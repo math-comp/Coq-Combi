@@ -51,40 +51,39 @@ Theorem bij_dyck_deriv :
   forall (w : list Brace), dyck_deriv w -> tree_to_dyck ( dyck_to_tree w ) = w.
 Proof.
   intros w deriv.
-  induction deriv.
-  rewrite e.
+  induction deriv as [ w Hnil | w a b deva Ha devb Hb Hcons ].
+  rewrite Hnil.
   rewrite nil_to_leaf; simpl; auto.
-  rewrite e; clear e; clear w.
+  rewrite Hcons; clear Hcons w.
   unfold dyck_to_tree.
-  destruct (is_dyck_dec (Open :: a ++ Close :: b)).
-  destruct (dyck_to_deriv i).
-  inversion e.
-  assert ((a = a0) /\ (b = b0)).
+  destruct (is_dyck_dec (Open :: a ++ Close :: b)) as [Hd | Hnd].
+  destruct (dyck_to_deriv Hd) as [Devnil | a0 b0 deva0 devb0 Hcons0].
+  inversion Devnil.
+  assert ((a = a0) /\ (b = b0)) as H.
   apply dyck_decompose_unique; auto; apply deriv_to_dyck; assumption.
   decompose [and] H; clear H.
-  rewrite e.
-  rewrite H0 in IHderiv1.
-  rewrite H1 in IHderiv2.
-  clear i e deriv1 deriv2 H0 H1 a b.
+  rewrite Hcons0.
+  rewrite H0, H1 in *|-.
+  clear Hd Hcons0 deva devb H0 H1 a b.
   simpl.
-  unfold dyck_to_tree in IHderiv1.
-  destruct (is_dyck_dec a0).
-  replace (dyck_to_deriv i) with d1 in IHderiv1.
-  rewrite IHderiv1.
-  unfold dyck_to_tree in IHderiv2.
-  destruct (is_dyck_dec b0).
-  replace (dyck_to_deriv i0) with d2 in IHderiv2.
-  rewrite IHderiv2.
+  unfold dyck_to_tree in Ha.
+  destruct (is_dyck_dec a0) as [Hda0 | Hnda0].
+  replace (dyck_to_deriv Hda0) with deva0 in Ha.
+  rewrite Ha.
+  unfold dyck_to_tree in Hb.
+  destruct (is_dyck_dec b0) as [Hdb0 | Hndb0].
+  replace (dyck_to_deriv Hdb0) with devb0 in Hb.
+  rewrite Hb.
   auto.
   apply deriv_unique.
-  simpl in IHderiv2.
-  rewrite <- IHderiv2 in n.
-  unfold is_dyck in n; simpl in n; tauto.
+  simpl in Hb.
+  rewrite <- Hb in Hndb0.
+  unfold is_dyck in Hndb0; simpl in Hndb0; tauto.
   apply deriv_unique.
-  simpl in IHderiv1.
-  rewrite <- IHderiv1 in n.
-  unfold is_dyck in n; simpl in n; tauto.
-  contradict n.
+  simpl in Ha.
+  rewrite <- Ha in Hnda0.
+  unfold is_dyck in Hnda0; simpl in Hnda0; tauto.
+  contradict Hnd.
   apply grammar_is_dyck; apply deriv_to_dyck; auto.
 Qed.
 
@@ -104,31 +103,32 @@ Proof.
   simpl; apply nil_to_leaf.
   simpl.
   specialize tree_to_dyck_is_dyck with t1; intro Hd1.
-  remember (tree_to_dyck t1) as d1.
   specialize tree_to_dyck_is_dyck with t2; intro Hd2.
+  remember (tree_to_dyck t1) as d1.
   remember (tree_to_dyck t2) as d2.
   unfold dyck_to_tree.
   elim (is_dyck_dec (Open :: d1 ++ Close :: d2)).
   intro Hd.
   remember (dyck_to_deriv Hd) as deriv.
-  destruct deriv.
-  inversion e.
-  assert ((a = d1) /\ (b = d2)) as H.
+(*  destruct deriv. *)
+  destruct (deriv) as [Devnil | w1 w2 dev1 dev2 Hcons].
+  inversion Devnil.
+  assert ((w1 = d1) /\ (w2 = d2)) as H.
   apply dyck_decompose_unique; auto; apply deriv_to_dyck; assumption.
   decompose [and] H; clear H.
-  subst a.
-  subst b.
-  assert (e = refl_equal (Open :: d1 ++ Close :: d2)) by apply proof_irrelevance.
-  subst e.
+  subst w1.
+  subst w2.
+  assert (Hcons = refl_equal (Open :: d1 ++ Close :: d2)) by apply proof_irrelevance.
+  subst Hcons.
   unfold dyck_to_tree in IHt1, IHt2.
   destruct (is_dyck_dec d1) as [Hisd1 | Hnisd1].
   destruct (is_dyck_dec d2) as [Hisd2 | Hnisd2].
   replace Hisd1 with Hd1 in * |- ; [auto | apply proof_irrelevance] .
   replace Hisd2 with Hd2 in * |- ; [auto | apply proof_irrelevance] .
   clear Hisd1 Hisd2.
-  assert (deriv1 = (dyck_to_deriv Hd1)) by apply deriv_unique.
-  assert (deriv2 = (dyck_to_deriv Hd2)) by apply deriv_unique.
-  subst deriv1; subst deriv2.
+  assert (dev1 = (dyck_to_deriv Hd1)) by apply deriv_unique.
+  assert (dev2 = (dyck_to_deriv Hd2)) by apply deriv_unique.
+  subst dev1; subst dev2.
   simpl.
   rewrite IHt1, IHt2.
   reflexivity.
