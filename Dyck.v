@@ -573,8 +573,8 @@ apply lt_le_trans with (length (Close :: b)); auto.
 Qed.
 
 Inductive dyck_deriv (w : list Brace) : Set :=
-  | grammar_nil  : w = nil -> dyck_deriv w
-  | grammar_cons : forall (a b : list Brace),
+  | deriv_nil  : w = nil -> dyck_deriv w
+  | deriv_cons : forall (a b : list Brace),
       dyck_deriv a -> dyck_deriv b -> w = Open :: a ++ Close :: b ->
         dyck_deriv w.
 
@@ -589,7 +589,7 @@ Proof.
   elim dyck_decompose_grammar with (b :: w); auto with datatypes.
   intro x; elim x; clear x; intros w1 w2.
   intro H0; decompose [and] H0; clear H0.
-  apply grammar_cons with w1 w2; auto;
+  apply deriv_cons with w1 w2; auto;
     apply Hind; auto; apply lt_n_Sm_le; rewrite <- Hl; rewrite H4.
   apply dyck_grammar_length_1 with w2; simpl; auto.
   apply dyck_grammar_length_2 with w1; simpl; auto.
@@ -600,7 +600,7 @@ Lemma total_induct :
 Proof.
   induction n; intros w Hd Hl.
   destruct w.
-  apply grammar_nil; auto.
+  apply deriv_nil; auto.
   simpl in Hl; omega.
   elim le_lt_dec with (length w) n.
   apply IHn; auto.
@@ -648,6 +648,7 @@ Proof.
   replace e with e0; auto.
   apply proof_irrelevance.
 Qed.
+
 
 End DyckWord.
 

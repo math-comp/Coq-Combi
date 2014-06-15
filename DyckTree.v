@@ -1,3 +1,5 @@
+(* We proove the bijection between Dyck words and binary trees *) 
+
 Require Import Arith.
 Require Import List.
 Require Import BinTrees.
@@ -8,8 +10,8 @@ Section DyckWordTreeBij.
 
 Fixpoint deriv_to_tree (w : list Brace) (deriv : dyck_deriv w) : Tree :=
   match deriv with
-    | grammar_nil _ => Leaf
-    | grammar_cons a b ga gb w => Node (deriv_to_tree a ga) (deriv_to_tree b gb)
+    | deriv_nil _ => Leaf
+    | deriv_cons a b ga gb w => Node (deriv_to_tree a ga) (deriv_to_tree b gb)
   end.
 
 Definition dyck_to_tree (w : list Brace) : Tree :=
@@ -45,7 +47,7 @@ Proof.
   apply grammar_is_dyck; auto.
 Qed.
 
-Theorem bij_1_aux :
+Theorem bij_dyck_deriv :
   forall (w : list Brace), dyck_deriv w -> tree_to_dyck ( dyck_to_tree w ) = w.
 Proof.
   intros w deriv.
@@ -86,16 +88,16 @@ Proof.
   apply grammar_is_dyck; apply deriv_to_dyck; auto.
 Qed.
 
-Theorem bij_1 :
+Theorem bij_dyck :
   forall (w : list Brace), is_dyck w -> tree_to_dyck ( dyck_to_tree w ) = w.
 Proof.
   intros w Hdw.
-  apply bij_1_aux.
+  apply bij_dyck_deriv.
   apply dyck_to_deriv.
   assumption.
 Qed.
 
-Theorem bij_2 :
+Theorem bij_tree :
   forall (t : Tree), dyck_to_tree ( tree_to_dyck t ) = t.
 Proof.
   induction t.
@@ -135,4 +137,54 @@ Proof.
   intro H; contradict H; apply grammar_is_dyck; auto.
 Qed.
 
+Theorem bij_tree_size:
+  forall (t : Tree), 2 * (size t) = length (tree_to_dyck t).
+Proof.
+  induction t.
+  simpl; auto.
+  simpl.
+  rewrite app_length.
+  simpl.
+  rewrite <- IHt1, <- IHt2.
+  omega.
+Qed.
+
+Theorem bij_derive_size:
+  forall (w : list Brace) (deriv : dyck_deriv w),
+    length w = 2* (size (deriv_to_tree w deriv)).
+Proof.
+  induction deriv.
+  rewrite e; simpl; auto.
+  rewrite e; simpl.
+  rewrite app_length; simpl.
+  rewrite IHderiv1, IHderiv2.
+  omega.
+Qed.
+
+Theorem bij_dyck_size:
+  forall (w : list Brace), (is_dyck w) -> 2 * (size (dyck_to_tree w)) = length w.
+Proof.
+  intros w Hdw.
+  unfold dyck_to_tree.
+  elim (is_dyck_dec w).
+  intro pf.
+  symmetry.
+  apply bij_derive_size.
+  contradiction.
+Qed.
+
+
 End DyckWordTreeBij.
+
+
+Require Import Wf_nat.
+Extraction Inline Wf_nat.lt_wf_rec1 Wf_nat.lt_wf_rec
+  Wf_nat.lt_wf_ind Wf_nat.gt_wf_rec Wf_nat.gt_wf_ind.
+
+Extract Inductive sumbool => "bool" [ "true" "false" ].
+
+Extract Inductive list => "list" [ "[]" "(::)" ].
+
+Extract Inductive prod => "(*)"  [ "(,)" ].
+
+Extraction "extract/dycktree.ml" dyck_to_tree tree_to_dyck.
