@@ -26,54 +26,38 @@ Qed.
 Definition dyck_has_tree (w : list Brace) :=
   is_dyck w -> { t: Tree | tree_is_deriv t w }.
 
-Lemma induct_one_step :
-  forall (n : nat),
-    (forall (w : list Brace), length w <= n -> dyck_has_tree w) -> 
-    forall (w : list Brace),  length w = (S n) -> dyck_has_tree w.
+
+Lemma dyck_has_tree_rec :
+  forall (w : list Brace),
+    (forall (s : list Brace), length s < length w -> dyck_has_tree s) -> 
+    dyck_has_tree w.
 Proof.
   unfold dyck_has_tree.
-  intros n Hind.
-  destruct w; intros Hl H.
-  simpl in Hl; inversion Hl.
+  intros w Hind.
+  destruct w; intros H.
+  exists Leaf; apply tree_nil; auto.
+
   elim dyck_decompose_grammar with (b :: w); auto with datatypes.
   intro x; elim x; clear x; intros w1 w2.
   intro H0; decompose [and] H0; clear H0.
+  rewrite H4 in *|-*; clear H H4.
   elim Hind with w1; auto.
   intros t1 Hdev1.
   elim Hind with w2; auto.
   intros t2 Hdev2.
   exists (Node t1 t2).
   apply tree_cons with t1 t2 w1 w2; auto.
-  apply lt_n_Sm_le; rewrite <- Hl.
   apply dyck_grammar_length_2 with w1; simpl; auto.
-  apply lt_n_Sm_le; rewrite <- Hl.
   apply dyck_grammar_length_1 with w2; simpl; auto.
 Qed.
 
-Lemma total_induct :
-  forall (n : nat) (w : list Brace), length w <= n -> dyck_has_tree w.
-Proof.
-  unfold dyck_has_tree.
-  induction n; intros w Hl Hd.
-  destruct w.
-  exists Leaf; apply tree_nil; auto.
-  simpl in Hl; omega.
-  elim le_lt_dec with (length w) n.
-  intro Hl1.
-  elim IHn with w; auto.
-  intro Hl1.
-  assert (length w = S n).
-  apply le_antisym; auto.
-  clear Hl Hl1.
-  apply induct_one_step with n; auto with arith.
+Definition R (a b:list Brace) := length a < length b.
+Lemma Rwf : well_founded R.
+  apply Wf_nat.well_founded_ltof.
 Qed.
 
-Theorem all_dyck_has_tree :
-  forall (w : list Brace), dyck_has_tree w.
-Proof.
-  intros w Hdw.
-  apply total_induct with (length w); auto with arith.
-Qed.
+Definition all_dyck_has_tree := Fix Rwf dyck_has_tree dyck_has_tree_rec.
+
 
 Theorem dyck_tree_unique :
   forall (t u : Tree) (w : list Brace),
