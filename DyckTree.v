@@ -1,4 +1,4 @@
-(* We proove the bijection between Dyck words and binary trees *) 
+(* We proove the bijection between Dyck words and binary trees *)
 
 Require Import Arith.
 Require Import List.
@@ -11,7 +11,7 @@ Section DyckWordTreeBij.
 Inductive tree_is_deriv (t : Tree) (w : list Brace) : Prop :=
   | tree_nil : t = Leaf -> w = nil -> tree_is_deriv t w
   | tree_cons : forall (t1 t2 : Tree) (w1 w2 : list Brace),
-      t = (Node t1 t2) -> w = Open :: w1 ++ Close :: w2 ->
+      t = Node t1 t2 -> w = Open :: w1 ++ Close :: w2 ->
         tree_is_deriv t1 w1 -> tree_is_deriv t2 w2 -> tree_is_deriv t w.
 
 Theorem tree_deriv_is_dyck :
@@ -28,8 +28,8 @@ Definition dyck_has_tree (w : list Brace) :=
 
 
 Lemma dyck_has_tree_rec :
-  forall (w : list Brace),
-    (forall (s : list Brace), length s < length w -> dyck_has_tree s) -> 
+  forall w : list Brace,
+    (forall s : list Brace, length s < length w -> dyck_has_tree s) ->
     dyck_has_tree w.
 Proof.
   unfold dyck_has_tree.
@@ -56,12 +56,13 @@ Lemma Rwf : well_founded R.
   apply Wf_nat.well_founded_ltof.
 Qed.
 
-Definition all_dyck_has_tree := Fix Rwf dyck_has_tree dyck_has_tree_rec.
+Definition all_dyck_has_tree : forall x : list Brace, dyck_has_tree x
+  := Fix Rwf dyck_has_tree dyck_has_tree_rec.
 
 
 Theorem dyck_tree_unique :
   forall (t u : Tree) (w : list Brace),
-    (tree_is_deriv t w) -> (tree_is_deriv u w) -> t = u.
+    tree_is_deriv t w -> tree_is_deriv u w -> t = u.
 Proof.
   induction t.
   induction u.
@@ -163,7 +164,7 @@ Proof.
 Qed.
 
 Theorem bij_dyck :
-  forall (w : list Brace), is_dyck w -> tree_to_dyck ( dyck_to_tree w ) = w.
+  forall w : list Brace, is_dyck w -> tree_to_dyck ( dyck_to_tree w ) = w.
 Proof.
   intros w Hd.
   unfold dyck_to_tree.
@@ -183,7 +184,7 @@ Qed.
 
 
 Theorem bij_tree :
-  forall (t : Tree), dyck_to_tree ( tree_to_dyck t ) = t.
+  forall t : Tree, dyck_to_tree ( tree_to_dyck t ) = t.
 Proof.
   induction t.
   simpl; apply nil_to_leaf.
@@ -219,7 +220,7 @@ Qed.
 
 
 Theorem bij_tree_size:
-  forall (t : Tree), 2 * (size t) = length (tree_to_dyck t).
+  forall t : Tree, 2 * (size t) = length (tree_to_dyck t).
 Proof.
   induction t.
   simpl; auto.
@@ -253,7 +254,7 @@ Qed.
 
 
 Theorem bij_dyck_size:
-  forall (w : list Brace), (is_dyck w) -> 2 * (size (dyck_to_tree w)) = length w.
+  forall w : list Brace, is_dyck w -> 2 * (size (dyck_to_tree w)) = length w.
 Proof.
   intros w Hdw.
   unfold dyck_to_tree.

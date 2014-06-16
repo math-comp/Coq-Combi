@@ -14,7 +14,7 @@ Fixpoint dyck_height (h : nat) (w : list Brace) : Prop :=
    match w with
    | nil => h = 0
    | Open::tlb => dyck_height (h+1) tlb
-   | Close::tlb => (h > 0) /\ (dyck_height (h-1) tlb)
+   | Close::tlb => h > 0 /\ dyck_height (h-1) tlb
    end.
 
 Definition is_dyck (w : list Brace) : Prop := dyck_height 0 w.
@@ -45,12 +45,12 @@ left; simpl; split.
 omega.
 rewrite <- minus_n_O; assumption.
 right; simpl.
-rewrite <- minus_n_O; tauto. 
+rewrite <- minus_n_O; tauto.
 Qed.
 
 Lemma dyck_height_unique:
   forall (w : list Brace) (h1 h2 : nat),
-    (dyck_height h1 w) -> (dyck_height h2 w) -> h1 = h2.
+    dyck_height h1 w -> dyck_height h2 w -> h1 = h2.
 Proof.
 induction w.
 intros h1 h2 H1 H2.
@@ -67,7 +67,7 @@ omega.
 Qed.
 
 Lemma is_dyck_dec:
-  forall (w : list Brace), {is_dyck w} + {~ is_dyck w}.
+  forall w : list Brace, {is_dyck w} + {~ is_dyck w}.
 Proof.
 intro w.
 unfold is_dyck.
@@ -75,9 +75,9 @@ apply dyck_height_dec.
 Qed.
 
 Lemma conc_is_dyck_height:
-  forall (w1 : list Brace), (is_dyck w1) ->
+  forall w1 : list Brace, is_dyck w1 ->
     forall (h : nat) (w : list Brace),
-      (dyck_height h w) -> (dyck_height h (w ++ w1)).
+      dyck_height h w -> dyck_height h (w ++ w1).
 Proof.
 intros w1 H1 h w.
 generalize h; clear h.
@@ -92,7 +92,7 @@ split; auto.
 Qed.
 
 Lemma conc_is_dyck:
-  forall (w1 w2 : list Brace), (is_dyck w1) -> (is_dyck w2) -> (is_dyck (w1 ++ w2)).
+  forall w1 w2 : list Brace, is_dyck w1 -> is_dyck w2 -> is_dyck (w1 ++ w2).
 Proof.
 intros w1 w2 Hd1 Hd2.
 unfold is_dyck.
@@ -101,7 +101,7 @@ Qed.
 
 Lemma conc_dyck_inv1_height :
   forall (w1 w2 : list Brace) (h : nat),
-    (dyck_height h w1) -> (dyck_height h (w1 ++ w2)) -> (is_dyck w2).
+    dyck_height h w1 -> dyck_height h (w1 ++ w2) -> is_dyck w2.
 Proof.
 induction w1.
 intros w2 h H H0.
@@ -118,8 +118,8 @@ elim H0; intros HH1 HH2; auto.
 Qed.
 
 Lemma conc_dyck_inv1:
-  forall (w1 w2 : list Brace),
-    (is_dyck w1) -> (is_dyck (w1 ++ w2)) -> (is_dyck w2).
+  forall w1 w2 : list Brace,
+    is_dyck w1 -> is_dyck (w1 ++ w2) -> is_dyck w2.
 Proof.
 unfold is_dyck; intros w1 w2 H0 H1.
 apply conc_dyck_inv1_height with w1 0; auto.
@@ -127,7 +127,7 @@ Qed.
 
 Lemma conc_dyck_inv2_height:
   forall (w1 w2 : list Brace) (h : nat),
-    (is_dyck w2) -> (dyck_height h (w1 ++ w2)) -> (dyck_height h w1).
+    is_dyck w2 -> dyck_height h (w1 ++ w2) -> dyck_height h w1.
 Proof.
 induction w1.
 intros w2 h H H0.
@@ -149,8 +149,8 @@ apply IHw1 with w2; auto.
 Qed.
 
 Lemma conc_dyck_inv2:
-  forall (w1 w2 : list Brace),
-    (is_dyck w2) -> (is_dyck (w1 ++ w2)) -> (is_dyck w1).
+  forall w1 w2 : list Brace,
+    is_dyck w2 -> is_dyck (w1 ++ w2) -> is_dyck w1.
 Proof.
 unfold is_dyck; intros w1 w2 H0 H1.
 apply conc_dyck_inv2_height with w2; auto.
@@ -162,7 +162,7 @@ Fixpoint proper_dyck_height (h : nat) (w : list Brace) : Prop :=
    | nil => False
    | Open::tlb => proper_dyck_height (h+1) tlb
    | Close::nil => h = 1
-   | Close::tlb => (h > 1) /\ (proper_dyck_height (h-1) (tlb))
+   | Close::tlb => h > 1 /\ proper_dyck_height (h-1) (tlb)
    end.
 
 Lemma proper_dyck_height_dec :
@@ -208,11 +208,11 @@ apply H0.
 Qed.
 
 Inductive proper_height_factor (h : nat) (w : list Brace) : Set :=
-  height_factor : forall (w1 w2 : list Brace),
-     (proper_dyck_height h w1) -> (w = (w1 ++ w2)) -> proper_height_factor h w.
+  height_factor : forall w1 w2 : list Brace,
+    proper_dyck_height h w1 -> w = (w1 ++ w2) -> proper_height_factor h w.
 
 Lemma proper_dyck_height_factor :
-  forall (w : list Brace) (h : nat), (w <> nil) -> (dyck_height h w) -> proper_height_factor h w.
+  forall (w : list Brace) (h : nat), w <> nil -> dyck_height h w -> proper_height_factor h w.
 Proof.
 induction w; intros h H.
 tauto.
@@ -265,15 +265,15 @@ compute; auto.
 Qed.
 
 Lemma proper_is_dyck :
-  forall (w : list Brace), proper_dyck w -> is_dyck w.
+  forall w : list Brace, proper_dyck w -> is_dyck w.
 Proof.
 unfold proper_dyck; unfold is_dyck.
 intros w H; apply proper_is_dyck_height; auto.
 Qed.
 
 Lemma dyck_factor :
-  forall (w : list Brace), (w <> nil) -> (is_dyck w) ->
-     { factor : (list Brace * list Brace) |
+  forall w : list Brace, w <> nil -> is_dyck w ->
+     { factor : list Brace * list Brace |
         let (w1, w2) := factor in proper_dyck w1 /\ w = w1 ++ w2 }.
 Proof.
 intros w wnil dw.
@@ -284,9 +284,9 @@ split; auto.
 Qed.
 
 Lemma dyck_factor_height_unique :
-  forall (w : list Brace) (h : nat) (wa1 wa2 wb1 wb2 : list Brace), (dyck_height h w) ->
-    proper_dyck_height h wa1 -> proper_dyck_height h wb1 -> w = wa1 ++ wa2 -> w = wb1 ++ wb2 ->
-      wa1 = wb1 /\ wa2 = wb2.
+  forall (w : list Brace) (h : nat) (wa1 wa2 wb1 wb2 : list Brace), dyck_height h w ->
+    proper_dyck_height h wa1 -> proper_dyck_height h wb1 ->
+      w = wa1 ++ wa2 -> w = wb1 ++ wb2 -> wa1 = wb1 /\ wa2 = wb2.
 Proof.
 induction w.
 intros h wa1 wa2 wb1 wb2 Hd Hpa Hpb Hca Hcb.
@@ -393,7 +393,7 @@ assumption.
 Qed.
 
 Lemma proper_dyck_brace :
-  forall (w : list Brace), proper_dyck w ->
+  forall w : list Brace, proper_dyck w ->
     { d : list Brace | is_dyck d /\ w = Open :: d ++ Close :: nil }.
 Proof.
 unfold proper_dyck.
@@ -414,7 +414,7 @@ Qed.
 
 
 Theorem dyck_decompose_grammar :
-  forall (w : list Brace), w <> nil -> is_dyck w ->
+  forall w : list Brace, w <> nil -> is_dyck w ->
     { factor : (list Brace * list Brace) |
        let (w1, w2) := factor in is_dyck w1 /\ is_dyck w2 /\ w = Open :: w1 ++ Close :: w2 }.
 Proof.
@@ -466,26 +466,24 @@ apply IHw; auto.
 Qed.
 
 Lemma dyck_proper_dyck :
-  forall (w : list Brace), is_dyck w -> proper_dyck_height 1 (w ++ Close :: nil).
+  forall w : list Brace, is_dyck w -> proper_dyck_height 1 (w ++ Close :: nil).
 Proof.
 intros w dw.
-assert (1 = 0+1) by auto. 
+assert (1 = 0+1) by auto.
 rewrite H.
 apply dyck_proper_dyck_height.
 auto.
 Qed.
 
 Lemma proper_is_proper_dyck :
-  forall (w : list Brace), is_dyck w -> proper_dyck (Open :: w ++ Close :: nil).
+  forall w : list Brace, is_dyck w -> proper_dyck (Open :: w ++ Close :: nil).
 Proof.
 intros w Hdw; unfold proper_dyck; simpl.
 apply dyck_proper_dyck; auto.
 Qed.
 
 Lemma grammar_is_dyck:
-  forall (w1 w2 : list Brace),
-    (is_dyck w1) -> (is_dyck w2) ->
-    (is_dyck (Open :: w1 ++ Close :: w2)).
+  forall w1 w2 : list Brace, is_dyck w1 -> is_dyck w2 -> is_dyck (Open :: w1 ++ Close :: w2).
 Proof.
 intros w1 w2 dw1 dw2.
 replace (Open :: w1 ++ Close :: w2) with (((Open :: w1) ++ Close :: nil) ++ w2).
@@ -499,7 +497,7 @@ auto with datatypes.
 Qed.
 
 Theorem dyck_decompose_unique :
-  forall (wa1 wa2 wb1 wb2 : list Brace),
+  forall wa1 wa2 wb1 wb2 : list Brace,
     is_dyck wa1 -> is_dyck wa2 -> is_dyck wb1 -> is_dyck wb2 ->
       Open :: wa1 ++ Close :: wa2  = Open :: wb1 ++ Close :: wb2 ->
         wa1 = wb1 /\ wa2 = wb2.
@@ -524,7 +522,7 @@ auto with datatypes.
 Qed.
 
 Lemma lel_app_1:
-  forall (a b : list Brace), lel a (a ++ b).
+  forall a b : list Brace, lel a (a ++ b).
 Proof.
 unfold lel.
 induction a.
@@ -534,7 +532,7 @@ apply le_n_S; auto.
 Qed.
 
 Lemma lel_app_2:
-  forall (a b : list Brace), lel b (a ++ b).
+  forall a b : list Brace, lel b (a ++ b).
 Proof.
 unfold lel.
 induction a.
@@ -544,7 +542,7 @@ apply le_trans with (length (a0 ++ b)); auto.
 Qed.
 
 Lemma dyck_grammar_length_1 :
-  forall (w a b : list Brace), w = (Open :: a) ++ (Close :: b) -> length a < length w.
+  forall w a b : list Brace, w = (Open :: a) ++ (Close :: b) -> length a < length w.
 Proof.
 intros w a b H.
 assert (length a < length (Open :: a)).
@@ -557,7 +555,7 @@ apply lt_le_trans with (length (Open :: a)); auto.
 Qed.
 
 Lemma dyck_grammar_length_2 :
-  forall (w a b : list Brace), w = (Open :: a) ++ (Close :: b) -> length b < length w.
+  forall w a b : list Brace, w = (Open :: a) ++ (Close :: b) -> length b < length w.
 Proof.
 intros w a b H.
 assert (length b < length (Close :: b)).

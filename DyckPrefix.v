@@ -61,18 +61,18 @@ Ltac omega_brace :=
   omega.
 
 Definition dyck_prefix_height (h : nat) (w : list Brace) : Prop :=
-  (forall (l : nat), (mult (sublist _ l w) Open) + h >= (mult (sublist _ l w) Close))
-  /\ (mult w Open) + h = (mult w Close).
+  (forall l : nat, (mult (sublist _ l w) Open) + h >= (mult (sublist _ l w) Close))
+  /\ (mult w Open) + h = mult w Close.
 
 Lemma dyck_prefix_nil :
-  forall (h : nat), dyck_prefix_height h nil <-> dyck_height h nil.
+  forall h : nat, dyck_prefix_height h nil <-> dyck_height h nil.
 Proof.
   unfold dyck_prefix_height, mult.
   destruct h; simpl.
   split.
   auto with arith.
   intro H; clear H; split; auto.
-  destruct l; 
+  destruct l;
   simpl; auto.
   split.
   intro H; decompose [and] H; auto.
@@ -186,7 +186,7 @@ Qed.
 Definition dyck_prefix (w : list Brace) : Prop := dyck_prefix_height 0 w.
 
 Theorem prefix_dyck_equiv_dyck :
-  forall (w : list Brace), is_dyck w <-> dyck_prefix w.
+  forall w : list Brace, is_dyck w <-> dyck_prefix w.
 Proof.
   split.
   apply prefix_impl_dyck.
@@ -195,4 +195,3 @@ Qed.
 
 
 End Prefix.
-
