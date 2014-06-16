@@ -523,9 +523,6 @@ rewrite ?app_assoc_reverse.
 auto with datatypes.
 Qed.
 
-
-Require Import ProofIrrelevance.
-
 Lemma lel_app_1:
   forall (a b : list Brace), lel a (a ++ b).
 Proof.
@@ -572,84 +569,6 @@ unfold lel in H1.
 apply lt_le_trans with (length (Close :: b)); auto.
 Qed.
 
-Inductive dyck_deriv (w : list Brace) : Set :=
-  | deriv_nil  : w = nil -> dyck_deriv w
-  | deriv_cons : forall (a b : list Brace),
-      dyck_deriv a -> dyck_deriv b -> w = Open :: a ++ Close :: b ->
-        dyck_deriv w.
-
-Lemma induct_one_step :
-  forall (n : nat),
-    (forall (w : list Brace), is_dyck w -> length w <= n -> dyck_deriv w) ->
-    forall (w : list Brace), is_dyck w -> length w = (S n) -> dyck_deriv w.
-Proof.
-  intros n Hind.
-  destruct w; intros H Hl.
-  simpl in Hl; inversion Hl.
-  elim dyck_decompose_grammar with (b :: w); auto with datatypes.
-  intro x; elim x; clear x; intros w1 w2.
-  intro H0; decompose [and] H0; clear H0.
-  apply deriv_cons with w1 w2; auto;
-    apply Hind; auto; apply lt_n_Sm_le; rewrite <- Hl; rewrite H4.
-  apply dyck_grammar_length_1 with w2; simpl; auto.
-  apply dyck_grammar_length_2 with w1; simpl; auto.
-Qed.
-
-Lemma total_induct :
-  forall (n : nat) (w : list Brace), is_dyck w -> length w <= n -> dyck_deriv w.
-Proof.
-  induction n; intros w Hd Hl.
-  destruct w.
-  apply deriv_nil; auto.
-  simpl in Hl; omega.
-  elim le_lt_dec with (length w) n.
-  apply IHn; auto.
-  intro Hl1.
-  assert (length w = S n).
-  apply le_antisym; auto.
-  clear Hl Hl1.
-  apply induct_one_step with n; auto with arith.
-Qed.
-
-Theorem dyck_to_deriv :
-  forall  (w : list Brace), is_dyck w -> dyck_deriv w.
-Proof.
-  intros w Hdw.
-  apply total_induct with (length w); auto with arith.
-Qed.
-
-Theorem deriv_to_dyck :
-  forall  (w : list Brace), dyck_deriv w -> is_dyck w.
-Proof.
-  intros w H; induction H.
-  rewrite e; apply nil_is_dyck.
-  rewrite e; apply grammar_is_dyck; assumption.
-Qed.
-
-Theorem deriv_unique :
-  forall (w : list Brace) (d1 d2 : dyck_deriv w), d1 = d2.
-Proof.
-  intros w d1 d2.
-  induction d1; destruct d2.
-  replace e with e0; auto.
-  apply proof_irrelevance.
-  contradict e0.
-  rewrite e; auto with datatypes.
-  contradict e0.
-  rewrite e; auto with datatypes.
-  inversion e; rewrite e0 in H.
-  assert (a0 = a /\ b0 = b).
-  apply dyck_decompose_unique; auto; apply deriv_to_dyck; assumption.
-  decompose [and] H0; clear H H0.
-  subst a0.
-  subst b0.
-  replace d2_1 with d1_1; auto.
-  replace d2_2 with d1_2; auto.
-  replace e with e0; auto.
-  apply proof_irrelevance.
-Qed.
-
-
 End DyckWord.
 
 Require Import Wf_nat.
@@ -681,4 +600,4 @@ Extract Constant minus => "( - )".
 Extract Constant beq_nat => "( = )".
 *)
 
-Extraction "extract/dyck.ml" dyck_decompose_grammar dyck_to_deriv.
+Extraction "extract/dyck.ml" dyck_decompose_grammar.

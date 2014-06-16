@@ -8,35 +8,166 @@ Require Import ProofIrrelevance.
 
 Section DyckWordTreeBij.
 
-Fixpoint deriv_to_tree (w : list Brace) (deriv : dyck_deriv w) : Tree :=
-  match deriv with
-    | deriv_nil _ => Leaf
-    | deriv_cons a b ga gb w => Node (deriv_to_tree a ga) (deriv_to_tree b gb)
-  end.
+Inductive tree_is_deriv (t : Tree) (w : list Brace) : Prop :=
+  | tree_nil : t = Leaf -> w = nil -> tree_is_deriv t w
+  | tree_cons : forall (t1 t2 : Tree) (w1 w2 : list Brace),
+      t = (Node t1 t2) -> w = Open :: w1 ++ Close :: w2 ->
+        tree_is_deriv t1 w1 -> tree_is_deriv t2 w2 -> tree_is_deriv t w.
+
+Theorem tree_deriv_is_dyck :
+  forall (t : Tree) (w : list Brace), tree_is_deriv t w -> is_dyck w.
+Proof.
+  intros t w d; unfold is_dyck.
+  induction d.
+  rewrite H0; simpl; auto.
+  rewrite H0; apply grammar_is_dyck; auto.
+Qed.
+
+Definition dyck_has_tree (w : list Brace) :=
+  is_dyck w -> { t: Tree | tree_is_deriv t w }.
+
+Lemma induct_one_step :
+  forall (n : nat),
+    (forall (w : list Brace), length w <= n -> dyck_has_tree w) -> 
+    forall (w : list Brace),  length w = (S n) -> dyck_has_tree w.
+Proof.
+  unfold dyck_has_tree.
+  intros n Hind.
+  destruct w; intros Hl H.
+  simpl in Hl; inversion Hl.
+  elim dyck_decompose_grammar with (b :: w); auto with datatypes.
+  intro x; elim x; clear x; intros w1 w2.
+  intro H0; decompose [and] H0; clear H0.
+  elim Hind with w1; auto.
+  intros t1 Hdev1.
+  elim Hind with w2; auto.
+  intros t2 Hdev2.
+  exists (Node t1 t2).
+  apply tree_cons with t1 t2 w1 w2; auto.
+  apply lt_n_Sm_le; rewrite <- Hl.
+  apply dyck_grammar_length_2 with w1; simpl; auto.
+  apply lt_n_Sm_le; rewrite <- Hl.
+  apply dyck_grammar_length_1 with w2; simpl; auto.
+Qed.
+
+Lemma total_induct :
+  forall (n : nat) (w : list Brace), length w <= n -> dyck_has_tree w.
+Proof.
+  unfold dyck_has_tree.
+  induction n; intros w Hl Hd.
+  destruct w.
+  exists Leaf; apply tree_nil; auto.
+  simpl in Hl; omega.
+  elim le_lt_dec with (length w) n.
+  intro Hl1.
+  elim IHn with w; auto.
+  intro Hl1.
+  assert (length w = S n).
+  apply le_antisym; auto.
+  clear Hl Hl1.
+  apply induct_one_step with n; auto with arith.
+Qed.
+
+Theorem all_dyck_has_tree :
+  forall (w : list Brace), dyck_has_tree w.
+Proof.
+  intros w Hdw.
+  apply total_induct with (length w); auto with arith.
+Qed.
+
+Theorem dyck_tree_unique :
+  forall (t u : Tree) (w : list Brace),
+    (tree_is_deriv t w) -> (tree_is_deriv u w) -> t = u.
+Proof.
+  induction t.
+  induction u.
+  auto.
+  intros w Hdlw Hdnw.
+  destruct Hdlw; destruct Hdnw.
+  inversion H1.
+  rewrite H0 in H2; inversion H2.
+  rewrite H0 in H2; inversion H2.
+  inversion H.
+  intros u w devNode devu.
+  destruct devNode.
+  inversion H.
+  inversion H.
+  destruct devu.
+  rewrite H0 in H4; inversion H4.
+  assert (w1 = w0 /\ w2 = w3).
+  apply dyck_decompose_unique; auto.
+  apply tree_deriv_is_dyck with t0; assumption.
+  apply tree_deriv_is_dyck with t3; assumption.
+  apply tree_deriv_is_dyck with t4; assumption.
+  apply tree_deriv_is_dyck with t5; assumption.
+  rewrite <- H0, <- H4; auto.
+  decompose [and] H5; clear H5.
+  subst w1.
+  subst w2.
+  subst t0.
+  subst t3.
+  clear H H0.
+  rewrite H1; clear H1.
+  rewrite IHt1 with t4 w0; auto.
+  rewrite IHt2 with t5 w3; auto.
+Qed.
 
 Definition dyck_to_tree (w : list Brace) : Tree :=
   match is_dyck_dec w with
-     | left proof => deriv_to_tree w (dyck_to_deriv proof)
+     | left proof => let (t, _) := (all_dyck_has_tree w proof) in t
      | right _ => Leaf
   end.
 
 Lemma nil_to_leaf : dyck_to_tree nil = Leaf.
 Proof.
   unfold dyck_to_tree; simpl.
-  case (is_dyck_dec nil).
-  intro i; simpl.
-  unfold deriv_to_tree.
-  destruct (dyck_to_deriv i).
-  simpl; auto.
-  inversion e.
-  intro; auto.
+  destruct (is_dyck_dec nil); auto.
+  elim all_dyck_has_tree with nil.
+  clear i.
+  intros t H.
+  destruct H; auto.
+  inversion H0.
 Qed.
+
 
 Fixpoint tree_to_dyck (t : Tree) : list Brace :=
   match t with
   | Leaf => nil
   | Node FG FD => Open :: (tree_to_dyck FG) ++ Close :: (tree_to_dyck FD)
-  end. 
+  end.
+
+Lemma tree_to_dyck_deriv_eq :
+  forall (t : Tree) (w : list Brace), tree_is_deriv t w -> tree_to_dyck t = w.
+Proof.
+  induction t; destruct w; auto; intro H; destruct H.
+  inversion H0.
+  inversion H.
+  inversion H.
+  inversion H0.
+  inversion H0.
+  rewrite H0; clear H0 b w.
+  inversion H; clear H.
+  subst t0.
+  subst t3.
+  simpl.
+  rewrite IHt1 with w1 by apply H1.
+  rewrite IHt2 with w2 by apply H2.
+  reflexivity.
+Qed.
+
+Lemma tree_to_dyck_eq_deriv :
+  forall (t : Tree) (w : list Brace), tree_to_dyck t = w -> tree_is_deriv t w.
+Proof.
+  induction t; auto.
+  destruct w.
+  simpl; apply tree_nil; auto.
+  simpl.
+  intro H; inversion H.
+  simpl.
+  intros t w.
+  rewrite <- w; clear w.
+  apply tree_cons with t1 t2 (tree_to_dyck t1) (tree_to_dyck t2); auto.
+Qed.
 
 Lemma tree_to_dyck_is_dyck :
   forall (t : Tree), is_dyck (tree_to_dyck t).
@@ -47,54 +178,25 @@ Proof.
   apply grammar_is_dyck; auto.
 Qed.
 
-Theorem bij_dyck_deriv :
-  forall (w : list Brace), dyck_deriv w -> tree_to_dyck ( dyck_to_tree w ) = w.
-Proof.
-  intros w deriv.
-  induction deriv as [ w Hnil | w a b deva Ha devb Hb Hcons ].
-  rewrite Hnil.
-  rewrite nil_to_leaf; simpl; auto.
-  rewrite Hcons; clear Hcons w.
-  unfold dyck_to_tree.
-  destruct (is_dyck_dec (Open :: a ++ Close :: b)) as [Hd | Hnd].
-  destruct (dyck_to_deriv Hd) as [Devnil | a0 b0 deva0 devb0 Hcons0].
-  inversion Devnil.
-  assert ((a = a0) /\ (b = b0)) as H.
-  apply dyck_decompose_unique; auto; apply deriv_to_dyck; assumption.
-  decompose [and] H; clear H.
-  rewrite Hcons0.
-  rewrite H0, H1 in *|-.
-  clear Hd Hcons0 deva devb H0 H1 a b.
-  simpl.
-  unfold dyck_to_tree in Ha.
-  destruct (is_dyck_dec a0) as [Hda0 | Hnda0].
-  replace (dyck_to_deriv Hda0) with deva0 in Ha.
-  rewrite Ha.
-  unfold dyck_to_tree in Hb.
-  destruct (is_dyck_dec b0) as [Hdb0 | Hndb0].
-  replace (dyck_to_deriv Hdb0) with devb0 in Hb.
-  rewrite Hb.
-  auto.
-  apply deriv_unique.
-  simpl in Hb.
-  rewrite <- Hb in Hndb0.
-  unfold is_dyck in Hndb0; simpl in Hndb0; tauto.
-  apply deriv_unique.
-  simpl in Ha.
-  rewrite <- Ha in Hnda0.
-  unfold is_dyck in Hnda0; simpl in Hnda0; tauto.
-  contradict Hnd.
-  apply grammar_is_dyck; apply deriv_to_dyck; auto.
-Qed.
-
 Theorem bij_dyck :
   forall (w : list Brace), is_dyck w -> tree_to_dyck ( dyck_to_tree w ) = w.
 Proof.
-  intros w Hdw.
-  apply bij_dyck_deriv.
-  apply dyck_to_deriv.
-  assumption.
+  intros w Hd.
+  unfold dyck_to_tree.
+  destruct is_dyck_dec with w; [ | tauto].
+  destruct w.
+  elim all_dyck_has_tree with nil.
+  clear i Hd.
+  intros t H.
+  destruct t; auto.
+  destruct H.
+  inversion H.
+  inversion H0.
+  clear Hd.
+  induction all_dyck_has_tree with (b :: w).
+  apply tree_to_dyck_deriv_eq; auto.
 Qed.
+
 
 Theorem bij_tree :
   forall (t : Tree), dyck_to_tree ( tree_to_dyck t ) = t.
@@ -109,33 +211,28 @@ Proof.
   unfold dyck_to_tree.
   elim (is_dyck_dec (Open :: d1 ++ Close :: d2)).
   intro Hd.
-  remember (dyck_to_deriv Hd) as deriv.
-(*  destruct deriv. *)
-  destruct (deriv) as [Devnil | w1 w2 dev1 dev2 Hcons].
-  inversion Devnil.
-  assert ((w1 = d1) /\ (w2 = d2)) as H.
-  apply dyck_decompose_unique; auto; apply deriv_to_dyck; assumption.
-  decompose [and] H; clear H.
+  induction all_dyck_has_tree with (Open :: d1 ++ Close :: d2).
+  destruct p.
+  inversion H0.
+  rewrite H; clear H x.
+  assert ((w1 = d1) /\ (w2 = d2)) as Heq.
+  apply dyck_decompose_unique; auto.
+  apply tree_deriv_is_dyck with t0; assumption.
+  apply tree_deriv_is_dyck with t3; assumption.
+  decompose [and] Heq; clear Heq.
   subst w1.
   subst w2.
-  assert (Hcons = refl_equal (Open :: d1 ++ Close :: d2)) by apply proof_irrelevance.
-  subst Hcons.
-  unfold dyck_to_tree in IHt1, IHt2.
-  destruct (is_dyck_dec d1) as [Hisd1 | Hnisd1].
-  destruct (is_dyck_dec d2) as [Hisd2 | Hnisd2].
-  replace Hisd1 with Hd1 in * |- ; [auto | apply proof_irrelevance] .
-  replace Hisd2 with Hd2 in * |- ; [auto | apply proof_irrelevance] .
-  clear Hisd1 Hisd2.
-  assert (dev1 = (dyck_to_deriv Hd1)) by apply deriv_unique.
-  assert (dev2 = (dyck_to_deriv Hd2)) by apply deriv_unique.
-  subst dev1; subst dev2.
-  simpl.
-  rewrite IHt1, IHt2.
+  clear H0 Hd Hd1 Hd2.
+  replace t0 with t1.
+  replace t3 with t2.
   reflexivity.
-  contradiction.
-  contradiction.
+  apply dyck_tree_unique with d2; auto.
+  apply tree_to_dyck_eq_deriv; auto.
+  apply dyck_tree_unique with d1; auto.
+  apply tree_to_dyck_eq_deriv; auto.
   intro H; contradict H; apply grammar_is_dyck; auto.
 Qed.
+
 
 Theorem bij_tree_size:
   forall (t : Tree), 2 * (size t) = length (tree_to_dyck t).
@@ -149,17 +246,27 @@ Proof.
   omega.
 Qed.
 
-Theorem bij_derive_size:
-  forall (w : list Brace) (deriv : dyck_deriv w),
-    length w = 2* (size (deriv_to_tree w deriv)).
+Theorem bij_dyck_deriv_size:
+  forall (t : Tree) (w : list Brace), tree_is_deriv t w -> 2 * (size t) = length w.
 Proof.
-  induction deriv.
-  rewrite e; simpl; auto.
-  rewrite e; simpl.
+  induction t.
+  destruct w.
+  intro H; simpl; auto.
+  intro H; destruct H.
+  inversion H0.
+  inversion H.
+  intros w H.
+  destruct H.
+  inversion H.
+  inversion H; clear H.
+  subst t0 t3.
+  rewrite H0; clear H0.
+  simpl.
   rewrite app_length; simpl.
-  rewrite IHderiv1, IHderiv2.
+  rewrite <- IHt1, <- IHt2; auto.
   omega.
 Qed.
+
 
 Theorem bij_dyck_size:
   forall (w : list Brace), (is_dyck w) -> 2 * (size (dyck_to_tree w)) = length w.
@@ -168,11 +275,10 @@ Proof.
   unfold dyck_to_tree.
   elim (is_dyck_dec w).
   intro pf.
-  symmetry.
-  apply bij_derive_size.
-  contradiction.
+  elim all_dyck_has_tree with w.
+  intro t; apply bij_dyck_deriv_size; auto.
+  intro H; tauto.
 Qed.
-
 
 End DyckWordTreeBij.
 
