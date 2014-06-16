@@ -1,6 +1,15 @@
-(*
+Require Import Arith.
+Require Import List.
+Require Import Dyck.
+Require Import Sublist.
+Require Import Multiset.
+Require Import Permutation.
+Require Import Coq.Sorting.PermutSetoid.
+Require Import PermutEq.
 
-Lemma eqBrace_dec :
+Section Prefix.
+
+Lemma eq_brace_dec :
   forall b1 b2 : Brace, {b1 = b2} + {b1 <> b2}.
 Proof.
 induction b1; induction b2.
@@ -11,217 +20,179 @@ induction b1; induction b2.
 Qed.
 
 Lemma if_close_close :
-   (if eqBrace_dec Close Close then 1 else 0) = 1.
+   (if eq_brace_dec Close Close then 1 else 0) = 1.
 Proof.
-destruct (eqBrace_dec Close Close); intros.
-ring.
-induction n.
-auto.
+destruct (eq_brace_dec Close Close); intros; auto with arith.
+destruct n; auto.
 Qed.
 
 Lemma if_close_open :
-   (if eqBrace_dec Close Open then 1 else 0) = 0.
+   (if eq_brace_dec Close Open then 1 else 0) = 0.
 Proof.
-destruct (eqBrace_dec Close Open); intros.
+destruct (eq_brace_dec Close Open); intros; auto with arith.
 inversion e.
-auto.
 Qed.
 
 Lemma if_open_close :
-   (if eqBrace_dec Open Close then 1 else 0) = 0.
+   (if eq_brace_dec Open Close then 1 else 0) = 0.
 Proof.
-destruct (eqBrace_dec Open Close); intros.
+destruct (eq_brace_dec Open Close); intros; auto with arith.
 inversion e.
-auto.
 Qed.
 
 Lemma if_open_open :
-   (if eqBrace_dec Open Open then 1 else 0) = 1.
+   (if eq_brace_dec Open Open then 1 else 0) = 1.
 Proof.
-destruct (eqBrace_dec Open Open); intros.
-ring.
-induction n.
-auto.
+destruct (eq_brace_dec Open Open); intros; auto with arith.
+destruct n; auto.
+Qed.
+
+Notation list_contents := (list_contents _ eq_brace_dec).
+
+Definition mult (l : list Brace) (b : Brace) := multiplicity (list_contents l) b.
+
+Ltac omega_brace :=
+  unfold mult in *|-*;
+  simpl in *|-*;
+  try rewrite ?if_close_close in *|-*;
+  try rewrite ?if_close_open  in *|-*;
+  try rewrite ?if_open_close  in *|-*;
+  try rewrite ?if_open_open   in *|-*;
+  omega.
+
+Definition dyck_prefix_height (h : nat) (w : list Brace) : Prop :=
+  (forall (l : nat), (mult (sublist _ l w) Open) + h >= (mult (sublist _ l w) Close))
+  /\ (mult w Open) + h = (mult w Close).
+
+Lemma dyck_prefix_nil :
+  forall (h : nat), dyck_prefix_height h nil <-> dyck_height h nil.
+Proof.
+  unfold dyck_prefix_height, mult.
+  destruct h; simpl.
+  split.
+  auto with arith.
+  intro H; clear H; split; auto.
+  destruct l; 
+  simpl; auto.
+  split.
+  intro H; decompose [and] H; auto.
+  split; auto with arith.
+  inversion H.
+Qed.
+
+Lemma dyck_impl_prefix :
+  forall (w : list Brace) (h : nat), dyck_prefix_height h w -> dyck_height h w.
+Proof.
+  unfold dyck_prefix_height.
+  induction w.
+  apply dyck_prefix_nil.
+  intro h.
+  destruct a.
+
+  simpl.
+  intro H; decompose [and] H; clear H.
+  apply IHw.
+  split.
+  clear IHw H1.
+  intro l.
+  specialize H0 with (S l).
+  omega_brace.
+
+  clear IHw H0.
+  omega_brace.
+
+  intro H; decompose [and] H; clear H.
+  destruct h.
+  clear IHw H1.
+  specialize H0 with 1.
+  simpl in H0.
+  rewrite sublist_0 in H0.
+  omega_brace.
+
+  simpl.
+  split; auto with arith.
+  rewrite <- minus_n_O.
+  apply IHw; clear IHw.
+  split.
+
+  intro l.
+  specialize H0 with (S l).
+  simpl in H0.
+  omega_brace.
+
+  omega_brace.
+Qed.
+
+Lemma prefix_impl_dyck :
+  forall (w : list Brace) (h : nat), dyck_height h w -> dyck_prefix_height h w.
+Proof.
+  unfold dyck_prefix_height.
+  induction w.
+  apply dyck_prefix_nil.
+  intro h.
+  destruct a.
+  intro H.
+  simpl in H.
+  split.
+
+  destruct l.
+  simpl.
+  unfold mult; auto with arith.
+
+  simpl.
+  specialize IHw with (h + 1).
+  elim IHw; auto; clear H IHw; intros IHw IHw1; clear IHw1.
+  specialize IHw with l.
+  omega_brace.
+
+  specialize IHw with (h + 1).
+  elim IHw; auto; clear H IHw; intros IHw IHw1; clear IHw.
+  omega_brace.
+
+  intro H; destruct h.
+  simpl in H; decompose [and] H; clear H.
+  contradict H0; omega.
+
+  split.
+
+  destruct l.
+  simpl.
+  unfold mult; auto with arith.
+
+  simpl in H; decompose [and] H; clear H H0.
+  rewrite <- minus_n_O in H1.
+  simpl.
+  specialize IHw with h.
+  elim IHw; auto; clear H1 IHw; intros IHw IHw1; clear IHw1.
+  specialize IHw with l.
+  omega_brace.
+
+  simpl in H; decompose [and] H; clear H H0.
+  rewrite <- minus_n_O in H1.
+  specialize IHw with h.
+  elim IHw; auto; clear H1 IHw; intros IHw IHw1; clear IHw.
+  omega_brace.
 Qed.
 
 
-Fixpoint cut_loop
-  (height : nat) (start : list Brace) (w : list Brace) :=
-     match w with
-       | nil       => (rev start, nil)
-       | Open::tlb  => cut_loop (height+1) (Open::start) tlb
-       | Close::tlb =>
-           match height with
-             | 0   =>  (rev start, tlb)
-             | S n => cut_loop n (Close::start) tlb
-           end
-     end.
-
-Fixpoint cut (w : list Brace) :=
-  match w with
-    | Open::l => cut_loop 0 nil l
-    | _ => (nil, nil)   (* we don't care *)
-  end.
-
-Theorem dyck_cut_is_dyck:
-  forall (w : list Brace) (n : nat), n > 0 -> dyck_height n w ->
-     dyck_height n (fst (cut_loop n nil w)).
+Theorem prefix_dyck_equiv_dyck_height :
+  forall (w : list Brace) (h : nat), dyck_height h w <-> dyck_prefix_height h w.
 Proof.
-intros.
-induction n.
-omega.
-
-
-intros.
-compute.
-omega.
-intros.
-Admitted.
-
-Let mult_list (l : list Brace) (a : Brace) :=
-  multiplicity (list_contents (eq (A := Brace)) eqBrace_dec l) a.
-
-
-Definition isDyck (w : list Brace) : Prop :=
-  mult_list w Open = mult_list w Close /\
-    forall (n : nat),
-      mult_list (sublist Brace n w) Open
-      	>= mult_list (sublist Brace n w) Close.
-
-
-Lemma nil_is_Dyck : isDyck nil.
-Proof.
-unfold isDyck, mult_list; split; intros.
- simpl; auto.
- rewrite sublist_nil; simpl; auto.
+  split.
+  apply prefix_impl_dyck.
+  apply dyck_impl_prefix.
 Qed.
 
-Lemma is_dyck_start_open :
-  forall (a : Brace) (w : list Brace), isDyck (a::w) -> a = Open.
+Definition dyck_prefix (w : list Brace) : Prop := dyck_prefix_height 0 w.
+
+Theorem prefix_dyck_equiv_dyck :
+  forall (w : list Brace), is_dyck w <-> dyck_prefix w.
 Proof.
-intros.
-elim H; intros; clear H H0.
-assert (mult_list (sublist Brace 1 (a :: w)) Open >= mult_list (sublist Brace 1 (a :: w)) Close).
-apply H1.
-clear H1.
-destruct a; auto.
-simpl in H.
-unfold mult_list in H; simpl in H.
-rewrite if_close_close, if_close_open, sublist_0 in H.
-compute in H.
-omega.
-Qed.
-
-Lemma isDyck_dec :
-  forall (l : list Brace), {isDyck l} + {~isDyck l}.
-Proof.
-intro l.
-unfold isDyck.
-
-Admitted. (* +++++++++++++++++++++++++ *)
-
-Lemma hat_isDyck : isDyck (Open::Close::nil).
-Proof.
-unfold isDyck, mult_list; split; intros.
-simpl.
-rewrite if_open_open, if_open_close, if_close_open, if_close_close.
-ring.
-induction n.
-auto.
-simpl.
-induction n.
-simpl.
-rewrite if_open_open, if_open_close.
-auto.
-simpl.
-rewrite if_open_open, if_open_close, if_close_open, if_close_close.
-simpl.
-induction n; simpl; auto.
-Qed.
-
-Definition is_break (w : list Brace) (n : nat) : Prop :=
-  mult_list (sublist Brace n w) Open
-    = mult_list (sublist Brace n w) Close.
-
-Lemma is_break_zero :
-  forall (w : list Brace), isDyck w -> is_break w 0.
-Proof.
-intros.
-unfold is_break.
-rewrite sublist_0.
-unfold mult_list.
-simpl.
-auto.
-Qed.
-
-Lemma is_break_lenght :
-  forall (w : list Brace), isDyck w -> is_break w (length w).
-Proof.
-unfold isDyck, is_break; intros.
-decompose [and] H; clear H; auto.
-rewrite sublist_full; auto.
+  split.
+  apply prefix_impl_dyck.
+  apply dyck_impl_prefix.
 Qed.
 
 
-Lemma break_is_Dyck :
-  forall (w : list Brace) (n : nat),
-    isDyck w -> is_break w n -> isDyck (sublist Brace n w).
-Proof.
-unfold isDyck, is_break; intros.
-decompose [and] H; clear H; intros.
-split; auto.
-intros n0; elim le_gt_dec with n0 n; intros.
- rewrite subsublist_le; auto.
- rewrite subsublist_gt; auto.
-Qed.
+End Prefix.
 
-
-Lemma is_break_dec :
-  forall (w : list Brace) (n : nat),
-    {is_break w n} + {~is_break w n}.
-Proof.
-intros; unfold is_break; apply eq_nat_dec.
-Qed.
-
-
-Inductive first_break (w : list Brace) : Set :=
-  fbreak : forall (n : nat), n > 0 -> is_break w n ->
-    (forall (n0:nat), 0 < n0 <= n -> ~ is_break w n0)
-      -> first_break w.
-
-Theorem Dyck_first_break :
-  forall (w : list Brace) (n : nat), isDyck w -> first_break w + { w = nil }.
-Proof.
-intros w n H.
-elim w; intros.
-right; auto.
-left.
-Admitted. (* +++++++++++++++++++++++++ *)
-
-Inductive decomposition (w w1 w2 : list Brace) : Prop :=
-  decomp : isDyck w1 -> isDyck w2 ->
-      w = (Open::w1) ++ (Close::w2) -> decomposition w w1 w2.
-
-
-Theorem Dyck_decompose :
-  forall (w : list Brace), isDyck w ->
-    { exists w1 w2 : list Brace, decomposition w w1 w2 } + { w = nil }.
-Proof.
-intros.
-induction w.
-right; auto.
-elim H.
-intros.
-clear IHw.
-left.
-
-Admitted. (* +++++++++++++++++++++++++ *)
-
-Theorem Dyck_decompose_unique :
-  forall w wa1 wa2 wb1 wb2 : list Brace, decomposition w wa1 wa2 -> decomposition w wb1 wb2 ->
-      wa1 = wb1 /\ wa2 = wb2.
-Proof.
-
-Admitted. (* +++++++++++++++++++++++++ *)
-
-*)
