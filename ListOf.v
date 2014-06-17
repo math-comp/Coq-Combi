@@ -63,11 +63,12 @@ induction l; intros; auto.
 Qed.
 
 
-
+(* List of elements of A, each element appears once and only once *)
 Definition list_of_set : Set :=
   { l : list A |
     forall a : A, (  P a /\ mult_list l a = 1) \/
       	       	  (~ P a /\ mult_list l a = 0) }.
+
 
 Lemma empty_set_list :
   (forall a : A, False) -> list_of_set.
@@ -82,7 +83,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 
 
-Section ListOfAB.
+Section ListOfOperations.
 Variable A B : Set.
 
 Variable eqA : relation A.
@@ -93,16 +94,209 @@ Variable eqB : relation B.
 Hypothesis eqB_equiv : equivalence B eqB.
 Variable eqB_dec : forall x y : B, {eqB x y} + {~ eqB x y}.
 
+
+Section ListOfUnion.
+
+Let sumAB := (A + B)%type.
+
+Definition eqsumAB : relation sumAB :=
+  fun P1 P2 : sumAB =>
+    match P1 with
+      | inl a1 =>
+        match P2 with
+          | inl a2 => eqA a1 a2
+          | inr _  => False
+        end
+      | inr b1 =>
+        match P2 with
+          | inl _  => False
+          | inr b2 => eqB b1 b2
+        end
+    end.
+
+Theorem eqsumAB_dec :
+  forall x y : sumAB, {eqsumAB x y} + {~ eqsumAB x y}.
+Proof.
+  destruct x; destruct y.
+  destruct (eqA_dec a a0); [left | right]; simpl; assumption.
+  right; simpl; auto.
+  right; simpl; auto.
+  destruct (eqB_dec b b0); [left | right]; simpl; assumption.
+Qed.
+
+Theorem eqsumAB_equiv : equivalence sumAB eqsumAB.
+Proof.
+  elim eqA_equiv; intros.
+  elim eqB_equiv; intros.
+  split.
+    unfold reflexive.
+      destruct x; simpl; auto.
+    unfold transitive in *.
+      destruct x as [xa | xb]; destruct y as [ya | yb].
+      destruct z as [za | zb].
+        simpl; apply equiv_trans.
+        simpl; auto.
+      simpl; intros z H; contradiction.
+      simpl; intros z H; contradiction.
+      destruct z as [za | zb].
+      simpl; auto.
+      simpl; apply equiv_trans0.
+    unfold symmetric in *.
+      destruct x as [xa | xb]; destruct y as [ya | yb].
+      simpl; apply equiv_sym.
+      simpl; auto.
+      simpl; auto.
+      simpl; apply equiv_sym0.
+Qed.
+
+Variable PA : A -> Prop.
+Variable PB : B -> Prop.
+
+Definition PsumAB (ab : sumAB) : Prop :=
+  match ab with
+    | inl a => PA a
+    | inr b => PB b
+  end.
+
+Lemma eqA_eqsumAB_compat :
+  forall (a0 a1 : A),
+    (if eqsumAB_dec (inl a0) (inl a1) then 1 else 0) =
+    (if eqA_dec a0 a1 then 1 else 0).
+Proof.
+  intros a0 a1.
+  destruct (eqsumAB_dec (inl a0) (inl a1)); destruct (eqA_dec a0 a1); tauto.
+Qed.
+
+Lemma eqB_eqsumAB_compat :
+  forall (b0 b1 : B),
+    (if eqsumAB_dec (inr b0) (inr b1) then 1 else 0) =
+    (if eqB_dec b0 b1 then 1 else 0).
+Proof.
+  intros b0 b1.
+  destruct (eqsumAB_dec (inr b0) (inr b1)); destruct (eqB_dec b0 b1); tauto.
+Qed.
+
+Lemma mult_a_lA :
+  forall (a : A) (lA : list A),
+    multiplicity (list_contents _ eqsumAB_dec (map (fun a : A => inl a) lA)) (inl a) =
+    multiplicity (list_contents _ eqA_dec lA) a.
+Proof.
+  intro a.
+  induction lA as [| a0 lA].
+  simpl; auto.
+  simpl.
+  rewrite IHlA.
+  rewrite <- eqA_eqsumAB_compat with a0 a; reflexivity.
+Qed.
+
+Lemma mult_b_lB :
+  forall (b : B) (lB : list B),
+    multiplicity (list_contents _ eqsumAB_dec (map (fun b : B => inr b) lB)) (inr b) =
+    multiplicity (list_contents _ eqB_dec lB) b.
+Proof.
+  intro b.
+  induction lB as [| b0 lB].
+  simpl; auto.
+  simpl; rewrite IHlB.
+  rewrite <- eqB_eqsumAB_compat with b0 b; reflexivity.
+Qed.
+
+Lemma mult_a_lB :
+  forall (a : A) (lB : list B),
+    multiplicity (list_contents _ eqsumAB_dec (map (fun b : B => inr b) lB))
+      (inl a) = 0.
+Proof.
+  intro a.
+  induction lB as [| b lB].
+  simpl; auto.
+  simpl; rewrite IHlB.
+  destruct (eqsumAB_dec (inr b) (inl a)).
+  contradiction.
+  auto with arith.
+Qed.
+
+Lemma mult_b_lA :
+  forall (b : B) (lA : list A),
+    multiplicity (list_contents _ eqsumAB_dec (map (fun a : A => inl a) lA))
+      (inr b) = 0.
+Proof.
+  intro b.
+  induction lA as [| a lA].
+  simpl; auto.
+  simpl; rewrite IHlA.
+  destruct (eqsumAB_dec (inl a) (inr b)).
+  contradiction.
+  auto with arith.
+Qed.
+
+
+Lemma mult_a :
+  forall (a : A) (lA : list A) (lB : list B),
+    multiplicity
+      (list_contents eqsumAB eqsumAB_dec
+         (map (fun a0 : A => inl a0) lA ++ map (fun b : B => inr b) lB))
+      (inl a) =
+    multiplicity (list_contents eqA eqA_dec lA) a.
+Proof.
+  intros a lA lB.
+  induction lA.
+  simpl.
+  apply mult_a_lB.
+  simpl.
+  rewrite IHlA, <- eqA_eqsumAB_compat; reflexivity.
+Qed.
+
+Lemma mult_b :
+  forall (b : B) (lA : list A) (lB : list B),
+    multiplicity
+      (list_contents eqsumAB eqsumAB_dec
+         (map (fun a0 : A => inl a0) lA ++ map (fun b : B => inr b) lB))
+      (inr b) =
+    multiplicity (list_contents eqB eqB_dec lB) b.
+Proof.
+  intros b lA lB.
+  induction lB as [ | b0 LB].
+  simpl.
+  rewrite app_nil_r.
+  apply mult_b_lA.
+  rewrite list_contents_app in *.
+  simpl in *.
+  rewrite <- eqB_eqsumAB_compat.
+  rewrite plus_comm at 1.
+  rewrite <- plus_assoc.
+  rewrite plus_comm in IHLB.
+  rewrite IHLB; reflexivity.
+Qed.
+
+
+Theorem list_of_union :
+  list_of_set A PA eqA eqA_dec ->
+  list_of_set B PB eqB eqB_dec ->
+    list_of_set sumAB PsumAB eqsumAB eqsumAB_dec.
+Proof.
+  intros LA LB.
+  destruct LA as (lA, HA).
+  destruct LB as (lB, HB).
+  exists ( (map (fun a : A => inl a) lA) ++ (map (fun b : B => inr b) lB) ).
+  destruct a.
+    clear HB.
+    destruct HA with a; decompose [and] H; clear H;
+      [left | right]; split; simpl; auto; rewrite mult_a; assumption. 
+    clear HA.
+    destruct HB with b; decompose [and] H; clear H;
+      [left | right]; split; simpl; auto; rewrite mult_b; assumption. 
+Qed.
+  
+End ListOfUnion.
+
 Section ListOfPairs.
 
 Let AB := (A * B)%type.
 
-Definition eqAB : relation AB.
-unfold relation; intros.
-elim H;  intros a  b.
-elim H0; intros a0 b0.
-apply (eqA a a0 /\ eqB b b0).
-Defined.
+Definition eqAB : relation AB :=
+  fun P1 P2 : AB =>
+    let (a1, b1) := P1 in
+    let (a2, b2) := P2 in (eqA a1 a2) /\ (eqB b1 b2).
 
 Theorem eqAB_dec :
   forall x y : AB, {eqAB x y} + {~ eqAB x y}.
@@ -367,7 +561,7 @@ Defined.
 
 End ListOfImage.
 
-End ListOfAB.
+End ListOfOperations.
 
 
 
