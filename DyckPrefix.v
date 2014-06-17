@@ -12,39 +12,39 @@ Section Prefix.
 Lemma eq_brace_dec :
   forall b1 b2 : Brace, {b1 = b2} + {b1 <> b2}.
 Proof.
-induction b1; induction b2.
- left; auto.
- right; unfold not; intro; inversion H.
- right; unfold not; intro; inversion H.
- left; auto.
-Qed.
+  induction b1; induction b2.
+  left; auto.
+  right; unfold not; intro; inversion H.
+  right; unfold not; intro; inversion H.
+  left; auto.
+Defined.
 
 Lemma if_close_close :
-   (if eq_brace_dec Close Close then 1 else 0) = 1.
+  (if eq_brace_dec Close Close then 1 else 0) = 1.
 Proof.
-destruct (eq_brace_dec Close Close); intros; auto with arith.
-destruct n; auto.
+  destruct (eq_brace_dec Close Close); intros; auto with arith.
+  destruct n; auto.
 Qed.
 
 Lemma if_close_open :
-   (if eq_brace_dec Close Open then 1 else 0) = 0.
+  (if eq_brace_dec Close Open then 1 else 0) = 0.
 Proof.
-destruct (eq_brace_dec Close Open); intros; auto with arith.
-inversion e.
+  destruct (eq_brace_dec Close Open); intros; auto with arith.
+  inversion e.
 Qed.
 
 Lemma if_open_close :
-   (if eq_brace_dec Open Close then 1 else 0) = 0.
+  (if eq_brace_dec Open Close then 1 else 0) = 0.
 Proof.
-destruct (eq_brace_dec Open Close); intros; auto with arith.
-inversion e.
+  destruct (eq_brace_dec Open Close); intros; auto with arith.
+  inversion e.
 Qed.
 
 Lemma if_open_open :
-   (if eq_brace_dec Open Open then 1 else 0) = 1.
+  (if eq_brace_dec Open Open then 1 else 0) = 1.
 Proof.
-destruct (eq_brace_dec Open Open); intros; auto with arith.
-destruct n; auto.
+  destruct (eq_brace_dec Open Open); intros; auto with arith.
+  destruct n; auto.
 Qed.
 
 Notation list_contents := (list_contents _ eq_brace_dec).
@@ -52,17 +52,18 @@ Notation list_contents := (list_contents _ eq_brace_dec).
 Definition mult (l : list Brace) (b : Brace) := multiplicity (list_contents l) b.
 
 Ltac omega_brace :=
-  unfold mult in *|-*;
-  simpl in *|-*;
-  try rewrite ?if_close_close in *|-*;
-  try rewrite ?if_close_open  in *|-*;
-  try rewrite ?if_open_close  in *|-*;
-  try rewrite ?if_open_open   in *|-*;
+  unfold mult in *;
+  simpl in *;
+  try rewrite ?if_close_close in *;
+  try rewrite ?if_close_open  in *;
+  try rewrite ?if_open_close  in *;
+  try rewrite ?if_open_open   in *;
   omega.
 
 Definition dyck_prefix_height (h : nat) (w : list Brace) : Prop :=
   (forall l : nat, (mult (sublist _ l w) Open) + h >= (mult (sublist _ l w) Close))
-  /\ (mult w Open) + h = mult w Close.
+  /\
+  (mult w Open) + h = mult w Close.
 
 Lemma dyck_prefix_nil :
   forall h : nat, dyck_prefix_height h nil <-> dyck_height h nil.
@@ -172,15 +173,6 @@ Proof.
   specialize IHw with h.
   elim IHw; auto; clear H1 IHw; intros IHw IHw1; clear IHw.
   omega_brace.
-Qed.
-
-
-Theorem prefix_dyck_equiv_dyck_height :
-  forall (w : list Brace) (h : nat), dyck_height h w <-> dyck_prefix_height h w.
-Proof.
-  split.
-  apply prefix_impl_dyck.
-  apply dyck_impl_prefix.
 Qed.
 
 Definition dyck_prefix (w : list Brace) : Prop := dyck_prefix_height 0 w.
