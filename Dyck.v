@@ -46,7 +46,7 @@ omega.
 rewrite <- minus_n_O; assumption.
 right; simpl.
 rewrite <- minus_n_O; tauto.
-Qed.
+Defined.
 
 Lemma dyck_height_unique:
   forall (w : list Brace) (h1 h2 : nat),
@@ -72,7 +72,7 @@ Proof.
 intro w.
 unfold is_dyck.
 apply dyck_height_dec.
-Qed.
+Defined.
 
 Lemma conc_is_dyck_height:
   forall w1 : list Brace, is_dyck w1 ->
@@ -186,7 +186,7 @@ left; simpl; auto.
 split; auto; omega.
 right; simpl; auto.
 tauto.
-Qed.
+Defined.
 
 Lemma proper_is_dyck_height :
   forall (h : nat) (w : list Brace), proper_dyck_height h w -> dyck_height h w.
@@ -254,7 +254,7 @@ apply Hp.
 rewrite Hconc; auto with datatypes.
 auto with datatypes.
 assumption.
-Qed.
+Defined.
 
 
 Definition proper_dyck (w : list Brace) : Prop := proper_dyck_height 0 w.
@@ -281,7 +281,7 @@ elim proper_dyck_height_factor with w 0; auto.
 intros w1 w2 pw1 H.
 exists (w1, w2).
 split; auto.
-Qed.
+Defined.
 
 Lemma dyck_factor_height_unique :
   forall (w : list Brace) (h : nat) (wa1 wa2 wb1 wb2 : list Brace), dyck_height h w ->
@@ -390,7 +390,7 @@ omega.
 elim H; clear H; intros H H0.
 rewrite <- minus_n_O in H0.
 assumption.
-Qed.
+Defined.
 
 Lemma proper_dyck_brace :
   forall w : list Brace, proper_dyck w ->
@@ -410,7 +410,7 @@ rewrite H1; auto with datatypes.
 simpl; auto.
 simpl in H.
 destruct w; omega.
-Qed.
+Defined.
 
 
 Theorem dyck_decompose_grammar :
@@ -434,7 +434,7 @@ rewrite H2; rewrite H4.
 simpl.
 rewrite app_assoc_reverse.
 simpl; auto.
-Qed.
+Defined.
 
 
 Lemma dyck_proper_dyck_height :
