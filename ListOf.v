@@ -74,7 +74,7 @@ Lemma empty_set_list :
 Proof.
 intros; unfold list_of_set.
 apply exist with (nil (A:=A)); tauto.
-Qed.
+Defined.
 
 End ListOf.
 
@@ -114,7 +114,7 @@ elim (eqA_dec a a0); intros.
   left; unfold eqAB; simpl; auto.
   right; unfold eqAB; simpl; tauto.
  right; unfold eqAB; simpl; tauto.
-Qed.
+Defined.
 
 Theorem eqAB_equiv : equivalence AB eqAB.
 Proof.
@@ -204,6 +204,7 @@ Lemma mult_list_rec :
       + multiplicity
       	 (list_contents eqAB eqAB_dec (list_prod (la) lb)) (a, b).
 Proof.
+Opaque eqAB_dec.
 intros; unfold list_prod at 1; fold list_prod.
   rewrite list_contents_app.
    simpl; elim (eqA_dec xa a); intros.
@@ -279,7 +280,7 @@ elim (plA a); clear plA; intros.
    right; split.
   unfold PAB; simpl; tauto.
   rewrite mult_list_of_pairs; rewrite H1; auto.
-Qed.
+Defined.
 
 End ListOfPairs.
 
@@ -362,7 +363,7 @@ elim (PB_dec b); intros PBb; [ left | right ].
   decompose [and] H0.
     rewrite H2 in b0.
     elim (le_Sn_O 0); auto.
-Qed.
+Defined.
 
 End ListOfImage.
 
@@ -409,6 +410,6 @@ unfold list_of_set; induction n; intros.
     unfold multiplicity; simpl; rewrite H2.
       rewrite H0; elim (eq_nat_dec n n); auto with arith.
       intro; elim b; auto.
-Qed.
+Defined.
 
 End ListOfNat.

@@ -1,16 +1,16 @@
 Require Export Arith.
 Require Export ListOf.
 Require Export BinTrees.
-  
+
 Section Listing.
 
 Lemma eq_tree_equiv :
   equivalence Tree (eq (A := Tree)).
 Proof.
-apply Build_equivalence; red; auto with datatypes.
-intros; rewrite H; auto.
-Qed.  
-  
+  apply Build_equivalence; red; auto with datatypes.
+  intros; rewrite H; auto.
+Qed.
+
 Lemma eq_tree_dec :
   forall T1 T2 : Tree, {T1 = T2} + {T1 <> T2}.
 Proof.
@@ -26,7 +26,7 @@ induction T1; intros; induction T2; intros.
   right; unfold not; intros; inversion H; auto.
   right; unfold not; intros; inversion H; auto.
   right; unfold not; intros; inversion H; auto.
-Qed.  
+Defined.
 
 Let list_of_trees_prop prop :=
   list_of_set Tree prop (eq (A := Tree)) eq_tree_dec.
@@ -36,27 +36,24 @@ Theorem list_of_trees_size_0 :
 Proof.
   unfold list_of_trees_prop, list_of_set.
 apply exist with (Leaf :: nil); intros.
-elim eq_tree_dec with a Leaf; intros.
+destruct eq_tree_dec with a Leaf as [a0 | a1].
  left; rewrite a0.
    split; auto.
-   unfold list_contents, multiplicity; simpl.
-   elim eq_tree_dec with Leaf Leaf; auto with datatypes.
-   intro b; elim b; auto.
  right; intros; split.
-  induction a.
-   elim b; auto.
+  destruct a.
+   elim a1; auto.
    unfold size; auto with arith.
-  unfold list_contents, multiplicity; simpl.
-    elim eq_tree_dec with Leaf a; auto.
-    intro; elim b; auto.
-Qed.
+   unfold list_contents, munion, multiplicity, SingletonBag, EmptyBag.
+    destruct eq_tree_dec with Leaf a; auto.
+    exfalso; auto.
+Defined.
 
-  
+
 Let sizeLeft (T : Tree) : nat :=
     match T with
   | Leaf => O
   | Node FG _ => (size FG)
-  end. 
+  end.
 
 
 Lemma tree_size_left_le_dec :
@@ -72,8 +69,8 @@ elim (eq_nat_dec (size T) n); intros.
     elim lt_irrefl with ng.
     apply lt_le_trans with (sizeLeft T); auto.
  right; tauto.
-Qed.  
-  
+Defined.
+
 Lemma tree_size_left_eq_dec :
   forall (n ng : nat) (T : Tree),
        {size T = n /\ sizeLeft T = ng} +
@@ -86,9 +83,9 @@ elim (eq_nat_dec (size T) n); intros.
   right; red; intro HH; decompose [and] HH; clear HH.
     contradiction.
  right; tauto.
-Qed.  
+Defined.
 
-  
+
 Theorem list_of_trees_loop_sizeLeft :
   forall n0 : nat,
     (forall n : nat, n <= n0 ->
@@ -98,7 +95,7 @@ Theorem list_of_trees_loop_sizeLeft :
 Proof.
 intros n0 ltn; induction nG.
 
-   (* Cas initial *) 
+   (* Cas initial *)
 
   unfold list_of_trees_prop.
    apply
@@ -136,7 +133,7 @@ intros n0 ltn; induction nG.
   unfold list_of_trees_prop.
 
 (* Liste des arbres *)
-  
+
   apply
    (list_of_image
       (eqA     := eqAB (eq (A:=Tree)) (eq (A:=Tree)))
@@ -145,7 +142,7 @@ intros n0 ltn; induction nG.
       (PA := PAB (fun T: Tree => size T = S nG)
                	 (fun T: Tree => size T = n0 - S nG))
     eq_tree_equiv eq_tree_dec)
-   with 
+   with
       (fun TT : Tree*Tree => match TT with | (t1,t2) => Node t1 t2 end).
     intros; rewrite <- H0; auto.
     induction a0.
@@ -169,14 +166,14 @@ intros n0 ltn; induction nG.
     apply tree_size_left_eq_dec.
 
 (* Liste des paires des sous-arbres *)
-  
+
     apply list_of_pairs.
      apply ltn; exact a.
      apply ltn.
        apply le_minus.
 
 (* Reunion des listes selon la taille de l'arbre gauche *)
-  
+
    elim IHnG; intros lst_le_nG H_le_nG; clear IHnG.
      elim H; intros lst_eq_nG H_eq_nG; clear H.
      unfold list_of_trees_prop, list_of_set;
@@ -232,9 +229,9 @@ intros n0 ltn; induction nG.
       elim H_le_nG with T; intros H; decompose [and] H; clear H H_le_nG.
        contradiction.
        rewrite H1; rewrite H3; auto.
-   
+
 (* On a fini la boucle : preuve que le resultat est atteint *)
-  
+
   unfold list_of_trees_prop in IHnG.
     elim IHnG; intros.
     unfold list_of_trees_prop, list_of_set; apply exist with x; intros.
@@ -249,9 +246,9 @@ intros n0 ltn; induction nG.
       apply le_trans with (size t + size t0); auto with arith.
       apply le_S_n; rewrite H5; auto with arith.
     auto with arith.
-Qed.
+Defined.
 
-  
+
 Theorem list_of_trees_rec :
   forall n0 : nat,
     (forall n : nat, n <= n0 ->
@@ -274,7 +271,7 @@ elim (Plst a); clear Plst; intros.
      assert (size t + size t0 = n0); auto with arith.
      rewrite H4; auto.
   exact H2.
-Qed.  
+Defined.
 
 
 (* This short version leads to a very slow ML program
@@ -290,23 +287,23 @@ induction n0; intros.
   apply IHn0; apply lt_n_Sm_le; trivial.
   rewrite b; apply list_of_trees_rec.
     exact IHn0.
-Qed.  
-  
+Defined.
+
 
 Let mult_list (l : list Tree) (T : Tree) :=
   multiplicity (list_contents (eq (A:=Tree)) eq_tree_dec l) T.
 
-  
+
 Inductive list_of_list_tree : nat -> Set :=
   exists_list_of_list_tree : forall (n0 : nat) (llt : list (list Tree)),
-    (length llt) = S n0 -> 
+    (length llt) = S n0 ->
        (forall (n : nat), n <= n0 ->
        	 forall (T : Tree),
       	     (size T = n) /\ mult_list (nth n llt nil) T = 1 \/
       	   ~ (size T = n) /\ mult_list (nth n llt nil) T = 0)
 	 -> list_of_list_tree n0.
 
-      
+
 Theorem list_of_list_tree_list_of :
   forall n0 : nat, list_of_list_tree n0 ->
     forall n : nat, n <= n0 ->
@@ -315,7 +312,7 @@ Proof.
 unfold list_of_trees_prop, list_of_set.
 intros n0 H; elim H; clear H; intros.
 apply exist with (nth n llt nil); intros.
-unfold mult_list in o.  
+unfold mult_list in o.
 elim (eq_nat_dec (size a) n); [left | right]; intros; split; auto.
  elim o with n a; intros; auto.
   decompose [and] H0; trivial.
@@ -323,7 +320,7 @@ elim (eq_nat_dec (size a) n); [left | right]; intros; split; auto.
  elim o with n a; intros; auto.
   decompose [and] H0; contradiction.
   decompose [and] H0; trivial.
-Qed.
+Defined.
 
 Lemma length_app :
   forall (A : Set) (l1 l2 : list A),
@@ -362,7 +359,7 @@ rewrite <- plus_n_Sm; auto.
 Qed.
 
 
-      
+
 Theorem list_of_list_tree_le :
   forall n0 : nat, list_of_list_tree n0.
 Proof.
@@ -408,30 +405,30 @@ induction n0; intros.
         rewrite nth_length_app; simpl; trivial.
   apply (list_of_list_tree_list_of n0); auto.
     apply exists_list_of_list_tree with llt; auto.
-Qed.    
+Defined.
 
-  
+
 Theorem list_of_trees :
   forall n : nat, list_of_trees_prop (fun T : Tree => (size T) = n).
 Proof.
 intro; apply list_of_list_tree_list_of with n; auto.
  apply list_of_list_tree_le.
-Qed.  
+Defined.
 
-  
+
 Theorem list_of_trees_slow :
   forall n : nat, list_of_trees_prop (fun T : Tree => (size T) = n).
 Proof.
 intros; apply list_of_trees_le with n; auto.
-Qed.  
+Defined.
 
-  
+
 End Listing.
 
-Require Import Wf_nat.  
+Require Import Wf_nat.
 Extraction Inline Wf_nat.lt_wf_rec1 Wf_nat.lt_wf_rec
   Wf_nat.lt_wf_ind Wf_nat.gt_wf_rec Wf_nat.gt_wf_ind.
 
 Extract Inductive sumbool => "bool" [ "true" "false" ].
-  
+
 Extraction "extract/listTree.ml" list_of_trees list_of_trees_slow.
