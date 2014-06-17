@@ -9,44 +9,6 @@ Require Import PermutEq.
 
 Section Prefix.
 
-Lemma eq_brace_dec :
-  forall b1 b2 : Brace, {b1 = b2} + {b1 <> b2}.
-Proof.
-  induction b1; induction b2.
-  left; auto.
-  right; unfold not; intro; inversion H.
-  right; unfold not; intro; inversion H.
-  left; auto.
-Defined.
-
-Lemma if_close_close :
-  (if eq_brace_dec Close Close then 1 else 0) = 1.
-Proof.
-  destruct (eq_brace_dec Close Close); intros; auto with arith.
-  destruct n; auto.
-Qed.
-
-Lemma if_close_open :
-  (if eq_brace_dec Close Open then 1 else 0) = 0.
-Proof.
-  destruct (eq_brace_dec Close Open); intros; auto with arith.
-  inversion e.
-Qed.
-
-Lemma if_open_close :
-  (if eq_brace_dec Open Close then 1 else 0) = 0.
-Proof.
-  destruct (eq_brace_dec Open Close); intros; auto with arith.
-  inversion e.
-Qed.
-
-Lemma if_open_open :
-  (if eq_brace_dec Open Open then 1 else 0) = 1.
-Proof.
-  destruct (eq_brace_dec Open Open); intros; auto with arith.
-  destruct n; auto.
-Qed.
-
 Notation list_contents := (list_contents _ eq_brace_dec).
 
 Definition mult (l : list Brace) (b : Brace) := multiplicity (list_contents l) b.

@@ -424,11 +424,3 @@ Defined.
 
 
 End Listing.
-
-Require Import Wf_nat.
-Extraction Inline Wf_nat.lt_wf_rec1 Wf_nat.lt_wf_rec
-  Wf_nat.lt_wf_ind Wf_nat.gt_wf_rec Wf_nat.gt_wf_ind.
-
-Extract Inductive sumbool => "bool" [ "true" "false" ].
-
-Extraction "extract/listTree.ml" list_of_trees list_of_trees_slow.

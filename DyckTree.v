@@ -142,16 +142,3 @@ Proof.
 Qed.
 
 End DyckWordTreeBij.
-
-
-Require Import Wf_nat.
-Extraction Inline Wf_nat.lt_wf_rec1 Wf_nat.lt_wf_rec
-  Wf_nat.lt_wf_ind Wf_nat.gt_wf_rec Wf_nat.gt_wf_ind.
-
-Extract Inductive sumbool => "bool" [ "true" "false" ].
-
-Extract Inductive list => "list" [ "[]" "(::)" ].
-
-Extract Inductive prod => "(*)"  [ "(,)" ].
-
-Extraction "extract/dycktree.ml" dyck_to_tree tree_to_dyck.

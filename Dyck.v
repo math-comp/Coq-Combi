@@ -1,14 +1,56 @@
 Require Import Arith.
 Require Import List.
-Require Export Omega.
+Require Import Omega.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Section DyckWord.
+Section BraceFacts.
 
 Inductive Brace : Set :=
   | Open : Brace | Close : Brace.
+
+Lemma eq_brace_dec :
+  forall b1 b2 : Brace, {b1 = b2} + {b1 <> b2}.
+Proof.
+  induction b1; induction b2.
+  left; auto.
+  right; unfold not; intro; inversion H.
+  right; unfold not; intro; inversion H.
+  left; auto.
+Defined.
+
+Lemma if_close_close :
+  (if eq_brace_dec Close Close then 1 else 0) = 1.
+Proof.
+  destruct (eq_brace_dec Close Close); intros; auto with arith.
+  destruct n; auto.
+Qed.
+
+Lemma if_close_open :
+  (if eq_brace_dec Close Open then 1 else 0) = 0.
+Proof.
+  destruct (eq_brace_dec Close Open); intros; auto with arith.
+  inversion e.
+Qed.
+
+Lemma if_open_close :
+  (if eq_brace_dec Open Close then 1 else 0) = 0.
+Proof.
+  destruct (eq_brace_dec Open Close); intros; auto with arith.
+  inversion e.
+Qed.
+
+Lemma if_open_open :
+  (if eq_brace_dec Open Open then 1 else 0) = 1.
+Proof.
+  destruct (eq_brace_dec Open Open); intros; auto with arith.
+  destruct n; auto.
+Qed.
+
+End BraceFacts.
+
+Section DyckWord.
 
 Fixpoint dyck_height (h : nat) (w : list Brace) : Prop :=
   match w with
@@ -571,34 +613,3 @@ Proof.
 Qed.
 
 End DyckWord.
-
-Require Import Wf_nat.
-Extraction Inline Wf_nat.lt_wf_rec1 Wf_nat.lt_wf_rec
-  Wf_nat.lt_wf_ind Wf_nat.gt_wf_rec Wf_nat.gt_wf_ind.
-
-Extract Inductive sumbool => "bool" [ "true" "false" ].
-
-Extract Inductive list => "list" [ "[]" "(::)" ].
-
-Extract Inductive prod => "(*)"  [ "(,)" ].
-
-(*
-Extract Inductive nat => "Big_int.big_int"
-  [ "Big_int.zero_big_int" "Big_int.succ_big_int" ] "(fun fO fS n ->
-    let one = Big_int.unit_big_int in
-    if n = Big_int.zero_big_int then fO () else fS (Big_int.sub_big_int n one))".
-*)
-
-(*
-Extract Inductive nat => "int"
-  [ "0" "(fun x -> x + 1)" ]
-  "(fun zero succ n ->
-      if n=0 then zero () else succ (n-1))".
-
-Extract Constant plus => "( + )".
-Extract Constant mult => "( * )".
-Extract Constant minus => "( - )".
-Extract Constant beq_nat => "( = )".
-*)
-
-Extraction "extract/dyck.ml" dyck_decompose_grammar.
