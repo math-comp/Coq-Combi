@@ -4,7 +4,6 @@ Require Import Arith.
 Require Import List.
 Require Import BinTrees.
 Require Import Dyck.
-Require Import ProofIrrelevance.
 
 Section DyckWordTreeBij.
 
