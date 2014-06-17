@@ -73,8 +73,6 @@ Proof.
   omega_brace.
 
   simpl.
-  split; auto with arith.
-  rewrite <- minus_n_O.
   apply IHw; clear IHw.
   split.
 
@@ -103,18 +101,17 @@ Proof.
   unfold mult; auto with arith.
 
   simpl.
-  specialize IHw with (h + 1).
+  specialize IHw with (S h).
   elim IHw; auto; clear H IHw; intros IHw IHw1; clear IHw1.
   specialize IHw with l.
   omega_brace.
 
-  specialize IHw with (h + 1).
+  specialize IHw with (S h).
   elim IHw; auto; clear H IHw; intros IHw IHw1; clear IHw.
   omega_brace.
 
   intro H; destruct h.
-  simpl in H; decompose [and] H; clear H.
-  contradict H0; omega.
+  simpl in H; contradiction.
 
   split.
 
@@ -122,18 +119,15 @@ Proof.
   simpl.
   unfold mult; auto with arith.
 
-  simpl in H; decompose [and] H; clear H H0.
-  rewrite <- minus_n_O in H1.
-  simpl.
+  simpl in H|-*.
   specialize IHw with h.
-  elim IHw; auto; clear H1 IHw; intros IHw IHw1; clear IHw1.
+  elim IHw; auto; clear IHw; intros IHw IHw1; clear IHw1.
   specialize IHw with l.
   omega_brace.
 
-  simpl in H; decompose [and] H; clear H H0.
-  rewrite <- minus_n_O in H1.
+  simpl in H|-*.
   specialize IHw with h.
-  elim IHw; auto; clear H1 IHw; intros IHw IHw1; clear IHw.
+  elim IHw; auto; clear IHw; intros IHw IHw1; clear IHw.
   omega_brace.
 Qed.
 

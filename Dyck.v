@@ -55,8 +55,12 @@ Section DyckWord.
 Fixpoint dyck_height (h : nat) (w : list Brace) : Prop :=
   match w with
     | nil => h = 0
-    | Open::tlb => dyck_height (h+1) tlb
-    | Close::tlb => h > 0 /\ dyck_height (h-1) tlb
+    | Open::tlb => dyck_height (S h) tlb
+    | Close::tlb =>
+      match h with
+        | 0    => False
+        | S hh => dyck_height hh tlb
+      end
   end.
 
 Definition is_dyck (w : list Brace) : Prop := dyck_height 0 w.
@@ -79,16 +83,12 @@ Proof.
   destruct h; [ left | right ]; compute; auto.
   intro H; inversion H.
   case a; intro h.
-  elim (IHw (h+1)); intro H; [ left | right ]; assumption.
+  elim (IHw (S h)); intro H; [ left | right ]; assumption.
   destruct h.
-  simpl; right.
-  intro H; decompose [and] H; inversion H0.
+  simpl; right; auto.
   elim (IHw h); intros H.
-  left; simpl; split.
-  auto with arith. 
-  rewrite <- minus_n_O; assumption.
-  right; simpl.
-  rewrite <- minus_n_O; tauto.
+  left; simpl; auto.
+  right; simpl; auto.
 Defined.
 
 Lemma dyck_height_unique:
@@ -100,13 +100,10 @@ Proof.
   simpl in H1; simpl in H2; rewrite H1, H2; reflexivity.
   case a; intros h1 h2 H1 H2.
   simpl in H1; simpl in H2.
-  apply NPeano.Nat.add_cancel_r with 1.
+  apply eq_add_S.
   apply IHw; assumption.
-  simpl in H1; elim H1; clear H1; intros H1p H1.
-  simpl in H2; elim H2; clear H2; intros H2p H2.
-  assert ((h1 - 1) = (h2 - 1)).
-  apply IHw; assumption.
-  omega.
+  simpl in H1, H2.
+  case h1, h2; auto with arith.
 Qed.
 
 Lemma is_dyck_dec:
@@ -129,8 +126,7 @@ Proof.
   intro H; rewrite H; assumption.
   intro h; case a; simpl.
   apply IHw.
-  intro H; elim H; clear H; intros H H0.
-  split; auto.
+  case h; auto.
 Qed.
 
 Lemma conc_is_dyck:
@@ -151,12 +147,10 @@ Proof.
   inversion H.
   intros w2 h H H0.
   destruct a; simpl in H0; simpl in H.
-  apply IHw1 with (h + 1); auto.
+  apply IHw1 with (S h); auto.
   destruct h; auto.
-  decompose [and] H; inversion H1.
-  apply IHw1 with (S h - 1).
-  elim H; intros HH1 HH2; auto.
-  elim H0; intros HH1 HH2; auto.
+  exfalso; auto.
+  apply IHw1 with h; auto.
 Qed.
 
 Lemma conc_dyck_inv1:
@@ -185,8 +179,7 @@ Proof.
   simpl; simpl in H0.
   apply IHw1 with w2; auto.
   simpl; simpl in H0.
-  elim H0; clear H0; intros H0 H1.
-  split; auto.
+  destruct h; auto.
   apply IHw1 with w2; auto.
 Qed.
 
@@ -202,9 +195,12 @@ Qed.
 Fixpoint proper_dyck_height (h : nat) (w : list Brace) : Prop :=
   match w with
     | nil => False
-    | Open::tlb => proper_dyck_height (h+1) tlb
+    | Open::tlb => proper_dyck_height (S h) tlb
     | Close::nil => h = 1
-    | Close::tlb => h > 1 /\ proper_dyck_height (h-1) (tlb)
+    | Close::tlb => match h with
+                        | 0 => False
+                        | S hh => hh > 0 /\ proper_dyck_height hh tlb
+                    end
   end.
 
 Lemma proper_dyck_height_dec :
@@ -214,10 +210,9 @@ Proof.
   induction w; intro h.
   right; simpl; tauto.
   case a.
-  elim IHw with (h + 1); intro H; [ left | right ]; simpl; auto.
+  elim IHw with (S h); intro H; [ left | right ]; simpl; auto.
   destruct h.
   destruct w; right; simpl; auto.
-  intro H; decompose [and] H; inversion H0.
   destruct w.
   destruct h; [ left | right ]; simpl; auto.
   destruct h.
@@ -240,15 +235,15 @@ Proof.
   induction w.
   intros h H; simpl in H; tauto.
   intros h H; destruct a.
-  simpl; simpl in H.
+  simpl in H|-*.
   apply IHw; auto.
   destruct w.
-  simpl in H; rewrite H; simpl; auto.
-  simpl in H; elim H; clear H; intros H H0.
-  simpl; split.
-  auto with arith.
+  simpl in H|-*.
+  rewrite H; auto.
+  destruct h; simpl in H|-*; auto.
   apply IHw.
-  apply H0.
+  decompose [and] H.
+  apply H.
 Qed.
 
 Inductive proper_height_factor (h : nat) (w : list Brace) : Set :=
@@ -262,29 +257,26 @@ Proof.
   tauto.
   clear H; intro H.
   destruct a; simpl in H.
-  elim IHw with (h+1).
+  elim IHw with (S h).
   intros w1 w2 Hp Hconc.
   apply height_factor with (Open :: w1) w2.
   simpl; auto.
   rewrite Hconc; simpl; auto.
   destruct w.
-  simpl in H; omega.
+  simpl in H; inversion H.
   auto with datatypes.
   assumption.
-  elim H; clear H; intros Hh H.
   destruct w.
   destruct h.
-  simpl in H; omega.
-  simpl in H.
-  rewrite minus_n_O with h.
-  rewrite H.
+  contradiction H.
+  simpl in H; rewrite H.
   apply height_factor with (Close :: nil) nil.
   simpl; auto.
   auto with datatypes.
-  elim IHw with (h-1).
+  destruct h.
+  contradiction H.
+  elim IHw with h.
   intros w1 w2 Hp Hconc.
-  destruct h; auto with arith.
-  omega.
   destruct h; auto with arith.
   apply height_factor with (Close :: nil) (b :: w).
   simpl; auto with arith.
@@ -293,7 +285,7 @@ Proof.
   destruct w1.
   simpl in Hp; tauto.
   simpl; split.
-  omega.
+  auto with arith.
   apply Hp.
   rewrite Hconc; auto with datatypes.
   auto with datatypes.
@@ -346,13 +338,13 @@ Proof.
 
   destruct a.
   destruct wa1.
-  simpl in Hpa; tauto.
+  simpl in Hpa; contradiction.
   destruct b.
   destruct wb1.
-  simpl in Hpb; tauto.
+  simpl in Hpb; contradiction.
   destruct b.
 
-  elim IHw with (h+1) wa1 wa2 wb1 wb2.
+  elim IHw with (S h) wa1 wa2 wb1 wb2.
   intros Heq1 Heq2.
   rewrite Heq1; auto.
 
@@ -365,21 +357,17 @@ Proof.
   simpl in Hca; inversion Hca.
 
   destruct h.
-  simpl in Hd; elim Hd; clear Hd; omega.
+  simpl in Hd; contradiction.
 
-  simpl in Hd; elim Hd; clear Hd; intros H Hd.
-  clear H.
+  simpl in Hd.
   destruct wa1.
   simpl in Hpa; contradiction.
-  rewrite <- minus_n_O with h in Hd.
   destruct b.
-  inversion Hca.
-  simpl in Hca.
+  inversion Hca; simpl in Hca.
   destruct wb1.
   simpl in Hpb; contradiction.
   destruct b.
-  inversion Hcb.
-  simpl in Hcb.
+  inversion Hcb; simpl in Hcb.
   destruct h.
   destruct wa1.
   destruct wb1.
@@ -388,8 +376,8 @@ Proof.
   inversion Hca; rewrite <- H0.
   inversion Hcb; rewrite <- H1.
   auto.
-  simpl in Hpb; elim Hpb; omega.
-  simpl in Hpa; elim Hpa; omega.
+  simpl in Hpb; decompose [and] Hpb; inversion H.
+  simpl in Hpa; decompose [and] Hpa; inversion H.
   elim IHw with (S h) wa1 wa2 wb1 wb2.
   intros Heq1 Heq2; rewrite Heq1; auto with datatypes.
   assumption.
@@ -402,15 +390,15 @@ Proof.
 Qed.
 
 Lemma proper_dyck_height_brace :
-  forall (w : list Brace) (h : nat),  proper_dyck_height (h+1) w ->
+  forall (w : list Brace) (h : nat),  proper_dyck_height (S h) w ->
     { d : list Brace | dyck_height h d /\ w = d ++ Close :: nil }.
 Proof.
   induction w.
   intros h H.
-  simpl in H; tauto.
+  simpl in H; contradiction.
   intros h H.
   destruct a.
-  elim IHw with (h+1).
+  elim IHw with (S h).
   intros x HH; elim HH; clear HH; intros H0 H1.
   exists (Open::x); split.
   simpl; assumption.
@@ -421,19 +409,16 @@ Proof.
   exists nil; split.
   simpl; auto.
   induction w; auto with datatypes.
-  elim H; intro HH; omega.
+  elim H; intro HH; inversion HH.
   elim IHw with h.
   intros x HH; elim HH; clear HH; intros Hd Hc.
   exists (Close::x); split.
-  simpl; split.
-  omega.
-  rewrite <- minus_n_O with h; assumption.
+  simpl; assumption.
   rewrite Hc; auto with datatypes.
   simpl in H.
   destruct w.
-  omega.
+  inversion H.
   elim H; clear H; intros H H0.
-  rewrite <- minus_n_O in H0.
   assumption.
 Defined.
 
@@ -444,7 +429,7 @@ Proof.
   unfold proper_dyck.
   intros w H.
   destruct w.
-  simpl in H; omega.
+  simpl in H; contradiction.
   destruct b.
   simpl in H.
   elim proper_dyck_height_brace with w 0.
@@ -454,7 +439,8 @@ Proof.
   rewrite H1; auto with datatypes.
   simpl; auto.
   simpl in H.
-  destruct w; omega.
+  destruct w; contradict H.
+  auto with arith.
 Defined.
 
 
@@ -484,29 +470,26 @@ Defined.
 
 Lemma dyck_proper_dyck_height :
   forall (w : list Brace) (h : nat),
-    dyck_height h w -> proper_dyck_height (h + 1) (w ++ Close :: nil).
+    dyck_height h w -> proper_dyck_height (S h) (w ++ Close :: nil).
 Proof.
   induction w.
   destruct h.
   intro H; compute; auto.
-  intro H; simpl in H; omega.
+  intro H; simpl in H; inversion H.
   intros h H.
   destruct a.
   simpl.
   apply IHw.
   simpl in H; auto.
   destruct h.
-  inversion H; omega.
-  simpl in H; elim H; clear H; intros H H0; clear H.
-  rewrite <- minus_n_O in H0.
-  simpl.
-  rewrite <- minus_n_O.
+  simpl in H; contradiction.
+  simpl in H|-*.
   assert (w ++ Close :: nil <> nil).
   auto with datatypes.
   destruct (w ++ Close :: nil).
-  tauto.
+  contradiction H0; auto.
   split.
-  omega.
+  auto with arith.
   apply IHw; auto.
 Qed.
 
@@ -514,8 +497,6 @@ Lemma dyck_proper_dyck :
   forall w : list Brace, is_dyck w -> proper_dyck_height 1 (w ++ Close :: nil).
 Proof.
   intros w dw.
-  assert (1 = 0+1) by auto.
-  rewrite H.
   apply dyck_proper_dyck_height.
   auto.
 Qed.
@@ -591,7 +572,7 @@ Lemma dyck_grammar_length_1 :
 Proof.
   intros w a b H.
   assert (length a < length (Open :: a)).
-  simpl; omega.
+  simpl; auto with arith.
   assert (lel (Open :: a) w).
   rewrite H.
   apply lel_app_1; auto.
@@ -604,7 +585,7 @@ Lemma dyck_grammar_length_2 :
 Proof.
   intros w a b H.
   assert (length b < length (Close :: b)).
-  simpl; omega.
+  simpl; auto with arith.
   assert (lel (Close :: b) w).
   rewrite H.
   apply lel_app_2; auto.
