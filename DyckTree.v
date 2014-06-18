@@ -56,6 +56,16 @@ Qed.
 Definition brace_dyck_to_tree : forall x : list Brace, brace_dyck_has_tree x
   := Fix Rwf brace_dyck_has_tree brace_dyck_has_tree_rec.
 
+Theorem has_tree_equiv_dyck :
+  forall w : list Brace, is_dyck w <-> exists t : Tree, tree_to_dyck t = w.
+Proof.
+  split; intros H.
+  elim brace_dyck_to_tree with w; auto.
+  intros t Ht; exists t; auto.
+  elim H; clear H; intros t H.
+  rewrite <- H; apply tree_to_dyck_is_dyck.
+Qed.
+
 Theorem tree_to_dyck_inj :
   forall t u : Tree, tree_to_dyck t = tree_to_dyck u -> t = u.
 Proof.
