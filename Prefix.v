@@ -1,7 +1,7 @@
 Require Import Arith.
 Require Import List.
 
-Section SubList.
+Section Prefix.
 
 Variable A : Set.
 
@@ -60,40 +60,40 @@ induction l0; intros.
 Qed.
 
 
-Fixpoint sublist (n:nat) (l:list A) {struct l} : list A :=
+Fixpoint prefix (n:nat) (l:list A) {struct l} : list A :=
   match n, l with
    | 0, _        => nil
    | S m, nil    => nil
-   | S m, x :: t => x :: (sublist m t)
+   | S m, x :: t => x :: (prefix m t)
 end.
 
-Lemma sublist_0 :
-  forall (l : list A), sublist 0 l = nil.
+Lemma prefix_0 :
+  forall (l : list A), prefix 0 l = nil.
 intro l; case l; auto.
 Qed.
 
-Lemma sublist_nil :
-  forall (n:nat), sublist n nil = nil.
+Lemma prefix_nil :
+  forall (n:nat), prefix n nil = nil.
 intro n; case n; auto.
 Qed.
 
-Lemma sublist_length_le :
+Lemma prefix_length_le :
   forall (n:nat) (l:list A),
-    length (sublist n l) <= length l.
+    length (prefix n l) <= length l.
 double induction n l; intros; simpl; auto with arith.
 Qed.
 
-Lemma sublist_full :
+Lemma prefix_full :
   forall (l:list A),
-    sublist (length l) l = l.
+    prefix (length l) l = l.
 Proof.
 induction l; intros; simpl; auto.
 rewrite IHl; auto.
 Qed.
 
-Lemma sublist_gt :
+Lemma prefix_gt :
   forall (n:nat) (l:list A), (length l) <= n  ->
-    (sublist n l) = l.
+    (prefix n l) = l.
 Proof.
 induction n.
  intros; assert (l = nil).
@@ -104,16 +104,16 @@ induction n.
    simpl in H; auto with arith.
 Qed.
 
-Lemma sublist_length_ok :
+Lemma prefix_length_ok :
   forall (n:nat) (l:list A), n <= (length l) ->
-    length (sublist n l) = n.
+    length (prefix n l) = n.
 Proof.
 double induction n l; intros; simpl; auto with arith.
 Qed.
 
-Lemma sublist_app :
+Lemma prefix_app :
   forall (n:nat) (l:list A),
-    { l1 : list A | l = (sublist n l) ++ l1 }.
+    { l1 : list A | l = (prefix n l) ++ l1 }.
 Proof.
 induction n; intros.
  exists l; case l; simpl; auto.
@@ -124,55 +124,55 @@ induction n; intros.
     rewrite <- p; auto.
 Qed.
 
-Lemma sublist_app_rev :
+Lemma prefix_app_rev :
   forall (l l0 : list A),
     (exists l1 : list A, l = l0 ++ l1)
-      -> l0 = sublist (length l0) l.
+      -> l0 = prefix (length l0) l.
 Proof.
 intros l l0; generalize l; clear l.
 induction l0; intros.
- simpl; rewrite sublist_0; auto.
+ simpl; rewrite prefix_0; auto.
  elim H; clear H; intros.
    rewrite H; clear H; simpl.
    rewrite <- IHl0; auto.
    exists x; auto.
 Qed.
 
-Lemma subsublist_le :
+Lemma subprefix_le :
   forall (l : list A) (n0 n1 : nat),
-    n0 <= n1 -> sublist n0 (sublist n1 l) = sublist n0 l.
+    n0 <= n1 -> prefix n0 (prefix n1 l) = prefix n0 l.
 Proof.
 induction l.
- intros; rewrite sublist_nil; rewrite sublist_nil; auto.
+ intros; rewrite prefix_nil; rewrite prefix_nil; auto.
  intros n0 n1; case n1; intros.
   assert (n0 = 0); auto with arith.
-    rewrite H0; rewrite sublist_0; rewrite sublist_0; auto.
+    rewrite H0; rewrite prefix_0; rewrite prefix_0; auto.
   generalize H.
     case n0; intros.
-   rewrite sublist_0; auto.
+   rewrite prefix_0; auto.
    simpl; rewrite IHl; auto with arith.
 Qed.
 
-Lemma subsublist_gt :
+Lemma subprefix_gt :
   forall (l : list A) (n0 n1 : nat),
-    n0 > n1 -> sublist n0 (sublist n1 l) = sublist n1 l.
+    n0 > n1 -> prefix n0 (prefix n1 l) = prefix n1 l.
 Proof.
 induction l.
- intros; rewrite sublist_nil; rewrite sublist_nil; auto.
+ intros; rewrite prefix_nil; rewrite prefix_nil; auto.
  intros n0 n1; case n1; intros.
-  intros; rewrite sublist_nil; auto.
+  intros; rewrite prefix_nil; auto.
   generalize H; clear H; case n0; intros.
    absurd (0 > S n); auto with arith.
    simpl; rewrite IHl; auto with arith.
 Qed.
 
 
-Lemma sublist_cons :
-  forall (a: A) (l : list A) (n : nat), 
-    sublist (S n) (a::l) = a::(sublist n l).
+Lemma prefix_cons :
+  forall (a: A) (l : list A) (n : nat),
+    prefix (S n) (a::l) = a::(prefix n l).
 Proof.
 intros.
 auto.
 Qed.
 
-End SubList.
+End Prefix.

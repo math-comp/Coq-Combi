@@ -4,6 +4,7 @@ Extraction Inline Wf_nat.lt_wf_rec1 Wf_nat.lt_wf_rec
 
 Require Import Dyck.
 Require Import DyckTree.
+Require Import ListOf.
 Require Import ListOfBinTrees.
 Require Import ListOfDyck.
 
@@ -34,3 +35,4 @@ Extraction "extract/dycktree.ml" dyck_to_tree tree_to_dyck.
 Extraction "extract/dyck.ml" dyck_decompose_grammar.
 Extraction "extract/listTree.ml" list_of_trees list_of_trees_slow.
 Extraction "extract/listDyck.ml" list_of_dyck.
+Extraction "extract/listOf.ml" list_of_union list_of_pairs list_of_image list_of_nat_lt_n.

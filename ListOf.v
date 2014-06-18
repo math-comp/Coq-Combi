@@ -285,7 +285,7 @@ Proof.
     clear HA.
     destruct HB with b; decompose [and] H; clear H;
       [left | right]; split; simpl; auto; rewrite mult_b; assumption. 
-Qed.
+Defined.
   
 End ListOfUnion.
 
@@ -568,7 +568,7 @@ End ListOfOperations.
 
 Section ListOfNat.
 
-Lemma list_of_nat_n :
+Lemma list_of_nat_lt_n :
   forall n : nat,
     list_of_set nat (fun i : nat => i < n) (eq (A := nat)) eq_nat_dec.
 Proof.

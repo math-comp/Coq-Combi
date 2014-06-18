@@ -1,7 +1,7 @@
 Require Import Arith.
 Require Import List.
 Require Import Dyck.
-Require Import Sublist.
+Require Import Prefix.
 Require Import Multiset.
 Require Import Permutation.
 Require Import Coq.Sorting.PermutSetoid.
@@ -23,7 +23,7 @@ Ltac omega_brace :=
   omega.
 
 Definition dyck_prefix_height (h : nat) (w : list Brace) : Prop :=
-  (forall l : nat, (mult (sublist _ l w) Open) + h >= (mult (sublist _ l w) Close))
+  (forall l : nat, (mult (prefix _ l w) Open) + h >= (mult (prefix _ l w) Close))
   /\
   (mult w Open) + h = mult w Close.
 
@@ -69,7 +69,7 @@ Proof.
   clear IHw H1.
   specialize H0 with 1.
   simpl in H0.
-  rewrite sublist_0 in H0.
+  rewrite prefix_0 in H0.
   omega_brace.
 
   simpl.
