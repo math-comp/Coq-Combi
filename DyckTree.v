@@ -152,3 +152,45 @@ Proof.
 Qed.
 
 End DyckWordTreeBij.
+
+
+Section GrammarDefinition.
+
+Inductive dyck_grammar : list Brace -> Prop :=
+  | dyck_nil  : dyck_grammar nil
+  | dyck_cons : forall a b : list Brace,
+                  dyck_grammar a -> dyck_grammar b ->
+                  dyck_grammar (Open :: a ++ Close :: b).
+
+Lemma tree_grammar : forall t : Tree, dyck_grammar (tree_to_dyck t).
+Proof.
+  induction t; simpl.
+  apply dyck_nil.
+  apply dyck_cons; assumption.
+Qed.
+
+Lemma dyck_grammar_rec :
+  forall w : list Brace,
+    (forall s : list Brace, length s < length w -> dyck_grammar s -> is_dyck s) ->
+    dyck_grammar w -> is_dyck w.
+Proof.
+  intros w H Hd.
+  destruct Hd.
+  apply nil_is_dyck.
+  apply grammar_is_dyck.
+  apply H; auto.
+  apply dyck_grammar_length_1 with b; simpl; reflexivity.
+  apply H; auto.
+  apply dyck_grammar_length_2 with a; simpl; reflexivity.
+Qed.
+
+Theorem is_dyck_equiv_grammar :
+  forall w : list Brace, dyck_grammar w <-> is_dyck w.
+Proof.
+  split; intro H.
+  apply (Fix Rwf _ dyck_grammar_rec); auto.
+  rewrite <- bij_dyck; auto.
+  apply tree_grammar.
+Qed.
+
+End GrammarDefinition.
