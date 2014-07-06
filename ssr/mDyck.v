@@ -8,19 +8,19 @@ Section Braces.
   Inductive Brace : Set :=
     | Open : Brace | Close : Brace.
 
-  Definition eqb b1 b2 :=
+  Definition eq_brace b1 b2 :=
     match b1, b2 with
       | Open, Open | Close, Close => true
       | _, _ => false
     end.
 
-  Lemma eqbP : Equality.axiom eqb.
+  Lemma eq_braceP : Equality.axiom eq_brace.
   Proof.
     move=> n m; apply: (iffP idP) => [|<-]; last by elim n.
     elim: n; elim m; by [].
   Qed.
 
-  Canonical brace_eqMixin := EqMixin eqbP.
+  Canonical brace_eqMixin := EqMixin eq_braceP.
   Canonical brace_eqType := Eval hnf in EqType Brace brace_eqMixin.
 
 End Braces.
@@ -82,8 +82,8 @@ Section mDyckRec.
     w1 \in dyck(h1) -> w2 \in dyck(h2) -> (w1 ++ w2) \in dyck(h1 + h2).
   Proof.
     elim: w1 w2 h1 h2 => [|[] w1 IHw1] w2 h1 h2 //=; first by case h1.
-     rewrite ?open_dyck_height addnA; by apply IHw1.
-     rewrite ?close_dyck_height; case: h1 => h1 //=; by apply IHw1.
+     rewrite !open_dyck_height addnA; by apply IHw1.
+     case: h1 => h1 //=; by apply IHw1.
   Qed.
 
   Fixpoint cut_to_height h w : seq Brace * seq Brace :=
@@ -182,7 +182,7 @@ Section mDyckRec.
   Lemma mult_cutP n w : w \in dyck(n) -> mult_cut_spec n w (mult_cut n w).
   Proof.
     elim: n w => [| n IHn w H] /=; first by rewrite -/dyck.
-    move: (ltn0Sn n) => Hpos.
+    have Hpos := ltn0Sn n.
     move: (cut_dyck_height H Hpos) (cut_to_height_factor H Hpos) => {H Hpos}.
     elim (cut_to_height 0 w) => w1 w2 [] Hdw1 Hdw2 Hcat.
     rewrite subn1 succnK in Hdw2; rewrite -/dyck in Hdw1.
@@ -196,13 +196,13 @@ Section mDyckRec.
   Proof.
     move=> [] {wr l}.
     elim: n w => [| n IHn ] w l wr Hlen //.
-    by move: (size0nil (eqP Hlen)) => -> _ _ /= /eqP ->.
+    by have -> := size0nil (eqP Hlen) => _ _ /= /eqP ->.
     case: l Hlen => w0 l //= Hlen /andP [] Hw0d Halld Hwrd Hjoinl.
-    rewrite eqSS in Hlen; move: (join_dyck_height Halld Hwrd).
+    rewrite eqSS in Hlen; have:= join_dyck_height Halld Hwrd.
     rewrite addn0 (eqP Hlen) -close_dyck_height => Wdn.
-    move: {Wdn} (cat_dyck_height Hw0d Wdn) => Wdn.
+    have{Wdn} Wdn := cat_dyck_height Hw0d Wdn.
     rewrite -(eqP Hjoinl) in Wdn.
-    move: {Wdn Hw0d Hjoinl} (dyck_factor_eq_cut Wdn (ltn0Sn _) Hw0d Hjoinl).
+    have{Wdn Hw0d Hjoinl}:= dyck_factor_eq_cut Wdn (ltn0Sn _) Hw0d Hjoinl.
     elim (cut_to_height 0 w) => _ _ [] /eqP <- /eqP <-.
     set wl := (join _ _ _).
     move: IHn => /(_ wl l wr Hlen Halld Hwrd (eq_refl _)) {Halld Hwrd}.
@@ -215,7 +215,7 @@ Section mDyckRec.
   CoInductive factor_spec w : seq (seq Brace) * seq Brace -> Prop :=
     MFactorSpec l wr of (size l == m) & (all (mem dyck) l) & wr \in dyck &
                 (w == Open :: (join Close wr l)) : factor_spec w (l, wr).
-
+  
   Lemma factorP w :
     w \in dyck -> (w != [::]) -> factor_spec w (factor w).
   Proof.
@@ -287,10 +287,10 @@ Section Induction.
       (dyck_lt_size wr w) /\
       (forall ww, ww \in l -> dyck_lt_size ww w).
   Proof.
-    move=> Hdyck Hnnil; move: (factorP Hdyck Hnnil).
+    move=> Hdyck Hnnil; have:= factorP Hdyck Hnnil.
     move Heqfct : (factor w) => C; elim: C Heqfct => l wr Heqfct Hfact.
     split; first by exact Hfact.
-    move: {Hnnil} (factor_spec_unique Hfact).
+    have{Hnnil}:= factor_spec_unique Hfact.
     (* The following elimination is only legible in sort Prop *)
     case Hfact => l0 w0 _ Halld Hwwd Hcat; rewrite Heqfct => Heq.
     move: Heq Halld Hcat Hwwd => [] -> -> {l0 w0} Halld Hcat Hwwd.
@@ -304,11 +304,12 @@ Section Induction.
     (forall w', dyck_lt_size w' w -> w' \in dyck -> P w') -> w \in dyck -> P w.
   Proof.
     case: (altP (w =P [::])); first by move=> -> _ _; apply Pnil.
-    move=> Hnnil HltP Hdyck; move: (factor_dyck_lt_size Hdyck Hnnil).
+    move=> Hnnil HltP Hdyck.
+    have:= factor_dyck_lt_size Hdyck Hnnil.
     case (factor w) => l wr [] Hfact [] Hwrdlt Hww.
     apply (Pcons Hfact) => {Hfact}.
     - by move=> ww Hwinl; apply HltP; apply Hww.
-    - rewrite /dyck_lt_size in Hwrdlt; move: (Hwrdlt) => [] Hwrd Hsz; by apply HltP.
+    - rewrite /dyck_lt_size in Hwrdlt; have [Hwrd Hsz] := Hwrdlt; by apply HltP.
   Qed.
 
   Require Import Coq.Arith.Wf_nat.
@@ -434,9 +435,9 @@ Section mDyckPrefix.
     rewrite (eqP (prefix_take _)) /mkseq /preim all_map /preim.
     split => [H | b n]; first by apply /allP => HH _ //=.
     case: (ltnP n (size w)) => Hn.
-    - move: (allP b n) => /= Hb {b}; apply Hb; by rewrite mem_iota add0n.
+    - have:= allP b n => /= Hb {b}; apply Hb; by rewrite mem_iota add0n.
     - rewrite take_oversize; last by apply (leq_trans Hn).
-      move: (allP b (size w).-1) => //= {b}.
+      have:= allP b (size w).-1 => //= {b}.
       case: w Hn => //= [a w] _.
       rewrite take_size; apply => {a}.
       rewrite in_cons mem_iota; by case (size w) => /=.
@@ -468,8 +469,8 @@ Section mDyckPrefix.
 
 End mDyckPrefix.
 
-
 (* Experiment with SSReflect tuple *)
+
 Require Import tuple.
 
 Section DyckTuple.
@@ -480,7 +481,7 @@ Section DyckTuple.
   Proof.
     elim: n w => //= n IHw w.
     elim (cut_to_height 0 w) => w1 w2.
-    move: (IHw w2); by elim (mult_cut n w2).
+    have:= IHw w2; by elim (mult_cut n w2).
   Qed.
 
   Definition tuple_factor (w : seq Brace) : m1tuple :=
@@ -500,9 +501,9 @@ Section DyckTuple.
     rewrite open_dyck /tuple_factor /factor /cons_tuple /= => Hd.
     constructor.
     rewrite /tval.
-    by move: (mult_cutP Hd); case => /= l wr _ Halld Hwrd _; apply /andP.
+    by case (mult_cutP Hd) => /= l wr _ Halld Hwrd _; apply/andP.
     rewrite /thead (tnth_nth [::]) => /=.
-    by move: (mult_cutP Hd); case => /= l wr _ _ _ H; rewrite (eqP H).
+    by case (mult_cutP Hd) => /= l wr _ _ _ H; rewrite (eqP H).
   Qed.
 
 End DyckTuple.
@@ -513,8 +514,11 @@ End MDyck.
 
 
 
-Module Zero. Let m := 0. End Zero.
+Module Zero. Section Zero. Definition m := 0. End Zero. End Zero.
 Module MDyck0 := MDyck Zero.
+
+Module One. Section One. Definition m := 1. End One. End One.
+Module MDyck1 := MDyck One.
 
 Section Tests.
 
@@ -524,9 +528,8 @@ Import MDyck0.
 Lemma dyck_zero_unique :
   forall (w : list Brace), w \in dyck -> w == nseq (size w) Open.
 Proof.
-  apply dyck_ind => //=.
-  move=> w l wr Hfact.
-  move: (factor_spec_unique Hfact) => Hfactor.
+  apply dyck_ind => //= w l wr Hfact.
+  have Hfactor := factor_spec_unique Hfact.
   rewrite Hfactor in Hfact.
   case: Hfact Hfactor => l0 w0 Hsz Halld Hwr0d Hjoin Heq.
   by move: Heq Hsz Halld Hwr0d Hjoin => [] <- <- {l0 w0} /nilP -> /= _ _ /eqP -> _.
@@ -547,35 +550,3 @@ Eval compute in tval (tuple_factor 1 d).
 Eval compute in (factor 1 d).
 *)
 
-(*
-
-Extract Inductive bool => "bool" [ "true" "false" ].
-Extract Inductive list => "list" [ "[]" "(::)" ].
-Extract Inductive prod => "(*)"  [ "(,)" ].
-(*
-Extract Inductive nat => "Big_int.big_int"
-  [ "Big_int.zero_big_int" "Big_int.succ_big_int" ] "(fun fO fS n ->
-    let one = Big_int.unit_big_int in
-    if n = Big_int.zero_big_int then fO () else fS (Big_int.sub_big_int n one))".
-*)
-
-Extract Inductive nat => "int"
-  [ "0" "(fun x -> x + 1)" ]
-  "(fun zero succ n -> if n=0 then zero () else succ (n-1))".
-
-Extract Inlined Constant plus => "( + )".
-Extract Constant mult => "( * )".
-Extract Constant eqn => "( = )".
-Extract Constant nat_eqType => "( = )".
-Extract Constant eq_op => "(fun eq -> eq)".
-
-*)
-
-Extraction Inline addn addn_rec.
-
-(*
-Extraction "mdycktuple.ml" tuple_factor.
-Extraction "mdyck.ml" dyck factor.
-*)
-
-Extraction "mdyck.ml"  MDyck.
