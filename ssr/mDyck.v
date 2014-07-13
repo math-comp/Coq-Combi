@@ -519,44 +519,6 @@ Section DyckSetInd.
 
 End DyckSetInd.
 
-(* Experiment with SSReflect tuple *)
-
-Require Import tuple.
-
-Section DyckTuple.
-
-  Notation m1tuple := ((m.+1).-tuple (seq Brace)).
-
-  Lemma mult_cut_size n w : size ((mult_cut n w).1) == n.
-  Proof.
-    elim: n w => //= n IHw w.
-    elim (cut_to_height 0 w) => w1 w2.
-    have:= IHw w2; by elim (mult_cut n w2).
-  Qed.
-
-  Definition tuple_factor (w : seq Brace) : m1tuple :=
-    let w0 := behead w in
-    cons_tuple ((mult_cut m w0).2) (Tuple (mult_cut_size m w0)).
-
-  CoInductive tuple_factor_spec w  (t : m1tuple) : Type :=
-    MTupleFactorSpec of
-                all (mem dyck_rec) t &
-                w == Open :: (join Close (thead t) (behead t))
-    : tuple_factor_spec w t.
-
-  Theorem dyck_factorP w :
-    w <> [::] -> w \in dyck_rec -> tuple_factor_spec w (tuple_factor w).
-  Proof.
-    case: w => [| [] w _] //=.
-    rewrite open_dyck /tuple_factor /factor /cons_tuple /= => Hd.
-    constructor; rewrite /tval.
-    by have:= mult_cutP Hd; case (mult_cut m w) => /= l wr [] _ Halld Hwrd _; apply/andP.
-    rewrite /thead (tnth_nth [::]) => /=.
-    by move: (mult_cutP Hd); case (mult_cut m w) => /= l wr [] _ _ _ H; rewrite (eqP H).
-  Qed.
-
-End DyckTuple.
-
 End MDyck.
 
 
