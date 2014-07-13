@@ -28,6 +28,12 @@ Section bin_tree.
   Canonical bin_tree_eqMixin := EqMixin eq_bin_treeP.
   Canonical bin_tree_eqType := Eval hnf in EqType bin_tree bin_tree_eqMixin.
 
+  Fixpoint size_tree (t : bin_tree) :=
+    match t with
+      | BinLeaf => 0
+      | BinNode l r => 1 + (size_tree l) + (size_tree r)
+    end.
+
 End bin_tree.
 
 Require Import brace mDyck.
@@ -95,6 +101,18 @@ Section DyckWordTreeBij.
     by rewrite (eqP (Hl l0 Heql)) (eqP (Hr r0 Heqr)).
   Qed.
 
+  Lemma bij_size_tree t : size (Dyck_of_tree t) == 2 * size_tree (t).
+  Proof.
+    elim: t => //= l /eqP Hl r /eqP Hr.
+    by rewrite size_cat /= Hl Hr -add1n addnA !mulnDr addnS.
+  Qed.
+
+  Lemma bij_size_Dyck d : size d == 2 * size_tree (tree_of_Dyck d).
+  Proof.
+    rewrite -{1}(eqP (bij1 d)); by apply bij_size_tree.
+  Qed.
+
+  
 End DyckWordTreeBij.
 
 (*
