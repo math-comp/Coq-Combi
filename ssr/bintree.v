@@ -1,6 +1,6 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
-
 Require Import Coq.Arith.Wf_nat Recdef.
+Require Import brace mDyck.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -36,9 +36,6 @@ Section bin_tree.
 
 End bin_tree.
 
-Require Import brace mDyck.
-
-Module One. Section One. Definition m := 1. End One. End One.
 
 
 Section DyckWordTreeBij.
