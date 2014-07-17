@@ -536,7 +536,7 @@ Import MDyck0.
 Lemma dyck_zero_unique :
   forall d : Dyck, dyckword d == nseq (size d) Open.
 Proof.
-  apply Dyck_gram_ind => //= D [[]] //= lD /=.
+  elim/Dyck_gram_ind => //= D [[]] //= lD /=.
   by rewrite /joinDyck /= => /nilP -> Dr /eqP -> _ /= /eqP {1}->.
 Qed.
 

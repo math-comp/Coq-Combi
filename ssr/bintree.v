@@ -65,7 +65,7 @@ Section DyckWordTreeBij.
 
   Lemma tree_of_Dyck_spec d : {t : bin_tree | word_of_tree t == d}.
   Proof.
-    move: d; apply Dyck_gram_ind; first by exists BinLeaf.
+    elim/Dyck_gram_ind: d; first by exists BinLeaf.
     move=> d [] /= [] [//|] dl /= [] //=.
     rewrite /joinDyck /= => _ dr /eqP -> Hrec.
     have Htriv : dl \in [:: dl] by rewrite inE.
@@ -109,7 +109,7 @@ Section DyckWordTreeBij.
     rewrite -{1}(eqP (bij1 d)); by apply bij_size_tree.
   Qed.
 
-  
+
 End DyckWordTreeBij.
 
 (*
