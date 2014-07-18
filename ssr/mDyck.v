@@ -523,11 +523,11 @@ End MDyck.
 
 
 
-Module Zero. Section Zero. Definition m := 0. End Zero. End Zero.
-Module MDyck0 := MDyck Zero.
+Module m0. Definition m := 0. End m0.
+Module MDyck0 := MDyck m0.
 
-Module One. Section One. Definition m := 1. End One. End One.
-Module MDyck1 := MDyck One.
+Module m1. Definition m := 1. End m1.
+Module MDyck1 := MDyck m1.
 
 Section Tests0.
 

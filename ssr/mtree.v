@@ -184,15 +184,12 @@ Module MTree (Param : M_PARAM).
 
 End MTree.
 
-
-(*
-
 Module MBijection (Param : M_PARAM).
 
   Module MDyckm := MDyck Param.
   Import MDyckm.
 
-  Module Param1. Section One. Definition m := Param.m + 1. End One. End Param1.
+  Module Param1. Definition m := Param.m + 1. End Param1.
   Module MTree := MTree Param1.
   Import MTree.
 
@@ -206,8 +203,10 @@ Module MBijection (Param : M_PARAM).
 
 End MBijection.
 
-Module M. Definition m := 2. End M.
-Module MT := MTree M.
+(*
+
+Module m2. Definition m := 2. End m2.
+Module MT := MTree m2.
 
 Section Tests.
 

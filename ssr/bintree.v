@@ -58,7 +58,7 @@ Section DyckWordTreeBij.
     elim: t => //= l Hl r Hr.
     rewrite -cat_cons -[Close :: _]cat1s catA.
     apply cat_dyck_height; last by apply Hr.
-    by rewrite -/cat /mDyck.One.m -[1]add0n; apply cat_dyck_height.
+    by rewrite -/cat /mDyck.m1.m -[1]add0n; apply cat_dyck_height.
   Qed.
 
   Definition Dyck_of_tree t := DyckWord (word_of_tree_is_dyck t).
@@ -98,17 +98,16 @@ Section DyckWordTreeBij.
     by rewrite (eqP (Hl l0 Heql)) (eqP (Hr r0 Heqr)).
   Qed.
 
-  Lemma bij_size_tree t : size (Dyck_of_tree t) == 2 * size_tree (t).
+  Lemma bij_size_tree t : size (Dyck_of_tree t) == (size_tree t).*2.
   Proof.
     elim: t => //= l /eqP Hl r /eqP Hr.
-    by rewrite size_cat /= Hl Hr -add1n addnA !mulnDr addnS.
+    by rewrite size_cat /= Hl Hr addnS -addnA add1n doubleS -doubleD.
   Qed.
 
-  Lemma bij_size_Dyck d : size d == 2 * size_tree (tree_of_Dyck d).
+  Lemma bij_size_Dyck d : size d == (size_tree (tree_of_Dyck d)).*2.
   Proof.
     rewrite -{1}(eqP (bij1 d)); by apply bij_size_tree.
   Qed.
-
 
 End DyckWordTreeBij.
 
