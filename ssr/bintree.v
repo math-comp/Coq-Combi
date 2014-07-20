@@ -63,7 +63,7 @@ Section DyckWordTreeBij.
 
   Definition Dyck_of_tree t := DyckWord (word_of_tree_is_dyck t).
 
-  Lemma tree_of_Dyck_spec d : {t : bin_tree | word_of_tree t == d}.
+  Definition tree_of_Dyck_spec d : {t : bin_tree | word_of_tree t == d}.
   Proof.
     elim/Dyck_gram_ind: d; first by exists BinLeaf.
     move=> d [] /= [] [//|] dl /= [] //=.
@@ -77,10 +77,10 @@ Section DyckWordTreeBij.
 
   Definition tree_of_Dyck d := val (tree_of_Dyck_spec d).
 
-  Definition tree_of_brace w : bin_tree :=
+(*  Definition tree_of_brace w : bin_tree :=
     (if dyck_rec w as b return (dyck_rec w) = b -> bin_tree
      then fun proof => tree_of_Dyck (DyckWord proof)
-     else fun _ => BinLeaf) Logic.eq_refl.
+     else fun _ => BinLeaf) Logic.eq_refl. *)
 
   Lemma bij1 d : Dyck_of_tree (tree_of_Dyck d) == d.
   Proof. rewrite /tree_of_Dyck; by elim (tree_of_Dyck_spec d). Qed.
@@ -109,17 +109,40 @@ Section DyckWordTreeBij.
     rewrite -{1}(eqP (bij1 d)); by apply bij_size_tree.
   Qed.
 
+  Lemma tree_of_emptyDyck : tree_of_Dyck emptyDyck = BinLeaf.
+  Proof.
+    rewrite /tree_of_Dyck.
+    elim (tree_of_Dyck_spec emptyDyck); by case.
+  Qed.
+
+  Lemma tree_of_gram_Dyck d :
+    d != emptyDyck -> { pair : bin_tree * bin_tree
+                      | let (t1, t2) := pair in d = Dyck_of_tree (BinNode t1 t2) }.
+  Proof.
+    rewrite -(eqP (bij1 d)); move Ht : (tree_of_Dyck d) => t; case: t Ht => //= t1 t2 Ht _.
+    by exists (t1, t2).
+  Qed.
+
 End DyckWordTreeBij.
 
-(*
 
 Import mDyck.MDyck1.
 
+(*
 Let w := [:: Open; Close ].
-Let d := (BinNode BinLeaf BinLeaf).
-
-Lemma ddyck : w \in dyck_rec. by []. Qed.
-
-Eval compute in val (tree_of_dyck_spec ddyck).
-
+Let d := DyckWord (is_true_true : w \in dyck_rec).
 *)
+Let t := (BinNode BinLeaf BinLeaf).
+Let d := DyckWord (is_true_true : [:: Open; Close] \in dyck_rec).
+Let dnnil : d != emptyDyck := is_true_true.
+
+(* Eval compute in tree_of_Dyck_spec d. *)
+
+Lemma checkbij : tree_of_Dyck (d) = t.
+Proof.
+  have Hnil : d != emptyDyck by []; elim (tree_of_gram_Dyck Hnil) => [[t1 t2]] {Hnil}.
+  rewrite /d /t => H. rewrite H (eqP (bij2 _)) /Dyck_of_tree /word_of_tree; move: H.
+  case: t1; case: t2 => //=.
+Qed.
+
+(* Eval compute in (tree_of_Dyck (DyckWord d)). *)
