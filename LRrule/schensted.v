@@ -9,6 +9,16 @@ Proof.
   have := eq_refl (size (rcons s l)). by rewrite {2}H size_rcons.
 Qed.
 
+Lemma subseq_rcons_eq (s : seq nat) w l : subseq s w <-> subseq (rcons s l) (rcons w l).
+Proof.
+  split.
+  - by rewrite -!cats1 => H; apply cat_subseq => //=; rewrite (eq_refl _).
+  - elim: w s => [|w0 w IHw s] /=.
+    case=> //= s0 s; case: (altP (s0 =P l)) => _ //=; by rewrite rcons_non_nil.
+  - case: s IHw => //= s0 s; case: (altP (s0 =P w0)) => _ //= H1 H2; first by apply H1.
+    rewrite -rcons_cons in H2; by apply H1.
+Qed.
+
 Lemma subseq_rcons_neq (s : seq nat) si w wn :
   si != wn -> subseq (rcons s si) (rcons w wn) -> subseq (rcons s si) w.
 Proof.
@@ -22,19 +32,6 @@ Proof.
       rewrite -rcons_cons; by exact (IHw _ _ H).
 Qed.
 
-Lemma subseq_rcons_2 (s : seq nat) w l : subseq s w <-> subseq (rcons s l) (rcons w l).
-Proof.
-  split.
-  - by rewrite -!cats1 => H; apply cat_subseq => //=; rewrite (eq_refl _).
-  - elim: w s => [|w0 w IHw s] /=.
-    case=> //= s0 s; case: (altP (s0 =P l)) => _ //=; by rewrite rcons_non_nil.
-  - case: s IHw => //= s0 s; case: (altP (s0 =P w0)) => _ //= H1 H2; first by apply H1.
-    rewrite -rcons_cons in H2; by apply H1.
-Qed.
-
-
-(* Schensted's Algorithm *)
-
 Section Rows.
 
   Fixpoint is_row (t : seq nat) : bool :=
@@ -44,27 +41,18 @@ Section Rows.
       | a :: (b :: _) as tl => (a <= b) && is_row tl
     end.
 
-  Lemma is_rowP (t : seq nat) :
+  Lemma is_row1P (t : seq nat) :
     reflect
-      (forall (i j : nat), i <= j -> j < (size t) -> nth 0 t i <= nth 0 t j)
+      (forall (i : nat), i.+1 < (size t) -> nth 0 t i <= nth 0 t i.+1)
       (is_row t).
   Proof.
     apply: (iffP idP).
-    - elim: t => [H1 a b _| t0 [/= _ _ |t1 t /= IHt]] /=; first by rewrite !nth_nil.
-      by case; case => //=.
-      move=> /andP [] Ht0t1 Hrowt1t; move: {Hrowt1t IHt} (IHt Hrowt1t) => IHt.
-      case; case=> //=.
-      * move=> j _ Hsize; have H0j: 0 <= j by [].
-        move: {IHt Hsize} (IHt _ _ H0j Hsize) => /= Hleq.
-        by apply (leq_trans Ht0t1).
-      * case=> //= j _ Hsize; have H0j: 0 <= j by [].
-        exact (IHt _ _ H0j Hsize).
-      * move=> i [//=|] j Hle Hsize /=.
-        exact (IHt i.+1 j Hle Hsize).
+    - elim: t => [_ i H //=| t0 [/= _ _ [|i] //=|t1 t /= IHt]] /andP [] Hleq Hrow.
+      move: (IHt Hrow) => {IHt Hrow} IHt.
+      case => [_ //=| i /= H]; by apply IHt.
     - elim: t => [_ //=|] t0 [//=| t1 t] IHt Ht /=.
-      apply /andP; split; first by apply (Ht 0 1).
-      apply IHt => {IHt} i j Hleqij Hsize.
-      exact (Ht i.+1 j.+1 Hleqij Hsize).
+      apply/andP; split; first by apply (Ht 0).
+      apply IHt => i; by apply (Ht i.+1).
   Qed.
 
   Lemma non_decr_equiv (t : seq nat) :
@@ -75,7 +63,7 @@ Section Rows.
     split => H; first by move=> i; apply (H i i.+1).
     move=> i j; move Hdiff : (j - i) => diff.
     elim: diff i j Hdiff => [i j /eqP Hdiff Hleq _ | diff IHdiff i j Hdiff Hleq Hsize].
-    - have HH: (i <= j <= i) by apply /andP.
+    - have HH: (i <= j <= i) by apply/andP.
       by rewrite (anti_leq HH).
     - have Hiltj: (i < j) by rewrite -subn_gt0 Hdiff.
       apply (leq_trans (n := (nth 0 t i.+1))).
@@ -83,11 +71,11 @@ Section Rows.
       apply IHdiff => //=; first by rewrite subnS Hdiff.
   Qed.
 
-  Lemma is_row1P (t : seq nat) :
+  Lemma is_rowP (t : seq nat) :
     reflect
-      (forall (i : nat), i.+1 < (size t) -> nth 0 t i <= nth 0 t i.+1)
+      (forall (i j : nat), i <= j -> j < (size t) -> nth 0 t i <= nth 0 t j)
       (is_row t).
-  Proof. apply: (iffP idP); by rewrite -non_decr_equiv => /is_rowP. Qed.
+  Proof. apply: (iffP idP); by rewrite non_decr_equiv => /is_row1P. Qed.
 
   Lemma is_row_rconsK l (t : seq nat) : is_row (rcons t l) -> is_row t.
   Proof.
@@ -105,7 +93,7 @@ Section Rows.
 
   Lemma is_row_rcons l (t : seq nat) : is_row t -> last 0 t <= l -> is_row (rcons t l).
   Proof.
-    move=> /is_row1P Hrow Hl; apply /is_row1P => i; rewrite size_rcons !nth_rcons => HH.
+    move/is_row1P => Hrow Hl; apply/is_row1P => i; rewrite size_rcons !nth_rcons => HH.
     have := (HH : (i < size t)) => {HH} HH; rewrite HH.
     case: (ltngtP i.+1 (size t)) => Hisz.
     - by apply Hrow.
@@ -116,7 +104,7 @@ Section Rows.
   Lemma row_lt_by_pos (t : seq nat) p q :
     is_row t -> p < size t -> q < size t -> nth 0 t p < nth 0 t q -> p < q.
   Proof.
-    move=> /is_rowP Hrow Hp Hq Hlt.
+    move/is_rowP => Hrow Hp Hq Hlt.
     have H : (q <= p -> nth 0 t q <= nth 0 t p) by move=> H; apply Hrow.
     by move: (contra H); rewrite -!ltnNge; apply.
   Qed.
@@ -201,17 +189,6 @@ Section Schensted.
     elim: t => //= t0 t; by case (ltnP l t0) => //=.
   Qed.
 
-  Lemma insert_leq_l l t : head 0 (insert l t) <= l.
-  Proof.
-    case: t => //= t0 t; by case (ltnP l t0) => //=.
-  Qed.
-
-  Lemma insert_leq_t0 l (t0 : nat) t : head 0 (insert l (t0 :: t)) <= t0.
-  Proof.
-    rewrite /=; case (ltnP l t0) => [|_] /=; first by apply ltnW.
-    by apply leqnn.
-  Qed.
-
   Lemma insert_leq l (t : seq nat) : forall (i : nat), nth 0 (insert l t) i <= nth l t i.
   Proof.
     elim: t => [| t0 t IHt] i /=.
@@ -284,42 +261,44 @@ Section Schensted.
       case (ltngtP (insert_pos l0 (Sch w)).+1 (size (Sch w))) => //= HH.
       * by rewrite HH in Hmax.
       * suff Heq: insert_pos l0 (Sch w) == size (Sch w) by rewrite Heq in Hneq.
-        apply /eqP/anti_leq/andP; split => //=; by apply insert_pos_size.
+        apply/eqP/anti_leq/andP; split => //=; by apply insert_pos_size.
       * by rewrite HH if_same in Hmax.
       case (IHw i Hlt) => {Hneq Hneqi Hlt IHw Hmax} s /= [] Hsubs [] Hrow Hsz.
       by exists s; split => //=; apply (subseq_trans Hsubs); apply subseq_rcons.
   Qed.
 
-  Lemma SchP w s si:
+  Theorem Sch_leq_last w s si:
     (is_row (rcons s si)) -> subseq (rcons s si) w ->
     (size s) < size (Sch w) /\ nth 0 (Sch w) (size s) <= si.
   Proof.
     elim/last_ind: w s si=> [| w wn IHw] s si; first by rewrite subseq0 rcons_non_nil.
     case: (altP (si =P wn)) => [-> {si} Hrow | Hsiwn Hrow Hsubs]; rewrite Sch_rcons.
     (* The subseqence s ends by wn *)
-    - rewrite -subseq_rcons_2; case/lastP: s Hrow => [/= _ _ | s si Hrow Hsubs].
+    - rewrite -subseq_rcons_eq; case/lastP: s Hrow => [/= _ _ | s si Hrow Hsubs].
       (* s = wn *)
       split; first by apply insert_size_non_0. by apply insert_head_lt.
       (* s = [s] si wn *)
     - move: (IHw _ _ (is_row_rconsK _ _ Hrow) Hsubs) => [] Hszlt Hlt {IHw}.
       move: (is_row_last _ _ Hrow); rewrite last_rcons => Hsiwn.
       rewrite insert_set size_set_nth nth_set_nth maxnC /maxn /=.
+      have Hrowinswn : is_row (insert wn (Sch w))
+        by apply insert_is_row; apply Sch_is_row; apply ltnW.
 
       case (ltnP (size (Sch w)) (insert_pos wn (Sch w)).+1).
+
       (* Insertion add a new [wn] box *)
       * rewrite size_rcons !ltnS => Hsize_ins.
         have Heqsize: (insert_pos wn (Sch w) = size (Sch w)) by
-          apply anti_leq; apply /andP; split; first by apply insert_pos_size.
+          apply anti_leq; apply/andP; split; first by apply insert_pos_size.
         rewrite Heqsize {Hsize_ins}; split; first by [].
         case: (altP ((size s).+1 =P size (Sch w))) => H; first by [].
         rewrite -[wn](insert_eq_pos _ (Sch w)).
-        have Hlts: ((size s).+1 < size (Sch w)) by rewrite ltn_neqAle; apply /andP.
-        (* TODO: simplify here *)
-        rewrite -Heqsize in Hlts => {H Hszlt}.
+        have Hlts: ((size s).+1 < size (Sch w)) by rewrite ltn_neqAle; apply/andP.
+        rewrite -Heqsize in Hlts {H Hszlt}.
         rewrite -(insert_lt_pos wn _ _ Hlts).
-        apply /is_rowP => //=; first by apply insert_is_row; apply Sch_is_row; apply ltnW.
-        by apply ltnW.
+        apply/is_rowP => //=; first by apply ltnW.
         by rewrite insert_set size_set_nth maxnC /maxn Heqsize ltnSn ltnSn.
+
       (* Wn bump a letter *)
       * case: (altP (size (rcons s si) =P insert_pos wn (Sch w))) => [|Hneq Hlts];
                                                                     first by move ->.
@@ -332,14 +311,36 @@ Section Schensted.
         have Hltsi: (size s).+1 < insert_pos wn (Sch w) by rewrite ltn_neqAle Hneq Hltswn.
         split; first by apply (ltn_trans Hltsi).
         rewrite -(insert_lt_pos _ _ _ Hltsi).
-        apply /is_rowP => //=; first by apply insert_is_row; apply Sch_is_row; apply ltnW.
-        apply (leq_trans Hlts); by apply insert_size_inf.
-    (* The subseqence doesn't end by wn *)
+        apply/is_rowP => //=; apply (leq_trans Hlts); by apply insert_size_inf.
+
+    (* The subsequence doesn't end by wn *)
     - move: (subseq_rcons_neq _ _ _ _ Hsiwn Hsubs) => {Hsiwn Hsubs} Hsubs.
       move: (IHw _ _ Hrow Hsubs) => {IHw Hrow Hsubs} [] Hsize Hleq; split.
       by apply (leq_trans Hsize); apply (insert_size_inf).
       have:= (insert_leq wn (Sch w) (size s)) => H1.
       apply (leq_trans H1); by rewrite (nth_any _ _ _ 0).
+  Qed.
+
+  Definition ndec_subseq s w := is_row s /\ subseq s w.
+  Definition ndec_subseq_n s w n := is_row s /\ subseq s w /\ size s == n.
+
+  Theorem size_ndec_Sch w s : ndec_subseq s w -> (size s) <= size (Sch w).
+  Proof.
+    rewrite /ndec_subseq; move=> [].
+    case/lastP: s => [//=| s si] =>  Hrow Hsubs.
+    move: (Sch_leq_last _ _ _ Hrow Hsubs) => [] H _.
+    by rewrite size_rcons.
+  Qed.
+
+  Theorem exist_size_Sch w : exists s : seq nat, ndec_subseq_n s w (size (Sch w)).
+  Proof.
+    rewrite /ndec_subseq; case/lastP: w => [| w wn]; first by exists [::].
+    move: (insert_size_non_0 wn (Sch w)); rewrite -Sch_rcons.
+    move H : (size _) => ssch; case: ssch H => [_ //=| n] Hn _.
+    move: (ltnSn n); rewrite -{2}Hn => H.
+    elim (Sch_exists _ _ H) => s [] Hsubs [] Hrow Hsize.
+    set ss := (rcons _ _) in Hrow; exists ss; split; first by []; split => //=.
+    by rewrite /ss size_rcons.
   Qed.
 
   Fixpoint insert_bump (l : nat) (t : seq nat) : (seq nat)*(option nat) :=
@@ -348,117 +349,5 @@ Section Schensted.
       else let: (tr, lr) := insert_bump l t in (l0::tr, lr)
     else ([:: l], None).
 
-End S.
+End Schensted.
 
-
-
-  Fixpoint insertsubs (l : nat) (prev : seq nat) (t : seq (seq nat)) : seq (seq nat) :=
-    if t is s0 :: t then
-      if l < (last 0 s0) then (rcons prev l) :: t
-      else s0 :: (insertsubs l s0 t)
-    else [:: rcons prev l].
-
-  Fixpoint insertsubs_pos (l : nat) (prev : seq nat) (t : seq (seq nat)) : nat :=
-    if t is s0 :: t then
-      if l < (last 0 s0) then 0
-      else (insertsubs_pos l s0 t).+1
-    else 0.
-
-  Lemma insertsubs_size_prev (l : nat) (prev : seq nat) (s : seq (seq nat)) :
-    (forall i, i < size s -> size (nth [::] s i) == i.+1 + size prev) ->
-    let sins := (insertsubs l prev s) in
-    forall i, i < size sins -> size (nth [::] sins i) == i.+1 + size prev.
-  Proof.
-    move=> Hs sins; rewrite /sins {sins}.
-    elim: s prev Hs => [| s0 s IHs] prev Hs i /=; first by case i => //=; rewrite size_rcons.
-    case: (ltnP l (last 0 s0)) Hs => [_| Hltl0].
-    - case: i => [//=| i] /= Hi {IHs}; first by rewrite size_rcons.
-      by apply (Hi i.+1).
-    - case: i => [ | i Hi] Hs /=; first by apply (Hs 0).
-      have HH : 0 < size (s0 :: s) by [].
-      move: {HH} (Hi 0 HH) => /=; rewrite add1n => Hszs0.
-      rewrite addSnnS -(eqP Hszs0); apply IHs => //= {IHs} i0 Hi0.
-      move: (Hi i0.+1 Hi0) => /= /eqP ->.
-      by rewrite (eqP Hszs0) addSnnS.
-  Qed.
-
-  Lemma insertsubs_size (l : nat) (s : seq (seq nat)) :
-    (forall i, i < size s -> size (nth [::] s i) == i.+1) ->
-    let sins := (insertsubs l [::] s) in
-    forall i, i < size sins -> size (nth [::] sins i) == i.+1.
-  Proof.
-    move=> Hs sins i; rewrite /sins {sins}.
-    have HH: i.+1 = i.+1 + size (nil (A := nat)) by rewrite /= addn0.
-    rewrite {2}HH; apply insertsubs_size_prev => /= {i HH} i.
-    rewrite addn0; by apply Hs.
-  Qed.
-
-  Lemma insertsubs_lt_pos (l : nat) (prev : seq nat) (s : seq (seq nat)) i :
-    i < (insertsubs_pos l prev s) -> nth [::] (insertsubs l prev s) i = nth [::] s i.
-  Proof.
-    elim: s prev i => //= s0 s; case (ltnP l (last 0 s0)) => //= _ IH _.
-    case => [_  //=| i Hi] /=; by apply IH.
-  Qed.
-
-  Lemma insertsubs_gt_pos (l : nat) (prev : seq nat) (s : seq (seq nat)) i :
-    (insertsubs_pos l prev s) < i -> nth [::] (insertsubs l prev s) i = nth [::] s i.
-  Proof.
-    elim: s prev i => [prev [|n _] //=| s0 s] /=; first by rewrite nth_nil.
-    case (ltnP l (last 0 s0)) => Hs H prev [|i Hi] //=; by apply H.
-  Qed.
-
-  Lemma insertsubs_eq_pos (l : nat) (prev : seq nat) (s : seq (seq nat)) :
-    nth [::] (insertsubs l prev s) (insertsubs_pos l prev s) =
-    rcons (nth [::] (prev :: s) (insertsubs_pos l prev s)) l.
-  Proof.
-    elim: s prev => [//=| s0 s /=]; by case (ltnP l (last 0 s0)) => //=.
-  Qed.
-
-
-  Fixpoint Schsubs_rev (w : seq nat) :=
-    if w is l0 :: w' then insertsubs l0 [::] (Schsubs_rev w')
-    else [::].
-  Definition Schsubs w := Schsubs_rev (rev w).
-
-  Lemma Schsubs_rcons l (w : seq nat) : Schsubs (rcons w l) = insertsubs l [::] (Schsubs w).
-  Proof. by rewrite /Schsubs rev_rcons /=. Qed.
-
-  Lemma Schsubs_last (w : seq nat) :
-    [seq last 0 x | x <- Schsubs w ] == Sch w.
-  Proof.
-    elim/last_ind: w => [| w l0 IHw] //=.
-    rewrite Schsubs_rcons Sch_rcons -(eqP IHw) {IHw}.
-    elim: (Schsubs w) => [//= | ] s0 ts IHts /=.
-    case (ltnP l0 (last 0 s0)) => Heq //=.
-    rewrite eqseq_cons (eq_refl (last 0 s0)) /= -(eqP IHts) {IHts}.
-    elim: ts => [//=| ts0 ts IHts /=]; first by rewrite last_rcons.
-      case (ltnP l0 (last 0 ts0)) => //= _; by rewrite eqseq_cons last_rcons (eq_refl l0) /=.
-  Qed.
-
-  Lemma Schsubs_size (w : seq nat) i :
-    i < size (Schsubs w) -> size (nth [::] (Schsubs w) i) == i.+1.
-  Proof.
-    elim/last_ind: w i => [| w l0 IHw] //= i.
-    rewrite Schsubs_rcons => Hi; by apply insertsubs_size.
-  Qed.
-
-  Lemma Schsubs_row (w : seq nat) i : is_row (nth [::] (Schsubs w) i).
-  Proof.
-    elim/last_ind: w i => [| w l0 IHw] //= i; first by rewrite /Schsubs; case i.
-    rewrite Schsubs_rcons.
-    case: (ltngtP i (insertsubs_pos l0 [::] (Schsubs w))) => Hi.
-    - by rewrite (insertsubs_lt_pos _ _ _ _ Hi).
-    - by rewrite (insertsubs_gt_pos _ _ _ _ Hi).
-    - rewrite Hi insertsubs_eq_pos.
-      apply /is_row1P.
-      
-  Qed.
-  
-
-  Lemma Schsubs_subs (w : seq nat) i : subseq (nth [::] (Schsubs w) i) w.
-  Proof.
-    elim/last_ind: w i => [| w l0 IHw] //= i; first by rewrite /Schsubs; case i.
-    rewrite Schsubs_rcons.
-    
-  Qed.
-  
