@@ -1,36 +1,5 @@
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
-
-Lemma nth_any (T : Type) (s : seq T) a b i : i < size s -> nth a s i = nth b s i.
-Proof. elim: s i => //= s0 s IHs [//=|i] Hsize /=. by apply IHs. Qed.
-
-Lemma rcons_non_nil (s : seq nat) l : ((rcons s l) == [::]) = false.
-Proof.
-  case: (altP (rcons s l =P [::])) => //= H.
-  have := eq_refl (size (rcons s l)). by rewrite {2}H size_rcons.
-Qed.
-
-Lemma subseq_rcons_eq (s : seq nat) w l : subseq s w <-> subseq (rcons s l) (rcons w l).
-Proof.
-  split.
-  - by rewrite -!cats1 => H; apply cat_subseq => //=; rewrite (eq_refl _).
-  - elim: w s => [|w0 w IHw s] /=.
-    case=> //= s0 s; case: (altP (s0 =P l)) => _ //=; by rewrite rcons_non_nil.
-  - case: s IHw => //= s0 s; case: (altP (s0 =P w0)) => _ //= H1 H2; first by apply H1.
-    rewrite -rcons_cons in H2; by apply H1.
-Qed.
-
-Lemma subseq_rcons_neq (s : seq nat) si w wn :
-  si != wn -> subseq (rcons s si) (rcons w wn) -> subseq (rcons s si) w.
-Proof.
-  elim: w s si=> [/=| w0 w IHw] s si H.
-  - case: s => [| s0 s] /=; first by case: (altP (si =P wn)) H.
-    case: (altP (s0 =P wn)) => //= ->; by rewrite rcons_non_nil.
-  - case: s => [/=| s0 s].
-    * case: (altP (si =P w0)) => [_ _|Hneq]; first by apply sub0seq.
-      rewrite -[ [:: si] ]/(rcons [::] si); exact (IHw _ _ H).
-    * rewrite !rcons_cons => /=; case: (altP (s0 =P w0)) => _; first by exact (IHw _ _ H).
-      rewrite -rcons_cons; by exact (IHw _ _ H).
-Qed.
+Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype seq.
+Require Import subseq.
 
 Section Rows.
 
@@ -314,27 +283,27 @@ Section Schensted.
         apply/is_rowP => //=; apply (leq_trans Hlts); by apply insert_size_inf.
 
     (* The subsequence doesn't end by wn *)
-    - move: (subseq_rcons_neq _ _ _ _ Hsiwn Hsubs) => {Hsiwn Hsubs} Hsubs.
+    - move: (subseq_rcons_neq _ _ _ _ _ Hsiwn Hsubs) => {Hsiwn Hsubs} Hsubs.
       move: (IHw _ _ Hrow Hsubs) => {IHw Hrow Hsubs} [] Hsize Hleq; split.
       by apply (leq_trans Hsize); apply (insert_size_inf).
       have:= (insert_leq wn (Sch w) (size s)) => H1.
       apply (leq_trans H1); by rewrite (nth_any _ _ _ 0).
   Qed.
 
-  Definition ndec_subseq s w := is_row s /\ subseq s w.
-  Definition ndec_subseq_n s w n := is_row s /\ subseq s w /\ size s == n.
+  Definition rowsubseq s w := is_row s /\ subseq s w.
+  Definition rowsubseq_n s w n := is_row s /\ subseq s w /\ size s == n.
 
-  Theorem size_ndec_Sch w s : ndec_subseq s w -> (size s) <= size (Sch w).
+  Theorem size_ndec_Sch w s : rowsubseq s w -> (size s) <= size (Sch w).
   Proof.
-    rewrite /ndec_subseq; move=> [].
+    rewrite /rowsubseq; move=> [].
     case/lastP: s => [//=| s si] =>  Hrow Hsubs.
     move: (Sch_leq_last _ _ _ Hrow Hsubs) => [] H _.
     by rewrite size_rcons.
   Qed.
 
-  Theorem exist_size_Sch w : exists s : seq nat, ndec_subseq_n s w (size (Sch w)).
+  Theorem exist_size_Sch w : exists s : seq nat, rowsubseq_n s w (size (Sch w)).
   Proof.
-    rewrite /ndec_subseq; case/lastP: w => [| w wn]; first by exists [::].
+    rewrite /rowsubseq; case/lastP: w => [| w wn]; first by exists [::].
     move: (insert_size_non_0 wn (Sch w)); rewrite -Sch_rcons.
     move H : (size _) => ssch; case: ssch H => [_ //=| n] Hn _.
     move: (ltnSn n); rewrite -{2}Hn => H.
@@ -342,6 +311,33 @@ Section Schensted.
     set ss := (rcons _ _) in Hrow; exists ss; split; first by []; split => //=.
     by rewrite /ss size_rcons.
   Qed.
+
+  (*
+  Section ExMaxn.
+
+    Variable w : seq nat.
+    Let P := [pred n : nat | [exists s, rowsubseq_n s w n] ].
+
+      fun (n : nat) => exists s, rowsubseq_n s w n.
+
+    Lemma ex_subseq : exists i, P i.
+    Proof.
+      rewrite /P /rowsubseq_n; exists 0; exists [::]; repeat split => //=.
+      by apply sub0seq.
+    Qed.
+
+    Lemma bound_subseq : forall i, P i -> i <= size w.
+    Proof.
+      rewrite /P /rowsubseq_n => i H.
+      elim: H => s [] _ [] Hsubs /eqP <-.
+      by apply size_subseq.
+    Qed.
+
+    Definition max_size_rowsubseq := (ex_maxn (P := P) ex_subseq bound_subseq).
+    exP : exists i, P i) (ubP
+
+  End ExMaxn.
+  *)
 
   Fixpoint insert_bump (l : nat) (t : seq nat) : (seq nat)*(option nat) :=
     if t is l0 :: t then
