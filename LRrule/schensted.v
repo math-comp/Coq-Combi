@@ -1,4 +1,5 @@
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype seq.
+Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
+
 Require Import subseq.
 
 Section Rows.
@@ -312,33 +313,6 @@ Section Schensted.
     by rewrite /ss size_rcons.
   Qed.
 
-  (*
-  Section ExMaxn.
-
-    Variable w : seq nat.
-    Let P := [pred n : nat | [exists s, rowsubseq_n s w n] ].
-
-      fun (n : nat) => exists s, rowsubseq_n s w n.
-
-    Lemma ex_subseq : exists i, P i.
-    Proof.
-      rewrite /P /rowsubseq_n; exists 0; exists [::]; repeat split => //=.
-      by apply sub0seq.
-    Qed.
-
-    Lemma bound_subseq : forall i, P i -> i <= size w.
-    Proof.
-      rewrite /P /rowsubseq_n => i H.
-      elim: H => s [] _ [] Hsubs /eqP <-.
-      by apply size_subseq.
-    Qed.
-
-    Definition max_size_rowsubseq := (ex_maxn (P := P) ex_subseq bound_subseq).
-    exP : exists i, P i) (ubP
-
-  End ExMaxn.
-  *)
-
   Fixpoint insert_bump (l : nat) (t : seq nat) : (seq nat)*(option nat) :=
     if t is l0 :: t then
       if l < l0 then (l :: t, Some l0)
@@ -346,4 +320,37 @@ Section Schensted.
     else ([:: l], None).
 
 End Schensted.
+
+Section SubSeq.
+
+  Variable w : seq nat.
+
+  Definition PRowSeq :=
+    [fun i : nat => [exists s : SubSeq nat_countType w, (is_row s) && (size s == i)]].
+
+  Lemma exrow0 : PRowSeq 0.
+  Proof. apply /existsP. by exists (sub_nil _ w). Qed.
+
+  Lemma max_row_len : forall i : nat, PRowSeq i -> i <= size w.
+  Proof. rewrite /PRowSeq=> i /= /existsP [[s Hs]] /andP [] _ /eqP <-; by apply size_le. Qed.
+
+  Definition max_rowsubseq_size := ex_maxn (P := PRowSeq) (ex_intro _ 0 exrow0) max_row_len.
+
+  Theorem size_max_rowsubseq : max_rowsubseq_size == size (Sch w).
+  Proof.
+    rewrite /max_rowsubseq_size.
+    case (ex_maxnP (ex_intro _ 0 exrow0) max_row_len) => i.
+    rewrite /PRowSeq /= => /existsP [] [s Hs] /andP [] /= Hrow Hsz Hmax.
+    rewrite -(eqP Hsz).
+    apply/eqP/anti_leq/andP; split.
+    - apply size_ndec_Sch; rewrite /rowsubseq; split; first exact Hrow.
+      by apply Hs.
+    - rewrite (eqP Hsz); case (exist_size_Sch w) => smax {Hrow Hsz}.
+      rewrite /rowsubseq /rowsubseq_n => [] [] Hrow [] Hsubs /eqP <-.
+      apply Hmax; apply /existsP.
+      exists (exist (is_subseq _ w) smax Hsubs).
+      by rewrite Hrow /=.
+  Qed.
+
+End SubSeq.
 
