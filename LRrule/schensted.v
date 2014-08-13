@@ -18,7 +18,7 @@ Section Rows.
       (forall (i : nat), i.+1 < (size t) -> nth 0 t i <= nth 0 t i.+1)
       (is_row t).
   Proof.
-    apply: (iffP idP).
+    apply/(iffP idP).
     - elim: t => [_ i H //=| t0 [/= _ _ [|i] //=|t1 t /= IHt]] /andP [] Hleq Hrow.
       move: (IHt Hrow) => {IHt Hrow} IHt.
       case => [_ //=| i /= H]; by apply IHt.
@@ -47,7 +47,7 @@ Section Rows.
     reflect
       (forall (i j : nat), i <= j -> j < (size t) -> nth 0 t i <= nth 0 t j)
       (is_row t).
-  Proof. apply: (iffP idP); by rewrite non_decr_equiv => /is_row1P. Qed.
+  Proof. apply/(iffP idP); by rewrite non_decr_equiv => /is_row1P. Qed.
 
   Lemma is_row_rconsK l (t : seq nat) : is_row (rcons t l) -> is_row t.
   Proof.
@@ -67,7 +67,7 @@ Section Rows.
   Proof.
     move/is_row1P => Hrow Hl; apply/is_row1P => i; rewrite size_rcons !nth_rcons => HH.
     have := (HH : (i < size t)) => {HH} HH; rewrite HH.
-    case: (ltngtP i.+1 (size t)) => Hisz.
+    case (ltngtP i.+1 (size t)) => Hisz.
     - by apply Hrow.
     - by rewrite ltnNge HH in Hisz.
     - move: Hrow HH Hl => _ _; by  rewrite (last_nth 0) -Hisz /=.
@@ -185,7 +185,7 @@ Section Schensted.
       move: {Hl0l1 Hlt} Hrow => /= ->; by rewrite (ltnW Hll1).
     - have:= (IHt Hrow) => {IHt Hrow} /=.
       case (ltnP l l1) => /= _; first by rewrite Hlt.
-      case: (insert t l); by rewrite Hl0l1.
+      case (insert t l); by rewrite Hl0l1.
   Qed.
 
   Fixpoint Sch_rev (w : seq nat) :=
@@ -199,7 +199,7 @@ Section Schensted.
   Lemma Sch_size w : size (Sch w) <= size w.
   Proof.
     elim/last_ind: w => [| w l0 IHw] //=.
-    rewrite Sch_rcons; move : (insert_size_sup (Sch w) l0) => Hins.
+    rewrite Sch_rcons; move: (insert_size_sup (Sch w) l0) => Hins.
     rewrite size_rcons; by apply (leq_trans Hins).
   Qed.
 
@@ -215,10 +215,10 @@ Section Schensted.
   Proof.
     elim/last_ind: w i => [| w l0 IHw] //= i.
     rewrite Sch_rcons insert_set size_set_nth nth_set_nth /=.
-    case: (altP (i =P (insert_pos (Sch w) l0))).
+    case (altP (i =P (insert_pos (Sch w) l0))).
     - case: i => [_ _|i]; first by exists [::]; split => //=; rewrite -cats1 suffix_subseq.
       move=> Hieq _; have := (insert_pos_size (Sch w) l0); rewrite -Hieq => Hisz.
-      case: (IHw i Hisz) => {Hisz IHw} s [] Hsubs [] Hrow Hsz.
+      case (IHw i Hisz) => {Hisz IHw} s [] Hsubs [] Hrow Hsz.
       exists (rcons s (nth 0 (Sch w) i)); split; last split.
       * rewrite -!cats1; apply cat_subseq => //=; first by rewrite cats1.
         by rewrite (eq_refl l0).
@@ -226,10 +226,10 @@ Section Schensted.
         have Hlt := (insert_pos_lt HH) => {HH}.
         apply is_row_rcons => //=; by rewrite last_rcons.
       * by rewrite size_rcons.
-    - case: (altP (insert_pos (Sch w) l0 =P (size (Sch w)))) => [->|].
+    - case (altP (insert_pos (Sch w) l0 =P (size (Sch w)))) => [->|].
       rewrite /maxn (_ : _.+1 < _ = false) => [Hneq Hlt1|]; last by elim: (size _).
       have Hlt : (i < size (Sch w)) by rewrite ltn_neqAle Hneq.
-      case: (IHw i Hlt) => {Hneq Hlt1 Hlt IHw} s /= [] Hsubs [] Hrow Hsz.
+      case (IHw i Hlt) => {Hneq Hlt1 Hlt IHw} s /= [] Hsubs [] Hrow Hsz.
       by exists s; split => //=; apply (subseq_trans Hsubs); apply subseq_rcons.
     - rewrite /maxn => Hneq Hneqi Hmax.
       have Hlt : (i < size (Sch w)).
@@ -247,7 +247,7 @@ Section Schensted.
     (size s) < size (Sch w) /\ nth 0 (Sch w) (size s) <= si.
   Proof.
     elim/last_ind: w s si=> [| w wn IHw] s si; first by rewrite subseq0 rcons_non_nil.
-    case: (altP (si =P wn)) => [-> {si} Hrow | Hsiwn Hrow Hsubs]; rewrite Sch_rcons.
+    case (altP (si =P wn)) => [-> {si} Hrow | Hsiwn Hrow Hsubs]; rewrite Sch_rcons.
     (* The subseqence s ends by wn *)
     - rewrite -subseq_rcons_eq; case/lastP: s Hrow => [/= _ _ | s si Hrow Hsubs].
       (* s = wn *)
@@ -266,7 +266,7 @@ Section Schensted.
         have Heqsize: (insert_pos (Sch w) wn = size (Sch w)) by
           apply anti_leq; apply/andP; split; first by apply insert_pos_size.
         rewrite Heqsize {Hsize_ins}; split; first by [].
-        case: (altP ((size s).+1 =P size (Sch w))) => H; first by [].
+        case (altP ((size s).+1 =P size (Sch w))) => H; first by [].
         rewrite -[wn](insert_eq_pos (Sch w) _).
         have Hlts: ((size s).+1 < size (Sch w)) by rewrite ltn_neqAle; apply/andP.
         rewrite -Heqsize in Hlts {H Hszlt}.
@@ -275,7 +275,7 @@ Section Schensted.
         by rewrite insert_set size_set_nth maxnC /maxn Heqsize ltnSn ltnSn.
 
       (* Wn bump a letter *)
-      * case: (altP (size (rcons s si) =P insert_pos (Sch w) wn)) => [|Hneq Hlts];
+      * case (altP (size (rcons s si) =P insert_pos (Sch w) wn)) => [|Hneq Hlts];
                                                                     first by move ->.
         rewrite -[wn](insert_eq_pos (Sch w) _).
         move: (insert_pos_gt (Sch w) wn); rewrite (@nth_any _ (Sch w) _ 0); last by [].
@@ -471,8 +471,7 @@ Section Tableaux.
     reflect ((size u) <= (size v) /\ forall i, i < size u -> nth 0 u i > nth 0 v i)
             (dominate u v).
   Proof.
-    rewrite /dominate.
-    apply: (iffP idP).
+    rewrite /dominate; apply/(iffP idP).
     - move=> /andP [] Hsz /forallP Hall; split => [//=| i Hi].
       by apply (Hall (Ordinal Hi)).
     - move=> [] -> /= H; apply /forallP => [[i Hi]] /=; by apply H.
@@ -537,8 +536,8 @@ Section Tableaux.
     - move=> i Hi.
       have Hins0': tr0 = (insert r0 l) by rewrite -insert_eq_bump Hins0.
       rewrite Hins0' !insert_set !nth_set_nth /=.
-      case: (altP (i =P (insert_pos r0 l))) => Hipos0;
-         case: (altP (i =P (insert_pos r1 l0))) => Hipos1.
+      case (altP (i =P (insert_pos r0 l))) => Hipos0;
+         case (altP (i =P (insert_pos r1 l0))) => Hipos1.
       * by apply (insert_bump_lt Hins0).
       * have Hl: (l <= nth 0 r0 i).
         - rewrite -(insert_eq_pos r0 l) -Hipos0 -[nth _ r0 _](nth_any l 0);
@@ -646,9 +645,6 @@ Eval compute in (to_word (RS [:: 2; 5; 1; 6; 4; 3])).
       if lr is Some ll then (rcons remw ll, rr) else (remw, rr)
     else ([::], r).
   Definition bump_row r w := bump_row_rev r (rev w).
-
-  Lemma count_mem_rcons w l i : count_mem i (rcons w l) = count_mem i w + (l == i).
-  Proof. by rewrite -count_rev rev_rcons /= count_rev addnC. Qed.
 
   Lemma bump_size r w :
     let: (remw, tres) := bump_row r w in
