@@ -19,7 +19,7 @@ Section RCons.
     by move=> /eqP [] ->.
   Qed.
 
-  Lemma rcons_non_nil s l : ((rcons s l) == [::]) = false.
+  Lemma rcons_nilF s l : ((rcons s l) == [::]) = false.
   Proof.
     case (altP (rcons s l =P [::])) => //= H.
     have:= eq_refl (size (rcons s l)). by rewrite {2}H size_rcons.
@@ -30,7 +30,7 @@ Section RCons.
     split.
     - by rewrite -!cats1 => H; apply cat_subseq => //=; rewrite (eq_refl _).
     - elim: w s => [|w0 w IHw s] /=.
-      case=> //= s0 s; case (altP (s0 =P l)) => _ //=; by rewrite rcons_non_nil.
+      case=> //= s0 s; case (altP (s0 =P l)) => _ //=; by rewrite rcons_nilF.
     - case: s IHw => //= s0 s; case (altP (s0 =P w0)) => _ //= H1 H2; first by apply H1.
       rewrite -rcons_cons in H2; by apply H1.
   Qed.
@@ -40,12 +40,12 @@ Section RCons.
   Proof.
     elim: w s si=> [/=| w0 w IHw] s si H.
     - case: s => [| s0 s] /=; first by case: (altP (si =P wn)) H.
-      case (altP (s0 =P wn)) => //= ->; by rewrite rcons_non_nil.
+      case (altP (s0 =P wn)) => //= ->; by rewrite rcons_nilF.
     - case: s => [/=| s0 s].
       * case (altP (si =P w0)) => [_ _|Hneq]; first by apply sub0seq.
         rewrite -[ [:: si] ]/(rcons [::] si); exact (IHw _ _ H).
-      * rewrite !rcons_cons => /=; case (altP (s0 =P w0)) => _; first by exact (IHw _ _ H).
-        rewrite -rcons_cons; by exact (IHw _ _ H).
+      * rewrite !rcons_cons /=; case (altP (s0 =P w0)) => _; first exact (IHw _ _ H).
+        rewrite -rcons_cons; exact (IHw _ _ H).
   Qed.
 
   Lemma count_mem_rcons w l i : count_mem i (rcons w l) = count_mem i w + (l == i).
@@ -119,7 +119,7 @@ Section MaxSize.
     apply/eqP/anti_leq/andP; split; first by apply max_len.
     suff: PSeq (size w); first by apply Hleqi.
     rewrite /PSeq /=; apply /existsP.
-    by exists (sub_full  w).
+    by exists (sub_full w).
   Qed.
 
 End MaxSize.
