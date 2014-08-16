@@ -6,31 +6,33 @@ Unset Strict Implicit.
 
 Section Rows.
 
-  Fixpoint is_row (t : seq nat) : bool :=
-    match t with
+  Implicit Type l : nat.
+  Implicit Type r : seq nat.
+
+  Fixpoint is_row r : bool :=
+    match r with
       | [::] => true
-      | [:: a] => true
-      | a :: (b :: _) as tl => (a <= b) && is_row tl
+      | l :: r => (l <= head l r) && is_row r
     end.
 
-  Lemma is_row1P (t : seq nat) :
+  Lemma is_row1P r :
     reflect
-      (forall (i : nat), i.+1 < (size t) -> nth 0 t i <= nth 0 t i.+1)
-      (is_row t).
+      (forall (i : nat), i.+1 < (size r) -> nth 0 r i <= nth 0 r i.+1)
+      (is_row r).
   Proof.
     apply/(iffP idP).
-    - elim: t => [_ i H //=| t0 [/= _ _ [|i] //=|t1 t /= IHt]] /andP [] Hleq Hrow.
-      move: (IHt Hrow) => {IHt Hrow} IHt.
-      case => [_ //=| i /= H]; by apply IHt.
-    - elim: t => [_ //=|] t0 [//=| t1 t] IHt Ht /=.
+    - elim: r => [_ i H //=| l0 [/= _ _ [|i] //=|l1 r /= IHr]] /andP [] Hleq Hrow.
+      move: (IHr Hrow) => {IHr Hrow} IHr.
+      case => [_ //=| i /= H]; by apply IHr.
+    - elim: r => [_ //=|] l0 [/=| l1 t] IHr Ht /=; first by rewrite leqnn.
       apply/andP; split; first by apply (Ht 0).
-      apply IHt => i; by apply (Ht i.+1).
+      apply IHr => i; by apply (Ht i.+1).
   Qed.
 
-  Lemma non_decr_equiv (t : seq nat) :
-    (forall (i j : nat), i <= j -> j < (size t) -> nth 0 t i <= nth 0 t j)
+  Lemma non_decr_equiv r :
+    (forall (i j : nat), i <= j -> j < (size r) -> nth 0 r i <= nth 0 r j)
     <->
-    (forall (i : nat), i.+1 < (size t) -> nth 0 t i <= nth 0 t i.+1).
+    (forall (i : nat), i.+1 < (size r) -> nth 0 r i <= nth 0 r i.+1).
   Proof.
     split => H; first by move=> i; apply (H i i.+1).
     move=> i j; move Hdiff : (j - i) => diff.
@@ -38,56 +40,125 @@ Section Rows.
     - have HH: (i <= j <= i) by apply/andP.
       by rewrite (anti_leq HH).
     - have Hiltj: (i < j) by rewrite -subn_gt0 Hdiff.
-      apply (leq_trans (n := (nth 0 t i.+1))).
+      apply (leq_trans (n := (nth 0 r i.+1))).
       apply H; by apply (leq_ltn_trans (n := j)).
       apply IHdiff => //=; first by rewrite subnS Hdiff.
   Qed.
 
-  Lemma is_rowP (t : seq nat) :
+  Lemma is_rowP r :
     reflect
-      (forall (i j : nat), i <= j -> j < (size t) -> nth 0 t i <= nth 0 t j)
-      (is_row t).
+      (forall (i j : nat), i <= j -> j < (size r) -> nth 0 r i <= nth 0 r j)
+      (is_row r).
   Proof. apply/(iffP idP); by rewrite non_decr_equiv => /is_row1P. Qed.
 
-  Lemma is_row_rconsK l (t : seq nat) : is_row (rcons t l) -> is_row t.
+  Lemma is_row_consK l r : is_row (cons l r) -> is_row r.
+  Proof. by move=> /= /andP [] _. Qed.
+
+  Lemma is_row_rconsK l r : is_row (rcons r l) -> is_row r.
   Proof.
-    elim: t => [//=|t0 [//=|t1 t] IHt] /= /andP [] -> /= H; by apply (IHt H).
+    elim:  r => [//= | l0 [_ //=|l1 r] IHr]; first by rewrite leqnn.
+    by move => /= /andP [] ->.
   Qed.
 
-  Lemma is_row_last l (t : seq nat) : is_row (rcons t l) -> last 0 t <= l.
+  Lemma is_row_last l r : is_row (rcons r l) -> last 0 r <= l.
   Proof.
-    elim: t => [//=|t0 t IHt /=]; move H: (rcons t l) => rtl.
-    case: rtl H => [/eqP H _| a l0 H /andP []]; first by rewrite rcons_nilF in H.
-    case: t IHt H => [_ /= [] -> //= | t1 t IH Heq Ht0].
-    move: Heq IH; rewrite !rcons_cons; move=> [] Ht1 Hl0.
-    subst t1; subst l0. by apply.
+    elim: r => [//=|t0 r IHr] /= /andP [] Ht0.
+    move/IHr {IHr}; by case: r Ht0 => [//=| l0 r] /=.
   Qed.
 
-  Lemma is_row_rcons l (t : seq nat) : is_row t -> last 0 t <= l -> is_row (rcons t l).
+  Lemma head_leq_last_row l r : is_row (l :: r) -> l <= last l r.
+  Proof.
+    elim: r l => [//=| t0 r IHr] l /= /andP [] Hl.
+    move/IHr {IHr}; by apply (leq_trans Hl).
+  Qed.
+
+  Lemma is_row_rcons l r : is_row r -> last 0 r <= l -> is_row (rcons r l).
   Proof.
     move/is_row1P => Hrow Hl; apply/is_row1P => i; rewrite size_rcons !nth_rcons => HH.
-    have := (HH : (i < size t)) => {HH} HH; rewrite HH.
-    case (ltngtP i.+1 (size t)) => Hisz.
+    have:= (HH : (i < size r)) => {HH} HH; rewrite HH.
+    case (ltngtP i.+1 (size r)) => Hisz.
     - by apply Hrow.
     - by rewrite ltnNge HH in Hisz.
     - move: Hrow HH Hl => _ _; by rewrite (last_nth 0) -Hisz.
   Qed.
 
-  Lemma row_lt_by_pos (t : seq nat) p q :
-    is_row t -> p < size t -> q < size t -> nth 0 t p < nth 0 t q -> p < q.
+  Lemma row_lt_by_pos r p q :
+    is_row r -> p < size r -> q < size r -> nth 0 r p < nth 0 r q -> p < q.
   Proof.
     move/is_rowP => Hrow Hp Hq Hlt.
-    have H : (q <= p -> nth 0 t q <= nth 0 t p) by move=> H; apply Hrow.
+    have H : (q <= p -> nth 0 r q <= nth 0 r p) by move=> H; apply Hrow.
     by move: (contra H); rewrite -!ltnNge; apply.
+  Qed.
+
+  Lemma is_row_set_nth l r pos :
+    is_row r -> l < nth 0 r pos ->
+    (forall n : nat, l < nth 0 r n -> pos <= n) -> is_row (set_nth 0 r pos l).
+  Proof.
+    move=> /is_row1P Hrow Hl Hmin; apply/is_row1P => i.
+    rewrite (lock (i.+1)) !nth_set_nth /=; unlock.
+    case: (ltnP pos (size r)) Hl => [Hpos Hl |HH]; last by rewrite (nth_default 0 HH) ltn0.
+    rewrite size_set_nth maxnC /maxn; have:= Hpos; rewrite leqNgt; move/negbTE => -> Hi1lt.
+    case (altP (i =P pos)) => Hipos; case (altP (i.+1 =P pos)) => Hi1pos.
+    - apply leqnn.
+    - apply ltnW; apply (leq_trans Hl); rewrite -Hipos; by apply Hrow.
+    - move: {Hmin} (contra (Hmin i)); rewrite -leqNgt -ltnNge; apply.
+      by rewrite Hi1pos leqnn.
+    - by apply Hrow.
   Qed.
 
 End Rows.
 
 
-Section Schensted.
+Section Insert.
 
   Implicit Type l : nat.
-  Implicit Type r w : seq nat.
+  Implicit Type r w s : seq nat.
+
+  Variable Row : seq nat.
+  Hypothesis HRow : is_row Row.
+  Variable l : nat.
+
+  Definition inspred i := l < nth 0 Row i.
+  Definition bump := l < (last 0 Row).
+
+  Lemma notbump : ~~bump = (l >= (last 0 Row)).
+  Proof. by rewrite /bump /= -leqNgt. Qed.
+
+  Lemma transf : bump -> l < (nth 0 Row (size Row).-1).
+  Proof. by rewrite nth_last. Qed.
+
+  Lemma inspred_any_bump i : inspred i -> bump.
+  Proof.
+    rewrite /inspred /= /bump; have := HRow.
+    elim: Row i => [/= | l0 r IHr] i; first by case: i.
+    case: i => [|i] /= /andP [] Hhead Hrow.
+    - case: r {IHr} Hhead Hrow => [//=|l1 r] /= Hl0l1.
+      move/head_leq_last_row => Hlast Hll0.
+      by apply (leq_trans Hll0 (leq_trans Hl0l1 Hlast)).
+    - move=> H; move: (IHr _ Hrow H); by case r.
+  Qed.
+
+  Definition mininspred : nat :=
+    if ltnP l (last 0 Row) is LtnNotGeq Hlast
+    then ex_minn (ex_intro inspred (size Row).-1 (transf Hlast))
+    else size Row.
+  Definition insmin := set_nth 0 Row mininspred l.
+
+  Lemma bump_mininspredE (Hbump : bump) :
+    mininspred = ex_minn (ex_intro inspred (size Row).-1 (transf Hbump)).
+  Proof.
+    rewrite /mininspred /inspred; apply /eqP.
+    case (ltnP l (last 0 Row)) => Hlast.
+    - set exP := (ex_intro _ _ _); case (ex_minnP exP) => pos1 {exP} Hl1 Hpos1.
+      set exP := (ex_intro _ _ _); case (ex_minnP exP) => pos2 {exP} Hl2 Hpos2.
+      by rewrite eqn_leq (Hpos1 _ Hl2) (Hpos2 _ Hl1).
+    - by exfalso; move: Hbump; rewrite /bump /= ltnNge Hlast.
+  Qed.
+
+  Lemma nbump_mininspredE : ~~bump -> mininspred = size Row.
+  Proof.
+    rewrite notbump /mininspred /inspred; by case (ltnP l (last 0 Row)) => [Hlt |//=].
+  Qed.
 
   Fixpoint insrow r l : seq nat :=
     if r is l0 :: r then
@@ -95,218 +166,292 @@ Section Schensted.
       else l0 :: (insrow r l)
     else [:: l].
 
-  Fixpoint insrow_pos r l : nat :=
+  Fixpoint inspos r l : nat :=
     if r is l0 :: r then
       if l < l0 then 0
-      else (insrow_pos r l).+1
+      else (inspos r l).+1
     else 0.
 
+  Notation pos := (inspos Row l).
+  Definition ins := set_nth 0 Row pos l.
 
-  Lemma insrow_head_lt r l : head 0 (insrow r l) <= l.
-  Proof. case: r => [//=|t0 t] /=; by case (ltnP l t0). Qed.
-
-  Lemma insrow_pos_size r l : insrow_pos r l <= size r.
-  Proof. elim: r => //= t0 t; by case (ltnP l t0). Qed.
-
-  Lemma insrow_lt_pos r l i :
-    i < (insrow_pos r l) -> nth 0 (insrow r l) i = nth 0 r i.
+  Lemma nbump_insposE : ~~bump -> mininspred = pos.
   Proof.
-    elim: r i => //= t0 t; case (ltnP l t0) => //= _ IH.
-    case => [_  //=| i Hi] /=; by apply IH.
+    move=> Hbump; rewrite (nbump_mininspredE Hbump).
+    move: Hbump; rewrite notbump.
+    elim: Row HRow => [//=|l0 r IHr] Hrow /= Hlast.
+    case: (ltnP l l0) => [Hll0|_].
+    * exfalso => {IHr}.
+      move: (leq_ltn_trans (leq_trans (head_leq_last_row Hrow) Hlast) Hll0).
+      by rewrite ltnn.
+    * move: {IHr Hrow} (IHr (is_row_consK Hrow)).
+      case: r Hlast => [//=| l1 r] /= Hlast.
+      by case (ltnP l l1) => _ IHr; rewrite (IHr Hlast).
   Qed.
 
-  Lemma insrow_gt_pos r l i :
-    (insrow_pos r l) < i -> nth 0 (insrow r l) i = nth 0 r i.
+  Lemma inspred_inspos : bump -> inspred pos.
   Proof.
-    elim: r i => [[|n _] //=| t0 t] /=; first by rewrite nth_nil.
-    case (ltnP l t0) => Ht H [|i Hi] //=; by apply H.
+    rewrite /inspred /bump; elim: Row => [//=| l0 [_ /= H| l1 r /= IHr]].
+    - by rewrite H /= H.
+    - move/IHr; by case (ltnP l l0) => //=.
   Qed.
 
-  Lemma insrow_eq_pos r l :
-    nth 0 (insrow r l) (insrow_pos r l) = l.
+  Lemma inspred_mininspred : bump -> inspred mininspred.
   Proof.
-    elim: r => [//=| t0 r /=]; by case (ltnP l t0).
+    move=> Hbump; rewrite (bump_mininspredE Hbump).
+    set exP := (ex_intro _ _ _); by case (ex_minnP exP).
   Qed.
 
-  Lemma insrow_set r l : insrow r l = set_nth 0 r (insrow_pos r l) l.
+  Lemma nth_lt_inspos i : i < pos -> nth 0 Row i <= l.
   Proof.
-    elim: r => [//=|t0 r IHt] /=; case (ltnP l t0) => H //=.
-    by rewrite IHt.
+    elim: Row i => [//=|t0 r IHr] /=; case (ltnP l t0) => //= Ht.
+    case=> [//=|i] /=; by apply IHr.
   Qed.
 
-  Lemma insrow_non_nil r l : insrow r l != [::].
-  Proof. case: r => [//=|t0 t] /=; by case (ltnP l t0) => H. Qed.
+  Lemma inspredN_lt_inspos i : i < pos -> ~~ (inspred i).
+  Proof. rewrite /inspred -leqNgt; apply nth_lt_inspos. Qed.
 
-  Lemma insrow_size_non_0 r l : 0 < size (insrow r l).
+  Lemma bump_insposE : bump -> mininspred = pos.
   Proof.
-    rewrite insrow_set size_set_nth.
-    apply (leq_trans (n := (insrow_pos r l).+1)) => //=; by apply leq_maxl.
+    move=> Hbump; rewrite (bump_mininspredE Hbump).
+    set exP := (ex_intro _ _ _); case (ex_minnP exP) => pos {exP} Hl Hpos.
+    move: (Hpos _ (inspred_inspos Hbump)) => Hleq.
+    case (ltnP pos (inspos Row l)) => H2.
+    - exfalso; move: (inspredN_lt_inspos H2) Hl => H; by rewrite (negbTE H).
+    - apply /eqP; by rewrite eqn_leq Hleq H2.
   Qed.
 
-  Lemma insrow_pos_lt r l i : i < insrow_pos r l -> nth 0 r i <= l.
+  Lemma posE : mininspred = pos.
+  Proof. case (boolP bump); first by apply bump_insposE. by apply nbump_insposE. Qed.
+
+  Lemma pos_leq_exP i : inspred i -> pos <= i.
   Proof.
-    elim: r i => [//=|t0 r IHt] /=; case (ltnP l t0) => //= Ht.
-    case=> [//=|i] /=; by apply IHt.
+    move=> HlPred.
+    rewrite -posE (bump_mininspredE (inspred_any_bump HlPred)).
+    set exP := (ex_intro _ _ _); case (ex_minnP exP) => pos {exP} _ Hpos.
+    by apply Hpos.
   Qed.
 
-  Lemma insrow_pos_gt r l : l < nth l.+1 r (insrow_pos r l).
-  Proof. elim: r => //= t0 t; by case (ltnP l t0). Qed.
+  Lemma insE : insmin = ins.
+  Proof. by rewrite /insmin /ins posE. Qed.
 
-  Lemma insrow_size_inf r l : (size r) <= size (insrow r l).
-  Proof. elim: r => //= t0 t; by case (ltnP l t0). Qed.
-
-  Lemma insrow_size_sup r l : size (insrow r l) <= (size r).+1.
-  Proof. elim: r => //= t0 t; by case (ltnP l t0). Qed.
-
-  Lemma insrow_leq r l : forall (i : nat), nth 0 (insrow r l) i <= nth l r i.
+  Lemma insrowE : insmin = insrow Row l.
   Proof.
-    elim: r => [| t0 r IHt] i /=.
-    rewrite nth_nil; case i => [| n]; first by rewrite nth0 /=.
-    by rewrite -nth_behead /= nth_nil.
-    case (ltnP l t0) => Hcomp; last by case i.
-    case i => /=; first by apply ltnW.
-    elim r => [| s0 s IHs] n; first by rewrite !nth_nil.
-    by case n.
+    rewrite /insmin posE.
+    elim: Row HRow => [//=| l0 r IHr] Hrow /=.
+    case (ltnP l l0) => _ //=; by rewrite (IHr (is_row_consK Hrow)).
   Qed.
 
-  Lemma insrow_is_row r l : (is_row r) -> is_row (insrow r l).
+  Lemma bump_inspos_lt_size : bump -> pos < size Row.
   Proof.
-    elim: r => //= l0 [_ _| l1 r IHt /andP [] Hl0l1 Hrow] /=;
-       first by case (ltnP l l0) => //= ->.
-    case (ltnP l l0) => Hlt /=.
-    - have Hll1: (l < l1) by apply (leq_trans Hlt Hl0l1).
-      move: {Hl0l1 Hlt} Hrow => /= ->; by rewrite (ltnW Hll1).
-    - have:= (IHt Hrow) => {IHt Hrow} /=.
-      case (ltnP l l1) => /= _; first by rewrite Hlt.
-      case (insrow r l); by rewrite Hl0l1.
+    rewrite -posE /bump; move=> Hbump; rewrite (bump_mininspredE Hbump).
+    set exP := (ex_intro _ _ _); case (ex_minnP exP) => pos {exP} Hl Hpos.
+    have:= (Hpos _ (transf Hbump)); case: Row Hbump {Hl Hpos}; first by rewrite /= ltn0.
+    move => l0 r _ /=; by rewrite ltnS.
   Qed.
 
-  Fixpoint Sch_rev (w : seq nat) :=
-    if w is l0 :: w' then insrow (Sch_rev w') l0
-    else [::].
+  Lemma nbump_inspos_eq_size : ~~bump -> pos = size Row.
+  Proof. move=> Hnbump; by rewrite -posE nbump_mininspredE. Qed.
+
+  Lemma pos_leq_size : pos <= size Row.
+  Proof.
+    case (boolP bump) => Hlast.
+    - move: (bump_inspos_lt_size Hlast) => H; by apply ltnW.
+    - by rewrite nbump_inspos_eq_size.
+  Qed.
+
+  Lemma lt_inspos_nth i : i < size Row -> nth 0 Row i <= l -> i < pos.
+  Proof.
+    move: HRow; move=> /is_rowP Hrow Hi Hnthi; rewrite -posE /mininspred /inspred.
+    case (ltnP l (last 0 Row)) => [Hlt |//=].
+    set exP := (ex_intro _ _ _); case (ex_minnP exP) => pos {exP} Hl Hpos.
+    move: (leq_ltn_trans Hnthi Hl) (Hrow pos i) => {Hrow} {Hpos} H1 H2.
+    have {H2} H2: (pos <= i -> nth 0 Row pos <= nth 0 Row i) by move=> H; by apply H2.
+    move: (contra H2); rewrite -!ltnNge; by apply.
+  Qed.
+
+  Lemma insrow_head_lt : head 0 (insrow Row l) <= l.
+  Proof. case: Row => [//=|l0 r] /=; by case (ltnP l l0). Qed.
+
+  Lemma ins_head_lt : head 0 ins <= l.
+  Proof. rewrite -insE insrowE; by apply insrow_head_lt. Qed.
+
+  Lemma is_row_ins : is_row ins.
+  Proof.
+    move: HRow; rewrite -insE /insmin /mininspred => Hrow.
+    case (ltnP l (last 0 Row)) => Hlast.
+    - set exP := (ex_intro _ _ _); case (ex_minnP exP) => pos {exP}.
+      rewrite /inspred; by apply is_row_set_nth.
+    - rewrite rcons_set_nth; by apply is_row_rcons.
+  Qed.
+
+  Lemma bump_size_ins : bump -> size ins = size Row.
+  Proof.
+    move/bump_inspos_lt_size; rewrite /insE /insmin size_set_nth maxnC /maxn leqNgt.
+    by move/negbTE => ->.
+  Qed.
+
+  Lemma nbump_size_ins : ~~bump -> size ins = (size Row).+1.
+  Proof.
+    move/nbump_mininspredE => H.
+    by rewrite -insE /insmin size_set_nth maxnC /maxn H ltnSn.
+  Qed.
+
+  Lemma nbump_ins_rconsE : ~~bump -> ins = rcons Row l.
+  Proof. move/nbump_mininspredE => H; by rewrite -insE /insmin H rcons_set_nth. Qed.
+
+  Lemma size_ins_inf : (size Row) <= size ins.
+  Proof.
+    rewrite -insE /insmin size_set_nth /maxn.
+    by case (ltnP mininspred.+1 (size Row)).
+  Qed.
+
+  Lemma size_ins_sup : size ins <= (size Row).+1.
+  Proof.
+    rewrite /ins size_set_nth /maxn.
+    case (ltnP pos.+1 (size Row)) => _.
+    - by apply leqnSn.
+    - by apply pos_leq_size.
+  Qed.
+
+  Lemma ins_leq i : i < size Row -> nth 0 ins i <= nth 0 Row i.
+  Proof.
+    rewrite -insE /insmin nth_set_nth /=.
+    case (altP (i =P mininspred)) => [->|_ _]; last by apply leqnn.
+    rewrite /mininspred /inspred; case (ltnP l (last 0 Row)) => [Hcase | Hcase].
+    - set exP := (ex_intro _ _ _); case (ex_minnP exP) => pos Hl _ _; by apply ltnW.
+    - by rewrite ltnn.
+  Qed.
+
+  Lemma ins_non_nil : ins != [::].
+  Proof. rewrite /ins; by apply set_nth_non_nil. Qed.
+
+  Lemma size_ins_non_0 : 0 < size ins.
+  Proof. move: ins_non_nil; by case ins. Qed.
+
+End Insert.
+
+
+Section Schensted.
+
+  Implicit Type l : nat.
+  Implicit Type r w s : seq nat.
+
+  Fixpoint Sch_rev w := if w is l0 :: w' then ins (Sch_rev w') l0 else [::].
   Definition Sch w := Sch_rev (rev w).
 
-  Lemma Sch_rcons l (w : seq nat) : Sch (rcons w l) = insrow (Sch w) l.
+  Lemma Sch_rcons l w : Sch (rcons w l) = ins (Sch w) l.
   Proof. by rewrite /Sch rev_rcons. Qed.
+
+  Lemma is_row_Sch w : is_row (Sch w).
+  Proof.
+    elim/last_ind: w => [//= | w wn IHw]; by rewrite Sch_rcons is_row_ins.
+  Qed.
 
   Lemma Sch_size w : size (Sch w) <= size w.
   Proof.
     elim/last_ind: w => [//= | w wn IHw]; rewrite Sch_rcons size_rcons.
-    by apply (leq_trans (insrow_size_sup (Sch w) wn)).
+    by apply (leq_trans (size_ins_sup (is_row_Sch w) wn)).
   Qed.
 
-  Lemma Sch_is_row w : is_row (Sch w).
-  Proof. elim/last_ind: w => [//= | w wn IHw]; by rewrite Sch_rcons insrow_is_row. Qed.
+  Definition subseqrow s w := subseq s w && is_row s.
+  Definition subseqrow_n s w n := [&& subseq s w , (size s == n) & is_row s].
 
-  Theorem Sch_exists (w : seq nat) i :
+  Theorem Sch_exists w i :
     i < size (Sch w) ->
-    exists s : seq nat, let s' := rcons s (nth 0 (Sch w) i) in
-      subseq s' w /\ is_row s' /\ size s == i.
+    exists s : seq nat, (last 0 s == nth 0 (Sch w) i) && subseqrow_n s w i.+1.
   Proof.
-    elim/last_ind: w i => [//=| w l0 IHw] i.
-    rewrite Sch_rcons insrow_set size_set_nth nth_set_nth /=.
-    case (altP (i =P (insrow_pos (Sch w) l0))).
-    - case: i => [_ _|i]; first by exists [::]; split => //=; rewrite -cats1 suffix_subseq.
-      move=> Hieq _; have := (insrow_pos_size (Sch w) l0); rewrite -Hieq => Hisz.
-      case (IHw i Hisz) => {Hisz IHw} s [] Hsubs [] Hrow Hsz.
-      exists (rcons s (nth 0 (Sch w) i)); split; last split.
-      * rewrite -!cats1; apply cat_subseq => //=; first by rewrite cats1.
-        by rewrite (eq_refl l0).
-      * have HH : (i < insrow_pos (Sch w) l0) by rewrite Hieq.
-        have Hlt := (insrow_pos_lt HH) => {HH}.
-        apply is_row_rcons => //=; by rewrite last_rcons.
-      * by rewrite size_rcons.
-    - case (altP (insrow_pos (Sch w) l0 =P (size (Sch w)))) => [->|].
-      - rewrite /maxn (_ : _.+1 < _ = false) => [Hneq Hlt1|]; last by elim: (size _).
-        have Hlt : (i < size (Sch w)) by rewrite ltn_neqAle Hneq.
-        case (IHw i Hlt) => {Hneq Hlt1 Hlt IHw} s /= [] Hsubs [] Hrow Hsz.
-        by exists s; split => //=; apply (subseq_trans Hsubs); apply subseq_rcons.
-      - rewrite /maxn => Hneq Hneqi Hmax.
-        have Hlt : (i < size (Sch w)).
-        case (ltngtP (insrow_pos (Sch w) l0).+1 (size (Sch w))) => //= HH.
-        * by rewrite HH in Hmax.
-        * suff Heq: insrow_pos (Sch w) l0 == size (Sch w) by rewrite Heq in Hneq.
-          apply/eqP/anti_leq/andP; split => //=; by apply insrow_pos_size.
-        * by rewrite HH if_same in Hmax.
-        case (IHw i Hlt) => {Hneq Hneqi Hlt IHw Hmax} s /= [] Hsubs [] Hrow Hsz.
-        by exists s; split => //=; apply (subseq_trans Hsubs); apply subseq_rcons.
+    rewrite /subseqrow_n.
+    elim/last_ind: w i => [//=| w wn IHw] i.
+    rewrite Sch_rcons {2}/ins. (* -(insE (is_row_Sch w)) {2}/insmin. *)
+    case (altP (i =P (inspos (Sch w) wn))) =>[|Hineq Hileq].
+    - case: i => [<-|i Hieq ] _.
+      * exists [:: wn] => /=; case (Sch w) => [|_ _];
+            rewrite -cats1 suffix_subseq; apply/and4P; by repeat split.
+      * move: (pos_leq_size (is_row_Sch w) wn); rewrite -Hieq.
+        case/IHw => {IHw} s => /and4P [] /eqP Hlast Hsubs /eqP Hsz Hrow.
+        exists (rcons s wn); apply/and4P; repeat split.
+        + by rewrite last_rcons nth_set_nth /= eq_refl.
+        + by apply subseq_rcons_eq.
+        + by rewrite size_rcons Hsz.
+        + apply (is_row_rcons Hrow); rewrite Hlast.
+          by apply nth_lt_inspos; rewrite -Hieq ltnSn.
+    - have: (i < size (Sch w)); have HrowSch := (is_row_Sch w).
+        move: Hineq Hileq; case (boolP (bump (Sch w) wn )) => Hcase.
+        + by rewrite (bump_size_ins HrowSch Hcase).
+        + rewrite (nbump_inspos_eq_size HrowSch Hcase) (nbump_size_ins HrowSch Hcase).
+          by rewrite ltnS ltn_neqAle => -> ->.
+      case/IHw => {IHw} s => /and4P [] /eqP Hlast Hsubs /eqP Hsz Hrow.
+      exists s; apply/and4P; repeat split.
+        + by rewrite Hlast nth_set_nth /= (negbTE Hineq).
+        + by apply (subseq_trans Hsubs); apply subseq_rcons.
+        + by rewrite Hsz.
+        + exact Hrow.
   Qed.
 
   Theorem Sch_leq_last w s si:
-    (is_row (rcons s si)) -> subseq (rcons s si) w ->
-    (size s) < size (Sch w) /\ nth 0 (Sch w) (size s) <= si.
+    subseqrow (rcons s si) w -> size s < size (Sch w) /\ nth 0 (Sch w) (size s) <= si.
   Proof.
-    elim/last_ind: w s si=> [| w wn IHw] s si; first by rewrite subseq0 rcons_nilF.
-    rewrite Sch_rcons.
-    case (altP (si =P wn)) => [-> {si} Hrow | Hsiwn Hrow Hsubs].
+    rewrite /subseqrow => /andP [].
+    elim/last_ind: w s si => [| w wn IHw] s si; first by rewrite subseq0 rcons_nilF.
+    rewrite Sch_rcons  /=; have:= (is_row_Sch w)=> HSch.
+    case (altP (si =P wn)) => [-> {si} | Hsiwn Hsubs Hrow].
+
     (* The subseqence s ends by wn *)
     - rewrite -subseq_rcons_eq.
-      case/lastP: s Hrow => [/= _ _ | s si Hrow Hsubs];
+      case/lastP: s => [ _ _ {IHw} | s si Hsubs Hrow].
       (* s = wn *)
-         first by rewrite insrow_size_non_0 insrow_head_lt.
+      * split; first by rewrite size_ins_non_0.
+        rewrite -[size [::]]/(0) nth0; apply ins_head_lt; by apply is_row_Sch.
       (* s = [s] si wn *)
-      move: (IHw _ _ (is_row_rconsK Hrow) Hsubs) => [] Hszlt Hlt {IHw}.
+      move: (IHw _ _ Hsubs (is_row_rconsK Hrow)) => [] Hszlt Hlt {IHw}.
       move: (is_row_last Hrow); rewrite last_rcons => Hsiwn.
-      rewrite insrow_set size_set_nth nth_set_nth maxnC /maxn /=.
-      have Hrowinswn : is_row (insrow (Sch w) wn)
-        by apply insrow_is_row; apply Sch_is_row; apply ltnW.
 
-      case (ltnP (size (Sch w)) (insrow_pos (Sch w) wn).+1).
-
-      (* Insrowion add a new [wn] box *)
-      * rewrite size_rcons !ltnS => Hsize_ins.
-        have Heqsize: (insrow_pos (Sch w) wn = size (Sch w)) by
-          apply anti_leq; apply/andP; split; first by apply insrow_pos_size.
-        rewrite Heqsize {Hsize_ins}; split; first exact Hszlt.
-        case (altP ((size s).+1 =P size (Sch w))) => [//=|] H.
-        rewrite -[wn](insrow_eq_pos (Sch w) _).
-        have Hlts: ((size s).+1 < size (Sch w)) by rewrite ltn_neqAle; apply/andP.
-        rewrite -Heqsize in Hlts {H Hszlt}.
-        rewrite -(insrow_lt_pos Hlts).
-        apply/is_rowP => //=; first by apply ltnW.
-        by rewrite insrow_set size_set_nth maxnC /maxn Heqsize ltnSn ltnSn.
-
+      case (boolP (bump (Sch w) wn )) => [Hbump | Hnbump].
       (* Wn bump a letter *)
-      * case (altP (size (rcons s si) =P insrow_pos (Sch w) wn)) => [-> //= |Hneq Hlts].
-        rewrite -[wn](insrow_eq_pos (Sch w) _).
-        move: (insrow_pos_gt (Sch w) wn); rewrite (@nth_any _ (Sch w) _ 0); last by [].
-        move: (leq_trans Hlt Hsiwn) => Hltwn Hwnpos.
-        move: (leq_ltn_trans Hltwn Hwnpos) => {Hltwn Hwnpos} Hltnth.
-        move: (row_lt_by_pos (Sch_is_row w) Hszlt Hlts Hltnth) => {Hltnth} Hltswn.
-        rewrite size_rcons; rewrite size_rcons in Hneq.
-        have Hltsi: (size s).+1 < insrow_pos (Sch w) wn by rewrite ltn_neqAle Hneq Hltswn.
-        split; first by apply (ltn_trans Hltsi).
-        rewrite -(insrow_lt_pos Hltsi).
-        apply/is_rowP => //=; apply (leq_trans Hlts); by apply insrow_size_inf.
+      * have Hszpos: (size s < inspos (Sch w) wn).
+          apply (lt_inspos_nth (is_row_Sch w) Hszlt).
+          by apply (leq_trans Hlt Hsiwn).
+        rewrite size_rcons (bump_size_ins HSch Hbump); split.
+        + by apply (leq_ltn_trans Hszpos (bump_inspos_lt_size HSch Hbump)).
+        + rewrite {2}(_: wn = nth 0 (ins (Sch w) wn) (inspos (Sch w) wn));
+            last by rewrite /ins nth_set_nth /= eq_refl.
+          have: (is_row (ins (Sch w) wn)) by apply is_row_ins.
+          move /is_rowP; apply; first by [].
+          by rewrite size_set_nth leq_max ltnSn.
+
+      (* Insertion add a new [wn] box *)
+      * rewrite (nbump_ins_rconsE HSch Hnbump) !size_rcons nth_rcons; split; first by [].
+        case (leqP (size s).+2 (size (Sch w))) => Hsz.
+        + apply (@leq_trans (last 0 (Sch w)) _ wn); last by rewrite -notbump.
+          rewrite -(nth_last 0).
+          apply (is_rowP _ HSch); first by have:= Hsz; rewrite -{1}(ltn_predK Hsz).
+          rewrite -{2}(ltn_predK Hsz); by apply ltnSn.
+        + case (altP ((size s).+1 =P size (Sch w))) => _; first by apply leqnn.
+          by apply leq0n.
 
     (* The subsequence doesn't end by wn *)
     - move: (subseq_rcons_neq Hsiwn Hsubs) => {Hsiwn Hsubs} Hsubs.
-      move: (IHw _ _ Hrow Hsubs) => {IHw Hrow Hsubs} [] Hsize Hleq; split.
-      by apply (leq_trans Hsize); apply (insrow_size_inf).
-      have:= (insrow_leq (Sch w) wn (size s)) => H1.
-      apply (leq_trans H1); by rewrite (@nth_any _ _ _ 0).
+      move: (IHw _ _ Hsubs Hrow) => {IHw Hrow Hsubs} [] Hsize Hleq; split.
+      * by apply (leq_trans Hsize); apply size_ins_inf.
+      * by apply (leq_trans (ins_leq HSch wn Hsize) Hleq).
   Qed.
 
-  Definition rowsubseq s w := is_row s /\ subseq s w.
-  Definition rowsubseq_n s w n := is_row s /\ subseq s w /\ size s == n.
-
-  Theorem size_ndec_Sch w s : rowsubseq s w -> (size s) <= size (Sch w).
+  Theorem size_ndec_Sch w s : subseqrow s w -> (size s) <= size (Sch w).
   Proof.
-    rewrite /rowsubseq; move=> [].
-    case/lastP: s => [//=| s si] =>  Hrow Hsubs.
-    move: (Sch_leq_last Hrow Hsubs) => [] H _.
+    case/lastP: s => [//=| s si].
+    move/Sch_leq_last => [] H _.
     by rewrite size_rcons.
   Qed.
 
-  Theorem exist_size_Sch w : exists s : seq nat, rowsubseq_n s w (size (Sch w)).
+  Theorem exist_size_Sch w : exists s : seq nat, subseqrow_n s w (size (Sch w)).
   Proof.
-    rewrite /rowsubseq; case/lastP: w => [| w wn]; first by exists [::].
-    move: (insrow_size_non_0 (Sch w) wn); rewrite -Sch_rcons.
+    case/lastP: w => [| w wn]; first by exists [::].
+    move: (size_ins_non_0 (Sch w) wn); rewrite -Sch_rcons.
     move H : (size _) => ssch; case: ssch H => [_ //=| n] Hn _.
     move: (ltnSn n); rewrite -{2}Hn => H.
-    elim (Sch_exists H) => s [] Hsubs [] Hrow Hsize.
-    set ss := (rcons _ _) in Hrow; exists ss; split; first by []; split => //=.
-    by rewrite /ss size_rcons.
+    elim (Sch_exists H) => s /andP [] _ Hrsq.
+    by exists s.
   Qed.
 
 End Schensted.
@@ -316,29 +461,29 @@ Section SubSeq.
   Variable w : seq nat.
 
   Definition PRowSeq :=
-    [fun i : nat => [exists s : SubSeq w, (is_row s) && (size s == i)]].
+    [pred i : nat | [exists s : SubSeq w, (size s == i) && (is_row s)]].
 
   Lemma exrow0 : PRowSeq 0.
   Proof. apply /existsP. by exists (sub_nil w). Qed.
 
   Lemma max_row_len : forall i : nat, PRowSeq i -> i <= size w.
-  Proof. rewrite /PRowSeq=> i /= /existsP [[s Hs]] /andP [] _ /eqP <-; by apply size_le. Qed.
+  Proof. rewrite /PRowSeq=> i /= /existsP [[s Hs]] /andP [] /eqP <- _; by apply size_le. Qed.
 
-  Definition max_rowsubseq_size := ex_maxn (ex_intro _ 0 exrow0) max_row_len.
+  Definition max_subseqrow_size := ex_maxn (ex_intro _ 0 exrow0) max_row_len.
 
-  Theorem size_max_rowsubseq : max_rowsubseq_size == size (Sch w).
+  Theorem size_max_subseqrow : max_subseqrow_size == size (Sch w).
   Proof.
-    rewrite /max_rowsubseq_size.
+    rewrite /max_subseqrow_size.
     case (ex_maxnP (ex_intro _ 0 exrow0) max_row_len) => i.
-    rewrite /PRowSeq /= => /existsP [] [s Hs] /andP [] /= Hrow Hsz Hmax.
-    rewrite -(eqP Hsz).
+    rewrite /PRowSeq /= => /existsP [] [s Hs] /andP [] /= /eqP Hsz Hrow Hmax.
+    rewrite -Hsz.
     apply/eqP/anti_leq/andP; split.
-    - apply size_ndec_Sch; rewrite /rowsubseq; split; first exact Hrow.
+    - apply size_ndec_Sch; rewrite /subseqrow; apply/andP; split; last exact Hrow.
       rewrite subseqs_all; by apply Hs.
-    - rewrite (eqP Hsz); case (exist_size_Sch w) => smax {Hrow Hsz}.
-      rewrite /rowsubseq /rowsubseq_n => [] [] Hrow [] /subseqs_all Hsubs /eqP <-.
+    - rewrite Hsz; case (exist_size_Sch w) => smax {Hrow Hsz}.
+      rewrite /subseqrow_n => /and3P [] /subseqs_all Hsubs /eqP <- Hrow.
       apply Hmax; apply /existsP; exists (SeqSub Hsubs).
-      by rewrite Hrow /=.
+      by rewrite /= Hrow eq_refl.
   Qed.
 
 End SubSeq.
@@ -349,117 +494,91 @@ Section Bump.
   Implicit Type r w : seq nat.
   Implicit Type t : seq (seq nat).
 
-  Fixpoint bumprow r l : (option nat) * (seq nat):=
+  Definition bumped r l := nth 0 r (inspos r l).
+
+  Lemma lt_bumped r l : bump r l -> l < bumped r l.
+  Proof. by move/inspred_inspos. Qed.
+
+  Fixpoint bumprow r l : (option nat) * (seq nat) :=
     if r is l0 :: r then
       if l < l0 then (Some l0, l :: r)
       else let: (lr, rr) := bumprow r l in (lr, l0 :: rr)
     else (None, [:: l]).
 
-  Lemma insbumprowE r l: (bumprow r l).2 = insrow r l.
+  Lemma ins_bumprowE r l : insrow r l = (bumprow r l).2.
   Proof.
-    elim: r => [//= | t0 r IHt /=].
+    elim: r => [//= | t0 r IHr /=].
     case (ltnP l t0) => _ //=.
-    by move: IHt; case (bumprow r l) => [lr tr] /= ->.
+    by move: IHr; case (bumprow r l) => [lr tr] /= ->.
   Qed.
 
-  Lemma bumprow_append r l tr:
-    bumprow r l = (None, tr) -> tr = rcons r l.
+  Lemma bump_bumprowE r l :
+    is_row r -> bump r l -> bumprow r l = (Some (bumped r l), ins r l).
   Proof.
-    elim: r tr => [[/eqP | a l0 [] <- <-] //=| t0 r IHt ] //=.
-    case (ltnP l t0) => _ //=.
-    move: IHt; case (bumprow r l) => [[ll //=|]] l0 H tr [] <-.
-    by rewrite (H l0 _).
+    move=> Hrow; rewrite /bumped -(insE Hrow) (insrowE Hrow).
+    elim: r Hrow => [//= | t0 r IHr] Hrow /= Hlast.
+    case (ltnP l t0) => //= Ht0.
+    have {Hlast} Hlast : (l < (last 0 r)).
+      case: r {IHr Hrow} Hlast => [/= H1 | //=].
+      move: (leq_trans H1 Ht0); by rewrite ltnn.
+    by rewrite (IHr (is_row_consK Hrow) Hlast).
   Qed.
 
-  Lemma insrow_append_pos r l tr:
-    bumprow r l = (None, tr) -> (insrow_pos r l) = size r.
+  Lemma nbump_bumprowE r l :
+    is_row r -> ~~(bump r l) -> bumprow r l = (None, ins r l).
   Proof.
-    elim: r tr => [//= | t0 r IHt /=].
-    case (ltnP l t0) => _ //=.
-    move: IHt; case (bumprow r l) => [[ll //=|] l0 IHt _ _ ].
-    by rewrite (IHt l0).
-  Qed.
-
-  Lemma bumprow_lt r l ll tr:
-    bumprow r l = (Some ll, tr) -> l < ll.
-  Proof.
-    elim: r ll tr => [//= | t0 r IHt /=].
-    case (ltnP l t0) => Hcomp /=; first by move => ll tr [] <- _.
-    move: IHt; case (bumprow r l) => [[lc //=|_ ll tr //=] trr] /= IHt ll tr [] Hlc Htr.
-    subst lc; subst tr; by apply (IHt _ trr).
-  Qed.
-
-  Lemma bumprow_bump r l ll tr:
-    bumprow r l = (Some ll, tr) -> ll = (nth 0 r (insrow_pos r l)).
-  Proof.
-    elim: r ll tr => [//= | t0 r IHt /=].
-    case (ltnP l t0) => _ /=; first by move => ll tr [] -> _.
-    move: IHt; case (bumprow r l) => [[lc //=|_ ll tr //=] trr] /= IHt ll tr [] Hlc Htr.
-    subst lc; subst tr; by apply (IHt _ trr).
-  Qed.
-
-  Lemma bumprow_pos r l ll tr:
-    bumprow r l = (Some ll, tr) -> (insrow_pos r l) < size r.
-  Proof.
-    elim: r ll tr => [//= | t0 r IHt /=].
-    case (ltnP l t0) => _ /=; first by move => ll tr [] _ _.
-    move: IHt; case (bumprow r l) => [[lc //=|_ _ _ //=] tr] /= IHt _ _ _.
-    by apply (IHt lc tr).
+    rewrite notbump; move=> Hrow; rewrite -(insE Hrow) (insrowE Hrow).
+    elim: r Hrow => [//= | t0 r IHr] Hrow Hlast /=.
+    case (ltnP l t0) => //= Ht0.
+    - exfalso.
+      move: (leq_ltn_trans (leq_trans (head_leq_last_row Hrow) Hlast) Ht0).
+      by rewrite ltnn.
+    - have {Hlast} Hlast : (last 0 r <= l) by case: r {IHr Hrow} Hlast.
+      by rewrite (IHr (is_row_consK Hrow) Hlast).
   Qed.
 
   Lemma bumprow_size r l:
     let: (lr, tr) := bumprow r l in
     (size r).+1 == (size tr) + if lr is Some _ then 1 else 0.
   Proof.
-    elim: r => [//= | t0 r IHt /=].
+    elim: r => [//= | t0 r IHr /=].
     case (ltnP l t0) => _ /=; first by rewrite -addn1.
-    by move: IHt; case (bumprow r l) => [lr tr] /= /eqP ->.
+    by move: IHr; case (bumprow r l) => [lr tr] /= /eqP ->.
   Qed.
 
   Lemma bumprow_mult r l i :
     let: (lr, tr) := bumprow r l in
     count_mem i r + (l == i) == count_mem i tr + if lr is Some ll then (ll == i) else 0.
   Proof.
-    elim: r => [| t0 r IHt] /=; first by rewrite !addn0.
+    elim: r => [| t0 r IHr] /=; first by rewrite !addn0.
     case (ltnP l t0) => _ /=.
     - by rewrite addnC -addnA eqn_add2l addnC eqn_add2l [t0 == i]eq_sym.
-    - move: IHt; case (bumprow r l) => [tr lr] /= IHt.
+    - move: IHr; case (bumprow r l) => [tr lr] /= IHr.
       by rewrite -!addnA eqn_add2l.
-  Qed.
-
-  Fixpoint instab t l : seq (seq nat) :=
-    if t is t0 :: t then
-      let: (lr, tr) := bumprow t0 l in
-      if lr is Some ll then tr :: (instab t ll) else tr :: t
-    else [:: [:: l]].
-
-  Lemma bump0 (t0 : seq nat) t l b0 b : instab (t0 :: t) l = b0 :: b -> b0 = insrow t0 l.
-  Proof.
-    rewrite -insbumprowE /=.
-    by case (bumprow t0 l) => [[l'|]] b' /= [] -> _.
   Qed.
 
 End Bump.
 
-Section Tableaux.
+Section Dominate.
 
   Implicit Type l : nat.
-  Implicit Type r u v w : seq nat.
-  Implicit Type t : seq (seq nat).
+  Implicit Type r u v : seq nat.
 
   Definition dominate u v :=
-    ((size u) <= (size v)) &&
-    [forall i : ordinal (size u), nth 0 u i > nth 0 v i].
+    ((size u) <= (size v)) && (all (fun i => nth 0 u i > nth 0 v i) (iota 0 (size u))).
 
   Lemma dominateP u v :
     reflect ((size u) <= (size v) /\ forall i, i < size u -> nth 0 u i > nth 0 v i)
             (dominate u v).
   Proof.
     rewrite /dominate; apply/(iffP idP).
-    - move=> /andP [] Hsz /forallP Hall; split => [//=| i Hi].
-      by apply (Hall (Ordinal Hi)).
-    - move=> [] -> /= H; apply /forallP => [[i Hi]] /=; by apply H.
+    - move=> /andP [] Hsz /allP Hall; split; first by exact Hsz.
+      move=> i Hi; apply Hall; by rewrite mem_iota add0n.
+    - move=> [] -> /= H; apply /allP => i; rewrite mem_iota add0n; by apply H.
   Qed.
+
+  Lemma dominate_nil u : dominate [::] u.
+  Proof. apply /dominateP => /=; by split. Qed.
 
   Lemma dominate_rcons v u l : dominate u v -> dominate u (rcons v l).
   Proof.
@@ -471,135 +590,103 @@ Section Tableaux.
     move: (leq_ltn_trans Hs Hi); by rewrite ltnn.
   Qed.
 
-  Lemma dominate_insrow_non_pos r1 r0 l i :
+  Lemma dominate_inspos r1 r0 l :
     is_row r0 -> is_row r1 -> dominate r1 r0 ->
-    i < size (insrow r1 l) -> i != insrow_pos r1 l -> nth 0 r0 i < nth 0 r1 i.
+    bump r0 l -> inspos r0 l >= inspos r1 (bumped r0 l).
   Proof.
-    move=> Hrow0 Hrow1 /dominateP [] Hsz Hdom Hi Hipos1.
-    apply Hdom; have:= (bumprow_size r1 l).
-    move Hins1 : (bumprow r1 l) => res1.
-    case: res1 Hins1 Hi => [[l1 |] tr1 Hins1] /=;
-        first by rewrite -insbumprowE addn1 Hins1 /= => Hi /eqP [] ->.
-    case (ltnP i (size r1)) => //= Hi1 Hi2 _.
-    (* absurd case *)
-    have HH : (i == size r1); move: (leq_trans Hi2 (insrow_size_sup r1 l));
-        first by rewrite ltnS eqn_leq Hi1 => ->.
-    move=> _ {Hi1 Hi2}.
-    move: (insrow_append_pos Hins1) HH Hipos1 => <- /eqP ->.
-    by rewrite eq_refl.
+    move=> Hrow0 Hrow1 /dominateP [] _ Hdom /= Hbump.
+    case (ltnP (inspos r0 l) (size r1)) => [|Hpossz].
+    - move/Hdom => {Hdom}; rewrite -/(bumped r0 l).
+      move: (bumped r0 l) (inspos r0 l) => l1 pos {r0 Hrow0 Hbump l} Hl1.
+      by apply pos_leq_exP.
+    - by apply (@leq_trans (size r1)); first by apply pos_leq_size.
   Qed.
 
-  Lemma dominate_eqsize_bump_appendF r1 r0 l l0 tr0 tr1 :
-    is_row r0 -> is_row r1 -> dominate r1 r0 -> size r1 = size r0 ->
-    bumprow r0 l = (Some l0, tr0) ->
-    bumprow r1 l0 = (None, tr1) -> False.
+  Lemma bump_dominate r1 r0 l :
+    is_row r0 -> is_row r1 -> dominate r1 r0 ->
+    bump r0 l -> dominate (ins r1 (bumped r0 l)) (ins r0 l).
   Proof.
-    move=> Hrow0 Hrow1 Hdomin Heqsz Hins0 Hins1.
-    have:= Hdomin => /dominateP [] _ Hdom.
-    move: (bumprow_append Hins1) => Htr1; subst tr1.
-    have {Hins1} Hins1: (rcons r1 l0) = (insrow r1 l0) by rewrite -insbumprowE Hins1.
-    have {Hins1} : (is_row (rcons r1 l0)) by rewrite Hins1 insrow_is_row.
-
-    move Hsz: (size r0) => n. (* n := size r0 <> 0 *)
-    case: n Hsz => [/eqP /nilP Hnil _| n Hn]; first by move: Hins0; rewrite Hnil.
-
-    move/is_row_last; rewrite -nth_last Heqsz Hn /= => H1.
-    have Hnlt : (n < size r1) by rewrite -Hn Heqsz.
-    move: (Hdom _ Hnlt) => /= H2.
-    move: (bumprow_bump Hins0) => Hl0.
-    move: (bumprow_pos Hins0); rewrite Hn ltnS => Hpos.
-    move: Hnlt; rewrite Heqsz => Hnlt.
-    move: (is_rowP _ Hrow0 _ _ Hpos Hnlt); rewrite -Hl0 => H3.
-    move: (leq_ltn_trans H1 (leq_ltn_trans H3 H2)); by rewrite ltnn.
+    move=> Hrow0 Hrow1 Hdom. have:= Hdom => /dominateP [] Hsize Hlt Hbump.
+    apply /dominateP; split.
+    - rewrite (bump_size_ins Hrow0 Hbump) {1}/ins size_set_nth /maxn.
+      case: (ltnP (inspos r1 (bumped r0 l)).+1 (size r1)) => [//=|_].
+      apply (@leq_ltn_trans (inspos r0 l)); first by apply dominate_inspos.
+      by apply bump_inspos_lt_size.
+    - move=> i Hi; rewrite /ins; move: (dominate_inspos Hrow0 Hrow1 Hdom Hbump).
+      set pos0 := inspos r0 _; set pos1 := inspos r1 _.
+      move=> Hpos; rewrite !nth_set_nth /=.
+      case (altP (i =P pos0)) => Hipos0;
+         case (altP (i =P pos1)) => Hipos1.
+      * by apply lt_bumped.
+      * apply (leq_trans (lt_bumped Hbump)); move Hl0 : (bumped r0 l) => l0.
+        rewrite -Hipos0 in Hpos => {Hrow0 Hlt Hdom Hsize Hbump Hipos0}.
+        rewrite /pos1 in Hipos1 Hpos; rewrite Hl0 in Hipos1 Hi Hpos => {pos1 pos0 Hl0}.
+        move: (is_row_ins Hrow1 l0) => /is_rowP Hrowins.
+        rewrite (_ : l0 = nth 0 (ins r1 l0) (inspos r1 l0));
+          last by rewrite nth_set_nth /= eq_refl.
+        rewrite (_ : nth 0 r1 i = nth 0 (ins r1 l0) i);
+          last by rewrite nth_set_nth /= (negbTE Hipos1).
+        by apply Hrowins.
+      * apply (@leq_ltn_trans l); last by apply lt_bumped.
+        subst pos0; apply nth_lt_inspos; by rewrite ltn_neqAle Hipos0 /= Hipos1.
+      * case (ltnP i (size r1)) => [|Hsz]; first by apply Hlt.
+        exfalso; case (boolP (bump r1 (bumped r0 l))) => [|Hnbump].
+        + move/bump_size_ins => H; rewrite (H Hrow1) in Hi.
+          move: (leq_ltn_trans Hsz Hi); by rewrite ltnn.
+        + have:= Hnbump; move/nbump_ins_rconsE => Heq.
+          rewrite (Heq Hrow1) size_rcons ltnS in Hi.
+          have {Hi Hsz} Hi: (i == size r1) by rewrite eqn_leq Hi Hsz.
+          rewrite /pos1 (nbump_inspos_eq_size Hrow1 Hnbump) in Hipos1.
+          by rewrite Hi in Hipos1.
   Qed.
+
+End Dominate.
+
+Section Tableaux.
+
+  Implicit Type l : nat.
+  Implicit Type r w : seq nat.
+  Implicit Type t : seq (seq nat).
 
   Fixpoint is_tableau t :=
-    match t with
-      | [::] => true
-      | [:: t0] => (t0 != [::]) && is_row t0
-      | t0 :: ((t1 :: _) as ttl) => is_row t0 && dominate t1 t0 && is_tableau ttl
-    end.
+    if t is t0 :: t'
+    then [&& (t0 != [::]), is_row t0, dominate (head [::] t') t0 & is_tableau t']
+    else true.
 
   Lemma tableau_is_row r t : is_tableau (r :: t) -> is_row r.
-  Proof. by case t => [| l0 l1 /andP []] /andP [] //=. Qed.
+  Proof. by move=> /= /and4P []. Qed.
 
-  Lemma tableau_tail r t : is_tableau (r :: t) -> is_tableau t.
-  Proof. by case t => [| l0 l1 /andP []] /andP [] //=. Qed.
+  Fixpoint instab t l : seq (seq nat) :=
+    if t is t0 :: t' then
+      let: (lr, rr) := bumprow t0 l in
+      if lr is Some ll then rr :: (instab t' ll) else rr :: t'
+    else [:: [:: l]].
 
-  Lemma bump_dominate r1 r0 l tr0 l0:
-    is_row r0 -> is_row r1 -> dominate r1 r0 ->
-    bumprow r0 l = (Some l0, tr0) -> dominate (insrow r1 l0) tr0.
+  Lemma head_instab (t0 : seq nat) t l :
+    is_row t0 -> head [::] (instab (t0 :: t) l) = ins t0 l.
   Proof.
-    move=> Hrow0 Hrow1 Hdomin; have:= Hdomin => /dominateP [] Hsz Hdom Hins0.
-    apply /dominateP; split => [|i Hi].
-
-    - have := (bumprow_size r0 l); rewrite Hins0 addn1 => /eqP [] <-.
-      case (ltnP (size r1) (size r0)) => Hcomp;
-          first by apply (leq_trans (insrow_size_sup r1 l0)).
-      have: ((size r1) == (size r0)) by rewrite eqn_leq; apply /andP.
-      move=> /eqP Heqsz {Hsz Hcomp}; rewrite -Heqsz.
-      have:= (bumprow_size r1 l0).
-      move Hins1 : (bumprow r1 l0) => res1.
-      case: res1 Hins1 => [[l1 tr1 Hins1 | tr1 Hins1 _]] /=;
-        first by rewrite -insbumprowE Hins1 addn1 => /eqP [] ->.
-      exfalso. (* absurd : l0 <= last r0 < last r1  and last r1 <= l0 *)
-      by apply (@dominate_eqsize_bump_appendF r1 r0 l l0 tr0 tr1).
-
-    - have Hins0': tr0 = (insrow r0 l) by rewrite -insbumprowE Hins0.
-      rewrite Hins0' !insrow_set !nth_set_nth /= => {Hins0'}.
-      case (altP (i =P (insrow_pos r0 l))) => Hipos0;
-         case (altP (i =P (insrow_pos r1 l0))) => Hipos1.
-      * by apply (bumprow_lt Hins0).
-      * have Hl: (l <= nth 0 r0 i).
-          rewrite -(insrow_eq_pos r0 l) -Hipos0 -[nth _ r0 _](nth_any l 0);
-              first by apply insrow_leq.
-          by rewrite Hipos0 (bumprow_pos Hins0).
-        have H01 := dominate_insrow_non_pos Hrow0 Hrow1 Hdomin Hi Hipos1.
-        by apply (leq_ltn_trans Hl H01).
-      * apply (leq_ltn_trans (n := l)); last by apply (bumprow_lt Hins0).
-        apply insrow_pos_lt.
-        rewrite neq_ltn in Hipos0.
-        move: Hipos0 => /orP; case => [//=| Habs].
-        (* absurd case *)
-        set j := (insrow_pos r0 l).
-        move: (insrow_pos_size r1 l0); rewrite -Hipos1 => H1.
-        move: (leq_trans Habs H1) => H2; move: (Hdom _ H2) => {Hdom H2}.
-        rewrite {1}/j -(bumprow_bump Hins0) => H2.
-        move: Habs; rewrite Hipos1 => Habs.
-        move: (leq_trans H2 (insrow_pos_lt Habs)).
-        by rewrite ltnn.
-      * by apply (dominate_insrow_non_pos Hrow0 Hrow1 Hdomin Hi Hipos1). 
+    move=> Hrow; rewrite -(insE Hrow) (insrowE Hrow).
+    rewrite ins_bumprowE /=; by case (bumprow t0 l) => [[l'|]] b.
   Qed.
 
-  Theorem instab_is_tableau t l : is_tableau t -> is_tableau (instab t l).
+  Theorem is_tableau_instab t l : is_tableau t -> is_tableau (instab t l).
   Proof.
-    elim: t l => [l _ //=| t0 t IHt] l Htab /=.
-    move H : (bumprow t0 l) => x; case: x H => [[ll|] tr] Hbump.
-    - move: {IHt} (IHt ll (tableau_tail Htab)).
-      move Hbp : (instab t ll) => bp.
-      have Htr : (tr = insrow t0 l) by rewrite -insbumprowE Hbump.
-      have Hrow := (insrow_is_row l (tableau_is_row Htab)).
-      case: bp Hbp => [_| b0 btl Hbp /= ->].
-      * by rewrite /= Htr Hrow insrow_non_nil.
-      * rewrite {1}Htr Hrow /= andbT => {Hrow}.
-        case: t Htab Hbp => [Htab /= [] <- _| t1 t Htabt01 Hbump1].
-        + have H : ([:: ll] = insrow [::] ll) by [].
-          have Hdom : (dominate [::] t0) by
-             rewrite /dominate /=; apply /forallP => [[m /=]]; rewrite ltn0.
-          rewrite H; apply (bump_dominate (r0 := t0) (l := l)) => //=.
-          by move: Htab => /= /andP [] _.
-        + have Htabt1 := (tableau_is_row (tableau_tail Htabt01)).
-          move: Htabt01 => /= /andP [] /andP [] Htabt0 Hdom _.
-          rewrite (bump0 Hbump1).
-          by apply (bump_dominate Htabt0 Htabt1 Hdom Hbump).
-    - move: (bumprow_append Hbump) => Htr {IHt}; subst tr.
-      have Htr : (rcons t0 l = insrow t0 l) by rewrite -insbumprowE Hbump.
-      case: t Htab (tableau_tail Htab) => [/= /andP [] Htab Hnnil _| t1 t].
-      * rewrite rcons_nilF /= Htr; by apply insrow_is_row.
-      * move=> /= /andP [] /andP [] Hrowt0 Hdom -> _.
-        apply /andP; split; last by []; apply /andP; split;
-            first by rewrite Htr; by apply insrow_is_row.
-        by apply dominate_rcons.
+    elim: t l => [l _ /=| t0 t IHt l Htab]; first by rewrite leqnn /=.
+    move: Htab => /and4P [] Ht0 Hrow0 Hdom; rewrite -/is_tableau =>  Htab.
+    case (boolP (bump t0 l)) => [Hbump0 | Hnbump0].
+    - rewrite /= (bump_bumprowE Hrow0 Hbump0).
+      case: t IHt Hdom Htab => [_ _ _ | t1 t IHt Hdom Htab] /=.
+      * rewrite ins_non_nil (is_row_ins Hrow0) leqnn /= andbT.
+        rewrite -[[:: bumped t0 l]]/(ins [::] ( bumped t0 l)).
+        by apply bump_dominate.
+      * move: (tableau_is_row Htab) => Hrow1.
+        rewrite (head_instab _ _ Hrow1).
+        move: {IHt} (IHt (bumped t0 l) Htab) => /= ->.
+        rewrite ins_non_nil (is_row_ins Hrow0) /= andbT.
+        by apply bump_dominate.
+    - rewrite /= (nbump_bumprowE Hrow0 Hnbump0) /= Htab.
+      rewrite ins_non_nil (is_row_ins Hrow0) /= andbT.
+      rewrite (nbump_ins_rconsE Hrow0 Hnbump0); by apply dominate_rcons.
   Qed.
 
   Definition to_word t := flatten (rev t).
@@ -611,12 +698,33 @@ Section Tableaux.
   Theorem RS_tableau w : is_tableau (RS w).
   Proof.
     elim/last_ind: w => [//=| w l0]; rewrite /RS rev_rcons /=.
-    by apply instab_is_tableau.
+    by apply is_tableau_instab.
   Qed.
 
 End Tableaux.
 
-(*
-Eval compute in (RS [:: 2; 5; 1; 6; 4; 3]).
-Eval compute in (to_word (RS [:: 2; 5; 1; 6; 4; 3])).
-*)
+Section Inverse.
+
+  Implicit Type l : nat.
+  Implicit Type r w : seq nat.
+  Implicit Type t : seq (seq nat).
+
+End Inverse.
+
+Lemma test_insrow : (insrow [:: 1; 1; 2; 3; 5] 2) == [:: 1; 1; 2; 2; 5].
+Proof. compute; by exact (eq_refl true). Qed.
+
+Lemma test_ins : (ins [:: 1; 1; 2; 3; 5] 2) == [:: 1; 1; 2; 2; 5].
+Proof. compute; by exact (eq_refl true). Qed.
+
+Lemma test_Sch : (Sch [:: 2; 5; 1; 6; 4; 3]) == [:: 1; 3; 6].
+Proof. compute; by exact (eq_refl true). Qed.
+
+Lemma test_RS : (RS [:: 2; 5; 1; 6; 4; 3]) == [:: [:: 1; 3; 6]; [:: 2; 4]; [:: 5]].
+Proof. compute; by exact (eq_refl true). Qed.
+
+Lemma test_to_word : (to_word (RS [:: 2; 5; 1; 6; 4; 3])) == [:: 5; 2; 4; 1; 3; 6].
+Proof. compute; by exact (eq_refl true). Qed.
+
+Lemma test_is_tableau : is_tableau (RS [:: 2; 5; 1; 6; 4; 3]).
+Proof. compute; by exact (eq_refl true). Qed.
