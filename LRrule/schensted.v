@@ -830,19 +830,100 @@ End InverseBump.
 
 Section Shape.
 
+  Implicit Type s : seq nat.
   Implicit Type t : seq (seq nat).
 
   Definition shape t := map size t.
-  Definition is_partition sh := forall i, (nth 0 sh i) >= nth 0 sh i.+1.
-  Definition is_corner sh i := (nth 0 sh i) > nth 0 sh i.+1.
+  Definition is_part sh :=
+    all (fun i => (nth 0 sh i) >= nth 0 sh i.+1) (iota 0 (size sh)).
+  Definition is_out_corner sh i := nth 0 sh i > nth 0 sh i.+1.
 
-  Lemma is_part_sht t : is_tableau t -> is_partition (shape t).
+  Lemma is_partP sh :
+    reflect (forall i, (nth 0 sh i) >= nth 0 sh i.+1) (is_part sh).
   Proof.
-    rewrite /is_partition /shape.
-    elim: t => [_ i |t0 t IHt /= /and4P [] Hnnil Hrow /dominateP [] Hdom _ Htab i];
+    rewrite /is_part; apply (iffP idP).
+    - move=> /allP => Hall i; case (ltnP i (size sh)) => Hi.
+      * apply Hall; by rewrite mem_iota add0n.
+      * rewrite (nth_default _ Hi) nth_default; first by [].
+        by apply (leq_trans Hi).
+    - move=> Hi; apply /allP => i _; by apply Hi.
+  Qed.
+
+  Lemma stupid i : (i == i.+1) = false.
+  Proof. by elim: i => [//=| I IHi]; rewrite eqSS. Qed.
+
+  Lemma del_cornerE sh i :
+    is_part (incr_nth sh i) -> is_out_corner (incr_nth sh i) i = is_part sh.
+  Proof.
+    move=> /is_partP Hpart1.
+    apply (sameP (@idP (is_out_corner _ i))); apply (equivP (@idP (is_part _))).
+    rewrite /is_out_corner; split.
+    - move=> /is_partP => Hpart; move: (Hpart i) => {Hpart}.
+      by rewrite !nth_incr_nth stupid eq_refl add0n add1n ltnS.
+    - move=> Hcorn; apply /is_partP => j; move: Hcorn (Hpart1 j).
+      rewrite !nth_incr_nth stupid eq_refl add0n add1n ltnS => Hcorn.
+      case (altP (i =P j)) => [<- //=|_].
+      case (altP (i =P j.+1)) => [Hi |_].
+      * rewrite add0n add1n; apply ltnW.
+      * by rewrite !add0n.
+  Qed.
+
+  Lemma is_part_sht t : is_tableau t -> is_part (shape t).
+  Proof.
+    rewrite /shape => Ht; apply /is_partP.
+    elim: t Ht => [_ i |t0 t IHt /= /and4P [] Hnnil Hrow /dominateP [] Hdom _ Htab i];
         first by rewrite nth_nil.
     case: i => [|i] /=; first by move: Hdom; case t.
     by apply IHt.
+  Qed.
+
+  Definition shape_rowseq s :=
+    [seq (count_mem i) s | i <- iota 0 (foldr maxn 0 s).+1].
+
+  Definition shape_rowseqOk s :=
+    if s is _ :: _ then [seq (count_mem i) s | i <- iota 0 (foldr maxn 0 s).+1] else [::].
+
+  Lemma shape_rowseq_cons l0 s:
+    shape_rowseq (l0 :: s) = incr_nth (shape_rowseq s) l0.
+  Proof.
+    rewrite {1}/shape_rowseq; apply (@eq_from_nth _ 0).
+    - rewrite size_incr_nth !size_map !size_iota /= {1}/maxn.
+      set m := (foldr _ _ _); case (ltnP l0 m); first by move/leq_trans => ->.
+      case: (ltnP l0 m.+1); last by [].
+      by rewrite ltnS => H1 H2; apply /eqP; rewrite eqSS eqn_leq H1 H2.
+    - move=> i; rewrite nth_incr_nth size_map => Hsz.
+      rewrite (nth_map 0 _ _ Hsz); rewrite size_iota in Hsz; rewrite (nth_iota _ Hsz).
+      rewrite add0n /shape_rowseq.
+      case (ltnP i (foldr maxn 0 s).+1) => Hi.
+      * rewrite (nth_map 0 _ _); last by rewrite size_iota.
+        by rewrite (nth_iota _ Hi) /= add0n.
+      * rewrite (nth_default 0) /=; last by rewrite size_map size_iota.
+        congr ((l0 == i) + _).
+        elim: s Hi {Hsz} => [//=| s0 s /=].
+        set m := (foldr _ _ _) => IHs; rewrite /maxn.
+        case (ltnP s0 m) => Hs Hi.
+        - rewrite (IHs Hi).
+          move: (ltnW Hs) => H2; by rewrite (ltn_eqF (leq_ltn_trans H2 Hi)).
+        - by rewrite (IHs (leq_ltn_trans Hs Hi)) (ltn_eqF Hi).
+  Qed.
+
+  Fixpoint is_yam s :=
+    if s is s0 :: s'
+    then is_part (shape_rowseq s) && is_yam s'
+    else true.
+
+  Lemma is_part_shyam s : is_yam s -> is_part (shape_rowseq s).
+  Proof. by case: s => [//= | s0 s] /= /andP []. Qed.
+
+  Lemma is_yam_tl l0 s : is_yam (l0 :: s) ->  is_yam s.
+  Proof. by move=> /= /andP []. Qed.
+
+  Lemma is_out_corner_yam l0 s :
+    is_yam (l0 :: s) -> is_out_corner (shape_rowseq (l0 :: s)) l0.
+  Proof.
+    move=> Hyam; move: (is_part_shyam (is_yam_tl Hyam)) => /is_partP Hpart.
+    rewrite /is_out_corner shape_rowseq_cons !nth_incr_nth stupid eq_refl add0n add1n ltnS.
+    by apply Hpart.
   Qed.
 
 End Shape.
@@ -853,10 +934,10 @@ Section Inverse.
   Implicit Type r s w : seq nat.
   Implicit Type t : seq (seq nat).
 
-  Lemma is_corner_nrow t l : is_tableau t ->
-      let: (res, nrow) := instabn t l in is_corner (shape res) nrow.
+  Lemma is_out_corner_nrow t l : is_tableau t ->
+      let: (res, nrow) := instabn t l in is_out_corner (shape res) nrow.
   Proof.
-    rewrite /is_corner.
+    rewrite /is_out_corner.
     elim: t l => [l _ //=|t0 t IHt l /= /and4P [] Hnnil Hrow /dominateP [] Hdom _ Htab].
     case: (boolP (bump t0 l)) => [Hbump | Hnbump].
     - rewrite (bump_bumprowE Hrow Hbump) /=.
@@ -934,11 +1015,11 @@ Section Inverse.
   Qed.
 
   Theorem instabninvK t nrow :
-    is_tableau t -> t != [::] -> is_corner (shape t) nrow ->
+    is_tableau t -> t != [::] -> is_out_corner (shape t) nrow ->
     let: (tin, l) := invinstabn t nrow in (instabn tin l) == (t, nrow).
   Proof.
     elim: t nrow => [//= | t0 t IHt] nrow /= /and4P [] Hnnil0 Hrow0 Hdom Htab _.
-    rewrite /is_corner.
+    rewrite /is_out_corner.
     case: nrow => [{IHt} /= Hcorn | nrow Hcorn].
     + case: t0 Hnnil0 Hrow0 Hdom Hcorn => [//= | l0 t0 _].
       case: (altP (t0 =P [::])) => [/= -> _ _ | Hnnil0 Hrow0 _ _].
@@ -959,6 +1040,27 @@ Section Inverse.
       by case: (invbumprow l t0) => [t0r l0r] /= /eqP -> /eqP ->.
   Qed.
 
+  Fixpoint RSbij_rev w : (seq (seq nat)) * (seq nat) :=
+    if w is w0 :: wtl
+    then let: (t, rows) := RSbij_rev wtl in
+         let: (tr, nrow) := instabn t w0 in
+         (tr, nrow :: rows)
+    else ([::], [::]).
+  Definition RSbij w := RSbij_rev (rev w).
+
+  (* Problem with emtpy word.
+  Lemma shape_RS_eq w : shape (RSbij w).1 == shape_rowseq (RSbij w).2.
+  Proof.
+    rewrite /shape_rowseq.
+    elim/last_ind: w => [//=| w l0]; rewrite /RSbij. rev_rcons /= => IHw.
+    
+  Lemma is_yam_RS2 w : is_yam (RSbij w).2.
+  Proof.
+    elim/last_ind: w => [//=| w l0]; rewrite /RSbij rev_rcons /= => IHw.
+    admit.
+    
+  Qed.
+*)
 End Inverse.
 
 
@@ -997,6 +1099,9 @@ Section Tests.
 
   Goal invinstabn [:: [:: 1; 3; 3]; [:: 2; 4; 6]; [:: 5]] 1  =
                  ([:: [:: 1; 3; 6]; [:: 2; 4];    [:: 5]], 3).
+  Proof. compute; by apply erefl. Qed.
+
+  Goal shape_rowseq [:: 0; 1; 2; 0; 1; 3] = [:: 2; 2; 1; 1].
   Proof. compute; by apply erefl. Qed.
 
 End Tests.

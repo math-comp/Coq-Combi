@@ -9,14 +9,17 @@ Section RCons.
   Implicit Type s w : seq T.
   Implicit Type a b l : T.
 
+  Lemma head_any s a b : s != [::] -> head a s = head b s.
+  Proof. by elim: s. Qed.
+
   Lemma nth_any s a b i : i < size s -> nth a s i = nth b s i.
   Proof. elim: s i => //= s0 s IHs [//=|i] Hsize /=. by apply IHs. Qed.
 
-  Lemma set_nth_non_nil d s n y : set_nth d s n y != [::].
-  Proof. elim: s => [|s0 s]; by case n. Qed.
-
   Lemma rcons_set_nth a s l : set_nth a s (size s) l = rcons s l.
   Proof. elim: s => [//=| l0 s IHs]. by rewrite rcons_cons -IHs /=. Qed.
+
+  Lemma set_nth_non_nil d s n y : set_nth d s n y != [::].
+  Proof. elim: s => [|s0 s]; by case n. Qed.
 
   Lemma cons_in_map_cons a b s w :
     forall l : seq (seq T), a :: s \in [seq b :: s1 | s1 <- l] -> a == b.
