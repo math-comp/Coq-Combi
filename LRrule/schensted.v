@@ -1107,6 +1107,69 @@ Section Inverse.
     by move Hins: (instabn t l0) => [tr row] /= -> ->.
   Qed.
 
+  Definition RSpair pair :=
+    let: (P, Q) := pair in [&& is_tableau P, is_yam Q & (shape P == shape_rowseq Q)].
+
+  Theorem RSbij_spec w : RSpair (RSbij w).
+  Proof.
+    rewrite /RSpair.
+    move H : (RSbij w) => [P Q]; apply /and3P; repeat split.
+    - move: (is_tableau_RSbij1 w); by rewrite H.
+    - move: (is_yam_RSbij2 w); by rewrite H.
+    - move: (shape_RSbij_eq w); by rewrite H => ->.
+  Qed.
+
+  Fixpoint RSbijinv tab srow :=
+    if srow is row :: srow'
+    then let: (tr, lr) := invinstabn tab row in
+         rcons (RSbijinv tr srow') lr
+    else [::].
+  Definition RSbijinv2 pair := RSbijinv (pair.1) (pair.2).
+
+  Theorem RS_bij_1 w : RSbijinv2 (RSbij w) == w.
+  Proof.
+    rewrite /RSbijinv2.
+    elim/last_ind: w => [//=| w wn]; rewrite /RSbij /RS rev_rcons /=.
+    move: (is_tableau_RSbij1 w); rewrite /RSbij.
+    move Hbij : (RSbij_rev (rev w)) => [t rows] /= Htab /eqP IHw.
+    move: (invinstabnK wn Htab); rewrite -(instabnE t wn).
+    move Hins: (instabn t wn) => [tr row] /= /eqP ->.
+    by rewrite IHw.
+  Qed.
+
+  Lemma is_tableau_instabninv1 t nrow :
+    is_tableau t -> is_out_corner (shape t) nrow ->
+    is_tableau (invinstabn t nrow).1.
+  Proof.
+    admit.
+  Qed.
+
+  Lemma shape_instabninv1 t row srow :
+    is_tableau t -> shape t == shape_rowseq (row :: srow) ->
+    shape (invinstabn t row).1 == shape_rowseq srow.
+  Proof.
+    admit.
+  Qed.
+
+  Theorem RS_bij_2 pair : RSpair pair -> RSbij (RSbijinv2 pair) == pair.
+  Proof.
+    rewrite /RSpair /RSbij /RSbijinv2; case: pair => [tab srow] /and3P [].
+    elim: srow tab => [[] //= _ _ | row srow IHsrow] tab Htab Hyam Hshape /=.
+    move: (is_out_corner_yam Hyam); rewrite -(eqP Hshape) => Hcorn.
+    have Hnnil : (tab != [::]).
+      move: Hshape; case tab => //= /eqP Habs.
+      move: (eq_refl (size ([::]: seq nat))); rewrite {2}Habs /= size_incr_nth.
+      move: (size (shape_rowseq srow)) => n.
+      by case (ltnP row n) => //= /ltn_predK <-.
+    move: (instabninvK Htab Hnnil Hcorn).
+    move: (is_tableau_instabninv1 Htab Hcorn).
+    move: (shape_instabninv1 Htab Hshape).
+    move Hinvins: (invinstabn tab row) => [tin l] /= Hshapetin Htabtin.
+    rewrite rev_rcons /=.
+    move: Hyam => /= /andP [] Hincr Hyam.
+    by move: (IHsrow tin Htabtin Hyam Hshapetin) => /= /eqP -> /eqP ->.
+  Qed.
+
 End Inverse.
 
 
@@ -1156,4 +1219,9 @@ Section Tests.
   Goal shape_rowseq [:: 0; 1; 2; 0; 1; 3] = [:: 2; 2; 1; 1].
   Proof. compute; by apply erefl. Qed.
 
+  Goal (RSbijinv2 (RSbij [:: 4; 1; 2; 1; 3; 2])) = [:: 4; 1; 2; 1; 3; 2].
+  Proof. compute; by apply erefl. Qed.
+
 End Tests.
+
+
