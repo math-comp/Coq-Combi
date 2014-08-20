@@ -1187,12 +1187,18 @@ Section Inverse.
     by rewrite IHw.
   Qed.
 
-  Lemma is_tableau_instabninv1 t nrow :
-    is_tableau t -> is_out_corner (shape t) nrow ->
-    is_tableau (invinstabn t nrow).1.
+  Lemma behead_incr_nth s nrow : behead (incr_nth s nrow.+1) = incr_nth (behead s) nrow.
+  Proof. elim: s => //=; by case nrow. Qed.
+
+  Lemma size_invins b s : size (invins b s) = (size s).
   Proof.
-    admit.
+    rewrite /invins; elim: s => [//= | s0 s] /=.
+    move H : (invbumprow b s) => [r a] /=.
+    by case (leqP b (head b s)) => _ //= ->.
   Qed.
+
+  Lemma yam_tl_non0 l s : is_yam (l.+1 :: s) -> s != [::].
+  Proof. case: s => [|//=] Hyam. move: (is_part_shyam Hyam). by rewrite part_head0F. Qed.
 
   Lemma shape_instabninv1 t row srow :
     is_yam (row :: srow) -> shape t == shape_rowseq (row :: srow) ->
@@ -1210,9 +1216,30 @@ Section Inverse.
       * move: Hshape; rewrite size_belast /=.
         by case: (shape_rowseq srow).
     - case: t => [//= | r0 t]; first by case (shape_rowseq srow).
-      rewrite shape_rowshape_cons => Hshape.
-      move => /=.
-      admit.
+      rewrite shape_rowshape_cons => /eqP Hshape.
+      have Hsz0 : (size r0) = head 0 (shape_rowseq srow) by 
+        move: Hshape => /=; case (shape_rowseq srow) => [|s0 s] [] ->.
+      have {Hshape} Hshape : shape t == shape_rowseq (row :: (shift_yam srow)).
+        move: (eq_refl (behead (shape (r0 :: t)))).
+        by rewrite {2}Hshape behead_incr_nth -shape_shift.
+      move: (yam_tl_non0 Hyam) => Hnnilsrow.
+      have {Hyam} Hyam : (is_yam (row :: shift_yam srow)) by apply (is_yam_shift Hyam).
+      move: (IHrow _ _ Hyam Hshape) => /= {IHrow Hshape Hyam}.
+      move Hinv: (invinstabn t row) => [tin l] /=.
+      move: (size_invins l r0); rewrite /invins.
+      move Hbump: (invbumprow l r0) => [t0r l0r] /= -> {Hbump t0r l0r} /eqP -> {Hinv tin l}.
+      rewrite shape_shift Hsz0 {Hsz0 r0}.
+      case: srow Hnnilsrow => [//= | a b _].
+      have: shape_rowseq (a :: b) != [::] by case: a => [/= | a /=]; case (shape_rowseq b).
+      by case (shape_rowseq (a :: b)).
+  Qed.
+
+
+  Lemma is_tableau_instabninv1 t nrow :
+    is_tableau t -> is_out_corner (shape t) nrow ->
+    is_tableau (invinstabn t nrow).1.
+  Proof.
+    admit.
   Qed.
 
   Theorem RS_bij_2 pair : RSpair pair -> RSbij (RSbijinv2 pair) == pair.
