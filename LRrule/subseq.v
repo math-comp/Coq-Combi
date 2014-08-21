@@ -57,6 +57,16 @@ Section RCons.
         rewrite -rcons_cons; exact (IHw _ _ H).
   Qed.
 
+  Lemma subseq_rev s w : subseq s w -> subseq (rev s) (rev w).
+  Proof.
+    elim: w s => [/= s /eqP -> //= | w0 w IHw] s //=.
+    case: s => [_ | s0 s /=]; first by rewrite {1}/rev /=; case (rev _).
+    rewrite !rev_cons; case: (altP (s0 =P w0)) => [-> | Hneq].
+    - move/IHw; by apply subseq_rcons_eq.
+    - move/IHw; rewrite rev_cons => {IHw} IHw; apply (@subseq_trans _ (rev w) _ _ IHw).
+      by apply subseq_rcons.
+  Qed.
+
   Lemma count_mem_rcons w l i : count_mem i (rcons w l) = count_mem i w + (l == i).
   Proof. by rewrite -count_rev rev_rcons /= count_rev addnC. Qed.
 
