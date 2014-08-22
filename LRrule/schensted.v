@@ -567,6 +567,7 @@ Section Bump.
       by apply lt_bumped.
   Qed.
 
+  (* Unused lemma *)
   Lemma bumprow_size :
     let: (lr, tr) := bumpRow in
     (size Row).+1 == (size tr) + if lr is Some _ then 1 else 0.
@@ -576,13 +577,13 @@ Section Bump.
     by move: IHr; case (bumprow r l) => [lr tr] /= /eqP ->.
   Qed.
 
-  Lemma bumprow_mult i :
+  Lemma bumprow_count p :
     let: (lr, tr) := bumpRow in
-    count_mem i Row + (l == i) == count_mem i tr + if lr is Some ll then (ll == i) else 0.
+    count p Row + (p l) == count p tr + if lr is Some ll then (p ll) else 0.
   Proof.
     elim: Row => [| t0 r IHr] /=; first by rewrite !addn0.
     case (ltnP l t0) => _ /=.
-    - by rewrite addnC -addnA eqn_add2l addnC eqn_add2l [t0 == i]eq_sym.
+    - by rewrite addnC -addnA eqn_add2l addnC eqn_add2l.
     - move: IHr; case (bumprow r l) => [tr lr] /= IHr.
       by rewrite -!addnA eqn_add2l.
   Qed.
@@ -798,8 +799,6 @@ Section Tableaux.
 
   Lemma instab_non_nil t l : instab t l != [::].
   Proof. case: t => [//=| t0 t /=]. by case (bumprow t0 l) => [[ll|]] l0. Qed.
-
-  Definition to_word t := flatten (rev t).
 
   Fixpoint RS_rev w : seq (seq nat) :=
     if w is w0 :: wr then instab (RS_rev wr) w0 else [::].
@@ -1227,6 +1226,60 @@ Section Inverse.
 End Inverse.
 
 
+Section Statistics.
+
+  Implicit Type t : seq (seq nat).
+
+  Definition size_tab t := sumn (shape t).
+
+  Lemma sum_incr_nth s i : sumn (incr_nth s i) = (sumn s).+1.
+  Proof.
+    elim: i s => [/= | i IHi]; first by case=> [| s0 s].
+    case=> [/= | s0 s /=]; first by rewrite /sumn add0n; elim i.
+    by rewrite (IHi s) addnS.
+  Qed.
+
+  Lemma size_instab t l : is_tableau t -> size_tab (instab t l) = (size_tab t).+1.
+  Proof.
+    rewrite /size_tab -instabnE => Htab.
+    have {Htab} := (shape_instabn l Htab).
+    case: (instabn t l) => [tr row] /= -> {tr l}.
+    by rewrite sum_incr_nth.
+  Qed.
+
+  Theorem size_RS w : size_tab (RS w) == size w.
+  Proof.
+    elim/last_ind: w => [//= | w0 w]; rewrite /RS rev_rcons /= -[(RS_rev (rev w0))]/(RS w0).
+    by rewrite (size_instab _ (is_tableau_RS _)) size_rcons eqSS.
+  Qed.
+
+  Definition to_word t := flatten (rev t).
+
+  Lemma flatten_rev_cons l t : flatten (rev (l :: t)) = flatten (rev t) ++ l.
+  Proof. admit. Qed.
+
+  Lemma count_instab t l p :
+    is_tableau t -> count p (to_word (instab t l)) = (p l) + count p (to_word t).
+  Proof.
+    rewrite /to_word; elim: t l => [//= _ | r t IHt] l /= /and4P [] _ _ _ Htab.
+    have:= (bumprow_count r l p).
+    case (bumprow r l) => [[ll|] lr] /= /eqP Hbump; rewrite addnC in Hbump;
+        rewrite !flatten_rev_cons !count_cat [_ + (count p r)]addnC addnA Hbump.
+    - by rewrite (IHt ll Htab) -addnA addnC -addnA addnC.
+    - by rewrite addn0 addnC.
+  Qed.
+
+  Theorem count_RS w p : count p w = count p (to_word (RS w)).
+  Proof.
+    elim/last_ind: w => [//= | w0 w]; rewrite /RS !rev_rcons /= -[(RS_rev (rev w0))]/(RS w0).
+    rewrite (count_instab _ _ (is_tableau_RS _)) => <-.
+    by rewrite -[rcons _ _](revK) rev_rcons count_rev /= count_rev.
+  Qed.
+
+  Theorem perm_RS w : perm_eq w (to_word (RS w)).
+  Proof. apply/perm_eqP => l; by apply count_RS. Qed.
+
+End Statistics.
 
 Section Bijection.
 
