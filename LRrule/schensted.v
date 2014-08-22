@@ -1255,8 +1255,11 @@ Section Statistics.
 
   Definition to_word t := flatten (rev t).
 
-  Lemma flatten_rev_cons l t : flatten (rev (l :: t)) = flatten (rev t) ++ l.
-  Proof. admit. Qed.
+  Lemma flatten_rcons l t : flatten (rcons t l) = flatten t ++ l.
+  Proof.
+    elim: t => [//= | t0 t IHt /=]; first by rewrite cats0.
+    by rewrite IHt catA.
+  Qed.
 
   Lemma count_instab t l p :
     is_tableau t -> count p (to_word (instab t l)) = (p l) + count p (to_word t).
@@ -1264,7 +1267,7 @@ Section Statistics.
     rewrite /to_word; elim: t l => [//= _ | r t IHt] l /= /and4P [] _ _ _ Htab.
     have:= (bumprow_count r l p).
     case (bumprow r l) => [[ll|] lr] /= /eqP Hbump; rewrite addnC in Hbump;
-        rewrite !flatten_rev_cons !count_cat [_ + (count p r)]addnC addnA Hbump.
+      rewrite !rev_cons !flatten_rcons !count_cat [_ + (count p r)]addnC addnA Hbump.
     - by rewrite (IHt ll Htab) -addnA addnC -addnA addnC.
     - by rewrite addn0 addnC.
   Qed.
