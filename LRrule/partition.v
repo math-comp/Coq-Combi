@@ -9,8 +9,10 @@ Proof. apply negbTE; by elim i. Qed.
 
 Section Shape.
 
+  Variable T : Type.
+
   Implicit Type s : seq nat.
-  Implicit Type t : seq (seq nat).
+  Implicit Type t : seq (seq T).
 
   Definition shape t := map size t.
   Fixpoint is_part sh :=
