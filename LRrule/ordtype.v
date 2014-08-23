@@ -152,7 +152,6 @@ Qed.
 
 Lemma ltnXW m n : m < n -> m <= n.
 Proof. by move/andP => []. Qed.
-Hint Resolve ltnXW.
 
 Lemma ltnX_trans n m p : m < n -> n < p -> m < p.
 Proof. move=> lt_mn /ltnXW. exact: ltnX_leqX_trans. Qed.
@@ -230,3 +229,5 @@ Proof. by rewrite leqXE /=. Qed.
 
 Lemma ltnXnatE m n : (n < m)%Ord = (n < m)%N.
 Proof. by rewrite leqXE ltn_neqAle. Qed.
+
+Hint Resolve leqXnn ltnX ltnXW.
