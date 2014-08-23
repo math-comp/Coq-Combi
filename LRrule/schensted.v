@@ -146,7 +146,7 @@ Qed.
 Section NonEmpty.
 
 Variable T : ordType.
-Variable Z : T.
+Notation Z := (inhabitant T).
 
 Section Insert.
 
@@ -1405,7 +1405,7 @@ Section Tests.
   Goal (to_word (RS [:: 2; 5; 1; 6; 4; 3])) = [:: 5; 2; 4; 1; 3; 6].
   Proof. compute; by apply erefl. Qed.
 
-  Goal is_tableau 0 (RS [:: 2; 5; 1; 6; 4; 3]).
+  Goal is_tableau (RS [:: 2; 5; 1; 6; 4; 3]).
   Proof. compute; by apply erefl. Qed.
 
   Goal (invbumprow 3 [:: 1; 1; 2; 2; 5]) = ([:: 1; 1; 2; 3; 5], 2).
@@ -1418,8 +1418,8 @@ Section Tests.
               ([:: [:: 1; 3; 3]; [:: 2; 4; 6]; [:: 5]], 1).
   Proof. compute; by apply erefl. Qed.
 
-  Goal invinstabn 0 [:: [:: 1; 3; 3]; [:: 2; 4; 6]; [:: 5]] 1  =
-                   ([:: [:: 1; 3; 6]; [:: 2; 4];    [:: 5]], 3).
+  Goal invinstabn [:: [:: 1; 3; 3]; [:: 2; 4; 6]; [:: 5]] 1  =
+                 ([:: [:: 1; 3; 6]; [:: 2; 4];    [:: 5]], 3).
   Proof. compute; by apply erefl. Qed.
 
   Goal is_part [:: 0] = false.
@@ -1431,7 +1431,7 @@ Section Tests.
   Goal shape_rowseq [:: 0; 1; 2; 0; 1; 3] = [:: 2; 2; 1; 1].
   Proof. compute; by apply erefl. Qed.
 
-  Goal (RSmapinv2 0 (RSmap [:: 4; 1; 2; 1; 3; 2])) = [:: 4; 1; 2; 1; 3; 2].
+  Goal (RSmapinv2 (RSmap [:: 4; 1; 2; 1; 3; 2])) = [:: 4; 1; 2; 1; 3; 2].
   Proof. compute; by apply erefl. Qed.
 
 End Tests.
