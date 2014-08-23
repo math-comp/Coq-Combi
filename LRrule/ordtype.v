@@ -101,7 +101,7 @@ Lemma leqXnn n : n <= n.
 Proof. have:= (@leqXordP T); by rewrite /Order.axiom /reflexive => [] [] refl _ _. Qed.
 Hint Resolve leqXnn.
 
-Lemma ltnXn n : n < n = false.
+Lemma ltnXnn n : n < n = false.
 Proof. by rewrite eq_refl. Qed.
 
 Lemma eq_leqX n m : n = m -> n <= m.
@@ -230,4 +230,4 @@ Proof. by rewrite leqXE /=. Qed.
 Lemma ltnXnatE m n : (n < m)%Ord = (n < m)%N.
 Proof. by rewrite leqXE ltn_neqAle. Qed.
 
-Hint Resolve leqXnn ltnX ltnXW.
+Hint Resolve leqXnn ltnXnn ltnXW.
