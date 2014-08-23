@@ -11,7 +11,7 @@ Definition axiom T (r : rel T) := [/\ reflexive r, antisymmetric r, transitive r
 
 Section ClassDef.
 
-Record mixin_of T := Mixin { r : rel T; _ : axiom r }.
+Record mixin_of T := Mixin { r : rel T; x : T; _ : axiom r }.
 
 Record class_of T := Class {base : Equality.class_of T; mixin : mixin_of T}.
 Local Coercion base : class_of >->  Equality.class_of.
@@ -212,6 +212,9 @@ Qed.
 
 End OrdTheory.
 
+Lemma inhabitant (T : ordType) : T.
+Proof. move H : T => HH; case: HH H => sort [] base [] r x ax t0 HT; by apply x. Qed.
+
 Fact leq_order : Order.axiom leq.
 Proof.
   split.
@@ -221,7 +224,7 @@ Proof.
   - exact leq_total.
 Qed.
 
-Definition nat_ordMixin := Order.Mixin leq_order.
+Definition nat_ordMixin := Order.Mixin 0 leq_order.
 Canonical nat_ordType := Eval hnf in OrdType nat nat_ordMixin.
 
 Lemma leqXnatE m n : (n <= m)%Ord = (n <= m)%N.

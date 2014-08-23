@@ -72,10 +72,12 @@ Section RCons.
 
 End RCons.
 
+
+
 Section Fintype.
   (* We define SubSeq w as a finType *)
 
-  Variable (T : countType).
+  Variable (T : choiceType).
   Implicit Type s w : seq T.
   Implicit Type a b l : T.
 
