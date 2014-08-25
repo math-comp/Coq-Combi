@@ -136,7 +136,7 @@ Proof.
   case: (ltnP pos (size r)) Hl => [Hpos Hl |HH]; last by rewrite (nth_default l HH) ltnXnn.
   rewrite size_set_nth maxnC /maxn; have:= Hpos; rewrite leqNgt; move/negbTE => -> Hi1lt.
   case (altP (i =P pos)) => Hipos; case (altP (i.+1 =P pos)) => Hi1pos.
-  - apply leqXnn.
+  - by apply leqXnn.
   - apply ltnXW; apply (ltnX_leqX_trans Hl); rewrite -Hipos; by apply Hrow.
   - move: {Hmin} (contra (Hmin i)); rewrite -leqXNgtnX -ltnNge; apply.
     by rewrite Hi1pos leqnn.
