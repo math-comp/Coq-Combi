@@ -1,7 +1,5 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import subseq partition ordtype schensted.
-
-Require Import finset perm.
+Require Import subseq partition ordtype permuted schensted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -20,7 +18,7 @@ Variable full : seq T.
 Hypothesis Hfull : forall x, invar x -> x \in full.
 
 Theorem full_bound :
-  forall s : seq T, all invar s -> uniq s -> size s <= size (full).
+  forall s : seq T, all invar s -> uniq s -> size s <= size full.
 Proof.
   move=> s /allP Hall Huniq; apply uniq_leq_size; first exact Huniq.
   move=> l Hl. by apply (Hfull (Hall _ Hl)).
@@ -250,7 +248,7 @@ Proof. move/rewseq_min=> H/H{H} H x y /rtransP Hrew; by apply H. Qed.
 End Depend.
 
 (* congruence closure of an homogeneous rewriting rule *)
-Section Congruence.
+Section CongruenceClosure.
 
 Variable Alph : eqType.
 Notation word := (seq_eqType Alph).
@@ -263,9 +261,7 @@ Hypothesis Hcongr :
 
 Lemma perm_eq_bound (x : word) (s : seq word) :
   all (perm_eq x) s -> uniq s -> size s <= (size x)`!.
-Proof.
-  admit.
-Qed.
+Proof. rewrite -(size_permuted x); apply full_bound; by apply eq_seqE. Qed.
 
 Lemma Hinvar (x0 x : word) : perm_eq x0 x -> all (perm_eq x0) (rule x).
 Proof.
@@ -300,6 +296,6 @@ Proof.
     apply rule_congr; apply Hcongr; by apply Hsym.
 Qed.
 
-End Congruence.
+End CongruenceClosure.
 
 
