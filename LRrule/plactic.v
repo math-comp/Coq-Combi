@@ -193,13 +193,13 @@ Let word := seq Alph.
 Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
 
-Notation "a :=: b" := (plactcongr a b).
+Notation "a =Pl b" := (plactcongr a b) (at level 70).
 
 Lemma rcons_rcons w a b : rcons (rcons w a) b = w ++ [:: a; b].
 Proof. by rewrite -!cats1 -catA cat1s. Qed.
 
 Lemma congr_row_1 r b l :
-  is_row (rcons r l) -> l <A b -> rcons (rcons r b) l :=: b :: rcons r l.
+  is_row (rcons r l) -> l <A b -> rcons (rcons r b) l =Pl b :: rcons r l.
 Proof.
   have:= (@plactcongr_equiv Alph) => /equivalence_relP [] Hrefl Htrans.
   have:= (@plactcongr_is_congr Alph) => Hcongr.
@@ -215,7 +215,7 @@ Proof.
  Qed.
 
 Lemma congr_row_2 a r l :
-  is_row (a :: r) -> l <A a -> a :: rcons r l :=: a :: l :: r.
+  is_row (a :: r) -> l <A a -> a :: rcons r l =Pl a :: l :: r.
 Proof.
   have:= (@plactcongr_equiv Alph) => /equivalence_relP [] Hrefl Htrans.
   have:= (@plactcongr_is_congr Alph) => Hcongr.
@@ -234,21 +234,22 @@ Proof.
       by rewrite /= Hrn1rn (ltnX_leqX_trans Hla Harn1) !mem_cat !mem_seq1 eq_refl /= !orbT.
 Qed.
 
-Lemma insLR L R r rpos l pos :
-  (size L) = pos -> r = L ++ rpos :: R -> set_nth l r pos l = L ++ l :: R.
+Lemma set_nth_LxR L c R l pos :
+  (size L) = pos -> set_nth l (L ++ c :: R) pos l = L ++ l :: R.
 Proof.
-  move=> Hsize Hr; have Hpos : pos < size r
-    by rewrite -Hsize Hr size_cat /= -addSnnS -{1}[(size L).+1]addn0 leq_add2l.
+  move Hr : (L ++ c :: R) => r Hsize.
+  have Hpos : pos < size r
+    by rewrite -Hsize -Hr size_cat /= -addSnnS -{1}[(size L).+1]addn0 leq_add2l.
   have Hsizeset : size (set_nth l r pos l) = size r.
     rewrite size_set_nth maxnC /maxn ltnS.
     by move: Hpos; rewrite ltnNge => /negbTE => ->.
   apply (eq_from_nth (x0 := l)) => [| i].
-  - rewrite (_ : size (_ ++ _ :: _) = size r); last by rewrite Hr !size_cat.
+  - rewrite (_ : size (_ ++ _ :: _) = size r); last by rewrite -Hr !size_cat.
     by rewrite Hsizeset.
   - rewrite Hsizeset nth_set_nth -/pos nth_cat Hsize /= => Hi.
     case (ltngtP i pos) => Hipos.
-    + by rewrite Hr nth_cat Hsize Hipos.
-    + rewrite Hr nth_cat Hsize.
+    + by rewrite -Hr nth_cat Hsize Hipos.
+    + rewrite -Hr nth_cat Hsize.
       have:= ltnW Hipos; rewrite leqNgt => /negbTE ->.
       case H : (i - pos) => [|//=].
       exfalso; have H1 : i <= pos by rewrite /leq H.
@@ -257,7 +258,7 @@ Proof.
 Qed.
 
 Lemma congr_bump r l :
-  r != [::] -> is_row r -> bump r l -> r ++ [:: l] :=: [:: bumped r l] ++ ins r l.
+  r != [::] -> is_row r -> bump r l -> r ++ [:: l] =Pl [:: bumped r l] ++ ins r l.
 Proof.
   have:= (@plactcongr_equiv Alph) => /equivalence_relP [] Hrefl Htrans.
   have:= (@plactcongr_is_congr Alph) => Hcongr.
@@ -281,14 +282,14 @@ Proof.
       have H : (size L) < pos by have:= size_take pos r; rewrite Hpos Hll size_rcons => <-.
       have:= (nth_lt_inspos H).
       by rewrite -(nth_take (n0 := pos) _ H) Hll nth_rcons ltnn eq_refl.
-    * rewrite /ins -/pos; apply (insLR (rpos := rpos)); last by rewrite Hr.
+    * rewrite /ins -/pos -Hr; apply set_nth_LxR.
       by rewrite -HL size_take Hpos.
   + rewrite -Hr -catA; apply (congr_catr Hcongr).
     rewrite cats1 rcons_cons; apply (congr_row_2 HrowR).
     rewrite Hrpos; by apply lt_bumped.
 Qed.
 
-Theorem congr_Sch w : w :=: (to_word (RS w)).
+Theorem congr_Sch w : w =Pl (to_word (RS w)).
 Proof.
   have:= (@plactcongr_equiv Alph) => /equivalence_relP [] Hrefl Htrans.
   have:= (@plactcongr_is_congr Alph) => Hcongr.
