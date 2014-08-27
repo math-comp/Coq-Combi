@@ -1,6 +1,4 @@
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import subseq partition ordtype schensted.
-
+Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype seq tuple.
 Require Import finset perm.
 
 Set Implicit Arguments.
