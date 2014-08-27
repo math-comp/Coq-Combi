@@ -123,12 +123,11 @@ Section Rows.
 
   Lemma is_row_rcons l r : is_row r -> (last l r <= l)%Ord -> is_row (rcons r l).
   Proof.
-    move/is_row1P => Hrow Hl; apply/is_row1P => i; rewrite size_rcons !nth_rcons => HH.
-    have {HH} HH := HH : (i < size r); rewrite HH.
-    case (ltngtP i.+1 (size r)) => Hisz.
-    - by apply Hrow.
-    - by rewrite ltnNge HH in Hisz.
-    - move: Hrow HH Hl => _ _; by rewrite (last_nth Z) -Hisz.
+    elim: r l => [//=| t0 r IHr] l /=; first by rewrite andbT.
+    case: r IHr => [//= _ _ -> /= | r0 r IHr]; first by rewrite andbT.
+    move=> /andP [] Ht0 Hrow Hlast.
+    rewrite (IHr _ Hrow) => /=; first by rewrite andbT.
+    by apply Hlast.
   Qed.
 
   Lemma row_lt_by_pos r p q :
@@ -443,7 +442,7 @@ Section Schensted.
         + by rewrite last_rcons nth_set_nth_any eq_refl.
         + by apply subseq_rcons_eq.
         + by rewrite size_rcons Hsz.
-        + apply (is_row_rcons Z Hrow).
+        + apply (is_row_rcons Hrow).
           have Hany : (size s).-1 < size s by rewrite Hsz.
           rewrite -nth_last (nth_any wn Z Hany) {Hany}; first rewrite nth_last Hlast.
           have:= pos_leq_size (is_row_Sch w) wn; rewrite -Hieq => Hany.

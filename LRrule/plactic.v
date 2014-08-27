@@ -276,7 +276,7 @@ Proof.
       apply (@congr_catl _ _ Hcongr _ _ R').
       rewrite -Hrpos !cats1 cat1s rcons_cons.
       apply congr_row_1; last by rewrite Hrpos; apply lt_bumped.
-      apply (is_row_rcons (inhabitant Alph) HrowL).
+      apply (is_row_rcons HrowL).
       case/lastP: L HL {Hr HrowL} => [//= | L ll Hll]; rewrite last_rcons.
       have H : (size L) < pos by have:= size_take pos r; rewrite Hpos Hll size_rcons => <-.
       have:= (nth_lt_inspos H).
