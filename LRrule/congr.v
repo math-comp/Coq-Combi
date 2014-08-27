@@ -1,9 +1,8 @@
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import subseq partition ordtype permuted schensted.
+Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
+Require Import permuted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
-
 
 Section Transitive.
 
@@ -140,12 +139,12 @@ Proof.
     * move=> s x <-; rewrite invar_undupE; by case (all invar s).
 Qed.
 
-Definition class x := trans [:: x].
+Definition tclass x := trans [:: x].
 
-Lemma classP x y :
-  invar x -> reflect (rewseq x y) (y \in class x).
+Lemma tclassP x y :
+  invar x -> reflect (rewseq x y) (y \in tclass x).
 Proof.
-  move=> Hinv; rewrite /class; apply (iffP idP).
+  move=> Hinv; rewrite /tclass; apply (iffP idP).
   + move/transP => H.
     have: (all invar [:: x]) by apply/allP=> z; rewrite mem_seq1 => /eqP ->.
     by move/H => [] z []; rewrite mem_seq1 => /eqP ->.
@@ -160,16 +159,16 @@ Proof.
   by apply IH.
 Qed.
 
-Lemma in_class_trans x y z :
-  invar x -> y \in class x -> z \in class y -> z \in class x.
+Lemma in_tclass_trans x y z :
+  invar x -> y \in tclass x -> z \in tclass y -> z \in tclass x.
 Proof.
-  move=> Hinvx /(classP _ Hinvx) => Hrewxy; have:= (invar_rewseq Hinvx Hrewxy).
-  move=> Hinvy /(classP _ Hinvy) => Hrewyz.
-  apply /(classP _ Hinvx); by apply (rewseq_trans (y := y)).
+  move=> Hinvx /(tclassP _ Hinvx) => Hrewxy; have:= (invar_rewseq Hinvx Hrewxy).
+  move=> Hinvy /(tclassP _ Hinvy) => Hrewyz.
+  apply /(tclassP _ Hinvx); by apply (rewseq_trans (y := y)).
 Qed.
 
-Lemma in_class_refl x : x \in class x.
-Proof. by rewrite /class; apply subset_trans; rewrite mem_seq1. Qed.
+Lemma in_tclass_refl x : x \in tclass x.
+Proof. by rewrite /tclass; apply subset_trans; rewrite mem_seq1. Qed.
 
 Hypothesis Hsym : forall x y, x \in rule y -> y \in rule x.
 
@@ -182,11 +181,11 @@ Proof.
   apply (rewseq_trans Hyz Hzx).
 Qed.
 
-Lemma in_class_sym x y : invar x -> y \in class x -> x \in class y.
+Lemma in_tclass_sym x y : invar x -> y \in tclass x -> x \in tclass y.
 Proof.
-  move=> Hinvx /(classP _ Hinvx) => Hrewxy.
+  move=> Hinvx /(tclassP _ Hinvx) => Hrewxy.
   have:= (invar_rewseq Hinvx Hrewxy) => Hinvy.
-  apply /(classP _ Hinvy); by apply rewseq_sym.
+  apply /(tclassP _ Hinvy); by apply rewseq_sym.
 Qed.
 
 End Transitive.
@@ -203,16 +202,16 @@ Hypothesis Hbound: forall x s, all (invar x) s -> uniq s -> size s <= bound x.
 Hypothesis Hsym : forall x y, x \in rule y -> y \in rule x.
 
 
-Definition rclass x := class (@Hinvar x) (@Hbound x) x.
+Definition rclass x := tclass (@Hinvar x) (@Hbound x) x.
 Definition rtrans : rel T := fun x y => y \in rclass x.
 
 Lemma rtransP x y : reflect (rewseq rule y x) (rtrans y x).
-Proof. rewrite /rtrans /rclass; by apply classP. Qed.
+Proof. rewrite /rtrans /rclass; by apply tclassP. Qed.
 
 Theorem equiv_rtrans : equivalence_rel rtrans.
 Proof.
   rewrite equivalence_relP; split.
-  - rewrite /reflexive /rtrans /rclass => x; apply in_class_refl.
+  - rewrite /reflexive /rtrans /rclass => x; apply in_tclass_refl.
   - rewrite /left_transitive => x y Hrxy z.
     apply/(sameP idP); apply(iffP idP); move: Hrxy.
     * move=> /rtransP Hryx /rtransP Hrzy; apply /rtransP.
@@ -247,17 +246,62 @@ Proof. move/rewseq_min=> H/H{H} H x y /rtransP Hrew; by apply H. Qed.
 
 End Depend.
 
-(* congruence closure of an homogeneous rewriting rule *)
+Section CongruenceFacts.
+
+Variable Alph : eqType.
+Notation word := (seq_eqType Alph).
+
+Definition congruence_rel (r : rel word) :=
+  forall a b1 c b2, r b1 b2 -> r (a ++ b1 ++ c) (a ++ b2 ++ c).
+
+Variable r : rel word.
+Hypothesis Hcongr : congruence_rel r.
+Hypothesis Hequiv : equivalence_rel r.
+
+Lemma congr_cons w1 w2 a : r w1 w2 -> r (a :: w1) (a :: w2).
+Proof.
+  rewrite -[a :: w1]cat1s -[[:: a] ++ w1]cats0 -catA.
+  rewrite -[a :: w2]cat1s -[[:: a] ++ w2]cats0 -catA.
+  by apply Hcongr.
+Qed.
+
+Lemma congr_rcons w1 w2 a : r w1 w2 -> r (rcons w1 a) (rcons w2 a).
+Proof.
+  rewrite -[rcons w1 a]cats1 -[w1 ++ [:: a]]cat0s.
+  rewrite -[rcons w2 a]cats1 -[w2 ++ [:: a]]cat0s.
+  by apply Hcongr.
+Qed.
+
+Lemma congr_catl u1 u2 v : r u1 u2 -> r (u1 ++ v) (u2 ++ v).
+Proof. rewrite -[u1 ++ v]cat0s -[u2 ++ v]cat0s; by apply Hcongr. Qed.
+
+Lemma congr_catr u v1 v2 : r v1 v2 -> r (u ++ v1) (u ++ v2).
+Proof. rewrite -[u ++ v1]cats0 -[u ++ v2]cats0 -!catA; by apply Hcongr. Qed.
+
+Lemma congr_cat u1 u2 v1 v2 : r u1 u2 -> r v1 v2 -> r (u1 ++ v1) (u2 ++ v2).
+Proof.
+  have:= Hequiv => /equivalence_relP [] Hrefl Htrans.
+  move=> Hu Hv; rewrite (Htrans _ (u1 ++ v2)).
+  - by apply congr_catl.
+  - by apply congr_catr.
+Qed.
+
+End CongruenceFacts.
+
+
+(* congruence closure of an homogeneous congruence rewriting rule *)
 Section CongruenceClosure.
 
 Variable Alph : eqType.
 Notation word := (seq_eqType Alph).
 
+Definition congruence_rule (rule : word -> seq word) :=
+  forall a b1 c b2, b2 \in rule b1 -> (a ++ b2 ++ c) \in rule (a ++ b1 ++ c).
+
 Variable rule : word -> seq word.
 Hypothesis Hsym : forall u v : word, v \in rule u -> u \in rule v.
 Hypothesis Hhomog : forall u : word, all (perm_eq u) (rule u).
-Hypothesis Hcongr :
-  forall u v1 v2 w : word , v2 \in rule v1 -> (u ++ v2 ++ w) \in rule (u ++ v1 ++ w).
+Hypothesis Hcongr : congruence_rule rule.
 
 Lemma perm_eq_bound (x : word) (s : seq word) :
   all (perm_eq x) s -> uniq s -> size s <= (size x)`!.
@@ -285,17 +329,116 @@ Proof.
   by apply perm_eq_refl.
 Qed.
 
-Lemma congr_is_congr (u v1 w : word) :
-  forall v2, congr v1 v2 -> congr (u ++ v2 ++ w) (u ++ v1 ++ w).
+Lemma congr_is_congr : congruence_rel congr.
 Proof.
   have:= equiv_congr => /equivalence_relP [] Hrefl Htrans.
-  apply congr_ind.
+  move=> a b1 c; apply congr_ind.
   + by apply Hrefl.
   + move=> x y Hx Hrule.
-    rewrite (@Htrans _ (u ++ x ++ w)); first exact Hx.
-    apply rule_congr; apply Hcongr; by apply Hsym.
+    rewrite (@Htrans _ (a ++ x ++ c)); last apply Hx.
+    by apply rule_congr; apply Hcongr.
 Qed.
 
 End CongruenceClosure.
 
+Require Import vectNK.
 
+Section CongruenceRule.
+
+Variable Alph : eqType.
+Notation word := (seq_eqType Alph).
+
+Variable rule : word -> seq word.
+Hypothesis Hhomog : forall u : word, all (perm_eq u) (rule u).
+Hypothesis Hsym : forall u v : word, v \in rule u -> u \in rule v.
+
+Definition congrrule s :=
+  flatten [seq
+             [seq (triple.1.1) ++ b1 ++ (triple.2) | b1 <- rule triple.1.2]
+          | triple <- cut3 s ].
+
+Lemma rule_congrrule u v : v \in rule u -> v \in congrrule u.
+Proof.
+  move=> H; apply/flatten_mapP.
+  exists ([::], u, [::]); first by rewrite -cat3_equiv_cut3 cat0s cats0.
+  apply/mapP; by exists v; last by rewrite cat0s cats0.
+Qed.
+
+Lemma congrrule_is_congr : congruence_rule congrrule.
+Proof.
+  move=> a b1 c b2 /flatten_mapP [] [[i j1] k].
+  rewrite -cat3_equiv_cut3 /= => /eqP -> {b1} /mapP [] j2 Hj2 -> {b2}.
+  rewrite !catA [a ++ i]lock -!catA; unlock. set a1 := a ++ i; set c1 := k ++ c.
+  apply/flatten_mapP; exists (a1, j1, c1); first by rewrite -cat3_equiv_cut3.
+  apply/mapP; by exists j2; first by apply Hj2.
+Qed.
+
+Lemma congrrule_homog u : all (perm_eq u) (congrrule u).
+Proof.
+  apply/allP => v /flatten_mapP [] [[i j1] k] /=.
+  rewrite -cat3_equiv_cut3 /= => /eqP -> /mapP [] j2 Hj2 ->.
+  rewrite perm_cat2l perm_cat2r.
+  have:= (Hhomog j1) => /allP; by apply.
+Qed.
+
+Lemma congrrule_sym u v : v \in congrrule u -> u \in congrrule v.
+Proof.
+  move/flatten_mapP => [] [[i j1] k].
+  rewrite -cat3_equiv_cut3 /= => /eqP -> /mapP [] j2 Hj2 ->.
+  have {Hj2} Hj2 := (Hsym Hj2); apply congrrule_is_congr.
+  by apply rule_congrrule.
+Qed.
+
+End CongruenceRule.
+
+
+Section Final.
+
+Variable Alph : eqType.
+Notation word := (seq_eqType Alph).
+
+Variable rule : word -> seq word.
+Hypothesis Hsym : forall u v : word, v \in rule u -> u \in rule v.
+Hypothesis Hhomog : forall u : word, all (perm_eq u) (rule u).
+
+Definition gencongr := (congr (congrrule_homog Hhomog)).
+
+Lemma gencongr_equiv : equivalence_rel gencongr.
+Proof. apply equiv_congr; by apply congrrule_sym. Qed.
+
+Lemma gencongr_is_congr : congruence_rel gencongr.
+Proof.
+  apply congr_is_congr; first by apply congrrule_sym.
+  by apply congrrule_is_congr.
+Qed.
+
+Lemma rule_gencongr u v : v \in rule u -> v \in gencongr u.
+Proof. move=> H; apply rule_congr; by apply rule_congrrule. Qed.
+
+Lemma gencongr_min (r : rel word) :
+  equivalence_rel r -> congruence_rel r ->
+  (forall x y, y \in rule x -> r x y) ->
+  forall x y, gencongr x y -> r x y.
+Proof.
+  move=> /equivalence_relP [] Hrefl Htrans Hcongr Hrule x y /rtransP => H.
+  elim: (H (@perm_eq_refl Alph)) => {H}; first by apply Hrefl.
+  move=> {x y} x y z _ Hrzy /flatten_mapP [] [[i j1] k] /=.
+  rewrite -cat3_equiv_cut3 /= => /eqP -> {x} /mapP [] j2 Hj2 Hz.
+  rewrite Hz in Hrzy => {z Hz}.
+  rewrite (@Htrans _ (i ++ j2 ++ k)); first exact Hrzy.
+  apply Hcongr; by  apply Hrule.
+Qed.
+
+Lemma gencongr_ind (P : word -> Prop) x :
+  P x ->
+  (forall a b1 c b2, P (a ++ b1 ++ c) -> b2 \in rule b1 -> P (a ++ b2 ++ c)) ->
+  forall y, gencongr x y -> P y.
+Proof.
+  move=> Hx IH; apply (rtrans_ind (@perm_eq_refl Alph) Hx).
+  move=> y z Hy /flatten_mapP [] [[i j1] k].
+  rewrite -cat3_equiv_cut3 /= => /eqP Heqy; subst y.
+  move=> /mapP [] j2 Hj2 Hz; subst z.
+  by apply (@IH _ j1).
+Qed.
+
+End Final.
