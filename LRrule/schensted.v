@@ -95,6 +95,20 @@ Section Rows.
     by move=> /= /andP [] ->.
   Qed.
 
+  Lemma is_row_take r n : is_row r -> is_row (take n r).
+  Proof.
+    elim: n r => [//= | n IHn ]; first by case.
+    case => [//= | r0 r /=] => /andP [] Hhead Hrow.
+    rewrite (IHn _ Hrow) andbT {Hrow}; move: Hhead.
+    case: r => [//= | r1 r] /=; by case n.
+  Qed.
+
+  Lemma is_row_drop r n : is_row r -> is_row (drop n r).
+  Proof.
+    elim: n r => [//= | n IHn ]; first by case.
+    case => [//= | r0 r /=] => /andP [] _ Hrow; by apply IHn.
+  Qed.
+
   Lemma is_row_last l r : is_row (rcons r l) -> (last l r <= l)%Ord.
   Proof.
     elim: r => [//=|t0 r IHr] /= /andP [] Ht0.
