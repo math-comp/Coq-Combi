@@ -357,6 +357,19 @@ Definition congrrule s :=
              [seq (triple.1.1) ++ b1 ++ (triple.2) | b1 <- rule triple.1.2]
           | triple <- cut3 s ].
 
+Lemma congrruleP u1 u2 :
+  reflect (exists a v1 b v2, [/\ u1 = a ++ v1 ++ b, u2 = a ++ v2 ++ b & v1 \in rule v2])
+          (u1 \in congrrule u2).
+Proof.
+  apply (iffP idP).
+  + move/flatten_mapP => [] [] [] a v2 b /=.
+    rewrite -cat3_equiv_cut3 => /eqP H2 /mapP [] v1 Hrule H1.
+    by exists a; exists v1; exists b; exists v2.
+  + move=> [] a [] v1 [] b [] v2 [] H1 H2 Hrule.
+    apply/flatten_mapP. exists (a, v2, b); first by rewrite -cat3_equiv_cut3 H2.
+    rewrite H1 /=; apply/mapP; by exists v1.
+Qed.
+
 Lemma rule_congrrule u v : v \in rule u -> v \in congrrule u.
 Proof.
   move=> H; apply/flatten_mapP.
