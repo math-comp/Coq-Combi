@@ -183,9 +183,15 @@ Proof. apply gencongr_equiv; by apply plactrule_sym. Qed.
 Lemma plactcongr_is_congr : congruence_rel plactcongr.
 Proof. apply gencongr_is_congr; by apply plactrule_sym. Qed.
 
+Lemma plactcongr_homog u v : v \in plactcongr u -> perm_eq u v.
+Proof. by apply gencongr_homog. Qed.
+
+Lemma size_plactcongr u v : v \in plactcongr u -> size u = size v.
+Proof. by move/plactcongr_homog/perm_eq_size. Qed.
+
 End Defs.
 
-Section Lothaire.
+Section RSToPlactic.
 
 Variable Alph : ordType.
 Let word := seq Alph.
@@ -315,10 +321,178 @@ Proof.
   rewrite Heq; rewrite -(Htrans _ _ (congr_Sch v)); by apply Hrefl.
 Qed.
 
+End RSToPlactic.
+
+Section RemoveBig.
+
+Variable Alph : ordType.
+Let word := seq Alph.
+
+Implicit Type a b c : Alph.
+Implicit Type u v w r : word.
+
+Lemma rembig_plact1 u v : u \in (plact1 v) -> rembig u = rembig v.
+Proof.
+  move/plact1P => [] a [] b [] c [] /andP [] Hab Hbc -> -> /=.
+  have:= Hab => /maxX_idPr ->; rewrite Hbc.
+  have:= ltnXW Hbc => /maxX_idPl ->.
+  have:= ltnXW (leqX_ltnX_trans Hab Hbc); by rewrite leqXNgtnX => /negbTE ->.
+Qed.
+
+Lemma rembig_plact1i u v : u \in (plact1i v) -> rembig u = rembig v.
+Proof. by rewrite -plact1I => /rembig_plact1 ->. Qed.
+
+Lemma rembig_plact2 u v : u \in (plact2 v) -> rembig u = rembig v.
+Proof.
+  move/plact2P => [] a [] b [] c [] /andP [] Hab Hbc -> -> /=.
+  have:= ltnX_leqX_trans Hab Hbc => Hac; rewrite Hac maxXC.
+  have {Hac} Hac := ltnXW Hac; have:= Hac => /maxX_idPr ->.
+  move: Hac; rewrite leqXNgtnX => /negbTE ->.
+  move: Hbc; by rewrite leqXNgtnX => /negbTE ->.
+Qed.
+
+Lemma rembig_plact2i u v : u \in (plact2i v) -> rembig u = rembig v.
+Proof. by rewrite -plact2I => /rembig_plact2 ->. Qed.
+
+Lemma rembig_plact u v : u \in (plactrule _ v) -> rembig u = rembig v.
+Proof.
+  move/plactruleP => [].
+  by apply rembig_plact1. by apply rembig_plact1i.
+  by apply rembig_plact2. by apply rembig_plact2i.
+Qed.
+
+Notation "a =Pl b" := (plactcongr a b) (at level 70).
+
+Theorem rembig_congr u v : u =Pl v -> (rembig u) =Pl (rembig v).
+Proof.
+  have:= (@plactcongr_equiv Alph) => /equivalence_relP [] Hrefl Htrans.
+  have:= (@plactcongr_is_congr Alph) => Hcongr.
+  move: v; apply gencongr_ind; first by apply Hrefl.
+  move=> a b1 c b2 => H Hplact.
+  rewrite -(@Htrans (rembig (a ++ b1 ++ c))); last by rewrite -(Htrans _ _ H); apply Hrefl.
+  have:= (plact_homog b1) => {u H} /allP Heq; have {Heq} Heq := (Heq _ Hplact).
+  have:= Heq; rewrite -(perm_cat2r c) => Heqc.
+  have:= (rembig_eq_permR _ Heqc) => Htmp; have {Htmp} := (Htmp a) => [] [] [] -> ->.
+  - apply Hcongr; by apply rule_gencongr.
+  - apply (congr_catr Hcongr).
+    have:= (rembig_eq_permL _ Heq) => Htmp; have {Htmp} := (Htmp c) => [] [] [] -> ->.
+    * apply (congr_catl Hcongr); rewrite (rembig_plact Hplact); by apply Hrefl.
+    * apply (congr_catl Hcongr); by apply rule_gencongr.
+Qed.
+
+Notation maxL := (foldl (@maxX Alph)).
+
+Notation appi T b i := (set_nth [::] T i (rcons (nth [::] T i) b)).
+
+Lemma shape_appi T b i : shape (appi T b i) = incr_nth (shape T) i.
+Proof.
+  rewrite /shape /=; apply (@eq_from_nth _ 0).
+  + rewrite size_map size_set_nth size_incr_nth size_map /maxn.
+    case (ltngtP i.+1 (size T)).
+    - by move/ltnW ->.
+    - by rewrite ltnNge => /negbTE ->.
+    - by move => ->; rewrite leqnn.
+  + move=> j Hi.
+    rewrite nth_incr_nth (nth_map [::]) /=; last by move: Hi; rewrite size_map.
+    rewrite nth_set_nth /= eq_sym.
+    have -> : nth 0 [seq size i | i <- T] j = size (nth [::] T j).
+      case (ltnP j (size T)) => Hcase.
+      * by rewrite (nth_map [::] _ _ Hcase).
+      * by rewrite (nth_default _ Hcase) nth_default; last by rewrite size_map.
+    case (altP (i =P j)) => [->| Hij].
+    - by rewrite size_rcons add1n.
+    - by rewrite add0n.
+Qed.
+
+Lemma instab_appi b l n w :
+  l <A b -> maxLeq w b -> is_tableau (appi (RS w) b n) ->
+  exists i : nat,
+    instab (appi (RS w) b n) l = appi (instab (RS w) l) b i.
+Proof.
+  admit.
+  (*
+  elim: n w l => [| n IHn] w l.
+  case H : (instabnrow (RS w) l) => [t nrow].
+  case (altP (i =P nrow)) => [-> | Hnrow] Htab.
+  * exists nrow.+1 => {i}.
+  * exists i.
+  *)
+Qed.
+
+Theorem rembig_RS a v :
+  exists i, RS (a :: v) = appi (RS (rembig (a :: v))) (maxL a v) i.
+Proof.
+  have Htmp : a::v != [::] by [].
+  have:= eq_refl (rembig (a :: v)) => /(rembigP _ Htmp) [] L [] b [] R [] -> Hav HL HR {Htmp}.
+  rewrite (maxL_LbR Hav HL (maxLtnW HR)) Hav {v Hav}.
+  elim/last_ind: R HR => [_ | R Rn IHR HR].
+  + exists 0; rewrite !cats0 cats1 {1}/RS rev_rcons [LHS]/= -[RS_rev (rev L)]/(RS L).
+    have:= is_tableau_RS L; case H : (RS L) => [//= | t0 t] /= /and4P [].
+    case/lastP: t0 H => [//= | t0' t0n] H _ Hrow _ _.
+    suff Hnbump : (~~ bump (rcons t0' t0n) b)
+      by rewrite (nbump_bumprowE Hrow Hnbump) (nbump_ins_rconsE Hrow Hnbump).
+    have := (perm_eq_maxLeq (gencongr_homog (congr_Sch L)) HL).
+    rewrite H {H} /bump /= last_rcons -leqXNgtnX.
+    have := (maxLP b (to_word (rcons t0' t0n :: t))) => /allP Htmp.
+    have : t0n \in b :: to_word (rcons t0' t0n :: t).
+      rewrite inE /to_word; apply /orP; right.
+      apply /flattenP; exists (rcons t0' t0n); first by rewrite mem_rev /= inE eq_refl.
+      by rewrite mem_rcons inE eq_refl.
+    move/Htmp => {Htmp} /=.
+    case: (to_word _) => [//= | x0 x /=].
+    rewrite -maxXL => H1 H2; by move: H2 H1 => /maxX_idPl ->.
+  + have {IHR} := IHR (maxLtn_rconsK HR) => [] [] i IHR.
+    have := is_tableau_RS (L ++ b :: R).
+    rewrite -rcons_cons -!rcons_cat /RS !rev_rcons /= -[RS_rev (rev (L ++ R))]/(RS (L ++ R)).
+    rewrite -[RS_rev (rev (L ++ b :: R))]/(RS (L ++ b :: R)) IHR {IHR}.
+    have:= (maxLeq_cat HL (maxLtnW (maxLtn_rconsK HR))).
+    move: (L ++ R) => W; have := (maxLtn_last HR) => {HR HL R L}.
+    by apply instab_appi.
+Qed.
+
+End RemoveBig.
+
+
+
+Section GreenInvariants.
+
+Variable Alph : ordType.
+Let word := seq Alph.
+
+Implicit Type a b c : Alph.
+Implicit Type u v w r : word.
+
+Notation "a =Pl b" := (plactcongr a b) (at level 70).
+
+Theorem plactic_shapeRS u v : u =Pl v -> shape (RS u) = shape (RS v).
+Proof.
+  admit. (* Needs Green's invariant *)
+Qed.
 
 Theorem plact_Sch u v : plactcongr u v <-> RS u == RS v.
 Proof.
-  admit.
+  split; last by apply Sch_plact.
+  move Hu : (size u) => n Hpl.
+  have:= (perm_eq_size (gencongr_homog Hpl)) => /esym; rewrite Hu.
+  elim: n u v Hpl Hu => [| n IHn] u v;
+    first by move=> _ /eqP/nilP -> /eqP/nilP ->; rewrite /RS.
+  move=> Hpl Hu Hv.
+  have:= (size_rembig u); rewrite Hu /= => Hszu.
+  have:= (size_rembig v); rewrite Hv /= => Hszv.
+  have {IHn} := IHn _ _ (rembig_congr Hpl) Hszu Hszv => /eqP Hplrem {Hszu Hszv}.
+  move: Hu; case Hu : u => [//= | u0 u'] _.
+  move: Hv; case Hv : v => [//= | v0 v'] _.
+  have:= rembig_RS u0 u' => [] [] iu; rewrite -Hu => Hiu.
+  have:= rembig_RS v0 v' => [] [] iv; rewrite -Hv -Hplrem {Hplrem} => Hiv.
+  rewrite Hu Hv in Hpl; rewrite -(maxL_perm_eq (gencongr_homog Hpl)) in Hiv.
+  suff H : iu = iv by rewrite Hiu Hiv -H.
+  apply /eqP; rewrite -Hu -Hv in Hpl; have:= (plactic_shapeRS Hpl) => /eqP.
+  rewrite Hiu Hiv {Hu Hv Hiu Hiv} !shape_appi; move: (shape _) => sh /eqP Hsh.
+  case (altP (iu =P iv)) => [//= | /negbTE Hdiff].
+  have:= eq_refl (nth 0 (incr_nth sh iu) iu).
+  by rewrite {2}Hsh !nth_incr_nth eq_refl [iv == iu]eq_sym Hdiff eqn_add2r.
 Qed.
 
-End Lothaire.
+End GreenInvariants.
+
+
