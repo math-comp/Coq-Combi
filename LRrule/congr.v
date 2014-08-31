@@ -454,4 +454,13 @@ Proof.
   by apply (@IH _ j1).
 Qed.
 
+Lemma gencongr_homog u v : v \in gencongr u -> perm_eq u v.
+Proof.
+  move: v; apply gencongr_ind; first by apply perm_eq_refl.
+  move=> a b1 c b2 => H Hrule.
+  rewrite (perm_eq_trans H); first by [].
+  rewrite perm_cat2l perm_cat2r.
+  move: (Hhomog b1) => /allP; by apply.
+Qed.
+
 End Final.
