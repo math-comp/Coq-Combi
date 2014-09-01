@@ -800,13 +800,13 @@ Section Dominate.
     - have:= nth_pos_ins r1 l1; rewrite -Hipos1.
       have:= Hlt i Hi'.
       rewrite (nth_any Z l0 (leq_trans Hi' Hsize)) (nth_any Z l1 Hi').
-      rewrite {1 3}Hipos1 {1 3}/ins nth_set_nth {1 2}Hipos1 /=.
+      rewrite {1}Hipos1 {1}/ins nth_set_nth {1}Hipos1 /=.
       case (altP (i =P inspos r0 l0)) => [Hipos0 _| Hipos0].
-      * rewrite {2 4}Hipos0 Hl1 => <-; rewrite Hipos1 nth_pos_ins.
+      * rewrite {2}Hipos0 Hl1 => <-; rewrite Hipos1 nth_pos_ins.
         case (boolP (bump r1 l1)) => Hbump;
           last by move: Hi; rewrite Hipos1 (nbump_inspos_eq_size Hrow1 Hbump) ltnn.
         have:= inspred_mininspred Hbump; by rewrite (insposE Hrow1) /inspred.
-      * rewrite -{1 4}Hipos1 (negbTE Hipos0) nth_pos_ins => Hlt1 Heqins.
+      * rewrite -{1}Hipos1 (negbTE Hipos0) nth_pos_ins => Hlt1 Heqins.
         rewrite -Hipos1 in Hlt1.
         apply (ltnX_leqX_trans Hlt1); rewrite -{1}Heqins.
         by apply ins_leq.

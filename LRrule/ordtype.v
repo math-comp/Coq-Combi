@@ -59,6 +59,8 @@ Lemma leqXordP T : Order.axiom (@leqX_op T).
 Proof. by case: T => ? [] /= base []. Qed.
 Implicit Arguments leqXordP [T].
 
+Definition ltnX_op T m n := ((m != n) && (@leqX_op T m n)).
+
 Prenex Implicits leqX_op leqXordP.
 
 (* Declare legacy Arith operators in new scope. *)
@@ -77,7 +79,7 @@ Delimit Scope ord_scope with Ord.
 Open Scope ord_scope.
 
 Notation "m <= n" := (leqX_op m n) : ord_scope.
-Notation "m < n"  := ((m != n) && (m <= n)) : ord_scope.
+Notation "m < n"  := (ltnX_op m n) : ord_scope.
 Notation "m >= n" := (n <= m) (only parsing) : ord_scope.
 Notation "m > n"  := (n < m) (only parsing)  : ord_scope.
 
@@ -103,7 +105,7 @@ Proof. have:= @leqXordP T; by rewrite /Order.axiom /reflexive => [] [] refl _ _.
 Hint Resolve leqXnn.
 
 Lemma ltnXnn n : n < n = false.
-Proof. by rewrite eq_refl. Qed.
+Proof. by rewrite /ltnX_op eq_refl. Qed.
 
 Lemma eq_leqX n m : n = m -> n <= m.
 Proof. by move->. Qed.
@@ -115,7 +117,9 @@ Lemma gtnX_eqF m n : m < n -> n == m = false.
 Proof. rewrite [(n == m)]eq_sym. by apply ltnX_eqF. Qed.
 
 Lemma leqX_eqVltnX m n : (m <= n) = (m == n) || (m < n).
-Proof. by case (altP (m =P n)) => [/= -> | /= _]; first by rewrite (leqXnn n). Qed.
+Proof.
+  rewrite /ltnX_op; by case (altP (m =P n)) => [/= -> | /= _]; first by rewrite (leqXnn n).
+Qed.
 
 Lemma ltnX_neqAleqX m n : (m < n) = (m != n) && (m <= n).
 Proof. by []. Qed.
@@ -137,7 +141,7 @@ Qed.
 
 Lemma leqX_ltnX_trans n m p : m <= n -> n < p -> m < p.
 Proof.
-  move=> H1 /andP [] Hneq H2; rewrite (leqX_trans H1 H2) andbT.
+  move=> H1 /andP [] Hneq H2; rewrite /ltnX_op (leqX_trans H1 H2) andbT.
   move: Hneq; apply contraLR => /=.
   rewrite !negbK [n == p]eqn_leqX => /eqP Heq; rewrite Heq in H1.
   by rewrite H1 H2.
@@ -145,7 +149,7 @@ Qed.
 
 Lemma ltnX_leqX_trans n m p : m < n -> n <= p -> m < p.
 Proof.
-  move=> /andP [] Hneq H1 H2; rewrite (leqX_trans H1 H2) andbT.
+  move=> /andP [] Hneq H1 H2; rewrite /ltnX_op (leqX_trans H1 H2) andbT.
   move: Hneq; apply contraLR => /=.
   rewrite !negbK [m == n]eqn_leqX => /eqP Heq; rewrite Heq; rewrite Heq in H1.
   by rewrite H1 H2.
@@ -175,7 +179,7 @@ Proof.
   - rewrite H negb_and negbK; case (boolP (n <= m)) => //=.
     * by rewrite eqn_leqX H => ->.
     * by rewrite orbT.
-  - by rewrite eqn_leqX H /= negb_and negbK /= orbF.
+  - by rewrite /ltnX_op eqn_leqX H /= negb_and negbK /= orbF.
 Qed.
 
 Lemma ltnXNgeqX m n : (m < n) = ~~ (n <= m).
@@ -207,7 +211,7 @@ CoInductive compareX m n : bool -> bool -> bool -> Set :=
 
 Lemma compareP m n : compareX m n (m < n) (n < m) (m == n).
 Proof.
-  rewrite eqn_leqX; case: ltnXP; first by constructor.
+  rewrite {1}/ltnX_op eqn_leqX; case: ltnXP; first by constructor.
   by rewrite leqX_eqVltnX orbC; case: leqXP => /=; constructor; first by apply/eqP.
 Qed.
 
@@ -215,10 +219,7 @@ Definition maxX m n := if m < n then n else m.
 Definition minX m n := if m < n then m else n.
 
 Lemma maxXC : commutative maxX.
-Proof.
-  move=> m n; rewrite /maxX; case (compareP m n) => //=; first by move /ltnXW ->.
-  by rewrite ltnXNgeqX => /negbTE ->.
-Qed.
+Proof. move=> m n; rewrite /maxX; by case (compareP m n). Qed.
 
 Lemma maxXA : associative maxX.
 Proof.
@@ -326,7 +327,7 @@ Proof.
 Qed.
 Lemma maxLtnCons b u a : b < a -> maxLtn u a -> maxL b u < a.
 Proof.
-  case: u => [//= | u0 u IHu] /=; rewrite -maxXL {3 5}/maxX.
+  case: u => [//= | u0 u IHu] /=; rewrite -maxXL {2}/maxX.
   by case (ltnXP b (maxL u0 u)).
 Qed.
 
@@ -565,8 +566,8 @@ Proof.
         move: Hub; case u => [/= | u0 u' /=] Hub /negbT;
           apply contraR; rewrite -ltnXNgeqX; first by rewrite (maxLeqL (maxLtnW Hvb)).
         rewrite maxL_cat (maxLeqL (maxLtnW Hvb)) -maxXL => Hu.
-        rewrite maxXC {1 3}/maxX; have:= Hub; rewrite leqXNgtnX => /negbTE ->.
-        move: Hub Hu; rewrite {2 4}/maxX. case (ltnXP w0 (maxL u0 u')) => //=.
+        rewrite maxXC {1}/maxX; have:= Hub; rewrite leqXNgtnX => /negbTE ->.
+        move: Hub Hu; rewrite {2}/maxX. case (ltnXP w0 (maxL u0 u')) => //=.
         move=> _ /leqX_ltnX_trans H/H{H}; by rewrite ltnXnn.
   - move=> [] u [] b [] v [] {Hwb}.
     elim: u w wb => [w wb -> -> _ /= -> //=| u0 u IHu].
@@ -602,4 +603,4 @@ Lemma leqXnatE m n : (n <= m)%Ord = (n <= m)%N.
 Proof. by rewrite leqXE /=. Qed.
 
 Lemma ltnXnatE m n : (n < m)%Ord = (n < m)%N.
-Proof. by rewrite leqXE ltn_neqAle. Qed.
+Proof. by rewrite /ltnX_op leqXE ltn_neqAle. Qed.
