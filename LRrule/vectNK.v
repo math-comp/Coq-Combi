@@ -52,7 +52,7 @@ Lemma sum_iota a b x :
   a <= x < a + b.+1 -> sumn [seq ((i == x) : nat) | i <- iota a b.+1] = 1.
 Proof.
   elim: b a => [/=| b IHb] a; first by rewrite addn1 ltnS -eqn_leq => ->.
-  have:= (IHb a.+1) => /= {IHb} IHb.
+  have:= IHb a.+1 => /= {IHb} IHb.
   case (ltnP a x) => H1 /andP [] H2 H3.
   + rewrite IHb; first by rewrite (ltn_eqF H1).
     by rewrite H1 addSnnS.

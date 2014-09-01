@@ -31,7 +31,7 @@ Lemma perm_eq_permuted_tuple (s : list T) (H : size s == n) :
 Proof.
   set t := Tuple H; have Ht : perm_eq s t by [].
   move=> s1 Hss1; rewrite perm_eq_sym in Hss1.
-  have:= (perm_eq_trans Hss1 Ht) => /tuple_perm_eqP [] p Hs1.
+  have:= perm_eq_trans Hss1 Ht => /tuple_perm_eqP [] p Hs1.
   apply/mapP; set t1 := (X in _ = tval X) in Hs1; exists t1; last exact Hs1.
   rewrite /permuted_tuple; apply/mapP.
   by exists p; first by rewrite mem_enum.

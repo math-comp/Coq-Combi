@@ -57,7 +57,7 @@ Proof.
   rewrite /step => /allP H; apply /allP => x.
   rewrite mem_undup mem_cat => /orP []; first by apply H.
   move=> /flattenP [] tmp /mapP [] y Hyins -> {tmp} Hxy.
-  have:= (Hinvar (H _ Hyins)) => /allP; by apply.
+  have:= Hinvar (H _ Hyins) => /allP; by apply.
 Qed.
 
 Lemma subset_step s : {subset s <= step s}.
@@ -97,7 +97,7 @@ Inductive rewseq x : T -> Prop :=
 Lemma invar_rewseq x y : invar x -> rewseq x y -> invar y.
 Proof.
   move=> Hx Hrew; elim: Hrew Hx => [//=|{x y} x y z] Hrew Hinv Hrule Hinvx.
-  apply Hinv => {Hinv}; have := Hinvar Hinvx => /allP; by apply.
+  apply Hinv => {Hinv}; have:= Hinvar Hinvx => /allP; by apply.
 Qed.
 
 Lemma step_closed x s y :
@@ -115,7 +115,7 @@ Proof.
   move=> Hl; apply (iffP idP).
   + move: Hl; apply trans_ind => //=.
     * move=> s _ Hsz IH Hall Hy.
-      case: (IH (invar_step Hall) Hy) => x [] Hx Hrew.
+      case (IH (invar_step Hall) Hy) => x [] Hx Hrew.
       move: Hx; rewrite /step mem_undup mem_cat => /orP []; first by exists x.
       move=> /flattenP [] tmp /mapP [] z Hyins -> {tmp} Hxy.
       exists z; split; first exact Hyins.
@@ -162,7 +162,7 @@ Qed.
 Lemma in_tclass_trans x y z :
   invar x -> y \in tclass x -> z \in tclass y -> z \in tclass x.
 Proof.
-  move=> Hinvx /(tclassP _ Hinvx) => Hrewxy; have:= (invar_rewseq Hinvx Hrewxy).
+  move=> Hinvx /(tclassP _ Hinvx) => Hrewxy; have:= invar_rewseq Hinvx Hrewxy.
   move=> Hinvy /(tclassP _ Hinvy) => Hrewyz.
   apply /(tclassP _ Hinvx); by apply (rewseq_trans (y := y)).
 Qed.
@@ -177,14 +177,14 @@ Proof.
   elim; first by apply NilRew.
   move=> {x y} x y z Hzy Hyz Hrule.
   have {Hrule} Hrule := (Hsym Hrule).
-  have:= (ConsRew (NilRew _) Hrule) => Hzx.
+  have:= ConsRew (NilRew _) Hrule => Hzx.
   apply (rewseq_trans Hyz Hzx).
 Qed.
 
 Lemma in_tclass_sym x y : invar x -> y \in tclass x -> x \in tclass y.
 Proof.
   move=> Hinvx /(tclassP _ Hinvx) => Hrewxy.
-  have:= (invar_rewseq Hinvx Hrewxy) => Hinvy.
+  have:= invar_rewseq Hinvx Hrewxy => Hinvy.
   apply /(tclassP _ Hinvy); by apply rewseq_sym.
 Qed.
 
@@ -217,7 +217,7 @@ Proof.
     * move=> /rtransP Hryx /rtransP Hrzy; apply /rtransP.
       by apply (rewseq_trans (y := y)).
     * move=> /rtransP Hryx /rtransP Hrzx; apply /rtransP.
-      have:= (rewseq_sym Hsym Hryx) => Hrzy; by apply (rewseq_trans (y := x)).
+      have:= rewseq_sym Hsym Hryx => Hrzy; by apply (rewseq_trans (y := x)).
 Qed.
 
 Lemma rtrans_ind (P : T -> Prop) x :
@@ -309,9 +309,9 @@ Proof. rewrite -(size_permuted x); apply full_bound; by apply eq_seqE. Qed.
 
 Lemma Hinvar (x0 x : word) : perm_eq x0 x -> all (perm_eq x0) (rule x).
 Proof.
-  have:= (perm_eq_trans); rewrite /transitive => Ptrans.
+  have:= perm_eq_trans; rewrite /transitive => Ptrans.
   move=> H; apply /allP => x1 Hx1; apply (@Ptrans _ x _ _ H).
-  have:= (Hhomog x) => /allP; by apply.
+  have:= Hhomog x => /allP; by apply.
 Qed.
 
 Definition congr := (rtrans Hinvar perm_eq_bound).
@@ -391,7 +391,7 @@ Proof.
   apply/allP => v /flatten_mapP [] [[i j1] k] /=.
   rewrite -cat3_equiv_cut3 /= => /eqP -> /mapP [] j2 Hj2 ->.
   rewrite perm_cat2l perm_cat2r.
-  have:= (Hhomog j1) => /allP; by apply.
+  have:= Hhomog j1 => /allP; by apply.
 Qed.
 
 Lemma congrrule_sym u v : v \in congrrule u -> u \in congrrule v.
