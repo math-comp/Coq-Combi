@@ -407,34 +407,6 @@ Proof.
     - by rewrite add0n.
 Qed.
 
-(* Move in missing *)
-Lemma incr_nth_inj sh : injective (incr_nth sh).
-Proof.
-  move=> i j Hsh.
-  case (altP (i =P j)) => [//= | /negbTE Hdiff].
-  have:= eq_refl (nth 0 (incr_nth sh i) j).
-  by rewrite {2}Hsh !nth_incr_nth eq_refl Hdiff eqn_add2r.
-Qed.
-
-(* Move in missing *)
-Lemma set_nth_size (T : Type) (x0 : T) s y :
-  set_nth x0 s (size s) y = rcons s y.
-Proof. elim: s => [//= | s0 s IHs /=]. by rewrite IHs -rcons_cons. Qed.
-
-(* Move in missing *)
-Lemma set_nth_rcons (T : Type) (x0 : T) s x n y :
-  set_nth x0 (rcons s x) n y =
-    if n < size s then rcons (set_nth x0 s n y) x
-    else if n == size s then rcons s y else (rcons s x) ++ ncons (n - size s).-1 x0 [:: y].
-Proof.
-  elim: s n => [//= | s0 s IHs] n.
-  + case (altP (n =P 0)) => [-> //= |].
-    case: n => [//= | [] //=].
-  + rewrite rcons_cons /=; case: n => [//= | n] /=.
-    have {IHs} := (IHs n). rewrite eqSS -[n.+1 < (size s).+1]/(n < (size s)).
-    by case (ltngtP n (size s)) => _ <-.
-Qed.
-
 Lemma inspos_rcons l r b : l <A b -> inspos r l = inspos (rcons r b) l.
 Proof. elim: r => [/= -> //= | r0 r IHr]; by rewrite rcons_cons /= => /IHr ->. Qed.
 
@@ -461,7 +433,7 @@ Proof.
   rewrite (nbump_bumprowE Hrow Hnbump) (bump_bumprowE Hrowb Hbumpb).
   rewrite /bumped /ins -(inspos_rcons r Hl).
   have:= nbump_inspos_eq_size Hrow Hnbump => Hsize.
-  by rewrite nth_rcons set_nth_rcons Hsize eq_refl ltnn set_nth_size.
+  by rewrite nth_rcons set_nth_rcons Hsize eq_refl ltnn rcons_set_nth.
 Qed.
 
 Fixpoint last_big t b :=
@@ -572,7 +544,6 @@ Lemma bisimul_instab t l b lb :
   let tres := (append_nth t b lb) in
   instab tres l = append_nth (instab t l) b (last_big (instab tres l) b).
 Proof.
-
   elim: t l lb => [/= l lb _| t0 t IHt l lb Htab] Hl Hallrow.
   - case: lb => [_ /=| lb Hj]; first by rewrite Hl /= (ltnX_eqF Hl) eq_refl.
     exfalso; have:= (Hj 0 (ltn0Sn _)); by rewrite /= ltnXnn.

@@ -3,6 +3,14 @@ Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+Lemma incr_nth_inj sh : injective (incr_nth sh).
+Proof.
+  move=> i j Hsh.
+  case (altP (i =P j)) => [//= | /negbTE Hdiff].
+  have:= eq_refl (nth 0 (incr_nth sh i) j).
+  by rewrite {2}Hsh !nth_incr_nth eq_refl Hdiff eqn_add2r.
+Qed.
+
 Section RCons.
 
   Variable (T : eqType).
@@ -20,6 +28,19 @@ Section RCons.
 
   Lemma set_nth_non_nil d s n y : set_nth d s n y != [::].
   Proof. elim: s => [|s0 s]; by case n. Qed.
+
+  Lemma set_nth_rcons (x0 : T) s x n y :
+    set_nth x0 (rcons s x) n y =
+    if n < size s then rcons (set_nth x0 s n y) x
+    else if n == size s then rcons s y else (rcons s x) ++ ncons (n - size s).-1 x0 [:: y].
+  Proof.
+    elim: s n => [//= | s0 s IHs] n.
+    + case (altP (n =P 0)) => [-> //= |].
+      case: n => [//= | [] //=].
+    + rewrite rcons_cons /=; case: n => [//= | n] /=.
+      have {IHs} := (IHs n). rewrite eqSS -[n.+1 < (size s).+1]/(n < (size s)).
+      by case (ltngtP n (size s)) => _ <-.
+  Qed.
 
   Lemma cons_in_map_cons a b s w :
     forall l : seq (seq T), a :: s \in [seq b :: s1 | s1 <- l] -> a == b.
