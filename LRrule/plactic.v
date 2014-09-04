@@ -227,7 +227,7 @@ Proof.
   have:= @plactcongr_is_congr Alph => Hcongr.
   elim/last_ind: r => [_ _ //= | r rn].
   case/lastP: r => [_ /=| r rn1].
-  - move/and3P => [] Harn _ _ Hla; apply rule_gencongr => //=.
+  - move/andP => [] Harn _ Hla; apply rule_gencongr => //=.
     by rewrite Harn Hla !mem_cat !mem_seq1 eq_refl /= !orbT.
   - move=> IH; rewrite -rcons_cons => Hrow Hla.
     have {IH} IH := (IH (is_row_rconsK Hrow) Hla).
@@ -402,7 +402,7 @@ Proof.
       case (ltnP j (size T)) => Hcase.
       * by rewrite (nth_map [::] _ _ Hcase).
       * by rewrite (nth_default _ Hcase) nth_default; last by rewrite size_map.
-    case (altP (i =P j)) => [->| Hij].
+    case eqP => [->|].
     - by rewrite size_rcons add1n.
     - by rewrite add0n.
 Qed.
@@ -456,9 +456,9 @@ Proof.
   move=> Htab Hmax; apply (iffP idP).
   + move/eqP ->; split.
     * elim: t Htab {Hmax} => [//= | t0 t IHt] /= /and4P [] _ _ _ Htab.
-      case (altP (last b t0 =P b)) => [//= | _]; by apply IHt.
+      case eqP => [//= | _]; by apply IHt.
     * elim: t Htab Hmax => [//= | t0 t IHt] /= /and4P [] Hnnil _ _ Htab Hmax.
-      case (altP (last b t0 =P b)) => [//= | H].
+      case eqP => [//= | /eqP H].
       case=> [/= _ | j].
       + have:= (maxLeq_to_word_hd Hmax); move: Hnnil H.
         case/lastP: t0 {Hmax} => [//= | t0 tn] _; rewrite last_rcons => H1 /maxLeq_last.

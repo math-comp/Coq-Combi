@@ -67,8 +67,8 @@ Section Shape.
     - move=> Hcorn; apply /is_partP; split; first exact Hn0.
       move=> j; move: Hcorn (Hpart1 j).
       rewrite !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS => Hcorn.
-      case (altP (i =P j)) => [<- //=|_].
-      case (altP (i =P j.+1)) => [Hi |_].
+      case (eqP (y:=j)) => [<- //=|_].
+      case eqP => [Hi |_].
       * rewrite add0n add1n; apply ltnW.
       * by rewrite !add0n.
   Qed.

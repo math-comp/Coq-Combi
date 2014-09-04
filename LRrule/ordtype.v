@@ -117,9 +117,7 @@ Lemma gtnX_eqF m n : m < n -> n == m = false.
 Proof. rewrite [(n == m)]eq_sym. by apply ltnX_eqF. Qed.
 
 Lemma leqX_eqVltnX m n : (m <= n) = (m == n) || (m < n).
-Proof.
-  rewrite /ltnX_op; by case (altP (m =P n)) => [/= -> | /= _]; first by rewrite (leqXnn n).
-Qed.
+Proof. rewrite /ltnX_op; by case eqP => [/= -> | /= _]; first by rewrite (leqXnn n). Qed.
 
 Lemma ltnX_neqAleqX m n : (m < n) = (m != n) && (m <= n).
 Proof. by []. Qed.
