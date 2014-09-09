@@ -154,7 +154,7 @@ Lemma greent_inf k : greent k >= minn N k.
 Proof.
   pose P := [set [set i ] | i in Ik k].
   have <- : scover P = minn N k.
-    rewrite /scover /=; suff -> : cover P = Ik k by apply sizeIk.
+    rewrite /=; suff -> : cover P = Ik k by apply sizeIk.
     rewrite /cover /P {P}.
     apply setP => i; apply/(sameP idP); apply(iffP idP).
     + move => Hi; apply/bigcupP; exists [set i]; last by rewrite in_set1.
@@ -175,14 +175,14 @@ Qed.
 
 Lemma greent_sup k : greent k <= N.
 Proof.
-  rewrite /greent /scover /=; apply/bigmax_leqP => P _.
+  rewrite /greent /=; apply/bigmax_leqP => P _.
   move: (cover P) => cover {P}; rewrite -{5}[N]card_ord.
   by apply max_card.
 Qed.
 
 End GreenDef.
 
-Implicit Arguments scover [N].
+Arguments scover [N].
 
 Lemma greentcast (Alph : ordType) (M N : nat) (Heq : M = N) k (V : M.-tuple Alph) :
   greent (tcast Heq V) k = greent V k.
@@ -353,7 +353,7 @@ Lemma green_row r k : is_row r -> green r k = minn (size r) k.
 Proof.
   move=> Hrow /=.
   apply/eqP; rewrite eqn_leq; apply/andP; split; last by apply greent_inf.
-  rewrite leq_min greent_sup /= /greent /scover; apply/bigmax_leqP => s.
+  rewrite leq_min greent_sup /= /greent /=; apply/bigmax_leqP => s.
   rewrite /kseq /trivIset => /and3P [] Hcard /eqP /= <- /forallP Hsort.
   suff {Hcard} H B : B \in s -> #|B| <= 1.
     apply (@leq_trans (\sum_(B in s) 1)); last by rewrite sum1_card.

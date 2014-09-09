@@ -57,7 +57,7 @@ Proof. by []. Qed.
 
 Lemma leqXordP T : Order.axiom (@leqX_op T).
 Proof. by case: T => ? [] /= base []. Qed.
-Implicit Arguments leqXordP [T].
+Arguments leqXordP [T].
 
 Definition ltnX_op T m n := ((m != n) && (@leqX_op T m n)).
 
