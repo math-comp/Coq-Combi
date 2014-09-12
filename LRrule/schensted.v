@@ -1325,6 +1325,15 @@ Section Statistics.
     by rewrite IHt catA.
   Qed.
 
+  Lemma to_word_cons r t : to_word (r :: t) = to_word t ++ r.
+  Proof. by rewrite /to_word rev_cons flatten_rcons. Qed.
+
+  Lemma size_to_word t : size_tab t = size (to_word t).
+  Proof.
+    rewrite /size_tab; elim: t => [//= | t0 t IHt] /=.
+    by rewrite to_word_cons size_cat IHt addnC.
+  Qed.
+
   Lemma count_instab t l p :
     is_tableau t -> count p (to_word (instab t l)) = (p l) + count p (to_word t).
   Proof.
