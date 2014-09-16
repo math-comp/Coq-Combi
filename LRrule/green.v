@@ -29,6 +29,9 @@ Qed.
 Lemma enum0 : enum 'I_0 = [::].
 Proof. apply/nilP; by rewrite /nilp size_enum_ord. Qed.
 
+Lemma nth_ord_ltn i n (H : i < n) x0 : nth x0 (enum 'I_n) i = (Ordinal H).
+Proof. by apply: val_inj => //=; rewrite nth_enum_ord. Qed.
+
 Implicit Type T : finType.
 
 Lemma set1_disjoint T (i j : T) : [set i] != [set j] -> [disjoint [set i] & [set j]].
@@ -333,14 +336,6 @@ Proof.
   move: Hi; by rewrite H ltnNge leq_addr.
 Qed.
 
-Lemma rinj_in_linjF i (s : {set 'I_M}) :
-  rinj i \in [set linj x | x in s] = false.
-Proof. apply negbTE; apply (introN idP) => /imsetP [] j _ /eqP; by rewrite eq_sym lrinjF. Qed.
-
-Lemma linj_in_rinjF i (s : {set 'I_N}) :
-  linj i \in [set rinj x | x in s] = false.
-Proof. apply negbTE; apply (introN idP) => /imsetP [] j _ /eqP; by rewrite lrinjF. Qed.
-
 Lemma disjoint_inj (sM : {set 'I_M}) (sN : {set 'I_N}) :
   [disjoint linj @: sM & rinj @: sN].
 Proof.
@@ -501,6 +496,14 @@ Proof.
     by rewrite green_row.
 Qed.
 
+End GreenSeq.
+
+Section GreenTab.
+
+Variable Alph : ordType.
+Implicit Type u v w : seq Alph.
+Implicit Type t : seq (seq Alph).
+
 Definition sym_cast m n (i : 'I_(m + n)) : 'I_(n + m) := cast_ord (addnC m n) i.
 
 Lemma cast_eq m n i j (H : m = n) : ((cast_ord H i) == (cast_ord H j)) = (i == j).
@@ -524,7 +527,6 @@ Proof.
     by [].
 Qed.
 
-
 Lemma mem_cast m n (H : m = n) (i : 'I_m) (S : {set 'I_m}) :
   ((cast_ord H) i) \in [set (cast_ord H) i | i in S] = (i \in S).
 Proof.
@@ -533,35 +535,36 @@ Proof.
   + by move/imsetP => [] j Hin /cast_ord_inj ->.
 Qed.
 
-Fixpoint tabextr_rec sh : seq {set 'I_(sumn sh)} :=
+
+
+Fixpoint shextr sh : seq {set 'I_(sumn sh)} :=
   if sh is s0 :: sh then
     [seq (sym_cast (@rshift (sumn sh) s0 i)) |:
-         (((@sym_cast _ _) \o (@lshift (sumn sh) s0)) @: (nth set0 (tabextr_rec sh) i))
+         (((@sym_cast _ _) \o (@lshift (sumn sh) s0)) @: (nth set0 (shextr sh) i))
     | i <- enum 'I_s0]
   else [::].
 
-Lemma size_tabextr_rec_cons s0 sh : size (tabextr_rec (s0 :: sh)) = s0.
-Proof. by rewrite /= size_map size_enum_ord. Qed.
-
-Lemma size_tabextr_rec sh : size (tabextr_rec sh) = head 0 sh.
-Proof. by case sh => [//= | s0 s]; apply size_tabextr_rec_cons. Qed.
-
-Lemma size_tabextr_tab (t : seq (seq Alph)) :
-  (size (head [::] t)) = size (tabextr_rec (shape t)).
-Proof.
-  by rewrite size_tabextr_rec (_: head 0 (shape t) = size (head [::] t)); last by case t.
-Qed.
-
-Definition cast_set_tab (t : seq (seq Alph)) :=
+Definition cast_set_tab t :=
   [fun s : {set 'I_(sumn (shape t))} => (cast_ord (size_to_word t)) @: s].
 
-Definition tabextr (t : seq (seq Alph)) :=
-  [fun k => [seq (cast_set_tab t s) | s <- take k (tabextr_rec (shape t))]].
+Definition tabextr t := map (cast_set_tab t) (shextr (shape t)).
 
-Lemma trivIseq_tabextr_rec sh : trivIseq (tabextr_rec sh).
+Definition tabextrk t := [fun k => take k (tabextr t)].
+
+Lemma size_shextr_cons s0 sh : size (shextr (s0 :: sh)) = s0.
+Proof. by rewrite /= size_map size_enum_ord. Qed.
+
+Lemma size_shextr sh : size (shextr sh) = head 0 sh.
+Proof. by case sh => [//= | s0 s]; apply size_shextr_cons. Qed.
+
+Lemma size_tabextr t : size (tabextr t) = size (head [::] t).
+Proof. rewrite /tabextr /= size_map size_shextr. by case t. Qed.
+
+
+Lemma trivIseq_shextr sh : trivIseq (shextr sh).
 Proof.
   elim: sh => [/= | s0 sh /= IHsh]; first by rewrite /trivIseq => i j /= /andP [].
-  rewrite /trivIseq size_tabextr_rec_cons => i j /andP [] Hij Hj.
+  rewrite /trivIseq size_shextr_cons => i j /andP [] Hij Hj.
   have Hi := (ltn_trans Hij Hj).
   rewrite /disjoint; apply/pred0P => l /=; apply (introF idP) => /andP [].
   rewrite (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
@@ -575,80 +578,289 @@ Proof.
     rewrite in_setU1 => /orP [].
     * by rewrite sym_cast_eq lrinjF.
     * move/imsetP => [] l Hlj /= /cast_ord_inj /linjP H; move: H Hli => -> Hli.
-      case: (ltnP j (size (tabextr_rec sh))) => Hj1;
+      case: (ltnP j (size (shextr sh))) => Hj1;
         last by move: Hlj; rewrite (nth_default _ Hj1) in_set0.
-      have : i < j < size (tabextr_rec sh) by rewrite Hij Hj1.
+      have : i < j < size (shextr sh) by rewrite Hij Hj1.
       move/(IHsh i j); rewrite /disjoint => /pred0P => H.
       have:= H l; by rewrite /= Hli Hlj.
 Qed.
 
-Lemma trivIset_tabextr k (t : seq (seq Alph)) : trivIset [set s | s \in (tabextr t k)].
+Lemma trivIset_tabextrk k t : trivIset [set s | s \in (tabextrk t k)].
 Proof.
-  apply trivIs; rewrite /tabextr /=.
+  apply trivIs; rewrite /tabextrk /tabextr /= -map_take.
   apply trivIseq_map; first by apply cast_ord_inj.
-  apply (trivIsubseq (v := (tabextr_rec (shape t)))).
-  + rewrite -{2}[tabextr_rec (shape t)](cat_take_drop k).
+  apply (trivIsubseq (v := (shextr (shape t)))).
+  + rewrite -{2}[shextr (shape t)](cat_take_drop k).
     by apply prefix_subseq.
-  + by apply trivIseq_tabextr_rec.
+  + by apply trivIseq_shextr.
 Qed.
 
-Lemma extract_rec t0 (t : seq (seq Alph)) i :
+
+Section Induction.
+
+Variable (t0 : seq Alph) (t : seq (seq Alph)).
+
+Lemma size_to_word_cons : size (to_word t) + size t0 = size (to_word (t0 :: t)).
+Proof. by rewrite -!size_to_word /size_tab /= addnC. Qed.
+
+Definition cast_cons := cast_ord size_to_word_cons.
+Definition rinjt := (cast_cons \o (@rshift (size (to_word t)) (size t0))).
+Definition linjt := (cast_cons \o (@lshift (size (to_word t)) (size t0))).
+
+Lemma linjtP : injective linjt.
+Proof.
+  move=> [] i Hi [] j Hj /eqP H; apply /eqP; move: H; by rewrite !/eq_op /=.
+Qed.
+Lemma rinjtP : injective rinjt.
+Proof.
+  move=> [] i Hi [] j Hj /eqP H; apply /eqP; move: H; by rewrite !/eq_op /= eqn_add2l.
+Qed.
+
+Lemma lrinjtF i j : (linjt i == rinjt j) = false.
+Proof.
+  apply (introF idP); case: i j => [] i Hi [] j Hj.
+  rewrite /eq_op /= => /eqP H.
+  move: Hi; by rewrite H ltnNge leq_addr.
+Qed.
+
+Lemma rinjt_in_linjtF i (s : {set 'I_(size (to_word t))}) :
+  rinjt i \in [set linjt x | x in s] = false.
+Proof.
+  apply negbTE; apply (introN idP) => /imsetP [] j _ /eqP; by rewrite eq_sym lrinjtF.
+Qed.
+
+Lemma linjt_in_rinjtF i (s : {set 'I_(size t0)}) :
+  linjt i \in [set rinjt x | x in s] = false.
+Proof. apply negbTE; apply (introN idP) => /imsetP [] j _ /eqP; by rewrite lrinjtF. Qed.
+
+Lemma disjoint_injt (st : {set 'I_(size (to_word t))}) (s0 : {set 'I_(size t0)}) :
+  [disjoint linjt @: st & rinjt @: s0].
+Proof.
+  rewrite /linjt /rinjt !imset_comp.
+  rewrite -setI_eq0 -imsetI; last by move=> i j _ _ /= /cast_ord_inj.
+  have := (disjoint_inj st s0); rewrite -setI_eq0 => /eqP ->.
+  by rewrite imset0.
+Qed.
+
+Definition lsplitt := [fun s : {set 'I_(size (to_word (t0 :: t)))} => linjt @^-1: s].
+Definition rsplitt := [fun s : {set 'I_(size (to_word (t0 :: t)))} => rinjt @^-1: s].
+
+Lemma splittabK (s : {set 'I_(size (to_word (t0 :: t)))}) :
+  s = (linjt @: lsplitt s) :|: (rinjt @: rsplitt s).
+Proof.
+  rewrite /lsplitt /rsplitt /linjt /rinjt.
+  apply/setP/subset_eqP/andP; split; apply/subsetP=> i Hi.
+  + apply/setUP; rewrite -(cast_ordKV size_to_word_cons i) !imset_comp !mem_cast.
+    have:= splitK (cast_ord (esym size_to_word_cons) i).
+    case: fintype.splitP => j Hj; rewrite /unsplit => Hinj.
+    * left; apply/imsetP; exists j => /=; last by rewrite Hinj.
+      by rewrite inE /= Hinj /cast_cons cast_ordKV.
+    * right; apply/imsetP; exists j => /=; last by rewrite Hinj.
+      by rewrite inE /= Hinj /cast_cons cast_ordKV.
+  + move: Hi; rewrite inE => /orP []; move/imsetP => [] j; by rewrite inE => H ->.
+Qed.
+
+Lemma cuttcover (p : {set {set 'I_(size (to_word (t0 :: t)))}}) :
+  cover p = linjt @: (cover (lsplitt @: p)) :|: rinjt @: (cover (rsplitt @: p)).
+Proof.
+  rewrite /lsplitt /rsplitt /linjt /rinjt /cover.
+  apply/setP/subset_eqP/andP; split; apply/subsetP=> i.
+  * move/bigcupP=> [] part Hpart Hi.
+    rewrite -(cast_ordKV size_to_word_cons i).
+    have:= splitK (cast_ord (esym size_to_word_cons) i).
+    case: fintype.splitP => j Hj; rewrite /unsplit => Hinj.
+    - rewrite -Hinj; apply/setUP; left.
+      rewrite /cast_cons imset_comp mem_cast; apply mem_imset; apply/bigcupP.
+      exists (lsplitt part); first by apply mem_imset.
+      by rewrite inE /linjt /= Hinj /cast_cons cast_ordKV.
+    - rewrite -Hinj; apply/setUP; right.
+      rewrite /cast_cons imset_comp mem_cast; apply mem_imset; apply/bigcupP.
+      exists (rsplitt part); first by apply mem_imset.
+      by rewrite inE /rinjt /= Hinj /cast_cons cast_ordKV.
+  * move/setUP => [] /imsetP [] j /bigcupP [] part /imsetP [] prt Hprt Hcut Hj ->;
+      apply/bigcupP; exists prt => //=; move: Hj; by rewrite Hcut inE.
+Qed.
+
+Lemma lcast_com :
+  (cast_ord (size_to_word (t0 :: t)))
+    \o (@sym_cast _ _) \o (@lshift (sumn (shape t)) (size t0))
+  =1  linjt \o (cast_ord (size_to_word t)).
+Proof. move=> i; apply /eqP; by rewrite /rinjt /= /eq_op /=. Qed.
+
+Lemma rcast_com :
+ (cast_ord (size_to_word (t0 :: t)))
+   \o (@sym_cast _ _) \o (@rshift (sumn (shape t)) (size t0))  =1  rinjt.
+Proof. move=> i; apply /eqP; rewrite /rinjt /= /eq_op /=; by rewrite -size_to_word. Qed.
+
+
+Lemma tabextr_cons:
+  tabextr (t0 :: t) =
+    [seq rinjt i |: (linjt @: (nth set0 (tabextr t) i)) | i <- enum 'I_(size t0)].
+Proof.
+  rewrite /tabextr /cast_cons /=.
+  apply (@eq_from_nth _ set0); first by rewrite !size_map.
+  move=> i; rewrite 2!size_map => Hienum; have:= Hienum; rewrite size_enum_ord => Hi.
+  rewrite -map_comp (nth_map (Ordinal Hi)) //= !(nth_enum_ord _ Hi).
+  rewrite (nth_map (Ordinal Hi)) //= !(nth_enum_ord _ Hi).
+  rewrite imsetU1 -!imset_comp.
+  case (ltnP i (size (shextr (shape t)))) => Hish.
+  + rewrite (nth_map set0 _ _ Hish).
+    have:= (rcast_com (nth (Ordinal Hi) (enum 'I_(size t0)) i)) => /= ->.
+    by rewrite -!imset_comp (eq_imset _ lcast_com).
+  + set empty := (nth set0 (map _ _)) i.
+    have {empty} -> : empty = set0 by rewrite /empty nth_default //= size_map.
+    set ii := nth _ _ i.
+    have {ii} -> : ii = Ordinal Hi by rewrite /ii; apply val_inj; rewrite /= nth_enum_ord.
+    by rewrite nth_default //= !imset0 -(rcast_com (Ordinal Hi)).
+Qed.
+
+Lemma size_tabextr_cons: size (tabextr (t0 :: t)) = size t0.
+Proof. by rewrite tabextr_cons /= size_map size_enum_ord. Qed.
+
+Lemma enum_cast_ord m n (H : n = m):
+  enum 'I_m = [seq cast_ord H i | i <- enum 'I_n].
+Proof.
+  subst m; rewrite /=.
+  have /eq_map -> : cast_ord (erefl n) =1 id by move=> i; apply val_inj.
+  by rewrite map_id.
+Qed.
+
+Lemma enumIsize_to_word :
+  enum 'I_(size (to_word (t0 :: t))) =
+  map linjt (enum 'I_(size (to_word t)))  ++  map rinjt (enum 'I_(size t0)).
+Proof.
+  rewrite /rinjt /linjt (enum_cast_ord size_to_word_cons).
+  rewrite !map_comp /cast_cons -map_cat; congr (map (cast_ord size_to_word_cons) _).
+  by rewrite map_id enumIMN.
+Qed.
+
+Lemma extract_rec i :
   i < size t0 ->
-  extract (in_tuple (to_word (t0 :: t)))
-     ((cast_set_tab (t0 :: t)) (nth set0 (tabextr_rec (shape (t0 :: t))) i)) =
-  rcons ((extract (in_tuple (to_word t)))
-           (cast_set_tab t (nth set0 (tabextr_rec (shape t)) i)))
+  extract (in_tuple (to_word (t0 :: t))) (nth set0 (tabextr (t0 :: t)) i) =
+  rcons (extract (in_tuple (to_word t)) (nth set0 (tabextr t) i))
         (nth (inhabitant Alph) t0 i).
 Proof.
-  move => Hi; rewrite /= !extractE /=.
-  set cst := cast_ord (size_to_word (t0 :: t)).
-  rewrite (nth_map (Ordinal Hi) _ _); last by rewrite size_enum_ord.
-  rewrite !nth_enum_ord //=.
-  have -> : (nth (Ordinal Hi) (enum 'I_(size t0)) i) = (Ordinal Hi)
-    by apply: val_inj => //=; rewrite nth_enum_ord.
-  rewrite (cast_map _ (size_to_word (t0 :: t))) -/cst.
-  rewrite /size_tab /= -[sumn (shape t)]/(size_tab t).
-  rewrite (cast_map _ (addnC (size_tab t) (size t0))).
-  set f1 := (X in map X _).
-  have {f1} /eq_map -> : f1 =1 mem ((rshift (size_tab t) (Ordinal Hi))
-                  |: [set lshift (size t0) x | x in nth set0 (tabextr_rec (shape t)) i]).
-    by rewrite /f1 => j; rewrite mem_cast imset_comp -imsetU1 mem_cast /=.
-  rewrite {1}to_word_cons enumIMN map_cat.
-  rewrite mask_cat;
-    last by rewrite 2!size_map size_enum_ord -size_to_word.
-  rewrite -2!map_comp.
-  set f1 := (X in map X _).
-  have {f1} /eq_map -> : f1 =1 mem (nth set0 (tabextr_rec (shape t)) i).
-    move=> j; rewrite /f1 /= !inE lrinjF /=.
-    by rewrite mem_imset_inj; last by apply linjP.
-  set f2 := (X in _ ++ mask (map X _) _).
-  have {f2} /eq_map -> : f2 =1 mem [set (Ordinal Hi)].
+  move => Hi; rewrite /= !extractE tabextr_cons enumIsize_to_word /=.
+  rewrite (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
+  rewrite nth_enum_ord //= {13}to_word_cons.
+  rewrite nth_ord_ltn map_cat mask_cat; last by rewrite 2!size_map size_enum_ord.
+  rewrite -map_comp.
+  set f1 := (X in map X _); set fr := (X in rcons (mask (map X _) _)).
+  have {f1} /eq_map -> : f1 =1 fr.
+    rewrite /f1 => j /=; rewrite inE in_set1 lrinjtF /=.
+    by rewrite (mem_imset_inj _ _ linjtP).
+  rewrite -map_comp; set f2 := (X in _ ++ mask (map X _) _).
+  have {f2} /eq_map -> : f2 =1 mem ([set (Ordinal Hi)]).
     move=> j; rewrite /f2 /= !inE.
     set b := (X in _ || X); have {b} -> : b = false.
-      rewrite /b; apply/imsetP => [] [] k _ /eqP; by rewrite eq_sym lrinjF.
+      rewrite /b; apply/imsetP => [] [] k _ /eqP; by rewrite eq_sym lrinjtF.
     rewrite orbF.
-    by apply/(sameP idP); apply(iffP idP) => [/eqP -> //=|] /eqP/rinjP ->.
+    by apply/(sameP idP); apply(iffP idP) => [/eqP -> //=|] /eqP/rinjtP ->.
   have := extract1 (in_tuple t0) (Ordinal Hi); rewrite /extract /= extractE /= => ->.
-  rewrite {cst} cats1 (tnth_nth (inhabitant Alph)) /=.
-
-  rewrite (cast_map _ (size_to_word t)) /=.
-  set f1 := (X in map X _).
-  set f2 := (X in _ = rcons (mask (map X _) _) _).
-  by have /eq_map -> : f1 =1 f2 by rewrite /f1 /f2 /inE => j /=; rewrite mem_cast.
+  by rewrite cats1 (tnth_nth (inhabitant Alph)) /=.
 Qed.
 
-Lemma sorted_tabextr (t : seq (seq Alph)) i :
-  is_tableau t -> i < size (tabextr_rec (shape t)) ->
+Lemma takeP (T : eqType) x0 x k (s : seq T) :
+  reflect (exists i, i < minn k (size s) /\ x = nth x0 s i) (x \in take k s).
+Proof.
+  apply (iffP idP).
+  + move=> Hx; pose ix := index x (take k s).
+    have Hix : ix < size s.
+      have:= Hx; rewrite /ix -index_mem size_take.
+      case: (ltnP k (size s)) => //= H1 H2; by apply (ltn_trans H2 H1).
+    have Hix2: ix < k.
+      have:= Hx; rewrite /ix -index_mem size_take /=.
+      by case: (ltnP k (size s)) => H; last by move/leq_trans; apply.
+    exists ix; split; first by rewrite leq_min Hix Hix2.
+    by rewrite -{1}(nth_index x0 Hx) nth_take.
+  + move=> [] i [] Hi ->.
+    have Hik := leq_trans Hi (geq_minl k (size s)).
+    have Hsz := leq_trans Hi (geq_minr k (size s)).
+    rewrite -(nth_take _ Hik); apply mem_nth; rewrite size_take.
+    by case (ltnP k (size s)).
+Qed.
+
+Lemma lsplitt_tab k :
+  head 0 (shape t) <= size t0 ->
+  cover [set lsplitt x | x in [set s in tabextrk (t0 :: t) k]] =
+  cover [set s in tabextrk t k].
+Proof.
+  move => Hsize; rewrite cover_imset /tabextrk /= tabextr_cons /cover /preimset.
+  apply/setP/subset_eqP/andP; split; apply/subsetP => i.
+  - move/bigcupP => [] S0; rewrite !inE.
+    move/(takeP set0) => [] pos [].
+    rewrite size_map size_enum_ord leq_min => /andP [] Hpos Hpos0 ->.
+    rewrite (nth_map (Ordinal Hpos0)); last by rewrite size_enum_ord.
+    rewrite !inE lrinjtF /= (mem_imset_inj _ _ linjtP) nth_ord_ltn => Hi.
+    apply/bigcupP; exists (nth set0 (tabextr t) (Ordinal Hpos0)); last exact Hi.
+    rewrite inE; apply/(takeP set0).
+    exists pos; split; last by [].
+    rewrite leq_min Hpos /=.
+    case: (ltnP pos (size (tabextr t))) => //= H.
+    move: Hi; by rewrite (nth_default _ H) in_set0.
+  - move/bigcupP => [] S0; rewrite !inE => /(takeP set0) [] pos [].
+    rewrite leq_min => [] /andP [] Hpos Hpossz -> Hi.
+    have Hpos0 : pos < size t0.
+      apply (leq_trans Hpossz). rewrite size_tabextr.
+      move: Hsize; rewrite /shape; by case t.
+    apply/bigcupP.
+    exists (rinjt (Ordinal Hpos0)
+                  |: [set linjt x | x in nth set0 (tabextr t) (Ordinal Hpos0)]).
+    * rewrite inE; apply/(takeP set0).
+      exists pos; rewrite size_map size_enum_ord leq_min; split; first by rewrite Hpos.
+      rewrite (nth_map (Ordinal Hpos0)); last by rewrite size_enum_ord.
+      by rewrite nth_ord_ltn.
+    * rewrite !inE lrinjtF /=; apply/imsetP; by exists i.
+Qed.
+
+Lemma rsplitt_tab k :
+  cover [set rsplitt x | x in [set s in (tabextrk (t0 :: t)) k]] =
+  [set i : 'I_(size t0) | i < k].
+Proof.
+  rewrite /tabextrk /= tabextr_cons.
+  apply/setP/subset_eqP/andP; split; apply/subsetP => i.
+  - rewrite in_set /= /preimset.
+    rewrite /cover => /bigcupP [] sj /imsetP [] stk.
+    rewrite inE => /(takeP set0) [] j.
+    rewrite size_map size_enum_ord leq_min => [] [] /andP [] Hjk Hjt0.
+    rewrite (nth_map (Ordinal Hjt0)); last by rewrite size_enum_ord.
+    rewrite (nth_enum_ord _ Hjt0).
+    have -> : nth (Ordinal Hjt0) (enum 'I_(size t0)) j = (Ordinal Hjt0).
+      by apply /eqP; rewrite /eq_op /= nth_enum_ord.
+    move=> -> -> {sj stk}; rewrite inE in_setU1 rinjt_in_linjtF orbF.
+    by move=> /eqP/rinjtP ->.
+  - rewrite inE /cover /preimset => Hi.
+    apply/bigcupP; exists [set i]; last by rewrite in_set1.
+    apply/imsetP; exists ((rinjt i) |: [set linjt x | x in nth set0 (tabextr t) i]).
+    + rewrite inE; apply/(takeP set0).
+      exists i; rewrite size_map size_enum_ord leq_min Hi; split; first by apply ltn_ord.
+      rewrite (nth_map i); last by rewrite size_enum_ord; apply ltn_ord.
+      rewrite nth_enum_ord; last by apply ltn_ord.
+      by rewrite nth_ord_enum.
+    +  apply/setP/subset_eqP/andP; split; apply/subsetP => j; rewrite in_set1.
+      * move/eqP=> -> {j}; by rewrite !inE eq_refl.
+      * by rewrite !inE rinjt_in_linjtF orbF => /eqP/rinjtP ->.
+Qed.
+
+Lemma cover_tabextr_rec k :
+  head 0 (shape t) <= size t0 ->
+  cover [set s in (tabextrk (t0 :: t) k)] =
+  rinjt @: [set s : 'I_(size t0) | s < k]  :|:  linjt @: cover [set s in (tabextrk t k)].
+Proof. move => Hsize; by rewrite cuttcover setUC rsplitt_tab (lsplitt_tab _ Hsize). Qed.
+
+End Induction.
+
+
+Lemma sorted_tabextr t i :
+  is_tableau t -> i < size (tabextr t) ->
   sorted (gtnX Alph)
-         (extract (in_tuple (to_word t))
-                            (cast_set_tab t (nth set0 (tabextr_rec (shape t)) i))).
+         (extract (in_tuple (to_word t)) (nth set0 (tabextr t) i)).
 Proof.
   elim: t => [//= | t0 t IHt].
   rewrite [X in X -> _]/=; move=> /and4P [] _ _ /dominateP [] Hsz Hdom Htab.
-  rewrite size_map size_enum_ord => Hi.
-  rewrite (extract_rec _ Hi).
+  rewrite size_tabextr_cons => Hi; rewrite (extract_rec _ Hi).
   case (ltnP i (size (head [::] t))) => Hit.
-  + have:= Hit; rewrite size_tabextr_tab; move/(IHt Htab) => {IHt}.
+  + have:= Hit; rewrite -size_tabextr; move/(IHt Htab) => {IHt}.
     move Hrec : (extract _ _) => ext.
     case: ext Hrec => [//= | a0 ext] Hext.
     rewrite rcons_cons /= rcons_path => -> /=.
@@ -656,131 +868,27 @@ Proof.
     rewrite -[last a0 ext]/(last (inhabitant Alph) (a0 :: ext)) -Hext {a0 ext Hext}.
     case: t Hsz Htab Hit => [//= | t1 t] Hsz Htab Hit.
     by rewrite (extract_rec _ Hit) last_rcons.
-  + rewrite nth_default; last by rewrite -size_tabextr_tab.
-    rewrite /= !imset0; by have:= extract0 => /= ->.
+  + rewrite nth_default; last by rewrite size_tabextr.
+    by rewrite extract0.
 Qed.
 
 Lemma ksupp_tabextr k t :
-  is_tableau t -> ksupp (in_tuple (to_word t)) k [set s | s \in (tabextr t k)].
+  is_tableau t -> ksupp (in_tuple (to_word t)) k [set s | s \in (tabextrk t k)].
 Proof.
-  move=> Htab; rewrite /ksupp /tabextr; apply/and3P; split.
-  + apply (leq_trans (card_seq ((tabextr t) k))).
-    rewrite /tabextr /= size_map size_take; by apply geq_minl.
-  + apply trivIset_tabextr.
+  move=> Htab; rewrite /ksupp /tabextrk; apply/and3P; split.
+  + apply (leq_trans (card_seq (tabextrk t k))).
+    rewrite /tabextrk /= size_take; by apply geq_minl.
+  + apply trivIset_tabextrk.
   + apply/forallP => s; apply/implyP.
-    rewrite /= inE map_take => /mem_take /mapP [] S Hin ->.
-    rewrite -(nth_index set0 Hin); move: Hin; rewrite -index_mem; set i := index _ _ => Hi.
+    rewrite /= inE => /mem_take Hin.
+    rewrite -(nth_index set0 Hin).
+    move: Hin; rewrite -index_mem; set i := index _ _ => Hi.
     by apply (sorted_tabextr Htab).
-Qed.
-
-Lemma cover_tabextr_rec k t t0 :
-  head 0 (shape t) <= size t0 ->
-  (cast_ord (esym (size_to_word (t0 :: t)))) @:
-    cover [set s in (tabextr (t0 :: t) k)] =
-  ((@sym_cast _ _)\o (@rshift _ _)) @:
-    [set s : 'I_(size t0) | s < k]
-  :|:
-  ((@sym_cast _ _)\o (@lshift _ _) \o cast_ord (esym (size_to_word t))) @:
-    cover [set s in (tabextr t k)].
-Proof.
-  move => Hsize.
-  apply/setP/subset_eqP/andP; split; apply/subsetP => i.
-  + move: i; rewrite -[size_tab (t0 :: t)]/(size t0 + size_tab t) => i.
-    have <- := cast_ordKV (addnC (size_tab t) (size t0)) i.
-    move H : (cast_ord (esym (addnC (size_tab t) (size t0))) i) => j {i H} Hj.
-    rewrite in_setU; apply/orP.
-    have:= splitK j; case: fintype.splitP => i _; rewrite /unsplit=> Hinj.
-    * right; rewrite 2!imset_comp mem_cast.
-      move: Hj; set jsym := cast_ord _ j.
-      have <- := cast_ordK (size_to_word (t0 :: t)) jsym.
-      rewrite mem_cast; set jtab := cast_ord _ jsym.
-      rewrite /cover => /bigcupP [] sj; rewrite inE /tabextr /=.
-      move/mapP => [] sj1; rewrite -map_take => /mapP => [] [] icol.
-      rewrite take_enumI => Hicol -> -> {sj1 sj}.
-      rewrite /jtab {jtab} mem_cast /jsym {jsym} /size_tab /sym_cast imset_comp.
-      rewrite -imsetU1 mem_cast -Hinj in_setU1 lrinjF /=.
-      rewrite !(mem_imset_inj _ _ (@linjP _ _)).
-      set S : {set 'I_(size_tab t)} := nth _ _ _ => Hi.
-      have <- := cast_ordK (size_to_word t) i; rewrite mem_cast.
-      apply/bigcupP; set f := (X in map X _); exists (f S); last by rewrite mem_cast.
-      rewrite inE; apply map_f; rewrite /S {f}.
-      have <- := nth_take set0 Hicol (tabextr_rec (shape t)).
-      apply mem_nth; rewrite size_take size_tabextr_rec.
-      case (ltnP k (head 0 (shape t))) => _; first by [].
-      case (ltnP icol (head 0 (shape t))) => H; first by [].
-      move: Hi; rewrite /S nth_default; last by rewrite size_tabextr_rec.
-      by rewrite in_set0.
-    * left; rewrite imset_comp mem_cast -Hinj.
-      rewrite !(mem_imset_inj _ _ (@rinjP _ _)) inE.
-      move: Hj => /imsetP [] i1 Hin1 Hi1.
-      move: Hin1; rewrite /cover => /bigcupP [] sj.
-      rewrite /tabextr inE /= => /mapP [] s.
-      rewrite -map_take => /mapP [] i2; rewrite take_enumI => Hi2 -> -> {s sj}.
-      have <- := cast_ordKV (size_to_word (t0 :: t)) i1.
-      rewrite mem_cast -Hi1 {i1 Hi1} imset_comp -imsetU1 mem_cast -Hinj in_setU1.
-      by rewrite rinj_in_linjF orbF => /eqP/rinjP ->.
-  + rewrite inE => /orP [].
-    * move/imsetP => [] i1; rewrite inE => Hi1 Hi; rewrite /= in Hi.
-      have <- := cast_ordK (size_to_word (t0 :: t)) i; rewrite mem_cast /cover.
-      rewrite /tabextr /= -map_take -!map_comp /=; set f := (X in map X _).
-      apply/bigcupP; exists (f i1); rewrite /f {f}.
-      - rewrite inE; rewrite mem_map; first by rewrite take_enumI.
-        apply inj_comp; first by apply imset_inj; apply cast_ord_inj.
-        move=> x1 x2 /=; rewrite -setP => H.
-        have {H} := H (sym_cast (rshift (sumn (shape t)) x1)).
-        rewrite /sym_cast !(imset_comp _ (@lshift _ _)).
-        rewrite -!imsetU1 !mem_cast !inE !rinj_in_linjF !orbF.
-        rewrite eq_refl => /eqP; rewrite eq_sym => /eqP/eqP; by move/rinjP.
-      - rewrite /= mem_cast Hi imset_comp -imsetU1 mem_cast in_setU1.
-        by rewrite rinj_in_linjF orbF.
-    * move/imsetP => [] i1; rewrite /cover => /bigcupP [] s.
-      rewrite inE /tabextr /= => /mapP [] st Hst -> {s} /imsetP [] i2 Hi2 -> -> {i1 i}.
-      rewrite /= /sym_cast; set i := (X in X \in _).
-      have <- := cast_ordK (size_to_word (t0 :: t)) i; rewrite mem_cast /cover.
-      apply/bigcupP.
-      pose ik := index st (take k (tabextr_rec (shape t))).
-      have Hik : ik < (size t0).
-        have:= Hst; rewrite /ik -index_mem size_take.
-        rewrite !size_tabextr_rec.
-        case: (ltnP k (head 0 (shape t))) => //= H1 H2; last by apply (leq_trans H2 Hsize).
-        apply (leq_trans H2); apply (leq_trans (ltnW H1) Hsize).
-      have Hik2: ik < k.
-        have:= Hst; rewrite /ik -index_mem size_take /=.
-        by case: (ltnP k (size (tabextr_rec (shape t)))) => H;
-          last by move/leq_trans; apply.
-
-      exists (cast_ord (size_to_word (t0 :: t)) @:
-                       (nth set0 (tabextr_rec (shape (t0 :: t))) ik)).
-      - rewrite /= inE.
-        set f := (X in _ \in map X _); set eln := (nth set0 _ _); set el := (X in X \in _).
-        have -> : el = f eln by [].
-        rewrite mem_map {el} /eln; last by rewrite /f; apply imset_inj; apply cast_ord_inj.
-        rewrite {f} (nth_map (Ordinal Hik)); last by rewrite size_enum_ord.
-        rewrite -map_take /sym_cast.
-        set f := (X in _ \in map X _); set el := (X in X \in _).
-        have -> : el = f (Ordinal Hik).
-          rewrite /el /f {el f}; rewrite !nth_enum_ord //=.
-          rewrite imset_comp -!imsetU1.
-          suff -> : nth (Ordinal Hik) (enum 'I_(size t0)) ik = (Ordinal Hik) by [].
-          by apply /eqP; rewrite /eq_op /= nth_enum_ord.
-        rewrite mem_map; first by rewrite take_enumI //=.
-        move=> x1 x2 /=; rewrite -setP => H.
-        have {H} := H (sym_cast (rshift (sumn (shape t)) x1)).
-        rewrite /sym_cast !inE eq_refl orTb.
-        rewrite imset_comp mem_cast rinj_in_linjF orbF.
-        move/eqP; by rewrite eq_sym => /eqP/eqP/cast_ord_inj/rinjP.
-      - rewrite mem_cast /i {i} /=.
-        rewrite (nth_map (Ordinal Hik)); last by rewrite size_enum_ord.
-        rewrite imset_comp -!imsetU1 mem_cast inE; apply/orP; right.
-        rewrite mem_imset_inj; last by apply linjP.
-        rewrite (nth_enum_ord _ Hik).
-        rewrite -(nth_take _ Hik2) /ik nth_index //=.
-        by rewrite cast_ordK.
 Qed.
 
 Lemma scover_tabextr k t :
   is_part (shape t) ->
-  scover [set s | s \in (tabextr t k)] = \sum_(l <- (shape t)) minn l k.
+  scover [set s | s \in (tabextrk t k)] = \sum_(l <- (shape t)) minn l k.
 Proof.
   elim: t => [//= | t0 t IHt] /=.
   - set s := (X in cover X); have -> : s = set0 by rewrite /s -setP => i; rewrite inE.
@@ -797,21 +905,18 @@ Proof.
     have /disjoint_setI0 -> : [disjoint sl & sr].
       rewrite /sl /sr {sl sr s} !imset_comp /disjoint /=.
       apply/pred0P => l /=; apply (introF idP) => /andP [].
-      (* TODO : simplify or lemmize *)
       move=> /imsetP [] l1 Hl1 {l} -> /imsetP [] l Hl /cast_ord_inj H; subst l1.
-      move: Hl Hl1 => /imsetP [] l1 Hl1 {l} -> /imsetP [] l Hl H; subst l1.
       move: Hl Hl1 => /imsetP [] l1 Hl1 {l} -> /imsetP [] l Hl /eqP.
-      by rewrite eq_sym lrinjF.
-    rewrite cards0 subn0 /s {s} card_imset; last by apply cast_ord_inj.
-    move ->. have -> : #|sl| = minn (size t0) k.
+      by rewrite lrinjF.
+    rewrite cards0 subn0 /s {s} => ->.
+    have -> : #|sl| = minn (size t0) k.
       rewrite /sl imset_comp card_imset; last by apply cast_ord_inj.
       rewrite card_imset; last by apply rinjP.
       by rewrite sizeIk.
     apply/eqP; rewrite eqn_add2l {sl} /sr.
-    move: (map _ (take k _)) => S.
-    rewrite 2!imset_comp card_imset; last by apply cast_ord_inj.
+    rewrite imset_comp card_imset; last by apply cast_ord_inj.
     rewrite card_imset; last by apply linjP.
-    by rewrite card_imset; last by apply cast_ord_inj.
+    by rewrite -map_take.
 Qed.
 
 Theorem green_tab k t :
@@ -822,5 +927,5 @@ Proof.
   apply leq_bigmax_cond; by apply ksupp_tabextr.
 Qed.
 
-End GreenSeq.
+End GreenTab.
 
