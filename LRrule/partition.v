@@ -1,4 +1,5 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
+Require Import bigop.
 Require Import subseq.
 
 Set Implicit Arguments.
@@ -7,14 +8,10 @@ Unset Strict Implicit.
 Lemma ieqi1F i : (i == i.+1) = false.
 Proof. apply negbTE; by elim i. Qed.
 
-Section Shape.
-
-  Variable T : Type.
+Section Partition.
 
   Implicit Type s : seq nat.
-  Implicit Type t : seq (seq T).
 
-  Definition shape t := map size t.
   Fixpoint is_part sh :=
     if sh is sh0 :: sh'
     then (sh0 >= head 1 sh') && (is_part sh')
@@ -73,6 +70,142 @@ Section Shape.
       * by rewrite !add0n.
   Qed.
 
+  Fixpoint incr_n sh n :=
+    if sh is s0 :: s then
+      if n is n.+1 then s0.+1 :: incr_n s n
+      else sh
+    else nseq n 1.
+  Fixpoint conj_part sh :=
+    if sh is s0 :: sh then incr_n (conj_part sh) s0
+    else [::].
+
+  Lemma is_part_n1 n : is_part (nseq n 1).
+  Proof. elim: n => [//= | n /= ->]; rewrite andbT; by case n. Qed.
+
+  Lemma is_part_incr_n sh n :
+    is_part sh -> is_part (incr_n sh n).
+  Proof.
+    elim: sh n => [//= n _| s0 sh IHsh] /=; first by apply is_part_n1.
+    case=> [//= | n] /andP [] Hhead /IHsh {IHsh} /= ->; rewrite andbT.
+    case: sh Hhead => [_ | s1 sh] /=; first by case n.
+    case: n => [| n] /=; last by apply.
+    by move/leq_trans; apply.
+  Qed.
+
+  Lemma is_part_conj sh : is_part sh -> is_part (conj_part sh).
+  Proof.
+    elim: sh => [//= | s0 sh IHsh] /= /andP [] _ /IHsh {IHsh}.
+    by apply is_part_incr_n.
+  Qed.
+
+  Lemma conj_nseq n : 0 < n -> conj_part (nseq n 1) = [:: n].
+  Proof.
+    elim: n => [//= | n IHn] /= _.
+    case: n IHn => [//= | n] IHn.
+    by rewrite (IHn (ltn0Sn n)).
+  Qed.
+
+  Lemma size_incr_n sh n :
+    size sh <= n -> size (incr_n sh n) = n.
+  Proof.
+    elim: sh n => [| s0 sh IHsh] /= n; first by rewrite size_nseq.
+    case: n => [//= | n]; by rewrite /= ltnS => /IHsh ->.
+  Qed.
+
+  Lemma size_conj sh : is_part sh -> size (conj_part sh) = head 0 sh.
+  Proof.
+    elim: sh => [//= | s0 [| s1 sh] IHsh] /= /andP [] Hhead /IHsh {IHsh} /= IHsh.
+    + by rewrite size_nseq.
+    + move: Hhead; by rewrite -{1}IHsh => /size_incr_n.
+  Qed.
+
+  Lemma sumn_incr_n sh n : sumn (incr_n sh n) = sumn sh + n.
+  Proof.
+    elim: n sh => [//= | n IHn]; first by case.
+    case => [/= | s0 s /=].
+    + have -> : sumn (nseq n 1) = n.
+        elim: n {IHn} => //= n ->; by rewrite add1n.
+      by rewrite add0n add1n.
+    + by rewrite IHn addnA addnS !addSn.
+  Qed.
+
+  Lemma sumn_part_cons sh : sumn (conj_part sh) = sumn sh.
+  Proof. elim: sh => [//= | s0 s IHs] /=; by rewrite sumn_incr_n IHs addnC. Qed.
+
+  Lemma conj_part_ind sh l :
+    sh != [::] -> is_part sh -> l >= size sh -> conj_part (incr_n sh l) = l :: conj_part sh.
+  Proof.
+    elim: sh l => [//= | s0 s IHs l] _ /=.
+    move=> /andP [] _ Hpart Hs0.
+    case: l Hs0 => [//= | l] /=; rewrite ltnS => Hs0.
+    case: s IHs Hpart Hs0 => [//= _ _| s1 s IHs].
+    + case: l => [//=| l ]; by rewrite conj_nseq; last by apply ltn0Sn.
+    + have: s1 :: s != [::] by [].
+      move=> Hneq Hpart Hsize /=.
+      have{IHs Hneq Hpart} := IHs l Hneq Hpart Hsize.
+      by case: l Hsize => [//= | l /=] _ ->.
+  Qed.
+
+  Lemma conj_partK sh : is_part sh -> conj_part (conj_part sh) = sh.
+  Proof.
+    elim: sh => [//=| s0 sh IHsh] /= /andP [] Hhead Hpart.
+    case (altP (sh =P [::])) => Hsh.
+    + move: Hhead; rewrite Hsh /=; by apply conj_nseq.
+    + rewrite conj_part_ind //=; first by rewrite IHsh.
+      * move: Hsh; apply contra => /eqP.
+        case: sh Hpart {IHsh Hhead} => [//= | s1 s] /=.
+        case: s1 => [/andP []| s1 _]; first by rewrite leqn0 => /part_head0F ->.
+        by case: (conj_part s).
+      * by apply is_part_conj.
+      * rewrite size_conj //=.
+        move: Hhead Hsh; by case sh.
+  Qed.
+
+  Lemma minn0 k : minn k 0 = 0.
+  Proof. by rewrite /minn ltn0. Qed.
+  Lemma minSS i j : minn i.+1 j.+1 = (minn i j).+1.
+  Proof. by rewrite /minn ltnS; case ltnP. Qed.
+
+  Definition part_sum s k := (\sum_(l <- (take k s)) l).
+
+  Lemma sum_conj sh k : \sum_(l <- sh) minn l k = part_sum (conj_part sh) k.
+  Proof.
+    rewrite /part_sum.
+    elim: sh => [//= | s0 sh]; first by rewrite !big_nil.
+    rewrite big_cons /= => ->; move: (conj_part sh) => c.
+    elim: c s0 k => [//= | c0 c IHc] s0 k /=.
+    - rewrite big_nil addn0.
+      elim: s0 k => [| s IHs] k /=; first by rewrite minnC minn0 big_nil.
+      case: k IHs => [_| k IHs]; first by rewrite minn0 big_nil.
+      by rewrite minSS big_cons -IHs add1n.
+    - case: s0 => [| s0]; first by rewrite minnC minn0 add0n; case: k IHc.
+      case: k => [//=| k] /=.
+      rewrite !big_cons -IHc !addnA minSS.
+      congr (_ + part_sum c k).
+      by rewrite !addSn addnC.
+  Qed.
+
+  Lemma part_sum_inj s t :
+    is_part s -> is_part t -> (forall k, part_sum s k = part_sum t k) -> s = t.
+  Proof.
+    rewrite /part_sum.
+    elim: s t => [//= t _ | s0 s IHs t].
+    + move/part_head_non0; case: t => [//= | t0 t] /= Hto IHs.
+      exfalso; have:= (IHs 1); rewrite big_cons take0 big_nil addn0 => H.
+      move: Hto; by rewrite H eq_refl.
+    + case: t s IHs => [s _ Hs _ Heq | t0 t].
+      * have := Heq 1; rewrite /= big_nil big_cons.
+        have /= Hs0 := (part_head_non0 Hs).
+        move/eqP; rewrite addn_eq0 => /andP [] /eqP H.
+        move: Hs0; by rewrite H eq_refl.
+      * move=> s IHs /is_part_tl Hps /is_part_tl Hpt /= Heq.
+        have := Heq 1; rewrite !take0 !big_cons !big_nil !addn0 => Ht0; subst t0.
+        congr (s0 :: _); apply (IHs _ Hps Hpt).
+        move=> k; have:= Heq k.+1.
+        by rewrite !big_cons => /eqP; rewrite eqn_add2l => /eqP.
+  Qed.
+
+  (* Shape of a sequence of row index (mostly Yamanouchi word) *)
   Fixpoint shape_rowseq s :=
     if s is s0 :: s'
     then incr_nth (shape_rowseq s') s0
@@ -155,4 +288,4 @@ Section Shape.
     by apply Hpart.
   Qed.
 
-End Shape.
+End Partition.
