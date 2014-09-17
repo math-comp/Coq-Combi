@@ -149,5 +149,16 @@ Proof.
   + by move/imsetP => [] j Hin /cast_ord_inj ->.
 Qed.
 
+Definition cast_set n m (H : n = m) : {set 'I_n} -> {set 'I_m} :=
+  [fun s : {set 'I_n} => (cast_ord H) @: s].
+
+Lemma cover_cast m n (P : {set {set 'I_n}}) (H : n = m) :
+  cover (imset (cast_set H) (mem P)) = (cast_set H) (cover P).
+Proof.
+  rewrite /= cover_imset /cover; apply esym; apply big_morph.
+  + move=> i j /=; by apply imsetU.
+  + by apply imset0.
+Qed.
+
 End Casts.
 
