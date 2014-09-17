@@ -129,6 +129,9 @@ Proof.
   by rewrite mask_true //= size_tuple.
 Qed.
 
+Variable comp : rel Alph.
+Hypothesis Hcomp : transitive comp.
+
 Variable N : nat.
 Variable wt : N.-tuple Alph.
 
@@ -144,17 +147,17 @@ Lemma extsubsI (s1 s2 : {set 'I_N}) :
   s1 \subset s2 -> subseq (extract s1) (extract s2).
 Proof. move/subsetP=> Hincl; apply extsubsIm=> i /=; by apply Hincl. Qed.
 
-Notation is_col r := (sorted (@gtnX Alph) r).
+Definition is_seq := [fun r => (sorted comp r)].
 
-Lemma is_col_extract_cond s P :
-  is_col (extract s) -> is_col (extract (s :&: P)).
+Lemma is_seq_extract_cond s P :
+  is_seq (extract s) -> is_seq (extract (s :&: P)).
 Proof.
-  apply subseq_sorted; first by move=> a b c /= H1 H2; apply (ltnX_trans H2 H1).
+  apply subseq_sorted; first by move=> a b c /= H1 H2; apply (Hcomp H1 H2).
   apply extsubsI; rewrite -{2}[s]setIT; apply setIS; by apply subsetT.
 Qed.
 
 Definition ksupp k (P : {set {set 'I_N}}) :=
-  [&& #|P| <= k, trivIset P & [forall (s | s \in P), is_col (extract s)]].
+  [&& #|P| <= k, trivIset P & [forall (s | s \in P), is_seq (extract s)]].
 
 Lemma ksupp0 k : ksupp k set0.
 Proof.
@@ -164,7 +167,7 @@ Proof.
 Qed.
 
 Definition scover := [fun P : {set {set 'I_N}} => #|cover P|].
-Definition greent k := \max_(P | ksupp k P) scover P.
+Definition green_rel_t k := \max_(P | ksupp k P) scover P.
 
 Notation Ik k := [set i : 'I_N | i < k].
 
@@ -212,7 +215,7 @@ Proof.
   move: Huniq; by rewrite Hs0 Hs1 /= inE eq_refl.
 Qed.
 
-Lemma greent_inf k : greent k >= minn N k.
+Lemma green_rel_t_inf k : green_rel_t k >= minn N k.
 Proof.
   pose P := [set [set i ] | i in Ik k].
   have <- : scover P = minn N k.
@@ -232,12 +235,12 @@ Proof.
       by apply set1_disjoint.
     + apply/forallP => s; apply/implyP => /imsetP [] i Hi ->; rewrite inE in Hi.
       by rewrite extract1 /sorted.
-  rewrite /greent; by apply leq_bigmax_cond.
+  rewrite /green_rel_t; by apply leq_bigmax_cond.
 Qed.
 
-Lemma greent_sup k : greent k <= N.
+Lemma green_rel_t_sup k : green_rel_t k <= N.
 Proof.
-  rewrite /greent /=; apply/bigmax_leqP => P _.
+  rewrite /green_rel_t /=; apply/bigmax_leqP => P _.
   move: (cover P) => cover {P}; rewrite -{5}[N]card_ord.
   by apply max_card.
 Qed.
@@ -246,13 +249,17 @@ End GreenDef.
 
 Arguments scover [N].
 
-Lemma greent_cast (Alph : ordType) (M N : nat) (Heq : M = N) k (V : M.-tuple Alph) :
-  greent (tcast Heq V) k = greent V k.
+Lemma green_rel_t_cast (Alph : ordType) R M N (Heq : M = N) k (V : M.-tuple Alph) :
+  green_rel_t R (tcast Heq V) k = green_rel_t R V k.
 Proof. by subst M. Qed.
 
 Section GreenCat.
 
 Variable Alph : ordType.
+
+Variable comp : rel Alph.
+Hypothesis Hcomp : transitive comp.
+
 Variable M N : nat.
 Variable V : M.-tuple Alph.
 Variable W : N.-tuple Alph.
@@ -360,24 +367,25 @@ Proof.
   rewrite inE /=; by apply leq_addr.
 Qed.
 
-Lemma greent_cat k : greent [tuple of V ++ W] k <= greent V k + greent W k.
+Lemma green_rel_t_cat k :
+  green_rel_t comp [tuple of V ++ W] k <= green_rel_t comp V k + green_rel_t comp W k.
 Proof.
-  rewrite /greent; set tc := [tuple of V ++ W].
-  have H : 0 < #|ksupp tc k| by apply/card_gt0P; exists set0; apply ksupp0.
-  case: (@eq_bigmax_cond _ (ksupp tc k) scover H) => ks Hks ->.
+  rewrite /green_rel_t; set tc := [tuple of V ++ W].
+  have H : 0 < #|ksupp comp tc k| by apply/card_gt0P; exists set0; apply ksupp0.
+  case: (@eq_bigmax_cond _ (ksupp comp tc k) scover H) => ks Hks ->.
   pose PV := lsplit @: ks; pose PW := rsplit @: ks.
   move: Hks => /and3P [] Hcard Htriv /forallP Hcol.
-  have HV : ksupp V k PV.
+  have HV : ksupp comp V k PV.
     rewrite /ksupp; apply/and3P; split; first by apply (leq_trans (leq_imset_card _ _) Hcard).
     - by apply preimset_trivIset; first by apply linjP.
     - apply/forallP=> stmp; apply/implyP => /imsetP [] s Hs -> {stmp}.
-      rewrite extlsplit; apply is_col_extract_cond; have:= Hcol s; by rewrite Hs.
+      rewrite extlsplit; apply is_seq_extract_cond; have:= Hcol s; by rewrite Hs.
   have HleqV := (@leq_bigmax_cond _ _ scover _ HV).
-  have HW : ksupp W k PW.
+  have HW : ksupp comp W k PW.
     rewrite /ksupp; apply/and3P; split; first by apply (leq_trans (leq_imset_card _ _) Hcard).
     - by apply preimset_trivIset; first by apply rinjP.
     - apply/forallP=> stmp; apply/implyP => /imsetP [] s Hs -> {stmp}.
-      rewrite extrsplit; apply is_col_extract_cond; have:= Hcol s; by rewrite Hs.
+      rewrite extrsplit; apply is_seq_extract_cond; have:= Hcol s; by rewrite Hs.
   have HleqW := (@leq_bigmax_cond _ _ scover _ HW).
   have -> : scover ks = scover PV + scover PW.
     rewrite /= cutcover.
@@ -394,23 +402,31 @@ Section GreenSeq.
 Variable Alph : ordType.
 Implicit Type u v w : seq Alph.
 
-Definition green u := [fun k => greent (in_tuple u) k].
+Variable comp : rel Alph.
+Hypothesis Hcomp : transitive comp.
 
-Lemma green_cat k v w : green (v ++ w) k <= green v k + green w k.
+Local Notation greent := (green_rel_t comp).
+
+Definition green_rel u := [fun k => greent (in_tuple u) k].
+
+Lemma green_rel_cat k v w : green_rel (v ++ w) k <= green_rel v k + green_rel w k.
 Proof.
   rewrite /disjoint /=.
   suff -> : greent (in_tuple (v ++ w)) k = greent [tuple of (in_tuple v) ++ (in_tuple w)] k
-    by apply greent_cat.
+    by apply green_rel_t_cat.
   have Hsz : size (v ++ w) = (size v + size w) by rewrite size_cat.
-  rewrite -(greent_cast Hsz); congr (greent _ k).
+  rewrite -(green_rel_t_cast _ Hsz); congr (greent _ k).
   apply eq_from_tnth => i; by rewrite tcastE !(tnth_nth (inhabitant Alph)).
 Qed.
 
-Lemma green_row r k : is_row r -> green r k = minn (size r) k.
+Let negcomp := (fun a b => ~~(comp a b)).
+Hypothesis Hnegcomp : transitive negcomp.
+
+Lemma green_rel_seq r k : is_seq negcomp r -> green_rel r k = minn (size r) k.
 Proof.
   move=> Hrow /=.
-  apply/eqP; rewrite eqn_leq; apply/andP; split; last by apply greent_inf.
-  rewrite leq_min greent_sup /= /greent /=; apply/bigmax_leqP => s.
+  apply/eqP; rewrite eqn_leq; apply/andP; split; last by apply green_rel_t_inf.
+  rewrite leq_min green_rel_t_sup /=; apply/bigmax_leqP => s.
   rewrite /ksupp /trivIset => /and3P [] Hcard /eqP /= <- /forallP Hsort.
   suff {Hcard} H B : B \in s -> #|B| <= 1.
     apply (@leq_trans (\sum_(B in s) 1)); last by rewrite sum1_card.
@@ -418,22 +434,10 @@ Proof.
   rewrite -(size_extract (in_tuple r)) /=.
   move=> HB; have {Hsort} := Hsort B; rewrite HB {HB s} /=.
   set s := (extractpred _ _) => Hsort.
-  have : sorted (leqX Alph) s.
-    move: Hrow; apply subseq_sorted; last by apply extsubsm.
-    move=> x y z; apply leqX_trans.
-  case H : s Hsort => [//= | s0 [//= | s1 tls]] /= /andP [] Hgt _ /andP [] Hle _.
-  have := leqX_ltnX_trans Hle Hgt; by rewrite ltnXnn.
-Qed.
-
-Corollary green_inf_tab k t :
-  is_tableau t -> green (to_word t) k <= \sum_(l <- (shape t)) minn l k.
-Proof.
-  elim: t => [_ | t0 t IHt] /=.
-  + rewrite /to_word; by apply (@leq_trans 0); first apply greent_sup.
-  + move=> /and4P [] _ Hrow _ /IHt => {IHt} Ht.
-    rewrite to_word_cons; apply (leq_trans (green_cat _ _ _)).
-    rewrite big_cons addnC; apply leq_add; last exact Ht.
-    by rewrite green_row.
+  have : sorted negcomp s.
+    move: Hrow; apply (subseq_sorted Hnegcomp); last by apply extsubsm.
+  case H : s Hsort => [//= | s0 [//= | s1 tls]] /= /andP [] Hgt _ /andP [].
+  by rewrite /negcomp Hgt.
 Qed.
 
 End GreenSeq.
@@ -736,41 +740,6 @@ Qed.
 End Induction.
 
 
-Lemma sorted_tabextr t i :
-  is_tableau t -> i < size (tabextr t) ->
-  sorted (gtnX Alph)
-         (extract (in_tuple (to_word t)) (nth set0 (tabextr t) i)).
-Proof.
-  elim: t => [//= | t0 t IHt].
-  rewrite [X in X -> _]/=; move=> /and4P [] _ _ /dominateP [] Hsz Hdom Htab.
-  rewrite size_tabextr_cons => Hi; rewrite (extract_rec _ Hi).
-  case (ltnP i (size (head [::] t))) => Hit.
-  + have:= Hit; rewrite -size_tabextr; move/(IHt Htab) => {IHt}.
-    move Hrec : (extract _ _) => ext.
-    case: ext Hrec => [//= | a0 ext] Hext.
-    rewrite rcons_cons /= rcons_path => -> /=.
-    suff {Hdom} -> : last a0 ext = nth (inhabitant Alph) (head [::] t) i by apply Hdom.
-    rewrite -[last a0 ext]/(last (inhabitant Alph) (a0 :: ext)) -Hext {a0 ext Hext}.
-    case: t Hsz Htab Hit => [//= | t1 t] Hsz Htab Hit.
-    by rewrite (extract_rec _ Hit) last_rcons.
-  + rewrite nth_default; last by rewrite size_tabextr.
-    by rewrite extract0.
-Qed.
-
-Lemma ksupp_tabextr k t :
-  is_tableau t -> ksupp (in_tuple (to_word t)) k [set s | s \in (tabextrk t k)].
-Proof.
-  move=> Htab; rewrite /ksupp /tabextrk; apply/and3P; split.
-  + apply (leq_trans (card_seq (tabextrk t k))).
-    rewrite /tabextrk /= size_take; by apply geq_minl.
-  + apply trivIset_tabextrk.
-  + apply/forallP => s; apply/implyP.
-    rewrite /= inE => /mem_take Hin.
-    rewrite -(nth_index set0 Hin).
-    move: Hin; rewrite -index_mem; set i := index _ _ => Hi.
-    by apply (sorted_tabextr Htab).
-Qed.
-
 Lemma scover_tabextr k t :
   is_part (shape t) ->
   scover [set s | s \in (tabextrk t k)] = \sum_(l <- (shape t)) minn l k.
@@ -804,21 +773,77 @@ Proof.
     by rewrite -map_take.
 Qed.
 
-Theorem green_tab_min k t :
-  is_tableau t -> green (to_word t) k = \sum_(l <- (shape t)) minn l k.
+Lemma sorted_gtnX_tabextr t i :
+  is_tableau t -> i < size (tabextr t) ->
+  sorted (gtnX Alph)
+         (extract (in_tuple (to_word t)) (nth set0 (tabextr t) i)).
 Proof.
-  move=> Ht; apply/eqP; rewrite eqn_leq (green_inf_tab _ Ht) /=.
-  rewrite /greent /= -(scover_tabextr _ (is_part_sht Ht)).
-  apply leq_bigmax_cond; by apply ksupp_tabextr.
+  elim: t => [//= | t0 t IHt].
+  rewrite [X in X -> _]/=; move=> /and4P [] _ _ /dominateP [] Hsz Hdom Htab.
+  rewrite size_tabextr_cons => Hi; rewrite (extract_rec _ Hi).
+  case (ltnP i (size (head [::] t))) => Hit.
+  + have:= Hit; rewrite -size_tabextr; move/(IHt Htab) => {IHt}.
+    move Hrec : (extract _ _) => ext.
+    case: ext Hrec => [//= | a0 ext] Hext.
+    rewrite rcons_cons /= rcons_path => -> /=.
+    suff {Hdom} -> : last a0 ext = nth (inhabitant Alph) (head [::] t) i by apply Hdom.
+    rewrite -[last a0 ext]/(last (inhabitant Alph) (a0 :: ext)) -Hext {a0 ext Hext}.
+    case: t Hsz Htab Hit => [//= | t1 t] Hsz Htab Hit.
+    by rewrite (extract_rec _ Hit) last_rcons.
+  + rewrite nth_default; last by rewrite size_tabextr.
+    by rewrite extract0.
 Qed.
 
-Theorem green_tab k t :
-  is_tableau t -> green (to_word t) k = part_sum (conj_part (shape t)) k.
-Proof. move/green_tab_min ->; by apply sum_conj. Qed.
+Lemma ksupp_gtnX_tabextr k t :
+  is_tableau t -> ksupp (gtnX Alph) (in_tuple (to_word t)) k [set s | s \in (tabextrk t k)].
+Proof.
+  move=> Htab; rewrite /ksupp /tabextrk; apply/and3P; split.
+  + apply (leq_trans (card_seq (tabextrk t k))).
+    rewrite /tabextrk /= size_take; by apply geq_minl.
+  + apply trivIset_tabextrk.
+  + apply/forallP => s; apply/implyP.
+    rewrite /= inE => /mem_take Hin.
+    rewrite -(nth_index set0 Hin).
+    move: Hin; rewrite -index_mem; set i := index _ _ => Hi.
+    by apply (sorted_gtnX_tabextr Htab).
+Qed.
 
-Theorem green_tab_eq_shape t1 t2 :
+Definition greenRow := green_rel (leqX Alph).
+Definition greenCol := green_rel (gtnX Alph).
+
+Lemma greenCol_inf_tab k t :
+  is_tableau t -> greenCol (to_word t) k <= \sum_(l <- (shape t)) minn l k.
+Proof.
+  elim: t => [_ | t0 t IHt] /=;
+    first by rewrite /to_word; apply (@leq_trans 0); first by apply green_rel_t_sup.
+  move=> /and4P [] _ Hrow _ /IHt => {IHt} Ht; rewrite to_word_cons.
+  apply (@leq_trans (greenCol (in_tuple (to_word t)) k + greenCol (in_tuple t0) k)).
+  - apply green_rel_cat; by move=> a b c /= H1 H2; apply (ltnX_trans H2 H1).
+  - rewrite big_cons addnC; apply leq_add; last exact Ht.
+    have:= (@green_rel_seq _ (gtnX Alph) _ t0 k).
+    rewrite /green_rel /= => -> //=.
+    * move=> a b c /=; rewrite -!leqXNgtnX; by apply leqX_trans.
+    * move: Hrow; rewrite /sorted; case: t0 => [//=| l t0].
+      have Req : leqX_op =2 (fun a b : Alph => ~~ (b <A a))
+        by move=> i j /=; apply leqXNgtnX.
+      by rewrite (eq_path Req).
+Qed.
+
+Theorem greenCol_tab_min k t :
+  is_tableau t -> greenCol (to_word t) k = \sum_(l <- (shape t)) minn l k.
+Proof.
+  move=> Ht; apply/eqP; rewrite eqn_leq (greenCol_inf_tab _ Ht) /=.
+  rewrite /greenCol /green_rel_t /= -(scover_tabextr _ (is_part_sht Ht)).
+  apply leq_bigmax_cond; by apply ksupp_gtnX_tabextr.
+Qed.
+
+Theorem greenCol_tab k t :
+  is_tableau t -> greenCol (to_word t) k = part_sum (conj_part (shape t)) k.
+Proof. move/greenCol_tab_min ->; by apply sum_conj. Qed.
+
+Theorem greenCol_tab_eq_shape t1 t2 :
   is_tableau t1 -> is_tableau t2 ->
-  (forall k, green (to_word t1) k = green (to_word t2) k) -> (shape t1 = shape t2).
+  (forall k, greenCol (to_word t1) k = greenCol (to_word t2) k) -> (shape t1 = shape t2).
 Proof.
   move=> Htab1 Htab2 Heq.
   have Hsh1 := is_part_sht Htab1; have Hsh2 := is_part_sht Htab2.
@@ -826,7 +851,7 @@ Proof.
     move=> H; rewrite -(conj_partK Hsh1) -(conj_partK Hsh2).
     by rewrite H (conj_partK Hsh2).
   apply (part_sum_inj (is_part_conj Hsh1) (is_part_conj Hsh2)).
-  move=> k. rewrite -(green_tab k Htab1) -(green_tab k Htab2).
+  move=> k. rewrite -(greenCol_tab k Htab1) -(greenCol_tab k Htab2).
   by apply Heq.
 Qed.
 
