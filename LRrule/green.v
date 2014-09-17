@@ -1,6 +1,6 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm tuple path bigop.
-Require Import subseq partition ordtype schensted congr plactic.
+Require Import subseq partition ordtype schensted congr plactic ordcast.
 
 
 Set Implicit Arguments.
@@ -9,90 +9,12 @@ Unset Printing Implicit Defensive.
 
 Open Scope bool.
 
-Section Tools.
 
-Lemma take_iota i k n : take k (iota i n) = iota i (minn k n).
-Proof.
-  rewrite /minn; case: (ltnP k n) => H; last by apply take_oversize; rewrite size_iota.
-  elim: k n H i => [//= | k IHk]; first by case.
-  case=> //= n H i; congr (i :: _); by apply IHk.
-Qed.
+Section TrivISeq.
 
-Lemma take_enumI n (i : 'I_n) k : i \in take k (enum 'I_n) = (i < k).
-Proof.
-  case: i => i Hi /=.
-  rewrite -(mem_map val_inj) map_take val_enum_ord /= take_iota mem_iota /= add0n.
-  rewrite /minn; case: (ltnP k n) => //= H.
-  by rewrite Hi (leq_trans Hi H).
-Qed.
+Variable T : finType.
 
-Lemma mem_takeP (T : eqType) x0 x k (s : seq T) :
-  reflect (exists i, i < minn k (size s) /\ x = nth x0 s i) (x \in take k s).
-Proof.
-  apply (iffP idP).
-  + move=> Hx; pose ix := index x (take k s).
-    have Hix : ix < size s.
-      have:= Hx; rewrite /ix -index_mem size_take.
-      case: (ltnP k (size s)) => //= H1 H2; by apply (ltn_trans H2 H1).
-    have Hix2: ix < k.
-      have:= Hx; rewrite /ix -index_mem size_take /=.
-      by case: (ltnP k (size s)) => H; last by move/leq_trans; apply.
-    exists ix; split; first by rewrite leq_min Hix Hix2.
-    by rewrite -{1}(nth_index x0 Hx) nth_take.
-  + move=> [] i [] Hi ->.
-    have Hik := leq_trans Hi (geq_minl k (size s)).
-    have Hsz := leq_trans Hi (geq_minr k (size s)).
-    rewrite -(nth_take _ Hik); apply mem_nth; rewrite size_take.
-    by case (ltnP k (size s)).
-Qed.
-
-
-Lemma enum0 : enum 'I_0 = [::].
-Proof. apply/nilP; by rewrite /nilp size_enum_ord. Qed.
-
-Lemma enum_cast_ord m n (H : n = m):
-  enum 'I_m = [seq cast_ord H i | i <- enum 'I_n].
-Proof.
-  subst m; rewrite /=.
-  have /eq_map -> : cast_ord (erefl n) =1 id by move=> i; apply val_inj.
-  by rewrite map_id.
-Qed.
-
-Lemma nth_ord_ltn i n (H : i < n) x0 : nth x0 (enum 'I_n) i = (Ordinal H).
-Proof. by apply: val_inj => //=; rewrite nth_enum_ord. Qed.
-
-Implicit Type T : finType.
-
-Lemma set1_disjoint T (i j : T) : [set i] != [set j] -> [disjoint [set i] & [set j]].
-Proof.
-  move=> Hneq; rewrite /disjoint; apply/pred0P => l /=; apply negbTE.
-  rewrite !in_set1; move: Hneq; by apply contra => /andP [] /eqP -> /eqP ->.
-Qed.
-
-Lemma mem_imset_inj T1 T2 (f : T1 -> T2) (i : T1) (s : {set T1}) :
-  injective f -> (f i) \in f @: s = (i \in s).
-Proof.
-  move=> H; apply/(sameP idP); apply(iffP idP); first by apply mem_imset.
-  by move/imsetP => [] j Hj /H ->.
-Qed.
-
-Lemma subset_imsetK T1 T2 (f : T1 -> T2) (s t : {set T1}):
-  injective f -> f @: s \subset f @: t -> s \subset t.
-Proof.
-  move=> Hinj /subsetP H; apply/subsetP => x /(mem_imset f) Hfx.
-  by have:= H _ Hfx => /imsetP [] y Hy /Hinj ->.
-Qed.
-
-Lemma imset_inj T1 T2 (f : T1 -> T2) :
-  injective f -> injective (fun s : {set T1} => (imset f (mem s))).
-Proof.
-  move=> Hinj s1 s2 /eqP; rewrite eqEsubset => /andP [] H12 H21.
-  have {Hinj} Hinj := (subset_imsetK Hinj).
-  apply /eqP; rewrite eqEsubset.
-  by rewrite (Hinj _ _ H12) (Hinj _ _ H21).
-Qed.
-
-Lemma card_seq T (s : seq T) : #|[set i in s]| <= size s.
+Lemma card_seq (s : seq T) : #|[set i in s]| <= size s.
 Proof.
   elim: s => [//= | s0 s IHs]; set t := [set i | i \in _].
   - suff -> : t = set0 by rewrite cards0.
@@ -101,35 +23,13 @@ Proof.
     by apply leq_add; first by case: (s0 \notin [set i in s]).
 Qed.
 
-Lemma imset_trivIset (T1 : finType) (T2 : finType) (F : T1 -> T2) (P : {set {set T1}}) :
-  injective F -> trivIset P -> trivIset ((fun s : {set T1} => F @: s) @: P).
-Proof.
-  move=> Hinj /trivIsetP Htriv.
-  apply/trivIsetP => A B /imsetP [] FA FAP -> {A} /imsetP [] FB FBP -> Hneq.
-  have {Hneq} Hneq : FA != FB by move: Hneq; apply contra => /eqP ->.
-  have := Htriv _ _ FAP FBP Hneq; rewrite -!setI_eq0 -imsetI.
-  * move=> /eqP ->; by rewrite imset0.
-  * move=> i j _ _ /=; by apply Hinj.
-Qed.
-
-Lemma preimset_trivIset (T1 : finType) (T2 : finType) (F : T1 -> T2) (P : {set {set T2}}) :
-  injective F -> trivIset P -> trivIset ((fun s : {set T2} => F @^-1: s) @: P).
-Proof.
-  move=> Hinj /trivIsetP Htriv.
-  apply/trivIsetP => A B /imsetP [] FA FAP -> {A} /imsetP [] FB FBP -> Hneq.
-  have {Hneq} Hneq : FA != FB by move: Hneq; apply contra => /eqP ->.
-  have := Htriv _ _ FAP FBP Hneq; rewrite -!setI_eq0 -preimsetI => /eqP ->.
-  by rewrite preimset0.
-Qed.
-
-
-Definition trivIseq T (u : seq {set T}) : Prop :=
+Definition trivIseq (u : seq {set T}) : Prop :=
   forall i j, i < j < size u -> [disjoint (nth set0 u i) & (nth set0 u j)].
 
-Lemma trivIseq_consK T u0 (u : seq {set T}) : trivIseq (u0 :: u) -> trivIseq u.
+Lemma trivIseq_consK u0 u : trivIseq (u0 :: u) -> trivIseq u.
 Proof. rewrite /trivIseq => H i j Hij; apply (H i.+1 j.+1); by rewrite /= !ltnS. Qed.
 
-Lemma trivIsubseq T (u v : seq {set T}) :
+Lemma trivIsubseq u v :
   subseq u v -> trivIseq v -> trivIseq u.
 Proof.
   elim: v u => [/= v1 /eqP -> //=| v1 v IHv] u.
@@ -145,7 +45,7 @@ Proof.
   + apply IHv => //=; by apply (trivIseq_consK Htriv).
 Qed.
 
-Lemma trivIs T (u : seq {set T}) : trivIseq u -> trivIset [set i | i \in u].
+Lemma trivIs u : trivIseq u -> trivIset [set i | i \in u].
 Proof.
   rewrite /trivIseq => H; apply/trivIsetP => A B.
   rewrite !inE => HAin HBin.
@@ -161,6 +61,8 @@ Proof.
   by move: HAB; apply contra => /eqP ->.
 Qed.
 
+End TrivISeq.
+
 Lemma trivIseq_map (T1 T2 : finType) (f : T1 -> T2) (S : seq {set T1}) :
   injective f -> trivIseq S -> trivIseq (map (fun s : {set T1} => f @: s) S).
 Proof.
@@ -174,7 +76,6 @@ Proof.
   have:= Hd l; by rewrite /= Hli Hlj.
 Qed.
 
-End Tools.
 
 
 Section GreenDef.
@@ -545,37 +446,6 @@ Implicit Type t : seq (seq Alph).
 
 Let sym_cast m n (i : 'I_(m + n)) : 'I_(n + m) := cast_ord (addnC m n) i.
 
-Lemma cast_eq m n i j (H : m = n) : ((cast_ord H i) == (cast_ord H j)) = (i == j).
-Proof. by apply/(sameP idP); apply(iffP idP) => [/eqP -> //= | ] /eqP /cast_ord_inj ->. Qed.
-
-Lemma sym_cast_eq m n i j : ((@sym_cast m n i) == sym_cast j) = (i == j).
-Proof. by apply cast_eq. Qed.
-
-Lemma cast_map n m (P : pred 'I_n) (H : m = n) :
-  [seq P i | i <- enum 'I_n] = [seq P ((cast_ord H) i) | i <- enum 'I_m].
-Proof.
-  apply (eq_from_nth (x0 := false)).
-  + do 2 rewrite size_map size_enum_ord; by rewrite H.
-  + move=> i; rewrite size_map size_enum_ord => Hn. have := Hn; rewrite -{1}H => Hm.
-    rewrite (nth_map (Ordinal Hn)); last by rewrite size_enum_ord.
-    rewrite (nth_map (Ordinal Hm)); last by rewrite size_enum_ord.
-    set i1 := (X in P X); have -> : i1 = Ordinal Hn.
-      by apply/eqP; rewrite /eq_op /= nth_enum_ord.
-    set i2 := (X in _ = P X); have -> : i2 = Ordinal Hn.
-      by apply/eqP; rewrite /eq_op /= nth_enum_ord.
-    by [].
-Qed.
-
-Lemma mem_cast m n (H : m = n) (i : 'I_m) (S : {set 'I_m}) :
-  ((cast_ord H) i) \in [set (cast_ord H) i | i in S] = (i \in S).
-Proof.
-  apply/(sameP idP); apply(iffP idP).
-  + move=> Hin; apply/imsetP; by exists i.
-  + by move/imsetP => [] j Hin /cast_ord_inj ->.
-Qed.
-
-
-
 Fixpoint shextr sh : seq {set 'I_(sumn sh)} :=
   if sh is s0 :: sh then
     [seq (sym_cast (@rshift (sumn sh) s0 i)) |:
@@ -684,6 +554,7 @@ Qed.
 Let lsplit_rec := [fun s : {set 'I_(size (to_word (t0 :: t)))} => linj_rec @^-1: s].
 Let rsplit_rec := [fun s : {set 'I_(size (to_word (t0 :: t)))} => rinj_rec @^-1: s].
 
+(* I didn't manage to use this lemma getting it pass through \bigcup *)
 Lemma split_recabK (s : {set 'I_(size (to_word (t0 :: t)))}) :
   s = (linj_rec @: lsplit_rec s) :|: (rinj_rec @: rsplit_rec s).
 Proof.
@@ -902,7 +773,7 @@ Qed.
 
 Lemma scover_tabextr k t :
   is_part (shape t) ->
- scover [set s | s \in (tabextrk t k)] = \sum_(l <- (shape t)) minn l k.
+  scover [set s | s \in (tabextrk t k)] = \sum_(l <- (shape t)) minn l k.
 Proof.
   elim: t => [//= | t0 t IHt] /=.
   - set s := (X in cover X); have -> : s = set0 by rewrite /s -setP => i; rewrite inE.
