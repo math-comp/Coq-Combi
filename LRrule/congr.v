@@ -82,7 +82,7 @@ Proof.
   by apply ltn_sub2l; first by apply (leq_trans H).
 Qed.
 
-Lemma subset_trans s : {subset s <= trans s}.
+Lemma subset_s_trans_s s : {subset s <= trans s}.
 Proof.
   apply trans_ind => //= {s}.
   * move=> s _ _ H x Hx; exact (H _ (subset_step Hx)).
@@ -128,7 +128,7 @@ Proof.
   + move: Hl y; apply trans_ind => //=.
     * move=> s _ Hsz IH Hinv y [] x [] Hxins.
       case.
-      - by apply subset_trans; apply subset_step.
+      - by apply subset_s_trans_s; apply subset_step.
       - move=> {y} y z Hrew Hrule; apply IH; first by apply invar_step.
         exists z; split; last exact Hrew.
         by apply (step_mem Hrule).
@@ -168,7 +168,7 @@ Proof.
 Qed.
 
 Lemma in_tclass_refl x : x \in tclass x.
-Proof. by rewrite /tclass; apply subset_trans; rewrite mem_seq1. Qed.
+Proof. by rewrite /tclass; apply subset_s_trans_s; rewrite mem_seq1. Qed.
 
 Hypothesis Hsym : forall x y, x \in rule y -> y \in rule x.
 
