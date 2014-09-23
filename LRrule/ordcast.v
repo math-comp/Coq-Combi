@@ -23,6 +23,14 @@ Proof.
   by move/imsetP => [] j Hj /H ->.
 Qed.
 
+Lemma map_filter_comp (T1 T2: Type) (l : seq T1) (PP : pred T2) (F : T1 -> T2) :
+  [seq F i | i <- l & PP (F i)] = [seq i | i <- map F l & PP i ].
+Proof.
+  rewrite filter_map /= -map_comp.
+  have /eq_filter -> : (preim F [eta PP]) =1 (fun i => PP (F i)) by [].
+  by rewrite map_comp.
+Qed.
+
 Lemma subset_imsetK T1 T2 (f : T1 -> T2) (s t : {set T1}):
   injective f -> f @: s \subset f @: t -> s \subset t.
 Proof.
@@ -90,12 +98,68 @@ Proof.
   case=> //= n H i; congr (i :: _); by apply IHk.
 Qed.
 
-Lemma take_enumI n (i : 'I_n) k : i \in take k (enum 'I_n) = (i < k).
+Lemma drop_iota i k n : drop k (iota i n) = iota (i + k) (n - k).
+Proof.
+  elim: k i n => [/= | k IHk] i n /=; first by rewrite addn0; case: n.
+  case: n => [//= | n] /=; by rewrite IHk addSn addnS subSS.
+Qed.
+
+Lemma mem_take_enumI n (i : 'I_n) k : i \in take k (enum 'I_n) = (i < k).
 Proof.
   case: i => i Hi /=.
   rewrite -(mem_map val_inj) map_take val_enum_ord /= take_iota mem_iota /= add0n.
   rewrite /minn; case: (ltnP k n) => //= H.
   by rewrite Hi (leq_trans Hi H).
+Qed.
+
+Lemma take_enumI n k : take k (enum 'I_n) = filter ((gtn k) \o val) (enum 'I_n).
+Proof.
+  apply (inj_map val_inj); rewrite map_take map_filter_comp val_enum_ord.
+  rewrite take_iota /minn.
+  case: (ltnP k n) => Hk.
+  + elim: k n Hk => [//= | k IHk] n Hk /=.
+    * set f := (X in filter X _); have /eq_filter -> : f =1 pred0 by [].
+      by rewrite filter_pred0.
+    * case: n Hk => [//= | n] Hk /=.
+      rewrite -[1]addn0 !iota_addl (IHk _ Hk).
+      by rewrite filter_map /= -!map_comp.
+  + rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT map_id.
+    move=> i /=; rewrite mem_iota add0n => /andP [] _ H2.
+    by rewrite (leq_trans H2 Hk).
+Qed.
+
+Lemma mem_drop_enumI n (i : 'I_n) k : i \in drop k (enum 'I_n) = (i >= k).
+Proof.
+  case (leqP k n) => Hkn.
+  + case: i => i Hi /=.
+    rewrite -(mem_map val_inj) map_drop val_enum_ord /= drop_iota mem_iota /= add0n.
+    have -> : i < k + (n - k) by rewrite subnKC.
+    by rewrite andbT.
+  + rewrite drop_oversize; last by rewrite size_enum_ord; apply ltnW.
+    have:= ltn_trans (ltn_ord i) Hkn.
+    by rewrite in_nil ltnNge => /negbTE => ->.
+Qed.
+
+Lemma drop_enumI n k : drop k (enum 'I_n) = filter ((leq k) \o val) (enum 'I_n).
+Proof.
+  apply (inj_map val_inj); rewrite map_drop map_filter_comp val_enum_ord.
+  rewrite drop_iota add0n.
+  case: (leqP n k) => Hk.
+  + have:= Hk; rewrite -subn_eq0 => /eqP -> /=.
+    rewrite (eq_in_filter (a2 := pred0)); first by rewrite filter_pred0.
+    move=> i; rewrite mem_iota add0n => /andP [] _ Hi.
+    have:= leq_trans Hi Hk.
+    by rewrite ltnNge => /negbTE => ->.
+  + move Hdiff : (n - k) => d; move: Hdiff => /eqP.
+    rewrite -(eqn_add2r k) subnK; last by apply ltnW.
+    move/eqP -> => {n Hk}.
+    rewrite addnC iota_add filter_cat map_id add0n.
+    rewrite (eq_in_filter (a2 := pred0)); first last.
+      move=> i; rewrite mem_iota add0n => /andP [] _ Hi.
+      move: Hi; by rewrite ltnNge => /negbTE => ->.
+    rewrite filter_pred0 cat0s.
+    rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT.
+    by move=> i; rewrite mem_iota => /andP [] ->.
 Qed.
 
 Lemma enum0 : enum 'I_0 = [::].
@@ -111,7 +175,6 @@ Qed.
 
 Lemma nth_ord_ltn i n (H : i < n) x0 : nth x0 (enum 'I_n) i = (Ordinal H).
 Proof. by apply: val_inj => //=; rewrite nth_enum_ord. Qed.
-
 
 Section Casts.
 
