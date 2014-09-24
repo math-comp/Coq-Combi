@@ -159,6 +159,12 @@ Proof. by move/andP => []. Qed.
 Lemma ltnX_trans n m p : m < n -> n < p -> m < p.
 Proof. move=> lt_mn /ltnXW. exact: ltnX_leqX_trans. Qed.
 
+Lemma geqX_trans : transitive geqX.
+Proof. move=> m n p /= H1 H2; by apply (leqX_trans H2 H1). Qed.
+
+Lemma gtnX_trans : transitive gtnX.
+Proof. move=> m n p /= H1 H2; by apply (ltnX_trans H2 H1). Qed.
+
 End POrderTheory.
 
 
@@ -265,6 +271,47 @@ Proof. by rewrite leqXNgtnX [n1 <= m]leqXNgtnX [n2 <= m]leqXNgtnX ltnX_maxX negb
 End OrdTheory.
 
 Hint Resolve leqXnn ltnXnn ltnXW.
+
+Lemma inhabitant (T : ordType) : T.
+Proof. move H : T => HH; case: HH H => sort [] base [] r x ax t0 HT; by apply x. Qed.
+
+Section Dual.
+
+Variable Alph : ordType.
+
+Fact geqX_order : Order.axiom (geqX Alph).
+Proof.
+  split.
+  - move=> n /=; by apply leqXnn.
+  - move=> m n /= /andP [] H1 H2; apply/eqP; by rewrite eqn_leqX H1 H2.
+  - move=> m n p /= H1 H2; by apply (leqX_trans H2 H1).
+  - move=> m n /=; exact (leqX_total n m).
+Qed.
+
+Definition dual_ordMixin := Order.Mixin (inhabitant Alph) geqX_order.
+Canonical dual_ordType := Eval hnf in OrdType Alph dual_ordMixin.
+
+Definition to_dual : Alph -> dual_ordType := id.
+Definition from_dual : dual_ordType -> Alph := id.
+
+Lemma dual_leqX m n : (to_dual m <= to_dual n) = (n <= m).
+Proof. by rewrite leqXE /=. Qed.
+
+Lemma dual_eq m n : (to_dual m == to_dual n) = (n == m).
+Proof. by rewrite !eqn_leqX !dual_leqX. Qed.
+
+Lemma dual_ltnX m n : (to_dual m < to_dual n) = (n < m).
+Proof. by rewrite /ltnX_op dual_leqX dual_eq. Qed.
+
+Lemma dualK : cancel to_dual from_dual.
+Proof. by []. Qed.
+
+Lemma from_dualK : cancel from_dual to_dual.
+Proof. by []. Qed.
+
+End Dual.
+
+
 
 Section MaxList.
 
@@ -581,9 +628,6 @@ Proof.
 Qed.
 
 End RemoveBig.
-
-Lemma inhabitant (T : ordType) : T.
-Proof. move H : T => HH; case: HH H => sort [] base [] r x ax t0 HT; by apply x. Qed.
 
 Fact leq_order : Order.axiom leq.
 Proof.

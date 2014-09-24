@@ -191,6 +191,45 @@ Proof. by move/plactcongr_homog/perm_eq_size. Qed.
 
 End Defs.
 
+
+
+Section Dual.
+
+Variable Alph : ordType.
+Let word := seq Alph.
+
+Let Dual := dual_ordType Alph.
+Implicit Type u v w : word.
+
+Definition revdual := [fun s : seq Alph => rev (map (@to_dual Alph) s)].
+Definition from_revdual := [fun s : seq Alph => (map (@from_dual Alph) (rev s))].
+
+Lemma size_revdual u : size u = size (revdual u).
+Proof. by rewrite /revdual /= size_rev size_map. Qed.
+
+Lemma plactdual u v : u \in plact1 v = (revdual u \in plact2 (revdual v)).
+Proof.
+  apply/(sameP idP); apply(iffP idP).
+  + move /plact2P => [] a' [] b' [] c' [] Habc'.
+    rewrite /revdual /= => H1 H2.
+    have:= eq_refl (from_revdual [:: b'; a'; c']); rewrite -{1}H1 /=.
+    rewrite revK -map_comp; set f := (X in map X _).
+    have /eq_map -> : f =1 id by move=> i; rewrite /f /= dualK.
+    rewrite map_id {f} => /eqP ->.
+    have:= eq_refl (from_revdual [:: b'; c'; a']); rewrite -{1}H2 /=.
+    rewrite revK -map_comp; set f := (X in map X _).
+    have /eq_map -> : f =1 id by move=> i; rewrite /f /= dualK.
+    rewrite map_id {f} => /eqP ->.
+    by rewrite -dual_leqX -dual_ltnX !from_dualK andbC Habc' /= mem_seq1.
+  + move /plact1P => [] a [] b [] c [] Habc -> ->.
+    by rewrite /revdual /= dual_leqX dual_ltnX andbC Habc /rev /= mem_seq1.
+Qed.
+
+Lemma plactinvdual u v : u \in plact1i v = (revdual u \in plact2i (revdual v)).
+Proof. apply/(sameP idP); apply(iffP idP); by rewrite -plact1I -plact2I plactdual. Qed.
+
+End Dual.
+
 Section RSToPlactic.
 
 Variable Alph : ordType.

@@ -27,6 +27,213 @@ Qed.
 
 Open Scope bool.
 
+Section GreenInj.
+
+Variable T1 T2 : ordType.
+Variable R1 : rel T1.
+Variable R2 : rel T2.
+
+Definition ksupp_inj k (u1 : seq T1) (u2 : seq T2) :=
+  forall s1, ksupp R1 (in_tuple u1) k s1 ->
+             exists s2, (scover s1 == scover s2) && ksupp R2 (in_tuple u2) k s2.
+
+Lemma leq_green k (u1 : seq T1) (u2 : seq T2) :
+  ksupp_inj k u1 u2 -> green_rel R1 u1 k <= green_rel R2 u2 k.
+Proof.
+  move=> Hinj; rewrite /= /green_rel /green_rel_t.
+  set P1 := ksupp R1 (in_tuple u1) k.
+  have : #|P1| > 0.
+    rewrite -cardsE card_gt0; apply/set0Pn.
+    exists set0; rewrite in_set; by apply ksupp0.
+  move/(eq_bigmax_cond scover) => [] ks1 Hks1 ->.
+  have := Hinj _ Hks1 => [] [] ks2 /andP [] /eqP -> Hks2.
+  by apply leq_bigmax_cond.
+Qed.
+
+End GreenInj.
+
+Section Duality.
+
+Variable Alph : ordType.
+Let word := seq Alph.
+
+Implicit Type a b c : Alph.
+Implicit Type u v w r : word.
+
+Variable w : word.
+Variable k : nat.
+
+Definition rev_ord_cast : 'I_(size w) -> 'I_(size (revdual _ w)) :=
+  (cast_ord (size_revdual w)) \o (@rev_ord _).
+Definition revSet (s : {set 'I_(size w)}) : {set 'I_(size (revdual _ w))} :=
+  [set rev_ord_cast i | i in s].
+Definition rev_ksupp (P : {set {set 'I_(size w)}}) : {set {set 'I_(size (revdual _ w))}} :=
+  [set revSet u | u in P].
+
+Definition rev_ksupp_inv (S : {set {set 'I_(size (revdual _ w))}}) :=
+  [set rev_ord_cast @^-1: s | s : {set 'I_(size (revdual _ w))} in S].
+
+Lemma rev_ord_cast_inj : injective rev_ord_cast.
+Proof. move=> i j; by rewrite /rev_ord_cast /= => /cast_ord_inj/rev_ord_inj. Qed.
+
+Lemma revSet_inj : injective revSet.
+Proof. move=> i j /=; rewrite /revSet; apply imset_inj; exact rev_ord_cast_inj. Qed.
+
+
+Lemma rev_ksuppK S : S = rev_ksupp_inv (rev_ksupp S).
+Proof.
+  rewrite /rev_ksupp_inv /rev_ksupp -imset_comp; set f := (X in imset X _).
+  suff /eq_imset -> : f =1 id by rewrite imset_id.
+  rewrite /f {f} /revSet => s /=.
+  apply/setP/subset_eqP/andP; split; apply/subsetP=> i; rewrite inE;
+   by rewrite mem_imset_inj; last exact rev_ord_cast_inj.
+Qed.
+
+Lemma rev_ksuppKV S : S = rev_ksupp (rev_ksupp_inv S).
+Proof.
+  rewrite /rev_ksupp_inv /rev_ksupp -imset_comp; set f := (X in imset X _).
+  suff /eq_imset -> : f =1 id by rewrite imset_id.
+  rewrite /f {f} /revSet => s /=.
+  apply/setP/subset_eqP/andP; split; apply/subsetP=> i.
+  + move=> /imsetP [] t; rewrite inE => Ht Hi; by subst i.
+  + move=> Hi; apply/imsetP.
+    exists (rev_ord ((cast_ord (esym (size_revdual w))) i)).
+    * by rewrite /rev_ord_cast inE /= rev_ordK cast_ordKV.
+    * by rewrite /rev_ord_cast /= rev_ordK cast_ordKV.
+Qed.
+
+Lemma irev_w i : i < size w -> size w - i.+1 < size w.
+Proof. move/subnSK ->; by apply leq_subr. Qed.
+
+Lemma rev_enum :
+  enum 'I_(size (revdual _ w)) = rev [seq rev_ord_cast i | i <- enum 'I_(size w)].
+Proof.
+  apply (inj_map val_inj); rewrite /=.
+  rewrite val_enum_ord map_rev -map_comp.
+  set f := (_ \o _);  have /eq_map -> : f =1 (fun i => size w - i.+1) \o val by [].
+  rewrite {f} map_comp val_enum_ord size_rev size_map.
+  apply (eq_from_nth (x0 := 0)); first by rewrite size_rev size_map.
+  move=> i; rewrite size_iota => Hi; rewrite nth_rev; last by rewrite size_map size_iota.
+  rewrite (nth_iota _ Hi) add0n size_map (nth_map 0);
+    last by rewrite size_iota; apply irev_w.
+  rewrite size_iota (nth_iota _ (irev_w Hi)).
+  rewrite add0n (subnSK Hi); by rewrite subKn; last by apply ltnW.
+Qed.
+
+Lemma extract_revSet S :
+  (extract (in_tuple (revdual Alph w))) (revSet S) = revdual Alph (extract (in_tuple w) S).
+Proof.
+  rewrite /extract /extractpred /= /revSet rev_enum.
+  rewrite filter_rev filter_map.
+  set f := (X in filter X _); have /eq_filter -> : f =1 (fun i => i \in S).
+    by move=> i; rewrite /f {f} /= mem_imset_inj; last exact rev_ord_cast_inj.
+  rewrite {f} map_rev -!map_comp; congr (rev _).
+  apply eq_map => i /=; rewrite !(tnth_nth (inhabitant Alph)) /=.
+  rewrite -map_rev -{4}[w]revK nth_rev size_rev; last by apply ltn_ord.
+  rewrite (nth_map (inhabitant Alph)); first by [].
+  rewrite size_rev; apply irev_w; by apply ltn_ord.
+Qed.
+
+Lemma is_row_dual T :
+  (is_seq (leqX Alph)) ((extract (in_tuple w)) T) <->
+  (is_seq (leqX (dual_ordType Alph)))
+    ((extract (in_tuple ((revdual Alph) w))) (revSet T)).
+Proof.
+  rewrite extract_revSet.
+  case: (extract _ _) => [//= | l0 l] /=.
+  rewrite -rev_sorted revK /sorted.
+  suff <- : l = [seq to_dual i | i <- l] by [].
+  by rewrite map_id.
+Qed.
+
+Lemma is_col_dual T :
+  (is_seq (gtnX Alph)) ((extract (in_tuple w)) T) <->
+  (is_seq (gtnX (dual_ordType Alph)))
+    ((extract (in_tuple ((revdual Alph) w))) (revSet T)).
+Proof.
+  rewrite extract_revSet.
+  case: (extract _ _) => [//= | l0 l] /=.
+  rewrite -rev_sorted revK /sorted /=.
+  rewrite (map_path (e' := (gtnX Alph)) (b := pred0)); first by [].
+  + rewrite /rel_base => x y _.
+    by rewrite /gtnX /= dual_ltnX.
+  + by rewrite has_pred0.
+Qed.
+
+Lemma size_rev_ksupp P : #|rev_ksupp P| = #|P|.
+Proof. by rewrite card_imset; last by apply revSet_inj. Qed.
+
+Lemma trivIset_setrev P : trivIset P = trivIset [set revSet u | u in P].
+Proof.
+  apply/(sameP idP); apply(iffP idP).
+  + move/(preimset_trivIset rev_ord_cast_inj).
+    by rewrite {2}[P]rev_ksuppK.
+  + by apply imset_trivIset; exact rev_ord_cast_inj.
+Qed.
+
+Lemma rev_is_ksupp_row P :
+  ksupp (leqX Alph) (in_tuple w) k P =
+  ksupp (leqX (dual_ordType Alph)) (in_tuple (revdual _ w)) k (rev_ksupp P).
+Proof.
+  rewrite /ksupp size_rev_ksupp trivIset_setrev; congr [&& _, _ & _].
+  apply/(sameP idP); apply(iffP idP) => /forallP Hall; apply/forallP => S; apply/implyP.
+  * move=> HS; have:= Hall (revSet S).
+    have -> : (revSet S \in [set revSet u | u in P])
+      by rewrite mem_imset_inj; last exact revSet_inj.
+    by rewrite is_row_dual.
+  * move=> /imsetP [] T HT -> {S}.
+    rewrite -is_row_dual.
+    have:= Hall T; by rewrite HT.
+Qed.
+
+Lemma rev_is_ksupp_col P :
+  ksupp (gtnX Alph) (in_tuple w) k P =
+  ksupp (gtnX (dual_ordType Alph)) (in_tuple (revdual _ w)) k (rev_ksupp P).
+Proof.
+  rewrite /ksupp size_rev_ksupp trivIset_setrev; congr [&& _, _ & _].
+  apply/(sameP idP); apply(iffP idP) => /forallP Hall; apply/forallP => S; apply/implyP.
+  * move=> HS; have:= Hall (revSet S).
+    have -> : (revSet S \in [set revSet u | u in P])
+      by rewrite mem_imset_inj; last exact revSet_inj.
+    by rewrite is_col_dual.
+  * move=> /imsetP [] T HT -> {S}.
+    rewrite -is_col_dual.
+    have:= Hall T; by rewrite HT.
+Qed.
+
+Lemma scover_rev P : scover (rev_ksupp P) = scover P.
+Proof. by rewrite !/scover /= -size_cover_inj; last exact rev_ord_cast_inj. Qed.
+
+Lemma greenCol_dual : greenCol w k = greenCol (revdual _ w) k.
+Proof.
+  rewrite /greenCol /=.
+  apply/eqP; rewrite eqn_leq; apply/andP; split.
+  - apply (@leq_green _ (dual_ordType _)).
+    rewrite /ksupp_inj => S HS; exists (rev_ksupp S).
+    by rewrite scover_rev eq_refl /= -rev_is_ksupp_col.
+  - apply (@leq_green (dual_ordType _) _).
+    rewrite /ksupp_inj => S HS.
+    pose U := rev_ksupp_inv S.
+    exists U; rewrite [S]rev_ksuppKV /U scover_rev eq_refl /=.
+    by move: HS; rewrite {1}[S]rev_ksuppKV -rev_is_ksupp_col.
+Qed.
+
+Lemma greenRow_dual : greenRow w k = greenRow (revdual _ w) k.
+Proof.
+  rewrite /greenCol /=.
+  apply/eqP; rewrite eqn_leq; apply/andP; split.
+  - apply (@leq_green _ (dual_ordType _)).
+    rewrite /ksupp_inj => S HS; exists (rev_ksupp S).
+    by rewrite scover_rev eq_refl /= -rev_is_ksupp_row.
+  - apply (@leq_green (dual_ordType _) _).
+    rewrite /ksupp_inj => S HS.
+    pose U := rev_ksupp_inv S.
+    exists U; rewrite [S]rev_ksuppKV /U scover_rev eq_refl /=.
+    by move: HS; rewrite {1}[S]rev_ksuppKV -rev_is_ksupp_row.
+Qed.
+
+End Duality.
+
 (* We make a module here to avoid poluting the global namespace *)
 Module Swap.
 Section Swap.
@@ -718,30 +925,14 @@ Implicit Type u v w r : word.
 
 Notation "a =Pl b" := (plactcongr a b) (at level 70).
 
-Definition ksupp_inj R k u1 u2 :=
-  forall s1, ksupp R (in_tuple (u1)) k s1 ->
-             exists s2, (scover s1 == scover s2) && ksupp R (in_tuple (u2)) k s2.
-
-Lemma leq_green R k u1 u2 : ksupp_inj R k u1 u2 -> green_rel R u1 k <= green_rel R u2 k.
-Proof.
-  move=> Hinj; rewrite /= /green_rel /green_rel_t.
-  set P1 := ksupp R (in_tuple u1) k.
-  have : #|P1| > 0.
-    rewrite -cardsE card_gt0; apply/set0Pn.
-    exists set0; rewrite in_set; by apply ksupp0.
-  move/(eq_bigmax_cond scover) => [] ks1 Hks1 ->.
-  have := Hinj _ Hks1 => [] [] ks2 /andP [] /eqP -> Hks2.
-  by apply leq_bigmax_cond.
-Qed.
-
 Lemma ksupp_inj_plact1 u v1 w v2 k :
-  v2 \in plact1 v1 -> ksupp_inj (gtnX Alph) k (u ++ v1 ++ w) (u ++ v2 ++ w).
+  v2 \in plact1 v1 -> ksupp_inj (gtnX Alph) (gtnX Alph) k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof.
   move/plact1P => [] a [] b [] c [] Hord -> -> {v1 v2}.
   rewrite /ksupp_inj  => S1 Hsupp.
 (*  set t1 := (u ++ [:: a; c; b] ++ w); set t2 := (u ++ [:: c; a; b] ++ w). *)
-  pose posa := Ordinal (Swap.ult u (b :: w) a c).
-  pose posc := Ordinal (Swap.u1lt u (b :: w) a c).
+  pose posa := (Swap.pos0 u (b :: w) a c).
+  pose posc := (Swap.pos1 u (b :: w) a c).
   case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
   + move/existsP => [] S /and3P [] HSin HSa HSb.
     exfalso; move: Hsupp; rewrite /ksupp => /and3P [] _ _ /forallP Hall.
@@ -765,18 +956,20 @@ Proof.
 Qed.
 
 Lemma ksupp_inj_plact1i u v1 w v2 k :
-  v2 \in plact1i v1 -> ksupp_inj (gtnX Alph) k (in_tuple (u ++ v1 ++ w)) (in_tuple (u ++ v2 ++ w)).
+  v2 \in plact1i v1 -> ksupp_inj (gtnX Alph) (gtnX Alph) k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof.
   admit.
 Qed.
 
 Lemma ksupp_inj_plact2 u v1 w v2 k :
-  v2 \in plact2 v1 -> ksupp_inj (gtnX Alph) k (in_tuple (u ++ v1 ++ w)) (in_tuple (u ++ v2 ++ w)).
+  v2 \in plact2 v1 -> ksupp_inj (gtnX Alph) (gtnX Alph) k
+                                (in_tuple (u ++ v1 ++ w)) (in_tuple (u ++ v2 ++ w)).
 Proof.
   admit.
 Qed.
 Lemma ksupp_inj_plact2i u v1 w v2 k :
-  v2 \in plact2i v1 -> ksupp_inj (gtnX Alph) k (in_tuple (u ++ v1 ++ w)) (in_tuple (u ++ v2 ++ w)).
+  v2 \in plact2i v1 -> ksupp_inj (gtnX Alph) (gtnX Alph) k
+                                 (in_tuple (u ++ v1 ++ w)) (in_tuple (u ++ v2 ++ w)).
 Proof.
   admit.
 Qed.
