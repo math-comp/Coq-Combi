@@ -977,8 +977,9 @@ Lemma extract_Sa:
   extract (in_tuple x) (S :&: [set j : 'I_(size x) | j <= posa]) =
   rcons (extract (in_tuple x) (S :&: [set j : 'I_(size x) | j < posa])) a.
 Proof.
-  have : posa \in (S :&: [set j : 'I_(size x) | j <= posa]) by rewrite !inE leqnn Hposa.
-  move /extract_cuti ->; rewrite -cats1 -{21}[[:: a]]cats0 -[tnth _ _ :: _]cat1s.
+  set S' := (X in extract _ X).
+  have : posa \in S' by rewrite /S' !inE leqnn Hposa.
+  rewrite /S'; move /extract_cuti ->; rewrite -cats1 -{21}[[:: a]]cats0 -[tnth _ _ :: _]cat1s.
   congr ((extract (in_tuple x) _) ++ _ ++ _).
   + rewrite -setP => i; rewrite !inE.
     case (boolP (i \in S)) => //= _.
@@ -995,21 +996,66 @@ Lemma extract_cS:
   extract (in_tuple x) (S :&: [set j : 'I_(size x) | j >= posc]) =
   c :: (extract (in_tuple x) (S :&: [set j : 'I_(size x) | j > posc])).
 Proof.
-  admit.
+  set S' := (X in extract _ X).
+  have : posc \in S' by rewrite !inE leqnn Hposc.
+  move /extract_cuti ->; rewrite -cat1s -[RHS]cat1s -[RHS]cat0s.
+  congr (_ ++ _ ++ (extract (in_tuple x) _)).
+  + set s := (X in extract _ X); suff -> : s = set0 by rewrite extract0.
+    rewrite /s {s} -setP => i; rewrite !inE -andbA.
+    apply/(sameP idP); apply(iffP idP) => //= /and3P [] _ H1 H2.
+    have:= leq_trans H2 H1; by rewrite ltnn.
+  + rewrite (tnth_nth a) /x /=; by elim: u.
+  + rewrite -setP => i; rewrite !inE.
+    case (boolP (i \in S)) => //= _.
+    case: (ltnP (size u).+2 i); last by rewrite andbF.
+    by move/ltnW ->.
 Qed.
 
 Lemma extract_Tb:
   (extract (in_tuple x)) (T :&: [set j : 'I_(size x) | j <= posb]) =
   rcons (extract (in_tuple x) (T :&: [set j : 'I_(size x) | j < posb])) b.
 Proof.
-  admit.
+  set T' := (X in extract _ X).
+  have : posb \in T' by rewrite /T' !inE leqnn Hposb.
+  move /extract_cuti ->; rewrite -cats1 -[[:: b]]cats0 -[tnth _ _ :: _]cat1s.
+  congr ((extract (in_tuple x) _) ++ _ ++ _).
+  + rewrite -setP => i; rewrite !inE.
+    case (boolP (i \in T)) => //= _.
+    case: (ltnP i (size u)); last by rewrite andbF.
+    by move/ltnW ->.
+  + rewrite (tnth_nth a) /x /=; by elim: u.
+  + set s := (X in extract _ X); suff -> : s = set0 by rewrite extract0.
+    rewrite /s {s} -setP => i; rewrite !inE -andbA.
+    apply/(sameP idP); apply(iffP idP) => //= /and3P [] _ H1 H2.
+    have:= leq_trans H2 H1; by rewrite ltnn.
 Qed.
 
 Lemma extract_bT:
   (extract (in_tuple x)) (T :&: [set j : 'I_(size x) | j >= posb]) =
   b :: (extract (in_tuple x)) (T :&: [set j : 'I_(size x) | j > posc]).
 Proof.
-  admit.
+  set T' := (X in extract _ X).
+  have : posb \in T' by rewrite !inE leqnn Hposb.
+  move /extract_cuti ->. rewrite -[tnth _ _ :: _ ]cat1s -[RHS]cat1s -[RHS]cat0s.
+  congr (_ ++ _ ++ (extract (in_tuple x) _)).
+  + set s := (X in extract _ X); suff -> : s = set0 by rewrite extract0.
+    rewrite /s {s} -setP => i; rewrite !inE -andbA.
+    apply/(sameP idP); apply(iffP idP) => //= /and3P [] _ H1 H2.
+    have:= leq_trans H2 H1; by rewrite ltnn.
+  + rewrite (tnth_nth a) /x /=; by elim: u.
+  + rewrite -setP => i; rewrite !inE.
+    case (boolP (i \in T)) => //= Hi.
+    case: (ltnP (size u).+2 i).
+    * move/ltnW/ltnW => H; by rewrite H (ltnW H).
+    * move=> Hi1; apply/(sameP idP); apply(iffP idP) => //= /andP [] _ H2.
+      have:= TS_disjoint => /disjoint_setI0; rewrite -setP => Hdisj.
+      case: (ltnP (size u).+1 i) => Hi2.
+      - have Htmp : i = posc by apply val_inj => /=; apply /eqP; rewrite eqn_leq Hi2 Hi1.
+        subst i => {Hi1 H2 Hi2}.
+        have:= (Hdisj posc); by rewrite in_set0 in_setI Hi Hposc.
+      - have Htmp : i = posa by apply val_inj => /=; apply /eqP; rewrite eqn_leq Hi2 H2.
+        subst i => {Hi1 H2 Hi2}.
+        have:= (Hdisj posa); by rewrite in_set0 in_setI Hi Hposa.
 Qed.
 
 Lemma extract_S1 : is_seq R (extract (in_tuple x) S1).
