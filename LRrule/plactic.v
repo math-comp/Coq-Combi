@@ -207,7 +207,25 @@ Definition from_revdual := [fun s : seq Alph => (map (@from_dual Alph) (rev s))]
 Lemma size_revdual u : size u = size (revdual u).
 Proof. by rewrite /revdual /= size_rev size_map. Qed.
 
-Lemma plactdual u v : u \in plact1 v = (revdual u \in plact2 (revdual v)).
+Lemma plact2dual u v : u \in plact2 v = (revdual u \in plact1 (revdual v)).
+Proof.
+  apply/(sameP idP); apply(iffP idP).
+  + move /plact1P => [] a' [] b' [] c' [] Habc'.
+    rewrite /revdual /= => H1 H2.
+    have:= eq_refl (from_revdual [:: a'; c'; b']); rewrite -{1}H1 /=.
+    rewrite revK -map_comp; set f := (X in map X _).
+    have /eq_map -> : f =1 id by move=> i; rewrite /f /= dualK.
+    rewrite map_id {f} => /eqP ->.
+    have:= eq_refl (from_revdual [:: c'; a'; b']); rewrite -{1}H2 /=.
+    rewrite revK -map_comp; set f := (X in map X _).
+    have /eq_map -> : f =1 id by move=> i; rewrite /f /= dualK.
+    rewrite map_id {f} => /eqP ->.
+    by rewrite -dual_leqX -dual_ltnX !from_dualK andbC Habc' /= mem_seq1.
+  + move /plact2P => [] a [] b [] c [] Habc -> ->.
+    by rewrite /revdual /= dual_leqX dual_ltnX andbC Habc /rev /= mem_seq1.
+Qed.
+
+Lemma plact1dual u v : u \in plact1 v = (revdual u \in plact2 (revdual v)).
 Proof.
   apply/(sameP idP); apply(iffP idP).
   + move /plact2P => [] a' [] b' [] c' [] Habc'.
@@ -225,8 +243,11 @@ Proof.
     by rewrite /revdual /= dual_leqX dual_ltnX andbC Habc /rev /= mem_seq1.
 Qed.
 
-Lemma plactinvdual u v : u \in plact1i v = (revdual u \in plact2i (revdual v)).
-Proof. apply/(sameP idP); apply(iffP idP); by rewrite -plact1I -plact2I plactdual. Qed.
+Lemma plact1invdual u v : u \in plact1i v = (revdual u \in plact2i (revdual v)).
+Proof. apply/(sameP idP); apply(iffP idP); by rewrite -plact1I -plact2I plact1dual. Qed.
+
+Lemma plact2invdual u v : u \in plact2i v = (revdual u \in plact1i (revdual v)).
+Proof. apply/(sameP idP); apply(iffP idP); by rewrite -plact1I -plact2I plact2dual. Qed.
 
 End Dual.
 
