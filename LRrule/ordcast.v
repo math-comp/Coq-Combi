@@ -215,6 +215,9 @@ Qed.
 Definition cast_set n m (H : n = m) : {set 'I_n} -> {set 'I_m} :=
   [fun s : {set 'I_n} => (cast_ord H) @: s].
 
+Lemma cast_set_inj n m (H : n = m) : injective (cast_set H).
+Proof. move=> S1 S2; rewrite /cast_set /=; apply imset_inj; apply cast_ord_inj. Qed.
+
 Lemma cover_cast m n (P : {set {set 'I_n}}) (H : n = m) :
   cover (imset (cast_set H) (mem P)) = (cast_set H) (cover P).
 Proof.
