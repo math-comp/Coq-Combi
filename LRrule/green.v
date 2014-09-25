@@ -144,12 +144,16 @@ Section GreenDef.
 Variable Alph : ordType.
 
 Definition extractpred n (wt : n.-tuple Alph) (P : pred 'I_n) :=
-  [seq tnth wt i | i <- enum 'I_n & P i].
+  [seq tnth wt i | i <- enum P].
 
-Lemma extractE n (wt : n.-tuple Alph) P :
+Lemma extractIE n (wt : n.-tuple Alph) P :
+  extractpred wt P = [seq tnth wt i | i <- enum 'I_n & P i].
+Proof. by rewrite /extractpred {1}/enum_mem -enumT /=. Qed.
+
+Lemma extractmaskE n (wt : n.-tuple Alph) P :
   extractpred wt P = mask [seq P i | i <- enum 'I_n] wt.
 Proof.
-  rewrite /extractpred.
+  rewrite extractIE.
   elim: n wt P => [//= | n IHn].
   + by rewrite enum0.
   + case/tupleP=> w0 w P; rewrite enum_ordS /=.
@@ -164,7 +168,7 @@ Qed.
 Lemma extsubsIm n wt (P1 P2 : pred 'I_n) :
   subpred P1 P2 -> subseq (extractpred wt P1) (extractpred wt P2).
 Proof.
-  rewrite !extractE; case: wt => w /= _.
+  rewrite !extractmaskE; case: wt => w /= _.
   elim: n w P1 P2 => [//= | n IHn] w P1 P2 H; first by rewrite enum0.
   case: w => [//= | w0 w]; first by rewrite !mask0.
   rewrite enum_ordS /= -map_comp -map_comp.
@@ -181,7 +185,7 @@ Qed.
 Lemma extsubsm n (w : n.-tuple Alph) (P : pred 'I_n) : subseq (extractpred w P) w.
 Proof.
   suff -> /= : tval w = mask [seq predT i | i <- enum 'I_n] w
-    by rewrite -extractE; apply extsubsIm.
+    by rewrite -extractmaskE; apply extsubsIm.
   have -> : [seq true | _ <- enum 'I_n] = nseq n true.
     apply (eq_from_nth (x0 := false)); first by rewrite size_nseq size_map size_enum_ord.
     move=> i; rewrite size_map size_enum_ord => Hi.
@@ -199,10 +203,7 @@ Variable wt : N.-tuple Alph.
 Definition extract := [fun s : {set 'I_N} => extractpred wt (mem s)].
 
 Lemma size_extract s : size (extract s) = #|s|.
-Proof.
-  rewrite /extractpred size_map cardE; congr (size (filter (mem s) _)).
-  by apply/all_filterP/allP.
-Qed.
+Proof. by rewrite /extractpred size_map cardE. Qed.
 
 Lemma extsubsI (s1 s2 : {set 'I_N}) :
   s1 \subset s2 -> subseq (extract s1) (extract s2).
@@ -257,30 +258,26 @@ Qed.
 
 Lemma extract0 : extract set0 = [::].
 Proof.
-  rewrite /= /extractpred.
+  rewrite /= extractIE /=.
   have /eq_filter -> : mem set0 =1 (@pred0 'I_N) by move=> i /=; rewrite in_set0.
   by rewrite filter_pred0.
 Qed.
 
 Lemma extract1 i : extract [set i] = [:: tnth wt i].
 Proof.
-  rewrite /= /extractpred.
+  rewrite /= extractIE.
   set s := filter _ _; suff -> : s = [:: i] by [].
-  have : uniq s by apply filter_uniq; apply enum_uniq.
-  have : i \in s by rewrite /s mem_filter /= in_set1 eq_refl mem_enum inE.
-  have Hj j : j \in s -> j = i by rewrite /s mem_filter /= in_set1 => /andP [] /eqP ->.
-  case: s Hj => [//= | s0 [| s1 s]]; first by rewrite mem_seq1 => _ /eqP ->.
-  move=> Hj Hin Huniq; exfalso.
-  have Hs0 : s0 = i by apply Hj; rewrite inE eq_refl.
-  have Hs1 : s1 = i by apply Hj; rewrite !inE eq_refl orbT.
-  move: Huniq; by rewrite Hs0 Hs1 /= inE eq_refl.
+  rewrite /s {s}.
+  have /eq_filter -> : (mem [set i]) =1 pred1 i by move=> j /=; rewrite in_set1.
+  apply filter_pred1_uniq; first by apply enum_uniq.
+  by rewrite mem_enum inE.
 Qed.
 
 Lemma extractS (l : seq 'I_N) :
   sorted (fun i j : 'I_N => val i < val j) l ->
   extract [set i in l] = [seq tnth wt i | i <- l].
 Proof.
-  move=> HS; rewrite /= /extractpred.
+  move=> HS; rewrite /= extractIE.
   set s := filter _ _; suff -> : s = l by [].
   rewrite /s {s}.
   set f := (X in filter X _).
@@ -415,7 +412,7 @@ Qed.
 Lemma extlsplit s :
    extract V (lsplit s) = extract [tuple of V ++ W] (s :&: [set i : 'I_(M+N)| i < M]).
 Proof.
-  rewrite /= !extractE enumIMN map_cat.
+  rewrite /= !extractmaskE enumIMN map_cat.
   rewrite mask_cat; last by rewrite 2!size_map size_enum_ord size_tuple.
   set sl := map _ (map rinj _).
   have -> : sl = (nseq N false).
@@ -433,7 +430,7 @@ Qed.
 Lemma extrsplit s :
    extract W (rsplit s) = extract [tuple of V ++ W] (s :&: [set i : 'I_(M+N)| i >= M]).
 Proof.
-  rewrite /= !extractE enumIMN map_cat.
+  rewrite /= !extractmaskE enumIMN map_cat.
   rewrite mask_cat; last by rewrite 2!size_map size_enum_ord size_tuple.
   set sl := map _ (map linj _).
   have -> : sl = (nseq M false).
@@ -727,7 +724,7 @@ Lemma extract_rec i :
   rcons (extract (in_tuple (to_word t)) (nth set0 (tabcols t) i))
         (nth (inhabitant Alph) t0 i).
 Proof.
-  move => Hi; rewrite /= !extractE tabcols_cons enumIsize_to_word /=.
+  move => Hi; rewrite /= !extractmaskE tabcols_cons enumIsize_to_word /=.
   rewrite (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
   rewrite nth_enum_ord //= {13}to_word_cons.
   rewrite nth_ord_ltn map_cat mask_cat; last by rewrite 2!size_map size_enum_ord.
@@ -743,7 +740,7 @@ Proof.
       rewrite /b; apply/imsetP => [] [] k _ /eqP; by rewrite eq_sym lrinj_recF.
     rewrite orbF.
     by apply/(sameP idP); apply(iffP idP) => [/eqP -> //=|] /eqP/rinj_recP ->.
-  have := extract1 (in_tuple t0) (Ordinal Hi); rewrite /extract /= extractE /= => ->.
+  have := extract1 (in_tuple t0) (Ordinal Hi); rewrite /extract /= extractmaskE /= => ->.
   by rewrite cats1 (tnth_nth (inhabitant Alph)) /=.
 Qed.
 
