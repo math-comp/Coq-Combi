@@ -1,3 +1,17 @@
+(******************************************************************************)
+(*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
+(*                                                                            *)
+(*  Distributed under the terms of the GNU General Public License (GPL)       *)
+(*                                                                            *)
+(*    This code is distributed in the hope that it will be useful,            *)
+(*    but WITHOUT ANY WARRANTY; without even the implied warranty of          *)
+(*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *)
+(*    General Public License for more details.                                *)
+(*                                                                            *)
+(*  The full text of the GPL is available at:                                 *)
+(*                                                                            *)
+(*                  http://www.gnu.org/licenses/                              *)
+(******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm tuple path bigop.
 Require Import subseq partition ordtype schensted congr plactic ordcast.
@@ -278,8 +292,7 @@ Lemma extractS (l : seq 'I_N) :
   extract [set i in l] = [seq tnth wt i | i <- l].
 Proof.
   move=> HS; rewrite /= extractIE.
-  set s := filter _ _; suff -> : s = l by [].
-  rewrite /s {s}.
+  congr ([seq tnth wt i | i <- _]).
   set f := (X in filter X _).
   have /eq_filter -> : f =1 mem l by move => i; rewrite /f !inE.
   by rewrite mem_enum_seqE.

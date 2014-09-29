@@ -1,3 +1,17 @@
+(******************************************************************************)
+(*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
+(*                                                                            *)
+(*  Distributed under the terms of the GNU General Public License (GPL)       *)
+(*                                                                            *)
+(*    This code is distributed in the hope that it will be useful,            *)
+(*    but WITHOUT ANY WARRANTY; without even the implied warranty of          *)
+(*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *)
+(*    General Public License for more details.                                *)
+(*                                                                            *)
+(*  The full text of the GPL is available at:                                 *)
+(*                                                                            *)
+(*                  http://www.gnu.org/licenses/                              *)
+(******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm tuple path bigop.
 Require Import subseq partition ordtype schensted congr plactic ordcast green.
@@ -191,9 +205,8 @@ Proof.
 Qed.
 
 Lemma is_row_dual T :
-  (is_seq (leqX Alph)) ((extract (in_tuple w)) T) <->
-  (is_seq (leqX (dual_ordType Alph)))
-    ((extract (in_tuple ((revdual Alph) w))) (revSet T)).
+  is_seq (leqX Alph) (extract (in_tuple w) T) <->
+  is_seq (leqX (dual_ordType Alph)) (extract (in_tuple (revdual Alph w)) (revSet T)).
 Proof.
   rewrite extract_revSet.
   case: (extract _ _) => [//= | l0 l] /=.
@@ -203,9 +216,8 @@ Proof.
 Qed.
 
 Lemma is_col_dual T :
-  (is_seq (gtnX Alph)) ((extract (in_tuple w)) T) <->
-  (is_seq (gtnX (dual_ordType Alph)))
-    ((extract (in_tuple ((revdual Alph) w))) (revSet T)).
+  is_seq (gtnX Alph) ((extract (in_tuple w)) T) <->
+  is_seq (gtnX (dual_ordType Alph)) (extract (in_tuple (revdual Alph w)) (revSet T)).
 Proof.
   rewrite extract_revSet.
   case: (extract _ _) => [//= | l0 l] /=.
@@ -442,7 +454,7 @@ Local Notation swapX := (@Swap.swap _ u v a b).
 Local Notation swapSetX := (Swap.swapSet u v a b).
 
 Hypothesis HnoBoth :
-  forall S, S \in P -> ~ ((posa \in S) && ((posb \in S))).
+  forall S, S \in P -> ~ ((posa \in S) && (posb \in S)).
 
 Lemma Hcast : size x = size y. Proof. by rewrite !size_cat. Qed.
 Definition castSet : {set 'I_(size x)} -> {set 'I_(size y)} :=
@@ -604,6 +616,7 @@ Local Notation posb := (Swap.pos0 u (c :: v) b a).
 Local Notation posa := (Swap.pos1 u (c :: v) b a).
 Local Notation swap := (@Swap.swap _ u (c :: v) b a).
 Local Notation swapSet := (Swap.swapSet u (c :: v) b a).
+
 Lemma u2lt : (size u).+2 < size x.
 Proof. by rewrite /= size_cat /= 2!addnS 2!ltnS -{1}[size u]addn0 ltn_add2l. Qed.
 Let posc := Ordinal u2lt.
@@ -763,7 +776,7 @@ Proof.
       * by rewrite /Qbnotin mem_imset_inj; last by apply Swap.swapSet_inj.
 Qed.
 
-Lemma Qbnotin_noboth T : T \in Qbnotin -> ~ ((posa \in T) && ((posc \in T))).
+Lemma Qbnotin_noboth T : T \in Qbnotin -> ~ ((posa \in T) && (posc \in T)).
 Proof.
   rewrite /Qbnotin => /imsetP [] U HU -> {T}.
   case: (altP (U =P S)) => Heq.
@@ -775,23 +788,6 @@ Proof.
     move/andP => [] Hb _; move: HbNin.
     by have -> : posb \in cover P by rewrite /cover; apply/bigcupP; exists U.
 Qed.
-
-(*
-Lemma Qbnotin_noboth_BADDDD T : T \in Qbnotin -> ~ ((posa \in T) && ((posb \in T))).
-Proof.
-  rewrite /Qbnotin => /imsetP [] U HU -> {T}.
-  case: (altP (U =P S)) => Heq.
-  + subst U; rewrite -Swap.swap0 /swapSet /=.
-    rewrite mem_imset_inj; last apply Swap.swap_inj.
-    by rewrite posbinSF.
-  + rewrite -Swap.swap1 /swapSet /=.
-    rewrite mem_imset_inj; last apply Swap.swap_inj.
-    move/andP => [] _ HinU.
-    move: Px => /and3P [] _ /trivIsetP Htriv _.
-    have {Htriv} /disjoint_setI0 := Htriv _ _ HU HS Heq; rewrite -setP => Hdisj.
-    have:= Hdisj posa; by rewrite !inE Hposa HinU.
-Qed.
-*)
 
 End BNotIn.
 
@@ -994,7 +990,7 @@ Qed.
 
 Lemma extract_cS:
   extract (in_tuple x) (S :&: [set j : 'I_(size x) | j >= posc]) =
-  c :: (extract (in_tuple x) (S :&: [set j : 'I_(size x) | j > posc])).
+  c :: extract (in_tuple x) (S :&: [set j : 'I_(size x) | j > posc]).
 Proof.
   set S' := (X in extract _ X).
   have : posc \in S' by rewrite !inE leqnn Hposc.
@@ -1012,7 +1008,7 @@ Proof.
 Qed.
 
 Lemma extract_Tb:
-  (extract (in_tuple x)) (T :&: [set j : 'I_(size x) | j <= posb]) =
+  extract (in_tuple x) (T :&: [set j : 'I_(size x) | j <= posb]) =
   rcons (extract (in_tuple x) (T :&: [set j : 'I_(size x) | j < posb])) b.
 Proof.
   set T' := (X in extract _ X).
@@ -1031,8 +1027,8 @@ Proof.
 Qed.
 
 Lemma extract_bT:
-  (extract (in_tuple x)) (T :&: [set j : 'I_(size x) | j >= posb]) =
-  b :: (extract (in_tuple x)) (T :&: [set j : 'I_(size x) | j > posc]).
+  extract (in_tuple x) (T :&: [set j : 'I_(size x) | j >= posb]) =
+  b :: extract (in_tuple x) (T :&: [set j : 'I_(size x) | j > posc]).
 Proof.
   set T' := (X in extract _ X).
   have : posb \in T' by rewrite !inE leqnn Hposb.
@@ -1151,8 +1147,8 @@ Proof.
     + move=> S0; by apply Qbnotin_noboth.
 Qed.
 
-Let x' := ((u ++ [:: b]) ++ [:: a; c] ++ v).
-Let y := (u ++ [:: b]) ++ [:: c; a] ++ v.
+Let x' := (u ++ [:: b]) ++ [:: a; c] ++ v.
+Let y  := (u ++ [:: b]) ++ [:: c; a] ++ v.
 
 Lemma eq_xx' : x = x'. Proof. by rewrite /x /x' -catA. Qed.
 
@@ -1284,7 +1280,7 @@ Let word := seq Alph.
 Implicit Type u v w : word.
 
 Lemma greenCol_leq_plact2 u v1 w v2 k :
-  v2 \in plact2 v1 -> (greenCol (u ++ v1 ++ w)) k <= (greenCol (u ++ v2 ++ w)) k.
+  v2 \in plact2 v1 -> greenCol (u ++ v1 ++ w) k <= greenCol (u ++ v2 ++ w) k.
 Proof.
   rewrite plact2dual => /greenCol_leq_plact1 H.
   rewrite [greenCol (_ ++ v1 ++ _) k]greenCol_dual.
@@ -1294,9 +1290,9 @@ Proof.
 Qed.
 
 Lemma greenCol_leq_plact1i u v1 w v2 k :
-  v2 \in plact1i v1 -> (greenCol (u ++ v1 ++ w)) k <= (greenCol (u ++ v2 ++ w)) k.
+  v2 \in plact1i v1 -> greenCol (u ++ v1 ++ w) k <= greenCol (u ++ v2 ++ w) k.
 Proof.
-  rewrite plact1invdual => /greenCol_leq_plact2i H.
+  rewrite plact1idual => /greenCol_leq_plact2i H.
   rewrite [greenCol (_ ++ v1 ++ _) k]greenCol_dual.
   rewrite [greenCol (_ ++ v2 ++ _) k]greenCol_dual.
   have:= H (revdual Alph w) (revdual Alph u) k.
@@ -1304,7 +1300,7 @@ Proof.
 Qed.
 
 Lemma greenCol_invar_plact1 u v1 w v2 k :
-  v2 \in plact1 v1 -> (greenCol (u ++ v1 ++ w)) k = (greenCol (u ++ v2 ++ w)) k.
+  v2 \in plact1 v1 -> greenCol (u ++ v1 ++ w) k = greenCol (u ++ v2 ++ w) k.
 Proof.
   move=> H; apply/eqP; rewrite eqn_leq; apply/andP; split.
   + by apply greenCol_leq_plact1.
@@ -1312,11 +1308,11 @@ Proof.
 Qed.
 
 Lemma greenCol_invar_plact1i u v1 w v2 k :
-  v2 \in plact1i v1 -> (greenCol (u ++ v1 ++ w)) k = (greenCol (u ++ v2 ++ w)) k.
+  v2 \in plact1i v1 -> greenCol (u ++ v1 ++ w) k = greenCol (u ++ v2 ++ w) k.
 Proof. by rewrite -plact1I => H; apply esym; apply greenCol_invar_plact1. Qed.
 
 Lemma greenCol_invar_plact2 u v1 w v2 k :
-  v2 \in plact2 v1 -> (greenCol (u ++ v1 ++ w)) k = (greenCol (u ++ v2 ++ w)) k.
+  v2 \in plact2 v1 -> greenCol (u ++ v1 ++ w) k = greenCol (u ++ v2 ++ w) k.
 Proof.
   move=> H; apply/eqP; rewrite eqn_leq; apply/andP; split.
   + by apply greenCol_leq_plact2.
@@ -1324,7 +1320,7 @@ Proof.
 Qed.
 
 Lemma greenCol_invar_plact2i u v1 w v2 k :
-  v2 \in plact2i v1 -> (greenCol (u ++ v1 ++ w)) k = (greenCol (u ++ v2 ++ w)) k.
+  v2 \in plact2i v1 -> greenCol (u ++ v1 ++ w) k = greenCol (u ++ v2 ++ w) k.
 Proof. by rewrite -plact2I => H; apply esym; apply greenCol_invar_plact2. Qed.
 
 End GreenInvariantsDual.
@@ -1340,7 +1336,7 @@ Implicit Type u v w r : word.
 
 Notation "a =Pl b" := (plactcongr a b) (at level 70).
 
-Theorem plactic_greenCol_inv u v : u =Pl v -> forall k, greenCol u k = greenCol v k.
+Theorem greenCol_invar_plactic u v : u =Pl v -> forall k, greenCol u k = greenCol v k.
 Proof.
   move=> Hpl k.
   move: v Hpl; apply gencongr_ind; first by apply erefl.
@@ -1351,17 +1347,23 @@ Proof.
   + apply greenCol_invar_plact2i.
 Qed.
 
+Corollary greenCol_RS k w : greenCol w k = part_sum (conj_part (shape (RS w))) k.
+Proof.
+  rewrite -greenCol_tab; last by apply is_tableau_RS.
+  apply greenCol_invar_plactic; by apply congr_RS.
+Qed.
+
 Corollary plactic_shapeRS u v : u =Pl v -> shape (RS u) = shape (RS v).
 Proof.
   move=> Hpl.
   suff HeqRS k : greenCol (to_word (RS u)) k = greenCol (to_word (RS v)) k
     by apply (greenCol_tab_eq_shape (is_tableau_RS u) (is_tableau_RS v) HeqRS).
-  have <- := plactic_greenCol_inv (congr_Sch u) k.
-  have <- := plactic_greenCol_inv (congr_Sch v) k.
-  by apply plactic_greenCol_inv.
+  have <- := greenCol_invar_plactic (congr_RS u) k.
+  have <- := greenCol_invar_plactic (congr_RS v) k.
+  by apply greenCol_invar_plactic.
 Qed.
 
-Theorem plact_Sch u v : plactcongr u v <-> RS u == RS v.
+Theorem plactic_RS u v : u =Pl v <-> RS u == RS v.
 Proof.
   split; last by apply Sch_plact.
   move Hu : (size u) => n Hpl.

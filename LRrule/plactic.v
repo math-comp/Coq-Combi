@@ -1,3 +1,17 @@
+(******************************************************************************)
+(*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
+(*                                                                            *)
+(*  Distributed under the terms of the GNU General Public License (GPL)       *)
+(*                                                                            *)
+(*    This code is distributed in the hope that it will be useful,            *)
+(*    but WITHOUT ANY WARRANTY; without even the implied warranty of          *)
+(*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *)
+(*    General Public License for more details.                                *)
+(*                                                                            *)
+(*  The full text of the GPL is available at:                                 *)
+(*                                                                            *)
+(*                  http://www.gnu.org/licenses/                              *)
+(******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm.
 Require Import subseq partition ordtype schensted congr.
@@ -243,10 +257,10 @@ Proof.
     by rewrite /revdual /= dual_leqX dual_ltnX andbC Habc /rev /= mem_seq1.
 Qed.
 
-Lemma plact1invdual u v : u \in plact1i v = (revdual u \in plact2i (revdual v)).
+Lemma plact1idual u v : u \in plact1i v = (revdual u \in plact2i (revdual v)).
 Proof. apply/(sameP idP); apply(iffP idP); by rewrite -plact1I -plact2I plact1dual. Qed.
 
-Lemma plact2invdual u v : u \in plact2i v = (revdual u \in plact1i (revdual v)).
+Lemma plact2idual u v : u \in plact2i v = (revdual u \in plact1i (revdual v)).
 Proof. apply/(sameP idP); apply(iffP idP); by rewrite -plact1I -plact2I plact2dual. Qed.
 
 End Dual.
@@ -355,7 +369,7 @@ Proof.
     rewrite Hrpos; by apply lt_bumped.
 Qed.
 
-Theorem congr_Sch w : w =Pl (to_word (RS w)).
+Theorem congr_RS w : w =Pl (to_word (RS w)).
 Proof.
   have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans.
   have:= @plactcongr_is_congr Alph => Hcongr.
@@ -377,12 +391,12 @@ Qed.
 Theorem Sch_plact u v : RS u == RS v -> plactcongr u v .
 Proof.
   have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans /eqP Heq.
-  rewrite (@Htrans _ (to_word (RS u))); last by apply congr_Sch.
-  rewrite Heq; rewrite -(Htrans _ _ (congr_Sch v)); by apply Hrefl.
+  rewrite (@Htrans _ (to_word (RS u))); last by apply congr_RS.
+  rewrite Heq; rewrite -(Htrans _ _ (congr_RS v)); by apply Hrefl.
 Qed.
 
 Lemma perm_eq_RS w : perm_eq w (to_word (RS w)).
-Proof. apply plactcongr_homog. by apply congr_Sch. Qed.
+Proof. apply plactcongr_homog. by apply congr_RS. Qed.
 
 End RSToPlactic.
 
