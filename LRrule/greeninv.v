@@ -1179,6 +1179,17 @@ Qed.
 End Case.
 End SetContainingBothLeft.
 
+Lemma RabcLeqX (Alph : ordType) (a b c : Alph) :
+  (a < b <= c)%Ord -> SetContainingBothLeft.hypRabc (leqX Alph) a b c.
+Proof.
+  move=> H; constructor.
+  + move=> x y z; by apply leqX_trans.
+  + by move: H => /andP /= [].
+  + move: H => /andP /= []; by rewrite ltnXNgeqX.
+  + move: H => /andP /= [] H1 _ /= x H2; by apply (leqX_trans H2 (ltnXW H1)).
+  + move: H => /andP /= [] H1 _ /= x H2; by apply (leqX_trans (ltnXW H1) H2).
+Qed.
+
 Lemma RabcGtnX (Alph : ordType) (a b c : Alph) :
   (a < b <= c)%Ord -> SetContainingBothLeft.hypRabc (gtnX Alph) c b a.
 Proof.
@@ -1198,7 +1209,84 @@ Let word := seq Alph.
 Variable u v1 w v2 : word.
 Variable k : nat.
 
-Lemma ksupp_inj_plact1 :
+
+(* | [:: c; a; b] => if (a <= b < c)%Ord then [:: [:: a; c; b]] else [::] *)
+Lemma ksuppRow_inj_plact1i :
+  v2 \in plact1i v1 -> ksupp_inj (leqX Alph) (leqX Alph) k (u ++ v1 ++ w) (u ++ v2 ++ w).
+Proof.
+  move/plact1iP => [] a [] b [] c [] Hord -> ->.
+  rewrite /ksupp_inj  => S1 Hsupp.
+  pose posa := (Swap.pos0 u (b :: w) c a).
+  pose posc := (Swap.pos1 u (b :: w) c a).
+  case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
+  + move/existsP => [] S /and3P [] HSin HSa HSb.
+    exfalso; move: Hsupp; rewrite /ksupp => /and3P [] _ _ /forallP Hall.
+    have Htrans: transitive (leqX Alph) by move=> d e f /= H1 H2; apply (leqX_trans H1 H2).
+    have:= Hall S; rewrite HSin /= {Hall} => Hsort.
+    have:= is_seq_extract_cond Htrans [set posa; posc] Hsort.
+    have -> : S :&: [set posa; posc] = [set posa; posc].
+      apply/setP/subset_eqP/andP; split; apply/subsetP=> i; first by rewrite inE => /andP [].
+      rewrite !inE => /orP [] => /eqP ->; rewrite eq_refl /=; first by rewrite HSa.
+      by rewrite HSb orbT.
+    have /extract2 -> : posa < posc by [].
+    rewrite !(tnth_nth b) /= andbT.
+    elim u => [| u0 u'] /=.
+    - move: Hord => /andP [] /leqX_ltnX_trans H/H{H}.
+      by rewrite leqXNgtnX => ->.
+    - by apply.
+  + rewrite negb_exists => /forallP Hall.
+    exists (NoSetContainingBoth.Q S1); rewrite NoSetContainingBoth.scover_noBoth /=.
+    apply NoSetContainingBoth.ksupp_noBoth; first exact Hsupp.
+    move=> S HS; have:= Hall S; by rewrite HS /= => /negbTE ->.
+Qed.
+
+Corollary greenRow_leq_plact1i :
+  v2 \in plact1i v1 -> greenRow (u ++ v1 ++ w) k <= greenRow (u ++ v2 ++ w) k.
+Proof. by move /ksuppRow_inj_plact1i; apply leq_green. Qed.
+
+(* | [:: b; a; c] => if (a < b <= c)%Ord then [:: [:: b; c; a]] else [::] *)
+Lemma ksuppRow_inj_plact2 :
+  v2 \in plact2 v1 -> ksupp_inj (leqX Alph) (leqX Alph) k (u ++ v1 ++ w) (u ++ v2 ++ w).
+Proof.
+  move/plact2P => [] a [] b [] c [] Hord -> ->.
+  have Hyp := RabcLeqX Hord.
+  have Hbac : ((u ++ [:: b]) ++ [:: a; c] ++ w) = (u ++ [:: b; a; c] ++ w) by rewrite -catA.
+  have Hbca : ((u ++ [:: b]) ++ [:: c; a] ++ w) = (u ++ [:: b; c; a] ++ w) by rewrite -catA.
+  rewrite -Hbca -Hbac /ksupp_inj  => P Hsupp.
+  pose posa := (Swap.pos0 (u ++ [:: b]) w a c).
+  pose posc := (Swap.pos1 (u ++ [:: b]) w a c).
+  case (boolP [exists S, [&& S \in P, posa \in S & posc \in S] ]).
+  - move/existsP => [] S /and3P [] HSin HSa HSc.
+    move HcastP : ((cast_set (eq_size Hbac)) @: P) => P'.
+    have Hsupp' : ksupp (leqX Alph) (in_tuple (u ++ [:: b; a; c] ++ w)) k P'.
+      rewrite -HcastP; by apply ksupp_cast.
+    move HcastS : (cast_set (eq_size Hbac) S) => S'.
+    have HS'in : S' \in P' by rewrite -HcastP -HcastS; apply mem_imset.
+    set pos1 := Swap.pos1 u (c :: w) b a; have Hpos1 : pos1 \in S'.
+       rewrite -(cast_ordKV (eq_size Hbac) pos1) -HcastS /cast_set /=; apply mem_imset.
+       suff -> //= : cast_ord (esym (eq_size Hbac)) pos1 = posa by [].
+       by apply val_inj; rewrite /= size_cat /= addn1.
+    set pos2 := Ordinal (SetContainingBothLeft.u2lt u w a b c); have Hpos2 : pos2 \in S'.
+       rewrite -(cast_ordKV (eq_size Hbac) pos2) -HcastS /cast_set /=; apply mem_imset.
+       suff -> //= : cast_ord (esym (eq_size Hbac)) pos2 = posc by [].
+       by apply val_inj; rewrite /= size_cat /= addn1.
+    have:= SetContainingBothLeft.exists_both Hyp Hsupp' HS'in Hpos1 Hpos2.
+    move=> [] Q [] Hcover HsuppQ.
+    exists Q; apply /andP; split; last exact HsuppQ.
+    rewrite Hcover -HcastP /scover /= -size_cover_inj //=; by apply cast_ord_inj.
+  - rewrite negb_exists => /forallP Hall.
+    exists (NoSetContainingBoth.Q P); rewrite NoSetContainingBoth.scover_noBoth /=.
+    apply NoSetContainingBoth.ksupp_noBoth; first exact Hsupp.
+    move=> S HS; have:= Hall S; by rewrite HS /= => /negbTE ->.
+Qed.
+
+Corollary greenRow_leq_plact2 :
+  v2 \in plact2 v1 -> greenRow (u ++ v1 ++ w) k <= greenRow (u ++ v2 ++ w) k.
+Proof. by move /ksuppRow_inj_plact2; apply leq_green. Qed.
+
+
+(* [:: a; c; b] => if (a <= b < c)%Ord then [:: [:: c; a; b]] else [::] *)
+Lemma ksuppCol_inj_plact1 :
   v2 \in plact1 v1 -> ksupp_inj (gtnX Alph) (gtnX Alph) k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof.
   move/plact1P => [] a [] b [] c [] Hord -> ->.
@@ -1229,9 +1317,10 @@ Qed.
 
 Corollary greenCol_leq_plact1 :
   v2 \in plact1 v1 -> greenCol (u ++ v1 ++ w) k <= greenCol (u ++ v2 ++ w) k.
-Proof. by move /ksupp_inj_plact1; apply leq_green. Qed.
+Proof. by move /ksuppCol_inj_plact1; apply leq_green. Qed.
 
-Lemma ksupp_inj_plact2i :
+(* [:: b; c; a] => if (a < b <= c)%Ord then [:: [:: b; a; c]] else [::] *)
+Lemma ksuppCol_inj_plact2i :
   v2 \in plact2i v1 -> ksupp_inj (gtnX Alph) (gtnX Alph) k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof.
   move/plact2iP => [] a [] b [] c [] Hord -> ->.
@@ -1268,7 +1357,7 @@ Qed.
 
 Corollary greenCol_leq_plact2i :
   v2 \in plact2i v1 -> greenCol (u ++ v1 ++ w) k <= greenCol (u ++ v2 ++ w) k.
-Proof. by move /ksupp_inj_plact2i; apply leq_green. Qed.
+Proof. by move /ksuppCol_inj_plact2i; apply leq_green. Qed.
 
 End GreenInvariantsRule.
 
@@ -1279,20 +1368,65 @@ Variable Alph : ordType.
 Let word := seq Alph.
 Implicit Type u v w : word.
 
-Lemma greenCol_leq_plact2 u v1 w v2 k :
-  v2 \in plact2 v1 -> greenCol (u ++ v1 ++ w) k <= greenCol (u ++ v2 ++ w) k.
+Lemma greenRow_leq_plact2i u v1 w v2 k :
+  v2 \in plact2i v1 -> greenRow (u ++ v1 ++ w) k <= greenRow (u ++ v2 ++ w) k.
 Proof.
-  rewrite plact2dual => /greenCol_leq_plact1 H.
+  rewrite plact2idual => /greenRow_leq_plact1i H.
+  rewrite [greenRow (_ ++ v1 ++ _) k]greenRow_dual.
+  rewrite [greenRow (_ ++ v2 ++ _) k]greenRow_dual.
+  have:= H (revdual Alph w) (revdual Alph u) k.
+  by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
+Qed.
+
+Lemma greenRow_leq_plact1 u v1 w v2 k :
+  v2 \in plact1 v1 -> greenRow (u ++ v1 ++ w) k <= greenRow (u ++ v2 ++ w) k.
+Proof.
+  rewrite plact1dual => /greenRow_leq_plact2 H.
+  rewrite [greenRow (_ ++ v1 ++ _) k]greenRow_dual.
+  rewrite [greenRow (_ ++ v2 ++ _) k]greenRow_dual.
+  have:= H (revdual Alph w) (revdual Alph u) k.
+  by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
+Qed.
+
+Lemma greenRow_invar_plact1 u v1 w v2 k :
+  v2 \in plact1 v1 -> greenRow (u ++ v1 ++ w) k = greenRow (u ++ v2 ++ w) k.
+Proof.
+  move=> H; apply/eqP; rewrite eqn_leq; apply/andP; split.
+  + by apply greenRow_leq_plact1.
+  + apply greenRow_leq_plact1i; by rewrite -plact1I.
+Qed.
+
+Lemma greenRow_invar_plact1i u v1 w v2 k :
+  v2 \in plact1i v1 -> greenRow (u ++ v1 ++ w) k = greenRow (u ++ v2 ++ w) k.
+Proof. by rewrite -plact1I => H; apply esym; apply greenRow_invar_plact1. Qed.
+
+Lemma greenRow_invar_plact2 u v1 w v2 k :
+  v2 \in plact2 v1 -> greenRow (u ++ v1 ++ w) k = greenRow (u ++ v2 ++ w) k.
+Proof.
+  move=> H; apply/eqP; rewrite eqn_leq; apply/andP; split.
+  + by apply greenRow_leq_plact2.
+  + apply greenRow_leq_plact2i; by rewrite -plact2I.
+Qed.
+
+Lemma greenRow_invar_plact2i u v1 w v2 k :
+  v2 \in plact2i v1 -> greenRow (u ++ v1 ++ w) k = greenRow (u ++ v2 ++ w) k.
+Proof. by rewrite -plact2I => H; apply esym; apply greenRow_invar_plact2. Qed.
+
+
+Lemma greenCol_leq_plact1i u v1 w v2 k :
+  v2 \in plact1i v1 -> greenCol (u ++ v1 ++ w) k <= greenCol (u ++ v2 ++ w) k.
+Proof.
+  rewrite plact1idual => /greenCol_leq_plact2i H.
   rewrite [greenCol (_ ++ v1 ++ _) k]greenCol_dual.
   rewrite [greenCol (_ ++ v2 ++ _) k]greenCol_dual.
   have:= H (revdual Alph w) (revdual Alph u) k.
   by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
 Qed.
 
-Lemma greenCol_leq_plact1i u v1 w v2 k :
-  v2 \in plact1i v1 -> greenCol (u ++ v1 ++ w) k <= greenCol (u ++ v2 ++ w) k.
+Lemma greenCol_leq_plact2 u v1 w v2 k :
+  v2 \in plact2 v1 -> greenCol (u ++ v1 ++ w) k <= greenCol (u ++ v2 ++ w) k.
 Proof.
-  rewrite plact1idual => /greenCol_leq_plact2i H.
+  rewrite plact2dual => /greenCol_leq_plact1 H.
   rewrite [greenCol (_ ++ v1 ++ _) k]greenCol_dual.
   rewrite [greenCol (_ ++ v2 ++ _) k]greenCol_dual.
   have:= H (revdual Alph w) (revdual Alph u) k.
@@ -1335,6 +1469,35 @@ Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
 
 Notation "a =Pl b" := (plactcongr a b) (at level 70).
+
+Theorem greenRow_invar_plactic u v : u =Pl v -> forall k, greenRow u k = greenRow v k.
+Proof.
+  move=> Hpl k.
+  move: v Hpl; apply gencongr_ind; first by apply erefl.
+  move=> a b1 c b2 -> {u} /plactruleP [].
+  + apply greenRow_invar_plact1.
+  + apply greenRow_invar_plact1i.
+  + apply greenRow_invar_plact2.
+  + apply greenRow_invar_plact2i.
+Qed.
+
+Corollary greenRow_RS k w : greenRow w k = part_sum (shape (RS w)) k.
+Proof.
+  rewrite -greenRow_tab; last by apply is_tableau_RS.
+  apply greenRow_invar_plactic; by apply congr_RS.
+Qed.
+
+
+Corollary plactic_shapeRS_row_proof u v : u =Pl v -> shape (RS u) = shape (RS v).
+Proof.
+  move=> Hpl.
+  suff HeqRS k : greenRow (to_word (RS u)) k = greenRow (to_word (RS v)) k
+    by apply (greenRow_tab_eq_shape (is_tableau_RS u) (is_tableau_RS v) HeqRS).
+  have <- := greenRow_invar_plactic (congr_RS u) k.
+  have <- := greenRow_invar_plactic (congr_RS v) k.
+  by apply greenRow_invar_plactic.
+Qed.
+
 
 Theorem greenCol_invar_plactic u v : u =Pl v -> forall k, greenCol u k = greenCol v k.
 Proof.
