@@ -563,17 +563,16 @@ Implicit Type u v w : seq Alph.
 Variable comp : rel Alph.
 Hypothesis Hcomp : transitive comp.
 
-Local Notation greent := (green_rel_t comp).
-
-Definition green_rel u := [fun k => greent (in_tuple u) k].
+Definition green_rel u := [fun k => green_rel_t comp (in_tuple u) k].
 
 Lemma green_rel_cat k v w : green_rel (v ++ w) k <= green_rel v k + green_rel w k.
 Proof.
   rewrite /disjoint /=.
-  suff -> : greent (in_tuple (v ++ w)) k = greent [tuple of (in_tuple v) ++ (in_tuple w)] k
+  suff -> : green_rel_t comp (in_tuple (v ++ w)) k =
+            green_rel_t comp [tuple of (in_tuple v) ++ (in_tuple w)] k
     by apply green_rel_t_cat.
   have Hsz : size (v ++ w) = (size v + size w) by rewrite size_cat.
-  rewrite -(green_rel_t_cast _ Hsz); congr (greent _ k).
+  rewrite -(green_rel_t_cast _ Hsz); congr (green_rel_t comp _ k).
   apply eq_from_tnth => i; by rewrite tcastE !(tnth_nth (inhabitant Alph)).
 Qed.
 
