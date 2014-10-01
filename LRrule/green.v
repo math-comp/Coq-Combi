@@ -157,6 +157,62 @@ Proof.
   have := H i; by rewrite !inE Hi HiX.
 Qed.
 
+Lemma scoverI (S : {set {set T}}) B :
+  trivIset S -> \sum_(i in S) #|i :&: B| = #|cover S :&: B|.
+Proof.
+  move=> /trivIsetP Htriv.
+  have : trivIset [set i :&: B | i in S].
+    apply /trivIsetP => U1 V1 /imsetP [] U HU -> /imsetP [] V HV -> {U1 V1} Hneq.
+    rewrite -setI_eq0 setIACA setIid.
+    have : U != V by move: Hneq; apply contra => /eqP ->.
+    move/(Htriv _ _ HU HV); rewrite -setI_eq0 => /eqP ->.
+    by rewrite set0I.
+  rewrite /trivIset.
+  pose F := (fun S => S :&: B).
+  have -> : cover [set F i | i in S] = F (cover S).
+    rewrite cover_imset /cover.
+    apply esym; apply big_morph; last by rewrite /F set0I.
+    move=> i j /=; by rewrite /F setIUl.
+  rewrite /F {F} /= => /eqP <-.
+  apply esym.
+  rewrite (bigID (fun S => S :&: B == set0)) /=.
+  rewrite (eq_bigr (fun B => 0)); first last.
+    move=> i /andP [] /imsetP [] j _ ->.
+    by rewrite -setIA setIid => /eqP ->; rewrite cards0.
+  rewrite sum_nat_dep_const muln0 add0n.
+  rewrite (eq_bigl (mem ([set i :&: B | i in S & i :&: B != set0]))); first last.
+    move=> i /=; apply/(sameP idP); apply(iffP idP).
+    - move/imsetP => [] j; rewrite inE => /andP [] Hj Hint -> {i}.
+      rewrite -setIA setIid Hint andbT.
+      apply/imsetP; by exists j.
+    - move/andP => [] /imsetP [] j Hj -> {i}.
+      rewrite -setIA setIid => Hint.
+      apply/imsetP; exists j => //=.
+      by rewrite inE Hj Hint.
+  rewrite big_imset /=; first last.
+    move=> i j /=; rewrite !inE => /andP [] HiS HiB /andP [] HjS HjB /eqP H.
+    apply /eqP; move: H; apply contraLR => H.
+    have := Htriv _ _ HiS HjS H.
+    rewrite -setI_eq0 => /eqP; rewrite -setP => Hneq.
+    move: HiB => /set0Pn [] x; rewrite inE => /andP [] Hx HxB.
+    have:= Hneq x; rewrite !inE Hx /= => Hxj.
+    apply /eqP; rewrite -setP => H0.
+    have:= H0 x; by rewrite !inE Hx Hxj HxB.
+  apply esym; rewrite (bigID (fun S => S :&: B == set0)) /=.
+  rewrite (eq_bigr (fun B => 0)); first last.
+    move=> i /andP [] _ /eqP ->.
+    by rewrite cards0.
+  rewrite sum_nat_dep_const muln0 add0n.
+  apply eq_bigl => i /=; by rewrite inE.
+Qed.
+
+Lemma trivIset_I (S : {set {set T}}) B :
+  trivIset S -> \sum_(i in S) #|i :&: B| <= #|B|.
+Proof.
+  move/scoverI ->; apply subset_leq_card.
+  apply/subsetP => i; by rewrite !inE => /andP [].
+Qed.
+
 End TrivISeq.
 
 Lemma trivIseq_map (T1 T2 : finType) (f : T1 -> T2) (S : seq {set T1}) :
@@ -171,6 +227,7 @@ Proof.
   move/(H i j); rewrite /disjoint => /pred0P => Hd.
   have:= Hd l; by rewrite /= Hli Hlj.
 Qed.
+
 
 Lemma set_nil (T : finType) : [set s : T in [::]] = set0.
 Proof. by rewrite -setP => i; rewrite inE. Qed.
@@ -1234,18 +1291,18 @@ Implicit Type t : seq (seq Alph).
 Definition greenRow := green_rel (leqX Alph).
 Definition greenCol := green_rel (gtnX Alph).
 
-Lemma size_row_extract t S i :
-  is_tableau t ->
+Lemma size_row_extract t S T :
+  is_tableau t -> T \in (tabcols t) ->
   sorted (leqX Alph) (extract (in_tuple (to_word t)) S) ->
-  #|S :&: (nth set0 (tabcols t) i)| <= 1.
+  #|S :&: T| <= 1.
 Proof.
-  move=> Htab Hleq.
-  case (ltnP i (size (tabcols t))) => Hi; last by rewrite (nth_default _ Hi) setI0 cards0.
-  set T := nth _ _ _.
+  move=> Htab HT Hleq.
   have: S :&: T \subset S by apply/subsetP => j; rewrite !inE=> /andP [].
   move/(extsubsI (in_tuple (to_word t)))/(subseq_sorted (@leqX_trans _)) => Htmp.
   have {Htmp Hleq} Hleq := Htmp Hleq.
-  have Hgtn:= sorted_gtnX_tabcols Htab Hi.
+  have Htmp := sorted_gtnX_tabcols Htab.
+  have := HT; rewrite -index_mem => /Htmp {Htmp}.
+  rewrite (nth_index _ HT) => Hgtn.
   have: S :&: T \subset T by apply/subsetP => j; rewrite !inE=> /andP [].
   move/(extsubsI (in_tuple (to_word t)))/(subseq_sorted (@gtnX_trans _)) => Htmp.
   have {Htmp Hgtn} Hgtn := Htmp Hgtn.
@@ -1278,102 +1335,37 @@ Proof.
   by rewrite bigcup_seq_cover (cover_tabcols Hpart) setIT.
 Qed.
 
-Lemma scoverI (T: finType) (S : {set {set T}}) B :
-  trivIset S -> \sum_(i in S) #|i :&: B| = #|cover S :&: B|.
-Proof.
-  move=> /trivIsetP Htriv.
-  have : trivIset [set i :&: B | i in S].
-    apply /trivIsetP => U1 V1 /imsetP [] U HU -> /imsetP [] V HV -> {U1 V1} Hneq.
-    rewrite -setI_eq0 setIACA setIid.
-    have : U != V by move: Hneq; apply contra => /eqP ->.
-    move/(Htriv _ _ HU HV); rewrite -setI_eq0 => /eqP ->.
-    by rewrite set0I.
-  rewrite /trivIset.
-  pose F := (fun S => S :&: B).
-  have -> : cover [set F i | i in S] = F (cover S).
-    rewrite cover_imset /cover.
-    apply esym; apply big_morph; last by rewrite /F set0I.
-    move=> i j /=; by rewrite /F setIUl.
-  rewrite /F {F} /= => /eqP <-.
-  apply esym.
-  rewrite (bigID (fun S => S :&: B == set0)) /=.
-  rewrite (eq_bigr (fun B => 0)); first last.
-    move=> i /andP [] /imsetP [] j _ ->.
-    by rewrite -setIA setIid => /eqP ->; rewrite cards0.
-  rewrite sum_nat_dep_const muln0 add0n.
-  rewrite (eq_bigl (mem ([set i :&: B | i in S & i :&: B != set0]))); first last.
-    move=> i /=; apply/(sameP idP); apply(iffP idP).
-    - move/imsetP => [] j; rewrite inE => /andP [] Hj Hint -> {i}.
-      rewrite -setIA setIid Hint andbT.
-      apply/imsetP; by exists j.
-    - move/andP => [] /imsetP [] j Hj -> {i}.
-      rewrite -setIA setIid => Hint.
-      apply/imsetP; exists j => //=.
-      by rewrite inE Hj Hint.
-  rewrite big_imset /=; first last.
-    move=> i j /=; rewrite !inE => /andP [] HiS HiB /andP [] HjS HjB /eqP H.
-    apply /eqP; move: H; apply contraLR => H.
-    have := Htriv _ _ HiS HjS H.
-    rewrite -setI_eq0 => /eqP; rewrite -setP => Hneq.
-    move: HiB => /set0Pn [] x; rewrite inE => /andP [] Hx HxB.
-    have:= Hneq x; rewrite !inE Hx /= => Hxj.
-    apply /eqP; rewrite -setP => H0.
-    have:= H0 x; by rewrite !inE Hx Hxj HxB.
-  apply esym; rewrite (bigID (fun S => S :&: B == set0)) /=.
-  rewrite (eq_bigr (fun B => 0)); first last.
-    move=> i /andP [] _ /eqP ->.
-    by rewrite cards0.
-  rewrite sum_nat_dep_const muln0 add0n.
-  apply eq_bigl => i /=; by rewrite inE.
-Qed.
-
-Lemma trivIset_I (T: finType) (S : {set {set T}}) B :
-  trivIset S -> \sum_(i in S) #|i :&: B| <= #|B|.
-Proof.
-  move/scoverI ->; apply subset_leq_card.
-  apply/subsetP => i; by rewrite !inE => /andP [].
-Qed.
-
 Lemma shape_tabcols t:
   is_tableau t ->
-  conj_part (shape t) =
-  [seq #|nth set0 (tabcols t) i| | i <- iota 0 (size (head [::] t))].
+  conj_part (shape t) = [seq #|s : {set 'I_(size (to_word t))}| | s <- tabcols t].
 Proof.
   move=> Htab.
   rewrite -shcol_cards; last by apply is_part_sht.
   rewrite /tabcols; apply (@eq_from_nth _ 0).
-  + rewrite !size_map size_shcols /shape size_iota; by case t.
+  + rewrite !size_map size_shcols; by case t.
   + move => i; rewrite size_map => Hi.
     have Hihead : i < size (head [::] t).
       move: Hi; rewrite size_shcols /shape /=; by case t.
-    rewrite (nth_map set0 _ _ Hi).
-    rewrite (nth_map 0); last by rewrite size_iota.
-    rewrite (nth_iota _ Hihead) add0n.
-    rewrite (nth_map set0 _ _ Hi) /=.
+    rewrite -map_comp !(nth_map set0 _ _ Hi) /=.
     by rewrite card_imset; last by apply cast_ord_inj.
 Qed.
 
 Lemma greenRow_extract k t :
   is_tableau t -> greenRow (to_word t) k <= \sum_(l <- conj_part (shape t)) minn l k.
 Proof.
-  move=> Htab.
+  move=> Htab; rewrite (shape_tabcols Htab).
   rewrite /greenRow /green_rel /= /green_rel_t /scover /=.
   apply/bigmax_leqP => S; rewrite /ksupp => /and3P [] Hsz Htriv.
   have:= Htriv; rewrite /trivIset => /eqP <- /forallP Hall.
   rewrite (eq_bigr (fun B => \sum_(S <- tabcols t) #|B :&: S|));
     last by move=> B _; rewrite (tabcol_cut (is_part_sht Htab)).
-  rewrite exchange_big /=.
-  have -> : tabcols t = [seq nth set0 (tabcols t) i | i <- iota 0 (size (head [::] t))].
-    apply (eq_from_nth (x0 := set0)); first by rewrite size_tabcols size_map size_iota.
-    move=> i Hi; rewrite (nth_map 0); last by rewrite size_iota -size_tabcols.
-    rewrite nth_iota; last by rewrite-size_tabcols.
-    by rewrite add0n.
-  rewrite (shape_tabcols Htab) !big_map.
-  apply leq_sum => i _; rewrite leq_min; apply /andP; split.
+  rewrite exchange_big /= big_map.
+  rewrite !big_seq; apply leq_sum.
+  move=> T HT; rewrite leq_min; apply /andP; split.
   - by apply trivIset_I.
   - apply (@leq_trans #|S|); last exact Hsz.
     rewrite -sum1_card; apply leq_sum.
-    move=> P HP; apply size_row_extract; first exact Htab.
+    move=> P HP; apply size_row_extract => //=.
     have:= Hall P; by rewrite HP.
 Qed.
 
