@@ -1152,7 +1152,7 @@ Let y  := (u ++ [:: b]) ++ [:: c; a] ++ v.
 
 Lemma eq_xx' : x = x'. Proof. by rewrite /x /x' -catA. Qed.
 
-Theorem exists_both :
+Theorem exists_Qy :
   exists Q : {set {set 'I_(size y)}},
     scover Q = scover P /\ ksupp R (in_tuple y) k Q .
 Proof.
@@ -1270,7 +1270,7 @@ Proof.
        rewrite -(cast_ordKV (eq_size Hbac) pos2) -HcastS /cast_set /=; apply mem_imset.
        suff -> //= : cast_ord (esym (eq_size Hbac)) pos2 = posc by [].
        by apply val_inj; rewrite /= size_cat /= addn1.
-    have:= SetContainingBothLeft.exists_both Hyp Hsupp' HS'in Hpos1 Hpos2.
+    have:= SetContainingBothLeft.exists_Qy Hyp Hsupp' HS'in Hpos1 Hpos2.
     move=> [] Q [] Hcover HsuppQ.
     exists Q; apply /andP; split; last exact HsuppQ.
     rewrite Hcover -HcastP /scover /= -size_cover_inj //=; by apply cast_ord_inj.
@@ -1345,7 +1345,7 @@ Proof.
        rewrite -(cast_ordKV (eq_size Hbca) pos2) -HcastS /cast_set /=; apply mem_imset.
        suff -> //= : cast_ord (esym (eq_size Hbca)) pos2 = posc by [].
        by apply val_inj; rewrite /= size_cat /= addn1.
-    have:= SetContainingBothLeft.exists_both Hyp Hsupp' HS'in Hpos1 Hpos2.
+    have:= SetContainingBothLeft.exists_Qy Hyp Hsupp' HS'in Hpos1 Hpos2.
     move=> [] Q [] Hcover HsuppQ.
     exists Q; apply /andP; split; last exact HsuppQ.
     rewrite Hcover -HcastP /scover /= -size_cover_inj //=; by apply cast_ord_inj.
