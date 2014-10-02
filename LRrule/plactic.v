@@ -395,9 +395,6 @@ Proof.
   rewrite Heq; rewrite -(Htrans _ _ (congr_RS v)); by apply Hrefl.
 Qed.
 
-Lemma perm_eq_RS w : perm_eq w (to_word (RS w)).
-Proof. apply plactcongr_homog. by apply congr_RS. Qed.
-
 End RSToPlactic.
 
 Section RemoveBig.
@@ -459,7 +456,7 @@ Qed.
 
 Notation maxL := (foldl (@maxX Alph)).
 
-Notation append_nth T b i := (set_nth [::] T i (rcons (nth [::] T i) b)).
+Definition append_nth T b i := (set_nth [::] T i (rcons (nth [::] T i) b)).
 
 Lemma shape_append_nth T b i : shape (append_nth T b i) = incr_nth (shape T) i.
 Proof.
@@ -677,7 +674,7 @@ Proof.
     move Hlb : (last_big (RS (L ++ b :: R)) b) => lb IHR.
     move: Hlb => /eqP; rewrite eq_sym => /last_bigP Htmp.
     have Htmp2 : maxLeq (to_word (RS (L ++ b :: R))) b.
-      apply (perm_eq_maxLeq (perm_RS (L ++ b :: R))).
+      apply (perm_eq_maxLeq (perm_eq_RS (L ++ b :: R))).
       move: HL; case L => [/= _ | L0 L' /=]; first by rewrite (maxLeqL (maxLtnW HmaxR)).
       by rewrite maxL_cat (maxLeqL (maxLtnW HmaxR)) => /maxX_idPr ->.
     have {Htmp Htmp2} := Htmp (is_tableau_RS (L ++ b :: R)) Htmp2 => [] [] _.
@@ -688,7 +685,7 @@ Proof.
 Qed.
 
 Theorem rembig_RS a v :
-  exists i, RS (a :: v) = append_nth (RS (rembig (a :: v))) (maxL a v) i.
+  {i | RS (a :: v) = append_nth (RS (rembig (a :: v))) (maxL a v) i}.
 Proof. exists (last_big (RS (a :: v)) (maxL a v)); by apply rembig_RS_last_big. Qed.
 
 End RemoveBig.
