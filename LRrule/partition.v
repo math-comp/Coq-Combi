@@ -65,6 +65,19 @@ Section Partition.
     by move: Head; rewrite Hsh0 leqn0.
   Qed.
 
+  Lemma part0 sh : is_part sh -> sumn sh = 0 -> sh = [::].
+  Proof. move/part_head_non0; by case: sh => //= [] [|s0]. Qed.
+
+  Lemma is_part_rconsK sh sn : is_part (rcons sh sn) -> is_part sh.
+  Proof.
+    case: sn => [/= | sn].
+      move/is_partP => []; by rewrite last_rcons.
+    elim: sh => [//= | s0 sh IHsh].
+    rewrite rcons_cons /= => /andP [] Hhead /IHsh {IHsh} ->.
+    rewrite andbT; case: sh Hhead => [//= | s1 sh]; first by apply leq_ltn_trans.
+    by rewrite rcons_cons.
+  Qed.
+
   (* unused lemma *)
   Lemma del_out_corner sh i :
     last 1 sh != 0 -> is_part (incr_nth sh i) ->
@@ -255,6 +268,16 @@ Section Partition.
   Lemma shape_rowshape_cons l s : shape_rowseq (l :: s) = incr_nth (shape_rowseq s) l.
   Proof. by []. Qed.
 
+  Lemma sum_incr_nth s i : sumn (incr_nth s i) = (sumn s).+1.
+  Proof.
+    elim: i s => [/= | i IHi]; first by case=> [| s0 s].
+    case=> [/= | s0 s /=]; first by rewrite /sumn add0n; elim i.
+    by rewrite (IHi s) addnS.
+  Qed.
+
+  Lemma shape_rowseq_eq_size y : sumn (shape_rowseq y) = size y.
+  Proof. elim: y => [//= | y0 y] /=; by rewrite sum_incr_nth => ->. Qed.
+
   (* Yamanouchi word:                                                            *)
   (*   sequence of rows of the corners for an increasing sequence of partitions. *)
   (*   they are in bijection with standard tableaux                              *)
@@ -269,14 +292,15 @@ Section Partition.
   Lemma is_yam_tl l0 s : is_yam (l0 :: s) -> is_yam s.
   Proof. by move=> /= /andP []. Qed.
 
-  Fixpoint shift_yam s :=
+  (* Remove the zeroes from a yam and decrease all the other entries by 1 *)
+  Fixpoint decr_yam s :=
     if s is s0 :: s'
     then if s0 is s0'.+1
-         then s0' :: (shift_yam s')
-         else (shift_yam s')
+         then s0' :: (decr_yam s')
+         else (decr_yam s')
     else [::].
 
-  Lemma shape_shift s : shape_rowseq (shift_yam s) = behead (shape_rowseq s).
+  Lemma shape_decr_yam s : shape_rowseq (decr_yam s) = behead (shape_rowseq s).
   Proof.
     elim: s => [//= | s0 s /= IHs].
     case s0 => [ | s0' /=].
@@ -285,11 +309,11 @@ Section Partition.
       by case: s0'.
   Qed.
 
-  Lemma is_yam_shift s : is_yam s -> (is_yam (shift_yam s)).
+  Lemma is_yam_decr s : is_yam s -> (is_yam (decr_yam s)).
   Proof.
     elim: s => [//= | s0 s IHs] /= /andP [] Hpart.
     move/IHs {IHs} => Hyam; case: s0 Hpart=> [//= | s0'] /=.
-    rewrite Hyam andbT shape_shift.
+    rewrite Hyam andbT shape_decr_yam.
     case H : (shape_rowseq s) => [| sh0 sh] /= /andP [] _ //=.
     by case s0'.
   Qed.
@@ -300,6 +324,50 @@ Section Partition.
     move=> Hyam; have:= is_part_shyam (is_yam_tl Hyam) => /is_partP [] _ Hpart.
     rewrite /is_out_corner !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS.
     by apply Hpart.
+  Qed.
+
+  (* Hyperstandard Yamanouchi word : 33 2222 11111 0000000 *)
+  Fixpoint hyper_yam_rev sh :=
+    if sh is s0 :: s then
+      nseq s0 (size s) ++ hyper_yam_rev s
+    else [::].
+  Definition hyper_yam sh := hyper_yam_rev (rev sh).
+
+  Lemma incr_nth_size s : incr_nth s (size s) = rcons s 1.
+  Proof.  by elim: s => [| s0 s /= ->]. Qed.
+
+  Lemma part_rcons_ind s sn : is_part (rcons s sn.+2) -> is_part (rcons s sn.+1).
+  Proof.
+    elim: s => [//= | s0 s IHs] /=.
+    move => /andP [] Hhead /IHs {IHs} ->; rewrite andbT.
+    case: s Hhead => [//= | s1 s]; first by apply ltn_trans.
+    by rewrite !rcons_cons.
+  Qed.
+
+  Lemma shape_rowseq_hyper_yam sh : is_part sh -> shape_rowseq (hyper_yam sh) = sh.
+  Proof.
+    rewrite /hyper_yam; elim/last_ind: sh => [//= | s sn IHs].
+    rewrite rev_rcons /=; case: sn => [/= | sn].
+      move/is_partP; by rewrite last_rcons /= => [] [].
+    elim: sn => [/= | sn /= IHsn].
+      move/is_part_rconsK/IHs ->; by rewrite size_rev incr_nth_size.
+    move=> Hpart; rewrite IHsn {IHsn IHs}.
+    - rewrite size_rev {Hpart}; elim: s => [//= | s0 s IHs] /=.
+      by rewrite IHs.
+    - by apply part_rcons_ind.
+  Qed.
+
+  Lemma hyper_yamP sh : is_part sh -> is_yam (hyper_yam sh).
+  Proof.
+    elim/last_ind: sh => [//= | s sn IHs].
+    rewrite /hyper_yam rev_rcons /=; case: sn => [//= | sn].
+      move/is_partP; by rewrite last_rcons /= => [] [].
+    elim: sn => [/= | sn /= IHsn].
+      move=> Hpart1; have Hpart := is_part_rconsK Hpart1.
+      by rewrite (IHs Hpart) size_rev (shape_rowseq_hyper_yam Hpart) incr_nth_size Hpart1.
+    move=> Hpart2; have {IHsn} /andP [] := IHsn (part_rcons_ind Hpart2).
+    move=> -> ->; rewrite !andbT.
+    have:= Hpart2; by rewrite -{1}(shape_rowseq_hyper_yam Hpart2) /hyper_yam rev_rcons.
   Qed.
 
 End Partition.

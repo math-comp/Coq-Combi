@@ -1222,16 +1222,16 @@ Section Inverse.
       rewrite shape_rowshape_cons => /eqP Hshape.
       have Hsz0 : (size r0) = head 0 (shape_rowseq yam) by
         move: Hshape => /=; case (shape_rowseq yam) => [|s0 s] [] ->.
-      have {Hshape} Hshape : shape t == shape_rowseq (nrow :: (shift_yam yam)).
+      have {Hshape} Hshape : shape t == shape_rowseq (nrow :: (decr_yam yam)).
         have:= eq_refl (behead (shape (r0 :: t))).
-        by rewrite {2}Hshape behead_incr_nth -shape_shift.
+        by rewrite {2}Hshape behead_incr_nth -shape_decr_yam.
       have Hnnilyam := yam_tail_non_nil Hyam.
-      have {Hyam} Hyam : (is_yam (nrow :: shift_yam yam)) by apply (is_yam_shift Hyam).
+      have {Hyam} Hyam : (is_yam (nrow :: decr_yam yam)) by apply (is_yam_decr Hyam).
       have {IHnrow Hshape Hyam} := IHnrow _ _ Hyam Hshape => /=.
       case Hinv: (invinstabnrow t nrow) => [tin l] /=.
       have:= size_invins l r0; rewrite /invins.
       case Hbump: (invbumprow l r0) => [t0r l0r] /= -> {Hbump t0r l0r} /eqP -> {Hinv tin l}.
-      rewrite shape_shift Hsz0 {Hsz0 r0}.
+      rewrite shape_decr_yam Hsz0 {Hsz0 r0}.
       case: yam Hnnilyam => [//= | a b _].
       have: shape_rowseq (a :: b) != [::] by case: a => [/= | a /=]; case (shape_rowseq b).
       by case (shape_rowseq (a :: b)).
@@ -1312,11 +1312,10 @@ Section Statistics.
 
   Definition size_tab t := sumn (shape t).
 
-  Lemma sum_incr_nth s i : sumn (incr_nth s i) = (sumn s).+1.
+  Lemma tab0 t : is_tableau t -> size_tab t = 0 -> t = [::].
   Proof.
-    elim: i s => [/= | i IHi]; first by case=> [| s0 s].
-    case=> [/= | s0 s /=]; first by rewrite /sumn add0n; elim i.
-    by rewrite (IHi s) addnS.
+    move/is_part_sht; rewrite /size_tab => /part0 H/H {H}.
+    rewrite /shape; by case t.
   Qed.
 
   Lemma size_instab t l : is_tableau t -> size_tab (instab t l) = (size_tab t).+1.
@@ -1368,7 +1367,7 @@ Section Statistics.
     by rewrite -[rcons _ _](revK) rev_rcons count_rev /= count_rev.
   Qed.
 
-  Theorem perm_RS w : perm_eq w (to_word (RS w)).
+  Theorem perm_eq_RS w : perm_eq w (to_word (RS w)).
   Proof. apply/perm_eqP => l; by apply count_RS. Qed.
 
 End Statistics.
