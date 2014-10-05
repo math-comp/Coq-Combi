@@ -641,6 +641,46 @@ Proof.
     have:= ltnX_leqX_trans H1 H2; by rewrite ltnXnn.
 Qed.
 
+Lemma perm_eq_nilF x u :
+  perm_eq [::] (x :: u) = false.
+Proof.
+  apply/(sameP idP); apply(iffP idP) => //=.
+  rewrite /perm_eq => /allP Hperm.
+    have /Hperm /= : x \in [::] ++ x :: u by rewrite /= inE eq_refl.
+  by rewrite eq_refl /= add1n.
+Qed.
+
+Lemma perm_eq_rembig u v :
+  perm_eq u v -> perm_eq (rembig u) (rembig v).
+Proof.
+  case Hu: u => [/= | u0 u']; case Hv: v => [//= | v0 v'].
+  + by rewrite perm_eq_nilF.
+  + by rewrite perm_eq_sym perm_eq_nilF.
+  move=> Hperm; have Hmax:= maxL_perm_eq Hperm; move: Hmax Hperm.
+
+  have:= eq_refl (rembig u); rewrite {2}Hu => /rembigP Htmp.
+  have /Htmp {Htmp} : u0 :: u != [::] by [].
+  move=> [] u1 [] bu [] u2 []; rewrite {1}Hu => -> Hub Hlequ Hltnu.
+  have {Hlequ Hltnu} -> := maxL_LbR Hub Hlequ (maxLtnW Hltnu).
+  rewrite Hub {u Hu Hub u0 u'}.
+
+  have:= eq_refl (rembig v); rewrite {2}Hv => /rembigP Htmp.
+  have /Htmp {Htmp} : v0 :: v != [::] by [].
+  move=> [] v1 [] bv [] v2 []; rewrite {1}Hv => -> Hvb Hleqv Hltnv.
+  have {Hleqv Hltnv} -> := maxL_LbR Hvb Hleqv (maxLtnW Hltnv).
+  rewrite Hvb {v Hv Hvb v0 v'}.
+
+  rename bv into mx; move ->.
+  rewrite -[mx :: u2]cat1s -[mx :: v2]cat1s -[perm_eq (u1 ++ u2) _](perm_cons mx).
+  have Hlemma u v : perm_eq (u ++ [:: mx] ++ v) (mx :: u ++ v).
+    rewrite catA -[mx :: u ++ v]/((mx :: u) ++ v) perm_cat2r -[mx :: u]cat1s.
+    apply perm_eqlE; by apply perm_catC.
+  move=> H; have:= Hlemma u1 u2; rewrite perm_eq_sym.
+  move/perm_eq_trans; apply.
+  apply (perm_eq_trans H).
+  by apply Hlemma.
+Qed.
+
 End RemoveBig.
 
 Fact leq_order : Order.axiom leq.
@@ -660,3 +700,14 @@ Proof. by rewrite leqXE /=. Qed.
 
 Lemma ltnXnatE m n : (n < m)%Ord = (n < m)%N.
 Proof. by rewrite /ltnX_op leqXE ltn_neqAle. Qed.
+
+Lemma maxL_iota n i : foldl (maxX (T:=nat_ordType)) i (iota i.+1 n) = i + n.
+Proof. elim: n i => [//= | n IHn] /= i. by rewrite {2}/maxX ltnXnatE ltnSn IHn addSnnS. Qed.
+
+Lemma rembig_iota n i : rembig (iota i n.+1) = iota i n.
+Proof.
+  elim: n i => [//= | n IHn] i.
+  have /= -> := (IHn i.+1).
+  by rewrite maxL_iota ltnXnatE ltnNge addSnnS leq_addr.
+Qed.
+

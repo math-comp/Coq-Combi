@@ -13,8 +13,9 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm tuple.
-Require Import subseq partition permuted ordtype schensted plactic greeninv.
+Require Import finset perm fingroup.
+
+Require Import subseq partition permuted ordtype schensted plactic greeninv std.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -45,7 +46,14 @@ Section Bijection.
 Implicit Type y : seq nat.
 Implicit Type t : seq (seq nat).
 
-Definition is_stdtab t := is_tableau t && perm_eq (to_word t) (iota 0 (size_tab t)).
+Definition is_stdtab t := is_tableau t && is_std (to_word t).
+
+Lemma RSperm n (p : 'S_n) : is_stdtab (RS (wordperm p)).
+Proof.
+  rewrite /is_stdtab; apply /andP; split; first by apply is_tableau_RS.
+  apply (perm_eq_std (wordperm_std p)).
+  rewrite perm_eq_sym; apply (perm_eq_RS (wordperm p)).
+Qed.
 
 Fixpoint stdtab_of_yam y :=
   if y is y0 :: y' then
@@ -78,8 +86,9 @@ Proof.
       by rewrite -[x :: flatten (rev t) ++ t0]/((x :: flatten (rev t)) ++ t0) perm_cat2r.
 Qed.
 
-Lemma perm_eq_stdtab_of_yam y : perm_eq (to_word (stdtab_of_yam y)) (iota 0 (size y)).
+Lemma std_of_yam y : is_std (to_word (stdtab_of_yam y)).
 Proof.
+  rewrite /is_std -size_to_word size_stdtab_of_yam.
   elim: y => [//= | y0 y IHy].
   have -> /= : iota 0 (size (y0 :: y)) = rcons (iota 0 (size y)) (size y).
     rewrite -[size (y0 :: y)]/((size y).+1) -addn1 iota_add add0n /=.
@@ -124,58 +133,15 @@ Qed.
 
 Lemma stdtab_of_yamP y : is_yam y -> is_stdtab (stdtab_of_yam y).
 Proof.
-  rewrite /is_stdtab.
-  rewrite /size_tab shape_stdtab_of_yam shape_rowseq_eq_size perm_eq_stdtab_of_yam andbT.
+  rewrite /is_stdtab std_of_yam andbT.
   elim: y => [//= | y0 y IHy] /= /andP [] Hpart /IHy {IHy}.
   move: Hpart; rewrite -shape_stdtab_of_yam.
   suff : all (gtn (size y)) (to_word (stdtab_of_yam y)) by apply is_tab_append_nth_size.
-  have /perm_eq_mem := perm_eq_stdtab_of_yam y.
-  move: (to_word (stdtab_of_yam y)) => w Hperm.
+  have:= std_of_yam y; rewrite /is_std -size_to_word size_stdtab_of_yam.
+  move=> /perm_eq_mem Hperm.
   apply /allP => x Hx /=.
   have:= Hperm x; by rewrite mem_iota /= add0n Hx => /esym ->.
 Qed.
-
-Lemma perm_eq_rembig (Alph : ordType) (u v : seq Alph) :
-  perm_eq u v -> perm_eq (rembig u) (rembig v).
-Proof.
-  case Hu: u => [/= | u0 u']; case Hv: v => [//= | v0 v'].
-  + by rewrite perm_eq_nilF.
-  + by rewrite perm_eq_sym perm_eq_nilF.
-  move=> Hperm; have Hmax:= maxL_perm_eq Hperm; move: Hmax Hperm.
-
-  have:= eq_refl (rembig u); rewrite {2}Hu => /rembigP Htmp.
-  have /Htmp {Htmp} : u0 :: u != [::] by [].
-  move=> [] u1 [] bu [] u2 []; rewrite {1}Hu => -> Hub Hlequ Hltnu.
-  have {Hlequ Hltnu} -> := maxL_LbR Hub Hlequ (maxLtnW Hltnu).
-  rewrite Hub {u Hu Hub u0 u'}.
-
-  have:= eq_refl (rembig v); rewrite {2}Hv => /rembigP Htmp.
-  have /Htmp {Htmp} : v0 :: v != [::] by [].
-  move=> [] v1 [] bv [] v2 []; rewrite {1}Hv => -> Hvb Hleqv Hltnv.
-  have {Hleqv Hltnv} -> := maxL_LbR Hvb Hleqv (maxLtnW Hltnv).
-  rewrite Hvb {v Hv Hvb v0 v'}.
-
-  rename bv into mx; move ->.
-  rewrite -[mx :: u2]cat1s -[mx :: v2]cat1s -[perm_eq (u1 ++ u2) _](perm_cons mx).
-  have Hlemma u v : perm_eq (u ++ [:: mx] ++ v) (mx :: u ++ v).
-    rewrite catA -[mx :: u ++ v]/((mx :: u) ++ v) perm_cat2r -[mx :: u]cat1s.
-    apply perm_eqlE; by apply perm_catC.
-  move=> H; have:= Hlemma u1 u2; rewrite perm_eq_sym.
-  move/perm_eq_trans; apply.
-  apply (perm_eq_trans H).
-  by apply Hlemma.
-Qed.
-
-Lemma maxL_iota n i : foldl (maxX (T:=nat_ordType)) i (iota i.+1 n) = i + n.
-Proof. elim: n i => [//= | n IHn] /= i. by rewrite {2}/maxX ltnXnatE ltnSn IHn addSnnS. Qed.
-
-Lemma rembig_iota n i : rembig (iota i n.+1) = iota i n.
-Proof.
-  elim: n i => [//= | n IHn] i.
-  have /= -> := (IHn i.+1).
-  by rewrite maxL_iota ltnXnatE ltnNge addSnnS leq_addr.
-Qed.
-
 
 Fixpoint yam_of_stdtab_rec n t :=
   if n is n'.+1 then
@@ -189,7 +155,7 @@ Proof. elim: n t => [//= | n IHn] /= t; by rewrite IHn. Qed.
 
 Theorem yam_of_stdtabK t : is_stdtab t -> stdtab_of_yam (yam_of_stdtab t) = t.
 Proof.
-  rewrite /yam_of_stdtab /is_stdtab => /andP [].
+  rewrite /yam_of_stdtab /is_stdtab /is_std -size_to_word => /andP [].
   move H : (size_tab t) => n.
   elim: n t H => [//= | n IHn] t Hsize Htab Hperm.
     move: Hsize => /tab0 H; by rewrite (H Htab).
@@ -234,7 +200,7 @@ Qed.
 
 Lemma size_notin_stdtab_of_yam y : (size y) \notin (to_word (stdtab_of_yam y)).
 Proof.
-  have /perm_eq_mem -> := perm_eq_stdtab_of_yam y.
+  have:= std_of_yam y; rewrite /is_std -size_to_word size_stdtab_of_yam => /perm_eq_mem ->.
   by rewrite mem_iota add0n /= ltnn.
 Qed.
 
@@ -322,7 +288,7 @@ Qed.
 
 Lemma stdtab_rembig t : is_stdtab t -> is_stdtab (RS (rembig (to_word t))).
 Proof.
-  rewrite /is_stdtab => /andP [].
+  rewrite /is_stdtab /is_std -size_to_word => /andP [].
   move H : (size_tab t) => n.
   elim: n t H => [//= | n IHn] t Hsize Htab Hperm.
   + by rewrite (tab0 Htab Hsize) /RS /=.
@@ -331,7 +297,7 @@ Proof.
     - rewrite perm_eq_sym; apply plactcongr_homog; by apply congr_RS.
     - apply (perm_eq_trans (perm_eq_rembig Hperm)).
       rewrite rembig_iota.
-      by rewrite (eqP (size_RS _)) size_rembig -size_to_word Hsize.
+      by rewrite -size_to_word (eqP (size_RS _)) size_rembig -size_to_word Hsize.
 Qed.
 
 Lemma yam_of_stdtabP t : is_stdtab t -> is_yam (yam_of_stdtab t).
@@ -360,3 +326,49 @@ Proof.
 Qed.
 
 End Bijection.
+
+Section RobinsonSchensted.
+
+Variable T : ordType.
+
+Notation TabPair := (seq (seq T) * seq (seq nat) : Type).
+
+Definition is_RStabpair (pair : TabPair) :=
+  let: (P, Q) := pair in [&& is_tableau P, is_stdtab Q & (shape P == shape Q)].
+
+Record rstabpair := RSTabPair { pqpair :> TabPair; _ : is_RStabpair pqpair }.
+
+Canonical rstabpair_subType := Eval hnf in [subType for pqpair].
+Definition rstabpair_eqMixin := Eval hnf in [eqMixin of rstabpair by <:].
+Canonical rstabpair_eqType := Eval hnf in EqType rstabpair rstabpair_eqMixin.
+
+Lemma pqpair_inj : injective pqpair. Proof. exact: val_inj. Qed.
+
+Definition RStabmap (w : seq T) := let (p, q) := (RSmap w) in (p, stdtab_of_yam q).
+
+Theorem RStabmap_spec w : is_RStabpair (RStabmap w).
+Proof.
+  have:= RSmap_spec w; rewrite /is_RStabpair /is_RSpair /RStabmap.
+  case H : (RSmap w) => [P Q] /and3P [] -> /stdtab_of_yamP -> /eqP -> /=.
+  by rewrite shape_stdtab_of_yam.
+Qed.
+
+Definition RStab w := RSTabPair (RStabmap_spec w).
+Definition RStabinv (pair : rstabpair) :=
+  let: (P, Q) := pqpair pair in RSmapinv2 (P, yam_of_stdtab Q).
+
+Lemma bijRStab : bijective RStab.
+Proof.
+  split with (g := RStabinv); rewrite /RStab /RStabinv /RStabmap.
+  - move=> w /=; have:= is_yam_RSmap2 w.
+    case H : (RSmap w) => [P Q] /= Hyam.
+    by rewrite stdtab_of_yamK; first by rewrite -H (RS_bij_1 w).
+  - move=> [[P Q] H] /=; apply pqpair_inj => /=.
+    move: H; rewrite /is_RStabpair => /and3P [] Htab Hstdtab Hshape //=.
+    rewrite RS_bij_2.
+    + by rewrite (yam_of_stdtabK Hstdtab).
+    + by rewrite /is_RSpair Htab yam_of_stdtabP //= shape_yam_of_stdtab.
+Qed.
+
+End RobinsonSchensted.
+

@@ -22,15 +22,6 @@ Section Permuted.
 
 Variable T : eqType.
 
-Lemma perm_eq_nilF (x : T) u :
-  perm_eq [::] (x :: u) = false.
-Proof.
-  apply/(sameP idP); apply(iffP idP) => //=.
-  rewrite /perm_eq => /allP Hperm.
-    have /Hperm /= : x \in [::] ++ x :: u by rewrite /= inE eq_refl.
-  by rewrite eq_refl /= add1n.
-Qed.
-
 Section SizeN.
 
 Variable n : nat.
