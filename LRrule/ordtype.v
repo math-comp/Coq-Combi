@@ -335,8 +335,7 @@ Let word := seq Alph.
 Implicit Type a b c : Alph.
 Implicit Type u v : word.
 
-Notation maxX := (@maxX Alph).
-Notation maxL := (foldl maxX).
+Definition maxL l := foldl (@maxX Alph) l.
 
 Lemma maxXb a u : a <= maxL a u.
 Proof.
@@ -353,101 +352,104 @@ Proof.
     by rewrite orbA [(_ == _) || (_ == _) ]orbC -orbA -in_cons IHu orbT.
 Qed.
 
-Lemma maxLPt a u : all (geqX _ (maxL a u)) u.
-Proof.
-  elim: u a => [//= | u0 u IHu /=] a; apply /andP; split; last by apply IHu.
-  apply (leqX_trans (leqX_maxXr a u0)); by apply maxXb.
-Qed.
-Lemma maxLP a u : all (geqX _ (maxL a u)) (a :: u).
-Proof. by rewrite /= (maxLPt a u) (maxXb a u). Qed.
-
 Lemma maxXL a b u : maxX a (maxL b u) = maxL (maxX a b) u.
 Proof. elim: u b => [//= | u0 u IHu /= b]; rewrite -maxXA; by apply IHu. Qed.
 
 Lemma maxL_cat a u b v : maxL a (u ++ b :: v) = maxX (maxL a u) (maxL b v).
 Proof. elim: u a => [/= | u0 u IHu /=] a; first by rewrite maxXL. by apply IHu. Qed.
 
-Definition maxLtn v a :=
-  if v is v0 :: v' then (maxL v0 v') < a else true.
+End MaxList.
 
-Definition maxLeq v a :=
-  if v is v0 :: v' then (maxL v0 v') <= a else true.
+Section AllLeqLtn.
 
-Lemma maxLeqL u a : maxLeq u a -> maxL a u = a.
-Proof. by case: u a => [//= | u0 u /=] a; rewrite -maxXL => /maxX_idPl. Qed.
+Variable Alph : ordType.
+Let word := seq Alph.
 
-Lemma maxLtnW v a : maxLtn v a -> maxLeq v a.
-Proof. case: v => [//= | v0 v /=]. by apply ltnXW. Qed.
+Implicit Type a b c : Alph.
+Implicit Type u v : word.
 
-Lemma maxLeqCons b u a : b <= a -> maxLeq u a -> maxL b u <= a.
+Definition allLeq v a := all (geqX Alph a) v.
+Definition allLtn v a := all (gtnX Alph a) v.
+
+Lemma maxLPt a u : allLeq u (maxL a u).
 Proof.
-  case: u => [//= | u0 u IHu] /=; rewrite -maxXL {2}/maxX => H2.
-  by case (ltnXP b (maxL u0 u)).
+  rewrite/allLeq; apply/allP => x Hx.
+  elim: u Hx a => [//= | u0 u IHu /=]; rewrite inE => /orP [/eqP -> | /IHu Hx] a.
+  + rewrite maxXC -maxXL; by apply leqX_maxXl.
+  + by apply Hx.
 Qed.
-Lemma maxLtnCons b u a : b < a -> maxLtn u a -> maxL b u < a.
-Proof.
-  case: u => [//= | u0 u IHu] /=; rewrite -maxXL {2}/maxX.
-  by case (ltnXP b (maxL u0 u)).
-Qed.
+Lemma maxLP a u : allLeq (a :: u) (maxL a u).
+Proof. by rewrite /= (maxLPt a u) (maxXb a u). Qed.
 
-Lemma maxLeq_consK b u a : maxLeq (b :: u) a -> maxLeq u a.
-Proof. case: u => //= c u; rewrite -maxXL; apply leqX_trans; by apply leqX_maxXr. Qed.
-Lemma maxLtn_consK b u a : maxLtn (b :: u) a -> maxLtn u a.
-Proof. case: u => //= c u; rewrite -maxXL; apply leqX_ltnX_trans; by apply leqX_maxXr. Qed.
+Lemma allLtnW v a : allLtn v a -> allLeq v a.
+Proof. move/allP => Hall; apply/allP => x Hx /=. apply ltnXW; by apply Hall. Qed.
 
-Lemma maxLeq_cat u v a : maxLeq u a -> maxLeq v a -> maxLeq (u ++ v) a.
+Lemma allLeqE u a : allLeq u a -> maxL a u = a.
+Proof. by elim: u => [//= | u0 u IHu /=] /andP [] /maxX_idPl -> /IHu. Qed.
+Lemma allLeqP u a : reflect (maxL a u = a) (allLeq u a).
 Proof.
-  elim: u => [//= | u0 u IHu] Hu Hv.
-  have:= IHu (maxLeq_consK Hu) Hv; move: Hu => /=.
-  move/(leqX_trans (maxXb u0 u)); by apply maxLeqCons.
-Qed.
-Lemma maxLtn_cat u v a : maxLtn u a -> maxLtn v a -> maxLtn (u ++ v) a.
-Proof.
-  elim: u => [//= | u0 u IHu] Hu Hv.
-  have:= IHu (maxLtn_consK Hu) Hv; move: Hu => /=.
-  move/(leqX_ltnX_trans (maxXb u0 u)); by apply maxLtnCons.
-Qed.
-
-Lemma maxLeq_catl u v a : maxLeq (u ++ v) a -> maxLeq u a.
-Proof.
-  case: u => //= u0 u; case: v => [| v0 v]; first by rewrite cats0.
-  rewrite maxL_cat; apply leqX_trans; by apply leqX_maxXl.
-Qed.
-Lemma maxLtn_catl u v a : maxLtn (u ++ v) a -> maxLtn u a.
-Proof.
-  case: u => //= u0 u; case: v => [| v0 v]; first by rewrite cats0.
-  rewrite maxL_cat; apply leqX_ltnX_trans; by apply leqX_maxXl.
+  apply (iffP idP); first by apply allLeqE.
+  rewrite/allLeq; elim: u a => [//= | u0 u IHu /=] a.
+  rewrite maxXC -maxXL => Hmax.
+  have Hu : maxL a u = a.
+    apply/eqP; rewrite eqn_leqX.
+    have:= (leqX_maxXr u0 (maxL a u)); rewrite Hmax => -> /=.
+    by apply maxXb.
+  have:= Hmax; rewrite Hu => /maxX_idPr -> /=.
+  by apply IHu.
 Qed.
 
-Lemma maxLeq_catr u v a : maxLeq (u ++ v) a -> maxLeq v a.
+Lemma allLeqCons b u a : b <= a -> allLeq u a -> allLeq (b :: u) a.
 Proof.
-  case: u => //= u0 u; case: v => [| v0 v]; first by rewrite cats0.
-  rewrite maxL_cat; apply leqX_trans; by apply leqX_maxXr.
+  move=> Hb /allP Hall; apply /allP => x.
+  by rewrite inE => /orP [/eqP -> //=|] /Hall.
 Qed.
-Lemma maxLtn_catr u v a : maxLtn (u ++ v) a -> maxLtn v a.
+Lemma allLtnCons b u a : b < a -> allLtn u a -> allLtn (b :: u) a.
 Proof.
-  case: u => //= u0 u; case: v => [| v0 v]; first by rewrite cats0.
-  rewrite maxL_cat; apply leqX_ltnX_trans; by apply leqX_maxXr.
+  move=> Hb /allP Hall; apply /allP => x.
+  by rewrite inE => /orP [/eqP -> //=|] /Hall.
 Qed.
 
-Lemma maxLeqAllP u a : maxLeq u a = all (geqX _ a) u.
+Lemma allLeqConsE u a b : allLeq (b :: u) a = (maxL b u <= a).
 Proof.
-  case: u => [//= | u0 u]; rewrite /maxLeq.
-  have:= maxLP u0 u.
-  case (leqXP (maxL u0 u) a) => H /allP Hall; apply esym.
-  + apply/allP => x /Hall /= H1; by apply (leqX_trans H1 H). 
-  + apply negbTE; move: H; apply contraL; rewrite -leqXNgtnX => /allP H.
-    have Hin := in_maxL u0 u. by apply (H _ Hin).
+  elim: u b => [/= | u0 u IHu /=] b; first by rewrite andbT.
+  by rewrite maxXC -maxXL geqX_maxX -IHu /= !andbA [(u0 <= a) && (b <= a)]andbC.
 Qed.
-Lemma maxLtnAllP u a : maxLtn u a = all (gtnX _ a) u.
+
+Lemma allLtnConsE u a b : allLtn (b :: u) a = (maxL b u < a).
 Proof.
-  case: u => [//= | u0 u]; rewrite /maxLtn.
-  have:= maxLP u0 u.
-  case (ltnXP (maxL u0 u) a) => H /allP Hall; apply esym.
-  + apply/allP => x /Hall /= H1; by apply (leqX_ltnX_trans H1 H).
-  + apply negbTE; move: H; apply contraL; rewrite -ltnXNgeqX => /allP H.
-    have Hin := in_maxL u0 u. by apply (H _ Hin).
+  elim: u b => [/= | u0 u IHu /=] b; first by rewrite andbT.
+  rewrite maxXC -maxXL gtnX_maxX -IHu /= [RHS]andbA [LHS]andbA.
+  congr (_ && _); by rewrite andbC.
 Qed.
+
+Lemma allLeq_consK b u a : allLeq (b :: u) a -> allLeq u a.
+Proof. move/allP => Hall; apply/allP => x Hx; apply Hall; by rewrite inE Hx orbT. Qed.
+Lemma allLtn_consK b u a : allLtn (b :: u) a -> allLtn u a.
+Proof. move/allP => Hall; apply/allP => x Hx; apply Hall; by rewrite inE Hx orbT. Qed.
+
+Lemma allLeq_catE u v a : allLeq (u ++ v) a = allLeq u a && allLeq v a.
+Proof. by rewrite /allLeq all_cat. Qed.
+Lemma allLtn_catE u v a : allLtn (u ++ v) a = allLtn u a && allLtn v a.
+Proof. by rewrite /allLtn all_cat. Qed.
+
+(*
+
+Lemma allLeq_cat u v a : allLeq u a -> allLeq v a -> allLeq (u ++ v) a.
+Proof. by rewrite /allLeq all_cat => -> ->. Qed.
+Lemma allLtn_cat u v a : allLtn u a -> allLtn v a -> allLtn (u ++ v) a.
+Proof. by rewrite /allLtn all_cat => -> ->. Qed.
+
+Lemma allLeq_catl u v a : allLeq (u ++ v) a -> allLeq u a.
+Proof. by rewrite /allLeq all_cat => /andP []. Qed.
+Lemma allLtn_catl u v a : allLtn (u ++ v) a -> allLtn u a.
+Proof. by rewrite /allLtn all_cat => /andP []. Qed.
+
+Lemma allLeq_catr u v a : allLeq (u ++ v) a -> allLeq v a.
+Proof. by rewrite /allLeq all_cat => /andP []. Qed.
+Lemma allLtn_catr u v a : allLtn (u ++ v) a -> allLtn v a.
+Proof. by rewrite /allLtn all_cat => /andP []. Qed.
+*)
 
 Lemma maxL_perm_eq a u b v : perm_eq (a :: u) (b :: v) -> maxL a u = maxL b v.
 Proof.
@@ -464,24 +466,25 @@ Proof.
     have:= maxLP a u => /allP H; by apply H.
 Qed.
 
-Lemma perm_eq_maxLeq u v a : perm_eq u v -> maxLeq u a -> maxLeq v a.
+Lemma perm_eq_allLeq u v a : perm_eq u v -> allLeq u a -> allLeq v a.
 Proof.
-  case: v => [//=| v0 v]; case: u => [//=| u0 u]; first by move=> /perm_eq_size.
-  by move/maxL_perm_eq => /= ->.
+  move=> Hperm /allLeqP; rewrite (maxL_perm_eq (b := a) (v := v)).
+  - by move=> Hall; apply/allLeqP.
+  - by rewrite perm_cons.
 Qed.
-Lemma perm_eq_maxLeqE u v a : perm_eq u v -> maxLeq u a = maxLeq v a.
+Lemma perm_eq_allLeqE u v a : perm_eq u v -> allLeq u a = allLeq v a.
 Proof.
-  move=> H; apply/(sameP idP); apply(iffP idP); apply perm_eq_maxLeq; last by [].
+  move=> H; apply/(sameP idP); apply(iffP idP); apply perm_eq_allLeq; last by [].
   by rewrite perm_eq_sym.
 Qed.
-Lemma perm_eq_maxLtn u v a : perm_eq u v -> maxLtn u a -> maxLtn v a.
+Lemma perm_eq_allLtn u v a : perm_eq u v -> allLtn u a -> allLtn v a.
 Proof.
-  case: v => [//=| v0 v]; case: u => [//=| u0 u]; first by move=> /perm_eq_size.
-  by move/maxL_perm_eq => /= ->.
+  move=> Hperm /allP Hall; apply/allP => X Hx.
+  apply Hall; by rewrite (perm_eq_mem Hperm).
 Qed.
-Lemma perm_eq_maxLtnE u v a : perm_eq u v -> maxLtn u a = maxLtn v a.
+Lemma perm_eq_allLtnE u v a : perm_eq u v -> allLtn u a = allLtn v a.
 Proof.
-  move=> H; apply/(sameP idP); apply(iffP idP); apply perm_eq_maxLtn; last by [].
+  move=> H; apply/(sameP idP); apply(iffP idP); apply perm_eq_allLtn; last by [].
   by rewrite perm_eq_sym.
 Qed.
 
@@ -492,25 +495,26 @@ Proof.
   rewrite perm_eq_sym; apply /perm_eqlP; by apply perm_rcons.
 Qed.
 
-Lemma maxLeq_rev u a : maxLeq (rev u) a = maxLeq u a.
-Proof. by rewrite (perm_eq_maxLeqE _ (perm_rev u)). Qed.
-Lemma maxLtn_rev u a : maxLtn (rev u) a = maxLtn u a.
-Proof. by rewrite (perm_eq_maxLtnE _ (perm_rev u)). Qed.
+Lemma allLeq_rev u a : allLeq (rev u) a = allLeq u a.
+Proof. by rewrite (perm_eq_allLeqE _ (perm_rev u)). Qed.
+Lemma allLtn_rev u a : allLtn (rev u) a = allLtn u a.
+Proof. by rewrite (perm_eq_allLtnE _ (perm_rev u)). Qed.
 
-Lemma maxLeq_rconsK b u a : maxLeq (rcons u b) a -> maxLeq u a.
-Proof. rewrite -maxLeq_rev rev_rcons => /maxLeq_consK; by rewrite maxLeq_rev. Qed.
-Lemma maxLtn_rconsK b u a : maxLtn (rcons u b) a -> maxLtn u a.
-Proof. rewrite -maxLtn_rev rev_rcons => /maxLtn_consK; by rewrite maxLtn_rev. Qed.
+Lemma allLeq_rconsK b u a : allLeq (rcons u b) a -> allLeq u a.
+Proof. rewrite -allLeq_rev rev_rcons => /allLeq_consK; by rewrite allLeq_rev. Qed.
+Lemma allLtn_rconsK b u a : allLtn (rcons u b) a -> allLtn u a.
+Proof. rewrite -allLtn_rev rev_rcons => /allLtn_consK; by rewrite allLtn_rev. Qed.
 
-Lemma maxLeq_last b u a : maxLeq (rcons u b) a -> b <= a.
-Proof. rewrite -maxLeq_rev rev_rcons /=; apply leqX_trans; by apply maxXb. Qed.
-Lemma maxLtn_last b u a : maxLtn (rcons u b) a -> b < a.
-Proof. rewrite -maxLtn_rev rev_rcons /=; apply leqX_ltnX_trans; by apply maxXb. Qed.
+Lemma allLeq_last b u a : allLeq (rcons u b) a -> b <= a.
+Proof. by rewrite -allLeq_rev rev_rcons /= => /andP []. Qed.
+Lemma allLtn_last b u a : allLtn (rcons u b) a -> b < a.
+Proof. by rewrite -allLtn_rev rev_rcons /= => /andP []. Qed.
+
 
 Lemma maxL_LbR a v L b R :
-  a :: v = L ++ b :: R -> maxLeq L b -> maxLeq R b -> maxL a v = b.
+  a :: v = L ++ b :: R -> allLeq L b -> allLeq R b -> maxL a v = b.
 Proof.
-  rewrite !maxLeqAllP; move=> Heq HL Hr.
+  rewrite /allLeq /maxL => Heq HL Hr.
   apply /eqP; rewrite eqn_leqX; apply/andP; split.
   + have: all (geqX _ b) (a :: v) by rewrite Heq all_cat HL /= leqXnn Hr.
     move/allP => Hallv; apply Hallv; by apply in_maxL.
@@ -518,7 +522,7 @@ Proof.
     by rewrite mem_cat inE eq_refl /= orbT.
 Qed.
 
-End MaxList.
+End AllLeqLtn.
 
 Section RemoveBig.
 
@@ -528,43 +532,37 @@ Let word := seq Alph.
 Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
 
-Notation maxX := (@maxX Alph).
-Notation maxL := (foldl maxX).
-
 Fixpoint rembig w := (* Remove the last occurence of the largest letter from w *)
   if w is a :: v then
-    if maxLtn v a then v else a :: rembig v
+    if allLtn v a then v else a :: rembig v
   else [::].
 
 Lemma size_rembig w : size (rembig w) = (size w).-1.
 Proof.
-  elim: w => [//= | a [//= | b w] IHw] /=.
-  case (maxL b w < a) => //=; by rewrite IHw.
+  elim: w => [//= | a w IHw] /=.
+  case: w IHw => [//= | b w'] IHw.
+  case (allLtn (b :: w') a) => //=; by rewrite IHw.
 Qed.
 
 Lemma rembig_catR a u b v :
   maxL a u <= maxL b v -> rembig (a :: u ++ b :: v) = a :: u ++ rembig (b :: v).
 Proof.
-  elim: u a => [| u0 u IHu] /= a; first by rewrite ltnXNgeqX => ->.
-  rewrite maxL_cat -maxXL ltnXNgeqX => H.
-  rewrite (leqX_trans
-             (leqX_trans (leqX_maxXl a (maxL u0 u)) H)
-             (leqX_maxXr (maxL u0 u) (maxL b v)) ) /=.
-  by have:= IHu _ (leqX_trans (leqX_maxXr a (maxL u0 u)) H) => /= ->.
+  rewrite /=; elim: u a => [| u0 u IHu] a.
+    by rewrite allLtnConsE /= leqXNgtnX /= => /negbTE ->.
+  rewrite allLtnConsE maxL_cat /= -maxXL geqX_maxX => /andP [] Ha Hmax.
+  rewrite ltnXNgeqX leqX_maxX Ha orbT /=.
+  by rewrite -(IHu _ Hmax).
 Qed.
+
 
 Lemma rembig_catL a u b v :
   maxL a u > maxL b v -> rembig (a :: u ++ b :: v) = rembig (a :: u) ++ b :: v.
 Proof.
-  elim: u a => [/= a -> //= | u0 u IHu] /= a.
-  rewrite maxL_cat -maxXL.
-  case (ltnXP (maxL u0 u) a) => H.
-  + have:= ltnXW H => /maxX_idPl ->.
-    case (leqXP (maxL u0 u) (maxL b v)) => [/maxX_idPr -> -> //=|].
-    move=>  /ltnXW /maxX_idPl ->; by rewrite H.
-  + have:= H => /maxX_idPr -> => H1; have:= H1 => /ltnXW/maxX_idPl ->.
-    rewrite ltnXNgeqX H /=.
-    by have:= IHu _ H1 => /= ->.
+  rewrite /=; elim: u a => [| u0 u IHu] a.
+    by rewrite allLtnConsE /= ltnXNgeqX /= => /negbTE ->.
+  rewrite allLtn_catE !allLtnConsE /= -maxXL maxXC /maxX.
+  case (ltnXP (maxL u0 u) a) => [H -> //= | H Hmax /=].
+  by rewrite IHu.
 Qed.
 
 Lemma rembig_cat u v :
@@ -608,12 +606,12 @@ Qed.
 
 Lemma rembigP w wb : wb != [::] ->
   reflect
-    (exists u b v, [/\ w = u ++ v, wb = u ++ b :: v, maxLeq u b & maxLtn v b])
+    (exists u b v, [/\ w = u ++ v, wb = u ++ b :: v, allLeq u b & allLtn v b])
     ( w == rembig wb).
 Proof.
   move=> Hwb; apply (iffP idP).
   - elim: wb Hwb w => [//= | w0 wb IHwb _] w /=.
-    case H : (maxLtn wb w0) => /eqP -> {w}.
+    case H : (allLtn wb w0) => /eqP -> {w}.
     * exists [::]; exists w0; exists wb; rewrite H !cat0s; by split.
     * have Hwb : wb != [::] by move: H; case wb.
       move Hw : (rembig wb) => w; move: Hw => /eqP; rewrite eq_sym => Hw.
@@ -621,22 +619,23 @@ Proof.
       exists (w0 :: u); exists b; exists v; split; last exact Hvb.
       - by rewrite Hcatw.
       - by rewrite Hcatwb.
-      - move: H; rewrite Hcatwb /maxLtn /maxLeq.
-        move: Hub; case u => [/= | u0 u' /=] Hub /negbT;
-          apply contraR; rewrite -ltnXNgeqX; first by rewrite (maxLeqL (maxLtnW Hvb)).
-        rewrite maxL_cat (maxLeqL (maxLtnW Hvb)) -maxXL => Hu.
-        rewrite maxXC {1}/maxX; have:= Hub; rewrite leqXNgtnX => /negbTE ->.
-        move: Hub Hu; rewrite {2}/maxX. case (ltnXP w0 (maxL u0 u')) => //=.
-        move=> _ /leqX_ltnX_trans H/H{H}; by rewrite ltnXnn.
+      - move: H; rewrite Hcatwb /= Hub andbT => /negbT.
+        apply contraR. rewrite -ltnXNgeqX => Hb.
+        rewrite allLtn_catE /= Hb /=; apply /andP; split.
+        + move: Hub => /allP /= Hub; apply/allP => x Hx /=.
+          by apply (leqX_ltnX_trans (Hub x Hx)).
+        + move: Hvb => /allP /= Hvb; apply/allP => x Hx /=.
+          by apply (ltnX_trans (Hvb x Hx)).
   - move=> [] u [] b [] v [] {Hwb}.
     elim: u w wb => [w wb -> -> _ /= -> //=| u0 u IHu].
-    move => w wb -> {w} -> {wb} /= Hleqb Hltnb /=.
+    move => w wb -> {w} -> {wb} Hleqb Hltnb /=.
     move Hw : (u ++ v) => w; move: Hw => /eqP; rewrite eq_sym => /eqP Hw.
     move Hwb : (u ++ b :: v) => wb; move: Hwb => /eqP; rewrite eq_sym => /eqP Hwb.
-    have:= IHu _ _ Hw Hwb (maxLeq_consK Hleqb) Hltnb => /eqP ->.
+    have:= IHu _ _ Hw Hwb (allLeq_consK Hleqb) Hltnb => /eqP ->.
+    rewrite allLeqConsE in Hleqb.
     have:= leqX_trans (maxXb u0 u) Hleqb; rewrite {2}Hwb.
-    case H : (maxLtn (u ++ b :: v) u0) => //=.
-    move: H => /maxLtn_catr; rewrite /maxLtn.
+    case H : (allLtn (u ++ b :: v) u0) => //=.
+    move: H; rewrite allLtn_catE allLtnConsE => /andP [] _.
     move/(leqX_ltnX_trans (maxXb _ _)) => H1 H2.
     have:= ltnX_leqX_trans H1 H2; by rewrite ltnXnn.
 Qed.
@@ -661,13 +660,13 @@ Proof.
   have:= eq_refl (rembig u); rewrite {2}Hu => /rembigP Htmp.
   have /Htmp {Htmp} : u0 :: u != [::] by [].
   move=> [] u1 [] bu [] u2 []; rewrite {1}Hu => -> Hub Hlequ Hltnu.
-  have {Hlequ Hltnu} -> := maxL_LbR Hub Hlequ (maxLtnW Hltnu).
+  have {Hlequ Hltnu} -> := maxL_LbR Hub Hlequ (allLtnW Hltnu).
   rewrite Hub {u Hu Hub u0 u'}.
 
   have:= eq_refl (rembig v); rewrite {2}Hv => /rembigP Htmp.
   have /Htmp {Htmp} : v0 :: v != [::] by [].
   move=> [] v1 [] bv [] v2 []; rewrite {1}Hv => -> Hvb Hleqv Hltnv.
-  have {Hleqv Hltnv} -> := maxL_LbR Hvb Hleqv (maxLtnW Hltnv).
+  have {Hleqv Hltnv} -> := maxL_LbR Hvb Hleqv (allLtnW Hltnv).
   rewrite Hvb {v Hv Hvb v0 v'}.
 
   rename bv into mx; move ->.
@@ -701,13 +700,13 @@ Proof. by rewrite leqXE /=. Qed.
 Lemma ltnXnatE m n : (n < m)%Ord = (n < m)%N.
 Proof. by rewrite /ltnX_op leqXE ltn_neqAle. Qed.
 
-Lemma maxL_iota n i : foldl (maxX (T:=nat_ordType)) i (iota i.+1 n) = i + n.
-Proof. elim: n i => [//= | n IHn] /= i. by rewrite {2}/maxX ltnXnatE ltnSn IHn addSnnS. Qed.
+Lemma maxL_iota n i : maxL i (iota i.+1 n) = i + n.
+Proof. elim: n i => [//= | n IHn] /= i. by rewrite /maxX ltnXnatE ltnSn IHn addSnnS. Qed.
 
 Lemma rembig_iota n i : rembig (iota i n.+1) = iota i n.
 Proof.
   elim: n i => [//= | n IHn] i.
   have /= -> := (IHn i.+1).
-  by rewrite maxL_iota ltnXnatE ltnNge addSnnS leq_addr.
+  by rewrite ltnXnatE ltnNge leqnSn /=.
 Qed.
 

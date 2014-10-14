@@ -408,9 +408,8 @@ Implicit Type u v w r : word.
 Lemma rembig_plact1 u v : u \in (plact1 v) -> rembig u = rembig v.
 Proof.
   move/plact1P => [] a [] b [] c [] /andP [] Hab Hbc -> -> /=.
-  have:= Hab => /maxX_idPr ->; rewrite Hbc.
-  have:= ltnXW Hbc => /maxX_idPl ->.
-  have:= ltnXW (leqX_ltnX_trans Hab Hbc); by rewrite leqXNgtnX => /negbTE ->.
+  rewrite Hbc [b <A a]ltnXNgeqX Hab /= andbT andbF.
+  by rewrite (leqX_ltnX_trans Hab Hbc).
 Qed.
 
 Lemma rembig_plact1i u v : u \in (plact1i v) -> rembig u = rembig v.
@@ -419,10 +418,8 @@ Proof. by rewrite -plact1I => /rembig_plact1 ->. Qed.
 Lemma rembig_plact2 u v : u \in (plact2 v) -> rembig u = rembig v.
 Proof.
   move/plact2P => [] a [] b [] c [] /andP [] Hab Hbc -> -> /=.
-  have:= ltnX_leqX_trans Hab Hbc => Hac; rewrite Hac maxXC.
-  have {Hac} Hac := ltnXW Hac; have:= Hac => /maxX_idPr ->.
-  move: Hac; rewrite leqXNgtnX => /negbTE ->.
-  move: Hbc; by rewrite leqXNgtnX => /negbTE ->.
+  rewrite Hab [c <A b]ltnXNgeqX Hbc /= !andbT.
+  by rewrite [c <A a]ltnXNgeqX (ltnX_leqX_trans Hab Hbc) (ltnXW (ltnX_leqX_trans Hab Hbc)).
 Qed.
 
 Lemma rembig_plact2i u v : u \in (plact2i v) -> rembig u = rembig v.
@@ -453,8 +450,6 @@ Proof.
     * apply (congr_catl Hcongr); rewrite (rembig_plact Hplact); by apply Hrefl.
     * apply (congr_catl Hcongr); by apply rule_gencongr.
 Qed.
-
-Notation maxL := (foldl (@maxX Alph)).
 
 Definition append_nth T b i := (set_nth [::] T i (rcons (nth [::] T i) b)).
 
@@ -513,14 +508,14 @@ Fixpoint last_big t b :=
     else (last_big t' b).+1
   else 0.
 
-Lemma maxLeq_to_word_hd t0 t b : maxLeq (to_word (t0 :: t)) b -> maxLeq t0 b.
-Proof. rewrite /to_word rev_cons flatten_rcons; by apply maxLeq_catr. Qed.
+Lemma allLeq_to_word_hd t0 t b : allLeq (to_word (t0 :: t)) b -> allLeq t0 b.
+Proof. by rewrite /to_word rev_cons flatten_rcons allLeq_catE => /andP [] _. Qed.
 
-Lemma maxLeq_to_word_tl t0 t b : maxLeq (to_word (t0 :: t)) b -> maxLeq (to_word t) b.
-Proof. rewrite /to_word rev_cons flatten_rcons; by apply maxLeq_catl. Qed.
+Lemma allLeq_to_word_tl t0 t b : allLeq (to_word (t0 :: t)) b -> allLeq (to_word t) b.
+Proof. by rewrite /to_word rev_cons flatten_rcons allLeq_catE => /andP []. Qed.
 
 Lemma last_bigP t b i :
-  is_tableau t -> maxLeq (to_word t) b ->
+  is_tableau t -> allLeq (to_word t) b ->
   reflect (last b (nth [::] t i) = b /\ forall j, j < i -> last b (nth [::] t j) <A b)
           (i == last_big t b).
 Proof.
@@ -531,33 +526,33 @@ Proof.
     * elim: t Htab Hmax => [//= | t0 t IHt] /= /and4P [] Hnnil _ _ Htab Hmax.
       case eqP => [//= | /eqP H].
       case=> [/= _ | j].
-      + have:= (maxLeq_to_word_hd Hmax); move: Hnnil H.
-        case/lastP: t0 {Hmax} => [//= | t0 tn] _; rewrite last_rcons => H1 /maxLeq_last.
+      + have:= (allLeq_to_word_hd Hmax); move: Hnnil H.
+        case/lastP: t0 {Hmax} => [//= | t0 tn] _; rewrite last_rcons => H1 /allLeq_last.
         by rewrite ltnX_neqAleqX H1.
-      + rewrite /=; by apply IHt; last by apply (maxLeq_to_word_tl Hmax).
+      + rewrite /=; by apply IHt; last by apply (allLeq_to_word_tl Hmax).
   + move=> []; elim: t i Htab Hmax => [/= i _ _| t0 t IHt].
     * case: i => [//= | i] /= _ H.
       exfalso; have:= H 0 (ltn0Sn _); by rewrite ltnXnn.
     * case=> [/= _ _ -> _| i]; first by rewrite eq_refl.
       move=> /= /and4P [] _ _ _ Htab Hmax Hlast Hj.
       have:= Hj 0 (ltn0Sn _) => /= /ltnX_eqF ->.
-      apply (IHt _ Htab (maxLeq_to_word_tl Hmax) Hlast).
+      apply (IHt _ Htab (allLeq_to_word_tl Hmax) Hlast).
       move=> j; by apply (Hj j.+1).
 Qed.
 
-Lemma maxL_LbR a v L b R : a :: v = L ++ b :: R -> maxLeq L b -> maxLeq R b -> maxL a v = b.
+Lemma maxL_LbR a v L b R : a :: v = L ++ b :: R -> allLeq L b -> allLeq R b -> maxL a v = b.
 Proof.
-  move=> Hav HL HR; apply/eqP; rewrite eqn_leqX; apply /andP; split.
+  move=> Hav /allP HL /allP HR; apply/eqP; rewrite eqn_leqX; apply /andP; split.
   - have:= in_maxL a v; rewrite Hav mem_cat inE => /orP []; last move/orP => [].
-    * move: HL; by rewrite maxLeqAllP => /allP H/H{H}.
+    * by move/HL.
     * by move/eqP ->.
-    * move: HR; by rewrite maxLeqAllP => /allP H/H{H}.
+    * by move/HR.  
   - have:= maxLP a v => /allP; apply.
     by rewrite Hav mem_cat inE eq_refl orbT.
 Qed.
 
-Lemma maxLeq_is_row_rcons w b :
-  maxLeq w b -> forall row, row \in RS w -> is_row (rcons row b).
+Lemma allLeq_is_row_rcons w b :
+  allLeq w b -> forall row, row \in RS w -> is_row (rcons row b).
 Proof.
   move=> H row Hin; apply is_row_rcons.
   + move: Hin; have:= (is_tableau_RS w).
@@ -565,12 +560,12 @@ Proof.
     rewrite inE => /orP [].
     * by move/eqP => ->.
     * by apply IHt.
-  + have: maxLeq (to_word (RS w)) b by rewrite (perm_eq_maxLeq (perm_eq_RS w)).
+  + have: allLeq (to_word (RS w)) b by rewrite (perm_eq_allLeq (perm_eq_RS w)).
     rewrite /to_word; elim: (RS w) Hin => [//= | t0 t IHt] /=.
     rewrite inE rev_cons flatten_rcons => /orP [/eqP ->|].
-    * move/maxLeq_catr; case/lastP: t0 => [//=| t0 tn].
-      move/maxLeq_last; by rewrite last_rcons.
-    * move=> Hrow /maxLeq_catl; by apply IHt.
+    * rewrite allLeq_catE => /andP [] _; case/lastP: t0 => [//=| t0 tn].
+      move/allLeq_last; by rewrite last_rcons.
+    * move=> Hrow; by rewrite allLeq_catE => /andP [] /(IHt Hrow).
 Qed.
 
 Lemma last_ins_lt r l b : l <A b -> last b r <A b -> last b (ins r l) <A b.
@@ -653,7 +648,7 @@ Proof.
   have: a :: v != [::] by [].
   move Hrem : (rembig (a :: v)) => rem; move: Hrem => /eqP; rewrite eq_sym.
   move/rembigP => H/H{H} [] L [] b [] R [] -> Hav HL HR.
-  rewrite (maxL_LbR Hav HL (maxLtnW HR)) Hav {a v Hav}.
+  rewrite (maxL_LbR Hav HL (allLtnW HR)) Hav {a v Hav}.
   elim/last_ind: R HR => [/= _| R Rn IHR].
   + rewrite cats0 cats1.
     rewrite [RS (rcons L b)]/RS rev_rcons /= -[RS_rev (rev L)]/(RS L).
@@ -663,24 +658,23 @@ Proof.
     * move: HRS; case HRSL : (RS L) => [//= | t0 t /=].
       - move=> [] <- <- /=; by rewrite eq_refl.
       - have Hrow: is_row (rcons t0 b).
-          have := maxLeq_is_row_rcons HL; rewrite HRSL; apply; by rewrite inE eq_refl orTb.
+          have := allLeq_is_row_rcons HL; rewrite HRSL; apply; by rewrite inE eq_refl orTb.
         rewrite (bumprow_rcons Hrow).
         move=> [] <- <-; by rewrite last_rcons eq_refl /=.
-  + move=> Hmax; have HmaxR:= (maxLtn_rconsK Hmax); move: Hmax => /maxLtn_last => HRnb.
+  + move=> Hmax; have HmaxR:= (allLtn_rconsK Hmax); move: Hmax => /allLtn_last => HRnb.
     rewrite -rcons_cons -!rcons_cat /RS !rev_rcons /=.
     rewrite -[RS_rev (rev (L ++ b :: R))]/(RS (L ++ b :: R))
             -[RS_rev (rev (L ++ R))]/(RS (L ++ R)).
     have {IHR} := IHR HmaxR => /=.
     move Hlb : (last_big (RS (L ++ b :: R)) b) => lb IHR.
     move: Hlb => /eqP; rewrite eq_sym => /last_bigP Htmp.
-    have Htmp2 : maxLeq (to_word (RS (L ++ b :: R))) b.
-      apply (perm_eq_maxLeq (perm_eq_RS (L ++ b :: R))).
-      move: HL; case L => [/= _ | L0 L' /=]; first by rewrite (maxLeqL (maxLtnW HmaxR)).
-      by rewrite maxL_cat (maxLeqL (maxLtnW HmaxR)) => /maxX_idPr ->.
+    have Htmp2 : allLeq (to_word (RS (L ++ b :: R))) b.
+      apply (perm_eq_allLeq (perm_eq_RS (L ++ b :: R))).
+      by rewrite allLeq_catE //= (allLtnW HmaxR) andbT HL /=.
     have {Htmp Htmp2} := Htmp (is_tableau_RS (L ++ b :: R)) Htmp2 => [] [] _.
     rewrite IHR => {IHR} Hj.
     apply (bisimul_instab (is_tableau_RS (L ++ R)) HRnb).
-    - apply maxLeq_is_row_rcons; apply (maxLeq_cat HL); by apply maxLtnW.
+    - apply allLeq_is_row_rcons; by rewrite allLeq_catE HL (allLtnW HmaxR).
       move=> j Hjlb; have:= Hj j Hjlb; by rewrite nth_set_nth /= (ltn_eqF Hjlb).
 Qed.
 
