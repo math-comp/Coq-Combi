@@ -178,7 +178,7 @@ Proof.
     rewrite rembig_iota; by apply perm_eq_refl.
   have:= IHn t' Hsize' Htab' Hperm'.
   rewrite size_yam_of_stdtab_rec Ht Hw => ->.
-  suff -> : (foldl (maxX (T:=nat_ordType)) w0 w) = n by [].
+  suff -> : (maxL w0 w) = n by [].
   move: Hperm; rewrite Hw /= => /maxL_perm_eq ->.
   by rewrite maxL_iota.
 Qed.
