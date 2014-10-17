@@ -1384,19 +1384,6 @@ Proof.
   apply leq_bigmax_cond; by apply ksupp_leqX_tabrowsk.
 Qed.
 
-Theorem greenRow_tab_eq_shape t1 t2 :
-  is_tableau t1 -> is_tableau t2 ->
-  (forall k, greenRow (to_word t1) k = greenRow (to_word t2) k) -> (shape t1 = shape t2).
-Proof.
-  move=> Htab1 Htab2 Heq.
-  have Hsh1 := is_part_sht Htab1; have Hsh2 := is_part_sht Htab2.
-  apply (part_sum_inj Hsh1 Hsh2).
-  move=> k. rewrite -(greenRow_tab k Htab1) -(greenRow_tab k Htab2).
-  by apply Heq.
-Qed.
-
-
-
 Lemma greenCol_inf_tab k t :
   is_tableau t -> greenCol (to_word t) k <= \sum_(l <- (shape t)) minn l k.
 Proof.
@@ -1427,7 +1414,22 @@ Theorem greenCol_tab k t :
   is_tableau t -> greenCol (to_word t) k = part_sum (conj_part (shape t)) k.
 Proof. move/greenCol_tab_min ->; by apply sum_conj. Qed.
 
-Theorem greenCol_tab_eq_shape t1 t2 :
+End GreenTab.
+
+
+
+Theorem greenRow_tab_eq_shape (T1 T2 : ordType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
+  is_tableau t1 -> is_tableau t2 ->
+  (forall k, greenRow (to_word t1) k = greenRow (to_word t2) k) -> (shape t1 = shape t2).
+Proof.
+  move=> Htab1 Htab2 Heq.
+  have Hsh1 := is_part_sht Htab1; have Hsh2 := is_part_sht Htab2.
+  apply (part_sum_inj Hsh1 Hsh2).
+  move=> k. rewrite -(greenRow_tab k Htab1) -(greenRow_tab k Htab2).
+  by apply Heq.
+Qed.
+
+Theorem greenCol_tab_eq_shape (T1 T2 : ordType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
   is_tableau t1 -> is_tableau t2 ->
   (forall k, greenCol (to_word t1) k = greenCol (to_word t2) k) -> (shape t1 = shape t2).
 Proof.
@@ -1440,6 +1442,4 @@ Proof.
   move=> k. rewrite -(greenCol_tab k Htab1) -(greenCol_tab k Htab2).
   by apply Heq.
 Qed.
-
-End GreenTab.
 
