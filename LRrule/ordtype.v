@@ -528,6 +528,7 @@ Section RemoveBig.
 
 Variable Alph : ordType.
 Let word := seq Alph.
+Let Z := (inhabitant Alph).
 
 Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
@@ -536,6 +537,11 @@ Fixpoint rembig w := (* Remove the last occurence of the largest letter from w *
   if w is a :: v then
     if allLtn v a then v else a :: rembig v
   else [::].
+
+Fixpoint posbig w := (* Position of the last occurence of the largest letter of w *)
+  if w is a :: v then
+    if allLtn v a then 0 else (posbig v).+1
+  else 0.
 
 Lemma size_rembig w : size (rembig w) = (size w).-1.
 Proof.
@@ -680,6 +686,201 @@ Proof.
   by apply Hlemma.
 Qed.
 
+Open Scope nat_scope.
+
+Lemma posbig_size_cons l s : posbig (l :: s) < size (l :: s).
+Proof.
+  elim H : s l => [//= | s0 s' IHs] l; rewrite -H /=.
+  case (allLtn s l) => //=.
+  rewrite H ltnS; by apply IHs.
+Qed.
+
+Lemma posbig_size s : s != [::] -> posbig s < size s.
+Proof. case: s => [//= | s l _]. by apply posbig_size_cons. Qed.
+
+Lemma posbigE u b v :
+  (allLeq u b && allLtn v b) = (posbig (u ++ b :: v) == size u).
+Proof.
+  apply/(sameP idP); apply(iffP idP).
+  - elim: u => [/= | u0 u /= IHu]; first by case (allLtn v b).
+    case (boolP (allLtn (u ++ b :: v) u0)) => [//= | Hall] /=.
+    rewrite eqSS => /IHu {IHu} /andP [] Hub Hvb.
+    rewrite Hub Hvb !andbT.
+    move: Hall; apply contraR; rewrite -ltnXNgeqX => H.
+    rewrite allLtn_catE /= H /=.
+    apply/andP; split; apply/allP => x.
+    * move: Hub => /allP X/X{X} /= H1; by apply (leqX_ltnX_trans H1 H).
+    * move: Hvb => /allP X/X{X} /= H1; by apply (ltnX_trans H1 H).
+  - move=> /andP [] Hu Hv.
+    elim: u Hu => [| u0 u IHu] /=; first by rewrite Hv.
+    move=> /andP [] Hub Hall; rewrite allLtn_catE /= ltnXNgeqX Hub /= andbF eqSS.
+    by apply IHu.
+Qed.
+
+Lemma posbig_take_dropE l s :
+  take (posbig (l :: s)) (rembig (l :: s)) ++
+     maxL l s
+     :: drop (posbig (l :: s)) (rembig (l :: s)) = l :: s.
+Proof.
+  elim Hs : s l => [//= | s0 s' IHs] l; rewrite -Hs /=.
+  case (boolP (allLtn s l)) => Hl /=.
+  + rewrite take0 drop0 /=; by have:= (allLtnW Hl) => /allLeqE ->.
+  + move: Hl; rewrite Hs allLtnConsE -leqXNgtnX /= -maxXL => /maxX_idPr ->.
+    by rewrite (IHs s0).
+Qed.
+
+Lemma nth_posbig l s : nth Z (l :: s) (posbig (l :: s)) = maxL l s.
+Proof.
+  rewrite /=; case: (boolP (allLtn s l)).
+  + by move/allLtnW/allLeqP => ->.
+  + elim Hs : s l => [//= | s0 s' IHs] /= l.
+    rewrite maxXC /maxX.
+    case (ltnXP s0 l) => Hl /= H.
+    * rewrite -(IHs l H).
+      suff -> : allLtn s' s0 = false by [].
+      apply negbTE; move: H; apply contra; apply sub_all => i /= Hi.
+      by apply (ltnX_trans Hi).
+    * case (boolP (allLtn s' s0)) => /= [|Hs0]; first by move /allLtnW/allLeqP ->.
+      by apply (IHs s0 Hs0).
+Qed.
+
+Lemma allLeq_posbig l s :
+  allLeq (take (posbig (l :: s)) (l :: s)) (maxL l s).
+Proof.
+  have:= maxLP l s; rewrite -{1}[l :: s](cat_take_drop (posbig (l :: s))).
+  by rewrite allLeq_catE => /andP [].
+Qed.
+
+Lemma allLtn_posbig l s :
+  allLtn (drop (posbig (l :: s)).+1 (l :: s)) (maxL l s).
+Proof.
+  elim Hs : s l => [//= | s0 s'] IHs l; rewrite -Hs /=.
+  have {IHs} := IHs (maxX l s0); rewrite /= maxXC /maxX.
+  case: (ltnXP s0 l) => Hs0; rewrite Hs /=.
+  - rewrite Hs0 /=; have:= (ltnXW Hs0) => /maxX_idPl ->.
+    case (boolP (allLtn s' l)) => Hall.
+    + rewrite drop0 /= => ->.
+      have /allLeqE -> := allLtnW Hall.
+      by rewrite Hs0.
+    + suff -> : allLtn s' s0 = false by [].
+      apply negbTE; move: Hall; apply contra; apply sub_all => i /= Hi.
+      by apply (ltnX_trans Hi).
+  - rewrite ltnXNgeqX Hs0 /=.
+    by move: Hs0 => /maxX_idPr ->.
+Qed.
+
+Lemma rembigE l s :
+  take (posbig (l :: s)) (l :: s) ++
+       drop (posbig (l :: s)).+1 (l :: s) = rembig (l :: s).
+Proof.
+  apply/eqP/rembigP; first by [].
+  set ss := l :: s; set pos := posbig (l :: s).
+  exists (take pos ss).
+  exists (nth Z ss pos).
+  exists (drop pos.+1 ss).
+  split; first by [].
+  + set sr := (X in _ ++ X); suff -> : sr = drop pos ss by rewrite cat_take_drop.
+    rewrite /sr /ss /pos /= {ss pos sr}.
+    elim H : s => [//= | s0 s']; rewrite -H.
+    case (boolP (allLtn s l)) => Hmax /=; first by rewrite drop0.
+    move: Hmax; rewrite H => Hmax /=.
+    case (boolP (allLtn s' s0)) => Hmax0 /=; first by rewrite drop0.
+    suff -> : allLtn s' l = false by [].
+    apply negbTE; move: Hmax; apply contra => /= Hmax.
+    apply allLtnCons; last exact Hmax.
+    case: s' Hmax0 Hmax {H} => [//= | s1 s']; rewrite !allLtnConsE.
+    rewrite -leqXNgtnX; by apply leqX_ltnX_trans.
+  + rewrite /ss /pos {ss pos} nth_posbig; by apply allLeq_posbig.
+  + rewrite /ss /pos {ss pos} nth_posbig; by apply allLtn_posbig.
+Qed.
+
+Lemma nth_lt_posbig i s : i < posbig s -> nth Z (rembig s) i = nth Z s i.
+Proof.
+  case H : s => [//= | s0 s'] => Hi.
+  rewrite -rembigE -H -{5}[s](cat_take_drop (posbig s)) !nth_cat.
+  by rewrite size_take posbig_size H //= Hi.
+Qed.
+
+Definition shift_pos    pos i := if i < pos then i else i.+1.
+Definition shiftinv_pos pos i := if i < pos then i else i.-1.
+
+Lemma shift_posK pos i : shiftinv_pos pos (shift_pos pos i) = i.
+Proof.
+  rewrite /shift_pos /shiftinv_pos.
+  case (ltnP i pos) => Hi.
+  + by rewrite Hi.
+  + by rewrite ltnNge (leq_trans Hi (leqnSn _)).
+Qed.
+
+Lemma shiftinv_posK pos i : i != pos -> shift_pos pos (shiftinv_pos pos i) = i.
+Proof.
+  rewrite /shift_pos /shiftinv_pos => Hipos.
+  case (ltnP i pos) => Hi.
+  + by rewrite Hi.
+  + case: i Hipos Hi => [| i] /=.
+    - move=> H1 H2; exfalso.
+      move: H2; rewrite leqn0 => /eqP H.
+      by rewrite H in H1.
+    - rewrite ltnNge => H1 H2.
+      rewrite eq_sym in H1.
+      by rewrite -ltnS ltn_neqAle H1 H2 /=.
+Qed.
+
+Lemma nth_rembig s i :
+  nth Z s (shift_pos (posbig s) i) = nth Z (rembig s) i.
+Proof.
+  case Hs : s => [/= | s0 s']; first by rewrite !nth_nil.
+  rewrite /shift_pos -rembigE nth_cat -Hs.
+  rewrite size_take posbig_size; last by rewrite Hs.
+  case (ltnP i (posbig s)) => Hipos.
+  + by rewrite nth_take.
+  + by rewrite nth_drop addSn subnKC.
+Qed.
+
+Lemma bad_if_leq i j : i <= j -> (if i < j then i else j) = i.
+Proof. move=> Hi; case (ltnP i j) => //= Hj; apply /eqP; by rewrite eqn_leq Hi Hj. Qed.
+
+Lemma nth_inspos s pos i n :
+  pos <= size s ->
+  nth Z ((take pos s) ++ n :: (drop pos s)) i =
+  if i == pos then n else nth Z s (shiftinv_pos pos i).
+Proof.
+  move=> Hpos.
+  case: (altP (i =P pos)) => [-> {i} | Hipos].
+    by rewrite nth_cat size_take (bad_if_leq Hpos) ltnn subnn.
+  rewrite /shiftinv_pos nth_cat size_take.
+  case (ltnP pos (size s)) => [{Hpos} Hpos | Hpos2].
+  - case: (ltnP i pos) => Hi; first by rewrite (nth_take _ Hi).
+    have {Hi Hipos} Hi : pos < i by rewrite ltn_neqAle eq_sym Hipos Hi.
+    case: i Hi => [//= | i] /=; rewrite ltnS => Hi.
+    by rewrite (subSn Hi) /= nth_drop (subnKC Hi).
+  - have {Hpos Hpos2} Hpos : pos = size s by apply/eqP; rewrite eqn_leq Hpos Hpos2.
+    subst pos.
+    case: (ltnP i (size s)) => Hisz; first by rewrite (nth_take _ Hisz).
+    have {Hipos Hisz} : size s < i by rewrite ltn_neqAle eq_sym Hisz Hipos.
+    case: i => [//= | i] /=; rewrite ltnS => Hi.
+    by rewrite (subSn Hi) /= nth_drop (subnKC Hi).
+Qed.
+
+Lemma shift_pos_incr pos i j : i <= j -> shift_pos pos i <= shift_pos pos j.
+Proof.
+  move=> Hij; rewrite /shift_pos; case (ltnP j pos) => Hj.
+  - by rewrite (leq_ltn_trans Hij Hj).
+  - case (ltnP i pos) => Hi.
+    + by apply (leq_trans Hij).
+    + by apply (leq_ltn_trans Hij).
+Qed.
+
+Lemma shiftinv_pos_incr pos i j : i <= j -> shiftinv_pos pos i <= shiftinv_pos pos j.
+Proof.
+  move=> Hij; rewrite /shiftinv_pos; case (ltnP j pos) => Hj.
+  - by rewrite (leq_ltn_trans Hij Hj).
+  - case (ltnP i pos) => Hi.
+    + have := (leq_trans Hi Hj); by case j.
+    + case: i Hij {Hj Hi} => [//= | i] /=.
+      by case: j.
+Qed.
+
 End RemoveBig.
 
 Fact leq_order : Order.axiom leq.
@@ -703,6 +904,9 @@ Proof. by rewrite /ltnX_op leqXE ltn_neqAle. Qed.
 Lemma maxL_iota n i : maxL i (iota i.+1 n) = i + n.
 Proof. elim: n i => [//= | n IHn] /= i. by rewrite /maxX ltnXnatE ltnSn IHn addSnnS. Qed.
 
+Lemma maxL_iota_n n : maxL 0 (iota 1 n) = n.
+Proof. by rewrite -{2}[n]add0n maxL_iota. Qed.
+
 Lemma rembig_iota n i : rembig (iota i n.+1) = iota i n.
 Proof.
   elim: n i => [//= | n IHn] i.
@@ -710,3 +914,18 @@ Proof.
   by rewrite ltnXnatE ltnNge leqnSn /=.
 Qed.
 
+Module OrdNotations.
+
+Notation "x <=A y" := (x <= y)%Ord (at level 70, y at next level).
+Notation "x >=A y" := (x >= y)%Ord (at level 70, y at next level, only parsing).
+Notation "x <A y"  := (x < y)%Ord (at level 70, y at next level).
+Notation "x >A y"  := (x > y)%Ord (at level 70, y at next level, only parsing).
+
+(*
+Notation "[A m <= n < p ]" := ((m <=A n) && (n <A p)) (at level 71).
+Notation "[A m <= n <= p ]" := ((m <=A n) && (n <=A p)) (at level 71).
+Notation "[A m < n <= p ]" := ((m <A n) && (n <=A p)) (at level 71).
+Notation "[A m < n < p ]" := ((m <A n) && (n <A p)) (at level 71).
+*)
+
+End OrdNotations.

@@ -1410,7 +1410,7 @@ Proof.
     rewrite /green_rel /= => -> //=.
     * move=> a b c /=; rewrite -!leqXNgtnX; by apply leqX_trans.
     * move: Hrow; rewrite /sorted; case: t0 => [//=| l t0].
-      have Req : leqX_op =2 (fun a b : Alph => ~~ (b <A a))
+      have Req : leqX_op =2 (fun a b : Alph => ~~ (b < a)%Ord)
         by move=> i j /=; apply leqXNgtnX.
       by rewrite (eq_path Req).
 Qed.
