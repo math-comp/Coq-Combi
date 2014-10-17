@@ -1487,7 +1487,6 @@ Proof.
   apply greenRow_invar_plactic; by apply congr_RS.
 Qed.
 
-
 Corollary plactic_shapeRS_row_proof u v : u =Pl v -> shape (RS u) = shape (RS v).
 Proof.
   move=> Hpl.
@@ -1560,3 +1559,23 @@ Proof.
 Qed.
 
 End GreenInvariants.
+
+Corollary greenRow_eq_shape_RS (S T : ordType) (s : seq S) (t : seq T) :
+  (forall k, greenRow s k = greenRow t k) -> (shape (RS s) = shape (RS t)).
+Proof.
+  move=> Hgreen; apply greenRow_tab_eq_shape; try apply is_tableau_RS.
+  move=> k.
+  rewrite -(greenRow_invar_plactic (u := s)); last by apply congr_RS.
+  rewrite -(greenRow_invar_plactic (u := t)); last by apply congr_RS.
+  by apply Hgreen.
+Qed.
+
+Corollary greenCol_eq_shape_RS (S T : ordType) (s : seq S) (t : seq T) :
+  (forall k, greenCol s k = greenCol t k) -> (shape (RS s) = shape (RS t)).
+Proof.
+  move=> Hgreen; apply greenCol_tab_eq_shape; try apply is_tableau_RS.
+  move=> k.
+  rewrite -(greenCol_invar_plactic (u := s)); last by apply congr_RS.
+  rewrite -(greenCol_invar_plactic (u := t)); last by apply congr_RS.
+  by apply Hgreen.
+Qed.
