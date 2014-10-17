@@ -16,7 +16,7 @@ Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq 
 Require Import finset perm fingroup path.
 
 Require Import subseq partition permuted ordtype std stdtab ordcast.
-Require Import schensted congr plactic green greeninv.
+Require Import schensted congr plactic green greeninv stdwork.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -204,8 +204,7 @@ Proof.
 Qed.
 
 Lemma invseqK s0 s t tn :
-  (* Wrong - need to standardize t *)
-  invseq (s0 :: s) (rcons t tn) -> invseq (rembig (s0 :: s)) t.
+  invseq (s0 :: s) (rcons t tn) -> invseq (rembig (s0 :: s)) (std t).
 Proof.
   rewrite /invseq => /andP [] /linvseqP Hst /linvseqP Hts.
   apply/andP; split; apply/linvseqP => i.
@@ -229,24 +228,23 @@ Proof.
   rewrite -!RSmapE [shape (RSmap t).1]shape_RSmap_eq !RSmapE.
   case Hs : s Hn Hinv Hsize => [//= | s0 s']; rewrite -Hs => Hn Hinv Hsize.
   rewrite Hs (rembig_RS_last_big s0 s') shape_append_nth -Hs.
-  set max := foldl _ _ _; set irow := last_big _ _.
+  set irow := last_big _ _.
   move=> Hshape.
   have Hszrem : size (rembig (s0 :: s')) = n.
     by move: Hn => /eqP; rewrite size_rembig Hs /= eqSS => /eqP.
   case/lastP Ht : t => [//= | t' tn].
     exfalso; move: Hsize; by rewrite Hn Ht.
   have:= Hinv; rewrite Hs Ht => /invseqK Hrec.
-  have Hsize' : size (rembig (s0 :: s')) = size t'.
-    by rewrite size_rembig -Hs Hsize Ht size_rcons.
+  have Hsize' : size (rembig (s0 :: s')) = size (std t').
+    by rewrite size_rembig -Hs Hsize Ht size_rcons /std size_std_rec.
   have {IHn} IHn := IHn _ _ Hszrem Hrec Hsize'.
   move: Hshape; rewrite -Hs Ht /RSmap rev_rcons /=.
   rewrite -[RSmap_rev (rev t')]/(RSmap t').
   case HRSt : (RSmap t') => [t0 rowt'].
   case Hins : (instabnrow t0 tn) => [tr irowt'] /=.
-  move: IHn; rewrite -Hs HRSt /= => ->.
+  move: IHn; rewrite -Hs RSmap_std HRSt /= => ->.
   rewrite shape_stdtab_of_yam => /incr_nth_inj ->.
   congr (append_nth _ _ _).
-  rewrite /max.
   admit.
 Qed.
 
