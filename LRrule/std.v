@@ -143,6 +143,9 @@ Proof.
   by rewrite size_cat /= addnS -size_cat cat_take_drop IHn.
 Qed.
 
+Lemma size_std s : size (std s) = size s.
+Proof. by apply size_std_rec. Qed.
+
 Lemma std_is_std s : is_std (std s).
 Proof.
   rewrite /is_std /std size_std_rec perm_eq_sym.
