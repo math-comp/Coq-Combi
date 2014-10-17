@@ -23,19 +23,9 @@ Unset Printing Implicit Defensive.
 
 Open Scope bool.
 
-Notation "x <=A y" := (x <= y)%Ord (at level 70, y at next level).
-Notation "x >=A y" := (x >= y)%Ord (at level 70, y at next level, only parsing).
-Notation "x <A y"  := (x < y)%Ord (at level 70, y at next level).
-Notation "x >A y"  := (x > y)%Ord (at level 70, y at next level, only parsing).
+Import OrdNotations.
 
 Section Defs.
-
-(*
-Notation "[A m <= n < p ]" := ((m <=A n) && (n <A p)) (at level 71).
-Notation "[A m <= n <= p ]" := ((m <=A n) && (n <=A p)) (at level 71).
-Notation "[A m < n <= p ]" := ((m <A n) && (n <=A p)) (at level 71).
-Notation "[A m < n < p ]" := ((m <A n) && (n <A p)) (at level 71).
-*)
 
 Variable Alph : ordType.
 Let word := seq Alph.
