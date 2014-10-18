@@ -84,6 +84,7 @@ VFILES:=congr.v\
   extract.v\
   greeninv.v\
   green.v\
+  invseq.v\
   ordcast.v\
   ordtype.v\
   partition.v\

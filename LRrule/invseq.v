@@ -16,7 +16,7 @@ Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq 
 Require Import finset perm fingroup path.
 
 Require Import subseq partition permuted ordtype std stdtab ordcast.
-Require Import schensted congr plactic green greeninv stdwork.
+Require Import schensted congr plactic green greeninv.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
