@@ -47,6 +47,9 @@ Proof. rewrite /is_std => /perm_eq_mem ->; by rewrite mem_iota /= add0n. Qed.
 Lemma std_uniq u : is_std u -> uniq u.
 Proof. rewrite /is_std => /perm_eq_uniq ->. by apply iota_uniq. Qed.
 
+Lemma maxStd s0 s : is_std (s0 :: s) -> maxL s0 s = size s.
+Proof. rewrite /is_std => /= /maxL_perm_eq /= ->. by rewrite maxL_iota_n. Qed.
+
 Definition wordperm n (p : 'S_n) := [seq val (p i) | i <- enum 'I_n].
 
 Open Scope group_scope.
