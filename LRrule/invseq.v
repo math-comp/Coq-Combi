@@ -321,6 +321,12 @@ Proof.
   apply/andP; split; apply/linvseqP => i Hi.
   - rewrite (nth_any _ (inhabitant nat_ordType) Hi) -nth_rembig.
     rewrite (nth_map (size (s0 :: s))); first last.
+      set si := shift_pos _ _; have Hsipos : si != posbig (s0 :: s).
+        rewrite /si /shift_pos; case: (ltnP i (posbig (s0 :: s))).
+        + by move /ltn_eqF ->.
+        + by rewrite -ltnS => /gtn_eqF ->.
+      rewrite ltn_neqAle -ltnS -(@size_rcons _ t tn) -(size_invseq Hinv).
+      
       admit.
     rewrite (posbig_invseq Hinv).
     have Hpos : shift_pos tn i < size (s0 :: s).
