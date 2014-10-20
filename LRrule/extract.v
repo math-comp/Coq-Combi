@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm.
-Require Import subseq partition ordtype schensted congr plactic.
+Require Import subseq partition ordtype schensted congr plactic green greeninv std.
 
 Require Import Wf_nat.
 Extraction Inline Wf_nat.lt_wf_rec1 Wf_nat.lt_wf_rec
@@ -45,4 +45,9 @@ Extract Constant beq_nat => "( = )".
 Let RSbijnat := (@RSbij nat_ordType).
 Let RSbijinvnat := (@RSbijinv nat_ordType).
 
-Extraction "extract/schensted.ml" RS RSbijnat RSbijinvnat plactcongr.
+Extraction "extract/schensted.ml"
+           RS RSbijnat RSbijinvnat
+           plactcongr
+           greenRow greenCol
+           is_std std.std
+.
