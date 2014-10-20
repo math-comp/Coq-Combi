@@ -156,6 +156,19 @@ Proof.
   - rewrite nth_mkseq //=; apply nth_index; by rewrite (mem_std _ Hstd).
 Qed.
 
+Lemma invseqE s t1 t2 : invseq s t1 -> invseq s t2 -> t1 = t2.
+Proof.
+  move=> Hinv1 Hinv2.
+  have Hsz: size t1 = size t2 by rewrite -(size_invseq Hinv1) -(size_invseq Hinv2).
+  apply (eq_from_nth (x0 := size s) Hsz) => i Hi1.
+  have:= Hi1; rewrite Hsz => Hi2.
+  have := Hinv1; rewrite /invseq => /andP [] _ Ht1s.
+  have Hnth1 := linvseq_ltn_szt Ht1s Hi1.
+  rewrite (invseq_nthE Hinv2 Hnth1 Hi2).
+  rewrite -Hsz.
+  by move: Ht1s => /linvseqP ->.
+Qed.
+
 Section KsuppInj.
 
 Variable s t : seq nat.
@@ -239,20 +252,19 @@ Proof.
     by apply val2pos_inj.
   + apply/forallP => ptmp; apply/implyP => /imsetP [] p Hp -> {ptmp}.
     have:= Hall p; rewrite Hp /= /extractpred.
-(**)
-   move/val2pos_enum ->; rewrite -map_comp /=.
-   set f := (X in map X _); have {f} /eq_map -> : f =1 id.
-     rewrite /f => i /=.
-     rewrite (tnth_nth (size s)) /=.
-     by have:= Hinvst => /linvseqP ->.
-   set l := map _ _; have : subseq l [seq val x | x  <- enum 'I_(size s)].
-     apply map_subseq; rewrite /enum_mem.
-     set pr := (X in subseq _ (filter X _)).
-     have /eq_filter -> : pr =1 predT by [].
-     rewrite filter_predT; by apply filter_subseq.
-   move /subseq_sorted; apply; first by move=> a b c H1 H2; by apply (leqX_trans H1 H2).
-   rewrite val_enum_ord.
-   apply iota_sorted.
+    move/val2pos_enum ->; rewrite -map_comp /=.
+    set f := (X in map X _); have {f} /eq_map -> : f =1 id.
+      rewrite /f => i /=.
+      rewrite (tnth_nth (size s)) /=.
+      by have:= Hinvst => /linvseqP ->.
+    set l := map _ _; have : subseq l [seq val x | x  <- enum 'I_(size s)].
+      apply map_subseq; rewrite /enum_mem.
+      set pr := (X in subseq _ (filter X _)).
+      have /eq_filter -> : pr =1 predT by [].
+      rewrite filter_predT; by apply filter_subseq.
+    move /subseq_sorted; apply; first by move=> a b c H1 H2; by apply (leqX_trans H1 H2).
+    rewrite val_enum_ord.
+    apply iota_sorted.
 Qed.
 
 End KsuppInj.
@@ -438,7 +450,7 @@ Proof.
   move: IHn; rewrite -Hs RSmap_std HRSt /= => ->.
   rewrite shape_stdtab_of_yam => /incr_nth_inj ->.
   congr (append_nth _ _ _).
-  
+
   have := eq_refl (sumn (shape (RSmap t').1)).
   rewrite {1}RSmapE (shape_RSmap_eq t') shape_rowseq_eq_size HRSt /= => /eqP <-.
   have := (eqP (size_RS t')); rewrite /size_tab => ->.
@@ -447,5 +459,20 @@ Proof.
   move: Hn; rewrite Hs /= => /eqP; by rewrite eqSS => /eqP <-.
 Qed.
 
+Corollary invseqRSE s t :
+  invseq s t -> RStabmap s = ((RStabmap t).2, (RStabmap t).1).
+Proof.
+  move=> Hinv.
+  rewrite -(invseqRSPQE Hinv) (invseqRSPQE (invseq_sym Hinv)).
+  by case (RStabmap s).
+Qed.
+
+Corollary invstdRSE s :
+  is_std s -> let (P, Q) := RStabmap (invstd s) in RStabmap s = (Q, P).
+Proof.
+  move=> Hstd.
+  case H : (RStabmap (invstd s)) => [P Q].
+  by rewrite (invseqRSE (is_std_invseq Hstd)) H.
+Qed.
 
 End InvSeq.
