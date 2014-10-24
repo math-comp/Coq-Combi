@@ -754,7 +754,7 @@ Proof. exists (last_big (RS (a :: v)) (maxL a v)); by apply rembig_RS_last_big. 
 End RemoveBig.
 
 
-Section RestrIntervBig.
+Section RestrIntervSmall.
 
 Variable Alph : ordType.
 Let word := seq Alph.
@@ -801,7 +801,7 @@ Proof.
   by rewrite Habc !mem_cat inE eq_refl /= !orbT.
 Qed.
 
-Lemma restr_big u v : u =Pl v -> filter infL u =Pl filter infL v.
+Lemma restr_small u v : u =Pl v -> filter infL u =Pl filter infL v.
 Proof.
   have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans.
   move: v; apply gencongr_ind; first by apply Hrefl.
@@ -819,10 +819,10 @@ Proof.
     by rewrite -(Htrans _ _ H); apply Hrefl.
 Qed.
 
-End RestrIntervBig.
+End RestrIntervSmall.
 
 
-Section RestrIntervSmall.
+Section RestrIntervBig.
 
 Variable Alph : ordType.
 Let Dual := dual_ordType Alph.
@@ -846,11 +846,78 @@ Proof.
   by rewrite dual_leqX.
 Qed.
 
-Lemma restr_small u v : u =Pl v -> filter supL u =Pl filter supL v.
+Lemma restr_big u v : u =Pl v -> filter supL u =Pl filter supL v.
 Proof.
   move=> H; rewrite [filter _ u]supL_infLdualE [filter _ v]supL_infLdualE.
-  rewrite -plact_from_dualE; apply restr_big.
+  rewrite -plact_from_dualE; apply restr_small.
   by rewrite -plact_dualE.
 Qed.
 
-End RestrIntervSmall.
+End RestrIntervBig.
+
+
+
+Section IncrMap.
+
+Variable T1 T2 : ordType.
+Variable F : T1 -> T2.
+Variable u v : seq T1.
+Hypothesis Hincr : {in u &, forall x y, x <A y -> F x <A F y}.
+
+Notation "a =Pl b" := (plactcongr a b) (at level 70).
+
+Lemma Fnondecr : {in u &, forall x y, x <=A y -> F x <=A F y}.
+Proof.
+  move=> x y Hx Hy /=; rewrite leqX_eqVltnX => /orP [/eqP -> //=| H].
+  by rewrite leqX_eqVltnX (Hincr Hx Hy H) orbT.
+Qed.
+
+Lemma subset_abc l a b c r :
+  {subset l ++ [:: a; b; c] ++ r <= u} -> [/\ a \in u, b \in u & c \in u].
+Proof. move=> H; split; apply H; by rewrite !mem_cat !inE /= eq_refl !orbT. Qed.
+
+Lemma plact_map_in_incr : u =Pl v -> (map F u) =Pl (map F v).
+Proof.
+  have:= @plactcongr_equiv T1 => /equivalence_relP [] Hrefl1 Htrans1.
+  have:= @plactcongr_equiv T2 => /equivalence_relP [] Hrefl2 Htrans2.
+  have:= @plactcongr_is_congr T2 => Hcongr2 H.
+  suff : {subset v <= u} /\ [seq F i | i <- u] =Pl [seq F i | i <- v] by move => [].
+  move: v H; apply gencongr_ind; first by split; last by apply Hrefl2.
+  move=> l v1 r v2 [] Hperm Hu Hrule.
+  split.
+  - move=> i; have {Hperm} := Hperm i.
+    rewrite !mem_cat => Hperm /or3P [] H; apply Hperm.
+    + by rewrite H ?orbT.
+    + have /allP Hall := plact_homog v1.
+      have {Hall} /perm_eq_mem -> := Hall _ Hrule.
+      by rewrite H ?orbT.
+    + by rewrite H ?orbT.
+  rewrite -(@Htrans2 [seq F i | i <- l ++ v1 ++ r]);
+    last by rewrite -(Htrans2 _ _ Hu); apply Hrefl2.
+  rewrite {Hu} !map_cat.
+  apply (congr_catr Hcongr2); apply (congr_catl Hcongr2).
+  apply rule_gencongr => /=; move: Hrule => /plactruleP [].
+  + move/plact1P => [] a [] b [] c [] Hord Hv1; rewrite Hv1 => -> {v2}; subst v1.
+    rewrite !mem_cat /=; move: Hord => /andP [].
+    have:= subset_abc Hperm => [] [] Ha Hc Hb.
+    move => /(Fnondecr Ha Hb) -> /(Hincr Hb Hc) -> /=.
+    by rewrite mem_seq1 eq_refl ?orbT.
+  + move/plact1iP => [] a [] b [] c [] Hord -> {v2} Hv1; rewrite Hv1; subst v1.
+    rewrite !mem_cat /=; move: Hord => /andP [].
+    have:= subset_abc Hperm => [] [] Hc Ha Hb.
+    move => /(Fnondecr Ha Hb) -> /(Hincr Hb Hc) -> /=.
+    by rewrite mem_seq1 eq_refl ?orbT.
+  + move/plact2P => [] a [] b [] c [] Hord Hv1; rewrite Hv1 => -> {v2}; subst v1.
+    rewrite !mem_cat /=; move: Hord => /andP [].
+    have:= subset_abc Hperm => [] [] Hb Ha Hc.
+    move => /(Hincr Ha Hb) -> /(Fnondecr Hb Hc) -> /=.
+    by rewrite mem_seq1 eq_refl ?orbT.
+  + move/plact2iP => [] a [] b [] c [] Hord -> {v2} Hv1; rewrite Hv1; subst v1.
+    rewrite !mem_cat /=; move: Hord => /andP [].
+    have:= subset_abc Hperm => [] [] Hb Hc Ha.
+    move => /(Hincr Ha Hb) -> /(Fnondecr Hb Hc) -> /=.
+    by rewrite mem_seq1 eq_refl ?orbT.
+Qed.
+
+End IncrMap.
+
