@@ -475,4 +475,22 @@ Proof.
   by rewrite (invseqRSE (is_std_invseq Hstd)) H.
 Qed.
 
+Corollary RSTabmapstdE (T : ordType) (w : seq T) :
+  (RStabmap (invstd (std w))).1 = (RStabmap (std w)).2.
+Proof.
+  have := invstdRSE (std_is_std w).
+  by case (RStabmap (invstd (std w))) => [P Q] /= ->.
+Qed.
+
+Corollary RSinvstdE (T : ordType) (w : seq T) :
+  RS (invstd (std w)) = (RStabmap w).2.
+Proof.
+  rewrite -RStabmapE RSTabmapstdE.
+  rewrite /RStabmap; set Ls := LHS; set Rs := RHS.
+  have {Ls} -> : Ls = stdtab_of_yam (RSmap (std w)).2 by rewrite /Ls; case: RSmap.
+  have {Rs} -> : Rs = stdtab_of_yam (RSmap w).2 by rewrite /Rs; case: RSmap.
+  congr (stdtab_of_yam _).
+  by apply RSmap_std.
+Qed.
+
 End InvSeq.

@@ -55,6 +55,13 @@ Proof.
   rewrite perm_eq_sym; apply (perm_eq_RS (wordperm p)).
 Qed.
 
+Lemma RSstdE (p : seq nat) : is_stdtab (RS p) = is_std p.
+Proof.
+  rewrite /is_stdtab is_tableau_RS /=.
+  apply/(sameP idP); apply(iffP idP) => Hstd; apply (perm_eq_std Hstd);
+    first rewrite perm_eq_sym; apply perm_eq_RS.
+Qed.
+
 Fixpoint stdtab_of_yam y :=
   if y is y0 :: y' then
     append_nth (stdtab_of_yam y') (size y') y0
@@ -345,6 +352,9 @@ Canonical rstabpair_eqType := Eval hnf in EqType rstabpair rstabpair_eqMixin.
 Lemma pqpair_inj : injective pqpair. Proof. exact: val_inj. Qed.
 
 Definition RStabmap (w : seq T) := let (p, q) := (RSmap w) in (p, stdtab_of_yam q).
+
+Lemma RStabmapE (w : seq T) : (RStabmap w).1 = RS w.
+Proof. rewrite /RStabmap -RSmapE; by case RSmap. Qed.
 
 Theorem RStabmap_spec w : is_RStabpair (RStabmap w).
 Proof.
