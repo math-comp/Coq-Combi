@@ -646,7 +646,7 @@ Proof.
     have:= ltnX_leqX_trans H1 H2; by rewrite ltnXnn.
 Qed.
 
-Lemma perm_eq_nilF x u :
+Lemma perm_eq_nilF (T : eqType) (x : T) (u : seq T) :
   perm_eq [::] (x :: u) = false.
 Proof.
   apply/(sameP idP); apply(iffP idP) => //=.
