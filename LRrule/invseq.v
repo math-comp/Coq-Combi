@@ -178,6 +178,13 @@ Proof.
   by move: Ht1s => /linvseqP ->.
 Qed.
 
+Lemma invstdK s : is_std s -> invstd (invstd s) = s.
+Proof.
+  move=> Hstd; apply (invseqE (s := invstd s)).
+  + apply invseq_invstd; by apply invstd_is_std.
+  + apply invseq_sym; by apply invseq_invstd.
+Qed.
+
 Section KsuppInj.
 
 Variable s t : seq nat.
