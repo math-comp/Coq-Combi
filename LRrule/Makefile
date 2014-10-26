@@ -48,7 +48,6 @@ COQDOCLIBS?=
 #                        #
 ##########################
 
-
 OPT?=
 COQDEP?=$(COQBIN)coqdep -c
 COQFLAGS?=-q $(OPT) $(COQLIBS) $(OTHERFLAGS) $(COQ_XML)
@@ -91,6 +90,7 @@ VFILES:=congr.v\
   permuted.v\
   plactic.v\
   schensted.v\
+  shuffle.v\
   stdtab.v\
   std.v\
   subseq.v\
