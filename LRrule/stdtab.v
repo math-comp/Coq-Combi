@@ -382,3 +382,28 @@ Qed.
 
 End RobinsonSchensted.
 
+
+Section Finset.
+
+Variable n : nat.
+Definition enum_stdtabn := [seq RS p | p <- enum_stdn n ].
+
+Lemma enum_stdtabnE t : ((is_stdtab t) && (size_tab t == n)) = (t \in enum_stdtabn).
+Proof.
+  apply/(sameP idP); apply(iffP idP).
+  + move/mapP => [] p; rewrite -enum_stdnE => /andP [] Hstd /eqP <- ->.
+    by rewrite RSstdE Hstd size_RS.
+  + rewrite /enum_stdtabn /is_stdtab => /andP [] /andP [] Htab Hstd Hsize.
+    apply/mapP; exists (to_word t); last by apply esym; apply RS_tabE.
+    by rewrite -enum_stdnE Hstd -size_to_word Hsize.
+Qed.
+
+Definition stdtabn := seq_sub_finType enum_stdtabn.
+
+Lemma stdtabnP (s : stdtabn) : is_stdtab (val s).
+Proof. case: s => s /=; by rewrite -enum_stdtabnE => /andP []. Qed.
+
+Lemma size_sdtabn (s : stdtabn) : size_tab (val s) = n.
+Proof. case: s => s /=; by rewrite -enum_stdtabnE => /andP [] _ /eqP. Qed.
+
+End Finset.

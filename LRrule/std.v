@@ -126,6 +126,31 @@ Qed.
 End StandardWords.
 
 
+Section Finset.
+
+Variable n : nat.
+Definition enum_stdn := [seq wordperm p | p <- enum 'S_n].
+
+Lemma enum_stdnE s : ((is_std s) && (size s == n)) = (s \in enum_stdn).
+Proof.
+  apply/(sameP idP); apply(iffP idP).
+  + move/mapP => [] p _ ->.
+    by rewrite wordperm_std /= /wordperm size_map size_enum_ord.
+  + rewrite /enum_stdn => /andP [] /is_stdP [] p Hstd /eqP Hsize.
+    apply/mapP; rewrite -Hsize; exists p; last exact Hstd.
+    by rewrite mem_enum.
+Qed.
+
+Definition stdn := seq_sub_finType enum_stdn.
+
+Lemma stdnP (s : stdn) : is_std (val s).
+Proof. case: s => s /=; by rewrite -enum_stdnE => /andP []. Qed.
+
+Lemma size_sdtn (s : stdn) : size (val s) = n.
+Proof. case: s => s /=; by rewrite -enum_stdnE => /andP [] _ /eqP. Qed.
+
+End Finset.
+
 Section Standardisation.
 
 Variable Alph : ordType.
