@@ -14,7 +14,6 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
-Require Import subseq.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -67,6 +66,15 @@ Section Partition.
 
   Lemma part0 sh : is_part sh -> sumn sh = 0 -> sh = [::].
   Proof. move/part_head_non0; by case: sh => //= [] [|s0]. Qed.
+
+  Lemma size_part sh : is_part sh -> size sh <= sumn sh.
+  Proof.
+    elim: sh => [//= | s0 sh IHsh] /= /andP [] Hhead Hpart.
+    apply (leq_ltn_trans (IHsh Hpart)).
+    rewrite -{1}[sumn sh]add0n ltn_add2r.
+    have /part_head_non0 /= : is_part (s0 :: sh) by rewrite /= Hhead Hpart.
+    by rewrite lt0n.
+  Qed.
 
   Lemma is_part_rconsK sh sn : is_part (rcons sh sn) -> is_part sh.
   Proof.
@@ -371,3 +379,4 @@ Section Partition.
   Qed.
 
 End Partition.
+
