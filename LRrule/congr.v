@@ -351,9 +351,6 @@ Proof. move/rewrite_path_min=> H/H{H} H x y /rtransP Hrew; by apply H. Qed.
 End Depend.
 
 
-(* Congruence closure of an homogeneous congruence rewriting rule             *)
-(* Closure of the rule by congruence, the result is a rule, on which we will  *)
-(* apply the transitive closure procedure.                                    *)
 Section CongruenceClosure.
 
 Variable Alph : eqType.
@@ -379,6 +376,7 @@ Proof.
 Qed.
 
 Definition congr := (rtrans Hinvar perm_eq_bound).
+Definition congr_class := (rclass Hinvar perm_eq_bound).
 
 Lemma rule_congr x y : y \in rule x -> congr x y.
 Proof. apply rule_rtrans. apply perm_eq_refl. Qed.
@@ -402,6 +400,9 @@ Proof.
     rewrite (@Htrans _ (a ++ x ++ c)); last apply Hx.
     by apply rule_congr; apply Hcongr.
 Qed.
+
+Lemma congr_classP x y : congr x y = (y \in congr_class x).
+Proof. by rewrite /congr /congr_class /rtrans. Qed.
 
 End CongruenceClosure.
 
@@ -479,6 +480,10 @@ Hypothesis Hsym : forall u v : word, v \in rule u -> u \in rule v.
 Hypothesis Hhomog : forall u : word, all (perm_eq u) (rule u).
 
 Definition gencongr := (congr (congrrule_homog Hhomog)).
+Definition genclass := (congr_class (congrrule_homog Hhomog)).
+
+Lemma genclassP x y : gencongr x y = (y \in genclass x).
+Proof. rewrite /gencongr /gencongr. by apply congr_classP. Qed.
 
 Lemma gencongr_equiv : equivalence_rel gencongr.
 Proof. apply equiv_congr; by apply congrrule_sym. Qed.
