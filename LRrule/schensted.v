@@ -1323,7 +1323,7 @@ Section Statistics.
     rewrite /size_tab -instabnrowE => Htab.
     have {Htab} := (shape_instabnrow l Htab).
     case (instabnrow t l) => [tr row] /= -> {tr l}.
-    by rewrite sum_incr_nth.
+    by rewrite sumn_incr_nth.
   Qed.
 
   Theorem size_RS w : size_tab (RS w) == size w.
