@@ -424,44 +424,6 @@ Section Partition.
     have:= Hpart2; by rewrite -{1}(shape_rowseq_hyper_yam Hpart2) /hyper_yam rev_rcons.
   Qed.
 
-(*
-  Fixpoint list_yam n :=
-    if n is n.+1 then
-      flatten [seq [seq i :: y |
-                    i <- iota 0 (size (shape_rowseq y)).+1 &
-                      is_in_corner (shape_rowseq y) i]
-              | y <- list_yam n]
-    else [:: [::]].
-  Fixpoint list_yam n :=
-    if n is n.+1 then
-      flatten [seq [seq i :: y | i <- iota 0 (size y).+1
-                                   & is_out_corner (shape_rowseq (i :: y)) i]
-              | y <- list_yam n]
-    else [:: [::]].
-
-  Lemma list_yamP y : is_yam y = (y \in (list_yam (size y))).
-  Proof.
-    move Hn : (size y) => n; elim: n y Hn => [//= | n IHn].
-      move=> y /eqP/nilP -> /=; by rewrite mem_seq1.
-    case=> [//= | y0 y].
-    move/eqP; rewrite eqSS => /eqP /IHn {IHn} Hy /=.
-    rewrite Hy.
-    apply/(sameP idP); apply(iffP idP).
-    - move/flatten_mapP=> [] x Hx; rewrite inE => /orP [].
-      + move/eqP => [] -> Hxy; subst x.
-        rewrite Hx andbT; apply is_part_incr_nth => //=.
-        apply is_part_shyam; by rewrite Hy.
-      + move/mapP=> [] i; rewrite mem_filter mem_iota add1n ltnS => /and3P [] Hcorn Hipos Hi.
-        move => [] -> {y0} Hxy; subst x.
-        rewrite Hx andbT; apply is_part_incr_nth => //=.
-        * apply is_part_shyam; by rewrite Hy.
-    - move/andP=> [] Hpart Hlst.
-      apply/flatten_mapP; exists y; first exact Hlst.
-      rewrite inE; case: y0 Hpart => [//= | y0]; first by rewrite eq_refl.
-      move=> Hpart; apply/orP; right; apply /mapP; exists y0.+1 => //=.
-      rewrite mem_filter mem_iota /= add1n ltnS.
-*)
-
 End Partition.
 
 
@@ -505,7 +467,7 @@ Definition is_part_of_n   sm       := [pred p | (sumn p == sm)   & is_part p ].
 Definition is_part_of_ns  sm sz    := [pred p | (size p == sz)   & is_part_of_n sm p].
 Definition is_part_of_nsk sm sz mx := [pred p | (head 1 p <= mx) & is_part_of_ns sm sz p].
 
-Lemma list_partnskP sm sz mx :
+Lemma list_partnsk_allP sm sz mx :
   mx >= 1 -> all (is_part_of_nsk sm sz mx) (list_partnsk sm sz mx).
 Proof.
   move=> Hmx; apply/allP => /=.
@@ -551,14 +513,14 @@ Proof.
   move=> Hx p. case (boolP ((is_part_of_nsk sm sz mx) p)) => H /=.
   - by rewrite list_partnsk_countE.
   - apply/count_memPn; move: H; apply contra.
-    by apply (allP (list_partnskP _ _ Hx)).
+    by apply (allP (list_partnsk_allP _ _ Hx)).
 Qed.
 
-Lemma list_partnsP sm sz : all (is_part_of_ns sm sz) (list_partns sm sz).
+Lemma list_partns_allP sm sz : all (is_part_of_ns sm sz) (list_partns sm sz).
 Proof.
   apply/allP; rewrite /list_partns => /= p.
   case: sm => [/= | sm]; first by case: sz; rewrite //= mem_seq1 => /eqP ->.
-  have /list_partnskP/allP Hall : sm.+1 >= 1 by [].
+  have /list_partnsk_allP/allP Hall : sm.+1 >= 1 by [].
   by move=> /Hall /= /andP [] _.
 Qed.
 
@@ -580,16 +542,16 @@ Proof.
   case (boolP ((is_part_of_ns sm sz) p)) => H /=.
   - by rewrite list_partns_countE.
   - apply/count_memPn; move: H; apply contra.
-    by apply (allP (list_partnsP _ _)).
+    by apply (allP (list_partns_allP _ _)).
 Qed.
 
-Lemma list_partnP sm : all (is_part_of_n sm) (list_partn sm).
+Lemma list_partn_allP sm : all (is_part_of_n sm) (list_partn sm).
 Proof.
   apply/allP; rewrite /list_partn => /= p.
   case: sm => [/= | sm]; first by rewrite mem_seq1 => /eqP ->.
   rewrite cat0s => /flatten_mapP [] i.
   rewrite mem_iota ltnS => /andP [] Hposi Hi.
-  have /list_partnskP/allP Hall : sm.+1 >= 1 by [].
+  have /list_partnsk_allP/allP Hall : sm.+1 >= 1 by [].
   by move=> /Hall /= /and3P [].
 Qed.
 
@@ -605,7 +567,7 @@ Proof.
       rewrite /empty {empty} -eq_in_map => i /=.
       rewrite mem_iota add1n ltnS => /andP [] /lt0n_neq0 Hi _.
       apply/count_memPn => /=; move: Hi; apply contra.
-      move/(allP (list_partnsP _ _)) => /= /andP [] /eqP <- _.
+      move/(allP (list_partns_allP _ _)) => /= /andP [] /eqP <- _.
       by rewrite Hsize.
     have -> : sumn (map (fun _ => 0) _) = 0.
       move=> T; by elim => [//= |l0 l /= ->].
@@ -618,7 +580,12 @@ Proof.
     by apply size_part.
 Qed.
 
-
+Lemma list_partnP n p : (is_part_of_n n p) = (p \in list_partn n).
+Proof.
+  apply/(sameP idP); apply(iffP idP).
+  - by move/(allP (list_partn_allP n)).
+  - rewrite -has_pred1 has_count; by move/list_partn_countE ->.
+Qed.
 
 Section PartOfn.
 
@@ -695,7 +662,7 @@ Qed.
 Lemma card_intpartn sm : #|{:intpartn sm}| = intpartn_nb sm.
 Proof.
   rewrite [#|_|]cardT enumT unlock /= /intpartn_enum size_pmap_sub -size_list_partn.
-  have := list_partnP sm; by rewrite all_count => /eqP.
+  have := list_partn_allP sm; by rewrite all_count => /eqP.
 Qed.
 
 End PartCombClass.
@@ -767,39 +734,23 @@ Fixpoint list_yamshn n sh :=
   else [:: [::]].
 Definition list_yamsh sh := list_yamshn (sumn sh) sh.
 Definition is_yam_of_shape sh y := (is_yam y) && (shape_rowseq y == sh).
+Definition is_yam_of_size n y := (is_yam y) && (size y == n).
 
-Lemma list_yamshP sh y:
-  is_part sh -> (is_yam_of_shape sh y) = (y \in list_yamsh sh).
+Lemma list_yamshP sh:
+  is_part sh -> all (is_yam_of_shape sh) (list_yamsh sh).
 Proof.
+  move=> Hpart; apply/allP => y.
   rewrite /list_yamsh /is_yam_of_shape; move Hn: (sumn sh) => n.
-  elim: n sh Hn y => [| n IHn] /= .
-    move=> sh Hsh y /part0 H0; rewrite mem_seq1 H0 //=; apply/(sameP idP); apply(iffP idP).
-    - by move=> /eqP -> /=.
-    - by move=> /andP [] /yam0 H /eqP /H{H} ->.
-  move=> sh Hsh [/= | y0 y] /=.
-  - move=> Hpart /=; have -> : [::] == sh = false by move: Hsh; case sh.
-    apply esym; by apply (introF idP) => /flattenP [] ltmp /mapP [] i _ -> /mapP [].
-  - move=> Hpart; apply/(sameP idP); apply(iffP idP).
-    + move/flatten_mapP => [] i; rewrite mem_filter mem_iota add0n => /and3P [] Hcorn _ Hi.
-      move/mapP => [] x Hx [] Hitmp Hxtmp; subst i x.
-      move: Hx; rewrite -IHn.
-      * move => /andP [] Hyam; rewrite Hyam => /eqP ->.
-        by rewrite decr_nthK //= Hpart /=.
-      * by rewrite sumn_decr_nth //= Hsh.
-      * by apply is_part_decr_nth.
-    + move => /andP [] /andP [] _ Hyam /eqP Htmp; subst sh.
-      move: Hsh => /eqP; rewrite sumn_incr_nth eqSS => /eqP /IHn {IHn} H.
-      have {H} := H y (is_part_shyam Hyam).
-      rewrite Hyam eq_refl /= => /esym Hy.
-      apply/flatten_mapP; exists y0.
-      * rewrite mem_filter mem_iota add0n /=.
-        have /= := @is_out_corner_yam y0 y.
-        rewrite Hpart Hyam /= => -> //=.
-        rewrite size_incr_nth.
-        by case (ltnP y0 (size (shape_rowseq y))).
-      * apply/mapP; exists y => //=.
-        rewrite incr_nthK //=.
-        by apply is_part_shyam.
+  elim: n sh Hpart Hn y => [| n IHn] /= .
+    by move=> sh Hsh /part0 H0 y; rewrite mem_seq1 H0 //= => /eqP ->.
+  move=> sh Hpart Hsh [/= | y0 y] /=.
+  - have -> : [::] == sh = false by move: Hsh; case sh.
+    by move=> /flattenP [] ltmp /mapP [] i _ -> /mapP [].
+  - move/flatten_mapP => [] i; rewrite mem_filter mem_iota add0n => /and3P [] Hcorn _ Hi.
+    move/mapP => [] x Hx [] Hitmp Hxtmp; subst i x.
+    have Hsum : sumn (decr_nth sh y0) = n by rewrite sumn_decr_nth //= Hsh.
+    have:= IHn _ (is_part_decr_nth Hpart Hcorn) Hsum _ Hx =>  /andP [] -> /eqP ->.
+    by rewrite decr_nthK //= Hpart /=.
 Qed.
 
 Lemma list_yamsh_countE sh y :
@@ -839,6 +790,39 @@ Eval compute in out_corners [:: 2; 1].
 Eval compute in [seq decr_nth [:: 2; 1] i | i <- out_corners [:: 2; 1]].
 *)
 
+Definition list_yamn n : seq (seq nat) :=
+  flatten [seq list_yamsh sh | sh <- list_partn n].
+
+Lemma list_yamnP n :
+  all (is_yam_of_size n) (list_yamn n).
+Proof.
+  rewrite /is_yam_of_size /list_yamn; apply/allP => y.
+  - move/flatten_mapP => [] p.
+    move /(allP (list_partn_allP n)) => /= /andP [] /eqP <- /list_yamshP /allP H/H{H}.
+    rewrite /is_yam_of_shape => /andP [] -> /eqP <- /=.
+    by rewrite shape_rowseq_eq_size.
+Qed.
+
+Lemma list_yamn_countE n y :
+  is_yam_of_size n y -> count_mem y (list_yamn n) = 1.
+Proof.
+  rewrite /is_yam_of_size => /andP [] Hyam /eqP Hsz.
+  rewrite /list_yamn count_flatten -map_comp.
+  set ci := (X in map X _).
+  have {ci} /eq_in_map -> : {in list_partn n, ci =1 fun i => i == (shape_rowseq y)}.
+    rewrite /ci {ci} => i /=.
+    case (altP (i =P shape_rowseq y)) => [-> | Hneq].
+    - rewrite list_yamsh_countE //=; first by apply is_part_shyam.
+      by rewrite /is_yam_of_shape Hyam eq_refl.
+    - rewrite -list_partnP /= => /andP [] /eqP Hsum Hpart.
+      apply/count_memPn; move: Hneq; apply contra.
+      move/(allP (list_yamshP Hpart)).
+      by rewrite /is_yam_of_shape => /andP [] _ /eqP ->.
+  rewrite sumn_count /=.
+  rewrite (eq_count (a2 := (pred1 (shape_rowseq y)))); last by [].
+  apply list_partn_countE.
+  by rewrite /= -Hsz shape_rowseq_eq_size eq_refl is_part_shyam.
+Qed.
 
 Section YamOfShape.
 
@@ -846,8 +830,8 @@ Variable sh : seq nat.
 Hypothesis Hpart : is_part sh.
 
 Structure yamsh : Type :=
-  YamSh {yamval :> seq nat; _ : is_yam_of_shape sh yamval}.
-Canonical yamsh_subType := Eval hnf in [subType for yamval].
+  YamSh {yamshval :> seq nat; _ : is_yam_of_shape sh yamshval}.
+Canonical yamsh_subType := Eval hnf in [subType for yamshval].
 Definition yamsh_eqMixin := Eval hnf in [eqMixin of yamsh by <:].
 Canonical yamsh_eqType := Eval hnf in EqType yamsh yamsh_eqMixin.
 Definition yamsh_choiceMixin := Eval hnf in [choiceMixin of yamsh by <:].
@@ -877,3 +861,42 @@ Lemma yamsh_sumn (y : yamsh) : shape_rowseq y = sh.
 Proof. by case: y => /= y /andP [] _ /eqP. Qed.
 
 End YamOfShape.
+
+
+Section YamOfSize.
+
+Variable n : nat.
+
+Structure yamn : Type :=
+  Yamn {yamnval :> seq nat; _ : is_yam_of_size n yamnval}.
+Canonical yamn_subType := Eval hnf in [subType for yamnval].
+Definition yamn_eqMixin := Eval hnf in [eqMixin of yamn by <:].
+Canonical yamn_eqType := Eval hnf in EqType yamn yamn_eqMixin.
+Definition yamn_choiceMixin := Eval hnf in [choiceMixin of yamn by <:].
+Canonical yamn_choiceType := Eval hnf in ChoiceType yamn yamn_choiceMixin.
+Definition yamn_countMixin := Eval hnf in [countMixin of yamn by <:].
+Canonical yamn_countType := Eval hnf in CountType yamn yamn_countMixin.
+Canonical yamn_subCountType := Eval hnf in [subCountType of yamn].
+
+
+Definition yamn_enum : seq yamn := pmap insub (list_yamn n).
+
+Lemma finite_yamn : Finite.axiom yamn_enum.
+Proof.
+  case=> /= y Hy; rewrite -(count_map _ (pred1 y)) (pmap_filter (@insubK _ _ _)).
+  rewrite count_filter -(@eq_count _ (pred1 y)) => [|s /=]; last first.
+    by rewrite isSome_insub; case: eqP=> // ->.
+  by apply list_yamn_countE.
+Qed.
+
+Canonical yamn_finMixin := Eval hnf in FinMixin finite_yamn.
+Canonical yamn_finType := Eval hnf in FinType yamn yamn_finMixin.
+Canonical yamn_subFinType := Eval hnf in [subFinType of yamn_countType].
+
+Lemma yamnP (y : yamn) : is_yam y.
+Proof. by case: y => /= y /andP []. Qed.
+
+Lemma yamn_sumn (y : yamn) : size y = n.
+Proof. by case: y => /= y /andP [] _ /eqP. Qed.
+
+End YamOfSize.
