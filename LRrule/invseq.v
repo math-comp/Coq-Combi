@@ -147,13 +147,22 @@ Qed.
 
 Definition invstd s := mkseq (fun i => index i s) (size s).
 
-Lemma is_std_invseq s : is_std s -> invseq s (invstd s).
+Lemma invseq_invstd s : is_std s -> invseq s (invstd s).
 Proof.
   move=> Hstd; rewrite /invseq; apply/andP; split; apply/linvseqP; rewrite size_mkseq => i Hi.
   - rewrite nth_mkseq.
     + apply (index_uniq _ Hi). by apply std_uniq.
     + by rewrite -(mem_std _ Hstd) mem_nth.
   - rewrite nth_mkseq //=; apply nth_index; by rewrite (mem_std _ Hstd).
+Qed.
+
+Lemma size_invstd p : size (invstd p) = size p.
+Proof. by rewrite /invstd size_mkseq. Qed.
+
+Lemma invstd_is_std p : is_std p -> is_std (invstd p).
+Proof.
+  move=> H; apply (invseq_is_std (t := p)).
+  apply invseq_sym; by apply invseq_invstd.
 Qed.
 
 Lemma invseqE s t1 t2 : invseq s t1 -> invseq s t2 -> t1 = t2.
@@ -472,7 +481,7 @@ Corollary invstdRSE s :
 Proof.
   move=> Hstd.
   case H : (RStabmap (invstd s)) => [P Q].
-  by rewrite (invseqRSE (is_std_invseq Hstd)) H.
+  by rewrite (invseqRSE (invseq_invstd Hstd)) H.
 Qed.
 
 Corollary RSTabmapstdE (T : ordType) (w : seq T) :
@@ -494,3 +503,17 @@ Proof.
 Qed.
 
 End InvSeq.
+
+Section Test.
+
+  Let u := [:: 4;1;2;2;5;3].
+  Let v := [:: 0;4;3;3].
+
+  Goal std u = [:: 4; 0; 1; 2; 5; 3].
+  Proof. compute; by apply erefl. Qed.
+
+  Goal invstd (std u) = filter (gtn (size u)) (invstd (std (u ++ v))).
+  Proof. compute; by apply erefl. Qed.
+
+End Test.
+
