@@ -15,7 +15,8 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm fingroup path.
 
-Require Import ordcast subseq partition ordtype schensted congr plactic green greeninv.
+Require Import ordcast subseq partition ordtype permuted.
+Require Import schensted congr plactic green greeninv.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -124,6 +125,78 @@ Proof.
 Qed.
 
 End StandardWords.
+
+
+Section StdCombClass.
+
+Variable n : nat.
+
+Definition is_std_of_n := [pred w | (is_std w) && (size w == n) ].
+
+Structure stdwordn : Type := StdWordN {stdwordnval :> seq nat; _ : is_std_of_n stdwordnval}.
+Canonical stdwordn_subType := Eval hnf in [subType for stdwordnval].
+Definition stdwordn_eqMixin := Eval hnf in [eqMixin of stdwordn by <:].
+Canonical stdwordn_eqType := Eval hnf in EqType stdwordn stdwordn_eqMixin.
+Definition stdwordn_choiceMixin := Eval hnf in [choiceMixin of stdwordn by <:].
+Canonical stdwordn_choiceType := Eval hnf in ChoiceType stdwordn stdwordn_choiceMixin.
+Definition stdwordn_countMixin := Eval hnf in [countMixin of stdwordn by <:].
+Canonical stdwordn_countType := Eval hnf in CountType stdwordn stdwordn_countMixin.
+Canonical stdwordnn_subCountType := Eval hnf in [subCountType of stdwordn].
+
+Lemma stdwordnP (s : stdwordn) : is_std (val s).
+Proof. by case: s => s /= /andP []. Qed.
+
+Lemma size_sdtn (s : stdwordn) : size (val s) = n.
+Proof. by case: s => s /= /andP [] _ /eqP. Qed.
+
+Definition enum_stdwordn := [seq wordperm p | p <- enum 'S_n].
+
+Lemma enum_stdwordnE s : (is_std_of_n s) = (s \in enum_stdwordn).
+Proof.
+  apply/(sameP idP); apply(iffP idP).
+  + move/mapP => [] p _ -> /=.
+    by rewrite wordperm_std /= /wordperm size_map size_enum_ord.
+  + rewrite /enum_stdwordn => /andP [] /is_stdP [] p Hstd /eqP Hsize.
+    apply/mapP; rewrite -Hsize; exists p; last exact Hstd.
+    by rewrite mem_enum.
+Qed.
+
+Lemma wordperm_inj : injective (@wordperm n).
+Proof.
+  move=> p q; rewrite /wordperm => Heq.
+  rewrite -permP => i.
+  have := erefl (nth 0 [seq val (p i) | i <- enum 'I_n] i).
+  have Hi : i < size (enum 'I_n) by rewrite size_enum_ord; apply ltn_ord.
+  rewrite {2}Heq /= !(nth_map i _ _ Hi).
+  rewrite nth_ord_enum; by apply val_inj.
+Qed.
+
+Lemma enum_stdwordn_uniq : uniq enum_stdwordn.
+Proof. rewrite/enum_stdwordn (map_inj_uniq wordperm_inj). by apply enum_uniq. Qed.
+
+Definition stdwordn_enum : seq stdwordn := pmap insub enum_stdwordn.
+
+Lemma finite_stdwordn : Finite.axiom stdwordn_enum.
+Proof.
+  rewrite /stdwordn_enum; apply Finite.uniq_enumP.
+  - apply pmap_sub_uniq; first exact enum_stdwordn_uniq.
+  - move=> s;
+    by rewrite mem_pmap_sub -enum_stdwordnE /= /in_mem /= stdwordnP size_sdtn eq_refl.
+Qed.
+
+Canonical stdwordn_finMixin := Eval hnf in FinMixin finite_stdwordn.
+Canonical stdwordn_finType := Eval hnf in FinType stdwordn stdwordn_finMixin.
+
+Lemma card_stdwordn : #|{:stdwordn}| = n`!.
+Proof.
+  rewrite [#|_|]cardT enumT unlock /= /stdwordn_enum size_pmap_sub.
+  rewrite -size_filter (eq_in_filter (a2 := predT));
+    last by move=> i /=; rewrite -enum_stdwordnE /is_std_of_n /= => ->.
+  by rewrite filter_predT size_map -card_Sn cardE.
+Qed.
+
+End StdCombClass.
+
 
 
 Section Standardisation.

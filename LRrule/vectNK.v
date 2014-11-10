@@ -63,18 +63,19 @@ Lemma count_flatten (T : eqType) (s : seq (seq T)) P :
 Proof. elim: s => [//= | s0 s IHs /=]. by rewrite count_cat IHs. Qed.
 
 Lemma sum_iota a b x :
-  a <= x < a + b.+1 -> sumn [seq ((i == x) : nat) | i <- iota a b.+1] = 1.
+  a <= x < a + b -> sumn [seq ((i == x) : nat) | i <- iota a b] = 1.
 Proof.
-  elim: b a => [/=| b IHb] a; first by rewrite addn1 ltnS -eqn_leq => ->.
+  elim: b a => [/=| b IHb] a.
+    rewrite addn0 => /andP [] /leq_ltn_trans H/H{H}.
+    by rewrite ltnn.
   have:= IHb a.+1 => /= {IHb} IHb.
   case (ltnP a x) => H1 /andP [] H2 H3.
   + rewrite IHb; first by rewrite (ltn_eqF H1).
     by rewrite H1 addSnnS.
   + rewrite eqn_leq H1 H2 /= {H2 H3 IHb}.
-    rewrite -ltnS in H1; rewrite (gtn_eqF H1) /= add0n.
     apply /eqP; rewrite eqSS; apply /eqP.
     elim: b a H1 => [//= | b IHb] a Ha /=.
-    rewrite IHb; first by rewrite gtn_eqF; last by rewrite leqW.
+    rewrite IHb; first by rewrite gtn_eqF; last by rewrite ltnS.
     by rewrite leqW.
 Qed.
 
