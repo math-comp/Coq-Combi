@@ -1399,7 +1399,41 @@ Section Bijection.
 
 End Bijection.
 
+Section Classes.
+
+Definition RSclass := [fun tab =>
+  [seq RSmapinv2 (tab, y) | y <- list_yamsh (shape tab)] ].
+
+Lemma RSclassP tab : is_tableau tab -> all (fun w => RS w == tab) (RSclass tab).
+Proof.
+  move=> Htab /=; apply/allP => w /mapP [] Q.
+  move /(allP (list_yamshP (is_part_sht Htab))).
+  rewrite /is_yam_of_shape => /andP [] Hyam /eqP Hsh -> {w}.
+  by rewrite -RSmapE RS_bij_2 //= Htab Hyam Hsh /=.
+Qed.
+
+Lemma RSclass_countE tab w :
+  is_tableau tab -> RS w = tab -> count_mem w (RSclass tab) = 1.
+Proof.
+  move=> Htab Hw /=; rewrite count_map.
+  rewrite (eq_in_count (a2 := pred1 ((RSmap w).2))); first last.
+    move=> y /= /(allP (list_yamshP (is_part_sht Htab))).
+    rewrite /is_yam_of_shape => /andP [] Hyam /eqP Hsh.
+    apply/(sameP idP); apply(iffP idP) => /eqP H.
+    - rewrite H {H} -Hw -RSmapE.
+      have -> : ((RSmap w).1, (RSmap w).2) = RSmap w by case RSmap.
+      by rewrite RS_bij_1.
+    - by rewrite -H {H} RS_bij_2 //= Htab Hyam Hsh /=.
+  apply list_yamsh_countE; first by apply is_part_sht.
+  rewrite /is_yam_of_shape -shape_RSmap_eq RSmapE Hw eq_refl andbT.
+  by apply is_yam_RSmap2.
+Qed.
+
+End Classes.
+
 End NonEmpty.
+
+
 
 Section Tests.
 
