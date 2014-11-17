@@ -26,6 +26,13 @@ Lemma sumn_count (T : eqType) (l : seq T) (P : pred T) :
   sumn [seq nat_of_bool (P i) | i <- l] = count P l.
 Proof. by elim: l => //= l0 l /= ->. Qed.
 
+Lemma countEP (T : eqType) (P : pred T) (l : list T) e :
+  (P e -> count_mem e l = 1) -> (P e -> e \in l).
+Proof.
+  move=> H/H{H}H. have : (count_mem e) l != 0 by rewrite H.
+  by apply contraR => /count_memPn ->.
+Qed.
+
 Section Partition.
 
   Implicit Type s : seq nat.
