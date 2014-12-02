@@ -185,6 +185,13 @@ Proof.
   + apply invseq_sym; by apply invseq_invstd.
 Qed.
 
+Lemma invstd_inj s t : is_std s -> is_std t -> (invstd s) = (invstd t) -> s = t.
+Proof.
+  move=> Hs Ht H.
+  have:= erefl (invstd (invstd s)).
+  by rewrite {2}H (invstdK Hs) (invstdK Ht).
+Qed.
+
 Section KsuppInj.
 
 Variable s t : seq nat.
