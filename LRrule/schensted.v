@@ -508,14 +508,14 @@ Section Schensted.
         by apply (leqX_trans (ins_leq HSch wn Hsize) Hleq).
   Qed.
 
-  Theorem size_ndec_Sch w s : subseqrow s w -> (size s) <= size (Sch w).
+  Corollary size_ndec_Sch w s : subseqrow s w -> (size s) <= size (Sch w).
   Proof.
     case/lastP: s => [//=| s si].
     move/Sch_leq_last => [] H _.
     by rewrite size_rcons.
   Qed.
 
-  Theorem exist_size_Sch w : exists s : seq T, subseqrow_n s w (size (Sch w)).
+  Corollary exist_size_Sch w : exists s : seq T, subseqrow_n s w (size (Sch w)).
   Proof.
     case/lastP: w => [| w wn]; first by exists [::].
     have:= size_ins_non_0 (Sch w) wn; rewrite -Sch_rcons.
