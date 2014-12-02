@@ -376,6 +376,25 @@ Proof.
     by rewrite -{1}[size u]addn0 leq_add2l.
 Qed.
 
+Lemma mem_shsh p u v :
+  is_std u -> is_std v ->
+  u = filter (gtn (size u)) p ->
+  shiftn (size u) v = (filter (leq (size u)) p) ->
+  p \in shsh u v.
+Proof.
+  move=> Hstdu Hstdv Hu Hv.
+  rewrite -(mem_shuffle _ (pred0_std v Hstdu)) size_map {2}Hu Hv.
+  apply/and3P; split.
+  - apply/eqP; apply eq_filter => i /=.
+    by rewrite (perm_eq_mem Hstdu i) mem_iota /= add0n.
+  - apply/eqP; apply eq_in_filter => i /= Hi.
+    by rewrite mem_filter Hi andbT.
+  - rewrite -(count_predC (gtn (size u)) p) -!size_filter -Hu.
+    have /eq_filter -> : (predC (gtn (size u))) =1 leq (size u).
+      move=> i /=; by rewrite -leqNgt.
+    by rewrite -Hv size_map.
+Qed.
+
 Lemma shift_plactcongr n u v : plactcongr u v = plactcongr (shiftn n u) (shiftn n v).
 Proof.
   apply/(sameP idP); apply(iffP idP).
@@ -397,7 +416,7 @@ Implicit Type a b c : Alph.
 Implicit Type u v w : word.
 Implicit Type t : seq (seq nat).
 
-Lemma std_perm_eq_filter_invstd p n :
+Lemma perm_eq_filter_gtn_invstd p n :
   is_std p -> perm_eq [seq x <- invstd p | x < n] (iota 0 (minn n (size p))).
 Proof.
   move=> Hstd; apply uniq_perm_eq.
@@ -409,14 +428,38 @@ Proof.
     by rewrite mem_iota /= add0n size_invstd.
 Qed.
 
+Lemma perm_eq_filter_leq_invstd p n :
+  is_std p -> perm_eq (shiftninv n [seq x <- invstd p | n <= x ]) (iota 0 ((size p) - n)).
+Proof.
+  move=> Hstd; apply uniq_perm_eq.
+  - rewrite map_inj_in_uniq.
+    + apply filter_uniq; apply std_uniq; first by apply invstd_is_std.
+    + move=> i j; rewrite !mem_filter => /andP [] Hi _ /andP [] Hj _ H.
+      by rewrite -(subnK Hi) H (subnK Hj).
+  - by apply iota_uniq.
+  - move=> i.
+    rewrite -{1}[i](addnK n) /shiftninv.
+    set rhs := RHS.
+    rewrite ( _ : rhs = ((i + n) \in filter (leq n) (invstd p))).
+      rewrite /rhs{rhs}; elim (invstd p) => [//= | l0 l IHl] /=.
+      case (leqP n l0) => /= Hl0.
+      + rewrite !inE IHl; congr (_ || _).
+        by rewrite addnK -(eqn_add2r n) (subnK Hl0).
+      + exact IHl.
+    rewrite /rhs{rhs} mem_filter mem_iota /= add0n leq_addl /=.
+    rewrite (perm_eq_mem (invstd_is_std Hstd)).
+    rewrite mem_iota /= add0n size_invstd.
+    by rewrite ltn_subRL addnC.
+Qed.
+
 Lemma size_std_cut p n :
   is_std p -> size [seq x <- invstd p | x < n] = minn n (size p).
-Proof. move/(std_perm_eq_filter_invstd n)/perm_eq_size ->; by rewrite size_iota. Qed.
+Proof. move/(perm_eq_filter_gtn_invstd n)/perm_eq_size ->; by rewrite size_iota. Qed.
 
 Lemma std_cut p n : is_std p -> is_std [seq x <- invstd p | x < n].
 Proof.
   move=> Hstd; rewrite /is_std (size_std_cut _ Hstd).
-  by apply std_perm_eq_filter_invstd.
+  by apply perm_eq_filter_gtn_invstd.
 Qed.
 
 Lemma size_cut_invstd u v :
@@ -458,122 +501,153 @@ Proof.
   by rewrite !nth_cat !ltnNge !leq_addr /= !addKn.
 Qed.
 
-Lemma filter_take_std p n :
-  n <= size p -> is_std p -> [seq x <- invstd p | x < n] = invstd (std (take n p)).
+Lemma index_leq_filter l (P : pred nat) i j :
+  P i -> P j ->
+  (index i (filter P l)) <= (index j (filter P l)) = (index i l <= index j l).
 Proof.
-  move=> Hn Hstd; rewrite /invstd size_std size_take (bad_if_leq Hn).
-  elim: p Hstd Hn => [//= | p0 p IHp].
-    admit.
-  
-Lemma bla u v : invseq (filter (gtn (size u)) (invstd (std (u ++ v)))) (std u).
-Proof.
-  apply/linvseq_sizeP; last by rewrite size_std size_cut_invstd.
-  apply/linvseqP => i; rewrite size_cut_invstd => Hi.
-  
-  
-Lemma bla u v i :
-  i < size u ->
-  nth (inhabitant nat_ordType)
-      (invstd [seq x <- invstd (std (u ++ v)) | gtn (size u) x]) i =
-  nth (inhabitant nat_ordType)
-      (std u) i.
-Proof.
-  move=> Hiu; set l := invstd _.
-  have Hist : i < size (std u) by rewrite size_std.
-  have Hil : i < size l by rewrite /l size_invstd size_cut_invstd.
-  rewrite (nth_any _ (size (std u)) Hil) /l.
-  admit. (*
-  rewrite -invseq_nthE.
-  have := invseq_nthE (invseq_invstd (std_cut (size u) (std_is_std (u ++ v)))).
-*)
+  move=> Hi Hj.
+  elim: l => [//= | l0 l IHl] /=.
+  case (boolP (P l0)) => [Hl0|] /=.
+  - case (altP (l0 =P i)) => Hil0; first by case (altP (l0 =P j)).
+    + case (altP (l0 =P j)) => [//= | Hjl0].
+    + by rewrite !ltnS IHl.
+  - case (altP (l0 =P i)) => [->|Hil0]; first by rewrite Hi.
+    case (altP (l0 =P j)) => [->|Hjl0]; first by rewrite Hj.
+    by rewrite ltnS IHl.
 Qed.
 
-End LR.
+Lemma index_invstd l i :
+  is_std l -> i < size l ->
+  (index i (invstd l)) = nth (inhabitant nat_ordType) l i.
+Proof. move=> Hstd Hi; by rewrite -{2}(invstdK Hstd) /invstd nth_mkseq //= size_mkseq. Qed.
 
 Lemma invstd_catl u v :
-  std u = invstd (filter (gtn (size u)) (invstd (std (u ++ v)))).
+  invstd (std u) = filter (gtn (size u)) (invstd (std (u ++ v))).
 Proof.
+  suff Heqinv : std u = invstd [seq x <- invstd (std (u ++ v)) | gtn (size u) x].
+    rewrite Heqinv invstdK //=.
+    apply std_cut; by apply std_is_std.
   apply/eqP/stdP; apply StdSpec;
     first by apply invstd_is_std; apply std_cut; apply std_is_std.
   apply/eq_invP; split; first by rewrite size_invstd size_cut_invstd.
   move=> i j /andP [] Hij Hj.
-  
-  rewrite /invstd.
-  rewrite nth_mkseq; last by rewrite size_cut_invstd; apply (leq_ltn_trans Hij Hj).
-  rewrite nth_mkseq; last by rewrite size_cut_invstd.
-
-
-  
-Lemma invstd_catl u v :
-  invstd (std u) = filter (gtn (size u)) (invstd (std (u ++ v))).
-Proof.
-  elim: u => [/= |u0 u IHu].
-    admit.
-  move: IHu; rewrite /invstd /mkseq.
-  rewrite !size_std size_cat. index_cat.
-
-  
-  rewrite /invstd /mkseq !size_std size_cat /=.
-  apply (std_spec_uniq (u := invstd (std u))).
-  (*
-  - apply StdSpec; last by apply eq_inv_refl.
-    apply (invseq_is_std (t := std u)).
-    apply invseq_sym; apply invseq_invstd; by apply std_is_std.
-  - apply StdSpec; first by apply std_cut; apply std_is_std.
-    apply/eq_invP; split.
-    + admit.
-    + rewrite size_invstd size_std => i j /andP [] Hij Hj.
-      rewrite /invstd nth_mkseq; last by apply (leq_ltn_trans Hij); rewrite size_std.
-      rewrite nth_mkseq; last by rewrite size_std.
-
-
-      rewrite /invstd /mkseq !size_std size_cat.
-
-
-  apply (invseqE (s := std u)); first by apply invseq_invstd; apply std_is_std.
-  apply invseq_sym; apply linvseq_sizeP.
-  - apply/linvseqP => i Hi.
-
-  rewrite /invstd /mkseq !size_std size_cat.
-  apply (std_spec_uniq (u := u)).
-  elim: u => [/= |u0 u IHu].
-    admit.
-  rewrite !size_std size_cat. index_cat.
-  *)
-  admit.
-  admit.
+  have Hi : i < size u by apply (leq_ltn_trans Hij).
+  rewrite leqXnatE /=.
+  do 2 (rewrite nth_mkseq; last by rewrite size_cut_invstd).
+  rewrite index_leq_filter //= -/(invstd (std (u++v))).
+  have Hucat : size u <= size (std (u ++ v)) by rewrite size_std size_cat; apply leq_addr.
+  do 2 (rewrite (index_invstd (std_is_std (u ++ v)));
+        last by apply (@leq_trans (size u)); last exact Hucat).
+  have /eq_invP := eq_inv_std (u ++ v) => [] [] Hsize Hinv.
+  have Hijsz : i <= j < size (u ++ v).
+    rewrite Hij /=; apply (leq_trans Hj); rewrite size_cat; by apply leq_addr.
+  rewrite -leqXnatE -(Hinv i j Hijsz).
+  by rewrite !nth_cat Hi Hj.
 Qed.
 
 Lemma invstd_catr u v :
   shiftn (size u) (invstd (std v)) = (filter (leq (size u)) (invstd (std (u ++ v)))).
 Proof.
   admit.
+  (*
+  suff : std v = invstd (shiftninv (size u) (filter (leq (size u)) (invstd (std (u ++ v))))).
+    move=> {1}->.
+    rewrite invstdK.
+    admit.
+    admit.
+  apply/eqP/stdP; apply StdSpec.
+    apply invstd_is_std. (* apply std_cut; apply std_is_std. *)
+    admit.
+  apply/eq_invP; split.
+    rewrite size_invstd size_map.
+    admit.
+  move=> i j /andP [] Hij Hj.
+  have Hi : i < size v by apply (leq_ltn_trans Hij).
+  rewrite leqXnatE /=.
+  rewrite nth_mkseq; first last.
+    rewrite size_map.
+  *)
 Qed.
 
 Lemma prod_FQSym u v : invstd (std (u ++ v)) \in shsh (invstd (std u)) (invstd (std v)).
 Proof.
-  admit.
+  apply mem_shsh.
+  - apply invstd_is_std; by apply std_is_std.
+  - apply invstd_is_std; by apply std_is_std.
+  - by rewrite (invstd_catl u v) size_cut_invstd.
+  - by rewrite size_invstd size_std (invstd_catr u v).
 Qed.
 
 Definition langQ t := [pred w : word | (RStabmap w).2 == t].
 
+Lemma size_langQ t u : u \in langQ t -> size u = size_tab t.
+Proof.
+  rewrite /langQ inE /RStabmap => /eqP <-.
+  rewrite -(eqP (size_RS u)) -RSmapE.
+  rewrite /size_tab shape_RSmap_eq.
+  case: (RSmap u) => p q /=.
+  by rewrite shape_stdtab_of_yam.
+Qed.
+
 Record plactLRTriple t1 t2 t : Prop :=
   PlactLRTriple :
-    forall p p1 p2, RS p1 = t1 -> RS p2 = t2 -> RS p = t ->
+    forall p1 p2 p, RS p1 = t1 -> RS p2 = t2 -> RS p = t ->
                     p \in shsh p1 p2 -> plactLRTriple t1 t2 t.
+Definition predLRTriple (t1 t2 : seq (seq nat)) :=
+  [pred t : (seq (seq nat)) |
+   has (fun p => RS p == t)
+       (flatten [seq shsh p1 p2 | p1 <- RSclass _ t1, p2 <- RSclass _ t2])].
+Definition predLRTripleFast (t1 t2 : seq (seq nat)) :=
+  [pred t : (seq (seq nat)) |
+   has (fun p => RS p == t)
+       (flatten [seq shsh (to_word t1) p2 | p2 <- RSclass _ t2])].
 
-Definition tripleT := ((seq nat) * (seq nat) * (seq nat) : Type).
-
-Theorem free_LR_rule_plact t1 t2 :
+Lemma LRTripleP t1 t2 t :
   is_stdtab t1 -> is_stdtab t2 ->
-  forall u1 u2 : word, size u1 = size_tab t1 -> size u2 = size_tab t2 ->
-  ( (u1 \in langQ t1 /\ u2 \in langQ t2) ->
-    { t | u1 ++ u2 \in langQ t /\ plactLRTriple t1 t2 t } ).
+  reflect (plactLRTriple t1 t2 t) (predLRTriple t1 t2 t).
 Proof.
-  move=> Hstd1 Hstd2 u1 u2 Hsz1 Hsz2.
-  move=> []; rewrite !inE => /eqP Hu1 /eqP Hu2.
+  rewrite /is_stdtab => /andP [] Htab1 _ /andP [] Htab2 _.
+  apply (iffP idP) => /=.
+  - move=> /hasP [] p /flattenP [] shuf /allpairsP [] [p1 p2] /= [].
+    move=> /mapP [] yam1
+            /(allP (list_yamshP (is_part_sht Htab1))) /= /andP [] Hyam1 Hsh1 Hp1.
+    move=> /mapP [] yam2
+            /(allP (list_yamshP (is_part_sht Htab2))) /= /andP [] Hyam2 Hsh2 Hp2.
+    move=> -> {shuf} Hshuf /eqP <- {t}.
+    apply (@PlactLRTriple t1 t2 (RS p) p1 p2 p) => //=.
+    + by rewrite Hp1 -RSmapE RS_bij_2 //= Htab1 Hyam1 eq_sym Hsh1.
+    + by rewrite Hp2 -RSmapE RS_bij_2 //= Htab2 Hyam2 eq_sym Hsh2.
+  - move=> [p1 p2 p]; rewrite -2!RSmapE => Hp1 Hp2 Hp Hsh.
+    apply/hasP; exists p; last by rewrite Hp.
+    apply/flattenP; exists (shsh p1 p2); last exact Hsh.
+    apply/allpairsP; exists (p1, p2); split; last by [].
+    + apply/mapP; rewrite -Hp1; exists ((RSmap p1).2).
+      * have : is_yam_of_shape (shape t1) (RSmap p1).2.
+          rewrite /is_yam_of_shape -shape_RSmap_eq Hp1 eq_refl andbT.
+          by apply is_yam_RSmap2.
+        move /(list_yamsh_countE (is_part_sht Htab1))/eqP.
+        rewrite Hp1; by apply contraLR => /count_memPn ->.
+      * have -> : ((RSmap p1).1, (RSmap p1).2) = RSmap p1 by case RSmap.
+        by rewrite RS_bij_1.
+    + apply/mapP; rewrite -Hp2; exists ((RSmap p2).2).
+      * have : is_yam_of_shape (shape t2) (RSmap p2).2.
+          rewrite /is_yam_of_shape -shape_RSmap_eq Hp2 eq_refl andbT.
+          by apply is_yam_RSmap2.
+        move /(list_yamsh_countE (is_part_sht Htab2))/eqP.
+        rewrite Hp2; by apply contraLR => /count_memPn ->.
+      * have -> : ((RSmap p2).1, (RSmap p2).2) = RSmap p2 by case RSmap.
+        by rewrite RS_bij_1.
+Qed.
+
+Theorem free_LR_rule_plact t1 t2 u1 u2:
+  is_stdtab t1 -> is_stdtab t2 -> u1 \in langQ t1 -> u2 \in langQ t2 ->
+  { t | plactLRTriple t1 t2 t /\ u1 ++ u2 \in langQ t}.
+Proof.
+  move=> Hstd1 Hstd2 Hu1 Hu2.
+  have Hsz1 := size_langQ Hu1; have Hsz2 := size_langQ Hu2.
+  move: Hu1 Hu2; rewrite !inE => /eqP Hu1 /eqP Hu2.
   exists (RS (invstd (std (u1 ++ u2)))).
-  rewrite RSinvstdE; split; first by rewrite inE.
+  rewrite RSinvstdE; split; last by rewrite inE.
   apply (PlactLRTriple (p1 := invstd (std u1))
                        (p2 := invstd (std u2))
                        (p := invstd (std (u1 ++ u2))) ).
@@ -583,7 +657,91 @@ Proof.
   + by apply prod_FQSym.
 Qed.
 
+
+Theorem free_LR_rule_pred t1 t2 :
+  is_stdtab t1 -> is_stdtab t2 ->
+  forall u1 u2 : word,
+  ( ((u1 \in langQ t1) && (u2 \in langQ t2)) =
+    [exists t : stdtabn (size_tab t1 + size_tab t2),
+       [&& predLRTriple t1 t2 t,
+               (u1 ++ u2 \in langQ t), (size u1 == size_tab t1) & (size u2 == size_tab t2)
+  ] ]).
+Proof.
+  move=> Hstd1 Hstd2 u1 u2.
+  apply/(sameP idP); apply(iffP idP).
+  - move=> /existsP [] t /and4P [] /(LRTripleP _ Hstd1 Hstd2) [] p1 p2 p Hp1 Hp2 Htmp.
+    rewrite -Htmp.
+    rewrite !inE -!RSinvstdE -Hp1 -Hp2 -plactic_RS => Hsh Hcat /eqP Hsz1 /eqP Hsz2.
+    have Hstdp1 : is_std p1 by rewrite -RSstdE Hp1.
+    have Hstdp2 : is_std p2 by rewrite -RSstdE Hp2.
+    have Hszp : size p1 = size u1 by rewrite Hsz1 -(eqP (size_RS p1)).
+    apply/andP; split; rewrite -plactic_RS.
+    + rewrite (invstd_catl u1 u2) (shsh_stdl Hstdp1 Hsh) Hszp.
+      case: (size u1) => [//= | n].
+      * have /eq_filter H : gtn 0 =1 pred0 by [].
+        rewrite !H {H} !filter_pred0.
+        have:= @plactcongr_equiv nat_ordType => /equivalence_relP [] Hrefl _.
+        by apply Hrefl. 
+      * have /eq_filter H : gtn n.+1 =1 geq n by [].
+        rewrite !H {H}.
+        by apply restr_small.
+    + rewrite (shift_plactcongr (size u1)) (invstd_catr u1 u2).
+      rewrite -{2}Hszp (shsh_stdr Hstdp1 Hsh) Hszp.
+      by apply restr_big.
+  - move/andP => [] Hu1 Hu2.
+    have := (free_LR_rule_plact Hstd1 Hstd2 Hu1 Hu2) => [] [] t [] Htr Ht.
+    have := Htr => /(LRTripleP _ Hstd1 Hstd2) Hpredtr.
+    move: Htr => [] p1 p2 p Hp1 Hp2 HRSt; rewrite /shsh => Hp.
+    apply/existsP.
+    have Htn : is_stdtab_of_n (size_tab t1 + size_tab t2) t.
+      rewrite /is_stdtab_of_n /is_stdtab /= -HRSt is_tableau_RS (eqP (size_RS _)) /=.
+      have /eqP -> := (allP (all_size_shuffle p1 (shiftn (size p1) p2))) _ Hp.
+      rewrite /shiftn size_map -Hp1 -Hp2 !(eqP (size_RS _)) eq_refl andbT.
+      move: Hstd1 Hstd2; rewrite -Hp1 -Hp2 !RSstdE => Hsp1 Hsp2.
+      have := (allP (std_shsh Hsp1 Hsp2)) _ Hp.
+      move /perm_eq_std; apply; rewrite perm_eq_sym.
+      by apply perm_eq_RS.
+    exists (StdtabN Htn).
+    apply/and4P; repeat split => //=; by apply /eqP; apply size_langQ.
+Qed.
+
+
 Theorem free_LR_rule t1 t2 :
+  is_stdtab t1 -> is_stdtab t2 ->
+  forall u1 u2 : word,
+  ( (u1 \in langQ t1 /\ u2 \in langQ t2) <->
+    (exists t, plactLRTriple t1 t2 t /\
+               u1 ++ u2 \in langQ t /\ size u1 = size_tab t1 /\ size u2 = size_tab t2
+  ) ).
+Proof.
+  move=> Hstd1 Hstd2 u1 u2.
+  split.
+  - move=> [] Hu1 Hu2.
+    have := (free_LR_rule_plact Hstd1 Hstd2 Hu1 Hu2) => [] [] t [] Htr Ht; exists t.
+    by repeat split; try apply size_langQ.
+  - move=> [] t [] [] p1 p2 p Hp1 Hp2 Htmp; subst t.
+    rewrite !inE -!RSinvstdE -Hp1 -Hp2 -!plactic_RS => Hsh [] Hcat [] Hsz1 Hsz2.
+    have Hstdp1 : is_std p1 by rewrite -RSstdE Hp1.
+    have Hstdp2 : is_std p2 by rewrite -RSstdE Hp2.
+    have Hszp : size p1 = size u1 by rewrite Hsz1 -(eqP (size_RS p1)).
+    split.
+    + rewrite (invstd_catl u1 u2) (shsh_stdl Hstdp1 Hsh) Hszp.
+      case: (size u1) => [//= | n].
+      * have /eq_filter H : gtn 0 =1 pred0 by [].
+        rewrite !H {H} !filter_pred0.
+        have:= @plactcongr_equiv nat_ordType => /equivalence_relP [] Hrefl _.
+        by apply Hrefl.
+      * have /eq_filter H : gtn n.+1 =1 geq n by [].
+        rewrite !H {H}.
+        by apply restr_small.
+    + rewrite (shift_plactcongr (size u1)) (invstd_catr u1 u2).
+      rewrite -{2}Hszp (shsh_stdr Hstdp1 Hsh) Hszp.
+      by apply restr_big.
+Qed.
+
+
+(*
+Theorem free_LR_rule_old t1 t2 :
   is_stdtab t1 -> is_stdtab t2 ->
   forall u1 u2 : word, size u1 = size_tab t1 -> size u2 = size_tab t2 ->
   ( (u1 \in langQ t1 /\ u2 \in langQ t2) <->
@@ -611,6 +769,24 @@ Proof.
       rewrite -{2}Hszp (shsh_stdr Hstdp1 Hsh) Hszp.
       by apply restr_big.
 Qed.
-
+*)
 End LR.
 
+
+(* First non trivial example of LR rule *)
+Eval compute in map (@shape nat_ordType)
+                    (filter
+                       (predLRTriple [:: [:: 0; 1]; [:: 2]] [:: [:: 0; 1]; [:: 2]])
+                       (list_stdtabn 6)).
+
+Eval compute in count
+                  (predLRTriple [:: [:: 0; 1]; [:: 2]] [:: [:: 0; 1]; [:: 2]])
+                  (list_stdtabsh [:: 3; 2; 1]).
+
+Eval compute in count
+                  (predLRTripleFast [:: [:: 0; 1]; [:: 2]] [:: [:: 0; 1]; [:: 2]])
+                  (list_stdtabsh [:: 3; 2; 1]).
+
+Eval compute in count
+                  (predLRTripleFast [:: [:: 0; 1]; [:: 2; 3]] [:: [:: 0; 1]; [:: 2; 3]])
+                  (list_stdtabsh [:: 4; 4]).
