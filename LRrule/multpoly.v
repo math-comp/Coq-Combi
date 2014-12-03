@@ -212,21 +212,23 @@ Qed.
 
 End Size.
 
-
 Variable R : comRingType.
 
-Definition Schur_pol d (sh : intpartn d) := polyset R (tabwordshape sh).
+Definition Schur d (sh : intpartn d) := polyset R (tabwordshape sh).
 
 Lemma Schur_freeSchurE d (Q : stdtabn_finType d) :
-  Schur_pol (shape_d Q) = polyset R (freeSchur Q).
+  Schur (shape_d Q) = polyset R (freeSchur Q).
 Proof.
-  rewrite /Schur_pol -tabword_of_tuple_freeSchur.
+  rewrite /Schur -tabword_of_tuple_freeSchur.
   rewrite /polyset (big_imset _ (@tabword_of_tuple_freeSchur_inj _ Q)) /=.
   apply eq_bigr => t _; apply perm_eq_commword.
   rewrite perm_eq_sym; by apply perm_eq_RS.
 Qed.
 
-Variable (d1 d2 : nat) (Q1 : stdtabn_finType d1) (Q2 : stdtabn_finType d2).
+Section SchurTab.
+
+Variables (d1 d2 : nat).
+Variables (Q1 : stdtabn d1) (Q2 : stdtabn d2).
 
 Definition LR_support :=
   [set Q : stdtabn_finType (d1 + d2) | predLRTriple Q1 Q2 Q ].
@@ -282,8 +284,7 @@ Qed.
 Definition Qsymb  d (w : d.-tuple 'I_n) := StdtabN (Qsymb_spec w).
 
 Lemma LR_rule_tab :
-  Schur_pol (shape_d Q1) * Schur_pol (shape_d Q2) =
-  \sum_(Q in LR_support) (Schur_pol (shape_d Q)).
+  Schur (shape_d Q1) * Schur (shape_d Q2) = \sum_(Q in LR_support) (Schur (shape_d Q)).
 Proof.
   rewrite !Schur_freeSchurE multcatset catset_LR_rule.
   rewrite -cover_imset /polyset.
@@ -329,5 +330,48 @@ Proof.
     by rewrite mem_imset //= inE HQ inE Hn0.
 Qed.
 
+End SchurTab.
+
+Lemma hyper_stdP d (P : intpartn d) : is_stdtab_of_n d (stdtab_of_yam (hyper_yam P)).
+Proof.
+  have Hyam := hyper_yamP (intpartnP P).
+  rewrite /= (stdtab_of_yamP Hyam) size_stdtab_of_yam /=.
+  rewrite -shape_rowseq_eq_size (shape_rowseq_hyper_yam (intpartnP P)).
+  by rewrite intpartn_sumn.
+Qed.
+Definition hyper_std d (P : intpartn d) := StdtabN (hyper_stdP P).
+
+Lemma shaped_hyper_stdP d (P : intpartn d) : shape_d (hyper_std P) = P.
+Proof.
+  rewrite /hyper_std /shape_d.
+  apply val_inj => /=.
+  by rewrite shape_stdtab_of_yam (shape_rowseq_hyper_yam (intpartnP P)).
+Qed.
+
+Definition LR_coeff d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) (P : intpartn (d1 + d2)) :=
+  #|[set Q | Q in (LR_support (hyper_std P1) (hyper_std P2)) & (shape Q == P)]|.
+
+Theorem LR_coeffP d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) :
+  Schur P1 * Schur P2 = \sum_(P : intpartn (d1 + d2)) (Schur P) *+ LR_coeff P1 P2 P.
+Proof.
+  rewrite /LR_coeff.
+  have := LR_rule_tab (hyper_std P1) (hyper_std P2).
+  rewrite !shaped_hyper_stdP => ->.
+  move : (LR_support _ _) => LR {P1 P2}.
+  rewrite (partition_big (@shape_d (d1 + d2)) predT) //=.
+  apply eq_bigr => P _.
+  rewrite (eq_bigr (fun i => (Schur P))); last by move=> T /andP [] _ /eqP ->.
+  rewrite big_const.
+  set c1 := card _; set c2 := card _.
+  suff -> : c1 = c2 by elim: c2 => [//= | c IHc] /=; rewrite IHc mulrS.
+  rewrite /c1 /c2 {c1 c2}.
+  apply eq_card => i /=.
+  rewrite imset_id unfold_in inE.
+  by congr (_ && _).
+Qed.
+
 End FinSets.
+
+
+
 

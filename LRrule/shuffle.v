@@ -791,7 +791,7 @@ Qed.
 
 End LR.
 
-
+(*
 (* First non trivial example of LR rule *)
 Eval compute in map (@shape nat_ordType)
                     (filter
@@ -809,3 +809,4 @@ Eval compute in count
 Eval compute in count
                   (predLRTripleFast [:: [:: 0; 1]; [:: 2; 3]] [:: [:: 0; 1]; [:: 2; 3]])
                   (list_stdtabsh [:: 4; 4]).
+*)
