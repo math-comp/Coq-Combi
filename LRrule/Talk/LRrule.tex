@@ -1,0 +1,1001 @@
+\documentclass[compress,11pt]{beamer}
+
+\usetheme{TALK}
+\usepackage[vcentermath,enableskew]{youngtab}
+\usepackage{minted}
+\usemintedstyle{emacs}
+%\usemintedstyle{colorful}
+%\usemintedstyle{borland}
+%\usemintedstyle{autumn}
+
+\newminted{coq}{
+frame=lines,
+framesep=2mm,
+fontsize=\scriptsize,
+mathescape=true
+}
+\usepackage{commath}
+
+% INFO DOCUMENT - TITRE, AUTEUR, INSTITUTION
+\title{\bf\LARGE Toward a formal proof of the \\
+Littlewood-Richardson rule}
+\subtitle{}
+\author{Florent Hivert}
+\institute[LRI]{
+  LRI / Université Paris Sud 11 / CNRS}
+\date[Décembre 2014]{Décembre 2014}
+
+\newcommand{\XX}{{\mathbb X}}
+
+\newcommand{\exec}{\operatorname{exec}}
+\newcommand{\free}[1]{\left\langle#1\right\rangle}
+\newcommand{\gl}{{\mathfrak gl}}
+\newcommand{\bb}{\mathbb}
+\newcommand{\A}{{\mathbb A}}
+\newcommand{\E}{{\mathbb E}}
+\newcommand{\F}{\mathbf{F}}
+\newcommand{\GG}{\mathbf{G}}
+\newcommand{\G}{\mathbf{G}}
+\newcommand{\N}{{\mathbb N}}
+\newcommand{\C}{{\mathbb C}}
+\newcommand{\R}{{\mathbb R}}
+\newcommand{\Z}{{\mathbb Z}}
+\newcommand{\Q}{{\mathbb Q}}
+\newcommand{\SG}{{\mathfrak S}}
+\newcommand{\ft}{\tilde{f}}
+\newcommand{\et}{\tilde{e}}
+\newcommand{\std}{\operatorname{Std}}
+\newcommand{\Des}{\operatorname{Des}}
+\newcommand{\Rec}{\operatorname{Rec}}
+\newcommand{\Sh}{\operatorname{Sh}}
+
+\newcommand{\sym}{\mathrm{sym}}
+\newcommand{\NCSF}{\mathbf{NCSF}}
+\newcommand{\QSym}{\mathrm{QSym}}
+\newcommand{\FSym}{\mathbf{FSym}}
+\newcommand{\FQSym}{\mathbf{FQSym}}
+\newcommand{\MQSym}{\mathbf{MQSym}}
+\newcommand{\Tree}{\mathbf{Tree}}
+
+\newcommand{\MS}{\mathbf{MS}}
+\newcommand{\FS}{{\mathbb \phi S}}
+\newcommand{\SSs}{\mathbb{S}}
+\newcommand{\TT}{{\cal T}}
+\newcommand{\PP}{{\cal P}}
+\def\Pp{{\bf P}}        % P de PBT
+\def\Qq{{\bf Q}}        % Q de PBT^*
+\newcommand{\HQ}{{\sf Q}}
+\newcommand{\HR}{{\sf R}}
+\newcommand{\rad}{\operatorname{rad}}
+\newcommand{\soc}{\operatorname{soc}}
+\newcommand{\Ext}{\operatorname{Ext}}
+\newcommand{\End}{\operatorname{End}}
+\newcommand{\conn}{{\cal C}}
+\newcommand{\ff}{{\sf F}}
+\newcommand{\UU}{\mathbf{U}}
+\newcommand{\VV}{\mathbf{V}}
+\newcommand{\sfact}{\operatorname{\rm sfact}}
+
+\newcommand{\partof}{\vdash}                    % Partition de
+\newcommand{\compof}{\vDash}                    % Composisition de
+\newcommand{\ssh}{\Cup}
+\newcommand{\saug}{\uplus}
+\newcommand{\sconc}{\bullet}
+\newcommand{\Std}{{\rm Std}}
+\newcommand{\Park}{{\rm Park}}
+\newcommand{\sumord}{\hat +}
+
+\newcommand{\qandq}{\text{\quad et\quad}}
+
+\newcommand{\tensor}{\otimes}
+\newcommand{\pairing}[2]{\left\langle#1,#2\right\rangle} % Crochet de dualite
+%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\alphX}{{\mathbb X}}
+\renewcommand{\emph}[1]{{\color{red} #1}}
+%------------------------------------------------------------------------------
+\begin{document}
+
+% PAGE D'ACCUEIL
+\frame{\titlepage}
+
+\begin{frame}{Symmetric Polynomials}
+  
+  $n$-variables : $\XX_n := \{x_0, x_1, \dots x_{n-1}\}$.
+
+  Polynomials in $\XX$ : $P(\XX) = P(x_0, x_1, \dots, x_{n-1})$; ex: $3x_0^3x_2
+  + 5 x_1x_2^4$.
+
+  \begin{DEFN}[Symmetric polynomial]
+    A polynomial is \emph{symmetric} if it is invariant under any permutation of the
+    variables: for all $\sigma\in\SG_n$,
+    \[P(x_0, x_1, \dots, x_{n-1}) = 
+    P(x_{\sigma(0)}, x_{\sigma(1)}, \dots, x_{\sigma({n-1})})\]
+  \end{DEFN}
+
+  \[P(a,b,c) = a^2b + a^2c + b^2c + ab^2 + ac^2 + bc^2\]
+  \[Q(a,b,c) = 5abc + 3a^2bc + 3ab^2c + 3abc^2\]
+
+\end{frame}
+
+\begin{frame}[fragile]{Integer Partitions}
+
+  different ways of decomposing an integer $n\in\N$ as a sum:
+  \[ 5=5=4+1=3+2=3+1+1=2+2+1=2+1+1+1=1+1+1+1+1 \]
+
+  Partition $\lambda := (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_l > 0)$.\\
+  $|\lambda| := \lambda_0+\lambda_1+\dots+\lambda_l \qandq
+  \ell(\lambda) := l\,. $
+
+  Ferrer's diagram of a partitions : $(5,3,2,2) \leftrightarrow \yng(2,2,3,5)$
+
+% \end{frame}
+
+% \begin{frame}[fragile]{Integer Partitions}
+
+% Formal definition:
+\begin{coqcode}
+  Fixpoint is_part sh := (* Predicate *)
+    if sh is sh0 :: sh'
+    then (sh0 >= head 1 sh') && (is_part sh')
+    else true.
+
+  (* Boolean reflection lemma *)
+  Lemma is_partP sh : reflect
+    (last 1 sh != 0 /\ forall i, (nth 0 sh i) >= (nth 0 sh i.+1))
+    (is_part sh).
+\end{coqcode}
+
+\end{frame}
+
+% \begin{frame}{Monomial symmetric polynomials}
+
+%   Partition $\lambda := (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_l > 0)$.\\
+%   \[ |\lambda| := \lambda_0+\lambda_1+\dots+\lambda_l \qandq
+%   \ell(\lambda) := l\,. \]
+
+%   \begin{DEFN}[Monomial symmetric polynomial]
+%     sum of all the distinct permutation of a monomial
+%   \end{DEFN}
+%   \[m_{(2,1)}(a,b,c) = a^2b + a^2c + b^2c + ab^2 + ac^2 + bc^2\]
+%   \[m_{(2,1,1)}(a,b,c) = 3a^2bc + 3ab^2c + 3abc^2\]
+%   \begin{PROP}
+%     $(m_{\lambda}(\XX_n))_\lambda$ where $\lambda$ is a \emph{partition} of length
+%     less than $n$ is a \emph{basis} of the algebra of symmetric polynomials.
+%   \end{PROP}
+% \end{frame}
+
+% \begin{frame}{Antisymmetric polynomials}
+
+%   \begin{DEFN}[Antiymmetric polynomial]
+%     A polynomial is \emph{antisymmetric} if for all $\sigma\in\SG_n$,
+%     \[P(x_0, x_1, \dots, x_{n-1}) = \operatorname{sign}(\sigma)
+%     P(x_{\sigma(0)}, x_{\sigma(1)}, \dots, x_{\sigma({n-1})})\]
+%     Equivalently for any $0\leq i < j < n$
+%     \[
+%     P(x_{0},\dots,x_i,\dots,x_j,\dots,x_{n-1})
+%     = -
+%     P(x_{0},\dots,x_j,\dots,x_i,\dots,x_{n-1})
+%     \]
+%   \end{DEFN}
+%   \begin{REMARK}
+%     $P(a,b) = - P(b,a)$ implies that $P(a,a)=0$ and therefore $P$ is divisible by $(b-a)$.
+%   \end{REMARK}
+% \end{frame}
+
+\begin{frame}{Schur symmetric polynomials}
+
+  \begin{DEFN}[Schur symmetric polynomial]
+    \small Partition $\lambda := (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_{l-1})$ with $l\leq
+    n$; set $\lambda_i:=0$ for $i\geq l$.\\
+
+    \[
+    s_{\lambda} = 
+    \frac{\sum_{\sigma\in\SG_n} \operatorname{sign}(\sigma)
+      \XX_n^{\sigma(\lambda+\rho)}}%
+    {\prod_{0\leq i<j<n} (x_j - x_i)}
+    = \frac{\left|
+       \begin{smallmatrix}
+         x_1^{\lambda_{n-1}+0}  & x_2^{\lambda_{n-1}+0}   & \dots  & x_n^{\lambda_{n-1}+0}  \\
+         x_1^{\lambda_{n-2}+1}  & x_2^{\lambda_{n-2}+1}   & \dots  & x_n^{\lambda_{n-2}+1}  \\
+         \vdots & \vdots & \ddots & \vdots \\
+         x_1^{\lambda_1+n-2}  & x_2^{\lambda_1+n-2}   & \dots  & x_n^{\lambda_1+n-2}  \\
+         x_1^{\lambda_0+n-1}  & x_2^{\lambda_0+n-1}   & \dots  & x_n^{\lambda_0+n-1}  \\
+      \end{smallmatrix}
+      \right|
+    }{\left|
+       \begin{smallmatrix}
+         1      & 1      & \dots  & 1     \\
+         x_1    & x_2    & \dots  & x_n    \\
+         x_1^2  & x_2^2   & \dots  & x_n^2  \\
+         \vdots & \vdots & \ddots & \vdots \\
+         x_1^{n-1}  & x_2^{n-1}   & \dots  & x_n^{n-1}  \\
+      \end{smallmatrix}
+      \right|
+    }
+    \]
+  \end{DEFN}
+  \[s_{(2,1)}(a,b,c) = a^2b + ab^2 + a^2c + 2abc + b^2c + ac^2 + bc^2\]
+\end{frame}
+
+
+\begin{frame}{Littlewood-Richardson coefficients}
+  
+  \begin{PROP}
+    The family $(s_\lambda)_{\ell(\lambda) \leq n}$ is (linear) basis of the
+    ring of symmetric polynomials on $\XX_n$.
+  \end{PROP}
+  
+  \begin{DEFN}[Littlewood-Richardson coefficients]
+    coefficients $c_{\lambda,\mu}^\nu$ of the expansion of a product:
+    \[
+    s_\lambda s_\mu = \sum_{\nu} c_{\lambda,\mu}^\nu s_\nu\,.
+    \]
+  \end{DEFN}
+  Fact: $s_\lambda(x_0,\dots,x_{n-1}, x_n := 0) =
+  s_\lambda(x_0,\dots,x_{n-1})$.
+
+  Consequence: $c_{\lambda,\mu}^\nu$ are independant of the number of variables.
+\end{frame}
+
+\begin{frame}{History}
+  \begin{itemize}
+  \item stated (1934) by D. E. Littlewood and A. R. Richardson, wrong proof,
+    wrong example.
+  \item Robinson (1938), wrong completed proof.
+  \item First correct proof: Schützenberger (1977).
+  \item Dozens of thesis and paper about its proof (Zelevinsky 1981, Macdonald
+    1995, Gasharov 1998, Duchamp-H-Thibon 2001, van Leeuwen 2001, Stembridge
+    2002).
+  \end{itemize}
+
+  \begin{quotation}\small
+    \textbf{Wikipedia}: The Littlewood–Richardson rule is notorious for the
+    number of errors that appeared prior to its complete, published
+    proof. Several published attempts to prove it are incomplete, and it is
+    particularly difficult to avoid errors when doing hand calculations with
+    it: even the original example in D. E. Littlewood and A. R. Richardson
+    (1934) contains an error.
+ \end{quotation}
+\end{frame}
+
+\begin{frame}{Applications}
+  \begin{itemize}
+  \item $\#P$-hard problem (possibly, invariant theory, $P \neq NP$).
+  \item Geometry: mumber of intersection of a grassmanian;
+  \item multiplicity of induction or restriction of irreducible representations
+    of the symmetric groups;
+  \item multiplicity of the tensor product of the irreducible representations
+    of linear groups;
+  \item Application in quantum physics (spectrum rays of the Hydrogen atoms);
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Young Tableau}
+
+  \begin{DEFN}
+    \begin{itemize}
+    \item Filling of a partition shape;
+    \item non decreasing along the rows;
+    \item strictly increasing along the columns.
+      \medskip
+    \item row reading
+    \end{itemize}
+  \end{DEFN}
+  \[\scriptsize
+  \young(dde,bcccd,aaabbde) = ddebcccdaaabbde
+  \qquad\qquad
+  \young(5,269,13478)=526913478\]
+  
+\end{frame}
+
+\begin{frame}[fragile]{Ordered types}
+  
+  I'm using \texttt{SSReflect} class/mixin/canonical paradigm.
+\begin{coqcode}
+Definition axiom T (r : rel T) :=
+    [/\ reflexive r, antisymmetric r, transitive r &
+        (forall m n : T, (r m n) || (r n m))].
+
+Record mixin_of T := Mixin { r : rel T; x : T; _ : axiom r }.
+Record class_of T := Class {base : Equality.class_of T; mixin : mixin_of T}.
+Structure type := Pack {sort; _ : class_of sort; _ : Type}.
+
+Notation ordType := type.
+
+Definition leqX_op T := Order.r (Order.mixin (Order.class T)).
+
+Delimit Scope ord_scope with Ord.
+Open Scope ord_scope.
+Notation "m <= n" := (leqX_op m n) : ord_scope.
+\end{coqcode}
+\end{frame}
+
+
+\begin{frame}[fragile]{Young Tableau: formal definition}
+
+\begin{coqcode}
+  Variable T : ordType.
+  Notation Z := (inhabitant T).
+  Notation is_row r := (sorted (@leqX_op T) r).
+
+  Definition dominate (u v : seq T) :=
+    ((size u) <= (size v)) && 
+     (all (fun i => (nth Z u i > nth Z v i)%Ord) (iota 0 (size u))).
+
+  Lemma dominateP u v :
+    reflect ((size u) <= (size v) /\ 
+             forall i, i < size u -> (nth Z u i > nth Z v i)%Ord)
+            (dominate u v).
+
+  Fixpoint is_tableau (t : seq (seq T)) :=
+    if t is t0 :: t'
+    then [&& (t0 != [::]), is_row t0,
+          dominate (head [::] t') t0 & is_tableau t']
+    else true.
+
+  Definition to_word t := flatten (rev t).
+\end{coqcode}
+\end{frame}
+
+\begin{frame}{Combinatorial definition of Schur functions}
+
+  \begin{DEFN}
+    \[s_\lambda(\XX) = \sum_\text{$T$ tableaux of shape $\lambda$} \XX^T\]
+    where $\XX^T$ is the product of the elements of $T$.
+  \end{DEFN}
+  \[s_{(2,1)}(a,b,c) = a^2b\,+\,ab^2\,+\,a^2c\ +\quad 2abc\quad +\
+  b^2c\,+\,ac^2\,+\,bc^2\]
+
+  \[s_{(2,1)}(a,b,c) = {  \scriptsize\young(b,aa) + \young(b,ab) + \young(c,aa)
+  + \young(b,ac) + \young(c,ab) + \young(c,bb) + \young(c,ac) + \young(c,bc)}\]
+\end{frame}
+
+\begin{frame}[fragile]
+\begin{coqcode}
+Variable R : comRingType.
+Fixpoint multpoly n :=
+  if n is n'.+1 then poly_comRingType (multpoly n') else R.
+
+(* 'I_n is the finite type $\{0, \dots, n-1\}$ *)
+Definition vari n (i : 'I_n) : multpoly n. (* i-th variable *)
+Proof.
+  elim: n i => [//= | n IHn] i; first by apply 1.
+  case (unliftP 0 i) => /= [j |] Hi.
+  - by apply (polyC (IHn j)).
+  - by apply 'X.
+Defined.
+
+Definition tabwordshape (sh : seq nat) :=
+  [set t : (sumn sh).-tuple 'I_n | 
+     (to_word (RS t) == t) && (shape (RS (t)) == sh)].
+
+Definition commword (w : seq 'I_n) : multpoly n := \prod_(i <- w) vari i.
+Definition polyset d (s : {set d.-tuple 'I_n}) := \sum_(w in s) commword w.
+
+Definition Schur_pol (sh : seq nat) := polyset R (tabwordshape sh).
+\end{coqcode}
+% |
+\end{frame}
+
+\begin{frame}{Yamanouchi Words}
+
+  $\abs{w}_x$ : number of occurrence of $x$ in $w$.
+
+  \begin{DEFN}
+    Sequence $w_0,\dots,w_{l-1}$ of integers such that for all $k, i$,
+    \[ \abs{w_i,\dots,w_{l-1}}_k \geq \abs{w_i,\dots,w_{l-1}}_{k+1} \]
+
+    Equivalently $(\abs{w}_i)_{i\leq\max(w)}$ is a partition and $w_1,\dots,w_{l-1}$ is
+    also Yamanouchi.
+  \end{DEFN}
+
+  \[ (), 0, 00, 10, 000, 100, 010, 210, \]
+  \[ 0000, 1010, 1100, 0010, 0100, 1000, 0210, 2010, 2100, 3210 \]
+\end{frame}
+
+\begin{frame}[fragile]{Yamanouchi words in Coq}
+  \begin{coqcode}
+(* incr_nth s i == the nat sequence s with item i incremented (s is *)
+(*                 first padded with 0's to size i+1, if needed).   *)
+
+  Fixpoint shape_rowseq s :=
+    if s is s0 :: s'
+    then incr_nth (shape_rowseq s') s0
+    else [::].
+
+  Definition shape_rowseq_count :=
+    [fun s => [seq (count_mem i) s | i <- iota 0 (foldr maxn 0 (map S s))]].
+
+  Lemma shape_rowseq_countE : shape_rowseq_count =1 shape_rowseq.
+
+  Fixpoint is_yam s :=
+    if s is s0 :: s'
+    then is_part (shape_rowseq s) && is_yam s'
+    else true.
+\end{coqcode} 
+% |
+\end{frame}
+
+\begin{frame}[fragile]{Note : generating Yamanouchi words}
+  \begin{coqcode}
+(* list_partn : list of partitions of n *)
+(* list_yamsh : list of Yamanouchi words of shape sh *)
+
+Definition is_yam_of_size n y := (is_yam y) && (size y == n).
+Definition list_yamn n : seq (seq nat) :=
+  flatten [seq list_yamsh sh | sh <- list_partn n].
+
+Lemma list_yamnP n :
+  all (is_yam_of_size n) (list_yamn n).
+
+Lemma list_yamn_countE n y :
+  is_yam_of_size n y -> count_mem y (list_yamn n) = 1.
+
+Eval compute in (list_yamn 4).
+     = [:: [:: 0; 0; 0; 0]; [:: 1; 0; 1; 0]; [:: 1; 1; 0; 0];
+           [:: 0; 0; 1; 0]; [:: 0; 1; 0; 0]; [:: 1; 0; 0; 0];
+           [:: 0; 2; 1; 0]; [:: 2; 0; 1; 0]; [:: 2; 1; 0; 0]; [::
+           3; 2; 1; 0]]
+     : seq (seq nat)
+\end{coqcode} 
+% |
+\end{frame}
+
+\begin{frame}{The LR Rule at last !}
+
+  \begin{THEO}[Littlewood-Richardson rule]
+    $c_{\lambda, \mu}^{\nu}$ is the number of (skew) tableaux of shape the
+    difference $\nu/\lambda$, whose row reading is a Yamanouchi word of
+    evaluation $\mu$.
+  \end{THEO}
+% ...00 ...00 ...00
+% ...1  ...1  ...1 
+% .00   .01   .02  
+% 12    02    01   
+  \[
+  C_{331,421}^{5432} = 3
+  \qquad \tiny
+  \young(12,:00,:::1,:::00)\qquad
+  \young(02,:01,:::1,:::00)\qquad
+  \young(01,:02,:::1,:::00)
+  \]
+% ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00
+% ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1
+% .00   .00   .00   .01   .00   .01   .02   .02   .12   .02   .02   .01   .01   .12   .12
+% 01    02    11    01    12    02    01    13    03    03    11    12    22    02    23
+  \[
+  C_{431,4321}^{7542} = 4
+  \qquad \tiny
+  \young(23,:112,:::01,::::000)\quad
+  \young(23,:012,:::11,::::000)\quad
+  \young(13,:022,:::11,::::000)\quad
+  \young(03,:122,:::11,::::000)\quad
+  \]
+  \[
+  C_{4321,431}^{7542} = 4
+  \qquad \tiny
+  \young(:2,::11,:::01,::::000)\quad
+  \young(:1,::12,:::01,::::000)\quad
+  \young(:1,::02,:::11,::::000)\quad
+  \young(:0,::12,:::11,::::000)\quad
+  \]
+
+\end{frame}
+
+\begin{frame}{Outline of a proof}
+
+  \textsc{\sc Lascoux, Leclerc and Thibon} \textit{The Plactic monoid},
+    {\it in} M.~Lothaire, Algebraic combinatorics on words,
+    Cambridge Univ. Press.
+
+  \begin{enumerate}
+  \item increasing subsequences and Schensted's algorithms;
+  \item Robinson-Schensted correspondance : a bijection;
+  \item Green's invariants: computing the maximum sum of the length of $k$ disjoint
+    non-decreassing subsequences;
+  \item Knuth relations, the plactic monoïd;
+  \item Green's invariants are plactic invariants: Equivalence between RS and plactic;
+  \item standardization; symmetry of RS;
+  \item Lifting to non commutative polynomials : Free quasi-symmetric function
+    and shuffle product;
+  \item non-commutative lifting the LR-rule : The free LR-rule;
+  \item Back to Yammanouchi words: a final bijection.
+  \end{enumerate}
+\end{frame}
+
+\newcommand{\red}[1]{{\color{red} #1}}
+\newcommand{\grn}[1]{{\color{green} #1}}
+\newcommand{\blu}[1]{{\color{blue} #1}}
+\begin{frame}{The longest increasing subsequence problem}
+
+  Some increasing subsequences: 
+  \[
+  \begin{array}{c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c}
+    a&b&a&b&c&a&b&b&a&d&b&a&b\\
+    a&b&\red{a}&b&c&\red a&\red b&\red b&a&\red d&b&a&b \\
+    \red a&\red b&a&\red{b}&c&a&\red b&\red b&a&d&\red b&a&\red b
+  \end{array}
+  \]
+  \begin{PROBLEM}[Schensted]
+    Given a finite sequence $w$, compute the maximum length of a increasing subsequence.
+  \end{PROBLEM}
+\end{frame}
+
+\newcommand{\ar}[1]{\xrightarrow{#1}}
+
+\begin{frame}[fragile]{Schensted's algorithm}
+
+  \begin{ALGO}
+    Start with an empty row $r$, insert the letters $l$ of the word one by one
+    from left to right by the following rule:
+    \begin{itemize}
+    \item replace the first letter strictly larger that $l$ by $l$;
+    \item append $l$ to $r$ if there is no such letter.
+    \end{itemize}
+  \end{ALGO}
+  \bigskip
+
+  Insertion of $\begin{array}{c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c}
+    a&b&a&b&c&a&b&b&a&d&b&a&b\\
+  \end{array}$
+  \begin{multline*}
+  \emptyset\ar{a}\young(a)\ar{b}\young(ab)\ar{a}\young(aa)\ar{b}\young(aab)
+  \ar{c}\young(aabc)\ar{a}\\
+  \young(aaac)\ar{b}\young(aaab)\ar{b}\young(aaabb)\ar{a}\\\young(aaaab)\ar{d}
+  \young(aaaabd)\ar{b}\young(aaaabb)\ar{a}\\
+  \young(aaaaab)\ar{b}\young(aaaaabb)
+  \end{multline*}
+\end{frame}
+
+\begin{frame}[fragile]{Schensted's specification}
+
+  \emph{Warning}: list index start from $0$.
+  \bigskip
+
+  \begin{THEO}[Schensted 1961]
+    The $i$-th entry $r[i+1]$ of the row $r$ is the smallest letter which ends
+    a increasing subsequence of length $i$.
+  \end{THEO}
+\end{frame}
+
+\begin{frame}[fragile]
+
+  \begin{coqcode}
+Fixpoint insrow r l : seq T :=
+  if r is l0 :: r then
+    if (l < l0)%Ord then l :: r
+    else l0 :: (insrow r l)
+  else [:: l].
+
+Fixpoint inspos r (l : T) : nat :=
+  if r is l0 :: r' then
+    if (l < l0)%Ord then 0
+    else (inspos r' l).+1
+  else 0.
+
+Definition ins r l := set_nth l r (inspos r l) l.
+
+Lemma insE r l : insmin r l = ins r l.
+Lemma insrowE r l : insmin r l = insrow r l.
+  \end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]
+  \begin{coqcode}
+  (* rev == list reversal,   rcons s x == the sequence s, followed by x *)
+  (* subseq s1 s2 == s1 is a subsequence of s2                          *)
+  Fixpoint Sch_rev w := if w is l0 :: w' then ins (Sch_rev w') l0 else [::].
+  Definition Sch w := Sch_rev (rev w).
+
+  Lemma is_row_Sch w : is_row (Sch w).
+
+  Definition subseqrow s w := subseq s w && is_row s.
+  Definition subseqrow_n s w n := [&& subseq s w , (size s == n) & is_row s].
+
+  Theorem Sch_exists w i :
+    i < size (Sch w) ->
+    exists s : seq T, (last Z s == nth Z (Sch w) i) && subseqrow_n s w i.+1.
+
+  Corollary exist_size_Sch w : 
+    exists s : seq T, subseqrow_n s w (size (Sch w)).
+
+  Theorem Sch_leq_last w s si :
+    subseqrow (rcons s si) w ->
+    size s < size (Sch w) /\ (nth Z (Sch w) (size s) <= si)%Ord.
+
+  Corollary size_ndec_Sch w s : subseqrow s w -> (size s) <= size (Sch w).
+  \end{coqcode}
+\end{frame}
+
+\begin{frame}{The ``apply it recursively'' rule}
+
+  \begin{block}
+      \bf\huge\bf If you have a great idea,\\
+      \emph{apply it recursively} \\
+      and you'll get \\
+      {\color{green} an even greater idea} !
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{The Robinson-Schensted's correspondance}
+
+  \emph{Bumping the letters}: when a letter is replaced in Schensted
+  algorithm, insert it in a next row (placed on top in the drawing).
+  \newcommand{\ra}{{\red a}}%
+  \newcommand{\rb}{{\red b}}%
+  \newcommand{\rc}{{\red c}}%
+  \newcommand{\rd}{{\red d}}%
+  \begin{multline*}
+  \emptyset\ar{a}\young(\ra )\ar{b}\young(a\rb)\ar{a}\young(\rb,a\ra)\ar{b}\young(b,aa\rb)
+  \ar{c}\young(b,aab\rc)\ar{a}\\[3mm]
+  \young(b\rb,aa\ra c)\ar{b}\young(bb\rc,aaa\rb)\ar{b}\young(bbc,aaab\rb)\ar{a}\\[3mm]
+  \young(\rc,bb\rb,aaa\ra b)\ar{d}
+  \young(c,bbb,aaaab\rd)\ar{b}\young(c,bbb\rd,aaaab\rb)\ar{a}\\[3mm]
+  \young(c\rd,bbb\rb,aaaa\ra b)\ar{b}\young(cd,bbbb,aaaaab\rb)
+  \end{multline*}
+\end{frame}
+
+\begin{frame}[fragile]
+  \begin{coqcode}
+Definition bump r l := (l < (last l r))%Ord.
+
+Fixpoint bumprow r l : (option T) * (seq T) :=
+  if r is l0 :: r then
+    if (l < l0)%Ord then (Some l0, l :: r)
+    else let: (lr, rr) := bumprow r l in (lr, l0 :: rr)
+  else (None, [:: l]).
+
+Fixpoint instab t l : seq (seq T) :=
+  if t is t0 :: t' then
+    let: (lr, rr) := bumprow t0 l in
+    if lr is Some ll then rr :: (instab t' ll) else rr :: t'
+  else [:: [:: l]].
+
+Fixpoint RS_rev w : seq (seq T) :=
+  if w is w0 :: wr then instab (RS_rev wr) w0 else [::].
+Definition RS w := RS_rev (rev w).
+
+Lemma bump_dominate r1 r0 l : is_row r0 -> is_row r1 -> bump r0 l ->
+  dominate r1 r0 -> dominate (ins r1 (bumped r0 l)) (ins r0 l).
+Theorem is_tableau_instab t l : is_tableau t -> is_tableau (instab t l).
+Theorem is_tableau_RS w : is_tableau (RS w).
+  \end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]{Going back}
+
+  If we remember which cell was added we can recover the letter and the
+  previous tableau:
+  \newcommand{\ra}{{\red a}}%
+  \newcommand{\rb}{{\red b}}%
+  \newcommand{\rc}{{\red c}}%
+  \newcommand{\rd}{{\red d}}%
+  \[
+  \only<1>{\yng(1,4,6)\ar{?} \young(cd,bbbb,aaaaab)}
+  \only<2>{\young(c,bbbd,aaaabb)\ar{a} \young(c\rd,bbb\rb,aaaa\ra b)}
+  \]
+  \begin{coqcode}
+RSmap : forall T : ordType, seq T -> seq (seq T) * seq nat
+RSmapinv2 : forall T : ordType, seq (seq T) * seq nat -> seq T
+
+Definition is_RSpair pair := let: (P, Q) := pair
+  in [&& is_tableau P, is_yam Q & (shape P == shape_rowseq Q)].
+Theorem RSmap_spec w : is_RSpair (RSmap w).
+
+Theorem RS_bij_1 w : RSmapinv2 (RSmap w) = w.
+Theorem RS_bij_2 pair : is_RSpair pair -> RSmap (RSmapinv2 pair) = pair.
+  \end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]{Robinson-Schensted's bijection (Yamanouchi version)}
+
+  \newcommand{\ra}{{\red a}}%
+  \newcommand{\rb}{{\red b}}%
+  \newcommand{\rc}{{\red c}}%
+  \newcommand{\rd}{{\red d}}%
+  \begin{multline*}
+  \emptyset,\emptyset \ar{a}
+  \young(\ra ),         {\tiny 0}\ar{b}
+  \young(a\rb),         00\ar{a}
+  \young(\rb,a\ra),     100\ar{b}\\[3mm]
+  \young(b,aa\rb),      0100\ar{c}
+  \young(b,aab\rc),     00100\ar{a}
+  \young(b\rb,aa\ra c), 100100\ar{b}\\[3mm]
+  \young(bb\rc,aaa\rb), 1100100\ar{b}
+  \young(bbc,aaab\rb),  01100100\ar{a}\\[3mm]
+  \young(\rc,bb\rb,aaa\ra b), 201100100\ar{d}
+  \young(c,bbb,aaaab\rd), 0201100100
+  \end{multline*}
+\end{frame}
+
+\begin{frame}[fragile]{Robinson-Schensted's bijection (Tableau version)}
+
+  \newcommand{\ra}{{\red a}}%
+  \newcommand{\rb}{{\red b}}%
+  \newcommand{\rc}{{\red c}}%
+  \newcommand{\rd}{{\red d}}%
+  \begin{multline*}
+  \emptyset,\emptyset \ar{a}
+  \young(\ra ),         \young(0)\ar{b}
+  \young(a\rb),         \young(01)\ar{a}
+  \young(\rb,a\ra),     \young(2,01)\ar{b}\\[3mm]
+  \young(b,aa\rb),      \young(2,013)\ar{c}
+  \young(b,aab\rc),     \young(2,0134)\ar{a}
+  \young(b\rb,aa\ra c), \young(25,0134)\ar{b}\\[3mm]
+  \young(bb\rc,aaa\rb), \young(256,0134)\ar{b}
+  \young(bbc,aaab\rb),  \young(256,01347)\ar{a}\\[3mm]
+  \young(\rc,bb\rb,aaa\ra b), \young(8,256,01347)\ar{d}
+  \young(c,bbb,aaaab\rd), \young(8,256,013479)
+  \end{multline*}
+\end{frame}
+
+\begin{frame}{Question ?}
+
+  \Huge\bf What does the Robinson-Schensted algorithm compute ?
+\end{frame}
+
+\begin{frame}{Green's Theorem}
+
+  disjoint support increasing subsequences:
+  \[
+  \begin{array}{c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c}
+    \grn{a}&\grn{b}&\red{a}&\grn{b}&\grn{c}&\red a&\red b&\red b&\blu{a}&\red d&\blu{b}&a&\blu{b} \\
+  \end{array}
+  \]
+
+  \begin{THEO}
+    For any word $w$, and integer $k$
+    \begin{itemize}
+    \item The sum of the length of the $k$-first row of $RS(w)$ is the maximum
+      sum of the length of $k$ disjoint support increasing subsequences of $w$;
+    \item The sum of the length of the $k$-first column of $RS(w)$ is the maximum
+      sum of the length of $k$ disjoint support strictly decreasing subsequences of $w$.
+    \end{itemize}
+  \end{THEO}
+\end{frame}
+
+\begin{frame}[fragile]
+  \begin{coqcode}
+(* From mathcomp: cover P     == the union of the set of sets P. *)
+(*                trivIset P <=> the elements of P are pairwise disjoint.  *)
+Definition cover P := \bigcup_(B in P) B.
+Definition trivIset P := \sum_(B in P) #|B| == #|cover P|.
+
+ariable N : nat.
+Variable wt : N.-tuple Alph.
+Definition extractpred (P : pred 'I_N) := [seq tnth wt i | i <- enum P].
+Definition extract := [fun s : {set 'I_N} => extractpred wt (mem s)].
+
+Definition is_seq := [fun r => (sorted comp r)].
+Definition ksupp k (P : {set {set 'I_N}}) :=
+  [&& #|P| <= k, trivIset P & [forall (s | s \in P), is_seq (extract s)]].
+
+Definition scover := [fun P : {set {set 'I_N}} => #|cover P|].
+Definition green_rel_t k := \max_(P | ksupp k P) scover P.
+Definition green_rel u := [fun k => green_rel_t comp (in_tuple u) k].
+
+Variable Alph : ordType.
+Definition greenRow := green_rel (leqX Alph).
+Definition greenCol := green_rel (gtnX Alph).
+  \end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]
+  \begin{coqcode}
+(* take n s == the sequence containing only the first n items of s *)
+(*             (or all of s if size s <= n).                       *)
+
+Definition part_sum s k := (\sum_(l <- (take k s)) l).
+
+Corollary greenRow_RS k w : greenRow w k = part_sum (shape (RS w)) k.
+
+(* conj_part : partition conjugate *)
+Corollary greenCol_RS k w : greenCol w k = part_sum (conj_part (shape (RS w))) k.
+  \end{coqcode}
+
+Proof: 
+\begin{itemize}
+\item Show that theorems \texttt{green(Row|Col)\_RS} hold whenever $w$ is the
+  row reading of a tableau;
+\item Knuth's relations: given a tableau $t$, describe all the word $w$ such
+  that $RS(w) = t$;
+\item Show that Green's invariant are indeed invariants.
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Step 1: Green's invariant of a tableau}
+
+  \begin{itemize}
+  \item Upper bound using concatenation;
+  \item Construction of an explicit $k$-sub sequence.
+  \end{itemize}
+\begin{coqcode}
+(* Bound from concatenation *)
+Lemma green_rel_cat k v w : 
+   green_rel (v ++ w) k <= green_rel v k + green_rel w k.
+Lemma greenCol_inf_tab k t : is_tableau t -> 
+   greenCol (to_word t) k <= \sum_(l <- (shape t)) minn l k.
+\end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]{  A dependant type nightmare !}
+
+Construction of an explicit $k$-sub sequence:
+\begin{center}
+\end{center}
+\begin{coqcode}
+(*         lshift n j == the i : 'I_(m + n) with value j : 'I_m.              *)
+(*         rshift m k == the i : 'I_(m + n) with value m + k, k : 'I_n.       *)
+Let sym_cast m n (i : 'I_(m + n)) : 'I_(n + m) := cast_ord (addnC m n) i.
+Definition shiftset s0 sh :=
+  [fun s : {set 'I_(sumn sh)} => 
+     ((@sym_cast _ _) \o (@lshift (sumn sh) s0)) @: s].
+
+Fixpoint shrows sh : seq {set 'I_(sumn sh)} :=
+  if sh is s0 :: sh then
+    [set ((@sym_cast _ _) \o (@rshift (sumn sh) s0)) i | i in 'I_s0] ::
+    map (@shiftset s0 sh) (shrows sh)
+  else [::].
+\end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]
+
+\begin{coqcode}
+Lemma size_to_word T (t : seq (seq T)) : size_tab t = size (to_word t)
+
+Let cast_set_tab t :=
+  [fun s : {set 'I_(sumn (shape t))} => (cast_ord (size_to_word t)) @: s].
+
+Definition tabrows t := map (cast_set_tab t) (shrows (shape t)).
+Definition tabrowsk t := [fun k => take k (tabrows t)].
+
+Lemma ksupp_leqX_tabrowsk k t : is_tableau t ->
+  ksupp (leqX Alph) (in_tuple (to_word t)) k [set s | s \in (tabrowsk t k)].
+
+Lemma scover_tabcolsk k t : is_part (shape t) ->
+  scover [set s | s \in (tabcolsk t k)] = \sum_(l <- (shape t)) minn l k.
+\end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]{Step 2: Knuth relation}
+
+\[acb \equiv cab\quad \text{if $a \leq b < c$}\]
+\[bac \equiv bca\quad \text{if $a < b \leq c$}\]
+
+  \begin{coqcode}
+Definition plact1 :=
+  fun s => match s return seq word with
+    | [:: a; c; b] => 
+        if (a <= b < c)%Ord then [:: [:: c; a; b]] else [::]
+    | _ => [::]
+  end.
+[...]
+
+Definition plactrule := 
+  [fun s => plact1 s ++ plact1i s ++ plact2 s ++ plact2i s].
+
+Lemma plactrule_sym u v : v \in (plactrule u) -> u \in (plactrule v).
+Lemma plact_homog : forall u : word, all (perm_eq u) (plactrule u).
+  \end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]{Step 2: The plactic congruence}
+
+  \begin{coqcode}
+CoInductive Generated_EquivCongruence (grel : rel word) :=
+  GenCongr : equivalence_rel grel ->
+             congruence_rel grel ->
+             ( forall u v, v \in rule u -> grel u v ) ->
+             ( forall r : rel word,
+                      equivalence_rel r -> congruence_rel r ->
+                      (forall x y, y \in rule x -> r x y) ->
+                      forall x y, grel x y -> r x y
+             ) -> Generated_EquivCongruence grel.
+
+Theorem gencongrP : Generated_EquivCongruence gencongr.
+
+Definition plactcongr := (gencongr plact_homog).
+
+Lemma plactcongr_equiv : equivalence_rel plactcongr.
+Lemma plactcongr_is_congr : congruence_rel plactcongr.
+Lemma plactcongr_homog u v : v \in plactcongr u -> perm_eq u v.
+Lemma size_plactcongr u v : v \in plactcongr u -> size u = size v.
+
+Notation "a =Pl b" := (plactcongr a b) (at level 70).
+  \end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]{Step 2: plactic congruence and RS algorithm}
+
+  \begin{coqcode}
+Lemma congr_bump r l :
+  r != [::] -> is_row r -> bump r l ->
+  r ++ [:: l] =Pl [:: bumped r l] ++ ins r l.
+
+Theorem congr_RS w : w =Pl (to_word (RS w)).
+
+(* rembig w : remove the last occurrence of the largest letter of w *)
+(* Bi-simulation *)
+Theorem rembig_RS_last_big a v :
+  RS (a :: v) = append_nth (RS (rembig (a :: v)))
+                           (maxL a v)
+                           (last_big (RS (a :: v)) (maxL a v)).
+  \end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]{Step 3: Green's numbers are plactic invariants}
+
+More dependant type nightmare
+  \begin{coqcode}
+Lemma ksupp_cast (T : ordType) R (w1 w2 : seq T) (H : w1 = w2) k Q :
+  ksupp R (in_tuple w1) k Q ->
+  ksupp R (in_tuple w2) k ((cast_set (eq_size H)) @: Q).
+
+Definition ksupp_inj k (u1 : seq T1) (u2 : seq T2) :=
+  forall s1, ksupp R1 (in_tuple u1) k s1 ->
+    exists s2, (scover s1 == scover s2) && ksupp R2 (in_tuple u2) k s2.
+
+Lemma leq_green k (u1 : seq T1) (u2 : seq T2) :
+  ksupp_inj k u1 u2 -> green_rel R1 u1 k <= green_rel R2 u2 k.
+  \end{coqcode}
+\end{frame}
+
+
+\begin{frame}[fragile]{Too many hypothesis nightmare !}
+  \begin{coqcode}
+Record hypRabc (Alph : ordType) (R : rel Alph) (a b c : Alph) : 
+Type := HypRabc
+  { Rtrans : transitive R;
+    Hbc : is_true (R b c);
+    Hba : is_true (~~ R b a);
+    Hxba : forall l : Alph, R l a -> R l b;
+    Hbax : forall l : Alph, R b l -> R a l }
+
+SetContainingBothLeft.exists_Qy
+     : forall (Alph : ordType) (R : rel Alph) (u v : seq Alph) (a b c : Alph),
+       SetContainingBothLeft.hypRabc R a b c ->
+       forall (k : nat) (P : {set {set 'I_(size (u ++ [:: b; a; c] ++ v))}}),
+       ksupp R (in_tuple (u ++ [:: b; a; c] ++ v)) k P ->
+       forall S0 : {set 'I_(size (u ++ [:: b; a; c] ++ v))},
+       S0 \in P ->
+       Swap.pos1 u (c :: v) b a \in S0 ->
+       Ordinal (SetContainingBothLeft.u2lt u v a b c) \in S0 ->
+       exists Q : {set {set 'I_(size ((u ++ [:: b]) ++ [:: c; a] ++ v))}},
+         scover Q = scover P /\
+         ksupp R (in_tuple ((u ++ [:: b]) ++ [:: c; a] ++ v)) k Q
+  \end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]
+
+  \begin{coqcode}
+Theorem greenRow_invar_plactic u v :
+  u =Pl v -> forall k, greenRow u k = greenRow v k.
+Corollary plactic_shapeRS_row_proof u v : 
+  u =Pl v -> shape (RS u) = shape (RS v).
+
+Corollary greenRow_RS k w : greenRow w k = part_sum (shape (RS w)) k.
+
+Theorem greenCol_invar_plactic u v : 
+  u =Pl v -> forall k, greenCol u k = greenCol v k.
+Corollary greenCol_RS k w : 
+  greenCol w k = part_sum (conj_part (shape (RS w))) k.
+
+Theorem plactic_RS u v : u =Pl v <-> RS u == RS v.
+(* Induction removing the last occurrence of the largest letter *)
+
+
+(* Could be proved much earlier *)
+Corollary RS_tabE (t : seq (seq Alph)) : is_tableau t -> RS (to_word t) = t.
+  \end{coqcode}
+ 
+ 
+\end{frame}
+
+\end{document}
+% "latex -synctex=1 -shell-escape"
+%%% Local Variables: LaTeX-command
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
