@@ -16,7 +16,7 @@ Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop ssralg zmodp.
 Require Import poly ssrint.
 
-Require Import partition schensted ordtype stdtab invseq greeninv.
+Require Import partition schensted ordtype stdtab invseq greeninv shuffle.
 
 (******************************************************************************)
 (* The main goal of this file is to lift the multiplication of multivariate   *)
@@ -96,8 +96,8 @@ Proof.
     by apply mem_imset2.
 Qed.
 
-
 End Poly.
+
 
 Section FinSets.
 
@@ -122,30 +122,35 @@ Qed.
 Definition ord_ordMixin := Order.Mixin inhabIn leqOrd_order.
 Canonical ord_ordType := Eval hnf in OrdType 'I_n ord_ordMixin.
 
+Section Size.
+
+Variable d : nat.
 
 (* set of tableaux on 'I_n of a given size *)
-Definition tabwordsize (d : nat) := [set t : d.-tuple 'I_n | to_word (RS t) == t].
+Definition tabwordsize := [set t : d.-tuple 'I_n | to_word (RS t) == t].
 (* set of tableaux on 'I_n of a given shape *)
-Definition tabwordshape (sh : seq nat) :=
-  [set t : (sumn sh).-tuple 'I_n | (to_word (RS t) == t) && (shape (RS (t)) == sh)].
-
+Definition tabwordshape (sh : intpartn d) :=
+  [set t : d.-tuple 'I_n | (to_word (RS t) == t) && (shape (RS (t)) == sh)].
 (* set of tableaux on 'I_n of a given Q-symbol *)
-Definition freeSchur (Q : seq (seq nat)) :=
-  [set t : (size_tab Q).-tuple 'I_n | (RStabmap t).2 == Q].
+Definition freeSchur (Q : stdtabn_finType d) :=
+  [set t : d.-tuple 'I_n | (RStabmap t).2 == Q].
 
-Lemma size_RS_tuple d (t : d.-tuple 'I_n) : size (to_word (RS t)) == d.
+Lemma freeSchurP Q t : t \in freeSchur Q = (val t \in langQ _ Q).
+Proof. by rewrite /freeSchur /langQ !inE /=. Qed.
+
+Lemma size_RS_tuple (t : d.-tuple 'I_n) : size (to_word (RS t)) == d.
 Proof. rewrite -size_to_word-{2}(size_tuple t); by apply size_RS. Qed.
-(* Bijection tabwordshape -> freeSchur *)
-Definition tabtuple d (t : d.-tuple 'I_n) : d.-tuple 'I_n := Tuple (size_RS_tuple t).
+(* Bijection freeSchur -> tabwordshape*)
+Definition tabword_of_tuple (t : d.-tuple 'I_n) : d.-tuple 'I_n := Tuple (size_RS_tuple t).
 
-Lemma perm_eq_tabtuple d (t : d.-tuple 'I_n) : perm_eq t (tabtuple t).
-Proof. rewrite /tabtuple /=; by apply perm_eq_RS. Qed.
+Lemma perm_eq_tabword_of_tuple (t : d.-tuple 'I_n) : perm_eq t (tabword_of_tuple t).
+Proof. rewrite /tabword_of_tuple /=; by apply perm_eq_RS. Qed.
 
-Lemma tabtuple_freeSchur_inj (Q : seq (seq nat)) :
-  {in freeSchur Q &, injective (@tabtuple (size_tab Q))}.
+Lemma tabword_of_tuple_freeSchur_inj (Q : stdtabn_finType d) :
+  {in (freeSchur Q) &, injective tabword_of_tuple }.
 Proof.
   move=> /= u v; rewrite /freeSchur !inE => /eqP Hu /eqP Hv H.
-  have {H} /= H : tval (tabtuple u) = tval (tabtuple v) by rewrite H.
+  have {H} /= H : tval (tabword_of_tuple u) = tval (tabword_of_tuple v) by rewrite H.
   case: (bijRStab ord_ordType) => RSinv HK _.
   apply val_inj; rewrite -[val u]HK -[val v]HK; congr (RSinv _).
   rewrite {RSinv HK} /RStab /=; apply pqpair_inj => /=.
@@ -155,11 +160,22 @@ Proof.
   by rewrite -(RS_tabE Hu) -(RS_tabE Hv) Heq.
 Qed.
 
-Lemma tabtuple_freeSchur (Q : seq (seq nat)) :
-  is_stdtab Q ->
-  [set tabtuple x | x in freeSchur Q] = tabwordshape (shape Q).
+Lemma sumn_shape_stdtabnE (Q : stdtabn_finType d) : (sumn (shape Q)) = d.
+Proof. case: Q => q; by rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP. Qed.
+
+Lemma is_part_shape_d (Q : stdtabn_finType d) : is_part_of_n d (shape Q).
 Proof.
-  move=> Htab; rewrite /freeSchur /tabwordshape /tabtuple.
+  rewrite /=; apply/andP; split.
+  - by rewrite -{2}(stdtabn_size Q).
+  - apply is_part_sht.
+    have := stdtabnP Q; by rewrite /is_stdtab => /andP [].
+Qed.
+Definition shape_d (Q : stdtabn_finType d) := (IntPartN (is_part_shape_d Q)).
+
+Lemma tabword_of_tuple_freeSchur (Q : stdtabn_finType d) :
+  [set tabword_of_tuple x | x in freeSchur Q] = tabwordshape (shape_d Q).
+Proof.
+  rewrite /freeSchur /tabwordshape /tabword_of_tuple.
   apply/setP/subset_eqP/andP; split; apply/subsetP => w; rewrite !inE.
   - move/imsetP => [] t; rewrite inE => /eqP HQ Htmp.
     have /eqP := eq_refl (val w); rewrite {2}Htmp {Htmp} /= => Hw.
@@ -169,61 +185,149 @@ Proof.
     case H : RSmap => [p q] /= -> <-.
     by rewrite shape_stdtab_of_yam.
   - move/andP => [] /eqP Hw /eqP Hsh; apply/imsetP.
-    have Hpair : is_RStabpair ((RS w), Q).
-      by rewrite /is_RStabpair is_tableau_RS Htab Hsh eq_refl.
+    have Hpair : is_RStabpair ((RS w), val Q).
+      by rewrite /is_RStabpair is_tableau_RS stdtabnP Hsh eq_refl.
     have Hpr : is_RSpair (RS w, yam_of_stdtab Q).
       have:= Hpair; rewrite /is_RStabpair /= => /andP [] -> /=.
       move=> /andP [] /yam_of_stdtabP -> /= /eqP ->.
-      by rewrite shape_yam_of_stdtab.
+      rewrite shape_yam_of_stdtab //=.
+      by apply stdtabnP.
     pose imw := (RStabinv (RSTabPair Hpair)).
-    have Hsz : size (imw) == size_tab Q.
+    have Hsz : size (imw) == d.
       rewrite /imw /RStabinv /=.
       rewrite -(eqP (size_RS _)) -RSmapE.
-      by rewrite (RS_bij_2 Hpr) /= /size_tab Hsh.
+      rewrite (RS_bij_2 Hpr) /=.
+      by rewrite (eqP (size_RS _)) size_tuple.
     exists (Tuple Hsz).
     + rewrite inE /= /imw.
       case: (bijRStab ord_ordType) => RSinv HK HinvK.
       rewrite /RStabmap /RStabinv /= (RS_bij_2 Hpr) /=.
-      by rewrite yam_of_stdtabK.
+      rewrite yam_of_stdtabK //=.
+      by apply stdtabnP.
     + apply val_inj => /=.
       rewrite /imw /RStabinv /= -Hw /=.
       congr (to_word _).
       by rewrite Hw -[RS (RSmapinv _ _)]RSmapE RS_bij_2.
 Qed.
 
-Section Schur.
+End Size.
+
 
 Variable R : comRingType.
 
-Definition Schur_pol (sh : seq nat) := polyset R (tabwordshape sh).
+Definition Schur_pol d (sh : intpartn d) := polyset R (tabwordshape sh).
 
-Lemma Schur_freeSchur (Q : seq (seq nat)) :
-  is_stdtab Q -> Schur_pol (shape Q) = polyset R (freeSchur Q).
+Lemma Schur_freeSchurE d (Q : stdtabn_finType d) :
+  Schur_pol (shape_d Q) = polyset R (freeSchur Q).
 Proof.
-  move=> Htab; rewrite /Schur_pol -(tabtuple_freeSchur Htab) {Htab}.
-  rewrite /polyset (big_imset _ (@tabtuple_freeSchur_inj Q)) /=.
+  rewrite /Schur_pol -tabword_of_tuple_freeSchur.
+  rewrite /polyset (big_imset _ (@tabword_of_tuple_freeSchur_inj _ Q)) /=.
   apply eq_bigr => t _; apply perm_eq_commword.
   rewrite perm_eq_sym; by apply perm_eq_RS.
 Qed.
 
-Lemma LR_lift_to_free (Q1 Q2 : seq (seq nat)) :
-  is_stdtab Q1 -> is_stdtab Q2 ->
-  Schur_pol (shape Q1) * Schur_pol (shape Q2) =
-  polyset R (catset (freeSchur Q1) (freeSchur Q2)).
-Proof. move=> /Schur_freeSchur -> /Schur_freeSchur ->; by apply multcatset. Qed.
+Variable (d1 d2 : nat) (Q1 : stdtabn_finType d1) (Q2 : stdtabn_finType d2).
 
-(* Use partition_big need stdtab (n) to be a fintype *)
-(*
-Goal forall (Q1 Q2 : seq (seq nat)),
-  is_stdtab Q1 -> is_stdtab Q2 ->
-  polyset R (catset (freeSchur Q1) (freeSchur Q2)) = 0.
+Definition LR_support :=
+  [set Q : stdtabn_finType (d1 + d2) | predLRTriple Q1 Q2 Q ].
+
+Lemma catset_LR_rule :
+  catset (freeSchur Q1) (freeSchur Q2) = \bigcup_(Q in LR_support) (freeSchur Q).
 Proof.
-  move=> Q1 Q2 HQ1 HQ2.
-  rewrite /polyset /catset.
-  have:= (partition_big
-            (fun w : (size_tab Q1 + size_tab Q2).-tuple 'I_n => (RStabmap w).2)).
-End Schur.
- *)
+  rewrite /catset.
+  apply/setP/subset_eqP/andP; split; apply/subsetP=> t.
+  - move/imset2P => [] w1 w2.
+    rewrite !freeSchurP /= => Hw1 Hw2 ->.
+    have : (val w1 \in langQ ord_ordType Q1) && (val w2 \in langQ ord_ordType Q2)
+      by rewrite Hw1 Hw2.
+    rewrite free_LR_rule_pred; first last; try by apply stdtabnP.
+    move => /and3P [] _ _ /existsP [].
+    rewrite !stdtabn_size => Q /andP [] Htriple /= Hcat.
+    apply/bigcupP; exists Q; first by rewrite /LR_support inE.
+    by rewrite freeSchurP.
+  - move/bigcupP => [] Q; rewrite /LR_support freeSchurP inE => Htriple /= Ht.
+    have Hsz1 : size (take d1 t) == d1.
+      rewrite size_take size_tuple.
+      case: d2 => [| d2']; first by rewrite addn0 ltnn.
+      by rewrite addnS ltnS leq_addr.
+    pose t1 := Tuple Hsz1.
+    have Hsz2 : size (drop d1 t) == d2.
+      by rewrite size_drop size_tuple addKn.
+    pose t2 := Tuple Hsz2.
+    have Hcat : t = cat_tuple t1 t2.
+      apply val_inj => /=; by rewrite cat_take_drop.
+    have : (val t1 \in langQ _ Q1 /\ val t2 \in langQ _ Q2).
+      rewrite free_LR_rule; try by apply stdtabnP.
+      rewrite !size_tuple !stdtabn_size; split; try by [].
+      exists Q; split; first by apply/LRTripleP; try apply stdtabnP.
+      by rewrite /= cat_take_drop.
+    move=> [] /= Ht1 Ht2.
+    apply/imset2P; apply (Imset2spec (x1 := t1) (x2 := t2)).
+    + by rewrite freeSchurP.
+    + by rewrite freeSchurP.
+    + apply val_inj; by rewrite /= cat_take_drop.
+Qed.
+
+Lemma Qsymb_spec d (w : d.-tuple 'I_n) : is_stdtab_of_n d (RStabmap w).2.
+Proof.
+  have := RStabmap_spec w.
+  rewrite /is_RStabpair; case H : (RStabmap w) => [P Q] /and3P [] _ Hstd /eqP Hsz.
+  rewrite /= Hstd /=.
+  rewrite /size_tab -Hsz.
+  have -> : P = RS w by rewrite -RStabmapE H.
+  rewrite -[sumn (shape (RS w))]/(size_tab (RS w)).
+  by rewrite (eqP (size_RS _)) size_tuple.
+Qed.
+
+Definition Qsymb  d (w : d.-tuple 'I_n) := StdtabN (Qsymb_spec w).
+
+Lemma LR_rule_tab :
+  Schur_pol (shape_d Q1) * Schur_pol (shape_d Q2) =
+  \sum_(Q in LR_support) (Schur_pol (shape_d Q)).
+Proof.
+  rewrite !Schur_freeSchurE multcatset catset_LR_rule.
+  rewrite -cover_imset /polyset.
+  rewrite big_trivIset; first last.
+    apply/trivIsetP => S1 S2.
+    move => /imsetP [] T1; rewrite inE => HT1 -> {S1}.
+    move => /imsetP [] T2; rewrite inE => HT2 -> {S2}.
+    rewrite /freeSchur => Hdiff.
+    rewrite /disjoint; apply/pred0P => w /=.
+    rewrite !inE; apply negbTE; move: Hdiff; apply contra.
+    by move=> /andP [] /eqP -> /eqP ->.
+
+  rewrite (@eq_bigr _ _ _ _ _ _ _ (fun Q => polyset R (freeSchur Q))) /=; first last.
+    move=> w _; by apply Schur_freeSchurE.
+
+  rewrite (big_setID [set x | freeSchur x == set0]) /=.
+  set A := (X in X + _); have HA : A = 0.
+    rewrite /A (eq_bigr (fun x => 0)).
+    + rewrite big_const; elim: (card _) => [//=| i IHi] /=; by rewrite IHi add0r.
+    + move=> i; rewrite inE => /andP [] _; rewrite inE => /eqP ->.
+      by rewrite /polyset big_set0.
+  rewrite HA add0r {A HA}.
+  rewrite -big_imset /=; first last.
+    move=> T1 T2 /=.
+    rewrite inE => /andP []; rewrite inE => /set0Pn [] x1 Hx1 _ _.
+    move: Hx1; rewrite /freeSchur inE => /eqP Hx1.
+    rewrite -setP => H; have := H x1; rewrite !inE Hx1.
+    rewrite eq_refl => /esym/eqP.
+    move=> Htmp; apply val_inj; by rewrite /= Htmp.
+  rewrite /polyset.
+  rewrite (big_setID [set set0]) /=.
+  set A := (X in X + _); have HA : A = 0.
+    rewrite /A (eq_bigr (fun x => 0)).
+    + rewrite big_const; elim: (card _) => [//=| i IHi] /=; by rewrite IHi add0r.
+    + move=> i; rewrite inE => /andP [] _; rewrite inE => /eqP ->.
+      by rewrite /polyset big_set0.
+  rewrite HA add0r {A HA}.
+  apply eq_bigl => s; rewrite !inE.
+  apply/(sameP idP); apply(iffP idP).
+  + move/imsetP => [] Q; rewrite 2!inE => /andP [] H1 H2 ->.
+    by rewrite H1 /= mem_imset.
+  + move=> /andP [] Hn0 /imsetP [] Q HQ Hs; subst s.
+    by rewrite mem_imset //= inE HQ inE Hn0.
+Qed.
 
 End FinSets.
 
