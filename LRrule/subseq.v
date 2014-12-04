@@ -108,71 +108,77 @@ End RCons.
 Section Fintype.
   (* We define SubSeq w as a finType *)
 
-  Variable (T : choiceType).
-  Implicit Type s w : seq T.
-  Implicit Type a b l : T.
+Variable (T : countType) (w : seq T).
+Implicit Type s w : seq T.
+Implicit Type a b l : T.
 
-  Fixpoint subseqs w :=
-    if w is w0 :: w' then
-      [seq w0 :: s | s <- subseqs w' ] ++ subseqs w'
-    else [:: [::] ].
+Structure subseqs : Type :=
+  Subseqs {subseqsval :> seq T; _ : subseq subseqsval w}.
+Canonical subseqs_subType := Eval hnf in [subType for subseqsval].
+Definition subseqs_eqMixin := Eval hnf in [eqMixin of subseqs by <:].
+Canonical subseqs_eqType := Eval hnf in EqType subseqs subseqs_eqMixin.
+Definition subseqs_choiceMixin := Eval hnf in [choiceMixin of subseqs by <:].
+Canonical subseqs_choiceType := Eval hnf in ChoiceType subseqs subseqs_choiceMixin.
+Definition subseqs_countMixin := Eval hnf in [countMixin of subseqs by <:].
+Canonical subseqs_countType := Eval hnf in CountType subseqs subseqs_countMixin.
+Canonical subseqs_subCountType := Eval hnf in [subCountType of subseqs].
 
-  Lemma subseqs_all s w : subseq s w <-> s \in subseqs w.
-  Proof.
-    split; elim: w s => [H| w0 w IHw].
-    * by move=> /eqP ->.
-    * have Hinjcons: injective (cons w0) by move=> x1 x2 [].
-      case=> [_|s0 s]; simpl; first by rewrite mem_cat (IHw _ (sub0seq w)); apply orbT.
-      case eqP => [-> | _] H; move: {H} (IHw _ H); rewrite mem_cat.
-      - by rewrite -[s \in _](mem_map Hinjcons) => ->.
-      - by move->; apply orbT.
+Fixpoint list_subseqs w :=
+  if w is w0 :: w' then
+    let rec := list_subseqs w' in [seq w0 :: s | s <- rec ] ++ rec
+  else [:: [::] ].
 
-    * by rewrite mem_seq1.
-    * have Hinjcons: injective (cons w0) by move=> x1 x2 [].
-      case=> [_|s0 s /=]; first by apply sub0seq.
-      case eqP => [-> | /eqP Hneq]; rewrite mem_cat => /orP [].
-      - rewrite (mem_map Hinjcons); by apply IHw.
-      - move/IHw => H; by apply (subseq_trans (subseq_cons _ _) H).
-      - move/cons_in_map_cons => H; rewrite (eqP (H s)) in Hneq.
-        by rewrite (eq_refl w0) in Hneq.
-      - by apply IHw.
-  Qed.
+Lemma list_subseqsP : all (fun s => subseq s w) (list_subseqs w).
+Proof.
+  apply/allP; elim: w => [| w0 wtl IHw] s /=.
+    by rewrite mem_seq1 => /eqP ->.
+  rewrite mem_cat => /orP [].
+  - move/mapP => [] s' /IHw Hsubs -> /=.
+    by rewrite eq_refl.
+  - case: s => [//= | s0 s].
+    move=> /IHw Hsubs; case eqP => Hs0.
+    + apply (@subseq_trans _ (s0 :: s)); first by apply subseq_cons.
+      exact Hsubs.
+    + exact Hsubs.
+Qed.
 
-  Definition SubSeq w := seq_sub (subseqs w).
-  Coercion seq_of_SubSeq w (s : (SubSeq w)) : seq T := ssval s.
+Lemma mem_list_subseqs s :
+  subseq s w -> s \in (list_subseqs w).
+Proof.
+  elim: w s => [| w0 wtl IHw] s /=.
+    move/eqP ->; by rewrite mem_seq1.
+  case: s => [/= _ | s0 s].
+  - by rewrite mem_cat (IHw [::] (sub0seq wtl)) orbT.
+  - have Hinjcons: injective (cons w0) by move=> x1 x2 [].
+    case eqP => [-> | _] H; move: {H} (IHw _ H); rewrite mem_cat.
+    + by rewrite (mem_map Hinjcons) => ->.
+    + by move => ->; rewrite orbT.
+Qed.
 
-  Definition Sub_of_subseq w s : subseq s w -> SubSeq w.
-  Proof. move => H; apply (SeqSub (ssval := s)); by rewrite -subseqs_all. Defined.
+Definition subseqs_enum : seq subseqs := pmap insub (undup (list_subseqs w)).
 
-  Definition sub_nil  w : (SubSeq w) := Sub_of_subseq (sub0seq w).
-  Definition sub_full w : (SubSeq w) := Sub_of_subseq (subseq_refl w).
+Lemma finite_subseqs : Finite.axiom subseqs_enum.
+Proof.
+  case=> /= s Hs; rewrite -(count_map _ (pred1 s)) (pmap_filter (@insubK _ _ _)).
+  rewrite count_filter -(@eq_count _ (pred1 s)) => [|s' /=]; last first.
+    by rewrite isSome_insub; case: eqP=> // ->.
+  rewrite count_uniq_mem.
+  + by rewrite mem_undup (mem_list_subseqs Hs).
+  + by apply undup_uniq.
+Qed.
 
-  Lemma size_le w (s : (SubSeq w)) : size s <= size w.
-  Proof. case: s => s Ps /=; apply size_subseq; by rewrite subseqs_all. Qed.
+Canonical subseqs_finMixin := Eval hnf in FinMixin finite_subseqs.
+Canonical subseqs_finType := Eval hnf in FinType subseqs subseqs_finMixin.
+Canonical subseqs_subFinType := Eval hnf in [subFinType of subseqs_countType].
+
+Lemma subseqsP (s : subseqs) : subseq s w.
+Proof. by case: s => /= s. Qed.
+
+Definition sub_nil  : subseqs := Subseqs (sub0seq w).
+Definition sub_full : subseqs := Subseqs (subseq_refl w).
+
+Lemma size_le (s : subseqs) : size s <= size w.
+Proof. case: s => s Ps /=; by apply size_subseq. Qed.
 
 End Fintype.
-
-Section MaxSize.
-
-  Variable w : seq nat.
-  Definition PSeq := [fun i : nat => [exists s : SubSeq w, size s == i]].
-
-  Lemma ex0 : PSeq 0.
-  Proof. apply /existsP. by exists (sub_nil w). Qed.
-
-  Lemma max_len : forall i : nat, PSeq i -> i <= size w.
-  Proof. rewrite /PSeq => i /= /existsP [[s Hs]] /eqP <-; by apply size_le. Qed.
-
-  Definition max_subseq_size := ex_maxn (P := PSeq) (ex_intro _ 0 ex0) max_len.
-
-  Lemma size_max_subseq : max_subseq_size == size w.
-  Proof.
-    rewrite /max_subseq_size; case (ex_maxnP (ex_intro _ 0 ex0) max_len) => i Hi Hleqi.
-    apply/eqP/anti_leq/andP; split; first by apply max_len.
-    suff: PSeq (size w); first by apply Hleqi.
-    rewrite /PSeq /=; apply /existsP.
-    by exists (sub_full w).
-  Qed.
-
-End MaxSize.
 

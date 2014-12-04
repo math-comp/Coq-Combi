@@ -527,39 +527,20 @@ Section Schensted.
 
 End Schensted.
 
-(* TODO : double inheritance from ordType and countType 
-Section SubSeq.
+Require Import bigop.
 
-  Variable w : seq T.
-
-  Definition PRowSeq :=
-    [pred i : nat | [exists s : SubSeq (T:= T) w, (size s == i) && (is_row s)]].
-
-  Lemma exrow0 : PRowSeq 0.
-  Proof. apply /existsP. by exists (sub_nil w). Qed.
-
-  Lemma max_row_len : forall i : nat, PRowSeq i -> i <= size w.
-  Proof. rewrite /PRowSeq=> i /= /existsP [[s Hs]] /andP [] /eqP <- _; by apply size_le. Qed.
-
-  Definition max_subseqrow_size := ex_maxn (ex_intro _ 0 exrow0) max_row_len.
-
-  Theorem size_max_subseqrow : max_subseqrow_size = size (Sch w).
-  Proof.
-    rewrite /max_subseqrow_size.
-    case (ex_maxnP (ex_intro _ 0 exrow0) max_row_len) => i.
-    rewrite /PRowSeq /= => /existsP [] [s Hs] /andP [] /= /eqP Hsz Hrow Hmax.
-    rewrite -Hsz.
-    apply/anti_leq/andP; split.
-    - apply size_ndec_Sch; rewrite /subseqrow; apply/andP; split; last exact Hrow.
-      rewrite subseqs_all; by apply Hs.
-    - rewrite Hsz; case (exist_size_Sch w) => smax {Hrow Hsz}.
-      rewrite /subseqrow_n => /and3P [] /subseqs_all Hsubs /eqP <- Hrow.
-      apply Hmax; apply /existsP; exists (SeqSub Hsubs).
-      by rewrite /= Hrow eq_refl.
-  Qed.
-
-End SubSeq.
-*)
+Theorem Sch_max_size w : size (Sch w) = \max_(s : subseqs w | is_row s) size s.
+Proof.
+  apply/eqP; rewrite eqn_leq; apply/andP; split.
+  - case : (exist_size_Sch w) => s; rewrite /subseqrow_n => /and3P [] Hsubs /eqP Hsz Hrow.
+    pose wit : (subseqs_finType w) := (Subseqs Hsubs).
+    have -> : size (Sch w) = size wit by rewrite /= Hsz.
+    by apply (@leq_bigmax_cond _ _ (size \o (@subseqsval _ w)) wit Hrow).
+  - apply/bigmax_leqP => s Hs.
+    apply size_ndec_Sch.
+    rewrite /subseqrow Hs andbT.
+    exact (subseqsP s).
+Qed.
 
 Section Bump.
 

@@ -12,7 +12,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
+Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -27,11 +27,13 @@ Section ClassDef.
 
 Record mixin_of T := Mixin { r : rel T; x : T; _ : axiom r }.
 
-Record class_of T := Class {base : Equality.class_of T; mixin : mixin_of T}.
-Local Coercion base : class_of >->  Equality.class_of.
+Record class_of T := Class {base : Countable.class_of T; mixin : mixin_of T}.
+Local Coercion base : class_of >->  Countable.class_of.
+Local Coercion mixin : class_of >-> mixin_of.
 
 Structure type := Pack {sort; _ : class_of sort; _ : Type}.
 Local Coercion sort : type >-> Sortclass.
+
 Variables (T : Type) (cT : type).
 Definition class := let: Pack _ c _ as cT' := cT return class_of cT' in c.
 Definition clone c of phant_id class c := @Pack T c T.
@@ -39,18 +41,24 @@ Let xT := let: Pack T _ _ := cT in T.
 Notation xclass := (class : class_of xT).
 
 Definition pack m :=
-  fun b bT & phant_id (Equality.class bT) b => Pack (@Class T b m) T.
+  fun b bT & phant_id (Countable.class bT) b => Pack (@Class T b m) T.
 
 (* Inheritance *)
 Definition eqType := @Equality.Pack cT xclass xT.
+Definition choiceType := @Choice.Pack cT xclass xT.
+Definition countType := @Countable.Pack cT xclass xT.
 
 End ClassDef.
 
 Module Import Exports.
-Coercion base : class_of >-> Equality.class_of.
+Coercion base : class_of >-> Countable.class_of.
 Coercion sort : type >-> Sortclass.
 Coercion eqType : type >-> Equality.type.
+Coercion choiceType : type >-> Choice.type.
+Coercion countType : type >-> Countable.type.
 Canonical eqType.
+Canonical choiceType.
+Canonical countType.
 Notation ordType := type.
 Notation ordMixin := mixin_of.
 Notation OrdType T m := (@pack T m _ _ id).
