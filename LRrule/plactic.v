@@ -457,7 +457,7 @@ Proof.
     apply (congr_catr Hcongr); by rewrite nbump_ins_rconsE.
 Qed.
 
-Theorem Sch_plact u v : RS u == RS v -> plactcongr u v .
+Corollary Sch_plact u v : RS u == RS v -> u =Pl v .
 Proof.
   have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans /eqP Heq.
   rewrite (@Htrans _ (to_word (RS u))); last by apply congr_RS.
