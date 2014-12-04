@@ -132,7 +132,7 @@ Definition tabwordsize := [set t : d.-tuple 'I_n | to_word (RS t) == t].
 Definition tabwordshape (sh : intpartn d) :=
   [set t : d.-tuple 'I_n | (to_word (RS t) == t) && (shape (RS (t)) == sh)].
 (* set of tableaux words on 'I_n of a given Q-symbol *)
-Definition freeSchur (Q : stdtabn_finType d) :=
+Definition freeSchur (Q : stdtabn d) :=
   [set t : d.-tuple 'I_n | (RStabmap t).2 == Q].
 
 Lemma freeSchurP Q t : t \in freeSchur Q = (val t \in langQ _ Q).
@@ -146,7 +146,7 @@ Definition tabword_of_tuple (t : d.-tuple 'I_n) : d.-tuple 'I_n := Tuple (size_R
 Lemma perm_eq_tabword_of_tuple (t : d.-tuple 'I_n) : perm_eq t (tabword_of_tuple t).
 Proof. rewrite /tabword_of_tuple /=; by apply perm_eq_RS. Qed.
 
-Lemma tabword_of_tuple_freeSchur_inj (Q : stdtabn_finType d) :
+Lemma tabword_of_tuple_freeSchur_inj (Q : stdtabn d) :
   {in (freeSchur Q) &, injective tabword_of_tuple}.
 Proof.
   move=> /= u v; rewrite /freeSchur !inE => /eqP Hu /eqP Hv H.
@@ -160,19 +160,19 @@ Proof.
   by rewrite -(RS_tabE Hu) -(RS_tabE Hv) Heq.
 Qed.
 
-Lemma sumn_shape_stdtabnE (Q : stdtabn_finType d) : (sumn (shape Q)) = d.
+Lemma sumn_shape_stdtabnE (Q : stdtabn d) : (sumn (shape Q)) = d.
 Proof. case: Q => q; by rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP. Qed.
 
-Lemma is_part_shape_d (Q : stdtabn_finType d) : is_part_of_n d (shape Q).
+Lemma is_part_shape_d (Q : stdtabn d) : is_part_of_n d (shape Q).
 Proof.
   rewrite /=; apply/andP; split.
   - by rewrite -{2}(stdtabn_size Q).
   - apply is_part_sht.
     have := stdtabnP Q; by rewrite /is_stdtab => /andP [].
 Qed.
-Definition shape_d (Q : stdtabn_finType d) := (IntPartN (is_part_shape_d Q)).
+Definition shape_d (Q : stdtabn d) := (IntPartN (is_part_shape_d Q)).
 
-Lemma tabword_of_tuple_freeSchur (Q : stdtabn_finType d) :
+Lemma tabword_of_tuple_freeSchur (Q : stdtabn d) :
   [set tabword_of_tuple x | x in freeSchur Q] = tabwordshape (shape_d Q).
 Proof.
   rewrite /freeSchur /tabwordshape /tabword_of_tuple.
@@ -217,7 +217,7 @@ Variable R : comRingType.
 Definition Schur d (sh : intpartn d) := polyset R (tabwordshape sh).
 
 (* Noncommutative lifting of Schur *)
-Lemma Schur_freeSchurE d (Q : stdtabn_finType d) :
+Lemma Schur_freeSchurE d (Q : stdtabn d) :
   Schur (shape_d Q) = polyset R (freeSchur Q).
 Proof.
   rewrite /Schur -tabword_of_tuple_freeSchur.
@@ -232,7 +232,7 @@ Variables (d1 d2 : nat).
 Variables (Q1 : stdtabn d1) (Q2 : stdtabn d2).
 
 Definition LR_support :=
-  [set Q : stdtabn_finType (d1 + d2) | predLRTriple Q1 Q2 Q ].
+  [set Q : stdtabn (d1 + d2) | predLRTriple Q1 Q2 Q ].
 
 (* Noncommutative LR rule *)
 Lemma catset_LR_rule :
