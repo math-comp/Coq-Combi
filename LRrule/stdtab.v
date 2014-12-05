@@ -50,16 +50,16 @@ Definition is_stdtab t := is_tableau t && is_std (to_word t).
 
 Lemma RSperm n (p : 'S_n) : is_stdtab (RS (wordperm p)).
 Proof.
-  rewrite /is_stdtab; apply /andP; split; first by apply is_tableau_RS.
-  apply (perm_eq_std (wordperm_std p)).
-  rewrite perm_eq_sym; apply (perm_eq_RS (wordperm p)).
+  rewrite /is_stdtab; apply/andP; split; first by apply: is_tableau_RS.
+  apply: (perm_eq_std (wordperm_std p)).
+  rewrite perm_eq_sym; apply: (perm_eq_RS (wordperm p)).
 Qed.
 
 Lemma RSstdE (p : seq nat) : is_stdtab (RS p) = is_std p.
 Proof.
   rewrite /is_stdtab is_tableau_RS /=.
-  apply/(sameP idP); apply(iffP idP) => Hstd; apply (perm_eq_std Hstd);
-    first rewrite perm_eq_sym; apply perm_eq_RS.
+  apply/(sameP idP); apply(iffP idP) => Hstd; apply: (perm_eq_std Hstd);
+    first rewrite perm_eq_sym; apply: perm_eq_RS.
 Qed.
 
 Fixpoint stdtab_of_yam y :=
@@ -86,7 +86,7 @@ Proof.
   + case => [//= | pos].
     * rewrite !rev_cons !flatten_rcons -cats1 -[x :: (_ ++ _)]cat1s.
       rewrite [flatten _ ++ _ ++ _]catA.
-      apply perm_eqlE; by apply perm_catC.
+      apply: perm_eqlE; by apply: perm_catC.
     * have {IHt} IHt := IHt pos.
       rewrite !rev_cons !flatten_rcons.
       move: IHt; set T := (flatten _).
@@ -99,10 +99,10 @@ Proof.
   elim: y => [//= | y0 y IHy].
   have -> /= : iota 0 (size (y0 :: y)) = rcons (iota 0 (size y)) (size y).
     rewrite -[size (y0 :: y)]/((size y).+1) -addn1 iota_add add0n /=.
-    by apply cats1.
-  apply (perm_eq_trans (perm_eq_append_nth _ _ _)).
+    by apply: cats1.
+  apply: (perm_eq_trans (perm_eq_append_nth _ _ _)).
   move: IHy; rewrite -(perm_cons (size y)) => /perm_eq_trans; apply.
-  rewrite perm_eq_sym; apply/perm_eqlP; by apply perm_rcons.
+  rewrite perm_eq_sym; apply/perm_eqlP; by apply: perm_rcons.
 Qed.
 
 Lemma is_tab_append_nth_size r T n :
@@ -116,11 +116,11 @@ Proof.
   case: r => [/= _ | r] /=.
   - move=> {IHT Hall} /and4P [] Hnnil Hrow Hdom ->.
     rewrite (dominate_rcons _ Hdom) {Hdom} !andbT.
-    apply /andP; split; first by case T0.
-    apply (is_row_rcons Hrow); rewrite {Hrow} leqXnatE.
+    apply/andP; split; first by case T0.
+    apply: (is_row_rcons Hrow); rewrite {Hrow} leqXnatE.
     case/lastP: T0 Hnnil Hall0 => [//= | T0 T0n] _.
     rewrite all_rcons last_rcons /= andbC => /andP [] _.
-    by apply ltnW.
+    by apply: ltnW.
   - move => /andP [] Hhead Hpart /and4P [] -> -> Hdom Htab /=.
     rewrite IHT //= andbT {IHT Hall Hpart Htab}.
     case: r Hhead => [| r]; last by case: T Hdom => [//= | T1 T].
@@ -131,7 +131,7 @@ Proof.
     + move/dominateP => [] _ Hdom Hsize.
       apply/dominateP; split; rewrite size_rcons; first by [].
       move=> i Hi; rewrite nth_rcons; case (ltnP i (size T1)) => Hi1.
-      * by apply Hdom.
+      * by apply: Hdom.
       * have -> : i == size T1 by rewrite eqn_leq Hi1 andbT -ltnS.
         move: Hall0 => /allP Hall0.
         have /Hall0 /= := (mem_nth (inhabitant nat_ordType) (leq_trans Hi Hsize)).
@@ -143,10 +143,10 @@ Proof.
   rewrite /is_stdtab std_of_yam andbT.
   elim: y => [//= | y0 y IHy] /= /andP [] Hpart /IHy {IHy}.
   move: Hpart; rewrite -shape_stdtab_of_yam.
-  suff : all (gtn (size y)) (to_word (stdtab_of_yam y)) by apply is_tab_append_nth_size.
+  suff : all (gtn (size y)) (to_word (stdtab_of_yam y)) by apply: is_tab_append_nth_size.
   have:= std_of_yam y; rewrite /is_std -size_to_word size_stdtab_of_yam.
   move=> /perm_eq_mem Hperm.
-  apply /allP => x Hx /=.
+  apply/allP => x Hx /=.
   have:= Hperm x; by rewrite mem_iota /= add0n Hx => /esym ->.
 Qed.
 
@@ -182,7 +182,7 @@ Proof.
     rewrite perm_eq_sym => /perm_eq_trans; apply.
     move: Hperm; rewrite Hw.
     move/perm_eq_rembig/perm_eq_trans; apply.
-    rewrite rembig_iota; by apply perm_eq_refl.
+    rewrite rembig_iota; by apply: perm_eq_refl.
   have:= IHn t' Hsize' Htab' Hperm'.
   rewrite size_yam_of_stdtab_rec Ht Hw => ->.
   suff -> : (maxL w0 w) = n by [].
@@ -198,7 +198,7 @@ Proof.
   elim: r t => [/= | r IHr] t /=; case: t => [_ | t0 t] /=.
   + by rewrite inE eq_refl.
   + by rewrite mem_rcons inE eq_refl /=.
-  + apply /eqP; rewrite eqSS.
+  + apply/eqP; rewrite eqSS.
     elim: r {IHr} => [//= | r]; first by rewrite inE eq_refl.
     by rewrite /ncons /= => /eqP ->.
   + rewrite /to_word rev_cons flatten_rcons mem_cat negb_or.
@@ -235,7 +235,7 @@ Qed.
 
 Lemma shape0 (T : ordType) (u : seq (seq T)) : [::] \notin u -> 0 \notin (shape u).
 Proof.
-  apply contra; rewrite /shape; elim: u => [//=| u0 u IHu] /=.
+  apply: contra; rewrite /shape; elim: u => [//=| u0 u IHu] /=.
   rewrite !inE => /orP [].
   + by rewrite eq_sym => /nilP ->.
   + move/IHu ->; by rewrite orbT.
@@ -269,9 +269,9 @@ Proof.
   have Hfind w := find_append_nth _ (size_notin_stdtab_of_yam w).
   have:= Hfind x0 x; rewrite (eqP Heqsz) Heq Hfind {Hfind} => H0.
   move=> /andP [] _ Hx /andP [] _ Hy.
-  rewrite H0; congr (_ :: _); apply (IHx _ Heqsz) => {IHx Heqsz} //=.
+  rewrite H0; congr (_ :: _); apply: (IHx _ Heqsz) => {IHx Heqsz} //=.
   move: Heq; rewrite H0 {H0}.
-  apply append_nth_injl; by apply stdtab_of_yam_nil.
+  apply: append_nth_injl; by apply: stdtab_of_yam_nil.
 Qed.
 
 Lemma shape_yam_of_stdtab t : is_stdtab t -> shape_rowseq (yam_of_stdtab t) = shape t.
@@ -289,7 +289,7 @@ Qed.
 Lemma part_yam_of_stdtab t : is_stdtab t -> is_part (shape_rowseq (yam_of_stdtab t)).
 Proof.
   move=> Htab; rewrite (shape_yam_of_stdtab Htab).
-  apply is_part_sht.
+  apply: is_part_sht.
   by move: Htab; rewrite /is_stdtab => /andP [].
 Qed.
 
@@ -300,9 +300,9 @@ Proof.
   elim: n t H => [//= | n IHn] t Hsize Htab Hperm.
   + by rewrite (tab0 Htab Hsize) /RS /=.
   + rewrite is_tableau_RS /=.
-    apply (@perm_eq_trans _ (rembig (to_word t))).
-    - rewrite perm_eq_sym; apply plactcongr_homog; by apply congr_RS.
-    - apply (perm_eq_trans (perm_eq_rembig Hperm)).
+    apply: (@perm_eq_trans _ (rembig (to_word t))).
+    - rewrite perm_eq_sym; apply: plactcongr_homog; by apply: congr_RS.
+    - apply: (perm_eq_trans (perm_eq_rembig Hperm)).
       rewrite rembig_iota.
       by rewrite -size_to_word (eqP (size_RS _)) size_rembig -size_to_word Hsize.
 Qed.
@@ -318,18 +318,18 @@ Proof.
   rewrite /= => Ht Hsize -> /=.
   have Hsize' : size_tab (RS (rembig (to_word t))) = n.
     by rewrite (eqP (size_RS _)) size_rembig -size_to_word Hsize.
-  apply (IHn _ Hsize').
-  + by apply stdtab_rembig.
+  apply: (IHn _ Hsize').
+  + by apply: stdtab_rembig.
   + rewrite -Hsize' (shape_yam_of_stdtab (stdtab_rembig Htab)).
-    apply is_part_sht; by apply is_tableau_RS.
+    apply: is_part_sht; by apply: is_tableau_RS.
 Qed.
 
 Theorem stdtab_of_yamK y : is_yam y -> yam_of_stdtab (stdtab_of_yam y) = y.
 Proof.
   move=> Hyam.
   have /yam_of_stdtabK := (stdtab_of_yamP Hyam).
-  apply stdtab_of_yam_inj; last exact Hyam.
-  apply yam_of_stdtabP; by apply stdtab_of_yamP.
+  apply: stdtab_of_yam_inj; last exact Hyam.
+  apply: yam_of_stdtabP; by apply: stdtab_of_yamP.
 Qed.
 
 End Bijection.
@@ -373,7 +373,7 @@ Proof.
   - move=> w /=; have:= is_yam_RSmap2 w.
     case H : (RSmap w) => [P Q] /= Hyam.
     by rewrite stdtab_of_yamK; first by rewrite -H (RS_bij_1 w).
-  - move=> [[P Q] H] /=; apply pqpair_inj => /=.
+  - move=> [[P Q] H] /=; apply: pqpair_inj => /=.
     move: H; rewrite /is_RStabpair => /and3P [] Htab Hstdtab Hshape //=.
     rewrite RS_bij_2.
     + by rewrite (yam_of_stdtabK Hstdtab).
@@ -415,10 +415,10 @@ Proof.
   rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
     move=> y /(allP (list_yamshP Hpart)).
     rewrite /is_yam_of_shape => /andP [] Hyam /eqP Hshy /=.
-    apply/(sameP idP); apply(iffP idP) => /eqP H; apply /eqP.
+    apply/(sameP idP); apply(iffP idP) => /eqP H; apply/eqP.
     + by rewrite H yam_of_stdtabK.
     + by rewrite -H stdtab_of_yamK.
-  apply (list_yamsh_countE Hpart).
+  apply: (list_yamsh_countE Hpart).
   by rewrite /is_yam_of_shape yam_of_stdtabP //= Hsht.
 Qed.
 
@@ -467,10 +467,10 @@ Proof.
   rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
     move=> y /(allP (list_yamnP n)).
     rewrite /is_yam_of_size => /andP [] Hyam /eqP Hszy /=.
-    apply/(sameP idP); apply(iffP idP) => /eqP H; apply /eqP.
+    apply/(sameP idP); apply(iffP idP) => /eqP H; apply/eqP.
     + by rewrite H yam_of_stdtabK.
     + by rewrite -H stdtab_of_yamK.
-  apply list_yamn_countE.
+  apply: list_yamn_countE.
   by rewrite /is_yam_of_size yam_of_stdtabP //= Hszt.
 Qed.
 

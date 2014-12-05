@@ -28,10 +28,10 @@ Variable n : nat.
 
 Lemma card_Sn : #|'S_(n)| = n`!.
 Proof.
-  rewrite -[n in n`!]card_ord -!cardsT -(card_perm setT) cardsE; apply eq_card => p.
+  rewrite -[n in n`!]card_ord -!cardsT -(card_perm setT) cardsE; apply: eq_card => p.
   rewrite /in_mem /perm_on /=.
-  apply /eqP; rewrite eq_sym eqb_id.
-  apply /subsetP => i _; by rewrite in_set.
+  apply/eqP; rewrite eq_sym eqb_id.
+  apply/subsetP => i _; by rewrite in_set.
 Qed.
 
 Definition permuted_tuple (t : n.-tuple T) :=
@@ -72,7 +72,7 @@ Lemma size_permuted s : size (permuted s) = (size s)`!.
 Proof. by rewrite /permuted size_map size_permuted_tuple. Qed.
 
 Lemma eq_seqE s s1 : perm_eq s s1 -> s1 \in permuted s.
-Proof. by apply perm_eq_permuted_tuple. Qed.
+Proof. by apply: perm_eq_permuted_tuple. Qed.
 
 End Permuted.
 

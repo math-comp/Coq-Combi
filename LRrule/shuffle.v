@@ -37,7 +37,7 @@ Lemma perm_eq_map_cons (T : eqType) (s t : seq (seq T)) (a : T) :
   perm_eq [seq a :: x | x <- s] [seq a :: x | x <- t] = perm_eq s t.
 Proof.
   apply/(sameP idP); apply(iffP idP) => /perm_eqP Hperm; apply/perm_eqP => P.
-  - rewrite !count_map /=; by apply Hperm.
+  - rewrite !count_map /=; by apply: Hperm.
   - have:= Hperm (preim behead P).
     have HP : P =1 (preim (fun s => (a :: s)) (preim behead P)) by [].
     by rewrite !count_map (eq_count HP).
@@ -94,13 +94,13 @@ Proof.
   elim: u v => [| a u IHu] /= v; first by rewrite shuffle_nil perm_eq_refl.
   elim: v => [| b v IHv] /=; first by rewrite perm_eq_refl.
   set sa := (X in X ++ _); set sb := (X in _ ++ X).
-  apply (@perm_eq_trans _ (sb ++ sa)); first by apply/perm_eqlP; apply perm_catC.
+  apply: (@perm_eq_trans _ (sb ++ sa)); first by apply/perm_eqlP; apply: perm_catC.
   set sc := (X in perm_eq _ (X ++ _)).
-  apply (@perm_eq_trans _ (sc ++ sa)).
+  apply: (@perm_eq_trans _ (sc ++ sa)).
   + rewrite perm_cat2r /sb /sc /= {sa sb sc}.
-    rewrite perm_eq_map_cons; by apply IHv.
+    rewrite perm_eq_map_cons; by apply: IHv.
   + rewrite perm_cat2l /sa /= {sa sb sc}.
-    rewrite perm_eq_map_cons; by apply IHu.
+    rewrite perm_eq_map_cons; by apply: IHu.
 Qed.
 
 (*
@@ -157,21 +157,21 @@ Proof.
   rewrite all_cat; apply/andP; split; apply/allP => s /mapP [] t Ht -> {s} /=.
   - rewrite perm_cons.
     have {IHu} /allP IHu := IHu (b :: v).
-    by apply IHu.
-  - apply (@perm_eq_trans _ (b :: v ++ a :: u)).
+    by apply: IHu.
+  - apply: (@perm_eq_trans _ (b :: v ++ a :: u)).
     + apply/perm_eqlP; by have /= := (perm_catC (a :: u) (b :: v)).
     + rewrite perm_cons perm_eq_sym.
       have:= IHv t Ht; rewrite perm_eq_sym => H.
-      apply (perm_eq_trans H).
+      apply: (perm_eq_trans H).
       apply/perm_eqlP; by have /= := perm_catC (a :: u) v.
 Qed.
 
 Lemma all_size_shuffle u v : all (fun s => size s == size u + size v) (shuffle u v).
 Proof.
-  apply /allP => x Hx; rewrite -size_cat.
-  apply/eqP; apply perm_eq_size.
+  apply/allP => x Hx; rewrite -size_cat.
+  apply/eqP; apply: perm_eq_size.
   have := perm_eq_shuffle u v => /allP Hall.
-  rewrite perm_eq_sym; by apply Hall.
+  rewrite perm_eq_sym; by apply: Hall.
 Qed.
 
 Lemma filter_mem_nil u : [seq x <- u | (mem [::]) x] == [::].
@@ -186,22 +186,22 @@ Lemma all_in_shufflel u v :
 Proof.
   elim: u v => [| a u IHu] /= v HI; first by rewrite !andbT filter_mem_nil.
   elim: v HI => [_ | b v IHv] /=.
-  - rewrite !andbT inE eq_refl /=; apply /eqP; congr (a :: _).
+  - rewrite !andbT inE eq_refl /=; apply/eqP; congr (a :: _).
     rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT.
     move => i /=; rewrite inE => ->; by rewrite orbT.
   - move=> HI; rewrite all_cat.
     apply/andP; split; apply/allP=> x /mapP [] s Hs -> {x} /=.
-    + rewrite !inE eq_refl /=; apply /eqP; congr (a :: _).
+    + rewrite !inE eq_refl /=; apply/eqP; congr (a :: _).
       have {IHu} /IHu/allP Hu : [predI u & b :: v] =i pred0.
-        move=> i; rewrite !inE; apply negbTE.
+        move=> i; rewrite !inE; apply: negbTE.
         have := HI i; rewrite !inE => /negbT.
-        apply contra => /andP [] ->; by rewrite orbT.
+        apply: contra => /andP [] ->; by rewrite orbT.
       case (boolP (a \in u)) => Ha.
-      * rewrite (eq_filter (a2 := mem u)); first by apply /eqP; apply (Hu _ Hs).
+      * rewrite (eq_filter (a2 := mem u)); first by apply/eqP; apply: (Hu _ Hs).
         move => i /=; rewrite inE.
         apply/(sameP idP); apply(iffP idP); first by move ->; rewrite orbT.
         by move/orP => []; first move/eqP ->.
-      * rewrite (eq_in_filter (a2 := mem u)); first by apply /eqP; apply (Hu _ Hs).
+      * rewrite (eq_in_filter (a2 := mem u)); first by apply/eqP; apply: (Hu _ Hs).
         move => i /=; rewrite inE => Hi.
         apply/(sameP idP); apply(iffP idP); first by move ->; rewrite orbT.
         have /allP Hperm := perm_eq_shuffle u (b :: v).
@@ -214,9 +214,9 @@ Proof.
           have := HI a; by rewrite !inE Habs !eq_refl /= orbT.
     + have := HI b; rewrite !inE /= eq_refl /= andbT => ->.
       have /IHv/allP : [predI a :: u & v] =i pred0.
-        move=> i /=; rewrite !inE; apply negbTE.
+        move=> i /=; rewrite !inE; apply: negbTE.
         have := HI i; rewrite !inE => /negbT.
-        apply contra => /andP [] -> ->; by rewrite orbT.
+        apply: contra => /andP [] -> ->; by rewrite orbT.
       by apply.
 Qed.
 
@@ -226,7 +226,7 @@ Lemma all_in_shuffler u v :
 Proof.
   move=> HI.
   rewrite (all_perm_eq (shuffleC v u)) //.
-  apply all_in_shufflel.
+  apply: all_in_shufflel.
   move=> i; by rewrite -(HI i) !inE andbC.
 Qed.
 
@@ -267,12 +267,12 @@ Proof.
     move=> [] Ha; subst s0 => Hu Hv Hall.
     rewrite mem_cat; apply/orP; left.
     apply/mapP; exists s; last by [].
-    by apply IHu.
+    by apply: IHu.
   + move=> Hu Hv {Hs0} /andP [] Hs0 Hall.
     rewrite Hs0 /= in Hv; move: Hv => [] Htmp; subst s0 => Hv.
     rewrite mem_cat; apply/orP; right.
     apply/mapP; exists s; last by [].
-    by apply IHv.
+    by apply: IHv.
 Qed.
 
 Lemma mem_shuffle u v s :
@@ -286,7 +286,7 @@ Proof.
     have:= all_in_shuffler HI => /allP Hall; rewrite (Hall _ Hs) /= {Hall}.
     have:= all_size_shuffle u v => /allP Hall; by rewrite (Hall _ Hs).
   + move=> /and3P [] /eqP Hu /eqP Hv /eqP Hsz.
-    by apply (mem_shuffle_pred HI).
+    by apply: (mem_shuffle_pred HI).
 Qed.
 
 Lemma swap_shuffle u v l a b r Pu Pv :
@@ -298,7 +298,7 @@ Lemma swap_shuffle u v l a b r Pu Pv :
   l ++ [:: b; a] ++ r \in shuffle u v.
 Proof.
   move=> HI s Hu Hv Hsz Ha Hb H.
-  apply (mem_shuffle_pred HI).
+  apply: (mem_shuffle_pred HI).
   + move: Hu; rewrite /s !filter_cat /= Ha.
     suff -> : Pu b = false by [].
       by have:= HI b; rewrite !inE Hb andbT.
@@ -348,7 +348,7 @@ Proof.
   case: leqP => H /=; rewrite !inE IHv.
   - congr (_ || _); by rewrite -{2}(subnK H) eqn_add2r.
   - suff -> : (i + n == v0) = false by [].
-    apply gtn_eqF; by apply ltn_addl.
+    apply: gtn_eqF; by apply: ltn_addl.
 Qed.
 
 Definition shsh u v := shuffle u (shiftn (size u) v).
@@ -356,23 +356,23 @@ Definition shsh u v := shuffle u (shiftn (size u) v).
 Lemma std_shsh u v : is_std u -> is_std v -> all is_std (shsh u v).
 Proof.
   rewrite /is_std /shsh /shiftn => Hu Hv.
-  apply /allP => s Hs.
+  apply/allP => s Hs.
   have /allP Hall := perm_eq_shuffle u (shiftn (size u) v).
   have {Hall} := Hall s Hs; rewrite perm_eq_sym => Hperm.
-  apply (perm_eq_trans Hperm).
+  apply: (perm_eq_trans Hperm).
   have /allP Hall := all_size_shuffle u (shiftn (size u) v).
   have {Hall} /eqP := Hall s Hs; rewrite size_map => -> {s Hs Hperm}.
   rewrite iota_add.
-  apply (@perm_eq_trans _ (u ++ iota (size u) (size v))); last by rewrite perm_cat2r.
+  apply: (@perm_eq_trans _ (u ++ iota (size u) (size v))); last by rewrite perm_cat2r.
   rewrite perm_cat2l -{2}[size u]addn0 iota_addl.
-  by apply perm_eq_map.
+  by apply: perm_eq_map.
 Qed.
 
 Lemma pred0_std u v : is_std u -> [predI u & shiftn (size u) v] =i pred0.
 Proof.
   rewrite /is_std /shsh /shiftn => /perm_eq_mem Hu i /=.
   rewrite !inE Hu mem_iota add0n /=.
-  apply (introF idP) => /andP [] Hlt /mapP [] j _ Hi.
+  apply: (introF idP) => /andP [] Hlt /mapP [] j _ Hi.
   move: Hlt; by rewrite Hi -{2}[size u]addn0 ltn_add2l.
 Qed.
 
@@ -381,7 +381,7 @@ Lemma shsh_sfiltergtn p u v :
 Proof.
   move=> Hstdu; rewrite /shsh.
   rewrite -(mem_shuffle _ (pred0_std v Hstdu)) => /and3P [] /eqP Hu _ _.
-  rewrite -{1}Hu; apply eq_filter => i /=.
+  rewrite -{1}Hu; apply: eq_filter => i /=.
   by rewrite (perm_eq_mem Hstdu) mem_iota /= add0n.
 Qed.
 
@@ -391,14 +391,14 @@ Proof.
   move=> Hstdu; rewrite /shsh => Hsh.
   rewrite sfilterleqE.
   have:= Hsh; rewrite -(mem_shuffle _ (pred0_std v Hstdu)) /= => /and3P [] _ /eqP <- _.
-  apply eq_in_filter => i /= Hi.
+  apply: eq_in_filter => i /= Hi.
   have /allP Hall := perm_eq_shuffle u (shiftn (size u) v).
   have {Hall} Hp := Hall p Hsh.
   move: Hi; rewrite -(perm_eq_mem Hp) mem_cat => /orP [].
   + rewrite (perm_eq_mem Hstdu) mem_iota /= add0n /shiftn => Hi.
     rewrite leqNgt Hi /=; apply/(introF idP) => /mapP [] j Hj Heq.
     move: Hi; by rewrite Heq -{2}[size u]addn0 ltn_add2l.
-  + move=> Hi; rewrite Hi; apply esym.
+  + move=> Hi; rewrite Hi; apply: esym.
     move: Hi; rewrite /shiftn => /mapP [] j _ ->.
     by rewrite -{1}[size u]addn0 leq_add2l.
 Qed.
@@ -410,9 +410,9 @@ Proof.
   - rewrite /shsh -(mem_shuffle _ (pred0_std v Hstdu)).
     move/andP => [] /eqP /= Hu /eqP /= Hv.
     apply/and3P; split.
-    + apply/eqP; rewrite -{2}Hu /=; apply eq_filter => i.
+    + apply/eqP; rewrite -{2}Hu /=; apply: eq_filter => i.
       by rewrite /= (perm_eq_mem Hstdu) mem_iota /= add0n.
-    + apply/eqP; rewrite -{2}Hv sfilterleqK /=; apply eq_in_filter => i /= Hi.
+    + apply/eqP; rewrite -{2}Hv sfilterleqK /=; apply: eq_in_filter => i /= Hi.
       by rewrite -Hv sfilterleqK mem_filter Hi andbT.
     + rewrite -(count_predC (gtn (size u)) p) -!size_filter.
       have /eq_filter -> : (predC (gtn (size u))) =1 leq (size u).
@@ -425,9 +425,9 @@ Lemma shift_plactcongr n u v : plactcongr u v = plactcongr (shiftn n u) (shiftn 
 Proof.
   apply/(sameP idP); apply(iffP idP).
   + rewrite -{2}[u](shiftuK n) -{2}[v](shiftuK n) /shiftn.
-    apply plact_map_in_incr => x y /mapP [] x0 Hx0 -> {x} /mapP [] y0 Hy0 -> {y}.
+    apply: plact_map_in_incr => x y /mapP [] x0 Hx0 -> {x} /mapP [] y0 Hy0 -> {y}.
     by rewrite !ltnXnatE ltn_add2l !addKn.
-  + apply plact_map_in_incr => x y _ _.
+  + apply: plact_map_in_incr => x y _ _.
     by rewrite !ltnXnatE ltn_add2l.
 Qed.
 
@@ -445,9 +445,9 @@ Implicit Type t : seq (seq nat).
 Lemma perm_eq_sfiltergtn p n :
   is_std p -> perm_eq (sfiltergtn n p) (iota 0 (minn n (size p))).
 Proof.
-  move=> Hstd; apply uniq_perm_eq.
-  - apply filter_uniq; by apply std_uniq.
-  - by apply iota_uniq.
+  move=> Hstd; apply: uniq_perm_eq.
+  - apply: filter_uniq; by apply: std_uniq.
+  - by apply: iota_uniq.
   - move=> i; rewrite mem_filter mem_iota /= add0n leq_min.
     congr (_ && _).
     rewrite (perm_eq_mem Hstd).
@@ -457,12 +457,12 @@ Qed.
 Lemma perm_eq_sfilterleq p n :
   is_std p -> perm_eq (sfilterleq n p) (iota 0 ((size p) - n)).
 Proof.
-  move=> Hstd; apply uniq_perm_eq.
+  move=> Hstd; apply: uniq_perm_eq.
   - rewrite map_inj_in_uniq.
-    + apply filter_uniq; by apply std_uniq.
+    + apply: filter_uniq; by apply: std_uniq.
     + move=> i j; rewrite !mem_filter => /andP [] Hi _ /andP [] Hj _ H.
       by rewrite -(subnK Hi) H (subnK Hj).
-  - by apply iota_uniq.
+  - by apply: iota_uniq.
   - move=> i; rewrite mem_sfilterleqK.
     rewrite (perm_eq_mem Hstd).
     rewrite !mem_iota /= !add0n.
@@ -479,25 +479,25 @@ Proof. move/(perm_eq_sfilterleq n)/perm_eq_size ->; by rewrite size_iota. Qed.
 Lemma sfiltergtn_is_std p n : is_std p -> is_std (sfiltergtn n p).
 Proof.
   move=> Hstd; rewrite /is_std (size_sfiltergtn _ Hstd).
-  by apply perm_eq_sfiltergtn.
+  by apply: perm_eq_sfiltergtn.
 Qed.
 Lemma sfilterleq_is_std p n : is_std p -> is_std (sfilterleq n p).
 Proof.
   move=> Hstd; rewrite /is_std (size_sfilterleq _ Hstd).
-  by apply perm_eq_sfilterleq.
+  by apply: perm_eq_sfilterleq.
 Qed.
 
 Lemma size_sfiltergtn_cat u v :
   size (sfiltergtn (size u) (invstd (std (u ++ v)))) = size u.
 Proof.
-  rewrite (size_sfiltergtn _ (invstd_is_std _)); last by apply std_is_std.
+  rewrite (size_sfiltergtn _ (invstd_is_std _)); last by apply: std_is_std.
   rewrite size_invstd size_std size_cat.
-  by have /minn_idPl -> : size u <= size u + size v by apply leq_addr.
+  by have /minn_idPl -> : size u <= size u + size v by apply: leq_addr.
 Qed.
 Lemma size_sfilterleq_cat u v :
   size (sfilterleq (size u) (invstd (std (u ++ v)))) = size v.
 Proof.
-  rewrite (size_sfilterleq _ (invstd_is_std _)); last by apply std_is_std.
+  rewrite (size_sfilterleq _ (invstd_is_std _)); last by apply: std_is_std.
   by rewrite size_invstd size_std size_cat addKn.
 Qed.
 
@@ -507,14 +507,14 @@ Proof.
   apply/eqP/std_eq_invP/eq_invP.
   have Hsz : size (take (size u) (std (u ++ v))) = size u.
     rewrite size_take size_std size_cat.
-    have /minn_idPl : size u <= size u + size v by apply leq_addr.
+    have /minn_idPl : size u <= size u + size v by apply: leq_addr.
     by rewrite /minn.
   split; rewrite Hsz //= => i j /andP [] Hij Hj.
   have Hi := leq_ltn_trans Hij Hj.
   rewrite (nth_take _ Hi) (nth_take _ Hj).
   have /eq_invP := eq_inv_std (u ++ v) => [] [] _ Hstd.
   have H : i <= j < size (u ++ v).
-    rewrite Hij /= size_cat; apply (leq_trans Hj); by apply leq_addr.
+    rewrite Hij /= size_cat; apply: (leq_trans Hj); by apply: leq_addr.
   rewrite -(Hstd _ _ H) {Hstd H}.
   by rewrite !nth_cat Hj Hi.
 Qed.
@@ -569,24 +569,24 @@ Lemma invstd_catgtn u v :
 Proof.
   suff Heqinv : std u = invstd (sfiltergtn (size u) (invstd (std (u ++ v)))).
     rewrite Heqinv invstdK //=.
-    apply (@sfiltergtn_is_std (invstd (std (u ++ v))) (size u)).
-    apply invstd_is_std; by apply std_is_std.
-  apply/eqP/stdP; apply StdSpec.
-    apply invstd_is_std.
-    apply (@sfiltergtn_is_std (invstd (std (u ++ v))) (size u)).
-    apply invstd_is_std; by apply std_is_std.
+    apply: (@sfiltergtn_is_std (invstd (std (u ++ v))) (size u)).
+    apply: invstd_is_std; by apply: std_is_std.
+  apply/eqP/stdP; apply: StdSpec.
+    apply: invstd_is_std.
+    apply: (@sfiltergtn_is_std (invstd (std (u ++ v))) (size u)).
+    apply: invstd_is_std; by apply: std_is_std.
   apply/eq_invP; split; first by rewrite size_invstd size_sfiltergtn_cat.
   move=> i j /andP [] Hij Hj.
-  have Hi : i < size u by apply (leq_ltn_trans Hij).
+  have Hi : i < size u by apply: (leq_ltn_trans Hij).
   rewrite leqXnatE /=.
   do 2 (rewrite nth_mkseq; last by rewrite size_sfiltergtn_cat).
   rewrite index_leq_filter //= -/(invstd (std (u++v))).
-  have Hucat : size u <= size (std (u ++ v)) by rewrite size_std size_cat; apply leq_addr.
+  have Hucat : size u <= size (std (u ++ v)) by rewrite size_std size_cat; apply: leq_addr.
   do 2 (rewrite (index_invstd (std_is_std (u ++ v)));
-        last by apply (@leq_trans (size u)); last exact Hucat).
+        last by apply: (@leq_trans (size u)); last exact Hucat).
   have /eq_invP := eq_inv_std (u ++ v) => [] [] _ Hinv.
   have Hijsz : i <= j < size (u ++ v).
-    rewrite Hij /=; apply (leq_trans Hj); rewrite size_cat; by apply leq_addr.
+    rewrite Hij /=; apply: (leq_trans Hj); rewrite size_cat; by apply: leq_addr.
   rewrite -leqXnatE -(Hinv i j Hijsz).
   by rewrite !nth_cat Hi Hj.
 Qed.
@@ -596,18 +596,18 @@ Lemma invstd_catleq u v :
 Proof.
   suff Heqinv : std v = invstd (sfilterleq (size u) (invstd (std (u ++ v)))).
     rewrite Heqinv invstdK //=.
-    apply (@sfilterleq_is_std (invstd (std (u ++ v))) (size u)).
-    apply invstd_is_std; by apply std_is_std.
-  apply/eqP/stdP; apply StdSpec.
-    apply invstd_is_std.
-    apply (@sfilterleq_is_std (invstd (std (u ++ v))) (size u)).
-    apply invstd_is_std; by apply std_is_std.
+    apply: (@sfilterleq_is_std (invstd (std (u ++ v))) (size u)).
+    apply: invstd_is_std; by apply: std_is_std.
+  apply/eqP/stdP; apply: StdSpec.
+    apply: invstd_is_std.
+    apply: (@sfilterleq_is_std (invstd (std (u ++ v))) (size u)).
+    apply: invstd_is_std; by apply: std_is_std.
   apply/eq_invP; split; first by rewrite size_invstd size_sfilterleq_cat.
   move=> i j /andP [] Hij Hj.
-  have Hi : i < size v by apply (leq_ltn_trans Hij).
+  have Hi : i < size v by apply: (leq_ltn_trans Hij).
   rewrite leqXnatE /=.
   do 2 (rewrite nth_mkseq; last by rewrite size_sfilterleq_cat).
-  rewrite !index_sfilterleq index_leq_filter; try apply leq_addl.
+  rewrite !index_sfilterleq index_leq_filter; try apply: leq_addl.
   do 2 (rewrite (index_invstd (std_is_std (u ++ v)));
     last by rewrite size_std size_cat addnC ltn_add2l).
   have /eq_invP := eq_inv_std (u ++ v) => [] [] _ Hinv.
@@ -617,7 +617,7 @@ Proof.
     by rewrite Hij Hj.
   rewrite -leqXnatE -(Hinv _ _ Hijsz) {Hijsz}.
   rewrite !nth_cat.
-  have H x : (x + size u < size u) = false by apply negbTE; rewrite -leqNgt; apply leq_addl.
+  have H x : (x + size u < size u) = false by apply: negbTE; rewrite -leqNgt; apply: leq_addl.
   by rewrite !H !addnK.
 Qed.
 
@@ -625,7 +625,7 @@ Qed.
 Theorem invstd_cat_in_shsh u v :
   invstd (std (u ++ v)) \in shsh (invstd (std u)) (invstd (std v)).
 Proof.
-  rewrite mem_shsh; last by apply invstd_is_std; apply std_is_std.
+  rewrite mem_shsh; last by apply: invstd_is_std; apply: std_is_std.
   by rewrite {2}(invstd_catgtn u v) size_invstd size_std (invstd_catleq u v) !eq_refl.
 Qed.
 
@@ -658,14 +658,14 @@ Lemma LRTripleP t1 t2 t :
   reflect (plactLRTriple t1 t2 t) (predLRTriple t1 t2 t).
 Proof.
   rewrite /is_stdtab => /andP [] Htab1 _ /andP [] Htab2 _.
-  apply (iffP idP) => /=.
+  apply: (iffP idP) => /=.
   - move=> /hasP [] p /flattenP [] shuf /allpairsP [] [p1 p2] /= [].
     move=> /mapP [] yam1
             /(allP (list_yamshP (is_part_sht Htab1))) /= /andP [] Hyam1 Hsh1 Hp1.
     move=> /mapP [] yam2
             /(allP (list_yamshP (is_part_sht Htab2))) /= /andP [] Hyam2 Hsh2 Hp2.
     move=> -> {shuf} Hshuf /eqP <- {t}.
-    apply (@PlactLRTriple t1 t2 (RS p) p1 p2 p) => //=.
+    apply: (@PlactLRTriple t1 t2 (RS p) p1 p2 p) => //=.
     + by rewrite Hp1 -RSmapE RS_bij_2 //= Htab1 Hyam1 eq_sym Hsh1.
     + by rewrite Hp2 -RSmapE RS_bij_2 //= Htab2 Hyam2 eq_sym Hsh2.
   - move=> [p1 p2 p]; rewrite -2!RSmapE => Hp1 Hp2 Hp Hsh.
@@ -675,17 +675,17 @@ Proof.
     + apply/mapP; rewrite -Hp1; exists ((RSmap p1).2).
       * have : is_yam_of_shape (shape t1) (RSmap p1).2.
           rewrite /is_yam_of_shape -shape_RSmap_eq Hp1 eq_refl andbT.
-          by apply is_yam_RSmap2.
+          by apply: is_yam_RSmap2.
         move /(list_yamsh_countE (is_part_sht Htab1))/eqP.
-        rewrite Hp1; by apply contraLR => /count_memPn ->.
+        rewrite Hp1; by apply: contraLR => /count_memPn ->.
       * have -> : ((RSmap p1).1, (RSmap p1).2) = RSmap p1 by case RSmap.
         by rewrite RS_bij_1.
     + apply/mapP; rewrite -Hp2; exists ((RSmap p2).2).
       * have : is_yam_of_shape (shape t2) (RSmap p2).2.
           rewrite /is_yam_of_shape -shape_RSmap_eq Hp2 eq_refl andbT.
-          by apply is_yam_RSmap2.
+          by apply: is_yam_RSmap2.
         move /(list_yamsh_countE (is_part_sht Htab2))/eqP.
-        rewrite Hp2; by apply contraLR => /count_memPn ->.
+        rewrite Hp2; by apply: contraLR => /count_memPn ->.
       * have -> : ((RSmap p2).1, (RSmap p2).2) = RSmap p2 by case RSmap.
         by rewrite RS_bij_1.
 Qed.
@@ -700,7 +700,7 @@ Proof.
     have Hsp1 : is_std p1 by rewrite -(RSstdE) Hp1.
     have Hsp2 : is_std p2 by rewrite -(RSstdE) Hp2.
     have /allP Hall := (std_shsh Hsp1 Hsp2).
-    by apply Hall.
+    by apply: Hall.
   - rewrite (eqP (size_RS _)).
     move: Hp; rewrite /shsh => Hp.
     have /allP Hall := all_size_shuffle p1 (shiftn (size p1) p2).
@@ -717,13 +717,13 @@ Proof.
   move: Hu1 Hu2; rewrite !inE => /eqP Hu1 /eqP Hu2.
   exists (RS (invstd (std (u1 ++ u2)))).
   rewrite RSinvstdE; split; last by rewrite inE.
-  apply (PlactLRTriple (p1 := invstd (std u1))
+  apply: (PlactLRTriple (p1 := invstd (std u1))
                        (p2 := invstd (std u2))
                        (p := invstd (std (u1 ++ u2))) ).
   + by rewrite -Hu1 RSinvstdE.
   + by rewrite -Hu2 RSinvstdE.
   + by rewrite RSinvstdE.
-  + by apply invstd_cat_in_shsh.
+  + by apply: invstd_cat_in_shsh.
 Qed.
 
 Theorem free_LR_rule t1 t2 :
@@ -735,7 +735,7 @@ Theorem free_LR_rule t1 t2 :
 Proof.
   move=> Hstd1 Hstd2 u1 u2.
   split.
-  - move=> [] Hu1 Hu2; split; try by apply size_langQ.
+  - move=> [] Hu1 Hu2; split; try by apply: size_langQ.
     have := (free_LR_rule_plact Hstd1 Hstd2 Hu1 Hu2) => [] [] t [] Htr Ht.
     by exists t.
   - move=> [] Hsz1 Hsz2 [] t [] [] p1 p2 p Hp1 Hp2 Htmp; subst t.
@@ -749,13 +749,13 @@ Proof.
       * have /eq_filter H : gtn 0 =1 pred0 by [].
         rewrite !H {H} !filter_pred0.
         have:= @plactcongr_equiv nat_ordType => /equivalence_relP [] Hrefl _.
-        by apply Hrefl.
+        by apply: Hrefl.
       * have /eq_filter H : gtn n.+1 =1 geq n by [].
         rewrite /= !H {H}.
-        by apply restr_small.
+        by apply: restr_small.
     + rewrite (invstd_catleq u1 u2) (shsh_sfilterleq Hstdp1 Hsh) Hszp.
       rewrite (shift_plactcongr (size u1)) !sfilterleqK.
-      by apply restr_big.
+      by apply: restr_big.
 Qed.
 
 End LR.

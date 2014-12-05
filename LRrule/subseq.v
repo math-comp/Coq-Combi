@@ -35,7 +35,7 @@ Section RCons.
   Proof. by elim: s. Qed.
 
   Lemma nth_any s a b i : i < size s -> nth a s i = nth b s i.
-  Proof. elim: s i => //= s0 s IHs [//=|i] Hsize /=. by apply IHs. Qed.
+  Proof. elim: s i => //= s0 s IHs [//=|i] Hsize /=. by apply: IHs. Qed.
 
   Lemma rcons_set_nth a s l : set_nth a s (size s) l = rcons s l.
   Proof. elim: s => [//=| l0 s IHs]. by rewrite rcons_cons -IHs /=. Qed.
@@ -68,11 +68,11 @@ Section RCons.
   Lemma subseq_rcons_eq s w l : subseq s w <-> subseq (rcons s l) (rcons w l).
   Proof.
     split.
-    - by rewrite -!cats1 => H; apply cat_subseq => //=; rewrite (eq_refl _).
+    - by rewrite -!cats1 => H; apply: cat_subseq => //=; rewrite (eq_refl _).
     - elim: w s => [|w0 w IHw s] /=.
       case=> //= s0 s; case (altP (s0 =P l)) => _ //=; by rewrite rcons_nilF.
-    - case: s IHw => //= s0 s; case (altP (s0 =P w0)) => _ //= H1 H2; first by apply H1.
-      rewrite -rcons_cons in H2; by apply H1.
+    - case: s IHw => //= s0 s; case (altP (s0 =P w0)) => _ //= H1 H2; first by apply: H1.
+      rewrite -rcons_cons in H2; by apply: H1.
   Qed.
 
   Lemma subseq_rcons_neq s si w wn :
@@ -82,7 +82,7 @@ Section RCons.
     - case: s => [| s0 s] /=; first by case: eqP H.
       case (altP (s0 =P wn)) => //= ->; by rewrite rcons_nilF.
     - case: s => [/=| s0 s].
-      * case eqP => [_ |] _; first by apply sub0seq.
+      * case eqP => [_ |] _; first by apply: sub0seq.
         rewrite -[ [:: si] ]/(rcons [::] si); exact (IHw _ _ H).
       * rewrite !rcons_cons /=; case (altP (s0 =P w0)) => _; first exact (IHw _ _ H).
         rewrite -rcons_cons; exact (IHw _ _ H).
@@ -94,8 +94,8 @@ Section RCons.
     case: s => [_ | s0 s /=]; first by rewrite {1}/rev /=; case (rev _).
     rewrite !rev_cons; case eqP => [-> | _].
     - move/IHw; by apply subseq_rcons_eq.
-    - move/IHw; rewrite rev_cons => {IHw} IHw; apply (@subseq_trans _ (rev w) _ _ IHw).
-      by apply subseq_rcons.
+    - move/IHw; rewrite rev_cons => {IHw} IHw; apply: (@subseq_trans _ (rev w) _ _ IHw).
+      by apply: subseq_rcons.
   Qed.
 
   Lemma count_mem_rcons w l i : count_mem i (rcons w l) = count_mem i w + (l == i).
@@ -137,7 +137,7 @@ Proof.
     by rewrite eq_refl.
   - case: s => [//= | s0 s].
     move=> /IHw Hsubs; case eqP => Hs0.
-    + apply (@subseq_trans _ (s0 :: s)); first by apply subseq_cons.
+    + apply: (@subseq_trans _ (s0 :: s)); first by apply: subseq_cons.
       exact Hsubs.
     + exact Hsubs.
 Qed.
@@ -164,7 +164,7 @@ Proof.
     by rewrite isSome_insub; case: eqP=> // ->.
   rewrite count_uniq_mem.
   + by rewrite mem_undup (mem_list_subseqs Hs).
-  + by apply undup_uniq.
+  + by apply: undup_uniq.
 Qed.
 
 Canonical subseqs_finMixin := Eval hnf in FinMixin finite_subseqs.
@@ -178,7 +178,7 @@ Definition sub_nil  : subseqs := Subseqs (sub0seq w).
 Definition sub_full : subseqs := Subseqs (subseq_refl w).
 
 Lemma size_le (s : subseqs) : size s <= size w.
-Proof. case: s => s Ps /=; by apply size_subseq. Qed.
+Proof. case: s => s Ps /=; by apply: size_subseq. Qed.
 
 End Fintype.
 

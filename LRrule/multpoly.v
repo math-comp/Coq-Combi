@@ -43,10 +43,10 @@ Fixpoint multpoly n :=
 
 Definition vari n (i : 'I_n) : multpoly n.
 Proof.
-  elim: n i => [//= | n IHn] i; first by apply 1.
+  elim: n i => [//= | n IHn] i; first by apply: 1.
   case (unliftP 0 i) => /= [j |] Hi.
-  - apply (polyC (IHn j)).
-  - apply 'X.
+  - apply: (polyC (IHn j)).
+  - apply: 'X.
 Defined.
 
 Variable n : nat.
@@ -54,7 +54,7 @@ Variable n : nat.
 Definition commword (w : seq 'I_n) : multpoly n := \prod_(i <- w) vari i.
 
 Lemma perm_eq_commword (u v : seq 'I_n) : perm_eq u v -> commword u = commword v.
-Proof. by apply eq_big_perm. Qed.
+Proof. by apply: eq_big_perm. Qed.
 
 Lemma commword_morph (u v : seq 'I_n) : commword (u ++ v) = (commword u) * (commword v).
 Proof. by rewrite /commword big_cat. Qed.
@@ -82,18 +82,18 @@ Lemma multcatset d1 d2 (s1 : {set d1.-tuple 'I_n}) (s2 : {set d2.-tuple 'I_n}) :
 Proof.
   rewrite /polyset /catset mulr_suml.
   rewrite (@eq_bigr _ _ _ _ _ _ _ (fun u => \sum_(v in s2) commword (cat_tuple u v)));
-    last by move=> u _; rewrite mulr_sumr; apply eq_bigr => t _; by rewrite commword_morph.
+    last by move=> u _; rewrite mulr_sumr; apply: eq_bigr => t _; by rewrite commword_morph.
   rewrite pair_big /=.
   rewrite (@eq_bigr _ _ _ _ _ _ _ (fun p => commword (cat_tuple p.1 p.2)));
     last by move=> [u v].
   rewrite -(@big_imset (multpoly n) _ _ _ _ (fun p => cat_tuple p.1 p.2) _ commword) /=;
-    last by move=> [u v] [x y] /= _ _; apply cat_tuple_inj.
-  apply eq_bigl => w.
+    last by move=> [u v] [x y] /= _ _; apply: cat_tuple_inj.
+  apply: eq_bigl => w.
   apply/(sameP idP); apply(iffP idP).
   - move/imset2P => [] u v Hu Hv -> {w}.
     apply/imsetP; exists (u, v) => //=; by rewrite unfold_in /= Hu Hv.
   - move/imsetP => [] [u v] /=; rewrite unfold_in /= => /andP [] Hu Hv ->.
-    by apply mem_imset2.
+    by apply: mem_imset2.
 Qed.
 
 End Poly.
@@ -106,16 +106,16 @@ Variable n : nat.
 Hypothesis Hpos : n != 0%N.
 
 Lemma inhabIn : 'I_n.
-Proof. move: Hpos; rewrite -lt0n; by apply Ordinal. Qed.
+Proof. move: Hpos; rewrite -lt0n; by apply: Ordinal. Qed.
 
 Definition leqOrd (i j : 'I_n) := (i <= j)%N.
 
 Fact leqOrd_order : Order.axiom leqOrd.
 Proof.
   split.
-  - move=> i; by apply leqnn.
-  - move=> i j; rewrite /leqOrd => H; apply val_inj; by apply anti_leq.
-  - move=> a b c; by apply leq_trans.
+  - move=> i; by apply: leqnn.
+  - move=> i j; rewrite /leqOrd => H; apply: val_inj; by apply: anti_leq.
+  - move=> a b c; by apply: leq_trans.
   - exact leq_total.
 Qed.
 
@@ -139,12 +139,12 @@ Lemma freeSchurP Q t : t \in freeSchur Q = (val t \in langQ _ Q).
 Proof. by rewrite /freeSchur /langQ !inE /=. Qed.
 
 Lemma size_RS_tuple (t : d.-tuple 'I_n) : size (to_word (RS t)) == d.
-Proof. rewrite -size_to_word-{2}(size_tuple t); by apply size_RS. Qed.
+Proof. rewrite -size_to_word-{2}(size_tuple t); by apply: size_RS. Qed.
 (* Bijection freeSchur -> tabwordshape *)
 Definition tabword_of_tuple (t : d.-tuple 'I_n) : d.-tuple 'I_n := Tuple (size_RS_tuple t).
 
 Lemma perm_eq_tabword_of_tuple (t : d.-tuple 'I_n) : perm_eq t (tabword_of_tuple t).
-Proof. rewrite /tabword_of_tuple /=; by apply perm_eq_RS. Qed.
+Proof. rewrite /tabword_of_tuple /=; by apply: perm_eq_RS. Qed.
 
 Lemma tabword_of_tuple_freeSchur_inj (Q : stdtabn d) :
   {in (freeSchur Q) &, injective tabword_of_tuple}.
@@ -152,8 +152,8 @@ Proof.
   move=> /= u v; rewrite /freeSchur !inE => /eqP Hu /eqP Hv H.
   have {H} /= H : tval (tabword_of_tuple u) = tval (tabword_of_tuple v) by rewrite H.
   case: (bijRStab ord_ordType) => RSinv HK _.
-  apply val_inj; rewrite -[val u]HK -[val v]HK; congr (RSinv _).
-  rewrite {RSinv HK} /RStab /=; apply pqpair_inj => /=.
+  apply: val_inj; rewrite -[val u]HK -[val v]HK; congr (RSinv _).
+  rewrite {RSinv HK} /RStab /=; apply: pqpair_inj => /=.
   have := is_tableau_RS u; have := is_tableau_RS v.
   move: Hu Hv H; rewrite -!RStabmapE /RStabmap.
   case RSmap => [pu qu] {u} /= ->; case RSmap => [pv qv] {v} /= -> Heq Hv Hu.
@@ -167,7 +167,7 @@ Lemma is_part_shape_d (Q : stdtabn d) : is_part_of_n d (shape Q).
 Proof.
   rewrite /=; apply/andP; split.
   - by rewrite -{2}(stdtabn_size Q).
-  - apply is_part_sht.
+  - apply: is_part_sht.
     have := stdtabnP Q; by rewrite /is_stdtab => /andP [].
 Qed.
 Definition shape_d (Q : stdtabn d) := (IntPartN (is_part_shape_d Q)).
@@ -191,7 +191,7 @@ Proof.
       have:= Hpair; rewrite /is_RStabpair /= => /andP [] -> /=.
       move=> /andP [] /yam_of_stdtabP -> /= /eqP ->.
       rewrite shape_yam_of_stdtab //=.
-      by apply stdtabnP.
+      by apply: stdtabnP.
     pose imw := (RStabinv (RSTabPair Hpair)).
     have Hsz : size (imw) == d.
       rewrite /imw /RStabinv /=.
@@ -203,8 +203,8 @@ Proof.
       case: (bijRStab ord_ordType) => RSinv HK HinvK.
       rewrite /RStabmap /RStabinv /= (RS_bij_2 Hpr) /=.
       rewrite yam_of_stdtabK //=.
-      by apply stdtabnP.
-    + apply val_inj => /=.
+      by apply: stdtabnP.
+    + apply: val_inj => /=.
       rewrite /imw /RStabinv /= -Hw /=.
       congr (to_word _).
       by rewrite Hw -[RS (RSmapinv _ _)]RSmapE RS_bij_2.
@@ -222,8 +222,8 @@ Lemma Schur_freeSchurE d (Q : stdtabn d) :
 Proof.
   rewrite /Schur -tabword_of_tuple_freeSchur.
   rewrite /polyset (big_imset _ (@tabword_of_tuple_freeSchur_inj _ Q)) /=.
-  apply eq_bigr => t _; apply perm_eq_commword.
-  rewrite perm_eq_sym; by apply perm_eq_RS.
+  apply: eq_bigr => t _; apply: perm_eq_commword.
+  rewrite perm_eq_sym; by apply: perm_eq_RS.
 Qed.
 
 Section SchurTab.
@@ -243,13 +243,13 @@ Proof.
   - move/imset2P => [] w1 w2.
     rewrite !freeSchurP /= => Hw1 Hw2 ->.
     have := conj Hw1 Hw2.
-    rewrite free_LR_rule; try by apply stdtabnP.
+    rewrite free_LR_rule; try by apply: stdtabnP.
     move => [] H1 H2 [] Q [] Htriple /= Hcat.
     have := is_stdtab_of_n_LRTriple (stdtabnP Q1) (stdtabnP Q2) Htriple.
     rewrite !stdtabn_size => HQ.
     apply/bigcupP; exists (StdtabN HQ).
-      rewrite /LR_support inE; apply/LRTripleP; try apply stdtabnP.
-      by apply Htriple.
+      rewrite /LR_support inE; apply/LRTripleP; try apply: stdtabnP.
+      by apply: Htriple.
     by rewrite freeSchurP.
   - move/bigcupP => [] Q; rewrite /LR_support freeSchurP inE => Htriple /= Ht.
     have Hsz1 : size (take d1 t) == d1.
@@ -261,17 +261,17 @@ Proof.
       by rewrite size_drop size_tuple addKn.
     pose t2 := Tuple Hsz2.
     have Hcat : t = cat_tuple t1 t2.
-      apply val_inj => /=; by rewrite cat_take_drop.
+      apply: val_inj => /=; by rewrite cat_take_drop.
     have : (val t1 \in langQ _ Q1 /\ val t2 \in langQ _ Q2).
-      rewrite free_LR_rule; try by apply stdtabnP.
+      rewrite free_LR_rule; try by apply: stdtabnP.
       rewrite !size_tuple !stdtabn_size; split; try by [].
-      exists Q; split; first by apply/LRTripleP; try apply stdtabnP.
+      exists Q; split; first by apply/LRTripleP; try apply: stdtabnP.
       by rewrite /= cat_take_drop.
     move=> [] /= Ht1 Ht2.
-    apply/imset2P; apply (Imset2spec (x1 := t1) (x2 := t2)).
+    apply/imset2P; apply: (Imset2spec (x1 := t1) (x2 := t2)).
     + by rewrite freeSchurP.
     + by rewrite freeSchurP.
-    + apply val_inj; by rewrite /= cat_take_drop.
+    + apply: val_inj; by rewrite /= cat_take_drop.
 Qed.
 
 Lemma Qsymb_spec d (w : d.-tuple 'I_n) : is_stdtab_of_n d (RStabmap w).2.
@@ -298,11 +298,11 @@ Proof.
     move => /imsetP [] T2; rewrite inE => HT2 -> {S2}.
     rewrite /freeSchur => Hdiff.
     rewrite /disjoint; apply/pred0P => w /=.
-    rewrite !inE; apply negbTE; move: Hdiff; apply contra.
+    rewrite !inE; apply: negbTE; move: Hdiff; apply: contra.
     by move=> /andP [] /eqP -> /eqP ->.
 
   rewrite (@eq_bigr _ _ _ _ _ _ _ (fun Q => polyset R (freeSchur Q))) /=;
-    last by move=> w _; apply Schur_freeSchurE.
+    last by move=> w _; apply: Schur_freeSchurE.
 
   rewrite (big_setID [set set0]) /=.
   set A := (X in X + _); have HA : A = 0.
@@ -326,10 +326,10 @@ Proof.
     move: Hx1; rewrite /freeSchur inE => /eqP Hx1.
     rewrite -setP => H; have := H x1; rewrite !inE Hx1.
     rewrite eq_refl => /esym/eqP.
-    move=> Htmp; apply val_inj; by rewrite /= Htmp.
+    move=> Htmp; apply: val_inj; by rewrite /= Htmp.
   rewrite /polyset.
 
-  apply eq_bigl => s; rewrite !inE.
+  apply: eq_bigl => s; rewrite !inE.
   apply/(sameP idP); apply(iffP idP).
   + move/imsetP => [] Q; rewrite 2!inE => /andP [] H1 H2 ->.
     by rewrite H1 /= mem_imset.
@@ -351,7 +351,7 @@ Definition hyper_std d (P : intpartn d) := StdtabN (hyper_stdP P).
 Lemma shaped_hyper_stdP d (P : intpartn d) : shape_d (hyper_std P) = P.
 Proof.
   rewrite /hyper_std /shape_d.
-  apply val_inj => /=.
+  apply: val_inj => /=.
   by rewrite shape_stdtab_of_yam (shape_rowseq_hyper_yam (intpartnP P)).
 Qed.
 
@@ -366,13 +366,13 @@ Proof.
   rewrite !shaped_hyper_stdP => ->.
   move : (LR_support _ _) => LR {P1 P2}.
   rewrite (partition_big (@shape_d (d1 + d2)) predT) //=.
-  apply eq_bigr => P _.
+  apply: eq_bigr => P _.
   rewrite (eq_bigr (fun i => (Schur P))); last by move=> T /andP [] _ /eqP ->.
   rewrite big_const.
   set c1 := card _; set c2 := card _.
   suff -> : c1 = c2 by elim: c2 => [//= | c IHc] /=; rewrite IHc mulrS.
   rewrite /c1 /c2 {c1 c2}.
-  apply eq_card => i /=.
+  apply: eq_card => i /=.
   by rewrite imset_id unfold_in inE.
 Qed.
 
