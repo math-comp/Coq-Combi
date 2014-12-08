@@ -382,6 +382,15 @@ Qed.
 
 End RobinsonSchensted.
 
+Lemma RStabmap_std (T : ordType) (w : seq T) : (RStabmap (std w)).2 = (RStabmap w).2.
+Proof.
+  rewrite /RStabmap.
+  move H : (RSmap w) => [P Q].
+  move Hs : (RSmap (std w)) => [Ps Qs] /=.
+  have -> : Q = (RSmap w).2 by rewrite H.
+  have -> : Qs = (RSmap (std w)).2 by rewrite Hs.
+  by rewrite RSmap_std.
+Qed.
 
 Section StdtabOfShape.
 
