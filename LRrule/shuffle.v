@@ -672,22 +672,8 @@ Proof.
     apply/hasP; exists p; last by rewrite Hp.
     apply/flattenP; exists (shsh p1 p2); last exact Hsh.
     apply/allpairsP; exists (p1, p2); split; last by [].
-    + apply/mapP; rewrite -Hp1; exists ((RSmap p1).2).
-      * have : is_yam_of_shape (shape t1) (RSmap p1).2.
-          rewrite /is_yam_of_shape -shape_RSmap_eq Hp1 eq_refl andbT.
-          by apply: is_yam_RSmap2.
-        move /(list_yamsh_countE (is_part_sht Htab1))/eqP.
-        rewrite Hp1; by apply: contraLR => /count_memPn ->.
-      * have -> : ((RSmap p1).1, (RSmap p1).2) = RSmap p1 by case RSmap.
-        by rewrite RS_bij_1.
-    + apply/mapP; rewrite -Hp2; exists ((RSmap p2).2).
-      * have : is_yam_of_shape (shape t2) (RSmap p2).2.
-          rewrite /is_yam_of_shape -shape_RSmap_eq Hp2 eq_refl andbT.
-          by apply: is_yam_RSmap2.
-        move /(list_yamsh_countE (is_part_sht Htab2))/eqP.
-        rewrite Hp2; by apply: contraLR => /count_memPn ->.
-      * have -> : ((RSmap p2).1, (RSmap p2).2) = RSmap p2 by case RSmap.
-        by rewrite RS_bij_1.
+    + rewrite /= -Hp1 RSmapE; by apply mem_RSclass.
+    + rewrite /= -Hp2 RSmapE; by apply mem_RSclass.
 Qed.
 
 Lemma is_stdtab_of_n_LRTriple t1 t2 t :
