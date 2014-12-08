@@ -805,7 +805,8 @@ Section Tableaux.
     then [&& (t0 != [::]), is_row t0, dominate (head [::] t') t0 & is_tableau t']
     else true.
 
-  Definition shape t := map size t.
+  (* Shape is defined in seq.v *)
+  (* Definition shape t := map size t. *) 
 
   Lemma tableau_is_row r t : is_tableau (r :: t) -> is_row r.
   Proof. by move=> /= /and4P []. Qed.
@@ -1393,22 +1394,24 @@ Proof.
   by rewrite -RSmapE RS_bij_2 //= Htab Hyam Hsh /=.
 Qed.
 
-Lemma RSclass_countE tab w :
-  is_tableau tab -> RS w = tab -> count_mem w (RSclass tab) = 1.
+Lemma RSclass_countE w : count_mem w (RSclass (RS w)) = 1.
 Proof.
-  move=> Htab Hw /=; rewrite count_map.
+  rewrite count_map.
   rewrite (eq_in_count (a2 := pred1 ((RSmap w).2))); first last.
-    move=> y /= /(allP (list_yamshP (is_part_sht Htab))).
+    move=> y /= /(allP (list_yamshP (is_part_sht (is_tableau_RS _)))).
     rewrite /is_yam_of_shape => /andP [] Hyam /eqP Hsh.
     apply/(sameP idP); apply(iffP idP) => /eqP H.
-    - rewrite H {H} -Hw -RSmapE.
+    - rewrite H {H} -RSmapE.
       have -> : ((RSmap w).1, (RSmap w).2) = RSmap w by case RSmap.
       by rewrite RS_bij_1.
-    - by rewrite -H {H} RS_bij_2 //= Htab Hyam Hsh /=.
-  apply: list_yamsh_countE; first by apply: is_part_sht.
-  rewrite /is_yam_of_shape -shape_RSmap_eq RSmapE Hw eq_refl andbT.
+    - by rewrite -H {H} RS_bij_2 //= (is_tableau_RS _) Hyam Hsh /=.
+  apply: (list_yamsh_countE (is_part_sht (is_tableau_RS _))).
+  rewrite /is_yam_of_shape -shape_RSmap_eq RSmapE eq_refl andbT.
   by apply: is_yam_RSmap2.
 Qed.
+
+Lemma mem_RSclass w : w \in (RSclass (RS w)).
+Proof. apply negbNE; apply/count_memPn. by rewrite RSclass_countE. Qed.
 
 End Classes.
 
