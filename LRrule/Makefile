@@ -81,6 +81,7 @@ endif
 
 VFILES:=congr.v\
   extract.v\
+  Erdos_Szekeres.v \
   greeninv.v\
   green.v\
   invseq.v\
