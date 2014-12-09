@@ -163,17 +163,17 @@ Qed.
 Lemma sumn_shape_stdtabnE (Q : stdtabn d) : (sumn (shape Q)) = d.
 Proof. case: Q => q; by rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP. Qed.
 
-Lemma is_part_shape_d (Q : stdtabn d) : is_part_of_n d (shape Q).
+Lemma is_part_shape_deg (Q : stdtabn d) : is_part_of_n d (shape Q).
 Proof.
   rewrite /=; apply/andP; split.
   - by rewrite -{2}(stdtabn_size Q).
   - apply: is_part_sht.
     have := stdtabnP Q; by rewrite /is_stdtab => /andP [].
 Qed.
-Definition shape_d (Q : stdtabn d) := (IntPartN (is_part_shape_d Q)).
+Definition shape_deg (Q : stdtabn d) := (IntPartN (is_part_shape_deg Q)).
 
 Lemma tabword_of_tuple_freeSchur (Q : stdtabn d) :
-  [set tabword_of_tuple x | x in freeSchur Q] = tabwordshape (shape_d Q).
+  [set tabword_of_tuple x | x in freeSchur Q] = tabwordshape (shape_deg Q).
 Proof.
   rewrite /freeSchur /tabwordshape /tabword_of_tuple.
   apply/setP/subset_eqP/andP; split; apply/subsetP => w; rewrite !inE.
@@ -218,7 +218,7 @@ Definition Schur d (sh : intpartn d) := polyset R (tabwordshape sh).
 
 (* Noncommutative lifting of Schur *)
 Lemma Schur_freeSchurE d (Q : stdtabn d) :
-  Schur (shape_d Q) = polyset R (freeSchur Q).
+  Schur (shape_deg Q) = polyset R (freeSchur Q).
 Proof.
   rewrite /Schur -tabword_of_tuple_freeSchur.
   rewrite /polyset (big_imset _ (@tabword_of_tuple_freeSchur_inj _ Q)) /=.
@@ -274,6 +274,7 @@ Proof.
     + apply: val_inj; by rewrite /= cat_take_drop.
 Qed.
 
+(*
 Lemma Qsymb_spec d (w : d.-tuple 'I_n) : is_stdtab_of_n d (RStabmap w).2.
 Proof.
   have := RStabmap_spec w.
@@ -284,11 +285,12 @@ Proof.
   rewrite -[sumn (shape (RS w))]/(size_tab (RS w)).
   by rewrite (eqP (size_RS _)) size_tuple.
 Qed.
-Definition Qsymb  d (w : d.-tuple 'I_n) := StdtabN (Qsymb_spec w).
+Definition Qsymb d (w : d.-tuple 'I_n) := StdtabN (Qsymb_spec w).
+*)
 
 (* Commutative image of noncommutative LR rule *)
 Theorem LR_rule_tab :
-  Schur (shape_d Q1) * Schur (shape_d Q2) = \sum_(Q in LR_support) (Schur (shape_d Q)).
+  Schur (shape_deg Q1) * Schur (shape_deg Q2) = \sum_(Q in LR_support) (Schur (shape_deg Q)).
 Proof.
   rewrite !Schur_freeSchurE multcatset catset_LR_rule.
   rewrite -cover_imset /polyset.
@@ -339,33 +341,33 @@ Qed.
 
 End SchurTab.
 
-Lemma hyper_stdP d (P : intpartn d) : is_stdtab_of_n d (stdtab_of_yam (hyper_yam P)).
+Lemma hyper_stdtabP d (P : intpartn d) : is_stdtab_of_n d (stdtab_of_yam (hyper_yam P)).
 Proof.
   have Hyam := hyper_yamP (intpartnP P).
   rewrite /= (stdtab_of_yamP Hyam) size_stdtab_of_yam /=.
   rewrite -shape_rowseq_eq_size (shape_rowseq_hyper_yam (intpartnP P)).
   by rewrite intpartn_sumn.
 Qed.
-Definition hyper_std d (P : intpartn d) := StdtabN (hyper_stdP P).
+Definition hyper_stdtab d (P : intpartn d) := StdtabN (hyper_stdtabP P).
 
-Lemma shaped_hyper_stdP d (P : intpartn d) : shape_d (hyper_std P) = P.
+Lemma shaped_hyper_stdtabP d (P : intpartn d) : shape_deg (hyper_stdtab P) = P.
 Proof.
-  rewrite /hyper_std /shape_d.
+  rewrite /hyper_stdtab /shape_deg.
   apply: val_inj => /=.
   by rewrite shape_stdtab_of_yam (shape_rowseq_hyper_yam (intpartnP P)).
 Qed.
 
 Definition LR_coeff d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) (P : intpartn (d1 + d2)) :=
-  #|[set Q | Q in (LR_support (hyper_std P1) (hyper_std P2)) & (shape Q == P)]|.
+  #|[set Q | Q in (LR_support (hyper_stdtab P1) (hyper_stdtab P2)) & (shape Q == P)]|.
 
 Theorem LR_coeffP d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) :
   Schur P1 * Schur P2 = \sum_(P : intpartn (d1 + d2)) (Schur P) *+ LR_coeff P1 P2 P.
 Proof.
   rewrite /LR_coeff.
-  have := LR_rule_tab (hyper_std P1) (hyper_std P2).
-  rewrite !shaped_hyper_stdP => ->.
+  have := LR_rule_tab (hyper_stdtab P1) (hyper_stdtab P2).
+  rewrite !shaped_hyper_stdtabP => ->.
   move : (LR_support _ _) => LR {P1 P2}.
-  rewrite (partition_big (@shape_d (d1 + d2)) predT) //=.
+  rewrite (partition_big (@shape_deg (d1 + d2)) predT) //=.
   apply: eq_bigr => P _.
   rewrite (eq_bigr (fun i => (Schur P))); last by move=> T /andP [] _ /eqP ->.
   rewrite big_const.
