@@ -659,6 +659,16 @@ Section Dominate.
   Lemma dominate_nil u : dominate [::] u.
   Proof. apply/dominateP => /=; by split. Qed.
 
+  Lemma dominate_trans r0 r1 r2 :
+    dominate r0 r1 -> dominate r1 r2 -> dominate r0 r2.
+  Proof.
+    move=> /dominateP [] Hsz0 Hdom0 /dominateP [] Hsz1 Hdom1.
+    apply/dominateP; split; first by apply (leq_trans Hsz0 Hsz1).
+    move => i Hi.
+    apply (ltnX_trans (Hdom1 i (leq_trans Hi Hsz0))).
+    by apply Hdom0.
+  Qed.
+
   Lemma dominate_rcons v u l : dominate u v -> dominate u (rcons v l).
   Proof.
     move /dominateP => [] Hsz Hlt.
@@ -810,6 +820,13 @@ Section Tableaux.
 
   Lemma tableau_is_row r t : is_tableau (r :: t) -> is_row r.
   Proof. by move=> /= /and4P []. Qed.
+
+  Lemma  is_tableau_rconsK t (tn : seq T) :
+    is_tableau (rcons t tn) -> is_tableau t.
+  Proof.
+    elim: t => [//= | t0 t IHt] /= /and4P [] -> -> Hdom /IHt -> /= {IHt}.
+    case: t Hdom => [//=| t1 t]; by rewrite rcons_cons /= => ->.
+  Qed.
 
   Lemma is_part_sht t : is_tableau t -> is_part (shape t).
   Proof.
