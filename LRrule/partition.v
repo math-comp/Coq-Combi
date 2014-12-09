@@ -91,6 +91,16 @@ Section Partition.
     by rewrite lt0n.
   Qed.
 
+  Lemma part_sumn_rectangle (sh : seq nat) :
+    is_part sh -> sumn sh <= (head 0 sh) * (size sh).
+  Proof.
+    elim: sh => [//= | s0 s IHs] /= /andP [] Hhead /IHs {IHs} Hsum.
+    rewrite mulnS leq_add2l.
+    apply (leq_trans Hsum).
+    rewrite {Hsum} leq_mul2r.
+    by case: s Hhead => [//= | s1 s].
+  Qed.
+
   Lemma is_part_rconsK sh sn : is_part (rcons sh sn) -> is_part sh.
   Proof.
     case: sn => [/= | sn].
