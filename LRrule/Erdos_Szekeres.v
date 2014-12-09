@@ -15,7 +15,7 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop path.
 
-Require Import partition schensted ordtype stdtab invseq congr plactic green greeninv.
+Require Import partition schensted ordtype green greeninv.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
