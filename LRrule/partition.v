@@ -33,6 +33,9 @@ Proof.
   by apply: contraR => /count_memPn ->.
 Qed.
 
+Lemma shape_rev T (s : seq (seq T)) : shape (rev s) = rev (shape s).
+Proof. rewrite /shape; elim: s => [//= | s0 s IHs] /=; by rewrite map_rev. Qed.
+
 Section Partition.
 
   Implicit Type s : seq nat.
@@ -293,7 +296,7 @@ Section Partition.
     then incr_nth (shape_rowseq s') s0
     else [::].
 
-  (* Unused old definition *)
+  (* equivalent definition *)
   Definition shape_rowseq_count :=
     [fun s => [seq (count_mem i) s | i <- iota 0 (foldr maxn 0 (map S s))]].
 
@@ -352,6 +355,19 @@ Section Partition.
 
   Lemma is_yam_tl l0 s : is_yam (l0 :: s) -> is_yam s.
   Proof. by move=> /= /andP []. Qed.
+
+  Lemma is_yam_suffix s t : is_yam (s ++ t) -> is_yam t.
+  Proof. by elim: s => [//= | s0 s IHs] /= /andP [] _ /IHs. Qed.
+
+  Lemma last_yam y : is_yam y -> last 0 y = 0.
+  Proof.
+    case/lastP: y => [//= | y yn].
+    rewrite last_rcons.
+    elim: y => [//= | y0 y IHy] /=.
+      case: yn => [//= | y] /= /andP [] H _.
+      by elim: y H => [//= | yn IHy] /= /IHy.
+    move=> /andP [] _; exact IHy.
+  Qed.
 
   (* Remove the zeroes from a yam and decrease all the other entries by 1 *)
   Fixpoint decr_yam s :=
