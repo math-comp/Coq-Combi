@@ -333,6 +333,21 @@ Section Partition.
         - by rewrite (IHs (leq_trans Hs Hi)) (ltn_eqF Hi).
   Qed.
 
+  Lemma foldr_maxn s : foldr maxn 0 [seq i.+1 | i <- s] = (\max_(i <- s) S i).
+  Proof.
+    elim: s => [| s0 s IHs] /=; first by rewrite big_nil.
+    by rewrite big_cons IHs.
+  Qed.
+
+  Lemma perm_eq_shape_rowseq s t : perm_eq s t -> shape_rowseq s = shape_rowseq t.
+  Proof.
+    move=> Hperm.
+    rewrite -!shape_rowseq_countE /shape_rowseq_count /=.
+    rewrite !foldr_maxn (eq_big_perm _ Hperm) /=.
+    apply eq_map => i.
+    by move: Hperm => /perm_eqP ->.
+  Qed.
+
   Lemma shape_rowshape_cons l s : shape_rowseq (l :: s) = incr_nth (shape_rowseq s) l.
   Proof. by []. Qed.
 
