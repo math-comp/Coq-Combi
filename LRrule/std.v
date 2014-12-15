@@ -581,6 +581,34 @@ Qed.
 
 End Spec.
 
+Section PermEq.
+
+Variable Alph : ordType.
+Implicit Type u v : seq Alph.
+
+Theorem perm_eq_stdE u v : perm_eq u v -> std u = std v -> u = v.
+Proof.
+  move=> Hperm.
+  move Hn : (size v) => n; elim: n u v Hn Hperm => [| n IHn] u v Hn Hperm /=.
+    move: Hperm => /perm_eq_size; rewrite Hn => /eqP/nilP -> _.
+    by move: Hn => /eqP/nilP ->.
+  move=> Hstd.
+  have:= size_rembig v; rewrite Hn /= => Hszrem.
+  have Hpermrem := perm_eq_rembig Hperm.
+  have:= erefl (rembig (std u)); rewrite {2}Hstd -!std_rembig => Hstdrem.
+  have {IHn Hszrem Hpermrem Hstdrem} Hrem := IHn _ _ Hszrem Hpermrem Hstdrem.
+  have:= erefl (posbig (std u)); rewrite {2}Hstd !std_posbig => Hstdpos.
+  have:= Hn; case Hv : v => [//= | v0 v'] /= _.
+  have:= Hperm => /perm_eq_size; rewrite Hn.
+  case Hu : u => [//= | u0 u'] /= _.
+  rewrite -[u0 :: u'](posbig_take_dropE) -[v0 :: v'](posbig_take_dropE).
+  rewrite -Hu -Hv Hrem Hstdpos.
+  congr (_ ++ _ :: _).
+  move: Hperm; rewrite Hu Hv.
+  by apply maxL_perm_eq.
+Qed.
+
+End PermEq.
 
 Section Transp.
 
