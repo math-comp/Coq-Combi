@@ -16,7 +16,7 @@ Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop ssralg zmodp.
 Require Import poly ssrint.
 
-Require Import partition schensted ordtype stdtab invseq greeninv shuffle.
+Require Import partition schensted yamplact ordtype std stdtab invseq greeninv shuffle.
 
 (******************************************************************************)
 (* The main goal of this file is to lift the multiplication of multivariate   *)
@@ -341,6 +341,45 @@ Qed.
 
 End SchurTab.
 
+Lemma hyper_stdtabP d (P : intpartn d) : is_stdtab_of_n d (RS (std (hyper_yam P))).
+Proof.
+  rewrite /= RSstdE std_is_std /=.
+  rewrite (eqP (size_RS _)).
+  rewrite size_std -shape_rowseq_eq_size (shape_rowseq_hyper_yam (intpartnP P)).
+  by rewrite intpartn_sumn.
+Qed.
+Definition hyper_stdtab d (P : intpartn d) := StdtabN (hyper_stdtabP P).
+
+Lemma shaped_hyper_stdtabP d (P : intpartn d) : shape_deg (hyper_stdtab P) = P.
+Proof.
+  rewrite /hyper_stdtab /shape_deg.
+  apply: val_inj => /=.
+  rewrite shape_RS_std (shape_RS_yam (hyper_yamP (intpartnP P))).
+  by rewrite (shape_rowseq_hyper_yam (intpartnP P)).
+Qed.
+
+Definition LR_coeff d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) (P : intpartn (d1 + d2)) :=
+  #|[set Q | Q in (LR_support (hyper_stdtab P1) (hyper_stdtab P2)) & (shape Q == P)]|.
+
+Theorem LR_coeffP d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) :
+  Schur P1 * Schur P2 = \sum_(P : intpartn (d1 + d2)) (Schur P) *+ LR_coeff P1 P2 P.
+Proof.
+  rewrite /LR_coeff.
+  have := LR_rule_tab (hyper_stdtab P1) (hyper_stdtab P2).
+  rewrite !shaped_hyper_stdtabP => ->.
+  move : (LR_support _ _) => LR {P1 P2}.
+  rewrite (partition_big (@shape_deg (d1 + d2)) predT) //=.
+  apply: eq_bigr => P _.
+  rewrite (eq_bigr (fun i => (Schur P))); last by move=> T /andP [] _ /eqP ->.
+  rewrite big_const.
+  set c1 := card _; set c2 := card _.
+  suff -> : c1 = c2 by elim: c2 => [//= | c IHc] /=; rewrite IHc mulrS.
+  rewrite /c1 /c2 {c1 c2}.
+  apply: eq_card => i /=.
+  by rewrite imset_id unfold_in inE.
+Qed.
+
+(* Old version with an alternative definition of hyper_stdtab
 Lemma hyper_stdtabP d (P : intpartn d) : is_stdtab_of_n d (stdtab_of_yam (hyper_yam P)).
 Proof.
   have Hyam := hyper_yamP (intpartnP P).
@@ -377,7 +416,7 @@ Proof.
   apply: eq_card => i /=.
   by rewrite imset_id unfold_in inE.
 Qed.
-
+*)
 End FinSets.
 
 

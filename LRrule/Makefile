@@ -96,7 +96,8 @@ VFILES:=congr.v\
   stdtab.v\
   std.v\
   subseq.v\
-  vectNK.v
+  vectNK.v\
+  yamplact.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))
