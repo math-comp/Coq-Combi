@@ -15,6 +15,7 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
 Require Import vectNK. (* for count_flatten *)
+Require Import subseq.  (* for nth_any *)
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -35,6 +36,22 @@ Qed.
 
 Lemma shape_rev T (s : seq (seq T)) : shape (rev s) = rev (shape s).
 Proof. rewrite /shape; elim: s => [//= | s0 s IHs] /=; by rewrite map_rev. Qed.
+
+Lemma incr_nthC (s : seq nat) i j :
+  incr_nth (incr_nth s i) j = incr_nth (incr_nth s j) i.
+Proof.
+  apply (eq_from_nth (x0 := 0)).
+  - rewrite !size_incr_nth.
+    case (ltnP i (size s)) => Hi.
+    + case (ltnP j (size s)) => Hj; first by rewrite Hi.
+      by rewrite ltnS (ltnW (leq_trans Hi Hj)).
+    + case (ltnP j (size s)) => Hj.
+      * by rewrite ltnS (ltnW (leq_trans Hj Hi)) ltnNge Hi.
+      * rewrite !ltnS; case: (ltngtP i j) => Hij; last by rewrite Hij.
+        - by rewrite (ltnW Hij) leqNgt Hij.
+        - by rewrite (ltnW Hij) leqNgt Hij.
+  - move=> k Hk; by rewrite !nth_incr_nth !addnA [(_ == _) + _]addnC.
+Qed.
 
 Section Partition.
 
@@ -111,13 +128,51 @@ Section Partition.
     by rewrite rcons_cons.
   Qed.
 
-(*
-  Definition is_in_corner sh i := (i == 0) || (nth 0 sh i > nth 0 sh i.-1).
-
   Lemma last_incr_nth_non0 sh i : last 1 sh != 0 -> last 1 (incr_nth sh i) != 0.
   Proof.
+    rewrite -!nth_last size_incr_nth.
+    case (ltnP i (size sh)) => Hi.
+    - have Hsz : (size sh).-1 < size sh by move: Hi; case: (size sh).
+      rewrite (nth_any 1 0 (s := (incr_nth sh i))); last by rewrite size_incr_nth Hi Hsz.
+      rewrite nth_incr_nth; apply contra.
+      rewrite addn_eq0 => /andP [] _ H.
+      by rewrite (nth_any 1 0).
+   - move=> _ /=.
+     rewrite (nth_any 1 0); last by rewrite size_incr_nth [i < size sh]ltnNge Hi /=.
+     by rewrite nth_incr_nth eq_refl.
   Qed.
 
+  Definition is_in_corner sh := [pred i | (i == 0) || (nth 0 sh i < nth 0 sh i.-1)].
+
+  Lemma is_part_incr_nth sh i : is_part sh -> is_in_corner sh i -> is_part (incr_nth sh i).
+  Proof.
+    rewrite /is_in_corner; move=> /is_partP [] Hhead Hpart.
+    case (altP (i =P 0)) => [-> _ {i} | Hi /= H]; apply/is_partP.
+    - case: sh Hhead Hpart => [//= _ _ | s0 sh /=]; first by split => //= [] [].
+      move=> Hlast Hi; split; first by move: Hlast; case sh.
+      case=> [| i]; first by apply: (leq_trans (Hi 0)) => //=.
+      by have /= := Hi i.+1.
+    - case: i Hi H => [//= | i] _; split; first by apply: last_incr_nth_non0.
+      move: H => /= H j.
+      case: sh Hhead Hpart H => [//= | s0 sh] /= Hlast Hpart Hcorn.
+      + exfalso; move: Hcorn; by rewrite nth_nil.
+      + rewrite !nth_incr_nth; case (altP (i =P j)) => Hi /=.
+        * rewrite add1n; subst i.
+          apply (leq_trans Hcorn).
+          elim: j s0 sh {Hcorn Hlast Hpart} => [//= | j IHj] s0 sh /=.
+          case sh => [//= | s1 sh']; first by rewrite nth_nil.
+          by apply IHj.
+        * rewrite add0n.
+          case: j Hi => [//= | j] Hj /=; first exact (Hpart 0).
+          rewrite nth_incr_nth; case (altP (i =P j)) => Hi.
+          case: sh Hpart {Hlast Hcorn} => [//= | s1 sh] /= Hpart.
+            by apply (leq_trans (Hpart j.+1)).
+          rewrite add0n.
+          case: sh Hpart {Hlast Hcorn} => [//= | s1 sh] /= Hpart.
+            exact (Hpart j.+1).
+  Qed.
+
+(* Absurd statement !!!!!!!!!
   Lemma is_part_incr_nth sh i : is_part sh -> is_in_corner sh i -> is_part (incr_nth sh i).
   Proof.
     rewrite /is_in_corner; move=> /is_partP [] Hhead Hpart.
@@ -138,11 +193,15 @@ Section Partition.
           by apply: leq_addl.
   Qed.
 
-  Lemma in_corner_leq_size sh i : is_in_corner sh i -> i <= size sh.
+  Lemma in_corner_leq_size sh i : is_in_corner sh i -> i <= (size sh).+1.
   Proof.
     rewrite /is_in_corner => /orP [/eqP -> //= | ].
-    case (ltnP i (size sh)) => [/ltnW -> //= | Hi].
-    by rewrite (nth_default _ Hi).
+    case: i => [//= | i] /=.
+    case: sh => [//= | s0 sh] /=; first by rewrite nth_nil.
+    case (leqP i (size (s0 :: sh))) => [//= | Hi].
+    rewrite (nth_default _ Hi).
+    case: i Hi => [//= | i] /=.
+    rewrite (nth_default _ Hi).
   Qed.
 *)
 
@@ -339,13 +398,35 @@ Section Partition.
     by rewrite big_cons IHs.
   Qed.
 
-  Lemma perm_eq_shape_rowseq s t : perm_eq s t -> shape_rowseq s = shape_rowseq t.
+  Lemma perm_eq_shape_rowseq s t : perm_eq s t = (shape_rowseq s == shape_rowseq t).
   Proof.
-    move=> Hperm.
-    rewrite -!shape_rowseq_countE /shape_rowseq_count /=.
-    rewrite !foldr_maxn (eq_big_perm _ Hperm) /=.
-    apply eq_map => i.
-    by move: Hperm => /perm_eqP ->.
+    apply/(sameP idP); apply(iffP idP).
+    - move/eqP.
+      rewrite -!shape_rowseq_countE /shape_rowseq_count /=.
+      set mx := foldr _ _ _ => H.
+      have := erefl (size [seq (count_mem i) s | i <- iota 0 mx]).
+      rewrite {2}H !size_map !size_iota => Hmax.
+      rewrite /perm_eq; apply /allP => i /= Hi.
+      have {Hi} Hi : i < mx.
+        move: Hi; rewrite mem_cat => /orP [].
+        + rewrite /mx; elim s => [//= | s0 s' IHs] /=.
+          rewrite inE => /orP [/eqP -> | Hi]; first by apply leq_maxl.
+          rewrite leq_max; apply/orP; right.
+          by apply IHs.
+        + rewrite Hmax; elim t => [//= | t0 t' IHt] /=.
+          rewrite inE => /orP [/eqP -> | Hi]; first by apply leq_maxl.
+          rewrite leq_max; apply/orP; right.
+          by apply IHt.
+      have := erefl (nth 0 [seq (count_mem i) s | i <- iota 0 mx] i).
+      rewrite {2}H (nth_map 0); last by rewrite -Hmax size_iota.
+      rewrite (nth_map 0); last by rewrite size_iota.
+      rewrite (nth_iota _ Hi) nth_iota; last by rewrite -Hmax.
+      by rewrite !add0n => ->.
+    - move=> Hperm.
+      rewrite -!shape_rowseq_countE /shape_rowseq_count /=.
+      rewrite !foldr_maxn (eq_big_perm _ Hperm) /=.
+      apply/eqP; apply eq_map => i.
+      by move: Hperm => /perm_eqP ->.
   Qed.
 
   Lemma shape_rowshape_cons l s : shape_rowseq (l :: s) = incr_nth (shape_rowseq s) l.
@@ -905,7 +986,7 @@ Canonical yamsh_subFinType := Eval hnf in [subFinType of yamsh_countType].
 Lemma yamshP (y : yamsh) : is_yam y.
 Proof. by case: y => /= y /andP []. Qed.
 
-Lemma yamsh_sumn (y : yamsh) : shape_rowseq y = sh.
+Lemma shape_yamsh (y : yamsh) : shape_rowseq y = sh.
 Proof. by case: y => /= y /andP [] _ /eqP. Qed.
 
 End YamOfShape.
