@@ -467,7 +467,7 @@ Proof.
     by rewrite size_rembig -Hs Hsize Ht size_rcons /std size_std_rec.
   have {IHn} IHn := IHn _ _ Hszrem Hrec Hsize'.
   move: Hshape; rewrite -Hs Ht /RSmap rev_rcons /=.
-  rewrite -[RSmap_rev (rev t')]/(RSmap t').
+  rewrite -/(RSmap t').
   case HRSt : (RSmap t') => [t0 rowt'].
   case Hins : (instabnrow t0 tn) => [tr irowt'] /=.
   move: IHn; rewrite -Hs RSmap_std HRSt /= => ->.
@@ -476,7 +476,7 @@ Proof.
 
   have := eq_refl (sumn (shape (RSmap t').1)).
   rewrite {1}RSmapE (shape_RSmap_eq t') shape_rowseq_eq_size HRSt /= => /eqP <-.
-  have := (eqP (size_RS t')); rewrite /size_tab => ->.
+  rewrite -/(size_tab (RS t')) size_RS.
   move: Hsize; rewrite Ht Hn size_rcons => /eqP; rewrite eqSS => /eqP <-.
   have := (invseq_is_std Hinv); rewrite Hs => /std_max ->.
   move: Hn; rewrite Hs /= => /eqP; by rewrite eqSS => /eqP <-.

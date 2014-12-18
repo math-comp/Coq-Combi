@@ -634,7 +634,7 @@ Definition langQ t := [pred w : word | (RStabmap w).2 == t].
 Lemma size_langQ t u : u \in langQ t -> size u = size_tab t.
 Proof.
   rewrite /langQ inE /RStabmap => /eqP <-.
-  rewrite -(eqP (size_RS u)) -RSmapE.
+  rewrite -size_RS -RSmapE.
   rewrite /size_tab shape_RSmap_eq.
   case: (RSmap u) => p q /=.
   by rewrite shape_stdtab_of_yam.
@@ -687,11 +687,10 @@ Proof.
     have Hsp2 : is_std p2 by rewrite -(RSstdE) Hp2.
     have /allP Hall := (std_shsh Hsp1 Hsp2).
     by apply: Hall.
-  - rewrite (eqP (size_RS _)).
-    move: Hp; rewrite /shsh => Hp.
+  - rewrite size_RS; move: Hp; rewrite /shsh => Hp.
     have /allP Hall := all_size_shuffle p1 (shiftn (size p1) p2).
     have /eqP -> := Hall _ Hp.
-    by rewrite size_map -Hp1 -Hp2 !(eqP (size_RS _)).
+    by rewrite size_map -Hp1 -Hp2 !size_RS.
 Qed.
 
 Theorem free_LR_rule_plact t1 t2 u1 u2:
@@ -728,7 +727,7 @@ Proof.
     rewrite !inE -!RSinvstdE -Hp1 -Hp2 -!plactic_RS => Hsh Hcat.
     have Hstdp1 : is_std p1 by rewrite -RSstdE Hp1.
     have Hstdp2 : is_std p2 by rewrite -RSstdE Hp2.
-    have Hszp : size p1 = size u1 by rewrite Hsz1 -(eqP (size_RS p1)) Hp1.
+    have Hszp : size p1 = size u1 by rewrite Hsz1 -size_RS Hp1.
     split.
     + rewrite (invstd_catgtn u1 u2) (shsh_sfiltergtn Hstdp1 Hsh) Hszp.
       case: (size u1) => [//= | n].

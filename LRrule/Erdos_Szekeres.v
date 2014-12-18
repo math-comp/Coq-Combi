@@ -64,10 +64,9 @@ Theorem Erdos_Szekeres (m n : nat) (s : seq T) :
   (exists t, subseq t s /\ sorted (gtnX T) t /\ size t > n).
 Proof.
   move=> Hsize; pose tab := RS s.
-  have := (eqP (size_RS s)); rewrite /size_tab => Hsz.
   have {Hsize} : (n < size (shape (RS s))) \/ (m < head 0 (shape (RS s))).
     have Hpart := is_part_sht (is_tableau_RS s).
-    apply/orP; move: Hsize; rewrite -Hsz.
+    apply/orP; move: Hsize; rewrite -(size_RS s) /size_tab. 
     apply contraLR; rewrite negb_or -!leqNgt => /andP [] Hn Hm.
     apply (leq_trans (part_sumn_rectangle Hpart)).
     by apply leq_mul.

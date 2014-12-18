@@ -139,7 +139,7 @@ Lemma freeSchurP Q t : t \in freeSchur Q = (val t \in langQ _ Q).
 Proof. by rewrite /freeSchur /langQ !inE /=. Qed.
 
 Lemma size_RS_tuple (t : d.-tuple 'I_n) : size (to_word (RS t)) == d.
-Proof. rewrite -size_to_word-{2}(size_tuple t); by apply: size_RS. Qed.
+Proof. by rewrite -size_to_word-{2}(size_tuple t) size_RS. Qed.
 (* Bijection freeSchur -> tabwordshape *)
 Definition tabword_of_tuple (t : d.-tuple 'I_n) : d.-tuple 'I_n := Tuple (size_RS_tuple t).
 
@@ -194,10 +194,9 @@ Proof.
       by apply: stdtabnP.
     pose imw := (RStabinv (RSTabPair Hpair)).
     have Hsz : size (imw) == d.
-      rewrite /imw /RStabinv /=.
-      rewrite -(eqP (size_RS _)) -RSmapE.
+      rewrite /imw /RStabinv /= -size_RS -RSmapE.
       rewrite (RS_bij_2 Hpr) /=.
-      by rewrite (eqP (size_RS _)) size_tuple.
+      by rewrite size_RS size_tuple.
     exists (Tuple Hsz).
     + rewrite inE /= /imw.
       case: (bijRStab ord_ordType) => RSinv HK HinvK.
@@ -343,8 +342,7 @@ End SchurTab.
 
 Lemma hyper_stdtabP d (P : intpartn d) : is_stdtab_of_n d (RS (std (hyper_yam P))).
 Proof.
-  rewrite /= RSstdE std_is_std /=.
-  rewrite (eqP (size_RS _)).
+  rewrite /= RSstdE std_is_std /= size_RS.
   rewrite size_std -shape_rowseq_eq_size (shape_rowseq_hyper_yam (intpartnP P)).
   by rewrite intpartn_sumn.
 Qed.

@@ -174,10 +174,10 @@ Proof.
   set t' := RS (rembig (w0 :: w)).
   have Htab' := is_tableau_RS (rembig (w0 :: w)).
   have Hsize' : size_tab t' = n.
-    by rewrite (eqP (size_RS _)) size_rembig -Hw -size_to_word Hsize.
+    by rewrite size_RS size_rembig -Hw -size_to_word Hsize.
   have Hperm' : perm_eq (to_word t') (iota 0 n).
     rewrite -Hsize'; move: Hperm.
-    rewrite /t' (eqP (size_RS _)) size_rembig -Hw -size_to_word Hsize /= => Hperm.
+    rewrite /t' size_RS size_rembig -Hw -size_to_word Hsize /= => Hperm.
     have:= plactcongr_homog (congr_RS (rembig (to_word t))).
     rewrite perm_eq_sym => /perm_eq_trans; apply.
     move: Hperm; rewrite Hw.
@@ -304,7 +304,7 @@ Proof.
     - rewrite perm_eq_sym; apply: plactcongr_homog; by apply: congr_RS.
     - apply: (perm_eq_trans (perm_eq_rembig Hperm)).
       rewrite rembig_iota.
-      by rewrite -size_to_word (eqP (size_RS _)) size_rembig -size_to_word Hsize.
+      by rewrite -size_to_word size_RS size_rembig -size_to_word Hsize.
 Qed.
 
 Lemma yam_of_stdtabP t : is_stdtab t -> is_yam (yam_of_stdtab t).
@@ -317,7 +317,7 @@ Proof.
     by rewrite size_to_word => -> /=.
   rewrite /= => Ht Hsize -> /=.
   have Hsize' : size_tab (RS (rembig (to_word t))) = n.
-    by rewrite (eqP (size_RS _)) size_rembig -size_to_word Hsize.
+    by rewrite size_RS size_rembig -size_to_word Hsize.
   apply: (IHn _ Hsize').
   + by apply: stdtab_rembig.
   + rewrite -Hsize' (shape_yam_of_stdtab (stdtab_rembig Htab)).

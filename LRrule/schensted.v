@@ -1325,10 +1325,10 @@ Section Statistics.
     by rewrite sumn_incr_nth.
   Qed.
 
-  Theorem size_RS w : size_tab (RS w) == size w.
+  Theorem size_RS w : size_tab (RS w) = size w.
   Proof.
     elim/last_ind: w => [//= | w0 w]; rewrite /RS rev_rcons /= -[(RS_rev (rev w0))]/(RS w0).
-    by rewrite (size_instab _ (is_tableau_RS _)) size_rcons eqSS.
+    by rewrite (size_instab _ (is_tableau_RS _)) size_rcons => ->.
   Qed.
 
   Definition to_word t := flatten (rev t).
