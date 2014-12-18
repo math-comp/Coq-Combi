@@ -231,7 +231,7 @@ Variables (d1 d2 : nat).
 Variables (Q1 : stdtabn d1) (Q2 : stdtabn d2).
 
 Definition LR_support :=
-  [set Q : stdtabn (d1 + d2) | predLRTriple Q1 Q2 Q ].
+  [set Q : stdtabn (d1 + d2) | predLRTripleFast Q1 Q2 Q ].
 
 (* Noncommutative LR rule *)
 Lemma catset_LR_rule :
@@ -247,7 +247,8 @@ Proof.
     have := is_stdtab_of_n_LRTriple (stdtabnP Q1) (stdtabnP Q2) Htriple.
     rewrite !stdtabn_size => HQ.
     apply/bigcupP; exists (StdtabN HQ).
-      rewrite /LR_support inE; apply/LRTripleP; try apply: stdtabnP.
+      rewrite /LR_support inE -LRTripleE; try apply: stdtabnP.
+      apply/LRTripleP; try apply: stdtabnP.
       by apply: Htriple.
     by rewrite freeSchurP.
   - move/bigcupP => [] Q; rewrite /LR_support freeSchurP inE => Htriple /= Ht.
@@ -264,8 +265,10 @@ Proof.
     have : (val t1 \in langQ _ Q1 /\ val t2 \in langQ _ Q2).
       rewrite free_LR_rule; try by apply: stdtabnP.
       rewrite !size_tuple !stdtabn_size; split; try by [].
-      exists Q; split; first by apply/LRTripleP; try apply: stdtabnP.
-      by rewrite /= cat_take_drop.
+      exists Q; split.
+      + apply/LRTripleP; try apply: stdtabnP.
+        by rewrite LRTripleE; try apply: stdtabnP.
+      + by rewrite /= cat_take_drop.
     move=> [] /= Ht1 Ht2.
     apply/imset2P; apply: (Imset2spec (x1 := t1) (x2 := t2)).
     + by rewrite freeSchurP.

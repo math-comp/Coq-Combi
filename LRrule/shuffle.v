@@ -652,11 +652,6 @@ Definition predLRTripleFast (t1 t2 : seq (seq nat)) :=
   [pred t : (seq (seq nat)) |
    has (fun p2 => to_word t \in shsh (to_word t1) p2) (RSclass _ t2)].
 
-Definition predLRTripleFastOld (t1 t2 : seq (seq nat)) :=
-  [pred t : (seq (seq nat)) |
-   to_word t \in
-       (flatten [seq shsh (to_word t1) p2 | p2 <- RSclass _ t2])].
-
 Lemma LRTripleP t1 t2 t :
   is_stdtab t1 -> is_stdtab t2 ->
   reflect (plactLRTriple t1 t2 t) (predLRTriple t1 t2 t).
