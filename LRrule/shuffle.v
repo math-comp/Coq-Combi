@@ -650,7 +650,11 @@ Definition predLRTriple (t1 t2 : seq (seq nat)) :=
        (flatten [seq shsh p1 p2 | p1 <- RSclass _ t1, p2 <- RSclass _ t2])].
 Definition predLRTripleFast (t1 t2 : seq (seq nat)) :=
   [pred t : (seq (seq nat)) |
-   has (fun p => RS p == t)
+   has (fun p2 => to_word t \in shsh (to_word t1) p2) (RSclass _ t2)].
+
+Definition predLRTripleFastOld (t1 t2 : seq (seq nat)) :=
+  [pred t : (seq (seq nat)) |
+   to_word t \in
        (flatten [seq shsh (to_word t1) p2 | p2 <- RSclass _ t2])].
 
 Lemma LRTripleP t1 t2 t :
@@ -674,6 +678,58 @@ Proof.
     apply/allpairsP; exists (p1, p2); split; last by [].
     + rewrite /= -Hp1 RSmapE; by apply mem_RSclass.
     + rewrite /= -Hp2 RSmapE; by apply mem_RSclass.
+Qed.
+
+Lemma filter_geqX_RS (T : ordType) (w : seq T) n :
+  RS (filter (geqX _ n) w) = filter_geqX_tab n (RS w).
+Proof.
+  apply/eqP.
+  rewrite -(RS_tabE (is_tableau_filter_geqX _ (is_tableau_RS w))) -plactic_RS /=.
+  rewrite to_word_filter_nnil -filter_to_word.
+  apply: restr_small; by apply: congr_RS.
+Qed.
+
+Lemma LRTripleE t1 t2 t :
+  is_stdtab t1 -> is_stdtab t2 -> is_stdtab t ->
+  predLRTriple t1 t2 t = predLRTripleFast t1 t2 t.
+Proof.
+  move=> Ht1 Ht2 Ht.
+  apply/(sameP idP); apply(iffP idP).
+  - move=> Hfast; apply/(LRTripleP t Ht1 Ht2).
+    move: Hfast => /= /hasP [] p2 /mapP [] y2 Hy2.
+    have := Ht2; rewrite /is_stdtab => /andP [] Htab2 _.
+    have := (is_part_sht Htab2) => /list_yamshP/allP Hall2.
+    have {Hall2 Hy2} := Hall2 _ Hy2.
+    rewrite /is_yam_of_shape => /andP [] Hyam2 /eqP Hsh2 Hp2 Htshsh.
+    have := Ht1; rewrite /is_stdtab => /andP [] /RS_tabE => H1 _.
+    have H2 : RS p2 = t2 by rewrite Hp2 -RSmapE RS_bij_2 //= Htab2 Hyam2 Hsh2 /=.
+    have := Ht; rewrite /is_stdtab => /andP [] /RS_tabE => Hres _.
+    by apply: (PlactLRTriple H1 H2 Hres).
+  - move/(LRTripleP t Ht1 Ht2) => [] p1 p2 p Hp1 Hp2 Hp Hshsh /=.
+    rewrite -Hp -Hp1 -Hp2.
+    pose p' := (sfilterleq (size p1) (to_word (RS p))).
+    have Hp' : RS p2 = RS p'.
+      apply/eqP; rewrite -plactic_RS.
+      move: Hshsh; have := Ht1; rewrite -Hp1 RSstdE => /mem_shsh -> /andP [] _ /eqP <-.
+      rewrite (shift_plactcongr (size p1)) /p' !sfilterleqK.
+      apply: restr_big; by apply congr_RS.
+    apply/hasP; exists p'.
+    + apply /mapP; exists (RSmap p').2.
+      * apply/count_memPn; rewrite Hp'.
+        have : is_yam_of_shape (shape (RS p')) (RSmap p').2.
+          by rewrite /is_yam_of_shape is_yam_RSmap2 /= -RSmapE shape_RSmap_eq.
+        by move/(list_yamsh_countE (is_part_sht (is_tableau_RS p'))) => ->.
+      * rewrite Hp' -[RS p']RSmapE /=.
+        have -> : ((RSmap p').1, (RSmap p').2) = RSmap p' by case RSmap.
+        by rewrite RS_bij_1.
+    + have : is_std (to_word (RS p1)) by move: Ht1; rewrite Hp1 /is_stdtab => /andP [].
+      move/mem_shsh ->; apply/andP.
+      rewrite -size_to_word size_RS; split; last by [].
+      move: Hshsh; have := Ht1; rewrite -Hp1 RSstdE => /mem_shsh -> /andP [] /eqP {3}<- _.
+      rewrite /=; case : (size p1) => [//= | n1].
+        by rewrite !filter_pred0 /RS /to_word /=.
+      have /eq_filter Htmp : geqX _ n1 =1 gtn n1.+1 by []; rewrite -!Htmp {Htmp}.
+      by rewrite filter_geqX_RS filter_to_word to_word_filter_nnil.
 Qed.
 
 Lemma is_stdtab_of_n_LRTriple t1 t2 t :

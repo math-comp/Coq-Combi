@@ -384,7 +384,7 @@ Proof.
     + have := stdtab_of_yamP (hyper_yamP Hsh); rewrite /is_stdtab => /andP [] Htab _.
       rewrite -(RS_tabE Htab).
       have -> : to_word (stdtab_of_yam (hyper_yam sh)) = std (hyper_yam sh).
-        admit.
+        ????
       apply/eqP; rewrite -plactic_RS.
       apply std_plact.
       rewrite (yam_plactic_shape _ (yamshP _)); split; first by apply hyper_yamP.
@@ -403,9 +403,6 @@ Fixpoint subs_eval eval i :=
 
 Lemma is_yam_of_shape_RS_hyper P s :
   RS s = (stdtab_of_yam (hyper_yam P)) -> is_yam_of_shape P (map (subs_eval P) s).
-Proof.
-  admit.
-Qed.
 *)
 
 (*

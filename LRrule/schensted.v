@@ -815,6 +815,8 @@ Section Tableaux.
     then [&& (t0 != [::]), is_row t0, dominate (head [::] t') t0 & is_tableau t']
     else true.
 
+  Definition to_word t := flatten (rev t).
+
   (* Shape is defined in seq.v *)
   (* Definition shape t := map size t. *) 
 
@@ -881,6 +883,102 @@ Section Tableaux.
     rewrite /RS rev_rcons /=.
     by apply: is_tableau_instab.
   Qed.
+
+
+  Lemma flatten_rcons r t : flatten (rcons t r) = flatten t ++ r.
+  Proof.
+    elim: t => [//= | t0 t IHt /=]; first by rewrite cats0.
+    by rewrite IHt catA.
+  Qed.
+
+  Lemma to_word_cons r t : to_word (r :: t) = to_word t ++ r.
+  Proof. by rewrite /to_word rev_cons flatten_rcons. Qed.
+
+Lemma filter_geqX_row r n :
+  is_row r -> filter (geqX T n) r = take (count (geqX T n) r) r.
+Proof.
+  elim: r => [//= | r0 r IHr] Hrow /=.
+  case: (leqXP r0 n) => Hr0.
+  - by rewrite add1n (IHr (is_row_consK Hrow)).
+  - rewrite add0n; have Hcount : count ((geqX T) n) r = 0.
+      elim: r r0 Hr0 Hrow {IHr} => [//= | r1 r /= IHr] r0 Hr0 /andP [] Hr0r1 Hpath.
+      have Hr1 := ltnX_leqX_trans Hr0 Hr0r1.
+      by rewrite leqXNgtnX Hr1 (IHr r1 Hr1 Hpath).
+    rewrite Hcount.
+    by apply/nilP; rewrite /nilp size_filter Hcount.
+Qed.
+
+Lemma filter_geqX_dominate r1 r0 n :
+    is_row r0 -> is_row r1 -> dominate r1 r0 ->
+    dominate (filter (geqX T n) r1) (filter (geqX T n) r0).
+Proof.
+  move=> Hrow0 Hrow1 /dominateP [] Hsz Hdom.
+  have Hsize : (count (geqX T n) r1) <= (count (geqX T n) r0).
+    rewrite -[r0](mkseq_nth Z) -[r1](mkseq_nth Z) /mkseq !count_map.
+    rewrite -(subnKC Hsz).
+    rewrite iota_add count_cat.
+    set s0 := (X in X + _).
+    apply (@leq_trans s0); last by apply leq_addr.
+    rewrite /s0 {s0} -!size_filter.
+    set f1 := (X in filter X _); set f0 := (X in _ <= size (filter X _)).
+    rewrite (eq_in_filter (a1 := f1) (a2 := predI f1 (gtn (size r1)))); first last.
+      move=> i; rewrite mem_iota /= add0n => ->; by rewrite andbT.
+    rewrite (eq_in_filter (a1 := f0) (a2 := predI f0 (gtn (size r1)))); first last.
+      move=> i; rewrite mem_iota /= add0n => ->; by rewrite andbT.
+    rewrite !size_filter; apply sub_count => i /=.
+    rewrite /f1 /f0 {f1 f0} /= => /andP [] Hn Hi;
+    rewrite Hi andbT; apply ltnXW.
+    by apply (ltnX_leqX_trans (Hdom i Hi) Hn).
+  apply/dominateP; rewrite !size_filter.
+  split; first exact Hsize.
+  move=> i Hi.
+  rewrite (filter_geqX_row _ Hrow0) (filter_geqX_row _ Hrow1) !nth_take.
+  - apply Hdom; apply (leq_trans Hi); by apply count_size.
+  - exact Hi.
+  - by apply (leq_trans Hi).
+Qed.
+
+Definition filter_geqX_tab n :=
+  [fun t : (seq (seq T)) => filter (fun r => r != [::])
+                                   [seq [seq x <- i | geqX T n x] | i <- t]].
+
+Lemma to_word_filter_nnil t : to_word (filter (fun r => r != [::]) t) = to_word t.
+Proof.
+  rewrite /to_word; elim: t => [//= | t0 t IHt] /=.
+  rewrite !rev_cons !flatten_rcons -IHt.
+  case: (altP (t0 =P [::])) => [-> | _] /=; first by rewrite cats0.
+  by rewrite rev_cons flatten_rcons.
+Qed.
+
+Lemma filter_to_word t p : filter p (to_word t) = to_word (map (filter p) t).
+Proof.
+    rewrite /to_word; elim: t => [//= | t0 t IHt] /=.
+    by rewrite !rev_cons !flatten_rcons -IHt filter_cat.
+Qed.
+
+Lemma head_filter_geqX_tab n t :
+  is_tableau t ->
+  head [::] (filter_geqX_tab n t) = [seq x <- head [::] t | (x <= n)%Ord].
+Proof.
+  elim: t => [//= | t0 t /= IHt] /and4P [] Hnnil0 Hrow0 Hdom Htab.
+  case: (altP ([seq x <- t0 | (x <= n)%Ord] =P [::])) => Ht0 //=.
+  rewrite (IHt Htab) Ht0 {IHt}.
+  case: t Hdom Htab => [//= | t1 t] /= Hdom /and3P [] Hnnil1 Hrow1 _.
+  have /dominateP := filter_geqX_dominate n Hrow0 Hrow1 Hdom => [] [].
+  by rewrite Ht0 /= leqn0 => /nilP ->.
+Qed.
+
+Lemma is_tableau_filter_geqX t n : is_tableau t -> is_tableau (filter_geqX_tab n t).
+Proof.
+  elim: t => [//= | t0 t /= IHt] /and4P [] Hnnil Hrow Hdom Htab.
+  case: (altP ([seq x <- t0 | (x <= n)%Ord] =P [::])) => Ht0 /=; first by apply IHt.
+  rewrite Ht0 /=; apply/and3P; split; last by apply IHt.
+  - apply sorted_filter; last exact Hrow.
+    move=> a b c; by apply leqX_trans.
+  - rewrite (head_filter_geqX_tab _ Htab).
+    apply filter_geqX_dominate => //=.
+    move: Htab; by case t => [//= | t1 t'] /= /and3P [].
+Qed.
 
 End Tableaux.
 
@@ -1325,27 +1423,16 @@ Section Statistics.
     by rewrite sumn_incr_nth.
   Qed.
 
-  Theorem size_RS w : size_tab (RS w) = size w.
-  Proof.
-    elim/last_ind: w => [//= | w0 w]; rewrite /RS rev_rcons /= -[(RS_rev (rev w0))]/(RS w0).
-    by rewrite (size_instab _ (is_tableau_RS _)) size_rcons => ->.
-  Qed.
-
-  Definition to_word t := flatten (rev t).
-
-  Lemma flatten_rcons l t : flatten (rcons t l) = flatten t ++ l.
-  Proof.
-    elim: t => [//= | t0 t IHt /=]; first by rewrite cats0.
-    by rewrite IHt catA.
-  Qed.
-
-  Lemma to_word_cons r t : to_word (r :: t) = to_word t ++ r.
-  Proof. by rewrite /to_word rev_cons flatten_rcons. Qed.
-
   Lemma size_to_word t : size_tab t = size (to_word t).
   Proof.
     rewrite /size_tab; elim: t => [//= | t0 t IHt] /=.
     by rewrite to_word_cons size_cat IHt addnC.
+  Qed.
+
+  Theorem size_RS w : size_tab (RS w) = size w.
+  Proof.
+    elim/last_ind: w => [//= | w0 w]; rewrite /RS rev_rcons /= -[(RS_rev (rev w0))]/(RS w0).
+    by rewrite (size_instab _ (is_tableau_RS _)) size_rcons => ->.
   Qed.
 
   Lemma count_instab t l p :
