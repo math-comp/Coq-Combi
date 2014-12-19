@@ -655,7 +655,8 @@ Proof.
   case (ltnP (inspos r l) (size r)) => H.
   + rewrite (nth_any l b H).
     apply: (@leqX_ltnX_trans _ (nth b r (size r).-1)); last exact Hlast.
-    apply: Hrow; move: H; by case: (size r).
+    apply: Hrow; move: H; case: (size r) => [//=| s].
+    by rewrite ltnS /= => -> /=.
   + by rewrite (nth_default _ H).
 Qed.
 
