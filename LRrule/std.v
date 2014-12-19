@@ -317,36 +317,38 @@ Proof. apply: std_std; by apply: std_is_std. Qed.
 
 Section Spec.
 
-Definition inversions (T : ordType) (w : seq T) : rel nat :=
+Implicit Type S T : ordType.
+
+Definition inversions T (w : seq T) : rel nat :=
   fun i j => (i <= j < size w) && (nth (inhabitant T) w i <=A nth (inhabitant T) w j).
 
-Definition eq_inv (T1 T2 : ordType) (w1 : seq T1) (w2 : seq T2) :=
+Definition eq_inv T1 T2 (w1 : seq T1) (w2 : seq T2) :=
   ((inversions w1) =2 (inversions w2)).
 
-Lemma eq_inv_refl (T : ordType) (w : seq T) : eq_inv w w.
+Lemma eq_inv_refl T (w : seq T) : eq_inv w w.
 Proof. by []. Qed.
 
-Lemma eq_inv_nil (T1 T2 : ordType) : eq_inv (@nil T1) (@nil T2).
+Lemma eq_inv_nil T1 T2 : eq_inv (@nil T1) (@nil T2).
 Proof.
   rewrite /eq_inv /inversions => i j /=.
   by rewrite ltn0 andbF.
 Qed.
 
-Lemma eq_inv_sym (T1 T2 : ordType) (w1 : seq T1) (w2 : seq T2) :
+Lemma eq_inv_sym T1 T2 (w1 : seq T1) (w2 : seq T2) :
   eq_inv w1 w2 -> eq_inv w2 w1.
 Proof.
   rewrite /inversions => Hinv i j.
   have:= Hinv i j; exact esym.
 Qed.
 
-Lemma eq_inv_trans (T1 T2 T3 : ordType) (w1 : seq T1) (w2 : seq T2) (w3 : seq T3) :
+Lemma eq_inv_trans T1 T2 T3 (w1 : seq T1) (w2 : seq T2) (w3 : seq T3) :
   eq_inv w1 w2 -> eq_inv w2 w3 -> eq_inv w1 w3.
 Proof.
   rewrite /inversions => H12 H23 i j.
   exact (etrans (H12 i j) (H23 i j)).
 Qed.
 
-Lemma eq_inv_size_leq (T1 T2 : ordType) (w1 : seq T1) (w2 : seq T2) :
+Lemma eq_inv_size_leq T1 T2 (w1 : seq T1) (w2 : seq T2) :
   eq_inv w1 w2 -> size w1 <= size w2.
 Proof.
   rewrite /eq_inv /inversions => Hinv.
@@ -355,14 +357,14 @@ Proof.
   by move/eqP/andP => [].
 Qed.
 
-Lemma eq_inv_size (T1 T2 : ordType) (w1 : seq T1) (w2 : seq T2) :
+Lemma eq_inv_size T1 T2 (w1 : seq T1) (w2 : seq T2) :
   eq_inv w1 w2 -> size w1 = size w2.
 Proof.
   move=> H; apply/eqP; rewrite eqn_leq.
   by rewrite (eq_inv_size_leq H) (eq_inv_size_leq (eq_inv_sym H)).
 Qed.
 
-Lemma eq_invP  (T1 T2 : ordType) (w1 : seq T1) (w2 : seq T2) :
+Lemma eq_invP  T1 T2 (w1 : seq T1) (w2 : seq T2) :
   (size w1 = size w2 /\
    forall i j, i <= j < size w1 ->
                nth (inhabitant T1) w1 i <=A nth (inhabitant T1) w1 j =
@@ -380,14 +382,14 @@ Proof.
     have {H} := H i j; by rewrite Hij.
 Qed.
 
-Lemma eq_inv_consK (T1 T2 : ordType) (a : T1) u (b : T2) v :
+Lemma eq_inv_consK T1 T2 (a : T1) u (b : T2) v :
   eq_inv (a :: u) (b :: v) -> eq_inv u v.
 Proof.
   rewrite /eq_inv /inversions => H i j.
   have /= := H i.+1 j.+1; by rewrite !ltnS.
 Qed.
 
-Lemma eq_inv_rconsK (T1 T2 : ordType) (a : T1) u (b : T2) v :
+Lemma eq_inv_rconsK T1 T2 (a : T1) u (b : T2) v :
   eq_inv (rcons u a) (rcons v b) -> eq_inv u v.
 Proof.
   rewrite -!eq_invP !size_rcons => [] [] Hsz H.
@@ -400,7 +402,7 @@ Proof.
   by rewrite !nth_rcons Hsz Hj (leq_ltn_trans Hi Hj).
 Qed.
 
-Lemma eq_inv_allgtnXimply (S T : ordType) (a : S) u (b : T) v :
+Lemma eq_inv_allgtnXimply S T (a : S) u (b : T) v :
   eq_inv (a :: u) (b :: v) -> (allLtn u a) -> (allLtn v b).
 Proof.
   move=> H; have:= (eq_inv_size H).
@@ -412,14 +414,14 @@ Proof.
   rewrite ltnXNgeqX => <-. by rewrite -ltnXNgeqX.
 Qed.
 
-Lemma eq_inv_allgtnX (S T : ordType) (a : S) u (b : T) v :
+Lemma eq_inv_allgtnX S T (a : S) u (b : T) v :
   eq_inv (a :: u) (b :: v) -> (allLtn u a) = (allLtn v b).
 Proof.
   move=> H1; have H2 := eq_inv_sym H1.
   apply/(sameP idP); apply(iffP idP); by apply: eq_inv_allgtnXimply.
 Qed.
 
-Lemma eq_inv_posbig (S T : ordType) (u : seq S) (v : seq T) :
+Lemma eq_inv_posbig S T (u : seq S) (v : seq T) :
   eq_inv u v -> posbig u = posbig v.
 Proof.
   move=> H; have /eqP := eq_inv_size H.
@@ -432,7 +434,7 @@ Proof.
   by case: (allLtn u a); last by rewrite Hpos.
 Qed.
 
-Lemma eq_inv_rembig (S T : ordType) (u : seq S) (v : seq T) :
+Lemma eq_inv_rembig S T (u : seq S) (v : seq T) :
   eq_inv u v -> eq_inv (rembig u) (rembig v).
 Proof.
   move => Hinv; have Heqpos:= eq_inv_posbig Hinv.
@@ -452,7 +454,7 @@ Proof.
     by rewrite ltnS.
 Qed.
 
-Lemma std_eq_inv (S T : ordType) (u : seq S) (v : seq T) :
+Lemma std_eq_inv S T (u : seq S) (v : seq T) :
   eq_inv u v -> std u = std v.
 Proof.
   move => Hinv; move Hn : (size u) => n.
@@ -468,7 +470,7 @@ Proof.
   by rewrite -(eq_inv_posbig Hinv).
 Qed.
 
-Lemma eq_inv_std (S : ordType) (u : seq S) : eq_inv u (std u).
+Lemma eq_inv_std T (u : seq T) : eq_inv u (std u).
 Proof.
   move Hn : (size u) => n.
   elim: n u Hn => [//= | n IHn] u Hn.
@@ -534,10 +536,10 @@ Proof.
     by rewrite Hn Hszrem ltnS.
 Qed.
 
-CoInductive std_spec (T : ordType) (s : seq T) (p : seq nat) : Prop :=
+CoInductive std_spec T (s : seq T) (p : seq nat) : Prop :=
   | StdSpec : is_std p -> eq_inv s p -> std_spec s p.
 
-Lemma std_spec_uniq (T : ordType) (u : seq T) p q :
+Lemma std_spec_uniq T (u : seq T) p q :
   std_spec u p -> std_spec u q -> p = q.
 Proof.
   case=> Heqp Hp; case=> Heqq Hq.
@@ -546,13 +548,13 @@ Proof.
   by apply: std_eq_inv.
 Qed.
 
-Lemma std_specP (T : ordType) (s : seq T) : std_spec s (std s).
+Lemma std_specP T (s : seq T) : std_spec s (std s).
 Proof.
   constructor; first by apply: std_is_std.
   by apply: eq_inv_std.
 Qed.
 
-Lemma stdP (T : ordType) (s : seq T) p :
+Lemma stdP T (s : seq T) p :
   reflect (std_spec s p) (std s == p).
 Proof.
   apply/(iffP idP).
@@ -560,7 +562,7 @@ Proof.
   + move=> Hspec; apply/eqP; by apply: (std_spec_uniq (std_specP s)).
 Qed.
 
-Lemma std_eq_invP (S T : ordType) (u : seq S) (v : seq T) :
+Lemma std_eq_invP S T (u : seq S) (v : seq T) :
   reflect (eq_inv u v) (std u == std v).
 Proof.
   apply: (iffP idP).
@@ -569,7 +571,7 @@ Proof.
   + by move /std_eq_inv ->.
 Qed.
 
-Lemma std_rconsK (S T : ordType) (u : seq S) (v : seq T) a b :
+Lemma std_rconsK S T (u : seq S) (v : seq T) a b :
   std (rcons u a) = std (rcons v b) -> std u = std v.
 Proof.
   move/eqP/std_eq_invP/eq_invP => [] /eqP; rewrite !size_rcons eqSS => /eqP Hsz Hinv.
@@ -577,6 +579,48 @@ Proof.
   move=> i j /andP [] Hij Hj.
   have {Hinv} /Hinv : i <= j < (size u).+1 by rewrite Hij /=; by apply: (leq_trans Hj).
   by rewrite !nth_rcons -Hsz (leq_ltn_trans Hij Hj) Hj.
+Qed.
+
+Lemma eq_inv_catl T1 T2 (u1 v1 : seq T1) (u2 v2 : seq T2) :
+  eq_inv (u1 ++ v1) (u2 ++ v2) -> size u1 = size u2 -> eq_inv u1 u2.
+Proof.
+  move/eq_invP => []; rewrite !size_cat => Hsz Hinv Hszu.
+  apply/eq_invP; split; first exact Hszu.
+  move=> i j /andP [] Hij Hj.
+  have /Hinv : i <= j < size u1 + size v1.
+    rewrite Hij /=; apply (leq_trans Hj); by apply leq_addr.
+  by rewrite !nth_cat -Hszu Hj (leq_ltn_trans Hij Hj).
+Qed.
+
+Lemma std_take_std T (u v : seq T) : std (take (size u) (std (u ++ v))) = std u.
+Proof.
+  apply/eqP/std_eq_invP.
+  rewrite -{3}(take_size_cat v (erefl (size u))).
+  apply (eq_inv_catl (v1 := drop (size u) (std (u ++ v)))
+                     (v2 := drop (size u) (u ++ v)) ).
+  - rewrite !cat_take_drop; apply eq_inv_sym; by apply eq_inv_std.
+  - by rewrite !size_take size_std.
+Qed.
+
+Lemma eq_inv_catr T1 T2 (u1 v1 : seq T1) (u2 v2 : seq T2) :
+  eq_inv (u1 ++ v1) (u2 ++ v2) -> size u1 = size u2 -> eq_inv v1 v2.
+Proof.
+  move/eq_invP => []; rewrite !size_cat => Hsz Hinv Hszu.
+  apply/eq_invP; split; first by apply/eqP; rewrite -(eqn_add2l (size u1)) {2}Hszu Hsz.
+  move=> i j /andP [] Hij Hj.
+  have /Hinv : size u1 + i <= size u1 + j < size u1 + size v1.
+    rewrite leq_add2l ltn_add2l Hij /=; by apply (leq_trans Hj).
+  by rewrite !nth_cat -Hszu !ltnNge !leq_addr /= !addKn.
+Qed.
+
+Lemma std_drop_std T (u v : seq T) : std (drop (size u) (std (u ++ v))) = std v.
+Proof.
+  apply/eqP/std_eq_invP.
+  rewrite -{2}(drop_size_cat v (erefl (size u))).
+  apply (eq_inv_catr (u1 := take (size u) (std (u ++ v)))
+                     (u2 := take (size u) (u ++ v)) ).
+  - rewrite !cat_take_drop; apply eq_inv_sym; by apply eq_inv_std.
+  - by rewrite !size_take size_std.
 Qed.
 
 End Spec.

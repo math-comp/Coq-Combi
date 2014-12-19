@@ -501,40 +501,6 @@ Proof.
   by rewrite size_invstd size_std size_cat addKn.
 Qed.
 
-(* Unused lemma *)
-Lemma std_take_std u v : std (take (size u) (std (u ++ v))) = std u.
-Proof.
-  apply/eqP/std_eq_invP/eq_invP.
-  have Hsz : size (take (size u) (std (u ++ v))) = size u.
-    rewrite size_take size_std size_cat.
-    have /minn_idPl : size u <= size u + size v by apply: leq_addr.
-    by rewrite /minn.
-  split; rewrite Hsz //= => i j /andP [] Hij Hj.
-  have Hi := leq_ltn_trans Hij Hj.
-  rewrite (nth_take _ Hi) (nth_take _ Hj).
-  have /eq_invP := eq_inv_std (u ++ v) => [] [] _ Hstd.
-  have H : i <= j < size (u ++ v).
-    rewrite Hij /= size_cat; apply: (leq_trans Hj); by apply: leq_addr.
-  rewrite -(Hstd _ _ H) {Hstd H}.
-  by rewrite !nth_cat Hj Hi.
-Qed.
-
-(* Unused lemma *)
-Lemma std_drop_std u v : std (drop (size u) (std (u ++ v))) = std v.
-Proof.
-  apply/eqP/std_eq_invP/eq_invP.
-  have Hsz : size (drop (size u) (std (u ++ v))) = size v.
-    by rewrite size_drop size_std size_cat addKn.
-  split; rewrite Hsz //= => i j /andP [] Hij Hj.
-  have Hi := leq_ltn_trans Hij Hj.
-  rewrite !nth_drop.
-  have /eq_invP := eq_inv_std (u ++ v) => [] [] _ Hstd.
-  have H : size u + i <= size u + j < size (u ++ v).
-    by rewrite leq_add2l size_cat ltn_add2l Hij Hj.
-  rewrite -(Hstd _ _ H) {Hstd H}.
-  by rewrite !nth_cat !ltnNge !leq_addr /= !addKn.
-Qed.
-
 Lemma index_leq_filter l (P : pred nat) i j :
   P i -> P j ->
   (index i (filter P l)) <= (index j (filter P l)) = (index i l <= index j l).
