@@ -295,11 +295,14 @@ Proof.
     by rewrite (RS_yam Hyam) (RS_yam Hyamz) Hsh.
 Qed.
 
-Lemma yam_std_inj sh : {in is_yam_of_shape sh &, injective (@std _) }.
+Lemma yam_std_inj : {in is_yam &, injective (@std _) }.
 Proof.
-  move=> y w; rewrite !unfold_in => /andP [] Hyy /eqP <- /andP [] Hyw.
-  rewrite eq_sym -perm_eq_shape_rowseq.
-  by apply perm_eq_stdE.
+  move=> y w /=; rewrite !unfold_in -/is_yam => Hy Hw Hstd.
+  apply perm_eq_stdE; last exact Hstd.
+  rewrite perm_eq_shape_rowseq.
+  rewrite -(shape_RS_yam Hy) -(shape_RS_yam Hw).
+  rewrite -(shape_RS_std y) -(shape_RS_std w).
+  by rewrite Hstd.
 Qed.
 
 Lemma auxbijP p (y : yamsh p) :
@@ -310,13 +313,13 @@ Proof.
   by rewrite (shape_RS_yam (yamshP y)) shape_yamsh.
 Qed.
 
-Definition auxbij p (y : yamsh p) := YamSh (auxbijP y).
+Definition auxbij p (Hpart : is_part p) (y : yamsh p) : yamsh_finType Hpart :=
+  YamSh (auxbijP y).
 
-Lemma auxbij_spec p : is_part p -> bijective (@auxbij p).
+Lemma auxbij_inj p (Hpart : is_part p) : injective (auxbij Hpart).
 Proof.
-  move=> Hpart; apply: injF_bij.
   move=> y z Heq.
-  have := erefl (val (auxbij y)); rewrite {2}Heq /= => HRS2.
+  have := erefl (val (auxbij Hpart y)); rewrite {2}Heq /= => HRS2.
   have HRS1 : RS (std y) = RS (std z).
     apply/eqP; rewrite -plactic_RS.
     apply std_plact; rewrite (yam_plactic_shape _ (yamshP y)).
@@ -329,21 +332,25 @@ Proof.
     by rewrite [RSmap (std y)]RSE [RSmap (std z)]RSE HRS1 !RSmap_std HRS2.
 Qed.
 
+Definition auxbij_inv p (Hp : is_part p) := invF (@auxbij_inj p Hp).
+
 Theorem plact_from_yam sh w :
-  is_part sh -> w =Pl std (hyper_yam sh) -> exists y, is_yam_of_shape sh y /\ std y = w.
+  is_part sh -> w =Pl std (hyper_yam sh) -> { y | is_yam_of_shape sh y & std y = w }.
 Proof.
-  move=> Hsh; rewrite plactic_RS => /eqP HRS.
+  move=> Hsh.
+  have := (plactic_RS w (std (hyper_yam sh))) => [] [] H _.
+  move=> /H => /eqP HRS.
   have Hyam : is_yam_of_shape sh (RSmap w).2.
     rewrite /is_yam_of_shape is_yam_RSmap2 /=.
     rewrite -shape_RSmap_eq RSmapE HRS shape_RS_std.
     by rewrite (shape_RS_yam (hyper_yamP Hsh)) shape_rowseq_hyper_yam.
   pose yimg := YamSh Hyam.
-  have := auxbij_spec Hsh => [] [] inv HinvK HKinv.
   have Hw : w = RSmapinv2 (RS (std (hyper_yam sh)), val yimg).
     rewrite -{1}[w]RS_bij_1.
     have -> : RSmap w = ((RSmap w).1, (RSmap w).2) by case RSmap.
     by rewrite RSmapE HRS.
-  exists (inv yimg); split.
+  pose y := (@auxbij_inv sh Hsh yimg).
+  exists y.
   - by rewrite /is_yam_of_shape yamshP shape_yamsh /=.
   - rewrite -[LHS]RS_bij_1 -[RHS]RS_bij_1.
     have RSE (x : seq nat) : RSmap x = (RS x, (RSmap x).2) by rewrite -RSmapE; case RSmap.
@@ -355,45 +362,11 @@ Proof.
       rewrite (yam_plactic_shape _ (yamshP _)); split; first by apply hyper_yamP.
       by rewrite shape_yamsh shape_rowseq_hyper_yam.
     + rewrite RSmap_std.
-      have -> : (RSmap (inv yimg)).2 = auxbij (inv yimg) by [].
-      by rewrite HKinv.
+      have -> : (RSmap y).2 = auxbij Hsh y by [].
+      by rewrite f_invF.
 Qed.
 
-(*
-Theorem plact_from_yam sh w :
-  is_part sh -> RS w = stdtab_of_yam (hyper_yam sh) ->
-  exists y, is_yam_of_shape sh y /\ std y = w.
-Proof.
-  move=> Hsh HRS.
-  have Hyam : is_yam_of_shape sh (RSmap w).2.
-    rewrite /is_yam_of_shape is_yam_RSmap2 /=.
-    rewrite -shape_RSmap_eq RSmapE HRS.
-    by rewrite shape_stdtab_of_yam shape_rowseq_hyper_yam.
-  pose yimg := YamSh Hyam.
-  have := auxbij_spec Hsh => [] [] inv HinvK HKinv.
-  have Hw : w = RSmapinv2 (stdtab_of_yam (hyper_yam sh), val yimg).
-    rewrite -{1}[w]RS_bij_1.
-    have -> : RSmap w = ((RSmap w).1, (RSmap w).2) by case RSmap.
-    by rewrite RSmapE HRS.
-  exists (inv yimg); split.
-  - by rewrite /is_yam_of_shape yamshP shape_yamsh /=.
-  - rewrite -[LHS]RS_bij_1 -[RHS]RS_bij_1.
-    have RSE (x : seq nat) : RSmap x = (RS x, (RSmap x).2) by rewrite -RSmapE; case RSmap.
-    rewrite RSE [RSmap w]RSE HRS.
-    congr (RSmapinv2 (_, _)).
-    + have := stdtab_of_yamP (hyper_yamP Hsh); rewrite /is_stdtab => /andP [] Htab _.
-      rewrite -(RS_tabE Htab).
-      have -> : to_word (stdtab_of_yam (hyper_yam sh)) = std (hyper_yam sh).
-        ????
-      apply/eqP; rewrite -plactic_RS.
-      apply std_plact.
-      rewrite (yam_plactic_shape _ (yamshP _)); split; first by apply hyper_yamP.
-      by rewrite shape_yamsh shape_rowseq_hyper_yam.
-    + rewrite RSmap_std.
-      have -> : (RSmap (inv yimg)).2 = auxbij (inv yimg) by [].
-      by rewrite HKinv.
-Qed.
-*)
+
 (*
 Fixpoint subs_eval eval i :=
   if eval is e0 :: ev then
