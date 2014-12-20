@@ -359,16 +359,22 @@ Proof.
   by rewrite (shape_rowseq_hyper_yam (intpartnP P)).
 Qed.
 
-Definition LR_coeff d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) (P : intpartn (d1 + d2)) :=
-  #|[set Q | Q in (LR_support (hyper_stdtab P1) (hyper_stdtab P2)) & (shape Q == P)]|.
+Section Coeffs.
 
-Theorem LR_coeffP d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) :
-  Schur P1 * Schur P2 = \sum_(P : intpartn (d1 + d2)) (Schur P) *+ LR_coeff P1 P2 P.
+Variables d1 d2 : nat.
+Variables (P1 : intpartn d1) (P2 : intpartn d2).
+
+Definition LRtab_set (P : intpartn (d1 + d2)) :=
+  [set Q | Q in (LR_support (hyper_stdtab P1) (hyper_stdtab P2)) & (shape Q == P)].
+Definition LRtab_coeff (P : intpartn (d1 + d2)) := #|LRtab_set P|.
+
+Theorem LRtab_coeffP :
+  Schur P1 * Schur P2 = \sum_P (Schur P) *+ LRtab_coeff P.
 Proof.
-  rewrite /LR_coeff.
+  rewrite /LRtab_coeff /LRtab_set.
   have := LR_rule_tab (hyper_stdtab P1) (hyper_stdtab P2).
   rewrite !shaped_hyper_stdtabP => ->.
-  move : (LR_support _ _) => LR {P1 P2}.
+  move : (LR_support _ _) => LR.
   rewrite (partition_big (@shape_deg (d1 + d2)) predT) //=.
   apply: eq_bigr => P _.
   rewrite (eq_bigr (fun i => (Schur P))); last by move=> T /andP [] _ /eqP ->.
@@ -379,6 +385,8 @@ Proof.
   apply: eq_card => i /=.
   by rewrite imset_id unfold_in inE.
 Qed.
+
+End Coeffs.
 
 (* Old version with an alternative definition of hyper_stdtab
 Lemma hyper_stdtabP d (P : intpartn d) : is_stdtab_of_n d (stdtab_of_yam (hyper_yam P)).
