@@ -903,10 +903,16 @@ Qed.
 Definition nat_ordMixin := Order.Mixin 0 leq_order.
 Canonical nat_ordType := Eval hnf in OrdType nat nat_ordMixin.
 
-Lemma leqXnatE m n : (n <= m)%Ord = (n <= m)%N.
+Lemma leqXnatE m n : (m <= n)%Ord = (m <= n)%N.
 Proof. by rewrite leqXE /=. Qed.
 
-Lemma ltnXnatE m n : (n < m)%Ord = (n < m)%N.
+Lemma geqXnatE m n : (m >= n)%Ord = (m >= n)%N.
+Proof. by rewrite leqXE /=. Qed.
+
+Lemma ltnXnatE m n : (m < n)%Ord = (m < n)%N.
+Proof. by rewrite /ltnX_op leqXE ltn_neqAle. Qed.
+
+Lemma gtnXnatE m n : (m > n)%Ord = (m > n)%N.
 Proof. by rewrite /ltnX_op leqXE ltn_neqAle. Qed.
 
 Lemma maxL_iota n i : maxL i (iota i.+1 n) = i + n.
