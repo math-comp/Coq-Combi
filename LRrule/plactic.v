@@ -23,6 +23,14 @@ Unset Printing Implicit Defensive.
 
 Open Scope bool.
 
+Lemma filter_perm_eq (T : eqType) (u v : seq T) P :
+  perm_eq u v -> perm_eq (filter P u) (filter P v).
+Proof.
+  move=> /perm_eqP Hcount.
+  apply/perm_eqP => Q; rewrite !count_filter.
+  by apply Hcount.
+Qed.
+
 Import OrdNotations.
 
 Section Defs.
@@ -765,12 +773,9 @@ Implicit Type u v w r : word.
 
 Notation "a =Pl b" := (plactcongr a b) (at level 70).
 
-Variable L : Alph.
-Notation infL := (geqX Alph L).
-
-Lemma plact1_infL u v1 w v2 :
+Lemma plact1_geqXL L u v1 w v2 :
    v2 \in plact1 v1 ->
-   [seq x <- u ++ v1 ++ w | infL x] =Pl [seq x <- u ++ v2 ++ w | infL x].
+   [seq x <- u ++ v1 ++ w | (geqX _ L) x] =Pl [seq x <- u ++ v2 ++ w | (geqX _ L) x].
 Proof.
   have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans.
   have Hcongr := @plactcongr_is_congr Alph.
@@ -785,9 +790,9 @@ Proof.
   by rewrite Habc !mem_cat inE eq_refl.
 Qed.
 
-Lemma plact2_infL u v1 w v2 :
+Lemma plact2_geqXL L u v1 w v2 :
    v2 \in plact2 v1 ->
-   [seq x <- u ++ v1 ++ w | infL x] =Pl [seq x <- u ++ v2 ++ w | infL x].
+   [seq x <- u ++ v1 ++ w | (geqX _ L) x] =Pl [seq x <- u ++ v2 ++ w | (geqX _ L) x].
 Proof.
   have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans.
   have Hcongr := @plactcongr_is_congr Alph.
@@ -802,22 +807,48 @@ Proof.
   by rewrite Habc !mem_cat inE eq_refl /= !orbT.
 Qed.
 
-Lemma restr_small u v : u =Pl v -> filter infL u =Pl filter infL v.
+Lemma plactic_filter_geqX L u v : u =Pl v -> filter (geqX _ L) u =Pl filter (geqX _ L) v.
 Proof.
   have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans.
   move: v; apply: gencongr_ind; first by apply: Hrefl.
   move=> a b1 c b2 Hu Hplact.
-  rewrite -(@Htrans ([seq x <- a ++ b1 ++ c | infL x]));
+  rewrite -(@Htrans ([seq x <- a ++ b1 ++ c | (geqX Alph L) x]));
     last by rewrite -(Htrans _ _ Hu); apply: Hrefl.
   move: Hplact {u Hu} => /plactruleP [].
-  + by apply: plact1_infL.
-  + rewrite -plact1I => /plact1_infL H.
+  + by apply: plact1_geqXL.
+  + rewrite -plact1I => /(plact1_geqXL L) H.
     have {H} H := H a c.
     by rewrite -(Htrans _ _ H); apply: Hrefl.
-  + by apply: plact2_infL.
-  + rewrite -plact2I => /plact2_infL H.
+  + by apply: plact2_geqXL.
+  + rewrite -plact2I => /(plact2_geqXL L) H.
     have {H} H := H a c.
     by rewrite -(Htrans _ _ H); apply: Hrefl.
+Qed.
+
+
+Lemma plactic_filter_gtnX L u v : u =Pl v -> filter (gtnX _ L) u =Pl filter (gtnX _ L) v.
+Proof.
+  have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans.
+  move=> H; case Hfu : (filter (gtnX _ L) u) => [| fu0 fu'].
+    suff -> : filter (gtnX _ L) v = [::] by apply Hrefl.
+    apply/eqP; move: Hfu => /eqP; apply contraLR.
+    rewrite -!has_filter => /hasP [] x Hx HgtnX.
+    apply/hasP; exists x; last exact HgtnX.
+    by move: H => /plactcongr_homog/perm_eq_mem ->.
+  have := maxLP fu0 fu' => /allP; rewrite -Hfu => HML.
+  set ML := maxL fu0 fu'.
+  have Heq: {in u, gtnX _ L =1 geqX _ ML}.
+    move=> x Hx /=.
+    apply/(sameP idP); apply(iffP idP) => Hxl.
+    - have:= in_maxL fu0 fu'; rewrite -Hfu; rewrite mem_filter /= => /andP [] HMLL _.
+      by apply (leqX_ltnX_trans Hxl HMLL).
+    - apply HML; by rewrite mem_filter Hx /= Hxl.
+  rewrite (eq_in_filter Heq).
+  have {Heq} Heq: {in v, gtnX _ L =1 geqX _ ML}.
+    move=> x /=; move: H => /plactcongr_homog/perm_eq_mem <-.
+    by apply Heq.
+  rewrite (eq_in_filter Heq).
+  by apply: plactic_filter_geqX.
 Qed.
 
 End RestrIntervSmall.
@@ -835,10 +866,12 @@ Implicit Type u v w r : word.
 Notation "a =Pl b" := (plactcongr a b) (at level 70).
 
 Variable L : Alph.
-Notation supL := (leqX Alph L).
-Notation infL := (geqX Dual L).
+Notation leqXL := (leqX Alph L).
+Notation geqXL := (geqX Dual L).
+Notation ltnXL := (ltnX Alph L).
+Notation gtnXL := (gtnX Dual L).
 
-Lemma supL_infLdualE u : filter supL u = from_revdual _ (filter infL (revdual _ u)).
+Lemma leqXL_geqXLdualE u : filter leqXL u = from_revdual _ (filter geqXL (revdual _ u)).
 Proof.
   rewrite /= filter_rev revK -filter_map -map_comp.
   set f := (X in map X _).
@@ -847,15 +880,30 @@ Proof.
   by rewrite dual_leqX.
 Qed.
 
-Lemma restr_big u v : u =Pl v -> filter supL u =Pl filter supL v.
+Lemma ltnXL_gtnXLdualE u : filter ltnXL u = from_revdual _ (filter gtnXL (revdual _ u)).
 Proof.
-  move=> H; rewrite [filter _ u]supL_infLdualE [filter _ v]supL_infLdualE.
-  rewrite -plact_from_dualE; apply: restr_small.
+  rewrite /= filter_rev revK -filter_map -map_comp.
+  set f := (X in map X _).
+  rewrite (eq_map (@dualK _)) map_id.
+  apply/eq_filter => i /=.
+  by rewrite dual_ltnX.
+Qed.
+
+Lemma plactic_filter_leqX u v : u =Pl v -> filter leqXL u =Pl filter leqXL v.
+Proof.
+  move=> H; rewrite [filter _ u]leqXL_geqXLdualE [filter _ v]leqXL_geqXLdualE.
+  rewrite -plact_from_dualE; apply: plactic_filter_geqX.
+  by rewrite -plact_dualE.
+Qed.
+
+Lemma plactic_filter_ltnX u v : u =Pl v -> filter ltnXL u =Pl filter ltnXL v.
+Proof.
+  move=> H; rewrite [filter _ u]ltnXL_gtnXLdualE [filter _ v]ltnXL_gtnXLdualE.
+  rewrite -plact_from_dualE; apply: plactic_filter_gtnX.
   by rewrite -plact_dualE.
 Qed.
 
 End RestrIntervBig.
-
 
 
 Section IncrMap.

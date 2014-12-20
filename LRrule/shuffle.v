@@ -647,7 +647,7 @@ Proof.
   apply/eqP.
   rewrite -(RS_tabE (is_tableau_filter_geqX _ (is_tableau_RS w))) -plactic_RS /=.
   rewrite to_word_filter_nnil -filter_to_word.
-  apply: restr_small; by apply: congr_RS.
+  apply: plactic_filter_geqX; by apply: congr_RS.
 Qed.
 
 Lemma LRTripleE t1 t2 t :
@@ -673,7 +673,7 @@ Proof.
       apply/eqP; rewrite -plactic_RS.
       move: Hshsh; have := Ht1; rewrite -Hp1 RSstdE => /mem_shsh -> /andP [] _ /eqP <-.
       rewrite (shift_plactcongr (size p1)) /p' !sfilterleqK.
-      apply: restr_big; by apply congr_RS.
+      apply: plactic_filter_leqX; apply congr_RS.
     apply/hasP; exists p'.
     + apply /mapP; exists (RSmap p').2.
       * apply/count_memPn; rewrite Hp'.
@@ -747,17 +747,11 @@ Proof.
     have Hszp : size p1 = size u1 by rewrite Hsz1 -size_RS Hp1.
     split.
     + rewrite (invstd_catgtn u1 u2) (shsh_sfiltergtn Hstdp1 Hsh) Hszp.
-      case: (size u1) => [//= | n].
-      * have /eq_filter H : gtn 0 =1 pred0 by [].
-        rewrite !H {H} !filter_pred0.
-        have:= @plactcongr_equiv nat_ordType => /equivalence_relP [] Hrefl _.
-        by apply: Hrefl.
-      * have /eq_filter H : gtn n.+1 =1 geq n by [].
-        rewrite /= !H {H}.
-        by apply: restr_small.
+      rewrite /= -!(eq_filter (gtnXnatE (size u1))).
+      by apply: plactic_filter_gtnX.
     + rewrite (invstd_catleq u1 u2) (shsh_sfilterleq Hstdp1 Hsh) Hszp.
       rewrite (shift_plactcongr (size u1)) !sfilterleqK.
-      by apply: restr_big.
+      by apply: plactic_filter_leqX.
 Qed.
 
 End LR.
