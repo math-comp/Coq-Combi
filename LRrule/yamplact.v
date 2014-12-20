@@ -23,8 +23,6 @@ Unset Printing Implicit Defensive.
 
 Open Scope N.
 
-Notation "a =Pl b" := (plactcongr a b) (at level 70).
-
 Lemma is_part_incr_nthE sh i j :
   i.+1 < j -> is_part sh -> is_part (incr_nth (incr_nth sh j) i) ->
   is_part (incr_nth sh i) = is_part (incr_nth sh j).

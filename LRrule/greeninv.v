@@ -100,13 +100,13 @@ Proof.
   rewrite -{1}[enum 'I_N](cat_take_drop i.+1) drop_enumI take_enumI filter_cat map_cat.
   rewrite -{1}[enum 'I_N](cat_take_drop i) drop_enumI take_enumI !filter_cat map_cat.
   rewrite -cat1s catA -!filter_predI; congr (((map (tnth wt) _) ++ _) ++ (map (tnth wt) _)).
-  + set pl := (X in filter X _); set pr := (X in _ = filter X _).
+  + set pl := (X in filter X); set pr := (X in _ = filter X _).
     suff /eq_filter -> : pl =1 pr by [].
     rewrite /pl /pr {pl pr} => j /=; rewrite !inE !andbT.
     congr ((j \in S) && _); case (ltnP j i) => H; last by rewrite andbF.
     by rewrite (ltn_trans H (ltnSn i)).
   + set l := (X in map _ X); suff -> : l = [:: i] by [].
-    rewrite /l {l}; set pl := (X in filter X _).
+    rewrite /l {l}; set pl := (X in filter X).
     have {pl} /eq_filter -> : pl =1 (pred1 i).
       rewrite /pl {pl} => j /=; rewrite ltnS -eqn_leq inE andbT.
       case: (altP (j =P i)) => [-> | H]; first by rewrite eq_refl Hi.
@@ -114,7 +114,7 @@ Proof.
         apply/negbTE; move: H; apply: contra; by move/eqP/val_inj ->.
     apply: filter_pred1_uniq; first by rewrite -enumT; apply: enum_uniq.
     by rewrite -enumT mem_enum inE.
-  + set pl := (X in filter X _); set pr := (X in _ = filter X _).
+  + set pl := (X in filter X); set pr := (X in _ = filter X _).
     suff /eq_filter -> : pl =1 pr by [].
     rewrite /pl /pr {pl pr} => j /=; by rewrite !inE !andbT.
 Qed.
@@ -133,15 +133,15 @@ Implicit Type u v w r : word.
 Variable w : word.
 Variable k : nat.
 
-Definition rev_ord_cast : 'I_(size w) -> 'I_(size (revdual _ w)) :=
+Definition rev_ord_cast : 'I_(size w) -> 'I_(size (revdual w)) :=
   (cast_ord (size_revdual w)) \o (@rev_ord _).
-Definition revSet (s : {set 'I_(size w)}) : {set 'I_(size (revdual _ w))} :=
+Definition revSet (s : {set 'I_(size w)}) : {set 'I_(size (revdual w))} :=
   [set rev_ord_cast i | i in s].
-Definition rev_ksupp (P : {set {set 'I_(size w)}}) : {set {set 'I_(size (revdual _ w))}} :=
+Definition rev_ksupp (P : {set {set 'I_(size w)}}) : {set {set 'I_(size (revdual w))}} :=
   [set revSet u | u in P].
 
-Definition rev_ksupp_inv (S : {set {set 'I_(size (revdual _ w))}}) :=
-  [set rev_ord_cast @^-1: s | s : {set 'I_(size (revdual _ w))} in S].
+Definition rev_ksupp_inv (S : {set {set 'I_(size (revdual w))}}) :=
+  [set rev_ord_cast @^-1: s | s : {set 'I_(size (revdual w))} in S].
 
 Lemma rev_ord_cast_inj : injective rev_ord_cast.
 Proof. move=> i j; by rewrite /rev_ord_cast /= => /cast_ord_inj/rev_ord_inj. Qed.
@@ -176,7 +176,7 @@ Lemma irev_w i : i < size w -> size w - i.+1 < size w.
 Proof. move/subnSK ->; by apply: leq_subr. Qed.
 
 Lemma rev_enum :
-  enum 'I_(size (revdual _ w)) = rev [seq rev_ord_cast i | i <- enum 'I_(size w)].
+  enum 'I_(size (revdual w)) = rev [seq rev_ord_cast i | i <- enum 'I_(size w)].
 Proof.
   apply: (inj_map val_inj); rewrite /=.
   rewrite val_enum_ord map_rev -map_comp.
@@ -191,7 +191,7 @@ Proof.
 Qed.
 
 Lemma extract_revSet S :
-  (extract (in_tuple (revdual Alph w))) (revSet S) = revdual Alph (extract (in_tuple w) S).
+  (extract (in_tuple (revdual w))) (revSet S) = revdual (extract (in_tuple w) S).
 Proof.
   rewrite !/extract /= !extractIE /revSet rev_enum.
   rewrite filter_rev filter_map.
@@ -205,8 +205,8 @@ Proof.
 Qed.
 
 Lemma is_row_dual T :
-  is_seq (leqX Alph) (extract (in_tuple w) T) <->
-  is_seq (leqX (dual_ordType Alph)) (extract (in_tuple (revdual Alph w)) (revSet T)).
+  is_seq (@leqX Alph) (extract (in_tuple w) T) <->
+  is_seq (@leqX (dual_ordType Alph)) (extract (in_tuple (revdual w)) (revSet T)).
 Proof.
   rewrite extract_revSet.
   case: (extract _ _) => [//= | l0 l] /=.
@@ -216,13 +216,13 @@ Proof.
 Qed.
 
 Lemma is_col_dual T :
-  is_seq (gtnX Alph) ((extract (in_tuple w)) T) <->
-  is_seq (gtnX (dual_ordType Alph)) (extract (in_tuple (revdual Alph w)) (revSet T)).
+  is_seq (@gtnX Alph) ((extract (in_tuple w)) T) <->
+  is_seq (@gtnX (dual_ordType Alph)) (extract (in_tuple (revdual w)) (revSet T)).
 Proof.
   rewrite extract_revSet.
   case: (extract _ _) => [//= | l0 l] /=.
   rewrite -rev_sorted revK /sorted /=.
-  rewrite (map_path (e' := (gtnX Alph)) (b := pred0)); first by [].
+  rewrite (map_path (e' := gtnX) (b := pred0)); first by [].
   + rewrite /rel_base => x y _.
     by rewrite /gtnX /= dual_ltnX.
   + by rewrite has_pred0.
@@ -240,8 +240,8 @@ Proof.
 Qed.
 
 Lemma rev_is_ksupp_row P :
-  ksupp (leqX Alph) (in_tuple w) k P =
-  ksupp (leqX (dual_ordType Alph)) (in_tuple (revdual _ w)) k (rev_ksupp P).
+  ksupp (@leqX Alph) (in_tuple w) k P =
+  ksupp (@leqX (dual_ordType Alph)) (in_tuple (revdual w)) k (rev_ksupp P).
 Proof.
   rewrite /ksupp size_rev_ksupp trivIset_setrev; congr [&& _, _ & _].
   apply/(sameP idP); apply(iffP idP) => /forallP Hall; apply/forallP => S; apply/implyP.
@@ -255,8 +255,8 @@ Proof.
 Qed.
 
 Lemma rev_is_ksupp_col P :
-  ksupp (gtnX Alph) (in_tuple w) k P =
-  ksupp (gtnX (dual_ordType Alph)) (in_tuple (revdual _ w)) k (rev_ksupp P).
+  ksupp (@gtnX Alph) (in_tuple w) k P =
+  ksupp (@gtnX (dual_ordType Alph)) (in_tuple (revdual w)) k (rev_ksupp P).
 Proof.
   rewrite /ksupp size_rev_ksupp trivIset_setrev; congr [&& _, _ & _].
   apply/(sameP idP); apply(iffP idP) => /forallP Hall; apply/forallP => S; apply/implyP.
@@ -272,7 +272,7 @@ Qed.
 Lemma scover_rev P : scover (rev_ksupp P) = scover P.
 Proof. by rewrite !/scover /= -size_cover_inj; last exact rev_ord_cast_inj. Qed.
 
-Lemma greenCol_dual : greenCol w k = greenCol (revdual _ w) k.
+Lemma greenCol_dual : greenCol w k = greenCol (revdual w) k.
 Proof.
   rewrite /greenCol /=.
   apply/eqP; rewrite eqn_leq; apply/andP; split.
@@ -286,7 +286,7 @@ Proof.
     by move: HS; rewrite {1}[S]rev_ksuppKV -rev_is_ksupp_col.
 Qed.
 
-Lemma greenRow_dual : greenRow w k = greenRow (revdual _ w) k.
+Lemma greenRow_dual : greenRow w k = greenRow (revdual w) k.
 Proof.
   rewrite /greenCol /=.
   apply/eqP; rewrite eqn_leq; apply/andP; split.
@@ -1180,7 +1180,7 @@ End Case.
 End SetContainingBothLeft.
 
 Lemma RabcLeqX (Alph : ordType) (a b c : Alph) :
-  (a < b <= c)%Ord -> SetContainingBothLeft.hypRabc (leqX Alph) a b c.
+  (a < b <= c)%Ord -> SetContainingBothLeft.hypRabc leqX a b c.
 Proof.
   move=> H; constructor.
   + move=> x y z; by apply: leqX_trans.
@@ -1191,7 +1191,7 @@ Proof.
 Qed.
 
 Lemma RabcGtnX (Alph : ordType) (a b c : Alph) :
-  (a < b <= c)%Ord -> SetContainingBothLeft.hypRabc (gtnX Alph) c b a.
+  (a < b <= c)%Ord -> SetContainingBothLeft.hypRabc gtnX c b a.
 Proof.
   move=> H; constructor.
   + by apply: gtnX_trans.
@@ -1212,7 +1212,7 @@ Variable k : nat.
 
 (* | [:: c; a; b] => if (a <= b < c)%Ord then [:: [:: a; c; b]] else [::] *)
 Lemma ksuppRow_inj_plact1i :
-  v2 \in plact1i v1 -> ksupp_inj (leqX Alph) (leqX Alph) k (u ++ v1 ++ w) (u ++ v2 ++ w).
+  v2 \in plact1i v1 -> ksupp_inj leqX leqX k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof.
   move/plact1iP => [] a [] b [] c [] Hord -> ->.
   rewrite /ksupp_inj  => S1 Hsupp.
@@ -1221,7 +1221,7 @@ Proof.
   case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
   + move/existsP => [] S /and3P [] HSin HSa HSb.
     exfalso; move: Hsupp; rewrite /ksupp => /and3P [] _ _ /forallP Hall.
-    have Htrans: transitive (leqX Alph) by move=> d e f /= H1 H2; apply: (leqX_trans H1 H2).
+    have Htrans: transitive (@leqX Alph) by move=> d e f /= H1 H2; apply: (leqX_trans H1 H2).
     have:= Hall S; rewrite HSin /= {Hall} => Hsort.
     have:= is_seq_extract_cond Htrans [set posa; posc] Hsort.
     have -> : S :&: [set posa; posc] = [set posa; posc].
@@ -1246,7 +1246,7 @@ Proof. by move /ksuppRow_inj_plact1i; apply: leq_green. Qed.
 
 (* | [:: b; a; c] => if (a < b <= c)%Ord then [:: [:: b; c; a]] else [::] *)
 Lemma ksuppRow_inj_plact2 :
-  v2 \in plact2 v1 -> ksupp_inj (leqX Alph) (leqX Alph) k (u ++ v1 ++ w) (u ++ v2 ++ w).
+  v2 \in plact2 v1 -> ksupp_inj leqX leqX k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof.
   move/plact2P => [] a [] b [] c [] Hord -> ->.
   have Hyp := RabcLeqX Hord.
@@ -1258,7 +1258,7 @@ Proof.
   case (boolP [exists S, [&& S \in P, posa \in S & posc \in S] ]).
   - move/existsP => [] S /and3P [] HSin HSa HSc.
     move HcastP : ((cast_set (eq_size Hbac)) @: P) => P'.
-    have Hsupp' : ksupp (leqX Alph) (in_tuple (u ++ [:: b; a; c] ++ w)) k P'.
+    have Hsupp' : ksupp leqX (in_tuple (u ++ [:: b; a; c] ++ w)) k P'.
       rewrite -HcastP; by apply: ksupp_cast.
     move HcastS : (cast_set (eq_size Hbac) S) => S'.
     have HS'in : S' \in P' by rewrite -HcastP -HcastS; apply: mem_imset.
@@ -1287,7 +1287,7 @@ Proof. by move /ksuppRow_inj_plact2; apply: leq_green. Qed.
 
 (* [:: a; c; b] => if (a <= b < c)%Ord then [:: [:: c; a; b]] else [::] *)
 Lemma ksuppCol_inj_plact1 :
-  v2 \in plact1 v1 -> ksupp_inj (gtnX Alph) (gtnX Alph) k (u ++ v1 ++ w) (u ++ v2 ++ w).
+  v2 \in plact1 v1 -> ksupp_inj gtnX gtnX k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof.
   move/plact1P => [] a [] b [] c [] Hord -> ->.
   rewrite /ksupp_inj  => S1 Hsupp.
@@ -1296,7 +1296,7 @@ Proof.
   case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
   + move/existsP => [] S /and3P [] HSin HSa HSb.
     exfalso; move: Hsupp; rewrite /ksupp => /and3P [] _ _ /forallP Hall.
-    have Htrans: transitive (gtnX Alph) by move=> d e f /= H1 H2; apply: (ltnX_trans H2 H1).
+    have Htrans: transitive (@gtnX Alph) by move=> d e f /= H1 H2; apply: (ltnX_trans H2 H1).
     have:= Hall S; rewrite HSin /= {Hall} => Hsort.
     have:= is_seq_extract_cond Htrans [set posa; posc] Hsort.
     have -> : S :&: [set posa; posc] = [set posa; posc].
@@ -1321,7 +1321,7 @@ Proof. by move /ksuppCol_inj_plact1; apply: leq_green. Qed.
 
 (* [:: b; c; a] => if (a < b <= c)%Ord then [:: [:: b; a; c]] else [::] *)
 Lemma ksuppCol_inj_plact2i :
-  v2 \in plact2i v1 -> ksupp_inj (gtnX Alph) (gtnX Alph) k (u ++ v1 ++ w) (u ++ v2 ++ w).
+  v2 \in plact2i v1 -> ksupp_inj gtnX gtnX k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof.
   move/plact2iP => [] a [] b [] c [] Hord -> ->.
   have Hyp := RabcGtnX Hord.
@@ -1333,7 +1333,7 @@ Proof.
   case (boolP [exists S, [&& S \in P, posa \in S & posc \in S] ]).
   - move/existsP => [] S /and3P [] HSin HSa HSc.
     move HcastP : ((cast_set (eq_size Hbca)) @: P) => P'.
-    have Hsupp' : ksupp (gtnX Alph) (in_tuple (u ++ [:: b; c; a] ++ w)) k P'.
+    have Hsupp' : ksupp gtnX (in_tuple (u ++ [:: b; c; a] ++ w)) k P'.
       rewrite -HcastP; by apply: ksupp_cast.
     move HcastS : (cast_set (eq_size Hbca) S) => S'.
     have HS'in : S' \in P' by rewrite -HcastP -HcastS; apply: mem_imset.
@@ -1374,7 +1374,7 @@ Proof.
   rewrite plact2idual => /greenRow_leq_plact1i H.
   rewrite [greenRow (_ ++ v1 ++ _) k]greenRow_dual.
   rewrite [greenRow (_ ++ v2 ++ _) k]greenRow_dual.
-  have:= H (revdual Alph w) (revdual Alph u) k.
+  have:= H (revdual w) (revdual u) k.
   by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
 Qed.
 
@@ -1384,7 +1384,7 @@ Proof.
   rewrite plact1dual => /greenRow_leq_plact2 H.
   rewrite [greenRow (_ ++ v1 ++ _) k]greenRow_dual.
   rewrite [greenRow (_ ++ v2 ++ _) k]greenRow_dual.
-  have:= H (revdual Alph w) (revdual Alph u) k.
+  have:= H (revdual w) (revdual u) k.
   by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
 Qed.
 
@@ -1419,7 +1419,7 @@ Proof.
   rewrite plact1idual => /greenCol_leq_plact2i H.
   rewrite [greenCol (_ ++ v1 ++ _) k]greenCol_dual.
   rewrite [greenCol (_ ++ v2 ++ _) k]greenCol_dual.
-  have:= H (revdual Alph w) (revdual Alph u) k.
+  have:= H (revdual w) (revdual u) k.
   by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
 Qed.
 
@@ -1429,7 +1429,7 @@ Proof.
   rewrite plact2dual => /greenCol_leq_plact1 H.
   rewrite [greenCol (_ ++ v1 ++ _) k]greenCol_dual.
   rewrite [greenCol (_ ++ v2 ++ _) k]greenCol_dual.
-  have:= H (revdual Alph w) (revdual Alph u) k.
+  have:= H (revdual w) (revdual u) k.
   by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
 Qed.
 
@@ -1467,8 +1467,6 @@ Let word := seq Alph.
 
 Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
-
-Notation "a =Pl b" := (plactcongr a b) (at level 70).
 
 Theorem greenRow_invar_plactic u v : u =Pl v -> forall k, greenRow u k = greenRow v k.
 Proof.

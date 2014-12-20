@@ -225,7 +225,7 @@ Proof. move=> i j k H1 H2; by apply: (leq_trans H1 H2). Qed.
 
 Lemma val2pos_enum (p : {set 'I_(size s)}) :
   (* Hypothesis : val2pos sorted in p *)
-  sorted (leqX _) [seq tnth (in_tuple s) i | i <- enum (mem p)] ->
+  sorted leqX [seq tnth (in_tuple s) i | i <- enum (mem p)] ->
   enum (mem [set val2pos x | x in p]) = [seq val2pos x | x <- enum p].
 Proof.
   rewrite /enum_mem /= (eq_filter (mem_mem _)) -!enumT /= => H.
@@ -263,7 +263,7 @@ Proof.
         rewrite mem_filter /= Hi' /=; by rewrite mem_enum.
 Qed.
 
-Lemma ksupp_inj_invseq k : ksupp_inj (leqX _) (leqX _) k s t.
+Lemma ksupp_inj_invseq k : ksupp_inj leqX leqX k s t.
 Proof.
   rewrite /ksupp_inj /ksupp => ks /and3P [] Hsz Htriv /forallP Hall.
   exists [set val2pos @: (p : {set 'I_(size s)}) | p in ks].

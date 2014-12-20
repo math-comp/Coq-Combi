@@ -195,15 +195,15 @@ Proof. apply: gencongr_equiv; by apply: plactrule_sym. Qed.
 Lemma plactcongr_is_congr : congruence_rel plactcongr.
 Proof. apply: gencongr_is_congr; by apply: plactrule_sym. Qed.
 
-Lemma plactcongr_homog u v : v \in plactcongr u -> perm_eq u v.
+Lemma plactcongr_homog u v : plactcongr u v -> perm_eq u v.
 Proof. by apply: gencongr_homog. Qed.
 
-Lemma size_plactcongr u v : v \in plactcongr u -> size u = size v.
+Lemma size_plactcongr u v : plactcongr u v -> size u = size v.
 Proof. by move/plactcongr_homog/perm_eq_size. Qed.
 
 End Defs.
 
-
+Notation "a =Pl b" := (plactcongr a b) (at level 70).
 
 Section DualRule.
 
@@ -239,11 +239,11 @@ Proof.
   + move /plact1P => [] a' [] b' [] c' [] Habc'.
     rewrite /revdual /= => H1 H2.
     have:= eq_refl (from_revdual [:: a'; c'; b']); rewrite -{1}H1 /=.
-    rewrite revK -map_comp; set f := (X in map X _).
+    rewrite revK -map_comp; set f := (X in map X).
     have /eq_map -> : f =1 id by move=> i; rewrite /f /= dualK.
     rewrite map_id {f} => /eqP ->.
     have:= eq_refl (from_revdual [:: c'; a'; b']); rewrite -{1}H2 /=.
-    rewrite revK -map_comp; set f := (X in map X _).
+    rewrite revK -map_comp; set f := (X in map X).
     have /eq_map -> : f =1 id by move=> i; rewrite /f /= dualK.
     rewrite map_id {f} => /eqP ->.
     by rewrite -dual_leqX -dual_ltnX !from_dualK andbC Habc' /= mem_seq1.
@@ -257,11 +257,11 @@ Proof.
   + move /plact2P => [] a' [] b' [] c' [] Habc'.
     rewrite /revdual /= => H1 H2.
     have:= eq_refl (from_revdual [:: b'; a'; c']); rewrite -{1}H1 /=.
-    rewrite revK -map_comp; set f := (X in map X _).
+    rewrite revK -map_comp; set f := (X in map X).
     have /eq_map -> : f =1 id by move=> i; rewrite /f /= dualK.
     rewrite map_id {f} => /eqP ->.
     have:= eq_refl (from_revdual [:: b'; c'; a']); rewrite -{1}H2 /=.
-    rewrite revK -map_comp; set f := (X in map X _).
+    rewrite revK -map_comp; set f := (X in map X).
     have /eq_map -> : f =1 id by move=> i; rewrite /f /= dualK.
     rewrite map_id {f} => /eqP ->.
     by rewrite -dual_leqX -dual_ltnX !from_dualK andbC Habc' /= mem_seq1.
@@ -277,6 +277,9 @@ Proof. apply/(sameP idP); apply:(iffP idP); by rewrite -plact1I -plact2I plact2d
 
 End DualRule.
 
+Arguments revdual [Alph].
+Arguments from_revdual [Alph].
+
 Section PlactDual.
 
 Variable Alph : ordType.
@@ -285,15 +288,13 @@ Let word := seq Alph.
 Let Dual := dual_ordType Alph.
 Implicit Type u v w : word.
 
-Notation "a =Pl b" := (plactcongr a b) (at level 70).
-
-Theorem plact_revdual u v : u =Pl v -> revdual _ u =Pl revdual _ v.
+Theorem plact_revdual u v : u =Pl v -> revdual u =Pl revdual v.
 Proof.
   have:= @plactcongr_equiv Dual => /equivalence_relP [] HreflD HtransD.
   have:= @plactcongr_is_congr Dual => HcongrD.
   move: v; apply: gencongr_ind; first by apply: HreflD.
   move=> a b1 c b2 Hu Hplact.
-  rewrite -(@HtransD (revdual _ (a ++ b1 ++ c)));
+  rewrite -(@HtransD (revdual (a ++ b1 ++ c)));
     last by rewrite -(HtransD _ _ Hu); apply: HreflD.
   rewrite {u Hu} /revdual /= !map_cat !rev_cat.
   apply: (congr_catl HcongrD); apply: (congr_catr HcongrD).
@@ -305,13 +306,13 @@ Proof.
 Qed.
 
 Theorem plact_from_revdual (u v : seq Dual) :
-  u =Pl v -> from_revdual _ u =Pl from_revdual _ v.
+  u =Pl v -> from_revdual u =Pl from_revdual v.
 Proof.
   have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans.
   have:= @plactcongr_is_congr Alph => Hcongr.
   move: v; apply: (@gencongr_ind Dual); first by apply: Hrefl.
   move=> a b1 c b2 Hu Hplact.
-  rewrite -(@Htrans (from_revdual _ (a ++ b1 ++ c)));
+  rewrite -(@Htrans (from_revdual (a ++ b1 ++ c)));
     last by rewrite -(Htrans _ _ Hu); apply: Hrefl.
   rewrite {u Hu} /from_revdual /= !rev_cat !map_cat.
   apply: (congr_catl Hcongr); apply: (congr_catr Hcongr).
@@ -323,17 +324,16 @@ Proof.
   + rewrite !mem_cat -plact1idual /from_revdual /= => -> ; by rewrite /= !orbT.
 Qed.
 
-Theorem plact_dualE u v : u =Pl v <-> revdual _ u =Pl revdual _ v.
+Theorem plact_dualE u v : u =Pl v <-> revdual u =Pl revdual v.
 Proof.
   split.
   - by apply: plact_revdual.
   - rewrite -{2}[u]revdualK -{2}[v]revdualK.
-    move Hu : (revdual _ u) => du; move Hv : (revdual _ v) => dv.
     by apply: plact_from_revdual.
 Qed.
 
 Theorem plact_from_dualE (u v : seq Dual) :
-  u =Pl v <-> from_revdual _ u =Pl from_revdual _ v.
+  u =Pl v <-> from_revdual u =Pl from_revdual v.
 Proof.
   split.
   - by apply: plact_from_revdual.
@@ -349,8 +349,6 @@ Let word := seq Alph.
 
 Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
-
-Notation "a =Pl b" := (plactcongr a b) (at level 70).
 
 Lemma rcons_rcons w a b : rcons (rcons w a) b = w ++ [:: a; b].
 Proof. by rewrite -!cats1 -catA cat1s. Qed.
@@ -508,8 +506,6 @@ Proof.
   by apply: rembig_plact1. by apply: rembig_plact1i.
   by apply: rembig_plact2. by apply: rembig_plact2i.
 Qed.
-
-Notation "a =Pl b" := (plactcongr a b) (at level 70).
 
 Theorem rembig_plactcongr u v : u =Pl v -> (rembig u) =Pl (rembig v).
 Proof.
@@ -771,11 +767,9 @@ Let word := seq Alph.
 Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
 
-Notation "a =Pl b" := (plactcongr a b) (at level 70).
-
 Lemma plact1_geqXL L u v1 w v2 :
    v2 \in plact1 v1 ->
-   [seq x <- u ++ v1 ++ w | (geqX _ L) x] =Pl [seq x <- u ++ v2 ++ w | (geqX _ L) x].
+   [seq x <- u ++ v1 ++ w | L >=A x] =Pl [seq x <- u ++ v2 ++ w | L >=A x].
 Proof.
   have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans.
   have Hcongr := @plactcongr_is_congr Alph.
@@ -792,7 +786,7 @@ Qed.
 
 Lemma plact2_geqXL L u v1 w v2 :
    v2 \in plact2 v1 ->
-   [seq x <- u ++ v1 ++ w | (geqX _ L) x] =Pl [seq x <- u ++ v2 ++ w | (geqX _ L) x].
+   [seq x <- u ++ v1 ++ w | L >=A x] =Pl [seq x <- u ++ v2 ++ w | L >=A  x].
 Proof.
   have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans.
   have Hcongr := @plactcongr_is_congr Alph.
@@ -807,12 +801,13 @@ Proof.
   by rewrite Habc !mem_cat inE eq_refl /= !orbT.
 Qed.
 
-Lemma plactic_filter_geqX L u v : u =Pl v -> filter (geqX _ L) u =Pl filter (geqX _ L) v.
+Lemma plactic_filter_geqX L u v :
+  u =Pl v -> [seq x <- u | L >=A x] =Pl [seq x <- v | L >=A x].
 Proof.
   have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans.
   move: v; apply: gencongr_ind; first by apply: Hrefl.
   move=> a b1 c b2 Hu Hplact.
-  rewrite -(@Htrans ([seq x <- a ++ b1 ++ c | (geqX Alph L) x]));
+  rewrite -(@Htrans ([seq x <- a ++ b1 ++ c | L >=A x]));
     last by rewrite -(Htrans _ _ Hu); apply: Hrefl.
   move: Hplact {u Hu} => /plactruleP [].
   + by apply: plact1_geqXL.
@@ -826,25 +821,26 @@ Proof.
 Qed.
 
 
-Lemma plactic_filter_gtnX L u v : u =Pl v -> filter (gtnX _ L) u =Pl filter (gtnX _ L) v.
+Lemma plactic_filter_gtnX L u v :
+  u =Pl v -> [seq x <- u | L >A x] =Pl [seq x <- v | L >A x].
 Proof.
   have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans.
-  move=> H; case Hfu : (filter (gtnX _ L) u) => [| fu0 fu'].
-    suff -> : filter (gtnX _ L) v = [::] by apply Hrefl.
+  move=> H; case Hfu : [seq x <- u | L >A x] => [| fu0 fu'].
+    suff -> : [seq x <- v | L >A x] = [::] by apply Hrefl.
     apply/eqP; move: Hfu => /eqP; apply contraLR.
     rewrite -!has_filter => /hasP [] x Hx HgtnX.
     apply/hasP; exists x; last exact HgtnX.
     by move: H => /plactcongr_homog/perm_eq_mem ->.
   have := maxLP fu0 fu' => /allP; rewrite -Hfu => HML.
   set ML := maxL fu0 fu'.
-  have Heq: {in u, gtnX _ L =1 geqX _ ML}.
+  have Heq: {in u, gtnX L =1 geqX ML}.
     move=> x Hx /=.
     apply/(sameP idP); apply(iffP idP) => Hxl.
     - have:= in_maxL fu0 fu'; rewrite -Hfu; rewrite mem_filter /= => /andP [] HMLL _.
       by apply (leqX_ltnX_trans Hxl HMLL).
     - apply HML; by rewrite mem_filter Hx /= Hxl.
   rewrite (eq_in_filter Heq).
-  have {Heq} Heq: {in v, gtnX _ L =1 geqX _ ML}.
+  have {Heq} Heq: {in v, gtnX L =1 geqX ML}.
     move=> x /=; move: H => /plactcongr_homog/perm_eq_mem <-.
     by apply Heq.
   rewrite (eq_in_filter Heq).
@@ -863,15 +859,13 @@ Let word := seq Alph.
 Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
 
-Notation "a =Pl b" := (plactcongr a b) (at level 70).
-
 Variable L : Alph.
-Notation leqXL := (leqX Alph L).
-Notation geqXL := (geqX Dual L).
-Notation ltnXL := (ltnX Alph L).
-Notation gtnXL := (gtnX Dual L).
+Notation leqXL := (@leqX Alph L).
+Notation geqXL := (@geqX Dual L).
+Notation ltnXL := (@ltnX Alph L).
+Notation gtnXL := (@gtnX Dual L).
 
-Lemma leqXL_geqXLdualE u : filter leqXL u = from_revdual _ (filter geqXL (revdual _ u)).
+Lemma leqXL_geqXLdualE u : filter leqXL u = from_revdual (filter geqXL (revdual u)).
 Proof.
   rewrite /= filter_rev revK -filter_map -map_comp.
   set f := (X in map X _).
@@ -880,7 +874,7 @@ Proof.
   by rewrite dual_leqX.
 Qed.
 
-Lemma ltnXL_gtnXLdualE u : filter ltnXL u = from_revdual _ (filter gtnXL (revdual _ u)).
+Lemma ltnXL_gtnXLdualE u : filter ltnXL u = from_revdual (filter gtnXL (revdual u)).
 Proof.
   rewrite /= filter_rev revK -filter_map -map_comp.
   set f := (X in map X _).
@@ -912,8 +906,6 @@ Variable T1 T2 : ordType.
 Variable F : T1 -> T2.
 Variable u v : seq T1.
 Hypothesis Hincr : {in u &, forall x y, x <A y -> F x <A F y}.
-
-Notation "a =Pl b" := (plactcongr a b) (at level 70).
 
 Lemma Fnondecr : {in u &, forall x y, x <=A y -> F x <=A F y}.
 Proof.

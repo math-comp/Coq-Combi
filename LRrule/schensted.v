@@ -905,12 +905,12 @@ Section Tableaux.
   Proof. by rewrite /to_word rev_cons flatten_rcons. Qed.
 
 Lemma filter_geqX_row r n :
-  is_row r -> filter (geqX T n) r = take (count (geqX T n) r) r.
+  is_row r -> filter (geqX n) r = take (count (geqX n) r) r.
 Proof.
   elim: r => [//= | r0 r IHr] Hrow /=.
   case: (leqXP r0 n) => Hr0.
   - by rewrite add1n (IHr (is_row_consK Hrow)).
-  - rewrite add0n; have Hcount : count ((geqX T) n) r = 0.
+  - rewrite add0n; have Hcount : count (geqX n) r = 0.
       elim: r r0 Hr0 Hrow {IHr} => [//= | r1 r /= IHr] r0 Hr0 /andP [] Hr0r1 Hpath.
       have Hr1 := ltnX_leqX_trans Hr0 Hr0r1.
       by rewrite leqXNgtnX Hr1 (IHr r1 Hr1 Hpath).
@@ -920,10 +920,10 @@ Qed.
 
 Lemma filter_geqX_dominate r1 r0 n :
     is_row r0 -> is_row r1 -> dominate r1 r0 ->
-    dominate (filter (geqX T n) r1) (filter (geqX T n) r0).
+    dominate (filter (geqX n) r1) (filter (geqX n) r0).
 Proof.
   move=> Hrow0 Hrow1 /dominateP [] Hsz Hdom.
-  have Hsize : (count (geqX T n) r1) <= (count (geqX T n) r0).
+  have Hsize : (count (geqX n) r1) <= (count (geqX n) r0).
     rewrite -[r0](mkseq_nth Z) -[r1](mkseq_nth Z) /mkseq !count_map.
     rewrite -(subnKC Hsz).
     rewrite iota_add count_cat.
@@ -950,7 +950,7 @@ Qed.
 
 Definition filter_geqX_tab n :=
   [fun t : (seq (seq T)) => filter (fun r => r != [::])
-                                   [seq [seq x <- i | geqX T n x] | i <- t]].
+                                   [seq [seq x <- i | geqX n x] | i <- t]].
 
 Lemma to_word_filter_nnil t : to_word (filter (fun r => r != [::]) t) = to_word t.
 Proof.

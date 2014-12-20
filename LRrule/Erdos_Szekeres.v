@@ -60,8 +60,8 @@ Qed.
 
 Theorem Erdos_Szekeres (m n : nat) (s : seq T) :
   (size s) > (m * n) ->
-  (exists t, subseq t s /\ sorted (leqX T) t /\ size t > m) \/
-  (exists t, subseq t s /\ sorted (gtnX T) t /\ size t > n).
+  (exists t, subseq t s /\ sorted leqX t /\ size t > m) \/
+  (exists t, subseq t s /\ sorted gtnX t /\ size t > n).
 Proof.
   move=> Hsize; pose tab := RS s.
   have {Hsize} : (n < size (shape (RS s))) \/ (m < head 0 (shape (RS s))).
@@ -85,7 +85,7 @@ Proof.
         rewrite /minn; move: Hs0; by case s0.
       by rewrite add1n.
     move=> Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
-    case : (green_rel_one s (gtnX T)) => x [] Hsubs [] Hsort <- Hn.
+    case: (green_rel_one s gtnX) => x [] Hsubs [] Hsort <- Hn.
     by exists x.
   - left.
     have := greenRow_RS 1 s.
@@ -94,9 +94,8 @@ Proof.
       case: (shape (RS s)) => [| s0 l] /=; first by rewrite big_nil.
       by rewrite take0 big_cons big_nil addn0.
     rewrite /greenRow => Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
-    case : (green_rel_one s (leqX T)) => x [] Hsubs [] Hsort <- Hn.
+    case: (green_rel_one s leqX) => x [] Hsubs [] Hsort <- Hn.
     by exists x.
 Qed.
-
 
 End OrderedType.

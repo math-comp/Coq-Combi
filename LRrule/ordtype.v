@@ -189,6 +189,10 @@ Proof. move=> m n p /= H1 H2; by apply: (ltnX_trans H2 H1). Qed.
 
 End POrderTheory.
 
+Arguments leqX [T].
+Arguments geqX [T].
+Arguments ltnX [T].
+Arguments gtnX [T].
 
 (* Needs total ordering *)
 Section OrdTheory.
@@ -301,7 +305,7 @@ Section Dual.
 
 Variable Alph : ordType.
 
-Fact geqX_order : Order.axiom (geqX Alph).
+Fact geqX_order : Order.axiom (@geqX Alph).
 Proof.
   split.
   - move=> n /=; by apply: leqXnn.
@@ -376,8 +380,8 @@ Let word := seq Alph.
 Implicit Type a b c : Alph.
 Implicit Type u v : word.
 
-Definition allLeq v a := all (geqX Alph a) v.
-Definition allLtn v a := all (gtnX Alph a) v.
+Definition allLeq v a := all (geqX a) v.
+Definition allLtn v a := all (gtnX a) v.
 
 Lemma maxLPt a u : allLeq u (maxL a u).
 Proof.
@@ -524,7 +528,7 @@ Lemma maxL_LbR a v L b R :
 Proof.
   rewrite /allLeq /maxL => Heq HL Hr.
   apply/eqP; rewrite eqn_leqX; apply/andP; split.
-  + have: all (geqX _ b) (a :: v) by rewrite Heq all_cat HL /= leqXnn Hr.
+  + have: all (geqX b) (a :: v) by rewrite Heq all_cat HL /= leqXnn Hr.
     move/allP => Hallv; apply: Hallv; by apply: in_maxL.
   + have:= maxLP a v => /allP; rewrite Heq; apply.
     by rewrite mem_cat inE eq_refl /= orbT.

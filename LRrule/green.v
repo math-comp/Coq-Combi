@@ -56,11 +56,11 @@ Lemma mem_enum_seqE n (l : seq 'I_n) :
   sorted (fun i j : 'I_n => val i < val j) l -> [seq i <- enum 'I_n | i \in l] = l.
 Proof.
   elim: n l => [|n IHn] [| l0 l].
-  + set f := (X in filter X _); have /eq_filter -> : f =1 pred0.
+  + set f := (X in filter X); have /eq_filter -> : f =1 pred0.
       rewrite /f; move=> i /=; by rewrite in_nil.
     by rewrite filter_pred0.
   + move=> _; have:= ltn_ord l0; by rewrite ltn0.
-  + set f := (X in filter X _); have /eq_filter -> : f =1 pred0.
+  + set f := (X in filter X); have /eq_filter -> : f =1 pred0.
       rewrite /f; move=> i /=; by rewrite in_nil.
     by rewrite filter_pred0.
   + rewrite (enum_ordS n) /=.
@@ -78,7 +78,7 @@ Proof.
       have Hsort : sorted (fun i j : 'I_n.+1 => i < j) (ord0 :: (Ordinal Hl0) :: l) by [].
       have {Hpath Hsort} := unlift_seqE Hsort => [] [] l1 [] Hsort1 ->.
       rewrite ord0_in_map_liftF -(IHn l1 Hsort1) filter_map /=.
-      set f := (X in filter X _); suff /eq_filter -> : f =1 mem l1 by [].
+      set f := (X in filter X); suff /eq_filter -> : f =1 mem l1 by [].
       rewrite /f {f}; move=> i /=.
       rewrite mem_map; last by apply: lift_inj.
       apply/(sameP idP); apply(iffP idP); last by rewrite mem_filter => /andP [].
@@ -407,7 +407,7 @@ Lemma extractS (l : seq 'I_N) :
 Proof.
   move=> HS; rewrite /= extractIE.
   congr ([seq tnth wt i | i <- _]).
-  set f := (X in filter X _).
+  set f := (X in filter X).
   have /eq_filter -> : f =1 mem l by move => i; rewrite /f !inE.
   by rewrite mem_enum_seqE.
 Qed.
@@ -1169,8 +1169,7 @@ Qed.
 
 Lemma sorted_leqX_tabrows t i :
   is_tableau t -> i < size (tabrows t) ->
-  sorted (leqX Alph)
-         (extract (in_tuple (to_word t)) (nth set0 (tabrows t) i)).
+  sorted leqX (extract (in_tuple (to_word t)) (nth set0 (tabrows t) i)).
 Proof.
   rewrite size_tabrows.
   elim: t i => [//= | t0 t IHt] i.
@@ -1182,7 +1181,7 @@ Proof.
 Qed.
 
 Lemma ksupp_leqX_tabrowsk k t :
-  is_tableau t -> ksupp (leqX Alph) (in_tuple (to_word t)) k [set s | s \in (tabrowsk t k)].
+  is_tableau t -> ksupp leqX (in_tuple (to_word t)) k [set s | s \in (tabrowsk t k)].
 Proof.
   move=> Htab; rewrite /ksupp /tabrowsk; apply/and3P; split.
   + apply: (leq_trans (card_seq (tabrowsk t k))).
@@ -1245,8 +1244,7 @@ Qed.
 
 Lemma sorted_gtnX_tabcols t i :
   is_tableau t -> i < size (tabcols t) ->
-  sorted (gtnX Alph)
-         (extract (in_tuple (to_word t)) (nth set0 (tabcols t) i)).
+  sorted gtnX (extract (in_tuple (to_word t)) (nth set0 (tabcols t) i)).
 Proof.
   elim: t => [//= | t0 t IHt].
   rewrite [X in X -> _]/=; move=> /and4P [] _ _ /dominateP [] Hsz Hdom Htab.
@@ -1265,7 +1263,7 @@ Proof.
 Qed.
 
 Lemma ksupp_gtnX_tabcolsk k t :
-  is_tableau t -> ksupp (gtnX Alph) (in_tuple (to_word t)) k [set s | s \in (tabcolsk t k)].
+  is_tableau t -> ksupp gtnX (in_tuple (to_word t)) k [set s | s \in (tabcolsk t k)].
 Proof.
   move=> Htab; rewrite /ksupp /tabcolsk; apply/and3P; split.
   + apply: (leq_trans (card_seq (tabcolsk t k))).
@@ -1288,12 +1286,12 @@ Variable Alph : ordType.
 
 Implicit Type t : seq (seq Alph).
 
-Definition greenRow := green_rel (leqX Alph).
-Definition greenCol := green_rel (gtnX Alph).
+Definition greenRow := green_rel (@leqX Alph).
+Definition greenCol := green_rel (@gtnX Alph).
 
 Lemma size_row_extract t S T :
   is_tableau t -> T \in (tabcols t) ->
-  sorted (leqX Alph) (extract (in_tuple (to_word t)) S) ->
+  sorted leqX (extract (in_tuple (to_word t)) S) ->
   #|S :&: T| <= 1.
 Proof.
   move=> Htab HT Hleq.
@@ -1393,7 +1391,7 @@ Proof.
   apply: (@leq_trans (greenCol (in_tuple (to_word t)) k + greenCol (in_tuple t0) k)).
   - apply: green_rel_cat; by move=> a b c /= H1 H2; apply: (ltnX_trans H2 H1).
   - rewrite big_cons addnC; apply: leq_add; last exact Ht.
-    have:= (@green_rel_seq _ (gtnX Alph) _ t0 k).
+    have:= (@green_rel_seq _ gtnX _ t0 k).
     rewrite /green_rel /= => -> //=.
     * move=> a b c /=; rewrite -!leqXNgtnX; by apply: leqX_trans.
     * move: Hrow; rewrite /sorted; case: t0 => [//=| l t0].

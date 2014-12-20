@@ -421,7 +421,7 @@ Proof.
   - move=> H; by rewrite {2}(shsh_sfiltergtn Hstdu H) (shsh_sfilterleq Hstdu H) !eq_refl.
 Qed.
 
-Lemma shift_plactcongr n u v : plactcongr u v = plactcongr (shiftn n u) (shiftn n v).
+Lemma shift_plactcongr n u v : (u =Pl v) = (shiftn n u =Pl shiftn n v).
 Proof.
   apply/(sameP idP); apply(iffP idP).
   + rewrite -{2}[u](shiftuK n) -{2}[v](shiftuK n) /shiftn.
@@ -642,7 +642,7 @@ Proof.
 Qed.
 
 Lemma filter_geqX_RS (T : ordType) (w : seq T) n :
-  RS (filter (geqX _ n) w) = filter_geqX_tab n (RS w).
+  RS (filter (geqX n) w) = filter_geqX_tab n (RS w).
 Proof.
   apply/eqP.
   rewrite -(RS_tabE (is_tableau_filter_geqX _ (is_tableau_RS w))) -plactic_RS /=.
@@ -689,7 +689,7 @@ Proof.
       move: Hshsh; have := Ht1; rewrite -Hp1 RSstdE => /mem_shsh -> /andP [] /eqP {3}<- _.
       rewrite /=; case : (size p1) => [//= | n1].
         by rewrite !filter_pred0 /RS /to_word /=.
-      have /eq_filter Htmp : geqX _ n1 =1 gtn n1.+1 by []; rewrite -!Htmp {Htmp}.
+      have /eq_filter Htmp : geqX n1 =1 gtn n1.+1 by []; rewrite -!Htmp {Htmp}.
       by rewrite filter_geqX_RS filter_to_word to_word_filter_nnil.
 Qed.
 
@@ -743,7 +743,6 @@ Proof.
   - move=> [] Hsz1 Hsz2 [] t [] [] p1 p2 p Hp1 Hp2 Htmp; subst t.
     rewrite !inE -!RSinvstdE -Hp1 -Hp2 -!plactic_RS => Hsh Hcat.
     have Hstdp1 : is_std p1 by rewrite -RSstdE Hp1.
-    have Hstdp2 : is_std p2 by rewrite -RSstdE Hp2.
     have Hszp : size p1 = size u1 by rewrite Hsz1 -size_RS Hp1.
     split.
     + rewrite (invstd_catgtn u1 u2) (shsh_sfiltergtn Hstdp1 Hsh) Hszp.

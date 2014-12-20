@@ -239,7 +239,7 @@ Qed.
 Lemma in_std_ltn_size s i : i \in std s = (i < size s).
 Proof. by rewrite (mem_std _ (std_is_std s)) size_std_rec. Qed.
 
-Lemma std_all_gtnX_size s : all (gtnX nat_ordType (size s)) (std s).
+Lemma std_all_gtnX_size s : all (gtnX (size s)) (std s).
 Proof. apply/allP=> i /=; by rewrite ltnXnatE in_std_ltn_size. Qed.
 
 Lemma allLtn_std_rec s : allLtn (std s) (size s).
@@ -817,8 +817,6 @@ Implicit Type s u v w : seq Alph.
 Implicit Type p : seq nat.
 Implicit Type t : seq (seq Alph).
 
-Notation "a =Pl b" := (plactcongr a b) (at level 70).
-
 Lemma std_plact1 (u v1 w v2 : seq Alph) :
   v2 \in plact1 v1 -> std (u ++ v1 ++ w) =Pl (std (u ++ v2 ++ w)).
 Proof.
@@ -946,9 +944,8 @@ Proof.
 Qed.
 
 Lemma sorted_std_extract u (S : {set 'I_(size u)}) :
-   sorted (leqX Alph) (extractpred (in_tuple u) (mem S)) =
-   sorted (leqX nat_ordType)
-     (extractpred (in_tuple (std u)) (mem (cast_set (esym (size_std u)) S))).
+   sorted leqX (extractpred (in_tuple u) (mem S)) =
+   sorted leqX (extractpred (in_tuple (std u)) (mem (cast_set (esym (size_std u)) S))).
 Proof.
   rewrite /extractpred cast_enum /= /sorted.
   set leqI := (fun i j : 'I_(size u) => i <= j).
@@ -968,7 +965,7 @@ Proof.
   by apply: ltn_ord.
 Qed.
 
-Lemma ksupp_inj_std u k : ksupp_inj (leqX _) (leqX _) k u (std u).
+Lemma ksupp_inj_std u k : ksupp_inj leqX leqX k u (std u).
 Proof.
   rewrite /ksupp_inj /ksupp => ks /and3P [] Hsz Htriv /forallP Hall.
   exists (cast_set (esym (size_std u)) @: ks).
@@ -984,7 +981,7 @@ Proof.
     by rewrite sorted_std_extract.
 Qed.
 
-Lemma ksupp_inj_stdI u k : ksupp_inj (leqX _) (leqX _) k (std u) u.
+Lemma ksupp_inj_stdI u k : ksupp_inj leqX leqX k (std u) u.
 Proof.
   rewrite /ksupp_inj /ksupp => ks /and3P [] Hsz Htriv /forallP Hall.
   exists (cast_set (size_std u) @: ks).
