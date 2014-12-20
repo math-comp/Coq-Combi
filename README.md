@@ -1,4 +1,5 @@
 Coq-Combi
 =========
 
-Experiment on combinatorics in Coq
+The main goal is currently to get a full formal proof of the
+Littlewood-Richardson proof in Coq. Its getting closer !
