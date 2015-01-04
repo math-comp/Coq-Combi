@@ -68,7 +68,7 @@ Section SkewShape.
     if inner is inn0 :: inn then
       if outer is out0 :: out then
         out0 - inn0 :: diff_shape inn out
-      else [::] (* Wrong case *)
+      else [::] (* Unused case *)
     else outer.
 
   Definition pad (T : Type) (x : T) sz := [fun s => s ++ nseq (sz - size s) x].
@@ -597,7 +597,7 @@ Proof.
     + case: t => [//= | t0 t] /=.
       rewrite ltnS rev_cons flatten_rcons all_cat => /IHs{IHs}Hrec /andP [] /Hrec{Hrec} Hrec.
       rewrite !rev_cons !flatten_rcons !filter_cat !map_cat subSS Hrec {Hrec}.
-      rewrite filter_leq_shiftn => Hall. (* => /all_filterP Hall. *)
+      rewrite filter_leq_shiftn => Hall.
       suff -> : [seq x - sh | x <- s0 & sh <= x] = [::] by rewrite cat0s.
       elim: s0 Hall {t s t0} => [//= | l0 s IHs] /= /andP [] H /IHs.
       by rewrite leqNgt H.
@@ -741,30 +741,20 @@ Proof.
   - by rewrite diff_shape_pad0.
 Qed.
 
-End EqInvSkewTab.
-
-(*
-Lemma skew_reshape_stdK (T : ordType) inner (t : seq (seq T)) :
-  is_skew_tableau inner
-                  (skew_reshape inner (outer_shape inner (shape t)) (std (to_word t))) ->
-  is_skew_tableau inner t.
+Theorem is_skew_tableau_reshape_std inner outer T  (u : seq T) :
+  size inner <= size outer ->
+  size u = sumn (diff_shape inner outer) ->
+  is_skew_tableau inner (skew_reshape inner outer u) =
+  is_skew_tableau inner (skew_reshape inner outer (std u)).
 Proof.
-  rewrite /skew_reshape /to_word.
-  elim: inner => [| inn0 inn IHinn] /=.
-    elim: t => [//= | t0 t IHt] /=.
-    rewrite addn0 subn0 !rev_cons flatten_rcons.
-    rewrite reshape_rcons; last by rewrite size_std size_cat size_flatten shape_rev.
-    rewrite rev_rcons /= addn0 subn0 => /and4P [].
-    rewrite size_drop size_std size_cat size_flatten shape_rev addKn => -> /=.
-    rewrite -is_row_stdE -shape_rev -size_flatten std_drop_std is_row_stdE => -> /=.
-    move=> Hdom Htab; apply /andP; split.
+  move=> Hin Hsize.
+  apply/(sameP idP); apply(iffP idP); apply eq_inv_is_skew_tableau_reshape => //=.
+  - apply eq_inv_sym; by apply eq_inv_std.
+  - by rewrite size_std.
+  - by apply eq_inv_std.
+Qed.
 
-    - apply IHt.
-    rewrite drop_cat.
-
-    case: outer => [//= | out0 out] /=.
-    rewrite rev_cons /= !reshape_rcons. rev_rcons.
-*)
+End EqInvSkewTab.
 
 
 Section LR.
@@ -775,9 +765,12 @@ Variables (P1 : intpartn d1) (P2 : intpartn d2).
 Lemma size_tab_P1 : d1 = size_tab (RS (std (hyper_yam P1))).
 Proof. by rewrite size_RS size_std size_hyper_yam intpartn_sumn. Qed.
 
+Lemma size_yam (y : yamsh_finType (intpartnP P2)) : size y = sumn P2.
+Proof. by rewrite -shape_rowseq_eq_size shape_yamsh. Qed.
+
 Lemma sfilterleq_LR_supportP Q :
   Q \in LR_support (hyper_stdtab P1) (hyper_stdtab P2) ->
-  exists y, is_yam_of_shape P2 y /\ std y = (sfilterleq d1 (to_word Q)).
+  exists y : yamsh_finType (intpartnP P2), std y = (sfilterleq d1 (to_word Q)).
 Proof.
   rewrite /LR_support inE.
   rewrite -LRTripleE; try apply stdtabnP.
@@ -790,7 +783,7 @@ Proof.
   rewrite -(size_RS p1) Hp1.
   have := hyper_stdtabP P1 => /andP [] _ /eqP -> /eqP Hsfp1 /eqP Hsfp2.
   suff : sfilterleq d1 (to_word Q) =Pl std (hyper_yam P2).
-    move/(plact_from_yam (intpartnP P2)) => [] yam Hyam; by exists yam.
+    move/(plact_from_yam (intpartnP P2)) => [] yam Hyam; by exists (YamSh Hyam).
   rewrite -Hp plactic_RS -Hp2 -Hsfp2 eq_sym -plactic_RS.
   rewrite /sfilterleq /=.
   apply: plact_map_in_incr.
@@ -833,6 +826,9 @@ Definition LRyam_coeff := #|LRyam_set|.
 
 Hypothesis Hincl : included P1 P.
 
+Lemma sumn_diffE : sumn (diff_shape P1 P) = sumn P2.
+Proof. by rewrite (sumn_diff_shape Hincl) !intpartn_sumn addKn. Qed.
+
 Lemma size_leq_skew_reshape (y : seq nat) :
   size (RS (std (hyper_yam P1))) <= size (skew_reshape P1 P y).
 Proof.
@@ -850,23 +846,20 @@ Lemma predLRTripleFast_bijLRyam (yam : yamsh P2) :
   is_skew_tableau P1 (skew_reshape P1 P yam) ->
   predLRTripleFast (hyper_stdtab P1) (hyper_stdtab P2) (bijLRyam yam).
 Proof.
-  case: yam => y Hyam /= Hskew.
-  apply/hasP; exists (std y).
+  move=> Hskew.
+  apply/hasP; exists (std yam).
     rewrite RSclassE; last by apply is_tableau_RS.
     rewrite -plactic_RS.
     apply std_plact.
-    move: Hyam; rewrite /is_yam_of_shape => /andP [] Hyam /eqP <-.
-    by apply yam_plactic_hyper.
-  have Hstd1 : is_std (to_word (RS (std (hyper_yam P1)))).
+    rewrite -{2}(shape_yamsh yam).
+    apply yam_plactic_hyper; by apply yamshP.
+  have Hstd1 : is_std (to_word (hyper_stdtab P1)).
     have /= := hyper_stdtabP P1 => /andP [].
     by rewrite /is_stdtab => /andP [].
-  rewrite {2}size_tab_P1.
-  rewrite -{2}[std y](to_word_skew_reshape Hincl); first last.
-    rewrite size_std sumn_diff_shape; last by apply Hincl.
-    rewrite !intpartn_sumn addKn -shape_rowseq_eq_size.
-    move: Hyam; rewrite /is_yam_of_shape => /andP [] _ /eqP ->.
-    by rewrite intpartn_sumn.
-  apply join_stdtab_in_shuffle.
+  rewrite -[std yam](to_word_skew_reshape Hincl); first last.
+    by rewrite size_std size_yam sumn_diffE.
+  rewrite /= {2}size_tab_P1.
+  apply: join_stdtab_in_shuffle.
   - rewrite RSstdE; by apply std_is_std.
   - by apply size_leq_skew_reshape.
 Qed.
@@ -875,12 +868,8 @@ Lemma bijLRyamP (yam : yamsh P2) :
   is_skew_tableau P1 (skew_reshape P1 P yam) ->
   is_stdtab_of_n (d1 + d2) (bijLRyam yam).
 Proof.
-  case Hy: yam => [y Hyam] Hskew /=.
+  move=> Hskew /=.
   rewrite /is_stdtab.
-  have Hszy : size y = d2.
-    rewrite -shape_rowseq_eq_size.
-    have:= Hyam; rewrite /is_yam_of_shape => /andP [] _ /eqP ->.
-    by rewrite intpartn_sumn.
   set sz := size_tab _.
   have {sz} -> : sz = d1 + d2.
     rewrite /sz{sz}  size_join_tab.
@@ -889,7 +878,7 @@ Proof.
       have /eq_map -> : (size \o shiftn d1) =1 size by move=> s /=; rewrite size_map.
       rewrite -/(shape _) (shape_skew_reshape Hincl).
       * by rewrite (sumn_diff_shape Hincl) !intpartn_sumn addKn.
-      * by rewrite size_std (sumn_diff_shape Hincl) !intpartn_sumn addKn.
+      * by rewrite size_std size_yam sumn_diffE.
     + rewrite size_map; by apply size_leq_skew_reshape.
   rewrite eq_refl andbT.
   apply/andP; split.
@@ -898,11 +887,9 @@ Proof.
     rewrite RSstdE; by apply std_is_std.
   - rewrite shape_RS_std shape_RS_yam; last by apply hyper_yamP; apply intpartnP.
     rewrite (shape_rowseq_hyper_yam (intpartnP P1)).
-    apply (eq_inv_is_skew_tableau_reshape (u1 := y)).
-    + by apply size_included.
-    + by apply eq_inv_std.
-    + by rewrite Hszy (sumn_diff_shape Hincl) !intpartn_sumn addKn.
+    rewrite -(is_skew_tableau_reshape_std (size_included Hincl)).
     + exact Hskew.
+    + by rewrite size_yam sumn_diffE.
   - have /= /hasP [] := predLRTripleFast_bijLRyam Hskew => z.
     set image := to_word _.
     rewrite (RSclassE _ (is_tableau_RS _)) -plactic_RS => /plactcongr_homog Hz.
@@ -969,9 +956,7 @@ Proof.
     rewrite /t{t} /= -map_comp.
     have /eq_map -> : size \o shiftn d1 =1 size by move=> i /=; rewrite size_map.
     rewrite -/(shape _) shape_skew_reshape //=.
-    rewrite size_std sumn_diff_shape; last by apply Hincl.
-    rewrite !intpartn_sumn addKn -shape_rowseq_eq_size.
-    by rewrite shape_yamsh intpartn_sumn.
+    by rewrite size_std size_yam sumn_diffE.
   rewrite -(size_diff_shape P1 P).
   rewrite -/(outer_shape P1 (diff_shape P1 P)).
   by apply diff_shapeK.
@@ -1016,7 +1001,7 @@ Proof.
   have:= HLR; rewrite inE /= => /hasP [] p2 /Hall{Hall} /Sch_plact Hpl Hshsh.
   have := hyper_stdtabP P1 => /=; rewrite /is_stdtab => /andP [] /andP [] _ Hstd /= /eqP Hsz.
   have := (shsh_sfilterleq Hstd Hshsh).
-  rewrite -size_to_word Hsz /= {Hstd Hsz} => (* H1 *) Hp2; subst p2.
+  rewrite -size_to_word Hsz /= {Hstd Hsz} => Hp2; subst p2.
   apply (eq_inv_is_skew_tableau_reshape (u1 := [seq x <- to_word Q | d1 <= x])).
   - by apply size_included.
   - apply/eq_invP; split; first by rewrite size_map.
@@ -1028,8 +1013,8 @@ Proof.
     have:= mem_nth Z Hj; by rewrite mem_filter => /andP [].
   - move: Hpl => /plactcongr_homog/perm_eq_size.
     rewrite size_map => ->.
-    rewrite size_std (sumn_diff_shape Hincl) !intpartn_sumn addKn.
-    by rewrite -shape_rowseq_eq_size (shape_rowseq_hyper_yam (intpartnP P2)) intpartn_sumn.
+    rewrite size_std sumn_diffE -shape_rowseq_eq_size shape_rowseq_hyper_yam //=.
+    by apply intpartnP.
   - rewrite (filterleq_LR_support HLRtab).
     have -> : val P1 = shape (filter_gtnX_tab d1 Q).
       by rewrite Hfilter -{1}(shaped_hyper_stdtabP P1) /=.
@@ -1042,17 +1027,12 @@ Lemma bijLR_surj Q :
   exists2 yam, yam \in LRyam_set & bijLR yam = Q.
 Proof.
   move=> HLRtab; have := HLRtab; rewrite /LRtab_set inE => /andP [] HLR /eqP Hshape.
-  have:= HLR => /sfilterleq_LR_supportP [] y [] Hy Hmap.
+  have:= HLR => /sfilterleq_LR_supportP [] y Hmap.
   have Hskew : is_skew_tableau P1 (skew_reshape P1 P y).
-    apply (eq_inv_is_skew_tableau_reshape (u1 := std y)).
-    + by apply size_included.
-    + apply eq_inv_sym; by apply eq_inv_std.
-    + rewrite size_std (sumn_diff_shape Hincl) !intpartn_sumn addKn.
-      rewrite -shape_rowseq_eq_size.
-      have:= Hy; rewrite /is_yam_of_shape => /andP [] _ /eqP ->.
-      by rewrite intpartn_sumn.
+    rewrite (is_skew_tableau_reshape_std (size_included Hincl)).
     + rewrite Hmap; by apply sfilterleq_LR_support_skew.
-  exists (YamSh Hy).
+    + by rewrite size_yam sumn_diffE.
+  exists y.
   - rewrite inE /=; exact Hskew.
   - rewrite /bijLR /=.
     case (boolP (is_skew_tableau P1 (skew_reshape P1 P y))) => /=; last by rewrite Hskew.
@@ -1082,23 +1062,19 @@ Proof.
   pose f := [fun s : seq nat =>
                to_word (join_tab (hyper_stdtab P1) (map (shiftn d1) (skew_reshape P1 P s)))].
   have {H} H : f (std x) = f (std y) by rewrite /= H.
-  have invf s : size s = sumn (diff_shape P1 P) -> sfilterleq d1 (f s) = s.
-    move => Hsize /=.
-    have /= := join_stdtab_in_shuffle (stdtabnP (hyper_stdtab P1)) (size_leq_skew_reshape s).
+  have invf (s : yamsh_finType (intpartnP P2)) : std s = sfilterleq d1 (f (std s)).
+    have /= := join_stdtab_in_shuffle
+                 (stdtabnP (hyper_stdtab P1)) (size_leq_skew_reshape (std s)).
     rewrite /size_tab.
     have := erefl (val P1); rewrite -{2}(shaped_hyper_stdtabP P1) /= => <-.
     rewrite intpartn_sumn.
     have := stdtabnP (hyper_stdtab P1); rewrite /is_stdtab => /andP [] _ /=.
     move /shsh_sfilterleq => HH/HH{HH}.
-    rewrite -size_to_word -size_tab_P1 /sfilterleq /= => <-.
-    rewrite to_word_skew_reshape //=.
+    rewrite -size_to_word -size_tab_P1 /sfilterleq /=.
+    by rewrite to_word_skew_reshape //= size_std size_yam sumn_diffE.
   apply perm_eq_stdE.
   - by rewrite perm_eq_shape_rowseq !shape_yamsh.
-  - have bla (z : yamsh_finType (intpartnP P2)) : size (std z) = sumn (diff_shape P1 P).
-      rewrite size_std sumn_diff_shape; last by apply Hincl.
-      rewrite -shape_rowseq_eq_size shape_yamsh.
-      by rewrite !intpartn_sumn addKn.
-    by rewrite -(invf _ (bla x)) -(invf _ (bla y)) H.
+  - by rewrite (invf x) (invf y) H.
 Qed.
 
 Theorem LR_coeff_yamP : LRtab_coeff P1 P2 P = LRyam_coeff.

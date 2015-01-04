@@ -81,11 +81,8 @@ Proof.
 Qed.
 
 (* *)
-Lemma count_flatten (T : Type) (s : seq (seq T)) P :
-  count P (flatten s) = sumn (map (count P) s).
-Proof. elim: s => [//= | s0 s IHs] /=; by rewrite count_cat IHs. Qed.
 
-Require Import bigop.
+Require Import bigop vectNK.
 
 (* Tentative proof of associativity of shuffle *)
 Lemma sumnE s : \sum_(i <- s) i = sumn s.

@@ -1014,7 +1014,7 @@ Proof.
 Qed.
 
 
-Lemma tabcols_cons:
+Lemma tabcols_cons :
   tabcols (t0 :: t) =
     [seq rinj_rec i |: (linj_rec @: (nth set0 (tabcols t) i)) | i <- enum 'I_(size t0)].
 Proof.
@@ -1035,7 +1035,7 @@ Proof.
     by rewrite nth_default //= !imset0 -(rcast_com (Ordinal Hi)).
 Qed.
 
-Lemma size_tabcols_cons: size (tabcols (t0 :: t)) = size t0.
+Lemma size_tabcols_cons : size (tabcols (t0 :: t)) = size t0.
 Proof. by rewrite tabcols_cons /= size_map size_enum_ord. Qed.
 
 Lemma extract_tabcols_rec i :

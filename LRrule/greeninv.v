@@ -969,7 +969,7 @@ Proof.
     by apply: (ltn_trans (ltnSn _)).
 Qed.
 
-Lemma extract_Sa:
+Lemma extract_Sa :
   extract (in_tuple x) (S :&: [set j : 'I_(size x) | j <= posa]) =
   rcons (extract (in_tuple x) (S :&: [set j : 'I_(size x) | j < posa])) a.
 Proof.
@@ -988,7 +988,7 @@ Proof.
     have:= leq_trans H2 H1; by rewrite ltnn.
 Qed.
 
-Lemma extract_cS:
+Lemma extract_cS :
   extract (in_tuple x) (S :&: [set j : 'I_(size x) | j >= posc]) =
   c :: extract (in_tuple x) (S :&: [set j : 'I_(size x) | j > posc]).
 Proof.
@@ -1007,7 +1007,7 @@ Proof.
     by move/ltnW ->.
 Qed.
 
-Lemma extract_Tb:
+Lemma extract_Tb :
   extract (in_tuple x) (T :&: [set j : 'I_(size x) | j <= posb]) =
   rcons (extract (in_tuple x) (T :&: [set j : 'I_(size x) | j < posb])) b.
 Proof.
@@ -1026,7 +1026,7 @@ Proof.
     have:= leq_trans H2 H1; by rewrite ltnn.
 Qed.
 
-Lemma extract_bT:
+Lemma extract_bT :
   extract (in_tuple x) (T :&: [set j : 'I_(size x) | j >= posb]) =
   b :: extract (in_tuple x) (T :&: [set j : 'I_(size x) | j > posc]).
 Proof.
