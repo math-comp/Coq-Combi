@@ -904,53 +904,60 @@ Section Tableaux.
   Lemma to_word_cons r t : to_word (r :: t) = to_word t ++ r.
   Proof. by rewrite /to_word rev_cons flatten_rcons. Qed.
 
-Lemma filter_geqX_row r n :
-  is_row r -> filter (geqX n) r = take (count (geqX n) r) r.
+Lemma filter_gtnX_row r n :
+  is_row r -> filter (gtnX n) r = take (count (gtnX n) r) r.
 Proof.
   elim: r => [//= | r0 r IHr] Hrow /=.
-  case: (leqXP r0 n) => Hr0.
+  case: (ltnXP r0 n) => Hr0.
   - by rewrite add1n (IHr (is_row_consK Hrow)).
-  - rewrite add0n; have Hcount : count (geqX n) r = 0.
+  - rewrite add0n; have Hcount : count (gtnX n) r = 0.
       elim: r r0 Hr0 Hrow {IHr} => [//= | r1 r /= IHr] r0 Hr0 /andP [] Hr0r1 Hpath.
-      have Hr1 := ltnX_leqX_trans Hr0 Hr0r1.
-      by rewrite leqXNgtnX Hr1 (IHr r1 Hr1 Hpath).
+      have Hr1 := leqX_trans Hr0 Hr0r1.
+      by rewrite ltnXNgeqX Hr1 (IHr r1 Hr1 Hpath).
     rewrite Hcount.
     by apply/nilP; rewrite /nilp size_filter Hcount.
 Qed.
 
-Lemma filter_geqX_dominate r1 r0 n :
-    is_row r0 -> is_row r1 -> dominate r1 r0 ->
-    dominate (filter (geqX n) r1) (filter (geqX n) r0).
+Lemma count_gtnX_dominate r1 r0 n :
+  dominate r1 r0 -> (count (gtnX n) r1) <= (count (gtnX n) r0).
 Proof.
-  move=> Hrow0 Hrow1 /dominateP [] Hsz Hdom.
-  have Hsize : (count (geqX n) r1) <= (count (geqX n) r0).
-    rewrite -[r0](mkseq_nth Z) -[r1](mkseq_nth Z) /mkseq !count_map.
-    rewrite -(subnKC Hsz).
-    rewrite iota_add count_cat.
-    set s0 := (X in X + _).
-    apply (@leq_trans s0); last by apply leq_addr.
-    rewrite /s0 {s0} -!size_filter.
-    set f1 := (X in filter X _); set f0 := (X in _ <= size (filter X _)).
-    rewrite (eq_in_filter (a1 := f1) (a2 := predI f1 (gtn (size r1)))); first last.
-      move=> i; rewrite mem_iota /= add0n => ->; by rewrite andbT.
-    rewrite (eq_in_filter (a1 := f0) (a2 := predI f0 (gtn (size r1)))); first last.
-      move=> i; rewrite mem_iota /= add0n => ->; by rewrite andbT.
-    rewrite !size_filter; apply sub_count => i /=.
-    rewrite /f1 /f0 {f1 f0} /= => /andP [] Hn Hi;
-    rewrite Hi andbT; apply ltnXW.
-    by apply (ltnX_leqX_trans (Hdom i Hi) Hn).
+  move=> /dominateP [] Hsz Hdom.
+  rewrite -[r0](mkseq_nth Z) -[r1](mkseq_nth Z) /mkseq !count_map.
+  rewrite -(subnKC Hsz).
+  rewrite iota_add count_cat.
+  set s0 := (X in X + _).
+  apply (@leq_trans s0); last by apply leq_addr.
+  rewrite /s0 {s0} -!size_filter.
+  set f1 := (X in filter X ); set f0 := (X in _ <= size (filter X _)).
+  rewrite (eq_in_filter (a1 := f1) (a2 := predI f1 (gtn (size r1)))); first last.
+    move=> i; rewrite mem_iota /= add0n => ->; by rewrite andbT.
+  rewrite (eq_in_filter (a1 := f0) (a2 := predI f0 (gtn (size r1)))); first last.
+    move=> i; rewrite mem_iota /= add0n => ->; by rewrite andbT.
+  rewrite !size_filter; apply sub_count => i /=.
+  rewrite /f1 /f0 {f1 f0} /= => /andP [] Hn Hi.
+  rewrite Hi andbT.
+  by apply (ltnX_trans (Hdom i Hi) Hn).
+Qed.
+
+Lemma filter_gtnX_dominate r1 r0 n :
+    is_row r0 -> is_row r1 -> dominate r1 r0 ->
+    dominate (filter (gtnX n) r1) (filter (gtnX n) r0).
+Proof.
+  move=> Hrow0 Hrow1 Hdom.
+  have Hsize := count_gtnX_dominate n Hdom.
+  move: Hdom => /dominateP [] Hsz Hdom.
   apply/dominateP; rewrite !size_filter.
   split; first exact Hsize.
   move=> i Hi.
-  rewrite (filter_geqX_row _ Hrow0) (filter_geqX_row _ Hrow1) !nth_take.
+  rewrite (filter_gtnX_row _ Hrow0) (filter_gtnX_row _ Hrow1) !nth_take.
   - apply Hdom; apply (leq_trans Hi); by apply count_size.
   - exact Hi.
   - by apply (leq_trans Hi).
 Qed.
 
-Definition filter_geqX_tab n :=
+Definition filter_gtnX_tab n :=
   [fun t : (seq (seq T)) => filter (fun r => r != [::])
-                                   [seq [seq x <- i | geqX n x] | i <- t]].
+                                   [seq [seq x <- i | gtnX n x] | i <- t]].
 
 Lemma to_word_filter_nnil t : to_word (filter (fun r => r != [::]) t) = to_word t.
 Proof.
@@ -966,27 +973,27 @@ Proof.
     by rewrite !rev_cons !flatten_rcons -IHt filter_cat.
 Qed.
 
-Lemma head_filter_geqX_tab n t :
+Lemma head_filter_gtnX_tab n t :
   is_tableau t ->
-  head [::] (filter_geqX_tab n t) = [seq x <- head [::] t | (x <= n)%Ord].
+  head [::] (filter_gtnX_tab n t) = [seq x <- head [::] t | (x < n)%Ord].
 Proof.
   elim: t => [//= | t0 t /= IHt] /and4P [] Hnnil0 Hrow0 Hdom Htab.
-  case: (altP ([seq x <- t0 | (x <= n)%Ord] =P [::])) => Ht0 //=.
+  case: (altP ([seq x <- t0 | (x < n)%Ord] =P [::])) => Ht0 //=.
   rewrite (IHt Htab) Ht0 {IHt}.
   case: t Hdom Htab => [//= | t1 t] /= Hdom /and3P [] Hnnil1 Hrow1 _.
-  have /dominateP := filter_geqX_dominate n Hrow0 Hrow1 Hdom => [] [].
+  have /dominateP := filter_gtnX_dominate n Hrow0 Hrow1 Hdom => [] [].
   by rewrite Ht0 /= leqn0 => /nilP ->.
 Qed.
 
-Lemma is_tableau_filter_geqX t n : is_tableau t -> is_tableau (filter_geqX_tab n t).
+Lemma is_tableau_filter_gtnX t n : is_tableau t -> is_tableau (filter_gtnX_tab n t).
 Proof.
   elim: t => [//= | t0 t /= IHt] /and4P [] Hnnil Hrow Hdom Htab.
-  case: (altP ([seq x <- t0 | (x <= n)%Ord] =P [::])) => Ht0 /=; first by apply IHt.
+  case: (altP ([seq x <- t0 | (x < n)%Ord] =P [::])) => Ht0 /=; first by apply IHt.
   rewrite Ht0 /=; apply/and3P; split; last by apply IHt.
   - apply sorted_filter; last exact Hrow.
     move=> a b c; by apply leqX_trans.
-  - rewrite (head_filter_geqX_tab _ Htab).
-    apply filter_geqX_dominate => //=.
+  - rewrite (head_filter_gtnX_tab _ Htab).
+    apply filter_gtnX_dominate => //=.
     move: Htab; by case t => [//= | t1 t'] /= /and3P [].
 Qed.
 
@@ -1526,6 +1533,24 @@ Qed.
 
 Lemma mem_RSclass w : w \in (RSclass (RS w)).
 Proof. apply negbNE; apply/count_memPn. by rewrite RSclass_countE. Qed.
+
+Lemma RSclassE tab w :
+  is_tableau tab -> w \in RSclass tab = (RS w == tab).
+Proof.
+  move=> Htab /=.
+  apply/(sameP idP); apply(iffP idP).
+  - move/eqP => Hw.
+    apply/mapP; exists (RSmap w).2.
+    + apply/count_memPn.
+      rewrite (list_yamsh_countE (is_part_sht Htab)) //=.
+      rewrite /is_yam_of_shape is_yam_RSmap2 /=.
+      by rewrite -shape_RSmap_eq RSmapE Hw.
+    + rewrite -Hw -RSmapE.
+      have -> : ((RSmap w).1, (RSmap w).2) = RSmap w by case RSmap.
+      by rewrite RS_bij_1.
+  - have /allP Hall := RSclassP Htab.
+    by move/Hall.
+Qed.
 
 End Classes.
 
