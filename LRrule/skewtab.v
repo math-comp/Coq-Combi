@@ -1194,16 +1194,4 @@ Qed.
 End LR.
 
 
-(*
-Eval compute in is_skew_tableau _ [:: 1] [:: [:: 2] ; [:: 1; 3]].
-Eval compute in is_skew_tableau _ [:: 1] [:: [:: 3] ; [:: 1; 2]].
-
-Eval compute in diff_shape [:: 2; 1] [:: 3; 2; 1].
-Eval compute in LR_coeff_compute [:: 2; 1] [:: 2; 1] [:: 3; 2; 1].
-Eval compute in LR_coeff_compute [:: 3; 3; 1] [:: 4; 2; 1] [:: 5; 4; 3; 2].
-Eval compute in LR_coeff_compute [:: 4; 3; 1] [:: 4; 3; 2; 1] [:: 7; 5; 4; 2].
-Eval compute in LR_coeff_compute [:: 4; 3; 2; 1] [:: 4; 3; 1] [:: 7; 5; 4; 2].
-*)
-
-
 

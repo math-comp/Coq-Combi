@@ -897,26 +897,6 @@ Proof.
     by rewrite -(Htrans _ _ H); apply: Hrefl.
 Qed.
 
-(*
-Lemma is_tableau_reshape_std t :
- is_tableau t -> is_tableau (reshape (rev (shape t)) (std (to_word t))).
-Proof.
-    usefull ????
-Qed.
-
-Lemma is_tableau_std t : is_tableau t -> std (to_word t) = to_word (RS (std (to_word t))).
-Proof.
-  usefull ????
-Qed.
-
-Theorem std_RS w : to_word (RS (std w)) = std (to_word (RS w)).
-Proof.
-  rewrite (is_tableau_std (is_tableau_RS w)); congr (to_word _).
-  apply/eqP; rewrite -plactic_RS.
-  apply: std_plact; by apply: congr_RS.
-Qed.
-*)
-
 Lemma cast_enum u (S : {set 'I_(size u)}) :
   enum (mem (cast_set (esym (size_std u)) S)) =
   map (cast_ord (esym (size_std u))) (enum (mem S)).

@@ -894,12 +894,6 @@ Proof.
     by case: (ltnP y0 (size (shape_rowseq y))).
 Qed.
 
-(* TESTS:
-Eval compute in list_yamsh [:: 3; 2; 1; 1].
-Eval compute in out_corners [:: 2; 1].
-Eval compute in [seq decr_nth [:: 2; 1] i | i <- out_corners [:: 2; 1]].
-*)
-
 Definition list_yamn n : seq (seq nat) :=
   flatten [seq list_yamsh sh | sh <- list_partn n].
 

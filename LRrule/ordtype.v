@@ -445,24 +445,6 @@ Proof. by rewrite /allLeq all_cat. Qed.
 Lemma allLtn_catE u v a : allLtn (u ++ v) a = allLtn u a && allLtn v a.
 Proof. by rewrite /allLtn all_cat. Qed.
 
-(*
-
-Lemma allLeq_cat u v a : allLeq u a -> allLeq v a -> allLeq (u ++ v) a.
-Proof. by rewrite /allLeq all_cat => -> ->. Qed.
-Lemma allLtn_cat u v a : allLtn u a -> allLtn v a -> allLtn (u ++ v) a.
-Proof. by rewrite /allLtn all_cat => -> ->. Qed.
-
-Lemma allLeq_catl u v a : allLeq (u ++ v) a -> allLeq u a.
-Proof. by rewrite /allLeq all_cat => /andP []. Qed.
-Lemma allLtn_catl u v a : allLtn (u ++ v) a -> allLtn u a.
-Proof. by rewrite /allLtn all_cat => /andP []. Qed.
-
-Lemma allLeq_catr u v a : allLeq (u ++ v) a -> allLeq v a.
-Proof. by rewrite /allLeq all_cat => /andP []. Qed.
-Lemma allLtn_catr u v a : allLtn (u ++ v) a -> allLtn v a.
-Proof. by rewrite /allLtn all_cat => /andP []. Qed.
-*)
-
 Lemma maxL_perm_eq a u b v : perm_eq (a :: u) (b :: v) -> maxL a u = maxL b v.
 Proof.
   move/perm_eqP => Hperm.

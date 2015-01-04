@@ -33,32 +33,8 @@ Proof.
   by rewrite -Hperm => /Hall.
 Qed.
 
-Lemma perm_eq_map_cons (T : eqType) (s t : seq (seq T)) (a : T) :
-  perm_eq [seq a :: x | x <- s] [seq a :: x | x <- t] = perm_eq s t.
-Proof.
-  apply/(sameP idP); apply(iffP idP) => /perm_eqP Hperm; apply/perm_eqP => P.
-  - rewrite !count_map /=; by apply: Hperm.
-  - have:= Hperm (preim behead P).
-    have HP : P =1 (preim (fun s => (a :: s)) (preim behead P)) by [].
-    by rewrite !count_map (eq_count HP).
-Qed.
-
 Lemma flatten_seq1 (T : eqType) (s : seq T) : flatten [seq [:: x] | x <- s] = s.
 Proof. by elim: s => [//= | s0 s /= ->]. Qed.
-
-Lemma perm_eq_map (T1 T2 : eqType) (f : T1 -> T2) (u v : seq T1) :
-  perm_eq u v -> perm_eq (map f u) (map f v).
-Proof.
-  case: u => [/= | u0 u];
-    first by case: v => [//= | v0 v]; rewrite perm_eq_nilF.
-  move /(perm_eq_iotaP u0) => [] perm Hperm Hu.
-  apply/(perm_eq_iotaP (f u0)); exists perm; first by rewrite size_map.
-  rewrite Hu -!map_comp.
-  apply eq_in_map => i /= Hi.
-  rewrite (nth_map u0) //=.
-  move: Hperm => /perm_eq_mem Hperm.
-  move: Hi; by rewrite Hperm mem_iota /= add0n.
-Qed.
 
 Section Defs.
 
@@ -68,6 +44,7 @@ Let word := seq Alph.
 Implicit Type a b c : Alph.
 Implicit Type u v w : word.
 
+(* Well founded recursive definition of shuffle (a :: u) v *)
 Fixpoint shuffle_from_rec a u shuffu' v {struct v} :=
   if v is b :: v' then
     [seq a :: w | w <- shuffu' v] ++ [seq b :: w | w <- shuffle_from_rec a u shuffu' v']
@@ -98,39 +75,43 @@ Proof.
   set sc := (X in perm_eq _ (X ++ _)).
   apply: (@perm_eq_trans _ (sc ++ sa)).
   + rewrite perm_cat2r /sb /sc /= {sa sb sc}.
-    rewrite perm_eq_map_cons; by apply: IHv.
+    apply: perm_map; by apply: IHv.
   + rewrite perm_cat2l /sa /= {sa sb sc}.
-    rewrite perm_eq_map_cons; by apply: IHu.
+    apply: perm_map; by apply: IHu.
 Qed.
 
-(*
+(* *)
 Lemma count_flatten (T : Type) (s : seq (seq T)) P :
   count P (flatten s) = sumn (map (count P) s).
-Proof.
+Proof. elim: s => [//= | s0 s IHs] /=; by rewrite count_cat IHs. Qed.
 
+Require Import bigop.
+
+(* Tentative proof of associativity of shuffle *)
+Lemma sumnE s : \sum_(i <- s) i = sumn s.
+Proof.
+  elim: s => [//= | s0 s IHs] /=; first by rewrite big_nil.
+  by rewrite big_cons IHs.
 Qed.
+
+Lemma perm_sumn l1 l2 : perm_eq l1 l2 -> sumn l1 = sumn l2.
+Proof. rewrite -!sumnE; by apply eq_big_perm. Qed.
 
 Lemma shuffle_perm_eq u l1 l2 :
   perm_eq l1 l2 ->
   perm_eq (flatten [seq shuffle u x | x <- l1])
           (flatten [seq shuffle u x | x <- l2]).
 Proof.
-  move /(perm_eq_map (shuffle u)).
+  move /(perm_map (shuffle u)).
   move: [seq shuffle u i | i <- l1] => L1 {l1}.
   move: [seq shuffle u i | i <- l2] => L2 {l2}.
   move=> Hperm; apply/perm_eqP => P.
-  
-  move /(perm_eq_iotaP [::]) => [] perm Hperm -> {L1}.
-  
-  apply/(perm_eq_iotaP [::]); exists perm. first by rewrite size_map.
-
-  elim: L1 L2 => [//= | a1 l1 IHl1] [/= | a2 l2] //=.
-  - by rewrite perm_eq_nilF.
-  - by rewrite perm_eq_sym perm_eq_nilF.
-  + 
-
+  rewrite !count_flatten.
+  apply: perm_sumn.
+  by apply: perm_map.
 Qed.
 
+(*
 Lemma shuffleA u v w :
   perm_eq (flatten [seq shuffle u x | x <- shuffle v w])
           (flatten [seq shuffle x w | x <- shuffle u v]).
@@ -140,14 +121,10 @@ Proof.
   elim: w => [//= | c w IHw] /=.
     rewrite (eq_map (f2 := (fun x => [:: x]))); last by move=> i /=; rewrite shuffle_nil.
     by rewrite cats0 flatten_seq1.
-  move: IHw.
-  have /= := IHv (c :: w).
-  have /= := IHu (b :: v) (c :: w).
-  
-
-(*  first by rewrite shuffle_nil perm_eq_refl. *)
+  have {IHv} /= IHv := IHv (c :: w).
+  have {IHu} /= IHu := IHu (b :: v) (c :: w).
+  apply (perm_eq_trans IHu).
 Qed.
-
 *)
 
 Lemma perm_eq_shuffle u v : all (perm_eq (u ++ v)) (shuffle u v).
@@ -355,7 +332,7 @@ Lemma perm_eq_shiftn_std n s :
   is_std s -> perm_eq (shiftn n s) (iota n (size s)).
 Proof.
   rewrite /is_std /shiftn -{2}(addn0 n) iota_addl.
-  by apply perm_eq_map.
+  by apply perm_map.
 Qed.
 
 Definition shsh u v := shuffle u (shiftn (size u) v).
@@ -372,7 +349,7 @@ Proof.
   rewrite iota_add.
   apply: (@perm_eq_trans _ (u ++ iota (size u) (size v))); last by rewrite perm_cat2r.
   rewrite perm_cat2l -{2}[size u]addn0 iota_addl.
-  by apply: perm_eq_map.
+  by apply: perm_map.
 Qed.
 
 Lemma pred0_std u v : is_std u -> [predI u & shiftn (size u) v] =i pred0.

@@ -363,39 +363,3 @@ Proof.
       have -> : (RSmap y).2 = auxbij Hsh y by [].
       by rewrite f_invF.
 Qed.
-
-
-(*
-Fixpoint subs_eval eval i :=
-  if eval is e0 :: ev then
-        if i < e0 then 0
-      else (subs_eval ev (i - e0)).+1
-    else 0 (* Unused case *).
-
-Lemma is_yam_of_shape_RS_hyper P s :
-  RS s = (stdtab_of_yam (hyper_yam P)) -> is_yam_of_shape P (map (subs_eval P) s).
-*)
-
-(*
-Lemma is_tableau_take (T : ordType) (t : seq (seq T)) n :
-  is_tableau t -> is_tableau (take n t).
-Proof.
-  elim: n t => [//= | n IHn] /= [//= | t0 t] //=.
-  move=> /and4P [] -> -> Hdom /IHn {IHn} ->; rewrite /= andbT.
-  move: Hdom; case: t => [//=| t1 t] /=; by case: n.
-Qed.
-
-Lemma size_shape T (t : seq (seq T)) : size (shape t) = size t.
-Proof. by rewrite size_map. Qed.
-
-Lemma nth_shape  T (t : seq (seq T)) n : (nth 0 (shape t) n) = size (nth [::] t n).
-Proof. rewrite /shape; by elim: n t => [//= | n IHn] /= [//= | t0 t] //=. Qed.
-
-Lemma tab_row_nnil (T : ordType) (t : seq (seq T)) n :
-  is_tableau t -> n < size t -> nth [::] t n != [::].
-Proof.
-  elim: t n => [//= | t0 t IHt] n /= /and4P [] H0 _ _ /IHt {IHt} Hrec.
-  case: n => [_ | n] /=; first exact H0.
-  by apply Hrec.
-Qed.
-*)

@@ -276,20 +276,6 @@ Proof.
     + apply: val_inj; by rewrite /= cat_take_drop.
 Qed.
 
-(*
-Lemma Qsymb_spec d (w : d.-tuple 'I_n) : is_stdtab_of_n d (RStabmap w).2.
-Proof.
-  have := RStabmap_spec w.
-  rewrite /is_RStabpair; case H : (RStabmap w) => [P Q] /and3P [] _ Hstd /eqP Hsz.
-  rewrite /= Hstd /=.
-  rewrite /size_tab -Hsz.
-  have -> : P = RS w by rewrite -RStabmapE H.
-  rewrite -[sumn (shape (RS w))]/(size_tab (RS w)).
-  by rewrite (eqP (size_RS _)) size_tuple.
-Qed.
-Definition Qsymb d (w : d.-tuple 'I_n) := StdtabN (Qsymb_spec w).
-*)
-
 (* Commutative image of noncommutative LR rule *)
 Theorem LR_rule_tab :
   Schur (shape_deg Q1) * Schur (shape_deg Q2) = \sum_(Q in LR_support) (Schur (shape_deg Q)).
@@ -388,44 +374,6 @@ Qed.
 
 End Coeffs.
 
-(* Old version with an alternative definition of hyper_stdtab
-Lemma hyper_stdtabP d (P : intpartn d) : is_stdtab_of_n d (stdtab_of_yam (hyper_yam P)).
-Proof.
-  have Hyam := hyper_yamP (intpartnP P).
-  rewrite /= (stdtab_of_yamP Hyam) size_stdtab_of_yam /=.
-  rewrite -shape_rowseq_eq_size (shape_rowseq_hyper_yam (intpartnP P)).
-  by rewrite intpartn_sumn.
-Qed.
-Definition hyper_stdtab d (P : intpartn d) := StdtabN (hyper_stdtabP P).
-
-Lemma shaped_hyper_stdtabP d (P : intpartn d) : shape_deg (hyper_stdtab P) = P.
-Proof.
-  rewrite /hyper_stdtab /shape_deg.
-  apply: val_inj => /=.
-  by rewrite shape_stdtab_of_yam (shape_rowseq_hyper_yam (intpartnP P)).
-Qed.
-
-Definition LR_coeff d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) (P : intpartn (d1 + d2)) :=
-  #|[set Q | Q in (LR_support (hyper_stdtab P1) (hyper_stdtab P2)) & (shape Q == P)]|.
-
-Theorem LR_coeffP d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) :
-  Schur P1 * Schur P2 = \sum_(P : intpartn (d1 + d2)) (Schur P) *+ LR_coeff P1 P2 P.
-Proof.
-  rewrite /LR_coeff.
-  have := LR_rule_tab (hyper_stdtab P1) (hyper_stdtab P2).
-  rewrite !shaped_hyper_stdtabP => ->.
-  move : (LR_support _ _) => LR {P1 P2}.
-  rewrite (partition_big (@shape_deg (d1 + d2)) predT) //=.
-  apply: eq_bigr => P _.
-  rewrite (eq_bigr (fun i => (Schur P))); last by move=> T /andP [] _ /eqP ->.
-  rewrite big_const.
-  set c1 := card _; set c2 := card _.
-  suff -> : c1 = c2 by elim: c2 => [//= | c IHc] /=; rewrite IHc mulrS.
-  rewrite /c1 /c2 {c1 c2}.
-  apply: eq_card => i /=.
-  by rewrite imset_id unfold_in inE.
-Qed.
-*)
 End FinSets.
 
 
