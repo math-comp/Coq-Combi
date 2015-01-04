@@ -23,6 +23,12 @@ Unset Strict Implicit.
 Lemma ieqi1F i : (i == i.+1) = false.
 Proof. apply: negbTE; by elim i. Qed.
 
+Lemma sumn_rev s : sumn (rev s) = sumn s.
+Proof.
+  elim: s => [//= | s0 s /= <-].
+  by rewrite rev_cons -cats1 sumn_cat /= addn0 addnC.
+Qed.
+
 Lemma sumn_count (T : eqType) (l : seq T) (P : pred T) :
   sumn [seq nat_of_bool (P i) | i <- l] = count P l.
 Proof. by elim: l => //= l0 l /= ->. Qed.
@@ -171,39 +177,6 @@ Section Partition.
           case: sh Hpart {Hlast Hcorn} => [//= | s1 sh] /= Hpart.
             exact (Hpart j.+1).
   Qed.
-
-(* Absurd statement !!!!!!!!!
-  Lemma is_part_incr_nth sh i : is_part sh -> is_in_corner sh i -> is_part (incr_nth sh i).
-  Proof.
-    rewrite /is_in_corner; move=> /is_partP [] Hhead Hpart.
-    case (altP (i =P 0)) => [-> _ {i} | Hi /= H]; apply/is_partP.
-    - case: sh Hhead Hpart => [//= _ _ | s0 sh /=]; first by split => //= [] [].
-      move=> Hlast Hi; split; first by move: Hlast; case sh.
-      case=> [| i]; first by apply: (leq_trans (Hi 0)) => //=.
-      by have /= := Hi i.+1.
-    - case: i Hi H => [//= | i] _; split.
-      + by apply: last_incr_nth_non0.
-      + move: H => /= H j.
-        case: sh Hhead Hpart H => [//= | s0 sh] /= Hlast Hpart Hcorn.
-        rewrite !nth_incr_nth; case (altP (i =P j)) => Hi /=.
-        * rewrite add1n; subst i; have:= Hpart j.
-          move /(leq_trans Hcorn); by rewrite ltnn.
-        * rewrite add0n; have := Hpart j; case: j Hi => [//= _ | j] /= _.
-          move/leq_trans; apply; rewrite nth_incr_nth.
-          by apply: leq_addl.
-  Qed.
-
-  Lemma in_corner_leq_size sh i : is_in_corner sh i -> i <= (size sh).+1.
-  Proof.
-    rewrite /is_in_corner => /orP [/eqP -> //= | ].
-    case: i => [//= | i] /=.
-    case: sh => [//= | s0 sh] /=; first by rewrite nth_nil.
-    case (leqP i (size (s0 :: sh))) => [//= | Hi].
-    rewrite (nth_default _ Hi).
-    case: i Hi => [//= | i] /=.
-    rewrite (nth_default _ Hi).
-  Qed.
-*)
 
   (* unused lemma *)
   Lemma del_out_corner sh i :
@@ -516,6 +489,13 @@ Section Partition.
     else [::].
   Definition hyper_yam sh := hyper_yam_rev (rev sh).
 
+  Lemma size_hyper_yam sh : size (hyper_yam sh) = sumn sh.
+  Proof.
+    elim/last_ind: sh => [//= | sh sn] /=.
+    rewrite /hyper_yam -(sumn_rev (rcons _ _)) rev_rcons /= size_cat => ->.
+    by rewrite size_nseq sumn_rev.
+  Qed.
+
   Lemma incr_nth_size s : incr_nth s (size s) = rcons s 1.
   Proof.  by elim: s => [| s0 s /= ->]. Qed.
 
@@ -527,6 +507,7 @@ Section Partition.
     by rewrite !rcons_cons.
   Qed.
 
+  (* "is_part sh" is just here to ensure that sh doesn't ends with a 0 *)
   Lemma shape_rowseq_hyper_yam sh : is_part sh -> shape_rowseq (hyper_yam sh) = sh.
   Proof.
     rewrite /hyper_yam; elim/last_ind: sh => [//= | s sn IHs].
