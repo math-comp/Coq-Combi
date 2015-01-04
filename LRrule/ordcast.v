@@ -26,14 +26,14 @@ Implicit Type T : finType.
 
 Lemma set1_disjoint T (i j : T) : [set i] != [set j] -> [disjoint [set i] & [set j]].
 Proof.
-  move=> Hneq; rewrite /disjoint; apply/pred0P => l /=; apply negbTE.
-  rewrite !in_set1; move: Hneq; by apply contra => /andP [] /eqP -> /eqP ->.
+  move=> Hneq; rewrite /disjoint; apply/pred0P => l /=; apply: negbTE.
+  rewrite !in_set1; move: Hneq; by apply: contra => /andP [] /eqP -> /eqP ->.
 Qed.
 
 Lemma mem_imset_inj T1 T2 (f : T1 -> T2) (i : T1) (s : {set T1}) :
   injective f -> (f i) \in f @: s = (i \in s).
 Proof.
-  move=> H; apply/(sameP idP); apply(iffP idP); first by apply mem_imset.
+  move=> H; apply/(sameP idP); apply(iffP idP); first by apply: mem_imset.
   by move/imsetP => [] j Hj /H ->.
 Qed.
 
@@ -57,7 +57,7 @@ Lemma imset_inj T1 T2 (f : T1 -> T2) :
 Proof.
   move=> Hinj s1 s2 /eqP; rewrite eqEsubset => /andP [] H12 H21.
   have {Hinj} Hinj := (subset_imsetK Hinj).
-  apply /eqP; rewrite eqEsubset.
+  apply/eqP; rewrite eqEsubset.
   by rewrite (Hinj _ _ H12) (Hinj _ _ H21).
 Qed.
 
@@ -66,10 +66,10 @@ Lemma imset_trivIset (T1 : finType) (T2 : finType) (F : T1 -> T2) (P : {set {set
 Proof.
   move=> Hinj /trivIsetP Htriv.
   apply/trivIsetP => A B /imsetP [] FA FAP -> {A} /imsetP [] FB FBP -> Hneq.
-  have {Hneq} Hneq : FA != FB by move: Hneq; apply contra => /eqP ->.
+  have {Hneq} Hneq : FA != FB by move: Hneq; apply: contra => /eqP ->.
   have := Htriv _ _ FAP FBP Hneq; rewrite -!setI_eq0 -imsetI.
   * move=> /eqP ->; by rewrite imset0.
-  * move=> i j _ _ /=; by apply Hinj.
+  * move=> i j _ _ /=; by apply: Hinj.
 Qed.
 
 Lemma preimset_trivIset (T1 : finType) (T2 : finType) (F : T1 -> T2) (P : {set {set T2}}) :
@@ -77,7 +77,7 @@ Lemma preimset_trivIset (T1 : finType) (T2 : finType) (F : T1 -> T2) (P : {set {
 Proof.
   move=> Hinj /trivIsetP Htriv.
   apply/trivIsetP => A B /imsetP [] FA FAP -> {A} /imsetP [] FB FBP -> Hneq.
-  have {Hneq} Hneq : FA != FB by move: Hneq; apply contra => /eqP ->.
+  have {Hneq} Hneq : FA != FB by move: Hneq; apply: contra => /eqP ->.
   have := Htriv _ _ FAP FBP Hneq; rewrite -!setI_eq0 -preimsetI => /eqP ->.
   by rewrite preimset0.
 Qed.
@@ -88,11 +88,11 @@ End ImsetInj.
 Lemma mem_takeP (T : eqType) x0 x k (s : seq T) :
   reflect (exists i, i < minn k (size s) /\ x = nth x0 s i) (x \in take k s).
 Proof.
-  apply (iffP idP).
+  apply: (iffP idP).
   + move=> Hx; pose ix := index x (take k s).
     have Hix : ix < size s.
       have:= Hx; rewrite /ix -index_mem size_take.
-      case: (ltnP k (size s)) => //= H1 H2; by apply (ltn_trans H2 H1).
+      case: (ltnP k (size s)) => //= H1 H2; by apply: (ltn_trans H2 H1).
     have Hix2: ix < k.
       have:= Hx; rewrite /ix -index_mem size_take /=.
       by case: (ltnP k (size s)) => H; last by move/leq_trans; apply.
@@ -101,15 +101,15 @@ Proof.
   + move=> [] i [] Hi ->.
     have Hik := leq_trans Hi (geq_minl k (size s)).
     have Hsz := leq_trans Hi (geq_minr k (size s)).
-    rewrite -(nth_take _ Hik); apply mem_nth; rewrite size_take.
+    rewrite -(nth_take _ Hik); apply: mem_nth; rewrite size_take.
     by case (ltnP k (size s)).
 Qed.
 
 Lemma take_iota i k n : take k (iota i n) = iota i (minn k n).
 Proof.
-  rewrite /minn; case: (ltnP k n) => H; last by apply take_oversize; rewrite size_iota.
+  rewrite /minn; case: (ltnP k n) => H; last by apply: take_oversize; rewrite size_iota.
   elim: k n H i => [//= | k IHk]; first by case.
-  case=> //= n H i; congr (i :: _); by apply IHk.
+  case=> //= n H i; congr (i :: _); by apply: IHk.
 Qed.
 
 Lemma drop_iota i k n : drop k (iota i n) = iota (i + k) (n - k).
@@ -128,7 +128,7 @@ Qed.
 
 Lemma take_enumI n k : take k (enum 'I_n) = filter ((gtn k) \o val) (enum 'I_n).
 Proof.
-  apply (inj_map val_inj); rewrite map_take map_filter_comp val_enum_ord.
+  apply: (inj_map val_inj); rewrite map_take map_filter_comp val_enum_ord.
   rewrite take_iota /minn.
   case: (ltnP k n) => Hk.
   + elim: k n Hk => [//= | k IHk] n Hk /=.
@@ -149,14 +149,14 @@ Proof.
     rewrite -(mem_map val_inj) map_drop val_enum_ord /= drop_iota mem_iota /= add0n.
     have -> : i < k + (n - k) by rewrite subnKC.
     by rewrite andbT.
-  + rewrite drop_oversize; last by rewrite size_enum_ord; apply ltnW.
+  + rewrite drop_oversize; last by rewrite size_enum_ord; apply: ltnW.
     have:= ltn_trans (ltn_ord i) Hkn.
     by rewrite in_nil ltnNge => /negbTE => ->.
 Qed.
 
 Lemma drop_enumI n k : drop k (enum 'I_n) = filter ((leq k) \o val) (enum 'I_n).
 Proof.
-  apply (inj_map val_inj); rewrite map_drop map_filter_comp val_enum_ord.
+  apply: (inj_map val_inj); rewrite map_drop map_filter_comp val_enum_ord.
   rewrite drop_iota add0n.
   case: (leqP n k) => Hk.
   + have:= Hk; rewrite -subn_eq0 => /eqP -> /=.
@@ -165,7 +165,7 @@ Proof.
     have:= leq_trans Hi Hk.
     by rewrite ltnNge => /negbTE => ->.
   + move Hdiff : (n - k) => d; move: Hdiff => /eqP.
-    rewrite -(eqn_add2r k) subnK; last by apply ltnW.
+    rewrite -(eqn_add2r k) subnK; last by apply: ltnW.
     move/eqP -> => {n Hk}.
     rewrite addnC iota_add filter_cat map_id add0n.
     rewrite (eq_in_filter (a2 := pred0)); first last.
@@ -183,7 +183,7 @@ Lemma enum_cast_ord m n (H : n = m):
   enum 'I_m = [seq cast_ord H i | i <- enum 'I_n].
 Proof.
   subst m; rewrite /=.
-  have /eq_map -> : cast_ord (erefl n) =1 id by move=> i; apply val_inj.
+  have /eq_map -> : cast_ord (erefl n) =1 id by move=> i; apply: val_inj.
   by rewrite map_id.
 Qed.
 
@@ -199,7 +199,7 @@ Lemma cast_eq m n i j (H : m = n) : ((cast_ord H i) == (cast_ord H j)) = (i == j
 Proof. subst m; by rewrite !cast_erefl. Qed.
 
 Lemma sym_cast_eq m n i j : ((cast_ord (addnC m n) i) == cast_ord (addnC m n) j) = (i == j).
-Proof. by apply cast_eq. Qed.
+Proof. by apply: cast_eq. Qed.
 
 Lemma cast_map (T: Type) n m (F : 'I_n -> T) (H : m = n) :
   [seq F i | i <- enum 'I_n] = [seq F ((cast_ord H) i) | i <- enum 'I_m].
@@ -230,14 +230,14 @@ Definition cast_set n m (H : n = m) : {set 'I_n} -> {set 'I_m} :=
   [fun s : {set 'I_n} => (cast_ord H) @: s].
 
 Lemma cast_set_inj n m (H : n = m) : injective (cast_set H).
-Proof. move=> S1 S2; rewrite /cast_set /=; apply imset_inj; apply cast_ord_inj. Qed.
+Proof. move=> S1 S2; rewrite /cast_set /=; apply: imset_inj; apply: cast_ord_inj. Qed.
 
 Lemma cover_cast m n (P : {set {set 'I_n}}) (H : n = m) :
   cover (imset (cast_set H) (mem P)) = (cast_set H) (cover P).
 Proof.
-  rewrite /= cover_imset /cover; apply esym; apply big_morph.
-  + move=> i j /=; by apply imsetU.
-  + by apply imset0.
+  rewrite /= cover_imset /cover; apply: esym; apply: big_morph.
+  + move=> i j /=; by apply: imsetU.
+  + by apply: imset0.
 Qed.
 
 End Casts.

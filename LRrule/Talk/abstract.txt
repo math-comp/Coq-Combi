@@ -1,0 +1,36 @@
+         Toward a formal proof of the Littlewood-Richardson Rule
+         =======================================================
+
+
+A symmetric polynomials is a polynomial in several variables which is
+invariant under any permutations of those variables. The most important basis
+of symmetric polynomial is the so called Schur basis. It has indeed numerous
+applications ranging from computer algebra to group theory and quantum physics
+and even possibly complexity theory. The Littlewood-Richardson coefficients
+are the coefficients of the expansion in the Schur basis of the product of two
+Schur polynomials. They are non-negative integers and in general, the most
+efficient way to compute them is to count the number of certain combinatorial
+objects called L-R tableaux. The algorithm enumerating those objects and
+counting them is called the Littlewood-Richardson Rule.
+
+The combinatorial object appearing here are some kind of two dimensional
+arrays filled with numbers called Young tableaux. In algorithmics, those
+tableaux are used in Schensted's algorithm to compute the longest length of a
+non-decreassing subsequence of a finite sequence. This algorithm defines a
+bijection between finite sequences and pairs of tableaux of the same shape.
+Schützenberger proof of the LR-rule needs a very fine analysis of this
+algorithms. In particular, a crucial ingredient is a remark due to Knuth that
+two sequences give the same tableau under Schensted algorithm if they are
+connected under a specific rewriting rule. As a consequence, the algorithms
+has a certain associativity property leading to the definition of a monoid
+called the plactic monoid.
+
+In the talk, I'll try to present my ongoing development in Coq/SSReflect of a
+formal proof of the L-R rule. I'll focus in particular on the algorithmic and
+combinatorial part. Here are the steps:
+ - Schensted's algorithms and it's specification;
+ - the Robinson-Schensted is a bijection;
+ - Green's invariants: given a sequence w, the Robinson-Schensted algorithm
+ actually compute the maximum sum of the length of k disjoint non-decreassing
+ subsequences of w.
+ - Knuth relations and the plactic monoid.

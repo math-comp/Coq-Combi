@@ -33,9 +33,9 @@ Proof.
     apply/flattenP; rewrite -/vect_n_k /mkseq.
     exists (map (cons s0) (vect_n_k (n - s0) k)).
     * apply/mapP; exists s0; last by [].
-      rewrite mem_iota leq0n add0n /= ltnS -Hsum /=; by apply leq_addr.
+      rewrite mem_iota leq0n add0n /= ltnS -Hsum /=; by apply: leq_addr.
     * apply/mapP; exists s; last by [].
-      apply IHk; first by rewrite -Hsum /= -{2}[s0]addn0 subnDl subn0.
+      apply: IHk; first by rewrite -Hsum /= -{2}[s0]addn0 subnDl subn0.
       by move: Hsize => /=.
 Qed.
 
@@ -51,8 +51,8 @@ Qed.
 
 Lemma vect_n_kP n k s : s \in vect_n_k n k = (sumn s == n) && (size s == k).
 Proof.
-  apply/(sameP idP); apply(iffP idP); last by apply in_vect_n_k.
-  move=> /andP []; by apply vect_n_k_in.
+  apply/(sameP idP); apply(iffP idP); last by apply: in_vect_n_k.
+  move=> /andP []; by apply: vect_n_k_in.
 Qed.
 
 Lemma vect_0_k k : vect_n_k 0 k = [:: nseq k 0].
@@ -73,7 +73,7 @@ Proof.
   + rewrite IHb; first by rewrite (ltn_eqF H1).
     by rewrite H1 addSnnS.
   + rewrite eqn_leq H1 H2 /= {H2 H3 IHb}.
-    apply /eqP; rewrite eqSS; apply /eqP.
+    apply/eqP; rewrite eqSS; apply/eqP.
     elim: b a H1 => [//= | b IHb] a Ha /=.
     rewrite IHb; first by rewrite gtn_eqF; last by rewrite ltnS.
     by rewrite leqW.
@@ -98,14 +98,14 @@ Proof.
     set p := ([eta _]); have : p =1 (pred_of_simpl (pred1 s)).
       rewrite /p => t /=; by rewrite eq_sym.
     move/eq_count -> => {p}.
-    apply IHk; by rewrite (eqP H).
+    apply: IHk; by rewrite (eqP H).
   move/eq_map -> => {IHk Ht f s k}; unlock.
-  by apply sum_iota; rewrite add0n.
+  by apply: sum_iota; rewrite add0n.
 Qed.
 
 Lemma uniq_vect_n_k n k : uniq (vect_n_k n k).
 Proof.
-  apply count_mem_uniq => s.
+  apply: count_mem_uniq => s.
   case H : (s \in vect_n_k n k); first by rewrite (count_mem_vect_n_k_eq_1 H).
   by move: H => /count_memPn ->.
 Qed.
@@ -118,13 +118,13 @@ Variable T : eqType.
 Implicit Type (s : seq T) (ss : seq (seq T)).
 
 Lemma mem_shape_vect_n_k ss : (shape ss) \in vect_n_k (size (flatten ss)) (size ss).
-Proof. apply vect_n_k_in; first by rewrite size_flatten. by rewrite size_map. Qed.
+Proof. apply: vect_n_k_in; first by rewrite size_flatten. by rewrite size_map. Qed.
 
 Definition cut_k k s := [seq reshape sh s | sh <- vect_n_k (size s) k].
 
 Lemma cut_k_flatten ss : ss \in cut_k (size ss) (flatten ss).
 Proof.
-  rewrite /cut_k; apply /mapP.
+  rewrite /cut_k; apply/mapP.
   exists (shape ss); first exact (mem_shape_vect_n_k ss).
   by rewrite flattenK.
 Qed.
@@ -160,7 +160,7 @@ Lemma cat3_equiv_cut3 s a b c : s == a ++ b ++ c <-> (a, b, c) \in cut3 s.
 Proof.
   have -> : (a ++ b ++ c) = flatten [:: a; b; c] by rewrite /= cats0.
   rewrite flatten_equiv_cut_k /cut3; split.
-  - move=> H; apply /mapP; by exists [:: a; b; c].
+  - move=> H; apply/mapP; by exists [:: a; b; c].
   - move=> /mapP [] t.
     case: t => [| t0 t]; first by rewrite /cut_k => /size_cut_k.
     case: t => [| t1 t]; first by rewrite /cut_k => /size_cut_k.
