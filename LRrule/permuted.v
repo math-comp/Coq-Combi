@@ -51,18 +51,6 @@ Proof.
   by exists p; first by rewrite mem_enum.
 Qed.
 
-(*
-Lemma permuted_tuple_eq_perm (s : list T) (H : size s == n) :
-  forall s1, s1 \in [seq tval t | t <- permuted_tuple (Tuple H)] -> perm_eq s s1.
-Proof.
-  move=> s1; set t := Tuple H; have Ht : perm_eq s t by [].
-  move/mapP => [] t1 /mapP [] p Hp -> -> {s1 t1}.
--  apply/tuple_perm_eqP.
-  exists (perm_inv p).
-   ......
-Qed.
-*)
-
 End SizeN.
 
 Definition permuted s :=
