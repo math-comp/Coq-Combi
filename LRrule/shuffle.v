@@ -351,6 +351,13 @@ Proof.
     apply: gtn_eqF; by apply: ltn_addl.
 Qed.
 
+Lemma perm_eq_shiftn_std n s :
+  is_std s -> perm_eq (shiftn n s) (iota n (size s)).
+Proof.
+  rewrite /is_std /shiftn -{2}(addn0 n) iota_addl.
+  by apply perm_eq_map.
+Qed.
+
 Definition shsh u v := shuffle u (shiftn (size u) v).
 
 Lemma std_shsh u v : is_std u -> is_std v -> all is_std (shsh u v).
@@ -641,13 +648,25 @@ Proof.
     + rewrite /= -Hp2 RSmapE; by apply mem_RSclass.
 Qed.
 
-Lemma filter_geqX_RS (T : ordType) (w : seq T) n :
-  RS (filter (geqX n) w) = filter_geqX_tab n (RS w).
+Lemma filter_gtnX_RS (T : ordType) (w : seq T) n :
+  RS (filter (gtnX n) w) = filter_gtnX_tab n (RS w).
 Proof.
   apply/eqP.
-  rewrite -(RS_tabE (is_tableau_filter_geqX _ (is_tableau_RS w))) -plactic_RS /=.
+  rewrite -(RS_tabE (is_tableau_filter_gtnX _ (is_tableau_RS w))) -plactic_RS /=.
   rewrite to_word_filter_nnil -filter_to_word.
-  apply: plactic_filter_geqX; by apply: congr_RS.
+  apply: plactic_filter_gtnX; by apply: congr_RS.
+Qed.
+
+Lemma predLRTripleFast_filter_gtnX t1 t2 t :
+  is_stdtab t1 -> is_stdtab t ->
+  predLRTripleFast t1 t2 t -> t1 = filter_gtnX_tab (size_tab t1) t.
+Proof.
+  move=> Ht1 Ht /= /hasP [] p2 Hp2 Hshsh.
+  move: Ht1; rewrite /is_stdtab => /andP [] Htab1 Hstd1.
+  rewrite -{1}(RS_tabE Htab1) (shsh_sfiltergtn Hstd1 Hshsh) /=.
+  rewrite -(eq_filter (gtnXnatE _)) size_to_word.
+  move: Ht; rewrite /is_stdtab => /andP [] Htab _.
+  by rewrite filter_gtnX_RS /= (RS_tabE Htab).
 Qed.
 
 Lemma LRTripleE t1 t2 t :
@@ -687,10 +706,8 @@ Proof.
       move/mem_shsh ->; apply/andP.
       rewrite -size_to_word size_RS; split; last by [].
       move: Hshsh; have := Ht1; rewrite -Hp1 RSstdE => /mem_shsh -> /andP [] /eqP {3}<- _.
-      rewrite /=; case : (size p1) => [//= | n1].
-        by rewrite !filter_pred0 /RS /to_word /=.
-      have /eq_filter Htmp : geqX n1 =1 gtn n1.+1 by []; rewrite -!Htmp {Htmp}.
-      by rewrite filter_geqX_RS filter_to_word to_word_filter_nnil.
+      rewrite /= -!(eq_filter (gtnXnatE _)) filter_gtnX_RS.
+      by rewrite filter_to_word to_word_filter_nnil.
 Qed.
 
 Lemma is_stdtab_of_n_LRTriple t1 t2 t :
@@ -712,16 +729,14 @@ Qed.
 
 Theorem free_LR_rule_plact t1 t2 u1 u2:
   is_stdtab t1 -> is_stdtab t2 -> u1 \in langQ t1 -> u2 \in langQ t2 ->
-  { t | plactLRTriple t1 t2 t /\ u1 ++ u2 \in langQ t}.
+  plactLRTriple t1 t2 (RStabmap (u1 ++ u2)).2.
 Proof.
   move=> Hstd1 Hstd2 Hu1 Hu2.
   have Hsz1 := size_langQ Hu1; have Hsz2 := size_langQ Hu2.
   move: Hu1 Hu2; rewrite !inE => /eqP Hu1 /eqP Hu2.
-  exists (RS (invstd (std (u1 ++ u2)))).
-  rewrite RSinvstdE; split; last by rewrite inE.
   apply: (PlactLRTriple (p1 := invstd (std u1))
-                       (p2 := invstd (std u2))
-                       (p := invstd (std (u1 ++ u2))) ).
+                        (p2 := invstd (std u2))
+                        (p  := invstd (std (u1 ++ u2))) ).
   + by rewrite -Hu1 RSinvstdE.
   + by rewrite -Hu2 RSinvstdE.
   + by rewrite RSinvstdE.
@@ -738,8 +753,9 @@ Proof.
   move=> Hstd1 Hstd2 u1 u2.
   split.
   - move=> [] Hu1 Hu2; split; try by apply: size_langQ.
-    have := (free_LR_rule_plact Hstd1 Hstd2 Hu1 Hu2) => [] [] t [] Htr Ht.
-    by exists t.
+    exists (RStabmap (u1 ++ u2)).2; split.
+    + by apply: free_LR_rule_plact.
+    + by rewrite inE.
   - move=> [] Hsz1 Hsz2 [] t [] [] p1 p2 p Hp1 Hp2 Htmp; subst t.
     rewrite !inE -!RSinvstdE -Hp1 -Hp2 -!plactic_RS => Hsh Hcat.
     have Hstdp1 : is_std p1 by rewrite -RSstdE Hp1.
