@@ -15,7 +15,7 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm.
 Require Import subseq partition ordtype schensted congr plactic green greeninv
-        std stdtab.
+        std stdtab skewtab therule.
 
 Require Import Wf_nat.
 Extraction Inline Wf_nat.lt_wf_rec1 Wf_nat.lt_wf_rec
@@ -54,4 +54,5 @@ Extraction "extract/schensted.ml"
            greenRow greenCol
            is_std std.std
            RStabnat RStabinvnat
+           is_stdtab LRyam_coeff
 .

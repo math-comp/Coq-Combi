@@ -13,6 +13,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
+Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -57,27 +58,6 @@ Qed.
 
 Lemma vect_0_k k : vect_n_k 0 k = [:: nseq k 0].
 Proof. elim: k => [//= | k IHk] /=; by rewrite subn0 cats0 IHk. Qed.
-
-Lemma count_flatten (T : eqType) (s : seq (seq T)) P :
-  count P (flatten s) = sumn [seq count P x | x <- s].
-Proof. elim: s => [//= | s0 s IHs /=]. by rewrite count_cat IHs. Qed.
-
-Lemma sum_iota a b x :
-  a <= x < a + b -> sumn [seq ((i == x) : nat) | i <- iota a b] = 1.
-Proof.
-  elim: b a => [/=| b IHb] a.
-    rewrite addn0 => /andP [] /leq_ltn_trans H/H{H}.
-    by rewrite ltnn.
-  have:= IHb a.+1 => /= {IHb} IHb.
-  case (ltnP a x) => H1 /andP [] H2 H3.
-  + rewrite IHb; first by rewrite (ltn_eqF H1).
-    by rewrite H1 addSnnS.
-  + rewrite eqn_leq H1 H2 /= {H2 H3 IHb}.
-    apply/eqP; rewrite eqSS; apply/eqP.
-    elim: b a H1 => [//= | b IHb] a Ha /=.
-    rewrite IHb; first by rewrite gtn_eqF; last by rewrite ltnS.
-    by rewrite leqW.
-Qed.
 
 Lemma count_mem_vect_n_k_eq_1 n k s : s \in vect_n_k n k -> count_mem s (vect_n_k n k) = 1.
 Proof.

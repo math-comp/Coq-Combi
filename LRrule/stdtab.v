@@ -14,8 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm fingroup.
-
-Require Import subseq partition permuted ordtype schensted plactic greeninv std.
+Require Import tools subseq partition yama permuted ordtype schensted plactic greeninv std.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -209,14 +208,6 @@ Lemma size_notin_stdtab_of_yam y : (size y) \notin (to_word (stdtab_of_yam y)).
 Proof.
   have:= std_of_yam y; rewrite /is_std -size_to_word size_stdtab_of_yam => /perm_eq_mem ->.
   by rewrite mem_iota add0n /= ltnn.
-Qed.
-
-Lemma rconsK (T : eqType) (l : T) u v : rcons u l = rcons v l -> u = v.
-Proof.
-  elim: u v => [| u0 u IHu]; case=> [|v0 v] //= [].
-  + move=> _; by case v.
-  + move=> _; by case u.
-  + by move=> -> /IHu ->.
 Qed.
 
 Lemma incr_nth_injl u v i :

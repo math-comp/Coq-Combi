@@ -15,7 +15,7 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm fingroup path.
 
-Require Import ordcast subseq partition ordtype permuted.
+Require Import tools ordcast partition yama ordtype permuted.
 Require Import schensted congr plactic green greeninv.
 
 Set Implicit Arguments.

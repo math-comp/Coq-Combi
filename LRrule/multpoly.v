@@ -13,10 +13,10 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import tuple finfun finset bigop ssralg zmodp.
+Require Import tuple finfun finset bigop ssralg.
 Require Import poly ssrint.
 
-Require Import partition schensted yamplact ordtype std stdtab invseq greeninv shuffle.
+Require Import partition yama schensted yamplact ordtype std stdtab invseq greeninv shuffle.
 
 (******************************************************************************)
 (* The main goal of this file is to lift the multiplication of multivariate   *)
@@ -44,7 +44,7 @@ Fixpoint multpoly n :=
 Definition vari n (i : 'I_n) : multpoly n.
 Proof.
   elim: n i => [//= | n IHn] i; first by apply: 1.
-  case (unliftP 0 i) => /= [j |] Hi.
+  case (unliftP ord0 i) => /= [j |] Hi.
   - apply: (polyC (IHn j)).
   - apply: 'X.
 Defined.
@@ -103,10 +103,10 @@ Section FinSets.
 
 Variable n : nat.
 
-Hypothesis Hpos : n != 0%N.
+Hypothesis Hnpos : n != 0%N.
 
 Lemma inhabIn : 'I_n.
-Proof. move: Hpos; rewrite -lt0n; by apply: Ordinal. Qed.
+Proof. move: Hnpos; rewrite -lt0n; by apply: Ordinal. Qed.
 
 Definition leqOrd (i j : 'I_n) := (i <= j)%N.
 

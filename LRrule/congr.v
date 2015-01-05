@@ -231,19 +231,6 @@ Proof.
     * move=> s x <-; rewrite invar_undupE; by case (all invar s).
 Qed.
 
-Definition tclass x := trans [:: x].
-
-Lemma tclassP x y :
-  invar x -> reflect (rewrite_path x y) (y \in tclass x).
-Proof.
-  move=> Hinv; rewrite /tclass; apply: (iffP idP).
-  + move/transP => H.
-    have: (all invar [:: x]) by apply/allP=> z; rewrite mem_seq1 => /eqP ->.
-    by move/H => [] z []; rewrite mem_seq1 => /eqP ->.
-  + move=> H; apply/transP; last by exists x; rewrite mem_seq1.
-    apply/allP=> x0; by rewrite mem_seq1 => /eqP ->.
-Qed.
-
 Lemma rewrite_path_trans x y z : rewrite_path x y -> rewrite_path y z -> rewrite_path x z.
 Proof.
   move=> [] pathxy Hxy Hy [] pathyz Hyz Hz.
@@ -252,38 +239,20 @@ Proof.
   + by rewrite last_cat -Hy.
 Qed.
 
-Lemma in_tclass_trans x y z :
-  invar x -> y \in tclass x -> z \in tclass y -> z \in tclass x.
+Lemma rewrite_path_sym x y :
+  (forall x y, x \in rule y -> y \in rule x) ->
+  rewrite_path x y -> rewrite_path y x.
 Proof.
-  move=> Hinvx /(tclassP _ Hinvx) => Hrewxy; have:= invar_rewrite_path Hinvx Hrewxy.
-  move=> Hinvy /(tclassP _ Hinvy) => Hrewyz.
-  apply/(tclassP _ Hinvx); by apply: (rewrite_path_trans (y := y)).
-Qed.
-
-Lemma in_tclass_refl x : x \in tclass x.
-Proof. by rewrite /tclass; apply: subset_s_trans_s; rewrite mem_seq1. Qed.
-
-Hypothesis Hsym : forall x y, x \in rule y -> y \in rule x.
-
-Lemma rewrite_path_sym x y : rewrite_path x y -> rewrite_path y x.
-Proof.
-  move=> [] pathxy. rewrite -rev_path => Hxy Hy.
+  move=> Hsym [] pathxy; rewrite -rev_path => Hxy Hy.
   move: Hxy; rewrite -Hy.
   case/lastP: pathxy Hy => [/= -> _ | pathxz z]; first by apply: (Rew (l := [::])).
   rewrite last_rcons belast_rcons rev_cons => -> {y} Hpath.
   apply: (Rew (l := rcons (rev pathxz) x)).
   + set rel := (X in path X _ _) in Hpath; set rel2 := (X in path X _ _).
     have /eq_path -> : rel2 =2 rel; last exact Hpath.
-      move=> i j; rewrite /rel /rel2.
-      apply/(sameP idP); apply(iffP idP); by apply: Hsym.
+    move=> i j; rewrite /rel /rel2.
+    apply/(sameP idP); apply(iffP idP); by apply: Hsym.
   + by rewrite last_rcons.
-Qed.
-
-Lemma in_tclass_sym x y : invar x -> y \in tclass x -> x \in tclass y.
-Proof.
-  move=> Hinvx /(tclassP _ Hinvx) => Hrewxy.
-  have:= invar_rewrite_path Hinvx Hrewxy => Hinvy.
-  apply/(tclassP _ Hinvy); by apply: rewrite_path_sym.
 Qed.
 
 End Transitive.
@@ -293,24 +262,41 @@ Section Depend.
 
 Variable T : eqType.
 Variable rule : T -> seq T.
-Variable invar : T -> pred T.
-Hypothesis invar_all : forall x, invar x x.
-Hypothesis Hinvar : forall x0 x, invar x0 x -> all (invar x0) (rule x).
-Variable bound : T -> nat.
-Hypothesis Hbound: forall x s, all (invar x) s -> uniq s -> size s <= bound x.
+
+Record invariant_context :=
+  InvariantContext {
+      invar : T -> pred T;
+      Hinvar_all : forall x, invar x x;
+      Hinvar : forall x0 x, invar x0 x -> all (invar x0) (rule x);
+      bound : T -> nat;
+      Hbound: forall x s, all (invar x) s -> uniq s -> size s <= bound x
+    }.
+Variable inv : invariant_context.
 Hypothesis Hsym : forall x y, x \in rule y -> y \in rule x.
 
-
-Definition rclass x := tclass (@Hinvar x) (@Hbound x) x.
+Definition rclass x := trans (@Hinvar inv x) (@Hbound inv x) [:: x].
 Definition rtrans : rel T := fun x y => y \in rclass x.
 
 Lemma rtransP x y : reflect (rewrite_path rule y x) (rtrans y x).
-Proof. rewrite /rtrans /rclass; by apply: tclassP. Qed.
+Proof.
+  rewrite /rtrans /rclass.
+  apply: (iffP idP).
+  - move/transP => H.
+    have: (all (invar inv y) [:: y]).
+      apply/allP=> z; rewrite mem_seq1 => /eqP ->.
+      by apply Hinvar_all.
+    by move/H => [] z []; rewrite mem_seq1 => /eqP ->.
+  - move=> H; apply/transP.
+    + apply/allP=> x0; rewrite mem_seq1 => /eqP ->.
+      by apply Hinvar_all.
+    + by exists y; rewrite mem_seq1.
+Qed.
 
 Theorem equiv_rtrans : equivalence_rel rtrans.
 Proof.
   rewrite equivalence_relP; split.
-  - rewrite /reflexive /rtrans /rclass => x; apply: in_tclass_refl.
+  - rewrite /reflexive /rtrans /rclass => x.
+    by apply: subset_s_trans_s; rewrite mem_seq1.
   - rewrite /left_transitive => x y Hrxy z.
     apply/(sameP idP); apply(iffP idP); move: Hrxy.
     * move=> /rtransP Hryx /rtransP Hrzy; apply/rtransP.
@@ -368,27 +354,27 @@ Lemma perm_eq_bound (x : word) (s : seq word) :
   all (perm_eq x) s -> uniq s -> size s <= (size x)`!.
 Proof. rewrite -(size_permuted x); apply: full_bound; by apply: eq_seqE. Qed.
 
-Lemma Hinvar (x0 x : word) : perm_eq x0 x -> all (perm_eq x0) (rule x).
+Lemma Hinvar_perm (x0 x : word) : perm_eq x0 x -> all (perm_eq x0) (rule x).
 Proof.
   have:= perm_eq_trans; rewrite /transitive => Ptrans.
   move=> H; apply/allP => x1 Hx1; apply: (@Ptrans _ x _ _ H).
   have:= Hhomog x => /allP; by apply.
 Qed.
 
-Definition congr := (rtrans Hinvar perm_eq_bound).
-Definition congr_class := (rclass Hinvar perm_eq_bound).
+Let inv := InvariantContext (@perm_eq_refl _) Hinvar_perm perm_eq_bound.
+Definition congr := rtrans inv.
+Definition congr_class := rclass inv.
 
 Lemma rule_congr x y : y \in rule x -> congr x y.
-Proof. apply: rule_rtrans. apply: perm_eq_refl. Qed.
+Proof. by apply: rule_rtrans. Qed.
 
 Lemma congr_ind (P : word -> Prop) x :
   P x -> (forall y z, P y -> z \in rule y -> P z) -> forall t, congr x t -> P t.
-Proof. apply: rtrans_ind. apply: perm_eq_refl. Qed.
+Proof. by apply: rtrans_ind. Qed.
 
 Lemma equiv_congr : equivalence_rel congr.
 Proof.
   apply: equiv_rtrans; last by move=> x y H; apply: Hsym.
-  by apply: perm_eq_refl.
 Qed.
 
 Lemma congr_is_congr : congruence_rel congr.
@@ -503,8 +489,8 @@ Lemma gencongr_min (r : rel word) :
   forall x y, gencongr x y -> r x y.
 Proof.
   move=> /equivalence_relP [] Hrefl Htrans Hcongr Hrule x y /rtransP => H.
-  have:= (H (@perm_eq_refl Alph)) => {H} [] [] l.
-  elim: l x => [/= x _ ->| l0 l IHl]; first by apply: Hrefl.
+  have:= H => {H} [] [] l.
+  elim: l x => [/= x _ ->| l0 l IHl] ; first by apply: Hrefl.
   move=> x /= /andP [] /flatten_mapP [] [[i j1] k].
   rewrite -cat3_equiv_cut3 /= => /eqP -> {x} /mapP [] j2 Hj2 ->.
   move=> /IHl H/H{H}; rewrite (@Htrans _ (i ++ j2 ++ k)) //=.
@@ -516,7 +502,7 @@ Theorem gencongr_ind (P : word -> Prop) x :
   (forall a b1 c b2, P (a ++ b1 ++ c) -> b2 \in rule b1 -> P (a ++ b2 ++ c)) ->
   forall y, gencongr x y -> P y.
 Proof.
-  move=> Hx IH; apply: (rtrans_ind (@perm_eq_refl Alph) Hx).
+  move=> Hx IH; apply: (rtrans_ind Hx).
   move=> y z Hy /flatten_mapP [] [[i j1] k].
   rewrite -cat3_equiv_cut3 /= => /eqP Heqy; subst y.
   move=> /mapP [] j2 Hj2 Hz; subst z.
