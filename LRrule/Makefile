@@ -85,7 +85,11 @@ VFILES:=congr.v\
   stdtab.v\
   std.v\
   subseq.v\
+  tableau.v\
+  therule.v\
+  tools.v\
   vectNK.v\
+  yama.v\
   yamplact.v
 
 -include $(addsuffix .d,$(VFILES))

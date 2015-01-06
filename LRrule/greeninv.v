@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm tuple path bigop.
-Require Import subseq partition ordtype schensted congr plactic ordcast green.
+Require Import tools subseq partition yama ordtype schensted congr plactic ordcast green.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm.
-Require Import subseq partition ordtype schensted congr.
+Require Import tools partition ordtype schensted congr.
 
 
 Set Implicit Arguments.
@@ -22,14 +22,6 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Open Scope bool.
-
-Lemma filter_perm_eq (T : eqType) (u v : seq T) P :
-  perm_eq u v -> perm_eq (filter P u) (filter P v).
-Proof.
-  move=> /perm_eqP Hcount.
-  apply/perm_eqP => Q; rewrite !count_filter.
-  by apply Hcount.
-Qed.
 
 Import OrdNotations.
 

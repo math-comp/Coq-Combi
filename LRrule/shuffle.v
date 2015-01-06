@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm binomial.
-Require Import subseq partition ordtype schensted std stdtab invseq.
+Require Import tools subseq partition yama ordtype schensted std stdtab invseq.
 Require Import plactic greeninv.
 
 
@@ -289,15 +289,13 @@ Section ShiftedShuffle.
 
 Implicit Type u v w : seq nat.
 
-Definition shiftn    n := map (addn n).
-Definition shiftninv n := map (subn^~ n).
-
+Definition shiftn n := map (addn n).
 Definition sfiltergtn n := [fun v => filter (gtn n) v].
-Definition sfilterleq n := [fun v => shiftninv n (filter (leq n) v)].
+Definition sfilterleq n := [fun v => map (subn^~ n) (filter (leq n) v)].
 
-Lemma shiftuK n : cancel (shiftn n) (shiftninv n).
+Lemma shiftuK n : cancel (shiftn n) (map (subn^~ n)).
 Proof.
-  move=> s; rewrite /shiftn /shiftninv -map_comp.
+  move=> s; rewrite /shiftn -map_comp.
   rewrite (eq_map (f2 := id)); first by rewrite map_id.
   move=> i /=; by rewrite /= addKn.
 Qed.

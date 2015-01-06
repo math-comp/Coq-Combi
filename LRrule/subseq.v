@@ -13,57 +13,16 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
+Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
-
-Lemma incr_nth_inj sh : injective (incr_nth sh).
-Proof.
-  move=> i j Hsh.
-  case (altP (i =P j)) => [//= | /negbTE Hdiff].
-  have:= eq_refl (nth 0 (incr_nth sh i) j).
-  by rewrite {2}Hsh !nth_incr_nth eq_refl Hdiff eqn_add2r.
-Qed.
 
 Section RCons.
 
   Variable (T : eqType).
   Implicit Type s w : seq T.
   Implicit Type a b l : T.
-
-  Lemma head_any s a b : s != [::] -> head a s = head b s.
-  Proof. by elim: s. Qed.
-
-  Lemma nth_any s a b i : i < size s -> nth a s i = nth b s i.
-  Proof. elim: s i => //= s0 s IHs [//=|i] Hsize /=. by apply: IHs. Qed.
-
-  Lemma rcons_set_nth a s l : set_nth a s (size s) l = rcons s l.
-  Proof. elim: s => [//=| l0 s IHs]. by rewrite rcons_cons -IHs /=. Qed.
-
-  Lemma set_nth_non_nil d s n y : set_nth d s n y != [::].
-  Proof. elim: s => [|s0 s]; by case n. Qed.
-
-  Lemma set_nth_rcons (x0 : T) s x n y :
-    set_nth x0 (rcons s x) n y =
-    if n < size s then rcons (set_nth x0 s n y) x
-    else if n == size s then rcons s y else (rcons s x) ++ ncons (n - size s).-1 x0 [:: y].
-  Proof.
-    elim: s n => [//= | s0 s IHs] n.
-    + case eqP => [-> //= |]; by case: n => [| []].
-    + rewrite rcons_cons /=; case: n => [//= | n] /=.
-      have {IHs} := (IHs n). rewrite eqSS -[n.+1 < (size s).+1]/(n < (size s)).
-      by case (ltngtP n (size s)) => _ <-.
-  Qed.
-
-  Lemma cons_in_map_cons a b s w :
-    forall l : seq (seq T), a :: s \in [seq b :: s1 | s1 <- l] -> a == b.
-  Proof.
-    elim=> [//=| l0 l H]; rewrite map_cons in_cons; move/orP => []; last by exact H.
-    by move=> /eqP [] ->.
-  Qed.
-
-  Lemma rcons_nilF s l : ((rcons s l) == [::]) = false.
-  Proof. case eqP=>//= H; have:= eq_refl (size (rcons s l)). by rewrite {2}H size_rcons. Qed.
 
   Lemma subseq_rcons_eq s w l : subseq s w <-> subseq (rcons s l) (rcons w l).
   Proof.
@@ -98,12 +57,7 @@ Section RCons.
       by apply: subseq_rcons.
   Qed.
 
-  Lemma count_mem_rcons w l i : count_mem i (rcons w l) = count_mem i w + (l == i).
-  Proof. by rewrite -count_rev rev_rcons /= count_rev addnC. Qed.
-
 End RCons.
-
-
 
 Section Fintype.
   (* We define SubSeq w as a finType *)
