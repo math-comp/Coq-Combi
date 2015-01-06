@@ -14,8 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 
-Require Import vectNK. (* for count_flatten *)
-Require Import partition. (* for sumn_count *)
+Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -128,6 +127,8 @@ Definition union_finType := Eval hnf in FinType TP union_finMixin.
 
 End SubtypesDisjointUnion.
 
+Require Import partition yama.
+
 Lemma PredEq n (sh : intpartn_subFinType n) :
   predI (is_yam_of_size n) (pred1 (val sh) \o shape_rowseq) =1 is_yam_of_shape (val sh).
 Proof.
@@ -143,10 +144,6 @@ Proof.
   by rewrite /is_yam_of_size /= shape_rowseq_eq_size => /andP [] /is_part_shyam -> ->.
 Qed.
 
-(*
-Structure yamn : Type :=
-  Yamn {yamnval :> seq nat; _ : is_yam_of_size n yamnval}.
-*)
 
 Definition yamsize n := Eval hnf in 
   union_finType
@@ -156,7 +153,9 @@ Definition yamsize n := Eval hnf in
 
 Let bla : yamn 2 := @Yamn 2 [:: 1; 0] is_true_true.
 Let blo : yamsize _ := bla.
-Eval compute in size (Finite.enum (yamn 0)).
+(* Eval compute in size (Finite.enum (yamn 0)). Doesn't work ! *)
+Eval compute in size (Finite.enum (yamn_finType 0)).
+Let x := size (Finite.enum (yamsize 2)).
 
 (*
 Structure tuple_of : Type := Tuple {tval :> seq T; _ : size tval == n}.
