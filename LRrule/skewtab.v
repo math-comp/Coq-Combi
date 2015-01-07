@@ -56,11 +56,67 @@ Section SkewShape.
       else false
     else true.
 
+  Lemma includedP inner outer :
+    reflect (size inner <= size outer /\ forall i, nth 0 inner i <= nth 0 outer i)
+            (included inner outer).
+  Proof.
+    apply (iffP idP).
+    - elim: inner outer => [//= | inn0 inn IHinn] /=.
+        move=> outer _; by split; last by move=> i; rewrite nth_nil.
+      case=> [//= | out0 out] /= /andP [] H0 /IHinn{IHinn} [] Hsize H.
+      split; first by rewrite ltnS.
+      by case.
+    - elim: inner outer => [//= | inn0 inn IHinn] /=.
+      case=> [ [] //= | out0 out] [] /=.
+      rewrite ltnS => Hsize H.
+      apply/andP; split; first by apply (H 0).
+      apply: IHinn; split; first exact Hsize.
+      move=> i; by apply (H i.+1).
+  Qed.
+
+  Lemma included_incr_nth inner outer i :
+    nth 0 inner i < nth 0 outer i ->
+    included inner outer -> included (incr_nth inner i) outer.
+  Proof.
+    move=> Hnth /includedP [] Hsize Hincl.
+    apply/includedP; split.
+    - rewrite size_incr_nth; case ltnP => _; first exact Hsize.
+      rewrite ltnNge; apply (introN idP) => Hout.
+      move: Hnth; by rewrite (nth_default _ Hout).
+    - move=> j; rewrite nth_incr_nth.
+      case eqP => [<- | _].
+      - by rewrite add1n.
+      - by rewrite add0n.
+  Qed.
+
   Lemma size_included inner outer : included inner outer -> size inner <= size outer.
   Proof.
     elim: inner outer => [//= | inn0 inn IHinn] /=.
     case=> [//= | outer0 outer] /= /andP [] _ /IHinn.
     by rewrite ltnS.
+  Qed.
+
+  Lemma sumn_included inner outer : included inner outer -> sumn inner <= sumn outer.
+  Proof.
+    elim: inner outer => [//= | inn0 inn IHinn] /=.
+    case=> [//= | outer0 outer] /= /andP [] H0 /IHinn.
+    by apply: leq_add.
+  Qed.
+
+  Lemma included_sumnE inner outer :
+    is_part outer ->
+    included inner outer ->
+    sumn inner = sumn outer ->
+    inner = outer.
+  Proof.
+    elim: inner outer => [| inn0 inn IHinn] /=.
+      by move=> outer Houter _ /esym/(part0 Houter) ->.
+    case=> [//= | outer0 out] /= /andP [] _ /IHinn{IHinn}Hrec /andP [] H0 Hincl Heq.
+    have {H0} H0 : inn0 = outer0.
+      apply anti_leq; rewrite H0 /=.
+      have := leq_sub2l (inn0 + sumn inn) (sumn_included Hincl).
+      by rewrite {1}Heq !addnK.
+    move: Heq => /eqP; by rewrite H0 eqn_add2l => /eqP/(Hrec Hincl) ->.
   Qed.
 
   Fixpoint diff_shape inner outer :=
