@@ -183,6 +183,18 @@ Section SkewShape.
     by rewrite addKn.
   Qed.
 
+  Lemma head_pad0 (T : Type) n (p : T) s : head p (pad p n s) = head p s.
+  Proof. elim: s => [| s0 s IHs] //=; rewrite subn0; by case: n. Qed.
+
+  Lemma included_pad0 inner outer :
+    included inner outer = included (pad 0 (size outer) inner) outer.
+  Proof.
+    elim: inner outer => [//= | inn0 inn IHinn] /= outer /=.
+     rewrite subn0; by elim: outer.
+    case: outer => [//= | out0 out] /=.
+    by rewrite subSS IHinn.
+Qed.
+
 End SkewShape.
 
 Section Dominate.

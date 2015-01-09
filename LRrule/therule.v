@@ -535,13 +535,13 @@ Proof.
 Qed.
 
 
-Definition LRyam_list (P1 P2 P : seq nat) :=
+Definition LRyam_enum (P1 P2 P : seq nat) :=
   [seq x <- list_yamsh P2 | is_skew_tableau P1 (skew_reshape P1 P x)].
-Definition LRyam_compute (P1 P2 P : seq nat) := size (LRyam_list P1 P2 P).
+Definition LRyam_compute (P1 P2 P : seq nat) := size (LRyam_enum P1 P2 P).
 
 Lemma LR_coeff_computeP : LRyam_compute P1 P2 P = LRyam_coeff.
 Proof.
-  rewrite /LRyam_coeff /LRyam_set /LRyam_compute /LRyam_list.
+  rewrite /LRyam_coeff /LRyam_set /LRyam_compute /LRyam_enum.
   rewrite cardE /enum_mem.
   rewrite -(size_map val); congr (size _).
   set E := Finite.enum _; have -> : (list_yamsh P2) = map val E.
