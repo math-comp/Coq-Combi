@@ -114,6 +114,7 @@ Section Yama.
     if s is s0 :: s'
     then is_part (shape_rowseq s) && is_yam s'
     else true.
+  Definition is_yam_of_shape sh y := (is_yam y) && (shape_rowseq y == sh).
 
   Lemma is_part_shyam s : is_yam s -> is_part (shape_rowseq s).
   Proof. by case: s => [//= | s0 s] /= /andP []. Qed.
@@ -226,7 +227,73 @@ Section Yama.
     have:= Hpart2; by rewrite -{1}(shape_rowseq_hyper_yam Hpart2) /hyper_yam rev_rcons.
   Qed.
 
+  Lemma hyper_yam_of_shape sh : is_part sh -> is_yam_of_shape sh (hyper_yam sh).
+  Proof.
+    move=> H; by rewrite /is_yam_of_shape (hyper_yamP H) (shape_rowseq_hyper_yam H) /=.
+  Qed.
+
 End Yama.
+
+    
+Lemma is_yam_cat_any y0 y1 z :
+  is_yam y0 -> is_yam y1 -> shape_rowseq y0 = shape_rowseq y1 ->
+  is_yam (z ++ y0) -> is_yam (z ++ y1).
+Proof.
+  elim: z => [//= | z0 z IHz] /= Hy0 Hy1 H /andP [] Hpart Hyam.
+  apply/andP; split; last by apply IHz.
+  suff <- : shape_rowseq (z ++ y0) = shape_rowseq (z ++ y1) by [].
+  apply /eqP; rewrite -perm_eq_shape_rowseq.
+  by rewrite perm_cat2l perm_eq_shape_rowseq H.
+Qed.
+
+Definition is_skew_yam innev outev sy :=
+  (forall y, is_yam_of_shape innev y -> is_yam_of_shape outev (sy ++ y)).
+
+Lemma skew_yam_nil sh : is_skew_yam sh sh [::].
+Proof. rewrite /is_skew_yam => y; by rewrite cat0s. Qed.
+
+Lemma skew_nil_yamE eval y : is_yam_of_shape eval y -> is_skew_yam [::] eval y.
+Proof.
+  move=> Hy z; rewrite {1}/is_yam_of_shape => /andP [] _ /eqP Hz.
+  have := shape_rowseq_eq_size z; rewrite Hz /= => /esym/eqP/nilP ->.
+  by rewrite cats0.
+Qed.
+
+Lemma skew_yam_cat sha shb shc y z :
+  is_skew_yam sha shb y -> is_skew_yam shb shc z -> is_skew_yam sha shc (z ++ y).
+Proof. rewrite /is_skew_yam => Hy Hz x /Hy /Hz; by rewrite catA. Qed.
+
+Lemma is_skew_yamE innev outev z y0 :
+  is_yam_of_shape innev y0 ->
+  is_yam_of_shape outev (z ++ y0) ->
+  is_skew_yam innev outev z.
+Proof.
+  move=> Hy0 Hcat y Hy.
+  move: Hy0 Hy Hcat.
+  rewrite /is_yam_of_shape => /andP [] Hy0 /eqP <- /andP [] Hy /eqP Hsh /andP [].
+  elim: z outev => [//= | z0 z IHz /=] outev Hcat Hshcat; first by rewrite Hy Hsh Hshcat.
+  move: Hcat => /andP [] Hincr0 Hcat0.
+  have {IHz} := IHz _ Hcat0 (eq_refl _) => /andP [] -> /eqP ->.
+  by rewrite Hincr0 Hshcat.
+Qed.
+
+Lemma is_part_skew_yam sha shb y :
+  is_part sha -> is_skew_yam sha shb y -> is_part shb.
+Proof.
+  move=> /hyper_yam_of_shape Ha Hskew.
+  have := Hskew _ Ha; by rewrite /is_yam_of_shape => /andP [] /is_part_shyam H /eqP <-.
+Qed.
+
+Lemma skew_yam_catK sha shb shc y z :
+  is_part sha ->
+  is_skew_yam sha shb y -> is_skew_yam sha shc (z ++ y) -> is_skew_yam shb shc z.
+Proof.
+  move=> /hyper_yam_of_shape Ha Hy Hcat.
+  apply (is_skew_yamE (Hy _ Ha)).
+  rewrite catA; by apply Hcat.
+Qed.
+
+
 
 Fixpoint decr_nth v i {struct i} :=
   if v is n :: v' then
@@ -293,7 +360,6 @@ Fixpoint list_yamshn n sh :=
                   i <- iota 0 (size sh) & is_out_corner sh i]
   else [:: [::]].
 Definition list_yamsh sh := list_yamshn (sumn sh) sh.
-Definition is_yam_of_shape sh y := (is_yam y) && (shape_rowseq y == sh).
 Definition is_yam_of_size n y := (is_yam y) && (size y == n).
 
 Lemma list_yamshP sh:
