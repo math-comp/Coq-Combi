@@ -222,9 +222,36 @@ Section Dominate.
         by rewrite ltnn.
   Qed.
 
+  Lemma skew_dominate_take n sh u v :
+    skew_dominate sh u (take n v) -> skew_dominate sh u v.
+  Proof.
+    move/skew_dominateP => [] Hsize Hdom.
+    apply/skew_dominateP; split.
+    - apply (leq_trans Hsize); rewrite leq_add2r size_take.
+      rewrite -/(minn n _); by apply geq_minr.
+    - move=> i Hi; have := Hdom i Hi.
+      rewrite nth_take; first by [].
+      move: Hi => /andP [] Hsh Hi.
+      rewrite -(leq_add2r sh) addSn (subnK Hsh).
+      apply (leq_trans Hi); apply (leq_trans Hsize).
+      rewrite leq_add2r size_take.
+      rewrite -/(minn n _); by apply geq_minl.
+  Qed.
+
+  Lemma skew_dominate_no_overlap sh u v :
+    size u <= sh -> skew_dominate sh u v.
+  Proof.
+    move => Hsize.
+    apply/skew_dominateP; split.
+    - apply (leq_trans Hsize); by apply leq_addl.
+    - move=> i /andP [] H1 H2; exfalso.
+      have := leq_trans H2 (leq_trans Hsize H1).
+        by rewrite ltnn.
+  Qed.
+
   Fixpoint is_skew_tableau inner t :=
     if t is t0 :: t'
-    then [&& size t0 + head 0 inner != 0,
+    then [&& head 0 inner + size t0 != 0,
          is_row t0,
          skew_dominate ((head 0 inner) - (head 0 (behead inner)))
                        (head [::] t') t0 & is_skew_tableau (behead inner) t']
@@ -233,7 +260,7 @@ Section Dominate.
   Lemma is_skew_tableau0 : is_skew_tableau [::] =1 (@is_tableau T).
   Proof.
     elim => [//=| t0 t IHt] /=.
-    rewrite addn0 subn0 skew_dominate0 IHt.
+    rewrite add0n subn0 skew_dominate0 IHt.
     by case t0.
   Qed.
 
@@ -242,7 +269,7 @@ Section Dominate.
   Proof.
     elim: t inner => [| t0 t IHt] /= inner; first by rewrite cats0.
     case: inner => [| inn0 inn] /=.
-      rewrite (IHt [::]) /= addn0.
+      rewrite (IHt [::]) /= add0n.
       by rewrite !subn0.
     rewrite (IHt inn) subSS /=.
     suff -> : head 0 (inn ++ nseq (size t - size inn) 0) = head 0 inn by [].
@@ -365,7 +392,7 @@ Proof.
   - rewrite !size_filter /=.
     set p1 := (X in count X); set p2 := (X in _ + count X _).
     have /eq_count -> : p2 =1 predC p1.
-      rewrite /p1 /p2; move=> i /=; by apply ltnXNgeqX.
+      rewrite /p1 /p2; move=> i /=; by rewrite -leqXNgtnX.
     rewrite count_predC.
     move: Hnnil; by apply contra => /nilP ->.
   - apply sorted_filter; last exact Hrow.
