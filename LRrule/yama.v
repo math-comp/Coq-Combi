@@ -234,7 +234,6 @@ Section Yama.
 
 End Yama.
 
-    
 Lemma is_yam_cat_any y0 y1 z :
   is_yam y0 -> is_yam y1 -> shape_rowseq y0 = shape_rowseq y1 ->
   is_yam (z ++ y0) -> is_yam (z ++ y1).
@@ -245,54 +244,6 @@ Proof.
   apply /eqP; rewrite -perm_eq_shape_rowseq.
   by rewrite perm_cat2l perm_eq_shape_rowseq H.
 Qed.
-
-Definition is_skew_yam innev outev sy :=
-  (forall y, is_yam_of_shape innev y -> is_yam_of_shape outev (sy ++ y)).
-
-Lemma skew_yam_nil sh : is_skew_yam sh sh [::].
-Proof. rewrite /is_skew_yam => y; by rewrite cat0s. Qed.
-
-Lemma skew_nil_yamE eval y : is_yam_of_shape eval y -> is_skew_yam [::] eval y.
-Proof.
-  move=> Hy z; rewrite {1}/is_yam_of_shape => /andP [] _ /eqP Hz.
-  have := shape_rowseq_eq_size z; rewrite Hz /= => /esym/eqP/nilP ->.
-  by rewrite cats0.
-Qed.
-
-Lemma skew_yam_cat sha shb shc y z :
-  is_skew_yam sha shb y -> is_skew_yam shb shc z -> is_skew_yam sha shc (z ++ y).
-Proof. rewrite /is_skew_yam => Hy Hz x /Hy /Hz; by rewrite catA. Qed.
-
-Lemma is_skew_yamE innev outev z y0 :
-  is_yam_of_shape innev y0 ->
-  is_yam_of_shape outev (z ++ y0) ->
-  is_skew_yam innev outev z.
-Proof.
-  move=> Hy0 Hcat y Hy.
-  move: Hy0 Hy Hcat.
-  rewrite /is_yam_of_shape => /andP [] Hy0 /eqP <- /andP [] Hy /eqP Hsh /andP [].
-  elim: z outev => [//= | z0 z IHz /=] outev Hcat Hshcat; first by rewrite Hy Hsh Hshcat.
-  move: Hcat => /andP [] Hincr0 Hcat0.
-  have {IHz} := IHz _ Hcat0 (eq_refl _) => /andP [] -> /eqP ->.
-  by rewrite Hincr0 Hshcat.
-Qed.
-
-Lemma is_part_skew_yam sha shb y :
-  is_part sha -> is_skew_yam sha shb y -> is_part shb.
-Proof.
-  move=> /hyper_yam_of_shape Ha Hskew.
-  have := Hskew _ Ha; by rewrite /is_yam_of_shape => /andP [] /is_part_shyam H /eqP <-.
-Qed.
-
-Lemma skew_yam_catK sha shb shc y z :
-  is_part sha ->
-  is_skew_yam sha shb y -> is_skew_yam sha shc (z ++ y) -> is_skew_yam shb shc z.
-Proof.
-  move=> /hyper_yam_of_shape Ha Hy Hcat.
-  apply (is_skew_yamE (Hy _ Ha)).
-  rewrite catA; by apply Hcat.
-Qed.
-
 
 
 Fixpoint decr_nth v i {struct i} :=
@@ -406,7 +357,7 @@ Proof.
       move=> i /=; case (altP (i =P y0)) => //= ->.
       apply: is_out_corner_yam; by rewrite /= Hpart Hyam.
     rewrite -sumn_count /=.
-    rewrite sum_iota //= add0n size_incr_nth.
+    rewrite sumn_iota //= add0n size_incr_nth.
     by case: (ltnP y0 (size (shape_rowseq y))).
 Qed.
 

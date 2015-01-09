@@ -373,7 +373,7 @@ Proof.
       + by rewrite Hhead Hsz -Hsm addKn !eq_refl Hpart.
     - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
       move=> s; by rewrite /= -eqseqE /= Hneq.
-  rewrite sum_iota //= add1n ltnS leq_min Hp0 -Hsm leq_addr !andbT.
+  rewrite sumn_iota //= add1n ltnS leq_min Hp0 -Hsm leq_addr !andbT.
   have /part_head_non0 /= : is_part (p0 :: p) by rewrite /= Hhead Hpart.
   by rewrite lt0n.
 Qed.
@@ -448,7 +448,7 @@ Proof.
     have {ci} /eq_map -> : ci =1 fun i => i == size p.
       rewrite /ci {ci} => i /=; rewrite list_partnsE /=.
       by rewrite Hsum Hpart !andbT eq_sym.
-    rewrite sum_iota //= add1n ltnS lt0n Hsize /= -(eqP Hsum).
+    rewrite sumn_iota //= add1n ltnS lt0n Hsize /= -(eqP Hsum).
     by apply: size_part.
 Qed.
 

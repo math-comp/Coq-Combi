@@ -132,7 +132,7 @@ Qed.
 Lemma shape_rev T (s : seq (seq T)) : shape (rev s) = rev (shape s).
 Proof. rewrite /shape; elim: s => [//= | s0 s IHs] /=; by rewrite map_rev. Qed.
 
-Lemma sum_iota a b x :
+Lemma sumn_iota a b x :
   a <= x < a + b -> sumn [seq ((i == x) : nat) | i <- iota a b] = 1.
 Proof.
   elim: b a => [/=| b IHb] a.

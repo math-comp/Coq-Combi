@@ -189,6 +189,14 @@ Qed.
     - move=> Hdom; by apply: (Hdom 0 (ltn0Sn _)).
   Qed.
 
+  Lemma dominate_tl a u b v :
+    dominate (a :: u) (b :: v) -> dominate u v.
+  Proof.
+    move=> /dominateP [] /=; rewrite ltnS => Hsize Hdom.
+    apply/dominateP; split; first exact Hsize.
+    move=> i Hi; by apply (Hdom i.+1 Hi).
+  Qed.
+
 End Dominate.
 
 
