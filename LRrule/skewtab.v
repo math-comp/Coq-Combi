@@ -95,6 +95,14 @@ Section SkewShape.
       by apply leq_addl.
   Qed.
 
+  Lemma included_decr_nth u i : included (decr_nth u i) u.
+  Proof.
+    elim: u i => [| u0 u IHu] [| i] //=.
+      case: u0 => [| [| u0]] //=.
+      by rewrite ltnS (leqnSn u0) (included_refl u).
+    by rewrite (leqnn u0) (IHu i).
+  Qed.
+
   Lemma included_incr_nth_inner inner outer i :
     nth 0 inner i < nth 0 outer i ->
     included inner outer -> included (incr_nth inner i) outer.

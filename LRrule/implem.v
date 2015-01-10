@@ -473,7 +473,6 @@ Proof.
 Qed.
 
 (* Mutiplicities are all one *)
-(* TODO : lot's of redudancies *)
 Lemma choose_one_countE shr innev shape mini maxi row l :
   is_part innev ->
   is_skew_yam innev shr row ->
@@ -484,20 +483,16 @@ Lemma choose_one_countE shr innev shape mini maxi row l :
   (count_mem l) (choose_one_letter shr mini maxi) = 1.
 Proof.
   rewrite /choose_one_letter count_filter
-    => Hpart Hrow Hlrow Hincl /andP [] Hmin Hmax Hisrow.
+    => Hpart Hrow Hlrw Hincl /andP [] Hmin Hmax Hisrow.
+  have {Hrow} := Hrow _ (hyper_yam_of_shape Hpart) => /= /andP [] Hyamrow /eqP Hshr.
+  have {Hlrw} := Hlrw _ (hyper_yam_of_shape Hpart) => /= /andP [] Hyamlrow /eqP Hshape.
   rewrite (eq_count (a2 := pred1 l)); first last.
     move=> i /=; case (altP (i =P l)) => [Hi | //=]; subst i.
     have /= -> /= : is_in_corner shr l.
-      have /= := Hlrow _ (hyper_yam_of_shape Hpart).
-      rewrite /is_yam_of_shape => /andP [] /is_in_corner_yam.
-      have := Hrow _ (hyper_yam_of_shape Hpart).
-      by rewrite /is_yam_of_shape => /andP [] _ /eqP ->.
+      rewrite -Hshr; by apply is_in_corner_yam.
     move: Hincl => /includedP [] _ Hincl.
     apply: (leq_trans _ (Hincl l)).
-    have /= := Hlrow _ (hyper_yam_of_shape Hpart).
-    rewrite /is_yam_of_shape => /andP [] _ /= /eqP <-.
-    have /= := Hrow _ (hyper_yam_of_shape Hpart).
-    rewrite /is_yam_of_shape => /andP [] _ /= /eqP ->.
+    rewrite -Hshape /= Hshr.
     by rewrite nth_incr_nth eq_refl add1n ltnS.
   rewrite (count_uniq_mem _ (iota_uniq _ _)) mem_iota Hmin /=.
   set m := minn _ _.
@@ -507,13 +502,10 @@ Proof.
     - have := H; rewrite {1}/leq => /eqP ->.
       by rewrite addn0 (leq_ltn_trans Hl H).
   rewrite /m {m} leq_min Hmax andbT.
-  have := Hrow _ (hyper_yam_of_shape Hpart).
-  rewrite /is_yam_of_shape => /andP [] /is_part_shyam Hp /eqP <-.
-  have /= := Hlrow _ (hyper_yam_of_shape Hpart).
-  rewrite /is_yam_of_shape => /andP [] /is_part_shyam /= Hp1 _.
-  by apply is_part_incr_nth_size.
+  apply is_part_incr_nth_size.
+  - rewrite -Hshr; exact (is_part_shyam Hyamrow).
+  - rewrite -Hshr; exact (is_part_shyam Hyamlrow).
 Qed.
-
 
 Lemma head_row_skew_yam innev shape l r :
   is_part innev -> sorted leqX_op (l :: r) ->
@@ -563,11 +555,7 @@ Proof.
   apply: (IHrow _ _ Hsize (dominate_tl Hdom) (is_row_consK Hisrow)
                  (skew_yam_consK Hinn Hskew)).
   apply: (included_trans _ Hincl).
-  rewrite -{2}(decr_nthK (i := l0) (is_part_skew_yam Hinn Hskew)).
-    apply included_incr_nth.
-  have /= := Hskew _ (hyper_yam_of_shape Hinn).
-  rewrite /is_yam_of_shape => /andP [] H /eqP <-.
-  exact (is_out_corner_yam H).
+  by apply included_decr_nth.
 Qed.
 
 Lemma yamtab_shift_countE inn0 innev shape sh row sol :
@@ -608,12 +596,7 @@ Proof.
   rewrite sumn_count /=.
   apply: (IHsh _ _ _ (is_row_consK Hisrow) Hsize Hskew0 (skew_yam_consK Hinn Hskew)).
   apply: (included_trans _ Hincl).
-  (* TODO : refactor *)
-  rewrite -{2}(decr_nthK (i := r0) (is_part_skew_yam Hinn Hskew)).
-    apply included_incr_nth.
-  have /= := Hskew _ (hyper_yam_of_shape Hinn).
-  rewrite /is_yam_of_shape => /andP [] H /eqP <-.
-  exact (is_out_corner_yam H).
+  by apply included_decr_nth.
 Qed.
 
 
