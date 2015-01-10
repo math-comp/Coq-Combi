@@ -323,61 +323,47 @@ Section Dominate.
 
   Implicit Type u v : seq T.
 
-  Definition skew_dominate sh u v :=
-    ((size u) <= (size v) + sh) &&
-     (all (fun i => (nth Z u i > nth Z v (i - sh))%Ord) (iota sh ((size u) - sh))).
+  Definition skew_dominate sh u v := dominate (drop sh u) v.
 
   Lemma skew_dominate0 : skew_dominate 0 =2 (@dominate T).
-  Proof.
-    move=> u v /=; rewrite /skew_dominate /dominate addn0 subn0.
-    bool_congr; apply eq_all => i.
-    by rewrite subn0.
-  Qed.
-
-  Lemma skew_dominateP sh u v :
-    reflect (((size u) <= (size v) + sh) /\
-             forall i, sh <= i < size u -> (nth Z u i > nth Z v (i - sh))%Ord)
-            (skew_dominate sh u v).
-  Proof.
-    rewrite /dominate /mkseq /skew_dominate; apply/(iffP idP).
-    - move=> /andP [] Hsz /allP Hall; split; first by exact Hsz.
-      move=> i /andP [] Hi Hisz; apply: Hall.
-      rewrite mem_iota Hi /= subnKC; first exact Hisz.
-      apply: (leq_trans Hi); by apply ltnW.
-    - move=> [] -> /= H; apply/allP => i; rewrite mem_iota => /andP [] Hi Hisz.
-      apply: H; rewrite Hi /=.
-      move: Hisz; case (leqP sh (size u)) => Hu.
-      + by rewrite (subnKC Hu).
-      + have := ltnW Hu; rewrite {1}/leq => /eqP ->.
-        rewrite addn0 => /(leq_ltn_trans Hi).
-        by rewrite ltnn.
-  Qed.
+  Proof. move=> u v /=; by rewrite /skew_dominate drop0. Qed.
 
   Lemma skew_dominate_take n sh u v :
     skew_dominate sh u (take n v) -> skew_dominate sh u v.
   Proof.
-    move/skew_dominateP => [] Hsize Hdom.
-    apply/skew_dominateP; split.
-    - apply (leq_trans Hsize); rewrite leq_add2r size_take.
-      rewrite -/(minn n _); by apply geq_minr.
-    - move=> i Hi; have := Hdom i Hi.
+    move/dominateP => [].
+    rewrite size_take -/(minn _ _) => Hsize Hdom.
+    apply/dominateP; split.
+    - apply (leq_trans Hsize); by apply geq_minr.
+    - move=> i Hi; have {Hdom} := Hdom i Hi.
       rewrite nth_take; first by [].
-      move: Hi => /andP [] Hsh Hi.
-      rewrite -(leq_add2r sh) addSn (subnK Hsh).
-      apply (leq_trans Hi); apply (leq_trans Hsize).
-      rewrite leq_add2r size_take.
-      rewrite -/(minn n _); by apply geq_minl.
+      have:= leq_trans Hi Hsize.
+      by rewrite leq_min => /andP [].
   Qed.
 
   Lemma skew_dominate_no_overlap sh u v :
     size u <= sh -> skew_dominate sh u v.
+  Proof. rewrite /skew_dominate => /drop_oversize ->;  by apply dominate_nil. Qed.
+
+  Lemma skew_dominate_consl sh l u v :
+    skew_dominate sh u v -> skew_dominate sh.+1 (l :: u) v.
   Proof.
-    move => Hsize.
-    apply/skew_dominateP; split.
-    - apply (leq_trans Hsize); by apply leq_addl.
-    - move=> i /andP [] H1 H2; exfalso.
-      have := leq_trans H2 (leq_trans Hsize H1).
-        by rewrite ltnn.
+    move/dominateP => [] Hsize Hdom.
+    apply/dominateP; split; first by move: Hsize; rewrite !size_drop.
+    by move=> i /= /Hdom.
+  Qed.
+
+  Lemma skew_dominate_cut sh u v :
+    skew_dominate sh u v = skew_dominate sh u (take (size u - sh) v).
+  Proof.
+    rewrite /skew_dominate /dominate.
+    congr (_ &&_ ).
+    - rewrite size_drop size_take -/(minn _ _).
+      case: leqP => [/minn_idPl -> | H]; first by rewrite leqnn.
+      have /minn_idPr -> := ltnW H.
+      by rewrite leqNgt H.
+    - apply eq_in_all => i; rewrite mem_iota add0n /= size_drop => Hi.
+      by rewrite nth_take.
   Qed.
 
   Fixpoint is_skew_tableau inner t :=
@@ -498,16 +484,13 @@ Proof.
   move: Hdom => /dominateP [] Hsz Hdom.
   have /eq_count Hcount : (gtnX n) =1 predC (leqX n).
     move=> i /=; by apply ltnXNgeqX.
-  apply/skew_dominateP; rewrite !size_filter.
-  split.
-  - rewrite -(leq_add2r (count (gtnX n) r1)).
-    rewrite -addnA (subnK Hsize).
+  apply/dominateP; split.
+  - rewrite size_drop !size_filter (subnBA _ Hsize) leq_subLR [count _ r0 + _]addnC.
     by rewrite !Hcount !count_predC.
-  - move=> i /andP [] Himin Himax.
+  - rewrite size_drop => i.
+    rewrite !size_filter (subnBA _ Hsize) Hcount !count_predC ltn_subRL => /Hdom.
     rewrite (filter_leqX_row _ Hrow0) (filter_leqX_row _ Hrow1) !nth_drop.
-    rewrite (addnBA _ Himin) -{1}(subnK Hsize) -addnA addKn.
-    apply Hdom.
-    by rewrite -(count_predC (leqX n) r1) Hcount addnC ltn_add2r.
+    by rewrite -Hcount addnA (subnKC Hsize).
 Qed.
 
 Definition filter_leqX_tab n :=
@@ -664,26 +647,29 @@ Lemma eq_inv_skew_dominate T1 T2 (u1 v1 : seq T1) (u2 v2 : seq T2) s :
   size u1 = size u2 ->
   skew_dominate s u1 v1 -> skew_dominate s u2 v2.
 Proof.
-  move/eq_invP => []; rewrite !size_cat => Hsz Hinv Hszu /skew_dominateP [] Hsz1 Hdom.
-  apply/skew_dominateP; split.
-    by rewrite -(leq_add2l (size u1)) addnA {2}Hszu -Hsz -addnA leq_add2l -Hszu.
-  rewrite -Hszu => i Hi; have {Hdom} := Hdom _ Hi.
+  move/eq_invP => []; rewrite !size_cat => Hsz Hinv Hszu /dominateP [] Hsz1 Hdom.
+  apply/dominateP; split.
+    move: Hsz Hsz1; rewrite !size_drop !leq_subLR Hszu => /eqP.
+    by rewrite eqn_add2l => /eqP ->.
+  move => i Hi1.
+  have Hi2 : i < size (drop s u1) by move: Hi1; rewrite !size_drop Hszu.
+  have {Hdom} := Hdom _ Hi2.
   set Z1 := inhabitant T1; set Z2 := inhabitant T2.
   rewrite -/Z1 -/Z2 in Hinv.
-  move: Hi => /andP [] Hs Hi.
-  have -> : nth Z1 v1 (i - s) = nth Z1 (u1 ++ v1) (i - s + size u1).
-    by rewrite nth_cat -{2}[size u1]add0n ltn_add2r /= addnK.
-  have -> : nth Z2 v2 (i - s) = nth Z2 (u2 ++ v2) (i - s + size u1).
-    by rewrite nth_cat -{1}[size u2]add0n Hszu ltn_add2r /= addnK.
-  have -> : nth Z1 u1 i = nth Z1 (u1 ++ v1) i.
-    by rewrite nth_cat Hi.
-  have -> : nth Z2 u2 i = nth Z2 (u2 ++ v2) i.
-    by rewrite nth_cat -Hszu Hi.
-  rewrite !ltnXNgeqX; apply contra.
-  rewrite Hinv {Hinv Z1 Z2} //.
-  rewrite -(leq_add2r s) -(ltn_add2r s) -addnA [size u1 + s]addnC addnA (subnK Hs).
-  rewrite leq_add2l (leq_trans Hs (ltnW Hi)) /= addnC -addnA ltn_add2l.
-  by apply (leq_trans Hi).
+  rewrite !nth_drop !ltnXNgeqX; apply contra.
+  move : Hi1 Hi2; rewrite !size_drop !ltn_subRL => Hi2 Hi1.
+  have -> : nth Z1 u1 (s + i) = nth Z1 (u1 ++ v1) (s + i).
+    by rewrite nth_cat Hi1.
+  have -> : nth Z2 u2 (s + i) = nth Z2 (u2 ++ v2) (s + i).
+    by rewrite nth_cat Hi2.
+  have -> : nth Z1 v1 i = nth Z1 (u1 ++ v1) (size u1 + i).
+    by rewrite nth_cat ltnNge leq_addr /= addKn.
+  have -> : nth Z2 v2 i = nth Z2 (u2 ++ v2) (size u2 + i).
+    by rewrite nth_cat ltnNge leq_addr /= addKn.
+  rewrite Hinv Hszu // {Hinv Z1 Z2}.
+  rewrite leq_add2r ltn_add2l; apply/andP; split.
+  apply ltnW; apply: (leq_ltn_trans _ Hi2); by apply leq_addr.
+  move: Hi1 Hsz1; by rewrite size_drop -ltn_subRL => /leq_trans H/H{H}.
 Qed.
 
 Lemma eq_inv_is_skew_tableau_reshape_size inner outer T1 T2 (u1 : seq T1) (u2 : seq T2) :

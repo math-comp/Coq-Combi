@@ -393,11 +393,7 @@ Proof.
     by rewrite mem_seq1 => /eqP [] ->.
   move/flatten_mapP => [[rec shrec]] /(IHsh _ _ Hdom){IHsh Hdom}Hrec.
   move/mapP => [] i _ [] -> _.
-  move: Hrec => /skew_dominateP [] Hsize Hdom.
-  apply/skew_dominateP; split; first by rewrite /= addnS ltnS.
-  case => [//= | i0] /=.
-  rewrite !ltnS subSS.
-  exact (Hdom i0).
+  by apply skew_dominate_consl.
 Qed.
 
 Lemma yamtab_row_is_row innev row :
@@ -678,17 +674,10 @@ Proof.
     move: Hout => //= /andP [] /(leq_sub2r sh0) H _.
     by rewrite addKn in H.
   apply: (yamtab_row_countE Hinnev Heq _ (is_row_drop _ _) Hdrop Hshape).
-  - move: Hskew => /= /and4P [] _ _ Hdom _.
-    apply/dominateP; split; first by rewrite Heq.
-    move=> i; rewrite size_drop => Hi; rewrite nth_take; first last.
-      move: Hi; rewrite addnC.
-      by move: Hinn => /=/andP [] /subnBA -> _.
-    rewrite nth_drop.
-    move: Hdom => /skew_dominateP [] _ Hdom.
-    have /Hdom : sh0 - inn0 <= i + (sh0 - inn0) < size row1.
-      rewrite leq_addl /=.
-      by rewrite ltn_subRL addnC in Hi.
-    by rewrite addnK addnC.
+  - move: Hskew => /= /and4P [] _ _; rewrite skew_dominate_cut /skew_dominate => Hdom _.
+    suff <- : size row1 - (sh0 - inn0) = inn0 + size row1 - sh0 by exact Hdom.
+    move: Hinn => /= /andP [] /subnBA -> _.
+    by rewrite addnC.
   - by move: Hskew => /= /and5P [] _ _ _ _ /andP [].
 Qed.
 
@@ -815,14 +804,10 @@ Proof.
       case: inner => [ _ _ /eqP/nilP ->| in0 inn] //=.
     case: inner => [_ | in0 inn] //=.
       case: yamtab {Hyam} => [ | yam0 yam] //= [] Hyam _ _.
-      rewrite subn0; apply/skew_dominateP; rewrite Hyam /= add0n; split => //=.
-      move => i /andP [] H0 H1; exfalso.
-      have := leq_trans H1 H0; by rewrite ltnn.
+      rewrite subn0; by rewrite /skew_dominate -Hyam drop_size.
     move=> /andP [] Hincl _.
     case: yamtab {Hyam}=> [ | yam0 yam] //= [] Hyam _ _.
-    apply/skew_dominateP; rewrite Hyam /= add0n; split => //=.
-    move => i /andP [] H0 H1; exfalso.
-    have := leq_trans H1 H0; by rewrite ltnn.
+    by rewrite /skew_dominate -Hyam drop_size.
   have {2}-> : outer = outer_shape ((pad 0 (size outer)) inner) (shape yamtab).
     by rewrite Hshape -(size_diff_shape inner outer) outer_shape_pad0 (diff_shapeK Hincl).
   exact (LRyamtab_list_countE Hnil Hinn Hout Hsize Hskew (skew_nil_yamE Hyam)).
