@@ -100,6 +100,19 @@ Proof.
   rewrite subSS; by apply Hrec.
 Qed.
 
+Lemma head_row_skew_yam innev shape l r :
+  is_part innev -> sorted leqX_op (l :: r) ->
+  is_skew_yam innev shape (l :: r) ->
+  l <= head (size innev) r.
+Proof.
+  case: r => [| l1 r /=] Hinn Hrow Hskew.
+    apply (is_part_incr_nth_size Hinn).
+    have:= Hskew _ (hyper_yam_of_shape Hinn).
+    rewrite /= /is_yam_of_shape /=.
+    by rewrite (shape_rowseq_hyper_yam Hinn) => /andP [] /andP [].
+  move: Hrow => /andP [].
+  by rewrite leqXnatE.
+Qed.
 
 
 (* COQ implementation of the LR rule *)
@@ -154,7 +167,7 @@ Fixpoint LRyamtab_count_rec innev inner outer sh0 row0 :=
   else 1.
 
 
-Lemma LRyam_tab_countE innev inner outer sh0 row0 :
+Lemma size_LRyamtab_listE innev inner outer sh0 row0 :
   size (LRyamtab_list_rec innev inner outer sh0 row0) =
   LRyamtab_count_rec innev inner outer sh0 row0.
 Proof.
@@ -503,20 +516,6 @@ Proof.
   - rewrite -Hshr; exact (is_part_shyam Hyamlrow).
 Qed.
 
-Lemma head_row_skew_yam innev shape l r :
-  is_part innev -> sorted leqX_op (l :: r) ->
-  is_skew_yam innev shape (l :: r) ->
-  l <= head (size innev) r.
-Proof.
-  case: r => [| l1 r /=] Hinn Hrow Hskew.
-    apply (is_part_incr_nth_size Hinn).
-    have:= Hskew _ (hyper_yam_of_shape Hinn).
-    rewrite /= /is_yam_of_shape /=.
-    by rewrite (shape_rowseq_hyper_yam Hinn) => /andP [] /andP [].
-  move: Hrow => /andP [].
-  by rewrite leqXnatE.
-Qed.
-
 Lemma yamtab_row_countE innev shape row base :
   is_part innev ->
   size row = size base ->
@@ -690,7 +689,7 @@ Definition LRcoeff inner eval outer :=
 
 Lemma LRcoeffE inner eval outer :
   size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.
-Proof. by rewrite LRyam_tab_countE. Qed.
+Proof. by rewrite size_LRyamtab_listE. Qed.
 
 Lemma LRyamtab_yam inner eval outer tab:
   tab \in (LRyamtab_list inner eval outer) -> is_yam (to_word tab).
@@ -755,20 +754,6 @@ Proof.
   apply (included_sumnE Hev (LRyamtab_included Htab)).
   rewrite Hsumn shape_rowseq_eq_size -size_to_word /size_tab.
   by rewrite (LRyamtab_shape Hinn Hout Hincl Htab).
-Qed.
-
-Lemma outer_shape_pad0 inner sz :
-  outer_shape (pad 0 (size sz) inner) sz = outer_shape inner sz.
-Proof.
-  rewrite /outer_shape; congr map; congr zip.
-  rewrite /= size_cat size_nseq.
-  set n := (X in (_++ _) ++ nseq X _).
-  suff -> : n = 0 by rewrite /= cats0.
-  rewrite /n{n}.
-  move: (size sz) (size inner) => a b.
-  case: (ltnP a b) => [/ltnW | ] H.
-  - move: H; rewrite /leq => /eqP H; by rewrite H addn0 H.
-  - by rewrite (subnKC H) subnn.
 Qed.
 
 Lemma count_mem_LRyamtab_list inner eval outer yamtab :

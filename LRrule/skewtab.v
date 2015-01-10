@@ -212,6 +212,21 @@ Section SkewShape.
     by rewrite addKn.
   Qed.
 
+
+  Lemma outer_shape_pad0 inner sz :
+    outer_shape (pad 0 (size sz) inner) sz = outer_shape inner sz.
+  Proof.
+    rewrite /outer_shape; congr map; congr zip.
+    rewrite /= size_cat size_nseq.
+    set n := (X in (_++ _) ++ nseq X _).
+    suff -> : n = 0 by rewrite /= cats0.
+    rewrite /n{n}.
+    move: (size sz) (size inner) => a b.
+    case: (ltnP a b) => [/ltnW | ] H.
+    - move: H; rewrite /leq => /eqP H; by rewrite H addn0 H.
+    - by rewrite (subnKC H) subnn.
+  Qed.
+
   Lemma head_pad0 (T : Type) n (p : T) s : head p (pad p n s) = head p s.
   Proof. elim: s => [| s0 s IHs] //=; rewrite subn0; by case: n. Qed.
 
