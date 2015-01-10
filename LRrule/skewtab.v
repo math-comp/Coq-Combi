@@ -74,7 +74,28 @@ Section SkewShape.
       move=> i; by apply (H i.+1).
   Qed.
 
-  Lemma included_incr_nth inner outer i :
+  Lemma included_refl sh : included sh sh.
+  Proof. elim: sh => [//= | s0 sh /= -> ]; by rewrite leqnn. Qed.
+
+  Lemma included_trans sha shb shc :
+    included sha shb -> included shb shc -> included sha shc.
+  Proof.
+    move=> /includedP [] Hsza Hincla /includedP [] Hszb Hinclb.
+    apply/includedP; split; first exact (leq_trans Hsza Hszb).
+    move=> i; by apply (leq_trans (Hincla i) (Hinclb i)).
+  Qed.
+
+  Lemma included_incr_nth sh i :
+    included sh (incr_nth sh i).
+  Proof.
+    apply/includedP; split.
+    - rewrite size_incr_nth; case ltnP => Hi //=.
+      by apply (leq_trans Hi).
+    - move=> j; rewrite nth_incr_nth.
+      by apply leq_addl.
+  Qed.
+
+  Lemma included_incr_nth_inner inner outer i :
     nth 0 inner i < nth 0 outer i ->
     included inner outer -> included (incr_nth inner i) outer.
   Proof.
@@ -196,6 +217,96 @@ Section SkewShape.
 Qed.
 
 End SkewShape.
+
+
+Definition is_skew_yam innev outev sy :=
+  (forall y, is_yam_of_shape innev y -> is_yam_of_shape outev (sy ++ y)).
+
+Lemma skew_yam_nil sh : is_skew_yam sh sh [::].
+Proof. rewrite /is_skew_yam => y; by rewrite cat0s. Qed.
+
+Lemma skew_nil_yamE eval y : is_yam_of_shape eval y -> is_skew_yam [::] eval y.
+Proof.
+  move=> Hy z; rewrite {1}/is_yam_of_shape => /andP [] _ /eqP Hz.
+  have := shape_rowseq_eq_size z; rewrite Hz /= => /esym/eqP/nilP ->.
+  by rewrite cats0.
+Qed.
+
+Lemma skew_yam_cat sha shb shc y z :
+  is_skew_yam sha shb y -> is_skew_yam shb shc z -> is_skew_yam sha shc (z ++ y).
+Proof. rewrite /is_skew_yam => Hy Hz x /Hy /Hz; by rewrite catA. Qed.
+
+Lemma is_skew_yamE innev outev z y0 :
+  is_yam_of_shape innev y0 ->
+  is_yam_of_shape outev (z ++ y0) ->
+  is_skew_yam innev outev z.
+Proof.
+  move=> Hy0 Hcat y Hy.
+  move: Hy0 Hy Hcat.
+  rewrite /is_yam_of_shape => /andP [] Hy0 /eqP <- /andP [] Hy /eqP Hsh /andP [].
+  elim: z outev => [//= | z0 z IHz /=] outev Hcat Hshcat; first by rewrite Hy Hsh Hshcat.
+  move: Hcat => /andP [] Hincr0 Hcat0.
+  have {IHz} := IHz _ Hcat0 (eq_refl _) => /andP [] -> /eqP ->.
+  by rewrite Hincr0 Hshcat.
+Qed.
+
+Lemma is_part_skew_yam sha shb y :
+  is_part sha -> is_skew_yam sha shb y -> is_part shb.
+Proof.
+  move=> /hyper_yam_of_shape Ha Hskew.
+  have := Hskew _ Ha; by rewrite /is_yam_of_shape => /andP [] /is_part_shyam H /eqP <-.
+Qed.
+
+Lemma skew_yam_catrK sha shb shc y z :
+  is_part sha ->
+  is_skew_yam sha shb y -> is_skew_yam sha shc (z ++ y) -> is_skew_yam shb shc z.
+Proof.
+  move=> /hyper_yam_of_shape Ha Hy Hcat.
+  apply (is_skew_yamE (Hy _ Ha)).
+  rewrite catA; by apply Hcat.
+Qed.
+
+Lemma skew_yam_consK sha shc i y :
+  is_part sha -> is_skew_yam sha shc (i :: y) ->
+  is_skew_yam sha (decr_nth shc i) y.
+Proof.
+  move=> Hpart Hskew.
+  have /= := Hskew _ (hyper_yam_of_shape Hpart).
+  rewrite /is_yam_of_shape /= => /andP [] /andP [] Hincr Hyam /eqP Hc.
+  apply (is_skew_yamE (hyper_yam_of_shape Hpart)).
+  rewrite /is_yam_of_shape Hyam /= -Hc.
+  by rewrite (incr_nthK (is_part_shyam Hyam) Hincr).
+Qed.
+
+Lemma skew_yam_catK sha shc y z :
+  is_part sha -> is_skew_yam sha shc (y ++ z) ->
+  { shb | is_skew_yam sha shb z & is_skew_yam shb shc y }.
+Proof.
+  move=> Hpart.
+  elim: y z shc => [| y0 y IHy ] z shc Hz /=.
+    exists shc; first exact Hz.
+    by apply skew_yam_nil.
+  have := IHy _ _ (skew_yam_consK Hpart Hz) => [] [shb] Hskz Hy.
+  exists shb; first exact Hskz.
+  exact (skew_yam_catrK Hpart Hskz Hz).
+Qed.
+
+Lemma skew_yam_included sha shb y :
+  is_part sha -> is_skew_yam sha shb y -> included sha shb.
+Proof.
+  move=> Hpart.
+  elim: y shb => [| y0 y IHy] shb /= Hskew.
+    have := Hskew _ (hyper_yam_of_shape Hpart).
+    rewrite cat0s /is_yam_of_shape (shape_rowseq_hyper_yam Hpart) => /andP [] _ /eqP ->.
+    by apply included_refl.
+  have {IHy} Hrec := IHy _ (skew_yam_consK Hpart Hskew).
+  have /= := Hskew _ (hyper_yam_of_shape Hpart).
+  rewrite /is_yam_of_shape => /andP [] /is_out_corner_yam => Hcorn /eqP Hb.
+  rewrite Hb in Hcorn.
+  have := included_incr_nth (decr_nth shb y0) y0.
+  rewrite (decr_nthK (is_part_skew_yam Hpart Hskew) Hcorn).
+  by apply included_trans.
+Qed.
 
 Section Dominate.
 
