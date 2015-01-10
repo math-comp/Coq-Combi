@@ -28,12 +28,12 @@ Open Scope N.
 Section LR.
 
 Notation Z := (inhabitant nat_ordType).
-  
+
 Lemma to_word_map_shiftn sh t : to_word (map (shiftn sh) t) = shiftn sh (to_word t).
 Proof.
-  rewrite /to_word /shiftn.
+  rewrite /shiftn.
   elim: t => [//= | t0 t IHt] /=.
-  by rewrite !rev_cons !flatten_rcons IHt map_cat.
+  by rewrite !to_word_cons IHt map_cat.
 Qed.
 
 Lemma filter_leq_shiftn sh t : [seq x - sh | x <- [seq sh + i | i <- t] & sh <= x] = t.
@@ -45,24 +45,19 @@ Proof. elim: t => [//= | l0 r /= ->] /=; by rewrite ltnNge leq_addr. Qed.
 Lemma shiftn_skew_dominate n sh u v :
   skew_dominate sh u v -> skew_dominate sh (shiftn n u) (shiftn n v).
 Proof.
-  rewrite /skew_dominate !size_map => /andP [] Hsz.
-  rewrite Hsz /=.
+  rewrite /skew_dominate /dominate !size_map => /andP [] Hsz.
+  rewrite -map_drop size_map Hsz /=.
   set p1 := (X in all X) => H.
   set p2 := (X in all X).
   rewrite (eq_in_all (a2 := p1)) //=.
-  move => i /=; rewrite mem_iota => /andP [] Hi1.
+  move => i /=; rewrite mem_iota add0n => /= Hi1.
   case (leqP sh (size u)) => Hu.
-  + rewrite (subnKC Hu) => Hi2.
-    rewrite /p1 /p2 {p1 p2 H} /shiftn.
-    rewrite !ltnXnatE.
-    rewrite (nth_map Z); first last.
-      rewrite -(ltn_add2l sh) (subnKC Hi1) addnC.
-      by apply (leq_trans Hi2).
-    rewrite (nth_map Z); last exact Hi2.
+  + rewrite /p1 /p2 {p1 p2 H} /shiftn.
+    rewrite !ltnXnatE (nth_map Z _ _ (leq_trans Hi1 Hsz)) (nth_map Z _ _ Hi1).
     by rewrite ltn_add2l.
-  + move=> Hi2; exfalso.
-    have := (ltnW Hu); rewrite /leq => /eqP Hleq.
-    move: Hi2; by rewrite Hleq addn0 ltnNge Hi1.
+  + exfalso; move: Hi1; rewrite size_drop.
+    have:= (ltnW Hu); rewrite {1}/leq => /eqP ->.
+    by rewrite ltn0.
 Qed.
 
 Lemma is_skew_tableau_map_shiftn sh inn t :
@@ -93,7 +88,6 @@ Proof.
     apply/allP => i; rewrite (perm_eq_mem Hperm).
     by rewrite mem_iota /= add0n.
   move: (size_tab s) => sh.
-  rewrite /to_word.
   elim: s t Htabs => [| s0 s IHs] /= t.
     move => _ _ Ht; rewrite subn0.
     set t' := map _ _.
@@ -102,7 +96,7 @@ Proof.
     rewrite -is_skew_tableau0.
     by apply is_skew_tableau_map_shiftn.
   move/and4P => [] Hnnils0 Hrows0 Hdoms Htabs.
-  rewrite rev_cons flatten_rcons all_cat => /andP [] Halls Halls0.
+  rewrite to_word_cons all_cat => /andP [] Halls Halls0.
   case: t => [//= | t0 t] /= /and4P [] Hszt0 Hrowt0 Hdomt Htabt.
   apply/and4P; rewrite subSS; split.
   - move: Hnnils0; apply contra; by case s0.
@@ -122,8 +116,9 @@ Proof.
   - rewrite size_map {IHs Hrows0 Hrowt0 Hnnils0 Hszt0} /=.
     case: s Hdoms Htabs Halls Hdomt Htabt => [//= _ _ _| s1 s] /=.
     + rewrite subn0.
-      case: t => [//= | t1 t] /= /skew_dominateP [] Hszt Hdomt _.
-      apply/dominateP; split; first by rewrite size_cat !size_map addnC.
+      case: t => [//= | t1 t] /= /dominateP [] Hszt Hdomt _.
+      apply/dominateP; split;
+        first by move: Hszt; rewrite size_cat !size_map size_drop leq_subLR.
       rewrite size_map => i Hi.
       rewrite nth_cat; case ltnP => His0.
       * move: Halls0 => /allP Halls0.
@@ -133,15 +128,18 @@ Proof.
         by apply leq_addr.
       * rewrite (nth_map Z _ _ Hi).
         rewrite (nth_map Z); first last.
-          rewrite -(ltn_add2l (size s0)) (subnKC His0) addnC.
+          rewrite -(ltn_add2l (size s0)) (subnKC His0).
+          move: Hszt; rewrite size_drop leq_subLR.
           by apply (leq_trans Hi).
         rewrite ltnXnatE ltn_add2l -ltnXnatE.
-        by apply Hdomt; rewrite His0 Hi.
+        have /Hdomt : (i - size s0) < size (drop (size s0) t1).
+          by rewrite size_drop ltn_subRL (subnKC His0).
+        by rewrite nth_drop (subnKC His0).
     + case: t => [//= | t1 t] /= /dominateP [] Hszs Hdoms _.
-      rewrite rev_cons flatten_rcons all_cat => /andP [] _ Halls1.
-      move/skew_dominateP => [] Hszt Hdomt _  {s t}.
+      rewrite to_word_cons all_cat => /andP [] _ Halls1.
+      move/dominateP => [] Hszt Hdomt _  {s t}.
       have {Hszt} Hszt : size s1 + size t1 <= size s0 + size t0.
-        by rewrite -(subnKC Hszs) -addnA leq_add2l addnC.
+        move: Hszt; by rewrite size_drop (subnBA _ Hszs) leq_subLR addnC.
       apply/dominateP; split; first by rewrite !size_cat !size_map.
       rewrite size_cat size_map => i Hi.
       rewrite !nth_cat.
@@ -158,9 +156,11 @@ Proof.
         rewrite (nth_map Z); first last.
           by rewrite -(ltn_add2l (size s1)) (subnKC Hi1).
         rewrite ltnXnatE ltn_add2l -ltnXnatE.
-        rewrite -{1}(subnKC Hi1) addnC -(subnBA _ Hszs).
-        apply Hdomt; apply/andP; split; first by apply leq_sub2r.
-        by rewrite -(subSn Hi1) leq_subLR.
+        have /Hdomt : i - size s0 < size (drop (size s0 - size s1) t1).
+          rewrite size_drop -(ltn_add2l (size s0)) (subnKC Hi0).
+          rewrite (subnBA _ Hszs) subnKC addnC //=.
+          apply (leq_trans Hi0); by apply ltnW.
+        by rewrite nth_drop addnC (addnBA _ Hszs) (subnK Hi0).
   - by apply IHs.
 Qed.
 
@@ -176,28 +176,28 @@ Proof.
     apply/allP => i; rewrite (perm_eq_mem Hperm).
     by rewrite mem_iota /= add0n.
   move: (size_tab s) => sh.
-  rewrite /to_word /shiftn => Hall; apply /andP; split; apply/eqP.
+  rewrite /shiftn => Hall; apply /andP; split; apply/eqP.
   - elim: s t Hsize Hall => [| s0 s IHs] /= t.
     + rewrite subn0 size_map => _ _.
       set t' := map _ _.
       have {t'} -> : t' = map (shiftn sh) t.
         by rewrite /t'; elim: t {t'} => //= r t ->.
       elim: t => [//= | t0 t IHt] /=.
-      rewrite rev_cons flatten_rcons filter_cat IHt cat0s {t IHt}.
+      rewrite to_word_cons filter_cat IHt cat0s {t IHt}.
       by rewrite filter_gtn_shiftn.
     + case: t => [//= | t0 t] /=.
-      rewrite ltnS rev_cons flatten_rcons all_cat => /IHs{IHs}Hrec /andP [] /Hrec{Hrec} Hrec.
-      rewrite rev_cons flatten_rcons !filter_cat subSS Hrec {Hrec} => /all_filterP ->.
+      rewrite ltnS to_word_cons all_cat => /IHs{IHs}Hrec /andP [] /Hrec{Hrec} Hrec.
+      rewrite to_word_cons !filter_cat subSS Hrec {Hrec} => /all_filterP ->.
       suff -> : [seq x <- [seq sh + i | i <- t0] | gtn sh x] = [::] by rewrite cats0.
       by rewrite filter_gtn_shiftn.
   - elim: s t Hsize Hall => [| s0 s IHs] /= t.
     + rewrite subn0 size_map => _ _.
       elim: t => [//= | t0 t IHt] /=.
-      rewrite !rev_cons !flatten_rcons !filter_cat map_cat IHt {IHt}.
+      rewrite !to_word_cons !filter_cat map_cat IHt {IHt}.
       by rewrite filter_leq_shiftn.
     + case: t => [//= | t0 t] /=.
-      rewrite ltnS rev_cons flatten_rcons all_cat => /IHs{IHs}Hrec /andP [] /Hrec{Hrec} Hrec.
-      rewrite !rev_cons !flatten_rcons !filter_cat !map_cat subSS Hrec {Hrec}.
+      rewrite ltnS to_word_cons all_cat => /IHs{IHs}Hrec /andP [] /Hrec{Hrec} Hrec.
+      rewrite !to_word_cons !filter_cat !map_cat subSS Hrec {Hrec}.
       rewrite filter_leq_shiftn => Hall.
       suff -> : [seq x - sh | x <- s0 & sh <= x] = [::] by rewrite cat0s.
       elim: s0 Hall {t s t0} => [//= | l0 s IHs] /= /andP [] H /IHs.
@@ -242,23 +242,21 @@ Qed.
 Lemma filter_gtnX_to_word (T : ordType) n (t : seq (seq T)) :
   filter (gtnX n) (to_word t) = to_word (filter_gtnX_tab n t).
 Proof.
-  rewrite /to_word.
   elim: t => [//= | t0 t IHt] /=.
-  rewrite rev_cons flatten_rcons filter_cat /=.
+  rewrite to_word_cons filter_cat /=.
   case: (altP (filter (gtnX n) t0 =P [::])) => H /=.
   - by rewrite H cats0 IHt.
-  - by rewrite rev_cons flatten_rcons IHt.
+  - by rewrite to_word_cons IHt.
 Qed.
 
 Lemma filter_leqX_to_word (T : ordType) n (t : seq (seq T)) :
   filter (leqX n) (to_word t) = to_word (filter_leqX_tab n t).
 Proof.
-  rewrite /to_word.
   elim: t => [//= | t0 t IHt] /=.
-  rewrite rev_cons flatten_rcons filter_cat /=.
+  rewrite to_word_cons filter_cat /=.
   case: (altP (filter (leqX n) t0 =P [::])) => H /=.
-  - by rewrite H cats0 IHt rev_cons flatten_rcons cats0.
-  - by rewrite rev_cons flatten_rcons IHt.
+  - by rewrite H cats0 IHt to_word_cons cats0.
+  - by rewrite to_word_cons IHt.
 Qed.
 
 Section OneCoeff.
@@ -535,13 +533,13 @@ Proof.
 Qed.
 
 
-Definition LRyam_list (P1 P2 P : seq nat) :=
+Definition LRyam_enum (P1 P2 P : seq nat) :=
   [seq x <- list_yamsh P2 | is_skew_tableau P1 (skew_reshape P1 P x)].
-Definition LRyam_compute (P1 P2 P : seq nat) := size (LRyam_list P1 P2 P).
+Definition LRyam_compute (P1 P2 P : seq nat) := size (LRyam_enum P1 P2 P).
 
 Lemma LR_coeff_computeP : LRyam_compute P1 P2 P = LRyam_coeff.
 Proof.
-  rewrite /LRyam_coeff /LRyam_set /LRyam_compute /LRyam_list.
+  rewrite /LRyam_coeff /LRyam_set /LRyam_compute /LRyam_enum.
   rewrite cardE /enum_mem.
   rewrite -(size_map val); congr (size _).
   set E := Finite.enum _; have -> : (list_yamsh P2) = map val E.

@@ -80,7 +80,7 @@ Proof.
     move/eq_count -> => {p}.
     apply: IHk; by rewrite (eqP H).
   move/eq_map -> => {IHk Ht f s k}; unlock.
-  by apply: sum_iota; rewrite add0n.
+  by apply: sumn_iota; rewrite add0n.
 Qed.
 
 Lemma uniq_vect_n_k n k : uniq (vect_n_k n k).

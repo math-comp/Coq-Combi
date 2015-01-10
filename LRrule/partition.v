@@ -111,6 +111,16 @@ Section Partition.
      by rewrite nth_incr_nth eq_refl.
   Qed.
 
+  Lemma is_part_incr_nth_size sh l :
+    is_part sh -> is_part (incr_nth sh l) -> l <= size sh.
+  Proof.
+    elim: sh l => [//= | sh0 sh IHsh] /= l.
+      move => _.
+      case: l => [| i] //= /andP []; by rewrite leqn0 => /part_head0F ->.
+    case: l => [//= | l].
+    by rewrite ltnS /= => /andP [] _ /IHsh H /andP [] _ /H.
+  Qed.
+
   Definition is_in_corner sh := [pred i | (i == 0) || (nth 0 sh i < nth 0 sh i.-1)].
 
   Lemma is_part_incr_nth sh i : is_part sh -> is_in_corner sh i -> is_part (incr_nth sh i).
@@ -373,7 +383,7 @@ Proof.
       + by rewrite Hhead Hsz -Hsm addKn !eq_refl Hpart.
     - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
       move=> s; by rewrite /= -eqseqE /= Hneq.
-  rewrite sum_iota //= add1n ltnS leq_min Hp0 -Hsm leq_addr !andbT.
+  rewrite sumn_iota //= add1n ltnS leq_min Hp0 -Hsm leq_addr !andbT.
   have /part_head_non0 /= : is_part (p0 :: p) by rewrite /= Hhead Hpart.
   by rewrite lt0n.
 Qed.
@@ -448,7 +458,7 @@ Proof.
     have {ci} /eq_map -> : ci =1 fun i => i == size p.
       rewrite /ci {ci} => i /=; rewrite list_partnsE /=.
       by rewrite Hsum Hpart !andbT eq_sym.
-    rewrite sum_iota //= add1n ltnS lt0n Hsize /= -(eqP Hsum).
+    rewrite sumn_iota //= add1n ltnS lt0n Hsize /= -(eqP Hsum).
     by apply: size_part.
 Qed.
 

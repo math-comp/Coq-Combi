@@ -99,13 +99,12 @@ Section RCons.
     by move=> /eqP [] ->.
   Qed.
 
-  Lemma rcons_nilF s l : ((rcons s l) == [::]) = false.
-  Proof. case eqP=>//= H; have:= eq_refl (size (rcons s l)). by rewrite {2}H size_rcons. Qed.
-
-
   Lemma count_flatten (s : seq (seq T)) P :
     count P (flatten s) = sumn [seq count P x | x <- s].
   Proof. elim: s => [//= | s0 s IHs /=]. by rewrite count_cat IHs. Qed.
+
+  Lemma rcons_nilF s l : ((rcons s l) == [::]) = false.
+  Proof. case eqP=>//= H; have:= eq_refl (size (rcons s l)). by rewrite {2}H size_rcons. Qed.
 
   Lemma count_mem_rcons w l i : count_mem i (rcons w l) = count_mem i w + (l == i).
   Proof. by rewrite -count_rev rev_rcons /= count_rev addnC. Qed.
@@ -116,6 +115,14 @@ Section RCons.
 
 End RCons.
 
+Lemma map_flatten (T1 T2 : eqType) (f : T1 -> T2) s :
+  map f (flatten s) = flatten (map (map f) s).
+Proof. elim: s => [//= | s0 s /= <-]; by apply map_cat. Qed.
+
+Lemma sumn_flatten s :
+  sumn (flatten s) = sumn (map sumn s).
+Proof. elim: s => [//= | s0 s /= <-]; by apply sumn_cat. Qed.
+
 Lemma sumn_rev s : sumn (rev s) = sumn s.
 Proof.
   elim: s => [//= | s0 s /= <-].
@@ -125,7 +132,7 @@ Qed.
 Lemma shape_rev T (s : seq (seq T)) : shape (rev s) = rev (shape s).
 Proof. rewrite /shape; elim: s => [//= | s0 s IHs] /=; by rewrite map_rev. Qed.
 
-Lemma sum_iota a b x :
+Lemma sumn_iota a b x :
   a <= x < a + b -> sumn [seq ((i == x) : nat) | i <- iota a b] = 1.
 Proof.
   elim: b a => [/=| b IHb] a.

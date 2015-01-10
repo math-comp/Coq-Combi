@@ -158,7 +158,7 @@ Proof.
     rewrite /yamtab -[size sh]add0n; move: 0.
     elim: sh => [//= | s0 sh IHsh] /= i; first by rewrite addn0.
     by rewrite IHsh addSnnS.
-  rewrite /to_word /hyper_yam !rev_rcons /= => ->.
+  rewrite /hyper_yam to_word_rcons rev_rcons /= => ->.
   by rewrite size_rev.
 Qed.
 
@@ -205,16 +205,15 @@ Lemma yamtab_unique t :
   is_tableau t -> is_yam (to_word t) -> t = yamtab (shape t).
 Proof.
   elim/last_ind: t => [//= | t tn IHt] /=.
-  rewrite /to_word rev_rcons /= -[flatten (rev t)]/(to_word t).
-  rewrite /shape map_rcons yamtab_rcons -/shape => Htab Hyam.
-  have {IHt} Hrec := IHt (is_tableau_rconsK Htab) (is_yam_suffix Hyam).
+  rewrite to_word_rcons /= /shape map_rcons yamtab_rcons -/shape => Htab Hyam.
+  have {IHt} Hrec := IHt (is_tableau_rconsK Htab) (is_yam_catr Hyam).
   rewrite -Hrec; congr (rcons t _).
   have := is_part_sht Htab.
   rewrite /shape map_rcons -/shape.
   move: Hrec; move: (shape t) => sh Ht; subst t.
   case/lastP: sh Htab Hyam => [| sh sn] /=.
     move=> /and3P [] _ Hrow _.
-    rewrite /yamtab /to_word /= cats0 => /last_yam Hlast _.
+    rewrite /yamtab /= cats0 => /last_yam Hlast _.
     case: tn Hrow Hlast => [//= | l0 tn] /=.
     elim: tn l0 => [l0 _ /= -> //= | l1 t' IHt] /= l0 /andP [] Hl0l1 Hpath Hlast.
     have {IHt Hpath Hlast} [] := IHt l1 Hpath Hlast => Hl1 <-.
@@ -224,7 +223,7 @@ Proof.
   case: sn => [//= | sn] /= _ _ Hdom /and3P [] Hrow Hn2 _.
   rewrite to_word_yamtab size_rcons.
   case/lastP: tn Hrow Hn2 Hdom => [//=| tn ln] /= _ Hrow Hdom.
-  rewrite -{1}cats1 -catA cat1s => /is_yam_suffix /= /andP [] Hpart _ /is_part_rconsK Hp0.
+  rewrite -{1}cats1 -catA cat1s => /is_yam_catr /= /andP [] Hpart _ /is_part_rconsK Hp0.
   move: Hpart; rewrite (shape_rowseq_hyper_yam Hp0) => Hp1.
   have Hln : ln <= (size sh).+1.
     elim: sh ln Hp0 Hp1 {Hdom Hrow} => [| s0 sh IHsh] /= ln.

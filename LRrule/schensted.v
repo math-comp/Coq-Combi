@@ -1121,10 +1121,10 @@ Section Statistics.
   Lemma count_instab t l p :
     is_tableau t -> count p (to_word (instab t l)) = (p l) + count p (to_word t).
   Proof.
-    rewrite /to_word; elim: t l => [//= _ | r t IHt] l /= /and4P [] _ _ _ Htab.
+    elim: t l => [//= _ | r t IHt] l /= /and4P [] _ _ _ Htab.
     have:= bumprow_count r l p.
     case (bumprow r l) => [[ll|] lr] /= /eqP Hbump; rewrite addnC in Hbump;
-      rewrite !rev_cons !flatten_rcons !count_cat [_ + (count p r)]addnC addnA Hbump.
+      rewrite !to_word_cons !count_cat [_ + (count p r)]addnC addnA Hbump.
     - by rewrite (IHt ll Htab) -addnA addnC -addnA addnC.
     - by rewrite addn0 addnC.
   Qed.

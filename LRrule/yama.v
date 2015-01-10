@@ -114,6 +114,7 @@ Section Yama.
     if s is s0 :: s'
     then is_part (shape_rowseq s) && is_yam s'
     else true.
+  Definition is_yam_of_shape sh y := (is_yam y) && (shape_rowseq y == sh).
 
   Lemma is_part_shyam s : is_yam s -> is_part (shape_rowseq s).
   Proof. by case: s => [//= | s0 s] /= /andP []. Qed.
@@ -127,8 +128,8 @@ Section Yama.
   Lemma is_yam_tl l0 s : is_yam (l0 :: s) -> is_yam s.
   Proof. by move=> /= /andP []. Qed.
 
-  Lemma is_yam_suffix s t : is_yam (s ++ t) -> is_yam t.
-  Proof. by elim: s => [//= | s0 s IHs] /= /andP [] _ /IHs. Qed.
+  Lemma is_yam_catr s t : is_yam (s ++ t) -> is_yam t.
+  Proof. by elim: s => [//= | s0 s IHs] /= /andP [] _. Qed.
 
   Lemma last_yam y : is_yam y -> last 0 y = 0.
   Proof.
@@ -172,6 +173,19 @@ Section Yama.
     move=> Hyam; have:= is_part_shyam (is_yam_tl Hyam) => /is_partP [] _ Hpart.
     rewrite /is_out_corner !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS.
     by apply: Hpart.
+  Qed.
+
+  Lemma is_in_corner_yam l0 s :
+    is_yam (l0 :: s) -> is_in_corner (shape_rowseq s) l0.
+  Proof.
+    rewrite /is_in_corner /=; case: l0 => [//= | l0] /=.
+    case: (shape_rowseq s) => [//= | sh0 sh].
+      move=> /andP [] /andP [] H1 H2 _; exfalso.
+      case: l0 H1 H2 => //= l0 _; by elim: l0.
+    move=> /andP [] /is_partP [] _ Hpart _.
+    have /= {Hpart} := Hpart l0.
+    rewrite -/(incr_nth (sh0 :: sh) l0.+1) !nth_incr_nth eq_refl add1n.
+    by rewrite eq_sym ieqi1F add0n.
   Qed.
 
   (* Hyperstandard Yamanouchi word : 33 2222 11111 0000000 *)
@@ -226,7 +240,24 @@ Section Yama.
     have:= Hpart2; by rewrite -{1}(shape_rowseq_hyper_yam Hpart2) /hyper_yam rev_rcons.
   Qed.
 
+  Lemma hyper_yam_of_shape sh : is_part sh -> is_yam_of_shape sh (hyper_yam sh).
+  Proof.
+    move=> H; by rewrite /is_yam_of_shape (hyper_yamP H) (shape_rowseq_hyper_yam H) /=.
+  Qed.
+
 End Yama.
+
+Lemma is_yam_cat_any y0 y1 z :
+  is_yam y0 -> is_yam y1 -> shape_rowseq y0 = shape_rowseq y1 ->
+  is_yam (z ++ y0) -> is_yam (z ++ y1).
+Proof.
+  elim: z => [//= | z0 z IHz] /= Hy0 Hy1 H /andP [] Hpart Hyam.
+  apply/andP; split; last by apply IHz.
+  suff <- : shape_rowseq (z ++ y0) = shape_rowseq (z ++ y1) by [].
+  apply /eqP; rewrite -perm_eq_shape_rowseq.
+  by rewrite perm_cat2l perm_eq_shape_rowseq H.
+Qed.
+
 
 Fixpoint decr_nth v i {struct i} :=
   if v is n :: v' then
@@ -293,7 +324,6 @@ Fixpoint list_yamshn n sh :=
                   i <- iota 0 (size sh) & is_out_corner sh i]
   else [:: [::]].
 Definition list_yamsh sh := list_yamshn (sumn sh) sh.
-Definition is_yam_of_shape sh y := (is_yam y) && (shape_rowseq y == sh).
 Definition is_yam_of_size n y := (is_yam y) && (size y == n).
 
 Lemma list_yamshP sh:
@@ -340,7 +370,7 @@ Proof.
       move=> i /=; case (altP (i =P y0)) => //= ->.
       apply: is_out_corner_yam; by rewrite /= Hpart Hyam.
     rewrite -sumn_count /=.
-    rewrite sum_iota //= add0n size_incr_nth.
+    rewrite sumn_iota //= add0n size_incr_nth.
     by case: (ltnP y0 (size (shape_rowseq y))).
 Qed.
 
