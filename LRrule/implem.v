@@ -237,7 +237,7 @@ Lemma one_letter_included innev mini maxi :
 Proof.
   move=> Hincl => i.
   rewrite /choose_one_letter mem_filter mem_iota => /andP [] /andP [] _ Hnth _.
-  by apply included_incr_nth.
+  by apply included_incr_nth_inner.
 Qed.
 
 Lemma yamtab_row_included innev row :
@@ -456,13 +456,196 @@ Proof.
     by rewrite andbT Hshift (subnKC H0).
   have := (IHout _ _ _ _ (path_sorted Hinn) Hpart0 Hincl Hsize Hrshiftrow _ Hrec Hshape).
   move=> {IHout Hrec Hpart0} /= /and3P [] _ _ ->; rewrite andbT.
-  case: (leqP sh0 out0) Hrshiftdom => [/minn_idPl -> //= | /ltnW Hover _]. 
+  case: (leqP sh0 out0) Hrshiftdom => [/minn_idPl -> //= | /ltnW Hover _].
   - by apply skew_dominate_take.
   - apply skew_dominate_no_overlap.
     rewrite Hshift leq_subLR.
     move: Hinn => /= /andP [] Hsh0 _.
     by rewrite (subnKC Hsh0).
 Qed.
+
+
+Lemma is_in_corner_yam l0 s :
+  is_yam (l0 :: s) -> is_in_corner (shape_rowseq s) l0.
+Proof.
+  rewrite /is_in_corner /=; case: l0 => [//= | l0] /=.
+  case: (shape_rowseq s) => [//= | sh0 sh].
+    move=> /andP [] /andP [] H1 H2 _; exfalso.
+    case: l0 H1 H2 => //= l0 _; by elim: l0.
+  move=> /andP [] /is_partP [] _ Hpart _.
+  have /= {Hpart} := Hpart l0.
+  rewrite -/(incr_nth (sh0 :: sh) l0.+1) !nth_incr_nth eq_refl add1n.
+  by rewrite eq_sym ieqi1F add0n.
+Qed.
+
+Lemma is_part_incr_nth_size sh l :
+  is_part sh -> is_part (incr_nth sh l) -> l <= size sh.
+Proof.
+  elim: sh l => [//= | sh0 sh IHsh] /= l.
+    move => _.
+    case: l => [| i] //= /andP []; by rewrite leqn0 => /part_head0F ->.
+  case: l => [//= | l].
+  by rewrite ltnS /= => /andP [] _ /IHsh H /andP [] _ /H.
+Qed.
+
+(* Mutiplicities are all one *)
+(* TODO : lot's of redudancies *)
+Lemma choose_one_countE shr innev shape mini maxi row l :
+  is_part innev ->
+  is_skew_yam innev shr row ->
+  is_skew_yam innev shape (l :: row) ->
+  included shape outev ->
+  mini <= l <= maxi ->
+  is_row (l :: row) ->
+  (count_mem l) (choose_one_letter shr mini maxi) = 1.
+Proof.
+  rewrite /choose_one_letter count_filter
+    => Hpart Hrow Hlrow Hincl /andP [] Hmin Hmax Hisrow.
+  rewrite (eq_count (a2 := pred1 l)); first last.
+    move=> i /=; case (altP (i =P l)) => [Hi | //=]; subst i.
+    have /= -> /= : is_in_corner shr l.
+      have /= := Hlrow _ (hyper_yam_of_shape Hpart).
+      rewrite /is_yam_of_shape => /andP [] /is_in_corner_yam.
+      have := Hrow _ (hyper_yam_of_shape Hpart).
+      by rewrite /is_yam_of_shape => /andP [] _ /eqP ->.
+    move: Hincl => /includedP [] _ Hincl.
+    apply: (leq_trans _ (Hincl l)).
+    have /= := Hlrow _ (hyper_yam_of_shape Hpart).
+    rewrite /is_yam_of_shape => /andP [] _ /= /eqP <-.
+    have /= := Hrow _ (hyper_yam_of_shape Hpart).
+    rewrite /is_yam_of_shape => /andP [] _ /= /eqP ->.
+    by rewrite nth_incr_nth eq_refl add1n ltnS.
+  rewrite (count_uniq_mem _ (iota_uniq _ _)) mem_iota Hmin /=.
+  set m := minn _ _.
+  suff : l <= m.
+    case (ltnP mini m.+1) => [/ltnW | ] H Hl.
+    - by rewrite (subnKC H) ltnS Hl.
+    - have := H; rewrite {1}/leq => /eqP ->.
+      by rewrite addn0 (leq_ltn_trans Hl H).
+  rewrite /m {m} leq_min Hmax andbT. 
+  have := Hrow _ (hyper_yam_of_shape Hpart).
+  rewrite /is_yam_of_shape => /andP [] /is_part_shyam Hp /eqP <-.
+  have /= := Hlrow _ (hyper_yam_of_shape Hpart).
+  rewrite /is_yam_of_shape => /andP [] /is_part_shyam /= Hp1 _.
+  by apply is_part_incr_nth_size.
+Qed.
+
+Lemma yamtab_row_countE innev shape row base :
+  is_part innev ->
+  size row = size base ->
+  dominate row base ->
+  is_row row ->
+  is_skew_yam innev shape row ->
+  included shape outev ->
+  count (preim (fst (B:=seq nat)) (pred1 row)) (yamtab_row innev base) = 1.
+Proof.
+  move=> Hinn.
+  elim: row base shape => [| l0 row IHrow] [| b0 base] //= shape.
+  move/eqP; rewrite eqSS => /eqP Hsize Hdom Hisrow Hskew Hincl.
+  rewrite count_flatten -map_comp.
+  set f1 := (X in map X); set rec := (X in map _ X).
+  pose f2 := nat_of_bool \o (pred1 row) \o (@fst (seq nat) (seq nat)).
+  have : {in rec, f1 =1 f2}.
+    rewrite /rec /f1 /f2 {rec f1 f2} => [[r shr]] /= Hr.
+    rewrite count_map.
+    case: (altP (r =P row)) => [Hrow | /negbTE Hneq] /=.
+    - subst r.
+      rewrite (eq_count (a2 := pred1 l0)); first last.
+        move=> i /=; by rewrite eqseq_cons eq_refl andbT.
+      apply: (choose_one_countE Hinn (yamtab_rowP Hr) Hskew Hincl _ Hisrow).
+      have Htmp : l0 :: row != [::] by [].
+      have /= := dominate_head Htmp Hdom; rewrite ltnXnatE => -> /=.
+      move: Hisrow => /=.
+      case row => [_| r0 r /= /andP []]/=; last by rewrite leqXnatE.
+      apply: (leq_trans _ (size_included Hincl)).
+      have /= := Hskew _ (hyper_yam_of_shape Hinn).
+      rewrite /is_yam_of_shape => /andP [] _ /= /eqP <-.
+      rewrite size_incr_nth.
+      by case ltnP => [/ltnW | ] //=.
+    - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
+      move=> y /=; by rewrite eqseq_cons Hneq andbF.
+  rewrite eq_in_map /rec /f2 => -> {f1 f2 rec}.
+  rewrite sumn_count /=.
+  apply: (IHrow _ _ Hsize (dominate_tl Hdom) (is_row_consK Hisrow)
+                 (skew_yam_consK Hinn Hskew)).
+  apply: (included_trans _ Hincl).
+  rewrite -{2}(decr_nthK (i := l0) (is_part_skew_yam Hinn Hskew)).
+    apply included_incr_nth.
+  have /= := Hskew _ (hyper_yam_of_shape Hinn).
+  rewrite /is_yam_of_shape => /andP [] H /eqP <-.
+  exact (is_out_corner_yam H).
+Qed.
+
+(*********************************************
+*******************************************
+*******************************************
+*******************************************
+*******************************************
+*******************************************
+*******************************************
+*******************************************)
+  Lemma is_yam_catr s t : is_yam (s ++ t) -> is_yam t.
+  Proof. by elim: s => [//= | s0 s IHs] /= /andP [] _. Qed.
+
+
+Lemma yamtab_shift_countE inn0 innev shape sh row sol :
+  is_part inn0 ->
+  is_row (row ++ sol) ->
+  size row = sh ->
+  is_skew_yam inn0 innev sol ->
+  is_skew_yam innev shape row ->
+  included shape outev ->
+  count (preim (fst (B:=seq nat)) (pred1 (row ++ sol))) (yamtab_shift innev sh sol) = 1.
+Proof.
+  move=> Hinn0.
+  elim : sh row sol shape => [| sh IHsh ] row sol shape /= Hisrow.
+    move=> /eqP/nilP -> _ /=; by rewrite eq_refl.
+  case: row Hisrow => [//= |r0 row] Hisrow /=.
+  move/eqP; rewrite eqSS => /eqP Hsize Hskew0 Hskew Hincl.
+  have Hinn := is_part_skew_yam Hinn0 Hskew0.
+  rewrite count_flatten -map_comp.
+  set f1 := (X in map X); set rec := (X in map _ X).
+  pose f2 := nat_of_bool \o (pred1 (row ++ sol)) \o (@fst (seq nat) (seq nat)).
+  have : {in rec, f1 =1 f2}.
+    rewrite /rec /f1 /f2 {rec f1 f2} => [[r shr]] /= Hr.
+    rewrite count_map.
+    case: (altP (r =P (row ++ sol))) => [Heq | /negbTE Hneq] /=.
+    - subst r.
+      rewrite (eq_count (a2 := pred1 r0)); first last.
+        move=> i /=; by rewrite eqseq_cons eq_refl andbT.
+      have -> : head (head (size innev) sol) (row ++ sol) = head (size innev) (row ++ sol).
+        by case row => //=; case sol.
+      apply: (choose_one_countE Hinn0 (yamtab_shiftP Hskew0 Hr)
+                 (skew_yam_cat Hskew0 Hskew) Hincl _ Hisrow).
+      have := Hisrow; rewrite /=.
+      case: (row ++ sol) => [_ | l0 l /= /andP []] /=; last by rewrite leqXnatE.
+      have := is_row_take (size (r0 :: row)) Hisrow.
+      rewrite (take_size_cat _ (erefl _)) => /head_leq_last_row.
+      rewrite leqXnatE => /leq_trans; apply.
+      case/lastP: row Hskew {Hisrow Hsize Hr} => [| row rn] /=.
+      + move=> H; apply (is_part_incr_nth_size Hinn).
+        have:= H _ (hyper_yam_of_shape Hinn).
+        rewrite /= /is_yam_of_shape /=.
+        by rewrite (shape_rowseq_hyper_yam Hinn) => /andP [] /andP [].
+      + rewrite last_rcons -rcons_cons -cats1 => H.
+        apply (is_part_incr_nth_size Hinn).
+        have:= H _ (hyper_yam_of_shape Hinn).
+        rewrite -catA /is_yam_of_shape => /andP [] /is_yam_catr /= /andP [].
+        by rewrite (shape_rowseq_hyper_yam Hinn).
+    - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
+      move=> y /=; by rewrite eqseq_cons Hneq andbF.
+  rewrite eq_in_map /rec /f2 => -> {f1 f2 rec}.
+  rewrite sumn_count /=.
+  apply: (IHsh _ _ _ (is_row_consK Hisrow) Hsize Hskew0 (skew_yam_consK Hinn Hskew)).
+  apply: (included_trans _ Hincl).
+  (* TODO : refactor *)
+  rewrite -{2}(decr_nthK (i := r0) (is_part_skew_yam Hinn Hskew)).
+    apply included_incr_nth.
+  have /= := Hskew _ (hyper_yam_of_shape Hinn).
+  rewrite /is_yam_of_shape => /andP [] H /eqP <-.
+  exact (is_out_corner_yam H).
+Qed.
+
 
 Lemma LRyamtab_list_countE innev inner sh0 row0 yamtab :
   is_part innev ->
@@ -497,7 +680,7 @@ Proof.
       move: Hrshift => /flatten_mapP [] [row shrow] /yamtab_rowP/yamtab_shiftP H/H{H}.
       rewrite Hrow1 => Hsk1 Hsk2.
       apply (Hrec shrshift (is_part_skew_yam Hinnev Hsk1)).
-      exact (skew_yam_catK Hinnev Hsk1 Hsk2).
+      exact (skew_yam_catrK Hinnev Hsk1 Hsk2).
     - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
       move=> y /=; by rewrite eqseq_cons Hneq.
   rewrite eq_in_map /rec /f2 => -> {f1 f2 rec Hrec}.
@@ -509,8 +692,19 @@ Proof.
     rewrite /rowl /f1 /f2 {rowl f1 f2} => [[row shrow]] /= Hrow.
     rewrite count_map /=.
     case: (altP (row =P (drop (sh0 - inn0) row1))) => [Hrow1 | /negbTE Hneq] /=.
-    - rewrite Hrow1.
-      admit.
+    - have Hshrow := yamtab_rowP Hrow.
+      rewrite -(cat_take_drop (sh0 - inn0) row1) -Hrow1.
+      move: Hyam; rewrite to_word_cons => /(skew_yam_catK Hinnev) [] shrow1 Hshrow1.
+      move=> /(skew_yam_included (is_part_skew_yam Hinnev Hshrow1)) Hincl.
+      apply: (yamtab_shift_countE Hinnev _ _ Hshrow _ Hincl).
+      + rewrite Hrow1 cat_take_drop.
+        by move: Hskew => /= /and5P [] _ _ _ _ /andP [].
+      + rewrite size_cat Hrow1 -size_cat cat_take_drop size_take -/(minn _ _).
+        move: Hinn => /= /andP [] H0 _.
+        by rewrite -{2}[sh0](subnKC H0) -addn_minr addKn.
+      + move: Hshrow; rewrite Hrow1 => /(skew_yam_catrK Hinnev) H.
+        move: Hshrow1; rewrite -{1}(cat_take_drop (sh0 - inn0) row1).
+        by apply H.
     - rewrite (eq_in_count (a2 := pred0)); first by rewrite count_pred0.
       move=> [shift shshift] /yamtab_shift_drop /= Hshift.
       move: Hneq; apply contraFF.
@@ -521,7 +715,28 @@ Proof.
       by rewrite drop_oversize.
   rewrite eq_in_map /rowl /f2 => -> {f1 f2 rowl}.
   rewrite map_comp sumn_count count_map /=.
-  admit.
+  move: Hyam; rewrite to_word_cons -{1}(cat_take_drop (sh0 - inn0) row1) catA => Hyam.
+  have := skew_yam_catK Hinnev Hyam => [] [] shape Hdrop.
+  move => /(skew_yam_included (is_part_skew_yam Hinnev Hdrop)) Hshape.
+  have Heq : size (drop (sh0 - inn0) row1) = size (take (inn0 + size row1 - sh0) row0).
+    rewrite size_drop size_take bad_if_leq.
+      move: Hinn => /=/andP [] /subnBA -> _.
+      by rewrite addnC.
+    move: Hout => //= /andP [] /(leq_sub2r sh0) H _.
+    by rewrite addKn in H.
+  apply: (yamtab_row_countE Hinnev Heq _ (is_row_drop _ _) Hdrop Hshape).
+  - move: Hskew => /= /and4P [] _ _ Hdom _.
+    apply/dominateP; split; first by rewrite Heq.
+    move=> i; rewrite size_drop => Hi; rewrite nth_take; first last.
+      move: Hi; rewrite addnC.
+      by move: Hinn => /=/andP [] /subnBA -> _.
+    rewrite nth_drop.
+    move: Hdom => /skew_dominateP [] _ Hdom.
+    have /Hdom : sh0 - inn0 <= i + (sh0 - inn0) < size row1.
+      rewrite leq_addl /=.
+      by rewrite ltn_subRL addnC in Hi.
+    by rewrite addnK addnC.
+  - by move: Hskew => /= /and5P [] _ _ _ _ /andP [].
 Qed.
 
 End OutEval.
@@ -759,50 +974,3 @@ Qed.
 
 End LR.
 
-Eval compute in LRyamtab_list [:: 2] [:: 1; 1] [:: 3; 1].
-
-Eval compute in LRyamtab_list [:: 2] [:: 1] [:: 3].
-
-Eval compute in LRyamtab_list [:: 2; 1] [:: 2; 1] [:: 3; 2; 1].
-
-Eval compute in LRyamtab_list [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2].
-
-Eval compute in
-    map (@to_word _) (LRyamtab_list [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2]).
-(*
-Eval compute in LRyam_enum [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2].
-     = [:: [:: 0; 3; 1; 2; 1; 0; 0]; [:: 1; 3; 0; 2; 1; 0; 0]]
-...00 ...00
-...1  ...1
-.02   .12
-13    03
-*)
-
-Eval compute in
-    map (@to_word _) (LRyamtab_list [:: 3; 3; 1] [:: 4; 2; 1] [:: 5; 4; 3; 2]).
-(*
-Eval compute in LRyam_enum [:: 3; 3; 1] [:: 4; 2; 1] [:: 5; 4; 3; 2].
-     = [:: [:: 0; 1; 0; 2; 1; 0; 0]; [:: 0; 2; 0; 1; 1; 0; 0];
-           [:: 1; 2; 0; 0; 1; 0; 0]]
-...11 ...11 ...11
-...2  ...2  ...2
-.11   .12   .13
-23    13    12
-*)
-
-(* According LRcalc = 18 *)
-Eval compute in size (LRyamtab_list
-  [:: 4; 3; 2; 1] [:: 4; 3; 2; 1] [:: 6; 5; 4; 3; 1; 1]).
-(* According LRcalc = 9 *)
-Eval compute in size (LRyamtab_list
-  [:: 4; 3; 2; 1] [:: 4; 3; 2; 1] [:: 5; 5; 3; 3; 2; 1; 1]).
-(* According to LRcalc and Wikipedia = 176 *)
-Eval compute in size (LRyamtab_list
-  [:: 5; 4; 3; 2; 1] [:: 5; 4; 3; 2; 1] [:: 8; 6; 5; 4; 3; 2; 1; 1]).
-Eval compute in LRcoeff
-  [:: 5; 4; 3; 2; 1] [:: 5; 4; 3; 2; 1] [:: 8; 6; 5; 4; 3; 2; 1; 1].
-(* According to LRcalc and Wikipedia = 2064 *)
-Eval compute in size (LRyamtab_list
-  [:: 6; 5; 4; 3; 2; 1] [:: 6; 5; 4; 3; 2; 1] [:: 9; 8; 7; 5; 4; 3; 3; 2; 1]).
-Eval compute in LRcoeff
-  [:: 6; 5; 4; 3; 2; 1] [:: 6; 5; 4; 3; 2; 1] [:: 9; 8; 7; 5; 4; 3; 3; 2; 1].
