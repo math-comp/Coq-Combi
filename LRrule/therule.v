@@ -31,9 +31,9 @@ Notation Z := (inhabitant nat_ordType).
   
 Lemma to_word_map_shiftn sh t : to_word (map (shiftn sh) t) = shiftn sh (to_word t).
 Proof.
-  rewrite /to_word /shiftn.
+  rewrite /shiftn.
   elim: t => [//= | t0 t IHt] /=.
-  by rewrite !rev_cons !flatten_rcons IHt map_cat.
+  by rewrite !to_word_cons IHt map_cat.
 Qed.
 
 Lemma filter_leq_shiftn sh t : [seq x - sh | x <- [seq sh + i | i <- t] & sh <= x] = t.
@@ -93,7 +93,6 @@ Proof.
     apply/allP => i; rewrite (perm_eq_mem Hperm).
     by rewrite mem_iota /= add0n.
   move: (size_tab s) => sh.
-  rewrite /to_word.
   elim: s t Htabs => [| s0 s IHs] /= t.
     move => _ _ Ht; rewrite subn0.
     set t' := map _ _.
@@ -102,7 +101,7 @@ Proof.
     rewrite -is_skew_tableau0.
     by apply is_skew_tableau_map_shiftn.
   move/and4P => [] Hnnils0 Hrows0 Hdoms Htabs.
-  rewrite rev_cons flatten_rcons all_cat => /andP [] Halls Halls0.
+  rewrite to_word_cons all_cat => /andP [] Halls Halls0.
   case: t => [//= | t0 t] /= /and4P [] Hszt0 Hrowt0 Hdomt Htabt.
   apply/and4P; rewrite subSS; split.
   - move: Hnnils0; apply contra; by case s0.
@@ -138,7 +137,7 @@ Proof.
         rewrite ltnXnatE ltn_add2l -ltnXnatE.
         by apply Hdomt; rewrite His0 Hi.
     + case: t => [//= | t1 t] /= /dominateP [] Hszs Hdoms _.
-      rewrite rev_cons flatten_rcons all_cat => /andP [] _ Halls1.
+      rewrite to_word_cons all_cat => /andP [] _ Halls1.
       move/skew_dominateP => [] Hszt Hdomt _  {s t}.
       have {Hszt} Hszt : size s1 + size t1 <= size s0 + size t0.
         by rewrite -(subnKC Hszs) -addnA leq_add2l addnC.
@@ -176,28 +175,28 @@ Proof.
     apply/allP => i; rewrite (perm_eq_mem Hperm).
     by rewrite mem_iota /= add0n.
   move: (size_tab s) => sh.
-  rewrite /to_word /shiftn => Hall; apply /andP; split; apply/eqP.
+  rewrite /shiftn => Hall; apply /andP; split; apply/eqP.
   - elim: s t Hsize Hall => [| s0 s IHs] /= t.
     + rewrite subn0 size_map => _ _.
       set t' := map _ _.
       have {t'} -> : t' = map (shiftn sh) t.
         by rewrite /t'; elim: t {t'} => //= r t ->.
       elim: t => [//= | t0 t IHt] /=.
-      rewrite rev_cons flatten_rcons filter_cat IHt cat0s {t IHt}.
+      rewrite to_word_cons filter_cat IHt cat0s {t IHt}.
       by rewrite filter_gtn_shiftn.
     + case: t => [//= | t0 t] /=.
-      rewrite ltnS rev_cons flatten_rcons all_cat => /IHs{IHs}Hrec /andP [] /Hrec{Hrec} Hrec.
-      rewrite rev_cons flatten_rcons !filter_cat subSS Hrec {Hrec} => /all_filterP ->.
+      rewrite ltnS to_word_cons all_cat => /IHs{IHs}Hrec /andP [] /Hrec{Hrec} Hrec.
+      rewrite to_word_cons !filter_cat subSS Hrec {Hrec} => /all_filterP ->.
       suff -> : [seq x <- [seq sh + i | i <- t0] | gtn sh x] = [::] by rewrite cats0.
       by rewrite filter_gtn_shiftn.
   - elim: s t Hsize Hall => [| s0 s IHs] /= t.
     + rewrite subn0 size_map => _ _.
       elim: t => [//= | t0 t IHt] /=.
-      rewrite !rev_cons !flatten_rcons !filter_cat map_cat IHt {IHt}.
+      rewrite !to_word_cons !filter_cat map_cat IHt {IHt}.
       by rewrite filter_leq_shiftn.
     + case: t => [//= | t0 t] /=.
-      rewrite ltnS rev_cons flatten_rcons all_cat => /IHs{IHs}Hrec /andP [] /Hrec{Hrec} Hrec.
-      rewrite !rev_cons !flatten_rcons !filter_cat !map_cat subSS Hrec {Hrec}.
+      rewrite ltnS to_word_cons all_cat => /IHs{IHs}Hrec /andP [] /Hrec{Hrec} Hrec.
+      rewrite !to_word_cons !filter_cat !map_cat subSS Hrec {Hrec}.
       rewrite filter_leq_shiftn => Hall.
       suff -> : [seq x - sh | x <- s0 & sh <= x] = [::] by rewrite cat0s.
       elim: s0 Hall {t s t0} => [//= | l0 s IHs] /= /andP [] H /IHs.
@@ -242,23 +241,21 @@ Qed.
 Lemma filter_gtnX_to_word (T : ordType) n (t : seq (seq T)) :
   filter (gtnX n) (to_word t) = to_word (filter_gtnX_tab n t).
 Proof.
-  rewrite /to_word.
   elim: t => [//= | t0 t IHt] /=.
-  rewrite rev_cons flatten_rcons filter_cat /=.
+  rewrite to_word_cons filter_cat /=.
   case: (altP (filter (gtnX n) t0 =P [::])) => H /=.
   - by rewrite H cats0 IHt.
-  - by rewrite rev_cons flatten_rcons IHt.
+  - by rewrite to_word_cons IHt.
 Qed.
 
 Lemma filter_leqX_to_word (T : ordType) n (t : seq (seq T)) :
   filter (leqX n) (to_word t) = to_word (filter_leqX_tab n t).
 Proof.
-  rewrite /to_word.
   elim: t => [//= | t0 t IHt] /=.
-  rewrite rev_cons flatten_rcons filter_cat /=.
+  rewrite to_word_cons filter_cat /=.
   case: (altP (filter (leqX n) t0 =P [::])) => H /=.
-  - by rewrite H cats0 IHt rev_cons flatten_rcons cats0.
-  - by rewrite rev_cons flatten_rcons IHt.
+  - by rewrite H cats0 IHt to_word_cons cats0.
+  - by rewrite to_word_cons IHt.
 Qed.
 
 Section OneCoeff.

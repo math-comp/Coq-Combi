@@ -461,7 +461,7 @@ Section Dominate.
   Proof.
     rewrite -(size_map size).
     move=> H; rewrite /skew_reshape (outer_shapeK H).
-    by rewrite /to_word -shape_rev flattenK revK.
+    by rewrite -shape_rev flattenK revK.
   Qed.
 
 End Dominate.
@@ -606,14 +606,14 @@ Lemma perm_eq_join_tab s t :
   size s <= size t ->
   perm_eq (to_word (join_tab s t)) (to_word s ++ to_word t).
 Proof.
-  rewrite /join_tab /to_word /=.
+  rewrite /join_tab /=.
   elim: t s => [//= | t0 t IHt] /= s; first by rewrite leqn0 => /nilP -> /=.
   case: s => [_ | s0 s] /=.
-    rewrite !rev_cons !flatten_rcons {IHt}.
+    rewrite !to_word_cons {IHt}.
     set t' := map _ _; suff -> : t' = t by apply perm_eq_refl.
     rewrite /t' {t' t0}; by elim: t => //= t0 t /= -> .
   rewrite ltnS subSS => /IHt{IHt}.
-  rewrite !rev_cons !flatten_rcons -!/(to_word _) !catA perm_cat2r.
+  rewrite !to_word_cons -!/(to_word _) !catA perm_cat2r.
   set m := map _ _.
   rewrite -(perm_cat2r s0) => /perm_eq_trans; apply.
   rewrite -!catA perm_cat2l.

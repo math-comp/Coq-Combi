@@ -446,12 +446,12 @@ Proof.
   elim: (RS w) l0 {H} => [//= | r0 t IHt] l0 /= /and4P [] Ht0 Hrow0 _ Htab.
   case (boolP (bump r0 l0)) => [Hbump | Hnbump].
   - rewrite (bump_bumprowE Hrow0 Hbump); have {IHt} := (IHt (bumped r0 l0) Htab).
-    rewrite /to_word !rev_cons -!cats1 !flatten_cat /= !cats0 -catA => IHt.
+    rewrite !to_word_cons -!cats1 /= -catA => IHt.
     rewrite (Htrans _ (flatten (rev t) ++ [:: bumped r0 l0] ++ (ins r0 l0))).
     * rewrite catA; by apply: congr_catl.
     * apply: (congr_catr Hcongr); by apply: congr_bump.
   - rewrite (nbump_bumprowE Hrow0 Hnbump) {IHt}.
-    rewrite /to_word !rev_cons -!cats1 !flatten_cat /= !cats0 -catA cats1.
+    rewrite !to_word_cons -!cats1 -catA cats1.
     apply: (congr_catr Hcongr); by rewrite nbump_ins_rconsE.
 Qed.
 
@@ -574,10 +574,9 @@ Fixpoint last_big t b :=
   else 0.
 
 Lemma allLeq_to_word_hd t0 t b : allLeq (to_word (t0 :: t)) b -> allLeq t0 b.
-Proof. by rewrite /to_word rev_cons flatten_rcons allLeq_catE => /andP [] _. Qed.
-
+Proof. by rewrite to_word_cons allLeq_catE => /andP [] _. Qed.
 Lemma allLeq_to_word_tl t0 t b : allLeq (to_word (t0 :: t)) b -> allLeq (to_word t) b.
-Proof. by rewrite /to_word rev_cons flatten_rcons allLeq_catE => /andP []. Qed.
+Proof. by rewrite to_word_cons allLeq_catE => /andP []. Qed.
 
 Lemma last_bigP t b i :
   is_tableau t -> allLeq (to_word t) b ->
@@ -626,8 +625,8 @@ Proof.
     * by move/eqP => ->.
     * by apply: IHt.
   + have: allLeq (to_word (RS w)) b by rewrite (perm_eq_allLeq (perm_eq_RS w)).
-    rewrite /to_word; elim: (RS w) Hin => [//= | t0 t IHt] /=.
-    rewrite inE rev_cons flatten_rcons => /orP [/eqP ->|].
+    elim: (RS w) Hin => [//= | t0 t IHt] /=.
+    rewrite inE to_word_cons => /orP [/eqP ->|].
     * rewrite allLeq_catE => /andP [] _; case/lastP: t0 => [//=| t0 tn].
       move/allLeq_last; by rewrite last_rcons.
     * move=> Hrow; by rewrite allLeq_catE => /andP [] /(IHt Hrow).

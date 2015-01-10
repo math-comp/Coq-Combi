@@ -973,9 +973,9 @@ Proof.
       move=> i /= /mapP [] j _ -> {i}; by rewrite mem_imset.
     rewrite filter_predT -map_comp.
     rewrite (eq_map (f2 := nth (inhabitant Alph) t0 \o val)); first last.
-    + move=> i /=; rewrite (tnth_nth (inhabitant Alph)) /to_word /=.
-      rewrite rev_cons flatten_rcons nth_cat.
-      rewrite /to_word -{2}[size (flatten (rev t))]addn0 ltn_add2l /=.
+    + move=> i /=; rewrite (tnth_nth (inhabitant Alph)).
+      rewrite {1 2}(to_word_cons t0 t) /= nth_cat.
+      rewrite -{2}[size (to_word t)]addn0 ltn_add2l /=.
       by rewrite addnC addnK.
     + apply: (eq_from_nth (x0 := inhabitant Alph)); first by rewrite size_map size_enum_ord.
       move=> i; rewrite size_map size_enum_ord => Hi.
@@ -1385,8 +1385,8 @@ Qed.
 Lemma greenCol_inf_tab k t :
   is_tableau t -> greenCol (to_word t) k <= \sum_(l <- (shape t)) minn l k.
 Proof.
-  elim: t => [_ | t0 t IHt] /=;
-    first by rewrite /to_word; apply: (@leq_trans 0); first by apply: green_rel_t_sup.
+  elim: t => [_ | t0 t IHt] /=.
+    by apply: (@leq_trans 0); first by apply: green_rel_t_sup.
   move=> /and4P [] _ Hrow _ /IHt => {IHt} Ht; rewrite to_word_cons.
   apply: (@leq_trans (greenCol (in_tuple (to_word t)) k + greenCol (in_tuple t0) k)).
   - apply: green_rel_cat; by move=> a b c /= H1 H2; apply: (ltnX_trans H2 H1).

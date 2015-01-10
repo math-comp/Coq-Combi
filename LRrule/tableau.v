@@ -216,12 +216,13 @@ Section Tableau.
 
   Definition to_word t := flatten (rev t).
 
-  (* TODO : use ! *)
   Lemma to_word_cons r t : to_word (r :: t) = to_word t ++ r.
   Proof. by rewrite /to_word rev_cons flatten_rcons. Qed.
+  Lemma to_word_rcons r t : to_word (rcons t r) = r ++ to_word t.
+  Proof. by rewrite /to_word rev_rcons /=. Qed.
 
   (* Shape is defined in seq.v *)
-  (* Definition shape t := map size t. *) 
+  (* Definition shape t := map size t. *)
 
   Lemma tableau_is_row r t : is_tableau (r :: t) -> is_row r.
   Proof. by move=> /= /and4P []. Qed.
@@ -297,16 +298,16 @@ Definition filter_gtnX_tab n :=
 
 Lemma to_word_filter_nnil t : to_word (filter (fun r => r != [::]) t) = to_word t.
 Proof.
-  rewrite /to_word; elim: t => [//= | t0 t IHt] /=.
-  rewrite !rev_cons !flatten_rcons -IHt.
+  elim: t => [//= | t0 t IHt] /=.
+  rewrite to_word_cons -IHt.
   case: (altP (t0 =P [::])) => [-> | _] /=; first by rewrite cats0.
-  by rewrite rev_cons flatten_rcons.
+  by rewrite to_word_cons.
 Qed.
 
 Lemma filter_to_word t p : filter p (to_word t) = to_word (map (filter p) t).
 Proof.
-    rewrite /to_word; elim: t => [//= | t0 t IHt] /=.
-    by rewrite !rev_cons !flatten_rcons -IHt filter_cat.
+    elim: t => [//= | t0 t IHt] /=.
+    by rewrite !to_word_cons -IHt filter_cat.
 Qed.
 
 Lemma head_filter_gtnX_tab n t :

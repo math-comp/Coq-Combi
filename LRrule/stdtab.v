@@ -78,18 +78,18 @@ Qed.
 Lemma perm_eq_append_nth t x pos :
   perm_eq (to_word (append_nth t x pos)) (x :: to_word t).
 Proof.
-  rewrite /append_nth /to_word; elim: t pos => [//= | t0 t IHt] /=.
+  rewrite /append_nth; elim: t pos => [//= | t0 t IHt] /=.
   + elim => [//= | pos IHpos].
-    move: IHpos; rewrite /= rev_cons flatten_rcons cats0.
+    move: IHpos; rewrite /= to_word_cons cats0.
     by rewrite nth_default //= set_nth_nil.
   + case => [//= | pos].
-    * rewrite !rev_cons !flatten_rcons -cats1 -[x :: (_ ++ _)]cat1s.
+    * rewrite !to_word_cons -cats1 -[x :: (_ ++ _)]cat1s.
       rewrite [flatten _ ++ _ ++ _]catA.
       apply: perm_eqlE; by apply: perm_catC.
     * have {IHt} IHt := IHt pos.
-      rewrite !rev_cons !flatten_rcons.
-      move: IHt; set T := (flatten _).
-      by rewrite -[x :: flatten (rev t) ++ t0]/((x :: flatten (rev t)) ++ t0) perm_cat2r.
+      rewrite /= !to_word_cons.
+      move: IHt; set T := (to_word _).
+      by rewrite -/((x :: to_word t) ++ t0) perm_cat2r.
 Qed.
 
 Lemma std_of_yam y : is_std (to_word (stdtab_of_yam y)).
@@ -97,7 +97,7 @@ Proof.
   rewrite /is_std -size_to_word size_stdtab_of_yam.
   elim: y => [//= | y0 y IHy].
   have -> /= : iota 0 (size (y0 :: y)) = rcons (iota 0 (size y)) (size y).
-    rewrite -[size (y0 :: y)]/((size y).+1) -addn1 iota_add add0n /=.
+    rewrite [size (y0 :: y)]/= -addn1 iota_add add0n /=.
     by apply: cats1.
   apply: (perm_eq_trans (perm_eq_append_nth _ _ _)).
   move: IHy; rewrite -(perm_cons (size y)) => /perm_eq_trans; apply.
@@ -110,7 +110,7 @@ Lemma is_tab_append_nth_size r T n :
    is_tableau T -> is_tableau (append_nth T n r).
 Proof.
   elim: T r => [//= | T0 T IHT] r /=; first by case: r => [//= | r] /=; elim: r.
-  rewrite /to_word rev_cons flatten_rcons all_cat -[flatten (rev T)]/(to_word T).
+  rewrite to_word_cons all_cat.
   move=> /andP [] Hall Hall0.
   case: r => [/= _ | r] /=.
   - move=> {IHT Hall} /and4P [] Hnnil Hrow Hdom ->.
@@ -200,8 +200,7 @@ Proof.
   + apply/eqP; rewrite eqSS.
     elim: r {IHr} => [//= | r]; first by rewrite inE eq_refl.
     by rewrite /ncons /= => /eqP ->.
-  + rewrite /to_word rev_cons flatten_rcons mem_cat negb_or.
-    by rewrite -[flatten (rev t)]/(to_word t) => /andP [] /IHr {IHr} -> /negbTE ->.
+  + by rewrite to_word_cons mem_cat negb_or => /andP [] /IHr {IHr} -> /negbTE ->.
 Qed.
 
 Lemma size_notin_stdtab_of_yam y : (size y) \notin (to_word (stdtab_of_yam y)).
