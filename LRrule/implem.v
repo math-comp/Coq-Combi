@@ -116,19 +116,18 @@ Fixpoint yamtab_row innev row :=
   if row is r0 :: tlr then
     flatten [seq
                [seq (i :: res.1, incr_nth res.2 i) |
-                i <- choose_one_letter res.2 r0.+1 (head (size outev) res.1)
+                i <- choose_one_letter res.2 r0.+1 (head (size innev) res.1)
                ] |
              res <- yamtab_row innev tlr ]
   else [:: ([::], innev) ].
 
-Fixpoint yamtab_shift innev sh sol :=
+Fixpoint yamtab_shift innev maxi sh sol :=
   if sh is s.+1 then
-    let maxi := head (size innev) sol in
     flatten [seq
                [seq (i :: res.1, incr_nth res.2 i) |
                 i <- choose_one_letter res.2 0 (head maxi res.1)
                ] |
-             res <- yamtab_shift innev s sol ]
+             res <- yamtab_shift innev maxi s sol ]
   else [:: (sol, innev) ].
 
 Fixpoint LRyamtab_list_rec innev inner outer sh0 row0 :=
@@ -136,7 +135,8 @@ Fixpoint LRyamtab_list_rec innev inner outer sh0 row0 :=
     let inn0 := head 0 inner in let inn := behead inner in
     let rowres := yamtab_row innev (take (out0 - sh0) row0) in
     let rows :=
-        flatten [seq yamtab_shift res.2 ((minn sh0 out0) - inn0) res.1
+        flatten [seq yamtab_shift res.2 (head (size innev) res.1)
+                     ((minn sh0 out0) - inn0) res.1
                 | res <- rowres ] in
     flatten [seq [seq row.1 :: tab |
                   tab <- LRyamtab_list_rec row.2 inn out inn0 row.1] |
@@ -148,9 +148,11 @@ Fixpoint LRyamtab_count_rec innev inner outer sh0 row0 :=
     let inn0 := head 0 inner in let inn := behead inner in
     let rowres := yamtab_row innev (take (out0 - sh0) row0) in
     sumn [seq sumn [seq LRyamtab_count_rec row.2 inn out inn0 row.1 |
-                    row <- yamtab_shift res.2 ((minn sh0 out0) - inn0) res.1 ]
+                    row <- yamtab_shift res.2 (head (size innev) res.1)
+                        ((minn sh0 out0) - inn0) res.1 ]
          | res <- rowres ]
   else 1.
+
 
 Lemma LRyam_tab_countE innev inner outer sh0 row0 :
   size (LRyamtab_list_rec innev inner outer sh0 row0) =
@@ -166,14 +168,17 @@ Proof.
     by rewrite size_map IHout.
 Qed.
 
-Lemma yamtab_shift_drop innev sh y :
-  forall res shape, (res, shape) \in yamtab_shift innev sh y ->
+
+(* Basic lemma *)
+Lemma yamtab_shift_drop innev maxi sh y :
+  forall res shape, (res, shape) \in yamtab_shift innev maxi sh y ->
   drop sh res = y.
 Proof.
   elim: sh => [//= | sh IHsh] /= res shape.
     rewrite mem_seq1 => /eqP [] -> _; by rewrite drop0.
   by move=> /flatten_mapP [[rec shrec]] /IHsh Hdrop /mapP [] i _ [] -> _ /=.
 Qed.
+
 
 (* LRyamtab_list_rec returns Yamanouchi words *)
 Lemma choose_one_letterP innev mini maxi :
@@ -200,16 +205,16 @@ Proof.
   rewrite -cat1s; exact (skew_yam_cat Hrec Hi).
 Qed.
 
-Lemma yamtab_shiftP innev sh row shrow :
+Lemma yamtab_shiftP innev maxi sh row shrow :
   is_skew_yam innev shrow row ->
-  forall res shape, (res, shape) \in yamtab_shift shrow sh row ->
+  forall res shape, (res, shape) \in yamtab_shift shrow maxi sh row ->
   is_skew_yam innev shape res.
 Proof.
   elim: sh row innev => [| sh IHsh] /= row innev Hrow res shres.
     by rewrite mem_seq1 => /eqP [] -> ->.
   move/flatten_mapP => [[rec shrec]] /(IHsh row innev Hrow) {IHsh} Hrec.
   move/mapP => [i] /choose_one_letterP /= Hi [] -> -> {res shres}.
-  rewrite -cat1s; exact (skew_yam_cat Hrec Hi). 
+  rewrite -cat1s; exact (skew_yam_cat Hrec Hi).
 Qed.
 
 Lemma LRyamtab_list_recP innev inner outer sh0 row0 y :
@@ -228,6 +233,7 @@ Proof.
   rewrite -catA.
   exact (IHout _ _ _ _ _ Hshift _ Hrec).
 Qed.
+
 
 (* LRyamtab_list_rec returns words whose rowshape in included in outshape *)
 Lemma one_letter_included innev mini maxi :
@@ -252,9 +258,9 @@ Proof.
   apply: (one_letter_included Hrec  Hi).
 Qed.
 
-Lemma yamtab_shift_included innev sh y :
+Lemma yamtab_shift_included innev maxi sh y :
   included innev outev ->
-  forall res shape, (res, shape) \in yamtab_shift innev sh y ->
+  forall res shape, (res, shape) \in yamtab_shift innev maxi sh y ->
   included shape outev.
 Proof.
   elim: sh innev y => [| sh IHsh] /= innev y Hincl res shres.
@@ -283,7 +289,8 @@ Proof.
   exact (IHout _ _ _ _ _ Hshift Hshshift _ Hrec).
 Qed.
 
-(* LRyamtab_list_rec returns fillings of skew shape outer/inner *)
+
+(* LRyamtab_list_rec returns fillings of skew shape (inner, outer) *)
 Lemma yamtab_row_size innev row :
   forall res shape, (res, shape) \in yamtab_row innev row ->
   size res = size row.
@@ -294,8 +301,8 @@ Proof.
   by move/mapP => [] i Hi [] -> _.
 Qed.
 
-Lemma yamtab_shift_size innev sh y :
-  forall res shape, (res, shape) \in yamtab_shift innev sh y ->
+Lemma yamtab_shift_size innev maxi sh y :
+  forall res shape, (res, shape) \in yamtab_shift maxi innev sh y ->
   size res = sh + size y.
 Proof.
   elim: sh innev y => [| sh IHsh] /= innev y res shres.
@@ -334,7 +341,7 @@ Qed.
 (* inner is padded with 0 *)
 Lemma LRyamtab_list_shape0 innev inner outer sh0 row0 :
   sorted geq (sh0 :: inner) -> is_part (sh0 + size row0 :: outer) ->
-  included inner outer -> size inner = size outer -> 
+  included inner outer -> size inner = size outer ->
   forall res, res \in LRyamtab_list_rec innev inner outer sh0 row0 ->
   shape res = diff_shape inner outer.
 Proof.
@@ -361,7 +368,8 @@ Proof.
   exact (is_part_tl Hout).
 Qed.
 
-(* LRyamtab_list_rec returns skew_tableau for inner *)
+
+(* LRyamtab_list_rec returns skew_tableau with inner shape inner *)
 Lemma yamtab_row_dominate innev row :
   forall res shape, (res, shape) \in yamtab_row innev row ->
   dominate res row.
@@ -376,9 +384,9 @@ Proof.
   by rewrite ltnXnatE.
 Qed.
 
-Lemma yamtab_shift_dominate innev sh row y :
+Lemma yamtab_shift_dominate innev maxi sh row y :
   dominate y row ->
-  forall res shape, (res, shape) \in yamtab_shift innev sh y ->
+  forall res shape, (res, shape) \in yamtab_shift innev maxi sh y ->
   skew_dominate sh res row.
 Proof.
   rewrite -skew_dominate0; elim: sh innev y => [//= | sh IHsh] /= innev y Hdom res shape.
@@ -403,7 +411,7 @@ Proof.
   move: Hi; rewrite /choose_one_letter mem_filter mem_iota /=.
   move => /and3P [] /andP [] _ Hnth Hr0.
   rewrite subSS addSn ltnS.
-  case: (ltnP (minn (size shrec) (head (size outev) rec)) r0) => H.
+  case: (ltnP (minn (size shrec) (head (size innev) rec)) r0) => H.
   - have := ltnW H; rewrite {1}/leq => /eqP ->.
     rewrite addn0 => /(leq_trans Hr0).
     by rewrite ltnn.
@@ -412,9 +420,9 @@ Proof.
     by rewrite leqXnatE => ->.
 Qed.
 
-Lemma yamtab_shift_is_row innev sh y :
+Lemma yamtab_shift_is_row innev maxi sh y :
   is_row y ->
-  forall res shape, (res, shape) \in yamtab_shift innev sh y ->
+  forall res shape, (res, shape) \in yamtab_shift innev maxi sh y ->
   is_row res.
 Proof.
   elim: sh innev y => [//= | sh IHsh] /= innev y Hdom res shape.
@@ -464,30 +472,6 @@ Proof.
     by rewrite (subnKC Hsh0).
 Qed.
 
-
-Lemma is_in_corner_yam l0 s :
-  is_yam (l0 :: s) -> is_in_corner (shape_rowseq s) l0.
-Proof.
-  rewrite /is_in_corner /=; case: l0 => [//= | l0] /=.
-  case: (shape_rowseq s) => [//= | sh0 sh].
-    move=> /andP [] /andP [] H1 H2 _; exfalso.
-    case: l0 H1 H2 => //= l0 _; by elim: l0.
-  move=> /andP [] /is_partP [] _ Hpart _.
-  have /= {Hpart} := Hpart l0.
-  rewrite -/(incr_nth (sh0 :: sh) l0.+1) !nth_incr_nth eq_refl add1n.
-  by rewrite eq_sym ieqi1F add0n.
-Qed.
-
-Lemma is_part_incr_nth_size sh l :
-  is_part sh -> is_part (incr_nth sh l) -> l <= size sh.
-Proof.
-  elim: sh l => [//= | sh0 sh IHsh] /= l.
-    move => _.
-    case: l => [| i] //= /andP []; by rewrite leqn0 => /part_head0F ->.
-  case: l => [//= | l].
-  by rewrite ltnS /= => /andP [] _ /IHsh H /andP [] _ /H.
-Qed.
-
 (* Mutiplicities are all one *)
 (* TODO : lot's of redudancies *)
 Lemma choose_one_countE shr innev shape mini maxi row l :
@@ -522,12 +506,27 @@ Proof.
     - by rewrite (subnKC H) ltnS Hl.
     - have := H; rewrite {1}/leq => /eqP ->.
       by rewrite addn0 (leq_ltn_trans Hl H).
-  rewrite /m {m} leq_min Hmax andbT. 
+  rewrite /m {m} leq_min Hmax andbT.
   have := Hrow _ (hyper_yam_of_shape Hpart).
   rewrite /is_yam_of_shape => /andP [] /is_part_shyam Hp /eqP <-.
   have /= := Hlrow _ (hyper_yam_of_shape Hpart).
   rewrite /is_yam_of_shape => /andP [] /is_part_shyam /= Hp1 _.
   by apply is_part_incr_nth_size.
+Qed.
+
+
+Lemma head_row_skew_yam innev shape l r :
+  is_part innev -> sorted leqX_op (l :: r) ->
+  is_skew_yam innev shape (l :: r) ->
+  l <= head (size innev) r.
+Proof.
+  case: r => [| l1 r /=] Hinn Hrow Hskew.
+    apply (is_part_incr_nth_size Hinn).
+    have:= Hskew _ (hyper_yam_of_shape Hinn).
+    rewrite /= /is_yam_of_shape /=.
+    by rewrite (shape_rowseq_hyper_yam Hinn) => /andP [] /andP [].
+  move: Hrow => /andP [].
+  by rewrite leqXnatE.
 Qed.
 
 Lemma yamtab_row_countE innev shape row base :
@@ -537,7 +536,8 @@ Lemma yamtab_row_countE innev shape row base :
   is_row row ->
   is_skew_yam innev shape row ->
   included shape outev ->
-  count (preim (fst (B:=seq nat)) (pred1 row)) (yamtab_row innev base) = 1.
+  count (preim (fst (B:=seq nat)) (pred1 row))
+        (yamtab_row innev base) = 1.
 Proof.
   move=> Hinn.
   elim: row base shape => [| l0 row IHrow] [| b0 base] //= shape.
@@ -555,13 +555,7 @@ Proof.
       apply: (choose_one_countE Hinn (yamtab_rowP Hr) Hskew Hincl _ Hisrow).
       have Htmp : l0 :: row != [::] by [].
       have /= := dominate_head Htmp Hdom; rewrite ltnXnatE => -> /=.
-      move: Hisrow => /=.
-      case row => [_| r0 r /= /andP []]/=; last by rewrite leqXnatE.
-      apply: (leq_trans _ (size_included Hincl)).
-      have /= := Hskew _ (hyper_yam_of_shape Hinn).
-      rewrite /is_yam_of_shape => /andP [] _ /= /eqP <-.
-      rewrite size_incr_nth.
-      by case ltnP => [/ltnW | ] //=.
+      exact (head_row_skew_yam Hinn Hisrow Hskew).
     - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
       move=> y /=; by rewrite eqseq_cons Hneq andbF.
   rewrite eq_in_map /rec /f2 => -> {f1 f2 rec}.
@@ -576,18 +570,6 @@ Proof.
   exact (is_out_corner_yam H).
 Qed.
 
-(*********************************************
-*******************************************
-*******************************************
-*******************************************
-*******************************************
-*******************************************
-*******************************************
-*******************************************)
-  Lemma is_yam_catr s t : is_yam (s ++ t) -> is_yam t.
-  Proof. by elim: s => [//= | s0 s IHs] /= /andP [] _. Qed.
-
-
 Lemma yamtab_shift_countE inn0 innev shape sh row sol :
   is_part inn0 ->
   is_row (row ++ sol) ->
@@ -595,7 +577,8 @@ Lemma yamtab_shift_countE inn0 innev shape sh row sol :
   is_skew_yam inn0 innev sol ->
   is_skew_yam innev shape row ->
   included shape outev ->
-  count (preim (fst (B:=seq nat)) (pred1 (row ++ sol))) (yamtab_shift innev sh sol) = 1.
+  count (preim (fst (B:=seq nat)) (pred1 (row ++ sol)))
+        (yamtab_shift innev (head (size inn0) sol) sh sol) = 1.
 Proof.
   move=> Hinn0.
   elim : sh row sol shape => [| sh IHsh ] row sol shape /= Hisrow.
@@ -613,25 +596,12 @@ Proof.
     - subst r.
       rewrite (eq_count (a2 := pred1 r0)); first last.
         move=> i /=; by rewrite eqseq_cons eq_refl andbT.
-      have -> : head (head (size innev) sol) (row ++ sol) = head (size innev) (row ++ sol).
+      have -> : head (head (size inn0) sol) (row ++ sol) = head (size inn0) (row ++ sol).
         by case row => //=; case sol.
       apply: (choose_one_countE Hinn0 (yamtab_shiftP Hskew0 Hr)
                  (skew_yam_cat Hskew0 Hskew) Hincl _ Hisrow).
-      have := Hisrow; rewrite /=.
-      case: (row ++ sol) => [_ | l0 l /= /andP []] /=; last by rewrite leqXnatE.
-      have := is_row_take (size (r0 :: row)) Hisrow.
-      rewrite (take_size_cat _ (erefl _)) => /head_leq_last_row.
-      rewrite leqXnatE => /leq_trans; apply.
-      case/lastP: row Hskew {Hisrow Hsize Hr} => [| row rn] /=.
-      + move=> H; apply (is_part_incr_nth_size Hinn).
-        have:= H _ (hyper_yam_of_shape Hinn).
-        rewrite /= /is_yam_of_shape /=.
-        by rewrite (shape_rowseq_hyper_yam Hinn) => /andP [] /andP [].
-      + rewrite last_rcons -rcons_cons -cats1 => H.
-        apply (is_part_incr_nth_size Hinn).
-        have:= H _ (hyper_yam_of_shape Hinn).
-        rewrite -catA /is_yam_of_shape => /andP [] /is_yam_catr /= /andP [].
-        by rewrite (shape_rowseq_hyper_yam Hinn).
+      rewrite /=.
+      exact (head_row_skew_yam Hinn0 Hisrow (skew_yam_cat Hskew0 Hskew)).
     - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
       move=> y /=; by rewrite eqseq_cons Hneq andbF.
   rewrite eq_in_map /rec /f2 => -> {f1 f2 rec}.
@@ -654,8 +624,8 @@ Lemma LRyamtab_list_countE innev inner sh0 row0 yamtab :
   size inner = size yamtab ->
   is_skew_tableau (sh0 :: inner) (row0 :: yamtab) ->
   is_skew_yam innev outev (to_word yamtab) ->
-  count_mem yamtab (LRyamtab_list_rec innev inner
-                                      (outer_shape inner (shape yamtab)) sh0 row0) = 1.
+  count_mem yamtab
+    (LRyamtab_list_rec innev inner (outer_shape inner (shape yamtab)) sh0 row0) = 1.
 Proof.
   elim: yamtab innev inner sh0 row0 => [//= | row1 yamtab IHyamtab]
                innev [//= | inn0 inn] sh0 row0 Hinnev.
@@ -973,4 +943,3 @@ Proof.
 Qed.
 
 End LR.
-

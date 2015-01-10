@@ -207,7 +207,7 @@ Proof.
   elim/last_ind: t => [//= | t tn IHt] /=.
   rewrite /to_word rev_rcons /= -[flatten (rev t)]/(to_word t).
   rewrite /shape map_rcons yamtab_rcons -/shape => Htab Hyam.
-  have {IHt} Hrec := IHt (is_tableau_rconsK Htab) (is_yam_suffix Hyam).
+  have {IHt} Hrec := IHt (is_tableau_rconsK Htab) (is_yam_catr Hyam).
   rewrite -Hrec; congr (rcons t _).
   have := is_part_sht Htab.
   rewrite /shape map_rcons -/shape.
@@ -224,7 +224,7 @@ Proof.
   case: sn => [//= | sn] /= _ _ Hdom /and3P [] Hrow Hn2 _.
   rewrite to_word_yamtab size_rcons.
   case/lastP: tn Hrow Hn2 Hdom => [//=| tn ln] /= _ Hrow Hdom.
-  rewrite -{1}cats1 -catA cat1s => /is_yam_suffix /= /andP [] Hpart _ /is_part_rconsK Hp0.
+  rewrite -{1}cats1 -catA cat1s => /is_yam_catr /= /andP [] Hpart _ /is_part_rconsK Hp0.
   move: Hpart; rewrite (shape_rowseq_hyper_yam Hp0) => Hp1.
   have Hln : ln <= (size sh).+1.
     elim: sh ln Hp0 Hp1 {Hdom Hrow} => [| s0 sh IHsh] /= ln.

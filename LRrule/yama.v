@@ -128,8 +128,8 @@ Section Yama.
   Lemma is_yam_tl l0 s : is_yam (l0 :: s) -> is_yam s.
   Proof. by move=> /= /andP []. Qed.
 
-  Lemma is_yam_suffix s t : is_yam (s ++ t) -> is_yam t.
-  Proof. by elim: s => [//= | s0 s IHs] /= /andP [] _ /IHs. Qed.
+  Lemma is_yam_catr s t : is_yam (s ++ t) -> is_yam t.
+  Proof. by elim: s => [//= | s0 s IHs] /= /andP [] _. Qed.
 
   Lemma last_yam y : is_yam y -> last 0 y = 0.
   Proof.
@@ -173,6 +173,19 @@ Section Yama.
     move=> Hyam; have:= is_part_shyam (is_yam_tl Hyam) => /is_partP [] _ Hpart.
     rewrite /is_out_corner !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS.
     by apply: Hpart.
+  Qed.
+
+  Lemma is_in_corner_yam l0 s :
+    is_yam (l0 :: s) -> is_in_corner (shape_rowseq s) l0.
+  Proof.
+    rewrite /is_in_corner /=; case: l0 => [//= | l0] /=.
+    case: (shape_rowseq s) => [//= | sh0 sh].
+      move=> /andP [] /andP [] H1 H2 _; exfalso.
+      case: l0 H1 H2 => //= l0 _; by elim: l0.
+    move=> /andP [] /is_partP [] _ Hpart _.
+    have /= {Hpart} := Hpart l0.
+    rewrite -/(incr_nth (sh0 :: sh) l0.+1) !nth_incr_nth eq_refl add1n.
+    by rewrite eq_sym ieqi1F add0n.
   Qed.
 
   (* Hyperstandard Yamanouchi word : 33 2222 11111 0000000 *)

@@ -111,6 +111,16 @@ Section Partition.
      by rewrite nth_incr_nth eq_refl.
   Qed.
 
+  Lemma is_part_incr_nth_size sh l :
+    is_part sh -> is_part (incr_nth sh l) -> l <= size sh.
+  Proof.
+    elim: sh l => [//= | sh0 sh IHsh] /= l.
+      move => _.
+      case: l => [| i] //= /andP []; by rewrite leqn0 => /part_head0F ->.
+    case: l => [//= | l].
+    by rewrite ltnS /= => /andP [] _ /IHsh H /andP [] _ /H.
+  Qed.
+
   Definition is_in_corner sh := [pred i | (i == 0) || (nth 0 sh i < nth 0 sh i.-1)].
 
   Lemma is_part_incr_nth sh i : is_part sh -> is_in_corner sh i -> is_part (incr_nth sh i).
