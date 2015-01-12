@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
-Require Import tools partition.
+Require Import tools combclass partition.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -318,19 +318,19 @@ Qed.
 
 Definition out_corners sh := filter (is_out_corner sh) (iota 0 (size sh)).
 
-Fixpoint list_yamshn n sh :=
+Fixpoint enum_yamshn n sh :=
   if n is n'.+1 then
-    flatten [seq [seq i :: y | y <- list_yamshn n' (decr_nth sh i)] |
+    flatten [seq [seq i :: y | y <- enum_yamshn n' (decr_nth sh i)] |
                   i <- iota 0 (size sh) & is_out_corner sh i]
   else [:: [::]].
-Definition list_yamsh sh := list_yamshn (sumn sh) sh.
+Definition enum_yamsh sh := enum_yamshn (sumn sh) sh.
 Definition is_yam_of_size n y := (is_yam y) && (size y == n).
 
-Lemma list_yamshP sh:
-  is_part sh -> all (is_yam_of_shape sh) (list_yamsh sh).
+Lemma enum_yamshP sh:
+  is_part sh -> all (is_yam_of_shape sh) (enum_yamsh sh).
 Proof.
   move=> Hpart; apply/allP => y.
-  rewrite /list_yamsh /is_yam_of_shape; move Hn: (sumn sh) => n.
+  rewrite /enum_yamsh /is_yam_of_shape; move Hn: (sumn sh) => n.
   elim: n sh Hpart Hn y => [| n IHn] /= .
     by move=> sh Hsh /part0 H0 y; rewrite mem_seq1 H0 //= => /eqP ->.
   move=> sh Hpart Hsh [/= | y0 y] /=.
@@ -343,14 +343,14 @@ Proof.
     by rewrite decr_nthK //= Hpart /=.
 Qed.
 
-Lemma list_yamsh_countE sh y :
-  is_part sh -> is_yam_of_shape sh y -> count_mem y (list_yamsh sh) = 1.
+Lemma enum_yamsh_countE sh :
+  is_part sh -> forall y, is_yam_of_shape sh y -> count_mem y (enum_yamsh sh) = 1.
 Proof.
-  rewrite /list_yamsh /is_yam_of_shape; move Hn: (sumn sh) => n.
-  elim: n sh Hn y => [| n IHn] /= .
-    move=> sh Hsh y /part0 H0.
+  rewrite /enum_yamsh /is_yam_of_shape; move Hn: (sumn sh) => n.
+  elim: n sh Hn => [| n IHn] /= .
+    move=> sh Hsh /part0 H0 y.
     by rewrite (H0 Hsh) => /andP [] /yam0 H /eqP /H{H} ->.
-  move=> sh Hsh [/= | y0 y] /= Hpart.
+  move=> sh Hsh  Hpart [/= | y0 y] /=.
   - by have -> : [::] == sh = false by move: Hsh; case sh.
   - move => /andP [] /andP [] _ Hyam /eqP Htmp; subst sh.
     rewrite count_flatten -map_comp; set ci := (X in map X _).
@@ -374,46 +374,12 @@ Proof.
     by case: (ltnP y0 (size (shape_rowseq y))).
 Qed.
 
-Definition list_yamn n : seq (seq nat) :=
-  flatten [seq list_yamsh sh | sh <- list_partn n].
-
-Lemma list_yamnP n :
-  all (is_yam_of_size n) (list_yamn n).
-Proof.
-  rewrite /is_yam_of_size /list_yamn; apply/allP => y.
-  - move/flatten_mapP => [] p.
-    move /(allP (list_partn_allP n)) => /= /andP [] /eqP <- /list_yamshP /allP H/H{H}.
-    rewrite /is_yam_of_shape => /andP [] -> /eqP <- /=.
-    by rewrite shape_rowseq_eq_size.
-Qed.
-
-Lemma list_yamn_countE n y :
-  is_yam_of_size n y -> count_mem y (list_yamn n) = 1.
-Proof.
-  rewrite /is_yam_of_size => /andP [] Hyam /eqP Hsz.
-  rewrite /list_yamn count_flatten -map_comp.
-  set ci := (X in map X _).
-  have {ci} /eq_in_map -> : {in list_partn n, ci =1 fun i => i == (shape_rowseq y)}.
-    rewrite /ci {ci} => i /=.
-    case (altP (i =P shape_rowseq y)) => [-> | Hneq].
-    - rewrite list_yamsh_countE //=; first by apply: is_part_shyam.
-      by rewrite /is_yam_of_shape Hyam eq_refl.
-    - rewrite -list_partnP /= => /andP [] /eqP Hsum Hpart.
-      apply/count_memPn; move: Hneq; apply: contra.
-      move/(allP (list_yamshP Hpart)).
-      by rewrite /is_yam_of_shape => /andP [] _ /eqP ->.
-  rewrite sumn_count /=.
-  rewrite (eq_count (a2 := (pred1 (shape_rowseq y)))); last by [].
-  apply: list_partn_countE.
-  by rewrite /= -Hsz shape_rowseq_eq_size eq_refl is_part_shyam.
-Qed.
-
 Section YamOfShape.
 
 Variable sh : seq nat.
 Hypothesis Hpart : is_part sh.
 
-Structure yamsh : Type :=
+Structure yamsh : predArgType :=
   YamSh {yamshval :> seq nat; _ : is_yam_of_shape sh yamshval}.
 Canonical yamsh_subType := Eval hnf in [subType for yamshval].
 Definition yamsh_eqMixin := Eval hnf in [eqMixin of yamsh by <:].
@@ -423,26 +389,18 @@ Canonical yamsh_choiceType := Eval hnf in ChoiceType yamsh yamsh_choiceMixin.
 Definition yamsh_countMixin := Eval hnf in [countMixin of yamsh by <:].
 Canonical yamsh_countType := Eval hnf in CountType yamsh yamsh_countMixin.
 Canonical yamsh_subCountType := Eval hnf in [subCountType of yamsh].
-
-Definition yamsh_enum : seq yamsh := pmap insub (list_yamsh sh).
-
-Lemma finite_yamsh : Finite.axiom yamsh_enum.
-Proof.
-  case=> /= p Hp; rewrite -(count_map _ (pred1 p)) (pmap_filter (@insubK _ _ _)).
-  rewrite count_filter -(@eq_count _ (pred1 p)) => [|s /=]; last first.
-    by rewrite isSome_insub; case: eqP=> // ->.
-  by apply: list_yamsh_countE.
-Qed.
-
-Canonical yamsh_finMixin := Eval hnf in FinMixin finite_yamsh.
-Canonical yamsh_finType := Eval hnf in FinType yamsh yamsh_finMixin.
-Canonical yamsh_subFinType := Eval hnf in [subFinType of yamsh_countType].
+Let type := sub_finType yamsh_subCountType (enum_yamshP Hpart) (enum_yamsh_countE Hpart).
+Canonical yamsh_finType := Eval hnf in [finType of yamsh for type].
+Canonical yamsh_subFinType := Eval hnf in [subFinType of yamsh].
 
 Lemma yamshP (y : yamsh) : is_yam y.
 Proof. by case: y => /= y /andP []. Qed.
 
 Lemma shape_yamsh (y : yamsh) : shape_rowseq y = sh.
 Proof. by case: y => /= y /andP [] _ /eqP. Qed.
+
+Lemma enum_yamshE : map val (enum yamsh) = enum_yamsh sh.
+Proof. rewrite /=; by apply enum_subP. Qed.
 
 End YamOfShape.
 
@@ -451,7 +409,22 @@ Section YamOfSize.
 
 Variable n : nat.
 
-Structure yamn : Type :=
+Lemma yamn_PredEq (sh : intpartn_subFinType n) :
+  predI (is_yam_of_size n) (pred1 (val sh) \o shape_rowseq) =1 is_yam_of_shape (val sh).
+Proof.
+  move=> y; rewrite /is_yam_of_size /is_yam_of_shape /= -andbA; congr (_ && _).
+  case: (altP (shape_rowseq y =P sh)) => /=; last by rewrite andbF.
+  rewrite -shape_rowseq_eq_size => ->.
+  by rewrite (intpartn_sumn sh) eq_refl.
+Qed.
+
+Lemma yamn_partition_shape_rowseq x :
+  is_yam_of_size n x -> (is_part_of_n n) (shape_rowseq x).
+Proof.
+  by rewrite /is_yam_of_size /= shape_rowseq_eq_size => /andP [] /is_part_shyam -> ->.
+Qed.
+
+Structure yamn : predArgType :=
   Yamn {yamnval :> seq nat; _ : is_yam_of_size n yamnval}.
 Canonical yamn_subType := Eval hnf in [subType for yamnval].
 Definition yamn_eqMixin := Eval hnf in [eqMixin of yamn by <:].
@@ -461,21 +434,11 @@ Canonical yamn_choiceType := Eval hnf in ChoiceType yamn yamn_choiceMixin.
 Definition yamn_countMixin := Eval hnf in [countMixin of yamn by <:].
 Canonical yamn_countType := Eval hnf in CountType yamn yamn_countMixin.
 Canonical yamn_subCountType := Eval hnf in [subCountType of yamn].
-
-
-Definition yamn_enum : seq yamn := pmap insub (list_yamn n).
-
-Lemma finite_yamn : Finite.axiom yamn_enum.
-Proof.
-  case=> /= y Hy; rewrite -(count_map _ (pred1 y)) (pmap_filter (@insubK _ _ _)).
-  rewrite count_filter -(@eq_count _ (pred1 y)) => [|s /=]; last first.
-    by rewrite isSome_insub; case: eqP=> // ->.
-  by apply: list_yamn_countE.
-Qed.
-
-Canonical yamn_finMixin := Eval hnf in FinMixin finite_yamn.
-Canonical yamn_finType := Eval hnf in FinType yamn yamn_finMixin.
-Canonical yamn_subFinType := Eval hnf in [subFinType of yamn_countType].
+Let type := union_finType
+    (fun p : intpartn_subFinType n => (yamsh_subFinType (intpartnP p)))
+    yamn_PredEq yamn_partition_shape_rowseq yamn_subCountType.
+Canonical yamn_finType := Eval hnf in [finType of yamn for type].
+Canonical yamn_subFinType := Eval hnf in [subFinType of yamn].
 
 Lemma yamnP (y : yamn) : is_yam y.
 Proof. by case: y => /= y /andP []. Qed.
@@ -483,4 +446,15 @@ Proof. by case: y => /= y /andP []. Qed.
 Lemma yamn_sumn (y : yamn) : size y = n.
 Proof. by case: y => /= y /andP [] _ /eqP. Qed.
 
+(* Check of disjoint union enumeration *)
+Lemma enum_yamnE :
+  map val (enum yamn) = flatten [seq enum_yamsh p | p <- enum_partn n].
+Proof.
+  rewrite enum_union_finTypeE /=; congr flatten.
+  rewrite (eq_map (f2 := enum_yamsh \o val)).
+  - by rewrite map_comp enum_intpartnE.
+  - move=> i /=; by rewrite enum_yamshE.
+Qed.
+
 End YamOfSize.
+

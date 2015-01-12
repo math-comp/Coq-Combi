@@ -13,17 +13,43 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
+Require Import bigop.
 
 Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+
+Lemma sum_count_mem (T : finType) (P : pred T) l :
+   \sum_(i | P i) (count_mem i) l = count P l.
+Proof.
+  rewrite -size_filter -(eq_filter (mem_enum P)).
+  rewrite -big_filter filter_index_enum.
+  have := enum_uniq P.
+  elim: (enum P) => [_ | p1 p IHp].
+    rewrite big_nil (eq_filter (a2 := pred0)); first by rewrite filter_pred0.
+    move=> i /=; by apply in_nil.
+  rewrite big_cons => /= /andP [] Hp1 /IHp{IHp} ->.
+  rewrite size_filter.
+  rewrite (eq_count (a1 := mem (p1 :: p)) (a2 := predU (pred1 p1) (mem p))); first last.
+    move => i /=; by rewrite in_cons.
+  rewrite -[RHS]addn0.
+  have /eq_count Hi : predI (pred1 p1) (mem p) =1 pred0.
+    move=> i /=; apply (introF idP) => /andP [] /eqP -> Hp1'.
+    by rewrite Hp1' in Hp1.
+  have := Hi l; rewrite count_pred0 => <-.
+  by rewrite count_predUI size_filter.
+Qed.
+
+
 Section SubtypeSeq.
 
-Variable T : eqType.
+Variable T : countType.
 Variable P : pred T.
-Variable TP : subType P.
+Variable TP : subCountType P.
+(* Variable subT : subType P.
+Let TP := sub_choiceType subT. *)
 
 Fixpoint subType_seq l {struct l} :=
   match l as l1 return all P l1 -> seq TP with
@@ -36,28 +62,65 @@ Fixpoint subType_seq l {struct l} :=
 
 
 Variable lst : seq T.
-Hypothesis Hall : all P lst.
+Hypothesis HallP : all P lst.
 
-Lemma subType_seqP : map val (subType_seq Hall) = lst.
+Lemma subType_seqP : map val (subType_seq HallP) = lst.
 Proof.
-  elim: lst Hall => [//= | l0 l IHl] /=.
-  case/andP => /= H0 Hall0.
-  by rewrite IHl SubK.
+  elim: lst HallP => [//= | l0 l IHl] /=.
+  case/andP => /= H0 Hall0; by rewrite IHl SubK.
 Qed.
+
+Section SubCount.
 
 Hypothesis Hcount : forall x : T, P x -> count_mem x lst = 1.
 
-Lemma finite_subP : Finite.axiom (subType_seq Hall).
+Lemma finite_subP : Finite.axiom (subType_seq HallP).
 Proof.
-  move=> xP; set p := (X in count X _).
-  rewrite (eq_count (a2 := (pred1 (val xP)) \o val)); last first.
-    rewrite /p; move=> i /=.
-    apply/(sameP idP); apply(iffP idP) => /eqP H; apply /eqP.
-    - by apply val_inj.
-    - by rewrite H.
-  rewrite -count_map subType_seqP Hcount //=.
-  by apply valP.
+  move=> xP; rewrite (eq_count (a2 := (pred1 (val xP)) \o val)).
+  - rewrite -count_map subType_seqP Hcount //=; by apply valP.
+  - move=> i; apply/(sameP idP); apply(iffP idP) => /eqP H; apply /eqP.
+    + by apply val_inj.
+    + by rewrite H.
 Qed.
+
+Definition sub_finMixin := Eval hnf in FinMixin finite_subP.
+Definition sub_finType := Eval hnf in FinType TP sub_finMixin.
+Definition sub_subFinType := Eval hnf in [subFinType of sub_finType].
+
+Lemma enum_subP : map val (enum sub_finType) = lst.
+Proof. by rewrite enumT unlock /= subType_seqP. Qed.
+
+End SubCount.
+
+
+
+Section SubUndup.
+
+Hypothesis HPin : forall x : T, P x -> x \in lst.
+
+Lemma finite_sub_undupP :
+  Finite.axiom (undup (subType_seq HallP)).
+Proof.
+  rewrite /Finite.axiom => x.
+  rewrite count_uniq_mem; last by apply undup_uniq.
+  rewrite mem_undup.
+  have := HPin (valP x); by rewrite -{1}subType_seqP (mem_map val_inj) => ->.
+Qed.
+
+Definition sub_undup_finMixin := Eval hnf in FinMixin finite_sub_undupP.
+Definition sub_undup_finType := Eval hnf in FinType TP sub_undup_finMixin.
+Definition sub_undup_subFinType := Eval hnf in [subFinType of sub_undup_finType].
+
+Lemma enum_sub_undupP : map val (enum sub_undup_finType) = undup lst.
+Proof.
+  rewrite enumT unlock /= -{2}subType_seqP.
+  elim: lst HallP => [//= | l0 l IHl] /=.
+  case/andP => /= H0 Hall0.
+  rewrite mem_map; last by apply val_inj.
+  case: (Sub l0 H0 \in subType_seq Hall0); by rewrite /= IHl.
+Qed.
+
+End SubUndup.
 
 End SubtypeSeq.
 
@@ -77,18 +140,18 @@ Variable TPi : forall i : TPI, subFinType (Pi (val i)).
 Hypothesis HPTi : forall i : TPI, (predI P (pred1 (val i) \o FI)) =1 (Pi (val i)).
 Hypothesis Hpart : forall x : T, P x -> PI (FI x).
 
-Definition union_list := flatten [seq map val (enum (TPi i)) | i <- enum TPI].
+Definition enum_union := flatten [seq map val (enum (TPi i)) | i <- enum TPI].
 
-Lemma all_unionP : all P union_list.
+Lemma all_unionP : all P enum_union.
 Proof.
-  rewrite /union_list.
+  rewrite /enum_union.
   apply/allP => x /flatten_mapP [] i /mapP [] ifin Hi -> {i} /mapP [] xfin Hx -> {x}.
   have /= := valP xfin; by rewrite -HPTi /= => /andP [].
 Qed.
 
-Lemma count_unionP x : P x -> count_mem x union_list = 1.
+Lemma count_unionP x : P x -> count_mem x enum_union = 1.
 Proof.
-  move=> HPx; have:= HPx; rewrite /union_list => /Hpart H.
+  move=> HPx; have:= HPx; rewrite /enum_union => /Hpart H.
   rewrite count_flatten -2!map_comp; set ci := (X in map X _).
   set ix := @Sub TI PI TPI (FI x) H.
   have {ci} /eq_map -> : ci =1 (pred_of_simpl (pred1 ix)).
@@ -113,9 +176,9 @@ Qed.
 
 Variable TP : subCountType P.
 
-Definition union_enum := subType_seq TP all_unionP.
+Let union_enum := subType_seq TP all_unionP.
 
-Lemma subType_unionP : map val union_enum = union_list.
+Lemma subType_unionP : map val union_enum = enum_union.
 Proof. by apply subType_seqP. Qed.
 
 Lemma finite_unionP : Finite.axiom union_enum.
@@ -123,106 +186,10 @@ Proof. apply finite_subP => x; by apply count_unionP. Qed.
 
 Definition union_finMixin := Eval hnf in FinMixin finite_unionP.
 Definition union_finType := Eval hnf in FinType TP union_finMixin.
-(* Canonical union_subFinType := Eval hnf in [subFinType of T]. *)
+Definition union_subFinType := Eval hnf in [subFinType of union_finType].
+
+Lemma enum_union_finTypeE :
+  map val (enum union_finType) = enum_union.
+Proof. by rewrite enumT unlock subType_seqP. Qed.
 
 End SubtypesDisjointUnion.
-
-Require Import partition yama.
-
-Lemma PredEq n (sh : intpartn_subFinType n) :
-  predI (is_yam_of_size n) (pred1 (val sh) \o shape_rowseq) =1 is_yam_of_shape (val sh).
-Proof.
-  move=> y; rewrite /is_yam_of_size /is_yam_of_shape /= -andbA; congr (_ && _).
-  case: (altP (shape_rowseq y =P sh)) => /=; last by rewrite andbF.
-  rewrite -shape_rowseq_eq_size => ->.
-  by rewrite (intpartn_sumn sh) eq_refl.
-Qed.
-
-Lemma shape_size n x :
-  is_yam_of_size n x -> (is_part_of_n n) (shape_rowseq x).
-Proof.
-  by rewrite /is_yam_of_size /= shape_rowseq_eq_size => /andP [] /is_part_shyam -> ->.
-Qed.
-
-
-Definition yamsize n := Eval hnf in 
-  union_finType
-    (fun p : intpartn_subFinType n => (yamsh_subFinType (intpartnP p)))
-    (@PredEq n)
-    (@shape_size n) (@yamn_subCountType n).
-
-Let bla : yamn 2 := @Yamn 2 [:: 1; 0] is_true_true.
-Let blo : yamsize _ := bla.
-(* Eval compute in size (Finite.enum (yamn 0)). Doesn't work ! *)
-Eval compute in size (Finite.enum (yamn_finType 0)).
-Let x := size (Finite.enum (yamsize 2)).
-
-(*
-Structure tuple_of : Type := Tuple {tval :> seq T; _ : size tval == n}.
-
-Definition tuple t mkT : tuple_of :=
-  mkT (let: Tuple _ tP := t return size t == n in tP).
-
-Notation "[ 'tuple' 'of' s ]" := (tuple (fun sP => @Tuple _ _ s sP))
-  (at level 0, format "[ 'tuple'  'of'  s ]") : form_scope.
-subFinType_finType
-
-*)
-
-(*
-Section SubtypeDisjointUnion.
-
-Variable T : eqType.
-Variable TI : eqType.
-Variable FI : T -> TI.
-Variable P : pred T.
-Variable PI : pred TI.
-
-Variable TP : subType P.
-
-Variable lstI : seq TI.
-Variable lst_fibers : TI -> seq T.
-
-Hypothesis Hpart : forall x : T, P x <-> PI (FI x).
-Hypothesis Hfibers : forall i x, x \in (lst_fibers i) -> FI x = i.
-
-Hypothesis HallI : all PI lstI.
-Hypothesis HcountI : forall i, PI i -> count_mem i lstI = 1.
-
-Hypothesis Hall_fibers : forall i : TI, PI i -> all P (lst_fibers i).
-Hypothesis Hcount_fibers : forall x, P x -> count_mem x (lst_fibers (FI x)) = 1.
-
-Definition union_list := flatten [seq lst_fibers i | i <- lstI].
-
-Lemma all_unionP : all P union_list.
-Proof.
-  rewrite /union_list; apply/allP => x /flatten_mapP [] i Hi.
-  by apply (allP (Hall_fibers (allP HallI _ Hi))).
-Qed.
-
-
-Lemma count_unionP x : P x -> count_mem x union_list = 1.
-Proof.
-  rewrite /union_list Hpart => H.
-  rewrite count_flatten -map_comp; set ci := (X in map X _).
-  have {ci} /eq_map -> : ci =1 fun i => i == FI x.
-    rewrite /ci {ci} => i /=.
-    case (altP (i =P FI x)) => [-> | Hneq].
-    - by rewrite Hcount_fibers //= Hpart.
-    - rewrite /=; apply/count_memPn.
-      move: Hneq; apply contra.
-      by move/Hfibers ->.
-  rewrite sumn_count; by apply HcountI.
-Qed.
-
-Definition union_enum := subType_seq TP all_unionP.
-
-Lemma subType_unionP : map val union_enum = union_list.
-Proof. by apply subType_seqP. Qed.
-
-Lemma finite_unionP : Finite.axiom union_enum.
-Proof. apply finite_subP => x; by apply count_unionP. Qed.
-
-End SubtypeDisjointUnion.
-
-*)

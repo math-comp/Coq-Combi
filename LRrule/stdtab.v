@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm fingroup.
-Require Import tools subseq partition yama permuted ordtype schensted plactic greeninv std.
+Require Import tools combclass subseq partition yama permuted ordtype schensted plactic greeninv std.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -389,7 +389,7 @@ Hypothesis Hpart : is_part sh.
 
 Definition is_stdtab_of_shape := [pred t | (is_stdtab t) && (shape t == sh) ].
 
-Structure stdtabsh : Type :=
+Structure stdtabsh : predArgType :=
   StdtabSh {stdtabshval :> seq (seq nat); _ : is_stdtab_of_shape stdtabshval}.
 Canonical stdtabsh_subType := Eval hnf in [subType for stdtabshval].
 Definition stdtabsh_eqMixin := Eval hnf in [eqMixin of stdtabsh by <:].
@@ -400,8 +400,8 @@ Definition stdtabsh_countMixin := Eval hnf in [countMixin of stdtabsh by <:].
 Canonical stdtabsh_countType := Eval hnf in CountType stdtabsh stdtabsh_countMixin.
 Canonical stdtabsh_subCountType := Eval hnf in [subCountType of stdtabsh].
 
-Definition list_stdtabsh : seq (seq (seq nat)) := map stdtab_of_yam (list_yamsh sh).
-Definition stdtabsh_enum : seq stdtabsh := pmap insub list_stdtabsh.
+Definition enum_stdtabsh : seq (seq (seq nat)) := map stdtab_of_yam (enum_yamsh sh).
+Let stdtabsh_enum : seq stdtabsh := pmap insub enum_stdtabsh.
 
 Lemma finite_stdtabsh : Finite.axiom stdtabsh_enum.
 Proof.
@@ -410,14 +410,14 @@ Proof.
     by rewrite isSome_insub; case: eqP=> // ->.
   move: Ht => /andP [] Htab /eqP.
   rewrite -(shape_yam_of_stdtab Htab) => Hsht.
-  rewrite /list_stdtabsh count_map.
+  rewrite /enum_stdtabsh count_map.
   rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
-    move=> y /(allP (list_yamshP Hpart)).
+    move=> y /(allP (enum_yamshP Hpart)).
     rewrite /is_yam_of_shape => /andP [] Hyam /eqP Hshy /=.
     apply/(sameP idP); apply(iffP idP) => /eqP H; apply/eqP.
     + by rewrite H yam_of_stdtabK.
     + by rewrite -H stdtab_of_yamK.
-  apply: (list_yamsh_countE Hpart).
+  apply: (enum_yamsh_countE Hpart).
   by rewrite /is_yam_of_shape yam_of_stdtabP //= Hsht.
 Qed.
 
@@ -452,8 +452,9 @@ Canonical stdtabn_countType := Eval hnf in CountType stdtabn stdtabn_countMixin.
 Canonical stdtabnn_subCountType := Eval hnf in [subCountType of stdtabn].
 
 
-Definition list_stdtabn : seq (seq (seq nat)) := map stdtab_of_yam (list_yamn n).
-Definition stdtabn_enum : seq stdtabn := pmap insub list_stdtabn.
+Definition enum_stdtabn : seq (seq (seq nat)) :=
+  map (stdtab_of_yam \o val) (enum (yamn n)).
+Let stdtabn_enum : seq stdtabn := pmap insub enum_stdtabn.
 
 Lemma finite_stdtabn : Finite.axiom stdtabn_enum.
 Proof.
@@ -462,15 +463,18 @@ Proof.
     by rewrite isSome_insub; case: eqP=> // ->.
   move: Ht => /andP [] Htab /eqP.
   rewrite -(size_yam_of_stdtab Htab) => Hszt.
-  rewrite /list_stdtabn count_map.
+  rewrite /enum_stdtabn map_comp.
+  rewrite !enumT unlock subType_seqP.
+  rewrite count_map.
   rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
-    move=> y /(allP (list_yamnP n)).
+    move=> y /(allP (all_unionP _ (@yamn_PredEq _))) /=.
     rewrite /is_yam_of_size => /andP [] Hyam /eqP Hszy /=.
     apply/(sameP idP); apply(iffP idP) => /eqP H; apply/eqP.
     + by rewrite H yam_of_stdtabK.
     + by rewrite -H stdtab_of_yamK.
-  apply: list_yamn_countE.
-  by rewrite /is_yam_of_size yam_of_stdtabP //= Hszt.
+  apply: (count_unionP _ (@yamn_PredEq _)).
+  - by apply: yamn_partition_shape_rowseq.
+  - by rewrite /is_yam_of_size yam_of_stdtabP //= Hszt.
 Qed.
 
 Canonical stdtabn_finMixin := Eval hnf in FinMixin finite_stdtabn.

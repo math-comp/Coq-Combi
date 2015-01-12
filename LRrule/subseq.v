@@ -13,7 +13,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
-Require Import tools.
+Require Import tools combclass.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -64,25 +64,13 @@ Section Fintype.
 
 Variable (T : countType) (w : seq T).
 Implicit Type s w : seq T.
-Implicit Type a b l : T.
 
-Structure subseqs : Type :=
-  Subseqs {subseqsval :> seq T; _ : subseq subseqsval w}.
-Canonical subseqs_subType := Eval hnf in [subType for subseqsval].
-Definition subseqs_eqMixin := Eval hnf in [eqMixin of subseqs by <:].
-Canonical subseqs_eqType := Eval hnf in EqType subseqs subseqs_eqMixin.
-Definition subseqs_choiceMixin := Eval hnf in [choiceMixin of subseqs by <:].
-Canonical subseqs_choiceType := Eval hnf in ChoiceType subseqs subseqs_choiceMixin.
-Definition subseqs_countMixin := Eval hnf in [countMixin of subseqs by <:].
-Canonical subseqs_countType := Eval hnf in CountType subseqs subseqs_countMixin.
-Canonical subseqs_subCountType := Eval hnf in [subCountType of subseqs].
-
-Fixpoint list_subseqs w :=
+Fixpoint enum_subseqs w :=
   if w is w0 :: w' then
-    let rec := list_subseqs w' in [seq w0 :: s | s <- rec ] ++ rec
+    let rec := enum_subseqs w' in [seq w0 :: s | s <- rec ] ++ rec
   else [:: [::] ].
 
-Lemma list_subseqsP : all (fun s => subseq s w) (list_subseqs w).
+Lemma enum_subseqsP : all (fun s => subseq s w) (enum_subseqs w).
 Proof.
   apply/allP; elim: w => [| w0 wtl IHw] s /=.
     by rewrite mem_seq1 => /eqP ->.
@@ -96,8 +84,8 @@ Proof.
     + exact Hsubs.
 Qed.
 
-Lemma mem_list_subseqs s :
-  subseq s w -> s \in (list_subseqs w).
+Lemma mem_enum_subseqs s :
+  subseq s w -> s \in (enum_subseqs w).
 Proof.
   elim: w s => [| w0 wtl IHw] s /=.
     move/eqP ->; by rewrite mem_seq1.
@@ -109,24 +97,26 @@ Proof.
     + by move => ->; rewrite orbT.
 Qed.
 
-Definition subseqs_enum : seq subseqs := pmap insub (undup (list_subseqs w)).
-
-Lemma finite_subseqs : Finite.axiom subseqs_enum.
-Proof.
-  case=> /= s Hs; rewrite -(count_map _ (pred1 s)) (pmap_filter (@insubK _ _ _)).
-  rewrite count_filter -(@eq_count _ (pred1 s)) => [|s' /=]; last first.
-    by rewrite isSome_insub; case: eqP=> // ->.
-  rewrite count_uniq_mem.
-  + by rewrite mem_undup (mem_list_subseqs Hs).
-  + by apply: undup_uniq.
-Qed.
-
-Canonical subseqs_finMixin := Eval hnf in FinMixin finite_subseqs.
-Canonical subseqs_finType := Eval hnf in FinType subseqs subseqs_finMixin.
-Canonical subseqs_subFinType := Eval hnf in [subFinType of subseqs_countType].
+Structure subseqs : predArgType :=
+  Subseqs {subseqsval :> seq T; _ : subseq subseqsval w}.
+Canonical subseqs_subType := Eval hnf in [subType for subseqsval].
+Definition subseqs_eqMixin := Eval hnf in [eqMixin of subseqs by <:].
+Canonical subseqs_eqType := Eval hnf in EqType subseqs subseqs_eqMixin.
+Definition subseqs_choiceMixin := Eval hnf in [choiceMixin of subseqs by <:].
+Canonical subseqs_choiceType := Eval hnf in ChoiceType subseqs subseqs_choiceMixin.
+Definition subseqs_countMixin := Eval hnf in [countMixin of subseqs by <:].
+Canonical subseqs_countType := Eval hnf in CountType subseqs subseqs_countMixin.
+Canonical subseqs_subCountType := Eval hnf in [subCountType of subseqs].
+Let type := sub_undup_finType subseqs_subCountType enum_subseqsP mem_enum_subseqs.
+Canonical subseqs_finType := [finType of subseqs for type].
+Canonical subseqs_subFinType := Eval hnf in [subFinType of subseqs].
 
 Lemma subseqsP (s : subseqs) : subseq s w.
 Proof. by case: s => /= s. Qed.
+
+Lemma enum_subseqsE :
+  map val (enum subseqs) = undup (enum_subseqs w).
+Proof. rewrite /=; by apply enum_sub_undupP. Qed.
 
 Definition sub_nil  : subseqs := Subseqs (sub0seq w).
 Definition sub_full : subseqs := Subseqs (subseq_refl w).

@@ -605,9 +605,9 @@ Proof.
   apply: (iffP idP) => /=.
   - move=> /hasP [] p /flattenP [] shuf /allpairsP [] [p1 p2] /= [].
     move=> /mapP [] yam1
-            /(allP (list_yamshP (is_part_sht Htab1))) /= /andP [] Hyam1 Hsh1 Hp1.
+            /(allP (enum_yamshP (is_part_sht Htab1))) /= /andP [] Hyam1 Hsh1 Hp1.
     move=> /mapP [] yam2
-            /(allP (list_yamshP (is_part_sht Htab2))) /= /andP [] Hyam2 Hsh2 Hp2.
+            /(allP (enum_yamshP (is_part_sht Htab2))) /= /andP [] Hyam2 Hsh2 Hp2.
     move=> -> {shuf} Hshuf /eqP <- {t}.
     apply: (@PlactLRTriple t1 t2 (RS p) p1 p2 p) => //=.
     + by rewrite Hp1 -RSmapE RS_bij_2 //= Htab1 Hyam1 eq_sym Hsh1.
@@ -650,7 +650,7 @@ Proof.
   - move=> Hfast; apply/(LRTripleP t Ht1 Ht2).
     move: Hfast => /= /hasP [] p2 /mapP [] y2 Hy2.
     have := Ht2; rewrite /is_stdtab => /andP [] Htab2 _.
-    have := (is_part_sht Htab2) => /list_yamshP/allP Hall2.
+    have := (is_part_sht Htab2) => /enum_yamshP/allP Hall2.
     have {Hall2 Hy2} := Hall2 _ Hy2.
     rewrite /is_yam_of_shape => /andP [] Hyam2 /eqP Hsh2 Hp2 Htshsh.
     have := Ht1; rewrite /is_stdtab => /andP [] /RS_tabE => H1 _.
@@ -670,7 +670,7 @@ Proof.
       * apply/count_memPn; rewrite Hp'.
         have : is_yam_of_shape (shape (RS p')) (RSmap p').2.
           by rewrite /is_yam_of_shape is_yam_RSmap2 /= -RSmapE shape_RSmap_eq.
-        by move/(list_yamsh_countE (is_part_sht (is_tableau_RS p'))) => ->.
+        by move/(enum_yamsh_countE (is_part_sht (is_tableau_RS p'))) => ->.
       * rewrite Hp' -[RS p']RSmapE /=.
         have -> : ((RSmap p').1, (RSmap p').2) = RSmap p' by case RSmap.
         by rewrite RS_bij_1.
@@ -748,17 +748,17 @@ End LR.
 Eval compute in map (@shape nat_ordType)
                     (filter
                        (predLRTriple [:: [:: 0; 1]; [:: 2]] [:: [:: 0; 1]; [:: 2]])
-                       (list_stdtabn 6)).
+                       (enum_stdtabn 6)).
 
 Eval compute in count
                   (predLRTriple [:: [:: 0; 1]; [:: 2]] [:: [:: 0; 1]; [:: 2]])
-                  (list_stdtabsh [:: 3; 2; 1]).
+                  (enum_stdtabsh [:: 3; 2; 1]).
 
 Eval compute in count
                   (predLRTripleFast [:: [:: 0; 1]; [:: 2]] [:: [:: 0; 1]; [:: 2]])
-                  (list_stdtabsh [:: 3; 2; 1]).
+                  (enum_stdtabsh [:: 3; 2; 1]).
 
 Eval compute in count
                   (predLRTripleFast [:: [:: 0; 1]; [:: 2; 3]] [:: [:: 0; 1]; [:: 2; 3]])
-                  (list_stdtabsh [:: 4; 4]).
+                  (enum_stdtabsh [:: 4; 4]).
 *)

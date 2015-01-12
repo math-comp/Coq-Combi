@@ -12,10 +12,11 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
+Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
 Require Import tuple finfun finset bigop path.
 
-Require Import tools partition yama schensted ordtype std stdtab invseq congr plactic greeninv.
+Require Import tools combclass partition yama ordtype.
+Require Import schensted std stdtab invseq congr plactic greeninv.
 Require Import yamplact skewtab shuffle multpoly therule.
 
 Set Implicit Arguments.
@@ -23,57 +24,6 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Open Scope N.
-
-Section SubtypeSeq.
-
-Variable T : eqType.
-Variable P : pred T.
-Variable TP : subType P.
-
-Fixpoint subType_seq l {struct l} :=
-  match l as l1 return all P l1 -> seq TP with
-    | [::]     => fun _ : true = true => [::]
-    | l0 :: ll => fun Hall =>
-                    match elimTF andP Hall with
-                      | conj H0 Hl => (Sub l0 H0) :: (subType_seq ll Hl)
-                    end
-  end.
-
-
-Variable lst : seq T.
-Hypothesis Hall : all P lst.
-
-Lemma subType_seqP : map val (subType_seq Hall) = lst.
-Proof.
-  elim: lst Hall => [//= | l0 l IHl] /=.
-  case/andP => /= H0 Hall0.
-  by rewrite IHl SubK.
-Qed.
-
-End SubtypeSeq.
-
-
-Lemma sum_count_mem (T : finType) (P : pred T) l :
-   \sum_(i | P i) (count_mem i) l = count P l.
-Proof.
-  rewrite -size_filter -(eq_filter (mem_enum P)).
-  rewrite -big_filter filter_index_enum.
-  have := enum_uniq P.
-  elim: (enum P) => [_ | p1 p IHp].
-    rewrite big_nil (eq_filter (a2 := pred0)); first by rewrite filter_pred0.
-    move=> i /=; by apply in_nil.
-  rewrite big_cons => /= /andP [] Hp1 /IHp{IHp} ->.
-  rewrite size_filter.
-  rewrite (eq_count (a1 := mem (p1 :: p)) (a2 := predU (pred1 p1) (mem p))); first last.
-    move => i /=; by rewrite in_cons.
-  rewrite -[RHS]addn0.
-  have /eq_count Hi : predI (pred1 p1) (mem p) =1 pred0.
-    move=> i /=; apply (introF idP) => /andP [] /eqP -> Hp1'.
-    by rewrite Hp1' in Hp1.
-  have := Hi l; rewrite count_pred0 => <-.
-  by rewrite count_predUI size_filter.
-Qed.
-
 
 Lemma sorted_is_part p :
   is_part p -> sorted geq p.
@@ -817,7 +767,8 @@ Qed.
 Lemma LRyamtab_all :
   all (is_yam_of_shape P2) (map (@to_word _) (LRyamtab_list P1 P2 P)).
 Proof. by apply/allP => w /mapP [] tab /LRyamtabP Htab ->. Qed.
-Definition LRyam_list := subType_seq (yamsh_subType P2) LRyamtab_all.
+Let bla := Eval hnf in [subCountType of yamsh P2].
+Definition LRyam_list := subType_seq bla LRyamtab_all.
 
 Lemma LRyamtab_spec_recip yam :
   yam \in LRyam_set P1 P2 P ->
@@ -863,6 +814,7 @@ Proof.
   rewrite -(mem_map val_inj) subType_seqP /= => /mapP [] tab Htab -> {yam}.
   have Hskew := LRyamtab_skew_tableau (intpartnP P1) (intpartnP P) Hincl Htab.
   have Hshape := LRyamtab_shape (intpartnP P1) (intpartnP P) Hincl Htab.
+  rewrite /is_LRtab /=.
   have <- : (outer_shape P1 (shape tab)) = P.
     by rewrite Hshape diff_shapeK.
   rewrite skew_reshapeK //= -(size_map size tab) -/(shape tab) Hshape size_diff_shape.

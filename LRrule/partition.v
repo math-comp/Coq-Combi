@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
-Require Import tools.
+Require Import tools combclass.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -338,19 +338,19 @@ Proof.
 Qed.
 
 
-Fixpoint list_partnsk sm sz mx : (seq (seq nat)) :=
+Fixpoint enum_partnsk sm sz mx : (seq (seq nat)) :=
   if sz is sz.+1 then
-    flatten [seq [seq i :: p | p <- list_partnsk (sm - i) sz i] | i <- iota 1 (minn sm mx)]
+    flatten [seq [seq i :: p | p <- enum_partnsk (sm - i) sz i] | i <- iota 1 (minn sm mx)]
   else if sm is sm.+1 then [::] else [:: [::]].
-Definition list_partns sm sz := list_partnsk sm sz sm.
-Definition list_partn sm := flatten [seq list_partns sm sz | sz <- iota 0 sm.+1 ].
+Definition enum_partns sm sz := enum_partnsk sm sz sm.
+Definition enum_partn sm := flatten [seq enum_partns sm sz | sz <- iota 0 sm.+1 ].
 
 Definition is_part_of_n   sm       := [pred p | (sumn p == sm)   & is_part p ].
 Definition is_part_of_ns  sm sz    := [pred p | (size p == sz)   & is_part_of_n sm p].
 Definition is_part_of_nsk sm sz mx := [pred p | (head 1 p <= mx) & is_part_of_ns sm sz p].
 
-Lemma list_partnsk_allP sm sz mx :
-  mx >= 1 -> all (is_part_of_nsk sm sz mx) (list_partnsk sm sz mx).
+Lemma enum_partnsk_allP sm sz mx :
+  mx >= 1 -> all (is_part_of_nsk sm sz mx) (enum_partnsk sm sz mx).
 Proof.
   move=> Hmx; apply/allP => /=.
   elim: sz sm mx Hmx => [/= [] //= | sz IHsz sm] /= mx Hmx p.
@@ -363,9 +363,9 @@ Proof.
   by rewrite !eq_refl.
 Qed.
 
-Lemma list_partnsk_countE sm sz mx :
+Lemma enum_partnsk_countE sm sz mx :
   mx >= 1 ->
-  forall p, is_part_of_nsk sm sz mx p -> count_mem p (list_partnsk sm sz mx) = 1.
+  forall p, is_part_of_nsk sm sz mx p -> count_mem p (enum_partnsk sm sz mx) = 1.
 Proof.
   elim: sz sm mx => [//= | sz IHsz] /= sm mx Hmx.
     by move=> p /and4P [] Hhead/nilP -> /= /eqP <-.
@@ -388,60 +388,60 @@ Proof.
   by rewrite lt0n.
 Qed.
 
-Lemma list_partnskE sm sz mx :
+Lemma enum_partnskE sm sz mx :
   mx >= 1 ->
-  forall p, count_mem p (list_partnsk sm sz mx) = is_part_of_nsk sm sz mx p.
+  forall p, count_mem p (enum_partnsk sm sz mx) = is_part_of_nsk sm sz mx p.
 Proof.
   move=> Hx p. case (boolP ((is_part_of_nsk sm sz mx) p)) => H /=.
-  - by rewrite list_partnsk_countE.
+  - by rewrite enum_partnsk_countE.
   - apply/count_memPn; move: H; apply: contra.
-    by apply: (allP (list_partnsk_allP _ _ Hx)).
+    by apply: (allP (enum_partnsk_allP _ _ Hx)).
 Qed.
 
-Lemma list_partns_allP sm sz : all (is_part_of_ns sm sz) (list_partns sm sz).
+Lemma enum_partns_allP sm sz : all (is_part_of_ns sm sz) (enum_partns sm sz).
 Proof.
-  apply/allP; rewrite /list_partns => /= p.
+  apply/allP; rewrite /enum_partns => /= p.
   case: sm => [/= | sm]; first by case: sz; rewrite //= mem_seq1 => /eqP ->.
-  have /list_partnsk_allP/allP Hall : sm.+1 >= 1 by [].
+  have /enum_partnsk_allP/allP Hall : sm.+1 >= 1 by [].
   by move=> /Hall /= /andP [] _.
 Qed.
 
-Lemma list_partns_countE sm sz p :
-  is_part_of_ns sm sz p -> count_mem p (list_partns sm sz) = 1.
+Lemma enum_partns_countE sm sz p :
+  is_part_of_ns sm sz p -> count_mem p (enum_partns sm sz) = 1.
 Proof.
-  rewrite /list_partns.
+  rewrite /enum_partns.
   case: p => /= [ /and3P [] /eqP <- /eqP <- //= | p0 p] /and4P [] Hsz Hsum Hhead Hpart.
-  rewrite list_partnsk_countE //=.
+  rewrite enum_partnsk_countE //=.
   - rewrite -(eqP Hsum); apply: (@leq_trans p0); last by apply: leq_addr.
     have /part_head_non0 /= : is_part (p0 :: p) by rewrite /= Hhead Hpart.
     by rewrite lt0n.
   - by rewrite Hsz Hsum Hhead Hpart -(eqP Hsum) leq_addr.
 Qed.
 
-Lemma list_partnsE sm sz p :
-  count_mem p (list_partns sm sz) = is_part_of_ns sm sz p.
+Lemma enum_partnsE sm sz p :
+  count_mem p (enum_partns sm sz) = is_part_of_ns sm sz p.
 Proof.
   case (boolP ((is_part_of_ns sm sz) p)) => H /=.
-  - by rewrite list_partns_countE.
+  - by rewrite enum_partns_countE.
   - apply/count_memPn; move: H; apply: contra.
-    by apply: (allP (list_partns_allP _ _)).
+    by apply: (allP (enum_partns_allP _ _)).
 Qed.
 
-Lemma list_partn_allP sm : all (is_part_of_n sm) (list_partn sm).
+Lemma enum_partn_allP sm : all (is_part_of_n sm) (enum_partn sm).
 Proof.
-  apply/allP; rewrite /list_partn => /= p.
+  apply/allP; rewrite /enum_partn => /= p.
   case: sm => [/= | sm]; first by rewrite mem_seq1 => /eqP ->.
   rewrite cat0s => /flatten_mapP [] i.
   rewrite mem_iota ltnS => /andP [] Hposi Hi.
-  have /list_partnsk_allP/allP Hall : sm.+1 >= 1 by [].
+  have /enum_partnsk_allP/allP Hall : sm.+1 >= 1 by [].
   by move=> /Hall /= /and3P [].
 Qed.
 
-Lemma list_partn_countE sm p :
-  is_part_of_n sm p -> count_mem p (list_partn sm) = 1.
+Lemma enum_partn_countE sm p :
+  is_part_of_n sm p -> count_mem p (enum_partn sm) = 1.
 Proof.
-  rewrite /list_partn /= => /andP [] Hsum Hpart.
-  rewrite count_cat list_partnsE /= Hsum Hpart !andbT.
+  rewrite /enum_partn /= => /andP [] Hsum Hpart.
+  rewrite count_cat enum_partnsE /= Hsum Hpart !andbT.
   case: (altP (size p =P 0)) => Hsize.
   - rewrite count_flatten -map_comp.
     set empty := map _ _.
@@ -449,31 +449,31 @@ Proof.
       rewrite /empty {empty} -eq_in_map => i /=.
       rewrite mem_iota add1n ltnS => /andP [] /lt0n_neq0 Hi _.
       apply/count_memPn => /=; move: Hi; apply: contra.
-      move/(allP (list_partns_allP _ _)) => /= /andP [] /eqP <- _.
+      move/(allP (enum_partns_allP _ _)) => /= /andP [] /eqP <- _.
       by rewrite Hsize.
     have -> : sumn (map (fun _ => 0) _) = 0.
       move=> T; by elim => [//= |l0 l /= ->].
     by rewrite addn0.
   - rewrite /= add0n count_flatten -map_comp; set ci := (X in map X _).
     have {ci} /eq_map -> : ci =1 fun i => i == size p.
-      rewrite /ci {ci} => i /=; rewrite list_partnsE /=.
+      rewrite /ci {ci} => i /=; rewrite enum_partnsE /=.
       by rewrite Hsum Hpart !andbT eq_sym.
     rewrite sumn_iota //= add1n ltnS lt0n Hsize /= -(eqP Hsum).
     by apply: size_part.
 Qed.
 
-Lemma list_partnP n p : (is_part_of_n n p) = (p \in list_partn n).
+Lemma enum_partnP n p : (is_part_of_n n p) = (p \in enum_partn n).
 Proof.
   apply/(sameP idP); apply(iffP idP).
-  - by move/(allP (list_partn_allP n)).
-  - rewrite -has_pred1 has_count; by move/list_partn_countE ->.
+  - by move/(allP (enum_partn_allP n)).
+  - rewrite -has_pred1 has_count; by move/enum_partn_countE ->.
 Qed.
 
 Section PartOfn.
 
 Variable n : nat.
 
-Structure intpartn : Type :=
+Structure intpartn : predArgType :=
   IntPartN {pnval :> seq nat; _ : is_part_of_n n pnval}.
 Canonical intpartn_subType := Eval hnf in [subType for pnval].
 Definition intpartn_eqMixin := Eval hnf in [eqMixin of intpartn by <:].
@@ -484,19 +484,9 @@ Definition intpartn_countMixin := Eval hnf in [countMixin of intpartn by <:].
 Canonical intpartn_countType := Eval hnf in CountType intpartn intpartn_countMixin.
 Canonical intpartn_subCountType := Eval hnf in [subCountType of intpartn].
 
-Definition intpartn_enum : seq intpartn := pmap insub (list_partn n).
-
-Lemma finite_intpartn : Finite.axiom intpartn_enum.
-Proof.
-  case=> /= p Hp; rewrite -(count_map _ (pred1 p)) (pmap_filter (@insubK _ _ _)).
-  rewrite count_filter -(@eq_count _ (pred1 p)) => [|s /=]; last first.
-    by rewrite isSome_insub; case: eqP=> // ->.
-  by apply: list_partn_countE.
-Qed.
-
-Canonical intpartn_finMixin := Eval hnf in FinMixin finite_intpartn.
-Canonical intpartn_finType := Eval hnf in FinType intpartn intpartn_finMixin.
-Canonical intpartn_subFinType := Eval hnf in [subFinType of intpartn_countType].
+Let type := sub_finType intpartn_subCountType (enum_partn_allP n) (@enum_partn_countE n).
+Canonical intpartn_finType := Eval hnf in [finType of intpartn for type].
+Canonical intpartn_subFinType := Eval hnf in [subFinType of intpartn].
 
 Lemma intpartnP (p : intpartn) : is_part p.
 Proof. by case: p => /= p /andP []. Qed.
@@ -504,8 +494,8 @@ Proof. by case: p => /= p /andP []. Qed.
 Lemma intpartn_sumn (p : intpartn) : sumn p = n.
 Proof. by case: p => /= p /andP [] /eqP. Qed.
 
-Definition to_intpart (p : intpartn) := IntPart (intpartnP p).
-Coercion to_intpart : intpartn >-> intpart.
+Lemma enum_intpartnE : map val (enum intpartn) = enum_partn n.
+Proof. rewrite /=; by apply enum_subP. Qed.
 
 End PartOfn.
 
@@ -517,8 +507,8 @@ Fixpoint intpartnsk_nb sm sz mx : nat :=
 Definition intpartns_nb sm sz := intpartnsk_nb sm sz sm.
 Definition intpartn_nb sm := iteri (sm.+1) (fun sz s => s + intpartns_nb sm sz) 0.
 
-Lemma size_list_partnsk sm sz mx :
-  size (list_partnsk sm sz mx) = (intpartnsk_nb sm sz mx).
+Lemma size_enum_partnsk sm sz mx :
+  size (enum_partnsk sm sz mx) = (intpartnsk_nb sm sz mx).
 Proof.
   elim: sz sm mx => [ [] | sz IHsz] //= sm mx.
   rewrite size_flatten /shape -[1]addn0 iota_addl -!map_comp.
@@ -528,25 +518,23 @@ Proof.
   by rewrite -{1}[n.+1]addn1 iota_add add0n map_cat sumn_cat IHn /= addn0.
 Qed.
 
-Lemma size_list_partns sm sz :
-  size (list_partns sm sz) = (intpartns_nb sm sz).
-Proof. by rewrite size_list_partnsk. Qed.
+Lemma size_enum_partns sm sz :
+  size (enum_partns sm sz) = (intpartns_nb sm sz).
+Proof. by rewrite size_enum_partnsk. Qed.
 
-Lemma size_list_partn sm :
-  size (list_partn sm) = intpartn_nb sm.
+Lemma size_enum_partn sm :
+  size (enum_partn sm) = intpartn_nb sm.
 Proof.
-  rewrite /intpartn_nb /list_partn size_flatten /shape.
+  rewrite /intpartn_nb /enum_partn size_flatten /shape.
   elim: (sm.+1) => [//= | n IHn].
   rewrite -{1}[n.+1]addn1 iota_add add0n !map_cat sumn_cat IHn /= addn0.
-  by rewrite size_list_partns.
+  by rewrite size_enum_partns.
 Qed.
 
-Lemma card_intpartn sm : #|{:intpartn sm}| = intpartn_nb sm.
+Lemma card_intpartn sm : #|intpartn sm| = intpartn_nb sm.
 Proof.
-  rewrite [#|_|]cardT enumT unlock /= /intpartn_enum size_pmap_sub -size_list_partn.
-  have := list_partn_allP sm; by rewrite all_count => /eqP.
+  rewrite [#|_|]cardT enumT unlock /=.
+  by rewrite -(size_map val) subType_seqP -size_enum_partn.
 Qed.
 
 End PartCombClass.
-
-

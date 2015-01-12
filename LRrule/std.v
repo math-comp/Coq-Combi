@@ -133,7 +133,8 @@ Variable n : nat.
 
 Definition is_std_of_n := [pred w | (is_std w) && (size w == n) ].
 
-Structure stdwordn : Type := StdWordN {stdwordnval :> seq nat; _ : is_std_of_n stdwordnval}.
+Structure stdwordn : predArgType :=
+  StdWordN {stdwordnval :> seq nat; _ : is_std_of_n stdwordnval}.
 Canonical stdwordn_subType := Eval hnf in [subType for stdwordnval].
 Definition stdwordn_eqMixin := Eval hnf in [eqMixin of stdwordn by <:].
 Canonical stdwordn_eqType := Eval hnf in EqType stdwordn stdwordn_eqMixin.
@@ -174,7 +175,7 @@ Qed.
 Lemma enum_stdwordn_uniq : uniq enum_stdwordn.
 Proof. rewrite/enum_stdwordn (map_inj_uniq wordperm_inj). by apply: enum_uniq. Qed.
 
-Definition stdwordn_enum : seq stdwordn := pmap insub enum_stdwordn.
+Let stdwordn_enum : seq stdwordn := pmap insub enum_stdwordn.
 
 Lemma finite_stdwordn : Finite.axiom stdwordn_enum.
 Proof.
@@ -187,7 +188,7 @@ Qed.
 Canonical stdwordn_finMixin := Eval hnf in FinMixin finite_stdwordn.
 Canonical stdwordn_finType := Eval hnf in FinType stdwordn stdwordn_finMixin.
 
-Lemma card_stdwordn : #|{:stdwordn}| = n`!.
+Lemma card_stdwordn : #|stdwordn| = n`!.
 Proof.
   rewrite [#|_|]cardT enumT unlock /= /stdwordn_enum size_pmap_sub.
   rewrite -size_filter (eq_in_filter (a2 := predT));

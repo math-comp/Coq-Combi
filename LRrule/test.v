@@ -38,7 +38,7 @@ Eval compute in
           (filter
              (predLRTripleFast (stdtab_of_yam (hyper_yam inner))
                                (stdtab_of_yam (hyper_yam eval)) )
-             (list_stdtabsh outer)),
+             (enum_stdtabsh outer)),
       (LRyam_enum inner eval outer) ).
 
 Eval compute in
@@ -50,7 +50,7 @@ Eval compute in
             (filter
                (predLRTripleFast (stdtab_of_yam (hyper_yam inner))
                                  (stdtab_of_yam (hyper_yam eval)) )
-               (list_stdtabsh outer)) )
+               (enum_stdtabsh outer)) )
       ( LRyam_enum inner eval outer ).
 
 Eval compute in

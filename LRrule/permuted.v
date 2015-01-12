@@ -40,7 +40,7 @@ Definition permuted_tuple (t : n.-tuple T) :=
 Lemma size_permuted_tuple (t : n.-tuple T) : size (permuted_tuple t) = n`!.
 Proof. rewrite /permuted_tuple size_map -cardE; exact card_Sn. Qed.
 
-Lemma perm_eq_permuted_tuple (s : list T) (H : size s == n) :
+Lemma perm_eq_permuted_tuple (s : seq T) (H : size s == n) :
   forall s1, perm_eq s s1 -> s1 \in [seq tval t | t <- permuted_tuple (Tuple H)].
 Proof.
   set t := Tuple H; have Ht : perm_eq s t by [].

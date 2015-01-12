@@ -15,7 +15,7 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop path.
 
-Require Import tools partition yama schensted ordtype std stdtab invseq congr plactic greeninv yamplact skewtab.
+Require Import tools ordcast combclass partition yama schensted ordtype std stdtab invseq congr plactic greeninv yamplact skewtab.
 Require Import shuffle multpoly.
 
 Set Implicit Arguments.
@@ -263,8 +263,8 @@ Section OneCoeff.
 
 Variable P : intpartn (d1 + d2).
 
-Definition LRyam_set :=
-  [set x : yamsh_finType (intpartnP P2) | is_skew_tableau P1 (skew_reshape P1 P x)].
+Definition is_LRtab (x : seq nat) := (is_skew_tableau P1 (skew_reshape P1 P x)).
+Definition LRyam_set := [set x : yamsh_finType (intpartnP P2) | is_LRtab x].
 Definition LRyam_coeff := #|LRyam_set|.
 
 Hypothesis Hincl : included P1 P.
@@ -286,10 +286,9 @@ Definition bijLRyam :=
      join_tab (hyper_stdtab P1) (map (shiftn d1) (skew_reshape P1 P (std y)))].
 
 Lemma predLRTripleFast_bijLRyam (yam : yamsh P2) :
-  is_skew_tableau P1 (skew_reshape P1 P yam) ->
-  predLRTripleFast (hyper_stdtab P1) (hyper_stdtab P2) (bijLRyam yam).
+  is_LRtab yam -> predLRTripleFast (hyper_stdtab P1) (hyper_stdtab P2) (bijLRyam yam).
 Proof.
-  move=> Hskew.
+  rewrite/is_LRtab => Hskew.
   apply/hasP; exists (std yam).
     rewrite RSclassE; last by apply is_tableau_RS.
     rewrite -plactic_RS.
@@ -308,11 +307,9 @@ Proof.
 Qed.
 
 Lemma bijLRyamP (yam : yamsh P2) :
-  is_skew_tableau P1 (skew_reshape P1 P yam) ->
-  is_stdtab_of_n (d1 + d2) (bijLRyam yam).
+  is_LRtab yam -> is_stdtab_of_n (d1 + d2) (bijLRyam yam).
 Proof.
-  move=> Hskew /=.
-  rewrite /is_stdtab.
+  rewrite /is_LRtab /= /is_stdtab => Hskew.
   set sz := size_tab _.
   have {sz} -> : sz = d1 + d2.
     rewrite /sz{sz}  size_join_tab.
@@ -343,7 +340,7 @@ Proof.
 Qed.
 
 Definition bijLR (yam : yamsh P2) : stdtabn (d1 + d2) :=
-  if (boolP (is_skew_tableau P1 (skew_reshape P1 P yam))) is AltTrue pf then
+  if (boolP (is_LRtab yam)) is AltTrue pf then
     StdtabN (bijLRyamP pf)
   else
     hyper_stdtab P.
@@ -352,8 +349,8 @@ Lemma bijLR_LR_support yam :
   yam \in LRyam_set ->
   bijLR yam \in LR_support (hyper_stdtab P1) (hyper_stdtab P2).
 Proof.
-  rewrite !inE /bijLR => Hskew.
-  case (boolP (is_skew_tableau P1 (skew_reshape P1 P yam))) => /=; last by rewrite Hskew.
+  rewrite !inE /bijLR /= => Hskew.
+  case (boolP (is_LRtab yam)) => /=; last by rewrite Hskew.
   by move/predLRTripleFast_bijLRyam => /=.
 Qed.
 
@@ -382,8 +379,8 @@ Qed.
 Lemma shape_bijLR yam :
   yam \in LRyam_set -> shape (bijLR yam) = P.
 Proof.
-  rewrite !inE /bijLR => Hskew.
-  case (boolP (is_skew_tableau P1 (skew_reshape P1 P yam))) => [_|] /=; last by rewrite Hskew.
+  rewrite !inE /bijLR /= => Hskew.
+  case (boolP (is_LRtab yam)) => [_|] /=; last by rewrite Hskew.
   rewrite /shape /join_tab.
   rewrite !size_map -map_comp.
   set f := (X in map X); have {f} /eq_map -> : f =1 fun p => size p.1 + size p.2.
@@ -434,8 +431,7 @@ Proof.
 Qed.
 
 Lemma sfilterleq_LR_support_skew Q :
-  Q \in LRtab_set P1 P2 P ->
-  is_skew_tableau P1 (skew_reshape P1 P (sfilterleq d1 (to_word Q))).
+  Q \in LRtab_set P1 P2 P -> is_LRtab (sfilterleq d1 (to_word Q)).
 Proof.
   have := stdtabnP (hyper_stdtab P2); rewrite /is_stdtab => /andP [] Htab2 Hstd2.
   have /allP /= Hall := RSclassP Htab2.
@@ -470,14 +466,14 @@ Lemma bijLR_surj Q :
 Proof.
   move=> HLRtab; have := HLRtab; rewrite /LRtab_set inE => /andP [] HLR /eqP Hshape.
   have:= HLR => /sfilterleq_LR_supportP [] y Hmap.
-  have Hskew : is_skew_tableau P1 (skew_reshape P1 P y).
-    rewrite (is_skew_tableau_reshape_std (size_included Hincl)).
+  have Hskew : is_LRtab y.
+    rewrite /is_LRtab (is_skew_tableau_reshape_std (size_included Hincl)).
     + rewrite Hmap; by apply sfilterleq_LR_support_skew.
     + by rewrite size_yam sumn_diffE.
   exists y.
   - rewrite inE /=; exact Hskew.
-  - rewrite /bijLR /=.
-    case (boolP (is_skew_tableau P1 (skew_reshape P1 P y))) => /=; last by rewrite Hskew.
+  - rewrite /bijLR.
+    case (boolP (is_LRtab y)) => /=; last by rewrite Hskew.
     move=> pf; apply val_inj => /= {pf}.
     have -> : RS (std (hyper_yam P1)) = filter_gtnX_tab d1 Q.
       have := (hyper_stdtabP P1) => /andP [] Htab1 /eqP Hsz1.
@@ -496,8 +492,8 @@ Qed.
 Lemma bijLR_inj : {in LRyam_set &, injective bijLR}.
 Proof.
   move=> x y; rewrite !inE /bijLR => Hx Hy.
-  case (boolP (is_skew_tableau P1 (skew_reshape P1 P x))) => /=; last by rewrite Hx.
-  case (boolP (is_skew_tableau P1 (skew_reshape P1 P y))) => /=; last by rewrite Hy.
+  case (boolP (is_LRtab x)) => /=; last by rewrite Hx.
+  case (boolP (is_LRtab y)) => /=; last by rewrite Hy.
   move=> Hy1 Hx1 H.
   apply val_inj => /=.
   have:= erefl (to_word (StdtabN (bijLRyamP Hx1))); rewrite {2}H /= {H Hx1 Hy1 Hx Hy} => H.
@@ -532,24 +528,16 @@ Proof.
     by apply mem_imset.
 Qed.
 
-
-Definition LRyam_enum (P1 P2 P : seq nat) :=
-  [seq x <- list_yamsh P2 | is_skew_tableau P1 (skew_reshape P1 P x)].
+Definition LRyam_enum (P1 P2 P : seq nat) := [seq x <- enum_yamsh P2 | is_LRtab x].
 Definition LRyam_compute (P1 P2 P : seq nat) := size (LRyam_enum P1 P2 P).
 
 Lemma LR_coeff_computeP : LRyam_compute P1 P2 P = LRyam_coeff.
 Proof.
   rewrite /LRyam_coeff /LRyam_set /LRyam_compute /LRyam_enum.
-  rewrite cardE /enum_mem.
-  rewrite -(size_map val); congr (size _).
-  set E := Finite.enum _; have -> : (list_yamsh P2) = map val E.
-    rewrite /E unlock /= /yamsh_enum (pmap_filter (insubK _)).
-    rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT.
-    move=> i /= /(allP (list_yamshP (intpartP P2))).
-    by rewrite isSome_insub => ->.
-  rewrite filter_map; congr (map _ _).
-  apply eq_filter => y /=.
-  by rewrite inE.
+  rewrite cardE (eq_enum (in_set _)) /enum_mem -enumT.
+  rewrite (eq_filter (a2 := (fun x => is_LRtab (val x)))).
+  - by rewrite -(size_map val) map_filter_comp enum_yamshE map_id.
+  - by move=> i /=; rewrite unfold_in.
 Qed.
 
 End OneCoeff.

@@ -68,6 +68,7 @@ endif
 ######################
 
 VFILES:=congr.v\
+  combclass.v\
   extract.v\
   Erdos_Szekeres.v \
   greeninv.v\

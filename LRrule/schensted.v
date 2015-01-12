@@ -403,9 +403,9 @@ Theorem Sch_max_size w : size (Sch w) = \max_(s : subseqs w | is_row s) size s.
 Proof.
   apply/eqP; rewrite eqn_leq; apply/andP; split.
   - case : (exist_size_Sch w) => s; rewrite /subseqrow_n => /and3P [] Hsubs /eqP Hsz Hrow.
-    pose wit : (subseqs_finType w) := (Subseqs Hsubs).
-    have -> : size (Sch w) = size wit by rewrite /= Hsz.
-    by apply: (@leq_bigmax_cond _ _ (size \o (@subseqsval _ w)) wit Hrow).
+    pose witness  := Subseqs Hsubs.
+    have -> : size (Sch w) = size witness by rewrite /= Hsz.
+    by apply: (@leq_bigmax_cond _ _ (size \o (@subseqsval _ w)) witness Hrow).
   - apply/bigmax_leqP => s Hs.
     apply: size_ndec_Sch.
     rewrite /subseqrow Hs andbT.
@@ -1171,12 +1171,12 @@ End Bijection.
 Section Classes.
 
 Definition RSclass := [fun tab =>
-  [seq RSmapinv2 (tab, y) | y <- list_yamsh (shape tab)] ].
+  [seq RSmapinv2 (tab, y) | y <- enum_yamsh (shape tab)] ].
 
 Lemma RSclassP tab : is_tableau tab -> all (fun w => RS w == tab) (RSclass tab).
 Proof.
   move=> Htab /=; apply/allP => w /mapP [] Q.
-  move /(allP (list_yamshP (is_part_sht Htab))).
+  move /(allP (enum_yamshP (is_part_sht Htab))).
   rewrite /is_yam_of_shape => /andP [] Hyam /eqP Hsh -> {w}.
   by rewrite -RSmapE RS_bij_2 //= Htab Hyam Hsh /=.
 Qed.
@@ -1185,14 +1185,14 @@ Lemma RSclass_countE w : count_mem w (RSclass (RS w)) = 1.
 Proof.
   rewrite count_map.
   rewrite (eq_in_count (a2 := pred1 ((RSmap w).2))); first last.
-    move=> y /= /(allP (list_yamshP (is_part_sht (is_tableau_RS _)))).
+    move=> y /= /(allP (enum_yamshP (is_part_sht (is_tableau_RS _)))).
     rewrite /is_yam_of_shape => /andP [] Hyam /eqP Hsh.
     apply/(sameP idP); apply(iffP idP) => /eqP H.
     - rewrite H {H} -RSmapE.
       have -> : ((RSmap w).1, (RSmap w).2) = RSmap w by case RSmap.
       by rewrite RS_bij_1.
     - by rewrite -H {H} RS_bij_2 //= (is_tableau_RS _) Hyam Hsh /=.
-  apply: (list_yamsh_countE (is_part_sht (is_tableau_RS _))).
+  apply: (enum_yamsh_countE (is_part_sht (is_tableau_RS _))).
   rewrite /is_yam_of_shape -shape_RSmap_eq RSmapE eq_refl andbT.
   by apply: is_yam_RSmap2.
 Qed.
@@ -1208,7 +1208,7 @@ Proof.
   - move/eqP => Hw.
     apply/mapP; exists (RSmap w).2.
     + apply/count_memPn.
-      rewrite (list_yamsh_countE (is_part_sht Htab)) //=.
+      rewrite (enum_yamsh_countE (is_part_sht Htab)) //=.
       rewrite /is_yam_of_shape is_yam_RSmap2 /=.
       by rewrite -shape_RSmap_eq RSmapE Hw.
     + rewrite -Hw -RSmapE.
