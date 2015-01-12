@@ -1,3 +1,14 @@
 *.glob
 *.v.d
 *.vo
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb
+.depend
+*.cmi
+*.cmo
+*.o
