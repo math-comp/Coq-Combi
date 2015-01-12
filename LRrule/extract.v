@@ -57,3 +57,7 @@ Extraction "extract/schensted.ml"
            is_stdtab
            LRyam_coeff LRcoeff LRyamtab_list
 .
+
+Extraction "extract/lrcoeff.ml"
+           LRcoeff LRyamtab_list
+.
