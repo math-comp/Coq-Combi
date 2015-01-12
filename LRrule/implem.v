@@ -68,6 +68,19 @@ Qed.
 (* COQ implementation of the LR rule *)
 Section OutEval.
 
+(* For some reason, using ssrnat's add prevents OCaml extraction *)
+Fixpoint add m n := if m is m'.+1 then add m' n.+1 else n.
+Lemma addE : add =2 addn.
+Proof. by elim=> //= n IHn m; rewrite IHn addSnnS. Qed.
+Let tsumn := foldl add 0.
+
+Lemma tsumnE : tsumn =1 sumn.
+Proof.
+  rewrite /tsumn => s; rewrite -(add0n (sumn s)); move: 0 => i.
+  elim: s i => [//= | s0 s IHs] i /=.
+  by rewrite IHs addE addnA.
+Qed.
+
 Variable outev : seq nat.
 
 Definition choose_one_letter innev mini maxi :=
@@ -110,7 +123,7 @@ Fixpoint LRyamtab_count_rec innev inner outer sh0 row0 :=
   if outer is out0 :: out then
     let inn0 := head 0 inner in let inn := behead inner in
     let rowres := yamtab_row innev (take (out0 - sh0) row0) in
-    sumn [seq sumn [seq LRyamtab_count_rec row.2 inn out inn0 row.1 |
+    tsumn [seq tsumn [seq LRyamtab_count_rec row.2 inn out inn0 row.1 |
                     row <- yamtab_shift res.2 (head (size innev) res.1)
                         ((minn sh0 out0) - inn0) res.1 ]
          | res <- rowres ]
@@ -123,10 +136,10 @@ Lemma size_LRyamtab_listE innev inner outer sh0 row0 :
 Proof.
   elim: outer innev inner sh0 row0 => [//= | out0 out IHout] /= innev inner sh0 row0.
   rewrite size_flatten /shape !map_flatten sumn_flatten -map_comp.
-  congr (sumn _).
+  rewrite tsumnE; congr (sumn _).
   rewrite (eq_map (f2 := map (fun row =>
                      LRyamtab_count_rec row.2 (behead inner) out (head 0 inner) row.1))).
-  - rewrite -!map_comp; by apply eq_map.
+  - rewrite [RHS]map_comp (eq_map tsumnE) -!map_comp; by apply eq_map.
   - move=> s /=; rewrite -map_comp; apply eq_map => {s} [] [row sh] /=.
     by rewrite size_map IHout.
 Qed.
