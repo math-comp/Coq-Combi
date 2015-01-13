@@ -39,8 +39,11 @@ Extract Inductive nat => "int"
       if n=0 then zero () else succ (n-1))".
 
 Extract Constant plus => "( + )".
+Extract Constant add => "( + )".
 Extract Constant mult => "( * )".
-Extract Constant beq_nat => "( = )".
+Extract Constant minus => "(fun m n -> if n > m then 0 else m - n )".
+Extract Constant eqn => "( = )".
+Extract Constant leq => "( <= )".
 *)
 
 Let RSbijnat := (@RSbij nat_ordType).
