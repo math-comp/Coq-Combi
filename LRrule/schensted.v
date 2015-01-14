@@ -398,7 +398,7 @@ Section Schensted.
 End Schensted.
 
 Require Import bigop.
-
+(*
 Theorem Sch_max_size w : size (Sch w) = \max_(s : subseqs w | is_row s) size s.
 Proof.
   apply/eqP; rewrite eqn_leq; apply/andP; split.
@@ -411,7 +411,7 @@ Proof.
     rewrite /subseqrow Hs andbT.
     exact (subseqsP s).
 Qed.
-
+*)
 Section Bump.
 
   Variable Row : seq T.
@@ -729,7 +729,7 @@ Section InverseBump.
     elim: s => [_ //=|l0 s IHs] /= _ /is_row_cons [] Hhead Hrow.
     case (altP (s =P [::])) => [-> /=| Hnnil]; first by rewrite leqXnn.
     rewrite (head_any _ Z Hnnil).
-    case (leqXP b (head (Z : Order.eqType T) s)) => [/= |_]; first by rewrite leqXnn.
+    case: (leqXP b (head (Z : Order.eqType T) s)) => [/= |_]; first by rewrite leqXnn.
     move: {IHs} (IHs Hnnil Hrow).
     case H : (invbumprow b s) => [r a] /= Hb.
     apply: (leqX_trans Hhead).
@@ -1150,10 +1150,10 @@ Section Bijection.
   Canonical rspair_subType := Eval hnf in [subType for pqpair].
   Definition rspair_eqMixin := Eval hnf in [eqMixin of rspair by <:].
   Canonical rspair_eqType := Eval hnf in EqType rspair rspair_eqMixin.
-  Definition rspair_choiceMixin := [choiceMixin of rspair by <:].
+(*  Definition rspair_choiceMixin := [choiceMixin of rspair by <:].
   Canonical rspair_choiceType :=
     Eval hnf in ChoiceType rspair rspair_choiceMixin.
-
+*)
   Lemma pqpair_inj : injective pqpair. Proof. exact: val_inj. Qed.
 
   Definition RSbij w := RSpair (RSmap_spec w).

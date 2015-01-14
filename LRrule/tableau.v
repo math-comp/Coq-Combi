@@ -168,7 +168,7 @@ Qed.
     move /dominateP => [] Hsz Hlt.
     apply/dominateP; split => [|i Hi]; first by rewrite size_rcons; apply: leqW.
     have H := Hlt _ Hi; rewrite nth_rcons.
-    case (ltnP i (size v)) => Hcomp //= {H}.
+    case: (ltnP i (size v)) => Hcomp //= {H}.
     move: {Hsz Hlt Hcomp} (leq_trans Hsz Hcomp) => Hs.
     have:= leq_ltn_trans Hs Hi; by rewrite ltnn.
   Qed.
