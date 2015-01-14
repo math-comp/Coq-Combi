@@ -333,7 +333,8 @@ Notation TabPair := (seq (seq T) * seq (seq nat) : Type).
 Definition is_RStabpair (pair : TabPair) :=
   let: (P, Q) := pair in [&& is_tableau P, is_stdtab Q & (shape P == shape Q)].
 
-Record rstabpair := RSTabPair { pqpair :> TabPair; _ : is_RStabpair pqpair }.
+Structure rstabpair : predArgType :=
+  RSTabPair { pqpair :> TabPair; _ : is_RStabpair pqpair }.
 
 Canonical rstabpair_subType := Eval hnf in [subType for pqpair].
 Definition rstabpair_eqMixin := Eval hnf in [eqMixin of rstabpair by <:].
@@ -439,7 +440,7 @@ Variable n : nat.
 
 Definition is_stdtab_of_n := [pred t | (is_stdtab t) && (size_tab t == n) ].
 
-Structure stdtabn : Type :=
+Structure stdtabn : predArgType :=
   StdtabN {stdtabnval :> seq (seq nat); _ : is_stdtab_of_n stdtabnval}.
 Canonical stdtabn_subType := Eval hnf in [subType for stdtabnval].
 Definition stdtabn_eqMixin := Eval hnf in [eqMixin of stdtabn by <:].

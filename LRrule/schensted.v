@@ -1145,14 +1145,14 @@ Section Bijection.
 
   Notation Pair := (seq (seq T) * seq nat : Type).
 
-  Record rspair := RSpair { pqpair :> Pair; _ : is_RSpair pqpair }.
+  Structure rspair : predArgType := RSpair { pqpair :> Pair; _ : is_RSpair pqpair }.
 
   Canonical rspair_subType := Eval hnf in [subType for pqpair].
   Definition rspair_eqMixin := Eval hnf in [eqMixin of rspair by <:].
   Canonical rspair_eqType := Eval hnf in EqType rspair rspair_eqMixin.
-(*  Definition rspair_choiceMixin := [choiceMixin of rspair by <:].
+  Definition rspair_choiceMixin := [choiceMixin of rspair by <:].
   Canonical rspair_choiceType :=
-    Eval hnf in ChoiceType rspair rspair_choiceMixin. *)
+    Eval hnf in ChoiceType rspair rspair_choiceMixin.
 
   Lemma pqpair_inj : injective pqpair. Proof. exact: val_inj. Qed.
 
