@@ -82,86 +82,15 @@ Lemma join_stdtab s t :
   is_stdtab s -> is_skew_tableau (shape s) t ->
   is_tableau (join_tab s (map (shiftn (size_tab s)) t)).
 Proof.
-  rewrite /join_tab /is_stdtab => /andP [].
-  rewrite /is_std -size_to_word /= => Htabs Hperm.
-  have {Hperm} : all (gtn (size_tab s)) (to_word s).
-    apply/allP => i; rewrite (perm_eq_mem Hperm).
-    by rewrite mem_iota /= add0n.
-  move: (size_tab s) => sh.
-  elim: s t Htabs => [| s0 s IHs] /= t.
-    move => _ _ Ht; rewrite subn0.
-    set t' := map _ _.
-    have {t'} -> : t' = map (shiftn sh) t.
-      by rewrite /t'; elim: t {Ht t'} => //= r t ->.
-    rewrite -is_skew_tableau0.
-    by apply is_skew_tableau_map_shiftn.
-  move/and4P => [] Hnnils0 Hrows0 Hdoms Htabs.
-  rewrite to_word_cons all_cat => /andP [] Halls Halls0.
-  case: t => [//= | t0 t] /= /and4P [] Hszt0 Hrowt0 Hdomt Htabt.
-  apply/and4P; rewrite subSS; split.
-  - move: Hnnils0; apply contra; by case s0.
-  - case: s0 Hnnils0 Hrows0 Halls0 {s t Hdoms Hszt0 Hdomt IHs Htabs Htabt Halls}
-          => [//= | l0 s0] /= _ Hpath /andP [] Hl0 Halls0.
-    rewrite cat_path Hpath {Hpath} /=.
-    case: t0 Hrowt0 => [//= | m0 t0] /= Hpath.
-    apply/andP; split.
-    + rewrite leqXnatE; case/lastP: s0 Halls0 => [_ | s0 sn] /=.
-      * apply ltnW; apply (leq_trans Hl0); by apply leq_addr.
-      * rewrite all_rcons last_rcons /= => /andP [] Hsn _.
-        apply ltnW; apply (leq_trans Hsn); by apply leq_addr.
-    + rewrite (map_path (e' := leqX_op) (b := pred0)).
-      * exact Hpath.
-      * move=> i j /= _; by rewrite !leqXnatE leq_add2l.
-      * by apply/hasPn => i.
-  - rewrite size_map {IHs Hrows0 Hrowt0 Hnnils0 Hszt0} /=.
-    case: s Hdoms Htabs Halls Hdomt Htabt => [//= _ _ _| s1 s] /=.
-    + rewrite subn0.
-      case: t => [//= | t1 t] /= /dominateP [] Hszt Hdomt _.
-      apply/dominateP; split;
-        first by move: Hszt; rewrite size_cat !size_map size_drop leq_subLR.
-      rewrite size_map => i Hi.
-      rewrite nth_cat; case ltnP => His0.
-      * move: Halls0 => /allP Halls0.
-        have {Halls0} /Halls0 /= Hnth := mem_nth Z His0.
-        rewrite ltnXnatE; apply (leq_trans Hnth).
-        rewrite (nth_map Z _ _ Hi).
-        by apply leq_addr.
-      * rewrite (nth_map Z _ _ Hi).
-        rewrite (nth_map Z); first last.
-          rewrite -(ltn_add2l (size s0)) (subnKC His0).
-          move: Hszt; rewrite size_drop leq_subLR.
-          by apply (leq_trans Hi).
-        rewrite ltnXnatE ltn_add2l -ltnXnatE.
-        have /Hdomt : (i - size s0) < size (drop (size s0) t1).
-          by rewrite size_drop ltn_subRL (subnKC His0).
-        by rewrite nth_drop (subnKC His0).
-    + case: t => [//= | t1 t] /= /dominateP [] Hszs Hdoms _.
-      rewrite to_word_cons all_cat => /andP [] _ Halls1.
-      move/dominateP => [] Hszt Hdomt _  {s t}.
-      have {Hszt} Hszt : size s1 + size t1 <= size s0 + size t0.
-        move: Hszt; by rewrite size_drop (subnBA _ Hszs) leq_subLR addnC.
-      apply/dominateP; split; first by rewrite !size_cat !size_map.
-      rewrite size_cat size_map => i Hi.
-      rewrite !nth_cat.
-      case: (ltnP i (size s1)) => Hi1; first by rewrite (leq_trans Hi1 Hszs); apply Hdoms.
-      case: (ltnP i (size s0)) => Hi0.
-      * move: Halls0 => /allP Halls0.
-        have {Halls0} /Halls0 /= Hnth := mem_nth Z Hi0.
-        rewrite ltnXnatE; apply (leq_trans Hnth).
-        rewrite (nth_map Z); first by apply leq_addr.
-        by rewrite -(subSn Hi1) leq_subLR.
-      * rewrite (nth_map Z); first last.
-          rewrite -(ltn_add2l (size s0)) (subnKC Hi0).
-          by apply (leq_trans Hi).
-        rewrite (nth_map Z); first last.
-          by rewrite -(ltn_add2l (size s1)) (subnKC Hi1).
-        rewrite ltnXnatE ltn_add2l -ltnXnatE.
-        have /Hdomt : i - size s0 < size (drop (size s0 - size s1) t1).
-          rewrite size_drop -(ltn_add2l (size s0)) (subnKC Hi0).
-          rewrite (subnBA _ Hszs) subnKC addnC //=.
-          apply (leq_trans Hi0); by apply ltnW.
-        by rewrite nth_drop addnC (addnBA _ Hszs) (subnK Hi0).
-  - by apply IHs.
+  rewrite /is_stdtab => /andP [].
+  rewrite /is_std -size_to_word /= => Htabs Hperm /(is_skew_tableau_map_shiftn (size_tab s)).
+  apply: join_tab_skew; last exact Htabs.
+  rewrite {2}/to_word -map_rev -map_flatten.
+  move: (flatten (rev t)) => w.
+  apply/allP => x /mapP [] i _ -> {x}.
+  rewrite /allLtn; apply/allP => j.
+  rewrite (perm_eq_mem Hperm) mem_iota /= add0n ltnXnatE => /leq_trans; apply.
+  by apply leq_addr.
 Qed.
 
 Lemma join_stdtab_in_shuffle s t :

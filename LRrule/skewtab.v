@@ -635,6 +635,78 @@ Proof.
     by rewrite -[f0 :: _ ++ _]cat1s catA cat1s -H (filter_gtnX_row _ Hrow0) cat_take_drop.
 Qed.
 
+Lemma all_allLtn_cat (s0 s1 s : seq T) :
+  all (allLtn (s0 ++ s1)) s -> all (allLtn s0) s /\ all (allLtn s1) s.
+Proof.
+  rewrite (eq_all (a2 := predI (allLtn s0) (allLtn s1))); first last.
+    rewrite /allLtn => i /=; by rewrite all_cat.
+  by rewrite all_predI => /andP [].
+Qed.
+
+Lemma join_tab_skew s t :
+  all (allLtn (to_word s)) (to_word t) ->
+  is_tableau s -> is_skew_tableau (shape s) t ->
+  is_tableau (join_tab s t).
+Proof.
+  rewrite /join_tab.
+  elim: s t => [| s0 s IHs] /= t.
+    move => _ _ Ht; rewrite subn0 /=.
+    set t' := map _ _.
+    have {t'} -> : t' = t.
+      by rewrite /t'; elim: t {Ht t'} => //= r t ->.
+    by rewrite -is_skew_tableau0.
+  rewrite to_word_cons => /all_allLtn_cat [] Halls Halls0.
+  move/and4P => [] Hnnils0 Hrows0 Hdoms Htabs.
+  case: t Halls0 Halls => [//= | t0 t] /= Halls0 Halls /and4P [] Hszt0 Hrowt0 Hdomt Htabt.
+  apply/and4P; rewrite subSS; split.
+  - move: Hnnils0; apply contra; by case s0.
+  - move: Halls0; rewrite to_word_cons all_cat => /andP [] _.
+    case: s0 Hnnils0 Hrows0 {s Hdoms Hszt0 Hdomt IHs Htabs Htabt Halls}
+          => [//=| l0 s0] /= _ Hpath /allP.
+    rewrite cat_path Hpath {Hpath} /=.
+    case: t0 Hrowt0 => [//= | m0 t0] /= Hpath Hall.
+    apply/andP; split; last exact Hpath.
+    + have {Hall} /Hall /andP [] : m0 \in m0 :: t0 by rewrite in_cons eq_refl.
+      case/lastP: s0 => [/ltnXW //= | s0 sn] /= _.
+      by rewrite last_rcons /allLtn all_rcons /= => /andP [] /ltnXW.
+  - rewrite {IHs Hrows0 Hrowt0 Hnnils0 Hszt0} /=.
+    case: s Hdoms Htabs Hdomt Htabt {Halls} => [_ _| s1 s] /=.
+    + rewrite subn0.
+      case: t Halls0 => [//= | t1 t] /= Halls0 /dominateP [] Hszt Hdomt _.
+      apply/dominateP; split; first by move: Hszt; rewrite size_cat size_drop leq_subLR.
+      move: Halls0; rewrite !to_word_cons !all_cat => /andP [] /andP [] _ Hallt1 Hallt0.
+      move=> i Hi.
+      rewrite nth_cat; case ltnP => His0.
+      * move: Hallt1 => /allP Hallt1.
+        have {Hallt1} /Hallt1 /= := mem_nth Z Hi.
+        rewrite /allLtn => /allP Hall.
+        by have {Hall} /Hall /= := mem_nth Z His0.
+      * have /Hdomt : (i - size s0) < size (drop (size s0) t1).
+          by rewrite size_drop ltn_subRL (subnKC His0).
+        by rewrite nth_drop (subnKC His0).
+    + case: t Halls0 => [//= | t1 t] /= Halls0 /dominateP [] Hszs Hdoms _.
+      move: Halls0; rewrite !to_word_cons !all_cat => /andP [] /andP [] _ Hallt1 Hallt0.
+      move/dominateP => [] Hszt Hdomt _  {s t}.
+      have {Hszt} Hszt : size s1 + size t1 <= size s0 + size t0.
+        move: Hszt; by rewrite size_drop (subnBA _ Hszs) leq_subLR addnC.
+      apply/dominateP; split; first by rewrite !size_cat.
+      rewrite size_cat => i Hi.
+      rewrite !nth_cat.
+      case: (ltnP i (size s1)) => Hi1; first by rewrite (leq_trans Hi1 Hszs); apply Hdoms.
+      case: (ltnP i (size s0)) => Hi0.
+      * move: Hallt1 => /allP Hallt1.
+        move: Hi. rewrite -{1}(subnKC Hi1) ltn_add2l => /(mem_nth Z) /Hallt1 {Hallt1}.
+        rewrite /allLtn => /allP Hall.
+        by have := mem_nth Z Hi0 => /Hall /=.
+      * have /Hdomt : i - size s0 < size (drop (size s0 - size s1) t1).
+          rewrite size_drop -(ltn_add2l (size s0)) (subnKC Hi0).
+          rewrite (subnBA _ Hszs) subnKC addnC //=.
+          apply (leq_trans Hi0); by apply ltnW.
+        by rewrite nth_drop addnC (addnBA _ Hszs) (subnK Hi0).
+  - apply: (IHs _ _ Htabs Htabt).
+    move: Halls; by rewrite to_word_cons all_cat => /andP [].
+Qed.
+
 End FilterLeqGeq.
 
 Section EqInvSkewTab.
