@@ -197,6 +197,62 @@ End Defs.
 
 Notation "a =Pl b" := (plactcongr a b) (at level 70).
 
+
+Section RowsAndCols.
+
+Variable Alph : ordType.
+Let word := seq Alph.
+Implicit Type u v w : word.
+
+Require Import path.
+
+Lemma plact_row u v : is_row u -> u =Pl v -> u = v.
+Proof.
+  move=> Hrowu; move: v; apply: gencongr_ind => [//= |] x y1 z y2 Hu /plactruleP [].
+  - move/plact1P => [] a [] b [] c [] /andP [] Hab Hbc Hy _; exfalso.
+    move: Hrowu; rewrite Hu Hy => /is_row_catR/is_row_catL /= /and3P [] _.
+    by rewrite leqXNgtnX Hbc.
+  - move/plact1iP => [] a [] b [] c [] /andP [] Hab Hbc _ Hy; exfalso.
+    move: Hrowu; rewrite Hu Hy => /is_row_catR/is_row_catL /= /and3P [].
+    by rewrite leqXNgtnX (leqX_ltnX_trans Hab Hbc).
+  - move/plact2P => [] a [] b [] c [] /andP [] Hab Hbc Hy _; exfalso.
+    move: Hrowu; rewrite Hu Hy => /is_row_catR/is_row_catL /= /and3P [].
+    by rewrite leqXNgtnX Hab.
+  - move/plact2iP => [] a [] b [] c [] /andP [] Hab Hbc _ Hy; exfalso.
+    move: Hrowu; rewrite Hu Hy => /is_row_catR/is_row_catL /= /and3P [] _.
+    by rewrite leqXNgtnX (ltnX_leqX_trans Hab Hbc).
+Qed.
+
+Lemma sorted_center u v w :
+  sorted (@gtnX Alph) (u ++ v ++ w) -> sorted (@gtnX Alph) v.
+Proof.
+  rewrite /sorted; case: u => [| u0 u] /=.
+    case: v => [//= | v0 v] /=.
+    by rewrite cat_path => /andP [].
+  case: v => [//= | v0 v] /=.
+  rewrite !cat_path => /andP [] /= _ /andP [] _.
+  by rewrite cat_path => /andP [].
+Qed.
+
+Lemma plact_col u v : sorted (@gtnX Alph) u -> u =Pl v -> u = v.
+Proof.
+  move=> Hcolu; move: v; apply: gencongr_ind => [//= |] x y1 z y2 Hu /plactruleP [].
+  - move/plact1P => [] a [] b [] c [] /andP [] Hab Hbc Hy _; exfalso.
+    move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P [].
+    by rewrite ltnXNgeqX (leqX_trans Hab (ltnXW Hbc)).
+  - move/plact1iP => [] a [] b [] c [] /andP [] Hab Hbc _ Hy; exfalso.
+    move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P [] _.
+    by rewrite ltnXNgeqX Hab. 
+  - move/plact2P => [] a [] b [] c [] /andP [] Hab Hbc Hy _; exfalso.
+    move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P [] _.
+    by rewrite ltnXNgeqX (leqX_trans (ltnXW Hab) Hbc).
+  - move/plact2iP => [] a [] b [] c [] /andP [] Hab Hbc _ Hy; exfalso.
+    move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P [].
+    by rewrite ltnXNgeqX Hbc.
+Qed.
+
+End RowsAndCols.
+
 Section DualRule.
 
 Variable Alph : ordType.
