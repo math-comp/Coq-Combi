@@ -87,6 +87,7 @@ VFILES:=congr.v\
   stdtab.v\
   std.v\
   subseq.v\
+  Sn.v\
   tableau.v\
   therule.v\
   tools.v\

@@ -218,6 +218,22 @@ Proof.
   rewrite big_cons; by apply: IH.
 Qed.
 
+Lemma inordi1 i : i < n -> (@inord n i != @inord n i.+1).
+Proof.
+  move=> Hi.
+  rewrite /eq_op /= inordK; last by apply (leq_trans Hi).
+  rewrite inordK; last by apply Hi.
+  by rewrite ieqi1F.
+Qed.
+
+Lemma odd_size_permE ts :
+  all (gtn n) ts -> odd (size ts) = odd_perm (\prod_(t <- ts) eltr t).
+Proof.
+  elim: ts => [_ | t0 t IHt] /=; first by rewrite big_nil odd_perm1.
+  move=> /andP [] Ht0 /IHt{IHt} ->.
+  by rewrite big_cons odd_mul_tperm (inordi1 Ht0) addTb.
+Qed.
+
 (*
 
 Definition code m s : size s == m && all (fun i => nth 0 s i <= i) (iota 0 m).
@@ -288,15 +304,16 @@ Proof.
   + apply/eqP; rewrite /eltr; apply: tperm3; by rewrite /eq_op /= !inordK.
 Qed.
 
-
+(*
 Lemma presentation_S_3 :
   [set: 'S_3] \isog Grp ( s1 : s2 : (s1*s1 = s2*s2 = 1, s1*s2*s1 = s2*s1*s2) ).
 Proof.
   apply intro_isoGrp; first exact homg_S_3.
   move=> Gt H; case/existsP => /= [] [x1 x2] /eqP [] Hgen Hx1 Hx2 H3.
   apply/homgP.
-  admit.
+
 Qed.
+*)
 
 Lemma homg_S4 :
   [set: 'S_4] \homg Grp (
