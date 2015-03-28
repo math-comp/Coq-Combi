@@ -330,13 +330,18 @@ Canonical poset_subFinType := Eval hnf in [subFinType of poset].
 Definition set_of_poset (P : poset) : {set T} := E.
 Coercion set_of_poset : poset >-> set_of.
 
-Lemma posetE (P : poset) : P =i E.
+Variable (P : poset).
+
+Lemma posetE : P =i E.
 Proof. by []. Qed.
 
-Definition strict_rel (P : poset) : rel T := [fun x y => (P x y) && (x != y)].
+Definition strict : rel T := [fun x y => (P x y) && (x != y)].
 
-Lemma strict_relW (P : poset) x y : strict_rel P x y -> P x y.
-Proof. by rewrite /strict_rel /= => /andP []. Qed.
+Lemma strictW x y : strict x y -> P x y.
+Proof. by rewrite /strict /= => /andP []. Qed.
+
+Lemma strict_neq x y : strict x y -> x != y.
+Proof. by rewrite /strict /= => /andP []. Qed.
 
 End PosetDefs.
 
@@ -379,15 +384,27 @@ Proof.
   by apply Htrans.
 Qed.
 
-Lemma strict_poset_trans P m n p :
-  strict_rel P m n -> strict_rel P n p -> strict_rel P m p.
+Lemma poset_strict_trans P m n p :
+  P m n -> strict P n p -> strict P m p.
 Proof.
-  rewrite /strict_rel /= => /andP [] Pmn Heqmn /andP [] Pnp Heqnp.
+  rewrite /strict /= => Pmn /andP [] Pnp Hneq.
   apply/andP; split; first by apply: (poset_trans Pmn).
-  apply (introN idP) => /eqP Hmp; subst p.
-  have Heq := anti_poset Pmn Pnp; subst n.
-  by rewrite eq_refl in Heqmn.
+  move: Hneq; apply contra => /eqP Heq; rewrite Heq {Heq} in Pmn.
+  apply/eqP; by apply: anti_poset.
 Qed.
+
+Lemma strict_poset_trans P m n p :
+  strict P m n -> P n p -> strict P m p.
+Proof.
+  rewrite /strict /= => /andP [] Pmn Hneq Pnp.
+  apply/andP; split; first by apply: (poset_trans Pmn).
+  move: Hneq; apply contra => /eqP Heq; rewrite -Heq {Heq} in Pnp.
+  apply/eqP; by apply: anti_poset.
+Qed.
+
+Lemma strict_trans P m n p :
+  strict P m n -> strict P n p -> strict P m p.
+Proof. move/strictW; by apply poset_strict_trans. Qed.
 
 End PosetTheory.
 
@@ -437,6 +454,22 @@ End Boolean.
 (*                       Constructions on Posets                              *)
 (*                                                                            *)
 (******************************************************************************)
+
+Section Cast.
+
+Variable T : finType.
+Variable E F : {set T}.
+Implicit Type P : poset E.
+
+Lemma cast_poset_exist P : E = F -> { Q : poset F | Q =2 P }.
+Proof. move => H; subst F; by exists P. Qed.
+
+Definition cast_poset (H : E = F) P := let: exist L _ := cast_poset_exist P H in L.
+Lemma cast_posetE (H : E = F) P : cast_poset H P =2 P.
+Proof. rewrite/cast_poset; by case: cast_poset_exist. Qed.
+
+End Cast.
+
 Section Dual.
 
 Variable T : finType.
@@ -629,11 +662,89 @@ Qed.
 End Sum.
 
 
+Section WellFounded.
+
+Variable T : finType.
+Variable E : {set T}.
+Implicit Type P : poset E.
+
+
+Definition expand P (f : T -> T) := forall x, x \in E -> P x (f x).
+Definition contract P (f : T -> T) := forall x, x \in E -> P (f x) x.
+
+Lemma expand_contract_dual P f : expand P f -> contract (dual_poset P) f.
+Proof. move=> H x Hx; rewrite dual_posetE; exact: H. Qed.
+Lemma contract_expand_dual P f : contract P f -> expand (dual_poset P) f.
+Proof. move=> H x Hx; rewrite dual_posetE; exact: H. Qed.
+Lemma expand_dual_contract P f : expand (dual_poset P) f -> contract P f.
+Proof. rewrite -{2}(dualK P); exact: expand_contract_dual. Qed.
+Lemma contract_dual_expand P f : contract (dual_poset P) f -> expand P f.
+Proof. rewrite -{2}(dualK P); exact: contract_expand_dual. Qed.
+
+Lemma expand_stable P f x : expand P f -> x \in E -> f x \in E.
+Proof. by move => H/H/stableP []. Qed.
+Lemma contract_stable P f x : contract P f -> x \in E -> f x \in E.
+Proof. by move => H/H/stableP []. Qed.
+
+Lemma expand_iterP P f n x :
+  expand P f -> x \in E -> iter n f x \in E /\ P x (iter n f x).
+Proof.
+  move=> H Hx; elim: n x Hx => [| n IHn] x Hx /=; first by split; last exact: posetnn.
+  have:= IHn x Hx => [] [] Hiter Pif; split; first exact: expand_stable.
+  apply (poset_trans Pif); exact: H.
+Qed.
+Lemma contract_iterP P f n x :
+  contract P f -> x \in E -> iter n f x \in E /\ P (iter n f x) x.
+Proof. move/contract_expand_dual; rewrite -dual_posetE; exact: expand_iterP. Qed.
+
+Theorem expand_iter_fix P f x :
+  expand P f -> x \in E -> { i | iter i.+1 f x = iter i f x }.
+Proof.
+  move=> Hexp Hx.
+  have : #|[set y | P x y]| <= #|[set: T]| by apply subset_leqif_card; apply subsetT.
+  case: #|[set: T]| => [| n] H.
+    exfalso; move: H; rewrite leqn0 cards_eq0 -subset0 => /subsetP H.
+    have {H} := H x; rewrite inE in_set0 => H.
+    by have:= H (posetnn Hx).
+  elim: n x Hx H => [| n IHn] x Hx H.
+  - exists 0; apply/eqP.
+    have {H} : [set y | P x y] = [set x].
+      apply/eqP; rewrite eq_sym eqEcard; apply/andP; split; last by rewrite cards1.
+      apply/subsetP => z; rewrite in_set1 inE => /eqP ->; exact: posetnn.
+    rewrite -setP /= => Heq.
+    have:= Heq (f x); rewrite !inE => <-.
+    by apply Hexp.
+  - case (leqP #|[set y | P x y]| n.+1) => [/(IHn x Hx) //| Hcard].
+    case: (altP (f x =P x)) => Hfx; first by exists 0.
+    have {H Hcard} /eqP : #|[set y | P x y]| = n.+2 by apply anti_leq; rewrite H Hcard.
+    have Hint : [set y | strict P x y] :&: [set x] = set0.
+      rewrite -setP => z; by rewrite !inE /strict /= eq_sym -andbA andNb andbF.
+    have <- : [set y | strict P x y] :|: [set x] = [set y | P x y].
+      rewrite -setP => z; rewrite !inE /strict /=.
+      case (boolP (P x z)) => /=; first by rewrite eq_sym orNb.
+      apply contraNF => /eqP ->; exact: posetnn.
+    rewrite cardsU Hint {Hint} cards1 cards0 addn1 subn0 eqSS => /eqP Hcard.
+    have {IHn} /IHn Hrec : (f x) \in E by move: (stableP (Hexp x Hx)) => [].
+    have /Hrec : #|[set y | P (f x) y]| <= n.+1.
+      rewrite -Hcard; apply subset_leqif_card; apply/subsetP => z.
+      rewrite !inE; apply strict_poset_trans.
+      by rewrite /strict /= (Hexp x Hx) eq_sym Hfx.
+    move=> [] i Hi; exists i.+1; move: Hi; by rewrite !iterSr.
+Qed.
+
+Corollary contract_iter_fix P f x :
+  contract P f -> x \in E -> { i | iter i.+1 f x = iter i f x }.
+Proof. move/contract_expand_dual; exact: expand_iter_fix. Qed.
+
+End WellFounded.
+
+
 (******************************************************************************)
 (*                                                                            *)
 (*                            Poset's elements                                *)
 (*                                                                            *)
 (******************************************************************************)
+
 Section MaxMin.
 
 Variable T : finType.
@@ -670,74 +781,24 @@ Qed.
 Lemma predminP P x : reflect (ismin P x) (predmin P x).
 Proof. rewrite /predmin; apply (iffP idP); by rewrite min_maxE => /predmaxP. Qed.
 
-Theorem hasmax P x : x \in P -> { m | ismax P m }.
-Proof.
-  move=> Hx.
-  have : #|[set y | P x y]| <= #|[set: T]| by apply subset_leqif_card; apply subsetT.
-  case: #|[set: T]| => [| n] H.
-    exfalso; move: H; rewrite leqn0 cards_eq0 -subset0 => /subsetP H.
-    have {H} := H x; rewrite inE in_set0 => H.
-    by have:= H (posetnn Hx).
-  elim: n x Hx H => [| n IHn] x Hx H.
-  - exists x; split => [| y Hy HP]; first exact Hx.
-    have Heq : [set y | P x y] = [set x].
-      apply/eqP; rewrite eq_sym eqEcard; apply/andP; split; last by rewrite cards1.
-      apply/subsetP => z; rewrite in_set1 inE => /eqP ->; exact: posetnn.
-    apply/eqP; by rewrite eq_sym -in_set1 -Heq inE.
-  - case (leqP #|[set y | P x y]| n.+1) => [/(IHn x Hx) //| Hcard].
-    have {H Hcard} /eqP : #|[set y | P x y]| = n.+2 by apply anti_leq; rewrite H Hcard.
-    have Hint : [set y | strict_rel P x y] :&: [set x] = set0.
-      rewrite -setP => z; by rewrite !inE /strict_rel /= eq_sym -andbA andNb andbF.
-    have <- : [set y | strict_rel P x y] :|: [set x] = [set y | P x y].
-      rewrite -setP => z; rewrite !inE /strict_rel /=.
-      case (boolP (P x z)) => /=; first by rewrite eq_sym orNb.
-      apply contraNF => /eqP ->; exact: posetnn.
-    rewrite cardsU Hint {Hint} cards1 cards0 addn1 subn0 eqSS => /eqP Hcard.
-    case: (pickP (mem [set y | strict_rel P x y])) => [/= y | Habs].
-    + rewrite inE => Hy.
-      apply: (IHn y); first by have:= Hy => /strict_relW/stableP [] _.
-      rewrite -Hcard; apply subset_leqif_card; apply/subsetP => z.
-      rewrite !inE; move: Hy; rewrite /strict_rel /= => /andP [] Hxy Hneq Hyz.
-      rewrite (poset_trans Hxy Hyz) /=.
-      move: Hneq; apply contra => /eqP Hz; apply/eqP; subst x.
-      exact: anti_poset.
-    + exfalso; have := eq_card Habs; by rewrite Hcard card0.
-Qed.
-
-Theorem hasmin P x : x \in P -> { m | ismin P m }.
-Proof.
-  rewrite posetE -(posetE (dual_poset P)) => /hasmax [] m.
-  have:= (min_maxE P m) => [] [] _ H/H{H} Hmin.
-  by exists m.
-Qed.
-
-End MaxMin.
-
-Section MinMaxRel.
-
-Variable T : finType.
-Variable E : {set T}.
-Implicit Type P : poset E.
-
 Theorem hasmaxrel P x : x \in P -> { m | ismax P m /\ P x m }.
 Proof.
-  move=> Hx.
-  pose F := [set y | (y \in P) && (P x y)].
-  have Hind : F \subset P by apply/subsetP => y; rewrite !inE => /andP [].
-  pose PF := induced Hind P.
-  have : x \in PF by rewrite inE Hx; exact: posetnn.
-  move=> /hasmax [] m [] Hm Hmax; exists m; split.
-  - split; first by apply (subsetP Hind).
-    move=> y Hy Pmy.
-    have HyPF : y \in PF.
-      rewrite inE Hy /=; apply: (poset_trans _ Pmy).
-      move: Hm; by rewrite inE => /andP [].
-    apply Hmax; first exact HyPF.
-    by rewrite inducedE //.
-  - move: Hm; by rewrite inE => /andP [].
+  pose f z := if pickP (mem [set y | strict P z y]) is Pick y _ then y else z.
+  have Hf : expand P f.
+    move=> z Hz; rewrite /f.
+    case: (pickP (mem [set y | strict P z y])) => [y |_]; last exact: posetnn.
+    rewrite !inE; exact: strictW.
+  move=> Hx; have := (expand_iter_fix Hf Hx) => [] [] n /=.
+  set m := iter n f x => Hn.
+  exists m; repeat split; try by have := (expand_iterP n Hf Hx) => [] [].
+  move=> y Hy Pyf.
+  move: Hn; rewrite {1}/f.
+  case: (pickP (mem [set y | strict P m y])) => [y0 Habs Hy0| H _].
+  - exfalso; move: Habs; by rewrite !inE /strict Hy0 /= eq_refl andbF.
+  - have:= H y; by rewrite !inE /strict /= Pyf /= => /negbFE/eqP.
 Qed.
 
-Theorem hasminrel P x : x \in P -> { m | ismin P m /\ P m x}.
+Corollary hasminrel P x : x \in P -> { m | ismin P m /\ P m x}.
 Proof.
   rewrite posetE -(posetE (dual_poset P)) => /hasmaxrel [] m [].
   have:= (min_maxE P m) => [] [] _ H/H{H} Hmin.
@@ -745,8 +806,13 @@ Proof.
   by exists m.
 Qed.
 
-End MinMaxRel.
+Corollary hasmax P x : x \in P -> { m | ismax P m }.
+Proof. move/hasmaxrel => [] m [] Hm _; by exists m. Qed.
 
+Corollary hasmin P x : x \in P -> { m | ismin P m }.
+Proof. move/hasminrel => [] m [] Hm _; by exists m. Qed.
+
+End MaxMin.
 
 Section Covers.
 
@@ -755,12 +821,12 @@ Variable E : {set T}.
 Variable P Q : poset E.
 
 Definition closed_interv m n := [set x : T | (P m x) && (P x n)].
-Definition open_interv m n := [set x : T | (strict_rel P m x) && (strict_rel P x n)].
+Definition open_interv m n := [set x : T | (strict P m x) && (strict P x n)].
 
-Definition cover : rel T := fun m n => (strict_rel P m n) && (open_interv m n == set0).
+Definition cover : rel T := fun m n => (strict P m n) && (open_interv m n == set0).
 
 Lemma cover_rel a b : cover a b -> P a b.
-Proof. by rewrite /cover /strict_rel /= => /andP [] /andP []. Qed.
+Proof. by rewrite /cover /strict /= => /andP [] /andP []. Qed.
 
 Lemma cover_intrans a b c : cover a b -> cover b c -> ~~ cover a c.
 Proof.
@@ -829,10 +895,10 @@ Proof.
     + by rewrite !(finrel_notinL _ y HxE).
 Qed.
 
-Lemma strict_ext x y : strict_rel P x y -> strict_rel Q x y.
+Lemma strict_ext x y : strict P x y -> strict Q x y.
 Proof.
   move: HPQ => /extP Hext.
-  rewrite /strict_rel /= => /andP [] /Hext Hs ->.
+  rewrite /strict /= => /andP [] /Hext Hs ->.
   by rewrite Hs.
 Qed.
 
@@ -851,7 +917,7 @@ Qed.
 
 Lemma cover_ext m n : cover Q m n -> P m n -> cover P m n.
 Proof.
-  rewrite /cover /strict_rel /= => /andP [] /andP [] _ -> Hopen -> /=.
+  rewrite /cover /strict /= => /andP [] /andP [] _ -> Hopen -> /=.
   move: Hopen; rewrite -!subset0; apply: subset_trans.
   by apply open_interv_ext.
 Qed.
@@ -913,7 +979,7 @@ Variable a b : T.
 Hypothesis Hcov : cover P a b.
 
 Let Neqab : a != b.
-Proof. move: Hcov => /andP []; by rewrite /strict_rel /= => /andP []. Qed.
+Proof. move: Hcov => /andP []; by rewrite /strict /= => /andP []. Qed.
 
 Lemma remcovrel_stable : stable E (fun m n => (P m n) && ((m, n) != (a, b))).
 Proof. by move=> x y /= /andP [] /stableP. Qed.
@@ -931,7 +997,7 @@ Proof.
     apply (introN idP) => /eqP [] Hy Hz; subst y z.
     move: Hcov => /andP [] _ /eqP; rewrite /open_interv -setP => Iab.
     have := Iab x.
-    rewrite in_set0 inE /strict_rel /=.
+    rewrite in_set0 inE /strict /=.
     rewrite Pxy Pyz /=.
     have -> : x != b by move: Hxy; apply contra => /eqP ->.
     have -> : a != x by move: Hyz; rewrite eq_sym; apply contra => /eqP ->.
@@ -1017,9 +1083,9 @@ Qed.
 
 Lemma addcov_ab : cover addcov a b.
 Proof.
-  rewrite /cover/strict_rel /= finrelE Neqab !posetnn //= orbT /open_interv -subset0 /=.
+  rewrite /cover/strict /= finrelE Neqab !posetnn //= orbT /open_interv -subset0 /=.
   apply/subsetP => i; rewrite in_set0 inE.
-  rewrite /strict_rel /= !finrelE !posetnn // /= andbT.
+  rewrite /strict /= !finrelE !posetnn // /= andbT.
   move=> /and3P [] /andP [] /orP [Pai|Pbi] Hai /orP [Pib|Pia] Hib.
   + move: Hinc; by rewrite (poset_trans Pai Pib).
   + move: Hai; by rewrite (anti_poset Pai Pia) eq_refl.
@@ -1081,17 +1147,39 @@ Qed.
 End Intersect.
 
 
+Section ExtRelPoset.
+
+Variable T : finType.
+Variable E : {set T}.
+Implicit Type P L : finrelType E.
+
+Lemma ext_rel_stable : stable [set: finrelType E] (fun A B => ext A B).
+Proof. move=> x y /= _; by rewrite inE. Qed.
+Lemma ext_rel_order : orderrel (finrel_stable ext_rel_stable).
+Proof.
+  apply/orderrelP;
+  split => [x Hx | x y | y x z] /=; rewrite !finrelE.
+  - exact: ext_refl.
+  - move=> /andP []; exact: ext_antisym_rel.
+  - exact: ext_trans.
+Qed.
+Definition ExtRelPoset := Poset ext_rel_order.
+
+End ExtRelPoset.
+
+
 Section ExtPoset.
 
 Variable T : finType.
 Variable E : {set T}.
 Implicit Type P L : poset E.
 
-Lemma ext_order :
-  orderrel (finrel [set: poset E] (fun (A B : poset E) => ext A B)).
+Lemma ext_stable : stable [set: poset E] (fun A B => ext A B).
+Proof. move=> x y /= _; by rewrite inE. Qed.
+Lemma ext_order : orderrel (finrel_stable ext_stable).
 Proof.
   apply/orderrelP;
-  split => [x Hx | x y | y x z] /=; rewrite !finrelE !in_setT //=.
+  split => [x Hx | x y | y x z] /=; rewrite !finrelE.
   - exact: ext_refl.
   - move=> /andP []; exact: ext_antisym.
   - exact: ext_trans.
@@ -1106,13 +1194,13 @@ Proof.
     rewrite negb_forall => /existsP [] y; rewrite negb_imply => /andP [] Hy Hinc.
     rewrite negb_and inE //= negb_forall; apply/existsP.
     exists (addcov Hinc); apply/implyP; rewrite inE /= => /implyP.
-    rewrite finrelE !in_setT /= => H.
+    rewrite finrelE => H.
     have {H} /eqP := (H (addcov_ext Hinc)); rewrite poset_eqE => H.
     have:= H x y.
     have:= Hinc; rewrite negb_or => /andP [] /negbTE -> _.
-    have:= addcov_ab Hx Hy Hinc; by rewrite /cover => /andP [] /strict_relW ->.
+    have:= addcov_ab Hx Hy Hinc; by rewrite /cover => /andP [] /strictW ->.
   - move=> H; split; first by rewrite inE.
-    move=> Q _; rewrite finrelE !in_setT /= => Hext.
+    move=> Q _; rewrite finrelE => Hext.
     exact: ext_total.
 Qed.
 
@@ -1129,7 +1217,7 @@ Qed.
 Theorem exists_linext P : { L : poset E | linext P L }.
 Proof.
   have /hasmaxrel : P \in ExtPoset by rewrite inE.
-  move=> [] L [] /max_extP; rewrite !finrelE !in_setT /= => Htot Hext.
+  move=> [] L [] /max_extP; rewrite !finrelE => Htot Hext.
   exists L; apply/linextP; split; first exact Hext.
   by move=> x y /Htot H/H{H}.
 Qed.
@@ -1239,6 +1327,8 @@ Proof.
   rewrite inE => /orP [] ->; by rewrite !orbT.
 Qed.
 
+Definition simpl := (cast_posetE, finrelE, in_setU, orbA).
+
 Theorem convex_extlin_extend (L : poset E) :
   linext (induced Hsub P) L ->
   { M : poset F | [/\ induced Hsub M = L, linext P M & convex M E] }.
@@ -1247,49 +1337,31 @@ Proof.
   have := exists_linext (induced SupF P) => [] [] LSup LSupP.
   have := exists_linext (induced InfF P) => [] [] LInf LInfP.
   pose LESup := sum_poset disjoint_E_Sup L LSup.
-  pose Mtmp := sum_poset disjoint_Inf_ESup LInf LESup.
-  have /eqP := HeqF; rewrite eqEsubset => /andP [] _ HFsubu.
-  move HM : (induced HFsubu Mtmp) => M.
+  pose M := sum_poset disjoint_Inf_ESup LInf LESup.
 
-  pose MRel x y := [|| LInf x y, L x y, LSup x y,
-                    (x \in E) && (y \in Sup)
-                   | (x \in Inf) && ((y \in E) || (y \in Sup))].
-  have MRelF x y : MRel x y = [&& x \in F, y \in F & MRel x y].
-    case (boolP (MRel x y)); last by rewrite !andbF.
-    rewrite /MRel => /or4P [|||/orP[]].
-    - by move/stableP=> [] /(subsetP InfF) -> /(subsetP InfF) ->.
-    - by move/stableP=> [] /(subsetP Hsub) -> /(subsetP Hsub) ->.
-    - by move/stableP=> [] /(subsetP SupF) -> /(subsetP SupF) ->.
-    - by move=> /andP [] /(subsetP Hsub) -> /(subsetP SupF) ->.
-    - by move=> /andP [] /(subsetP InfF) -> /orP [/(subsetP Hsub) ->|/(subsetP SupF) ->].
-  have {MRelF} MP : M =2 MRel.
-    move=> x y; rewrite -HM finrelE MRelF; congr [&& _, _ & _].
-    by rewrite !finrelE !in_setU /MRel !orbA.
-  rewrite /MRel {MRel HM Mtmp LESup HFsubu} in MP.
-
-  exists M; split.
+  exists (cast_poset HeqF M); split.
   - rewrite poset_eq_inE => x y Hx Hy.
-    rewrite inducedE // MP.
+    rewrite inducedE // !simpl.
     have HySup := ExF disjoint_E_Sup Hy; rewrite HySup (QF _ _ HySup) !orbF {HySup}.
     have:= disjoint_Inf_ESup; rewrite disjoints_subset setCU => H1.
     have HxInf := FxE disjoint_Inf_E Hx; by rewrite HxInf (QF _ _ HxInf) /= andbF !orbF.
   - apply/linextP; split.
     apply/extP => x y Pxy; have:= stableP Pxy => [] [] /FuP/or3P [] Hx.
     + move=> /FuP/orP [Hy|].
-      * suff: LInf x y by rewrite MP => ->.
+      * suff: LInf x y by rewrite !simpl => ->.
         move: LInfP => /linextP [] /extP Hext _; apply Hext => {Hext}.
         by rewrite inducedE.
-      * move=> /orP [] Hy; by rewrite MP Hx Hy /= !orbT.
+      * move=> /orP [] Hy; by rewrite !simpl Hx Hy /= !orbT.
     + move=> /FuP/or3P [] Hy.
       * exfalso; move: Hy; rewrite inE => /andP []; rewrite inE negb_or => /andP [] H1 H2 _.
         move: H2; rewrite inE negb_and inE negb_and H1 /=.
         have := stableP Pxy => [] [] _ -> /=.
         rewrite negb_exists => /forallP H.
         have:= H x; by rewrite Hx Pxy.
-      * suff: L x y by rewrite MP => ->; rewrite orbT.
+      * suff: L x y by rewrite !simpl => ->; rewrite orbT.
         move: Hlin => /linextP [] /extP Hext _; apply Hext => {Hext}.
         by rewrite inducedE.
-      * by rewrite MP Hx Hy /= !orbT.
+      * by rewrite !simpl Hx Hy /= !orbT.
     + move=> /FuP/or3P [] Hy.
       * exfalso.
         move: Hy Hx; rewrite !inE negb_or => /andP [] /andP [] Hy; rewrite Hy /=.
@@ -1301,11 +1373,11 @@ Proof.
         move=> /existsP [] z /andP [] Hz Pzx.
         move: Hconv => /convexP HconvP.
         by rewrite (HconvP _ _ _ Hz Hy Pzx Pxy) in HxE.
-      * suff: LSup x y by rewrite MP => ->; rewrite !orbT.
+      * suff: LSup x y by rewrite !simpl => ->; rewrite !orbT.
         move: LSupP => /linextP [] /extP Hext _; apply Hext => {Hext}.
         by rewrite inducedE.
   - move=> x y /=.
-    rewrite !MP => /FuP/or3P [] Hx /FuP/or3P [] Hy; try by rewrite Hx Hy /= !orbT /=.
+    rewrite !simpl => /FuP/or3P [] Hx /FuP/or3P [] Hy; try by rewrite Hx Hy /= !orbT /=.
     * move: LInfP => /linextP [] _ Htot.
       have := Htot _ _ Hx Hy => /orP [] ->; by rewrite /= ?orbT.
     * move: Hlin => /linextP [] _ Htot.
@@ -1313,7 +1385,7 @@ Proof.
     * move: LSupP => /linextP [] _ Htot.
       have := Htot _ _ Hx Hy => /orP [] ->; by rewrite /= ?orbT.
   - apply/convexP => x y z Hx Hz.
-    rewrite !MP Hx Hz.
+    rewrite !simpl Hx Hz.
     have HxInf := FxE disjoint_Inf_E Hx; rewrite HxInf (QF _ _ HxInf) /= ?andbT ?orbF.
     have HxSup := ExF disjoint_E_Sup Hx; rewrite (QF _ _ HxSup) /= ?andbT ?orbF.
     have HzInf := FxE disjoint_Inf_E Hz; rewrite (QF _ _ HzInf) /= ?andbT ?orbF.
@@ -1576,6 +1648,10 @@ Qed.
 End SeqExt.
 
 End LinearPoset.
+
+
+
+Require Import finfun.
 
 
 (* Definition refltransclosure R :=
