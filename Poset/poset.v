@@ -36,6 +36,15 @@ Proof.
   - move=> /imset2P [] x1 y1 Hx1 Hy1 [] -> ->; by rewrite Hx1 Hy1.
 Qed.
 
+Lemma exists_exP (fT : finType) (P : pred fT) : [exists x, P x] -> { x | P x }.
+Proof.
+  rewrite /FiniteQuant.quant0b /= /pred0b.
+  rewrite (eq_card (B := P)); last by move=> i; rewrite /inE.
+  case: (pickP P) => [x Hx _|]; first by exists x.
+  by move/eq_card0 ->.
+Qed.
+
+
 Section FiniteRelations.
 
 Variable T : finType.
@@ -493,6 +502,9 @@ Proof. by rewrite revrelE. Qed.
 Lemma dualK : involutive dual_poset.
 Proof. move=> P; apply val_inj => /=; by apply revrelK. Qed.
 
+Lemma strict_dualE P x y : strict (dual_poset P) x y = strict P y x.
+Proof. by rewrite /strict /= revrelE eq_sym. Qed.
+
 End Dual.
 
 
@@ -662,79 +674,43 @@ Qed.
 End Sum.
 
 
+
+Require Import Wf.
+
 Section WellFounded.
 
 Variable T : finType.
 Variable E : {set T}.
 Implicit Type P : poset E.
 
-
-Definition expand P (f : T -> T) := forall x, x \in E -> P x (f x).
-Definition contract P (f : T -> T) := forall x, x \in E -> P (f x) x.
-
-Lemma expand_contract_dual P f : expand P f -> contract (dual_poset P) f.
-Proof. move=> H x Hx; rewrite dual_posetE; exact: H. Qed.
-Lemma contract_expand_dual P f : contract P f -> expand (dual_poset P) f.
-Proof. move=> H x Hx; rewrite dual_posetE; exact: H. Qed.
-Lemma expand_dual_contract P f : expand (dual_poset P) f -> contract P f.
-Proof. rewrite -{2}(dualK P); exact: expand_contract_dual. Qed.
-Lemma contract_dual_expand P f : contract (dual_poset P) f -> expand P f.
-Proof. rewrite -{2}(dualK P); exact: contract_expand_dual. Qed.
-
-Lemma expand_stable P f x : expand P f -> x \in E -> f x \in E.
-Proof. by move => H/H/stableP []. Qed.
-Lemma contract_stable P f x : contract P f -> x \in E -> f x \in E.
-Proof. by move => H/H/stableP []. Qed.
-
-Lemma expand_iterP P f n x :
-  expand P f -> x \in E -> iter n f x \in E /\ P x (iter n f x).
+Lemma eq_well_founded (TT : Type) (R S : TT -> TT -> Prop) :
+  R =2 S -> well_founded R -> well_founded S.
 Proof.
-  move=> H Hx; elim: n x Hx => [| n IHn] x Hx /=; first by split; last exact: posetnn.
-  have:= IHn x Hx => [] [] Hiter Pif; split; first exact: expand_stable.
-  apply (poset_trans Pif); exact: H.
-Qed.
-Lemma contract_iterP P f n x :
-  contract P f -> x \in E -> iter n f x \in E /\ P (iter n f x) x.
-Proof. move/contract_expand_dual; rewrite -dual_posetE; exact: expand_iterP. Qed.
-
-Theorem expand_iter_fix P f x :
-  expand P f -> x \in E -> { i | iter i.+1 f x = iter i f x }.
-Proof.
-  move=> Hexp Hx.
-  have : #|[set y | P x y]| <= #|[set: T]| by apply subset_leqif_card; apply subsetT.
-  case: #|[set: T]| => [| n] H.
-    exfalso; move: H; rewrite leqn0 cards_eq0 -subset0 => /subsetP H.
-    have {H} := H x; rewrite inE in_set0 => H.
-    by have:= H (posetnn Hx).
-  elim: n x Hx H => [| n IHn] x Hx H.
-  - exists 0; apply/eqP.
-    have {H} : [set y | P x y] = [set x].
-      apply/eqP; rewrite eq_sym eqEcard; apply/andP; split; last by rewrite cards1.
-      apply/subsetP => z; rewrite in_set1 inE => /eqP ->; exact: posetnn.
-    rewrite -setP /= => Heq.
-    have:= Heq (f x); rewrite !inE => <-.
-    by apply Hexp.
-  - case (leqP #|[set y | P x y]| n.+1) => [/(IHn x Hx) //| Hcard].
-    case: (altP (f x =P x)) => Hfx; first by exists 0.
-    have {H Hcard} /eqP : #|[set y | P x y]| = n.+2 by apply anti_leq; rewrite H Hcard.
-    have Hint : [set y | strict P x y] :&: [set x] = set0.
-      rewrite -setP => z; by rewrite !inE /strict /= eq_sym -andbA andNb andbF.
-    have <- : [set y | strict P x y] :|: [set x] = [set y | P x y].
-      rewrite -setP => z; rewrite !inE /strict /=.
-      case (boolP (P x z)) => /=; first by rewrite eq_sym orNb.
-      apply contraNF => /eqP ->; exact: posetnn.
-    rewrite cardsU Hint {Hint} cards1 cards0 addn1 subn0 eqSS => /eqP Hcard.
-    have {IHn} /IHn Hrec : (f x) \in E by move: (stableP (Hexp x Hx)) => [].
-    have /Hrec : #|[set y | P (f x) y]| <= n.+1.
-      rewrite -Hcard; apply subset_leqif_card; apply/subsetP => z.
-      rewrite !inE; apply strict_poset_trans.
-      by rewrite /strict /= (Hexp x Hx) eq_sym Hfx.
-    move=> [] i Hi; exists i.+1; move: Hi; by rewrite !iterSr.
+  rewrite /well_founded => H WfR a; apply: (well_founded_ind WfR) => x Hind.
+  constructor => y; rewrite -H; move: y; exact Hind.
 Qed.
 
-Corollary contract_iter_fix P f x :
-  contract P f -> x \in E -> { i | iter i.+1 f x = iter i f x }.
-Proof. move/contract_expand_dual; exact: expand_iter_fix. Qed.
+Lemma strict_Wf P : well_founded (fun x y => is_true (strict P x y)).
+Proof.
+  move=> x; have := leqnn #|[set y | strict P y x]|.
+  move: {2}#|[set y | strict P y x]| => n.
+  elim: n x => [| n IHn] x Hx.
+    constructor=> y Habs; exfalso; move: Habs.
+    move: Hx; rewrite leqn0 cards_eq0 -subset0 => /subsetP Hx.
+    have {Hx} := Hx y; by rewrite inE in_set0 => H/H.
+  constructor=> y sPyx; apply IHn; rewrite -ltnS.
+  apply: (leq_trans _ Hx) => {Hx}; apply proper_card.
+  rewrite /proper; apply/andP; split; apply/subsetP.
+  - move=> z; rewrite !inE => /strict_trans; by apply.
+  - move=> Hsubs; move: sPyx; have {Hsubs} := Hsubs y; rewrite !inE => H/H{H}.
+    by rewrite /strict /= eq_refl andbF.
+Defined.
+
+Lemma strict_inv_Wf P : well_founded (fun x y => is_true (strict P y x)).
+Proof.
+  apply (eq_well_founded (R := fun x y => strict (dual_poset P) x y)); last exact: strict_Wf.
+  move => x y /=; by rewrite strict_dualE.
+Qed.
 
 End WellFounded.
 
@@ -754,7 +730,7 @@ Implicit Type P : poset E.
 Definition ismax P x := x \in P /\ forall y, y \in P -> P x y -> x = y.
 Definition predmax P x := (x \in P) && [forall y in P, (P x y) ==> (x == y)].
 Definition ismin P x := x \in P /\ forall y, y \in P -> P y x -> x = y.
-Definition predmin P x := predmax (dual_poset P) x.
+Definition predmin P x := (x \in P) && [forall y in P, (P y x) ==> (x == y)].
 
 Lemma max_minE P x : ismax P x <-> ismin (dual_poset P) x.
 Proof.
@@ -765,6 +741,14 @@ Proof.
 Qed.
 Lemma min_maxE P x : ismin P x <-> ismax (dual_poset P) x.
 Proof. by rewrite -{1}(dualK P) max_minE. Qed.
+
+Lemma predmax_predminE P x : predmax P x = predmin (dual_poset P) x.
+Proof.
+  rewrite /predmin /predmax; congr (_ && _).
+  apply eq_forallb_in => y _; congr (_ ==> _); by rewrite dual_posetE.
+Qed.
+Lemma predmin_predmaxE P x : predmin P x = predmax (dual_poset P) x.
+Proof. by rewrite -{1}(dualK P) predmax_predminE. Qed.
 
 Lemma predmaxP P x : reflect (ismax P x) (predmax P x).
 Proof.
@@ -777,40 +761,37 @@ Proof.
     apply/forallP => y; apply/implyP => /H{H}H.
     by apply/implyP => /H ->.
 Qed.
-
 Lemma predminP P x : reflect (ismin P x) (predmin P x).
-Proof. rewrite /predmin; apply (iffP idP); by rewrite min_maxE => /predmaxP. Qed.
+Proof. apply (iffP idP); by rewrite min_maxE predmin_predmaxE => /predmaxP. Qed.
 
-Theorem hasmaxrel P x : x \in P -> { m | ismax P m /\ P x m }.
+Let Prd P x := x \in P -> { m | ismin P m /\ P m x }.
+Definition search_min_rel P x : (forall y, strict P y x -> Prd P y) -> Prd P x.
 Proof.
-  pose f z := if pickP (mem [set y | strict P z y]) is Pick y _ then y else z.
-  have Hf : expand P f.
-    move=> z Hz; rewrite /f.
-    case: (pickP (mem [set y | strict P z y])) => [y |_]; last exact: posetnn.
-    rewrite !inE; exact: strictW.
-  move=> Hx; have := (expand_iter_fix Hf Hx) => [] [] n /=.
-  set m := iter n f x => Hn.
-  exists m; repeat split; try by have := (expand_iterP n Hf Hx) => [] [].
-  move=> y Hy Pyf.
-  move: Hn; rewrite {1}/f.
-  case: (pickP (mem [set y | strict P m y])) => [y0 Habs Hy0| H _].
-  - exfalso; move: Habs; by rewrite !inE /strict Hy0 /= eq_refl andbF.
-  - have:= H y; by rewrite !inE /strict /= Pyf /= => /negbFE/eqP.
+  rewrite /Prd => Hind Hx.
+  case: (boolP (predmin P x)) => [/predminP Hmin |].
+  - exists x; by split; last exact: posetnn.
+  - rewrite negb_and Hx /= negb_forall => /exists_exP [] y.
+    rewrite !negb_imply => /andP [] Hy H.
+    have {H} H : strict P y x by rewrite /strict /= eq_sym.
+    have := (Hind y H Hy) => [] [] m [] Hmin Pmy.
+    exists m; split; first exact Hmin.
+    apply strictW; exact (poset_strict_trans Pmy H).
+Defined.
+
+Definition find_min_rel P : forall x, x \in P -> { m | ismin P m /\ P m x }
+  := Fix (strict_Wf P) (Prd P) (@search_min_rel P).
+
+Lemma find_max_rel P : forall x, x \in P -> { m | ismax P m /\ P x m }.
+Proof.
+  move=> x Hx; have /find_min_rel : x \in dual_poset P by [].
+  move=> [] m []; rewrite dual_posetE => /((max_minE P m).2) Hmax Pxm; by exists m.
 Qed.
 
-Corollary hasminrel P x : x \in P -> { m | ismin P m /\ P m x}.
-Proof.
-  rewrite posetE -(posetE (dual_poset P)) => /hasmaxrel [] m [].
-  have:= (min_maxE P m) => [] [] _ H/H{H} Hmin.
-  rewrite dual_posetE => Hxm.
-  by exists m.
-Qed.
+Corollary find_max P x : x \in P -> { m | ismax P m }.
+Proof. move/find_max_rel => [] m [] Hm _; by exists m. Qed.
 
-Corollary hasmax P x : x \in P -> { m | ismax P m }.
-Proof. move/hasmaxrel => [] m [] Hm _; by exists m. Qed.
-
-Corollary hasmin P x : x \in P -> { m | ismin P m }.
-Proof. move/hasminrel => [] m [] Hm _; by exists m. Qed.
+Corollary find_min P x : x \in P -> { m | ismin P m }.
+Proof. move/find_min_rel => [] m [] Hm _; by exists m. Qed.
 
 End MaxMin.
 
@@ -1216,7 +1197,7 @@ Qed.
 
 Theorem exists_linext P : { L : poset E | linext P L }.
 Proof.
-  have /hasmaxrel : P \in ExtPoset by rewrite inE.
+  have /find_max_rel : P \in ExtPoset by rewrite inE.
   move=> [] L [] /max_extP; rewrite !finrelE => Htot Hext.
   exists L; apply/linextP; split; first exact Hext.
   by move=> x y /Htot H/H{H}.
@@ -1651,7 +1632,86 @@ End LinearPoset.
 
 
 
-Require Import finfun.
+
+
+Section Recursion.
+
+Variable T : finType.
+Variable E : {set T}.
+Implicit Type P : poset E.
+
+Definition contract P (f : T -> T) := forall x, x \in E -> P (f x) x.
+Definition expand P (f : T -> T) := forall x, x \in E -> P x (f x).
+
+Lemma expand_contract_dual P f : expand P f -> contract (dual_poset P) f.
+Proof. move=> H x Hx; rewrite dual_posetE; exact: H. Qed.
+Lemma contract_expand_dual P f : contract P f -> expand (dual_poset P) f.
+Proof. move=> H x Hx; rewrite dual_posetE; exact: H. Qed.
+Lemma expand_dual_contract P f : expand (dual_poset P) f -> contract P f.
+Proof. rewrite -{2}(dualK P); exact: expand_contract_dual. Qed.
+Lemma contract_dual_expand P f : contract (dual_poset P) f -> expand P f.
+Proof. rewrite -{2}(dualK P); exact: contract_expand_dual. Qed.
+
+Section Contract.
+
+Variable P : poset E.
+Variable f : T -> T.
+Hypothesis Hcontr : contract P f.
+
+Lemma contract_stable x : x \in E -> f x \in E.
+Proof. by move: Hcontr => H/H/stableP []. Qed.
+
+Theorem contract_iter_fix x : x \in E -> { i | iter i.+1 f x = iter i f x }.
+Proof.
+  move: x; apply: (well_founded_induction (strict_Wf P)) => x Hind Hx.
+  case: (altP (x =P f x)) => [Heq|Hneq]; first by exists 0 => /=; rewrite -Heq.
+  have Hfxx : strict P (f x) x by rewrite /strict /= eq_sym Hneq Hcontr.
+  have := stableP (strictW Hfxx) => [] [] Hfx _.
+  have := Hind (f x) Hfxx Hfx => [] [] i Hi.
+  exists i.+1; move: Hi; by rewrite !iterSr.
+Qed.
+
+Definition contract_fix :=
+  fun x => if (boolP (x \in E)) is AltTrue Prf then
+             let: exist i _ := contract_iter_fix Prf in iter i f x
+           else x.
+
+Lemma contract_fixP x : x \in E -> f (contract_fix x) = contract_fix x.
+Proof.
+  rewrite /contract_fix; case (boolP (x \in E)) => [Prf _ | //].
+  by case (contract_iter_fix Prf) => /= n ->.
+Qed.
+
+Lemma contract_fin_ind (PP : T -> Prop) x :
+  PP x -> (forall y, PP y -> PP (f y)) -> x \in E -> PP (contract_fix x).
+Proof.
+  rewrite /contract_fix => HPPx HPP.
+  case (boolP (x \in E)) => [Prf _ | //].
+  case (contract_iter_fix Prf) => /= n _.
+  elim: n => [//| n IHn] /=; by apply HPP.
+Qed.
+
+Lemma contract_iterP n x : x \in E -> iter n f x \in E /\ P (iter n f x) x.
+Proof.
+  move=> Hx; elim: n x Hx => [| n IHn] x Hx /=; first by split; last exact: posetnn.
+  have:= IHn x Hx => [] [] Hiter Pif; split; first exact: contract_stable.
+  apply: (poset_trans _ Pif); exact: Hcontr.
+Qed.
+
+End Contract.
+
+Lemma expand_iter_fix P f x :
+  expand P f -> x \in E -> { i | iter i.+1 f x = iter i f x }.
+Proof. move/expand_contract_dual/contract_iter_fix; by apply. Qed.
+
+Lemma expand_stable P f x : expand P f -> x \in E -> f x \in E.
+Proof. by move => H/H/stableP []. Qed.
+
+Lemma expand_iterP P f n x :
+  expand P f -> x \in E -> iter n f x \in E /\ P x (iter n f x).
+Proof. move/expand_contract_dual; rewrite -dual_posetE => /contract_iterP; by apply. Qed.
+
+End Recursion.
 
 
 (* Definition refltransclosure R :=
@@ -1666,3 +1726,5 @@ Lemma refl_refltransclosure R : reflexiverel (refltransclosure R).
 Proof.
   rewrite /reflexiverel.
 *)
+
+
