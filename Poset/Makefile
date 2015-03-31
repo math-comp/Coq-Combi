@@ -80,7 +80,7 @@ endif
 #                    #
 ######################
 
-VFILES:=poset.v
+VFILES:=poset.v inclexcl.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))
