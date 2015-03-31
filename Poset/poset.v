@@ -28,7 +28,7 @@ Proof.
   by rewrite H // !in_cons eq_refl ?orbT.
 Qed.
 
-Lemma in_pair (T : finType) x y (E F : {set T}) :
+Lemma in_pair (T U : finType) x y (E : {set T}) (F : {set U}):
   (x, y) \in [set (e, f) | e in E, f in F] = (x \in E) && (y \in F).
 Proof.
   apply/(sameP idP); apply(iffP idP).
@@ -57,12 +57,12 @@ Definition rel_of_set (R : relset) : rel T := fun x y => (x, y) \in R.
 Lemma rel_of_setK (R : rel T) : rel_of_set (set_of_rel R) =2 R.
 Proof. move=> x y; by rewrite /set_of_rel/rel_of_set /= inE /=. Qed.
 
-Definition stable (R : rel T) := forall x y, R x y -> x \in E /\ y \in E.
+Definition stablerel (R : rel T) := forall x y, R x y -> x \in E /\ y \in E.
 
 Definition full : relset := [set p | (p.1 \in E) && (p.2 \in E)].
-Definition stablerel (R : relset) := R \subset full.
+Definition stablerelset (R : relset) := R \subset full.
 
-Lemma stablerelP R : reflect (stable (rel_of_set R)) (stablerel R).
+Lemma stablerelsetP R : reflect (stablerel (rel_of_set R)) (stablerelset R).
 Proof.
   apply (iffP idP) => /=.
   - move=> /subsetP H x y; rewrite /rel_of_set => /H.
@@ -71,7 +71,7 @@ Proof.
     by rewrite inE /= => -> ->.
 Qed.
 
-Record finrelType := FinRel { RelSet : relset; _ : stablerel RelSet }.
+Record finrelType := FinRel { RelSet : relset; _ : stablerelset RelSet }.
 Canonical finrel_subType := Eval hnf in [subType for RelSet].
 Definition finrel_eqMixin := Eval hnf in [eqMixin of finrelType by <:].
 Canonical finrel_eqType := Eval hnf in EqType finrelType finrel_eqMixin.
@@ -95,13 +95,13 @@ Proof. by []. Qed.
 Lemma finrel_relsetE R x y : R x y = ((x, y) \in (RelSet R)).
 Proof. by []. Qed.
 
-Lemma stableP R : stable R.
-Proof. move=> x y; rewrite finrel_relsetE; case: R => r /= /stablerelP; by apply. Qed.
+Lemma stablerelP R : stablerel R.
+Proof. move=> x y; rewrite finrel_relsetE; case: R => r /= /stablerelsetP; by apply. Qed.
 
 Lemma finrel_notinL R x y : x \notin E -> R x y = false.
-Proof. by apply contraNF => /stableP []. Qed.
+Proof. by apply contraNF => /stablerelP []. Qed.
 Lemma finrel_notinR R x y : y \notin E -> R x y = false.
-Proof. by apply contraNF => /stableP []. Qed.
+Proof. by apply contraNF => /stablerelP []. Qed.
 
 Lemma finrel_eqE R S : R = S <-> R =2 S.
 Proof.
@@ -117,18 +117,18 @@ Proof.
   rewrite -!finrel_relsetE.
   case: (boolP (x \in E)) => HxE.
   - case: (boolP (y \in E)) => HyE; first by apply H.
-    case: (boolP (R x y)) => [/stableP [] _ Habs| _]; first by rewrite Habs in HyE.
-    case: (boolP (S x y)) => [/stableP [] _ Habs|  ]; first by rewrite Habs in HyE.
+    case: (boolP (R x y)) => [/stablerelP [] _ Habs| _]; first by rewrite Habs in HyE.
+    case: (boolP (S x y)) => [/stablerelP [] _ Habs|  ]; first by rewrite Habs in HyE.
     by [].
-  - case: (boolP (R x y)) => [/stableP [] Habs _| _]; first by rewrite Habs in HxE.
-    case: (boolP (S x y)) => [/stableP [] Habs _|  ]; first by rewrite Habs in HxE.
+  - case: (boolP (R x y)) => [/stablerelP [] Habs _| _]; first by rewrite Habs in HxE.
+    case: (boolP (S x y)) => [/stablerelP [] Habs _|  ]; first by rewrite Habs in HxE.
     by [].
 Qed.
 
 
 Lemma stable_finrel (r : rel T) :
-  stablerel [set p | [&& p.1 \in E, p.2 \in E & r p.1 p.2]].
-Proof. by apply/stablerelP => x y; rewrite /rel_of_set inE /= => /and3P []. Qed.
+  stablerelset [set p | [&& p.1 \in E, p.2 \in E & r p.1 p.2]].
+Proof. by apply/stablerelsetP => x y; rewrite /rel_of_set inE /= => /and3P []. Qed.
 Definition finrel (r : rel T) := FinRel (stable_finrel r).
 Lemma finrel_inE (r : rel T) : {in E &, finrel (r : rel T) =2 r}.
 Proof. by move=> x y Hx Hy /=; rewrite finrel_relsetE inE Hx Hy /=. Qed.
@@ -139,10 +139,10 @@ Proof. by rewrite finrel_relsetE inE /=. Qed.
 Section Stable.
 
 Variable r : rel T.
-Hypothesis Hstable : stable r.
+Hypothesis Hstable : stablerel r.
 
-Lemma finrel_of_stablerel : stablerel [set p | r p.1 p.2].
-Proof. apply/stablerelP => x y; rewrite /rel_of_set inE /=; exact: Hstable. Qed.
+Lemma finrel_of_stablerel : stablerelset [set p | r p.1 p.2].
+Proof. apply/stablerelsetP => x y; rewrite /rel_of_set inE /=; exact: Hstable. Qed.
 Definition finrel_stable := FinRel finrel_of_stablerel.
 Lemma finrel_stableE : finrel_stable =2 r.
 Proof. move=> x y; by rewrite finrel_relsetE inE /=. Qed.
@@ -151,8 +151,8 @@ End Stable.
 
 Let finrelE := (finrelE_tmp, finrel_stableE).
 
-Lemma stablerel_diag : stablerel [set (x, x) | x in E].
-Proof. apply/stablerelP => x y. by rewrite /rel_of_set => /imsetP [] z Hz [] -> ->. Qed.
+Lemma stablerel_diag : stablerelset [set (x, x) | x in E].
+Proof. apply/stablerelsetP => x y. by rewrite /rel_of_set => /imsetP [] z Hz [] -> ->. Qed.
 Definition diagrel := FinRel stablerel_diag.
 Lemma diagrelE x y : diagrel x y = (x \in E) && (x == y).
 Proof.
@@ -161,8 +161,8 @@ Proof.
   - move/imsetP => [] z Hz [] -> ->; by rewrite eq_refl Hz.
 Qed.
 
-Lemma stablerel_rev R : stablerel [set p | R p.2 p.1].
-Proof. apply/stablerelP => x y; by rewrite /rel_of_set inE /= => /stableP []. Qed.
+Lemma stablerel_rev R : stablerelset [set p | R p.2 p.1].
+Proof. apply/stablerelsetP => x y; rewrite /rel_of_set inE /= => /stablerelP [] //. Qed.
 Definition revrel R := FinRel (stablerel_rev R).
 Lemma revrelE R x y : revrel R x y = R y x.
 Proof. by rewrite finrel_relsetE /= inE /=. Qed.
@@ -174,7 +174,9 @@ Lemma comprelP R S x y : reflect (exists z, R x z /\ S z y) (comprel R S x y).
 Proof.
   rewrite finrelE; apply (iffP idP).
   - move=> /and3P [] _ _ /existsP [] z /andP H; by exists z.
-  - move=> [] z [] HR HS; have:= stableP HR => [] [] -> _; have:= stableP HS => [] [] _ ->.
+  - move=> [] z [] HR HS;
+          have:= stablerelP HR => [] [] -> _;
+          have:= stablerelP HS => [] [] _ ->.
     rewrite /=; apply/existsP; exists z; by rewrite HR HS.
 Qed.
 
@@ -190,10 +192,10 @@ Proof.
     apply/comprelP; by exists b.
 Qed.
 
-Lemma stablerel_inter R S : stablerel (RelSet R :&: RelSet S).
+Lemma stablerel_inter R S : stablerelset (RelSet R :&: RelSet S).
 Proof.
-  apply/stablerelP => x y. rewrite /rel_of_set inE => /andP [].
-  by rewrite -finrel_relsetE => /stableP.
+  apply/stablerelsetP => x y. rewrite /rel_of_set inE => /andP [].
+  by rewrite -finrel_relsetE => /stablerelP.
 Qed.
 Definition inter R S := FinRel (stablerel_inter R S).
 Lemma interE R S x y : inter R S x y = R x y && S x y.
@@ -221,35 +223,33 @@ Definition equivalencerel R :=
 Lemma extP R S : reflect (forall x y, R x y -> S x y) (ext R S).
 Proof.
   apply (iffP idP).
-  - move=> /forallP Hall x y HR; have:= stableP HR => [] [] Hx Hy.
-    exact: (implyP (implyP (forallP (implyP (Hall x) Hx) y) Hy)).
-  - move=> H; apply/forallP => x; apply/implyP => Hx; apply/forallP => y; apply/implyP => Hy.
+  - move=> /forall_inP Hall x y HR; have:= stablerelP HR => [] [] Hx Hy.
+    exact: (implyP (forall_inP (Hall x Hx) y Hy)).
+  - move=> H; apply/forall_inP => x Hx; apply/forall_inP => y Hy.
     apply/implyP; by apply H.
 Qed.
 
 Lemma totalrelP R : reflect {in E &, total R} (totalrel R).
 Proof.
   apply (iffP idP) => /=.
-  - move=> /forallP Hall x y Hx Hy.
-    exact: (implyP (forallP (implyP (Hall x) Hx) y) Hy).
-  - move=> H; apply/forallP => x; apply/implyP => Hx; apply/forallP => y; apply/implyP => Hy.
-    by apply H.
+  - move=> /forall_inP Hall x y Hx Hy.
+    exact: (forall_inP (Hall x Hx) y Hy).
+  - move=> H; apply/forall_inP => x Hx; apply/forall_inP => y Hy; by apply H.
 Qed.
 
 Lemma reflexiverelP R : reflect {in E, reflexive R} (reflexiverel R).
 Proof.
   apply (iffP idP).
-  - move=> /forallP Hall x Hx; exact: (implyP (Hall x)). 
-  - move=> H; apply/forallP => x; apply/implyP => Hx; by apply H.
+  - by move=> /forall_inP Hall x /Hall.
+  - move=> H; apply/forall_inP => x Hx; by apply H.
 Qed.
 
 Lemma irreflexiverelP R :
   reflect {in E, irreflexive R} (irreflexiverel R).
 Proof.
   apply (iffP idP).
-  - move=> /forallP Hall x Hx; apply/eqP; exact: (implyP (Hall x)).
-  - move=> H; apply/forallP => x; apply/implyP => Hx; apply/eqP.
-    by apply H.
+  - move=> /forall_inP Hall x Hx; apply/eqP; exact: Hall.
+  - move=> H; apply/forall_inP => x Hx; apply/eqP; by apply H.
 Qed.
 
 Lemma symmetricrelP R : reflect (symmetric R) (symmetricrel R).
@@ -267,7 +267,7 @@ Proof.
     by have:= H Ryx => [] /andP [] _ /eqP.
   - move=> H; apply/extP => x y.
     rewrite diagrelE interE revrelE /= => /andP [] Rxy Ryx.
-    have:= stableP Rxy => [] [] -> _ /=; apply/eqP.
+    have:= stablerelP Rxy => [] [] -> _ /=; apply/eqP.
     apply H; by rewrite Rxy Ryx.
 Qed.
 
@@ -297,7 +297,7 @@ Proof.
       * by have {H} := H _ _ _ Hy Hx Hy => [] [] -> H/H <-.
       * by have {H} := H _ _ _ Hx Hy Hx => [] [] -> H/H <-.
   - apply/transitiverelP => y x z Rxy Ryz.
-    have:= stableP Rxy => [] [] Hx Hy; have:= stableP Ryz => [] [] _ Hz.
+    have:= stablerelP Rxy => [] [] Hx Hy; have:= stablerelP Ryz => [] [] _ Hz.
     by have {H} := H _ _ _ Hx Hy Hz => [] [] _ ->.
 Qed.
 
@@ -422,7 +422,7 @@ Hint Resolve posetnn.
 
 (******************************************************************************)
 (*                                                                            *)
-(*                           Examples of Posets                               *)
+(*                           Examples of posets                               *)
 (*                                                                            *)
 (******************************************************************************)
 Section TrivOrder.
@@ -460,7 +460,7 @@ End Boolean.
 
 (******************************************************************************)
 (*                                                                            *)
-(*                       Constructions on Posets                              *)
+(*                       Constructions of posets                              *)
 (*                                                                            *)
 (******************************************************************************)
 
@@ -597,20 +597,20 @@ Qed.
 Lemma FxE x : x \in F -> x \in E = false.
 Proof. move=> HxF; apply (introF idP) => HxE; by rewrite ExF in HxF. Qed.
 
-Lemma PxE x y : P x y -> x \in E. Proof. by move=> /stableP []. Qed.
-Lemma PyE x y : P x y -> y \in E. Proof. by move=> /stableP []. Qed.
-Lemma QxF x y : Q x y -> x \in F. Proof. by move=> /stableP []. Qed.
-Lemma QyF x y : Q x y -> y \in F. Proof. by move=> /stableP []. Qed.
+Lemma PxE x y : P x y -> x \in E. Proof. by move=> /stablerelP []. Qed.
+Lemma PyE x y : P x y -> y \in E. Proof. by move=> /stablerelP []. Qed.
+Lemma QxF x y : Q x y -> x \in F. Proof. by move=> /stablerelP []. Qed.
+Lemma QyF x y : Q x y -> y \in F. Proof. by move=> /stablerelP []. Qed.
 
 Lemma PxnF x y : x \in E = false -> P x y = false.
-Proof. by apply contraFF => /stableP []. Qed.
+Proof. by apply contraFF => /stablerelP []. Qed.
 Lemma PnxF x y : x \in E = false -> P y x = false.
-Proof. by apply contraFF => /stableP []. Qed.
+Proof. by apply contraFF => /stablerelP []. Qed.
 Definition PF x y (H : x \in E = false) := (PxnF y H, PnxF y H).
 Lemma QxnF x y : x \in F = false -> Q x y = false.
-Proof. by apply contraFF => /stableP []. Qed.
+Proof. by apply contraFF => /stablerelP []. Qed.
 Lemma QnxF x y : x \in F = false -> Q y x = false.
-Proof. by apply contraFF => /stableP []. Qed.
+Proof. by apply contraFF => /stablerelP []. Qed.
 Definition QF x y (H : x \in F = false) := (QxnF y H, QnxF y H).
 
 Definition simplP x y (H : P x y) z :=
@@ -623,10 +623,10 @@ Definition simplQ x y (H : Q x y) z :=
    PF z (FxE (QxF H)), PF z (FxE (QyF H)), andbF, orbF).
 
 Lemma ordsumrel_stable :
-  stable (E :|: F) (fun x y => [|| P x y, Q x y | (x \in E) && (y \in F)]).
+  stablerel (E :|: F) (fun x y => [|| P x y, Q x y | (x \in E) && (y \in F)]).
 Proof.
   move=> x y /=.
-  rewrite !inE => /or3P [/stableP [] -> -> // | /stableP [] -> ->| /andP [] -> ->];
+  rewrite !inE => /or3P [/stablerelP [] -> -> // | /stablerelP [] -> ->| /andP [] -> ->];
     by rewrite !orbT.
 Qed.
 Definition ordsumrel := finrel_stable ordsumrel_stable.
@@ -645,7 +645,7 @@ Proof.
       by move /(poset_trans Pxy) ->.
     + rewrite !(simplQ Qxy) /=; by apply poset_trans.
     + rewrite HxE (FxE HyF) !(QF _ (ExF HxE)) !(PF _ (FxE HyF)) /= orbF.
-      move=> /stableP [] _ ->; by rewrite orbT.
+      move=> /stablerelP [] _ ->; by rewrite orbT.
 Qed.
 Definition sum_poset := Poset sum_order.
 
@@ -674,6 +674,11 @@ Qed.
 End Sum.
 
 
+(******************************************************************************)
+(*                                                                            *)
+(*                      Finite posets are well founded                        *)
+(*                                                                            *)
+(******************************************************************************)
 
 Require Import Wf.
 
@@ -753,12 +758,10 @@ Proof. by rewrite -{1}(dualK P) predmax_predminE. Qed.
 Lemma predmaxP P x : reflect (ismax P x) (predmax P x).
 Proof.
   apply (iffP idP).
-  - move=> /andP [] Hx /forallP Hall; split => [| y Hy Hxy]; first exact Hx.
-    have {Hall} := Hall y => /implyP Hall.
-    have {Hall} := Hall Hy => /implyP Hall.
-    apply/eqP; by apply Hall.
+  - move=> /andP [] Hx /forall_inP Hall; split => [| y Hy Hxy]; first exact Hx.
+    apply/eqP; by apply (implyP (Hall y Hy)).
   - move=> [] Hx H; apply/andP; split; first exact Hx.
-    apply/forallP => y; apply/implyP => /H{H}H.
+    apply/forall_inP => y /H{H}H.
     by apply/implyP => /H ->.
 Qed.
 Lemma predminP P x : reflect (ismin P x) (predmin P x).
@@ -951,6 +954,12 @@ Qed.
 End SumExtMax.
 
 
+(******************************************************************************)
+(*                                                                            *)
+(*               More examples and constructions of posets                    *)
+(*                                                                            *)
+(******************************************************************************)
+
 Section RemCov.
 
 Variable T : finType.
@@ -962,8 +971,8 @@ Hypothesis Hcov : cover P a b.
 Let Neqab : a != b.
 Proof. move: Hcov => /andP []; by rewrite /strict /= => /andP []. Qed.
 
-Lemma remcovrel_stable : stable E (fun m n => (P m n) && ((m, n) != (a, b))).
-Proof. by move=> x y /= /andP [] /stableP. Qed.
+Lemma remcovrel_stable : stablerel E (fun m n => (P m n) && ((m, n) != (a, b))).
+Proof. by move=> x y /= /andP [] /stablerelP. Qed.
 
 Lemma remcov_order : orderrel (finrel_stable remcovrel_stable).
 Proof.
@@ -992,7 +1001,7 @@ Proof. apply/extP => x y; by rewrite finrelE => /andP []. Qed.
 Lemma remcov_max_ext Q : ext Q P -> ~~ Q a b -> ext Q remcov.
 Proof.
   move=> /extP HQP Hab; apply/extP => x y Qxy.
-  rewrite finrelE; have:= stableP Qxy => [] [] Hx Hy.
+  rewrite finrelE; have:= stablerelP Qxy => [] [] Hx Hy.
   apply/andP; split => //; first by apply HQP.
   move: Hab; by apply contra => /eqP [] <- <-.
 Qed.
@@ -1026,8 +1035,8 @@ Proof.
   by apply posetnn.
 Qed.
 
-Lemma addcovrel_stable : stable E (fun m n => (P m n) || (P m a && P b n)).
-Proof. by move=> x y /orP [/stableP // |] /andP [] /stableP [] -> _ /stableP [] _ ->. Qed.
+Lemma addcovrel_stable : stablerel E (fun m n => (P m n) || (P m a && P b n)).
+Proof. by move=> x y /orP [/stablerelP // |] /andP [] /stablerelP [] -> _ /stablerelP [] _ ->. Qed.
 
 Lemma addcov_order : orderrel (finrel_stable addcovrel_stable).
 Proof.
@@ -1094,10 +1103,10 @@ Proof.
   - move=> H; apply/bigcapP => P /H{H}; by rewrite -finrel_relsetE.
 Qed.
 
-Lemma intrelset_stable : stablerel E intrelset.
+Lemma intrelset_stable : stablerelset E intrelset.
 Proof.
-  apply/stablerelP => x y; rewrite /rel_of_set => /intrelsetP Hxy.
-  move: SPn0 => /set0Pn [] P /Hxy; exact: stableP.
+  apply/stablerelsetP => x y; rewrite /rel_of_set => /intrelsetP Hxy.
+  move: SPn0 => /set0Pn [] P /Hxy; exact: stablerelP.
 Qed.
 
 Lemma intrelset_order : orderrel (FinRel intrelset_stable).
@@ -1134,7 +1143,7 @@ Variable T : finType.
 Variable E : {set T}.
 Implicit Type P L : finrelType E.
 
-Lemma ext_rel_stable : stable [set: finrelType E] (fun A B => ext A B).
+Lemma ext_rel_stable : stablerel [set: finrelType E] (fun A B => ext A B).
 Proof. move=> x y /= _; by rewrite inE. Qed.
 Lemma ext_rel_order : orderrel (finrel_stable ext_rel_stable).
 Proof.
@@ -1155,7 +1164,7 @@ Variable T : finType.
 Variable E : {set T}.
 Implicit Type P L : poset E.
 
-Lemma ext_stable : stable [set: poset E] (fun A B => ext A B).
+Lemma ext_stable : stablerel [set: poset E] (fun A B => ext A B).
 Proof. move=> x y /= _; by rewrite inE. Qed.
 Lemma ext_order : orderrel (finrel_stable ext_stable).
 Proof.
@@ -1232,7 +1241,7 @@ Proof.
   rewrite poset_eqE => x y.
   apply/(sameP idP); apply(iffP idP).
   - case: (boolP (P x y)) => // Hxy Habs.
-    have:= stableP Habs => [] [] Hx Hy.
+    have:= stablerelP Habs => [] [] Hx Hy.
     have:= linext_ncmp Hx Hy Hxy => [] [] L [].
     rewrite -in_set => /(intposetP (linextn0 P)) Hncmp Lxy.
     have Heq : x = y by apply: (anti_poset _ Lxy); apply Hncmp.
@@ -1245,6 +1254,43 @@ Qed.
 End ExtPoset.
 
 
+Section CartProd.
+
+Variable T U : finType.
+Variables (E : {set T}) (F : {set U}).
+Variables (P : poset E) (Q : poset F).
+
+Lemma cartprodrel_stable :
+  stablerel [set (e, f) | e in E, f in F] (fun x y => P x.1 y.1 && Q x.2 y.2).
+Proof.
+  move=> [xp xq] [yp yq] /= /andP [] /stablerelP [] Hxp Hxq /stablerelP [] Hyp Hyq.
+  rewrite !in_pair; split; by apply/andP.
+Qed.
+Definition cartprodrel := finrel_stable cartprodrel_stable.
+
+Lemma cartprod_order : orderrel cartprodrel.
+Proof.
+  apply/orderrelP.
+  split=> [ [xp xq] | [xp xq] [yp yq] | [yp yq] [xp xq] [zp zq]]; rewrite !finrelE /=.
+  - rewrite in_pair => /andP [] Hp Hq; apply/andP; split; exact: posetnn.
+  - move=> /andP [] /andP [] HxyP HxyQ /andP [] HyxP HyxQ.
+    by rewrite (anti_poset HxyP HyxP) (anti_poset HxyQ HyxQ).
+  - move=> /andP [] HxyP HxyQ /andP [] HyzP HyzQ.
+    by rewrite (poset_trans HxyP HyzP) (poset_trans HxyQ HyzQ).
+Qed.
+Definition cartprod := Poset cartprod_order.
+
+Lemma cartprodP x y : reflect (P x.1 y.1 /\ Q x.2 y.2) (cartprod x y).
+Proof. by rewrite finrelE; apply andP. Qed.
+
+End CartProd.
+
+(******************************************************************************)
+(*                                                                            *)
+(*                          Convex sets in Posets                             *)
+(*                                                                            *)
+(******************************************************************************)
+
 Section Convex.
 
 Variable T : finType.
@@ -1256,12 +1302,12 @@ Lemma convexP E (P : poset E) (S : {set T}) :
   reflect (forall x y z, x \in S -> z \in S -> P x y -> P y z -> y \in S) (convex P S).
 Proof.
   apply (iffP idP) => [|H].
-  - move=> /forallP Hallx x y z /(implyP (Hallx x)) {Hallx}.
-    move=> /forallP Hallz /(implyP (Hallz z)) {Hallz} /forallP Hally Hxy Hyz.
-    apply (implyP (Hally y)); by rewrite Hxy Hyz.
-  - apply/forallP => x; apply/implyP => /H{H}H.
-    apply/forallP => z; apply/implyP => /H{H}H.
-    apply/forallP => y; apply/implyP => /andP [].
+  - move=> /forall_inP Hallx x y z /Hallx {Hallx}.
+    move=> /forall_inP Hallz/Hallz {Hallz} /forall_inP Hally Hxy Hyz.
+    apply Hally; by rewrite Hxy Hyz.
+  - apply/forall_inP => x /H{H}H.
+    apply/forall_inP => z /H{H}H.
+    apply/forall_inP => y /andP [].
     exact: H.
 Qed.
 
@@ -1327,7 +1373,7 @@ Proof.
     have:= disjoint_Inf_ESup; rewrite disjoints_subset setCU => H1.
     have HxInf := FxE disjoint_Inf_E Hx; by rewrite HxInf (QF _ _ HxInf) /= andbF !orbF.
   - apply/linextP; split.
-    apply/extP => x y Pxy; have:= stableP Pxy => [] [] /FuP/or3P [] Hx.
+    apply/extP => x y Pxy; have:= stablerelP Pxy => [] [] /FuP/or3P [] Hx.
     + move=> /FuP/orP [Hy|].
       * suff: LInf x y by rewrite !simpl => ->.
         move: LInfP => /linextP [] /extP Hext _; apply Hext => {Hext}.
@@ -1336,7 +1382,7 @@ Proof.
     + move=> /FuP/or3P [] Hy.
       * exfalso; move: Hy; rewrite inE => /andP []; rewrite inE negb_or => /andP [] H1 H2 _.
         move: H2; rewrite inE negb_and inE negb_and H1 /=.
-        have := stableP Pxy => [] [] _ -> /=.
+        have := stablerelP Pxy => [] [] _ -> /=.
         rewrite negb_exists => /forallP H.
         have:= H x; by rewrite Hx Pxy.
       * suff: L x y by rewrite !simpl => ->; rewrite orbT.
@@ -1346,7 +1392,7 @@ Proof.
     + move=> /FuP/or3P [] Hy.
       * exfalso.
         move: Hy Hx; rewrite !inE negb_or => /andP [] /andP [] Hy; rewrite Hy /=.
-        have:= stableP Pxy => [] [] -> ->; rewrite !andbT /=.
+        have:= stablerelP Pxy => [] [] -> ->; rewrite !andbT /=.
         rewrite negb_exists => /forallP H _ /andP [] Hx /existsP [] z /andP [] Hz Pzx.
         have:= H z; by rewrite Hz /= (poset_trans Pzx Pxy).
       * exfalso.
@@ -1372,14 +1418,21 @@ Proof.
     have HzInf := FxE disjoint_Inf_E Hz; rewrite (QF _ _ HzInf) /= ?andbT ?orbF.
     have HzSup := ExF disjoint_E_Sup Hz; rewrite HzSup (QF _ _ HzSup) andbF /= ?andbT ?orbF.
     move {HxInf HxSup HzInf HzSup} => /orP [Lxy _| Supy /orP [Lyz|Infy]].
-    + by have := stableP Lxy => [] [].
-    + by have := stableP Lyz => [] [].
+    + by have := stablerelP Lxy => [] [].
+    + by have := stablerelP Lyz => [] [].
     + exfalso.
       have:= disjoint_Inf_ESup; rewrite disjoints_subset => /subsetP H.
       have := H y Infy; by rewrite inE inE Supy orbT.
 Qed.
 
 End Convex.
+
+
+(******************************************************************************)
+(*                                                                            *)
+(*                         Linear posets and lists                            *)
+(*                                                                            *)
+(******************************************************************************)
 
 Section LinearPoset.
 
@@ -1427,7 +1480,7 @@ Section PermEqS.
 Variable s : seq T.
 Hypothesis Hperm : perm_eq s (enum E).
 
-Lemma mem2_stable : stable E (mem2 s).
+Lemma mem2_stable : stablerel E (mem2 s).
 Proof.
   move=> x y. rewrite /mem2 -![_ \in E]mem_enum -!(perm_eq_mem Hperm).
   case: (boolP (x \in s)) => [_ Hy|Hx].
@@ -1518,7 +1571,7 @@ Proof.
   apply ext_total; last exact HtotP.
   apply/extP => x y Pxy.
   have /perm_eqlP := perm_sort expposet_of_seq (enum E); rewrite -/seq_of_poset => Hperm.
-  rewrite finrelE; have:= stableP Pxy => [] [] Hx Hy.
+  rewrite finrelE; have:= stablerelP Pxy => [] [] Hx Hy.
   rewrite (mem2_indexE _ _ seq_of_poset_uniq); last by rewrite (perm_eq_mem Hperm) mem_enum.
   move: sorted_seq_of_poset Hx Hy.
   rewrite -[x \in E]mem_enum -[y \in E]mem_enum -!(perm_eq_mem Hperm).
@@ -1628,10 +1681,128 @@ Qed.
 
 End SeqExt.
 
+Section MinMax.
+
+Variable P : linposet.
+
+Lemma min_lin x : ismin P x -> x = head x (permseq_of_linposet P).
+Proof.
+  case: P => Pos /= /totalrelP HPos [] Hx Hmin.
+  have:= sorted_seq_of_poset HPos.
+  case Hpos : (seq_of_poset Pos) => [// | p0 perm] /= Hsort.
+  have Hp0 : p0 \in Pos.
+    by rewrite -mem_enum -(perm_eq_mem (perm_seq_of_poset Pos)) Hpos inE eq_refl.
+  apply (Hmin _ Hp0).
+  case: (altP (x =P p0)) => [-> | Hxp0]; first exact: posetnn.
+  apply (allP (order_path_min (poset_trans (P := Pos)) Hsort)).
+  move: Hx; rewrite -mem_enum -(perm_eq_mem (perm_seq_of_poset Pos)) Hpos inE.
+  by move: Hxp0 => /negbTE -> /=.
+Qed.
+
+Lemma min_linE x : x \in E -> x = head x (permseq_of_linposet P) -> ismin P x.
+Proof.
+  case: P => Pos /= /totalrelP HPos Hx Heq; split => [| y Hy Pyx]; first exact Hx.
+  apply: (anti_poset _ Pyx).
+  have:= sorted_seq_of_poset HPos.
+  case Hpos : (seq_of_poset Pos) Heq => [| p0 perm] /= Heq.
+    exfalso; move: Hy.
+    by rewrite -mem_enum -(perm_eq_mem (perm_seq_of_poset Pos)) Hpos in_nil.
+  subst p0; case: (altP (y =P x)) => [-> _ | Hyx Hpath]; first exact: posetnn.
+  apply (allP (order_path_min (poset_trans (P := Pos)) Hpath)).
+  move: Hy; rewrite -mem_enum -(perm_eq_mem (perm_seq_of_poset Pos)) Hpos inE.
+  by move: Hyx => /negbTE -> /=.
+Qed.
+
+End MinMax.
+
 End LinearPoset.
 
 
 
+
+(******************************************************************************)
+(*                                                                            *)
+(*                          Poset of endofunctions                            *)
+(*                                                                            *)
+(******************************************************************************)
+
+Section FunOrder.
+
+Variable T : finType.
+Variable E : {set T}.
+
+Definition stable (f : T -> T) := (forall x, x \in E -> f x \in E).
+Definition endopred (f : T -> T) := [forall x, if x \in E then f x \in E else f x == x].
+
+Record endofunType := EndoFun { Fun :> {ffun T -> T}; _ : endopred Fun }.
+Canonical endofun_subType := Eval hnf in [subType for Fun].
+Definition endofun_eqMixin := Eval hnf in [eqMixin of endofunType by <:].
+Canonical endofun_eqType := Eval hnf in EqType endofunType endofun_eqMixin.
+Definition endofun_choiceMixin := Eval hnf in [choiceMixin of endofunType by <:].
+Canonical endofun_choiceType := Eval hnf in ChoiceType endofunType endofun_choiceMixin.
+Definition endofun_countMixin := Eval hnf in [countMixin of endofunType by <:].
+Canonical endofun_countType := Eval hnf in CountType endofunType endofun_countMixin.
+Canonical endofun_subCountType := Eval hnf in [subCountType of endofunType].
+Definition endofun_finMixin := Eval hnf in [finMixin of endofunType by <:].
+Canonical endofun_finType := Eval hnf in  FinType endofunType endofun_finMixin.
+Canonical endofun_subFinType := Eval hnf in [subFinType of endofunType].
+
+Lemma endofun_of_fun (f : T -> T) :
+  stable f -> endopred [ffun x => if x \in E then f x else x].
+Proof.
+  move => H; apply/forallP => x; rewrite ffunE.
+  case: (boolP (x \in E)) => [/H |] //.
+Qed.
+Definition endofun (f : T -> T) (H : stable f) := EndoFun (endofun_of_fun H).
+
+Lemma endofuntypeP (f : endofunType) : endopred f.
+Proof. by case: f. Qed.
+
+Lemma stableP (f : endofunType) : stable f.
+Proof. case: f => f /= /forallP Hall x Hx. have := Hall x; by rewrite Hx. Qed.
+Lemma endoE (f : T -> T) (H : stable f) : {in E, f =1 endofun H}.
+Proof. by move=> x /=; rewrite ffunE => ->. Qed.
+
+Lemma endofunP (f g : endofunType) : f = g <-> {in E, f =1 g}.
+Proof.
+  split.
+  - move=> H x Hx.
+    have : f = g :> {ffun T -> T} by rewrite H.
+    rewrite -ffunP; by apply.
+  - move=> H; apply val_inj => /=; rewrite -ffunP => x.
+    have:= forallP (endofuntypeP g) x; have:= forallP (endofuntypeP f) x.
+    by case: (boolP (x \in E)) => [/H | _ /eqP -> /eqP ->].
+Qed.
+
+Variable P : poset E.
+
+Lemma pointwise_stable :
+  stablerel [set : endofunType] (fun f g => [forall x in E, P (f x) (g x)]).
+Proof. move=> f g _; by rewrite inE. Qed.
+Definition pointwiserel := finrel_stable pointwise_stable.
+
+Lemma pointwise_order : orderrel pointwiserel.
+Proof.
+  apply/orderrelP; split => [f Hf | f g | g f h] /=; rewrite !finrelE.
+  - apply/forall_inP => x /(stableP f); by apply posetnn.
+  - move=> /andP [] /forall_inP Hfg /forall_inP Hgf.
+    rewrite endofunP => x Hx; apply: (anti_poset (Hfg x Hx) (Hgf x Hx)).
+  - move=> /forall_inP Hfg /forall_inP Hgh; apply/forall_inP => x Hx.
+    by apply (poset_trans (Hfg x Hx) (Hgh x Hx)).
+Qed.
+Definition pointwise := Poset pointwise_order.
+
+Lemma pointwiseP (f g : endofunType) :
+  reflect (forall x, x \in E -> P (f x) (g x)) (pointwise f g).
+Proof. rewrite finrelE; exact: forall_inP. Qed.
+
+End FunOrder.
+
+(******************************************************************************)
+(*                                                                            *)
+(*                           Recursion in posets                              *)
+(*                                                                            *)
+(******************************************************************************)
 
 
 Section Recursion.
@@ -1659,14 +1830,14 @@ Variable f : T -> T.
 Hypothesis Hcontr : contract P f.
 
 Lemma contract_stable x : x \in E -> f x \in E.
-Proof. by move: Hcontr => H/H/stableP []. Qed.
+Proof. by move: Hcontr => H/H/stablerelP []. Qed.
 
 Theorem contract_iter_fix x : x \in E -> { i | iter i.+1 f x = iter i f x }.
 Proof.
   move: x; apply: (well_founded_induction (strict_Wf P)) => x Hind Hx.
   case: (altP (x =P f x)) => [Heq|Hneq]; first by exists 0 => /=; rewrite -Heq.
   have Hfxx : strict P (f x) x by rewrite /strict /= eq_sym Hneq Hcontr.
-  have := stableP (strictW Hfxx) => [] [] Hfx _.
+  have := stablerelP (strictW Hfxx) => [] [] Hfx _.
   have := Hind (f x) Hfxx Hfx => [] [] i Hi.
   exists i.+1; move: Hi; by rewrite !iterSr.
 Qed.
@@ -1698,6 +1869,29 @@ Proof.
   apply: (poset_trans _ Pif); exact: Hcontr.
 Qed.
 
+Lemma fix_gt x : f x = x -> forall n, iter n f x = x.
+Proof. move=> Hfix; by elim=> [| n /= ->]. Qed.
+
+Lemma contract_fixC : {in E, contract_fix \o f =1 f \o contract_fix}.
+Proof.
+  rewrite /contract_fix => x /=; case (boolP (x \in E)) => // Hx _.
+  have := contract_stable Hx; case (boolP (f x \in E)) => // Hfx _.
+  case (contract_iter_fix Hx) => n Hn.
+  case (contract_iter_fix Hfx) => m; rewrite -!iterS -!iterSr.
+  move: m.+1 => {m} m => Hm; rewrite Hn.
+  wlog : m n Hm Hn / m <= n.
+    move=> Hlog; case: (leqP m n); first exact: Hlog.
+    move=> /ltnW H; apply esym; exact: Hlog.
+  move=> /subnK Hmn; rewrite -Hmn iter_add.
+  apply esym; apply fix_gt; exact: Hm.
+Qed.
+
+Lemma iterC g n : {in E, g \o f =1 f \o g} -> {in E, g \o iter n f =1 iter n f \o g}.
+Proof.
+  move=> H; elim: n => [//| n IHn] x Hx /=.
+  have:= (IHn _ Hx) => /= <-; apply H; by apply (contract_iterP n Hx).1.
+Qed.
+
 End Contract.
 
 Lemma expand_iter_fix P f x :
@@ -1705,7 +1899,7 @@ Lemma expand_iter_fix P f x :
 Proof. move/expand_contract_dual/contract_iter_fix; by apply. Qed.
 
 Lemma expand_stable P f x : expand P f -> x \in E -> f x \in E.
-Proof. by move => H/H/stableP []. Qed.
+Proof. by move => H/H/stablerelP []. Qed.
 
 Lemma expand_iterP P f n x :
   expand P f -> x \in E -> iter n f x \in E /\ P x (iter n f x).
