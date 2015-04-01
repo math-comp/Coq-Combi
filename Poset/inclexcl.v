@@ -21,8 +21,9 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Open Scope ring_scope.
 Import GRing.
+Open Scope ring_scope.
+
 
 Section InclusionExclusion.
 
@@ -30,6 +31,22 @@ Variable T : finType.
 Variable R : ringType.
 Variable E : {set T}.
 Variable P : poset E.
+
+Lemma sum_interval (M : T -> T -> R) x y :
+  P x y ->
+  \sum_(z : T | P x z && P z y) M x z
+  = M x y + \sum_(z : T | P x z && strict P z y) M x z.
+Proof.
+  move=> Pxy.
+  rewrite (bigID (pred1 y)) /=.
+  rewrite (eq_bigl (pred1 y)); first last.
+    move=> z /=; case (altP (z =P y)) => [->|]; last by rewrite andbF.
+    by rewrite Pxy; have:= stablerelP Pxy => [] [] _ /posetnn ->.
+  rewrite big_pred1_eq.
+  rewrite (eq_bigl (fun z => P x z && strict P z y)); first by [].
+  by move=> z /=; rewrite /strict /= andbA.
+Qed.
+
 
 CoInductive moebius_fun (M : T -> T -> R) : Prop :=
   Moebius_Fun :
@@ -42,7 +59,7 @@ Hypothesis HM : moebius_fun M.
 Variable f g : T -> R.
 Hypothesis Hfg : forall x : T, f x = \sum_(y : T | P x y) g y.
 
-Theorem incl_excl x : x \in E -> g x = \sum_(y : T| P x y) (M x y) * (f y).
+Theorem poset_incl_excl x : x \in E -> g x = \sum_(y : T| P x y) (M x y) * (f y).
 Proof.
   move: HM x => [] HMfix HMnP HMinter x Hx.
   rewrite (eq_bigr (fun y => \sum_(z | P y z) (M x y) * (g z))); first last.
@@ -50,8 +67,7 @@ Proof.
   rewrite (exchange_big_dep (P x)) /=; last by move=> y z; apply: poset_trans.
   rewrite (bigID (pred1 x)) /=.
   set S := (X in X + _); have {S} -> : S = g x.
-    rewrite /S{S}.
-    rewrite (eq_bigl (pred1 x)); first last.
+    rewrite /S{S} (eq_bigl (pred1 x)); first last.
       move=> i /=; case (altP (i =P x)) => [->|]; last by rewrite andbF.
       by rewrite posetnn.
     rewrite big_pred1_eq (eq_bigl (pred1 x)); first last.
@@ -69,6 +85,32 @@ Proof.
 Qed.
 
 End InclusionExclusion.
+
+
+
+Section Unicity.
+
+Variable T : finType.
+Variable R : ringType.
+Variable E : {set T}.
+Variable P : poset E.
+
+Theorem moebius_fun_uniq (M1 M2 : T -> T -> R) :
+  moebius_fun P M1 -> moebius_fun P M2 -> {in E, M1 =2 M2}.
+Proof.
+  move=> [] Mfix1 MnP1 Minter1 [] Mfix2 MnP2 Minter2 x Hx.
+  apply: (well_founded_ind (strict_Wf P)) => y IHy.
+  case: (altP (x =P y)) => [<- | Hneq]; first by rewrite Mfix1 // Mfix2.
+  case: (boolP (P x y)) => [Pxy | nPxy]; last by rewrite MnP1 // MnP2.
+  have sPxy: strict P x y by rewrite /strict /= Pxy Hneq.
+  have := Minter1 _ _ sPxy; rewrite (sum_interval _ Pxy) => /eqP.
+  rewrite addr_eq0 => /eqP ->.
+  have := Minter2 _ _ sPxy; rewrite (sum_interval _ Pxy) => /eqP.
+  rewrite addr_eq0 => /eqP ->.
+  congr (- _); apply eq_bigr => z /andP [] _; exact: IHy.
+Qed.
+
+End Unicity.
 
 
 
@@ -120,15 +162,8 @@ Qed.
 Lemma moebius_interv x y :
   strict P x y -> \sum_(z : T | P x z && P z y) moebius x z = 0.
 Proof.
-  move=> sPxy; rewrite (bigID (pred1 y)) /=.
-  rewrite (eq_bigl (pred1 y)); first last.
-    move=> z /=; case (altP (z =P y)) => [->|]; last by rewrite andbF.
-    rewrite (strictW sPxy) posetnn //.
-    by move: (stablerelP (strictW sPxy)) => [].
-  rewrite big_pred1_eq.
-  rewrite (eq_bigl (fun z => P x z && strict P z y)); first last.
-    by move=> z /=; rewrite /strict /= andbA.
-  by rewrite -[X in _ + X]opprK -(moebius_interv_ind sPxy) addrN.
+  move=> sPxy.
+  by rewrite (sum_interval _ (strictW sPxy)) (moebius_interv_ind sPxy) addNr.
 Qed.
 
 Lemma moebiusP : moebius_fun P moebius.
@@ -139,6 +174,59 @@ Proof.
   - exact moebius_interv.
 Qed.
 
-Definition moebius_inv := incl_excl moebiusP.
+Definition moebius_inv := poset_incl_excl moebiusP.
 
 End Moebius.
+
+
+
+Section Boolean.
+
+Variable T : finType.
+Variable R : ringType.
+
+Definition boolmoebius (S1 S2 : {set T}) : R :=
+  if (S1 \subset S2) then (-1) ^+ #|S2 :\: S1| else 0.
+
+Lemma boolmoebiusP : moebius_fun (boolposet T) boolmoebius.
+Proof.
+  rewrite /boolmoebius; constructor.
+  - move=> X _; by rewrite subxx_hint setDv cards0.
+  - move=> X Y _; by rewrite finrelE => /negbTE ->.
+  - move=> X Y; rewrite /strict /= finrelE andbC -properEneq => PrXY.
+    rewrite (eq_bigr (fun z => (-1) ^+ #|z :\: X|)); first last.
+      move=> Z /=; by rewrite finrelE => /andP [] ->.
+    rewrite (eq_bigl (fun Z : {set T} => (X \subset Z) && (Z \subset Y))); first last.
+      by move => Z /=; rewrite !finrelE.
+    have {PrXY} := properP PrXY => [] [] HXY [] a HaY HanX.
+    rewrite (bigID (fun (i : {set T}) => a \in i)) /=.
+    rewrite (reindex_onto (fun Z => a |: Z) (fun Z => Z :\ a)) /=; first last.
+      move=> i /andP [] _; by apply setD1K.
+    set P := (X in \sum_( i | X i ) _ + _).
+    set Q := (X in _ + \sum_( i | X i ) _).
+    rewrite (eq_bigl Q); first last.
+      move=> S; rewrite /P/Q{P Q} setU11 andbT.
+      have -> : ((a |: S) :\ a == S) = (a \notin S).
+        apply (sameP idP); apply (iffP idP) => [/setU1K -> // | /eqP <-].
+        by rewrite !inE negb_and negbK eq_refl.
+        case: (boolP (a \in S)) => [_| Ha] //=; first by rewrite !andbF.
+        rewrite !andbT; congr (_ && _).
+        - apply (sameP idP); apply (iffP idP) => /subsetP Hsub; apply/subsetP => i.
+          + rewrite inE => /Hsub ->; by rewrite orbT.
+          + move=> Hi; have:= Hsub _ Hi; rewrite !inE.
+            case: (altP (i =P a)) => [Hia|] //=.
+            exfalso; move: HanX; by rewrite -Hia Hi.
+        - apply (sameP idP); apply (iffP idP) => /subsetP Hsub; apply/subsetP => i.
+          + rewrite !inE; case: (altP (i =P a)) => [Hia _ | _] //=; last by apply Hsub.
+            by rewrite Hia.
+          + move=> Hi; apply Hsub; by rewrite inE Hi orbT.
+    rewrite {P} (eq_bigr (fun i => - (-1) ^+ #|i :\: X|)); first last.
+      move=> S; rewrite /Q{Q} => /andP [] /andP [] XsS _ HanS.
+      suff -> : (a |: S) :\: X = a |: (S :\: X).
+        by rewrite cardsU1 inE HanX /= HanS /= addSn add0n exprS mulN1r.
+      rewrite -setP => i; rewrite !inE.
+      by case (altP (i =P a)) => [/= ->| //]; first by rewrite HanX.
+    by rewrite sumrN addNr.
+Qed.
+
+End Boolean.
