@@ -336,6 +336,8 @@ Definition poset_finMixin := Eval hnf in [finMixin of poset by <:].
 Canonical poset_finType := Eval hnf in  FinType poset poset_finMixin.
 Canonical poset_subFinType := Eval hnf in [subFinType of poset].
 
+Definition carrier (P : poset) := T.
+
 Definition set_of_poset (P : poset) : {set T} := E.
 Coercion set_of_poset : poset >-> set_of.
 
@@ -446,15 +448,18 @@ Section Boolean.
 
 Variable T : finType.
 
+Lemma subset_stable : stablerel [set: {set T}] (fun (A B : {set T}) => A \subset B).
+Proof. move=> x y /=; by rewrite !in_setT. Qed.
+
 Lemma subset_order :
-  orderrel (finrel [set: {set T}] (fun (A B : {set T}) => A \subset B)).
+  orderrel (finrel_stable subset_stable).
 Proof.
   apply/orderrelP.
-  split => [x Hx | x y | y x z] /=; rewrite !finrelE !in_setT //=.
+  split => [x Hx | x y | y x z] /=; rewrite !finrelE //.
   - by rewrite -eqEsubset => /eqP.
   - exact: subset_trans.
 Qed.
-Definition Bool := Poset subset_order.
+Definition boolposet := Poset subset_order.
 
 End Boolean.
 
@@ -1717,6 +1722,35 @@ End MinMax.
 
 End LinearPoset.
 
+
+Section ConvexLinear.
+
+Variable T : finType.
+Variable E F : {set T}.
+Hypothesis Hsub : E \subset F.
+Variable P : linposet F.
+
+
+Lemma convlinseq :
+  reflect
+    (exists u w : seq T,
+       permseq_of_linposet P = u ++ (seq_of_poset (induced Hsub P)) ++ w :> seq T)
+    (convex P E).
+Proof.
+  apply (iffP idP).
+  - move=> /forall_inP H.
+    set l := permseq_of_linposet P.
+    case: (boolP (E == set0)) => [/eqP HE | /set0Pn [] x Hx].
+      subst E; exists l; exists [::]; rewrite cats0 -{1}(cats0 l); congr (_ ++ _).
+      by rewrite /seq_of_poset enum_set0 /sort/merge_sort_rec/merge_sort_pop.
+    have Hxind : x \in (induced Hsub P) by [].
+    have:= find_min Hxind => [] [] m Hm; have:= find_max Hxind => [] [] M HM.
+    exists (take (index m l) l); exists (drop (index M l).+1 l).
+    admit.
+  admit.
+Qed.
+
+End ConvexLinear.
 
 
 
