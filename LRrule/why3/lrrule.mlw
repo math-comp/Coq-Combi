@@ -16,13 +16,25 @@ module LRrule
     done;
     res
 
-  let partial_sums (a: array int) : array int
-    ensures  { length result = 1 + length a }
+  let compute_end_of_row (outer inner: array int) : array int
+    ensures  { length result = length outer }
   =
-    let n = Array.length a in
-    let sums = Array.make (n + 1) 0 in
-    for i = 0 to n-1 do sums[i+1] <- sums[i] + a[i] done;
+    let ds = diff_shape outer inner in
+    let n = Array.length ds in
+    let sums = Array.make n 0 in
+    for i = 1 to n-1 do sums[i] <- sums[i-1] + ds[i] done;
     sums
+
+  let compute_end_of_overlap (outer inner end_of_row: array int) : (array int, array int)
+  =
+    let n = Array.length outer in
+    let eoo = Array.make n 0 in
+    let below = Array.make n 0 in
+    for r = 1 to n-1 do
+      below[r] <- outer[r] - inner[r-1];
+      eoo[r] <- end_of_row[r-1] + below[r]
+    done;
+    (eoo, below)
 
   let add_empty_row (outer: array int) (inner: array int) : (array int, array int)
     requires { 1 <= length outer = length inner }
@@ -37,30 +49,25 @@ module LRrule
   let lrrule (outer: array int) (inner: array int) (eval: array int) : int
   =
     let (outer, inner) = add_empty_row outer inner in
-    let ds = diff_shape outer inner in
-    let sums = partial_sums ds in
-    let n = sums[Array.length sums - 1] in
+    let end_of_row = compute_end_of_row outer inner in
+    let n = end_of_row[Array.length end_of_row - 1] in
+    let (end_of_overlap, below) = compute_end_of_overlap outer inner end_of_row in
     let szshape = Array.length outer in (* = Array.length inner *)
     let szeval = Array.length eval in
     let innev = Array.make szeval 0 in
     let lastinnev = ref 0 in (* only zeros from this index *)
     let work = Array.make n 0 in
     let compute_bounds (row idx: int) =
-      let min =
-        if idx < outer[row] - inner[row-1] then
-          (* there are values below *)
-          work[sums[row-1] - idx - (inner[row-1] - inner[row])]
-        else 0
-      in
-      let max = if idx = 0 then !lastinnev
-        else MinMax.min !lastinnev work[sums[row] - idx + 1] in
+      let min = if idx < end_of_overlap[row] then work[idx - below[row]] + 1 else 0 in
+      let max = if idx = end_of_row[row-1] then !lastinnev
+        else MinMax.min !lastinnev work[idx - 1] in
       (min, max)
     in
     (* row = current row in work
        idx = current index in row, from the end *)
     let rec yamtab_row (row idx: int) =
-      if idx = outer[row] - inner[row] then
-        count_rec (row + 1)
+      if idx = end_of_row[row] then
+        count_rec (row + 1) idx
       else begin
         let (min, max) = compute_bounds row idx in
         let sum = ref 0 in
@@ -68,7 +75,7 @@ module LRrule
           if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
             innev[v] <- innev[v] + 1;
             if v = !lastinnev then lastinnev += 1;
-            work[n - sums[row-1] - idx] <- v;
+            work[idx] <- v;
             sum += yamtab_row row (idx+1);
             innev[v] <- innev[v] - 1;
             if !lastinnev = v+1 && innev[v] = 0 then lastinnev -= 1
@@ -77,9 +84,9 @@ module LRrule
         !sum
       end
     (* move from row [row-1] to row [row] *)
-    with count_rec (row: int) =
-      if row = szshape then 1 else yamtab_row row 0
+    with count_rec (row idx: int) =
+      if row = szshape then 1 else yamtab_row row idx
     in
-    count_rec 1
+    count_rec 1 0
 
 end

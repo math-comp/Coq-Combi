@@ -1,1 +1,8 @@
 lrrule__LRrule.ml
+*__*.ml
+*.cm*
+*.o
+test_lrrule
+test_lrrule.byte
+*.bak
+*.annot
