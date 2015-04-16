@@ -761,6 +761,46 @@ Proof.
   exact (LRyamtab_list_countE Hnil Hinn Hout Hsize Hskew (skew_nil_yamE Hyam)).
 Qed.
 
+
+Section PackedSpec.
+
+Variable  inner eval outer : seq nat.
+
+Inductive inputSpec :=
+  InputSpec :
+    is_part inner ->
+    is_part outer ->
+    included inner outer ->
+    is_part eval ->
+    sumn eval = sumn (diff_shape inner outer) -> inputSpec.
+
+Inductive outputSpec (tab : seq (seq nat)) :=
+  OutputSpec :
+    is_skew_tableau inner tab ->
+    shape tab = diff_shape inner outer ->
+    is_yam (to_word tab) ->
+    shape_rowseq (to_word tab) = eval -> outputSpec tab.
+
+Lemma outputSpecP tab :
+  inputSpec -> tab \in (LRyamtab_list inner eval outer) -> outputSpec tab.
+Proof.
+  move=> [] Hinn Hout Hincl Hev Hsumn Htab; constructor.
+  - exact: (@LRyamtab_skew_tableau inner eval outer tab).
+  - exact: (@LRyamtab_shape inner eval outer tab).
+  - exact: (@LRyamtab_yam inner eval outer tab).
+  - exact: (@LRyamtab_eval inner eval outer tab).
+Qed.
+
+Lemma outputSpec_count_mem tab :
+  inputSpec -> outputSpec tab -> count_mem tab (LRyamtab_list inner eval outer) = 1.
+Proof.
+  move=> [] Hinn Hout Hincl Hev Hsumnc [] Htab Hshape Hyam Heval.
+  apply: count_mem_LRyamtab_list => //=.
+  by rewrite /is_yam_of_shape Hyam Heval eq_refl.
+Qed.
+
+End PackedSpec.
+
 Section Spec.
 
 Variables d1 d2 : nat.
