@@ -2,5 +2,84 @@
 module LRrule
 
   use import int.Int
+  use import int.MinMax
+  use import ref.Refint
+  use import array.Array
+
+  let diff_shape (outer: array int) (inner: array int) : array int
+    requires { length outer = length inner }
+    ensures  { length result = length outer }
+  =
+    let res = Array.copy outer in
+    for i = 0 to Array.length outer - 1 do
+      res[i] <- res[i] - inner[i]
+    done;
+    res
+
+  let partial_sums (a: array int) : array int
+    ensures  { length result = 1 + length a }
+  =
+    let n = Array.length a in
+    let sums = Array.make (n + 1) 0 in
+    for i = 0 to n-1 do sums[i+1] <- sums[i] + a[i] done;
+    sums
+
+  let add_empty_row (outer: array int) (inner: array int) : (array int, array int)
+    requires { 1 <= length outer = length inner }
+    ensures  { let (o, i) = result in length o = length i = 1 + length outer }
+  = let sz = Array.length outer in
+    let n = outer[0] in
+    let o = Array.make (sz + 1) n in
+    let i = Array.make (sz + 1) n in
+    for k = 1 to sz do o[k] <- outer[k - 1]; i[k] <- inner[k - 1] done;
+    (o, i)
+
+  let lrrule (outer: array int) (inner: array int) (eval: array int) : int
+  =
+    let (outer, inner) = add_empty_row outer inner in
+    let ds = diff_shape outer inner in
+    let sums = partial_sums ds in
+    let n = sums[Array.length sums - 1] in
+    let szshape = Array.length outer in (* = Array.length inner *)
+    let szeval = Array.length eval in
+    let innev = Array.make szeval 0 in
+    let lastinnev = ref 0 in (* only zeros from this index *)
+    let work = Array.make n 0 in
+    let compute_bounds (row idx: int) =
+      let min =
+        if idx < outer[row] - inner[row-1] then
+          (* there are values below *)
+          work[sums[row-1] - idx - (inner[row-1] - inner[row])]
+        else 0
+      in
+      let max = if idx = 0 then !lastinnev
+        else MinMax.min !lastinnev work[sums[row] - idx + 1] in
+      (min, max)
+    in
+    (* row = current row in work
+       idx = current index in row, from the end *)
+    let rec yamtab_row (row idx: int) =
+      if idx = outer[row] - inner[row] then
+        count_rec (row + 1)
+      else begin
+        let (min, max) = compute_bounds row idx in
+        let sum = ref 0 in
+        for v = min to max do
+          if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
+            innev[v] <- innev[v] + 1;
+            if v = !lastinnev then lastinnev += 1;
+            work[n - sums[row-1] - idx] <- v;
+            sum += yamtab_row row (idx+1);
+            innev[v] <- innev[v] - 1;
+            if !lastinnev = v+1 && innev[v] = 0 then lastinnev -= 1
+          end
+        done;
+        !sum
+      end
+    (* move from row [row-1] to row [row] *)
+    with count_rec (row: int) =
+      if row = szshape then 1 else yamtab_row row 0
+    in
+    count_rec 1
 
 end
