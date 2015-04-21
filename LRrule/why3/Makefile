@@ -21,12 +21,13 @@ OCAMLLIB= why3__BuiltIn__BuiltIn.ml \
 EXTRACT=lrrule__LRrule.ml
 
 OPAM:=~/.opam/$(shell opam switch show)/lib
+LIBDIR:=$(shell why3 --print-libdir)/why3
 
 test_lrrule: $(EXTRACT) debug.ml test_lrrule.ml
-	ocamlopt -o $@ -g -annot -I $(OPAM)/zarith -I ~/why3/lib/why3 zarith.cmxa why3extract.cmxa $(OCAMLLIB) debug.ml $(EXTRACT) test_lrrule.ml
+	ocamlopt -o $@ -g -annot -I $(OPAM)/zarith zarith.cmxa -I $(LIBDIR) why3extract.cmxa $(OCAMLLIB) debug.ml $(EXTRACT) test_lrrule.ml
 
 test_lrrule.byte: $(EXTRACT) debug.ml test_lrrule.ml
-	ocamlc -o $@ -g -annot -I $(OPAM)/zarith -I ~/why3/lib/why3 zarith.cma why3extract.cma $(OCAMLLIB) debug.ml $(EXTRACT) test_lrrule.ml
+	ocamlc -o $@ -g -annot -I $(OPAM)/zarith zarith.cma -I $(LIBDIR) why3extract.cma $(OCAMLLIB) debug.ml $(EXTRACT) test_lrrule.ml
 
 $(EXTRACT): lrrule.mlw
 	why3 extract -D ocaml64 -L . -T lrrule.LRrule -o .
