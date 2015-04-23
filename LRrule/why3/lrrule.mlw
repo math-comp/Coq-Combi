@@ -1,57 +1,95 @@
 
+(*
+   Alt-Ergo 0.99.1
+   CVC4 1.4
+   Z3 4.3.2
+   Coq 8.4pl5
+*)
+
+theory Sum
+
+  use import int.Int
+  use HighOrd
+
+  function sum (a b: int) (f: int -> int) : int
+  (** sum of [f n] for [a <= n <= b] *)
+
+  axiom sum_def1:
+    forall f: int -> int, a b: int.
+    b < a -> sum a b f = 0
+
+  axiom sum_def2:
+    forall f: int -> int, a b: int.
+    a <= b -> sum a b f = sum a (b - 1) f + f b
+
+  lemma sum_left:
+    forall f: int -> int, a b: int.
+    a <= b -> sum a b f = f a + sum (a + 1) b f
+
+  lemma sum_ext:
+    forall f g: int -> int, a b: int.
+    (forall i. a <= i <= b -> f i = g i) ->
+    sum a b f = sum a b g
+
+  lemma sum_nonneg:
+    forall f: int -> int, a b: int.
+    (forall i. a <= i <= b -> 0 <= f i) ->
+    0 <= sum a b f
+
+end
+
+
 module LRrule
 
   use import int.Int
   use import int.MinMax
   use import ref.Refint
   use import array.Array
+  use import Sum
 
   function is_part (shape: array int) : bool =
-    (forall i:int. 1 <= i < length shape -> shape[i-1] >= shape[i] ) /\
+    (forall i j: int. 0 <= i <= j < length shape -> shape[i] >= shape[j] ) /\
     (shape[length shape - 1] >= 0)
+
+  lemma is_part_nonneg:
+    forall sh. is_part sh -> forall i: int. 0 <= i  < length sh -> 0 <= sh[i]
 
   function included (inner: array int) (outer: array int) : bool =
     (length inner = length outer) /\
     (forall i:int. 0 <= i < length outer -> inner[i] <= outer[i])
 
-
-  let diff_shape (outer: array int) (inner: array int) : array int
-    requires { length inner = length outer }
-    ensures  { length result = length outer }
-    ensures  { forall i:int. 0 <= i < length result -> result[i] = outer[i] - inner[i] }
-    (* I'm not sure we want the following here, since it could be deduced from the *)
-    (* previous postcondition. Is it possible to have it as an outside lemma ?     *)
-    requires { included inner outer }
-    ensures  { forall i:int. 0 <= i < length result -> result[i] >= 0 }
-   =
-    let res = copy outer in
-    for i = 0 to length outer - 1 do
-      invariant { forall j:int. 0 <= j < i -> res[j] = outer[j] - inner[j] }
-      invariant { forall j:int. i <= j < length res -> res[j] = outer[j] }
-      res[i] <- res[i] - inner[i]
-    done;
-    res
-
-
   let compute_end_of_row (outer inner: array int) : array int
     requires { included inner outer }
     ensures  { length result = length outer }
+    ensures  { result[0] = 0 }
+    ensures  { forall i. 1 <= i < length result ->
+               result[i] = sum 1 i (\ j. outer[j] - inner[j]) }
   =
-    let ds = diff_shape outer inner in
-    let n = Array.length ds in
+    let n = Array.length outer in
     let sums = Array.make n 0 in
-    for i = 1 to n-1 do sums[i] <- sums[i-1] + ds[i] done;
+    for i = 1 to n-1 do
+      invariant { sums[0] = 0 }
+      invariant { forall k. 1 <= k < i -> sums[k] = sum 1 k (\j. outer[j] - inner[j]) }
+      sums[i] <- sums[i-1] + outer[i] - inner[i]
+    done;
     sums
 
 
-  let compute_end_of_overlap (outer inner end_of_row: array int) : (array int, array int)
-    requires { length outer = length inner }
-    requires { length outer = length end_of_row }
+  let compute_end_of_overlap_and_below
+    (outer inner end_of_row: array int) : (array int, array int)
+    requires { length outer = length inner = length end_of_row }
+    ensures  { let (eoo, below) = result in length eoo = length below = length outer }
+    ensures  { let (eoo, below) = result in
+               forall i. 1 <= i < length eoo ->
+               below[i] = outer[i] - inner[i-1] /\ eoo[i] = end_of_row[i-1] + below[i] }
+    (* eoo[0] and below[0] are left unspecified *)
   =
     let n = Array.length outer in
     let eoo = Array.make n 0 in
     let below = Array.make n 0 in
     for r = 1 to n-1 do
+      invariant { forall i. 1 <= i < r ->
+        below[i] = outer[i] - inner[i-1] /\ eoo[i] = end_of_row[i-1] + below[i] }
       below[r] <- outer[r] - inner[r-1];
       eoo[r] <- end_of_row[r-1] + below[r]
     done;
@@ -60,37 +98,53 @@ module LRrule
 
   let add_empty_row (outer: array int) (inner: array int) : (array int, array int)
     requires { 1 <= length outer = length inner }
-    ensures  { let (o, i) = result in length o = length i = 1 + length outer }
+    ensures  { let (out, inn) = result in length out = length inn = 1 + length outer }
+    ensures  { let (out, inn) = result in
+               out[0] = inn[0] = outer[0] /\
+               forall k. 1 <= k <= length outer -> out[k] = outer[k-1] /\ inn[k] = inner[k-1] }
   = let sz = Array.length outer in
     let n = outer[0] in
-    let o = Array.make (sz + 1) n in
-    let i = Array.make (sz + 1) n in
-    for k = 1 to sz do o[k] <- outer[k - 1]; i[k] <- inner[k - 1] done;
-    (o, i)
+    let out = Array.make (sz + 1) n in
+    let inn = Array.make (sz + 1) n in
+    for k = 1 to sz do
+      invariant { out[0] = inn[0] = outer[0] }
+      invariant { forall j. 1 <= j < k -> out[j] = outer[j-1] /\ inn[j] = inner[j-1] }
+      out[k] <- outer[k - 1]; inn[k] <- inner[k - 1]
+    done;
+    (out, inn)
 
   let lrrule (outer: array int) (inner: array int) (eval: array int) : int
-    requires { length outer = length inner }
+    requires { 1 <= length outer = length inner }
+    requires { included inner outer }
+    requires { is_part inner /\ is_part outer /\ is_part eval }
+    diverges
   =
     let (outer, inner) = add_empty_row outer inner in
     let end_of_row = compute_end_of_row outer inner in
     let n = end_of_row[Array.length end_of_row - 1] in
-    let (end_of_overlap, below) = compute_end_of_overlap outer inner end_of_row in
+    let (end_of_overlap, below) = compute_end_of_overlap_and_below outer inner end_of_row in
     let szshape = Array.length outer in (* = Array.length inner *)
     let szeval = Array.length eval in
     let innev = Array.make szeval 0 in
     let lastinnev = ref 0 in (* only zeros from this index *)
     let work = Array.make n 0 in
     let compute_bounds (row idx: int) =
+      requires { 0 <= row < szshape }
+      requires { end_of_row[row-1] <= idx < end_of_row[row] }
       let min = if idx < end_of_overlap[row] then work[idx - below[row]] + 1 else 0 in
       let max = if idx = end_of_row[row-1] then !lastinnev
         else MinMax.min !lastinnev work[idx - 1] in
       (min, max)
     in
-    (* row = current row in work
-       idx = current index in row, from the end *)
+    (* row = current row
+       idx = current index in work, from the start *)
     let rec count_rec (row idx: int) =
-      (* move from row [row-1] to row [row] *)
+      requires { 0 <= row <= szshape }
+      requires { end_of_row[row-1] <= idx <= end_of_row[row] }
+      diverges
+      (* found a solution *)
       if row = szshape then 1
+      (* move from row [row-1] to row [row] *)
       else if idx = end_of_row[row] then count_rec (row + 1) idx
       else begin
         let (min, max) = compute_bounds row idx in
