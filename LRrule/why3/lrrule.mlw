@@ -102,6 +102,8 @@ module LRrule
     ensures  { let (out, inn) = result in
                out[0] = inn[0] = outer[0] /\
                forall k. 1 <= k <= length outer -> out[k] = outer[k-1] /\ inn[k] = inner[k-1] }
+    requires { included inner outer}
+    ensures  { let (out, inn) = result in included inn out }
   = let sz = Array.length outer in
     let n = outer[0] in
     let out = Array.make (sz + 1) n in
