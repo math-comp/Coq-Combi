@@ -28,4 +28,4 @@ let [outer; inner; eval] =
 
 let () =
   Format.printf "%s@."
-    (Why3__BigInt.to_string (lrrule outer inner eval))
+    (Why3__BigInt.to_string (lrrule2 outer inner eval))

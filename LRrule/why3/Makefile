@@ -3,9 +3,9 @@
 
 test: test_lrrule
 	OCAMLRUNPARAM=bt ./test_lrrule 3 2 1 - 2 1 0 - 2 1 0
-	OCAMLRUNPARAM=bt ./test_lrrule 5 4 1 - 3 1 0 - 3 2 1
+	OCAMLRUNPARAM=bt ./test_lrrule 5 4 1 - 3 1 0 - 3 2 1 0
 	OCAMLRUNPARAM=bt ./test_lrrule 5 4 3 2 - 3 3 1 0 - 4 2 1 0
-	time ./test_lrrule 11 10 9 8 7 6 5 4 3 2 1 - 7 6 5 5 4 3 2 1 0 0 0 - 7 6 5 5 4 3 2 1 0 0 0
+	time ./test_lrrule 11 10 9 8 7 6 5 4 3 2 1 - 7 6 5 5 4 3 2 1 0 0 0 - 7 6 5 5 4 3 2 1 0
 	# 268484
 
 test.byte: test_lrrule.byte
