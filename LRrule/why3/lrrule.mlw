@@ -82,6 +82,11 @@ module LRrule
     ensures  { let (eoo, below) = result in
                forall i. 1 <= i < length eoo ->
                below[i] = outer[i] - inner[i-1] /\ eoo[i] = end_of_row[i-1] + below[i] }
+    ensures { let (eoo, below) = result in
+                forall row idx.
+                  2 <= row < length below ->
+                    end_of_row[row-1] <= idx < eoo[row] ->
+                     end_of_row[row-2] <= idx - below[row] < end_of_row[row-1]}
     (* eoo[0] and below[0] are left unspecified *)
   =
     let n = Array.length outer in
