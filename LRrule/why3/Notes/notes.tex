@@ -1,6 +1,10 @@
-\documentclass{article}
+\documentclass[12pt,a4paper]{article}
 
-\usepackage[vcentermath,enableskew]{youngtab}
+\usepackage[top=30pt,bottom=30pt,left=48pt,right=46pt]{geometry}
+
+\usepackage{genyoungtabtikz}
+% \YFrench % use french convention for tableaux.
+
 \usepackage{minted}
 \usemintedstyle{emacs}
 %\usemintedstyle{colorful}
@@ -132,22 +136,25 @@ Littlewood-Richardson rule\\[5mm]}
 Some examples:
   \[
   C_{331,421}^{5432} = 3
-  \qquad \tiny
-  \young(12,:00,:::1,:::00)\qquad
-  \young(02,:01,:::1,:::00)\qquad
-  \young(01,:02,:::1,:::00)
+  \qquad
+  \Yboxdim{12pt}\scriptstyle
+  \gyoung(12,:;00,:::;1,:::;00)\qquad
+  \gyoung(02,:;01,:::;1,:::;00)\qquad
+  \gyoung(01,:;02,:::;1,:::;00)
   \]
 % ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00
 % ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1
 % .00   .00   .00   .01   .00   .01   .02   .02   .12   .02   .02   .01   .01   .12   .12
 % 01    02    11    01    12    02    01    13    03    03    11    12    22    02    23
+
   \[
   C_{4321,431}^{7542} = 4
-  \qquad \tiny
-  \young(:2,::11,:::01,::::000)\quad
-  \young(:1,::12,:::01,::::000)\quad
-  \young(:1,::02,:::11,::::000)\quad
-  \young(:0,::12,:::11,::::000)\quad
+  \qquad
+  \Yboxdim{12pt}\scriptstyle
+  \gyoung(:;2,::;11,:::;01,::::;000)\quad
+  \gyoung(:;1,::;12,:::;01,::::;000)\quad
+  \gyoung(:;1,::;02,:::;11,::::;000)\quad
+  \gyoung(:;0,::;12,:::;11,::::;000)\quad
   \]
 
 
@@ -157,22 +164,27 @@ Some examples:
   \def\AD{{\color{pink} 3}}
   \[
   C_{431,4321}^{7542} = 4
-  \qquad \tiny
-  \young(\AC\AD,:\AB\AB\AC,:::\AA\AB,::::\AA\AA\AA)\quad
-  \young(\AC\AD,:\AA\AB\AC,:::\AB\AB,::::\AA\AA\AA)\quad
-  \young(\AB\AD,:\AA\AC\AC,:::\AB\AB,::::\AA\AA\AA)\quad
-  \young(\AA\AD,:\AB\AC\AC,:::\AB\AB,::::\AA\AA\AA)\quad
+  \qquad
+  \Yboxdim{12pt}\scriptstyle
+  \gyoung(\AC\AD,:;\AB\AB\AC,:::;\AA\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AC\AD,:;\AA\AB\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AB\AD,:;\AA\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AA\AD,:;\AB\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
   \]
 
+\begin{verbatim}
+$ ./test_lrrule 7 5 4 3 - 4 3 1 0 - 4 3 2 2
+2
+\end{verbatim}
   \def\AA{\red 0}
   \def\AB{\grn 1}
   \def\AC{\blu 2}
   \def\AD{{\color{pink} 3}}
   \[
   C_{431,4322}^{7543} = 2
-  \qquad \tiny
-  \young(\AB\AD\AD,:\AA\AC\AC,:::\AB\AB,::::\AA\AA\AA)\quad
-  \young(\AA\AD\AD,:\AB\AC\AC,:::\AB\AB,::::\AA\AA\AA)\quad
+  \qquad
+  \gyoung(\AB\AD\AD,:;\AA\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AA\AD\AD,:;\AB\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
   \]
 
 
@@ -186,6 +198,9 @@ Some examples:
 \newcommand{\eor}{\texttt{end\_of\_row}}
 \newcommand{\eoo}{\texttt{end\_of\_overlap}}
 \newcommand{\below}{\texttt{below}}
+\newcommand{\wt}{\Yfillcolour{white}}
+\newcommand{\gr}{\Yfillcolour{lightgray}}
+
 First step: adding sentinels, here are the requirement:
 \begin{itemize}
 \item the first row is empty;
@@ -196,15 +211,15 @@ For example, $\out = 7543$, $\inn=431$ and
 $\evl=4321$ is transformed as $\out=77543$,
 $\inn=74310$ and $\evl=43220$.
 \[
-\young(\ \ \ ,\bullet\ \ \ ,\bullet\bullet\bullet\ \ ,\bullet\bullet\bullet\bullet\ \ \ ,\bullet\bullet\bullet\bullet\bullet\bullet\bullet)
+\gyoung(\ \ \ ,!\gr;!\wt\ \ \ ,!\gr;;;!\wt\ \ ,!\gr;;;;!\wt\ \ \ ,!\gr;;;;;;;!\wt)
 \]
 The contents of the box are stored in an array called \work{} in the following order:
 \def\Dix{10}
 \[
-\young(\Dix98,\bullet765,\bullet\bullet\bullet43,\bullet\bullet\bullet\bullet210,\bullet\bullet\bullet\bullet\bullet\bullet\bullet)
+\gyoung(\Dix98,!\gr;!\wt765,!\gr;;;!\wt43,!\gr;;;;!\wt210,!\gr;;;;;;;!\wt)
 \]
 For example
-\[  \young(\AA\AD\AD,:\AB\AC\AC,:::\AB\AB,::::\AA\AA\AA) \]
+\[  \gyoung(\AA\AD\AD,!\gr;!\wt;\AB\AC\AC,!\gr;;;!\wt;\AB\AB,!\gr;;;;!\wt;\AA\AA\AA,!\gr;;;;;;;!\wt) \]
 is stored in reverse order as
 \[
 \begin{array}{|c|c|c||c|c||c|c|c||c|c|c|}
