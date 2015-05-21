@@ -20,7 +20,7 @@
  <goal name="sum_decomp">
  </goal>
 </theory>
-<theory name="LRrule" sum="fe98000761592eb0a7f59d3289eea677" expanded="true">
+<theory name="LRrule" sum="b6d1b644d5c6936d27082981f421eb24" expanded="true">
  <goal name="is_part_nonneg">
  <proof prover="0" timelimit="5"><result status="valid" time="0.00" steps="7"/></proof>
  <proof prover="1"><result status="valid" time="0.02"/></proof>
@@ -446,10 +446,10 @@
   <goal name="WP_parameter lrrule.39" expl="39. index in array bounds">
   <proof prover="0"><result status="valid" time="0.12" steps="254"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.40" expl="40. loop invariant preservation" expanded="true">
-  <transf name="inline_goal" expanded="true">
-   <goal name="WP_parameter lrrule.40.1" expl="1. loop invariant preservation" expanded="true">
-   <transf name="split_goal_wp" expanded="true">
+  <goal name="WP_parameter lrrule.40" expl="40. loop invariant preservation">
+  <transf name="inline_goal">
+   <goal name="WP_parameter lrrule.40.1" expl="1. loop invariant preservation">
+   <transf name="split_goal_wp">
     <goal name="WP_parameter lrrule.40.1.1" expl="1. VC for lrrule">
     <proof prover="0" timelimit="21"><result status="valid" time="0.14" steps="205"/></proof>
     </goal>
@@ -468,11 +468,11 @@
     <goal name="WP_parameter lrrule.40.1.6" expl="6. VC for lrrule">
     <proof prover="2" timelimit="26"><result status="valid" time="25.37"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.40.1.7" expl="7. VC for lrrule" expanded="true">
-    <transf name="simplify_trivial_quantification" expanded="true">
-     <goal name="WP_parameter lrrule.40.1.7.1" expl="1. VC for lrrule" expanded="true">
-     <transf name="inline_goal" expanded="true">
-      <goal name="WP_parameter lrrule.40.1.7.1.1" expl="1. VC for lrrule" expanded="true">
+    <goal name="WP_parameter lrrule.40.1.7" expl="7. VC for lrrule">
+    <transf name="simplify_trivial_quantification">
+     <goal name="WP_parameter lrrule.40.1.7.1" expl="1. VC for lrrule">
+     <transf name="inline_goal">
+      <goal name="WP_parameter lrrule.40.1.7.1.1" expl="1. VC for lrrule">
       <proof prover="2" timelimit="61"><result status="valid" time="19.16"/></proof>
       </goal>
      </transf>
@@ -640,10 +640,10 @@
   <goal name="WP_parameter lrrule.68" expl="68. loop invariant preservation">
   <proof prover="0"><result status="valid" time="2.48" steps="479"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.69" expl="69. loop invariant preservation">
-  <transf name="inline_goal">
-   <goal name="WP_parameter lrrule.69.1" expl="1. loop invariant preservation">
-   <transf name="split_goal_wp">
+  <goal name="WP_parameter lrrule.69" expl="69. loop invariant preservation" expanded="true">
+  <transf name="inline_goal" expanded="true">
+   <goal name="WP_parameter lrrule.69.1" expl="1. loop invariant preservation" expanded="true">
+   <transf name="split_goal_wp" expanded="true">
     <goal name="WP_parameter lrrule.69.1.1" expl="1. VC for lrrule">
     <proof prover="0" timelimit="16"><result status="valid" time="0.10" steps="169"/></proof>
     </goal>
@@ -659,11 +659,313 @@
     <goal name="WP_parameter lrrule.69.1.5" expl="5. VC for lrrule">
     <proof prover="2" timelimit="16"><result status="valid" time="0.18"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.69.1.6" expl="6. VC for lrrule">
-    <proof prover="2" timelimit="31"><result status="valid" time="15.19"/></proof>
+    <goal name="WP_parameter lrrule.69.1.6" expl="6. VC for lrrule" expanded="true">
+    <metas
+     expanded="true">
+     <ts_pos name="tuple2" arity="2" id="1184"
+      ip_theory="Tuple2">
+      <ip_library name="why3"/>
+      <ip_library name="Tuple2"/>
+      <ip_qualid name="tuple2"/>
+     </ts_pos>
+     <ls_pos name="infix +" id="1639"
+      ip_theory="Int">
+      <ip_library name="int"/>
+      <ip_qualid name="infix +"/>
+     </ls_pos>
+     <ls_pos name="prefix -" id="1640"
+      ip_theory="Int">
+      <ip_library name="int"/>
+      <ip_qualid name="prefix -"/>
+     </ls_pos>
+     <ls_pos name="infix *" id="1641"
+      ip_theory="Int">
+      <ip_library name="int"/>
+      <ip_qualid name="infix *"/>
+     </ls_pos>
+     <ls_pos name="make" id="3218"
+      ip_theory="Array">
+      <ip_library name="array"/>
+      <ip_qualid name="make"/>
+     </ls_pos>
+     <ls_pos name="valid_end_of_overlap_and_below" id="5994"
+      ip_theory="LRrule">
+      <ip_qualid name="valid_end_of_overlap_and_below"/>
+     </ls_pos>
+     <ls_pos name="valid_arrays_data" id="7663"
+      ip_theory="LRrule">
+      <ip_qualid name="valid_arrays_data"/>
+     </ls_pos>
+     <ls_pos name="valid_arrays_index" id="7674"
+      ip_theory="LRrule">
+      <ip_qualid name="valid_arrays_index"/>
+     </ls_pos>
+     <ls_pos name="valid_eval" id="7700"
+      ip_theory="LRrule">
+      <ip_qualid name="valid_eval"/>
+     </ls_pos>
+     <ls_pos name="valid_innev" id="7706"
+      ip_theory="LRrule">
+      <ip_qualid name="valid_innev"/>
+     </ls_pos>
+     <pr_pos name="Unit_def_r" id="1652"
+      ip_theory="Int">
+      <ip_library name="int"/>
+      <ip_qualid name="CommutativeGroup"/>
+      <ip_qualid name="Unit_def_r"/>
+     </pr_pos>
+     <pr_pos name="Trans" id="1721"
+      ip_theory="Int">
+      <ip_library name="int"/>
+      <ip_qualid name="Trans"/>
+     </pr_pos>
+     <pr_pos name="Antisymm" id="1728"
+      ip_theory="Int">
+      <ip_library name="int"/>
+      <ip_qualid name="Antisymm"/>
+     </pr_pos>
+     <pr_pos name="ZeroLessOne" id="1738"
+      ip_theory="Int">
+      <ip_library name="int"/>
+      <ip_qualid name="ZeroLessOne"/>
+     </pr_pos>
+     <pr_pos name="Max_l" id="1815"
+      ip_theory="MinMax">
+      <ip_library name="int"/>
+      <ip_qualid name="Max_l"/>
+     </pr_pos>
+     <pr_pos name="Max_comm" id="1825"
+      ip_theory="MinMax">
+      <ip_library name="int"/>
+      <ip_qualid name="Max_comm"/>
+     </pr_pos>
+     <pr_pos name="Min_assoc" id="1830"
+      ip_theory="MinMax">
+      <ip_library name="int"/>
+      <ip_qualid name="Min_assoc"/>
+     </pr_pos>
+     <pr_pos name="sum_def1" id="2420"
+      ip_theory="Sum">
+      <ip_qualid name="sum_def1"/>
+     </pr_pos>
+     <pr_pos name="sum_def2" id="2427"
+      ip_theory="Sum">
+      <ip_qualid name="sum_def2"/>
+     </pr_pos>
+     <pr_pos name="sum_left" id="2434"
+      ip_theory="Sum">
+      <ip_qualid name="sum_left"/>
+     </pr_pos>
+     <pr_pos name="sum_ext" id="2441"
+      ip_theory="Sum">
+      <ip_qualid name="sum_ext"/>
+     </pr_pos>
+     <pr_pos name="sum_nonneg" id="2452"
+      ip_theory="Sum">
+      <ip_qualid name="sum_nonneg"/>
+     </pr_pos>
+     <pr_pos name="sum_decomp" id="2461"
+      ip_theory="Sum">
+      <ip_qualid name="sum_decomp"/>
+     </pr_pos>
+     <pr_pos name="Select_eq" id="2662"
+      ip_theory="Map">
+      <ip_library name="map"/>
+      <ip_qualid name="Select_eq"/>
+     </pr_pos>
+     <meta name="remove_logic">
+      <meta_arg_ls id="1639"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="1640"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="1641"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="3218"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="5994"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="7663"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="7674"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="7700"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="7706"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="1652"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="1721"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="1728"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="1738"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="1815"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="1825"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="1830"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2420"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2427"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2434"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2441"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2452"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2461"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2662"/>
+     </meta>
+     <meta name="remove_type">
+      <meta_arg_ts id="1184"/>
+     </meta>
+     <goal name="WP_parameter lrrule.69.1.6" expl="6. VC for lrrule" expanded="true">
+     <transf name="eliminate_builtin" expanded="true">
+      <goal name="WP_parameter lrrule.69.1.6.1" expl="1. VC for lrrule" expanded="true">
+      <proof prover="2" timelimit="31"><result status="valid" time="14.03"/></proof>
+      </goal>
+     </transf>
+     </goal>
+    </metas>
     </goal>
-    <goal name="WP_parameter lrrule.69.1.7" expl="7. VC for lrrule">
-    <proof prover="2" timelimit="31"><result status="valid" time="9.15"/></proof>
+    <goal name="WP_parameter lrrule.69.1.7" expl="7. VC for lrrule" expanded="true">
+    <metas
+     expanded="true">
+     <ts_pos name="tuple2" arity="2" id="1184"
+      ip_theory="Tuple2">
+      <ip_library name="why3"/>
+      <ip_library name="Tuple2"/>
+      <ip_qualid name="tuple2"/>
+     </ts_pos>
+     <ls_pos name="infix @" id="15"
+      ip_theory="HighOrd">
+      <ip_library name="why3"/>
+      <ip_library name="HighOrd"/>
+      <ip_qualid name="infix @"/>
+     </ls_pos>
+     <ls_pos name="sum" id="2416" ip_theory="Sum">
+      <ip_qualid name="sum"/>
+     </ls_pos>
+     <ls_pos name="set" id="2629"
+      ip_theory="Map">
+      <ip_library name="map"/>
+      <ip_qualid name="set"/>
+     </ls_pos>
+     <ls_pos name="const" id="2680"
+      ip_theory="Map">
+      <ip_library name="map"/>
+      <ip_qualid name="const"/>
+     </ls_pos>
+     <ls_pos name="make" id="3218"
+      ip_theory="Array">
+      <ip_library name="array"/>
+      <ip_qualid name="make"/>
+     </ls_pos>
+     <ls_pos name="valid_arrays_data" id="7663"
+      ip_theory="LRrule">
+      <ip_qualid name="valid_arrays_data"/>
+     </ls_pos>
+     <pr_pos name="Antisymm" id="1728"
+      ip_theory="Int">
+      <ip_library name="int"/>
+      <ip_qualid name="Antisymm"/>
+     </pr_pos>
+     <pr_pos name="ZeroLessOne" id="1738"
+      ip_theory="Int">
+      <ip_library name="int"/>
+      <ip_qualid name="ZeroLessOne"/>
+     </pr_pos>
+     <pr_pos name="Max_l" id="1815"
+      ip_theory="MinMax">
+      <ip_library name="int"/>
+      <ip_qualid name="Max_l"/>
+     </pr_pos>
+     <pr_pos name="Max_comm" id="1825"
+      ip_theory="MinMax">
+      <ip_library name="int"/>
+      <ip_qualid name="Max_comm"/>
+     </pr_pos>
+     <pr_pos name="sum_def2" id="2427"
+      ip_theory="Sum">
+      <ip_qualid name="sum_def2"/>
+     </pr_pos>
+     <pr_pos name="is_part_nonneg" id="5425"
+      ip_theory="LRrule">
+      <ip_qualid name="is_part_nonneg"/>
+     </pr_pos>
+     <meta name="remove_logic">
+      <meta_arg_ls id="15"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="2416"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="2629"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="2680"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="3218"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="7663"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="1728"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="1738"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="1815"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="1825"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2427"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="5425"/>
+     </meta>
+     <meta name="remove_type">
+      <meta_arg_ts id="1184"/>
+     </meta>
+     <goal name="WP_parameter lrrule.69.1.7" expl="7. VC for lrrule" expanded="true">
+     <transf name="eliminate_builtin" expanded="true">
+      <goal name="WP_parameter lrrule.69.1.7.1" expl="1. VC for lrrule" expanded="true">
+      <proof prover="2" timelimit="31"><result status="valid" time="11.13"/></proof>
+      </goal>
+     </transf>
+     </goal>
+    </metas>
     </goal>
     <goal name="WP_parameter lrrule.69.1.8" expl="8. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.27"/></proof>
@@ -779,11 +1081,107 @@
     <proof prover="2"><result status="valid" time="0.26"/></proof>
     </goal>
     <goal name="WP_parameter lrrule.86.1.6" expl="6. VC for lrrule" expanded="true">
-    <proof prover="2" timelimit="61"><result status="valid" time="26.91"/></proof>
+    <metas
+     expanded="true">
+     <ts_pos name="tuple2" arity="2" id="1184"
+      ip_theory="Tuple2">
+      <ip_library name="why3"/>
+      <ip_library name="Tuple2"/>
+      <ip_qualid name="tuple2"/>
+     </ts_pos>
+     <ls_pos name="infix @" id="15"
+      ip_theory="HighOrd">
+      <ip_library name="why3"/>
+      <ip_library name="HighOrd"/>
+      <ip_qualid name="infix @"/>
+     </ls_pos>
+     <ls_pos name="sum" id="2416" ip_theory="Sum">
+      <ip_qualid name="sum"/>
+     </ls_pos>
+     <ls_pos name="valid_arrays_index" id="7674"
+      ip_theory="LRrule">
+      <ip_qualid name="valid_arrays_index"/>
+     </ls_pos>
+     <ls_pos name="valid_eval" id="7700"
+      ip_theory="LRrule">
+      <ip_qualid name="valid_eval"/>
+     </ls_pos>
+     <ls_pos name="valid_innev" id="7706"
+      ip_theory="LRrule">
+      <ip_qualid name="valid_innev"/>
+     </ls_pos>
+     <pr_pos name="sum_def1" id="2420"
+      ip_theory="Sum">
+      <ip_qualid name="sum_def1"/>
+     </pr_pos>
+     <pr_pos name="sum_def2" id="2427"
+      ip_theory="Sum">
+      <ip_qualid name="sum_def2"/>
+     </pr_pos>
+     <pr_pos name="sum_left" id="2434"
+      ip_theory="Sum">
+      <ip_qualid name="sum_left"/>
+     </pr_pos>
+     <pr_pos name="sum_ext" id="2441"
+      ip_theory="Sum">
+      <ip_qualid name="sum_ext"/>
+     </pr_pos>
+     <pr_pos name="sum_nonneg" id="2452"
+      ip_theory="Sum">
+      <ip_qualid name="sum_nonneg"/>
+     </pr_pos>
+     <pr_pos name="sum_decomp" id="2461"
+      ip_theory="Sum">
+      <ip_qualid name="sum_decomp"/>
+     </pr_pos>
+     <meta name="remove_logic">
+      <meta_arg_ls id="15"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="2416"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="7674"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="7700"/>
+     </meta>
+     <meta name="remove_logic">
+      <meta_arg_ls id="7706"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2420"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2427"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2434"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2441"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2452"/>
+     </meta>
+     <meta name="remove_prop">
+      <meta_arg_pr id="2461"/>
+     </meta>
+     <meta name="remove_type">
+      <meta_arg_ts id="1184"/>
+     </meta>
+     <goal name="WP_parameter lrrule.86.1.6" expl="6. VC for lrrule" expanded="true">
+     <transf name="eliminate_builtin" expanded="true">
+      <goal name="WP_parameter lrrule.86.1.6.1" expl="1. VC for lrrule" expanded="true">
+      <proof prover="2" timelimit="26"><result status="valid" time="8.24"/></proof>
+      </goal>
+     </transf>
+     </goal>
+    </metas>
     </goal>
-    <goal name="WP_parameter lrrule.86.1.7" expl="7. VC for lrrule">
-    <transf name="simplify_trivial_quantification">
-     <goal name="WP_parameter lrrule.86.1.7.1" expl="1. VC for lrrule">
+    <goal name="WP_parameter lrrule.86.1.7" expl="7. VC for lrrule" expanded="true">
+    <transf name="simplify_trivial_quantification" expanded="true">
+     <goal name="WP_parameter lrrule.86.1.7.1" expl="1. VC for lrrule" expanded="true">
      <proof prover="2" timelimit="21"><result status="valid" time="19.10"/></proof>
      </goal>
     </transf>
