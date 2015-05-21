@@ -5,8 +5,6 @@
 <prover id="0" name="Alt-Ergo" version="0.99.1" timelimit="6" memlimit="1000"/>
 <prover id="1" name="CVC4" version="1.4" timelimit="5" memlimit="1000"/>
 <prover id="2" name="Z3" version="4.3.2" timelimit="6" memlimit="1000"/>
-<prover id="3" name="Spass" version="3.7" timelimit="21" memlimit="1000"/>
-<prover id="4" name="Z3" version="3.2" timelimit="21" memlimit="1000"/>
 <file name="../lrrule.mlw" expanded="true">
 <theory name="Sum" sum="7b98dae06dcd4e07a9f1a4a1f2513321">
  <goal name="sum_left">
@@ -26,7 +24,7 @@
  <proof prover="2"><undone/></proof>
  </goal>
 </theory>
-<theory name="LRrule" sum="6c9aeefb92427a19417b3b8a3fc88697" expanded="true">
+<theory name="LRrule" sum="0d0cb728ff4d43fb48d4483feb8f59be" expanded="true">
  <goal name="is_part_nonneg">
  <proof prover="0" timelimit="5"><result status="valid" time="0.00" steps="7"/></proof>
  <proof prover="1"><result status="valid" time="0.02"/></proof>
@@ -370,533 +368,531 @@
   <goal name="WP_parameter lrrule.25" expl="25. loop invariant init">
   <proof prover="0"><result status="valid" time="0.02" steps="60"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.26" expl="26. loop invariant init">
-  <proof prover="0"><result status="valid" time="0.05" steps="76"/></proof>
+  <goal name="WP_parameter lrrule.26" expl="26. index in array bounds">
+  <proof prover="2"><result status="valid" time="7.17"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.27" expl="27. index in array bounds">
-  <proof prover="2"><result status="valid" time="3.56"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.28" expl="28. type invariant">
+  <goal name="WP_parameter lrrule.27" expl="27. type invariant">
   <proof prover="0"><result status="valid" time="0.02" steps="68"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.29" expl="29. index in array bounds">
+  <goal name="WP_parameter lrrule.28" expl="28. index in array bounds">
   <proof prover="0"><result status="valid" time="0.01" steps="74"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.30" expl="30. index in array bounds">
+  <goal name="WP_parameter lrrule.29" expl="29. index in array bounds">
   <proof prover="0"><result status="valid" time="0.02" steps="90"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.31" expl="31. index in array bounds">
+  <goal name="WP_parameter lrrule.30" expl="30. index in array bounds">
   <proof prover="2"><result status="valid" time="0.00"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.32" expl="32. assertion">
+  <goal name="WP_parameter lrrule.31" expl="31. assertion">
   <proof prover="0" timelimit="31"><result status="valid" time="0.05" steps="102"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.33" expl="33. type invariant">
+  <goal name="WP_parameter lrrule.32" expl="32. type invariant">
   <proof prover="0"><result status="valid" time="0.03" steps="102"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.34" expl="34. index in array bounds">
-  <proof prover="2" timelimit="21"><result status="valid" time="0.55"/></proof>
+  <goal name="WP_parameter lrrule.33" expl="33. index in array bounds">
+  <proof prover="2" timelimit="21"><result status="valid" time="1.86"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.35" expl="35. precondition">
+  <goal name="WP_parameter lrrule.34" expl="34. precondition">
   <transf name="inline_goal">
-   <goal name="WP_parameter lrrule.35.1" expl="1. precondition">
+   <goal name="WP_parameter lrrule.34.1" expl="1. precondition">
    <transf name="split_goal_wp">
-    <goal name="WP_parameter lrrule.35.1.1" expl="1. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.08" steps="127"/></proof>
+    <goal name="WP_parameter lrrule.34.1.1" expl="1. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.08" steps="133"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.35.1.2" expl="2. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.09" steps="127"/></proof>
+    <goal name="WP_parameter lrrule.34.1.2" expl="2. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.09" steps="133"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.35.1.3" expl="3. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.60" steps="594"/></proof>
+    <goal name="WP_parameter lrrule.34.1.3" expl="3. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.60" steps="592"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.35.1.4" expl="4. VC for lrrule">
-    <proof prover="2"><result status="valid" time="0.36"/></proof>
+    <goal name="WP_parameter lrrule.34.1.4" expl="4. VC for lrrule">
+    <proof prover="2"><result status="valid" time="1.56"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.35.1.5" expl="5. VC for lrrule">
+    <goal name="WP_parameter lrrule.34.1.5" expl="5. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.09"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.35.1.6" expl="6. VC for lrrule">
+    <goal name="WP_parameter lrrule.34.1.6" expl="6. VC for lrrule">
     <transf name="inline_goal">
-     <goal name="WP_parameter lrrule.35.1.6.1" expl="1. VC for lrrule">
-     <proof prover="2"><result status="valid" time="5.11"/></proof>
+     <goal name="WP_parameter lrrule.34.1.6.1" expl="1. VC for lrrule">
+     <proof prover="2" timelimit="26"><result status="valid" time="16.78"/></proof>
      </goal>
     </transf>
     </goal>
-    <goal name="WP_parameter lrrule.35.1.7" expl="7. VC for lrrule">
+    <goal name="WP_parameter lrrule.34.1.7" expl="7. VC for lrrule">
     <transf name="inline_goal">
-     <goal name="WP_parameter lrrule.35.1.7.1" expl="1. VC for lrrule">
-     <proof prover="2" timelimit="21"><result status="valid" time="2.24"/></proof>
+     <goal name="WP_parameter lrrule.34.1.7.1" expl="1. VC for lrrule">
+     <proof prover="2" timelimit="21"><result status="valid" time="7.67"/></proof>
      </goal>
     </transf>
     </goal>
-    <goal name="WP_parameter lrrule.35.1.8" expl="8. VC for lrrule">
-    <proof prover="0"><result status="valid" time="2.99" steps="635"/></proof>
+    <goal name="WP_parameter lrrule.34.1.8" expl="8. VC for lrrule">
+    <proof prover="0"><result status="valid" time="2.99" steps="854"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.35.1.9" expl="9. VC for lrrule">
+    <goal name="WP_parameter lrrule.34.1.9" expl="9. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.02"/></proof>
     </goal>
    </transf>
    </goal>
   </transf>
+  </goal>
+  <goal name="WP_parameter lrrule.35" expl="35. precondition">
+  <proof prover="0"><result status="valid" time="0.14" steps="212"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.36" expl="36. precondition">
-  <proof prover="0"><result status="valid" time="0.14" steps="181"/></proof>
+  <proof prover="0"><result status="valid" time="0.14" steps="226"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.37" expl="37. precondition">
-  <proof prover="0"><result status="valid" time="0.14" steps="193"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.38" expl="38. index in array bounds">
+  <goal name="WP_parameter lrrule.37" expl="37. index in array bounds">
   <proof prover="2"><result status="valid" time="0.02"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.39" expl="39. index in array bounds">
-  <proof prover="0"><result status="valid" time="0.18" steps="193"/></proof>
+  <goal name="WP_parameter lrrule.38" expl="38. index in array bounds">
+  <proof prover="0"><result status="valid" time="0.18" steps="226"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.40" expl="40. index in array bounds">
-  <proof prover="0"><result status="valid" time="0.12" steps="217"/></proof>
+  <goal name="WP_parameter lrrule.39" expl="39. index in array bounds">
+  <proof prover="0"><result status="valid" time="0.12" steps="254"/></proof>
+  </goal>
+  <goal name="WP_parameter lrrule.40" expl="40. loop invariant preservation">
+  <transf name="inline_goal">
+   <goal name="WP_parameter lrrule.40.1" expl="1. loop invariant preservation">
+   <transf name="split_goal_wp">
+    <goal name="WP_parameter lrrule.40.1.1" expl="1. VC for lrrule">
+    <proof prover="0" timelimit="21"><result status="valid" time="0.14" steps="205"/></proof>
+    </goal>
+    <goal name="WP_parameter lrrule.40.1.2" expl="2. VC for lrrule">
+    <proof prover="0" timelimit="21"><result status="valid" time="0.16" steps="211"/></proof>
+    </goal>
+    <goal name="WP_parameter lrrule.40.1.3" expl="3. VC for lrrule">
+    <proof prover="0" timelimit="21"><result status="valid" time="0.18" steps="211"/></proof>
+    </goal>
+    <goal name="WP_parameter lrrule.40.1.4" expl="4. VC for lrrule">
+    <proof prover="2"><result status="valid" time="0.79"/></proof>
+    </goal>
+    <goal name="WP_parameter lrrule.40.1.5" expl="5. VC for lrrule">
+    <proof prover="2"><result status="valid" time="0.18"/></proof>
+    </goal>
+    <goal name="WP_parameter lrrule.40.1.6" expl="6. VC for lrrule">
+    <proof prover="2" timelimit="26"><result status="valid" time="2.53"/></proof>
+    </goal>
+    <goal name="WP_parameter lrrule.40.1.7" expl="7. VC for lrrule">
+    <proof prover="2" timelimit="26"><result status="valid" time="12.20"/></proof>
+    </goal>
+    <goal name="WP_parameter lrrule.40.1.8" expl="8. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.26" steps="211"/></proof>
+    </goal>
+    <goal name="WP_parameter lrrule.40.1.9" expl="9. VC for lrrule">
+    <proof prover="2"><result status="valid" time="1.06"/></proof>
+    </goal>
+   </transf>
+   </goal>
+  </transf>
   </goal>
   <goal name="WP_parameter lrrule.41" expl="41. loop invariant preservation">
-  <transf name="inline_goal">
-   <goal name="WP_parameter lrrule.41.1" expl="1. loop invariant preservation">
-   <transf name="split_goal_wp">
-    <goal name="WP_parameter lrrule.41.1.1" expl="1. VC for lrrule">
-    <proof prover="0" timelimit="21"><result status="valid" time="0.14" steps="199"/></proof>
-    </goal>
-    <goal name="WP_parameter lrrule.41.1.2" expl="2. VC for lrrule">
-    <proof prover="0" timelimit="21"><result status="valid" time="0.16" steps="205"/></proof>
-    </goal>
-    <goal name="WP_parameter lrrule.41.1.3" expl="3. VC for lrrule">
-    <proof prover="0" timelimit="21"><result status="valid" time="0.18" steps="205"/></proof>
-    </goal>
-    <goal name="WP_parameter lrrule.41.1.4" expl="4. VC for lrrule">
-    <proof prover="2"><result status="valid" time="0.56"/></proof>
-    </goal>
-    <goal name="WP_parameter lrrule.41.1.5" expl="5. VC for lrrule">
-    <proof prover="2"><result status="valid" time="0.42"/></proof>
-    </goal>
-    <goal name="WP_parameter lrrule.41.1.6" expl="6. VC for lrrule">
-    <proof prover="2" timelimit="21"><result status="valid" time="11.48"/></proof>
-    </goal>
-    <goal name="WP_parameter lrrule.41.1.7" expl="7. VC for lrrule">
-    <proof prover="2" timelimit="21"><result status="valid" time="15.84"/></proof>
-    </goal>
-    <goal name="WP_parameter lrrule.41.1.8" expl="8. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.26" steps="205"/></proof>
-    </goal>
-    <goal name="WP_parameter lrrule.41.1.9" expl="9. VC for lrrule">
-    <proof prover="2"><result status="valid" time="0.49"/></proof>
-    </goal>
-   </transf>
-   </goal>
-  </transf>
+  <proof prover="0"><result status="valid" time="0.39" steps="367"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.42" expl="42. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.39" steps="380"/></proof>
+  <proof prover="0"><result status="valid" time="4.16" steps="684"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.43" expl="43. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="2.30" steps="455"/></proof>
+  <proof prover="0"><result status="valid" time="4.56" steps="745"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.44" expl="44. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="3.08" steps="492"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.45" expl="45. loop invariant preservation">
   <transf name="inline_goal">
-   <goal name="WP_parameter lrrule.45.1" expl="1. loop invariant preservation">
+   <goal name="WP_parameter lrrule.44.1" expl="1. loop invariant preservation">
    <transf name="split_goal_wp">
-    <goal name="WP_parameter lrrule.45.1.1" expl="1. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.14" steps="199"/></proof>
+    <goal name="WP_parameter lrrule.44.1.1" expl="1. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.14" steps="205"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.45.1.2" expl="2. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.15" steps="193"/></proof>
+    <goal name="WP_parameter lrrule.44.1.2" expl="2. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.15" steps="199"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.45.1.3" expl="3. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.19" steps="193"/></proof>
+    <goal name="WP_parameter lrrule.44.1.3" expl="3. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.19" steps="199"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.45.1.4" expl="4. VC for lrrule">
+    <goal name="WP_parameter lrrule.44.1.4" expl="4. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.04"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.45.1.5" expl="5. VC for lrrule">
+    <goal name="WP_parameter lrrule.44.1.5" expl="5. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.03"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.45.1.6" expl="6. VC for lrrule">
+    <goal name="WP_parameter lrrule.44.1.6" expl="6. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.02"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.45.1.7" expl="7. VC for lrrule">
+    <goal name="WP_parameter lrrule.44.1.7" expl="7. VC for lrrule">
     <proof prover="2" timelimit="36"><result status="valid" time="0.02"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.45.1.8" expl="8. VC for lrrule">
-    <proof prover="0"><result status="valid" time="1.28" steps="387"/></proof>
+    <goal name="WP_parameter lrrule.44.1.8" expl="8. VC for lrrule">
+    <proof prover="0"><result status="valid" time="2.34" steps="631"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.45.1.9" expl="9. VC for lrrule">
+    <goal name="WP_parameter lrrule.44.1.9" expl="9. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.02"/></proof>
     </goal>
    </transf>
    </goal>
   </transf>
   </goal>
+  <goal name="WP_parameter lrrule.45" expl="45. loop invariant preservation">
+  <proof prover="2"><result status="valid" time="0.06"/></proof>
+  </goal>
   <goal name="WP_parameter lrrule.46" expl="46. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.36" steps="360"/></proof>
+  <proof prover="0"><result status="valid" time="3.94" steps="675"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.47" expl="47. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="1.96" steps="449"/></proof>
+  <proof prover="0"><result status="valid" time="3.74" steps="736"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.48" expl="48. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="2.53" steps="486"/></proof>
+  <proof prover="0"><result status="valid" time="0.22" steps="340"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.49" expl="49. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.22" steps="211"/></proof>
+  <proof prover="0"><result status="valid" time="0.22" steps="331"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.50" expl="50. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.20" steps="205"/></proof>
+  <proof prover="0"><result status="valid" time="0.23" steps="340"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.51" expl="51. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.23" steps="211"/></proof>
+  <proof prover="0"><result status="valid" time="0.17" steps="340"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.52" expl="52. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.17" steps="211"/></proof>
+  <goal name="WP_parameter lrrule.52" expl="52. assertion">
+  <proof prover="0" timelimit="31"><result status="valid" time="0.18" steps="98"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.53" expl="53. assertion">
-  <proof prover="0" timelimit="31"><result status="valid" time="0.18" steps="260"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.54" expl="54. type invariant">
+  <goal name="WP_parameter lrrule.53" expl="53. type invariant">
   <proof prover="0"><result status="valid" time="0.02" steps="98"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.55" expl="55. index in array bounds">
-  <proof prover="2"><result status="valid" time="5.50"/></proof>
+  <goal name="WP_parameter lrrule.54" expl="54. index in array bounds">
+  <proof prover="2"><result status="valid" time="4.83"/></proof>
+  </goal>
+  <goal name="WP_parameter lrrule.55" expl="55. precondition">
+  <proof prover="2" timelimit="16"><result status="valid" time="9.73"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.56" expl="56. precondition">
-  <proof prover="2" timelimit="16"><result status="valid" time="8.41"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.57" expl="57. precondition">
   <proof prover="0"><result status="valid" time="0.02" steps="173"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.58" expl="58. precondition">
+  <goal name="WP_parameter lrrule.57" expl="57. precondition">
   <proof prover="0"><result status="valid" time="0.12" steps="185"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.59" expl="59. index in array bounds">
+  <goal name="WP_parameter lrrule.58" expl="58. index in array bounds">
   <proof prover="0"><result status="valid" time="0.14" steps="191"/></proof>
   <proof prover="2"><result status="valid" time="0.00"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.60" expl="60. index in array bounds">
+  <goal name="WP_parameter lrrule.59" expl="59. index in array bounds">
   <proof prover="2"><result status="valid" time="0.00"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.61" expl="61. index in array bounds">
+  <goal name="WP_parameter lrrule.60" expl="60. index in array bounds">
   <proof prover="0"><result status="valid" time="0.14" steps="209"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.62" expl="62. loop invariant preservation">
+  <goal name="WP_parameter lrrule.61" expl="61. loop invariant preservation">
   <transf name="inline_goal">
-   <goal name="WP_parameter lrrule.62.1" expl="1. loop invariant preservation">
+   <goal name="WP_parameter lrrule.61.1" expl="1. loop invariant preservation">
    <transf name="split_goal_wp">
-    <goal name="WP_parameter lrrule.62.1.1" expl="1. VC for lrrule">
-    <proof prover="0" timelimit="36"><result status="valid" time="0.21" steps="181"/></proof>
+    <goal name="WP_parameter lrrule.61.1.1" expl="1. VC for lrrule">
+    <proof prover="0" timelimit="36"><result status="valid" time="0.21" steps="187"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.62.1.2" expl="2. VC for lrrule">
-    <proof prover="0" timelimit="36"><result status="valid" time="0.18" steps="187"/></proof>
+    <goal name="WP_parameter lrrule.61.1.2" expl="2. VC for lrrule">
+    <proof prover="0" timelimit="36"><result status="valid" time="0.18" steps="193"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.62.1.3" expl="3. VC for lrrule">
-    <proof prover="0" timelimit="36"><result status="valid" time="0.14" steps="187"/></proof>
+    <goal name="WP_parameter lrrule.61.1.3" expl="3. VC for lrrule">
+    <proof prover="0" timelimit="36"><result status="valid" time="0.14" steps="193"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.62.1.4" expl="4. VC for lrrule">
+    <goal name="WP_parameter lrrule.61.1.4" expl="4. VC for lrrule">
     <proof prover="2" timelimit="16"><result status="valid" time="0.02"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.62.1.5" expl="5. VC for lrrule">
+    <goal name="WP_parameter lrrule.61.1.5" expl="5. VC for lrrule">
     <proof prover="1" timelimit="16"><result status="valid" time="0.05"/></proof>
     <proof prover="2" timelimit="16"><result status="valid" time="0.03"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.62.1.6" expl="6. VC for lrrule">
+    <goal name="WP_parameter lrrule.61.1.6" expl="6. VC for lrrule">
     <proof prover="1" timelimit="16"><result status="valid" time="0.05"/></proof>
     <proof prover="2" timelimit="16"><result status="valid" time="0.03"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.62.1.7" expl="7. VC for lrrule">
-    <proof prover="0"><result status="valid" time="1.26" steps="390"/></proof>
+    <goal name="WP_parameter lrrule.61.1.7" expl="7. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.58" steps="333"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.62.1.8" expl="8. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.25" steps="187"/></proof>
+    <goal name="WP_parameter lrrule.61.1.8" expl="8. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.25" steps="193"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.62.1.9" expl="9. VC for lrrule">
-    <proof prover="0"><result status="valid" time="2.69" steps="434"/></proof>
+    <goal name="WP_parameter lrrule.61.1.9" expl="9. VC for lrrule">
+    <proof prover="0"><result status="valid" time="1.28" steps="376"/></proof>
     </goal>
    </transf>
    </goal>
   </transf>
   </goal>
+  <goal name="WP_parameter lrrule.62" expl="62. loop invariant preservation">
+  <proof prover="0"><result status="valid" time="1.55" steps="467"/></proof>
+  </goal>
   <goal name="WP_parameter lrrule.63" expl="63. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="2.31" steps="477"/></proof>
+  <proof prover="0"><result status="valid" time="2.39" steps="443"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.64" expl="64. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="2.39" steps="541"/></proof>
+  <proof prover="0"><result status="valid" time="2.40" steps="480"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.65" expl="65. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="4.87" steps="588"/></proof>
+  <proof prover="2" timelimit="16"><result status="valid" time="11.38"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.66" expl="66. loop invariant preservation">
-  <proof prover="2" timelimit="16"><result status="valid" time="10.22"/></proof>
+  <proof prover="0"><result status="valid" time="0.20" steps="209"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.67" expl="67. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.28" steps="388"/></proof>
+  <proof prover="0"><result status="valid" time="2.30" steps="437"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.68" expl="68. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="2.30" steps="535"/></proof>
+  <proof prover="0"><result status="valid" time="2.48" steps="479"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.69" expl="69. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="3.99" steps="597"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.70" expl="70. loop invariant preservation">
   <transf name="inline_goal">
-   <goal name="WP_parameter lrrule.70.1" expl="1. loop invariant preservation">
+   <goal name="WP_parameter lrrule.69.1" expl="1. loop invariant preservation">
    <transf name="split_goal_wp">
-    <goal name="WP_parameter lrrule.70.1.1" expl="1. VC for lrrule">
-    <proof prover="0" timelimit="16"><result status="valid" time="0.10" steps="163"/></proof>
+    <goal name="WP_parameter lrrule.69.1.1" expl="1. VC for lrrule">
+    <proof prover="0" timelimit="16"><result status="valid" time="0.10" steps="169"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.70.1.2" expl="2. VC for lrrule">
-    <proof prover="0" timelimit="16"><result status="valid" time="0.11" steps="175"/></proof>
+    <goal name="WP_parameter lrrule.69.1.2" expl="2. VC for lrrule">
+    <proof prover="0" timelimit="16"><result status="valid" time="0.11" steps="181"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.70.1.3" expl="3. VC for lrrule">
-    <proof prover="0" timelimit="16"><result status="valid" time="0.12" steps="175"/></proof>
+    <goal name="WP_parameter lrrule.69.1.3" expl="3. VC for lrrule">
+    <proof prover="0" timelimit="16"><result status="valid" time="0.12" steps="181"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.70.1.4" expl="4. VC for lrrule">
+    <goal name="WP_parameter lrrule.69.1.4" expl="4. VC for lrrule">
     <proof prover="2" timelimit="16"><result status="valid" time="0.94"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.70.1.5" expl="5. VC for lrrule">
-    <proof prover="2" timelimit="16"><result status="valid" time="0.14"/></proof>
+    <goal name="WP_parameter lrrule.69.1.5" expl="5. VC for lrrule">
+    <proof prover="2" timelimit="16"><result status="valid" time="0.44"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.70.1.6" expl="6. VC for lrrule">
-    <proof prover="2" timelimit="31"><result status="valid" time="25.40"/></proof>
+    <goal name="WP_parameter lrrule.69.1.6" expl="6. VC for lrrule">
+    <proof prover="2" timelimit="31"><result status="valid" time="21.00"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.70.1.7" expl="7. VC for lrrule">
-    <proof prover="2" timelimit="31"><result status="valid" time="19.44"/></proof>
+    <goal name="WP_parameter lrrule.69.1.7" expl="7. VC for lrrule">
+    <proof prover="2" timelimit="31"><result status="valid" time="15.94"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.70.1.8" expl="8. VC for lrrule">
+    <goal name="WP_parameter lrrule.69.1.8" expl="8. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.14"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.70.1.9" expl="9. VC for lrrule">
+    <goal name="WP_parameter lrrule.69.1.9" expl="9. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.45"/></proof>
     </goal>
    </transf>
    </goal>
   </transf>
   </goal>
+  <goal name="WP_parameter lrrule.70" expl="70. loop invariant preservation">
+  <proof prover="2"><result status="valid" time="0.04"/></proof>
+  </goal>
   <goal name="WP_parameter lrrule.71" expl="71. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.30" steps="374"/></proof>
+  <proof prover="0"><result status="valid" time="1.41" steps="451"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.72" expl="72. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="2.56" steps="556"/></proof>
+  <proof prover="0"><result status="valid" time="2.06" steps="498"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.73" expl="73. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="4.55" steps="620"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.74" expl="74. index in array bounds">
+  <goal name="WP_parameter lrrule.73" expl="73. index in array bounds">
   <proof prover="2"><result status="valid" time="0.00"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.75" expl="75. index in array bounds">
+  <goal name="WP_parameter lrrule.74" expl="74. index in array bounds">
   <proof prover="2"><result status="valid" time="0.02"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.76" expl="76. index in array bounds">
+  <goal name="WP_parameter lrrule.75" expl="75. index in array bounds">
   <proof prover="0"><result status="valid" time="0.02" steps="102"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.77" expl="77. index in array bounds">
+  <goal name="WP_parameter lrrule.76" expl="76. index in array bounds">
   <proof prover="0"><result status="valid" time="0.03" steps="60"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.78" expl="78. assertion">
+  <goal name="WP_parameter lrrule.77" expl="77. assertion">
   <proof prover="0" timelimit="31"><result status="valid" time="0.08" steps="114"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.79" expl="79. type invariant">
+  <goal name="WP_parameter lrrule.78" expl="78. type invariant">
   <proof prover="0"><result status="valid" time="0.01" steps="114"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.80" expl="80. index in array bounds">
-  <proof prover="2" timelimit="16"><result status="valid" time="4.69"/></proof>
+  <goal name="WP_parameter lrrule.79" expl="79. index in array bounds">
+  <proof prover="2" timelimit="16"><result status="valid" time="6.13"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.81" expl="81. precondition">
+  <goal name="WP_parameter lrrule.80" expl="80. precondition">
   <transf name="inline_goal">
-   <goal name="WP_parameter lrrule.81.1" expl="1. precondition">
+   <goal name="WP_parameter lrrule.80.1" expl="1. precondition">
    <transf name="split_goal_wp">
-    <goal name="WP_parameter lrrule.81.1.1" expl="1. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.06" steps="139"/></proof>
+    <goal name="WP_parameter lrrule.80.1.1" expl="1. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.06" steps="145"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.81.1.2" expl="2. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.06" steps="139"/></proof>
+    <goal name="WP_parameter lrrule.80.1.2" expl="2. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.06" steps="145"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.81.1.3" expl="3. VC for lrrule">
-    <proof prover="0"><result status="valid" time="1.25" steps="774"/></proof>
+    <goal name="WP_parameter lrrule.80.1.3" expl="3. VC for lrrule">
+    <proof prover="0"><result status="valid" time="1.25" steps="739"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.81.1.4" expl="4. VC for lrrule">
-    <proof prover="2"><result status="valid" time="0.94"/></proof>
+    <goal name="WP_parameter lrrule.80.1.4" expl="4. VC for lrrule">
+    <proof prover="2"><result status="valid" time="0.45"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.81.1.5" expl="5. VC for lrrule">
-    <proof prover="2"><result status="valid" time="0.04"/></proof>
+    <goal name="WP_parameter lrrule.80.1.5" expl="5. VC for lrrule">
+    <proof prover="2"><result status="valid" time="0.18"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.81.1.6" expl="6. VC for lrrule">
-    <proof prover="2" timelimit="21"><result status="valid" time="13.64"/></proof>
+    <goal name="WP_parameter lrrule.80.1.6" expl="6. VC for lrrule">
+    <proof prover="2" timelimit="21"><result status="valid" time="10.09"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.81.1.7" expl="7. VC for lrrule">
+    <goal name="WP_parameter lrrule.80.1.7" expl="7. VC for lrrule">
     <proof prover="2" timelimit="16"><result status="valid" time="13.38"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.81.1.8" expl="8. VC for lrrule">
+    <goal name="WP_parameter lrrule.80.1.8" expl="8. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.02"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.81.1.9" expl="9. VC for lrrule">
+    <goal name="WP_parameter lrrule.80.1.9" expl="9. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.02"/></proof>
     </goal>
    </transf>
    </goal>
   </transf>
+  </goal>
+  <goal name="WP_parameter lrrule.81" expl="81. precondition">
+  <proof prover="0"><result status="valid" time="0.15" steps="262"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.82" expl="82. precondition">
-  <proof prover="0"><result status="valid" time="0.15" steps="205"/></proof>
+  <proof prover="0"><result status="valid" time="0.17" steps="276"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.83" expl="83. precondition">
-  <proof prover="0"><result status="valid" time="0.17" steps="217"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.84" expl="84. index in array bounds">
+  <goal name="WP_parameter lrrule.83" expl="83. index in array bounds">
   <proof prover="2"><result status="valid" time="0.02"/></proof>
   </goal>
+  <goal name="WP_parameter lrrule.84" expl="84. index in array bounds">
+  <proof prover="0"><result status="valid" time="0.17" steps="276"/></proof>
+  </goal>
   <goal name="WP_parameter lrrule.85" expl="85. index in array bounds">
-  <proof prover="0"><result status="valid" time="0.17" steps="217"/></proof>
+  <proof prover="0"><result status="valid" time="0.28" steps="304"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.86" expl="86. index in array bounds">
-  <proof prover="0"><result status="valid" time="0.14" steps="241"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.87" expl="87. loop invariant preservation" expanded="true">
-  <transf name="inline_goal" expanded="true">
-   <goal name="WP_parameter lrrule.87.1" expl="1. loop invariant preservation" expanded="true">
-   <transf name="split_goal_wp" expanded="true">
-    <goal name="WP_parameter lrrule.87.1.1" expl="1. VC for lrrule">
-    <proof prover="0" timelimit="16"><result status="valid" time="0.17" steps="211"/></proof>
+  <goal name="WP_parameter lrrule.86" expl="86. loop invariant preservation">
+  <transf name="inline_goal">
+   <goal name="WP_parameter lrrule.86.1" expl="1. loop invariant preservation">
+   <transf name="split_goal_wp">
+    <goal name="WP_parameter lrrule.86.1.1" expl="1. VC for lrrule">
+    <proof prover="0" timelimit="16"><result status="valid" time="0.17" steps="217"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.87.1.2" expl="2. VC for lrrule">
-    <proof prover="0" timelimit="16"><result status="valid" time="0.23" steps="217"/></proof>
+    <goal name="WP_parameter lrrule.86.1.2" expl="2. VC for lrrule">
+    <proof prover="0" timelimit="16"><result status="valid" time="0.23" steps="223"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.87.1.3" expl="3. VC for lrrule">
-    <proof prover="0" timelimit="16"><result status="valid" time="0.23" steps="217"/></proof>
+    <goal name="WP_parameter lrrule.86.1.3" expl="3. VC for lrrule">
+    <proof prover="0" timelimit="16"><result status="valid" time="0.80" steps="613"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.87.1.4" expl="4. VC for lrrule">
+    <goal name="WP_parameter lrrule.86.1.4" expl="4. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.88"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.87.1.5" expl="5. VC for lrrule">
-    <proof prover="2"><result status="valid" time="0.52"/></proof>
+    <goal name="WP_parameter lrrule.86.1.5" expl="5. VC for lrrule">
+    <proof prover="2"><result status="valid" time="0.26"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.87.1.6" expl="6. VC for lrrule">
-    <proof prover="2" timelimit="31"><result status="valid" time="31.83"/></proof>
+    <goal name="WP_parameter lrrule.86.1.6" expl="6. VC for lrrule">
+    <proof prover="2" timelimit="31"><result status="valid" time="50.94"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.87.1.7" expl="7. VC for lrrule" expanded="true">
-    <proof prover="0"><result status="timeout" time="5.99"/></proof>
-    <proof prover="1" timelimit="6"><result status="timeout" time="6.06"/></proof>
-    <proof prover="2" timelimit="21"><result status="timeout" time="20.95"/></proof>
-    <proof prover="3"><result status="timeout" time="21.33"/></proof>
+    <goal name="WP_parameter lrrule.86.1.7" expl="7. VC for lrrule">
+    <transf name="simplify_trivial_quantification">
+     <goal name="WP_parameter lrrule.86.1.7.1" expl="1. VC for lrrule">
+     <proof prover="2" timelimit="21"><result status="valid" time="19.10"/></proof>
+     </goal>
+    </transf>
     </goal>
-    <goal name="WP_parameter lrrule.87.1.8" expl="8. VC for lrrule">
-    <proof prover="0"><result status="valid" time="8.84" steps="1614"/></proof>
+    <goal name="WP_parameter lrrule.86.1.8" expl="8. VC for lrrule">
+    <proof prover="0"><result status="valid" time="5.57" steps="1203"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.87.1.9" expl="9. VC for lrrule">
-    <proof prover="2"><result status="valid" time="1.13"/></proof>
+    <goal name="WP_parameter lrrule.86.1.9" expl="9. VC for lrrule">
+    <proof prover="2"><result status="valid" time="0.37"/></proof>
     </goal>
    </transf>
    </goal>
   </transf>
+  </goal>
+  <goal name="WP_parameter lrrule.87" expl="87. loop invariant preservation">
+  <proof prover="0"><result status="valid" time="0.52" steps="395"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.88" expl="88. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.54" steps="408"/></proof>
+  <proof prover="0"><result status="valid" time="5.57" steps="766"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.89" expl="89. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="5.57" steps="827"/></proof>
+  <proof prover="0"><result status="valid" time="8.69" steps="866"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.90" expl="90. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="4.64" steps="562"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.91" expl="91. loop invariant preservation">
   <transf name="inline_goal">
-   <goal name="WP_parameter lrrule.91.1" expl="1. loop invariant preservation">
+   <goal name="WP_parameter lrrule.90.1" expl="1. loop invariant preservation">
    <transf name="split_goal_wp">
-    <goal name="WP_parameter lrrule.91.1.1" expl="1. VC for lrrule">
-    <proof prover="0" timelimit="16"><result status="valid" time="0.20" steps="211"/></proof>
+    <goal name="WP_parameter lrrule.90.1.1" expl="1. VC for lrrule">
+    <proof prover="0" timelimit="16"><result status="valid" time="0.20" steps="217"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.91.1.2" expl="2. VC for lrrule">
-    <proof prover="0" timelimit="16"><result status="valid" time="0.18" steps="205"/></proof>
+    <goal name="WP_parameter lrrule.90.1.2" expl="2. VC for lrrule">
+    <proof prover="0" timelimit="16"><result status="valid" time="0.18" steps="211"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.91.1.3" expl="3. VC for lrrule">
-    <proof prover="0" timelimit="16"><result status="valid" time="0.16" steps="205"/></proof>
+    <goal name="WP_parameter lrrule.90.1.3" expl="3. VC for lrrule">
+    <proof prover="0" timelimit="16"><result status="valid" time="0.16" steps="211"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.91.1.4" expl="4. VC for lrrule">
+    <goal name="WP_parameter lrrule.90.1.4" expl="4. VC for lrrule">
+    <proof prover="2"><result status="valid" time="0.41"/></proof>
+    </goal>
+    <goal name="WP_parameter lrrule.90.1.5" expl="5. VC for lrrule">
+    <proof prover="2"><result status="valid" time="0.25"/></proof>
+    </goal>
+    <goal name="WP_parameter lrrule.90.1.6" expl="6. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.02"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.91.1.5" expl="5. VC for lrrule">
+    <goal name="WP_parameter lrrule.90.1.7" expl="7. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.02"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.91.1.6" expl="6. VC for lrrule">
-    <proof prover="2"><result status="valid" time="0.02"/></proof>
+    <goal name="WP_parameter lrrule.90.1.8" expl="8. VC for lrrule">
+    <proof prover="2"><result status="valid" time="0.22"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.91.1.7" expl="7. VC for lrrule">
-    <proof prover="2"><result status="valid" time="0.02"/></proof>
-    </goal>
-    <goal name="WP_parameter lrrule.91.1.8" expl="8. VC for lrrule">
-    <proof prover="2"><result status="valid" time="0.03"/></proof>
-    </goal>
-    <goal name="WP_parameter lrrule.91.1.9" expl="9. VC for lrrule">
+    <goal name="WP_parameter lrrule.90.1.9" expl="9. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.03"/></proof>
     </goal>
    </transf>
    </goal>
   </transf>
   </goal>
+  <goal name="WP_parameter lrrule.91" expl="91. loop invariant preservation">
+  <proof prover="2"><result status="valid" time="0.20"/></proof>
+  </goal>
   <goal name="WP_parameter lrrule.92" expl="92. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.39" steps="388"/></proof>
+  <proof prover="2"><result status="valid" time="0.32"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.93" expl="93. loop invariant preservation">
-  <proof prover="2"><result status="valid" time="0.19"/></proof>
+  <proof prover="2"><result status="valid" time="0.02"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.94" expl="94. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="3.68" steps="562"/></proof>
+  <proof prover="0"><result status="valid" time="0.34" steps="368"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.95" expl="95. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.34" steps="378"/></proof>
+  <proof prover="0"><result status="valid" time="0.33" steps="359"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.96" expl="96. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.22" steps="368"/></proof>
+  <proof prover="0"><result status="valid" time="0.39" steps="368"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.97" expl="97. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.39" steps="378"/></proof>
+  <proof prover="0"><result status="valid" time="0.38" steps="368"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.98" expl="98. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.38" steps="378"/></proof>
+  <goal name="WP_parameter lrrule.98" expl="98. assertion">
+  <proof prover="0" timelimit="31"><result status="valid" time="0.09" steps="114"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.99" expl="99. assertion">
-  <proof prover="0" timelimit="31"><result status="valid" time="0.09" steps="110"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.100" expl="100. type invariant">
+  <goal name="WP_parameter lrrule.99" expl="99. type invariant">
   <proof prover="0"><result status="valid" time="0.02" steps="110"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.101" expl="101. index in array bounds">
+  <goal name="WP_parameter lrrule.100" expl="100. index in array bounds">
   <proof prover="2"><result status="valid" time="3.00"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.102" expl="102. precondition">
+  <goal name="WP_parameter lrrule.101" expl="101. precondition">
   <transf name="inline_goal">
-   <goal name="WP_parameter lrrule.102.1" expl="1. precondition">
+   <goal name="WP_parameter lrrule.101.1" expl="1. precondition">
    <transf name="split_goal_wp">
-    <goal name="WP_parameter lrrule.102.1.1" expl="1. VC for lrrule">
-    <proof prover="0" timelimit="16"><result status="valid" time="0.14" steps="133"/></proof>
+    <goal name="WP_parameter lrrule.101.1.1" expl="1. VC for lrrule">
+    <proof prover="0" timelimit="16"><result status="valid" time="0.14" steps="139"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.102.1.2" expl="2. VC for lrrule">
-    <proof prover="0" timelimit="16"><result status="valid" time="0.14" steps="133"/></proof>
+    <goal name="WP_parameter lrrule.101.1.2" expl="2. VC for lrrule">
+    <proof prover="0" timelimit="16"><result status="valid" time="0.14" steps="139"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.102.1.3" expl="3. VC for lrrule">
-    <proof prover="0" timelimit="16"><result status="valid" time="0.15" steps="133"/></proof>
+    <goal name="WP_parameter lrrule.101.1.3" expl="3. VC for lrrule">
+    <proof prover="0" timelimit="16"><result status="valid" time="0.15" steps="139"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.102.1.4" expl="4. VC for lrrule">
+    <goal name="WP_parameter lrrule.101.1.4" expl="4. VC for lrrule">
     <proof prover="2" timelimit="16"><result status="valid" time="0.58"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.102.1.5" expl="5. VC for lrrule">
-    <proof prover="2" timelimit="16"><result status="valid" time="0.22"/></proof>
+    <goal name="WP_parameter lrrule.101.1.5" expl="5. VC for lrrule">
+    <proof prover="2" timelimit="16"><result status="valid" time="0.08"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.102.1.6" expl="6. VC for lrrule">
-    <proof prover="2" timelimit="21"><result status="valid" time="9.63"/></proof>
+    <goal name="WP_parameter lrrule.101.1.6" expl="6. VC for lrrule">
+    <proof prover="2" timelimit="26"><result status="valid" time="19.77"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.102.1.7" expl="7. VC for lrrule">
-    <proof prover="2"><result status="valid" time="7.86"/></proof>
+    <goal name="WP_parameter lrrule.101.1.7" expl="7. VC for lrrule">
+    <proof prover="2" timelimit="26"><result status="valid" time="15.50"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.102.1.8" expl="8. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.51" steps="263"/></proof>
+    <goal name="WP_parameter lrrule.101.1.8" expl="8. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.51" steps="250"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.102.1.9" expl="9. VC for lrrule">
+    <goal name="WP_parameter lrrule.101.1.9" expl="9. VC for lrrule">
     <proof prover="1" timelimit="16"><result status="valid" time="0.29"/></proof>
     <proof prover="2" timelimit="16"><result status="valid" time="0.04"/></proof>
     </goal>
@@ -904,197 +900,193 @@
    </goal>
   </transf>
   </goal>
-  <goal name="WP_parameter lrrule.103" expl="103. precondition">
+  <goal name="WP_parameter lrrule.102" expl="102. precondition">
   <proof prover="0"><result status="valid" time="0.12" steps="197"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.104" expl="104. precondition">
+  <goal name="WP_parameter lrrule.103" expl="103. precondition">
   <proof prover="0"><result status="valid" time="0.13" steps="209"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.105" expl="105. index in array bounds">
+  <goal name="WP_parameter lrrule.104" expl="104. index in array bounds">
   <proof prover="2"><result status="valid" time="0.02"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.106" expl="106. index in array bounds">
+  <goal name="WP_parameter lrrule.105" expl="105. index in array bounds">
   <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.107" expl="107. index in array bounds">
+  <goal name="WP_parameter lrrule.106" expl="106. index in array bounds">
   <proof prover="0"><result status="valid" time="0.16" steps="233"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.108" expl="108. loop invariant preservation">
+  <goal name="WP_parameter lrrule.107" expl="107. loop invariant preservation">
   <transf name="inline_goal">
-   <goal name="WP_parameter lrrule.108.1" expl="1. loop invariant preservation">
+   <goal name="WP_parameter lrrule.107.1" expl="1. loop invariant preservation">
    <transf name="split_goal_wp">
-    <goal name="WP_parameter lrrule.108.1.1" expl="1. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.24" steps="193"/></proof>
+    <goal name="WP_parameter lrrule.107.1.1" expl="1. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.24" steps="199"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.108.1.2" expl="2. VC for lrrule">
+    <goal name="WP_parameter lrrule.107.1.2" expl="2. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.26" steps="211"/></proof>
+    </goal>
+    <goal name="WP_parameter lrrule.107.1.3" expl="3. VC for lrrule">
     <proof prover="0"><result status="valid" time="0.26" steps="205"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.108.1.3" expl="3. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.26" steps="199"/></proof>
-    </goal>
-    <goal name="WP_parameter lrrule.108.1.4" expl="4. VC for lrrule">
+    <goal name="WP_parameter lrrule.107.1.4" expl="4. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.02"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.108.1.5" expl="5. VC for lrrule">
+    <goal name="WP_parameter lrrule.107.1.5" expl="5. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.08"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.108.1.6" expl="6. VC for lrrule">
+    <goal name="WP_parameter lrrule.107.1.6" expl="6. VC for lrrule">
     <transf name="inline_goal">
-     <goal name="WP_parameter lrrule.108.1.6.1" expl="1. VC for lrrule">
+     <goal name="WP_parameter lrrule.107.1.6.1" expl="1. VC for lrrule">
      <proof prover="2" timelimit="16"><result status="valid" time="0.05"/></proof>
      </goal>
     </transf>
     </goal>
-    <goal name="WP_parameter lrrule.108.1.7" expl="7. VC for lrrule">
+    <goal name="WP_parameter lrrule.107.1.7" expl="7. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.02"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.108.1.8" expl="8. VC for lrrule">
+    <goal name="WP_parameter lrrule.107.1.8" expl="8. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.03"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.108.1.9" expl="9. VC for lrrule">
+    <goal name="WP_parameter lrrule.107.1.9" expl="9. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.02"/></proof>
     </goal>
    </transf>
    </goal>
   </transf>
   </goal>
+  <goal name="WP_parameter lrrule.108" expl="108. loop invariant preservation">
+  <proof prover="0"><result status="valid" time="5.98" steps="1197"/></proof>
+  </goal>
   <goal name="WP_parameter lrrule.109" expl="109. loop invariant preservation">
-  <proof prover="2"><result status="valid" time="0.04"/></proof>
+  <proof prover="0"><result status="valid" time="5.46" steps="807"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.110" expl="110. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="2.63" steps="493"/></proof>
+  <proof prover="2"><result status="valid" time="0.02"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.111" expl="111. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="1.73" steps="528"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.112" expl="112. loop invariant preservation" expanded="true">
-  <transf name="inline_goal" expanded="true">
-   <goal name="WP_parameter lrrule.112.1" expl="1. loop invariant preservation" expanded="true">
-   <transf name="split_goal_wp" expanded="true">
-    <goal name="WP_parameter lrrule.112.1.1" expl="1. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.12" steps="193"/></proof>
+  <transf name="inline_goal">
+   <goal name="WP_parameter lrrule.111.1" expl="1. loop invariant preservation">
+   <transf name="split_goal_wp">
+    <goal name="WP_parameter lrrule.111.1.1" expl="1. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.26" steps="199"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.112.1.2" expl="2. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.12" steps="187"/></proof>
+    <goal name="WP_parameter lrrule.111.1.2" expl="2. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.24" steps="193"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.112.1.3" expl="3. VC for lrrule">
-    <proof prover="0"><result status="valid" time="0.12" steps="187"/></proof>
+    <goal name="WP_parameter lrrule.111.1.3" expl="3. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.24" steps="193"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.112.1.4" expl="4. VC for lrrule">
-    <proof prover="2"><result status="valid" time="0.53"/></proof>
+    <goal name="WP_parameter lrrule.111.1.4" expl="4. VC for lrrule">
+    <proof prover="2"><result status="valid" time="0.73"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.112.1.5" expl="5. VC for lrrule">
-    <proof prover="2"><result status="valid" time="0.34"/></proof>
+    <goal name="WP_parameter lrrule.111.1.5" expl="5. VC for lrrule">
+    <proof prover="2"><result status="valid" time="0.61"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.112.1.6" expl="6. VC for lrrule">
-    <proof prover="2" timelimit="21"><result status="valid" time="20.60"/></proof>
+    <goal name="WP_parameter lrrule.111.1.6" expl="6. VC for lrrule">
+    <proof prover="2" timelimit="21"><result status="valid" time="10.90"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.112.1.7" expl="7. VC for lrrule" expanded="true">
-    <proof prover="0" timelimit="21"><result status="timeout" time="20.87"/></proof>
-    <proof prover="1" timelimit="21"><result status="timeout" time="21.32"/></proof>
-    <proof prover="2" timelimit="21"><result status="timeout" time="20.95"/></proof>
-    <proof prover="3"><result status="timeout" time="21.41"/></proof>
-    <proof prover="4"><result status="timeout" time="20.97"/></proof>
+    <goal name="WP_parameter lrrule.111.1.7" expl="7. VC for lrrule">
+    <proof prover="2" timelimit="26"><result status="valid" time="12.73"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.112.1.8" expl="8. VC for lrrule">
-    <proof prover="0"><result status="valid" time="1.28" steps="432"/></proof>
+    <goal name="WP_parameter lrrule.111.1.8" expl="8. VC for lrrule">
+    <proof prover="0"><result status="valid" time="0.87" steps="385"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.112.1.9" expl="9. VC for lrrule">
+    <goal name="WP_parameter lrrule.111.1.9" expl="9. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.37"/></proof>
     </goal>
    </transf>
    </goal>
   </transf>
   </goal>
+  <goal name="WP_parameter lrrule.112" expl="112. loop invariant preservation">
+  <proof prover="0"><result status="valid" time="0.21" steps="233"/></proof>
+  </goal>
   <goal name="WP_parameter lrrule.113" expl="113. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.28" steps="376"/></proof>
+  <proof prover="0"><result status="valid" time="2.90" steps="505"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.114" expl="114. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="2.01" steps="487"/></proof>
+  <proof prover="0"><result status="valid" time="2.93" steps="554"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.115" expl="115. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="1.80" steps="537"/></proof>
+  <proof prover="2" timelimit="16"><result status="valid" time="16.82"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.116" expl="116. loop invariant preservation">
-  <proof prover="2" timelimit="16"><result status="valid" time="9.80"/></proof>
+  <proof prover="0"><result status="valid" time="0.12" steps="227"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.117" expl="117. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.25" steps="366"/></proof>
+  <proof prover="0"><result status="valid" time="1.41" steps="505"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.118" expl="118. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="1.41" steps="481"/></proof>
+  <proof prover="0"><result status="valid" time="1.83" steps="560"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.119" expl="119. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="1.53" steps="546"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.120" expl="120. loop invariant preservation">
   <proof prover="0"><result status="valid" time="0.01" steps="98"/></proof>
   </goal>
+  <goal name="WP_parameter lrrule.120" expl="120. loop invariant preservation">
+  <proof prover="0"><result status="valid" time="0.06" steps="98"/></proof>
+  </goal>
   <goal name="WP_parameter lrrule.121" expl="121. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.02" steps="98"/></proof>
+  <proof prover="0"><result status="valid" time="0.13" steps="196"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.122" expl="122. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.13" steps="188"/></proof>
+  <proof prover="0"><result status="valid" time="0.19" steps="301"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.123" expl="123. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.19" steps="289"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.124" expl="124. loop invariant preservation">
   <proof prover="0"><result status="valid" time="0.02" steps="82"/></proof>
   </goal>
+  <goal name="WP_parameter lrrule.124" expl="124. loop invariant preservation">
+  <proof prover="0"><result status="valid" time="0.06" steps="86"/></proof>
+  </goal>
   <goal name="WP_parameter lrrule.125" expl="125. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.02" steps="86"/></proof>
+  <proof prover="0"><result status="valid" time="0.16" steps="148"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.126" expl="126. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.16" steps="156"/></proof>
+  <proof prover="0"><result status="valid" time="0.16" steps="230"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.127" expl="127. loop invariant preservation">
-  <proof prover="0"><result status="valid" time="0.16" steps="238"/></proof>
+  <goal name="WP_parameter lrrule.127" expl="127. type invariant">
+  <proof prover="0"><result status="valid" time="0.02" steps="60"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.128" expl="128. type invariant">
   <proof prover="0"><result status="valid" time="0.02" steps="60"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.129" expl="129. type invariant">
-  <proof prover="0"><result status="valid" time="0.02" steps="60"/></proof>
+  <goal name="WP_parameter lrrule.129" expl="129. postcondition">
+  <proof prover="0"><result status="valid" time="0.14" steps="123"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.130" expl="130. postcondition">
-  <proof prover="0"><result status="valid" time="0.14" steps="131"/></proof>
+  <proof prover="0"><result status="valid" time="0.12" steps="173"/></proof>
   </goal>
   <goal name="WP_parameter lrrule.131" expl="131. postcondition">
-  <proof prover="0"><result status="valid" time="0.12" steps="185"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.132" expl="132. postcondition">
-  <proof prover="2"><result status="valid" time="0.38"/></proof>
-  </goal>
-  <goal name="WP_parameter lrrule.133" expl="133. precondition">
+  <goal name="WP_parameter lrrule.132" expl="132. precondition">
   <transf name="inline_goal">
-   <goal name="WP_parameter lrrule.133.1" expl="1. precondition">
+   <goal name="WP_parameter lrrule.132.1" expl="1. precondition">
    <transf name="split_goal_wp">
-    <goal name="WP_parameter lrrule.133.1.1" expl="1. VC for lrrule">
+    <goal name="WP_parameter lrrule.132.1.1" expl="1. VC for lrrule">
     <proof prover="0"><result status="valid" time="0.02" steps="19"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.133.1.2" expl="2. VC for lrrule">
+    <goal name="WP_parameter lrrule.132.1.2" expl="2. VC for lrrule">
     <proof prover="0"><result status="valid" time="0.02" steps="19"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.133.1.3" expl="3. VC for lrrule">
+    <goal name="WP_parameter lrrule.132.1.3" expl="3. VC for lrrule">
     <proof prover="0"><result status="valid" time="0.02" steps="19"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.133.1.4" expl="4. VC for lrrule">
+    <goal name="WP_parameter lrrule.132.1.4" expl="4. VC for lrrule">
     <proof prover="2"><result status="valid" time="0.04"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.133.1.5" expl="5. VC for lrrule">
+    <goal name="WP_parameter lrrule.132.1.5" expl="5. VC for lrrule">
     <proof prover="0"><result status="valid" time="0.04" steps="51"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.133.1.6" expl="6. VC for lrrule">
+    <goal name="WP_parameter lrrule.132.1.6" expl="6. VC for lrrule">
     <proof prover="0"><result status="valid" time="0.01" steps="20"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.133.1.7" expl="7. VC for lrrule">
+    <goal name="WP_parameter lrrule.132.1.7" expl="7. VC for lrrule">
     <proof prover="0"><result status="valid" time="0.02" steps="20"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.133.1.8" expl="8. VC for lrrule">
+    <goal name="WP_parameter lrrule.132.1.8" expl="8. VC for lrrule">
     <proof prover="0"><result status="valid" time="0.01" steps="0"/></proof>
     </goal>
-    <goal name="WP_parameter lrrule.133.1.9" expl="9. VC for lrrule">
+    <goal name="WP_parameter lrrule.132.1.9" expl="9. VC for lrrule">
     <proof prover="1" timelimit="16"><result status="valid" time="0.06"/></proof>
     <proof prover="2" timelimit="16"><result status="valid" time="0.03"/></proof>
     </goal>
@@ -1102,10 +1094,10 @@
    </goal>
   </transf>
   </goal>
-  <goal name="WP_parameter lrrule.134" expl="134. precondition">
+  <goal name="WP_parameter lrrule.133" expl="133. precondition">
   <proof prover="0"><result status="valid" time="0.02" steps="16"/></proof>
   </goal>
-  <goal name="WP_parameter lrrule.135" expl="135. precondition">
+  <goal name="WP_parameter lrrule.134" expl="134. precondition">
   <proof prover="0"><result status="valid" time="0.16" steps="115"/></proof>
   </goal>
  </transf>

@@ -224,7 +224,7 @@ module LRrule
         'Init:
         for v = min to max do
           invariant { valid_innev eval innev work idx !lastinnev }
-          invariant { max <= !lastinnev }
+          invariant { !lastinnev = at !lastinnev 'Init }
           invariant { forall i. 0 <= i < length innev ->
                       innev[i] = (at innev 'Init)[i] }
           invariant { forall i. 0 <= i < idx -> work[i] = (at work 'Init)[i] }
