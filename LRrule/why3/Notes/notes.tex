@@ -1,0 +1,256 @@
+\documentclass{article}
+
+\usepackage[vcentermath,enableskew]{youngtab}
+\usepackage{minted}
+\usemintedstyle{emacs}
+%\usemintedstyle{colorful}
+%\usemintedstyle{borland}
+%\usemintedstyle{autumn}
+
+\newminted{coq}{
+frame=lines,
+framesep=2mm,
+fontsize=\scriptsize,
+mathescape=true
+}
+\usepackage{commath}
+
+% INFO DOCUMENT - TITRE, AUTEUR, INSTITUTION
+\title{\bf\LARGE A certified implementation of \\
+Littlewood-Richardson rule\\[5mm]}
+\author{Jean-Christophe Filliatre and Florent Hivert}
+%\institute[LRI]{
+%  LRI / Université Paris Sud 11 / CNRS / INRIA}
+\date{Mai 2015}
+
+\newcommand{\XX}{{\mathbb X}}
+
+\newcommand{\exec}{\operatorname{exec}}
+\newcommand{\free}[1]{\left\langle#1\right\rangle}
+\newcommand{\gl}{{\mathfrak gl}}
+\newcommand{\bb}{\mathbb}
+\newcommand{\A}{{\mathbb A}}
+\newcommand{\E}{{\mathbb E}}
+\newcommand{\F}{\mathbf{F}}
+\newcommand{\GG}{\mathbf{G}}
+\newcommand{\G}{\mathbf{G}}
+\newcommand{\N}{{\mathbb N}}
+\newcommand{\C}{{\mathbb C}}
+\newcommand{\R}{{\mathbb R}}
+\newcommand{\Z}{{\mathbb Z}}
+\newcommand{\Q}{{\mathbb Q}}
+\newcommand{\SG}{{\mathfrak S}}
+\newcommand{\ft}{\tilde{f}}
+\newcommand{\et}{\tilde{e}}
+\newcommand{\std}{\operatorname{Std}}
+\newcommand{\Des}{\operatorname{Des}}
+\newcommand{\Rec}{\operatorname{Rec}}
+\newcommand{\Sh}{\operatorname{Sh}}
+
+\newcommand{\sym}{\mathrm{sym}}
+\newcommand{\NCSF}{\mathbf{NCSF}}
+\newcommand{\QSym}{\mathrm{QSym}}
+\newcommand{\FSym}{\mathbf{FSym}}
+\newcommand{\FQSym}{\mathbf{FQSym}}
+\newcommand{\MQSym}{\mathbf{MQSym}}
+\newcommand{\Tree}{\mathbf{Tree}}
+
+\newcommand{\MS}{\mathbf{MS}}
+\newcommand{\FS}{{\mathbb \phi S}}
+\newcommand{\SSs}{\mathbb{S}}
+\newcommand{\TT}{{\cal T}}
+\newcommand{\PP}{{\cal P}}
+\def\Pp{{\bf P}}        % P de PBT
+\def\Qq{{\bf Q}}        % Q de PBT^*
+\newcommand{\HQ}{{\sf Q}}
+\newcommand{\HR}{{\sf R}}
+\newcommand{\rad}{\operatorname{rad}}
+\newcommand{\soc}{\operatorname{soc}}
+\newcommand{\Ext}{\operatorname{Ext}}
+\newcommand{\End}{\operatorname{End}}
+\newcommand{\conn}{{\cal C}}
+\newcommand{\ff}{{\sf F}}
+\newcommand{\UU}{\mathbf{U}}
+\newcommand{\VV}{\mathbf{V}}
+\newcommand{\sfact}{\operatorname{\rm sfact}}
+
+\newcommand{\partof}{\vdash}                    % Partition de
+\newcommand{\compof}{\vDash}                    % Composisition de
+\newcommand{\ssh}{\Cup}
+\newcommand{\saug}{\uplus}
+\newcommand{\sconc}{\bullet}
+\newcommand{\Std}{{\rm Std}}
+\newcommand{\Park}{{\rm Park}}
+\newcommand{\sumord}{\hat +}
+
+\newcommand{\qandq}{\text{\quad et\quad}}
+
+\newcommand{\tensor}{\otimes}
+\newcommand{\pairing}[2]{\left\langle#1,#2\right\rangle} % Crochet de dualite
+
+\newcommand{\red}[1]{{\color{red} #1}}
+\newcommand{\grn}[1]{{\color{green} #1}}
+\newcommand{\blu}[1]{{\color{blue} #1}}
+
+%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\alphX}{{\mathbb X}}
+\renewcommand{\emph}[1]{{\color{red} #1}}
+
+
+\newtheorem{THEO}{Theorem}
+\newtheorem{PROP}{Proposition}
+\newtheorem{LEMMA}{Lemma}
+\newtheorem{CORO}{Corollary}
+\newtheorem{PROBLEM}{Problem}
+\newtheorem{REMARK}{Remark}
+\newtheorem{NOTE}{Note}
+
+% \theoremstyle{definition}
+\newtheorem{DEFN}{Definition}
+\newtheorem{DEFNs}{Definitions}
+\newtheorem{ALGO}{Algorithm}
+
+
+%------------------------------------------------------------------------------
+\begin{document}
+
+\maketitle
+
+\section{The rule}
+
+\begin{THEO}[Littlewood-Richardson rule]
+  $c_{\lambda, \mu}^{\nu}$ is the number of (skew) tableaux of shape the
+  difference $\nu/\lambda$, whose row reading is a Yamanouchi word of
+  evaluation $\mu$.
+\end{THEO}
+
+% ...00 ...00 ...00
+% ...1  ...1  ...1 
+% .00   .01   .02  
+% 12    02    01   
+
+Some examples:
+  \[
+  C_{331,421}^{5432} = 3
+  \qquad \tiny
+  \young(12,:00,:::1,:::00)\qquad
+  \young(02,:01,:::1,:::00)\qquad
+  \young(01,:02,:::1,:::00)
+  \]
+% ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00
+% ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1
+% .00   .00   .00   .01   .00   .01   .02   .02   .12   .02   .02   .01   .01   .12   .12
+% 01    02    11    01    12    02    01    13    03    03    11    12    22    02    23
+  \[
+  C_{4321,431}^{7542} = 4
+  \qquad \tiny
+  \young(:2,::11,:::01,::::000)\quad
+  \young(:1,::12,:::01,::::000)\quad
+  \young(:1,::02,:::11,::::000)\quad
+  \young(:0,::12,:::11,::::000)\quad
+  \]
+
+
+  \def\AA{\red 0}
+  \def\AB{\grn 1}
+  \def\AC{\blu 2}
+  \def\AD{{\color{pink} 3}}
+  \[
+  C_{431,4321}^{7542} = 4
+  \qquad \tiny
+  \young(\AC\AD,:\AB\AB\AC,:::\AA\AB,::::\AA\AA\AA)\quad
+  \young(\AC\AD,:\AA\AB\AC,:::\AB\AB,::::\AA\AA\AA)\quad
+  \young(\AB\AD,:\AA\AC\AC,:::\AB\AB,::::\AA\AA\AA)\quad
+  \young(\AA\AD,:\AB\AC\AC,:::\AB\AB,::::\AA\AA\AA)\quad
+  \]
+
+  \def\AA{\red 0}
+  \def\AB{\grn 1}
+  \def\AC{\blu 2}
+  \def\AD{{\color{pink} 3}}
+  \[
+  C_{431,4322}^{7543} = 2
+  \qquad \tiny
+  \young(\AB\AD\AD,:\AA\AC\AC,:::\AB\AB,::::\AA\AA\AA)\quad
+  \young(\AA\AD\AD,:\AB\AC\AC,:::\AB\AB,::::\AA\AA\AA)\quad
+  \]
+
+
+\pagebreak
+\section{Data structures}
+\newcommand{\inn}{\texttt{inner}}
+\newcommand{\out}{\texttt{outer}}
+\newcommand{\evl}{\texttt{eval}}
+\newcommand{\innev}{\texttt{innev}}
+\newcommand{\work}{\texttt{work}}
+\newcommand{\eor}{\texttt{end\_of\_row}}
+\newcommand{\eoo}{\texttt{end\_of\_overlap}}
+\newcommand{\below}{\texttt{below}}
+First step: adding sentinels, here are the requirement:
+\begin{itemize}
+\item the first row is empty;
+\item the lenght of \texttt{inner} and \texttt{outer} are equal;
+\item \texttt{eval} ends with a $0$.
+\end{itemize}
+For example, $\out = 7543$, $\inn=431$ and
+$\evl=4321$ is transformed as $\out=77543$,
+$\inn=74310$ and $\evl=43220$.
+\[
+\young(\ \ \ ,\bullet\ \ \ ,\bullet\bullet\bullet\ \ ,\bullet\bullet\bullet\bullet\ \ \ ,\bullet\bullet\bullet\bullet\bullet\bullet\bullet)
+\]
+The contents of the box are stored in an array called \work{} in the following order:
+\def\Dix{10}
+\[
+\young(\Dix98,\bullet765,\bullet\bullet\bullet43,\bullet\bullet\bullet\bullet210,\bullet\bullet\bullet\bullet\bullet\bullet\bullet)
+\]
+For example
+\[  \young(\AA\AD\AD,:\AB\AC\AC,:::\AB\AB,::::\AA\AA\AA) \]
+is stored in reverse order as
+\[
+\begin{array}{|c|c|c||c|c||c|c|c||c|c|c|}
+  \hline
+  0   & 1   & 2   & 3   & 4   & 5   & 6   & 7   & 8   & 9   & 10  \\
+  \hline
+  \AA & \AA & \AA & \AB & \AB & \AC & \AC & \AB & \AD & \AD & \AA \\
+  \hline
+\end{array}
+\]
+Or writing the array in reverse order:
+\[
+\begin{array}{|c|c|c||c|c|c||c|c||c|c|c|}
+  \hline
+  10  & 9   & 8   & 7   & 6   & 5   & 4   & 3   & 2   & 1   & 0 \\
+  \hline
+  \AA & \AD & \AD & \AB & \AC & \AC & \AB & \AB & \AA & \AA & \AA \\
+  \hline
+\end{array}
+\]
+We use some index arrays:
+\[
+  \begin{array}{|c|c|c|c|c|c|c|}
+    \hline
+    & 0 & 1 & 2 & 3 & 4 & \\
+    \hline
+    \hline
+    \out & 7 & 7 & 5 & 4 & 3 & \\
+    \hline
+    \inn & 7 & 4 & 3 & 1 & 0 & \\
+    \hline
+    \hline
+    \eor & 0 & 3 & 5 & 8 & 11 & \sum_{j=1}^i  \out[j] - \inn[j]\\
+    \hline
+    \below & ? & 0 & 1 & 1 & 2 & \out[i] - \inn[i-1]\\
+    \hline
+    \eoo & ? & 0 & 4 & 6 & 10 & \eor[i-1] + \below[i]\\
+    \hline
+  \end{array}
+\]
+
+
+
+\end{document}
+% "latex -synctex=1 -shell-escape"
+%%% Local Variables: LaTeX-command
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
