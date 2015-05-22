@@ -1,0 +1,193 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[top=30pt,bottom=30pt,left=48pt,right=46pt]{geometry}
+
+\usepackage{genyoungtabtikz}
+% \YFrench % use french convention for tableaux.
+
+\usepackage{minted}
+\usemintedstyle{emacs}
+%\usemintedstyle{colorful}
+%\usemintedstyle{borland}
+%\usemintedstyle{autumn}
+
+\newminted{coq}{
+frame=lines,
+framesep=2mm,
+fontsize=\scriptsize,
+mathescape=true
+}
+\usepackage{commath}
+
+% INFO DOCUMENT - TITRE, AUTEUR, INSTITUTION
+\title{\bf\LARGE A formal proof of \\
+Littlewood-Richardson rule\\[5mm]}
+\author{Florent Hivert}
+%\institute[LRI]{
+%  LRI / Université Paris Sud 11 / CNRS / INRIA}
+\date{Mai 2015}
+
+\newcommand{\XX}{{\mathbb X}}
+
+\newcommand{\exec}{\operatorname{exec}}
+\newcommand{\free}[1]{\left\langle#1\right\rangle}
+\newcommand{\gl}{{\mathfrak gl}}
+\newcommand{\bb}{\mathbb}
+\newcommand{\A}{{\mathbb A}}
+\newcommand{\E}{{\mathbb E}}
+\newcommand{\F}{\mathbf{F}}
+\newcommand{\GG}{\mathbf{G}}
+\newcommand{\G}{\mathbf{G}}
+\newcommand{\N}{{\mathbb N}}
+\newcommand{\C}{{\mathbb C}}
+\newcommand{\R}{{\mathbb R}}
+\newcommand{\Z}{{\mathbb Z}}
+\newcommand{\Q}{{\mathbb Q}}
+\newcommand{\SG}{{\mathfrak S}}
+\newcommand{\ft}{\tilde{f}}
+\newcommand{\et}{\tilde{e}}
+\newcommand{\std}{\operatorname{Std}}
+\newcommand{\Des}{\operatorname{Des}}
+\newcommand{\Rec}{\operatorname{Rec}}
+\newcommand{\Sh}{\operatorname{Sh}}
+
+\newcommand{\sym}{\mathrm{sym}}
+\newcommand{\NCSF}{\mathbf{NCSF}}
+\newcommand{\QSym}{\mathrm{QSym}}
+\newcommand{\FSym}{\mathbf{FSym}}
+\newcommand{\FQSym}{\mathbf{FQSym}}
+\newcommand{\MQSym}{\mathbf{MQSym}}
+\newcommand{\Tree}{\mathbf{Tree}}
+
+\newcommand{\MS}{\mathbf{MS}}
+\newcommand{\FS}{{\mathbb \phi S}}
+\newcommand{\SSs}{\mathbb{S}}
+\newcommand{\TT}{{\cal T}}
+\newcommand{\PP}{{\cal P}}
+\def\Pp{{\bf P}}        % P de PBT
+\def\Qq{{\bf Q}}        % Q de PBT^*
+\newcommand{\HQ}{{\sf Q}}
+\newcommand{\HR}{{\sf R}}
+\newcommand{\rad}{\operatorname{rad}}
+\newcommand{\soc}{\operatorname{soc}}
+\newcommand{\Ext}{\operatorname{Ext}}
+\newcommand{\End}{\operatorname{End}}
+\newcommand{\conn}{{\cal C}}
+\newcommand{\ff}{{\sf F}}
+\newcommand{\UU}{\mathbf{U}}
+\newcommand{\VV}{\mathbf{V}}
+\newcommand{\sfact}{\operatorname{\rm sfact}}
+
+\newcommand{\partof}{\vdash}                    % Partition de
+\newcommand{\compof}{\vDash}                    % Composisition de
+\newcommand{\ssh}{\Cup}
+\newcommand{\saug}{\uplus}
+\newcommand{\sconc}{\bullet}
+\newcommand{\Std}{{\rm Std}}
+\newcommand{\Park}{{\rm Park}}
+\newcommand{\sumord}{\hat +}
+
+\newcommand{\qandq}{\text{\quad et\quad}}
+
+\newcommand{\tensor}{\otimes}
+\newcommand{\pairing}[2]{\left\langle#1,#2\right\rangle} % Crochet de dualite
+
+\newcommand{\red}[1]{{\color{red} #1}}
+\newcommand{\grn}[1]{{\color{green} #1}}
+\newcommand{\blu}[1]{{\color{blue} #1}}
+
+%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\alphX}{{\mathbb X}}
+\renewcommand{\emph}[1]{{\color{red} #1}}
+
+
+\newtheorem{THEO}{Theorem}
+\newtheorem{PROP}{Proposition}
+\newtheorem{LEMMA}{Lemma}
+\newtheorem{CORO}{Corollary}
+\newtheorem{PROBLEM}{Problem}
+\newtheorem{REMARK}{Remark}
+\newtheorem{NOTE}{Note}
+
+% \theoremstyle{definition}
+\newtheorem{DEFN}{Definition}
+\newtheorem{DEFNs}{Definitions}
+\newtheorem{ALGO}{Algorithm}
+
+
+%------------------------------------------------------------------------------
+\begin{document}
+
+\maketitle
+
+\section{The rule}
+
+\begin{THEO}[Littlewood-Richardson rule]
+  $c_{\lambda, \mu}^{\nu}$ is the number of (skew) tableaux of shape the
+  difference $\nu/\lambda$, whose row reading is a Yamanouchi word of
+  evaluation $\mu$.
+\end{THEO}
+
+% ...00 ...00 ...00
+% ...1  ...1  ...1 
+% .00   .01   .02  
+% 12    02    01   
+
+Some examples:
+  \[
+  C_{331,421}^{5432} = 3
+  \qquad
+  \Yboxdim{12pt}\scriptstyle
+  \gyoung(12,:;00,:::;1,:::;00)\qquad
+  \gyoung(02,:;01,:::;1,:::;00)\qquad
+  \gyoung(01,:;02,:::;1,:::;00)
+  \]
+% ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00
+% ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1
+% .00   .00   .00   .01   .00   .01   .02   .02   .12   .02   .02   .01   .01   .12   .12
+% 01    02    11    01    12    02    01    13    03    03    11    12    22    02    23
+
+  \[
+  C_{4321,431}^{7542} = 4
+  \qquad
+  \Yboxdim{12pt}\scriptstyle
+  \gyoung(:;2,::;11,:::;01,::::;000)\quad
+  \gyoung(:;1,::;12,:::;01,::::;000)\quad
+  \gyoung(:;1,::;02,:::;11,::::;000)\quad
+  \gyoung(:;0,::;12,:::;11,::::;000)\quad
+  \]
+
+
+  \def\AA{\red 0}
+  \def\AB{\grn 1}
+  \def\AC{\blu 2}
+  \def\AD{{\color{pink} 3}}
+  \[
+  C_{431,4321}^{7542} = 4
+  \qquad
+  \Yboxdim{12pt}\scriptstyle
+  \gyoung(\AC\AD,:;\AB\AB\AC,:::;\AA\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AC\AD,:;\AA\AB\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AB\AD,:;\AA\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AA\AD,:;\AB\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \]
+
+  \def\AA{\red 0}
+  \def\AB{\grn 1}
+  \def\AC{\blu 2}
+  \def\AD{{\color{pink} 3}}
+  \[
+  C_{431,4322}^{7543} = 2
+  \qquad
+  \gyoung(\AB\AD\AD,:;\AA\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AA\AD\AD,:;\AB\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \]
+
+
+\end{document}
+
+%%% Local Variables: compile-command: "pdflatex -shell-escape lrproof.tex"
+%%% Local Variables: LaTeX-command
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
