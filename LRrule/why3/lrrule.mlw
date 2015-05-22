@@ -286,6 +286,10 @@ module LRrule
                out[0] = inn[0] = outer[0] /\
                forall k. 1 <= k <= length outer ->
                  out[k] = outer[k-1] /\ inn[k] = inner[k-1] }
+    ensures  { (* We are missing a lemma here *) 
+               let (out, inn) = result in
+		sum_array out = sum_array outer + outer [0] /\
+		sum_array inn = sum_array inner + outer [0] }
     requires { included inner outer}
     ensures  { let (out, inn) = result in included inn out }
   = let sz = Array.length outer in
@@ -305,6 +309,7 @@ module LRrule
     requires { included inner outer }
     requires { is_part inner /\ is_part outer }
     requires { valid_eval eval }
+    requires { sum_array eval = sum_array outer - sum_array inner }
     diverges
   =
     let (outer, inner) = add_empty_row outer inner in
