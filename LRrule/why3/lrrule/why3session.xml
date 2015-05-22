@@ -22,7 +22,7 @@
 </theory>
 <theory name="CoqSpec" sum="d41d8cd98f00b204e9800998ecf8427e" expanded="true">
 </theory>
-<theory name="LRrule" sum="418ff388be0ee820f1fdb198cdbc4689" expanded="true">
+<theory name="LRrule" sum="73161a890491d3919b1a7213eb1284de" expanded="true">
  <goal name="is_part_nonneg">
  <proof prover="0"><result status="valid" time="0.00" steps="9"/></proof>
  <proof prover="1"><result status="valid" time="0.02"/></proof>
@@ -1140,7 +1140,7 @@
   </goal>
   <goal name="WP_parameter add_empty_row.22" expl="22. postcondition" expanded="true">
   <proof prover="0"><result status="timeout" time="5.02"/></proof>
-  <proof prover="1"><result status="timeout" time="6.01"/></proof>
+  <proof prover="1"><result status="timeout" time="5.05"/></proof>
   <proof prover="2"><result status="timeout" time="5.02"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.23" expl="23. postcondition">
@@ -1149,8 +1149,8 @@
   </goal>
  </transf>
  </goal>
- <goal name="WP_parameter lrrule2" expl="VC for lrrule2">
- <transf name="split_goal_wp">
+ <goal name="WP_parameter lrrule2" expl="VC for lrrule2" expanded="true">
+ <transf name="split_goal_wp" expanded="true">
   <goal name="WP_parameter lrrule2.1" expl="1. precondition">
   <proof prover="0"><result status="valid" time="0.02" steps="10"/></proof>
   <proof prover="1"><result status="valid" time="0.06"/></proof>
@@ -1168,18 +1168,18 @@
   </goal>
   <goal name="WP_parameter lrrule2.4" expl="4. precondition">
   <proof prover="0"><result status="valid" time="0.02" steps="20"/></proof>
-  <proof prover="1"><result status="valid" time="0.03"/></proof>
-  <proof prover="2"><result status="valid" time="0.00"/></proof>
+  <proof prover="1" obsolete="true"><result status="valid" time="0.03"/></proof>
+  <proof prover="2" obsolete="true"><result status="valid" time="0.00"/></proof>
   </goal>
   <goal name="WP_parameter lrrule2.5" expl="5. precondition">
   <proof prover="0"><result status="valid" time="0.01" steps="20"/></proof>
-  <proof prover="1"><result status="valid" time="0.03"/></proof>
-  <proof prover="2"><result status="valid" time="0.01"/></proof>
+  <proof prover="1" obsolete="true"><result status="valid" time="0.03"/></proof>
+  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter lrrule2.6" expl="6. precondition">
   <proof prover="0"><result status="valid" time="0.02" steps="20"/></proof>
-  <proof prover="1"><result status="valid" time="0.03"/></proof>
-  <proof prover="2"><result status="valid" time="0.04"/></proof>
+  <proof prover="1" obsolete="true"><result status="valid" time="0.03"/></proof>
+  <proof prover="2" obsolete="true"><result status="valid" time="0.04"/></proof>
   </goal>
  </transf>
  </goal>

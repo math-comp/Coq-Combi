@@ -288,8 +288,8 @@ module LRrule
                  out[k] = outer[k-1] /\ inn[k] = inner[k-1] }
     ensures  { (* We are missing a lemma here *) 
                let (out, inn) = result in
-		sum_array out = sum_array outer + outer [0] /\
-		sum_array inn = sum_array inner + outer [0] }
+		sum_array out = outer [0] + sum_array outer /\
+		sum_array inn = outer [0] + sum_array inner }
     requires { included inner outer}
     ensures  { let (out, inn) = result in included inn out }
   = let sz = Array.length outer in
