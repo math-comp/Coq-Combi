@@ -42,6 +42,28 @@ theory Sum
 
 end
 
+module ArraySum
+
+  use import int.Int
+  use import array.Array
+  use import Sum
+
+  function sum_sub_array (a: array int) (lo hi: int) : int =
+    sum lo hi (\i: int. a[i])
+
+  function sum_array (a: array int) : int =
+    sum_sub_array a 0 (length a - 1)
+
+  let rec lemma sum_sub_array_shift (a b: array int) (lo hi: int)
+    requires { length a + 1 = length b }
+    requires { forall i: int. lo <= i <= hi -> a[i] = b[i+1] }
+    ensures  { sum_sub_array a lo hi = sum_sub_array b (lo+1) (hi+1) }
+    variant  { hi - lo }
+  =
+    if lo <= hi then sum_sub_array_shift a b (lo+1) hi
+
+end
+
 module CoqSpec
 
   type nat (* ? *)
@@ -60,12 +82,11 @@ module LRrule
   use import int.Int
   use import int.MinMax
   use import ref.Refint
+  use import map.Map
   use import array.Array
   use import Sum
+  use import ArraySum
   use import int.NumOf
-
-  function sum_array (a: array int) : int =
-    sum 0 (length a - 1) (\i: int. a[i])
 
   function is_part (shape: array int) : bool =
     (forall i j: int. 0 <= i <= j < length shape -> shape[i] >= shape[j] ) /\
@@ -114,9 +135,56 @@ module LRrule
   predicate is_tableau_reading (s: skew_shape) (w: array int) =
     is_tableau_reading_prefix s w (length w)
 
-  predicate is_solution (s: skew_shape) (eval : array int) (w: array int) =
+  predicate is_solution (s: skew_shape) (eval: array int) (w: array int) =
     is_yam_of_eval eval w /\
     is_tableau_reading s w
+
+  (** storing solutions we have found so far *)
+
+  type solution = array int
+
+  (* solutions t and u have the same prefix [0..i[ *)
+  predicate eq_prefix (t u: solution) (i: int) =
+    forall k: int. 0 <= k < i -> t[k] = u[k]
+
+  predicate lt_sol (s1 s2: solution) =
+    length s1 = length s2 /\
+    exists i: int. 0 <= i < length s1 /\ eq_prefix s1 s2 i /\ s1[i] < s2[i]
+
+  predicate eq_sol (t u: solution) =
+    length t = length u /\
+    eq_prefix t u (length t)
+
+(***
+  type solutions = {
+    mutable sols: map int (map int int);
+    mutable next: int; (* next slot for a solution *)
+  }
+
+  val ghost solutions: solutions
+
+  let ghost store_solution (sh: skew_shape) (eval: array int) (w: solution)
+    : unit
+    requires { is_solution sh eval w }
+    writes   { solutions.sols, solutions.next }
+    ensures  { solutions.next = (old solutions.next) + 1 }
+    ensures  { solutions.sols =
+               Map.set (old solutions.sols) (old solutions.next) w.elts }
+  =
+    solutions.sols <- Map.set solutions.sols solutions.next w.elts;
+    solutions.next <- solutions.next + 1
+
+  (* s[a..b[ is sorted for lt_sol *)
+  predicate sorted (s: solutions) (a b: int) =
+    forall i j: int. a <= i < j < b -> lt_sol (Map.get s i) (Map.get s j)
+
+  (* a sorted array of solutions contains no duplicate *)
+  lemma no_duplicate:
+    forall s: solutions, a b: int. sorted s a b ->
+    forall i j: int. a <= i < j < b -> not (eq_sol (Map.get s i) (Map.get s j))
+***)
+
+  (** skew shapes *)
 
   predicate valid_end_of_row (outer inner end_of_row: array int) =
     length end_of_row = length outer /\
@@ -190,7 +258,7 @@ module LRrule
     1 <= length eval /\ is_part eval /\
     eval[length eval - 1] = 0 (* sentinel: eval ends with a zero *)
 
-  (* TODO: boundle work, innev, and lastinnev in a record *)
+  (* TODO: bundle work, innev, and lastinnev in a record *)
 
   predicate valid_innev (eval innev work: array int) (idx lastinnev: int) =
     length eval = length innev /\
@@ -286,7 +354,7 @@ module LRrule
                out[0] = inn[0] = outer[0] /\
                forall k. 1 <= k <= length outer ->
                  out[k] = outer[k-1] /\ inn[k] = inner[k-1] }
-    ensures  { (* We are missing a lemma here *) 
+    ensures  { (* We are missing a lemma here *)
                let (out, inn) = result in
 		sum_array out = outer [0] + sum_array outer /\
 		sum_array inn = outer [0] + sum_array inner }
