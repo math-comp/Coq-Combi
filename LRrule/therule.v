@@ -513,7 +513,7 @@ Notation Schur p := (Schur Hnpos R p).
 
 Theorem LRtab_coeffP :
   Schur P1 * Schur P2 =
- \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
+  \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
 Proof.
   rewrite LRtab_coeffP.
   rewrite (bigID (fun P : intpartn (d1 + d2) => included P1 P) predT) /=.
