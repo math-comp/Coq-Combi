@@ -31,6 +31,11 @@ theory Sum
     (forall i. a <= i <= b -> f i = g i) ->
     sum a b f = sum a b g
 
+  lemma sum_le:
+    forall f g: int -> int, a b: int.
+    (forall i. a <= i <= b -> f i <= g i) ->
+    sum a b f <= sum a b g
+
   lemma sum_nonneg:
     forall f: int -> int, a b: int.
     (forall i. a <= i <= b -> 0 <= f i) ->
@@ -98,6 +103,18 @@ module LRrule
   function included (inner: array int) (outer: array int) : bool =
     (length inner = length outer) /\
     (forall i:int. 0 <= i < length outer -> inner[i] <= outer[i])
+
+  let rec lemma sum_le_eq (f g: int -> int) (a b: int)
+    requires { forall i. a <= i <= b -> f i <= g i }
+    requires { sum a b f = sum a b g }
+    ensures  { forall i. a <= i <= b -> f i = g i }
+    variant  { b - a }
+  = if a < b then sum_le_eq f g (a+1) b
+
+  lemma included_parts_eq:
+    forall innev eval.
+    included innev eval -> sum_array innev = sum_array eval ->
+    forall i. 0 <= i < length innev -> innev[i] = eval[i]
 
   (** number of i a[i] = v st lo <= i < hi *)
   function numeq (a: array int) (v: int) (lo hi: int) : int =
@@ -189,8 +206,8 @@ module LRrule
       not (eq_sol (s2a (Map.get s.sols i)) (s2a (Map.get s.sols j)))
 
   predicate good_solutions
-    (s: solutions) (lo hi: int)
     (sh: skew_shape) (eval: array int)
+    (s: solutions) (lo hi: int)
   =
     sorted s lo hi /\
     forall i. lo <= i < hi -> is_solution sh eval (s2a (Map.get s.sols i))
@@ -275,7 +292,11 @@ module LRrule
     requires { valid_skew_shape sh }
     requires { valid_eval eval }
     requires { sum_array eval = sum_array sh.outer - sum_array sh.inner }
-    ensures  { result = solutions.next - old solutions.next }
+    requires { solutions.next = 0 }
+    ensures  { result = solutions.next }
+    ensures  { good_solutions sh eval solutions 0 result }
+    ensures  { forall w. is_solution sh eval w ->
+               exists i. 0 <= i < solutions.next /\ eq_sol w (s2a (Map.get solutions.sols i)) }
     diverges
   =
     let n = sh.end_of_row[Array.length sh.end_of_row - 1] in
@@ -291,13 +312,19 @@ module LRrule
       requires { 1 <= row <= szshape = length sh.outer }
       requires { row < szshape -> sh.end_of_row[row-1] <= idx <= sh.end_of_row[row] }
       requires { valid_innev eval innev work idx !lastinnev }
-      requires { is_yam_prefix work idx }
-      requires { is_tableau_reading_prefix sh work idx }
+      requires { is_solution_prefix sh eval work idx }
       diverges
       ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
       ensures  { forall i. 0 <= i < idx -> work[i] = (old work)[i] }
       ensures  { !lastinnev = old !lastinnev }
       ensures  { result = solutions.next - old solutions.next }
+      ensures  { sorted solutions (old solutions.next) solutions.next }
+      ensures  { forall i. old solutions.next <= i < solutions.next ->
+                 let w = s2a (Map.get solutions.sols i) in
+                 is_solution sh eval w /\ eq_prefix (old work) w idx }
+      ensures  { forall w. is_solution sh eval w -> eq_prefix (old work) w idx ->
+                 exists i. old solutions.next <= i < solutions.next /\
+                           eq_sol w (s2a (Map.get solutions.sols i)) }
       =
       assert { sh.end_of_overlap[1] = 0 };
       assert { forall row idx.
@@ -324,6 +351,8 @@ module LRrule
           if idx = sh.end_of_row[row-1] then !lastinnev
           else MinMax.min !lastinnev work[idx - 1]
         end in
+        assert { forall w. is_solution sh eval w -> eq_prefix work w idx ->
+                 min <= w[idx] <= max };
         let sum = ref 0 in
         'Init:
         for v = min to max do
@@ -332,9 +361,18 @@ module LRrule
                       innev[i] = (at innev 'Init)[i] }
           invariant { forall i. 0 <= i < idx -> work[i] = (at work 'Init)[i] }
           invariant { valid_innev eval innev work idx !lastinnev }
-          invariant { is_yam_prefix work idx }
+          invariant { "expl: is_yam" is_yam_prefix work idx }
           invariant { is_tableau_reading_prefix sh work idx }
           invariant { !sum = solutions.next - at solutions.next 'Init }
+          invariant { sorted solutions (at solutions.next 'Init) solutions.next }
+          invariant { forall i. at solutions.next 'Init <= i < solutions.next ->
+                      let w = s2a (Map.get solutions.sols i) in
+                      is_solution sh eval w /\ eq_prefix (at work 'Init) w idx /\
+                      min <= w[idx] < v }
+          invariant { forall w. is_solution sh eval w -> eq_prefix (at work 'Init) w idx ->
+                      min <= w[idx] < v ->
+                      exists i. at solutions.next 'Init <= i < solutions.next /\
+                                eq_sol w (s2a (Map.get solutions.sols i)) }
         if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
             innev[v] <- innev[v] + 1;
             if v = !lastinnev then lastinnev += 1;
@@ -412,6 +450,7 @@ module LRrule
     diverges
   =
     let sh = compute_skew_shape outer inner in
+    ghost solutions.next <- 0;
     lrrule sh eval
 
 end
