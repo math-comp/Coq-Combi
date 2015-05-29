@@ -109,10 +109,13 @@ module LRrule
     (forall p: int. 0 <= p <= len ->
        forall v: int. 0 <= v -> numeq w (v+1) 0 p <= numeq w v 0 p)
 
+  predicate is_yam_of_eval_prefix (eval: array int) (w: array int) (len: int) =
+    is_yam_prefix w len /\
+    (forall i: int. 0 <= i < len -> 0 <= w[i] < length eval) /\
+    (forall v: int. 0 <= v < length eval -> numeq w v 0 len = eval[v])
+
   predicate is_yam_of_eval (eval: array int) (w: array int) =
-    is_yam_prefix w (length w) /\
-    (forall i: int. 0 <= i < length w -> 0 <= w[i] < length eval) /\
-    (forall v: int. 0 <= v < length eval -> numeq w v 0 (length w) = eval[v])
+    is_yam_of_eval_prefix eval w (length w)
 
   type skew_shape = {
     outer: array int;
@@ -134,6 +137,11 @@ module LRrule
 
   predicate is_tableau_reading (s: skew_shape) (w: array int) =
     is_tableau_reading_prefix s w (length w)
+
+  predicate is_solution_prefix
+    (s: skew_shape) (eval: array int) (w: array int) (len: int) =
+    is_yam_of_eval_prefix eval w len /\
+    is_tableau_reading_prefix s w len
 
   predicate is_solution (s: skew_shape) (eval: array int) (w: array int) =
     is_yam_of_eval eval w /\
@@ -199,18 +207,26 @@ module LRrule
 
   (** skew shapes *)
 
+  (* outer and inner after add_empty_row *)
+  predicate valid_normalized_outer_inner (outer inner: array int) =
+    2 <= length outer = length inner /\
+    included inner outer /\
+    is_part inner /\ is_part outer /\
+    outer[0] = inner[0] = outer[1]
+
   predicate valid_end_of_row (outer inner end_of_row: array int) =
     length end_of_row = length outer /\
     end_of_row[0] = 0 /\
     forall i. 1 <= i < length end_of_row ->
               end_of_row[i] = sum 1 i (\ j. outer[j] - inner[j])
 
-  predicate valid_skew_shape (s: skew_shape) =
-    valid_end_of_row s.outer s.inner s.end_of_row /\
-    length s.end_of_overlap = length s.below = length s.outer /\
-    forall i. 1 <= i < length s.end_of_overlap ->
-      s.below[i] = s.outer[i] - s.inner[i-1] /\
-      s.end_of_overlap[i] = s.end_of_row[i-1] + s.below[i]
+  predicate valid_skew_shape (sh: skew_shape) =
+    valid_normalized_outer_inner sh.outer sh.inner /\
+    valid_end_of_row sh.outer sh.inner sh.end_of_row /\
+    length sh.end_of_overlap = length sh.below = length sh.outer /\
+    forall i. 1 <= i < length sh.end_of_overlap ->
+      sh.below[i] = sh.outer[i] - sh.inner[i-1] /\
+      sh.end_of_overlap[i] = sh.end_of_row[i-1] + sh.below[i]
     (* end_of_overlap[0] and below[0] are left unspecified *)
 
   let compute_end_of_row (outer inner: array int) : array int
@@ -227,26 +243,6 @@ module LRrule
     done;
     sums
 
-  let compute_skew_shape (outer inner: array int) : skew_shape
-    requires { included inner outer }
-    ensures  { valid_skew_shape result }
-    ensures  { result.outer = outer }
-    ensures  { result.inner = inner }
-  =
-    let end_of_row = compute_end_of_row outer inner in
-    let n = Array.length outer in
-    let eoo = Array.make n 0 in
-    let below = Array.make n 0 in
-    for r = 1 to n-1 do
-      invariant { forall i. 1 <= i < r ->
-        below[i] = outer[i] - inner[i-1] /\
-        eoo[i] = end_of_row[i-1] + below[i] }
-      below[r] <- outer[r] - inner[r-1];
-      eoo[r] <- end_of_row[r-1] + below[r]
-    done;
-    { outer = outer; inner = inner; end_of_row = end_of_row;
-      end_of_overlap = eoo; below = below }
-
   (*
 
  szshape = 3
@@ -259,13 +255,6 @@ module LRrule
     0                         |
                               +
   *)
-
-  (* outer and inner after add_empty_row *)
-  predicate valid_arrays_data (outer inner: array int) =
-    2 <= length outer = length inner /\
-    included inner outer /\
-    is_part inner /\ is_part outer /\
-    outer[0] = inner[0] = outer[1]
 
   predicate valid_eval (eval: array int) =
     1 <= length eval /\ is_part eval /\
@@ -282,16 +271,16 @@ module LRrule
     (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
     (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
 
-  let lrrule (outer: array int) (inner: array int) (eval: array int) : int
-    requires { valid_arrays_data outer inner }
+  let lrrule (sh: skew_shape) (eval: array int) : int
+    requires { valid_skew_shape sh }
     requires { valid_eval eval }
-    requires { sum_array eval = sum_array outer - sum_array inner }
+    requires { sum_array eval = sum_array sh.outer - sum_array sh.inner }
+    ensures  { result = solutions.next - old solutions.next }
     diverges
   =
-    let sh = compute_skew_shape outer inner in
     let n = sh.end_of_row[Array.length sh.end_of_row - 1] in
     assert { 0 <= n };
-    let szshape = Array.length outer in (* = Array.length inner *)
+    let szshape = Array.length sh.outer in (* = Array.length inner *)
     let szeval = Array.length eval in
     let innev = Array.make szeval 0 in
     let lastinnev = ref 0 in (* only zeros from this index *)
@@ -299,7 +288,7 @@ module LRrule
     (* row = current row
        idx = current index in work, from the start *)
     let rec count_rec (row idx: int)
-      requires { 1 <= row <= szshape = length outer }
+      requires { 1 <= row <= szshape = length sh.outer }
       requires { row < szshape -> sh.end_of_row[row-1] <= idx <= sh.end_of_row[row] }
       requires { valid_innev eval innev work idx !lastinnev }
       requires { is_yam_prefix work idx }
@@ -363,17 +352,16 @@ module LRrule
   let add_empty_row
     (outer: array int) (inner: array int) : (array int, array int)
     requires { 1 <= length outer = length inner }
+    requires { included inner outer}
     ensures  { let (out, inn) = result in
                length out = length inn = 1 + length outer }
     ensures  { let (out, inn) = result in
                out[0] = inn[0] = outer[0] /\
                forall k. 1 <= k <= length outer ->
                  out[k] = outer[k-1] /\ inn[k] = inner[k-1] }
-    ensures  { (* We are missing a lemma here *)
-               let (out, inn) = result in
+    ensures  { let (out, inn) = result in
 		sum_array out = outer [0] + sum_array outer /\
 		sum_array inn = outer [0] + sum_array inner }
-    requires { included inner outer}
     ensures  { let (out, inn) = result in included inn out }
   = let sz = Array.length outer in
     let n = outer[0] in
@@ -387,6 +375,34 @@ module LRrule
     done;
     (out, inn)
 
+  let compute_skew_shape (outer inner: array int) : skew_shape
+    requires { 1 <= length outer = length inner }
+    requires { included inner outer }
+    requires { is_part inner /\ is_part outer }
+    ensures  { valid_skew_shape result }
+    ensures  { length result.outer = length result.inner = 1 + length outer }
+    ensures  { result.outer[0] = result.inner[0] = outer[0] /\
+               forall k. 1 <= k <= length outer ->
+                 result.outer[k] = outer[k-1] /\ result.inner[k] = inner[k-1] }
+    ensures  { sum_array result.outer = outer [0] + sum_array outer }
+    ensures  { sum_array result.inner = outer [0] + sum_array inner }
+  =
+    let (outer, inner) = add_empty_row outer inner in
+    assert { valid_normalized_outer_inner outer inner };
+    let end_of_row = compute_end_of_row outer inner in
+    let n = Array.length outer in
+    let eoo = Array.make n 0 in
+    let below = Array.make n 0 in
+    for r = 1 to n-1 do
+      invariant { forall i. 1 <= i < r ->
+        below[i] = outer[i] - inner[i-1] /\
+        eoo[i] = end_of_row[i-1] + below[i] }
+      below[r] <- outer[r] - inner[r-1];
+      eoo[r] <- end_of_row[r-1] + below[r]
+    done;
+    { outer = outer; inner = inner; end_of_row = end_of_row;
+      end_of_overlap = eoo; below = below }
+
   let lrrule2 outer inner eval
     requires { 1 <= length outer = length inner }
     requires { included inner outer }
@@ -395,9 +411,8 @@ module LRrule
     requires { sum_array eval = sum_array outer - sum_array inner }
     diverges
   =
-    let (outer, inner) = add_empty_row outer inner in
-    assert { valid_arrays_data outer inner };
-    lrrule outer inner eval
+    let sh = compute_skew_shape outer inner in
+    lrrule sh eval
 
 end
 
