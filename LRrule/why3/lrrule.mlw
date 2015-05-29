@@ -141,48 +141,61 @@ module LRrule
 
   (** storing solutions we have found so far *)
 
-  type solution = array int
-
   (* solutions t and u have the same prefix [0..i[ *)
-  predicate eq_prefix (t u: solution) (i: int) =
-    forall k: int. 0 <= k < i -> t[k] = u[k]
+  predicate eq_prefix (s1 s2: array int) (i: int) =
+    forall k: int. 0 <= k < i -> s1[k] = s2[k]
 
-  predicate lt_sol (s1 s2: solution) =
+  predicate lt_sol (s1 s2: array int) =
     length s1 = length s2 /\
     exists i: int. 0 <= i < length s1 /\ eq_prefix s1 s2 i /\ s1[i] < s2[i]
 
-  predicate eq_sol (t u: solution) =
-    length t = length u /\
-    eq_prefix t u (length t)
+  predicate eq_sol (s1 s2: array int) =
+    length s1 = length s2 /\
+    eq_prefix s1 s2 (length s1)
 
-(***
+  lemma lt_not_eq:
+    forall s1 s2: array int. lt_sol s1 s2 -> not (eq_sol s1 s2)
+
+  type solution
+
+  function a2s (array int) : solution
+  function s2a solution : array int
+
+  axiom a2s2a_def:
+    forall a: array int. eq_sol a (s2a (a2s a))
+
   type solutions = {
-    mutable sols: map int (map int int);
+    mutable sols: map int solution;
     mutable next: int; (* next slot for a solution *)
   }
 
+  (* s[lo..hi[ is sorted for lt_sol *)
+  predicate sorted (s: solutions) (lo hi: int) =
+    forall i j: int. lo <= i < j < hi ->
+                     lt_sol (s2a (Map.get s.sols i)) (s2a (Map.get s.sols j))
+
+  (* a sorted array of solutions contains no duplicate *)
+  lemma no_duplicate:
+    forall s: solutions, lo hi: int. sorted s lo hi ->
+    forall i j: int. lo <= i < j < hi ->
+      not (eq_sol (s2a (Map.get s.sols i)) (s2a (Map.get s.sols j)))
+
+  predicate good_solutions
+    (s: solutions) (lo hi: int)
+    (sh: skew_shape) (eval: array int)
+  =
+    sorted s lo hi /\
+    forall i. lo <= i < hi -> is_solution sh eval (s2a (Map.get s.sols i))
+
   val ghost solutions: solutions
 
-  let ghost store_solution (sh: skew_shape) (eval: array int) (w: solution)
+  val ghost store_solution (sh: skew_shape) (eval: array int) (w: array int)
     : unit
     requires { is_solution sh eval w }
     writes   { solutions.sols, solutions.next }
     ensures  { solutions.next = (old solutions.next) + 1 }
     ensures  { solutions.sols =
-               Map.set (old solutions.sols) (old solutions.next) w.elts }
-  =
-    solutions.sols <- Map.set solutions.sols solutions.next w.elts;
-    solutions.next <- solutions.next + 1
-
-  (* s[a..b[ is sorted for lt_sol *)
-  predicate sorted (s: solutions) (a b: int) =
-    forall i j: int. a <= i < j < b -> lt_sol (Map.get s i) (Map.get s j)
-
-  (* a sorted array of solutions contains no duplicate *)
-  lemma no_duplicate:
-    forall s: solutions, a b: int. sorted s a b ->
-    forall i j: int. a <= i < j < b -> not (eq_sol (Map.get s i) (Map.get s j))
-***)
+               Map.set (old solutions.sols) (old solutions.next) (a2s w) }
 
   (** skew shapes *)
 
@@ -295,6 +308,7 @@ module LRrule
       ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
       ensures  { forall i. 0 <= i < idx -> work[i] = (old work)[i] }
       ensures  { !lastinnev = old !lastinnev }
+      ensures  { result = solutions.next - old solutions.next }
       =
       assert { sh.end_of_overlap[1] = 0 };
       assert { forall row idx.
@@ -304,7 +318,7 @@ module LRrule
       if row = szshape then begin
         (* found a solution *)
         assert { idx = n };
-        assert { is_solution sh eval work };
+        ghost store_solution sh eval work;
         1
       end
       else if idx = sh.end_of_row[row] then
@@ -331,6 +345,7 @@ module LRrule
           invariant { valid_innev eval innev work idx !lastinnev }
           invariant { is_yam_prefix work idx }
           invariant { is_tableau_reading_prefix sh work idx }
+          invariant { !sum = solutions.next - at solutions.next 'Init }
         if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
             innev[v] <- innev[v] + 1;
             if v = !lastinnev then lastinnev += 1;
