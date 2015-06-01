@@ -5,7 +5,9 @@
 <prover id="0" name="Alt-Ergo" version="0.99.1" timelimit="5" memlimit="1000"/>
 <prover id="1" name="CVC4" version="1.4" timelimit="5" memlimit="1000"/>
 <prover id="2" name="Z3" version="4.3.2" timelimit="5" memlimit="1000"/>
+<prover id="3" name="CVC3" version="2.4.1" timelimit="11" memlimit="1000"/>
 <prover id="4" name="Z3" version="4.3.3" timelimit="11" memlimit="1000"/>
+<prover id="5" name="Alt-Ergo" version="0.95.2" timelimit="1" memlimit="1000"/>
 <file name="../lrrule.mlw" expanded="true">
 <theory name="Sum" sum="a808282ec4c8056e7600ab15da683884">
  <goal name="sum_left">
@@ -30,86 +32,125 @@
 </theory>
 <theory name="CoqSpec" sum="d41d8cd98f00b204e9800998ecf8427e" expanded="true">
 </theory>
-<theory name="LRrule" sum="a9a70c566d0158ae95428c7ca298fe40" expanded="true">
+<theory name="LRrule" sum="8a8e7b75127d22f0b75d9045adc97e2b" expanded="true">
  <goal name="is_part_nonneg">
  <proof prover="0" obsolete="true"><result status="valid" time="0.00" steps="9"/></proof>
  <proof prover="1" obsolete="true"><result status="valid" time="0.02"/></proof>
  <proof prover="2" obsolete="true"><result status="valid" time="0.00"/></proof>
  </goal>
- <goal name="WP_parameter sum_le_eq" expl="VC for sum_le_eq" expanded="true">
+ <goal name="WP_parameter sum_le_eq" expl="VC for sum_le_eq">
  <proof prover="0" timelimit="11"><result status="valid" time="0.22" steps="78"/></proof>
  </goal>
- <goal name="included_parts_eq" expanded="true">
+ <goal name="included_parts_eq">
  <proof prover="4"><result status="valid" time="1.98"/></proof>
  </goal>
  <goal name="lt_not_eq">
- <proof prover="1" timelimit="10" obsolete="true"><result status="valid" time="0.06"/></proof>
+ <proof prover="1" timelimit="10"><result status="valid" time="0.06"/></proof>
  </goal>
  <goal name="no_duplicate">
- <proof prover="2" timelimit="10" obsolete="true"><result status="valid" time="0.02"/></proof>
+ <proof prover="2" timelimit="10"><result status="valid" time="0.02"/></proof>
  </goal>
  <goal name="WP_parameter compute_end_of_row" expl="VC for compute_end_of_row">
  <transf name="split_goal_wp">
   <goal name="WP_parameter compute_end_of_row.1" expl="1. array creation size">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="3"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.03"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="3"/></proof>
+  <proof prover="1"><result status="valid" time="0.03"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter compute_end_of_row.2" expl="2. postcondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="13"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.20"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.12"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="14"/></proof>
+  <proof prover="1"><result status="valid" time="0.20"/></proof>
+  <proof prover="2"><result status="valid" time="0.12"/></proof>
   </goal>
   <goal name="WP_parameter compute_end_of_row.3" expl="3. loop invariant init">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="5"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.04"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="5"/></proof>
+  <proof prover="1"><result status="valid" time="0.04"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter compute_end_of_row.4" expl="4. loop invariant init">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="5"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.03"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.00"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="5"/></proof>
+  <proof prover="1"><result status="valid" time="0.03"/></proof>
+  <proof prover="2"><result status="valid" time="0.00"/></proof>
   </goal>
   <goal name="WP_parameter compute_end_of_row.5" expl="5. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="8"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.04"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.00"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="8"/></proof>
+  <proof prover="1"><result status="valid" time="0.04"/></proof>
+  <proof prover="2"><result status="valid" time="0.00"/></proof>
   </goal>
   <goal name="WP_parameter compute_end_of_row.6" expl="6. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="9"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.03"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.02"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="9"/></proof>
+  <proof prover="1"><result status="valid" time="0.03"/></proof>
+  <proof prover="2"><result status="valid" time="0.02"/></proof>
   </goal>
   <goal name="WP_parameter compute_end_of_row.7" expl="7. type invariant">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="9"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.03"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="9"/></proof>
+  <proof prover="1"><result status="valid" time="0.03"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter compute_end_of_row.8" expl="8. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="9"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.03"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.02"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="9"/></proof>
+  <proof prover="1"><result status="valid" time="0.03"/></proof>
+  <proof prover="2"><result status="valid" time="0.02"/></proof>
   </goal>
   <goal name="WP_parameter compute_end_of_row.9" expl="9. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="11"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.03"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.02"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="11"/></proof>
+  <proof prover="1"><result status="valid" time="0.03"/></proof>
+  <proof prover="2"><result status="valid" time="0.02"/></proof>
   </goal>
   <goal name="WP_parameter compute_end_of_row.10" expl="10. loop invariant preservation">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="12"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.02"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="12"/></proof>
+  <proof prover="1"><result status="valid" time="0.13"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter compute_end_of_row.11" expl="11. loop invariant preservation">
-  <proof prover="0" obsolete="true"><result status="valid" time="1.40" steps="154"/></proof>
+  <proof prover="0"><result status="valid" time="1.73" steps="223"/></proof>
   </goal>
   <goal name="WP_parameter compute_end_of_row.12" expl="12. type invariant">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="5"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.12"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.00"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="5"/></proof>
+  <proof prover="1"><result status="valid" time="0.12"/></proof>
+  <proof prover="2"><result status="valid" time="0.00"/></proof>
   </goal>
   <goal name="WP_parameter compute_end_of_row.13" expl="13. postcondition">
-  <proof prover="1" obsolete="true"><result status="valid" time="1.93"/></proof>
+  <transf name="introduce_premises">
+   <goal name="WP_parameter compute_end_of_row.13.1" expl="1. postcondition">
+   <transf name="inline_goal">
+    <goal name="WP_parameter compute_end_of_row.13.1.1" expl="1. postcondition">
+    <transf name="split_goal_wp">
+     <goal name="WP_parameter compute_end_of_row.13.1.1.1" expl="1. VC for compute_end_of_row">
+     <proof prover="0" timelimit="11"><result status="valid" time="0.02" steps="5"/></proof>
+     <proof prover="1" timelimit="11"><result status="valid" time="0.14"/></proof>
+     <proof prover="2" timelimit="11"><result status="valid" time="0.02"/></proof>
+     <proof prover="5"><result status="valid" time="0.06" steps="5"/></proof>
+     </goal>
+     <goal name="WP_parameter compute_end_of_row.13.1.1.2" expl="2. VC for compute_end_of_row">
+     <proof prover="0" timelimit="11"><result status="valid" time="0.02" steps="7"/></proof>
+     <proof prover="1" timelimit="11"><result status="valid" time="0.15"/></proof>
+     <proof prover="2" timelimit="11"><result status="valid" time="0.04"/></proof>
+     <proof prover="5"><result status="valid" time="0.06" steps="7"/></proof>
+     </goal>
+     <goal name="WP_parameter compute_end_of_row.13.1.1.3" expl="3. VC for compute_end_of_row">
+     <transf name="introduce_premises">
+      <goal name="WP_parameter compute_end_of_row.13.1.1.3.1" expl="1. VC for compute_end_of_row">
+      <transf name="inline_goal">
+       <goal name="WP_parameter compute_end_of_row.13.1.1.3.1.1" expl="1. VC for compute_end_of_row">
+       <transf name="inline_goal">
+        <goal name="WP_parameter compute_end_of_row.13.1.1.3.1.1.1" expl="1. VC for compute_end_of_row">
+        <proof prover="0" timelimit="11"><result status="timeout" time="10.95"/></proof>
+        <proof prover="1" timelimit="11"><result status="timeout" time="11.03"/></proof>
+        <proof prover="2" timelimit="11"><result status="timeout" time="10.96"/></proof>
+        <proof prover="3"><result status="valid" time="3.29"/></proof>
+        </goal>
+       </transf>
+       </goal>
+      </transf>
+      </goal>
+     </transf>
+     </goal>
+    </transf>
+    </goal>
+   </transf>
+   </goal>
+  </transf>
   </goal>
  </transf>
  </goal>
@@ -1141,174 +1182,174 @@
  <goal name="WP_parameter add_empty_row" expl="VC for add_empty_row">
  <transf name="split_goal_wp">
   <goal name="WP_parameter add_empty_row.1" expl="1. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="5"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="5"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.2" expl="2. array creation size">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="7"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="7"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.3" expl="3. array creation size">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="8"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="8"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.4" expl="4. postcondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="8"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="8"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.5" expl="5. postcondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="8"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="8"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.6" expl="6. postcondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="8"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="8"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.7" expl="7. postcondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="8"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="8"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.8" expl="8. loop invariant init">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="10"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="10"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.9" expl="9. loop invariant init">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="9"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="9"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.10" expl="10. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="12"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="12"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.11" expl="11. type invariant">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="14"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="14"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.12" expl="12. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="14"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="14"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.13" expl="13. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="17"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="17"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.14" expl="14. type invariant">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="18"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="18"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.15" expl="15. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="18"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="18"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.16" expl="16. loop invariant preservation">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="19"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="19"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.17" expl="17. loop invariant preservation">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.05" steps="39"/></proof>
+  <proof prover="0"><result status="valid" time="0.05" steps="41"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.18" expl="18. type invariant">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="10"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="10"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.19" expl="19. type invariant">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="10"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.16"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="10"/></proof>
+  <proof prover="1"><result status="valid" time="0.03"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.20" expl="20. postcondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="10"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.02"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="10"/></proof>
+  <proof prover="1"><result status="valid" time="0.02"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.21" expl="21. postcondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="16"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.15"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="16"/></proof>
+  <proof prover="1"><result status="valid" time="0.15"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.22" expl="22. postcondition">
-  <proof prover="2" timelimit="26" obsolete="true"><result status="valid" time="1.56"/></proof>
+  <proof prover="2" timelimit="26"><result status="valid" time="4.22"/></proof>
   </goal>
   <goal name="WP_parameter add_empty_row.23" expl="23. postcondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.41" steps="116"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.70"/></proof>
+  <proof prover="0"><result status="valid" time="0.16" steps="140"/></proof>
+  <proof prover="1"><result status="valid" time="0.70"/></proof>
   </goal>
  </transf>
  </goal>
  <goal name="WP_parameter compute_skew_shape" expl="VC for compute_skew_shape">
  <transf name="split_goal_wp">
   <goal name="WP_parameter compute_skew_shape.1" expl="1. precondition">
-  <proof prover="0" timelimit="26" obsolete="true"><result status="valid" time="0.05" steps="7"/></proof>
+  <proof prover="0" timelimit="26"><result status="valid" time="0.05" steps="7"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.2" expl="2. precondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="7"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.13"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="7"/></proof>
+  <proof prover="1"><result status="valid" time="0.13"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.3" expl="3. assertion">
-  <proof prover="1" timelimit="11" obsolete="true"><result status="valid" time="7.93"/></proof>
+  <proof prover="1" timelimit="11"><result status="timeout" time="16.03"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.4" expl="4. precondition">
-  <proof prover="0" timelimit="26" obsolete="true"><result status="valid" time="0.06" steps="17"/></proof>
+  <proof prover="0" timelimit="26"><result status="valid" time="0.06" steps="17"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.5" expl="5. array creation size">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="19"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.13"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.00"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="19"/></proof>
+  <proof prover="1"><result status="valid" time="0.13"/></proof>
+  <proof prover="2"><result status="valid" time="0.00"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.6" expl="6. array creation size">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="19"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.13"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="19"/></proof>
+  <proof prover="1"><result status="valid" time="0.13"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.7" expl="7. postcondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.05" steps="19"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.07"/></proof>
+  <proof prover="0"><result status="valid" time="0.05" steps="19"/></proof>
+  <proof prover="1"><result status="valid" time="0.07"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.8" expl="8. postcondition">
-  <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.06" steps="19"/></proof>
+  <proof prover="0" timelimit="11"><result status="valid" time="0.06" steps="19"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.9" expl="9. postcondition">
-  <proof prover="0" timelimit="26" obsolete="true"><result status="valid" time="0.06" steps="19"/></proof>
+  <proof prover="0" timelimit="26"><result status="valid" time="0.06" steps="19"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.10" expl="10. postcondition">
-  <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.06" steps="19"/></proof>
+  <proof prover="0" timelimit="11"><result status="valid" time="0.06" steps="19"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.11" expl="11. postcondition">
-  <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.06" steps="19"/></proof>
+  <proof prover="0" timelimit="11"><result status="valid" time="0.06" steps="19"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.12" expl="12. loop invariant init">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="21"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.14"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.00"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="21"/></proof>
+  <proof prover="1"><result status="valid" time="0.14"/></proof>
+  <proof prover="2"><result status="valid" time="0.00"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.13" expl="13. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="22"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.17"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.00"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="22"/></proof>
+  <proof prover="1"><result status="valid" time="0.04"/></proof>
+  <proof prover="2"><result status="valid" time="0.00"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.14" expl="14. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="24"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.14"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="24"/></proof>
+  <proof prover="1"><result status="valid" time="0.14"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.15" expl="15. type invariant">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="25"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.15"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="25"/></proof>
+  <proof prover="1"><result status="valid" time="0.15"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.16" expl="16. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="25"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.16"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="25"/></proof>
+  <proof prover="1"><result status="valid" time="0.04"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.17" expl="17. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="26"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.14"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.12"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="26"/></proof>
+  <proof prover="1"><result status="valid" time="0.14"/></proof>
+  <proof prover="2"><result status="valid" time="0.12"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.18" expl="18. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="27"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.18"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.11"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="27"/></proof>
+  <proof prover="1"><result status="valid" time="0.04"/></proof>
+  <proof prover="2"><result status="valid" time="0.11"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.19" expl="19. type invariant">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="27"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.14"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="27"/></proof>
+  <proof prover="1"><result status="valid" time="0.14"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.20" expl="20. index in array bounds">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="27"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.14"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="27"/></proof>
+  <proof prover="1"><result status="valid" time="0.14"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.21" expl="21. loop invariant preservation">
-  <proof prover="0" obsolete="true"><result status="valid" time="1.20" steps="179"/></proof>
+  <proof prover="0"><result status="valid" time="0.26" steps="183"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.22" expl="22. type invariant">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.03" steps="20"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.14"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.03" steps="20"/></proof>
+  <proof prover="1"><result status="valid" time="0.14"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.23" expl="23. postcondition">
   <transf name="inline_goal">
@@ -1319,93 +1360,94 @@
      <goal name="WP_parameter compute_skew_shape.23.1.1.1" expl="1. VC for compute_skew_shape">
      <transf name="split_goal_wp">
       <goal name="WP_parameter compute_skew_shape.23.1.1.1.1" expl="1. VC for compute_skew_shape">
-      <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.16" steps="18"/></proof>
+      <proof prover="0" timelimit="11"><result status="valid" time="0.04" steps="18"/></proof>
       </goal>
       <goal name="WP_parameter compute_skew_shape.23.1.1.1.2" expl="2. VC for compute_skew_shape">
-      <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.13" steps="17"/></proof>
+      <proof prover="0" timelimit="11"><result status="valid" time="0.13" steps="17"/></proof>
       </goal>
       <goal name="WP_parameter compute_skew_shape.23.1.1.1.3" expl="3. VC for compute_skew_shape">
-      <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.56" steps="72"/></proof>
+      <proof prover="0" timelimit="11"><result status="valid" time="0.15" steps="72"/></proof>
       </goal>
       <goal name="WP_parameter compute_skew_shape.23.1.1.1.4" expl="4. VC for compute_skew_shape">
-      <proof prover="4" obsolete="true"><result status="valid" time="0.16"/></proof>
+      <proof prover="4"><result status="valid" time="0.04"/></proof>
       </goal>
       <goal name="WP_parameter compute_skew_shape.23.1.1.1.5" expl="5. VC for compute_skew_shape">
-      <proof prover="4" obsolete="true"><result status="valid" time="0.15"/></proof>
+      <proof prover="4"><result status="valid" time="0.03"/></proof>
       </goal>
       <goal name="WP_parameter compute_skew_shape.23.1.1.1.6" expl="6. VC for compute_skew_shape">
-      <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.11" steps="17"/></proof>
+      <proof prover="0" timelimit="11"><result status="valid" time="0.11" steps="17"/></proof>
       </goal>
       <goal name="WP_parameter compute_skew_shape.23.1.1.1.7" expl="7. VC for compute_skew_shape">
-      <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.11" steps="17"/></proof>
+      <proof prover="0" timelimit="11"><result status="valid" time="0.11" steps="17"/></proof>
       </goal>
      </transf>
      </goal>
     </transf>
     </goal>
     <goal name="WP_parameter compute_skew_shape.23.1.2" expl="2. VC for compute_skew_shape">
-    <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="1.84" steps="112"/></proof>
+    <proof prover="0" timelimit="11"><result status="valid" time="0.66" steps="137"/></proof>
     </goal>
     <goal name="WP_parameter compute_skew_shape.23.1.3" expl="3. VC for compute_skew_shape">
-    <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.09" steps="20"/></proof>
+    <proof prover="0" timelimit="11"><result status="valid" time="0.09" steps="20"/></proof>
     </goal>
     <goal name="WP_parameter compute_skew_shape.23.1.4" expl="4. VC for compute_skew_shape">
-    <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.11" steps="20"/></proof>
+    <proof prover="0" timelimit="11"><result status="valid" time="0.11" steps="20"/></proof>
     </goal>
     <goal name="WP_parameter compute_skew_shape.23.1.5" expl="5. VC for compute_skew_shape">
-    <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.33" steps="65"/></proof>
+    <proof prover="0" timelimit="11"><result status="valid" time="0.09" steps="66"/></proof>
     </goal>
     <goal name="WP_parameter compute_skew_shape.23.1.6" expl="6. VC for compute_skew_shape">
-    <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.91" steps="126"/></proof>
+    <proof prover="0" timelimit="11"><result status="valid" time="0.25" steps="128"/></proof>
     </goal>
    </transf>
    </goal>
   </transf>
   </goal>
   <goal name="WP_parameter compute_skew_shape.24" expl="24. postcondition">
-  <proof prover="0" timelimit="26" obsolete="true"><result status="valid" time="0.07" steps="20"/></proof>
+  <proof prover="0" timelimit="26"><result status="valid" time="0.07" steps="20"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.25" expl="25. postcondition">
-  <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.08" steps="33"/></proof>
+  <proof prover="0" timelimit="11"><result status="valid" time="0.08" steps="33"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.26" expl="26. postcondition">
-  <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.05" steps="20"/></proof>
+  <proof prover="0" timelimit="11"><result status="valid" time="0.05" steps="20"/></proof>
   </goal>
   <goal name="WP_parameter compute_skew_shape.27" expl="27. postcondition">
-  <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.07" steps="20"/></proof>
+  <proof prover="0" timelimit="11"><result status="valid" time="0.07" steps="20"/></proof>
   </goal>
  </transf>
  </goal>
  <goal name="WP_parameter lrrule2" expl="VC for lrrule2">
  <transf name="split_goal_wp">
   <goal name="WP_parameter lrrule2.1" expl="1. precondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="10"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.06"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.03"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="10"/></proof>
+  <proof prover="1"><result status="valid" time="0.06"/></proof>
+  <proof prover="2"><result status="valid" time="0.03"/></proof>
   </goal>
   <goal name="WP_parameter lrrule2.2" expl="2. precondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="10"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.05"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.04"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="10"/></proof>
+  <proof prover="1"><result status="valid" time="0.05"/></proof>
+  <proof prover="2"><result status="valid" time="0.04"/></proof>
   </goal>
   <goal name="WP_parameter lrrule2.3" expl="3. precondition">
-  <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.06" steps="10"/></proof>
-  <proof prover="4" obsolete="true"><result status="valid" time="0.12"/></proof>
+  <proof prover="0" timelimit="11"><result status="valid" time="0.06" steps="10"/></proof>
+  <proof prover="4"><result status="valid" time="0.12"/></proof>
   </goal>
   <goal name="WP_parameter lrrule2.4" expl="4. precondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.02" steps="23"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.03"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.00"/></proof>
+  <proof prover="0"><result status="valid" time="0.02" steps="23"/></proof>
+  <proof prover="1"><result status="valid" time="0.03"/></proof>
+  <proof prover="2"><result status="valid" time="0.00"/></proof>
   </goal>
   <goal name="WP_parameter lrrule2.5" expl="5. precondition">
-  <proof prover="0" obsolete="true"><result status="valid" time="0.01" steps="23"/></proof>
-  <proof prover="1" obsolete="true"><result status="valid" time="0.03"/></proof>
-  <proof prover="2" obsolete="true"><result status="valid" time="0.01"/></proof>
+  <proof prover="0"><result status="valid" time="0.01" steps="23"/></proof>
+  <proof prover="1"><result status="valid" time="0.03"/></proof>
+  <proof prover="2"><result status="valid" time="0.01"/></proof>
   </goal>
   <goal name="WP_parameter lrrule2.6" expl="6. precondition">
-  <proof prover="0" timelimit="11" obsolete="true"><result status="valid" time="0.07" steps="23"/></proof>
+  <proof prover="0" timelimit="11"><result status="valid" time="0.07" steps="23"/></proof>
   </goal>
   <goal name="WP_parameter lrrule2.7" expl="7. precondition">
+  <proof prover="0" timelimit="11"><result status="valid" time="0.02" steps="23"/></proof>
   </goal>
  </transf>
  </goal>
