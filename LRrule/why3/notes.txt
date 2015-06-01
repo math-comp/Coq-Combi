@@ -1,0 +1,16 @@
+
+on cherche à prouver en Coq
+
+  forall inner outer eval coq_inner coq_outer coq_eval,
+
+    f inner = coq_inner ->   // soit on prouve que f est une bijection
+                             // soit sa définition est suffisamment
+                             //   simple pour qu'on s'en persuade
+
+    forall sh: skew_shape, valid_skew_shape sh ->
+                           inner sh.inner = inner ->
+                           outer sh.outer = outer ->
+    forall eval coq_eval, f eval = coq_eval ->
+    is_solution sh eval work
+<-> coq_is_solution inner outer eval (coq_work work)
+
