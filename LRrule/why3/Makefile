@@ -32,6 +32,11 @@ test_lrrule.byte: $(EXTRACT) debug.ml test_lrrule.ml
 $(EXTRACT): lrrule.mlw
 	why3 extract -D ocaml64 -L . -T lrrule.LRrule -o .
 
+# proof of equivalence
+Spec.v: lrrule.mlw
+	why3 realize -D coq-ssreflect -L . -T lrrule.Spec -o .
+	sed -e "s/2%Z/2%:Z/g" Spec.v > Spec.v
+
 clean:
 	rm -f *~ *.cm* *.o *.annot
 	rm -f *.bak test_lrrule test_lrrule.byte lrrule__LRrule.ml

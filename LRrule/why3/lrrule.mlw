@@ -6,52 +6,11 @@
    Coq 8.4pl5
 *)
 
-theory Sum
-
-  use import int.Int
-  use HighOrd
-
-  function sum (a b: int) (f: int -> int) : int
-  (** sum of [f n] for [a <= n <= b] *)
-
-  axiom sum_def1:
-    forall f: int -> int, a b: int.
-    b < a -> sum a b f = 0
-
-  axiom sum_def2:
-    forall f: int -> int, a b: int.
-    a <= b -> sum a b f = sum a (b - 1) f + f b
-
-  lemma sum_left:
-    forall f: int -> int, a b: int.
-    a <= b -> sum a b f = f a + sum (a + 1) b f
-
-  lemma sum_ext:
-    forall f g: int -> int, a b: int.
-    (forall i. a <= i <= b -> f i = g i) ->
-    sum a b f = sum a b g
-
-  lemma sum_le:
-    forall f g: int -> int, a b: int.
-    (forall i. a <= i <= b -> f i <= g i) ->
-    sum a b f <= sum a b g
-
-  lemma sum_nonneg:
-    forall f: int -> int, a b: int.
-    (forall i. a <= i <= b -> 0 <= f i) ->
-    0 <= sum a b f
-
-  lemma sum_decomp:
-    forall f: int -> int, a b c: int. a <= b <= c ->
-    sum a c f = sum a b f + sum (b+1) c f
-
-end
-
 module ArraySum
 
   use import int.Int
   use import array.Array
-  use import Sum
+  use import int.Sum
 
   function sum_sub_array (a: array int) (lo hi: int) : int =
     sum lo hi (\i: int. a[i])
@@ -69,27 +28,12 @@ module ArraySum
 
 end
 
-module CoqSpec
-
-  type nat (* ? *)
-  use import list.List
-
-  type partition = list nat
-
-  predicate inputSpec (inner outer eval: partition)
-
-  predicate outputSpec (inner outer eval: partition) (tab: list (list nat))
-
-end
-
-module LRrule
+module Spec
 
   use import int.Int
-  use import int.MinMax
-  use import ref.Refint
   use import map.Map
   use import array.Array
-  use import Sum
+  use import int.Sum
   use import ArraySum
   use import int.NumOf
 
@@ -164,6 +108,43 @@ module LRrule
     is_yam_of_eval eval w /\
     is_tableau_reading s w
 
+  (** skew shapes *)
+
+  (* outer and inner after add_empty_row *)
+  predicate valid_normalized_outer_inner (outer inner: array int) =
+    2 <= length outer = length inner /\
+    included inner outer /\
+    is_part inner /\ is_part outer /\
+    outer[0] = inner[0] = outer[1]
+
+  predicate valid_end_of_row (outer inner end_of_row: array int) =
+    length end_of_row = length outer /\
+    end_of_row[0] = 0 /\
+    forall i. 1 <= i < length end_of_row ->
+              end_of_row[i] = sum 1 i (\ j. outer[j] - inner[j])
+
+  predicate valid_skew_shape (sh: skew_shape) =
+    valid_normalized_outer_inner sh.outer sh.inner /\
+    valid_end_of_row sh.outer sh.inner sh.end_of_row /\
+    length sh.end_of_overlap = length sh.below = length sh.outer /\
+    forall i. 1 <= i < length sh.end_of_overlap ->
+      sh.below[i] = sh.outer[i] - sh.inner[i-1] /\
+      sh.end_of_overlap[i] = sh.end_of_row[i-1] + sh.below[i]
+    (* end_of_overlap[0] and below[0] are left unspecified *)
+
+end
+
+module LRrule
+
+  use import Spec
+  use import int.Int
+  use import int.MinMax
+  use import ref.Refint
+  use import map.Map
+  use import array.Array
+  use import int.Sum
+  use import ArraySum
+
   (** storing solutions we have found so far *)
 
   (* solutions t and u have the same prefix [0..i[ *)
@@ -221,30 +202,6 @@ module LRrule
     ensures  { solutions.next = (old solutions.next) + 1 }
     ensures  { solutions.sols =
                Map.set (old solutions.sols) (old solutions.next) (a2s w) }
-
-  (** skew shapes *)
-
-  (* outer and inner after add_empty_row *)
-  predicate valid_normalized_outer_inner (outer inner: array int) =
-    2 <= length outer = length inner /\
-    included inner outer /\
-    is_part inner /\ is_part outer /\
-    outer[0] = inner[0] = outer[1]
-
-  predicate valid_end_of_row (outer inner end_of_row: array int) =
-    length end_of_row = length outer /\
-    end_of_row[0] = 0 /\
-    forall i. 1 <= i < length end_of_row ->
-              end_of_row[i] = sum 1 i (\ j. outer[j] - inner[j])
-
-  predicate valid_skew_shape (sh: skew_shape) =
-    valid_normalized_outer_inner sh.outer sh.inner /\
-    valid_end_of_row sh.outer sh.inner sh.end_of_row /\
-    length sh.end_of_overlap = length sh.below = length sh.outer /\
-    forall i. 1 <= i < length sh.end_of_overlap ->
-      sh.below[i] = sh.outer[i] - sh.inner[i-1] /\
-      sh.end_of_overlap[i] = sh.end_of_row[i-1] + sh.below[i]
-    (* end_of_overlap[0] and below[0] are left unspecified *)
 
   let compute_end_of_row (outer inner: array int) : array int
     requires { included inner outer }
