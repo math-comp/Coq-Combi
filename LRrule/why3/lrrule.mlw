@@ -253,7 +253,8 @@ module LRrule
     ensures  { result = solutions.next }
     ensures  { good_solutions sh eval solutions 0 result }
     ensures  { forall w. is_solution sh eval w ->
-               exists i. 0 <= i < solutions.next /\ eq_sol w (s2a (Map.get solutions.sols i)) }
+               exists i. 0 <= i < solutions.next /\
+                         eq_sol w (s2a (Map.get solutions.sols i)) }
     diverges
   =
     let n = sh.end_of_row[Array.length sh.end_of_row - 1] in
@@ -267,7 +268,8 @@ module LRrule
        idx = current index in work, from the start *)
     let rec count_rec (row idx: int)
       requires { 1 <= row <= szshape = length sh.outer }
-      requires { row < szshape -> sh.end_of_row[row-1] <= idx <= sh.end_of_row[row] }
+      requires { row < szshape ->
+                 sh.end_of_row[row-1] <= idx <= sh.end_of_row[row] }
       requires { valid_innev eval innev work idx !lastinnev }
       requires { is_solution_prefix sh eval work idx }
       diverges
@@ -279,7 +281,8 @@ module LRrule
       ensures  { forall i. old solutions.next <= i < solutions.next ->
                  let w = s2a (Map.get solutions.sols i) in
                  is_solution sh eval w /\ eq_prefix (old work) w idx }
-      ensures  { forall w. is_solution sh eval w -> eq_prefix (old work) w idx ->
+      ensures  { forall w. is_solution sh eval w ->
+                 eq_prefix (old work) w idx ->
                  exists i. old solutions.next <= i < solutions.next /\
                            eq_sol w (s2a (Map.get solutions.sols i)) }
       =
@@ -317,16 +320,22 @@ module LRrule
           invariant { forall i. 0 <= i < length innev ->
                       innev[i] = (at innev 'Init)[i] }
           invariant { forall i. 0 <= i < idx -> work[i] = (at work 'Init)[i] }
-          invariant { valid_innev eval innev work idx !lastinnev }
+          invariant { "expl: valid_innev"
+                      valid_innev eval innev work idx !lastinnev }
           invariant { "expl: is_yam" is_yam_prefix work idx }
           invariant { is_tableau_reading_prefix sh work idx }
           invariant { !sum = solutions.next - at solutions.next 'Init }
-          invariant { sorted solutions (at solutions.next 'Init) solutions.next }
-          invariant { forall i. at solutions.next 'Init <= i < solutions.next ->
+          invariant { "expl: sorted solutions"
+                    sorted solutions (at solutions.next 'Init) solutions.next }
+          invariant { "expl: only solutions"
+                      forall i. at solutions.next 'Init <= i < solutions.next ->
                       let w = s2a (Map.get solutions.sols i) in
-                      is_solution sh eval w /\ eq_prefix (at work 'Init) w idx /\
+                      is_solution sh eval w /\
+                      eq_prefix (at work 'Init) w idx /\
                       min <= w[idx] < v }
-          invariant { forall w. is_solution sh eval w -> eq_prefix (at work 'Init) w idx ->
+          invariant { "expl: all solutions"
+                      forall w. is_solution sh eval w ->
+                      eq_prefix (at work 'Init) w idx ->
                       min <= w[idx] < v ->
                       exists i. at solutions.next 'Init <= i < solutions.next /\
                                 eq_sol w (s2a (Map.get solutions.sols i)) }
