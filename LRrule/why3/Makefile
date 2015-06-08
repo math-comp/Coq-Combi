@@ -1,3 +1,5 @@
+include Makefile.coq
+
 
 .PHONY: test test.byte
 
