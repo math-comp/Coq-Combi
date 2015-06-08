@@ -57,6 +57,17 @@ Section Yama.
         - by rewrite (IHs (leq_trans Hs Hi)) (ltn_eqF Hi).
   Qed.
 
+  Lemma nth_shape_rowseq s i : nth 0 (shape_rowseq s) i = count_mem i s.
+  Proof.
+    rewrite -shape_rowseq_countE /shape_rowseq_count.
+    case: (ltnP i (foldr maxn 0 [seq i.+1 | i <- s])) => Hi.
+    - rewrite (nth_map 0); last by rewrite size_iota.
+      by rewrite nth_iota.
+    - rewrite nth_default; last by rewrite size_map size_iota.
+      elim: s Hi => [| s0 s IHs] //=.
+      by rewrite geq_max => /andP [] /ltn_eqF -> /= /IHs <-.
+  Qed.
+
   Lemma foldr_maxn s : foldr maxn 0 [seq i.+1 | i <- s] = (\max_(i <- s) S i).
   Proof.
     elim: s => [| s0 s IHs] /=; first by rewrite big_nil.
@@ -115,6 +126,32 @@ Section Yama.
     then is_part (shape_rowseq s) && is_yam s'
     else true.
   Definition is_yam_of_shape sh y := (is_yam y) && (shape_rowseq y == sh).
+
+  Lemma is_yamP s :
+    reflect
+      (forall i n, count_mem n (drop i s) >= count_mem n.+1 (drop i s))
+      (is_yam s).
+  Proof.
+    apply (iffP idP).
+    - elim: s => [| s0 s IHs] //= /andP [] /is_partP [] _ Hpart /IHs Hrec {IHs}.
+      case => [| i] n //=.
+      + case: (altP (s0 =P n)) => Hns0.
+        subst s0; rewrite ieqi1F add0n add1n.
+        have:= Hrec 0 n; rewrite drop0 => /leq_trans; by apply.
+      + case: (altP (s0 =P n.+1)) => Hn1s0.
+        have:= Hpart n; rewrite !nth_incr_nth Hn1s0 eq_refl eq_sym ieqi1F.
+        by rewrite !add0n !add1n !nth_shape_rowseq.
+      + rewrite !add0n.
+        have:= Hrec 0 n; by rewrite drop0.
+    - elim: s => [//= | s0 s IHs] H.
+      apply/andP; split.
+      + move: H {IHs}. move: (s0 :: s) => {s0 s} s Hs.
+        have {Hs} := Hs 0; rewrite drop0 => Hs.
+        apply /is_partP; split; last by move=> i; rewrite !nth_shape_rowseq.
+        * elim: s {Hs} => [//= | s0 s IHs] /=.
+          by apply last_incr_nth_non0.
+      + apply: IHs => i n; exact (H i.+1 n).
+  Qed.
 
   Lemma is_part_shyam s : is_yam s -> is_part (shape_rowseq s).
   Proof. by case: s => [//= | s0 s] /= /andP []. Qed.

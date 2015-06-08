@@ -254,7 +254,7 @@ Definition LR_support :=
   [set Q : stdtabn (d1 + d2) | predLRTripleFast Q1 Q2 Q ].
 
 (* Noncommutative LR rule *)
-Lemma catset_LR_rule :
+Lemma free_LR_rule :
   catset (freeSchur Q1) (freeSchur Q2) = \bigcup_(Q in LR_support) (freeSchur Q).
 Proof.
   rewrite /catset.
@@ -262,7 +262,7 @@ Proof.
   - move/imset2P => [] w1 w2.
     rewrite !freeSchurP /= => Hw1 Hw2 ->.
     have := conj Hw1 Hw2.
-    rewrite free_LR_rule; try by apply: stdtabnP.
+    rewrite LRTriple_cat_equiv; try by apply: stdtabnP.
     move => [] H1 H2 [] Q [] Htriple /= Hcat.
     have := is_stdtab_of_n_LRTriple (stdtabnP Q1) (stdtabnP Q2) Htriple.
     rewrite !stdtabn_size => HQ.
@@ -283,7 +283,7 @@ Proof.
     have Hcat : t = cat_tuple t1 t2.
       apply: val_inj => /=; by rewrite cat_take_drop.
     have : (val t1 \in langQ _ Q1 /\ val t2 \in langQ _ Q2).
-      rewrite free_LR_rule; try by apply: stdtabnP.
+      rewrite LRTriple_cat_equiv; try by apply: stdtabnP.
       rewrite !size_tuple !stdtabn_size; split; try by [].
       exists Q; split.
       + apply/LRTripleP; try apply: stdtabnP.
@@ -300,7 +300,7 @@ Qed.
 Theorem LR_rule_tab :
   Schur (shape_deg Q1) * Schur (shape_deg Q2) = \sum_(Q in LR_support) (Schur (shape_deg Q)).
 Proof.
-  rewrite !Schur_freeSchurE multcatset catset_LR_rule.
+  rewrite !Schur_freeSchurE multcatset free_LR_rule.
   rewrite -cover_imset /polyset.
   rewrite big_trivIset /=; first last.
     apply/trivIsetP => S1 S2.

@@ -699,7 +699,7 @@ Proof.
     by rewrite size_map -Hp1 -Hp2 !size_RS.
 Qed.
 
-Theorem free_LR_rule_plact t1 t2 u1 u2:
+Theorem LRTriple_cat_langQ t1 t2 u1 u2:
   is_stdtab t1 -> is_stdtab t2 -> u1 \in langQ t1 -> u2 \in langQ t2 ->
   plactLRTriple t1 t2 (RStabmap (u1 ++ u2)).2.
 Proof.
@@ -715,7 +715,7 @@ Proof.
   + by apply: invstd_cat_in_shsh.
 Qed.
 
-Theorem free_LR_rule t1 t2 :
+Theorem LRTriple_cat_equiv t1 t2 :
   is_stdtab t1 -> is_stdtab t2 ->
   forall u1 u2 : word,
   ( (u1 \in langQ t1 /\ u2 \in langQ t2) <->
@@ -726,7 +726,7 @@ Proof.
   split.
   - move=> [] Hu1 Hu2; split; try by apply: size_langQ.
     exists (RStabmap (u1 ++ u2)).2; split.
-    + by apply: free_LR_rule_plact.
+    + by apply: LRTriple_cat_langQ.
     + by rewrite inE.
   - move=> [] Hsz1 Hsz2 [] t [] [] p1 p2 p Hp1 Hp2 Htmp; subst t.
     rewrite !inE -!RSinvstdE -Hp1 -Hp2 -!plactic_RS => Hsh Hcat.

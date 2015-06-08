@@ -191,17 +191,29 @@ Qed.
 Section OneCoeff.
 
 Variable P : intpartn (d1 + d2).
-
-Definition is_skew_reshape_tableau (x : seq nat) :=
-  is_skew_tableau P1 (skew_reshape P1 P x).
-Definition LRyam_set :=
-  [set x : yamsh_finType (intpartnP P2) | is_skew_reshape_tableau x].
-Definition LRyam_coeff := #|LRyam_set|.
-
 Hypothesis Hincl : included P1 P.
 
 Lemma sumn_diffE : sumn (diff_shape P1 P) = sumn P2.
 Proof. by rewrite (sumn_diff_shape Hincl) !intpartn_sumn addKn. Qed.
+
+Definition is_skew_reshape_tableau (w : seq nat) :=
+  is_skew_tableau P1 (skew_reshape P1 P w).
+Lemma is_skew_reshape_tableauP (w : seq nat) :
+  size w = sumn (diff_shape P1 P) ->
+  reflect
+    (exists tab, [/\ is_skew_tableau P1 tab, shape tab = diff_shape P1 P & to_word tab = w])
+    (is_skew_reshape_tableau w).
+Proof.
+  rewrite /is_skew_reshape_tableau => Hsize; apply (iffP idP).
+  - move=> H; exists (skew_reshape P1 P w); split; first exact H.
+    + exact: (shape_skew_reshape Hincl Hsize).
+    + exact: (to_word_skew_reshape Hincl Hsize).
+  - move=> [] tab [] Htab Hsh <-.
+    rewrite -(diff_shapeK Hincl) -Hsh.
+    rewrite skew_reshapeK; first exact Htab.
+    rewrite -(size_map size) -/(shape tab) Hsh size_diff_shape.
+    by apply size_included.
+Qed.
 
 Lemma size_leq_skew_reshape (y : seq nat) :
   size (RS (std (hyper_yam P1))) <= size (skew_reshape P1 P y).
@@ -271,6 +283,9 @@ Proof.
     by apply (allP (std_shsh Hstd1 Hz)).
 Qed.
 
+Definition LRyam_set :=
+  [set y : yamsh_finType (intpartnP P2) | is_skew_reshape_tableau y].
+Definition LRyam_coeff := #|LRyam_set|.
 Definition bijLR (yam : yamsh P2) : stdtabn (d1 + d2) :=
   if (boolP (is_skew_reshape_tableau yam)) is AltTrue pf then
     StdtabN (bijLRyamP pf)
@@ -447,10 +462,8 @@ Proof.
   - by rewrite (invf x) (invf y) H.
 Qed.
 
-Theorem LR_coeff_yamP : LRtab_coeff P1 P2 P = LRyam_coeff.
+Lemma bijLR_image : LRtab_set P1 P2 P = [set bijLR x | x in LRyam_set].
 Proof.
-  rewrite /LRtab_coeff /LRyam_coeff.
-  suff -> : LRtab_set P1 P2 P = bijLR @: LRyam_set by apply card_in_imset; apply bijLR_inj.
   rewrite -setP => Q.
   apply/(sameP idP); apply(iffP idP).
   - move/imsetP => [] y Hy ->.
@@ -460,6 +473,14 @@ Proof.
     by apply mem_imset.
 Qed.
 
+Theorem LR_coeff_yamP : LRtab_coeff P1 P2 P = LRyam_coeff.
+Proof.
+  rewrite /LRtab_coeff /LRyam_coeff.
+  suff -> : LRtab_set P1 P2 P = bijLR @: LRyam_set by apply card_in_imset; apply bijLR_inj.
+  exact: bijLR_image.
+Qed.
+
+(* Unused ************************)
 Definition LRyam_enum (P1 P2 P : seq nat) :=
   [seq x <- enum_yamsh P2 | is_skew_reshape_tableau x].
 Definition LRyam_compute (P1 P2 P : seq nat) := size (LRyam_enum P1 P2 P).
@@ -472,6 +493,7 @@ Proof.
   - by rewrite -(size_map val) map_filter_comp enum_yamshE map_id.
   - by move=> i /=; rewrite unfold_in.
 Qed.
+(* End of Unused *****************)
 
 End OneCoeff.
 
