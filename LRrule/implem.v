@@ -72,8 +72,8 @@ Section OutEval.
 Fixpoint add m n := if m is m'.+1 then add m' n.+1 else n.
 Lemma addE : add =2 addn.
 Proof. by elim=> //= n IHn m; rewrite IHn addSnnS. Qed.
-Let tsumn := foldl add 0.
 
+Let tsumn := foldl add 0.
 Lemma tsumnE : tsumn =1 sumn.
 Proof.
   rewrite /tsumn => s; rewrite -(add0n (sumn s)); move: 0 => i.
@@ -867,7 +867,7 @@ Proof.
   rewrite -(mem_map val_inj) subType_seqP /= => /mapP [] tab Htab -> {yam}.
   have Hskew := LRyamtab_skew_tableau (intpartnP P1) (intpartnP P) Hincl Htab.
   have Hshape := LRyamtab_shape (intpartnP P1) (intpartnP P) Hincl Htab.
-  rewrite /is_LRtab /=.
+  rewrite /is_skew_reshape_tableau /=.
   have <- : (outer_shape P1 (shape tab)) = P.
     by rewrite Hshape diff_shapeK.
   rewrite skew_reshapeK //= -(size_map size tab) -/(shape tab) Hshape size_diff_shape.

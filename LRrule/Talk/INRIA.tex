@@ -1,12 +1,14 @@
 \documentclass[compress,11pt]{beamer}
 
 \usetheme{TALK}
-\usepackage[vcentermath,enableskew]{youngtab}
+\usepackage[vcentermath]{genyoungtabtikz}
 \usepackage{minted}
 \usemintedstyle{emacs}
 %\usemintedstyle{colorful}
 %\usemintedstyle{borland}
 %\usemintedstyle{autumn}
+
+\usepackage{genyoungtabtikz}
 
 \newminted{coq}{
 frame=lines,
@@ -27,70 +29,25 @@ Littlewood-Richardson rule\\[5mm]}
 
 \newcommand{\XX}{{\mathbb X}}
 
-\newcommand{\exec}{\operatorname{exec}}
 \newcommand{\free}[1]{\left\langle#1\right\rangle}
-\newcommand{\gl}{{\mathfrak gl}}
-\newcommand{\bb}{\mathbb}
-\newcommand{\A}{{\mathbb A}}
-\newcommand{\E}{{\mathbb E}}
-\newcommand{\F}{\mathbf{F}}
-\newcommand{\GG}{\mathbf{G}}
-\newcommand{\G}{\mathbf{G}}
 \newcommand{\N}{{\mathbb N}}
 \newcommand{\C}{{\mathbb C}}
-\newcommand{\R}{{\mathbb R}}
-\newcommand{\Z}{{\mathbb Z}}
 \newcommand{\Q}{{\mathbb Q}}
 \newcommand{\SG}{{\mathfrak S}}
-\newcommand{\ft}{\tilde{f}}
-\newcommand{\et}{\tilde{e}}
 \newcommand{\std}{\operatorname{Std}}
-\newcommand{\Des}{\operatorname{Des}}
-\newcommand{\Rec}{\operatorname{Rec}}
-\newcommand{\Sh}{\operatorname{Sh}}
 
 \newcommand{\sym}{\mathrm{sym}}
 \newcommand{\NCSF}{\mathbf{NCSF}}
 \newcommand{\QSym}{\mathrm{QSym}}
 \newcommand{\FSym}{\mathbf{FSym}}
-\newcommand{\FQSym}{\mathbf{FQSym}}
-\newcommand{\MQSym}{\mathbf{MQSym}}
-\newcommand{\Tree}{\mathbf{Tree}}
-
-\newcommand{\MS}{\mathbf{MS}}
-\newcommand{\FS}{{\mathbb \phi S}}
-\newcommand{\SSs}{\mathbb{S}}
-\newcommand{\TT}{{\cal T}}
-\newcommand{\PP}{{\cal P}}
-\def\Pp{{\bf P}}        % P de PBT
-\def\Qq{{\bf Q}}        % Q de PBT^*
-\newcommand{\HQ}{{\sf Q}}
-\newcommand{\HR}{{\sf R}}
-\newcommand{\rad}{\operatorname{rad}}
-\newcommand{\soc}{\operatorname{soc}}
-\newcommand{\Ext}{\operatorname{Ext}}
-\newcommand{\End}{\operatorname{End}}
-\newcommand{\conn}{{\cal C}}
-\newcommand{\ff}{{\sf F}}
-\newcommand{\UU}{\mathbf{U}}
-\newcommand{\VV}{\mathbf{V}}
-\newcommand{\sfact}{\operatorname{\rm sfact}}
 
 \newcommand{\partof}{\vdash}                    % Partition de
 \newcommand{\compof}{\vDash}                    % Composisition de
-\newcommand{\ssh}{\Cup}
-\newcommand{\saug}{\uplus}
-\newcommand{\sconc}{\bullet}
-\newcommand{\Std}{{\rm Std}}
-\newcommand{\Park}{{\rm Park}}
-\newcommand{\sumord}{\hat +}
 
 \newcommand{\qandq}{\text{\quad et\quad}}
 
-\newcommand{\tensor}{\otimes}
-\newcommand{\pairing}[2]{\left\langle#1,#2\right\rangle} % Crochet de dualite
-%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\alphX}{{\mathbb X}}
+%%%%%%%%%%%%%%%%%%%%%
 \renewcommand{\emph}[1]{{\color{red} #1}}
 %------------------------------------------------------------------------------
 \begin{document}
@@ -149,7 +106,7 @@ Works because of some associativity property: the {\color{red} plactic monoid}.
   $|\lambda| := \lambda_0+\lambda_1+\dots+\lambda_l \qandq
   \ell(\lambda) := l\,. $
 
-  Ferrer's diagram of a partitions : $(5,3,2,2) \leftrightarrow \yng(2,2,3,5)$
+  Ferrer's diagram of a partitions : $(5,3,2,2) \leftrightarrow \yngs(0.5, 2,2,3,5)$
 
 % \end{frame}
 
@@ -298,6 +255,7 @@ Works because of some associativity property: the {\color{red} plactic monoid}.
 
 \section{Combinatorial ingredients: partitions and tableaux}
 
+\Yboxdim{10pt}
 \begin{frame}{Young Tableau}
 
   \begin{DEFN}
@@ -373,7 +331,8 @@ Notation "m <= n" := (leqX_op m n) : ord_scope.
   \[s_{(2,1)}(a,b,c) = a^2b\,+\,ab^2\,+\,a^2c\ +\quad 2abc\quad +\
   b^2c\,+\,ac^2\,+\,bc^2\]
 
-  \[s_{(2,1)}(a,b,c) = {  \scriptsize\young(b,aa) + \young(b,ab) + \young(c,aa)
+  \[s_{(2,1)}(a,b,c) = {  \Yboxdim{8pt}\scriptsize
+    \young(b,aa) + \young(b,ab) + \young(c,aa)
   + \young(b,ac) + \young(c,ab) + \young(c,bb) + \young(c,ac) + \young(c,bc)}\]
 \end{frame}
 
@@ -484,10 +443,10 @@ Definition Schur_pol (sh : seq nat) := polyset R (tabwordshape sh).
 % 12    02    01   
   \[
   C_{331,421}^{5432} = 3
-  \qquad \tiny
-  \young(12,:00,:::1,:::00)\qquad
-  \young(02,:01,:::1,:::00)\qquad
-  \young(01,:02,:::1,:::00)
+  \qquad \Yboxdim{7pt}\tiny
+  \gyoung(12,:;00,:::;1,:::;00)\qquad
+  \gyoung(02,:;01,:::;1,:::;00)\qquad
+  \gyoung(01,:;02,:::;1,:::;00)
   \]
 % ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00
 % ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1
@@ -495,22 +454,23 @@ Definition Schur_pol (sh : seq nat) := polyset R (tabwordshape sh).
 % 01    02    11    01    12    02    01    13    03    03    11    12    22    02    23
   \[
   C_{431,4321}^{7542} = 4
-  \qquad \tiny
-  \young(23,:112,:::01,::::000)\quad
-  \young(23,:012,:::11,::::000)\quad
-  \young(13,:022,:::11,::::000)\quad
-  \young(03,:122,:::11,::::000)\quad
+  \qquad \Yboxdim{7pt}\tiny
+  \gyoung(23,:;112,:::;01,::::;000)\quad
+  \gyoung(23,:;012,:::;11,::::;000)\quad
+  \gyoung(13,:;022,:::;11,::::;000)\quad
+  \gyoung(03,:;122,:::;11,::::;000)\quad
   \]
   \[
   C_{4321,431}^{7542} = 4
-  \qquad \tiny
-  \young(:2,::11,:::01,::::000)\quad
-  \young(:1,::12,:::01,::::000)\quad
-  \young(:1,::02,:::11,::::000)\quad
-  \young(:0,::12,:::11,::::000)\quad
+  \qquad \Yboxdim{7pt}\tiny
+  \gyoung(:;2,::;11,:::;01,::::;000)\quad
+  \gyoung(:;1,::;12,:::;01,::::;000)\quad
+  \gyoung(:;1,::;02,:::;11,::::;000)\quad
+  \gyoung(:;0,::;12,:::;11,::::;000)\quad
   \]
 
 \end{frame}
+
 
 \begin{frame}{Outline of a proof}
 
@@ -676,6 +636,7 @@ Lemma insrowE r l : insmin r l = insrow r l.
   \end{multline*}
 \end{frame}
 
+
 \begin{frame}[fragile]
   \begin{coqcode}
 Definition bump r l := (l < (last l r))%Ord.
@@ -730,6 +691,7 @@ Theorem RS_bij_2 pair : is_RSpair pair -> RSmap (RSmapinv2 pair) = pair.
   \end{coqcode}
 \end{frame}
 
+
 \begin{frame}[fragile]{Robinson-Schensted's bijection (Yamanouchi version)}
 
   \newcommand{\ra}{{\red a}}%
@@ -771,6 +733,7 @@ Theorem RS_bij_2 pair : is_RSpair pair -> RSmap (RSmapinv2 pair) = pair.
   \young(c,bbb,aaaab\rd), \young(8,256,013479)
   \end{multline*}
 \end{frame}
+
 
 \begin{frame}[fragile]{Idea of the proof: the non commutative lifting}
 
@@ -1066,6 +1029,7 @@ Corollary Sch_plact u v : RS u == RS v -> u =Pl v .
   \end{coqcode}
 \end{frame}
 
+
 \begin{frame}[fragile]{Step 3: Green's numbers are plactic invariants}
 
 \[
@@ -1254,7 +1218,7 @@ Theorem LR_coeffP d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) :
   \def\J{{\color{pink} 17}}
   \[
   C_{431,4321}^{7542} = 4
-  \qquad \tiny
+  \quad \tiny\Yboxdim{8pt}
   \young(\H\J,7\E\F\I,456\A\G,0123\B\C\D)\quad
   \young(\H\J,7\A\E\I,456\F\G,0123\B\C\D)\quad
   \young(\E\J,7\A\H\I,456\F\G,0123\B\C\D)\quad
@@ -1268,11 +1232,11 @@ Theorem LR_coeffP d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) :
   \def\AD{{\color{pink} 3}}
   \[
   C_{431,4321}^{7542} = 4
-  \qquad \tiny
-  \young(\AC\AD,:\AB\AB\AC,:::\AA\AB,::::\AA\AA\AA)\quad
-  \young(\AC\AD,:\AA\AB\AC,:::\AB\AB,::::\AA\AA\AA)\quad
-  \young(\AB\AD,:\AA\AC\AC,:::\AB\AB,::::\AA\AA\AA)\quad
-  \young(\AA\AD,:\AB\AC\AC,:::\AB\AB,::::\AA\AA\AA)\quad
+  \quad \tiny\Yboxdim{8pt}
+  \gyoung(\AC\AD,:;\AB\AB\AC,:::;\AA\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AC\AD,:;\AA\AB\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AB\AD,:;\AA\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AA\AD,:;\AB\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
   \]
   + a fast algorithm to enumerate those
 \end{frame}

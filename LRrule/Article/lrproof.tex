@@ -1,0 +1,402 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[top=30pt,bottom=30pt,left=48pt,right=46pt]{geometry}
+
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage[vcentermath]{genyoungtabtikz}
+% \YFrench % use french convention for tableaux.
+
+\usepackage{minted}
+\usemintedstyle{emacs}
+%\usemintedstyle{colorful}
+%\usemintedstyle{borland}
+%\usemintedstyle{autumn}
+
+\newminted{coq}{
+frame=lines,
+framesep=2mm,
+mathescape=true
+}
+\usepackage{commath}
+
+\newcommand{\Coq}{\texttt{Coq}}
+\newcommand{\SSR}{\texttt{SSReflect}}
+\newcommand{\LR}{Littlewood-Richardson\ }
+
+
+% INFO DOCUMENT - TITRE, AUTEUR, INSTITUTION
+\title{\bf\LARGE A formal proof of \\
+\LR rule\\[5mm]}
+\author{Florent Hivert}
+%\institute[LRI]{
+%  LRI / Université Paris Sud 11 / CNRS / INRIA}
+\date{Mai 2015}
+
+\newcommand{\free}[1]{\left\langle#1\right\rangle}
+\newcommand{\N}{{\mathbb N}}
+\newcommand{\C}{{\mathbb C}}
+\newcommand{\Q}{{\mathbb Q}}
+\newcommand{\SG}{{\mathfrak S}}
+\newcommand{\std}{\operatorname{Std}}
+
+\newcommand{\sym}{\mathrm{sym}}
+\newcommand{\NCSF}{\mathbf{NCSF}}
+\newcommand{\QSym}{\mathrm{QSym}}
+\newcommand{\FSym}{\mathbf{FSym}}
+
+\newcommand{\partof}{\vdash}                    % Partition de
+\newcommand{\compof}{\vDash}                    % Composisition de
+
+\newcommand{\qandq}{\text{\quad et\quad}}
+
+\newcommand{\red}[1]{{\color{red} #1}}
+\newcommand{\grn}[1]{{\color{green} #1}}
+\newcommand{\blu}[1]{{\color{blue} #1}}
+
+\newcommand{\alphX}{{\mathbb X}}
+
+
+
+\newtheorem{THEO}{Theorem}
+\newtheorem{PROP}{Proposition}
+\newtheorem{LEMMA}{Lemma}
+\newtheorem{CORO}{Corollary}
+\newtheorem{PROBLEM}{Problem}
+\newtheorem{REMARK}{Remark}
+\newtheorem{NOTE}{Note}
+
+% \theoremstyle{definition}
+\newtheorem{DEFN}{Definition}
+\newtheorem{DEFNs}{Definitions}
+\newtheorem{ALGO}{Algorithm}
+
+%------------------------------------------------------------------------------
+\begin{document}
+
+\maketitle
+
+\abstract{We present a formalized proof of the \LR rule using \Coq{} and
+  \SSR{}. The \LR coefficients are defined as the coefficient of the
+  expansion of the product of two Schur function (a particular basis of the
+  ring of symmetric functions). Those coefficient are nonnegative
+  integers. The \LR rule describe allows to compute these coefficients as
+  the number of filling of a specific shape with integer satisfying some
+  comparison conditions.}
+
+\tableofcontents
+
+\section{Introduction}
+
+We start by a general presentation of the problem. The goal is to give a
+reader an idea of the field of algebraic combinatorics and the \LR problem. In
+this first part we stay rather sketchy: to avoid to much repetition, precise
+definitions will be given later together with their Coq formalization.
+
+\subsection{Symmetric function and \LR coefficients}
+The ring \emph{symmetric functions} is defined as a limit as $n$ goes to the
+infinity of the ring of symmetric polynomial in $n$ indeterminates. This ring
+serves as universal structure in which relations between symmetric polynomials
+can be expressed in a way independent of the number $n$ of indeterminates (but
+its elements are neither polynomials nor functions). Among other things, this
+ring plays an important role in the representation theory of the symmetric
+group or the general linear group~\cite{MacDo}. It also plays a role in
+various geometric problems~\cite{Horn,Grassman}.
+
+In these various context, the most important ingredient is a particular linear
+basis $(s_\lambda)_\lambda$ whose elements are called the \emph{Schur
+  functions}. Recall that linear basis of symmetric functions are indexed by
+\emph{integer partition}, that is non increasing sequences of positive
+integers. As a linear basis of an algebra, the product of two Schur functions
+can be expressed as a linear combination of Schur functions:
+\begin{equation}
+  s_\lambda s_\mu = \sum_{\nu} c_{\lambda, \mu}^{\nu}\ s_\nu\,.
+\end{equation}
+For example,
+\begin{multline}
+  s_{(2,1)} * s_{(3,2,2)} = s_{(3,2,2,2,1)} + s_{(3,3,2,1,1)} + s_{(3,3,2,2)} +
+  s_{(3,3,3,1)}
+  + s_{(4,2,2,1,1)} + \\
+  s_{(4,2,2,2)} + 2s_{(4,3,2,1)} + s_{(4,3,3)} + s_{(4,4,2)} + s_{(5,2,2,1)} +
+  s_{(5,3,2)}
+\end{multline}
+The coefficients $c_{\lambda, \mu}^{\nu}$ of the decomposition are called the
+\LR coefficients and are nonnegative integer. The \LR rule describe them as
+the number of certain combinatorial configurations called \LR tableaux. For
+example, from the previous expansion one can read that $c_{((2,1),
+  (3,2,2)}^{(4,3,2,1)} = 2$ which correspond to the two following
+configurations:
+\begin{equation}
+  \gyoung(2,12,:;01,::;00)\qquad\qquad
+  \gyoung(2,02,:;11,::;00)
+\end{equation}
+The precise definition of the configuration is rather intricate, crossing
+several types of constraints on the filling of a diagram of box by numbers. It
+makes the rule difficult to state, to use and even more to prove: According to
+Wikipedia~\cite{WikiLR}:
+\begin{quotation}
+  The \LR rule is notorious for the number of errors that appeared prior to
+  its complete, published proof. Several published attempts to prove it are
+  incomplete, and it is particularly difficult to avoid errors when doing hand
+  calculations with it: even the original example in D.~E.~Littlewood and
+  A.~R.~Richardson (1934) contains an error.
+\end{quotation}
+
+This rule was first stated in 1934 by D.~E.~Littlewood and
+A.~R.~Richardson~\cite{LR}. However, their proof was wrong: they only proved
+it in a very particular case. They also made a mistake in their example. In
+1938, Robinson~\cite{Robinson} attempted to complete the proof, but there was
+still a mistake. One has to wait until 1977 to get the first correct proof due
+to Schützenberger. This proof has numerous combinatorial ingredient, and as it
+was written, many combinatorialists though that this proof was ``somewhat
+gappy''. The present work follows more or less this original proof showing
+that there where actually no crucial gaps. After this first proof, one can
+find dozens of thesis and paper about simplifying the
+argument~\cite{Zelevinsky81,Macdonald95,Gasharov98,DHT01,VanLeeuwen01,Stembridge02}
+and the combinatorial study of these coefficients it is still an active
+research topic~\cite{qAnalogs}.  \bigskip
+
+\subsection{A computational point of view on \LR coefficients}
+
+From a computational point of view, such a rule give a good way to compute
+those numbers. Indeed it was proved in 2006 by H.~Narayanan that the
+computation of the \LR coefficients is
+$\#P$-complete~\cite{Narayanan06}. Recall the $\#P$ is the complexity class
+counting problem (i.e. with an answer in $\N$) analog of the complexity class
+$NP$ for decision problem (i.e. with a boolean answer). More formally, $\#P$
+is the class of function problems of the form "compute $f(x)$", where $f$ is
+the number of accepting paths of a nondeterministic Turing machine running in
+polynomial time. This roughly means that we shouldn't expect to have a better
+algorithm to compute those number in general than enumerating the solution of
+a combinatorial problem such as \LR tableaux. 
+
+Note that there are other combinatorial model for them such as Knutson and Tao
+Honeycomb~\cite{KnutsonTao}. This model appear in particular in ...
+\LR coefficient
+also appear in Mulmuley's Geometric complexity theory, a strategy to prove
+that $P\neq NP$ using invariant theory.
+
+\begin{quotation}
+  We point out that the remarkable Knutson and Tao Saturation Theorem and
+  polynomial time algorithms for LP have together an important and immediate
+  consequence in Geometric Complexity Theory. The problem of deciding
+  positivity of Littlewood-Richardson coefficients for GLn(C) belongs to
+  P. Furthermore, the algorithm is strongly polynomial.  The main goal of this
+  article is to explain the significance of this result in the context of
+  Geometric Complexity Theory. Furthermore, it is also conjectured that an
+*  analogous result holds for arbitrary symmetrizable Kac-Moody algebras.
+\end{quotation}
+
+\subsection{Algebraic point of view on \LR coefficients}
+
+From the algebraic point of view, these coefficients are very important
+because they have numerous interpretation in various field of mathematics:
+\begin{itemize}
+\item They count the multiplicity of induction or restriction of irreducible
+  representations of the symmetric groups;
+\item By Schur-Weyl duality, they also count the multiplicity of the tensor
+  product of the irreducible representations of linear groups;
+\item Geometry: mumber of intersection in a grassmanian variety, cup product
+  of the cohomology;
+\item Horn problem: eigenvalues of the sum of two hermitian matrix;
+\item Extension of abelian groups (Hall algebra);
+\item Application in quantum physics (spectrum rays of the Hydrogen atoms);
+\end{itemize}
+
+
+\section{Combinatorial Background}
+
+\subsection{Ordered set}
+
+  I'm using \SSR class/mixin/canonical paradigm.
+\begin{coqcode}
+Definition axiom T (r : rel T) :=
+    [/\ reflexive r, antisymmetric r, transitive r &
+        (forall m n : T, (r m n) || (r n m))].
+
+Record mixin_of T := Mixin { r : rel T; x : T; _ : axiom r }.
+Record class_of T := Class {base : Countable.class_of T; mixin : mixin_of T}.
+Structure type := Pack {sort; _ : class_of sort; _ : Type}.
+Notation ordType := type.
+
+Definition leqX_op T := Order.r (Order.mixin (Order.class T)).
+
+Delimit Scope ord_scope with Ord.
+Open Scope ord_scope.
+Notation "m <= n" := (leqX_op m n) : ord_scope.
+\end{coqcode}
+
+\subsection{Partitions}
+
+different ways of decomposing an integer $n\in\N$ as a sum:
+\[ 5=5=4+1=3+2=3+1+1=2+2+1=2+1+1+1=1+1+1+1+1 \]
+
+Partition $\lambda := (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_l > 0)$.\\
+$|\lambda| := \lambda_0+\lambda_1+\dots+\lambda_l \qandq
+\ell(\lambda) := l\,. $
+
+Ferrer's diagram of a partitions : $(5,3,2,2) \leftrightarrow \yngs(0.5, 2,2,3,5)$
+
+\begin{coqcode}
+  Fixpoint is_part sh := (* Boolean Predicate *)
+    if sh is sh0 :: sh'
+    then (sh0 >= head 1 sh') && (is_part sh')
+    else true.
+
+  (* Boolean reflection lemma *)
+  Lemma is_partP sh : reflect
+    (last 1 sh != 0 /\ forall i, (nth 0 sh i) >= (nth 0 sh i.+1))
+    (is_part sh).
+\end{coqcode}
+
+\subsection{Tableaux}
+
+\begin{coqcode}
+  Variable T : ordType.
+  Notation Z := (inhabitant T).
+  Notation is_row r := (sorted (@leqX_op T) r).
+
+  Definition dominate (u v : seq T) :=
+    ((size u) <= (size v)) && 
+     (all (fun i => (nth Z u i > nth Z v i)%Ord) (iota 0 (size u))).
+
+  Lemma dominateP u v :
+    reflect ((size u) <= (size v) /\ 
+             forall i, i < size u -> (nth Z u i > nth Z v i)%Ord)
+            (dominate u v).
+
+  Fixpoint is_tableau (t : seq (seq T)) :=
+    if t is t0 :: t' then  
+      [&& (t0 != [::]), is_row t0, 
+        dominate (head [::] t') t0 & is_tableau t']
+    else true.
+
+  Definition to_word t := flatten (rev t).
+\end{coqcode}
+
+\subsection{Yamanouchi words}
+
+  $\abs{w}_x$ : number of occurrence of $x$ in $w$.
+
+  \begin{DEFN}
+    Sequence $w_0,\dots,w_{(l-1}$ of integers such that for all $k, i$,
+    \[ \abs{w_i,\dots,w_{l-1}}_k \geq \abs{w_i,\dots,w_{l-1}}_{k+1} \]
+
+    Equivalently $(\abs{w}_i)_{i\leq\max(w)}$ is a partition and $w_1,\dots,w_{l-1}$ is
+    also Yamanouchi.
+  \end{DEFN}
+
+  \[ (), 0, 00, 10, 000, 100, 010, 210, \]
+  \[ 0000, 1010, 1100, 0010, 0100, 1000, 0210, 2010, 2100, 3210 \]
+
+  \begin{coqcode}
+(* incr_nth s i == the nat sequence s with item i incremented (s is *)
+(*                 first padded with 0's to size i+1, if needed).   *)
+
+  Fixpoint shape_rowseq s :=
+    if s is s0 :: s'
+    then incr_nth (shape_rowseq s') s0
+    else [::].
+
+  Definition shape_rowseq_count :=
+    [fun s => [seq (count_mem i) s | i <- iota 0 (foldr maxn 0 (map S s))]].
+
+  Lemma shape_rowseq_countE : shape_rowseq_count =1 shape_rowseq.
+
+  Fixpoint is_yam s :=
+    if s is s0 :: s'
+    then is_part (shape_rowseq s) && is_yam s'
+    else true.
+\end{coqcode} 
+% |
+
+\section{The rule}
+
+\begin{THEO}[Littlewood-Richardson rule]
+  $c_{\lambda, \mu}^{\nu}$ is the number of (skew) tableaux of shape the
+  difference $\nu/\lambda$, whose row reading is a Yamanouchi word of
+  evaluation $\mu$.
+\end{THEO}
+
+% ...00 ...00 ...00
+% ...1  ...1  ...1 
+% .00   .01   .02  
+% 12    02    01   
+
+Some examples:
+  \[
+  C_{331,421}^{5432} = 3
+  \qquad
+  \Yboxdim{12pt}\scriptstyle
+  \gyoung(12,:;00,:::;1,:::;00)\qquad
+  \gyoung(02,:;01,:::;1,:::;00)\qquad
+  \gyoung(01,:;02,:::;1,:::;00)
+  \]
+% ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00
+% ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1
+% .00   .00   .00   .01   .00   .01   .02   .02   .12   .02   .02   .01   .01   .12   .12
+% 01    02    11    01    12    02    01    13    03    03    11    12    22    02    23
+
+  \[
+  C_{4321,431}^{7542} = 4
+  \qquad
+  \Yboxdim{12pt}\scriptstyle
+  \gyoung(:;2,::;11,:::;01,::::;000)\quad
+  \gyoung(:;1,::;12,:::;01,::::;000)\quad
+  \gyoung(:;1,::;02,:::;11,::::;000)\quad
+  \gyoung(:;0,::;12,:::;11,::::;000)\quad
+  \]
+
+
+  \def\AA{\red 0}
+  \def\AB{\grn 1}
+  \def\AC{\blu 2}
+  \def\AD{{\color{pink} 3}}
+  \[
+  C_{431,4321}^{7542} = 4
+  \qquad
+  \Yboxdim{12pt}\scriptstyle
+  \gyoung(\AC\AD,:;\AB\AB\AC,:::;\AA\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AC\AD,:;\AA\AB\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AB\AD,:;\AA\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AA\AD,:;\AB\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \]
+
+  \def\AA{\red 0}
+  \def\AB{\grn 1}
+  \def\AC{\blu 2}
+  \def\AD{{\color{pink} 3}}
+  \[
+  C_{431,4322}^{7543} = 2
+  \qquad
+  \gyoung(\AB\AD\AD,:;\AA\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AA\AD\AD,:;\AB\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \]
+
+Coq statement:
+
+\begin{coqcode}
+Variable (d1 d2 : nat) (P1 : intpartn d1) (P2 : intpartn d2).
+Variable (n : nat) (R : comRingType).
+Hypothesis Hnpos : n != 0%N.
+Notation Schur p := (Schur Hnpos R p).
+
+Definition is_skew_reshape_tableau (x : seq nat) :=
+  is_skew_tableau P1 (skew_reshape P1 P x).
+Definition LRyam_set :=
+  [set x : yamsh_finType (intpartnP P2) | is_skew_reshape_tableau x].
+Definition LRyam_coeff := #|LRyam_set|.
+
+Theorem LRtab_coeffP :
+  Schur P1 * Schur P2 =
+  \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
+\end{coqcode}
+
+\end{document}
+
+%%% Local Variables:
+%%% compile-command: "pdflatex -shell-escape lrproof.tex"
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
