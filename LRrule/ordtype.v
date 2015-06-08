@@ -299,7 +299,7 @@ End OrdTheory.
 Hint Resolve leqXnn ltnXnn ltnXW.
 
 Lemma inhabitant (T : ordType) : T.
-Proof. move H : T => HH; case: HH H => sort [] base [] r x ax t0 HT; by apply: x. Qed.
+Proof. case: T => sort [] base [] r x ax t0; by apply: x. Qed.
 
 Section Dual.
 
