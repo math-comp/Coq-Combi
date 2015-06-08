@@ -39,7 +39,7 @@ Spec.v: lrrule.mlw
 	why3 realize -D coq-ssreflect -L . -T lrrule.Spec -o .
 	sed -e "s/2%Z/2%:Z/g" -i Spec.v
 
-clean:
+clean::
 	rm -f *~ *.cm* *.o *.annot
 	rm -f *.bak test_lrrule test_lrrule.byte lrrule__LRrule.ml
 	rm -f why3__*.ml

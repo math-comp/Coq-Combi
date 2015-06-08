@@ -180,32 +180,19 @@ Axiom numof_change_equiv : forall (p1:(int -> bool)) (p2:(int -> bool))
   is_true (j < b)%Z) -> (((p1 j) = true) <-> ((p2 j) = true))) -> ((numof p2
   a b) = (numof p1 a b)).
 
-Parameter is_part: (array int) -> bool.
-
-Axiom is_part_def : forall (shape:(array int)), (((forall (i:int) (j:int),
+Definition is_part (shape:(array int)): Prop := (forall (i:int) (j:int),
   (is_true (0%Z <= i)%Z /\ (is_true (i <= j)%Z /\
   is_true (j < (length shape))%Z)) -> is_true ((get shape j) <= (get shape
-  i))%Z) /\ is_true (0%Z <= (get shape ((length shape) - 1%Z)%Z))%Z) ->
-  ((is_part shape) = true)) /\ ((~ ((forall (i:int) (j:int),
-  (is_true (0%Z <= i)%Z /\ (is_true (i <= j)%Z /\
-  is_true (j < (length shape))%Z)) -> is_true ((get shape j) <= (get shape
-  i))%Z) /\ is_true (0%Z <= (get shape ((length shape) - 1%Z)%Z))%Z)) ->
-  ((is_part shape) = false)).
+  i))%Z) /\ is_true (0%Z <= (get shape ((length shape) - 1%Z)%Z))%Z.
 
 Axiom is_part_nonneg : forall (sh:(array int)), ((is_part sh) = true) ->
   forall (i:int), (is_true (0%Z <= i)%Z /\ is_true (i < (length sh))%Z) ->
   is_true (0%Z <= (get sh i))%Z.
 
-Parameter included: (array int) -> (array int) -> bool.
-
-Axiom included_def : forall (inner1:(array int)) (outer1:(array int)),
-  ((((length inner1) = (length outer1)) /\ forall (i:int),
+Definition included (inner1:(array int)) (outer1:(array int)): Prop :=
+  ((length inner1) = (length outer1)) /\ forall (i:int),
   (is_true (0%Z <= i)%Z /\ is_true (i < (length outer1))%Z) ->
-  is_true ((get inner1 i) <= (get outer1 i))%Z) -> ((included inner1
-  outer1) = true)) /\ ((~ (((length inner1) = (length outer1)) /\
-  forall (i:int), (is_true (0%Z <= i)%Z /\
-  is_true (i < (length outer1))%Z) -> is_true ((get inner1
-  i) <= (get outer1 i))%Z)) -> ((included inner1 outer1) = false)).
+  is_true ((get inner1 i) <= (get outer1 i))%Z.
 
 Axiom sum_le_eq : forall (f:(int -> int)) (g:(int -> int)) (a:int) (b:int),
   ((forall (i:int), (is_true (a <= i)%Z /\ is_true (i <= b)%Z) -> is_true ((f

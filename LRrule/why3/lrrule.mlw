@@ -37,14 +37,14 @@ module Spec
   use import ArraySum
   use import int.NumOf
 
-  function is_part (shape: array int) : bool =
+  predicate is_part (shape: array int) =
     (forall i j: int. 0 <= i <= j < length shape -> shape[i] >= shape[j] ) /\
     (shape[length shape - 1] >= 0)
 
   lemma is_part_nonneg:
     forall sh. is_part sh -> forall i: int. 0 <= i < length sh -> 0 <= sh[i]
 
-  function included (inner: array int) (outer: array int) : bool =
+  predicate included (inner: array int) (outer: array int) =
     (length inner = length outer) /\
     (forall i:int. 0 <= i < length outer -> inner[i] <= outer[i])
 

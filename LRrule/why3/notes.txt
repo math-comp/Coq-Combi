@@ -14,3 +14,12 @@ on cherche à prouver en Coq
     is_solution sh eval work
 <-> coq_is_solution inner outer eval (coq_work work)
 
+
+
+------------------------------------------------------------------------------
+driver Coq ssreflect
+
+- printer : {a: why3Type} au lieu de {a: Type} {aWT: WhyType a}
+
+- tableaux : définis dans ssrwhy3
+
