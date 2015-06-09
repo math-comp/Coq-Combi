@@ -51,18 +51,22 @@ End Why3Type.
 Export Why3Type.Exports.
 
 
-Lemma witness (T : why3Type) : T.
-Proof.
-  case: T => sort [] base [] x _ /=; by apply: x.
-Qed.
-
+Definition witness (T : why3Type) : T :=
+  match T return T with
+      Why3Type.Pack sort cls _ => Why3Type.x (Why3Type.mixin cls)
+  end.
 
 
 Definition nat_why3Mixin := Why3Type.Mixin (T:=nat) 0.
 Canonical nat_why3Type := Eval hnf in Why3Type nat nat_why3Mixin.
+Lemma witness_nat_why3Type : witness nat_why3Type = 0.
+Proof. by []. Qed.
+
 
 Definition int_why3Mixin := Why3Type.Mixin (T:=int) 0.
 Canonical int_why3Type := Eval hnf in Why3Type int int_why3Mixin.
+Lemma witness_int_why3Type : witness int_why3Type = 0.
+Proof. by []. Qed.
 
 (*Import GRing.Theory Num.Theory.
 Local Open Scope ring_scope.*)
