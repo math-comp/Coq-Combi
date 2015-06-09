@@ -79,6 +79,7 @@ module Spec
   use import int.NumOf
 
   predicate is_part (shape: array int) =
+    1 <= length shape /\
     (forall i j: int. 0 <= i <= j < length shape -> shape[i] >= shape[j] ) /\
     (shape[length shape - 1] >= 0)
 
@@ -293,6 +294,11 @@ module LRrule
     forall i. 0 < i < length sh.end_of_row ->
     sh.end_of_row[i - 1] <= sh.end_of_row[i]
 
+  lemma is_part_eq:
+    forall a1 a2: array int. is_part a1 -> eq_sol a1 a2 -> is_part a2
+
+  (* code *)
+
   let lrrule (sh: skew_shape) (eval: array int) : int
     requires { valid_skew_shape sh }
     requires { valid_eval eval }
@@ -392,13 +398,15 @@ module LRrule
                                 eq_sol w (s2a (Map.get solutions.sols i)) }
           invariant { forall i. 0 <= i < at solutions.next 'Init ->
                 Map.get solutions.sols i = Map.get (at solutions.sols 'Init) i }
-       if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
+          'L:
+          if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
             innev[v] <- innev[v] + 1;
             if v = !lastinnev then lastinnev += 1;
             assert { 0 <= v < !lastinnev };
             work[idx] <- v;
             sum += count_rec row (idx+1);
             innev[v] <- innev[v] - 1;
+            assert { eq_sol innev (at innev 'L) };
             if !lastinnev = v+1 && innev[v] = 0 then lastinnev -= 1
           end
         done;
