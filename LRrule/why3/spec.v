@@ -180,10 +180,11 @@ Axiom numof_change_equiv : forall (p1:(int -> bool)) (p2:(int -> bool))
   is_true (j < b)%Z) -> (((p1 j) = true) <-> ((p2 j) = true))) -> ((numof p2
   a b) = (numof p1 a b)).
 
-Definition is_part (shape:(array int)): Prop := (forall (i:int) (j:int),
+Definition is_part (shape:(array int)): Prop :=
+  is_true (1%Z <= (length shape))%Z /\ ((forall (i:int) (j:int),
   (is_true (0%Z <= i)%Z /\ (is_true (i <= j)%Z /\
   is_true (j < (length shape))%Z)) -> is_true ((get shape j) <= (get shape
-  i))%Z) /\ is_true (0%Z <= (get shape ((length shape) - 1%Z)%Z))%Z.
+  i))%Z) /\ is_true (0%Z <= (get shape ((length shape) - 1%Z)%Z))%Z).
 
 Axiom is_part_nonneg : forall (sh:(array int)), ((is_part sh) = true) ->
   forall (i:int), (is_true (0%Z <= i)%Z /\ is_true (i < (length sh))%Z) ->
