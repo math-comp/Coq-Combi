@@ -6,11 +6,52 @@
    Coq 8.4pl5
 *)
 
+theory Sum
+
+  use import int.Int
+  use HighOrd
+
+  function sum (a b: int) (f: int -> int) : int
+  (** sum of [f n] for [a <= n <= b] *)
+
+  axiom sum_def1:
+    forall f: int -> int, a b: int.
+    b < a -> sum a b f = 0
+
+  axiom sum_def2:
+    forall f: int -> int, a b: int.
+    a <= b -> sum a b f = sum a (b - 1) f + f b
+
+  lemma sum_left:
+    forall f: int -> int, a b: int.
+    a <= b -> sum a b f = f a + sum (a + 1) b f
+
+  lemma sum_ext:
+    forall f g: int -> int, a b: int.
+    (forall i. a <= i <= b -> f i = g i) ->
+    sum a b f = sum a b g
+
+  lemma sum_le:
+    forall f g: int -> int, a b: int.
+    (forall i. a <= i <= b -> f i <= g i) ->
+    sum a b f <= sum a b g
+
+  lemma sum_nonneg:
+    forall f: int -> int, a b: int.
+    (forall i. a <= i <= b -> 0 <= f i) ->
+    0 <= sum a b f
+
+  lemma sum_decomp:
+    forall f: int -> int, a b c: int. a <= b <= c ->
+    sum a c f = sum a b f + sum (b+1) c f
+
+end
+
 module ArraySum
 
   use import int.Int
   use import array.Array
-  use import int.Sum
+  use import Sum
 
   function sum_sub_array (a: array int) (lo hi: int) : int =
     sum lo hi (\i: int. a[i])
@@ -33,11 +74,12 @@ module Spec
   use import int.Int
   use import map.Map
   use import array.Array
-  use import int.Sum
+  use import Sum
   use import ArraySum
   use import int.NumOf
 
   predicate is_part (shape: array int) =
+    1 <= length shape /\
     (forall i j: int. 0 <= i <= j < length shape -> shape[i] >= shape[j] ) /\
     (shape[length shape - 1] >= 0)
 
@@ -142,7 +184,7 @@ module LRrule
   use import ref.Refint
   use import map.Map
   use import array.Array
-  use import int.Sum
+  use import Sum
   use import ArraySum
 
   (** storing solutions we have found so far *)
@@ -168,7 +210,7 @@ module LRrule
   function s2a solution : array int
 
   axiom a2s2a_def:
-    forall a: array int. eq_sol a (s2a (a2s a))
+    forall a: array int. s2a (a2s a) = a
 
   type solutions = {
     mutable sols: map int solution;
@@ -245,6 +287,18 @@ module LRrule
     (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
     (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
 
+  (* lemmas *)
+
+  lemma end_of_row_nondecreasing:
+    forall sh: skew_shape. valid_skew_shape sh ->
+    forall i. 0 < i < length sh.end_of_row ->
+    sh.end_of_row[i - 1] <= sh.end_of_row[i]
+
+  lemma is_part_eq:
+    forall a1 a2: array int. is_part a1 -> eq_sol a1 a2 -> is_part a2
+
+  (* code *)
+
   let lrrule (sh: skew_shape) (eval: array int) : int
     requires { valid_skew_shape sh }
     requires { valid_eval eval }
@@ -268,15 +322,16 @@ module LRrule
        idx = current index in work, from the start *)
     let rec count_rec (row idx: int)
       requires { 1 <= row <= szshape = length sh.outer }
-      requires { row < szshape ->
-                 sh.end_of_row[row-1] <= idx <= sh.end_of_row[row] }
+      requires { if row < szshape then
+                 sh.end_of_row[row-1] <= idx <= sh.end_of_row[row]
+                 else idx = n }
       requires { valid_innev eval innev work idx !lastinnev }
       requires { is_solution_prefix sh eval work idx }
       diverges
       ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
       ensures  { forall i. 0 <= i < idx -> work[i] = (old work)[i] }
       ensures  { !lastinnev = old !lastinnev }
-      ensures  { result = solutions.next - old solutions.next }
+      ensures  { result = solutions.next - old solutions.next >= 0 }
       ensures  { sorted solutions (old solutions.next) solutions.next }
       ensures  { forall i. old solutions.next <= i < solutions.next ->
                  let w = s2a (Map.get solutions.sols i) in
@@ -285,6 +340,8 @@ module LRrule
                  eq_prefix (old work) w idx ->
                  exists i. old solutions.next <= i < solutions.next /\
                            eq_sol w (s2a (Map.get solutions.sols i)) }
+      ensures  { forall i. 0 <= i < old solutions.next ->
+                 Map.get solutions.sols i = Map.get (old solutions.sols) i }
       =
       assert { sh.end_of_overlap[1] = 0 };
       assert { forall row idx.
@@ -324,7 +381,7 @@ module LRrule
                       valid_innev eval innev work idx !lastinnev }
           invariant { "expl: is_yam" is_yam_prefix work idx }
           invariant { is_tableau_reading_prefix sh work idx }
-          invariant { !sum = solutions.next - at solutions.next 'Init }
+          invariant { !sum = solutions.next - at solutions.next 'Init >= 0 }
           invariant { "expl: sorted solutions"
                     sorted solutions (at solutions.next 'Init) solutions.next }
           invariant { "expl: only solutions"
@@ -339,13 +396,17 @@ module LRrule
                       min <= w[idx] < v ->
                       exists i. at solutions.next 'Init <= i < solutions.next /\
                                 eq_sol w (s2a (Map.get solutions.sols i)) }
-        if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
+          invariant { forall i. 0 <= i < at solutions.next 'Init ->
+                Map.get solutions.sols i = Map.get (at solutions.sols 'Init) i }
+          'L:
+          if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
             innev[v] <- innev[v] + 1;
             if v = !lastinnev then lastinnev += 1;
             assert { 0 <= v < !lastinnev };
             work[idx] <- v;
             sum += count_rec row (idx+1);
             innev[v] <- innev[v] - 1;
+            assert { eq_sol innev (at innev 'L) };
             if !lastinnev = v+1 && innev[v] = 0 then lastinnev -= 1
           end
         done;
