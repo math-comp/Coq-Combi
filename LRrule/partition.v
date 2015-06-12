@@ -52,6 +52,20 @@ Section Partition.
         move: Hlast; by case sh.
   Qed.
 
+  Lemma is_part_ijP sh :
+    reflect (last 1 sh != 0 /\ forall i j, i <= j -> (nth 0 sh i) >= nth 0 sh j) (is_part sh).
+  Proof.
+    apply: (iffP idP).
+    - move/is_partP => [] H0 H; split; first exact H0.
+      move=> i {H0} j /subnKC <-.
+      elim: (j - i) => [|n IHn] {j}; first by rewrite addn0.
+      rewrite addnS.
+      exact: (leq_trans (H _) IHn).
+    - move=> [] H0 H; apply/is_partP; split; first exact H0.
+      move=> {H0} i.
+      exact: H.
+  Qed.
+
   Lemma part_head0F sh : head 1 sh == 0 -> is_part sh = false.
   Proof.
     elim: sh => [//= | sh0 sh IHsh] /= /eqP ->.
