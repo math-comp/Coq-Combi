@@ -35,7 +35,7 @@ Fixpoint convert_part (a : array int) : (seq nat) :=
   else [::].
 
 Definition convert_part_inv (len : nat) (p : seq nat) : array int :=
-  mkseq (fun i => (nth 0 p i):int) len.
+  mkseq (fun i => (nth 0 p i):int) len. (* why3 partition are non-empty *)
 
 Lemma size_convert_part (a : array int) :
   size (convert_part a) <= size a.
@@ -60,43 +60,52 @@ Proof.
   - move: (X in last X.+1 _) => m.
     elim: a m => [| a0 a IHa] m //.
     by case: a0 => [] // [] // n.
-  - move: H => [Hdec Hlast] i.
+  - move: H => [] Hlen [] Hdec Hlast i.
     case: (ltnP i.+1 (size (convert_part a))) => Hi.
-    rewrite -lez_nat -(nth_getE _ Hi) -nth_getE; last by apply: (leq_trans _ Hi).
-    apply Hdec; repeat split => //.
-    + by rewrite lez_nat.
-    + rewrite ltz_nat; apply: (leq_trans Hi).
+    + rewrite -lez_nat -(nth_getE _ Hi) -nth_getE; last by apply: (leq_trans _ Hi).
+      apply Hdec; repeat split => //.
+      * by rewrite lez_nat.
+      * rewrite ltz_nat; apply: (leq_trans Hi).
       by apply size_convert_part.
   - by rewrite nth_default.
 Qed.
 
 Lemma get_convert_part_inv len p (i : nat) :
-  get (convert_part_inv len p) i = nth 0 p i.
+  size p <= len -> get (convert_part_inv len p) i = nth 0 p i.
 Proof.
-  rewrite /get /convert_part_inv /length.
+  rewrite /get /convert_part_inv /length => Hlen.
   case: (ltnP i len) => Hi.
   - by rewrite nth_mkseq.
-  - rewrite nth_default.
-    * admit.
+  - rewrite !nth_default => //.
+    * exact (leq_trans Hlen Hi).
     * by rewrite size_mkseq.
 Qed.
 
-Lemma convert_part_inv_impl (p : seq nat) len :
-  is_part p -> spec.is_part (convert_part_inv len p).
+Lemma cond_ijl_int_nat (P : int -> int -> Prop) (l : nat) :
+  (forall i j : int, (0 <= i)%R /\ (i <= j)%R /\ (j < l)%R -> P i j) <->
+  (forall i j : nat,                i <= j /\     j < l    -> P (Posz i) (Posz j)).
 Proof.
-  rewrite /spec.is_part /length.
-  elim: p => [| p0 p IHp] /=.
-  - move=> _; split => [i j|].
-    + rewrite size_mkseq => [] [].
-      case: i => [i _ [] | //=].
-      rewrite get_convert_part_inv nth_nil.
-      case: j => [j _ | //=].
-      by rewrite get_convert_part_inv nth_nil.
-    + rewrite size_mkseq /=.
-      case: len.
-      * admit.       (* Problem de get array -1 si len == 0*)
-      * admit.
-  - admit.
+  split.
+  + move=> H i j [] Hij Hj.
+    apply H; by rewrite !lez_nat ltz_nat.
+  + move=> H i j [].
+    case: i => i // _ [].
+    case: j => [j| [] //=].
+    rewrite lez_nat ltz_nat => Hij Hj.
+    by apply H.
+Qed.
+
+Lemma convert_part_inv_impl (p : seq nat) len :
+  size p <= len -> 0 < len -> is_part p -> spec.is_part (convert_part_inv len p).
+Proof.
+  rewrite /spec.is_part /length cond_ijl_int_nat lez_nat size_mkseq.
+  move=> Hsz Hlen /is_part_ijP [] Hlast H.
+  repeat split; first by [].
+  + move=> i j [] Hij Hj.
+    do 2 (rewrite get_convert_part_inv; last by []).
+    rewrite lez_nat; exact: H.
+  + case: len Hlen Hsz => [//= | len] _ Hsize.
+    by rewrite /= subn1 /= -/(get _ len) get_convert_part_inv.
 Qed.
 
 Lemma convert_included_size (a b : array int) :
