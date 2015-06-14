@@ -108,6 +108,56 @@ Proof.
     by rewrite /= subn1 /= -/(get _ len) get_convert_part_inv.
 Qed.
 
+Lemma convert_partK (p : seq nat) len :
+  size p <= len -> is_part p -> convert_part (convert_part_inv len p) = p.
+Proof.
+  rewrite /convert_part_inv.
+  elim: p len => [| p0 p IHp] /= len Hsz.
+    by case: len {Hsz} => [//| len].
+  case: len Hsz => [//= | len].
+  rewrite ltnS => /IHp {IHp}; rewrite /mkseq => Hrec /andP [] Hhead Hpart.
+  rewrite /= -add1n iota_addl -map_comp.
+  case: p0 Hhead.
+    rewrite leqn0 => /part_head0F Habs; by rewrite Habs in Hpart.
+  move=> n _; by rewrite -{2}(Hrec Hpart).
+Qed.
+
+Lemma convert_part_invK (a : array int) :
+  spec.is_part a -> convert_part_inv (size a) (convert_part a) = a.
+Proof.
+  rewrite /spec.is_part /length cond_ijl_int_nat lez_nat /convert_part_inv.
+  move=> [] _.
+  elim: a => [//= | a0 a IHa] [] Hget Hlast.
+  case: a0 Hget Hlast => [[|a0]| a0] H Hlast /=.
+  - have {IHa Hlast H} H (j : nat) : j < size a -> get a j = 0.
+      move=> Hj {IHa}.
+      have /H /= Hlt : 0 <= j.+1 /\ j.+1 < size (Posz 0 :: a) by [].
+      have /H /= : j.+1 <= size a /\ size a  < size (Posz 0 :: a) by [].
+      move: Hlast; rewrite /= subn1 /= => /Num.Theory.ler_trans H1/H1{H1} Hgt.
+      apply Num.Theory.ler_asym.
+      by rewrite Hlt Hgt.
+    rewrite /mkseq /= -add1n iota_addl -map_comp.
+    congr (_ :: _).
+    rewrite -{2}(mkseq_nth (0 : int) a).
+    apply eq_map => i /=.
+    case: (ltnP i (size a)) => [/H /= -> //= |] H1.
+    by rewrite  nth_default.
+  - rewrite /mkseq /= -[1]add1n iota_addl -map_comp -{3}IHa {IHa} //.
+    split.
+    + move=> i j {Hlast} Hij.
+      have : i.+1 <= j.+1 /\ j.+1 < (size a).+1 by [].
+      by apply H.
+    + move: Hlast; rewrite /get /=.
+      case: a {H} => [|a1 a] //=.
+      by rewrite subn1.
+  + exfalso.
+    suff : 0 <= (size (Negz a0 :: a) - 1) /\
+              (size (Negz a0 :: a) - 1) < size (Negz a0 :: a).
+      by move=> /H /(Num.Theory.ler_trans Hlast).
+    split; first by [].
+    by rewrite /= subn1.
+Qed.
+
 Lemma convert_included_size (a b : array int) :
   spec.included a b -> size (convert_part a) <= size (convert_part b).
 Proof.
