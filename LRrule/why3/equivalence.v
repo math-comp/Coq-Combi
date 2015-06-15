@@ -81,6 +81,19 @@ Proof.
     * by rewrite size_mkseq.
 Qed.
 
+Lemma cond_il_int_nat (P : int -> Prop) (l : nat) :
+  (forall i : int, (0 <= i)%R /\ (i < l)%R -> P i) <->
+  (forall i : nat,                i < l    -> P (Posz i)).
+Proof.
+  split.
+  + move=> H i [] Hi.
+    apply H; by rewrite !lez_nat ltz_nat.
+  + move=> H i [].
+    case: i => i // _ [].
+    rewrite ltz_nat.
+    by apply H.
+Qed.
+
 Lemma cond_ijl_int_nat (P : int -> int -> Prop) (l : nat) :
   (forall i j : int, (0 <= i)%R /\ (i <= j)%R /\ (j < l)%R -> P i j) <->
   (forall i j : nat,                i <= j /\     j < l    -> P (Posz i) (Posz j)).
@@ -190,4 +203,22 @@ Proof.
     apply (leq_trans (size_convert_part a)).
     by rewrite -lez_nat Hlen.
   + by rewrite nth_default.
+Qed.
+
+Lemma convert_included_inv_impl (a b : seq nat) len :
+  size b <= len -> included a b ->
+  spec.included (convert_part_inv len a) (convert_part_inv len b).
+Proof.
+  rewrite /spec.included /length cond_il_int_nat => Hsize Hincl.
+  rewrite !size_mkseq; split; first by [].
+  elim: a b len Hincl Hsize => [|a0 a IHa] b len.
+    move=> _ Hsize i Hi.
+    by rewrite !get_convert_part_inv // nth_nil.
+  case: b => [| b0 b] //.
+  rewrite [included _ _]/= [size _]/= => /andP [] H0 Hincl.
+  case: len => [// | len]; rewrite ltnS => Hsize.
+  case=> [//= | i]; rewrite ltnS => /(IHa b len Hincl Hsize).
+  move: Hincl => /includedP [] Hszab _.
+  have Hsza := leq_trans Hszab Hsize.
+  by rewrite !get_convert_part_inv.
 Qed.
