@@ -21,9 +21,12 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-(* Import GRing.Theory Num.Theory.
+(*
+Import GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 *)
+
+Import Num.Theory.
 
 Fixpoint convert_part (a : array int) : (seq nat) :=
   if a is i :: tl then
@@ -53,6 +56,43 @@ Proof.
   rewrite ltnS => /IHa; by apply.
 Qed.
 
+Lemma get_convert_part_inv len p (i : nat) :
+  size p <= len -> get (convert_part_inv len p) i = nth 0 p i.
+Proof.
+  rewrite /get /convert_part_inv /length => Hlen.
+  case: (ltnP i len) => Hi.
+  - by rewrite nth_mkseq.
+  - rewrite !nth_default => //.
+    * exact (leq_trans Hlen Hi).
+    * by rewrite size_mkseq.
+Qed.
+
+Lemma cond_il_int_nat (P : int -> Prop) (l : nat) :
+  (forall i : int, (0 <= i)%R /\ (i < l)%R -> P i) <->
+  (forall i : nat,                i < l    -> P (Posz i)).
+Proof.
+  split.
+  + move=> H i Hi; apply H; by rewrite !lez_nat ltz_nat.
+  + move=> H i [].
+    case: i => i // _.
+    rewrite ltz_nat; by apply H.
+Qed.
+
+Lemma cond_ijl_int_nat (P : int -> int -> Prop) (l : nat) :
+  (forall i j : int, (0 <= i)%R /\ (i <= j)%R /\ (j < l)%R -> P i j) <->
+  (forall i j : nat,                i <= j /\     j < l    -> P (Posz i) (Posz j)).
+Proof.
+  split.
+  + move=> H i j [] Hij Hj.
+    apply H; by rewrite !lez_nat ltz_nat.
+  + move=> H i j [].
+    case: i => i // _ [].
+    case: j => [j| [] //=].
+    rewrite lez_nat ltz_nat => Hij Hj.
+    by apply H.
+Qed.
+
+(* Conversion preserve is_part *)
 Lemma convert_part_impl (a : array int) :
   spec.is_part a -> is_part (convert_part a).
 Proof.
@@ -70,44 +110,6 @@ Proof.
   - by rewrite nth_default.
 Qed.
 
-Lemma get_convert_part_inv len p (i : nat) :
-  size p <= len -> get (convert_part_inv len p) i = nth 0 p i.
-Proof.
-  rewrite /get /convert_part_inv /length => Hlen.
-  case: (ltnP i len) => Hi.
-  - by rewrite nth_mkseq.
-  - rewrite !nth_default => //.
-    * exact (leq_trans Hlen Hi).
-    * by rewrite size_mkseq.
-Qed.
-
-Lemma cond_il_int_nat (P : int -> Prop) (l : nat) :
-  (forall i : int, (0 <= i)%R /\ (i < l)%R -> P i) <->
-  (forall i : nat,                i < l    -> P (Posz i)).
-Proof.
-  split.
-  + move=> H i [] Hi.
-    apply H; by rewrite !lez_nat ltz_nat.
-  + move=> H i [].
-    case: i => i // _ [].
-    rewrite ltz_nat.
-    by apply H.
-Qed.
-
-Lemma cond_ijl_int_nat (P : int -> int -> Prop) (l : nat) :
-  (forall i j : int, (0 <= i)%R /\ (i <= j)%R /\ (j < l)%R -> P i j) <->
-  (forall i j : nat,                i <= j /\     j < l    -> P (Posz i) (Posz j)).
-Proof.
-  split.
-  + move=> H i j [] Hij Hj.
-    apply H; by rewrite !lez_nat ltz_nat.
-  + move=> H i j [].
-    case: i => i // _ [].
-    case: j => [j| [] //=].
-    rewrite lez_nat ltz_nat => Hij Hj.
-    by apply H.
-Qed.
-
 Lemma convert_part_inv_impl (p : seq nat) len :
   size p <= len -> 0 < len -> is_part p -> spec.is_part (convert_part_inv len p).
 Proof.
@@ -121,6 +123,7 @@ Proof.
     by rewrite /= subn1 /= -/(get _ len) get_convert_part_inv.
 Qed.
 
+(* On partition, conversion are invert one of each other *)
 Lemma convert_partK (p : seq nat) len :
   size p <= len -> is_part p -> convert_part (convert_part_inv len p) = p.
 Proof.
@@ -146,8 +149,8 @@ Proof.
       move=> Hj {IHa}.
       have /H /= Hlt : 0 <= j.+1 /\ j.+1 < size (Posz 0 :: a) by [].
       have /H /= : j.+1 <= size a /\ size a  < size (Posz 0 :: a) by [].
-      move: Hlast; rewrite /= subn1 /= => /Num.Theory.ler_trans H1/H1{H1} Hgt.
-      apply Num.Theory.ler_asym.
+      move: Hlast; rewrite /= subn1 /= => /ler_trans H1/H1{H1} Hgt.
+      apply ler_asym.
       by rewrite Hlt Hgt.
     rewrite /mkseq /= -add1n iota_addl -map_comp.
     congr (_ :: _).
@@ -166,34 +169,29 @@ Proof.
   + exfalso.
     suff : 0 <= (size (Negz a0 :: a) - 1) /\
               (size (Negz a0 :: a) - 1) < size (Negz a0 :: a).
-      by move=> /H /(Num.Theory.ler_trans Hlast).
+      by move=> /H /(ler_trans Hlast).
     split; first by [].
     by rewrite /= subn1.
 Qed.
 
-Lemma convert_included_size (a b : array int) :
-  spec.included a b -> size (convert_part a) <= size (convert_part b).
-Proof.
-  rewrite /spec.included /length.
-  elim: a b => [| a0 a IHa] [|b0 b] [] //= /eqP.
-  rewrite eqz_nat eqSS => /eqP Hsize.
-  case: a0 => [] //= [] //= a0.
-  case: b0 => [[|b0]|b0] H /=.
-  - exfalso; by have /H : (0 <= 0%:Z)%R /\ (0%:Z < (size b).+1)%R by [].
-  - rewrite ltnS; apply IHa.
-    split; first by rewrite Hsize.
-    case=> i [] //= _; rewrite ltz_nat => Hi.
-    suff /H /= : (0 <= i.+1%:Z)%R /\ (i.+1%:Z < (size b).+1)%R by [].
-    split; first by rewrite lez_nat.
-    by rewrite ltz_nat ltnS.
-  - exfalso; by have /H : (0 <= 0%:Z)%R /\ (0%:Z < (size b).+1)%R by [].
-Qed.
 
+(* Equivalence of inclusion of partition *)
 Lemma convert_included_impl (a b : array int) :
   spec.included a b -> included (convert_part a) (convert_part b).
 Proof.
-  move=> H; have Hsize := (convert_included_size H).
-  move: H; rewrite /spec.included /length => [] [] Hlen Hincl.
+  rewrite /spec.included /length => [] [] Hlen Hincl.
+  have Hsize : size (convert_part a) <= size (convert_part b).
+    elim: a b Hlen Hincl => [| a0 a IHa] [|b0 b] //= /eqP.
+    rewrite eqz_nat eqSS => /eqP Hsize.
+    case: a0 => [] //= [] //= a0.
+    case: b0 => [[|b0]|b0] H /=.
+    - exfalso; by have /H : (0 <= 0%:Z)%R /\ (0%:Z < (size b).+1)%R by [].
+    - rewrite ltnS; apply IHa; first by rewrite Hsize.
+      case=> i [] //= _; rewrite ltz_nat => Hi.
+      suff /H /= : (0 <= i.+1%:Z)%R /\ (i.+1%:Z < (size b).+1)%R by [].
+      split; first by rewrite lez_nat.
+      by rewrite ltz_nat ltnS.
+    - exfalso; by have /H : (0 <= 0%:Z)%R /\ (0%:Z < (size b).+1)%R by [].
   apply/includedP; split; first exact Hsize.
   move=> i.
   case: (ltnP i (size (convert_part a))) => Hi.
