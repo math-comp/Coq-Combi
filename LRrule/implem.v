@@ -19,6 +19,22 @@ Require Import tools combclass partition yama ordtype.
 Require Import schensted std stdtab invseq congr plactic greeninv.
 Require Import yamplact skewtab shuffle multpoly therule.
 
+(******************************************************************************)
+(* This file contains a Coq implementation of the Littlewood-Richardson rule  *)
+(*                                                                            *)
+(* LRcoeff       : seq nat -> seq nat -> seq nat -> nat                       *)
+(*                 returns the LR coefficient                                 *)
+(* LRyamtab_list : seq nat -> seq nat -> seq nat -> seq (seq (seq nat))       *)
+(*                 returns the list of LR tableaux                            *)
+(*                                                                            *)
+(* The following lemma assert that LRcoeff agrees with LRyamtab_list          *)
+(*   Lemma LRcoeffE inner eval outer :                                        *)
+(*     size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.      *)
+(*                                                                            *)
+(******************************************************************************)
+
+
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
