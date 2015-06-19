@@ -49,15 +49,15 @@ Qed.
 
 
 Definition is_skew_yam innev outev sy :=
-  (forall y, is_yam_of_shape innev y -> is_yam_of_shape outev (sy ++ y)).
+  (forall y, is_yam_of_eval innev y -> is_yam_of_eval outev (sy ++ y)).
 
 Lemma skew_yam_nil sh : is_skew_yam sh sh [::].
 Proof. rewrite /is_skew_yam => y; by rewrite cat0s. Qed.
 
-Lemma skew_nil_yamE eval y : is_yam_of_shape eval y -> is_skew_yam [::] eval y.
+Lemma skew_nil_yamE eval y : is_yam_of_eval eval y -> is_skew_yam [::] eval y.
 Proof.
-  move=> Hy z; rewrite {1}/is_yam_of_shape => /andP [] _ /eqP Hz.
-  have := shape_rowseq_eq_size z; rewrite Hz /= => /esym/eqP/nilP ->.
+  move=> Hy z; rewrite {1}/is_yam_of_eval => /andP [] _ /eqP Hz.
+  have := evalseq_eq_size z; rewrite Hz /= => /esym/eqP/nilP ->.
   by rewrite cats0.
 Qed.
 
@@ -66,13 +66,13 @@ Lemma skew_yam_cat sha shb shc y z :
 Proof. rewrite /is_skew_yam => Hy Hz x /Hy /Hz; by rewrite catA. Qed.
 
 Lemma is_skew_yamE innev outev z y0 :
-  is_yam_of_shape innev y0 ->
-  is_yam_of_shape outev (z ++ y0) ->
+  is_yam_of_eval innev y0 ->
+  is_yam_of_eval outev (z ++ y0) ->
   is_skew_yam innev outev z.
 Proof.
   move=> Hy0 Hcat y Hy.
   move: Hy0 Hy Hcat.
-  rewrite /is_yam_of_shape => /andP [] Hy0 /eqP <- /andP [] Hy /eqP Hsh /andP [].
+  rewrite /is_yam_of_eval => /andP [] Hy0 /eqP <- /andP [] Hy /eqP Hsh /andP [].
   elim: z outev => [//= | z0 z IHz /=] outev Hcat Hshcat; first by rewrite Hy Hsh Hshcat.
   move: Hcat => /andP [] Hincr0 Hcat0.
   have {IHz} := IHz _ Hcat0 (eq_refl _) => /andP [] -> /eqP ->.
@@ -82,15 +82,15 @@ Qed.
 Lemma is_part_skew_yam sha shb y :
   is_part sha -> is_skew_yam sha shb y -> is_part shb.
 Proof.
-  move=> /hyper_yam_of_shape Ha Hskew.
-  have := Hskew _ Ha; by rewrite /is_yam_of_shape => /andP [] /is_part_shyam H /eqP <-.
+  move=> /hyper_yam_of_eval Ha Hskew.
+  have := Hskew _ Ha; by rewrite /is_yam_of_eval => /andP [] /is_part_eval_yam H /eqP <-.
 Qed.
 
 Lemma skew_yam_catrK sha shb shc y z :
   is_part sha ->
   is_skew_yam sha shb y -> is_skew_yam sha shc (z ++ y) -> is_skew_yam shb shc z.
 Proof.
-  move=> /hyper_yam_of_shape Ha Hy Hcat.
+  move=> /hyper_yam_of_eval Ha Hy Hcat.
   apply (is_skew_yamE (Hy _ Ha)).
   rewrite catA; by apply Hcat.
 Qed.
@@ -100,11 +100,11 @@ Lemma skew_yam_consK sha shc i y :
   is_skew_yam sha (decr_nth shc i) y.
 Proof.
   move=> Hpart Hskew.
-  have /= := Hskew _ (hyper_yam_of_shape Hpart).
-  rewrite /is_yam_of_shape /= => /andP [] /andP [] Hincr Hyam /eqP Hc.
-  apply (is_skew_yamE (hyper_yam_of_shape Hpart)).
-  rewrite /is_yam_of_shape Hyam /= -Hc.
-  by rewrite (incr_nthK (is_part_shyam Hyam) Hincr).
+  have /= := Hskew _ (hyper_yam_of_eval Hpart).
+  rewrite /is_yam_of_eval /= => /andP [] /andP [] Hincr Hyam /eqP Hc.
+  apply (is_skew_yamE (hyper_yam_of_eval Hpart)).
+  rewrite /is_yam_of_eval Hyam /= -Hc.
+  by rewrite (incr_nthK (is_part_eval_yam Hyam) Hincr).
 Qed.
 
 Lemma skew_yam_catK sha shc y z :
@@ -125,12 +125,12 @@ Lemma skew_yam_included sha shb y :
 Proof.
   move=> Hpart.
   elim: y shb => [| y0 y IHy] shb /= Hskew.
-    have := Hskew _ (hyper_yam_of_shape Hpart).
-    rewrite cat0s /is_yam_of_shape (shape_rowseq_hyper_yam Hpart) => /andP [] _ /eqP ->.
+    have := Hskew _ (hyper_yam_of_eval Hpart).
+    rewrite cat0s /is_yam_of_eval (evalseq_hyper_yam Hpart) => /andP [] _ /eqP ->.
     by apply included_refl.
   have {IHy} Hrec := IHy _ (skew_yam_consK Hpart Hskew).
-  have /= := Hskew _ (hyper_yam_of_shape Hpart).
-  rewrite /is_yam_of_shape => /andP [] /is_out_corner_yam => Hcorn /eqP Hb.
+  have /= := Hskew _ (hyper_yam_of_eval Hpart).
+  rewrite /is_yam_of_eval => /andP [] /is_out_corner_yam => Hcorn /eqP Hb.
   rewrite Hb in Hcorn.
   have := included_incr_nth (decr_nth shb y0) y0.
   rewrite (decr_nthK (is_part_skew_yam Hpart Hskew) Hcorn).

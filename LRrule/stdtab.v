@@ -32,8 +32,8 @@ Theorem yam_of_stdtabK t : is_stdtab t -> stdtab_of_yam (yam_of_stdtab t) = t.
 
 Statistic:
 
-Lemma shape_stdtab_of_yam y : shape (stdtab_of_yam y) = shape_rowseq y.
-Lemma shape_yam_of_stdtab t : is_stdtab t -> shape_rowseq (yam_of_stdtab t) = shape t.
+Lemma shape_stdtab_of_yam y : shape (stdtab_of_yam y) = evalseq y.
+Lemma shape_yam_of_stdtab t : is_stdtab t -> evalseq (yam_of_stdtab t) = shape t.
 Lemma size_stdtab_of_yam y  : size_tab (stdtab_of_yam y) = size y.
 Lemma size_yam_of_stdtab t  : is_stdtab t -> size (yam_of_stdtab t) = size_tab t.
                                                                               *)
@@ -66,7 +66,7 @@ Fixpoint stdtab_of_yam y :=
     append_nth (stdtab_of_yam y') (size y') y0
   else [::].
 
-Lemma shape_stdtab_of_yam y : shape (stdtab_of_yam y) = shape_rowseq y.
+Lemma shape_stdtab_of_yam y : shape (stdtab_of_yam y) = evalseq y.
 Proof. elim: y => [//= | y0 y IHy] /=. by rewrite shape_append_nth IHy. Qed.
 
 Lemma size_stdtab_of_yam y : size_tab (stdtab_of_yam y) = size y.
@@ -264,7 +264,7 @@ Proof.
   apply: append_nth_injl; by apply: stdtab_of_yam_nil.
 Qed.
 
-Lemma shape_yam_of_stdtab t : is_stdtab t -> shape_rowseq (yam_of_stdtab t) = shape t.
+Lemma shape_yam_of_stdtab t : is_stdtab t -> evalseq (yam_of_stdtab t) = shape t.
 Proof.
   move/yam_of_stdtabK => H.
   have:= erefl (shape t); by rewrite -{1}H shape_stdtab_of_yam.
@@ -273,10 +273,10 @@ Qed.
 Lemma size_yam_of_stdtab t : is_stdtab t -> size (yam_of_stdtab t) = size_tab t.
 Proof.
   move=> Htab.
-  by rewrite /size_tab -(shape_yam_of_stdtab Htab) shape_rowseq_eq_size.
+  by rewrite /size_tab -(shape_yam_of_stdtab Htab) evalseq_eq_size.
 Qed.
 
-Lemma part_yam_of_stdtab t : is_stdtab t -> is_part (shape_rowseq (yam_of_stdtab t)).
+Lemma part_yam_of_stdtab t : is_stdtab t -> is_part (evalseq (yam_of_stdtab t)).
 Proof.
   move=> Htab; rewrite (shape_yam_of_stdtab Htab).
   apply: is_part_sht.
@@ -401,7 +401,7 @@ Definition stdtabsh_countMixin := Eval hnf in [countMixin of stdtabsh by <:].
 Canonical stdtabsh_countType := Eval hnf in CountType stdtabsh stdtabsh_countMixin.
 Canonical stdtabsh_subCountType := Eval hnf in [subCountType of stdtabsh].
 
-Definition enum_stdtabsh : seq (seq (seq nat)) := map stdtab_of_yam (enum_yamsh sh).
+Definition enum_stdtabsh : seq (seq (seq nat)) := map stdtab_of_yam (enum_yameval sh).
 Let stdtabsh_enum : seq stdtabsh := pmap insub enum_stdtabsh.
 
 Lemma finite_stdtabsh : Finite.axiom stdtabsh_enum.
@@ -413,13 +413,13 @@ Proof.
   rewrite -(shape_yam_of_stdtab Htab) => Hsht.
   rewrite /enum_stdtabsh count_map.
   rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
-    move=> y /(allP (enum_yamshP Hpart)).
-    rewrite /is_yam_of_shape => /andP [] Hyam /eqP Hshy /=.
+    move=> y /(allP (enum_yamevalP Hpart)).
+    rewrite /is_yam_of_eval => /andP [] Hyam /eqP Hevy /=.
     apply/(sameP idP); apply(iffP idP) => /eqP H; apply/eqP.
     + by rewrite H yam_of_stdtabK.
     + by rewrite -H stdtab_of_yamK.
-  apply: (enum_yamsh_countE Hpart).
-  by rewrite /is_yam_of_shape yam_of_stdtabP //= Hsht.
+  apply: (enum_yameval_countE Hpart).
+  by rewrite /is_yam_of_eval yam_of_stdtabP //= Hsht.
 Qed.
 
 Canonical stdtabsh_finMixin := Eval hnf in FinMixin finite_stdtabsh.
@@ -474,7 +474,7 @@ Proof.
     + by rewrite H yam_of_stdtabK.
     + by rewrite -H stdtab_of_yamK.
   apply: (count_unionP _ (@yamn_PredEq _)).
-  - by apply: yamn_partition_shape_rowseq.
+  - by apply: yamn_partition_evalseq.
   - by rewrite /is_yam_of_size yam_of_stdtabP //= Hszt.
 Qed.
 

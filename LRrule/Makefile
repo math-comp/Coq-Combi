@@ -229,10 +229,6 @@ printenv:
 %.v.beautified:
 	$(COQC) $(COQDEBUG) $(COQFLAGS) -beautify $*
 
-# WARNING
-#
-# This Makefile has been automagically generated
-# Edit at your own risks !
-#
-# END OF WARNING
 
+COQDEFS := --language=none -r '/^[[:space:]]*\(Axiom\|Theorem\|Class\|Instance\|Let\|Ltac\|Definition\|Lemma\|Record\|Remark\|Structure\|Fixpoint\|Fact\|Corollary\|Let\|Inductive\|Coinductive\|Notation\|Proposition\|Module[[:space:]]+Import\|Module\)[[:space:]]+\([[:alnum:]'\''_]+\)/\2/'
+TAGS : $(VFILES); etags $(COQDEFS) $^

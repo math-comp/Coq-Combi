@@ -10,17 +10,31 @@
 
 \usepackage[vcentermath]{genyoungtabtikz}
 % \YFrench % use french convention for tableaux.
-\usepackage{minted}
-\usemintedstyle{emacs}
+%\usepackage{minted}
+%\usemintedstyle{emacs}
 %\usemintedstyle{colorful}
 %\usemintedstyle{borland}
 %\usemintedstyle{autumn}
 
-\newminted{coq}{
-frame=lines,
-framesep=2mm,
-mathescape=true
-}
+%\newminted{coq}{
+%frame=lines,
+%framesep=2mm,
+%mathescape=true
+%}
+
+\usepackage{listings}
+\definecolor{dkblue}{rgb}{0,0.1,0.5}
+\definecolor{lightblue}{rgb}{0,0.5,0.5}
+\definecolor{dkgreen}{rgb}{0,0.4,0}
+\definecolor{dk2green}{rgb}{0.4,0,0}
+\definecolor{dkviolet}{rgb}{0.6,0,0.8}
+\definecolor{brick}{rgb}{0.6,0.2,0.25}
+
+% installation du mode SSR
+\def\lstlanguagefiles{defManSSR.tex}
+\lstset{language=SSR}
+
+
 \usepackage{commath}
 
 \newcommand{\Coq}{\texttt{Coq}\xspace}
@@ -40,9 +54,10 @@ mathescape=true
 \newcommand{\N}{{\mathbb N}}
 \newcommand{\C}{{\mathbb C}}
 \newcommand{\Q}{{\mathbb Q}}
+\newcommand{\K}{{\mathbb K}}
 \newcommand{\SG}{{\mathfrak S}}
 \newcommand{\std}{\operatorname{Std}}
-
+\newcommand{\sgn}{\operatorname{sgn}}
 \newcommand{\sym}{\mathrm{sym}}
 \newcommand{\NCSF}{\mathbf{NCSF}}
 \newcommand{\QSym}{\mathrm{QSym}}
@@ -50,6 +65,7 @@ mathescape=true
 
 \newcommand{\partof}{\vdash}                    % Partition de
 \newcommand{\compof}{\vDash}                    % Composisition de
+\newcommand{\shape}{\operatorname{shape}} 
 
 \newcommand{\qandq}{\text{\quad et\quad}}
 
@@ -74,6 +90,8 @@ mathescape=true
 \newtheorem{DEFN}{Definition}
 \newtheorem{DEFNs}{Definitions}
 \newtheorem{ALGO}{Algorithm}
+
+\lstset{moredelim=[is][\color{red}\bfseries\ttfamily\underbar]{|*}{*|}}
 
 %------------------------------------------------------------------------------
 \begin{document}
@@ -104,7 +122,7 @@ mathescape=true
 
 \section{Introduction}
 
-\todo{rant about formalization of combinatorics}
+\todo[inline]{rant about formalization of combinatorics}
 
 We start by a general presentation of the problem. The goal is to give a
 reader an idea of the field of algebraic combinatorics and the \LR problem. In
@@ -264,110 +282,126 @@ formalizing using \SSR mixin and canonical paradigm the notion of totally
 ordered set.
 
 There is however a small technical problem due to the fact that \Coq's doesn't
-allows partial functions. Indeed, in many places we uses the \verb|nth|
+allows partial functions. Indeed, in many places we uses the \lstinline|nth|
 function which compute the $n$-th element of a list. If $n$ is larger than the
-size of the lists, the \verb|nth| function returns a default value which
-must therefore be provided. Indeed \verb|nth| type is
-\[\verb|forall T : Type, T -> seq T -> nat -> T|.\]
-We therefore decided to formalized \emph{Non empty totally ordered type} under
-the name \verb|ordtype|. Here is the relevant part of the code (in the file
-\verb|ordtype.v|):
-\begin{coqcode}
-Definition axiom T (r : rel T) :=
+size of the lists, the \lstinline|nth| function returns a default value which
+must therefore be provided. Indeed \lstinline|nth| type is
+\lstinline|forall T : Type, T -> seq T -> nat -> T|,
+the default value is the first argument. We therefore decided to formalize
+\emph{non empty totally ordered type} under the name \lstinline|ordtype|. Here
+is the relevant part of the code (in the file \verb|ordtype.v|):
+\begin{lstlisting}
+Definition |*axiom*| T (r : rel T) :=
     [/\ reflexive r, antisymmetric r, transitive r &
         (forall m n : T, (r m n) || (r n m))].
 
-Record mixin_of T := Mixin { r : rel T; x : T; _ : axiom r }.
-Record class_of T := Class {base : Countable.class_of T; mixin : mixin_of T}.
-Structure type := Pack {sort; _ : class_of sort; _ : Type}.
-Notation ordType := type.
-\end{coqcode}
+Record |*mixin_of*| T := Mixin { r : rel T; x : T; _ : axiom r }.
+Record |*class_of*| T := Class {base : Countable.class_of T; mixin : mixin_of T}.
+Structure |*type*| := Pack {sort; _ : class_of sort; _ : Type}.
+Notation |*ordType*| := type.
+\end{lstlisting}
 To ease readability we provide short notations in a specific scope with tag
-\verb|Ord| for the comparison functions:
-\begin{coqcode}
-Definition leqX_op T := Order.r (Order.mixin (Order.class T)).
+\lstinline|Ord| for the comparison functions:
+\begin{lstlisting}
+Definition |*leqX_op*| T := Order.r (Order.mixin (Order.class T)).
 
-Delimit Scope ord_scope with Ord.
+Delimit Scope |*ord_scope*| with |*Ord*|.
 Open Scope ord_scope.
 Notation "m <= n" := (leqX_op m n) : ord_scope.
-\end{coqcode}
-A witness of non-emptyness can be obtained using the \verb+inhabitant+ lemma:
-\begin{coqcode}
-Lemma inhabitant (T : ordType) : T.
-\end{coqcode}
-As an application, we provide \verb|nat| with a canonical \verb|ordtype|
-structure which wraps the usual ordering. We provide \verb|0| as the witness
+\end{lstlisting}
+A witness of non-emptyness can be obtained using the \lstinline+inhabitant+ lemma:
+\begin{lstlisting}
+Lemma |*inhabitant*| (T : ordType) : T.
+\end{lstlisting}
+As an application, we provide \lstinline|nat| with a canonical \lstinline|ordtype|
+structure which wraps the usual ordering. We provide \lstinline|0| as the witness
 of non emptyness:
-\begin{coqcode}
-structure:
-Fact leq_order : Order.axiom leq.
+\begin{lstlisting}
+Fact |*leq_order*| : Order.axiom leq.
 [...]
-Definition nat_ordMixin := Order.Mixin 0 leq_order.
-Canonical nat_ordType := Eval hnf in OrdType nat nat_ordMixin.
+Definition |*nat_ordMixin*| := Order.Mixin 0 leq_order.
+Canonical |*nat_ordType*| := Eval hnf in OrdType nat nat_ordMixin.
 
-Lemma leqXnatE m n : (m <= n)%Ord = (m <= n)%N.
-\end{coqcode}
-The code further clone most of the \SSR \verb|nat| comparison lemmas. To
-ease switching between \verb|nat| and arbitrary \verb|ordtype|, we decided
-to add a letter \verb|X| to the function names. For example, the statement
-\verb|(m <= n) = ~~ (n < m)| is called \verb|leqNgtn| for \verb|nat| and
-\verb|leqXNgtnX| for arbitrary \verb|ordtype|. We give the construction of
-a dual order. The file also prove a bunch of useful lemmas about sequence of
-elements belonging to an ordered type.
+Lemma |*leqXnatE*| m n : (m <= n)%Ord = (m <= n)%N.
+\end{lstlisting}
+The code further clone most of the \SSR \lstinline|nat| comparison lemmas. To
+ease switching between \lstinline|nat| and arbitrary \lstinline|ordtype|, we
+decided to add a letter \lstinline|X| to the comparison function names. For
+example, the statement \lstinline|(m <= n) = ~~ (n < m)| is called
+\lstinline|leqNgtn| for \lstinline|nat| and \lstinline|leqXNgtnX| for
+arbitrary \lstinline|ordtype|. We give further constructions such as dual
+order. The file also prove a bunch of useful lemmas about sequences of elements
+belonging to an ordered type dealing for example with maximum element an
+particularly its last occurrence.
 
 \subsection{Partitions}
 
 The theory of symmetric function is closely related to partition theory. They
 are defined as the different ways of decomposing an integer $n\in\N$ as a sum:
-\[ 5=5=4+1=3+2=3+1+1=2+2+1=2+1+1+1=1+1+1+1+1\,. \] Two decomposition that differ
-only by their order are considered equal. The usual convention is to sort the
-summand (called \emph{part}) in decreasing order. They are a fundamental
+\[ 5=5=4+1=3+2=3+1+1=2+2+1=2+1+1+1=1+1+1+1+1\,. \] Two decompositions that
+differ only by their order are considered equal. The usual convention is to
+sort the summand (called \emph{part}) in decreasing order in \SSR this also
+ensure that equality of partition is the same as Leibnitz equality. Due to
+their fundamental role is the theory of symmetric function, they are a key
 ingredient of our formalization.
 
 \begin{DEFN}
-  A partition $\lambda := (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_{l-1} >
-  0)$ of a integer $n$ is a finite decreasing sequence of positive integers
-  whose sum is $n$. We denote $|\lambda| := n =
-  \lambda_0+\lambda_1+\dots+\lambda_{l-1}$ the sum and $\ell(\lambda) := l$
-  the length. We also denote $\lambda\partof n$ the fact that $\lambda$ is a
-  partition of $n$.
+  A \emph{partition} $\lambda :=
+  (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_{l-1} > 0)$ of an integer $n$ is
+  a finite decreasing sequence of positive integers whose sum is $n$. We
+  denote $|\lambda| := n = \lambda_0+\lambda_1+\dots+\lambda_{l-1}$ the sum
+  and $\ell(\lambda) := l$ the length. We also denote $\lambda\partof n$ the
+  fact that $\lambda$ is a partition of $n$.
 
   Note that there is only one partition of the integer $0$ namely the empty
-  sequence.
+  sequence so that $\lambda\partof0$ means that $\lambda = ()$.
 \end{DEFN}
-We decided to represent partitions naturally by terms of type \verb+seq nat+.
-Following \SSR paradigm, the definition \verb|is_part| is given as a
-computational boolean predicate (recursive) function. When they are easier to
-use in a proof, we provide two equivalent statement in \verb|prop| using two
-reflection lemmas:
-\begin{coqcode}
-  Fixpoint is_part sh := (* Boolean Predicate *)
+We decided to represent partitions naturally by terms of type 
+\lstinline+seq nat+. 
+Following \SSR paradigm, the definition \lstinline|is_part| is given as
+a computational boolean predicate (a recursive function). Since a
+\lstinline{fixpoint} is not always the easiest statement to use is a proof, we
+provide two equivalent statements (in \lstinline|Prop|) using two reflection
+lemmas. These equivalent statement are also perhaps easier to read
+\begin{lstlisting}
+  Fixpoint |*is_part*| sh := (* Boolean Predicate *)
     if sh is sh0 :: sh'
     then (sh0 >= head 1 sh') && (is_part sh')
     else true.
 
   (* Boolean reflection lemmas *)
-  Lemma is_partP sh : reflect
+  Lemma |*is_partP*| sh : reflect
     (last 1 sh != 0 /\ forall i, (nth 0 sh i) >= (nth 0 sh i.+1))
     (is_part sh).
 
-  Lemma is_part_ijP sh : reflect
+  Lemma |*is_part_ijP*| sh : reflect
     (last 1 sh != 0 /\ forall i j, i <= j -> (nth 0 sh i) >= nth 0 sh j) 
     (is_part sh).
-\end{coqcode}
-The set of partition of a given $n$ is finite, we model this fact by defining
-a dependant type and providing it with a \SSR canonical \verb+fintype+
-structure.
-\begin{coqcode}
-Definition is_part_of_n sm := [pred p | (sumn p == sm) & is_part p ].
-Structure intpartn n : predArgType :=
-  IntPartN {pnval :> seq nat; _ : is_part_of_n n pnval}.
-\end{coqcode}
+\end{lstlisting}
+The set of partition of a given $n$ is finite, so we provide a function
+\lstinline|enum_partn| for enumerating them. Thanks to this function, we
+further model this fact by defining a dependant type and providing it with a
+canonical \lstinline+fintype+ structure.
+\begin{lstlisting}
+Definition |*is_part_of_n*| sm := [pred p | (sumn p == sm) & is_part p ].
+
+Definition |*enum_partn*| sm := [...]
+
+Lemma |*enum_partn_allP*| sm : all (is_part_of_n sm) (enum_partn sm).
+Lemma |*enum_partn_countE*| sm p : is_part_of_n sm p -> count_mem p (enum_partn sm) = 1.
+
+Structure |*intpartn*| n : predArgType :=
+  IntPartN {pnval :> seq nat ; _ : is_part_of_n n pnval}.
+[...]
+Let |*type*| := sub_finType intpartn_subCountType (enum_partn_allP n) (@enum_partn_countE n).
+Canonical |*intpartn_finType*| := Eval hnf in [finType of intpartn for type].
+
+\end{lstlisting}
 Note that by design choice, most of the lemmas on partition (and other
 combinatorial object such as tableaux, Yamanouchi words) require a
-\verb|seq nat| together with a proof of \verb+is_part+ rather that some
+\lstinline|seq nat| together with a proof of \lstinline+is_part+ rather that some
 dependant type. Dependant type are only used when statements need to confine a
-set in a \verb+fintype+ e.g. statement about cardinalities.
+set in a \lstinline+fintype+ e.g. statement about cardinalities.
 
 It is customary to depict a partition by a diagram of boxes called its Ferrers
 diagram. Namely the Ferres diagram of a partition $\lambda := (\lambda_0,
@@ -376,33 +410,33 @@ boxes of respective length $\lambda_0, \lambda_1,\dots,\lambda_{l-1}$. We use
 the French convention which put the longest row at the bottom of the
 picture (English literature usually draw them upside down). For example,
 \[(7,5,3,2,2)\quad\text{ is depicted as }\quad \yngs(0.5, 2,2,3,5,7).\]
-
 \bigskip
-Partition are ordered by the inclusion of their diagram. As usual, we define
-both a boolean predicate and a reflection lemma:
-\begin{coqcode}
-  Fixpoint included inner outer :=
-    if inner is inn0 :: inn then
-      if outer is out0 :: out then
-        (inn0 <= out0) && (included inn out)
-      else false
-    else true.
 
-  Lemma includedP inner outer :
-    reflect (size inner <= size outer /\ forall i, nth 0 inner i <= nth 0 outer i)
-            (included inner outer).
-\end{coqcode}
+Partition are ordered by the inclusion of their diagram. Here is the
+corresponding boolean predicate and the reflection lemma:
+\begin{lstlisting}
+Fixpoint |*included*| inner outer :=
+  if inner is inn0 :: inn then
+    if outer is out0 :: out then
+      (inn0 <= out0) && (included inn out)
+    else false
+  else true.
+
+Lemma |*includedP*| inner outer : reflect
+  (size inner <= size outer /\ forall i, nth 0 inner i <= nth 0 outer i)
+  (included inner outer).
+\end{lstlisting}
 A skew partition is the difference of two included partition:
 \[(7,5,3,2,2) / (4,2,1)\quad\leftrightarrow\quad \gyoungs(0.5,\ \ ,\ \ ,:;\ \
 ,::;\ \ \ ,::::;\ \ \ ).\] We didn't define a specific type for skew partition
 in \Coq: when a skew partition is required we just pass proof of
-\verb+is_part inner+, \verb+is_part outer+ together with
-\verb+included inner outer+.
+\lstinline+is_part inner+, \lstinline+is_part outer+ together with
+\lstinline+included inner outer+.
 
 \subsection{Tableaux}
 
 Tableaux were invented by Alfred Young to understand the representation of the
-symmetric groups. We depict them
+symmetric groups. They are the central character of the story here.
 \begin{DEFN}
   Let $\alphA$ be an alphabet (that is a totally ordered set). A \emph{Young
     tableau} or \emph{tableau} for short is a filling $T$ with letters from
@@ -425,164 +459,403 @@ Here is an example of a tableau, a standard tableau and a skew tableau.
 Following~\cite{Lothaire}, we formalize tableau by defining a dominance
 relation between two consecutive nondecreasing sequence called \emph{rows}:
 \begin{DEFN}
+Let $\alphA$ be an alphabet (that is a totally ordered set). 
   A non decreasing word $v \in \alphA^*$ is called a \emph{row}. Let $u = x_0
   \dots x_{r-1}$ and $v = y_0 \dots y_{s-1}$ be two rows. ($x_i, y_j \in \alphA$). We
   say that \emph{$u$ dominates $v$} if $r\leq s$ and for $i = 0,\dots,r-1$,
   $x_i > y_i$.
-
-  A \emph{tableau} is a sequence of non empty row which such that each row
-  dominate the next one.
+  A \emph{tableau} is a sequence of non empty row such that each row dominate
+  the next one.
 \end{DEFN}
-\begin{coqcode}
-  Variable T : ordType.
-  Notation Z := (inhabitant T).
-  Notation is_row r := (sorted (@leqX_op T) r).
+As for partitions, we don't use a specific type for rows and tableaux and use simply
+\lstinline{seq seq nat} as a data-structure. Tableau are just defined using a
+predicate \lstinline{is_tableau}. We show here only the boolean reflection
+lemma for \lstinline{dominate}, and refer the reader to the file for the
+formal definition of standard tableau and skew tableau.
+\begin{lstlisting}
+Variable T : ordType.
+Notation Z := (inhabitant T).
+Notation |*is_row*| r := (sorted (@leqX_op T) r).
 
-  Definition dominate (u v : seq T) :=
-    ((size u) <= (size v)) && 
-     (all (fun i => (nth Z u i > nth Z v i)%Ord) (iota 0 (size u))).
+Lemma |*dominateP*| u v : reflect
+  ((size u) <= (size v) /\ forall i, i < size u -> (nth Z u i > nth Z v i)%Ord)
+  (dominate u v).
 
-  Lemma dominateP u v :
-    reflect ((size u) <= (size v) /\ 
-             forall i, i < size u -> (nth Z u i > nth Z v i)%Ord)
-            (dominate u v).
+Fixpoint |*is_tableau*| (t : seq (seq T)) :=
+  if t is t0 :: t' then
+    [&& (t0 != [::]), is_row t0,
+      dominate (head [::] t') t0 & is_tableau t']
+  else true.
+\end{lstlisting}
 
-  Fixpoint is_tableau (t : seq (seq T)) :=
-    if t is t0 :: t' then  
-      [&& (t0 != [::]), is_row t0, 
-        dominate (head [::] t') t0 & is_tableau t']
-    else true.
-
-  Definition to_word t := flatten (rev t).
-\end{coqcode}
+A very important notion is the row reading of a tableau. It is just the word
+obtained from the natural reading (top to bottom and left to right) of a
+tableau. For example, the reading of the first tableau above is:
+$ffcddbccdfaabeefgh$.
+It is defined in coq by
+\begin{lstlisting}
+Definition |*to_word*| t := flatten (rev t).
+\end{lstlisting}
 
 \subsection{Yamanouchi words}
 
-  $\abs{w}_x$ : number of occurrence of $x$ in $w$.
+Yamanouchi is a data structure which is equivalent to standard
+tableaux. However, since they are one dimensional, they are sometimes easier
+to manipulate. They also appears in the \LR rule statement.
 
-  \begin{DEFN}
-    Sequence $w_0,\dots,w_{(l-1}$ of integers such that for all $k, i$,
-    \[ \abs{w_i,\dots,w_{l-1}}_k \geq \abs{w_i,\dots,w_{l-1}}_{k+1} \]
+\begin{DEFN}
+  For a word $W$ we write $\abs{w}_x$ the number of occurrence of $x$ in $w$.
+  A word $w := w_0,\dots,w_{l-1}$ over the integers is \emph{Yamanouchi} if for
+  all $k, i \in \N$,
+  \[ \abs{w_i,\dots,w_{l-1}}_k \geq \abs{w_i,\dots,w_{l-1}}_{k+1} \]
+\end{DEFN}
+As we code Yamanouchi words by term of type \lstinline{seq nat}, it is easier
+to have a recursive definition. Here it is:
+\begin{DEFN}
+  Equivalently, $w$ is \emph{Yamanouchi} either if its empty or if
+  $(\abs{w}_i)_{i\leq\max(w)}$ (called the row-shape of $w$) is a partition
+  and $w_1,\dots,w_{l-1}$ is also Yamanouchi.
+\end{DEFN}
+Here is a complete list of Yamanouchi word of length smaller than $4$.
+\begin{gather}
+  (), 0, 00, 10, 000, 100, 010, 210, \\
+  0000, 1010, 1100, 0010, 0100, 1000, 0210, 2010, 2100, 3210
+\end{gather}
+The partition $(\abs{w}_i)_{i\leq\max(w)}$ is denoted \lstinline|shape_rowseq w|.
+ We recall that in \SSR, the call \lstinline{incr_nth s i} design the nat
+sequence \lstinline|s| with item $i$ incremented (first padded with 0's to
+size $i+1$, if needed).
 
-    Equivalently $(\abs{w}_i)_{i\leq\max(w)}$ is a partition and $w_1,\dots,w_{l-1}$ is
-    also Yamanouchi.
-  \end{DEFN}
+  \begin{lstlisting}
+Fixpoint |*shape_rowseq*| s :=
+  if s is s0 :: s'
+  then incr_nth (shape_rowseq s') s0
+  else [::].
 
-  \[ (), 0, 00, 10, 000, 100, 010, 210, \]
-  \[ 0000, 1010, 1100, 0010, 0100, 1000, 0210, 2010, 2100, 3210 \]
+Definition |*shape_rowseq_count*| := (* iterative version *)
+  [fun s => [seq (count_mem i) s | i <- iota 0 (foldr maxn 0 (map S s))]].
 
-  \begin{coqcode}
-(* incr_nth s i == the nat sequence s with item i incremented (s is *)
-(*                 first padded with 0's to size i+1, if needed).   *)
+Lemma |*shape_rowseq_countE*| : shape_rowseq_count =1 shape_rowseq.
 
-  Fixpoint shape_rowseq s :=
-    if s is s0 :: s'
-    then incr_nth (shape_rowseq s') s0
-    else [::].
+Fixpoint |*is_yam*| s :=
+  if s is s0 :: s'
+  then is_part (shape_rowseq s) && is_yam s'
+  else true.
 
-  Definition shape_rowseq_count :=
-    [fun s => [seq (count_mem i) s | i <- iota 0 (foldr maxn 0 (map S s))]].
+Lemma |*is_yamP*| s : reflect
+  (forall i n, count_mem n (drop i s) >= count_mem n.+1 (drop i s))
+  (is_yam s).
+\end{lstlisting}
 
-  Lemma shape_rowseq_countE : shape_rowseq_count =1 shape_rowseq.
+For standard tableau as well as Yamanouchi word, we finally provide, as we
+already explained for partition, enumeration functions. This allows use is to
+endow the various dependant type (e.g. for size or shape), with a canonical
+\lstinline{fintype} structure (see for example \lstinline{is_yam_of_shape},
+\lstinline{enum_yamsh}, \lstinline{yamsh}, \lstinline{yamsh_finType} for
+Yamanouchi words of a given row-shape.
+\todo{Do I want to present the bijection with standard tableau here ?}
+\section{Schur polynomial and the \LR rule}
 
-  Fixpoint is_yam s :=
-    if s is s0 :: s'
-    then is_part (shape_rowseq s) && is_yam s'
-    else true.
-\end{coqcode} 
-% |
-
-\section{The statement of the rule}
+The \LR rule allows to expand product of symmetric polynomials in a particular
+basis called Schur polynomials. The theory of symmetric polynomial is usually
+carried trough their limit as the number of variable tends to the infinity
+which are called symmetric function (though they are neither polynomial nor
+function but rather bounded degree formal power series. We provide here an
+extremely short introduction. The interested reader should refer to Macdonald
+books~\cite{Macddo}.
 
 \subsection{Symmetric functions and Schur function}
 
-\subsection{The statement}
+We fix a positive integer $n$ and consider polynomials in the set of variables
+$\alphX_n:=\{x_0,\dots,x_{n-1}\}$. The symmetric group $\SG_n$ on
+$\{0,\dots,n-1\}$ acts on variable by permutation.
+\begin{DEFN}
+ A polynomial $f(x_0,\dots,x_{n-1})$ is symmetric if it is invariant by any
+ permutation of the variables, that is for all permutation $\sigma\in\SG_n$,
+ \begin{equation}
+   f^\sigma(\alphX) := f(x_{\sigma(0)}, x_{\sigma(1)}, \dots, x_{\sigma(n-1)}) = 
+   f(x_{0}, x_{1}, \dots, x_{n-1})\,.
+ \end{equation}
+\end{DEFN}
+\todo{example} The sum of two symmetric polynomial is symmetric as well as the
+product of a symmetric polynomial by a scalar or the product of two symmetric
+polynomial. Therefore they form a sub-algebra denoted $\sym(\alphX_n)$ of the
+algebra of polynomials. 
 
+A natural basis of this algebra is given by the so-called monomial symmetric
+polynomials. They are defined as the sum of the orbit of a monomial under the
+action of the symmetric group. Since in any orbit they is only one monomial
+whose exponent are sorted decreasingly, it makes sense to index the element by
+this sequence of exponents. We can even remove the zeroes from this sequence
+getting a partition of length at most $n$. So we see that the basis of
+symmetric polynomials are indexed by partition of length at most $n$.
+\begin{equation*}
+  m_{(2,1)}(x_0,x_1,x_2) =
+  x_0^2x_1 + x_0x_1^2 + x_0^2x_2 + x_1^2x_2 + x_0x_2^2 + x_1x_2^2\,.
+\end{equation*}
+\begin{multline*}
+  m_{(2,2,1)}(x_0,x_1,x_2,x_3) =
+  x_0^2x_1^2x_2 + x_0^2x_1x_2^2 + x_0x_1^2x_2^2 + x_0^2x_1^2x_3 +
+  x_0^2x_2^2x_3 + x_1^2x_2^2x_3 + \\
+  x_0^2x_1x_3^2 + x_0x_1^2x_3^2 + x_0^2x_2x_3^2 + x_1^2x_2x_3^2 +
+  x_0x_2^2x_3^2 + x_1x_2^2x_3^2\,.
+\end{multline*}
+However, it appear in the theory that this simple basis has not that much
+interesting properties. One of the most important basis is the so-called Schur
+polynomials. They were first defined by Jacobi but they are named in the honor
+of Schur who discovered their importance in the representation theory. The
+original definition of Jacobi is the following: 
+
+\begin{DEFN}[Jacobi's definition of Schur function]
+  let $\lambda:=(\lambda_0\dots\lambda_{\ell-1})$ be a partition of length
+  $\ell$ at most $n$. We complete $\lambda$ by setting $\lambda_i:=0$ whenever
+  $i\geq\ell$. Then
+  \begin{equation}
+    s_{\lambda} (\alphX) :=
+    \frac{1}{\Delta}\sum_{\sigma\in\SG_n}
+    \sgn(\sigma)\ 
+    (x_0^{\lambda_0 + n-1}x_1^{\lambda_1 + n-2}\cdots x_{n-1}^{\lambda_{n-1}})^\sigma
+  \end{equation}
+  where
+  \begin{itemize}
+  \item $\Delta:=\prod_{0\leq i<j<n} (x_i - x_j)$ is the Vandermonde
+    determinant;
+  \item $\sgn(\sigma)$ is $+1$ or $-1$ whether $\sigma$ is an
+    even or odd permutations (the parity of the number of transpositions in a
+    decomposition of $\sigma$).
+  \end{itemize}
+\end{DEFN}
+Note that due to the factor $\sgn(\sigma)$ the sum is antisymmetric, meaning
+that it is multiplied by $\sgn(\mu)$ under the action of a permutation $\mu$.
+This implies that the sum is divisible by $\Delta$ so that $s_\lambda$ is a
+proper polynomial. As the quotient of two antisymmetric polynomials it is
+symmetric. Also it is simple to see that
+\begin{equation}
+s_{\lambda} (\alphX) =
+   x_0^{\lambda_0}x_1^{\lambda_1}\cdots x_{n-1}^{\lambda_{n-1}} +  \cdots
+\end{equation}
+where the rest of the terms contains only monomial which are smaller for the
+lexicographic order on the exponents. As a consequence, the Schur polynomials are
+linearly independant and form a basis of the algebra of symmetric
+polynomials.
+
+Interestingly enough, \emph{we did not need to formalize} this part of the
+theory. Indeed, we decide to chose a definition which has a more combinatorial
+feeling. This may looks like a kind of cheating. However, the equivalence of
+this definition with the combinatorial one is generally proved showing that
+both verify a recursive rule (due to Pieri) which give the product of a Schur
+polynomial by an elementary one. This rule is a very particular case of the
+\LR rule, so that it didn't really simplified the proof. Also most of the
+paper dealing with the \LR rule start from the combinatorial definition.
+\begin{DEFN}[Combinatorial definition of Schur function]
+
+  let $\lambda:=(\lambda_0\dots\lambda_{\ell-1})$ be a partition of length
+  $\ell$ at most $n$. For a tableau $t$ over the alphabet $\{0,\dots,n-1\}$ we
+  denote $\alphX^t$ the product $\prod_{i\in t}x_i$ (equivalently it is the
+  image of the row reading of $t$ under the morphism $i\mapsto x_i$ which
+  send non-commutative words to commutative monomials).
+  \begin{equation}
+    s_\lambda(\alphX) := \sum_{t\ \mid \shape(t) = \lambda}  \alphX^\lambda\,.
+  \end{equation}
+  the sum being taken over all the tableau of shape $\lambda$.
+\end{DEFN}
+For example,
+\begin{gather*}
+  s_{(2,1)}(x_0,x_1,x_2) =
+  \begin{array}[b]{c@{\ +\ }c@{\ +\ }c@{\ +\ }c@{\ +\ }c@{\ +\ }c@{\ +\ }l}
+    % \Yboxdim{8pt}\scriptsize
+    \young(1,00) & \young(1,01) & \young(2,00) &
+    \young(1,02)\ \young(2,01) & \young(2,11) & \young(2,02) & \young(2,12) \\[5mm]
+    x_0^2x_1 & x_0x_1^2 & x_0^2x_2 & 2\,x_0x_1x_2 & x_1^2x_2 & x_0x_2^2 & x_1x_2^2\,.
+  \end{array}
+\end{gather*}
+Though it is non trivial in general, one can check on this example that the
+result is indeed a symmetric polynomial. Indeed, one can subsume the previous
+example by
+\begin{equation*}
+  s_{(2,1)} = 2\,m_{(1,1,1)} + m_{(2,1)}\,.
+\end{equation*}
+Another example is
+\begin{equation}\label{eq:example_schur}
+  s_{3211} = 
+  35\,m_{1111111} + 15\,m_{211111} + 6\,m_{22111} + 2\,m_{2221} + 3\,m_{31111} + m_{3211}\,.
+\end{equation}
+The coefficient $6$ for $m_{22111}$ that is the coefficient of
+$x_0^2x_1^2x_2x_3x_4$ is the number of tableau of shape $(3,2,1,1)$ whose row
+reading is a permutations of $0011234$ here is the list
+\begin{equation*}
+  \young(4,3,12,001)\qquad\young(4,2,13,001)\qquad\young(3,2,14,001)\qquad
+  \young(4,3,11,002)\qquad\young(4,2,11,003)\qquad\young(3,2,11,004)\,.
+\end{equation*}
+the fact that $s_{3211}$ is symmetric express for example that the coefficient
+of $x_0^2x_1^2x_2x_3x_4$ is also the coefficient for example
+$x_0x_1^2x_2x_3x_4^2$ as one can check on the following list of tableaux
+\begin{equation*}
+  \young(4,3,24,011)\qquad\young(4,3,14,012)\qquad\young(4,3,12,014)\qquad
+  \young(4,2,13,014)\qquad\young(4,2,14,013)\qquad\young(3,2,14,014)
+\end{equation*}
+Again this is non trivial that these two set of tableaux are equinumerous.
+\medskip
+
+Another very important point is that all those computation are independant of
+the number of variables. More precisely, in the preceding example
+(Equation~\ref{eq:example_schur}), this equation is true whatever is the
+number of variable, only that $s_\lambda(\alphX_n)$ and $m_\lambda(\alphX_n)$
+vanishes if $\ell(\lambda) > n$.
+
+\begin{lstlisting}
+Variable R : comRingType.
+
+Fixpoint |*multpoly*| n :=
+  if n is n'.+1 then poly_comRingType (multpoly n') else R.
+
+Fixpoint |*vari*| n : 'I_n -> multpoly n :=
+  if n is n'.+1 then
+    fun i : 'I_n'.+1 =>
+      if unliftP ord0 i is UnliftSome j _ then (vari j)%:P
+      else 'X
+  else fun _ => 1.
+
+Variable n : nat.
+
+Definition |*commword*| (w : seq 'I_n) : multpoly n := \prod_(i <- w) vari i.
+Definition |*polyset*| d (s : {set d.-tuple 'I_n}) := \sum_(w in s) commword w.
+
+Definition |*is_tableau_of_shape_reading*| (sh : seq nat) (w : seq A) :=
+  (to_word (RS w) == w) && (shape (RS (w)) == sh).
+
+Lemma |*is_tableau_of_shape_readingP*| (sh : seq nat) (w : seq A) : reflect
+  (exists tab, [/\ is_tableau tab, shape tab = sh & to_word tab = w])
+  (is_tableau_of_shape_reading sh w).
+
+Definition |*tabwordshape*| (sh : intpartn d) :=
+  [set t : d.-tuple 'I_n | is_tableau_of_shape_reading sh t ].
+
+Definition |*Schur*| d (sh : intpartn d) := polyset R (tabwordshape sh).
+\end{lstlisting}
+
+\subsection{The statement of the rule}
+
+At last we come to the statement of the rule. They express the coefficient of
+the product (the so called structure constants) of the symmetric polynomials
+in the basis of Schur polynomials.
+\begin{DEFN}
+  Let $A$ be a algebra over a field $\K$ with a basis $B := (b_i)_{i\in I}$
+  indexed by a set $I$. The \emph{structure constant of $A$ in the basis $B$}
+  are the coefficient $c_{i,j}^k$ with $i,j,k\in I$ of the expansion of the
+  product $b_i b_j= \sum_{k\in I} c_{i,j}^k b_k$.
+
+  The \LR coefficient $c_{\lambda, \mu}^{\nu}$ are the structure constant of
+  the algebra of symmetric polynomials in the basis of Schur function.
+\end{DEFN}
+The \LR rule states that the \LR coefficients are non-negative integer, and
+give a way to compute them:
 \begin{THEO}[Littlewood-Richardson rule]
   $c_{\lambda, \mu}^{\nu}$ is the number of (skew) tableaux of shape the
   difference $\nu/\lambda$, whose row reading is a Yamanouchi word of
   evaluation $\mu$.
 \end{THEO}
-
 % ...00 ...00 ...00
 % ...1  ...1  ...1 
 % .00   .01   .02  
-% 12    02    01   
+% 12    02    01
 
-Some examples:
-  \[
-  C_{331,421}^{5432} = 3
-  \qquad
-  \Yboxdim{12pt}\scriptstyle
-  \gyoung(12,:;00,:::;1,:::;00)\qquad
-  \gyoung(02,:;01,:::;1,:::;00)\qquad
-  \gyoung(01,:;02,:::;1,:::;00)
-  \]
-% ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00
-% ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1
-% .00   .00   .00   .01   .00   .01   .02   .02   .12   .02   .02   .01   .01   .12   .12
-% 01    02    11    01    12    02    01    13    03    03    11    12    22    02    23
-
-  \[
-  C_{4321,431}^{7542} = 4
-  \qquad
-  \Yboxdim{12pt}\scriptstyle
-  \gyoung(:;2,::;11,:::;01,::::;000)\quad
-  \gyoung(:;1,::;12,:::;01,::::;000)\quad
-  \gyoung(:;1,::;02,:::;11,::::;000)\quad
-  \gyoung(:;0,::;12,:::;11,::::;000)\quad
-  \]
-
+Here are some examples:
 
   \def\AA{\red 0}
   \def\AB{\grn 1}
   \def\AC{\blu 2}
-  \def\AD{{\color{pink} 3}}
+  \def\AD{{\color{gray} 3}}
   \[
-  C_{431,4321}^{7542} = 4
+  C_{331,\red4\grn2\blu1}^{5432} = 3
   \qquad
   \Yboxdim{12pt}\scriptstyle
-  \gyoung(\AC\AD,:;\AB\AB\AC,:::;\AA\AB,::::;\AA\AA\AA)\quad
-  \gyoung(\AC\AD,:;\AA\AB\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
-  \gyoung(\AB\AD,:;\AA\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
-  \gyoung(\AA\AD,:;\AB\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AB\AC,:;\AA\AA,:::;\AB,:::;\AA\AA)\qquad
+  \gyoung(\AA\AC,:;\AA\AB,:::;\AB,:::;\AA\AA)\qquad
+  \gyoung(\AA\AB,:;\AA\AC,:::;\AB,:::;\AA\AA)
   \]
 
-  \def\AA{\red 0}
-  \def\AB{\grn 1}
-  \def\AC{\blu 2}
-  \def\AD{{\color{pink} 3}}
   \[
-  C_{431,4322}^{7543} = 2
+  C_{4321,\red4\grn3\blu1}^{7542} = 4
+  \qquad
+  \Yboxdim{12pt}\scriptstyle
+  \gyoung(:;\AC,::;\AB\AB,:::;\AA\AB,::::;\AA\AA\AA)\quad
+  \gyoung(:;\AB,::;\AB\AC,:::;\AA\AB,::::;\AA\AA\AA)\quad
+  \gyoung(:;\AB,::;\AA\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(:;\AA,::;\AB\AC,:::;\AB\AB,::::;\AA\AA\AA)
+  \]
+
+  \[
+  C_{431,\red4\grn3\blu2\color{gray}1}^{7542} = 4
+  \qquad
+  \Yboxdim{12pt}\scriptstyle
+  \gyoung(\AC\AD,:;\AB\AB\AC,:::;\AA\AB,::::;\AA\AA\AA)\ 
+  \gyoung(\AC\AD,:;\AA\AB\AC,:::;\AB\AB,::::;\AA\AA\AA)\ 
+  \gyoung(\AB\AD,:;\AA\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\ 
+  \gyoung(\AA\AD,:;\AB\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)
+  \]
+
+  \[
+  C_{431,\red4\grn3\blu2\color{gray}2}^{7543} = 2
   \qquad
   \gyoung(\AB\AD\AD,:;\AA\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
-  \gyoung(\AA\AD\AD,:;\AB\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
+  \gyoung(\AA\AD\AD,:;\AB\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)
   \]
 
-\Coq statement:
+Since once the shape is fixed, on can recover the tableau from its row
+reading, on can rephrase the statement as
+\begin{THEO}[Littlewood-Richardson rule]
+  $c_{\lambda, \mu}^{\nu}$ is the number of Yamanouchi word of evaluation
+  $\mu$ which are the row reading of a (skew) tableaux of shape the difference
+  $\nu/\lambda$.
+\end{THEO}
 
-\begin{coqcode}
+In \SSR, to be able to speak of the cardinality of a set, we must live inside
+a \text{\lstinline{fintype}.} fortunately, we know that the dependant type of
+Yamanouchi word of evaluation $\mu$ has a canonical \lstinline{fintype} namely
+\lstinline{yamsh_finType}. So to be able to write a such a statement we switch
+to using dependant type.
+\begin{lstlisting}
 Variable (d1 d2 : nat) (P1 : intpartn d1) (P2 : intpartn d2).
 Variable (n : nat) (R : comRingType).
-Hypothesis Hnpos : n != 0%N.
-Notation Schur p := (Schur Hnpos R p).
+Hypothesis |*Hnpos*| : n != 0%N.
+Notation |*Schur*| p := (Schur Hnpos R p).
 
-Definition is_skew_reshape_tableau (x : seq nat) :=
+Definition |*is_skew_reshape_tableau*| (x : seq nat) :=
   is_skew_tableau P1 (skew_reshape P1 P x).
-Lemma is_skew_reshape_tableauP (w : seq nat) :
+Lemma |*is_skew_reshape_tableauP*| (w : seq nat) :
   size w = sumn (diff_shape P1 P) ->
   reflect
-    (exists tab, [/\ is_skew_tableau P1 tab, shape tab = diff_shape P1 P & to_word tab = w])
+    (exists tab, [/\ is_skew_tableau P1 tab,
+                     shape tab = diff_shape P1 P & to_word tab = w])
     (is_skew_reshape_tableau w).
 
-Definition LRyam_set :=
+Definition |*LRyam_set*| :=
   [set x : yamsh_finType (intpartnP P2) | is_skew_reshape_tableau x].
-Definition LRyam_coeff := #|LRyam_set|.
+Definition |*LRyam_coeff*| := #|LRyam_set|.
 
-Theorem LRtab_coeffP :
+Theorem |*LRtab_coeffP*| :
   Schur P1 * Schur P2 =
   \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
-\end{coqcode}
+\end{lstlisting}
+
+\section{Schensted algorithm and the Robinson-Schensted bijection}
+
+\section{The plactic monoïd}
+
+\section{Green's plactic invariants}
+
+\section{Standardization}
+
+\section{Shuffle product and the free \LR rule}
+
+\section{The plactic version of the \LR rule}
+
+\section{The final bijection}
+
+\section{A \Coq implementation of the rule}
+
+\section{Conclusion}
 
 \section{Schensted algorithm and the Robinson-Schensted bijection}
 
