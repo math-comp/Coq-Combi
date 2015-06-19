@@ -139,12 +139,12 @@ Variables (P1 : intpartn d1) (P2 : intpartn d2).
 Lemma size_tab_P1 : d1 = size_tab (RS (std (hyper_yam P1))).
 Proof. by rewrite size_RS size_std size_hyper_yam intpartn_sumn. Qed.
 
-Lemma size_yam (y : yamsh_finType (intpartnP P2)) : size y = sumn P2.
-Proof. by rewrite -shape_rowseq_eq_size shape_yamsh. Qed.
+Lemma size_yam (y : yameval_finType (intpartnP P2)) : size y = sumn P2.
+Proof. by rewrite -evalseq_eq_size eval_yameval. Qed.
 
 Lemma sfilterleq_LR_supportP Q :
   Q \in LR_support (hyper_stdtab P1) (hyper_stdtab P2) ->
-  exists y : yamsh_finType (intpartnP P2), std y = (sfilterleq d1 (to_word Q)).
+  exists y : yameval_finType (intpartnP P2), std y = (sfilterleq d1 (to_word Q)).
 Proof.
   rewrite /LR_support inE.
   rewrite -LRTripleE; try apply stdtabnP.
@@ -157,7 +157,7 @@ Proof.
   rewrite -(size_RS p1) Hp1.
   have := hyper_stdtabP P1 => /andP [] _ /eqP -> /eqP Hsfp1 /eqP Hsfp2.
   suff : sfilterleq d1 (to_word Q) =Pl std (hyper_yam P2).
-    move/(plact_from_yam (intpartnP P2)) => [] yam Hyam; by exists (YamSh Hyam).
+    move/(plact_from_yam (intpartnP P2)) => [] yam Hyam; by exists (YamEval Hyam).
   rewrite -Hp plactic_RS -Hp2 -Hsfp2 eq_sym -plactic_RS.
   rewrite /sfilterleq /=.
   apply: plact_map_in_incr.
@@ -220,7 +220,7 @@ Lemma size_leq_skew_reshape (y : seq nat) :
 Proof.
   rewrite -(size_map size) -/(shape (RS _)) shape_RS_std.
   rewrite shape_RS_yam; last by apply hyper_yamP; apply intpartnP.
-  rewrite (shape_rowseq_hyper_yam (intpartnP P1)).
+  rewrite (evalseq_hyper_yam (intpartnP P1)).
   rewrite size_skew_reshape; by apply size_included.
 Qed.
 
@@ -228,7 +228,7 @@ Definition bijLRyam :=
   [fun y : seq nat =>
      join_tab (hyper_stdtab P1) (map (shiftn d1) (skew_reshape P1 P (std y)))].
 
-Lemma predLRTripleFast_bijLRyam (yam : yamsh P2) :
+Lemma predLRTripleFast_bijLRyam (yam : yameval P2) :
   is_skew_reshape_tableau yam ->
   predLRTripleFast (hyper_stdtab P1) (hyper_stdtab P2) (bijLRyam yam).
 Proof.
@@ -237,8 +237,8 @@ Proof.
     rewrite RSclassE; last by apply is_tableau_RS.
     rewrite -plactic_RS.
     apply std_plact.
-    rewrite -{2}(shape_yamsh yam).
-    apply yam_plactic_hyper; by apply yamshP.
+    rewrite -{2}(eval_yameval yam).
+    apply yam_plactic_hyper; by apply yamevalP.
   have Hstd1 : is_std (to_word (hyper_stdtab P1)).
     have /= := hyper_stdtabP P1 => /andP [].
     by rewrite /is_stdtab => /andP [].
@@ -250,7 +250,7 @@ Proof.
   - by apply size_leq_skew_reshape.
 Qed.
 
-Lemma bijLRyamP (yam : yamsh P2) :
+Lemma bijLRyamP (yam : yameval P2) :
   is_skew_reshape_tableau yam -> is_stdtab_of_n (d1 + d2) (bijLRyam yam).
 Proof.
   rewrite /is_skew_reshape_tableau /= /is_stdtab => Hskew.
@@ -270,7 +270,7 @@ Proof.
     apply join_stdtab.
     rewrite RSstdE; by apply std_is_std.
   - rewrite shape_RS_std shape_RS_yam; last by apply hyper_yamP; apply intpartnP.
-    rewrite (shape_rowseq_hyper_yam (intpartnP P1)).
+    rewrite (evalseq_hyper_yam (intpartnP P1)).
     rewrite -(is_skew_tableau_reshape_std (size_included Hincl)).
     + exact Hskew.
     + by rewrite size_yam sumn_diffE.
@@ -284,9 +284,9 @@ Proof.
 Qed.
 
 Definition LRyam_set :=
-  [set y : yamsh_finType (intpartnP P2) | is_skew_reshape_tableau y].
+  [set y : yameval_finType (intpartnP P2) | is_skew_reshape_tableau y].
 Definition LRyam_coeff := #|LRyam_set|.
-Definition bijLR (yam : yamsh P2) : stdtabn (d1 + d2) :=
+Definition bijLR (yam : yameval P2) : stdtabn (d1 + d2) :=
   if (boolP (is_skew_reshape_tableau yam)) is AltTrue pf then
     StdtabN (bijLRyamP pf)
   else
@@ -337,7 +337,7 @@ Proof.
     rewrite /t{t} /pad /= map_cat.
     rewrite -(size_map size) -/(shape (RS _)) shape_RS_std.
     rewrite shape_RS_yam; last by apply hyper_yamP; apply intpartnP.
-    rewrite (shape_rowseq_hyper_yam (intpartnP P1)).
+    rewrite (evalseq_hyper_yam (intpartnP P1)).
     by rewrite map_nseq.
   set t := map size _; have {t} -> : t = diff_shape P1 P.
     rewrite /t{t} /= -map_comp.
@@ -398,7 +398,7 @@ Proof.
     have:= mem_nth Z Hj; by rewrite mem_filter => /andP [].
   - move: Hpl => /plactcongr_homog/perm_eq_size.
     rewrite size_map => ->.
-    rewrite size_std sumn_diffE -shape_rowseq_eq_size shape_rowseq_hyper_yam //=.
+    rewrite size_std sumn_diffE -evalseq_eq_size evalseq_hyper_yam //=.
     by apply intpartnP.
   - rewrite (filterleq_LR_support HLRtab).
     have -> : val P1 = shape (filter_gtnX_tab d1 Q).
@@ -447,7 +447,7 @@ Proof.
   pose f := [fun s : seq nat =>
                to_word (join_tab (hyper_stdtab P1) (map (shiftn d1) (skew_reshape P1 P s)))].
   have {H} H : f (std x) = f (std y) by rewrite /= H.
-  have invf (s : yamsh_finType (intpartnP P2)) : std s = sfilterleq d1 (f (std s)).
+  have invf (s : yameval_finType (intpartnP P2)) : std s = sfilterleq d1 (f (std s)).
     have /= := join_stdtab_in_shuffle
                  (stdtabnP (hyper_stdtab P1)) (size_leq_skew_reshape (std s)).
     rewrite /size_tab.
@@ -458,7 +458,7 @@ Proof.
     rewrite -size_to_word -size_tab_P1 /sfilterleq /=.
     by rewrite to_word_skew_reshape //= size_std size_yam sumn_diffE.
   apply perm_eq_stdE.
-  - by rewrite perm_eq_shape_rowseq !shape_yamsh.
+  - by rewrite perm_eq_evalseq !eval_yameval.
   - by rewrite (invf x) (invf y) H.
 Qed.
 
@@ -482,7 +482,7 @@ Qed.
 
 (* Unused ************************)
 Definition LRyam_enum (P1 P2 P : seq nat) :=
-  [seq x <- enum_yamsh P2 | is_skew_reshape_tableau x].
+  [seq x <- enum_yameval P2 | is_skew_reshape_tableau x].
 Definition LRyam_compute (P1 P2 P : seq nat) := size (LRyam_enum P1 P2 P).
 
 Lemma LR_coeff_computeP : LRyam_compute P1 P2 P = LRyam_coeff.
@@ -490,7 +490,7 @@ Proof.
   rewrite /LRyam_coeff /LRyam_set /LRyam_compute /LRyam_enum.
   rewrite cardE (eq_enum (in_set _)) /enum_mem -enumT.
   rewrite (eq_filter (a2 := (fun x => is_skew_reshape_tableau (val x)))).
-  - by rewrite -(size_map val) map_filter_comp enum_yamshE map_id.
+  - by rewrite -(size_map val) map_filter_comp enum_yamevalE map_id.
   - by move=> i /=; rewrite unfold_in.
 Qed.
 (* End of Unused *****************)

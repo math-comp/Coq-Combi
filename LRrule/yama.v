@@ -24,17 +24,17 @@ Section Yama.
   Implicit Type s : seq nat.
 
 
-  (* Shape of a sequence of row index (mostly Yamanouchi word) *)
-  Fixpoint shape_rowseq s :=
+  (* Evaluation of a sequence of integer (mostly Yamanouchi word) *)
+  Fixpoint evalseq s :=
     if s is s0 :: s'
-    then incr_nth (shape_rowseq s') s0
+    then incr_nth (evalseq s') s0
     else [::].
 
   (* equivalent definition *)
-  Definition shape_rowseq_count :=
+  Definition evalseq_count :=
     [fun s => [seq (count_mem i) s | i <- iota 0 (foldr maxn 0 (map S s))]].
 
-  Lemma shape_rowseq_countE : shape_rowseq_count =1 shape_rowseq.
+  Lemma evalseq_countE : evalseq_count =1 evalseq.
   Proof.
     elim=>[//= | l0 s /= <-]; apply: (@eq_from_nth _ 0).
     - rewrite size_incr_nth !size_map !size_iota /= {1}maxnC {1}/maxn.
@@ -57,9 +57,9 @@ Section Yama.
         - by rewrite (IHs (leq_trans Hs Hi)) (ltn_eqF Hi).
   Qed.
 
-  Lemma nth_shape_rowseq s i : nth 0 (shape_rowseq s) i = count_mem i s.
+  Lemma nth_evalseq s i : nth 0 (evalseq s) i = count_mem i s.
   Proof.
-    rewrite -shape_rowseq_countE /shape_rowseq_count.
+    rewrite -evalseq_countE /evalseq_count.
     case: (ltnP i (foldr maxn 0 [seq i.+1 | i <- s])) => Hi.
     - rewrite (nth_map 0); last by rewrite size_iota.
       by rewrite nth_iota.
@@ -74,11 +74,11 @@ Section Yama.
     by rewrite big_cons IHs.
   Qed.
 
-  Lemma perm_eq_shape_rowseq s t : perm_eq s t = (shape_rowseq s == shape_rowseq t).
+  Lemma perm_eq_evalseq s t : perm_eq s t = (evalseq s == evalseq t).
   Proof.
     apply/(sameP idP); apply(iffP idP).
     - move/eqP.
-      rewrite -!shape_rowseq_countE /shape_rowseq_count /=.
+      rewrite -!evalseq_countE /evalseq_count /=.
       set mx := foldr _ _ _ => H.
       have := erefl (size [seq (count_mem i) s | i <- iota 0 mx]).
       rewrite {2}H !size_map !size_iota => Hmax.
@@ -99,16 +99,16 @@ Section Yama.
       rewrite (nth_iota _ Hi) nth_iota; last by rewrite -Hmax.
       by rewrite !add0n => ->.
     - move=> Hperm.
-      rewrite -!shape_rowseq_countE /shape_rowseq_count /=.
+      rewrite -!evalseq_countE /evalseq_count /=.
       rewrite !foldr_maxn (eq_big_perm _ Hperm) /=.
       apply/eqP; apply eq_map => i.
       by move: Hperm => /perm_eqP ->.
   Qed.
 
-  Lemma shape_rowshape_cons l s : shape_rowseq (l :: s) = incr_nth (shape_rowseq s) l.
+  Lemma evalseq_cons l s : evalseq (l :: s) = incr_nth (evalseq s) l.
   Proof. by []. Qed.
 
-  Lemma shape_rowseq_eq_size y : sumn (shape_rowseq y) = size y.
+  Lemma evalseq_eq_size y : sumn (evalseq y) = size y.
   Proof. elim: y => [//= | y0 y] /=; by rewrite sumn_incr_nth => ->. Qed.
 
   (* Yamanouchi word:                                                            *)
@@ -116,9 +116,9 @@ Section Yama.
   (*   they are in bijection with standard tableaux                              *)
   Fixpoint is_yam s :=
     if s is s0 :: s'
-    then is_part (shape_rowseq s) && is_yam s'
+    then is_part (evalseq s) && is_yam s'
     else true.
-  Definition is_yam_of_shape sh y := (is_yam y) && (shape_rowseq y == sh).
+  Definition is_yam_of_eval ev y := (is_yam y) && (evalseq y == ev).
 
   Lemma is_yamP s :
     reflect
@@ -133,26 +133,26 @@ Section Yama.
         have:= Hrec 0 n; rewrite drop0 => /leq_trans; by apply.
       + case: (altP (s0 =P n.+1)) => Hn1s0.
         have:= Hpart n; rewrite !nth_incr_nth Hn1s0 eq_refl eq_sym ieqi1F.
-        by rewrite !add0n !add1n !nth_shape_rowseq.
+        by rewrite !add0n !add1n !nth_evalseq.
       + rewrite !add0n.
         have:= Hrec 0 n; by rewrite drop0.
     - elim: s => [//= | s0 s IHs] H.
       apply/andP; split.
       + move: H {IHs}. move: (s0 :: s) => {s0 s} s Hs.
         have {Hs} := Hs 0; rewrite drop0 => Hs.
-        apply /is_partP; split; last by move=> i; rewrite !nth_shape_rowseq.
+        apply /is_partP; split; last by move=> i; rewrite !nth_evalseq.
         * elim: s {Hs} => [//= | s0 s IHs] /=.
           by apply last_incr_nth_non0.
       + apply: IHs => i n; exact (H i.+1 n).
   Qed.
 
-  Lemma is_part_shyam s : is_yam s -> is_part (shape_rowseq s).
+  Lemma is_part_eval_yam s : is_yam s -> is_part (evalseq s).
   Proof. by case: s => [//= | s0 s] /= /andP []. Qed.
 
-  Lemma yam0 y : is_yam y -> shape_rowseq y = [::] -> y = [::].
+  Lemma yam0 y : is_yam y -> evalseq y = [::] -> y = [::].
   Proof.
     case: y => [//= | y0 y] /= _.
-    case: y0 => [| y0] /=; by case (shape_rowseq y).
+    case: y0 => [| y0] /=; by case (evalseq y).
   Qed.
 
   Lemma is_yam_tl l0 s : is_yam (l0 :: s) -> is_yam s.
@@ -179,37 +179,37 @@ Section Yama.
          else (decr_yam s')
     else [::].
 
-  Lemma shape_decr_yam s : shape_rowseq (decr_yam s) = behead (shape_rowseq s).
+  Lemma evalseq_decr_yam s : evalseq (decr_yam s) = behead (evalseq s).
   Proof.
     elim: s => [//= | s0 s /= IHs].
     case s0 => [ | s0' /=].
-    - rewrite IHs /=; by case (shape_rowseq s).
-    - rewrite IHs /=; case (shape_rowseq s) => [|sh0 sh //=].
+    - rewrite IHs /=; by case (evalseq s).
+    - rewrite IHs /=; case (evalseq s) => [|sh0 sh //=].
       by case: s0'.
   Qed.
 
-  Lemma is_yam_decr s : is_yam s -> (is_yam (decr_yam s)).
+  Lemma is_yam_decr s : is_yam s -> is_yam (decr_yam s).
   Proof.
     elim: s => [//= | s0 s IHs] /= /andP [] Hpart.
     move/IHs {IHs} => Hyam; case: s0 Hpart=> [//= | s0'] /=.
-    rewrite Hyam andbT shape_decr_yam.
-    case H : (shape_rowseq s) => [| sh0 sh] /= /andP [] _ //=.
+    rewrite Hyam andbT evalseq_decr_yam.
+    case H : (evalseq s) => [| sh0 sh] /= /andP [] _ //=.
     by case s0'.
   Qed.
 
   Lemma is_out_corner_yam l0 s :
-    is_yam (l0 :: s) -> is_out_corner (shape_rowseq (l0 :: s)) l0.
+    is_yam (l0 :: s) -> is_out_corner (evalseq (l0 :: s)) l0.
   Proof.
-    move=> Hyam; have:= is_part_shyam (is_yam_tl Hyam) => /is_partP [] _ Hpart.
+    move=> Hyam; have:= is_part_eval_yam (is_yam_tl Hyam) => /is_partP [] _ Hpart.
     rewrite /is_out_corner !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS.
     by apply: Hpart.
   Qed.
 
   Lemma is_in_corner_yam l0 s :
-    is_yam (l0 :: s) -> is_in_corner (shape_rowseq s) l0.
+    is_yam (l0 :: s) -> is_in_corner (evalseq s) l0.
   Proof.
     rewrite /is_in_corner /=; case: l0 => [//= | l0] /=.
-    case: (shape_rowseq s) => [//= | sh0 sh].
+    case: (evalseq s) => [//= | sh0 sh].
       move=> /andP [] /andP [] H1 H2 _; exfalso.
       case: l0 H1 H2 => //= l0 _; by elim: l0.
     move=> /andP [] /is_partP [] _ Hpart _.
@@ -219,15 +219,15 @@ Section Yama.
   Qed.
 
   (* Hyperstandard Yamanouchi word : 33 2222 11111 0000000 *)
-  Fixpoint hyper_yam_rev sh :=
-    if sh is s0 :: s then
+  Fixpoint hyper_yam_rev ev :=
+    if ev is s0 :: s then
       nseq s0 (size s) ++ hyper_yam_rev s
     else [::].
-  Definition hyper_yam sh := hyper_yam_rev (rev sh).
+  Definition hyper_yam ev := hyper_yam_rev (rev ev).
 
-  Lemma size_hyper_yam sh : size (hyper_yam sh) = sumn sh.
+  Lemma size_hyper_yam ev : size (hyper_yam ev) = sumn ev.
   Proof.
-    elim/last_ind: sh => [//= | sh sn] /=.
+    elim/last_ind: ev => [//= | sh sn] /=.
     rewrite /hyper_yam -(sumn_rev (rcons _ _)) rev_rcons /= size_cat => ->.
     by rewrite size_nseq sumn_rev.
   Qed.
@@ -243,10 +243,10 @@ Section Yama.
     by rewrite !rcons_cons.
   Qed.
 
-  (* "is_part sh" is just here to ensure that sh doesn't ends with a 0 *)
-  Lemma shape_rowseq_hyper_yam sh : is_part sh -> shape_rowseq (hyper_yam sh) = sh.
+  (* "is_part ev" is just here to ensure that sh doesn't ends with a 0 *)
+  Lemma evalseq_hyper_yam ev : is_part ev -> evalseq (hyper_yam ev) = ev.
   Proof.
-    rewrite /hyper_yam; elim/last_ind: sh => [//= | s sn IHs].
+    rewrite /hyper_yam; elim/last_ind: ev => [//= | s sn IHs].
     rewrite rev_rcons /=; case: sn => [/= | sn].
       move/is_partP; by rewrite last_rcons /= => [] [].
     elim: sn => [/= | sn /= IHsn].
@@ -257,81 +257,81 @@ Section Yama.
     - by apply: part_rcons_ind.
   Qed.
 
-  Lemma hyper_yamP sh : is_part sh -> is_yam (hyper_yam sh).
+  Lemma hyper_yamP ev : is_part ev -> is_yam (hyper_yam ev).
   Proof.
-    elim/last_ind: sh => [//= | s sn IHs].
+    elim/last_ind: ev => [//= | s sn IHs].
     rewrite /hyper_yam rev_rcons /=; case: sn => [//= | sn].
       move/is_partP; by rewrite last_rcons /= => [] [].
     elim: sn => [/= | sn /= IHsn].
       move=> Hpart1; have Hpart := is_part_rconsK Hpart1.
-      by rewrite (IHs Hpart) size_rev (shape_rowseq_hyper_yam Hpart) incr_nth_size Hpart1.
+      by rewrite (IHs Hpart) size_rev (evalseq_hyper_yam Hpart) incr_nth_size Hpart1.
     move=> Hpart2; have {IHsn} /andP [] := IHsn (part_rcons_ind Hpart2).
     move=> -> ->; rewrite !andbT.
-    have:= Hpart2; by rewrite -{1}(shape_rowseq_hyper_yam Hpart2) /hyper_yam rev_rcons.
+    have:= Hpart2; by rewrite -{1}(evalseq_hyper_yam Hpart2) /hyper_yam rev_rcons.
   Qed.
 
-  Lemma hyper_yam_of_shape sh : is_part sh -> is_yam_of_shape sh (hyper_yam sh).
+  Lemma hyper_yam_of_eval ev : is_part ev -> is_yam_of_eval ev (hyper_yam ev).
   Proof.
-    move=> H; by rewrite /is_yam_of_shape (hyper_yamP H) (shape_rowseq_hyper_yam H) /=.
+    move=> H; by rewrite /is_yam_of_eval (hyper_yamP H) (evalseq_hyper_yam H) /=.
   Qed.
 
 End Yama.
 
 Lemma is_yam_cat_any y0 y1 z :
-  is_yam y0 -> is_yam y1 -> shape_rowseq y0 = shape_rowseq y1 ->
+  is_yam y0 -> is_yam y1 -> evalseq y0 = evalseq y1 ->
   is_yam (z ++ y0) -> is_yam (z ++ y1).
 Proof.
   elim: z => [//= | z0 z IHz] /= Hy0 Hy1 H /andP [] Hpart Hyam.
   apply/andP; split; last by apply IHz.
-  suff <- : shape_rowseq (z ++ y0) = shape_rowseq (z ++ y1) by [].
-  apply /eqP; rewrite -perm_eq_shape_rowseq.
-  by rewrite perm_cat2l perm_eq_shape_rowseq H.
+  suff <- : evalseq (z ++ y0) = evalseq (z ++ y1) by [].
+  apply /eqP; rewrite -perm_eq_evalseq.
+  by rewrite perm_cat2l perm_eq_evalseq H.
 Qed.
 
-Fixpoint enum_yamshn n sh :=
+Fixpoint enum_yamevaln n ev :=
   if n is n'.+1 then
-    flatten [seq [seq i :: y | y <- enum_yamshn n' (decr_nth sh i)] |
-                  i <- iota 0 (size sh) & is_out_corner sh i]
+    flatten [seq [seq i :: y | y <- enum_yamevaln n' (decr_nth ev i)] |
+                  i <- iota 0 (size ev) & is_out_corner ev i]
   else [:: [::]].
-Definition enum_yamsh sh := enum_yamshn (sumn sh) sh.
+Definition enum_yameval ev := enum_yamevaln (sumn ev) ev.
 Definition is_yam_of_size n y := (is_yam y) && (size y == n).
 
-Lemma enum_yamshP sh:
-  is_part sh -> all (is_yam_of_shape sh) (enum_yamsh sh).
+Lemma enum_yamevalP ev:
+  is_part ev -> all (is_yam_of_eval ev) (enum_yameval ev).
 Proof.
   move=> Hpart; apply/allP => y.
-  rewrite /enum_yamsh /is_yam_of_shape; move Hn: (sumn sh) => n.
-  elim: n sh Hpart Hn y => [| n IHn] /= .
-    by move=> sh Hsh /part0 H0 y; rewrite mem_seq1 H0 //= => /eqP ->.
-  move=> sh Hpart Hsh [/= | y0 y] /=.
-  - have -> : [::] == sh = false by move: Hsh; case sh.
+  rewrite /enum_yameval /is_yam_of_eval; move Hn: (sumn ev) => n.
+  elim: n ev Hpart Hn y => [| n IHn] /= .
+    by move=> ev Hsh /part0 H0 y; rewrite mem_seq1 H0 //= => /eqP ->.
+  move=> ev Hpart Hev [/= | y0 y] /=.
+  - have -> : [::] == ev = false by move: Hev; case ev.
     by move=> /flattenP [] ltmp /mapP [] i _ -> /mapP [].
   - move/flatten_mapP => [] i; rewrite mem_filter mem_iota add0n => /and3P [] Hcorn _ Hi.
     move/mapP => [] x Hx [] Hitmp Hxtmp; subst i x.
-    have Hsum : sumn (decr_nth sh y0) = n by rewrite sumn_decr_nth //= Hsh.
+    have Hsum : sumn (decr_nth ev y0) = n by rewrite sumn_decr_nth //= Hev.
     have:= IHn _ (is_part_decr_nth Hpart Hcorn) Hsum _ Hx =>  /andP [] -> /eqP ->.
     by rewrite decr_nthK //= Hpart /=.
 Qed.
 
-Lemma enum_yamsh_countE sh :
-  is_part sh -> forall y, is_yam_of_shape sh y -> count_mem y (enum_yamsh sh) = 1.
+Lemma enum_yameval_countE ev :
+  is_part ev -> forall y, is_yam_of_eval ev y -> count_mem y (enum_yameval ev) = 1.
 Proof.
-  rewrite /enum_yamsh /is_yam_of_shape; move Hn: (sumn sh) => n.
-  elim: n sh Hn => [| n IHn] /= .
-    move=> sh Hsh /part0 H0 y.
-    by rewrite (H0 Hsh) => /andP [] /yam0 H /eqP /H{H} ->.
-  move=> sh Hsh  Hpart [/= | y0 y] /=.
-  - by have -> : [::] == sh = false by move: Hsh; case sh.
-  - move => /andP [] /andP [] _ Hyam /eqP Htmp; subst sh.
+  rewrite /enum_yameval /is_yam_of_eval; move Hn: (sumn ev) => n.
+  elim: n ev Hn => [| n IHn] /= .
+    move=> ev Hev /part0 H0 y.
+    by rewrite (H0 Hev) => /andP [] /yam0 H /eqP /H{H} ->.
+  move=> ev Hev Hpart [/= | y0 y] /=.
+  - by have -> : [::] == ev = false by move: Hev; case ev.
+  - move => /andP [] /andP [] _ Hyam /eqP Htmp; subst ev.
     rewrite count_flatten -map_comp; set ci := (X in map X _).
     have {ci} /eq_map -> : ci =1 fun i => i == y0.
       rewrite /ci {ci} => i /=; rewrite count_map /=.
       case (altP (i =P y0)) => [Heq | /negbTE Hneq].
       + subst i; rewrite (eq_count (a2 := pred_of_simpl (pred1 y))); first last.
           move=> s; by rewrite /= -eqseqE /= eq_refl /=.
-        rewrite (incr_nthK (is_part_shyam Hyam) Hpart) IHn //=.
-        * move: Hsh; rewrite sumn_incr_nth => /eqP; by rewrite eqSS => /eqP.
-        * by apply: is_part_shyam.
+        rewrite (incr_nthK (is_part_eval_yam Hyam) Hpart) IHn //=.
+        * move: Hev; rewrite sumn_incr_nth => /eqP; by rewrite eqSS => /eqP.
+        * by apply: is_part_eval_yam.
         * by rewrite Hyam eq_refl.
       + rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
         move=> s; by rewrite /= -eqseqE /= Hneq.
@@ -341,57 +341,57 @@ Proof.
       apply: is_out_corner_yam; by rewrite /= Hpart Hyam.
     rewrite -sumn_count /=.
     rewrite sumn_iota //= add0n size_incr_nth.
-    by case: (ltnP y0 (size (shape_rowseq y))).
+    by case: (ltnP y0 (size (evalseq y))).
 Qed.
 
-Section YamOfShape.
+Section YamOfEval.
 
-Variable sh : seq nat.
-Hypothesis Hpart : is_part sh.
+Variable ev : seq nat.
+Hypothesis Hpart : is_part ev.
 
-Structure yamsh : predArgType :=
-  YamSh {yamshval :> seq nat; _ : is_yam_of_shape sh yamshval}.
-Canonical yamsh_subType := Eval hnf in [subType for yamshval].
-Definition yamsh_eqMixin := Eval hnf in [eqMixin of yamsh by <:].
-Canonical yamsh_eqType := Eval hnf in EqType yamsh yamsh_eqMixin.
-Definition yamsh_choiceMixin := Eval hnf in [choiceMixin of yamsh by <:].
-Canonical yamsh_choiceType := Eval hnf in ChoiceType yamsh yamsh_choiceMixin.
-Definition yamsh_countMixin := Eval hnf in [countMixin of yamsh by <:].
-Canonical yamsh_countType := Eval hnf in CountType yamsh yamsh_countMixin.
-Canonical yamsh_subCountType := Eval hnf in [subCountType of yamsh].
-Let type := sub_finType yamsh_subCountType (enum_yamshP Hpart) (enum_yamsh_countE Hpart).
-Canonical yamsh_finType := Eval hnf in [finType of yamsh for type].
-Canonical yamsh_subFinType := Eval hnf in [subFinType of yamsh].
+Structure yameval : predArgType :=
+  YamEval {yamevalval :> seq nat; _ : is_yam_of_eval ev yamevalval}.
+Canonical yameval_subType := Eval hnf in [subType for yamevalval].
+Definition yameval_eqMixin := Eval hnf in [eqMixin of yameval by <:].
+Canonical yameval_eqType := Eval hnf in EqType yameval yameval_eqMixin.
+Definition yameval_choiceMixin := Eval hnf in [choiceMixin of yameval by <:].
+Canonical yameval_choiceType := Eval hnf in ChoiceType yameval yameval_choiceMixin.
+Definition yameval_countMixin := Eval hnf in [countMixin of yameval by <:].
+Canonical yameval_countType := Eval hnf in CountType yameval yameval_countMixin.
+Canonical yameval_subCountType := Eval hnf in [subCountType of yameval].
+Let type := sub_finType yameval_subCountType (enum_yamevalP Hpart) (enum_yameval_countE Hpart).
+Canonical yameval_finType := Eval hnf in [finType of yameval for type].
+Canonical yameval_subFinType := Eval hnf in [subFinType of yameval].
 
-Lemma yamshP (y : yamsh) : is_yam y.
+Lemma yamevalP (y : yameval) : is_yam y.
 Proof. by case: y => /= y /andP []. Qed.
 
-Lemma shape_yamsh (y : yamsh) : shape_rowseq y = sh.
+Lemma eval_yameval (y : yameval) : evalseq y = ev.
 Proof. by case: y => /= y /andP [] _ /eqP. Qed.
 
-Lemma enum_yamshE : map val (enum yamsh) = enum_yamsh sh.
+Lemma enum_yamevalE : map val (enum yameval) = enum_yameval ev.
 Proof. rewrite /=; by apply enum_subP. Qed.
 
-End YamOfShape.
+End YamOfEval.
 
 
 Section YamOfSize.
 
 Variable n : nat.
 
-Lemma yamn_PredEq (sh : intpartn_subFinType n) :
-  predI (is_yam_of_size n) (pred1 (val sh) \o shape_rowseq) =1 is_yam_of_shape (val sh).
+Lemma yamn_PredEq (ev : intpartn_subFinType n) :
+  predI (is_yam_of_size n) (pred1 (val ev) \o evalseq) =1 is_yam_of_eval (val ev).
 Proof.
-  move=> y; rewrite /is_yam_of_size /is_yam_of_shape /= -andbA; congr (_ && _).
-  case: (altP (shape_rowseq y =P sh)) => /=; last by rewrite andbF.
-  rewrite -shape_rowseq_eq_size => ->.
-  by rewrite (intpartn_sumn sh) eq_refl.
+  move=> y; rewrite /is_yam_of_size /is_yam_of_eval /= -andbA; congr (_ && _).
+  case: (altP (evalseq y =P ev)) => /=; last by rewrite andbF.
+  rewrite -evalseq_eq_size => ->.
+  by rewrite (intpartn_sumn ev) eq_refl.
 Qed.
 
-Lemma yamn_partition_shape_rowseq x :
-  is_yam_of_size n x -> (is_part_of_n n) (shape_rowseq x).
+Lemma yamn_partition_evalseq yam :
+  is_yam_of_size n yam -> (is_part_of_n n) (evalseq yam).
 Proof.
-  by rewrite /is_yam_of_size /= shape_rowseq_eq_size => /andP [] /is_part_shyam -> ->.
+  by rewrite /is_yam_of_size /= evalseq_eq_size => /andP [] /is_part_eval_yam -> ->.
 Qed.
 
 Structure yamn : predArgType :=
@@ -405,8 +405,8 @@ Definition yamn_countMixin := Eval hnf in [countMixin of yamn by <:].
 Canonical yamn_countType := Eval hnf in CountType yamn yamn_countMixin.
 Canonical yamn_subCountType := Eval hnf in [subCountType of yamn].
 Let type := union_finType
-    (fun p : intpartn_subFinType n => (yamsh_subFinType (intpartnP p)))
-    yamn_PredEq yamn_partition_shape_rowseq yamn_subCountType.
+    (fun p : intpartn_subFinType n => (yameval_subFinType (intpartnP p)))
+    yamn_PredEq yamn_partition_evalseq yamn_subCountType.
 Canonical yamn_finType := Eval hnf in [finType of yamn for type].
 Canonical yamn_subFinType := Eval hnf in [subFinType of yamn].
 
@@ -418,12 +418,12 @@ Proof. by case: y => /= y /andP [] _ /eqP. Qed.
 
 (* Check of disjoint union enumeration *)
 Lemma enum_yamnE :
-  map val (enum yamn) = flatten [seq enum_yamsh p | p <- enum_partn n].
+  map val (enum yamn) = flatten [seq enum_yameval p | p <- enum_partn n].
 Proof.
   rewrite enum_union_finTypeE /=; congr flatten.
-  rewrite (eq_map (f2 := enum_yamsh \o val)).
+  rewrite (eq_map (f2 := enum_yameval \o val)).
   - by rewrite map_comp enum_intpartnE.
-  - move=> i /=; by rewrite enum_yamshE.
+  - move=> i /=; by rewrite enum_yamevalE.
 Qed.
 
 End YamOfSize.

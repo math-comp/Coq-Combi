@@ -475,7 +475,7 @@ Proof.
   congr (append_nth _ _ _).
 
   have := eq_refl (sumn (shape (RSmap t').1)).
-  rewrite {1}RSmapE (shape_RSmap_eq t') shape_rowseq_eq_size HRSt /= => /eqP <-.
+  rewrite {1}RSmapE (shape_RSmap_eq t') evalseq_eq_size HRSt /= => /eqP <-.
   rewrite -/(size_tab (RS t')) size_RS.
   move: Hsize; rewrite Ht Hn size_rcons => /eqP; rewrite eqSS => /eqP <-.
   have := (invseq_is_std Hinv); rewrite Hs => /std_max ->.

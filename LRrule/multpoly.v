@@ -352,7 +352,7 @@ End SchurTab.
 Lemma hyper_stdtabP d (P : intpartn d) : is_stdtab_of_n d (RS (std (hyper_yam P))).
 Proof.
   rewrite /= RSstdE std_is_std /= size_RS.
-  rewrite size_std -shape_rowseq_eq_size (shape_rowseq_hyper_yam (intpartnP P)).
+  rewrite size_std -evalseq_eq_size (evalseq_hyper_yam (intpartnP P)).
   by rewrite intpartn_sumn.
 Qed.
 Definition hyper_stdtab d (P : intpartn d) := StdtabN (hyper_stdtabP P).
@@ -362,7 +362,7 @@ Proof.
   rewrite /hyper_stdtab /shape_deg.
   apply: val_inj => /=.
   rewrite shape_RS_std (shape_RS_yam (hyper_yamP (intpartnP P))).
-  by rewrite (shape_rowseq_hyper_yam (intpartnP P)).
+  by rewrite (evalseq_hyper_yam (intpartnP P)).
 Qed.
 
 Section Coeffs.

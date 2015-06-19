@@ -1549,7 +1549,7 @@ Proof.
   move=> Htab.
   have : is_RSpair (t, hyper_yam (shape t)).
     rewrite /is_RSpair Htab (hyper_yamP (is_part_sht Htab)) /=.
-    by rewrite (shape_rowseq_hyper_yam (is_part_sht Htab)).
+    by rewrite (evalseq_hyper_yam (is_part_sht Htab)).
   move/RS_bij_2; set w := (X in RSmap X); move=> Hw.
   have:= (RSmapE w); rewrite Hw /= => ->.
   have:= congr_RS w.

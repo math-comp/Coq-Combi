@@ -996,16 +996,6 @@ Qed.
 Theorem shape_RS_std u : shape (RS (std u)) = shape (RS u).
 Proof. apply: greenRow_eq_shape_RS; by apply: green_std. Qed.
 
-Lemma shape_Qsymb (u : seq Alph) l i :
-  shape_rowseq (RSmap (rcons u l)).2 = incr_nth (shape_rowseq (RSmap u).2) i ->
-  (RSmap (rcons u l)).2 = i :: (RSmap u).2.
-Proof.
-  rewrite /RSmap rev_rcons /= -[RSmap_rev (rev u)]/(RSmap u).
-  case HRS : (RSmap u) => [t0 rows].
-  case Hins : (instabnrow t0 l) => [tr irow] /=.
-  by move/incr_nth_inj ->.
-Qed.
-
 Lemma size_RSmap2 u : size ((RSmap u).2) = size u.
 Proof.
   elim/last_ind: u => [//= | u un].
@@ -1036,11 +1026,14 @@ Proof.
     by case: (instabnrow t wn) => [tr nrow] /= [] _ ->.
   have Hsize : size w' = n by move: Hn => /eqP; rewrite size_rcons eqSS => /eqP.
   have /std_rconsK Hst : std (rcons w' wn) = std (rcons st stn) by rewrite -H std_stdE.
-  rewrite Hyamw /= -(IHn _ _ Hsize).
+  rewrite {wn Hw Hn H HRS} Hyamw /= -(IHn _ _ Hsize).
   have Hsizest : size st = n.
     have := Hst; rewrite /std -{2}(size_std_rec (size st) st) => <-.
     by rewrite size_std_rec.
-  rewrite Hst (IHn _ _ Hsizest).
-  by apply: shape_Qsymb.
+  rewrite Hst (IHn _ _ Hsizest) {Hst IHn Hsize Hsizest}.
+  rewrite /RSmap rev_rcons /= -[RSmap_rev (rev st)]/(RSmap st).
+  case HRS : (RSmap st) => [t0 rows].
+  case Hins : (instabnrow t0 stn) => [tr irow] /=.
+  by move/incr_nth_inj ->.
 Qed.
 
