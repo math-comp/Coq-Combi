@@ -21,14 +21,16 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 (******************************************************************************)
-(* Bijection between Yamanouchi word and standard tableau                     *)
-(* Main results:                                                              *)
-(* Bijection:
+(** Bijection between Yamanouchi words and standard tableau                   *)
+(*                                                                           *)
+(** Main results:                                                             *)
+(*                                                                           *)
+(** Bijection:
 
-Lemma   stdtab_of_yamP y : is_yam y    -> is_stdtab (stdtab_of_yam y).
-Theorem stdtab_of_yamK y : is_yam y    -> yam_of_stdtab (stdtab_of_yam y) = y.
-Lemma   yam_of_stdtabP t : is_stdtab t -> is_yam (yam_of_stdtab t).
-Theorem yam_of_stdtabK t : is_stdtab t -> stdtab_of_yam (yam_of_stdtab t) = t.
+[Lemma   stdtab_of_yamP y : is_yam y    -> is_stdtab (stdtab_of_yam y).]
+[Theorem stdtab_of_yamK y : is_yam y    -> yam_of_stdtab (stdtab_of_yam y) = y.]
+[Lemma   yam_of_stdtabP t : is_stdtab t -> is_yam (yam_of_stdtab t).]
+[Theorem yam_of_stdtabK t : is_stdtab t -> stdtab_of_yam (yam_of_stdtab t) = t.]
 
 Statistic:
 
