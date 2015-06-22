@@ -13,94 +13,92 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
-
 (* Why3 assumption *)
 Definition unit := unit.
 
 Parameter set: forall {a: why3Type} {b: why3Type},
   (a -> b)%type -> a -> b -> (a -> b)%type.
 
-Axiom Select_eq : forall  {a: why3Type} {b: why3Type},
+Axiom Select_eq : forall {a: why3Type} {b: why3Type},
   forall (m:(a -> b)%type), forall (a1:a) (a2:a), forall (b1:b), (a1 = a2) ->
   (((set m a1 b1) a2) = b1).
 
-Axiom Select_neq : forall {a: why3Type} {b: why3Type},
-                   forall (m:(a -> b)%type), forall (a1:a) (a2:a),
-                   forall (b1:b), (~ (a1 = a2)) -> (((set m a1 b1) a2) = (m a2)).
+Axiom Select_neq : forall {a: why3Type}
+  {b: why3Type}, forall (m:(a -> b)%type), forall (a1:a) (a2:a),
+  forall (b1:b), (~ (a1 = a2)) -> (((set m a1 b1) a2) = (m a2)).
 
 Parameter const: forall {a: why3Type} {b: why3Type},
   b -> (a -> b)%type.
 
 (* Why3 assumption *)
-(* Inductive array (a:Type) := *)
-(*   | mk_array : int -> (int -> a)%type -> array a. *)
-
-(* Parameter array_Why3Type : why3Type -> why3Type. *)
-(* Canonical array_Why3Type. *)
-(* Axiom array_WhyType : forall (a:why3Type), . *)
-(* Existing Instance array_WhyType. *)
-(* Implicit Arguments mk_array [[a]]. *)
-
-(* (* Why3 assumption *) *)
-(* Definition elts {a:why3Type} (v:(array a)): (int -> a)%type := *)
-(*   match v with *)
-(*   | (mk_array x x1) => x1 *)
-(*   end. *)
-
-(* (* Why3 assumption *) *)
-(* Definition length {a:why3Type} (v:(array a)): int := *)
-(*   match v with *)
-(*   | (mk_array x x1) => x *)
-(*   end. *)
-
-(* (* Why3 assumption *) *)
-(* Definition get1 {a:why3Type} (a1:(array a)) (i:int): a := *)
-(*   ((elts a1) i). *)
-
-(* (* Why3 assumption *) *)
-(* Definition set1 {a:why3Type} (a1:(array a)) (i:int) *)
-(*   (v:a): (array a) := (mk_array (length a1) (set (elts a1) i v)). *)
-
-(* (* Why3 assumption *) *)
-(* Definition make {a:why3Type} (n:int) (v:a): (array a) := *)
-(*   (mk_array n (const v: (int -> a)%type)). *)
-
-(* Axiom func : forall (a:Type) (b:Type), Type. *)
-(* (* Parameter func_WhyType : forall (a:Type) {a_WT:WhyType a} *) *)
-(* (*   (b:Type) {b_WT:WhyType b}, WhyType (func a b). *) *)
-(* (* Existing Instance func_WhyType. *) *)
+(*
+Inductive array (a:Type) :=
+  | mk_array : int -> (int -> a)%type -> array a.
+Axiom array_WhyType : forall (a:Type) {a_WT:WhyType a}, WhyType (array a).
+Existing Instance array_WhyType.
+Implicit Arguments mk_array [[a]].
 
 (* Why3 assumption *)
-(* Definition pred (a:Type) := (a -> bool). *)
+Definition elts {a: why3Type} (v:(array a)): (int -> a)%type :=
+  match v with
+  | (mk_array x x1) => x1
+  end.
 
-(* Parameter infix_at: forall {a:why3Type} *)
-(*   {b:Type} {b_WT:WhyType b}, (a -> b) -> a -> b. *)
+(* Why3 assumption *)
+Definition length {a: why3Type} (v:(array a)): int :=
+  match v with
+  | (mk_array x x1) => x
+  end.
+
+(* Why3 assumption *)
+Definition get1 {a: why3Type} (a1:(array a)) (i:int): a :=
+  ((elts a1) i).
+
+(* Why3 assumption *)
+Definition set1 {a: why3Type} (a1:(array a)) (i:int)
+  (v:a): (array a) := (mk_array (length a1) (set (elts a1) i v)).
+
+(* Why3 assumption *)
+Definition make {a: why3Type} (n:int) (v:a): (array a) :=
+  (mk_array n (const v: (int -> a)%type)).
+*)
+(*
+Axiom func : forall (a:Type) (b:Type), Type.
+Parameter func_WhyType : forall (a:Type) {a_WT:WhyType a}
+  (b:Type) {b_WT:WhyType b}, WhyType (func a b).
+Existing Instance func_WhyType.
+
+(* Why3 assumption *)
+Definition pred (a:Type) := (a -> bool).
+
+Parameter infix_at: forall {a: why3Type}
+  {b: why3Type}, (a -> b) -> a -> b.
+*)
 
 Parameter sum: int -> int -> (int -> int) -> int.
 
-Axiom sum_def1 : forall (f:(int -> int)) (a:int) (b:int),
-  (b < a)%Z -> ((sum a b f) = 0%Z).
+Axiom sum_def1 : forall (f:(int -> int)) (a:int) (b:int), (b < a)%Z ->
+  ((sum a b f) = 0%Z).
 
-Axiom sum_def2 : forall (f:(int -> int)) (a:int) (b:int),
-  is_true (a <= b)%Z -> ((sum a b f) = ((sum a (b - 1%Z)%Z f) + (f b))%Z).
+Axiom sum_def2 : forall (f:(int -> int)) (a:int) (b:int), (a <= b)%Z ->
+  ((sum a b f) = ((sum a (b - 1%Z)%Z f) + (f b))%Z).
 
-Axiom sum_left : forall (f:(int -> int)) (a:int) (b:int),
-  is_true (a <= b)%Z -> ((sum a b f) = ((f a) + (sum (a + 1%Z)%Z b f))%Z).
+Axiom sum_left : forall (f:(int -> int)) (a:int) (b:int), (a <= b)%Z ->
+  ((sum a b f) = ((f a) + (sum (a + 1%Z)%Z b f))%Z).
 
 Axiom sum_ext : forall (f:(int -> int)) (g:(int -> int)) (a:int) (b:int),
-  (forall (i:int), (is_true (a <= i)%Z /\ is_true (i <= b)%Z) -> ((f i) = (g
-  i))) -> ((sum a b f) = (sum a b g)).
+  (forall (i:int), ((a <= i)%Z /\ (i <= b)%Z) -> ((f i) = (g i))) -> ((sum a
+  b f) = (sum a b g)).
 
 Axiom sum_le : forall (f:(int -> int)) (g:(int -> int)) (a:int) (b:int),
-  (forall (i:int), (is_true (a <= i)%Z /\ is_true (i <= b)%Z) -> is_true ((f
-  i) <= (g i))%Z) -> is_true ((sum a b f) <= (sum a b g))%Z.
+  (forall (i:int), ((a <= i)%Z /\ (i <= b)%Z) -> ((f i) <= (g i))%Z) ->
+  ((sum a b f) <= (sum a b g))%Z.
 
 Axiom sum_nonneg : forall (f:(int -> int)) (a:int) (b:int), (forall (i:int),
-  (is_true (a <= i)%Z /\ is_true (i <= b)%Z) -> is_true (0%Z <= (f i))%Z) ->
-  is_true (0%Z <= (sum a b f))%Z.
+  ((a <= i)%Z /\ (i <= b)%Z) -> (0%Z <= (f i))%Z) -> (0%Z <= (sum a b f))%Z.
 
 Axiom sum_decomp : forall (f:(int -> int)) (a:int) (b:int) (c:int),
-  (is_true (a <= b)%Z /\ is_true (b <= c)%Z) -> ((sum a c f) = ((sum a b
+  ((a <= b)%Z /\ (b <= c)%Z) -> ((sum a c f) = ((sum a b
   f) + (sum (b + 1%Z)%Z c f))%Z).
 
 (* Why3 assumption *)
@@ -112,98 +110,95 @@ Definition sum_array (a:(array int)): int := (sum_sub_array a 0%Z
   ((length a) - 1%Z)%Z).
 
 Axiom sum_sub_array_shift : forall (a:(array int)) (b:(array int)) (lo:int)
-  (hi:int), ((is_true (0%Z <= (length a))%Z /\
-  is_true (0%Z <= (length b))%Z) /\ ((((length a) + 1%Z)%Z = (length b)) /\
-  forall (i:int), (is_true (lo <= i)%Z /\ is_true (i <= hi)%Z) -> ((get a
-  i) = (get b (i + 1%Z)%Z)))) -> ((sum_sub_array a lo hi) = (sum_sub_array b
-  (lo + 1%Z)%Z (hi + 1%Z)%Z)).
+  (hi:int), (((0%Z <= (length a))%Z /\ (0%Z <= (length b))%Z) /\
+  ((((length a) + 1%Z)%Z = (length b)) /\ forall (i:int), ((lo <= i)%Z /\
+  (i <= hi)%Z) -> ((get a i) = (get b (i + 1%Z)%Z)))) -> ((sum_sub_array a
+  lo hi) = (sum_sub_array b (lo + 1%Z)%Z (hi + 1%Z)%Z)).
+
+Axiom sum_array_sub : forall (a:(array int)) (b:(array int)) (lo:int)
+  (hi:int), (((0%Z <= (length a))%Z /\ (0%Z <= (length b))%Z) /\
+  ((length a) = (length b))) -> ((sum lo hi (fun (i:int) => ((get b
+  i) - (get a i))%Z)) = ((sum_sub_array b lo hi) - (sum_sub_array a lo
+  hi))%Z).
 
 Parameter numof: (int -> bool) -> int -> int -> int.
 
-Axiom Numof_empty : forall (p:(int -> bool)) (a:int) (b:int),
-  is_true (b <= a)%Z -> ((numof p a b) = 0%Z).
+Axiom Numof_empty : forall (p:(int -> bool)) (a:int) (b:int), (b <= a)%Z ->
+  ((numof p a b) = 0%Z).
 
 Axiom Numof_right_no_add : forall (p:(int -> bool)) (a:int) (b:int),
-  is_true (a < b)%Z -> ((~ ((p (b - 1%Z)%Z) = true)) -> ((numof p a
-  b) = (numof p a (b - 1%Z)%Z))).
+  (a < b)%Z -> ((~ ((p (b - 1%Z)%Z) = true)) -> ((numof p a b) = (numof p a
+  (b - 1%Z)%Z))).
 
 Axiom Numof_right_add : forall (p:(int -> bool)) (a:int) (b:int),
-  is_true (a < b)%Z -> (((p (b - 1%Z)%Z) = true) -> ((numof p a
-  b) = (1%Z + (numof p a (b - 1%Z)%Z))%Z)).
+  (a < b)%Z -> (((p (b - 1%Z)%Z) = true) -> ((numof p a b) = (1%Z + (numof p
+  a (b - 1%Z)%Z))%Z)).
 
-Axiom Numof_bounds : forall (p:(int -> bool)) (a:int) (b:int),
-  is_true (a < b)%Z -> (is_true (0%Z <= (numof p a b))%Z /\ is_true ((numof p
-  a b) <= (b - a)%Z)%Z).
+Axiom Numof_bounds : forall (p:(int -> bool)) (a:int) (b:int), (a < b)%Z ->
+  ((0%Z <= (numof p a b))%Z /\ ((numof p a b) <= (b - a)%Z)%Z).
 
 Axiom Numof_append : forall (p:(int -> bool)) (a:int) (b:int) (c:int),
-  (is_true (a <= b)%Z /\ is_true (b <= c)%Z) -> ((numof p a c) = ((numof p a
-  b) + (numof p b c))%Z).
+  ((a <= b)%Z /\ (b <= c)%Z) -> ((numof p a c) = ((numof p a b) + (numof p b
+  c))%Z).
 
 Axiom Numof_left_no_add : forall (p:(int -> bool)) (a:int) (b:int),
-  is_true (a < b)%Z -> ((~ ((p a) = true)) -> ((numof p a b) = (numof p
-  (a + 1%Z)%Z b))).
+  (a < b)%Z -> ((~ ((p a) = true)) -> ((numof p a b) = (numof p (a + 1%Z)%Z
+  b))).
 
-Axiom Numof_left_add : forall (p:(int -> bool)) (a:int) (b:int),
-  is_true (a < b)%Z -> (((p a) = true) -> ((numof p a b) = (1%Z + (numof p
-  (a + 1%Z)%Z b))%Z)).
+Axiom Numof_left_add : forall (p:(int -> bool)) (a:int) (b:int), (a < b)%Z ->
+  (((p a) = true) -> ((numof p a b) = (1%Z + (numof p (a + 1%Z)%Z b))%Z)).
 
 Axiom Empty : forall (p:(int -> bool)) (a:int) (b:int), (forall (n:int),
-  (is_true (a <= n)%Z /\ is_true (n < b)%Z) -> ~ ((p n) = true)) -> ((numof p
-  a b) = 0%Z).
+  ((a <= n)%Z /\ (n < b)%Z) -> ~ ((p n) = true)) -> ((numof p a b) = 0%Z).
 
-Axiom Full : forall (p:(int -> bool)) (a:int) (b:int), is_true (a <= b)%Z ->
-  ((forall (n:int), (is_true (a <= n)%Z /\ is_true (n < b)%Z) -> ((p
-  n) = true)) -> ((numof p a b) = (b - a)%Z)).
+Axiom Full : forall (p:(int -> bool)) (a:int) (b:int), (a <= b)%Z ->
+  ((forall (n:int), ((a <= n)%Z /\ (n < b)%Z) -> ((p n) = true)) -> ((numof p
+  a b) = (b - a)%Z)).
 
 Axiom numof_increasing : forall (p:(int -> bool)) (i:int) (j:int) (k:int),
-  (is_true (i <= j)%Z /\ is_true (j <= k)%Z) -> is_true ((numof p i
-  j) <= (numof p i k))%Z.
+  ((i <= j)%Z /\ (j <= k)%Z) -> ((numof p i j) <= (numof p i k))%Z.
 
 Axiom numof_strictly_increasing : forall (p:(int -> bool)) (i:int) (j:int)
-  (k:int) (l:int), (is_true (i <= j)%Z /\ (is_true (j <= k)%Z /\
-  is_true (k < l)%Z)) -> (((p k) = true) -> is_true ((numof p i j) < (numof p
-  i l))%Z).
+  (k:int) (l:int), ((i <= j)%Z /\ ((j <= k)%Z /\ (k < l)%Z)) -> (((p
+  k) = true) -> ((numof p i j) < (numof p i l))%Z).
 
 Axiom numof_change_any : forall (p1:(int -> bool)) (p2:(int -> bool)) (a:int)
-  (b:int), (forall (j:int), (is_true (a <= j)%Z /\ is_true (j < b)%Z) ->
-  (((p1 j) = true) -> ((p2 j) = true))) -> is_true ((numof p1 a
-  b) <= (numof p2 a b))%Z.
+  (b:int), (forall (j:int), ((a <= j)%Z /\ (j < b)%Z) -> (((p1 j) = true) ->
+  ((p2 j) = true))) -> ((numof p1 a b) <= (numof p2 a b))%Z.
 
 Axiom numof_change_some : forall (p1:(int -> bool)) (p2:(int -> bool))
-  (a:int) (b:int) (i:int), (is_true (a <= i)%Z /\ is_true (i < b)%Z) ->
-  ((forall (j:int), (is_true (a <= j)%Z /\ is_true (j < b)%Z) -> (((p1
-  j) = true) -> ((p2 j) = true))) -> ((~ ((p1 i) = true)) -> (((p2
-  i) = true) -> is_true ((numof p1 a b) < (numof p2 a b))%Z))).
+  (a:int) (b:int) (i:int), ((a <= i)%Z /\ (i < b)%Z) -> ((forall (j:int),
+  ((a <= j)%Z /\ (j < b)%Z) -> (((p1 j) = true) -> ((p2 j) = true))) ->
+  ((~ ((p1 i) = true)) -> (((p2 i) = true) -> ((numof p1 a b) < (numof p2 a
+  b))%Z))).
 
 Axiom numof_change_equiv : forall (p1:(int -> bool)) (p2:(int -> bool))
-  (a:int) (b:int), (forall (j:int), (is_true (a <= j)%Z /\
-  is_true (j < b)%Z) -> (((p1 j) = true) <-> ((p2 j) = true))) -> ((numof p2
-  a b) = (numof p1 a b)).
+  (a:int) (b:int), (forall (j:int), ((a <= j)%Z /\ (j < b)%Z) -> (((p1
+  j) = true) <-> ((p2 j) = true))) -> ((numof p2 a b) = (numof p1 a b)).
 
-Definition is_part (shape:(array int)): Prop :=
-  is_true (1%Z <= (length shape))%Z /\ ((forall (i:int) (j:int),
-  (is_true (0%Z <= i)%Z /\ (is_true (i <= j)%Z /\
-  is_true (j < (length shape))%Z)) -> is_true ((get shape j) <= (get shape
-  i))%Z) /\ is_true (0%Z <= (get shape ((length shape) - 1%Z)%Z))%Z).
+(* Why3 assumption *)
+Definition is_part (shape:(array int)): Prop := (1%Z <= (length shape))%Z /\
+  ((forall (i:int) (j:int), ((0%Z <= i)%Z /\ ((i <= j)%Z /\
+  (j < (length shape))%Z)) -> ((get shape j) <= (get shape i))%Z) /\
+  (0%Z <= (get shape ((length shape) - 1%Z)%Z))%Z).
 
-Axiom is_part_nonneg : forall (sh:(array int)), ((is_part sh) = true) ->
-  forall (i:int), (is_true (0%Z <= i)%Z /\ is_true (i < (length sh))%Z) ->
-  is_true (0%Z <= (get sh i))%Z.
+Axiom is_part_nonneg : forall (sh:(array int)), (is_part sh) ->
+  forall (i:int), ((0%Z <= i)%Z /\ (i < (length sh))%Z) -> (0%Z <= (get sh
+  i))%Z.
 
+(* Why3 assumption *)
 Definition included (inner1:(array int)) (outer1:(array int)): Prop :=
-  ((length inner1) = (length outer1)) /\ forall (i:int),
-  (is_true (0%Z <= i)%Z /\ is_true (i < (length outer1))%Z) ->
-  is_true ((get inner1 i) <= (get outer1 i))%Z.
+  ((length inner1) = (length outer1)) /\ forall (i:int), ((0%Z <= i)%Z /\
+  (i < (length outer1))%Z) -> ((get inner1 i) <= (get outer1 i))%Z.
 
 Axiom sum_le_eq : forall (f:(int -> int)) (g:(int -> int)) (a:int) (b:int),
-  ((forall (i:int), (is_true (a <= i)%Z /\ is_true (i <= b)%Z) -> is_true ((f
-  i) <= (g i))%Z) /\ ((sum a b f) = (sum a b g))) -> forall (i:int),
-  (is_true (a <= i)%Z /\ is_true (i <= b)%Z) -> ((f i) = (g i)).
+  ((forall (i:int), ((a <= i)%Z /\ (i <= b)%Z) -> ((f i) <= (g i))%Z) /\
+  ((sum a b f) = (sum a b g))) -> forall (i:int), ((a <= i)%Z /\
+  (i <= b)%Z) -> ((f i) = (g i)).
 
 Axiom included_parts_eq : forall (innev:(array int)) (eval:(array int)),
-  ((included innev eval) = true) ->
-  (((sum_array innev) = (sum_array eval)) -> forall (i:int),
-  (is_true (0%Z <= i)%Z /\ is_true (i < (length innev))%Z) -> ((get innev
+  (included innev eval) -> (((sum_array innev) = (sum_array eval)) ->
+  forall (i:int), ((0%Z <= i)%Z /\ (i < (length innev))%Z) -> ((get innev
   i) = (get eval i))).
 
 Parameter fc: (array int) -> int -> (int -> bool).
@@ -217,30 +212,34 @@ Definition numeq (a:(array int)) (v:int) (lo:int) (hi:int): int :=
 
 (* Why3 assumption *)
 Definition is_yam_prefix (w:(array int)) (len:int): Prop :=
-  (is_true (0%Z <= len)%Z /\ is_true (len <= (length w))%Z) /\
-  ((forall (i:int), (is_true (0%Z <= i)%Z /\ is_true (i < len)%Z) ->
-  is_true (0%Z <= (get w i))%Z) /\ forall (p:int), (is_true (0%Z <= p)%Z /\
-  is_true (p <= len)%Z) -> forall (v:int), is_true (0%Z <= v)%Z ->
-  is_true ((numeq w (v + 1%Z)%Z 0%Z p) <= (numeq w v 0%Z p))%Z).
+  ((0%Z <= len)%Z /\ (len <= (length w))%Z) /\ ((forall (i:int),
+  ((0%Z <= i)%Z /\ (i < len)%Z) -> (0%Z <= (get w i))%Z) /\ forall (p:int),
+  ((0%Z <= p)%Z /\ (p <= len)%Z) -> forall (v1:int) (v2:int),
+  ((0%Z <= v1)%Z /\ (v1 <= v2)%Z) -> ((numeq w v2 0%Z p) <= (numeq w v1 0%Z
+  p))%Z).
 
 (* Why3 assumption *)
 Definition is_yam_of_eval_prefix (eval:(array int)) (w:(array int))
   (len:int): Prop := (is_yam_prefix w len) /\ ((forall (i:int),
-  (is_true (0%Z <= i)%Z /\ is_true (i < len)%Z) -> (is_true (0%Z <= (get w
-  i))%Z /\ is_true ((get w i) < (length eval))%Z)) /\ forall (v:int),
-  (is_true (0%Z <= v)%Z /\ is_true (v < (length eval))%Z) -> ((numeq w v 0%Z
-  len) = (get eval v))).
+  ((0%Z <= i)%Z /\ (i < len)%Z) -> ((0%Z <= (get w i))%Z /\ ((get w
+  i) < (length eval))%Z)) /\ forall (v:int), ((0%Z <= v)%Z /\
+  (v < (length eval))%Z) -> ((numeq w v 0%Z len) = (get eval v))).
 
 (* Why3 assumption *)
 Definition is_yam_of_eval (eval:(array int)) (w:(array int)): Prop :=
   (is_yam_of_eval_prefix eval w (length w)).
 
+Axiom is_yam_of_eval_length : forall (eval:(array int)) (w:(array int)),
+  (is_yam_of_eval eval w) -> ((length w) = (sum_array eval)).
+
 (* Why3 assumption *)
 Inductive skew_shape :=
   | mk_skew_shape : (array int) -> (array int) -> (array int) -> (array
       int) -> (array int) -> skew_shape.
-(* Axiom skew_shape_WhyType : WhyType skew_shape. *)
-(* Existing Instance skew_shape_WhyType. *)
+(*
+Axiom skew_shape_WhyType : WhyType skew_shape.
+Existing Instance skew_shape_WhyType.
+*)
 
 (* Why3 assumption *)
 Definition below (v:skew_shape): (array int) :=
@@ -274,16 +273,14 @@ Definition outer (v:skew_shape): (array int) :=
 
 (* Why3 assumption *)
 Definition is_tableau_reading_prefix (s:skew_shape) (w:(array int))
-  (len:int): Prop := (forall (r:int), (is_true (1%Z <= r)%Z /\
-  is_true (r < (length (outer s)))%Z) -> forall (i:int),
-  is_true (i < len)%Z -> ((is_true ((get (end_of_row s)
-  (r - 1%Z)%Z) <= i)%Z /\ is_true (i < ((get (end_of_row s)
-  r) - 1%Z)%Z)%Z) -> is_true ((get w (i + 1%Z)%Z) <= (get w i))%Z)) /\
-  forall (r:int), (is_true (1%Z <= r)%Z /\
-  is_true (r < (length (outer s)))%Z) -> forall (i:int),
-  is_true (i < len)%Z -> ((is_true ((get (end_of_row s)
-  (r - 1%Z)%Z) <= i)%Z /\ is_true (i < (get (end_of_overlap s) r))%Z) ->
-  is_true ((get w (i - (get (below s) r))%Z) < (get w i))%Z).
+  (len:int): Prop := (forall (r:int), ((1%Z <= r)%Z /\
+  (r < (length (outer s)))%Z) -> forall (i:int), (i < len)%Z ->
+  ((((get (end_of_row s) (r - 1%Z)%Z) <= i)%Z /\ (i < ((get (end_of_row s)
+  r) - 1%Z)%Z)%Z) -> ((get w (i + 1%Z)%Z) <= (get w i))%Z)) /\
+  forall (r:int), ((1%Z <= r)%Z /\ (r < (length (outer s)))%Z) ->
+  forall (i:int), (i < len)%Z -> ((((get (end_of_row s)
+  (r - 1%Z)%Z) <= i)%Z /\ (i < (get (end_of_overlap s) r))%Z) -> ((get w
+  (i - (get (below s) r))%Z) < (get w i))%Z).
 
 (* Why3 assumption *)
 Definition is_tableau_reading (s:skew_shape) (w:(array int)): Prop :=
@@ -300,18 +297,17 @@ Definition is_solution (s:skew_shape) (eval:(array int)) (w:(array
 
 (* Why3 assumption *)
 Definition valid_normalized_outer_inner (outer1:(array int)) (inner1:(array
-  int)): Prop := (is_true (2%:Z <= (length outer1))%Z /\
-  ((length outer1) = (length inner1))) /\ (((included inner1
-  outer1) = true) /\ (((is_part inner1) = true) /\
-  (((is_part outer1) = true) /\ (((get outer1 0%Z) = (get inner1 0%Z)) /\
-  ((get inner1 0%Z) = (get outer1 1%Z)))))).
+  int)): Prop := ((2%:Z <= (length outer1))%Z /\
+  ((length outer1) = (length inner1))) /\ ((included inner1 outer1) /\
+  ((is_part inner1) /\ ((is_part outer1) /\ (((get outer1
+  0%Z) = (get inner1 0%Z)) /\ ((get inner1 0%Z) = (get outer1 1%Z)))))).
 
 (* Why3 assumption *)
 Definition valid_end_of_row (outer1:(array int)) (inner1:(array int))
   (end_of_row1:(array int)): Prop :=
   ((length end_of_row1) = (length outer1)) /\ (((get end_of_row1
-  0%Z) = 0%Z) /\ forall (i:int), (is_true (1%Z <= i)%Z /\
-  is_true (i < (length end_of_row1))%Z) -> ((get end_of_row1 i) = (sum 1%Z i
+  0%Z) = 0%Z) /\ forall (i:int), ((1%Z <= i)%Z /\
+  (i < (length end_of_row1))%Z) -> ((get end_of_row1 i) = (sum 1%Z i
   (fun (j:int) => ((get outer1 j) - (get inner1 j))%Z)))).
 
 (* Why3 assumption *)
@@ -320,8 +316,103 @@ Definition valid_skew_shape (sh:skew_shape): Prop :=
   (outer sh) (inner sh) (end_of_row sh)) /\
   ((((length (end_of_overlap sh)) = (length (below sh))) /\
   ((length (below sh)) = (length (outer sh)))) /\ forall (i:int),
-  (is_true (1%Z <= i)%Z /\ is_true (i < (length (end_of_overlap sh)))%Z) ->
+  ((1%Z <= i)%Z /\ (i < (length (end_of_overlap sh)))%Z) ->
   (((get (below sh) i) = ((get (outer sh) i) - (get (inner sh)
   (i - 1%Z)%Z))%Z) /\ ((get (end_of_overlap sh) i) = ((get (end_of_row sh)
   (i - 1%Z)%Z) + (get (below sh) i))%Z)))).
+
+Axiom end_of_row_last : forall (sh:skew_shape), (valid_skew_shape sh) ->
+  ((get (end_of_row sh)
+  ((length (end_of_row sh)) - 1%Z)%Z) = ((sum_array (outer sh)) - (sum_array (inner sh)))%Z).
+
+Axiom solution_length : forall (s:skew_shape) (eval:(array int)) (w:(array
+  int)), (valid_skew_shape s) -> ((is_solution s eval w) ->
+  ((length w) = (sum_array eval))).
+
+(* Why3 assumption *)
+Definition eq_prefix (s1:(array int)) (s2:(array int)) (i:int): Prop :=
+  forall (k:int), ((0%Z <= k)%Z /\ (k < i)%Z) -> ((get s1 k) = (get s2 k)).
+
+(* Why3 assumption *)
+Definition lt_sol (s1:(array int)) (s2:(array int)): Prop :=
+  ((length s1) = (length s2)) /\ exists i:int, ((0%Z <= i)%Z /\
+  (i < (length s1))%Z) /\ ((eq_prefix s1 s2 i) /\ ((get s1 i) < (get s2
+  i))%Z).
+
+(* Why3 assumption *)
+Definition eq_sol (s1:(array int)) (s2:(array int)): Prop :=
+  ((length s1) = (length s2)) /\ (eq_prefix s1 s2 (length s1)).
+
+Axiom lt_not_eq : forall (s1:(array int)) (s2:(array int)), (lt_sol s1 s2) ->
+  ~ (eq_sol s1 s2).
+
+Axiom solution : Type.
+(*
+Parameter solution_WhyType : WhyType solution.
+Existing Instance solution_WhyType.
+*)
+
+Parameter a2s: (array int) -> solution.
+
+Parameter s2a: solution -> (array int).
+
+Axiom a2s2a_def : forall (a:(array int)), ((s2a (a2s a)) = a).
+
+(* Why3 assumption *)
+Inductive solutions :=
+  | mk_solutions : (int -> solution)%type -> int -> solutions.
+(*
+Axiom solutions_WhyType : WhyType solutions.
+Existing Instance solutions_WhyType.
+*)
+
+(* Why3 assumption *)
+Definition next (v:solutions): int :=
+  match v with
+  | (mk_solutions x x1) => x1
+  end.
+
+(* Why3 assumption *)
+Definition sols (v:solutions): (int -> solution)%type :=
+  match v with
+  | (mk_solutions x x1) => x
+  end.
+
+(* Why3 assumption *)
+Definition sorted (s:solutions) (lo:int) (hi:int): Prop := forall (i:int)
+  (j:int), ((lo <= i)%Z /\ ((i < j)%Z /\ (j < hi)%Z)) -> (lt_sol
+  (s2a ((sols s) i)) (s2a ((sols s) j))).
+
+Axiom no_duplicate : forall (s:solutions) (lo:int) (hi:int), (sorted s lo
+  hi) -> forall (i:int) (j:int), ((lo <= i)%Z /\ ((i < j)%Z /\
+  (j < hi)%Z)) -> ~ (eq_sol (s2a ((sols s) i)) (s2a ((sols s) j))).
+
+(* Why3 assumption *)
+Definition good_solutions (sh:skew_shape) (eval:(array int)) (s:solutions)
+  (lo:int) (hi:int): Prop := (sorted s lo hi) /\ ((forall (i:int),
+  ((lo <= i)%Z /\ (i < hi)%Z) -> (is_solution sh eval (s2a ((sols s) i)))) /\
+  forall (w:(array int)), (is_solution sh eval w) -> exists i:int,
+  ((0%Z <= i)%Z /\ (i < (next s))%Z) /\ (eq_sol w (s2a ((sols s) i)))).
+
+(* Why3 assumption *)
+Definition valid_eval (eval:(array int)): Prop := (1%Z <= (length eval))%Z /\
+  ((is_part eval) /\ ((get eval ((length eval) - 1%Z)%Z) = 0%Z)).
+
+(* Why3 assumption *)
+Definition valid_innev (eval:(array int)) (innev:(array int)) (work:(array
+  int)) (idx:int) (lastinnev:int): Prop :=
+  ((length eval) = (length innev)) /\ (((0%Z <= lastinnev)%Z /\
+  (lastinnev < (length eval))%Z) /\ ((is_part innev) /\ ((included innev
+  eval) /\ ((forall (i:int), ((0%Z <= i)%Z /\ (i < idx)%Z) ->
+  ((0%Z <= (get work i))%Z /\ ((get work i) < lastinnev)%Z)) /\
+  (((lastinnev = 0%Z) \/ (0%Z < (get innev (lastinnev - 1%Z)%Z))%Z) /\
+  forall (i:int), ((lastinnev <= i)%Z /\ (i < (length innev))%Z) ->
+  ((get innev i) = 0%Z)))))).
+
+Axiom end_of_row_nondecreasing : forall (sh:skew_shape), (valid_skew_shape
+  sh) -> forall (i:int), ((0%Z < i)%Z /\ (i < (length (end_of_row sh)))%Z) ->
+  ((get (end_of_row sh) (i - 1%Z)%Z) <= (get (end_of_row sh) i))%Z.
+
+Axiom is_part_eq : forall (a1:(array int)) (a2:(array int)), (is_part a1) ->
+  ((eq_sol a1 a2) -> (is_part a2)).
 

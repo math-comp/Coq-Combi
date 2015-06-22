@@ -1,6 +1,8 @@
 
 on cherche à prouver en Coq
 
+- correction
+
   forall inner outer eval coq_inner coq_outer coq_eval,
 
     f inner = coq_inner ->   // soit on prouve que f est une bijection
@@ -11,15 +13,22 @@ on cherche à prouver en Coq
                            inner sh.inner = inner ->
                            outer sh.outer = outer ->
     forall eval coq_eval, f eval = coq_eval ->
-    is_solution sh eval work
-<-> coq_is_solution inner outer eval (coq_work work)
 
+      is_solution sh eval work
+    <-> coq_is_solution inner outer (to_coq eval) (to_coq work)
+
+- complétude
+
+  forall coq_input
+  exists sh: skew_shape. valid_skew_shape sh /\ to_coq ... = coq_input
 
 
 ------------------------------------------------------------------------------
 driver Coq ssreflect
 
-- printer : {a: why3Type} au lieu de {a: Type} {aWT: WhyType a}
+- printer :
+  - {a: why3Type} au lieu de {a: Type} {aWT: WhyType a}
+  - pas de "= true" quand un booléen est utilisé à la place de Prop
 
 - tableaux : définis dans ssrwhy3
 

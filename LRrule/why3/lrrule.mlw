@@ -67,6 +67,14 @@ module ArraySum
   =
     if lo <= hi then sum_sub_array_shift a b (lo+1) hi
 
+   let rec lemma sum_array_sub (a b: array int) (lo hi: int)
+     requires { length a = length b }
+     ensures  { sum lo hi (\ i . b[i] - a[i]) =
+                sum_sub_array b lo hi - sum_sub_array a lo hi }
+     variant  { hi - lo }
+   =
+    if lo <= hi then sum_array_sub a b (lo+1) hi
+
 end
 
 module Spec
@@ -120,6 +128,11 @@ module Spec
 
   predicate is_yam_of_eval (eval: array int) (w: array int) =
     is_yam_of_eval_prefix eval w (length w)
+
+  (* TODO: requires commutation of sum and numeq *)
+  lemma is_yam_of_eval_length:
+    forall eval w.
+    is_yam_of_eval eval w -> length w = sum_array eval
 
   type skew_shape = {
     outer: array int;
@@ -175,18 +188,13 @@ module Spec
       sh.end_of_overlap[i] = sh.end_of_row[i-1] + sh.below[i]
     (* end_of_overlap[0] and below[0] are left unspecified *)
 
-end
+  lemma end_of_row_last:
+    forall sh. valid_skew_shape sh ->
+    sh.end_of_row[length sh.end_of_row - 1] = sum_array sh.outer - sum_array sh.inner
 
-module LRrule
-
-  use import Spec
-  use import int.Int
-  use import int.MinMax
-  use import ref.Refint
-  use import map.Map
-  use import array.Array
-  use import Sum
-  use import ArraySum
+  lemma solution_length:
+    forall s eval w. valid_skew_shape s ->
+    is_solution s eval w -> length w = sum_array eval
 
   (** storing solutions we have found so far *)
 
@@ -234,7 +242,45 @@ module LRrule
     (s: solutions) (lo hi: int)
   =
     sorted s lo hi /\
-    forall i. lo <= i < hi -> is_solution sh eval (s2a (Map.get s.sols i))
+    (forall i. lo <= i < hi -> is_solution sh eval (s2a (Map.get s.sols i))) /\
+    (forall w. is_solution sh eval w ->
+       exists i. 0 <= i < s.next /\ eq_sol w (s2a (Map.get s.sols i)))
+
+  predicate valid_eval (eval: array int) =
+    1 <= length eval /\ is_part eval /\
+    eval[length eval - 1] = 0 (* sentinel: eval ends with a zero *)
+
+  predicate valid_innev (eval innev work: array int) (idx lastinnev: int) =
+    length eval = length innev /\
+    0 <= lastinnev < length eval /\
+    is_part innev /\
+    included innev eval /\
+    (forall i: int. 0 <= i < idx -> 0 <= work[i] < lastinnev) /\
+    (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
+    (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
+
+  (* lemmas *)
+
+  lemma end_of_row_nondecreasing:
+    forall sh: skew_shape. valid_skew_shape sh ->
+    forall i. 0 < i < length sh.end_of_row ->
+    sh.end_of_row[i - 1] <= sh.end_of_row[i]
+
+  lemma is_part_eq:
+    forall a1 a2: array int. is_part a1 -> eq_sol a1 a2 -> is_part a2
+
+end
+
+module LRrule
+
+  use import Spec
+  use import int.Int
+  use import int.MinMax
+  use import ref.Refint
+  use import map.Map
+  use import array.Array
+  use import Sum
+  use import ArraySum
 
   val ghost solutions: solutions
 
@@ -273,30 +319,7 @@ module LRrule
                               +
   *)
 
-  predicate valid_eval (eval: array int) =
-    1 <= length eval /\ is_part eval /\
-    eval[length eval - 1] = 0 (* sentinel: eval ends with a zero *)
-
   (* TODO: bundle work, innev, and lastinnev in a record *)
-
-  predicate valid_innev (eval innev work: array int) (idx lastinnev: int) =
-    length eval = length innev /\
-    0 <= lastinnev < length eval /\
-    is_part innev /\
-    included innev eval /\
-    (forall i: int. 0 <= i < idx -> 0 <= work[i] < lastinnev) /\
-    (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
-    (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
-
-  (* lemmas *)
-
-  lemma end_of_row_nondecreasing:
-    forall sh: skew_shape. valid_skew_shape sh ->
-    forall i. 0 < i < length sh.end_of_row ->
-    sh.end_of_row[i - 1] <= sh.end_of_row[i]
-
-  lemma is_part_eq:
-    forall a1 a2: array int. is_part a1 -> eq_sol a1 a2 -> is_part a2
 
   (* code *)
 
@@ -307,13 +330,11 @@ module LRrule
     requires { solutions.next = 0 }
     ensures  { result = solutions.next }
     ensures  { good_solutions sh eval solutions 0 result }
-    ensures  { forall w. is_solution sh eval w ->
-               exists i. 0 <= i < solutions.next /\
-                         eq_sol w (s2a (Map.get solutions.sols i)) }
     diverges
   =
     let n = sh.end_of_row[Array.length sh.end_of_row - 1] in
     assert { 0 <= n };
+    assert { n = sum_array eval };
     let szshape = Array.length sh.outer in (* = Array.length inner *)
     let szeval = Array.length eval in
     let innev = Array.make szeval 0 in
