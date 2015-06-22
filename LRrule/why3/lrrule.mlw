@@ -110,7 +110,8 @@ module Spec
     0 <= len <= length w /\
     (forall i: int. 0 <= i < len -> 0 <= w[i]) /\
     (forall p: int. 0 <= p <= len ->
-       forall v: int. 0 <= v -> numeq w (v+1) 0 p <= numeq w v 0 p)
+       (* forall v: int. 0 <= v -> numeq w (v+1) 0 p <= numeq w v 0 p) *)
+       forall v1 v2. 0 <= v1 <= v2 -> numeq w v2 0 p <= numeq w v1 0 p)
 
   predicate is_yam_of_eval_prefix (eval: array int) (w: array int) (len: int) =
     is_yam_prefix w len /\
