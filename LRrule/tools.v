@@ -18,6 +18,13 @@ Require Import bigop.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+(******************************************************************************)
+(** * A bunch of lemmas about seqs which are missing in SSReflect             *)
+(*                                                                            *)
+(** TODO: these probably should be contributed to SSReflect itself            *)
+(******************************************************************************)
+
+
 Section RCons.
 
   Variable (T : eqType).
