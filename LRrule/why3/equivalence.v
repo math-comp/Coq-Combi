@@ -342,11 +342,22 @@ Proof.
     by rewrite eqz_nat subnDA addKn.
 Qed.
 
+Section SolCorrect.
+
 Variable sol : array int.
 Hypothesis Hsol : spec.is_solution sh eval sol.
 
 Definition sol_from_Why3 : seq (seq nat) :=
   skew_reshape inner outer (rev [seq `|i| | i <- sol]).
+
+Lemma size_sol :  size sol = sumn (diff_shape inner outer).
+Proof.
+  have:= spec.solution_length Hvalidsh Hsol.
+  rewrite part_sumn_sum_arrayE; last by move: Hvalideval => [] _ [].
+  move=> /eqP; rewrite eqz_nat => /eqP ->.
+  by have:= inputSpec_from_Why3 => [] [].
+Qed.
+
 
 Lemma to_word_sol_from_Why3 :
   to_word sol_from_Why3 = rev [seq `|i| | i <- sol].
@@ -354,11 +365,8 @@ Proof.
   move: Hvalidsh => [] [] Hlen [] Hincl _ _.
   rewrite to_word_skew_reshape; first by [].
   - exact: (included_behead (convert_included_impl Hincl)).
-  - have:= spec.solution_length Hvalidsh Hsol.
-    rewrite /length size_rev size_map.
-    rewrite part_sumn_sum_arrayE; last by move: Hvalideval => [] _ [].
-    move=> /eqP; rewrite eqz_nat => /eqP ->.
-    by have:= inputSpec_from_Why3 => [] [].
+  - rewrite /length size_rev size_map.
+    exact: size_sol.
 Qed.
 
 Lemma drop_rev (T : eqType) (l : seq T) i : drop i (rev l) = rev (take (size l - i) l).
@@ -371,6 +379,41 @@ Proof.
   case: ltnP => //= /take_oversize ->.
   suff -> : size l' - i - size l' = 0 by rewrite cats0.
   by rewrite subnAC subnn sub0n.
+Qed.
+
+Lemma spec_reindex s0 s (n i : nat) :
+  spec.numof (spec.fc s i) 0 n =
+  spec.numof (spec.fc (s0 :: s) i) 1 (Posz n + 1).
+Proof.
+  elim: n => [//= | n IHn].
+    by rewrite GRing.Theory.add0r !spec.Numof_empty.
+  rewrite -addn1 PoszD.
+  case: (boolP (spec.fc s i n)) => H.
+  - rewrite spec.Numof_right_add; first last.
+    + by rewrite GRing.Theory.addrK.
+    + by rewrite ltz_nat !addn1.
+    rewrite [RHS]spec.Numof_right_add; first last.
+    + rewrite GRing.Theory.addrK.
+      have : spec.fc s i n = true by [].
+      by rewrite !spec.fc_def /= addn1.
+    + by rewrite ltz_nat !addn1.
+    by rewrite !GRing.Theory.addrK IHn.
+  - rewrite spec.Numof_right_no_add; first last.
+    + rewrite GRing.Theory.addrK.
+      apply/eqP.
+      move: H => /eqP.
+      by apply contraL => /eqP ->.
+    + by rewrite ltz_nat !addn1.
+    rewrite [RHS]spec.Numof_right_no_add; first last.
+    + rewrite GRing.Theory.addrK.
+      apply/eqP.
+      move: H => /eqP.
+      apply contraL => /eqP H.
+      suff -> : spec.fc s i n = true by [].
+      move: H; rewrite !spec.fc_def.
+      by rewrite -PoszD addn1.
+    + by rewrite ltz_nat !addn1.
+    by rewrite !GRing.Theory.addrK IHn.
 Qed.
 
 Lemma count_mem_numeqE n i :
@@ -395,13 +438,13 @@ Proof.
   - rewrite [RHS]spec.Numof_left_add //.
     + congr ( 1 + _)%R.
       rewrite -addn1 PoszD GRing.Theory.add0r.
-      admit. (* Ask Jean-Christophe *)
+      exact: spec_reindex.
     + rewrite spec.fc_def /=.
       have /Hpos /= /gez0_abs <- : 0 < size (s0 :: s) by [].
       by rewrite H0.
   - rewrite [RHS]spec.Numof_left_no_add //.
     - rewrite -addn1 !GRing.Theory.add0r.
-      admit. (* Ask Jean-Christophe *)
+      exact: spec_reindex.
     + rewrite spec.fc_def /=.
       have /Hpos /= /gez0_abs <- : 0 < size (s0 :: s) by [].
       by apply /eqP; rewrite eqz_nat; apply/eqP.
@@ -422,15 +465,32 @@ Proof.
   - by rewrite lez_nat.
 Qed.
 
-Lemma is_solution_correct (a : array int) :
-  spec.is_solution sh eval a ->
-  outputSpec inner (convert_part eval) outer (sol_from_Why3 a).
+Lemma eval_sol : evalseq (to_word sol_from_Why3) = convert_part eval.
 Proof.
-  move=> [].
+  admit.
+Qed.
+
+Lemma is_solution_correct :
+  outputSpec inner (convert_part eval) outer sol_from_Why3.
+Proof.
+  move: Hvalidsh => [] [] _ [] Hincl [] Hpartinner [] Hpartouter [] Hfirst _ _.
+  constructor.
+  - admit.
+  - rewrite /sol_from_Why3.
+    rewrite shape_skew_reshape //.
+    + apply included_behead; exact: convert_included_impl.
+    + by rewrite size_rev size_map size_sol.
+  - exact: sol_is_yam.
+  - exact: eval_sol.
+Qed.
+
+End SolCorrect.
 
 Theorem Why3Correct (s : spec.solutions) :
     spec.good_solutions sh eval s 0 (spec.next s) ->
     (spec.next s) = (LRcoeff (convert_part (spec.inner sh))
                              (convert_part (spec.outer sh))
                              (convert_part eval)).
-
+Proof.
+  admit.
+Qed.
