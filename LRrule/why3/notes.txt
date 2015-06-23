@@ -22,6 +22,12 @@ on cherche à prouver en Coq
   forall coq_input
   exists sh: skew_shape. valid_skew_shape sh /\ to_coq ... = coq_input
 
+------------------------------------------------------------------------------
+biblio Why3
+
+int.NumOf
+
+  un lemme de réindexation (par décalage)
 
 ------------------------------------------------------------------------------
 driver Coq ssreflect
