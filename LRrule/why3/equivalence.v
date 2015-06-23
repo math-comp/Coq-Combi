@@ -618,3 +618,6 @@ Proof.
   rewrite /sol_from_Why3 size_skew_reshape.
   by apply size_included.
 Qed.
+
+End SpecFromWhy3.
+
