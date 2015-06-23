@@ -18,6 +18,8 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(** * Inhabited totally ordered types *)
+
 Module Order.
 
 Definition axiom T (r : rel T) := [/\ reflexive r, antisymmetric r, transitive r &

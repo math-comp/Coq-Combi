@@ -521,25 +521,25 @@ Here is a complete list of Yamanouchi word of length smaller than $4$.
   (), 0, 00, 10, 000, 100, 010, 210, \\
   0000, 1010, 1100, 0010, 0100, 1000, 0210, 2010, 2100, 3210
 \end{gather}
-The partition $(\abs{w}_i)_{i\leq\max(w)}$ is denoted \lstinline|shape_rowseq w|.
+The partition $(\abs{w}_i)_{i\leq\max(w)}$ is denoted \lstinline|evalseq w|.
  We recall that in \SSR, the call \lstinline{incr_nth s i} design the nat
 sequence \lstinline|s| with item $i$ incremented (first padded with 0's to
 size $i+1$, if needed).
 
   \begin{lstlisting}
-Fixpoint |*shape_rowseq*| s :=
+Fixpoint |*evalseq*| s :=
   if s is s0 :: s'
-  then incr_nth (shape_rowseq s') s0
+  then incr_nth (evalseq s') s0
   else [::].
 
-Definition |*shape_rowseq_count*| := (* iterative version *)
+Definition |*evalseq_count*| := (* iterative version *)
   [fun s => [seq (count_mem i) s | i <- iota 0 (foldr maxn 0 (map S s))]].
 
-Lemma |*shape_rowseq_countE*| : shape_rowseq_count =1 shape_rowseq.
+Lemma |*evalseq_countE*| : evalseq_count =1 evalseq.
 
 Fixpoint |*is_yam*| s :=
   if s is s0 :: s'
-  then is_part (shape_rowseq s) && is_yam s'
+  then is_part (evalseq s) && is_yam s'
   else true.
 
 Lemma |*is_yamP*| s : reflect
@@ -625,19 +625,19 @@ original definition of Jacobi is the following:
     decomposition of $\sigma$).
   \end{itemize}
 \end{DEFN}
-Note that due to the factor $\sgn(\sigma)$ the sum is antisymmetric, meaning
-that it is multiplied by $\sgn(\mu)$ under the action of a permutation $\mu$.
-This implies that the sum is divisible by $\Delta$ so that $s_\lambda$ is a
-proper polynomial. As the quotient of two antisymmetric polynomials it is
-symmetric. Also it is simple to see that
+Note that the numerator sum is antisymmetric, meaning that it is multiplied by
+$\sgn(\mu)$ under the action of a permutation $\mu$.  This implies that the
+sum is divisible by $\Delta$ so that $s_\lambda$ is a proper polynomial. As
+the quotient of two antisymmetric polynomials it is moreover symmetric. Also
+it is simple to see that
 \begin{equation}
 s_{\lambda} (\alphX) =
    x_0^{\lambda_0}x_1^{\lambda_1}\cdots x_{n-1}^{\lambda_{n-1}} +  \cdots
 \end{equation}
-where the rest of the terms contains only monomial which are smaller for the
-lexicographic order on the exponents. As a consequence, the Schur polynomials are
-linearly independant and form a basis of the algebra of symmetric
-polynomials.
+where the rest of the terms contains only monomial which are larger for the
+reverse lexicographic order on the exponents. As a consequence, the Schur
+polynomials are linearly independant and form a \emph{basis of the algebra of
+  symmetric polynomials}.
 
 Interestingly enough, \emph{we did not need to formalize} this part of the
 theory. Indeed, we decide to chose a definition which has a more combinatorial

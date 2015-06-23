@@ -35,6 +35,9 @@ Section Partition.
   Lemma is_part_tl l0 sh : is_part (l0 :: sh) -> is_part sh.
   Proof. by move=> /= /andP []. Qed.
 
+  Lemma is_part_behead sh : is_part sh -> is_part (behead sh).
+  Proof. case: sh => [//| l0 sh] /=; exact: is_part_tl. Qed.
+
   Lemma is_partP sh :
     reflect (last 1 sh != 0 /\ forall i, (nth 0 sh i) >= nth 0 sh i.+1) (is_part sh).
   Proof.
