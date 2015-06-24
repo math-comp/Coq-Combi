@@ -181,7 +181,7 @@ install-doc:
 
 clean:
 	rm -f $(VOFILES) $(VIFILES) $(GFILES) $(VFILES:.v=.v.d) $(VFILES:=.beautified) $(VFILES:=.old)
-	rm -f all.ps all-gal.ps all.pdf all-gal.pdf all.glob $(VFILES:.v=.glob) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex) all-mli.tex
+	rm -f all.ps all-gal.ps all.pdf all-gal.pdf all.glob $(VFILES:.v=.glob) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex) all-mli.tex dep.pdf
 	- rm -rf html mlihtml
 
 archclean:
@@ -232,3 +232,7 @@ printenv:
 
 COQDEFS := --language=none -r '/^[[:space:]]*\(Axiom\|Theorem\|Class\|Instance\|Let\|Ltac\|Definition\|Lemma\|Record\|Remark\|Structure\|Fixpoint\|Fact\|Corollary\|Let\|Inductive\|Coinductive\|Notation\|Proposition\|Module[[:space:]]+Import\|Module\)[[:space:]]+\([[:alnum:]'\''_]+\)/\2/'
 TAGS : $(VFILES); etags $(COQDEFS) $^
+
+dep.pdf: $(VFILES:.v=.v.d)
+	rm -f dep.pdf
+	cat *.v.d | sed -e 's/[^ ]*glob//g' | sed -e 's/[^ ]*beautified//g' | ocamldot | dot -Tpdf > dep.pdf
