@@ -195,6 +195,49 @@ Section Dominate.
                        (head [::] t') t0 & is_skew_tableau (behead inner) t']
     else inner == [::].
 
+  Lemma is_skew_tableauP inner t : reflect
+    [/\ size inner <= size t,
+     forall i, i < size t -> nth 0 inner i + size (nth [::] t i) != 0,
+     forall i, is_row (nth [::] t i) &
+     forall i, skew_dominate ((nth 0 inner i) - (nth 0 (behead inner) i))
+                             (nth [::] t i.+1) (nth [::] t i)]
+    (is_skew_tableau inner t).
+  Proof.
+    apply (iffP idP).
+    - elim: t inner => [| t0 t IHt] /= inner.
+        move=> /eqP ->; by split=> // i; rewrite !nth_default.
+      case: inner => [| inn0 inn] /and4P [] Ht0 Hrow0 Hdom0 /= /IHt [] Hsz Hnnil Hrow Hdom.
+      + split.
+        * by [].
+        * case=> [_| i] /=; first exact: Ht0.
+          rewrite ltnS => /Hnnil; by rewrite nth_default.
+        * by case.
+        * case=> [| i] /=; first by move: Hdom0; rewrite /= subn0.
+          have:= Hdom i => /=; by rewrite nth_default // subn0.
+      + split.
+        * exact: Hsz.
+        * case=> [_| i] /=; last by rewrite ltnS; exact: Hnnil.
+          by move: Ht0.
+        * by case.
+        * case=> [| i] /=; first exact: Hdom0.
+          have:= (Hdom i) => /=; case inn => //=; by rewrite nth_default.
+    - elim: t inner => [| t0 t IHt] inner //= [] Hsz Hnnil Hrow Hdom.
+        by move: Hsz; rewrite leqn0 => /nilP ->.
+      apply/and4P; split.
+      + have /Hnnil /= : 0 < (size t).+1 by [].
+        by case inner.
+      + rewrite -/(nth [::] (t0 :: t) 0); exact: Hrow.
+      + move: Hdom; case t => [| t1 tt] //= Hdom.
+        have /= := Hdom 0; by case inner.
+      + apply IHt; split => [| i Hi | i | i].
+        * move: Hsz; by case inner.
+        * have /Hnnil /= : i.+1 < (size t).+1 by [].
+          case inner => //=; by rewrite [nth 0 [::] i]nth_default.
+        * exact: (Hrow i.+1).
+        * have /= := (Hdom i.+1).
+          case inner => [|/= _ [| inn]] //=; by rewrite [nth 0 [::] i]nth_default.
+  Qed.
+
   Lemma is_skew_tableau0 : is_skew_tableau [::] =1 (@is_tableau T).
   Proof.
     elim => [//=| t0 t IHt] /=.
