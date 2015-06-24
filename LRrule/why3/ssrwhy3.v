@@ -87,4 +87,6 @@ Definition get (a : array T) (i : int) :=
 Definition array_why3Mixin := Why3Type.Mixin (T:= array T) [::].
 Canonical array_why3Type := Eval hnf in Why3Type (array T) array_why3Mixin.
 
+(* TODO: set, const *)
+
 End Array.

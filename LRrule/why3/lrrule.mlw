@@ -237,12 +237,11 @@ module Spec
     forall i j: int. lo <= i < j < hi ->
       not (eq_sol (s2a (Map.get s.sols i)) (s2a (Map.get s.sols j)))
 
-  predicate good_solutions
-    (sh: skew_shape) (eval: array int)
-    (s: solutions) (lo hi: int)
-  =
-    sorted s lo hi /\
-    (forall i. lo <= i < hi -> is_solution sh eval (s2a (Map.get s.sols i))) /\
+  predicate good_solutions (sh: skew_shape) (eval: array int) (s: solutions) =
+    0 <= s.next /\
+    sorted s 0 s.next /\
+    (forall i. 0 <= i < s.next ->
+      is_solution sh eval (s2a (Map.get s.sols i))) /\
     (forall w. is_solution sh eval w ->
        exists i. 0 <= i < s.next /\ eq_sol w (s2a (Map.get s.sols i)))
 
@@ -329,7 +328,7 @@ module LRrule
     requires { sum_array eval = sum_array sh.outer - sum_array sh.inner }
     requires { solutions.next = 0 }
     ensures  { result = solutions.next }
-    ensures  { good_solutions sh eval solutions 0 result }
+    ensures  { good_solutions sh eval solutions }
     diverges
   =
     let n = sh.end_of_row[Array.length sh.end_of_row - 1] in
