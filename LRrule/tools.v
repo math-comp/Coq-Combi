@@ -169,6 +169,21 @@ Proof.
   by congr (_ + \sum_(j <- _ ) _).
 Qed.
 
+Lemma take_rev (T : eqType) (l : seq T) i : take i (rev l) = rev (drop (size l - i) l).
+Proof.
+  elim: i l => [| i IHi] l.
+    by rewrite take0 subn0 drop_size.
+  case/lastP: l => [//= | l' ln].
+  rewrite rev_rcons /= IHi -rev_rcons.
+  congr (rev _).
+  rewrite size_rcons subSS.
+  rewrite -(cats1 l') drop_cat.
+  case: ltnP; first by rewrite cats1.
+  move=> /drop_oversize -> /=.
+  suff -> : size l' - i - size l' = 0 by [].
+  by rewrite subnAC subnn sub0n.
+Qed.
+
 Lemma drop_rev (T : eqType) (l : seq T) i : drop i (rev l) = rev (take (size l - i) l).
 Proof.
   elim: i l => [| i IHi] l.
