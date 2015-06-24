@@ -28,6 +28,7 @@ Local Open Scope ring_scope.
 
 Import Num.Theory.
 
+
 Fixpoint convert_part (a : array int) : (seq nat) :=
   if a is i :: tl then
     match i with
@@ -247,19 +248,6 @@ Proof.
     by rewrite big_cons -PoszD addn1 -addSnnS IHn.
 Qed.
 
-Lemma sum_iota_sumnE l n :
-  size l <= n -> \sum_(i <- iota 0 n) nth 0 l i = sumn l.
-Proof.
-  elim: l n => [n _| l0 l IHl n] /=.
-    elim: n => [|n IHn]; first by rewrite big_nil.
-    by rewrite -addn1 iota_add big_cat /= IHn big_cons big_nil nth_default.
-  case: n => [//= | n].
-  rewrite ltnS => /IHl {IHl} <-.
-  rewrite /= big_cons /=.
-  rewrite -add1n iota_addl big_map.
-  by congr (_ + \sum_(j <- _ ) _).
-Qed.
-
 Lemma part_sumn_sum_arrayE sh :
   spec.is_part sh -> spec.sum_array sh = sumn (convert_part sh).
 Proof.
@@ -274,13 +262,6 @@ Proof.
   rewrite {Hpart} -(big_morph (id2 := 0) _ PoszD) //.
   apply/eqP; rewrite eqz_nat; apply/eqP.
   by rewrite sum_iota_sumnE; last exact: size_convert_part.
-Qed.
-
-Lemma included_behead p1 p2 :
-  included p1 p2 -> included (behead p1) (behead p2).
-Proof.
-  case: p1 => [//=|a l].
-  by case: p2 => [//=|b s] /= /andP [].
 Qed.
 
 Section SpecFromWhy3.
@@ -369,18 +350,6 @@ Proof.
     exact: size_sol.
 Qed.
 
-Lemma drop_rev (T : eqType) (l : seq T) i : drop i (rev l) = rev (take (size l - i) l).
-Proof.
-  elim: i l => [| i IHi] l.
-    by rewrite drop0 subn0 take_size.
-  case/lastP: l => [//= | l' ln].
-  rewrite rev_rcons /= IHi; congr (rev _).
-  rewrite size_rcons subSS -cats1 take_cat.
-  case: ltnP => //= /take_oversize ->.
-  suff -> : size l' - i - size l' = 0 by rewrite cats0.
-  by rewrite subnAC subnn sub0n.
-Qed.
-
 Lemma spec_reindex s0 s (n : nat) (i : int):
   spec.numof (spec.fc s i) 0 n =
   spec.numof (spec.fc (s0 :: s) i) 1 (Posz n + 1).
@@ -465,33 +434,6 @@ Proof.
   - by rewrite lez_nat.
 Qed.
 
-Lemma part_len_lt p q :
-  (forall i, nth 0 p i = nth 0 q i) -> is_part p -> is_part q -> size p = size q.
-Proof.
-  wlog Hwlog: p q / (size p) <= (size q).
-    move=> Hwlog Hnth.
-    by case: (leqP (size p) (size q)) => [|/ltnW] /Hwlog H/H{H}H/H{H} ->.
-  move=> Hnth /is_part_ijP [] Hlastp Hp /is_part_ijP [] Hlastq Hq.
-  apply anti_leq; rewrite Hwlog {Hwlog} /=.
-  case: q Hnth Hlastq Hq => [//=|q0 q] Hnth Hlastq Hq.
-  rewrite leqNgt; apply (introN idP) => Habs.
-  move: Hlastq.
-  have:= Habs; rewrite -(ltn_predK Habs) ltnS => H.
-  have:= Hq _ _ H.
-  by rewrite nth_last /= -Hnth nth_default // leqn0 => /eqP ->.
-Qed.
-
-Lemma part_eqP p q :
-  is_part p -> is_part q -> reflect (forall i, nth 0 p i = nth 0 q i) (p == q).
-Proof.
-  move=> Hp Hq.
-  apply (iffP idP) => [/eqP -> //| H].
-  apply/eqP; apply (eq_from_nth (x0 := 0)).
-  - exact: part_len_lt.
-  - move=> i _; exact: H.
-Qed.
-
-
 Lemma numeq_false (s : array int) (i : int) :
   (forall j : int,
      (0 <= j)%R /\ (j < length s)%R -> ~ (get s j = i)%R) ->
@@ -529,7 +471,8 @@ Qed.
 
 Lemma skew_tab_sol : is_skew_tableau inner sol_from_Why3.
 Proof.
-  move: Hsol => [].
+  move: Hsol => [] _ [] Hrow Hdom.
+  rewrite /sol_from_Why3.
   admit.
 Qed.
 
@@ -556,15 +499,54 @@ Qed.
 
 End SolCorrect.
 
+
+Section SolCompl.
+
+Variable tab : seq (seq nat).
+Hypothesis Hout : outputSpec inner (convert_part eval) outer tab.
+
+Definition sol_from_tab : array int := [seq Posz i | i <- rev (to_word tab)].
+
+Lemma is_yam_ev_sol : spec.is_yam_of_eval eval sol_from_tab.
+Proof.
+  rewrite /sol_from_tab.
+  move: Hout => [] _ Heval /is_yam_ijP Hyam Hev.
+  repeat split.
+  - by [].
+  - rewrite cond_il_int_nat size_map => i /= Hi.
+    by rewrite (nth_map 0 _ _ Hi) lez_nat.
+  - admit.
+  - move: i H; rewrite cond_il_int_nat size_map => i /= Hi.
+    by rewrite (nth_map 0 _ _ Hi) lez_nat.
+  - move: i H; rewrite cond_il_int_nat size_map => i /= Hi.
+    rewrite (nth_map 0 _ _ Hi) ltz_nat.
+    admit.
+  - rewrite cond_il_int_nat => i Hi.
+    admit.
+Qed.
+
+Lemma is_tab_sol : spec.is_tableau_reading sh sol_from_tab.
+Proof.
+  admit.
+Qed.
+
+Lemma is_solution_compl : spec.is_solution sh eval sol_from_tab.
+Proof.
+  split.
+  - exact is_yam_ev_sol.
+  - exact: is_tab_sol.
+Qed.
+
+End SolCompl.
+
 Require Import tuple finfun finset bigop choice combclass.
 
 Theorem Why3Correct (s : spec.solutions) :
-    (0 <= (spec.next s))%R ->
-    spec.good_solutions sh eval s 0 (spec.next s) ->
+    spec.good_solutions sh eval s ->
     spec.next s = LRcoeff inner (convert_part eval) outer.
 Proof.
-  case: (spec.next s) => [n _ |//].
-  move=> [] Hsort []; rewrite cond_il_int_nat => Hsol Hcompl.
+  move=> []; case: (spec.next s) => [n _ |//] [] Hsort [].
+  rewrite cond_il_int_nat => Hsol Hcompl.
   apply/eqP; rewrite eqz_nat; apply/eqP.
   have:= inputSpec_from_Why3 => [] [] Hpartinner Hpartouter Hincl Hparteval Hs.
   pose d1 := sumn inner.
