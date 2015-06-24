@@ -214,6 +214,36 @@ Section Tableau.
     then [&& (t0 != [::]), is_row t0, dominate (head [::] t') t0 & is_tableau t']
     else true.
 
+  Lemma is_tableauP t : reflect
+    [/\ forall i, i < size t -> (nth [::] t i) != [::],
+     forall i, is_row (nth [::] t i) &
+     forall i j, i < j -> dominate (nth [::] t j) (nth [::] t i)]
+    (is_tableau t).
+  Proof.
+    apply (iffP idP).
+    - elim: t => [_ | t0 t IHt] /=.
+        split=> i //=; first by rewrite nth_default.
+        move=> j; by rewrite !nth_default.
+      move=> /and4P [] Ht0 Hrow0 Hdom0 /IHt {IHt} [] Hnnil Hrow Hdom.
+      split; try by case.
+      case=> [| i] [| j] //=.
+      + case: j => [|j] _; first by rewrite nth0.
+        apply: (dominate_trans _ Hdom0).
+        rewrite -nth0; exact: Hdom.
+      + rewrite ltnS; exact: Hdom.
+    - elim: t => [| t0 t IHt] //= [] Hnnil Hrow Hdom.
+      apply/and4P; split.
+      + rewrite -/(nth [::] (t0 :: t) 0); exact: Hnnil.
+      + rewrite -/(nth [::] (t0 :: t) 0); exact: Hrow.
+      + move: Hdom; case t => [| t1 tt] //= H.
+        rewrite -/(nth [::] (t0 :: t1 :: tt) 0) -/(nth [::] (t0 :: t1 :: tt) 1).
+        exact: H.
+      + apply IHt; split => [i H | i | i j H].
+        * by have /Hnnil : i.+1 < (size t).+1 by [].
+        * exact: (Hrow i.+1).
+        * by have /Hdom : i.+1 < j.+1 by [].
+  Qed.
+
   Definition to_word t := flatten (rev t).
 
   Lemma to_word_cons r t : to_word (r :: t) = to_word t ++ r.
