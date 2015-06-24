@@ -28,6 +28,60 @@ Local Open Scope ring_scope.
 
 Import Num.Theory.
 
+Lemma spec_reindex s0 s (n : nat) (i : int):
+  spec.numof (spec.fc s i) 0 n =
+  spec.numof (spec.fc (s0 :: s) i) 1 (Posz n + 1).
+Proof.
+  elim: n => [//= | n IHn].
+    by rewrite GRing.Theory.add0r !spec.Numof_empty.
+  rewrite -addn1 PoszD.
+  case: (boolP (spec.fc s i n)) => H.
+  - rewrite spec.Numof_right_add; first last.
+    + by rewrite GRing.Theory.addrK.
+    + by rewrite ltz_nat !addn1.
+    rewrite [RHS]spec.Numof_right_add; first last.
+    + rewrite GRing.Theory.addrK.
+      have : spec.fc s i n = true by [].
+      by rewrite !spec.fc_def /= addn1.
+    + by rewrite ltz_nat !addn1.
+    by rewrite !GRing.Theory.addrK IHn.
+  - rewrite spec.Numof_right_no_add; first last.
+    + rewrite GRing.Theory.addrK.
+      apply/eqP.
+      move: H => /eqP.
+      by apply contraL => /eqP ->.
+    + by rewrite ltz_nat !addn1.
+    rewrite [RHS]spec.Numof_right_no_add; first last.
+    + rewrite GRing.Theory.addrK.
+      apply/eqP.
+      move: H => /eqP.
+      apply contraL => /eqP H.
+      suff -> : spec.fc s i n = true by [].
+      move: H; rewrite !spec.fc_def.
+      by rewrite -PoszD addn1.
+    + by rewrite ltz_nat !addn1.
+    by rewrite !GRing.Theory.addrK IHn.
+Qed.
+
+Lemma spec_numeqE s v (l : nat) :
+  l <= size s -> spec.numof (spec.fc s v) 0 l = count_mem v (take l s).
+Proof.
+  rewrite /spec.numeq.
+  elim: l s => [|l IHl] s.
+    by rewrite spec.Numof_empty // take0.
+  case: s => [| s0 s] //=.
+  rewrite ltnS PoszD => /IHl <-.
+  case: eqP => [-> {s0} | Hs0] /=.
+  - rewrite spec.Numof_left_add //.
+    + congr ( 1 + _)%R.
+      rewrite -addn1 PoszD GRing.Theory.add0r.
+      by rewrite -spec_reindex.
+    + by rewrite spec.fc_def.
+  - rewrite spec.Numof_left_no_add //.
+    + rewrite -addn1 PoszD !GRing.Theory.add0r.
+      by rewrite -spec_reindex.
+    + by rewrite spec.fc_def /=.
+Qed.
 
 Fixpoint convert_part (a : array int) : (seq nat) :=
   if a is i :: tl then
@@ -68,7 +122,7 @@ Proof.
     * by rewrite size_mkseq.
 Qed.
 
-Lemma cond_il_int_nat (P : int -> Prop) (l : nat) :
+Lemma cond_ltz_nat (P : int -> Prop) (l : nat) :
   (forall i : int, (0 <= i)%R /\ (i < l)%R -> P i) <->
   (forall i : nat,                i < l    -> P (Posz i)).
 Proof.
@@ -79,7 +133,44 @@ Proof.
     rewrite ltz_nat; by apply H.
 Qed.
 
-Lemma cond_ijl_int_nat (P : int -> int -> Prop) (l : nat) :
+Lemma cond_ltz_int (P : int -> int -> Prop) :
+  (forall i j : int, (0 <= i)%R /\ (i < j)%R -> P i j) <->
+  (forall i j : nat,                i < j    -> P i j).
+Proof.
+  split.
+  - move=> H i j Hij; apply H;  by rewrite !lez_nat ltz_nat.
+  - move=> H i [].
+    + case: i => i j [] // _.
+      rewrite ltz_nat; exact: H.
+    + move=> j [] Hi Hij; exfalso.
+      by have:= (ler_lt_trans Hi Hij).
+Qed.
+
+Lemma cond_lez_nat (P : int -> Prop) (l : nat) :
+  (forall i : int, (0 <= i)%R /\ (i <= l)%R -> P i) <->
+  (forall i : nat,                i <= l    -> P (Posz i)).
+Proof.
+  split.
+  + move=> H i Hi; apply H; by rewrite !lez_nat.
+  + move=> H i [].
+    case: i => i // _.
+    rewrite lez_nat; by apply H.
+Qed.
+
+Lemma cond_lez_int (P : int -> int -> Prop) :
+  (forall i j : int, (0 <= i)%R /\ (i <= j)%R -> P i j) <->
+  (forall i j : nat,                i <= j    -> P i j).
+Proof.
+  split.
+  - move=> H i j Hij; apply H; by rewrite !lez_nat.
+  - move=> H i [].
+    + case: i => i j [] // _.
+      rewrite lez_nat; exact: H.
+    + move=> j [] Hi Hij; exfalso.
+      by have:= (ler_trans Hi Hij).
+Qed.
+
+Lemma cond_lez_ltz_nat (P : int -> int -> Prop) (l : nat) :
   (forall i j : int, (0 <= i)%R /\ (i <= j)%R /\ (j < l)%R -> P i j) <->
   (forall i j : nat,                i <= j /\     j < l    -> P (Posz i) (Posz j)).
 Proof.
@@ -97,7 +188,7 @@ Lemma part_nth_getE (a : array int) (i : nat) :
   spec.is_part a -> get a i = nth 0 (convert_part a) i.
 Proof.
   rewrite /spec.is_part /length /= lez_nat => [] [] Hsz [].
-  rewrite cond_ijl_int_nat /length => Hpart /= Hlast.
+  rewrite cond_lez_ltz_nat /length => Hpart /= Hlast.
   case (ltnP i (size (convert_part a))) => Hi; first by rewrite -nth_getE.
   rewrite (nth_default _ Hi).
   case (ltnP i (size a)) => Hi1; last by rewrite (nth_default _ Hi1).
@@ -148,7 +239,7 @@ Qed.
 Lemma convert_part_inv_impl (p : seq nat) len :
   size p <= len -> 0 < len -> is_part p -> spec.is_part (convert_part_inv len p).
 Proof.
-  rewrite /spec.is_part /length cond_ijl_int_nat lez_nat size_mkseq.
+  rewrite /spec.is_part /length cond_lez_ltz_nat lez_nat size_mkseq.
   move=> Hsz Hlen /is_part_ijP [] Hlast H.
   repeat split; first by [].
   + move=> i j [] Hij Hj.
@@ -215,7 +306,7 @@ Lemma convert_included_inv_impl (a b : seq nat) len :
   size b <= len -> included a b ->
   spec.included (convert_part_inv len a) (convert_part_inv len b).
 Proof.
-  rewrite /spec.included /length cond_il_int_nat => Hsize Hincl.
+  rewrite /spec.included /length cond_ltz_nat => Hsize Hincl.
   rewrite !size_mkseq; split; first by [].
   elim: a b len Hincl Hsize => [|a0 a IHa] b len.
     move=> _ Hsize i Hi.
@@ -350,73 +441,23 @@ Proof.
     exact: size_sol.
 Qed.
 
-Lemma spec_reindex s0 s (n : nat) (i : int):
-  spec.numof (spec.fc s i) 0 n =
-  spec.numof (spec.fc (s0 :: s) i) 1 (Posz n + 1).
-Proof.
-  elim: n => [//= | n IHn].
-    by rewrite GRing.Theory.add0r !spec.Numof_empty.
-  rewrite -addn1 PoszD.
-  case: (boolP (spec.fc s i n)) => H.
-  - rewrite spec.Numof_right_add; first last.
-    + by rewrite GRing.Theory.addrK.
-    + by rewrite ltz_nat !addn1.
-    rewrite [RHS]spec.Numof_right_add; first last.
-    + rewrite GRing.Theory.addrK.
-      have : spec.fc s i n = true by [].
-      by rewrite !spec.fc_def /= addn1.
-    + by rewrite ltz_nat !addn1.
-    by rewrite !GRing.Theory.addrK IHn.
-  - rewrite spec.Numof_right_no_add; first last.
-    + rewrite GRing.Theory.addrK.
-      apply/eqP.
-      move: H => /eqP.
-      by apply contraL => /eqP ->.
-    + by rewrite ltz_nat !addn1.
-    rewrite [RHS]spec.Numof_right_no_add; first last.
-    + rewrite GRing.Theory.addrK.
-      apply/eqP.
-      move: H => /eqP.
-      apply contraL => /eqP H.
-      suff -> : spec.fc s i n = true by [].
-      move: H; rewrite !spec.fc_def.
-      by rewrite -PoszD addn1.
-    + by rewrite ltz_nat !addn1.
-    by rewrite !GRing.Theory.addrK IHn.
-Qed.
-
 Lemma count_mem_numeqE n i :
   Posz (count_mem i (drop n (to_word sol_from_Why3))) =
   spec.numeq sol i 0 (size sol - n)%N.
 Proof.
-  rewrite to_word_sol_from_Why3 /spec.numeq.
+  rewrite /spec.numeq to_word_sol_from_Why3 spec_numeqE; last exact: leq_subr.
   rewrite drop_rev count_rev size_map.
-  have:= leq_subr n (size sol).
-  move: Hsol => [] [] _ []; rewrite cond_il_int_nat => Hpos _ _.
+  apply /eqP; rewrite eqz_nat; apply/eqP.
+  rewrite -map_take.
+  move: (size sol - n) => {n} n.
+  move: Hsol => [] [] _ []; rewrite cond_ltz_nat => Hpos _ _.
   have {Hpos} Hpos i0 : i0 < size sol -> (0 <= get sol i0)%R by move/Hpos => [].
-  move Hlen : (size sol - n) => len.
-  elim: len sol Hpos {Hlen} => [| n0 IHn] s Hpos.
-    by rewrite spec.Numof_empty // take0.
-  case: s Hpos => [//= | s0 s] Hpos /=.
-  rewrite ltnS => /IHn {IHn} Hrec.
-  have /Hrec : forall i0 : nat, i0 < size s -> (0 <= get s i0)%R.
-    move=> j Hj; by have /Hpos : j.+1 < size (s0 :: s) by [].
-  move => {Hrec} Hrec.
-  rewrite PoszD Hrec {Hrec}.
-  case: eqP => H0 /=.
-  - rewrite [RHS]spec.Numof_left_add //.
-    + congr ( 1 + _)%R.
-      rewrite -addn1 PoszD GRing.Theory.add0r.
-      exact: spec_reindex.
-    + rewrite spec.fc_def /=.
-      have /Hpos /= /gez0_abs <- : 0 < size (s0 :: s) by [].
-      by rewrite H0.
-  - rewrite [RHS]spec.Numof_left_no_add //.
-    - rewrite -addn1 !GRing.Theory.add0r.
-      exact: spec_reindex.
-    + rewrite spec.fc_def /=.
-      have /Hpos /= /gez0_abs <- : 0 < size (s0 :: s) by [].
-      by apply /eqP; rewrite eqz_nat; apply/eqP.
+  elim : sol n Hpos => [// | s0 s IHs] n Hpos /=.
+  case: n => [//= | n] /=.
+  rewrite -eqz_nat.
+  have /Hpos /= /gez0_abs -> : 0 < size (s0 :: s) by [].
+  congr (_ + _); apply IHs => j Hj.
+  by have /Hpos : j.+1 < size (s0 :: s) by [].
 Qed.
 
 Lemma is_yam_sol : is_yam (to_word sol_from_Why3).
@@ -426,7 +467,7 @@ Proof.
   rewrite /sol_from_Why3; move: Hsol => [] [] Hyam _ _.
   apply/is_yamP => i n.
   move: Hyam => [] _ [].
-  rewrite cond_il_int_nat => Hpos Hyam.
+  rewrite cond_ltz_nat => Hpos Hyam.
   rewrite -lez_nat !count_mem_numeqE.
   apply Hyam; split => //.
   - rewrite /length lez_nat.
@@ -439,7 +480,7 @@ Lemma numeq_false (s : array int) (i : int) :
      (0 <= j)%R /\ (j < length s)%R -> ~ (get s j = i)%R) ->
   spec.numeq s i 0 (length s) = 0.
 Proof.
-  rewrite cond_il_int_nat /length /spec.numeq.
+  rewrite cond_ltz_nat /length /spec.numeq.
   elim: s => [_ | s0 s IHs]; first by rewrite spec.Numof_empty.
   move=> H; rewrite spec.Numof_left_no_add //.
   + rewrite /= -addn1 PoszD GRing.Theory.add0r.
@@ -499,7 +540,6 @@ Qed.
 
 End SolCorrect.
 
-
 Section SolCompl.
 
 Variable tab : seq (seq nat).
@@ -513,16 +553,31 @@ Proof.
   move: Hout => [] _ Heval /is_yam_ijP Hyam Hev.
   repeat split.
   - by [].
-  - rewrite cond_il_int_nat size_map => i /= Hi.
+  - rewrite cond_ltz_nat size_map => i /= Hi.
     by rewrite (nth_map 0 _ _ Hi) lez_nat.
-  - admit.
-  - move: i H; rewrite cond_il_int_nat size_map => i /= Hi.
+  - rewrite cond_lez_nat => l Hl.
+    have:= Hl; rewrite size_map size_rev -evalseq_eq_size Hev cond_lez_int => Hl1 i j Hij.
+    rewrite /spec.numeq !spec_numeqE // lez_nat.
+    rewrite map_rev take_rev !count_rev -map_drop !count_map.
+    rewrite [X in (X <= _)](eq_count (a2 := (pred1 j))); last by [].
+    rewrite [X in (_ <= X)](eq_count (a2 := (pred1 i))); last by [].
+    by apply Hyam.
+  - move: i H; rewrite cond_ltz_nat size_map => i /= Hi.
     by rewrite (nth_map 0 _ _ Hi) lez_nat.
-  - move: i H; rewrite cond_il_int_nat size_map => i /= Hi.
+  - move: i H; rewrite cond_ltz_nat size_map => i /= Hi.
     rewrite (nth_map 0 _ _ Hi) ltz_nat.
-    admit.
-  - rewrite cond_il_int_nat => i Hi.
-    admit.
+    apply: (leq_trans _ (size_convert_part _)).
+    have {Hi} := mem_nth 0 Hi => /count_memPn.
+    move: (nth _ _ _) => {i} i.
+    rewrite count_rev -nth_evalseq Hev => /eqP.
+    apply contraR; rewrite -ltnNge ltnS // => Hi.
+    by rewrite nth_default.
+  - rewrite cond_ltz_nat => i Hi.
+    rewrite /spec.numeq spec_numeqE // take_size.
+    rewrite map_rev count_rev count_map.
+    rewrite (eq_count (a2 := (pred1 i))); last by [].
+    rewrite -nth_evalseq Hev part_nth_getE //.
+    by move: Hvalideval => [] _ [].
 Qed.
 
 Lemma is_tab_sol : spec.is_tableau_reading sh sol_from_tab.
@@ -546,7 +601,7 @@ Theorem Why3Correct (s : spec.solutions) :
     spec.next s = LRcoeff inner (convert_part eval) outer.
 Proof.
   move=> []; case: (spec.next s) => [n _ |//] [] Hsort [].
-  rewrite cond_il_int_nat => Hsol Hcompl.
+  rewrite cond_ltz_nat => Hsol Hcompl.
   apply/eqP; rewrite eqz_nat; apply/eqP.
   have:= inputSpec_from_Why3 => [] [] Hpartinner Hpartouter Hincl Hparteval Hs.
   pose d1 := sumn inner.
