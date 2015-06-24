@@ -146,6 +146,22 @@ Section Yama.
       + apply: IHs => i n; exact (H i.+1 n).
   Qed.
 
+  Lemma is_yam_ijP s :
+    reflect
+      (forall d i j, i <= j -> count_mem i (drop d s) >= count_mem j (drop d s))
+      (is_yam s).
+  Proof.
+    apply (iffP idP).
+    - move=> /is_yamP Hyam d i j Hij.
+      have {Hyam} Hsuff := Hyam d.
+      rewrite -(subnKC Hij).
+      elim: (j-i) => [| r IHr]; first by rewrite addn0.
+      apply: (leq_trans _ IHr).
+      rewrite addnS; exact: Hsuff.
+    - move=> H; apply/is_yamP => i d.
+      exact: H.
+  Qed.
+
   Lemma is_part_eval_yam s : is_yam s -> is_part (evalseq s).
   Proof. by case: s => [//= | s0 s] /= /andP []. Qed.
 

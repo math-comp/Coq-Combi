@@ -69,6 +69,32 @@ Section Partition.
       exact: H.
   Qed.
 
+  Lemma part_len_lt p q :
+    (forall i, nth 0 p i = nth 0 q i) -> is_part p -> is_part q -> size p = size q.
+  Proof.
+    wlog Hwlog: p q / (size p) <= (size q).
+      move=> Hwlog Hnth.
+      by case: (leqP (size p) (size q)) => [|/ltnW] /Hwlog H/H{H}H/H{H} ->.
+    move=> Hnth /is_part_ijP [] Hlastp Hp /is_part_ijP [] Hlastq Hq.
+    apply anti_leq; rewrite Hwlog {Hwlog} /=.
+    case: q Hnth Hlastq Hq => [//=|q0 q] Hnth Hlastq Hq.
+    rewrite leqNgt; apply (introN idP) => Habs.
+    move: Hlastq.
+    have:= Habs; rewrite -(ltn_predK Habs) ltnS => H.
+    have:= Hq _ _ H.
+    by rewrite nth_last /= -Hnth nth_default // leqn0 => /eqP ->.
+  Qed.
+
+  Lemma part_eqP p q :
+    is_part p -> is_part q -> reflect (forall i, nth 0 p i = nth 0 q i) (p == q).
+  Proof.
+    move=> Hp Hq.
+    apply (iffP idP) => [/eqP -> //| H].
+    apply/eqP; apply (eq_from_nth (x0 := 0)).
+    - exact: part_len_lt.
+    - move=> i _; exact: H.
+  Qed.
+
   Lemma part_head0F sh : head 1 sh == 0 -> is_part sh = false.
   Proof.
     elim: sh => [//= | sh0 sh IHsh] /= /eqP ->.
@@ -416,6 +442,13 @@ Section SkewShape.
       apply/andP; split; first by apply (H 0).
       apply: IHinn; split; first exact Hsize.
       move=> i; by apply (H i.+1).
+  Qed.
+
+  Lemma included_behead p1 p2 :
+    included p1 p2 -> included (behead p1) (behead p2).
+  Proof.
+    case: p1 => [//=|a l].
+      by case: p2 => [//=|b s] /= /andP [].
   Qed.
 
   Lemma included_refl sh : included sh sh.

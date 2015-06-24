@@ -156,6 +156,31 @@ Proof.
     by rewrite leqW.
 Qed.
 
+Lemma sum_iota_sumnE l n :
+  size l <= n -> \sum_(i <- iota 0 n) nth 0 l i = sumn l.
+Proof.
+  elim: l n => [n _| l0 l IHl n] /=.
+    elim: n => [|n IHn]; first by rewrite big_nil.
+    by rewrite -addn1 iota_add big_cat /= IHn big_cons big_nil nth_default.
+  case: n => [//= | n].
+  rewrite ltnS => /IHl {IHl} <-.
+  rewrite /= big_cons /=.
+  rewrite -add1n iota_addl big_map.
+  by congr (_ + \sum_(j <- _ ) _).
+Qed.
+
+Lemma drop_rev (T : eqType) (l : seq T) i : drop i (rev l) = rev (take (size l - i) l).
+Proof.
+  elim: i l => [| i IHi] l.
+    by rewrite drop0 subn0 take_size.
+  case/lastP: l => [//= | l' ln].
+  rewrite rev_rcons /= IHi; congr (rev _).
+  rewrite size_rcons subSS -cats1 take_cat.
+  case: ltnP => //= /take_oversize ->.
+  suff -> : size l' - i - size l' = 0 by rewrite cats0.
+  by rewrite subnAC subnn sub0n.
+Qed.
+
 Lemma incr_nth_inj sh : injective (incr_nth sh).
 Proof.
   move=> i j Hsh.
