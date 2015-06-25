@@ -108,6 +108,14 @@ Section Partition.
     by move: Head; rewrite Hsh0 leqn0.
   Qed.
 
+  Lemma nth_part_non0 sh i : is_part sh -> i < size sh -> nth 0 sh i != 0.
+  Proof.
+    elim: i sh => [//= | i IHi] [//=| s0 s].
+      by move=> /part_head_non0.
+    move=> /= /andP [] _.
+    exact: IHi.
+  Qed.
+
   Lemma part0 sh : is_part sh -> sumn sh = 0 -> sh = [::].
   Proof. move/part_head_non0; by case: sh => //= [] [|s0]. Qed.
 
@@ -541,6 +549,15 @@ Section SkewShape.
   Proof.
     elim: inner outer => [//= | inn0 inn IHinn] /= [//= | out0 out] /=.
     by rewrite IHinn.
+  Qed.
+
+  Lemma nth_diff_shape inn out i : nth 0 (diff_shape inn out) i = nth 0 out i - nth 0 inn i.
+  Proof.
+    elim: inn out i => [| inn0 inn IHinn] out i //=.
+      by rewrite (@nth_default _ _ [::]) // subn0.
+    case: out => [| out0 out] /=.
+      by rewrite nth_default.
+    by case: i => [| i] //=.
   Qed.
 
   Lemma sumn_diff_shape inner outer :
