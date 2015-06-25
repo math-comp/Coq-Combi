@@ -782,20 +782,22 @@ Section PackedSpec.
 
 Variable  inner eval outer : seq nat.
 
-Inductive inputSpec :=
-  InputSpec :
-    is_part inner ->
-    is_part outer ->
-    included inner outer ->
-    is_part eval ->
-    sumn eval = sumn (diff_shape inner outer) -> inputSpec.
+Record inputSpec :=
+  InputSpec {
+      inner_part : is_part inner;
+      outer_part : is_part outer;
+      incl       : included inner outer;
+      eval_part  : is_part eval;
+      sumn_eq    : sumn eval = sumn (diff_shape inner outer)
+    }.
 
-Inductive outputSpec (tab : seq (seq nat)) :=
-  OutputSpec :
-    is_skew_tableau inner tab ->
-    shape tab = diff_shape inner outer ->
-    is_yam (to_word tab) ->
-    evalseq (to_word tab) = eval -> outputSpec tab.
+Record outputSpec (tab : seq (seq nat)) :=
+  OutputSpec {
+      skew        : is_skew_tableau inner tab;
+      shaps_eq    : shape tab = diff_shape inner outer;
+      yam_to_word : is_yam (to_word tab);
+      eval_eq     : evalseq (to_word tab) = eval
+    }.
 
 Lemma outputSpecP tab :
   inputSpec -> tab \in (LRyamtab_list inner eval outer) -> outputSpec tab.
