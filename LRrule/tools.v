@@ -139,6 +139,14 @@ Qed.
 Lemma shape_rev T (s : seq (seq T)) : shape (rev s) = rev (shape s).
 Proof. rewrite /shape; elim: s => [//= | s0 s IHs] /=; by rewrite map_rev. Qed.
 
+Lemma eq_from_flatten_shape (T : eqType) (u v : seq (seq T)) :
+  (u = v) <-> ((flatten u = flatten v) /\ (shape u = shape v)).
+Proof.
+  split; first by move ->.
+  move=> [] Hflat Hshape.
+  by rewrite -(flattenK u) -(flattenK v) Hflat Hshape.
+Qed.
+
 Lemma sumn_iota a b x :
   a <= x < a + b -> sumn [seq ((i == x) : nat) | i <- iota a b] = 1.
 Proof.
