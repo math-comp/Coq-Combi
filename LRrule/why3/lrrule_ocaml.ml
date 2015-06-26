@@ -135,6 +135,60 @@ let lrrule_matrix outer inner eval =
   in
   count_rec 0 0
 
+(* variant using a matrix insteaf of a flat array work
+
+     row = current row, in [0 .. length outer[
+     idx = current index in row (from left to left),
+           in [0 .. outer[row]-inner[row][
+
+   ^  +-------------------+
+   |  |_______|___        |
+  row |  |________|___    |
+   |  |    |__________|___|
+   0  |_______|___________|
+               0 -> idx -->
+
+*)
+
+let lrrule_matrix2 outer inner eval =
+  let szshape = Array.length outer in (* = Array.length inner *)
+  let width = Array.mapi (fun r out -> out - inner.(r)) outer in
+  let max_width = Array.fold_left max 0 width in
+  let shift =
+    Array.mapi (fun r inn -> if r = 0 then 0 else inner.(r-1) - inn) inner in
+  let szeval = Array.length eval in
+  let innev = Array.make szeval 0 in
+  let lastinnev = ref 0 in (* only zeros from this index *)
+  let work = Array.make_matrix szshape max_width 0 in
+  let rec count_rec row idx =
+    if row = szshape then
+      1 (* found a solution *)
+    else if idx < 0 then
+      (* move from row [row-1] to row [row] *)
+      count_rec (row + 1) (if row + 1 < szshape then width.(row + 1) - 1 else 0)
+    else begin
+      let min =
+	if row > 0 && idx >= shift.(row)
+	then work.(row - 1).(idx - shift.(row)) + 1 else 0 in
+      let max =
+        if idx = width.(row) - 1 then !lastinnev
+        else Pervasives.min !lastinnev work.(row).(idx + 1) in
+      let sum = ref 0 in
+      for v = min to max do
+        if innev.(v) < eval.(v) && (v = 0 || innev.(v-1) > innev.(v)) then begin
+          innev.(v) <- innev.(v) + 1;
+          if v = !lastinnev then incr lastinnev;
+          work.(row).(idx) <- v;
+          sum := !sum + count_rec row (idx - 1);
+          innev.(v) <- innev.(v) - 1;
+          if !lastinnev = v+1 && innev.(v) = 0 then decr lastinnev
+        end
+      done;
+      !sum
+    end
+  in
+  count_rec 0 (width.(0) - 1)
+
 (* tests *)
 
 let test_lrrule lrrule =
@@ -147,7 +201,8 @@ let test_lrrule lrrule =
             [| 7;  6; 5; 5; 4; 3; 2; 1; 0       |] = 268484)
 
 (* let () = test_lrrule lrrule2 *)
-let () = test_lrrule lrrule_matrix
+(* let () = test_lrrule lrrule_matrix *)
+let () = test_lrrule lrrule_matrix2
 
 (*
   Local Variables:
