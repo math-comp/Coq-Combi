@@ -6,3 +6,4 @@ test_lrrule
 test_lrrule.byte
 *.bak
 *.annot
+lrrule_ocaml.opt

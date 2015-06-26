@@ -82,6 +82,7 @@ module Spec
   use import int.Int
   use import map.Map
   use import array.Array
+  use import matrix.Matrix
   use import Sum
   use import ArraySum
   use import int.NumOf
@@ -114,6 +115,12 @@ module Spec
   function numeq (a: array int) (v: int) (lo hi: int) : int =
     numof (\i: int. a[i] = v) lo hi
 
+  predicate valid_input (outer inner: array int) =
+    1 <= length outer = length inner /\
+    included inner outer /\
+    is_part inner /\ is_part outer
+
+(*
   predicate is_yam_prefix (w: array int) (len: int) =
     0 <= len <= length w /\
     (forall i: int. 0 <= i < len -> 0 <= w[i]) /\
@@ -164,34 +171,6 @@ module Spec
     is_yam_of_eval eval w /\
     is_tableau_reading s w
 
-  (** skew shapes *)
-
-  (* outer and inner after add_empty_row *)
-  predicate valid_normalized_outer_inner (outer inner: array int) =
-    2 <= length outer = length inner /\
-    included inner outer /\
-    is_part inner /\ is_part outer /\
-    outer[0] = inner[0] = outer[1]
-
-  predicate valid_end_of_row (outer inner end_of_row: array int) =
-    length end_of_row = length outer /\
-    end_of_row[0] = 0 /\
-    forall i. 1 <= i < length end_of_row ->
-              end_of_row[i] = sum 1 i (\ j. outer[j] - inner[j])
-
-  predicate valid_skew_shape (sh: skew_shape) =
-    valid_normalized_outer_inner sh.outer sh.inner /\
-    valid_end_of_row sh.outer sh.inner sh.end_of_row /\
-    length sh.end_of_overlap = length sh.below = length sh.outer /\
-    forall i. 1 <= i < length sh.end_of_overlap ->
-      sh.below[i] = sh.outer[i] - sh.inner[i-1] /\
-      sh.end_of_overlap[i] = sh.end_of_row[i-1] + sh.below[i]
-    (* end_of_overlap[0] and below[0] are left unspecified *)
-
-  lemma end_of_row_last:
-    forall sh. valid_skew_shape sh ->
-    sh.end_of_row[length sh.end_of_row - 1] = sum_array sh.outer - sum_array sh.inner
-
   lemma solution_length:
     forall s eval w. valid_skew_shape s ->
     is_solution s eval w -> length w = sum_array eval
@@ -212,20 +191,22 @@ module Spec
 
   lemma lt_not_eq:
     forall s1 s2: array int. lt_sol s1 s2 -> not (eq_sol s1 s2)
+*)
 
   type solution
 
-  function a2s (array int) : solution
-  function s2a solution : array int
+  function m2s (matrix int) : solution
+  function s2m solution : matrix int
 
-  axiom a2s2a_def:
-    forall a: array int. s2a (a2s a) = a
+  axiom m2s2m_def:
+    forall m: matrix int. s2m (m2s m) = m
 
   type solutions = {
     mutable sols: map int solution;
     mutable next: int; (* next slot for a solution *)
   }
 
+(*
   (* s[lo..hi[ is sorted for lt_sol *)
   predicate sorted (s: solutions) (lo hi: int) =
     forall i j: int. lo <= i < j < hi ->
@@ -244,262 +225,175 @@ module Spec
       is_solution sh eval (s2a (Map.get s.sols i))) /\
     (forall w. is_solution sh eval w ->
        exists i. 0 <= i < s.next /\ eq_sol w (s2a (Map.get s.sols i)))
+*)
 
   predicate valid_eval (eval: array int) =
     1 <= length eval /\ is_part eval /\
     eval[length eval - 1] = 0 (* sentinel: eval ends with a zero *)
 
-  predicate valid_innev (eval innev work: array int) (idx lastinnev: int) =
-    length eval = length innev /\
+  predicate valid_innev
+    (outer inner eval innev: array int)
+    (work: matrix int) (row idx lastinnev: int) =
     0 <= lastinnev < length eval /\
     is_part innev /\
     included innev eval /\
-    (forall i: int. 0 <= i < idx -> 0 <= work[i] < lastinnev) /\
+    (forall r. 0 <= r < row ->
+       forall i. 0 <= i < outer[r] - inner[r] ->
+         0 <= Matrix.get work (r, i) < lastinnev) /\
+    (forall i. idx < i < outer[row] - inner[row] ->
+         0 <= Matrix.get work (row, i) < lastinnev) /\
     (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
     (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
 
-  (* lemmas *)
-
-  lemma end_of_row_nondecreasing:
-    forall sh: skew_shape. valid_skew_shape sh ->
-    forall i. 0 < i < length sh.end_of_row ->
-    sh.end_of_row[i - 1] <= sh.end_of_row[i]
-
+(*
   lemma is_part_eq:
     forall a1 a2: array int. is_part a1 -> eq_sol a1 a2 -> is_part a2
+*)
+
+  predicate frame (w1 w2: matrix int) (width: array int) (row idx: int) =
+    "expl:frame"(
+    (forall r. 0 <= r < row ->
+       forall i. 0 <= i < width[r] ->
+         Matrix.get w2 (r, i) = Matrix.get w1 (r, i))
+    /\
+    (forall i. idx < i < width[row] ->
+         Matrix.get w2 (row, i) = Matrix.get w1 (row, i))
+   )
 
 end
 
 module LRrule
 
-  use import Spec
   use import int.Int
   use import int.MinMax
   use import ref.Refint
-  use import map.Map
   use import array.Array
+  use import matrix.Matrix
+
   use import Sum
   use import ArraySum
+  use import Spec
 
   val ghost solutions: solutions
 
-  val ghost store_solution (sh: skew_shape) (eval: array int) (w: array int)
+  val ghost store_solution (outer inner eval: array int) (w: matrix int)
     : unit
-    requires { is_solution sh eval w }
+    (* requires { is_solution sh eval w } *)
     writes   { solutions.sols, solutions.next }
     ensures  { solutions.next = (old solutions.next) + 1 }
     ensures  { solutions.sols =
-               Map.set (old solutions.sols) (old solutions.next) (a2s w) }
+               Map.set (old solutions.sols) (old solutions.next) (m2s w) }
 
-  let compute_end_of_row (outer inner: array int) : array int
-    requires { included inner outer }
-    ensures  { valid_end_of_row outer inner result }
+  let compute_width (outer inner: array int) : array int
+    requires { length outer = length inner }
+    ensures  { length result = length outer }
+    ensures  { forall j. 0 <= j < length outer ->
+    	       result[j] = outer[j] - inner[j] }
   =
     let n = Array.length outer in
-    let sums = Array.make n 0 in
-    for i = 1 to n-1 do
-      invariant { sums[0] = 0 }
-      invariant { forall k. 1 <= k < i ->
-                  sums[k] = sum 1 k (\j. outer[j] - inner[j]) }
-      sums[i] <- sums[i-1] + outer[i] - inner[i]
+    let width = Array.make n 0 in
+    for i = 0 to n - 1 do
+      invariant { forall j. 0 <= j < i -> width[j] = outer[j] - inner[j] }
+      width[i] <- outer[i] - inner[i]
     done;
-    sums
+    width
+
+  let max_array (a: array int) : int
+    ensures  { forall j. 0 <= j < length a -> a[j] <= result }
+  =
+    let m = ref 0 in
+    for i = 0 to Array.length a - 1 do
+      invariant { forall j. 0 <= j < i -> a[j] <= !m }
+      if a[i] > !m then m := a[i]
+    done;
+    !m
+
+  let compute_shift (inner: array int) : array int
+    ensures  { length result = length inner }
+    ensures  { forall j. 0 < j < length inner ->
+    	       result[j] = inner[j - 1] - inner[j] }
+  =
+    let n = Array.length inner in
+    let shift = Array.make n 0 in
+    for i = 1 to n - 1 do
+      invariant { forall j. 0 < j < i -> shift[j] = inner[j-1] - inner[j] }
+      shift[i] <- inner[i-1] - inner[i]
+    done;
+    shift
 
   (*
+     row = current row, in [0 .. length outer[
+     idx = current index in row (from left to left),
+           in [0 .. outer[row]-inner[row][
 
- szshape = 3
-
-         +--------------+
-    2    |       |      |
-         +-------+------+-----+
-    1            |            |
-                 +------------+
-    0                         |
-                              +
+   ^  +-------------------+
+   |  |_______|___        |
+  row |  |________|___    |
+   |  |    |__________|___|
+   0  |_______|___________|
+               0 -> idx -->
   *)
 
-  (* TODO: bundle work, innev, and lastinnev in a record *)
-
-  (* code *)
-
-  let lrrule (sh: skew_shape) (eval: array int) : int
-    requires { valid_skew_shape sh }
+  let lrrule (outer inner eval: array int) : int =
+    requires { valid_input outer inner }
     requires { valid_eval eval }
-    requires { sum_array eval = sum_array sh.outer - sum_array sh.inner }
-    requires { solutions.next = 0 }
-    ensures  { result = solutions.next }
-    ensures  { good_solutions sh eval solutions }
-    diverges
-  =
-    let n = sh.end_of_row[Array.length sh.end_of_row - 1] in
-    assert { 0 <= n };
-    assert { n = sum_array eval };
-    let szshape = Array.length sh.outer in (* = Array.length inner *)
+    requires { sum_array eval = sum_array outer - sum_array inner }
+    let szshape = Array.length outer in (* = Array.length inner *)
+    let width = compute_width outer inner in
+    let max_width = max_array width in
+    let shift = compute_shift inner in
     let szeval = Array.length eval in
     let innev = Array.make szeval 0 in
     let lastinnev = ref 0 in (* only zeros from this index *)
-    let work = Array.make n 0 in
-    (* row = current row
-       idx = current index in work, from the start *)
-    let rec count_rec (row idx: int)
-      requires { 1 <= row <= szshape = length sh.outer }
-      requires { if row < szshape then
-                 sh.end_of_row[row-1] <= idx <= sh.end_of_row[row]
-                 else idx = n }
-      requires { valid_innev eval innev work idx !lastinnev }
-      requires { is_solution_prefix sh eval work idx }
-      diverges
+    let work = Matrix.make szshape max_width 0 in
+    let rec count_rec (row idx: int) : int =
+      requires { 0 <= row <= szshape }
+      requires { if row < szshape then 0 <= idx < width[row] else idx = 0 }
       ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
-      ensures  { forall i. 0 <= i < idx -> work[i] = (old work)[i] }
+      ensures  { frame (old work) work width row idx }
+      requires { valid_innev outer inner eval innev work row idx !lastinnev }
+      variant  { szshape - row, idx }
       ensures  { !lastinnev = old !lastinnev }
-      ensures  { result = solutions.next - old solutions.next >= 0 }
-      ensures  { sorted solutions (old solutions.next) solutions.next }
-      ensures  { forall i. old solutions.next <= i < solutions.next ->
-                 let w = s2a (Map.get solutions.sols i) in
-                 is_solution sh eval w /\ eq_prefix (old work) w idx }
-      ensures  { forall w. is_solution sh eval w ->
-                 eq_prefix (old work) w idx ->
-                 exists i. old solutions.next <= i < solutions.next /\
-                           eq_sol w (s2a (Map.get solutions.sols i)) }
-      ensures  { forall i. 0 <= i < old solutions.next ->
-                 Map.get solutions.sols i = Map.get (old solutions.sols) i }
-      =
-      assert { sh.end_of_overlap[1] = 0 };
-      assert { forall row idx.
-               2 <= row < length sh.below ->
-               sh.end_of_row[row-1] <= idx < sh.end_of_overlap[row] ->
-               sh.end_of_row[row-2] <= idx - sh.below[row] < sh.end_of_row[row-1] };
-      if row = szshape then begin
-        (* found a solution *)
-        assert { idx = n };
-        ghost store_solution sh eval work;
-        1
-      end
-      else if idx = sh.end_of_row[row] then
+      if row = szshape then
+        1 (* found a solution *)
+      else if idx < 0 then
         (* move from row [row-1] to row [row] *)
-        count_rec (row + 1) idx
+        count_rec (row + 1)
+	  (if row + 1 < szshape then width[row + 1] - 1 else 0)
       else begin
         let min = abstract ensures { result =
-            if idx < sh.end_of_overlap[row] then work[idx - sh.below[row]] + 1 else 0
-          } if idx < sh.end_of_overlap[row] then work[idx - sh.below[row]] + 1 else 0
-          end in
+          if row > 0 && idx >= shift[row]
+          then Matrix.get work (row - 1, idx - shift[row]) + 1 else 0 }
+          if row > 0 && idx >= shift[row]
+          then Matrix.get work (row - 1, idx - shift[row]) + 1 else 0 end in
         let max = abstract ensures { result =
-          if idx = sh.end_of_row[row-1] then !lastinnev
-          else MinMax.min !lastinnev work[idx - 1] }
-          if idx = sh.end_of_row[row-1] then !lastinnev
-          else MinMax.min !lastinnev work[idx - 1]
-        end in
-        assert { forall w. is_solution sh eval w -> eq_prefix work w idx ->
-                 min <= w[idx] <= max };
+          if idx = width[row] - 1 then !lastinnev
+          else MinMax.min !lastinnev (Matrix.get work (row, idx + 1)) }
+          if idx = width[row] - 1 then !lastinnev
+          else MinMax.min !lastinnev (Matrix.get work (row, idx + 1)) end in
         let sum = ref 0 in
         'Init:
         for v = min to max do
           invariant { !lastinnev = at !lastinnev 'Init }
           invariant { forall i. 0 <= i < length innev ->
                       innev[i] = (at innev 'Init)[i] }
-          invariant { forall i. 0 <= i < idx -> work[i] = (at work 'Init)[i] }
+          invariant { frame (at work 'Init) work width row idx }
           invariant { "expl: valid_innev"
-                      valid_innev eval innev work idx !lastinnev }
-          invariant { "expl: is_yam" is_yam_prefix work idx }
-          invariant { is_tableau_reading_prefix sh work idx }
-          invariant { !sum = solutions.next - at solutions.next 'Init >= 0 }
-          invariant { "expl: sorted solutions"
-                    sorted solutions (at solutions.next 'Init) solutions.next }
-          invariant { "expl: only solutions"
-                      forall i. at solutions.next 'Init <= i < solutions.next ->
-                      let w = s2a (Map.get solutions.sols i) in
-                      is_solution sh eval w /\
-                      eq_prefix (at work 'Init) w idx /\
-                      min <= w[idx] < v }
-          invariant { "expl: all solutions"
-                      forall w. is_solution sh eval w ->
-                      eq_prefix (at work 'Init) w idx ->
-                      min <= w[idx] < v ->
-                      exists i. at solutions.next 'Init <= i < solutions.next /\
-                                eq_sol w (s2a (Map.get solutions.sols i)) }
-          invariant { forall i. 0 <= i < at solutions.next 'Init ->
-                Map.get solutions.sols i = Map.get (at solutions.sols 'Init) i }
-          'L:
+                  valid_innev outer inner eval innev work row idx !lastinnev }
           if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
             innev[v] <- innev[v] + 1;
             if v = !lastinnev then lastinnev += 1;
             assert { 0 <= v < !lastinnev };
-            work[idx] <- v;
-            sum += count_rec row (idx+1);
+            Matrix.set work (row, idx) v;
+            sum += count_rec row (idx - 1);
             innev[v] <- innev[v] - 1;
-            assert { eq_sol innev (at innev 'L) };
             if !lastinnev = v+1 && innev[v] = 0 then lastinnev -= 1
           end
         done;
         !sum
       end
-    in count_rec 1 0
-
-  let add_empty_row
-    (outer: array int) (inner: array int) : (array int, array int)
-    requires { 1 <= length outer = length inner }
-    requires { included inner outer}
-    ensures  { let (out, inn) = result in
-               length out = length inn = 1 + length outer }
-    ensures  { let (out, inn) = result in
-               out[0] = inn[0] = outer[0] /\
-               forall k. 1 <= k <= length outer ->
-                 out[k] = outer[k-1] /\ inn[k] = inner[k-1] }
-    ensures  { let (out, inn) = result in
-		sum_array out = outer [0] + sum_array outer /\
-		sum_array inn = outer [0] + sum_array inner }
-    ensures  { let (out, inn) = result in included inn out }
-  = let sz = Array.length outer in
-    let n = outer[0] in
-    let out = Array.make (sz + 1) n in
-    let inn = Array.make (sz + 1) n in
-    for k = 1 to sz do
-      invariant { out[0] = inn[0] = outer[0] }
-      invariant { forall j. 1 <= j < k ->
-                  out[j] = outer[j-1] /\ inn[j] = inner[j-1] }
-      out[k] <- outer[k - 1]; inn[k] <- inner[k - 1]
-    done;
-    (out, inn)
-
-  let compute_skew_shape (outer inner: array int) : skew_shape
-    requires { 1 <= length outer = length inner }
-    requires { included inner outer }
-    requires { is_part inner /\ is_part outer }
-    ensures  { valid_skew_shape result }
-    ensures  { length result.outer = length result.inner = 1 + length outer }
-    ensures  { result.outer[0] = result.inner[0] = outer[0] /\
-               forall k. 1 <= k <= length outer ->
-                 result.outer[k] = outer[k-1] /\ result.inner[k] = inner[k-1] }
-    ensures  { sum_array result.outer = outer [0] + sum_array outer }
-    ensures  { sum_array result.inner = outer [0] + sum_array inner }
-  =
-    let (outer, inner) = add_empty_row outer inner in
-    assert { valid_normalized_outer_inner outer inner };
-    let end_of_row = compute_end_of_row outer inner in
-    let n = Array.length outer in
-    let eoo = Array.make n 0 in
-    let below = Array.make n 0 in
-    for r = 1 to n-1 do
-      invariant { forall i. 1 <= i < r ->
-        below[i] = outer[i] - inner[i-1] /\
-        eoo[i] = end_of_row[i-1] + below[i] }
-      below[r] <- outer[r] - inner[r-1];
-      eoo[r] <- end_of_row[r-1] + below[r]
-    done;
-    { outer = outer; inner = inner; end_of_row = end_of_row;
-      end_of_overlap = eoo; below = below }
-
-  let lrrule2 outer inner eval
-    requires { 1 <= length outer = length inner }
-    requires { included inner outer }
-    requires { is_part inner /\ is_part outer }
-    requires { valid_eval eval }
-    requires { sum_array eval = sum_array outer - sum_array inner }
-    diverges
-  =
-    let sh = compute_skew_shape outer inner in
-    ghost solutions.next <- 0;
-    lrrule sh eval
+    in
+    count_rec 0 (width[0] - 1)
 
 end
 
