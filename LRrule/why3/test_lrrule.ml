@@ -1,6 +1,6 @@
 
 open Why3extract
-open Lrrule__LRruleMatrix
+open Lrrule__LRrule
 
 (*
 time ./test_lrrule 11 10 9 8 7 6 5 4 3 2 1 - 7 6 5 5 4 3 2 1 - 7 6 5 5 4 3 2 1
