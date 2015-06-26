@@ -1,6 +1,6 @@
 
 open Why3extract
-open Lrrule__LRrule
+open Lrrule__LRruleMatrix
 
 (*
 time ./test_lrrule 11 10 9 8 7 6 5 4 3 2 1 - 7 6 5 5 4 3 2 1 - 7 6 5 5 4 3 2 1
@@ -28,4 +28,4 @@ let [outer; inner; eval] =
 
 let () =
   Format.printf "%s@."
-    (Why3__BigInt.to_string (lrrule2 outer inner eval))
+    (Why3__BigInt.to_string (lrrule outer inner eval))

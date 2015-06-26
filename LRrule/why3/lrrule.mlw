@@ -503,6 +503,86 @@ module LRrule
 
 end
 
+module LRruleMatrix
+
+  use import int.Int
+  use import int.MinMax
+  use import ref.Refint
+  use import array.Array
+  use import matrix.Matrix
+
+  use import Sum
+  use import ArraySum
+  use import Spec
+
+  predicate valid_innev (eval innev: array int) (lastinnev: int) =
+    0 <= lastinnev < length eval /\
+    is_part innev /\
+    included innev eval /\
+    (* (forall i: int. 0 <= i < idx -> 0 <= work[i] < lastinnev) /\ *)
+    (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
+    (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
+
+  let lrrule (outer inner eval: array int) : int =
+    requires { 1 <= length outer = length inner }
+    requires { included inner outer }
+    requires { is_part inner /\ is_part outer }
+    requires { valid_eval eval }
+    requires { sum_array eval = sum_array outer - sum_array inner }
+    let szshape = Array.length outer in (* = Array.length inner *)
+    let width = outer[0] in
+    let szeval = Array.length eval in
+    let innev = Array.make szeval 0 in
+    let lastinnev = ref 0 in (* only zeros from this index *)
+    let work = Matrix.make szshape width 0 in
+    let rec count_rec (row idx: int) : int =
+      requires { 0 <= row <= szshape }
+      requires { if row < szshape
+      	       	 then width - outer[row] <= idx <= width - inner[row]
+                 else idx = 0 }
+      requires { valid_innev eval innev !lastinnev }
+      variant  { szshape - row, width - idx }
+      ensures  { !lastinnev = old !lastinnev }
+      if row = szshape then
+        1 (* found a solution *)
+      else if idx = width - inner[row] then
+        (* move from row [row-1] to row [row] *)
+        count_rec (row + 1)
+  	(if row + 1 < szshape then width - outer[row + 1] else 0)
+      else begin
+        let min = abstract ensures { result =
+          if row > 0 && idx < width - inner[row - 1]
+    	  then Matrix.get work (row - 1, idx) + 1 else 0 }
+	  if row > 0 && idx < width - inner[row - 1]
+    	  then Matrix.get work (row - 1, idx) + 1 else 0 end in
+        let max = abstract ensures { result =
+          if idx = width - outer[row] then !lastinnev
+          else MinMax.min !lastinnev (Matrix.get work (row, idx - 1)) }
+          if idx = width - outer[row] then !lastinnev
+          else MinMax.min !lastinnev (Matrix.get work (row, idx - 1)) end in
+        let sum = ref 0 in
+        'Init:
+        for v = min to max do
+          invariant { !lastinnev = at !lastinnev 'Init }
+          invariant { "expl: valid_innev"
+                      valid_innev eval innev !lastinnev }
+          if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
+            innev[v] <- innev[v] + 1;
+            if v = !lastinnev then lastinnev += 1;
+            assert { 0 <= v < !lastinnev };
+            Matrix.set work (row, idx) v;
+            sum += count_rec row (idx + 1);
+            innev[v] <- innev[v] - 1;
+            if !lastinnev = v+1 && innev[v] = 0 then lastinnev -= 1
+          end
+        done;
+        !sum
+      end
+    in
+    count_rec 0 0
+
+end
+
 (*
 Local Variables:
 compile-command: "why3 ide lrrule"

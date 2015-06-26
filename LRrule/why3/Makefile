@@ -20,7 +20,7 @@ OCAMLLIB= why3__BuiltIn__BuiltIn.ml \
  ref__Refint.ml \
  array__Array.ml
 
-EXTRACT=lrrule__LRrule.ml
+EXTRACT=lrrule__Spec.ml lrrule__LRrule.ml lrrule__LRruleMatrix.ml
 
 OPAM:=~/.opam/$(shell opam switch show)/lib
 LIBDIR:=$(shell why3 --print-libdir)/why3
@@ -31,8 +31,11 @@ test_lrrule: $(EXTRACT) debug.ml test_lrrule.ml
 test_lrrule.byte: $(EXTRACT) debug.ml test_lrrule.ml
 	ocamlc -o $@ -g -annot -I $(OPAM)/zarith zarith.cma -I $(LIBDIR) why3extract.cma $(OCAMLLIB) debug.ml $(EXTRACT) test_lrrule.ml
 
+lrrule_ocaml.opt: lrrule_ocaml.ml
+	ocamlopt -o $@ $^
+
 $(EXTRACT): lrrule.mlw
-	why3 extract -D ocaml64 -L . -T lrrule.LRrule -o .
+	why3 extract -D ocaml64 -L . -T lrrule.LRruleMatrix -o .
 
 # proof of equivalence
 Spec.v: lrrule.mlw
