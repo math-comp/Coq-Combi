@@ -24,6 +24,10 @@ Unset Strict Implicit.
 (** TODO: these probably should be contributed to SSReflect itself            *)
 (******************************************************************************)
 
+(* Some automatization *)
+Lemma nth_nil i : nth 0 [::] i = 0.
+Proof. by rewrite nth_default. Qed.
+Hint Resolve nth_nil.
 
 Section RCons.
 
@@ -70,7 +74,7 @@ Section RCons.
   Qed.
 
   Lemma nth_set_nth_expand a b l i c j :
-    (size l <= j < i) ->  nth a (set_nth b l i c) j = b.
+    (size l <= j < i) -> nth a (set_nth b l i c) j = b.
   Proof.
     elim: l i j => [/= | l0 l IHl].
     - elim => [//= | i' Hi] /=.
@@ -164,18 +168,22 @@ Proof.
     by rewrite leqW.
 Qed.
 
-Lemma sum_iota_sumnE l n :
-  size l <= n -> \sum_(i <- iota 0 n) nth 0 l i = sumn l.
+Lemma sumn_take r s : sumn (take r s) = \sum_(0 <= i < r) nth 0 s i.
 Proof.
-  elim: l n => [n _| l0 l IHl n] /=.
-    elim: n => [|n IHn]; first by rewrite big_nil.
-    by rewrite -addn1 iota_add big_cat /= IHn big_cons big_nil nth_default.
-  case: n => [//= | n].
-  rewrite ltnS => /IHl {IHl} <-.
-  rewrite /= big_cons /=.
-  rewrite -add1n iota_addl big_map.
-  by congr (_ + \sum_(j <- _ ) _).
+  elim: r s => [|r IHr] s /=.
+    by rewrite take0 /index_iota /= big_nil.
+  case: s => [| s0 s] /=.
+    rewrite {IHr} (eq_bigr (fun _ => 0)) //.
+    rewrite big_const_nat subn0.
+    by elim: r.
+  rewrite IHr /index_iota !subn0 /= big_cons /=.
+  congr (_ + _); rewrite -add1n iota_addl big_map.
+  exact: eq_bigr.
 Qed.
+
+Lemma sum_iota_sumnE l n :
+  size l <= n -> \sum_(0 <= i < n) nth 0 l i = sumn l.
+Proof. by rewrite -sumn_take => /take_oversize ->. Qed.
 
 Lemma take_rev (T : eqType) (l : seq T) i : take i (rev l) = rev (drop (size l - i) l).
 Proof.
@@ -204,6 +212,43 @@ Proof.
   by rewrite subnAC subnn sub0n.
 Qed.
 
+Lemma drop_drop (T : eqType) (s : seq T) n1 n2 :
+  drop n1 (drop n2 s) = drop (n1 + n2) s.
+Proof.
+  elim: s n1 n2 => [| s0 s IHs] //=.
+  case=> [//= | n1] n2; first by rewrite drop0 add0n.
+  rewrite addSn; case: n2 => [//=| n2]; first by rewrite addn0.
+  by rewrite -addSnnS.
+Qed.
+
+Lemma rev_flatten (T : eqType) (l : seq (seq T)) :
+  rev (flatten l) = flatten (rev (map rev l)).
+Proof.
+  elim: l => [| l0 l IHl] //=.
+  by rewrite rev_cons flatten_rcons -IHl rev_cat.
+Qed.
+
+Lemma rev_reshape (T : eqType) s (l : seq T) :
+  size l = sumn s -> rev (map rev (reshape (rev s) (rev l))) = reshape s l.
+Proof.
+  move=> H; apply eq_from_flatten_shape; split.
+  - rewrite reshapeKr; last by rewrite H.
+    rewrite -rev_flatten reshapeKr; first by rewrite revK.
+    by rewrite size_rev H sumn_rev.
+  - rewrite shape_rev /shape -map_comp.
+    rewrite (eq_map (f2 := size)); last by move=> v; rewrite /= size_rev.
+    rewrite -/(shape _) reshapeKl; last by rewrite size_rev sumn_rev H.
+    rewrite -/(shape _) reshapeKl; last by rewrite H.
+    by rewrite revK.
+Qed.
+
+Lemma nth_reshape (T : eqType) s (l : seq T) n :
+  nth [::] (reshape s l) n = take (nth 0 s n) (drop (sumn (take n s)) l).
+Proof.
+  elim: n s l => [| n IHn] [| s0 s] l; rewrite ?take0 ?drop0 //=.
+  rewrite addnC -drop_drop; exact: IHn.
+Qed.
+
 Lemma incr_nth_inj sh : injective (incr_nth sh).
 Proof.
   move=> i j Hsh.
@@ -227,7 +272,6 @@ Proof.
         - by rewrite (ltnW Hij) leqNgt Hij.
   - move=> k Hk; by rewrite !nth_incr_nth !addnA [(_ == _) + _]addnC.
 Qed.
-
 
 Lemma filter_perm_eq (T : eqType) (u v : seq T) P :
   perm_eq u v -> perm_eq (filter P u) (filter P v).
