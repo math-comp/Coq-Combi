@@ -238,9 +238,9 @@ module Spec
     is_part innev /\
     included innev eval /\
     (forall r. 0 <= r < row ->
-       forall i. outer[0] - outer[r] <= i < outer[0] - inner[r] ->
+       forall i. 0 <= i < outer[r] - inner[r] ->
          0 <= Matrix.get work (r, i) < lastinnev) /\
-    (forall i. outer[0] - outer[row] <= i < idx ->
+    (forall i. idx < i < outer[row] - inner[row] ->
          0 <= Matrix.get work (row, i) < lastinnev) /\
     (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
     (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
@@ -250,13 +250,13 @@ module Spec
     forall a1 a2: array int. is_part a1 -> eq_sol a1 a2 -> is_part a2
 *)
 
-  predicate frame (w1 w2: matrix int) (width row idx: int) =
+  predicate frame (w1 w2: matrix int) (width: array int) (row idx: int) =
     "expl:frame"(
     (forall r. 0 <= r < row ->
-       forall i. 0 <= i < width ->
+       forall i. 0 <= i < width[r] ->
          Matrix.get w2 (r, i) = Matrix.get w1 (r, i))
     /\
-    (forall i. 0 <= i < idx ->
+    (forall i. idx < i < width[row] ->
          Matrix.get w2 (row, i) = Matrix.get w1 (row, i))
    )
 
@@ -284,43 +284,93 @@ module LRrule
     ensures  { solutions.sols =
                Map.set (old solutions.sols) (old solutions.next) (m2s w) }
 
+  let compute_width (outer inner: array int) : array int
+    requires { length outer = length inner }
+    ensures  { length result = length outer }
+    ensures  { forall j. 0 <= j < length outer ->
+    	       result[j] = outer[j] - inner[j] }
+  =
+    let n = Array.length outer in
+    let width = Array.make n 0 in
+    for i = 0 to n - 1 do
+      invariant { forall j. 0 <= j < i -> width[j] = outer[j] - inner[j] }
+      width[i] <- outer[i] - inner[i]
+    done;
+    width
+
+  let max_array (a: array int) : int
+    ensures  { forall j. 0 <= j < length a -> a[j] <= result }
+  =
+    let m = ref 0 in
+    for i = 0 to Array.length a - 1 do
+      invariant { forall j. 0 <= j < i -> a[j] <= !m }
+      if a[i] > !m then m := a[i]
+    done;
+    !m
+
+  let compute_shift (inner: array int) : array int
+    ensures  { length result = length inner }
+    ensures  { forall j. 0 < j < length inner ->
+    	       result[j] = inner[j - 1] - inner[j] }
+  =
+    let n = Array.length inner in
+    let shift = Array.make n 0 in
+    for i = 1 to n - 1 do
+      invariant { forall j. 0 < j < i -> shift[j] = inner[j-1] - inner[j] }
+      shift[i] <- inner[i-1] - inner[i]
+    done;
+    shift
+
+  (*
+     row = current row, in [0 .. length outer[
+     idx = current index in row (from left to left),
+           in [0 .. outer[row]-inner[row][
+
+   ^  +-------------------+
+   |  |_______|___        |
+  row |  |________|___    |
+   |  |    |__________|___|
+   0  |_______|___________|
+               0 -> idx -->
+  *)
+
   let lrrule (outer inner eval: array int) : int =
     requires { valid_input outer inner }
     requires { valid_eval eval }
     requires { sum_array eval = sum_array outer - sum_array inner }
     let szshape = Array.length outer in (* = Array.length inner *)
-    let width = outer[0] in
+    let width = compute_width outer inner in
+    let max_width = max_array width in
+    let shift = compute_shift inner in
     let szeval = Array.length eval in
     let innev = Array.make szeval 0 in
     let lastinnev = ref 0 in (* only zeros from this index *)
-    let work = Matrix.make szshape width 0 in
+    let work = Matrix.make szshape max_width 0 in
     let rec count_rec (row idx: int) : int =
       requires { 0 <= row <= szshape }
-      requires { if row < szshape
-                 then width - outer[row] <= idx <= width - inner[row]
-                 else idx = 0 }
+      requires { if row < szshape then 0 <= idx < width[row] else idx = 0 }
       ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
       ensures  { frame (old work) work width row idx }
       requires { valid_innev outer inner eval innev work row idx !lastinnev }
-      variant  { szshape - row, width - idx }
+      variant  { szshape - row, idx }
       ensures  { !lastinnev = old !lastinnev }
       if row = szshape then
         1 (* found a solution *)
-      else if idx = width - inner[row] then
+      else if idx < 0 then
         (* move from row [row-1] to row [row] *)
         count_rec (row + 1)
-        (if row + 1 < szshape then width - outer[row + 1] else 0)
+	  (if row + 1 < szshape then width[row + 1] - 1 else 0)
       else begin
         let min = abstract ensures { result =
-          if row > 0 && idx < width - inner[row - 1]
-          then Matrix.get work (row - 1, idx) + 1 else 0 }
-          if row > 0 && idx < width - inner[row - 1]
-          then Matrix.get work (row - 1, idx) + 1 else 0 end in
+          if row > 0 && idx >= shift[row]
+          then Matrix.get work (row - 1, idx - shift[row]) + 1 else 0 }
+          if row > 0 && idx >= shift[row]
+          then Matrix.get work (row - 1, idx - shift[row]) + 1 else 0 end in
         let max = abstract ensures { result =
-          if idx = width - outer[row] then !lastinnev
-          else MinMax.min !lastinnev (Matrix.get work (row, idx - 1)) }
-          if idx = width - outer[row] then !lastinnev
-          else MinMax.min !lastinnev (Matrix.get work (row, idx - 1)) end in
+          if idx = width[row] - 1 then !lastinnev
+          else MinMax.min !lastinnev (Matrix.get work (row, idx + 1)) }
+          if idx = width[row] - 1 then !lastinnev
+          else MinMax.min !lastinnev (Matrix.get work (row, idx + 1)) end in
         let sum = ref 0 in
         'Init:
         for v = min to max do
@@ -335,7 +385,7 @@ module LRrule
             if v = !lastinnev then lastinnev += 1;
             assert { 0 <= v < !lastinnev };
             Matrix.set work (row, idx) v;
-            sum += count_rec row (idx + 1);
+            sum += count_rec row (idx - 1);
             innev[v] <- innev[v] - 1;
             if !lastinnev = v+1 && innev[v] = 0 then lastinnev -= 1
           end
@@ -343,7 +393,7 @@ module LRrule
         !sum
       end
     in
-    count_rec 0 0
+    count_rec 0 (width[0] - 1)
 
 end
 
