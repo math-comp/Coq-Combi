@@ -127,119 +127,6 @@ module Spec
     length s1 = length s2 /\
     eq_prefix s1 s2 (length s1)
 
-(*
-  predicate is_yam_prefix (w: array int) (len: int) =
-    0 <= len <= length w /\
-    (forall i: int. 0 <= i < len -> 0 <= w[i]) /\
-    (forall p: int. 0 <= p <= len ->
-       (* forall v: int. 0 <= v -> numeq w (v+1) 0 p <= numeq w v 0 p) *)
-       forall v1 v2. 0 <= v1 <= v2 -> numeq w v2 0 p <= numeq w v1 0 p)
-
-  predicate is_yam_of_eval_prefix (eval: array int) (w: array int) (len: int) =
-    is_yam_prefix w len /\
-    (forall i: int. 0 <= i < len -> 0 <= w[i] < length eval) /\
-    (forall v: int. 0 <= v < length eval -> numeq w v 0 len = eval[v])
-
-  predicate is_yam_of_eval (eval: array int) (w: array int) =
-    is_yam_of_eval_prefix eval w (length w)
-
-  (* TODO: requires commutation of sum and numeq *)
-  lemma is_yam_of_eval_length:
-    forall eval w.
-    is_yam_of_eval eval w -> length w = sum_array eval
-
-  type skew_shape = {
-    outer: array int;
-    inner: array int;
-    end_of_row: array int;
-    end_of_overlap: array int;
-    below: array int;
-  }
-
-  predicate non_decreasing_row_suffix
-    (outer inner: array int) (work: matrix int) (r start: int)
-  = forall i1 i2. start < i1 <= i2 < outer[r] - inner[r] ->
-                  Matrix.get work (r, i1) <= Matrix.get work (r, i2)
-
-  predicate increasing_column
-    (outer inner: array int) (work: matrix int) (r i: int)
-
-  predicate is_tableau_reading_prefix
-    (outer inner: array int) (work: matrix int) (row idx: int) =
-    (* each row of the tableau is non-decreasing (from left to right) *)
-    (forall r. 0 <= r < row ->
-       non_decreasing_row_suffix outer inner work r 0) /\
-    non_decreasing_row_suffix outer inner work row (idx + 1) /\
-    (* each column of the tableau is increasing (from bottom up) *)
-    (forall r: int. 1 <= r < length s.outer ->
-       forall i: int. i < len -> s.end_of_row[r-1] <= i < s.end_of_overlap[r] ->
-         w[i] > w[i - s.below[r]])
-
-  predicate is_tableau_reading (s: skew_shape) (w: array int) =
-    is_tableau_reading_prefix s w (length w)
-
-  predicate is_solution_prefix
-    (s: skew_shape) (eval: array int) (w: array int) (len: int) =
-    is_yam_of_eval_prefix eval w len /\
-    is_tableau_reading_prefix s w len
-
-  predicate is_solution (s: skew_shape) (eval: array int) (w: array int) =
-    is_yam_of_eval eval w /\
-    is_tableau_reading s w
-
-  lemma solution_length:
-    forall s eval w. valid_skew_shape s ->
-    is_solution s eval w -> length w = sum_array eval
-
-  (** storing solutions we have found so far *)
-
-  (* solutions t and u have the same prefix [0..i[ *)
-  predicate lt_sol (s1 s2: array int) =
-    length s1 = length s2 /\
-    exists i: int. 0 <= i < length s1 /\ eq_prefix s1 s2 i /\ s1[i] < s2[i]
-
-  predicate eq_sol (s1 s2: array int) =
-    length s1 = length s2 /\
-    eq_prefix s1 s2 (length s1)
-
-  lemma lt_not_eq:
-    forall s1 s2: array int. lt_sol s1 s2 -> not (eq_sol s1 s2)
-*)
-
-  type solution
-
-  function m2s (matrix int) : solution
-  function s2m solution : matrix int
-
-  axiom m2s2m_def:
-    forall m: matrix int. s2m (m2s m) = m
-
-  type solutions = {
-    mutable sols: map int solution;
-    mutable next: int; (* next slot for a solution *)
-  }
-
-(*
-  (* s[lo..hi[ is sorted for lt_sol *)
-  predicate sorted (s: solutions) (lo hi: int) =
-    forall i j: int. lo <= i < j < hi ->
-                     lt_sol (s2a (Map.get s.sols i)) (s2a (Map.get s.sols j))
-
-  (* a sorted array of solutions contains no duplicate *)
-  lemma no_duplicate:
-    forall s: solutions, lo hi: int. sorted s lo hi ->
-    forall i j: int. lo <= i < j < hi ->
-      not (eq_sol (s2a (Map.get s.sols i)) (s2a (Map.get s.sols j)))
-
-  predicate good_solutions (sh: skew_shape) (eval: array int) (s: solutions) =
-    0 <= s.next /\
-    sorted s 0 s.next /\
-    (forall i. 0 <= i < s.next ->
-      is_solution sh eval (s2a (Map.get s.sols i))) /\
-    (forall w. is_solution sh eval w ->
-       exists i. 0 <= i < s.next /\ eq_sol w (s2a (Map.get s.sols i)))
-*)
-
   predicate valid_eval (eval: array int) =
     1 <= length eval /\ is_part eval /\
     eval[length eval - 1] = 0 (* sentinel: eval ends with a zero *)
@@ -262,6 +149,7 @@ module Spec
   lemma is_part_eq:
     forall a1 a2: array int. is_part a1 -> eq_array a1 a2 -> is_part a2
 
+  (* two matrices coincide up to cell (row, idx), excluded *)
   predicate frame (outer inner: array int) (w1 w2: matrix int) (row idx: int) =
     (forall r. 0 <= r < row ->
        forall i. 0 <= i < outer[r] - inner[r] ->
@@ -275,6 +163,140 @@ module Spec
     valid_innev outer inner eval innev work1 row idx lastinnev ->
     frame outer inner work1 work2 row idx ->
     valid_innev outer inner eval innev work2 row idx lastinnev
+
+  (* tableau condition *)
+(*
+  predicate non_decreasing_row_suffix
+    (outer inner: array int) (work: matrix int) (r start: int)
+  = forall i1 i2. start < i1 <= i2 < outer[r] - inner[r] ->
+                  Matrix.get work (r, i1) <= Matrix.get work (r, i2)
+
+  (* cell (r,i) is greater than the cell right below, if it exists *)
+  predicate increasing_column
+    (outer inner: array int) (work: matrix int) (r i: int)
+  = r > 0 && i >= inner[r - 1] - inner[r] -> (* if there a cell below *)
+    Matrix.get work (r, i) >
+    Matrix.get work (r - 1, i - (inner[r - 1] - inner[r])) (* it is smaller *)
+
+  predicate is_tableau_reading_prefix
+    (outer inner: array int) (work: matrix int) (row idx: int) =
+    (* each row of the tableau is non-decreasing (from left to right) *)
+    (forall r. 0 <= r < row ->
+       non_decreasing_row_suffix outer inner work r 0) /\
+    (row < length outer ->
+      non_decreasing_row_suffix outer inner work row (idx + 1)) /\
+    (* each column of the tableau is increasing (from bottom up) *)
+    (forall r. 1 <= r < row ->
+       forall i. 0 <= i < outer[r] - inner[r] ->
+         increasing_column outer inner work r i) /\
+    (row < length outer ->
+      forall i. idx < i < outer[row] - inner[row] ->
+        increasing_column outer inner work row i)
+
+  predicate is_tableau_reading (outer inner: array int) (work: matrix int) =
+    is_tableau_reading_prefix outer inner work (length outer) 0
+*)
+
+  (* Yamanouchi condition *)
+(*
+  predicate is_yam_prefix (w: array int) (len: int) =
+    0 <= len <= length w /\
+    (forall i: int. 0 <= i < len -> 0 <= w[i]) /\
+    (forall p: int. 0 <= p <= len ->
+       forall v1 v2. 0 <= v1 <= v2 -> numeq w v2 0 p <= numeq w v1 0 p)
+
+  predicate is_yam_of_eval_prefix (eval: array int) (w: array int) (len: int) =
+    is_yam_prefix w len /\
+    (forall i: int. 0 <= i < len -> 0 <= w[i] < length eval) /\
+    (forall v: int. 0 <= v < length eval -> numeq w v 0 len = eval[v])
+
+  predicate is_yam_of_eval (eval: array int) (w: array int) =
+    is_yam_of_eval_prefix eval w (length w)
+
+  lemma is_yam_of_eval_length:
+    forall eval w.
+    is_yam_of_eval eval w -> length w = sum_array eval
+*)
+
+  (* solution *)
+(*
+  predicate is_solution_prefix
+    (s: skew_shape) (eval: array int) (w: array int) (len: int) =
+    is_yam_of_eval_prefix eval w len /\
+    is_tableau_reading_prefix s w len
+
+  predicate is_solution (s: skew_shape) (eval: array int) (w: array int) =
+    is_yam_of_eval eval w /\
+    is_tableau_reading s w
+
+  lemma solution_length:
+    forall s eval w. valid_skew_shape s ->
+    is_solution s eval w -> length w = sum_array eval
+*)
+
+  (* solutions are found in lexicographic order *)
+
+  predicate eq_rows (outer inner: array int) (w1 w2: matrix int) (row: int) =
+    forall r. 0 <= r < row ->
+      forall i. 0 <= i < outer[r] - inner[r] ->
+        Matrix.get w1 (r, i) = Matrix.get w2 (r, i)
+
+  predicate lt_sol (outer inner: array int) (w1 w2: matrix int) =
+    rows w1 = rows w2 = length outer /\ columns w1 = columns w2 /\
+    exists row col: int.
+      0 <= row < length outer /\ eq_rows outer inner w1 w2 row /\
+      (row < length outer ->
+        0 <= col < outer[row] - inner[row] /\
+        (forall i. col < i < outer[row] - inner[row] ->
+          Matrix.get w1 (row, i) = Matrix.get w2 (row, i)) /\
+        Matrix.get w1 (row, col) < Matrix.get w2 (row, col))
+
+  predicate eq_sol (outer inner: array int) (w1 w2: matrix int) =
+    rows w1 = rows w2 = length outer /\ columns w1 = columns w2 /\
+    eq_rows outer inner w1 w2 (length outer)
+
+  lemma lt_not_eq:
+    forall outer inner: array int, w1 w2: matrix int.
+    lt_sol outer inner w1 w2 -> not (eq_sol outer inner w1 w2)
+
+  (* a type to store solutions *)
+
+  type solution
+
+  function m2s (matrix int) : solution
+  function s2m solution : matrix int
+
+  axiom m2s2m_def:
+    forall m: matrix int. s2m (m2s m) = m
+
+  type solutions = {
+    mutable sols: map int solution;
+    mutable next: int; (* next slot for a solution *)
+  }
+
+  (* s[lo..hi[ is sorted for lt_sol *)
+  predicate sorted (outer inner: array int) (s: solutions) (lo hi: int) =
+    forall i j: int.
+      lo <= i < j < hi ->
+      lt_sol outer inner (s2m (Map.get s.sols i)) (s2m (Map.get s.sols j))
+
+  (* a sorted array of solutions contains no duplicate *)
+  lemma no_duplicate:
+    forall outer inner: array int, s: solutions, lo hi: int.
+    sorted outer inner s lo hi ->
+    forall i j: int. lo <= i < j < hi ->
+      not (eq_sol outer inner (s2m (Map.get s.sols i)) (s2m (Map.get s.sols j)))
+
+(*
+  predicate good_solutions (outer inner eval: array int) (s: solutions) =
+    0 <= s.next /\
+    sorted s 0 s.next /\
+    (forall i. 0 <= i < s.next ->
+      is_solution outer inner eval (s2m (Map.get s.sols i))) /\
+    (forall w. is_solution outer inner eval w ->
+       exists i. 0 <= i < s.next /\
+                 eq_sol outer inner w (s2m (Map.get s.sols i)))
+*)
 
 end
 
@@ -342,7 +364,7 @@ module LRrule
      idx = current index in row (from left to left),
            in [0 .. outer[row]-inner[row][
 
-   ^  +-------------------+
+   ^  _____________________
    |  |_______|___        |
   row |  |________|___    |
    |  |    |__________|___|
@@ -379,15 +401,16 @@ module LRrule
       ensures  { result = solutions.next - old solutions.next >= 0 }
       (*
       ensures  { forall i. old solutions.next <= i < solutions.next ->
-                 let w = s2a (Map.get solutions.sols i) in
-                 is_solution sh eval w /\ eq_prefix (old work) w idx }
+                 let w = s2m (Map.get solutions.sols i) in
+                 is_solution sh eval w /\
+                 frame outer inner (old work) w row idx }
       ensures  { forall w. is_solution sh eval w ->
                  eq_prefix (old work) w idx ->
                  exists i. old solutions.next <= i < solutions.next /\
-                           eq_sol w (s2a (Map.get solutions.sols i)) }
+                      eq_sol outer inner w (s2m (Map.get solutions.sols i)) }
+      *)
       ensures  { forall i. 0 <= i < old solutions.next ->
                  Map.get solutions.sols i = Map.get (old solutions.sols) i }
-      *)
       if row = szshape then begin
         (* found a solution *)
         ghost store_solution outer inner eval work;
@@ -424,19 +447,19 @@ module LRrule
                     sorted solutions (at solutions.next 'Init) solutions.next }
           invariant { "expl: only solutions"
                       forall i. at solutions.next 'Init <= i < solutions.next ->
-                      let w = s2a (Map.get solutions.sols i) in
+                      let w = s2m (Map.get solutions.sols i) in
                       is_solution sh eval w /\
-                      eq_prefix (at work 'Init) w idx /\
-                      min <= w[idx] < v }
+                      frame outer inner (at work 'Init) w row idx /\
+                      min <= Matrix.get w (row, idx) < v }
           invariant { "expl: all solutions"
                       forall w. is_solution sh eval w ->
-                      eq_prefix (at work 'Init) w idx ->
-                      min <= w[idx] < v ->
+                      frame outer inner (at work 'Init) w row idx ->
+                      min <= Matrix.get w (row, idx) < v ->
                       exists i. at solutions.next 'Init <= i < solutions.next /\
-                                eq_sol w (s2a (Map.get solutions.sols i)) }
+                         frame outer inner w (s2m (Map.get solutions.sols i)) }
+          *)
           invariant { forall i. 0 <= i < at solutions.next 'Init ->
                 Map.get solutions.sols i = Map.get (at solutions.sols 'Init) i }
-          *)
           'L:
           if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
             innev[v] <- innev[v] + 1;
