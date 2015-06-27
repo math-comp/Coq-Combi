@@ -240,7 +240,8 @@ module Spec
     (forall r. 0 <= r < row ->
        forall i. 0 <= i < outer[r] - inner[r] ->
          0 <= Matrix.get work (r, i) < lastinnev) /\
-    (forall i. idx < i < outer[row] - inner[row] ->
+    (row < length outer ->
+      forall i. idx < i < outer[row] - inner[row] ->
          0 <= Matrix.get work (row, i) < lastinnev) /\
     (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
     (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
@@ -250,15 +251,19 @@ module Spec
     forall a1 a2: array int. is_part a1 -> eq_sol a1 a2 -> is_part a2
 *)
 
-  predicate frame (w1 w2: matrix int) (width: array int) (row idx: int) =
-    "expl:frame"(
+  predicate frame (outer inner: array int) (w1 w2: matrix int) (row idx: int) =
     (forall r. 0 <= r < row ->
-       forall i. 0 <= i < width[r] ->
+       forall i. 0 <= i < outer[r] - inner[r] ->
          Matrix.get w2 (r, i) = Matrix.get w1 (r, i))
     /\
-    (forall i. idx < i < width[row] ->
+    (forall i. idx < i < outer[row] - inner[row] ->
          Matrix.get w2 (row, i) = Matrix.get w1 (row, i))
-   )
+
+  lemma valid_innev_framed:
+    forall outer inner eval innev work1 work2 row idx lastinnev.
+    valid_innev outer inner eval innev work1 row idx lastinnev ->
+    frame outer inner work1 work2 row idx ->
+    valid_innev outer inner eval innev work2 row idx lastinnev
 
 end
 
@@ -338,6 +343,9 @@ module LRrule
     requires { valid_input outer inner }
     requires { valid_eval eval }
     requires { sum_array eval = sum_array outer - sum_array inner }
+    requires { solutions.next = 0 }
+    ensures  { result = solutions.next }
+    (* ensures  { good_solutions sh eval solutions } *)
     let szshape = Array.length outer in (* = Array.length inner *)
     let width = compute_width outer inner in
     let max_width = max_array width in
@@ -348,15 +356,32 @@ module LRrule
     let work = Matrix.make szshape max_width 0 in
     let rec count_rec (row idx: int) : int =
       requires { 0 <= row <= szshape }
-      requires { if row < szshape then 0 <= idx < width[row] else idx = 0 }
+      requires { if row < szshape then -1 <= idx < width[row] else idx = 0 }
       ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
-      ensures  { frame (old work) work width row idx }
-      requires { valid_innev outer inner eval innev work row idx !lastinnev }
+      requires { "expl:valid_innev"
+                 valid_innev outer inner eval innev work row idx !lastinnev }
+      (* requires { is_solution_prefix sh eval work idx } *)
       variant  { szshape - row, idx }
       ensures  { !lastinnev = old !lastinnev }
-      if row = szshape then
+      ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
+      ensures  { "expl:frame" frame outer inner (old work) work row idx }
+      ensures  { result = solutions.next - old solutions.next >= 0 }
+      (*
+      ensures  { forall i. old solutions.next <= i < solutions.next ->
+                 let w = s2a (Map.get solutions.sols i) in
+                 is_solution sh eval w /\ eq_prefix (old work) w idx }
+      ensures  { forall w. is_solution sh eval w ->
+                 eq_prefix (old work) w idx ->
+                 exists i. old solutions.next <= i < solutions.next /\
+                           eq_sol w (s2a (Map.get solutions.sols i)) }
+      ensures  { forall i. 0 <= i < old solutions.next ->
+                 Map.get solutions.sols i = Map.get (old solutions.sols) i }
+      *)
+      if row = szshape then begin
+        (* found a solution *)
+        ghost store_solution outer inner eval work;
         1 (* found a solution *)
-      else if idx < 0 then
+      end else if idx < 0 then
         (* move from row [row-1] to row [row] *)
         count_rec (row + 1)
 	  (if row + 1 < szshape then width[row + 1] - 1 else 0)
@@ -377,9 +402,30 @@ module LRrule
           invariant { !lastinnev = at !lastinnev 'Init }
           invariant { forall i. 0 <= i < length innev ->
                       innev[i] = (at innev 'Init)[i] }
-          invariant { frame (at work 'Init) work width row idx }
-          invariant { "expl: valid_innev"
+          invariant { "expl:frame"
+                      frame outer inner (at work 'Init) work row idx }
+          invariant { "expl:valid_innev"
                   valid_innev outer inner eval innev work row idx !lastinnev }
+          invariant { !sum = solutions.next - at solutions.next 'Init >= 0 }
+          (*
+          invariant { is_tableau_reading_prefix sh work idx }
+          invariant { "expl: sorted solutions"
+                    sorted solutions (at solutions.next 'Init) solutions.next }
+          invariant { "expl: only solutions"
+                      forall i. at solutions.next 'Init <= i < solutions.next ->
+                      let w = s2a (Map.get solutions.sols i) in
+                      is_solution sh eval w /\
+                      eq_prefix (at work 'Init) w idx /\
+                      min <= w[idx] < v }
+          invariant { "expl: all solutions"
+                      forall w. is_solution sh eval w ->
+                      eq_prefix (at work 'Init) w idx ->
+                      min <= w[idx] < v ->
+                      exists i. at solutions.next 'Init <= i < solutions.next /\
+                                eq_sol w (s2a (Map.get solutions.sols i)) }
+          invariant { forall i. 0 <= i < at solutions.next 'Init ->
+                Map.get solutions.sols i = Map.get (at solutions.sols 'Init) i }
+          *)
           if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
             innev[v] <- innev[v] + 1;
             if v = !lastinnev then lastinnev += 1;
@@ -387,7 +433,8 @@ module LRrule
             Matrix.set work (row, idx) v;
             sum += count_rec row (idx - 1);
             innev[v] <- innev[v] - 1;
-            if !lastinnev = v+1 && innev[v] = 0 then lastinnev -= 1
+            (* assert { eq_sol innev (at innev 'L) }; *)
+           if !lastinnev = v+1 && innev[v] = 0 then lastinnev -= 1
           end
         done;
         !sum
