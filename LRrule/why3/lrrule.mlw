@@ -133,8 +133,8 @@ module Spec
 
   predicate valid_innev
     (outer inner eval innev: array int)
-    (work: matrix int) (row idx lastinnev: int) =
-    0 <= lastinnev < length eval /\
+    (work: matrix int) (row idx lastinnev: int)
+  = 0 <= lastinnev < length eval /\
     is_part innev /\
     included innev eval /\
     (forall r. 0 <= r < row ->
@@ -163,6 +163,17 @@ module Spec
     valid_innev outer inner eval innev work1 row idx lastinnev ->
     frame outer inner work1 work2 row idx ->
     valid_innev outer inner eval innev work2 row idx lastinnev
+
+  lemma frame_weakening:
+    forall outer inner work1 work2 row idx.
+    frame outer inner work1 work2 row (idx - 1) ->
+    frame outer inner work1 work2 row idx
+
+  lemma frame_trans:
+    forall outer inner work1 work2 work3 row idx.
+    frame outer inner work1 work2 row idx ->
+    frame outer inner work2 work3 row idx ->
+    frame outer inner work1 work3 row idx
 
   (* tableau condition *)
 (*
@@ -242,17 +253,24 @@ module Spec
         Matrix.get w1 (r, i) = Matrix.get w2 (r, i)
 
   predicate lt_sol (outer inner: array int) (w1 w2: matrix int) =
-    rows w1 = rows w2 = length outer /\ columns w1 = columns w2 /\
-    exists row col: int.
+    (* rows w1 = rows w2 = length outer /\ columns w1 = columns w2 /\ *)
+    exists row: int.
       0 <= row < length outer /\ eq_rows outer inner w1 w2 row /\
-      (row < length outer ->
-        0 <= col < outer[row] - inner[row] /\
+      exists col. 0 <= col < outer[row] - inner[row] /\
         (forall i. col < i < outer[row] - inner[row] ->
           Matrix.get w1 (row, i) = Matrix.get w2 (row, i)) /\
-        Matrix.get w1 (row, col) < Matrix.get w2 (row, col))
+        Matrix.get w1 (row, col) < Matrix.get w2 (row, col)
+
+  lemma frame_lt_sol:
+    forall outer inner w1 w2 row idx.
+    frame outer inner w1 w2 row idx ->
+    0 <= row < length outer ->
+    0 <= idx < outer[row] - inner[row] ->
+    Matrix.get w1 (row, idx) < Matrix.get w2 (row, idx) ->
+    lt_sol outer inner w1 w2
 
   predicate eq_sol (outer inner: array int) (w1 w2: matrix int) =
-    rows w1 = rows w2 = length outer /\ columns w1 = columns w2 /\
+    (* rows w1 = rows w2 = length outer /\ columns w1 = columns w2 /\ *)
     eq_rows outer inner w1 w2 (length outer)
 
   lemma lt_not_eq:
@@ -287,16 +305,15 @@ module Spec
     forall i j: int. lo <= i < j < hi ->
       not (eq_sol outer inner (s2m (Map.get s.sols i)) (s2m (Map.get s.sols j)))
 
-(*
   predicate good_solutions (outer inner eval: array int) (s: solutions) =
     0 <= s.next /\
-    sorted s 0 s.next /\
+    sorted outer inner s 0 s.next (* /\
     (forall i. 0 <= i < s.next ->
       is_solution outer inner eval (s2m (Map.get s.sols i))) /\
     (forall w. is_solution outer inner eval w ->
        exists i. 0 <= i < s.next /\
                  eq_sol outer inner w (s2m (Map.get s.sols i)))
-*)
+  *)
 
 end
 
@@ -378,7 +395,7 @@ module LRrule
     requires { sum_array eval = sum_array outer - sum_array inner }
     requires { solutions.next = 0 }
     ensures  { result = solutions.next }
-    (* ensures  { good_solutions sh eval solutions } *)
+    ensures  { "expl:good solutions" good_solutions outer inner eval solutions }
     let szshape = Array.length outer in (* = Array.length inner *)
     let width = compute_width outer inner in
     let max_width = max_array width in
@@ -390,7 +407,6 @@ module LRrule
     let rec count_rec (row idx: int) : int =
       requires { 0 <= row <= szshape }
       requires { if row < szshape then -1 <= idx < width[row] else idx = 0 }
-      ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
       requires { "expl:valid_innev"
                  valid_innev outer inner eval innev work row idx !lastinnev }
       (* requires { is_solution_prefix sh eval work idx } *)
@@ -399,18 +415,22 @@ module LRrule
       ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
       ensures  { "expl:frame" frame outer inner (old work) work row idx }
       ensures  { result = solutions.next - old solutions.next >= 0 }
-      (*
-      ensures  { forall i. old solutions.next <= i < solutions.next ->
+      ensures  { forall i. 0 <= i < old solutions.next ->
+                 Map.get solutions.sols i = Map.get (old solutions.sols) i }
+      ensures  { "expl:only solutions"
+                 forall i. old solutions.next <= i < solutions.next ->
                  let w = s2m (Map.get solutions.sols i) in
-                 is_solution sh eval w /\
+                 (* is_solution sh eval w /\ *)
                  frame outer inner (old work) w row idx }
+      ensures  { "expl:sorted solutions"
+                 sorted outer inner
+                   solutions (old solutions.next) solutions.next }
+      (*
       ensures  { forall w. is_solution sh eval w ->
                  eq_prefix (old work) w idx ->
                  exists i. old solutions.next <= i < solutions.next /\
                       eq_sol outer inner w (s2m (Map.get solutions.sols i)) }
       *)
-      ensures  { forall i. 0 <= i < old solutions.next ->
-                 Map.get solutions.sols i = Map.get (old solutions.sols) i }
       if row = szshape then begin
         (* found a solution *)
         ghost store_solution outer inner eval work;
@@ -441,16 +461,21 @@ module LRrule
           invariant { "expl:valid_innev"
                   valid_innev outer inner eval innev work row idx !lastinnev }
           invariant { !sum = solutions.next - at solutions.next 'Init >= 0 }
+          invariant { forall i. 0 <= i < at solutions.next 'Init ->
+                Map.get solutions.sols i = Map.get (at solutions.sols 'Init) i }
           (*
           invariant { is_tableau_reading_prefix sh work idx }
-          invariant { "expl: sorted solutions"
-                    sorted solutions (at solutions.next 'Init) solutions.next }
-          invariant { "expl: only solutions"
+          *)
+          invariant { "expl:only solutions"
                       forall i. at solutions.next 'Init <= i < solutions.next ->
                       let w = s2m (Map.get solutions.sols i) in
-                      is_solution sh eval w /\
+                      (* is_solution sh eval w /\ *)
                       frame outer inner (at work 'Init) w row idx /\
                       min <= Matrix.get w (row, idx) < v }
+          invariant { "expl:sorted solutions"
+                      sorted outer inner
+                        solutions (at solutions.next 'Init) solutions.next }
+          (*
           invariant { "expl: all solutions"
                       forall w. is_solution sh eval w ->
                       frame outer inner (at work 'Init) w row idx ->
@@ -458,8 +483,6 @@ module LRrule
                       exists i. at solutions.next 'Init <= i < solutions.next /\
                          frame outer inner w (s2m (Map.get solutions.sols i)) }
           *)
-          invariant { forall i. 0 <= i < at solutions.next 'Init ->
-                Map.get solutions.sols i = Map.get (at solutions.sols 'Init) i }
           'L:
           if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
             innev[v] <- innev[v] + 1;
