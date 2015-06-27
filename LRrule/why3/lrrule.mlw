@@ -120,6 +120,13 @@ module Spec
     included inner outer /\
     is_part inner /\ is_part outer
 
+  predicate eq_prefix (s1 s2: array int) (i: int) =
+    forall k: int. 0 <= k < i -> s1[k] = s2[k]
+
+  predicate eq_array (s1 s2: array int) =
+    length s1 = length s2 /\
+    eq_prefix s1 s2 (length s1)
+
 (*
   predicate is_yam_prefix (w: array int) (len: int) =
     0 <= len <= length w /\
@@ -149,11 +156,20 @@ module Spec
     below: array int;
   }
 
-  predicate is_tableau_reading_prefix (s: skew_shape) (w: array int) (len: int) =
+  predicate non_decreasing_row_suffix
+    (outer inner: array int) (work: matrix int) (r start: int)
+  = forall i1 i2. start < i1 <= i2 < outer[r] - inner[r] ->
+                  Matrix.get work (r, i1) <= Matrix.get work (r, i2)
+
+  predicate increasing_column
+    (outer inner: array int) (work: matrix int) (r i: int)
+
+  predicate is_tableau_reading_prefix
+    (outer inner: array int) (work: matrix int) (row idx: int) =
     (* each row of the tableau is non-decreasing (from left to right) *)
-    (forall r: int. 1 <= r < length s.outer ->
-       forall i: int. i < len -> s.end_of_row[r-1] <= i < s.end_of_row[r] - 1 ->
-         w[i] >= w[i+1]) /\
+    (forall r. 0 <= r < row ->
+       non_decreasing_row_suffix outer inner work r 0) /\
+    non_decreasing_row_suffix outer inner work row (idx + 1) /\
     (* each column of the tableau is increasing (from bottom up) *)
     (forall r: int. 1 <= r < length s.outer ->
        forall i: int. i < len -> s.end_of_row[r-1] <= i < s.end_of_overlap[r] ->
@@ -178,9 +194,6 @@ module Spec
   (** storing solutions we have found so far *)
 
   (* solutions t and u have the same prefix [0..i[ *)
-  predicate eq_prefix (s1 s2: array int) (i: int) =
-    forall k: int. 0 <= k < i -> s1[k] = s2[k]
-
   predicate lt_sol (s1 s2: array int) =
     length s1 = length s2 /\
     exists i: int. 0 <= i < length s1 /\ eq_prefix s1 s2 i /\ s1[i] < s2[i]
@@ -246,10 +259,8 @@ module Spec
     (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
     (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
 
-(*
   lemma is_part_eq:
-    forall a1 a2: array int. is_part a1 -> eq_sol a1 a2 -> is_part a2
-*)
+    forall a1 a2: array int. is_part a1 -> eq_array a1 a2 -> is_part a2
 
   predicate frame (outer inner: array int) (w1 w2: matrix int) (row idx: int) =
     (forall r. 0 <= r < row ->
@@ -426,6 +437,7 @@ module LRrule
           invariant { forall i. 0 <= i < at solutions.next 'Init ->
                 Map.get solutions.sols i = Map.get (at solutions.sols 'Init) i }
           *)
+          'L:
           if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
             innev[v] <- innev[v] + 1;
             if v = !lastinnev then lastinnev += 1;
@@ -433,7 +445,7 @@ module LRrule
             Matrix.set work (row, idx) v;
             sum += count_rec row (idx - 1);
             innev[v] <- innev[v] - 1;
-            (* assert { eq_sol innev (at innev 'L) }; *)
+            assert { eq_array innev (at innev 'L) };
            if !lastinnev = v+1 && innev[v] = 0 then lastinnev -= 1
           end
         done;
