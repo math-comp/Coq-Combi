@@ -6,44 +6,49 @@
    Coq 8.4pl5
 *)
 
+(* TODO
+   - increasing_column : compare with right above
+   - is_yam_prefix -> is_yam_suffix
+*)
+
 theory Sum
 
   use import int.Int
   use HighOrd
 
   function sum (a b: int) (f: int -> int) : int
-  (** sum of [f n] for [a <= n <= b] *)
+  (** sum of [f n] for [a <= n < b] *)
 
   axiom sum_def1:
     forall f: int -> int, a b: int.
-    b < a -> sum a b f = 0
+    b <= a -> sum a b f = 0
 
   axiom sum_def2:
     forall f: int -> int, a b: int.
-    a <= b -> sum a b f = sum a (b - 1) f + f b
+    a < b -> sum a b f = sum a (b - 1) f + f (b - 1)
 
   lemma sum_left:
     forall f: int -> int, a b: int.
-    a <= b -> sum a b f = f a + sum (a + 1) b f
+    a < b -> sum a b f = f a + sum (a + 1) b f
 
   lemma sum_ext:
     forall f g: int -> int, a b: int.
-    (forall i. a <= i <= b -> f i = g i) ->
+    (forall i. a <= i < b -> f i = g i) ->
     sum a b f = sum a b g
 
   lemma sum_le:
     forall f g: int -> int, a b: int.
-    (forall i. a <= i <= b -> f i <= g i) ->
+    (forall i. a <= i < b -> f i <= g i) ->
     sum a b f <= sum a b g
 
   lemma sum_nonneg:
     forall f: int -> int, a b: int.
-    (forall i. a <= i <= b -> 0 <= f i) ->
+    (forall i. a <= i < b -> 0 <= f i) ->
     0 <= sum a b f
 
   lemma sum_decomp:
     forall f: int -> int, a b c: int. a <= b <= c ->
-    sum a c f = sum a b f + sum (b+1) c f
+    sum a c f = sum a b f + sum b c f
 
 end
 
@@ -57,15 +62,15 @@ module ArraySum
     sum lo hi (\i: int. a[i])
 
   function sum_array (a: array int) : int =
-    sum_sub_array a 0 (length a - 1)
+    sum_sub_array a 0 (length a)
 
   let rec lemma sum_sub_array_shift (a b: array int) (lo hi: int)
     requires { length a + 1 = length b }
-    requires { forall i: int. lo <= i <= hi -> a[i] = b[i+1] }
+    requires { forall i: int. lo <= i < hi -> a[i] = b[i+1] }
     ensures  { sum_sub_array a lo hi = sum_sub_array b (lo+1) (hi+1) }
     variant  { hi - lo }
   =
-    if lo <= hi then sum_sub_array_shift a b (lo+1) hi
+    if lo < hi then sum_sub_array_shift a b (lo+1) hi
 
    let rec lemma sum_array_sub (a b: array int) (lo hi: int)
      requires { length a = length b }
@@ -73,7 +78,7 @@ module ArraySum
                 sum_sub_array b lo hi - sum_sub_array a lo hi }
      variant  { hi - lo }
    =
-    if lo <= hi then sum_array_sub a b (lo+1) hi
+    if lo < hi then sum_array_sub a b (lo+1) hi
 
 end
 
@@ -100,9 +105,9 @@ module Spec
     (forall i:int. 0 <= i < length outer -> inner[i] <= outer[i])
 
   let rec lemma sum_le_eq (f g: int -> int) (a b: int)
-    requires { forall i. a <= i <= b -> f i <= g i }
+    requires { forall i. a <= i < b -> f i <= g i }
     requires { sum a b f = sum a b g }
-    ensures  { forall i. a <= i <= b -> f i = g i }
+    ensures  { forall i. a <= i < b -> f i = g i }
     variant  { b - a }
   = if a < b then sum_le_eq f g (a+1) b
 
@@ -176,13 +181,14 @@ module Spec
     frame outer inner work1 work3 row idx
 
   (* tableau condition *)
-(*
+
   predicate non_decreasing_row_suffix
     (outer inner: array int) (work: matrix int) (r start: int)
-  = forall i1 i2. start < i1 <= i2 < outer[r] - inner[r] ->
+  = forall i1 i2. start <= i1 <= i2 < outer[r] - inner[r] ->
                   Matrix.get work (r, i1) <= Matrix.get work (r, i2)
 
   (* cell (r,i) is greater than the cell right below, if it exists *)
+  (* FIXME: compare with cell above instead *)
   predicate increasing_column
     (outer inner: array int) (work: matrix int) (r i: int)
   = r > 0 && i >= inner[r - 1] - inner[r] -> (* if there a cell below *)
@@ -195,7 +201,7 @@ module Spec
     (forall r. 0 <= r < row ->
        non_decreasing_row_suffix outer inner work r 0) /\
     (row < length outer ->
-      non_decreasing_row_suffix outer inner work row (idx + 1)) /\
+       non_decreasing_row_suffix outer inner work row (idx + 1)) /\
     (* each column of the tableau is increasing (from bottom up) *)
     (forall r. 1 <= r < row ->
        forall i. 0 <= i < outer[r] - inner[r] ->
@@ -206,7 +212,32 @@ module Spec
 
   predicate is_tableau_reading (outer inner: array int) (work: matrix int) =
     is_tableau_reading_prefix outer inner work (length outer) 0
-*)
+
+  (* matrix -> array *)
+
+  function width (outer inner: array int) : int -> int =
+    \r. outer[r] - inner[r]
+
+  function to_word (outer inner: array int) (w: matrix int) : array int
+
+  axiom to_word_size:
+    forall outer inner w.
+    length outer = length inner -> included inner outer ->
+    rows w = length outer ->
+    (forall r. 0 <= r < length outer ->
+               columns w >= outer[r] - inner[r]) ->
+    length (to_word outer inner w) = sum 0 (length outer) (width outer inner)
+
+  axiom to_word_contents:
+    forall outer inner w.
+    length outer = length inner -> included inner outer ->
+    rows w = length outer ->
+    (forall r. 0 <= r < length outer ->
+               columns w >= outer[r] - inner[r]) ->
+    forall r. 0 <= r < length outer ->
+    forall i. 0 <= i < outer[r] - inner[r] ->
+    (to_word outer inner w)[i + sum (r + 1) (length outer) (width outer inner)]
+    = Matrix.get w (r, i)
 
   (* Yamanouchi condition *)
 (*
@@ -314,6 +345,56 @@ module Spec
        exists i. 0 <= i < s.next /\
                  eq_sol outer inner w (s2m (Map.get s.sols i)))
   *)
+
+end
+
+module ToWord
+  use import int.Int
+  use import int.MinMax
+  use import ref.Refint
+  use import array.Array
+  use import matrix.Matrix
+  use import Sum
+  use import Spec
+
+  let ghost to_word (outer inner: array int) (w: matrix int) : array int
+    requires { length outer = length inner }
+    requires { included inner outer }
+    requires { rows w = length outer }
+    requires { forall r. 0 <= r < length outer ->
+               columns w >= outer[r] - inner[r] }
+    ensures  { length result = sum 0 (length outer) (width outer inner) }
+    ensures  { forall r. 0 <= r < length outer ->
+               forall i. 0 <= i < outer[r] - inner[r] ->
+               result[i + sum (r + 1) (length outer) (width outer inner)] =
+               Matrix.get w (r, i) }
+  =
+    let s = length outer in
+    let n = ref 0 in
+    for r = 0 to s - 1 do invariant { !n = sum 0 r (width outer inner) >= 0 }
+      n += outer[r] - inner[r]
+    done;
+    let a = Array.make !n 0 in
+    let start = ref 0 in
+    for row = s - 1 downto 0 do
+      invariant { !start = sum (row + 1) (length outer) (width outer inner) }
+      invariant { forall r. row < r < length outer ->
+                  forall i. 0 <= i < outer[r] - inner[r] ->
+                  a[i + sum (r + 1) (length outer) (width outer inner)] =
+                  Matrix.get w (r, i) }
+      for col = 0 to outer[row] - inner[row] - 1 do
+        invariant { forall r. row < r < length outer ->
+                    forall i. 0 <= i < outer[r] - inner[r] ->
+                    a[i + sum (r + 1) (length outer) (width outer inner)] =
+                    Matrix.get w (r, i) }
+        invariant { forall i. 0 <= i < col ->
+                    a[i + sum (row + 1) (length outer) (width outer inner)] =
+                    Matrix.get w (row, i) }
+        a[!start + col] <- Matrix.get w (row, col)
+      done;
+      start += outer[row] - inner[row]
+    done;
+    a
 
 end
 

@@ -20,7 +20,7 @@ OCAMLLIB= why3__BuiltIn__BuiltIn.ml \
  ref__Refint.ml \
  array__Array.ml
 
-EXTRACT=lrrule__Spec.ml lrrule__LRrule.ml
+EXTRACT= lrrule__LRrule.ml
 
 OPAM:=~/.opam/$(shell opam switch show)/lib
 LIBDIR:=$(shell why3 --print-libdir)/why3
