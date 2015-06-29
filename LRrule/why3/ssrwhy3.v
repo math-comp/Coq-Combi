@@ -92,8 +92,6 @@ End Array.
 
 Import GRing.Theory Num.Theory.
 
-Structure bla : predArgType := { n :> nat; m : nat; _ : n + m >= 0 }.
-
 Structure matrix (T : Type) : predArgType :=
   Matrix {matrixval :> seq (seq T);
           nrows : int;
