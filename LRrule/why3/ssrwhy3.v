@@ -86,7 +86,61 @@ Definition get (a : array T) (i : int) :=
 
 Definition array_why3Mixin := Why3Type.Mixin (T:= array T) [::].
 Canonical array_why3Type := Eval hnf in Why3Type (array T) array_why3Mixin.
-
 (* TODO: set, const *)
 
 End Array.
+
+Import GRing.Theory Num.Theory.
+
+Structure bla : predArgType := { n :> nat; m : nat; _ : n + m >= 0 }.
+
+Structure matrix (T : Type) : predArgType :=
+  Matrix {matrixval :> seq (seq T);
+          nrows : int;
+          ncols : int;
+          _ : (0 <= nrows)%R;
+          _ : (0 <= ncols)%R;
+          _ : size matrixval == `|nrows|;
+          _ : all [pred r | size r == `|ncols|] matrixval
+         }.
+
+Section Matrix.
+
+Variable (T:why3Type).
+
+Definition matrix_get (m : matrix T) (rc : int * int) :=
+  match rc with
+    | (Posz rr, Posz cc) => nth (witness T) (nth [::] m rr) cc
+    | _ => (witness T)
+  end.
+
+Definition eq_matrix (m1 m2 : matrix T) :=
+  [&& (m1 == m2 :> seq (seq T)),
+      (nrows m1 == nrows m2) &
+      (ncols m1 == ncols m2)].
+
+Lemma eq_matrixP : Equality.axiom eq_matrix.
+Proof.
+  rewrite /eq_matrix => m1 m2.
+  apply (iffP idP).
+  - case: m1; rewrite /is_true => [m1 r1 c1 pr1 pc1 Hzs1 Hall1].
+    case: m2; rewrite /is_true => [m2 r2 c2 pr2 pc2 Hzs2 Hall2].
+    move=> /= /and3P [] /eqP Hm /eqP Hr /eqP Hc.
+    subst m1 r1 c1; congr Matrix; by apply eq_irrelevance.
+  - move ->; case: m2 => [m2 r2 c2 pr2 pc2 Hzs2 Hall2] /=.
+    by rewrite !eq_refl.
+Qed.
+
+Definition matrix_eqMixin := EqMixin eq_matrixP.
+Canonical matrix_eqType := Eval hnf in EqType (matrix T) matrix_eqMixin.
+
+Lemma empty_matrix : matrix T.
+  by apply (@Matrix T [::] 0 0).
+Defined.
+
+Definition matrix_why3Mixin := Why3Type.Mixin (T:= matrix T) empty_matrix.
+Canonical matrix_why3Type := Eval hnf in Why3Type (matrix T) matrix_why3Mixin.
+
+End Matrix.
+
+
