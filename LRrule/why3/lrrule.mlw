@@ -116,7 +116,6 @@ module Spec
     numof (\i: int. a[i] = v) lo hi
 
   predicate valid_input (outer inner: array int) =
-    1 <= length outer = length inner /\
     included inner outer /\
     is_part inner /\ is_part outer
 
@@ -149,10 +148,13 @@ module Spec
   lemma is_part_eq:
     forall a1 a2: array int. is_part a1 -> eq_array a1 a2 -> is_part a2
 
+  function width (outer inner: array int) : int -> int =
+    \r. outer[r] - inner[r]
+
   (* two matrices coincide up to cell (row, idx), excluded *)
   predicate frame (outer inner: array int) (w1 w2: matrix int) (row idx: int) =
     (forall r. 0 <= r < row ->
-       forall i. 0 <= i < outer[r] - inner[r] ->
+       forall i. 0 <= i < width outer inner r ->
          Matrix.get w2 (r, i) = Matrix.get w1 (r, i))
     /\
     (forall i. idx < i < outer[row] - inner[row] ->
@@ -209,9 +211,6 @@ module Spec
 
   (* matrix -> array *)
 
-  function width (outer inner: array int) : int -> int =
-    \r. outer[r] - inner[r]
-
   predicate valid_work (outer inner: array int) (w: matrix int) =
     rows w = length outer /\
     (forall r. 0 <= r < length outer ->
@@ -226,7 +225,7 @@ module Spec
   axiom to_word_contents:
     forall outer inner w. included inner outer -> valid_work outer inner w ->
     forall r. 0 <= r < length outer ->
-    forall i. 0 <= i < outer[r] - inner[r] ->
+    forall i. 0 <= i < width outer inner r ->
     (to_word outer inner w)[i + sum (r + 1) (length outer) (width outer inner)]
     = Matrix.get w (r, i)
 
@@ -256,11 +255,13 @@ module Spec
 
   predicate is_solution_suffix
     (outer inner eval: array int) (w: matrix int) (row idx: int) =
+    valid_work outer inner w /\
     let len = sum 0 (row + 1) (width outer inner) - idx - 1 in
     is_yam_of_eval_suffix eval (to_word outer inner w) len /\
     is_tableau_reading_suffix outer inner w row idx
 
   predicate is_solution (outer inner eval: array int) (w: matrix int) =
+    valid_work outer inner w /\
     is_yam_of_eval eval (to_word outer inner w) /\
     is_tableau_reading outer inner w
 
@@ -273,15 +274,15 @@ module Spec
 
   predicate eq_rows (outer inner: array int) (w1 w2: matrix int) (row: int) =
     forall r. 0 <= r < row ->
-      forall i. 0 <= i < outer[r] - inner[r] ->
+      forall i. 0 <= i < width outer inner r ->
         Matrix.get w1 (r, i) = Matrix.get w2 (r, i)
 
   predicate lt_sol (outer inner: array int) (w1 w2: matrix int) =
     (* rows w1 = rows w2 = length outer /\ columns w1 = columns w2 /\ *)
     exists row: int.
       0 <= row < length outer /\ eq_rows outer inner w1 w2 row /\
-      exists col. 0 <= col < outer[row] - inner[row] /\
-        (forall i. col < i < outer[row] - inner[row] ->
+      exists col. 0 <= col < width outer inner row /\
+        (forall i. col < i < width outer inner row ->
           Matrix.get w1 (row, i) = Matrix.get w2 (row, i)) /\
         Matrix.get w1 (row, col) < Matrix.get w2 (row, col)
 
@@ -289,7 +290,7 @@ module Spec
     forall outer inner w1 w2 row idx.
     frame outer inner w1 w2 row idx ->
     0 <= row < length outer ->
-    0 <= idx < outer[row] - inner[row] ->
+    0 <= idx < width outer inner row ->
     Matrix.get w1 (row, idx) < Matrix.get w2 (row, idx) ->
     lt_sol outer inner w1 w2
 
@@ -355,7 +356,7 @@ module ToWord
     requires { valid_work outer inner w }
     ensures  { length result = sum 0 (length outer) (width outer inner) }
     ensures  { forall r. 0 <= r < length outer ->
-               forall i. 0 <= i < outer[r] - inner[r] ->
+               forall i. 0 <= i < width outer inner r ->
                result[i + sum (r + 1) (length outer) (width outer inner)] =
                Matrix.get w (r, i) }
   =
@@ -369,12 +370,12 @@ module ToWord
     for row = s - 1 downto 0 do
       invariant { !start = sum (row + 1) (length outer) (width outer inner) }
       invariant { forall r. row < r < length outer ->
-                  forall i. 0 <= i < outer[r] - inner[r] ->
+                  forall i. 0 <= i < width outer inner r ->
                   a[i + sum (r + 1) (length outer) (width outer inner)] =
                   Matrix.get w (r, i) }
       for col = 0 to outer[row] - inner[row] - 1 do
         invariant { forall r. row < r < length outer ->
-                    forall i. 0 <= i < outer[r] - inner[r] ->
+                    forall i. 0 <= i < width outer inner r ->
                     a[i + sum (r + 1) (length outer) (width outer inner)] =
                     Matrix.get w (r, i) }
         invariant { forall i. 0 <= i < col ->
@@ -414,15 +415,15 @@ module LRrule
     requires { length outer = length inner }
     ensures  { length result = length outer }
     ensures  { forall j. 0 <= j < length outer ->
-    	       result[j] = outer[j] - inner[j] }
+    	       result[j] = width outer inner j }
   =
     let n = Array.length outer in
-    let width = Array.make n 0 in
+    let a = Array.make n 0 in
     for i = 0 to n - 1 do
-      invariant { forall j. 0 <= j < i -> width[j] = outer[j] - inner[j] }
-      width[i] <- outer[i] - inner[i]
+      invariant { forall j. 0 <= j < i -> a[j] = width outer inner j }
+      a[i] <- outer[i] - inner[i]
     done;
-    width
+    a
 
   let max_array (a: array int) : int
     ensures  { forall j. 0 <= j < length a -> a[j] <= result }

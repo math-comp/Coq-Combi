@@ -183,9 +183,7 @@ Definition numeq (a:(array int)) (v:int) (lo:int) (hi:int): int :=
 
 (* Why3 assumption *)
 Definition valid_input (outer:(array int)) (inner:(array int)): Prop :=
-  ((1%:Z <= (size outer : int))%Z /\
-  ((size outer : int) = (size inner : int))) /\ ((included inner outer) /\
-  ((is_part inner) /\ (is_part outer))).
+  (included inner outer) /\ ((is_part inner) /\ (is_part outer)).
 
 (* Why3 assumption *)
 Definition eq_prefix (s1:(array int)) (s2:(array int)) (i:int): Prop :=
@@ -221,10 +219,14 @@ Axiom is_part_eq : forall (a1:(array int)) (a2:(array int)), (is_part a1) ->
   ((eq_array a1 a2) -> (is_part a2)).
 
 (* Why3 assumption *)
+Definition width (outer:(array int)) (inner:(array int)): (int -> int) :=
+  fun (r:int) => ((get outer r) - (get inner r))%Z.
+
+(* Why3 assumption *)
 Definition frame (outer:(array int)) (inner:(array int)) (w1:(matrix int))
   (w2:(matrix int)) (row:int) (idx:int): Prop := (forall (r:int),
   ((0%:Z <= r)%Z /\ (r < row)%Z) -> forall (i:int), ((0%:Z <= i)%Z /\
-  (i < ((get outer r) - (get inner r))%Z)%Z) -> ((matrix_get w2 (r,
+  (i < ((width outer inner) r))%Z) -> ((matrix_get w2 (r,
   i)) = (matrix_get w1 (r, i)))) /\ forall (i:int), ((idx < i)%Z /\
   (i < ((get outer row) - (get inner row))%Z)%Z) -> ((matrix_get w2 (row,
   i)) = (matrix_get w1 (row, i))).
@@ -280,10 +282,6 @@ Definition is_tableau_reading (outer:(array int)) (inner:(array int))
   (size outer : int) 0%:Z).
 
 (* Why3 assumption *)
-Definition width (outer:(array int)) (inner:(array int)): (int -> int) :=
-  fun (r:int) => ((get outer r) - (get inner r))%Z.
-
-(* Why3 assumption *)
 Definition valid_work (outer:(array int)) (inner:(array int))
   (w:(matrix int)): Prop := ((nrows w : int) = (size outer : int)) /\
   forall (r:int), ((0%:Z <= r)%Z /\ (r < (size outer : int))%Z) ->
@@ -299,10 +297,9 @@ Axiom to_word_size : forall (outer:(array int)) (inner:(array int))
 Axiom to_word_contents : forall (outer:(array int)) (inner:(array int))
   (w:(matrix int)), (included inner outer) -> ((valid_work outer inner w) ->
   forall (r:int), ((0%:Z <= r)%Z /\ (r < (size outer : int))%Z) ->
-  forall (i:int), ((0%:Z <= i)%Z /\
-  (i < ((get outer r) - (get inner r))%Z)%Z) -> ((get (to_word outer inner
-  w) (i + (sum (r + 1%:Z)%Z (size outer : int) (width outer
-  inner)))%Z) = (matrix_get w (r, i)))).
+  forall (i:int), ((0%:Z <= i)%Z /\ (i < ((width outer inner) r))%Z) ->
+  ((get (to_word outer inner w) (i + (sum (r + 1%:Z)%Z (size outer : int)
+  (width outer inner)))%Z) = (matrix_get w (r, i)))).
 
 (* Why3 assumption *)
 Definition is_yam_suffix (w:(array int)) (len:int): Prop := let n :=
@@ -330,14 +327,16 @@ Axiom is_yam_of_eval_length : forall (eval:(array int)) (w:(array int)),
 (* Why3 assumption *)
 Definition is_solution_suffix (outer:(array int)) (inner:(array int))
   (eval:(array int)) (w:(matrix int)) (row:int) (idx:int): Prop :=
-  (is_yam_of_eval_suffix eval (to_word outer inner w) (((sum 0%:Z
-  (row + 1%:Z)%Z (width outer inner)) - idx)%Z - 1%:Z)%Z) /\
-  (is_tableau_reading_suffix outer inner w row idx).
+  (valid_work outer inner w) /\ ((is_yam_of_eval_suffix eval (to_word outer
+  inner w) (((sum 0%:Z (row + 1%:Z)%Z (width outer
+  inner)) - idx)%Z - 1%:Z)%Z) /\ (is_tableau_reading_suffix outer inner w row
+  idx)).
 
 (* Why3 assumption *)
 Definition is_solution (outer:(array int)) (inner:(array int))
-  (eval:(array int)) (w:(matrix int)): Prop := (is_yam_of_eval eval
-  (to_word outer inner w)) /\ (is_tableau_reading outer inner w).
+  (eval:(array int)) (w:(matrix int)): Prop := (valid_work outer inner w) /\
+  ((is_yam_of_eval eval (to_word outer inner w)) /\ (is_tableau_reading outer
+  inner w)).
 
 Axiom solution_length : forall (outer:(array int)) (inner:(array int))
   (eval:(array int)) (w:(matrix int)), (is_solution outer inner eval w) ->
@@ -346,24 +345,22 @@ Axiom solution_length : forall (outer:(array int)) (inner:(array int))
 (* Why3 assumption *)
 Definition eq_rows (outer:(array int)) (inner:(array int)) (w1:(matrix int))
   (w2:(matrix int)) (row:int): Prop := forall (r:int), ((0%:Z <= r)%Z /\
-  (r < row)%Z) -> forall (i:int), ((0%:Z <= i)%Z /\
-  (i < ((get outer r) - (get inner r))%Z)%Z) -> ((matrix_get w1 (r,
-  i)) = (matrix_get w2 (r, i))).
+  (r < row)%Z) -> forall (i:int), ((0%:Z <= i)%Z /\ (i < ((width outer inner)
+  r))%Z) -> ((matrix_get w1 (r, i)) = (matrix_get w2 (r, i))).
 
 (* Why3 assumption *)
 Definition lt_sol (outer:(array int)) (inner:(array int)) (w1:(matrix int))
   (w2:(matrix int)): Prop := exists row:int, ((0%:Z <= row)%Z /\
   (row < (size outer : int))%Z) /\ ((eq_rows outer inner w1 w2 row) /\
-  exists col:int, ((0%:Z <= col)%Z /\
-  (col < ((get outer row) - (get inner row))%Z)%Z) /\ ((forall (i:int),
-  ((col < i)%Z /\ (i < ((get outer row) - (get inner row))%Z)%Z) ->
+  exists col:int, ((0%:Z <= col)%Z /\ (col < ((width outer inner) row))%Z) /\
+  ((forall (i:int), ((col < i)%Z /\ (i < ((width outer inner) row))%Z) ->
   ((matrix_get w1 (row, i)) = (matrix_get w2 (row, i)))) /\ ((matrix_get w1 (
   row, col)) < (matrix_get w2 (row, col)))%Z)).
 
 Axiom frame_lt_sol : forall (outer:(array int)) (inner:(array int))
   (w1:(matrix int)) (w2:(matrix int)) (row:int) (idx:int), (frame outer inner
   w1 w2 row idx) -> (((0%:Z <= row)%Z /\ (row < (size outer : int))%Z) ->
-  (((0%:Z <= idx)%Z /\ (idx < ((get outer row) - (get inner row))%Z)%Z) ->
+  (((0%:Z <= idx)%Z /\ (idx < ((width outer inner) row))%Z) ->
   (((matrix_get w1 (row, idx)) < (matrix_get w2 (row, idx)))%Z -> (lt_sol
   outer inner w1 w2)))).
 
