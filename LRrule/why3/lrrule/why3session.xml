@@ -30,7 +30,7 @@
  <proof prover="2" timelimit="10"><result status="valid" time="1.17"/></proof>
  </goal>
 </theory>
-<theory name="Spec" sum="c30b09751ac0c7447ca6c0a8cad782a5">
+<theory name="Spec" sum="13c8a2adace4b0f6a3488ced8d758942" expanded="true">
  <goal name="is_part_nonneg">
  <proof prover="0" timelimit="10"><result status="valid" time="0.02" steps="8"/></proof>
  </goal>
@@ -52,6 +52,11 @@
  <goal name="frame_trans">
  <proof prover="2"><result status="valid" time="0.02"/></proof>
  </goal>
+ <goal name="is_yam_of_eval_length" expanded="true">
+ </goal>
+ <goal name="solution_length">
+ <proof prover="2" timelimit="10"><result status="valid" time="0.04"/></proof>
+ </goal>
  <goal name="frame_lt_sol">
  <proof prover="2"><result status="valid" time="0.12"/></proof>
  </goal>
@@ -62,14 +67,14 @@
  <proof prover="2"><result status="valid" time="0.02"/></proof>
  </goal>
 </theory>
-<theory name="ToWord" sum="11766dda80ab3439a6635cc373d7ca8b">
+<theory name="ToWord" sum="422ac7a5e2b681e15c9fc739352bf849">
  <goal name="WP_parameter to_word" expl="VC for to_word">
  <transf name="split_goal_wp">
   <goal name="WP_parameter to_word.1" expl="1. array creation size">
   <proof prover="0" timelimit="10"><result status="valid" time="0.03" steps="7"/></proof>
   </goal>
   <goal name="WP_parameter to_word.2" expl="2. postcondition">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="11"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="12"/></proof>
   </goal>
   <goal name="WP_parameter to_word.3" expl="3. postcondition">
   <proof prover="0" timelimit="10"><result status="valid" time="0.03" steps="11"/></proof>
@@ -141,16 +146,16 @@
   <proof prover="0" timelimit="10"><result status="valid" time="0.03" steps="12"/></proof>
   </goal>
   <goal name="WP_parameter to_word.26" expl="26. loop invariant init">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.03" steps="10"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.03" steps="11"/></proof>
   </goal>
   <goal name="WP_parameter to_word.27" expl="27. index in array bounds">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.03" steps="12"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.03" steps="13"/></proof>
   </goal>
   <goal name="WP_parameter to_word.28" expl="28. index in array bounds">
   <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="12"/></proof>
   </goal>
   <goal name="WP_parameter to_word.29" expl="29. loop invariant preservation">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.36" steps="84"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.36" steps="85"/></proof>
   </goal>
   <goal name="WP_parameter to_word.30" expl="30. array creation size">
   <proof prover="0" timelimit="10"><result status="valid" time="0.03" steps="9"/></proof>
@@ -162,13 +167,13 @@
   <proof prover="0" timelimit="10"><result status="valid" time="0.03" steps="14"/></proof>
   </goal>
   <goal name="WP_parameter to_word.33" expl="33. loop invariant init">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="13"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="14"/></proof>
   </goal>
   <goal name="WP_parameter to_word.34" expl="34. loop invariant init">
   <proof prover="0" timelimit="10"><result status="valid" time="0.03" steps="13"/></proof>
   </goal>
   <goal name="WP_parameter to_word.35" expl="35. index in array bounds">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="14"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="15"/></proof>
   </goal>
   <goal name="WP_parameter to_word.36" expl="36. index in array bounds">
   <proof prover="0" timelimit="10"><result status="valid" time="0.02" steps="14"/></proof>
@@ -180,31 +185,31 @@
   <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="15"/></proof>
   </goal>
   <goal name="WP_parameter to_word.39" expl="39. loop invariant preservation">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.05" steps="27"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.05" steps="28"/></proof>
   </goal>
   <goal name="WP_parameter to_word.40" expl="40. loop invariant preservation">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.06" steps="32"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.06" steps="33"/></proof>
   </goal>
   <goal name="WP_parameter to_word.41" expl="41. loop invariant init">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.06" steps="30"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.06" steps="31"/></proof>
   </goal>
   <goal name="WP_parameter to_word.42" expl="42. loop invariant init">
   <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="16"/></proof>
   </goal>
   <goal name="WP_parameter to_word.43" expl="43. precondition">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="26"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.17" steps="64"/></proof>
   </goal>
   <goal name="WP_parameter to_word.44" expl="44. type invariant">
   <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="18"/></proof>
   </goal>
   <goal name="WP_parameter to_word.45" expl="45. index in array bounds">
-  <proof prover="2" timelimit="10"><result status="valid" time="3.05"/></proof>
+  <proof prover="2" timelimit="10"><result status="valid" time="2.43"/></proof>
   </goal>
   <goal name="WP_parameter to_word.46" expl="46. loop invariant preservation">
-  <proof prover="2" timelimit="10"><result status="valid" time="3.72"/></proof>
+  <proof prover="2" timelimit="10"><result status="valid" time="0.74"/></proof>
   </goal>
   <goal name="WP_parameter to_word.47" expl="47. loop invariant preservation">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="25"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="26"/></proof>
   </goal>
   <goal name="WP_parameter to_word.48" expl="48. index in array bounds">
   <proof prover="0" timelimit="10"><result status="valid" time="0.03" steps="15"/></proof>
@@ -213,7 +218,7 @@
   <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="15"/></proof>
   </goal>
   <goal name="WP_parameter to_word.50" expl="50. loop invariant preservation">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.06" steps="27"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.06" steps="28"/></proof>
   </goal>
   <goal name="WP_parameter to_word.51" expl="51. loop invariant preservation">
   <proof prover="0" timelimit="10"><result status="valid" time="0.23" steps="66"/></proof>
@@ -225,12 +230,12 @@
   <proof prover="0" timelimit="10"><result status="valid" time="0.04" steps="11"/></proof>
   </goal>
   <goal name="WP_parameter to_word.54" expl="54. postcondition">
-  <proof prover="0" timelimit="10"><result status="valid" time="0.05" steps="25"/></proof>
+  <proof prover="0" timelimit="10"><result status="valid" time="0.05" steps="26"/></proof>
   </goal>
  </transf>
  </goal>
 </theory>
-<theory name="LRrule" sum="13e7b8681d9302abc1615bd9b408217b" expanded="true">
+<theory name="LRrule" sum="df0e5f958932fb0ae8fb5b79a2815f09" expanded="true">
  <goal name="WP_parameter compute_width" expl="VC for compute_width">
  <proof prover="0"><result status="valid" time="0.07" steps="31"/></proof>
  </goal>

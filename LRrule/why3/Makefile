@@ -40,7 +40,7 @@ $(EXTRACT): lrrule.mlw
 # proof of equivalence
 Spec.v: lrrule.mlw
 	why3 realize -D coq-ssreflect -L . -T lrrule.Spec -o .
-	sed -e "s/2%Z/2%:Z/g" -i Spec.v
+	# sed -e "s/2%Z/2%:Z/g" -i Spec.v
 
 clean::
 	rm -f *~ *.cm* *.o *.annot

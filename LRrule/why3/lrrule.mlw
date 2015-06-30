@@ -6,11 +6,6 @@
    Coq 8.4pl5
 *)
 
-(* TODO
-   - increasing_column : compare with right above
-   - is_yam_prefix -> is_yam_suffix
-*)
-
 theory Sum
 
   use import int.Int
@@ -187,15 +182,14 @@ module Spec
   = forall i1 i2. start <= i1 <= i2 < outer[r] - inner[r] ->
                   Matrix.get work (r, i1) <= Matrix.get work (r, i2)
 
-  (* cell (r,i) is greater than the cell right below, if it exists *)
-  (* FIXME: compare with cell above instead *)
+  (* cell (r,i) is smaller than the cell right below, if it exists *)
   predicate increasing_column
     (outer inner: array int) (work: matrix int) (r i: int)
   = r > 0 && i >= inner[r - 1] - inner[r] -> (* if there a cell below *)
     Matrix.get work (r, i) >
     Matrix.get work (r - 1, i - (inner[r - 1] - inner[r])) (* it is smaller *)
 
-  predicate is_tableau_reading_prefix
+  predicate is_tableau_reading_suffix
     (outer inner: array int) (work: matrix int) (row idx: int) =
     (* each row of the tableau is non-decreasing (from left to right) *)
     (forall r. 0 <= r < row ->
@@ -211,70 +205,69 @@ module Spec
         increasing_column outer inner work row i)
 
   predicate is_tableau_reading (outer inner: array int) (work: matrix int) =
-    is_tableau_reading_prefix outer inner work (length outer) 0
+    is_tableau_reading_suffix outer inner work (length outer) 0
 
   (* matrix -> array *)
 
   function width (outer inner: array int) : int -> int =
     \r. outer[r] - inner[r]
 
+  predicate valid_work (outer inner: array int) (w: matrix int) =
+    rows w = length outer /\
+    (forall r. 0 <= r < length outer ->
+               columns w >= outer[r] - inner[r])
+
   function to_word (outer inner: array int) (w: matrix int) : array int
 
   axiom to_word_size:
-    forall outer inner w.
-    included inner outer ->
-    rows w = length outer ->
-    (forall r. 0 <= r < length outer ->
-               columns w >= outer[r] - inner[r]) ->
+    forall outer inner w. included inner outer -> valid_work outer inner w ->
     length (to_word outer inner w) = sum 0 (length outer) (width outer inner)
 
   axiom to_word_contents:
-    forall outer inner w.
-    included inner outer ->
-    rows w = length outer ->
-    (forall r. 0 <= r < length outer ->
-               columns w >= outer[r] - inner[r]) ->
+    forall outer inner w. included inner outer -> valid_work outer inner w ->
     forall r. 0 <= r < length outer ->
     forall i. 0 <= i < outer[r] - inner[r] ->
     (to_word outer inner w)[i + sum (r + 1) (length outer) (width outer inner)]
     = Matrix.get w (r, i)
 
   (* Yamanouchi condition *)
-(*
-  predicate is_yam_prefix (w: array int) (len: int) =
-    0 <= len <= length w /\
-    (forall i: int. 0 <= i < len -> 0 <= w[i]) /\
-    (forall p: int. 0 <= p <= len ->
-       forall v1 v2. 0 <= v1 <= v2 -> numeq w v2 0 p <= numeq w v1 0 p)
 
-  predicate is_yam_of_eval_prefix (eval: array int) (w: array int) (len: int) =
-    is_yam_prefix w len /\
-    (forall i: int. 0 <= i < len -> 0 <= w[i] < length eval) /\
-    (forall v: int. 0 <= v < length eval -> numeq w v 0 len = eval[v])
+  predicate is_yam_suffix (w: array int) (len: int) =
+    let n = length w in
+    0 <= len <= n /\
+    (forall i: int. n - len <= i < n -> 0 <= w[i]) /\
+    (forall p: int. 0 <= p <= len ->
+       forall v1 v2. 0 <= v1 <= v2 -> numeq w v2 (n-p) n <= numeq w v1 (n-p) n)
+
+  predicate is_yam_of_eval_suffix (eval: array int) (w: array int) (len: int) =
+    let n = length w in
+    is_yam_suffix w len /\
+    (forall i: int. n - len <= i < n -> 0 <= w[i] < length eval) /\
+    (forall v: int. 0 <= v < length eval -> numeq w v (n-len) n = eval[v])
 
   predicate is_yam_of_eval (eval: array int) (w: array int) =
-    is_yam_of_eval_prefix eval w (length w)
+    is_yam_of_eval_suffix eval w (length w)
 
   lemma is_yam_of_eval_length:
     forall eval w.
     is_yam_of_eval eval w -> length w = sum_array eval
-*)
 
   (* solution *)
-(*
-  predicate is_solution_prefix
-    (s: skew_shape) (eval: array int) (w: array int) (len: int) =
-    is_yam_of_eval_prefix eval w len /\
-    is_tableau_reading_prefix s w len
 
-  predicate is_solution (s: skew_shape) (eval: array int) (w: array int) =
-    is_yam_of_eval eval w /\
-    is_tableau_reading s w
+  predicate is_solution_suffix
+    (outer inner eval: array int) (w: matrix int) (row idx: int) =
+    let len = sum 0 (row + 1) (width outer inner) - idx - 1 in
+    is_yam_of_eval_suffix eval (to_word outer inner w) len /\
+    is_tableau_reading_suffix outer inner w row idx
+
+  predicate is_solution (outer inner eval: array int) (w: matrix int) =
+    is_yam_of_eval eval (to_word outer inner w) /\
+    is_tableau_reading outer inner w
 
   lemma solution_length:
-    forall s eval w. valid_skew_shape s ->
-    is_solution s eval w -> length w = sum_array eval
-*)
+    forall outer inner eval w.
+    is_solution outer inner eval w ->
+    length (to_word outer inner w) = sum_array eval
 
   (* solutions are found in lexicographic order *)
 
@@ -359,9 +352,7 @@ module ToWord
 
   let ghost to_word (outer inner: array int) (w: matrix int) : array int
     requires { included inner outer }
-    requires { rows w = length outer }
-    requires { forall r. 0 <= r < length outer ->
-               columns w >= outer[r] - inner[r] }
+    requires { valid_work outer inner w }
     ensures  { length result = sum 0 (length outer) (width outer inner) }
     ensures  { forall r. 0 <= r < length outer ->
                forall i. 0 <= i < outer[r] - inner[r] ->
@@ -489,7 +480,7 @@ module LRrule
       requires { if row < szshape then -1 <= idx < width[row] else idx = 0 }
       requires { "expl:valid_innev"
                  valid_innev outer inner eval innev work row idx !lastinnev }
-      (* requires { is_solution_prefix sh eval work idx } *)
+      (* requires { is_solution_suffix sh eval work idx } *)
       variant  { szshape - row, idx }
       ensures  { !lastinnev = old !lastinnev }
       ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
@@ -544,7 +535,7 @@ module LRrule
           invariant { forall i. 0 <= i < at solutions.next 'Init ->
                 Map.get solutions.sols i = Map.get (at solutions.sols 'Init) i }
           (*
-          invariant { is_tableau_reading_prefix sh work idx }
+          invariant { is_tableau_reading_suffix sh work idx }
           *)
           invariant { "expl:only solutions"
                       forall i. at solutions.next 'Init <= i < solutions.next ->
