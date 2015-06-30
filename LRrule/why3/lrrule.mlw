@@ -222,7 +222,7 @@ module Spec
 
   axiom to_word_size:
     forall outer inner w.
-    length outer = length inner -> included inner outer ->
+    included inner outer ->
     rows w = length outer ->
     (forall r. 0 <= r < length outer ->
                columns w >= outer[r] - inner[r]) ->
@@ -230,7 +230,7 @@ module Spec
 
   axiom to_word_contents:
     forall outer inner w.
-    length outer = length inner -> included inner outer ->
+    included inner outer ->
     rows w = length outer ->
     (forall r. 0 <= r < length outer ->
                columns w >= outer[r] - inner[r]) ->
@@ -358,7 +358,6 @@ module ToWord
   use import Spec
 
   let ghost to_word (outer inner: array int) (w: matrix int) : array int
-    requires { length outer = length inner }
     requires { included inner outer }
     requires { rows w = length outer }
     requires { forall r. 0 <= r < length outer ->
