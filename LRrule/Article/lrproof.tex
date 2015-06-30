@@ -1063,6 +1063,51 @@ algorithm.
 
 \section{Schensted algorithm and the Robinson-Schensted bijection}
 
+\begin{DEFN}
+  Let $w = w_0\dots w_{l-1}$ a finite sequence over a totally ordered set. A
+  \emph{subsequence} of $w$ is a sequence $v=v_0\dots v_{r-1}$ such that there exists
+  a strictly increasing $r$-tuple of integer $I:=0<=i_0<i_1<\dots<i_{r-1}<l$
+  verifying for all $k<r$, $v_k = w_{i_k}$.
+\end{DEFN}
+It is already defined in \SSR by the following boolean predicate:
+
+\begin{lstlisting}
+Fixpoint subseq s1 s2 :=
+  if s2 is y :: s2' then
+    if s1 is x :: s1' then subseq (if x == y then s1' else s1) s2' else true
+  else s1 == [::].
+\end{lstlisting}
+
+
+The main algorithmic ingredient of the proof is Schensted algorithms which
+solve efficiently the following problem
+\begin{PROBLEM}
+  Given a finite sequence $w$ over a totally ordered set, compute the maximum
+  length of a increasing subsequence.
+\end{PROBLEM}
+
+  \begin{ALGO}
+    Start with an empty row $r$, insert the letters $l$ of the word one by one
+    from left to right by the following rule:
+    \begin{itemize}
+    \item replace the first letter strictly larger that $l$ by $l$;
+    \item append $l$ to $r$ if there is no such letter.
+    \end{itemize}
+  \end{ALGO}
+  \bigskip
+
+\newcommand{\ar}[1]{\xrightarrow{#1}}
+  Insertion of $\begin{array}{c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c}
+    a&b&a&b&c&a&b&b&a&d&b&a&b\\
+  \end{array}$
+  \begin{multline*}
+  \emptyset\ar{a}\young(a)\ar{b}\young(ab)\ar{a}\young(aa)\ar{b}\young(aab)
+  \ar{c}\young(aabc)\ar{a}\young(aaac)\ar{b}\young(aaab)\ar{b}\\
+  \young(aaabb)\ar{a}\young(aaaab)\ar{d}
+  \young(aaaabd)\ar{b}\young(aaaabb)\ar{a}\\
+  \young(aaaaab)\ar{b}\young(aaaaabb)
+  \end{multline*}
+
 \section{The plactic monoïd}
 
 \section{Green's plactic invariants}
