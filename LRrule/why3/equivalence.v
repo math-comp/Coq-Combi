@@ -1,4 +1,3 @@
-
 (*
    here we prove the equivalence between definitions from
    - the Coq proof (in directory ..), and
@@ -100,19 +99,18 @@ Proof.
 Qed.
 
 Lemma spec_sum_nat (i j : nat) (f : int -> int) :
-  spec.sum i j f = (\sum_( i <= k < j.+1 ) (f k))%R.
+  spec.sum i j f = (\sum_( i <= k < j ) (f k))%R.
 Proof.
-  case: (ltnP j i) => Hi.
-  - have:= Hi; rewrite -ltz_nat => /spec.sum_def1 ->.
+  case: (leqP j i) => Hi.
+  - have:= Hi; rewrite -lez_nat => /spec.sum_def1 ->.
     move: Hi; rewrite /index_iota /leq => /eqP -> /=.
     by rewrite big_nil.
-  - rewrite /index_iota -{1}(subnKC Hi) (subSn Hi).
+  - rewrite /index_iota -{1}(subnKC (ltnW Hi)).
     move: (j-i) {Hi} => n.
     elim: n i => [|n IHn]/= i.
-      rewrite addn0 spec.sum_left // spec.sum_def1; last by rewrite ltz_nat addn1.
-      by rewrite big_cons big_nil !addr0.
+      by rewrite addn0 spec.sum_def1 // big_nil.
     rewrite spec.sum_left; first last.
-      rewrite addnS; apply ltnW; rewrite ltnS; by apply leq_addr.
+      rewrite addnS ltz_nat ltnS; by apply leq_addr.
     by rewrite big_cons -PoszD addn1 -addSnnS IHn.
 Qed.
 
@@ -162,20 +160,13 @@ Proof.
   case: eqP => [-> {s0} | Hs0] /=.
   - rewrite spec.Numof_left_add //.
     + congr ( 1 + _)%R.
-      rewrite -addn1 PoszD add0r.
+      rewrite -(addn1 l) PoszD add0r.
       by rewrite -spec_reindex.
     + by rewrite spec.fc_def.
   - rewrite spec.Numof_left_no_add //.
-    + rewrite -addn1 PoszD !add0r.
+    + rewrite -(addn1 l) PoszD !add0r.
       by rewrite -spec_reindex.
     + by rewrite spec.fc_def /=.
-Qed.
-
-Lemma spec_eq_solE a b : spec.eq_sol a b <-> a = b.
-Proof.
-  split => [|->]// [] /eqP; rewrite eqz_nat => /eqP.
-  rewrite /spec.eq_prefix cond_ltz_nat /=.
-  exact: eq_from_nth.
 Qed.
 
 Fixpoint convert_part (a : array int) : (seq nat) :=
@@ -360,118 +351,313 @@ Proof.
   have:= Hpart => [] [].
   rewrite /length => Hlen _.
   case: sh Hlen Hpart => [//= | s0 sh] _ Hpart.
-  rewrite [size _]/= -addn1 PoszD !addrK spec_sum_nat.
+  rewrite [size _]/= -addn1 PoszD spec_sum_nat.
   rewrite (eq_bigr (fun n => Posz (nth 0 (convert_part (s0 :: sh)) n))); first last.
     move=> i _; exact: part_nth_getE.
   rewrite {Hpart} -(big_morph (id2 := 0) _ PoszD) //.
   apply/eqP; rewrite eqz_nat; apply/eqP.
-  by rewrite sum_iota_sumnE; last exact: size_convert_part.
+  by rewrite addn1 sum_iota_sumnE; last exact: size_convert_part.
 Qed.
+
+
+
+
+(*
+Lemma spec_eq_solE inner outer a b : spec.eq_sol inner outer a b <-> a = b.
+Proof.
+  rewrite /spec.eq_sol /spec.eq_rows.
+  split => [|->]// [] /eqP; rewrite eqz_nat => /eqP.
+  rewrite /spec.eq_prefix cond_ltz_nat /=.
+  exact: eq_from_nth.
+Qed.
+*)
 
 Section SpecFromWhy3.
 
-Variable (sh: spec.skew_shape) (eval: array int).
-Hypothesis Hvalidsh : spec.valid_skew_shape sh.
-Hypothesis Hvalideval :  spec.valid_eval eval.
-Hypothesis Hsum : spec.sum_array eval =
-  (spec.sum_array (spec.outer sh) - (spec.sum_array (spec.inner sh)))%R.
+Variable (outerw innerw evalw : array int).
+Hypothesis Hinput : spec.valid_input outerw innerw.
+Hypothesis Hvalideval :  spec.valid_eval evalw.
+Hypothesis Hsum : spec.sum_array evalw =
+  ((spec.sum_array outerw) - (spec.sum_array innerw))%R.
 
-(* Probably unuseful *)
-Lemma inputSpec_duphead_from_Why3 :
-  inputSpec
-    (convert_part (spec.inner sh))
-    (convert_part eval)
-    (convert_part (spec.outer sh)).
-Proof.
-  move: Hvalidsh => [] [] Hlen [] Hincl [] Hpartinner [] Hpartouter _ _.
-  move: Hvalideval => [] _ [] Hparteval _.
-  constructor.
-  - exact: convert_part_impl.
-  - exact: convert_part_impl.
-  - exact: convert_included_impl.
-  - exact: convert_part_impl.
-  - apply/eqP; rewrite -eqz_nat -(part_sumn_sum_arrayE Hparteval) Hsum.
-    rewrite (part_sumn_sum_arrayE Hpartinner) (part_sumn_sum_arrayE Hpartouter).
-    rewrite sumn_diff_shape; last exact: convert_included_impl.
-    rewrite subzn //.
-    apply sumn_included.
-    exact: convert_included_impl.
-Qed.
+Lemma part_outerw : spec.is_part outerw.
+Proof. by move: Hinput => [] _ []. Qed.
 
-Notation inner := (behead (convert_part (spec.inner sh))).
-Notation outer := (behead (convert_part (spec.outer sh))).
+Lemma part_innerw : spec.is_part innerw.
+Proof. by move: Hinput => [] _ []. Qed.
 
-
-Lemma nth_behead_part p i :
-  spec.is_part p -> get p i.+1 = nth 0 (behead (convert_part p)) i.
-Proof.
-  move=> /part_nth_getE ->.
-  case: (convert_part p) => //=.
-  by apply/eqP; rewrite eqz_nat; apply/eqP.
-Qed.
-
-Lemma nth_inner i : get (spec.inner sh) i.+1 = nth 0 inner i.
-Proof. apply nth_behead_part; by move: Hvalidsh => [] [] _ [] _ []. Qed.
-Lemma nth_outer i : get (spec.outer sh) i.+1 = nth 0 outer i.
-Proof. apply nth_behead_part; by move: Hvalidsh => [] [] _ [] _ [] _ []. Qed.
+Lemma includedw : spec.included innerw outerw.
+Proof. by move: Hinput => [] . Qed.
 
 Lemma inputSpec_from_Why3 :
-  inputSpec inner (convert_part eval) outer.
+  inputSpec
+    (convert_part innerw)
+    (convert_part evalw)
+    (convert_part outerw).
 Proof.
-  move: Hvalidsh => [] [] Hlen [] Hincl [] Hpartinner [] Hpartouter [] Hfirst _ _.
   move: Hvalideval => [] _ [] Hparteval _.
-  have Hinclinnout := included_behead (convert_included_impl Hincl).
   constructor.
-  - apply is_part_behead; exact: convert_part_impl.
-  - apply is_part_behead; exact: convert_part_impl.
-  - exact: Hinclinnout.
+  - exact: (convert_part_impl part_innerw).
+  - exact: (convert_part_impl part_outerw).
+  - exact: (convert_included_impl includedw).
   - exact: convert_part_impl.
-  - apply/eqP; rewrite -eqz_nat -(part_sumn_sum_arrayE Hparteval) Hsum {Hparteval}.
-    rewrite (part_sumn_sum_arrayE Hpartinner) (part_sumn_sum_arrayE Hpartouter).
-    rewrite (sumn_diff_shape Hinclinnout).
-    rewrite subzn //; last by apply sumn_included; exact: convert_included_impl.
-    have:= sumn_included Hinclinnout.
-    move: Hfirst {Hincl}.
-    case: (spec.outer sh) Hpartouter => [//=|out0 out].
-    case: (spec.inner sh) Hpartinner => [//=|inn0 inn].
-      by rewrite /spec.is_part /length //= lez_nat => [] [].
-    move=> _ _ //=.
-    case: out0 => [] //= [] //= out0.
-    case: inn0 => [] //= [] //= inn0.
-    move=> /eqP; rewrite eqz_nat => /eqP -> Hlesum.
-    by rewrite eqz_nat subnDA addKn.
+  - apply/eqP; rewrite -eqz_nat -(part_sumn_sum_arrayE Hparteval) Hsum.
+    rewrite (part_sumn_sum_arrayE part_innerw) (part_sumn_sum_arrayE part_outerw).
+    rewrite sumn_diff_shape; last exact: (convert_included_impl includedw).
+    rewrite subzn //.
+    apply sumn_included.
+    exact: (convert_included_impl includedw).
 Qed.
+
+Notation inner := (convert_part innerw).
+Notation outer := (convert_part outerw).
+Notation eval  := (convert_part evalw).
+Notation width := (diff_shape inner outer).
 
 Section SolCorrect.
 
-Variable sol : array int.
-Hypothesis Hsol : spec.is_solution sh eval sol.
+Variable solw : matrix int.
+Hypothesis Hsol : spec.is_solution outerw innerw evalw solw.
 
-Definition sol_from_Why3 : seq (seq nat) :=
-  skew_reshape inner outer (rev [seq `|i| | i <- sol]).
+Lemma Hwork : spec.valid_work outerw innerw solw.
+Proof. by move: Hsol => []. Qed.
 
-Lemma size_sol : size sol = sumn (diff_shape inner outer).
+Definition sol : seq (seq nat) :=
+  mkseq (fun i =>
+           [seq `|n| | n <- take (nth 0 width i) (nth [::] solw i)])
+        (size outer).
+
+Lemma size_sol : size sol = size outer.
+Proof. by rewrite size_mkseq. Qed.
+
+Lemma widthE (i : nat) : (spec.width outerw innerw) i = nth 0 width i.
 Proof.
-  have:= spec.solution_length Hvalidsh Hsol.
-  rewrite part_sumn_sum_arrayE; last by move: Hvalideval => [] _ [].
-  move=> /eqP; rewrite eqz_nat => /eqP ->.
-  by have:= inputSpec_from_Why3 => [] [].
+  rewrite /spec.width nth_diff_shape.
+  rewrite (part_nth_getE _ part_innerw) (part_nth_getE _ part_outerw).
+  move: inputSpec_from_Why3.(incl) => /includedP [] _ H.
+  by rewrite (subzn (H i)).
 Qed.
 
-Lemma shape_sol_from_Why3 : shape sol_from_Why3 = diff_shape inner outer.
+Lemma size_nth_solE i : i < size outer ->  size (nth [::] sol i) = nth 0 width i.
 Proof.
-  rewrite (shape_skew_reshape inputSpec_from_Why3.(incl)) // size_rev size_map.
-  exact: size_sol.
+  move=> Hi.
+  rewrite (nth_mkseq _ _ Hi) size_map size_take.
+  rewrite bad_if_leq // -lez_nat -{1}widthE.
+  move: Hwork => [].
+  case: solw => /= mat [nrows|//] [ncols|//] /= _ _ /= /eqP Hszmat /allP Hall [] Hsize.
+  subst nrows; rewrite cond_ltz_nat => H.
+  have -> : size (nth [::] mat i) = ncols.
+    have := leq_trans Hi (size_convert_part outerw).
+    by rewrite -Hsize => /(mem_nth [::])/Hall/eqP.
+  apply H; apply (leq_trans Hi); exact: size_convert_part.
 Qed.
 
-Lemma to_word_sol_from_Why3 :
-  to_word sol_from_Why3 = rev [seq `|i| | i <- sol].
+Lemma shape_sol : shape sol = width.
 Proof.
-  rewrite to_word_skew_reshape; first by [].
-  - exact: inputSpec_from_Why3.(incl).
-  - rewrite /length size_rev size_map.
-    exact: size_sol.
+  apply (eq_from_nth (x0 := 0)); rewrite size_map size_mkseq.
+  - by rewrite size_diff_shape.
+  - move=> i Hi.
+    rewrite (nth_map [::]); last by rewrite size_sol.
+    exact: size_nth_solE.
 Qed.
+
+Lemma spec_sum_widthE (a b : nat) :
+  spec.sum a b (spec.width outerw innerw) = \sum_(a <= i0 < b) nth 0 width i0.
+Proof.
+  rewrite spec_sum_nat.
+  rewrite (eq_bigr (fun i => Posz (nth 0 width i))); last by move=> j _; exact: widthE.
+  by rewrite -(big_morph (id2 := 0) _ PoszD).
+Qed.
+
+Lemma spec_sum_szouterw_widthE (a : nat) : a <= size outer ->
+  spec.sum a (size outerw) (spec.width outerw innerw) =
+  \sum_(a <= i0 < size outer) nth 0 width i0.
+Proof.
+  move=> Ha.
+  rewrite spec_sum_widthE; apply/eqP; rewrite eqz_nat; apply/eqP.
+  rewrite (big_cat_nat _ _ _ Ha (size_convert_part outerw)) /=.
+  set B := (X in (_ + X)).
+  suff -> : B = 0 by rewrite addn0.
+  rewrite /B {B} big_seq_cond (eq_bigr (fun _ => 0)).
+  + by rewrite -big_seq_cond sum_nat_const_nat muln0.
+  + move=> j; rewrite /index_iota mem_iota => /andP [] /andP [] Hj _ _.
+    apply nth_default; by rewrite size_diff_shape.
+Qed.
+
+Lemma size_to_wordE : size (to_word sol) = size (spec.to_word outerw innerw solw).
+Proof.
+  rewrite -size_to_word /size_tab shape_sol.
+  have := spec.to_word_size includedw Hwork.
+  rewrite spec_sum_widthE => /eqP; rewrite eqz_nat => /eqP ->.
+  apply esym; apply sum_iota_sumnE.
+  rewrite size_diff_shape; exact: size_convert_part.
+Qed.
+
+Lemma sols_pos r i :
+  r < size outer -> i < nth 0 width r -> (matrix_get solw (Posz r, Posz i) >= 0)%R.
+Proof.
+  move => Hr Hi.
+  rewrite -(@spec.to_word_contents outerw innerw); first last.
+    - by rewrite widthE ?lez_nat ?ltz_nat.
+    - rewrite ?lez_nat ?ltz_nat.
+      by split; last exact: (leq_trans Hr (size_convert_part outerw)).
+    - exact: Hwork.
+    - exact: includedw.
+  set k := (X in get _ X).
+  move: Hsol => [] _ [] Heval _.
+  move: Heval => [] _ [] Hval _.
+  have {Hval} := Hval k; set Hyp := (X in ((X -> _) -> _)) => Hval.
+  suff {Hval} /Hval [] : Hyp by [].
+  rewrite /Hyp {Hyp} /k {k}; split; first by rewrite subrr spec_sum_widthE.
+  rewrite -size_to_wordE -size_to_word /size_tab.
+  rewrite -(sum_iota_sumnE (n := size outer)); last by rewrite shape_sol size_diff_shape.
+  rewrite spec_sum_szouterw_widthE; last by rewrite addn1.
+  rewrite ltz_nat.
+  apply (leq_trans (n := \sum_(r <= i0 < size outer) nth 0 width i0)).
+  - by rewrite (big_ltn Hr) addn1 ltn_add2r.
+  - rewrite [X in (_ <= X)](eq_bigr (nth 0 width)); last by move=> k; rewrite shape_sol.
+    have H : 0 <= r by [].
+    rewrite (big_cat_nat _ _ _ H (ltnW Hr)) /=.
+    exact: leq_addl.
+Qed.
+
+Lemma sol_contentsE r i :
+  r < size outer -> i < nth 0 width r ->
+  Posz (nth 0 (nth [::] sol r) i) = matrix_get solw (Posz r, Posz i).
+Proof.
+  rewrite /sol => Hr Hi.
+  rewrite (nth_mkseq _ _ Hr) (nth_map (Posz 0)); first last.
+    have := size_nth_solE Hr; rewrite /sol.
+    by rewrite (nth_mkseq _ _ Hr) size_map => ->.
+  rewrite /matrix_get witness_int_why3Type (nth_take _ Hi).
+  apply gez0_abs; exact: sols_pos.
+Qed.
+
+Fixpoint slice_seq sh i :=
+  if sh is s0 :: s then
+    if i < s0 then (0, i)
+    else let (r, c) := slice_seq s (i - s0) in (r.+1, c)
+  else (0, i).
+
+Lemma slice_seqE sh i :
+  let (r, c) := (slice_seq sh i) in (\sum_(0 <= j < r) nth 0 sh j) + c = i.
+Proof.
+  elim: sh i => [| s0 s IHs] i //=; first by rewrite /index_iota /= big_nil.
+  case: (ltnP i s0) => His0 //=; first by rewrite /index_iota /= big_nil.
+  have {IHs} := IHs (i - s0); case: (slice_seq s (i - s0)) => r c.
+  rewrite big_nat_recl //= -addnA => ->.
+  exact: subnKC.
+Qed.
+
+Lemma slice_seqP sh i :
+  i < sumn sh -> let (r, c) := (slice_seq sh i) in r < size sh /\ c < nth 0 sh r.
+Proof.
+  elim: sh i => [| s0 s IHs] i //= Hi.
+  case: (ltnP i s0) => His0 //=.
+  have {IHs} := IHs (i - s0); case: (slice_seq s (i - s0)) => r c /=.
+  rewrite ltnS; apply.
+  by rewrite -(subSn His0) leq_subLR.
+Qed.
+
+Lemma iota_gtn a b : [seq i <- iota 0 a | b <= i] = iota b (a - b).
+Proof.
+  elim: a => [//=| n IHn].
+  rewrite -addn1 iota_add add0n /= filter_cat IHn {IHn} /=.
+  case: leqP => Hb.
+  - by rewrite addn1 (subSn Hb) -addn1 iota_add /= subnKC.
+  - rewrite addn1 cats0.
+    have := Hb; rewrite /leq => /eqP ->.
+    by have := ltnW Hb; rewrite /leq => /eqP ->.
+Qed.
+
+Lemma sum_rev s r : r < size s ->
+   \sum_(size s - r <= i0 < size s) nth 0 s i0 = \sum_(0 <= j < r) nth 0 (rev s) j.
+Proof.
+  move=> Hr.
+  rewrite [RHS](big_nat_widen _ _ _ _ _ (ltnW Hr)) [RHS]big_nat_rev /= add0n.
+  rewrite [RHS]big_seq_cond /= [RHS](eq_bigr (fun i => nth 0 s i)); first last.
+    move=> i /andP []; rewrite mem_iota !add0n subn0 => /andP [] _ His Hi.
+    rewrite nth_rev; last by apply (ltn_trans Hi).
+    congr nth; by rewrite -(subSn His) subSS (subKn (ltnW His)).
+  rewrite -big_seq_cond /=.
+  rewrite -[RHS]big_filter /index_iota subn0.
+  congr bigop.
+  rewrite (eq_in_filter (a2 := fun i => size s - r <= i)); first by rewrite iota_gtn.
+  move => i; rewrite mem_iota add0n => /andP [] _ Hi.
+  by rewrite -(subSn Hi) subSS !leq_subLR addnC.
+Qed.
+
+Lemma index_slice i :
+  i < size (to_word sol) ->
+  let (r, c) := (slice_seq (rev width) i) in
+  let rr := size width - r.+1 in
+  [/\ r < size outer,
+      rr < size outer,
+      c < nth 0 width rr &
+      c + \sum_(rr + 1 <= i0 < size outer) nth 0 width i0 = i ].
+Proof.
+  move=> Hi; have := (slice_seqE (rev width) i).
+  have Hszout : size outer > 0.
+    move: Hi; apply contraLR; rewrite -!leqNgt.
+    rewrite -size_to_word /size_tab shape_sol leqn0 => /eqP Hszout.
+    have:= eq_refl (size width); by rewrite {2}size_diff_shape Hszout => /nilP ->.
+  move: Hi; rewrite -size_to_word /size_tab -sumn_rev => /slice_seqP.
+  rewrite shape_sol.
+  case: (slice_seq (rev width) i) => r c [].
+  rewrite size_rev => Hr.
+  rewrite (nth_rev _ Hr) => Hc Heq.
+  split => //=.
+  - move: Hr; by rewrite size_diff_shape.
+  - rewrite size_diff_shape -subSn; last by rewrite -(size_diff_shape inner).
+    rewrite subSS; exact: leq_subr.
+  - rewrite -Heq addnC; congr (_ + _).
+    rewrite -(size_diff_shape inner outer) addn1 (subnSK Hr).
+    exact: sum_rev.
+Qed.
+
+Lemma nth_flatten T (x : T) tab i :
+  nth x (flatten tab) i = let (r, c) := (slice_seq (shape tab) i) in
+                          nth x (nth [::] tab r) c.
+Proof.
+  elim: tab i => [| t0 t IHt] //= i.
+  rewrite nth_cat; case: ltnP => //= Hi.
+  rewrite IHt {IHt}; by case: (slice_seq (shape t) (i - size t0)) => r c.
+Qed.
+
+Lemma to_wordE : to_word sol = [seq `|i| | i <- spec.to_word outerw innerw solw].
+Proof.
+  apply (eq_from_nth (x0 := 0)).
+  - by rewrite size_map size_to_wordE.
+  - move=> i Hi.
+    rewrite /to_word nth_flatten shape_rev shape_sol.
+    rewrite (nth_map (Posz 0)); last by rewrite -size_to_wordE.
+    have := index_slice Hi.
+    case: (slice_seq (rev width) i) => r c [] Hr Hr1 Hl <-.
+    have:= (@spec.to_word_contents outerw innerw _ includedw Hwork).
+    rewrite cond_ltz_nat => Hspec.
+    have {Hspec} /Hspec := leq_trans Hr1 (size_convert_part outerw).
+    rewrite widthE cond_ltz_nat => Hspec.
+    have {Hspec} := Hspec _ Hl.
+    rewrite spec_sum_szouterw_widthE /=; last by rewrite addn1.
+    move => ->.
+    move: Hr1 Hl; rewrite size_diff_shape => Hr1 Hl.
+    rewrite nth_rev; last by rewrite size_sol.
+    rewrite /sol size_mkseq (nth_mkseq _ _ Hr1).
+    rewrite (nth_map (Posz 0)); first last.
+      rewrite size_take bad_if_leq // -lez_nat -widthE.
+      move: Hsol; rewrite /spec.is_solution => [] [] [] Hnrows.
+      rewrite cond_ltz_nat => H _.
+      have {H} := H _ (leq_trans Hr1 (size_convert_part outerw)).
+      rewrite /spec.width.
+      suff -> : ncols solw = size (nth [::] solw (size outer - r.+1)) by [].
+      case: solw Hnrows => mat [nrows | //=] [ncols | //=] /= _ _ /eqP <- {nrows}.
+      move=> /allP Hall /eqP; rewrite eqz_nat => /eqP Hsz.
+      have := leq_trans Hr1 (size_convert_part outerw).
+      by rewrite -Hsz => /(mem_nth [::])/Hall/=/eqP ->.
+    by rewrite nth_take.
+Qed.
+
+(* Ok upto there ************)
 
 Lemma count_mem_numeqE n i :
   Posz (count_mem i (drop n (to_word sol_from_Why3))) =
