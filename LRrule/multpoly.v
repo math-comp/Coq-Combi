@@ -255,7 +255,7 @@ Definition LR_support :=
 
 (* Noncommutative LR rule *)
 Lemma free_LR_rule :
-  catset (freeSchur Q1) (freeSchur Q2) = \bigcup_(Q in LR_support) (freeSchur Q).
+  catset (freeSchur Q1) (freeSchur Q2) = \bigcup_(Q in LR_support) freeSchur Q.
 Proof.
   rewrite /catset.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> t.
