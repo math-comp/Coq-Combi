@@ -300,8 +300,8 @@ End OrdTheory.
 
 Hint Resolve leqXnn ltnXnn ltnXW.
 
-Lemma inhabitant (T : ordType) : T.
-Proof. case: T => sort [] base [] r x ax t0; by apply: x. Qed.
+Definition inhabitant (T : ordType) : T.
+Proof. case: T => sort [] base [] r x ax t0; by apply: x. Defined.
 
 Section Dual.
 
@@ -890,6 +890,9 @@ Qed.
 
 Definition nat_ordMixin := Order.Mixin 0 leq_order.
 Canonical nat_ordType := Eval hnf in OrdType nat nat_ordMixin.
+
+Lemma inhabitant_nat_ordType : inhabitant nat_ordType = 0.
+Proof. by []. Qed.
 
 Lemma leqXnatE m n : (m <= n)%Ord = (m <= n)%N.
 Proof. by rewrite leqXE /=. Qed.
