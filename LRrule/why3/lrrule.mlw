@@ -115,6 +115,11 @@ module Spec
   function numeq (a: array int) (v: int) (lo hi: int) : int =
     numof (\i: int. a[i] = v) lo hi
 
+  let rec lemma numeq_shift (a1 a2: array int) (v lo hi: int) : unit
+    requires { forall i. lo <= i < hi -> a1[i] = a2[i+1] }
+    ensures  { numeq a1 v lo hi = numeq a2 v (lo+1) (hi+1) } variant { hi - lo }
+  = if lo < hi then numeq_shift a1 a2 v (lo+1) hi
+
   predicate valid_input (outer inner: array int) =
     included inner outer /\
     is_part inner /\ is_part outer

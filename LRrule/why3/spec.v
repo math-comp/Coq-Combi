@@ -181,6 +181,12 @@ Axiom fc_def : forall (a:(array int)) (v:int) (i:int), (((fc a v)
 Definition numeq (a:(array int)) (v:int) (lo:int) (hi:int): int :=
   (numof (fc a v) lo hi).
 
+Axiom numeq_shift : forall (a1:(array int)) (a2:(array int)) (v:int) (lo:int)
+  (hi:int), (((0%:Z <= (size a1 : int))%Z /\ (0%:Z <= (size a2 : int))%Z) /\
+  forall (i:int), ((lo <= i)%Z /\ (i < hi)%Z) ->
+  ((get a1 i) = (get a2 (i + 1%:Z)%Z))) -> ((numeq a1 v lo hi) = (numeq a2 v
+  (lo + 1%:Z)%Z (hi + 1%:Z)%Z)).
+
 (* Why3 assumption *)
 Definition valid_input (outer:(array int)) (inner:(array int)): Prop :=
   (included inner outer) /\ ((is_part inner) /\ (is_part outer)).
