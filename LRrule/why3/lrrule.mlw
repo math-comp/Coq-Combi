@@ -337,13 +337,12 @@ module Spec
 
   predicate good_solutions (outer inner eval: array int) (s: solutions) =
     0 <= s.next /\
-    sorted outer inner s 0 s.next (* /\
+    sorted outer inner s 0 s.next /\
     (forall i. 0 <= i < s.next ->
       is_solution outer inner eval (s2m (Map.get s.sols i))) /\
     (forall w. is_solution outer inner eval w ->
        exists i. 0 <= i < s.next /\
                  eq_sol outer inner w (s2m (Map.get s.sols i)))
-  *)
 
 end
 
@@ -410,7 +409,7 @@ module LRrule
 
   val ghost store_solution (outer inner eval: array int) (w: matrix int)
     : unit
-    (* requires { is_solution sh eval w } *)
+    requires { is_solution outer inner eval w }
     writes   { solutions.sols, solutions.next }
     ensures  { solutions.next = (old solutions.next) + 1 }
     ensures  { solutions.sols =
@@ -486,7 +485,7 @@ module LRrule
       requires { if row < szshape then -1 <= idx < width[row] else idx = 0 }
       requires { "expl:valid_innev"
                  valid_innev outer inner eval innev work row idx !lastinnev }
-      (* requires { is_solution_suffix sh eval work idx } *)
+      requires { is_solution_suffix outer inner eval work row idx }
       variant  { szshape - row, idx }
       ensures  { !lastinnev = old !lastinnev }
       ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
@@ -497,17 +496,15 @@ module LRrule
       ensures  { "expl:only solutions"
                  forall i. old solutions.next <= i < solutions.next ->
                  let w = s2m (Map.get solutions.sols i) in
-                 (* is_solution sh eval w /\ *)
+                 is_solution outer inner eval w /\
                  frame outer inner (old work) w row idx }
       ensures  { "expl:sorted solutions"
                  sorted outer inner
                    solutions (old solutions.next) solutions.next }
-      (*
-      ensures  { forall w. is_solution sh eval w ->
-                 eq_prefix (old work) w idx ->
+      ensures  { forall w. is_solution outer inner eval w ->
+                 frame outer inner (old work) w row idx ->
                  exists i. old solutions.next <= i < solutions.next /\
                       eq_sol outer inner w (s2m (Map.get solutions.sols i)) }
-      *)
       if row = szshape then begin
         (* found a solution *)
         ghost store_solution outer inner eval work;
@@ -540,26 +537,22 @@ module LRrule
           invariant { !sum = solutions.next - at solutions.next 'Init >= 0 }
           invariant { forall i. 0 <= i < at solutions.next 'Init ->
                 Map.get solutions.sols i = Map.get (at solutions.sols 'Init) i }
-          (*
-          invariant { is_tableau_reading_suffix sh work idx }
-          *)
+          invariant { is_tableau_reading_suffix outer inner work row idx }
           invariant { "expl:only solutions"
                       forall i. at solutions.next 'Init <= i < solutions.next ->
                       let w = s2m (Map.get solutions.sols i) in
-                      (* is_solution sh eval w /\ *)
+                      is_solution outer inner eval w /\
                       frame outer inner (at work 'Init) w row idx /\
                       min <= Matrix.get w (row, idx) < v }
           invariant { "expl:sorted solutions"
                       sorted outer inner
                         solutions (at solutions.next 'Init) solutions.next }
-          (*
           invariant { "expl: all solutions"
-                      forall w. is_solution sh eval w ->
+                      forall w. is_solution outer inner eval w ->
                       frame outer inner (at work 'Init) w row idx ->
                       min <= Matrix.get w (row, idx) < v ->
-                      exists i. at solutions.next 'Init <= i < solutions.next /\
-                         frame outer inner w (s2m (Map.get solutions.sols i)) }
-          *)
+                  exists i. at solutions.next 'Init <= i < solutions.next /\
+                  frame outer inner w (s2m (Map.get solutions.sols i)) row idx }
           'L:
           if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
             innev[v] <- innev[v] + 1;
