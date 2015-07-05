@@ -120,6 +120,10 @@ module Spec
     ensures  { numeq a1 v lo hi = numeq a2 v (lo+1) (hi+1) } variant { hi - lo }
   = if lo < hi then numeq_shift a1 a2 v (lo+1) hi
 
+  lemma numeq0:
+    forall w k. (forall i. 0 <= i < length w -> w[i] < k) ->
+    numeq w k 0 (length w) = 0
+
   predicate valid_input (outer inner: array int) =
     included inner outer /\
     is_part inner /\ is_part outer
@@ -269,6 +273,14 @@ module Spec
     valid_work outer inner w /\
     is_yam_of_eval eval (to_word outer inner w) /\
     is_tableau_reading outer inner w
+
+(*
+  lemma sols_pos:
+    forall outer inner eval sol.
+    is_solution outer inner eval sol ->
+    forall r i. 0 <= r < length outer -> 0 <= i < width outer inner r ->
+    0 <= Matrix.get sol (r, i)
+*)
 
   lemma solution_length:
     forall outer inner eval w.
