@@ -218,7 +218,24 @@ module Spec
   predicate is_tableau_reading (outer inner: array int) (work: matrix int) =
     is_tableau_reading_suffix outer inner work (length outer) 0
 
-  (* matrix -> array *)
+  (* to_word: matrix -> array
+
+     #rows = s = length outer
+     width r = outer[r] - inner[r]
+
+      _____________________
+  s-1 |_______|___        |
+  s-2 |  |________|___    |
+   |  |    |__________|___|
+   0  |_______|___________|
+               0 -> idx -->
+
+      0                                        length = \sum width
+     +---------+---------+----------+---------+
+     | row s-1 | row s-2 |   ...    |  row 0  |
+     +---------+---------+----------+---------+
+
+  *)
 
   predicate valid_work (outer inner: array int) (w: matrix int) =
     rows w = length outer /\
@@ -237,6 +254,17 @@ module Spec
     forall i. 0 <= i < width outer inner r ->
     (to_word outer inner w)[i + sum (r + 1) (length outer) (width outer inner)]
     = Matrix.get w (r, i)
+
+  let lemma valid_to_word_index (outer inner: array int) (r i: int)
+    requires { included inner outer }
+    requires { 0 <= r < length outer }
+    requires { 0 <= i < width outer inner r }
+    ensures  { 0 <= i + sum (r + 1) (length outer) (width outer inner)
+                  <     sum 0       (length outer) (width outer inner) }
+  = assert { sum 0       (length outer) (width outer inner) =
+             sum 0 r                    (width outer inner) +
+             width outer inner r                            +
+             sum (r + 1) (length outer) (width outer inner) }
 
   (* Yamanouchi condition *)
 
@@ -265,8 +293,9 @@ module Spec
   predicate is_solution_suffix
     (outer inner eval: array int) (w: matrix int) (row idx: int) =
     valid_work outer inner w /\
-    let len = sum 0 (row + 1) (width outer inner) - idx - 1 in
-    is_yam_of_eval_suffix eval (to_word outer inner w) len /\
+    (let len = sum 0 row (width outer inner)
+          + if row = length outer then 0 else width outer inner row - idx - 1 in
+    is_yam_of_eval_suffix eval (to_word outer inner w) len) /\
     is_tableau_reading_suffix outer inner w row idx
 
   predicate is_solution (outer inner eval: array int) (w: matrix int) =
@@ -274,13 +303,12 @@ module Spec
     is_yam_of_eval eval (to_word outer inner w) /\
     is_tableau_reading outer inner w
 
-(*
   lemma sols_pos:
     forall outer inner eval sol.
+    included outer inner ->
     is_solution outer inner eval sol ->
-    forall r i. 0 <= r < length outer -> 0 <= i < width outer inner r ->
+    forall r i. 0 <= r < length outer -> 0 <= i < width outer inner r  ->
     0 <= Matrix.get sol (r, i)
-*)
 
   lemma solution_length:
     forall outer inner eval w.
@@ -463,6 +491,15 @@ module LRrule
       shift[i] <- inner[i-1] - inner[i]
     done;
     shift
+
+  (* these lemmas are used only in the program proof, not in the Coq proof
+     of equivalence *)
+
+  lemma solution_suffix_solution:
+    forall outer inner eval work.
+    included inner outer ->
+    is_solution_suffix outer inner eval work (length outer) 0 ->
+    is_solution        outer inner eval work
 
   (*
      row = current row, in [0 .. length outer[
