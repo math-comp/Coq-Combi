@@ -249,6 +249,103 @@ Proof.
   rewrite addnC -drop_drop; exact: IHn.
 Qed.
 
+Fixpoint shape_nth sh i :=
+  if sh is s0 :: s then
+    if i < s0 then (0, i)
+    else let (r, c) := shape_nth s (i - s0) in (r.+1, c)
+  else (0, i).
+
+Lemma shape_nthE sh i :
+  let (r, c) := (shape_nth sh i) in (\sum_(0 <= j < r) nth 0 sh j) + c = i.
+Proof.
+  elim: sh i => [| s0 s IHs] i //=; first by rewrite /index_iota /= big_nil.
+  case: (ltnP i s0) => His0 //=; first by rewrite /index_iota /= big_nil.
+  have {IHs} := IHs (i - s0); case: (shape_nth s (i - s0)) => r c.
+  rewrite big_nat_recl //= -addnA => ->.
+  exact: subnKC.
+Qed.
+
+Lemma shape_nthP sh i :
+  i < sumn sh -> let (r, c) := (shape_nth sh i) in r < size sh /\ c < nth 0 sh r.
+Proof.
+  elim: sh i => [| s0 s IHs] i //= Hi.
+  case: (ltnP i s0) => His0 //=.
+  have {IHs} := IHs (i - s0); case: (shape_nth s (i - s0)) => r c /=.
+  rewrite ltnS; apply.
+  by rewrite -(subSn His0) leq_subLR.
+Qed.
+
+Lemma iota_gtn a b : [seq i <- iota 0 a | b <= i] = iota b (a - b).
+Proof.
+  elim: a => [//=| n IHn].
+  rewrite -addn1 iota_add add0n /= filter_cat IHn {IHn} /=.
+  case: leqP => Hb.
+  - by rewrite addn1 (subSn Hb) -addn1 iota_add /= subnKC.
+  - rewrite addn1 cats0.
+    have := Hb; rewrite /leq => /eqP ->.
+    by have := ltnW Hb; rewrite /leq => /eqP ->.
+Qed.
+
+Lemma nth_flatten T (x : T) tab i :
+  nth x (flatten tab) i = let (r, c) := (shape_nth (shape tab) i) in
+                          nth x (nth [::] tab r) c.
+Proof.
+  elim: tab i => [| t0 t IHt] //= i.
+  rewrite nth_cat; case: ltnP => //= Hi.
+  rewrite IHt {IHt}; by case: (shape_nth (shape t) (i - size t0)) => r c.
+Qed.
+
+Section BigInterv.
+
+Variable R : Type.
+Variable idx : R.
+Variable op : Monoid.law idx.
+
+Lemma big_nat_widen0 a b c F :
+  b <= c -> \big[op/idx]_(a <= i < b) F i = \big[op/idx]_(0 <= i < c | a <= i < b) F i.
+Proof.
+  move=> Hbc.
+  rewrite {1}/index_iota -iota_gtn -{1}(subn0 b) big_filter -/(index_iota 0 b).
+  by rewrite (big_nat_widen _ _ _ _ _ Hbc).
+Qed.
+
+End BigInterv.
+
+Lemma sum_nth_rev s a b :
+   \sum_(a <= i < b) nth 0 (rev s) i = \sum_(size s - b <= i < size s - a) nth 0 s i.
+Proof.
+  have sum0 u v : size s <= u -> \sum_(u <= i < v) nth 0 (rev s) i = 0.
+    move=> Hu; rewrite big_seq_cond [LHS](eq_bigr (fun i => 0)); first last.
+      move=> i; rewrite mem_iota => /andP [] /andP [] Hai _ _.
+      rewrite nth_default // size_rev; exact: leq_trans Hu Hai.
+    by rewrite -big_seq_cond -/(index_iota _ _) /= sum_nat_const_nat muln0.
+  wlog Hbs: b / b <= (size s).
+    move=> Hwlog; case: (leqP b (size s)) => [| /ltnW Hbs]; first exact: Hwlog.
+    have:= Hwlog (size s) (leqnn (size s)).
+    have:= Hbs; rewrite subnn {1}/leq => /eqP -> <-.
+    case: (ltnP a (size s)) => Has.
+    - by rewrite (big_cat_nat _ _ _ (ltnW Has) Hbs) /= (sum0 _ _ (leqnn (size s))) addn0.
+    - rewrite {2}/index_iota; have:= Has; rewrite /leq => /eqP -> /=.
+      by rewrite (sum0 _ _ Has) big_nil.
+  case: (ltnP a b) => Hab; first last.
+  - rewrite /index_iota; have:= Hab; rewrite /leq => /eqP -> /=.
+    have := leq_sub2l (size s) Hab; rewrite /leq => /eqP -> /=.
+    by rewrite !big_nil.
+  - rewrite (big_nat_widen0 _ _ _ Hbs) big_nat_rev /= add0n.
+    rewrite big_seq_cond [LHS](eq_bigr (fun i => nth 0 s i)); first last.
+      move=> i /and3P []; rewrite mem_iota add0n subn0 => /andP [] _ Hi Hi1 Hi2.
+      rewrite nth_rev; last exact (leq_trans Hi2 Hbs).
+      congr nth; by rewrite subnS subKn.
+    rewrite (eq_bigl (fun i => size s - b <= i < size s - a)); first last.
+      move=> i /=; rewrite mem_iota add0n subn0 leq0n /=.
+        rewrite leq_subLR addnC -leq_subLR ltn_subRL addnC -ltn_subRL [RHS]andbC.
+        case: (size s) => [//= | n]; rewrite subSS ltnS.
+        case: (leqP i n) => [Hn | /=]; first by rewrite (subSn Hn) ltnS.
+        rewrite {1}/leq => /eqP ->.
+        by rewrite ltn0.
+    rewrite -big_nat_widen0 //; exact: leq_subr.
+Qed.
+
 Lemma incr_nth_inj sh : injective (incr_nth sh).
 Proof.
   move=> i j Hsh.
@@ -280,3 +377,4 @@ Proof.
   apply/perm_eqP => Q; rewrite !count_filter.
   by apply Hcount.
 Qed.
+
