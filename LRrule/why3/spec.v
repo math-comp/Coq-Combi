@@ -14,7 +14,6 @@ Require Import ssralg ssrnum.
 Import GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
-
 (* Why3 assumption *)
 Definition unit := unit.
 
@@ -186,6 +185,10 @@ Axiom numeq_shift : forall (a1:(array int)) (a2:(array int)) (v:int) (lo:int)
   forall (i:int), ((lo <= i)%Z /\ (i < hi)%Z) ->
   ((get a1 i) = (get a2 (i + 1%:Z)%Z))) -> ((numeq a1 v lo hi) = (numeq a2 v
   (lo + 1%:Z)%Z (hi + 1%:Z)%Z)).
+
+Axiom numeq0 : forall (w:(array int)) (k:int), (forall (i:int),
+  ((0%:Z <= i)%Z /\ (i < (size w : int))%Z) -> ((get w i) < k)%Z) ->
+  ((numeq w k 0%:Z (size w : int)) = 0%:Z).
 
 (* Why3 assumption *)
 Definition valid_input (outer:(array int)) (inner:(array int)): Prop :=
@@ -415,6 +418,10 @@ Axiom no_duplicate : forall (outer:(array int)) (inner:(array int))
 
 (* Why3 assumption *)
 Definition good_solutions (outer:(array int)) (inner:(array int))
-  (eval:(array int)) (s:solutions): Prop := (0%:Z <= (next s))%Z /\ (sorted
-  outer inner s 0%:Z (next s)).
+  (eval:(array int)) (s:solutions): Prop := (0%:Z <= (next s))%Z /\ ((sorted
+  outer inner s 0%:Z (next s)) /\ ((forall (i:int), ((0%:Z <= i)%Z /\
+  (i < (next s))%Z) -> (is_solution outer inner eval (s2m ((sols s) i)))) /\
+  forall (w:(matrix int)), (is_solution outer inner eval w) -> exists i:int,
+  ((0%:Z <= i)%Z /\ (i < (next s))%Z) /\ (eq_sol outer inner w
+  (s2m ((sols s) i))))).
 
