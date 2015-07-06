@@ -671,13 +671,12 @@ Proof.
 Qed.
 
 Lemma size_drop_nth_sol r :
-  size (drop (nth 0 inner r - nth 0 (behead inner) r) (nth [::] sol r.+1))
+  size (drop (nth 0 inner r - nth 0 inner r.+1) (nth [::] sol r.+1))
   = nth 0 outer r.+1 - nth 0 inner r.
 Proof.
   case (ltnP r.+1 (size outer)) => Hi.
   - rewrite size_drop (size_nth_solE Hwork Hi).
     rewrite !nth_diff_shape.
-    have -> : nth 0 (behead inner) r = nth 0 inner r.+1 by case inner.
     rewrite subnBA; last exact: inner_decr.
     rewrite subnK //; last exact: le_inner_outer.
   - rewrite [nth _ sol _]nth_default; last by rewrite size_sol.
@@ -685,7 +684,7 @@ Proof.
 Qed.
 
 Lemma skew_dominate_nth_sol r :
-  skew_dominate (nth 0 inner r - nth 0 (behead inner) r)
+  skew_dominate (nth 0 inner r - nth 0 inner r.+1)
                 (nth [::] sol r.+1) (nth [::] sol r).
 Proof.
   rewrite /skew_dominate; apply/dominateP; split.
@@ -696,7 +695,6 @@ Proof.
     + rewrite [nth _ sol _]nth_default; last by rewrite size_sol.
       by rewrite (nth_default _ (leq_trans Hi _)).
   move=> c; rewrite size_drop_nth_sol.
-  have -> : nth 0 (behead inner) r = nth 0 inner r.+1 by case inner.
   rewrite ltnXnatE inhabitant_nat_ordType => Hc.
   move: Hsol => [] _ [] _ [] _ [] _ [] Hcol _.
   rewrite nth_drop.
@@ -909,7 +907,6 @@ Proof.
     move: Hout => [] /is_skew_tableauP [] _ _ _ Hdom Hshape _ _.
     have {Hdom} := Hdom r => /dominateP.
     rewrite inhabitant_nat_ordType size_drop !size_nth_tab => [] [] _.
-    have -> : nth 0 (behead inner) r = nth 0 inner r.+1 by case inner.
     move=> Hdom.
     have := Hdom (i - (nth 0 inner r - nth 0 inner r.+1)).
     set Hyp := (X in (is_true X -> _) -> _) => {Hdom} Hdom.
