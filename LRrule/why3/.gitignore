@@ -8,3 +8,4 @@ test_lrrule.byte
 *.annot
 lrrule_ocaml.opt
 Spec.v
+lrrule_unsafe.opt

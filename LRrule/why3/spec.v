@@ -328,16 +328,26 @@ Definition is_yam_suffix (w:(array int)) (len:int): Prop := let n :=
   n) <= (numeq w v1 (n - p)%Z n))%Z)).
 
 (* Why3 assumption *)
-Definition is_yam_of_eval_suffix (eval:(array int)) (w:(array int))
-  (len:int): Prop := let n := (size w : int) in ((is_yam_suffix w len) /\
-  ((forall (i:int), (((n - len)%Z <= i)%Z /\ (i < n)%Z) ->
-  ((0%:Z <= (get w i))%Z /\ ((get w i) < (size eval : int))%Z)) /\
-  forall (v:int), ((0%:Z <= v)%Z /\ (v < (size eval : int))%Z) -> ((numeq w v
-  (n - len)%Z n) = (get eval v)))).
+Definition is_yam (w:(array int)): Prop := (is_yam_suffix w (size w : int)).
 
 (* Why3 assumption *)
-Definition is_yam_of_eval (eval:(array int)) (w:(array int)): Prop :=
-  (is_yam_of_eval_suffix eval w (size w : int)).
+Definition is_of_eval_suffix (eval:(array int)) (w:(array int))
+  (len:int): Prop := let n := (size w : int) in ((forall (i:int),
+  (((n - len)%Z <= i)%Z /\ (i < n)%Z) -> ((0%:Z <= (get w i))%Z /\
+  ((get w i) < (size eval : int))%Z)) /\ forall (v:int), ((0%:Z <= v)%Z /\
+  (v < (size eval : int))%Z) -> ((numeq w v (n - len)%Z n) = (get eval v))).
+
+(* Why3 assumption *)
+Definition is_of_eval (eval:(array int)) (w:(array int)): Prop :=
+  (is_of_eval_suffix eval w (size w : int)).
+
+(* Why3 assumption *)
+Definition is_yam_of_eval_suffix (eval:(array int)) (w:(array int))
+  (len:int): Prop := (is_yam_suffix w len) /\ (is_of_eval_suffix eval w len).
+
+(* Why3 assumption *)
+Definition is_yam_of_eval (eval:(array int)) (w:(array int)): Prop := (is_yam
+  w) /\ (is_of_eval eval w).
 
 Axiom is_yam_of_eval_length : forall (eval:(array int)) (w:(array int)),
   (is_yam_of_eval eval w) -> ((size w : int) = (sum_array eval)).
