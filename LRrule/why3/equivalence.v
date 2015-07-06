@@ -447,7 +447,7 @@ Proof.
 Qed.
 
 Definition pos_mat := forall r i : nat,
-  r < size outer -> i < nth 0 width r -> (matrix_get solw (Posz r, Posz i) >= 0)%R.
+  r < size outer -> i < nth 0 width r -> (matrix_get solw (Posz r) (Posz i) >= 0)%R.
 
 Hypothesis Hsol_pos : pos_mat.
 
@@ -486,7 +486,7 @@ Qed.
 
 Lemma sol_contentsE r i :
   r < size outer -> i < nth 0 width r ->
-  Posz (nth 0 (nth [::] sol r) i) = matrix_get solw (Posz r, Posz i).
+  Posz (nth 0 (nth [::] sol r) i) = matrix_get solw (Posz r) (Posz i).
 Proof.
   rewrite /sol => Hr Hi.
   rewrite (nth_mkseq _ _ Hr) (nth_map (Posz 0)); first last.
@@ -722,7 +722,7 @@ Proof.
       rewrite subzn; last exact: inner_decr.
       rewrite lez_nat; exact: leq_addl.
     rewrite -(sol_contentsE Hwork sols_pos Hr Hi).
-    set tmp := (X in matrix_get _ (_, X)).
+    set tmp := (X in matrix_get _ _ X).
     have {tmp} -> : tmp = c by rewrite /tmp /i PoszD (subzn (inner_decr r)) addrK.
     rewrite -(sol_contentsE Hwork sols_pos); first last.
       - rewrite nth_diff_shape; apply (leq_trans Hc).

@@ -106,8 +106,8 @@ Section Matrix.
 
 Variable (T:why3Type).
 
-Definition matrix_get (m : matrix T) (rc : int * int) :=
-  match rc with
+Definition matrix_get (m : matrix T) (r: int) (c : int) :=
+  match (r, c) with
     | (Posz rr, Posz cc) => nth (witness T) (nth [::] m rr) cc
     | _ => (witness T)
   end.
