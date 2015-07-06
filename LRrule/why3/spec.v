@@ -370,7 +370,7 @@ Definition is_solution (outer:(array int)) (inner:(array int))
   inner w)).
 
 Axiom sols_pos : forall (outer:(array int)) (inner:(array int))
-  (eval:(array int)) (sol:(matrix int)), (included outer inner) ->
+  (eval:(array int)) (sol:(matrix int)), (included inner outer) ->
   ((is_solution outer inner eval sol) -> forall (r:int) (i:int),
   ((0%:Z <= r)%Z /\ (r < (size outer : int))%Z) -> (((0%:Z <= i)%Z /\
   (i < ((width outer inner) r))%Z) -> (0%:Z <= (matrix_get sol (r, i)))%Z)).

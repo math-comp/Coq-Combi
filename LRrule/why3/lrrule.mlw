@@ -315,7 +315,7 @@ module Spec
 
   lemma sols_pos:
     forall outer inner eval sol.
-    included outer inner ->
+    included inner outer ->
     is_solution outer inner eval sol ->
     forall r i. 0 <= r < length outer -> 0 <= i < width outer inner r  ->
     0 <= Matrix.get sol (r, i)
