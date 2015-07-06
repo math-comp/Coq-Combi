@@ -310,6 +310,15 @@ Axiom to_word_contents : forall (outer:(array int)) (inner:(array int))
   ((get (to_word outer inner w) (i + (sum (r + 1%:Z)%Z (size outer : int)
   (width outer inner)))%Z) = (matrix_get w (r, i)))).
 
+Axiom valid_to_word_index : forall (outer:(array int)) (inner:(array int))
+  (r:int) (i:int), (((0%:Z <= (size outer : int))%Z /\
+  (0%:Z <= (size inner : int))%Z) /\ ((included inner outer) /\
+  (((0%:Z <= r)%Z /\ (r < (size outer : int))%Z) /\ ((0%:Z <= i)%Z /\
+  (i < ((width outer inner) r))%Z)))) -> ((0%:Z <= (i + (sum (r + 1%:Z)%Z
+  (size outer : int) (width outer inner)))%Z)%Z /\ ((i + (sum (r + 1%:Z)%Z
+  (size outer : int) (width outer inner)))%Z < (sum 0%:Z (size outer : int)
+  (width outer inner)))%Z).
+
 (* Why3 assumption *)
 Definition is_yam_suffix (w:(array int)) (len:int): Prop := let n :=
   (size w : int) in (((0%:Z <= len)%Z /\ (len <= n)%Z) /\ ((forall (i:int),
@@ -336,16 +345,25 @@ Axiom is_yam_of_eval_length : forall (eval:(array int)) (w:(array int)),
 (* Why3 assumption *)
 Definition is_solution_suffix (outer:(array int)) (inner:(array int))
   (eval:(array int)) (w:(matrix int)) (row:int) (idx:int): Prop :=
-  (valid_work outer inner w) /\ ((is_yam_of_eval_suffix eval (to_word outer
-  inner w) (((sum 0%:Z (row + 1%:Z)%Z (width outer
-  inner)) - idx)%Z - 1%:Z)%Z) /\ (is_tableau_reading_suffix outer inner w row
-  idx)).
+  (valid_work outer inner w) /\ ((((row = (size outer : int)) ->
+  (is_yam_of_eval_suffix eval (to_word outer inner w) ((sum 0%:Z row
+  (width outer inner)) + 0%:Z)%Z)) /\ ((~ (row = (size outer : int))) ->
+  (is_yam_of_eval_suffix eval (to_word outer inner w) ((sum 0%:Z row
+  (width outer inner)) + ((((width outer inner)
+  row) - idx)%Z - 1%:Z)%Z)%Z))) /\ (is_tableau_reading_suffix outer inner w
+  row idx)).
 
 (* Why3 assumption *)
 Definition is_solution (outer:(array int)) (inner:(array int))
   (eval:(array int)) (w:(matrix int)): Prop := (valid_work outer inner w) /\
   ((is_yam_of_eval eval (to_word outer inner w)) /\ (is_tableau_reading outer
   inner w)).
+
+Axiom sols_pos : forall (outer:(array int)) (inner:(array int))
+  (eval:(array int)) (sol:(matrix int)), (included outer inner) ->
+  ((is_solution outer inner eval sol) -> forall (r:int) (i:int),
+  ((0%:Z <= r)%Z /\ (r < (size outer : int))%Z) -> (((0%:Z <= i)%Z /\
+  (i < ((width outer inner) r))%Z) -> (0%:Z <= (matrix_get sol (r, i)))%Z)).
 
 Axiom solution_length : forall (outer:(array int)) (inner:(array int))
   (eval:(array int)) (w:(matrix int)), (is_solution outer inner eval w) ->
