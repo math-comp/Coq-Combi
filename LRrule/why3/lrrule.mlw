@@ -275,14 +275,24 @@ module Spec
     (forall p: int. 0 <= p <= len ->
        forall v1 v2. 0 <= v1 <= v2 -> numeq w v2 (n-p) n <= numeq w v1 (n-p) n)
 
-  predicate is_yam_of_eval_suffix (eval: array int) (w: array int) (len: int) =
+  predicate is_yam (w: array int) =
+    is_yam_suffix w (length w)
+
+  predicate is_of_eval_suffix (eval: array int) (w: array int) (len: int) =
     let n = length w in
-    is_yam_suffix w len /\
     (forall i: int. n - len <= i < n -> 0 <= w[i] < length eval) /\
     (forall v: int. 0 <= v < length eval -> numeq w v (n-len) n = eval[v])
 
+  predicate is_of_eval (eval: array int) (w: array int) =
+    is_of_eval_suffix eval w (length w)
+
+  predicate is_yam_of_eval_suffix (eval: array int) (w: array int) (len: int) =
+    is_yam_suffix w len /\
+    is_of_eval_suffix eval w len
+
   predicate is_yam_of_eval (eval: array int) (w: array int) =
-    is_yam_of_eval_suffix eval w (length w)
+    is_yam w /\
+    is_of_eval eval w
 
   lemma is_yam_of_eval_length:
     forall eval w.
