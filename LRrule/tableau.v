@@ -215,7 +215,7 @@ Section Tableau.
     else true.
 
   Lemma is_tableauP t : reflect
-    [/\ forall i, i < size t -> (nth [::] t i) != [::],
+    [/\ forall i, i < size t -> (nth [::] t i) != [::], (* forbid empty lines *)
      forall i, is_row (nth [::] t i) &
      forall i j, i < j -> dominate (nth [::] t j) (nth [::] t i)]
     (is_tableau t).
