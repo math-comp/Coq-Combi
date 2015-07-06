@@ -881,7 +881,7 @@ Proof.
   - move=> r Hr; rewrite /spec.non_decreasing_row_suffix.
     rewrite -/(spec.width outerw innerw _) widthE cond_nat => i j [] Hij Hj /=.
     have Hi := leq_ltn_trans Hij Hj.
-    rewrite (solwmatE Hr Hj) (solwmatE Hr Hi).
+    rewrite /matrix_get (solwmatE Hr Hj) (solwmatE Hr Hi).
     rewrite lez_nat -leqXnatE.
     move: Hout => [] /is_skew_tableauP [] _ _ Hrow _ _ _ _.
     apply: (is_rowP 0 _ (Hrow r)).
