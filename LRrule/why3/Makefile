@@ -37,6 +37,10 @@ lrrule_ocaml.opt: lrrule_ocaml.ml
 $(EXTRACT): lrrule.mlw
 	why3 extract -D ocaml64 -L . -T lrrule.LRrule -o .
 
+lrrule_unsafe.opt: lrrule.mlw test_lrrule_unsafe.ml
+	why3 extract -D ocaml-unsafe-int -L . -T lrrule.LRrule -o .
+	ocamlopt -o $@ $(OCAMLLIB) lrrule__LRrule.ml test_lrrule_unsafe.ml
+
 # proof of equivalence
 Spec.v: lrrule.mlw
 	why3 realize -D coq-ssreflect -L . -T lrrule.Spec -o .
