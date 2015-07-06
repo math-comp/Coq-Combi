@@ -504,8 +504,9 @@ Let $\alphA$ be an alphabet (that is a totally ordered set).
   \dots x_{r-1}$ and $v = y_0 \dots y_{s-1}$ be two rows. ($x_i, y_j \in \alphA$). We
   say that \emph{$u$ dominates $v$} if $r\leq s$ and for $i = 0,\dots,r-1$,
   $x_i > y_i$.
-  A \emph{tableau} is a sequence of non empty row such that each row dominate
-  the next one.
+
+  A \emph{tableau} is a sequence of non empty row which is reverse sorted for
+  the dominance order.
 \end{DEFN}
 As for partitions, we don't use a specific type for rows and tableaux and use
 simply \verb{seq seq nat} as a data-structure. Tableau are just defined
@@ -522,7 +523,7 @@ Lemma |*dominateP*| u v : reflect
   (dominate u v).
 
 Lemma |*is_tableauP*| t : reflect
-  [/\ forall i, i < size t -> (nth [::] t i) != [::],
+  [/\ forall i, i < size t -> (nth [::] t i) != [::],  (* forbid empty rows *)
      forall i, is_row (nth [::] t i) &
      forall i j, i < j -> dominate (nth [::] t j) (nth [::] t i) ]
   (is_tableau t).

@@ -189,7 +189,7 @@ Section Dominate.
 
   Fixpoint is_skew_tableau inner t :=
     if t is t0 :: t'
-    then [&& head 0 inner + size t0 != 0,
+    then [&& head 0 inner + size t0 != 0, (* forbid empty rows *)
          is_row t0,
          skew_dominate ((head 0 inner) - (head 0 (behead inner)))
                        (head [::] t') t0 & is_skew_tableau (behead inner) t']
@@ -199,7 +199,7 @@ Section Dominate.
     [/\ size inner <= size t,
      forall i, i < size t -> nth 0 inner i + size (nth [::] t i) != 0,
      forall i, is_row (nth [::] t i) &
-     forall i, skew_dominate ((nth 0 inner i) - (nth 0 (behead inner) i))
+     forall i, skew_dominate ((nth 0 inner i) - (nth 0 inner i.+1))
                              (nth [::] t i.+1) (nth [::] t i)]
     (is_skew_tableau inner t).
   Proof.
