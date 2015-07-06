@@ -501,6 +501,23 @@ module LRrule
     is_solution_suffix outer inner eval work (length outer) 0 ->
     is_solution        outer inner eval work
 
+  (* move to next row *)
+  lemma solution_suffix_next_row:
+    forall outer inner eval work row.
+    included inner outer ->
+    0 <= row < length outer ->
+    is_solution_suffix
+      outer inner eval work row     (-1) ->
+    is_solution_suffix
+      outer inner eval work (row+1) (width outer inner (row+1) - 1)
+
+  (* move to last row *)
+  lemma solution_suffix_last_row:
+    forall outer inner eval work.
+    included inner outer ->
+    is_solution_suffix outer inner eval work (length outer - 1) (-1) ->
+    is_solution_suffix outer inner eval work (length outer)     0
+
   (*
      row = current row, in [0 .. length outer[
      idx = current index in row (from left to left),
