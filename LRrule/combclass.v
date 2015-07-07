@@ -90,6 +90,9 @@ Definition sub_subFinType := Eval hnf in [subFinType of sub_finType].
 Lemma enum_subP : map val (enum sub_finType) = lst.
 Proof. by rewrite enumT unlock /= subType_seqP. Qed.
 
+Lemma card_subE : #|sub_finType| = size lst.
+Proof. by rewrite cardE -(size_map val) /= enum_subP. Qed.
+
 End SubCount.
 
 
@@ -191,5 +194,16 @@ Definition union_subFinType := Eval hnf in [subFinType of union_finType].
 Lemma enum_union_finTypeE :
   map val (enum union_finType) = enum_union.
 Proof. by rewrite enumT unlock subType_seqP. Qed.
+
+Lemma card_unionE : #|union_finType| = \sum_(i in TPI) #|TPi i|.
+Proof.
+  rewrite cardE -(size_map val) /= enum_union_finTypeE.
+  rewrite /enum_union size_flatten /shape -map_comp.
+  rewrite (eq_map (f2 := fun i => #|TPi i|)); first last.
+    move=> i /=; by rewrite size_map cardE.
+  rewrite /index_enum -enumT.
+  elim: (enum TPI) => [| i0 I IHI] /=; first by rewrite big_nil.
+  by rewrite big_cons inE -IHI.
+Qed.
 
 End SubtypesDisjointUnion.
