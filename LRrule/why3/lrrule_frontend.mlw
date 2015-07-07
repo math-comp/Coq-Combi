@@ -1,0 +1,37 @@
+
+module LRruleFrontend
+
+  use import int.Int
+  use import int.MinMax
+  use import ref.Refint
+  use import array.Array
+  use import lrrule.Spec
+  use import lrrule.LRrule
+
+  function extended (a: array int) (len: int) : array int
+
+  (* axioms *)
+
+  val fill_with_zero (a: array int) (len: int) : array int
+
+  let lrrule_frontend (outer inner eval: array int) : int
+    requires { is_part inner }
+    requires { is_part outer }
+    requires { is_part eval }
+    (* requires { sum_array eval = sum_array outer - sum_array inner } *)
+    requires { solutions.next = 0 }
+    ensures  { result = solutions.next }
+    (* ensures  { good_solutions outer inner eval solutions } *)
+  =
+    let len = max (length outer) (length inner) in
+    let outer' = fill_with_zero outer len in
+    let inner' = fill_with_zero inner len in
+    lrrule outer' inner' eval
+
+end
+
+(*
+Local Variables:
+compile-command: "why3 ide -L . lrrule_frontend.mlw"
+End:
+*)
