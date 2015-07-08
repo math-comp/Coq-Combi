@@ -168,6 +168,24 @@ Proof.
     by rewrite leqW.
 Qed.
 
+Lemma sumn_map_condE (T : Type) (s : seq T) (f : T -> nat) (P : pred T) :
+  \sum_(i <- s | P i) f i = sumn [seq f i | i <- s & P i].
+Proof.
+  elim: s => [//= | s0 s IHs] /=; first by rewrite big_nil.
+  rewrite big_cons IHs.
+  by case: (P s0).
+Qed.
+
+Lemma sumn_mapE (T : Type) (s : seq T) (f : T -> nat) :
+  \sum_(i <- s) f i = sumn [seq f i | i <- s].
+Proof. by rewrite sumn_map_condE filter_predT. Qed.
+
+Lemma sumnE s : \sum_(i <- s) i = sumn s.
+Proof. by rewrite sumn_mapE map_id. Qed.
+
+Lemma perm_sumn l1 l2 : perm_eq l1 l2 -> sumn l1 = sumn l2.
+Proof. rewrite -!sumnE; by apply eq_big_perm. Qed.
+
 Lemma sumn_take r s : sumn (take r s) = \sum_(0 <= i < r) nth 0 s i.
 Proof.
   elim: r s => [|r IHr] s /=.
@@ -377,4 +395,13 @@ Proof.
   apply/perm_eqP => Q; rewrite !count_filter.
   by apply Hcount.
 Qed.
+
+Lemma all_perm_eq (T : eqType) (u v : seq T) P : perm_eq u v -> all P u -> all P v.
+Proof.
+  move=> /perm_eq_mem Hperm /allP Hall; apply/allP => x.
+  by rewrite -Hperm => /Hall.
+Qed.
+
+Lemma flatten_seq1 (T : eqType) (s : seq T) : flatten [seq [:: x] | x <- s] = s.
+Proof. by elim: s => [//= | s0 s /= ->]. Qed.
 
