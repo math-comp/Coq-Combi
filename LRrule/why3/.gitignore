@@ -1,11 +1,11 @@
-lrrule__LRrule.ml
 *__*.ml
 *.cm*
 *.o
-test_lrrule
-test_lrrule.byte
+lrrule.opt
+lrrule.byte
 *.bak
 *.annot
 lrrule_ocaml.opt
 Spec.v
 lrrule_unsafe.opt
+lrrule64.opt

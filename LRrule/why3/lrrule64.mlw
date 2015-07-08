@@ -1,0 +1,220 @@
+module Spec
+
+  use import int.Int
+  use import map.Map
+  use import array.Array
+  use import matrix.Matrix
+  (* use import int.Sum *)
+  (* use import int.NumOf *)
+
+  predicate is_part (shape: array int) =
+    1 <= length shape /\
+    (forall i j: int. 0 <= i <= j < length shape -> shape[i] >= shape[j] ) /\
+    (shape[length shape - 1] >= 0)
+
+  lemma is_part_nonneg:
+    forall sh. is_part sh -> forall i: int. 0 <= i < length sh -> 0 <= sh[i]
+
+  predicate included (inner: array int) (outer: array int) =
+    (length inner = length outer) /\
+    (forall i:int. 0 <= i < length outer -> inner[i] <= outer[i])
+
+  predicate valid_input (outer inner: array int) =
+    included inner outer /\
+    is_part inner /\ is_part outer
+
+end
+
+module LRrule
+
+  use import HighOrd
+  use import int.Int
+  use int.MinMax
+  use import mach.int.Int63
+  use import mach.int.Refint63
+  use import mach.int.MinMax63
+  use array.Array
+  use import mach.array.Array63
+  use import mach.matrix.Matrix63
+  use import Spec
+
+  function t (x: int63) : int = to_int x
+  function ta (a: array63 int63) : Array.array int
+  axiom ta_length: forall a. Array.length (ta a) = t (length a)
+  axiom ta_get: forall a i. 0 <= i < t (length a) ->
+    Array.get (ta a) i = t a[i]
+
+  function width (outer inner: Array.array int) : int -> int =
+    \r. Array.get outer r - Array.get inner r
+
+  let compute_width (outer inner: array63 int63) : array63 int63
+    requires { valid_input (ta outer) (ta inner) }
+    ensures  { length result = length outer }
+    ensures  { forall j. 0 <= j < t (length outer) ->
+    	       t result[j] = width (ta outer) (ta inner) j }
+  =
+    let n = Array63.length outer in
+    let a = Array63.make n (of_int 0) in
+    let i = ref (of_int 0) in while !i < n do
+      invariant { 0 <= t !i <= t n } variant { t n - t !i }
+      invariant { forall j. 0 <= j < t !i ->
+                  t a[j] = width (ta outer) (ta inner) j }
+      a[!i] <- outer[!i] - inner[!i];
+    incr i done;
+    a
+
+  let max_array (a: array63 int63) : int63
+    ensures  { forall j. 0 <= j < t (length a) -> t a[j] <= t result }
+  =
+    let n = Array63.length a in
+    let m = ref (of_int 0) in
+    let i = ref (of_int 0) in while !i < n do
+      invariant { 0 <= t !i <= t n } variant { t n - t !i }
+      invariant { forall j. 0 <= j < t !i -> t a[j] <= t !m }
+      if a[!i] > !m then m := a[!i];
+    incr i done;
+    !m
+
+  let compute_shift (inner: array63 int63) : array63 int63
+    requires { is_part (ta inner) }
+    ensures  { length result = length inner }
+    ensures  { forall j. 0 < j < t (length inner) ->
+    	       t result[j] = t inner[j - 1] - t inner[j] }
+  =
+    let n = Array63.length inner in
+    let shift = Array63.make n (of_int 0) in
+    let i = ref (of_int 1) in while !i < n do
+      invariant { 1 <= t !i <= t n } variant { t n - t !i }
+      invariant { forall j. 0 < j < t !i ->
+                  t shift[j] = t inner[j-1] - t inner[j] }
+      shift[!i] <- inner[!i - of_int 1] - inner[!i];
+    incr i done;
+    shift
+
+  let lrrule (outer inner eval: array63 int63) : int63
+    requires { valid_input (ta outer) (ta inner) }
+    diverges
+(*
+    requires { valid_eval eval }
+    requires { sum_array eval = sum_array outer - sum_array inner }
+    requires { solutions.next = 0 }
+    ensures  { result = solutions.next }
+    ensures  { "expl:good solutions" good_solutions outer inner eval solutions }
+*)
+  =
+    let zero = of_int 0 in
+    let one  = of_int 1 in
+    let szshape = Array63.length outer in (* = Array.length inner *)
+    let width = compute_width outer inner in
+    let max_width = max_array width in
+    let shift = compute_shift inner in
+    let szeval = Array63.length eval in
+    let innev = Array63.make szeval zero in
+    let lastinnev = ref zero in (* only zeros from this index *)
+    let work = Matrix63.make szshape max_width zero in
+    let rec count_rec (row idx: int63) : int63 =
+      diverges
+      (*
+      requires { 0 <= row <= szshape }
+      requires { if row < szshape then -1 <= idx < width[row] else idx = 0 }
+      requires { "expl:valid_innev"
+                 valid_innev outer inner eval innev work row idx !lastinnev }
+      requires { is_solution_suffix outer inner eval work row idx }
+      variant  { szshape - row, idx }
+      ensures  { !lastinnev = old !lastinnev }
+      ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
+      ensures  { "expl:frame" frame outer inner (old work) work row idx }
+      ensures  { result = solutions.next - old solutions.next >= 0 }
+      ensures  { forall i. 0 <= i < old solutions.next ->
+                 Map.get solutions.sols i = Map.get (old solutions.sols) i }
+      ensures  { "expl:only solutions"
+                 forall i. old solutions.next <= i < solutions.next ->
+                 let w = s2m (Map.get solutions.sols i) in
+                 is_solution outer inner eval w /\
+                 frame outer inner (old work) w row idx }
+      ensures  { "expl:sorted solutions"
+                 sorted outer inner
+                   solutions (old solutions.next) solutions.next }
+      ensures  { forall w. is_solution outer inner eval w ->
+                 frame outer inner (old work) w row idx ->
+                 exists i. old solutions.next <= i < solutions.next /\
+                      eq_sol outer inner w (s2m (Map.get solutions.sols i)) }
+      *)
+      if row = szshape then begin
+        (* found a solution *)
+        (* ghost store_solution outer inner eval work; *)
+        one (* found a solution *)
+      end else if idx < zero then
+        (* move from row [row-1] to row [row] *)
+        count_rec (row + one)
+	  (if row + one < szshape then width[row + one] - one else zero)
+      else begin
+        let min = abstract ensures { t result =
+          if t row > 0 && t idx >= t shift[t row]
+          then t (Matrix63.get work (t row - 1) (t idx - t shift[t row])) + 1
+          else 0 }
+          if row > zero && idx >= shift[row]
+          then Matrix63.get work (row - one) (idx - shift[row]) + one else zero end in
+        let max = abstract ensures { t result =
+          if t idx = t width[t row] - 1 then t !lastinnev
+          else MinMax.min (t !lastinnev) (t (Matrix63.get work (t row) (t idx + 1))) }
+          if idx = width[row] - one then !lastinnev
+          else MinMax63.min !lastinnev (Matrix63.get work row (idx + one)) end in
+        let sum = ref zero in
+        'Init:
+        (*for v = min to max do*)
+        let v = ref min in while !v <= max do
+          invariant { t min <= t !v <= t max } variant { t max - t !v }
+          (*
+          invariant { !lastinnev = at !lastinnev 'Init }
+          invariant { forall i. 0 <= i < length innev ->
+                      innev[i] = (at innev 'Init)[i] }
+          invariant { "expl:frame"
+                      frame outer inner (at work 'Init) work row idx }
+          invariant { "expl:valid_innev"
+                  valid_innev outer inner eval innev work row idx !lastinnev }
+          invariant { !sum = solutions.next - at solutions.next 'Init >= 0 }
+          invariant { forall i. 0 <= i < at solutions.next 'Init ->
+                Map.get solutions.sols i = Map.get (at solutions.sols 'Init) i }
+          invariant { is_tableau_reading_suffix outer inner work row idx }
+          invariant { "expl:only solutions"
+                      forall i. at solutions.next 'Init <= i < solutions.next ->
+                      let w = s2m (Map.get solutions.sols i) in
+                      is_solution outer inner eval w /\
+                      frame outer inner (at work 'Init) w row idx /\
+                      min <= Matrix.get w row idx < v }
+          invariant { "expl:sorted solutions"
+                      sorted outer inner
+                        solutions (at solutions.next 'Init) solutions.next }
+          invariant { "expl: all solutions"
+                      forall w. is_solution outer inner eval w ->
+                      frame outer inner (at work 'Init) w row idx ->
+                      min <= Matrix.get w row idx < v ->
+                  exists i. at solutions.next 'Init <= i < solutions.next /\
+                  frame outer inner w (s2m (Map.get solutions.sols i)) row idx }
+          *)
+          'L:
+          if innev[!v] < eval[!v] &&
+             (!v = zero || innev[!v - one] > innev[!v]) then begin
+            innev[!v] <- innev[!v] + one;
+            if !v = !lastinnev then lastinnev += one;
+            (* assert { 0 <= v < !lastinnev }; *)
+            Matrix63.set work row idx !v;
+            sum += count_rec row (idx - one);
+            innev[!v] <- innev[!v] - one;
+            (* assert { eq_array innev (at innev 'L) }; *)
+           if !lastinnev = !v + one && innev[!v] = zero then lastinnev -= one
+          end;
+        incr v done;
+        !sum
+      end
+    in
+    count_rec zero (width[zero] - one)
+
+end
+
+(*
+Local Variables:
+compile-command: "why3 ide lrrule64"
+End:
+*)
