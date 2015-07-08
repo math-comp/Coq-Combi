@@ -362,8 +362,9 @@ Qed.
 
 Section YamOfEval.
 
-Variable ev : seq nat.
-Hypothesis Hpart : is_part ev.
+Variable ev : intpart.
+Lemma Hpart : is_part ev.
+Proof. by case: ev. Qed.
 
 Structure yameval : predArgType :=
   YamEval {yamevalval :> seq nat; _ : is_yam_of_eval ev yamevalval}.
@@ -421,7 +422,7 @@ Definition yamn_countMixin := Eval hnf in [countMixin of yamn by <:].
 Canonical yamn_countType := Eval hnf in CountType yamn yamn_countMixin.
 Canonical yamn_subCountType := Eval hnf in [subCountType of yamn].
 Let type := union_finType
-    (fun p : intpartn_subFinType n => (yameval_subFinType (intpartnP p)))
+    (fun p : intpartn_subFinType n => (yameval_subFinType p))
     yamn_PredEq yamn_partition_evalseq yamn_subCountType.
 Canonical yamn_finType := Eval hnf in [finType of yamn for type].
 Canonical yamn_subFinType := Eval hnf in [subFinType of yamn].
