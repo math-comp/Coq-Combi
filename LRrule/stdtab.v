@@ -387,8 +387,7 @@ Qed.
 
 Section StdtabOfShape.
 
-Variable sh : seq nat.
-Hypothesis Hpart : is_part sh.
+Variable sh : intpart.
 
 Definition is_stdtab_of_shape := [pred t | (is_stdtab t) && (shape t == sh) ].
 
@@ -415,12 +414,12 @@ Proof.
   rewrite -(shape_yam_of_stdtab Htab) => Hsht.
   rewrite /enum_stdtabsh count_map.
   rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
-    move=> y /(allP (enum_yamevalP Hpart)).
+    move=> y /(allP (enum_yamevalP (intpartP sh))).
     rewrite /is_yam_of_eval => /andP [] Hyam /eqP Hevy /=.
     apply/(sameP idP); apply(iffP idP) => /eqP H; apply/eqP.
     + by rewrite H yam_of_stdtabK.
     + by rewrite -H stdtab_of_yamK.
-  apply: (enum_yameval_countE Hpart).
+  apply: (enum_yameval_countE (intpartP sh)).
   by rewrite /is_yam_of_eval yam_of_stdtabP //= Hsht.
 Qed.
 

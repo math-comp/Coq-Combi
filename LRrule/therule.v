@@ -139,12 +139,12 @@ Variables (P1 : intpartn d1) (P2 : intpartn d2).
 Lemma size_tab_P1 : d1 = size_tab (RS (std (hyper_yam P1))).
 Proof. by rewrite size_RS size_std size_hyper_yam intpartn_sumn. Qed.
 
-Lemma size_yam (y : yameval_finType (intpartnP P2)) : size y = sumn P2.
+Lemma size_yam (y : yameval_finType P2) : size y = sumn P2.
 Proof. by rewrite -evalseq_eq_size eval_yameval. Qed.
 
 Lemma sfilterleq_LR_supportP Q :
   Q \in LR_support (hyper_stdtab P1) (hyper_stdtab P2) ->
-  exists y : yameval_finType (intpartnP P2), std y = (sfilterleq d1 (to_word Q)).
+  exists y : yameval_finType P2, std y = (sfilterleq d1 (to_word Q)).
 Proof.
   rewrite /LR_support inE.
   rewrite -LRTripleE; try apply stdtabnP.
@@ -157,7 +157,9 @@ Proof.
   rewrite -(size_RS p1) Hp1.
   have := hyper_stdtabP P1 => /andP [] _ /eqP -> /eqP Hsfp1 /eqP Hsfp2.
   suff : sfilterleq d1 (to_word Q) =Pl std (hyper_yam P2).
-    move/(plact_from_yam (intpartnP P2)) => [] yam Hyam; by exists (YamEval Hyam).
+    move/(plact_from_yam (intpartnP P2)) => [] yam Hyam.
+    have {Hyam} Hyam : is_yam_of_eval (intpart_of_intpartn P2) yam by [].
+    by exists (YamEval Hyam).
   rewrite -Hp plactic_RS -Hp2 -Hsfp2 eq_sym -plactic_RS.
   rewrite /sfilterleq /=.
   apply: plact_map_in_incr.
@@ -237,7 +239,7 @@ Proof.
     rewrite RSclassE; last by apply is_tableau_RS.
     rewrite -plactic_RS.
     apply std_plact.
-    rewrite -{2}(eval_yameval yam).
+    have /= <- := (eval_yameval yam).
     apply yam_plactic_hyper; by apply yamevalP.
   have Hstd1 : is_std (to_word (hyper_stdtab P1)).
     have /= := hyper_stdtabP P1 => /andP [].
@@ -284,7 +286,7 @@ Proof.
 Qed.
 
 Definition LRyam_set :=
-  [set y : yameval_finType (intpartnP P2) | is_skew_reshape_tableau P P1 y].
+  [set y : yameval_finType P2 | is_skew_reshape_tableau P P1 y].
 Definition LRyam_coeff := #|LRyam_set|.
 Definition bijLR (yam : yameval P2) : stdtabn (d1 + d2) :=
   if (boolP (is_skew_reshape_tableau P P1 yam)) is AltTrue pf then
@@ -447,7 +449,7 @@ Proof.
   pose f := [fun s : seq nat =>
                to_word (join_tab (hyper_stdtab P1) (map (shiftn d1) (skew_reshape P1 P s)))].
   have {H} H : f (std x) = f (std y) by rewrite /= H.
-  have invf (s : yameval_finType (intpartnP P2)) : std s = sfilterleq d1 (f (std s)).
+  have invf (s : yameval_finType P2) : std s = sfilterleq d1 (f (std s)).
     have /= := join_stdtab_in_shuffle
                  (stdtabnP (hyper_stdtab P1)) (size_leq_skew_reshape (std s)).
     rewrite /size_tab.

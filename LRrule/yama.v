@@ -363,8 +363,6 @@ Qed.
 Section YamOfEval.
 
 Variable ev : intpart.
-Lemma Hpart : is_part ev.
-Proof. by case: ev. Qed.
 
 Structure yameval : predArgType :=
   YamEval {yamevalval :> seq nat; _ : is_yam_of_eval ev yamevalval}.
@@ -376,7 +374,8 @@ Canonical yameval_choiceType := Eval hnf in ChoiceType yameval yameval_choiceMix
 Definition yameval_countMixin := Eval hnf in [countMixin of yameval by <:].
 Canonical yameval_countType := Eval hnf in CountType yameval yameval_countMixin.
 Canonical yameval_subCountType := Eval hnf in [subCountType of yameval].
-Let type := sub_finType yameval_subCountType (enum_yamevalP Hpart) (enum_yameval_countE Hpart).
+Let type := sub_finType yameval_subCountType
+                        (enum_yamevalP (intpartP ev)) (enum_yameval_countE (intpartP ev)).
 Canonical yameval_finType := Eval hnf in [finType of yameval for type].
 Canonical yameval_subFinType := Eval hnf in [subFinType of yameval].
 
