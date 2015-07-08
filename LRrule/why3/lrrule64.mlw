@@ -1,5 +1,6 @@
 module Spec
 
+  use HighOrd
   use import int.Int
   use import map.Map
   use import array.Array
@@ -23,6 +24,33 @@ module Spec
     included inner outer /\
     is_part inner /\ is_part outer
 
+  predicate valid_innev
+    (outer inner eval innev: array int)
+    (work: matrix int) (row idx lastinnev: int)
+  = 0 <= lastinnev < length eval /\
+    is_part innev /\
+    included innev eval /\
+    (forall r. 0 <= r < row ->
+       forall i. 0 <= i < outer[r] - inner[r] ->
+         0 <= Matrix.get work r i < lastinnev) /\
+    (row < length outer ->
+      forall i. idx < i < outer[row] - inner[row] ->
+         0 <= Matrix.get work row i < lastinnev) /\
+    (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
+    (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
+
+  function width (outer inner: array int) : int -> int =
+    \r. outer[r] - inner[r]
+
+  predicate frame (outer inner: array int) (w1 w2: matrix int) (row idx: int) =
+    (forall r. 0 <= r < row ->
+       forall i. 0 <= i < width outer inner r ->
+         Matrix.get w2 r i = Matrix.get w1 r i)
+    /\
+    (row < length outer ->
+      forall i. idx < i < width outer inner row ->
+         Matrix.get w2 row i = Matrix.get w1 row i)
+
 end
 
 module LRrule
@@ -36,6 +64,7 @@ module LRrule
   use array.Array
   use import mach.array.Array63
   use import mach.matrix.Matrix63
+  use mach.peano.Peano as P
   use import Spec
 
   function t (x: int63) : int = to_int x
@@ -91,7 +120,7 @@ module LRrule
     incr i done;
     shift
 
-  let lrrule (outer inner eval: array63 int63) : int63
+  let lrrule (outer inner eval: array63 int63) : P.t
     requires { valid_input (ta outer) (ta inner) }
     diverges
 (*
@@ -112,17 +141,23 @@ module LRrule
     let innev = Array63.make szeval zero in
     let lastinnev = ref zero in (* only zeros from this index *)
     let work = Matrix63.make szshape max_width zero in
-    let rec count_rec (row idx: int63) : int63 =
+    let sum = ref (P.zero ()) in
+    let rec count_rec (row idx: int63) : unit =
       diverges
+      requires { 0 <= t row <= t szshape }
+      requires { if t row < t szshape then -1 <= t idx < t width[t row]
+                 else t idx = 0 }
+      requires { 0 <= t !lastinnev < t (length eval) }
       (*
-      requires { 0 <= row <= szshape }
-      requires { if row < szshape then -1 <= idx < width[row] else idx = 0 }
       requires { "expl:valid_innev"
                  valid_innev outer inner eval innev work row idx !lastinnev }
       requires { is_solution_suffix outer inner eval work row idx }
       variant  { szshape - row, idx }
+      *)
       ensures  { !lastinnev = old !lastinnev }
-      ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
+      ensures  { forall i. 0 <= i < t (length innev) ->
+                 t innev[i] = t (old innev)[i] }
+      (*
       ensures  { "expl:frame" frame outer inner (old work) work row idx }
       ensures  { result = solutions.next - old solutions.next >= 0 }
       ensures  { forall i. 0 <= i < old solutions.next ->
@@ -141,9 +176,8 @@ module LRrule
                       eq_sol outer inner w (s2m (Map.get solutions.sols i)) }
       *)
       if row = szshape then begin
-        (* found a solution *)
         (* ghost store_solution outer inner eval work; *)
-        one (* found a solution *)
+        sum := P.succ !sum (* found a solution *)
       end else if idx < zero then
         (* move from row [row-1] to row [row] *)
         count_rec (row + one)
@@ -160,15 +194,14 @@ module LRrule
           else MinMax.min (t !lastinnev) (t (Matrix63.get work (t row) (t idx + 1))) }
           if idx = width[row] - one then !lastinnev
           else MinMax63.min !lastinnev (Matrix63.get work row (idx + one)) end in
-        let sum = ref zero in
         'Init:
         (*for v = min to max do*)
         let v = ref min in while !v <= max do
-          invariant { t min <= t !v <= t max } variant { t max - t !v }
-          (*
+          invariant { t min <= t !v } variant { t max - t !v }
           invariant { !lastinnev = at !lastinnev 'Init }
-          invariant { forall i. 0 <= i < length innev ->
-                      innev[i] = (at innev 'Init)[i] }
+          invariant { forall i. 0 <= i < t (length innev) ->
+                      t innev[i] = t (at innev 'Init)[i] }
+          (*
           invariant { "expl:frame"
                       frame outer inner (at work 'Init) work row idx }
           invariant { "expl:valid_innev"
@@ -200,16 +233,16 @@ module LRrule
             if !v = !lastinnev then lastinnev += one;
             (* assert { 0 <= v < !lastinnev }; *)
             Matrix63.set work row idx !v;
-            sum += count_rec row (idx - one);
+            count_rec row (idx - one);
             innev[!v] <- innev[!v] - one;
             (* assert { eq_array innev (at innev 'L) }; *)
            if !lastinnev = !v + one && innev[!v] = zero then lastinnev -= one
           end;
-        incr v done;
-        !sum
+        incr v done
       end
     in
-    count_rec zero (width[zero] - one)
+    count_rec zero (width[zero] - one);
+    !sum
 
 end
 
