@@ -2,7 +2,7 @@ Add Rec LoadPath "../Combi/LRrule".
 
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
-Require Import tools combclass partition yama.
+Require Import tools combclass partition yama stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -14,6 +14,7 @@ Section BLa.
       IntPart (is_part_decr_nth (intpartP p) pf)
     else p.
 
+(*
   Definition decr_nth_part (p : intpart) i : intpart :=
     if (boolP (is_out_corner p i)) is AltTrue pf then
       IntPart (is_part_decr_nth (intpartP p) pf)
@@ -29,14 +30,25 @@ Section BLa.
       | AltFalse pf => f (pfalse pf)
     end.
   Proof. by case: X. Qed.
+*)
+
+
+  Lemma bla (A B : Type) (f : A -> B) (C D : Prop) (X : sumbool C D) ptrue pfalse:
+    f (match X with
+         | left pf => ptrue pf
+         | right pf => pfalse pf
+       end) =
+    match X with
+      | left pf => f (ptrue pf)
+      | right pf => f (pfalse pf)
+    end.
+  Proof. by case: X. Qed.
 
   Lemma decr_nth_partE (p : intpart) i :
     is_out_corner p i -> decr_nth_part p i = decr_nth p i :> seq nat.
   Proof.
     rewrite /decr_nth_part bla /=.
-    case: (is_out_corner p i) => //= _.
-    
-
+    by case: (is_out_corner p i).
   Qed.
 
   Lemma card_yama_rec (p : intpart) :
@@ -57,5 +69,21 @@ Section BLa.
     rewrite mem_filter => /andP [] Hcorn _.
     rewrite size_map.
     rewrite cardE enumT unlock /= -(size_map val) subType_seqP /=.
-    rewrite /enum_yameval (decr_nth_partE Hcorn) sumn_decr_nth.
-    
+    rewrite /enum_yameval (decr_nth_partE Hcorn).
+    by rewrite (sumn_decr_nth (intpartP p) Hcorn) Hn' /=.
+  Qed.
+
+  Lemma card_yama0 :
+    #|yameval_finType (IntPart (pval := [::]) is_true_true)| = 1.
+  Proof.
+    by rewrite cardE enumT unlock -(size_map val) subType_seqP.
+  Qed.
+
+  Lemma card_yam_stdtabE (p : intpart) :
+    #|yameval_finType p| = #|stdtabsh_finType (intpartP p)|.
+  Proof.
+    admit.
+  Qed.
+
+
+  
