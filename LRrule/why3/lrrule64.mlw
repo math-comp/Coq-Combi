@@ -5,8 +5,6 @@ module Spec
   use import map.Map
   use import array.Array
   use import matrix.Matrix
-  (* use import int.Sum *)
-  (* use import int.NumOf *)
 
   predicate is_part (shape: array int) =
     1 <= length shape /\
@@ -24,32 +22,12 @@ module Spec
     included inner outer /\
     is_part inner /\ is_part outer
 
-  predicate valid_innev
-    (outer inner eval innev: array int)
-    (work: matrix int) (row idx lastinnev: int)
-  = 0 <= lastinnev < length eval /\
-    is_part innev /\
-    included innev eval /\
-    (forall r. 0 <= r < row ->
-       forall i. 0 <= i < outer[r] - inner[r] ->
-         0 <= Matrix.get work r i < lastinnev) /\
-    (row < length outer ->
-      forall i. idx < i < outer[row] - inner[row] ->
-         0 <= Matrix.get work row i < lastinnev) /\
-    (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
-    (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
+  predicate valid_eval (eval: array int) =
+    1 <= length eval /\ is_part eval /\
+    eval[length eval - 1] = 0 (* sentinel: eval ends with a zero *)
 
   function width (outer inner: array int) : int -> int =
     \r. outer[r] - inner[r]
-
-  predicate frame (outer inner: array int) (w1 w2: matrix int) (row idx: int) =
-    (forall r. 0 <= r < row ->
-       forall i. 0 <= i < width outer inner r ->
-         Matrix.get w2 r i = Matrix.get w1 r i)
-    /\
-    (row < length outer ->
-      forall i. idx < i < width outer inner row ->
-         Matrix.get w2 row i = Matrix.get w1 row i)
 
 end
 
@@ -122,14 +100,8 @@ module LRrule
 
   let lrrule (outer inner eval: array63 int63) : P.t
     requires { valid_input (ta outer) (ta inner) }
+    requires { valid_eval (ta eval) }
     diverges
-(*
-    requires { valid_eval eval }
-    requires { sum_array eval = sum_array outer - sum_array inner }
-    requires { solutions.next = 0 }
-    ensures  { result = solutions.next }
-    ensures  { "expl:good solutions" good_solutions outer inner eval solutions }
-*)
   =
     let zero = of_int 0 in
     let one  = of_int 1 in
@@ -147,36 +119,21 @@ module LRrule
       requires { 0 <= t row <= t szshape }
       requires { if t row < t szshape then -1 <= t idx < t width[t row]
                  else t idx = 0 }
+      requires { forall i. 0 <= i < t (length innev) -> 0 <= t innev[i] }
       requires { 0 <= t !lastinnev < t (length eval) }
-      (*
-      requires { "expl:valid_innev"
-                 valid_innev outer inner eval innev work row idx !lastinnev }
-      requires { is_solution_suffix outer inner eval work row idx }
-      variant  { szshape - row, idx }
-      *)
+      requires { forall r. 0 <= r < t szshape ->
+                 forall i. 0 <= i < t max_width ->
+                 0 <= t (Matrix63.get work r i) < t (length eval) }
+      requires { t !lastinnev = 0 \/ 0 < t innev[t !lastinnev - 1] }
+      requires { forall i: int. t !lastinnev <= i < t (length innev) ->
+                 t innev[i] = 0 }
       ensures  { !lastinnev = old !lastinnev }
       ensures  { forall i. 0 <= i < t (length innev) ->
                  t innev[i] = t (old innev)[i] }
-      (*
-      ensures  { "expl:frame" frame outer inner (old work) work row idx }
-      ensures  { result = solutions.next - old solutions.next >= 0 }
-      ensures  { forall i. 0 <= i < old solutions.next ->
-                 Map.get solutions.sols i = Map.get (old solutions.sols) i }
-      ensures  { "expl:only solutions"
-                 forall i. old solutions.next <= i < solutions.next ->
-                 let w = s2m (Map.get solutions.sols i) in
-                 is_solution outer inner eval w /\
-                 frame outer inner (old work) w row idx }
-      ensures  { "expl:sorted solutions"
-                 sorted outer inner
-                   solutions (old solutions.next) solutions.next }
-      ensures  { forall w. is_solution outer inner eval w ->
-                 frame outer inner (old work) w row idx ->
-                 exists i. old solutions.next <= i < solutions.next /\
-                      eq_sol outer inner w (s2m (Map.get solutions.sols i)) }
-      *)
-      if row = szshape then begin
-        (* ghost store_solution outer inner eval work; *)
+      ensures  { forall r. 0 <= r < t szshape ->
+                 forall i. 0 <= i < t max_width ->
+                 0 <= t (Matrix63.get work r i) < t (length eval) }
+     if row = szshape then begin
         sum := P.succ !sum (* found a solution *)
       end else if idx < zero then
         (* move from row [row-1] to row [row] *)
@@ -201,41 +158,22 @@ module LRrule
           invariant { !lastinnev = at !lastinnev 'Init }
           invariant { forall i. 0 <= i < t (length innev) ->
                       t innev[i] = t (at innev 'Init)[i] }
-          (*
-          invariant { "expl:frame"
-                      frame outer inner (at work 'Init) work row idx }
-          invariant { "expl:valid_innev"
-                  valid_innev outer inner eval innev work row idx !lastinnev }
-          invariant { !sum = solutions.next - at solutions.next 'Init >= 0 }
-          invariant { forall i. 0 <= i < at solutions.next 'Init ->
-                Map.get solutions.sols i = Map.get (at solutions.sols 'Init) i }
-          invariant { is_tableau_reading_suffix outer inner work row idx }
-          invariant { "expl:only solutions"
-                      forall i. at solutions.next 'Init <= i < solutions.next ->
-                      let w = s2m (Map.get solutions.sols i) in
-                      is_solution outer inner eval w /\
-                      frame outer inner (at work 'Init) w row idx /\
-                      min <= Matrix.get w row idx < v }
-          invariant { "expl:sorted solutions"
-                      sorted outer inner
-                        solutions (at solutions.next 'Init) solutions.next }
-          invariant { "expl: all solutions"
-                      forall w. is_solution outer inner eval w ->
-                      frame outer inner (at work 'Init) w row idx ->
-                      min <= Matrix.get w row idx < v ->
-                  exists i. at solutions.next 'Init <= i < solutions.next /\
-                  frame outer inner w (s2m (Map.get solutions.sols i)) row idx }
-          *)
+          invariant { forall r. 0 <= r < t szshape ->
+                      forall i. 0 <= i < t max_width ->
+                      0 <= t (Matrix63.get work r i) < t (length eval) }
+          invariant { t !lastinnev = 0 \/ 0 < t innev[t !lastinnev - 1] }
+          invariant { forall i: int. t !lastinnev <= i < t (length innev) ->
+                      t innev[i] = 0 }
           'L:
           if innev[!v] < eval[!v] &&
              (!v = zero || innev[!v - one] > innev[!v]) then begin
+            assert { 0 <= t innev[t !v] };
+            assert { t !v < t (length eval) - 1 };
             innev[!v] <- innev[!v] + one;
             if !v = !lastinnev then lastinnev += one;
-            (* assert { 0 <= v < !lastinnev }; *)
             Matrix63.set work row idx !v;
             count_rec row (idx - one);
             innev[!v] <- innev[!v] - one;
-            (* assert { eq_array innev (at innev 'L) }; *)
            if !lastinnev = !v + one && innev[!v] = zero then lastinnev -= one
           end;
         incr v done
