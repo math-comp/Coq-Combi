@@ -55,8 +55,10 @@ Section RecYama.
     by rewrite (sumn_decr_nth (intpartP p) Hcorn) Hn' /=.
   Qed.
 
+  Definition empty_part := IntPart (pval := [::]) is_true_true.
+
   Lemma card_yama0 :
-    #|yameval_finType (IntPart (pval := [::]) is_true_true)| = 1.
+    #|yameval_finType empty_part| = 1.
   Proof.
     by rewrite cardE enumT unlock -(size_map val) subType_seqP.
   Qed.
@@ -74,6 +76,27 @@ Section RecYama.
     rewrite /is_yam_of_eval /is_stdtab_of_shape /= => /andP [] /stdtab_of_yamP -> /=.
     move=> /eqP <-.
     by rewrite shape_stdtab_of_yam.
+  Qed.
+
+  Lemma part_out_corner_ind (f : intpart -> nat) :
+    f empty_part = 1 ->
+    ( forall p : intpart,
+        (p != [::] :> seq nat) ->
+        f p = \sum_(i <- out_corners p) f (decr_nth_part p i) ) ->
+    ( forall p : intpart, f p = #|stdtabsh_finType p| ).
+  Proof.
+    move=> H0 Hrec p.
+    move Hp : (sumn p) => n.
+    elim: n p Hp => [| n IHn] p Hp.
+      suff -> : p = empty_part by rewrite H0 -card_yam_stdtabE card_yama0.
+      apply val_inj => /=; exact: (part0 (intpartP p) Hp).
+    have Hnnil : p != [::] :> seq nat.
+      move: Hp => /eqP; by apply contraL => /eqP ->.
+    rewrite (Hrec _ Hnnil) -card_yam_stdtabE (card_yama_rec Hnnil).
+    rewrite /out_corners !big_filter; apply eq_bigr => i Hi.
+    rewrite card_yam_stdtabE IHn //=.
+    rewrite /decr_nth_part_def Hi (sumn_decr_nth (intpartP p) Hi).
+    by rewrite Hp.
   Qed.
 
 End RecYama.
