@@ -310,13 +310,13 @@ Proof.
   by rewrite (shape_RS_yam (yamevalP y)) eval_yameval.
 Qed.
 
-Definition auxbij p (Hpart : is_part p) (y : yameval p) : yameval_finType Hpart :=
+Definition auxbij (p : intpart) (y : yameval p) : yameval_finType p :=
   YamEval (auxbijP y).
 
-Lemma auxbij_inj p (Hpart : is_part p) : injective (auxbij Hpart).
+Lemma auxbij_inj (p : intpart) : injective (@auxbij p).
 Proof.
   move=> y z Heq.
-  have := erefl (val (auxbij Hpart y)); rewrite {2}Heq /= => HRS2.
+  have := erefl (val (auxbij y)); rewrite {2}Heq /= => HRS2.
   have HRS1 : RS (std y) = RS (std z).
     apply/eqP; rewrite -plactic_RS.
     apply std_plact; rewrite (yam_plactic_shape _ (yamevalP y)).
@@ -329,7 +329,7 @@ Proof.
     by rewrite [RSmap (std y)]RSE [RSmap (std z)]RSE HRS1 !RSmap_std HRS2.
 Qed.
 
-Definition auxbij_inv p (Hp : is_part p) := invF (@auxbij_inj p Hp).
+Definition auxbij_inv (p : intpart) := invF (@auxbij_inj p).
 
 Theorem plact_from_yam sh w :
   is_part sh -> w =Pl std (hyper_yam sh) -> { y | is_yam_of_eval sh y & std y = w }.
@@ -337,7 +337,8 @@ Proof.
   move=> Hsh.
   have := (plactic_RS w (std (hyper_yam sh))) => [] [] H _.
   move=> /H => /eqP HRS.
-  have Hyam : is_yam_of_eval sh (RSmap w).2.
+  pose Sh := IntPart Hsh.
+  have Hyam : is_yam_of_eval Sh (RSmap w).2.
     rewrite /is_yam_of_eval is_yam_RSmap2 /=.
     rewrite -shape_RSmap_eq RSmapE HRS shape_RS_std.
     by rewrite (shape_RS_yam (hyper_yamP Hsh)) evalseq_hyper_yam.
@@ -346,7 +347,7 @@ Proof.
     rewrite -{1}[w]RS_bij_1.
     have -> : RSmap w = ((RSmap w).1, (RSmap w).2) by case RSmap.
     by rewrite RSmapE HRS.
-  pose y := (@auxbij_inv sh Hsh yimg).
+  pose y := (@auxbij_inv Sh yimg).
   exists y.
   - by rewrite /is_yam_of_eval yamevalP eval_yameval /=.
   - rewrite -[LHS]RS_bij_1 -[RHS]RS_bij_1.
@@ -359,6 +360,6 @@ Proof.
       rewrite (yam_plactic_shape _ (yamevalP _)); split; first by apply hyper_yamP.
       by rewrite eval_yameval evalseq_hyper_yam.
     + rewrite RSmap_std.
-      have -> : (RSmap y).2 = auxbij Hsh y by [].
+      have -> : (RSmap y).2 = @auxbij Sh y by [].
       by rewrite f_invF.
 Qed.

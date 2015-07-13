@@ -816,6 +816,9 @@ Canonical intpartn_subFinType := Eval hnf in [subFinType of intpartn].
 Lemma intpartnP (p : intpartn) : is_part p.
 Proof. by case: p => /= p /andP []. Qed.
 
+Definition intpart_of_intpartn (p : intpartn) := IntPart (intpartnP p).
+Coercion intpart_of_intpartn : intpartn >-> intpart.
+
 Lemma intpartn_sumn (p : intpartn) : sumn p = n.
 Proof. by case: p => /= p /andP [] /eqP. Qed.
 

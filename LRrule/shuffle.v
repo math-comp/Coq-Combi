@@ -26,16 +26,6 @@ Open Scope bool.
 
 Import OrdNotations.
 
-
-Lemma all_perm_eq (T : eqType) (u v : seq T) P : perm_eq u v -> all P u -> all P v.
-Proof.
-  move=> /perm_eq_mem Hperm /allP Hall; apply/allP => x.
-  by rewrite -Hperm => /Hall.
-Qed.
-
-Lemma flatten_seq1 (T : eqType) (s : seq T) : flatten [seq [:: x] | x <- s] = s.
-Proof. by elim: s => [//= | s0 s /= ->]. Qed.
-
 Section Defs.
 
 Variable Alph : eqType.
@@ -80,19 +70,10 @@ Proof.
     apply: perm_map; by apply: IHu.
 Qed.
 
-(* *)
 
 Require Import bigop vectNK.
 
 (* Tentative proof of associativity of shuffle *)
-Lemma sumnE s : \sum_(i <- s) i = sumn s.
-Proof.
-  elim: s => [//= | s0 s IHs] /=; first by rewrite big_nil.
-  by rewrite big_cons IHs.
-Qed.
-
-Lemma perm_sumn l1 l2 : perm_eq l1 l2 -> sumn l1 = sumn l2.
-Proof. rewrite -!sumnE; by apply eq_big_perm. Qed.
 
 Lemma shuffle_perm_eq u l1 l2 :
   perm_eq l1 l2 ->
