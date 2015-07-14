@@ -101,7 +101,6 @@ module LRrule
   let lrrule (outer inner eval: array63 int63) : P.t
     requires { valid_input (ta outer) (ta inner) }
     requires { valid_eval (ta eval) }
-    diverges
   =
     let zero = of_int 0 in
     let one  = of_int 1 in
@@ -115,7 +114,6 @@ module LRrule
     let work = Matrix63.make szshape max_width zero in
     let sum = ref (P.zero ()) in
     let rec count_rec (row idx: int63) : unit =
-      diverges
       requires { 0 <= t row <= t szshape }
       requires { if t row < t szshape then -1 <= t idx < t width[t row]
                  else t idx = 0 }
@@ -127,6 +125,7 @@ module LRrule
       requires { t !lastinnev = 0 \/ 0 < t innev[t !lastinnev - 1] }
       requires { forall i: int. t !lastinnev <= i < t (length innev) ->
                  t innev[i] = 0 }
+      variant  { t szshape - t row, t idx }
       ensures  { !lastinnev = old !lastinnev }
       ensures  { forall i. 0 <= i < t (length innev) ->
                  t innev[i] = t (old innev)[i] }
