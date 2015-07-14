@@ -403,11 +403,68 @@ with glue code to parse the command line, we can play with it
 \end{frame}
 
 \begin{frame}\frametitle{goal}
-  an efficient OCaml implementation
+  an efficient OCaml implementation using
+  \begin{itemize}
+  \item arrays instead of lists
+  \item efficient arithmetic instead of type \texttt{nat}
+    \begin{itemize}
+    \item either arbitrary-precision arithmetic with GMP
+    \item or even better machine arithmetic
+    \end{itemize}
+  \end{itemize}
+
+  \bigskip\bigskip
+  we use Why3 and its OCaml extraction mechanism
 \end{frame}
 
-% TODO: the two Why3 programs
-% data types, safety, arithmetic, extraction
+\begin{frame}\frametitle{data structures}
+  four arrays
+  \begin{displaymath}
+    \begin{array}{lll}
+      \mathtt{outer}~(\nu) & \gyoung(;7;5;4;2)    & \\
+      \mathtt{inner}~(lambda) & \gyoung(;4;3;1;0) & \quad\mbox{(same
+        length as \texttt{outer})}\\
+      \mathtt{eval}~(\mu) & \gyoung(;4;3;2;1;0) & \quad\mbox{(ends with
+        a 0 sentinel)} \\
+      \mathtt{innev} & \gyoung(;3;1;0;0;0) &
+    \end{array}
+  \end{displaymath}
+  a matrix for the tableau under construction
+  \begin{displaymath}
+    \mathtt{work} \qquad\qquad \gyoung(;;,:;;;,:::;;1,::::;0;0;0)
+  \end{displaymath}
+\end{frame}
+
+\begin{frame}\frametitle{backtracking algorithm}
+  \begin{flushleft}
+    \texttt{count}(\texttt{row}, \texttt{idx}) = \\
+    \quad \emph{if} $\texttt{row}=\mathtt{length}(\mathtt{outer})$ \emph{then
+    return} 1 \quad {\small// found one solution} \\
+    \quad \emph{if} $\mathtt{idx}<0$ \emph{then return}
+    $\mathtt{count}(\mathtt{row}+1,...)$ \quad {\small// move to next row} \\
+    \quad $s \leftarrow 0$ \\
+    \quad \emph{for} $v$ \emph{in} the range of possible values for
+    $\mathtt{work}[\mathtt{row},\mathtt{idx}]$ \\
+    \quad \quad $\mathtt{work}[\mathtt{row},\mathtt{idx}] \leftarrow
+    v$ \\
+    \quad \quad $\texttt{innev}[v] \leftarrow \mathtt{innev}[v]+1$ \\
+    \quad \quad $s \leftarrow s + \mathtt{count}(\mathtt{row},
+    \mathtt{idx}-1)$ \quad {\small// move to next cell} \\
+    \quad \quad $\texttt{innev}[v] \leftarrow \mathtt{innev}[v]-1$ \\
+    \quad \emph{return} $s$
+  \end{flushleft}
+\end{frame}
+
+\begin{frame}\frametitle{proof}
+  we prove
+  \begin{itemize}
+  \item termination and safety
+  \item absence of 
+  \item correctness: computes the Littlewood–Richardson coefficient
+  \end{itemize}
+\end{frame}
+
+% safety, arithmetic, extraction
 
 % Coq proof of equivalence
 
