@@ -1,0 +1,51 @@
+
+\RequirePackage{listings}
+\RequirePackage{amssymb}
+
+\lstdefinelanguage{why3}
+{
+%backgroundcolor=\color{blue!20},
+basicstyle=\ttfamily,
+morekeywords=[1]{predicate,goal,type,use,import,theory,end,in,%
+mutable,invariant,model,raises,returns,reads,writes,%
+variant,let,val,while,for,to,downto,loop,abstract,private,any,assume,check,%
+rec,clone,if,then,else,begin,%
+module,exception,raise,fun,do,done,%
+export,match,try,with,not,inductive,coinductive},%
+keywordstyle=[1]{\color{blue}},%
+morekeywords=[2]{requires,ensures,axiom,ghost,old, function,assert,%
+constant,forall,exists,lemma,forall,exists,syntax},%
+keywordstyle=[2]{\color{blue}},%
+otherkeywords={},%
+commentstyle=\itshape\color{red},%
+columns=[l]fullflexible,%
+sensitive=true,%
+morecomment=[s]{(*}{*)},%
+escapeinside={*?}{?*},%
+keepspaces=true,
+literate=%
+%{'a}{$\alpha$}{1}%
+%{'b}{$\beta$}{1}%
+% {<}{$<$}{1}%
+% {>}{$>$}{1}%
+% {<=}{$\le$}{1}%
+% {>=}{$\ge$}{1}%
+% {<>}{$\ne$}{1}%
+{/\\}{$\land$}{1}%
+{\\/}{ $\lor$ }{3}%
+% {not\ }{$\lnot$ }{1}%
+% {not(}{$\lnot$(}{1}%
+% {+->}{$\mapsto$}{2}%
+%{-->}{$\longrightarrow$}{2}%
+{->}{$\rightarrow$}{2}%
+{<-}{$\leftarrow$}{2}%
+{<->}{$\leftrightarrow$}{2}%
+%
+%
+}
+
+\lstnewenvironment{why3}{\lstset{language=why3}}{}
+\lstnewenvironment{why3small}{\lstset{language=why3,basicstyle=\small\ttfamily}}{}
+
+\newcommand{\whyf}[1]{\lstinline[language=why3]{#1}}
+

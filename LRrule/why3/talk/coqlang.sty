@@ -1,0 +1,42 @@
+
+\RequirePackage{listings}
+\RequirePackage{amssymb}
+
+\lstdefinelanguage{coq}
+{
+backgroundcolor=\color{darkgray},%
+basicstyle=\ttfamily,%
+keywordstyle=[1]{\color{red}},%
+morekeywords=[1]{Theorem,Definition},%
+commentstyle=\itshape\color{red},%
+columns=[l]fullflexible,%
+sensitive=true,%
+morecomment=[s]{(*}{*)},%
+escapeinside={*?}{?*},%
+keepspaces=true,
+literate=%
+%{'a}{$\alpha$}{1}%
+%{'b}{$\beta$}{1}%
+% {<}{$<$}{1}%
+% {>}{$>$}{1}%
+% {<=}{$\le$}{1}%
+% {>=}{$\ge$}{1}%
+% {<>}{$\ne$}{1}%
+{/\\}{$\land$}{1}%
+{\\/}{ $\lor$ }{3}%
+% {not\ }{$\lnot$ }{1}%
+% {not(}{$\lnot$(}{1}%
+% {+->}{$\mapsto$}{2}%
+%{-->}{$\longrightarrow$}{2}%
+{->}{$\rightarrow$}{2}%
+{<-}{$\leftarrow$}{2}%
+{<->}{$\leftrightarrow$}{2}%
+%
+%
+}
+
+\lstnewenvironment{coq}{\lstset{language=coq}}{}
+\lstnewenvironment{coqsmall}{\lstset{language=coq,basicstyle=\small\ttfamily}}{}
+
+\newcommand{\coqf}[1]{\lstinline[language=coq]{#1}}
+

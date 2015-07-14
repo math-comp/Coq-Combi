@@ -12,19 +12,11 @@
 \usepackage[vcentermath]{genyoungtabtikz}
 \usepackage{minted}
 \usemintedstyle{emacs}
-%\usemintedstyle{colorful}
-%\usemintedstyle{borland}
-%\usemintedstyle{autumn}
 
 \usepackage{genyoungtabtikz}
 
-\newminted{coq}{
-frame=lines,
-framesep=2mm,
-fontsize=\scriptsize,
-mathescape=true
-}
 \usepackage{commath}
+\usepackage{listings,coqlang,ocamllang,why3lang}
 
 \beamertemplatenavigationsymbolsempty
 \setbeamertemplate{enumerate items}[ball]
@@ -303,7 +295,7 @@ Littlewood-Richardson coefficients\\[5mm]}
     of linear groups
   \item Geometry: mumber of intersection in a grassmanian variety, cup product
     of the cohomology
-  \item Horn problem: eigenvalues of the sum of two hermitian matrices
+  \item Horn problem: eigenvalues of the sum of two Hermitian matrices
   \item Extension of abelian groups (Hall algebra)
   \item Application in quantum physics (spectrum rays of the Hydrogen atoms)
   \end{itemize}
@@ -316,24 +308,102 @@ Littlewood-Richardson coefficients\\[5mm]}
   \end{center}
 \end{frame}
 
-
 \begin{frame}\frametitle{a Coq proof of Littlewood–Richardson rule}
   \begin{itemize}
   \item author: Florent Hivert
-  \item uses the Ssreflect extension of Coq
+  \item uses the Ssreflect extension of Coq \par
+    and the Mathematical Components libraries
   \item 15,000 lines of script
   \item available at \url{https://github.com/hivert/Coq-Combi}
   \end{itemize}
 \end{frame}
 
-% TODO: what does the Coq spec look like
+\begin{frame}[fragile]\frametitle{outline of the proof}
+  first introduce Schur functions and coefficients $c_{\lambda, \mu}^{\nu}$
+\begin{coq}
+Schur P1 * Schur P2 =
+  \sum_P (Schur P) *+ LRtab_coeff P1 P2 P
+\end{coq}
+  then introduce tableaux, Yamanouchi words, and define
+\begin{coq}
+Definition LRyam_set P1 P2 P :=
+  [ set y : yameval_finType P2 |
+    is_skew_reshape_tableau P P1 y].
+Definition LRyam_coeff P1 P2 P :=
+  #|LRyam_set P1 P2 P|.
+\end{coq}
+  finally, prove
+\begin{coq}
+Theorem LR_coeff_yamP:
+  forall P1 P2 P, included P1 P ->
+  LRtab_coeff P1 P2 P = LRyam_coeff P1 P2 P.
+\end{coq}
+\end{frame}
 
-\begin{frame}[fragile]\frametitle{the extracted program}
-\begin{verbatim}
+\begin{frame}[fragile]\frametitle{an implementation}
+  the Coq proof also includes an \emph{implementation},
+  i.e. a function that uses backtracking to compute the coefficients
+\begin{coq}
+LRcoeff: seq nat -> seq nat -> seq nat -> nat
+\end{coq}
+
+\bigskip
+it comes with a proof of correctness
+\begin{coq}
+Theorem LR_yamtabE:
+  forall P1 P2 P, included P1 P ->
+  LRyam_coeff P1 P2 P = LRcoeff P1 P2 P.
+\end{coq}
+\end{frame}
+
+\begin{frame}[fragile]\frametitle{an OCaml program}
+using Coq extraction mechanism, we get an OCaml code
+\begin{ocaml}
 type nat = O | S of nat
 ...
 val lRcoeff: nat list -> nat list -> nat list -> nat
+\end{ocaml}
+
+\bigskip
+with glue code to parse the command line, we can play with it
+\begin{verbatim}
+./lrcoeff 11 10 9 8 7 6 5 4 3 2 1 - 7 6 5 5 4 3 2 1 -
+          7 6 5 5 4 3 2 1
+268484
 \end{verbatim}
+\end{frame}
+
+\begin{frame}\frametitle{efficiency}
+  this program is rather inefficient, because
+  \begin{itemize}
+  \item it uses \emph{unary Peano numbers} for
+    \begin{itemize}
+    \item partitions
+    \item tableaux indices
+    \item tableaux values
+    \item solution count
+    \end{itemize}
+  \item it uses \emph{linear time} \texttt{nth}/\texttt{upd} functions on lists
+    everywhere
+  \end{itemize}
+
+  \bigskip
+  in particular, the OCaml GC is heavily solicited
+
+
+  \bigskip
+  $\Rightarrow$ 2 orders of magnitude slower than C library \texttt{lrcalc}
+\end{frame}
+
+\begin{frame}
+  \begin{center}
+    \emph{an efficient program and its proof} \\
+    \hrulefill
+  \end{center}
+\end{frame}
+
+\begin{frame}\frametitle{goal}
+  an efficient OCaml implementation
 \end{frame}
 
 % TODO: the two Why3 programs
@@ -343,7 +413,7 @@ val lRcoeff: nat list -> nat list -> nat list -> nat
 
 % the big picture
 
-\begin{frame}\frametitle{comparison}
+\begin{frame}\frametitle{efficiency}
   \begin{displaymath}
     \begin{array}{ll}
       \nu & = 24,24,22,20,18,18,16,16,15,13,10,8,8,7,5,5,5,3,2,1 \\
@@ -355,14 +425,14 @@ val lRcoeff: nat list -> nat list -> nat list -> nat
     c_{\lambda, \mu}^{\nu} = 13,911,775
   \end{displaymath}
   \begin{center}
-    \begin{tabular}{|c|c|c|c|c|}
+    \begin{tabular}{|c|c|c|c|}
       \hline
-      & extracted & \multicolumn{2}{|c|}{extracted from Why3} & C library \\
-      \cline{3-4}
-      & from Coq  &   ZArith  & machine arith & \texttt{lrcalc} \\
-      \hline
-      & 31.6      &    26.7   & 1.18 & 0.35 \\
+      extracted & \multicolumn{2}{|c|}{extracted from Why3} & C library \\
+      \cline{2-3}
+      from Coq  &   ZArith  & machine arith & \texttt{lrcalc} \\
       \hline\hline
+      31.6      &    26.7   & 1.18 & 0.35 \\
+      \hline
     \end{tabular}
   \end{center}
 \end{frame}
