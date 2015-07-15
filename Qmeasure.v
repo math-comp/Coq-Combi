@@ -2,8 +2,8 @@
 
 Add Rec LoadPath "ALEA/src" as ALEA.
 
-Require Export Misc.
-Require Export Ccpo.
+Require Import Misc Ccpo.
+
 Set Implicit Arguments.
 Local Open Scope O_scope.
 
@@ -905,10 +905,17 @@ by move => _; rewrite /= mulr0.
 Save.
 
 
-(** ** Uniform distribution beween 0 and n *)
+(** ** Uniform distribution on a non empty sequence of points *)
 
 Record unif (A:Type) : Type := mkunif 
-   {upoints :> seq A; _ : upoints<>[::]}.
+   {upoints :> seq A; _ : size upoints!=O}.
+
+Definition usize A (p:unif A) : nat := size (upoints p).
+
+Lemma usize_pos A (p:unif A) : usize p != O.
+rewrite /usize; case p => up Hup.
+by move:up Hup; case; rewrite /=.
+Save.
 
 Definition unif2fin A (p:unif A) : fin A.
    exists (upoints p) (fun A => 1%Q).
@@ -921,117 +928,72 @@ rewrite big_cons /=.
 apply Num.Theory.ltr_le_trans with 1; auto.
 rewrite Num.Theory.ler_addl.
 apply weight_nonneg.
-Save.
+Defined.
 
 
 Definition Uniform A (d:unif A) : distr A := Finite (unif2fin d).
      
-(*
-Definition is_discrete (A:Type) (m: distr A) := 
-      exists d : discr A, m == Discrete d.
-
-(** *** Distribution for [random n]
-The distribution associated to [random n] is 
-       [ f  --> sigma (i=0..n) [1]1+n (f i) ]
-       we cannot factorize [ [1/]1+n ] because of possible overflow *)
-
-Instance random_mon : forall n, monotonic (fun (f:MF nat) => sigma (fun k => Unth n *  f k) (S n)).
-red; intros; auto.
-Save.
-
-Definition random (n:nat):M nat := mon (fun (f:MF nat) => sigma (fun k => Unth n *  f k) (S n)).
-
-Lemma random_simpl : forall n (f : MF nat), 
-           random n f = sigma (fun k => Unth n *  f k) (S n).
+Lemma Uniform_simpl A (d:unif A) : mu (Uniform d) = mfinite (upoints d) (fun A => 1%Q).
 trivial.
 Save.
 
-(** *** Properties of [random] *)
-
-Lemma random_stable_inv : forall n, stable_inv (random n).
-unfold random, stable_inv, finv; intros; simpl.
-rewrite (sigma_inv f (fnth_retract n)); auto.
+Lemma weight1_size A (d:seq A) : weight d (fun x => 1) = (size d)%:Q.
+by rewrite /weight -sum1_size sumMz.
 Save.
 
-Lemma random_stable_plus : forall n, stable_plus (random n).
-unfold stable_plus, fplus; intros.
-repeat (rewrite random_simpl).
-unfold fplusok, finv in H.
-transitivity 
- (sigma (fun k : nat => ([1/]1+n * f k) + ([1/]1+n  * g k)) (S n)).
-apply sigma_eq_compat; intros.
-assert (f k <= [1-] (g k)); auto.
-apply sigma_plus with (f:=fun k : nat => Unth n * f k)
-                      (g:=fun k : nat => Unth n * g k); auto.
+Lemma mu_uniform_sum A (d:unif A) (f:A->rat) : 
+      mu (Uniform d) f = (\sum_(i <- d) f i) / (size d)%:Q.
+rewrite Uniform_simpl /mfinite /= weight1_size.
+congr (_ / _).
+apply eq_bigr.
+move => i _; apply mul1r.
 Save.
 
-Lemma random_stable_mult : forall n, stable_mult (random n).
-unfold stable_mult, fmult; intros; repeat (rewrite random_simpl).
-transitivity 
- (sigma (fun l : nat => k * ([1/]1+n * f l)) (S n)).
-apply sigma_eq_compat; intros; auto.
-apply sigma_mult with (f:=fun k : nat => Unth n * f k).
-red; intros.
-transitivity ([1/]1+n); auto.
-transitivity ([1-] (sigma (fun k1 => Unth n) k0)); auto.
-apply (fnth_retract n k0); auto.
+Lemma Uniform_eq_in (A:eqType) (d:unif A) (a:A) : uniq d -> (a \in upoints d)%SEQ -> 
+     mu (Uniform d) (fun x => (x==a)%:Q) = 1%:Q / (usize d)%:Q.
+move => Hu Ha; rewrite /Uniform Finite_eq_in //.
+rewrite /fprob /=.
+rat_to_ring.
+by rewrite weight1_size.
 Save.
 
-
-Lemma random_continuous : forall n, continuous (random n).
-unfold continuous; intros; rewrite random_simpl.
-transitivity 
-    (sigma (fun k : nat => lub (UMult ([1/]1+n) @ (h <o> k))) (S n)).
-apply sigma_le_compat; intros; simpl.
-rewrite (lub_eq_mult ([1/]1+n) (h <o> k)); auto.
-transitivity 
-(sigma (lub (D:=MF nat) (ishift (fun k : nat => (UMult ([1/]1+n) @ (h <o> k))))) (S n)).
-apply sigma_le_compat; intros; auto.
-rewrite MF_lub_simpl.
-apply lub_le_compat; intro m; simpl; auto.
-rewrite sigma_lub1; auto.
-apply lub_le_compat; intro m; simpl; auto.
+Lemma Uniform_eq_out (A:eqType) (d:unif A) (a:A) : 
+     (a \notin upoints d)%SEQ -> 
+     mu (Uniform d) (fun x => (x==a)%:Q) = 0%Q.
+move => Ha; rewrite /Uniform Finite_eq_out //.
+left; exact Ha.
 Save.
 
-Definition Random (n:nat) : distr nat.
-exists (random n).
-apply random_stable_inv.
-apply random_stable_plus.
-apply random_stable_mult.
-apply random_continuous.
-Defined.
+(* Uniform distribution between 0 and n included *)
 
-Lemma Random_simpl : forall (n:nat), mu (Random n) = random n.  
+Definition unifnat (n:nat) : unif nat := mkunif (iota 0 (n.+1)) (eq_refl true). 
+
+Definition Random n : distr nat := Uniform (unifnat n).
+
+Lemma Random_simpl (n:nat) : mu (Random n) = mfinite (iota 0 (n.+1)) (fun x => 1%:Q).
 trivial.
 Save.
 
-Instance Random_total : forall n : nat,  Term (Random n).
-red; intros; simpl mu;unfold fone; rewrite random_simpl.
-transitivity  (sigma (fnth n) (S n)).
-apply sigma_eq_compat.
-intros; repeat Usimpl; auto.
-auto.
+Lemma Random_eq_in (n:nat) (a:nat) : (a <= n)%N -> 
+     mu (Random n) (fun x => (x==a)%:Q) = 1%:Q / (n.+1)%:Q.
+move => Han; rewrite /Random; rewrite Uniform_eq_in.
+congr (_ / _).
+by rewrite /usize size_iota.
+apply iota_uniq.
+rewrite mem_iota //.
 Save.
-Hint Resolve Random_total.
 
-Lemma Random_inv : forall f n, mu (Random n) (finv f) == [1-] (mu (Random n) f).
-intros; apply mu_stable_inv_term; auto.
+Lemma Random_eq_out (n:nat) (a:nat) : (n < a)%N -> 
+     mu (Random n) (fun x => (x==a)%:Q) = 0%Q.
+move => Han; rewrite /Random; rewrite Uniform_eq_out //.
+rewrite mem_iota /=.
+rewrite add0n.
+by rewrite -leqNgt.
 Save.
-Hint Resolve Random_inv.
-*)
 
-(** ** Tacticals *)
+Lemma mu_random_sum (n:nat) (f:nat -> rat) : 
+      mu (Random n) f = (\sum_(0 <= i < n.+1) f i) / (n.+1)%:Q.
+rewrite /Random mu_uniform_sum.
+by rewrite size_iota.
+Save.
 
-(*
-Ltac mu_plus d := 
-  match goal with 
- | |- context [fmont (mu d) (fun x => (Uplus (@?f x) (@?g x)))] => 
-      rewrite (mu_stable_plus d (f:=f) (g:=g))
-  end.
-
-Ltac mu_mult d := 
-  match goal with 
- | |- context [fmont (mu d) (fun x => (Umult ?k (@?f x)))] => 
-      rewrite (mu_stable_mult d k f)
-  end.
-*)
