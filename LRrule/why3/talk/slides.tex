@@ -4,10 +4,13 @@
 
 \usetheme{Pittsburgh}
 \usecolortheme{beaver}
+\definecolor{thered}{rgb}{0.797,0,0}
 \definecolor{thegray}{rgb}{0.949,0.949,0.949}
 \definecolor{darkgray}{rgb}{0.8477,0.8477,0.8477}
 \setbeamercolor{block title}{use=structure,fg=white,bg=red!75!black}
 \setbeamercolor{block body}{use=structure,fg=black,bg=darkgray}
+\setbeamercolor{item projected}{bg=red}
+\setbeamertemplate{enumerate items}[default]
 
 \usepackage[vcentermath]{genyoungtabtikz}
 \usepackage{minted}
@@ -20,6 +23,10 @@
 
 \beamertemplatenavigationsymbolsempty
 \setbeamertemplate{enumerate items}[ball]
+\setbeamercolor{itemize item}{fg=thered}
+\setbeamercolor{itemize subitem}{fg=thered}
+\setbeamercolor{itemize subsubitem}{fg=thered}
+\setbeamercolor{description item}{fg=thered}
 \setbeamertemplate{frametitle}{\vspace*{0.5em}\hfill\insertframetitle}
 \let\emph\alert
 
@@ -374,7 +381,12 @@ with glue code to parse the command line, we can play with it
 \end{frame}
 
 \begin{frame}\frametitle{efficiency}
-  this program is rather inefficient, because
+  this program is rather inefficient
+
+  (2 orders of magnitude slower than the C library \texttt{lrcalc})
+
+  \bigskip
+  because
   \begin{itemize}
   \item it uses \emph{unary Peano numbers} for
     \begin{itemize}
@@ -389,10 +401,6 @@ with glue code to parse the command line, we can play with it
 
   \bigskip
   in particular, the OCaml GC is heavily solicited
-
-
-  \bigskip
-  $\Rightarrow$ 2 orders of magnitude slower than C library \texttt{lrcalc}
 \end{frame}
 
 \begin{frame}
@@ -422,7 +430,7 @@ with glue code to parse the command line, we can play with it
   \begin{displaymath}
     \begin{array}{lll}
       \mathtt{outer}~(\nu) & \gyoung(;7;5;4;2)    & \\
-      \mathtt{inner}~(lambda) & \gyoung(;4;3;1;0) & \quad\mbox{(same
+      \mathtt{inner}~(\lambda) & \gyoung(;4;3;1;0) & \quad\mbox{(same
         length as \texttt{outer})}\\
       \mathtt{eval}~(\mu) & \gyoung(;4;3;2;1;0) & \quad\mbox{(ends with
         a 0 sentinel)} \\
@@ -431,7 +439,8 @@ with glue code to parse the command line, we can play with it
   \end{displaymath}
   a matrix for the tableau under construction
   \begin{displaymath}
-    \mathtt{work} \qquad\qquad \gyoung(;;,:;;;,:::;;1,::::;0;0;0)
+    \mathtt{work} \qquad\quad \gyoung(;;,:;;;,:::;;1,::::;0;0;0)
+    \qquad\qquad\qquad\qquad\qquad
   \end{displaymath}
 \end{frame}
 
@@ -453,22 +462,98 @@ with glue code to parse the command line, we can play with it
     \quad \quad $\texttt{innev}[v] \leftarrow \mathtt{innev}[v]-1$ \\
     \quad \emph{return} $s$
   \end{flushleft}
+  \begin{displaymath}
+    \begin{array}{rc}
+       & \mathtt{idx} \\
+       & \downarrow \\
+      \mathtt{row}\to & \raisebox{1ex}{\gyoung(;;,:;;;,:::;;1,::::;0;0;0)}
+    \end{array}
+  \end{displaymath}
 \end{frame}
 
 \begin{frame}\frametitle{proof}
   we prove
   \begin{itemize}
-  \item termination and safety
-  \item absence of 
+  \item termination
+  \item absence of array access out of bounds
+  \item absence of arithmetic overflow
   \item correctness: computes the Littlewood–Richardson coefficient
   \end{itemize}
 \end{frame}
 
-% safety, arithmetic, extraction
+\begin{frame}\frametitle{proof: termination}
+  immediate: as we make progress in the tableau, the quantity
+  \begin{displaymath}
+    (\mathtt{length}(\mathtt{outer}) - \mathtt{row}, ~ \mathtt{idx})
+  \end{displaymath}
+  decreases lexicographically
+\end{frame}
 
-% Coq proof of equivalence
+\begin{frame}\frametitle{proof: absence of array access out of bounds}
+  not very difficult, but requires
+  \begin{itemize}
+  \item the 0 sentinel in \texttt{eval} \par
+  \item some invariants \par (e.g. values in \texttt{work} are smaller than
+    $\mathtt{length}(\mathtt{eval})$)
+  \item some frame properties
+  \end{itemize}
+\end{frame}
 
-% the big picture
+\begin{frame}\frametitle{proof: absence of arithmetic overflow}
+  \begin{itemize}
+  \item with arbitrary precision arithmetic \par
+    $\Rightarrow$ nothing to do \par
+    $\Rightarrow$ but will translate to arbitrary precision arithmetic (GMP)
+
+  \bigskip
+  \item with 64-bit machine arithmetic
+    \begin{itemize}
+    \item array indices and tableaux values indeed fit in 64 bits \par
+      (both bounded by some array length, itself a 64-bit
+      integer) \par
+      $\Rightarrow$ all VCs easily discharged
+    \item but what about the value returned (the total count)?
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]\frametitle{Peano arithmetic}
+  to implement the counter, we use a different, abstract type of
+  integers, with limited operations
+\begin{why3}
+  type peano
+  constant zero: peano
+  function succ (p:peano) : peano
+\end{why3}
+  compiled into OCaml's type of 64-bit integers
+
+\vfill
+  see:
+  Martin Clochard, Jean-Christophe Filli\^atre, Andrei Paskevich.
+  \textit{How to avoid proving the absence of integer overflows}.
+  VSTTE 2015
+\end{frame}
+
+\begin{frame}\frametitle{proof of correctness}
+  ghost code is added to store solutions within a global (ghost) array
+
+  \bigskip
+  the proof is \emph{not yet completed}
+
+  \bigskip
+  so far we have proved
+  \begin{itemize}
+  \item \texttt{innev} is a partition included in \texttt{eval}
+  \item \texttt{work} only contains values that are non zero in \texttt{innev}
+  \item all frame properties (\texttt{work} unchanged below
+    \texttt{row}/\texttt{idx}, \texttt{innev} unchanged at all, etc.)
+  \end{itemize}
+  we still have to prove
+  \begin{itemize}
+  \item tableaux found are indeed solutions
+  \item all solutions found and no duplicate
+  \end{itemize}
+\end{frame}
 
 \begin{frame}\frametitle{efficiency}
   \begin{displaymath}
@@ -481,6 +566,7 @@ with glue code to parse the command line, we can play with it
   \begin{displaymath}
     c_{\lambda, \mu}^{\nu} = 13,911,775
   \end{displaymath}
+  \bigskip
   \begin{center}
     \begin{tabular}{|c|c|c|c|}
       \hline
@@ -493,6 +579,73 @@ with glue code to parse the command line, we can play with it
     \end{tabular}
   \end{center}
 \end{frame}
+
+\begin{frame}
+  \begin{center}
+    \emph{connection with the Coq proof} \\
+    \hrulefill
+  \end{center}
+\end{frame}
+
+\begin{frame}\frametitle{a legitimate question}
+  are the Why3 and Coq programs computing the same thing?
+
+  \bigskip
+  after all, we have
+  \begin{itemize}
+  \item distinct data structures (nats/lists vs ints/arrays)
+  \item different specifications (partition, tableau, Yamanouchi word)
+  \item different algorithms
+  \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{a proof of equivalence}
+  
+\end{frame}
+
+\begin{frame}\frametitle{}
+  \begin{center}
+    \begin{tabular}{ccc}
+      \emph{Coq} & & \emph{Why3} \\[1em]
+      \texttt{inner} & &       \texttt{inner} \\[-1em]
+      & $\stackrel{\mathtt{partw}}{\longrightarrow}$
+      & \\[-0.5em]
+      \texttt{outer} & &\texttt{outer} \\
+      \texttt{eval} & &       \texttt{eval} \\[-1.5em]
+      & $\stackrel{\mathtt{part}}{\longleftarrow}$ & \\[1em]
+      \texttt{inputSpec} & & \texttt{valid\_input} \\
+                         & & \texttt{solutions} \\
+      \texttt{LRcoeff}   & & \texttt{good\_solutions}
+    \end{tabular}
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]\frametitle{proof of equivalence}
+\begin{coq}
+Theorem Why3Correct:
+  forall innerw outerw evalw: array int,
+  forall s, good_solutions innerw outerw evalw s ->
+  length s =
+    LRcoeff (part innerw) (part outerw) (part evalw)
+\end{coq}
+\begin{coq}
+Theorem Why3complete:
+  forall inner outer eval: seq nat,
+  forall s,
+  good_solutions (partw inner)
+                 (partw outer) (partw eval) s ->
+  length s = LRcoeff inner outer eval
+\end{coq}
+\end{frame}
+
+\begin{frame}\frametitle{what is the TCB?}
+  \begin{itemize}
+  \item the Coq definitions and statements
+  \item the definition of \texttt{part} / \texttt{partw}
+  \end{itemize}
+\end{frame}
+
+% TODO: draw the big picture
 
 \end{document}
 

@@ -4,18 +4,17 @@
 
 \lstdefinelanguage{why3}
 {
-%backgroundcolor=\color{blue!20},
-basicstyle=\ttfamily,
+backgroundcolor=\color{darkgray},%
+basicstyle=\ttfamily,%
+keywordstyle=[1]{\color{thered}},%
 morekeywords=[1]{predicate,goal,type,use,import,theory,end,in,%
 mutable,invariant,model,raises,returns,reads,writes,%
 variant,let,val,while,for,to,downto,loop,abstract,private,any,assume,check,%
 rec,clone,if,then,else,begin,%
 module,exception,raise,fun,do,done,%
-export,match,try,with,not,inductive,coinductive},%
-keywordstyle=[1]{\color{blue}},%
-morekeywords=[2]{requires,ensures,axiom,ghost,old, function,assert,%
+export,match,try,with,not,inductive,coinductive,%
+requires,ensures,axiom,ghost,old, function,assert,%
 constant,forall,exists,lemma,forall,exists,syntax},%
-keywordstyle=[2]{\color{blue}},%
 otherkeywords={},%
 commentstyle=\itshape\color{red},%
 columns=[l]fullflexible,%
