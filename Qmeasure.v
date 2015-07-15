@@ -889,7 +889,19 @@ Lemma Finite_eq_out (A:eqType) (d:fin A) (a:A) :
      mu (Finite d) (fun x => (x==a)%:Q) = 0.
 move => Ha.
 rewrite Finite_simpl finite_simpl.
-admit.
+rewrite big1_seq.
+apply mul0r.
+move => i Hi.
+case (@eqP _ i a).
+move => H; move :Hi; rewrite H /=.
+move => Ha1.
+case (andP Ha1) => H1 H2 //=.
+destruct Ha.
+by move: H0 H2; case (a \in points d).
+move: H0 H1; rewrite Num.Theory.ltrNge /=.
+change ((coeff d a <= 0)%B -> ~~(coeff d a <= 0)%B -> (coeff d a * 1%:~R)%R = 0%R).
+by case (coeff d a <= 0)%B.
+by move => _; rewrite /= mulr0.S
 Save.
 
 
