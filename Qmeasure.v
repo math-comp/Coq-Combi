@@ -841,18 +841,23 @@ by rewrite Num.Theory.invr_gt0; auto.
 Save.
 Hint Resolve inv_weight_pos.
 
+Lemma weight_is_unit A (d:fin A) : (weight (points d) (coeff d)) \is a unit.
+apply Num.Theory.unitf_gt0.
+auto.
+Save.
+Hint Resolve weight_is_unit.
+
+
 Definition fprob A (d:fin A) (a : A) : rat := coeff d a / weight (points d) (coeff d).
 
 Definition Finite : forall A,  fin A -> distr A.
 intros A d ; exists (mfinite (points d) (coeff d)).
 apply finite_stable_sub; trivial.
 rewrite finite_simpl.
-rewrite -{2}(divrr (x:=weight (points d) (coeff d))).
+rewrite -{2}(divrr (weight_is_unit d)).
 congr *%R.
 apply eq_bigr => i Hi.
 apply mulr1.
-apply Num.Theory.unitf_gt0.
-auto.
 Defined.
 
 Lemma Finite_simpl : forall A (d:fin A), 
@@ -904,6 +909,17 @@ by case (coeff d a <= 0)%B.
 by move => _; rewrite /= mulr0.
 Save.
 
+Lemma Finite_in_seq (A:eqType) (d:fin A) : 
+     mu (Finite d) (fun x => (x \in points d)%:Q) = 1%R.
+rewrite Finite_simpl finite_simpl.
+rewrite -[in X in _ = X](divrr (weight_is_unit d)).
+congr (_ / _).
+rewrite /weight.
+rewrite [in X in _ = X]big_seq_cond [in X in X = _]big_seq_cond.
+apply eq_bigr.
+move => i; case (i \in points d); rewrite //=.
+by rewrite mulr1.
+Save.
 
 (** ** Uniform distribution on a non empty sequence of points *)
 
@@ -964,6 +980,11 @@ move => Ha; rewrite /Uniform Finite_eq_out //.
 left; exact Ha.
 Save.
 
+Lemma Uniform_in_seq (A:eqType) (d:unif A) : 
+     mu (Uniform d) (fun x => (x \in upoints d)%:Q) = 1%R.
+rewrite /Uniform; apply Finite_in_seq.
+Save.
+
 (* Uniform distribution between 0 and n included *)
 
 Definition unifnat (n:nat) : unif nat := mkunif (iota 0 (n.+1)) (eq_refl true). 
@@ -997,3 +1018,11 @@ rewrite /Random mu_uniform_sum.
 by rewrite size_iota.
 Save.
 
+Lemma Random_in_range (n:nat) : 
+     mu (Random n) (fun x => (x <= n)%N%:Q) = 1%R.
+rewrite /Random -[in X in _ = X](Uniform_in_seq _ (unifnat n)).
+apply Mstable_eq; move => x /=.
+congr natmul.
+rewrite -[(0%N :: iota 1 n)]/(iota 0%N (n.+1)).
+rewrite mem_iota add0n //=.
+Save.
