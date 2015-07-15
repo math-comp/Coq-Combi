@@ -7,13 +7,10 @@ Require Export Ccpo.
 Set Implicit Arguments.
 Local Open Scope O_scope.
 
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype rat finfun ssrnum ssralg ssrint.
-Require Import bigop.
+Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype rat 
+               finfun ssrnum ssralg ssrint bigop.
 Import GRing.
 Local Open Scope ring_scope.
-(* Local Open Scope rat_scope.*)
-
-(* Local Open Scope type_scope. *)
 
 Instance ratO : ord rat := 
      { Oeq := fun n m : rat => n = m;
@@ -28,12 +25,15 @@ move => H; by rewrite H Num.Theory.lerr.
 red; move => x y z; apply Num.Theory.ler_trans.
 Defined.
 
-Definition MF (A:Type) := A -> rat.
+(** Functions to be measured *)
 
+Definition MF (A:Type) := A -> rat.
 
 Instance MFO (A:Type) : ord (MF A) := ford A rat.
 
 Canonical rat_lmodType : lmodType rat := Eval hnf in regular_lmodType rat_Ring.
+
+(** Type of measures on [A] *)
 
 Definition M A := MF A -m> rat.
 
@@ -44,9 +44,11 @@ red; auto.
 Save.
 Hint Resolve app_mon.
 
-Definition unit (A:Type) (x:A) : M A := mon (fun (f:MF A) => f x).
+(** Monadic operators on M A *)
 
-Definition star : forall (A B:Type), M A -> (A -> M B) -> M B.
+Definition munit (A:Type) (x:A) : M A := mon (fun (f:MF A) => f x).
+
+Definition mstar : forall (A B:Type), M A -> (A -> M B) -> M B.
 intros A B a F; exists (fun f => a (fun x => F x f)).
 red; intros.
 apply (fmonotonic a); intro z; simpl.
@@ -54,23 +56,23 @@ apply (fmonotonic (F z)); trivial.
 Defined.
 
 Lemma star_simpl : forall (A B:Type) (a:M A) (F:A -> M B)(f:MF B),
-        star a F f =  a (fun x => F x f).
+        mstar a F f =  a (fun x => F x f).
 trivial.
 Save.
 
 (** ** Properties of monadic operators *)
-Lemma law1 : forall (A B:Type) (x:A) (F:A -> M B) (f:MF B), star (unit x) F f == F x f.
+Lemma law1 : forall (A B:Type) (x:A) (F:A -> M B) (f:MF B), mstar (munit x) F f == F x f.
 trivial.
 Qed.
 
 Lemma law2 :
- forall (A:Type) (a:M A) (f:MF A), star a (fun x:A => unit x) f == a (fun x:A => f x).
+ forall (A:Type) (a:M A) (f:MF A), mstar a (fun x:A => munit x) f == a (fun x:A => f x).
 trivial.
 Qed.
 
 Lemma law3 :
  forall (A B C:Type) (a:M A) (F:A -> M B) (G:B -> M C)
-   (f:MF C), star (star a F) G f == star a (fun x:A => star (F x) G) f.
+   (f:MF C), mstar (mstar a F) G f == mstar a (fun x:A => mstar (F x) G) f.
 trivial.
 Qed.
 
@@ -89,9 +91,9 @@ Definition stable_mull (A:Type) (m:M A) : Prop :=
 Definition stable_opp (A:Type) (m:M A) : Prop :=
   forall (f:MF A), m (fun x => - (f x)) = - (m f).
 
+(** Linearity on rational is deduced from stability with respect to substraction *)
 
 Section StabilityProperties.
-Import GRing.
 
 Variable A : Type.
 Variable m : M A.
@@ -209,27 +211,26 @@ Save.
 End StabilityProperties.
 
 
-
-Lemma unit_stable_eq : forall (A:Type) (x:A), stable (unit x).
+Lemma unit_stable_eq : forall (A:Type) (x:A), stable (munit x).
 auto.
 Qed.
 
-Lemma star_stable_eq : forall (A B:Type) (m:M A) (F:A -> M B), stable (star m F).
+Lemma star_stable_eq : forall (A B:Type) (m:M A) (F:A -> M B), stable (mstar m F).
 auto.
 Qed.
 
-Lemma unit_monotonic A (x:A) (f g : MF A):(f <= g)%O -> unit x f <= unit x g.
+Lemma unit_monotonic A (x:A) (f g : MF A):(f <= g)%O -> munit x f <= munit x g.
 by rewrite /unit /=.
 Qed.
 
-Lemma star_monotonic A B (m:M A) (F:A -> M B) (f g : MF B) : (f <= g)%O -> star m F f <= star m F g.
-move => H; rewrite /star /=.
+Lemma star_monotonic A B (m:M A) (F:A -> M B) (f g : MF B) : (f <= g)%O -> mstar m F f <= mstar m F g.
+move => H; rewrite /mstar /=.
 apply (fmonotonic m); intro x.
 by apply (fmonotonic (F x)).
 Qed.
 
 Lemma star_le_compat A B (m1 m2:M A) (F1 F2:A -> M B):
-       (m1 <= m2)%O -> (F1 <= F2)%O -> (star m1 F1 <= star m2 F2)%O.
+       (m1 <= m2)%O -> (F1 <= F2)%O -> (mstar m1 F1 <= mstar m2 F2)%O.
 intros; intro f; repeat rewrite star_simpl.
 transitivity (m1 (fun x : A => (F2 x) f)); auto.
 apply (fmonotonic m1); intro x.
@@ -237,17 +238,17 @@ apply (H0 x f).
 Save.
 Hint Resolve star_le_compat.
 
-(** *** Stability for substraction *)
-Lemma unit_stable_sub : forall (A:Type) (x:A), stable_sub (unit x).
+(** *** Stability for substraction of unit and star *)
+Lemma unit_stable_sub : forall (A:Type) (x:A), stable_sub (munit x).
 red in |- *; intros.
 unfold unit in |- *.
 auto.
 Qed.
 
 Lemma star_stable_sub : forall (A B:Type) (m:M A) (F:A -> M B),
-   stable_sub m -> (forall a:A, stable_sub (F a)) -> stable_sub (star m F).
+   stable_sub m -> (forall a:A, stable_sub (F a)) -> stable_sub (mstar m F).
 unfold stable_sub in |- *; intros.
-unfold star in |- *; simpl.
+unfold mstar in |- *; simpl.
 transitivity (m (fun x:A => F x f - F x g)).
 apply (Mstable_eq m); intro x; auto.
 apply (H (fun x : A => (F x) f) (fun x : A => (F x) g)).
@@ -358,16 +359,16 @@ Defined.
 (** ** Monadic operators for distributions *)
 Definition Munit : forall A:Type, A -> distr A.
 intros A x.
-exists (unit x).
+exists (munit x).
 apply unit_stable_sub.
 rewrite /unit /=; auto.
 Defined.
 
 Definition Mlet : forall A B:Type, distr A -> (A -> distr B) -> distr B.
 intros A B mA mB.
-exists (star (mu mA) (fun x => (mu (mB x)))).
+exists (mstar (mu mA) (fun x => (mu (mB x)))).
 apply star_stable_sub; auto.
-rewrite /star /=; apply mu_one_eq; auto.
+rewrite /mstar /=; apply mu_one_eq; auto.
 Defined.
 
 Lemma Munit_simpl : forall (A:Type) (q:A -> rat) x, mu (Munit x) q = q x.
@@ -417,7 +418,6 @@ Add Parametric Morphism (A B : Type) : (Mlet (A:=A) (B:=B))
   as Mlet_le_pointwise_morphism.
 auto.
 Save.
-
 
 
 Instance Mlet_mon2 : forall (A B : Type), monotonic2 (@Mlet A B).
@@ -494,7 +494,6 @@ intros f g H1.
 apply mu_eq_compat; auto.
 Save.
 
-
 (* Utile? *)
 Add Parametric Morphism (A:Type) (a:distr A) : (@mu A a)
   with signature (@pointwise_relation _ _ (@Ole _ _) ==> Ole) as mu_distr_le_morphism.
@@ -514,20 +513,19 @@ intros x y H F G H2.
 apply Mlet_eq_compat; auto.
 Save.
 
-
 (** ** Properties of monadic operators *)
-Lemma Mlet_unit : forall (A B:Type) (x:A) (m:A -> distr B), Mlet (Munit x) m == m x.
+Lemma Mlet_unit : forall A B (x:A) (m:A -> distr B), Mlet (Munit x) m == m x.
 intros; intro f; auto.
 Save.
 
-Lemma Mlet_ext : forall (A:Type) (m:distr A), Mlet m (fun x => Munit x) == m.
+Lemma Mlet_ext : forall A (m:distr A), Mlet m (fun x => Munit x) == m.
 intros;  intro f.
 rewrite Mlet_simpl.
 apply (mu_stable_eq m).
 intro x; auto.
 Save.
 
-Lemma Mlet_assoc : forall (A B C:Type) (m1: distr A) (m2:A -> distr B) (m3:B -> distr C),
+Lemma Mlet_assoc : forall A B C (m1: distr A) (m2:A -> distr B) (m3:B -> distr C),
      Mlet (Mlet m1 m2) m3 == Mlet m1 (fun x:A => Mlet (m2 x) m3).
 intros;  intro f; simpl; trivial.
 Save.
@@ -704,7 +702,7 @@ Hint Resolve Mcond_mult Mcond_conj_simpl.
 *)
 
 
-(** ** distribution for [flip]
+(** ** Distribution for [flip]
 The distribution associated to [flip ()] is 
        [f --> [1/2] (f true) + [1/2] (f false) ] *)
 
@@ -725,8 +723,6 @@ Lemma flip_stable_sub : stable_sub flip.
 unfold flip, stable_sub; intros f g; simpl.
 ring_to_rat; ring.
 Save.
-
-Import Field_theory Field_tac.
 
 Lemma flip_prob : flip (fun x => 1) = 1.
 rewrite /flip /= !mulr1 -div1r addf_div /=; auto.
@@ -760,114 +756,19 @@ trivial.
 Save.
 
 
-(** ** Uniform distribution beween 0 and n *)
+(** ** Finite distributions given by points and rational coefficients *)
+
 Require Arith.
 
-(*
-(** ** Distributions and general summations *)
-
-Definition sigma_fun A (f:nat -> MF A) (n:nat) : MF A := fun x => sigma (fun k => f k x) n.
-Definition serie_fun A (f:nat -> MF A) : MF A := fun x => serie (fun k => f k x).
-
-Definition Sigma_fun A (f:nat -> MF A) : nat -m> MF A := 
-              ishift (fun x => Sigma (fun k => f k x)).
-
-Lemma Sigma_fun_simpl : forall A (f:nat -> MF A) (n:nat),
-    Sigma_fun f n = sigma_fun f n.
-trivial.
-Save.
-
-Lemma serie_fun_lub_sigma_fun : forall A (f:nat -> MF A), 
-     serie_fun f == lub (Sigma_fun f).
-intros; unfold serie_fun.
-simpl; intro x.
-unfold serie; apply lub_eq_compat.
-simpl; intro n; trivial.
-Save.
-Hint Resolve serie_fun_lub_sigma_fun.
-
-Lemma sigma_fun_0 : forall A (f:nat -> MF A), sigma_fun f 0 == fzero A.
-intros; unfold fzero; intro x; auto.
-Save.
-
-Lemma sigma_fun_S : forall A (f:nat->MF A) (n:nat), 
-      sigma_fun f (S n) == fplus (f n) (sigma_fun f n).
-intros; unfold fplus; intro x; auto.
-Save.
-
-
-Lemma mu_sigma_le : forall A (d:distr A) (f:nat -> MF A) (n:nat), 
-      mu d (sigma_fun f n) <= sigma (fun k => mu d (f k)) n.
-induction n; intros.
-rewrite sigma_0; transitivity (mu d (fzero A)); auto.
-rewrite sigma_S; transitivity (mu d (fplus (f n) (sigma_fun f n))).
-auto.
-transitivity (mu d (f n) + mu d (sigma_fun f n)); auto.
-Save.
-
-Lemma retract_fplusok : forall A (f:nat -> MF A) (n:nat), 
-     (forall x, retract (fun k => f k x) n) -> 
-     forall k, (k < n)%nat -> fplusok (f k) (sigma_fun f k).
-red; intros; intro x.
-apply (H x k); auto.
-Save.
-
-
-Lemma mu_sigma_eq : forall A (d:distr A) (f:nat -> MF A) (n:nat), 
-     (forall x, retract (fun k => f k x) n) -> 
-      mu d (sigma_fun f n) == sigma (fun k => mu d (f k)) n.
-induction n; intros.
-rewrite sigma_0; transitivity (mu d (fzero A)); auto.
-rewrite sigma_S; transitivity (mu d (fplus (f n) (sigma_fun f n))).
-auto.
-transitivity (mu d (f n) + mu d (sigma_fun f n)); auto.
-apply (mu_stable_plus d).
-apply retract_fplusok with (S n); auto.
-Save.
-
-
-Lemma mu_serie_le : forall A (d:distr A) (f:nat -> MF A), 
-      mu d (serie_fun f) <= serie (fun k => mu d (f k)).
-intros; transitivity (mu d (lub (Sigma_fun f))).
-apply mu_monotonic; rewrite (serie_fun_lub_sigma_fun f); trivial.
-transitivity (lub (mu d @ (Sigma_fun f))).
-apply (mu_continuous d).
-unfold serie; apply lub_le_compat; intro n.
-rewrite comp_simpl.
-exact (mu_sigma_le d f n).
-Save.
-
-Lemma mu_serie_eq : forall A (d:distr A) (f:nat -> MF A), 
-     (forall x, wretract (fun k => f k x)) -> 
-      mu d (serie_fun f) == serie (fun k => mu d (f k)).
-intros; transitivity (mu d (lub (Sigma_fun f))).
-apply mu_stable_eq; apply (serie_fun_lub_sigma_fun f); trivial.
-transitivity (lub (mu d @ (Sigma_fun f))).
-apply (lub_comp_eq (mu d)).
-apply (mu_continuous d).
-unfold serie; apply lub_eq_compat; intro n.
-rewrite comp_simpl.
-apply (mu_sigma_eq d f (n:=n)).
-red; intros.
-apply (H x k).
-Save.
-
-Lemma wretract_fplusok : forall A (f:nat -> MF A), 
-     (forall x, wretract (fun k => f k x)) -> 
-     forall k, fplusok (f k) (sigma_fun f k).
-red; intros; intro x.
-apply (H x k); auto.
-Save.
-
-*)
-
-(** ** Finite distributions *)
 Local Open Scope rat_scope.
 
 Section FiniteDistributions.
 
 Variable A : Type.
 Variable p : seq A.
+
+(** We use a finite sequent of points, give a rational coefficient 
+    to each point but only consider positive ones *)
 
 Definition weight (c : A -> rat) : rat := \sum_(i <- p | 0 < c i) (c i).
 
@@ -929,9 +830,18 @@ Save.
 
 End FiniteDistributions.
 
+(** We have a distribution when the total weight is positive *)
+
 Record fin (A:Type) : Type := mkfin
      {points : seq A; coeff : A -> rat; weight_pos : 0 < weight points coeff}.
 Hint Resolve weight_pos.
+
+Lemma inv_weight_pos A (d:fin A) : 0 < (weight (points d) (coeff d))^-1.
+by rewrite Num.Theory.invr_gt0; auto.
+Save.
+Hint Resolve inv_weight_pos.
+
+Definition fprob A (d:fin A) (a : A) : rat := coeff d a / weight (points d) (coeff d).
 
 Definition Finite : forall A,  fin A -> distr A.
 intros A d ; exists (mfinite (points d) (coeff d)).
@@ -950,8 +860,43 @@ Lemma Finite_simpl : forall A (d:fin A),
 trivial.
 Save.
 
+
+Lemma Finite_eq_in (A:eqType) (d:fin A) (a:A) : 
+     uniq (points d) -> (a \in points d)%SEQ -> 0 < coeff d a -> 
+     mu (Finite d) (fun x => (x==a)%:Q) = fprob d a.
+move => Hu Hain Hap.
+rewrite Finite_simpl finite_simpl /fprob.
+congr *%R.
+rewrite -big_filter.
+rewrite (bigD1_seq a) /=.
+rewrite (eq_refl a) mulr1.
+transitivity (coeff d a + 0)%R.
+congr +%R.
+apply big1.
+move => i Hi.
+move: Hi; case (i == a); rewrite /=.
+by [].
+by rewrite mulr0.
+by rewrite addr0.
+rewrite mem_filter.
+by rewrite Hain Hap.
+by rewrite filter_uniq.
+Save.
+
+
+Lemma Finite_eq_out (A:eqType) (d:fin A) (a:A) : 
+     (a \notin points d)%SEQ \/ (coeff d a <= 0)%Q -> 
+     mu (Finite d) (fun x => (x==a)%:Q) = 0.
+move => Ha.
+rewrite Finite_simpl finite_simpl.
+admit.
+Save.
+
+
+(** ** Uniform distribution beween 0 and n *)
+
 Record unif (A:Type) : Type := mkunif 
-   {upoints : seq A; _ : upoints<>[::]}.
+   {upoints :> seq A; _ : upoints<>[::]}.
 
 Definition unif2fin A (p:unif A) : fin A.
    exists (upoints p) (fun A => 1%Q).
