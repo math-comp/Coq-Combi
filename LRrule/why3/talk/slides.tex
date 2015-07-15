@@ -534,27 +534,6 @@ with glue code to parse the command line, we can play with it
   VSTTE 2015
 \end{frame}
 
-\begin{frame}\frametitle{proof of correctness}
-  ghost code is added to store solutions within a global (ghost) array
-
-  \bigskip
-  the proof is \emph{not yet completed}
-
-  \bigskip
-  so far we have proved
-  \begin{itemize}
-  \item \texttt{innev} is a partition included in \texttt{eval}
-  \item \texttt{work} only contains values that are non zero in \texttt{innev}
-  \item all frame properties (\texttt{work} unchanged below
-    \texttt{row}/\texttt{idx}, \texttt{innev} unchanged at all, etc.)
-  \end{itemize}
-  we still have to prove
-  \begin{itemize}
-  \item tableaux found are indeed solutions
-  \item all solutions found and no duplicate
-  \end{itemize}
-\end{frame}
-
 \begin{frame}\frametitle{efficiency}
   \begin{displaymath}
     \begin{array}{ll}
@@ -582,6 +561,86 @@ with glue code to parse the command line, we can play with it
 
 \begin{frame}
   \begin{center}
+    \emph{proof of correctness} \\
+    \hrulefill
+  \end{center}
+\end{frame}
+
+\begin{frame}[fragile]\frametitle{specification 1/3}
+\begin{why3}
+predicate is_part (a: array int) =
+  ... a is a partition ...
+\end{why3}
+\begin{why3}
+predicate valid_input (outer inner: array int) =
+  ... inner and outer are partitions ... /\
+  ... inner is included in outer ...
+\end{why3}
+\begin{why3}
+predicate valid_eval (eval: array int) =
+  ... eval is a partition ... /\
+  ... ends with at least a 0 ...
+\end{why3}
+\end{frame}
+
+\begin{frame}[fragile]\frametitle{specification 2/3}
+  ghost code stores solutions within a global (ghost) array \texttt{s}
+
+  \bigskip
+  \begin{columns}
+  \column{0.7\textwidth}
+\begin{why3}
+predicate good_solutions s =
+  ... s is sorted ... /\
+  ... s contains only solutions ... /\
+  ... s contains all solutions ...
+\end{why3}
+
+  \column{0.3\textwidth}
+  \begin{tabular}{|c|l}
+  \multicolumn{1}{c}{\texttt{~~~~s~~~~}} \\\cline{1-1}
+  \\\cline{1-1}
+  \\\cline{1-1}
+  $\vdots$ \\\cline{1-1}
+  \\\cline{1-1}
+  \\\cline{1-1} & \texttt{next}
+  \\
+  \\
+  \end{tabular}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]\frametitle{specification 3/3}
+\begin{why3}
+let lrrule (outer inner eval: array int) : int =
+  requires { valid_input outer inner }
+  requires { valid_eval eval }
+  requires { sum_array eval =
+               sum_array outer - sum_array inner }
+  requires { s.next = 0 }
+  ensures  { result = s.next }
+  ensures  { good_solutions outer inner eval s }
+\end{why3}
+  \bigskip
+  note: the proof is \emph{not yet completed}
+\end{frame}
+
+  % \bigskip
+  % so far we have proved
+  % \begin{itemize}
+  % \item \texttt{innev} is a partition included in \texttt{eval}
+  % \item \texttt{work} only contains values that are non zero in \texttt{innev}
+  % \item all frame properties (\texttt{work} unchanged below
+  %   \texttt{row}/\texttt{idx}, \texttt{innev} unchanged at all, etc.)
+  % \end{itemize}
+  % we still have to prove
+  % \begin{itemize}
+  % \item tableaux found are indeed solutions
+  % \item all solutions found and no duplicate
+  % \end{itemize}
+
+\begin{frame}
+  \begin{center}
     \emph{connection with the Coq proof} \\
     \hrulefill
   \end{center}
@@ -597,16 +656,31 @@ with glue code to parse the command line, we can play with it
   \item different specifications (partition, tableau, Yamanouchi word)
   \item different algorithms
   \end{itemize}
+
+  \bigskip
+  let us show the equivalence, using Coq
 \end{frame}
 
-\begin{frame}\frametitle{a proof of equivalence}
-  
+\begin{frame}[fragile]\frametitle{proof of equivalence}
+  all Why3 definitions are translated into Coq (automatically)
+
+  \bigskip
+  there, we define two functions \texttt{part} and \texttt{partw} to
+  convert partitions from one type to the other
+
+\begin{coq}
+  part: array int -> seq nat
+\end{coq}
+\begin{coq}
+  partw: nat -> seq nat -> array int
+\end{coq}
+(the first argument is the length)
 \end{frame}
 
-\begin{frame}\frametitle{}
+\begin{frame}\frametitle{proof of equivalence}
   \begin{center}
     \begin{tabular}{ccc}
-      \emph{Coq} & & \emph{Why3} \\[1em]
+      \emph{Coq} & & \emph{from Why3} \\[1em]
       \texttt{inner} & &       \texttt{inner} \\[-1em]
       & $\stackrel{\mathtt{partw}}{\longrightarrow}$
       & \\[-0.5em]
@@ -614,7 +688,8 @@ with glue code to parse the command line, we can play with it
       \texttt{eval} & &       \texttt{eval} \\[-1.5em]
       & $\stackrel{\mathtt{part}}{\longleftarrow}$ & \\[1em]
       \texttt{inputSpec} & & \texttt{valid\_input} \\
-                         & & \texttt{solutions} \\
+                         & & \texttt{valid\_eval} \\
+                         & & \texttt{s} \\
       \texttt{LRcoeff}   & & \texttt{good\_solutions}
     \end{tabular}
   \end{center}
@@ -624,829 +699,51 @@ with glue code to parse the command line, we can play with it
 \begin{coq}
 Theorem Why3Correct:
   forall innerw outerw evalw: array int,
+  valid_input outerw innerw ->
+  valid_eval evalw ->
+  sum_array evalw =
+    sum_array outerw - sum_array innerw ->
   forall s, good_solutions innerw outerw evalw s ->
-  length s =
+  s.next =
     LRcoeff (part innerw) (part outerw) (part evalw)
-\end{coq}
-\begin{coq}
-Theorem Why3complete:
-  forall inner outer eval: seq nat,
-  forall s,
-  good_solutions (partw inner)
-                 (partw outer) (partw eval) s ->
-  length s = LRcoeff inner outer eval
 \end{coq}
 \end{frame}
 
-\begin{frame}\frametitle{what is the TCB?}
+\begin{frame}[fragile]\frametitle{proof of equivalence}
+the other way round
+\bigskip
+\begin{coq}
+Theorem Why3complete:
+  forall inner outer eval: seq nat,
+  inputSpec inner eval outer ->
+  let l = max (1 + size eval)
+              (max (size inner) (size outer)) in
+  forall s,
+  good_solutions (partw l inner)
+                 (partw l outer) (partw l eval) s ->
+  s.next = LRcoeff inner outer eval
+\end{coq}
+\end{frame}
+
+\begin{frame}[fragile]\frametitle{what is the TCB?}
   \begin{itemize}
   \item the Coq definitions and statements
-  \item the definition of \texttt{part} / \texttt{partw}
+  \item the definition of \texttt{partw}
   \end{itemize}
+\begin{coq}
+Definition partw (l: nat) (p: seq nat) : array int :=
+  mkseq (fun i => Posz (nth 0 p i)) l.
+\end{coq}
+
+  \bigskip
+  in particular, you don't have to read \emph{any} Why3 definition
 \end{frame}
 
 % TODO: draw the big picture
 
 \end{document}
 
-
-\section{Combinatorial ingredients: partitions and tableaux}
-
-
-
-\begin{frame}{Outline of a proof}
-
-  \textsc{\sc Lascoux, Leclerc and Thibon} \textit{The Plactic monoid},
-    {\it in} M.~Lothaire, Algebraic combinatorics on words,
-    Cambridge Univ. Press.
-
-  \begin{enumerate}
-  \item increasing subsequences and Schensted's algorithms;
-  \item Robinson-Schensted correspondance : a bijection;
-  \item Green's invariants: computing the maximum sum of the length of $k$ disjoint
-    non-decreassing subsequences;
-  \item Knuth relations, the plactic monoïd;
-  \item Green's invariants are plactic invariants: Equivalence between RS and plactic;
-  \item standardization; symmetry of RS;
-  \item Lifting to non commutative polynomials : Free quasi-symmetric function
-    and shuffle product;
-  \item non-commutative lifting the LR-rule : The free/tableau LR-rule;
-  \item Back to Yamanouchi words: a final bijection.
-  \end{enumerate}
-\end{frame}
-
-\section{The longest increasing subsequence problem}
-
-\newcommand{\red}[1]{{\color{red} #1}}
-\newcommand{\grn}[1]{{\color{green} #1}}
-\newcommand{\blu}[1]{{\color{blue} #1}}
-\begin{frame}{The longest increasing subsequence problem}
-
-  Some increasing subsequences:
-  \[
-  \begin{array}{c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c}
-    a&b&a&b&c&a&b&b&a&d&b&a&b\\
-    a&b&\red{a}&b&c&\red a&\red b&\red b&a&\red d&b&a&b \\
-    \red a&\red b&a&\red{b}&c&a&\red b&\red b&a&d&\red b&a&\red b
-  \end{array}
-  \]
-  \begin{PROBLEM}[Schensted]
-    Given a finite sequence $w$, compute the maximum length of a increasing subsequence.
-  \end{PROBLEM}
-\end{frame}
-
-\newcommand{\ar}[1]{\xrightarrow{#1}}
-
-\begin{frame}[fragile]{Schensted's algorithm}
-
-  \begin{ALGO}
-    Start with an empty row $r$, insert the letters $l$ of the word one by one
-    from left to right by the following rule:
-    \begin{itemize}
-    \item replace the first letter strictly larger that $l$ by $l$;
-    \item append $l$ to $r$ if there is no such letter.
-    \end{itemize}
-  \end{ALGO}
-  \bigskip
-
-  Insertion of $\begin{array}{c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c}
-    a&b&a&b&c&a&b&b&a&d&b&a&b\\
-  \end{array}w$
-  \begin{multline*}
-  \emptyset\ar{a}\young(a)\ar{b}\young(ab)\ar{a}\young(aa)\ar{b}\young(aab)
-  \ar{c}\young(aabc)\ar{a}\\
-  \young(aaac)\ar{b}\young(aaab)\ar{b}\young(aaabb)\ar{a}\\\young(aaaab)\ar{d}
-  \young(aaaabd)\ar{b}\young(aaaabb)\ar{a}\\
-  \young(aaaaab)\ar{b}\young(aaaaabb)
-  \end{multline*}
-\end{frame}
-
-\begin{frame}[fragile]{Schensted's specification}
-
-  \emph{Warning}: list index start from $0$.
-  \bigskip
-
-  \begin{THEO}[Schensted 1961]
-    The $i$-th entry $r[i+1]$ of the row $r$ is the smallest letter which ends
-    a increasing subsequence of length $i$.
-  \end{THEO}
-\[
-\operatorname{Schensted}(
-\begin{array}{c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c}
-  a&b&a&b&c&a&b&b&a&d&b&a&b\\
-\end{array})
-= \young(aaaaabb)
-\]
-\end{frame}
-
-
-\begin{frame}[fragile]
-
-  \begin{coqcode}
-Fixpoint insrow r l : seq T :=
-  if r is l0 :: r then
-    if (l < l0)%Ord then l :: r
-    else l0 :: (insrow r l)
-  else [:: l].
-
-Fixpoint inspos r (l : T) : nat :=
-  if r is l0 :: r' then
-    if (l < l0)%Ord then 0
-    else (inspos r' l).+1
-  else 0.
-
-Definition ins r l := set_nth l r (inspos r l) l.
-
-Lemma insE r l : insmin r l = ins r l.
-Lemma insrowE r l : insmin r l = insrow r l.
-  \end{coqcode}
-\end{frame}
-
-\begin{frame}[fragile]
-  \begin{coqcode}
-  (* rev == list reversal,   rcons s x == the sequence s, followed by x *)
-  (* subseq s1 s2 == s1 is a subsequence of s2                          *)
-  Fixpoint Sch_rev w := if w is l0 :: w' then ins (Sch_rev w') l0 else [::].
-  Definition Sch w := Sch_rev (rev w).
-
-  Lemma is_row_Sch w : is_row (Sch w).
-
-  Definition subseqrow s w := subseq s w && is_row s.
-  Definition subseqrow_n s w n := [&& subseq s w , (size s == n) & is_row s].
-
-  Theorem Sch_exists w i :
-    i < size (Sch w) ->
-    exists s : seq T, (last Z s == nth Z (Sch w) i) && subseqrow_n s w i.+1.
-  (* Induction elimining the last letter : elim/last_ind: w *)
-  Theorem Sch_leq_last w s si :
-    subseqrow (rcons s si) w ->
-    size s < size (Sch w) /\ (nth Z (Sch w) (size s) <= si)%Ord.
-  (* Induction elimining the last letter : elim/last_ind: w *)
-
-  Theorem Sch_max_size w :
-    size (Sch w) = \max_(s : subseqs w | is_row s) size s.
-  \end{coqcode}
-\end{frame}
-
-\begin{frame}{The ``apply it recursively'' rule}
-
-  \begin{block}
-      \bf\huge\bf If you have a great idea,\\
-      \pause
-      \emph{apply it recursively} \\
-      \pause
-      and you'll get \\
-      {\color{green} an even greater idea} !
-  \end{block}
-\end{frame}
-
-\begin{frame}[fragile]{The Robinson-Schensted's correspondence}
-
-  {\color{blue}Bumping the letters}: when a letter is replaced in Schensted
-  algorithm, \textbf{insert it in a next row} (placed on top in the drawing).
-  \newcommand{\ra}{{\red a}}%
-  \newcommand{\rb}{{\red b}}%
-  \newcommand{\rc}{{\red c}}%
-  \newcommand{\rd}{{\red d}}%
-  \begin{multline*}
-  \emptyset\ar{a}\young(\ra )\ar{b}\young(a\rb)\ar{a}\young(\rb,a\ra)\ar{b}\young(b,aa\rb)
-  \ar{c}\young(b,aab\rc)\ar{a}\\[3mm]
-  \young(b\rb,aa\ra c)\ar{b}\young(bb\rc,aaa\rb)\ar{b}\young(bbc,aaab\rb)\ar{a}\\[3mm]
-  \young(\rc,bb\rb,aaa\ra b)\ar{d}
-  \young(c,bbb,aaaab\rd)\ar{b}\young(c,bbb\rd,aaaab\rb)\ar{a}\\[3mm]
-  \young(c\rd,bbb\rb,aaaa\ra b)\ar{b}\young(cd,bbbb,aaaaab\rb)
-  \end{multline*}
-\end{frame}
-
-
-\begin{frame}[fragile]
-  \begin{coqcode}
-Definition bump r l := (l < (last l r))%Ord.
-
-Fixpoint bumprow r l : (option T) * (seq T) :=
-  if r is l0 :: r then
-    if (l < l0)%Ord then (Some l0, l :: r)
-    else let: (lr, rr) := bumprow r l in (lr, l0 :: rr)
-  else (None, [:: l]).
-
-Fixpoint instab t l : seq (seq T) :=
-  if t is t0 :: t' then
-    let: (lr, rr) := bumprow t0 l in
-    if lr is Some ll then rr :: (instab t' ll) else rr :: t'
-  else [:: [:: l]].
-
-Fixpoint RS_rev w : seq (seq T) :=
-  if w is w0 :: wr then instab (RS_rev wr) w0 else [::].
-Definition RS w := RS_rev (rev w).
-
-Lemma bump_dominate r1 r0 l : is_row r0 -> is_row r1 -> bump r0 l ->
-  dominate r1 r0 -> dominate (ins r1 (bumped r0 l)) (ins r0 l).
-Theorem is_tableau_instab t l : is_tableau t -> is_tableau (instab t l).
-Theorem is_tableau_RS w : is_tableau (RS w).
-  \end{coqcode}
-\end{frame}
-
-\begin{frame}[fragile]{Going back}
-
-  If we remember which cell was added we can recover the letter and the
-  previous tableau:
-  \newcommand{\ra}{{\red a}}%
-  \newcommand{\rb}{{\red b}}%
-  \newcommand{\rc}{{\red c}}%
-  \newcommand{\rd}{{\red d}}%
-  \[
-  \only<1>{\yng(1,4,6)\ar{?} \young(cd,bbbb,aaaaab)}
-  \only<2>{\young(c,bbbd,aaaabb)\ar{a} \young(c\rd,bbb\rb,aaaa\ra b)}
-  \]
-\pause
-
-  \begin{coqcode}
-RSmap : forall T : ordType, seq T -> seq (seq T) * seq nat
-RSmapinv2 : forall T : ordType, seq (seq T) * seq nat -> seq T
-
-Definition is_RSpair pair := let: (P, Q) := pair
-  in [&& is_tableau P, is_yam Q & (shape P == shape_rowseq Q)].
-Theorem RSmap_spec w : is_RSpair (RSmap w).
-
-Theorem RS_bij_1 w : RSmapinv2 (RSmap w) = w.
-Theorem RS_bij_2 pair : is_RSpair pair -> RSmap (RSmapinv2 pair) = pair.
-  \end{coqcode}
-\end{frame}
-
-
-\begin{frame}[fragile]{Robinson-Schensted's bijection (Yamanouchi version)}
-
-  \newcommand{\ra}{{\red a}}%
-  \newcommand{\rb}{{\red b}}%
-  \newcommand{\rc}{{\red c}}%
-  \newcommand{\rd}{{\red d}}%
-  \begin{multline*}
-  \emptyset,\emptyset \ar{a}
-  \young(\ra ),         {\tiny 0}\ar{b}
-  \young(a\rb),         00\ar{a}
-  \young(\rb,a\ra),     100\ar{b}\\[3mm]
-  \young(b,aa\rb),      0100\ar{c}
-  \young(b,aab\rc),     00100\ar{a}
-  \young(b\rb,aa\ra c), 100100\ar{b}\\[3mm]
-  \young(bb\rc,aaa\rb), 1100100\ar{b}
-  \young(bbc,aaab\rb),  01100100\ar{a}\\[3mm]
-  \young(\rc,bb\rb,aaa\ra b), 201100100\ar{d}
-  \young(c,bbb,aaaab\rd), 0201100100
-  \end{multline*}
-\end{frame}
-
-\begin{frame}[fragile]{Robinson-Schensted's bijection (Tableau version)}
-
-  \newcommand{\ra}{{\red a}}%
-  \newcommand{\rb}{{\red b}}%
-  \newcommand{\rc}{{\red c}}%
-  \newcommand{\rd}{{\red d}}%
-  \begin{multline*}
-  \emptyset,\emptyset \ar{a}
-  \young(\ra ),         \young(0)\ar{b}
-  \young(a\rb),         \young(01)\ar{a}
-  \young(\rb,a\ra),     \young(2,01)\ar{b}\\[3mm]
-  \young(b,aa\rb),      \young(2,013)\ar{c}
-  \young(b,aab\rc),     \young(2,0134)\ar{a}
-  \young(b\rb,aa\ra c), \young(25,0134)\ar{b}\\[3mm]
-  \young(bb\rc,aaa\rb), \young(256,0134)\ar{b}
-  \young(bbc,aaab\rb),  \young(256,01347)\ar{a}\\[3mm]
-  \young(\rc,bb\rb,aaa\ra b), \young(8,256,01347)\ar{d}
-  \young(c,bbb,aaaab\rd), \young(8,256,013479)
-  \end{multline*}
-\end{frame}
-
-
-\begin{frame}[fragile]{Idea of the proof: the non commutative lifting}
-
-  Fix the second tableau $Q$ in the bijection
-  \[L_Q := \{ w\ \mid\ RS(w)_2 = Q \}\]
-  Then clearly:
-    \[S_{\operatorname{shape}(Q)} = \sum_{w\in L_Q} \operatorname{comm}(w)\]
-    \pause\bigskip
-  The crucial fact is:
-  \begin{THEO}
-    There exists an explicit set $\Omega(Q, R)$ such that
-    \[L_Q L_R = \sum_{T\in\Omega(Q, R)} L_T.\]
-  \end{THEO}
-\end{frame}
-
-\begin{frame}[fragile]{Idea of the proof: the non commutative lifting}
-
-  \begin{coqcode}
-Variable R : comRingType.
-Fixpoint multpoly n :=
-  if n is n'.+1 then poly_comRingType (multpoly n') else R.
-
-Definition vari n (i : 'I_n) : multpoly n.
-Definition commword (w : seq 'I_n) : multpoly n := \prod_(i <- w) vari i.
-
-Definition polyset d (s : {set d.-tuple 'I_n}) := \sum_(w in s) commword w.
-Definition catset d1 d2 (s1 : {set d1.-tuple 'I_n}) (s2 : {set d2.-tuple 'I_n})
-           : {set (d1 + d2).-tuple 'I_n} :=
- [set cat_tuple w1 w2 | w1 in s1, w2 in s2].
-
-Lemma multcatset d1 d2 (s1 : {set d1.-tuple 'I_n}) (s2 : {set d2.-tuple 'I_n}) :
-  polyset s1 * polyset s2 = polyset (catset s1 s2).
-   \end{coqcode}
-
-\end{frame}
-
-\begin{frame}[fragile]{The free LR-rule}
-
-  \begin{coqcode}
-Definition freeSchur (Q : stdtabn d) :=
-  [set t : d.-tuple 'I_n | (RStabmap t).2 == Q].
-
-Lemma Schur_freeSchurE d (Q : stdtabn d) :
-  Schur (shape_deg Q) = polyset R (freeSchur Q).
-
-Definition predLRTriple (t1 t2 : seq (seq nat)) : pred (t : (seq (seq nat))).
-
-Variables (d1 d2 : nat).
-Variables (Q1 : stdtabn d1) (Q2 : stdtabn d2).
-Definition LR_support :=
-  [set Q : stdtabn (d1 + d2) | predLRTriple Q1 Q2 Q ].
-
-Lemma catset_LR_rule :
-  catset (freeSchur Q1) (freeSchur Q2) =
-    \bigcup_(Q in LR_support) (freeSchur Q).
-   \end{coqcode}
-
-\end{frame}
-
-\begin{frame}[fragile]{Proving the free LR-rule}
-
-  \begin{coqcode}
-Definition freeSchur (Q : stdtabn d) :=
-  [set t : d.-tuple 'I_n | (RStabmap t).2 == Q].
-
-Lemma catset_LR_rule :
-  catset (freeSchur Q1) (freeSchur Q2) =
-    \bigcup_(Q in LR_support) (freeSchur Q).
-   \end{coqcode}
-   \bigskip
-
-   \Large\bf One needs to understand the execution of the RS algorithms on the
-   concatenation of two words !
-\end{frame}
-
-
-\begin{frame}{Question ?}
-
-  \Huge\bf What does the Robinson-Schensted algorithm compute ?
-\end{frame}
-
-\section{Green's Theorem and the plactic monoid}
-\begin{frame}{Green's Theorem}
-
-  disjoint support increasing subsequences:
-  \[
-  \begin{array}{c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c}
-    \grn{a}&\grn{b}&\red{a}&\grn{b}&\grn{c}&\red a&\red b&\red b&\blu{a}&\red d&\blu{b}&a&\blu{b}
-  \end{array}
-  \]
-  \pause
-  \begin{THEO}
-    For any word $w$, and integer $k$
-    \begin{itemize}
-    \item The sum of the length of the $k$-first row of $RS(w)$ is the maximum
-      sum of the length of $k$ disjoint support increasing subsequences of $w$;
-  \pause
-    \item The sum of the length of the $k$-first column of $RS(w)$ is the maximum
-      sum of the length of $k$ disjoint support strictly decreasing subsequences of $w$.
-    \end{itemize}
-  \end{THEO}
-\end{frame}
-
-\begin{frame}[fragile]
-  \begin{coqcode}
-(* From mathcomp: cover P     == the union of the set of sets P. *)
-(*                trivIset P <=> the elements of P are pairwise disjoint.  *)
-Definition cover P := \bigcup_(B in P) B.
-Definition trivIset P := \sum_(B in P) #|B| == #|cover P|.
-
-Variable N : nat. Variable wt : N.-tuple Alph.
-Definition extractpred (P : pred 'I_N) := [seq tnth wt i | i <- enum P].
-Definition extract := [fun s : {set 'I_N} => extractpred wt (mem s)].
-
-Variable comp : rel Alph. Hypothesis Hcomp : transitive comp.
-Definition is_seq := [fun r => (sorted comp r)].
-Definition ksupp k (P : {set {set 'I_N}}) :=
-  [&& #|P| <= k, trivIset P & [forall (s | s \in P), is_seq (extract s)]].
-
-Definition green_rel_t k := \max_(P | ksupp k P) #|cover P|].
-Definition green_rel u := [fun k => green_rel_t comp (in_tuple u) k].
-
-Variable Alph : ordType.
-Definition greenRow := green_rel (leqX Alph).
-Definition greenCol := green_rel (gtnX Alph).
-  \end{coqcode}
-\end{frame}
-
-\begin{frame}[fragile]{Green's Theorem}
-  \begin{coqcode}
-(* take n s == the sequence containing only the first n items of s *)
-(*             (or all of s if size s <= n).                       *)
-
-Definition part_sum s k := (\sum_(l <- (take k s)) l).
-
-Corollary greenRow_RS k w :
-  greenRow w k = part_sum (shape (RS w)) k.
-
-(* conj_part : partition conjugate *)
-Corollary greenCol_RS k w :
-  greenCol w k = part_sum (conj_part (shape (RS w))) k.
-  \end{coqcode}
-\pause
-Proof:
-\begin{itemize}
-\item Show that theorems \texttt{green(Row|Col)\_RS} hold whenever $w$ is the
-  row reading of a tableau;
-\item Knuth's relations: given a tableau $t$, describe all the word $w$ such
-  that $RS(w) = t$;
-\item Show that Green's invariant are indeed invariants.
-\end{itemize}
-\end{frame}
-
-\begin{frame}[fragile]{Step 1: Green's invariant of a tableau}
-
-  \begin{itemize}
-  \item Green Columns : Upper bound using concatenation;
-  \item Green Rows : Upper bound intersection with columns;
-  \item Construction of an explicit $k$-sub sequence.
-  \end{itemize}
-\bigskip
-
-\begin{coqcode}
-(* Bound from concatenation *)
-Lemma green_rel_cat k v w :
-   green_rel (v ++ w) k <= green_rel v k + green_rel w k.
-
-Lemma greenCol_inf_tab k t :
-  is_tableau t -> greenCol (to_word t) k <= \sum_(l <- (shape t)) minn l k.
-
-(* Note : conj_part p == conjugate partition of p *)
-Definition part_sum s k := (\sum_(l <- (take k s)) l).
-Lemma sum_conj sh k : \sum_(l <- sh) minn l k = part_sum (conj_part sh) k.
-\end{coqcode}
-\end{frame}
-
-\begin{frame}[fragile]{Construction of an explicit $k$-sub sequence:}
-
-\emph{\bf  A dependant type nightmare !}
-
-
-\begin{coqcode}
-(* lshift n j == the i : 'I_(m + n) with value j : 'I_m.        *)
-(* rshift m k == the i : 'I_(m + n) with value m + k, k : 'I_n. *)
-Let sym_cast m n (i : 'I_(m + n)) : 'I_(n + m) := cast_ord (addnC m n) i.
-Definition shiftset s0 sh :=
-  [fun s : {set 'I_(sumn sh)} =>
-     ((@sym_cast _ _) \o (@lshift (sumn sh) s0)) @: s].
-
-Fixpoint shrows sh : seq {set 'I_(sumn sh)} :=
-  if sh is s0 :: sh then
-    [set ((@sym_cast _ _) \o (@rshift (sumn sh) s0)) i | i in 'I_s0] ::
-    map (@shiftset s0 sh) (shrows sh)
-  else [::].
-
-Lemma lcast_com :
-  (cast_ord (size_to_word (t0 :: t)))
-    \o (@sym_cast _ _) \o (@lshift (sumn (shape t)) (size t0))
-  =1  linj_rec \o (cast_ord (size_to_word t)).
-\end{coqcode}
-\end{frame}
-
-\begin{frame}[fragile]
-
-\begin{coqcode}
-Lemma size_to_word T (t : seq (seq T)) : size_tab t = size (to_word t)
-
-Let cast_set_tab t :=
-  [fun s : {set 'I_(sumn (shape t))} => (cast_ord (size_to_word t)) @: s].
-
-Definition tabrows t := map (cast_set_tab t) (shrows (shape t)).
-Definition tabrowsk t := [fun k => take k (tabrows t)].
-
-Lemma ksupp_leqX_tabrowsk k t : is_tableau t ->
-  ksupp (leqX Alph) (in_tuple (to_word t)) k [set s | s \in (tabrowsk t k)].
-
-Lemma scover_tabcolsk k t : is_part (shape t) ->
-  scover [set s | s \in (tabcolsk t k)] = \sum_(l <- (shape t)) minn l k.
-\end{coqcode}
-\end{frame}
-
-\begin{frame}[fragile]{Step 2: Knuth relation}
-
-\[\red{ac}\blu{b} \equiv \red{ca}\blu{b} \quad \text{if $\red{a} \leq \blu{b} < \red{c}$}\]
-\[\blu{b}\red{ac} \equiv \blu{b}\red{ca} \quad \text{if $\red{a} < \blu{b} \leq \red{c}$}\]
-
-  \begin{coqcode}
-Definition plact1 :=
-  fun s => match s return seq word with
-    | [:: a; c; b] =>
-        if (a <= b < c)%Ord then [:: [:: c; a; b]] else [::]
-    | _ => [::]
-  end.
-[...]
-
-Definition plactrule :=
-  [fun s => plact1 s ++ plact1i s ++ plact2 s ++ plact2i s].
-
-Lemma plactrule_sym u v : v \in (plactrule u) -> u \in (plactrule v).
-Lemma plact_homog : forall u : word, all (perm_eq u) (plactrule u).
-  \end{coqcode}
-\end{frame}
-
-\begin{frame}[fragile]{Step 2: The plactic congruence}
-
-  \begin{coqcode}
-Definition congruence_rel (r : rel word) :=
-  forall a b1 c b2, r b1 b2 -> r (a ++ b1 ++ c) (a ++ b2 ++ c).
-
-CoInductive Generated_EquivCongruence (grel : rel word) :=
-  GenCongr : equivalence_rel grel ->
-             congruence_rel grel ->
-             ( forall u v, v \in rule u -> grel u v ) ->
-             ( forall r : rel word,
-                      equivalence_rel r -> congruence_rel r ->
-                      (forall x y, y \in rule x -> r x y) ->
-                      forall x y, grel x y -> r x y
-             ) -> Generated_EquivCongruence grel.
-
-Theorem gencongrP : Generated_EquivCongruence gencongr.
-Definition plactcongr := (gencongr plact_homog).
-
-Lemma plactcongr_homog u v : v \in plactcongr u -> perm_eq u v.
-Lemma size_plactcongr u v : v \in plactcongr u -> size u = size v.
-
-Notation "a =Pl b" := (plactcongr a b) (at level 70).
-  \end{coqcode}
-\end{frame}
-
-\begin{frame}[fragile]{Step 2: plactic congruence and RS algorithm}
-
-
-\[ \young(aaaccd) \cdot b\ \equiv_\text{Pl}\ c \cdot \young(aaabcd) \]
-
-
-\begin{multline*}
-  aaaccd\cdot b \to
-  aaac\blu{c}\red{db} \to
-  aaa\blu{c}\red{cb}d \to
-  aa\red{ac}\blu{b}cd \to\\
-  a\red{ac}\blu{a}bcd \to
-  \red{ac}\blu{a}abcd \to
-  c\cdot acaabcd
-\end{multline*}
-
-  \begin{coqcode}
-Lemma congr_bump r l :
-  r != [::] -> is_row r -> bump r l ->
-  r ++ [:: l] =Pl [:: bumped r l] ++ ins r l.
-
-Theorem congr_RS w : w =Pl (to_word (RS w)).
-Corollary Sch_plact u v : RS u == RS v -> u =Pl v .
-  \end{coqcode}
-\end{frame}
-
-
-\begin{frame}[fragile]{Step 3: Green's numbers are plactic invariants}
-
-\[
-u \equiv_{Pl} v\quad \Longrightarrow\quad
- \forall k\in\N,\ \operatorname{Green}_k(u) = \operatorname{Green}_k(v)
-\]
-  \begin{coqcode}
-Lemma ksupp_cast (T : ordType) R (w1 w2 : seq T) (H : w1 = w2) k Q :
-  ksupp R (in_tuple w1) k Q ->
-  ksupp R (in_tuple w2) k ((cast_set (eq_size H)) @: Q).
-
-Definition ksupp_inj k (u1 : seq T1) (u2 : seq T2) :=
-  forall s1, ksupp R1 (in_tuple u1) k s1 ->
-    exists s2, (scover s1 == scover s2) && ksupp R2 (in_tuple u2) k s2.
-
-Lemma leq_green k (u1 : seq T1) (u2 : seq T2) :
-  ksupp_inj k u1 u2 -> green_rel R1 u1 k <= green_rel R2 u2 k.
-  \end{coqcode}
-\end{frame}
-
-
-\begin{frame}[fragile]{Dependent type + too many hypothesis nightmare !}
-  \begin{coqcode}
-Record hypRabc (Alph : ordType) (R : rel Alph) (a b c : Alph) :
-Type := HypRabc
-  { Rtrans : transitive R;
-    Hbc : is_true (R b c);
-    Hba : is_true (~~ R b a);
-    Hxba : forall l : Alph, R l a -> R l b;
-    Hbax : forall l : Alph, R b l -> R a l }
-
-SetContainingBothLeft.exists_Qy
-     : forall (Alph : ordType) (R : rel Alph) (u v : seq Alph) (a b c : Alph),
-       SetContainingBothLeft.hypRabc R a b c ->
-       forall (k : nat) (P : {set {set 'I_(size (u ++ [:: b; a; c] ++ v))}}),
-       ksupp R (in_tuple (u ++ [:: b; a; c] ++ v)) k P ->
-       forall S0 : {set 'I_(size (u ++ [:: b; a; c] ++ v))},
-       S0 \in P ->
-       Swap.pos1 u (c :: v) b a \in S0 ->
-       Ordinal (SetContainingBothLeft.u2lt u v a b c) \in S0 ->
-       exists Q : {set {set 'I_(size ((u ++ [:: b]) ++ [:: c; a] ++ v))}},
-         scover Q = scover P /\
-         ksupp R (in_tuple ((u ++ [:: b]) ++ [:: c; a] ++ v)) k Q
-  \end{coqcode}
-\end{frame}
-
-\begin{frame}[fragile]{Green's Plactic invariants}
-
-  \begin{coqcode}
-Theorem greenRow_invar_plactic u v :
-  u =Pl v -> forall k, greenRow u k = greenRow v k.
-Theorem greenCol_invar_plactic u v :
-  u =Pl v -> forall k, greenCol u k = greenCol v k.
-
-Corollary greenRow_RS k w :
-  greenRow w k = part_sum (shape (RS w)) k.
-
-Corollary greenCol_RS k w :
-  greenCol w k = part_sum (conj_part (shape (RS w))) k.
-
-Corollary plactic_shapeRS_row_proof u v :
-  u =Pl v -> shape (RS u) = shape (RS v).
-  \end{coqcode}
-\end{frame}
-
-
-
-\begin{frame}[fragile]{Main plactic theorem}
-
-  \begin{coqcode}
-(* rembig w : remove the last occurrence of the largest letter of w *)
-(* append_nth T b i : append b to the i-th row of T *)
-
-Theorem rembig_RS a v :
-  {i | RS (a :: v) = append_nth (RS (rembig (a :: v))) (maxL a v) i}.
-(* Proof by Bi-simulation *)
-
-Theorem rembig_plactcongr u v : u =Pl v -> (rembig u) =Pl (rembig v).
-(* Proof by induction on the rules *)
-
-Lemma plactic_shapeRS u v : u =Pl v -> shape (RS u) = shape (RS v).
-(* Proof by green invariant *)
-
-Theorem plactic_RS u v : u =Pl v <-> RS u == RS v.
-(* Induction removing the last occurrence of the largest letter *)
-(* same shape => the largest letter is appended in the same row *)
-
-(* Could be proved much earlier *)
-Corollary RS_tabE (t : seq (seq Alph)) : is_tableau t -> RS (to_word t) = t.
-  \end{coqcode}
-\end{frame}
-
-\section{Noncommutative lifting}
-\begin{frame}[fragile]{... and then}
-
-  \begin{enumerate}
-    \setcounter{enumi}{6}
-  \item standardization; symmetry of RS;
-  \item Lifting to non commutative polynomials : Free quasi-symmetric function
-    and shuffle product;
-  \item non-commutative lifting the LR-rule : The free/tableau LR-rule;
-  \item Back to Yamanouchi words: a final bijection.
-  \end{enumerate}
-
-  \begin{coqcode}
-(* inverse word permutations *)
-Definition linvseq s :=
-  [fun t => all (fun i => nth (size s) t (nth (size t) s i) == i)
-    (iota 0 (size s))].
-Definition invseq s t := linvseq s t && linvseq t s.
-
-Corollary invseqRSE s t :
-  invseq s t -> RStabmap s = ((RStabmap t).2, (RStabmap t).1).
-  \end{coqcode}
-\end{frame}
-
-\begin{frame}[fragile]
-  \begin{enumerate}
-    \setcounter{enumi}{7}
-  \item Lifting to non commutative polynomials : Free quasi-symmetric function
-    and shuffle product;
-  \end{enumerate}
-
-  \begin{coqcode}
-Fixpoint shuffle_from_rec a u shuffu' v {struct v} :=
-  if v is b :: v' then
-    [seq a :: w | w <- shuffu' v] ++
-    [seq b :: w | w <- shuffle_from_rec a u shuffu' v']
-  else [:: (a :: u)].
-Fixpoint shuffle u v {struct u} :=
-  if u is a :: u' then
-    shuffle_from_rec a u' (shuffle u') v
-  else [:: v].
-Definition shiftn    n := map (addn n).
-Definition shsh u v := shuffle u (shiftn (size u) v).
-
-(* This is essentially the product rule of FQSym *)
-Theorem invstd_cat_in_shsh u v :
-  invstd (std (u ++ v)) \in shsh (invstd (std u)) (invstd (std v)).
-  \end{coqcode}
-\end{frame}
-
-\begin{frame}[fragile]
-  \begin{enumerate}
-    \setcounter{enumi}{8}
-  \item non-commutative lifting the LR-rule : The free/tableau LR-rule;
-  \end{enumerate}
-
-  \begin{coqcode}
-Record plactLRTriple t1 t2 t : Prop :=
-  PlactLRTriple :
-    forall p1 p2 p, RS p1 = t1 -> RS p2 = t2 -> RS p = t ->
-                    p \in shsh p1 p2 -> plactLRTriple t1 t2 t.
-(* reflect (plactLRTriple t1 t2 t) (predLRTriple t1 t2 t). *)
-Definition LR_support :=
-  [set Q : stdtabn (d1 + d2) | predLRTriple Q1 Q2 Q ].
-Definition LR_coeff d1 d2
-  (P1 : intpartn d1) (P2 : intpartn d2) (P : intpartn (d1 + d2)) :=
-  #|[set Q | Q in (LR_support (hyper_std P1) (hyper_std P2)) &
-                  (shape Q == P)]|.
-
-Theorem LR_coeffP d1 d2 (P1 : intpartn d1) (P2 : intpartn d2) :
-  Schur P1 * Schur P2 =
-    \sum_(P : intpartn (d1 + d2)) (Schur P) *+ LR_coeff P1 P2 P.
-  \end{coqcode}
-\end{frame}
-
-\begin{frame}[fragile]{The final bijection}
-
-  \begin{enumerate}
-    \setcounter{enumi}{9}
-  \item Back to Yamanouchi words: a final bijection:
-  \end{enumerate}
-  \bigskip
-
-  Tableau version:
-  \def\A{\red 8}
-  \def\B{\red{9}}
-  \def\C{\red{10}}
-  \def\D{\red{11}}
-  \def\E{\grn{12}}
-  \def\F{\grn{13}}
-  \def\G{\grn{14}}
-  \def\H{\blu{15}}
-  \def\I{\blu{16}}
-  \def\J{{\color{pink} 17}}
-  \[
-  C_{431,4321}^{7542} = 4
-  \quad \tiny\Yboxdim{8pt}
-  \young(\H\J,7\E\F\I,456\A\G,0123\B\C\D)\quad
-  \young(\H\J,7\A\E\I,456\F\G,0123\B\C\D)\quad
-  \young(\E\J,7\A\H\I,456\F\G,0123\B\C\D)\quad
-  \young(\A\J,7\E\H\I,456\F\G,0123\B\C\D)\quad
-  \]
-
-  Yamanouchi word version:
-  \def\AA{\red 0}
-  \def\AB{\grn 1}
-  \def\AC{\blu 2}
-  \def\AD{{\color{pink} 3}}
-  \[
-  C_{431,4321}^{7542} = 4
-  \quad \tiny\Yboxdim{8pt}
-  \gyoung(\AC\AD,:;\AB\AB\AC,:::;\AA\AB,::::;\AA\AA\AA)\quad
-  \gyoung(\AC\AD,:;\AA\AB\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
-  \gyoung(\AB\AD,:;\AA\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
-  \gyoung(\AA\AD,:;\AB\AC\AC,:::;\AB\AB,::::;\AA\AA\AA)\quad
-  \]
-  + a fast algorithm to enumerate those
-\end{frame}
-
-\begin{frame}{Easy / Hard points}
-
-  \begin{itemize}
-  \item SSReflect is good at automatically dealing with trivial cases (size
-    $*=\frac{1}{3}$);
-    \medskip
-  \item Few missing basic lemmas;
-    \pause
-
-  \item Lack of end user documentation for the class/mixin/canonical paradigm;
-    \medskip
-
-  \item Tuple and dependant types;
-    \medskip
-
-  \item More generally, I feel that SSReflect is too much oriented toward
-    finite;
-    \medskip
-
-  \item Dealing with a lot of hypothesis.
-  \end{itemize}
-
-\end{frame}
-\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % "latex -synctex=1 -shell-escape"
 %%% Local Variables: LaTeX-command
