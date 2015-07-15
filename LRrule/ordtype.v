@@ -24,7 +24,7 @@ Definition axiom T (r : rel T) := [/\ reflexive r, antisymmetric r & transitive 
 
 Section ClassDef.
 
-Record mixin_of T := Mixin { r : rel T; x : T; _ : axiom r }.
+Record mixin_of T := Mixin { r : rel T; _ : axiom r }.
 
 Record class_of T := Class {base : Equality.class_of T; mixin : mixin_of T}.
 Local Coercion base : class_of >->  Equality.class_of.
@@ -180,10 +180,6 @@ Proof. move=> m n p /= H1 H2; by apply: (leqX_trans H2 H1). Qed.
 Lemma gtnX_trans : transitive gtnX.
 Proof. move=> m n p /= H1 H2; by apply: (ltnX_trans H2 H1). Qed.
 
-
-Lemma inhabitant : T.
-Proof.  move H : T => HH; case: HH H => sort [] base [] r x ax t0 HT; by apply: x. Qed.
-
 End POrderTheory.
 
 Arguments leqX [T].
@@ -216,26 +212,15 @@ Local Coercion sort : type >-> Sortclass.
 Variables (T : Type) (cT : type).
 Definition class := let: Pack _ c _ as cT' := cT return class_of cT' in c.
 Definition clone c of phant_id class c := @Pack T c T.
-Let xT := let: Pack T _ _ := cT in T.
+Let xT := let: Pack T0 _ _ := cT in T0.
 Notation xclass := (class : class_of xT).
 
 
-Definition pack (b : PartOrder.class_of T) (m0 : mixin_of (PartOrder.Pack b T))
+Definition pack (b : PartOrder.class_of T) (m : mixin_of (PartOrder.Pack b T))
            (bT : pordType)
            (_ : phant_id (PartOrder.class bT) b)
-           (m : mixin_of bT)
-           (_ : phant_id m0 m) := Pack (@Class T b m0) T.
-(*
-Definition pack (bT : pordType) (m : mixin_of bT)
-           (b : PartOrder.class_of T)
-           (_ : phant_id (PartOrder.class bT) b)
-           (m1 : mixin_of (PartOrder.Pack b T))
-           (_ : phant_id m1 m) := Pack (@Class T b m1) T.
-*)
-(*  :=
-  fun bT b & phant_id (PartOrder.class bT) b =>
-  fun m & phant_id m0 m => Pack (@Class T b m) T.
-*)
+           (m0 : mixin_of bT)
+           (_ : phant_id m m0) := Pack (@Class T b m) T.
 
 (* Inheritance *)
 Definition eqType := @Equality.Pack cT xclass xT.
@@ -269,32 +254,8 @@ Proof. case: T => ? [] /= base [] /= H T0; by apply H. Qed.
 Arguments leqXpordP [T].
 
 
-(***********************************************************************)
-Fact leq_porder : PartOrder.axiom leq.
-Proof.
-  split.
-  - move=> n; by apply: leqnn.
-  - exact anti_leq.
-  - move=> m n p; by apply: leq_trans.
-Qed.
-
-Definition nat_pordMixin := PartOrder.Mixin 0 leq_porder.
-Canonical nat_pordType := Eval hnf in POrdType nat nat_pordMixin.
-
-Lemma leqXnatE m n : (m <= n)%Ord = (m <= n)%N.
-Proof. by rewrite leqXE /=. Qed.
-
-Fact leq_order : Order.axiom nat_pordType.
-Proof. move=> m n /=; rewrite !leqXnatE; by apply leq_total. Qed.
-
-Definition nat_ordMixin := Order.Mixin leq_order.
-Canonical nat_ordType := Eval hnf in OrdType nat nat_ordMixin.
-(***********************************************************************)
 
 
-
-
-(* Needs total ordering *)
 Section OrdTheory.
 
 Variable T : ordType.
@@ -312,9 +273,7 @@ Qed.
 Lemma ltnXNgeqX m n : (m < n) = ~~ (n <= m).
 Proof. by rewrite [n <= m]leqXNgtnX negbK. Qed.
 
-
 (* Comparison predicates. *)
-
 CoInductive leqX_xor_gtnX m n : bool -> bool -> Set :=
   | LeqXNotGtnX of m <= n : leqX_xor_gtnX m n true false
   | GtnXNotLeqX of n < m  : leqX_xor_gtnX m n false true.
@@ -396,56 +355,11 @@ End OrdTheory.
 Hint Resolve leqXnn ltnXnn ltnXW.
 
 
-Section DualPOrder.
-
-Variable T : pordType.
-
-Fact geqX_order : PartOrder.axiom (@geqX T).
-Proof.
-  split.
-  - move=> n /=; by apply: leqXnn.
-  - move=> m n /= /andP [] H1 H2; apply/eqP; by rewrite eqn_leqX H1 H2.
-  - move=> m n p /= H1 H2; by apply: (leqX_trans H2 H1).
-Qed.
-
-Definition dual_pordMixin := PartOrder.Mixin (inhabitant T) geqX_order.
-Canonical dual_pordType := Eval hnf in POrdType T dual_pordMixin.
-
-Definition to_dual : T -> dual_pordType := id.
-Definition from_dual : dual_pordType -> T := id.
-
-Lemma dual_leqX m n : (to_dual m <= to_dual n) = (n <= m).
-Proof. by rewrite leqXE /=. Qed.
-
-Lemma dual_eq m n : (to_dual m == to_dual n) = (n == m).
-Proof. by rewrite !eqn_leqX !dual_leqX. Qed.
-
-Lemma dual_ltnX m n : (to_dual m < to_dual n) = (n < m).
-Proof. by rewrite /ltnX_op dual_leqX dual_eq. Qed.
-
-Lemma dualK : cancel to_dual from_dual.
-Proof. by []. Qed.
-
-Lemma from_dualK : cancel from_dual to_dual.
-Proof. by []. Qed.
-
-End DualPOrder.
-
-Section DualOrder.
-
-Variable T : ordType.
-
-Fact geqX_total : Order.axiom (dual_pordType T).
-Proof. move=> m n /=; rewrite !dual_leqX; exact (leqX_total n m). Qed.
-
-Definition dual_ordMixin := Order.Mixin geqX_total.
-Canonical dual_ordType := Eval hnf in OrdType (dual_pordType T) dual_ordMixin.
-
-End DualOrder.
 
 Section MaxList.
 
 Variable Alph : ordType.
+
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -626,7 +540,8 @@ Section RemoveBig.
 
 Variable Alph : ordType.
 Let word := seq Alph.
-Let Z := (inhabitant Alph).
+
+Variable Z : Alph.
 
 Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
@@ -981,7 +896,157 @@ Qed.
 
 End RemoveBig.
 
+
+Module OrdNotations.
+
+Notation "x <=A y" := (x <= y)%Ord (at level 70, y at next level).
+Notation "x >=A y" := (x >= y)%Ord (at level 70, y at next level, only parsing).
+Notation "x <A y"  := (x < y)%Ord (at level 70, y at next level).
+Notation "x >A y"  := (x > y)%Ord (at level 70, y at next level, only parsing).
+
 (*
+Notation "[A m <= n < p ]" := ((m <=A n) && (n <A p)) (at level 71).
+Notation "[A m <= n <= p ]" := ((m <=A n) && (n <=A p)) (at level 71).
+Notation "[A m < n <= p ]" := ((m <A n) && (n <=A p)) (at level 71).
+Notation "[A m < n < p ]" := ((m <A n) && (n <A p)) (at level 71).
+*)
+
+End OrdNotations.
+
+
+Section DualPOrder.
+
+Variable T : pordType.
+
+Fact geqX_order : PartOrder.axiom (@geqX T).
+Proof.
+  split.
+  - move=> n /=; by apply: leqXnn.
+  - move=> m n /= /andP [] H1 H2; apply/eqP; by rewrite eqn_leqX H1 H2.
+  - move=> m n p /= H1 H2; by apply: (leqX_trans H2 H1).
+Qed.
+
+Definition dual_pordMixin := PartOrder.Mixin geqX_order.
+Definition dual_pordType := Eval hnf in POrdType T dual_pordMixin.
+(* Canonical dual_pordType := Eval hnf in POrdType T dual_pordMixin. *)
+
+Definition to_dual : T -> dual_pordType := id.
+Definition from_dual : dual_pordType -> T := id.
+
+Lemma dual_leqX m n : (to_dual m <= to_dual n) = (n <= m).
+Proof. by rewrite leqXE /=. Qed.
+
+Lemma dual_eq m n : (to_dual m == to_dual n) = (n == m).
+Proof. by rewrite !eqn_leqX !dual_leqX. Qed.
+
+Lemma dual_ltnX m n : (to_dual m < to_dual n) = (n < m).
+Proof. by rewrite /ltnX_op dual_leqX dual_eq. Qed.
+
+Lemma dualK : cancel to_dual from_dual.
+Proof. by []. Qed.
+
+Lemma from_dualK : cancel from_dual to_dual.
+Proof. by []. Qed.
+
+End DualPOrder.
+
+Section DualOrder.
+
+Variable T : ordType.
+
+Fact geqX_total : Order.axiom (dual_pordType T).
+Proof. move=> m n /=; rewrite !dual_leqX; exact (leqX_total n m). Qed.
+
+Definition dual_ordMixin := Order.Mixin geqX_total.
+Definition dual_ordType := Eval hnf in OrdType (dual_pordType T) dual_ordMixin.
+(* Canonical dual_ordType := Eval hnf in OrdType (dual_pordType T) dual_ordMixin. *)
+
+End DualOrder.
+
+
+Module Inhabited.
+
+Structure mixin_of T := Mixin {x : T}.
+Notation class_of := mixin_of (only parsing).
+
+Section ClassDef.
+
+Structure type := Pack {sort; _ : class_of sort; _ : Type}.
+Local Coercion sort : type >-> Sortclass.
+Variables (T : Type) (cT : type).
+
+Definition class := let: Pack _ c _ := cT return class_of cT in c.
+
+Definition pack c := @Pack T c T.
+Definition clone := fun c & cT -> T & phant_id (pack c) cT => pack c.
+
+End ClassDef.
+
+Module Exports.
+Coercion sort : type >-> Sortclass.
+Notation inhType := type.
+Notation InhMixin := Mixin.
+Notation InhType T m := (@pack T m).
+Notation "[ 'inhMixin' 'of' T ]" := (class _ : mixin_of T)
+  (at level 0, format "[ 'inhMixin'  'of'  T ]") : form_scope.
+Notation "[ 'inhType' 'of' T 'for' C ]" := (@clone T C _ idfun id)
+  (at level 0, format "[ 'inhType'  'of'  T  'for'  C ]") : form_scope.
+Notation "[ 'inhType' 'of' T ]" := (@clone T _ _ id id)
+  (at level 0, format "[ 'inhType'  'of'  T ]") : form_scope.
+End Exports.
+
+End Inhabited.
+Export Inhabited.Exports.
+
+Module InhPOrdType.
+
+Section ClassDef.
+
+Record class_of (T : Type) : Type := Class {
+  base :> PartOrder.class_of T;
+  mixin : Inhabited.mixin_of T
+}.
+
+Definition base2 T m : Inhabited.class_of T := mixin m.
+Local Coercion base2 : class_of >-> Inhabited.class_of.
+
+Structure type := Pack {sort; _ : class_of sort; _ : Type}.
+Local Coercion sort : type >-> Sortclass.
+
+Variables (T : Type) (cT : type).
+
+Definition class := let: Pack _ c _ := cT return class_of cT in c.
+
+Definition clone c of phant_id class c := @Pack T c T.
+Let xT := let: Pack T _ _ := cT in T.
+Notation xclass := (class : class_of xT).
+Definition pack :=
+  fun bT b & phant_id (PartOrder.class bT) (b : PartOrder.class_of T) =>
+  fun mT m & phant_id (Inhabited.class mT) (@Inhabited.class_of T) =>
+  Pack (@Class T b m) T.
+
+Definition eqType := @Equality.Pack cT xclass xT.
+Definition pordType := @PartOrder.Pack cT xclass xT.
+
+End ClassDef.
+
+Module Exports.
+Coercion sort : type >-> Sortclass.
+Notation inhPOrdType := type.
+Notation InhMixin := Inhabited.Mixin.
+Notation InhPOrdType T m := (@pack T m _ id _ _ id).
+(*Notation "[ 'inhPOrdMixin' 'of' T ]" := (class _ : mixin_of T)
+  (at level 0, format "[ 'inhPOrdMixin'  'of'  T ]") : form_scope.*)
+Notation "[ 'inhPOrdType' 'of' T 'for' C ]" := (@clone T C _ idfun id)
+  (at level 0, format "[ 'inhPOrdType'  'of'  T  'for'  C ]") : form_scope.
+Notation "[ 'inhPOrdType' 'of' T ]" := (@clone T _ _ id id)
+  (at level 0, format "[ 'inhPOrdType'  'of'  T ]") : form_scope.
+End Exports.
+
+End InhPOrdType.
+Export InhPOrdType.Exports.
+
+
 Fact leq_porder : PartOrder.axiom leq.
 Proof.
   split.
@@ -990,7 +1055,7 @@ Proof.
   - move=> m n p; by apply: leq_trans.
 Qed.
 
-Definition nat_pordMixin := PartOrder.Mixin 0 leq_porder.
+Definition nat_pordMixin := PartOrder.Mixin leq_porder.
 Canonical nat_pordType := Eval hnf in POrdType nat nat_pordMixin.
 
 Lemma leqXnatE m n : (m <= n)%Ord = (m <= n)%N.
@@ -998,12 +1063,10 @@ Proof. by rewrite leqXE /=. Qed.
 
 Fact leq_order : Order.axiom nat_pordType.
 Proof. move=> m n /=; rewrite !leqXnatE; by apply leq_total. Qed.
-  
-Definition nat_ordMixin := Order.Mixin leq_order.
-Canonical nat_ordType := Eval hnf in OrdType nat_pordType nat_ordMixin.
 
-Notation OrdType T m := (@pack T _ m _ _ id _ id).
-*)
+Definition nat_ordMixin := Order.Mixin leq_order.
+Canonical nat_ordType := Eval hnf in OrdType nat nat_ordMixin.
+
 Lemma geqXnatE m n : (m >= n)%Ord = (m >= n)%N.
 Proof. by rewrite leqXE /=. Qed.
 
@@ -1026,18 +1089,16 @@ Proof.
   by rewrite ltnXnatE ltnNge leqnSn /=.
 Qed.
 
-Module OrdNotations.
 
-Notation "x <=A y" := (x <= y)%Ord (at level 70, y at next level).
-Notation "x >=A y" := (x >= y)%Ord (at level 70, y at next level, only parsing).
-Notation "x <A y"  := (x < y)%Ord (at level 70, y at next level).
-Notation "x >A y"  := (x > y)%Ord (at level 70, y at next level, only parsing).
+Definition inhabitant (T : inhType) : T :=
+  let: Inhabited.Pack sort cls _ := T in Inhabited.x cls.
 
-(*
-Notation "[A m <= n < p ]" := ((m <=A n) && (n <A p)) (at level 71).
-Notation "[A m <= n <= p ]" := ((m <=A n) && (n <=A p)) (at level 71).
-Notation "[A m < n <= p ]" := ((m <A n) && (n <=A p)) (at level 71).
-Notation "[A m < n < p ]" := ((m <A n) && (n <A p)) (at level 71).
-*)
 
-End OrdNotations.
+Definition nat_inhMixin := Inhabited.Mixin 0.
+Canonical nat_inhType := Eval hnf in InhType nat nat_inhMixin.
+Lemma inhabitant_nat : inhabitant nat_inhType = 0. Proof. by []. Qed.
+
+Canonical nat_inhPOrdType := Eval hnf in InhPOrdType nat nat_pordType.
+
+Definition nat_inhPOrdType := [inhPOrdType of nat].
+
