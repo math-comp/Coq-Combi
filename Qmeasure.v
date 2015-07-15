@@ -901,7 +901,7 @@ by move: H0 H2; case (a \in points d).
 move: H0 H1; rewrite Num.Theory.ltrNge /=.
 change ((coeff d a <= 0)%B -> ~~(coeff d a <= 0)%B -> (coeff d a * 1%:~R)%R = 0%R).
 by case (coeff d a <= 0)%B.
-by move => _; rewrite /= mulr0.S
+by move => _; rewrite /= mulr0.
 Save.
 
 
