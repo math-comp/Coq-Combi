@@ -1,0 +1,5 @@
+-I ../Combi/LRrule
+-R ALEA/src ALEA
+ALEA/src
+Qmeasure.v
+recyama.v
