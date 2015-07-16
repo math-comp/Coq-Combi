@@ -30,16 +30,20 @@ case: (leqP a j) => [Haj|Hja].
   rewrite H2. 
   move : Haj.
   rewrite leqNgt.
-  move => Haj.
-  have: (if j < a then (haut L j).+1 else 0) = 0.
-    admit.
-  move => H3.
-  by rewrite H3. 
-(*
-+ rewrite /iff.
-  case: i => [|i'] ; [rewrite /=|]. apply conj.
-  *)
-  admit. Qed.
+  case (j<a); by simpl.
++ rewrite /=.
+  case: i => [|i'].
+  rewrite /=.
+  rewrite leqNgt.
+  move : Hja.
+  by case (j<a) => [_|].
+  rewrite /=.
+  move : Hja.
+  case (j<a); [|rewrite //=].
+  apply conj.
+  exact (IH j (is_part_tl Hpart) i') .
+Qed.
+
 
 
 Definition hook' (L : seq nat) i j := ((nth 0 L i)-j).-1 + ((haut L j)-i).-1.
@@ -68,6 +72,7 @@ Qed.
 
 
 
+(*
 Lemma hook'0_out_corner L i j : is_part L -> is_in_part L i j -> hook' L i j = 0 
                                    -> is_out_corner L i /\ (j = (nth 0 L i).-1).
 elim : L i.
@@ -86,11 +91,29 @@ elim : L i.
 *)
 admit.
 Save.
+*)
 
+Lemma hook'0_out_corner L i j : is_part L -> is_in_part L i j -> hook' L i j == 0 
+                                   -> is_out_corner L i && (j == (nth 0 L i).-1).
+move => Hpart.
+rewrite /is_in_part => Hin_part.
+rewrite /hook' addn_eq0.
+move /andP => [Hnth Hhaut].
+apply /andP; split.
+rewrite /is_out_corner. 
+apply leq_trans with j.+1; last rewrite //=.
+rewrite ltnS haut_nth //=.
+by rewrite -subn_eq0 subnS.
+rewrite eqn_leq.
+apply /andP; split. 
+rewrite -(leq_add2l 1).
+apply leq_trans with (nth 0 L i).
+trivial.
+apply leqSpred.
+rewrite -subn_eq0.
+by rewrite -subn1 -subnAC subn1.
+Qed.
 
-
-
- (* is_part L en hyp ? oui! *)
 
 Lemma out_corner_hook'0 L i : is_out_corner L i -> hook' L i (nth 0 L i).-1 = 0.
 admit. Save.
