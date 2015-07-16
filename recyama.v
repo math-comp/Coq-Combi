@@ -1,4 +1,4 @@
-Add Rec LoadPath "../Combi/LRrule".
+Add Rec LoadPath "Coq-Combi/LRrule".
 
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
