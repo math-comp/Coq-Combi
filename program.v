@@ -51,15 +51,22 @@ Lemma in_hook_seq_decr (i j:nat) (k l : nat) :
 admit.
 Save.
 
+Fact succ_neq0 : forall n m : nat, (n==m.+1)%N -> (n!=0)%N.
+move => n m; rewrite -lt0n.
+by move => H; rewrite (eqP H).
+Save.
 
-(*
-Fixpoint choose_corner (i j : nat) := 
+Fixpoint choose_corner (i j : nat) (m:nat) := 
+   if m is m'.+1 then
      let s := hook_seq i j in
-     if size s is O as n return size s == n -> distr (nat*nat) 
-     then fun _ => Munit (i,j) 
-     else Mlet Uniform (mkunif s sne) 
+     (if size s is p.+1 as n return (size s==n)%N -> distr (seq nat*seq nat) 
+     then fun (Hs: (size s == p.+1)%N)  => 
+          Mlet (Uniform (mkunif s (succ_neq0 _ _ Hs)))
           (fun ab => let: (k,l) := ab in 
-             Mlet (choose_corner k l) (fun AB => let: (A,B):=AB in (i::A,j::B))).
-*)
+             Mlet (choose_corner k l m') (fun AB => let: (A,B):=AB in Munit (i::A,j::B)))
+     else fun _ => Munit ([::i],[::j]))
+     (eq_refl (size s))
+   else Munit ([::i],[::j]).
+
 
 End FindCorner.
