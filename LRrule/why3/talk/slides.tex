@@ -110,38 +110,46 @@ Littlewood-Richardson coefficients\\[5mm]}
   \yngs(1, 2,2,3,5)$$
 \end{frame}
 
+\begin{frame}\frametitle{tableau}
+  \begin{DEFN}[semistandard Young tableau of shape $\lambda$]
+    A Young diagram of shape $\lambda$ filled with integers
+    \begin{itemize}
+    \item non decreasing along the rows
+    \item strictly increasing along the columns
+    \end{itemize}
+  \end{DEFN}
+
+  \bigskip
+  example:
+  $$\gyoung(3,23,122,00112)$$
+\end{frame}
+
 \begin{frame}{Schur symmetric polynomials}
 
   \begin{DEFN}[Schur symmetric polynomial]
-    \small Partition $\lambda := (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_{l-1})$ with $l\leq
-    n$; set $\lambda_i:=0$ for $i\geq l$.\\
-
-    \[
-    s_{\lambda} =
-    \frac{\sum_{\sigma\in\SG_n} \operatorname{sign}(\sigma)
-      \XX_n^{\sigma(\lambda+\rho)}}%
-    {\prod_{0\leq i<j<n} (x_j - x_i)}
-    = \frac{\left|
-       \begin{smallmatrix}
-         x_1^{\lambda_{n-1}+0}  & x_2^{\lambda_{n-1}+0}   & \dots  & x_n^{\lambda_{n-1}+0}  \\
-         x_1^{\lambda_{n-2}+1}  & x_2^{\lambda_{n-2}+1}   & \dots  & x_n^{\lambda_{n-2}+1}  \\
-         \vdots & \vdots & \ddots & \vdots \\
-         x_1^{\lambda_1+n-2}  & x_2^{\lambda_1+n-2}   & \dots  & x_n^{\lambda_1+n-2}  \\
-         x_1^{\lambda_0+n-1}  & x_2^{\lambda_0+n-1}   & \dots  & x_n^{\lambda_0+n-1}  \\
-      \end{smallmatrix}
-      \right|
-    }{\left|
-       \begin{smallmatrix}
-         1      & 1      & \dots  & 1     \\
-         x_1    & x_2    & \dots  & x_n    \\
-         x_1^2  & x_2^2   & \dots  & x_n^2  \\
-         \vdots & \vdots & \ddots & \vdots \\
-         x_1^{n-1}  & x_2^{n-1}   & \dots  & x_n^{n-1}  \\
-      \end{smallmatrix}
-      \right|
-    }
-    \]
+    Given a partition $\lambda :=
+    (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_{l-1})$ with $l\leq
+    n$ \par
+    (set $\lambda_i:=0$ for $i\geq l$)
+    \[ s_{\lambda}(x_0,\dots,x_{n-1}) = \sum_{T} x_0^{t_0}\cdots x_{n-1}^{t_{n-1}} \]
+    where the sum is over all semistandard Young tableaux of shape $\lambda$
+    and $t_i$ is the number of occurrences of $i$ in $T$.
   \end{DEFN}
+\end{frame}
+
+\begin{frame}\frametitle{example}
+  $n=3$, $\lambda = (2,1)$
+  \begin{displaymath}
+    \begin{array}{ccccc}
+        \gyoung(1,00) & & \gyoung(2,00) & & \gyoung(1,01) \\[1em]
+        a^2b          & & a^2c          & & ab^2 \\[1em]
+                & \gyoung(2,01) & & \gyoung(1,02) \\[1em]
+                  & & 2abc \\[1em]
+        \gyoung(2,11) & & \gyoung(2,02) & & \gyoung(2,12) \\[1em]
+        b^2c          & & ac^2          & & bc^2
+    \end{array}
+  \end{displaymath}
+
   \[s_{(2,1)}(a,b,c) = a^2b + ab^2 + a^2c + 2abc + b^2c + ac^2 + bc^2\]
 \end{frame}
 
@@ -185,7 +193,7 @@ Littlewood-Richardson coefficients\\[5mm]}
   $$(5,4,3,2)/(3,3,1)=\gyoung(;;,:;;,:::;,:::;;)$$
 \end{frame}
 
-\begin{frame}\frametitle{tableaux}
+\begin{frame}\frametitle{skew tableau}
   \begin{DEFN}[Skew semistandard Young tableau]
     A skew shape $\nu/\lambda$ filled with integers
     \begin{itemize}
@@ -602,6 +610,10 @@ predicate valid_eval (eval: array int) =
   \begin{columns}
   \column{0.7\textwidth}
 \begin{why3}
+predicate is_solution work =
+  ...
+\end{why3}
+\begin{why3}
 predicate good_solutions s =
   ... s is sorted ... /\
   ... s contains only solutions ... /\
@@ -713,7 +725,7 @@ let lrrule (outer inner eval: array int) : int =
       & $\stackrel{\mathtt{part}}{\longleftarrow}$ & \\[1em]
       \texttt{inputSpec} & & \texttt{valid\_input} \\
                          & & \texttt{valid\_eval} \\
-                         & & \texttt{s} \\
+      \texttt{outputSpec} & & \texttt{is\_solution} \\
       \texttt{LRcoeff}   & & \texttt{good\_solutions}
     \end{tabular}
   \end{center}
