@@ -1,4 +1,4 @@
-Add Rec LoadPath "Coq-Combi/LRrule".
+Add Rec LoadPath "../Combi/LRrule".
 
 Require Import ssreflect ssrbool eqtype ssrnat seq .
 Require Import bigop fintype Omega rat ssrint ssralg.
@@ -80,9 +80,12 @@ elim : L i.
   move /andP.
   case.
   move => /eqP Hnth /eqP Hhaut.
+(*
   move => a L IHL i Hpart Hin_part Hhook'.
   rewrite addn_eq0.
-
+*)
+admit.
+Save.
 
 
 

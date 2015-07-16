@@ -541,6 +541,33 @@ Lemma let_indep_distr : forall (A B:Type) (m1:distr A) (m2: distr B),
 exact let_indep.
 Save.
 
+Lemma mu_bool_le1 A (m:distr A) (f:A->bool) : mu m (fun x => (f x)%:Q) <= 1.
+apply Num.Theory.ler_trans with (mu m (fun x => 1%:Q)).
+apply mu_monotonic => x.
+case (f x) => //=.
+rewrite mu_prob => //=.
+Save.
+Hint Resolve mu_bool_le1.
+
+Lemma mu_bool_impl A (m:distr A) (f g:A->bool) : 
+   (forall x, implb (f x) (g x)%B) -> (mu m (fun x => (f x)%:Q) <= mu m (fun x => (g x)%:Q))%Q.
+move => Hfg; apply mu_monotonic => x.
+move: (Hfg x); case (f x) => //=.
+by case (g x) => //=.
+by case (g x) => //=.
+Save.
+
+
+Lemma mu_bool_impl1 A (m:distr A) (f g:A->bool) : (forall x, implb (f x) (g x)%B) ->
+    mu m (fun x => (f x)%:Q) = 1 ->  mu m (fun x => (g x)%:Q) = 1.
+move => Hi Hf.
+apply Num.Theory.ler_anti.
+apply /andP.
+split; trivial.
+rewrite -[X in X <= _]Hf.
+apply  mu_bool_impl; trivial.
+Save.
+
 (*
 (** ** Conditional probabilities *)
 
@@ -984,6 +1011,32 @@ Lemma Uniform_in_seq (A:eqType) (d:unif A) :
      mu (Uniform d) (fun x => (x \in upoints d)%:Q) = 1%R.
 rewrite /Uniform; apply Finite_in_seq.
 Save.
+
+Fact succ_neq0 : forall n m : nat, (n==m.+1)%N -> (n!=0)%N.
+move => n m; rewrite -lt0n.
+by move => H; rewrite (eqP H).
+Save.
+
+Lemma Uniform_unif_seq_eq (A:eqType) (d1 d2 : unif A) : 
+      (d1 == d2 :> seq A) -> Uniform d1 == Uniform d2.
+move => Heq f.
+rewrite 2!mu_uniform_sum.
+move: Heq; case /eqP => Heq.
+by rewrite Heq.
+Save.
+
+(** Uniform distribution on a sequence with a default value *)
+
+Definition unif_def A (d:A) (s:seq A) : unif A.
+exists (if s is [::] then [::d] else s).
+by case s.
+Defined.
+
+Lemma Uniform_def_ne A (d:A) (s:seq A) : 
+      forall (Hs:(size s != 0)%N), Uniform (unif_def d s) = Uniform (mkunif s Hs).
+case s; rewrite //=.
+Save.
+
 
 (* Uniform distribution between 0 and n included *)
 
