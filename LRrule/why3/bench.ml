@@ -25,10 +25,28 @@ let n = ref 0
 let () = Array.iteri (fun i out -> n := !n + out - inner.(i)) outer
 let eval = random_partition !n
 
+let cmd exec =
+  let b = Buffer.create 1024 in
+  let fmt = formatter_of_buffer b in
+  fprintf fmt "%s " exec;
+  for i = 0 to rows-1 do fprintf fmt "%d " outer.(i) done;
+  fprintf fmt "- ";
+  for i = 0 to rows-1 do fprintf fmt "%d " inner.(i) done;
+  fprintf fmt "- ";
+  Array.iter (fun p -> fprintf fmt "%d " p) eval;
+  fprintf fmt "0@?";
+  let s = Buffer.contents b in
+  s
+
 let () =
-  printf "./lrrule64.opt ";
-  for i = 0 to rows-1 do printf "%d " outer.(i) done; printf "- ";
-  for i = 0 to rows-1 do printf "%d " inner.(i) done; printf "- ";
-  Array.iter (fun p -> printf "%d " p) eval; printf "0@."
+  printf "%s@." (cmd "");
+  ignore (Sys.command (cmd "time ./lrrule64.opt"));
+  ignore (Sys.command (cmd "time lrcoef"));
+  ()
+
+
+
+
+
 
 
