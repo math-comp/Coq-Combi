@@ -20,7 +20,7 @@ Section FindCorner.
 
 Variable p : intpart.
 
-Definition last i := nth O p i.-1.
+Definition lend i := (nth O p i).-1.
 
 Definition is_in_hook (i j:nat) (k l : nat) := 
      ((i == k) && (j < l < nth 0 p i))%N || ((j == l) && (i < k < size p))%N.
@@ -47,7 +47,7 @@ admit.
 Save.
 
 Lemma hook_seq_empty (i j:nat) : 
-      is_in_part p i j -> (hook_seq i j == [::])%B -> (j == last i)%B && is_out_corner p i.
+      is_in_part p i j -> (hook_seq i j == [::])%B -> (j == lend i)%B && is_out_corner p i.
 admit.
 Save.
 
@@ -122,24 +122,113 @@ Save.
 
 Require Import path.
 
+Definition is_trace (A B : seq nat) := 
+      [&& (A != [::]), (B != [::]), is_out_corner p (last O A), 
+          lend (last O A) == last O B, sorted ltn A & sorted ltn B].
+
+Lemma is_trace_in_part (A B : seq nat) : is_trace A B ->
+      forall a b, a \in A -> b \in B -> is_in_part p a b.
+admit.
+Save.
+
+Lemma is_trace_tll (a:nat) (A B : seq nat) : A != [::] -> is_trace (a::A) B -> is_trace A B.
+admit.
+Save.
+
+Lemma is_trace_tlr (b:nat) (A B : seq nat) : B != [::] -> is_trace A (b::B) -> is_trace A B.
+admit.
+Save.
+
+
+Lemma fun_cons_simpll a A B : 
+    (fun x : seq nat * seq nat => ((a :: x.1, x.2) == (a :: A, B))%:~R) ==
+    (fun x : seq nat * seq nat => (x == (A, B))%:~R).
+move => [X Y] /=.
+rewrite /eq_op /=.
+rewrite {1}/eq_op /=.
+by rewrite eq_refl.
+Save.
+
+Lemma fun_cons_simplr a A B : 
+    (fun x : seq nat * seq nat => ((x.1, a :: x.2) == (A, a :: B))%:~R) ==
+    (fun x : seq nat * seq nat => (x == (A, B))%:~R).
+move => [X Y] /=.
+rewrite /eq_op /=.
+rewrite {2}/eq_op /=.
+by rewrite eq_refl.
+Save.
+
 Lemma choose_corner_decomp m a b (A B : seq nat) : 
-      (size (hook_next_seq a b) != 0)%N -> 
+      (size (hook_next_seq a b) != 0)%N -> is_trace (a::A) (b::B) ->
       (* path ltn a A -> path ltn b B -> *)
       mu (choose_corner m.+1 a b) (fun R => (R==(a::A,b::B))%:Q)
-      = mu (choose_corner m  a (head O B)) (fun R => (R==(a::A,B))%:Q) + 
-        mu (choose_corner m  (head O A) b) (fun R => (R==(A,b::B))%:Q).
-move => Hs.
+      = (mu (choose_corner m  a (head O B)) (fun R => (R==(a::A,B))%:Q) + 
+        mu (choose_corner m  (head O A) b) (fun R => (R==(A,b::B))%:Q))
+        / (size (hook_next_seq a b))%:Q.
+move => Hs Ht.
 rewrite (choose_corner_rec_simpl _ _ _ Hs) Mlet_simpl.
-rewrite mu_uniform_sum /=. 
+rewrite mu_uniform_sum /=.
+congr (_ / _). 
 rewrite /hook_next_seq.
 rewrite big_cat /=.
 rewrite !big_map /=.
-rewrite (bigD1_seq (head O A) _ (iota_uniq _ _)) /=.
+rewrite GRing.addrC.
+congr (_+_)%R.
+case (boolP (size B == O)) => HB.
+rewrite big1.
+apply esym.
+apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m a (head O B))).
+move => [X Y] /=.
+apply /implyP => /andP [] /andP [] /andP [] _ SY _ _.
+move: SY; apply contra.
+by move => /eqP [] _ ->. 
+move => i _; rewrite fun_cons_simplr.
+apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m a i)).
+move => [X Y] /=.
+apply /implyP => /andP [] /andP [] /andP [] _ SY _ _.
+move: SY; apply contra.
+by move => /eqP [] _ ->. 
+
+rewrite (bigD1_seq (head O B) _ (iota_uniq _ _)) /=.
+admit.
+rewrite mem_iota.
+have:= Ht => /and5P [_ _ _ _] /andP [_ H4].
+apply /andP; split. 
+move: HB H4; rewrite /sorted.
+case B => [//|b0 B' /=].
+by move => _ /andP [].
+have Hh : (head O B \in b :: B).
+move: HB; case B => //=.
+move => n l _; by rewrite !inE eq_refl orbT.
+have := (is_trace_in_part _ _ Ht a (head O B) (mem_head _ _) Hh).
+rewrite /is_in_part addSn.
+move => Hlt.
+apply (leq_trans Hlt).
 (*
-rewrite {1}/eq_op /=.
-rewrite {1 2}/eq_op /=.
-rewrite !eq_refl /= -/eq_op.
+rewrite -addnS -subSn.
+rewrite (ltn_predK Hlt).
+rewrite subnKC //.
 *)
+admit.
+
+case (boolP (size A == O)) => HA.
+rewrite big1.
+admit.
+move => i _; rewrite fun_cons_simpll.
+admit.
+rewrite (bigD1_seq (head O A) _ (iota_uniq _ _)) /=.
+
+rewrite -{1}(fun_cons_simpll a).
+rewrite -[RHS]GRing.addr0.
+congr (_+_)%R.
+apply: big1.
+move => i Hi.
+rewrite fun_cons_simpll.
+admit.
+admit.
+Save.
+
+
 
 
 End FindCorner.

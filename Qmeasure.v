@@ -550,7 +550,7 @@ Save.
 Hint Resolve mu_bool_le1.
 
 Lemma mu_bool_impl A (m:distr A) (f g:A->bool) : 
-   (forall x, implb (f x) (g x)%B) -> (mu m (fun x => (f x)%:Q) <= mu m (fun x => (g x)%:Q))%Q.
+   (forall x, (f x) ==> (g x)%B) -> (mu m (fun x => (f x)%:Q) <= mu m (fun x => (g x)%:Q))%Q.
 move => Hfg; apply mu_monotonic => x.
 move: (Hfg x); case (f x) => //=.
 by case (g x) => //=.
@@ -558,7 +558,7 @@ by case (g x) => //=.
 Save.
 
 
-Lemma mu_bool_impl1 A (m:distr A) (f g:A->bool) : (forall x, implb (f x) (g x)%B) ->
+Lemma mu_bool_impl1 A (m:distr A) (f g:A->bool) : (forall x, (f x) ==> (g x)%B) ->
     mu m (fun x => (f x)%:Q) = 1 ->  mu m (fun x => (g x)%:Q) = 1.
 move => Hi Hf.
 apply Num.Theory.ler_anti.
@@ -567,6 +567,28 @@ split; trivial.
 rewrite -[X in X <= _]Hf.
 apply  mu_bool_impl; trivial.
 Save.
+
+Lemma mu_stable_pos A (m:distr A) f : (forall x, 0 <= f x) -> 0 <= mu m f.
+move => Hf; rewrite -(mu_zero m).
+by apply mu_monotonic => x /=.
+Save.
+
+
+Lemma mu_bool_negb0 A (m:distr A) (f g:A->bool) : (forall x, (f x) ==> ~~ (g x)%B) ->
+    mu m (fun x => (f x)%:Q) = 1 ->  mu m (fun x => (g x)%:Q) = 0.
+move => Hi Hf.
+apply Num.Theory.ler_anti.
+apply /andP; split.
+apply Num.Theory.ler_trans with (mu m (fun x : A => 1 - (f x)%:Q)).
+apply mu_monotonic => x.
+move: (Hi x); case (f x) => //=.
+by case (g x) => //=.
+by case (g x) => //=.
+by rewrite mu_stable_inv Hf subrr.
+apply mu_stable_pos.
+move => x; by case (g x).
+Save.
+
 
 (*
 (** ** Conditional probabilities *)

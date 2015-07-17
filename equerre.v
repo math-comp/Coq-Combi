@@ -44,7 +44,12 @@ case: (leqP a j) => [Haj|Hja].
   exact (IH j (is_part_tl Hpart) i') .
 Qed.
 
-
+Lemma haut_decr (L : seq nat) j1 j2 : is_part L -> j1 <= j2 -> haut L j2 <= haut L j1.
+move => Hp Hle.
+apply (haut_nth j2 Hp (haut L j1)).
+apply: (leq_trans _ Hle).
+by apply (haut_nth j1 Hp (haut L j1)).
+Save.
 
 Definition hook' (L : seq nat) i j := ((nth 0 L i)-j).-1 + ((haut L j)-i).-1.
 Definition hook (L : seq nat) i j := (hook' L i j ).+1.
@@ -114,9 +119,29 @@ rewrite -subn_eq0.
 by rewrite -subn1 -subnAC subn1.
 Qed.
 
+Lemma negb_simpl : forall b1 b2, ~~ b1= ~~ b2 -> b1=b2.
+move => b1 b2; by case b1; case b2.
+Save.
+
+Lemma iff_eqb : forall (b1 b2:bool), (b1<->b2) -> b1=b2.
+move => b1 b2; case b1; case b2 => //=; intuition.
+discriminate H0.
+trivial.
+Save.
+
+Lemma haut_in_le L i j : is_part L -> ((is_in_part L i j) = (i < haut L j)). 
+rewrite /is_in_part; move => Hp.
+apply negb_simpl.
+rewrite -!leqNgt.
+apply iff_eqb.
+apply haut_nth; auto.
+Save.
 
 Lemma out_corner_hook'0 L i : is_out_corner L i -> hook' L i (nth 0 L i).-1 = 0.
-admit. Save.
+admit. 
+Save.
+
+
 
 Definition F L :=  ((((sumn L )`!)%:Q) / (F_deno L)%:Q)%Q. 
 
@@ -202,7 +227,27 @@ admit.
 Qed.
 
 
-
+Lemma hook'_decomp (L : intpart) (a b :nat) (o:nat) : 
+     is_in_part L a b -> is_out_corner L o -> a <= o -> b <= lindex L o 
+     -> hook' L a b = hook' L a  (lindex L o) + hook' L o b.
+move => Hpart Hc Hl Hr; rewrite /hook'.
+have Lpart : is_part L.
+by apply intpartP.
+have Hnao : (nth O L o <= nth O L a).
+have :=(is_part_ijP L Lpart).
+move => [_ H2].
+by apply H2.
+have Hnb : (haut L (lindex L o) <= haut L b).
+by apply haut_decr.
+have H : (haut L (lindex L o) = o).
+rewrite /lindex.
+set na:= nth 0 L a.
+set hb:= haut L b.
+set no:= nth 0 L o.
+set ho:= haut L (no.-1).
+admit.
+admit.
+Save.
 
 
 
