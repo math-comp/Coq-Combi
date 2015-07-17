@@ -27,7 +27,9 @@ Definition is_in_hook (i j:nat) (k l : nat) :=
 
 Lemma in_hook_part (i j:nat) (k l : nat) :
    is_in_part p i j -> is_in_hook i j k l -> is_in_part p k l.
-admit.
+Proof.
+  rewrite /is_in_part /is_in_hook => Hj /orP [] /and3P [] /eqP <- // H1 H2.
+  by rewrite ltnNge (haut_nth _ (intpartP p)) -ltnNge.
 Save.
 
 Definition hook_next_seq i j : seq (nat+nat) := 
@@ -43,7 +45,29 @@ Definition hook_seq i j := [seq (hook_next i j n) | n <- hook_next_seq i j].
 
 Lemma in_hook_seq (i j:nat) (k l : nat) :
    (k,l) \in (hook_seq i j) -> is_in_hook i j k l.
-admit.
+Proof.
+  rewrite /hook_seq /is_in_hook => /mapP [] x.
+  rewrite mem_cat => /orP [] /mapP [] u; rewrite mem_iota => Hu -> /= [] -> -> {x k l}.
+  - rewrite eq_refl /=; apply/orP; right.
+    move: Hu; case: (haut p j) => [|n] /=.
+    + rewrite sub0n addn0 ltnS => /andP [] /leq_trans => H/H{H}.
+      by rewrite ltnn.
+    + rewrite addSn !ltnS.
+      case: (leqP i n) => [Hi | /ltnW Hi].
+      * by rewrite (subnKC Hi).
+      * move: Hi; rewrite {1}/leq => /eqP ->.
+        rewrite addn0 => /andP [] /leq_trans => H/H{H}.
+      by rewrite ltnn.
+  - rewrite eq_refl /=; apply/orP; left.
+    move: Hu; case: (nth O p i) => [|n] /=.
+    + rewrite sub0n addn0 ltnS => /andP [] /leq_trans => H/H{H}.
+      by rewrite ltnn.
+    + rewrite addSn !ltnS.
+      case: (leqP j n) => [Hj | /ltnW Hj].
+      * by rewrite (subnKC Hj).
+      * move: Hj; rewrite {1}/leq => /eqP ->.
+        rewrite addn0 => /andP [] /leq_trans => H/H{H}.
+      by rewrite ltnn.
 Save.
 
 Lemma hook_seq_empty (i j:nat) : 
