@@ -80,30 +80,7 @@ endif
 #                    #
 ######################
 
-VFILES:=RpRing.v\
-  Rplus.v\
-  Markov.v\
-  DistrTactic.v\
-  Bernoulli.v\
-  BinCoeff.v\
-  Choice.v\
-  IterFlip.v\
-  RandomList.v\
-  IsDiscrete.v\
-  Cover.v\
-  Sets.v\
-  Prog_Intervals.v\
-  Prog.v\
-  SProbas.v\
-  Probas.v\
-  Monads.v\
-  Intervals.v\
-  FracNat.v\
-  Frac.v\
-  Uprop.v\
-  Utheory.v\
-  Rlow.v\
-  Ccpo.v\
+VFILES:=Ccpo.v\
   Misc.v
 
 -include $(addsuffix .d,$(VFILES))

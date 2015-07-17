@@ -40,8 +40,8 @@ $(call includecmdwithout@,$(COQBIN)coqtop -config)
 ##########################
 
 COQLIBS?=-I .\
-  -I ../Combi/LRrule 
-COQDOCLIBS?=
+  -I ../Combi/LRrule -R ALEA/src ALEA
+COQDOCLIBS?=-R ALEA/src ALEA
 
 ##########################
 #                        #
@@ -81,7 +81,9 @@ endif
 #                    #
 ######################
 
-VFILES:=recyama.v
+VFILES:=equerre.v\
+  recyama.v\
+  Qmeasure.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))
@@ -105,7 +107,7 @@ endif
 #                                     #
 #######################################
 
-all: $(VOFILES) 
+all: $(VOFILES) ./ALEA/src
 
 spec: $(VIFILES)
 
@@ -139,7 +141,16 @@ beautify: $(VFILES:=.beautified)
 	@echo 'Do not do "make clean" until you are sure that everything went well!'
 	@echo 'If there were a problem, execute "for file in $$(find . -name \*.v.old -print); do mv $${file} $${file%.old}; done" in your shell/'
 
-.PHONY: all opt byte archclean clean install userinstall depend html validate
+.PHONY: all opt byte archclean clean install userinstall depend html validate ./ALEA/src
+
+###################
+#                 #
+# Subdirectories. #
+#                 #
+###################
+
+./ALEA/src:
+	cd ./ALEA/src ; $(MAKE) all
 
 ####################
 #                  #
@@ -157,24 +168,27 @@ userinstall:
 	+$(MAKE) USERINSTALL=true install
 
 install:
-	install -d $(DSTROOT)$(COQLIBINSTALL)/$(INSTALLDEFAULTROOT); \
+	install -d $(DSTROOT)$(COQLIBINSTALL)/ALEA; \
 	for i in $(VOFILESINC); do \
-	 install -m 0644 $$i $(DSTROOT)$(COQLIBINSTALL)/$(INSTALLDEFAULTROOT)/`basename $$i`; \
+	 install -m 0644 $$i $(DSTROOT)$(COQLIBINSTALL)/ALEA/`basename $$i`; \
 	done
+	+cd ./ALEA/src && $(MAKE) DSTROOT="$(DSTROOT)" INSTALLDEFAULTROOT="$(INSTALLDEFAULTROOT)/./ALEA/src" install
 
 install-doc:
-	install -d "$(DSTROOT)"$(COQDOCINSTALL)/$(INSTALLDEFAULTROOT)/html
+	install -d "$(DSTROOT)"$(COQDOCINSTALL)/ALEA/html
 	for i in html/*; do \
-	 install -m 0644 $$i "$(DSTROOT)"$(COQDOCINSTALL)/$(INSTALLDEFAULTROOT)/$$i;\
+	 install -m 0644 $$i "$(DSTROOT)"$(COQDOCINSTALL)/ALEA/$$i;\
 	done
 
 clean:
 	rm -f $(VOFILES) $(VIFILES) $(GFILES) $(VFILES:.v=.v.d) $(VFILES:=.beautified) $(VFILES:=.old)
 	rm -f all.ps all-gal.ps all.pdf all-gal.pdf all.glob $(VFILES:.v=.glob) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex) all-mli.tex
 	- rm -rf html mlihtml
+	(cd ./ALEA/src ; $(MAKE) clean)
 
 archclean:
 	rm -f *.cmx *.o
+	(cd ./ALEA/src ; $(MAKE) archclean)
 
 printenv:
 	@"$(COQBIN)coqtop" -config
@@ -189,6 +203,7 @@ Makefile: Make
 	mv -f $@ $@.bak
 	"$(COQBIN)coq_makefile" -f $< -o $@
 
+	(cd ./ALEA/src ; $(MAKE) Makefile)
 
 ###################
 #                 #
