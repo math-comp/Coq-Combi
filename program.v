@@ -12,6 +12,7 @@ Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype rat
 Local Open Scope ring_scope.
 Require Import partition.
 Require Import equerre.
+Local Open Scope rat_scope.
 
 (* Require Import equerre. *)
 
@@ -30,7 +31,7 @@ admit.
 Save.
 
 Definition hook_next_seq i j : seq (nat+nat) := 
-    [seq (inl k) | k <- iota (i.+1) ((size p).-1 - i)]++
+    [seq (inl k) | k <- iota (i.+1) ((haut p j).-1 - i)]++
     [seq (inr k) | k <- iota (j.+1) ((nth O p i).-1 - j)].
 
 (* Lemma size_hook : forall i j, size (hook_seq i j) == hook' i j. *)
@@ -55,7 +56,7 @@ Lemma in_hook_seq_decr (i j:nat) (k l : nat) :
 admit.
 Save.
 
-Fixpoint choose_corner (m:nat) (i j : nat)  := 
+Fixpoint choose_corner (m:nat) (i j : nat) : distr ((seq nat) * (seq nat)) := 
    if m is m'.+1 then
      let s := hook_next_seq i j in
      (if size s is p.+1 
@@ -98,11 +99,9 @@ Lemma choose_corner_inv m  :
 elim m.
 move => i j //=; rewrite 2!eq_refl //=.
 move => n Hin i j.
-have choice : ((size (hook_next_seq i j) == 0)%N || (size (hook_next_seq i j) != 0)%N).
-case (size (hook_next_seq i j)) => //=.
-move: choice => /orP [H0|Hs].
+case (boolP (size (hook_next_seq i j)== O)) => [H0|Hs].
 rewrite choose_corner_end_simpl => //=.
-rewrite 2!eq_refl //=.
+by rewrite 2!eq_refl.
 rewrite (choose_corner_rec_simpl n i j Hs).
 rewrite Mlet_simpl.
 rewrite mu_one_eq => //=.
@@ -120,6 +119,27 @@ move:H1 => /andP [H3 H4].
 move:H3 => /andP [H3 _].
 by rewrite H3 H4 eq_refl.
 Save.
+
+Require Import path.
+
+Lemma choose_corner_decomp m a b (A B : seq nat) : 
+      (size (hook_next_seq a b) != 0)%N -> 
+      (* path ltn a A -> path ltn b B -> *)
+      mu (choose_corner m.+1 a b) (fun R => (R==(a::A,b::B))%:Q)
+      = mu (choose_corner m  a (head O B)) (fun R => (R==(a::A,B))%:Q) + 
+        mu (choose_corner m  (head O A) b) (fun R => (R==(A,b::B))%:Q).
+move => Hs.
+rewrite (choose_corner_rec_simpl _ _ _ Hs) Mlet_simpl.
+rewrite mu_uniform_sum /=. 
+rewrite /hook_next_seq.
+rewrite big_cat /=.
+rewrite !big_map /=.
+rewrite (bigD1_seq (head O A) _ (iota_uniq _ _)) /=.
+(*
+rewrite {1}/eq_op /=.
+rewrite {1 2}/eq_op /=.
+rewrite !eq_refl /= -/eq_op.
+*)
 
 
 End FindCorner.
