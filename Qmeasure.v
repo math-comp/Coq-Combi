@@ -321,9 +321,14 @@ intros Hf Hg; rewrite mu_stable_add Hf Hg; auto.
 Save.
 Hint Resolve mu_add_zero.
 
-Lemma mu_non_neg A (m: distr A) f : (\0 <= f)%O -> 0 <= mu m f.
+Lemma mu_stable_pos A (m: distr A) f : (\0 <= f)%O -> 0 <= mu m f.
 move => Hf; rewrite -(mu_zero m).
 apply (fmonotonic (mu m)); auto.
+Save.
+
+Lemma mu_stable_le1 A (m:distr A) f : (forall x, f x <= 1) -> mu m f <= 1.
+move => Hf; rewrite -(mu_prob m).
+by apply mu_monotonic => x /=.
 Save.
 
 Lemma mu_cte A (m: distr A) (c:rat) : mu m (fun x => c) = c.
@@ -568,11 +573,6 @@ rewrite -[X in X <= _]Hf.
 apply  mu_bool_impl; trivial.
 Save.
 
-Lemma mu_stable_pos A (m:distr A) f : (forall x, 0 <= f x) -> 0 <= mu m f.
-move => Hf; rewrite -(mu_zero m).
-by apply mu_monotonic => x /=.
-Save.
-
 
 Lemma mu_bool_negb0 A (m:distr A) (f g:A->bool) : (forall x, (f x) ==> ~~ (g x)%B) ->
     mu m (fun x => (f x)%:Q) = 1 ->  mu m (fun x => (g x)%:Q) = 0.
@@ -586,9 +586,28 @@ by case (g x) => //=.
 by case (g x) => //=.
 by rewrite mu_stable_inv Hf subrr.
 apply mu_stable_pos.
-move => x; by case (g x).
+by move => x /=; case (g x).
 Save.
 
+Lemma mu_bool_negb A (m:distr A) (f:A->bool) : mu m (fun x => (~~ f x)%:Q) = 1 - mu m (fun x => (f x)%:Q).
+rewrite -mu_stable_inv.
+apply mu_stable_eq => x; by case (f x).
+Save.
+
+Lemma mu_bool_negb1 A (m:distr A) (f g:A->bool) : (forall x, (~~ (f x) ==> g x)%B) ->
+    mu m (fun x => (f x)%:Q) = 0 ->  mu m (fun x => (g x)%:Q) = 1.
+move => Hi Hf.
+apply Num.Theory.ler_anti.
+apply /andP; split.
+apply mu_stable_le1.
+by move => x /=; case (g x).
+apply Num.Theory.ler_trans with (mu m (fun x : A => 1 - (f x)%:Q)).
+by rewrite mu_stable_inv Hf subr0.
+apply mu_monotonic => x.
+move: (Hi x); case (f x) => //=.
+by case (g x) => //=.
+by case (g x) => //=.
+Save.
 
 (*
 (** ** Conditional probabilities *)
