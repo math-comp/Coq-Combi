@@ -215,22 +215,25 @@ congr (_+_)%R.
   rewrite /is_in_part addSn.
   move => Hlt.
   apply (leq_trans Hlt).
-rewrite -addnS -subSn.
-
-(*
-rewrite -addnS -subSn.
-rewrite (ltn_predK Hlt).
-rewrite subnKC //.
-*)
-admit.
-admit.
-
+  apply leq_trans with ((nth O p a).-1).+1.
+  by apply leqSpred => /=.
+  rewrite ltnS.
+  by rewrite -leq_subLR.
 + case (boolP (size A == O)) => HA.
-rewrite big1.
-admit.
-move => i _; rewrite fun_cons_simpll.
-admit.
-rewrite (bigD1_seq (head O A) _ (iota_uniq _ _)) /=.
+  - rewrite big1.
+   apply esym.
+   apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m (head O A) b)).
+   move => [X Y] /=.
+   apply /implyP => /andP [] /andP [] /andP [] SX _ _ _.
+   move: SX; apply contra.
+   move => /eqP [H1 _]; by rewrite H1. 
+   move => i _; rewrite fun_cons_simpll.
+   apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m i b)).
+   move => [X Y] /=.
+   apply /implyP => /andP [] /andP [] /andP [] SX _ _ _.
+   move: SX; apply contra.
+   by move => /eqP [He _]; rewrite He. 
+   - rewrite (bigD1_seq (head O A) _ (iota_uniq _ _)) /=.
 
 rewrite -{1}(fun_cons_simpll a).
 rewrite -[RHS]GRing.addr0.
@@ -238,8 +241,32 @@ congr (_+_)%R.
 apply: big1.
 move => i Hi.
 rewrite fun_cons_simpll.
+   apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m i b)).
+   move => [X Y] /=.
+   apply /implyP => /andP [] /andP [] /andP [] _ _ Ha _.
+   move: Hi; apply contra.
+   move => /eqP [He _]; rewrite -He. 
+by rewrite eq_sym. 
+  rewrite mem_iota.
+  have:= Ht => /and5P [H1 H2 H3 H4] /andP [H5 H6].
+  apply /andP; split. 
+  move: HA H5; rewrite /sorted.
+  case A => [//|a0 A' /=].
+  by move => _ /andP [].
+  have Hh : (head O A \in a :: A).
+  move: HA; case A => //=.
+  move => n l _; by rewrite !inE eq_refl orbT.
+  have := (is_trace_in_part _ _ Ht (head O A) b Hh (mem_head _ _)).
+  rewrite /is_in_part addSn.
+  move => Hlt.
+(*
+  apply (leq_trans Hlt).
+  apply leq_trans with ((nth O p a).-1).+1.
+  by apply leqSpred => /=.
+  rewrite ltnS.
+  by rewrite -leq_subLR.*)
 admit.
-admit.
+
 Save.
 
 
