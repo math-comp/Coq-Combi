@@ -23,7 +23,7 @@ Variable p : intpart.
 Definition lend i := (nth O p i).-1.
 
 Definition is_in_hook (i j:nat) (k l : nat) := 
-     ((i == k) && (j < l < nth 0 p i))%N || ((j == l) && (i < k < size p))%N.
+     ((i == k) && (j < l < nth 0 p i))%N || ((j == l) && (i < k < haut p j))%N.
 
 Lemma in_hook_part (i j:nat) (k l : nat) :
    is_in_part p i j -> is_in_hook i j k l -> is_in_part p k l.
@@ -174,44 +174,58 @@ rewrite big_cat /=.
 rewrite !big_map /=.
 rewrite GRing.addrC.
 congr (_+_)%R.
-case (boolP (size B == O)) => HB.
-rewrite big1.
-apply esym.
-apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m a (head O B))).
-move => [X Y] /=.
-apply /implyP => /andP [] /andP [] /andP [] _ SY _ _.
-move: SY; apply contra.
-by move => /eqP [] _ ->. 
-move => i _; rewrite fun_cons_simplr.
-apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m a i)).
-move => [X Y] /=.
-apply /implyP => /andP [] /andP [] /andP [] _ SY _ _.
-move: SY; apply contra.
-by move => /eqP [] _ ->. 
++ case (boolP (size B == O)) => HB.
+ - rewrite big1.
+   apply esym.
+   apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m a (head O B))).
+   move => [X Y] /=.
+   apply /implyP => /andP [] /andP [] /andP [] _ SY _ _.
+   move: SY; apply contra.
+   by move => /eqP [] _ ->. 
+   move => i _; rewrite fun_cons_simplr.
+   apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m a i)).
+   move => [X Y] /=.
+   apply /implyP => /andP [] /andP [] /andP [] _ SY _ _.
+   move: SY; apply contra.
+   by move => /eqP [] _ ->. 
+  - rewrite (bigD1_seq (head O B) _ (iota_uniq _ _)) /=.
+  rewrite -{1}(fun_cons_simplr b).
+  rewrite -[RHS]GRing.addr0.
+  congr (_+_)%R.
+  apply: big1.
+  move => i Hi.
+  rewrite fun_cons_simplr.
+  apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m a i)).
+  move => [X Y] /=.
+  apply /implyP => /andP [] /andP [] /andP [] _ _ _ SH.
+  move: Hi; apply contra.
+  move => /eqP [_ H].
+  rewrite -H.
+  by rewrite eq_sym. 
+  rewrite mem_iota.
+  have:= Ht => /and5P [_ _ _ _] /andP [_ H4].
+  apply /andP; split. 
+  move: HB H4; rewrite /sorted.
+  case B => [//|b0 B' /=].
+  by move => _ /andP [].
+  have Hh : (head O B \in b :: B).
+  move: HB; case B => //=.
+  move => n l _; by rewrite !inE eq_refl orbT.
+  have := (is_trace_in_part _ _ Ht a (head O B) (mem_head _ _) Hh).
+  rewrite /is_in_part addSn.
+  move => Hlt.
+  apply (leq_trans Hlt).
+rewrite -addnS -subSn.
 
-rewrite (bigD1_seq (head O B) _ (iota_uniq _ _)) /=.
-admit.
-rewrite mem_iota.
-have:= Ht => /and5P [_ _ _ _] /andP [_ H4].
-apply /andP; split. 
-move: HB H4; rewrite /sorted.
-case B => [//|b0 B' /=].
-by move => _ /andP [].
-have Hh : (head O B \in b :: B).
-move: HB; case B => //=.
-move => n l _; by rewrite !inE eq_refl orbT.
-have := (is_trace_in_part _ _ Ht a (head O B) (mem_head _ _) Hh).
-rewrite /is_in_part addSn.
-move => Hlt.
-apply (leq_trans Hlt).
 (*
 rewrite -addnS -subSn.
 rewrite (ltn_predK Hlt).
 rewrite subnKC //.
 *)
 admit.
+admit.
 
-case (boolP (size A == O)) => HA.
++ case (boolP (size A == O)) => HA.
 rewrite big1.
 admit.
 move => i _; rewrite fun_cons_simpll.
