@@ -16,7 +16,8 @@ Fixpoint haut (L : seq nat) j {struct L} : nat :=
   |b :: reste => if j<b then (haut reste j).+1 else 0
 end.
 
-Lemma haut_nth : forall L j, is_part L -> forall i, ( nth 0 L i <= j  <-> haut L j <= i).
+Lemma haut_nth : forall L j, is_part L ->
+                 forall i, ( nth 0 L i <= j  <-> haut L j <= i).
 elim => [|a L IH] j Hpart i; [rewrite nth_default //= |].
 case: (leqP a j) => [Haj|Hja].
 + move /is_part_ijP : Hpart.
