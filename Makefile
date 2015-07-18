@@ -81,7 +81,9 @@ endif
 #                    #
 ######################
 
-VFILES:=recyama.v\
+VFILES:=program.v\
+  equerre.v\
+  recyama.v\
   Qmeasure.v
 
 -include $(addsuffix .d,$(VFILES))

@@ -16,8 +16,8 @@ Fixpoint haut (L : seq nat) j {struct L} : nat :=
   |b :: reste => if j<b then (haut reste j).+1 else 0
 end.
 
-Lemma haut_nth : forall L j, is_part L ->
-                 forall i, ( nth 0 L i <= j  <-> haut L j <= i).
+
+Lemma haut_nth : forall L j, is_part L -> forall i, (nth 0 L i <= j) = (haut L j <= i).
 elim => [|a L IH] j Hpart i; [rewrite nth_default //= |].
 case: (leqP a j) => [Haj|Hja].
 + move /is_part_ijP : Hpart.
@@ -45,7 +45,12 @@ case: (leqP a j) => [Haj|Hja].
   exact (IH j (is_part_tl Hpart) i') .
 Qed.
 
-
+Lemma haut_decr (L : seq nat) j1 j2 : is_part L -> j1 <= j2 -> haut L j2 <= haut L j1.
+move => Hp Hle.
+rewrite -(haut_nth _ Hp).
+apply: (leq_trans _ Hle).
+by rewrite (haut_nth j1 Hp).
+Save.
 
 Definition hook' (L : seq nat) i j := ((nth 0 L i)-j).-1 + ((haut L j)-i).-1.
 Definition hook (L : seq nat) i j := (hook' L i j ).+1.
@@ -73,6 +78,27 @@ Qed.
 
 
 
+(*
+Lemma hook'0_out_corner L i j : is_part L -> is_in_part L i j -> hook' L i j = 0 
+                                   -> is_out_corner L i /\ (j = (nth 0 L i).-1).
+elim : L i.
++ move => i .
+  by rewrite (in_empty i j).
++ move => a L IHL i Hpart Hin_part.
+  rewrite  {1}/hook'.
+  move /eqP.
+  rewrite addn_eq0.
+  move /andP.
+  case.
+  move => /eqP Hnth /eqP Hhaut.
+(*
+  move => a L IHL i Hpart Hin_part Hhook'.
+  rewrite addn_eq0.
+*)
+admit.
+Save.
+*)
+
 Lemma hook'0_out_corner L i j : is_part L -> is_in_part L i j -> hook' L i j == 0 
                                    -> is_out_corner L i && (j == (nth 0 L i).-1).
 move => Hpart.
@@ -94,9 +120,29 @@ rewrite -subn_eq0.
 by rewrite -subn1 -subnAC subn1.
 Qed.
 
+Lemma negb_simpl : forall b1 b2, ~~ b1= ~~ b2 -> b1=b2.
+move => b1 b2; by case b1; case b2.
+Save.
+
+Lemma iff_eqb : forall (b1 b2:bool), (b1<->b2) -> b1=b2.
+move => b1 b2; case b1; case b2 => //=; intuition.
+discriminate H0.
+trivial.
+Save.
+
+Lemma haut_in_le L i j : is_part L -> ((is_in_part L i j) = (i < haut L j)). 
+rewrite /is_in_part; move => Hp.
+apply negb_simpl.
+rewrite -!leqNgt.
+apply iff_eqb.
+by rewrite haut_nth.
+Save.
 
 Lemma out_corner_hook'0 L i : is_out_corner L i -> hook' L i (nth 0 L i).-1 = 0.
-admit. Save.
+admit. 
+Save.
+
+
 
 Definition F L :=  ((((sumn L )`!)%:Q) / (F_deno L)%:Q)%Q. 
 
@@ -182,7 +228,27 @@ admit.
 Qed.
 
 
-
+Lemma hook'_decomp (L : intpart) (a b :nat) (o:nat) : 
+     is_in_part L a b -> is_out_corner L o -> a <= o -> b <= lindex L o 
+     -> hook' L a b = hook' L a  (lindex L o) + hook' L o b.
+move => Hpart Hc Hl Hr; rewrite /hook'.
+have Lpart : is_part L.
+by apply intpartP.
+have Hnao : (nth O L o <= nth O L a).
+have :=(is_part_ijP L Lpart).
+move => [_ H2].
+by apply H2.
+have Hnb : (haut L (lindex L o) <= haut L b).
+by apply haut_decr.
+have H : (haut L (lindex L o) = o).
+rewrite /lindex.
+set na:= nth 0 L a.
+set hb:= haut L b.
+set no:= nth 0 L o.
+set ho:= haut L (no.-1).
+admit.
+admit.
+Save.
 
 
 
