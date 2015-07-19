@@ -200,9 +200,30 @@ let test_lrrule lrrule =
             [| 7;  6; 5; 5; 4; 3; 2; 1; 0; 0; 0 |]
             [| 7;  6; 5; 5; 4; 3; 2; 1; 0       |] = 268484)
 
-(* let () = test_lrrule lrrule2 *)
-(* let () = test_lrrule lrrule_matrix *)
+let () = test_lrrule lrrule2
+let () = test_lrrule lrrule_matrix
 let () = test_lrrule lrrule_matrix2
+let () = exit 0
+
+open List
+
+let cut_list cut l =
+  let rec loop = function
+    | [] -> [], []
+    | l :: t ->
+	let ct, res = loop t
+	in if l = cut then ([], ct :: res)
+	  else (l :: ct), res
+  in let res0, res = loop l
+  in res0 :: res
+
+let [outer; inner; eval] =
+  map
+    (fun l -> Array.of_list (map int_of_string l))
+    (cut_list "-" (tl (Array.to_list Sys.argv)))
+
+let () =
+  Format.printf "%d@." (lrrule_matrix2 outer inner eval)
 
 (*
   Local Variables:
