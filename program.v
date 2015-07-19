@@ -72,7 +72,35 @@ Save.
 
 Lemma hook_seq_empty (i j:nat) : 
       is_in_part p i j -> (hook_seq i j == [::])%B -> (j == lend i)%B && is_out_corner p i.
-admit.
+Proof.
+  rewrite /is_in_part => Hpart.
+  rewrite /hook_seq => /eqP/nilP; rewrite /nilp size_map.
+  rewrite /hook_next_seq size_cat !size_map.
+  rewrite addn_eq0 !size_iota /lend => /andP [].
+  rewrite /is_out_corner => Hhaut Hnth.
+  apply/andP; split.
+  - apply/eqP; apply anti_leq.
+    rewrite {2}/leq Hnth andbT.
+    by rewrite -ltnS (ltn_predK Hpart).
+  - move: Hnth; rewrite subn_eq0 -ltnS (ltn_predK Hpart) => Hnth.
+    have Hj : nth O p i = j.+1 by apply anti_leq; rewrite Hpart Hnth.
+    move: Hhaut => {Hpart Hnth}; rewrite subn_eq0 Hj.
+    case: p Hj => pp /=.
+    elim: pp i j => [//= | p0 p' IHp'] /= i j /andP [] Hhead Hpart Hj.
+    case: ltnP => //=.
+    + rewrite -Hj => H1 H2.
+      move: H2; rewrite -(haut_nth _ Hpart) Hj => /leq_trans; by apply.
+    + case: i Hj => [| i]/= Hj Hp0 _.
+      * case: p' Hhead Hpart {IHp'} => [| p1 p'] //=.
+        subst p0; move: Hp0; by rewrite ltnn.
+      * apply: (IHp' _ _ Hpart Hj) => {IHp'}.
+        exfalso.
+        move: Hpart => /is_part_ijP [] _ Hpart.
+        have {Hpart} /Hpart : (0 <= i)%N by [].
+        rewrite Hj => Habs.
+        have:= leq_ltn_trans (leq_trans Hhead Hp0) Habs.
+        case p' => //= p1 /= _.
+        by rewrite ltnn.
 Save.
 
 Lemma in_hook_seq_decr (i j:nat) (k l : nat) :
