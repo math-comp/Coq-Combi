@@ -20,8 +20,6 @@ Section FindCorner.
 
 Variable p : intpart.
 
-Definition lend i := (nth O p i).-1.
-
 Definition is_in_hook (i j:nat) (k l : nat) := 
      ((i == k) && (j < l < nth 0 p i))%N || ((j == l) && (i < k < haut p j))%N.
 
@@ -47,7 +45,7 @@ admit.
 Save.
 
 Lemma hook_seq_empty (i j:nat) : 
-      is_in_part p i j -> (hook_seq i j == [::])%B -> (j == lend i)%B && is_out_corner p i.
+      is_in_part p i j -> (hook_seq i j == [::])%B -> (j == lindex p i)%B && is_out_corner p i.
 admit.
 Save.
 
@@ -124,7 +122,7 @@ Require Import path.
 
 Definition is_trace (A B : seq nat) := 
       [&& (A != [::]), (B != [::]), is_out_corner p (last O A), 
-          lend (last O A) == last O B, sorted ltn A & sorted ltn B].
+          lindex p (last O A) == last O B, sorted ltn A & sorted ltn B].
 
 Lemma is_trace_in_part (A B : seq nat) : is_trace A B ->
       forall a b, a \in A -> b \in B -> is_in_part p a b.
@@ -160,12 +158,12 @@ Save.
 
 Lemma choose_corner_decomp m a b (A B : seq nat) : 
       (size (hook_next_seq a b) != 0)%N -> is_trace (a::A) (b::B) ->
-      (* path ltn a A -> path ltn b B -> *)
       mu (choose_corner m.+1 a b) (fun R => (R==(a::A,b::B))%:Q)
       = (mu (choose_corner m  a (head O B)) (fun R => (R==(a::A,B))%:Q) + 
         mu (choose_corner m  (head O A) b) (fun R => (R==(A,b::B))%:Q))
         / (size (hook_next_seq a b))%:Q.
 move => Hs Ht.
+have Hpp:=intpartP p.
 rewrite (choose_corner_rec_simpl _ _ _ Hs) Mlet_simpl.
 rewrite mu_uniform_sum /=.
 congr (_ / _). 
@@ -256,17 +254,14 @@ by rewrite eq_sym.
   have Hh : (head O A \in a :: A).
   move: HA; case A => //=.
   move => n l _; by rewrite !inE eq_refl orbT.
-  have := (is_trace_in_part _ _ Ht (head O A) b Hh (mem_head _ _)).
-  rewrite /is_in_part addSn.
-  move => Hlt.
-(*
-  apply (leq_trans Hlt).
-  apply leq_trans with ((nth O p a).-1).+1.
+  have := (is_trace_in_part _ _ Ht (head O A) b Hh (mem_head _ _)) => Hp.
+  apply (@leq_trans (haut p b)). 
+  rewrite -(haut_in_le (L:=p) (head O A) b _) //=.
+  rewrite addSn.
+  apply leq_trans with ((haut p b).-1).+1.
   by apply leqSpred => /=.
   rewrite ltnS.
-  by rewrite -leq_subLR.*)
-admit.
-
+  by rewrite -leq_subLR.
 Save.
 
 
