@@ -282,10 +282,12 @@ module Spec
   predicate is_of_eval_suffix (eval: array int) (w: array int) (len: int) =
     let n = length w in
     (forall i: int. n - len <= i < n -> 0 <= w[i] < length eval) /\
-    (forall v: int. 0 <= v < length eval -> numeq w v (n-len) n = eval[v])
+    (forall v: int. 0 <= v < length eval -> numeq w v (n-len) n <= eval[v])
 
   predicate is_of_eval (eval: array int) (w: array int) =
-    is_of_eval_suffix eval w (length w)
+    let n = length w in
+    (forall i: int. 0 <= i < n -> 0 <= w[i] < length eval) /\
+    (forall v: int. 0 <= v < length eval -> numeq w v 0 n = eval[v])
 
   predicate is_yam_of_eval_suffix (eval: array int) (w: array int) (len: int) =
     is_yam_suffix w len /\
@@ -506,6 +508,14 @@ module LRrule
   (* these lemmas are used only in the program proof, not in the Coq proof
      of equivalence *)
 
+  lemma width_nonneg:
+    forall outer inner r. included inner outer ->
+    0 <= r < length outer -> 0 <= width outer inner r
+
+  lemma sum_width_nonneg:
+    forall outer inner r1 r2. included inner outer ->
+    0 <= r1 <= r2 <= length outer -> 0 <= sum r1 r2 (width outer inner)
+
   (* cell (row, idx) is beyond cell (r, i)
      (row, idx) might be (length outer, 0), but (r, i) is a legal cell *)
   predicate cell_beyond (outer inner: array int) (row idx r i: int) =
@@ -656,6 +666,13 @@ module LRrule
     is_solution        outer inner eval work
 
   (* move to next row *)
+  lemma frame_next_row:
+    forall outer inner w1 w2 row.
+    0 <= row < length outer ->
+    frame outer inner w1 w2 row       (-1)
+    <->
+    frame outer inner w1 w2 (row + 1) (width outer inner (row+1) - 1)
+
   lemma solution_suffix_next_row:
     forall outer inner eval work row.
     included inner outer ->
@@ -671,6 +688,11 @@ module LRrule
     included inner outer ->
     is_solution_suffix outer inner eval work (length outer - 1) (-1) ->
     is_solution_suffix outer inner eval work (length outer)     0
+
+  lemma is_yam_of_eval_suffix_0:
+    forall outer inner eval work.
+    included inner outer -> valid_work outer inner work -> is_part eval ->
+    is_yam_of_eval_suffix eval (to_word outer inner work) 0
 
   (*
      row = current row, in [0 .. length outer[
