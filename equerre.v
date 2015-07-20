@@ -16,7 +16,8 @@ Fixpoint haut (L : seq nat) j {struct L} : nat :=
   |b :: reste => if j<b then (haut reste j).+1 else 0
 end.
 
-Lemma haut_nth : forall L j, is_part L -> forall i, ( nth 0 L i <= j  <-> haut L j <= i).
+
+Lemma haut_nth : forall L j, is_part L -> forall i, (nth 0 L i <= j) = (haut L j <= i).
 elim => [|a L IH] j Hpart i; [rewrite nth_default //= |].
 case: (leqP a j) => [Haj|Hja].
 + move /is_part_ijP : Hpart.
@@ -46,9 +47,9 @@ Qed.
 
 Lemma haut_decr (L : seq nat) j1 j2 : is_part L -> j1 <= j2 -> haut L j2 <= haut L j1.
 move => Hp Hle.
-apply (haut_nth j2 Hp (haut L j1)).
+rewrite -(haut_nth _ Hp).
 apply: (leq_trans _ Hle).
-by apply (haut_nth j1 Hp (haut L j1)).
+by rewrite (haut_nth j1 Hp).
 Save.
 
 Definition hook' (L : seq nat) i j := ((nth 0 L i)-j).-1 + ((haut L j)-i).-1.
@@ -134,7 +135,7 @@ rewrite /is_in_part; move => Hp.
 apply negb_simpl.
 rewrite -!leqNgt.
 apply iff_eqb.
-apply haut_nth; auto.
+by rewrite haut_nth.
 Save.
 
 Lemma out_corner_hook'0 L i : is_out_corner L i -> hook' L i (nth 0 L i).-1 = 0.
