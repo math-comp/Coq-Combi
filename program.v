@@ -20,6 +20,11 @@ Section FindCorner.
 
 Variable p : intpart.
 
+Fact is_part_p : is_part p.
+apply intpartP.
+Save.
+Hint Resolve is_part_p.
+
 Definition is_in_hook (i j:nat) (k l : nat) := 
      ((i == k) && (j < l < nth 0 p i))%N || ((j == l) && (i < k < haut p j))%N.
 
@@ -40,6 +45,10 @@ Definition hook_next i j n : nat * nat :=
     match n with inl k => (k,j) | inr k => (i,k) end.
 
 Definition hook_seq i j := [seq (hook_next i j n) | n <- hook_next_seq i j].
+
+Lemma size_hook_seq_next_eq i j : size (hook_seq i j)=size (hook_next_seq i j).
+apply: size_map.
+Save.
 
 Lemma in_hook_seq (i j:nat) (k l : nat) :
    (k,l) \in (hook_seq i j) -> is_in_hook i j k l.
@@ -69,7 +78,8 @@ Proof.
 Save.
 
 Lemma hook_seq_empty (i j:nat) : 
-      is_in_part p i j -> (hook_seq i j == [::])%B -> (j == lindex p i)%B && is_out_corner p i.
+      is_in_part p i j -> (hook_seq i j == [::])%B 
+      -> (j == lindex p i)%B && is_out_corner p i.
 Proof.
   rewrite /is_in_part => Hpart.
   rewrite /hook_seq => /eqP/nilP; rewrite /nilp size_map.
@@ -101,9 +111,85 @@ Proof.
         by rewrite ltnn.
 Save.
 
+Lemma size_hook_seq_hook' i j : size (hook_seq i j) = hook' p i j.
+rewrite size_hook_seq_next_eq /hook' /hook_next_seq size_cat !size_map !size_iota.
+rewrite addnC -!subn1.
+congr addn; apply subnAC.
+Save.
+
+Lemma leq_subnKC : forall m n, (n <= m + (n - m))%N.
+move => m n; rewrite -leq_subLR //.
+Save.
+
+Lemma leq_subnK : forall m n, (n <= (n - m) + m)%N.
+move => m n; rewrite addnC; apply leq_subnKC.
+Save.
+
+Lemma leq_ltn_add : forall m1 m2 n1 n2, ((m1<=n1) -> (m2<n2) -> (m1+m2<n1+n2))%N.
+move => m1 m2 n1 n2 H1 H2; rewrite -addnS; apply leq_add => //.
+Save.
+
+Lemma ltn_leq_add : forall m1 m2 n1 n2, ((m1<n1) -> (m2<=n2) -> (m1+m2<n1+n2))%N.
+move => m1 m2 n1 n2 H1 H2; rewrite -addSn; apply leq_add => //.
+Save.
+
 Lemma in_hook_seq_decr (i j:nat) (k l : nat) :
-   (k,l) \in (hook_seq i j) -> (size (hook_seq k l) < size (hook_seq i j))%N.
-admit.
+   is_in_part p i j -> (k,l) \in (hook_seq i j) -> (size (hook_seq k l) < size (hook_seq i j))%N.
+rewrite (is_in_part_simpl i j) // => /andP [] Hijl Hijc.
+rewrite !size_hook_seq_hook' /hook_seq /hook_next_seq map_cat mem_cat -!map_comp /hook_next /funcomp /= 
+  => /orP [].
++ rewrite -(rwP (mapP (y:=(k, l)))) => [[x Hx Hy]].
+  move: Hx; rewrite mem_iota; move /andP => [[Hx1 Hx2]].
+  injection Hy => Hy1 Hy2; subst.
+  rewrite /hook' -!subn1.
+  apply leq_ltn_add. 
+  - apply leq_sub => //; apply leq_sub => //.
+  have [_ Hm]:=(elimT (is_part_ijP p) is_part_p).
+  apply Hm; apply ltnW => //.
+  - rewrite -!subnDA.
+  move: Hijc.
+  rewrite (leq_eqVlt (i.+1) (haut p j)) => /orP [].
+  move /eqP => Hh.
+  exfalso; move: Hx2; rewrite -Hh => /=.
+  rewrite subnn addn0 => Hxi.
+  have abs := (leq_ltn_trans Hx1 Hxi).
+  by move:abs; rewrite ltnn //.
+  move => Hh.
+  move: Hh Hx2.
+  rewrite -(add1n i) => Hh; rewrite -subn1 -subnDA.
+  rewrite subnKC //=.
+  move => Hj; apply leq_trans with (haut p j - x)%N.
+  apply ltn_sub2l => //.
+  rewrite addn1 //.
+  apply leq_sub => //.
+  rewrite addn1 //.
+  apply ltnW => //.
++ rewrite -(rwP (mapP (y:=(k, l)))) => [[x Hx Hy]].
+  move: Hx; rewrite mem_iota; move /andP => [[Hx1 Hx2]].
+  injection Hy => Hy1 Hy2; subst.
+  rewrite /hook' -!subn1.
+  apply ltn_leq_add.
+  - rewrite -!subnDA.
+  move: Hijl.
+  rewrite (leq_eqVlt (j.+1) (nth O p i)) => /orP [].
+  move /eqP => Hh.
+  exfalso; move: Hx2; rewrite -Hh => /=.
+  rewrite subnn addn0 => Hxi.
+  have abs := (leq_ltn_trans Hx1 Hxi).
+  by move:abs; rewrite ltnn //.
+  move => Hh.
+  move: Hh Hx2.
+  rewrite -(add1n j) => Hh; rewrite -subn1 -subnDA.
+  rewrite subnKC //=.
+  move => Hj; apply leq_trans with (nth O p i - x)%N.
+  apply ltn_sub2l => //.
+  rewrite addn1 //.
+  apply leq_sub => //.
+  rewrite addn1 //.
+  apply ltnW => //.
+  - apply leq_sub => //; apply leq_sub => //.
+  apply haut_decr => //.
+  by apply ltnW => //.
 Save.
 
 Fixpoint choose_corner (m:nat) (i j : nat) : distr ((seq nat) * (seq nat)) := 
@@ -215,7 +301,6 @@ Lemma choose_corner_decomp m a b (A B : seq nat) :
         mu (choose_corner m  (head O A) b) (fun R => (R==(A,b::B))%:Q))
         / (size (hook_next_seq a b))%:Q.
 move => Hs Ht.
-have Hpp:=intpartP p.
 rewrite (choose_corner_rec_simpl _ _ _ Hs) Mlet_simpl.
 rewrite mu_uniform_sum /=.
 congr (_ / _). 
@@ -315,8 +400,5 @@ by rewrite eq_sym.
   rewrite ltnS.
   by rewrite -leq_subLR.
 Save.
-
-
-
 
 End FindCorner.
