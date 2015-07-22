@@ -81,6 +81,12 @@ case: (leqP a j) => [Haj|Hja].
   exact (IH j (is_part_tl Hpart) i') .
 Qed.
 
+Lemma haut_nth_lt : forall L j, is_part L -> forall i, (j < nth 0 L i) = (i < haut L j).
+move => L j HL i; rewrite !ltnNge.
+congr negb.
+apply haut_nth; trivial.
+Save.
+
 Lemma haut_decr (L : seq nat) j1 j2 : is_part L -> j1 <= j2 -> haut L j2 <= haut L j1.
 move => Hp Hle.
 rewrite -(haut_nth _ Hp).
@@ -165,16 +171,18 @@ Save.
 
 Lemma haut_in_le L i j : is_part L -> ((is_in_part L i j) = (i < haut L j)). 
 rewrite /is_in_part; move => Hp.
-apply negb_simpl.
-rewrite -!leqNgt.
-apply iff_eqb.
-by rewrite haut_nth.
+apply haut_nth_lt; trivial.
 Save.
 
-Lemma out_corner_hook'0 L i : is_out_corner L i -> hook' L i (nth 0 L i).-1 = 0.
+Lemma is_in_part_simpl L i j : is_part L -> is_in_part L i j = ((j < nth O L i) && (i < haut L j))%B.
+rewrite /is_in_part; move => Hp.
+have [Ht | Hf] := (boolP (j < nth 0 L i)) => //=. 
+rewrite -haut_nth_lt //.
+Save.
+
+Lemma out_corner_hook'0 L i : is_out_corner L i -> hook' L i (lindex L i) = 0.
 admit. 
 Save.
-
 
 
 Definition F L :=  ((((sumn L )`!)%:Q) / (F_deno L)%:Q)%Q. 
