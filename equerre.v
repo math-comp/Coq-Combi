@@ -24,6 +24,28 @@ Save.
 
 
 
+Lemma part_head_0ltn sh : is_part sh -> 0 < head 1 sh.
+Proof.
+  elim: sh => [//= | sh0 sh IHsh] /= /andP [] Head.
+  move/IHsh; apply: contraLR. rewrite !ltnNge !negbK leqn0 => /eqP Hsh0.
+  by move: Head; rewrite Hsh0 leqn0.
+Qed.
+
+Lemma nth_part_0ltn sh i : is_part sh -> i < size sh -> 0 < nth 0 sh i.
+Proof.
+  elim: i sh => [//= | i IHi] [//=| s0 s].
+    by move=> /part_head_0ltn.
+  move=> /= /andP [] _.
+  exact: IHi.
+Qed.
+
+Lemma out_corner_ltn_size p i : is_out_corner p i -> i < size p.
+apply contraLR.
+rewrite /is_out_corner !ltnNge !negbK => Hsize.
+by rewrite !nth_default; [rewrite //=|apply (leq_trans Hsize)| ].
+Qed.
+ 
+
 Fixpoint haut (L : seq nat) j {struct L} : nat :=
  match L with
   |[::] => 0
@@ -92,15 +114,21 @@ Qed.
 
 Definition p0 := [:: 5; 3; 3; 1].
 
-Lemma haut_lindex ( p : intpart) i : is_out_corner p i -> haut p (lindex p i) == 1+i .
+Lemma haut_lindex_ltn p i : i < haut p (lindex p i).
+admit.
+Qed.
+
+Lemma haut_lindex_out ( p : intpart) i : is_out_corner p i -> haut p (lindex p i) == 1+i .
 rewrite /is_out_corner /lindex.
 move => His_out_corner.
 rewrite eqn_leq.
 apply /andP; split.
-rewrite -haut_nth; last by apply intpartP. 
-rewrite -leq_succ.
-rewrite prednK; last .
-admit. admit.
++ rewrite -haut_nth; last by apply intpartP. 
+  rewrite -leq_succ.
+  rewrite prednK; [apply His_out_corner|apply nth_part_0ltn].
+  apply intpartP.
+  by apply out_corner_ltn_size.
++ apply haut_lindex_ltn.
 Qed.
 
 
