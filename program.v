@@ -117,6 +117,11 @@ rewrite addnC -!subn1.
 congr addn; apply subnAC.
 Save.
 
+
+Lemma size_hook_next_seq_hook' i j : size (hook_next_seq i j) = hook' p i j.
+rewrite -size_hook_seq_next_eq; apply size_hook_seq_hook'.
+Save.
+
 Lemma leq_subnKC : forall m n, (n <= m + (n - m))%N.
 move => m n; rewrite -leq_subLR //.
 Save.
@@ -256,6 +261,53 @@ move:H3 => /andP [H3 _].
 by rewrite H3 H4 eq_refl.
 Save.
 
+Lemma choose_corner_emptyl m i j (A B : seq nat) : 
+      (A == [::])%B -> mu (choose_corner m i j) (fun R => (R==(A,B))%:Q) = 0.
+move => HA.
+apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m i j)).
+   move => [X Y] /=.
+   apply /implyP => /andP [] /andP [] /andP [] SX SY _ _.
+   move: SX; apply contra.
+   by rewrite size_eq0 xpair_eqE (eqP HA); move => /andP [].
+Save.
+
+Lemma choose_corner_emptyr m i j (A B : seq nat) : 
+      (B == [::])%B -> mu (choose_corner m i j) (fun R => (R==(A,B))%:Q) = 0.
+move => HB.
+apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m i j)).
+   move => [X Y] /=.
+   apply /implyP => /andP [] /andP [] /andP [] SX SY _ _.
+   move: SY; apply contra.
+   by rewrite size_eq0 xpair_eqE (eqP HB); move => /andP [].
+Save.
+
+Lemma choose_corner_headl m i j (A B : seq nat) : 
+      (i != head O A)%B -> mu (choose_corner m i j) (fun R => (R==(A,B))%:Q) = 0.
+move => Ha.
+apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m i j)).
+   move => [X Y] /=.
+   apply /implyP => /andP [] /andP [] /andP [] _ _ hi hj.
+   rewrite xpair_eqE.
+   apply /negP; move => /andP [] /eqP Ha1 _.
+   move:hi; rewrite Ha1 /=.
+   move => Ha2; apply (elimN eqP Ha).
+   by move: Ha2 => /eqP.
+Save.
+
+Lemma choose_corner_headr m i j (A B : seq nat) : 
+      (j != head O B)%B -> mu (choose_corner m i j) (fun R => (R==(A,B))%:Q) = 0.
+move => Hb.
+apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m i j)).
+   move => [X Y] /=.
+   apply /implyP => /andP [] /andP [] /andP [] _ _ hi hj.
+   rewrite xpair_eqE.
+   apply /negP; move => /andP [] _ /eqP Hb1.
+   move:hj; rewrite Hb1 /=.
+   move => Hb2; apply (elimN eqP Hb).
+   by move: Hb2 => /eqP.
+Save.
+
+
 Require Import path.
 
 Definition is_trace (A B : seq nat) := 
@@ -275,6 +327,15 @@ Lemma is_trace_tlr (b:nat) (A B : seq nat) : B != [::] -> is_trace A (b::B) -> i
 admit.
 Save.
 
+Lemma is_trace_corner_nil (a b:nat) (A B : seq nat) : is_trace (a::A) (b::B) 
+      -> (size (hook_next_seq a b) == 0)%N -> (A == [::]) && (B == [::]).
+admit.
+Save.
+
+Lemma is_trace_corner_not_nil (a b:nat) (A B : seq nat) : is_trace (a::A) (b::B) 
+      -> (size (hook_next_seq a b) != 0)%N -> (A != [::]) || (B != [::]).
+admit.
+Save.
 
 Lemma fun_cons_simpll a A B : 
     (fun x : seq nat * seq nat => ((a :: x.1, x.2) == (a :: A, B))%:~R) ==
@@ -309,81 +370,51 @@ rewrite big_cat /=.
 rewrite !big_map /=.
 rewrite GRing.addrC.
 congr (_+_)%R.
-+ case (boolP (size B == O)) => HB.
++ case (boolP (B == [::])) => HB.
  - rewrite big1.
-   apply esym.
-   apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m a (head O B))).
-   move => [X Y] /=.
-   apply /implyP => /andP [] /andP [] /andP [] _ SY _ _.
-   move: SY; apply contra.
-   by move => /eqP [] _ ->. 
-   move => i _; rewrite fun_cons_simplr.
-   apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m a i)).
-   move => [X Y] /=.
-   apply /implyP => /andP [] /andP [] /andP [] _ SY _ _.
-   move: SY; apply contra.
-   by move => /eqP [] _ ->. 
-  - rewrite (bigD1_seq (head O B) _ (iota_uniq _ _)) /=.
-  rewrite -{1}(fun_cons_simplr b).
-  rewrite -[RHS]GRing.addr0.
-  congr (_+_)%R.
-  apply: big1.
-  move => i Hi.
-  rewrite fun_cons_simplr.
-  apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m a i)).
-  move => [X Y] /=.
-  apply /implyP => /andP [] /andP [] /andP [] _ _ _ SH.
-  move: Hi; apply contra.
-  move => /eqP [_ H].
-  rewrite -H.
-  by rewrite eq_sym. 
-  rewrite mem_iota.
-  have:= Ht => /and5P [_ _ _ _] /andP [_ H4].
-  apply /andP; split. 
-  move: HB H4; rewrite /sorted.
-  case B => [//|b0 B' /=].
-  by move => _ /andP [].
-  have Hh : (head O B \in b :: B).
-  move: HB; case B => //=.
-  move => n l _; by rewrite !inE eq_refl orbT.
-  have := (is_trace_in_part _ _ Ht a (head O B) (mem_head _ _) Hh).
-  rewrite /is_in_part addSn.
-  move => Hlt.
-  apply (leq_trans Hlt).
-  apply leq_trans with ((nth O p a).-1).+1.
-  by apply leqSpred => /=.
-  rewrite ltnS.
-  by rewrite -leq_subLR.
-+ case (boolP (size A == O)) => HA.
+   * apply esym.
+     by apply choose_corner_emptyr.
+   * move => i _; rewrite fun_cons_simplr.
+     by apply choose_corner_emptyr.
+ - rewrite (bigD1_seq (head O B) _ (iota_uniq _ _)) /=.
+   * rewrite -{1}(fun_cons_simplr b).
+     rewrite -[RHS]GRing.addr0.
+     congr (_+_)%R.
+     apply: big1.
+     move => i Hi.
+     rewrite fun_cons_simplr.
+     by apply choose_corner_headr.
+   * rewrite mem_iota.
+     have:= Ht => /and5P [_ _ _ _] /andP [_ H4].
+     apply /andP; split. 
+     move: HB H4; rewrite /sorted.
+     case B => [//|b0 B' /=].
+     by move => _ /andP [].
+     have Hh : (head O B \in b :: B).
+     move: HB; case B => //=.
+     move => n l _; by rewrite !inE eq_refl orbT.
+     have := (is_trace_in_part _ _ Ht a (head O B) (mem_head _ _) Hh).
+     rewrite /is_in_part addSn.
+     move => Hlt.
+     apply (leq_trans Hlt).
+     apply leq_trans with ((nth O p a).-1).+1.
+     by apply leqSpred => /=.
+     rewrite ltnS.
+     by rewrite -leq_subLR.
++ case (boolP (A == [::])) => HA.
   - rewrite big1.
-   apply esym.
-   apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m (head O A) b)).
-   move => [X Y] /=.
-   apply /implyP => /andP [] /andP [] /andP [] SX _ _ _.
-   move: SX; apply contra.
-   move => /eqP [H1 _]; by rewrite H1. 
-   move => i _; rewrite fun_cons_simpll.
-   apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m i b)).
-   move => [X Y] /=.
-   apply /implyP => /andP [] /andP [] /andP [] SX _ _ _.
-   move: SX; apply contra.
-   by move => /eqP [He _]; rewrite He. 
-   - rewrite (bigD1_seq (head O A) _ (iota_uniq _ _)) /=.
-
-rewrite -{1}(fun_cons_simpll a).
-rewrite -[RHS]GRing.addr0.
-congr (_+_)%R.
-apply: big1.
-move => i Hi.
-rewrite fun_cons_simpll.
-   apply: (mu_bool_negb0 _ _ _ _ (choose_corner_inv m i b)).
-   move => [X Y] /=.
-   apply /implyP => /andP [] /andP [] /andP [] _ _ Ha _.
-   move: Hi; apply contra.
-   move => /eqP [He _]; rewrite -He. 
-by rewrite eq_sym. 
-  rewrite mem_iota.
-  have:= Ht => /and5P [H1 H2 H3 H4] /andP [H5 H6].
+    * by apply esym; apply choose_corner_emptyl.
+    * move => i _; rewrite fun_cons_simpll.
+      by apply: choose_corner_emptyl.
+  - rewrite (bigD1_seq (head O A) _ (iota_uniq _ _)) /=.
+    * rewrite -{1}(fun_cons_simpll a).
+      rewrite -[RHS]GRing.addr0.
+      congr (_+_)%R.
+      apply: big1.
+      move => i Hi; rewrite fun_cons_simpll.
+      by apply choose_corner_headl.
+    * rewrite mem_iota.
+      have:= Ht => /and5P [H1 H2 H3 H4] /andP [H5 H6].
   apply /andP; split. 
   move: HA H5; rewrite /sorted.
   case A => [//|a0 A' /=].
@@ -401,4 +432,59 @@ by rewrite eq_sym.
   by rewrite -leq_subLR.
 Save.
 
+Lemma belast_empty  (T:eqType) (x:T) (s : seq T) : (s==[::])%B -> belast x s = [::].
+by move => /eqP Hs; subst.
+Save.
+
+Lemma cons_head_behead (T:eqType) x (s : seq T) : (s!=[::]) -> s = head x s :: behead s.
+case s => //=.
+Save.
+
+
+Definition PI (a b:nat) (A B:seq nat) : rat := 
+     \prod_(i <- belast a A) (1/(hook' p i (last b (b::B)))%:Q) 
+   * \prod_(j <- belast b B) (1/(hook' p (last a (a::A)) j)%:Q).
+
+Lemma PIprog m : forall a b (A B : seq nat), (size A + size B <= m)%N ->  is_trace (a::A) (b::B) ->
+      mu (choose_corner m a b) (fun R => (R==(a::A,b::B))%:Q) = PI a b A B.
+elim:m.
+* move => a b A B.
+rewrite leqn0 addn_eq0 size_eq0 size_eq0 => /andP [].
+move => /eqP HA /eqP HB; subst.
+by move => HT; rewrite choose_corner0_simpl Munit_simpl /PI eq_refl /belast big_nil big_nil //=.
+* move => n IHn a b A B Hs Ht.
+have [HO|Hn0]:= boolP (size (hook_next_seq a b) == O).
+ + rewrite choose_corner_end_simpl //=.
+have HAB := is_trace_corner_nil a b A B Ht HO.
+move : HAB => /andP [].
+move => /eqP HA /eqP HB; subst.
+by rewrite xpair_eqE eqseq_cons eqseq_cons eq_refl eq_refl /PI big_nil big_nil.
+ + rewrite choose_corner_decomp //=.
+have HAB:= is_trace_corner_not_nil a b A B Ht Hn0.
+move : HAB => /orP [].
+move => HA.
+have [HB|HnB]:= boolP (B == [::]).
+rewrite /PI.
+rewrite (choose_corner_emptyr n a (head O B)) //.
+rewrite GRing.add0r.
+have HAd := (cons_head_behead _ O A HA).
+rewrite  {2} HAd.
+rewrite (IHn (head O A) b (behead A)).
+rewrite (belast_empty _ b B HB).
+rat_to_ring; rewrite big_nil GRing.mulr1.
+rewrite /PI (eqP HB) big_nil /=.
+rewrite  {3} HAd (belast_cat a [::head O A] (behead A)) big_cat big_seq1 /=.
+rewrite size_hook_next_seq_hook'.
+rat_to_ring; rewrite GRing.mul1r GRing.mulr1.
+rewrite GRing.mulrC //.
+rewrite -ltnS size_behead -addSn.
+apply: (leq_trans _ Hs).
+apply leq_add; trivial.
+rewrite prednK //.
+by rewrite lt0n size_eq0.
+rewrite -HAd.
+apply (is_trace_tll _ _ _ HA Ht).
+admit.
+admit.
+Save.
 End FindCorner.
