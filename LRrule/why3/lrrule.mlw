@@ -297,10 +297,6 @@ module Spec
     is_yam w /\
     is_of_eval eval w
 
-  lemma is_yam_of_eval_length:
-    forall eval w.
-    is_yam_of_eval eval w -> length w = sum_array eval
-
   (* solution *)
 
   predicate is_solution_suffix
@@ -322,11 +318,6 @@ module Spec
     is_solution outer inner eval sol ->
     forall r i. 0 <= r < length outer -> 0 <= i < width outer inner r  ->
     0 <= Matrix.get sol r i
-
-  lemma solution_length:
-    forall outer inner eval w.
-    is_solution outer inner eval w ->
-    length (to_word outer inner w) = sum_array eval
 
   (* solutions are found in lexicographic order *)
 
@@ -455,6 +446,7 @@ module LRrule
   use import matrix.Matrix
 
   use import Sum
+  use import int.NumOf
   use import ArraySum
   use import Spec
 
@@ -694,6 +686,36 @@ module LRrule
     included inner outer -> valid_work outer inner work -> is_part eval ->
     is_yam_of_eval_suffix eval (to_word outer inner work) 0
 
+  function andp (p q: int -> bool) : int -> bool = \i. p i /\ q i
+  function notp (p  : int -> bool) : int -> bool = \i. not (p i)
+  function intv (w: array int) (a b: int) : int -> bool = \i. a <= w[i] < b
+  function eq   (w: array int) (v: int) : int -> bool = \i. w[i] = v
+
+  let rec lemma numof_change_exclusion (p1 p2: int -> bool) (a b: int)
+    variant { b - a }
+    ensures  { numof p1 a b =
+               numof (andp p1 p2) a b + numof (andp p1 (notp p2)) a b }
+  = if a < b then numof_change_exclusion p1 p2 (a+1) b
+
+  let lemma is_yam_of_eval_length (eval w: array int)
+    requires { is_yam_of_eval eval w }
+    ensures  { length w = sum_array eval }
+  = let k = length eval in
+    let n = length w in
+    for v = k downto 0 do
+      invariant { n = sum v k (\i:int. numeq w i 0 n)
+                    + numof (\i: int. 0 <= w[i] < v) 0 n }
+      assert { numof (\i: int. 0 <= w[i] < v) 0 n =
+               numof (andp (\i: int. 0 <= w[i] < v) (notp (\i. w[i] = v-1))) 0 n +
+               numof (andp (\i: int. 0 <= w[i] < v) (\i. w[i] = v-1))  0 n }
+      (* numof_change_exclusion (intv w 0 v) (eq w (v-1)) 0 n *)
+    done
+
+  lemma solution_length:
+    forall outer inner eval w.
+    is_solution outer inner eval w ->
+    length (to_word outer inner w) = sum_array eval
+
   (*
      row = current row, in [0 .. length outer[
      idx = current index in row (from left to left),
@@ -754,7 +776,9 @@ module LRrule
       end else if idx < 0 then
         (* move from row [row-1] to row [row] *)
         count_rec (row + 1)
-	  (if row + 1 < szshape then width[row + 1] - 1 else 0)
+	  (abstract ensures { result =
+            if row + 1 < szshape then width[row + 1] - 1 else 0 }
+            if row + 1 < szshape then width[row + 1] - 1 else 0 end)
       else begin
         let min = abstract ensures { result =
           if row > 0 && idx >= shift[row]
@@ -796,7 +820,10 @@ module LRrule
                   exists i. at solutions.next 'Init <= i < solutions.next /\
                   frame outer inner w (s2m (Map.get solutions.sols i)) row idx }
           'L:
-          if innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) then begin
+          if abstract ensures { result <->
+            innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) }
+            innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v])
+          end then begin
             innev[v] <- innev[v] + 1;
             if v = !lastinnev then lastinnev += 1;
             assert { 0 <= v < !lastinnev };
@@ -804,7 +831,10 @@ module LRrule
             sum += count_rec row (idx - 1);
             innev[v] <- innev[v] - 1;
             assert { eq_array innev (at innev 'L) };
-           if !lastinnev = v+1 && innev[v] = 0 then lastinnev -= 1
+           if abstract ensures { result <->
+             !lastinnev = v+1 && innev[v] = 0 }
+             !lastinnev = v+1 && innev[v] = 0
+           end then lastinnev -= 1
           end
         done;
         !sum
