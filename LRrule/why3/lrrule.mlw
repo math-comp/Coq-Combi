@@ -266,7 +266,7 @@ module Spec
     forall i. 0 <= i < width outer inner r ->
     (to_word outer inner w)[word_index outer inner r i] = Matrix.get w r i
 
-  let lemma valid_to_word_index (outer inner: array int) (r i: int)
+  let lemma valid_word_index (outer inner: array int) (r i: int)
     requires { included inner outer }
     requires { 0 <= r < length outer }
     requires { 0 <= i < width outer inner r }
@@ -521,35 +521,47 @@ module LRrule
 
   predicate valid_cell (outer inner: array int) (row idx: int) =
     0 <= row <= length outer /\
-    if row < length outer then -1 <= idx < width outer inner row
-    else idx = -1
+    if row < length outer then -1 <= idx < width outer inner row else idx = -1
 
-  (* cell (row, idx) is beyond cell (r, i)
-     (row, idx) might be (length outer, 0), but (r, i) is a legal cell *)
-  predicate cell_beyond (outer inner: array int) (row idx r i: int) =
-    valid_cell outer inner row idx /\
-    0 <= r < length outer /\ 0 <= i < width outer inner r /\
-    (r < row \/ r = row /\ idx < i)
+  predicate matrix_cell (outer inner: array int) (row idx: int) =
+    0 <= row < length outer /\
+    0 <= idx < width outer inner row
 
-  lemma cell_beyond_framed:
+  (** cells are ordered lexicographically
+      [lt_cell r1 i1 r2 i2] means [(r1,i1)] is considered before [(r2,i2)] *)
+  predicate lt_cell (outer inner: array int) (r1 i1 r2 i2: int) =
+    matrix_cell outer inner r1 i1 /\
+    valid_cell outer inner r2 i2 /\
+    (r1 < r2 \/ r1 = r2 /\ i2 < i1)
+
+  lemma lt_cell_framed:
     forall outer inner work1 work2 row idx r i.
     frame outer inner work1 work2 row idx ->
-    cell_beyond outer inner row idx r i ->
+    lt_cell outer inner r i row idx ->
     Matrix.get work2 r i = Matrix.get work1 r i
 
-  lemma non_decreasing_row_suffix_framed:
-    forall outer inner work1 work2 row idx r start.
-    non_decreasing_row_suffix outer inner work1 r start ->
-    frame outer inner work1 work2 row idx ->
-    cell_beyond outer inner row idx r start ->
-    non_decreasing_row_suffix outer inner work2 r start
+  lemma lt_cell_row:
+    forall outer inner row idx r start i.
+    lt_cell outer inner r start row idx ->
+    start <= i < width outer inner r ->
+    lt_cell outer inner r i     row idx
+
+  let lemma non_decreasing_row_suffix_framed
+    (outer inner: array int) (work1 work2: matrix int) (row idx r start: int)
+    requires { non_decreasing_row_suffix outer inner work1 r start }
+    requires { frame outer inner work1 work2 row idx }
+    requires { lt_cell outer inner r start row idx }
+    ensures  { non_decreasing_row_suffix outer inner work2 r start }
+  = assert { forall i. start <= i < width outer inner r ->
+             lt_cell outer inner r i row idx &&
+             Matrix.get work1 r i = Matrix.get work2 r i }
 
   lemma increasing_column_framed:
     forall outer inner work1 work2 row idx r i.
     valid_input outer inner ->
     increasing_column outer inner work1 r i ->
     frame outer inner work1 work2 row idx ->
-    cell_beyond outer inner row idx r i ->
+    lt_cell outer inner r i row idx ->
     increasing_column outer inner work2 r i
 
   lemma is_tableau_reading_suffix_framed:
@@ -566,23 +578,21 @@ module LRrule
     valid_cell outer inner row idx ->
     valid_work outer inner work1 -> valid_work outer inner work2 ->
     frame outer inner work1 work2 row idx ->
-    forall r i. cell_beyond outer inner row idx r i ->
+    forall r i. lt_cell outer inner r i row idx ->
     let k = i + sum (r + 1) (length outer) (width outer inner) in
     (to_word outer inner work2)[k] = (to_word outer inner work1)[k]
 
   let lemma decomp_word_index (outer inner: array int) (k: int)
     requires { valid_input outer inner }
     requires { 0 <= k < word_length outer inner }
-    ensures  { exists r. exists i. 0 <= r < length outer /\
-               0 <= i < width outer inner r /\
+    ensures  { exists r. exists i. matrix_cell outer inner r i /\
                k = word_index outer inner r i }
   =
     let rec lookup (r s: int) =
       requires { 0 <= r < length outer }
       requires { 0 <= s = sum (r + 1) (length outer) (width outer inner) <= k }
       variant  { r }
-      ensures  { exists r. exists i. 0 <= r < length outer /\
-                 0 <= i < width outer inner r /\
+      ensures  { exists r. exists i. matrix_cell outer inner r i /\
                  k = i + sum (r + 1) (length outer) (width outer inner) }
       let s1 = s + outer[r] - inner[r] in
       if s1 <= k then lookup (r - 1) s1 else
@@ -590,16 +600,28 @@ module LRrule
     in
     lookup (length outer - 1) 0
 
+  lemma suffix_length_bounds:
+    forall outer inner row idx.
+    valid_input outer inner ->
+    valid_cell outer inner row idx ->
+    0 <= suffix_length outer inner row idx <= word_length outer inner
+
+  lemma suffix_length_word_index:
+    forall outer inner row idx.
+    valid_input outer inner ->
+    matrix_cell outer inner row idx ->
+    suffix_length outer inner row idx + 1 + word_index outer inner row idx =
+    word_length outer inner
+
   let lemma decomp_word_index2
     (outer inner: array int) (work: matrix int) (row idx r i: int)
     requires { valid_input outer inner }
     requires { valid_cell outer inner row idx }
     requires { valid_work outer inner work }
-    requires { 0 <= r < length outer }
-    requires { 0 <= i < width outer inner r }
-    requires { word_length outer inner - suffix_length outer inner row idx
-               <= word_index outer inner r i < word_length outer inner }
-    ensures  { cell_beyond outer inner row idx r i }
+    requires { matrix_cell outer inner r i }
+    requires { suffix_length outer inner r i
+             < suffix_length outer inner row idx }
+    ensures  { lt_cell outer inner r i row idx }
   =
     assert { 0 <= word_length outer inner - suffix_length outer inner row idx };
     assert { 0 <= suffix_length outer inner row idx };
@@ -675,7 +697,7 @@ module LRrule
     forall outer inner eval work.
     included inner outer ->
     is_solution_suffix outer inner eval work (length outer - 1) (-1) ->
-    is_solution_suffix outer inner eval work (length outer)     0
+    is_solution_suffix outer inner eval work (length outer)     (-1)
 
   lemma is_yam_of_eval_suffix_0:
     forall outer inner eval work.
