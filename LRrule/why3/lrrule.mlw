@@ -45,6 +45,11 @@ theory Sum
     forall f: int -> int, a b c: int. a <= b <= c ->
     sum a c f = sum a b f + sum b c f
 
+  lemma sum_zero:
+    forall f: int -> int, a b: int.
+    (forall i. a <= i < b -> f i = 0) ->
+    sum a b f = 0
+
 end
 
 module ArraySum
@@ -245,24 +250,28 @@ module Spec
 
   function to_word (outer inner: array int) (w: matrix int) : array int
 
+  function word_length (outer inner: array int) : int =
+    sum 0 (length outer) (width outer inner)
+
   axiom to_word_size:
     forall outer inner w. included inner outer -> valid_work outer inner w ->
-    length (to_word outer inner w) = sum 0 (length outer) (width outer inner)
+    length (to_word outer inner w) = word_length outer inner
+
+  function word_index (outer inner: array int) (row idx: int) : int =
+    idx + sum (row + 1) (length outer) (width outer inner)
 
   axiom to_word_contents:
     forall outer inner w. included inner outer -> valid_work outer inner w ->
     forall r. 0 <= r < length outer ->
     forall i. 0 <= i < width outer inner r ->
-    (to_word outer inner w)[i + sum (r + 1) (length outer) (width outer inner)]
-    = Matrix.get w r i
+    (to_word outer inner w)[word_index outer inner r i] = Matrix.get w r i
 
   let lemma valid_to_word_index (outer inner: array int) (r i: int)
     requires { included inner outer }
     requires { 0 <= r < length outer }
     requires { 0 <= i < width outer inner r }
-    ensures  { 0 <= i + sum (r + 1) (length outer) (width outer inner)
-                  <     sum 0       (length outer) (width outer inner) }
-  = assert { sum 0       (length outer) (width outer inner) =
+    ensures  { 0 <= word_index outer inner r i < word_length outer inner }
+  = assert { word_length outer inner                        =
              sum 0 r                    (width outer inner) +
              width outer inner r                            +
              sum (r + 1) (length outer) (width outer inner) }
@@ -299,11 +308,14 @@ module Spec
 
   (* solution *)
 
+  function suffix_length (outer inner: array int) (row idx: int) : int =
+    sum 0 row (width outer inner) +
+    if row = length outer then 0 else width outer inner row - idx - 1
+
   predicate is_solution_suffix
     (outer inner eval: array int) (w: matrix int) (row idx: int) =
     valid_work outer inner w /\
-    (let len = sum 0 row (width outer inner)
-          + if row = length outer then 0 else width outer inner row - idx - 1 in
+    (let len = suffix_length outer inner row idx in
     is_yam_of_eval_suffix eval (to_word outer inner w) len) /\
     is_tableau_reading_suffix outer inner w row idx
 
@@ -402,11 +414,10 @@ module ToWord
   let ghost to_word (outer inner: array int) (w: matrix int) : array int
     requires { included inner outer }
     requires { valid_work outer inner w }
-    ensures  { length result = sum 0 (length outer) (width outer inner) }
+    ensures  { length result = word_length outer inner }
     ensures  { forall r. 0 <= r < length outer ->
                forall i. 0 <= i < width outer inner r ->
-               result[i + sum (r + 1) (length outer) (width outer inner)] =
-               Matrix.get w r i }
+               result[word_index outer inner r i] = Matrix.get w r i }
   =
     let s = length outer in
     let n = ref 0 in
@@ -508,12 +519,15 @@ module LRrule
     forall outer inner r1 r2. included inner outer ->
     0 <= r1 <= r2 <= length outer -> 0 <= sum r1 r2 (width outer inner)
 
+  predicate valid_cell (outer inner: array int) (row idx: int) =
+    0 <= row <= length outer /\
+    if row < length outer then -1 <= idx < width outer inner row
+    else idx = -1
+
   (* cell (row, idx) is beyond cell (r, i)
      (row, idx) might be (length outer, 0), but (r, i) is a legal cell *)
   predicate cell_beyond (outer inner: array int) (row idx r i: int) =
-    0 <= row <= length outer /\
-    (if row < length outer then -1 <= idx < width outer inner row else idx = 0)
-    /\
+    valid_cell outer inner row idx /\
     0 <= r < length outer /\ 0 <= i < width outer inner r /\
     (r < row \/ r = row /\ idx < i)
 
@@ -541,9 +555,7 @@ module LRrule
   lemma is_tableau_reading_suffix_framed:
     forall outer inner work1 work2 row idx.
     valid_input outer inner ->
-    0 <= row <= length outer ->
-    (if row < length outer then -1 <= idx < width outer inner row
-    else idx = 0) ->
+    valid_cell outer inner row idx ->
     is_tableau_reading_suffix outer inner work1 row idx ->
     frame outer inner work1 work2 row idx ->
     is_tableau_reading_suffix outer inner work2 row idx
@@ -551,9 +563,7 @@ module LRrule
   lemma to_word_suffix_framed:
     forall outer inner work1 work2 row idx.
     valid_input outer inner ->
-    0 <= row <= length outer ->
-    (if row < length outer then -1 <= idx < width outer inner row
-    else idx = 0) ->
+    valid_cell outer inner row idx ->
     valid_work outer inner work1 -> valid_work outer inner work2 ->
     frame outer inner work1 work2 row idx ->
     forall r i. cell_beyond outer inner row idx r i ->
@@ -562,41 +572,38 @@ module LRrule
 
   let lemma decomp_word_index (outer inner: array int) (k: int)
     requires { valid_input outer inner }
-    requires { 0 <= k < sum 0 (length outer) (width outer inner) }
+    requires { 0 <= k < word_length outer inner }
     ensures  { exists r. exists i. 0 <= r < length outer /\
                0 <= i < width outer inner r /\
-               k = i + sum (r + 1) (length outer) (width outer inner) }
+               k = word_index outer inner r i }
   =
     let rec lookup (r s: int) =
       requires { 0 <= r < length outer }
-      requires { s = sum (r + 1) (length outer) (width outer inner) <= k }
+      requires { 0 <= s = sum (r + 1) (length outer) (width outer inner) <= k }
       variant  { r }
       ensures  { exists r. exists i. 0 <= r < length outer /\
                  0 <= i < width outer inner r /\
                  k = i + sum (r + 1) (length outer) (width outer inner) }
-      let s = s + outer[r] - inner[r] in if s <= k then lookup (r - 1) s
+      let s1 = s + outer[r] - inner[r] in
+      if s1 <= k then lookup (r - 1) s1 else
+      assert { k = (k - s) + sum (r + 1) (length outer) (width outer inner) }
     in
     lookup (length outer - 1) 0
 
   let lemma decomp_word_index2
-    (outer inner: array int) (work: matrix int) (row idx n len k r i: int)
+    (outer inner: array int) (work: matrix int) (row idx r i: int)
     requires { valid_input outer inner }
-    requires { 0 <= row <= length outer }
-    requires { if row < length outer then -1 <= idx < width outer inner row
-               else idx = 0 }
+    requires { valid_cell outer inner row idx }
     requires { valid_work outer inner work }
-    requires { n = sum 0 (length outer) (width outer inner) }
-    requires { len = sum 0 row (width outer inner)
-        + if row = length outer then 0 else width outer inner row - idx - 1 }
-    requires { n - len <= k < n }
     requires { 0 <= r < length outer }
     requires { 0 <= i < width outer inner r }
-    requires { k = i + sum (r + 1) (length outer) (width outer inner) }
+    requires { word_length outer inner - suffix_length outer inner row idx
+               <= word_index outer inner r i < word_length outer inner }
     ensures  { cell_beyond outer inner row idx r i }
   =
-    assert { 0 <= n - len };
-    assert { 0 <= len };
-    assert { sum 0       (length outer) (width outer inner) =
+    assert { 0 <= word_length outer inner - suffix_length outer inner row idx };
+    assert { 0 <= suffix_length outer inner row idx };
+    assert { word_length outer inner =
              sum 0 r                    (width outer inner) +
              width outer inner r                            +
              sum (r + 1) (length outer) (width outer inner) }
@@ -604,12 +611,9 @@ module LRrule
   lemma is_yam_suffix_framed:
     forall outer inner work1 work2 row idx.
     valid_input outer inner ->
-    0 <= row <= length outer ->
-    (if row < length outer then -1 <= idx < width outer inner row
-    else idx = 0) ->
+    valid_cell outer inner row idx ->
     valid_work outer inner work1 -> valid_work outer inner work2 ->
-    let len = sum 0 row (width outer inner)
-          + if row = length outer then 0 else width outer inner row - idx - 1 in
+    let len = suffix_length outer inner row idx in
     is_yam_suffix (to_word outer inner work1) len ->
     frame outer inner work1 work2 row idx ->
     is_yam_suffix (to_word outer inner work2) len
@@ -617,12 +621,9 @@ module LRrule
   lemma is_of_eval_suffix_framed:
     forall outer inner eval work1 work2 row idx.
     valid_input outer inner ->
-    0 <= row <= length outer ->
-    (if row < length outer then -1 <= idx < width outer inner row
-    else idx = 0) ->
+    valid_cell outer inner row idx ->
     valid_work outer inner work1 -> valid_work outer inner work2 ->
-    let len = sum 0 row (width outer inner)
-          + if row = length outer then 0 else width outer inner row - idx - 1 in
+    let len = suffix_length outer inner row idx in
     is_of_eval_suffix eval (to_word outer inner work1) len ->
     frame outer inner work1 work2 row idx ->
     is_of_eval_suffix eval (to_word outer inner work2) len
@@ -630,12 +631,9 @@ module LRrule
   lemma is_yam_of_eval_suffix_framed:
     forall outer inner eval work1 work2 row idx.
     valid_input outer inner ->
-    0 <= row <= length outer ->
-    (if row < length outer then -1 <= idx < width outer inner row
-    else idx = 0) ->
+    valid_cell outer inner row idx ->
     valid_work outer inner work1 -> valid_work outer inner work2 ->
-    let len = sum 0 row (width outer inner)
-          + if row = length outer then 0 else width outer inner row - idx - 1 in
+    let len = suffix_length outer inner row idx in
     is_yam_of_eval_suffix eval (to_word outer inner work1) len ->
     frame outer inner work1 work2 row idx ->
     is_yam_of_eval_suffix eval (to_word outer inner work2) len
@@ -643,9 +641,7 @@ module LRrule
   lemma is_solution_suffix_framed:
     forall outer inner eval work1 work2 row idx.
     valid_input outer inner ->
-    0 <= row <= length outer ->
-    (if row < length outer then -1 <= idx < width outer inner row
-    else idx = 0) ->
+    valid_cell outer inner row idx ->
     valid_work outer inner work1 -> valid_work outer inner work2 ->
     is_solution_suffix outer inner eval work1 row idx ->
     frame outer inner work1 work2 row idx ->
@@ -653,7 +649,7 @@ module LRrule
 
   lemma solution_suffix_solution:
     forall outer inner eval work.
-    included inner outer ->
+    valid_input inner outer -> valid_work outer inner work ->
     is_solution_suffix outer inner eval work (length outer) 0 ->
     is_solution        outer inner eval work
 
@@ -745,12 +741,12 @@ module LRrule
     let lastinnev = ref 0 in (* only zeros from this index *)
     let work = Matrix.make szshape max_width 0 in
     let rec count_rec (row idx: int) : int =
-      requires { 0 <= row <= szshape }
-      requires { if row < szshape then -1 <= idx < width[row] else idx = 0 }
+      requires { valid_cell outer inner row idx }
       requires { "expl:valid_innev"
                  valid_innev outer inner eval innev work row idx !lastinnev }
+      requires { sum_array innev = suffix_length outer inner row idx }
       requires { is_solution_suffix outer inner eval work row idx }
-      variant  { szshape - row, idx }
+      variant  { szshape - row, idx + 1 }
       ensures  { !lastinnev = old !lastinnev }
       ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
       ensures  { "expl:frame" frame outer inner (old work) work row idx }
@@ -776,18 +772,18 @@ module LRrule
       end else if idx < 0 then
         (* move from row [row-1] to row [row] *)
         count_rec (row + 1)
-	  (abstract ensures { result =
-            if row + 1 < szshape then width[row + 1] - 1 else 0 }
-            if row + 1 < szshape then width[row + 1] - 1 else 0 end)
+	  (abstract (*ensures { result =
+            if row + 1 < szshape then width[row + 1] - 1 else 0 }*)
+            if row + 1 < szshape then width[row + 1] - 1 else -1 end)
       else begin
-        let min = abstract ensures { result =
+        let min = abstract (*ensures { result =
           if row > 0 && idx >= shift[row]
-          then Matrix.get work (row - 1) (idx - shift[row]) + 1 else 0 }
+          then Matrix.get work (row - 1) (idx - shift[row]) + 1 else 0 }*)
           if row > 0 && idx >= shift[row]
           then Matrix.get work (row - 1) (idx - shift[row]) + 1 else 0 end in
-        let max = abstract ensures { result =
+        let max = abstract (*ensures { result =
           if idx = width[row] - 1 then !lastinnev
-          else MinMax.min !lastinnev (Matrix.get work row (idx + 1)) }
+          else MinMax.min !lastinnev (Matrix.get work row (idx + 1)) }*)
           if idx = width[row] - 1 then !lastinnev
           else MinMax.min !lastinnev (Matrix.get work row (idx + 1)) end in
         let sum = ref 0 in
@@ -820,8 +816,8 @@ module LRrule
                   exists i. at solutions.next 'Init <= i < solutions.next /\
                   frame outer inner w (s2m (Map.get solutions.sols i)) row idx }
           'L:
-          if abstract ensures { result <->
-            innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) }
+          if abstract (*ensures { result <->
+            innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) }*)
             innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v])
           end then begin
             innev[v] <- innev[v] + 1;
@@ -831,8 +827,8 @@ module LRrule
             sum += count_rec row (idx - 1);
             innev[v] <- innev[v] - 1;
             assert { eq_array innev (at innev 'L) };
-           if abstract ensures { result <->
-             !lastinnev = v+1 && innev[v] = 0 }
+           if abstract (*ensures { result <->
+             !lastinnev = v+1 && innev[v] = 0 }*)
              !lastinnev = v+1 && innev[v] = 0
            end then lastinnev -= 1
           end
