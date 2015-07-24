@@ -10,6 +10,42 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+
+
+Lemma ltppSS : forall m n , n<m-1 -> m = (m.-2).+2 .
+case => [ltn0 //=|[ltn0 //=|m' //=]].
+Save.
+
+Lemma leq_succ : forall m n, (m.+1 <= n.+1) = (m <= n).
+move => m n.
+rewrite -addn1 -(addn1 n).
+apply leq_add2r.
+Save.
+
+
+
+Lemma part_head_0ltn sh : is_part sh -> 0 < head 1 sh.
+Proof.
+  elim: sh => [//= | sh0 sh IHsh] /= /andP [] Head.
+  move/IHsh; apply: contraLR. rewrite !ltnNge !negbK leqn0 => /eqP Hsh0.
+  by move: Head; rewrite Hsh0 leqn0.
+Qed.
+
+Lemma nth_part_0ltn sh i : is_part sh -> i < size sh -> 0 < nth 0 sh i.
+Proof.
+  elim: i sh => [//= | i IHi] [//=| s0 s].
+    by move=> /part_head_0ltn.
+  move=> /= /andP [] _.
+  exact: IHi.
+Qed.
+
+Lemma out_corner_ltn_size p i : is_out_corner p i -> i < size p.
+apply contraLR.
+rewrite /is_out_corner !ltnNge !negbK => Hsize.
+by rewrite !nth_default; [rewrite //=|apply (leq_trans Hsize)| ].
+Qed.
+ 
+
 Fixpoint haut (L : seq nat) j {struct L} : nat :=
  match L with
   |[::] => 0
@@ -45,6 +81,12 @@ case: (leqP a j) => [Haj|Hja].
   exact (IH j (is_part_tl Hpart) i') .
 Qed.
 
+Lemma haut_nth_lt : forall L j, is_part L -> forall i, (j < nth 0 L i) = (i < haut L j).
+move => L j HL i; rewrite !ltnNge.
+congr negb.
+apply haut_nth; trivial.
+Save.
+
 Lemma haut_decr (L : seq nat) j1 j2 : is_part L -> j1 <= j2 -> haut L j2 <= haut L j1.
 move => Hp Hle.
 rewrite -(haut_nth _ Hp).
@@ -76,28 +118,25 @@ move => i j.
 rewrite /is_in_part nth_default //=.
 Qed.
 
+Definition p0 := [:: 5; 3; 3; 1].
 
-
-(*
-Lemma hook'0_out_corner L i j : is_part L -> is_in_part L i j -> hook' L i j = 0 
-                                   -> is_out_corner L i /\ (j = (nth 0 L i).-1).
-elim : L i.
-+ move => i .
-  by rewrite (in_empty i j).
-+ move => a L IHL i Hpart Hin_part.
-  rewrite  {1}/hook'.
-  move /eqP.
-  rewrite addn_eq0.
-  move /andP.
-  case.
-  move => /eqP Hnth /eqP Hhaut.
-(*
-  move => a L IHL i Hpart Hin_part Hhook'.
-  rewrite addn_eq0.
-*)
+Lemma haut_lindex_ltn p i : i < haut p (lindex p i).
 admit.
-Save.
-*)
+Qed.
+
+Lemma haut_lindex_out ( p : intpart) i : is_out_corner p i -> haut p (lindex p i) == 1+i .
+rewrite /is_out_corner /lindex.
+move => His_out_corner.
+rewrite eqn_leq.
+apply /andP; split.
++ rewrite -haut_nth; last by apply intpartP. 
+  rewrite -leq_succ.
+  rewrite prednK; [apply His_out_corner|apply nth_part_0ltn].
+  apply intpartP.
+  by apply out_corner_ltn_size.
++ apply haut_lindex_ltn.
+Qed.
+
 
 Lemma hook'0_out_corner L i j : is_part L -> is_in_part L i j -> hook' L i j == 0 
                                    -> is_out_corner L i && (j == (nth 0 L i).-1).
@@ -132,16 +171,18 @@ Save.
 
 Lemma haut_in_le L i j : is_part L -> ((is_in_part L i j) = (i < haut L j)). 
 rewrite /is_in_part; move => Hp.
-apply negb_simpl.
-rewrite -!leqNgt.
-apply iff_eqb.
-by rewrite haut_nth.
+apply haut_nth_lt; trivial.
 Save.
 
-Lemma out_corner_hook'0 L i : is_out_corner L i -> hook' L i (nth 0 L i).-1 = 0.
+Lemma is_in_part_simpl L i j : is_part L -> is_in_part L i j = ((j < nth O L i) && (i < haut L j))%B.
+rewrite /is_in_part; move => Hp.
+have [Ht | Hf] := (boolP (j < nth 0 L i)) => //=. 
+rewrite -haut_nth_lt //.
+Save.
+
+Lemma out_corner_hook'0 L i : is_out_corner L i -> hook' L i (lindex L i) = 0.
 admit. 
 Save.
-
 
 
 Definition F L :=  ((((sumn L )`!)%:Q) / (F_deno L)%:Q)%Q. 
@@ -187,15 +228,6 @@ Qed.
 Lemma is_out_corner_cons a L i : is_out_corner L i <-> is_out_corner (a :: L) i.+1.
 intuition. Qed.
 
-Lemma ltppSS : forall m n , n<m-1 -> m = (m.-2).+2 .
-case => [ltn0 //=|[ltn0 //=|m' //=]].
-Save.
-
-Lemma leq_succ : forall m n, (m.+1 <= n.+1) = (m <= n).
-move => m n.
-rewrite -addn1 -(addn1 n).
-apply leq_add2r.
-Save.
 
 Lemma hook_mange_ligne (L : seq nat) (i j :nat) : (is_part L) -> is_out_corner L i 
       -> (i < size L) -> (j < nth 0 L i -1) -> 
