@@ -172,7 +172,7 @@ module Spec
          Matrix.get w2 r i = Matrix.get w1 r i)
     /\
     (row < length outer ->
-      forall i. idx < i < width outer inner row ->
+       forall i. idx < i < width outer inner row ->
          Matrix.get w2 row i = Matrix.get w1 row i)
 
   lemma valid_innev_framed:
@@ -245,8 +245,7 @@ module Spec
 
   predicate valid_work (outer inner: array int) (w: matrix int) =
     rows w = length outer /\
-    (forall r. 0 <= r < length outer ->
-               columns w >= outer[r] - inner[r])
+    (forall r. 0 <= r < length outer -> columns w >= outer[r] - inner[r])
 
   function to_word (outer inner: array int) (w: matrix int) : array int
 
@@ -519,16 +518,19 @@ module LRrule
     forall outer inner r1 r2. included inner outer ->
     0 <= r1 <= r2 <= length outer -> 0 <= sum r1 r2 (width outer inner)
 
+  (** [(row, idx)] is a valid cell for the algorithm
+      i.e. it can be an argument of recursive function [count] *)
   predicate valid_cell (outer inner: array int) (row idx: int) =
     0 <= row <= length outer /\
     if row < length outer then -1 <= idx < width outer inner row else idx = -1
 
+  (** [(row, idx)] is a valid cell for the matrix *)
   predicate matrix_cell (outer inner: array int) (row idx: int) =
     0 <= row < length outer /\
     0 <= idx < width outer inner row
 
-  (** cells are ordered lexicographically
-      [lt_cell r1 i1 r2 i2] means [(r1,i1)] is considered before [(r2,i2)] *)
+  (** [lt_cell r1 i1 r2 i2] means [(r1,i1)] is considered before [(r2,i2)]
+      in the algorithm (this is a lexicographic order) *)
   predicate lt_cell (outer inner: array int) (r1 i1 r2 i2: int) =
     matrix_cell outer inner r1 i1 /\
     valid_cell outer inner r2 i2 /\
@@ -579,7 +581,7 @@ module LRrule
     valid_work outer inner work1 -> valid_work outer inner work2 ->
     frame outer inner work1 work2 row idx ->
     forall r i. lt_cell outer inner r i row idx ->
-    let k = i + sum (r + 1) (length outer) (width outer inner) in
+    let k = word_index outer inner r i in
     (to_word outer inner work2)[k] = (to_word outer inner work1)[k]
 
   let lemma decomp_word_index (outer inner: array int) (k: int)
@@ -593,7 +595,7 @@ module LRrule
       requires { 0 <= s = sum (r + 1) (length outer) (width outer inner) <= k }
       variant  { r }
       ensures  { exists r. exists i. matrix_cell outer inner r i /\
-                 k = i + sum (r + 1) (length outer) (width outer inner) }
+                 k = word_index outer inner r i }
       let s1 = s + outer[r] - inner[r] in
       if s1 <= k then lookup (r - 1) s1 else
       assert { k = (k - s) + sum (r + 1) (length outer) (width outer inner) }
@@ -625,10 +627,34 @@ module LRrule
   =
     assert { 0 <= word_length outer inner - suffix_length outer inner row idx };
     assert { 0 <= suffix_length outer inner row idx };
-    assert { word_length outer inner =
+    assert { word_length outer inner                        =
              sum 0 r                    (width outer inner) +
              width outer inner r                            +
-             sum (r + 1) (length outer) (width outer inner) }
+             sum (r + 1) (length outer) (width outer inner) };
+    assert { width outer inner r                            +
+             sum (r + 1) (length outer) (width outer inner) =
+             width outer inner r - i + word_index outer inner r i }
+
+  (* HERE *)
+  lemma lt_cell_word_index:
+    forall outer inner row1 idx1 row2 idx2.
+    valid_input outer inner ->
+    matrix_cell outer inner row1 idx1 ->
+    matrix_cell outer inner row2 idx2 -> (* valid_cell ? *)
+    lt_cell outer inner row1 idx1 row2 idx2 <->
+    word_index outer inner row1 idx2 < word_index outer inner row2 idx1
+
+  lemma to_word_suffix_framed2:
+    forall outer inner work1 work2 row idx.
+    valid_input outer inner ->
+    valid_cell outer inner row idx ->
+    valid_work outer inner work1 -> valid_work outer inner work2 ->
+    frame outer inner work1 work2 row idx ->
+    let n = word_length outer inner in
+    forall k. n - suffix_length outer inner row idx <= k < n ->
+    (to_word outer inner work2)[k] = (to_word outer inner work1)[k]
+
+  (* TODO frame -> numeq (to_word) *)
 
   lemma is_yam_suffix_framed:
     forall outer inner work1 work2 row idx.
@@ -762,6 +788,7 @@ module LRrule
     let innev = Array.make szeval 0 in
     let lastinnev = ref 0 in (* only zeros from this index *)
     let work = Matrix.make szshape max_width 0 in
+    assert { valid_work outer inner work };
     let rec count_rec (row idx: int) : int =
       requires { valid_cell outer inner row idx }
       requires { "expl:valid_innev"
