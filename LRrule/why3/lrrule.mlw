@@ -616,10 +616,9 @@ module LRrule
     word_length outer inner
 
   let lemma decomp_word_index2
-    (outer inner: array int) (work: matrix int) (row idx r i: int)
+    (outer inner: array int) (row idx r i: int)
     requires { valid_input outer inner }
     requires { valid_cell outer inner row idx }
-    requires { valid_work outer inner work }
     requires { matrix_cell outer inner r i }
     requires { suffix_length outer inner r i
              < suffix_length outer inner row idx }
@@ -635,71 +634,134 @@ module LRrule
              sum (r + 1) (length outer) (width outer inner) =
              width outer inner r - i + word_index outer inner r i }
 
-  (* HERE *)
   lemma lt_cell_word_index:
     forall outer inner row1 idx1 row2 idx2.
     valid_input outer inner ->
     matrix_cell outer inner row1 idx1 ->
-    matrix_cell outer inner row2 idx2 -> (* valid_cell ? *)
+    valid_cell outer inner row2 idx2 ->
     lt_cell outer inner row1 idx1 row2 idx2 <->
-    word_index outer inner row1 idx2 < word_index outer inner row2 idx1
+    word_index outer inner row2 idx2 < word_index outer inner row1 idx1
 
-  lemma to_word_suffix_framed2:
+  let lemma to_word_suffix_framed2
+    (outer inner: array int) (work1 work2: matrix int) (row idx k: int)
+    requires { valid_input outer inner }
+    requires { valid_cell outer inner row idx }
+    requires { valid_work outer inner work1 }
+    requires { valid_work outer inner work2 }
+    requires { frame outer inner work1 work2 row idx }
+    requires { let n = word_length outer inner in
+               n - suffix_length outer inner row idx <= k < n }
+    ensures  { (to_word outer inner work2)[k] = (to_word outer inner work1)[k] }
+  = decomp_word_index outer inner k;
+    assert { exists r. exists i. matrix_cell outer inner r i /\
+             k = word_index outer inner r i /\
+             lt_cell outer inner r i row idx }
+
+  predicate eq_suffix (w1 w2: array int) (len: int) =
+    0 <= len <= length w1 = length w2 /\
+    forall i. length w1 - len <= i < length w1 -> w2[i] = w1[i]
+
+  lemma frame_eq_suffix:
     forall outer inner work1 work2 row idx.
     valid_input outer inner ->
     valid_cell outer inner row idx ->
-    valid_work outer inner work1 -> valid_work outer inner work2 ->
+    valid_work outer inner work1 ->
+    valid_work outer inner work2 ->
     frame outer inner work1 work2 row idx ->
-    let n = word_length outer inner in
-    forall k. n - suffix_length outer inner row idx <= k < n ->
-    (to_word outer inner work2)[k] = (to_word outer inner work1)[k]
-
-  (* TODO frame -> numeq (to_word) *)
-
-  lemma is_yam_suffix_framed:
-    forall outer inner work1 work2 row idx.
-    valid_input outer inner ->
-    valid_cell outer inner row idx ->
-    valid_work outer inner work1 -> valid_work outer inner work2 ->
     let len = suffix_length outer inner row idx in
-    is_yam_suffix (to_word outer inner work1) len ->
-    frame outer inner work1 work2 row idx ->
-    is_yam_suffix (to_word outer inner work2) len
+    eq_suffix (to_word outer inner work2) (to_word outer inner work1) len
 
-  lemma is_of_eval_suffix_framed:
-    forall outer inner eval work1 work2 row idx.
-    valid_input outer inner ->
-    valid_cell outer inner row idx ->
-    valid_work outer inner work1 -> valid_work outer inner work2 ->
-    let len = suffix_length outer inner row idx in
-    is_of_eval_suffix eval (to_word outer inner work1) len ->
-    frame outer inner work1 work2 row idx ->
-    is_of_eval_suffix eval (to_word outer inner work2) len
+  let lemma numeq_framed
+    (outer inner: array int) (work1 work2: matrix int) (row idx: int)
+    requires { valid_input outer inner }
+    requires { valid_cell outer inner row idx }
+    requires { valid_work outer inner work1 }
+    requires { valid_work outer inner work2 }
+    requires { frame outer inner work1 work2 row idx }
+    ensures  { let n = word_length outer inner in
+               let len = suffix_length outer inner row idx in
+               forall p. 0 <= p <= len -> forall v.
+               numeq (to_word outer inner work2) v (n-p) n =
+               numeq (to_word outer inner work1) v (n-p) n }
+  = assert { let len = suffix_length outer inner row idx in
+      eq_suffix (to_word outer inner work2) (to_word outer inner work1) len }
+
+  let lemma is_yam_suffix_framed
+    (outer inner: array int) (work1 work2: matrix int) (row idx: int)
+    requires { valid_input outer inner }
+    requires { valid_cell outer inner row idx }
+    requires { valid_work outer inner work1 }
+    requires { valid_work outer inner work2 }
+    requires { frame outer inner work1 work2 row idx }
+    ensures  { let len = suffix_length outer inner row idx in
+               is_yam_suffix (to_word outer inner work1) len ->
+               is_yam_suffix (to_word outer inner work2) len }
+  = numeq_framed outer inner work1 work2 row idx;
+    assert { length (to_word outer inner work1) =
+             length (to_word outer inner work2) = word_length outer inner }
+
+  let lemma is_of_eval_suffix_framed
+    (outer inner eval: array int) (work1 work2: matrix int) (row idx: int)
+    requires { valid_input outer inner }
+    requires { valid_cell outer inner row idx }
+    requires { valid_work outer inner work1 }
+    requires { valid_work outer inner work2 }
+    requires { frame outer inner work1 work2 row idx }
+    ensures  { let len = suffix_length outer inner row idx in
+               is_of_eval_suffix eval (to_word outer inner work1) len ->
+               is_of_eval_suffix eval (to_word outer inner work2) len }
+  = numeq_framed outer inner work1 work2 row idx;
+    assert { length (to_word outer inner work1) =
+             length (to_word outer inner work2) = word_length outer inner }
 
   lemma is_yam_of_eval_suffix_framed:
     forall outer inner eval work1 work2 row idx.
     valid_input outer inner ->
     valid_cell outer inner row idx ->
-    valid_work outer inner work1 -> valid_work outer inner work2 ->
+    valid_work outer inner work1 ->
+    valid_work outer inner work2 ->
+    frame outer inner work1 work2 row idx ->
     let len = suffix_length outer inner row idx in
     is_yam_of_eval_suffix eval (to_word outer inner work1) len ->
-    frame outer inner work1 work2 row idx ->
     is_yam_of_eval_suffix eval (to_word outer inner work2) len
 
   lemma is_solution_suffix_framed:
     forall outer inner eval work1 work2 row idx.
     valid_input outer inner ->
     valid_cell outer inner row idx ->
-    valid_work outer inner work1 -> valid_work outer inner work2 ->
+    valid_work outer inner work1 ->
+    valid_work outer inner work2 ->
     is_solution_suffix outer inner eval work1 row idx ->
     frame outer inner work1 work2 row idx ->
     is_solution_suffix outer inner eval work2 row idx
 
-  lemma solution_suffix_solution:
-    forall outer inner eval work.
-    valid_input inner outer -> valid_work outer inner work ->
-    is_solution_suffix outer inner eval work (length outer) 0 ->
-    is_solution        outer inner eval work
+  let lemma suffix_length_all (outer inner: array int)
+    ensures { suffix_length outer inner (length outer) (-1) =
+              word_length outer inner }
+  = ()
+
+  (* FIXME: really useful? *)
+  let lemma is_of_eval_framed
+    (outer inner eval: array int) (work1 work2: matrix int)
+    requires { valid_input outer inner }
+    requires { valid_work outer inner work1 }
+    requires { valid_work outer inner work2 }
+    requires { frame outer inner work1 work2 (length outer) (-1) }
+    ensures  { is_of_eval eval (to_word outer inner work1) ->
+               is_of_eval eval (to_word outer inner work2) }
+  = suffix_length_all outer inner;
+    numeq_framed outer inner work1 work2 (length outer) (-1);
+    assert { length (to_word outer inner work1) =
+             length (to_word outer inner work2) = word_length outer inner }
+
+  (* HERE *)
+  let lemma solution_suffix_solution
+    (outer inner eval: array int) (work: matrix int)
+    requires { valid_input outer inner }
+    requires { valid_work outer inner work }
+    requires { is_solution_suffix outer inner eval work (length outer) (-1) }
+    ensures  { is_solution        outer inner eval work }
+  = ()
 
   (* move to next row *)
   lemma frame_next_row:
@@ -788,7 +850,6 @@ module LRrule
     let innev = Array.make szeval 0 in
     let lastinnev = ref 0 in (* only zeros from this index *)
     let work = Matrix.make szshape max_width 0 in
-    assert { valid_work outer inner work };
     let rec count_rec (row idx: int) : int =
       requires { valid_cell outer inner row idx }
       requires { "expl:valid_innev"
@@ -814,6 +875,7 @@ module LRrule
                  frame outer inner (old work) w row idx ->
                  exists i. old solutions.next <= i < solutions.next /\
                       eq_sol outer inner w (s2m (Map.get solutions.sols i)) }
+      assert { valid_work outer inner work };
       if row = szshape then begin
         (* found a solution *)
         ghost store_solution outer inner eval work;
@@ -822,7 +884,7 @@ module LRrule
         (* move from row [row-1] to row [row] *)
         count_rec (row + 1)
 	  (abstract (*ensures { result =
-            if row + 1 < szshape then width[row + 1] - 1 else 0 }*)
+            if row + 1 < szshape then width[row + 1] - 1 else -1 }*)
             if row + 1 < szshape then width[row + 1] - 1 else -1 end)
       else begin
         let min = abstract (*ensures { result =
