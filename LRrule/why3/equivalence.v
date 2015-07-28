@@ -398,20 +398,20 @@ Qed.
 
 Lemma index_slice i :
   i < sumn width ->
-  let (r, c) := (shape_nth (rev width) i) in
+  let (r, c) := (reshape_coord (rev width) i) in
   let rr := size width - r.+1 in
   [/\ r < size outer,
       rr < size outer,
       c < nth 0 width rr &
       c + \sum_(rr + 1 <= i0 < size outer) nth 0 width i0 = i ].
 Proof.
-  move=> Hi; have := (shape_nthE (rev width) i).
+  move=> Hi; have := (reshape_coordK (rev width) i).
   have Hszout : size outer > 0.
     move: Hi; apply contraLR; rewrite -!leqNgt.
     rewrite leqn0 => /eqP Hszout.
     have:= eq_refl (size width); by rewrite {2}size_diff_shape Hszout => /nilP ->.
-  move: Hi; rewrite -sumn_rev => /shape_nthP.
-  case: (shape_nth (rev width) i) => r c [].
+  move: Hi; rewrite -sumn_rev => /reshape_coordP.
+  case: (reshape_coord (rev width) i) => r c [].
   rewrite size_rev => Hr.
   rewrite (nth_rev _ Hr) => Hc Heq.
   split => //=.
@@ -513,7 +513,7 @@ Proof.
     rewrite /to_word (nth_map 0 _ _ Hi) nth_flatten shape_rev shape_sol.
     have:= Hi; rewrite -size_to_word /size_tab shape_sol => Hiw.
     have := index_slice Hiw.
-    case: (shape_nth (rev width) i) => r c [] Hr Hr1 Hl <-.
+    case: (reshape_coord (rev width) i) => r c [] Hr Hr1 Hl <-.
     have:= (@spec.to_word_contents outerw innerw _ includedw Hwork).
     rewrite !cond_nat => Hspec.
     have {Hspec} /Hspec := leq_trans Hr1 (size_lt_part outerw).
