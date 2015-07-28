@@ -267,30 +267,54 @@ Proof.
   rewrite addnC -drop_drop; exact: IHn.
 Qed.
 
-Fixpoint shape_nth sh i :=
+Fixpoint reshape_coord sh i :=
   if sh is s0 :: s then
     if i < s0 then (0, i)
-    else let (r, c) := shape_nth s (i - s0) in (r.+1, c)
+    else let (r, c) := reshape_coord s (i - s0) in (r.+1, c)
   else (0, i).
 
-Lemma shape_nthE sh i :
-  let (r, c) := (shape_nth sh i) in (\sum_(0 <= j < r) nth 0 sh j) + c = i.
+Definition flatten_coord sh r c := (\sum_(0 <= j < r) nth 0 sh j) + c.
+
+Lemma flatten_coordP sh r c :
+  c < nth 0 sh r -> flatten_coord sh r c < sumn sh.
 Proof.
+  case: (ltnP r (size sh)) => Hr; last by rewrite (nth_default _ Hr).
+  rewrite -(sum_iota_sumnE (n := size sh)) // => Hc.
+  rewrite (big_cat_nat _ _ _ _ (ltnW Hr)) //= ltn_add2l.
+  rewrite (big_ltn Hr); exact: ltn_addr.
+Qed.
+
+Lemma reshape_coordP sh i :
+  i < sumn sh -> let (r, c) := (reshape_coord sh i) in r < size sh /\ c < nth 0 sh r.
+Proof.
+  elim: sh i => [| s0 s IHs] i //= Hi.
+  case: (ltnP i s0) => His0 //=.
+  have {IHs} := IHs (i - s0); case: (reshape_coord s (i - s0)) => r c /=.
+  rewrite ltnS; apply.
+  by rewrite -(subSn His0) leq_subLR.
+Qed.
+
+Lemma reshape_coordK sh i :
+  let (r, c) := reshape_coord sh i in flatten_coord sh r c = i.
+Proof.
+  rewrite /flatten_coord.
   elim: sh i => [| s0 s IHs] i //=; first by rewrite /index_iota /= big_nil.
   case: (ltnP i s0) => His0 //=; first by rewrite /index_iota /= big_nil.
-  have {IHs} := IHs (i - s0); case: (shape_nth s (i - s0)) => r c.
+  have {IHs} := IHs (i - s0); case: (reshape_coord s (i - s0)) => r c.
   rewrite big_nat_recl //= -addnA => ->.
   exact: subnKC.
 Qed.
 
-Lemma shape_nthP sh i :
-  i < sumn sh -> let (r, c) := (shape_nth sh i) in r < size sh /\ c < nth 0 sh r.
+Lemma flatten_coordK sh r c :
+  c < nth 0 sh r -> reshape_coord sh (flatten_coord sh r c) = (r, c).
 Proof.
-  elim: sh i => [| s0 s IHs] i //= Hi.
-  case: (ltnP i s0) => His0 //=.
-  have {IHs} := IHs (i - s0); case: (shape_nth s (i - s0)) => r c /=.
-  rewrite ltnS; apply.
-  by rewrite -(subSn His0) leq_subLR.
+  rewrite /flatten_coord.
+  elim: r c sh => [| r IHr] /= c [//= | s0 s] /=.
+    by rewrite /index_iota subn0 /= big_nil add0n => ->.
+  have -> : \sum_(0 <= j < r.+1) nth 0 (s0 :: s) j = s0 + \sum_(0 <= j < r) nth 0 s j.
+    by rewrite big_nat_recl //=.
+  rewrite [X in if X then _ else _]ltnNge -addnA leq_addr /=.
+  by rewrite addKn => /IHr ->.
 Qed.
 
 Lemma iota_gtn a b : [seq i <- iota 0 a | b <= i] = iota b (a - b).
@@ -305,12 +329,12 @@ Proof.
 Qed.
 
 Lemma nth_flatten T (x : T) tab i :
-  nth x (flatten tab) i = let (r, c) := (shape_nth (shape tab) i) in
+  nth x (flatten tab) i = let (r, c) := (reshape_coord (shape tab) i) in
                           nth x (nth [::] tab r) c.
 Proof.
   elim: tab i => [| t0 t IHt] //= i.
   rewrite nth_cat; case: ltnP => //= Hi.
-  rewrite IHt {IHt}; by case: (shape_nth (shape t) (i - size t0)) => r c.
+  rewrite IHt {IHt}; by case: (reshape_coord (shape t) (i - size t0)) => r c.
 Qed.
 
 Section BigInterv.
