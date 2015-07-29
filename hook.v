@@ -574,6 +574,14 @@ Lemma cons_head_behead (T : eqType) x (s : seq T) :
   (s != [::]) -> s = head x s :: behead s.
 Proof. by case s. Qed.
 
+Lemma belast_behead_rcons (T : eqType) x l (s : seq T) :
+  belast (head x (rcons s l)) (behead (rcons s l)) = s.
+Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= belast_rcons. Qed.
+
+Lemma last_behead_rcons (T : eqType) x l (s : seq T) :
+  last (head x (rcons s l)) (behead (rcons s l)) = l.
+Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= last_rcons. Qed.
+
 Open Scope ring_scope.
 
 (* Formula of Lemma 3. *)
@@ -799,6 +807,8 @@ Proof.
   by rewrite eq_refl.
 Qed.
 
+Require Import gnw bigallpairs.
+
 Lemma Formula1 :
   (F_deno p)%:Q / (F_deno (decr_nth p Alpha))%:Q =
   ( \prod_(0 <= i < Alpha) (1 + (al_length p i Beta)%:Q^-1)) *
@@ -811,7 +821,13 @@ Lemma SimpleCalculation :
   \big[+%R/0%R]_(X <- enum_trace Alpha Beta) PI_trace X =
   (F_deno p)%:Q / (F_deno (decr_nth p Alpha))%:Q.
 Proof.
-  admit.
+  rewrite /enum_trace /trace_seq /PI_trace /PI.
+  rewrite big_allpairs /=.
+  rewrite Formula1 !expand_prod_add1_seq.
+  rewrite /index_iota subn0 big_map big_distrl /=; apply eq_big_seq => A HA.
+  rewrite /index_iota subn0 big_map big_distrr /=; apply eq_big_seq => B HB.
+  rewrite !belast_behead_rcons !last_behead_rcons.
+  congr (_ * _); apply eq_big_seq => L _; by rewrite mul1r.
 Qed.
 
 Theorem Theorem2 :
