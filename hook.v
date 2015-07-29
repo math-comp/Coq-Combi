@@ -30,16 +30,6 @@ Import GRing.Theory.
 
 Local Open Scope nat_scope.
 
-(*
-Add Rec LoadPath "../Combi/LRrule".
-Add Rec LoadPath "ALEA/src" as ALEA.
-
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import bigop fintype rat ssrint ssralg.
-Require Import tools partition.
-*)
-
-
 Require Import recyama.
 
 Lemma sorted_subseq_iota_rcons s n : subseq s (iota 0 n) = sorted ltn (rcons s n).
@@ -133,11 +123,6 @@ Proof.
 Qed.
 
 Coercion ratz : int >-> rat.
-
-Definition F_deno (sh : seq nat) :=
-    \prod_(r < length sh) \prod_(c < nth 0 sh r) (hook_length sh r c).
-Definition F sh :=  (((sumn sh)`!)%:Q / (F_deno sh)%:Q)%R.
-
 
 Section FindCorner.
 
@@ -740,7 +725,8 @@ Hypothesis Hcorn : is_corner_box p Alpha Beta.
 
 Definition ends_at := (fun R => (last O R.1 == Alpha) && (last O R.2 == Beta)).
 Definition PI_trace X := (PI (head O X.1) (head O X.2) (behead X.1) (behead X.2)).
-Lemma bla (prd : nat -> bool) :
+
+Lemma reshape_coord_walk_to (prd : nat -> bool) :
   forall i, prd i ->
   (mu (let (r, c) := reshape_coord p i in
        walk_to_corner (al_length p r c) r c)) ends_at =
@@ -779,6 +765,10 @@ Proof.
   by rewrite !addSn.
 Qed.
 
+Definition F_deno (sh : seq nat) :=
+    \prod_(r < length sh) \prod_(c < nth O sh r) (hook_length sh r c).
+Definition F sh :=  (((sumn sh)`!)%:Q / (F_deno sh)%:Q)%R.
+
 Open Scope ring_scope.
 
 Lemma prob_cond :
@@ -787,7 +777,7 @@ Lemma prob_cond :
 Proof.
   rewrite /choose_corner MLet_simpl mu_random_sum sumnpSPE.
   rewrite mulrC mul1r; congr (_ / _)%R.
-  rewrite (eq_bigr _ (@bla _)).
+  rewrite (eq_bigr _ (@reshape_coord_walk_to _)).
   rewrite (exchange_big_dep (@predT _)) //=.
   apply eq_big_seq => [[A B]]; rewrite (enum_traceP Hcorn) => /and3P [] Htrace HA HB.
   have Hin : (head O B < nth O p (head O A))%N.
@@ -807,7 +797,35 @@ Proof.
   by rewrite eq_refl.
 Qed.
 
-Require Import gnw bigallpairs.
+Require Import bigallpairs.
+
+Section Formule.
+
+  Open Scope ring_scope.
+
+  Variable T : countType.
+  Variable R : comRingType.
+  Variable alpha : T -> R.
+
+  Lemma expand_prod_add1_seq (S : seq T) :
+    \prod_(i <- S) (1 + alpha i) =
+    \sum_(s <- enum_subseqs S) \prod_(i <- s) alpha i.
+  Proof.
+    elim: S => [| n S IHs] //=.
+      rewrite /= big_nil.
+      by rewrite big_cons 2! big_nil addr0.
+    rewrite big_cons IHs {IHs}.
+    set sub := (enum_subseqs _).
+    rewrite big_cat /=.
+    rewrite mulrDl mul1r addrC.
+    congr ( _ + _ ).
+    rewrite big_distrr /=.
+    rewrite big_map.
+    apply eq_bigr => i _.
+    by rewrite big_cons.
+  Qed.
+
+End Formule.
 
 Lemma Formula1 :
   (F_deno p)%:Q / (F_deno (decr_nth p Alpha))%:Q =
@@ -853,11 +871,34 @@ Proof.
   rewrite -Hdec; exact: SimpleCalculation.
 Qed.
 
+Lemma choose_corner_ends_at_pos : mu choose_corner ends_at > 0.
+Proof.
+  rewrite /choose_corner /=.
+  rewrite -/(iota 0 (sumn p).-1.+1) sumnpSPE /weight.
+  rewrite (eq_bigl predT) //=.
+  admit.
+Qed.
+
 End EndsAt.
+
+Definition bla : fin nat.
+Proof.
+  apply: (mkfin (out_corners p) (fun i => (mu choose_corner (ends_at i (nth 0 p i).-1)))).
+  rewrite /weight.
+  admit.
+Qed.
 
 Corollary Corollary4 :
   (\sum_(i <- out_corners p) (F (decr_nth_part p i)) / (F p) = 1)%R.
 Proof.
+  rewrite big_seq_cond.
+  rewrite (eq_bigr (fun i => (mu choose_corner (ends_at i (nth 0 p i).-1)))); first last.
+    move => i /andP [].
+    rewrite /out_corners mem_filter => /andP [] Hcorn _ _.
+    apply esym; apply Theorem2.
+    by rewrite /is_corner_box Hcorn eq_refl.
+  rewrite -big_seq_cond.
+  rewrite -(Finite_in_seq _ bla).
   admit.
 Qed.
 
