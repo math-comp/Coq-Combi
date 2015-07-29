@@ -581,7 +581,7 @@ Lemma eval_solE :
   (spec.is_of_eval evalw wordw <-> evalseq (to_word sol) = eval).
 Proof.
   move=> Hyamw.
-  rewrite /spec.is_of_eval /spec.is_of_eval_suffix subrr !cond_nat; split.
+  rewrite /spec.is_of_eval !cond_nat; split.
   - move=> [] Hsz Heval; apply/eqP/part_eqP.
       + apply is_part_eval_yam; by rewrite -is_yam_solE.
       + exact: inputSpec_from_Why3.(eval_part).
@@ -657,7 +657,7 @@ Notation wordw := (spec.to_word outerw innerw solw).
 
 Lemma wordw_pos (i : nat) : (0 <= get wordw i)%R.
 Proof.
-  move: Hsol => [] _ [] [] _ []; rewrite subrr cond_ltz_nat => Hpos _ _.
+  move: Hsol => [] _ [] [] _ []; rewrite cond_ltz_nat => Hpos _ _.
   case: (ltnP i (size wordw)) => [/Hpos [] //= | H] /=.
   by rewrite (nth_default _ H).
 Qed.

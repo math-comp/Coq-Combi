@@ -67,19 +67,19 @@ Littlewood-Richardson coefficients\\[5mm]}
   \begin{enumerate}
   \item what are Littlewood-Richardson coefficients
   \item how do we compute them: the Littlewood-Richardson rule
-  \item a Coq proof of the rule \par
-    (previous work by Florent Hivert)
+  \item a Coq proof of the rule (previous work by Florent Hivert)
   \item an efficient program and its proof
   \end{enumerate}
 \end{frame}
 
 \begin{frame}{symmetric polynomials}
 
-  $n$-variables : $\XX_n := \{x_0, x_1, \dots x_{n-1}\}$.
+  % $n$-variables : $\XX_n := \{x_0, x_1, \dots x_{n-1}\}$
 
-  Polynomials in $\XX$ : $P(\XX) = P(x_0, x_1, \dots, x_{n-1})$; ex: $3x_0^3x_2
-  + 5 x_1x_2^4$.
+  % Polynomials in $\XX$ : $P(\XX) = P(x_0, x_1, \dots, x_{n-1})$; ex: $3x_0^3x_2
+  % + 5 x_1x_2^4$
 
+  % \bigskip
   \begin{DEFN}[Symmetric polynomial]
     A polynomial is \emph{symmetric} if it is invariant under any permutation of the
     variables: for all $\sigma\in\SG_n$,
@@ -114,8 +114,8 @@ Littlewood-Richardson coefficients\\[5mm]}
   \begin{DEFN}[semistandard Young tableau of shape $\lambda$]
     A Young diagram of shape $\lambda$ filled with integers
     \begin{itemize}
-    \item non decreasing along the rows
-    \item strictly increasing along the columns
+    \item non decreasing along the rows (left to right)
+    \item strictly increasing along the columns (bottom up)
     \end{itemize}
   \end{DEFN}
 
@@ -197,8 +197,8 @@ Littlewood-Richardson coefficients\\[5mm]}
   \begin{DEFN}[Skew semistandard Young tableau]
     A skew shape $\nu/\lambda$ filled with integers
     \begin{itemize}
-    \item non decreasing along the rows
-    \item strictly increasing along the columns
+    \item non decreasing along the rows (left to right)
+    \item strictly increasing along the columns (bottom up)
     \end{itemize}
   \end{DEFN}
 
@@ -298,6 +298,9 @@ Littlewood-Richardson coefficients\\[5mm]}
     it: even the original example in D. E. Littlewood and A. R. Richardson
     (1934) contains an error.
  \end{quotation}
+ \begin{itemize}
+ \item \#-P complete (Narayanan, 2005)
+ \end{itemize}
 \end{frame}
 
 % $\#P$-hard problem
@@ -308,7 +311,7 @@ Littlewood-Richardson coefficients\\[5mm]}
     of the symmetric groups
   \item multiplicity of the tensor product of the irreducible representations
     of linear groups
-  \item geometry: mumber of intersection in a grassmanian variety, cup product
+  \item geometry: number of intersections in a Grassmanian variety, cup product
     of the cohomology
   \item Horn problem: eigenvalues of the sum of two Hermitian matrices
   \item extension of Abelian groups (Hall algebra)
@@ -430,7 +433,7 @@ with glue code to parse the command line, we can play with it
   \end{itemize}
 
   \bigskip\bigskip
-  we use Why3 and its OCaml extraction mechanism
+  we use Why3 to do this
 \end{frame}
 
 \begin{frame}\frametitle{Why3 in a nutshell}
@@ -439,7 +442,7 @@ with glue code to parse the command line, we can play with it
   \item a \emph{first-order polymorphic logic} with recursive definitions,
     algebraic data types, inductive predicates
   \item support for \emph{many theorem provers}, both automated and
-    interactive
+    interactive (Z3, Alt-Ergo, Coq, etc.)
   \item an \emph{ML-like programming language} with behavioral specifications,
     a VCgen, and an automatic translation to OCaml
   \end{itemize}
@@ -551,7 +554,7 @@ with glue code to parse the command line, we can play with it
   see:
   Martin Clochard, Jean-Christophe Filli\^atre, Andrei Paskevich.
   \textit{How to avoid proving the absence of integer overflows}.
-  VSTTE 2015
+  VSTTE 15
 \end{frame}
 
 \begin{frame}\frametitle{efficiency}
@@ -571,7 +574,7 @@ with glue code to parse the command line, we can play with it
       \hline
       extracted & \multicolumn{2}{|c|}{extracted from Why3} & C library \\
       \cline{2-3}
-      from Coq  &   ZArith  & machine arith & \texttt{lrcalc} \\
+      from Coq  &   GMP  & machine arith & \texttt{lrcalc} \\
       \hline\hline
       31.6      &    26.7   & 1.18 & 0.35 \\
       \hline
@@ -685,7 +688,7 @@ let lrrule (outer inner eval: array int) : int =
   \end{itemize}
 \end{frame}
 
-\begin{frame}\frametitle{the big picture}
+\begin{frame}\frametitle{proof of equivalence}
 
   let us show the equivalence, using Coq
 
@@ -710,7 +713,7 @@ let lrrule (outer inner eval: array int) : int =
 \begin{coq}
   partw: nat -> seq nat -> array int
 \end{coq}
-(the first argument is the length)
+\quad(the first argument is the length)
 \end{frame}
 
 \begin{frame}\frametitle{proof of equivalence}
@@ -784,6 +787,11 @@ Definition partw (l: nat) (p: seq nat) : array int :=
   \item its equivalence, at the specification level, with another
     program already proved correct
   \end{itemize}
+
+  \bigskip
+  long-term goal: have such verified software integrated in SageMath
+
+  (Florent is one of the main developers of SageMath)
 \end{frame}
 
 \end{document}
