@@ -84,6 +84,8 @@ endif
 VFILES:=program.v\
   equerre.v\
   recyama.v\
+  hook.v\
+  bigallpairs.v\
   Qmeasure.v
 
 -include $(addsuffix .d,$(VFILES))

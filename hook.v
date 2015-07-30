@@ -19,19 +19,69 @@ Require Import Misc Ccpo Qmeasure.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype rat
-               finfun ssrnum ssralg ssrint bigop path.
+Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq ssrint rat
+               fintype bigop path ssralg ssrnum.
+(* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 Require Import tools subseq partition.
-(* Require Import equerre.
-Local Open Scope O_scope.
-Local Open Scope rat_scope.
-Local Open Scope ring_scope. *)
+
 Import GRing.Theory.
+Import Num.Theory.
+
+
+Definition int_to_rat : int -> rat := intmul (GRing.one rat_Ring).
+Coercion int_to_rat : int >-> rat.
+
+(* TODO : Move in Qmeasure *)
+Section DistrSum.
+
+Local Open Scope ring_scope.
+
+Lemma mu_stable_sum (A : Type) (m : distr A) (I : Type) (s : seq I) (f : I -> A -> rat) :
+  mu m (fun a => \sum_(i <- s) f i a) = \sum_(i <- s) (mu m (f i)).
+Proof.
+  elim: s => [| s0 s IHs] /=.
+    rewrite big_nil; apply mu_zero_eq => x; by rewrite big_nil.
+  rewrite big_cons -IHs -mu_stable_add.
+  apply Mstable_eq => x /=; by rewrite big_cons.
+Qed.
+
+Lemma in_seq_sum (A : eqType) (s : seq A) x :
+  uniq s -> (x \in s)%:Q = \sum_(i <- s) (x == i)%:Q.
+Proof.
+  elim: s => [| s0 s IHs] /=; first by rewrite big_nil.
+  rewrite inE big_cons => /andP [] /negbTE Hs0 /IHs <- {IHs}.
+  case: (boolP (x == s0)) => [/= /eqP -> | _ ]; last by rewrite /= add0r.
+  by rewrite Hs0 addr0.
+Qed.
+
+Lemma mu_in_seq (A : eqType) (m : distr A) (s : seq A) :
+  uniq s ->
+  mu m (fun x => (x \in s)) = \sum_(a <- s) mu m (fun x => (x == a)).
+Proof.
+  rewrite -mu_stable_sum => Hs.
+  apply Mstable_eq => x /=.
+  exact: in_seq_sum.
+Qed.
+
+Lemma mu_bool_cond (A : Type) (m : distr A) (f g : A -> bool) :
+  mu m (fun x => (f x)) = 1 ->
+  mu m (fun x => (g x)) = mu m (fun x => (f x && g x)).
+Proof.
+  move=> H; apply ler_asym; apply/andP; split.
+  - rewrite -[X in (_ <= X)]addr0.
+    have <- : (mu m) (fun x : A => (~~ f x && g x)) = 0.
+      move: H; apply mu_bool_negb0 => x; by case: (f x).
+    rewrite -Mstable_add //.
+    apply mu_monotonic => x /=.
+    case: (f x); by rewrite ?addr0 ?add0r.
+  - by apply mu_bool_impl => x; apply/implyP => /andP [].
+Qed.
+
+End DistrSum.
 
 Local Open Scope nat_scope.
 
-Require Import recyama.
-
+(* TODO : move in LRrule/tools *)
 Lemma sorted_subseq_iota_rcons s n : subseq s (iota 0 n) = sorted ltn (rcons s n).
 Proof.
   apply (sameP idP); apply (iffP idP).
@@ -121,8 +171,6 @@ Proof.
       exact: leqSpred.
     + by rewrite -subn_eq0 -subn1 -subnAC subn1.
 Qed.
-
-Coercion ratz : int >-> rat.
 
 Section FindCorner.
 
@@ -245,7 +293,7 @@ Open Scope ring_scope.
 Lemma walk_to_corner_inv m r c :
   mu (walk_to_corner m r c)
      (fun HS => [&& (size   HS.1 != 0), (size   HS.2 != 0),
-                    (head 0 HS.1 == r)& (head 0 HS.2 == c)]%N%:Q)
+                    (head 0 HS.1 == r)& (head 0 HS.2 == c)]%N)
       = 1.
 Proof.
   elim: m r c => [| n Hn] r c.
@@ -339,7 +387,7 @@ Proof.
   apply: (mu_bool_negb0 _ _ _ _ (walk_to_corner_inv _ _ _)) => [] [X Y] /=.
   apply /implyP => /and4P [] SX SY _ _.
   move: SX; apply contra.
-  by rewrite size_eq0 xpair_eqE (eqP HA); move => /andP [].
+  by rewrite /charfun size_eq0 xpair_eqE (eqP HA); move => /andP [].
 Qed.
 
 Lemma walk_to_corner_emptyr m i j (A B : seq nat) :
@@ -349,7 +397,7 @@ Proof.
   apply: (mu_bool_negb0 _ _ _ _ (walk_to_corner_inv m i j)) => [] [X Y] /=.
   apply /implyP => /and4P [] SX SY _ _.
   move: SY; apply contra.
-  by rewrite size_eq0 xpair_eqE (eqP HB); move => /andP [].
+  by rewrite /charfun size_eq0 xpair_eqE (eqP HB); move => /andP [].
 Qed.
 
 Lemma charfun_simpll a A B :
@@ -377,9 +425,9 @@ Proof.
   move => Hs Ht.
   rewrite (walk_to_corner_rec_simpl _ Hs) Mlet_simpl.
   rewrite mu_uniform_sum /=.
-  congr (_ / _)%R.
+  congr (_ / _).
   rewrite /hook_next_seq big_cat /= !big_map /= addrC.
-  congr (_ + _)%R.
+  congr (_ + _).
   - case (boolP (size B == 0%N)) => HB.
     + rewrite big1.
       * apply esym.
@@ -392,7 +440,7 @@ Proof.
         move: SY; by apply contra => /eqP [] _ ->.
     + rewrite (bigD1_seq (head O B) _ (iota_uniq _ _)) /=.
       * rewrite -{1}(@charfun_simplr b (a :: A) B) -[RHS]addr0.
-        congr (_+_)%R.
+        congr (_ + _).
         apply: big1 => i Hi.
         rewrite charfun_simplr.
         apply: (mu_bool_negb0 _ _ _ _ (walk_to_corner_inv m a i)) => [] [X Y] /=.
@@ -417,7 +465,7 @@ Proof.
         move: SX; by apply contra => /eqP [] ->.
     + rewrite (bigD1_seq (head O A) _ (iota_uniq _ _)) /=.
       * rewrite -{1}(@charfun_simpll a A (b :: B)) -[RHS]addr0.
-        congr (_+_)%R.
+        congr (_ + _).
         apply: big1 => i Hi.
         rewrite charfun_simpll.
         apply: (mu_bool_negb0 _ _ _ _ (walk_to_corner_inv m i b)) => [] [X Y] /=.
@@ -602,11 +650,11 @@ Proof.
     rewrite /PI /= !big_cons.
     set lA := (last A0 A); set lB := (last B0 B).
     set A' := (belast A0 A); set B' := (belast B0 B).
-    set PjlB := (\big[ *%R/1]_(j <- A') (1 / (al_length p j lB)%:Q))%R.
-    set PlAj := (\big[ *%R/1]_(j <- B') (1 / (al_length p lA j)%:Q))%R.
-    rewrite -![(_ * PjlB)%R]mulrC !mulrA -![(_ * PlAj)%R]mulrC.
+    set PjlB := (\prod_(j <- A') (1 / (al_length p j lB)%:Q)).
+    set PlAj := (\prod_(j <- B') (1 / (al_length p lA j)%:Q)).
+    rewrite -![(_ * PjlB)]mulrC !mulrA -![(_ * PlAj)%R]mulrC.
     rewrite !mulrA -!mulrDr mulr1 -!mulrA.
-    congr (_ * (_ * _))%R.
+    congr (_ * (_ * _)).
     rewrite !mulrA mulr1.
     have /= := al_length_last_rectangle Htrace.
     rewrite -/lA -/lB => ->.
@@ -624,7 +672,7 @@ Proof.
     rewrite -mulrzDl /= intr_eq0 eqz_nat.
     by rewrite addn_eq0 negb_and Alen0 Blen0.
   - move: HA => /eqP HA; subst A.
-    rewrite [X in (_ + X)%R]walk_to_corner_emptyl // addr0.
+    rewrite [X in (_ + X)]walk_to_corner_emptyl // addr0.
     have HBd := (cons_head_behead O HB).
     rewrite {2}HBd.
     rewrite (IHm a (head O B) [::] (behead B)); first last.
@@ -658,6 +706,44 @@ Definition trace_seq (last : nat) : seq (seq nat) :=
 
 Definition enum_trace (Alpha Beta : nat) : seq ((seq nat) * (seq nat)) :=
   [seq (A, B) | A <- trace_seq Alpha, B <- trace_seq Beta].
+
+(* TODO : move in subseq *)
+Lemma cons_in_enum_subseq (T : countType) x0 (x s : seq T) :
+  x0 :: x \in enum_subseqs (T:=T) s -> x0 \in s.
+Proof.
+  elim: s => [//= | s0 s IHs] /=.
+  rewrite inE mem_cat => /orP [].
+  - move=> /mapP [] x1 _ [] -> _.
+    by rewrite eq_refl.
+  - move/IHs ->; by rewrite orbT.
+Qed.
+
+(* TODO : move in subseq *)
+Lemma enum_subseqs_uniq (T : countType) (s : seq T) : uniq s -> uniq (enum_subseqs s).
+Proof.
+  elim: s => [//= | s0 s IHs] /= /andP [] Hs0 /IHs{IHs} Huniq.
+  rewrite cat_uniq; apply/and3P; split.
+  - by rewrite map_inj_uniq // => i j [].
+  - apply/hasP => [] [] x.
+    case: x => [_| x0 x] /=; first by move=> /mapP [] y _.
+    move=> /cons_in_enum_subseq Hs0' /mapP [] y _ [] Hx0 _.
+    move: Hs0; by rewrite -Hx0 Hs0'.
+  - exact: Huniq.
+Qed.
+
+Lemma trace_seq_uniq l : uniq (trace_seq l).
+Proof.
+  rewrite map_inj_uniq; last exact: rconsK.
+  apply enum_subseqs_uniq; exact: iota_uniq.
+Qed.
+
+Lemma enum_trace_uniq (Alpha Beta : nat) : uniq (enum_trace Alpha Beta).
+Proof.
+  rewrite /enum_trace; apply allpairs_uniq.
+  - exact: trace_seq_uniq.
+  - exact: trace_seq_uniq.
+  - by move=> [i1 i2] [j1 j2].
+Qed.
 
 Lemma trace_corner_box (Alpha Beta : nat) :
   is_corner_box p Alpha Beta ->
@@ -723,35 +809,9 @@ Section EndsAt.
 Variable (Alpha Beta : nat).
 Hypothesis Hcorn : is_corner_box p Alpha Beta.
 
+Definition starts_at r c := (fun R => (head O R.1 == r) && (head O R.2 == c)).
 Definition ends_at := (fun R => (last O R.1 == Alpha) && (last O R.2 == Beta)).
 Definition PI_trace X := (PI (head O X.1) (head O X.2) (behead X.1) (behead X.2)).
-
-Lemma reshape_coord_walk_to (prd : nat -> bool) :
-  forall i, prd i ->
-  (mu (let (r, c) := reshape_coord p i in
-       walk_to_corner (al_length p r c) r c)) ends_at =
-  (\sum_(X <- enum_trace Alpha Beta |
-         let (r, c) := reshape_coord p i in (head O X.1 == r) && (head O X.2 == c))
-    PI_trace X)%R.
-Proof.
-  move=> i _ {prd}; case: (reshape_coord p i) => [r c].
-  rewrite big_seq_cond.
-  rewrite (eq_bigr
-             (fun X => mu (walk_to_corner (al_length p r c) r c)
-                          (charfun X.1 X.2))); first last.
-    move=> [A B] /= /and3P [].
-    rewrite (enum_traceP Hcorn) => /and3P [] Htrace HAlpha HBeta /eqP <- /eqP <- {r c}.
-    rewrite /PI_trace -(PIprog (m := al_length p (head 0 A) (head 0 B))) /=; first last.
-    - have:= Htrace => /and3P [] HA HB _; by rewrite -!cons_head_behead.
-    - have:= Htrace => /and3P [] HA HB _.
-      case: A B HA HB Htrace {HAlpha HBeta} => [//= | a A] [//= | b B] /= _ _ Htrace.
-      rewrite addnC.
-      exact: (leq_add (trace_size_arm_length Htrace) (trace_size_leg_length Htrace)).
-    apply: Mstable_eq => [] [X1 X2].
-    have:= Htrace => /and3P [] HA HB _; by rewrite -!cons_head_behead.
-  rewrite -big_seq_cond.
-  admit.
-Qed.
 
 Lemma sumnpSPE : (sumn p).-1.+1 = sumn p.
 Proof.
@@ -771,12 +831,59 @@ Definition F sh :=  (((sumn sh)`!)%:Q / (F_deno sh)%:Q)%R.
 
 Open Scope ring_scope.
 
+Lemma reshape_coord_walk_to (prd : nat -> bool) :
+  forall i, prd i ->
+  (mu (let (r, c) := reshape_coord p i in
+       walk_to_corner (al_length p r c) r c)) ends_at =
+  \sum_(X <- enum_trace Alpha Beta | let (r, c) := reshape_coord p i in starts_at r c X)
+   PI_trace X.
+Proof.
+  move=> i _ {prd}; case: (reshape_coord p i) => [r c].
+  rewrite big_seq_cond.
+  pose F := (fun X => mu (walk_to_corner (al_length p r c) r c) (charfun X.1 X.2)).
+  rewrite (eq_bigr F); first last.
+    move=> [A B] /= /and3P [].
+    rewrite /F (enum_traceP Hcorn) => /and3P [] Htrace HAlpha HBeta /eqP <- /eqP <- {F r c}.
+    rewrite /PI_trace -(PIprog (m := al_length p (head O A) (head O B))) /=; first last.
+    - have:= Htrace => /and3P [] HA HB _; by rewrite -!cons_head_behead.
+    - have:= Htrace => /and3P [] HA HB _.
+      case: A B HA HB Htrace {HAlpha HBeta} => [//= | a A] [//= | b B] /= _ _ Htrace.
+      rewrite addnC.
+      exact: (leq_add (trace_size_arm_length Htrace) (trace_size_leg_length Htrace)).
+    apply: Mstable_eq => [] [X1 X2].
+    have:= Htrace => /and3P [] HA HB _; by rewrite -!cons_head_behead.
+  rewrite -big_seq_cond.
+  have /= := @bigID rat_ZmodType 0 (Monoid.ComLaw (@addrC _))
+                    _  (enum_trace Alpha Beta) (starts_at r c) (fun _ => true) F.
+  set null := (X in _ = (_ + X)).
+  have {null} -> : null = 0.
+    rewrite /null {null}.
+    rewrite (eq_bigr (fun _ => 0)); first last.
+      move=> [A B]; rewrite /starts_at /F {F} /= => H.
+      apply: (mu_bool_negb0 _ _ _ _ (walk_to_corner_inv _ _ _)) => [] [X Y] /=.
+      apply /implyP => /and4P [] _ _ /eqP Hr /eqP Hc.
+      subst r c.
+      move: H; apply contra => /eqP [] -> -> .
+      by rewrite !eq_refl.
+    rewrite big_const_seq.
+    by elim: (count _ _) => [| n /= ->].
+  rewrite addr0 => <-.
+  rewrite /F {F} -mu_stable_sum /ends_at.
+  have H : mu (walk_to_corner (al_length p r c) r c) (fun X => is_trace X.1 X.2) = 1.
+    admit.
+  rewrite (@mu_bool_cond _ (walk_to_corner (al_length p r c) r c) _ _ H).
+  apply Mstable_eq => x /=.
+  rewrite /is_trace /charfun -in_seq_sum; last exact: enum_trace_uniq.
+  (* rewrite (eq_bigr (fun X => X *)
+                        admit.
+Qed.
+
 Lemma prob_cond :
   mu choose_corner ends_at =
   1 / (sumn p)%:Q * \sum_(X <- enum_trace Alpha Beta) PI_trace X.
 Proof.
   rewrite /choose_corner MLet_simpl mu_random_sum sumnpSPE.
-  rewrite mulrC mul1r; congr (_ / _)%R.
+  rewrite mulrC mul1r; congr (_ / _).
   rewrite (eq_bigr _ (@reshape_coord_walk_to _)).
   rewrite (exchange_big_dep (@predT _)) //=.
   apply eq_big_seq => [[A B]]; rewrite (enum_traceP Hcorn) => /and3P [] Htrace HA HB.
@@ -786,12 +893,13 @@ Proof.
     exact: (is_trace_in_part Htrace).
   rewrite -big_filter (bigD1_seq (flatten_coord p (head O A) (head O B))) /=; first last.
   - apply filter_uniq; exact: iota_uniq.
-  - rewrite mem_filter (flatten_coordK Hin) !eq_refl /=.
+  - rewrite mem_filter (flatten_coordK Hin) /starts_at !eq_refl /=.
     rewrite mem_iota add0n subn0 /=.
     exact: flatten_coordP.
-  rewrite -[RHS]addr0; congr (_ + _)%R.
+  rewrite -[RHS]addr0; congr (_ + _).
   rewrite big_filter_cond; apply big_pred0 => i.
   have:= (reshape_coordK p i); case: (reshape_coord p i) => [r c] <-.
+  rewrite /starts_at.
   case: (boolP ((head 0 A) == r)%N) => //= /eqP <-.
   case: (boolP ((head 0 B) == c)%N) => //= /eqP <-.
   by rewrite eq_refl.
@@ -836,7 +944,7 @@ Proof.
 Qed.
 
 Lemma SimpleCalculation :
-  \big[+%R/0%R]_(X <- enum_trace Alpha Beta) PI_trace X =
+  \sum_(X <- enum_trace Alpha Beta) PI_trace X =
   (F_deno p)%:Q / (F_deno (decr_nth p Alpha))%:Q.
 Proof.
   rewrite /enum_trace /trace_seq /PI_trace /PI.
@@ -848,8 +956,10 @@ Proof.
   congr (_ * _); apply eq_big_seq => L _; by rewrite mul1r.
 Qed.
 
+Require Import recyama.
+
 Theorem Theorem2 :
-  mu choose_corner ends_at = ((F (decr_nth_part p Alpha)) / (F p))%R.
+  mu choose_corner ends_at = (F (decr_nth_part p Alpha)) / (F p).
 Proof.
   rewrite prob_cond /F.
   have:= Hcorn => /andP [] Hout _.
@@ -860,47 +970,42 @@ Proof.
   rewrite factS PoszM -!ratzE ratzM !ratzE.
   rat_to_ring.
   set Rhs := (RHS).
-  have -> : Rhs = ((1 / (sumn dec).+1%:~R) * (F_deno p)%:Q / (F_deno dec)%:Q)%R.
+  have -> : Rhs = ((1 / (sumn dec).+1%:Q) * (F_deno p)%:Q / (F_deno dec)%:Q).
     rewrite /Rhs -!mulrA [(((F_deno dec)%:Q)^-1 / _)%R]mulrC !invfM !mul1r.
-    rewrite !mulrA [X in (X / _ / _ / _)%R]mulrC.
-    congr (_ * _)%R; rewrite -!mulrA; congr (_ * _)%R.
+    rewrite !mulrA [X in (X / _ / _ / _)]mulrC.
+    congr (_ * _); rewrite -!mulrA; congr (_ * _).
     rewrite mulrA divff; first by rewrite invrK mul1r.
     rewrite intr_eq0 eqz_nat -lt0n.
     exact: fact_gt0.
-  rewrite {Rhs} !mul1r -[RHS]mulrA; congr (_ * _)%R.
+  rewrite {Rhs} !mul1r -[RHS]mulrA; congr (_ * _).
   rewrite -Hdec; exact: SimpleCalculation.
 Qed.
 
+(*
 Lemma choose_corner_ends_at_pos : mu choose_corner ends_at > 0.
 Proof.
   rewrite /choose_corner /=.
   rewrite -/(iota 0 (sumn p).-1.+1) sumnpSPE /weight.
   rewrite (eq_bigl predT) //=.
-  admit.
+
 Qed.
+*)
 
 End EndsAt.
 
-Definition bla : fin nat.
-Proof.
-  apply: (mkfin (out_corners p) (fun i => (mu choose_corner (ends_at i (nth 0 p i).-1)))).
-  rewrite /weight.
-  admit.
-Qed.
+Open Scope ring_scope.
 
 Corollary Corollary4 :
-  (\sum_(i <- out_corners p) (F (decr_nth_part p i)) / (F p) = 1)%R.
+  \sum_(i <- out_corners p) (F (decr_nth_part p i)) / (F p) = 1.
 Proof.
   rewrite big_seq_cond.
-  rewrite (eq_bigr (fun i => (mu choose_corner (ends_at i (nth 0 p i).-1)))); first last.
+  rewrite (eq_bigr (fun i => (mu choose_corner (ends_at i (nth O p i).-1)))); first last.
     move => i /andP [].
     rewrite /out_corners mem_filter => /andP [] Hcorn _ _.
     apply esym; apply Theorem2.
     by rewrite /is_corner_box Hcorn eq_refl.
-  rewrite -big_seq_cond.
-  rewrite -(Finite_in_seq _ bla).
+  rewrite -big_seq_cond -mu_stable_sum.
   admit.
 Qed.
 
 End FindCorner.
-
