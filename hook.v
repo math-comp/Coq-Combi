@@ -32,12 +32,28 @@ Import Num.Theory.
 Definition int_to_rat : int -> rat := intmul (GRing.one rat_Ring).
 Coercion int_to_rat : int >-> rat.
 
+Lemma int_to_ratD : {morph int_to_rat : n m / (n + m)%R >-> (n + m)%R}.
+Proof. move => m n /=; by apply mulrzDl. Qed.
+
+Section FieldLemmas.
+
+Local Open Scope ring_scope.
 
 Lemma iter_plus1 n : (iter n (+%R (1 : rat)) 0 = int_to_rat n)%R.
 Proof.
   elim: n => [//= | n IHn] /=.
   by rewrite -add1n PoszD IHn /int_to_rat mulrzDl.
 Qed.
+
+Lemma quot_eq1 (R : fieldType) (x y : R) : x / y = 1 -> x = y.
+Proof.
+  move=> H.
+  have := GRing.Field.intro_unit H; rewrite invr_eq0 => Hy.
+  rewrite -[y]mul1r -H -mulrA [_ * y]mulrC.
+  by rewrite (divff Hy) mulr1.
+Qed.
+
+End FieldLemmas.
 
 (* TODO : Move in Qmeasure *)
 Section DistrSum.
@@ -1152,6 +1168,35 @@ End EndsAt.
 
 Open Scope ring_scope.
 
+(* TODO: move in partition.v *)
+Lemma  out_corners_uniq sh : uniq (out_corners sh).
+Proof. rewrite /out_corners; apply filter_uniq; exact: iota_uniq. Qed.
+
+Lemma ends_at_out_cornerE :
+  (fun X : seq nat * seq nat =>
+     \sum_(i0 <- out_corners p) (ends_at i0 (nth O p i0).-1 X)%:Q)
+    == (fun X => is_corner_box p (last O X.1) (last O X.2)).
+Proof.
+  rewrite /ends_at => [] [A B] /=.
+  case (boolP (is_corner_box p (last O A) (last O B))) => Hcorn.
+  - rewrite (bigD1_seq (last O A) _ (out_corners_uniq p)) /=; first last.
+      move: Hcorn; rewrite /out_corners /is_corner_box => /andP [] Hcorn _.
+      rewrite mem_filter Hcorn mem_iota add0n leq0n /=.
+      move: Hcorn; rewrite /is_out_corner.
+      apply contraLR; by rewrite -!ltnNge ltnS => /(nth_default O) ->.
+    move: Hcorn; rewrite /is_corner_box eq_refl => /andP [] _ -> /=.
+    rewrite -[RHS]addr0; congr (_ + _).
+    rewrite (eq_bigr (fun _ => 0)).
+      rewrite big_const_seq; by elim: (count _ _) => [//= | n /= ->].
+    by move=> i; rewrite eq_sym => /negbTE ->.
+  - rewrite (eq_big_seq (fun _ => 0)).
+      rewrite big_const_seq; by elim: (count _ _) => [//= | n /= ->].
+    move=> i; rewrite mem_filter => /andP [] Hout _.
+    suff /negbTE -> : ~~ ((last O A == i) && (last O B == (nth O p i).-1)) by [].
+    move: Hcorn; rewrite /is_corner_box; apply contra => /andP [] /eqP Hi.
+    subst i => ->; by rewrite Hout.
+Qed.
+
 Corollary Corollary4 :
   p != [::] :> seq nat -> \sum_(i <- out_corners p) (F (decr_nth_part p i)) / (F p) = 1.
 Proof.
@@ -1170,8 +1215,45 @@ Proof.
     rewrite -big_nat_0cond big_const_seq count_predT size_iota subn0 iter_plus1.
     rat_to_ring; by rewrite divff // intr_eq0.
   move=> i /reshape_coordP.
-  case: (reshape_coord p i) => [r c] [] Hr Hc.
-  admit.
+  case: (reshape_coord p i) => [r c] [].
+  rewrite -/(is_in_part p _ _) => Hr Hc.
+  rewrite (Mstable_eq _ ends_at_out_cornerE).
+  apply: (mu_bool_impl1 _ (fun X => is_trace X.1 X.2)).
+    move=> [A B] /=; by apply/implyP => /and5P [].
+  exact: mu_walk_to_corner_is_trace.
 Qed.
 
+Corollary Corollary4bis :
+  p != [::] :> seq nat -> \sum_(i <- out_corners p) (F (decr_nth_part p i)) = F p.
+Proof. move=> /Corollary4; rewrite -mulr_suml; exact: quot_eq1. Qed.
+
 End FindCorner.
+
+Require Import stdtab.
+
+Open Scope ring_scope.
+
+Lemma card_stdtabsh_rat_rec (f : intpart -> rat) :
+  f empty_part = 1 ->
+  ( forall p : intpart,
+      (p != [::] :> seq nat) ->
+      f p = \sum_(i <- out_corners p) f (decr_nth_part p i) ) ->
+  ( forall p : intpart, f p = #|stdtabsh_finType p| ).
+Proof.
+  move=> H0 Hrec.
+  elim/intpart_out_corner_ind => [//= | p Hnnil IHp] /=.
+    by rewrite H0 -card_yam_stdtabE card_yama0.
+  rewrite (Hrec _ Hnnil) -card_yam_stdtabE (card_yama_rec Hnnil).
+  rewrite (big_morph Posz PoszD (id1 := Posz O%N)) //.
+  rewrite (big_morph int_to_rat int_to_ratD (id1 := 0)) //.
+  rewrite /out_corners !big_filter; apply eq_bigr => i Hi.
+  by rewrite card_yam_stdtabE IHp //=.
+Qed.
+
+Theorem HookLengthFormula (p : intpart) : F p = #|stdtabsh_finType p|.
+Proof.
+  move: p; apply card_stdtabsh_rat_rec.
+  - by rewrite /F /= /F_deno /= big_ord0 factE.
+  - move=> p Hp; apply esym.
+    exact: Corollary4bis.
+Qed.
