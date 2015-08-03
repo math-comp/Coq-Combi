@@ -84,6 +84,7 @@ endif
 VFILES:=program.v\
   equerre.v\
   recyama.v\
+  shape.v\
   hook.v\
   bigallpairs.v\
   Qmeasure.v

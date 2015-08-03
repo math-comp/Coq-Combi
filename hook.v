@@ -35,6 +35,9 @@ Coercion int_to_rat : int >-> rat.
 Lemma int_to_ratD : {morph int_to_rat : n m / (n + m)%R >-> (n + m)%R}.
 Proof. move => m n /=; by apply mulrzDl. Qed.
 
+Lemma int_to_ratM : {morph int_to_rat : n m / (n * m)%R >-> (n * m)%R}.
+Proof. move => m n /=; by rewrite -intrM. Qed.
+
 Section FieldLemmas.
 
 Local Open Scope ring_scope.
@@ -135,6 +138,27 @@ Qed.
 End DistrSum.
 
 Local Open Scope nat_scope.
+
+(* TODO : move in LRrule/tools *)
+Lemma filter_flatten (T : eqType) (s : seq (seq T)) (P : pred T) :
+  filter P (flatten s) = flatten [seq filter P i | i <- s].
+Proof. elim: s => [//= | s0 s /= <-]; exact: filter_cat. Qed.
+
+Lemma belast_empty (T : eqType) (x : T) (s : seq T) : (s == [::])%B -> belast x s = [::].
+Proof. by move => /eqP Hs; subst. Qed.
+
+Lemma cons_head_behead (T : eqType) x (s : seq T) :
+  (s != [::]) -> s = head x s :: behead s.
+Proof. by case s. Qed.
+
+Lemma belast_behead_rcons (T : eqType) x l (s : seq T) :
+  belast (head x (rcons s l)) (behead (rcons s l)) = s.
+Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= belast_rcons. Qed.
+
+Lemma last_behead_rcons (T : eqType) x l (s : seq T) :
+  last (head x (rcons s l)) (behead (rcons s l)) = l.
+Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= last_rcons. Qed.
+
 
 (* TODO : move in LRrule/tools *)
 Lemma sorted_subseq_iota_rcons s n : subseq s (iota 0 n) = sorted ltn (rcons s n).
@@ -279,6 +303,28 @@ Proof.
     + rewrite -ltnS; apply (leq_trans Hin_part).
       exact: leqSpred.
     + by rewrite -subn_eq0 -subn1 -subnAC subn1.
+Qed.
+
+Lemma corner_arm_length0 sh r c :
+  is_part sh -> is_corner_box sh r c -> arm_length sh r c = 0.
+Proof.
+  rewrite /is_corner_box /is_out_corner /arm_length => Hpart /andP [] _ /eqP ->.
+  case: (nth 0 sh r) => [//= | n]; by rewrite subSn //= subnn.
+Qed.
+
+Lemma corner_leg_length0 sh r c :
+  is_part sh -> is_corner_box sh r c -> leg_length sh r c = 0.
+Proof.
+  rewrite /leg_length => Hpart Hcorn.
+  apply (corner_arm_length0 (is_part_conj Hpart)).
+  exact: is_corner_box_conj_part.
+Qed.
+
+Lemma corner_al_length0 sh r c :
+  is_part sh -> is_corner_box sh r c -> al_length sh r c = 0.
+Proof.
+  rewrite /al_length => Hpart Hcorn.
+  by rewrite corner_arm_length0 // corner_leg_length0 //.
 Qed.
 
 Section FindCorner.
@@ -774,21 +820,6 @@ Proof.
   exact: al_length_corner_box (sorted_leq_last HA) (sorted_leq_last HB).
 Qed.
 
-Lemma belast_empty (T : eqType) (x : T) (s : seq T) : (s == [::])%B -> belast x s = [::].
-Proof. by move => /eqP Hs; subst. Qed.
-
-Lemma cons_head_behead (T : eqType) x (s : seq T) :
-  (s != [::]) -> s = head x s :: behead s.
-Proof. by case s. Qed.
-
-Lemma belast_behead_rcons (T : eqType) x l (s : seq T) :
-  belast (head x (rcons s l)) (behead (rcons s l)) = s.
-Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= belast_rcons. Qed.
-
-Lemma last_behead_rcons (T : eqType) x l (s : seq T) :
-  last (head x (rcons s l)) (behead (rcons s l)) = l.
-Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= last_rcons. Qed.
-
 Open Scope ring_scope.
 
 (* Formula of Lemma 3. *)
@@ -999,8 +1030,9 @@ Proof.
   by rewrite !addSn.
 Qed.
 
-Definition F_deno (sh : seq nat) :=
-    \prod_(r < length sh) \prod_(c < nth O sh r) (hook_length sh r c).
+Require Import shape.
+
+Definition F_deno (sh : seq nat) := \prod_(b : box_in sh) hook_length sh b.1 b.2.
 Definition F sh :=  (((sumn sh)`!)%:Q / (F_deno sh)%:Q)%R.
 
 Open Scope ring_scope.
@@ -1118,12 +1150,172 @@ Section Formule.
 
 End Formule.
 
+Lemma incr_first_n_nthC sh i j :
+  incr_first_n (incr_nth sh i) j = incr_nth (incr_first_n sh j) i.
+Proof.
+  elim: sh i j => [| s0 sh IHsh].
+    elim=> [| i IHi] [|j] //=.
+    have {IHi} /= <- := IHi j.
+    by case: i.
+  case=> [| i] [| j] //=.
+  by rewrite IHsh.
+Qed.
+
+Lemma incr_nth_conj sh i :
+  is_part sh -> is_in_corner sh i ->
+  conj_part (incr_nth sh i) = incr_nth (conj_part sh) (nth O sh i).
+Proof.
+  elim: sh i => [| s0 sh IHsh] i /=.
+    by rewrite /is_in_corner /= !nth_nil => _ /orP [] // /eqP ->.
+  move=> /= /andP [] H0 Hpart.
+  case: i => [_ | i Hcrn]/=.
+    have Hszconj: (size (conj_part sh) <= s0)%N.
+      rewrite (size_conj_part Hpart).
+      move: H0; case sh => [| n _] //=; exact: ltnW.
+    have Hszn : size (incr_first_n (conj_part sh) s0.+1) = s0.+1.
+      by rewrite size_incr_first_n; last exact: (leq_trans Hszconj).
+    apply (eq_from_nth (x0 := O)).
+    - rewrite Hszn.
+      by rewrite size_incr_nth ltnNge (size_incr_first_n Hszconj) leqnn /=.
+    - move=> i; rewrite Hszn => Hi.
+      rewrite nth_incr_nth !nth_incr_first_n Hi ltn_neqAle.
+      move: Hi; rewrite ltnS eq_sym => ->.
+      case: eqP => /= _; by rewrite ?add0n ?add1n.
+  rewrite (IHsh _ Hpart); first exact: incr_first_n_nthC.
+  move: Hcrn => /=; by case: i.
+Qed.
+
+Lemma arm_length_incr_nth_row sh r c :
+  is_in_part sh r c -> arm_length (incr_nth sh r) r c = (arm_length sh r c).+1.
+Proof.
+  rewrite /is_in_part /arm_length nth_incr_nth eq_refl add1n => Hc.
+  rewrite prednK; last by rewrite subn_gt0.
+  by rewrite subSn; last by apply ltnW.
+Qed.
+
+Lemma arm_length_incr_nth_nrow sh r c i :
+  i != r -> arm_length (incr_nth sh i) r c = (arm_length sh r c).
+Proof.
+  rewrite /arm_length nth_incr_nth => /negbTE ->.
+  by rewrite add0n.
+Qed.
+
+Lemma al_length_incr_nth_row sh r c :
+  is_part sh -> is_in_corner sh r ->
+  is_in_part sh r c -> al_length (incr_nth sh r) r c = (al_length sh r c).+1.
+Proof.
+  rewrite /hook_length /al_length => Hpart Hcrn Hin.
+  rewrite (arm_length_incr_nth_row Hin) addSn.
+  congr (_ + _).+1.
+  rewrite /leg_length /arm_length (incr_nth_conj Hpart Hcrn) nth_incr_nth.
+  move: Hin; rewrite /is_in_part eq_sym ltn_neqAle => /andP [] /negbTE -> _.
+  by rewrite add0n.
+Qed.
+
+Lemma out_corner_incr_nth sh i :
+  is_part sh -> is_in_corner sh i -> is_out_corner (incr_nth sh i) i.
+Proof.
+  rewrite /is_in_corner /is_out_corner /= nth_incr_nth eq_refl add1n.
+  case: i => [/= | i].
+    case: sh => [// | s0 [// | s1 s]] /= /andP [].
+    by rewrite ltnS.
+  move=> Hpart /orP [] //; rewrite [i.+1.-1]/=.
+  elim: sh i Hpart => [| s0 sh IHsh] i /=; first by rewrite !nth_nil.
+  move=> /andP [] Hhead Hpart.
+  case: i => [_|i].
+    move: Hhead; case: sh Hpart {IHsh} => [//= | s1 [//= | s2 sh]] /= /andP [].
+    by rewrite ltnS.
+  by move=> /(IHsh i Hpart).
+Qed.
+
+Lemma nth_decr_nth sh i :
+  nth O (decr_nth sh i) i = (nth O sh i).-1.
+Proof. by elim: i sh => [| i IHi] [| [|[|s0]] sh] /=. Qed.
+
+Lemma nth_decr_nth_neq sh i j :
+  is_part sh -> is_out_corner sh i -> i != j -> nth O (decr_nth sh i) j = (nth O sh j).
+Proof.
+  move=> Hpart Hcrn /negbTE Hij.
+  rewrite -{2}(decr_nthK Hpart Hcrn).
+  by rewrite nth_incr_nth Hij add0n.
+Qed.
+
+Lemma in_corner_decr_nth sh i :
+  is_part sh -> is_out_corner sh i -> is_in_corner (decr_nth sh i) i.
+Proof.
+  move=> Hpart Hout.
+  rewrite /is_in_corner /=.
+  case: i Hout => [//=|i] Hout; rewrite [i.+1.-1]/=.
+  apply/orP; right.
+  rewrite nth_decr_nth nth_decr_nth_neq //; last by rewrite eq_sym ieqi1F.
+  move: Hout; rewrite /is_out_corner => Hi2.
+  have:= is_partP _ Hpart => [] [] _ Hdecr.
+  apply: leq_trans _ (Hdecr i).
+  move: Hi2; by case: (nth O sh i.+1).
+Qed.
+
 Lemma Formula1 :
   (F_deno p)%:Q / (F_deno (decr_nth p Alpha))%:Q =
   ( \prod_(0 <= i < Alpha) (1 + (al_length p i Beta)%:Q^-1)) *
   ( \prod_(0 <= j < Beta)  (1 + (al_length p Alpha j)%:Q^-1)).
 Proof.
-  admit.
+  rewrite /F_deno !big_box_in /=.
+  have := Hcorn => /andP [] Hcrn /eqP HBeta.
+  have:= (decr_nthK is_part_p Hcrn); set p' := decr_nth p Alpha => Hp.
+  rewrite -{1}Hp -(eq_big_perm _ (box_in_incr_nth _ _)) /= big_cons.
+  rewrite !PoszM /= !intrM /=.
+  rewrite !(big_morph Posz PoszM (id1 := Posz 1%N)) //=.
+  rewrite !(big_morph intr (@intrM _) (id1 := 1)) //=.
+  rewrite -mulrA.
+  have -> : (nth O p' Alpha) = Beta.
+    by rewrite HBeta -Hp nth_incr_nth eq_refl add1n.
+  rewrite {1}/hook_length (corner_al_length0 is_part_p Hcorn) mul1r.
+  rewrite -prodf_div /=.
+  rewrite (bigID (fun i => i.1 == Alpha)) /=.
+
+  rewrite [RHS]mulrC; congr (_ * _).
+  - rewrite big_seq_cond.
+    rewrite (eq_bigr (fun i => (1 + (al_length p Alpha i.2)%:Q^-1))); first last.
+      move=> [r c] /= /andP []; rewrite mem_enum_box_in unfold_in /= => Hin /eqP Hr.
+      subst r.
+      rewrite /hook_length -Hp al_length_incr_nth_row; first last.
+      - exact: Hin.
+      - rewrite /p'.
+      - by apply in_corner_decr_nth.
+      - by apply is_part_decr_nth.
+      move: (al_length p' Alpha c) => n.
+      have Hn : n.+1%:Q != 0 by rewrite intr_eq0.
+      rewrite -{3}(divff Hn) -{3}div1r -mulrDl; congr (_ / _).
+      by rewrite -addn1 PoszD mulrzDl.
+    rewrite -big_seq_cond.
+    set f := (X in _ = \prod_(i <- _) X i).
+    transitivity (\prod_(i <- [seq i.2 | i <- enum_box_in p' & i.1 == Alpha]) f i).
+      rewrite big_map big_filter; exact: eq_bigr.
+    move: (f) => F {f}.
+    rewrite big_map /enum_box_in filter_flatten big_flatten /= -map_comp big_map.
+    case: (ltnP Alpha (size p')) => Halpha.
+    + rewrite (bigD1_seq Alpha) /=; first last.
+      - exact: iota_uniq.
+      - rewrite mem_iota add0n.
+      - by rewrite Halpha.
+      rewrite big_filter big_map (eq_bigl (fun _ => true));
+        last by move=> i; rewrite /= eq_refl.
+      rewrite /p' nth_decr_nth -HBeta (eq_bigr F); last by [].
+      rewrite /index_iota subn0 mulrC.
+      rewrite (eq_bigr (fun _ => 1)).
+        rewrite big_const_seq; elim: (count _ _) => [| n] /=; rewrite !mul1r //.
+      move=> i /negbTE Hi.
+      by rewrite big_filter big_map big_pred0.
+    + move: HBeta; rewrite -nth_decr_nth (nth_default _ Halpha) => ->.
+      rewrite /index_iota /= big_nil.
+      rewrite (eq_big_seq (fun _ => 1)).
+        by rewrite big_const_seq; elim: (count _ _) => [| n] //= ->.
+      move=> i; rewrite mem_iota add0n /= => Hi.
+      rewrite big_filter big_map big_pred0 // => j /=.
+      exact: ltn_eqF (leq_trans Hi Halpha).
+  rewrite (bigID (fun i => i.2 == Beta)) /= -[RHS]mulr1; congr (_ * _).
+  - admit.
+  - admit.
 Qed.
 
 Lemma SimpleCalculation :
@@ -1246,14 +1438,14 @@ Proof.
   rewrite (Hrec _ Hnnil) -card_yam_stdtabE (card_yama_rec Hnnil).
   rewrite (big_morph Posz PoszD (id1 := Posz O%N)) //.
   rewrite (big_morph int_to_rat int_to_ratD (id1 := 0)) //.
-  rewrite /out_corners !big_filter; apply eq_bigr => i Hi.
+ rewrite /out_corners !big_filter; apply eq_bigr => i Hi.
   by rewrite card_yam_stdtabE IHp //=.
 Qed.
 
 Theorem HookLengthFormula (p : intpart) : F p = #|stdtabsh_finType p|.
 Proof.
   move: p; apply card_stdtabsh_rat_rec.
-  - by rewrite /F /= /F_deno /= big_ord0 factE.
+  - by rewrite /F /= /F_deno /= big_box_in /enum_box_in /= big_nil factE.
   - move=> p Hp; apply esym.
     exact: Corollary4bis.
 Qed.
