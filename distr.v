@@ -29,9 +29,20 @@ Require Import tools subseq partition.
 Import GRing.Theory.
 Import Num.Theory.
 
+(* Lemma about rational computation **************************************)
+
 Definition int_to_rat : int -> rat := intmul (GRing.one rat_Ring).
 Coercion int_to_rat : int >-> rat.
 
+Lemma int_to_ratD : {morph int_to_rat : n m / (n + m)%R >-> (n + m)%R}.
+Proof. move => m n /=; by apply mulrzDl. Qed.
+
+Lemma int_to_ratM : {morph int_to_rat : n m / (n * m)%R >-> (n * m)%R}.
+Proof. move => m n /=; by rewrite -intrM. Qed.
+
+Section FieldLemmas.
+
+Local Open Scope ring_scope.
 
 Lemma iter_plus1 n : (iter n (+%R (1 : rat)) 0 = int_to_rat n)%R.
 Proof.
@@ -39,10 +50,28 @@ Proof.
   by rewrite -add1n PoszD IHn /int_to_rat mulrzDl.
 Qed.
 
+Lemma quot_eq1 (R : fieldType) (x y : R) : x / y = 1 -> x = y.
+Proof.
+  move=> H.
+  have := GRing.Field.intro_unit H; rewrite invr_eq0 => Hy.
+  rewrite -[y]mul1r -H -mulrA [_ * y]mulrC.
+  by rewrite (divff Hy) mulr1.
+Qed.
+
+End FieldLemmas.
+
+
 (* TODO : Move in Qmeasure *)
 Section DistrSum.
 
 Local Open Scope ring_scope.
+
+Lemma mu_bool_0le A (m:distr A) (f:A->bool) : 0 <= mu m (fun x => (f x)%:Q).
+Proof.
+  apply mu_stable_pos => x /=.
+  by case (f x).
+Qed.
+Hint Resolve mu_bool_0le.
 
 Lemma mu_stable_sum (A : Type) (m : distr A) (I : Type) (s : seq I) (f : I -> A -> rat) :
   mu m (fun a => \sum_(i <- s) f i a) = \sum_(i <- s) (mu m (f i)).
@@ -85,67 +114,28 @@ Proof.
   - by apply mu_bool_impl => x; apply/implyP => /andP [].
 Qed.
 
-Section Bool_mult.
-
-Variable (A:Type) (c : A -> bool) (m : distr A).
-
-Hypothesis Hc : mu m (fun x => (c x)) = 1.
-
-Instance bool_mon : monotonic (fun (g : MF A) => mu m (fun x => (c x)%:Q * (g x))).
-Proof.
-  red => f g Hfg; apply mu_monotonic => a.
-  case: (c a) => /=.
-  - rewrite !mul1r; exact: Hfg.
-  - by rewrite !mul0r.
-Qed.
-
-Definition bool_mult : M A := mon (fun (g : MF A) => mu m (fun x => (c x)%:Q * (g x))).
-
-Lemma bool_mult_prob : bool_mult (fun x => 1%:Q) = 1.
-Proof.
-  rewrite /bool_mult /=; rewrite -{3}Hc.
-  apply Mstable_eq => x.
-  by rewrite mulr1.
-Qed.
-
-Definition Bool_mult : distr A.
-Proof.
-  exists bool_mult; last exact: bool_mult_prob.
-  move=> f g /=; rewrite -mu_stable_sub.
-  apply Mstable_eq => x /=.
-  by rewrite mulrDr mulrN.
-Defined.
-
-Lemma bool_mult_simpl f : mu Bool_mult f = mu m (fun x => (c x)%:Q * (f x)).
-Proof. by []. Qed.
-
-Lemma mu_pos_cond (g : A -> rat) : mu m g = mu Bool_mult g.
-Proof.
-  rewrite bool_mult_simpl; apply ler_asym; apply/andP; split.
-  - admit.
-  - apply mu_monotonic => x /=.
-    case : (c x); rewrite ?mul1r ?mul0r //.
-    
-End Bool_mult.
-  
 Lemma mu_pos_cond (A : Type) (m : distr A) (f : A -> bool) (g : A -> rat) :
-  (forall x, 0 <= g x) ->
+  (forall x, 0 <= g x <= 1) ->
   mu m (fun x => (f x)) = 1 ->
   mu m (fun x => (g x)) = mu m (fun x => ((f x)%:Q * g x)).
 Proof.
-  move=> Hg H; apply ler_asym; apply/andP; split.
+  move=> Hg H.
+  have H0g x : 0 <= g x by have := Hg x => /andP [].
+  have Hg1 x : g x <= 1 by have := Hg x => /andP [].
+  apply ler_asym; apply/andP; split.
   - rewrite -[X in (_ <= X)]addr0.
     have <- : (mu m) (fun x : A => ((~~ f x)%:Q * g x)) = 0.
       apply ler_asym; apply/andP; split.
       + rewrite -(subrr 1) -{3}H -mu_bool_negb.
         apply mu_monotonic => x /=.
-        case: (f x) => //=.      have : 1 - 1 = 0 by rewrite .
-      move: H; rewrite 
-      move: H; apply mu_bool_negb0 => x; by case: (f x).
+        case: (f x) => /=; by rewrite ?mul0r ?mul1r.
+      + apply mu_stable_pos => x /=.
+        case: (f x) => /=; by rewrite ?mul0r ?mul1r.
     rewrite -Mstable_add //.
     apply mu_monotonic => x /=.
-    case: (f x); by rewrite ?addr0 ?add0r.
-  - by apply mu_bool_impl => x; apply/implyP => /andP [].
+    case: (f x); by rewrite /= ?mul0r ?mul1r ?addr0 ?add0r.
+  - apply mu_monotonic => x /=.
+    case: (f x) => /=; by rewrite ?mul0r ?mul1r.
 Qed.
 
 End DistrSum.
