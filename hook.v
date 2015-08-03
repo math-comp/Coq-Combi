@@ -1202,8 +1202,8 @@ End Formule.
 
 Lemma Formula1 :
   (F_deno p)%:Q / (F_deno (decr_nth p Alpha))%:Q =
-  ( \prod_(0 <= i < Alpha) (1 + (al_length p i Beta)%:Q^-1)) *
-  ( \prod_(0 <= j < Beta)  (1 + (al_length p Alpha j)%:Q^-1)).
+  ( \prod_(0 <= i < Alpha) (1 + (al_length p i Beta )%:Q^-1) ) *
+  ( \prod_(0 <= j < Beta)  (1 + (al_length p Alpha j)%:Q^-1) ).
 Proof.
   rewrite /F_deno !big_box_in /=.
   have := Hcorn => /andP [] Hcrn /eqP HBeta.
@@ -1220,6 +1220,7 @@ Proof.
   rewrite (bigID (fun i => i.1 == Alpha)) /=.
 
   rewrite [RHS]mulrC; congr (_ * _).
+  (* Hooks on the row of (Alpha, Beta) *)
   - rewrite big_seq_cond.
     rewrite (eq_bigr (fun i => (1 + (al_length p Alpha i.2)%:Q^-1))); first last.
       move=> [r c] /= /andP []; rewrite mem_enum_box_in unfold_in /= => Hin /eqP Hr.
@@ -1259,9 +1260,25 @@ Proof.
       move=> i; rewrite mem_iota add0n /= => Hi.
       rewrite big_filter big_map big_pred0 // => j /=.
       exact: ltn_eqF (leq_trans Hi Halpha).
+
   rewrite (bigID (fun i => i.2 == Beta)) /= -[RHS]mulr1; congr (_ * _).
+
+  (* Hooks on the column of (Alpha, Beta) *)
   - admit.
-  - admit.
+
+  (* Hooks neither on the row or column of (Alpha, Beta) *)
+  - rewrite big_seq_cond (eq_bigr (fun _ => 1)).
+      by rewrite big_const_seq; elim: (count _ _) => [| n] //= ->.
+    move=> [r c] /= /and3P [].
+    rewrite mem_enum_box_in /is_box_in_shape unfold_in => Hrc Hr Hc.
+    rewrite -Hp /hook_length al_length_incr_nth.
+    + by rewrite divff // intr_eq0.
+    + exact: is_part_decr_nth.
+    + exact: in_corner_decr_nth.
+    + exact: Hrc.
+    + by rewrite eq_sym.
+    + move: Hc; rewrite eq_sym HBeta -Hp.
+      by rewrite nth_incr_nth eq_refl add1n.
 Qed.
 
 Lemma SimpleCalculation :
