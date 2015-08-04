@@ -31,7 +31,7 @@ Definition MF (A:Type) := A -> rat.
 
 Instance MFO (A:Type) : ord (MF A) := ford A rat.
 
-Canonical rat_lmodType : lmodType rat := Eval hnf in regular_lmodType rat_Ring.
+(* Canonical rat_lmodType : lmodType rat := Eval hnf in regular_lmodType rat_Ring. *)
 
 (** Type of measures on [A] *)
 
@@ -270,17 +270,15 @@ Hint Resolve mu_stable_sub mu_prob.
 
 (** ** Properties of measures *)
 
-Lemma mu_monotonic A (m: distr A) : monotonic (mu m).
+Lemma mu_monotonic {A} (m: distr A) : monotonic (mu m).
 apply fmonotonic; auto.
 Save.
 Hint Resolve mu_monotonic.
-Implicit Arguments mu_monotonic [A].
 
-Lemma mu_stable_eq A (m: distr A) : stable (mu m).
+Lemma mu_stable_eq {A} (m: distr A) : stable (mu m).
 apply fstable; auto.
 Save.
 Hint Resolve mu_stable_eq.
-Implicit Arguments mu_stable_eq [A].
 
 Lemma mu_zero A (m: distr A) : mu m \0 = 0.
 apply Mstable0; auto.
@@ -847,10 +845,9 @@ Save.
 Hint Resolve weight_nonneg.
 
 Lemma weight_case c : (weight c = 0) \/ 0 < (weight c)^-1.
-have Hc:((weight c == 0) || (0 < weight c)).
+have :((weight c == 0) || (0 < weight c)).
 rewrite -(Num.Theory.le0r (weight c)); auto.
-move:Hc; case /orP => Hc.
-move:Hc; case /eqP; auto.
+move=> /orP [/eqP ->|]; first auto.
 by rewrite Num.Theory.invr_gt0; auto.
 Save.
 
@@ -1062,8 +1059,7 @@ Lemma Uniform_unif_seq_eq (A:eqType) (d1 d2 : unif A) :
       (d1 == d2 :> seq A) -> Uniform d1 == Uniform d2.
 move => Heq f.
 rewrite 2!mu_uniform_sum.
-move: Heq; case /eqP => Heq.
-by rewrite Heq.
+by rewrite (eqP Heq).
 Save.
 
 (** Uniform distribution on a sequence with a default value *)
