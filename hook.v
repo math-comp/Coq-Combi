@@ -30,7 +30,23 @@ Require Import rat_coerce distr shape bigallpairs recyama.
 Import GRing.Theory.
 Import Num.Theory.
 
+Lemma big_nat_0cond (R : Type) (idx : R) op n f :
+  \big[op/idx]_(0 <= i < n) f i = \big[op/idx]_(0 <= i < n | (i < n)%N) f i.
+Proof.
+  rewrite big_seq_cond /=.
+  rewrite (eq_bigl (fun i => (i < n)%N)); first by [].
+  move=> i; by rewrite /= mem_index_iota leq0n /= andbT.
+Qed.
 
+Lemma big_const_idx
+      (R : Type) (idx : R) (op : Monoid.law idx)
+      (T : Type) (s : seq T) (p : pred T) (f : T -> R) :
+  (forall i, p i -> f i = idx) -> \big[op/idx]_(i <- s | p i) f i = idx.
+Proof.
+  move=> H;rewrite (eq_bigr (fun _ => idx) H).
+  rewrite big_const_seq.
+  by elim: (count _ _) => [| n /= ->]; last by rewrite Monoid.Theory.mul1m.
+Qed.
 
 Local Open Scope nat_scope.
 
@@ -462,15 +478,13 @@ Proof.
       last by move=> i; rewrite /= eq_refl.
     rewrite /p' nth_decr_nth -HBeta (eq_bigr F); last by [].
     rewrite /index_iota subn0 mulrC.
-    rewrite (eq_bigr (fun _ => 1)).
-      rewrite big_const_seq; elim: (count _ _) => [| n] /=; rewrite !mul1r //.
+    rewrite (eq_bigr (fun _ => 1)); first by rewrite big_const_idx // mul1r.
     move=> i /negbTE Hi.
     by rewrite big_filter big_map big_pred0.
   + move: HBeta; rewrite -nth_decr_nth (nth_default _ Halpha) => ->.
     rewrite /index_iota /= big_nil.
-    rewrite (eq_big_seq (fun _ => 1)).
-      by rewrite big_const_seq; elim: (count _ _) => [| n] //= ->.
-    move=> i; rewrite mem_iota add0n /= => Hi.
+    rewrite big_seq_cond.
+    apply big_const_idx => i; rewrite andbT mem_iota /= add0n => Hi.
     rewrite big_filter big_map big_pred0 // => j /=.
     exact: ltn_eqF (leq_trans Hi Halpha).
 Qed.
@@ -1168,35 +1182,20 @@ Proof.
     apply: Mstable_eq => [] [X1 X2].
     have:= Htrace => /and3P [] HA HB _; by rewrite !cons_head_behead.
   rewrite -big_seq_cond.
-  have /= := @bigID rat_ZmodType 0 (Monoid.ComLaw (@addrC _))
-                    _  (enum_trace Alpha Beta) (starts_at r c) (fun _ => true) F.
-  set null := (X in _ = (_ + X)).
-  have {null} -> : null = 0.
-    rewrite /null {null}.
-    rewrite (eq_bigr (fun _ => 0)); first last.
-      move=> [A B]; rewrite /starts_at /F {F} /= => H.
-      apply: (mu_bool_negb0 _ _ _ _ (walk_to_corner_inv _ _ _)) => [] [X Y] /=.
-      apply /implyP => /and4P [] _ _ /eqP Hr /eqP Hc.
-      subst r c.
-      move: H; apply contra => /eqP [] -> -> .
-      by rewrite !eq_refl.
-    rewrite big_const_seq.
-    by elim: (count _ _) => [| n /= ->].
-  rewrite addr0 => <-.
-  rewrite /F {F} -mu_stable_sum /ends_at.
-  have H := mu_walk_to_corner_is_trace Hin (leqnn _).
-  rewrite (mu_bool_cond _ H).
-  apply Mstable_eq => [[A B]] /=.
-  rewrite /charfun -in_seq_sum; last exact: enum_trace_uniq.
-  by rewrite enum_traceP.
-Qed.
-
-Lemma big_nat_0cond (R : Type) (idx : R) op n f :
-  \big[op/idx]_(0 <= i < n) f i = \big[op/idx]_(0 <= i < n | (i < n)%N) f i.
-Proof.
-  rewrite big_seq_cond /=.
-  rewrite (eq_bigl (fun i => (i < n)%N)); first by [].
-  move=> i; by rewrite /= mem_index_iota leq0n /= andbT.
+  transitivity (\sum_(i0 <- enum_trace Alpha Beta) F i0).
+  - rewrite /F {F} -mu_stable_sum /ends_at.
+    have H := mu_walk_to_corner_is_trace Hin (leqnn _).
+    rewrite (mu_bool_cond _ H).
+    apply Mstable_eq => [[A B]] /=.
+    rewrite /charfun -in_seq_sum; last exact: enum_trace_uniq.
+    by rewrite enum_traceP.
+  - rewrite (bigID (starts_at r c)) /= -[RHS]addr0; congr (_ + _).
+    apply big_const_idx => [[A B]]; rewrite /starts_at /F {F} /= => H.
+    apply: (mu_bool_negb0 _ _ _ _ (walk_to_corner_inv _ _ _)) => [] [X Y] /=.
+    apply /implyP => /and4P [] _ _ /eqP Hr /eqP Hc.
+    subst r c.
+    move: H; apply contra => /eqP [] -> -> .
+    by rewrite !eq_refl.
 Qed.
 
 Lemma prob_cond :
@@ -1237,38 +1236,49 @@ Section Formule.
     \prod_(i <- S) (1 + alpha i) = \sum_(s <- enum_subseqs S) \prod_(i <- s) alpha i.
   Proof.
     elim: S => [| n S IHs] //=.
-      rewrite /= big_nil.
-      by rewrite big_cons 2! big_nil addr0.
+      by rewrite /= big_nil big_cons 2! big_nil addr0.
     rewrite big_cons IHs {IHs}.
-    set sub := (enum_subseqs _).
-    rewrite big_cat /=.
-    rewrite mulrDl mul1r addrC.
+    move: (enum_subseqs _) => sub.
+    rewrite big_cat /= mulrDl mul1r addrC.
     congr ( _ + _ ).
-    rewrite big_distrr /=.
-    rewrite big_map.
+    rewrite big_distrr /= big_map.
     apply eq_bigr => i _.
     by rewrite big_cons.
   Qed.
 
 End Formule.
 
+
+Let p' := decr_nth p Alpha.
+
+Fact Hcrn : is_out_corner p Alpha.
+Proof. by have := Hcorn => /andP [] Hcrn /eqP HBeta. Qed.
+Hint Resolve Hcrn.
+
+Fact Hp : incr_nth p' Alpha = p. Proof. exact: decr_nthK. Qed.
+Fact Hpart' : is_part p'. Proof. exact: is_part_decr_nth. Qed.
+Let Hpartc' : is_part (conj_part p') := is_part_conj Hpart'.
+Hint Resolve Hpart' Hpartc'.
+
+Fact HBeta : Beta = (nth O p Alpha).-1.
+Proof. by have := Hcorn => /andP [] Hcrn /eqP HBeta. Qed.
+Fact HBeta' : Beta = (nth O p' Alpha).
+Proof. by rewrite HBeta -Hp nth_incr_nth eq_refl add1n. Qed.
+
+
+
 Lemma Formula1 :
-  (F_deno p)%:Q / (F_deno (decr_nth p Alpha))%:Q =
+  (F_deno p)%:Q / (F_deno p')%:Q =
   ( \prod_(0 <= i < Alpha) (1 + (al_length p i Beta )%:Q^-1) ) *
   ( \prod_(0 <= j < Beta)  (1 + (al_length p Alpha j)%:Q^-1) ).
 Proof.
   rewrite /F_deno !big_box_in /= /hook_length.
-  have := Hcorn => /andP [] Hcrn /eqP HBeta.
-  have:= (decr_nthK is_part_p Hcrn); set p' := decr_nth p Alpha => Hp.
-  have Hpart' : is_part p' by exact: is_part_decr_nth.
-  have Hpartc' := is_part_conj Hpart'.
   rewrite -{1}Hp -(eq_big_perm _ (box_in_incr_nth _ _)) /= big_cons.
   rewrite !PoszM /= !intrM /=.
   rewrite !(big_morph Posz PoszM (id1 := Posz 1%N)) //=.
   rewrite !(big_morph intr (@intrM _) (id1 := 1)) //=.
   rewrite -mulrA.
-  have HBeta' : (nth O p' Alpha) = Beta by rewrite HBeta -Hp nth_incr_nth eq_refl add1n.
-  rewrite HBeta' (corner_al_length0 is_part_p Hcorn) mul1r.
+  rewrite -HBeta' (corner_al_length0 is_part_p Hcorn) mul1r.
   rewrite -prodf_div /=.
   rewrite (bigID (fun i => i.1 == Alpha)) /=.
   rewrite mulrC (bigID (fun i => i.2 == Beta)) /= mulrC mulrA.
@@ -1282,9 +1292,9 @@ Proof.
     have Hcornconj := is_corner_box_conj_part is_part_p Hcorn.
     have Hconj' : (decr_nth (conj_part p) Beta) = conj_part p'.
       rewrite -Hp incr_nth_conj_part //; last exact: in_corner_decr_nth.
-      rewrite HBeta' incr_nthK //.
+      rewrite -HBeta' incr_nthK //.
       apply (is_part_incr_nth Hpartc').
-      rewrite -HBeta'; apply (is_in_corner_conj_part Hpart').
+      rewrite HBeta'; apply (is_in_corner_conj_part Hpart').
       exact: in_corner_decr_nth.
 
     transitivity (\prod_(0 <= j < Alpha) (1 + (al_length (conj_part p) Beta j)%:Q^-1));
@@ -1297,28 +1307,26 @@ Proof.
     rewrite (eq_map (f2 := swap \o swap)); last by move=> [r c].
     rewrite map_comp big_map.
     transitivity (\prod_(i <- enum_box_in p' | (i.1 != Alpha) && (i.2 == Beta)) f (swap i)).
-    + apply eq_bigr => [[r c]] _.
+      apply eq_bigr => [[r c]] _.
       by rewrite /swap /f {f} /= !al_length_conj_part.
-    + rewrite -big_filter; apply eq_big_perm.
-      apply uniq_perm_eq.
-      * apply filter_uniq; exact: enum_box_in_uniq.
-      * rewrite (map_inj_uniq swap_inj).
-        apply filter_uniq; exact: enum_box_in_uniq.
-      * move=> [r c] /=.
-        have {2}-> : (r, c) = swap (c, r) by [].
-        rewrite (mem_map swap_inj) !mem_filter /=.
-        rewrite !mem_enum_box_in !unfold_in /= /is_in_shape -!/(is_in_part _ _ _).
-        rewrite -is_in_conj_part //.
-        case: (boolP (is_in_part p' r c)) => Hrc; last by rewrite !andbF.
-        case: (altP (c =P Beta)) => /= Hc; last by rewrite !andbF.
-        rewrite !andbT.
-        move: Hrc; rewrite /is_in_part Hc -HBeta'.
-        rewrite ltnNge; by apply contra => /eqP ->.
+    rewrite -big_filter; apply eq_big_perm.
+    apply uniq_perm_eq.
+    + apply filter_uniq; exact: enum_box_in_uniq.
+    + rewrite (map_inj_uniq swap_inj).
+      apply filter_uniq; exact: enum_box_in_uniq.
+    + move=> [r c] /=.
+      have {2}-> : (r, c) = swap (c, r) by [].
+      rewrite (mem_map swap_inj) !mem_filter /=.
+      rewrite !mem_enum_box_in !unfold_in /= /is_in_shape -!/(is_in_part _ _ _).
+      rewrite -is_in_conj_part //.
+      case: (boolP (is_in_part p' r c)) => Hrc; last by rewrite !andbF.
+      case: (altP (c =P Beta)) => /= Hc; last by rewrite !andbF.
+      rewrite !andbT.
+      move: Hrc; rewrite /is_in_part Hc HBeta'.
+      rewrite ltnNge; by apply contra => /eqP ->.
 
   (* Hooks neither on the row or column of (Alpha, Beta) *)
-  - rewrite big_seq_cond (eq_bigr (fun _ => 1)).
-      by rewrite big_const_seq; elim: (count _ _) => [| n] //= ->.
-    move=> [r c] /= /and3P [].
+  - rewrite big_seq_cond; apply big_const_idx => [[r c]] /= /and3P [].
     rewrite mem_enum_box_in /is_box_in_shape unfold_in => Hrc Hr Hc.
     rewrite -Hp al_length_incr_nth.
     + by rewrite divff // intr_eq0.
@@ -1331,8 +1339,7 @@ Proof.
 Qed.
 
 Lemma SimpleCalculation :
-  \sum_(X <- enum_trace Alpha Beta) PI_trace X =
-  (F_deno p)%:Q / (F_deno (decr_nth p Alpha))%:Q.
+  \sum_(X <- enum_trace Alpha Beta) PI_trace X = (F_deno p)%:Q / (F_deno p')%:Q.
 Proof.
   rewrite /enum_trace /trace_seq /PI_trace /PI.
   rewrite big_allpairs /=.
@@ -1345,26 +1352,21 @@ Qed.
 
 
 Theorem Theorem2 :
-  mu choose_corner ends_at = (HLF (decr_nth_part p Alpha)) / (HLF p).
+  mu choose_corner ends_at = (HLF p') / (HLF p).
 Proof.
-  rewrite prob_cond /HLF.
-  have:= Hcorn => /andP [] Hout _.
-  rewrite -{1 2}(decr_nthK is_part_p Hout) /=.
-  rewrite /decr_nth_part_def Hout.
-  move Hdec : (decr_nth p Alpha) => dec.
-  rewrite sumn_incr_nth.
+  rewrite prob_cond /HLF -{1 2}Hp sumn_incr_nth.
   rewrite factS PoszM -!ratzE ratzM !ratzE.
   rat_to_ring.
   set Rhs := (RHS).
-  have -> : Rhs = ((1 / (sumn dec).+1%:Q) * (F_deno p)%:Q / (F_deno dec)%:Q).
-    rewrite /Rhs -!mulrA [(((F_deno dec)%:Q)^-1 / _)%R]mulrC !invfM !mul1r.
+  have -> : Rhs = ((1 / (sumn p').+1%:Q) * (F_deno p)%:Q / (F_deno p')%:Q).
+    rewrite /Rhs -!mulrA [(((F_deno p')%:Q)^-1 / _)%R]mulrC !invfM !mul1r.
     rewrite !mulrA [X in (X / _ / _ / _)]mulrC.
     congr (_ * _); rewrite -!mulrA; congr (_ * _).
     rewrite mulrA divff; first by rewrite invrK mul1r.
     rewrite intr_eq0 eqz_nat -lt0n.
     exact: fact_gt0.
   rewrite {Rhs} !mul1r -[RHS]mulrA; congr (_ * _).
-  rewrite -Hdec; exact: SimpleCalculation.
+  exact: SimpleCalculation.
 Qed.
 
 End EndsAt.
@@ -1388,26 +1390,22 @@ Proof.
       move: Hcorn; rewrite /is_out_corner.
       apply contraLR; by rewrite -!ltnNge ltnS => /(nth_default O) ->.
     move: Hcorn; rewrite /is_corner_box eq_refl => /andP [] _ -> /=.
-    rewrite -[RHS]addr0; congr (_ + _).
-    rewrite (eq_bigr (fun _ => 0)).
-      rewrite big_const_seq; by elim: (count _ _) => [//= | n /= ->].
-    by move=> i; rewrite eq_sym => /negbTE ->.
-  - rewrite (eq_big_seq (fun _ => 0)).
-      rewrite big_const_seq; by elim: (count _ _) => [//= | n /= ->].
-    move=> i; rewrite mem_filter => /andP [] Hout _.
+    rewrite big_const_idx // => i; by rewrite eq_sym => /negbTE ->.
+  - rewrite big_seq_cond big_const_idx // => i.
+    rewrite mem_filter andbT => /andP [] Hout _.
     suff /negbTE -> : ~~ ((last O A == i) && (last O B == (nth O p i).-1)) by [].
     move: Hcorn; rewrite /is_corner_box; apply contra => /andP [] /eqP Hi.
     subst i => ->; by rewrite Hout.
 Qed.
 
 Corollary Corollary4 :
-  p != [::] :> seq nat -> \sum_(i <- out_corners p) (HLF (decr_nth_part p i)) / (HLF p) = 1.
+  p != [::] :> seq nat -> \sum_(i <- out_corners p) (HLF (decr_nth p i)) / (HLF p) = 1.
 Proof.
   rewrite big_seq_cond => Hp.
   rewrite (eq_bigr (fun i => (mu choose_corner (ends_at i (nth O p i).-1)))); first last.
     move => i /andP [].
     rewrite /out_corners mem_filter => /andP [] Hcorn _ _.
-    apply esym; apply Theorem2.
+    apply esym. apply Theorem2.
     by rewrite /is_corner_box Hcorn eq_refl.
   rewrite -big_seq_cond -mu_stable_sum.
   rewrite /choose_corner Mlet_simpl mu_random_sum.
@@ -1426,9 +1424,13 @@ Proof.
   exact: mu_walk_to_corner_is_trace.
 Qed.
 
-Corollary Corollary4bis :
+Corollary Corollary4_intpart :
   p != [::] :> seq nat -> \sum_(i <- out_corners p) (HLF (decr_nth_part p i)) = HLF p.
-Proof. move=> /Corollary4; rewrite -mulr_suml; exact: quot_eq1. Qed.
+Proof.
+  move=> /Corollary4; rewrite -mulr_suml => /quot_eq1 <-.
+  apply eq_big_seq => i; rewrite mem_filter => /andP [] Hi _.
+  by rewrite /= /decr_nth_part_def Hi.
+Qed.
 
 End FindCorner.
 
@@ -1437,7 +1439,7 @@ Proof.
   move: p; apply card_stdtabsh_rat_rec.
   - by rewrite /HLF /= /F_deno /= big_box_in /enum_box_in /= big_nil factE.
   - move=> p Hp; apply esym.
-    rewrite /= /decr_nth_part_def /=. exact: Corollary4bis.
+    rewrite /= /decr_nth_part_def /=. exact: Corollary4_intpart.
 Qed.
 
 
