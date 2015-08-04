@@ -24,8 +24,8 @@ Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq ssrint rat
                fintype bigop path ssralg ssrnum.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
-Require Import tools subseq partition.
-Require Import distr shape bigallpairs.
+Require Import tools subseq partition stdtab.
+Require Import rat_coerce distr shape bigallpairs recyama.
 
 Import GRing.Theory.
 Import Num.Theory.
@@ -43,7 +43,7 @@ Lemma belast_empty (T : eqType) (x : T) (s : seq T) : (s == [::])%B -> belast x 
 Proof. by move => /eqP Hs; subst. Qed.
 
 Lemma cons_head_behead (T : eqType) x (s : seq T) :
-  (s != [::]) -> s = head x s :: behead s.
+  (s != [::]) -> head x s :: behead s = s.
 Proof. by case s. Qed.
 
 Lemma belast_behead_rcons (T : eqType) x l (s : seq T) :
@@ -1029,7 +1029,7 @@ Proof.
     by rewrite addn_eq0 negb_and Alen0 Blen0.
   - move: HA => /eqP HA; subst A.
     rewrite [X in (_ + X)]walk_to_corner_emptyl // addr0.
-    have HBd := (cons_head_behead O HB).
+    have HBd := esym (cons_head_behead O HB).
     rewrite {2}HBd.
     rewrite (IHm a (head O B) [::] (behead B)); first last.
       * rewrite -HBd; exact: (is_trace_tlr HB Ht).
@@ -1042,7 +1042,7 @@ Proof.
     by rewrite !mul1r mulrC.
   - move: HB => /eqP HB; subst B.
     rewrite walk_to_corner_emptyr  // add0r.
-    have HAd := (cons_head_behead O HA).
+    have HAd := esym (cons_head_behead O HA).
     rewrite {2}HAd.
     rewrite (IHm (head O A) b (behead A) [::]); first last.
       * rewrite -HAd; exact: (is_trace_tll HA Ht).
@@ -1106,13 +1106,13 @@ Proof.
     rewrite /F (enum_traceP Hcorn).
     move => /and3P [] Htrace HAlpha HBeta /eqP <- /eqP <- {F r c Hin}.
     rewrite /PI_trace -(PIprog (m := al_length p (head O A) (head O B))) /=; first last.
-    - have:= Htrace => /and3P [] HA HB _; by rewrite -!cons_head_behead.
+    - have:= Htrace => /and3P [] HA HB _; by rewrite !cons_head_behead.
     - have:= Htrace => /and3P [] HA HB _.
       case: A B HA HB Htrace {HAlpha HBeta} => [//= | a A] [//= | b B] /= _ _ Htrace.
       rewrite addnC.
       exact: (leq_add (trace_size_arm_length Htrace) (trace_size_leg_length Htrace)).
     apply: Mstable_eq => [] [X1 X2].
-    have:= Htrace => /and3P [] HA HB _; by rewrite -!cons_head_behead.
+    have:= Htrace => /and3P [] HA HB _; by rewrite !cons_head_behead.
   rewrite -big_seq_cond.
   have /= := @bigID rat_ZmodType 0 (Monoid.ComLaw (@addrC _))
                     _  (enum_trace Alpha Beta) (starts_at r c) (fun _ => true) F.
@@ -1294,7 +1294,6 @@ Proof.
   congr (_ * _); apply eq_big_seq => L _; by rewrite mul1r.
 Qed.
 
-Require Import recyama.
 
 Theorem Theorem2 :
   mu choose_corner ends_at = (F (decr_nth_part p Alpha)) / (F p).
@@ -1384,31 +1383,10 @@ Proof. move=> /Corollary4; rewrite -mulr_suml; exact: quot_eq1. Qed.
 
 End FindCorner.
 
-Require Import stdtab.
-
-Open Scope ring_scope.
-
-Lemma card_stdtabsh_rat_rec (f : intpart -> rat) :
-  f empty_part = 1 ->
-  ( forall p : intpart,
-      (p != [::] :> seq nat) ->
-      f p = \sum_(i <- out_corners p) f (decr_nth_part p i) ) ->
-  ( forall p : intpart, f p = #|stdtabsh_finType p| ).
-Proof.
-  move=> H0 Hrec.
-  elim/intpart_out_corner_ind => [//= | p Hnnil IHp] /=.
-    by rewrite H0 -card_yam_stdtabE card_yama0.
-  rewrite (Hrec _ Hnnil) -card_yam_stdtabE (card_yama_rec Hnnil).
-  rewrite (big_morph Posz PoszD (id1 := Posz O%N)) //.
-  rewrite (big_morph int_to_rat int_to_ratD (id1 := 0)) //.
- rewrite /out_corners !big_filter; apply eq_bigr => i Hi.
-  by rewrite card_yam_stdtabE IHp //=.
-Qed.
-
 Theorem HookLengthFormula (p : intpart) : F p = #|stdtabsh_finType p|.
 Proof.
   move: p; apply card_stdtabsh_rat_rec.
   - by rewrite /F /= /F_deno /= big_box_in /enum_box_in /= big_nil factE.
   - move=> p Hp; apply esym.
-    exact: Corollary4bis.
+    rewrite /= /decr_nth_part_def /=. exact: Corollary4bis.
 Qed.

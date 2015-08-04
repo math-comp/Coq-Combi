@@ -1,7 +1,7 @@
 Add Rec LoadPath "../Combi/LRrule".
 
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import bigop.
+Require Import bigop ssrint rat ssralg ssrnum.
 Require Import tools combclass partition yama stdtab.
 
 Set Implicit Arguments.
@@ -128,5 +128,28 @@ Section RecYama.
     rewrite /out_corners !big_filter; apply eq_bigr => i Hi.
     by rewrite card_yam_stdtabE IHp //=.
   Qed.
+
+  Require Import rat_coerce.
+  Import GRing.Theory.
+  Import Num.Theory.
+
+  Open Scope ring_scope.
+
+  Lemma card_stdtabsh_rat_rec (f : intpart -> rat) :
+    f empty_part = 1 ->
+    ( forall p : intpart,
+        (p != [::] :> seq nat) ->
+        f p = \sum_(i <- out_corners p) f (decr_nth_part p i) ) ->
+    ( forall p : intpart, f p = #|stdtabsh_finType p| ).
+  Proof.
+    move=> H0 Hrec.
+    elim/intpart_out_corner_ind => [//= | p Hnnil IHp] /=.
+      by rewrite H0 -card_yam_stdtabE card_yama0.
+    rewrite (Hrec _ Hnnil) -card_yam_stdtabE (card_yama_rec Hnnil).
+    rewrite (big_morph Posz PoszD (id1 := Posz O%N)) //.
+    rewrite (big_morph int_to_rat int_to_ratD (id1 := 0)) //.
+    rewrite /out_corners !big_filter; apply eq_bigr => i Hi.
+    by rewrite card_yam_stdtabE IHp //=.
+Qed.
 
 End RecYama.

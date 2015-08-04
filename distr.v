@@ -25,40 +25,11 @@ Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq ssrint rat
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
 Require Import tools subseq partition.
+Require Import rat_coerce.
 
 Import GRing.Theory.
 Import Num.Theory.
 
-(* Lemma about rational computation **************************************)
-
-Definition int_to_rat : int -> rat := intmul (GRing.one rat_Ring).
-Coercion int_to_rat : int >-> rat.
-
-Lemma int_to_ratD : {morph int_to_rat : n m / (n + m)%R >-> (n + m)%R}.
-Proof. move => m n /=; by apply mulrzDl. Qed.
-
-Lemma int_to_ratM : {morph int_to_rat : n m / (n * m)%R >-> (n * m)%R}.
-Proof. move => m n /=; by rewrite -intrM. Qed.
-
-Section FieldLemmas.
-
-Local Open Scope ring_scope.
-
-Lemma iter_plus1 n : (iter n (+%R (1 : rat)) 0 = int_to_rat n)%R.
-Proof.
-  elim: n => [//= | n IHn] /=.
-  by rewrite -add1n PoszD IHn /int_to_rat mulrzDl.
-Qed.
-
-Lemma quot_eq1 (R : fieldType) (x y : R) : x / y = 1 -> x = y.
-Proof.
-  move=> H.
-  have := GRing.Field.intro_unit H; rewrite invr_eq0 => Hy.
-  rewrite -[y]mul1r -H -mulrA [_ * y]mulrC.
-  by rewrite (divff Hy) mulr1.
-Qed.
-
-End FieldLemmas.
 
 
 (* TODO : Move in Qmeasure *)

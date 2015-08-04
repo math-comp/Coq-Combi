@@ -81,13 +81,15 @@ endif
 #                    #
 ######################
 
-VFILES:=program.v\
-  equerre.v\
-  recyama.v\
-  shape.v\
-  hook.v\
+VFILES:=\
+  rat_coerce.v\
   bigallpairs.v\
-  Qmeasure.v
+  Qmeasure.v\
+  distr.v\
+  shape.v\
+  recyama.v\
+  hook.v\
+  # program.v\ equerre.v\
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))

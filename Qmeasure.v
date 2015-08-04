@@ -7,8 +7,8 @@ Require Import Misc Ccpo.
 Set Implicit Arguments.
 Local Open Scope O_scope.
 
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype rat 
-               finfun ssrnum ssralg ssrint bigop.
+Require Import ssreflect ssrfun eqtype ssrbool ssrnat seq choice fintype finfun
+                bigop ssrint rat ssralg ssrnum.
 Import GRing.
 Local Open Scope ring_scope.
 
