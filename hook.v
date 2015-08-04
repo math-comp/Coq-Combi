@@ -423,6 +423,59 @@ Proof.
   move: Hi2; by case: (nth 0 sh i.+1).
 Qed.
 
+Open Scope ring_scope.
+
+Lemma prod_al_length_quot_row p Alpha Beta :
+  is_part p -> is_corner_box p Alpha Beta ->
+  \prod_(i <- enum_box_in (decr_nth p Alpha) | i.1 == Alpha)
+   ((al_length p i.1 i.2).+1%:Q / (al_length (decr_nth p Alpha) i.1 i.2).+1%:Q) =
+  \prod_(0 <= j < Beta) (1 + (al_length p Alpha j)%:Q^-1).
+Proof.
+  move=> Hpart Hcorn.
+  have := Hcorn => /andP [] Hcrn /eqP HBeta.
+  have:= (decr_nthK Hpart Hcrn); set p' := decr_nth p Alpha => Hp.
+  rewrite big_seq_cond.
+  rewrite (eq_bigr (fun i => (1 + (al_length p Alpha i.2)%:Q^-1))); first last.
+    move=> [r c] /= /andP []; rewrite mem_enum_box_in unfold_in /= => Hin /eqP Hr.
+    subst r.
+    rewrite -Hp al_length_incr_nth_row; first last.
+    - exact: Hin.
+    - rewrite /p'.
+    - by apply in_corner_decr_nth.
+    - by apply is_part_decr_nth.
+    move: (al_length p' Alpha c) => n.
+    have Hn : n.+1%:Q != 0 by rewrite intr_eq0.
+    rewrite -{3}(divff Hn) -{3}div1r -mulrDl; congr (_ / _).
+    by rewrite -addn1 PoszD mulrzDl.
+  rewrite -big_seq_cond.
+  set f := (X in _ = \prod_(i <- _) X i).
+  transitivity (\prod_(i <- [seq i.2 | i <- enum_box_in p' & i.1 == Alpha]) f i).
+    rewrite big_map big_filter; exact: eq_bigr.
+  move: (f) => F {f}.
+  rewrite big_map /enum_box_in filter_flatten big_flatten /= -map_comp big_map.
+  case: (ltnP Alpha (size p')) => Halpha.
+  + rewrite (bigD1_seq Alpha) /=; first last.
+    - exact: iota_uniq.
+    - rewrite mem_iota add0n.
+    - by rewrite Halpha.
+    rewrite big_filter big_map (eq_bigl (fun _ => true));
+      last by move=> i; rewrite /= eq_refl.
+    rewrite /p' nth_decr_nth -HBeta (eq_bigr F); last by [].
+    rewrite /index_iota subn0 mulrC.
+    rewrite (eq_bigr (fun _ => 1)).
+      rewrite big_const_seq; elim: (count _ _) => [| n] /=; rewrite !mul1r //.
+    move=> i /negbTE Hi.
+    by rewrite big_filter big_map big_pred0.
+  + move: HBeta; rewrite -nth_decr_nth (nth_default _ Halpha) => ->.
+    rewrite /index_iota /= big_nil.
+    rewrite (eq_big_seq (fun _ => 1)).
+      by rewrite big_const_seq; elim: (count _ _) => [| n] //= ->.
+    move=> i; rewrite mem_iota add0n /= => Hi.
+    rewrite big_filter big_map big_pred0 // => j /=.
+    exact: ltn_eqF (leq_trans Hi Halpha).
+Qed.
+
+Close Scope ring_scope.
 
 Section FindCorner.
 
@@ -1175,8 +1228,6 @@ Qed.
 
 Section Formule.
 
-  Open Scope ring_scope.
-
   Variable T : countType.
   Variable R : comRingType.
   Variable alpha : T -> R.
@@ -1205,73 +1256,70 @@ Lemma Formula1 :
   ( \prod_(0 <= i < Alpha) (1 + (al_length p i Beta )%:Q^-1) ) *
   ( \prod_(0 <= j < Beta)  (1 + (al_length p Alpha j)%:Q^-1) ).
 Proof.
-  rewrite /F_deno !big_box_in /=.
+  rewrite /F_deno !big_box_in /= /hook_length.
   have := Hcorn => /andP [] Hcrn /eqP HBeta.
   have:= (decr_nthK is_part_p Hcrn); set p' := decr_nth p Alpha => Hp.
+  have Hpart' : is_part p' by exact: is_part_decr_nth.
+  have Hpartc' := is_part_conj Hpart'.
   rewrite -{1}Hp -(eq_big_perm _ (box_in_incr_nth _ _)) /= big_cons.
   rewrite !PoszM /= !intrM /=.
   rewrite !(big_morph Posz PoszM (id1 := Posz 1%N)) //=.
   rewrite !(big_morph intr (@intrM _) (id1 := 1)) //=.
   rewrite -mulrA.
-  have -> : (nth O p' Alpha) = Beta.
-    by rewrite HBeta -Hp nth_incr_nth eq_refl add1n.
-  rewrite {1}/hook_length (corner_al_length0 is_part_p Hcorn) mul1r.
+  have HBeta' : (nth O p' Alpha) = Beta by rewrite HBeta -Hp nth_incr_nth eq_refl add1n.
+  rewrite HBeta' (corner_al_length0 is_part_p Hcorn) mul1r.
   rewrite -prodf_div /=.
   rewrite (bigID (fun i => i.1 == Alpha)) /=.
+  rewrite mulrC (bigID (fun i => i.2 == Beta)) /= mulrC mulrA.
+  rewrite [RHS]mulrC -[RHS]mulr1; congr (_ * _ * _).
 
-  rewrite [RHS]mulrC; congr (_ * _).
   (* Hooks on the row of (Alpha, Beta) *)
-  - rewrite big_seq_cond.
-    rewrite (eq_bigr (fun i => (1 + (al_length p Alpha i.2)%:Q^-1))); first last.
-      move=> [r c] /= /andP []; rewrite mem_enum_box_in unfold_in /= => Hin /eqP Hr.
-      subst r.
-      rewrite /hook_length -Hp al_length_incr_nth_row; first last.
-      - exact: Hin.
-      - rewrite /p'.
-      - by apply in_corner_decr_nth.
-      - by apply is_part_decr_nth.
-      move: (al_length p' Alpha c) => n.
-      have Hn : n.+1%:Q != 0 by rewrite intr_eq0.
-      rewrite -{3}(divff Hn) -{3}div1r -mulrDl; congr (_ / _).
-      by rewrite -addn1 PoszD mulrzDl.
-    rewrite -big_seq_cond.
-    set f := (X in _ = \prod_(i <- _) X i).
-    transitivity (\prod_(i <- [seq i.2 | i <- enum_box_in p' & i.1 == Alpha]) f i).
-      rewrite big_map big_filter; exact: eq_bigr.
-    move: (f) => F {f}.
-    rewrite big_map /enum_box_in filter_flatten big_flatten /= -map_comp big_map.
-    case: (ltnP Alpha (size p')) => Halpha.
-    + rewrite (bigD1_seq Alpha) /=; first last.
-      - exact: iota_uniq.
-      - rewrite mem_iota add0n.
-      - by rewrite Halpha.
-      rewrite big_filter big_map (eq_bigl (fun _ => true));
-        last by move=> i; rewrite /= eq_refl.
-      rewrite /p' nth_decr_nth -HBeta (eq_bigr F); last by [].
-      rewrite /index_iota subn0 mulrC.
-      rewrite (eq_bigr (fun _ => 1)).
-        rewrite big_const_seq; elim: (count _ _) => [| n] /=; rewrite !mul1r //.
-      move=> i /negbTE Hi.
-      by rewrite big_filter big_map big_pred0.
-    + move: HBeta; rewrite -nth_decr_nth (nth_default _ Halpha) => ->.
-      rewrite /index_iota /= big_nil.
-      rewrite (eq_big_seq (fun _ => 1)).
-        by rewrite big_const_seq; elim: (count _ _) => [| n] //= ->.
-      move=> i; rewrite mem_iota add0n /= => Hi.
-      rewrite big_filter big_map big_pred0 // => j /=.
-      exact: ltn_eqF (leq_trans Hi Halpha).
-
-  rewrite (bigID (fun i => i.2 == Beta)) /= -[RHS]mulr1; congr (_ * _).
+  - exact: prod_al_length_quot_row.
 
   (* Hooks on the column of (Alpha, Beta) *)
-  - admit.
+  - have Hpartconj := is_part_conj is_part_p.
+    have Hcornconj := is_corner_box_conj_part is_part_p Hcorn.
+    have Hconj' : (decr_nth (conj_part p) Beta) = conj_part p'.
+      rewrite -Hp incr_nth_conj_part //; last exact: in_corner_decr_nth.
+      rewrite HBeta' incr_nthK //.
+      apply (is_part_incr_nth Hpartc').
+      rewrite -HBeta'; apply (is_in_corner_conj_part Hpart').
+      exact: in_corner_decr_nth.
+
+    transitivity (\prod_(0 <= j < Alpha) (1 + (al_length (conj_part p) Beta j)%:Q^-1));
+      last by apply eq_bigr => i _; rewrite al_length_conj_part.
+    rewrite -(prod_al_length_quot_row Hpartconj Hcornconj) Hconj'.
+    pose swap i : nat * nat := (i.2, i.1).
+    have swap_inj : injective swap by apply (can_inj (g := swap)) => [] [r c].
+    rewrite -[RHS]big_filter; set f := (X in \prod_(i <- _) X i).
+    rewrite -[X in \prod_(i <- X) _]map_id.
+    rewrite (eq_map (f2 := swap \o swap)); last by move=> [r c].
+    rewrite map_comp big_map.
+    transitivity (\prod_(i <- enum_box_in p' | (i.1 != Alpha) && (i.2 == Beta)) f (swap i)).
+    + apply eq_bigr => [[r c]] _.
+      by rewrite /swap /f {f} /= !al_length_conj_part.
+    + rewrite -big_filter; apply eq_big_perm.
+      apply uniq_perm_eq.
+      * apply filter_uniq; exact: enum_box_in_uniq.
+      * rewrite (map_inj_uniq swap_inj).
+        apply filter_uniq; exact: enum_box_in_uniq.
+      * move=> [r c] /=.
+        have {2}-> : (r, c) = swap (c, r) by [].
+        rewrite (mem_map swap_inj) !mem_filter /=.
+        rewrite !mem_enum_box_in !unfold_in /= /is_in_shape -!/(is_in_part _ _ _).
+        rewrite -is_in_conj_part //.
+        case: (boolP (is_in_part p' r c)) => Hrc; last by rewrite !andbF.
+        case: (altP (c =P Beta)) => /= Hc; last by rewrite !andbF.
+        rewrite !andbT.
+        move: Hrc; rewrite /is_in_part Hc -HBeta'.
+        rewrite ltnNge; by apply contra => /eqP ->.
 
   (* Hooks neither on the row or column of (Alpha, Beta) *)
   - rewrite big_seq_cond (eq_bigr (fun _ => 1)).
       by rewrite big_const_seq; elim: (count _ _) => [| n] //= ->.
     move=> [r c] /= /and3P [].
     rewrite mem_enum_box_in /is_box_in_shape unfold_in => Hrc Hr Hc.
-    rewrite -Hp /hook_length al_length_incr_nth.
+    rewrite -Hp al_length_incr_nth.
     + by rewrite divff // intr_eq0.
     + exact: is_part_decr_nth.
     + exact: in_corner_decr_nth.
