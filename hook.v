@@ -38,25 +38,12 @@ Proof.
   move=> i; by rewrite /= mem_index_iota leq0n /= andbT.
 Qed.
 
-Lemma big_const_idx
-      (R : Type) (idx : R) (op : Monoid.law idx)
-      (T : Type) (s : seq T) (p : pred T) (f : T -> R) :
-  (forall i, p i -> f i = idx) -> \big[op/idx]_(i <- s | p i) f i = idx.
-Proof.
-  move=> H;rewrite (eq_bigr (fun _ => idx) H).
-  rewrite big_const_seq.
-  by elim: (count _ _) => [| n /= ->]; last by rewrite Monoid.Theory.mul1m.
-Qed.
-
 Local Open Scope nat_scope.
 
 (* TODO : move in LRrule/tools *)
 Lemma filter_flatten (T : eqType) (s : seq (seq T)) (P : pred T) :
   filter P (flatten s) = flatten [seq filter P i | i <- s].
 Proof. elim: s => [//= | s0 s /= <-]; exact: filter_cat. Qed.
-
-Lemma belast_empty (T : eqType) (x : T) (s : seq T) : (s == [::])%B -> belast x s = [::].
-Proof. by move => /eqP Hs; subst. Qed.
 
 Lemma cons_head_behead (T : eqType) x (s : seq T) :
   (s != [::]) -> head x s :: behead s = s.
@@ -109,14 +96,124 @@ Proof.
 Qed.
 
 
-
-
+(* TODO : move in LRrule/partition.v *)
 Lemma is_in_part_le (sh : seq nat) r c j k :
   is_part sh -> is_in_part sh r c -> j <= r -> k <= c -> is_in_part sh j k.
 Proof.
   rewrite /is_in_part => /is_part_ijP [] _ Hpart Hcr /Hpart Hrj Hkc.
   exact: leq_ltn_trans Hkc (leq_trans Hcr Hrj).
 Qed.
+
+
+(* TODO : move in LRrule/partition.v *)
+Lemma incr_first_n_nthC sh i j :
+  incr_first_n (incr_nth sh i) j = incr_nth (incr_first_n sh j) i.
+Proof.
+  elim: sh i j => [| s0 sh IHsh].
+    elim=> [| i IHi] [|j] //=.
+    have {IHi} /= <- := IHi j.
+    by case: i.
+  case=> [| i] [| j] //=.
+  by rewrite IHsh.
+Qed.
+
+(* TODO : move in LRrule/partition.v *)
+Lemma incr_nth_conj_part sh i :
+  is_part sh -> is_in_corner sh i ->
+  conj_part (incr_nth sh i) = incr_nth (conj_part sh) (nth 0 sh i).
+Proof.
+  elim: sh i => [| s0 sh IHsh] i /=.
+    by rewrite /is_in_corner /= !nth_nil => _ /orP [] // /eqP ->.
+  move=> /= /andP [] H0 Hpart.
+  case: i => [_ | i Hcrn]/=.
+    have Hszconj: (size (conj_part sh) <= s0)%N.
+      rewrite (size_conj_part Hpart).
+      move: H0; case sh => [| n _] //=; exact: ltnW.
+    have Hszn : size (incr_first_n (conj_part sh) s0.+1) = s0.+1.
+      by rewrite size_incr_first_n; last exact: (leq_trans Hszconj).
+    apply (eq_from_nth (x0 := 0)).
+    - rewrite Hszn.
+      by rewrite size_incr_nth ltnNge (size_incr_first_n Hszconj) leqnn /=.
+    - move=> i; rewrite Hszn => Hi.
+      rewrite nth_incr_nth !nth_incr_first_n Hi ltn_neqAle.
+      move: Hi; rewrite ltnS eq_sym => ->.
+      case: eqP => /= _; by rewrite ?add0n ?add1n.
+  rewrite (IHsh _ Hpart); first exact: incr_first_n_nthC.
+  move: Hcrn => /=; by case: i.
+Qed.
+
+(* TODO : move in LRrule/partition.v *)
+Lemma is_in_corner_conj_part sh r :
+  is_part sh -> is_in_corner sh r -> is_in_corner (conj_part sh) (nth 0 sh r).
+Proof.
+  case: (altP ( r =P 0)) => Hr; rewrite /is_in_corner /= => Hpart /orP [].
+  - move=> /eqP ->.
+    have := part_head_non0 Hpart.
+    case: sh Hpart => [//= | s0 sh] /= /andP [] Hs0 Hpart Hs0n0.
+    apply/orP; right.
+    rewrite !nth_incr_first_n ltnn.
+    have -> /= : s0.-1 < s0 by move: Hs0n0; case s0.
+    rewrite ltnS {Hs0}.
+    case: s0 Hs0n0 => [//= | s0] _.
+    have := is_part_conj Hpart => /is_partP [] _; by apply.
+ - by rewrite Hr ltnn.
+ - by rewrite (negbTE Hr).
+ - move=> Hnthr.
+   case: eqP => //= /eqP H.
+   have : nth 0 sh r <= nth 0 sh r < nth 0 sh r.-1 by rewrite leqnn Hnthr.
+   rewrite -(nth_conjE _ Hpart Hr) => /eqP.
+   rewrite -(conj_ltnE Hpart) => ->.
+   move: H; by case: (nth 0 sh r).
+Qed.
+
+(* TODO : move in LRrule/partition.v *)
+Lemma out_corner_incr_nth sh i :
+  is_part sh -> is_in_corner sh i -> is_out_corner (incr_nth sh i) i.
+Proof.
+  rewrite /is_in_corner /is_out_corner /= nth_incr_nth eq_refl add1n.
+  case: i => [/= | i].
+    case: sh => [// | s0 [// | s1 s]] /= /andP [].
+    by rewrite ltnS.
+  move=> Hpart /orP [] //; rewrite [i.+1.-1]/=.
+  elim: sh i Hpart => [| s0 sh IHsh] i /=; first by rewrite !nth_nil.
+  move=> /andP [] Hhead Hpart.
+  case: i => [_|i].
+    move: Hhead; case: sh Hpart {IHsh} => [//= | s1 [//= | s2 sh]] /= /andP [].
+    by rewrite ltnS.
+  by move=> /(IHsh i Hpart).
+Qed.
+
+(* TODO : move in LRrule/partition.v *)
+Lemma nth_decr_nth sh i :
+  nth 0 (decr_nth sh i) i = (nth 0 sh i).-1.
+Proof. by elim: i sh => [| i IHi] [| [|[|s0]] sh] /=. Qed.
+
+(* TODO : move in LRrule/partition.v *)
+Lemma nth_decr_nth_neq sh i j :
+  is_part sh -> is_out_corner sh i -> i != j -> nth 0 (decr_nth sh i) j = nth 0 sh j.
+Proof.
+  move=> Hpart Hcrn /negbTE Hij.
+  rewrite -{2}(decr_nthK Hpart Hcrn).
+  by rewrite nth_incr_nth Hij add0n.
+Qed.
+
+(* TODO : move in LRrule/partition.v *)
+Lemma in_corner_decr_nth sh i :
+  is_part sh -> is_out_corner sh i -> is_in_corner (decr_nth sh i) i.
+Proof.
+  move=> Hpart Hout.
+  rewrite /is_in_corner /=.
+  case: i Hout => [//=|i] Hout; rewrite [i.+1.-1]/=.
+  apply/orP; right.
+  rewrite nth_decr_nth nth_decr_nth_neq //; last by rewrite eq_sym ieqi1F.
+  move: Hout; rewrite /is_out_corner => Hi2.
+  have:= is_partP _ Hpart => [] [] _ Hdecr.
+  apply: leq_trans _ (Hdecr i).
+  move: Hi2; by case: (nth 0 sh i.+1).
+Qed.
+
+
+(* Corner Box ***********************************)
 
 Definition is_corner_box sh r c := (is_out_corner sh r && (c == (nth 0 sh r).-1)).
 
@@ -206,7 +303,6 @@ Proof.
   exact: leg_length_ltr.
 Qed.
 
-
 Lemma al_length0_corner sh r c :
   is_part sh -> is_in_part sh r c -> al_length sh r c = 0 -> is_corner_box sh r c.
 Proof.
@@ -246,7 +342,7 @@ Proof.
   by rewrite corner_arm_length0 // corner_leg_length0 //.
 Qed.
 
-Lemma arm_length_corner_box sh (r c u v : nat) :
+Lemma arm_length_corner_box sh r c u v :
   is_part sh ->
   r <= u -> c <= v -> is_corner_box sh u v ->
   arm_length sh r c = arm_length sh u c + arm_length sh r v.
@@ -264,7 +360,7 @@ Proof.
   by rewrite !subSn //= addnC addnBA // subnK.
 Qed.
 
-Lemma leg_length_corner_box sh (r c u v : nat) :
+Lemma leg_length_corner_box sh r c u v :
   is_part sh ->
   r <= u -> c <= v -> is_corner_box sh u v ->
   leg_length sh r c = leg_length sh u c + leg_length sh r v.
@@ -274,7 +370,7 @@ Proof.
   exact: is_corner_box_conj_part.
 Qed.
 
-Lemma al_length_corner_box sh (r c u v : nat) :
+Lemma al_length_corner_box sh r c u v :
   is_part sh -> r <= u -> c <= v -> is_corner_box sh u v ->
   al_length sh r c = al_length sh u c + al_length sh r v.
 Proof.
@@ -282,42 +378,6 @@ Proof.
   rewrite /al_length (arm_length_corner_box Hpart Hru Hcv Hcorn).
   rewrite /al_length (leg_length_corner_box Hpart Hru Hcv Hcorn).
   rewrite !addnA; congr (_ + _); rewrite -!addnA; congr (_ + _); by rewrite addnC.
-Qed.
-
-
-Lemma incr_first_n_nthC sh i j :
-  incr_first_n (incr_nth sh i) j = incr_nth (incr_first_n sh j) i.
-Proof.
-  elim: sh i j => [| s0 sh IHsh].
-    elim=> [| i IHi] [|j] //=.
-    have {IHi} /= <- := IHi j.
-    by case: i.
-  case=> [| i] [| j] //=.
-  by rewrite IHsh.
-Qed.
-
-Lemma incr_nth_conj_part sh i :
-  is_part sh -> is_in_corner sh i ->
-  conj_part (incr_nth sh i) = incr_nth (conj_part sh) (nth 0 sh i).
-Proof.
-  elim: sh i => [| s0 sh IHsh] i /=.
-    by rewrite /is_in_corner /= !nth_nil => _ /orP [] // /eqP ->.
-  move=> /= /andP [] H0 Hpart.
-  case: i => [_ | i Hcrn]/=.
-    have Hszconj: (size (conj_part sh) <= s0)%N.
-      rewrite (size_conj_part Hpart).
-      move: H0; case sh => [| n _] //=; exact: ltnW.
-    have Hszn : size (incr_first_n (conj_part sh) s0.+1) = s0.+1.
-      by rewrite size_incr_first_n; last exact: (leq_trans Hszconj).
-    apply (eq_from_nth (x0 := 0)).
-    - rewrite Hszn.
-      by rewrite size_incr_nth ltnNge (size_incr_first_n Hszconj) leqnn /=.
-    - move=> i; rewrite Hszn => Hi.
-      rewrite nth_incr_nth !nth_incr_first_n Hi ltn_neqAle.
-      move: Hi; rewrite ltnS eq_sym => ->.
-      case: eqP => /= _; by rewrite ?add0n ?add1n.
-  rewrite (IHsh _ Hpart); first exact: incr_first_n_nthC.
-  move: Hcrn => /=; by case: i.
 Qed.
 
 Lemma arm_length_incr_nth_row sh r c :
@@ -347,29 +407,6 @@ Proof.
   by rewrite add0n.
 Qed.
 
-Lemma is_in_corner_conj_part sh r :
-  is_part sh -> is_in_corner sh r -> is_in_corner (conj_part sh) (nth 0 sh r).
-Proof.
-  case: (altP ( r =P 0)) => Hr; rewrite /is_in_corner /= => Hpart /orP [].
-  - move=> /eqP ->.
-    have := part_head_non0 Hpart.
-    case: sh Hpart => [//= | s0 sh] /= /andP [] Hs0 Hpart Hs0n0.
-    apply/orP; right.
-    rewrite !nth_incr_first_n ltnn.
-    have -> /= : s0.-1 < s0 by move: Hs0n0; case s0.
-    rewrite ltnS {Hs0}.
-    case: s0 Hs0n0 => [//= | s0] _.
-    have := is_part_conj Hpart => /is_partP [] _; by apply.
- - by rewrite Hr ltnn.
- - by rewrite (negbTE Hr).
- - move=> Hnthr.
-   case: eqP => //= /eqP H.
-   have : nth 0 sh r <= nth 0 sh r < nth 0 sh r.-1 by rewrite leqnn Hnthr.
-   rewrite -(nth_conjE _ Hpart Hr) => /eqP.
-   rewrite -(conj_ltnE Hpart) => ->.
-   move: H; by case: (nth 0 sh r).
-Qed.
-
 Lemma al_length_incr_nth_col sh r i :
   is_part sh -> is_in_corner sh r ->
   is_in_part sh i (nth 0 sh r) ->
@@ -397,47 +434,6 @@ Proof.
     exact: arm_length_incr_nth_nrow.
 Qed.
 
-Lemma out_corner_incr_nth sh i :
-  is_part sh -> is_in_corner sh i -> is_out_corner (incr_nth sh i) i.
-Proof.
-  rewrite /is_in_corner /is_out_corner /= nth_incr_nth eq_refl add1n.
-  case: i => [/= | i].
-    case: sh => [// | s0 [// | s1 s]] /= /andP [].
-    by rewrite ltnS.
-  move=> Hpart /orP [] //; rewrite [i.+1.-1]/=.
-  elim: sh i Hpart => [| s0 sh IHsh] i /=; first by rewrite !nth_nil.
-  move=> /andP [] Hhead Hpart.
-  case: i => [_|i].
-    move: Hhead; case: sh Hpart {IHsh} => [//= | s1 [//= | s2 sh]] /= /andP [].
-    by rewrite ltnS.
-  by move=> /(IHsh i Hpart).
-Qed.
-
-Lemma nth_decr_nth sh i :
-  nth 0 (decr_nth sh i) i = (nth 0 sh i).-1.
-Proof. by elim: i sh => [| i IHi] [| [|[|s0]] sh] /=. Qed.
-
-Lemma nth_decr_nth_neq sh i j :
-  is_part sh -> is_out_corner sh i -> i != j -> nth 0 (decr_nth sh i) j = nth 0 sh j.
-Proof.
-  move=> Hpart Hcrn /negbTE Hij.
-  rewrite -{2}(decr_nthK Hpart Hcrn).
-  by rewrite nth_incr_nth Hij add0n.
-Qed.
-
-Lemma in_corner_decr_nth sh i :
-  is_part sh -> is_out_corner sh i -> is_in_corner (decr_nth sh i) i.
-Proof.
-  move=> Hpart Hout.
-  rewrite /is_in_corner /=.
-  case: i Hout => [//=|i] Hout; rewrite [i.+1.-1]/=.
-  apply/orP; right.
-  rewrite nth_decr_nth nth_decr_nth_neq //; last by rewrite eq_sym ieqi1F.
-  move: Hout; rewrite /is_out_corner => Hi2.
-  have:= is_partP _ Hpart => [] [] _ Hdecr.
-  apply: leq_trans _ (Hdecr i).
-  move: Hi2; by case: (nth 0 sh i.+1).
-Qed.
 
 Open Scope ring_scope.
 
@@ -478,13 +474,13 @@ Proof.
       last by move=> i; rewrite /= eq_refl.
     rewrite /p' nth_decr_nth -HBeta (eq_bigr F); last by [].
     rewrite /index_iota subn0 mulrC.
-    rewrite (eq_bigr (fun _ => 1)); first by rewrite big_const_idx // mul1r.
+    rewrite (eq_bigr (fun _ => 1)); first by rewrite big1 // mul1r.
     move=> i /negbTE Hi.
     by rewrite big_filter big_map big_pred0.
   + move: HBeta; rewrite -nth_decr_nth (nth_default _ Halpha) => ->.
     rewrite /index_iota /= big_nil.
     rewrite big_seq_cond.
-    apply big_const_idx => i; rewrite andbT mem_iota /= add0n => Hi.
+    apply big1 => i; rewrite andbT mem_iota /= add0n => Hi.
     rewrite big_filter big_map big_pred0 // => j /=.
     exact: ltn_eqF (leq_trans Hi Halpha).
 Qed.
@@ -912,11 +908,13 @@ Qed.
 
 
 Lemma walk_to_corner_decomp m a b (A B : seq nat) :
-  (size (hook_next_seq a b) != 0)%N -> is_trace (a::A) (b::B) ->
+  (size (hook_next_seq a b) != 0)%N ->
+  is_trace (a::A) (b::B) ->
   mu (walk_to_corner m.+1 a b) (charfun (a :: A) (b :: B))
-  = (mu (walk_to_corner m  a (head O B)) (charfun (a :: A) B) +
-     mu (walk_to_corner m  (head O A) b) (charfun A (b :: B)) )
-        / (size (hook_next_seq a b))%:Q.
+  =
+  ( mu (walk_to_corner m  a (head O B)) (charfun (a :: A) B) +
+    mu (walk_to_corner m  (head O A) b) (charfun A (b :: B))
+  ) / (size (hook_next_seq a b))%:Q.
 Proof.
   move => Hs Ht.
   rewrite (walk_to_corner_rec_simpl _ Hs) Mlet_simpl.
@@ -1013,7 +1011,7 @@ Proof.
       move=> [A B]; apply /andP; by split; first apply mu_bool_0le.
     rewrite [RHS](mu_pos_cond _ (walk_to_corner_inv m j c)); first last.
       move=> [A B]; by case: (is_trace _ _).
-    apply Mstable_eq => [] [A B].
+    apply Mstable_eq => [] [A B] /=.
     case: eqP => /=; first by rewrite !mul0r.
     case: eqP => /=; first by rewrite !mul0r.
     case: eqP => /=; last by rewrite !mul0r.
@@ -1137,7 +1135,7 @@ Variable (Alpha Beta : nat).
 Hypothesis Hcorn : is_corner_box p Alpha Beta.
 
 Definition starts_at r c := (fun R => (head O R.1 == r) && (head O R.2 == c)).
-Definition ends_at := (fun R => (last O R.1 == Alpha) && (last O R.2 == Beta)).
+Definition ends_at   r c := (fun R => (last O R.1 == r) && (last O R.2 == c)).
 Definition PI_trace X := (PI (head O X.1) (head O X.2) (behead X.1) (behead X.2)).
 
 Lemma sumnpSPE : (sumn p).-1.+1 = sumn p.
@@ -1160,7 +1158,7 @@ Definition HLF sh :=  (((sumn sh)`!)%:Q / (F_deno sh)%:Q)%R.
 Lemma reshape_coord_walk_to :
   forall i, (i < sumn p)%N ->
   (mu (let (r, c) := reshape_coord p i in
-       walk_to_corner (al_length p r c) r c)) ends_at =
+       walk_to_corner (al_length p r c) r c)) (ends_at Alpha Beta) =
   \sum_(X <- enum_trace Alpha Beta | let (r, c) := reshape_coord p i in starts_at r c X)
    PI_trace X.
 Proof.
@@ -1190,7 +1188,7 @@ Proof.
     rewrite /charfun -in_seq_sum; last exact: enum_trace_uniq.
     by rewrite enum_traceP.
   - rewrite (bigID (starts_at r c)) /= -[RHS]addr0; congr (_ + _).
-    apply big_const_idx => [[A B]]; rewrite /starts_at /F {F} /= => H.
+    apply big1 => [[A B]]; rewrite /starts_at /F {F} /= => H.
     apply: (mu_bool_negb0 _ _ _ _ (walk_to_corner_inv _ _ _)) => [] [X Y] /=.
     apply /implyP => /and4P [] _ _ /eqP Hr /eqP Hc.
     subst r c.
@@ -1198,8 +1196,8 @@ Proof.
     by rewrite !eq_refl.
 Qed.
 
-Lemma prob_cond :
-  mu choose_corner ends_at =
+Lemma prob_choose_corner_ends_at :
+  mu choose_corner (ends_at Alpha Beta) =
   1 / (sumn p)%:Q * \sum_(X <- enum_trace Alpha Beta) PI_trace X.
 Proof.
   rewrite /choose_corner MLet_simpl mu_random_sum sumnpSPE.
@@ -1326,7 +1324,7 @@ Proof.
       rewrite ltnNge; by apply contra => /eqP ->.
 
   (* Hooks neither on the row or column of (Alpha, Beta) *)
-  - rewrite big_seq_cond; apply big_const_idx => [[r c]] /= /and3P [].
+  - rewrite big_seq_cond; apply big1 => [[r c]] /= /and3P [].
     rewrite mem_enum_box_in /is_box_in_shape unfold_in => Hrc Hr Hc.
     rewrite -Hp al_length_incr_nth.
     + by rewrite divff // intr_eq0.
@@ -1352,9 +1350,9 @@ Qed.
 
 
 Theorem Theorem2 :
-  mu choose_corner ends_at = (HLF p') / (HLF p).
+  mu choose_corner (ends_at Alpha Beta) = (HLF p') / (HLF p).
 Proof.
-  rewrite prob_cond /HLF -{1 2}Hp sumn_incr_nth.
+  rewrite prob_choose_corner_ends_at /HLF -{1 2}Hp sumn_incr_nth.
   rewrite factS PoszM -!ratzE ratzM !ratzE.
   rat_to_ring.
   set Rhs := (RHS).
@@ -1390,8 +1388,8 @@ Proof.
       move: Hcorn; rewrite /is_out_corner.
       apply contraLR; by rewrite -!ltnNge ltnS => /(nth_default O) ->.
     move: Hcorn; rewrite /is_corner_box eq_refl => /andP [] _ -> /=.
-    rewrite big_const_idx // => i; by rewrite eq_sym => /negbTE ->.
-  - rewrite big_seq_cond big_const_idx // => i.
+    rewrite big1 // => i; by rewrite eq_sym => /negbTE ->.
+  - rewrite big_seq_cond big1 // => i.
     rewrite mem_filter andbT => /andP [] Hout _.
     suff /negbTE -> : ~~ ((last O A == i) && (last O B == (nth O p i).-1)) by [].
     move: Hcorn; rewrite /is_corner_box; apply contra => /andP [] /eqP Hi.
