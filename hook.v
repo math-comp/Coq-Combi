@@ -20,8 +20,8 @@ Require Import Misc Ccpo Qmeasure.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq ssrint rat
-               fintype bigop path ssralg ssrnum.
+Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq
+        ssrint div rat fintype bigop path ssralg ssrnum.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
 Require Import tools subseq partition stdtab.
@@ -806,6 +806,7 @@ Proof.
 Qed.
 
 
+(* Probabilistic algorithm ****************************************)
 
 Fixpoint walk_to_corner (m : nat) (i j : nat) : distr ((seq nat) * (seq nat)) :=
    if m is m'.+1 then
@@ -1139,7 +1140,7 @@ Qed.
 
 
 Definition F_deno (sh : seq nat) := (\prod_(b : box_in sh) hook_length sh b.1 b.2)%N.
-Definition F sh :=  (((sumn sh)`!)%:Q / (F_deno sh)%:Q)%R.
+Definition HLF sh :=  (((sumn sh)`!)%:Q / (F_deno sh)%:Q)%R.
 
 
 Lemma reshape_coord_walk_to :
@@ -1344,9 +1345,9 @@ Qed.
 
 
 Theorem Theorem2 :
-  mu choose_corner ends_at = (F (decr_nth_part p Alpha)) / (F p).
+  mu choose_corner ends_at = (HLF (decr_nth_part p Alpha)) / (HLF p).
 Proof.
-  rewrite prob_cond /F.
+  rewrite prob_cond /HLF.
   have:= Hcorn => /andP [] Hout _.
   rewrite -{1 2}(decr_nthK is_part_p Hout) /=.
   rewrite /decr_nth_part_def Hout.
@@ -1400,7 +1401,7 @@ Proof.
 Qed.
 
 Corollary Corollary4 :
-  p != [::] :> seq nat -> \sum_(i <- out_corners p) (F (decr_nth_part p i)) / (F p) = 1.
+  p != [::] :> seq nat -> \sum_(i <- out_corners p) (HLF (decr_nth_part p i)) / (HLF p) = 1.
 Proof.
   rewrite big_seq_cond => Hp.
   rewrite (eq_bigr (fun i => (mu choose_corner (ends_at i (nth O p i).-1)))); first last.
@@ -1426,15 +1427,41 @@ Proof.
 Qed.
 
 Corollary Corollary4bis :
-  p != [::] :> seq nat -> \sum_(i <- out_corners p) (F (decr_nth_part p i)) = F p.
+  p != [::] :> seq nat -> \sum_(i <- out_corners p) (HLF (decr_nth_part p i)) = HLF p.
 Proof. move=> /Corollary4; rewrite -mulr_suml; exact: quot_eq1. Qed.
 
 End FindCorner.
 
-Theorem HookLengthFormula (p : intpart) : F p = #|stdtabsh_finType p|.
+Theorem HookLengthFormula_rat (p : intpart) : HLF p = #|stdtabsh_finType p|.
 Proof.
   move: p; apply card_stdtabsh_rat_rec.
-  - by rewrite /F /= /F_deno /= big_box_in /enum_box_in /= big_nil factE.
+  - by rewrite /HLF /= /F_deno /= big_box_in /enum_box_in /= big_nil factE.
   - move=> p Hp; apply esym.
     rewrite /= /decr_nth_part_def /=. exact: Corollary4bis.
 Qed.
+
+
+Lemma F_deno_non0 (p : intpart) : (F_deno p) != 0.
+Proof.
+  rewrite /F_deno -eqz_nat !(big_morph Posz PoszM (id1 := Posz 1%N)) //.
+  by apply/prodf_neq0 => [] [] [r c].
+Qed.
+
+Lemma HLprod_nat (p : intpart) : #|stdtabsh_finType p| * (F_deno p) = (sumn p)`!.
+Proof.
+  apply /eqP; rewrite -eqz_nat PoszM.
+  rewrite -(@eqr_int rat_numDomainType) intrM /=.
+  have /= := (HookLengthFormula_rat p).
+  rewrite /int_to_rat /= => <-.
+  apply/eqP; rewrite /HLF -mulrA -[RHS]mulr1; congr (_ * _)%R.
+  rewrite mulrC divff // intr_eq0.
+  rewrite eqz_nat; exact: F_deno_non0.
+Qed.
+
+Lemma divF_deno (p : intpart) : (F_deno p) %| (sumn p)`!.
+Proof. apply/dvdnP; exists #|stdtabsh_finType p|; by rewrite HLprod_nat. Qed.
+
+Theorem HookLengthFormula (p : intpart) :
+  #|stdtabsh_finType p| = (sumn p)`! %/ (F_deno p).
+Proof. rewrite -HLprod_nat mulnK // lt0n; exact: F_deno_non0. Qed.
+
