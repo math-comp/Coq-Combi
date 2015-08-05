@@ -116,7 +116,7 @@ Proof. by case: s => /= s. Qed.
 
 Lemma enum_subseqsE :
   map val (enum subseqs) = undup (enum_subseqs w).
-Proof. rewrite /=; by apply enum_sub_undupP. Qed.
+Proof. rewrite /=; by apply enum_sub_undupE. Qed.
 
 Definition sub_nil  : subseqs := Subseqs (sub0seq w).
 Definition sub_full : subseqs := Subseqs (subseq_refl w).
@@ -125,4 +125,3 @@ Lemma size_le (s : subseqs) : size s <= size w.
 Proof. case: s => s Ps /=; by apply: size_subseq. Qed.
 
 End Fintype.
-

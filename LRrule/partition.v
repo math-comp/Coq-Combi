@@ -942,7 +942,7 @@ Lemma intpartn_sumn (p : intpartn) : sumn p = n.
 Proof. by case: p => /= p /andP [] /eqP. Qed.
 
 Lemma enum_intpartnE : map val (enum intpartn) = enum_partn n.
-Proof. rewrite /=; by apply enum_subP. Qed.
+Proof. rewrite /=; by apply enum_subE. Qed.
 
 End PartOfn.
 

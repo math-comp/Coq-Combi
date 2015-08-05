@@ -386,7 +386,7 @@ Lemma eval_yameval (y : yameval) : evalseq y = ev.
 Proof. by case: y => /= y /andP [] _ /eqP. Qed.
 
 Lemma enum_yamevalE : map val (enum yameval) = enum_yameval ev.
-Proof. rewrite /=; by apply enum_subP. Qed.
+Proof. rewrite /=; by apply enum_subE. Qed.
 
 End YamOfEval.
 
@@ -436,7 +436,7 @@ Proof. by case: y => /= y /andP [] _ /eqP. Qed.
 Lemma enum_yamnE :
   map val (enum yamn) = flatten [seq enum_yameval p | p <- enum_partn n].
 Proof.
-  rewrite enum_union_finTypeE /=; congr flatten.
+  rewrite enum_unionE /=; congr flatten.
   rewrite (eq_map (f2 := enum_yameval \o val)).
   - by rewrite map_comp enum_intpartnE.
   - move=> i /=; by rewrite enum_yamevalE.

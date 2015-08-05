@@ -387,12 +387,12 @@ Qed.
 
 Section StdtabOfShape.
 
+Definition is_stdtab_of_shape sh := [pred t | (is_stdtab t) && (shape t == sh) ].
+
 Variable sh : intpart.
 
-Definition is_stdtab_of_shape := [pred t | (is_stdtab t) && (shape t == sh) ].
-
 Structure stdtabsh : predArgType :=
-  StdtabSh {stdtabshval :> seq (seq nat); _ : is_stdtab_of_shape stdtabshval}.
+  StdtabSh {stdtabshval :> seq (seq nat); _ : is_stdtab_of_shape sh stdtabshval}.
 Canonical stdtabsh_subType := Eval hnf in [subType for stdtabshval].
 Definition stdtabsh_eqMixin := Eval hnf in [eqMixin of stdtabsh by <:].
 Canonical stdtabsh_eqType := Eval hnf in EqType stdtabsh stdtabsh_eqMixin.

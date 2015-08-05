@@ -15,7 +15,7 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm fingroup path.
 
-Require Import tools ordcast partition yama ordtype permuted.
+Require Import tools combclass ordcast partition yama ordtype permuted.
 Require Import schensted congr plactic green greeninv.
 
 Set Implicit Arguments.
@@ -152,14 +152,15 @@ Proof. by case: s => s /= /andP [] _ /eqP. Qed.
 
 Definition enum_stdwordn := [seq wordperm p | p <- enum 'S_n].
 
-Lemma enum_stdwordnE s : (is_std_of_n s) = (s \in enum_stdwordn).
+Lemma enum_stdwordnE : enum_stdwordn =i is_std_of_n.
+(* (is_std_of_n s) = (s \in enum_stdwordn). *)
 Proof.
-  apply/(sameP idP); apply(iffP idP).
-  + move/mapP => [] p _ -> /=.
-    by rewrite wordperm_std /= /wordperm size_map size_enum_ord.
+  move=> s; apply/(sameP idP); apply(iffP idP).
   + rewrite /enum_stdwordn => /andP [] /is_stdP [] p Hstd /eqP Hsize.
     apply/mapP; rewrite -Hsize; exists p; last exact Hstd.
     by rewrite mem_enum.
+  + move/mapP => [] p _ -> /=.
+    by rewrite unfold_in /is_std_of_n /= wordperm_std /= /wordperm size_map size_enum_ord.
 Qed.
 
 Lemma wordperm_inj : injective (@wordperm n).
@@ -175,26 +176,12 @@ Qed.
 Lemma enum_stdwordn_uniq : uniq enum_stdwordn.
 Proof. rewrite/enum_stdwordn (map_inj_uniq wordperm_inj). by apply: enum_uniq. Qed.
 
-Let stdwordn_enum : seq stdwordn := pmap insub enum_stdwordn.
-
-Lemma finite_stdwordn : Finite.axiom stdwordn_enum.
-Proof.
-  rewrite /stdwordn_enum; apply: Finite.uniq_enumP.
-  - apply: pmap_sub_uniq; first exact enum_stdwordn_uniq.
-  - move=> s;
-    by rewrite mem_pmap_sub -enum_stdwordnE /= /in_mem /= stdwordnP size_sdtn eq_refl.
-Qed.
-
-Canonical stdwordn_finMixin := Eval hnf in FinMixin finite_stdwordn.
+Canonical stdwordn_finMixin :=
+  Eval hnf in subuniq_finMixin stdwordnn_subCountType enum_stdwordn_uniq enum_stdwordnE.
 Canonical stdwordn_finType := Eval hnf in FinType stdwordn stdwordn_finMixin.
 
 Lemma card_stdwordn : #|stdwordn| = n`!.
-Proof.
-  rewrite [#|_|]cardT enumT unlock /= /stdwordn_enum size_pmap_sub.
-  rewrite -size_filter (eq_in_filter (a2 := predT));
-    last by move=> i /=; rewrite -enum_stdwordnE /is_std_of_n /= => ->.
-  by rewrite filter_predT size_map -card_Sn cardE.
-Qed.
+Proof. by rewrite card_subuniqE size_map -card_Sn cardE. Qed.
 
 End StdCombClass.
 
