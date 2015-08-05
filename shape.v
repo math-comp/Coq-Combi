@@ -92,19 +92,10 @@ Lemma box_inP (rc : box_in) : is_in_shape sh rc.1 rc.2.
 Proof. by case: rc. Qed.
 
 Lemma enum_box_inE : map val (enum box_in) = enum_box_in.
-Proof. rewrite /=; by apply enum_subP. Qed.
+Proof. rewrite /=; by apply enum_subE. Qed.
 
-(* TODO : Generalize and move in comb_class.v *)
 Lemma mem_enum_box_in : enum_box_in =i is_box_in_shape.
-Proof.
-  move=> [r c]; rewrite -enum_box_inE.
-  apply (sameP idP); apply (iffP idP).
-  - move=> H; pose box := BoxIn H.
-    have <- : val box = (r, c) by [].
-    rewrite mem_map; last exact: val_inj.
-    by rewrite mem_enum.
-  - by move/mapP => [] [box Hbox] /= _ ->.
-Qed.
+Proof. exact: (sub_enumE enum_box_inP count_enum_box_inP). Qed.
 
 Lemma big_enum_box_in (R : Type) (idx : R) (op : Monoid.law idx) (f : nat -> nat -> R):
   \big[op/idx]_(b <- enum_box_in) f b.1 b.2 =
