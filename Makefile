@@ -89,6 +89,7 @@ VFILES:=\
   shape.v\
   recyama.v\
   hook.v\
+  RSident.v\
   # program.v\ equerre.v\
 
 -include $(addsuffix .d,$(VFILES))

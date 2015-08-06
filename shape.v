@@ -16,7 +16,7 @@ Add Rec LoadPath "../Combi/LRrule".
 
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
-Require Import tools combclass partition.
+Require Import tools combclass.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
