@@ -360,18 +360,24 @@ Definition RStab w := RSTabPair (RStabmap_spec w).
 Definition RStabinv (pair : rstabpair) :=
   let: (P, Q) := pqpair pair in RSmapinv2 (P, yam_of_stdtab Q).
 
-Lemma bijRStab : bijective RStab.
+Lemma RStabK : cancel RStab RStabinv.
 Proof.
-  split with (g := RStabinv); rewrite /RStab /RStabinv /RStabmap.
-  - move=> w /=; have:= is_yam_RSmap2 w.
-    case H : (RSmap w) => [P Q] /= Hyam.
-    by rewrite stdtab_of_yamK; first by rewrite -H (RS_bij_1 w).
-  - move=> [[P Q] H] /=; apply: pqpair_inj => /=.
-    move: H; rewrite /is_RStabpair => /and3P [] Htab Hstdtab Hshape //=.
-    rewrite RS_bij_2.
-    + by rewrite (yam_of_stdtabK Hstdtab).
-    + by rewrite /is_RSpair Htab yam_of_stdtabP //= shape_yam_of_stdtab.
+  rewrite /RStab /RStabinv /RStabmap.
+  move=> w /=; have:= is_yam_RSmap2 w.
+  case H : (RSmap w) => [P Q] /= Hyam.
+  by rewrite stdtab_of_yamK; first by rewrite -H (RS_bij_1 w).
 Qed.
+Lemma RStabinvK : cancel RStabinv RStab.
+Proof.
+  rewrite /RStab /RStabinv /RStabmap.
+  move=> [[P Q] H] /=; apply: pqpair_inj => /=.
+  move: H; rewrite /is_RStabpair => /and3P [] Htab Hstdtab Hshape //=.
+  rewrite RS_bij_2.
+  + by rewrite (yam_of_stdtabK Hstdtab).
+  + by rewrite /is_RSpair Htab yam_of_stdtabP //= shape_yam_of_stdtab.
+Qed.
+Lemma bijRStab : bijective RStab.
+Proof. split with (g := RStabinv). exact: RStabK. exact: RStabinvK. Qed.
 
 End RobinsonSchensted.
 

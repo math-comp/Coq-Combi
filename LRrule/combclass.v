@@ -233,7 +233,7 @@ Lemma enum_unionE :
   map val (enum union_finType) = enum_union.
 Proof. by rewrite enumT unlock subType_seqP. Qed.
 
-Lemma card_unionE : #|union_finType| = \sum_(i in TPI) #|TPi i|.
+Lemma card_unionE : #|union_finType| = \sum_(i : TPI) #|TPi i|.
 Proof.
   rewrite cardE -(size_map val) /= enum_unionE.
   rewrite /enum_union size_flatten /shape -map_comp.
@@ -241,7 +241,7 @@ Proof.
     move=> i /=; by rewrite size_map cardE.
   rewrite /index_enum -enumT.
   elim: (enum TPI) => [| i0 I IHI] /=; first by rewrite big_nil.
-  by rewrite big_cons inE -IHI.
+  by rewrite big_cons IHI.
 Qed.
 
 End SubtypesDisjointUnion.
