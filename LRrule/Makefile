@@ -82,6 +82,7 @@ VFILES:=congr.v\
   permuted.v\
   plactic.v\
   schensted.v\
+  shape.v\
   shuffle.v\
   skewtab.v\
   stdtab.v\

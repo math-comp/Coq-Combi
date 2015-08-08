@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
-Require Import tools combclass.
+Require Import tools combclass shape.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -322,12 +322,10 @@ Section Partition.
         move: Hhead Hsh; by case sh.
   Qed.
 
-  Definition is_in_part sh r c := c < nth 0 sh r.
-
   Lemma is_in_conj_part_impl sh:
-    is_part sh -> forall r c , is_in_part sh r c -> is_in_part (conj_part sh) c r.
+    is_part sh -> forall r c , is_in_shape sh r c -> is_in_shape (conj_part sh) c r.
   Proof.
-    rewrite /is_in_part.
+    rewrite /is_in_shape.
     elim: sh => [| s0 s IHs] Hpart r c.
       by rewrite /is_out_corner nth_default // nth_default //.
     have:= Hpart => /= /andP [] Hhead Hparts.
@@ -340,7 +338,7 @@ Section Partition.
   Qed.
 
   Lemma is_in_conj_part sh :
-    is_part sh -> forall r c, is_in_part sh r c = is_in_part (conj_part sh) c r.
+    is_part sh -> forall r c, is_in_shape sh r c = is_in_shape (conj_part sh) c r.
   Proof.
     move=> Hpart r c.
     apply/(sameP idP); apply(iffP idP).
@@ -355,7 +353,7 @@ Section Partition.
     is_part sh -> forall i j, nth 0 sh i > j = (nth 0 (conj_part sh) j > i).
   Proof.
     move=> Hpart.
-    rewrite -/(is_in_part sh _ _) -/(is_in_part (conj_part sh) _ _).
+    rewrite -/(is_in_shape sh _ _) -/(is_in_shape (conj_part sh) _ _).
     exact: is_in_conj_part.
   Qed.
 
@@ -407,10 +405,10 @@ Section Partition.
   Qed.
 
   Lemma is_out_cornerP sh i : is_part sh ->
-    (i < size sh) && (~~ is_in_part sh i.+1 (nth 0 sh i).-1) =
+    (i < size sh) && (~~ is_in_shape sh i.+1 (nth 0 sh i).-1) =
     (is_out_corner sh i).
   Proof.
-    rewrite /is_out_corner /is_in_part -ltnNge => Hpart.
+    rewrite /is_out_corner /is_in_shape -ltnNge => Hpart.
     apply/(sameP idP); apply(iffP idP).
     - case: (ltnP i (size sh)) => Hi; last by rewrite [nth 0 sh i]nth_default.
       have := nth_part_non0 Hpart Hi.
