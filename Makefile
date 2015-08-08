@@ -86,7 +86,6 @@ VFILES:=\
   bigallpairs.v\
   Qmeasure.v\
   distr.v\
-  shape.v\
   recyama.v\
   hook.v\
   RSident.v\

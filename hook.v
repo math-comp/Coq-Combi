@@ -98,9 +98,9 @@ Qed.
 
 (* TODO : move in LRrule/partition.v *)
 Lemma is_in_part_le (sh : seq nat) r c j k :
-  is_part sh -> is_in_part sh r c -> j <= r -> k <= c -> is_in_part sh j k.
+  is_part sh -> is_in_shape sh r c -> j <= r -> k <= c -> is_in_shape sh j k.
 Proof.
-  rewrite /is_in_part => /is_part_ijP [] _ Hpart Hcr /Hpart Hrj Hkc.
+  rewrite /is_in_shape => /is_part_ijP [] _ Hpart Hcr /Hpart Hrj Hkc.
   exact: leq_ltn_trans Hkc (leq_trans Hcr Hrj).
 Qed.
 
@@ -218,9 +218,9 @@ Qed.
 Definition is_corner_box sh r c := (is_out_corner sh r && (c == (nth 0 sh r).-1)).
 
 Lemma is_corner_box_in_part sh r c :
-  is_corner_box sh r c -> is_in_part sh r c.
+  is_corner_box sh r c -> is_in_shape sh r c.
 Proof.
-  rewrite /is_corner_box /is_in_part /is_out_corner => /andP [] Hr /eqP ->.
+  rewrite /is_corner_box /is_in_shape /is_out_corner => /andP [] Hr /eqP ->.
   move: Hr; by case (nth 0 sh r).
 Qed.
 
@@ -249,9 +249,9 @@ Lemma al_length_conj_part sh r c :
 Proof. by rewrite /al_length /leg_length addnC => /conj_partK ->. Qed.
 
 Lemma arm_length_ler sh r c j :
-  is_part sh -> r < j -> is_in_part sh j c -> arm_length sh j c <= arm_length sh r c.
+  is_part sh -> r < j -> is_in_shape sh j c -> arm_length sh j c <= arm_length sh r c.
 Proof.
-  rewrite /al_length /is_in_part /leg_length /arm_length => /is_part_ijP [] _ Hpart Hr Hc.
+  rewrite /al_length /is_in_shape /leg_length /arm_length => /is_part_ijP [] _ Hpart Hr Hc.
   have Hshjr := Hpart _ _ (ltnW Hr).
   rewrite -ltnS !prednK; first by apply leq_sub2r.
   - rewrite subn_gt0; exact: leq_trans Hc Hshjr.
@@ -259,9 +259,9 @@ Proof.
 Qed.
 
 Lemma arm_length_ltl sh r c j :
-  is_part sh -> c < j -> is_in_part sh r j -> arm_length sh r j < arm_length sh r c.
+  is_part sh -> c < j -> is_in_shape sh r j -> arm_length sh r j < arm_length sh r c.
 Proof.
-  rewrite /al_length /is_in_part /leg_length /arm_length => /is_part_ijP [] _ Hpart Hc Hr.
+  rewrite /al_length /is_in_shape /leg_length /arm_length => /is_part_ijP [] _ Hpart Hc Hr.
   have Hshjr := Hpart _ _ (ltnW Hr).
   have Hcr := ltn_trans Hc Hr.
   rewrite -ltnS !prednK; first by apply ltn_sub2l.
@@ -270,7 +270,7 @@ Proof.
 Qed.
 
 Lemma leg_length_ltr sh r c j :
-  is_part sh -> r < j -> is_in_part sh j c -> leg_length sh j c < leg_length sh r c.
+  is_part sh -> r < j -> is_in_shape sh j c -> leg_length sh j c < leg_length sh r c.
 Proof.
   rewrite /leg_length => Hpart Hr.
   rewrite (is_in_conj_part Hpart).
@@ -278,7 +278,7 @@ Proof.
 Qed.
 
 Lemma leg_length_lel sh r c j :
-  is_part sh -> c < j -> is_in_part sh r j -> leg_length sh r j <= leg_length sh r c.
+  is_part sh -> c < j -> is_in_shape sh r j -> leg_length sh r j <= leg_length sh r c.
 Proof.
   rewrite /leg_length => Hpart Hr.
   rewrite (is_in_conj_part Hpart).
@@ -286,7 +286,7 @@ Proof.
 Qed.
 
 Lemma al_length_ltl sh r c j :
-  is_part sh -> c < j -> is_in_part sh r j -> al_length sh r j < al_length sh r c.
+  is_part sh -> c < j -> is_in_shape sh r j -> al_length sh r j < al_length sh r c.
 Proof.
   rewrite /al_length => Hpart Hr Hc.
   rewrite -addSn; apply leq_add.
@@ -295,7 +295,7 @@ Proof.
 Qed.
 
 Lemma al_length_ltr sh r c j :
-  is_part sh -> r < j -> is_in_part sh j c -> al_length sh j c < al_length sh r c.
+  is_part sh -> r < j -> is_in_shape sh j c -> al_length sh j c < al_length sh r c.
 Proof.
   rewrite /al_length => Hpart Hr Hc.
   rewrite -addnS; apply leq_add.
@@ -304,10 +304,10 @@ Proof.
 Qed.
 
 Lemma al_length0_corner sh r c :
-  is_part sh -> is_in_part sh r c -> al_length sh r c = 0 -> is_corner_box sh r c.
+  is_part sh -> is_in_shape sh r c -> al_length sh r c = 0 -> is_corner_box sh r c.
 Proof.
   move => Hpart.
-  rewrite /is_in_part => Hin_part /eqP.
+  rewrite /is_in_shape => Hin_part /eqP.
   rewrite addn_eq0 => /andP [Hnth Hhaut].
   apply /andP; split.
   - rewrite /is_out_corner.
@@ -381,9 +381,9 @@ Proof.
 Qed.
 
 Lemma arm_length_incr_nth_row sh r c :
-  is_in_part sh r c -> arm_length (incr_nth sh r) r c = (arm_length sh r c).+1.
+  is_in_shape sh r c -> arm_length (incr_nth sh r) r c = (arm_length sh r c).+1.
 Proof.
-  rewrite /is_in_part /arm_length nth_incr_nth eq_refl add1n => Hc.
+  rewrite /is_in_shape /arm_length nth_incr_nth eq_refl add1n => Hc.
   rewrite prednK; last by rewrite subn_gt0.
   by rewrite subSn; last by apply ltnW.
 Qed.
@@ -397,19 +397,19 @@ Qed.
 
 Lemma al_length_incr_nth_row sh r c :
   is_part sh -> is_in_corner sh r ->
-  is_in_part sh r c -> al_length (incr_nth sh r) r c = (al_length sh r c).+1.
+  is_in_shape sh r c -> al_length (incr_nth sh r) r c = (al_length sh r c).+1.
 Proof.
   rewrite /hook_length /al_length => Hpart Hcrn Hin.
   rewrite (arm_length_incr_nth_row Hin) addSn.
   congr (_ + _).+1.
   rewrite /leg_length /arm_length (incr_nth_conj_part Hpart Hcrn) nth_incr_nth.
-  move: Hin; rewrite /is_in_part eq_sym ltn_neqAle => /andP [] /negbTE -> _.
+  move: Hin; rewrite /is_in_shape eq_sym ltn_neqAle => /andP [] /negbTE -> _.
   by rewrite add0n.
 Qed.
 
 Lemma al_length_incr_nth_col sh r i :
   is_part sh -> is_in_corner sh r ->
-  is_in_part sh i (nth 0 sh r) ->
+  is_in_shape sh i (nth 0 sh r) ->
   al_length (incr_nth sh r) i (nth 0 sh r) = (al_length sh i (nth 0 sh r)).+1.
 Proof.
   move=> Hpart Hcorn Hin.
@@ -423,7 +423,7 @@ Qed.
 
 Lemma al_length_incr_nth sh i r c :
   is_part sh -> is_in_corner sh i ->
-  is_in_part sh r c ->
+  is_in_shape sh r c ->
   i != r -> nth 0 sh i != c ->
   al_length (incr_nth sh i) r c = al_length sh r c.
 Proof.
@@ -502,10 +502,10 @@ Definition is_in_hook (r c : nat) (k l : nat) :=
   ((r == k) && (c < l < nth 0 p r)) ||
   ((c == l) && (r < k < nth 0 conj c)).
 
-Lemma in_hook_part (r c : nat) (k l : nat) :
-   is_in_part p r c -> is_in_hook r c k l -> is_in_part p k l.
+Lemma is_in_hook_shape (r c : nat) (k l : nat) :
+   is_in_shape p r c -> is_in_hook r c k l -> is_in_shape p k l.
 Proof.
-  rewrite /is_in_part /is_in_hook => Hj /orP [] /and3P [] /eqP <- // H1 H2.
+  rewrite /is_in_shape /is_in_hook => Hj /orP [] /and3P [] /eqP <- // H1 H2.
   by rewrite conj_ltnE.
 Qed.
 
@@ -570,7 +570,7 @@ Proof.
 Qed.
 
 Lemma hook_seq_empty (r c : nat) :
-  is_in_part p r c -> hook_seq r c = [::] -> is_corner_box p r c.
+  is_in_shape p r c -> hook_seq r c = [::] -> is_corner_box p r c.
 Proof.
   move=> Hpart Hhl; by apply al_length0_corner; last by rewrite -size_hook_seq Hhl.
 Qed.
@@ -628,17 +628,17 @@ Proof.
   by have /H /= : a \in (a :: A) by rewrite inE eq_refl.
 Qed.
 
-Lemma is_trace_in_in_part (A B : seq nat) : is_trace A B ->
-  forall a b, a \in A -> b \in B -> is_in_part p a b.
+Lemma is_trace_in_in_shape (A B : seq nat) : is_trace A B ->
+  forall a b, a \in A -> b \in B -> is_in_shape p a b.
 Proof.
   rewrite /is_trace => /and5P [] _ _ HltnA HltnB /is_corner_box_in_part Hpart a b Ha Hb.
   apply: (@is_in_part_le p (last 0 A) (last 0 B) _ _ (intpartP p) Hpart);
     exact: sorted_in_leq_last.
 Qed.
 
-Lemma is_trace_in_part (a b : nat) (A B : seq nat) :
-  is_trace (a :: A) (b :: B) -> is_in_part p a b.
-Proof. move/is_trace_in_in_part; apply; by rewrite inE eq_refl. Qed.
+Lemma is_trace_in_shape (a b : nat) (A B : seq nat) :
+  is_trace (a :: A) (b :: B) -> is_in_shape p a b.
+Proof. move/is_trace_in_in_shape; apply; by rewrite inE eq_refl. Qed.
 
 Lemma trace_size_arm_length (a b : nat) (A B : seq nat) :
   is_trace (a :: A) (b :: B) -> size B <= arm_length p a b.
@@ -652,8 +652,8 @@ Proof.
     rewrite -ltnS prednK //; last by rewrite subn_gt0; exact: (ltn_trans Hb HB0).
     rewrite ltnS; apply ltn_sub2l; last exact Hb.
     exact: (ltn_trans Hb HB0).
-  rewrite -/(is_in_part _ _ _).
-  by apply (is_trace_in_in_part Htrace); rewrite !inE eq_refl /= ?orbT.
+  rewrite -/(is_in_shape _ _ _).
+  by apply (is_trace_in_in_shape Htrace); rewrite !inE eq_refl /= ?orbT.
 Qed.
 
 Lemma trace_size_leg_length (a b : nat) (A B : seq nat) :
@@ -668,9 +668,9 @@ Proof.
     rewrite -ltnS prednK //; last by rewrite subn_gt0; exact: (ltn_trans Ha HA0).
     rewrite ltnS; apply ltn_sub2l; last exact Ha.
     exact: (ltn_trans Ha HA0).
-  rewrite -/(is_in_part _ _ _).
+  rewrite -/(is_in_shape _ _ _).
   rewrite -is_in_conj_part //.
-  by apply (is_trace_in_in_part Htrace); rewrite !inE eq_refl /= ?orbT.
+  by apply (is_trace_in_in_shape Htrace); rewrite !inE eq_refl /= ?orbT.
 Qed.
 
 Lemma size_tracer (a b : nat) (A B : seq nat) :
@@ -946,7 +946,7 @@ Proof.
         rewrite mem_iota (iota_hookE _ Hb) Hb /=.
         have Hh : (head O B \in b :: B).
           move: HB; case B => [//= | n l] _; by rewrite !inE eq_refl orbT.
-        exact: (is_trace_in_in_part Ht (mem_head _ _) Hh).
+        exact: (is_trace_in_in_shape Ht (mem_head _ _) Hh).
   - case (boolP (size A == O)) => HA.
     + rewrite big1.
       * apply esym.
@@ -971,13 +971,13 @@ Proof.
         rewrite mem_iota (iota_hookE _ Ha) Ha /=.
         have Hh : (head O A \in a :: A).
           move: HA; case A => [//= | n l] _; by rewrite !inE eq_refl orbT.
-        have:= (is_trace_in_in_part Ht Hh (mem_head _ _)).
+        have:= (is_trace_in_in_shape Ht Hh (mem_head _ _)).
         case: p => /= part Hpart.
         by rewrite is_in_conj_part.
 Qed.
 
 Lemma mu_walk_to_corner_is_trace r c m :
-  is_in_part p r c ->
+  is_in_shape p r c ->
   ((al_length p r c) <= m)%N ->
   mu (walk_to_corner m r c) (fun X => is_trace X.1 X.2) = 1.
 Proof.
@@ -1002,7 +1002,7 @@ Proof.
   apply eq_big_seq => i.
   rewrite mem_cat => /orP [] /mapP [] j; rewrite mem_iota => /andP [] H1 H2 -> {i};
     move: H2; rewrite (iota_hookE _ H1) Mlet_simpl.
-  - rewrite -/(is_in_part _ _ _) -(is_in_conj_part is_part_p) => Hj.
+  - rewrite -/(is_in_shape _ _ _) -(is_in_conj_part is_part_p) => Hj.
     have Hlen : (al_length p j c <= m)%N.
       rewrite -ltnS; apply: (leq_trans _ Hal).
       exact: al_length_ltr.
@@ -1019,7 +1019,7 @@ Proof.
     rewrite !mul1r /is_trace /=.
     case: A B => [//= | a0 A] [//= | b0 B] /= _ -> _ _.
     by rewrite H1.
-  - rewrite -/(is_in_part _ _ _) => Hj.
+  - rewrite -/(is_in_shape _ _ _) => Hj.
     have Hlen : (al_length p r j <= m)%N.
       rewrite -ltnS; apply: (leq_trans _ Hal).
       exact: al_length_ltl.
@@ -1164,7 +1164,7 @@ Lemma reshape_coord_walk_to :
 Proof.
   move=> i /reshape_coordP.
   case: (reshape_coord p i) => [r c] [] _.
-  rewrite -/(is_in_part p _ _) => Hin.
+  rewrite -/(is_in_shape p _ _) => Hin.
   rewrite big_seq_cond.
   pose F := (fun X => mu (walk_to_corner (al_length p r c) r c) (charfun X.1 X.2)).
   rewrite (eq_bigr F); first last.
@@ -1208,7 +1208,7 @@ Proof.
   have Hin : (head O B < nth O p (head O A))%N.
     have:= Htrace => /and3P [] HA0 HB0 _.
     case: A B HA0 HB0 Htrace {HA HB} => [//= | a A] [//= | b B] /= _ _ Htrace.
-    exact: (is_trace_in_part Htrace).
+    exact: (is_trace_in_shape Htrace).
   rewrite -big_filter (bigD1_seq (flatten_coord p (head O A) (head O B))) /=; first last.
   - apply filter_uniq; exact: iota_uniq.
   - rewrite mem_filter (flatten_coordK Hin) /starts_at !eq_refl /=.
@@ -1315,12 +1315,12 @@ Proof.
     + move=> [r c] /=.
       have {2}-> : (r, c) = swap (c, r) by [].
       rewrite (mem_map swap_inj) !mem_filter /=.
-      rewrite !mem_enum_box_in !unfold_in /= /is_in_shape -!/(is_in_part _ _ _).
+      rewrite !mem_enum_box_in !unfold_in /= /is_in_shape -!/(is_in_shape _ _ _).
       rewrite -is_in_conj_part //.
-      case: (boolP (is_in_part p' r c)) => Hrc; last by rewrite !andbF.
+      case: (boolP (is_in_shape p' r c)) => Hrc; last by rewrite !andbF.
       case: (altP (c =P Beta)) => /= Hc; last by rewrite !andbF.
       rewrite !andbT.
-      move: Hrc; rewrite /is_in_part Hc HBeta'.
+      move: Hrc; rewrite /is_in_shape Hc HBeta'.
       rewrite ltnNge; by apply contra => /eqP ->.
 
   (* Hooks neither on the row or column of (Alpha, Beta) *)
@@ -1415,7 +1415,7 @@ Proof.
     rat_to_ring; by rewrite divff // intr_eq0.
   move=> i /reshape_coordP.
   case: (reshape_coord p i) => [r c] [].
-  rewrite -/(is_in_part p _ _) => Hr Hc.
+  rewrite -/(is_in_shape p _ _) => Hr Hc.
   rewrite (Mstable_eq _ ends_at_out_cornerE).
   apply: (mu_bool_impl1 _ (fun X => is_trace X.1 X.2)).
     move=> [A B] /=; by apply/implyP => /and5P [].
