@@ -41,6 +41,17 @@ Section RCons.
     by rewrite IHt catA.
   Qed.
 
+  Lemma cons_head_behead x s : (s != [::]) -> head x s :: behead s = s.
+  Proof. by case s. Qed.
+
+  Lemma belast_behead_rcons x l s :
+    belast (head x (rcons s l)) (behead (rcons s l)) = s.
+  Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= belast_rcons. Qed.
+
+  Lemma last_behead_rcons x l s :
+    last (head x (rcons s l)) (behead (rcons s l)) = l.
+  Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= last_rcons. Qed.
+
   Lemma head_any s a b : s != [::] -> head a s = head b s.
   Proof. by elim: s. Qed.
 
@@ -129,6 +140,10 @@ End RCons.
 Lemma map_flatten (T1 T2 : eqType) (f : T1 -> T2) s :
   map f (flatten s) = flatten (map (map f) s).
 Proof. elim: s => [//= | s0 s /= <-]; by apply map_cat. Qed.
+
+Lemma filter_flatten (T : eqType) (s : seq (seq T)) (P : pred T) :
+  filter P (flatten s) = flatten [seq filter P i | i <- s].
+Proof. elim: s => [//= | s0 s /= <-]; exact: filter_cat. Qed.
 
 Lemma sumn_flatten s :
   sumn (flatten s) = sumn (map sumn s).
