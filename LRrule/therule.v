@@ -15,7 +15,8 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop path.
 
-Require Import tools ordcast combclass partition yama schensted ordtype std stdtab invseq congr plactic greeninv yamplact skewtab.
+Require Import tools ordcast combclass partition Yamanouchi ordtype std stdtab invseq.
+Require Import Schensted congr plactic Greene_inv stdplact Yam_plact skewtab.
 Require Import shuffle multpoly.
 
 Set Implicit Arguments.

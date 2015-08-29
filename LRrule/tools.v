@@ -332,7 +332,19 @@ Proof.
   by rewrite addKn => /IHr ->.
 Qed.
 
-Lemma iota_gtn a b : [seq i <- iota 0 a | b <= i] = iota b (a - b).
+Lemma iota_ltn a b : b <= a -> [seq i <- iota 0 a | i < b] = iota 0 b.
+Proof.
+  move=> Hab.
+  rewrite -(subnKC Hab) iota_add add0n filter_cat.
+  rewrite -[RHS]cats0; congr (_ ++ _).
+  - rewrite (eq_in_filter (a2 := predT)) ?filter_predT //.
+    move=> i /=; by rewrite mem_iota add0n => /andP [] _ ->.
+  - rewrite (eq_in_filter (a2 := pred0)) ?filter_pred0 //.
+    move=> i /=. rewrite mem_iota (subnKC Hab) => /andP [].
+    by rewrite leqNgt => /negbTE.
+Qed.
+
+Lemma iota_geq a b : [seq i <- iota 0 a | b <= i] = iota b (a - b).
 Proof.
   elim: a => [//=| n IHn].
   rewrite -addn1 iota_add add0n /= filter_cat IHn {IHn} /=.
@@ -362,7 +374,7 @@ Lemma big_nat_widen0 a b c F :
   b <= c -> \big[op/idx]_(a <= i < b) F i = \big[op/idx]_(0 <= i < c | a <= i < b) F i.
 Proof.
   move=> Hbc.
-  rewrite {1}/index_iota -iota_gtn -{1}(subn0 b) big_filter -/(index_iota 0 b).
+  rewrite {1}/index_iota -iota_geq -{1}(subn0 b) big_filter -/(index_iota 0 b).
   by rewrite (big_nat_widen _ _ _ _ _ Hbc).
 Qed.
 

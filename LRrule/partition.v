@@ -76,7 +76,7 @@ Section Partition.
     exact: leq_ltn_trans Hkc (leq_trans Hcr Hrj).
   Qed.
 
-  Lemma part_len_lt p q :
+  Lemma part_nth_len_eq p q :
     (forall i, nth 0 p i = nth 0 q i) -> is_part p -> is_part q -> size p = size q.
   Proof.
     wlog Hwlog: p q / (size p) <= (size q).
@@ -98,7 +98,7 @@ Section Partition.
     move=> Hp Hq.
     apply (iffP idP) => [/eqP -> //| H].
     apply/eqP; apply (eq_from_nth (x0 := 0)).
-    - exact: part_len_lt.
+    - exact: part_nth_len_eq.
     - move=> i _; exact: H.
   Qed.
 

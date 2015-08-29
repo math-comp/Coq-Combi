@@ -15,9 +15,8 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
 Require Import tuple finfun finset bigop path.
 
-Require Import tools combclass partition yama ordtype.
-Require Import schensted std stdtab invseq congr plactic greeninv.
-Require Import yamplact skewtab shuffle multpoly therule.
+Require Import tools combclass partition Yamanouchi ordtype tableau.
+Require Import skewtab multpoly therule.
 
 (******************************************************************************)
 (* This file contains a Coq implementation of the Littlewood-Richardson rule  *)

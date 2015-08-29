@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import path.
-Require Import tools partition yama ordtype subseq.
+Require Import tools partition Yamanouchi ordtype subseq.
 Require Export tableau.
 
 Set Implicit Arguments.

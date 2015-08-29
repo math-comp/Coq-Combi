@@ -14,7 +14,8 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm fingroup.
-Require Import tools combclass subseq partition yama permuted ordtype schensted plactic greeninv std.
+Require Import tools combclass subseq partition Yamanouchi permuted ordtype.
+Require Import Schensted plactic Greene_inv std stdplact.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm.
-Require Import subseq partition ordtype schensted congr plactic green greeninv
+Require Import subseq partition ordtype Schensted congr plactic Greene Greene_inv
         std stdtab skewtab therule implem.
 
 Require Import Wf_nat.
@@ -54,7 +54,7 @@ Let RStabinvnat := (@RStabinv nat_ordType).
 Extraction "extract/schensted.ml"
            RS RSbijnat RSbijinvnat
            plactcongr
-           greenRow greenCol
+           Greene_row Greene_col
            is_std std.std
            RStabnat RStabinvnat
            is_stdtab

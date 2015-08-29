@@ -16,7 +16,9 @@ Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop ssralg.
 Require Import poly ssrint.
 
-Require Import partition yama schensted yamplact ordtype std stdtab invseq greeninv shuffle.
+(* TODO: understand why the following unnatural order is neecessary to compile *)
+Require Import ordtype partition Yamanouchi std Schensted stdtab invseq.
+Require Import stdplact Yam_plact Greene_inv shuffle.
 
 (******************************************************************************)
 (* The main goal of this file is to lift the multiplication of multivariate   *)
@@ -173,12 +175,26 @@ Proof.
   have {H} /= H : tval (tabword_of_tuple u) = tval (tabword_of_tuple v) by rewrite H.
   case: (bijRStab ord_ordType) => RSinv HK _.
   apply: val_inj; rewrite -[val u]HK -[val v]HK; congr (RSinv _).
-  rewrite {RSinv HK} /RStab /=; apply: pqpair_inj => /=.
+  rewrite {RSinv HK} /RStab /=. apply: pqpair_inj => /=.
   have := is_tableau_RS u; have := is_tableau_RS v.
   move: Hu Hv H; rewrite -!RStabmapE /RStabmap.
   case RSmap => [pu qu] {u} /= ->; case RSmap => [pv qv] {v} /= -> Heq Hv Hu.
   by rewrite -(RS_tabE Hu) -(RS_tabE Hv) Heq.
 Qed.
+
+(*
+  n : nat
+  Hnpos : n != 0
+  d : nat
+  Q : stdtabn d
+  u : d.-tuple 'I_n
+  v : d.-tuple 'I_n
+  Hu : (RStabmap u).2 = Q
+  Hv : (RStabmap v).2 = Q
+  H : to_word (RS u) = to_word (RS v)
+  ============================
+   RSTabPair (RStabmap_spec u) = RSTabPair (RStabmap_spec v)
+ *)
 
 Lemma sumn_shape_stdtabnE (Q : stdtabn d) : (sumn (shape Q)) = d.
 Proof. case: Q => q; by rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP. Qed.

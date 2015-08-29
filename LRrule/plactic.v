@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm.
-Require Import tools partition ordtype schensted congr.
+Require Import tools partition ordtype Schensted congr.
 
 
 Set Implicit Arguments.
