@@ -489,22 +489,6 @@ Proof.
   by move: Htab; rewrite /is_stdtab => /andP [].
 Qed.
 
-(*
-Lemma stdtab_rembig t : is_stdtab t -> is_stdtab (RS (rembig (to_word t))).
-Proof.
-  rewrite /is_stdtab /is_std -size_to_word => /andP [].
-  move H : (size_tab t) => n.
-  elim: n t H => [//= | n IHn] t Hsize Htab Hperm.
-  + by rewrite (tab0 Htab Hsize) /RS /=.
-  + rewrite is_tableau_RS /=.
-    apply: (@perm_eq_trans _ (rembig (to_word t))).
-    - rewrite perm_eq_sym; apply: plactcongr_homog; by apply: congr_RS.
-    - apply: (perm_eq_trans (perm_eq_rembig Hperm)).
-      rewrite rembig_iota.
-      by rewrite -size_to_word size_RS size_rembig -size_to_word Hsize.
-Qed.
-*)
-
 Lemma yam_of_stdtabP t : is_stdtab t -> is_yam (yam_of_stdtab t).
 Proof.
   move=> Hstdtab; have := part_yam_of_stdtab Hstdtab.
