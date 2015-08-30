@@ -15,7 +15,7 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset path bigop.
 
-Require Import tools partition Yamanouchi ordtype std stdtab invseq.
+Require Import tools partition Yamanouchi ordtype std stdtab.
 Require Import Schensted congr plactic Greene_inv stdplact.
 
 Set Implicit Arguments.

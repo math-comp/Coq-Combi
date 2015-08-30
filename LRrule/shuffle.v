@@ -14,8 +14,8 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm binomial.
-Require Import tools subseq partition Yamanouchi ordtype std stdtab invseq.
-Require Import Schensted plactic Greene_inv.
+Require Import tools subseq partition Yamanouchi ordtype std stdtab.
+Require Import Schensted plactic Greene_inv stdplact.
 
 
 Set Implicit Arguments.

@@ -17,7 +17,7 @@ Require Import tuple finfun finset bigop ssralg.
 Require Import poly ssrint.
 
 (* TODO: understand why the following unnatural order is neecessary to compile *)
-Require Import ordtype partition Yamanouchi std Schensted stdtab invseq.
+Require Import ordtype partition Yamanouchi std Schensted stdtab.
 Require Import stdplact Yam_plact Greene_inv shuffle.
 
 (******************************************************************************)

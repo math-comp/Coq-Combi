@@ -74,7 +74,6 @@ VFILES:=congr.v\
   Greene_inv.v\
   Greene.v\
   implem.v\
-  invseq.v\
   multpoly.v\
   ordcast.v\
   ordtype.v\
