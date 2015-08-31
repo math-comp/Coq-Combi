@@ -17,7 +17,7 @@ Require Import tuple finfun finset bigop path.
 
 Require Import tools ordcast combclass partition Yamanouchi ordtype std stdtab.
 Require Import Schensted congr plactic Greene_inv stdplact Yam_plact skewtab.
-Require Import shuffle multpoly.
+Require Import shuffle Schur.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
