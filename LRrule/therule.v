@@ -136,6 +136,9 @@ Proof.
 Qed.
 
 Variables d1 d2 : nat.
+
+Section TheRule.
+
 Variables (P1 : intpartn d1) (P2 : intpartn d2).
 
 Lemma size_tab_P1 : d1 = size_tab (RS (std (hyper_yam P1))).
@@ -536,6 +539,8 @@ Variable (n : nat) (R : comRingType).
 Hypothesis Hnpos : n != 0%N.
 
 Notation Schur p := (Schur Hnpos R p).
+Notation complete p := (complete Hnpos R p).
+Notation elementary p := (elementary Hnpos R p).
 
 Theorem LRtab_coeffP :
   Schur P1 * Schur P2 =
@@ -556,7 +561,95 @@ Proof.
   by apply: eq_bigr => P /LR_coeff_yamP ->.
 Qed.
 
-End LR.
+End TheRule.
 
+Section Pieri.
+
+Local Open Scope ring_scope.
+Import GRing.Theory.
+
+Variable (n : nat) (R : comRingType).
+
+Hypothesis Hnpos : n != 0%N.
+
+Notation Schur p := (Schur Hnpos R p).
+Notation complete p := (complete Hnpos R p).
+Notation elementary p := (elementary Hnpos R p).
+
+Lemma evalseq0 y : evalseq y = [::] -> y = [::].
+Proof. case: y => [//= | [|y0] y] /=; by case: (evalseq y). Qed.
+
+Lemma yamrowP : is_yam_of_eval (intpart_of_intpartn (rowpartn d2)) (ncons d2 0%N [::]).
+Proof.
+  rewrite /is_yam_of_eval; elim: d2 => [//= | d] /andP [] /= -> /eqP ->.
+  by case: d => /=.
+Qed.
+Definition yamrow : yameval (rowpartn d2) := YamEval yamrowP.
+
+Lemma is_row_yamrow : is_row (ncons d2 0%N [::]).
+Proof. by elim: d2 => [| [|d]]. Qed.
+
+Lemma yam_of_rowpart d y : is_yam_of_eval (rowpart d) y -> y = ncons d 0%N [::].
+Proof.
+  move=> /andP [] Hyam /eqP.
+  elim: d y Hyam => [//= | d IHd] //=.
+    move=> y _; exact: evalseq0.
+  case=> [| y0 y] //= /andP [] _ /IHd {IHd} Hrec.
+  case: y0 => [| y0] /= Heval.
+  * case Heval: (evalseq y) Heval => [| ev0 ev] //=.
+      by move: Heval => /evalseq0 -> [] <- /=.
+    move => [] Hev0 Hev; subst.
+    rewrite Hrec // Heval {Hrec}.
+    case: d Heval => [|//=] Heval.
+    exfalso; case: y Heval => [//=| y0 y] /=.
+    case: (evalseq y) y0 => [| a [| l0 l]] [|[|y0]] //=.
+  * exfalso; by case: (evalseq y) y0 Heval => [| a [| l0 l]] [|y0].
+Qed.
+
+Theorem Pieri_row (P1 : intpartn d1) :
+  Schur P1 * complete d2 = \sum_(P : intpartn (d1 + d2) | hb_strip P1 P) Schur P.
+Proof.
+  rewrite /Schur.complete LRtab_coeffP.
+  rewrite [LHS]big_mkcond [RHS]big_mkcond /=.
+  apply eq_bigr => p _.
+  case: (boolP (included P1 p)) => Hincl; first last.
+    suff /negbTE -> : ~~ hb_strip P1 p by [].
+    move: Hincl; apply contra; exact: hb_strip_included.
+  suff -> : LRyam_coeff P1 (rowpartn d2) p = hb_strip P1 p.
+    case: (hb_strip P1 p); by rewrite /= ?mulr1n ?mulr0n.
+  rewrite /LRyam_coeff /LRyam_set.
+  rewrite /is_skew_reshape_tableau.
+  set LRset := (X in #|pred_of_set X|).
+  case: (boolP (hb_strip P1 p)) => Hstrip /=.
+  - suff -> : LRset = [set yamrow] by rewrite cards1.
+    rewrite -setP => y; rewrite !inE {LRset}.
+    case: y => y Hy /=.
+    have -> : (YamEval Hy == yamrow) = (y == (ncons d2 0%N [::])).
+      apply (sameP idP); apply (iffP idP) => /eqP Heq.
+      + apply/eqP; by apply val_inj.
+      + by rewrite -[y]/(val (YamEval Hy)) Heq.
+    move: Hy => /= /yam_of_rowpart ->.
+    rewrite eq_refl; move: Hstrip.
+    rewrite -(hb_strip_rowE (intpartnP _) (intpartnP _)
+                            (u := (ncons d2 0%N [::]))); first last.
+    + rewrite size_ncons /= addn0 (sumn_diffE (rowpartn d2)) //=.
+      rewrite /rowpart; case: d2 => [//= | d] /=; by rewrite addn0.
+    + exact: is_row_yamrow.
+    by move=> /andP [].
+  - suff -> : LRset = set0 by rewrite cards0.
+    apply/eqP; rewrite -subset0.
+    apply/subsetP => y; rewrite in_set0 inE => Hskew.
+    move: Hstrip; rewrite -(hb_strip_rowE (intpartnP _) (intpartnP _) (u := y)); first last.
+    + rewrite -evalseq_eq_size eval_yameval.
+      by rewrite (sumn_diffE (rowpartn d2)).
+    + case: y {Hskew} => y /= Hy.
+      suff -> : y = ncons d2 0%N [::] by exact: is_row_yamrow.
+      exact: yam_of_rowpart.
+    by rewrite Hincl Hskew.
+Qed.
+
+End Pieri.
+
+End LR.
 
 

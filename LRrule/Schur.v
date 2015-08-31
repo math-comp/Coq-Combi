@@ -24,13 +24,9 @@ Require Import Schensted stdplact Yam_plact Greene_inv shuffle.
 (* polynomials to the non commutative setting.                                *)
 (******************************************************************************)
 
-
-
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
-
-
 
 Local Open Scope ring_scope.
 Import GRing.Theory.
@@ -86,7 +82,6 @@ Proof.
 Qed.
 
 End Poly.
-
 
 Section FinSets.
 
@@ -254,7 +249,23 @@ End Size.
 
 Variable R : comRingType.
 
-Definition Schur d (sh : intpartn d) := polyset R (tabwordshape sh).
+Definition Schur d (sh : intpartn d) : {mpoly R[n]} := polyset R (tabwordshape sh).
+
+Definition rowpart d := if d is _.+1 then [:: d] else [::].
+Fact rowpartnP d : is_part_of_n d (rowpart d).
+Proof. case: d => [//= | d]; by rewrite /is_part_of_n /= addn0 eq_refl. Qed.
+Definition rowpartn d : intpartn d := IntPartN (rowpartnP d).
+Definition complete d : {mpoly R[n]} := Schur (rowpartn d).
+
+Definition colpart d := ncons d 1%N [::].
+Fact colpartnP d : is_part_of_n d (colpart d).
+Proof.
+  elim: d => [| d ] //= /andP [] /eqP -> ->.
+  rewrite add1n eq_refl andbT /=.
+  by case: d.
+Qed.
+Definition colpartn d : intpartn d := IntPartN (colpartnP d).
+Definition elementary d : {mpoly R[n]} := Schur (colpartn d).
 
 (* Noncommutative lifting of Schur *)
 Lemma Schur_freeSchurE d (Q : stdtabn d) :
