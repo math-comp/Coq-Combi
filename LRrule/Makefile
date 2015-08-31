@@ -74,13 +74,13 @@ VFILES:=congr.v\
   Greene_inv.v\
   Greene.v\
   implem.v\
-  multpoly.v\
   ordcast.v\
   ordtype.v\
   partition.v\
   permuted.v\
   plactic.v\
   Schensted.v\
+  Schur.v\
   shape.v\
   shuffle.v\
   skewtab.v\
