@@ -1,3 +1,52 @@
+module ArraySumComp
+
+  use import int.Int
+  use import ref.Refint
+  use import array.Array
+  use import lrrule.ArraySum
+
+  let compute_sum_array (a : array int) : int =
+     ensures { result = sum_array a }
+     let res = ref 0 in
+	for i = 0 to (length a) - 1 do
+	  invariant { !res = sum_sub_array a 0 i }
+	  res := !res + a[i]
+	done;
+        !res
+end
+
+
+module Spec
+
+  use import int.Int
+  use import int.MinMax
+  use import ref.Refint
+  use import array.Array
+  use import lrrule.Spec
+  use import lrrule.LRrule
+
+  predicate part_included (inner: array int) (outer: array int) =
+    (length inner <= length outer) /\
+    (forall i:int. 0 <= i < length inner -> inner[i] <= outer[i])
+
+  exception Not_included
+
+  let is_part_included (inner: array int) (outer: array int) =
+    ensures { part_included inner outer -> result = true }
+    ensures { not part_included inner outer -> result = false }
+    if (length inner > length outer) then false
+    else
+      try
+	for i = 0 to (length inner) - 1 do
+	  invariant {
+	    forall j : int. 0 <= j < i -> inner[j] <= outer[j] }
+	  if inner[i] > outer[i] then raise Not_included
+	done;
+	true
+      with Not_included ->
+	false
+      end
+end
 
 module LRruleFrontend
 
@@ -7,6 +56,7 @@ module LRruleFrontend
   use import array.Array
   use import lrrule.Spec
   use import lrrule.LRrule
+  use import Spec
 
   function extended (a: array int) (len: int) : array int
 
