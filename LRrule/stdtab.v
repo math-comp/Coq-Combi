@@ -18,14 +18,6 @@ Require Import tools combclass partition Yamanouchi permuted ordtype std tableau
 
 Import OrdNotations.
 
-(* TODO : move in tools.v *)
-Lemma nth_map_size (T : eqType) (s : seq (seq T)) i :
-  nth 0 (shape s) i = size (nth [::] s i).
-Proof.
-  rewrite /shape; case: (ltnP i (size s)) => Hi; first exact: nth_map.
-  by rewrite !nth_default // size_map.
-Qed.
-
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
