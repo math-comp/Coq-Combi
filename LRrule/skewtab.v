@@ -314,6 +314,113 @@ Section Dominate.
     by rewrite -shape_rev flattenK revK.
   Qed.
 
+  Fixpoint hb_strip inner outer :=
+    if inner is inn0 :: inn then
+      if outer is out0 :: out then
+        (head 0 out <= inn0 <= out0) && (hb_strip inn out)
+      else false
+    else if outer is out0 :: out then out == [::]
+         else true.
+
+  Lemma hb_strip_included inner outer :
+    hb_strip inner outer -> included inner outer.
+  Proof.
+    elim: inner outer => [| inn0 inn IHinn] [| out0 out] //=.
+    by move=> /andP [] /andP [] _ -> /IHinn ->.
+  Qed.
+
+  Lemma row_dominate u v :
+    is_row (u ++ v) -> dominate u v -> u = [::].
+  Proof.
+    case: u => [//= | u0 u] /=.
+    case: v => [//= | v0 v] /= /order_path_min Hpath.
+    have {Hpath} /Hpath /allP Hall : transitive (@leqX_op T)
+      by move=> i j k; apply leqX_trans.
+    move=> /dominateP [] /=; rewrite ltnS => Hsize Hdom.
+    have {Hdom} /Hdom /= H0 : 0 < (size u).+1 by [].
+    exfalso.
+    have /Hall : v0 \in u ++ v0 :: v by rewrite mem_cat in_cons eq_refl /= orbT.
+    by rewrite leqXNgtnX H0.
+  Qed.
+
+  Lemma row_hb_strip inner t :
+    is_part inner ->
+    is_skew_tableau inner t -> is_row (to_word t) ->
+    hb_strip inner (outer_shape inner (shape t)).
+  Proof.
+    rewrite /outer_shape.
+    elim: t inner => [| t0 t IHt] /= inner Hpart.
+      by rewrite cats0 => /eqP -> _ /=.
+    case: inner Hpart => [_ | inn0 inn] /=.
+      rewrite subn0 add0n to_word_cons => /and4P [] Ht0 _.
+      case: t {IHt} => [| t1 t] //=.
+      rewrite to_word_cons add0n subn0 /skew_dominate drop0 => Hdom /and4P [] Ht1 _ _ _.
+      rewrite -catA => /is_row_catR Hrow.
+      exfalso; move: Ht1; by rewrite (row_dominate Hrow Hdom).
+    move=> /andP [] Hhead Hpart.
+    rewrite to_word_cons subSS => /and4P [] _ _ Hdom /IHt{IHt}Hrec Hrow.
+    have {Hrec Hpart} -> := Hrec Hpart (is_row_catL Hrow).
+    rewrite leq_addr !andbT.
+    case: t Hdom Hrow => [//= | t1 t]/=; first by case: inn {Hhead}.
+    case: inn Hhead => [_ | inn1 inn] /=.
+      rewrite add0n subn0 to_word_cons -catA /skew_dominate => Hdom /is_row_catR.
+      rewrite -(cat_take_drop inn0 t1) -catA => /is_row_catR /row_dominate H1.
+      rewrite (H1 Hdom) cats0 size_take.
+      by case ltnP => [/ltnW|].
+    rewrite /skew_dominate to_word_cons -catA => Hhead Hdom.
+    rewrite -(cat_take_drop (inn0 - inn1) t1) -catA => /is_row_catR.
+    move=> /is_row_catR/row_dominate H1.
+    rewrite (H1 Hdom) cats0 size_take.
+    case ltnP => [_|]; first by rewrite subnKC.
+    by rewrite -(leq_add2l inn1) subnKC.
+  Qed.
+
+  Lemma hb_strip_rowE inner outer u :
+    is_part inner -> is_part outer ->
+    is_row u -> size u = sumn (diff_shape inner outer) ->
+    included inner outer && is_skew_tableau inner (skew_reshape inner outer u) =
+    hb_strip inner outer.
+  Proof.
+    move=> Hpartin Hpartout Hrow Hsize.
+    apply/(sameP idP); apply(iffP idP).
+    - move=> Hstrip; apply/andP; split; first by apply hb_strip_included.
+      elim: inner outer Hpartout u Hsize Hrow Hstrip {Hpartin} =>
+           [| inn0 inn IHinn] /= [//=| out0 out].
+        move=> Hpart u Hsize Hrow Hout.
+        move: Hout Hsize Hpart => /eqP -> /=.
+        rewrite addn0 add0n => Hsize; rewrite -Hsize take_size => /andP [] /lt0n_neq0 -> _.
+        by rewrite Hrow eq_refl.
+      move=> Hpartout /= u Hsize Hrow.
+      move=> /andP [] /andP [] Hhead0 H0 Hstrip.
+      rewrite /skew_reshape /= rev_cons reshape_rcons; first last.
+        by rewrite sumn_rev Hsize /= addnC.
+      rewrite rev_rcons /=.
+      apply/and4P; split.
+      + rewrite size_drop sumn_rev Hsize /= addnK (subnKC H0).
+        by have /= := part_head_non0 Hpartout.
+      + by apply is_row_drop.
+      + apply skew_dominate_no_overlap.
+        rewrite -/(skew_reshape _ _ _) sumn_rev.
+        have : size (take (sumn (diff_shape inn out)) u) = sumn (diff_shape inn out).
+          by rewrite size_take Hsize /= bad_if_leq; last by apply leq_addl.
+        move /(shape_skew_reshape (hb_strip_included Hstrip)).
+        set sh := skew_reshape _ _ _ => Hshape.
+        have -> : size (head [::] sh) = head 0 (shape sh) by rewrite /shape; case sh.
+        rewrite Hshape {IHinn Hsize Hrow sh Hshape Hstrip}.
+        case: inn => [| inn1 inn] /=; first by rewrite subn0.
+        case: out Hhead0 {Hpartout} => [//= | out1 out]/= H.
+        by apply leq_sub2r.
+      + rewrite -/(skew_reshape _ _ _); apply IHinn.
+        * by move: Hpartout => /= /andP [].
+        * by rewrite size_take sumn_rev Hsize /= bad_if_leq; last by apply leq_addl.
+        * by apply is_row_take.
+        * exact Hstrip.
+    - move=> /andP [] Hincl /(row_hb_strip Hpartin).
+      rewrite (to_word_skew_reshape Hincl Hsize) => H.
+      have {H} := H Hrow.
+      by rewrite (shape_skew_reshape Hincl Hsize) (diff_shapeK Hincl).
+  Qed.
+
 End Dominate.
 
 Section FilterLeqGeq.

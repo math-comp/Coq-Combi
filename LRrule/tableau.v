@@ -91,6 +91,12 @@ Section Rows.
     by case: r H => [//=|r1 r] /andP [].
   Qed.
 
+  Lemma is_row_catL u v : is_row (u ++ v) -> is_row u.
+  Proof.  move/(is_row_take (size u)); by rewrite take_size_cat. Qed.
+
+  Lemma is_row_catR u v : is_row (u ++ v) -> is_row v.
+  Proof.  move/(is_row_drop (size u)); by rewrite drop_size_cat. Qed.
+
   Lemma is_row_rcons l r : is_row r -> (last l r <= l)%Ord -> is_row (rcons r l).
   Proof. case: r => [//=| r0 r] /=; by rewrite rcons_path => -> ->. Qed.
 
