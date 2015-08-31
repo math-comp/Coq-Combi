@@ -14,6 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
 Require Import tuple finfun finset bigop path.
+Require Import mpoly.
 
 Require Import tools combclass partition Yamanouchi ordtype tableau.
 Require Import skewtab multpoly therule.

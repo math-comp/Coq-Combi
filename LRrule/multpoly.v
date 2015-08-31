@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop ssralg.
-Require Import poly.
+Require Import ssrcomplements poset freeg bigenough mpoly.
 
 Require Import tools ordtype partition Yamanouchi std stdtab.
 Require Import Schensted stdplact Yam_plact Greene_inv shuffle.
@@ -38,20 +38,9 @@ Import GRing.Theory.
 Section Poly.
 
 Variable R : comRingType.
-
-Fixpoint multpoly n :=
-  if n is n'.+1 then poly_comRingType (multpoly n') else R.
-
-Fixpoint vari n : 'I_n -> multpoly n :=
-  if n is n'.+1 then
-    fun i : 'I_n'.+1 =>
-      if unliftP ord0 i is UnliftSome j _ then (vari j)%:P
-      else 'X
-  else fun _ => 1.
-
 Variable n : nat.
 
-Definition commword (w : seq 'I_n) : multpoly n := \prod_(i <- w) vari i.
+Definition commword (w : seq 'I_n) : {mpoly R[n]} := \prod_(i <- w) 'X_i.
 
 Lemma perm_eq_commword (u v : seq 'I_n) : perm_eq u v -> commword u = commword v.
 Proof. by apply: eq_big_perm. Qed.
@@ -86,7 +75,7 @@ Proof.
   rewrite pair_big /=.
   rewrite (@eq_bigr _ _ _ _ _ _ _ (fun p => commword (cat_tuple p.1 p.2)));
     last by move=> [u v].
-  rewrite -(@big_imset (multpoly n) _ _ _ _ (fun p => cat_tuple p.1 p.2) _ commword) /=;
+  rewrite -(@big_imset _ _ _ _ _ (fun p => cat_tuple p.1 p.2) _ commword) /=;
     last by move=> [u v] [x y] /= _ _; apply: cat_tuple_inj.
   apply: eq_bigl => w.
   apply/(sameP idP); apply(iffP idP).
