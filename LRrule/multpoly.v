@@ -14,11 +14,10 @@
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop ssralg.
-Require Import poly ssrint.
+Require Import poly.
 
-(* TODO: understand why the following unnatural order is neecessary to compile *)
-Require Import ordtype partition Yamanouchi std Schensted stdtab.
-Require Import stdplact Yam_plact Greene_inv shuffle.
+Require Import tools ordtype partition Yamanouchi std stdtab.
+Require Import Schensted stdplact Yam_plact Greene_inv shuffle.
 
 (******************************************************************************)
 (* The main goal of this file is to lift the multiplication of multivariate   *)
@@ -128,12 +127,31 @@ Section TableauReading.
 Variable A : ordType.
 
 Definition is_tableau_of_shape_reading (sh : seq nat) (w : seq A) :=
+  (size w == sumn sh) && (is_tableau (rev (reshape (rev sh) w))).
+Definition is_tableau_of_shape_reading_RS (sh : seq nat) (w : seq A) :=
   (to_word (RS w) == w) && (shape (RS (w)) == sh).
 
 Lemma is_tableau_of_shape_readingP (sh : seq nat) (w : seq A) :
-    reflect
-      (exists tab, [/\ is_tableau tab, shape tab = sh & to_word tab = w])
-      (is_tableau_of_shape_reading sh w).
+  reflect
+    (exists tab, [/\ is_tableau tab, shape tab = sh & to_word tab = w])
+    (is_tableau_of_shape_reading sh w).
+Proof.
+  apply (iffP idP).
+  - move=> /andP [] /eqP Hsz Htab.
+    exists (rev (reshape (rev sh) w)); split => //.
+    rewrite shape_rev -{2}(revK sh); congr (rev _).
+    apply: reshapeKl; by rewrite sumn_rev Hsz.
+    rewrite /to_word revK; apply: reshapeKr; by rewrite sumn_rev Hsz.
+  - move=> [] tab [] Htab Hsh Hw; apply/andP; split.
+    + by rewrite -Hw -size_to_word /size_tab Hsh.
+    + rewrite -Hw /to_word -Hsh.
+      by rewrite /shape -map_rev -/(shape _) flattenK revK.
+Qed.
+
+Lemma is_tableau_of_shape_reading_RSP (sh : seq nat) (w : seq A) :
+  reflect
+    (exists tab, [/\ is_tableau tab, shape tab = sh & to_word tab = w])
+    (is_tableau_of_shape_reading_RS sh w).
 Proof.
   apply (iffP idP).
   - move=> /andP [] /eqP HRS /eqP Hsh.
@@ -141,6 +159,15 @@ Proof.
   - move=> [] tab [] Htab Hsh Hw; apply/andP.
     have:= RS_tabE Htab; rewrite Hw => ->.
     by rewrite Hw Hsh.
+Qed.
+
+Lemma is_tableau_of_shape_reading_RSE sh :
+  is_tableau_of_shape_reading sh =1 is_tableau_of_shape_reading_RS sh.
+Proof.
+  move=> w.
+  apply (sameP idP); apply (iffP idP).
+  - by move /is_tableau_of_shape_reading_RSP/is_tableau_of_shape_readingP.
+  - by move /is_tableau_of_shape_readingP/is_tableau_of_shape_reading_RSP.
 Qed.
 
 End TableauReading.
@@ -162,6 +189,8 @@ Proof. by rewrite /freeSchur /langQ !inE /=. Qed.
 
 Lemma size_RS_tuple (t : d.-tuple 'I_n) : size (to_word (RS t)) == d.
 Proof. by rewrite -size_to_word-{2}(size_tuple t) size_RS. Qed.
+
+
 (* Bijection freeSchur -> tabwordshape *)
 Definition tabword_of_tuple (t : d.-tuple 'I_n) : d.-tuple 'I_n := Tuple (size_RS_tuple t).
 
@@ -182,20 +211,6 @@ Proof.
   by rewrite -(RS_tabE Hu) -(RS_tabE Hv) Heq.
 Qed.
 
-(*
-  n : nat
-  Hnpos : n != 0
-  d : nat
-  Q : stdtabn d
-  u : d.-tuple 'I_n
-  v : d.-tuple 'I_n
-  Hu : (RStabmap u).2 = Q
-  Hv : (RStabmap v).2 = Q
-  H : to_word (RS u) = to_word (RS v)
-  ============================
-   RSTabPair (RStabmap_spec u) = RSTabPair (RStabmap_spec v)
- *)
-
 Lemma sumn_shape_stdtabnE (Q : stdtabn d) : (sumn (shape Q)) = d.
 Proof. case: Q => q; by rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP. Qed.
 
@@ -211,8 +226,9 @@ Definition shape_deg (Q : stdtabn d) := (IntPartN (is_part_shape_deg Q)).
 Lemma tabword_of_tuple_freeSchur (Q : stdtabn d) :
   [set tabword_of_tuple x | x in freeSchur Q] = tabwordshape (shape_deg Q).
 Proof.
-  rewrite /freeSchur /tabwordshape /tabword_of_tuple /is_tableau_of_shape_reading.
-  apply/setP/subset_eqP/andP; split; apply/subsetP => w; rewrite !inE.
+  rewrite /freeSchur /tabwordshape /tabword_of_tuple.
+  apply/setP/subset_eqP/andP; split; apply/subsetP => w;
+    rewrite !inE is_tableau_of_shape_reading_RSE /is_tableau_of_shape_reading_RS.
   - move/imsetP => [] t; rewrite inE => /eqP HQ Htmp.
     have /eqP := eq_refl (val w); rewrite {2}Htmp {Htmp} /= => Hw.
     rewrite Hw (RS_tabE (is_tableau_RS t)) eq_refl /= {w Hw}.
