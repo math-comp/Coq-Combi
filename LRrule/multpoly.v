@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop ssralg.
-Require Import poly ssrint.
+Require Import poly.
 
 (* TODO: understand why the following unnatural order is neecessary to compile *)
 Require Import ordtype partition Yamanouchi std Schensted stdtab.
