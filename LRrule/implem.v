@@ -15,9 +15,24 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
 Require Import tuple finfun finset bigop path.
 
-Require Import tools combclass partition yama ordtype.
-Require Import schensted std stdtab invseq congr plactic greeninv.
-Require Import yamplact skewtab shuffle multpoly therule.
+Require Import tools combclass partition Yamanouchi ordtype tableau.
+Require Import skewtab multpoly therule.
+
+(******************************************************************************)
+(* This file contains a Coq implementation of the Littlewood-Richardson rule  *)
+(*                                                                            *)
+(* LRcoeff       : seq nat -> seq nat -> seq nat -> nat                       *)
+(*                 returns the LR coefficient                                 *)
+(* LRyamtab_list : seq nat -> seq nat -> seq nat -> seq (seq (seq nat))       *)
+(*                 returns the list of LR tableaux                            *)
+(*                                                                            *)
+(* The following lemma assert that LRcoeff agrees with LRyamtab_list          *)
+(*   Lemma LRcoeffE inner eval outer :                                        *)
+(*     size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.      *)
+(*                                                                            *)
+(******************************************************************************)
+
+
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -57,9 +72,9 @@ Lemma head_row_skew_yam innev shape l r :
 Proof.
   case: r => [| l1 r /=] Hinn Hrow Hskew.
     apply (is_part_incr_nth_size Hinn).
-    have:= Hskew _ (hyper_yam_of_shape Hinn).
-    rewrite /= /is_yam_of_shape /=.
-    by rewrite (shape_rowseq_hyper_yam Hinn) => /andP [] /andP [].
+    have:= Hskew _ (hyper_yam_of_eval Hinn).
+    rewrite /= /is_yam_of_eval /=.
+    by rewrite (evalseq_hyper_yam Hinn) => /andP [] /andP [].
   move: Hrow => /andP [].
   by rewrite leqXnatE.
 Qed.
@@ -72,8 +87,8 @@ Section OutEval.
 Fixpoint add m n := if m is m'.+1 then add m' n.+1 else n.
 Lemma addE : add =2 addn.
 Proof. by elim=> //= n IHn m; rewrite IHn addSnnS. Qed.
-Let tsumn := foldl add 0.
 
+Let tsumn := foldl add 0.
 Lemma tsumnE : tsumn =1 sumn.
 Proof.
   rewrite /tsumn => s; rewrite -(add0n (sumn s)); move: 0 => i.
@@ -161,13 +176,13 @@ Lemma choose_one_letterP innev mini maxi :
   forall i, i \in choose_one_letter innev mini maxi ->
   is_skew_yam innev (incr_nth innev i) [:: i].
 Proof.
-  rewrite /is_skew_yam /is_yam_of_shape => i.
+  rewrite /is_skew_yam /is_yam_of_eval => i.
   rewrite mem_filter mem_iota => /andP [] /andP [] Hcorn _ _.
   move => y /andP [] Hyam /eqP Hinnev; subst innev.
   apply/andP; split => //=.
   rewrite Hyam andbT.
   apply is_part_incr_nth; last exact Hcorn.
-  by apply is_part_shyam.
+  by apply is_part_eval_yam.
 Qed.
 
 Lemma yamtab_rowP innev row :
@@ -194,14 +209,14 @@ Proof.
 Qed.
 
 Lemma LRyamtab_list_recP innev inner outer sh0 row0 y :
-  is_yam_of_shape innev y ->
+  is_yam_of_eval innev y ->
   forall res, res \in LRyamtab_list_rec innev inner outer sh0 row0 ->
   is_yam (to_word res ++ y).
 Proof.
   elim: outer innev inner sh0 row0 y => [//= | out0 out IHout] /=
               innev inner sh0 row0 y Hy res.
     rewrite mem_seq1 => /eqP -> /=.
-    by move: Hy; rewrite /is_yam_of_shape => /andP [].
+    by move: Hy; rewrite /is_yam_of_eval => /andP [].
   move=> /flatten_mapP [[rshift shrshift]] /flatten_mapP [[rrow shrrow]] /= Hrow Hshift.
   move=> /mapP [] rec Hrec -> {res}; rewrite to_word_cons.
   have {Hrow} Hrow := yamtab_rowP Hrow.
@@ -248,14 +263,14 @@ Qed.
 
 Lemma LRyamtab_list_included innev inner outer sh0 row0 y :
   included innev outev ->
-  is_yam_of_shape innev y ->
+  is_yam_of_eval innev y ->
   forall res, res \in LRyamtab_list_rec innev inner outer sh0 row0 ->
-  included (shape_rowseq (to_word res ++ y)) outev.
+  included (evalseq (to_word res ++ y)) outev.
 Proof.
   elim: outer innev inner sh0 row0 y => [//= | out0 out IHout] /=
               innev inner sh0 row0 y Hincl Hy res.
     rewrite mem_seq1 => /eqP -> /=.
-    move: Hy; by rewrite /is_yam_of_shape => /andP [] Hyam /eqP ->.
+    move: Hy; by rewrite /is_yam_of_eval => /andP [] Hyam /eqP ->.
   move=> /flatten_mapP [[rshift shrshift]] /flatten_mapP [[rrow shrrow]] /= Hrow Hshift.
   move=> /mapP [] rec Hrec -> {res}; rewrite to_word_cons -catA.
   have Hshrow := yamtab_rowP Hrow.
@@ -456,8 +471,8 @@ Lemma choose_one_countE shr innev shape mini maxi row l :
 Proof.
   rewrite /choose_one_letter count_filter
     => Hpart Hrow Hlrw Hincl /andP [] Hmin Hmax Hisrow.
-  have {Hrow} := Hrow _ (hyper_yam_of_shape Hpart) => /= /andP [] Hyamrow /eqP Hshr.
-  have {Hlrw} := Hlrw _ (hyper_yam_of_shape Hpart) => /= /andP [] Hyamlrow /eqP Hshape.
+  have {Hrow} := Hrow _ (hyper_yam_of_eval Hpart) => /= /andP [] Hyamrow /eqP Hshr.
+  have {Hlrw} := Hlrw _ (hyper_yam_of_eval Hpart) => /= /andP [] Hyamlrow /eqP Hshape.
   rewrite (eq_count (a2 := pred1 l)); first last.
     move=> i /=; case (altP (i =P l)) => [Hi | //=]; subst i.
     have /= -> /= : is_in_corner shr l.
@@ -475,8 +490,8 @@ Proof.
       by rewrite addn0 (leq_ltn_trans Hl H).
   rewrite /m {m} leq_min Hmax andbT.
   apply is_part_incr_nth_size.
-  - rewrite -Hshr; exact (is_part_shyam Hyamrow).
-  - rewrite -Hshr; exact (is_part_shyam Hyamlrow).
+  - rewrite -Hshr; exact (is_part_eval_yam Hyamrow).
+  - rewrite -Hshr; exact (is_part_eval_yam Hyamlrow).
 Qed.
 
 Lemma yamtab_row_countE innev shape row base :
@@ -662,7 +677,7 @@ Proof.
 Qed.
 
 Lemma LRyamtab_included inner eval outer tab:
-  tab \in (LRyamtab_list inner eval outer) -> included (shape_rowseq (to_word tab)) eval.
+  tab \in (LRyamtab_list inner eval outer) -> included (evalseq (to_word tab)) eval.
 Proof.
   rewrite /LRyamtab_list -(cats0 (to_word tab)).
   by apply LRyamtab_list_included.
@@ -711,18 +726,18 @@ Qed.
 Lemma LRyamtab_eval inner eval outer tab:
   is_part inner -> is_part outer -> included inner outer ->
   is_part eval -> sumn eval = sumn (diff_shape inner outer) ->
-  tab \in (LRyamtab_list inner eval outer) -> shape_rowseq (to_word tab) = eval.
+  tab \in (LRyamtab_list inner eval outer) -> evalseq (to_word tab) = eval.
 Proof.
   move=> Hinn Hout Hincl Hev Hsumn Htab.
   apply (included_sumnE Hev (LRyamtab_included Htab)).
-  rewrite Hsumn shape_rowseq_eq_size -size_to_word /size_tab.
+  rewrite Hsumn evalseq_eq_size -size_to_word /size_tab.
   by rewrite (LRyamtab_shape Hinn Hout Hincl Htab).
 Qed.
 
 Lemma count_mem_LRyamtab_list inner eval outer yamtab :
   is_part inner -> is_part outer -> included inner outer ->
   is_skew_tableau inner yamtab -> shape yamtab = diff_shape inner outer ->
-  is_yam_of_shape eval (to_word yamtab) ->
+  is_yam_of_eval eval (to_word yamtab) ->
   count_mem yamtab (LRyamtab_list inner eval outer) = 1.
 Proof.
   move=> Hinn Hout Hincl.
@@ -761,6 +776,48 @@ Proof.
   exact (LRyamtab_list_countE Hnil Hinn Hout Hsize Hskew (skew_nil_yamE Hyam)).
 Qed.
 
+
+Section PackedSpec.
+
+Variable  inner eval outer : seq nat.
+
+Record inputSpec :=
+  InputSpec {
+      inner_part : is_part inner;
+      outer_part : is_part outer;
+      incl       : included inner outer;
+      eval_part  : is_part eval;
+      sumn_eq    : sumn eval = sumn (diff_shape inner outer)
+    }.
+
+Record outputSpec (tab : seq (seq nat)) :=
+  OutputSpec {
+      skew        : is_skew_tableau inner tab;
+      shaps_eq    : shape tab = diff_shape inner outer;
+      yam_to_word : is_yam (to_word tab);
+      eval_eq     : evalseq (to_word tab) = eval
+    }.
+
+Lemma outputSpecP tab :
+  inputSpec -> tab \in (LRyamtab_list inner eval outer) -> outputSpec tab.
+Proof.
+  move=> [] Hinn Hout Hincl Hev Hsumn Htab; constructor.
+  - exact: (@LRyamtab_skew_tableau inner eval outer tab).
+  - exact: (@LRyamtab_shape inner eval outer tab).
+  - exact: (@LRyamtab_yam inner eval outer tab).
+  - exact: (@LRyamtab_eval inner eval outer tab).
+Qed.
+
+Lemma outputSpec_count_mem tab :
+  inputSpec -> outputSpec tab -> count_mem tab (LRyamtab_list inner eval outer) = 1.
+Proof.
+  move=> [] Hinn Hout Hincl Hev Hsumnc [] Htab Hshape Hyam Heval.
+  apply: count_mem_LRyamtab_list => //=.
+  by rewrite /is_yam_of_eval Hyam Heval eq_refl.
+Qed.
+
+End PackedSpec.
+
 Section Spec.
 
 Variables d1 d2 : nat.
@@ -769,18 +826,18 @@ Variable P : intpartn (d1 + d2).
 Hypothesis Hincl : included P1 P.
 
 Lemma LRyamtabP tab :
-  tab \in (LRyamtab_list P1 P2 P) -> is_yam_of_shape P2 (to_word tab).
+  tab \in (LRyamtab_list P1 P2 P) -> is_yam_of_eval P2 (to_word tab).
 Proof.
-  rewrite /is_yam_of_shape => Htab; apply /andP; split.
+  rewrite /is_yam_of_eval => Htab; apply /andP; split.
   - by apply (LRyamtab_yam Htab).
   - rewrite (LRyamtab_eval (intpartnP P1) (intpartnP P) Hincl (intpartnP P2) _ Htab) //=.
     by rewrite (sumn_diff_shape Hincl) !intpartn_sumn addKn.
 Qed.
 
 Lemma LRyamtab_all :
-  all (is_yam_of_shape P2) (map (@to_word _) (LRyamtab_list P1 P2 P)).
+  all (is_yam_of_eval P2) (map (@to_word _) (LRyamtab_list P1 P2 P)).
 Proof. by apply/allP => w /mapP [] tab /LRyamtabP Htab ->. Qed.
-Let bla := Eval hnf in [subCountType of yamsh P2].
+Let bla := Eval hnf in [subCountType of yameval P2].
 Definition LRyam_list := subType_seq bla LRyamtab_all.
 
 Lemma LRyamtab_spec_recip yam :
@@ -789,7 +846,7 @@ Lemma LRyamtab_spec_recip yam :
 Proof.
   rewrite inE => Hyam.
   have Hszyam : size yam = sumn (diff_shape P1 P).
-    by rewrite -shape_rowseq_eq_size shape_yamsh (sumn_diffE P2).
+    by rewrite -evalseq_eq_size eval_yameval (sumn_diffE P2).
   rewrite -[val yam](to_word_skew_reshape Hincl Hszyam).
   rewrite count_map.
   rewrite (eq_in_count (a2 := pred1 (skew_reshape P1 P (val yam)))); first last.
@@ -803,8 +860,8 @@ Proof.
     by apply size_included.
   apply (count_mem_LRyamtab_list (intpartnP P1) (intpartnP P) Hincl Hyam).
   - by rewrite (shape_skew_reshape Hincl Hszyam).
-  - rewrite /is_yam_of_shape; rewrite (to_word_skew_reshape Hincl Hszyam).
-    by rewrite yamshP shape_yamsh eq_refl.
+  - rewrite /is_yam_of_eval; rewrite (to_word_skew_reshape Hincl Hszyam).
+    by rewrite yamevalP eval_yameval eq_refl.
 Qed.
 
 Lemma LRyam_spec_recip yam :
@@ -827,7 +884,7 @@ Proof.
   rewrite -(mem_map val_inj) subType_seqP /= => /mapP [] tab Htab -> {yam}.
   have Hskew := LRyamtab_skew_tableau (intpartnP P1) (intpartnP P) Hincl Htab.
   have Hshape := LRyamtab_shape (intpartnP P1) (intpartnP P) Hincl Htab.
-  rewrite /is_LRtab /=.
+  rewrite /is_skew_reshape_tableau /=.
   have <- : (outer_shape P1 (shape tab)) = P.
     by rewrite Hshape diff_shapeK.
   rewrite skew_reshapeK //= -(size_map size tab) -/(shape tab) Hshape size_diff_shape.

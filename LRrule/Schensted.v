@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import path.
-Require Import tools partition yama ordtype subseq.
+Require Import tools partition Yamanouchi ordtype subseq.
 Require Export tableau.
 
 Set Implicit Arguments.
@@ -933,7 +933,7 @@ Section Inverse.
   Lemma is_tableau_RSmap1 w : is_tableau (RSmap w).1.
   Proof. rewrite /RSmap RSmapE; apply: is_tableau_RS. Qed.
 
-  Lemma shape_RSmap_eq w : shape (RSmap w).1 = shape_rowseq (RSmap w).2.
+  Lemma shape_RSmap_eq w : shape (RSmap w).1 = evalseq (RSmap w).2.
   Proof.
     elim/last_ind: w => [//=| w l0]; rewrite /RSmap rev_rcons /=.
     have:= is_tableau_RSmap1 w; rewrite /RSmap.
@@ -953,7 +953,7 @@ Section Inverse.
   Qed.
 
   Definition is_RSpair pair :=
-    let: (P, Q) := pair in [&& is_tableau (T:=T) P, is_yam Q & (shape P == shape_rowseq Q)].
+    let: (P, Q) := pair in [&& is_tableau (T:=T) P, is_yam Q & (shape P == evalseq Q)].
 
   Theorem RSmap_spec w : is_RSpair (RSmap w).
   Proof.
@@ -994,40 +994,40 @@ Section Inverse.
   Qed.
 
   Lemma yam_tail_non_nil (l : nat) (s : seq nat) : is_yam (l.+1 :: s) -> s != [::].
-  Proof. case: s => [|//=] Hyam. have:= is_part_shyam Hyam. by rewrite part_head0F. Qed.
+  Proof. case: s => [|//=] Hyam. have:= is_part_eval_yam Hyam. by rewrite part_head0F. Qed.
 
   Lemma shape_instabnrowinv1 t nrow yam :
-    is_yam (nrow :: yam) -> shape t == shape_rowseq (nrow :: yam) ->
-    shape (invinstabnrow t nrow).1 == shape_rowseq yam.
+    is_yam (nrow :: yam) -> shape t == evalseq (nrow :: yam) ->
+    shape (invinstabnrow t nrow).1 == evalseq yam.
   Proof.
     elim: nrow yam t => [|nrow IHnrow] yam t Hyam.
-    - case: t => [//= | r0 t]; first by case (shape_rowseq yam).
-      rewrite shape_rowshape_cons => Hshape.
-      have {Hyam} Hpart := is_part_shyam (is_yam_tl Hyam).
+    - case: t => [//= | r0 t]; first by case (evalseq yam).
+      rewrite evalseq_cons => Hshape.
+      have {Hyam} Hpart := is_part_eval_yam (is_yam_tl Hyam).
       case: r0 Hpart Hshape => [/= | l0 [| l1 r0'] ] Hpart Hshape /=.
-      * by case: (shape_rowseq yam) Hshape.
-      * case: (shape_rowseq yam) Hpart Hshape => //=.
+      * by case: (evalseq yam) Hshape.
+      * case: (evalseq yam) Hpart Hshape => //=.
         case => [|//=] l /andP []; rewrite leqn0.
         by move/part_head0F => ->.
       * move: Hshape; rewrite size_belast /=.
-        by case (shape_rowseq yam).
-    - case: t => [//= | r0 t]; first by case (shape_rowseq yam).
-      rewrite shape_rowshape_cons => /eqP Hshape.
-      have Hsz0 : (size r0) = head 0 (shape_rowseq yam) by
-        move: Hshape => /=; case (shape_rowseq yam) => [|s0 s] [] ->.
-      have {Hshape} Hshape : shape t == shape_rowseq (nrow :: (decr_yam yam)).
+        by case (evalseq yam).
+    - case: t => [//= | r0 t]; first by case (evalseq yam).
+      rewrite evalseq_cons => /eqP Hshape.
+      have Hsz0 : (size r0) = head 0 (evalseq yam) by
+        move: Hshape => /=; case (evalseq yam) => [|s0 s] [] ->.
+      have {Hshape} Hshape : shape t == evalseq (nrow :: (decr_yam yam)).
         have:= eq_refl (behead (shape (r0 :: t))).
-        by rewrite {2}Hshape behead_incr_nth -shape_decr_yam.
+        by rewrite {2}Hshape behead_incr_nth -evalseq_decr_yam.
       have Hnnilyam := yam_tail_non_nil Hyam.
       have {Hyam} Hyam : (is_yam (nrow :: decr_yam yam)) by apply: (is_yam_decr Hyam).
       have {IHnrow Hshape Hyam} := IHnrow _ _ Hyam Hshape => /=.
       case Hinv: (invinstabnrow t nrow) => [tin l] /=.
       have:= size_invins l r0; rewrite /invins.
       case Hbump: (invbumprow l r0) => [t0r l0r] /= -> {Hbump t0r l0r} /eqP -> {Hinv tin l}.
-      rewrite shape_decr_yam Hsz0 {Hsz0 r0}.
+      rewrite evalseq_decr_yam Hsz0 {Hsz0 r0}.
       case: yam Hnnilyam => [//= | a b _].
-      have: shape_rowseq (a :: b) != [::] by case: a => [/= | a /=]; case (shape_rowseq b).
-      by case (shape_rowseq (a :: b)).
+      have: evalseq (a :: b) != [::] by case: a => [/= | a /=]; case (evalseq b).
+      by case (evalseq (a :: b)).
   Qed.
 
   Lemma head_tableau_non_nil h t : is_tableau (h :: t) -> h != [::].
@@ -1086,7 +1086,7 @@ Section Inverse.
     have Hnnil : (tab != [::]).
       move: Hshape; case tab => //= /eqP Habs.
       have:= eq_refl (size ([::]: seq nat)); rewrite {2}Habs /= size_incr_nth.
-      move: (size (shape_rowseq yam)) => n.
+      move: (size (evalseq yam)) => n.
       by case (ltnP row n) => //= /ltn_predK <-.
     have:= instabnrowinvK Htab Hnnil Hcorn.
     have:= is_tableau_instabnrowinv1 Htab Hcorn.
@@ -1145,16 +1145,16 @@ Section Bijection.
 
   Notation Pair := (seq (seq T) * seq nat : Type).
 
-  Structure rspair : predArgType := RSpair { pqpair :> Pair; _ : is_RSpair pqpair }.
+  Structure rspair : predArgType := RSpair { pyampair :> Pair; _ : is_RSpair pyampair }.
 
-  Canonical rspair_subType := Eval hnf in [subType for pqpair].
+  Canonical rspair_subType := Eval hnf in [subType for pyampair].
   Definition rspair_eqMixin := Eval hnf in [eqMixin of rspair by <:].
   Canonical rspair_eqType := Eval hnf in EqType rspair rspair_eqMixin.
   Definition rspair_choiceMixin := [choiceMixin of rspair by <:].
   Canonical rspair_choiceType :=
     Eval hnf in ChoiceType rspair rspair_choiceMixin.
 
-  Lemma pqpair_inj : injective pqpair. Proof. exact: val_inj. Qed.
+  Lemma pyampair_inj : injective pyampair. Proof. exact: val_inj. Qed.
 
   Definition RSbij w := RSpair (RSmap_spec w).
   Definition RSbijinv (ps : rspair) := RSmapinv2 ps.
@@ -1163,7 +1163,7 @@ Section Bijection.
   Proof.
     split with (g := RSbijinv); rewrite /RSbij /RSbijinv.
     - move=> w /=; by rewrite (RS_bij_1 w).
-    - move=> [pq H]; apply: pqpair_inj => /=; exact (RS_bij_2 H).
+    - move=> [pq H]; apply: pyampair_inj => /=; exact (RS_bij_2 H).
   Qed.
 
 End Bijection.
@@ -1171,13 +1171,13 @@ End Bijection.
 Section Classes.
 
 Definition RSclass := [fun tab =>
-  [seq RSmapinv2 (tab, y) | y <- enum_yamsh (shape tab)] ].
+  [seq RSmapinv2 (tab, y) | y <- enum_yameval (shape tab)] ].
 
 Lemma RSclassP tab : is_tableau tab -> all (fun w => RS w == tab) (RSclass tab).
 Proof.
   move=> Htab /=; apply/allP => w /mapP [] Q.
-  move /(allP (enum_yamshP (is_part_sht Htab))).
-  rewrite /is_yam_of_shape => /andP [] Hyam /eqP Hsh -> {w}.
+  move /(allP (enum_yamevalP (is_part_sht Htab))).
+  rewrite /is_yam_of_eval => /andP [] Hyam /eqP Hsh -> {w}.
   by rewrite -RSmapE RS_bij_2 //= Htab Hyam Hsh /=.
 Qed.
 
@@ -1185,15 +1185,15 @@ Lemma RSclass_countE w : count_mem w (RSclass (RS w)) = 1.
 Proof.
   rewrite count_map.
   rewrite (eq_in_count (a2 := pred1 ((RSmap w).2))); first last.
-    move=> y /= /(allP (enum_yamshP (is_part_sht (is_tableau_RS _)))).
-    rewrite /is_yam_of_shape => /andP [] Hyam /eqP Hsh.
+    move=> y /= /(allP (enum_yamevalP (is_part_sht (is_tableau_RS _)))).
+    rewrite /is_yam_of_eval => /andP [] Hyam /eqP Hsh.
     apply/(sameP idP); apply(iffP idP) => /eqP H.
     - rewrite H {H} -RSmapE.
       have -> : ((RSmap w).1, (RSmap w).2) = RSmap w by case RSmap.
       by rewrite RS_bij_1.
     - by rewrite -H {H} RS_bij_2 //= (is_tableau_RS _) Hyam Hsh /=.
-  apply: (enum_yamsh_countE (is_part_sht (is_tableau_RS _))).
-  rewrite /is_yam_of_shape -shape_RSmap_eq RSmapE eq_refl andbT.
+  apply: (enum_yameval_countE (is_part_sht (is_tableau_RS _))).
+  rewrite /is_yam_of_eval -shape_RSmap_eq RSmapE eq_refl andbT.
   by apply: is_yam_RSmap2.
 Qed.
 
@@ -1208,8 +1208,8 @@ Proof.
   - move/eqP => Hw.
     apply/mapP; exists (RSmap w).2.
     + apply/count_memPn.
-      rewrite (enum_yamsh_countE (is_part_sht Htab)) //=.
-      rewrite /is_yam_of_shape is_yam_RSmap2 /=.
+      rewrite (enum_yameval_countE (is_part_sht Htab)) //=.
+      rewrite /is_yam_of_eval is_yam_RSmap2 /=.
       by rewrite -shape_RSmap_eq RSmapE Hw.
     + rewrite -Hw -RSmapE.
       have -> : ((RSmap w).1, (RSmap w).2) = RSmap w by case RSmap.
@@ -1221,6 +1221,79 @@ Qed.
 End Classes.
 
 End NonEmpty.
+
+
+Require Import finset perm fingroup.
+Require Import std stdtab.
+
+Lemma RSperm n (p : 'S_n) : is_stdtab (RS (wordperm p)).
+Proof.
+  rewrite /is_stdtab; apply/andP; split; first by apply: is_tableau_RS.
+  apply: (perm_eq_std (wordperm_std p)).
+  rewrite perm_eq_sym; apply: (perm_eq_RS (wordperm p)).
+Qed.
+
+Lemma RSstdE (p : seq nat) : is_stdtab (RS p) = is_std p.
+Proof.
+  rewrite /is_stdtab is_tableau_RS /=.
+  apply/(sameP idP); apply(iffP idP) => Hstd; apply: (perm_eq_std Hstd);
+    first rewrite perm_eq_sym; apply: perm_eq_RS.
+Qed.
+
+Section QTableau.
+
+Variable T : ordType.
+
+Notation TabPair := (seq (seq T) * seq (seq nat) : Type).
+
+Definition is_RStabpair (pair : TabPair) :=
+  let: (P, Q) := pair in [&& is_tableau P, is_stdtab Q & (shape P == shape Q)].
+
+Structure rstabpair : predArgType :=
+  RSTabPair { pqpair :> TabPair; _ : is_RStabpair pqpair }.
+
+Canonical rstabpair_subType := Eval hnf in [subType for pqpair].
+Definition rstabpair_eqMixin := Eval hnf in [eqMixin of rstabpair by <:].
+Canonical rstabpair_eqType := Eval hnf in EqType rstabpair rstabpair_eqMixin.
+
+Lemma pqpair_inj : injective pqpair. Proof. exact: val_inj. Qed.
+
+Definition RStabmap (w : seq T) := let (p, q) := (RSmap w) in (p, stdtab_of_yam q).
+
+Lemma RStabmapE (w : seq T) : (RStabmap w).1 = RS w.
+Proof. rewrite /RStabmap -RSmapE; by case RSmap. Qed.
+
+Theorem RStabmap_spec w : is_RStabpair (RStabmap w).
+Proof.
+  have:= RSmap_spec w; rewrite /is_RStabpair /is_RSpair /RStabmap.
+  case H : (RSmap w) => [P Q] /and3P [] -> /stdtab_of_yamP -> /eqP -> /=.
+  by rewrite shape_stdtab_of_yam.
+Qed.
+
+Definition RStab w := RSTabPair (RStabmap_spec w).
+Definition RStabinv (pair : rstabpair) :=
+  let: (P, Q) := pqpair pair in RSmapinv2 (P, yam_of_stdtab Q).
+
+Lemma RStabK : cancel RStab RStabinv.
+Proof.
+  rewrite /RStab /RStabinv /RStabmap.
+  move=> w /=; have:= is_yam_RSmap2 w.
+  case H : (RSmap w) => [P Q] /= Hyam.
+  by rewrite stdtab_of_yamK; first by rewrite -H (RS_bij_1 w).
+Qed.
+Lemma RStabinvK : cancel RStabinv RStab.
+Proof.
+  rewrite /RStab /RStabinv /RStabmap.
+  move=> [[P Q] H] /=; apply: pqpair_inj => /=.
+  move: H; rewrite /is_RStabpair => /and3P [] Htab Hstdtab Hshape //=.
+  rewrite RS_bij_2.
+  + by rewrite (yam_of_stdtabK Hstdtab).
+  + by rewrite /is_RSpair Htab yam_of_stdtabP //= shape_yam_of_stdtab.
+Qed.
+Lemma bijRStab : bijective RStab.
+Proof. split with (g := RStabinv). exact: RStabK. exact: RStabinvK. Qed.
+
+End QTableau.
 
 
 
@@ -1264,10 +1337,10 @@ Section Tests.
   Goal is_part [:: 0] = false.
   Proof. compute; by apply: erefl. Qed.
 
-  Goal shape_rowseq [::] = [::].
+  Goal evalseq [::] = [::].
   Proof. compute; by apply: erefl. Qed.
 
-  Goal shape_rowseq [:: 0; 1; 2; 0; 1; 3] = [:: 2; 2; 1; 1].
+  Goal evalseq [:: 0; 1; 2; 0; 1; 3] = [:: 2; 2; 1; 1].
   Proof. compute; by apply: erefl. Qed.
 
   Goal (RSmapinv2 (RSmap [:: 4; 1; 2; 1; 3; 2])) = [:: 4; 1; 2; 1; 3; 2].

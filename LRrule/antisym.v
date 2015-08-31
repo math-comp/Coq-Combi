@@ -14,11 +14,13 @@
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
-Require Import fingroup perm zmodp binomial poly poset freeg.
+Require Import fingroup perm zmodp binomial poly ssrcomplements poset freeg.
 
-
-Require Import tools ordcast combclass partition yama schensted ordtype std stdtab invseq congr plactic greeninv yamplact skewtab.
+Require Import Sn.
+(*
+Require Import tools ordcast combclass partition schensted ordtype std stdtab invseq congr plactic greeninv yamplact skewtab.
 Require Import shuffle multpoly Sn.
+*)
 
 Require Import bigenough mpoly.
 
@@ -254,13 +256,14 @@ Lemma vander_rec n (R : comRingType) :
 Proof.
   rewrite /vander_fact /minject /vandermonde /=.
   rewrite (bigID (fun p : 'I_n.+1 * 'I_n.+1 => p.2 == inord n)) /=.
-  rewrite -mpolywME.
   set Peq := (\prod_(i : 'I_n.+1 * 'I_n.+1 | (i.1 < i.2) && (i.2 == inord n))
               ('X_i.1 - 'X_i.2)).
   set Pneq := (\prod_(i : 'I_n.+1 * 'I_n.+1 | (i.1 < i.2) && (i.2 != inord n))
               ('X_i.1 - 'X_i.2)).
   have := erefl (mpoly_mul Peq Pneq).
     rewrite {1}/mpoly_mul /=.
+  admit.
+Qed.
 
 Theorem sym_anti_iso n (R : comRingType) (q : {mpoly R[n]}) :
   q \is antisymmetric ->

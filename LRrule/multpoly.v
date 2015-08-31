@@ -16,7 +16,9 @@ Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop ssralg.
 Require Import poly ssrint.
 
-Require Import partition yama schensted yamplact ordtype std stdtab invseq greeninv shuffle.
+(* TODO: understand why the following unnatural order is neecessary to compile *)
+Require Import ordtype partition Yamanouchi std Schensted stdtab.
+Require Import stdplact Yam_plact Greene_inv shuffle.
 
 (******************************************************************************)
 (* The main goal of this file is to lift the multiplication of multivariate   *)
@@ -41,13 +43,12 @@ Variable R : comRingType.
 Fixpoint multpoly n :=
   if n is n'.+1 then poly_comRingType (multpoly n') else R.
 
-Definition vari n (i : 'I_n) : multpoly n.
-Proof.
-  elim: n i => [//= | n IHn] i; first by apply: 1.
-  case (unliftP ord0 i) => /= [j |] Hi.
-  - apply: (polyC (IHn j)).
-  - apply: 'X.
-Defined.
+Fixpoint vari n : 'I_n -> multpoly n :=
+  if n is n'.+1 then
+    fun i : 'I_n'.+1 =>
+      if unliftP ord0 i is UnliftSome j _ then (vari j)%:P
+      else 'X
+  else fun _ => 1.
 
 Variable n : nat.
 
@@ -122,18 +123,39 @@ Qed.
 Definition ord_ordMixin := Order.Mixin inhabIn leqOrd_order.
 Canonical ord_ordType := Eval hnf in OrdType 'I_n ord_ordMixin.
 
+Section TableauReading.
+
+Variable A : ordType.
+
+Definition is_tableau_of_shape_reading (sh : seq nat) (w : seq A) :=
+  (to_word (RS w) == w) && (shape (RS (w)) == sh).
+
+Lemma is_tableau_of_shape_readingP (sh : seq nat) (w : seq A) :
+    reflect
+      (exists tab, [/\ is_tableau tab, shape tab = sh & to_word tab = w])
+      (is_tableau_of_shape_reading sh w).
+Proof.
+  apply (iffP idP).
+  - move=> /andP [] /eqP HRS /eqP Hsh.
+    exists (RS w); split => //; by apply is_tableau_RS.
+  - move=> [] tab [] Htab Hsh Hw; apply/andP.
+    have:= RS_tabE Htab; rewrite Hw => ->.
+    by rewrite Hw Hsh.
+Qed.
+
+End TableauReading.
+
 Section Size.
 
 Variable d : nat.
 
-(* set of tableaux words on 'I_n of a given size *)
-Definition tabwordsize := [set t : d.-tuple 'I_n | to_word (RS t) == t].
 (* set of tableaux words on 'I_n of a given shape *)
 Definition tabwordshape (sh : intpartn d) :=
-  [set t : d.-tuple 'I_n | (to_word (RS t) == t) && (shape (RS (t)) == sh)].
+  [set t : d.-tuple 'I_n | is_tableau_of_shape_reading sh t ].
 (* set of tableaux words on 'I_n of a given Q-symbol *)
 Definition freeSchur (Q : stdtabn d) :=
   [set t : d.-tuple 'I_n | (RStabmap t).2 == Q].
+
 
 Lemma freeSchurP Q t : t \in freeSchur Q = (val t \in langQ _ Q).
 Proof. by rewrite /freeSchur /langQ !inE /=. Qed.
@@ -153,12 +175,26 @@ Proof.
   have {H} /= H : tval (tabword_of_tuple u) = tval (tabword_of_tuple v) by rewrite H.
   case: (bijRStab ord_ordType) => RSinv HK _.
   apply: val_inj; rewrite -[val u]HK -[val v]HK; congr (RSinv _).
-  rewrite {RSinv HK} /RStab /=; apply: pqpair_inj => /=.
+  rewrite {RSinv HK} /RStab /=. apply: pqpair_inj => /=.
   have := is_tableau_RS u; have := is_tableau_RS v.
   move: Hu Hv H; rewrite -!RStabmapE /RStabmap.
   case RSmap => [pu qu] {u} /= ->; case RSmap => [pv qv] {v} /= -> Heq Hv Hu.
   by rewrite -(RS_tabE Hu) -(RS_tabE Hv) Heq.
 Qed.
+
+(*
+  n : nat
+  Hnpos : n != 0
+  d : nat
+  Q : stdtabn d
+  u : d.-tuple 'I_n
+  v : d.-tuple 'I_n
+  Hu : (RStabmap u).2 = Q
+  Hv : (RStabmap v).2 = Q
+  H : to_word (RS u) = to_word (RS v)
+  ============================
+   RSTabPair (RStabmap_spec u) = RSTabPair (RStabmap_spec v)
+ *)
 
 Lemma sumn_shape_stdtabnE (Q : stdtabn d) : (sumn (shape Q)) = d.
 Proof. case: Q => q; by rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP. Qed.
@@ -175,7 +211,7 @@ Definition shape_deg (Q : stdtabn d) := (IntPartN (is_part_shape_deg Q)).
 Lemma tabword_of_tuple_freeSchur (Q : stdtabn d) :
   [set tabword_of_tuple x | x in freeSchur Q] = tabwordshape (shape_deg Q).
 Proof.
-  rewrite /freeSchur /tabwordshape /tabword_of_tuple.
+  rewrite /freeSchur /tabwordshape /tabword_of_tuple /is_tableau_of_shape_reading.
   apply/setP/subset_eqP/andP; split; apply/subsetP => w; rewrite !inE.
   - move/imsetP => [] t; rewrite inE => /eqP HQ Htmp.
     have /eqP := eq_refl (val w); rewrite {2}Htmp {Htmp} /= => Hw.
@@ -234,15 +270,15 @@ Definition LR_support :=
   [set Q : stdtabn (d1 + d2) | predLRTripleFast Q1 Q2 Q ].
 
 (* Noncommutative LR rule *)
-Lemma catset_LR_rule :
-  catset (freeSchur Q1) (freeSchur Q2) = \bigcup_(Q in LR_support) (freeSchur Q).
+Lemma free_LR_rule :
+  catset (freeSchur Q1) (freeSchur Q2) = \bigcup_(Q in LR_support) freeSchur Q.
 Proof.
   rewrite /catset.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> t.
   - move/imset2P => [] w1 w2.
     rewrite !freeSchurP /= => Hw1 Hw2 ->.
     have := conj Hw1 Hw2.
-    rewrite free_LR_rule; try by apply: stdtabnP.
+    rewrite LRTriple_cat_equiv; try by apply: stdtabnP.
     move => [] H1 H2 [] Q [] Htriple /= Hcat.
     have := is_stdtab_of_n_LRTriple (stdtabnP Q1) (stdtabnP Q2) Htriple.
     rewrite !stdtabn_size => HQ.
@@ -263,7 +299,7 @@ Proof.
     have Hcat : t = cat_tuple t1 t2.
       apply: val_inj => /=; by rewrite cat_take_drop.
     have : (val t1 \in langQ _ Q1 /\ val t2 \in langQ _ Q2).
-      rewrite free_LR_rule; try by apply: stdtabnP.
+      rewrite LRTriple_cat_equiv; try by apply: stdtabnP.
       rewrite !size_tuple !stdtabn_size; split; try by [].
       exists Q; split.
       + apply/LRTripleP; try apply: stdtabnP.
@@ -280,7 +316,7 @@ Qed.
 Theorem LR_rule_tab :
   Schur (shape_deg Q1) * Schur (shape_deg Q2) = \sum_(Q in LR_support) (Schur (shape_deg Q)).
 Proof.
-  rewrite !Schur_freeSchurE multcatset catset_LR_rule.
+  rewrite !Schur_freeSchurE multcatset free_LR_rule.
   rewrite -cover_imset /polyset.
   rewrite big_trivIset /=; first last.
     apply/trivIsetP => S1 S2.
@@ -332,7 +368,7 @@ End SchurTab.
 Lemma hyper_stdtabP d (P : intpartn d) : is_stdtab_of_n d (RS (std (hyper_yam P))).
 Proof.
   rewrite /= RSstdE std_is_std /= size_RS.
-  rewrite size_std -shape_rowseq_eq_size (shape_rowseq_hyper_yam (intpartnP P)).
+  rewrite size_std -evalseq_eq_size (evalseq_hyper_yam (intpartnP P)).
   by rewrite intpartn_sumn.
 Qed.
 Definition hyper_stdtab d (P : intpartn d) := StdtabN (hyper_stdtabP P).
@@ -342,7 +378,7 @@ Proof.
   rewrite /hyper_stdtab /shape_deg.
   apply: val_inj => /=.
   rewrite shape_RS_std (shape_RS_yam (hyper_yamP (intpartnP P))).
-  by rewrite (shape_rowseq_hyper_yam (intpartnP P)).
+  by rewrite (evalseq_hyper_yam (intpartnP P)).
 Qed.
 
 Section Coeffs.

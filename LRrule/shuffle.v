@@ -14,8 +14,8 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm binomial.
-Require Import tools subseq partition yama ordtype schensted std stdtab invseq.
-Require Import plactic greeninv.
+Require Import tools subseq partition Yamanouchi ordtype std stdtab.
+Require Import Schensted plactic Greene_inv stdplact.
 
 
 Set Implicit Arguments.
@@ -25,16 +25,6 @@ Unset Printing Implicit Defensive.
 Open Scope bool.
 
 Import OrdNotations.
-
-
-Lemma all_perm_eq (T : eqType) (u v : seq T) P : perm_eq u v -> all P u -> all P v.
-Proof.
-  move=> /perm_eq_mem Hperm /allP Hall; apply/allP => x.
-  by rewrite -Hperm => /Hall.
-Qed.
-
-Lemma flatten_seq1 (T : eqType) (s : seq T) : flatten [seq [:: x] | x <- s] = s.
-Proof. by elim: s => [//= | s0 s /= ->]. Qed.
 
 Section Defs.
 
@@ -80,19 +70,10 @@ Proof.
     apply: perm_map; by apply: IHu.
 Qed.
 
-(* *)
 
 Require Import bigop vectNK.
 
 (* Tentative proof of associativity of shuffle *)
-Lemma sumnE s : \sum_(i <- s) i = sumn s.
-Proof.
-  elim: s => [//= | s0 s IHs] /=; first by rewrite big_nil.
-  by rewrite big_cons IHs.
-Qed.
-
-Lemma perm_sumn l1 l2 : perm_eq l1 l2 -> sumn l1 = sumn l2.
-Proof. rewrite -!sumnE; by apply eq_big_perm. Qed.
 
 Lemma shuffle_perm_eq u l1 l2 :
   perm_eq l1 l2 ->
@@ -605,9 +586,9 @@ Proof.
   apply: (iffP idP) => /=.
   - move=> /hasP [] p /flattenP [] shuf /allpairsP [] [p1 p2] /= [].
     move=> /mapP [] yam1
-            /(allP (enum_yamshP (is_part_sht Htab1))) /= /andP [] Hyam1 Hsh1 Hp1.
+            /(allP (enum_yamevalP (is_part_sht Htab1))) /= /andP [] Hyam1 Hsh1 Hp1.
     move=> /mapP [] yam2
-            /(allP (enum_yamshP (is_part_sht Htab2))) /= /andP [] Hyam2 Hsh2 Hp2.
+            /(allP (enum_yamevalP (is_part_sht Htab2))) /= /andP [] Hyam2 Hsh2 Hp2.
     move=> -> {shuf} Hshuf /eqP <- {t}.
     apply: (@PlactLRTriple t1 t2 (RS p) p1 p2 p) => //=.
     + by rewrite Hp1 -RSmapE RS_bij_2 //= Htab1 Hyam1 eq_sym Hsh1.
@@ -650,9 +631,9 @@ Proof.
   - move=> Hfast; apply/(LRTripleP t Ht1 Ht2).
     move: Hfast => /= /hasP [] p2 /mapP [] y2 Hy2.
     have := Ht2; rewrite /is_stdtab => /andP [] Htab2 _.
-    have := (is_part_sht Htab2) => /enum_yamshP/allP Hall2.
+    have := (is_part_sht Htab2) => /enum_yamevalP/allP Hall2.
     have {Hall2 Hy2} := Hall2 _ Hy2.
-    rewrite /is_yam_of_shape => /andP [] Hyam2 /eqP Hsh2 Hp2 Htshsh.
+    rewrite /is_yam_of_eval => /andP [] Hyam2 /eqP Hsh2 Hp2 Htshsh.
     have := Ht1; rewrite /is_stdtab => /andP [] /RS_tabE => H1 _.
     have H2 : RS p2 = t2 by rewrite Hp2 -RSmapE RS_bij_2 //= Htab2 Hyam2 Hsh2 /=.
     have := Ht; rewrite /is_stdtab => /andP [] /RS_tabE => Hres _.
@@ -668,9 +649,9 @@ Proof.
     apply/hasP; exists p'.
     + apply /mapP; exists (RSmap p').2.
       * apply/count_memPn; rewrite Hp'.
-        have : is_yam_of_shape (shape (RS p')) (RSmap p').2.
-          by rewrite /is_yam_of_shape is_yam_RSmap2 /= -RSmapE shape_RSmap_eq.
-        by move/(enum_yamsh_countE (is_part_sht (is_tableau_RS p'))) => ->.
+        have : is_yam_of_eval (shape (RS p')) (RSmap p').2.
+          by rewrite /is_yam_of_eval is_yam_RSmap2 /= -RSmapE shape_RSmap_eq.
+        by move/(enum_yameval_countE (is_part_sht (is_tableau_RS p'))) => ->.
       * rewrite Hp' -[RS p']RSmapE /=.
         have -> : ((RSmap p').1, (RSmap p').2) = RSmap p' by case RSmap.
         by rewrite RS_bij_1.
@@ -699,7 +680,7 @@ Proof.
     by rewrite size_map -Hp1 -Hp2 !size_RS.
 Qed.
 
-Theorem free_LR_rule_plact t1 t2 u1 u2:
+Theorem LRTriple_cat_langQ t1 t2 u1 u2:
   is_stdtab t1 -> is_stdtab t2 -> u1 \in langQ t1 -> u2 \in langQ t2 ->
   plactLRTriple t1 t2 (RStabmap (u1 ++ u2)).2.
 Proof.
@@ -715,7 +696,7 @@ Proof.
   + by apply: invstd_cat_in_shsh.
 Qed.
 
-Theorem free_LR_rule t1 t2 :
+Theorem LRTriple_cat_equiv t1 t2 :
   is_stdtab t1 -> is_stdtab t2 ->
   forall u1 u2 : word,
   ( (u1 \in langQ t1 /\ u2 \in langQ t2) <->
@@ -726,7 +707,7 @@ Proof.
   split.
   - move=> [] Hu1 Hu2; split; try by apply: size_langQ.
     exists (RStabmap (u1 ++ u2)).2; split.
-    + by apply: free_LR_rule_plact.
+    + by apply: LRTriple_cat_langQ.
     + by rewrite inE.
   - move=> [] Hsz1 Hsz2 [] t [] [] p1 p2 p Hp1 Hp2 Htmp; subst t.
     rewrite !inE -!RSinvstdE -Hp1 -Hp2 -!plactic_RS => Hsh Hcat.

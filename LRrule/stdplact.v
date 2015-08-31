@@ -15,182 +15,252 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm fingroup path.
 
-Require Import tools partition yama ordtype std stdtab ordcast.
-Require Import schensted congr plactic green greeninv.
+Require Import tools combclass ordcast partition Yamanouchi ordtype permuted std stdtab.
+Require Import Schensted congr plactic Greene Greene_inv.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Import OrdNotations.
 
-Lemma perm_eq_size_uniq (T : eqType) (s1 s2 : seq T) :
-  uniq s1 -> {subset s1 <= s2} -> size s2 <= size s1 -> perm_eq s1 s2.
+Section StdRS.
+
+Variable Alph : ordType.
+Let Z := (inhabitant Alph).
+Implicit Type s u v w : seq Alph.
+Implicit Type p : seq nat.
+Implicit Type t : seq (seq Alph).
+
+Lemma std_plact1 (u v1 w v2 : seq Alph) :
+  v2 \in plact1 v1 -> std (u ++ v1 ++ w) =Pl (std (u ++ v2 ++ w)).
 Proof.
-  move=> Hus1 Hsubs Hszleq.
-  have := leq_size_perm Hus1 Hsubs Hszleq => [] [] Heq Hsz.
-  apply: (uniq_perm_eq Hus1); last exact Heq.
-  by rewrite -(perm_uniq Heq Hsz).
+  have Hcongr := @plactcongr_is_congr nat_ordType.
+  move/plact1P => [] a [] b [] c [] Habc -> ->.
+  have := (std_cutabc u w a c b) => [] [] U [] V [] A [] C [] B [] Hsz Hstd.
+  have Hac : a <A c by move: Habc => /andP []; apply: leqX_ltnX_trans.
+  rewrite Hstd (std_transp Hac Hsz Hstd) -[[:: C; A] ++ B :: V]/([:: C; A; B] ++ V).
+  apply: (congr_catr Hcongr); apply: (congr_catl Hcongr).
+  apply: rule_gencongr => /=.
+  suff -> : (A <= B < C)%Ord by rewrite inE eq_refl.
+  have := eq_inv_std (u ++ [:: a; c; b] ++ w); rewrite Hstd {Hstd} => /eq_invP [] Hsize Hinv.
+  have := Hinv (size u) (size u).+2.
+  set Hyp := (X in (X -> _ ) -> _) => Hinvab.
+  have {Hyp Hinvab} /Hinvab : Hyp.
+    rewrite /Hyp (leq_trans (leqnSn _) (leqnSn _)) /= size_cat /=.
+    by rewrite -2!addSnnS -{1}[(size u).+2]addn0 ltn_add2l.
+  rewrite {3 4}Hsz !nth_sizeu !nth_sizeu2 => <-.
+  have := Hinv (size u).+1 (size u).+2.
+  set Hyp := (X in (X -> _ ) -> _) => Hinvbc.
+  have {Hyp Hinvbc} /Hinvbc : Hyp.
+    rewrite /Hyp (ltn_trans (ltnSn _) (ltnSn _)) /= size_cat /=.
+    by rewrite -2!addSnnS -{1}[(size u).+2]addn0 ltn_add2l.
+  rewrite {3 4}Hsz !nth_sizeu1 !nth_sizeu2 ltnXNgeqX => <-.
+  by rewrite -ltnXNgeqX.
 Qed.
 
-Section InvSeq.
+Lemma reorg3 (T : eqType) (u w : seq T) b a c :
+  u ++ [:: b; a; c] ++ w = (u ++ [:: b]) ++ [:: a; c] ++ w.
+Proof. by rewrite -catA. Qed.
 
-Implicit Type n : nat.
-
-Definition linvseq s :=
-  [fun t => all (fun i => nth (size s) t (nth (size t) s i) == i) (iota 0 (size s))].
-Definition invseq s t := linvseq s t && linvseq t s.
-
-Lemma linvseqP s t :
-  reflect (forall i, i < size s -> nth (size s) t (nth (size t) s i) = i) (linvseq s t).
+Lemma std_plact2 (u v1 w v2 : seq Alph) :
+  v2 \in plact2 v1 -> std (u ++ v1 ++ w) =Pl (std (u ++ v2 ++ w)).
 Proof.
-  rewrite /linvseq; apply: (iffP idP) => /=.
-  - move=> /allP H i Hi.
-    apply/eqP; apply: H; by rewrite mem_iota.
-  - move=> H; apply/allP => /= i; rewrite mem_iota /= add0n => Hi.
-    by rewrite (H i Hi).
+  have Hcongr := @plactcongr_is_congr nat_ordType.
+  move/plact2P => [] a [] b [] c [] Habc -> ->.
+  have := (std_cutabc u w b a c) => [] [] U [] W [] B [] A [] C [] Hsz.
+  have Hac : a <A c by move: Habc => /andP []; apply: ltnX_leqX_trans.
+  rewrite !reorg3.
+  have Hsz1 : size (u ++ [:: b]) = size (U ++ [:: B]) by rewrite !size_cat Hsz.
+  move=> Hstd; rewrite Hstd (std_transp Hac Hsz1 Hstd).
+  rewrite -!reorg3.
+  apply: (congr_catr Hcongr); apply: (congr_catl Hcongr).
+  apply: rule_gencongr => /=.
+  suff -> : (A < B <= C)%Ord by rewrite !mem_cat inE eq_refl /= !orbT.
+  rewrite -!reorg3  in Hstd.
+  have := eq_inv_std (u ++ [:: b; a; c] ++ w).
+  rewrite Hstd {Hstd} => /eq_invP [] Hsize Hinv.
+  have := Hinv (size u) (size u).+2.
+  set Hyp := (X in (X -> _ ) -> _) => Hinvab.
+  have {Hyp Hinvab} /Hinvab : Hyp.
+    rewrite /Hyp (leq_trans (leqnSn _) (leqnSn _)) /= size_cat /=.
+    by rewrite -2!addSnnS -{1}[(size u).+2]addn0 ltn_add2l.
+  rewrite {3 4}Hsz !nth_sizeu !nth_sizeu2 => <-.
+  have := Hinv (size u) (size u).+1.
+  set Hyp := (X in (X -> _ ) -> _) => Hinvbc.
+  have {Hyp Hinvbc} /Hinvbc : Hyp.
+    rewrite /Hyp (leqnSn _) /= size_cat /=.
+    by rewrite -addSnnS -{1}[(size u).+1]addn0 ltn_add2l.
+  rewrite {3 4}Hsz !nth_sizeu !nth_sizeu1 ltnXNgeqX => <-.
+  by rewrite -ltnXNgeqX.
 Qed.
 
-Lemma invseq_sym s t : invseq s t -> invseq t s.
-Proof. by rewrite /invseq andbC. Qed.
-
-Lemma size_all_leq n t : (forall i, i < n -> i \in t) -> n <= size t.
+Theorem std_plact u v : u =Pl v -> std u =Pl std v.
 Proof.
-  move=> H.
-  pose s := undup (filter (gtn n) t).
-  have Hperm : perm_eq s (iota 0 n).
-    apply: uniq_perm_eq.
-    + by apply: undup_uniq.
-    + by apply: iota_uniq.
-    + move=> i; rewrite /s mem_undup mem_iota /= add0n mem_filter /=.
-      apply/(sameP idP); apply(iffP idP).
-      * move=> Hi; by rewrite Hi (H i Hi).
-      * by move/andP => [] ->.
-  have -> : n = size (iota 0 n) by rewrite size_iota.
-  rewrite -(perm_eq_size Hperm) /s.
-  apply: (leq_trans (size_undup _)).
-  rewrite size_filter; by apply: count_size.
+  have:= @plactcongr_equiv nat_ordType => /equivalence_relP [] Hrefl Htrans.
+  move: v; apply: gencongr_ind; first by apply: Hrefl.
+  move=> a b1 c b2 H Hplact.
+  rewrite -(@Htrans (std (a ++ b1 ++ c))); last by rewrite -(Htrans _ _ H); apply: Hrefl.
+  move: Hplact {H} => /plactruleP [].
+  + apply: std_plact1.
+  + rewrite -plact1I => /std_plact1 H.
+    have {H} H := H a c.
+    by rewrite -(Htrans _ _ H); apply: Hrefl.
+  + apply: std_plact2.
+  + rewrite -plact2I => /std_plact2 H.
+    have {H} H := H a c.
+    by rewrite -(Htrans _ _ H); apply: Hrefl.
 Qed.
 
-Lemma linvseq_ltn_szt s t :
-  linvseq s t -> forall i, i < size s -> nth (size t) s i < size t.
+Lemma cast_enum u (S : {set 'I_(size u)}) :
+  enum (mem (cast_set (esym (size_std u)) S)) =
+  map (cast_ord (esym (size_std u))) (enum (mem S)).
 Proof.
-  move/linvseqP => Hinv i Hi.
-  have:= Hinv i Hi.
-  case: (ltnP (nth (size t) s i) (size t)) => //= Habs.
-  rewrite (nth_default _ Habs) => H.
-  by move: Hi; rewrite H ltnn.
+  rewrite {1}/enum_mem -enumT /=.
+  rewrite -[filter _ _]map_id (cast_map_cond _ _ (esym (size_std u))).
+  congr (map _ _).
+  rewrite {2}/enum_mem -enumT /=.
+  apply: eq_filter => i /=.
+  by rewrite mem_cast.
 Qed.
 
-Lemma size_leq_invseq s t : linvseq s t -> size s <= size t.
+Lemma sorted_enum_ord N :
+  sorted (fun i j : 'I_N => i <= j) (enum 'I_N).
 Proof.
-  move=> Hinv; have:= Hinv => /linvseqP H.
-  apply: size_all_leq => i Hi.
-  have {H} H := H i Hi.
-  rewrite -H; apply: mem_nth.
-  by apply: linvseq_ltn_szt.
+  rewrite /sorted; case Henum : (enum 'I_N) => [//= | a l].
+  rewrite -(map_path (h := val) (e := leq) (b := pred0)).
+  - have -> : l = behead (enum 'I_N) by rewrite Henum.
+    have -> : val a = head 0 (map val (enum 'I_N)) by rewrite Henum.
+    rewrite -behead_map val_enum_ord.
+    case: N {a l Henum} => [//= | N] /=.
+    by apply: (iota_sorted 0 N.+1).
+  - by [].
+  - by rewrite (eq_has (a2 := pred0)); first by rewrite has_pred0.
 Qed.
 
-Lemma size_invseq s t : invseq s t -> size s = size t.
+Lemma sorted_std_extract u (S : {set 'I_(size u)}) :
+   sorted leqX (extractpred (in_tuple u) (mem S)) =
+   sorted leqX (extractpred (in_tuple (std u)) (mem (cast_set (esym (size_std u)) S))).
 Proof.
-  rewrite /invseq => /andP [] Hst Hts.
-  apply/eqP; rewrite eqn_leq.
-  apply/andP; split; by apply: size_leq_invseq.
+  rewrite /extractpred cast_enum /= /sorted.
+  set leqI := (fun i j : 'I_(size u) => i <= j).
+  have leqI_trans : transitive leqI.
+    move=> i j k; rewrite /leqI; by apply: leq_trans.
+  have: sorted leqI (enum (mem S)).
+    rewrite {1}/enum_mem -enumT /=.
+    apply: (sorted_filter leqI_trans).
+    by apply: sorted_enum_ord.
+  case: (enum (mem S)) => [//= | i0 l] {S} /=.
+  elim: l i0 => [//= | i1 l IHl] i0 /= /andP [] Hleqi Hpath.
+  rewrite -(IHl i1 Hpath) {IHl Hpath}; congr (_ && _).
+  rewrite !(tnth_nth Z) !(tnth_nth (inhabitant (nat_ordType))) /=.
+  have := eq_inv_std u => /eq_invP [] Hsz Hinv.
+  apply: Hinv.
+  move: Hleqi; rewrite /leqI => -> /=.
+  by apply: ltn_ord.
 Qed.
 
-Lemma linvseq_subset_iota s t : linvseq s t -> {subset iota 0 (size s) <= t}.
+Lemma ksupp_inj_std u k : ksupp_inj leqX leqX k u (std u).
 Proof.
-  move/linvseqP => Hinv i.
-  rewrite mem_iota /= add0n => Hi.
-  have Heq := Hinv i Hi; rewrite -Heq.
-  apply: mem_nth; move: Hi; apply: contraLR; rewrite -!ltnNge !ltnS => H.
-  have := nth_default (size s) H.
-  by rewrite Heq => ->.
+  rewrite /ksupp_inj /ksupp => ks /and3P [] Hsz Htriv /forallP Hall.
+  exists (cast_set (esym (size_std u)) @: ks).
+  apply/and4P; split.
+  - rewrite /scover /= cover_cast /cast_set /=.
+    by rewrite card_imset; last by apply: cast_ord_inj.
+  - apply: (@leq_trans #|ks|); last exact Hsz.
+    by apply: leq_imset_card.
+  - apply: imset_trivIset; last exact Htriv.
+    by apply: cast_ord_inj.
+  - apply/forallP => Sstd; apply/implyP => /imsetP [] S HS -> {Sstd}.
+    have {Hall} := Hall S; rewrite HS /=.
+    by rewrite sorted_std_extract.
 Qed.
 
-Lemma invseq_is_std s t : invseq s t -> is_std s.
+Lemma ksupp_inj_stdI u k : ksupp_inj leqX leqX k (std u) u.
 Proof.
-  move=> /invseq_sym Hinv; rewrite /is_std perm_eq_sym.
-  apply: perm_eq_size_uniq.
-  - by apply: iota_uniq.
-  - rewrite -(size_invseq Hinv); apply: linvseq_subset_iota.
-    move: Hinv; by rewrite /invseq => /andP [].
-  - by rewrite size_iota.
+  rewrite /ksupp_inj /ksupp => ks /and3P [] Hsz Htriv /forallP Hall.
+  exists (cast_set (size_std u) @: ks).
+  apply/and4P; split.
+  - rewrite /scover /= cover_cast /cast_set /=.
+    by rewrite card_imset; last by apply: cast_ord_inj.
+  - apply: (@leq_trans #|ks|); last exact Hsz.
+    by apply: leq_imset_card.
+  - apply: imset_trivIset; last exact Htriv.
+    by apply: cast_ord_inj.
+  - apply/forallP => Sstd; apply/implyP => /imsetP [] S HS -> {Sstd}.
+    have {Hall} := Hall S; rewrite HS /=.
+    rewrite sorted_std_extract; congr (path.sorted _ ).
+    rewrite /extractpred; congr (map _ _).
+    apply: eq_enum => i.
+    rewrite inE /cast_set /= -imset_comp.
+    set f := (X in imset X _).
+    have /eq_imset -> : f =1 id.
+      by move=> j; rewrite /f /= (cast_ordK (size_std u)).
+    by rewrite imset_id inE.
 Qed.
 
-Lemma linvseq_sizeP s t :
-  linvseq s t -> size s = size t -> invseq s t.
+Lemma Greene_std u k : Greene_row (std u) k = Greene_row u k.
 Proof.
-  move=> Hinv Hsize; rewrite /invseq; apply/andP; split; first exact Hinv.
-  have Hiota := linvseq_subset_iota Hinv.
-  have Htmp : size t <= size (iota 0 (size s)) by rewrite size_iota Hsize.
-  have Huniq := leq_size_uniq (iota_uniq 0 (size s)) Hiota Htmp.
-  have {Htmp Hiota} Hperm := perm_eq_size_uniq (iota_uniq 0 (size s)) Hiota Htmp.
-  apply/linvseqP => i Hi; move: Hinv => /linvseqP Hinv.
-  have:= mem_nth (size s) Hi; rewrite -(perm_eq_mem Hperm) mem_iota /= add0n => Hnth.
-  have {Hinv} Heq := Hinv _ Hnth.
-  have /eqP := Heq; rewrite nth_uniq //=; first by move/eqP.
-  case: (ltnP (nth (size t) s (nth (size s) t i)) (size t)) => //= H.
-  move: Heq; rewrite (nth_default _ H) => /eqP.
-  by rewrite (gtn_eqF Hnth).
+  apply/eqP; rewrite eqn_leq; apply/andP; split;
+    apply: leq_Greene.
+  + by apply: ksupp_inj_stdI.
+  + by apply: ksupp_inj_std.
 Qed.
 
-Lemma invseq_nthE s t :
-  invseq s t ->
-  forall i j, i < size s -> j < size t -> (i = nth (size s) t j <-> nth (size t) s i = j).
+Theorem shape_RS_std u : shape (RS (std u)) = shape (RS u).
+Proof. apply: Greene_row_eq_shape_RS; by apply: Greene_std. Qed.
+
+Lemma size_RSmap2 u : size ((RSmap u).2) = size u.
 Proof.
-  move=> Hinv i j Hi Hj.
-  move: Hinv; rewrite /invseq => /andP [] /linvseqP Hst /linvseqP Hts.
-  split => H.
-  + have:= Hts j Hj; by rewrite H.
-  + have:= Hst i Hi; by rewrite H.
+  elim/last_ind: u => [//= | u un].
+  rewrite /RSmap rev_rcons /=.
+  case: (RSmap_rev (rev u)) => [t rows] /=.
+  case: (instabnrow t un) => [tr nrow] /= ->.
+  by rewrite size_rcons.
 Qed.
 
-Definition invstd s := mkseq (fun i => index i s) (size s).
+End StdRS.
 
-Lemma invseq_invstd s : is_std s -> invseq s (invstd s).
+Theorem RSmap_std (T : ordType) (w : seq T) : (RSmap (std w)).2 = (RSmap w).2.
 Proof.
-  move=> Hstd; rewrite /invseq; apply/andP; split; apply/linvseqP; rewrite size_mkseq => i Hi.
-  - rewrite nth_mkseq.
-    + apply: (index_uniq _ Hi). by apply: std_uniq.
-    + by rewrite -(mem_std _ Hstd) mem_nth.
-  - rewrite nth_mkseq //=; apply: nth_index; by rewrite (mem_std _ Hstd).
+  move Hn : (size w) => n.
+  elim: n T w Hn => [/= | n IHn] T w; first by move/eqP/nilP => ->.
+  case/lastP Hw : w => [//= | w' wn] Hn.
+  have:= shape_RS_std (rcons w' wn).
+  rewrite -!RSmapE !shape_RSmap_eq.
+  case/lastP H : (std (rcons w' wn)) => [/= | st stn].
+    exfalso; have:= eq_refl (@size nat [::]).
+    by rewrite -{1}H size_std_rec size_rcons.
+  case HRS : ((RSmap (rcons w' wn)).2) => [/= | iw yamw].
+    exfalso; have:= eq_refl (@size nat [::]).
+    by rewrite -{1}HRS size_RSmap2 size_rcons.
+  have Hyamw : yamw = (RSmap w').2.
+    move: HRS; rewrite /RSmap rev_rcons /=.
+    case: (RSmap_rev (rev w')) => [t rows] /=.
+    by case: (instabnrow t wn) => [tr nrow] /= [] _ ->.
+  have Hsize : size w' = n by move: Hn => /eqP; rewrite size_rcons eqSS => /eqP.
+  have /std_rconsK Hst : std (rcons w' wn) = std (rcons st stn) by rewrite -H std_stdE.
+  rewrite {wn Hw Hn H HRS} Hyamw /= -(IHn _ _ Hsize).
+  have Hsizest : size st = n.
+    have := Hst; rewrite /std -{2}(size_std_rec (size st) st) => <-.
+    by rewrite size_std_rec.
+  rewrite Hst (IHn _ _ Hsizest) {Hst IHn Hsize Hsizest}.
+  rewrite /RSmap rev_rcons /= -[RSmap_rev (rev st)]/(RSmap st).
+  case HRS : (RSmap st) => [t0 rows].
+  case Hins : (instabnrow t0 stn) => [tr irow] /=.
+  by move/incr_nth_inj ->.
 Qed.
 
-Lemma size_invstd p : size (invstd p) = size p.
-Proof. by rewrite /invstd size_mkseq. Qed.
-
-Lemma invstd_is_std p : is_std p -> is_std (invstd p).
+Corollary RStabmap_std (T : ordType) (w : seq T) : (RStabmap (std w)).2 = (RStabmap w).2.
 Proof.
-  move=> H; apply: (invseq_is_std (t := p)).
-  apply: invseq_sym; by apply: invseq_invstd.
+  rewrite /RStabmap.
+  move H : (RSmap w) => [P Q].
+  move Hs : (RSmap (std w)) => [Ps Qs] /=.
+  have -> : Q = (RSmap w).2 by rewrite H.
+  have -> : Qs = (RSmap (std w)).2 by rewrite Hs.
+  by rewrite RSmap_std.
 Qed.
 
-Lemma invseqE s t1 t2 : invseq s t1 -> invseq s t2 -> t1 = t2.
-Proof.
-  move=> Hinv1 Hinv2.
-  have Hsz: size t1 = size t2 by rewrite -(size_invseq Hinv1) -(size_invseq Hinv2).
-  apply: (eq_from_nth (x0 := size s) Hsz) => i Hi1.
-  have:= Hi1; rewrite Hsz => Hi2.
-  have := Hinv1; rewrite /invseq => /andP [] _ Ht1s.
-  have Hnth1 := linvseq_ltn_szt Ht1s Hi1.
-  rewrite (invseq_nthE Hinv2 Hnth1 Hi2).
-  rewrite -Hsz.
-  by move: Ht1s => /linvseqP ->.
-Qed.
-
-Lemma invstdK s : is_std s -> invstd (invstd s) = s.
-Proof.
-  move=> Hstd; apply: (invseqE (s := invstd s)).
-  + apply: invseq_invstd; by apply: invstd_is_std.
-  + apply: invseq_sym; by apply: invseq_invstd.
-Qed.
-
-Lemma invstd_inj s t : is_std s -> is_std t -> (invstd s) = (invstd t) -> s = t.
-Proof.
-  move=> Hs Ht H.
-  have:= erefl (invstd (invstd s)).
-  by rewrite {2}H (invstdK Hs) (invstdK Ht).
-Qed.
 
 Section KsuppInj.
 
@@ -292,20 +362,20 @@ Qed.
 
 End KsuppInj.
 
-Lemma green_invseq s t k : invseq s t -> greenRow s k = greenRow t k.
+Lemma Greene_invseq s t k : invseq s t -> Greene_row s k = Greene_row t k.
 Proof.
   move=> Hst; have Hts := invseq_sym Hst.
   apply/eqP; rewrite eqn_leq; apply/andP; split;
-    apply: leq_green; by apply: ksupp_inj_invseq.
+    apply: leq_Greene; by apply: ksupp_inj_invseq.
 Qed.
 
 Lemma shape_invseq s t : invseq s t -> shape (RS s) = shape (RS t).
 Proof.
-  move=> Hinv; apply: greenRow_tab_eq_shape; try apply: is_tableau_RS.
+  move=> Hinv; apply: Greene_row_tab_eq_shape; try apply: is_tableau_RS.
   move=> k.
-  rewrite -(greenRow_invar_plactic (congr_RS s) k).
-  rewrite -(greenRow_invar_plactic (congr_RS t) k).
-  by apply: green_invseq.
+  rewrite -(Greene_row_invar_plactic (congr_RS s) k).
+  rewrite -(Greene_row_invar_plactic (congr_RS t) k).
+  by apply: Greene_invseq.
 Qed.
 
 Lemma std_rcons_shiftinv t tn :
@@ -475,7 +545,7 @@ Proof.
   congr (append_nth _ _ _).
 
   have := eq_refl (sumn (shape (RSmap t').1)).
-  rewrite {1}RSmapE (shape_RSmap_eq t') shape_rowseq_eq_size HRSt /= => /eqP <-.
+  rewrite {1}RSmapE (shape_RSmap_eq t') evalseq_eq_size HRSt /= => /eqP <-.
   rewrite -/(size_tab (RS t')) size_RS.
   move: Hsize; rewrite Ht Hn size_rcons => /eqP; rewrite eqSS => /eqP <-.
   have := (invseq_is_std Hinv); rewrite Hs => /std_max ->.
@@ -516,8 +586,6 @@ Proof.
   by apply: RSmap_std.
 Qed.
 
-End InvSeq.
-
 Section Test.
 
   Let u := [:: 4;1;2;2;5;3].
@@ -530,4 +598,3 @@ Section Test.
   Proof. compute; by apply: erefl. Qed.
 
 End Test.
-

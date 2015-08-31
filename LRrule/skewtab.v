@@ -15,7 +15,7 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop path.
 
-Require Import tools partition yama ordtype tableau std stdtab.
+Require Import tools partition Yamanouchi ordtype tableau std stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -47,211 +47,17 @@ Proof.
   by rewrite -IHsh; last by rewrite size_drop -Hsize -addnA addKn.
 Qed.
 
-Section SkewShape.
-
-  Fixpoint included inner outer :=
-    if inner is inn0 :: inn then
-      if outer is out0 :: out then
-        (inn0 <= out0) && (included inn out)
-      else false
-    else true.
-
-  Lemma includedP inner outer :
-    reflect (size inner <= size outer /\ forall i, nth 0 inner i <= nth 0 outer i)
-            (included inner outer).
-  Proof.
-    apply (iffP idP).
-    - elim: inner outer => [//= | inn0 inn IHinn] /=.
-        move=> outer _; by split; last by move=> i; rewrite nth_nil.
-      case=> [//= | out0 out] /= /andP [] H0 /IHinn{IHinn} [] Hsize H.
-      split; first by rewrite ltnS.
-      by case.
-    - elim: inner outer => [//= | inn0 inn IHinn] /=.
-      case=> [ [] //= | out0 out] [] /=.
-      rewrite ltnS => Hsize H.
-      apply/andP; split; first by apply (H 0).
-      apply: IHinn; split; first exact Hsize.
-      move=> i; by apply (H i.+1).
-  Qed.
-
-  Lemma included_refl sh : included sh sh.
-  Proof. elim: sh => [//= | s0 sh /= -> ]; by rewrite leqnn. Qed.
-
-  Lemma included_trans sha shb shc :
-    included sha shb -> included shb shc -> included sha shc.
-  Proof.
-    move=> /includedP [] Hsza Hincla /includedP [] Hszb Hinclb.
-    apply/includedP; split; first exact (leq_trans Hsza Hszb).
-    move=> i; by apply (leq_trans (Hincla i) (Hinclb i)).
-  Qed.
-
-  Lemma included_incr_nth sh i :
-    included sh (incr_nth sh i).
-  Proof.
-    apply/includedP; split.
-    - rewrite size_incr_nth; case ltnP => Hi //=.
-      by apply (leq_trans Hi).
-    - move=> j; rewrite nth_incr_nth.
-      by apply leq_addl.
-  Qed.
-
-  Lemma included_decr_nth u i : included (decr_nth u i) u.
-  Proof.
-    elim: u i => [| u0 u IHu] [| i] //=.
-      case: u0 => [| [| u0]] //=.
-      by rewrite ltnS (leqnSn u0) (included_refl u).
-    by rewrite (leqnn u0) (IHu i).
-  Qed.
-
-  Lemma included_incr_nth_inner inner outer i :
-    nth 0 inner i < nth 0 outer i ->
-    included inner outer -> included (incr_nth inner i) outer.
-  Proof.
-    move=> Hnth /includedP [] Hsize Hincl.
-    apply/includedP; split.
-    - rewrite size_incr_nth; case ltnP => _; first exact Hsize.
-      rewrite ltnNge; apply (introN idP) => Hout.
-      move: Hnth; by rewrite (nth_default _ Hout).
-    - move=> j; rewrite nth_incr_nth.
-      case eqP => [<- | _].
-      - by rewrite add1n.
-      - by rewrite add0n.
-  Qed.
-
-  Lemma size_included inner outer : included inner outer -> size inner <= size outer.
-  Proof.
-    elim: inner outer => [//= | inn0 inn IHinn] /=.
-    case=> [//= | outer0 outer] /= /andP [] _ /IHinn.
-    by rewrite ltnS.
-  Qed.
-
-  Lemma sumn_included inner outer : included inner outer -> sumn inner <= sumn outer.
-  Proof.
-    elim: inner outer => [//= | inn0 inn IHinn] /=.
-    case=> [//= | outer0 outer] /= /andP [] H0 /IHinn.
-    by apply: leq_add.
-  Qed.
-
-  Lemma included_sumnE inner outer :
-    is_part outer ->
-    included inner outer ->
-    sumn inner = sumn outer ->
-    inner = outer.
-  Proof.
-    elim: inner outer => [| inn0 inn IHinn] /=.
-      by move=> outer Houter _ /esym/(part0 Houter) ->.
-    case=> [//= | outer0 out] /= /andP [] _ /IHinn{IHinn}Hrec /andP [] H0 Hincl Heq.
-    have {H0} H0 : inn0 = outer0.
-      apply anti_leq; rewrite H0 /=.
-      have := leq_sub2l (inn0 + sumn inn) (sumn_included Hincl).
-      by rewrite {1}Heq !addnK.
-    move: Heq => /eqP; by rewrite H0 eqn_add2l => /eqP/(Hrec Hincl) ->.
-  Qed.
-
-  Fixpoint diff_shape inner outer :=
-    if inner is inn0 :: inn then
-      if outer is out0 :: out then
-        out0 - inn0 :: diff_shape inn out
-      else [::] (* Unused case *)
-    else outer.
-
-  Definition pad (T : Type) (x : T) sz := [fun s => s ++ nseq (sz - size s) x].
-
-  Definition outer_shape inner size_seq :=
-    [seq p.1 + p.2 | p <- zip (pad 0 (size (size_seq)) inner) size_seq].
-
-  Lemma size_diff_shape inner outer : size (diff_shape inner outer) = size outer.
-  Proof.
-    elim: inner outer => [//= | inn0 inn IHinn] /= [//= | out0 out] /=.
-    by rewrite IHinn.
-  Qed.
-
-  Lemma sumn_diff_shape inner outer :
-    included inner outer -> sumn (diff_shape inner outer) = sumn outer - sumn inner.
-  Proof.
-    elim: inner outer => [//= | inn0 inn IHinn] /= [//= | out0 out] /=.
-      by rewrite subn0.
-    move/andP => [] Hleq Hincl.
-    rewrite (IHinn _ Hincl) {IHinn}.
-    have Hsumn : sumn inn <= sumn out.
-      elim: inn out Hincl => [//= | inn1 inn IHinn] /= [//= | out1 out] /=.
-      move/andP => [] H1 /IHinn; by apply leq_add.
-    by rewrite subnDA (addnBA _ Hsumn) addnC (addnBA _ Hleq) [out0 + _]addnC.
-  Qed.
-
-  Lemma diff_shape_pad0 inner outer :
-    diff_shape ((pad 0 (size outer)) inner) outer = diff_shape inner outer.
-  Proof.
-    elim: inner outer => [//= | inn0 inn IHinn] //=.
-      elim=> [//= | out0 out] /=; by rewrite !subn0 => ->.
-    case=> [//= | out0 out] /=.
-    by rewrite subSS IHinn.
-  Qed.
-
-  Lemma diff_shapeK inner outer :
-    included inner outer ->
-    outer_shape inner (diff_shape inner outer) = outer.
-  Proof.
-    rewrite /outer_shape.
-    elim: inner outer => [//= | inn0 inn IHinn] /= outer.
-      rewrite subn0 => _; elim: outer => [//= | out0 out /= ->].
-      by rewrite add0n.
-   case: outer => [//= | out0 out] /= /andP [] Hin /IHinn{IHinn} ->.
-   by rewrite addnC subnK.
-  Qed.
-
-  Lemma outer_shapeK inner diff :
-    size inner <= size diff ->
-    diff_shape inner (outer_shape inner diff) = diff.
-  Proof.
-    rewrite /outer_shape.
-    elim: inner diff => [//= | inn0 inn IHinn] /= diff.
-      rewrite subn0 => _; elim: diff => [//= | d0 diff /= ->].
-      by rewrite add0n.
-    case: diff => [//=| t0 t] /=; rewrite ltnS subSS => /IHinn /= ->.
-    by rewrite addKn.
-  Qed.
-
-
-  Lemma outer_shape_pad0 inner sz :
-    outer_shape (pad 0 (size sz) inner) sz = outer_shape inner sz.
-  Proof.
-    rewrite /outer_shape; congr map; congr zip.
-    rewrite /= size_cat size_nseq.
-    set n := (X in (_++ _) ++ nseq X _).
-    suff -> : n = 0 by rewrite /= cats0.
-    rewrite /n{n}.
-    move: (size sz) (size inner) => a b.
-    case: (ltnP a b) => [/ltnW | ] H.
-    - move: H; rewrite /leq => /eqP H; by rewrite H addn0 H.
-    - by rewrite (subnKC H) subnn.
-  Qed.
-
-  Lemma head_pad0 (T : Type) n (p : T) s : head p (pad p n s) = head p s.
-  Proof. elim: s => [| s0 s IHs] //=; rewrite subn0; by case: n. Qed.
-
-  Lemma included_pad0 inner outer :
-    included inner outer = included (pad 0 (size outer) inner) outer.
-  Proof.
-    elim: inner outer => [//= | inn0 inn IHinn] /= outer /=.
-     rewrite subn0; by elim: outer.
-    case: outer => [//= | out0 out] /=.
-    by rewrite subSS IHinn.
-  Qed.
-
-End SkewShape.
-
 
 Definition is_skew_yam innev outev sy :=
-  (forall y, is_yam_of_shape innev y -> is_yam_of_shape outev (sy ++ y)).
+  (forall y, is_yam_of_eval innev y -> is_yam_of_eval outev (sy ++ y)).
 
 Lemma skew_yam_nil sh : is_skew_yam sh sh [::].
 Proof. rewrite /is_skew_yam => y; by rewrite cat0s. Qed.
 
-Lemma skew_nil_yamE eval y : is_yam_of_shape eval y -> is_skew_yam [::] eval y.
+Lemma skew_nil_yamE eval y : is_yam_of_eval eval y -> is_skew_yam [::] eval y.
 Proof.
-  move=> Hy z; rewrite {1}/is_yam_of_shape => /andP [] _ /eqP Hz.
-  have := shape_rowseq_eq_size z; rewrite Hz /= => /esym/eqP/nilP ->.
+  move=> Hy z; rewrite {1}/is_yam_of_eval => /andP [] _ /eqP Hz.
+  have := evalseq_eq_size z; rewrite Hz /= => /esym/eqP/nilP ->.
   by rewrite cats0.
 Qed.
 
@@ -260,13 +66,13 @@ Lemma skew_yam_cat sha shb shc y z :
 Proof. rewrite /is_skew_yam => Hy Hz x /Hy /Hz; by rewrite catA. Qed.
 
 Lemma is_skew_yamE innev outev z y0 :
-  is_yam_of_shape innev y0 ->
-  is_yam_of_shape outev (z ++ y0) ->
+  is_yam_of_eval innev y0 ->
+  is_yam_of_eval outev (z ++ y0) ->
   is_skew_yam innev outev z.
 Proof.
   move=> Hy0 Hcat y Hy.
   move: Hy0 Hy Hcat.
-  rewrite /is_yam_of_shape => /andP [] Hy0 /eqP <- /andP [] Hy /eqP Hsh /andP [].
+  rewrite /is_yam_of_eval => /andP [] Hy0 /eqP <- /andP [] Hy /eqP Hsh /andP [].
   elim: z outev => [//= | z0 z IHz /=] outev Hcat Hshcat; first by rewrite Hy Hsh Hshcat.
   move: Hcat => /andP [] Hincr0 Hcat0.
   have {IHz} := IHz _ Hcat0 (eq_refl _) => /andP [] -> /eqP ->.
@@ -276,15 +82,15 @@ Qed.
 Lemma is_part_skew_yam sha shb y :
   is_part sha -> is_skew_yam sha shb y -> is_part shb.
 Proof.
-  move=> /hyper_yam_of_shape Ha Hskew.
-  have := Hskew _ Ha; by rewrite /is_yam_of_shape => /andP [] /is_part_shyam H /eqP <-.
+  move=> /hyper_yam_of_eval Ha Hskew.
+  have := Hskew _ Ha; by rewrite /is_yam_of_eval => /andP [] /is_part_eval_yam H /eqP <-.
 Qed.
 
 Lemma skew_yam_catrK sha shb shc y z :
   is_part sha ->
   is_skew_yam sha shb y -> is_skew_yam sha shc (z ++ y) -> is_skew_yam shb shc z.
 Proof.
-  move=> /hyper_yam_of_shape Ha Hy Hcat.
+  move=> /hyper_yam_of_eval Ha Hy Hcat.
   apply (is_skew_yamE (Hy _ Ha)).
   rewrite catA; by apply Hcat.
 Qed.
@@ -294,11 +100,11 @@ Lemma skew_yam_consK sha shc i y :
   is_skew_yam sha (decr_nth shc i) y.
 Proof.
   move=> Hpart Hskew.
-  have /= := Hskew _ (hyper_yam_of_shape Hpart).
-  rewrite /is_yam_of_shape /= => /andP [] /andP [] Hincr Hyam /eqP Hc.
-  apply (is_skew_yamE (hyper_yam_of_shape Hpart)).
-  rewrite /is_yam_of_shape Hyam /= -Hc.
-  by rewrite (incr_nthK (is_part_shyam Hyam) Hincr).
+  have /= := Hskew _ (hyper_yam_of_eval Hpart).
+  rewrite /is_yam_of_eval /= => /andP [] /andP [] Hincr Hyam /eqP Hc.
+  apply (is_skew_yamE (hyper_yam_of_eval Hpart)).
+  rewrite /is_yam_of_eval Hyam /= -Hc.
+  by rewrite (incr_nthK (is_part_eval_yam Hyam) Hincr).
 Qed.
 
 Lemma skew_yam_catK sha shc y z :
@@ -319,12 +125,12 @@ Lemma skew_yam_included sha shb y :
 Proof.
   move=> Hpart.
   elim: y shb => [| y0 y IHy] shb /= Hskew.
-    have := Hskew _ (hyper_yam_of_shape Hpart).
-    rewrite cat0s /is_yam_of_shape (shape_rowseq_hyper_yam Hpart) => /andP [] _ /eqP ->.
+    have := Hskew _ (hyper_yam_of_eval Hpart).
+    rewrite cat0s /is_yam_of_eval (evalseq_hyper_yam Hpart) => /andP [] _ /eqP ->.
     by apply included_refl.
   have {IHy} Hrec := IHy _ (skew_yam_consK Hpart Hskew).
-  have /= := Hskew _ (hyper_yam_of_shape Hpart).
-  rewrite /is_yam_of_shape => /andP [] /is_out_corner_yam => Hcorn /eqP Hb.
+  have /= := Hskew _ (hyper_yam_of_eval Hpart).
+  rewrite /is_yam_of_eval => /andP [] /is_out_corner_yam => Hcorn /eqP Hb.
   rewrite Hb in Hcorn.
   have := included_incr_nth (decr_nth shb y0) y0.
   rewrite (decr_nthK (is_part_skew_yam Hpart Hskew) Hcorn).
@@ -383,11 +189,54 @@ Section Dominate.
 
   Fixpoint is_skew_tableau inner t :=
     if t is t0 :: t'
-    then [&& head 0 inner + size t0 != 0,
+    then [&& head 0 inner + size t0 != 0, (* forbid empty rows *)
          is_row t0,
          skew_dominate ((head 0 inner) - (head 0 (behead inner)))
                        (head [::] t') t0 & is_skew_tableau (behead inner) t']
     else inner == [::].
+
+  Lemma is_skew_tableauP inner t : reflect
+    [/\ size inner <= size t,
+     forall i, i < size t -> nth 0 inner i + size (nth [::] t i) != 0,
+     forall i, is_row (nth [::] t i) &
+     forall i, skew_dominate ((nth 0 inner i) - (nth 0 inner i.+1))
+                             (nth [::] t i.+1) (nth [::] t i)]
+    (is_skew_tableau inner t).
+  Proof.
+    apply (iffP idP).
+    - elim: t inner => [| t0 t IHt] /= inner.
+        move=> /eqP ->; by split=> // i; rewrite !nth_default.
+      case: inner => [| inn0 inn] /and4P [] Ht0 Hrow0 Hdom0 /= /IHt [] Hsz Hnnil Hrow Hdom.
+      + split.
+        * by [].
+        * case=> [_| i] /=; first exact: Ht0.
+          rewrite ltnS => /Hnnil; by rewrite nth_default.
+        * by case.
+        * case=> [| i] /=; first by move: Hdom0; rewrite /= subn0.
+          have:= Hdom i => /=; by rewrite nth_default // subn0.
+      + split.
+        * exact: Hsz.
+        * case=> [_| i] /=; last by rewrite ltnS; exact: Hnnil.
+          by move: Ht0.
+        * by case.
+        * case=> [| i] /=; first exact: Hdom0.
+          have:= (Hdom i) => /=; case inn => //=; by rewrite nth_default.
+    - elim: t inner => [| t0 t IHt] inner //= [] Hsz Hnnil Hrow Hdom.
+        by move: Hsz; rewrite leqn0 => /nilP ->.
+      apply/and4P; split.
+      + have /Hnnil /= : 0 < (size t).+1 by [].
+        by case inner.
+      + rewrite -/(nth [::] (t0 :: t) 0); exact: Hrow.
+      + move: Hdom; case t => [| t1 tt] //= Hdom.
+        have /= := Hdom 0; by case inner.
+      + apply IHt; split => [| i Hi | i | i].
+        * move: Hsz; by case inner.
+        * have /Hnnil /= : i.+1 < (size t).+1 by [].
+          case inner => //=; by rewrite [nth 0 [::] i]nth_default.
+        * exact: (Hrow i.+1).
+        * have /= := (Hdom i.+1).
+          case inner => [|/= _ [| inn]] //=; by rewrite [nth 0 [::] i]nth_default.
+  Qed.
 
   Lemma is_skew_tableau0 : is_skew_tableau [::] =1 (@is_tableau T).
   Proof.
