@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import path.
-Require Import tools partition yama ordtype subseq.
+Require Import tools partition Yamanouchi ordtype subseq.
 Require Export tableau.
 
 Set Implicit Arguments.
@@ -1145,16 +1145,16 @@ Section Bijection.
 
   Notation Pair := (seq (seq T) * seq nat : Type).
 
-  Structure rspair : predArgType := RSpair { pqpair :> Pair; _ : is_RSpair pqpair }.
+  Structure rspair : predArgType := RSpair { pyampair :> Pair; _ : is_RSpair pyampair }.
 
-  Canonical rspair_subType := Eval hnf in [subType for pqpair].
+  Canonical rspair_subType := Eval hnf in [subType for pyampair].
   Definition rspair_eqMixin := Eval hnf in [eqMixin of rspair by <:].
   Canonical rspair_eqType := Eval hnf in EqType rspair rspair_eqMixin.
   Definition rspair_choiceMixin := [choiceMixin of rspair by <:].
   Canonical rspair_choiceType :=
     Eval hnf in ChoiceType rspair rspair_choiceMixin.
 
-  Lemma pqpair_inj : injective pqpair. Proof. exact: val_inj. Qed.
+  Lemma pyampair_inj : injective pyampair. Proof. exact: val_inj. Qed.
 
   Definition RSbij w := RSpair (RSmap_spec w).
   Definition RSbijinv (ps : rspair) := RSmapinv2 ps.
@@ -1163,7 +1163,7 @@ Section Bijection.
   Proof.
     split with (g := RSbijinv); rewrite /RSbij /RSbijinv.
     - move=> w /=; by rewrite (RS_bij_1 w).
-    - move=> [pq H]; apply: pqpair_inj => /=; exact (RS_bij_2 H).
+    - move=> [pq H]; apply: pyampair_inj => /=; exact (RS_bij_2 H).
   Qed.
 
 End Bijection.
@@ -1221,6 +1221,79 @@ Qed.
 End Classes.
 
 End NonEmpty.
+
+
+Require Import finset perm fingroup.
+Require Import std stdtab.
+
+Lemma RSperm n (p : 'S_n) : is_stdtab (RS (wordperm p)).
+Proof.
+  rewrite /is_stdtab; apply/andP; split; first by apply: is_tableau_RS.
+  apply: (perm_eq_std (wordperm_std p)).
+  rewrite perm_eq_sym; apply: (perm_eq_RS (wordperm p)).
+Qed.
+
+Lemma RSstdE (p : seq nat) : is_stdtab (RS p) = is_std p.
+Proof.
+  rewrite /is_stdtab is_tableau_RS /=.
+  apply/(sameP idP); apply(iffP idP) => Hstd; apply: (perm_eq_std Hstd);
+    first rewrite perm_eq_sym; apply: perm_eq_RS.
+Qed.
+
+Section QTableau.
+
+Variable T : ordType.
+
+Notation TabPair := (seq (seq T) * seq (seq nat) : Type).
+
+Definition is_RStabpair (pair : TabPair) :=
+  let: (P, Q) := pair in [&& is_tableau P, is_stdtab Q & (shape P == shape Q)].
+
+Structure rstabpair : predArgType :=
+  RSTabPair { pqpair :> TabPair; _ : is_RStabpair pqpair }.
+
+Canonical rstabpair_subType := Eval hnf in [subType for pqpair].
+Definition rstabpair_eqMixin := Eval hnf in [eqMixin of rstabpair by <:].
+Canonical rstabpair_eqType := Eval hnf in EqType rstabpair rstabpair_eqMixin.
+
+Lemma pqpair_inj : injective pqpair. Proof. exact: val_inj. Qed.
+
+Definition RStabmap (w : seq T) := let (p, q) := (RSmap w) in (p, stdtab_of_yam q).
+
+Lemma RStabmapE (w : seq T) : (RStabmap w).1 = RS w.
+Proof. rewrite /RStabmap -RSmapE; by case RSmap. Qed.
+
+Theorem RStabmap_spec w : is_RStabpair (RStabmap w).
+Proof.
+  have:= RSmap_spec w; rewrite /is_RStabpair /is_RSpair /RStabmap.
+  case H : (RSmap w) => [P Q] /and3P [] -> /stdtab_of_yamP -> /eqP -> /=.
+  by rewrite shape_stdtab_of_yam.
+Qed.
+
+Definition RStab w := RSTabPair (RStabmap_spec w).
+Definition RStabinv (pair : rstabpair) :=
+  let: (P, Q) := pqpair pair in RSmapinv2 (P, yam_of_stdtab Q).
+
+Lemma RStabK : cancel RStab RStabinv.
+Proof.
+  rewrite /RStab /RStabinv /RStabmap.
+  move=> w /=; have:= is_yam_RSmap2 w.
+  case H : (RSmap w) => [P Q] /= Hyam.
+  by rewrite stdtab_of_yamK; first by rewrite -H (RS_bij_1 w).
+Qed.
+Lemma RStabinvK : cancel RStabinv RStab.
+Proof.
+  rewrite /RStab /RStabinv /RStabmap.
+  move=> [[P Q] H] /=; apply: pqpair_inj => /=.
+  move: H; rewrite /is_RStabpair => /and3P [] Htab Hstdtab Hshape //=.
+  rewrite RS_bij_2.
+  + by rewrite (yam_of_stdtabK Hstdtab).
+  + by rewrite /is_RSpair Htab yam_of_stdtabP //= shape_yam_of_stdtab.
+Qed.
+Lemma bijRStab : bijective RStab.
+Proof. split with (g := RStabinv). exact: RStabK. exact: RStabinvK. Qed.
+
+End QTableau.
 
 
 

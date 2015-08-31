@@ -8,7 +8,7 @@ Add LoadPath "..".
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype bigop.
 (* Require Import tuple finfun finset path. *)
 Require Import tuple finfun finset ssralg ssrnum ssrint bigop.
-Require Import tools partition yama ordtype tableau std stdtab skewtab therule implem combclass.
+Require Import tools partition Yamanouchi ordtype tableau std stdtab skewtab therule implem combclass.
 (* import definitions from Why3 *)
 Require Import ssrwhy3.
 Require spec.

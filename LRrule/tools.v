@@ -41,6 +41,17 @@ Section RCons.
     by rewrite IHt catA.
   Qed.
 
+  Lemma cons_head_behead x s : (s != [::]) -> head x s :: behead s = s.
+  Proof. by case s. Qed.
+
+  Lemma belast_behead_rcons x l s :
+    belast (head x (rcons s l)) (behead (rcons s l)) = s.
+  Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= belast_rcons. Qed.
+
+  Lemma last_behead_rcons x l s :
+    last (head x (rcons s l)) (behead (rcons s l)) = l.
+  Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= last_rcons. Qed.
+
   Lemma head_any s a b : s != [::] -> head a s = head b s.
   Proof. by elim: s. Qed.
 
@@ -130,6 +141,10 @@ Lemma map_flatten (T1 T2 : eqType) (f : T1 -> T2) s :
   map f (flatten s) = flatten (map (map f) s).
 Proof. elim: s => [//= | s0 s /= <-]; by apply map_cat. Qed.
 
+Lemma filter_flatten (T : eqType) (s : seq (seq T)) (P : pred T) :
+  filter P (flatten s) = flatten [seq filter P i | i <- s].
+Proof. elim: s => [//= | s0 s /= <-]; exact: filter_cat. Qed.
+
 Lemma sumn_flatten s :
   sumn (flatten s) = sumn (map sumn s).
 Proof. elim: s => [//= | s0 s /= <-]; by apply sumn_cat. Qed.
@@ -138,6 +153,12 @@ Lemma sumn_rev s : sumn (rev s) = sumn s.
 Proof.
   elim: s => [//= | s0 s /= <-].
   by rewrite rev_cons -cats1 sumn_cat /= addn0 addnC.
+Qed.
+
+Lemma nth_map_size T (s : seq (seq T)) i : nth 0 (shape s) i = size (nth [::] s i).
+Proof.
+  rewrite /shape; case: (ltnP i (size s)) => Hi; first exact: nth_map.
+  by rewrite !nth_default // size_map.
 Qed.
 
 Lemma shape_rev T (s : seq (seq T)) : shape (rev s) = rev (shape s).
@@ -317,7 +338,19 @@ Proof.
   by rewrite addKn => /IHr ->.
 Qed.
 
-Lemma iota_gtn a b : [seq i <- iota 0 a | b <= i] = iota b (a - b).
+Lemma iota_ltn a b : b <= a -> [seq i <- iota 0 a | i < b] = iota 0 b.
+Proof.
+  move=> Hab.
+  rewrite -(subnKC Hab) iota_add add0n filter_cat.
+  rewrite -[RHS]cats0; congr (_ ++ _).
+  - rewrite (eq_in_filter (a2 := predT)) ?filter_predT //.
+    move=> i /=; by rewrite mem_iota add0n => /andP [] _ ->.
+  - rewrite (eq_in_filter (a2 := pred0)) ?filter_pred0 //.
+    move=> i /=. rewrite mem_iota (subnKC Hab) => /andP [].
+    by rewrite leqNgt => /negbTE.
+Qed.
+
+Lemma iota_geq a b : [seq i <- iota 0 a | b <= i] = iota b (a - b).
 Proof.
   elim: a => [//=| n IHn].
   rewrite -addn1 iota_add add0n /= filter_cat IHn {IHn} /=.
@@ -347,7 +380,7 @@ Lemma big_nat_widen0 a b c F :
   b <= c -> \big[op/idx]_(a <= i < b) F i = \big[op/idx]_(0 <= i < c | a <= i < b) F i.
 Proof.
   move=> Hbc.
-  rewrite {1}/index_iota -iota_gtn -{1}(subn0 b) big_filter -/(index_iota 0 b).
+  rewrite {1}/index_iota -iota_geq -{1}(subn0 b) big_filter -/(index_iota 0 b).
   by rewrite (big_nat_widen _ _ _ _ _ Hbc).
 Qed.
 

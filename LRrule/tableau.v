@@ -271,6 +271,22 @@ Section Tableau.
     case: t Hdom => //=; by case: t0 Ht0.
   Qed.
 
+  Lemma tab_eqP p q :
+    is_tableau p -> is_tableau q -> reflect (forall i, nth [::] p i = nth [::] q i) (p == q).
+  Proof.
+    move=> Hp Hq.
+    apply (iffP idP) => [/eqP -> //| H].
+    have Hnth t i : nth 0 (shape t) i = size (nth [::] t i).
+      case: (ltnP i (size t)) => Hi.
+      - by rewrite /shape (nth_map [::] _ _ Hi).
+      - by rewrite !nth_default // size_map.
+    have Hsz : size p = size q.
+      rewrite -!(size_map size); congr (size _).
+      apply/eqP/(part_eqP (is_part_sht Hp) (is_part_sht Hq)) => i.
+      by rewrite !Hnth H.
+    apply/eqP; by apply (eq_from_nth (x0 := [::]) Hsz) => i _.
+  Qed.
+
 Lemma filter_gtnX_row r n :
   is_row r -> filter (gtnX n) r = take (count (gtnX n) r) r.
 Proof.

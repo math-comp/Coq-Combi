@@ -13,7 +13,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import ordtype tableau yama stdtab shuffle multpoly skewtab therule implem.
+Require Import ordtype tableau Yamanouchi stdtab shuffle multpoly skewtab therule implem.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -30,18 +30,21 @@ Definition yam_from_LRtab inner eval (tab : seq (seq nat)) :=
     map (subs_eval eval) (sfilterleq sinn ((@to_word _) tab)).
 
 
-Eval compute in
-    let inner := [:: 2; 1] in
-    let eval  := [:: 2; 1] in
-    let outer := [:: 3; 2; 1] in
-    ( map (yam_from_LRtab inner eval)
-          (filter
-             (predLRTripleFast (stdtab_of_yam (hyper_yam inner))
-                               (stdtab_of_yam (hyper_yam eval)) )
-             (enum_stdtabsh outer)),
-      (LRyam_enum inner eval outer) ).
+Goal
+  let inner := [:: 2; 1] in
+  let eval  := [:: 2; 1] in
+  let outer := [:: 3; 2; 1] in
+  ( map (yam_from_LRtab inner eval)
+        (filter
+           (predLRTripleFast (stdtab_of_yam (hyper_yam inner))
+                             (stdtab_of_yam (hyper_yam eval)) )
+           (enum_stdtabsh outer)),
+    (LRyam_enum inner eval outer) )
+  =
+  ([:: [:: 0; 1; 0]; [:: 1; 0; 0]], [:: [:: 0; 1; 0]; [:: 1; 0; 0]]).
+Proof. compute; exact erefl. Qed.
 
-Eval compute in
+Goal
     let inner := [:: 2; 1] in
     let eval  := [:: 2; 1] in
     let outer := [:: 3; 2; 1] in
@@ -52,26 +55,39 @@ Eval compute in
                                  (stdtab_of_yam (hyper_yam eval)) )
                (enum_stdtabsh outer)) )
       ( LRyam_enum inner eval outer ).
+Proof. compute; exact erefl. Qed.
 
-Eval compute in
-    let inner := [:: 3; 2; 1] in
-    let eval  := [:: 2; 2] in
-    let outer := [:: 4; 3; 2; 1] in
-      (LRyam_enum inner eval outer).
+Goal
+  let inner := [:: 3; 2; 1] in
+  let eval  := [:: 2; 2] in
+  let outer := [:: 4; 3; 2; 1] in
+  (LRyam_enum inner eval outer)
+  = [:: [:: 1; 0; 1; 0]; [:: 1; 1; 0; 0]].
+Proof. compute; exact erefl. Qed.
 
 
-Eval compute in LRyamtab_list [:: 2] [:: 1; 1] [:: 3; 1].
+Goal LRyamtab_list [:: 2] [:: 1; 1] [:: 3; 1]
+     = [:: [:: [:: 0]; [:: 1]]].
+Proof. compute; exact erefl. Qed.
 
-Eval compute in LRyamtab_list [:: 2] [:: 1] [:: 3].
+Goal LRyamtab_list [:: 2] [:: 1] [:: 3] = [:: [:: [:: 0]]].
+Proof. compute; exact erefl. Qed.
 
-Eval compute in LRyamtab_list [:: 2; 1] [:: 2; 1] [:: 3; 2; 1].
+Goal LRyamtab_list [:: 2; 1] [:: 2; 1] [:: 3; 2; 1]
+     = [:: [:: [:: 0]; [:: 0]; [:: 1]]; [:: [:: 0]; [:: 1]; [:: 0]]].
+Proof. compute; exact erefl. Qed.
 
-Eval compute in LRyamtab_list [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2].
+Goal LRyamtab_list [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2]
+     = [:: [:: [:: 0; 0]; [:: 1]; [:: 0; 2]; [:: 1; 3]];
+           [:: [:: 0; 0]; [:: 1]; [:: 1; 2]; [:: 0; 3]]].
+Proof. compute; exact erefl. Qed.
 
-Eval compute in
-    map (@to_word _) (LRyamtab_list [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2]).
+Goal map (@to_word _) (LRyamtab_list [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2])
+     = [:: [:: 1; 3; 0; 2; 1; 0; 0]; [:: 0; 3; 1; 2; 1; 0; 0]].
+Proof. compute; exact erefl. Qed.
+
 (*
-Eval compute in LRyam_enum [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2].
+Goal LRyam_enum [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2].
      = [:: [:: 0; 3; 1; 2; 1; 0; 0]; [:: 1; 3; 0; 2; 1; 0; 0]]
 ...00 ...00
 ...1  ...1
@@ -79,10 +95,13 @@ Eval compute in LRyam_enum [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2].
 13    03
 *)
 
-Eval compute in
-    map (@to_word _) (LRyamtab_list [:: 3; 3; 1] [:: 4; 2; 1] [:: 5; 4; 3; 2]).
+Goal map (@to_word _) (LRyamtab_list [:: 3; 3; 1] [:: 4; 2; 1] [:: 5; 4; 3; 2])
+     = [:: [:: 1; 2; 0; 0; 1; 0; 0]; [:: 0; 2; 0; 1; 1; 0; 0];
+           [:: 0; 1; 0; 2; 1; 0; 0]].
+Proof. compute; exact erefl. Qed.
+
 (*
-Eval compute in LRyam_enum [:: 3; 3; 1] [:: 4; 2; 1] [:: 5; 4; 3; 2].
+Goal LRyam_enum [:: 3; 3; 1] [:: 4; 2; 1] [:: 5; 4; 3; 2].
      = [:: [:: 0; 1; 0; 2; 1; 0; 0]; [:: 0; 2; 0; 1; 1; 0; 0];
            [:: 1; 2; 0; 0; 1; 0; 0]]
 ...11 ...11 ...11
@@ -92,18 +111,24 @@ Eval compute in LRyam_enum [:: 3; 3; 1] [:: 4; 2; 1] [:: 5; 4; 3; 2].
 *)
 
 (* According LRcalc = 18 *)
-Eval compute in size (LRyamtab_list
-  [:: 4; 3; 2; 1] [:: 4; 3; 2; 1] [:: 6; 5; 4; 3; 1; 1]).
+Goal size (LRyamtab_list
+  [:: 4; 3; 2; 1] [:: 4; 3; 2; 1] [:: 6; 5; 4; 3; 1; 1]) = 18.
+Proof. compute; exact erefl. Qed.
 (* According LRcalc = 9 *)
-Eval compute in size (LRyamtab_list
-  [:: 4; 3; 2; 1] [:: 4; 3; 2; 1] [:: 5; 5; 3; 3; 2; 1; 1]).
+Goal size (LRyamtab_list
+  [:: 4; 3; 2; 1] [:: 4; 3; 2; 1] [:: 5; 5; 3; 3; 2; 1; 1]) = 9.
+Proof. compute; exact erefl. Qed.
 (* According to LRcalc and Wikipedia = 176 *)
-Eval compute in size (LRyamtab_list
-  [:: 5; 4; 3; 2; 1] [:: 5; 4; 3; 2; 1] [:: 8; 6; 5; 4; 3; 2; 1; 1]).
-Eval compute in LRcoeff
-  [:: 5; 4; 3; 2; 1] [:: 5; 4; 3; 2; 1] [:: 8; 6; 5; 4; 3; 2; 1; 1].
+Goal size (LRyamtab_list
+  [:: 5; 4; 3; 2; 1] [:: 5; 4; 3; 2; 1] [:: 8; 6; 5; 4; 3; 2; 1; 1]) = 176.
+Proof. compute; exact erefl. Qed.
+Goal LRcoeff
+  [:: 5; 4; 3; 2; 1] [:: 5; 4; 3; 2; 1] [:: 8; 6; 5; 4; 3; 2; 1; 1] = 176.
+Proof. compute; exact erefl. Qed.
 (* According to LRcalc and Wikipedia = 2064 *)
-Eval compute in size (LRyamtab_list
-  [:: 6; 5; 4; 3; 2; 1] [:: 6; 5; 4; 3; 2; 1] [:: 9; 8; 7; 5; 4; 3; 3; 2; 1]).
-Eval compute in LRcoeff
-  [:: 6; 5; 4; 3; 2; 1] [:: 6; 5; 4; 3; 2; 1] [:: 9; 8; 7; 5; 4; 3; 3; 2; 1].
+Goal size (LRyamtab_list
+  [:: 6; 5; 4; 3; 2; 1] [:: 6; 5; 4; 3; 2; 1] [:: 9; 8; 7; 5; 4; 3; 3; 2; 1]) = 2064.
+Proof. compute; exact erefl. Qed.
+Goal LRcoeff
+  [:: 6; 5; 4; 3; 2; 1] [:: 6; 5; 4; 3; 2; 1] [:: 9; 8; 7; 5; 4; 3; 3; 2; 1] = 2064.
+Proof. compute; exact erefl. Qed.

@@ -15,7 +15,7 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop path.
 
-Require Import partition schensted ordtype green greeninv.
+Require Import partition Schensted ordtype Greene Greene_inv stdplact.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -27,10 +27,10 @@ Section OrderedType.
 
 Variable T : ordType.
 
-Lemma green_rel_one (s : seq T) (R : rel T) :
-  exists t : seq T, subseq t s /\ sorted R t /\ size t = (green_rel R s) 1.
+Lemma Greene_rel_one (s : seq T) (R : rel T) :
+  exists t : seq T, subseq t s /\ sorted R t /\ size t = (Greene_rel R s) 1.
 Proof.
-  rewrite /green_rel /= /green_rel_t.
+  rewrite /Greene_rel /= /Greene_rel_t.
   set P := (X in \max_(_ | X _) _).
   have : #|P| > 0.
     apply/card_gt0P; exists set0.
@@ -72,7 +72,7 @@ Proof.
     by apply leq_mul.
   move=> [] Hltn.
   - right => {m}.
-    have := greenCol_RS 1 s.
+    have := Greene_col_RS 1 s.
     rewrite -sum_conj.
     have -> : \sum_(l <- shape (RS s)) minn l 1 = size (shape (RS s)).
       have := is_part_sht (is_tableau_RS s).
@@ -85,16 +85,16 @@ Proof.
         rewrite /minn; move: Hs0; by case s0.
       by rewrite add1n.
     move=> Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
-    case: (green_rel_one s gtnX) => x [] Hsubs [] Hsort <- Hn.
+    case: (Greene_rel_one s gtnX) => x [] Hsubs [] Hsort <- Hn.
     by exists x.
   - left.
-    have := greenRow_RS 1 s.
+    have := Greene_row_RS 1 s.
     have -> : part_sum (shape (RS s)) 1 = head 0 (shape (RS s)).
       rewrite /part_sum.
       case: (shape (RS s)) => [| s0 l] /=; first by rewrite big_nil.
       by rewrite take0 big_cons big_nil addn0.
-    rewrite /greenRow => Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
-    case: (green_rel_one s leqX) => x [] Hsubs [] Hsort <- Hn.
+    rewrite /Greene_row => Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
+    case: (Greene_rel_one s leqX) => x [] Hsubs [] Hsort <- Hn.
     by exists x.
 Qed.
 

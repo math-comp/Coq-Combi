@@ -15,7 +15,7 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop path.
 
-Require Import tools partition yama ordtype tableau std stdtab.
+Require Import tools partition Yamanouchi ordtype tableau std stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

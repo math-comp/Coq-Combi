@@ -71,28 +71,29 @@ VFILES:=congr.v\
   combclass.v\
   extract.v\
   Erdos_Szekeres.v \
-  greeninv.v\
-  green.v\
+  Greene_inv.v\
+  Greene.v\
   implem.v\
-  invseq.v\
   multpoly.v\
   ordcast.v\
   ordtype.v\
   partition.v\
   permuted.v\
   plactic.v\
-  schensted.v\
+  Schensted.v\
+  shape.v\
   shuffle.v\
   skewtab.v\
   stdtab.v\
   std.v\
+  stdplact.v\
   subseq.v\
   tableau.v\
   therule.v\
   tools.v\
   vectNK.v\
-  yama.v\
-  yamplact.v
+  Yamanouchi.v\
+  Yam_plact.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))
