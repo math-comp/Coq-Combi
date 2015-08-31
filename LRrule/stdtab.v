@@ -519,6 +519,7 @@ End Bijection.
 Section StdtabOfShape.
 
 Definition is_stdtab_of_shape sh := [pred t | (is_stdtab t) && (shape t == sh) ].
+Definition enum_stdtabsh sh : seq (seq (seq nat)) := map stdtab_of_yam (enum_yameval sh).
 
 Variable sh : intpart.
 
@@ -533,8 +534,7 @@ Definition stdtabsh_countMixin := Eval hnf in [countMixin of stdtabsh by <:].
 Canonical stdtabsh_countType := Eval hnf in CountType stdtabsh stdtabsh_countMixin.
 Canonical stdtabsh_subCountType := Eval hnf in [subCountType of stdtabsh].
 
-Definition enum_stdtabsh : seq (seq (seq nat)) := map stdtab_of_yam (enum_yameval sh).
-Let stdtabsh_enum : seq stdtabsh := pmap insub enum_stdtabsh.
+Let stdtabsh_enum : seq stdtabsh := pmap insub (enum_stdtabsh sh).
 
 Lemma finite_stdtabsh : Finite.axiom stdtabsh_enum.
 Proof.
