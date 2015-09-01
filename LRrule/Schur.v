@@ -31,6 +31,7 @@ Unset Printing Implicit Defensive.
 Local Open Scope ring_scope.
 Import GRing.Theory.
 
+
 Section Poly.
 
 Variable R : comRingType.
@@ -82,6 +83,7 @@ Proof.
 Qed.
 
 End Poly.
+
 
 Section FinSets.
 
