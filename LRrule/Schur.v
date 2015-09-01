@@ -30,11 +30,14 @@ Unset Printing Implicit Defensive.
 
 Reserved Notation "{ 'mpoly' T [ n ] }"
   (at level 0, T, n at level 2, format "{ 'mpoly'  T [ n ] }").
+Reserved Notation "''X_' i"
+  (at level 8, i at level 2, format "''X_' i").
 
 Local Open Scope ring_scope.
 Import GRing.Theory.
 
-Section Poly.
+
+Section MPoly.
 
 Variable R : comRingType.
 
@@ -48,9 +51,18 @@ Fixpoint vari n : 'I_n -> multpoly n :=
       else 'X
   else fun _ => 1.
 
+End MPoly.
+
+Notation "{ 'mpoly' T [ n ] }" := (multpoly T n).
+Notation "'X_ i"        := (vari _ i).
+
+
+Section Poly.
+
+Variable R : comRingType.
 Variable n : nat.
 
-Definition commword (w : seq 'I_n) : multpoly n := \prod_(i <- w) vari i.
+Definition commword (w : seq 'I_n) : {mpoly R[n]} := \prod_(i <- w) 'X_i.
 
 Lemma perm_eq_commword (u v : seq 'I_n) : perm_eq u v -> commword u = commword v.
 Proof. by apply: eq_big_perm. Qed.
@@ -97,7 +109,6 @@ Qed.
 
 End Poly.
 
-Notation "{ 'mpoly' T [ n ] }" := (multpoly T n).
 
 Section FinSets.
 
