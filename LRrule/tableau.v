@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import path.
-Require Import tools partition ordtype.
+Require Import tools partition ordtype sorted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -24,95 +24,28 @@ Open Scope N.
 Section Rows.
 
   Variable T : ordType.
-  Variable Z : T.
 
   Implicit Type l : T.
   Implicit Type r : seq T.
 
   Notation is_row r := (sorted (@leqX_op T) r).
 
-  Lemma is_row1P r :
-    reflect
-      (forall (i : nat), i.+1 < (size r) -> (nth Z r i <= nth Z r i.+1)%Ord)
-      (is_row r).
-  Proof. case: r => [| r0 r] /=; first by apply/(iffP idP). by apply/pathP. Qed.
-
-  Lemma non_decr_equiv r :
-    (forall (i j : nat), i <= j < (size r) -> (nth Z r i <= nth Z r j)%Ord)
-    <->
-    (forall (i : nat), i.+1 < (size r) -> (nth Z r i <= nth Z r i.+1)%Ord).
-  Proof.
-    split => H.
-    - move=> i Hi.
-      have : i <= i.+1 < size r by rewrite Hi andbT.
-      by apply: H.
-    - move=> i j; move Hdiff : (j - i) => diff.
-      elim: diff i j Hdiff => [| diff IHdiff] i j /=.
-      + move/eqP; rewrite -/(leq j i) => H1 /andP [] H2 Hj.
-        have -> : i = j by apply/eqP; rewrite eqn_leq H1 H2.
-        by [].
-      + move=> Hdiff => /andP [] _ Hj.
-        have Hiltj : i < j by rewrite -subn_gt0 Hdiff.
-        apply: (leqX_trans (n := nth Z r i.+1)).
-        * apply: H; by apply: (leq_ltn_trans Hiltj).
-        * apply: IHdiff => //=; first by rewrite subnS Hdiff.
-          by rewrite Hiltj Hj.
-  Qed.
-
-  Lemma is_rowP r :
-    reflect
-      (forall (i j : nat), i <= j < (size r) -> (nth Z r i <= nth Z r j)%Ord)
-      (is_row r).
-  Proof. apply/(iffP idP); by rewrite non_decr_equiv => /is_row1P. Qed.
-
-  Lemma is_row_cons l r : is_row (cons l r) -> (l <= head l r)%Ord /\ is_row r.
-  Proof. case: r => [//=| r0 r]; by move => /andP [] /= ->. Qed.
-
-  Lemma is_row_consK l r : is_row (cons l r) -> is_row r.
-  Proof. by case: r => [//=| r0 r] => /andP []. Qed.
-
-  Lemma is_row_rconsK l r : is_row (rcons r l) -> is_row r.
-  Proof. case: r => [//=| r0 r] /=; by rewrite rcons_path => /andP []. Qed.
-
-  Lemma is_row_last l r : is_row (rcons r l) -> (last l r <= l)%Ord.
-  Proof. case: r => [//=| r0 r] /=; by rewrite rcons_path => /andP []. Qed.
-
-  Lemma is_row_take r n : is_row r -> is_row (take n r).
-  Proof.
-    elim: r n => [//= | r0 r IHr] [//=| n] /= H.
-    case: r r0 H IHr => [//=| r1 r] r0 /= /andP [] H Hp IHr.
-    have:= IHr n Hp. case: n => [//=|n] /= ->; by rewrite H.
-  Qed.
-
-  Lemma is_row_drop r n : is_row r -> is_row (drop n r).
-  Proof.
-    elim: n r => [//= | n IHn ]; first by case.
-    case => [//= | r0 r /=] H; apply IHn => {IHn}.
-    by case: r H => [//=|r1 r] /andP [].
-  Qed.
-
-  Lemma is_row_catL u v : is_row (u ++ v) -> is_row u.
-  Proof.  move/(is_row_take (size u)); by rewrite take_size_cat. Qed.
-
-  Lemma is_row_catR u v : is_row (u ++ v) -> is_row v.
-  Proof.  move/(is_row_drop (size u)); by rewrite drop_size_cat. Qed.
-
-  Lemma is_row_rcons l r : is_row r -> (last l r <= l)%Ord -> is_row (rcons r l).
-  Proof. case: r => [//=| r0 r] /=; by rewrite rcons_path => -> ->. Qed.
-
-  Lemma head_leq_last_row l r : is_row (l :: r) -> (l <= last l r)%Ord.
-  Proof.
-    elim: r l => [//=| t0 r IHr] l /= /andP [] Hl.
-    move/IHr {IHr}; by apply: (leqX_trans Hl).
-  Qed.
-
-  Lemma row_lt_by_pos r p q :
+  Definition is_row1P Z r := sorted1P Z (@leqX_op T) r.
+  Definition is_rowP Z r := sortedP Z (@leqX_trans T) (@leqXnn T) r.
+  Definition is_row_cons := sorted_cons (@leqXnn T).
+  Definition is_row_consK := sorted_consK (R := @leqX_op T).
+  Definition is_row_rcons := sorted_rcons (R := @leqX_op T).
+  Definition is_row_rconsK := sorted_rconsK (R := @leqX_op T).
+  Definition is_row_last := sorted_last (@leqXnn T).
+  Definition is_row_take := sorted_take (R := @leqX_op T).
+  Definition is_row_drop := sorted_drop (R := @leqX_op T).
+  Definition is_row_catL := sorted_catL (R := @leqX_op T).
+  Definition is_row_catR := sorted_catR (R := @leqX_op T).
+  Definition head_leq_last_row := head_leq_last_sorted (@leqX_trans T) (@leqXnn T).
+  Lemma row_lt_by_pos Z r p q:
     is_row r -> p < size r -> q < size r -> (nth Z r p < nth Z r q)%Ord -> p < q.
   Proof.
-    move/is_rowP => Hrow Hp Hq Hlt.
-    have H : q <= p -> (nth Z r q <= nth Z r p)%Ord.
-      by move=> H; apply Hrow; rewrite H Hp.
-    by have:= contra H; rewrite -ltnXNgeqX ltnNge; apply.
+    rewrite /ltnX_op. apply: (sorted_lt_by_pos (@leqX_trans T) (@leqXnn T) (@anti_leqX T)). 
   Qed.
 
 End Rows.

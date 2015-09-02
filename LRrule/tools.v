@@ -155,7 +155,7 @@ Proof.
   by rewrite rev_cons -cats1 sumn_cat /= addn0 addnC.
 Qed.
 
-Lemma nth_map_size T (s : seq (seq T)) i : nth 0 (shape s) i = size (nth [::] s i).
+Lemma nth_shape T (s : seq (seq T)) i : nth 0 (shape s) i = size (nth [::] s i).
 Proof.
   rewrite /shape; case: (ltnP i (size s)) => Hi; first exact: nth_map.
   by rewrite !nth_default // size_map.
