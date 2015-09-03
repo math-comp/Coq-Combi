@@ -307,7 +307,7 @@ Section Partition.
     + by rewrite IHn addnA addnS !addSn.
   Qed.
 
-  Lemma sumn_part_cons sh : sumn (conj_part sh) = sumn sh.
+  Lemma sumn_conj_part sh : sumn (conj_part sh) = sumn sh.
   Proof. elim: sh => [//= | s0 s IHs] /=; by rewrite sumn_incr_first_n IHs addnC. Qed.
 
   Lemma conj_part_ind sh l :
