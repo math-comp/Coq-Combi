@@ -307,7 +307,7 @@ Section Partition.
     + by rewrite IHn addnA addnS !addSn.
   Qed.
 
-  Lemma sumn_part_cons sh : sumn (conj_part sh) = sumn sh.
+  Lemma sumn_conj_part sh : sumn (conj_part sh) = sumn sh.
   Proof. elim: sh => [//= | s0 s IHs] /=; by rewrite sumn_incr_first_n IHs addnC. Qed.
 
   Lemma conj_part_ind sh l :
@@ -877,9 +877,9 @@ Canonical intpart_countType := Eval hnf in CountType intpart intpart_countMixin.
 Lemma intpartP (p : intpart) : is_part p.
 Proof. by case: p. Qed.
 
-Definition intpart_conj p := IntPart (is_part_conj (intpartP p)).
+Canonical conj_intpart p := IntPart (is_part_conj (intpartP p)).
 
-Lemma intpart_conjK : involutive intpart_conj.
+Lemma conj_intpartK : involutive conj_intpart.
 Proof.  move=> p; apply: val_inj => /=; by rewrite conj_partK; last by apply: intpartP. Qed.
 
 Lemma intpart_sum_inj (s t : intpart) :
@@ -1051,6 +1051,13 @@ Proof. by case: p => /= p /andP [] /eqP. Qed.
 
 Lemma enum_intpartnE : map val (enum intpartn) = enum_partn n.
 Proof. rewrite /=; by apply enum_subE. Qed.
+
+Lemma conj_intpartnP (sh : intpartn) : is_part_of_n n (conj_part sh).
+Proof.
+  case: sh => sh /= /andP [] /eqP <- Hpart.
+  by rewrite is_part_conj // sumn_conj_part /= eq_refl.
+Qed.
+Canonical conj_intpartn (sh : intpartn) := IntPartN (conj_intpartnP sh).
 
 End PartOfn.
 

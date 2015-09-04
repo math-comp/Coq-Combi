@@ -52,6 +52,20 @@ Proof. rewrite /is_std => /perm_eq_uniq ->. by apply: iota_uniq. Qed.
 Lemma std_max s0 s : is_std (s0 :: s) -> maxL s0 s = size s.
 Proof. rewrite /is_std => /= /maxL_perm_eq /= ->. by rewrite maxL_iota_n. Qed.
 
+Lemma is_stdP s : reflect (forall n, n < size s -> n \in s) (is_std s).
+Proof.
+  rewrite /is_std; apply (iffP idP).
+  - move=> Hperm n Hn; by rewrite (perm_eq_mem Hperm) mem_iota add0n Hn.
+  - move=> H.
+    have Hsubs : {subset iota 0 (size s) <= s}.
+      move=> n; rewrite mem_iota /= add0n; exact: H.
+    have Hsz : size s <= size (iota 0 (size s)) by rewrite size_iota.
+    have := leq_size_perm (iota_uniq _ _) Hsubs Hsz => [] [] Hs _.
+    have Huniq := leq_size_uniq (iota_uniq _ _) Hsubs Hsz.
+    apply (uniq_perm_eq Huniq (iota_uniq _ _)).
+    move => i; by rewrite Hs.
+Qed.
+
 Definition wordperm n (p : 'S_n) := [seq val (p i) | i <- enum 'I_n].
 
 Open Scope group_scope.
@@ -103,7 +117,7 @@ Proof.
   by rewrite nth_ord_enum /= permE /fp /= ffunE /= /fpn /=.
 Qed.
 
-Lemma is_stdP s : reflect (exists p : 'S_(size s), s = wordperm p) (is_std s).
+Lemma is_std_wordpermP s : reflect (exists p : 'S_(size s), s = wordperm p) (is_std s).
 Proof.
   apply: (iffP idP).
   + move/perm_of_std => [] p Hp; by exists p.
@@ -157,7 +171,7 @@ Lemma enum_stdwordnE : enum_stdwordn =i is_std_of_n.
 (* (is_std_of_n s) = (s \in enum_stdwordn). *)
 Proof.
   move=> s; apply/(sameP idP); apply(iffP idP).
-  + rewrite /enum_stdwordn => /andP [] /is_stdP [] p Hstd /eqP Hsize.
+  + rewrite /enum_stdwordn => /andP [] /is_std_wordpermP [] p Hstd /eqP Hsize.
     apply/mapP; rewrite -Hsize; exists p; last exact Hstd.
     by rewrite mem_enum.
   + move/mapP => [] p _ -> /=.
