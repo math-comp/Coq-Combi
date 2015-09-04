@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import path.
-Require Import tools partition ordtype sorted.
+Require Import tools shape partition ordtype sorted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -153,6 +153,14 @@ Section Tableau.
     then [&& (t0 != [::]), is_row t0, dominate (head [::] t') t0 & is_tableau t']
     else true.
 
+  Definition get_tab (t : seq (seq T)) (r c : nat) :=
+    nth (inhabitant T) (nth [::] t r) c.
+
+  Definition to_word t := flatten (rev t).
+
+  (* Shape is defined in seq.v *)
+  (* Definition shape t := map size t. *)
+
   Lemma is_tableauP t : reflect
     [/\ forall i, i < size t -> (nth [::] t i) != [::], (* forbid empty lines *)
      forall i, is_row (nth [::] t i) &
@@ -183,15 +191,23 @@ Section Tableau.
         * by have /Hdom : i.+1 < j.+1 by [].
   Qed.
 
-  Definition to_word t := flatten (rev t).
+  Lemma get_tab_default t (r c : nat) : ~~ is_in_shape (shape t) r c -> get_tab t r c = Z.
+  Proof. rewrite /is_in_shape /get_tab -leqNgt nth_shape => Hc; exact: nth_default. Qed.
 
   Lemma to_word_cons r t : to_word (r :: t) = to_word t ++ r.
   Proof. by rewrite /to_word rev_cons flatten_rcons. Qed.
   Lemma to_word_rcons r t : to_word (rcons t r) = r ++ to_word t.
   Proof. by rewrite /to_word rev_rcons /=. Qed.
 
-  (* Shape is defined in seq.v *)
-  (* Definition shape t := map size t. *)
+  Lemma mem_to_word t (r c : nat) :
+    is_in_shape (shape t) r c -> (get_tab t r c) \in (to_word t).
+  Proof.
+    rewrite /is_in_shape /get_tab.
+    elim: t r c => [//= | t0 t IHt] /= r c; first by rewrite nth_default.
+    rewrite to_word_cons mem_cat => H.
+    case: r H => [/mem_nth ->| r] /=; first by rewrite orbT.
+    by move/IHt ->.
+  Qed.
 
   Lemma tableau_is_row r t : is_tableau (r :: t) -> is_row r.
   Proof. by move=> /= /and4P []. Qed.
@@ -224,6 +240,67 @@ Section Tableau.
       apply/eqP/(part_eqP (is_part_sht Hp) (is_part_sht Hq)) => i.
       by rewrite !Hnth H.
     apply/eqP; by apply (eq_from_nth (x0 := [::]) Hsz) => i _.
+  Qed.
+
+  Require Import path sorted.
+
+  Lemma is_tableau_sorted_dominate (t : seq (seq T)) :
+    is_tableau t =
+    [&& is_part (shape t), all (sorted (@leqX_op T)) t & sorted (fun x y => dominate y x) t].
+  Proof.
+    apply (sameP idP); apply (iffP idP).
+    - elim: t => [//= | t0 t IHt] /and3P [] Hpart.
+      have:= part_head_non0 Hpart.
+      rewrite [head _ _]/= [all _ _]/= [is_tableau _]/=.
+      move=> /nilP /eqP -> /andP [] -> Hall Hsort /=.
+      apply/andP; split.
+      + by case: t Hsort {Hpart Hall IHt} => [//= | t1 t] /= /andP [].
+      + apply: IHt; rewrite (is_part_tl Hpart) Hall /=.
+        exact: (sorted_consK Hsort).
+    - elim: t => [| t0 t IHt]//= /and4P [] Hnnil Hrow0 Hdom /IHt /and3P [] Hpart Hall Hsort.
+      rewrite Hpart Hrow0 Hall {Hpart Hrow0 Hall IHt} !andbT /=; apply/andP; split.
+      + case: t Hdom {Hsort} => [_ | t1 t] /=; first by case: t0 Hnnil.
+        by move => /dominateP [].
+      + by case: t Hdom Hsort => [//=| t1 t]/= -> ->.
+  Qed.
+
+  Lemma is_tableau_getP (t : seq (seq T)) :
+    reflect
+      [/\ is_part (shape t),
+       (forall (r c : nat), is_in_shape (shape t) r c.+1 ->
+                    ((get_tab t r c) <= (get_tab t r c.+1))%Ord) &
+       (forall (r c : nat), is_in_shape (shape t) r.+1 c ->
+                    ((get_tab t r c) < (get_tab t r.+1 c)))%Ord]
+      (is_tableau t).
+  Proof.
+    apply/(iffP idP).
+    - move=> Htab; split.
+      + exact: is_part_sht.
+      + rewrite /is_in_shape /get_tab => r c Hrc.
+        move: Htab => /is_tableauP [] _ Hrow _.
+        apply: (is_row1P _ _ (Hrow r)); by rewrite -nth_shape.
+      + rewrite /is_in_shape /get_tab => r c Hrc.
+        move: Htab => /is_tableauP [] _ _ Hdom.
+        have := dominateP _ _ (Hdom _ _ (ltnSn r)) => [] [] _; apply.
+        by rewrite -nth_shape.
+    - move=> [] Hpart Hrow Hcol.
+      apply/is_tableauP; split.
+      + move=> i Hi.
+        have:= nth_part_non0 Hpart; rewrite size_map => H.
+        have {H} := H _ Hi.
+        apply contra => /eqP.
+        by rewrite nth_shape => ->.
+      + move=> r; apply/(is_row1P (inhabitant T)) => c.
+        rewrite -nth_shape => /Hrow; by apply.
+      + move=> i j Hij; case: (ltnP j (size t)) => Hjr.
+        * have H : i < j < size t by rewrite Hij Hjr.
+          have Htrans : transitive (fun x : seq T => (@dominate T)^~ x).
+            move=> a b c /= Hab Hca; exact: dominate_trans Hca Hab.
+          move: i j H {Hij Hjr}; rewrite (incr_equiv [::] Htrans t) => i Hi.
+          apply/dominateP; rewrite -!nth_shape.
+          split; first by have:= is_partP _ Hpart => [] [] _; apply.
+          move=> j; by rewrite -/(is_in_shape _ _ _) -!/(get_tab _ _ _) => /Hcol ->.
+        * rewrite (nth_default _ Hjr); exact: dominate_nil.
   Qed.
 
 Lemma filter_gtnX_row r n :
