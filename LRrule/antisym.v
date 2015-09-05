@@ -72,6 +72,21 @@ Section MPolySym.
 
   Implicit Types p q r : {mpoly R[n]}.
 
+  Lemma issym_tpermP p :
+    reflect (forall i j, msym (tperm i j) p = p)
+            (p \is symmetric).
+  Proof.
+    apply (iffP idP).
+    - move=> /forallP Hsym i j.
+      by rewrite (eqP (Hsym (tperm _ _))).
+    - move=> Htperm; apply/forallP => s.
+      case: (prod_tpermP s) => ts -> {s} Hall.
+      elim: ts Hall => [_ | t0 ts IHts] /=.
+        by rewrite !big_nil /= msym_act1.
+      move=> /andP [] _ /IHts{IHts}/eqP Hrec.
+      by rewrite !big_cons msym_actM Htperm Hrec.
+  Qed.
+
   Definition antisymmetric : qualifier 0 {mpoly R[n]} :=
     [qualify p | [forall s, msym s p == if odd_perm s then - p else p]].
 
@@ -126,6 +141,17 @@ Section MPolySym.
 End MPolySym.
 
 Implicit Arguments antisymmetric [n R].
+
+Lemma issym_eltrP n (R : ringType) (p : {mpoly R[n.+1]}) :
+  reflect (forall i, i < n -> msym (eltr n i) p = p) (p \is symmetric).
+Proof.
+  apply (iffP idP).
+  - move=> /forallP Hanti i Hi.
+    by have /eqP -> := Hanti (eltr n i).
+  - move=> Heltr; apply/forallP; elim/eltr_ind => [| S i Hi /eqP IH].
+    + by rewrite msym_act1.
+    + by rewrite msym_actM (Heltr i Hi) IH.
+Qed.
 
 Lemma isantisym_eltrP n (R : ringType) (p : {mpoly R[n.+1]}) :
   reflect (forall i, i < n -> msym (eltr n i) p = - p) (p \is antisymmetric).
