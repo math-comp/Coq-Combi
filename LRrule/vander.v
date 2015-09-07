@@ -43,131 +43,213 @@ Local Open Scope ring_scope.
 
 
 Section MPoly.
-  Variable n : nat.
-  Variable R : ringType.
 
-  Implicit Types p q r : {mpoly R[n]}.
+Variable n : nat.
+Variable R : ringType.
 
-  Lemma msym_act1 p : msym 1 p = p.
-  Proof.
-    rewrite -mpolyP => m.
-    rewrite !mcoeff_sym; congr mcoeff.
-    rewrite mnmP => i.
-    by rewrite !multinomE tnth_mktuple /= perm1.
-  Qed.
+Implicit Types p q r : {mpoly R[n]}.
 
-  Lemma msym_actM s t p : msym (s * t)%g p = msym t (msym s p).
-  Proof.
-    rewrite -mpolyP => m.
-    rewrite !mcoeff_sym; congr mcoeff.
-    rewrite mnmP => i.
-    by rewrite !multinomE !tnth_mktuple multinomE tnth_mktuple permM  /=.
-  Qed.
+Lemma char_mpoly : [char R] =i [char {mpoly R[n]}].
+Proof.
+  move=> p; rewrite !unfold_in /= -mpolyC_nat.
+  case: (prime.prime p) => //=.
+  apply (sameP idP); apply (iffP idP) => [/eqP | /eqP -> //=].
+  rewrite -(mpolyP) => H; have {H} /= := H 0%MM.
+  by rewrite mcoeff0 raddfMn /= mcoeffMn mcoeff1 eq_refl /= => ->.
+Qed.
 
 End MPoly.
 
 Section MPolySym.
-  Variable n : nat.
-  Variable R : comRingType.
 
-  Implicit Types p q r : {mpoly R[n]}.
+Variable n : nat.
+Variable R : comRingType.
 
-  Definition antisymmetric : qualifier 0 {mpoly R[n]} :=
-    [qualify p | [forall s, msym s p == if odd_perm s then - p else p]].
+Implicit Types p q r : {mpoly R[n]}.
 
-  Lemma isantisymP p :
-    reflect (forall s, msym s p = if odd_perm s then - p else p) (p \is antisymmetric).
-  Proof.
-    apply (iffP idP).
-    - move=> /forallP Hanti s.
-      by rewrite (eqP (Hanti s )).
-    - move=> H; apply/forallP => s.
-      by rewrite H.
-  Qed.
+Definition antisym : qualifier 0 {mpoly R[n]} :=
+  [qualify p | [forall s, msym s p == if odd_perm s then - p else p]].
 
-  Lemma isantisym_tpermP p :
-    reflect (forall i j, msym (tperm i j) p = if (i != j) then - p else p)
-            (p \is antisymmetric).
-  Proof.
-    apply (iffP idP).
-    - move=> /forallP Hanti i j.
-      by rewrite (eqP (Hanti (tperm _ _))) odd_tperm.
-    - move=> Htperm; apply/forallP => s.
-      case: (prod_tpermP s) => ts -> {s} Hall.
-      elim: ts Hall => [_ | t0 ts IHts] /=.
-        by rewrite !big_nil odd_perm1 /= msym_act1.
-      move=> /andP [] H0 /IHts{IHts}/eqP Hrec.
-      rewrite !big_cons msym_actM Htperm H0 msymN Hrec.
-      rewrite odd_mul_tperm H0 /=.
-      case: (odd_perm _) => //=.
-      by rewrite opprK.
-  Qed.
+Fact antisym_key : pred_key antisym. Proof. by []. Qed.
+Canonical antisym_keyed := KeyedQualifier antisym_key.
 
-  Lemma sym_anti p q :
-    p \is antisymmetric -> q \is symmetric -> p * q \is antisymmetric.
-  Proof.
-    move=> /isantisymP Hsym /issymP Hanti.
-    apply/isantisymP => s.
-    rewrite msymM Hsym Hanti.
-    case: (odd_perm s) => //=.
-    by rewrite mulNr.
-  Qed.
+Lemma isantisymP p :
+  reflect (forall s, msym s p = if odd_perm s then - p else p) (p \is antisym).
+Proof.
+  apply (iffP idP).
+  - move=> /forallP Hanti s.
+    by rewrite (eqP (Hanti s )).
+  - move=> H; apply/forallP => s.
+    by rewrite H.
+Qed.
 
-  Lemma anti_anti p q :
-    p \is antisymmetric -> q \is antisymmetric -> p * q \is symmetric.
-  Proof.
-    move=> /isantisymP Hp /isantisymP Hq.
-    apply/issymP => s.
-    rewrite msymM Hp Hq.
-    case: (odd_perm s) => //=.
-    by rewrite mulrN mulNr opprK.
-  Qed.
+Lemma antisym_char2 : (2 \in [char R]) -> symmetric =i antisym.
+Proof.
+  move=> Hchar p /=.
+  apply (sameP idP); apply (iffP idP).
+  - move=> /isantisymP H; apply/issymP => s.
+    rewrite H oppr_char2; first by case: (odd_perm s).
+    by apply: (rmorph_char (mpolyC_rmorphism _ _)).
+  - move => /issymP H; apply/isantisymP => s.
+    rewrite H oppr_char2; first by case: (odd_perm s).
+    by apply: (rmorph_char (mpolyC_rmorphism _ _)).
+Qed.
 
-  Definition Vandmx : 'M[ {mpoly R[n]} ]_n:= \matrix_(i, j < n) 'X_i ^+ j.
-  Definition Vandet := \det Vandmx.
+Lemma perm_smalln : n <= 1 -> forall s : 'S_n, s = 1%g.
+Proof.
+  move=> Hn s; rewrite -permP => i.
+  rewrite perm1.
+  case: n Hn s i => [| [| n']] //= Hn s; first by case.
+  move=> i; case: (s i) => a Ha; case: i => b Hb.
+  apply val_inj => /=.
+  by case: a b Ha Hb => [|a][|b].
+Qed.
 
-  Lemma tperm_Vander_xrow i j :
-    i != j -> msym (tperm i j) Vandet = \det (xrow i j Vandmx).
-  Proof.
-    rewrite /Vandet/Vandmx => Hij.
-    rewrite -det_map_mx /=; congr (\det _).
-    rewrite /map_mx -matrixP => r c /=.
-    rewrite !mxE rmorphX /= msymX /=; congr (mpolyX _ _ ^+ c) => {c}.
-    rewrite mnmP => u /=; rewrite !mnm_tnth /=.
-    rewrite !tnth_map /= tnth_ord_tuple /= mnm1E tpermV.
-    congr (nat_of_bool _); apply (sameP idP); apply (iffP idP).
-    - by move/eqP <-; rewrite tpermK.
-    - by move/eqP ->; rewrite tpermK.
-  Qed.
+Lemma sym_smalln : n <= 1 -> (@symmetric n R) =i predT.
+Proof.
+  move=> Hn p /=; rewrite [RHS]unfold_in /=.
+  apply/issymP => s.
+  by rewrite (perm_smalln Hn s) msym1m.
+Qed.
 
-  Lemma tperm_Vander i j : i != j -> msym (tperm i j) Vandet = - Vandet.
-  Proof.
-    move=> Hij; rewrite (tperm_Vander_xrow Hij).
-    rewrite xrowE det_mulmx -/(Vandet) det_perm.
-    by rewrite odd_tperm Hij /= expr1 mulN1r.
-  Qed.
+Lemma antisym_smalln : n <= 1 -> antisym =i predT.
+Proof.
+  move=> Hn p /=; rewrite [RHS]unfold_in /=.
+  apply/isantisymP => s.
+  by rewrite (perm_smalln Hn s) odd_perm1 msym1m.
+Qed.
 
-  Lemma Vander_anti : Vandet \is antisymmetric.
-  Proof.
-    apply/isantisym_tpermP => i j.
-    case: (altP (i =P j)) => [-> |] /=; first by rewrite tperm1 msym_act1.
-    exact: tperm_Vander.
-  Qed.
+Lemma isantisym_tpermP p :
+  reflect (forall i j, msym (tperm i j) p = if (i != j) then - p else p)
+          (p \is antisym).
+Proof.
+  apply (iffP idP).
+  - move=> /forallP Hanti i j.
+    by rewrite (eqP (Hanti (tperm _ _))) odd_tperm.
+  - move=> Htperm; apply/forallP => s.
+    case: (prod_tpermP s) => ts -> {s} Hall.
+    elim: ts Hall => [_ | t0 ts IHts] /=.
+      by rewrite !big_nil odd_perm1 /= msym1m.
+    move=> /andP [] H0 /IHts{IHts}/eqP Hrec.
+    rewrite !big_cons msymMm Htperm H0 msymN Hrec.
+    rewrite odd_mul_tperm H0 /=.
+    case: (odd_perm _) => //=.
+    by rewrite opprK.
+Qed.
+
+Lemma sym_anti p q :
+  p \is antisym -> q \is symmetric -> p * q \is antisym.
+Proof.
+  move=> /isantisymP Hsym /issymP Hpq.
+  apply/isantisymP => s.
+  rewrite msymM Hsym Hpq.
+  case: (odd_perm s) => //=.
+  by rewrite mulNr.
+Qed.
+
+Lemma anti_anti p q :
+  p \is antisym -> q \is antisym -> p * q \is symmetric.
+Proof.
+  move=> /isantisymP Hp /isantisymP Hq.
+  apply/issymP => s.
+  rewrite msymM Hp Hq.
+  case: (odd_perm s) => //=.
+  by rewrite mulrN mulNr opprK.
+Qed.
 
 End MPolySym.
 
-Implicit Arguments antisymmetric [n R].
+Implicit Arguments antisym [n R].
+
+Section MPolyIDomain.
+
+Variable n : nat.
+Variable R : idomainType.
+
+Implicit Types p q r : {mpoly R[n]}.
+
+Lemma sym_antiE p q :
+  p != 0 -> p \is antisym -> (q \is symmetric) = (p * q \is antisym).
+Proof.
+  case: (leqP n 1) => Hn.
+    by rewrite !(sym_smalln Hn) !(antisym_smalln Hn) !unfold_in /=.
+  move=> Hp H; apply (sameP idP); apply (iffP idP); last exact: (sym_anti H).
+  move: H => /isantisymP Hsym /isantisymP Hpq.
+  apply/issymP => s.
+  have:= Hpq s; rewrite msymM Hsym => H.
+  apply (mulfI Hp).
+  move: H; case: (odd_perm s); last by [].
+  by rewrite mulNr => /oppr_inj.
+Qed.
+
+Lemma sym_antisym_char2 :
+  n >= 2 -> ~~ (2 \in [char R]) -> forall p, p \is symmetric -> p \is antisym -> p = 0.
+Proof.
+  rewrite (char_mpoly n R) => H1 Hchar p /= /issymP Hsym /isantisymP Hanti.
+  have H0 : 0 < n by apply: (ltn_trans _ H1).
+  pose s := (tperm (Ordinal H0) (Ordinal H1)).
+  have := Hanti s; rewrite Hsym.
+  rewrite odd_tperm /= => /eqP; rewrite -addr_eq0.
+  rewrite -mulr2n -mulr_natr mulf_eq0 => /orP [/eqP -> //|] /= /eqP H2.
+  exfalso; rewrite {H1 p Hsym Hanti H0 s}.
+  move: Hchar; rewrite negb_and /=.
+  by rewrite H2 eq_refl.
+Qed.
+
+Definition antim (s : seq nat) : 'M[ {mpoly R[n]} ]_n :=
+  \matrix_(i, j < n) 'X_i ^+ (j + nth 0 s (size s - j))%N.
+Definition Vandmx : 'M[ {mpoly R[n]} ]_n := \matrix_(i, j < n) 'X_i ^+ j.
+Definition Vandet := \det Vandmx.
+
+Lemma Vandmx_antimE : Vandmx = antim [::].
+Proof. rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE addn0. Qed.
+
+Lemma tperm_antim_xrow s i j :
+  i != j -> msym (tperm i j) (\det (antim s)) = \det (xrow i j (antim s)).
+Proof.
+  rewrite /antim => Hij.
+  rewrite -det_map_mx /=; congr (\det _).
+  rewrite /map_mx -matrixP => r c /=.
+  rewrite !mxE rmorphX /= msymX /=.
+  congr (mpolyX _ _ ^+ _) => {c}.
+  rewrite mnmP => u /=; rewrite !mnm_tnth /=.
+  rewrite !tnth_map /= tnth_ord_tuple /= mnm1E tpermV.
+  congr (nat_of_bool _); apply (sameP idP); apply (iffP idP).
+  - by move/eqP <-; rewrite tpermK.
+  - by move/eqP ->; rewrite tpermK.
+Qed.
+
+Lemma tperm_antim s i j : i != j -> msym (tperm i j) (\det (antim s)) = - (\det (antim s)).
+Proof.
+  move=> Hij; rewrite (tperm_antim_xrow _ Hij).
+  rewrite xrowE det_mulmx det_perm.
+  by rewrite odd_tperm Hij /= expr1 mulN1r.
+Qed.
+
+Lemma antimP s : \det (antim s) \is antisym.
+Proof.
+  apply/isantisym_tpermP => i j.
+  case: (altP (i =P j)) => [-> |] /=; first by rewrite tperm1 msym1m.
+  exact: tperm_antim.
+Qed.
+
+Corollary Vander_anti : Vandet \is antisym.
+Proof. rewrite /Vandet Vandmx_antimE. exact: antimP. Qed.
+
+End MPolyIDomain.
+
+Implicit Arguments antisym [n R].
 
 Lemma isantisym_eltrP n (R : comRingType) (p : {mpoly R[n.+1]}) :
-  reflect (forall i, i < n -> msym (eltr n i) p = - p) (p \is antisymmetric).
+  reflect (forall i, i < n -> msym (eltr n i) p = - p) (p \is antisym).
 Proof.
   apply (iffP idP).
   - move=> /forallP Hanti i Hi.
     have /eqP -> := Hanti (eltr n i).
     by rewrite /eltr odd_tperm (inordi1 Hi).
   - move=> Heltr; apply/forallP; elim/eltr_ind => [| S i Hi /eqP IH].
-    + by rewrite odd_perm1 /= msym_act1.
-    + rewrite msym_actM (Heltr i Hi).
+    + by rewrite odd_perm1 /= msym1m.
+    + rewrite msymMm (Heltr i Hi).
       rewrite msymN IH odd_mul_tperm (inordi1 Hi) addTb if_neg /=.
       case: (odd_perm S) => //=.
     by rewrite opprK.
@@ -244,12 +326,12 @@ Proof.
   by case: p.
 Qed.
 
-Lemma anti_vandermonde n (R : comRingType) : @vandermonde n R \is antisymmetric.
+Lemma anti_vandermonde n (R : comRingType) : @vandermonde n R \is antisym.
 Proof.
   case: n => [| n].
     apply/isantisymP => s.
     have -> : s = 1%g by rewrite -permP => i; have := ltn_ord i.
-    by rewrite msym_act1 odd_perm1.
+    by rewrite msym1m odd_perm1.
   apply/isantisym_eltrP => i Hi.
   rewrite /vandermonde.
   rewrite (bigD1 (inord i, inord i.+1)) /=; last by rewrite !inordK //=; apply (leq_trans Hi).
@@ -280,7 +362,7 @@ Proof.
 Qed.
 
 Lemma sym_vanderM n (R : comRingType) (p : {mpoly R[n]}) :
-  p \is symmetric -> vandermonde * p \is antisymmetric.
+  p \is symmetric -> vandermonde * p \is antisym.
 Proof. apply sym_anti; by apply anti_vandermonde. Qed.
 
 Definition vander_fact n (R : comRingType) : {ipoly R[n.+1]}
@@ -302,14 +384,14 @@ Proof.
 Qed.
 
 Theorem sym_anti_iso n (R : comRingType) (q : {mpoly R[n]}) :
-  q \is antisymmetric ->
+  q \is antisym ->
   { p : {mpoly R[n]} | p \is symmetric & q = vandermonde * p }.
 Proof.
   elim: n q => [| n IHn] q /=.
     move=> _; exists q.
     - apply/issymP => s.
       have -> : s = 1%g by rewrite -permP => i; have := ltn_ord i.
-      by rewrite msym_act1.
+      by rewrite msym1m.
     - rewrite /vandermonde.
       rewrite big_pred0; last by move=> [[u Hu] v].
       by rewrite mul1r.
