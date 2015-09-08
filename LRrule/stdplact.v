@@ -33,7 +33,7 @@ Implicit Type p : seq nat.
 Implicit Type t : seq (seq Alph).
 
 Lemma std_plact1 (u v1 w v2 : seq Alph) :
-  v2 \in plact1 v1 -> std (u ++ v1 ++ w) =Pl (std (u ++ v2 ++ w)).
+  v2 \in plact1 v1 -> std (u ++ v1 ++ w) =Pl std (u ++ v2 ++ w).
 Proof.
   have Hcongr := @plactcongr_is_congr nat_ordType.
   move/plact1P => [] a [] b [] c [] Habc -> ->.
@@ -64,7 +64,7 @@ Lemma reorg3 (T : eqType) (u w : seq T) b a c :
 Proof. by rewrite -catA. Qed.
 
 Lemma std_plact2 (u v1 w v2 : seq Alph) :
-  v2 \in plact2 v1 -> std (u ++ v1 ++ w) =Pl (std (u ++ v2 ++ w)).
+  v2 \in plact2 v1 -> std (u ++ v1 ++ w) =Pl std (u ++ v2 ++ w).
 Proof.
   have Hcongr := @plactcongr_is_congr nat_ordType.
   move/plact2P => [] a [] b [] c [] Habc -> ->.
@@ -598,3 +598,4 @@ Section Test.
   Proof. compute; by apply: erefl. Qed.
 
 End Test.
+

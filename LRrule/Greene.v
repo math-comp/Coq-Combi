@@ -464,10 +464,10 @@ End GreeneDef.
 
 Arguments scover [N].
 
-Lemma eq_Greene_rel_t (T : ordType) (R1 R2 : rel T) N (u : N.-tuple T) k :
-  R1 =2 R2 -> Greene_rel_t R1 u k = Greene_rel_t R2 u k.
+Lemma eq_Greene_rel_t (T : ordType) (R1 R2 : rel T) N (u : N.-tuple T) :
+  R1 =2 R2 -> Greene_rel_t R1 u  =1  Greene_rel_t R2 u.
 Proof.
-  rewrite /Greene_rel_t /= => H.
+  rewrite /Greene_rel_t /= => H k.
   apply eq_bigl => S; rewrite /ksupp; congr [&& _, _ & _].
   rewrite /is_seq /=; apply eq_forallb_in => s _.
   case: (extractpred _ _) => [| e t] //=.
@@ -477,6 +477,19 @@ Qed.
 Lemma Greene_rel_t_cast (Alph : ordType) R M N (Heq : M = N) k (V : M.-tuple Alph) :
   Greene_rel_t R (tcast Heq V) k = Greene_rel_t R V k.
 Proof. by subst M. Qed.
+
+Lemma Greene_rel_t_uniq (T : ordType) (leT : rel T) N (u : N.-tuple T) :
+  uniq u -> Greene_rel_t leT u  =1  Greene_rel_t (fun x y => (x != y) && (leT x y)) u.
+Proof.
+  rewrite /Greene_rel_t => Huniq k.
+  apply eq_bigl => S; rewrite /ksupp; congr [&& _, _ & _].
+  rewrite /is_seq /=; apply eq_forallb_in => s _ {S k}.
+  have {Huniq} := subseq_uniq (extsubsm u (mem s)) Huniq.
+  case: (extractpred _ _) => {s} [| n s] //=.
+  elim: s n => //= m s IHs n.
+  by rewrite inE negb_or => /andP [] /andP [] -> _ /IHs ->.
+Qed.
+
 
 Section GreeneCat.
 
@@ -667,9 +680,138 @@ Qed.
 End GreeneSeq.
 
 
-Lemma eq_Greene_rel (T : ordType) (R1 R2 : rel T) u k :
-  R1 =2 R2 -> Greene_rel R1 u k = Greene_rel R2 u k.
+Lemma eq_Greene_rel (T : ordType) (R1 R2 : rel T) u :
+  R1 =2 R2 -> Greene_rel R1 u  =1  Greene_rel R2 u.
 Proof. exact: eq_Greene_rel_t. Qed.
+
+Lemma Greene_rel_uniq (T : ordType) (leT : rel T) u :
+  uniq u -> Greene_rel leT u  =1  Greene_rel (fun x y => (x != y) && (leT x y)) u.
+Proof. move=> Hu; rewrite /Greene_rel => k /=; exact: Greene_rel_t_uniq. Qed.
+
+Lemma size_cover_inj (T1 T2 : finType) (F : T1 -> T2) (P : {set {set T1}}):
+  injective F -> #|cover P| = #|cover [set F @: S | S : {set T1} in P]|.
+Proof.
+  move=> Hinj.
+  set FSet := fun S : {set T1} => F @: S.
+  suff -> : cover [set FSet S | S in P] = FSet (cover P) by rewrite card_imset.
+  rewrite cover_imset /cover; apply: esym; apply: big_morph.
+  + move=> i j /=; by apply: imsetU.
+  + by apply: imset0.
+Qed.
+
+Section GreeneInj.
+
+Variable T1 T2 : ordType.
+Variable R1 : rel T1.
+Variable R2 : rel T2.
+
+Definition ksupp_inj k (u1 : seq T1) (u2 : seq T2) :=
+  forall s1, ksupp R1 (in_tuple u1) k s1 ->
+             exists s2, (scover s1 == scover s2) && ksupp R2 (in_tuple u2) k s2.
+
+Lemma leq_Greene k (u1 : seq T1) (u2 : seq T2) :
+  ksupp_inj k u1 u2 -> Greene_rel R1 u1 k <= Greene_rel R2 u2 k.
+Proof.
+  move=> Hinj; rewrite /= /Greene_rel /Greene_rel_t.
+  set P1 := ksupp R1 (in_tuple u1) k.
+  have : #|P1| > 0.
+    rewrite -cardsE card_gt0; apply/set0Pn.
+    exists set0; rewrite in_set; by apply: ksupp0.
+  move/(eq_bigmax_cond scover) => [] ks1 Hks1 ->.
+  have := Hinj _ Hks1 => [] [] ks2 /andP [] /eqP -> Hks2.
+  by apply: leq_bigmax_cond.
+Qed.
+
+End GreeneInj.
+
+
+Section Rev.
+
+Variable Alph : ordType.
+Let Z := (inhabitant Alph).
+Implicit Type u v w : seq Alph.
+Implicit Type p : seq nat.
+Implicit Type t : seq (seq Alph).
+
+Definition revset n (s : {set 'I_n}) : {set 'I_n} := [set rev_ord x | x in s].
+
+Lemma revsetK {n} : involutive (@revset n).
+Proof.
+  rewrite /revset => s.
+  rewrite -imset_comp -setP => i /=.
+  apply (sameP idP); apply (iffP idP).
+  - move=> Hi; apply /imsetP; exists i => //=.
+    by rewrite rev_ordK.
+  - move/imsetP => [] x /= Hx ->.
+    by rewrite rev_ordK.
+Qed.
+
+Require Import sorted.
+
+Lemma ksupp_inj_rev (leT : rel Alph) u k : ksupp_inj leT (fun y x => leT x y) k u (rev u).
+Proof.
+  move=> ks /and3P [] Hsz Htriv /forallP Hall.
+  exists (cast_set (esym (size_rev u)) @: ((@revset _) @: ks)).
+  apply/and4P; split.
+  - rewrite /scover /= cover_cast /cast_set /=.
+    rewrite card_imset; last by apply: cast_ord_inj.
+    rewrite -size_cover_inj //; apply inv_inj; exact: rev_ordK.
+  - apply: (@leq_trans #|ks|); last exact Hsz.
+    rewrite -imset_comp; exact: leq_imset_card.
+  - apply: imset_trivIset; first exact: cast_ord_inj.
+    apply: imset_trivIset; last exact: Htriv.
+    apply inv_inj; exact: rev_ordK.
+  - apply/forallP => S1; apply/implyP => /imsetP [] S2 /imsetP [] S HS -> -> {S1 S2}.
+    have {Hall} := Hall S; rewrite HS /=.
+    rewrite -(revK (extractpred (in_tuple (rev u)) _)) rev_sorted.
+    rewrite !extractIE -map_rev -filter_rev.
+    rewrite (eq_map (f2 := fun i => tnth (in_tuple u) (cast_ord (size_rev u) (rev_ord i))));
+      first last.
+      move=> i /=; by rewrite !(tnth_nth Z) /= nth_rev ?{2}(size_rev u) // -(size_rev u).
+    set S1 := (X in sorted _ X -> _); set S2 := (X in _ -> sorted _ X).
+    suff -> : S1 = S2 by [].
+    rewrite /S1 /S2 {S1 S2 k ks Hsz Htriv HS}.
+    rewrite !map_comp; congr map; rewrite map_id.
+    set f := (X in map (@rev_ord _) (filter X _)).
+    have {f} /eq_filter -> : f =1 fun i => (cast_ord (size_rev u) (rev_ord i)) \in S.
+      rewrite /f /revset /cast_set => i /=.
+      rewrite -{1}(cast_ordK (size_rev u) i) mem_cast.
+      rewrite -{1}(rev_ordK i).
+      have -> x : cast_ord (size_rev u) (rev_ord x) = rev_ord (cast_ord (size_rev u) x).
+        apply val_inj => /=; by rewrite {1}size_rev.
+      by rewrite (mem_imset_inj _ _ rev_ord_inj).
+    rewrite (map_filter_comp _ (fun i => cast_ord (size_rev u) i \in S) (@rev_ord _)).
+    rewrite map_id -filter_map; congr filter.
+    apply (inj_map val_inj); apply (eq_from_nth (x0 := 0)).
+      by rewrite !size_map !size_rev size_map.
+    rewrite size_map size_enum_ord => i Hi.
+    rewrite -![X in (_ = nth _ X _)]map_comp.
+    rewrite map_rev val_enum_ord (nth_iota _ Hi) add0n.
+    rewrite nth_rev size_map size_enum_ord; last by rewrite size_rev.
+    rewrite {12}(size_rev).
+    rewrite (eq_map (f2 := (fun i => (size u - i.+1))\o val)); first last.
+      move=> j /=; by rewrite {1}size_rev.
+    rewrite map_comp val_enum_ord size_rev.
+    have Hu : size u - i.+1 < size u by rewrite -subn_gt0 subKn.
+    rewrite (nth_map 0); last by rewrite size_iota.
+    rewrite (nth_iota _ Hu) add0n -(subSn Hi) subSS.
+    by rewrite subKn; last by apply ltnW.
+Qed.
+
+Lemma Greene_rel_rev (leT : rel Alph) u :
+  Greene_rel leT u =1 Greene_rel (fun y x => leT x y) (rev u).
+Proof.
+  move=> k; apply anti_leq; apply/andP; split.
+  - apply leq_Greene; first exact: ksupp_inj_rev.
+  - rewrite [X in (_ <= X)](eq_Greene_rel
+                              (R2 := (fun y : Alph => (fun y : Alph => leT^~ y)^~ y))).
+    + apply leq_Greene; rewrite -{2}(revK u); exact: ksupp_inj_rev.
+    + by move=> i j.
+Qed.
+
+End Rev.
+
+
 
 Section GreeneRec.
 
@@ -1455,4 +1597,3 @@ Proof.
   move=> k. rewrite -(Greene_col_tab k Htab1) -(Greene_col_tab k Htab2).
   by apply: Heq.
 Qed.
-

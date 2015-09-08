@@ -21,17 +21,6 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Lemma size_cover_inj (T1 T2 : finType) (F : T1 -> T2) (P : {set {set T1}}):
-  let FSet := fun S : {set T1} => F @: S in
-  injective F -> #|cover P| = #|cover [set FSet S | S in P]|.
-Proof.
-  move=> FSet Hinj; have -> : cover [set FSet S | S in P] = FSet (cover P).
-  rewrite cover_imset /cover; apply: esym; apply: big_morph.
-  + move=> i j /=; by apply: imsetU.
-  + by apply: imset0.
-  by rewrite card_imset.
-Qed.
-
 Lemma bigcup_set1 (T1 : finType) (S : {set T1}) :
   \bigcup_(i in [set S]) i = S.
 Proof.
@@ -56,31 +45,6 @@ Proof.
 Qed.
 
 Open Scope bool.
-
-Section GreeneInj.
-
-Variable T1 T2 : ordType.
-Variable R1 : rel T1.
-Variable R2 : rel T2.
-
-Definition ksupp_inj k (u1 : seq T1) (u2 : seq T2) :=
-  forall s1, ksupp R1 (in_tuple u1) k s1 ->
-             exists s2, (scover s1 == scover s2) && ksupp R2 (in_tuple u2) k s2.
-
-Lemma leq_Greene k (u1 : seq T1) (u2 : seq T2) :
-  ksupp_inj k u1 u2 -> Greene_rel R1 u1 k <= Greene_rel R2 u2 k.
-Proof.
-  move=> Hinj; rewrite /= /Greene_rel /Greene_rel_t.
-  set P1 := ksupp R1 (in_tuple u1) k.
-  have : #|P1| > 0.
-    rewrite -cardsE card_gt0; apply/set0Pn.
-    exists set0; rewrite in_set; by apply: ksupp0.
-  move/(eq_bigmax_cond scover) => [] ks1 Hks1 ->.
-  have := Hinj _ Hks1 => [] [] ks2 /andP [] /eqP -> Hks2.
-  by apply: leq_bigmax_cond.
-Qed.
-
-End GreeneInj.
 
 Section ExtractCuti.
 
@@ -1577,4 +1541,20 @@ Proof.
   rewrite -(Greene_col_invar_plactic (u := s)); last by apply: congr_RS.
   rewrite -(Greene_col_invar_plactic (u := t)); last by apply: congr_RS.
   by apply: HGreene.
+Qed.
+
+
+
+Theorem shape_RS_rev (S : ordType) (s : seq S) :
+  uniq s -> shape (RS (rev s)) = conj_part (shape (RS s)).
+Proof.
+  have Htr := is_tableau_RS (rev s); have Ht := is_tableau_RS s.
+  move=> Hs; apply: part_sum_inj.
+    exact: is_part_sht.
+    exact: is_part_conj (is_part_sht _).
+  move=> k.
+  rewrite -Greene_col_RS -Greene_row_RS /Greene_col /Greene_row.
+  rewrite Greene_rel_rev revK (Greene_rel_uniq _ Hs).
+  apply eq_Greene_rel => x y /=.
+  by rewrite eq_sym.
 Qed.
