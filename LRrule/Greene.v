@@ -464,6 +464,16 @@ End GreeneDef.
 
 Arguments scover [N].
 
+Lemma eq_Greene_rel_t (T : ordType) (R1 R2 : rel T) N (u : N.-tuple T) k :
+  R1 =2 R2 -> Greene_rel_t R1 u k = Greene_rel_t R2 u k.
+Proof.
+  rewrite /Greene_rel_t /= => H.
+  apply eq_bigl => S; rewrite /ksupp; congr [&& _, _ & _].
+  rewrite /is_seq /=; apply eq_forallb_in => s _.
+  case: (extractpred _ _) => [| e t] //=.
+  by rewrite (eq_path H).
+Qed.
+
 Lemma Greene_rel_t_cast (Alph : ordType) R M N (Heq : M = N) k (V : M.-tuple Alph) :
   Greene_rel_t R (tcast Heq V) k = Greene_rel_t R V k.
 Proof. by subst M. Qed.
@@ -655,6 +665,11 @@ Proof.
 Qed.
 
 End GreeneSeq.
+
+
+Lemma eq_Greene_rel (T : ordType) (R1 R2 : rel T) u k :
+  R1 =2 R2 -> Greene_rel R1 u k = Greene_rel R2 u k.
+Proof. exact: eq_Greene_rel_t. Qed.
 
 Section GreeneRec.
 
