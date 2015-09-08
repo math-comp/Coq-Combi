@@ -507,7 +507,11 @@ Qed.
 
 End Bijection.
 
-Definition conj_tab (t : seq (seq nat)) :=
+Section ConjTab.
+
+Variable T : ordType.
+
+Definition conj_tab (t : seq (seq T)) : seq (seq T) :=
   let c := conj_part (shape t) in
   mkseq (fun i => mkseq (fun j => get_tab t j i) (nth 0 c i)) (size c).
 
@@ -543,7 +547,7 @@ Proof.
   apply (eq_from_nth (x0 := [::])).
     by rewrite -(size_map size) -/shape !shape_conj_tab (conj_partK Hpart) size_map.
   move=> r _.
-  apply (eq_from_nth (x0 := 0)).
+  apply (eq_from_nth (x0 := (inhabitant T))).
     by rewrite -!nth_shape !shape_conj_tab (conj_partK Hpart).
   move=> c _.
   rewrite -!/(get_tab _ _ _) get_conj_tab; first last.
@@ -553,6 +557,8 @@ Qed.
 
 Lemma conj_tabK t : is_tableau t -> conj_tab (conj_tab t) = t.
 Proof. move=> /is_part_sht; exact :conj_tab_shapeK. Qed.
+
+End ConjTab.
 
 Lemma stdtab_get_tabNE t :
   is_stdtab t ->
