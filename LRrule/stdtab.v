@@ -541,18 +541,22 @@ Proof.
     by rewrite leqNgt -nth_shape shape_conj_tab.
 Qed.
 
+Lemma eq_from_shape_get_tab (t u : seq (seq T)) :
+  shape t = shape u -> get_tab t =2 get_tab u -> t = u.
+Proof.
+  move=> Hsh Hget; apply (eq_from_nth (x0 := [::])).
+    by rewrite -!(size_map size) -!/(shape _) Hsh.
+  move=> r _; apply (eq_from_nth (x0 := (inhabitant T))).
+    by rewrite -!nth_shape Hsh.
+  move=> c _; by rewrite -!/(get_tab _ _ _) Hget.
+Qed.
+
 Lemma conj_tab_shapeK t : is_part (shape t) -> conj_tab (conj_tab t) = t.
 Proof.
-  move=> Hpart.
-  apply (eq_from_nth (x0 := [::])).
-    by rewrite -(size_map size) -/shape !shape_conj_tab (conj_partK Hpart) size_map.
-  move=> r _.
-  apply (eq_from_nth (x0 := (inhabitant T))).
-    by rewrite -!nth_shape !shape_conj_tab (conj_partK Hpart).
-  move=> c _.
-  rewrite -!/(get_tab _ _ _) get_conj_tab; first last.
-    rewrite shape_conj_tab; exact: is_part_conj.
-  by rewrite get_conj_tab.
+  move=> Hpart; apply eq_from_shape_get_tab.
+  - by rewrite !shape_conj_tab conj_partK.
+  - move=> r c; rewrite get_conj_tab; last by rewrite shape_conj_tab; exact: is_part_conj.
+    by rewrite get_conj_tab.
 Qed.
 
 Lemma conj_tabK t : is_tableau t -> conj_tab (conj_tab t) = t.
