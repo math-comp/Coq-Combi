@@ -1100,3 +1100,5 @@ Proof.
 Qed.
 
 End PartCombClass.
+
+Hint Resolve intpartP intpartnP.

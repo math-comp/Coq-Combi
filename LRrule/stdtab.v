@@ -783,3 +783,5 @@ Qed.
 Lemma card_stdtabsh_conj_part (sh : intpart) :
   #|stdtabsh_finType (conj_intpart sh)| = #|stdtabsh_finType sh|.
 Proof. apply esym; exact: (bij_card (conj_stdtabsh_bij sh)). Qed.
+
+Hint Resolve stdtabnP stdtabshP.

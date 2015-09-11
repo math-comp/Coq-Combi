@@ -253,8 +253,7 @@ Proof.
     have Hpr : is_RSpair (RS w, yam_of_stdtab Q).
       have:= Hpair; rewrite /is_RStabpair /= => /andP [] -> /=.
       move=> /andP [] /yam_of_stdtabP -> /= /eqP ->.
-      rewrite shape_yam_of_stdtab //=.
-      by apply: stdtabnP.
+      by rewrite shape_yam_of_stdtab.
     pose imw := (RStabinv (RSTabPair Hpair)).
     have Hsz : size (imw) == d.
       rewrite /imw /RStabinv /= -size_RS -RSmapE.
@@ -264,8 +263,7 @@ Proof.
     + rewrite inE /= /imw.
       case: (bijRStab ord_ordType) => RSinv HK HinvK.
       rewrite /RStabmap /RStabinv /= (RS_bij_2 Hpr) /=.
-      rewrite yam_of_stdtabK //=.
-      by apply: stdtabnP.
+      by rewrite yam_of_stdtabK.
     + apply: val_inj => /=.
       rewrite /imw /RStabinv /= -Hw /=.
       congr (to_word _).

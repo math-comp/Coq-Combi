@@ -404,8 +404,7 @@ Proof.
     have:= mem_nth Z Hj; by rewrite mem_filter => /andP [].
   - move: Hpl => /plactcongr_homog/perm_eq_size.
     rewrite size_map => ->.
-    rewrite size_std sumn_diffE -evalseq_eq_size evalseq_hyper_yam //=.
-    by apply intpartnP.
+    by rewrite size_std sumn_diffE -evalseq_eq_size evalseq_hyper_yam.
   - rewrite (filterleq_LR_support HLRtab).
     have -> : val P1 = shape (filter_gtnX_tab d1 Q).
       by rewrite Hfilter -{1}(shaped_hyper_stdtabP P1) /=.

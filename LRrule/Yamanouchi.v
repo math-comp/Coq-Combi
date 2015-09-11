@@ -444,3 +444,4 @@ Qed.
 
 End YamOfSize.
 
+Hint Resolve yamnP yamevalP.
