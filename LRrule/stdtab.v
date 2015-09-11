@@ -171,6 +171,9 @@ Implicit Type t : seq (seq nat).
 
 Definition is_stdtab t := is_tableau t && is_std (to_word t).
 
+Lemma stdtabP t : is_stdtab t -> is_tableau t.
+Proof. by move=> /andP []. Qed.
+
 Section StdTabInd.
 
 Fixpoint remn_rec t n :=

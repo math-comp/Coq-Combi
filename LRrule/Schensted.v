@@ -971,7 +971,7 @@ Section Inverse.
     else [::].
   Definition RSmapinv2 pair := RSmapinv (pair.1) (pair.2).
 
-  Theorem RS_bij_1 w : RSmapinv2 (RSmap w) = w.
+  Theorem RSmapK w : RSmapinv2 (RSmap w) = w.
   Proof.
     rewrite /RSmapinv2.
     elim/last_ind: w => [//=| w wn]; rewrite /RSmap /RS rev_rcons /=.
@@ -1078,7 +1078,7 @@ Section Inverse.
       rewrite /bumped Hins0 => [] [] <- <-; by rewrite -Hins.
   Qed.
 
-  Theorem RS_bij_2 pair : is_RSpair pair -> RSmap (RSmapinv2 pair) = pair.
+  Theorem RSmapinv2K pair : is_RSpair pair -> RSmap (RSmapinv2 pair) = pair.
   Proof.
     rewrite /is_RSpair /RSmap /RSmapinv2; case: pair => [tab yam] /and3P [].
     elim: yam tab => [[] //= _ _ | row yam IHyam] tab Htab Hyam Hshape /=.
@@ -1162,8 +1162,8 @@ Section Bijection.
   Lemma bijRS : bijective RSbij.
   Proof.
     split with (g := RSbijinv); rewrite /RSbij /RSbijinv.
-    - move=> w /=; by rewrite (RS_bij_1 w).
-    - move=> [pq H]; apply: pyampair_inj => /=; exact (RS_bij_2 H).
+    - move=> w /=; by rewrite (RSmapK w).
+    - move=> [pq H]; apply: pyampair_inj => /=; exact (RSmapinv2K H).
   Qed.
 
 End Bijection.
@@ -1178,7 +1178,7 @@ Proof.
   move=> Htab /=; apply/allP => w /mapP [] Q.
   move /(allP (enum_yamevalP (is_part_sht Htab))).
   rewrite /is_yam_of_eval => /andP [] Hyam /eqP Hsh -> {w}.
-  by rewrite -RSmapE RS_bij_2 //= Htab Hyam Hsh /=.
+  by rewrite -RSmapE RSmapinv2K //= Htab Hyam Hsh /=.
 Qed.
 
 Lemma RSclass_countE w : count_mem w (RSclass (RS w)) = 1.
@@ -1190,8 +1190,8 @@ Proof.
     apply/(sameP idP); apply(iffP idP) => /eqP H.
     - rewrite H {H} -RSmapE.
       have -> : ((RSmap w).1, (RSmap w).2) = RSmap w by case RSmap.
-      by rewrite RS_bij_1.
-    - by rewrite -H {H} RS_bij_2 //= (is_tableau_RS _) Hyam Hsh /=.
+      by rewrite RSmapK.
+    - by rewrite -H {H} RSmapinv2K //= (is_tableau_RS _) Hyam Hsh /=.
   apply: (enum_yameval_countE (is_part_sht (is_tableau_RS _))).
   rewrite /is_yam_of_eval -shape_RSmap_eq RSmapE eq_refl andbT.
   by apply: is_yam_RSmap2.
@@ -1213,7 +1213,7 @@ Proof.
       by rewrite -shape_RSmap_eq RSmapE Hw.
     + rewrite -Hw -RSmapE.
       have -> : ((RSmap w).1, (RSmap w).2) = RSmap w by case RSmap.
-      by rewrite RS_bij_1.
+      by rewrite RSmapK.
   - have /allP Hall := RSclassP Htab.
     by move/Hall.
 Qed.
@@ -1270,6 +1270,18 @@ Proof.
   by rewrite shape_stdtab_of_yam.
 Qed.
 
+Lemma shape_RStabmapE (w : seq T) : shape (RStabmap w).1 = shape (RStabmap w).2.
+Proof.
+  have:= RStabmap_spec w; rewrite /is_RStabpair.
+  by case: (RStabmap w) => [P Q] /and3P [] /= _ _ /eqP.
+Qed.
+
+Lemma is_stdtab_RStabmap2 (w : seq T) : is_stdtab (RStabmap w).2.
+Proof.
+  have:= RStabmap_spec w; rewrite /is_RStabpair.
+  by case: (RStabmap w) => [P Q] /and3P [] /=.
+Qed.
+
 Definition RStab w := RSTabPair (RStabmap_spec w).
 Definition RStabinv (pair : rstabpair) :=
   let: (P, Q) := pqpair pair in RSmapinv2 (P, yam_of_stdtab Q).
@@ -1279,14 +1291,14 @@ Proof.
   rewrite /RStab /RStabinv /RStabmap.
   move=> w /=; have:= is_yam_RSmap2 w.
   case H : (RSmap w) => [P Q] /= Hyam.
-  by rewrite stdtab_of_yamK; first by rewrite -H (RS_bij_1 w).
+  by rewrite stdtab_of_yamK; first by rewrite -H (RSmapK w).
 Qed.
 Lemma RStabinvK : cancel RStabinv RStab.
 Proof.
   rewrite /RStab /RStabinv /RStabmap.
   move=> [[P Q] H] /=; apply: pqpair_inj => /=.
   move: H; rewrite /is_RStabpair => /and3P [] Htab Hstdtab Hshape //=.
-  rewrite RS_bij_2.
+  rewrite RSmapinv2K.
   + by rewrite (yam_of_stdtabK Hstdtab).
   + by rewrite /is_RSpair Htab yam_of_stdtabP //= shape_yam_of_stdtab.
 Qed.

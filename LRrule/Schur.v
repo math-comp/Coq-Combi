@@ -36,7 +36,6 @@ Reserved Notation "''X_' i"
 Local Open Scope ring_scope.
 Import GRing.Theory.
 
-
 Section MPoly.
 
 Variable R : comRingType.
@@ -110,29 +109,6 @@ Qed.
 End Poly.
 
 
-Section FinSets.
-
-Variable n : nat.
-
-Hypothesis Hnpos : n != 0%N.
-
-Lemma inhabIn : 'I_n.
-Proof. move: Hnpos; rewrite -lt0n; by apply: Ordinal. Qed.
-
-Definition leqOrd (i j : 'I_n) := (i <= j)%N.
-
-Fact leqOrd_order : Order.axiom leqOrd.
-Proof.
-  split.
-  - move=> i; by apply: leqnn.
-  - move=> i j; rewrite /leqOrd => H; apply: val_inj; by apply: anti_leq.
-  - move=> a b c; by apply: leq_trans.
-  - exact leq_total.
-Qed.
-
-Definition ord_ordMixin := Order.Mixin inhabIn leqOrd_order.
-Canonical ord_ordType := Eval hnf in OrdType 'I_n ord_ordMixin.
-
 Section TableauReading.
 
 Variable A : ordType.
@@ -183,6 +159,30 @@ Qed.
 
 End TableauReading.
 
+
+Section FinSets.
+
+Variable n : nat.
+
+Hypothesis Hnpos : n != 0%N.
+
+Lemma inhabIn : 'I_n.
+Proof. move: Hnpos; rewrite -lt0n; by apply: Ordinal. Qed.
+
+Definition leqOrd (i j : 'I_n) := (i <= j)%N.
+
+Fact leqOrd_order : Order.axiom leqOrd.
+Proof.
+  split.
+  - move=> i; by apply: leqnn.
+  - move=> i j; rewrite /leqOrd => H; apply: val_inj; by apply: anti_leq.
+  - move=> a b c; by apply: leq_trans.
+  - exact leq_total.
+Qed.
+
+Definition ord_ordMixin := Order.Mixin inhabIn leqOrd_order.
+Canonical ord_ordType := Eval hnf in OrdType 'I_n ord_ordMixin.
+
 Section Size.
 
 Variable d : nat.
@@ -195,7 +195,7 @@ Definition freeSchur (Q : stdtabn d) :=
   [set t : d.-tuple 'I_n | (RStabmap t).2 == Q].
 
 
-Lemma freeSchurP Q t : t \in freeSchur Q = (val t \in langQ _ Q).
+Lemma freeSchurP Q t : t \in freeSchur Q = (val t \in langQ Q).
 Proof. by rewrite /freeSchur /langQ !inE /=. Qed.
 
 Lemma size_RS_tuple (t : d.-tuple 'I_n) : size (to_word (RS t)) == d.
@@ -243,10 +243,7 @@ Proof.
   - move/imsetP => [] t; rewrite inE => /eqP HQ Htmp.
     have /eqP := eq_refl (val w); rewrite {2}Htmp {Htmp} /= => Hw.
     rewrite Hw (RS_tabE (is_tableau_RS t)) eq_refl /= {w Hw}.
-    move: HQ; rewrite -!RStabmapE /RStabmap.
-    have := (shape_RSmap_eq t).
-    case H : RSmap => [p q] /= -> <-.
-    by rewrite shape_stdtab_of_yam.
+    by rewrite -HQ -!RStabmapE shape_RStabmapE.
   - move/andP => [] /eqP Hw /eqP Hsh; apply/imsetP.
     have Hpair : is_RStabpair ((RS w), val Q).
       by rewrite /is_RStabpair is_tableau_RS stdtabnP Hsh eq_refl.
@@ -257,17 +254,16 @@ Proof.
     pose imw := (RStabinv (RSTabPair Hpair)).
     have Hsz : size (imw) == d.
       rewrite /imw /RStabinv /= -size_RS -RSmapE.
-      rewrite (RS_bij_2 Hpr) /=.
+      rewrite (RSmapinv2K Hpr) /=.
       by rewrite size_RS size_tuple.
     exists (Tuple Hsz).
     + rewrite inE /= /imw.
-      case: (bijRStab ord_ordType) => RSinv HK HinvK.
-      rewrite /RStabmap /RStabinv /= (RS_bij_2 Hpr) /=.
-      by rewrite yam_of_stdtabK.
+      have := erefl (val (RSTabPair Hpair)).
+      by rewrite -{2}(RStabinvK (RSTabPair Hpair)) /= => <-.
     + apply: val_inj => /=.
       rewrite /imw /RStabinv /= -Hw /=.
       congr (to_word _).
-      by rewrite Hw -[RS (RSmapinv _ _)]RSmapE RS_bij_2.
+      by rewrite Hw -[RS (RSmapinv _ _)]RSmapE RSmapinv2K.
 Qed.
 
 End Size.
@@ -339,7 +335,7 @@ Proof.
     pose t2 := Tuple Hsz2.
     have Hcat : t = cat_tuple t1 t2.
       apply: val_inj => /=; by rewrite cat_take_drop.
-    have : (val t1 \in langQ _ Q1 /\ val t2 \in langQ _ Q2).
+    have : (val t1 \in langQ Q1 /\ val t2 \in langQ Q2).
       rewrite LRTriple_cat_equiv; try by apply: stdtabnP.
       rewrite !size_tuple !stdtabn_size; split; try by [].
       exists Q; split.
@@ -406,21 +402,25 @@ Qed.
 
 End SchurTab.
 
-Lemma hyper_stdtabP d (P : intpartn d) : is_stdtab_of_n d (RS (std (hyper_yam P))).
+Definition hyper_tab sh := RS (std (hyper_yam sh)).
+Lemma hyper_tabP sh : is_stdtab (hyper_tab sh).
+Proof. by rewrite /hyper_tab /= RSstdE std_is_std. Qed.
+
+Lemma hyper_stdtabP d (P : intpartn d) : is_stdtab_of_n d (hyper_tab P).
 Proof.
-  rewrite /= RSstdE std_is_std /= size_RS.
+  rewrite /is_stdtab_of_n /= hyper_tabP /= size_RS.
   rewrite size_std -evalseq_eq_size (evalseq_hyper_yam (intpartnP P)).
   by rewrite intpartn_sumn.
 Qed.
 Definition hyper_stdtab d (P : intpartn d) := StdtabN (hyper_stdtabP P).
 
-Lemma shaped_hyper_stdtabP d (P : intpartn d) : shape_deg (hyper_stdtab P) = P.
+Lemma shape_hyper_stdtabP d (P : intpartn d) : shape (hyper_stdtab P) = P.
 Proof.
-  rewrite /hyper_stdtab /shape_deg.
-  apply: val_inj => /=.
   rewrite shape_RS_std (shape_RS_yam (hyper_yamP (intpartnP P))).
   by rewrite (evalseq_hyper_yam (intpartnP P)).
 Qed.
+Lemma shaped_hyper_stdtabP d (P : intpartn d) : shape_deg (hyper_stdtab P) = P.
+Proof. apply: val_inj => /=; exact: shape_hyper_stdtabP. Qed.
 
 Section Coeffs.
 
@@ -430,6 +430,7 @@ Variables (P1 : intpartn d1) (P2 : intpartn d2).
 Definition LRtab_set (P : intpartn (d1 + d2)) :=
   [set Q in (LR_support (hyper_stdtab P1) (hyper_stdtab P2)) | (shape Q == P)].
 Definition LRtab_coeff (P : intpartn (d1 + d2)) := #|LRtab_set P|.
+
 
 Theorem LRtab_coeffP :
   Schur P1 * Schur P2 = \sum_P (Schur P) *+ LRtab_coeff P.
@@ -449,9 +450,310 @@ Proof.
   by rewrite unfold_in inE.
 Qed.
 
+Require Import plactic congr Yam_plact.
+
+Lemma size_RSmapinv2_yam d (Typ : ordType) (tab : seq (seq Typ)) (T : stdtabn d) :
+  size (RSmapinv2 (tab, yam_of_stdtab T)) = d.
+Proof.
+  rewrite -{2}(stdtabn_size T) -size_yam_of_stdtab // /RSmapinv2 /=.
+  elim: (yam_of_stdtab _) tab => [//= | w0 w /= IHw] tab.
+  case: (invinstabnrow _ _) => [tr lr].
+  by rewrite size_rcons IHw.
+Qed.
+
+
+Section Bij_LR_support.
+
+Section ChangeUT.
+
+Variable (U1 T1 : stdtabn d1) (U2 T2 : stdtabn d2).
+Hypothesis Hsh1 : shape U1 = shape T1.
+Hypothesis Hsh2 : shape U2 = shape T2.
+
+Section TakeDrop.
+
+Variable T : ordType.
+
+Lemma RStabE (w : seq T) : (RStab w).1 = (RS w).
+Proof. by rewrite RStabmapE. Qed.
+
+Definition changeUT T1 T2 (w : seq T) : seq T :=
+  (RSmapinv2 (RS (take d1 w), yam_of_stdtab T1)) ++
+  (RSmapinv2 (RS (drop d1 w), yam_of_stdtab T2)).
+
+Variable w : seq T.
+Hypothesis Htake : shape (RS (take d1 w)) = shape U1.
+Hypothesis Hdrop : shape (RS (drop d1 w)) = shape U2.
+
+Lemma changeUtakeP : is_RStabpair (RS (take d1 w), val U1).
+Proof. by rewrite /is_RStabpair is_tableau_RS Htake /= eq_refl andbT. Qed.
+Lemma changeUdropP : is_RStabpair (RS (drop d1 w), val U2).
+Proof. by rewrite /is_RStabpair is_tableau_RS Hdrop /= eq_refl andbT. Qed.
+Lemma changeTtakeP : is_RStabpair (RS (take d1 w), val T1).
+Proof. by rewrite /is_RStabpair is_tableau_RS Htake /= Hsh1 eq_refl andbT. Qed.
+Lemma changeTdropP : is_RStabpair (RS (drop d1 w), val T2).
+Proof. by rewrite /is_RStabpair is_tableau_RS Hdrop /= Hsh2 eq_refl andbT. Qed.
+
+Lemma toDepRSPair (u : seq T) d (t : stdtabn d) (H : is_RStabpair (RS u, val t)) :
+  RSmapinv2 (RS u, yam_of_stdtab t) = RStabinv (RSTabPair H).
+Proof. by []. Qed.
+
+Lemma plact_changeUT_take : take d1 (changeUT T1 T2 w) =Pl take d1 w.
+Proof.
+  rewrite /changeUT take_size_cat; last by rewrite /= size_RSmapinv2_yam.
+  rewrite (toDepRSPair changeTtakeP).
+  apply Sch_plact; apply/eqP.
+  by rewrite -[LHS]RStabE RStabinvK //.
+Qed.
+
+Lemma plact_changeUT_drop : drop d1 (changeUT T1 T2 w) =Pl drop d1 w.
+Proof.
+  rewrite /changeUT drop_size_cat; last by rewrite /= size_RSmapinv2_yam.
+  rewrite (toDepRSPair changeTdropP).
+  apply Sch_plact; apply/eqP.
+  by rewrite -[LHS]RStabE RStabinvK //.
+Qed.
+
+Lemma plact_changeUT : changeUT T1 T2 w =Pl w.
+Proof.
+  rewrite /changeUT -{3}(cat_take_drop d1 w).
+  apply: (@congr_cat _ _ (@plactcongr_is_congr _) (@plactcongr_equiv _)).
+  - by have:= plact_changeUT_take; rewrite /changeUT take_size_cat // size_RSmapinv2_yam.
+  - by have:= plact_changeUT_drop; rewrite /changeUT drop_size_cat // size_RSmapinv2_yam.
+Qed.
+
+End TakeDrop.
+
+Lemma changeUTK (T : ordType) (w : seq T) :
+  (take d1 w) \in langQ U1 ->
+  (drop d1 w) \in langQ U2 ->
+  changeUT U1 U2 (changeUT T1 T2 w) = w.
+Proof.
+  rewrite !inE /= /changeUT => /eqP Htake /eqP Hdrop.
+  rewrite ?take_size_cat ?drop_size_cat ?size_RSmapinv2_yam //.
+  have Htk : shape (RS (take d1 w)) = shape U1.
+     by rewrite -RStabmapE shape_RStabmapE Htake.
+  have Hdp : shape (RS (drop d1 w)) = shape U2.
+     by rewrite -RStabmapE shape_RStabmapE Hdrop.
+  have -> : RS (RSmapinv2 (RS (take d1 w), yam_of_stdtab T1)) = RS (take d1 w).
+    by rewrite (toDepRSPair (changeTtakeP _)) -RStabE RStabinvK /=.
+  have -> : RS (RSmapinv2 (RS (drop d1 w), yam_of_stdtab T2)) = RS (drop d1 w).
+    by rewrite (toDepRSPair (changeTdropP _)) -RStabE RStabinvK /=.
+  rewrite -{3}(cat_take_drop d1 w); congr (_ ++ _).
+  - move: Htake; rewrite /RStabmap /= -!RSmapE.
+    case H : (RSmap (take d1 w)) => [Pt Qt] <- /=.
+    rewrite stdtab_of_yamK -/((Pt, Qt).2) -H; last exact: is_yam_RSmap2.
+    by rewrite RSmapK.
+  - move: Hdrop; rewrite /RStabmap /= -!RSmapE.
+    case H : (RSmap (drop d1 w)) => [Pt Qt] <- /=.
+    rewrite stdtab_of_yamK -/((Pt, Qt).2) -H; last exact: is_yam_RSmap2.
+    by rewrite RSmapK.
+Qed.
+
+Section DefBij.
+
+Variable Q : stdtabn (d1 + d2).
+Hypothesis HTriple : predLRTriple U1 U2 Q.
+Let w := RSmapinv2 (yamtab (shape Q), yam_of_stdtab Q).
+
+Lemma RSpairyamQ : is_RSpair (yamtab (shape Q), yam_of_stdtab Q).
+Proof.
+  rewrite /= yamtabP /=; last by apply: is_part_sht; exact: stdtabP.
+  by rewrite yam_of_stdtabP //= shape_yam_of_stdtab // shape_yamtab.
+Qed.
+
+Definition fun_LR_support :=
+  (RStab (changeUT T1 T2 (RSmapinv2 (yamtab (shape Q), yam_of_stdtab Q)))).2.
+
+Lemma bij_LR_supportP : is_stdtab_of_n (d1 + d2) fun_LR_support.
+Proof.
+  rewrite /is_stdtab_of_n /= /fun_LR_support.
+  apply/andP; split; first exact: is_stdtab_RStabmap2.
+  rewrite /size_tab /= -shape_RStabmapE RStabmapE -/(size_tab _) size_RS size_cat.
+  by rewrite !size_RSmapinv2_yam.
+Qed.
+Definition bij_LR_support := StdtabN bij_LR_supportP.
+
+Lemma take_drop_langQ :
+  ((take d1 w) \in langQ U1 /\ (drop d1 w) \in langQ U2).
+Proof.
+  have:= HTriple => /LRTripleP Htriple.
+  have {Htriple} Htriple:= (Htriple (stdtabnP _) (stdtabnP _)).
+  have Hszw : size w = (d1 + d2)%N by rewrite /w size_RSmapinv2_yam.
+  rewrite LRTriple_cat_equiv //; split.
+  - rewrite size_take stdtabn_size Hszw bad_if_leq //; exact: leq_addr.
+  - by rewrite size_drop stdtabn_size Hszw addKn.
+  - exists (val Q); split; first exact: Htriple.
+    rewrite cat_take_drop /w inE /= /RStabmap RSmapinv2K; last exact: RSpairyamQ.
+    by rewrite yam_of_stdtabK.
+Qed.
+
+Lemma shape_bij_LR_support : shape bij_LR_support = shape Q.
+Proof.
+  have:= take_drop_langQ; rewrite /= /fun_LR_support /= -shape_RStabmapE RStabmapE.
+  rewrite !inE => [] [] /eqP HU1 /eqP HU2.
+  have -> : RS (changeUT T1 T2 w) = RS w.
+    apply/eqP; rewrite -plactic_RS;
+    by apply: plact_changeUT; rewrite -RStabmapE shape_RStabmapE ?HU1 ?HU2.
+  rewrite /w -RSmapE shape_RSmap_eq /w RSmapinv2K; last exact: RSpairyamQ.
+  by rewrite //= shape_yam_of_stdtab.
+Qed.
+
+Lemma shape_takeRS : shape (RS (take d1 w)) = shape U1.
+Proof.
+  have := take_drop_langQ; rewrite -/w => /= [] [] Htake _.
+  move: Htake; rewrite inE => /eqP <-.
+  by rewrite -RStabmapE shape_RStabmapE.
+Qed.
+
+Lemma shape_dropRS : shape (RS (drop d1 w)) = shape U2.
+Proof.
+  have := take_drop_langQ; rewrite -/w => /= [] [] _ Hdrop.
+  move: Hdrop; rewrite inE => /eqP <-.
+  by rewrite -RStabmapE shape_RStabmapE.
+Qed.
+
+Lemma predLR_bij_LR_support : predLRTriple T1 T2 bij_LR_support.
+Proof.
+  apply/LRTripleP => //=; rewrite /fun_LR_support.
+  have := take_drop_langQ; rewrite -/w => /= [] [] Htake Hdrop.
+  apply LRTriple_cat_langQ => //.
+  - have Hpair := changeTtakeP shape_takeRS.
+    rewrite (toDepRSPair Hpair) inE.
+    have := eq_refl (RSTabPair Hpair).2.
+    by rewrite -{1}(RStabinvK (RSTabPair Hpair)) => /=.
+  - have Hpair := changeTdropP shape_dropRS.
+    rewrite (toDepRSPair Hpair) inE.
+    have := eq_refl (RSTabPair Hpair).2.
+    by rewrite -{1}(RStabinvK (RSTabPair Hpair)) => /=.
+Qed.
+
+End DefBij.
+
+Lemma card_LRtab_set_leq P :
+  #|[set Q in (LR_support U1 U2) | (shape Q == P)]| <=
+  #|[set Q in (LR_support T1 T2) | (shape Q == P)]|.
+Proof.
+  rewrite /LR_support.
+  have Hsimpl A B C :
+      [set Q in (LR_support A B) | (shape Q == C)] =
+      [set Q : stdtabn (d1 + d2) | predLRTriple A B Q & (shape Q == C)].
+    rewrite -setP => Q; rewrite /LR_support 2!inE [RHS]inE.
+    congr (_ && _); by rewrite LRTripleE.
+  rewrite !Hsimpl {Hsimpl}.
+  rewrite -(card_in_imset (f := bij_LR_support)).
+  - apply subset_leqif_cards; apply/subsetP => Qres /imsetP [] Q.
+    rewrite inE => /andP [] Hpred /eqP <- -> {Qres}.
+    rewrite inE; apply/andP; split.
+    + exact: predLR_bij_LR_support.
+    + by rewrite shape_bij_LR_support.
+  - move=> Q1 Q2; rewrite inE => /andP [] HQ1 /eqP HshQ1.
+    rewrite inE => /andP [] HQ2 /eqP; rewrite -HshQ1 {HshQ1} => Heqsh Heq.
+    have := erefl (val (bij_LR_support Q1)); rewrite {2}Heq{Heq} => /=.
+    rewrite /fun_LR_support.
+    set w1 := (X in changeUT _ _ X).
+    set w2 := (X in _ = (RStab (changeUT _ _ X)).2) => Heq1.
+    have : RS w1 = RS w2.
+      rewrite -!RSmapE /w1 /w2 !RSmapinv2K; first last.
+      - rewrite /is_RSpair yamtabP /=; last by apply: is_part_sht; exact: stdtabP.
+        by rewrite yam_of_stdtabP //= shape_yamtab shape_yam_of_stdtab.
+      - rewrite /is_RSpair yamtabP /=; last by apply: is_part_sht; exact: stdtabP.
+        by rewrite yam_of_stdtabP //= shape_yamtab shape_yam_of_stdtab.
+      - by rewrite /= Heqsh.
+    have := take_drop_langQ HQ1.
+    have := plact_changeUT (shape_takeRS HQ1) (shape_dropRS HQ1); rewrite -/w1.
+    rewrite plactic_RS => /eqP <- [] HQ1take HQ1drop.
+    have := take_drop_langQ HQ2.
+    have := plact_changeUT (shape_takeRS HQ2) (shape_dropRS HQ2); rewrite -/w2.
+    rewrite plactic_RS => /eqP <- [] HQ2take HQ2drop.
+    rewrite -!RStabE => Heq2.
+    have {Heq1 Heq2 HQ1take HQ1drop HQ2take HQ2drop} Heq : w1 = w2.
+      rewrite -(changeUTK HQ1take HQ1drop) -(changeUTK HQ2take HQ2drop).
+      congr changeUT.
+      rewrite -(RStabK (changeUT T1 T2 w1)) -(RStabK (changeUT T1 T2 w2)).
+      congr RStabinv.
+      apply val_inj; move: Heq1 Heq2 => /=.
+      case: (RStabmap (changeUT T1 T2 w1)) => A1 B1.
+      by case: (RStabmap (changeUT T1 T2 w2)) => A2 B2 /= -> ->.
+    apply val_inj.
+    rewrite /= -(yam_of_stdtabK (stdtabnP Q1)) -(yam_of_stdtabK (stdtabnP Q2)).
+    congr stdtab_of_yam.
+    have:= RSmapinv2K (RSpairyamQ Q1); rewrite -/w1 Heq /w2.
+    by rewrite (RSmapinv2K (RSpairyamQ Q2)) => [] [] _ ->.
+Qed.
+
+End ChangeUT.
+
+Lemma card_LRtab_setE P (U1 T1 : stdtabn d1) (U2 T2 : stdtabn d2) :
+  shape T1 = shape U1 -> shape T2 = shape U2 ->
+  #|[set Q in (LR_support U1 U2) | (shape Q == P)]| =
+  #|[set Q in (LR_support T1 T2) | (shape Q == P)]|.
+Proof. move=> H1 H2; apply anti_leq; rewrite !card_LRtab_set_leq // H1 H2. Qed.
+
+Lemma LRtab_coeffE (T1 : stdtabn d1) (T2 : stdtabn d2) P :
+  shape T1 = P1 -> shape T2 = P2 ->
+  LRtab_coeff P = #|[set Q in (LR_support T1 T2) | (shape Q == P)]|.
+Proof.
+  rewrite /LRtab_coeff /LRtab_set => H1 H2.
+  apply card_LRtab_setE; by rewrite shape_hyper_stdtabP ?H1 ?H2.
+Qed.
+
+End Bij_LR_support.
+
 End Coeffs.
 
 End FinSets.
+
+Section Conj.
+
+Variables d1 d2 : nat.
+
+Lemma LR_support_conj (T1 : stdtabn d1) (T2 : stdtabn d2):
+  LR_support (conj_stdtabn T1) (conj_stdtabn T2) = (@conj_stdtabn _) @: (LR_support T1 T2).
+Proof.
+  rewrite /LR_support -setP => T; rewrite inE.
+  apply (sameP idP); apply (iffP idP).
+  - move => /imsetP [] U; rewrite inE -LRTripleE //.
+    rewrite conj_predLRTriple // => H -> {T}.
+    rewrite -LRTripleE; try exact: is_stdtab_conj.
+    exact: H.
+  - rewrite -LRTripleE; try exact: is_stdtab_conj; last exact: stdtabnP.
+    move=> H.
+    apply/imsetP; exists (conj_stdtabn T).
+    + rewrite inE -LRTripleE //.
+      rewrite conj_predLRTriple // conj_tabK; first exact H.
+      * by have := stdtabnP T => /andP [].
+      * apply val_inj; rewrite /= conj_tabK //.
+        by have := stdtabnP T => /andP [].
+Qed.
+
+Theorem LRtab_coeff_conj (P1 : intpartn d1) (P2 : intpartn d2) (P : intpartn (d1 + d2)) :
+  LRtab_coeff P1 P2 P =
+  LRtab_coeff (conj_intpartn P1) (conj_intpartn P2) (conj_intpartn P).
+Proof.
+  rewrite [RHS](LRtab_coeffE
+                  (T1 := conj_stdtabn (hyper_stdtab P1))
+                  (T2 := conj_stdtabn (hyper_stdtab P2))); first last.
+    - by rewrite shape_conj_tab  shape_hyper_stdtabP.
+    - by rewrite shape_conj_tab  shape_hyper_stdtabP.
+  rewrite /LRtab_coeff /LRtab_set LR_support_conj.
+  have Hinj : injective (conj_stdtabn (n:=d1 + d2)).
+    apply inv_inj => T; apply val_inj; rewrite /= conj_tabK //.
+    by have := stdtabnP T => /andP [].
+  rewrite -(@card_imset _ _ (@conj_stdtabn _)) //.
+  rewrite !setIdE imsetI; last by move=> a b /= _ _; exact: Hinj.
+  congr (card (mem (_ :&: _))).
+  rewrite -setP => T; rewrite !inE.
+  apply (sameP idP); apply (iffP idP).
+  - move/eqP => H; apply/imsetP; exists (conj_stdtabn T).
+    + by rewrite inE /= shape_conj_tab H /= conj_partK.
+    + apply val_inj => //=; rewrite conj_tabK //.
+      by have := stdtabnP T => /andP [].
+  - move/imsetP => [] U; rewrite inE => /eqP HU -> /=.
+    by rewrite shape_conj_tab HU.
+Qed.
+
+End Conj.
 
 
 

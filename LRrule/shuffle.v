@@ -591,8 +591,8 @@ Proof.
             /(allP (enum_yamevalP (is_part_sht Htab2))) /= /andP [] Hyam2 Hsh2 Hp2.
     move=> -> {shuf} Hshuf /eqP <- {t}.
     apply: (@PlactLRTriple t1 t2 (RS p) p1 p2 p) => //=.
-    + by rewrite Hp1 -RSmapE RS_bij_2 //= Htab1 Hyam1 eq_sym Hsh1.
-    + by rewrite Hp2 -RSmapE RS_bij_2 //= Htab2 Hyam2 eq_sym Hsh2.
+    + by rewrite Hp1 -RSmapE RSmapinv2K //= Htab1 Hyam1 eq_sym Hsh1.
+    + by rewrite Hp2 -RSmapE RSmapinv2K //= Htab2 Hyam2 eq_sym Hsh2.
   - move=> [p1 p2 p]; rewrite -2!RSmapE => Hp1 Hp2 Hp Hsh.
     apply/hasP; exists p; last by rewrite Hp.
     apply/flattenP; exists (shsh p1 p2); last exact Hsh.
@@ -635,7 +635,7 @@ Proof.
     have {Hall2 Hy2} := Hall2 _ Hy2.
     rewrite /is_yam_of_eval => /andP [] Hyam2 /eqP Hsh2 Hp2 Htshsh.
     have := Ht1; rewrite /is_stdtab => /andP [] /RS_tabE => H1 _.
-    have H2 : RS p2 = t2 by rewrite Hp2 -RSmapE RS_bij_2 //= Htab2 Hyam2 Hsh2 /=.
+    have H2 : RS p2 = t2 by rewrite Hp2 -RSmapE RSmapinv2K //= Htab2 Hyam2 Hsh2 /=.
     have := Ht; rewrite /is_stdtab => /andP [] /RS_tabE => Hres _.
     by apply: (PlactLRTriple H1 H2 Hres).
   - move/(LRTripleP t Ht1 Ht2) => [] p1 p2 p Hp1 Hp2 Hp Hshsh /=.
@@ -654,7 +654,7 @@ Proof.
         by move/(enum_yameval_countE (is_part_sht (is_tableau_RS p'))) => ->.
       * rewrite Hp' -[RS p']RSmapE /=.
         have -> : ((RSmap p').1, (RSmap p').2) = RSmap p' by case RSmap.
-        by rewrite RS_bij_1.
+        by rewrite RSmapK.
     + have : is_std (to_word (RS p1)) by move: Ht1; rewrite Hp1 /is_stdtab => /andP [].
       move/mem_shsh ->; apply/andP.
       rewrite -size_to_word size_RS; split; last by [].
@@ -761,6 +761,8 @@ Proof.
 Qed.
 
 End LR.
+
+Implicit Arguments langQ [Alph].
 
 (*
 (* First non trivial example of LR rule *)
