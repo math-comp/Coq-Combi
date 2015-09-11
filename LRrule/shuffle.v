@@ -722,6 +722,44 @@ Proof.
       by apply: plactic_filter_leqX.
 Qed.
 
+
+Theorem conj_plactLRTriple t1 t2 t :
+  is_stdtab t1 -> is_stdtab t2 -> is_stdtab t ->
+  plactLRTriple t1 t2 t -> plactLRTriple (conj_tab t1) (conj_tab t2) (conj_tab t).
+Proof.
+  move=> Ht1 Ht2 Ht [] p1 p2 p Hp1 Hp2 Hp.
+  rewrite mem_shsh; last by rewrite -RSstdE Hp1.
+  move=> /= /andP [] /eqP Hsh1 /eqP Hsh2.
+  apply: (@PlactLRTriple _ _ _ (rev p1) (rev p2) (rev p)).
+  - rewrite RS_rev_uniq; last by apply std_uniq; rewrite -RSstdE Hp1.
+    by rewrite Hp1.
+  - rewrite RS_rev_uniq; last by apply std_uniq; rewrite -RSstdE Hp2.
+    by rewrite Hp2.
+  - rewrite RS_rev_uniq; last by apply std_uniq; rewrite -RSstdE Hp.
+    by rewrite Hp.
+  - rewrite mem_shsh; first last.
+      rewrite /is_std size_rev.
+      have := perm_rev p1 => /perm_eqlP <-.
+      by rewrite -/(is_std _)  -RSstdE Hp1.
+    by rewrite /= size_rev !filter_rev map_rev Hsh1 Hsh2 !eq_refl.
+Qed.
+
+Theorem conj_predLRTriple t1 t2 t :
+  is_stdtab t1 -> is_stdtab t2 -> is_stdtab t ->
+  predLRTriple t1 t2 t = predLRTriple (conj_tab t1) (conj_tab t2) (conj_tab t).
+Proof.
+  move=> Ht1 Ht2 Ht.
+  have Hc1 := is_stdtab_conj Ht1.
+  have Hc2 := is_stdtab_conj Ht2.
+  have Hc := is_stdtab_conj Ht.
+  apply (sameP idP); apply (iffP idP) => /LRTripleP H; apply/LRTripleP => //=.
+  - rewrite -[t1]conj_tabK; last by move: Ht1 => /andP [].
+    rewrite -[t2]conj_tabK; last by move: Ht2 => /andP [].
+    rewrite -[t]conj_tabK;  last by move: Ht  => /andP [].
+    apply: conj_plactLRTriple => //; exact: H.
+  - apply: conj_plactLRTriple => //; exact: H.
+Qed.
+
 End LR.
 
 (*

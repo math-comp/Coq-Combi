@@ -100,6 +100,18 @@ Qed.
 Lemma size_append_nth t b i : size_tab (append_nth t b i) = (size_tab t).+1.
 Proof. by rewrite /size_tab shape_append_nth sumn_incr_nth. Qed.
 
+Lemma get_tab_append_nth (t : seq (seq T)) l i r c :
+  get_tab (append_nth t l i) r c =
+  if (r == i) && (c == nth 0 (shape t) i) then l else get_tab t r c.
+Proof.
+  rewrite /get_tab /append_nth nth_set_nth /=.
+  case: (altP (r =P i)) => [-> | //=] /=.
+  rewrite nth_rcons nth_shape.
+  case: (ltnP c (size (nth [::] t i))) => Hc; first by rewrite (ltn_eqF Hc).
+  case: (altP (c =P (size (nth [::] t i)))) => [// | Hc'].
+  by rewrite nth_default.
+Qed.
+
 Fixpoint last_big t b :=
   if t is t0 :: t' then
     if last b t0 == b then 0
@@ -561,6 +573,27 @@ Qed.
 
 Lemma conj_tabK t : is_tableau t -> conj_tab (conj_tab t) = t.
 Proof. move=> /is_part_sht; exact :conj_tab_shapeK. Qed.
+
+Lemma append_nth_conj_tab (t : seq (seq T)) l i :
+  is_part (shape t) ->
+  is_in_corner (shape t) i ->
+  conj_tab (append_nth t l i) = append_nth (conj_tab t) l (nth 0 (shape t) i).
+Proof.
+  move=> Hsh Hcorn; apply eq_from_shape_get_tab.
+  - rewrite shape_conj_tab !shape_append_nth shape_conj_tab.
+    exact: incr_nth_conj_part.
+  - move=> r c; rewrite get_conj_tab; first last.
+      rewrite shape_append_nth; by apply is_part_incr_nth.
+    rewrite !get_tab_append_nth.
+    case: (altP (r =P nth 0 (shape t) i)); rewrite /= ?andbF ?andbT get_conj_tab //.
+    rewrite shape_conj_tab.
+    move: Hcorn; rewrite /is_in_corner /= => /orP [/eqP Hi| H] Hr.
+    + by rewrite Hi nth0 nth_default // size_conj_part.
+    + have : nth 0 (shape t) i <= nth 0 (shape t) i < nth 0 (shape t) i.-1.
+        by rewrite leqnn H.
+      rewrite -nth_conjE //; last by case: i H {Hr}; rewrite // ltnn.
+      by move=> /eqP ->.
+Qed.
 
 End ConjTab.
 

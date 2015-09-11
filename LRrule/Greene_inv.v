@@ -1544,9 +1544,14 @@ Proof.
 Qed.
 
 
+Require Import stdtab plactic.
 
-Theorem shape_RS_rev (S : ordType) (s : seq S) :
-  uniq s -> shape (RS (rev s)) = conj_part (shape (RS s)).
+Section Rev.
+
+Variable T : ordType.
+Implicit Type s : seq T.
+
+Lemma shape_RS_rev s : uniq s -> shape (RS (rev s)) = conj_part (shape (RS s)).
 Proof.
   have Htr := is_tableau_RS (rev s); have Ht := is_tableau_RS s.
   move=> Hs; apply: part_sum_inj.
@@ -1558,3 +1563,40 @@ Proof.
   apply eq_Greene_rel => x y /=.
   by rewrite eq_sym.
 Qed.
+
+Lemma RS_rev_uniq s : uniq s -> RS (rev s) = conj_tab (RS s).
+Proof.
+  move Hsz : (size s) => n.
+  elim: n s Hsz => [| n IHn] s.
+    by rewrite /RS /conj_tab; move=> /eqP/nilP -> _ /=.
+  move=> Hsz Huniq.
+  have:= size_rembig s; rewrite Hsz /= => Hszrem.
+  have {IHn Hszrem} := IHn _ Hszrem (rembig_uniq Huniq); rewrite (rembig_rev_uniq Huniq).
+  have {Huniq} := shape_RS_rev Huniq.
+  case Hs: s Hsz => [//= | s0 s'] Hsz.
+  have:= rembig_RS s0 s' => [] [] iu; rewrite -Hs => Hrem; rewrite Hrem.
+  case/lastP Hrs: s Hsz Hs => [//= | t tn] _ Hs; rewrite -Hrs => Hsh Heq.
+  have:= rembig_RS tn (rev t) => [] [] iv; rewrite -rev_rcons -Hrs => HRSr.
+  move: Hsh; rewrite HRSr {HRSr}.
+  have Hpart := is_part_sht (is_tableau_RS (rembig s)).
+  have : is_in_corner (shape (RS (rembig s))) iu.
+    have := is_part_sht (is_tableau_RS s); rewrite Hrem shape_append_nth => Hparti.
+    rewrite -(incr_nthK Hpart Hparti); apply (in_corner_decr_nth Hparti).
+    rewrite del_out_corner => //.
+    by move: Hpart => /is_partP [].
+  move: Heq Hpart.
+  move: (RS (rembig (rev s))) (RS (rembig s)) => tabr tab Hr.
+  subst tabr => Hpart Hcorn Hsh.
+  apply eq_from_shape_get_tab; first by rewrite shape_conj_tab.
+  move => r c.
+  rewrite (append_nth_conj_tab _ Hpart Hcorn).
+  congr (get_tab (append_nth _ _ _) _ _).
+  - apply maxL_perm_eq; rewrite -Hs -rev_rcons.
+    rewrite perm_eq_sym; exact: perm_rev.
+  - move: Hsh.
+    rewrite !shape_append_nth shape_conj_tab.
+    rewrite incr_nth_conj_part //.
+    exact: incr_nth_inj.
+Qed.
+
+End Rev.

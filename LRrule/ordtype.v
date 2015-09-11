@@ -385,6 +385,13 @@ Implicit Type u v : word.
 Definition allLeq v a := all (geqX a) v.
 Definition allLtn v a := all (gtnX a) v.
 
+Lemma allLtn_notin s b : allLeq s b -> b \notin s -> allLtn s b.
+Proof.
+  elim: s => [//= | s0 s IHs] /= /andP [].
+  rewrite ltnX_neqAleqX => -> /IHs{IHs} Hrec.
+  by rewrite inE negb_or eq_sym => /andP [] ->.
+Qed.
+
 Lemma maxLPt a u : allLeq u (maxL a u).
 Proof.
   rewrite/allLeq; apply/allP => x Hx.
@@ -681,6 +688,33 @@ Proof.
   apply: (perm_eq_trans H).
   by apply: Hlemma.
 Qed.
+
+Lemma rembig_rev_uniq s : uniq s -> rev (rembig s) = rembig (rev s).
+Proof.
+  case: (altP (s =P [::])) => [-> /= |]; first by rewrite /rev.
+  move=> /rembigP HP.
+  have {HP} /HP := (eq_refl (rembig s)) => [] [] u [] b [] v [] -> -> Hu Hb.
+  rewrite -rev_uniq !rev_cat rev_cons -cats1 -catA cat1s.
+  rewrite cat_uniq => /and3P [] _ _ /= /andP [].
+  rewrite mem_rev => Hbu _.
+  apply/eqP/rembigP; first by case: (rev v).
+  exists (rev v); exists b; exists (rev u); split => //.
+  - rewrite allLeq_rev; exact: allLtnW.
+  - rewrite allLtn_rev; exact: allLtn_notin.
+Qed.
+
+Lemma rembig_subseq s : subseq (rembig s) s.
+Proof.
+  elim: s => [//= | s0 s IHs] /=.
+  case: allLtn; last by rewrite eq_refl.
+  case: s {IHs} => [//= | s1 s].
+  case: eqP => _; first exact: subseq_cons.
+  exact: subseq_refl.
+Qed.
+
+Lemma rembig_uniq s : uniq s -> uniq (rembig s).
+Proof. apply subseq_uniq; exact: rembig_subseq. Qed.
+
 
 Open Scope nat_scope.
 
