@@ -153,7 +153,7 @@ Proof.
   rewrite /LR_support inE.
   rewrite -LRTripleE; try apply stdtabnP.
   move/(LRTripleP _ (stdtabnP (hyper_stdtab P1)) (stdtabnP (hyper_stdtab P2))).
-  move=> [] p1 p2 p /= Hp1 Hp2 Hp.
+  move=> [] p1 p2 p /=; rewrite /hyper_tab => Hp1 Hp2 Hp.
   have Hstdp1 : is_std p1.
     rewrite -RSstdE Hp1.
     by have := hyper_stdtabP P1 => /andP [].
@@ -427,7 +427,7 @@ Proof.
   - rewrite /bijLR.
     case (boolP (is_skew_reshape_tableau P P1 y)) => /=; last by rewrite Hskew.
     move=> pf; apply val_inj => /= {pf}.
-    have -> : RS (std (hyper_yam P1)) = filter_gtnX_tab d1 Q.
+    have -> : hyper_tab P1 = filter_gtnX_tab d1 Q.
       have := (hyper_stdtabP P1) => /andP [] Htab1 /eqP Hsz1.
       rewrite inE in HLR.
       rewrite (predLRTripleFast_filter_gtnX Htab1 (stdtabnP Q) HLR).
