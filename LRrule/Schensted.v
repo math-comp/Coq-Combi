@@ -13,9 +13,8 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import path.
-Require Import tools partition Yamanouchi ordtype subseq.
-Require Export tableau.
+Require Import path bigop finset perm fingroup.
+Require Import tools partition Yamanouchi ordtype subseq tableau std stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -396,8 +395,6 @@ Section Schensted.
   Qed.
 
 End Schensted.
-
-Require Import bigop.
 
 Theorem Sch_max_size w : size (Sch w) = \max_(s : subseqs w | is_row s) size s.
 Proof.
@@ -1222,9 +1219,6 @@ End Classes.
 
 End NonEmpty.
 
-
-Require Import finset perm fingroup.
-Require Import std stdtab.
 
 Lemma RSperm n (p : 'S_n) : is_stdtab (RS (wordperm p)).
 Proof.

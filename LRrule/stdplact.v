@@ -15,7 +15,7 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm fingroup path.
 
-Require Import tools combclass ordcast partition Yamanouchi ordtype permuted std stdtab.
+Require Import tools combclass ordcast partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted congr plactic Greene Greene_inv.
 
 Set Implicit Arguments.

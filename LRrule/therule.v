@@ -13,9 +13,9 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import tuple finfun finset bigop path.
+Require Import tuple finfun finset bigop path ssralg.
 
-Require Import tools ordcast combclass partition Yamanouchi ordtype std stdtab.
+Require Import tools ordcast combclass partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted congr plactic Greene_inv stdplact Yam_plact skewtab.
 Require Import shuffle Schur.
 
@@ -526,8 +526,6 @@ Proof.
   by apply included_shape_filter_gtnX_tab.
 Qed.
 
-
-Require Import ssralg.
 
 Local Open Scope ring_scope.
 Import GRing.Theory.

@@ -13,8 +13,12 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
-Require Import path.
-Require Import permuted.
+Require Import Recdef path.
+Require Import permuted vectNK.
+
+
+Set Implicit Arguments.
+Unset Strict Implicit.
 
 (******************************************************************************)
 (* Equivalence and congruence closure of a rewriting rule on words            *)
@@ -43,9 +47,6 @@ Require Import permuted.
 (* - gencongr_ind : induction principle on classes for gencongr, any property *)
 (*                  preserved along the rewriting rule holds for classes.     *)
 (******************************************************************************)
-
-Set Implicit Arguments.
-Unset Strict Implicit.
 
 (* Basic facts on congruences:                                                *)
 (* equivalence of various definitions and immediate consequences              *)
@@ -117,8 +118,6 @@ End FullKnown.
 
 Variable bound : nat.
 Hypothesis Hbound: forall s : seq T, all invar s -> uniq s -> size s <= bound.
-
-Require Import Recdef.
 
 Lemma invar_undupE s : all invar (undup s) = all invar s.
 Proof.
@@ -392,7 +391,6 @@ Proof. by rewrite /congr /congr_class /rtrans. Qed.
 
 End CongruenceClosure.
 
-Require Import vectNK.
 
 Section CongruenceRule.
 

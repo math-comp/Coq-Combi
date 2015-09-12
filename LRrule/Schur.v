@@ -16,8 +16,8 @@ Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop ssralg.
 Require Import poly.
 
-Require Import tools ordtype partition Yamanouchi std stdtab.
-Require Import Schensted stdplact Yam_plact Greene_inv shuffle.
+Require Import tools ordtype partition Yamanouchi std tableau stdtab.
+Require Import Schensted congr plactic stdplact Yam_plact Greene_inv shuffle.
 
 (******************************************************************************)
 (* The main goal of this file is to lift the multiplication of multivariate   *)
@@ -449,8 +449,6 @@ Proof.
   apply: eq_card => i /=.
   by rewrite unfold_in inE.
 Qed.
-
-Require Import plactic congr Yam_plact.
 
 Lemma size_RSmapinv2_yam d (Typ : ordType) (tab : seq (seq Typ)) (T : stdtabn d) :
   size (RSmapinv2 (tab, yam_of_stdtab T)) = d.

@@ -13,8 +13,8 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm binomial.
-Require Import tools subseq partition Yamanouchi ordtype std stdtab.
+Require Import finset perm binomial bigop.
+Require Import tools vectNK subseq partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted plactic Greene_inv stdplact.
 
 
@@ -70,8 +70,6 @@ Proof.
     apply: perm_map; by apply: IHu.
 Qed.
 
-
-Require Import bigop vectNK.
 
 (* Tentative proof of associativity of shuffle *)
 

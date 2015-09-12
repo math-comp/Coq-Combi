@@ -13,8 +13,8 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm.
-Require Import tools partition ordtype Schensted congr.
+Require Import finset perm path.
+Require Import tools partition ordtype tableau Schensted congr.
 
 
 Set Implicit Arguments.
@@ -203,8 +203,6 @@ Section RowsAndCols.
 Variable Alph : ordType.
 Let word := seq Alph.
 Implicit Type u v w : word.
-
-Require Import path.
 
 Lemma plact_row u v : is_row u -> u =Pl v -> u = v.
 Proof.

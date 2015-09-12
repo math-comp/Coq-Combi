@@ -14,7 +14,8 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm tuple path bigop.
-Require Import tools subseq partition ordtype Schensted congr plactic ordcast.
+Require Import sorted tools subseq partition ordtype tableau.
+Require Import Schensted congr plactic ordcast.
 
 
 Set Implicit Arguments.
@@ -746,7 +747,6 @@ Proof.
     by rewrite rev_ordK.
 Qed.
 
-Require Import sorted.
 
 Lemma ksupp_inj_rev (leT : rel Alph) u k : ksupp_inj leT (fun y x => leT x y) k u (rev u).
 Proof.

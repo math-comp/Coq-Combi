@@ -14,8 +14,8 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm tuple path bigop.
-Require Import tools subseq partition Yamanouchi ordtype.
-Require Import Schensted congr plactic ordcast Greene.
+Require Import tools ordcast ordtype subseq partition tableau Yamanouchi stdtab.
+Require Import Schensted congr plactic Greene.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -1543,8 +1543,6 @@ Proof.
   by apply: HGreene.
 Qed.
 
-
-Require Import stdtab plactic.
 
 Section Rev.
 
