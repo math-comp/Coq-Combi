@@ -51,7 +51,7 @@ Let RSbijinvnat := (@RSbijinv nat_ordType).
 Let RStabnat := (@RStab nat_ordType).
 Let RStabinvnat := (@RStabinv nat_ordType).
 
-Extraction "extract/schensted.ml"
+Extraction "src/LRrule/schensted.ml"
            RS RSbijnat RSbijinvnat
            plactcongr
            Greene_row Greene_col
@@ -61,6 +61,6 @@ Extraction "extract/schensted.ml"
            LRyam_coeff LRcoeff LRyamtab_list
 .
 
-Extraction "extract/lrcoeff.ml"
+Extraction "src/LRrule/lrcoeff.ml"
            LRcoeff LRyamtab_list
 .
