@@ -12,8 +12,6 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Add Rec LoadPath "ALEA/src" as ALEA.
-Add Rec LoadPath "../Combi/LRrule".
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -22,7 +20,7 @@ Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq
         ssrint div rat fintype bigop path ssralg ssrnum.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
-Require Import tools combclass ordtype subseq partition tableau schensted std invseq stdtab.
+Require Import ordtype tools combclass partition tableau Schensted std stdtab.
 Require Import hook.
 
 (* TODO : Contribute to SSReflect/fintype.v *)
@@ -128,7 +126,7 @@ Lemma stpn_partition_shape tabp :
 Proof.
   rewrite /is_stdtab_pair_of_n; move: tabp => [p1 p2] /= /andP [].
   rewrite /size_tab => /andP [] /andP [] H _ -> _ /=.
-  exact: is_part_sht.
+  exact: (is_part_sht H).
 Qed.
 
 Structure stpn : predArgType :=

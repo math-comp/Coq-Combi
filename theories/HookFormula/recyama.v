@@ -1,8 +1,20 @@
-Add Rec LoadPath "../Combi/LRrule".
-
+(******************************************************************************)
+(*       Copyright (C) 2015 Florent Hivert <florent.hivert@lri.fr>            *)
+(*                                                                            *)
+(*  Distributed under the terms of the GNU General Public License (GPL)       *)
+(*                                                                            *)
+(*    This code is distributed in the hope that it will be useful,            *)
+(*    but WITHOUT ANY WARRANTY; without even the implied warranty of          *)
+(*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *)
+(*    General Public License for more details.                                *)
+(*                                                                            *)
+(*  The full text of the GPL is available at:                                 *)
+(*                                                                            *)
+(*                  http://www.gnu.org/licenses/                              *)
+(******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop ssrint rat ssralg ssrnum.
-Require Import tools combclass partition yama stdtab.
+Require Import tools combclass partition Yamanouchi stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

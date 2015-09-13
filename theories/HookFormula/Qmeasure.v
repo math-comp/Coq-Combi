@@ -1,7 +1,5 @@
 (** * Qmeasure.v: Definition of finite probabilities as measures with values in rational numbers *)
 
-Add Rec LoadPath "ALEA/src" as ALEA.
-
 Require Import Misc Ccpo.
 
 Set Implicit Arguments.

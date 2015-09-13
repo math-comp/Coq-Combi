@@ -12,8 +12,6 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Add Rec LoadPath "ALEA/src" as ALEA.
-Add Rec LoadPath "../Combi/LRrule".
 
 Require Import Misc Ccpo Qmeasure.
 

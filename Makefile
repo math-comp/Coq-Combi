@@ -86,6 +86,13 @@ VFILES:=theories/Combi/combclass.v\
   theories/Combi/vectNK.v\
   theories/Combi/Yamanouchi.v\
   theories/Erdos_Szekeres/Erdos_Szekeres.v\
+  theories/HookFormula/ALEA/Ccpo.v\
+  theories/HookFormula/ALEA/Misc.v\
+  theories/HookFormula/Qmeasure.v\
+  theories/HookFormula/RSident.v\
+  theories/HookFormula/distr.v\
+  theories/HookFormula/hook.v\
+  theories/HookFormula/recyama.v\
   theories/LRrule/congr.v\
   theories/LRrule/extract.v\
   theories/LRrule/Greene_inv.v\
@@ -99,6 +106,8 @@ VFILES:=theories/Combi/combclass.v\
   theories/LRrule/stdplact.v\
   theories/LRrule/therule.v\
   theories/LRrule/Yam_plact.v\
+  theories/SSRcomplements/bigallpairs.v\
+  theories/SSRcomplements/rat_coerce.v\
   theories/SSRcomplements/sorted.v\
   theories/SSRcomplements/tools.v
 
