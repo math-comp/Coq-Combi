@@ -84,6 +84,7 @@ VFILES:=congr.v\
   shape.v\
   shuffle.v\
   skewtab.v\
+  sorted.v\
   stdtab.v\
   std.v\
   stdplact.v\

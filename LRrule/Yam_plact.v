@@ -15,7 +15,7 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset path bigop.
 
-Require Import tools partition Yamanouchi ordtype std stdtab.
+Require Import tools partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted congr plactic Greene_inv stdplact.
 
 Set Implicit Arguments.
@@ -325,7 +325,7 @@ Proof.
     by rewrite !eval_yameval.
   apply val_inj; apply perm_eq_stdE => /=.
   - by rewrite perm_eq_evalseq !eval_yameval.
-  - rewrite -[std y]RS_bij_1 -[std z]RS_bij_1 /=.
+  - rewrite -[std y]RSmapK -[std z]RSmapK /=.
     have RSE (x : seq nat) : RSmap x = (RS x, (RSmap x).2) by rewrite -RSmapE; case RSmap.
     by rewrite [RSmap (std y)]RSE [RSmap (std z)]RSE HRS1 !RSmap_std HRS2.
 Qed.
@@ -345,13 +345,13 @@ Proof.
     by rewrite (shape_RS_yam (hyper_yamP Hsh)) evalseq_hyper_yam.
   pose yimg := YamEval Hyam.
   have Hw : w = RSmapinv2 (RS (std (hyper_yam sh)), val yimg).
-    rewrite -{1}[w]RS_bij_1.
+    rewrite -{1}[w]RSmapK.
     have -> : RSmap w = ((RSmap w).1, (RSmap w).2) by case RSmap.
     by rewrite RSmapE HRS.
   pose y := (@auxbij_inv Sh yimg).
   exists y.
   - by rewrite /is_yam_of_eval yamevalP eval_yameval /=.
-  - rewrite -[LHS]RS_bij_1 -[RHS]RS_bij_1.
+  - rewrite -[LHS]RSmapK -[RHS]RSmapK.
     have RSE (x : seq nat) : RSmap x = (RS x, (RSmap x).2) by rewrite -RSmapE; case RSmap.
     rewrite RSE [RSmap w]RSE HRS.
     congr (RSmapinv2 (_, _)).

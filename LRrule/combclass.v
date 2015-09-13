@@ -13,13 +13,26 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import bigop.
-
-Require Import tools.
+Require Import bigop tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+(* TODO : Contribute to SSReflect/fintype.v *)
+Section BijCard.
+
+Variables U V : finType.
+Variable f : U -> V.
+
+Lemma bij_card : bijective f -> #|U| = #|V|.
+Proof.
+  move=> [] g Hfg Hgf.
+  apply anti_leq; apply/andP; split.
+  - rewrite -(card_codom (can_inj Hfg)); exact: max_card.
+  - rewrite -(card_codom (can_inj Hgf)); exact: max_card.
+Qed.
+
+End BijCard.
 
 Lemma sum_count_mem (T : finType) (P : pred T) l :
    \sum_(i | P i) (count_mem i) l = count P l.

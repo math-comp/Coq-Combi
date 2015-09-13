@@ -105,6 +105,9 @@ Section Yama.
       by move: Hperm => /perm_eqP ->.
   Qed.
 
+  Lemma evalseq0 y : evalseq y = [::] -> y = [::].
+  Proof. case: y => [//= | [|y0] y] /=; by case: (evalseq y). Qed.
+
   Lemma evalseq_cons l s : evalseq (l :: s) = incr_nth (evalseq s) l.
   Proof. by []. Qed.
 
@@ -164,12 +167,6 @@ Section Yama.
 
   Lemma is_part_eval_yam s : is_yam s -> is_part (evalseq s).
   Proof. by case: s => [//= | s0 s] /= /andP []. Qed.
-
-  Lemma yam0 y : is_yam y -> evalseq y = [::] -> y = [::].
-  Proof.
-    case: y => [//= | y0 y] /= _.
-    case: y0 => [| y0] /=; by case (evalseq y).
-  Qed.
 
   Lemma is_yam_tl l0 s : is_yam (l0 :: s) -> is_yam s.
   Proof. by move=> /= /andP []. Qed.
@@ -335,7 +332,7 @@ Proof.
   rewrite /enum_yameval /is_yam_of_eval; move Hn: (sumn ev) => n.
   elim: n ev Hn => [| n IHn] /= .
     move=> ev Hev /part0 H0 y.
-    by rewrite (H0 Hev) => /andP [] /yam0 H /eqP /H{H} ->.
+    by rewrite (H0 Hev) => /andP [] _ /eqP/evalseq0 ->.
   move=> ev Hev Hpart [/= | y0 y] /=.
   - by have -> : [::] == ev = false by move: Hev; case ev.
   - move => /andP [] /andP [] _ Hyam /eqP Htmp; subst ev.
@@ -385,6 +382,9 @@ Proof. by case: y => /= y /andP []. Qed.
 Lemma eval_yameval (y : yameval) : evalseq y = ev.
 Proof. by case: y => /= y /andP [] _ /eqP. Qed.
 
+Lemma size_yameval (y : yameval) : size y = sumn ev.
+Proof. by rewrite -evalseq_eq_size eval_yameval. Qed.
+
 Lemma enum_yamevalE : map val (enum yameval) = enum_yameval ev.
 Proof. rewrite /=; by apply enum_subE. Qed.
 
@@ -429,7 +429,7 @@ Canonical yamn_subFinType := Eval hnf in [subFinType of yamn].
 Lemma yamnP (y : yamn) : is_yam y.
 Proof. by case: y => /= y /andP []. Qed.
 
-Lemma yamn_sumn (y : yamn) : size y = n.
+Lemma size_yamn (y : yamn) : size y = n.
 Proof. by case: y => /= y /andP [] _ /eqP. Qed.
 
 (* Check of disjoint union enumeration *)
@@ -444,3 +444,4 @@ Qed.
 
 End YamOfSize.
 
+Hint Resolve yamnP yamevalP.

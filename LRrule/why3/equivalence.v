@@ -1024,7 +1024,7 @@ Proof.
   move: Hcorr => []; rewrite spec_nextE => _ [] Hsort [].
   rewrite cond_ltz_nat => Hsol Hcompl.
   apply/eqP; rewrite eqz_nat; apply/eqP.
-  have /= <- := @LR_yamtabE d1 d2 P1 P2 P Hincl_dep.
+  have /= <- := @LRcoeffE d1 d2 P1 P2 P Hincl_dep.
   rewrite /LRyam_coeff -sum1dep_card.
   rewrite (eq_bigr (fun y => count_mem y sols_dep)); first last.
     move=> [] yam Hyamev /=.

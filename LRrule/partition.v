@@ -19,8 +19,6 @@ Require Import tools combclass shape.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Lemma ieqi1F i : (i == i.+1) = false.
-Proof. apply: negbTE; by elim i. Qed.
 
 Section Partition.
 
@@ -307,7 +305,7 @@ Section Partition.
     + by rewrite IHn addnA addnS !addSn.
   Qed.
 
-  Lemma sumn_part_cons sh : sumn (conj_part sh) = sumn sh.
+  Lemma sumn_conj_part sh : sumn (conj_part sh) = sumn sh.
   Proof. elim: sh => [//= | s0 s IHs] /=; by rewrite sumn_incr_first_n IHs addnC. Qed.
 
   Lemma conj_part_ind sh l :
@@ -651,7 +649,6 @@ Section Partition.
 
 End Partition.
 
-
 Section SkewShape.
 
   Fixpoint included inner outer :=
@@ -760,6 +757,25 @@ Section SkewShape.
     move: Heq => /eqP; by rewrite H0 eqn_add2l => /eqP/(Hrec Hincl) ->.
   Qed.
 
+  Lemma included_conj_part inner outer :
+    is_part inner -> is_part outer ->
+    included inner outer -> included (conj_part inner) (conj_part outer).
+  Proof.
+    move=> Hinn Hout /includedP [] Hsz Hincl.
+    apply/includedP; split; first by rewrite !size_conj_part // -!nth0; exact: Hincl.
+    move=> i.
+    rewrite -conj_leqE //; apply (leq_trans (Hincl _)); by rewrite conj_leqE.
+  Qed.
+
+  Lemma included_conj_partE inner outer :
+    is_part inner -> is_part outer ->
+    included inner outer = included (conj_part inner) (conj_part outer).
+  Proof.
+    move=> Hinn Hout; apply (sameP idP); apply (iffP idP); last exact: included_conj_part.
+    rewrite -{2}(conj_partK Hinn) -{2}(conj_partK Hout).
+    apply: included_conj_part; exact: is_part_conj.
+  Qed.
+
   Fixpoint diff_shape inner outer :=
     if inner is inn0 :: inn then
       if outer is out0 :: out then
@@ -858,7 +874,7 @@ Section SkewShape.
      rewrite subn0; by elim: outer.
     case: outer => [//= | out0 out] /=.
     by rewrite subSS IHinn.
-Qed.
+  Qed.
 
 End SkewShape.
 
@@ -877,16 +893,18 @@ Canonical intpart_countType := Eval hnf in CountType intpart intpart_countMixin.
 Lemma intpartP (p : intpart) : is_part p.
 Proof. by case: p. Qed.
 
-Definition intpart_conj p := IntPart (is_part_conj (intpartP p)).
+Hint Resolve intpartP.
 
-Lemma intpart_conjK : involutive intpart_conj.
-Proof.  move=> p; apply: val_inj => /=; by rewrite conj_partK; last by apply: intpartP. Qed.
+Canonical conj_intpart p := IntPart (is_part_conj (intpartP p)).
+
+Lemma conj_intpartK : involutive conj_intpart.
+Proof. move=> p; apply: val_inj => /=; by rewrite conj_partK. Qed.
 
 Lemma intpart_sum_inj (s t : intpart) :
   (forall k, part_sum s k = part_sum t k) -> s = t.
 Proof.
   move=> H; apply: val_inj => /=.
-  apply: part_sum_inj; last exact H; by apply: intpartP.
+  by apply: part_sum_inj; last exact H.
 Qed.
 
 
@@ -1042,7 +1060,7 @@ Canonical intpartn_subFinType := Eval hnf in [subFinType of intpartn].
 
 Lemma intpartnP (p : intpartn) : is_part p.
 Proof. by case: p => /= p /andP []. Qed.
-
+Hint Resolve intpartnP.
 Definition intpart_of_intpartn (p : intpartn) := IntPart (intpartnP p).
 Coercion intpart_of_intpartn : intpartn >-> intpart.
 
@@ -1051,6 +1069,16 @@ Proof. by case: p => /= p /andP [] /eqP. Qed.
 
 Lemma enum_intpartnE : map val (enum intpartn) = enum_partn n.
 Proof. rewrite /=; by apply enum_subE. Qed.
+
+Lemma conj_intpartnP (sh : intpartn) : is_part_of_n n (conj_part sh).
+Proof.
+  case: sh => sh /= /andP [] /eqP <- Hpart.
+  by rewrite is_part_conj // sumn_conj_part /= eq_refl.
+Qed.
+Canonical conj_intpartn (sh : intpartn) := IntPartN (conj_intpartnP sh).
+
+Lemma conj_intpartnK : involutive conj_intpartn.
+Proof. move=> p; apply: val_inj => /=; by rewrite conj_partK. Qed.
 
 End PartOfn.
 
@@ -1093,3 +1121,5 @@ Proof.
 Qed.
 
 End PartCombClass.
+
+Hint Resolve intpartP intpartnP.

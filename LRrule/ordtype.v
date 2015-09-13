@@ -20,6 +20,9 @@ Unset Printing Implicit Defensive.
 
 (** * Inhabited totally ordered types *)
 
+Lemma bad_if_leq i j : i <= j -> (if i < j then i else j) = i.
+Proof. move=> Hi; case (ltnP i j) => //= Hj; apply/eqP; by rewrite eqn_leq Hi Hj. Qed.
+
 Module Order.
 
 Definition axiom T (r : rel T) := [/\ reflexive r, antisymmetric r, transitive r &
@@ -385,6 +388,13 @@ Implicit Type u v : word.
 Definition allLeq v a := all (geqX a) v.
 Definition allLtn v a := all (gtnX a) v.
 
+Lemma allLtn_notin s b : allLeq s b -> b \notin s -> allLtn s b.
+Proof.
+  elim: s => [//= | s0 s IHs] /= /andP [].
+  rewrite ltnX_neqAleqX => -> /IHs{IHs} Hrec.
+  by rewrite inE negb_or eq_sym => /andP [] ->.
+Qed.
+
 Lemma maxLPt a u : allLeq u (maxL a u).
 Proof.
   rewrite/allLeq; apply/allP => x Hx.
@@ -682,6 +692,33 @@ Proof.
   by apply: Hlemma.
 Qed.
 
+Lemma rembig_rev_uniq s : uniq s -> rev (rembig s) = rembig (rev s).
+Proof.
+  case: (altP (s =P [::])) => [-> /= |]; first by rewrite /rev.
+  move=> /rembigP HP.
+  have {HP} /HP := (eq_refl (rembig s)) => [] [] u [] b [] v [] -> -> Hu Hb.
+  rewrite -rev_uniq !rev_cat rev_cons -cats1 -catA cat1s.
+  rewrite cat_uniq => /and3P [] _ _ /= /andP [].
+  rewrite mem_rev => Hbu _.
+  apply/eqP/rembigP; first by case: (rev v).
+  exists (rev v); exists b; exists (rev u); split => //.
+  - rewrite allLeq_rev; exact: allLtnW.
+  - rewrite allLtn_rev; exact: allLtn_notin.
+Qed.
+
+Lemma rembig_subseq s : subseq (rembig s) s.
+Proof.
+  elim: s => [//= | s0 s IHs] /=.
+  case: allLtn; last by rewrite eq_refl.
+  case: s {IHs} => [//= | s1 s].
+  case: eqP => _; first exact: subseq_cons.
+  exact: subseq_refl.
+Qed.
+
+Lemma rembig_uniq s : uniq s -> uniq (rembig s).
+Proof. apply subseq_uniq; exact: rembig_subseq. Qed.
+
+
 Open Scope nat_scope.
 
 Lemma posbig_size_cons l s : posbig (l :: s) < size (l :: s).
@@ -833,9 +870,6 @@ Proof.
   + by rewrite nth_drop addSn subnKC.
 Qed.
 
-Lemma bad_if_leq i j : i <= j -> (if i < j then i else j) = i.
-Proof. move=> Hi; case (ltnP i j) => //= Hj; apply/eqP; by rewrite eqn_leq Hi Hj. Qed.
-
 Lemma nth_inspos s pos i n :
   pos <= size s ->
   nth Z ((take pos s) ++ n :: (drop pos s)) i =
@@ -918,6 +952,33 @@ Proof.
   have /= -> := (IHn i.+1).
   by rewrite ltnXnatE ltnNge leqnSn /=.
 Qed.
+
+
+Section Ordinal.
+
+Variable n : nat.
+
+Hypothesis Hnpos : n != 0%N.
+
+Lemma inhabIn : 'I_n.
+Proof. move: Hnpos; rewrite -lt0n; by apply: Ordinal. Qed.
+
+Definition leqOrd (i j : 'I_n) := (i <= j)%N.
+
+Fact leqOrd_order : Order.axiom leqOrd.
+Proof.
+  split.
+  - move=> i; by apply: leqnn.
+  - move=> i j; rewrite /leqOrd => H; apply: val_inj; by apply: anti_leq.
+  - move=> a b c; by apply: leq_trans.
+  - exact leq_total.
+Qed.
+
+Definition ord_ordMixin := Order.Mixin inhabIn leqOrd_order.
+Definition ord_ordType := Eval hnf in OrdType 'I_n ord_ordMixin.
+
+End Ordinal.
+
 
 Module OrdNotations.
 

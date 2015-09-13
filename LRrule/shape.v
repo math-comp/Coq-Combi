@@ -21,6 +21,12 @@ Unset Strict Implicit.
 
 Definition is_in_shape sh r c := c < nth 0 sh r.
 
+Lemma is_in_shape_size sh r c : is_in_shape sh r c -> r < size sh.
+Proof.
+  rewrite /is_in_shape; apply contraLR; rewrite -!leqNgt => Hr.
+  by rewrite (nth_default _ Hr).
+Qed.
+
 Section BoxIn.
 
 Variable sh : seq nat.
