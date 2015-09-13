@@ -1544,7 +1544,7 @@ Proof.
 Qed.
 
 
-Section Rev.
+Section RevConj.
 
 Variable T : ordType.
 Implicit Type s : seq T.
@@ -1597,4 +1597,4 @@ Proof.
     exact: incr_nth_inj.
 Qed.
 
-End Rev.
+End RevConj.

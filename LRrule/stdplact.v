@@ -16,7 +16,8 @@ Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq 
 Require Import finset perm fingroup path.
 
 Require Import tools combclass ordcast partition Yamanouchi ordtype std tableau stdtab.
-Require Import Schensted congr plactic Greene Greene_inv.
+
+Require Import sorted Schensted congr plactic Greene Greene_inv.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -59,13 +60,12 @@ Proof.
   by rewrite -ltnXNgeqX.
 Qed.
 
-Lemma reorg3 (T : eqType) (u w : seq T) b a c :
-  u ++ [:: b; a; c] ++ w = (u ++ [:: b]) ++ [:: a; c] ++ w.
-Proof. by rewrite -catA. Qed.
 
 Lemma std_plact2 (u v1 w v2 : seq Alph) :
   v2 \in plact2 v1 -> std (u ++ v1 ++ w) =Pl std (u ++ v2 ++ w).
 Proof.
+  have reorg3 (T : eqType) (U W : seq T) b a c :
+    U ++ [:: b; a; c] ++ W = (U ++ [:: b]) ++ [:: a; c] ++ W by rewrite -catA.
   have Hcongr := @plactcongr_is_congr nat_ordType.
   move/plact2P => [] a [] b [] c [] Habc -> ->.
   have := (std_cutabc u w b a c) => [] [] U [] W [] B [] A [] C [] Hsz.
@@ -122,20 +122,6 @@ Proof.
   rewrite {2}/enum_mem -enumT /=.
   apply: eq_filter => i /=.
   by rewrite mem_cast.
-Qed.
-
-Lemma sorted_enum_ord N :
-  sorted (fun i j : 'I_N => i <= j) (enum 'I_N).
-Proof.
-  rewrite /sorted; case Henum : (enum 'I_N) => [//= | a l].
-  rewrite -(map_path (h := val) (e := leq) (b := pred0)).
-  - have -> : l = behead (enum 'I_N) by rewrite Henum.
-    have -> : val a = head 0 (map val (enum 'I_N)) by rewrite Henum.
-    rewrite -behead_map val_enum_ord.
-    case: N {a l Henum} => [//= | N] /=.
-    by apply: (iota_sorted 0 N.+1).
-  - by [].
-  - by rewrite (eq_has (a2 := pred0)); first by rewrite has_pred0.
 Qed.
 
 Lemma sorted_std_extract u (S : {set 'I_(size u)}) :
@@ -210,15 +196,6 @@ Qed.
 Theorem shape_RS_std u : shape (RS (std u)) = shape (RS u).
 Proof. apply: Greene_row_eq_shape_RS; by apply: Greene_std. Qed.
 
-Lemma size_RSmap2 u : size ((RSmap u).2) = size u.
-Proof.
-  elim/last_ind: u => [//= | u un].
-  rewrite /RSmap rev_rcons /=.
-  case: (RSmap_rev (rev u)) => [t rows] /=.
-  case: (instabnrow t un) => [tr nrow] /= ->.
-  by rewrite size_rcons.
-Qed.
-
 End StdRS.
 
 Theorem RSmap_std (T : ordType) (w : seq T) : (RSmap (std w)).2 = (RSmap w).2.
@@ -287,29 +264,24 @@ Proof.
   have:= erefl (val posi); by rewrite {2}Heq /=.
 Qed.
 
-Lemma mem_mem n (st : {set 'I_n}) : mem (mem st) =1 mem st.
-Proof. by []. Qed.
-
-Let leqtransi : transitive leq.
-Proof. move=> i j k H1 H2; by apply: (leq_trans H1 H2). Qed.
 
 Lemma val2pos_enum (p : {set 'I_(size s)}) :
   (* Hypothesis : val2pos sorted in p *)
   sorted leqX [seq tnth (in_tuple s) i | i <- enum (mem p)] ->
   enum (mem [set val2pos x | x in p]) = [seq val2pos x | x <- enum p].
 Proof.
-  rewrite /enum_mem /= (eq_filter (mem_mem _)) -!enumT /= => H.
+  rewrite /enum_mem (eq_filter (a2 := mem p)) // -!enumT /= => H.
   apply: (inj_map val_inj).
   rewrite -map_comp (eq_map val2posE).
-  rewrite (eq_filter (mem_mem _)).
+  rewrite (eq_filter (a2 := mem [set val2pos x | x in p])) //.
   move: H; have /eq_map -> : (tnth (in_tuple s)) =1 (nth (size t) s).
     move=> i /=; by apply: tnth_nth.
   set l1 := (X in sorted _ X); set l := (X in _ = X).
   have {l1} -> : l1 = l by [].
   move=> H; apply: (eq_sorted (leT := leq)).
-  - exact leqtransi.
+  - exact: leq_trans.
   - move=> i j H1; apply/eqP; by rewrite eqn_leq.
-  - apply: (subseq_sorted leqtransi (s2 := map val (enum 'I_(size t)))).
+  - apply: (subseq_sorted leq_trans (s2 := map val (enum 'I_(size t)))).
     + apply: map_subseq; by apply: filter_subseq.
     + rewrite val_enum_ord; by apply: iota_sorted.
   - move: H; rewrite /sorted; case: l => [//= | l0 l].
@@ -585,17 +557,3 @@ Proof.
   congr (stdtab_of_yam _).
   by apply: RSmap_std.
 Qed.
-
-Section Test.
-
-  Let u := [:: 4;1;2;2;5;3].
-  Let v := [:: 0;4;3;3].
-
-  Goal std u = [:: 4; 0; 1; 2; 5; 3].
-  Proof. compute; by apply: erefl. Qed.
-
-  Goal invstd (std u) = filter (gtn (size u)) (invstd (std (u ++ v))).
-  Proof. compute; by apply: erefl. Qed.
-
-End Test.
-

@@ -927,6 +927,15 @@ Section Inverse.
     by case (instabnrow (RS_rev (rev w)) wn).
   Qed.
 
+  Lemma size_RSmap2 w : size ((RSmap w).2) = size w.
+  Proof.
+    elim/last_ind: w => [//= | w wn].
+    rewrite /RSmap rev_rcons /=.
+    case: (RSmap_rev (rev w)) => [t rows] /=.
+    case: (instabnrow t wn) => [tr nrow] /= ->.
+    by rewrite size_rcons.
+  Qed.
+
   Lemma is_tableau_RSmap1 w : is_tableau (RSmap w).1.
   Proof. rewrite /RSmap RSmapE; apply: is_tableau_RS. Qed.
 

@@ -27,7 +27,7 @@ Require Import skewtab Schur therule.
 (*                 returns the list of LR tableaux                            *)
 (*                                                                            *)
 (* The following lemma assert that LRcoeff agrees with LRyamtab_list          *)
-(*   Lemma LRcoeffE inner eval outer :                                        *)
+(*   Lemma LRcoeffP inner eval outer :                                        *)
 (*     size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.      *)
 (*                                                                            *)
 (******************************************************************************)
@@ -665,7 +665,7 @@ Definition LRyamtab_list inner eval outer :=
 Definition LRcoeff inner eval outer :=
   LRyamtab_count_rec eval [::] inner outer (head 1 outer) [::].
 
-Lemma LRcoeffE inner eval outer :
+Lemma LRcoeffP inner eval outer :
   size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.
 Proof. by rewrite size_LRyamtab_listE. Qed.
 
@@ -846,7 +846,7 @@ Lemma LRyamtab_spec_recip yam :
 Proof.
   rewrite inE => Hyam.
   have Hszyam : size yam = sumn (diff_shape P1 P).
-    by rewrite -evalseq_eq_size eval_yameval (sumn_diffE P2).
+    by rewrite -evalseq_eq_size eval_yameval (sumn_diff_shape_intpartE P2).
   rewrite -[val yam](to_word_skew_reshape Hincl Hszyam).
   rewrite count_map.
   rewrite (eq_in_count (a2 := pred1 (skew_reshape P1 P (val yam)))); first last.
@@ -872,9 +872,9 @@ Proof.
   by rewrite -count_map subType_seqP.
 Qed.
 
-Theorem LR_yamtabE : LRyam_coeff P1 P2 P = LRcoeff P1 P2 P.
+Theorem LRcoeffE : LRyam_coeff P1 P2 P = LRcoeff P1 P2 P.
 Proof.
-  rewrite /LRyam_coeff -LRcoeffE -(size_map (@to_word _)).
+  rewrite /LRyam_coeff -LRcoeffP -(size_map (@to_word _)).
   rewrite -sum1dep_card (eq_bigr (fun y => count_mem y LRyam_list)); first last.
     by move=> yam Hyam; rewrite LRyam_spec_recip //= inE.
   rewrite sum_count_mem.
@@ -914,7 +914,7 @@ Theorem LRtab_coeffP :
   \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRcoeff P1 P2 P.
 Proof.
   rewrite (LRtab_coeffP P1 P2 R Hnpos).
-  by apply eq_bigr => outer /LR_yamtabE ->.
+  by apply eq_bigr => outer /LRcoeffE ->.
 Qed.
 
 End LR.

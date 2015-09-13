@@ -522,6 +522,24 @@ Qed.
 
 End Bijection.
 
+
+Lemma eq_inv_is_row (T1 T2 : ordType) (u1 : seq T1) (u2 : seq T2) :
+  eq_inv u1 u2 -> is_row u1 -> is_row u2.
+Proof.
+  move/eq_invP => [] Hsz.
+  set Z1 := inhabitant T1; set Z2 := inhabitant T2 => Hinv /(is_rowP Z1) Hrow.
+  apply/(is_rowP Z2) => i j; rewrite -Hsz => Hij.
+  rewrite -(Hinv i j Hij).
+  by apply Hrow.
+Qed.
+
+Lemma is_row_stdE (T : ordType) (w : seq T) : is_row (std w) = is_row w.
+Proof.
+  apply/(sameP idP); apply(iffP idP);
+    apply eq_inv_is_row; last apply eq_inv_sym; by apply eq_inv_std.
+Qed.
+
+
 Section ConjTab.
 
 Variable T : ordType.
@@ -776,8 +794,19 @@ Canonical stdtabn_subFinType := Eval hnf in [subFinType of stdtabn_countType].
 Lemma stdtabnP (s : stdtabn) : is_stdtab s.
 Proof. by case: s => s /= /andP []. Qed.
 
-Lemma stdtabn_size (s : stdtabn) : size_tab s = n.
+Lemma size_tab_stdtabn (s : stdtabn) : size_tab s = n.
 Proof. by case: s => s /= /andP [] _ /eqP. Qed.
+
+Lemma sumn_shape_stdtabnE (Q : stdtabn) : (sumn (shape Q)) = n.
+Proof. case: Q => q; by rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP. Qed.
+
+Lemma is_part_shape_deg (Q : stdtabn) : is_part_of_n n (shape Q).
+Proof.
+  rewrite /=; apply/andP; split.
+  - by rewrite -/(size_tab _) size_tab_stdtabn.
+  - apply: is_part_sht; apply stdtabP; exact: stdtabnP.
+Qed.
+Definition shape_deg (Q : stdtabn) := (IntPartN (is_part_shape_deg Q)).
 
 End StdtabCombClass.
 

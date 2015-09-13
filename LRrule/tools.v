@@ -29,6 +29,12 @@ Lemma nth_nil i : nth 0 [::] i = 0.
 Proof. by rewrite nth_default. Qed.
 Hint Resolve nth_nil.
 
+Lemma ieqi1F i : (i == i.+1) = false.
+Proof. apply: negbTE; by elim i. Qed.
+
+Lemma bad_if_leq i j : i <= j -> (if i < j then i else j) = i.
+Proof. move=> Hi; case (ltnP i j) => //= Hj; apply/eqP; by rewrite eqn_leq Hi Hj. Qed.
+
 Section RCons.
 
   Variable (T : eqType).
@@ -287,6 +293,35 @@ Proof.
   elim: n s l => [| n IHn] [| s0 s] l; rewrite ?take0 ?drop0 //=.
   rewrite addnC -drop_drop; exact: IHn.
 Qed.
+
+Lemma map_reshape (T1 T2 : Type) (f : T1 -> T2) sh (s : seq T1) :
+  map (map f) (reshape sh s) = reshape sh (map f s).
+Proof. elim: sh s => [//= | sh0 sh IHsh] /= s;  by rewrite map_take IHsh map_drop. Qed.
+
+Lemma size_reshape (T : Type) sh (s : seq T) : size (reshape sh s) = size sh.
+Proof. elim: sh s => [//= | s0 sh IHsh] /= s; by rewrite IHsh. Qed.
+
+Lemma reshape_rcons (T : Type) (s : seq T) sh sn :
+  sumn sh + sn = size s ->
+  reshape (rcons sh sn) s = rcons (reshape sh (take (sumn sh) s)) (drop (sumn sh) s).
+Proof.
+  elim: sh s => [//= | s0 sh IHsh] /= s.
+    rewrite add0n => Hsz.
+    by rewrite drop0 take_oversize; last by rewrite Hsz.
+  move=> Hsize.
+  have Hs0 : (if s0 < size s then s0 else size s) = s0.
+    by rewrite bad_if_leq; last by rewrite -Hsize -addnA; apply leq_addr.
+  have -> : take (s0 + sumn sh) s = take s0 s ++ take (sumn sh) (drop s0 s).
+    rewrite -{1 3}[s](cat_take_drop s0) drop_cat take_cat size_take.
+    by rewrite Hs0 ltnNge leq_addr /= addKn ltnn subnn drop0.
+  rewrite take_cat size_take Hs0 ltnn subnn take0 cats0.
+  rewrite drop_cat size_take Hs0 ltnn subnn drop0.
+  have -> : drop (s0 + sumn sh) s = drop (sumn sh) (drop s0 s).
+    rewrite -[s](cat_take_drop s0) !drop_cat size_take.
+    by rewrite Hs0 ltnNge leq_addr /= addKn ltnn subnn drop0.
+  by rewrite -IHsh; last by rewrite size_drop -Hsize -addnA addKn.
+Qed.
+
 
 Fixpoint reshape_coord sh i :=
   if sh is s0 :: s then

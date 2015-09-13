@@ -20,6 +20,9 @@ Unset Printing Implicit Defensive.
 
 (** * Inhabited totally ordered types *)
 
+Lemma bad_if_leq i j : i <= j -> (if i < j then i else j) = i.
+Proof. move=> Hi; case (ltnP i j) => //= Hj; apply/eqP; by rewrite eqn_leq Hi Hj. Qed.
+
 Module Order.
 
 Definition axiom T (r : rel T) := [/\ reflexive r, antisymmetric r, transitive r &
@@ -867,9 +870,6 @@ Proof.
   + by rewrite nth_drop addSn subnKC.
 Qed.
 
-Lemma bad_if_leq i j : i <= j -> (if i < j then i else j) = i.
-Proof. move=> Hi; case (ltnP i j) => //= Hj; apply/eqP; by rewrite eqn_leq Hi Hj. Qed.
-
 Lemma nth_inspos s pos i n :
   pos <= size s ->
   nth Z ((take pos s) ++ n :: (drop pos s)) i =
@@ -952,6 +952,33 @@ Proof.
   have /= -> := (IHn i.+1).
   by rewrite ltnXnatE ltnNge leqnSn /=.
 Qed.
+
+
+Section Ordinal.
+
+Variable n : nat.
+
+Hypothesis Hnpos : n != 0%N.
+
+Lemma inhabIn : 'I_n.
+Proof. move: Hnpos; rewrite -lt0n; by apply: Ordinal. Qed.
+
+Definition leqOrd (i j : 'I_n) := (i <= j)%N.
+
+Fact leqOrd_order : Order.axiom leqOrd.
+Proof.
+  split.
+  - move=> i; by apply: leqnn.
+  - move=> i j; rewrite /leqOrd => H; apply: val_inj; by apply: anti_leq.
+  - move=> a b c; by apply: leq_trans.
+  - exact leq_total.
+Qed.
+
+Definition ord_ordMixin := Order.Mixin inhabIn leqOrd_order.
+Definition ord_ordType := Eval hnf in OrdType 'I_n ord_ordMixin.
+
+End Ordinal.
+
 
 Module OrdNotations.
 

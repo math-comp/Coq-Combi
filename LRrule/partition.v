@@ -19,8 +19,6 @@ Require Import tools combclass shape.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Lemma ieqi1F i : (i == i.+1) = false.
-Proof. apply: negbTE; by elim i. Qed.
 
 Section Partition.
 
@@ -651,7 +649,6 @@ Section Partition.
 
 End Partition.
 
-
 Section SkewShape.
 
   Fixpoint included inner outer :=
@@ -770,6 +767,15 @@ Section SkewShape.
     rewrite -conj_leqE //; apply (leq_trans (Hincl _)); by rewrite conj_leqE.
   Qed.
 
+  Lemma included_conj_partE inner outer :
+    is_part inner -> is_part outer ->
+    included inner outer = included (conj_part inner) (conj_part outer).
+  Proof.
+    move=> Hinn Hout; apply (sameP idP); apply (iffP idP); last exact: included_conj_part.
+    rewrite -{2}(conj_partK Hinn) -{2}(conj_partK Hout).
+    apply: included_conj_part; exact: is_part_conj.
+  Qed.
+
   Fixpoint diff_shape inner outer :=
     if inner is inn0 :: inn then
       if outer is out0 :: out then
@@ -868,7 +874,7 @@ Section SkewShape.
      rewrite subn0; by elim: outer.
     case: outer => [//= | out0 out] /=.
     by rewrite subSS IHinn.
-Qed.
+  Qed.
 
 End SkewShape.
 

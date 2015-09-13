@@ -23,31 +23,6 @@ Unset Printing Implicit Defensive.
 
 Open Scope N.
 
-Lemma size_reshape (T : Type) sh (s : seq T) : size (reshape sh s) = size sh.
-Proof. elim: sh s => [//= | s0 sh IHsh] /= s; by rewrite IHsh. Qed.
-
-Lemma reshape_rcons (T : Type) (s : seq T) sh sn :
-  sumn sh + sn = size s ->
-  reshape (rcons sh sn) s = rcons (reshape sh (take (sumn sh) s)) (drop (sumn sh) s).
-Proof.
-  elim: sh s => [//= | s0 sh IHsh] /= s.
-    rewrite add0n => Hsz.
-    by rewrite drop0 take_oversize; last by rewrite Hsz.
-  move=> Hsize.
-  have Hs0 : (if s0 < size s then s0 else size s) = s0.
-    by rewrite bad_if_leq; last by rewrite -Hsize -addnA; apply leq_addr.
-  have -> : take (s0 + sumn sh) s = take s0 s ++ take (sumn sh) (drop s0 s).
-    rewrite -{1 3}[s](cat_take_drop s0) drop_cat take_cat size_take.
-    by rewrite Hs0 ltnNge leq_addr /= addKn ltnn subnn drop0.
-  rewrite take_cat size_take Hs0 ltnn subnn take0 cats0.
-  rewrite drop_cat size_take Hs0 ltnn subnn drop0.
-  have -> : drop (s0 + sumn sh) s = drop (sumn sh) (drop s0 s).
-    rewrite -[s](cat_take_drop s0) !drop_cat size_take.
-    by rewrite Hs0 ltnNge leq_addr /= addKn ltnn subnn drop0.
-  by rewrite -IHsh; last by rewrite size_drop -Hsize -addnA addKn.
-Qed.
-
-
 Definition is_skew_yam innev outev sy :=
   (forall y, is_yam_of_eval innev y -> is_yam_of_eval outev (sy ++ y)).
 
@@ -791,22 +766,6 @@ End FilterLeqGeq.
 Section EqInvSkewTab.
 
 Implicit Type T : ordType.
-
-Lemma eq_inv_is_row T1 T2 (u1 : seq T1) (u2 : seq T2) :
-  eq_inv u1 u2 -> is_row u1 -> is_row u2.
-Proof.
-  move/eq_invP => [] Hsz.
-  set Z1 := inhabitant T1; set Z2 := inhabitant T2 => Hinv /(is_rowP Z1) Hrow.
-  apply/(is_rowP Z2) => i j; rewrite -Hsz => Hij.
-  rewrite -(Hinv i j Hij).
-  by apply Hrow.
-Qed.
-
-Lemma is_row_stdE T (w : seq T) : is_row (std w) = is_row w.
-Proof.
-  apply/(sameP idP); apply(iffP idP);
-    apply eq_inv_is_row; last apply eq_inv_sym; by apply eq_inv_std.
-Qed.
 
 Lemma eq_inv_skew_dominate T1 T2 (u1 v1 : seq T1) (u2 v2 : seq T2) s :
   eq_inv (u1 ++ v1) (u2 ++ v2) ->

@@ -158,3 +158,17 @@ Section Sorted.
   Qed.
 
 End Sorted.
+
+Lemma sorted_enum_ord N :
+  sorted (fun i j : 'I_N => i <= j) (enum 'I_N).
+Proof.
+  rewrite /sorted; case Henum : (enum 'I_N) => [//= | a l].
+  rewrite -(map_path (h := val) (e := leq) (b := pred0)).
+  - have -> : l = behead (enum 'I_N) by rewrite Henum.
+    have -> : val a = head 0 (map val (enum 'I_N)) by rewrite Henum.
+    rewrite -behead_map val_enum_ord.
+    case: N {a l Henum} => [//= | N] /=.
+    by apply: (iota_sorted 0 N.+1).
+  - by [].
+  - by rewrite (eq_has (a2 := pred0)); first by rewrite has_pred0.
+Qed.
