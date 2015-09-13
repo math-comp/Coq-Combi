@@ -36,8 +36,8 @@ Goal
   let outer := [:: 3; 2; 1] in
   ( map (yam_from_LRtab inner eval)
         (filter
-           (predLRTripleFast (stdtab_of_yam (hyper_yam inner))
-                             (stdtab_of_yam (hyper_yam eval)) )
+           (pred_LRtriple_fast (stdtab_of_yam (hyper_yam inner))
+                               (stdtab_of_yam (hyper_yam eval)) )
            (enum_stdtabsh outer)),
     (LRyam_enum inner eval outer) )
   =
@@ -51,8 +51,8 @@ Goal
     perm_eq
       ( map (yam_from_LRtab inner eval)
             (filter
-               (predLRTripleFast (stdtab_of_yam (hyper_yam inner))
-                                 (stdtab_of_yam (hyper_yam eval)) )
+               (pred_LRtriple_fast (stdtab_of_yam (hyper_yam inner))
+                                   (stdtab_of_yam (hyper_yam eval)) )
                (enum_stdtabsh outer)) )
       ( LRyam_enum inner eval outer ).
 Proof. compute; exact erefl. Qed.

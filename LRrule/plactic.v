@@ -13,8 +13,8 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm.
-Require Import tools partition ordtype Schensted congr.
+Require Import finset perm path.
+Require Import tools partition ordtype tableau Schensted congr.
 
 
 Set Implicit Arguments.
@@ -204,8 +204,6 @@ Variable Alph : ordType.
 Let word := seq Alph.
 Implicit Type u v w : word.
 
-Require Import path.
-
 Lemma plact_row u v : is_row u -> u =Pl v -> u = v.
 Proof.
   move=> Hrowu; move: v; apply: gencongr_ind => [//= |] x y1 z y2 Hu /plactruleP [].
@@ -252,6 +250,64 @@ Proof.
 Qed.
 
 End RowsAndCols.
+
+
+Section Rev.
+
+Variable Alph : ordType.
+Let word := seq Alph.
+Implicit Type u v w : word.
+
+Lemma plact_uniq_rev u v : uniq u -> u =Pl v -> rev u =Pl rev v.
+Proof.
+  move=> Huniq.
+  have {Huniq} Huniq x y z : rev u =Pl rev (x ++ y ++ z) -> uniq y.
+    move=> Hpl; have : uniq (x ++ y ++ z).
+      rewrite -rev_uniq -(perm_eq_uniq (s1 := rev u)) ?rev_uniq //.
+      exact: plactcongr_homog.
+    by rewrite !cat_uniq => /and4P [] _ _.
+  have:= @plactcongr_equiv Alph => /equivalence_relP [] Hrefl Htrans.
+  have:= @plactcongr_is_congr Alph => Hcongr.
+  move: v; apply: gencongr_ind => [| x y1 z y2 Hv /plactruleP []] /=; first exact: Hrefl.
+  - move/plact1P => [] a [] b [] c [] /andP [] Hab Hbc Hy1 Hy2.
+    rewrite (Htrans _ _ Hv) !rev_cat -!catA; apply: Hcongr.
+    rewrite Hy1 Hy2 /rev /=; apply rule_gencongr.
+    apply/plactruleP/or4P => /=.
+    have := Huniq _ _ _ Hv; rewrite Hy1 /= => /andP [].
+    rewrite mem_seq2 negb_or => /andP [] _ Hanb _.
+    by rewrite !ltnX_neqAleqX Hab Hanb (ltnXW Hbc) /= !mem_seq1 eq_refl ?orbT.
+  - move/plact1iP => [] a [] b [] c [] /andP [] Hab Hbc Hy2 Hy1.
+    rewrite (Htrans _ _ Hv) !rev_cat -!catA; apply: Hcongr.
+    rewrite Hy1 Hy2 /rev /=; apply rule_gencongr.
+    apply/plactruleP/or4P => /=.
+    have := Huniq _ _ _ Hv; rewrite Hy1 /= => /and3P [] _.
+    rewrite mem_seq1 => Hanb _.
+    by rewrite !ltnX_neqAleqX Hab Hanb (ltnXW Hbc) /= !mem_seq1 eq_refl ?orbT.
+  - move/plact2P => [] a [] b [] c [] /andP [] Hab Hbc Hy1 Hy2.
+    rewrite (Htrans _ _ Hv) !rev_cat -!catA; apply: Hcongr.
+    rewrite Hy1 Hy2 /rev /=; apply rule_gencongr.
+    apply/plactruleP/or4P => /=.
+    have := Huniq _ _ _ Hv; rewrite Hy1 /= => /andP [].
+    rewrite mem_seq2 negb_or => /andP [] _ Hbnc _.
+    by rewrite !ltnX_neqAleqX Hbc Hbnc (ltnXW Hab) /= !mem_seq1 eq_refl ?orbT.
+  - move/plact2iP => [] a [] b [] c [] /andP [] Hab Hbc Hy2 Hy1.
+    rewrite (Htrans _ _ Hv) !rev_cat -!catA; apply: Hcongr.
+    rewrite Hy1 Hy2 /rev /=; apply rule_gencongr.
+    apply/plactruleP/or4P => /=.
+    have := Huniq _ _ _ Hv; rewrite Hy1 /= => /and3P [].
+    rewrite mem_seq2 negb_or => /andP [] Hbnc _ _ _.
+    by rewrite !ltnX_neqAleqX Hbc Hbnc (ltnXW Hab) /= !mem_seq1 eq_refl ?orbT.
+Qed.
+
+Lemma plact_uniq_revE u v : uniq u -> (u =Pl v) = (rev u =Pl rev v).
+Proof.
+  move=> Hu.
+  apply (sameP idP); apply (iffP idP); last exact: plact_uniq_rev.
+  rewrite -{2}(revK u) -{2}(revK v).
+  apply: plact_uniq_rev; by rewrite rev_uniq.
+Qed.
+
+End Rev.
 
 Section DualRule.
 

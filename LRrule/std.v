@@ -983,3 +983,17 @@ Proof.
 Qed.
 
 End InvSeq.
+
+
+Section Test.
+
+  Let u := [:: 4;1;2;2;5;3].
+  Let v := [:: 0;4;3;3].
+
+  Goal std u = [:: 4; 0; 1; 2; 5; 3].
+  Proof. compute; by apply: erefl. Qed.
+
+  Goal invstd (std u) = filter (gtn (size u)) (invstd (std (u ++ v))).
+  Proof. compute; by apply: erefl. Qed.
+
+End Test.

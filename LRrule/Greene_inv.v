@@ -14,23 +14,12 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm tuple path bigop.
-Require Import tools subseq partition Yamanouchi ordtype.
-Require Import Schensted congr plactic ordcast Greene.
+Require Import tools ordcast ordtype subseq partition tableau Yamanouchi stdtab.
+Require Import Schensted congr plactic Greene.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
-
-Lemma size_cover_inj (T1 T2 : finType) (F : T1 -> T2) (P : {set {set T1}}):
-  let FSet := fun S : {set T1} => F @: S in
-  injective F -> #|cover P| = #|cover [set FSet S | S in P]|.
-Proof.
-  move=> FSet Hinj; have -> : cover [set FSet S | S in P] = FSet (cover P).
-  rewrite cover_imset /cover; apply: esym; apply: big_morph.
-  + move=> i j /=; by apply: imsetU.
-  + by apply: imset0.
-  by rewrite card_imset.
-Qed.
 
 Lemma bigcup_set1 (T1 : finType) (S : {set T1}) :
   \bigcup_(i in [set S]) i = S.
@@ -56,31 +45,6 @@ Proof.
 Qed.
 
 Open Scope bool.
-
-Section GreeneInj.
-
-Variable T1 T2 : ordType.
-Variable R1 : rel T1.
-Variable R2 : rel T2.
-
-Definition ksupp_inj k (u1 : seq T1) (u2 : seq T2) :=
-  forall s1, ksupp R1 (in_tuple u1) k s1 ->
-             exists s2, (scover s1 == scover s2) && ksupp R2 (in_tuple u2) k s2.
-
-Lemma leq_Greene k (u1 : seq T1) (u2 : seq T2) :
-  ksupp_inj k u1 u2 -> Greene_rel R1 u1 k <= Greene_rel R2 u2 k.
-Proof.
-  move=> Hinj; rewrite /= /Greene_rel /Greene_rel_t.
-  set P1 := ksupp R1 (in_tuple u1) k.
-  have : #|P1| > 0.
-    rewrite -cardsE card_gt0; apply/set0Pn.
-    exists set0; rewrite in_set; by apply: ksupp0.
-  move/(eq_bigmax_cond scover) => [] ks1 Hks1 ->.
-  have := Hinj _ Hks1 => [] [] ks2 /andP [] /eqP -> Hks2.
-  by apply: leq_bigmax_cond.
-Qed.
-
-End GreeneInj.
 
 Section ExtractCuti.
 
@@ -1551,7 +1515,7 @@ Proof.
   have : is_RSpair (t, hyper_yam (shape t)).
     rewrite /is_RSpair Htab (hyper_yamP (is_part_sht Htab)) /=.
     by rewrite (evalseq_hyper_yam (is_part_sht Htab)).
-  move/RS_bij_2; set w := (X in RSmap X); move=> Hw.
+  move/RSmapinv2K; set w := (X in RSmap X); move=> Hw.
   have:= (RSmapE w); rewrite Hw /= => ->.
   have:= congr_RS w.
   by rewrite plactic_RS => /eqP <-.
@@ -1578,3 +1542,59 @@ Proof.
   rewrite -(Greene_col_invar_plactic (u := t)); last by apply: congr_RS.
   by apply: HGreene.
 Qed.
+
+
+Section RevConj.
+
+Variable T : ordType.
+Implicit Type s : seq T.
+
+Lemma shape_RS_rev s : uniq s -> shape (RS (rev s)) = conj_part (shape (RS s)).
+Proof.
+  have Htr := is_tableau_RS (rev s); have Ht := is_tableau_RS s.
+  move=> Hs; apply: part_sum_inj.
+    exact: is_part_sht.
+    exact: is_part_conj (is_part_sht _).
+  move=> k.
+  rewrite -Greene_col_RS -Greene_row_RS /Greene_col /Greene_row.
+  rewrite Greene_rel_rev revK (Greene_rel_uniq _ Hs).
+  apply eq_Greene_rel => x y /=.
+  by rewrite eq_sym.
+Qed.
+
+Lemma RS_rev_uniq s : uniq s -> RS (rev s) = conj_tab (RS s).
+Proof.
+  move Hsz : (size s) => n.
+  elim: n s Hsz => [| n IHn] s.
+    by rewrite /RS /conj_tab; move=> /eqP/nilP -> _ /=.
+  move=> Hsz Huniq.
+  have:= size_rembig s; rewrite Hsz /= => Hszrem.
+  have {IHn Hszrem} := IHn _ Hszrem (rembig_uniq Huniq); rewrite (rembig_rev_uniq Huniq).
+  have {Huniq} := shape_RS_rev Huniq.
+  case Hs: s Hsz => [//= | s0 s'] Hsz.
+  have:= rembig_RS s0 s' => [] [] iu; rewrite -Hs => Hrem; rewrite Hrem.
+  case/lastP Hrs: s Hsz Hs => [//= | t tn] _ Hs; rewrite -Hrs => Hsh Heq.
+  have:= rembig_RS tn (rev t) => [] [] iv; rewrite -rev_rcons -Hrs => HRSr.
+  move: Hsh; rewrite HRSr {HRSr}.
+  have Hpart := is_part_sht (is_tableau_RS (rembig s)).
+  have : is_in_corner (shape (RS (rembig s))) iu.
+    have := is_part_sht (is_tableau_RS s); rewrite Hrem shape_append_nth => Hparti.
+    rewrite -(incr_nthK Hpart Hparti); apply (in_corner_decr_nth Hparti).
+    rewrite del_out_corner => //.
+    by move: Hpart => /is_partP [].
+  move: Heq Hpart.
+  move: (RS (rembig (rev s))) (RS (rembig s)) => tabr tab Hr.
+  subst tabr => Hpart Hcorn Hsh.
+  apply eq_from_shape_get_tab; first by rewrite shape_conj_tab.
+  move => r c.
+  rewrite (append_nth_conj_tab _ Hpart Hcorn).
+  congr (get_tab (append_nth _ _ _) _ _).
+  - apply maxL_perm_eq; rewrite -Hs -rev_rcons.
+    rewrite perm_eq_sym; exact: perm_rev.
+  - move: Hsh.
+    rewrite !shape_append_nth shape_conj_tab.
+    rewrite incr_nth_conj_part //.
+    exact: incr_nth_inj.
+Qed.
+
+End RevConj.

@@ -13,9 +13,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import bigop.
-
-Require Import tools.
+Require Import bigop tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

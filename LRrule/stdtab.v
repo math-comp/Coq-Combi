@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm fingroup.
-Require Import tools combclass shape partition Yamanouchi permuted ordtype std tableau.
+Require Import tools combclass shape partition Yamanouchi ordtype std tableau.
 
 Import OrdNotations.
 
@@ -100,6 +100,18 @@ Qed.
 Lemma size_append_nth t b i : size_tab (append_nth t b i) = (size_tab t).+1.
 Proof. by rewrite /size_tab shape_append_nth sumn_incr_nth. Qed.
 
+Lemma get_tab_append_nth (t : seq (seq T)) l i r c :
+  get_tab (append_nth t l i) r c =
+  if (r == i) && (c == nth 0 (shape t) i) then l else get_tab t r c.
+Proof.
+  rewrite /get_tab /append_nth nth_set_nth /=.
+  case: (altP (r =P i)) => [-> | //=] /=.
+  rewrite nth_rcons nth_shape.
+  case: (ltnP c (size (nth [::] t i))) => Hc; first by rewrite (ltn_eqF Hc).
+  case: (altP (c =P (size (nth [::] t i)))) => [// | Hc'].
+  by rewrite nth_default.
+Qed.
+
 Fixpoint last_big t b :=
   if t is t0 :: t' then
     if last b t0 == b then 0
@@ -158,6 +170,9 @@ Implicit Type y : seq nat.
 Implicit Type t : seq (seq nat).
 
 Definition is_stdtab t := is_tableau t && is_std (to_word t).
+
+Lemma stdtabP t : is_stdtab t -> is_tableau t.
+Proof. by move=> /andP []. Qed.
 
 Section StdTabInd.
 
@@ -507,7 +522,29 @@ Qed.
 
 End Bijection.
 
-Definition conj_tab (t : seq (seq nat)) :=
+
+Lemma eq_inv_is_row (T1 T2 : ordType) (u1 : seq T1) (u2 : seq T2) :
+  eq_inv u1 u2 -> is_row u1 -> is_row u2.
+Proof.
+  move/eq_invP => [] Hsz.
+  set Z1 := inhabitant T1; set Z2 := inhabitant T2 => Hinv /(is_rowP Z1) Hrow.
+  apply/(is_rowP Z2) => i j; rewrite -Hsz => Hij.
+  rewrite -(Hinv i j Hij).
+  by apply Hrow.
+Qed.
+
+Lemma is_row_stdE (T : ordType) (w : seq T) : is_row (std w) = is_row w.
+Proof.
+  apply/(sameP idP); apply(iffP idP);
+    apply eq_inv_is_row; last apply eq_inv_sym; by apply eq_inv_std.
+Qed.
+
+
+Section ConjTab.
+
+Variable T : ordType.
+
+Definition conj_tab (t : seq (seq T)) : seq (seq T) :=
   let c := conj_part (shape t) in
   mkseq (fun i => mkseq (fun j => get_tab t j i) (nth 0 c i)) (size c).
 
@@ -537,22 +574,49 @@ Proof.
     by rewrite leqNgt -nth_shape shape_conj_tab.
 Qed.
 
+Lemma eq_from_shape_get_tab (t u : seq (seq T)) :
+  shape t = shape u -> get_tab t =2 get_tab u -> t = u.
+Proof.
+  move=> Hsh Hget; apply (eq_from_nth (x0 := [::])).
+    by rewrite -!(size_map size) -!/(shape _) Hsh.
+  move=> r _; apply (eq_from_nth (x0 := (inhabitant T))).
+    by rewrite -!nth_shape Hsh.
+  move=> c _; by rewrite -!/(get_tab _ _ _) Hget.
+Qed.
+
 Lemma conj_tab_shapeK t : is_part (shape t) -> conj_tab (conj_tab t) = t.
 Proof.
-  move=> Hpart.
-  apply (eq_from_nth (x0 := [::])).
-    by rewrite -(size_map size) -/shape !shape_conj_tab (conj_partK Hpart) size_map.
-  move=> r _.
-  apply (eq_from_nth (x0 := 0)).
-    by rewrite -!nth_shape !shape_conj_tab (conj_partK Hpart).
-  move=> c _.
-  rewrite -!/(get_tab _ _ _) get_conj_tab; first last.
-    rewrite shape_conj_tab; exact: is_part_conj.
-  by rewrite get_conj_tab.
+  move=> Hpart; apply eq_from_shape_get_tab.
+  - by rewrite !shape_conj_tab conj_partK.
+  - move=> r c; rewrite get_conj_tab; last by rewrite shape_conj_tab; exact: is_part_conj.
+    by rewrite get_conj_tab.
 Qed.
 
 Lemma conj_tabK t : is_tableau t -> conj_tab (conj_tab t) = t.
 Proof. move=> /is_part_sht; exact :conj_tab_shapeK. Qed.
+
+Lemma append_nth_conj_tab (t : seq (seq T)) l i :
+  is_part (shape t) ->
+  is_in_corner (shape t) i ->
+  conj_tab (append_nth t l i) = append_nth (conj_tab t) l (nth 0 (shape t) i).
+Proof.
+  move=> Hsh Hcorn; apply eq_from_shape_get_tab.
+  - rewrite shape_conj_tab !shape_append_nth shape_conj_tab.
+    exact: incr_nth_conj_part.
+  - move=> r c; rewrite get_conj_tab; first last.
+      rewrite shape_append_nth; by apply is_part_incr_nth.
+    rewrite !get_tab_append_nth.
+    case: (altP (r =P nth 0 (shape t) i)); rewrite /= ?andbF ?andbT get_conj_tab //.
+    rewrite shape_conj_tab.
+    move: Hcorn; rewrite /is_in_corner /= => /orP [/eqP Hi| H] Hr.
+    + by rewrite Hi nth0 nth_default // size_conj_part.
+    + have : nth 0 (shape t) i <= nth 0 (shape t) i < nth 0 (shape t) i.-1.
+        by rewrite leqnn H.
+      rewrite -nth_conjE //; last by case: i H {Hr}; rewrite // ltnn.
+      by move=> /eqP ->.
+Qed.
+
+End ConjTab.
 
 Lemma stdtab_get_tabNE t :
   is_stdtab t ->
@@ -730,8 +794,19 @@ Canonical stdtabn_subFinType := Eval hnf in [subFinType of stdtabn_countType].
 Lemma stdtabnP (s : stdtabn) : is_stdtab s.
 Proof. by case: s => s /= /andP []. Qed.
 
-Lemma stdtabn_size (s : stdtabn) : size_tab s = n.
+Lemma size_tab_stdtabn (s : stdtabn) : size_tab s = n.
 Proof. by case: s => s /= /andP [] _ /eqP. Qed.
+
+Lemma sumn_shape_stdtabnE (Q : stdtabn) : (sumn (shape Q)) = n.
+Proof. case: Q => q; by rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP. Qed.
+
+Lemma is_part_shape_deg (Q : stdtabn) : is_part_of_n n (shape Q).
+Proof.
+  rewrite /=; apply/andP; split.
+  - by rewrite -/(size_tab _) size_tab_stdtabn.
+  - apply: is_part_sht; apply stdtabP; exact: stdtabnP.
+Qed.
+Definition shape_deg (Q : stdtabn) := (IntPartN (is_part_shape_deg Q)).
 
 End StdtabCombClass.
 
@@ -773,3 +848,5 @@ Qed.
 Lemma card_stdtabsh_conj_part (sh : intpart) :
   #|stdtabsh_finType (conj_intpart sh)| = #|stdtabsh_finType sh|.
 Proof. apply esym; exact: (bij_card (conj_stdtabsh_bij sh)). Qed.
+
+Hint Resolve stdtabnP stdtabshP.

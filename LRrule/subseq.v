@@ -13,6 +13,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
+Require Import path.
 Require Import tools combclass.
 
 Set Implicit Arguments.
@@ -155,8 +156,6 @@ Proof. case: s => s Ps /=; by apply: size_subseq. Qed.
 
 End Fintype.
 
-
-Require Import path.
 
 Lemma sorted_subseq_iota_rcons s n : subseq s (iota 0 n) = sorted ltn (rcons s n).
 Proof.

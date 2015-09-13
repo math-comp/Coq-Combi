@@ -13,7 +13,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import path.
+Require Import path sorted.
 Require Import tools shape partition ordtype sorted.
 
 Set Implicit Arguments.
@@ -241,8 +241,6 @@ Section Tableau.
       by rewrite !Hnth H.
     apply/eqP; by apply (eq_from_nth (x0 := [::]) Hsz) => i _.
   Qed.
-
-  Require Import path sorted.
 
   Lemma is_tableau_sorted_dominate (t : seq (seq T)) :
     is_tableau t =
