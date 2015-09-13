@@ -13,13 +13,26 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import bigop.
-
-Require Import tools.
+Require Import bigop tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+(* TODO : Contribute to SSReflect/fintype.v *)
+Section BijCard.
+
+Variables U V : finType.
+Variable f : U -> V.
+
+Lemma bij_card : bijective f -> #|U| = #|V|.
+Proof.
+  move=> [] g Hfg Hgf.
+  apply anti_leq; apply/andP; split.
+  - rewrite -(card_codom (can_inj Hfg)); exact: max_card.
+  - rewrite -(card_codom (can_inj Hgf)); exact: max_card.
+Qed.
+
+End BijCard.
 
 Lemma sum_count_mem (T : finType) (P : pred T) l :
    \sum_(i | P i) (count_mem i) l = count P l.
@@ -62,6 +75,9 @@ Fixpoint subType_seq l {struct l} :=
 
 
 Variable lst : seq T.
+
+Section SubCount.
+
 Hypothesis HallP : all P lst.
 
 Lemma subType_seqP : map val (subType_seq HallP) = lst.
@@ -70,9 +86,16 @@ Proof.
   case/andP => /= H0 Hall0; by rewrite IHl SubK.
 Qed.
 
-Section SubCount.
-
 Hypothesis Hcount : forall x : T, P x -> count_mem x lst = 1.
+
+Lemma sub_enumE : lst =i P.
+Proof.
+  move=> i.
+  apply (sameP idP); apply (iffP idP); rewrite !unfold_in.
+  - move=> /Hcount => H; apply/count_memPn.
+    by rewrite H.
+  - by move=> /(allP HallP).
+Qed.
 
 Lemma finite_subP : Finite.axiom (subType_seq HallP).
 Proof.
@@ -87,15 +110,46 @@ Definition sub_finMixin := Eval hnf in FinMixin finite_subP.
 Definition sub_finType := Eval hnf in FinType TP sub_finMixin.
 Definition sub_subFinType := Eval hnf in [subFinType of sub_finType].
 
-Lemma enum_subP : map val (enum sub_finType) = lst.
+Lemma enum_subE : map val (enum sub_finType) = lst.
 Proof. by rewrite enumT unlock /= subType_seqP. Qed.
+
+Lemma card_subE : #|sub_finType| = size lst.
+Proof. by rewrite cardE -(size_map val) /= enum_subE. Qed.
 
 End SubCount.
 
 
+Section SubUniq.
+
+Hypothesis Huniq : uniq lst.
+Hypothesis HE : lst =i P.
+
+Lemma Hallp : all P lst.
+Proof. apply/allP => x; by rewrite HE. Qed.
+
+Lemma Hcount : forall x : T, P x -> count_mem x lst = 1.
+Proof.
+  move=> x.
+  have := HE x; rewrite !unfold_in => <-.
+  by rewrite (count_uniq_mem _ Huniq) unfold_in => ->.
+Qed.
+
+Definition subuniq_finMixin := Eval hnf in sub_finMixin Hallp Hcount.
+Definition subuniq_finType := Eval hnf in FinType TP subuniq_finMixin.
+Definition subuniq_subFinType := Eval hnf in [subFinType of subuniq_finType].
+
+Lemma enum_subuniqE : map val (enum subuniq_finType) = lst.
+Proof. by rewrite enumT unlock /= subType_seqP. Qed.
+
+Lemma card_subuniqE : #|subuniq_finType| = size lst.
+Proof. by rewrite cardE -(size_map val) /= enum_subE. Qed.
+
+End SubUniq.
+
 
 Section SubUndup.
 
+Hypothesis HallP : all P lst.
 Hypothesis HPin : forall x : T, P x -> x \in lst.
 
 Lemma finite_sub_undupP :
@@ -111,7 +165,7 @@ Definition sub_undup_finMixin := Eval hnf in FinMixin finite_sub_undupP.
 Definition sub_undup_finType := Eval hnf in FinType TP sub_undup_finMixin.
 Definition sub_undup_subFinType := Eval hnf in [subFinType of sub_undup_finType].
 
-Lemma enum_sub_undupP : map val (enum sub_undup_finType) = undup lst.
+Lemma enum_sub_undupE : map val (enum sub_undup_finType) = undup lst.
 Proof.
   rewrite enumT unlock /= -{2}subType_seqP.
   elim: lst HallP => [//= | l0 l IHl] /=.
@@ -178,7 +232,7 @@ Variable TP : subCountType P.
 
 Let union_enum := subType_seq TP all_unionP.
 
-Lemma subType_unionP : map val union_enum = enum_union.
+Lemma subType_unionE : map val union_enum = enum_union.
 Proof. by apply subType_seqP. Qed.
 
 Lemma finite_unionP : Finite.axiom union_enum.
@@ -188,8 +242,19 @@ Definition union_finMixin := Eval hnf in FinMixin finite_unionP.
 Definition union_finType := Eval hnf in FinType TP union_finMixin.
 Definition union_subFinType := Eval hnf in [subFinType of union_finType].
 
-Lemma enum_union_finTypeE :
+Lemma enum_unionE :
   map val (enum union_finType) = enum_union.
 Proof. by rewrite enumT unlock subType_seqP. Qed.
+
+Lemma card_unionE : #|union_finType| = \sum_(i : TPI) #|TPi i|.
+Proof.
+  rewrite cardE -(size_map val) /= enum_unionE.
+  rewrite /enum_union size_flatten /shape -map_comp.
+  rewrite (eq_map (f2 := fun i => #|TPi i|)); first last.
+    move=> i /=; by rewrite size_map cardE.
+  rewrite /index_enum -enumT.
+  elim: (enum TPI) => [| i0 I IHI] /=; first by rewrite big_nil.
+  by rewrite big_cons IHI.
+Qed.
 
 End SubtypesDisjointUnion.

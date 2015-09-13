@@ -14,13 +14,11 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
-Require Import tools combclass.
+Require Import tools combclass shape.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Lemma ieqi1F i : (i == i.+1) = false.
-Proof. apply: negbTE; by elim i. Qed.
 
 Section Partition.
 
@@ -34,6 +32,9 @@ Section Partition.
 
   Lemma is_part_tl l0 sh : is_part (l0 :: sh) -> is_part sh.
   Proof. by move=> /= /andP []. Qed.
+
+  Lemma is_part_behead sh : is_part sh -> is_part (behead sh).
+  Proof. case: sh => [//| l0 sh] /=; exact: is_part_tl. Qed.
 
   Lemma is_partP sh :
     reflect (last 1 sh != 0 /\ forall i, (nth 0 sh i) >= nth 0 sh i.+1) (is_part sh).
@@ -52,6 +53,53 @@ Section Partition.
         move: Hlast; by case sh.
   Qed.
 
+  Lemma is_part_ijP sh :
+    reflect (last 1 sh != 0 /\ forall i j, i <= j -> (nth 0 sh i) >= nth 0 sh j) (is_part sh).
+  Proof.
+    apply: (iffP idP).
+    - move/is_partP => [] H0 H; split; first exact H0.
+      move=> i {H0} j /subnKC <-.
+      elim: (j - i) => [|n IHn] {j}; first by rewrite addn0.
+      rewrite addnS.
+      exact: (leq_trans (H _) IHn).
+    - move=> [] H0 H; apply/is_partP; split; first exact H0.
+      move=> {H0} i.
+      exact: H.
+  Qed.
+
+  Lemma is_in_part_le (sh : seq nat) r c j k :
+    is_part sh -> is_in_shape sh r c -> j <= r -> k <= c -> is_in_shape sh j k.
+  Proof.
+    rewrite /is_in_shape => /is_part_ijP [] _ Hpart Hcr /Hpart Hrj Hkc.
+    exact: leq_ltn_trans Hkc (leq_trans Hcr Hrj).
+  Qed.
+
+  Lemma part_nth_len_eq p q :
+    (forall i, nth 0 p i = nth 0 q i) -> is_part p -> is_part q -> size p = size q.
+  Proof.
+    wlog Hwlog: p q / (size p) <= (size q).
+      move=> Hwlog Hnth.
+      by case: (leqP (size p) (size q)) => [|/ltnW] /Hwlog H/H{H}H/H{H} ->.
+    move=> Hnth /is_part_ijP [] Hlastp Hp /is_part_ijP [] Hlastq Hq.
+    apply anti_leq; rewrite Hwlog {Hwlog} /=.
+    case: q Hnth Hlastq Hq => [//=|q0 q] Hnth Hlastq Hq.
+    rewrite leqNgt; apply (introN idP) => Habs.
+    move: Hlastq.
+    have:= Habs; rewrite -(ltn_predK Habs) ltnS => H.
+    have:= Hq _ _ H.
+    by rewrite nth_last /= -Hnth nth_default // leqn0 => /eqP ->.
+  Qed.
+
+  Lemma part_eqP p q :
+    is_part p -> is_part q -> reflect (forall i, nth 0 p i = nth 0 q i) (p == q).
+  Proof.
+    move=> Hp Hq.
+    apply (iffP idP) => [/eqP -> //| H].
+    apply/eqP; apply (eq_from_nth (x0 := 0)).
+    - exact: part_nth_len_eq.
+    - move=> i _; exact: H.
+  Qed.
+
   Lemma part_head0F sh : head 1 sh == 0 -> is_part sh = false.
   Proof.
     elim: sh => [//= | sh0 sh IHsh] /= /eqP ->.
@@ -63,6 +111,14 @@ Section Partition.
     elim: sh => [//= | sh0 sh IHsh] /= /andP [] Head.
     move/IHsh; apply: contraLR; rewrite !negbK => /eqP Hsh0.
     by move: Head; rewrite Hsh0 leqn0.
+  Qed.
+
+  Lemma nth_part_non0 sh i : is_part sh -> i < size sh -> nth 0 sh i != 0.
+  Proof.
+    elim: i sh => [//= | i IHi] [//=| s0 s].
+      by move=> /part_head_non0.
+    move=> /= /andP [] _.
+    exact: IHi.
   Qed.
 
   Lemma part0 sh : is_part sh -> sumn sh = 0 -> sh = [::].
@@ -170,20 +226,40 @@ Section Partition.
       * by rewrite !add0n.
   Qed.
 
-  Fixpoint incr_n sh n :=
+  Fixpoint incr_first_n sh n :=
     if sh is s0 :: s then
-      if n is n.+1 then s0.+1 :: incr_n s n
+      if n is n.+1 then s0.+1 :: incr_first_n s n
       else sh
     else nseq n 1.
   Fixpoint conj_part sh :=
-    if sh is s0 :: sh then incr_n (conj_part sh) s0
+    if sh is s0 :: sh then incr_first_n (conj_part sh) s0
     else [::].
 
   Lemma is_part_n1 n : is_part (nseq n 1).
   Proof. elim: n => [//= | n /= ->]; rewrite andbT; by case n. Qed.
 
-  Lemma is_part_incr_n sh n :
-    is_part sh -> is_part (incr_n sh n).
+  Lemma nth_incr_first_n sh n i :
+    nth 0 (incr_first_n sh n) i = if i < n then (nth 0 sh i).+1 else nth 0 sh i.
+  Proof.
+    elim: sh n i => [| s0 s IHs] n i /=.
+      by rewrite nth_nseq nth_default.
+    case: n i => [| n] //= [| i] //=.
+    exact: IHs.
+  Qed.
+
+  Lemma incr_first_n_nthC sh i j :
+    incr_first_n (incr_nth sh i) j = incr_nth (incr_first_n sh j) i.
+  Proof.
+    elim: sh i j => [| s0 sh IHsh].
+      elim=> [| i IHi] [|j] //=.
+      have {IHi} /= <- := IHi j.
+      by case: i.
+    case=> [| i] [| j] //=.
+    by rewrite IHsh.
+  Qed.
+
+  Lemma is_part_incr_first_n sh n :
+    is_part sh -> is_part (incr_first_n sh n).
   Proof.
     elim: sh n => [//= n _| s0 sh IHsh] /=; first by apply: is_part_n1.
     case=> [//= | n] /andP [] Hhead /IHsh {IHsh} /= ->; rewrite andbT.
@@ -195,7 +271,7 @@ Section Partition.
   Lemma is_part_conj sh : is_part sh -> is_part (conj_part sh).
   Proof.
     elim: sh => [//= | s0 sh IHsh] /= /andP [] _ /IHsh {IHsh}.
-    by apply: is_part_incr_n.
+    by apply: is_part_incr_first_n.
   Qed.
 
   Lemma conj_nseq n : 0 < n -> conj_part (nseq n 1) = [:: n].
@@ -205,21 +281,21 @@ Section Partition.
     by rewrite (IHn (ltn0Sn n)).
   Qed.
 
-  Lemma size_incr_n sh n :
-    size sh <= n -> size (incr_n sh n) = n.
+  Lemma size_incr_first_n sh n :
+    size sh <= n -> size (incr_first_n sh n) = n.
   Proof.
     elim: sh n => [| s0 sh IHsh] /= n; first by rewrite size_nseq.
     case: n => [//= | n]; by rewrite /= ltnS => /IHsh ->.
   Qed.
 
-  Lemma size_conj sh : is_part sh -> size (conj_part sh) = head 0 sh.
+  Lemma size_conj_part sh : is_part sh -> size (conj_part sh) = head 0 sh.
   Proof.
     elim: sh => [//= | s0 [| s1 sh] IHsh] /= /andP [] Hhead /IHsh {IHsh} /= IHsh.
     + by rewrite size_nseq.
-    + move: Hhead; by rewrite -{1}IHsh => /size_incr_n.
+    + move: Hhead; by rewrite -{1}IHsh => /size_incr_first_n.
   Qed.
 
-  Lemma sumn_incr_n sh n : sumn (incr_n sh n) = sumn sh + n.
+  Lemma sumn_incr_first_n sh n : sumn (incr_first_n sh n) = sumn sh + n.
   Proof.
     elim: n sh => [//= | n IHn]; first by case.
     case => [/= | s0 s /=].
@@ -229,11 +305,12 @@ Section Partition.
     + by rewrite IHn addnA addnS !addSn.
   Qed.
 
-  Lemma sumn_part_cons sh : sumn (conj_part sh) = sumn sh.
-  Proof. elim: sh => [//= | s0 s IHs] /=; by rewrite sumn_incr_n IHs addnC. Qed.
+  Lemma sumn_conj_part sh : sumn (conj_part sh) = sumn sh.
+  Proof. elim: sh => [//= | s0 s IHs] /=; by rewrite sumn_incr_first_n IHs addnC. Qed.
 
   Lemma conj_part_ind sh l :
-    sh != [::] -> is_part sh -> l >= size sh -> conj_part (incr_n sh l) = l :: conj_part sh.
+    sh != [::] -> is_part sh -> l >= size sh ->
+    conj_part (incr_first_n sh l) = l :: conj_part sh.
   Proof.
     elim: sh l => [//= | s0 s IHs l] _ /=.
     move=> /andP [] _ Hpart Hs0.
@@ -257,8 +334,155 @@ Section Partition.
         case: s1 => [/andP []| s1 _]; first by rewrite leqn0 => /part_head0F ->.
         by case: (conj_part s).
       * by apply: is_part_conj.
-      * rewrite size_conj //=.
+      * rewrite size_conj_part //=.
         move: Hhead Hsh; by case sh.
+  Qed.
+
+  Lemma incr_nth_conj_part sh i :
+    is_part sh -> is_in_corner sh i ->
+    conj_part (incr_nth sh i) = incr_nth (conj_part sh) (nth 0 sh i).
+  Proof.
+    elim: sh i => [| s0 sh IHsh] i /=.
+      by rewrite /is_in_corner /= !nth_nil => _ /orP [] // /eqP ->.
+    move=> /= /andP [] H0 Hpart.
+    case: i => [_ | i Hcrn]/=.
+      have Hszconj: (size (conj_part sh) <= s0)%N.
+        rewrite (size_conj_part Hpart).
+        move: H0; case sh => [| n _] //=; exact: ltnW.
+      have Hszn : size (incr_first_n (conj_part sh) s0.+1) = s0.+1.
+        by rewrite size_incr_first_n; last exact: (leq_trans Hszconj).
+      apply (eq_from_nth (x0 := 0)).
+      - rewrite Hszn.
+        by rewrite size_incr_nth ltnNge (size_incr_first_n Hszconj) leqnn /=.
+      - move=> i; rewrite Hszn => Hi.
+        rewrite nth_incr_nth !nth_incr_first_n Hi ltn_neqAle.
+        move: Hi; rewrite ltnS eq_sym => ->.
+        case: eqP => /= _; by rewrite ?add0n ?add1n.
+    rewrite (IHsh _ Hpart); first exact: incr_first_n_nthC.
+    move: Hcrn => /=; by case: i.
+  Qed.
+
+  Lemma is_in_conj_part_impl sh:
+    is_part sh -> forall r c , is_in_shape sh r c -> is_in_shape (conj_part sh) c r.
+  Proof.
+    rewrite /is_in_shape.
+    elim: sh => [| s0 s IHs] Hpart r c.
+      by rewrite /is_out_corner nth_default // nth_default //.
+    have:= Hpart => /= /andP [] Hhead Hparts.
+    rewrite nth_incr_first_n.
+    case: r => [ -> // | r] /= H.
+    have := Hpart => /is_part_ijP [] _ Hdecr.
+    have {Hdecr} /Hdecr/= : 0 <= r.+1 by [].
+    move=> /(leq_trans H) ->.
+    rewrite ltnS; exact:  IHs.
+  Qed.
+
+  Lemma is_in_conj_part sh :
+    is_part sh -> forall r c, is_in_shape sh r c = is_in_shape (conj_part sh) c r.
+  Proof.
+    move=> Hpart r c.
+    apply/(sameP idP); apply(iffP idP).
+    - rewrite -{2}(conj_partK Hpart).
+      apply is_in_conj_part_impl.
+      exact: is_part_conj.
+    - exact: is_in_conj_part_impl.
+  Qed.
+
+  (* A rephrasing of the preceding lemma *)
+  Lemma conj_ltnE sh :
+    is_part sh -> forall i j, nth 0 sh i > j = (nth 0 (conj_part sh) j > i).
+  Proof.
+    move=> Hpart.
+    rewrite -/(is_in_shape sh _ _) -/(is_in_shape (conj_part sh) _ _).
+    exact: is_in_conj_part.
+  Qed.
+
+  Lemma conj_leqE sh :
+    is_part sh ->
+                    forall i j, (nth 0 sh i <= j) = (nth 0 (conj_part sh) j <= i).
+  Proof. move=> Hpart i j. by rewrite leqNgt [RHS]leqNgt (conj_ltnE Hpart). Qed.
+
+  Lemma out_corner_incr_first_n sh i :
+    is_part sh -> is_out_corner (incr_first_n sh i.+1) i.
+  Proof.
+    rewrite /is_out_corner.
+    elim: sh i => [/= i _ | s0 sh IHsh i]; first by elim: i.
+    move=> /= => /andP [] Hhead /IHsh{IHsh} Hrec.
+    case: i => [| i] /=; first by case: sh Hhead {Hrec}.
+    exact: (Hrec i).
+  Qed.
+
+  Lemma out_corner_incr_first_nE sh n i :
+    is_part sh -> is_out_corner sh i -> is_out_corner (incr_first_n sh n) i.
+  Proof.
+    rewrite /is_out_corner.
+    elim: sh i n => [/= i n _ | s0 sh IHsh i n]; first by elim: i.
+    rewrite [is_part _]/= => /andP [] Hhead Hpart.
+    case: i => [/= | i].
+      case: sh IHsh Hhead Hpart => [//= | s1 sh] IHsh Hhead Hpart H10.
+        case: n {IHsh Hhead Hpart} => [//= | n].
+        rewrite /nseq; case: n => [//= | n] /=.
+        by rewrite ltnS.
+      case: n {IHsh Hhead Hpart} => [| [| n]] //=.
+      by apply (leq_trans H10).
+    rewrite [X in (X -> _)]/= => Hcorn.
+    case: n => [//= | n].
+    exact: (IHsh _ n Hpart Hcorn).
+  Qed.
+
+  Lemma out_corner_incr_nth sh i :
+    is_part sh -> is_in_corner sh i -> is_out_corner (incr_nth sh i) i.
+  Proof.
+    rewrite /is_in_corner /is_out_corner /= nth_incr_nth eq_refl add1n.
+    case: i => [/= | i].
+      case: sh => [// | s0 [// | s1 s]] /= /andP [].
+      by rewrite ltnS.
+    move=> Hpart /orP [] //; rewrite [i.+1.-1]/=.
+    elim: sh i Hpart => [| s0 sh IHsh] i /=; first by rewrite !nth_nil.
+    move=> /andP [] Hhead Hpart.
+    case: i => [_|i].
+      move: Hhead; case: sh Hpart {IHsh} => [//= | s1 [//= | s2 sh]] /= /andP [].
+      by rewrite ltnS.
+    by move=> /(IHsh i Hpart).
+  Qed.
+
+  Lemma out_corner_conj_part sh i :
+    is_part sh -> is_out_corner sh i -> is_out_corner (conj_part sh) (nth 0 sh i).-1.
+  Proof.
+    elim: sh i => [| s0 sh IHsh] i /=.
+      by rewrite /is_out_corner nth_default // nth_default //.
+    move=> /andP [] H0 Hpart.
+    case: i => [//= | i] /= H.
+      case: s0 H0 H => [//= | s0]/= _ H.
+      apply out_corner_incr_first_n.
+      exact: is_part_conj.
+    apply out_corner_incr_first_nE; first exact: is_part_conj.
+    by apply (IHsh _ Hpart).
+  Qed.
+
+  Lemma is_out_cornerP sh i : is_part sh ->
+    (i < size sh) && (~~ is_in_shape sh i.+1 (nth 0 sh i).-1) =
+    (is_out_corner sh i).
+  Proof.
+    rewrite /is_out_corner /is_in_shape -ltnNge => Hpart.
+    apply/(sameP idP); apply(iffP idP).
+    - case: (ltnP i (size sh)) => Hi; last by rewrite [nth 0 sh i]nth_default.
+      have := nth_part_non0 Hpart Hi.
+      by case: (nth 0 sh i) => pi //= _ ->.
+    - move=> /andP [] /(nth_part_non0 Hpart).
+      by case: (nth 0 sh i).
+  Qed.
+
+  Lemma nth_conjE sh r c :
+    is_part sh -> c != 0 ->
+    (nth 0 (conj_part sh) r == c) = (nth 0 sh c <= r < nth 0 sh c.-1).
+  Proof.
+    move=> Hpart.
+    case: c => [//= | c _].
+    rewrite (conj_leqE Hpart) (conj_ltnE Hpart) /=.
+    apply/(sameP idP); apply(iffP idP).
+    - move=> H; apply/eqP; by apply anti_leq.
+    - move/eqP ->; by rewrite !leqnn.
   Qed.
 
   Lemma minn0 k : minn k 0 = 0.
@@ -305,10 +529,354 @@ Section Partition.
         by rewrite !big_cons => /eqP; rewrite eqn_add2l => /eqP.
   Qed.
 
+  Fixpoint decr_nth v i {struct i} :=
+    if v is n :: v' then
+      if i is i'.+1 then n :: decr_nth v' i'
+      else if n is n'.+1 then
+             if n' is _.+1 then
+               n' :: v'
+             else [::]
+           else [::]
+    else [::].
+
+  Lemma incr_nthK sh i :
+    is_part sh -> is_part (incr_nth sh i) -> decr_nth (incr_nth sh i) i = sh.
+  Proof.
+    elim: sh i => [| s0 sh IHsh] /=.
+      case=> [| i] //= _ /andP []; by rewrite leqn0 => /part_head0F ->.
+    case=> [| i] //=.
+      case: s0 => //= /andP []; by rewrite leqn0 => /part_head0F ->.
+    move=> /andP [] Head Hpart /andP [] Headincr Hpartincr.
+    by rewrite IHsh.
+  Qed.
+
+  Lemma decr_nthK sh i :
+    is_part sh -> is_out_corner sh i -> incr_nth (decr_nth sh i) i = sh.
+  Proof.
+    rewrite /is_out_corner.
+    elim: sh i => [| s0 sh IHsh] /=; first by case.
+    case=> [| i] /=; case: s0 => [| s0] //= /andP [].
+      - move=> {IHsh} Hs0 /part_head_non0 Hhead H ; case: s0 Hs0 H Hhead => //= _.
+        case: sh => //= s1 sh; by rewrite ltnS leqn0 => /eqP ->.
+      - by rewrite leqn0 => /part_head0F ->.
+    move=> Hhead Hpart Hnth; by rewrite IHsh.
+  Qed.
+
+  Lemma sumn_incr_nth s i : sumn (incr_nth s i) = (sumn s).+1.
+  Proof.
+    elim: i s => [/= | i IHi]; first by case=> [| s0 s].
+    case=> [/= | s0 s /=]; first by rewrite /sumn add0n; elim i.
+    by rewrite (IHi s) addnS.
+  Qed.
+
+  Lemma nth_decr_nth sh i :
+    nth 0 (decr_nth sh i) i = (nth 0 sh i).-1.
+  Proof. by elim: i sh => [| i IHi] [| [|[|s0]] sh] /=. Qed.
+
+  Lemma nth_decr_nth_neq sh i j :
+    is_part sh -> is_out_corner sh i -> i != j -> nth 0 (decr_nth sh i) j = nth 0 sh j.
+  Proof.
+    move=> Hpart Hcrn /negbTE Hij.
+    rewrite -{2}(decr_nthK Hpart Hcrn).
+      by rewrite nth_incr_nth Hij add0n.
+  Qed.
+
+  Lemma sumn_decr_nth sh i :
+    is_part sh -> is_out_corner sh i -> (sumn (decr_nth sh i)) = (sumn sh).-1.
+  Proof.
+    move=> Hpart Hcorn. rewrite -{2}[sh](decr_nthK Hpart Hcorn).
+    by rewrite sumn_incr_nth /=.
+  Qed.
+
+  Lemma is_part_decr_nth sh i :
+    is_part sh -> is_out_corner sh i -> is_part (decr_nth sh i).
+  Proof.
+    rewrite /is_out_corner.
+    elim: sh i => [| s0 sh IHsh] /=; first by case.
+    case=> [| i] /=.
+    - case: s0 => [| [| s0]] //= /andP [] _ ->.
+      case sh => //= s1 _; by rewrite ltnS => ->.
+    move=> /andP [] Hhead Hpart Hnth.
+    apply/andP; split; last by apply: IHsh.
+    apply: (@leq_trans (head 1 sh)); last exact Hhead.
+    case: sh {IHsh Hhead Hnth s0} Hpart => [//= | s1 s]; first by case i.
+    case i => //= /andP [].
+    case: s1 => [| [| s1]] //=.
+    by rewrite leqn0 => /part_head0F ->.
+  Qed.
+
+  Lemma in_corner_decr_nth sh i :
+    is_part sh -> is_out_corner sh i -> is_in_corner (decr_nth sh i) i.
+  Proof.
+    move=> Hpart Hout.
+    rewrite /is_in_corner /=.
+    case: i Hout => [//=|i] Hout; rewrite [i.+1.-1]/=.
+    apply/orP; right.
+    rewrite nth_decr_nth nth_decr_nth_neq //; last by rewrite eq_sym ieqi1F.
+    move: Hout; rewrite /is_out_corner => Hi2.
+    have:= is_partP _ Hpart => [] [] _ Hdecr.
+    apply: leq_trans _ (Hdecr i).
+    move: Hi2; by case: (nth 0 sh i.+1).
+  Qed.
+
+  Lemma is_in_corner_conj_part sh r :
+    is_part sh -> is_in_corner sh r -> is_in_corner (conj_part sh) (nth 0 sh r).
+  Proof.
+    case: (altP ( r =P 0)) => Hr; rewrite /is_in_corner /= => Hpart /orP [].
+    - move=> /eqP ->.
+      have := part_head_non0 Hpart.
+      case: sh Hpart => [//= | s0 sh] /= /andP [] Hs0 Hpart Hs0n0.
+      apply/orP; right.
+      rewrite !nth_incr_first_n ltnn.
+      have -> /= : s0.-1 < s0 by move: Hs0n0; case s0.
+      rewrite ltnS {Hs0}.
+      case: s0 Hs0n0 => [//= | s0] _.
+      have := is_part_conj Hpart => /is_partP [] _; by apply.
+   - by rewrite Hr ltnn.
+   - by rewrite (negbTE Hr).
+   - move=> Hnthr.
+     case: eqP => //= /eqP H.
+     have : nth 0 sh r <= nth 0 sh r < nth 0 sh r.-1 by rewrite leqnn Hnthr.
+     rewrite -(nth_conjE _ Hpart Hr) => /eqP.
+     rewrite -(conj_ltnE Hpart) => ->.
+     move: H; by case: (nth 0 sh r).
+  Qed.
+
+  Definition out_corners sh := filter (is_out_corner sh) (iota 0 (size sh)).
+
+  Lemma  out_corners_uniq sh : uniq (out_corners sh).
+  Proof. rewrite /out_corners; apply filter_uniq; exact: iota_uniq. Qed.
 
 End Partition.
 
+Section SkewShape.
 
+  Fixpoint included inner outer :=
+    if inner is inn0 :: inn then
+      if outer is out0 :: out then
+        (inn0 <= out0) && (included inn out)
+      else false
+    else true.
+
+  Lemma includedP inner outer :
+    reflect (size inner <= size outer /\ forall i, nth 0 inner i <= nth 0 outer i)
+            (included inner outer).
+  Proof.
+    apply (iffP idP).
+    - elim: inner outer => [//= | inn0 inn IHinn] /=.
+        move=> outer _; by split; last by move=> i; rewrite nth_nil.
+      case=> [//= | out0 out] /= /andP [] H0 /IHinn{IHinn} [] Hsize H.
+      split; first by rewrite ltnS.
+      by case.
+    - elim: inner outer => [//= | inn0 inn IHinn] /=.
+      case=> [ [] //= | out0 out] [] /=.
+      rewrite ltnS => Hsize H.
+      apply/andP; split; first by apply (H 0).
+      apply: IHinn; split; first exact Hsize.
+      move=> i; by apply (H i.+1).
+  Qed.
+
+  Lemma included_behead p1 p2 :
+    included p1 p2 -> included (behead p1) (behead p2).
+  Proof.
+    case: p1 => [//=|a l].
+      by case: p2 => [//=|b s] /= /andP [].
+  Qed.
+
+  Lemma included_refl sh : included sh sh.
+  Proof. elim: sh => [//= | s0 sh /= -> ]; by rewrite leqnn. Qed.
+
+  Lemma included_trans sha shb shc :
+    included sha shb -> included shb shc -> included sha shc.
+  Proof.
+    move=> /includedP [] Hsza Hincla /includedP [] Hszb Hinclb.
+    apply/includedP; split; first exact (leq_trans Hsza Hszb).
+    move=> i; by apply (leq_trans (Hincla i) (Hinclb i)).
+  Qed.
+
+  Lemma included_incr_nth sh i :
+    included sh (incr_nth sh i).
+  Proof.
+    apply/includedP; split.
+    - rewrite size_incr_nth; case ltnP => Hi //=.
+      by apply (leq_trans Hi).
+    - move=> j; rewrite nth_incr_nth.
+      by apply leq_addl.
+  Qed.
+
+  Lemma included_decr_nth u i : included (decr_nth u i) u.
+  Proof.
+    elim: u i => [| u0 u IHu] [| i] //=.
+      case: u0 => [| [| u0]] //=.
+      by rewrite ltnS (leqnSn u0) (included_refl u).
+    by rewrite (leqnn u0) (IHu i).
+  Qed.
+
+  Lemma included_incr_nth_inner inner outer i :
+    nth 0 inner i < nth 0 outer i ->
+    included inner outer -> included (incr_nth inner i) outer.
+  Proof.
+    move=> Hnth /includedP [] Hsize Hincl.
+    apply/includedP; split.
+    - rewrite size_incr_nth; case ltnP => _; first exact Hsize.
+      rewrite ltnNge; apply (introN idP) => Hout.
+      move: Hnth; by rewrite (nth_default _ Hout).
+    - move=> j; rewrite nth_incr_nth.
+      case eqP => [<- | _].
+      - by rewrite add1n.
+      - by rewrite add0n.
+  Qed.
+
+  Lemma size_included inner outer : included inner outer -> size inner <= size outer.
+  Proof.
+    elim: inner outer => [//= | inn0 inn IHinn] /=.
+    case=> [//= | outer0 outer] /= /andP [] _ /IHinn.
+    by rewrite ltnS.
+  Qed.
+
+  Lemma sumn_included inner outer : included inner outer -> sumn inner <= sumn outer.
+  Proof.
+    elim: inner outer => [//= | inn0 inn IHinn] /=.
+    case=> [//= | outer0 outer] /= /andP [] H0 /IHinn.
+    by apply: leq_add.
+  Qed.
+
+  Lemma included_sumnE inner outer :
+    is_part outer ->
+    included inner outer ->
+    sumn inner = sumn outer ->
+    inner = outer.
+  Proof.
+    elim: inner outer => [| inn0 inn IHinn] /=.
+      by move=> outer Houter _ /esym/(part0 Houter) ->.
+    case=> [//= | outer0 out] /= /andP [] _ /IHinn{IHinn}Hrec /andP [] H0 Hincl Heq.
+    have {H0} H0 : inn0 = outer0.
+      apply anti_leq; rewrite H0 /=.
+      have := leq_sub2l (inn0 + sumn inn) (sumn_included Hincl).
+      by rewrite {1}Heq !addnK.
+    move: Heq => /eqP; by rewrite H0 eqn_add2l => /eqP/(Hrec Hincl) ->.
+  Qed.
+
+  Lemma included_conj_part inner outer :
+    is_part inner -> is_part outer ->
+    included inner outer -> included (conj_part inner) (conj_part outer).
+  Proof.
+    move=> Hinn Hout /includedP [] Hsz Hincl.
+    apply/includedP; split; first by rewrite !size_conj_part // -!nth0; exact: Hincl.
+    move=> i.
+    rewrite -conj_leqE //; apply (leq_trans (Hincl _)); by rewrite conj_leqE.
+  Qed.
+
+  Lemma included_conj_partE inner outer :
+    is_part inner -> is_part outer ->
+    included inner outer = included (conj_part inner) (conj_part outer).
+  Proof.
+    move=> Hinn Hout; apply (sameP idP); apply (iffP idP); last exact: included_conj_part.
+    rewrite -{2}(conj_partK Hinn) -{2}(conj_partK Hout).
+    apply: included_conj_part; exact: is_part_conj.
+  Qed.
+
+  Fixpoint diff_shape inner outer :=
+    if inner is inn0 :: inn then
+      if outer is out0 :: out then
+        out0 - inn0 :: diff_shape inn out
+      else [::] (* Unused case *)
+    else outer.
+
+  Definition pad (T : Type) (x : T) sz := [fun s => s ++ nseq (sz - size s) x].
+
+  Definition outer_shape inner size_seq :=
+    [seq p.1 + p.2 | p <- zip (pad 0 (size (size_seq)) inner) size_seq].
+
+  Lemma size_diff_shape inner outer : size (diff_shape inner outer) = size outer.
+  Proof.
+    elim: inner outer => [//= | inn0 inn IHinn] /= [//= | out0 out] /=.
+    by rewrite IHinn.
+  Qed.
+
+  Lemma nth_diff_shape inn out i : nth 0 (diff_shape inn out) i = nth 0 out i - nth 0 inn i.
+  Proof.
+    elim: inn out i => [| inn0 inn IHinn] out i //=.
+      by rewrite (@nth_default _ _ [::]) // subn0.
+    case: out => [| out0 out] /=.
+      by rewrite nth_default.
+    by case: i => [| i] //=.
+  Qed.
+
+  Lemma sumn_diff_shape inner outer :
+    included inner outer -> sumn (diff_shape inner outer) = sumn outer - sumn inner.
+  Proof.
+    elim: inner outer => [//= | inn0 inn IHinn] /= [//= | out0 out] /=.
+      by rewrite subn0.
+    move/andP => [] Hleq Hincl.
+    rewrite (IHinn _ Hincl) {IHinn}.
+    have Hsumn : sumn inn <= sumn out.
+      elim: inn out Hincl => [//= | inn1 inn IHinn] /= [//= | out1 out] /=.
+      move/andP => [] H1 /IHinn; by apply leq_add.
+    by rewrite subnDA (addnBA _ Hsumn) addnC (addnBA _ Hleq) [out0 + _]addnC.
+  Qed.
+
+  Lemma diff_shape_pad0 inner outer :
+    diff_shape ((pad 0 (size outer)) inner) outer = diff_shape inner outer.
+  Proof.
+    elim: inner outer => [//= | inn0 inn IHinn] //=.
+      elim=> [//= | out0 out] /=; by rewrite !subn0 => ->.
+    case=> [//= | out0 out] /=.
+    by rewrite subSS IHinn.
+  Qed.
+
+  Lemma diff_shapeK inner outer :
+    included inner outer ->
+    outer_shape inner (diff_shape inner outer) = outer.
+  Proof.
+    rewrite /outer_shape.
+    elim: inner outer => [//= | inn0 inn IHinn] /= outer.
+      rewrite subn0 => _; elim: outer => [//= | out0 out /= ->].
+      by rewrite add0n.
+   case: outer => [//= | out0 out] /= /andP [] Hin /IHinn{IHinn} ->.
+   by rewrite addnC subnK.
+  Qed.
+
+  Lemma outer_shapeK inner diff :
+    size inner <= size diff ->
+    diff_shape inner (outer_shape inner diff) = diff.
+  Proof.
+    rewrite /outer_shape.
+    elim: inner diff => [//= | inn0 inn IHinn] /= diff.
+      rewrite subn0 => _; elim: diff => [//= | d0 diff /= ->].
+      by rewrite add0n.
+    case: diff => [//=| t0 t] /=; rewrite ltnS subSS => /IHinn /= ->.
+    by rewrite addKn.
+  Qed.
+
+
+  Lemma outer_shape_pad0 inner sz :
+    outer_shape (pad 0 (size sz) inner) sz = outer_shape inner sz.
+  Proof.
+    rewrite /outer_shape; congr map; congr zip.
+    rewrite /= size_cat size_nseq.
+    set n := (X in (_++ _) ++ nseq X _).
+    suff -> : n = 0 by rewrite /= cats0.
+    rewrite /n{n}.
+    move: (size sz) (size inner) => a b.
+    case: (ltnP a b) => [/ltnW | ] H.
+    - move: H; rewrite /leq => /eqP H; by rewrite H addn0 H.
+    - by rewrite (subnKC H) subnn.
+  Qed.
+
+  Lemma head_pad0 (T : Type) n (p : T) s : head p (pad p n s) = head p s.
+  Proof. elim: s => [| s0 s IHs] //=; rewrite subn0; by case: n. Qed.
+
+  Lemma included_pad0 inner outer :
+    included inner outer = included (pad 0 (size outer) inner) outer.
+  Proof.
+    elim: inner outer => [//= | inn0 inn IHinn] /= outer /=.
+     rewrite subn0; by elim: outer.
+    case: outer => [//= | out0 out] /=.
+    by rewrite subSS IHinn.
+  Qed.
+
+End SkewShape.
 
 
 Section PartCombClass.
@@ -325,16 +893,18 @@ Canonical intpart_countType := Eval hnf in CountType intpart intpart_countMixin.
 Lemma intpartP (p : intpart) : is_part p.
 Proof. by case: p. Qed.
 
-Definition intpart_conj p := IntPart (is_part_conj (intpartP p)).
+Hint Resolve intpartP.
 
-Lemma intpart_conjK : involutive intpart_conj.
-Proof.  move=> p; apply: val_inj => /=; by rewrite conj_partK; last by apply: intpartP. Qed.
+Canonical conj_intpart p := IntPart (is_part_conj (intpartP p)).
+
+Lemma conj_intpartK : involutive conj_intpart.
+Proof. move=> p; apply: val_inj => /=; by rewrite conj_partK. Qed.
 
 Lemma intpart_sum_inj (s t : intpart) :
   (forall k, part_sum s k = part_sum t k) -> s = t.
 Proof.
   move=> H; apply: val_inj => /=.
-  apply: part_sum_inj; last exact H; by apply: intpartP.
+  by apply: part_sum_inj; last exact H.
 Qed.
 
 
@@ -490,12 +1060,25 @@ Canonical intpartn_subFinType := Eval hnf in [subFinType of intpartn].
 
 Lemma intpartnP (p : intpartn) : is_part p.
 Proof. by case: p => /= p /andP []. Qed.
+Hint Resolve intpartnP.
+Definition intpart_of_intpartn (p : intpartn) := IntPart (intpartnP p).
+Coercion intpart_of_intpartn : intpartn >-> intpart.
 
 Lemma intpartn_sumn (p : intpartn) : sumn p = n.
 Proof. by case: p => /= p /andP [] /eqP. Qed.
 
 Lemma enum_intpartnE : map val (enum intpartn) = enum_partn n.
-Proof. rewrite /=; by apply enum_subP. Qed.
+Proof. rewrite /=; by apply enum_subE. Qed.
+
+Lemma conj_intpartnP (sh : intpartn) : is_part_of_n n (conj_part sh).
+Proof.
+  case: sh => sh /= /andP [] /eqP <- Hpart.
+  by rewrite is_part_conj // sumn_conj_part /= eq_refl.
+Qed.
+Canonical conj_intpartn (sh : intpartn) := IntPartN (conj_intpartnP sh).
+
+Lemma conj_intpartnK : involutive conj_intpartn.
+Proof. move=> p; apply: val_inj => /=; by rewrite conj_partK. Qed.
 
 End PartOfn.
 
@@ -538,3 +1121,5 @@ Proof.
 Qed.
 
 End PartCombClass.
+
+Hint Resolve intpartP intpartnP.

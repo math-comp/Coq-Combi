@@ -13,9 +13,9 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm binomial.
-Require Import tools subseq partition yama ordtype schensted std stdtab invseq.
-Require Import plactic greeninv.
+Require Import finset perm binomial bigop.
+Require Import tools vectNK subseq partition Yamanouchi ordtype std tableau stdtab.
+Require Import Schensted plactic Greene_inv stdplact.
 
 
 Set Implicit Arguments.
@@ -25,16 +25,6 @@ Unset Printing Implicit Defensive.
 Open Scope bool.
 
 Import OrdNotations.
-
-
-Lemma all_perm_eq (T : eqType) (u v : seq T) P : perm_eq u v -> all P u -> all P v.
-Proof.
-  move=> /perm_eq_mem Hperm /allP Hall; apply/allP => x.
-  by rewrite -Hperm => /Hall.
-Qed.
-
-Lemma flatten_seq1 (T : eqType) (s : seq T) : flatten [seq [:: x] | x <- s] = s.
-Proof. by elim: s => [//= | s0 s /= ->]. Qed.
 
 Section Defs.
 
@@ -80,19 +70,8 @@ Proof.
     apply: perm_map; by apply: IHu.
 Qed.
 
-(* *)
-
-Require Import bigop vectNK.
 
 (* Tentative proof of associativity of shuffle *)
-Lemma sumnE s : \sum_(i <- s) i = sumn s.
-Proof.
-  elim: s => [//= | s0 s IHs] /=; first by rewrite big_nil.
-  by rewrite big_cons IHs.
-Qed.
-
-Lemma perm_sumn l1 l2 : perm_eq l1 l2 -> sumn l1 = sumn l2.
-Proof. rewrite -!sumnE; by apply eq_big_perm. Qed.
 
 Lemma shuffle_perm_eq u l1 l2 :
   perm_eq l1 l2 ->
@@ -148,17 +127,12 @@ Proof.
   rewrite perm_eq_sym; by apply: Hall.
 Qed.
 
-Lemma filter_mem_nil u : [seq x <- u | (mem [::]) x] == [::].
-Proof.
-  rewrite (eq_filter (a2 := pred0)); first by rewrite filter_pred0.
-  move => i /=; by rewrite in_nil.
-Qed.
-
 Lemma all_in_shufflel u v :
   predI (mem u) (mem v) =i pred0 ->
   all (fun s => filter (mem u) s == u) (shuffle u v).
 Proof.
-  elim: u v => [| a u IHu] /= v HI; first by rewrite !andbT filter_mem_nil.
+  elim: u v => [| a u IHu] /= v HI.
+    by rewrite !andbT (eq_filter (a2 := pred0)) // filter_pred0.
   elim: v HI => [_ | b v IHv] /=.
   - rewrite !andbT inE eq_refl /=; apply/eqP; congr (a :: _).
     rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT.
@@ -263,6 +237,7 @@ Proof.
     by apply: (mem_shuffle_pred HI).
 Qed.
 
+(* Unused lemma *)
 Lemma swap_shuffle u v l a b r Pu Pv :
   predI Pu Pv =i pred0 ->
   let s := l ++ [:: a; b] ++ r in
@@ -412,7 +387,7 @@ Qed.
 
 End ShiftedShuffle.
 
-Section LR.
+Section LRTriple.
 
 Variable Alph : ordType.
 Let word := seq Alph.
@@ -585,33 +560,33 @@ Proof.
   by rewrite shape_stdtab_of_yam.
 Qed.
 
-Record plactLRTriple t1 t2 t : Prop :=
-  PlactLRTriple :
+Record LRtriple t1 t2 t : Prop :=
+  LRTriple :
     forall p1 p2 p, RS p1 = t1 -> RS p2 = t2 -> RS p = t ->
-                    p \in shsh p1 p2 -> plactLRTriple t1 t2 t.
-Definition predLRTriple (t1 t2 : seq (seq nat)) :=
+                    p \in shsh p1 p2 -> LRtriple t1 t2 t.
+Definition pred_LRtriple (t1 t2 : seq (seq nat)) :=
   [pred t : (seq (seq nat)) |
    has (fun p => RS p == t)
        (flatten [seq shsh p1 p2 | p1 <- RSclass _ t1, p2 <- RSclass _ t2])].
-Definition predLRTripleFast (t1 t2 : seq (seq nat)) :=
+Definition pred_LRtriple_fast (t1 t2 : seq (seq nat)) :=
   [pred t : (seq (seq nat)) |
    has (fun p2 => to_word t \in shsh (to_word t1) p2) (RSclass _ t2)].
 
-Lemma LRTripleP t1 t2 t :
+Lemma LRtripleP t1 t2 t :
   is_stdtab t1 -> is_stdtab t2 ->
-  reflect (plactLRTriple t1 t2 t) (predLRTriple t1 t2 t).
+  reflect (LRtriple t1 t2 t) (pred_LRtriple t1 t2 t).
 Proof.
   rewrite /is_stdtab => /andP [] Htab1 _ /andP [] Htab2 _.
   apply: (iffP idP) => /=.
   - move=> /hasP [] p /flattenP [] shuf /allpairsP [] [p1 p2] /= [].
     move=> /mapP [] yam1
-            /(allP (enum_yamshP (is_part_sht Htab1))) /= /andP [] Hyam1 Hsh1 Hp1.
+            /(allP (enum_yamevalP (is_part_sht Htab1))) /= /andP [] Hyam1 Hsh1 Hp1.
     move=> /mapP [] yam2
-            /(allP (enum_yamshP (is_part_sht Htab2))) /= /andP [] Hyam2 Hsh2 Hp2.
+            /(allP (enum_yamevalP (is_part_sht Htab2))) /= /andP [] Hyam2 Hsh2 Hp2.
     move=> -> {shuf} Hshuf /eqP <- {t}.
-    apply: (@PlactLRTriple t1 t2 (RS p) p1 p2 p) => //=.
-    + by rewrite Hp1 -RSmapE RS_bij_2 //= Htab1 Hyam1 eq_sym Hsh1.
-    + by rewrite Hp2 -RSmapE RS_bij_2 //= Htab2 Hyam2 eq_sym Hsh2.
+    apply: (@LRTriple t1 t2 (RS p) p1 p2 p) => //=.
+    + by rewrite Hp1 -RSmapE RSmapinv2K //= Htab1 Hyam1 eq_sym Hsh1.
+    + by rewrite Hp2 -RSmapE RSmapinv2K //= Htab2 Hyam2 eq_sym Hsh2.
   - move=> [p1 p2 p]; rewrite -2!RSmapE => Hp1 Hp2 Hp Hsh.
     apply/hasP; exists p; last by rewrite Hp.
     apply/flattenP; exists (shsh p1 p2); last exact Hsh.
@@ -629,9 +604,9 @@ Proof.
   apply: plactic_filter_gtnX; by apply: congr_RS.
 Qed.
 
-Lemma predLRTripleFast_filter_gtnX t1 t2 t :
+Lemma pred_LRtriple_fast_filter_gtnX t1 t2 t :
   is_stdtab t1 -> is_stdtab t ->
-  predLRTripleFast t1 t2 t -> t1 = filter_gtnX_tab (size_tab t1) t.
+  pred_LRtriple_fast t1 t2 t -> t1 = filter_gtnX_tab (size_tab t1) t.
 Proof.
   move=> Ht1 Ht /= /hasP [] p2 Hp2 Hshsh.
   move: Ht1; rewrite /is_stdtab => /andP [] Htab1 Hstd1.
@@ -641,23 +616,23 @@ Proof.
   by rewrite filter_gtnX_RS /= (RS_tabE Htab).
 Qed.
 
-Lemma LRTripleE t1 t2 t :
+Lemma LRtriple_fastE t1 t2 t :
   is_stdtab t1 -> is_stdtab t2 -> is_stdtab t ->
-  predLRTriple t1 t2 t = predLRTripleFast t1 t2 t.
+  pred_LRtriple t1 t2 t = pred_LRtriple_fast t1 t2 t.
 Proof.
   move=> Ht1 Ht2 Ht.
   apply/(sameP idP); apply(iffP idP).
-  - move=> Hfast; apply/(LRTripleP t Ht1 Ht2).
+  - move=> Hfast; apply/(LRtripleP t Ht1 Ht2).
     move: Hfast => /= /hasP [] p2 /mapP [] y2 Hy2.
     have := Ht2; rewrite /is_stdtab => /andP [] Htab2 _.
-    have := (is_part_sht Htab2) => /enum_yamshP/allP Hall2.
+    have := (is_part_sht Htab2) => /enum_yamevalP/allP Hall2.
     have {Hall2 Hy2} := Hall2 _ Hy2.
-    rewrite /is_yam_of_shape => /andP [] Hyam2 /eqP Hsh2 Hp2 Htshsh.
+    rewrite /is_yam_of_eval => /andP [] Hyam2 /eqP Hsh2 Hp2 Htshsh.
     have := Ht1; rewrite /is_stdtab => /andP [] /RS_tabE => H1 _.
-    have H2 : RS p2 = t2 by rewrite Hp2 -RSmapE RS_bij_2 //= Htab2 Hyam2 Hsh2 /=.
+    have H2 : RS p2 = t2 by rewrite Hp2 -RSmapE RSmapinv2K //= Htab2 Hyam2 Hsh2 /=.
     have := Ht; rewrite /is_stdtab => /andP [] /RS_tabE => Hres _.
-    by apply: (PlactLRTriple H1 H2 Hres).
-  - move/(LRTripleP t Ht1 Ht2) => [] p1 p2 p Hp1 Hp2 Hp Hshsh /=.
+    by apply: (LRTriple H1 H2 Hres).
+  - move/(LRtripleP t Ht1 Ht2) => [] p1 p2 p Hp1 Hp2 Hp Hshsh /=.
     rewrite -Hp -Hp1 -Hp2.
     pose p' := (sfilterleq (size p1) (to_word (RS p))).
     have Hp' : RS p2 = RS p'.
@@ -668,12 +643,12 @@ Proof.
     apply/hasP; exists p'.
     + apply /mapP; exists (RSmap p').2.
       * apply/count_memPn; rewrite Hp'.
-        have : is_yam_of_shape (shape (RS p')) (RSmap p').2.
-          by rewrite /is_yam_of_shape is_yam_RSmap2 /= -RSmapE shape_RSmap_eq.
-        by move/(enum_yamsh_countE (is_part_sht (is_tableau_RS p'))) => ->.
+        have : is_yam_of_eval (shape (RS p')) (RSmap p').2.
+          by rewrite /is_yam_of_eval is_yam_RSmap2 /= -RSmapE shape_RSmap_eq.
+        by move/(enum_yameval_countE (is_part_sht (is_tableau_RS p'))) => ->.
       * rewrite Hp' -[RS p']RSmapE /=.
         have -> : ((RSmap p').1, (RSmap p').2) = RSmap p' by case RSmap.
-        by rewrite RS_bij_1.
+        by rewrite RSmapK.
     + have : is_std (to_word (RS p1)) by move: Ht1; rewrite Hp1 /is_stdtab => /andP [].
       move/mem_shsh ->; apply/andP.
       rewrite -size_to_word size_RS; split; last by [].
@@ -682,8 +657,8 @@ Proof.
       by rewrite filter_to_word to_word_filter_nnil.
 Qed.
 
-Lemma is_stdtab_of_n_LRTriple t1 t2 t :
-  is_stdtab t1 -> is_stdtab t2 -> plactLRTriple t1 t2 t ->
+Lemma is_stdtab_of_n_LRtriple t1 t2 t :
+  is_stdtab t1 -> is_stdtab t2 -> LRtriple t1 t2 t ->
   is_stdtab_of_n ((size_tab t1) + (size_tab t2)) t.
 Proof.
   move=> H1 H2 [] p1 p2 p Hp1 Hp2 <- {t} Hp /=.
@@ -699,14 +674,14 @@ Proof.
     by rewrite size_map -Hp1 -Hp2 !size_RS.
 Qed.
 
-Theorem free_LR_rule_plact t1 t2 u1 u2:
+Theorem LRtriple_cat_langQ t1 t2 u1 u2:
   is_stdtab t1 -> is_stdtab t2 -> u1 \in langQ t1 -> u2 \in langQ t2 ->
-  plactLRTriple t1 t2 (RStabmap (u1 ++ u2)).2.
+  LRtriple t1 t2 (RStabmap (u1 ++ u2)).2.
 Proof.
   move=> Hstd1 Hstd2 Hu1 Hu2.
   have Hsz1 := size_langQ Hu1; have Hsz2 := size_langQ Hu2.
   move: Hu1 Hu2; rewrite !inE => /eqP Hu1 /eqP Hu2.
-  apply: (PlactLRTriple (p1 := invstd (std u1))
+  apply: (LRTriple (p1 := invstd (std u1))
                         (p2 := invstd (std u2))
                         (p  := invstd (std (u1 ++ u2))) ).
   + by rewrite -Hu1 RSinvstdE.
@@ -715,18 +690,18 @@ Proof.
   + by apply: invstd_cat_in_shsh.
 Qed.
 
-Theorem free_LR_rule t1 t2 :
+Theorem LRtriple_cat_equiv t1 t2 :
   is_stdtab t1 -> is_stdtab t2 ->
   forall u1 u2 : word,
   ( (u1 \in langQ t1 /\ u2 \in langQ t2) <->
     [/\ size u1 = size_tab t1, size u2 = size_tab t2 &
-     exists t, plactLRTriple t1 t2 t /\ u1 ++ u2 \in langQ t] ).
+     exists t, LRtriple t1 t2 t /\ u1 ++ u2 \in langQ t] ).
 Proof.
   move=> Hstd1 Hstd2 u1 u2.
   split.
   - move=> [] Hu1 Hu2; split; try by apply: size_langQ.
     exists (RStabmap (u1 ++ u2)).2; split.
-    + by apply: free_LR_rule_plact.
+    + by apply: LRtriple_cat_langQ.
     + by rewrite inE.
   - move=> [] Hsz1 Hsz2 [] t [] [] p1 p2 p Hp1 Hp2 Htmp; subst t.
     rewrite !inE -!RSinvstdE -Hp1 -Hp2 -!plactic_RS => Hsh Hcat.
@@ -741,24 +716,64 @@ Proof.
       by apply: plactic_filter_leqX.
 Qed.
 
-End LR.
+
+Theorem LRtriple_conj t1 t2 t :
+  is_stdtab t1 -> is_stdtab t2 -> is_stdtab t ->
+  LRtriple t1 t2 t -> LRtriple (conj_tab t1) (conj_tab t2) (conj_tab t).
+Proof.
+  move=> Ht1 Ht2 Ht [] p1 p2 p Hp1 Hp2 Hp.
+  rewrite mem_shsh; last by rewrite -RSstdE Hp1.
+  move=> /= /andP [] /eqP Hsh1 /eqP Hsh2.
+  apply: (@LRTriple _ _ _ (rev p1) (rev p2) (rev p)).
+  - rewrite RS_rev_uniq; last by apply std_uniq; rewrite -RSstdE Hp1.
+    by rewrite Hp1.
+  - rewrite RS_rev_uniq; last by apply std_uniq; rewrite -RSstdE Hp2.
+    by rewrite Hp2.
+  - rewrite RS_rev_uniq; last by apply std_uniq; rewrite -RSstdE Hp.
+    by rewrite Hp.
+  - rewrite mem_shsh; first last.
+      rewrite /is_std size_rev.
+      have := perm_rev p1 => /perm_eqlP <-.
+      by rewrite -/(is_std _)  -RSstdE Hp1.
+    by rewrite /= size_rev !filter_rev map_rev Hsh1 Hsh2 !eq_refl.
+Qed.
+
+Theorem pred_LRtriple_conj t1 t2 t :
+  is_stdtab t1 -> is_stdtab t2 -> is_stdtab t ->
+  pred_LRtriple t1 t2 t = pred_LRtriple (conj_tab t1) (conj_tab t2) (conj_tab t).
+Proof.
+  move=> Ht1 Ht2 Ht.
+  have Hc1 := is_stdtab_conj Ht1.
+  have Hc2 := is_stdtab_conj Ht2.
+  have Hc := is_stdtab_conj Ht.
+  apply (sameP idP); apply (iffP idP) => /LRtripleP H; apply/LRtripleP => //=.
+  - rewrite -[t1]conj_tabK; last by move: Ht1 => /andP [].
+    rewrite -[t2]conj_tabK; last by move: Ht2 => /andP [].
+    rewrite -[t]conj_tabK;  last by move: Ht  => /andP [].
+    apply: LRtriple_conj => //; exact: H.
+  - apply: LRtriple_conj => //; exact: H.
+Qed.
+
+End LRTriple.
+
+Implicit Arguments langQ [Alph].
 
 (*
 (* First non trivial example of LR rule *)
 Eval compute in map (@shape nat_ordType)
                     (filter
-                       (predLRTriple [:: [:: 0; 1]; [:: 2]] [:: [:: 0; 1]; [:: 2]])
+                       (pred_LRtriple [:: [:: 0; 1]; [:: 2]] [:: [:: 0; 1]; [:: 2]])
                        (enum_stdtabn 6)).
 
 Eval compute in count
-                  (predLRTriple [:: [:: 0; 1]; [:: 2]] [:: [:: 0; 1]; [:: 2]])
+                  (pred_LRtriple [:: [:: 0; 1]; [:: 2]] [:: [:: 0; 1]; [:: 2]])
                   (enum_stdtabsh [:: 3; 2; 1]).
 
 Eval compute in count
-                  (predLRTripleFast [:: [:: 0; 1]; [:: 2]] [:: [:: 0; 1]; [:: 2]])
+                  (pred_LRtriple_fast [:: [:: 0; 1]; [:: 2]] [:: [:: 0; 1]; [:: 2]])
                   (enum_stdtabsh [:: 3; 2; 1]).
 
 Eval compute in count
-                  (predLRTripleFast [:: [:: 0; 1]; [:: 2; 3]] [:: [:: 0; 1]; [:: 2; 3]])
+                  (pred_LRtriple_fast [:: [:: 0; 1]; [:: 2; 3]] [:: [:: 0; 1]; [:: 2; 3]])
                   (enum_stdtabsh [:: 4; 4]).
 *)

@@ -14,7 +14,8 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm tuple path bigop.
-Require Import tools subseq partition ordtype schensted congr plactic ordcast.
+Require Import sorted tools subseq partition ordtype tableau.
+Require Import Schensted congr plactic ordcast.
 
 
 Set Implicit Arguments.
@@ -267,7 +268,7 @@ Qed.
 
 End BigTrivISeq.
 
-Section GreenDef.
+Section GreeneDef.
 
 Variable Alph : ordType.
 
@@ -357,7 +358,7 @@ Proof.
 Qed.
 
 Definition scover := [fun P : {set {set 'I_N}} => #|cover P|].
-Definition green_rel_t k := \max_(P | ksupp k P) scover P.
+Definition Greene_rel_t k := \max_(P | ksupp k P) scover P.
 
 Notation Ik k := [set i : 'I_N | i < k].
 
@@ -420,7 +421,7 @@ Proof.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> k; by rewrite !inE.
 Qed.
 
-Lemma green_rel_t_inf k : green_rel_t k >= minn N k.
+Lemma Greene_rel_t_inf k : Greene_rel_t k >= minn N k.
 Proof.
   pose P := [set [set i ] | i in Ik k].
   have <- : scover P = minn N k.
@@ -440,19 +441,19 @@ Proof.
       by apply: set1_disjoint.
     + apply/forallP => s; apply/implyP => /imsetP [] i Hi ->; rewrite inE in Hi.
       by rewrite extract1 /sorted.
-  rewrite /green_rel_t; by apply: leq_bigmax_cond.
+  rewrite /Greene_rel_t; by apply: leq_bigmax_cond.
 Qed.
 
-Lemma green_rel_t_sup k : green_rel_t k <= N.
+Lemma Greene_rel_t_sup k : Greene_rel_t k <= N.
 Proof.
-  rewrite /green_rel_t /=; apply/bigmax_leqP => P _.
+  rewrite /Greene_rel_t /=; apply/bigmax_leqP => P _.
   move: (cover P) => cover {P}; rewrite -{5}[N]card_ord.
   by apply: max_card.
 Qed.
 
-Lemma green_rel_t_0 : green_rel_t 0 = 0.
+Lemma Greene_rel_t_0 : Greene_rel_t 0 = 0.
 Proof.
-  rewrite /green_rel_t /=.
+  rewrite /Greene_rel_t /=.
   apply/eqP; rewrite eqn_leq; apply/andP; split; last by [].
   apply/bigmax_leqP => S.
   rewrite /ksupp => /and3P [] HS _ _.
@@ -460,15 +461,38 @@ Proof.
   by rewrite /cover big_set0 cards0.
 Qed.
 
-End GreenDef.
+End GreeneDef.
 
 Arguments scover [N].
 
-Lemma green_rel_t_cast (Alph : ordType) R M N (Heq : M = N) k (V : M.-tuple Alph) :
-  green_rel_t R (tcast Heq V) k = green_rel_t R V k.
+Lemma eq_Greene_rel_t (T : ordType) (R1 R2 : rel T) N (u : N.-tuple T) :
+  R1 =2 R2 -> Greene_rel_t R1 u  =1  Greene_rel_t R2 u.
+Proof.
+  rewrite /Greene_rel_t /= => H k.
+  apply eq_bigl => S; rewrite /ksupp; congr [&& _, _ & _].
+  rewrite /is_seq /=; apply eq_forallb_in => s _.
+  case: (extractpred _ _) => [| e t] //=.
+  by rewrite (eq_path H).
+Qed.
+
+Lemma Greene_rel_t_cast (Alph : ordType) R M N (Heq : M = N) k (V : M.-tuple Alph) :
+  Greene_rel_t R (tcast Heq V) k = Greene_rel_t R V k.
 Proof. by subst M. Qed.
 
-Section GreenCat.
+Lemma Greene_rel_t_uniq (T : ordType) (leT : rel T) N (u : N.-tuple T) :
+  uniq u -> Greene_rel_t leT u  =1  Greene_rel_t (fun x y => (x != y) && (leT x y)) u.
+Proof.
+  rewrite /Greene_rel_t => Huniq k.
+  apply eq_bigl => S; rewrite /ksupp; congr [&& _, _ & _].
+  rewrite /is_seq /=; apply eq_forallb_in => s _ {S k}.
+  have {Huniq} := subseq_uniq (extsubsm u (mem s)) Huniq.
+  case: (extractpred _ _) => {s} [| n s] //=.
+  elim: s n => //= m s IHs n.
+  by rewrite inE negb_or => /andP [] /andP [] -> _ /IHs ->.
+Qed.
+
+
+Section GreeneCat.
 
 Variable Alph : ordType.
 
@@ -582,10 +606,10 @@ Proof.
   rewrite inE /=; by apply: leq_addr.
 Qed.
 
-Lemma green_rel_t_cat k :
-  green_rel_t comp [tuple of V ++ W] k <= green_rel_t comp V k + green_rel_t comp W k.
+Lemma Greene_rel_t_cat k :
+  Greene_rel_t comp [tuple of V ++ W] k <= Greene_rel_t comp V k + Greene_rel_t comp W k.
 Proof.
-  rewrite /green_rel_t; set tc := [tuple of V ++ W].
+  rewrite /Greene_rel_t; set tc := [tuple of V ++ W].
   have H : 0 < #|ksupp comp tc k| by apply/card_gt0P; exists set0; apply: ksupp0.
   case: (@eq_bigmax_cond _ (ksupp comp tc k) scover H) => ks Hks ->.
   pose PV := lsplit @: ks; pose PW := rsplit @: ks.
@@ -609,10 +633,10 @@ Proof.
   by apply: leq_add.
 Qed.
 
-End GreenCat.
+End GreeneCat.
 
 
-Section GreenSeq.
+Section GreeneSeq.
 
 Variable Alph : ordType.
 Implicit Type u v w : seq Alph.
@@ -620,27 +644,27 @@ Implicit Type u v w : seq Alph.
 Variable comp : rel Alph.
 Hypothesis Hcomp : transitive comp.
 
-Definition green_rel u := [fun k => green_rel_t comp (in_tuple u) k].
+Definition Greene_rel u := [fun k => Greene_rel_t comp (in_tuple u) k].
 
-Lemma green_rel_cat k v w : green_rel (v ++ w) k <= green_rel v k + green_rel w k.
+Lemma Greene_rel_cat k v w : Greene_rel (v ++ w) k <= Greene_rel v k + Greene_rel w k.
 Proof.
   rewrite /disjoint /=.
-  suff -> : green_rel_t comp (in_tuple (v ++ w)) k =
-            green_rel_t comp [tuple of (in_tuple v) ++ (in_tuple w)] k
-    by apply: green_rel_t_cat.
+  suff -> : Greene_rel_t comp (in_tuple (v ++ w)) k =
+            Greene_rel_t comp [tuple of (in_tuple v) ++ (in_tuple w)] k
+    by apply: Greene_rel_t_cat.
   have Hsz : size (v ++ w) = (size v + size w) by rewrite size_cat.
-  rewrite -(green_rel_t_cast _ Hsz); congr (green_rel_t comp _ k).
+  rewrite -(Greene_rel_t_cast _ Hsz); congr (Greene_rel_t comp _ k).
   apply: eq_from_tnth => i; by rewrite tcastE !(tnth_nth (inhabitant Alph)).
 Qed.
 
 Let negcomp := (fun a b => ~~(comp a b)).
 Hypothesis Hnegcomp : transitive negcomp.
 
-Lemma green_rel_seq r k : is_seq negcomp r -> green_rel r k = minn (size r) k.
+Lemma Greene_rel_seq r k : is_seq negcomp r -> Greene_rel r k = minn (size r) k.
 Proof.
   move=> Hrow /=.
-  apply/eqP; rewrite eqn_leq; apply/andP; split; last by apply: green_rel_t_inf.
-  rewrite leq_min green_rel_t_sup /=; apply/bigmax_leqP => s.
+  apply/eqP; rewrite eqn_leq; apply/andP; split; last by apply: Greene_rel_t_inf.
+  rewrite leq_min Greene_rel_t_sup /=; apply/bigmax_leqP => s.
   rewrite /ksupp /trivIset => /and3P [] Hcard /eqP /= <- /forallP Hsort.
   suff {Hcard} H B : B \in s -> #|B| <= 1.
     apply: (@leq_trans (\sum_(B in s) 1)); last by rewrite sum1_card.
@@ -654,9 +678,142 @@ Proof.
   by rewrite /negcomp Hgt.
 Qed.
 
-End GreenSeq.
+End GreeneSeq.
 
-Section GreenRec.
+
+Lemma eq_Greene_rel (T : ordType) (R1 R2 : rel T) u :
+  R1 =2 R2 -> Greene_rel R1 u  =1  Greene_rel R2 u.
+Proof. exact: eq_Greene_rel_t. Qed.
+
+Lemma Greene_rel_uniq (T : ordType) (leT : rel T) u :
+  uniq u -> Greene_rel leT u  =1  Greene_rel (fun x y => (x != y) && (leT x y)) u.
+Proof. move=> Hu; rewrite /Greene_rel => k /=; exact: Greene_rel_t_uniq. Qed.
+
+Lemma size_cover_inj (T1 T2 : finType) (F : T1 -> T2) (P : {set {set T1}}):
+  injective F -> #|cover P| = #|cover [set F @: S | S : {set T1} in P]|.
+Proof.
+  move=> Hinj.
+  set FSet := fun S : {set T1} => F @: S.
+  suff -> : cover [set FSet S | S in P] = FSet (cover P) by rewrite card_imset.
+  rewrite cover_imset /cover; apply: esym; apply: big_morph.
+  + move=> i j /=; by apply: imsetU.
+  + by apply: imset0.
+Qed.
+
+Section GreeneInj.
+
+Variable T1 T2 : ordType.
+Variable R1 : rel T1.
+Variable R2 : rel T2.
+
+Definition ksupp_inj k (u1 : seq T1) (u2 : seq T2) :=
+  forall s1, ksupp R1 (in_tuple u1) k s1 ->
+             exists s2, (scover s1 == scover s2) && ksupp R2 (in_tuple u2) k s2.
+
+Lemma leq_Greene k (u1 : seq T1) (u2 : seq T2) :
+  ksupp_inj k u1 u2 -> Greene_rel R1 u1 k <= Greene_rel R2 u2 k.
+Proof.
+  move=> Hinj; rewrite /= /Greene_rel /Greene_rel_t.
+  set P1 := ksupp R1 (in_tuple u1) k.
+  have : #|P1| > 0.
+    rewrite -cardsE card_gt0; apply/set0Pn.
+    exists set0; rewrite in_set; by apply: ksupp0.
+  move/(eq_bigmax_cond scover) => [] ks1 Hks1 ->.
+  have := Hinj _ Hks1 => [] [] ks2 /andP [] /eqP -> Hks2.
+  by apply: leq_bigmax_cond.
+Qed.
+
+End GreeneInj.
+
+
+Section Rev.
+
+Variable Alph : ordType.
+Let Z := (inhabitant Alph).
+Implicit Type u v w : seq Alph.
+Implicit Type p : seq nat.
+Implicit Type t : seq (seq Alph).
+
+Definition revset n (s : {set 'I_n}) : {set 'I_n} := [set rev_ord x | x in s].
+
+Lemma revsetK {n} : involutive (@revset n).
+Proof.
+  rewrite /revset => s.
+  rewrite -imset_comp -setP => i /=.
+  apply (sameP idP); apply (iffP idP).
+  - move=> Hi; apply /imsetP; exists i => //=.
+    by rewrite rev_ordK.
+  - move/imsetP => [] x /= Hx ->.
+    by rewrite rev_ordK.
+Qed.
+
+
+Lemma ksupp_inj_rev (leT : rel Alph) u k : ksupp_inj leT (fun y x => leT x y) k u (rev u).
+Proof.
+  move=> ks /and3P [] Hsz Htriv /forallP Hall.
+  exists (cast_set (esym (size_rev u)) @: ((@revset _) @: ks)).
+  apply/and4P; split.
+  - rewrite /scover /= cover_cast /cast_set /=.
+    rewrite card_imset; last by apply: cast_ord_inj.
+    rewrite -size_cover_inj //; apply inv_inj; exact: rev_ordK.
+  - apply: (@leq_trans #|ks|); last exact Hsz.
+    rewrite -imset_comp; exact: leq_imset_card.
+  - apply: imset_trivIset; first exact: cast_ord_inj.
+    apply: imset_trivIset; last exact: Htriv.
+    apply inv_inj; exact: rev_ordK.
+  - apply/forallP => S1; apply/implyP => /imsetP [] S2 /imsetP [] S HS -> -> {S1 S2}.
+    have {Hall} := Hall S; rewrite HS /=.
+    rewrite -(revK (extractpred (in_tuple (rev u)) _)) rev_sorted.
+    rewrite !extractIE -map_rev -filter_rev.
+    rewrite (eq_map (f2 := fun i => tnth (in_tuple u) (cast_ord (size_rev u) (rev_ord i))));
+      first last.
+      move=> i /=; by rewrite !(tnth_nth Z) /= nth_rev ?{2}(size_rev u) // -(size_rev u).
+    set S1 := (X in sorted _ X -> _); set S2 := (X in _ -> sorted _ X).
+    suff -> : S1 = S2 by [].
+    rewrite /S1 /S2 {S1 S2 k ks Hsz Htriv HS}.
+    rewrite !map_comp; congr map; rewrite map_id.
+    set f := (X in map (@rev_ord _) (filter X _)).
+    have {f} /eq_filter -> : f =1 fun i => (cast_ord (size_rev u) (rev_ord i)) \in S.
+      rewrite /f /revset /cast_set => i /=.
+      rewrite -{1}(cast_ordK (size_rev u) i) mem_cast.
+      rewrite -{1}(rev_ordK i).
+      have -> x : cast_ord (size_rev u) (rev_ord x) = rev_ord (cast_ord (size_rev u) x).
+        apply val_inj => /=; by rewrite {1}size_rev.
+      by rewrite (mem_imset_inj _ _ rev_ord_inj).
+    rewrite (map_filter_comp _ (fun i => cast_ord (size_rev u) i \in S) (@rev_ord _)).
+    rewrite map_id -filter_map; congr filter.
+    apply (inj_map val_inj); apply (eq_from_nth (x0 := 0)).
+      by rewrite !size_map !size_rev size_map.
+    rewrite size_map size_enum_ord => i Hi.
+    rewrite -![X in (_ = nth _ X _)]map_comp.
+    rewrite map_rev val_enum_ord (nth_iota _ Hi) add0n.
+    rewrite nth_rev size_map size_enum_ord; last by rewrite size_rev.
+    rewrite {12}(size_rev).
+    rewrite (eq_map (f2 := (fun i => (size u - i.+1))\o val)); first last.
+      move=> j /=; by rewrite {1}size_rev.
+    rewrite map_comp val_enum_ord size_rev.
+    have Hu : size u - i.+1 < size u by rewrite -subn_gt0 subKn.
+    rewrite (nth_map 0); last by rewrite size_iota.
+    rewrite (nth_iota _ Hu) add0n -(subSn Hi) subSS.
+    by rewrite subKn; last by apply ltnW.
+Qed.
+
+Lemma Greene_rel_rev (leT : rel Alph) u :
+  Greene_rel leT u =1 Greene_rel (fun y x => leT x y) (rev u).
+Proof.
+  move=> k; apply anti_leq; apply/andP; split.
+  - apply leq_Greene; first exact: ksupp_inj_rev.
+  - rewrite [X in (_ <= X)](eq_Greene_rel
+                              (R2 := (fun y : Alph => (fun y : Alph => leT^~ y)^~ y))).
+    + apply leq_Greene; rewrite -{2}(revK u); exact: ksupp_inj_rev.
+    + by move=> i j.
+Qed.
+
+End Rev.
+
+
+
+Section GreeneRec.
 
 Variable Alph : ordType.
 Implicit Type u v w : seq Alph.
@@ -1276,18 +1433,18 @@ Proof.
     by apply: (sorted_gtnX_tabcols Htab).
 Qed.
 
-End GreenRec.
+End GreeneRec.
 
 
 
-Section GreenTab.
+Section GreeneTab.
 
 Variable Alph : ordType.
 
 Implicit Type t : seq (seq Alph).
 
-Definition greenRow := green_rel (@leqX Alph).
-Definition greenCol := green_rel (@gtnX Alph).
+Definition Greene_row := Greene_rel (@leqX Alph).
+Definition Greene_col := Greene_rel (@gtnX Alph).
 
 Lemma size_row_extract t S T :
   is_tableau t -> T \in (tabcols t) ->
@@ -1348,11 +1505,11 @@ Proof.
     by rewrite card_imset; last by apply: cast_ord_inj.
 Qed.
 
-Lemma greenRow_extract k t :
-  is_tableau t -> greenRow (to_word t) k <= \sum_(l <- conj_part (shape t)) minn l k.
+Lemma Greene_row_extract k t :
+  is_tableau t -> Greene_row (to_word t) k <= \sum_(l <- conj_part (shape t)) minn l k.
 Proof.
   move=> Htab; rewrite (shape_tabcols Htab).
-  rewrite /greenRow /green_rel /= /green_rel_t /scover /=.
+  rewrite /Greene_row /Greene_rel /= /Greene_rel_t /scover /=.
   apply/bigmax_leqP => S; rewrite /ksupp => /and3P [] Hsz Htriv.
   have:= Htriv; rewrite /trivIset => /eqP <- /forallP Hall.
   rewrite (eq_bigr (fun B => \sum_(S <- tabcols t) #|B :&: S|));
@@ -1367,32 +1524,32 @@ Proof.
     have:= Hall P; by rewrite HP.
 Qed.
 
-Lemma greenRow_inf_tab k t :
-  is_tableau t -> greenRow (to_word t) k <= part_sum (shape t) k.
+Lemma Greene_row_inf_tab k t :
+  is_tableau t -> Greene_row (to_word t) k <= part_sum (shape t) k.
 Proof.
   move=> Htab.
-  have:= greenRow_extract k Htab; by rewrite sum_conj (conj_partK (is_part_sht Htab)).
+  have:= Greene_row_extract k Htab; by rewrite sum_conj (conj_partK (is_part_sht Htab)).
 Qed.
 
-Theorem greenRow_tab k t :
-  is_tableau t -> greenRow (to_word t) k = part_sum (shape t) k.
+Theorem Greene_row_tab k t :
+  is_tableau t -> Greene_row (to_word t) k = part_sum (shape t) k.
 Proof.
-  move=> Ht; apply/eqP; rewrite eqn_leq (greenRow_inf_tab _ Ht) /=.
-  rewrite /greenRow /green_rel_t /= -(scover_tabrows _ (is_part_sht Ht)).
+  move=> Ht; apply/eqP; rewrite eqn_leq (Greene_row_inf_tab _ Ht) /=.
+  rewrite /Greene_row /Greene_rel_t /= -(scover_tabrows _ (is_part_sht Ht)).
   apply: leq_bigmax_cond; by apply: ksupp_leqX_tabrowsk.
 Qed.
 
-Lemma greenCol_inf_tab k t :
-  is_tableau t -> greenCol (to_word t) k <= \sum_(l <- (shape t)) minn l k.
+Lemma Greene_col_inf_tab k t :
+  is_tableau t -> Greene_col (to_word t) k <= \sum_(l <- (shape t)) minn l k.
 Proof.
   elim: t => [_ | t0 t IHt] /=.
-    by apply: (@leq_trans 0); first by apply: green_rel_t_sup.
+    by apply: (@leq_trans 0); first by apply: Greene_rel_t_sup.
   move=> /and4P [] _ Hrow _ /IHt => {IHt} Ht; rewrite to_word_cons.
-  apply: (@leq_trans (greenCol (in_tuple (to_word t)) k + greenCol (in_tuple t0) k)).
-  - apply: green_rel_cat; by move=> a b c /= H1 H2; apply: (ltnX_trans H2 H1).
+  apply: (@leq_trans (Greene_col (in_tuple (to_word t)) k + Greene_col (in_tuple t0) k)).
+  - apply: Greene_rel_cat; by move=> a b c /= H1 H2; apply: (ltnX_trans H2 H1).
   - rewrite big_cons addnC; apply: leq_add; last exact Ht.
-    have:= (@green_rel_seq _ gtnX _ t0 k).
-    rewrite /green_rel /= => -> //=.
+    have:= (@Greene_rel_seq _ gtnX _ t0 k).
+    rewrite /Greene_rel /= => -> //=.
     * move=> a b c /=; rewrite -!leqXNgtnX; by apply: leqX_trans.
     * move: Hrow; rewrite /sorted; case: t0 => [//=| l t0].
       have Req : leqX_op =2 (fun a b : Alph => ~~ (b < a)%Ord)
@@ -1400,36 +1557,36 @@ Proof.
       by rewrite (eq_path Req).
 Qed.
 
-Theorem greenCol_tab_min k t :
-  is_tableau t -> greenCol (to_word t) k = \sum_(l <- (shape t)) minn l k.
+Theorem Greene_col_tab_min k t :
+  is_tableau t -> Greene_col (to_word t) k = \sum_(l <- (shape t)) minn l k.
 Proof.
-  move=> Ht; apply/eqP; rewrite eqn_leq (greenCol_inf_tab _ Ht) /=.
-  rewrite /greenCol /green_rel_t /= -(scover_tabcolsk _ (is_part_sht Ht)).
+  move=> Ht; apply/eqP; rewrite eqn_leq (Greene_col_inf_tab _ Ht) /=.
+  rewrite /Greene_col /Greene_rel_t /= -(scover_tabcolsk _ (is_part_sht Ht)).
   apply: leq_bigmax_cond; by apply: ksupp_gtnX_tabcolsk.
 Qed.
 
-Theorem greenCol_tab k t :
-  is_tableau t -> greenCol (to_word t) k = part_sum (conj_part (shape t)) k.
-Proof. move/greenCol_tab_min ->; by apply: sum_conj. Qed.
+Theorem Greene_col_tab k t :
+  is_tableau t -> Greene_col (to_word t) k = part_sum (conj_part (shape t)) k.
+Proof. move/Greene_col_tab_min ->; by apply: sum_conj. Qed.
 
-End GreenTab.
+End GreeneTab.
 
 
 
-Theorem greenRow_tab_eq_shape (T1 T2 : ordType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
+Theorem Greene_row_tab_eq_shape (T1 T2 : ordType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
   is_tableau t1 -> is_tableau t2 ->
-  (forall k, greenRow (to_word t1) k = greenRow (to_word t2) k) -> (shape t1 = shape t2).
+  (forall k, Greene_row (to_word t1) k = Greene_row (to_word t2) k) -> (shape t1 = shape t2).
 Proof.
   move=> Htab1 Htab2 Heq.
   have Hsh1 := is_part_sht Htab1; have Hsh2 := is_part_sht Htab2.
   apply: (part_sum_inj Hsh1 Hsh2).
-  move=> k. rewrite -(greenRow_tab k Htab1) -(greenRow_tab k Htab2).
+  move=> k. rewrite -(Greene_row_tab k Htab1) -(Greene_row_tab k Htab2).
   by apply: Heq.
 Qed.
 
-Theorem greenCol_tab_eq_shape (T1 T2 : ordType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
+Theorem Greene_col_tab_eq_shape (T1 T2 : ordType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
   is_tableau t1 -> is_tableau t2 ->
-  (forall k, greenCol (to_word t1) k = greenCol (to_word t2) k) -> (shape t1 = shape t2).
+  (forall k, Greene_col (to_word t1) k = Greene_col (to_word t2) k) -> (shape t1 = shape t2).
 Proof.
   move=> Htab1 Htab2 Heq.
   have Hsh1 := is_part_sht Htab1; have Hsh2 := is_part_sht Htab2.
@@ -1437,7 +1594,6 @@ Proof.
     move=> H; rewrite -(conj_partK Hsh1) -(conj_partK Hsh2).
     by rewrite H (conj_partK Hsh2).
   apply: (part_sum_inj (is_part_conj Hsh1) (is_part_conj Hsh2)).
-  move=> k. rewrite -(greenCol_tab k Htab1) -(greenCol_tab k Htab2).
+  move=> k. rewrite -(Greene_col_tab k Htab1) -(Greene_col_tab k Htab2).
   by apply: Heq.
 Qed.
-

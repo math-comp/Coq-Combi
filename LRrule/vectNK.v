@@ -18,6 +18,11 @@ Require Import tools.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+(******************************************************************************)
+(** Integer vectors of sum [[n]] and size [[k]]                               *)
+(**                                                                           *)
+(** TODO: make this a proper [[finType]].                                     *)
+(******************************************************************************)
 
 Section VectNK.
 
@@ -90,9 +95,17 @@ Proof.
   by move: H => /count_memPn ->.
 Qed.
 
+
 End VectNK.
 
-Section CutNK.
+
+(******************************************************************************)
+(** Cutting a seq in [[k]] slices                                             *)
+(**                                                                           *)
+(** The result is of type [[seq seq T]]                                       *)
+(******************************************************************************)
+
+Section CutK.
 
 Variable T : eqType.
 Implicit Type (s : seq T) (ss : seq (seq T)).
@@ -123,7 +136,13 @@ Proof.
   by rewrite reshapeKl; last by rewrite Hsum.
 Qed.
 
-End CutNK.
+End CutK.
+
+(******************************************************************************)
+(** Cutting a seq in 3 slices                                                 *)
+(**                                                                           *)
+(** The result is of type (seq T) * (seq T) * (seq T)                         *)
+(******************************************************************************)
 
 Section Cut3.
 

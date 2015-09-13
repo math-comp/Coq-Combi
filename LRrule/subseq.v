@@ -13,10 +13,12 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
+Require Import path.
 Require Import tools combclass.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+
 
 Section RCons.
 
@@ -62,13 +64,37 @@ End RCons.
 Section Fintype.
   (* We define SubSeq w as a finType *)
 
-Variable (T : countType) (w : seq T).
+Variable (T : countType).
 Implicit Type s w : seq T.
 
 Fixpoint enum_subseqs w :=
   if w is w0 :: w' then
     let rec := enum_subseqs w' in [seq w0 :: s | s <- rec ] ++ rec
   else [:: [::] ].
+
+Lemma cons_in_enum_subseq x0 x s :
+  x0 :: x \in enum_subseqs s -> x0 \in s.
+Proof.
+  elim: s => [//= | s0 s IHs] /=.
+  rewrite inE mem_cat => /orP [].
+  - move=> /mapP [] x1 _ [] -> _.
+    by rewrite eq_refl.
+  - move/IHs ->; by rewrite orbT.
+Qed.
+
+Lemma enum_subseqs_uniq s : uniq s -> uniq (enum_subseqs s).
+Proof.
+  elim: s => [//= | s0 s IHs] /= /andP [] Hs0 /IHs{IHs} Huniq.
+  rewrite cat_uniq; apply/and3P; split.
+  - by rewrite map_inj_uniq // => i j [].
+  - apply/hasP => [] [] x.
+    case: x => [_| x0 x] /=; first by move=> /mapP [] y _.
+    move=> /cons_in_enum_subseq Hs0' /mapP [] y _ [] Hx0 _.
+    move: Hs0; by rewrite -Hx0 Hs0'.
+  - exact: Huniq.
+Qed.
+
+Variable (w : seq T).
 
 Lemma enum_subseqsP : all (fun s => subseq s w) (enum_subseqs w).
 Proof.
@@ -116,7 +142,11 @@ Proof. by case: s => /= s. Qed.
 
 Lemma enum_subseqsE :
   map val (enum subseqs) = undup (enum_subseqs w).
-Proof. rewrite /=; by apply enum_sub_undupP. Qed.
+Proof. rewrite /=; by apply enum_sub_undupE. Qed.
+
+Lemma uniq_enum_subseqsE :
+  uniq w -> map val (enum subseqs) = enum_subseqs w.
+Proof. move/enum_subseqs_uniq/undup_id <-. exact: enum_subseqsE. Qed.
 
 Definition sub_nil  : subseqs := Subseqs (sub0seq w).
 Definition sub_full : subseqs := Subseqs (subseq_refl w).
@@ -126,3 +156,39 @@ Proof. case: s => s Ps /=; by apply: size_subseq. Qed.
 
 End Fintype.
 
+
+Lemma sorted_subseq_iota_rcons s n : subseq s (iota 0 n) = sorted ltn (rcons s n).
+Proof.
+  apply (sameP idP); apply (iffP idP).
+  - elim: n s => [/= [//=| s0 s]| n IHn s].
+      rewrite rcons_cons /= => /(order_path_min ltn_trans) /= /allP Hall.
+      exfalso.
+      suff /Hall : 0 \in rcons s 0 by [].
+      by rewrite mem_rcons inE eq_refl.
+    case/lastP: s => [_| s sn]; first exact: sub0seq.
+    case: (ltnP sn n) => Hsn Hsort.
+    + have {Hsort} Hsort : sorted ltn (rcons s sn).
+        case: s Hsort => [//= | s0 s].
+        by rewrite !rcons_cons /= rcons_path => /andP [].
+      have /IHn : sorted ltn (rcons (rcons s sn) n).
+        case: s Hsort => [_ /= | s0 s]; first by rewrite andbT.
+        rewrite !rcons_cons /=.
+        by rewrite (rcons_path ltn s0 (rcons s sn) n) /= last_rcons Hsn => ->.
+      move/subseq_trans; apply.
+      rewrite -addn1 iota_add add0n cats1.
+      exact: subseq_rcons.
+    + have H : sn = n.
+        apply anti_leq; rewrite Hsn andbT.
+        move: Hsort.
+        case: s => [/= /andP []| s0 s]/=; first by rewrite ltnS.
+        by rewrite rcons_path /= last_rcons ltnS => /andP [].
+      subst sn.
+      rewrite -addn1 iota_add add0n /= cats1.
+      rewrite -subseq_rcons_eq; apply IHn.
+      case: s Hsort => [//= | s0 s].
+      by rewrite !rcons_cons /= rcons_path => /andP [].
+  - move=> Hsubs.
+    apply: (subseq_sorted ltn_trans (s2 := (iota 0 n.+1))).
+    + by rewrite -addn1 iota_add add0n /= cats1 -subseq_rcons_eq.
+    + exact: iota_ltn_sorted.
+Qed.

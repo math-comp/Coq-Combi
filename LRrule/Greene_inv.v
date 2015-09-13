@@ -14,22 +14,12 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm tuple path bigop.
-Require Import tools subseq partition yama ordtype schensted congr plactic ordcast green.
+Require Import tools ordcast ordtype subseq partition tableau Yamanouchi stdtab.
+Require Import Schensted congr plactic Greene.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
-
-Lemma size_cover_inj (T1 T2 : finType) (F : T1 -> T2) (P : {set {set T1}}):
-  let FSet := fun S : {set T1} => F @: S in
-  injective F -> #|cover P| = #|cover [set FSet S | S in P]|.
-Proof.
-  move=> FSet Hinj; have -> : cover [set FSet S | S in P] = FSet (cover P).
-  rewrite cover_imset /cover; apply: esym; apply: big_morph.
-  + move=> i j /=; by apply: imsetU.
-  + by apply: imset0.
-  by rewrite card_imset.
-Qed.
 
 Lemma bigcup_set1 (T1 : finType) (S : {set T1}) :
   \bigcup_(i in [set S]) i = S.
@@ -55,31 +45,6 @@ Proof.
 Qed.
 
 Open Scope bool.
-
-Section GreenInj.
-
-Variable T1 T2 : ordType.
-Variable R1 : rel T1.
-Variable R2 : rel T2.
-
-Definition ksupp_inj k (u1 : seq T1) (u2 : seq T2) :=
-  forall s1, ksupp R1 (in_tuple u1) k s1 ->
-             exists s2, (scover s1 == scover s2) && ksupp R2 (in_tuple u2) k s2.
-
-Lemma leq_green k (u1 : seq T1) (u2 : seq T2) :
-  ksupp_inj k u1 u2 -> green_rel R1 u1 k <= green_rel R2 u2 k.
-Proof.
-  move=> Hinj; rewrite /= /green_rel /green_rel_t.
-  set P1 := ksupp R1 (in_tuple u1) k.
-  have : #|P1| > 0.
-    rewrite -cardsE card_gt0; apply/set0Pn.
-    exists set0; rewrite in_set; by apply: ksupp0.
-  move/(eq_bigmax_cond scover) => [] ks1 Hks1 ->.
-  have := Hinj _ Hks1 => [] [] ks2 /andP [] /eqP -> Hks2.
-  by apply: leq_bigmax_cond.
-Qed.
-
-End GreenInj.
 
 Section ExtractCuti.
 
@@ -272,28 +237,28 @@ Qed.
 Lemma scover_rev P : scover (rev_ksupp P) = scover P.
 Proof. by rewrite !/scover /= -size_cover_inj; last exact rev_ord_cast_inj. Qed.
 
-Lemma greenCol_dual : greenCol w k = greenCol (revdual w) k.
+Lemma Greene_col_dual : Greene_col w k = Greene_col (revdual w) k.
 Proof.
-  rewrite /greenCol /=.
+  rewrite /Greene_col /=.
   apply/eqP; rewrite eqn_leq; apply/andP; split.
-  - apply: (@leq_green _ (dual_ordType _)).
+  - apply: (@leq_Greene _ (dual_ordType _)).
     rewrite /ksupp_inj => S HS; exists (rev_ksupp S).
     by rewrite scover_rev eq_refl /= -rev_is_ksupp_col.
-  - apply: (@leq_green (dual_ordType _) _).
+  - apply: (@leq_Greene (dual_ordType _) _).
     rewrite /ksupp_inj => S HS.
     pose U := rev_ksupp_inv S.
     exists U; rewrite [S]rev_ksuppKV /U scover_rev eq_refl /=.
     by move: HS; rewrite {1}[S]rev_ksuppKV -rev_is_ksupp_col.
 Qed.
 
-Lemma greenRow_dual : greenRow w k = greenRow (revdual w) k.
+Lemma Greene_row_dual : Greene_row w k = Greene_row (revdual w) k.
 Proof.
-  rewrite /greenCol /=.
+  rewrite /Greene_col /=.
   apply/eqP; rewrite eqn_leq; apply/andP; split.
-  - apply: (@leq_green _ (dual_ordType _)).
+  - apply: (@leq_Greene _ (dual_ordType _)).
     rewrite /ksupp_inj => S HS; exists (rev_ksupp S).
     by rewrite scover_rev eq_refl /= -rev_is_ksupp_row.
-  - apply: (@leq_green (dual_ordType _) _).
+  - apply: (@leq_Greene (dual_ordType _) _).
     rewrite /ksupp_inj => S HS.
     pose U := rev_ksupp_inv S.
     exists U; rewrite [S]rev_ksuppKV /U scover_rev eq_refl /=.
@@ -1201,7 +1166,7 @@ Proof.
   + move: H => /andP /= [] _ H1 /= x H2; by apply: (ltnX_leqX_trans H2 H1).
 Qed.
 
-Section GreenInvariantsRule.
+Section GreeneInvariantsRule.
 
 Variable Alph : ordType.
 Let word := seq Alph.
@@ -1240,9 +1205,9 @@ Proof.
     move=> S HS; have:= Hall S; by rewrite HS /= => /negbTE ->.
 Qed.
 
-Corollary greenRow_leq_plact1i :
-  v2 \in plact1i v1 -> greenRow (u ++ v1 ++ w) k <= greenRow (u ++ v2 ++ w) k.
-Proof. by move /ksuppRow_inj_plact1i; apply: leq_green. Qed.
+Corollary Greene_row_leq_plact1i :
+  v2 \in plact1i v1 -> Greene_row (u ++ v1 ++ w) k <= Greene_row (u ++ v2 ++ w) k.
+Proof. by move /ksuppRow_inj_plact1i; apply: leq_Greene. Qed.
 
 (* | [:: b; a; c] => if (a < b <= c)%Ord then [:: [:: b; c; a]] else [::] *)
 Lemma ksuppRow_inj_plact2 :
@@ -1280,9 +1245,9 @@ Proof.
     move=> S HS; have:= Hall S; by rewrite HS /= => /negbTE ->.
 Qed.
 
-Corollary greenRow_leq_plact2 :
-  v2 \in plact2 v1 -> greenRow (u ++ v1 ++ w) k <= greenRow (u ++ v2 ++ w) k.
-Proof. by move /ksuppRow_inj_plact2; apply: leq_green. Qed.
+Corollary Greene_row_leq_plact2 :
+  v2 \in plact2 v1 -> Greene_row (u ++ v1 ++ w) k <= Greene_row (u ++ v2 ++ w) k.
+Proof. by move /ksuppRow_inj_plact2; apply: leq_Greene. Qed.
 
 
 (* [:: a; c; b] => if (a <= b < c)%Ord then [:: [:: c; a; b]] else [::] *)
@@ -1315,9 +1280,9 @@ Proof.
     move=> S HS; have:= Hall S; by rewrite HS /= => /negbTE ->.
 Qed.
 
-Corollary greenCol_leq_plact1 :
-  v2 \in plact1 v1 -> greenCol (u ++ v1 ++ w) k <= greenCol (u ++ v2 ++ w) k.
-Proof. by move /ksuppCol_inj_plact1; apply: leq_green. Qed.
+Corollary Greene_col_leq_plact1 :
+  v2 \in plact1 v1 -> Greene_col (u ++ v1 ++ w) k <= Greene_col (u ++ v2 ++ w) k.
+Proof. by move /ksuppCol_inj_plact1; apply: leq_Greene. Qed.
 
 (* [:: b; c; a] => if (a < b <= c)%Ord then [:: [:: b; a; c]] else [::] *)
 Lemma ksuppCol_inj_plact2i :
@@ -1355,112 +1320,112 @@ Proof.
     move=> S HS; have:= Hall S; by rewrite HS /= => /negbTE ->.
 Qed.
 
-Corollary greenCol_leq_plact2i :
-  v2 \in plact2i v1 -> greenCol (u ++ v1 ++ w) k <= greenCol (u ++ v2 ++ w) k.
-Proof. by move /ksuppCol_inj_plact2i; apply: leq_green. Qed.
+Corollary Greene_col_leq_plact2i :
+  v2 \in plact2i v1 -> Greene_col (u ++ v1 ++ w) k <= Greene_col (u ++ v2 ++ w) k.
+Proof. by move /ksuppCol_inj_plact2i; apply: leq_Greene. Qed.
 
-End GreenInvariantsRule.
+End GreeneInvariantsRule.
 
 
-Section GreenInvariantsDual.
+Section GreeneInvariantsDual.
 
 Variable Alph : ordType.
 Let word := seq Alph.
 Implicit Type u v w : word.
 
-Lemma greenRow_leq_plact2i u v1 w v2 k :
-  v2 \in plact2i v1 -> greenRow (u ++ v1 ++ w) k <= greenRow (u ++ v2 ++ w) k.
+Lemma Greene_row_leq_plact2i u v1 w v2 k :
+  v2 \in plact2i v1 -> Greene_row (u ++ v1 ++ w) k <= Greene_row (u ++ v2 ++ w) k.
 Proof.
-  rewrite plact2idual => /greenRow_leq_plact1i H.
-  rewrite [greenRow (_ ++ v1 ++ _) k]greenRow_dual.
-  rewrite [greenRow (_ ++ v2 ++ _) k]greenRow_dual.
+  rewrite plact2idual => /Greene_row_leq_plact1i H.
+  rewrite [Greene_row (_ ++ v1 ++ _) k]Greene_row_dual.
+  rewrite [Greene_row (_ ++ v2 ++ _) k]Greene_row_dual.
   have:= H (revdual w) (revdual u) k.
   by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
 Qed.
 
-Lemma greenRow_leq_plact1 u v1 w v2 k :
-  v2 \in plact1 v1 -> greenRow (u ++ v1 ++ w) k <= greenRow (u ++ v2 ++ w) k.
+Lemma Greene_row_leq_plact1 u v1 w v2 k :
+  v2 \in plact1 v1 -> Greene_row (u ++ v1 ++ w) k <= Greene_row (u ++ v2 ++ w) k.
 Proof.
-  rewrite plact1dual => /greenRow_leq_plact2 H.
-  rewrite [greenRow (_ ++ v1 ++ _) k]greenRow_dual.
-  rewrite [greenRow (_ ++ v2 ++ _) k]greenRow_dual.
+  rewrite plact1dual => /Greene_row_leq_plact2 H.
+  rewrite [Greene_row (_ ++ v1 ++ _) k]Greene_row_dual.
+  rewrite [Greene_row (_ ++ v2 ++ _) k]Greene_row_dual.
   have:= H (revdual w) (revdual u) k.
   by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
 Qed.
 
-Lemma greenRow_invar_plact1 u v1 w v2 k :
-  v2 \in plact1 v1 -> greenRow (u ++ v1 ++ w) k = greenRow (u ++ v2 ++ w) k.
+Lemma Greene_row_invar_plact1 u v1 w v2 k :
+  v2 \in plact1 v1 -> Greene_row (u ++ v1 ++ w) k = Greene_row (u ++ v2 ++ w) k.
 Proof.
   move=> H; apply/eqP; rewrite eqn_leq; apply/andP; split.
-  + by apply: greenRow_leq_plact1.
-  + apply: greenRow_leq_plact1i; by rewrite -plact1I.
+  + by apply: Greene_row_leq_plact1.
+  + apply: Greene_row_leq_plact1i; by rewrite -plact1I.
 Qed.
 
-Lemma greenRow_invar_plact1i u v1 w v2 k :
-  v2 \in plact1i v1 -> greenRow (u ++ v1 ++ w) k = greenRow (u ++ v2 ++ w) k.
-Proof. by rewrite -plact1I => H; apply: esym; apply: greenRow_invar_plact1. Qed.
+Lemma Greene_row_invar_plact1i u v1 w v2 k :
+  v2 \in plact1i v1 -> Greene_row (u ++ v1 ++ w) k = Greene_row (u ++ v2 ++ w) k.
+Proof. by rewrite -plact1I => H; apply: esym; apply: Greene_row_invar_plact1. Qed.
 
-Lemma greenRow_invar_plact2 u v1 w v2 k :
-  v2 \in plact2 v1 -> greenRow (u ++ v1 ++ w) k = greenRow (u ++ v2 ++ w) k.
+Lemma Greene_row_invar_plact2 u v1 w v2 k :
+  v2 \in plact2 v1 -> Greene_row (u ++ v1 ++ w) k = Greene_row (u ++ v2 ++ w) k.
 Proof.
   move=> H; apply/eqP; rewrite eqn_leq; apply/andP; split.
-  + by apply: greenRow_leq_plact2.
-  + apply: greenRow_leq_plact2i; by rewrite -plact2I.
+  + by apply: Greene_row_leq_plact2.
+  + apply: Greene_row_leq_plact2i; by rewrite -plact2I.
 Qed.
 
-Lemma greenRow_invar_plact2i u v1 w v2 k :
-  v2 \in plact2i v1 -> greenRow (u ++ v1 ++ w) k = greenRow (u ++ v2 ++ w) k.
-Proof. by rewrite -plact2I => H; apply: esym; apply: greenRow_invar_plact2. Qed.
+Lemma Greene_row_invar_plact2i u v1 w v2 k :
+  v2 \in plact2i v1 -> Greene_row (u ++ v1 ++ w) k = Greene_row (u ++ v2 ++ w) k.
+Proof. by rewrite -plact2I => H; apply: esym; apply: Greene_row_invar_plact2. Qed.
 
 
-Lemma greenCol_leq_plact1i u v1 w v2 k :
-  v2 \in plact1i v1 -> greenCol (u ++ v1 ++ w) k <= greenCol (u ++ v2 ++ w) k.
+Lemma Greene_col_leq_plact1i u v1 w v2 k :
+  v2 \in plact1i v1 -> Greene_col (u ++ v1 ++ w) k <= Greene_col (u ++ v2 ++ w) k.
 Proof.
-  rewrite plact1idual => /greenCol_leq_plact2i H.
-  rewrite [greenCol (_ ++ v1 ++ _) k]greenCol_dual.
-  rewrite [greenCol (_ ++ v2 ++ _) k]greenCol_dual.
+  rewrite plact1idual => /Greene_col_leq_plact2i H.
+  rewrite [Greene_col (_ ++ v1 ++ _) k]Greene_col_dual.
+  rewrite [Greene_col (_ ++ v2 ++ _) k]Greene_col_dual.
   have:= H (revdual w) (revdual u) k.
   by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
 Qed.
 
-Lemma greenCol_leq_plact2 u v1 w v2 k :
-  v2 \in plact2 v1 -> greenCol (u ++ v1 ++ w) k <= greenCol (u ++ v2 ++ w) k.
+Lemma Greene_col_leq_plact2 u v1 w v2 k :
+  v2 \in plact2 v1 -> Greene_col (u ++ v1 ++ w) k <= Greene_col (u ++ v2 ++ w) k.
 Proof.
-  rewrite plact2dual => /greenCol_leq_plact1 H.
-  rewrite [greenCol (_ ++ v1 ++ _) k]greenCol_dual.
-  rewrite [greenCol (_ ++ v2 ++ _) k]greenCol_dual.
+  rewrite plact2dual => /Greene_col_leq_plact1 H.
+  rewrite [Greene_col (_ ++ v1 ++ _) k]Greene_col_dual.
+  rewrite [Greene_col (_ ++ v2 ++ _) k]Greene_col_dual.
   have:= H (revdual w) (revdual u) k.
   by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
 Qed.
 
-Lemma greenCol_invar_plact1 u v1 w v2 k :
-  v2 \in plact1 v1 -> greenCol (u ++ v1 ++ w) k = greenCol (u ++ v2 ++ w) k.
+Lemma Greene_col_invar_plact1 u v1 w v2 k :
+  v2 \in plact1 v1 -> Greene_col (u ++ v1 ++ w) k = Greene_col (u ++ v2 ++ w) k.
 Proof.
   move=> H; apply/eqP; rewrite eqn_leq; apply/andP; split.
-  + by apply: greenCol_leq_plact1.
-  + apply: greenCol_leq_plact1i; by rewrite -plact1I.
+  + by apply: Greene_col_leq_plact1.
+  + apply: Greene_col_leq_plact1i; by rewrite -plact1I.
 Qed.
 
-Lemma greenCol_invar_plact1i u v1 w v2 k :
-  v2 \in plact1i v1 -> greenCol (u ++ v1 ++ w) k = greenCol (u ++ v2 ++ w) k.
-Proof. by rewrite -plact1I => H; apply: esym; apply: greenCol_invar_plact1. Qed.
+Lemma Greene_col_invar_plact1i u v1 w v2 k :
+  v2 \in plact1i v1 -> Greene_col (u ++ v1 ++ w) k = Greene_col (u ++ v2 ++ w) k.
+Proof. by rewrite -plact1I => H; apply: esym; apply: Greene_col_invar_plact1. Qed.
 
-Lemma greenCol_invar_plact2 u v1 w v2 k :
-  v2 \in plact2 v1 -> greenCol (u ++ v1 ++ w) k = greenCol (u ++ v2 ++ w) k.
+Lemma Greene_col_invar_plact2 u v1 w v2 k :
+  v2 \in plact2 v1 -> Greene_col (u ++ v1 ++ w) k = Greene_col (u ++ v2 ++ w) k.
 Proof.
   move=> H; apply/eqP; rewrite eqn_leq; apply/andP; split.
-  + by apply: greenCol_leq_plact2.
-  + apply: greenCol_leq_plact2i; by rewrite -plact2I.
+  + by apply: Greene_col_leq_plact2.
+  + apply: Greene_col_leq_plact2i; by rewrite -plact2I.
 Qed.
 
-Lemma greenCol_invar_plact2i u v1 w v2 k :
-  v2 \in plact2i v1 -> greenCol (u ++ v1 ++ w) k = greenCol (u ++ v2 ++ w) k.
-Proof. by rewrite -plact2I => H; apply: esym; apply: greenCol_invar_plact2. Qed.
+Lemma Greene_col_invar_plact2i u v1 w v2 k :
+  v2 \in plact2i v1 -> Greene_col (u ++ v1 ++ w) k = Greene_col (u ++ v2 ++ w) k.
+Proof. by rewrite -plact2I => H; apply: esym; apply: Greene_col_invar_plact2. Qed.
 
-End GreenInvariantsDual.
+End GreeneInvariantsDual.
 
 
-Section GreenInvariants.
+Section GreeneInvariants.
 
 Variable Alph : ordType.
 Let word := seq Alph.
@@ -1468,59 +1433,59 @@ Let word := seq Alph.
 Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
 
-Theorem greenRow_invar_plactic u v : u =Pl v -> forall k, greenRow u k = greenRow v k.
+Theorem Greene_row_invar_plactic u v : u =Pl v -> forall k, Greene_row u k = Greene_row v k.
 Proof.
   move=> Hpl k.
   move: v Hpl; apply: gencongr_ind; first by apply: erefl.
   move=> a b1 c b2 -> {u} /plactruleP [].
-  + apply: greenRow_invar_plact1.
-  + apply: greenRow_invar_plact1i.
-  + apply: greenRow_invar_plact2.
-  + apply: greenRow_invar_plact2i.
+  + apply: Greene_row_invar_plact1.
+  + apply: Greene_row_invar_plact1i.
+  + apply: Greene_row_invar_plact2.
+  + apply: Greene_row_invar_plact2i.
 Qed.
 
-Corollary greenRow_RS k w : greenRow w k = part_sum (shape (RS w)) k.
+Corollary Greene_row_RS k w : Greene_row w k = part_sum (shape (RS w)) k.
 Proof.
-  rewrite -greenRow_tab; last by apply: is_tableau_RS.
-  apply: greenRow_invar_plactic; by apply: congr_RS.
+  rewrite -Greene_row_tab; last by apply: is_tableau_RS.
+  apply: Greene_row_invar_plactic; by apply: congr_RS.
 Qed.
 
 Corollary plactic_shapeRS_row_proof u v : u =Pl v -> shape (RS u) = shape (RS v).
 Proof.
   move=> Hpl.
-  suff HeqRS k : greenRow (to_word (RS u)) k = greenRow (to_word (RS v)) k
-    by apply: (greenRow_tab_eq_shape (is_tableau_RS u) (is_tableau_RS v) HeqRS).
-  have <- := greenRow_invar_plactic (congr_RS u) k.
-  have <- := greenRow_invar_plactic (congr_RS v) k.
-  by apply: greenRow_invar_plactic.
+  suff HeqRS k : Greene_row (to_word (RS u)) k = Greene_row (to_word (RS v)) k
+    by apply: (Greene_row_tab_eq_shape (is_tableau_RS u) (is_tableau_RS v) HeqRS).
+  have <- := Greene_row_invar_plactic (congr_RS u) k.
+  have <- := Greene_row_invar_plactic (congr_RS v) k.
+  by apply: Greene_row_invar_plactic.
 Qed.
 
 
-Theorem greenCol_invar_plactic u v : u =Pl v -> forall k, greenCol u k = greenCol v k.
+Theorem Greene_col_invar_plactic u v : u =Pl v -> forall k, Greene_col u k = Greene_col v k.
 Proof.
   move=> Hpl k.
   move: v Hpl; apply: gencongr_ind; first by apply: erefl.
   move=> a b1 c b2 -> {u} /plactruleP [].
-  + apply: greenCol_invar_plact1.
-  + apply: greenCol_invar_plact1i.
-  + apply: greenCol_invar_plact2.
-  + apply: greenCol_invar_plact2i.
+  + apply: Greene_col_invar_plact1.
+  + apply: Greene_col_invar_plact1i.
+  + apply: Greene_col_invar_plact2.
+  + apply: Greene_col_invar_plact2i.
 Qed.
 
-Corollary greenCol_RS k w : greenCol w k = part_sum (conj_part (shape (RS w))) k.
+Corollary Greene_col_RS k w : Greene_col w k = part_sum (conj_part (shape (RS w))) k.
 Proof.
-  rewrite -greenCol_tab; last by apply: is_tableau_RS.
-  apply: greenCol_invar_plactic; by apply: congr_RS.
+  rewrite -Greene_col_tab; last by apply: is_tableau_RS.
+  apply: Greene_col_invar_plactic; by apply: congr_RS.
 Qed.
 
 Corollary plactic_shapeRS u v : u =Pl v -> shape (RS u) = shape (RS v).
 Proof.
   move=> Hpl.
-  suff HeqRS k : greenCol (to_word (RS u)) k = greenCol (to_word (RS v)) k
-    by apply: (greenCol_tab_eq_shape (is_tableau_RS u) (is_tableau_RS v) HeqRS).
-  have <- := greenCol_invar_plactic (congr_RS u) k.
-  have <- := greenCol_invar_plactic (congr_RS v) k.
-  by apply: greenCol_invar_plactic.
+  suff HeqRS k : Greene_col (to_word (RS u)) k = Greene_col (to_word (RS v)) k
+    by apply: (Greene_col_tab_eq_shape (is_tableau_RS u) (is_tableau_RS v) HeqRS).
+  have <- := Greene_col_invar_plactic (congr_RS u) k.
+  have <- := Greene_col_invar_plactic (congr_RS v) k.
+  by apply: Greene_col_invar_plactic.
 Qed.
 
 Theorem plactic_RS u v : u =Pl v <-> RS u == RS v.
@@ -1549,31 +1514,87 @@ Proof.
   move=> Htab.
   have : is_RSpair (t, hyper_yam (shape t)).
     rewrite /is_RSpair Htab (hyper_yamP (is_part_sht Htab)) /=.
-    by rewrite (shape_rowseq_hyper_yam (is_part_sht Htab)).
-  move/RS_bij_2; set w := (X in RSmap X); move=> Hw.
+    by rewrite (evalseq_hyper_yam (is_part_sht Htab)).
+  move/RSmapinv2K; set w := (X in RSmap X); move=> Hw.
   have:= (RSmapE w); rewrite Hw /= => ->.
   have:= congr_RS w.
   by rewrite plactic_RS => /eqP <-.
 Qed.
 
-End GreenInvariants.
+End GreeneInvariants.
 
-Corollary greenRow_eq_shape_RS (S T : ordType) (s : seq S) (t : seq T) :
-  (forall k, greenRow s k = greenRow t k) -> (shape (RS s) = shape (RS t)).
+Corollary Greene_row_eq_shape_RS (S T : ordType) (s : seq S) (t : seq T) :
+  (forall k, Greene_row s k = Greene_row t k) -> (shape (RS s) = shape (RS t)).
 Proof.
-  move=> Hgreen; apply: greenRow_tab_eq_shape; try apply: is_tableau_RS.
+  move=> HGreene; apply: Greene_row_tab_eq_shape; try apply: is_tableau_RS.
   move=> k.
-  rewrite -(greenRow_invar_plactic (u := s)); last by apply: congr_RS.
-  rewrite -(greenRow_invar_plactic (u := t)); last by apply: congr_RS.
-  by apply: Hgreen.
+  rewrite -(Greene_row_invar_plactic (u := s)); last by apply: congr_RS.
+  rewrite -(Greene_row_invar_plactic (u := t)); last by apply: congr_RS.
+  by apply: HGreene.
 Qed.
 
-Corollary greenCol_eq_shape_RS (S T : ordType) (s : seq S) (t : seq T) :
-  (forall k, greenCol s k = greenCol t k) -> (shape (RS s) = shape (RS t)).
+Corollary Greene_col_eq_shape_RS (S T : ordType) (s : seq S) (t : seq T) :
+  (forall k, Greene_col s k = Greene_col t k) -> (shape (RS s) = shape (RS t)).
 Proof.
-  move=> Hgreen; apply: greenCol_tab_eq_shape; try apply: is_tableau_RS.
+  move=> HGreene; apply: Greene_col_tab_eq_shape; try apply: is_tableau_RS.
   move=> k.
-  rewrite -(greenCol_invar_plactic (u := s)); last by apply: congr_RS.
-  rewrite -(greenCol_invar_plactic (u := t)); last by apply: congr_RS.
-  by apply: Hgreen.
+  rewrite -(Greene_col_invar_plactic (u := s)); last by apply: congr_RS.
+  rewrite -(Greene_col_invar_plactic (u := t)); last by apply: congr_RS.
+  by apply: HGreene.
 Qed.
+
+
+Section RevConj.
+
+Variable T : ordType.
+Implicit Type s : seq T.
+
+Lemma shape_RS_rev s : uniq s -> shape (RS (rev s)) = conj_part (shape (RS s)).
+Proof.
+  have Htr := is_tableau_RS (rev s); have Ht := is_tableau_RS s.
+  move=> Hs; apply: part_sum_inj.
+    exact: is_part_sht.
+    exact: is_part_conj (is_part_sht _).
+  move=> k.
+  rewrite -Greene_col_RS -Greene_row_RS /Greene_col /Greene_row.
+  rewrite Greene_rel_rev revK (Greene_rel_uniq _ Hs).
+  apply eq_Greene_rel => x y /=.
+  by rewrite eq_sym.
+Qed.
+
+Lemma RS_rev_uniq s : uniq s -> RS (rev s) = conj_tab (RS s).
+Proof.
+  move Hsz : (size s) => n.
+  elim: n s Hsz => [| n IHn] s.
+    by rewrite /RS /conj_tab; move=> /eqP/nilP -> _ /=.
+  move=> Hsz Huniq.
+  have:= size_rembig s; rewrite Hsz /= => Hszrem.
+  have {IHn Hszrem} := IHn _ Hszrem (rembig_uniq Huniq); rewrite (rembig_rev_uniq Huniq).
+  have {Huniq} := shape_RS_rev Huniq.
+  case Hs: s Hsz => [//= | s0 s'] Hsz.
+  have:= rembig_RS s0 s' => [] [] iu; rewrite -Hs => Hrem; rewrite Hrem.
+  case/lastP Hrs: s Hsz Hs => [//= | t tn] _ Hs; rewrite -Hrs => Hsh Heq.
+  have:= rembig_RS tn (rev t) => [] [] iv; rewrite -rev_rcons -Hrs => HRSr.
+  move: Hsh; rewrite HRSr {HRSr}.
+  have Hpart := is_part_sht (is_tableau_RS (rembig s)).
+  have : is_in_corner (shape (RS (rembig s))) iu.
+    have := is_part_sht (is_tableau_RS s); rewrite Hrem shape_append_nth => Hparti.
+    rewrite -(incr_nthK Hpart Hparti); apply (in_corner_decr_nth Hparti).
+    rewrite del_out_corner => //.
+    by move: Hpart => /is_partP [].
+  move: Heq Hpart.
+  move: (RS (rembig (rev s))) (RS (rembig s)) => tabr tab Hr.
+  subst tabr => Hpart Hcorn Hsh.
+  apply eq_from_shape_get_tab; first by rewrite shape_conj_tab.
+  move => r c.
+  rewrite (append_nth_conj_tab _ Hpart Hcorn).
+  congr (get_tab (append_nth _ _ _) _ _).
+  - apply maxL_perm_eq; rewrite -Hs -rev_rcons.
+    rewrite perm_eq_sym; exact: perm_rev.
+  - move: Hsh.
+    rewrite !shape_append_nth shape_conj_tab.
+    rewrite incr_nth_conj_part //.
+    exact: incr_nth_inj.
+Qed.
+
+End RevConj.

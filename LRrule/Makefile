@@ -71,28 +71,30 @@ VFILES:=congr.v\
   combclass.v\
   extract.v\
   Erdos_Szekeres.v \
-  greeninv.v\
-  green.v\
+  Greene_inv.v\
+  Greene.v\
   implem.v\
-  invseq.v\
-  multpoly.v\
   ordcast.v\
   ordtype.v\
   partition.v\
   permuted.v\
   plactic.v\
-  schensted.v\
+  Schensted.v\
+  Schur.v\
+  shape.v\
   shuffle.v\
   skewtab.v\
+  sorted.v\
   stdtab.v\
   std.v\
+  stdplact.v\
   subseq.v\
   tableau.v\
   therule.v\
   tools.v\
   vectNK.v\
-  yama.v\
-  yamplact.v
+  Yamanouchi.v\
+  Yam_plact.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))
@@ -181,7 +183,7 @@ install-doc:
 
 clean:
 	rm -f $(VOFILES) $(VIFILES) $(GFILES) $(VFILES:.v=.v.d) $(VFILES:=.beautified) $(VFILES:=.old)
-	rm -f all.ps all-gal.ps all.pdf all-gal.pdf all.glob $(VFILES:.v=.glob) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex) all-mli.tex
+	rm -f all.ps all-gal.ps all.pdf all-gal.pdf all.glob $(VFILES:.v=.glob) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex) all-mli.tex dep.pdf
 	- rm -rf html mlihtml
 
 archclean:
@@ -229,10 +231,10 @@ printenv:
 %.v.beautified:
 	$(COQC) $(COQDEBUG) $(COQFLAGS) -beautify $*
 
-# WARNING
-#
-# This Makefile has been automagically generated
-# Edit at your own risks !
-#
-# END OF WARNING
 
+COQDEFS := --language=none -r '/^[[:space:]]*\(Axiom\|Theorem\|Class\|Instance\|Let\|Ltac\|Definition\|Lemma\|Record\|Remark\|Structure\|Fixpoint\|Fact\|Corollary\|Let\|Inductive\|Coinductive\|Notation\|Proposition\|Module[[:space:]]+Import\|Module\)[[:space:]]+\([[:alnum:]'\''_]+\)/\2/'
+TAGS : $(VFILES); etags $(COQDEFS) $^
+
+dep.pdf: $(VFILES:.v=.v.d)
+	rm -f dep.pdf
+	cat *.v.d | sed -e 's/[^ ]*glob//g' | sed -e 's/[^ ]*beautified//g' | ocamldot | dot -Tpdf > dep.pdf

@@ -15,7 +15,8 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset path bigop.
 
-Require Import tools partition yama schensted ordtype std stdtab invseq congr plactic greeninv.
+Require Import tools partition Yamanouchi ordtype std tableau stdtab.
+Require Import Schensted congr plactic Greene_inv stdplact.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -69,7 +70,7 @@ Proof.
   - move=> b1 cw b2 H /plactruleP [] Hrew.
     + move: Hrew H => /plact1P [] a [] b [] c [].
       rewrite leqXnatE ltnXnatE => /andP [] Hab Hbc -> -> /=.
-      set yc := (incr_nth (shape_rowseq cw) b).
+      set yc := (incr_nth (evalseq cw) b).
       move=> /and4P [] H1 H2 Hpart ->; rewrite Hpart.
       rewrite incr_nthC H1 !andbT /=.
       case (ltnP a.+1 c) => Hac; first by rewrite (is_part_incr_nthE Hac).
@@ -83,7 +84,7 @@ Proof.
       by rewrite -is_part_incr_nth1E.
     + move: Hrew H => /plact1iP [] a [] b [] c [].
       rewrite leqXnatE ltnXnatE => /andP [] Hab Hbc -> -> /=.
-      set yc := (incr_nth (shape_rowseq cw) b).
+      set yc := (incr_nth (evalseq cw) b).
       move=> /and4P []; rewrite incr_nthC => H1 H2 Hpart Hyam.
       rewrite Hpart Hyam H1 !andbT /=.
       case (ltnP a.+1 c) => Hac; first by rewrite -(is_part_incr_nthE Hac Hpart).
@@ -95,13 +96,13 @@ Proof.
         apply/eqP; by rewrite eqn_leq Hbc Hac /=.
       subst c; subst yc.
       rewrite incr_nthC is_part_incr_nth1E; first exact Hpart.
-      by apply is_part_shyam.
+      by apply is_part_eval_yam.
     + move: Hrew H => /plact2P [] a [] b [] c [].
       rewrite leqXnatE ltnXnatE => /andP [] Hab Hbc -> -> /=.
       move=> /and4P []; rewrite [(incr_nth (incr_nth _ a) c)]incr_nthC => H1 H2 Hpart Hyam.
       rewrite Hyam H1 H2 !andbT /= {H1}.
       case (ltnP a.+1 c) => Hac;
-                           first by rewrite (is_part_incr_nthE Hac (is_part_shyam Hyam)).
+                           first by rewrite (is_part_incr_nthE Hac (is_part_eval_yam Hyam)).
       have {Hbc} Hbc : b = c.
         apply/eqP; rewrite eqn_leq Hbc /=.
         by apply (leq_trans Hac).
@@ -109,13 +110,13 @@ Proof.
       have {Hac Hab} Hac : c = a.+1.
         apply/eqP; by rewrite eqn_leq Hac Hab.
       subst c.
-      by rewrite -(is_part_incr_nth1E _ (is_part_shyam Hyam)).
+      by rewrite -(is_part_incr_nth1E _ (is_part_eval_yam Hyam)).
     + move: Hrew H => /plact2iP [] a [] b [] c [].
       rewrite leqXnatE ltnXnatE => /andP [] Hab Hbc -> -> /=.
       move=> /and4P []; rewrite [(incr_nth (incr_nth _ a) c)]incr_nthC => H1 H2 Hpart Hyam.
       rewrite Hyam H1 H2 !andbT /=.
       case (ltnP a.+1 c) => Hac;
-                           first by rewrite -(is_part_incr_nthE Hac (is_part_shyam Hyam)).
+                           first by rewrite -(is_part_incr_nthE Hac (is_part_eval_yam Hyam)).
       have {Hbc} Hbc : b = c.
         apply/eqP; rewrite eqn_leq Hbc /=.
         by apply (leq_trans Hac).
@@ -123,13 +124,13 @@ Proof.
       have {Hac Hab} Hac : c = a.+1.
         apply/eqP; by rewrite eqn_leq Hac Hab.
       subst c.
-      apply (is_part_incr_nth (is_part_shyam Hyam)) => /=.
+      apply (is_part_incr_nth (is_part_eval_yam Hyam)) => /=.
       move: H1 => /is_partP [] _ H1.
       have := H1 a; by rewrite !nth_incr_nth !eq_refl ieqi1F eq_sym ieqi1F !add0n !add1n ltnS.
   - move=> b1 cw b2 /andP [] Hpart Hyam Hrew.
     rewrite (IHaw _ _ _ Hyam Hrew) andbT.
-    suff -> : (shape_rowseq (aw ++ b2 ++ cw)) = (shape_rowseq (aw ++ b1 ++ cw)) by [].
-    rewrite -!shape_rowseq_countE /shape_rowseq_count /=.
+    suff -> : (evalseq (aw ++ b2 ++ cw)) = (evalseq (aw ++ b1 ++ cw)) by [].
+    rewrite -!evalseq_countE /evalseq_count /=.
     have Hperm : perm_eq (aw ++ b1 ++ cw) (aw ++ b2 ++ cw).
       apply: plactcongr_homog; apply: plactcongr_is_congr; apply: rule_gencongr; exact Hrew.
     rewrite !foldr_maxn (eq_big_perm _ Hperm) /=.
@@ -224,7 +225,7 @@ Proof.
   rewrite to_word_yamtab size_rcons.
   case/lastP: tn Hrow Hn2 Hdom => [//=| tn ln] /= _ Hrow Hdom.
   rewrite -{1}cats1 -catA cat1s => /is_yam_catr /= /andP [] Hpart _ /is_part_rconsK Hp0.
-  move: Hpart; rewrite (shape_rowseq_hyper_yam Hp0) => Hp1.
+  move: Hpart; rewrite (evalseq_hyper_yam Hp0) => Hp1.
   have Hln : ln <= (size sh).+1.
     elim: sh ln Hp0 Hp1 {Hdom Hrow} => [| s0 sh IHsh] /= ln.
       case: ln => [//= | ln] _ /= /andP [] _ /part_head_non0.
@@ -261,19 +262,19 @@ Proof.
   exact (yamtab_unique (is_tableau_RS y) (is_yam_plactic Hyam (congr_RS y))).
 Qed.
 
-Lemma shape_RS_yam y : is_yam y -> shape (RS y) = shape_rowseq y.
+Lemma shape_RS_yam y : is_yam y -> shape (RS y) = evalseq y.
 Proof.
   move => Hyam.
   have := congr_RS y => /gencongr_homog.
-  rewrite perm_eq_shape_rowseq => /eqP ->.
-  rewrite {2}(RS_yam_RS Hyam) to_word_yamtab shape_rowseq_hyper_yam //=.
+  rewrite perm_eq_evalseq => /eqP ->.
+  rewrite {2}(RS_yam_RS Hyam) to_word_yamtab evalseq_hyper_yam //=.
   apply is_part_sht; by apply is_tableau_RS.
 Qed.
 
-Lemma RS_yam y : is_yam y -> RS y = yamtab (shape_rowseq y).
+Lemma RS_yam y : is_yam y -> RS y = yamtab (evalseq y).
 Proof. move => Hyam; by rewrite (RS_yam_RS Hyam) (shape_RS_yam Hyam). Qed.
 
-Theorem yam_plactic_hyper y : is_yam y -> y =Pl hyper_yam (shape_rowseq y).
+Theorem yam_plactic_hyper y : is_yam y -> y =Pl hyper_yam (evalseq y).
 Proof.
   move => Hyam; rewrite -(shape_RS_yam Hyam) -to_word_yamtab.
   have HPly := congr_RS y.
@@ -281,7 +282,7 @@ Proof.
 Qed.
 
 Corollary yam_plactic_shape y z :
-  is_yam y -> ( y =Pl z <-> (is_yam z /\ shape_rowseq y = shape_rowseq z)).
+  is_yam y -> ( y =Pl z <-> (is_yam z /\ evalseq y = evalseq z)).
 Proof.
   move=> Hyam; split.
   - move=> HPl; split; first exact (is_yam_plactic Hyam HPl).
@@ -296,69 +297,70 @@ Lemma yam_std_inj : {in is_yam &, injective (@std _) }.
 Proof.
   move=> y w /=; rewrite !unfold_in -/is_yam => Hy Hw Hstd.
   apply perm_eq_stdE; last exact Hstd.
-  rewrite perm_eq_shape_rowseq.
+  rewrite perm_eq_evalseq.
   rewrite -(shape_RS_yam Hy) -(shape_RS_yam Hw).
   rewrite -(shape_RS_std y) -(shape_RS_std w).
   by rewrite Hstd.
 Qed.
 
-Lemma auxbijP p (y : yamsh p) :
-  is_yam_of_shape p ((RSmap y).2).
+Lemma auxbijP p (y : yameval p) :
+  is_yam_of_eval p ((RSmap y).2).
 Proof.
-  rewrite /is_yam_of_shape is_yam_RSmap2 /=.
+  rewrite /is_yam_of_eval is_yam_RSmap2 /=.
   rewrite -shape_RSmap_eq RSmapE.
-  by rewrite (shape_RS_yam (yamshP y)) shape_yamsh.
+  by rewrite (shape_RS_yam (yamevalP y)) eval_yameval.
 Qed.
 
-Definition auxbij p (Hpart : is_part p) (y : yamsh p) : yamsh_finType Hpart :=
-  YamSh (auxbijP y).
+Definition auxbij (p : intpart) (y : yameval p) : yameval_finType p :=
+  YamEval (auxbijP y).
 
-Lemma auxbij_inj p (Hpart : is_part p) : injective (auxbij Hpart).
+Lemma auxbij_inj (p : intpart) : injective (@auxbij p).
 Proof.
   move=> y z Heq.
-  have := erefl (val (auxbij Hpart y)); rewrite {2}Heq /= => HRS2.
+  have := erefl (val (auxbij y)); rewrite {2}Heq /= => HRS2.
   have HRS1 : RS (std y) = RS (std z).
     apply/eqP; rewrite -plactic_RS.
-    apply std_plact; rewrite (yam_plactic_shape _ (yamshP y)).
-    split; first by apply yamshP.
-    by rewrite !shape_yamsh.
+    apply std_plact; rewrite (yam_plactic_shape _ (yamevalP y)).
+    split; first by apply yamevalP.
+    by rewrite !eval_yameval.
   apply val_inj; apply perm_eq_stdE => /=.
-  - by rewrite perm_eq_shape_rowseq !shape_yamsh.
-  - rewrite -[std y]RS_bij_1 -[std z]RS_bij_1 /=.
+  - by rewrite perm_eq_evalseq !eval_yameval.
+  - rewrite -[std y]RSmapK -[std z]RSmapK /=.
     have RSE (x : seq nat) : RSmap x = (RS x, (RSmap x).2) by rewrite -RSmapE; case RSmap.
     by rewrite [RSmap (std y)]RSE [RSmap (std z)]RSE HRS1 !RSmap_std HRS2.
 Qed.
 
-Definition auxbij_inv p (Hp : is_part p) := invF (@auxbij_inj p Hp).
+Definition auxbij_inv (p : intpart) := invF (@auxbij_inj p).
 
 Theorem plact_from_yam sh w :
-  is_part sh -> w =Pl std (hyper_yam sh) -> { y | is_yam_of_shape sh y & std y = w }.
+  is_part sh -> w =Pl std (hyper_yam sh) -> { y | is_yam_of_eval sh y & std y = w }.
 Proof.
   move=> Hsh.
   have := (plactic_RS w (std (hyper_yam sh))) => [] [] H _.
   move=> /H => /eqP HRS.
-  have Hyam : is_yam_of_shape sh (RSmap w).2.
-    rewrite /is_yam_of_shape is_yam_RSmap2 /=.
+  pose Sh := IntPart Hsh.
+  have Hyam : is_yam_of_eval Sh (RSmap w).2.
+    rewrite /is_yam_of_eval is_yam_RSmap2 /=.
     rewrite -shape_RSmap_eq RSmapE HRS shape_RS_std.
-    by rewrite (shape_RS_yam (hyper_yamP Hsh)) shape_rowseq_hyper_yam.
-  pose yimg := YamSh Hyam.
+    by rewrite (shape_RS_yam (hyper_yamP Hsh)) evalseq_hyper_yam.
+  pose yimg := YamEval Hyam.
   have Hw : w = RSmapinv2 (RS (std (hyper_yam sh)), val yimg).
-    rewrite -{1}[w]RS_bij_1.
+    rewrite -{1}[w]RSmapK.
     have -> : RSmap w = ((RSmap w).1, (RSmap w).2) by case RSmap.
     by rewrite RSmapE HRS.
-  pose y := (@auxbij_inv sh Hsh yimg).
+  pose y := (@auxbij_inv Sh yimg).
   exists y.
-  - by rewrite /is_yam_of_shape yamshP shape_yamsh /=.
-  - rewrite -[LHS]RS_bij_1 -[RHS]RS_bij_1.
+  - by rewrite /is_yam_of_eval yamevalP eval_yameval /=.
+  - rewrite -[LHS]RSmapK -[RHS]RSmapK.
     have RSE (x : seq nat) : RSmap x = (RS x, (RSmap x).2) by rewrite -RSmapE; case RSmap.
     rewrite RSE [RSmap w]RSE HRS.
     congr (RSmapinv2 (_, _)).
     + have := stdtab_of_yamP (hyper_yamP Hsh); rewrite /is_stdtab => /andP [] Htab _.
       apply/eqP; rewrite -plactic_RS.
       apply std_plact.
-      rewrite (yam_plactic_shape _ (yamshP _)); split; first by apply hyper_yamP.
-      by rewrite shape_yamsh shape_rowseq_hyper_yam.
+      rewrite (yam_plactic_shape _ (yamevalP _)); split; first by apply hyper_yamP.
+      by rewrite eval_yameval evalseq_hyper_yam.
     + rewrite RSmap_std.
-      have -> : (RSmap y).2 = auxbij Hsh y by [].
+      have -> : (RSmap y).2 = @auxbij Sh y by [].
       by rewrite f_invF.
 Qed.
