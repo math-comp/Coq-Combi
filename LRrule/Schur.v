@@ -288,6 +288,12 @@ Qed.
 Definition colpartn d : intpartn d := IntPartN (colpartnP d).
 Definition elementary d : {mpoly R[n]} := Schur (colpartn d).
 
+Lemma conj_rowpartn d : conj_intpartn (rowpartn d) = colpartn d.
+Proof. apply val_inj => /=; rewrite /rowpart /colpart; by case: d. Qed.
+Lemma conj_colpartn d : conj_intpartn (colpartn d) = rowpartn d.
+Proof. rewrite -[RHS]conj_intpartnK; by rewrite conj_rowpartn. Qed.
+
+
 (* Noncommutative lifting of Schur *)
 Lemma Schur_freeSchurE d (Q : stdtabn d) :
   Schur (shape_deg Q) = polyset R (freeSchur Q).
@@ -701,6 +707,7 @@ End Bij_LR_support.
 End Coeffs.
 
 End FinSets.
+
 
 Section Conj.
 

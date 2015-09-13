@@ -602,21 +602,13 @@ Proof.
   * exfalso; by case: (evalseq y) y0 Heval => [| a [| l0 l]] [|y0].
 Qed.
 
-Theorem Pieri_row (P1 : intpartn d1) :
-  Schur P1 * complete d2 = \sum_(P : intpartn (d1 + d2) | hb_strip P1 P) Schur P.
+Theorem LRyam_coeff_Pieri_row (P1 : intpartn d1) (P : intpartn (d1 + d2)) :
+  included P1 P -> LRyam_coeff P1 (rowpartn d2) P = hb_strip P1 P.
 Proof.
-  rewrite /Schur.complete LRtab_coeffP.
-  rewrite [LHS]big_mkcond [RHS]big_mkcond /=.
-  apply eq_bigr => p _.
-  case: (boolP (included P1 p)) => Hincl; first last.
-    suff /negbTE -> : ~~ hb_strip P1 p by [].
-    move: Hincl; apply contra; exact: hb_strip_included.
-  suff -> : LRyam_coeff P1 (rowpartn d2) p = hb_strip P1 p.
-    case: (hb_strip P1 p); by rewrite /= ?mulr1n ?mulr0n.
-  rewrite /LRyam_coeff /LRyam_set.
+  rewrite /LRyam_coeff /LRyam_set => Hincl.
   rewrite /is_skew_reshape_tableau.
   set LRset := (X in #|pred_of_set X|).
-  case: (boolP (hb_strip P1 p)) => Hstrip /=.
+  case: (boolP (hb_strip P1 P)) => Hstrip /=.
   - suff -> : LRset = [set yamrow] by rewrite cards1.
     rewrite -setP => y; rewrite !inE {LRset}.
     case: y => y Hy /=.
@@ -642,6 +634,44 @@ Proof.
       suff -> : y = ncons d2 0%N [::] by exact: is_row_yamrow.
       exact: yam_of_rowpart.
     by rewrite Hincl Hskew.
+Qed.
+
+Theorem Pieri_row (P1 : intpartn d1) :
+  Schur P1 * complete d2 = \sum_(P : intpartn (d1 + d2) | hb_strip P1 P) Schur P.
+Proof.
+  rewrite /Schur.complete LRtab_coeffP.
+  rewrite [LHS]big_mkcond [RHS]big_mkcond /=.
+  apply eq_bigr => p _.
+  case: (boolP (included P1 p)) => Hincl; first last.
+    suff /negbTE -> : ~~ hb_strip P1 p by [].
+    move: Hincl; apply contra; exact: hb_strip_included.
+  rewrite (LRyam_coeff_Pieri_row Hincl).
+  case: (hb_strip P1 p); by rewrite /= ?mulr1n ?mulr0n.
+Qed.
+
+Theorem LRyam_coeff_Pieri_col (P1 : intpartn d1) (P : intpartn (d1 + d2)) :
+  included P1 P -> LRyam_coeff P1 (colpartn d2) P = vb_strip P1 P.
+Proof.
+  move=> Hincl.
+  have Hinclc : included (conj_intpartn P1) (conj_intpartn P).
+    exact: included_conj_part.
+  rewrite -conj_rowpartn -{1}(conj_intpartnK P1) -{1}(conj_intpartnK P).
+  rewrite -LR_coeff_yamP; last by rewrite !conj_intpartnK.
+  rewrite -LRtab_coeff_conj (LR_coeff_yamP _ Hinclc) (LRyam_coeff_Pieri_row Hinclc).
+  by rewrite /= hb_strip_conjE.
+Qed.
+
+Theorem Pieri_col (P1 : intpartn d1) :
+  Schur P1 * elementary d2 = \sum_(P : intpartn (d1 + d2) | vb_strip P1 P) Schur P.
+Proof.
+  rewrite /Schur.elementary LRtab_coeffP.
+  rewrite [LHS]big_mkcond [RHS]big_mkcond /=.
+  apply eq_bigr => p _.
+  case: (boolP (included P1 p)) => Hincl; first last.
+    suff /negbTE -> : ~~ vb_strip P1 p by [].
+    move: Hincl; apply contra; exact: vb_strip_included.
+  rewrite (LRyam_coeff_Pieri_col Hincl).
+  case: (vb_strip P1 p); by rewrite /= ?mulr1n ?mulr0n.
 Qed.
 
 End Pieri.
