@@ -39,7 +39,7 @@ $(call includecmdwithout@,$(COQBIN)coqtop -config)
 #                        #
 ##########################
 
-COQLIBS?=-I . -I ..
+COQLIBS?=-I . -R ../../theories/ -as Combi
 COQDOCLIBS?=
 
 ##########################
