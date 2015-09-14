@@ -1,3 +1,5 @@
+(** * Combi.HookFormula.hook : A proof of the Hook-Lenght formula *)
+
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)

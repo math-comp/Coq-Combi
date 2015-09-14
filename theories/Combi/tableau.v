@@ -1,3 +1,5 @@
+(** * Combi.Combi.tableau : Young Tableaux *)
+
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)

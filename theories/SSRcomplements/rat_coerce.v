@@ -12,21 +12,17 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Add Rec LoadPath "../Combi/LRrule".
-
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+(** * Setup a coercion [int -> rat] and add a few simple lemmas *)
+
 Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq ssrint rat
                fintype bigop path ssralg ssrnum.
-(* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
-
-Require Import tools subseq partition.
 
 Import GRing.Theory.
 Import Num.Theory.
 
-(* Lemma about rational computation **************************************)
 
 Definition int_to_rat : int -> rat := intmul (GRing.one rat_Ring).
 Coercion int_to_rat : int >-> rat.

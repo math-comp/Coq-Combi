@@ -1,3 +1,5 @@
+(** * Combi.Combi.permuted : Listing the Permutations of a seq *)
+
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -14,6 +16,13 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype seq tuple.
 Require Import finset perm.
+
+(** * The list of the permuted tuple of a given tuple                        *)
+(*
+The main goal is to show that, given a sequence [s] over an [eqType] there
+are only finitely many sequences [s'] which are a permutation of [s] (that is
+[perm_eq s s']
+*)
 
 Set Implicit Arguments.
 Unset Strict Implicit.

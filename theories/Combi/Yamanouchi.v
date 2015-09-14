@@ -1,3 +1,5 @@
+(** * Combi.Combi.Yamanouchi : Yamanouchi Words *)
+
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -421,8 +423,9 @@ Definition yamn_countMixin := Eval hnf in [countMixin of yamn by <:].
 Canonical yamn_countType := Eval hnf in CountType yamn yamn_countMixin.
 Canonical yamn_subCountType := Eval hnf in [subCountType of yamn].
 Let type := union_finType
-    (fun p : intpartn_subFinType n => (yameval_subFinType p))
-    yamn_PredEq yamn_partition_evalseq yamn_subCountType.
+              yamn_subCountType
+              (fun p : intpartn_subFinType n => (yameval_subFinType p))
+              yamn_PredEq yamn_partition_evalseq.
 Canonical yamn_finType := Eval hnf in [finType of yamn for type].
 Canonical yamn_subFinType := Eval hnf in [subFinType of yamn].
 

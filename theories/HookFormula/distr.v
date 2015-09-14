@@ -22,7 +22,6 @@ Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq ssrint rat
                fintype bigop path ssralg ssrnum.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
-Require Import tools subseq partition.
 Require Import rat_coerce.
 
 Import GRing.Theory.

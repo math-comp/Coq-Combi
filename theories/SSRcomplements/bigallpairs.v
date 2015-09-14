@@ -17,6 +17,12 @@ Require Import tuple ssrnum ssralg ssrint finfun bigop.
 
 Import GRing.Theory.
 
+(******************************************************************************)
+(** * Spliting a [bigop] over [allpairs]                                      *)
+(*                                                                            *)
+(** TODO: it probably should be contributed to bigop.v                        *)
+(******************************************************************************)
+
 Section AllPairs.
 
 Open Scope ring_scope.

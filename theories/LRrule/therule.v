@@ -23,6 +23,8 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(** * The Littlewood-Richardson Rule *)
+
 Open Scope N.
 
 
@@ -542,6 +544,7 @@ Qed.
 End TheRule.
 
 
+(** ** Pieri's rules *)
 Section Pieri.
 
 Local Open Scope ring_scope.

@@ -34,6 +34,8 @@ $(call includecmdwithout@,$(COQBIN)coqtop -config)
 
 COQLIBS?= -R theories Combi
 COQDOCLIBS?=-R theories Combi
+COQEXTLIBS:=--external http://ssr.msr-inria.inria.fr/doc/mathcomp-1.5/ MathComp \
+            --external http://ssr.msr-inria.inria.fr/doc/ssreflect-1.5/ Ssreflect
 
 ##########################
 #                        #
@@ -46,7 +48,7 @@ OPT?=
 COQDEP?="$(COQBIN)coqdep" -c
 COQFLAGS?=-q $(OPT) $(COQLIBS) $(OTHERFLAGS) $(COQ_XML)
 COQCHKFLAGS?=-silent -o
-COQDOCFLAGS?=-interpolate -utf8
+COQDOCFLAGS?=-interpolate -utf8 --lib-subtitles --no-lib-name
 COQC?="$(COQBIN)coqc"
 GALLINA?="$(COQBIN)gallina"
 COQDOC?="$(COQBIN)coqdoc"
@@ -73,7 +75,7 @@ endif
 #                    #
 ######################
 
-VFILES:=theories/Combi/combclass.v\
+VFILES:= theories/Combi/combclass.v\
   theories/Combi/ordtype.v\
   theories/Combi/partition.v\
   theories/Combi/permuted.v\
@@ -85,6 +87,10 @@ VFILES:=theories/Combi/combclass.v\
   theories/Combi/tableau.v\
   theories/Combi/vectNK.v\
   theories/Combi/Yamanouchi.v\
+  theories/SSRcomplements/bigallpairs.v\
+  theories/SSRcomplements/rat_coerce.v\
+  theories/SSRcomplements/sorted.v\
+  theories/SSRcomplements/tools.v\
   theories/Erdos_Szekeres/Erdos_Szekeres.v\
   theories/HookFormula/ALEA/Ccpo.v\
   theories/HookFormula/ALEA/Misc.v\
@@ -105,11 +111,7 @@ VFILES:=theories/Combi/combclass.v\
   theories/LRrule/shuffle.v\
   theories/LRrule/stdplact.v\
   theories/LRrule/therule.v\
-  theories/LRrule/Yam_plact.v\
-  theories/SSRcomplements/bigallpairs.v\
-  theories/SSRcomplements/rat_coerce.v\
-  theories/SSRcomplements/sorted.v\
-  theories/SSRcomplements/tools.v
+  theories/LRrule/Yam_plact.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))
@@ -141,11 +143,11 @@ gallina: $(GFILES)
 
 html: $(GLOBFILES) $(VFILES)
 	- mkdir -p html
-	$(COQDOC) -toc $(COQDOCFLAGS) -html $(COQDOCLIBS) -d html $(VFILES)
+	$(COQDOC) -toc $(COQDOCFLAGS) -html $(COQDOCLIBS) -d html $(COQEXTLIBS) $(VFILES)
 
 gallinahtml: $(GLOBFILES) $(VFILES)
 	- mkdir -p html
-	$(COQDOC) -toc $(COQDOCFLAGS) -html -g $(COQDOCLIBS) -d html $(VFILES)
+	$(COQDOC) -toc $(COQDOCFLAGS) -html -g $(COQDOCLIBS) -d html $(COQEXTLIBS) $(VFILES)
 
 all.ps: $(VFILES)
 	$(COQDOC) -toc $(COQDOCFLAGS) -ps $(COQDOCLIBS) -o $@ `$(COQDEP) -sort -suffix .v $^`
@@ -248,8 +250,13 @@ printenv:
 
 
 COQDEFS := --language=none -r '/^[[:space:]]*\(Axiom\|Theorem\|Class\|Instance\|Let\|Ltac\|Definition\|Lemma\|Record\|Remark\|Structure\|Fixpoint\|Fact\|Corollary\|Let\|Inductive\|Coinductive\|Notation\|Proposition\|Module[[:space:]]+Import\|Module\)[[:space:]]+\([[:alnum:]'\''_]+\)/\2/'
-TAGS : $(VFILES); etags $(COQDEFS) $^
+TAGS: $(VFILES)
+	etags $(COQDEFS) $(VFILES)
 
-dep.pdf: $(VFILES:.v=.v.d)
+dep.dot: $(VFILES:.v=.v.d)
+	rm -f dep.dot
+	cat $(VFILES:.v=.v.d) | sed -e 's/[^ ]*glob//g' | sed -e 's/[^ ]*beautified//g' | ocamldot > dep.dot
+
+dep.pdf: dep.dot
 	rm -f dep.pdf
-	cat *.v.d | sed -e 's/[^ ]*glob//g' | sed -e 's/[^ ]*beautified//g' | ocamldot | dot -Tpdf > dep.pdf
+	dot -Tpdf dep.dot > dep.pdf

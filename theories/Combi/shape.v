@@ -1,3 +1,4 @@
+(** * Combi.Combi.shape : Coordinates of Boxes Inside a Shape *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,9 +13,16 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * A finite type for coordinate of boxes inside a shape *)
+(**
+Currently, a shape is a sequence of ragged left rows, the length of which
+are stored in a [seq nat]. Therefore [(r, c)] is in [sh] if [r < sh[i]]
+*)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
 Require Import tools combclass.
+
+
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -27,6 +35,7 @@ Proof.
   by rewrite (nth_default _ Hr).
 Qed.
 
+(** ** Canonical [finType] structure for box in [sh] *)
 Section BoxIn.
 
 Variable sh : seq nat.
@@ -101,6 +110,7 @@ Proof. rewrite /=; by apply enum_subE. Qed.
 Lemma mem_enum_box_in : enum_box_in =i is_box_in_shape.
 Proof. exact: (sub_enumE enum_box_inP count_enum_box_inP). Qed.
 
+(** ** Rewriting bigops running along the boxes of a shape *)
 Lemma big_enum_box_in (R : Type) (idx : R) (op : Monoid.law idx) (f : nat -> nat -> R):
   \big[op/idx]_(b <- enum_box_in) f b.1 b.2 =
   \big[op/idx]_(0 <= r < size sh) \big[op/idx]_(0 <= c < nth 0 sh r) f r c.
@@ -121,6 +131,7 @@ Qed.
 
 End BoxIn.
 
+(** ** Adding a box to a shape *)
 Lemma box_in_incr_nth sh i :
   perm_eq ((i, nth 0 sh i) :: enum_box_in sh) (enum_box_in (incr_nth sh i)).
 Proof.

@@ -15,12 +15,17 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import path.
 
+(******************************************************************************)
+(** * Various Lemmas about [path] and [sorted] which are missing in MathComp  *)
+(*                                                                            *)
+(** TODO: these probably should be contributed to path.v                      *)
+(******************************************************************************)
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 
 Open Scope N.
 
-(* TODO : Those lemmas should be contributed to path *)
 
 Section Sorted.
 

@@ -1,3 +1,5 @@
+(** * Combi.Combi.vectNK : Integer Cector of Given Sums and Sizes *)
+
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)

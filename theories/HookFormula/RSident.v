@@ -23,21 +23,6 @@ Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq
 Require Import ordtype tools combclass partition tableau Schensted std stdtab.
 Require Import hook.
 
-(* TODO : Contribute to SSReflect/fintype.v *)
-Section BijCard.
-
-Variables U V : finType.
-Variable f : U -> V.
-
-Lemma bij_card : bijective f -> #|U| = #|V|.
-Proof.
-  move=> [] g Hfg Hgf.
-  apply anti_leq; apply/andP; split.
-  - rewrite -(card_codom (can_inj Hfg)); exact: max_card.
-  - rewrite -(card_codom (can_inj Hgf)); exact: max_card.
-Qed.
-
-End BijCard.
 
 Section Identity.
 
@@ -142,9 +127,10 @@ Canonical stpn_subCountType := Eval hnf in [subCountType of stpn].
 
 Definition type :=
   union_finType
+    stpn_subCountType
     (Pi := fun sh : seq nat => is_stdtab_pair_of_shape sh)
     (fun p : intpartn_subFinType n => (stpsh_subFinType p))
-    stpn_PredEq stpn_partition_shape stpn_subCountType.
+    stpn_PredEq stpn_partition_shape.
 Canonical stpn_finType := Eval hnf in [finType of stpn for type].
 Canonical stpn_subFinType := Eval hnf in [subFinType of stpn].
 
