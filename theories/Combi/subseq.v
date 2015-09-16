@@ -1,3 +1,5 @@
+(** * Combi.Combi.subseq : Subsequence of a sequence as a fintype *)
+
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -16,10 +18,14 @@ Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
 Require Import path.
 Require Import tools combclass.
 
+(******************************************************************************)
+(** TODO: these probably should be contributed to path.v                      *)
+(******************************************************************************)
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-
+(** ** A few lemmas about [subseq] and [rcons] *)
 Section RCons.
 
   Variable (T : eqType).
@@ -61,8 +67,14 @@ Section RCons.
 
 End RCons.
 
+
+(** ** Subsequence of a sequence as a [fintype]                                *)
+(**
+We define a dependent type [SubSeq w] and provide it with a Canonical
+[finType] structure
+**)
+
 Section Fintype.
-  (* We define SubSeq w as a finType *)
 
 Variable (T : countType).
 Implicit Type s w : seq T.
@@ -156,7 +168,7 @@ Proof. case: s => s Ps /=; by apply: size_subseq. Qed.
 
 End Fintype.
 
-
+(** ** Relating sub sequences of [iota] and being sorted *)
 Lemma sorted_subseq_iota_rcons s n : subseq s (iota 0 n) = sorted ltn (rcons s n).
 Proof.
   apply (sameP idP); apply (iffP idP).

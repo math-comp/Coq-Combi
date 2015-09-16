@@ -15,48 +15,55 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
 Require Import Recdef path.
 Require Import permuted vectNK.
+(******************************************************************************)
+(** * Equivalence and congruence closure of a rewriting rule on words
+
+- The rewriting rule is given as a map [rule : word -> seq word]
+- The closure is a relation (type : [rel word])
+
+We suppose that equivalence classes are _finite_, this is sufficient for
+out purpose here that is the construction of the plactic monoid. This also
+ensure that the generated equivalence relation is decidable by bounding
+the lenght of the rewriting paths. Concretely, this is done by requiring
+that [rule] is included in a refexive relation [invar] which is invariant by
+rewriting rule, that is:
+
+  [Hypothesis Hinvar : forall x0 x, invar x0 x -> all (invar x0) (rule x).]
+
+We show that this is true for homogeneous rules (ie: that permutes words):
+
+  [Hypothesis Hhomog : forall u : word, all (perm_eq u) (rule u).]
+
+Also to simplify the code, we assume that the rule are symmetric, that is
+
+  [Hypothesis Hsym : forall x y, x \in rule y -> y \in rule x.]
+
+Assuming the two latter hypothesis, we define a relation [gencongr] which is
+the congruence transitive closure of rule. The main results here are
+- [gencongrP]       : gencongr is the smallest transitive congruence relation
+                      contaning rule.
+- [gencongr_unique] : gencongr is uniquely characterized by the property above
+- [gencongr_ind] : induction principle on classes for gencongr, any property
+                   preserved along the rewriting rule holds for classes.      *)
+(******************************************************************************)
 
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-(******************************************************************************)
-(* Equivalence and congruence closure of a rewriting rule on words            *)
-(*                                                                            *)
-(* The rewriting rule is given as a map 'rule : word -> seq word'             *)
-(* The closure is a relation (type : rel word)                                *)
-(*                                                                            *)
-(* We suppose that equivalence classes are *finite*, this is sufficient for   *)
-(* out purpose here that is the construction of the plactic monoid. This also *)
-(* ensure that the generated equivalence relation is decidable by bounding    *)
-(* the lenght of the rewriting paths. Concretely this is done by requiring    *)
-(* that rule is included in a refexive relation invar which is invariant by   *)
-(* rewriting rule, that is:                                                   *)
-(*   Hypothesis Hinvar : forall x0 x, invar x0 x -> all (invar x0) (rule x).  *)
-(*                                                                            *)
-(* We show that this is true for homogeneous rules (ie: that permutes words   *)
-(*   Hypothesis Hhomog : forall u : word, all (perm_eq u) (rule u).           *)
-(*                                                                            *)
-(* Also to simplify the code, we assume that the rule are symmetric, that is  *)
-(*   Hypothesis Hsym : forall x y, x \in rule y -> y \in rule x.              *)
-(*                                                                            *)
-(* Assuming the two latter hypothesis, we define a relation gencongr which is *)
-(* the congruence transitive closure of rule. The main results here are       *)
-(* - gencongrP    : gencongr is the smallest transitive congruence relation   *)
-(*                  contaning rule.                                           *)
-(* - gencongr_ind : induction principle on classes for gencongr, any property *)
-(*                  preserved along the rewriting rule holds for classes.     *)
-(******************************************************************************)
 
-(* Basic facts on congruences:                                                *)
-(* equivalence of various definitions and immediate consequences              *)
+(** ** Basic facts on congruences:                                            *)
+(** equivalence of various definitions and immediate consequences             *)
 Section CongruenceFacts.
 
 Variable Alph : eqType.
-Notation word := (seq_eqType Alph).
+Notation word := (seq Alph).
 
 Definition congruence_rel (r : rel word) :=
   forall a b1 c b2, r b1 b2 -> r (a ++ b1 ++ c) (a ++ b2 ++ c).
+
+Definition congruence_rule (rule : word -> seq word) :=
+  congruence_rel (fun a b => a \in rule b).
 
 Variable r : rel word.
 Hypothesis Hcongr : congruence_rel r.
@@ -92,9 +99,10 @@ Qed.
 
 End CongruenceFacts.
 
-(* Transitive closure of a rule with finite classes                           *)
-(* Since we only need to contruct it and not to compute with it, we use a     *)
-(* simple but extremely inefficient algorithm                                 *)
+
+(** ** Transitive closure of a rule with finite classes                          *)
+(**  Since we only need to contruct it and not to compute with it, we use a     *)
+(**  simple but extremely inefficient algorithm                                 *)
 Section Transitive.
 
 Variable T : eqType.
@@ -155,7 +163,7 @@ Proof. rewrite /step => x Hx; by rewrite mem_undup mem_cat Hx. Qed.
 Lemma subset_undup_step s : {subset undup s <= step s}.
 Proof. rewrite /step => x; rewrite mem_undup => Hx; by rewrite mem_undup mem_cat Hx. Qed.
 
-(* This is a very unefficient transitive closure algorithm *)
+(** This is a very unefficient transitive closure algorithm *)
 Function trans (s : seq T) {measure (fun s => bound - size (undup s))} : seq T :=
   let us := undup s in
   if all invar us then
@@ -256,7 +264,8 @@ Qed.
 
 End Transitive.
 
-(* Deals with the dependance of invar on x *)
+
+(** ** Deals with the dependance of invar on x *)
 Section Depend.
 
 Variable T : eqType.
@@ -336,13 +345,12 @@ Proof. move/rewrite_path_min=> H/H{H} H x y /rtransP Hrew; by apply: H. Qed.
 End Depend.
 
 
+(** ** Given a rule which is a congruence, we show that the transitive closure
+       is a congruence as well *)
 Section CongruenceClosure.
 
 Variable Alph : eqType.
 Notation word := (seq_eqType Alph).
-
-Definition congruence_rule (rule : word -> seq word) :=
-  forall a b1 c b2, b2 \in rule b1 -> (a ++ b2 ++ c) \in rule (a ++ b1 ++ c).
 
 Variable rule : word -> seq word.
 Hypothesis Hsym : forall u v : word, v \in rule u -> u \in rule v.
@@ -392,9 +400,10 @@ Proof. by rewrite /congr /congr_class /rtrans. Qed.
 End CongruenceClosure.
 
 
+(** ** The congruence closure of an homogeneous symmetric rule *)
 Section CongruenceRule.
 
-Variable Alph : eqType.
+  Variable Alph : eqType.
 Notation word := (seq_eqType Alph).
 
 Variable rule : word -> seq word.
@@ -453,7 +462,8 @@ Qed.
 
 End CongruenceRule.
 
-(* Main results                                                               *)
+
+(** ** Main results                                                               *)
 Section Final.
 
 Variable Alph : eqType.
@@ -516,6 +526,9 @@ Proof.
   move: (Hhomog b1) => /allP; by apply.
 Qed.
 
+(** [Generated_EquivCongruence grel] == [grel] is the minimimal congruence
+    which contains [rule] *)
+
 CoInductive Generated_EquivCongruence (grel : rel word) :=
   GenCongr : equivalence_rel grel ->
              congruence_rel grel ->
@@ -525,6 +538,7 @@ CoInductive Generated_EquivCongruence (grel : rel word) :=
                       (forall x y, y \in rule x -> r x y) ->
                       forall x y, grel x y -> r x y
              ) -> Generated_EquivCongruence grel.
+
 
 Theorem gencongrP : Generated_EquivCongruence gencongr.
 Proof.
@@ -546,6 +560,16 @@ Proof.
   move=> Hgrel x y; apply/(sameP idP); apply(iffP idP).
   - by apply: gencongr_imply; first exact gencongrP.
   - by apply: gencongr_imply; last  exact gencongrP.
+Qed.
+
+Theorem gencongr_generic_ind grel (P : word -> Prop) x :
+  Generated_EquivCongruence grel ->
+  P x ->
+  (forall a b1 c b2, P (a ++ b1 ++ c) -> b2 \in rule b1 -> P (a ++ b2 ++ c)) ->
+  forall y, grel x y -> P y.
+Proof.
+  move=> /gencongr_unique Heq Hinit Hind y.
+  rewrite Heq; move: y; exact: gencongr_ind.
 Qed.
 
 End Final.

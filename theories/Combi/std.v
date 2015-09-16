@@ -1,3 +1,5 @@
+(** * Combi.Combi.std : Standard Words, i.e. Permutation as Words *)
+
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -192,11 +194,11 @@ Lemma enum_stdwordn_uniq : uniq enum_stdwordn.
 Proof. rewrite/enum_stdwordn (map_inj_uniq wordperm_inj). by apply: enum_uniq. Qed.
 
 Canonical stdwordn_finMixin :=
-  Eval hnf in subuniq_finMixin stdwordnn_subCountType enum_stdwordn_uniq enum_stdwordnE.
+  Eval hnf in sub_uniq_finMixin stdwordnn_subCountType enum_stdwordn_uniq enum_stdwordnE.
 Canonical stdwordn_finType := Eval hnf in FinType stdwordn stdwordn_finMixin.
 
 Lemma card_stdwordn : #|stdwordn| = n`!.
-Proof. by rewrite card_subuniqE size_map -card_Sn cardE. Qed.
+Proof. by rewrite card_sub_uniqE size_map -card_Sn cardE. Qed.
 
 End StdCombClass.
 

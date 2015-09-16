@@ -34,6 +34,8 @@ $(call includecmdwithout@,$(COQBIN)coqtop -config)
 
 COQLIBS?= -R theories Combi
 COQDOCLIBS?=-R theories Combi
+COQEXTLIBS:=--external http://ssr.msr-inria.inria.fr/doc/mathcomp-1.5/ MathComp \
+            --external http://ssr.msr-inria.inria.fr/doc/ssreflect-1.5/ Ssreflect
 
 ##########################
 #                        #
@@ -46,7 +48,7 @@ OPT?=
 COQDEP?="$(COQBIN)coqdep" -c
 COQFLAGS?=-q $(OPT) $(COQLIBS) $(OTHERFLAGS) $(COQ_XML)
 COQCHKFLAGS?=-silent -o
-COQDOCFLAGS?=-interpolate -utf8
+COQDOCFLAGS?=-interpolate -utf8 --lib-subtitles --no-lib-name
 COQC?="$(COQBIN)coqc"
 GALLINA?="$(COQBIN)gallina"
 COQDOC?="$(COQBIN)coqdoc"
@@ -73,7 +75,7 @@ endif
 #                    #
 ######################
 
-VFILES:=theories/Combi/combclass.v\
+VFILES:= theories/Combi/combclass.v\
   theories/Combi/ordtype.v\
   theories/Combi/partition.v\
   theories/Combi/permuted.v\
@@ -85,8 +87,18 @@ VFILES:=theories/Combi/combclass.v\
   theories/Combi/tableau.v\
   theories/Combi/vectNK.v\
   theories/Combi/Yamanouchi.v\
+  theories/SSRcomplements/bigallpairs.v\
+  theories/SSRcomplements/rat_coerce.v\
+  theories/SSRcomplements/sorted.v\
+  theories/SSRcomplements/tools.v\
   theories/Erdos_Szekeres/Erdos_Szekeres.v\
-  theories/LRrule/antisym.v\
+  theories/HookFormula/ALEA/Ccpo.v\
+  theories/HookFormula/ALEA/Misc.v\
+  theories/HookFormula/Qmeasure.v\
+  theories/HookFormula/RSident.v\
+  theories/HookFormula/distr.v\
+  theories/HookFormula/hook.v\
+  theories/HookFormula/recyama.v\
   theories/LRrule/congr.v\
   theories/LRrule/extract.v\
   theories/LRrule/Greene_inv.v\
@@ -100,10 +112,9 @@ VFILES:=theories/Combi/combclass.v\
   theories/LRrule/Sn.v\
   theories/LRrule/stdplact.v\
   theories/LRrule/therule.v\
+  theories/LRrule/antisym.v\
   theories/LRrule/vander.v\
   theories/LRrule/Yam_plact.v\
-  theories/SSRcomplements/sorted.v\
-  theories/SSRcomplements/tools.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))
@@ -135,11 +146,17 @@ gallina: $(GFILES)
 
 html: $(GLOBFILES) $(VFILES)
 	- mkdir -p html
-	$(COQDOC) -toc $(COQDOCFLAGS) -html $(COQDOCLIBS) -d html $(VFILES)
+	$(COQDOC) -toc $(COQDOCFLAGS) -html $(COQDOCLIBS) -d html $(COQEXTLIBS) $(VFILES)
 
-gallinahtml: $(GLOBFILES) $(VFILES)
+gallinahtml: $(GLOBFILES) $(VFILES) depend.dot
 	- mkdir -p html
-	$(COQDOC) -toc $(COQDOCFLAGS) -html -g $(COQDOCLIBS) -d html $(VFILES)
+	$(COQDOC) -toc $(COQDOCFLAGS) -html -g $(COQDOCLIBS) -d html $(COQEXTLIBS) $(VFILES)
+	dot -Tpng -o html/depend.png -Tcmapx -o html/depend.map depend.dot
+	dot -Tsvg -o html/depend.svg depend.dot
+	rm -f html/index_lib.html
+	mv html/index.html html/index_lib.html
+	cat scripts/header.html html/depend.map scripts/footer.html > html/index.html
+
 
 all.ps: $(VFILES)
 	$(COQDOC) -toc $(COQDOCFLAGS) -ps $(COQDOCLIBS) -o $@ `$(COQDEP) -sort -suffix .v $^`
@@ -161,7 +178,7 @@ beautify: $(VFILES:=.beautified)
 	@echo 'Do not do "make clean" until you are sure that everything went well!'
 	@echo 'If there were a problem, execute "for file in $$(find . -name \*.v.old -print); do mv $${file} $${file%.old}; done" in your shell/'
 
-.PHONY: all opt byte archclean clean install userinstall depend html validate
+.PHONY: all opt byte archclean clean install userinstall depend html validate html gallinahtml
 
 ####################
 #                  #
@@ -193,7 +210,7 @@ install-doc:
 clean:
 	rm -f $(VOFILES) $(VIFILES) $(GFILES) $(VFILES:.v=.v.d) $(VFILES:=.beautified) $(VFILES:=.old)
 	rm -f all.ps all-gal.ps all.pdf all-gal.pdf all.glob $(VFILES:.v=.glob) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex) all-mli.tex
-	- rm -rf html mlihtml
+	- rm -rf depend depend.dot depend.pdf html scripts/ocamldot scripts/ocamldot.ml scripts/ocamldot.cmi scripts/ocamldot.cmo mlihtml
 
 archclean:
 	rm -f *.cmx *.o
@@ -242,8 +259,22 @@ printenv:
 
 
 COQDEFS := --language=none -r '/^[[:space:]]*\(Axiom\|Theorem\|Class\|Instance\|Let\|Ltac\|Definition\|Lemma\|Record\|Remark\|Structure\|Fixpoint\|Fact\|Corollary\|Let\|Inductive\|Coinductive\|Notation\|Proposition\|Module[[:space:]]+Import\|Module\)[[:space:]]+\([[:alnum:]'\''_]+\)/\2/'
-TAGS : $(VFILES); etags $(COQDEFS) $^
+TAGS: $(VFILES)
+	etags $(COQDEFS) $(VFILES)
 
-dep.pdf: $(VFILES:.v=.v.d)
-	rm -f dep.pdf
-	cat *.v.d | sed -e 's/[^ ]*glob//g' | sed -e 's/[^ ]*beautified//g' | ocamldot | dot -Tpdf > dep.pdf
+depend.d: $(VFILES:.v=.v.d)
+	rm -f depend
+	cat $(VFILES:.v=.v.d) | sed -e 's/[^ ]*glob//g' | sed -e 's/[^ ]*beautified//g' > depend.d
+
+scripts/ocamldot: scripts/ocamldot.mll
+	ocamllex scripts/ocamldot.mll
+	ocamlc -o $@ scripts/ocamldot.ml
+
+depend.dot: depend.d scripts/ocamldot
+	rm -f depend.dot
+	scripts/ocamldot depend.d > depend.dot
+	sed -i -e "s/Theories/Combi/g" -e "s/\//./g" depend.dot
+
+depend.pdf: depend.dot
+	rm -f depend.pdf
+	dot -Tpdf depend.dot > depend.pdf

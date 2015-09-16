@@ -1,3 +1,5 @@
+(** * Combi.Combi.ordtype : Ordered Types *)
+
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
