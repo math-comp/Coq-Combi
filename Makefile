@@ -145,9 +145,15 @@ html: $(GLOBFILES) $(VFILES)
 	- mkdir -p html
 	$(COQDOC) -toc $(COQDOCFLAGS) -html $(COQDOCLIBS) -d html $(COQEXTLIBS) $(VFILES)
 
-gallinahtml: $(GLOBFILES) $(VFILES)
+gallinahtml: $(GLOBFILES) $(VFILES) depend.dot
 	- mkdir -p html
 	$(COQDOC) -toc $(COQDOCFLAGS) -html -g $(COQDOCLIBS) -d html $(COQEXTLIBS) $(VFILES)
+	dot -Tpng -o html/depend.png -Tcmapx -o html/depend.map depend.dot
+	dot -Tsvg -o html/depend.svg depend.dot
+	rm -f html/index_lib.html
+	mv html/index.html html/index_lib.html
+	cat scripts/header.html html/depend.map scripts/footer.html > html/index.html
+
 
 all.ps: $(VFILES)
 	$(COQDOC) -toc $(COQDOCFLAGS) -ps $(COQDOCLIBS) -o $@ `$(COQDEP) -sort -suffix .v $^`
@@ -169,7 +175,7 @@ beautify: $(VFILES:=.beautified)
 	@echo 'Do not do "make clean" until you are sure that everything went well!'
 	@echo 'If there were a problem, execute "for file in $$(find . -name \*.v.old -print); do mv $${file} $${file%.old}; done" in your shell/'
 
-.PHONY: all opt byte archclean clean install userinstall depend html validate
+.PHONY: all opt byte archclean clean install userinstall depend html validate html gallinahtml
 
 ####################
 #                  #
@@ -201,7 +207,7 @@ install-doc:
 clean:
 	rm -f $(VOFILES) $(VIFILES) $(GFILES) $(VFILES:.v=.v.d) $(VFILES:=.beautified) $(VFILES:=.old)
 	rm -f all.ps all-gal.ps all.pdf all-gal.pdf all.glob $(VFILES:.v=.glob) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex) all-mli.tex
-	- rm -rf html mlihtml
+	- rm -rf depend depend.dot depend.pdf html scripts/ocamldot scripts/ocamldot.ml scripts/ocamldot.cmi scripts/ocamldot.cmo mlihtml
 
 archclean:
 	rm -f *.cmx *.o
@@ -253,10 +259,19 @@ COQDEFS := --language=none -r '/^[[:space:]]*\(Axiom\|Theorem\|Class\|Instance\|
 TAGS: $(VFILES)
 	etags $(COQDEFS) $(VFILES)
 
-dep.dot: $(VFILES:.v=.v.d)
-	rm -f dep.dot
-	cat $(VFILES:.v=.v.d) | sed -e 's/[^ ]*glob//g' | sed -e 's/[^ ]*beautified//g' | ocamldot > dep.dot
+depend.d: $(VFILES:.v=.v.d)
+	rm -f depend
+	cat $(VFILES:.v=.v.d) | sed -e 's/[^ ]*glob//g' | sed -e 's/[^ ]*beautified//g' > depend.d
 
-dep.pdf: dep.dot
-	rm -f dep.pdf
-	dot -Tpdf dep.dot > dep.pdf
+scripts/ocamldot: scripts/ocamldot.mll
+	ocamllex scripts/ocamldot.mll
+	ocamlc -o $@ scripts/ocamldot.ml
+
+depend.dot: depend.d scripts/ocamldot
+	rm -f depend.dot
+	scripts/ocamldot depend.d > depend.dot
+	sed -i -e "s/Theories/Combi/g" -e "s/\//./g" depend.dot
+
+depend.pdf: depend.dot
+	rm -f depend.pdf
+	dot -Tpdf depend.dot > depend.pdf
