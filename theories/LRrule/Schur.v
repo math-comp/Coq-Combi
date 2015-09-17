@@ -227,7 +227,7 @@ Proof. case: d => [//= | d]; by rewrite /is_part_of_n /= addn0 eq_refl. Qed.
 Definition rowpartn d : intpartn d := IntPartN (rowpartnP d).
 Definition complete d : {mpoly R[n]} := Schur (rowpartn d).
 
-Definition colpart d := ncons d 1%N [::].
+Definition colpart d := nseq d 1%N.
 Fact colpartnP d : is_part_of_n d (colpart d).
 Proof.
   elim: d => [| d ] //= /andP [] /eqP -> ->.
@@ -241,6 +241,66 @@ Lemma conj_rowpartn d : conj_intpartn (rowpartn d) = colpartn d.
 Proof. apply val_inj => /=; rewrite /rowpart /colpart; by case: d. Qed.
 Lemma conj_colpartn d : conj_intpartn (colpartn d) = rowpartn d.
 Proof. rewrite -[RHS]conj_intpartnK; by rewrite conj_rowpartn. Qed.
+
+
+Require Import path.
+
+Lemma rev_nseq (T : eqType) (x : T) d : rev (nseq d x) = nseq d x.
+Proof.
+  elim: d => [//= | d IHd].
+  by rewrite -{1}(addn1 d) nseqD rev_cat IHd /=.
+Qed.
+
+Lemma tabwordshape_col d (w : d.-tuple 'I_n) :
+  w \in tabwordshape (colpartn d) = sorted (@gtnX _) w.
+Proof.
+  rewrite inE /is_tableau_of_shape_reading /= /colpart ; case: w => w /=/eqP Hw.
+  have -> : sumn (nseq d 1%N) = d.
+    elim: d {Hw} => //= d /= ->; by rewrite add1n.
+  rewrite Hw eq_refl /= rev_nseq.
+  have -> : rev (reshape (nseq d 1%N) w) = [seq [:: i] | i <- rev w].
+    rewrite map_rev; congr rev.
+    elim: d w Hw => [| d IHd] //=; first by case.
+    case => [| w0 w] //= /eqP; rewrite eqSS => /eqP /IHd <-.
+    by rewrite take0 drop0.
+  rewrite -rev_sorted.
+  case: {w} (rev w) {d Hw} => [|w0 w] //=.
+  elim: w w0 => [//= | w1 w /= <-] w0 /=.
+  congr andb; rewrite /dominate /= andbT {w}.
+  by rewrite /ltnX_op leqXE /= /leqOrd -ltn_neqAle.
+Qed.
+
+(** The definition of elementary symmetric polynomials as column Schur
+    function agrees with the one from mpoly *)
+Lemma elementaryE d : mesym n R d = elementary d.
+Proof.
+  rewrite mesym_tupleE /tmono /elementary/Schur/polylang/commword.
+  rewrite (eq_bigl _ _ (@tabwordshape_col d)).
+  set f := BIG_F.
+  rewrite (eq_bigr (fun x => f(rev_tuple x))); first last.
+    rewrite /f => i _ /=; apply: eq_big_perm; exact: perm_rev.
+  rewrite (eq_bigl (fun i => sorted gtnX (rev_tuple i))); first last.
+    move=> [t /= _]; rewrite rev_sorted.
+    case: t => [//= | t0 t] /=.
+    apply: (map_path (b := pred0)).
+    + move=> x y /= _; by rewrite -ltnXnatE.
+    + by apply/hasPn => x /=.
+  rewrite /f {f}.
+  rewrite [RHS](eq_big_perm
+                  (map (@rev_tuple _ _)
+                       (enum (tuple_finType d (ordinal_finType n))))) /=.
+  rewrite big_map /=; first by rewrite /index_enum /= enumT.
+  apply uniq_perm_eq.
+  - rewrite /index_enum -enumT; exact: enum_uniq.
+  - rewrite map_inj_uniq; first exact: enum_uniq.
+    apply (can_inj (g := (@rev_tuple _ _))).
+    move=> t; apply val_inj => /=; by rewrite revK.
+  - rewrite /index_enum -enumT /= => t.
+    rewrite mem_enum /= inE; apply esym; apply/mapP.
+    exists (rev_tuple t) => /=.
+    + by rewrite mem_enum.
+    + apply val_inj; by rewrite /= revK.
+Qed.
 
 
 (* Noncommutative lifting of Schur *)
