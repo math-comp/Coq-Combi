@@ -109,7 +109,7 @@ VFILES:= theories/Combi/combclass.v\
   theories/LRrule/Schensted.v\
   theories/LRrule/Schur.v\
   theories/LRrule/shuffle.v\
-  theories/LRrule/Sn.v\
+  theories/LRrule/sym_group.v\
   theories/LRrule/stdplact.v\
   theories/LRrule/therule.v\
   theories/LRrule/antisym.v\

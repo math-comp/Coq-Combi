@@ -16,7 +16,7 @@ Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
 Require Import fingroup perm zmodp binomial poly ssrcomplements poset freeg.
 
-Require Import Sn.
+Require Import sym_group.
 (*
 Require Import tools ordcast combclass partition schensted ordtype std stdtab invseq congr plactic greeninv yamplact skewtab.
 Require Import shuffle multpoly Sn.

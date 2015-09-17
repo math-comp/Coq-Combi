@@ -16,7 +16,7 @@ Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
 Require Import fingroup perm zmodp binomial poly ssrcomplements poset freeg matrix.
 
-Require Import Sn.
+Require Import sym_group.
 (*
 Require Import tools ordcast combclass partition schensted ordtype std stdtab invseq congr plactic greeninv yamplact skewtab.
 Require Import shuffle multpoly Sn.
@@ -32,17 +32,7 @@ Import GRing.Theory BigEnough.
 
 Local Open Scope ring_scope.
 
-
-Set Implicit Arguments.
-Unset Strict Implicit.
-Unset Printing Implicit Defensive.
-
-Import GRing.Theory BigEnough.
-
-Local Open Scope ring_scope.
-
-
-Section MPoly.
+Section CharMPoly.
 
 Variable n : nat.
 Variable R : ringType.
@@ -58,7 +48,7 @@ Proof.
   by rewrite mcoeff0 raddfMn /= mcoeffMn mcoeff1 eq_refl /= => ->.
 Qed.
 
-End MPoly.
+End CharMPoly.
 
 Section MPolySym.
 
@@ -161,6 +151,7 @@ End MPolySym.
 
 Implicit Arguments antisym [n R].
 
+
 Section MPolyIDomain.
 
 Variable n : nat.
@@ -195,6 +186,28 @@ Proof.
   move: Hchar; rewrite negb_and /=.
   by rewrite H2 eq_refl.
 Qed.
+
+End MPolyIDomain.
+
+Lemma isantisym_eltrP n (R : comRingType) (p : {mpoly R[n.+1]}) :
+  reflect (forall i, i < n -> msym (eltr n i) p = - p) (p \is antisym).
+Proof.
+  apply (iffP idP).
+  - move=> /forallP Hanti i Hi.
+    have /eqP -> := Hanti (eltr n i).
+    by rewrite /eltr odd_tperm (inordi1 Hi).
+  - move=> Heltr; apply/forallP; elim/eltr_ind => [| S i Hi /eqP IH].
+    + by rewrite odd_perm1 /= msym1m.
+    + rewrite msymMm (Heltr i Hi).
+      rewrite msymN IH odd_mul_tperm (inordi1 Hi) addTb if_neg /=.
+      case: (odd_perm S) => //=.
+    by rewrite opprK.
+Qed.
+
+Section VandermondeDet.
+
+Variable n : nat.
+Variable R : comRingType.
 
 Definition antim (s : seq nat) : 'M[ {mpoly R[n]} ]_n :=
   \matrix_(i, j < n) 'X_i ^+ (j + nth 0 s (size s - j))%N.
@@ -236,24 +249,9 @@ Qed.
 Corollary Vander_anti : Vandet \is antisym.
 Proof. rewrite /Vandet Vandmx_antimE. exact: antimP. Qed.
 
-End MPolyIDomain.
+End VandermondeDet.
 
-Implicit Arguments antisym [n R].
 
-Lemma isantisym_eltrP n (R : comRingType) (p : {mpoly R[n.+1]}) :
-  reflect (forall i, i < n -> msym (eltr n i) p = - p) (p \is antisym).
-Proof.
-  apply (iffP idP).
-  - move=> /forallP Hanti i Hi.
-    have /eqP -> := Hanti (eltr n i).
-    by rewrite /eltr odd_tperm (inordi1 Hi).
-  - move=> Heltr; apply/forallP; elim/eltr_ind => [| S i Hi /eqP IH].
-    + by rewrite odd_perm1 /= msym1m.
-    + rewrite msymMm (Heltr i Hi).
-      rewrite msymN IH odd_mul_tperm (inordi1 Hi) addTb if_neg /=.
-      case: (odd_perm S) => //=.
-    by rewrite opprK.
-Qed.
 
 
 
