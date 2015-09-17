@@ -210,12 +210,12 @@ Variable n : nat.
 Variable R : comRingType.
 
 Definition antim (s : seq nat) : 'M[ {mpoly R[n]} ]_n :=
-  \matrix_(i, j < n) 'X_i ^+ (j + nth 0 s (size s - j))%N.
-Definition Vandmx : 'M[ {mpoly R[n]} ]_n := \matrix_(i, j < n) 'X_i ^+ j.
+  \matrix_(i, j < n) 'X_i ^+ (nth 0 s j + n - j)%N.
+Definition Vandmx : 'M[ {mpoly R[n]} ]_n := \matrix_(i, j < n) 'X_i ^+ (n - j).
 Definition Vandet := \det Vandmx.
 
 Lemma Vandmx_antimE : Vandmx = antim [::].
-Proof. rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE addn0. Qed.
+Proof. rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE nth_default. Qed.
 
 Lemma tperm_antim_xrow s i j :
   i != j -> msym (tperm i j) (\det (antim s)) = \det (xrow i j (antim s)).
