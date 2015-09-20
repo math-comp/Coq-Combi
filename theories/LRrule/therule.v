@@ -276,7 +276,7 @@ Proof.
     + by rewrite size_yameval sumn_diff_shape_intpartE.
   - have /= /hasP [] := pred_LRtriple_fast_bijLRyam Hskew => z.
     set image := to_word _.
-    rewrite (RSclassE _ (is_tableau_RS _)) -plactic_RS => /plactcongr_homog Hz.
+    rewrite (RSclassE _ (is_tableau_RS _)) -plactic_RS => /plact_homog Hz.
     have {Hz} Hz : is_std z by apply: (perm_eq_std _ Hz); apply std_is_std.
     have : is_stdtab (RS (std (hyper_yam P1))) by rewrite RSstdE; apply std_is_std.
     rewrite /is_stdtab => /andP [] _ Hstd1.
@@ -390,7 +390,7 @@ Proof.
     rewrite (nth_map Z); last by apply Hj.
     rewrite !leqXnatE leq_subLR subnKC //=.
     have:= mem_nth Z Hj; by rewrite mem_filter => /andP [].
-  - move: Hpl => /plactcongr_homog/perm_eq_size.
+  - move: Hpl => /plact_homog/perm_eq_size.
     rewrite size_map => ->.
     by rewrite size_std sumn_diff_shape_intpartE -evalseq_eq_size evalseq_hyper_yam.
   - rewrite (filterleq_LRsupport HLRtab).

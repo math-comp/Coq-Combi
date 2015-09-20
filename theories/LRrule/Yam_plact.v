@@ -132,7 +132,7 @@ Proof.
     suff -> : (evalseq (aw ++ b2 ++ cw)) = (evalseq (aw ++ b1 ++ cw)) by [].
     rewrite -!evalseq_countE /evalseq_count /=.
     have Hperm : perm_eq (aw ++ b1 ++ cw) (aw ++ b2 ++ cw).
-      apply: plactcongr_homog; apply: plactcongr_is_congr; apply: rule_gencongr; exact Hrew.
+      apply: plact_homog; apply: plact_is_congr; apply: rule_gencongr; exact Hrew.
     rewrite !foldr_maxn (eq_big_perm _ Hperm) /=.
     apply eq_map => i /=.
     by move: Hperm => /perm_eqP ->.

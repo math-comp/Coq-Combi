@@ -490,7 +490,7 @@ Qed.
 Lemma plact_changeUT : changeUT T1 T2 w =Pl w.
 Proof.
   rewrite /changeUT -{3}(cat_take_drop d1 w).
-  apply: (@congr_cat _ _ (@plactcongr_is_congr _) (@plactcongr_equiv _)).
+  apply: plact_cat.
   - by have:= plact_changeUT_take; rewrite /changeUT take_size_cat // size_RSmapinv2_yam.
   - by have:= plact_changeUT_drop; rewrite /changeUT drop_size_cat // size_RSmapinv2_yam.
 Qed.
