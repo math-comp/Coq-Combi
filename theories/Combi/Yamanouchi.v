@@ -212,18 +212,18 @@ Section Yama.
     by case s0'.
   Qed.
 
-  Lemma is_out_corner_yam l0 s :
-    is_yam (l0 :: s) -> is_out_corner (evalseq (l0 :: s)) l0.
+  Lemma is_rem_corner_yam l0 s :
+    is_yam (l0 :: s) -> is_rem_corner (evalseq (l0 :: s)) l0.
   Proof.
     move=> Hyam; have:= is_part_eval_yam (is_yam_tl Hyam) => /is_partP [] _ Hpart.
-    rewrite /is_out_corner !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS.
+    rewrite /is_rem_corner !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS.
     by apply: Hpart.
   Qed.
 
-  Lemma is_in_corner_yam l0 s :
-    is_yam (l0 :: s) -> is_in_corner (evalseq s) l0.
+  Lemma is_add_corner_yam l0 s :
+    is_yam (l0 :: s) -> is_add_corner (evalseq s) l0.
   Proof.
-    rewrite /is_in_corner /=; case: l0 => [//= | l0] /=.
+    rewrite /is_add_corner /=; case: l0 => [//= | l0] /=.
     case: (evalseq s) => [//= | sh0 sh].
       move=> /andP [] /andP [] H1 H2 _; exfalso.
       case: l0 H1 H2 => //= l0 _; by elim: l0.
@@ -306,7 +306,7 @@ Qed.
 Fixpoint enum_yamevaln n ev :=
   if n is n'.+1 then
     flatten [seq [seq i :: y | y <- enum_yamevaln n' (decr_nth ev i)] |
-                  i <- iota 0 (size ev) & is_out_corner ev i]
+                  i <- iota 0 (size ev) & is_rem_corner ev i]
   else [:: [::]].
 Definition enum_yameval ev := enum_yamevaln (sumn ev) ev.
 Definition is_yam_of_size n y := (is_yam y) && (size y == n).
@@ -353,7 +353,7 @@ Proof.
     rewrite sumn_count count_filter.
     rewrite (eq_count (a2 := pred_of_simpl (pred1 y0))); first last.
       move=> i /=; case (altP (i =P y0)) => //= ->.
-      apply: is_out_corner_yam; by rewrite /= Hpart Hyam.
+      apply: is_rem_corner_yam; by rewrite /= Hpart Hyam.
     rewrite -sumn_count /=.
     rewrite sumn_iota //= add0n size_incr_nth.
     by case: (ltnP y0 (size (evalseq y))).

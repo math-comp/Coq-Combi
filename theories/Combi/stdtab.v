@@ -599,7 +599,7 @@ Proof. move=> /is_part_sht; exact :conj_tab_shapeK. Qed.
 
 Lemma append_nth_conj_tab (t : seq (seq T)) l i :
   is_part (shape t) ->
-  is_in_corner (shape t) i ->
+  is_add_corner (shape t) i ->
   conj_tab (append_nth t l i) = append_nth (conj_tab t) l (nth 0 (shape t) i).
 Proof.
   move=> Hsh Hcorn; apply eq_from_shape_get_tab.
@@ -610,7 +610,7 @@ Proof.
     rewrite !get_tab_append_nth.
     case: (altP (r =P nth 0 (shape t) i)); rewrite /= ?andbF ?andbT get_conj_tab //.
     rewrite shape_conj_tab.
-    move: Hcorn; rewrite /is_in_corner /= => /orP [/eqP Hi| H] Hr.
+    move: Hcorn; rewrite /is_add_corner /= => /orP [/eqP Hi| H] Hr.
     + by rewrite Hi nth0 nth_default // size_conj_part.
     + have : nth 0 (shape t) i <= nth 0 (shape t) i < nth 0 (shape t) i.-1.
         by rewrite leqnn H.

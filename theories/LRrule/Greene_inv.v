@@ -1577,7 +1577,7 @@ Proof.
   have:= rembig_RS tn (rev t) => [] [] iv; rewrite -rev_rcons -Hrs => HRSr.
   move: Hsh; rewrite HRSr {HRSr}.
   have Hpart := is_part_sht (is_tableau_RS (rembig s)).
-  have : is_in_corner (shape (RS (rembig s))) iu.
+  have : is_add_corner (shape (RS (rembig s))) iu.
     have := is_part_sht (is_tableau_RS s); rewrite Hrem shape_append_nth => Hparti.
     rewrite -(incr_nthK Hpart Hparti); apply (in_corner_decr_nth Hparti).
     rewrite del_out_corner => //.

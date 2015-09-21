@@ -19,17 +19,18 @@ Require Import tools combclass partition Yamanouchi ordtype tableau.
 Require Import skewtab Schur therule.
 
 (******************************************************************************)
-(* This file contains a Coq implementation of the Littlewood-Richardson rule  *)
-(*                                                                            *)
-(* LRcoeff       : seq nat -> seq nat -> seq nat -> nat                       *)
-(*                 returns the LR coefficient                                 *)
-(* LRyamtab_list : seq nat -> seq nat -> seq nat -> seq (seq (seq nat))       *)
-(*                 returns the list of LR tableaux                            *)
-(*                                                                            *)
-(* The following lemma assert that LRcoeff agrees with LRyamtab_list          *)
-(*   Lemma LRcoeffP inner eval outer :                                        *)
-(*     size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.      *)
-(*                                                                            *)
+(** This file contains a Coq implementation of the Littlewood-Richardson rule *)
+(**                                                                           *)
+(** [LRcoeff]       : [seq nat -> seq nat -> seq nat -> nat]                  *)
+(**                   returns the LR coefficient                              *)
+(** [LRyamtab_list] : seq nat -> seq nat -> seq nat -> seq (seq (seq nat))    *)
+(**                   returns the list of LR tableaux                         *)
+(**                                                                           *)
+(** The following lemma assert that LRcoeff agrees with LRyamtab_list         *)
+(**                                                                           *)
+(**  [Lemma LRcoeffP inner eval outer :                                       *)
+(**     size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.]    *)
+(**                                                                           *)
 (******************************************************************************)
 
 
@@ -100,7 +101,7 @@ Variable outev : seq nat.
 
 Definition choose_one_letter innev mini maxi :=
   filter
-    (fun i => is_in_corner innev i && (nth 0 innev i < nth 0 outev i))
+    (fun i => is_add_corner innev i && (nth 0 innev i < nth 0 outev i))
     (iota mini ((minn (size innev) maxi).+1 - mini) ).
 
 Fixpoint yamtab_row innev row :=
@@ -475,8 +476,8 @@ Proof.
   have {Hlrw} := Hlrw _ (hyper_yam_of_eval Hpart) => /= /andP [] Hyamlrow /eqP Hshape.
   rewrite (eq_count (a2 := pred1 l)); first last.
     move=> i /=; case (altP (i =P l)) => [Hi | //=]; subst i.
-    have /= -> /= : is_in_corner shr l.
-      rewrite -Hshr; by apply is_in_corner_yam.
+    have /= -> /= : is_add_corner shr l.
+      rewrite -Hshr; by apply is_add_corner_yam.
     move: Hincl => /includedP [] _ Hincl.
     apply: (leq_trans _ (Hincl l)).
     rewrite -Hshape /= Hshr.

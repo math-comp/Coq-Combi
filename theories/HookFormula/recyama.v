@@ -22,14 +22,14 @@ Unset Strict Implicit.
 Section RecYama.
 
   Definition decr_nth_part_def (p : seq nat) i : (seq nat) :=
-    if is_out_corner p i then decr_nth p i
+    if is_rem_corner p i then decr_nth p i
     else p.
 
   Lemma is_part_decr_nth_part (p : intpart) i :
     is_part (decr_nth_part_def p i).
   Proof.
     rewrite /decr_nth_part_def.
-    case: (boolP (is_out_corner p i)).
+    case: (boolP (is_rem_corner p i)).
     - apply is_part_decr_nth; exact: intpartP.
     - move=> _; exact: intpartP.
   Qed.
@@ -38,10 +38,10 @@ Section RecYama.
     IntPart (is_part_decr_nth_part p i).
 
   Lemma decr_nth_partE (p : intpart) i :
-    is_out_corner p i -> decr_nth_part p i = decr_nth p i :> seq nat.
+    is_rem_corner p i -> decr_nth_part p i = decr_nth p i :> seq nat.
   Proof.
     rewrite /decr_nth_part /decr_nth_part_def /=.
-    by case: (is_out_corner p i).
+    by case: (is_rem_corner p i).
   Qed.
 
   Lemma card_yama_rec (p : intpart) :
@@ -94,7 +94,7 @@ Section RecYama.
     f empty_part ->
     ( forall p : intpart,
         (p != [::] :> seq nat) ->
-        (forall i, is_out_corner p i -> f (decr_nth_part p i) ) -> f p ) ->
+        (forall i, is_rem_corner p i -> f (decr_nth_part p i) ) -> f p ) ->
     ( forall p : intpart, f p).
   Proof.
     move=> H0 Hrec p.
@@ -114,7 +114,7 @@ Section RecYama.
     f [::] ->
     ( forall p, is_part p ->
         (p != [::]) ->
-        (forall i, is_out_corner p i -> f (decr_nth p i) ) -> f p ) ->
+        (forall i, is_rem_corner p i -> f (decr_nth p i) ) -> f p ) ->
     ( forall p, is_part p -> f p).
   Proof.
     move=> H0 Hrec p Hp.

@@ -107,7 +107,7 @@ Proof.
     by apply included_refl.
   have {IHy} Hrec := IHy _ (skew_yam_consK Hpart Hskew).
   have /= := Hskew _ (hyper_yam_of_eval Hpart).
-  rewrite /is_yam_of_eval => /andP [] /is_out_corner_yam => Hcorn /eqP Hb.
+  rewrite /is_yam_of_eval => /andP [] /is_rem_corner_yam => Hcorn /eqP Hb.
   rewrite Hb in Hcorn.
   have := included_incr_nth (decr_nth shb y0) y0.
   rewrite (decr_nthK (is_part_skew_yam Hpart Hskew) Hcorn).
