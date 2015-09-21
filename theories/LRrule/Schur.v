@@ -133,7 +133,7 @@ Proof.
     apply: reshapeKl; by rewrite sumn_rev Hsz.
     rewrite /to_word revK; apply: reshapeKr; by rewrite sumn_rev Hsz.
   - move=> [] tab [] Htab Hsh Hw; apply/andP; split.
-    + by rewrite -Hw -size_to_word /size_tab Hsh.
+    + by rewrite -Hw size_to_word /size_tab Hsh.
     + rewrite -Hw /to_word -Hsh.
       by rewrite /shape -map_rev -/(shape _) flattenK revK.
 Qed.
@@ -184,7 +184,7 @@ Lemma freeSchurP Q t : t \in freeSchur Q = (val t \in langQ Q).
 Proof. by rewrite /freeSchur /langQ !inE /=. Qed.
 
 Lemma size_RS_tuple (t : d.-tuple 'I_n) : size (to_word (RS t)) == d.
-Proof. by rewrite -size_to_word-{2}(size_tuple t) size_RS. Qed.
+Proof. by rewrite size_to_word -{2}(size_tuple t) size_RS. Qed.
 
 
 (* Bijection freeSchur -> tabwordshape *)

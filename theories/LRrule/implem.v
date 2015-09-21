@@ -730,7 +730,7 @@ Lemma LRyamtab_eval inner eval outer tab:
 Proof.
   move=> Hinn Hout Hincl Hev Hsumn Htab.
   apply (included_sumnE Hev (LRyamtab_included Htab)).
-  rewrite Hsumn evalseq_eq_size -size_to_word /size_tab.
+  rewrite Hsumn evalseq_eq_size size_to_word /size_tab.
   by rewrite (LRyamtab_shape Hinn Hout Hincl Htab).
 Qed.
 

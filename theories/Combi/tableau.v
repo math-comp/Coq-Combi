@@ -405,7 +405,7 @@ Proof.
   rewrite /shape; by case t.
 Qed.
 
-Lemma size_to_word t : size_tab t = size (to_word t).
+Lemma size_to_word t : size (to_word t) = size_tab t.
 Proof.
   rewrite /size_tab; elim: t => [//= | t0 t IHt] /=.
   by rewrite to_word_cons size_cat IHt addnC.

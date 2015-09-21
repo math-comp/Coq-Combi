@@ -86,7 +86,7 @@ Lemma join_stdtab s t :
   is_tableau (join_tab s (map (shiftn (size_tab s)) t)).
 Proof.
   rewrite /is_stdtab => /andP [].
-  rewrite /is_std -size_to_word /= => Htabs Hperm /(is_skew_tableau_map_shiftn (size_tab s)).
+  rewrite /is_std size_to_word /= => Htabs Hperm /(is_skew_tableau_map_shiftn (size_tab s)).
   apply: join_tab_skew; last exact Htabs.
   rewrite {2}/to_word -map_rev -map_flatten.
   move: (flatten (rev t)) => w.
@@ -103,7 +103,7 @@ Lemma join_stdtab_in_shuffle s t :
 Proof.
   rewrite /join_tab /is_stdtab => /andP [] _ Hstd Hsize.
   rewrite (mem_shsh _ _ Hstd).
-  move: Hstd; rewrite /is_std -size_to_word /= => Hperm.
+  move: Hstd; rewrite /is_std size_to_word /= => Hperm.
   have {Hperm} : all (gtn (size_tab s)) (to_word s).
     apply/allP => i; rewrite (perm_eq_mem Hperm).
     by rewrite mem_iota /= add0n.
@@ -381,7 +381,7 @@ Proof.
   have:= HLR; rewrite inE /= => /hasP [] p2 /Hall{Hall} /Sch_plact Hpl Hshsh.
   have := hyper_stdtabnP P1 => /=; rewrite /is_stdtab => /andP [] /andP [] _ Hstd /= /eqP Hsz.
   have := (shsh_sfilterleq Hstd Hshsh).
-  rewrite -size_to_word Hsz /= {Hstd Hsz} => Hp2; subst p2.
+  rewrite size_to_word Hsz /= {Hstd Hsz} => Hp2; subst p2.
   apply (eq_inv_is_skew_tableau_reshape (u1 := [seq x <- to_word Q | d1 <= x])).
   - by apply size_included.
   - apply/eq_invP; split; first by rewrite size_map.
@@ -445,7 +445,7 @@ Proof.
     rewrite intpartn_sumn.
     have := stdtabnP (hyper_stdtabn P1); rewrite /is_stdtab => /andP [] _ /=.
     move /shsh_sfilterleq => HH/HH{HH}.
-    rewrite -size_to_word (size_tab_stdtabn (hyper_stdtabn P1)) /sfilterleq /=.
+    rewrite size_to_word (size_tab_stdtabn (hyper_stdtabn P1)) /sfilterleq /=.
     by rewrite to_word_skew_reshape //= size_std size_yameval sumn_diff_shape_intpartE.
   apply perm_eq_stdE.
   - by rewrite perm_eq_evalseq !eval_yameval.

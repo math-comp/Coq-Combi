@@ -200,12 +200,12 @@ Proof.
   move=> Hsize Hstdtab _.
   have Htab : is_tableau t by move: Hstdtab => /andP [].
   have Hstd : is_std (to_word t) by move: Hstdtab => /andP [].
-  have Hperm : perm_eq (to_word t) (iota 0 n.+1) by rewrite -Hsize size_to_word.
+  have Hperm : perm_eq (to_word t) (iota 0 n.+1) by rewrite -Hsize -size_to_word.
   have := std_uniq Hstd.
   have : allLeq (to_word t) n.
     have := Hstd => /perm_eq_allLeqE ->.
     apply/allP => x.
-    by rewrite mem_iota add0n -size_to_word Hsize /= leqXnatE.
+    by rewrite mem_iota add0n size_to_word Hsize /= leqXnatE.
   have : n \in to_word t.
     move: Hperm => /perm_eq_mem ->.
     by rewrite mem_iota /= add0n.
@@ -292,7 +292,7 @@ Proof.
   move=> Hsize Hstdtab Hnnil /=.
   have := remnP Hstdtab Hnnil; rewrite /remn Hsize /= => [] [] Htab Happ {Hnnil}.
   move: Hstdtab; rewrite /is_stdtab Htab /= /is_std.
-  rewrite -!size_to_word {1}Hsize => /andP [] _ Hperm.
+  rewrite !size_to_word {1}Hsize => /andP [] _ Hperm.
   have := erefl (size_tab t).
   rewrite -{1}Happ size_append_nth Hsize => /eqP; rewrite eqSS => /eqP Hsz.
   have := perm_eq_append_nth (remn_rec t n) n (last_big t n).
@@ -329,7 +329,7 @@ Qed.
 
 Lemma std_of_yam y : is_std (to_word (stdtab_of_yam y)).
 Proof.
-  rewrite /is_std -size_to_word size_stdtab_of_yam.
+  rewrite /is_std size_to_word size_stdtab_of_yam.
   elim: y => [//= | y0 y IHy].
   have -> /= : iota 0 (size (y0 :: y)) = rcons (iota 0 (size y)) (size y).
     rewrite [size (y0 :: y)]/= -addn1 iota_add add0n /=.
@@ -377,7 +377,7 @@ Proof.
   elim: y => [//= | y0 y IHy] /= /andP [] Hpart /IHy {IHy}.
   move: Hpart; rewrite -shape_stdtab_of_yam.
   suff : all (gtn (size y)) (to_word (stdtab_of_yam y)) by apply: is_tab_append_nth_size.
-  have:= std_of_yam y; rewrite /is_std -size_to_word size_stdtab_of_yam.
+  have:= std_of_yam y; rewrite /is_std size_to_word size_stdtab_of_yam.
   move=> /perm_eq_mem Hperm.
   apply/allP => x Hx /=.
   have:= Hperm x; by rewrite mem_iota /= add0n Hx => /esym ->.
@@ -420,7 +420,7 @@ Qed.
 
 Lemma size_notin_stdtab_of_yam y : (size y) \notin (to_word (stdtab_of_yam y)).
 Proof.
-  have:= std_of_yam y; rewrite /is_std -size_to_word size_stdtab_of_yam => /perm_eq_mem ->.
+  have:= std_of_yam y; rewrite /is_std size_to_word size_stdtab_of_yam => /perm_eq_mem ->.
   by rewrite mem_iota add0n /= ltnn.
 Qed.
 
@@ -505,7 +505,7 @@ Proof.
   move H : (size_tab t) => n.
   elim: n t H Hstdtab => [//= | n IHn] t Hsize Hstdtab.
   move Hw : (to_word t) Hsize => w; case : w Hw => [//= | w0 w].
-    by rewrite size_to_word => -> /=.
+    by rewrite -size_to_word => -> /=.
   rewrite /= => Ht Hsize -> /=.
   have Hnnil : t != [::] by move: Hsize => /eqP; apply contraL => /eqP ->.
   have := size_tab_remn Hstdtab Hnnil; rewrite Hsize /= => Hsz.
@@ -675,12 +675,12 @@ Proof.
       * exact: Hj2.
       * by rewrite /eq_op /= eq_refl /= eq_sym (gtn_eqF Hj).
   - apply/is_stdP => n.
-    rewrite -size_to_word /size_tab shape_conj_tab sumn_conj_part
-            -/(size_tab _) size_to_word => /is_stdP H.
+    rewrite size_to_word /size_tab shape_conj_tab sumn_conj_part
+            -/(size_tab _) -size_to_word => /is_stdP H.
     have {H} Hn := H Hstd.
     have := Hn; rewrite -index_mem; have := nth_index 0 Hn.
     move: (index _ _) => pos <- {Hn} Hpos.
-    move: Hpos; rewrite -size_to_word /size_tab -sumn_rev /shape -map_rev -/(shape _) => Hpos.
+    move: Hpos; rewrite size_to_word /size_tab -sumn_rev /shape -map_rev -/(shape _) => Hpos.
     have {Hpos} := reshape_coordP Hpos.
     rewrite (nth_flatten 0 (rev t) pos).
     have := reshape_coordK (shape (rev t)) pos.
