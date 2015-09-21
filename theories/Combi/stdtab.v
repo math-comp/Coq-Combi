@@ -604,7 +604,7 @@ Lemma append_nth_conj_tab (t : seq (seq T)) l i :
 Proof.
   move=> Hsh Hcorn; apply eq_from_shape_get_tab.
   - rewrite shape_conj_tab !shape_append_nth shape_conj_tab.
-    exact: incr_nth_conj_part.
+    exact: conj_part_incr_nth.
   - move=> r c; rewrite get_conj_tab; first last.
       rewrite shape_append_nth; by apply is_part_incr_nth.
     rewrite !get_tab_append_nth.

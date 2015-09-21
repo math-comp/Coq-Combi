@@ -231,7 +231,7 @@ Proof.
   rewrite /hook_length /al_length => Hpart Hcrn Hin.
   rewrite (arm_length_incr_nth_row Hin) addSn.
   congr (_ + _).+1.
-  rewrite /leg_length /arm_length (incr_nth_conj_part Hpart Hcrn) nth_incr_nth.
+  rewrite /leg_length /arm_length (conj_part_incr_nth Hpart Hcrn) nth_incr_nth.
   move: Hin; rewrite /is_in_shape eq_sym ltn_neqAle => /andP [] /negbTE -> _.
   by rewrite add0n.
 Qed.
@@ -243,7 +243,7 @@ Lemma al_length_incr_nth_col sh r i :
 Proof.
   move=> Hpart Hcorn Hin.
   rewrite -al_length_conj_part; last exact: is_part_incr_nth.
-  rewrite incr_nth_conj_part // al_length_incr_nth_row; first last.
+  rewrite conj_part_incr_nth // al_length_incr_nth_row; first last.
     - by rewrite -is_in_conj_part.
     - exact: is_add_corner_conj_part.
     - exact: is_part_conj.
@@ -259,7 +259,7 @@ Proof.
   rewrite /al_length => Hpart Hcorn Hin Hr Hc.
   congr (_ + _).
   - exact: arm_length_incr_nth_nrow.
-  - rewrite /leg_length incr_nth_conj_part //.
+  - rewrite /leg_length conj_part_incr_nth //.
     exact: arm_length_incr_nth_nrow.
 Qed.
 
@@ -1094,7 +1094,7 @@ Proof.
   - have Hpartconj := is_part_conj is_part_p.
     have Hcornconj := is_corner_box_conj_part is_part_p Hcorn.
     have Hconj' : (decr_nth (conj_part p) Beta) = conj_part p'.
-      rewrite -Hp incr_nth_conj_part //; last exact: in_corner_decr_nth.
+      rewrite -Hp conj_part_incr_nth //; last exact: in_corner_decr_nth.
       rewrite -HBeta' incr_nthK //.
       apply (is_part_incr_nth Hpartc').
       rewrite HBeta'; apply (is_add_corner_conj_part Hpart').

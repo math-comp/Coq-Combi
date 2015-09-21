@@ -1593,7 +1593,7 @@ Proof.
     rewrite perm_eq_sym; exact: perm_rev.
   - move: Hsh.
     rewrite !shape_append_nth shape_conj_tab.
-    rewrite incr_nth_conj_part //.
+    rewrite conj_part_incr_nth //.
     exact: incr_nth_inj.
 Qed.
 

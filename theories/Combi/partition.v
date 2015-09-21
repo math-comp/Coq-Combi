@@ -479,7 +479,7 @@ Section Partition.
         move: Hhead Hsh; by case sh.
   Qed.
 
-  Lemma incr_nth_conj_part sh i :
+  Lemma conj_part_incr_nth sh i :
     is_part sh -> is_add_corner sh i ->
     conj_part (incr_nth sh i) = incr_nth (conj_part sh) (nth 0 sh i).
   Proof.
