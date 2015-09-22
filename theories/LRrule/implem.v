@@ -20,17 +20,18 @@ Require Import tools combclass partition Yamanouchi ordtype tableau.
 Require Import skewtab Schur therule.
 
 (******************************************************************************)
-(* This file contains a Coq implementation of the Littlewood-Richardson rule  *)
-(*                                                                            *)
-(* LRcoeff       : seq nat -> seq nat -> seq nat -> nat                       *)
-(*                 returns the LR coefficient                                 *)
-(* LRyamtab_list : seq nat -> seq nat -> seq nat -> seq (seq (seq nat))       *)
-(*                 returns the list of LR tableaux                            *)
-(*                                                                            *)
-(* The following lemma assert that LRcoeff agrees with LRyamtab_list          *)
-(*   Lemma LRcoeffP inner eval outer :                                        *)
-(*     size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.      *)
-(*                                                                            *)
+(** This file contains a Coq implementation of the Littlewood-Richardson rule *)
+(**                                                                           *)
+(** [LRcoeff]       : [seq nat -> seq nat -> seq nat -> nat]                  *)
+(**                   returns the LR coefficient                              *)
+(** [LRyamtab_list] : seq nat -> seq nat -> seq nat -> seq (seq (seq nat))    *)
+(**                   returns the list of LR tableaux                         *)
+(**                                                                           *)
+(** The following lemma assert that LRcoeff agrees with LRyamtab_list         *)
+(**                                                                           *)
+(**  [Lemma LRcoeffP inner eval outer :                                       *)
+(**     size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.]    *)
+(**                                                                           *)
 (******************************************************************************)
 
 
@@ -101,7 +102,7 @@ Variable outev : seq nat.
 
 Definition choose_one_letter innev mini maxi :=
   filter
-    (fun i => is_in_corner innev i && (nth 0 innev i < nth 0 outev i))
+    (fun i => is_add_corner innev i && (nth 0 innev i < nth 0 outev i))
     (iota mini ((minn (size innev) maxi).+1 - mini) ).
 
 Fixpoint yamtab_row innev row :=
@@ -357,7 +358,7 @@ Proof.
   rewrite Hshift; congr (_ :: _).
   rewrite (IHout _ _ _ _ (path_sorted Hinn) _ _ _ _ Hrec) {IHout Hrec} //=.
   rewrite Hshift (subnKC H0) -/(is_part (out0 :: out)).
-  exact (is_part_tl Hout).
+  exact (is_part_consK Hout).
 Qed.
 
 
@@ -446,9 +447,9 @@ Proof.
   have Hrshiftdom := yamtab_shift_dominate (yamtab_row_dominate Hrow) Hshift.
   move {Hshift Hrow rrow shrrow}=> /= [] Hshift Hshape.
   rewrite (part_head_non0 Hout) Hrow0 Hrshiftrow.
-  rewrite Hshift (subnKC H0) (part_head_non0 (is_part_tl Hout)) /=.
+  rewrite Hshift (subnKC H0) (part_head_non0 (is_part_consK Hout)) /=.
   have Hpart0 : is_part (inn0 + size rshift :: out).
-    have := is_part_tl Hout => /=/andP [] Hhout ->.
+    have := is_part_consK Hout => /=/andP [] Hhout ->.
     by rewrite andbT Hshift (subnKC H0).
   have := (IHout _ _ _ _ (path_sorted Hinn) Hpart0 Hincl Hsize Hrshiftrow _ Hrec Hshape).
   move=> {IHout Hrec Hpart0} /= /and3P [] _ _ ->; rewrite andbT.
@@ -476,8 +477,8 @@ Proof.
   have {Hlrw} := Hlrw _ (hyper_yam_of_eval Hpart) => /= /andP [] Hyamlrow /eqP Hshape.
   rewrite (eq_count (a2 := pred1 l)); first last.
     move=> i /=; case (altP (i =P l)) => [Hi | //=]; subst i.
-    have /= -> /= : is_in_corner shr l.
-      rewrite -Hshr; by apply is_in_corner_yam.
+    have /= -> /= : is_add_corner shr l.
+      rewrite -Hshr; by apply is_add_corner_yam.
     move: Hincl => /includedP [] _ Hincl.
     apply: (leq_trans _ (Hincl l)).
     rewrite -Hshape /= Hshr.
@@ -593,7 +594,7 @@ Proof.
   have Hskewrec : is_skew_tableau (inn0 :: inn) (row1 :: yamtab).
     by move: Hskew => /=/and4P [].
   have {IHyamtab} Hrec :=
-    IHyamtab _ inn inn0 row1 _ (path_sorted Hinn) (is_part_tl Hout) Hsize Hskewrec.
+    IHyamtab _ inn inn0 row1 _ (path_sorted Hinn) (is_part_consK Hout) Hsize Hskewrec.
   rewrite /= count_flatten -map_comp subSS -/(outer_shape _ _).
   set f1 := (X in map X); set rec := (X in map _ X).
   pose f2 := nat_of_bool \o (pred1 row1) \o (@fst (seq nat) (seq nat)).
@@ -731,7 +732,7 @@ Lemma LRyamtab_eval inner eval outer tab:
 Proof.
   move=> Hinn Hout Hincl Hev Hsumn Htab.
   apply (included_sumnE Hev (LRyamtab_included Htab)).
-  rewrite Hsumn evalseq_eq_size -size_to_word /size_tab.
+  rewrite Hsumn evalseq_eq_size size_to_word /size_tab.
   by rewrite (LRyamtab_shape Hinn Hout Hincl Htab).
 Qed.
 

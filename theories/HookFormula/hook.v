@@ -1,5 +1,4 @@
 (** * Combi.HookFormula.hook : A proof of the Hook-Lenght formula *)
-
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -44,21 +43,21 @@ Local Open Scope nat_scope.
 
 (* Corner Box ***********************************)
 
-Definition is_corner_box sh r c := (is_out_corner sh r && (c == (nth 0 sh r).-1)).
+Definition is_corner_box sh r c := (is_rem_corner sh r && (c == (nth 0 sh r).-1)).
 
 Lemma is_corner_box_in_part sh r c :
   is_corner_box sh r c -> is_in_shape sh r c.
 Proof.
-  rewrite /is_corner_box /is_in_shape /is_out_corner => /andP [] Hr /eqP ->.
+  rewrite /is_corner_box /is_in_shape /is_rem_corner => /andP [] Hr /eqP ->.
   move: Hr; by case (nth 0 sh r).
 Qed.
 
 Lemma is_corner_box_conj_part sh u v :
   is_part sh -> is_corner_box sh u v -> is_corner_box (conj_part sh) v u.
 Proof.
-  rewrite /is_corner_box {1}/is_out_corner => Hpart /andP [] Hcorn /eqP Hv.
+  rewrite /is_corner_box {1}/is_rem_corner => Hpart /andP [] Hcorn /eqP Hv.
   subst.
-  rewrite (out_corner_conj_part Hpart Hcorn) /= eq_sym.
+  rewrite (rem_corner_conj_part Hpart Hcorn) /= eq_sym.
   have : nth 0 sh u.+1 <= (nth 0 sh u).-1 < (nth 0 sh u).
     move: Hcorn; case: (nth 0 sh u) => [//= | shu].
     by rewrite ltnS [shu.+1.-1]/= => -> /=.
@@ -139,7 +138,7 @@ Proof.
   rewrite /is_in_shape => Hin_part /eqP.
   rewrite addn_eq0 => /andP [Hnth Hhaut].
   apply /andP; split.
-  - rewrite /is_out_corner.
+  - rewrite /is_rem_corner.
     apply: (leq_trans _ Hin_part).
     rewrite ltnS (conj_leqE Hpart).
     by rewrite -subn_eq0 subnS.
@@ -152,7 +151,7 @@ Qed.
 Lemma corner_arm_length0 sh r c :
   is_part sh -> is_corner_box sh r c -> arm_length sh r c = 0.
 Proof.
-  rewrite /is_corner_box /is_out_corner /arm_length => Hpart /andP [] _ /eqP ->.
+  rewrite /is_corner_box /is_rem_corner /arm_length => Hpart /andP [] _ /eqP ->.
   case: (nth 0 sh r) => [//= | n]; by rewrite subSn //= subnn.
 Qed.
 
@@ -177,7 +176,7 @@ Lemma arm_length_corner_box sh r c u v :
   arm_length sh r c = arm_length sh u c + arm_length sh r v.
 Proof.
   move=> /is_part_ijP [] _ Hpart.
-  rewrite /is_corner_box /is_out_corner => Hr Hc /andP [] Hcorn /eqP Hv.
+  rewrite /is_corner_box /is_rem_corner => Hr Hc /andP [] Hcorn /eqP Hv.
   subst v.
   rewrite /arm_length.
   have {Hpart Hr} := Hpart _ _ Hr.
@@ -225,33 +224,33 @@ Proof.
 Qed.
 
 Lemma al_length_incr_nth_row sh r c :
-  is_part sh -> is_in_corner sh r ->
+  is_part sh -> is_add_corner sh r ->
   is_in_shape sh r c -> al_length (incr_nth sh r) r c = (al_length sh r c).+1.
 Proof.
   rewrite /hook_length /al_length => Hpart Hcrn Hin.
   rewrite (arm_length_incr_nth_row Hin) addSn.
   congr (_ + _).+1.
-  rewrite /leg_length /arm_length (incr_nth_conj_part Hpart Hcrn) nth_incr_nth.
+  rewrite /leg_length /arm_length (conj_part_incr_nth Hpart Hcrn) nth_incr_nth.
   move: Hin; rewrite /is_in_shape eq_sym ltn_neqAle => /andP [] /negbTE -> _.
   by rewrite add0n.
 Qed.
 
 Lemma al_length_incr_nth_col sh r i :
-  is_part sh -> is_in_corner sh r ->
+  is_part sh -> is_add_corner sh r ->
   is_in_shape sh i (nth 0 sh r) ->
   al_length (incr_nth sh r) i (nth 0 sh r) = (al_length sh i (nth 0 sh r)).+1.
 Proof.
   move=> Hpart Hcorn Hin.
   rewrite -al_length_conj_part; last exact: is_part_incr_nth.
-  rewrite incr_nth_conj_part // al_length_incr_nth_row; first last.
+  rewrite conj_part_incr_nth // al_length_incr_nth_row; first last.
     - by rewrite -is_in_conj_part.
-    - exact: is_in_corner_conj_part.
+    - exact: is_add_corner_conj_part.
     - exact: is_part_conj.
   by rewrite al_length_conj_part.
 Qed.
 
 Lemma al_length_incr_nth sh i r c :
-  is_part sh -> is_in_corner sh i ->
+  is_part sh -> is_add_corner sh i ->
   is_in_shape sh r c ->
   i != r -> nth 0 sh i != c ->
   al_length (incr_nth sh i) r c = al_length sh r c.
@@ -259,7 +258,7 @@ Proof.
   rewrite /al_length => Hpart Hcorn Hin Hr Hc.
   congr (_ + _).
   - exact: arm_length_incr_nth_nrow.
-  - rewrite /leg_length incr_nth_conj_part //.
+  - rewrite /leg_length conj_part_incr_nth //.
     exact: arm_length_incr_nth_nrow.
 Qed.
 
@@ -282,7 +281,7 @@ Proof.
     rewrite -Hp al_length_incr_nth_row; first last.
     - exact: Hin.
     - rewrite /p'.
-    - by apply in_corner_decr_nth.
+    - by apply add_corner_decr_nth.
     - by apply is_part_decr_nth.
     move: (al_length p' Alpha c) => n.
     have Hn : n.+1%:Q != 0 by rewrite intr_eq0.
@@ -524,7 +523,7 @@ Proof.
   move=> Htrace; apply (sameP idP); apply (iffP idP).
   - move=> /andP [] /eqP HA /eqP HB; subst.
     move: Htrace => /and5P [] _ _ _ _ /=.
-    rewrite /is_corner_box /al_length /leg_length /arm_length /is_out_corner.
+    rewrite /is_corner_box /al_length /leg_length /arm_length /is_rem_corner.
     move => /andP [] Ha /eqP Hb; subst.
     have -> : (nth 0 p a - (nth 0 p a).-1) = 1.
       move: Ha; case: (nth 0 p a) => [//= | pa] _.
@@ -946,7 +945,7 @@ Definition PI_trace X := (PI (head O X.1) (head O X.2) (behead X.1) (behead X.2)
 Lemma sumnpSPE : (sumn p).-1.+1 = sumn p.
 Proof.
   have Hszp : (Alpha < size p)%N.
-    move: Hcorn; rewrite /is_corner_box /is_out_corner => /andP [] H _.
+    move: Hcorn; rewrite /is_corner_box /is_rem_corner => /andP [] H _.
     move: H; apply contraLR; rewrite -!ltnNge ltnS => H.
     by rewrite (nth_default _ H).
   move: Hszp; case: p => /= [] [//= | p0 p'].
@@ -1054,7 +1053,7 @@ End Formule.
 
 Let p' := decr_nth p Alpha.
 
-Fact Hcrn : is_out_corner p Alpha.
+Fact Hcrn : is_rem_corner p Alpha.
 Proof. by have := Hcorn => /andP [] Hcrn /eqP HBeta. Qed.
 Hint Resolve Hcrn.
 
@@ -1094,11 +1093,11 @@ Proof.
   - have Hpartconj := is_part_conj is_part_p.
     have Hcornconj := is_corner_box_conj_part is_part_p Hcorn.
     have Hconj' : (decr_nth (conj_part p) Beta) = conj_part p'.
-      rewrite -Hp incr_nth_conj_part //; last exact: in_corner_decr_nth.
+      rewrite -Hp conj_part_incr_nth //; last exact: add_corner_decr_nth.
       rewrite -HBeta' incr_nthK //.
       apply (is_part_incr_nth Hpartc').
-      rewrite HBeta'; apply (is_in_corner_conj_part Hpart').
-      exact: in_corner_decr_nth.
+      rewrite HBeta'; apply (is_add_corner_conj_part Hpart').
+      exact: add_corner_decr_nth.
 
     transitivity (\prod_(0 <= j < Alpha) (1 + (al_length (conj_part p) Beta j)%:Q^-1));
       last by apply eq_bigr => i _; rewrite al_length_conj_part.
@@ -1134,7 +1133,7 @@ Proof.
     rewrite -Hp al_length_incr_nth.
     + by rewrite divff // intr_eq0.
     + exact: is_part_decr_nth.
-    + exact: in_corner_decr_nth.
+    + exact: add_corner_decr_nth.
     + exact: Hrc.
     + by rewrite eq_sym.
     + move: Hc; rewrite eq_sym HBeta -Hp.
@@ -1176,17 +1175,17 @@ End EndsAt.
 
 Open Scope ring_scope.
 
-Lemma ends_at_out_cornerE :
+Lemma ends_at_rem_cornerE :
   (fun X : seq nat * seq nat =>
-     \sum_(i0 <- out_corners p) (ends_at i0 (nth O p i0).-1 X)%:Q)
+     \sum_(i0 <- rem_corners p) (ends_at i0 (nth O p i0).-1 X)%:Q)
     == (fun X => is_corner_box p (last O X.1) (last O X.2)).
 Proof.
   rewrite /ends_at => [] [A B] /=.
   case (boolP (is_corner_box p (last O A) (last O B))) => Hcorn.
-  - rewrite (bigD1_seq (last O A) _ (out_corners_uniq p)) /=; first last.
-      move: Hcorn; rewrite /out_corners /is_corner_box => /andP [] Hcorn _.
+  - rewrite (bigD1_seq (last O A) _ (rem_corners_uniq p)) /=; first last.
+      move: Hcorn; rewrite /rem_corners /is_corner_box => /andP [] Hcorn _.
       rewrite mem_filter Hcorn mem_iota add0n leq0n /=.
-      move: Hcorn; rewrite /is_out_corner.
+      move: Hcorn; rewrite /is_rem_corner.
       apply contraLR; by rewrite -!ltnNge ltnS => /(nth_default O) ->.
     move: Hcorn; rewrite /is_corner_box eq_refl => /andP [] _ -> /=.
     rewrite big1 // => i; by rewrite eq_sym => /negbTE ->.
@@ -1198,12 +1197,12 @@ Proof.
 Qed.
 
 Corollary Corollary4 :
-  p != [::] :> seq nat -> \sum_(i <- out_corners p) (HLF (decr_nth p i)) / (HLF p) = 1.
+  p != [::] :> seq nat -> \sum_(i <- rem_corners p) (HLF (decr_nth p i)) / (HLF p) = 1.
 Proof.
   rewrite big_seq_cond => Hp.
   rewrite (eq_bigr (fun i => (mu choose_corner (ends_at i (nth O p i).-1)))); first last.
     move => i /andP [].
-    rewrite /out_corners mem_filter => /andP [] Hcorn _ _.
+    rewrite /rem_corners mem_filter => /andP [] Hcorn _ _.
     apply esym. apply Theorem2.
     by rewrite /is_corner_box Hcorn eq_refl.
   rewrite -big_seq_cond -mu_stable_sum.
@@ -1217,14 +1216,14 @@ Proof.
   move=> i /reshape_coordP.
   case: (reshape_coord p i) => [r c] [].
   rewrite -/(is_in_shape p _ _) => Hr Hc.
-  rewrite (Mstable_eq _ ends_at_out_cornerE).
+  rewrite (Mstable_eq _ ends_at_rem_cornerE).
   apply: (mu_bool_impl1 _ (fun X => is_trace X.1 X.2)).
     move=> [A B] /=; by apply/implyP => /and5P [].
   exact: mu_walk_to_corner_is_trace.
 Qed.
 
 Corollary Corollary4_eq :
-  p != [::] :> seq nat -> \sum_(i <- out_corners p) (HLF (decr_nth_part p i)) = HLF p.
+  p != [::] :> seq nat -> \sum_(i <- rem_corners p) (HLF (decr_nth_part p i)) = HLF p.
 Proof.
   move=> /Corollary4; rewrite -mulr_suml => /quot_eq1 <-.
   apply eq_big_seq => i; rewrite mem_filter => /andP [] Hi _.

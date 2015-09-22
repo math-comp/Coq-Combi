@@ -36,12 +36,11 @@ Implicit Type t : seq (seq Alph).
 Lemma std_plact1 (u v1 w v2 : seq Alph) :
   v2 \in plact1 v1 -> std (u ++ v1 ++ w) =Pl std (u ++ v2 ++ w).
 Proof.
-  have Hcongr := @plactcongr_is_congr nat_ordType.
   move/plact1P => [] a [] b [] c [] Habc -> ->.
   have := (std_cutabc u w a c b) => [] [] U [] V [] A [] C [] B [] Hsz Hstd.
   have Hac : a <A c by move: Habc => /andP []; apply: leqX_ltnX_trans.
   rewrite Hstd (std_transp Hac Hsz Hstd) -[[:: C; A] ++ B :: V]/([:: C; A; B] ++ V).
-  apply: (congr_catr Hcongr); apply: (congr_catl Hcongr).
+  apply: plact_catr; apply: plact_catl.
   apply: rule_gencongr => /=.
   suff -> : (A <= B < C)%Ord by rewrite inE eq_refl.
   have := eq_inv_std (u ++ [:: a; c; b] ++ w); rewrite Hstd {Hstd} => /eq_invP [] Hsize Hinv.
@@ -66,7 +65,6 @@ Lemma std_plact2 (u v1 w v2 : seq Alph) :
 Proof.
   have reorg3 (T : eqType) (U W : seq T) b a c :
     U ++ [:: b; a; c] ++ W = (U ++ [:: b]) ++ [:: a; c] ++ W by rewrite -catA.
-  have Hcongr := @plactcongr_is_congr nat_ordType.
   move/plact2P => [] a [] b [] c [] Habc -> ->.
   have := (std_cutabc u w b a c) => [] [] U [] W [] B [] A [] C [] Hsz.
   have Hac : a <A c by move: Habc => /andP []; apply: ltnX_leqX_trans.
@@ -74,7 +72,7 @@ Proof.
   have Hsz1 : size (u ++ [:: b]) = size (U ++ [:: B]) by rewrite !size_cat Hsz.
   move=> Hstd; rewrite Hstd (std_transp Hac Hsz1 Hstd).
   rewrite -!reorg3.
-  apply: (congr_catr Hcongr); apply: (congr_catl Hcongr).
+  apply: plact_catr; apply: plact_catl.
   apply: rule_gencongr => /=.
   suff -> : (A < B <= C)%Ord by rewrite !mem_cat inE eq_refl /= !orbT.
   rewrite -!reorg3  in Hstd.
@@ -97,19 +95,18 @@ Qed.
 
 Theorem std_plact u v : u =Pl v -> std u =Pl std v.
 Proof.
-  have:= @plactcongr_equiv nat_ordType => /equivalence_relP [] Hrefl Htrans.
-  move: v; apply: gencongr_ind; first by apply: Hrefl.
+  move: v; apply: gencongr_ind; first exact: plact_refl.
   move=> a b1 c b2 H Hplact.
-  rewrite -(@Htrans (std (a ++ b1 ++ c))); last by rewrite -(Htrans _ _ H); apply: Hrefl.
+  rewrite (plact_ltrans H).
   move: Hplact {H} => /plactruleP [].
   + apply: std_plact1.
   + rewrite -plact1I => /std_plact1 H.
     have {H} H := H a c.
-    by rewrite -(Htrans _ _ H); apply: Hrefl.
+    by rewrite -(@plact_ltrans _ _ _ H); exact: plact_refl.
   + apply: std_plact2.
   + rewrite -plact2I => /std_plact2 H.
     have {H} H := H a c.
-    by rewrite -(Htrans _ _ H); apply: Hrefl.
+    by rewrite -(@plact_ltrans _ _ _ H); exact: plact_refl.
 Qed.
 
 Lemma cast_enum u (S : {set 'I_(size u)}) :

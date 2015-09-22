@@ -810,10 +810,10 @@ Section Inverse.
   Implicit Type t u : seq (seq T).
 
   (* unused lemma *)
-  Lemma is_out_corner_instabnrow t l : is_tableau t ->
-      let: (res, nrow) := instabnrow t l in is_out_corner (shape res) nrow.
+  Lemma is_rem_corner_instabnrow t l : is_tableau t ->
+      let: (res, nrow) := instabnrow t l in is_rem_corner (shape res) nrow.
   Proof.
-    rewrite /is_out_corner.
+    rewrite /is_rem_corner.
     elim: t l => [l _ //=|t0 t IHt l /= /and4P [] Hnnil Hrow /dominateP [] Hdom _ Htab].
     case (boolP (bump t0 l)) => [Hbump | Hnbump].
     - rewrite (bump_bumprowE Hrow Hbump) /=.
@@ -887,11 +887,11 @@ Section Inverse.
   Qed.
 
   Theorem instabnrowinvK t nrow :
-    is_tableau t -> t != [::] -> is_out_corner (shape t) nrow ->
+    is_tableau t -> t != [::] -> is_rem_corner (shape t) nrow ->
     let: (tin, l) := invinstabnrow t nrow in (instabnrow tin l) = (t, nrow).
   Proof.
     elim: t nrow => [//= | t0 t IHt] nrow /= /and4P [] Hnnil0 Hrow0 Hdom Htab _.
-    rewrite /is_out_corner.
+    rewrite /is_rem_corner.
     case: nrow => [{IHt} /= Hcorn | nrow Hcorn].
     + case: t0 Hnnil0 Hrow0 Hdom Hcorn => [//= | l0 t0 _].
       case eqP => [/= -> _ _ | Hnnil0 Hrow0 _ _].
@@ -1040,9 +1040,9 @@ Section Inverse.
   Proof. by move/and4P => [] ->. Qed.
 
   Lemma is_tableau_instabnrowinv1 (s : seq (seq T)) nrow :
-    is_tableau s -> is_out_corner (shape s) nrow -> is_tableau (invinstabnrow s nrow).1.
+    is_tableau s -> is_rem_corner (shape s) nrow -> is_tableau (invinstabnrow s nrow).1.
   Proof.
-    rewrite /is_out_corner.
+    rewrite /is_rem_corner.
     elim: s nrow => [/= |s0 s IHs] nrow; first by case nrow.
     case: nrow => [/= | nrow].
     - move=> {IHs} /and4P []; case: s0 => [//= | s0h s0t] _.
@@ -1088,7 +1088,7 @@ Section Inverse.
   Proof.
     rewrite /is_RSpair /RSmap /RSmapinv2; case: pair => [tab yam] /and3P [].
     elim: yam tab => [[] //= _ _ | row yam IHyam] tab Htab Hyam Hshape /=.
-    have:= is_out_corner_yam Hyam; rewrite -(eqP Hshape) => Hcorn.
+    have:= is_rem_corner_yam Hyam; rewrite -(eqP Hshape) => Hcorn.
     have Hnnil : (tab != [::]).
       move: Hshape; case tab => //= /eqP Habs.
       have:= eq_refl (size ([::]: seq nat)); rewrite {2}Habs /= size_incr_nth.

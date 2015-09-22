@@ -837,7 +837,7 @@ Fixpoint shcols sh : seq {set 'I_(sumn sh)} :=
   else [::].
 
 Let cast_set_tab t :=
-  [fun s : {set 'I_(sumn (shape t))} => (cast_ord (size_to_word t)) @: s].
+  [fun s : {set 'I_(sumn (shape t))} => (cast_ord (esym (size_to_word t))) @: s].
 
 Definition tabrows t := map (cast_set_tab t) (shrows (shape t)).
 Definition tabcols t := map (cast_set_tab t) (shcols (shape t)).
@@ -933,7 +933,7 @@ Proof.
   elim: t Hpart i => [//= | t0 t IHt] Hpart i /=.
   rewrite inE => /orP [/eqP -> |].
   + have:= (part_head_non0 Hpart) => /=; by case (size t0).
-  + apply: IHt; by apply: (is_part_tl Hpart).
+  + apply: IHt; by apply: (is_part_consK Hpart).
 Qed.
 
 Lemma trivIseq_shrows sh : trivIseq (shrows sh).
@@ -1006,7 +1006,7 @@ Section Induction.
 Variable (t0 : seq Alph) (t : seq (seq Alph)).
 
 Lemma size_to_word_cons : size (to_word t) + size t0 = size (to_word (t0 :: t)).
-Proof. by rewrite -!size_to_word /size_tab /= addnC. Qed.
+Proof. by rewrite !size_to_word /size_tab /= addnC. Qed.
 
 Let cast_cons := cast_ord size_to_word_cons.
 Let rinj_rec := (cast_cons \o (@rshift (size (to_word t)) (size t0))).
@@ -1088,15 +1088,15 @@ Proof.
 Qed.
 
 Lemma lcast_com :
-  (cast_ord (size_to_word (t0 :: t)))
+  (cast_ord (esym (size_to_word (t0 :: t))))
     \o (@sym_cast _ _) \o (@lshift (sumn (shape t)) (size t0))
-  =1  linj_rec \o (cast_ord (size_to_word t)).
+  =1  linj_rec \o (cast_ord (esym (size_to_word t))).
 Proof. move=> i; apply/eqP; by rewrite /rinj_rec /= /eq_op /=. Qed.
 
 Lemma rcast_com :
- (cast_ord (size_to_word (t0 :: t)))
+ (cast_ord (esym (size_to_word (t0 :: t))))
    \o (@sym_cast _ _) \o (@rshift (sumn (shape t)) (size t0))  =1  rinj_rec.
-Proof. move=> i; apply/eqP; rewrite /rinj_rec /= /eq_op /=; by rewrite -size_to_word. Qed.
+Proof. move=> i; apply/eqP; rewrite /rinj_rec /= /eq_op /=; by rewrite size_to_word. Qed.
 
 
 Lemma enumIsize_to_word :
@@ -1390,7 +1390,7 @@ Proof.
   have -> : tabcols t = tabcolsk t (size (head [::] t)).
     by rewrite /tabcolsk /= -size_tabcols take_size.
   have := (scover_tabcolsk _ Hpart); rewrite /scover /= => ->.
-  rewrite cardsT card_ord -size_to_word /size_tab.
+  rewrite cardsT card_ord size_to_word /size_tab.
   have : head 0 (shape t) <= (size (head [::] t)) by case t.
   elim: (shape t) Hpart => [//= | p0 p IHp] /= /andP [] Hhead Hpart Hp0.
   rewrite big_cons; apply: leq_add.

@@ -611,7 +611,7 @@ Proof.
   move=> Ht1 Ht /= /hasP [] p2 Hp2 Hshsh.
   move: Ht1; rewrite /is_stdtab => /andP [] Htab1 Hstd1.
   rewrite -{1}(RS_tabE Htab1) (shsh_sfiltergtn Hstd1 Hshsh) /=.
-  rewrite -(eq_filter (gtnXnatE _)) size_to_word.
+  rewrite -(eq_filter (gtnXnatE _)) -size_to_word.
   move: Ht; rewrite /is_stdtab => /andP [] Htab _.
   by rewrite filter_gtnX_RS /= (RS_tabE Htab).
 Qed.
@@ -651,7 +651,7 @@ Proof.
         by rewrite RSmapK.
     + have : is_std (to_word (RS p1)) by move: Ht1; rewrite Hp1 /is_stdtab => /andP [].
       move/mem_shsh ->; apply/andP.
-      rewrite -size_to_word size_RS; split; last by [].
+      rewrite size_to_word size_RS; split; last by [].
       move: Hshsh; have := Ht1; rewrite -Hp1 RSstdE => /mem_shsh -> /andP [] /eqP {3}<- _.
       rewrite /= -!(eq_filter (gtnXnatE _)) filter_gtnX_RS.
       by rewrite filter_to_word to_word_filter_nnil.

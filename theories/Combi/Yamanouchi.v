@@ -1,5 +1,4 @@
 (** * Combi.Combi.Yamanouchi : Yamanouchi Words *)
-
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -14,6 +13,36 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(**
+Yamanouchi word are stored as [seq nat].
+
+- [evalseq s] == the evaluation of the sequence s stored as a sequenc, that is
+                 the sequence counting whose i-th entry is the number of
+                 occurences of i in s; the final zeroes are not stored so that
+                 the sequence ends with a non zero entry.
+- [evalseq_count] == an alternate definition of the previous sequence
+- [is_yam s] == s is a Yamanouchi word
+- [is_yam_of_eval ev s] == s is a Yamanouchi word of evaluation ev.
+- [decr_yam s] == the Yamanouchi word obtained by removing the zero and
+                   decrassing all the other entries by 1
+- [hyper_yam ev] == the hyperstandard (decreassing) Yamanouchi word of
+                    evaluation ev such as 33 2222 11111 0000000
+
+Enumeration of Yamanouchi words:
+
+- [is_yam_of_eval ev y] == y is a yamanouchi word of evalutation ev
+- [is_yam_of_size n y] == y is a yamanouchi word of size n
+- [enum_yameval ev] == the lists of all yamanouchi word of evalutation ev
+
+
+Sigma types of Yamanouchi words:
+
+- [yameval ev] == a type for [seq nat] which are Yamanouchi words of
+                  evaluation ev; it is canonically a [finType]
+- [yamn n] == a type for [seq nat] which are Yamanouchi words of
+              size n; it is canonically a [finType]
+******)
+
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
 Require Import tools combclass partition.
@@ -25,8 +54,7 @@ Section Yama.
 
   Implicit Type s : seq nat.
 
-
-  (* Evaluation of a sequence of integer (mostly Yamanouchi word) *)
+  (** ** Evaluation of a sequence of integer (mostly Yamanouchi word) *)
   Fixpoint evalseq s :=
     if s is s0 :: s'
     then incr_nth (evalseq s') s0
@@ -116,9 +144,9 @@ Section Yama.
   Lemma evalseq_eq_size y : sumn (evalseq y) = size y.
   Proof. elim: y => [//= | y0 y] /=; by rewrite sumn_incr_nth => ->. Qed.
 
-  (* Yamanouchi word:                                                            *)
-  (*   sequence of rows of the corners for an increasing sequence of partitions. *)
-  (*   they are in bijection with standard tableaux                              *)
+  (** ** Yamanouchi words                                                            *)
+  (*       sequence of rows of the corners for an increasing sequence of partitions. *)
+  (*       they are in bijection with standard tableaux                              *)
   Fixpoint is_yam s :=
     if s is s0 :: s'
     then is_part (evalseq s) && is_yam s'
@@ -186,7 +214,7 @@ Section Yama.
     move=> /andP [] _; exact IHy.
   Qed.
 
-  (* Remove the zeroes from a yam and decrease all the other entries by 1 *)
+  (** Remove the zeroes from a yam and decrease all the other entries by 1 *)
   Fixpoint decr_yam s :=
     if s is s0 :: s'
     then if s0 is s0'.+1
@@ -212,18 +240,18 @@ Section Yama.
     by case s0'.
   Qed.
 
-  Lemma is_out_corner_yam l0 s :
-    is_yam (l0 :: s) -> is_out_corner (evalseq (l0 :: s)) l0.
+  Lemma is_rem_corner_yam l0 s :
+    is_yam (l0 :: s) -> is_rem_corner (evalseq (l0 :: s)) l0.
   Proof.
     move=> Hyam; have:= is_part_eval_yam (is_yam_tl Hyam) => /is_partP [] _ Hpart.
-    rewrite /is_out_corner !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS.
+    rewrite /is_rem_corner !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS.
     by apply: Hpart.
   Qed.
 
-  Lemma is_in_corner_yam l0 s :
-    is_yam (l0 :: s) -> is_in_corner (evalseq s) l0.
+  Lemma is_add_corner_yam l0 s :
+    is_yam (l0 :: s) -> is_add_corner (evalseq s) l0.
   Proof.
-    rewrite /is_in_corner /=; case: l0 => [//= | l0] /=.
+    rewrite /is_add_corner /=; case: l0 => [//= | l0] /=.
     case: (evalseq s) => [//= | sh0 sh].
       move=> /andP [] /andP [] H1 H2 _; exfalso.
       case: l0 H1 H2 => //= l0 _; by elim: l0.
@@ -233,7 +261,7 @@ Section Yama.
     by rewrite eq_sym ieqi1F add0n.
   Qed.
 
-  (* Hyperstandard Yamanouchi word : 33 2222 11111 0000000 *)
+  (** ** Hyperstandard Yamanouchi word : 33 2222 11111 0000000 *)
   Fixpoint hyper_yam_rev ev :=
     if ev is s0 :: s then
       nseq s0 (size s) ++ hyper_yam_rev s
@@ -303,10 +331,13 @@ Proof.
   by rewrite perm_cat2l perm_eq_evalseq H.
 Qed.
 
+
+(** ** Enumeration of Yamanouchi words *)
+
 Fixpoint enum_yamevaln n ev :=
   if n is n'.+1 then
     flatten [seq [seq i :: y | y <- enum_yamevaln n' (decr_nth ev i)] |
-                  i <- iota 0 (size ev) & is_out_corner ev i]
+                  i <- iota 0 (size ev) & is_rem_corner ev i]
   else [:: [::]].
 Definition enum_yameval ev := enum_yamevaln (sumn ev) ev.
 Definition is_yam_of_size n y := (is_yam y) && (size y == n).
@@ -353,7 +384,7 @@ Proof.
     rewrite sumn_count count_filter.
     rewrite (eq_count (a2 := pred_of_simpl (pred1 y0))); first last.
       move=> i /=; case (altP (i =P y0)) => //= ->.
-      apply: is_out_corner_yam; by rewrite /= Hpart Hyam.
+      apply: is_rem_corner_yam; by rewrite /= Hpart Hyam.
     rewrite -sumn_count /=.
     rewrite sumn_iota //= add0n size_incr_nth.
     by case: (ltnP y0 (size (evalseq y))).
