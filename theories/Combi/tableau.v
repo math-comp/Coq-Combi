@@ -1,5 +1,4 @@
 (** * Combi.Combi.tableau : Young Tableaux *)
-
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -14,6 +13,24 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(**
+We define the notion of (semistandard) Young tableau over an [ordType]
+denoted [T].
+
+- [is_row r] == r is sorted
+- [dominate u v] == u dominate v, that is v is longer than u and
+            the i-th letter of u is strictly larger than the i-th letter of v.
+            this is a order.
+- [is_tableau t] == t of type [(seq (seq T))] is a tableau that is a sequence
+                    of non empty rows which is sorted for the dominate order.
+- [get_tab t r c] == the element of t of coordinate (r c), or [inhabitant T]
+                    if (r, c) is not is the tableau
+- [to_word t] == the row reading of the tableau t
+- [size_tab t] == the size (number of boxes) of t
+- [filter_gtnX_tab n t] == the sub-tableau of t formed by the element smaller
+                   than [n].
+*****)
+
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import path sorted.
 Require Import tools shape partition ordtype sorted.
@@ -23,6 +40,7 @@ Unset Strict Implicit.
 
 Open Scope N.
 
+(** ** Specialization of sorted Lemmas *)
 Section Rows.
 
   Variable T : ordType.
@@ -54,6 +72,7 @@ End Rows.
 
 Notation is_row r := (sorted (@leqX_op _) r).
 
+(** ** Dominance order for rows *)
 Section Dominate.
 
   Variable T : ordType.
@@ -141,6 +160,7 @@ Qed.
 End Dominate.
 
 
+(** ** Tableaux : definition and basic properties *)
 Section Tableau.
 
   Variable T : ordType.
@@ -255,7 +275,7 @@ Section Tableau.
       move=> /nilP /eqP -> /andP [] -> Hall Hsort /=.
       apply/andP; split.
       + by case: t Hsort {Hpart Hall IHt} => [//= | t1 t] /= /andP [].
-      + apply: IHt; rewrite (is_part_tl Hpart) Hall /=.
+      + apply: IHt; rewrite (is_part_consK Hpart) Hall /=.
         exact: (sorted_consK Hsort).
     - elim: t => [| t0 t IHt]//= /and4P [] Hnnil Hrow0 Hdom /IHt /and3P [] Hpart Hall Hsort.
       rewrite Hpart Hrow0 Hall {Hpart Hrow0 Hall IHt} !andbT /=; apply/andP; split.

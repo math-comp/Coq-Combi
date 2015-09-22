@@ -47,7 +47,7 @@ Section RecYama.
   Lemma card_yama_rec (p : intpart) :
     (p != [::] :> seq nat) ->
     #|yameval_finType p| =
-    \sum_(i <- out_corners p)
+    \sum_(i <- rem_corners p)
       #|yameval_finType (decr_nth_part p i)|.
   Proof.
     move=> H.
@@ -58,7 +58,7 @@ Section RecYama.
       exfalso; move: H.
       by rewrite (part0 (intpartP p) Hn').
     rewrite size_flatten /shape sumn_map_condE.
-    rewrite /out_corners -!map_comp.
+    rewrite /rem_corners -!map_comp.
     congr sumn; apply eq_in_map => i /=.
     rewrite mem_filter => /andP [] Hcorn _.
     rewrite size_map.
@@ -90,7 +90,7 @@ Section RecYama.
     by rewrite shape_stdtab_of_yam.
   Qed.
 
-  Lemma intpart_out_corner_ind (f : intpart -> Type) :
+  Lemma intpart_rem_corner_ind (f : intpart -> Type) :
     f empty_part ->
     ( forall p : intpart,
         (p != [::] :> seq nat) ->
@@ -110,7 +110,7 @@ Section RecYama.
     by rewrite (sumn_decr_nth (intpartP p) Hi) Hp.
   Qed.
 
-  Lemma part_out_corner_ind (f : seq nat -> Type) :
+  Lemma part_rem_corner_ind (f : seq nat -> Type) :
     f [::] ->
     ( forall p, is_part p ->
         (p != [::]) ->
@@ -120,7 +120,7 @@ Section RecYama.
     move=> H0 Hrec p Hp.
     move Htmp : (IntPart Hp) => pdep.
     have -> : p = pdep by rewrite -Htmp.
-    elim/intpart_out_corner_ind: pdep {p Hp Htmp} => [| p Hp IHp] //=.
+    elim/intpart_rem_corner_ind: pdep {p Hp Htmp} => [| p Hp IHp] //=.
     apply (Hrec p (intpartP p) Hp) => i Hi.
     have /= := (IHp i Hi).
     by rewrite /decr_nth_part_def Hi.
@@ -130,14 +130,14 @@ Section RecYama.
     f empty_part = 1 ->
     ( forall p : intpart,
         (p != [::] :> seq nat) ->
-        f p = \sum_(i <- out_corners p) f (decr_nth_part p i) ) ->
+        f p = \sum_(i <- rem_corners p) f (decr_nth_part p i) ) ->
     ( forall p : intpart, f p = #|stdtabsh_finType p| ).
   Proof.
     move=> H0 Hrec.
-    elim/intpart_out_corner_ind => [//= | p Hnnil IHp] /=.
+    elim/intpart_rem_corner_ind => [//= | p Hnnil IHp] /=.
       by rewrite H0 -card_yam_stdtabE card_yama0.
     rewrite (Hrec _ Hnnil) -card_yam_stdtabE (card_yama_rec Hnnil).
-    rewrite /out_corners !big_filter; apply eq_bigr => i Hi.
+    rewrite /rem_corners !big_filter; apply eq_bigr => i Hi.
     by rewrite card_yam_stdtabE IHp //=.
   Qed.
 
@@ -151,16 +151,16 @@ Section RecYama.
     f empty_part = 1 ->
     ( forall p : intpart,
         (p != [::] :> seq nat) ->
-        f p = \sum_(i <- out_corners p) f (decr_nth_part p i) ) ->
+        f p = \sum_(i <- rem_corners p) f (decr_nth_part p i) ) ->
     ( forall p : intpart, f p = #|stdtabsh_finType p| ).
   Proof.
     move=> H0 Hrec.
-    elim/intpart_out_corner_ind => [//= | p Hnnil IHp] /=.
+    elim/intpart_rem_corner_ind => [//= | p Hnnil IHp] /=.
       by rewrite H0 -card_yam_stdtabE card_yama0.
     rewrite (Hrec _ Hnnil) -card_yam_stdtabE (card_yama_rec Hnnil).
     rewrite (big_morph Posz PoszD (id1 := Posz O%N)) //.
     rewrite (big_morph int_to_rat int_to_ratD (id1 := 0)) //.
-    rewrite /out_corners !big_filter; apply eq_bigr => i Hi.
+    rewrite /rem_corners !big_filter; apply eq_bigr => i Hi.
     by rewrite card_yam_stdtabE IHp //=.
 Qed.
 

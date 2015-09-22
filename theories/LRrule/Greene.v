@@ -933,7 +933,7 @@ Proof.
   elim: t Hpart i => [//= | t0 t IHt] Hpart i /=.
   rewrite inE => /orP [/eqP -> |].
   + have:= (part_head_non0 Hpart) => /=; by case (size t0).
-  + apply: IHt; by apply: (is_part_tl Hpart).
+  + apply: IHt; by apply: (is_part_consK Hpart).
 Qed.
 
 Lemma trivIseq_shrows sh : trivIseq (shrows sh).

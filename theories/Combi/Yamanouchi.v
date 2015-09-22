@@ -1,5 +1,4 @@
 (** * Combi.Combi.Yamanouchi : Yamanouchi Words *)
-
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -14,6 +13,36 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(**
+Yamanouchi word are stored as [seq nat].
+
+- [evalseq s] == the evaluation of the sequence s stored as a sequenc, that is
+                 the sequence counting whose i-th entry is the number of
+                 occurences of i in s; the final zeroes are not stored so that
+                 the sequence ends with a non zero entry.
+- [evalseq_count] == an alternate definition of the previous sequence
+- [is_yam s] == s is a Yamanouchi word
+- [is_yam_of_eval ev s] == s is a Yamanouchi word of evaluation ev.
+- [decr_yam s] == the Yamanouchi word obtained by removing the zero and
+                   decrassing all the other entries by 1
+- [hyper_yam ev] == the hyperstandard (decreassing) Yamanouchi word of
+                    evaluation ev such as 33 2222 11111 0000000
+
+Enumeration of Yamanouchi words:
+
+- [is_yam_of_eval ev y] == y is a yamanouchi word of evalutation ev
+- [is_yam_of_size n y] == y is a yamanouchi word of size n
+- [enum_yameval ev] == the lists of all yamanouchi word of evalutation ev
+
+
+Sigma types of Yamanouchi words:
+
+- [yameval ev] == a type for [seq nat] which are Yamanouchi words of
+                  evaluation ev; it is canonically a [finType]
+- [yamn n] == a type for [seq nat] which are Yamanouchi words of
+              size n; it is canonically a [finType]
+******)
+
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
 Require Import tools combclass partition.
@@ -25,8 +54,7 @@ Section Yama.
 
   Implicit Type s : seq nat.
 
-
-  (* Evaluation of a sequence of integer (mostly Yamanouchi word) *)
+  (** ** Evaluation of a sequence of integer (mostly Yamanouchi word) *)
   Fixpoint evalseq s :=
     if s is s0 :: s'
     then incr_nth (evalseq s') s0
@@ -116,9 +144,9 @@ Section Yama.
   Lemma evalseq_eq_size y : sumn (evalseq y) = size y.
   Proof. elim: y => [//= | y0 y] /=; by rewrite sumn_incr_nth => ->. Qed.
 
-  (* Yamanouchi word:                                                            *)
-  (*   sequence of rows of the corners for an increasing sequence of partitions. *)
-  (*   they are in bijection with standard tableaux                              *)
+  (** ** Yamanouchi words                                                            *)
+  (*       sequence of rows of the corners for an increasing sequence of partitions. *)
+  (*       they are in bijection with standard tableaux                              *)
   Fixpoint is_yam s :=
     if s is s0 :: s'
     then is_part (evalseq s) && is_yam s'
@@ -186,7 +214,7 @@ Section Yama.
     move=> /andP [] _; exact IHy.
   Qed.
 
-  (* Remove the zeroes from a yam and decrease all the other entries by 1 *)
+  (** Remove the zeroes from a yam and decrease all the other entries by 1 *)
   Fixpoint decr_yam s :=
     if s is s0 :: s'
     then if s0 is s0'.+1
@@ -233,7 +261,7 @@ Section Yama.
     by rewrite eq_sym ieqi1F add0n.
   Qed.
 
-  (* Hyperstandard Yamanouchi word : 33 2222 11111 0000000 *)
+  (** ** Hyperstandard Yamanouchi word : 33 2222 11111 0000000 *)
   Fixpoint hyper_yam_rev ev :=
     if ev is s0 :: s then
       nseq s0 (size s) ++ hyper_yam_rev s
@@ -302,6 +330,9 @@ Proof.
   apply /eqP; rewrite -perm_eq_evalseq.
   by rewrite perm_cat2l perm_eq_evalseq H.
 Qed.
+
+
+(** ** Enumeration of Yamanouchi words *)
 
 Fixpoint enum_yamevaln n ev :=
   if n is n'.+1 then

@@ -1,5 +1,4 @@
-(** * Combi.Combi.vectNK : Integer Cector of Given Sums and Sizes *)
-
+(** * Combi.Combi.vectNK : Integer Vector of Given Sums and Sizes *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -14,17 +13,22 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(******************************************************************************)
+(** * Integer vectors of sum n and size k
+
+- [vect_n_k n k] == the list of integer vectors of sum n and size k
+- [cut_k k s] == the list of the cutting of s in k slices (the result is of
+                 type [seq (seq T)])
+- [cut3 s] == the list of the cutting of s in 3 slices (the result is of type
+              [seq (seq T) * (seq T) * (seq T)])
+
+*****)
+
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
 Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
-
-(******************************************************************************)
-(** Integer vectors of sum [[n]] and size [[k]]                               *)
-(**                                                                           *)
-(** TODO: make this a proper [[finType]].                                     *)
-(******************************************************************************)
 
 Section VectNK.
 
@@ -101,11 +105,7 @@ Qed.
 End VectNK.
 
 
-(******************************************************************************)
-(** Cutting a seq in [[k]] slices                                             *)
-(**                                                                           *)
-(** The result is of type [[seq seq T]]                                       *)
-(******************************************************************************)
+(** Cutting a seq in k slices : the result is of type [seq (seq T)] *)
 
 Section CutK.
 
@@ -140,11 +140,8 @@ Qed.
 
 End CutK.
 
-(******************************************************************************)
-(** Cutting a seq in 3 slices                                                 *)
-(**                                                                           *)
-(** The result is of type (seq T) * (seq T) * (seq T)                         *)
-(******************************************************************************)
+
+(** Cutting a seq in 3 slices : the result is of type [seq (seq T) * (seq T) * (seq T)] *)
 
 Section Cut3.
 

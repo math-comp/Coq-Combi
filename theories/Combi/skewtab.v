@@ -332,12 +332,12 @@ Section Dominate.
       move=> /andP [] H0 /IHinn{IHinn}Hrec [//= | i]; exact: Hrec.
     - elim: inner Hinn outer Hout => [| inn0 inn IHinn] Hinn /= [| out0 out] Hout //= H.
       + have:= H 0 => /andP []; rewrite nth_nil leqn0 => /eqP {H} H _.
-        have:= part_head_non0 (is_part_tl Hout).
+        have:= part_head_non0 (is_part_consK Hout).
         rewrite -nth0; by case: out H {Hout} => [//=| out1 out'] /= ->.
       + have:= part_head_non0 Hinn; have:= H 0.
         by rewrite /= leqn0 => ->.
       + have := H 0; rewrite nth0 /= => -> /=.
-        apply (IHinn (is_part_tl Hinn) _ (is_part_tl Hout)) => i.
+        apply (IHinn (is_part_consK Hinn) _ (is_part_consK Hout)) => i.
         exact: H i.+1.
   Qed.
 
@@ -374,7 +374,7 @@ Section Dominate.
           have:= part_head_non0 Hpart => /=.
           rewrite -lt0n eqn_leq => ->.
           have:= H 0 => /= -> /=.
-          apply: IHout; last exact: (is_part_tl Hpart).
+          apply: IHout; last exact: (is_part_consK Hpart).
           move=> i; exact: H i.+1.
       + move: Hpart => /andP [] H0 /IHout{IHout}Hrec
                        /andP [] _  /Hrec{Hrec}Hrec H.

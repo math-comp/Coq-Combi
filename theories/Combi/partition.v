@@ -1,5 +1,4 @@
 (** * Combi.Combi.partition : Integer Partitions *)
-
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -14,14 +13,66 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * Integer Partitions
+
+Partitions are stored by terms of type [seq (seq nat)]. We define the
+following predicates and operations on [seq (seq nat)]:
+
+- [is_part sh] == [sh] is a partition.
+- [is_add_corner sh i] == i is the row of an addable corner of sh
+- [is_rem_corner sh i] == i is the row of a removable corner of sh
+- [incr_nth sh i] == the shape obtained by adding a box at the end of the
+                     i-th row. This gives a partition if i is an addable
+                     corner of sh (Lemma [is_part_incr_nth]).
+- [decr_nth sh i] == the shape obtained by removing a box at the end of the
+                     i-th row. This gives a partition if i is an removable
+                     corner of sh (Lemma [is_part_decr_nth]).
+- [rem_corners sh] == the list of the rows of the removable corners of sh.
+- [incr_first_n sh n] == adding 1 to the n'th first part of sh,
+                     always gives a partitions
+- [conj_part sh] == the conjugate of a partition
+- [part_sum sh k] == the k-th partial sum of sh, that is the sum of the k
+                     first parts of sh
+- [included s t] == the Ferrer's diagram of s is included in the
+                    Ferrer's diagram of t. This is an order.
+- [diff_shape s t] == the difference of the shape s and t
+- [outer_shape s t] == add t to the shape s
+
+
+Enumeration of integer partitions:
+
+- [is_part_of_n sm sh] == sh in a partition of n
+- [is_part_of_ns sm sz sh] == sh in a partitionfo n of size sz.
+- [is_part_of_nsk sm sz mx sh] == sh in a partition of n of size sz
+                                    in parts at most mx
+- [enum_partn sm] == the lists of all partitions of n
+- [enum_partns sm sz] == the lists of all partitions of n of size sz
+- [enum_partnsk sm sz mx] == the lists of all partitions of n of size sz
+                                    in parts at most mx
+
+- [intpartn_nb sm] == the number of partitions of n
+- [intpartns_nb sm sz] == the number of partitions of n of size sz
+- [intpartnsk_nb sm sz mx] == the number of partitions of n of size sz
+                                    in parts at most mx
+
+
+Sigma types for integer partitions:
+
+- [intpart] == a type for [seq (seq nat)] which are partitions; it is
+               canonically a [subCountType] of [seq (seq nat)]
+- [conj_intpart] == the conjugate of a [intpart] as a [intpart]
+
+- [intpart n] == a type for [seq (seq nat)] which are partitions of n;
+                it is canonically a [finType]
+- [conj_intpartn] == the conjugate of a [intpartn] as a [intpartn]
+******)
+
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
 Require Import tools combclass shape.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
-
-(** * Integer Partitions *)
 
 (** ** Definitions and basic properties *)
 Section Partition.
@@ -32,12 +83,6 @@ Section Partition.
     if sh is sh0 :: sh'
     then (sh0 >= head 1 sh') && (is_part sh')
     else true.
-
-  Lemma is_part_tl l0 sh : is_part (l0 :: sh) -> is_part sh.
-  Proof. by move=> /= /andP []. Qed.
-
-  Lemma is_part_behead sh : is_part sh -> is_part (behead sh).
-  Proof. case: sh => [//| l0 sh] /=; exact: is_part_tl. Qed.
 
   (** Two equivalent definitions *)
   Lemma is_partP sh :
@@ -69,6 +114,24 @@ Section Partition.
     - move=> [] H0 H; apply/is_partP; split; first exact H0.
       move=> {H0} i.
       exact: H.
+  Qed.
+
+(** Sub-partitions *)
+
+  Lemma is_part_consK l0 sh : is_part (l0 :: sh) -> is_part sh.
+  Proof. by move=> /= /andP []. Qed.
+
+  Lemma is_part_behead sh : is_part sh -> is_part (behead sh).
+  Proof. case: sh => [//| l0 sh] /=; exact: is_part_consK. Qed.
+
+  Lemma is_part_rconsK sh sn : is_part (rcons sh sn) -> is_part sh.
+  Proof.
+    case: sn => [/= | sn].
+      move/is_partP => []; by rewrite last_rcons.
+    elim: sh => [//= | s0 sh IHsh].
+    rewrite rcons_cons /= => /andP [] Hhead /IHsh {IHsh} ->.
+    rewrite andbT; case: sh Hhead => [//= | s1 sh]; first by apply: leq_ltn_trans.
+    by rewrite rcons_cons.
   Qed.
 
   (** TODO : write the reciprocal *)
@@ -106,7 +169,7 @@ Section Partition.
     - move=> i _; exact: H.
   Qed.
 
-  (** Partitions dont have 0 parts *)
+  (** Partitions don't have 0 parts *)
   Lemma part_head0F sh : head 1 sh == 0 -> is_part sh = false.
   Proof.
     elim: sh => [//= | sh0 sh IHsh] /= /eqP ->.
@@ -151,15 +214,10 @@ Section Partition.
     by case: s Hhead => [//= | s1 s].
   Qed.
 
-  Lemma is_part_rconsK sh sn : is_part (rcons sh sn) -> is_part sh.
-  Proof.
-    case: sn => [/= | sn].
-      move/is_partP => []; by rewrite last_rcons.
-    elim: sh => [//= | s0 sh IHsh].
-    rewrite rcons_cons /= => /andP [] Hhead /IHsh {IHsh} ->.
-    rewrite andbT; case: sh Hhead => [//= | s1 sh]; first by apply: leq_ltn_trans.
-    by rewrite rcons_cons.
-  Qed.
+
+(** ** Corners, adding and removing corners *)
+  Definition is_rem_corner sh i := nth 0 sh i > nth 0 sh i.+1.
+  Definition is_add_corner sh i := (i == 0) || (nth 0 sh i < nth 0 sh i.-1).
 
   Lemma last_incr_nth_non0 sh i : last 1 sh != 0 -> last 1 (incr_nth sh i) != 0.
   Proof.
@@ -184,10 +242,6 @@ Section Partition.
     case: l => [//= | l].
     by rewrite ltnS /= => /andP [] _ /IHsh H /andP [] _ /H.
   Qed.
-
-(** ** Corners, adding and removing corners *)
-  Definition is_rem_corner sh i := nth 0 sh i > nth 0 sh i.+1.
-  Definition is_add_corner  sh := [pred i | (i == 0) || (nth 0 sh i < nth 0 sh i.-1)].
 
   Lemma is_part_incr_nth sh i : is_part sh -> is_add_corner sh i -> is_part (incr_nth sh i).
   Proof.
@@ -218,7 +272,7 @@ Section Partition.
   Qed.
 
   (* unused lemma *)
-  Lemma del_out_corner sh i :
+  Lemma del_rem_corner sh i :
     last 1 sh != 0 -> is_part (incr_nth sh i) ->
     is_rem_corner (incr_nth sh i) i = is_part sh.
   Proof.
@@ -236,7 +290,7 @@ Section Partition.
       * by rewrite !add0n.
   Qed.
 
-  Lemma out_corner_incr_nth sh i :
+  Lemma rem_corner_incr_nth sh i :
     is_part sh -> is_add_corner sh i -> is_rem_corner (incr_nth sh i) i.
   Proof.
     rewrite /is_add_corner /is_rem_corner /= nth_incr_nth eq_refl add1n.
@@ -346,7 +400,7 @@ Section Partition.
     by rewrite leqn0 => /part_head0F ->.
   Qed.
 
-  Lemma in_corner_decr_nth sh i :
+  Lemma add_corner_decr_nth sh i :
     is_part sh -> is_rem_corner sh i -> is_add_corner (decr_nth sh i) i.
   Proof.
     move=> Hpart Hout.
@@ -360,10 +414,10 @@ Section Partition.
     move: Hi2; by case: (nth 0 sh i.+1).
   Qed.
 
-  Definition out_corners sh := filter (is_rem_corner sh) (iota 0 (size sh)).
+  Definition rem_corners sh := filter (is_rem_corner sh) (iota 0 (size sh)).
 
-  Lemma  out_corners_uniq sh : uniq (out_corners sh).
-  Proof. rewrite /out_corners; apply filter_uniq; exact: iota_uniq. Qed.
+  Lemma  rem_corners_uniq sh : uniq (rem_corners sh).
+  Proof. rewrite /rem_corners; apply filter_uniq; exact: iota_uniq. Qed.
 
 (** ** Conjugate of a partition *)
 
@@ -555,7 +609,7 @@ Section Partition.
     - move/eqP ->; by rewrite !leqnn.
   Qed.
 
-  Lemma out_corner_incr_first_n sh i :
+  Lemma rem_corner_incr_first_n sh i :
     is_part sh -> is_rem_corner (incr_first_n sh i.+1) i.
   Proof.
     rewrite /is_rem_corner.
@@ -565,7 +619,7 @@ Section Partition.
     exact: (Hrec i).
   Qed.
 
-  Lemma out_corner_incr_first_nE sh n i :
+  Lemma rem_corner_incr_first_nE sh n i :
     is_part sh -> is_rem_corner sh i -> is_rem_corner (incr_first_n sh n) i.
   Proof.
     rewrite /is_rem_corner.
@@ -606,7 +660,7 @@ Section Partition.
      move: H; by case: (nth 0 sh r).
   Qed.
 
-  Lemma out_corner_conj_part sh i :
+  Lemma rem_corner_conj_part sh i :
     is_part sh -> is_rem_corner sh i -> is_rem_corner (conj_part sh) (nth 0 sh i).-1.
   Proof.
     elim: sh i => [| s0 sh IHsh] i /=.
@@ -614,9 +668,9 @@ Section Partition.
     move=> /andP [] H0 Hpart.
     case: i => [//= | i] /= H.
       case: s0 H0 H => [//= | s0]/= _ H.
-      apply out_corner_incr_first_n.
+      apply rem_corner_incr_first_n.
       exact: is_part_conj.
-    apply out_corner_incr_first_nE; first exact: is_part_conj.
+    apply rem_corner_incr_first_nE; first exact: is_part_conj.
     by apply (IHsh _ Hpart).
   Qed.
 
@@ -654,7 +708,7 @@ Section Partition.
         have /= Hs0 := (part_head_non0 Hs).
         move/eqP; rewrite addn_eq0 => /andP [] /eqP H.
         move: Hs0; by rewrite H eq_refl.
-      * move=> s IHs /is_part_tl Hps /is_part_tl Hpt /= Heq.
+      * move=> s IHs /is_part_consK Hps /is_part_consK Hpt /= Heq.
         have := Heq 1; rewrite !take0 !big_cons !big_nil !addn0 => Ht0; subst t0.
         congr (s0 :: _); apply: (IHs _ Hps Hpt).
         move=> k; have:= Heq k.+1.
@@ -893,7 +947,7 @@ Section SkewShape.
 
 End SkewShape.
 
-(** * Fintypes for Partitions *)
+(** * Sigma Types for Partitions *)
 Section PartCombClass.
 
 Structure intpart : Type := IntPart {pval :> seq nat; _ : is_part pval}.
@@ -1096,6 +1150,8 @@ Lemma conj_intpartnK : involutive conj_intpartn.
 Proof. move=> p; apply: val_inj => /=; by rewrite conj_partK. Qed.
 
 End PartOfn.
+
+(** * Counting functions *)
 
 Fixpoint intpartnsk_nb sm sz mx : nat :=
   if sz is sz.+1 then

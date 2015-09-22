@@ -357,7 +357,7 @@ Proof.
   rewrite Hshift; congr (_ :: _).
   rewrite (IHout _ _ _ _ (path_sorted Hinn) _ _ _ _ Hrec) {IHout Hrec} //=.
   rewrite Hshift (subnKC H0) -/(is_part (out0 :: out)).
-  exact (is_part_tl Hout).
+  exact (is_part_consK Hout).
 Qed.
 
 
@@ -446,9 +446,9 @@ Proof.
   have Hrshiftdom := yamtab_shift_dominate (yamtab_row_dominate Hrow) Hshift.
   move {Hshift Hrow rrow shrrow}=> /= [] Hshift Hshape.
   rewrite (part_head_non0 Hout) Hrow0 Hrshiftrow.
-  rewrite Hshift (subnKC H0) (part_head_non0 (is_part_tl Hout)) /=.
+  rewrite Hshift (subnKC H0) (part_head_non0 (is_part_consK Hout)) /=.
   have Hpart0 : is_part (inn0 + size rshift :: out).
-    have := is_part_tl Hout => /=/andP [] Hhout ->.
+    have := is_part_consK Hout => /=/andP [] Hhout ->.
     by rewrite andbT Hshift (subnKC H0).
   have := (IHout _ _ _ _ (path_sorted Hinn) Hpart0 Hincl Hsize Hrshiftrow _ Hrec Hshape).
   move=> {IHout Hrec Hpart0} /= /and3P [] _ _ ->; rewrite andbT.
@@ -593,7 +593,7 @@ Proof.
   have Hskewrec : is_skew_tableau (inn0 :: inn) (row1 :: yamtab).
     by move: Hskew => /=/and4P [].
   have {IHyamtab} Hrec :=
-    IHyamtab _ inn inn0 row1 _ (path_sorted Hinn) (is_part_tl Hout) Hsize Hskewrec.
+    IHyamtab _ inn inn0 row1 _ (path_sorted Hinn) (is_part_consK Hout) Hsize Hskewrec.
   rewrite /= count_flatten -map_comp subSS -/(outer_shape _ _).
   set f1 := (X in map X); set rec := (X in map _ X).
   pose f2 := nat_of_bool \o (pred1 row1) \o (@fst (seq nat) (seq nat)).

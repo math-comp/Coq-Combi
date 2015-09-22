@@ -1,5 +1,4 @@
 (** * Combi.Combi.std : Standard Words, i.e. Permutation as Words *)
-
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -14,6 +13,37 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** Standard words : words wich are permutations of [0, 1, ..., n-1]:
+
+- [is_std s] == s is a standard word
+- [is_std_of_n n s] == s is a standard word of size n
+- [wordperm p] == the standard word associated with a permutation [p] of ['S_n]
+
+Sigma types for standard word
+
+- [stdwordn n] == a type for [seq nat] which standard words size n;
+                  it is canonically a [finType]
+
+Inversions and standardisation of a word over a totally ordered alphabet
+
+- [std s] == given a word w over an [ordType] returns the standard word with
+             the same set of inversion (lemmas [stdP] and [std_eq_invP])
+- [versions w i j] == i j is an non-inversion of w that is
+                        <<i <= j < size w and w_i <= w_j>>
+
+- [eq_inv w1 w2] == w1 and w2 have the same versions which is equivalent
+                    to the same set of inversions; in particular w1 and w2
+                    have the same size.
+The main result here is [std_eq_invP] which says that having the same inversions
+is the same as having the same standardized.
+
+- [linvseq s t] == t is the left inverse of s
+- [invseq s t] == s and t are inverse on of each other
+- [invstd w] == the inverse of the standardized of w that is the permutation
+                which sorts w in a stable way.
+
+*****)
+
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm fingroup path.
 
@@ -27,6 +57,8 @@ Import OrdNotations.
 
 Open Scope nat_scope.
 
+
+(** * Standard words *)
 Section StandardWords.
 
 Implicit Type n : nat.
@@ -144,6 +176,7 @@ Qed.
 End StandardWords.
 
 
+(** * Standard words as a [finType] *)
 Section StdCombClass.
 
 Variable n : nat.
@@ -203,7 +236,7 @@ Proof. by rewrite card_sub_uniqE size_map -card_Sn cardE. Qed.
 End StdCombClass.
 
 
-
+(** * Standardisation of a word over a totally ordered alphabet *)
 Section Standardisation.
 
 Variable Alph : ordType.
@@ -320,43 +353,44 @@ Qed.
 Lemma std_stdE (T : ordType) (s : seq T) : std (std s) = std s.
 Proof. apply: std_std; by apply: std_is_std. Qed.
 
+(** ** Inversion sets and standardization *)
 Section Spec.
 
 Implicit Type S T : ordType.
 
-Definition inversions T (w : seq T) : rel nat :=
+Definition versions T (w : seq T) : rel nat :=
   fun i j => (i <= j < size w) && (nth (inhabitant T) w i <=A nth (inhabitant T) w j).
 
 Definition eq_inv T1 T2 (w1 : seq T1) (w2 : seq T2) :=
-  ((inversions w1) =2 (inversions w2)).
+  ((versions w1) =2 (versions w2)).
 
 Lemma eq_inv_refl T (w : seq T) : eq_inv w w.
 Proof. by []. Qed.
 
 Lemma eq_inv_nil T1 T2 : eq_inv (@nil T1) (@nil T2).
 Proof.
-  rewrite /eq_inv /inversions => i j /=.
+  rewrite /eq_inv /versions => i j /=.
   by rewrite ltn0 andbF.
 Qed.
 
 Lemma eq_inv_sym T1 T2 (w1 : seq T1) (w2 : seq T2) :
   eq_inv w1 w2 -> eq_inv w2 w1.
 Proof.
-  rewrite /inversions => Hinv i j.
+  rewrite /versions => Hinv i j.
   have:= Hinv i j; exact esym.
 Qed.
 
 Lemma eq_inv_trans T1 T2 T3 (w1 : seq T1) (w2 : seq T2) (w3 : seq T3) :
   eq_inv w1 w2 -> eq_inv w2 w3 -> eq_inv w1 w3.
 Proof.
-  rewrite /inversions => H12 H23 i j.
+  rewrite /versions => H12 H23 i j.
   exact (etrans (H12 i j) (H23 i j)).
 Qed.
 
 Lemma eq_inv_size_leq T1 T2 (w1 : seq T1) (w2 : seq T2) :
   eq_inv w1 w2 -> size w1 <= size w2.
 Proof.
-  rewrite /eq_inv /inversions => Hinv.
+  rewrite /eq_inv /versions => Hinv.
   case H : (size w1) => [//= | n].
   have:= Hinv n n; rewrite H leqnn ltnSn leqXnn /=.
   by move/eqP/andP => [].
@@ -372,25 +406,37 @@ Qed.
 Lemma eq_invP  T1 T2 (w1 : seq T1) (w2 : seq T2) :
   (size w1 = size w2 /\
    forall i j, i <= j < size w1 ->
-               nth (inhabitant T1) w1 i <=A nth (inhabitant T1) w1 j =
+               (nth (inhabitant T1) w1 i <=A nth (inhabitant T1) w1 j) =
                (nth (inhabitant T2) w2 i <=A nth (inhabitant T2) w2 j))
     <-> (eq_inv w1 w2).
 Proof.
   split.
-  - rewrite /eq_inv /inversions; move=> [] Hsz H i j /=.
+  - rewrite /eq_inv /versions; move=> [] Hsz H i j /=.
     apply/(sameP idP); apply(iffP idP) => /andP [] Hij Hnth.
     + by rewrite H Hsz Hij.
     + by rewrite -(H _ _ Hij) -Hsz Hij.
   - move=> H; have Hsz := eq_inv_size H; split; first exact Hsz.
     move=> i j Hij.
-    move: H; rewrite /eq_inv /inversions -Hsz => H.
+    move: H; rewrite /eq_inv /versions -Hsz => H.
     have {H} := H i j; by rewrite Hij.
+Qed.
+
+Lemma eq_inv_inversionP  T1 T2 (w1 : seq T1) (w2 : seq T2) :
+  (size w1 = size w2 /\
+   forall i j, i <= j < size w1 ->
+               (nth (inhabitant T1) w1 i >A nth (inhabitant T1) w1 j) =
+               (nth (inhabitant T2) w2 i >A nth (inhabitant T2) w2 j))
+    <-> (eq_inv w1 w2).
+Proof.
+  rewrite -eq_invP; split => [] [] Hsz H; split; try exact Hsz.
+  - move=> i j Hij; rewrite !leqXNgtnX; by rewrite H.
+  - move=> i j Hij; rewrite !ltnXNgeqX; by rewrite H.
 Qed.
 
 Lemma eq_inv_consK T1 T2 (a : T1) u (b : T2) v :
   eq_inv (a :: u) (b :: v) -> eq_inv u v.
 Proof.
-  rewrite /eq_inv /inversions => H i j.
+  rewrite /eq_inv /versions => H i j.
   have /= := H i.+1 j.+1; by rewrite !ltnS.
 Qed.
 
@@ -411,7 +457,7 @@ Lemma eq_inv_allgtnXimply S T (a : S) u (b : T) v :
   eq_inv (a :: u) (b :: v) -> (allLtn u a) -> (allLtn v b).
 Proof.
   move=> H; have:= (eq_inv_size H).
-  move: H; rewrite /eq_inv /inversions => H /= /eqP; rewrite eqSS => /eqP Hsz.
+  move: H; rewrite /eq_inv /versions => H /= /eqP; rewrite eqSS => /eqP Hsz.
   move/(all_nthP (inhabitant S)) => Hall; apply/(all_nthP (inhabitant T)).
   rewrite -Hsz => i Hi; have /= Hleq := (Hall i Hi).
   have /= := H 0 i.+1.
@@ -434,7 +480,7 @@ Proof.
     by move=> _; rewrite eq_sym => /nilP ->.
   case: v => [//= |b v] /= Heq.
   rewrite eqSS => Hsize; have {IHu} Hpos := IHu v (eq_inv_consK Heq) Hsize.
-  have:= Heq; rewrite /eq_inv /inversions => Hinv.
+  have:= Heq; rewrite /eq_inv /versions => Hinv.
   rewrite -(eq_inv_allgtnX Heq).
   by case: (allLtn u a); last by rewrite Hpos.
 Qed.
@@ -630,6 +676,7 @@ Qed.
 
 End Spec.
 
+
 Section PermEq.
 
 Variable Alph : ordType.
@@ -659,6 +706,8 @@ Qed.
 
 End PermEq.
 
+
+(** ** Standardization and elementary transpositions of a word *)
 Section Transp.
 
 Variable Alph : ordType.
@@ -813,8 +862,7 @@ Qed.
 
 
 
-(* Inverse of a standard word *)
-
+(** * Inverse of a standard word *)
 Lemma perm_eq_size_uniq (T : eqType) (s1 s2 : seq T) :
   uniq s1 -> {subset s1 <= s2} -> size s2 <= size s1 -> perm_eq s1 s2.
 Proof.
@@ -936,6 +984,8 @@ Proof.
   + have:= Hts j Hj; by rewrite H.
   + have:= Hst i Hi; by rewrite H.
 Qed.
+
+(** * inverse of the standardized of w *)
 
 Definition invstd s := mkseq (fun i => index i s) (size s).
 
