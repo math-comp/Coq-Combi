@@ -111,7 +111,8 @@ VFILES:= theories/Combi/combclass.v\
   theories/LRrule/shuffle.v\
   theories/LRrule/stdplact.v\
   theories/LRrule/therule.v\
-  theories/LRrule/Yam_plact.v
+  theories/LRrule/Yam_plact.v\
+  theories/Poset/poset.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))

@@ -720,7 +720,7 @@ Lemma strict_inv_Wf P : well_founded (fun x y => is_true (strict P y x)).
 Proof.
   apply (eq_well_founded (R := fun x y => strict (dual_poset P) x y)); last exact: strict_Wf.
   move => x y /=; by rewrite strict_dualE.
-Qed.
+Defined.
 
 End WellFounded.
 
