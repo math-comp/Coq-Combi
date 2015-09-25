@@ -162,7 +162,6 @@ Proof. by rewrite /freeSchur /langQ !inE /=. Qed.
 Lemma size_RS_tuple (t : d.-tuple 'I_n) : size (to_word (RS t)) == d.
 Proof. by rewrite size_to_word -{2}(size_tuple t) size_RS. Qed.
 
-
 (* Bijection freeSchur -> tabwordshape *)
 Definition tabword_of_tuple (t : d.-tuple 'I_n) : d.-tuple 'I_n := Tuple (size_RS_tuple t).
 
@@ -220,6 +219,28 @@ End Degree.
 Variable R : comRingType.
 
 Definition Schur d (sh : intpartn d) : {mpoly R[n]} := polylang R (tabwordshape sh).
+
+
+Lemma tabwordshape_oversize d (sh : intpartn d) :
+  size sh > n -> tabwordshape sh = set0.
+Proof.
+  move=> Hn; apply/eqP; rewrite -subset0; apply/subsetP => w.
+  rewrite in_set0 inE => /is_tableau_of_shape_readingP [] tab [] Htab Hsh _ {w}.
+  suff F0 i : i < size sh -> nth (inhabitant Alph) (nth [::] tab i) 0 >= i.
+    have H := ltn_ord (nth (inhabitant Alph) (nth [::] tab n) 0).
+    have:= leq_trans H (F0 _ Hn); by rewrite ltnn.
+  rewrite -Hsh size_map; elim: i => [//= | i IHi] Hi.
+  have := IHi (ltn_trans (ltnSn i) Hi); move/leq_ltn_trans; apply.
+  rewrite -ltnXnatE.
+  move: Htab => /is_tableauP [] Hnnil _ Hdom.
+  have {Hdom} := Hdom _ _ (ltnSn i) => /dominateP [] _; apply.
+  rewrite lt0n; apply/nilP/eqP; exact: Hnnil.
+Qed.
+Lemma Schur_oversize d (sh : intpartn d) : size sh > n -> Schur sh = 0.
+Proof.
+  rewrite /Schur => /tabwordshape_oversize ->.
+  by rewrite /polylang big_set0.
+Qed.
 
 Definition rowpart d := if d is _.+1 then [:: d] else [::].
 Fact rowpartnP d : is_part_of_n d (rowpart d).
@@ -379,20 +400,20 @@ Proof.
     last by move=> w _; apply: Schur_freeSchurE.
 
   rewrite (big_setID [set set0]) /=.
-  set A := (X in X + _); have HA : A = 0.
+  set A := (X in X + _); have {A} -> : A = 0.
     rewrite /A (eq_bigr (fun x => 0)).
     + rewrite big_const; elim: (card _) => [//=| i IHi] /=; by rewrite IHi add0r.
     + move=> i; rewrite inE => /andP [] _; rewrite inE => /eqP ->.
       by rewrite /polylang big_set0.
-  rewrite HA add0r {A HA}.
+  rewrite add0r.
 
   rewrite (big_setID [set x | freeSchur x == set0]) /=.
-  set A := (X in X + _); have HA : A = 0.
+  set A := (X in X + _); have {A} -> : A = 0.
     rewrite /A (eq_bigr (fun x => 0)).
     + rewrite big_const; elim: (card _) => [//=| i IHi] /=; by rewrite IHi add0r.
     + move=> i; rewrite inE => /andP [] _; rewrite inE => /eqP ->.
       by rewrite /polylang big_set0.
-  rewrite HA add0r {A HA}.
+  rewrite add0r.
 
   rewrite -big_imset /=; first last.
     move=> T1 T2 /=.
@@ -400,7 +421,7 @@ Proof.
     move: Hx1; rewrite /freeSchur inE => /eqP Hx1.
     rewrite -setP => H; have := H x1; rewrite !inE Hx1.
     rewrite eq_refl => /esym/eqP.
-    move=> Htmp; apply: val_inj; by rewrite /= Htmp.
+    exact: val_inj.
   rewrite /polylang.
 
   apply: eq_bigl => s; rewrite !inE.

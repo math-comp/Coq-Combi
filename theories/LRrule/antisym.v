@@ -69,13 +69,13 @@ Proof.
 Qed.
 
 Definition antisym : qualifier 0 {mpoly R[n]} :=
-  [qualify p | [forall s, msym s p == if odd_perm s then - p else p]].
+  [qualify p | [forall s, msym s p == (-1) ^+ s *: p]].
 
 Fact antisym_key : pred_key antisym. Proof. by []. Qed.
 Canonical antisym_keyed := KeyedQualifier antisym_key.
 
 Lemma isantisymP p :
-  reflect (forall s, msym s p = if odd_perm s then - p else p) (p \is antisym).
+  reflect (forall s, msym s p = (-1) ^+ s *: p) (p \is antisym).
 Proof.
   apply (iffP idP).
   - move=> /forallP Hanti s.
@@ -84,22 +84,24 @@ Proof.
     by rewrite H.
 Qed.
 
+Definition simplexp := (expr0, expr1, scale1r, scaleN1r, mulrN, mulNr, mulrNN, opprK).
+
 Lemma isantisym_tpermP p :
   reflect (forall i j, msym (tperm i j) p = if (i != j) then - p else p)
           (p \is antisym).
 Proof.
   apply (iffP idP).
   - move=> /forallP Hanti i j.
-    by rewrite (eqP (Hanti (tperm _ _))) odd_tperm.
+    rewrite (eqP (Hanti (tperm _ _))) odd_tperm.
+    case: (i != j); by rewrite !simplexp.
   - move=> Htperm; apply/forallP => s.
     case: (prod_tpermP s) => ts -> {s} Hall.
     elim: ts Hall => [_ | t0 ts IHts] /=.
-      by rewrite !big_nil odd_perm1 /= msym1m.
+      by rewrite !big_nil odd_perm1 /= msym1m expr0 scale1r.
     move=> /andP [] H0 /IHts{IHts}/eqP Hrec.
     rewrite !big_cons msymMm Htperm H0 msymN Hrec.
     rewrite odd_mul_tperm H0 /=.
-    case: (odd_perm _) => //=.
-    by rewrite opprK.
+    by case: (odd_perm _); rewrite !simplexp.
 Qed.
 
 Lemma antisym_char2 : (2 \in [char R]) -> symmetric =i antisym.
@@ -107,11 +109,9 @@ Proof.
   move=> Hchar p /=.
   apply (sameP idP); apply (iffP idP).
   - move=> /isantisymP H; apply/issymP => s.
-    rewrite H oppr_char2; first by case: (odd_perm s).
-    by apply: (rmorph_char (mpolyC_rmorphism _ _)).
+    by rewrite H oppr_char2; first by rewrite expr1n scale1r.
   - move => /issymP H; apply/isantisymP => s.
-    rewrite H oppr_char2; first by case: (odd_perm s).
-    by apply: (rmorph_char (mpolyC_rmorphism _ _)).
+    by rewrite H oppr_char2; first by rewrite expr1n scale1r.
 Qed.
 
 Lemma perm_smalln : n <= 1 -> forall s : 'S_n, s = 1%g.
@@ -135,7 +135,7 @@ Lemma antisym_smalln : n <= 1 -> antisym =i predT.
 Proof.
   move=> Hn p /=; rewrite [RHS]unfold_in /=.
   apply/isantisymP => s.
-  by rewrite (perm_smalln Hn s) odd_perm1 msym1m.
+  by rewrite (perm_smalln Hn s) odd_perm1 msym1m expr0 scale1r.
 Qed.
 
 Lemma sym_anti p q :
@@ -144,8 +144,7 @@ Proof.
   move=> /isantisymP Hsym /issymP Hanti.
   apply/isantisymP => s.
   rewrite msymM Hsym Hanti.
-  case: (odd_perm s) => //=.
-  by rewrite mulNr.
+  by case: (odd_perm _); rewrite !simplexp.
 Qed.
 
 Lemma anti_anti p q :
@@ -154,8 +153,7 @@ Proof.
   move=> /isantisymP Hp /isantisymP Hq.
   apply/issymP => s.
   rewrite msymM Hp Hq.
-  case: (odd_perm s) => //=.
-  by rewrite mulrN mulNr opprK.
+  by case: (odd_perm _); rewrite !simplexp.
 Qed.
 
 End MPolySym.
@@ -181,13 +179,12 @@ Proof.
   apply (iffP idP).
   - move=> /forallP Hanti i Hi.
     have /eqP -> := Hanti (eltr n i).
-    by rewrite /eltr odd_tperm (inordi1 Hi).
+    by rewrite /eltr odd_tperm (inordi1 Hi) !simplexp.
   - move=> Heltr; apply/forallP; elim/eltr_ind => [| S i Hi /eqP IH].
-    + by rewrite odd_perm1 /= msym1m.
+    + by rewrite odd_perm1 /= msym1m !simplexp.
     + rewrite msymMm (Heltr i Hi).
-      rewrite msymN IH odd_mul_tperm (inordi1 Hi) addTb if_neg /=.
-      case: (odd_perm S) => //=.
-    by rewrite opprK.
+      rewrite msymN IH odd_mul_tperm (inordi1 Hi) addTb.
+      by case: (odd_perm _); rewrite !simplexp.
 Qed.
 
 
@@ -208,8 +205,8 @@ Proof.
   apply/issymP => s.
   have:= Hpq s; rewrite msymM Hsym => H.
   apply (mulfI Hp).
-  move: H; case: (odd_perm s); last by [].
-  by rewrite mulNr => /oppr_inj.
+  move: H; case: (odd_perm s); rewrite !simplexp; last by [].
+  by move=> /oppr_inj.
 Qed.
 
 Lemma sym_antisym_char2 :
@@ -219,7 +216,7 @@ Proof.
   have H0 : 0 < n by apply: (ltn_trans _ H1).
   pose s := (tperm (Ordinal H0) (Ordinal H1)).
   have := Hanti s; rewrite Hsym.
-  rewrite odd_tperm /= => /eqP; rewrite -addr_eq0.
+  rewrite odd_tperm /= => /eqP; rewrite !simplexp -addr_eq0.
   rewrite -mulr2n -mulr_natr mulf_eq0 => /orP [/eqP -> //|] /= /eqP H2.
   exfalso; rewrite {H1 p Hsym Hanti H0 s}.
   move: Hchar; rewrite negb_and /=.
@@ -301,7 +298,7 @@ Proof.
   case: n => [| n].
     apply/isantisymP => s.
     have -> : s = 1%g by rewrite -permP => i; have := ltn_ord i.
-    by rewrite msym1m odd_perm1.
+    by rewrite msym1m odd_perm1 simplexp.
   apply/isantisym_eltrP => i Hi.
   rewrite /vandermonde.
   rewrite (bigD1 (inord i, inord i.+1)) /=; last by rewrite !inordK //=; apply (leq_trans Hi).
