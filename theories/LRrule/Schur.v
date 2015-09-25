@@ -220,6 +220,14 @@ Variable R : comRingType.
 
 Definition Schur d (sh : intpartn d) : {mpoly R[n]} := polylang R (tabwordshape sh).
 
+Lemma Schur0 (sh : intpartn 0) : Schur sh = 1.
+Proof.
+  rewrite /Schur.
+  have -> : tabwordshape sh = [set [tuple]].
+    rewrite -setP => t; rewrite !inE.
+    by rewrite tuple0 eq_refl intpartn0.
+  by rewrite /polylang big_set1 /commword big_nil.
+Qed.
 
 Lemma tabwordshape_oversize d (sh : intpartn d) :
   size sh > n -> tabwordshape sh = set0.

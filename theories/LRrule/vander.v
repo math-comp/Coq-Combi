@@ -321,7 +321,7 @@ Qed.
 (* TODO : Fixme *)
 Local Open Scope ring_scope.
 
-Lemma altSchur_mpart_elementary d (P1 : intpartn d) k :
+Theorem altSchur_mpart_elementary d (P1 : intpartn d) k :
   size P1 <= n ->
   (altSchur (mpart P1)) * 'e_k =
   \sum_(P : intpartn (d + k) | vb_strip P1 P && (size P <= n)) altSchur (mpart P).
@@ -363,10 +363,46 @@ Proof.
       by case: (i \in S); rewrite ?addn0 ?addn1 ?ltnSn ?ltnn.
 Qed.
 
+Hypothesis Hn : n != 0%N.
 
+(* pose part0 := @IntPartN 0 [::] is_true_true. *)
 
-
-
+Theorem altSchurE d (P : intpartn d) :
+  size P <= n -> altSchur (mpart P) = altSchur 0 * Schur Hn R P.
+Proof.
+  suff {d P} H : forall b d, d <= b -> forall (P : intpartn d),
+    size P <= n -> altSchur (mpart P) = altSchur 0 * Schur Hn R P by apply: (H d).
+  elim=> [ |b IHb] d Hd P.
+    move: Hd; rewrite leqn0 => /eqP Hd; subst d.
+    rewrite Schur0 mulr1 => _; congr altSchur.
+    rewrite intpartn0 /mpart /= mnmP => i; by rewrite !mnmE /=.
+  case: (leqP d b) => Hdb; first exact: (IHb _ Hdb).
+  have {Hd Hdb} Hd : d = b.+1 by apply anti_leq; rewrite Hd Hdb.
+  subst d => HszP.
+  pose k := head 1%N (conj_intpartn P).
+  pose p1 := behead (conj_intpartn P); pose d1 := sumn p1.
+  have Hk : (d1 + k = b.+1)%N.
+    have:= intpartn_sumn (conj_intpartn P).
+    rewrite /d1 /k /p1 /=.
+    case: (conj_part P) => [//= | [//= | c0] c] /=; by rewrite addnC.
+  have Hd1 : d1 <= b.
+    rewrite -ltnS -Hk.
+    have:= part_head_non0 (intpartnP (conj_intpartn P)).
+    rewrite -/k; case k => //= k' _.
+    rewrite addnS ltnS; exact: leq_addr.
+  have Hp1 : is_part_of_n d1 p1 by rewrite /= /d1 eq_refl is_part_behead.
+  pose P1 := IntPartN Hp1.
+  have HszP1 : size (conj_intpartn P1) <= n.
+    rewrite size_conj_part //.
+    apply: (leq_trans _ HszP); rewrite /= /p1.
+    have := size_conj_part (intpartnP (conj_intpartn P)).
+    rewrite conj_partK // => ->.
+    have:= (intpartnP (conj_intpartn P)) => /=.
+    by case: (conj_part P) => [| c0 [| c1 c]] //= /andP [].
+  have {IHb} Hrec := IHb _ Hd1 (conj_intpartn P1) HszP1.
+  have := altSchur_mpart_elementary k HszP1.
+  rewrite Hrec.
+  
 Definition antim (s : seq nat) : 'M[ {mpoly R[n]} ]_n :=
   \matrix_(i, j < n) 'X_i ^+ (nth 0 s j + (n - 1) - j)%N.
 Definition Vandmx : 'M[ {mpoly R[n]} ]_n := \matrix_(i, j < n) 'X_i ^+ (n - 1 - j).
@@ -375,7 +411,7 @@ Definition Vandet := \det Vandmx.
 Lemma Vandmx_antimE : Vandmx = antim [::].
 Proof. rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE nth_default. Qed.
 
-Lemma altSchurE s : altSchur s = \det (antim s).
+Lemma altSchur_detE s : altSchur s = \det (antim s).
 Proof.
   rewrite /altSchur /alternpol.
   have H : injective (fun (f : 'S_n) => (f ^-1)%g) by apply inv_inj; exact: invgK.

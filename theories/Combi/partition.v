@@ -1151,7 +1151,22 @@ Proof. move=> p; apply: val_inj => /=; by rewrite conj_partK. Qed.
 
 End PartOfn.
 
-(** * Counting functions *)
+Lemma intpartn0 (sh : intpartn 0) : sh = [::] :> seq nat.
+  case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
+  by rewrite /enum_partn /= inE => /eqP.
+Qed.
+
+Lemma intpartn1 (sh : intpartn 1) : sh = [:: 1] :> seq nat.
+  case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
+  by rewrite /enum_partn /= inE => /eqP.
+Qed.
+
+Lemma intpartn2 (sh : intpartn 2) : sh = [:: 2]  :> seq nat \/ sh = [:: 1; 1] :> seq nat.
+  case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
+  rewrite /enum_partn /= !inE => /orP [] /eqP ->; by [left | right].
+Qed.
+
+(**  * Counting functions *)
 
 Fixpoint intpartnsk_nb sm sz mx : nat :=
   if sz is sz.+1 then
