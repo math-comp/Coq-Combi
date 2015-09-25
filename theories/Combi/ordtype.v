@@ -28,7 +28,7 @@ Proof. move=> Hi; case (ltnP i j) => //= Hj; apply/eqP; by rewrite eqn_leq Hi Hj
 Module Order.
 
 Definition axiom T (r : rel T) := [/\ reflexive r, antisymmetric r, transitive r &
-                                   (forall m n : T, (r m n) || (r n m))].
+                                   total r].
 
 Section ClassDef.
 
@@ -980,6 +980,66 @@ Definition ord_ordMixin := Order.Mixin inhabIn leqOrd_order.
 Definition ord_ordType := Eval hnf in OrdType 'I_n ord_ordMixin.
 
 End Ordinal.
+
+
+Section LexOrder.
+
+Variable T : ordType.
+
+Implicit Types s : seq T.
+
+Fixpoint lex s1 s2 :=
+  if s1 is x1 :: s1' then
+    if s2 is x2 :: s2' then
+      (x1 < x2) || ((x1 == x2) && lex s1' s2')
+    else
+      false
+  else
+    true.
+
+Lemma lex_le_head x sx y sy :
+  lex (x :: sx) (y :: sy) -> x <= y.
+Proof. by case/orP => [/ltnXW|/andP [/eqP-> _]]. Qed.
+
+Lemma lex_refl : reflexive lex.
+Proof. by elim => [|x s ih] //=; rewrite eqxx ih orbT. Qed.
+
+Lemma lex_antisym : antisymmetric lex.
+Proof.
+  elim=> [|x sx ih] [|y sy] //= /andP []; case/orP=> [h|].
+    rewrite [y<x]ltnX_neqAleqX andbC {2}eq_sym (ltnX_eqF h).
+    by move: h; rewrite ltnXNgeqX => /negbTE ->.
+  case/andP => /eqP->; rewrite eqxx ltnXnn /= => h1 h2.
+  by rewrite (ih sy) // h1 h2.
+Qed.
+
+Lemma lex_trans : transitive lex.
+Proof.
+  elim=> [|y sy ih] [|x sx] [|z sz] // h1 h2.
+  have le := leqX_trans (lex_le_head h1) (lex_le_head h2).
+  have := h2 => /= /orP []; have := h1 => /= /orP [].
+    by move=> lt1 lt2; rewrite (ltnX_trans lt1 lt2).
+    by case/andP=> /eqP-> _ ->.
+    by move=> lt /andP [/eqP<- _]; rewrite lt.
+  move=> /andP [_ l1] /andP [_ l2]; rewrite ih // andbT.
+  by rewrite orbC -leqX_eqVltnX.
+Qed.
+
+Lemma lex_total : total lex.
+Proof.
+  elim=> [|x sx ih] [|y sy] //=; case: (boolP (x < y))=> //=.
+  rewrite -leqXNgtnX // leqX_eqVltnX; case/orP=> [/eqP->|].
+    by rewrite !eqxx ltnXnn /= ih.
+  by move=> lt; rewrite [x==y]eq_sym (ltnX_eqF lt) /= orbF.
+Qed.
+
+Fact lex_order : Order.axiom lex.
+Proof. split. exact: lex_refl. exact lex_antisym. exact lex_trans. exact lex_total. Qed.
+
+Definition lex_ordMixin := Order.Mixin [::] lex_order.
+Canonical lex_ordType := Eval hnf in OrdType (seq T) lex_ordMixin.
+
+End LexOrder.
 
 
 Module OrdNotations.

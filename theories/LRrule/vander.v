@@ -28,23 +28,35 @@ Import GRing.Theory.
 
 Local Open Scope ring_scope.
 
+Definition intpartn_cast m n (eq_mn : m = n) p :=
+  let: erefl in _ = n := eq_mn return intpartn n in p.
+
+Lemma intpartn_castE m n (eq_mn : m = n) p : val (intpartn_cast eq_mn p) = val p.
+Proof. subst m; by case: p. Qed.
+
+
 
 Section VandermondeDet.
 
 Variable n : nat.
 Variable R : comRingType.
 
-Definition alternpol (f : {mpoly R[n]}) : {mpoly R[n]} :=
-  \sum_(s : 'S_n) (-1) ^+ s *: msym s f.
-Definition rho := [multinom (n - 1 - i)%N | i < n].
-Definition altSchur (m : 'X_{1..n}) := alternpol 'X_[m + rho].
-Definition mpart (s : seq nat) :=
-  if (size s) > n then 0%MM else [multinom (nth 0 s i)%N | i < n].
 
-Lemma altSchur_anti m : altSchur m \is antisym.
+Definition alternpol f : {mpoly R[n]} := \sum_(s : 'S_n) (-1) ^+ s *: msym s f.
+Definition rho := [multinom (n - 1 - i)%N | i < n].
+Definition mpart (s : seq nat) := [multinom (nth 0 s i)%N | i < n].
+
+
+Local Notation "''e_' k" := (@mesym _ _ k) (at level 8, k at level 2, format "''e_' k").
+Local Notation "''a_' k" := (alternpol 'X_[k])
+                              (at level 8, k at level 2, format "''a_' k").
+(* Local Notation "m # s" := [multinom m (s i) | i < n]
+  (at level 40, left associativity, format "m # s"). *)
+
+Lemma altSchur_anti m : 'a_m \is antisym.
 Proof.
   apply/isantisymP => S.
-  rewrite /altSchur/alternpol.
+  rewrite /alternpol.
   rewrite (big_morph (msym S) (@msymD _ _ _) (@msym0 _ _ _)).
   rewrite scaler_sumr.
   rewrite [RHS](reindex_inj (mulIg S)); apply: eq_big => //= s _.
@@ -53,7 +65,7 @@ Proof.
 Qed.
 
 Lemma alterpol_alternate (m : 'X_{1..n}) (i j : 'I_n) :
-  i != j -> m i = m j -> alternpol 'X_[m] = 0.
+  i != j -> m i = m j -> 'a_m = 0.
 Proof.
   move=> H Heq.
   pose t := tperm i j.
@@ -71,7 +83,7 @@ Proof.
 Qed.
 
 Lemma altSchur_add1_0 (m : 'X_{1..n}) i :
-  (nth 0%N m i).+1 = nth 0%N m i.+1 -> altSchur m = 0.
+  (nth 0%N m i).+1 = nth 0%N m i.+1 -> 'a_(m + rho) = 0.
 Proof.
   move=> Heq.
   have Hi1n : i.+1 < n.
@@ -92,15 +104,11 @@ Proof.
   by rewrite subn_gt0.
 Qed.
 
-Local Notation "''e_' k" := (@mesym _ _ k) (at level 8, k at level 2, format "''e_' k").
-(* Local Notation "m # s" := [multinom m (s i) | i < n]
-  (at level 40, left associativity, format "m # s"). *)
 
 Lemma altSchur_elementary (m : 'X_{1..n}) k :
-  (altSchur m) * 'e_k =
-  \sum_(h : {set 'I_n} | #|h| == k) altSchur (m + mesym1 h).
+  'a_(m + rho) * 'e_k = \sum_(h : {set 'I_n} | #|h| == k) 'a_(m + mesym1 h + rho).
 Proof.
-  rewrite /altSchur/alternpol exchange_big /=.
+  rewrite /alternpol exchange_big /=.
   rewrite mulr_suml; apply eq_bigr => s _.
   rewrite -(issymP _ (mesym_sym n R k) s) mesymE.
   rewrite (raddf_sum (msym_additive _ _)) /=.
@@ -109,9 +117,10 @@ Proof.
   by rewrite -!addmA [(mesym1 h + rho)%MM]addmC.
 Qed.
 
+Require Import tools ordtype sorted Schur therule.
+
 Section HasIncr.
 
-Require Import tools sorted Schur.
 Local Open Scope nat_scope.
 
 Variables (d k : nat) (P1 : intpartn d) (h : {set 'I_n}).
@@ -120,7 +129,7 @@ Definition hasincr :=
   has (fun i => (nth 0 (mpart P1 + mesym1 h)%MM i).+1 ==
                  nth 0 (mpart P1 + mesym1 h)%MM i.+1) (iota 0 n.-1).
 
-Lemma hasincr0 : hasincr -> altSchur ((mpart P1) + mesym1 h) = 0%R.
+Lemma hasincr0 : hasincr -> 'a_(mpart P1 + mesym1 h + rho) = 0%R.
 Proof. move=> /hasP [] i _ /eqP; exact: altSchur_add1_0. Qed.
 
 Fixpoint rem_trail0 s :=
@@ -170,7 +179,7 @@ Lemma not_hasincr_part :
   is_part_of_n (d + #|h|) (rem_trail0 ((mpart P1) + mesym1 h)%MM).
 Proof.
   move=> Hsz /hasPn H.
-  rewrite /mpart ltnNge Hsz /=.
+  rewrite /mpart.
   apply/andP; split.
   - rewrite sumn_rem_trail0.
     rewrite -(@sum_iota_sumnE _ n); last by rewrite size_map size_enum_ord.
@@ -196,7 +205,7 @@ Proof.
     have {H} /H : i \in iota 0 n.-1.
       rewrite mem_iota add0n.
       by case: n Hi1 {Hsz H Hi} => [//= | n'] /=; rewrite ltnS.
-    rewrite /mpart ltnNge Hsz.
+    rewrite /mpart.
     have H0 : 0 < n by apply: (leq_ltn_trans _ Hi1).
     rewrite !(nth_map (Ordinal H0) 0) ?size_enum_ord // !mnmE.
     rewrite !nth_enum_ord //.
@@ -227,10 +236,8 @@ Lemma add_mesymE :
   mpart add_mesym = (mpart P1 + mesym1 h)%MM.
 Proof.
   rewrite /add_mesym /add_mpart_mesym => Hsz /= /eqP <- Hincr.
-  rewrite /mpart /= Hsz Hincr /= (ltnNge n (size P1)) Hsz eq_refl /=.
+  rewrite /mpart Hincr Hsz eq_refl /=.
   set S := (map _ _).
-  have := size_rem_trail0 S.
-  rewrite size_map size_enum_ord (ltnNge n) /S {S} => -> /=.
   rewrite mnmP => i.
   rewrite mnmE nth_rem_trail0.
   have H0 : 0 < n by apply: (leq_ltn_trans _ (ltn_ord i)).
@@ -286,7 +293,7 @@ Proof.
     - by rewrite size_map size_enum_ord.
   have H0 : 0 < n by apply: (leq_ltn_trans _ Hi).
   rewrite !(nth_map (Ordinal H0) 0) ?size_enum_ord // !mnmE.
-  rewrite inE /mpart ltnNge Hsz1 /= mnmE (nth_enum_ord (Ordinal H0) Hi).
+  rewrite inE /mpart /= (nth_enum_ord (Ordinal H0) Hi).
   case: ssrnat.ltnP => H /=; rewrite ?addn0 ?addn1.
   - apply anti_leq; rewrite H /=.
     by have := Hstr i => /andP [].
@@ -323,14 +330,14 @@ Local Open Scope ring_scope.
 
 Theorem altSchur_mpart_elementary d (P1 : intpartn d) k :
   size P1 <= n ->
-  (altSchur (mpart P1)) * 'e_k =
-  \sum_(P : intpartn (d + k) | vb_strip P1 P && (size P <= n)) altSchur (mpart P).
+  'a_(mpart P1 + rho) * 'e_k =
+  \sum_(P : intpartn (d + k) | vb_strip P1 P && (size P <= n)) 'a_(mpart P + rho).
 Proof.
   rewrite altSchur_elementary => Hsz.
   rewrite (bigID (hasincr P1)) /=.
   rewrite (eq_bigr (fun x => 0)); last by move=> i /andP [] _ /hasincr0.
   rewrite sumr_const mul0rn add0r.
-  rewrite (eq_bigr (fun h => altSchur (mpart (add_mesym k P1 h)))); first last.
+  rewrite (eq_bigr (fun h => 'a_(mpart (add_mesym k P1 h) + rho))); first last.
     move=> i /andP [] Hk Hincr; by rewrite add_mesymE.
   rewrite (reindex_onto _ _ (add_mesymK Hsz)).
   apply eq_bigl => S; rewrite inE.
@@ -347,7 +354,7 @@ Proof.
         - by rewrite size_map size_enum_ord.
       have H0 : 0 < n by apply: (leq_ltn_trans _ Hi).
       rewrite (nth_map (Ordinal H0)) ?size_enum_ord // !mnmE.
-      rewrite /mpart ltnNge Hsz /= mnmE (nth_enum_ord (Ordinal H0) Hi).
+      rewrite /mpart (nth_enum_ord (Ordinal H0) Hi).
       by case: (_ \in _); rewrite ?addn0 ?addn1 leqnn ltnW.
     + rewrite /add_mesym /= Hsz H /=.
       apply (leq_trans (size_rem_trail0 _)).
@@ -357,41 +364,50 @@ Proof.
       have H0 : 0 < n by apply: (leq_ltn_trans _ (ltn_ord i)).
       rewrite (nth_map (Ordinal H0)); last by rewrite size_enum_ord.
       rewrite nth_ord_enum /= (mnm_nth 0) /= mnmE.
-      rewrite /mpart (ltnNge n _) Hsz /=.
+      rewrite /mpart /=.
       rewrite (nth_map (Ordinal H0)); last by rewrite size_enum_ord.
       rewrite nth_ord_enum.
       by case: (i \in S); rewrite ?addn0 ?addn1 ?ltnSn ?ltnn.
 Qed.
 
 Hypothesis Hn : n != 0%N.
+Local Notation "''s_' k" := (Schur Hn R k) (at level 8, k at level 2, format "''s_' k").
 
-(* pose part0 := @IntPartN 0 [::] is_true_true. *)
+Lemma Schur_cast d d' (P : intpartn d) (Heq : d = d') :
+  's_P = Schur Hn R (intpartn_cast Heq P).
+Proof. subst d'; by congr Schur. Qed.
+
+Lemma vb_strip_rem_col0 d (P : intpartn d) :
+  vb_strip (conj_part (behead (conj_part P))) P.
+Proof.
+  admit.
+Qed.
 
 Theorem altSchurE d (P : intpartn d) :
-  size P <= n -> altSchur (mpart P) = altSchur 0 * Schur Hn R P.
+  size P <= n -> 'a_rho * 's_P = 'a_(mpart P + rho).
 Proof.
   suff {d P} H : forall b d, d <= b -> forall (P : intpartn d),
-    size P <= n -> altSchur (mpart P) = altSchur 0 * Schur Hn R P by apply: (H d).
+    size P <= n -> 'a_rho * 's_P = 'a_(mpart P + rho) by apply: (H d).
   elim=> [ |b IHb] d Hd P.
     move: Hd; rewrite leqn0 => /eqP Hd; subst d.
-    rewrite Schur0 mulr1 => _; congr altSchur.
+    rewrite Schur0 mulr1 -{1}(add0m rho)=> _; congr 'a_(_ + rho).
     rewrite intpartn0 /mpart /= mnmP => i; by rewrite !mnmE /=.
   case: (leqP d b) => Hdb; first exact: (IHb _ Hdb).
   have {Hd Hdb} Hd : d = b.+1 by apply anti_leq; rewrite Hd Hdb.
-  subst d => HszP.
+  elim/lex_inpart_wf: P => P IHP HszP.
   pose k := head 1%N (conj_intpartn P).
   pose p1 := behead (conj_intpartn P); pose d1 := sumn p1.
-  have Hk : (d1 + k = b.+1)%N.
+  have Hk : (d = d1 + k)%N.
     have:= intpartn_sumn (conj_intpartn P).
     rewrite /d1 /k /p1 /=.
-    case: (conj_part P) => [//= | [//= | c0] c] /=; by rewrite addnC.
+    case: (conj_part P) => [| [//= | c0] c] /=; by rewrite Hd // addnC.
   have Hd1 : d1 <= b.
-    rewrite -ltnS -Hk.
+    rewrite -ltnS -Hd Hk.
     have:= part_head_non0 (intpartnP (conj_intpartn P)).
     rewrite -/k; case k => //= k' _.
     rewrite addnS ltnS; exact: leq_addr.
-  have Hp1 : is_part_of_n d1 p1 by rewrite /= /d1 eq_refl is_part_behead.
-  pose P1 := IntPartN Hp1.
+  have p1P : is_part_of_n d1 p1 by rewrite /= /d1 eq_refl is_part_behead.
+  pose P1 := IntPartN p1P.
   have HszP1 : size (conj_intpartn P1) <= n.
     rewrite size_conj_part //.
     apply: (leq_trans _ HszP); rewrite /= /p1.
@@ -399,10 +415,40 @@ Proof.
     rewrite conj_partK // => ->.
     have:= (intpartnP (conj_intpartn P)) => /=.
     by case: (conj_part P) => [| c0 [| c1 c]] //= /andP [].
-  have {IHb} Hrec := IHb _ Hd1 (conj_intpartn P1) HszP1.
   have := altSchur_mpart_elementary k HszP1.
-  rewrite Hrec.
-  
+  have {IHb HszP1 Hd1} <- := IHb _ Hd1 (conj_intpartn P1) HszP1.
+  rewrite -mulrA elementaryE Pieri_elementary.
+  rewrite (bigID (fun P0 : intpartn (d1 + k) => (size P0 <= n))) /= addrC.
+  rewrite big1 ?add0r; first last.
+    move=> i /andP [] _; rewrite -ltnNge; exact: Schur_oversize.
+  rewrite mulr_sumr.
+  pose P' := intpartn_cast Hk P.
+  rewrite (bigID (pred1 P')) [X in _ = X](bigID (pred1 P')) /=.
+  set prd := BIG_P.
+  have Hprd : prd =1 pred1 P'.
+    rewrite {}/prd => sh /=.
+    case: eqP => [-> | _]; rewrite ?andbT ?andbF // {sh}.
+    rewrite intpartn_castE {P' P1 d1 Hk p1P} HszP andbT /p1 /=.
+    exact: vb_strip_rem_col0.
+  rewrite !(eq_bigl _ _ Hprd) {Hprd prd} /= !big_pred1_eq intpartn_castE.
+  set A := (X in _ + X); set B := (X in _ = _ + X).
+  suff -> : A = B by move=> /addIr <- {A B}; rewrite -Schur_cast.
+  apply eq_bigr => {A B} sh /andP [] /andP [] Hstrip Hsz Hsh.
+  pose sh' := intpartn_cast (esym Hk) sh.
+  have Hlex : (val sh' < P)%Ord.
+    rewrite intpartn_castE /= {sh'}.
+    rewrite ltnX_neqAleqX; apply/andP; split.
+      move: Hsh; apply contra => /eqP H.
+      apply/eqP; apply val_inj; by rewrite intpartn_castE.
+    rewrite {Hsh Hsz P'}.
+    admit.
+  have Hsz' : size sh' <= n by rewrite intpartn_castE.
+  have := IHP sh' Hlex Hsz'.
+  rewrite -Schur_cast => ->.
+  by rewrite intpartn_castE.
+Qed.
+
+
 Definition antim (s : seq nat) : 'M[ {mpoly R[n]} ]_n :=
   \matrix_(i, j < n) 'X_i ^+ (nth 0 s j + (n - 1) - j)%N.
 Definition Vandmx : 'M[ {mpoly R[n]} ]_n := \matrix_(i, j < n) 'X_i ^+ (n - 1 - j).
@@ -411,9 +457,9 @@ Definition Vandet := \det Vandmx.
 Lemma Vandmx_antimE : Vandmx = antim [::].
 Proof. rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE nth_default. Qed.
 
-Lemma altSchur_detE s : altSchur s = \det (antim s).
+Lemma altSchur_detE s : 'a_(s + rho) = \det (antim s).
 Proof.
-  rewrite /altSchur /alternpol.
+  rewrite /alternpol.
   have H : injective (fun (f : 'S_n) => (f ^-1)%g) by apply inv_inj; exact: invgK.
   rewrite (reindex_inj H) /=.
   apply eq_bigr => p _; rewrite odd_permV.
