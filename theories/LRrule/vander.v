@@ -380,7 +380,54 @@ Proof. subst d'; by congr Schur. Qed.
 Lemma vb_strip_rem_col0 d (P : intpartn d) :
   vb_strip (conj_part (behead (conj_part P))) P.
 Proof.
-  admit.
+  rewrite -{2}(conj_intpartnK P) /=.
+  have Hc : is_part (conj_part P) by apply is_part_conj.
+  apply hb_strip_conj => //; first by apply is_part_behead.
+  elim: {d P} (conj_part P) Hc => [//=| s0 s IHs] /= /andP [] H0 /IHs {IHs}.
+  case: s H0 => [//=| s1 s] /= -> ->.
+  by rewrite leqnn.
+Qed.
+
+
+Lemma vb_strip_lex (d1 k : nat) (sh : intpartn (d1 + k)) p :
+  vb_strip p sh ->
+  sumn p = d1 ->
+  is_part p -> (val sh <= incr_first_n p k)%Ord.
+Proof.
+  rewrite /=.
+  elim: p d1 k sh => [| p0 p IHsh] d1 k sh Hstr.
+    have {Hstr} Hstr := vb_stripP (is_true_true : is_part [::]) (intpartnP _) Hstr.
+    move=> Hd1 _; subst d1.
+    suff /= -> : val sh = nseq k 1%N by [].
+    case: sh Hstr => sh /=; rewrite add0n => /andP [] /eqP.
+    elim: sh k => [//= | s0 s IHs] /= k Hk; first by rewrite -Hk.
+    rewrite -/(is_part (s0 :: s)) => Hpart Hstr.
+    have Hs0 : s0 = 1%N.
+      have := Hstr 0%N => /=.
+      have /= := part_head_non0 Hpart.
+      by case s0 => [| [| s0']].
+    subst s0; rewrite -Hk add1n /= {1}(IHs (sumn s)) //.
+    - exact: (is_part_consK Hpart).
+    - move=> i; have /= := Hstr i.+1.
+      by rewrite !nth_nil.
+  case: sh Hstr => sh Hsh /= Hstr.
+  case: k Hsh => [| k] Hsh Hd1; subst d1; rewrite -/(is_part (p0 :: p)) /= => /andP [] _ Hp.
+    have Hincl := vb_strip_included Hstr.
+    move: Hsh; rewrite addn0 /= -/(sumn (p0 :: p)) => /andP [] /eqP /esym Heq Hsh.
+    by rewrite (included_sumnE Hsh Hincl Heq).
+  case: sh Hstr Hsh => [//= |s0 sh] /= /andP [] H0 Hstrip.
+  move=> /andP [] /eqP Heq /andP [] _ Hs.
+  rewrite leqXE /= ltnXnatE ltnS.
+  case: (leqP s0 p0) => //= Hp0.
+  have Hs0 : s0 = p0.+1.
+    apply anti_leq; rewrite Hp0.
+    by move: H0 => /andP [] _ ->.
+  subst s0; rewrite eq_refl /= {Hp0}.
+  move: Heq; rewrite addSn addnS => /eqP; rewrite eqSS -addnA => /eqP /addnI Heq.
+  have Hsh : is_part_of_n (sumn p + k)%N sh.
+    by rewrite /= Heq eq_refl Hs.
+  have /= := IHsh _ _ (IntPartN Hsh).
+  by rewrite leqXE /=; apply.
 Qed.
 
 Theorem altSchurE d (P : intpartn d) :
@@ -441,7 +488,15 @@ Proof.
       move: Hsh; apply contra => /eqP H.
       apply/eqP; apply val_inj; by rewrite intpartn_castE.
     rewrite {Hsh Hsz P'}.
-    admit.
+    have /= -> : val P = incr_first_n (conj_part p1) k.
+      move: Hk; rewrite /d1 /p1 /= -{2}(conj_intpartnK P) /=.
+      rewrite -{1}(intpartn_sumn (conj_intpartn P)) /=.
+      case: (conj_part P) => [//= | p0 p] /=; first by rewrite add0n => <-.
+      rewrite addnC -{2}(addKn (sumn p) k) => <-.
+      by rewrite addKn.
+    have:= intpartnP (conj_intpartn P1).
+    have /= {Hk p1P P1} := intpartn_sumn (conj_intpartn P1).
+    exact: vb_strip_lex.
   have Hsz' : size sh' <= n by rewrite intpartn_castE.
   have := IHP sh' Hlex Hsz'.
   rewrite -Schur_cast => ->.
