@@ -733,7 +733,7 @@ Proof.
     by rewrite Hp.
   - rewrite mem_shsh; first last.
       rewrite /is_std size_rev.
-      have := perm_rev p1 => /perm_eqlP <-.
+      have := perm_eq_rev p1 => /perm_eqlP <-.
       by rewrite -/(is_std _)  -RSstdE Hp1.
     by rewrite /= size_rev !filter_rev map_rev Hsh1 Hsh2 !eq_refl.
 Qed.

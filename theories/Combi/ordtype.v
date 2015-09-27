@@ -15,16 +15,13 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
+Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 (** * Inhabited totally ordered types *)
-
-Lemma bad_if_leq i j : i <= j -> (if i < j then i else j) = i.
-Proof. move=> Hi; case (ltnP i j) => //= Hj; apply/eqP; by rewrite eqn_leq Hi Hj. Qed.
-
 Module Order.
 
 Definition axiom T (r : rel T) := [/\ reflexive r, antisymmetric r, transitive r &
@@ -496,17 +493,10 @@ Proof.
   by rewrite perm_eq_sym.
 Qed.
 
-Lemma perm_rev u : perm_eq u (rev u).
-Proof.
-  elim: u => [//= | u0 u]; rewrite rev_cons -(perm_cons u0).
-  move /perm_eq_trans; apply.
-  rewrite perm_eq_sym; apply/perm_eqlP; by apply: perm_rcons.
-Qed.
-
 Lemma allLeq_rev u a : allLeq (rev u) a = allLeq u a.
-Proof. by rewrite (perm_eq_allLeqE _ (perm_rev u)). Qed.
+Proof. by rewrite (perm_eq_allLeqE _ (perm_eq_rev u)). Qed.
 Lemma allLtn_rev u a : allLtn (rev u) a = allLtn u a.
-Proof. by rewrite (perm_eq_allLtnE _ (perm_rev u)). Qed.
+Proof. by rewrite (perm_eq_allLtnE _ (perm_eq_rev u)). Qed.
 
 Lemma allLeq_rconsK b u a : allLeq (rcons u b) a -> allLeq u a.
 Proof. rewrite -allLeq_rev rev_rcons => /allLeq_consK; by rewrite allLeq_rev. Qed.
@@ -864,7 +854,7 @@ Qed.
 Lemma nth_rembig s i :
   nth Z s (shift_pos (posbig s) i) = nth Z (rembig s) i.
 Proof.
-  case Hs : s => [/= | s0 s']; first by rewrite !nth_nil.
+  case Hs : s => [//= | s0 s'].
   rewrite /shift_pos -rembigE nth_cat -Hs.
   rewrite size_take posbig_size; last by rewrite Hs.
   case (ltnP i (posbig s)) => Hipos.

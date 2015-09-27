@@ -24,9 +24,6 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 
 
-(* Some automatization *)
-Lemma nth_nil i : nth 0 [::] i = 0.
-Proof. by rewrite nth_default. Qed.
 Hint Resolve nth_nil.
 
 Lemma ieqi1F i : (i == i.+1) = false.
@@ -452,6 +449,13 @@ Qed.
 
 
 (** ** [perm_eq] related lemmas *)
+Lemma perm_eq_rev (T : eqType) (u : seq T) : perm_eq u (rev u).
+Proof.
+  elim: u => [//= | u0 u]; rewrite rev_cons -(perm_cons u0).
+  move /perm_eq_trans; apply.
+  rewrite perm_eq_sym; apply/perm_eqlP; by apply: perm_rcons.
+Qed.
+
 Lemma filter_perm_eq (T : eqType) (u v : seq T) P :
   perm_eq u v -> perm_eq (filter P u) (filter P v).
 Proof.
