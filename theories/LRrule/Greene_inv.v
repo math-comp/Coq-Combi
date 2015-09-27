@@ -1590,7 +1590,7 @@ Proof.
   rewrite (append_nth_conj_tab _ Hpart Hcorn).
   congr (get_tab (append_nth _ _ _) _ _).
   - apply maxL_perm_eq; rewrite -Hs -rev_rcons.
-    rewrite perm_eq_sym; exact: perm_rev.
+    rewrite perm_eq_sym; exact: perm_eq_rev.
   - move: Hsh.
     rewrite !shape_append_nth shape_conj_tab.
     rewrite conj_part_incr_nth //.
