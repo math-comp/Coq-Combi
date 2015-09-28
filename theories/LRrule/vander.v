@@ -15,7 +15,7 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
 Require Import fingroup perm zmodp binomial poly matrix.
-Require Import partition skewtab.
+Require Import tools partition skewtab.
 Require Import ssrcomplements poset freeg mpoly.
 
 Require Import sym_group antisym.
@@ -36,7 +36,7 @@ Proof. subst m; by case: p. Qed.
 
 
 
-Section VandermondeDet.
+Section Alternant.
 
 Variable n : nat.
 Variable R : comRingType.
@@ -50,10 +50,8 @@ Definition mpart (s : seq nat) := [multinom (nth 0 s i)%N | i < n].
 Local Notation "''e_' k" := (@mesym _ _ k) (at level 8, k at level 2, format "''e_' k").
 Local Notation "''a_' k" := (alternpol 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
-(* Local Notation "m # s" := [multinom m (s i) | i < n]
-  (at level 40, left associativity, format "m # s"). *)
 
-Lemma altSchur_anti m : 'a_m \is antisym.
+Lemma alt_anti m : 'a_m \is antisym.
 Proof.
   apply/isantisymP => S.
   rewrite /alternpol.
@@ -63,6 +61,54 @@ Proof.
   rewrite msymZ -msymMm scalerA; congr (_ *: _).
   by rewrite odd_permM signr_addb [X in (_  = _ * X)]mulrC signrMK.
 Qed.
+
+Lemma rho_iota : rho = rev (iota 0 n) :> seq nat.
+Proof.
+  apply (eq_from_nth (x0 := 0%N)).
+    by rewrite size_tuple size_rev size_iota.
+  move=> i; rewrite size_tuple => Hi.
+  rewrite /= nth_rev size_iota //.
+  rewrite (eq_map (f2 := (fun i => (n - 1 - i)%N) \o (@val _ _ _))) //.
+  rewrite map_comp val_enum_ord (nth_map 0%N); last by rewrite size_iota.
+  rewrite !nth_iota //.
+    rewrite ?add0n subn1; by case: n Hi.
+  case: n Hi => [// | m] _.
+  rewrite subSS ltnS; exact: leq_subr.
+Qed.
+
+Lemma rho_uniq : uniq rho.
+Proof.
+  suff : perm_eq rho (iota 0 n).
+    move/perm_eq_uniq ->; exact: iota_uniq.
+  rewrite rho_iota perm_eq_sym.
+  exact: perm_eq_rev.
+Qed.
+
+Lemma alt_uniq_non0 (m : 'X_{1..n}) : uniq m -> 'a_m != 0.
+Proof.
+  move=> Huniq.
+  suff : mcoeff m 'a_m == 1.
+    apply contraL => /eqP ->; rewrite mcoeff0 eq_sym.
+    exact: oner_neq0.
+  rewrite /alternpol (reindex_inj invg_inj) /=.
+  rewrite raddf_sum /= (bigID (pred1 1%g)) /=.
+  rewrite big_pred1_eq odd_permV odd_perm1 expr0 scale1r invg1 msym1m.
+  rewrite mcoeffX eq_refl /=.
+  rewrite (eq_bigr (fun _ => 0)); first by rewrite big1_eq addr0.
+  move=> s Hs; rewrite mcoeffZ msymX mcoeffX invgK.
+  suff : [multinom m (s i) | i < n] != m.
+    move=> /negbTE -> /=; by rewrite mulr0.
+  move: Hs; apply contra => /eqP; rewrite mnmP => Heq.
+  apply/eqP; rewrite -permP => i; rewrite perm1; apply val_inj => /=.
+  have /eqP := Heq i; rewrite !mnmE !(mnm_nth 0%N).
+  rewrite nth_uniq; last exact: Huniq.
+  - by move=> /eqP ->.
+  - rewrite size_tuple; exact: ltn_ord.
+  - rewrite size_tuple; exact: ltn_ord.
+Qed.
+
+Lemma altrho_non0 : 'a_rho != 0.
+Proof. exact: alt_uniq_non0 (rho_uniq). Qed.
 
 Lemma alterpol_alternate (m : 'X_{1..n}) (i j : 'I_n) :
   i != j -> m i = m j -> 'a_m = 0.
@@ -82,7 +128,7 @@ Proof.
   case: (tpermP i j k) => Hk //; by rewrite Hk Heq.
 Qed.
 
-Lemma altSchur_add1_0 (m : 'X_{1..n}) i :
+Lemma alt_add1_0 (m : 'X_{1..n}) i :
   (nth 0%N m i).+1 = nth 0%N m i.+1 -> 'a_(m + rho) = 0.
 Proof.
   move=> Heq.
@@ -105,7 +151,7 @@ Proof.
 Qed.
 
 
-Lemma altSchur_elementary (m : 'X_{1..n}) k :
+Lemma alt_elementary (m : 'X_{1..n}) k :
   'a_(m + rho) * 'e_k = \sum_(h : {set 'I_n} | #|h| == k) 'a_(m + mesym1 h + rho).
 Proof.
   rewrite /alternpol exchange_big /=.
@@ -130,7 +176,7 @@ Definition hasincr :=
                  nth 0 (mpart P1 + mesym1 h)%MM i.+1) (iota 0 n.-1).
 
 Lemma hasincr0 : hasincr -> 'a_(mpart P1 + mesym1 h + rho) = 0%R.
-Proof. move=> /hasP [] i _ /eqP; exact: altSchur_add1_0. Qed.
+Proof. move=> /hasP [] i _ /eqP; exact: alt_add1_0. Qed.
 
 Fixpoint rem_trail0 s :=
   if s is s0 :: s' then
@@ -328,12 +374,12 @@ Qed.
 (* TODO : Fixme *)
 Local Open Scope ring_scope.
 
-Theorem altSchur_mpart_elementary d (P1 : intpartn d) k :
+Theorem alt_mpart_elementary d (P1 : intpartn d) k :
   size P1 <= n ->
   'a_(mpart P1 + rho) * 'e_k =
   \sum_(P : intpartn (d + k) | vb_strip P1 P && (size P <= n)) 'a_(mpart P + rho).
 Proof.
-  rewrite altSchur_elementary => Hsz.
+  rewrite alt_elementary => Hsz.
   rewrite (bigID (hasincr P1)) /=.
   rewrite (eq_bigr (fun x => 0)); last by move=> i /andP [] _ /hasincr0.
   rewrite sumr_const mul0rn add0r.
@@ -430,7 +476,7 @@ Proof.
   by rewrite leqXE /=; apply.
 Qed.
 
-Theorem altSchurE d (P : intpartn d) :
+Theorem altE d (P : intpartn d) :
   size P <= n -> 'a_rho * 's_P = 'a_(mpart P + rho).
 Proof.
   suff {d P} H : forall b d, d <= b -> forall (P : intpartn d),
@@ -462,7 +508,7 @@ Proof.
     rewrite conj_partK // => ->.
     have:= (intpartnP (conj_intpartn P)) => /=.
     by case: (conj_part P) => [| c0 [| c1 c]] //= /andP [].
-  have := altSchur_mpart_elementary k HszP1.
+  have := alt_mpart_elementary k HszP1.
   have {IHb HszP1 Hd1} <- := IHb _ Hd1 (conj_intpartn P1) HszP1.
   rewrite -mulrA elementaryE Pieri_elementary.
   rewrite (bigID (fun P0 : intpartn (d1 + k) => (size P0 <= n))) /= addrC.
@@ -503,16 +549,50 @@ Proof.
   by rewrite intpartn_castE.
 Qed.
 
+End Alternant.
+
+
+
+Section Bla.
+
+Variable n : nat.
+Variable R : idomainType.
+
+Hypothesis Hn : n != 0%N.
+Local Notation "''s_' k" := (Schur Hn R k) (at level 8, k at level 2, format "''s_' k").
+
+Corollary alt_sym d (P : intpartn d) : size P <= n -> 's_P \is symmetric.
+Proof.
+  move=> HP.
+  have := alt_anti R (mpart n P + rho n).
+  rewrite -(altE _ _ HP).
+  rewrite -sym_antiE //; last exact: alt_anti.
+  exact: altrho_non0.
+Qed.
+
+End Bla.
+
+
+Section VandermondeDet.
+
+Variable n : nat.
+Variable R : comRingType.
+
+Local Notation "''a_' k" := (alternpol 'X_[k])
+                              (at level 8, k at level 2, format "''a_' k").
+Local Notation rho := (rho n).
 
 Definition antim (s : seq nat) : 'M[ {mpoly R[n]} ]_n :=
   \matrix_(i, j < n) 'X_i ^+ (nth 0 s j + (n - 1) - j)%N.
 Definition Vandmx : 'M[ {mpoly R[n]} ]_n := \matrix_(i, j < n) 'X_i ^+ (n - 1 - j).
 Definition Vandet := \det Vandmx.
 
+Local Open Scope ring_scope.
+
 Lemma Vandmx_antimE : Vandmx = antim [::].
 Proof. rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE nth_default. Qed.
 
-Lemma altSchur_detE s : 'a_(s + rho) = \det (antim s).
+Lemma alt_detE s : 'a_(s + rho) = \det (antim s).
 Proof.
   rewrite /alternpol.
   have H : injective (fun (f : 'S_n) => (f ^-1)%g) by apply inv_inj; exact: invgK.

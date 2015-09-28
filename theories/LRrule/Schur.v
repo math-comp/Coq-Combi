@@ -307,7 +307,7 @@ Proof.
   rewrite (eq_bigl _ _ (@tabwordshape_col d)).
   set f := BIG_F.
   rewrite (eq_bigr (fun x => f(rev_tuple x))); first last.
-    rewrite /f => i _ /=; apply: eq_big_perm; exact: perm_rev.
+    rewrite /f => i _ /=; apply: eq_big_perm; exact: perm_eq_rev.
   rewrite (eq_bigl (fun i => sorted gtnX (rev_tuple i))); first last.
     move=> [t /= _]; rewrite rev_sorted.
     case: t => [//= | t0 t] /=.
