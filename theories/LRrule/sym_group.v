@@ -30,7 +30,6 @@ Definition trivSimpl := (eq_refl, eqSS, ieqi1F, ieqi2F, i1eqiF, i2eqiF).
 
 Import GroupScope.
 
-
 Section Transp.
 
 Variable T : finType.
@@ -73,7 +72,6 @@ Proof.
 Qed.
 
 End Transp.
-
 
 Section Coxeter.
 
@@ -236,9 +234,53 @@ Proof.
   by rewrite big_cons odd_mul_tperm (inordi1 Ht0) addTb.
 Qed.
 
+(*
+
+Definition code m s : size s == m && all (fun i => nth 0 s i <= i) (iota 0 m).
+
+Lemma perm_on_prod_eltrP m s :
+  perm_on [set k : 'I_n.+1 | k <= m] s ->
+  { ts : seq nat |
+    size ts = m, forall i, i < m -> nth 0 i ts < i &
+    
+
+Section Pres.
+
+Import Presentation.
+
+Fixpoint ins_sq_eq (init : formula) n :=
+  if n is n'.+1 then ins_sq_eq (And ((Cst n')^+2) init) n'
+  else init.
+
+Fixpoint ins_braid_eq init n :=
+  if n is n'.+1 then
+    ins_braid_eq (And ((Cst n') * (Cst n'.+1) * (Cst n') =
+                       ((Cst n'.+1) * (Cst n') * (Cst n'.+1)) )
+                      init) n'
+  else init.
+
+Fixpoint ins_comm_eq_n init n i :=
+  if i is i'.+1 then
+    ins_comm_eq_n (And (Comm (Cst i') (Cst n))
+                      init) n i'
+  else init.
+
+Fixpoint ins_comm_eq init n :=
+  if n is n'.+1 then
+    ins_comm_eq (ins_comm_eq_n init n' n'.-1) n'
+  else init.
+
+Definition pres_Sn n :=
+  ins_sq_eq (ins_braid_eq (ins_comm_eq (Eq1 Idx) n) n.-1) n.
+
+Eval compute in pres_Sn 4.
+
+Lemma homg_Sn :
+  hom [set: 'S_n.+1] (Formula (pres_Sn n)).
+    
+End Pres.
+*)
 End Coxeter.
-
-
 
 Lemma homg_S_3 :
   [set: 'S_3] \homg Grp ( s0 : s1 : (s0^+2 = s1^+2 = 1, s0*s1*s0 = s1*s0*s1) ).
@@ -261,6 +303,17 @@ Proof.
   + by rewrite expgS expg1 tperm2.
   + apply/eqP; rewrite /eltr; apply: tperm3; by rewrite /eq_op /= !inordK.
 Qed.
+
+(*
+Lemma presentation_S_3 :
+  [set: 'S_3] \isog Grp ( s1 : s2 : (s1*s1 = s2*s2 = 1, s1*s2*s1 = s2*s1*s2) ).
+Proof.
+  apply intro_isoGrp; first exact homg_S_3.
+  move=> Gt H; case/existsP => /= [] [x1 x2] /eqP [] Hgen Hx1 Hx2 H3.
+  apply/homgP.
+
+Qed.
+*)
 
 Lemma homg_S4 :
   [set: 'S_4] \homg Grp (
@@ -296,3 +349,21 @@ Proof.
   - apply/eqP; rewrite /eltr; apply: tperm3; by rewrite /eq_op /= !inordK.
   - apply/eqP; rewrite /eltr; apply: tperm4; by rewrite /eq_op /= !inordK.
 Qed.
+
+(*
+
+        (fun s1 : Presentation.term =>
+         Presentation.Cast
+           (Presentation.Generator
+              (fun s2 : Presentation.term =>
+               Presentation.Cast
+                 (Presentation.Formula
+                    (Presentation.And
+                       (Presentation.Eq3 (Presentation.Mul s1 s1)
+                          (Presentation.Mul s2 s2) Presentation.Idx)
+                       (Presentation.Eq2
+                          (Presentation.Mul (Presentation.Mul s1 s2) s1)
+                          (Presentation.Mul (Presentation.Mul s2 s1) s2)))))))
+
+
+*)
