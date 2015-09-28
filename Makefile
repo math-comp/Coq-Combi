@@ -113,7 +113,7 @@ VFILES:= theories/Combi/combclass.v\
   theories/LRrule/stdplact.v\
   theories/LRrule/therule.v\
   theories/LRrule/antisym.v\
-  theories/LRrule/vander.v\
+  theories/LRrule/Schur_alt.v\
   theories/LRrule/Yam_plact.v\
 
 -include $(addsuffix .d,$(VFILES))

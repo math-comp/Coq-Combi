@@ -106,10 +106,10 @@ Proof.
   - rewrite size_tuple; exact: ltn_ord.
 Qed.
 
-Lemma altrho_non0 : 'a_rho != 0.
+Lemma alt_rho_non0 : 'a_rho != 0.
 Proof. exact: alt_uniq_non0 (rho_uniq). Qed.
 
-Lemma alterpol_alternate (m : 'X_{1..n}) (i j : 'I_n) :
+Lemma alt_alternate (m : 'X_{1..n}) (i j : 'I_n) :
   i != j -> m i = m j -> 'a_m = 0.
 Proof.
   move=> H Heq.
@@ -136,7 +136,7 @@ Proof.
     move: Heq; by rewrite [RHS]nth_default // size_tuple.
   have Hi : i < n by rewrite ltnW.
   pose i0 := Ordinal Hi; pose i1 := Ordinal Hi1n.
-  have /alterpol_alternate : i0 != i1.
+  have /alt_alternate : i0 != i1.
     apply (introN idP) => /eqP H.
     have := erefl (val i0); rewrite {2}H /= => /eqP.
     by rewrite ieqi1F.
@@ -370,7 +370,7 @@ Proof.
   by rewrite nth_rem_trail0 nth_add_setdiff.
 Qed.
 
-(* TODO : Fixme *)
+
 Local Open Scope ring_scope.
 
 Theorem alt_mpart_elementary d (P1 : intpartn d) k :
@@ -475,7 +475,7 @@ Proof.
   by rewrite leqXE /=; apply.
 Qed.
 
-Theorem altE d (P : intpartn d) :
+Theorem alt_SchurE d (P : intpartn d) :
   size P <= n -> 'a_rho * 's_P = 'a_(mpart P + rho).
 Proof.
   suff {d P} H : forall b d, d <= b -> forall (P : intpartn d),
@@ -551,22 +551,27 @@ Qed.
 End Alternant.
 
 
-
-Section IdomainSymmetric.
+Section Idomain.
 
 Variable n : nat.
 Variable R : idomainType.
 
 Hypothesis Hn : n != 0%N.
 Local Notation "''s_' k" := (Schur Hn R k) (at level 8, k at level 2, format "''s_' k").
+Local Notation "''a_' k" := (alternpol 'X_[k])
+                              (at level 8, k at level 2, format "''a_' k").
 
-Corollary alt_sym d (P : intpartn d) : size P <= n -> 's_P \is symmetric.
+Theorem alt_uniq d (P : intpartn d) (s : {mpoly R[n]}) :
+  size P <= n -> 'a_(rho n) * s = 'a_(mpart n P + rho n) -> s = 's_P.
+Proof. by move=> /(alt_SchurE R Hn) <- /(mulfI (alt_rho_non0 n R)). Qed.
+
+Theorem alt_sym d (P : intpartn d) : size P <= n -> 's_P \is symmetric.
 Proof.
   move=> HP.
   have := alt_anti R (mpart n P + rho n).
-  rewrite -(altE _ _ HP).
+  rewrite -(alt_SchurE _ _ HP).
   rewrite -sym_antiE //; last exact: alt_anti.
-  exact: altrho_non0.
+  exact: alt_rho_non0.
 Qed.
 
-End IdomainSymmetric.
+End Idomain.
