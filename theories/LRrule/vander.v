@@ -15,9 +15,8 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
 Require Import fingroup perm zmodp binomial poly matrix.
-Require Import tools partition skewtab.
 Require Import ssrcomplements poset freeg mpoly.
-
+Require Import tools ordtype sorted partition skewtab Schur therule.
 Require Import sym_group antisym.
 
 Set Implicit Arguments.
@@ -163,11 +162,11 @@ Proof.
   by rewrite -!addmA [(mesym1 h + rho)%MM]addmC.
 Qed.
 
-Require Import tools ordtype sorted Schur therule.
 
-Section HasIncr.
 
 Local Open Scope nat_scope.
+
+Section HasIncr.
 
 Variables (d k : nat) (P1 : intpartn d) (h : {set 'I_n}).
 
@@ -553,7 +552,7 @@ End Alternant.
 
 
 
-Section Bla.
+Section IdomainSymmetric.
 
 Variable n : nat.
 Variable R : idomainType.
@@ -570,7 +569,7 @@ Proof.
   exact: altrho_non0.
 Qed.
 
-End Bla.
+End IdomainSymmetric.
 
 
 Section VandermondeDet.
