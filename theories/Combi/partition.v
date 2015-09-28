@@ -1151,7 +1151,22 @@ Proof. move=> p; apply: val_inj => /=; by rewrite conj_partK. Qed.
 
 End PartOfn.
 
-(** * Counting functions *)
+Lemma intpartn0 (sh : intpartn 0) : sh = [::] :> seq nat.
+  case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
+  by rewrite /enum_partn /= inE => /eqP.
+Qed.
+
+Lemma intpartn1 (sh : intpartn 1) : sh = [:: 1] :> seq nat.
+  case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
+  by rewrite /enum_partn /= inE => /eqP.
+Qed.
+
+Lemma intpartn2 (sh : intpartn 2) : sh = [:: 2]  :> seq nat \/ sh = [:: 1; 1] :> seq nat.
+  case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
+  rewrite /enum_partn /= !inE => /orP [] /eqP ->; by [left | right].
+Qed.
+
+(**  * Counting functions *)
 
 Fixpoint intpartnsk_nb sm sz mx : nat :=
   if sz is sz.+1 then
@@ -1194,3 +1209,38 @@ Qed.
 End PartCombClass.
 
 Hint Resolve intpartP intpartnP.
+
+
+Require Import ordtype finset.
+
+(** * TODO: Generalize and move in finOrdType *)
+Section WFIntPartN.
+
+Import OrdNotations.
+
+Variable n : nat.
+Variable P : intpartn n -> Type.
+Implicit Types p : intpartn n.
+
+Hypothesis IH : forall p1, (forall p2, val p2 <A p1 -> P p2) -> P p1.
+
+Lemma lex_inpart_wf p : P p.
+Proof.
+  have := leqnn #|[set y : intpartn n | val y <A p ]|.
+  move: {2}#|[set y | val y <A val p]| => c.
+  elim: c p => [| c IHc] p.
+    rewrite leqn0 cards_eq0 => /eqP Hp.
+    apply IH => P2 Hp2; exfalso.
+    suff : P2 \in set0 by rewrite in_set0.
+    by rewrite -Hp inE.
+  move => H; apply IH => p2 Hp2.
+  apply IHc; rewrite -ltnS.
+  apply: (leq_trans _ H) => {H}; apply proper_card.
+  rewrite /proper; apply/andP; split; apply/subsetP.
+  - move=> z; rewrite !inE => /ltnX_trans; by apply.
+  - move=> Hsubs; move: Hp2; have {Hsubs} := Hsubs p2; rewrite !inE => H/H/=.
+    by rewrite ltnXnn.
+Defined.
+
+End WFIntPartN.
+
