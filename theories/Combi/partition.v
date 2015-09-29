@@ -18,15 +18,16 @@
 Partitions are stored by terms of type [seq (seq nat)]. We define the
 following predicates and operations on [seq (seq nat)]:
 
-- [is_part sh] == [sh] is a partition.
+- [is_part sh] == [sh] is a partition
+- [rem_trail0 sh] == remove the trailing zeroes of a shape
 - [is_add_corner sh i] == i is the row of an addable corner of sh
 - [is_rem_corner sh i] == i is the row of a removable corner of sh
 - [incr_nth sh i] == the shape obtained by adding a box at the end of the
                      i-th row. This gives a partition if i is an addable
-                     corner of sh (Lemma [is_part_incr_nth]).
+                     corner of sh (Lemma [is_part_incr_nth])
 - [decr_nth sh i] == the shape obtained by removing a box at the end of the
                      i-th row. This gives a partition if i is an removable
-                     corner of sh (Lemma [is_part_decr_nth]).
+                     corner of sh (Lemma [is_part_decr_nth])
 - [rem_corners sh] == the list of the rows of the removable corners of sh.
 - [incr_first_n sh n] == adding 1 to the n'th first part of sh,
                      always gives a partitions
@@ -42,7 +43,7 @@ following predicates and operations on [seq (seq nat)]:
 Enumeration of integer partitions:
 
 - [is_part_of_n sm sh] == sh in a partition of n
-- [is_part_of_ns sm sz sh] == sh in a partitionfo n of size sz.
+- [is_part_of_ns sm sz sh] == sh in a partitionfo n of size sz
 - [is_part_of_nsk sm sz mx sh] == sh in a partition of n of size sz
                                     in parts at most mx
 - [enum_partn sm] == the lists of all partitions of n
@@ -68,8 +69,8 @@ Sigma types for integer partitions:
 ******)
 
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import bigop.
-Require Import tools combclass shape.
+Require Import bigop path.
+Require Import tools combclass shape sorted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -212,6 +213,50 @@ Section Partition.
     apply (leq_trans Hsum).
     rewrite {Hsum} leq_mul2r.
     by case: s Hhead => [//= | s1 s].
+  Qed.
+
+
+(** Removing trailing zeroes *)
+  Fixpoint rem_trail0 s :=
+    if s is s0 :: s' then
+      if (rem_trail0 s') is t1 :: t' then s0 :: t1 :: t'
+      else if s0 == 0 then [::] else [:: s0]
+    else [::].
+
+  Lemma size_rem_trail0 s : size (rem_trail0 s) <= size s.
+  Proof.
+    elim: s => [//= | s0 s]/=.
+    case: (rem_trail0 s) => [/= _ | //=].
+    by case: eqP.
+  Qed.
+
+  Lemma nth_rem_trail0 s i : nth 0 (rem_trail0 s) i = nth 0 s i.
+  Proof.
+    elim: s i => [//= | s0 s]/=.
+    case: (rem_trail0 s) => [/= | t1 t'] IHs i.
+    - case (altP (s0 =P 0)) => [-> |_].
+      * by case: i => [//= | i]; first by rewrite /= -IHs.
+      * case: i => [//= | i] /=; exact: IHs.
+    - case: i => [//= | i] /=; exact: IHs.
+  Qed.
+
+  Lemma sumn_rem_trail0 s : sumn (rem_trail0 s) = sumn s.
+  Proof.
+    elim: s => [//= | s0 s] /=.
+    case: (rem_trail0 s) => [/= <- | t1 t' <- //=].
+    case: (altP (s0 =P 0%N)) => [-> | _] /=; by rewrite ?addn0.
+  Qed.
+
+  Lemma is_part_rem_trail0 s : sorted geq s -> is_part (rem_trail0 s).
+  Proof.
+    case: s => [//= | s0 s]; rewrite [sorted _ _]/=.
+    elim: s s0 => [| s1 s IHs] s0 /=; first by case: s0.
+    move=> /andP [] H01 /IHs /=.
+    case: (rem_trail0 s) => [_ | t0 t] /=; last by rewrite H01.
+    case: (altP (s1 =P 0)) => [_ | Hs1].
+    - case (altP (s0 =P 0)) => [// | Hs0] /=.
+      by rewrite lt0n Hs0.
+    - by rewrite /= H01 lt0n Hs1.
   Qed.
 
 
@@ -1165,6 +1210,12 @@ Lemma intpartn2 (sh : intpartn 2) : sh = [:: 2]  :> seq nat \/ sh = [:: 1; 1] :>
   case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
   rewrite /enum_partn /= !inE => /orP [] /eqP ->; by [left | right].
 Qed.
+
+Definition intpartn_cast m n (eq_mn : m = n) p :=
+  let: erefl in _ = n := eq_mn return intpartn n in p.
+
+Lemma intpartn_castE m n (eq_mn : m = n) p : val (intpartn_cast eq_mn p) = val p.
+Proof. subst m; by case: p. Qed.
 
 (**  * Counting functions *)
 
