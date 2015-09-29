@@ -27,13 +27,6 @@ Import GRing.Theory.
 
 Local Open Scope ring_scope.
 
-Definition intpartn_cast m n (eq_mn : m = n) p :=
-  let: erefl in _ = n := eq_mn return intpartn n in p.
-
-Lemma intpartn_castE m n (eq_mn : m = n) p : val (intpartn_cast eq_mn p) = val p.
-Proof. subst m; by case: p. Qed.
-
-
 
 Section Alternant.
 
@@ -176,48 +169,6 @@ Definition hasincr :=
 
 Lemma hasincr0 : hasincr -> 'a_(mpart P1 + mesym1 h + rho) = 0%R.
 Proof. move=> /hasP [] i _ /eqP; exact: alt_add1_0. Qed.
-
-Fixpoint rem_trail0 s :=
-  if s is s0 :: s' then
-    if (rem_trail0 s') is t1 :: t' then s0 :: t1 :: t'
-    else if s0 == 0 then [::] else [:: s0]
-  else [::].
-
-Lemma size_rem_trail0 s : size (rem_trail0 s) <= size s.
-Proof.
-  elim: s => [//= | s0 s]/=.
-  case: (rem_trail0 s) => [/= _ | //=].
-  by case: eqP.
-Qed.
-
-Lemma nth_rem_trail0 s i : nth 0 (rem_trail0 s) i = nth 0 s i.
-Proof.
-  elim: s i => [//= | s0 s]/=.
-  case: (rem_trail0 s) => [/= | t1 t'] IHs i.
-  - case (altP (s0 =P 0)) => [-> |_].
-    * by case: i => [//= | i]; first by rewrite /= -IHs.
-    * case: i => [//= | i] /=; exact: IHs.
-  - case: i => [//= | i] /=; exact: IHs.
-Qed.
-
-Lemma sumn_rem_trail0 s : sumn (rem_trail0 s) = sumn s.
-Proof.
-  elim: s => [//= | s0 s] /=.
-  case: (rem_trail0 s) => [/= <- | t1 t' <- //=].
-  case: (altP (s0 =P 0%N)) => [-> | _] /=; by rewrite ?addn0.
-Qed.
-
-Lemma is_part_rem_trail0 s : sorted geq s -> is_part (rem_trail0 s).
-Proof.
-  case: s => [//= | s0 s]; rewrite [sorted _ _]/=.
-  elim: s s0 => [| s1 s IHs] s0 /=; first by case: s0.
-  move=> /andP [] H01 /IHs /=.
-  case: (rem_trail0 s) => [_ | t0 t] /=; last by rewrite H01.
-  case: (altP (s1 =P 0)) => [_ | Hs1].
-  - case (altP (s0 =P 0)) => [// | Hs0] /=.
-    by rewrite lt0n Hs0.
-  - by rewrite /= H01 lt0n Hs1.
-Qed.
 
 Lemma not_hasincr_part :
   size P1 <= n -> ~~ hasincr ->
