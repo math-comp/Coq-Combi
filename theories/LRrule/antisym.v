@@ -138,6 +138,28 @@ Proof.
   by rewrite (perm_smalln Hn s) odd_perm1 msym1m expr0 scale1r.
 Qed.
 
+Lemma antisym_zmod : zmod_closed antisym.
+Proof.
+split=> [|p q /isantisymP sp /isantisymP sq]; apply/isantisymP=> s.
+  by rewrite msym0 scaler0.
+by rewrite msymB sp sq scalerBr.
+Qed.
+
+Canonical antisym_opprPred := OpprPred antisym_zmod.
+Canonical antisym_addrPred := AddrPred antisym_zmod.
+Canonical antisym_zmodPred := ZmodPred antisym_zmod.
+
+
+Lemma antisym_submod_closed : submod_closed antisym.
+Proof.
+split=> [|c p q /isantisymP sp /isantisymP sq]; apply/isantisymP=> s.
+  by rewrite msym0 scaler0.
+rewrite msymD msymZ sp sq.
+by rewrite scalerA commr_sign -scalerA scalerDr.
+Qed.
+
+Canonical antisym_submodPred := SubmodPred antisym_submod_closed.
+
 Lemma sym_anti p q :
   p \is antisym -> q \is symmetric -> p * q \is antisym.
 Proof.
