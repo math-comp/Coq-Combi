@@ -280,6 +280,67 @@ Proof.
   by rewrite -{1}(addn1 d) nseqD rev_cat IHd /=.
 Qed.
 
+
+Lemma tabwordshape_row d (w : d.-tuple 'I_n) :
+  w \in tabwordshape (rowpartn d) = sorted leq [seq val i | i <- w].
+Proof.
+  rewrite inE /is_tableau_of_shape_reading /= /rowpart ; case: w => w /=/eqP Hw.
+  case: d Hw => [//= | d] Hw; rewrite Hw /=; first by case: w Hw.
+  rewrite addn0 eq_refl andbT //=.
+  case: w Hw => [//= | w0 w] /= /eqP; rewrite eqSS => /eqP <-.
+  rewrite take_size; apply esym; apply (map_path (b := pred0)) => /=.
+  - move=> i j /= _ ; exact: leqXnatE.
+  - by apply/hasPn => x /=.
+Qed.
+
+
+Lemma perm_eq_enum_basis d :
+  perm_eq [seq s2m (val s) | s <- enum (basis n d)]
+          [seq val m | m <- enum [set m : 'X_{1..n < d.+1} | mdeg m == d]].
+Proof.
+  apply uniq_perm_eq.
+  - rewrite map_inj_in_uniq; first exact: enum_uniq.
+    move=> i j; rewrite !mem_enum => Hi Hj; exact: inj_s2m.
+  - rewrite map_inj_uniq; first exact: enum_uniq.
+    exact: val_inj.
+  move=> m; apply (sameP idP); apply (iffP idP).
+  - move=> /mapP [] mb; rewrite mem_enum inE => /eqP Hmb ->.
+    have Ht : size (m2s mb) == d by rewrite -{2}Hmb size_m2s.
+    apply/mapP; exists (Tuple Ht) => /=; last by rewrite s2mK.
+    rewrite mem_enum inE /=; exact: srt_m2s.
+  - move=> /mapP [] s; rewrite mem_enum inE /= => Hsort ->.
+    have mdegs : mdeg (s2m s) = d.
+      rewrite /s2m /mdeg mnm_valK /= big_map enumT -/(index_enum _).
+      by rewrite combclass.sum_count_mem count_predT size_tuple.
+    have mdegsP : mdeg (s2m s) < d.+1 by rewrite mdegs.
+    apply/mapP; exists (BMultinom mdegsP) => //.
+    by rewrite mem_enum inE /= mdegs.
+ Qed.
+
+(** Equivalent definition of complete symmetric function *)
+Lemma complete_basisE d : \sum_(s in (basis n d)) 'X_[s2m s] = complete d.
+Proof.
+  rewrite /complete /Schur /polylang /commword (eq_bigl _ _ (@tabwordshape_row d)).
+  rewrite [RHS](eq_bigr (fun s : d.-tuple 'I_n => 'X_[s2m s])); first last.
+    move=> [s _] /= _; rewrite /s2m; elim: s => [| s0 s IHs]/=.
+      by rewrite big_nil -/mnm0 mpolyX0.
+    rewrite big_cons {}IHs -mpolyXD; congr ('X_[_]).
+    rewrite mnmP => i; by rewrite mnmDE !mnmE.
+  apply eq_bigl => m;  by rewrite inE /=.
+Qed.
+
+Lemma completeE d : \sum_(m : 'X_{1..n < d.+1} | mdeg m == d) 'X_[m] = complete d.
+Proof.
+  rewrite -(big_map (@bmnm n d.+1) (fun m => mdeg m == d) (fun m => 'X_[m])).
+  rewrite /index_enum -enumT -big_filter.
+  set tmp := filter _ _.
+  have {tmp} -> : tmp = [seq val m | m <- enum [set m :  'X_{1..n < d.+1} | mdeg m == d]].
+    rewrite {}/tmp /enum_mem filter_map -filter_predI; congr map.
+    apply eq_filter => s /=; by rewrite !inE andbT.
+  rewrite -(eq_big_perm _ (perm_eq_enum_basis d)) /=.
+  by rewrite big_map -complete_basisE -[RHS]big_filter.
+Qed.
+
 Lemma tabwordshape_col d (w : d.-tuple 'I_n) :
   w \in tabwordshape (colpartn d) = sorted (@gtnX _) w.
 Proof.
