@@ -516,7 +516,7 @@ Theorem alt_uniq d (P : intpartn d) (s : {mpoly R[n]}) :
   size P <= n -> 'a_(rho n) * s = 'a_(mpart n P + rho n) -> s = 's_P.
 Proof. by move=> /(alt_SchurE R Hn) <- /(mulfI (alt_rho_non0 n R)). Qed.
 
-Theorem alt_sym d (P : intpartn d) : size P <= n -> 's_P \is symmetric.
+Theorem Schur_sym d (P : intpartn d) : size P <= n -> 's_P \is symmetric.
 Proof.
   move=> HP.
   have := alt_anti R (mpart n P + rho n).
