@@ -32,6 +32,14 @@ Proof. apply: negbTE; by elim i. Qed.
 Lemma bad_if_leq i j : i <= j -> (if i < j then i else j) = i.
 Proof. move=> Hi; case (ltnP i j) => //= Hj; apply/eqP; by rewrite eqn_leq Hi Hj. Qed.
 
+Lemma leq_addE m1 m2 n1 n2 :
+  m1 <= m2 -> n1 <= n2 -> m1 + n1 = m2 + n2 -> m1 = m2 /\ n1 = n2.
+Proof.
+  move=> Hm Hn H.
+  suff Hmeq : m1 = m2 by split => //; move: H; rewrite Hmeq => /addnI.
+  apply anti_leq; rewrite Hm /=.
+  have:= leq_sub2l (m1 + n1) Hn; by rewrite {1}H !addnK.
+Qed.
 
 (** ** [rcons] and [cons] related lemmas *)
 Section SeqLemmas.

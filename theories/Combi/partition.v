@@ -864,11 +864,7 @@ Section SkewShape.
     elim: inner outer => [| inn0 inn IHinn] /=.
       by move=> outer Houter _ /esym/(part0 Houter) ->.
     case=> [//= | outer0 out] /= /andP [] _ /IHinn{IHinn}Hrec /andP [] H0 Hincl Heq.
-    have {H0} H0 : inn0 = outer0.
-      apply anti_leq; rewrite H0 /=.
-      have := leq_sub2l (inn0 + sumn inn) (sumn_included Hincl).
-      by rewrite {1}Heq !addnK.
-    move: Heq => /eqP; by rewrite H0 eqn_add2l => /eqP/(Hrec Hincl) ->.
+    by have:= leq_addE H0 (sumn_included Hincl) Heq => [] [] -> /(Hrec Hincl) ->.
   Qed.
 
   Lemma included_conj_part inner outer :
