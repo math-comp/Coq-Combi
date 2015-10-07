@@ -565,43 +565,4 @@ Proof.
   have Hi := ltn_ord (p i); by rewrite -ltnS (ltn_predK Hi).
 Qed.
 
-Lemma tperm_antim_xrow s i j :
- msym (tperm i j) (\det (antim s)) = \det (xrow i j (antim s)).
-Proof.
-  rewrite /antim -det_map_mx /=; congr (\det _).
-  rewrite /map_mx -matrixP => r c /=.
-  rewrite !mxE rmorphX /= msymX /=.
-  congr (mpolyX _ _ ^+ _) => {c}.
-  rewrite mnmP => u /=; rewrite !mnm_tnth /=.
-  rewrite !tnth_map /= tnth_ord_tuple /= mnm1E tpermV.
-  congr (nat_of_bool _); apply (sameP idP); apply (iffP idP).
-  - by move/eqP <-; rewrite tpermK.
-  - by move/eqP ->; rewrite tpermK.
-Qed.
-
-Lemma antimP s : \det (antim s) \is antisym.
-Proof.
-  apply/isantisym_tpermP => i j.
-  case: (altP (i =P j)) => [-> | Hij] /=; first by rewrite tperm1 msym1m.
-  rewrite tperm_antim_xrow xrowE det_mulmx det_perm.
-  by rewrite odd_tperm Hij /= expr1 mulN1r.
-Qed.
-
-Corollary Vandet_anti : Vandet \is antisym.
-Proof. rewrite /Vandet Vandmx_antimE. exact: antimP. Qed.
-
-Lemma antim_add1_0 (s : seq nat) i :
-  i.+1 < n -> (nth 0%N s i).+1 = nth 0%N s i.+1 -> \det (antim s) = 0.
-Proof.
-  move=> Hi1n; have Hi : i < n by rewrite ltnW.
-  pose i0 := Ordinal Hi; pose i1 := Ordinal Hi1n.
-  have : i0 != i1.
-    apply (introN idP) => /eqP H.
-    have := erefl (val i0); rewrite {2}H /= => /eqP.
-    by rewrite ieqi1F.
-  move => H Heq; rewrite -det_tr.
-  apply: (determinant_alternate H) => j.
-  by rewrite /antim !mxE -Heq /= addSn subSS.
-Qed.
-
 End VandermondeDet.
