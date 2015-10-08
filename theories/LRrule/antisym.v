@@ -17,11 +17,64 @@ Require Import finset fintype finfun tuple bigop ssralg ssrint.
 Require Import fingroup perm zmodp binomial poly.
 Require Import ssrcomplements poset freeg mpoly.
 
-Require Import sym_group.
+Require Import tools sym_group.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
+
+(* TODO : Move in Tools *)
+Lemma sumn_rcons s i : sumn (rcons s i) = sumn s + i.
+Proof. elim: s => [//= | s0 s IHs]; by rewrite rcons_cons /= IHs addnA. Qed.
+
+Lemma binomial_sumn_iota n : 'C(n, 2) = sumn (iota 0 n).
+Proof. by rewrite -triangular_sum sumnE /index_iota subn0. Qed.
+
+Lemma card_triangle n : #|[set i : 'I_n * 'I_n | i.1 < i.2]| = 'C(n, 2).
+Proof.
+  rewrite -card_ltn_sorted_tuples.
+  pose f := (fun i : 'I_n * 'I_n => [tuple i.1; i.2]).
+  have /card_imset <- : injective f by rewrite /f => [] [i1 i2] [j1 j2] /= [] -> ->.
+  congr (card (mem (pred_of_set _))).
+  rewrite -setP => [] [[| s0 [| s1 [|s]]]] // Hs.
+  rewrite !inE; apply/idP/idP.
+  - rewrite /f {f} => /imsetP [[i j]].
+    by rewrite inE /= andbT => Hij /(congr1 val) /= [] -> ->.
+  - move=> /= /andP [] Hsort _.
+    apply/imsetP; exists (s0, s1); first by rewrite inE.
+    by apply val_inj.
+Qed.
+
+Require Import sorted.
+Open Scope nat_scope.
+
+(* TODO : Move in Sorted *)
+Lemma sorted_ltn_ind s :
+  sorted ltn s -> sumn (iota 0 (size s)) <= sumn s /\ last 0 s >= (size s).-1.
+Proof.
+  elim/last_ind: s => [//=| s sn IHs] /= Hsort.
+  move/(_ (sorted_rconsK Hsort)): IHs => [] Hsum Hlast; split.
+  - rewrite sumn_rcons size_rcons -addn1 iota_add /= sumn_cat /= add0n addn0.
+    apply (leq_add Hsum).
+    case/lastP: s Hsort Hlast {Hsum} => [//= | s sn1] /=.
+    rewrite !size_rcons !last_rcons /= -!cats1 -catA cat1s => /sorted_catR /=.
+    by rewrite andbT => /(leq_ltn_trans _); apply.
+  - case/lastP: s Hsort Hlast {Hsum} => [//= | s sn1] /=.
+    rewrite !size_rcons !last_rcons /= -!cats1 -catA cat1s => /sorted_catR /=.
+    by rewrite andbT => /(leq_ltn_trans _); apply.
+Qed.
+
+(* TODO : Move in Sorted *)
+Lemma sorted_sumn_iotaE s :
+  sorted ltn s -> sumn s = sumn (iota 0 (size s)) -> s = iota 0 (size s).
+Proof.
+  elim/last_ind: s => [//= | s sn IHs] /= Hsort.
+  have:= sorted_ltn_ind Hsort.
+  rewrite sumn_rcons size_rcons -{1 3 4}addn1 iota_add /= sumn_cat /= add0n addn0 cats1.
+  rewrite last_rcons => [] [] _ Hsn.
+  have:= sorted_ltn_ind (sorted_rconsK Hsort) => [] [] Hsum _ /esym.
+  by move=> /(leq_addE Hsum Hsn) [] /esym/(IHs (sorted_rconsK Hsort)) <- <-.
+Qed.
 
 Import GRing.Theory.
 
@@ -39,7 +92,7 @@ Proof.
   move=> p; rewrite !unfold_in /= -mpolyC_nat.
   case: (prime.prime p) => //=.
   apply (sameP idP); apply (iffP idP) => [/eqP | /eqP -> //=].
-  rewrite -(mpolyP) => H; have {H} /= := H 0%MM.
+  rewrite -(mpolyP) => /(_ 0%MM).
   by rewrite mcoeff0 raddfMn /= mcoeffMn mcoeff1 eq_refl /= => ->.
 Qed.
 
@@ -190,6 +243,48 @@ Proof.
   by rewrite (perm_eq_mem (msuppN _)).
 Qed.
 
+Lemma notuniq_witnessE (T : eqType) (x0 : T) (s : seq T) :
+  [exists i : 'I_(size s),
+     [exists j : 'I_(size s), (i != j) && (nth x0 s i == nth x0 s j)]] =
+  ~~ uniq s.
+Proof.
+  rewrite -[LHS]negbK; congr (~~ _).
+  rewrite negb_exists; apply (sameP idP); apply (iffP idP).
+  - move=> Huniq; apply /forallP => [[i Hi]] /=.
+    rewrite negb_exists; apply /forallP => [[j Hj]].
+    rewrite negb_and -implybE; apply/implyP; apply contra => /=.
+    rewrite (nth_uniq _ Hi Hj Huniq) => /eqP /= Heq.
+    by apply/eqP/val_inj.
+  - elim : s => [//=| s0 s IHs] /forallP /= H.
+    rewrite {}IHs ?andbT.
+    + move/(_ (inord 0%N)): H; apply contra => Hin.
+      apply/existsP; exists (inord (index s0 s).+1); apply/andP; split.
+      * by rewrite /eq_op /= inordK // inordK // ltnS index_mem.
+      * by rewrite inordK //= inordK //= ?(nth_index _ Hin) // ltnS index_mem.
+    + apply/forallP => i.
+      move/(_ (inord i.+1)): H; apply contra => /existsP [] j /andP [] Hneq Hnth.
+      apply/existsP; exists (inord j.+1).
+      rewrite {1}/eq_op /=.
+      rewrite inordK /=; last exact: ltn_ord.
+      rewrite inordK /=; last exact: ltn_ord.
+      by rewrite eqSS Hneq Hnth.
+Qed.
+
+Lemma notuniq_witnessP (T : eqType) (x0 : T) (s : seq T) :
+  reflect (exists i j, [/\ i < size s, j < size s, i != j & nth x0 s i = nth x0 s j])
+  (~~ uniq s).
+Proof.
+  rewrite -(notuniq_witnessE x0); apply (iffP idP).
+  - move=> /existsP [[i Hi]] /existsP [[j Hj]].
+    rewrite {1}/eq_op /= => /andP [] Hneq /eqP Hnth.
+    by exists i; exists j.
+  - move=> [] i [] j [] Hi Hj Hneq Hnth.
+    apply/existsP; exists (Ordinal Hi); apply/existsP; exists (Ordinal Hj).
+    by rewrite {1}/eq_op /= Hneq Hnth /=.
+Qed.
+
+
+
 Lemma mlead_antisym_sorted (p : {mpoly R[n]}) : p \is antisym ->
   forall (i j : 'I_n), i <= j -> (mlead p) j <= (mlead p) i.
 Proof.
@@ -241,45 +336,237 @@ Section MPolyIDomain.
 
 Variable n : nat.
 Variable R : idomainType.
+Hypothesis Hchar : ~~ (2 \in [char R]).
 
-Implicit Types p q r : {mpoly R[n]}.
 
-Lemma sym_antiE p q :
-  p != 0 -> p \is antisym -> (q \is symmetric) = (p * q \is antisym).
+Lemma sym_antisym_char2 :
+  n >= 2 -> forall p : {mpoly R[n]}, p \is symmetric -> p \is antisym -> p = 0.
+Proof.
+  move: Hchar; rewrite (char_mpoly n R) => Hchp Hn p /= /issymP Hsym /isantisymP Hanti.
+  have H0 : 0 < n by apply: (ltn_trans _ Hn).
+  pose s := (tperm (Ordinal H0) (Ordinal Hn)).
+  have := Hanti s; rewrite Hsym.
+  rewrite odd_tperm /= => /eqP; rewrite !simplexp -addr_eq0.
+  rewrite -mulr2n -mulr_natr mulf_eq0 => /orP [/eqP -> //|] /= /eqP /= H2.
+  exfalso; rewrite {Hsym Hanti H0 s}.
+  by move: Hchp; rewrite negb_and H2 eq_refl.
+Qed.
+
+Section Lead.
+
+Variable p : {mpoly R[n]}.
+
+Implicit Types q r : {mpoly R[n]}.
+
+Hypothesis Hpn0 : p != 0.
+Hypothesis Hpanti : p \is antisym.
+
+Lemma sym_antiE q :(q \is symmetric) = (p * q \is antisym).
 Proof.
   case: (leqP n 1) => Hn.
     by rewrite !(sym_smalln Hn) !(antisym_smalln Hn) !unfold_in /=.
-  move=> Hp H; apply (sameP idP); apply (iffP idP); last exact: (sym_anti H).
-  move: H => /isantisymP Hsym /isantisymP Hpq.
+  apply (sameP idP); apply (iffP idP); last exact: (sym_anti Hpanti).
+  move: Hpanti => /isantisymP Hsym /isantisymP Hpq.
   apply/issymP => s.
-  have:= Hpq s; rewrite msymM Hsym => H.
-  apply (mulfI Hp).
+  have:= Hpq s; rewrite msymM Hsym => H; apply (mulfI Hpn0).
   move: H; case: (odd_perm s); rewrite !simplexp; last by [].
   by move=> /oppr_inj.
 Qed.
 
-Lemma sym_antisym_char2 :
-  n >= 2 -> ~~ (2 \in [char R]) -> forall p, p \is symmetric -> p \is antisym -> p = 0.
+
+Local Notation "m # s" := [multinom m (s i) | i < n]
+  (at level 40, left associativity, format "m # s").
+
+Lemma isantisym_msupp_uniq (m : 'X_{1..n}) : m \in msupp p -> uniq m.
 Proof.
-  rewrite (char_mpoly n R) => H1 Hchar p /= /issymP Hsym /isantisymP Hanti.
-  have H0 : 0 < n by apply: (ltn_trans _ H1).
-  pose s := (tperm (Ordinal H0) (Ordinal H1)).
-  have := Hanti s; rewrite Hsym.
-  rewrite odd_tperm /= => /eqP; rewrite !simplexp -addr_eq0.
-  rewrite -mulr2n -mulr_natr mulf_eq0 => /orP [/eqP -> //|] /= /eqP H2.
-  exfalso; rewrite {H1 p Hsym Hanti H0 s}.
-  move: Hchar; rewrite negb_and /=.
-  by rewrite H2 eq_refl.
+  rewrite mcoeff_msupp => Hsupp.
+  case: (boolP (uniq m)) => // /notuniq_witnessP H.
+  move/(_ 0%N): H => [] i [] j []; rewrite size_tuple => Hi Hj Hneq Hnth.
+  move/isantisymP/(_ (tperm (Ordinal Hi) (Ordinal Hj))) : Hpanti.
+  rewrite odd_tperm /eq_op /= Hneq expr1 scaleN1r.
+  move/(congr1 (mcoeff m)); rewrite mcoeffN mcoeff_sym.
+  have -> : m#tperm (Ordinal Hi) (Ordinal Hj) = m.
+    rewrite mnmP => k; rewrite mnmE.
+    case: (tpermP (Ordinal Hi) (Ordinal Hj) k) => [-> | -> |] //;
+    by rewrite !(mnm_nth 0) /= Hnth.
+  move/eqP; rewrite -addr_eq0.
+  rewrite -mulr2n -mulr_natr mulf_eq0.
+  move: Hchar; rewrite negb_and => /negbTE ->.
+  by move: Hsupp => /negbTE ->.
+Qed.
+
+Hypothesis Hphomog : p \is 'C(n , 2).-homog.
+
+Lemma isantisym_mlead_iota : mlead p = rev (iota 0 n) :> seq nat.
+Proof.
+  move: Hphomog; rewrite binomial_sumn_iota => /dhomogP Hhomog.
+  have Huniq := isantisym_msupp_uniq (mlead_supp Hpn0).
+  rewrite -(revK (mlead p)) -{4}(size_tuple (mlead p)) -size_rev; congr rev.
+  apply sorted_sumn_iotaE; first last.
+    rewrite size_rev size_tuple sumn_rev -sumnE -/(mdeg _).
+    by rewrite (Hhomog _ (mlead_supp Hpn0)).
+  rewrite ltn_sorted_uniq_leq rev_uniq Huniq /=.
+  rewrite {Huniq Hhomog} rev_sorted.
+  apply/sortedP.
+    - by move=> i j k /= /(leq_trans _); apply.
+    - by move=> i /=.
+  move=> i j; rewrite size_tuple=> /andP [] Hij Hj.
+  have H := mlead_antisym_sorted Hpanti.
+  have /= := H (Ordinal (leq_ltn_trans Hij Hj)) (Ordinal Hj) Hij.
+  by rewrite !(mnm_nth 0) /=; apply.
+Qed.
+
+Definition alternpol f : {mpoly R[n]} := \sum_(s : 'S_n) (-1) ^+ s *: msym s f.
+Definition rho := [multinom (n - 1 - i)%N | i < n].
+Definition mpart (s : seq nat) := [multinom (nth 0 s i)%N | i < n].
+
+Local Notation "''e_' k" := (@mesym _ _ k) (at level 8, k at level 2, format "''e_' k").
+Local Notation "''a_' k" := (alternpol 'X_[k])
+                              (at level 8, k at level 2, format "''a_' k").
+
+Lemma alt_anti m : 'a_m \is antisym.
+Proof.
+  apply/isantisymP => S.
+  rewrite /alternpol.
+  rewrite (big_morph (msym S) (@msymD _ _ _) (@msym0 _ _ _)).
+  rewrite scaler_sumr.
+  rewrite [RHS](reindex_inj (mulIg S)); apply: eq_big => //= s _.
+  rewrite msymZ -msymMm scalerA; congr (_ *: _).
+  by rewrite odd_permM signr_addb [X in (_  = _ * X)]mulrC signrMK.
+Qed.
+
+Lemma isantisym_mlead_rho : mlead p = rho.
+Proof.
+  apply val_inj => /=; apply val_inj => /=; rewrite isantisym_mlead_iota.
+  apply (eq_from_nth (x0 := 0%N)).
+    by rewrite size_rev size_iota size_map size_enum_ord.
+  move=> i; rewrite size_rev size_iota => Hi.
+  rewrite nth_rev size_iota // (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
+  rewrite nth_enum_ord // nth_iota; first last.
+    case: n Hi => [// | m] _; by rewrite ltnS subSS; exact: leq_subr.
+  rewrite add0n; case: n Hi => [// | m] _; by rewrite !subSS subn0.
+Qed.
+
+End Lead.
+
+Local Notation "''e_' k" := (@mesym _ _ k) (at level 8, k at level 2, format "''e_' k").
+Local Notation "''a_' k" := (alternpol 'X_[k])
+                              (at level 8, k at level 2, format "''a_' k").
+
+Lemma isantisym_alt (p : {mpoly R[n]}) :
+  p != 0 -> p \is antisym -> p \is ('C(n, 2)).-homog -> p = (mleadc p) *: 'a_rho.
+Proof.
+  move=> Hpn0 Hanti Hhom.
+  apply/eqP; rewrite isantisym_mlead_rho // -subr_eq0.
+  set f := p - p@_rho *: 'a_rho.
+  case: (altP (f =P 0)) => // Habs.
+  have /(isantisym_mlead_rho Habs) H : f \is antisym.
+    apply (rpredD Hanti); apply rpredNr; apply rpredZ; exact: alt_anti.
+  have /H {H} Hlead : f \is ('C(n, 2)).-homog.
+    apply (rpredD Hhom); apply rpredNr; apply rpredZ.
+    admit.
+  move: Habs => /mlead_supp; rewrite Hlead /f mcoeff_msupp.
+  rewrite linearB /= linearZ linear_sum /=.
+  rewrite (bigID (xpred1 1%g)) /= big_pred1_eq.
+  rewrite odd_perm1 /= expr0 scale1r msym1m mcoeffX eq_refl /=.
+  rewrite big1; first by rewrite addr0 mulr1 subrr eq_refl.
+  move=> s Hs; apply /eqP; move: Hs; apply contraR.
+  rewrite linearZ /= msymX mcoeffX.
+  case: (altP ( _ =P rho)); last by rewrite mulr0 eq_refl.
+  rewrite mnmP => H _; rewrite -eq_invg1; apply/eqP.
+  rewrite -permP => i; rewrite perm1.
+  move /(_ i) : H => /=.
+  rewrite /rho !mnm_tnth !tnth_mktuple !mnm_tnth !tnth_mktuple.
+  admit.
 Qed.
 
 End MPolyIDomain.
 
-
-
+(* Definition vandermonde n (R : ringType) : {mpoly R[n]} :=
+  \prod_(p in [set i : 'I_n * 'I_n | i.1 < i.2]) ('X_p.1 - 'X_p.2).
+*)
 Definition vandermonde n (R : ringType) : {mpoly R[n]} :=
   \prod_(p : 'I_n * 'I_n | p.1 < p.2) ('X_p.1 - 'X_p.2).
 
 Implicit Arguments vandermonde [n R].
+
+Section Vander.
+
+Variable n : nat.
+Variable R : idomainType.
+
+Local Notation D := (@vandermonde n R).
+Local Notation "'X_ i" := (@mpolyX n R U_(i)).
+
+
+Lemma vandermonde_homog : D \is homog [measure of mdeg].
+Proof.
+  rewrite /vandermonde -big_filter.
+  set F := BIG_F; rewrite (eq_bigl (fun x => xpredT (F x))) //.
+  rewrite -(big_map F xpredT id) /F {F}.
+  apply prod_homog; apply/allP => X /mapP [[i j]] /= _ -> {X}.
+  apply/homogP; exists 1%N; apply rpredB; by rewrite dhomogX /= mdeg1.
+Qed.
+
+Lemma polyX_inj (i j : 'I_n) : 'X_i = 'X_j -> i = j.
+Proof.
+  move/(congr1 (mcoeff U_(j))); rewrite !mcoeffX eq_refl /=.
+  case: (altP (U_(i)%MM =P U_(j)%MM)) => [H _ | _ /esym /= /eqP] /=; first last.
+    by have:= oner_neq0 R => /negbTE ->.
+  have:= congr1 (fun x : 'X_{1..n} => x j) H.
+  rewrite !mnm1E eq_refl eq_sym; by case: eqP.
+Qed.
+
+Lemma diffX_neq0 (i j : 'I_n) : i != j -> 'X_i - 'X_j != 0.
+Proof. by apply contra; rewrite subr_eq0 => /eqP /polyX_inj ->. Qed.
+
+Lemma msuppX1 i : msupp 'X_i = [:: U_(i)%MM].
+Proof. rewrite msuppE /= unlock /= domU //; exact: oner_neq0. Qed.
+
+Lemma vandermonde_neq0 : D != 0.
+Proof.
+  rewrite /vandermonde -big_filter prodf_seq_neq0.
+  apply/allP => [[i j]]; rewrite mem_filter /= => /andP [].
+  rewrite ltn_neqAle => /andP [] Hij _ _; exact: diffX_neq0.
+Qed.
+
+Lemma vandermonde_dhomog : D \is 'C(n, 2).-homog.
+Proof.
+  have:= vandermonde_homog; rewrite homog_msize.
+  suff -> : (msize D).-1 = 'C(n, 2) by [].
+  rewrite /vandermonde -big_filter; set s := filter _ _.
+  have <-: size s = 'C(n, 2).
+    rewrite /s{s} /index_enum.
+    rewrite (eq_filter (a2 := mem [set i : 'I_n * 'I_n | i.1 < i.2])); first last.
+      by move => i /=; rewrite inE.
+    by rewrite -cardE card_triangle.
+ have : all (fun i => i.1 != i.2) s.
+    rewrite {}/s; apply/allP => [[i j]] /=.
+    rewrite mem_filter /= => /andP [].
+    by rewrite ltn_neqAle => /andP [] ->.
+  elim: s => [| [i j] s IHs] /=; first by rewrite big_nil msize1.
+  move=> /andP [] Hs Hall; move /(_ Hall) : IHs => Hrec.
+  have Hprodn0: \prod_(j0 <- s) ('X_j0.1 - 'X_j0.2) != 0.
+    rewrite {i j Hs} prodf_seq_neq0; apply/allP => [[i j]] /= /(allP Hall) /=.
+    exact: diffX_neq0.
+  rewrite big_cons (msizeM (diffX_neq0 Hs) Hprodn0).
+  have -> : msize ('X_i - 'X_j : {mpoly R[n]}) = 2.
+    rewrite msizeE.
+    have : perm_eq (msupp ('X_i - 'X_j : {mpoly R[n]})) [:: U_(i); U_(j)]%MM.
+      apply: (perm_eq_trans (msuppD _)).
+        move=> m /=; rewrite (perm_eq_mem (msuppN _)) !mcoeff_msupp !mcoeffX.
+        case: (altP (U_(j)%MM =P m)) => /= [<- {m} |]; last by rewrite eq_refl andbF.
+        suff -> : U_(i)%MM == U_(j)%MM = false by rewrite eq_refl.
+        apply negbTE; move: Hs; apply contra => /eqP/(congr1 (fun x : 'X_{1..n} => x j)).
+        rewrite !mnm1E eq_refl eq_sym; by case: eqP.
+      by rewrite !msuppX1 cat1s perm_cons -msuppX1 msuppN.
+    move=> /(eq_big_perm _) -> /=; by rewrite !big_cons big_nil !mdeg1.
+  rewrite addSn add1n /= -Hrec.
+  move: Hprodn0; rewrite -msize_poly_eq0.
+  by case: (msize _).
+Qed.
+
+End Vander.
 
 Definition eltrp n i (p : 'I_n.+1 * 'I_n.+1) := (eltr n i p.1, eltr n i p.2).
 
@@ -421,10 +708,8 @@ Proof.
     + rewrite (eq_bigl (fun i : 'I_n * 'I_n => i.1 < i.2)); first last.
         move=> [[i Hi] [j Hj]] /=.
         rewrite !(inordK (ltn_trans _ (ltnSn _))) //.
-        case: (i < j) => //=.
-        apply/(introN idP) => /eqP H.
-        have:= (erefl (val (@inord n j))).
-        rewrite {2}H{H} /= !(inordK (ltn_trans _ (ltnSn _))) // => H.
+        case: (i < j) => //=; apply/(introN idP) => /eqP/(congr1 val).
+        rewrite /= !(inordK (ltn_trans _ (ltnSn _))) // => H.
         move: Hj; by rewrite H ltnn.
       apply (eq_bigr) => [[i j]] /= _.
       by rewrite mwidenB !mwiden_inord.
@@ -459,20 +744,17 @@ Theorem sym_anti_iso2 (R : idomainType) (p : {mpoly R[2]}) :
   p \is antisym ->
   { q : {mpoly R[2]} | q \is symmetric & p = ('X_0 - 'X_1) * q }.
 Proof.
-  move=> Hchar /isantisymP Hp.
-  have {Hp} := Hp (eltr 1 0)%N.
+  move=> Hchar /isantisymP /(_ (eltr 1 0)%N).
   rewrite odd_tperm.
   have -> : inord 0 != (inord 1 : 'I_2) by rewrite /eq_op /= !inordK.
-  rewrite expr1 scaleN1r => Hp.
-  have {Hp} Hp : p = - msym (eltr 1 0) p by rewrite Hp opprK.
+  rewrite expr1 scaleN1r => /(congr1 -%R); rewrite opprK.
   pose T := [tuple ('X_0 : {mpoly R[2]}); 'X_0].
-  have:= erefl (p \mPo T).
-  rewrite {2}Hp comp_mpolyN msym_mPo.
+  move/(congr1 (comp_mpoly T)); rewrite comp_mpolyN msym_mPo.
   set t := [tuple _ | i < 2]; have {t} -> : t = T.
     apply eq_from_tnth => i.
     rewrite !tnth_mktuple {t} /T.
     case: tpermP => // -> /=; by rewrite !(tnth_nth 'X_0) !inordK.
-  move=> /eqP; rewrite -addr_eq0.
+  move=> /eqP; rewrite eq_sym -addr_eq0.
   rewrite -mulr2n -mulr_natr mulf_eq0.
   move: Hchar; rewrite (char_mpoly 2 R); rewrite inE /= => /negbTE ->.
   rewrite orbF /T {T} => /eqP.

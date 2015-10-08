@@ -96,7 +96,7 @@ Lemma mwmwgt_homogE (p : {mpoly R[n]}) d :
   p \is d.-homog for [measure of mnmwgt] = ((p \mPo E) \is d.-homog).
 Proof.
   rewrite !homog_piE; rewrite pihomog_mPo.
-  by apply (sameP idP); apply (iffP idP) => [/eqP/msym_fundamental_un | /eqP] ->.
+  by apply/idP/idP => [/eqP |  /eqP/msym_fundamental_un ] ->.
 Qed.
 
 End MPoESymHomog.
@@ -197,7 +197,7 @@ Lemma Schur_dec_homog d p : p \is d.-homog -> Schur_dec p ->
 Proof.
   move=> Hp [[d1 co /= Hco]].
   case: (altP (p =P 0)) => [-> | Hn0].
-    exists (fun _ => 0); apply esym; apply big1 => sh _; by rewrite scale0r.
+    exists (fun=> 0); apply esym; apply big1 => sh _; by rewrite scale0r.
   have : \sum_p0 co p0 *: Schur Hnpos R p0 \is d1.-homog.
     apply rpred_sum => sh _; apply rpredZ; exact: Schur_homog.
   rewrite -Hco => /(dhomog_uniq Hn0 Hp) Hd; subst d1.
@@ -211,7 +211,7 @@ Proof.
   rewrite -mwmwgt_homogE => /dhomogP.
   rewrite {2}(mpolyE pe); elim: (msupp pe) => [_| m0 supp IHsupp Hhomog] /=.
     rewrite big_nil comp_mpoly0.
-    exists (fun _ => 0); apply esym; apply big1 => sh _; by rewrite scale0r.
+    exists (fun=> 0); apply esym; apply big1 => sh _; by rewrite scale0r.
   have : {in supp, forall m : 'X_{1..n}, [measure of mnmwgt] m = d}.
     by move=> m Hm /=; apply Hhomog; rewrite inE Hm orbT.
   rewrite big_cons linearP /= => /IHsupp{IHsupp} [coe ->].

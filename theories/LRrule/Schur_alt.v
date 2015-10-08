@@ -130,8 +130,7 @@ Proof.
   have Hi : i < n by rewrite ltnW.
   pose i0 := Ordinal Hi; pose i1 := Ordinal Hi1n.
   have /alt_alternate : i0 != i1.
-    apply (introN idP) => /eqP H.
-    have := erefl (val i0); rewrite {2}H /= => /eqP.
+    apply (introN idP) => /eqP/(congr1 val)/=/eqP.
     by rewrite ieqi1F.
   apply.
   rewrite !mnmDE !mnmE !(mnm_nth 0%N) -Heq -(mnm_nth 0%N m i0).
@@ -596,9 +595,7 @@ Proof.
   move=> Hi1n; have Hi : i < n by rewrite ltnW.
   pose i0 := Ordinal Hi; pose i1 := Ordinal Hi1n.
   have : i0 != i1.
-    apply (introN idP) => /eqP H.
-    have := erefl (val i0); rewrite {2}H /= => /eqP.
-    by rewrite ieqi1F.
+    apply (introN idP) => /eqP/(congr1 val)/=/eqP; by rewrite ieqi1F.
   move => H Heq; rewrite -det_tr.
   apply: (determinant_alternate H) => j.
   by rewrite /antim !mxE -Heq /= addSn subSS.
