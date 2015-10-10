@@ -69,7 +69,7 @@ Lemma size_permuted s : size (permuted s) = (size s)`!.
 Proof. by rewrite /permuted size_map size_permuted_tuple. Qed.
 
 Lemma eq_seqE s s1 : perm_eq s s1 -> s1 \in permuted s.
-Proof. by apply: perm_eq_permuted_tuple. Qed.
+Proof. exact: perm_eq_permuted_tuple. Qed.
 
 End Permuted.
 
