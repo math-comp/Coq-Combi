@@ -82,7 +82,7 @@ Proof.
   elim: s n => [//= | s0 s IHs] n.
   + case eqP => [-> //= |]; by case: n => [| []].
   + rewrite rcons_cons /=; case: n => [//= | n] /=.
-    have {IHs} := (IHs n). rewrite eqSS -[n.+1 < (size s).+1]/(n < (size s)).
+    move/(_ n) : IHs; rewrite eqSS ltnS.
     by case (ltngtP n (size s)) => _ <-.
 Qed.
 
@@ -317,12 +317,13 @@ Proof.
   move=> Hsize.
   have Hs0 : (if s0 < size s then s0 else size s) = s0.
     by rewrite bad_if_leq; last by rewrite -Hsize -addnA; apply leq_addr.
-  have -> : take (s0 + sumn sh) s = take s0 s ++ take (sumn sh) (drop s0 s).
+  rewrite (_ : take (s0 + sumn sh) s = take s0 s ++ take (sumn sh) (drop s0 s));
+    first last.
     rewrite -{1 3}[s](cat_take_drop s0) drop_cat take_cat size_take.
     by rewrite Hs0 ltnNge leq_addr /= addKn ltnn subnn drop0.
   rewrite take_cat size_take Hs0 ltnn subnn take0 cats0.
   rewrite drop_cat size_take Hs0 ltnn subnn drop0.
-  have -> : drop (s0 + sumn sh) s = drop (sumn sh) (drop s0 s).
+  rewrite (_ : drop (s0 + sumn sh) s = drop (sumn sh) (drop s0 s)); first last.
     rewrite -[s](cat_take_drop s0) !drop_cat size_take.
     by rewrite Hs0 ltnNge leq_addr /= addKn ltnn subnn drop0.
   by rewrite -IHsh; last by rewrite size_drop -Hsize -addnA addKn.
@@ -351,7 +352,7 @@ Lemma reshape_coordP sh i :
 Proof.
   elim: sh i => [| s0 s IHs] i //= Hi.
   case: (ltnP i s0) => His0 //=.
-  have {IHs} := IHs (i - s0); case: (reshape_coord s (i - s0)) => r c /=.
+  move/(_ (i - s0)) : IHs; case: (reshape_coord s (i - s0)) => r c /=.
   rewrite ltnS; apply.
   by rewrite -(subSn His0) leq_subLR.
 Qed.
@@ -362,7 +363,7 @@ Proof.
   rewrite /flatten_coord.
   elim: sh i => [| s0 s IHs] i //=; first by rewrite /index_iota /= big_nil.
   case: (ltnP i s0) => His0 //=; first by rewrite /index_iota /= big_nil.
-  have {IHs} := IHs (i - s0); case: (reshape_coord s (i - s0)) => r c.
+  move/(_ (i - s0)) : IHs; case: (reshape_coord s (i - s0)) => r c.
   rewrite big_nat_recl //= -addnA => ->.
   exact: subnKC.
 Qed.
@@ -373,8 +374,8 @@ Proof.
   rewrite /flatten_coord.
   elim: r c sh => [| r IHr] /= c [//= | s0 s] /=.
     by rewrite /index_iota subn0 /= big_nil add0n => ->.
-  have -> : \sum_(0 <= j < r.+1) nth 0 (s0 :: s) j = s0 + \sum_(0 <= j < r) nth 0 s j.
-    by rewrite big_nat_recl //=.
+  rewrite (_ : \sum_(0 <= j < r.+1) nth 0 (s0 :: s) j
+               = s0 + \sum_(0 <= j < r) nth 0 s j); last by rewrite big_nat_recl.
   rewrite [X in if X then _ else _]ltnNge -addnA leq_addr /=.
   by rewrite addKn => /IHr ->.
 Qed.
@@ -395,7 +396,7 @@ Proof.
   elim: b a => [/=| b IHb] a.
     rewrite addn0 => /andP [] /leq_ltn_trans H/H{H}.
     by rewrite ltnn.
-  have:= IHb a.+1 => /= {IHb} IHb.
+  move/(_ a.+1) : IHb => /= IHb.
   case (ltnP a x) => H1 /andP [] H2 H3.
   + rewrite IHb; first by rewrite (ltn_eqF H1).
     by rewrite H1 addSnnS.
@@ -435,8 +436,8 @@ Lemma incr_nth_inj sh : injective (incr_nth sh).
 Proof.
   move=> i j Hsh.
   case (altP (i =P j)) => [//= | /negbTE Hdiff].
-  have:= eq_refl (nth 0 (incr_nth sh i) j).
-  by rewrite {2}Hsh !nth_incr_nth eq_refl Hdiff eqn_add2r.
+  move/(congr1 (fun s => nth 0 s j)) : Hsh => /eqP.
+  by rewrite !nth_incr_nth eq_refl Hdiff eqn_add2r.
 Qed.
 
 Lemma incr_nthC (s : seq nat) i j :
@@ -506,7 +507,7 @@ Proof.
     by rewrite -big_seq_cond -/(index_iota _ _) /= sum_nat_const_nat muln0.
   wlog Hbs: b / b <= (size s).
     move=> Hwlog; case: (leqP b (size s)) => [| /ltnW Hbs]; first exact: Hwlog.
-    have:= Hwlog (size s) (leqnn (size s)).
+    move/(_ (size s) (leqnn (size s))) : Hwlog.
     have:= Hbs; rewrite subnn {1}/leq => /eqP -> <-.
     case: (ltnP a (size s)) => Has.
     - by rewrite (big_cat_nat _ _ _ (ltnW Has) Hbs) /= (sum0 _ _ (leqnn (size s))) addn0.
