@@ -73,28 +73,28 @@ Lemma congr_cons w1 w2 a : r w1 w2 -> r (a :: w1) (a :: w2).
 Proof.
   rewrite -[a :: w1]cat1s -[[:: a] ++ w1]cats0 -catA.
   rewrite -[a :: w2]cat1s -[[:: a] ++ w2]cats0 -catA.
-  by apply: Hcongr.
+  exact: Hcongr.
 Qed.
 
 Lemma congr_rcons w1 w2 a : r w1 w2 -> r (rcons w1 a) (rcons w2 a).
 Proof.
   rewrite -[rcons w1 a]cats1 -[w1 ++ [:: a]]cat0s.
   rewrite -[rcons w2 a]cats1 -[w2 ++ [:: a]]cat0s.
-  by apply: Hcongr.
+  exact: Hcongr.
 Qed.
 
 Lemma congr_catl u1 u2 v : r u1 u2 -> r (u1 ++ v) (u2 ++ v).
-Proof. rewrite -[u1 ++ v]cat0s -[u2 ++ v]cat0s; by apply: Hcongr. Qed.
+Proof. rewrite -[u1 ++ v]cat0s -[u2 ++ v]cat0s; exact: Hcongr. Qed.
 
 Lemma congr_catr u v1 v2 : r v1 v2 -> r (u ++ v1) (u ++ v2).
-Proof. rewrite -[u ++ v1]cats0 -[u ++ v2]cats0 -!catA; by apply: Hcongr. Qed.
+Proof. rewrite -[u ++ v1]cats0 -[u ++ v2]cats0 -!catA; exact: Hcongr. Qed.
 
 Lemma congr_cat u1 u2 v1 v2 : r u1 u2 -> r v1 v2 -> r (u1 ++ v1) (u2 ++ v2).
 Proof.
-  have:= Hequiv => /equivalence_relP [] Hrefl Htrans.
+  move: Hequiv => /equivalence_relP [] Hrefl Htrans.
   move=> Hu Hv; rewrite (Htrans _ (u1 ++ v2)).
-  - by apply: congr_catl.
-  - by apply: congr_catr.
+  - exact: congr_catl.
+  - exact: congr_catr.
 Qed.
 
 End CongruenceFacts.
@@ -119,7 +119,7 @@ Theorem full_bound :
   forall s : seq T, all invar s -> uniq s -> size s <= size full.
 Proof.
   move=> s /allP Hall Huniq; apply: uniq_leq_size; first exact Huniq.
-  move=> l Hl. by apply: (Hfull (Hall _ Hl)).
+  move=> l Hl. exact: (Hfull (Hall _ Hl)).
 Qed.
 
 End FullKnown.
@@ -129,7 +129,7 @@ Hypothesis Hbound: forall s : seq T, all invar s -> uniq s -> size s <= bound.
 
 Lemma invar_undupE s : all invar (undup s) = all invar s.
 Proof.
-  apply/(sameP idP); apply(iffP idP); move/allP => H; apply/allP => x Hx; apply: H;
+  apply/idP/idP => /allP H; apply/allP => x Hx; apply: H;
     move: Hx; by rewrite mem_undup.
 Qed.
 
@@ -140,21 +140,21 @@ Proof.
   move=> Hrule Hx.
   rewrite /step mem_undup mem_cat; apply/orP; right.
   apply/flattenP; exists (rule x); last by [].
-  by apply: map_f.
+  exact: map_f.
 Qed.
 
 Lemma uniq_step s : uniq (step s).
 Proof. by rewrite /step; apply: undup_uniq. Qed.
 
 Lemma undup_step s : undup (step s) = step s.
-Proof. by rewrite /step [undup (undup _)]undup_id; last by apply: undup_uniq. Qed.
+Proof. by rewrite /step [undup (undup _)]undup_id; last exact: undup_uniq. Qed.
 
 Lemma invar_step s : all invar s -> all invar (step s).
 Proof.
   rewrite /step => /allP H; apply/allP => x.
-  rewrite mem_undup mem_cat => /orP []; first by apply: H.
+  rewrite mem_undup mem_cat => /orP []; first exact: H.
   move=> /flattenP [] tmp /mapP [] y Hyins -> {tmp} Hxy.
-  have:= Hinvar (H _ Hyins) => /allP; by apply.
+  move/(_ _ (H _ Hyins))/allP : Hinvar; by apply.
 Qed.
 
 Lemma subset_step s : {subset s <= step s}.
@@ -176,7 +176,7 @@ Proof.
   have Hszus:= Hbound Hinv (undup_uniq s).
   rewrite invar_undupE in Hinv.
   have Hszn:= Hbound (invar_step Hinv) (uniq_step s).
-  by apply: ltn_sub2l; first by apply: (leq_trans H).
+  by apply: ltn_sub2l; first exact: (leq_trans H).
 Qed.
 
 Lemma subset_s_trans_s s : {subset s <= trans s}.
@@ -194,7 +194,7 @@ Lemma invar_rewrite_path x y : invar x -> rewrite_path x y -> invar y.
 Proof.
   move=> Hx [] l.
   elim: l x Hx => [x Hx _ -> //= | l0 l IHl] x Hx /= /andP [] Hrule /IHl; apply.
-  have:= Hinvar Hx => /allP; by apply.
+  move/(_ _ Hx)/allP : Hinvar; by apply.
 Qed.
 
 Lemma step_closed x s y :
@@ -202,7 +202,7 @@ Lemma step_closed x s y :
 Proof.
   move=> H Hx [] l.
   elim: l x Hx => [x Hx _ -> //= | l0 l IHl] x Hx /= /andP [] Hrule /IHl; apply.
-  have:= H l0; rewrite mem_undup => ->.
+  move/(_ l0) : H; rewrite mem_undup => ->.
   exact (step_mem Hrule Hx).
 Qed.
 
@@ -221,20 +221,20 @@ Proof.
     * move=> s _ x <-; case (ltnP (size (undup s)) (size (step s))) => //= Hsz _.
       have:= leq_size_perm (undup_uniq s) (subset_undup_step (s:= s)) Hsz.
       move=> [] Heq _ _; rewrite mem_undup => Hy.
-      exists y; split => //=; by apply: (Rew (l := [::])).
+      exists y; split => //=; exact: (Rew (l := [::])).
     * move=> s x <-; rewrite invar_undupE; by case (all invar s).
   + move: Hl y; apply trans_ind => //=.
     * move=> s _ Hsz IH Hinv y [] x [] Hxins [].
       case.
       - move=> Hpath /= ->; by apply: subset_s_trans_s; apply: subset_step.
       - move=> z pat /= /andP [] Hz Hpath ->.
-        apply: IH; first by apply: invar_step.
-        exists z; split; first by apply: (step_mem Hz).
-        by apply: (Rew Hpath).
+        apply: IH; first exact: invar_step.
+        exists z; split; first exact: (step_mem Hz).
+        exact: (Rew Hpath).
     * move=> s _ x <-; case (ltnP (size (undup s)) (size (step s))) => //= Hsz _.
       have:= leq_size_perm (undup_uniq s) (subset_undup_step (s:= s)) Hsz.
       move=> [] Heq _ _ y {x} [] x [] Hx Hrew.
-      rewrite mem_undup; by apply: (step_closed Heq Hx).
+      rewrite mem_undup; exact: (step_closed Heq Hx).
     * move=> s x <-; rewrite invar_undupE; by case (all invar s).
 Qed.
 
@@ -252,13 +252,12 @@ Lemma rewrite_path_sym x y :
 Proof.
   move=> Hsym [] pathxy; rewrite -rev_path => Hxy Hy.
   move: Hxy; rewrite -Hy.
-  case/lastP: pathxy Hy => [/= -> _ | pathxz z]; first by apply: (Rew (l := [::])).
+  case/lastP: pathxy Hy => [/= -> _ | pathxz z]; first exact: (Rew (l := [::])).
   rewrite last_rcons belast_rcons rev_cons => -> {y} Hpath.
   apply: (Rew (l := rcons (rev pathxz) x)).
-  + set rel := (X in path X _ _) in Hpath; set rel2 := (X in path X _ _).
-    have /eq_path -> : rel2 =2 rel; last exact Hpath.
-    move=> i j; rewrite /rel /rel2.
-    apply/(sameP idP); apply(iffP idP); by apply: Hsym.
+  + set rel := (X in path X _ _) in Hpath.
+    rewrite (eq_path (e' := rel)); first exact: Hpath.
+    move=> i j; rewrite /rel; apply/idP/idP; exact: Hsym.
   + by rewrite last_rcons.
 Qed.
 
@@ -292,11 +291,11 @@ Proof.
   - move/transP => H.
     have: (all (invar inv y) [:: y]).
       apply/allP=> z; rewrite mem_seq1 => /eqP ->.
-      by apply Hinvar_all.
+      exact: Hinvar_all.
     by move/H => [] z []; rewrite mem_seq1 => /eqP ->.
   - move=> H; apply/transP.
     + apply/allP=> x0; rewrite mem_seq1 => /eqP ->.
-      by apply Hinvar_all.
+      exact: Hinvar_all.
     + by exists y; rewrite mem_seq1.
 Qed.
 
@@ -306,11 +305,11 @@ Proof.
   - rewrite /reflexive /rtrans /rclass => x.
     by apply: subset_s_trans_s; rewrite mem_seq1.
   - rewrite /left_transitive => x y Hrxy z.
-    apply/(sameP idP); apply(iffP idP); move: Hrxy.
-    * move=> /rtransP Hryx /rtransP Hrzy; apply/rtransP.
-      by apply: (rewrite_path_trans (y := y)).
+    apply/idP/idP; move: Hrxy.
     * move=> /rtransP Hryx /rtransP Hrzx; apply/rtransP.
-      have:= rewrite_path_sym Hsym Hryx => Hrzy; by apply: (rewrite_path_trans (y := x)).
+      by move/(rewrite_path_sym Hsym) : Hryx => /rewrite_path_trans/(_ Hrzx).
+    * move=> /rtransP Hryx /rtransP Hrzy; apply/rtransP.
+      exact: (rewrite_path_trans (y := y)).
 Qed.
 
 Lemma rtrans_ind (P : T -> Prop) x :
@@ -318,7 +317,7 @@ Lemma rtrans_ind (P : T -> Prop) x :
 Proof.
   move=> Hx IHr t /rtransP [] l; elim: l x Hx t => [|l0 l IHl] x Hx t /= Hpath -> //=.
   move: Hpath => /andP [] Hl0 Hpath.
-  by apply: (@IHl l0); first by apply: (@IHr x).
+  by apply: (@IHl l0); first exact: (@IHr x).
 Qed.
 
 Lemma rule_rtrans x y : y \in rule x -> rtrans x y.
@@ -332,7 +331,7 @@ Lemma rewrite_path_min (r : rel T) :
   forall x y, rewrite_path rule x y -> r x y.
 Proof.
   rewrite equivalence_relP => [] [] Hrefl Htr Hin x y [] l.
-  elim: l x => [/= x _ -> | l0 l IHl] /=; first by apply: Hrefl.
+  elim: l x => [/= x _ -> | l0 l IHl] /=; first exact: Hrefl.
   move=> x /andP [] /Hin Hl0 /IHl H/H {IHl H} Hl0y.
   by rewrite (Htr _ _ Hl0 y).
 Qed.
@@ -340,7 +339,7 @@ Qed.
 Lemma rtrans_min (r : rel T) :
   equivalence_rel r -> (forall x y, y \in rule x -> r x y) ->
   forall x y, rtrans x y -> r x y.
-Proof. move/rewrite_path_min=> H/H{H} H x y /rtransP Hrew; by apply: H. Qed.
+Proof. move/rewrite_path_min=> H/H{H} H x y /rtransP Hrew; exact: H. Qed.
 
 End Depend.
 
@@ -359,13 +358,13 @@ Hypothesis Hcongr : congruence_rule rule.
 
 Lemma perm_eq_bound (x : word) (s : seq word) :
   all (perm_eq x) s -> uniq s -> size s <= (size x)`!.
-Proof. rewrite -(size_permuted x); apply: full_bound; by apply: eq_seqE. Qed.
+Proof. rewrite -(size_permuted x); apply: full_bound; exact: eq_seqE. Qed.
 
 Lemma Hinvar_perm (x0 x : word) : perm_eq x0 x -> all (perm_eq x0) (rule x).
 Proof.
-  have:= perm_eq_trans; rewrite /transitive => Ptrans.
+  move: perm_eq_trans; rewrite /transitive => Ptrans.
   move=> H; apply/allP => x1 Hx1; apply: (@Ptrans _ x _ _ H).
-  have:= Hhomog x => /allP; by apply.
+  move/(_ x)/allP : Hhomog; by apply.
 Qed.
 
 Let inv := InvariantContext (@perm_eq_refl _) Hinvar_perm perm_eq_bound.
@@ -373,11 +372,11 @@ Definition congr := rtrans inv.
 Definition congr_class := rclass inv.
 
 Lemma rule_congr x y : y \in rule x -> congr x y.
-Proof. by apply: rule_rtrans. Qed.
+Proof. exact: rule_rtrans. Qed.
 
 Lemma congr_ind (P : word -> Prop) x :
   P x -> (forall y z, P y -> z \in rule y -> P z) -> forall t, congr x t -> P t.
-Proof. by apply: rtrans_ind. Qed.
+Proof. exact: rtrans_ind. Qed.
 
 Lemma equiv_congr : equivalence_rel congr.
 Proof.
@@ -386,9 +385,9 @@ Qed.
 
 Lemma congr_is_congr : congruence_rel congr.
 Proof.
-  have:= equiv_congr => /equivalence_relP [] Hrefl Htrans.
+  move: equiv_congr => /equivalence_relP [] Hrefl Htrans.
   move=> a b1 c; apply: congr_ind.
-  + by apply: Hrefl.
+  + exact: Hrefl.
   + move=> x y Hx Hrule.
     rewrite (@Htrans _ (a ++ x ++ c)); last apply: Hx.
     by apply: rule_congr; apply: Hcongr.
@@ -441,7 +440,7 @@ Proof.
   rewrite -cat3_equiv_cut3 /= => /eqP -> {b1} /mapP [] j2 Hj2 -> {b2}.
   rewrite !catA [a ++ i]lock -!catA; unlock. set a1 := a ++ i; set c1 := k ++ c.
   apply/flatten_mapP; exists (a1, j1, c1); first by rewrite -cat3_equiv_cut3.
-  apply/mapP; by exists j2; first by apply: Hj2.
+  apply/mapP; by exists j2; first exact: Hj2.
 Qed.
 
 Lemma congrrule_homog u : all (perm_eq u) (congrrule u).
@@ -449,15 +448,14 @@ Proof.
   apply/allP => v /flatten_mapP [] [[i j1] k] /=.
   rewrite -cat3_equiv_cut3 /= => /eqP -> /mapP [] j2 Hj2 ->.
   rewrite perm_cat2l perm_cat2r.
-  have:= Hhomog j1 => /allP; by apply.
+  move/(_ j1)/allP : Hhomog; by apply.
 Qed.
 
 Lemma congrrule_sym u v : v \in congrrule u -> u \in congrrule v.
 Proof.
   move/flatten_mapP => [] [[i j1] k].
-  rewrite -cat3_equiv_cut3 /= => /eqP -> /mapP [] j2 Hj2 ->.
-  have {Hj2} Hj2 := (Hsym Hj2); apply: congrrule_is_congr.
-  by apply: rule_congrrule.
+  rewrite -cat3_equiv_cut3 /= => /eqP -> /mapP [] j2 /Hsym Hj2 ->.
+  apply: congrrule_is_congr; exact: rule_congrrule.
 Qed.
 
 End CongruenceRule.
@@ -477,32 +475,31 @@ Definition gencongr := (congr (congrrule_homog Hhomog)).
 Definition genclass := (congr_class (congrrule_homog Hhomog)).
 
 Lemma genclassP x y : gencongr x y = (y \in genclass x).
-Proof. rewrite /gencongr /gencongr. by apply: congr_classP. Qed.
+Proof. rewrite /gencongr /gencongr. exact: congr_classP. Qed.
 
 Lemma gencongr_equiv : equivalence_rel gencongr.
-Proof. apply: equiv_congr; by apply: congrrule_sym. Qed.
+Proof. apply: equiv_congr; exact: congrrule_sym. Qed.
 
 Lemma gencongr_is_congr : congruence_rel gencongr.
 Proof.
-  apply: congr_is_congr; first by apply: congrrule_sym.
-  by apply: congrrule_is_congr.
+  apply: congr_is_congr; first exact: congrrule_sym.
+  exact: congrrule_is_congr.
 Qed.
 
 Lemma rule_gencongr u v : v \in rule u -> v \in gencongr u.
-Proof. move=> H; apply: rule_congr; by apply: rule_congrrule. Qed.
+Proof. move=> H; apply: rule_congr; exact: rule_congrrule. Qed.
 
 Lemma gencongr_min (r : rel word) :
   equivalence_rel r -> congruence_rel r ->
   (forall x y, y \in rule x -> r x y) ->
   forall x y, gencongr x y -> r x y.
 Proof.
-  move=> /equivalence_relP [] Hrefl Htrans Hcongr Hrule x y /rtransP => H.
-  have:= H => {H} [] [] l.
-  elim: l x => [/= x _ ->| l0 l IHl] ; first by apply: Hrefl.
-  move=> x /= /andP [] /flatten_mapP [] [[i j1] k].
+  move=> /equivalence_relP [] Hrefl Htrans Hcongr Hrule x y /rtransP [] l.
+  elim: l x => [/= x _ ->| l0 l IHl] /=; first exact: Hrefl.
+  move=> x /andP [] /flatten_mapP [] [[i j1] k].
   rewrite -cat3_equiv_cut3 /= => /eqP -> {x} /mapP [] j2 Hj2 ->.
   move=> /IHl H/H{H}; rewrite (@Htrans _ (i ++ j2 ++ k)) //=.
-  apply: Hcongr; by apply: Hrule.
+  apply: Hcongr; exact: Hrule.
 Qed.
 
 Theorem gencongr_ind (P : word -> Prop) x :
@@ -510,16 +507,15 @@ Theorem gencongr_ind (P : word -> Prop) x :
   (forall a b1 c b2, P (a ++ b1 ++ c) -> b2 \in rule b1 -> P (a ++ b2 ++ c)) ->
   forall y, gencongr x y -> P y.
 Proof.
-  move=> Hx IH; apply: (rtrans_ind Hx).
-  move=> y z Hy /flatten_mapP [] [[i j1] k].
+  move=> Hx IH; apply: (rtrans_ind Hx) => y z Hy /flatten_mapP [] [[i j1] k].
   rewrite -cat3_equiv_cut3 /= => /eqP Heqy; subst y.
   move=> /mapP [] j2 Hj2 Hz; subst z.
-  by apply: (@IH _ j1).
+  exact: (@IH _ j1).
 Qed.
 
 Lemma gencongr_homog u v : v \in gencongr u -> perm_eq u v.
 Proof.
-  move: v; apply: gencongr_ind; first by apply: perm_eq_refl.
+  move: v; apply: gencongr_ind; first exact: perm_eq_refl.
   move=> a b1 c b2 => H Hrule.
   rewrite (perm_eq_trans H); first by [].
   rewrite perm_cat2l perm_cat2r.
@@ -552,14 +548,12 @@ Qed.
 Lemma gencongr_imply r1 r2 :
   Generated_EquivCongruence r1 -> Generated_EquivCongruence r2 ->
   forall x y, r1 x y -> r2 x y.
-Proof. case=> Heq1 Hc1 Hr1 Hmin1; case=> Heq2 Hc2 Hr2 _; by apply: Hmin1. Qed.
+Proof. case=> Heq1 Hc1 Hr1 Hmin1; case=> Heq2 Hc2 Hr2 _; exact: Hmin1. Qed.
 
 Theorem gencongr_unique grel :
   Generated_EquivCongruence grel -> grel =2 gencongr.
 Proof.
-  move=> Hgrel x y; apply/(sameP idP); apply(iffP idP).
-  - by apply: gencongr_imply; first exact gencongrP.
-  - by apply: gencongr_imply; last  exact gencongrP.
+  move=> Hgrel x y; apply/idP/idP; apply: gencongr_imply => //; exact gencongrP.
 Qed.
 
 Theorem gencongr_generic_ind grel (P : word -> Prop) x :
