@@ -292,7 +292,7 @@ Qed.
 Lemma tnth_pos1 : tnth (in_tuple x) pos1 = l1.
 Proof.
   rewrite (tnth_nth l1) nth_cat.
-  rewrite (_ : pos1 < size u = false); first last.
+  have -> : pos1 < size u = false.
     by have:= leqnSn (size u); rewrite leqNgt => /negbTE ->.
   by rewrite subSn //= subnn.
 Qed.
@@ -578,7 +578,7 @@ Let posc := Ordinal u2lt.
 Lemma tnth_posc : tnth (in_tuple x) posc = c.
 Proof.
   rewrite /x (tnth_nth c) nth_cat /=.
-  rewrite (_ : (size u).+2 < size u = false); first last.
+  have -> : (size u).+2 < size u = false.
     have:= leq_trans (leqnSn (size u)) (leqnSn _).
     by rewrite leqNgt => /negbTE ->.
   by rewrite -add1n addnS -addSn addnK.
@@ -615,17 +615,16 @@ Proof.
   rewrite /swapSet /= -setP /swap => i.
   rewrite (eq_in_imset (g := id)); first by rewrite imset_id.
   move=> {i} i /= Hi.
-  rewrite (_ : (i == posb) = false); first last.
+  have -> : (i == posb) = false.
     apply/(introF idP) => //= /eqP Hib; subst i.
     have Hcov : posb \in cover P by rewrite /cover; apply/bigcupP; exists TP.
     by move: HbNin; rewrite Hcov.
-  rewrite (_ : (i == posa) = false); first last.
-    apply/(introF idP) => //= /eqP Hib; subst i.
-    move: Px; rewrite /ksupp => /and3P [] _ /trivIsetP Htriv _.
-    move/(_  _ _ HTP HS Hneq) : Htriv => /disjoint_setI0.
-    rewrite -setP => /(_ posa); rewrite in_set0 in_setI Hi.
-    by rewrite Hposa.
-  by [].
+  suff -> : (i == posa) = false by [].
+  apply/(introF idP) => //= /eqP Hib; subst i.
+  move: Px; rewrite /ksupp => /and3P [] _ /trivIsetP Htriv _.
+  move/(_  _ _ HTP HS Hneq) : Htriv => /disjoint_setI0.
+  rewrite -setP => /(_ posa); rewrite in_set0 in_setI Hi.
+  by rewrite Hposa.
 Qed.
 
 Lemma extract_swapSet T :
@@ -646,14 +645,14 @@ Proof.
     rewrite -!setIdE -setP => i; rewrite !inE.
     case: (ltnP i (size u)) => Hi; first by rewrite (ltn_trans Hi).
     case (ltnP i (size u).+1) => Hi2; last by rewrite andbF.
-    rewrite (_ : i = posb); first last.
+    have -> : i = posb.
       apply: val_inj => /=; apply/eqP; by rewrite eqn_leq Hi andbT -ltnS.
     by rewrite posbinSF.
   congr (_ ++ _ :: _).
   set LS := (setI _ _); have HposcLS : posc \in LS.
     rewrite /LS !inE /=; apply/andP; by split.
   have /= -> := (extract_cuti (in_tuple x) HposcLS).
-  rewrite (_ : LS :&: [set j : 'I_(size x) | j < (size u).+2] = set0); first last.
+  have -> : LS :&: [set j : 'I_(size x) | j < (size u).+2] = set0.
     rewrite /LS -setP => i; rewrite !inE /=.
     apply/(introF idP) => //= /andP [] /andP [] Hi H1 H2.
     have:= leq_ltn_trans H1 H2; by rewrite ltnn.
@@ -683,7 +682,7 @@ Proof.
     rewrite -(Swap.swapR (i := posc)) //.
     rewrite mem_imset_inj //=; exact: Swap.swap_inj.
   have /= -> :=  (extract_cuti (in_tuple x) HposcLS).
-  rewrite (_ : LS :&: [set j : 'I_(size x) | j < (size u).+2] = set0); first last.
+  have -> : LS :&: [set j : 'I_(size x) | j < (size u).+2] = set0.
     rewrite /LS -setP => i; rewrite !inE /=.
     case (ltnP (size u) i) => Hi; last by rewrite andbF.
     case (ltnP i (size u).+2) => Hi2; last by rewrite andbF.
@@ -759,7 +758,7 @@ Proof.
   move: Px; rewrite /ksupp => /and3P [] _ _ /forallP Hall.
   move/(_ S): Hall; rewrite HS.
   move/(is_seq_extract_cond (Rtrans HRabc) [set posb; posa]).
-  rewrite (_ : S :&: [set posb; posa] = [set posb; posa]); first last.
+  have -> : S :&: [set posb; posa] = [set posb; posa].
     apply/setP/subset_eqP/andP; split; apply/subsetP=> i; first by rewrite inE => /andP [].
     rewrite !inE => /orP [] => /eqP ->; rewrite eq_refl /=; first by rewrite Hposb.
     by rewrite Hposa orbT.
@@ -1020,12 +1019,12 @@ Proof.
   rewrite /=; case HlL: lL => [|l0 lL']; first by rewrite cat0s.
   rewrite /sorted /= cat_path => -> /=.
   case HlR : lR => [//=| r0 lR'] /= ->; rewrite andbT.
-  rewrite (_ : (last l0 lL') = a); first last.
+  have -> : last l0 lL' = a.
     have := extract_Sa; rewrite -/lL HlL.
     case: (extract _ _) => [/= [] -> -> //=| y z [] -> ->].
     by rewrite last_rcons.
   apply: (Hbax HRabc).
-  have := (is_seq_extract_cond (Rtrans HRabc) [set j : 'I_(size x) | j >= posb] HseqT).
+  have:= (is_seq_extract_cond (Rtrans HRabc) [set j : 'I_(size x) | j >= posb] HseqT).
   by rewrite extract_bT -/lR HlR /= => /andP [] ->.
 Qed.
 
@@ -1040,11 +1039,11 @@ Proof.
   rewrite /=; case HlL: lL => [|l0 lL']; first by rewrite cat0s.
   rewrite /sorted /= cat_path => -> /=.
   rewrite /lR extract_cS /= => ->; rewrite andbT.
-  rewrite (_ : (last l0 lL') = b); first last.
+  have -> : last l0 lL' = b.
     have := extract_Tb; rewrite -/lL HlL.
     case: (extract _ _) => [/= [] -> -> //=| y z [] -> ->].
     by rewrite last_rcons.
-  exact (Hbc HRabc).
+  exact: (Hbc HRabc).
 Qed.
 
 Lemma ksupp_bin : ksupp R (in_tuple x) k Qbin.
@@ -1053,7 +1052,7 @@ Proof.
   rewrite /Qbin; apply/and3P; split.
   - move: HszP.
     rewrite -setDDl (cardsD1 S P) (cardsD1 T (P :\ S)) HS /=.
-    rewrite (_ : T \in P :\ S) /=; last by rewrite !inE TSneq HT.
+    have -> /= : T \in P :\ S by rewrite !inE TSneq HT.
     apply: leq_trans; rewrite addnA add1n.
     apply: (leq_trans (leq_card_setU _ _)); rewrite leq_add2r.
     apply: (leq_trans (leq_card_setU _ _)); by rewrite !cards1.
@@ -1124,11 +1123,10 @@ Proof.
     have:= Hnoboth S0 HS0.
     rewrite -(cast_ordKV (eq_size eq_xx') x0) -(cast_ordKV (eq_size eq_xx') x1).
     rewrite !(mem_imset_inj _ _ (@cast_ord_inj _ _ _)).
-    rewrite (_ : cast_ord (esym (eq_size eq_xx')) x0 = posa); first last.
+    have -> : cast_ord (esym (eq_size eq_xx')) x0 = posa.
       by apply: val_inj; rewrite /= size_cat /= addn1.
-    rewrite (_ : cast_ord (esym (eq_size eq_xx')) x1 = posc); first last.
-      by apply: val_inj; rewrite /= size_cat /= addn1.
-    by [].
+    suff -> : cast_ord (esym (eq_size eq_xx')) x1 = posc by [].
+    by apply: val_inj; rewrite /= size_cat /= addn1.
 Qed.
 
 End Case.
@@ -1179,7 +1177,7 @@ Proof.
     have Htrans: transitive (@leqX Alph) by move=> d e f /= H1 H2; apply: (leqX_trans H1 H2).
     move/(_ S): Hall; rewrite HSin /=.
     move/(is_seq_extract_cond Htrans [set posa; posc]).
-    rewrite (_ : S :&: [set posa; posc] = [set posa; posc]); first last.
+    have -> : S :&: [set posa; posc] = [set posa; posc].
       apply/setP/subset_eqP/andP; split; apply/subsetP=> i; first by rewrite inE => /andP [].
       rewrite !inE => /orP [] => /eqP ->; rewrite eq_refl /=; first by rewrite HSa.
       by rewrite HSb orbT.
@@ -1254,7 +1252,7 @@ Proof.
     have Htrans: transitive (@gtnX Alph) by move=> d e f /= H1 H2; apply: (ltnX_trans H2 H1).
     move/(_ S): Hall; rewrite HSin /= => Hsort.
     have:= is_seq_extract_cond Htrans [set posa; posc] Hsort.
-    rewrite (_ : S :&: [set posa; posc] = [set posa; posc]); first last.
+    have -> : S :&: [set posa; posc] = [set posa; posc].
       apply/setP/subset_eqP/andP; split; apply/subsetP=> i; first by rewrite inE => /andP [].
       rewrite !inE => /orP [] => /eqP ->; rewrite eq_refl /=; first by rewrite HSa.
       by rewrite HSb orbT.

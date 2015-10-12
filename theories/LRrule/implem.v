@@ -427,7 +427,7 @@ Lemma LRyamtab_list_skew_tableau0 innev inner outer sh0 row0 :
   is_skew_tableau (sh0 :: inner) (row0 :: res).
 Proof.
   move=> Hinn Hout Hincl Hsize Hrow0 res Hres.
-  have := LRyamtab_list_shape0 Hinn Hout Hincl Hsize Hres.
+  have:= LRyamtab_list_shape0 Hinn Hout Hincl Hsize Hres.
   move: Hinn Hout Hincl Hsize Hrow0 res Hres.
   elim: outer innev inner sh0 row0 => [//= | out0 out IHout]
               innev inner sh0 row0 Hinn Hout /= Hincl Hsize Hrow0 res.
@@ -443,10 +443,10 @@ Proof.
   rewrite (part_head_non0 Hout) Hrow0 Hrshiftrow.
   rewrite Hshift (subnKC H0) (part_head_non0 (is_part_consK Hout)) /=.
   have Hpart0 : is_part (inn0 + size rshift :: out).
-    have := is_part_consK Hout => /=/andP [] Hhout ->.
+    have:= is_part_consK Hout => /=/andP [] Hhout ->.
     by rewrite andbT Hshift (subnKC H0).
-  have := (IHout _ _ _ _ (path_sorted Hinn) Hpart0 Hincl Hsize Hrshiftrow _ Hrec Hshape).
-  move=> {IHout Hrec Hpart0} /= /and3P [] _ _ ->; rewrite andbT.
+  move/(_ _ _ _ _ (path_sorted Hinn) Hpart0 Hincl Hsize Hrshiftrow _ Hrec Hshape): IHout.
+  move=> {Hrec Hpart0} /= /and3P [] _ _ ->; rewrite andbT.
   case: (leqP sh0 out0) Hrshiftdom => [/minn_idPl -> //= | /ltnW Hover _].
   - exact: skew_dominate_take.
   - apply skew_dominate_no_overlap.
@@ -471,8 +471,7 @@ Proof.
   move/(_ _ (hyper_yam_of_eval Hpart)): Hlrw => /= /andP [] Hyamlrow /eqP Hshape.
   rewrite (eq_count (a2 := pred1 l)); first last.
     move=> i /=; case (altP (i =P l)) => [Hi | //=]; subst i.
-    have /= -> /= : is_add_corner shr l.
-      rewrite -Hshr; exact: is_add_corner_yam.
+    have -> /= : is_add_corner shr l by rewrite -Hshr; exact: is_add_corner_yam.
     move: Hincl => /includedP [] _ Hincl.
     apply: (leq_trans _ (Hincl l)).
     rewrite -Hshape /= Hshr.
@@ -484,7 +483,7 @@ Proof.
     - by rewrite (subnKC H) ltnS Hl.
     - have:= H; rewrite {1}/leq => /eqP ->.
       by rewrite addn0 (leq_ltn_trans Hl H).
-  rewrite /m {m} leq_min Hmax andbT.
+  rewrite {}/m leq_min Hmax andbT.
   apply is_part_incr_nth_size.
   - rewrite -Hshr; exact (is_part_eval_yam Hyamrow).
   - rewrite -Hshr; exact (is_part_eval_yam Hyamlrow).
@@ -514,8 +513,8 @@ Proof.
       rewrite (eq_count (a2 := pred1 l0)); first last.
         move=> i /=; by rewrite eqseq_cons eq_refl andbT.
       apply: (choose_one_countE Hinn (yamtab_rowP Hr) Hskew Hincl _ Hisrow).
-      have Htmp : l0 :: row != [::] by [].
-      have /= := dominate_head Htmp Hdom; rewrite ltnXnatE => -> /=.
+      have /dominate_head/(_ Hdom) : l0 :: row != [::] by [].
+      rewrite ltnXnatE => -> /=.
       exact: head_row_skew_yam Hinn Hisrow Hskew.
     - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
       move=> y /=; by rewrite eqseq_cons Hneq andbF.
@@ -583,8 +582,7 @@ Proof.
                innev [//= | inn0 inn] sh0 row0 Hinnev.
      by move=> _ _ /eqP/nilP -> /=.
   move=> Hinn Hout Hsize Hskew Hyam.
-  have {Hsize} Hsize : size inn = size yamtab.
-    by move: Hsize => /eqP; rewrite eqSS => /eqP Hsize.
+  rewrite /= in Hsize; move: Hsize => /eqP; rewrite eqSS => /eqP Hsize.
   have Hskewrec : is_skew_tableau (inn0 :: inn) (row1 :: yamtab).
     by move: Hskew => /=/and4P [].
   move/(_ _ inn inn0 row1 _ (path_sorted Hinn)
@@ -602,7 +600,7 @@ Proof.
       move: Hrshift => /flatten_mapP [] [row shrow] /yamtab_rowP/yamtab_shiftP H/H{H}.
       rewrite Hrow1 => Hsk1 Hsk2.
       apply (Hrec shrshift (is_part_skew_yam Hinnev Hsk1)).
-      exact (skew_yam_catrK Hinnev Hsk1 Hsk2).
+      exact: (skew_yam_catrK Hinnev Hsk1 Hsk2).
     - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
       move=> y /=; by rewrite eqseq_cons Hneq.
   rewrite eq_in_map /rec /f2 => -> {f1 f2 rec Hrec}.
@@ -632,14 +630,14 @@ Proof.
       move: Hneq; apply contraFF.
       rewrite -Hshift => /eqP ->.
       case: (leqP sh0 (inn0 + size row1)) => [/minn_idPl -> //= | /ltnW Hover].
-      have := leq_sub2r inn0 Hover; rewrite (minn_idPr Hover) addKn.
+      have:= leq_sub2r inn0 Hover; rewrite (minn_idPr Hover) addKn.
       move => /drop_oversize ->.
       by rewrite drop_oversize.
   rewrite eq_in_map /rowl /f2 => -> {f1 f2 rowl}.
   rewrite map_comp sumn_count count_map /=.
   move: Hyam; rewrite to_word_cons -{1}(cat_take_drop (sh0 - inn0) row1) catA => Hyam.
-  have := skew_yam_catK Hinnev Hyam => [] [] shape Hdrop.
-  move => /(skew_yam_included (is_part_skew_yam Hinnev Hdrop)) Hshape.
+  have:= skew_yam_catK Hinnev Hyam => [] [] shape Hdrop.
+  move=> /(skew_yam_included (is_part_skew_yam Hinnev Hdrop)) Hshape.
   have Heq : size (drop (sh0 - inn0) row1) = size (take (inn0 + size row1 - sh0) row0).
     rewrite size_drop size_take bad_if_leq.
       move: Hinn => /=/andP [] /subnBA -> _.
@@ -767,9 +765,9 @@ Proof.
     move=> /andP [] Hincl _.
     case: yamtab {Hyam}=> [ | yam0 yam] //= [] Hyam _ _.
     by rewrite /skew_dominate -Hyam drop_size.
-  rewrite {2}(_ : outer = outer_shape ((pad 0 (size outer)) inner) (shape yamtab));
-    last by rewrite Hshape -(size_diff_shape inner outer)
-                              outer_shape_pad0 (diff_shapeK Hincl).
+  have {2}-> : outer = outer_shape ((pad 0 (size outer)) inner) (shape yamtab).
+    by rewrite Hshape -(size_diff_shape inner outer)
+                         outer_shape_pad0 (diff_shapeK Hincl).
   exact: LRyamtab_list_countE Hnil Hinn Hout Hsize Hskew (skew_nil_yamE Hyam).
 Qed.
 
@@ -847,11 +845,10 @@ Proof.
   rewrite -[val yam](to_word_skew_reshape Hincl Hszyam).
   rewrite count_map.
   rewrite (eq_in_count (a2 := pred1 (skew_reshape P1 P (val yam)))); first last.
-    move=> tab /= Htab; apply/(sameP idP); apply(iffP idP) => [/eqP -> //= | /eqP].
-    rewrite (to_word_skew_reshape Hincl Hszyam).
-    move <-.
+    move=> tab /= Htab; apply/idP/idP => [/eqP| /eqP -> //].
+    rewrite (to_word_skew_reshape Hincl Hszyam) => <-.
     have Hshape := (LRyamtab_shape (intpartnP P1) (intpartnP P) Hincl Htab).
-    rewrite -(_ : (outer_shape P1 (shape tab)) = P); last by rewrite Hshape diff_shapeK.
+    have <- : (outer_shape P1 (shape tab)) = P by rewrite Hshape diff_shapeK.
     rewrite skew_reshapeK //= -(size_map size tab) -/(shape tab) Hshape size_diff_shape.
     exact: size_included.
   apply (count_mem_LRyamtab_list (intpartnP P1) (intpartnP P) Hincl Hyam).
@@ -881,7 +878,7 @@ Proof.
   have Hskew := LRyamtab_skew_tableau (intpartnP P1) (intpartnP P) Hincl Htab.
   have Hshape := LRyamtab_shape (intpartnP P1) (intpartnP P) Hincl Htab.
   rewrite /is_skew_reshape_tableau /=.
-  rewrite -(_ : (outer_shape P1 (shape tab)) = P); last by rewrite Hshape diff_shapeK.
+  have <- : (outer_shape P1 (shape tab)) = P by rewrite Hshape diff_shapeK.
   rewrite skew_reshapeK //= -(size_map size tab) -/(shape tab) Hshape size_diff_shape.
   exact: size_included.
 Qed.

@@ -338,11 +338,11 @@ Proof.
     + exact: iota_uniq.
     + move=> i; move: H; rewrite /is_std => /perm_eq_mem Hperm.
       case (ltnP i tn) => Hi.
-      * rewrite {2}(_ : i = shiftinv_pos tn i); last by rewrite /shiftinv_pos Hi.
+      * have {2}-> : i = shiftinv_pos tn i by rewrite /shiftinv_pos Hi.
         move=> Hiota; apply: map_f; have:= Hperm i; move: Hiota.
         rewrite !mem_iota /= !add0n size_rcons ltnS => /ltnW ->.
         by rewrite mem_rcons inE (ltn_eqF Hi) /= => ->.
-      * rewrite {2}(_ : i = shiftinv_pos tn i.+1); first last.
+      * have {2}-> : i = shiftinv_pos tn i.+1.
           by rewrite /shiftinv_pos ltnNge (leq_trans Hi (leqnSn _)).
         move=> Hiota; apply: map_f; have:= Hperm i.+1; move: Hiota.
         rewrite !mem_iota /= !add0n size_rcons ltnS => ->.
@@ -443,8 +443,7 @@ Proof.
   rewrite (nth_any (inhabitant _) (size (rcons t tn)) Hpos).
   move: (Hst _ Hpos); rewrite nth_rcons.
   rewrite (_ : nth _ _ _ < size t); first by move ->; rewrite shift_posK.
-  rewrite (_ : size t = (size (s0 :: s)).-1); first last.
-    by rewrite (size_invseq Hinv) size_rcons.
+  have -> : size t = (size (s0 :: s)).-1 by rewrite (size_invseq Hinv) size_rcons.
   apply: (nth_std_pos (size (rcons t tn)) (invseq_is_std Hinv) Hpos).
   rewrite (posbig_invseq Hinv) /shift_pos.
   case (ltnP i tn); first by move /ltn_eqF ->.
@@ -464,9 +463,9 @@ Theorem invseqRSPQE s t :
 Proof.
   rewrite /RStabmap /= => Hinv.
   case HRSs : (RSmap s) => [Ps Qs] /=.
-  rewrite (_ : Ps = RS s); last by rewrite -RSmapE HRSs.
+  have -> : Ps = RS s by rewrite -RSmapE HRSs.
   case HRSt : (RSmap t) => [Pt Qt] /=.
-  rewrite (_ : Qt = (RSmap t).2); last by rewrite HRSt.
+  have -> : Qt = (RSmap t).2 by rewrite HRSt.
   move Hn: (size s) => n {Ps Qs HRSs Pt Qt HRSt}.
   have Hsize := size_invseq Hinv.
   elim: n s t Hn Hinv Hsize => [/= | n IHn] s t Hn Hinv Hsize.

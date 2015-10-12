@@ -534,18 +534,18 @@ Proof.
   + rewrite -Hr -catA; apply: plact_catr.
     rewrite cats1 rcons_cons; apply: (congr_row_2 HrowR).
     rewrite Hrpos; exact: lt_bumped.
-  + rewrite (_ : ins r l = L ++ l :: R').
-    * rewrite -[[:: rpos, l & R']]cat1s -![l :: R']cat1s !catA.
-      apply: plact_catl.
-      rewrite -Hrpos !cats1 cat1s rcons_cons.
-      apply: congr_row_1; last by rewrite Hrpos; apply: lt_bumped.
-      apply: (is_row_rcons HrowL).
-      case/lastP: L HL {Hr HrowL} => [//= | L ll Hll]; rewrite last_rcons.
-      have H : (size L) < pos by have:= size_take pos r; rewrite Hpos Hll size_rcons => <-.
-      have:= nth_lt_inspos H.
-      by rewrite -(nth_take (n0 := pos) _ H) Hll nth_rcons ltnn eq_refl.
-    * rewrite /ins -/pos -Hr; apply: set_nth_LxR.
+  + have -> : ins r l = L ++ l :: R'.
+      rewrite /ins -/pos -Hr; apply: set_nth_LxR.
       by rewrite -HL size_take Hpos.
+    rewrite -[[:: rpos, l & R']]cat1s -![l :: R']cat1s !catA.
+    apply: plact_catl.
+    rewrite -Hrpos !cats1 cat1s rcons_cons.
+    apply: congr_row_1; last by rewrite Hrpos; apply: lt_bumped.
+    apply: (is_row_rcons HrowL).
+    case/lastP: L HL {Hr HrowL} => [//= | L ll Hll]; rewrite last_rcons.
+    have H : (size L) < pos by have:= size_take pos r; rewrite Hpos Hll size_rcons => <-.
+    have:= nth_lt_inspos H.
+    by rewrite -(nth_take (n0 := pos) _ H) Hll nth_rcons ltnn eq_refl.
 Qed.
 
 Theorem congr_RS w : w =Pl (to_word (RS w)).
