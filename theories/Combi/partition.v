@@ -223,12 +223,13 @@ Section Partition.
     rewrite -!nth_last size_incr_nth.
     case (ltnP i (size sh)) => Hi.
     - have Hsz : (size sh).-1 < size sh by move: Hi; case: (size sh).
-      rewrite (nth_any 1 0 (s := (incr_nth sh i))); last by rewrite size_incr_nth Hi Hsz.
+      rewrite (set_nth_default 0 1 (s := incr_nth _ _));
+        last by rewrite size_incr_nth Hi Hsz.
       rewrite nth_incr_nth; apply contra.
       rewrite addn_eq0 => /andP [] _ H.
-      by rewrite (nth_any 1 0).
+      by rewrite (set_nth_default 0 1).
    - move=> _ /=.
-     rewrite (nth_any 1 0); last by rewrite size_incr_nth [i < size sh]ltnNge Hi /=.
+     rewrite (set_nth_default 0 1); last by rewrite size_incr_nth [i < size sh]ltnNge Hi /=.
      by rewrite nth_incr_nth eq_refl.
   Qed.
 
@@ -279,11 +280,11 @@ Section Partition.
     rewrite/is_rem_corner; apply/idP/idP.
     - move=> Hcorn; apply/is_partP; split; first exact Hn0.
       move=> j; move: Hcorn (Hpart1 j).
-      rewrite !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS => Hcorn.
+      rewrite !nth_incr_nth (@ltn_eqF i i.+1) // eq_refl add0n add1n ltnS => Hcorn.
       case (eqP (y:=j)) => [<- //=|_].
       case eqP => [Hi |_]; rewrite !add0n // add1n; apply: ltnW.
     - move=> /is_partP => [] [] _ /(_ i).
-      by rewrite !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS.
+      by rewrite !nth_incr_nth (@ltn_eqF i i.+1) // eq_refl add0n add1n ltnS.
   Qed.
 
   Lemma rem_corner_incr_nth sh i :
@@ -402,9 +403,9 @@ Section Partition.
     move=> Hpart Hout; rewrite /is_add_corner /=.
     case: i Hout => [//=|i] Hout; rewrite [i.+1.-1]/=.
     apply/orP; right.
-    rewrite nth_decr_nth nth_decr_nth_neq //; last by rewrite eq_sym ieqi1F.
+    rewrite nth_decr_nth nth_decr_nth_neq //; last by rewrite eq_sym ltn_eqF.
     move: Hout; rewrite /is_rem_corner => Hi2.
-    move/is_partP : Hpart => [] [] _ Hdecr.
+    move/is_partP : Hpart => [] _ Hdecr.
     apply: leq_trans _ (Hdecr i).
     move: Hi2; by case: (nth 0 sh i.+1).
   Qed.

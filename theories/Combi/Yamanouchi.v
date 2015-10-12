@@ -159,10 +159,10 @@ Section Yama.
     - elim: s => [| s0 s IHs] //= /andP [] /is_partP [] _ Hpart /IHs Hrec {IHs}.
       case => [| i] n //=.
       + case: (altP (s0 =P n)) => Hns0.
-        subst s0; rewrite ieqi1F add0n add1n.
+        subst s0; rewrite ltn_eqF // add0n add1n.
         move/(_ 0 n) : Hrec; rewrite drop0 => /leq_trans; by apply.
       + case: (altP (s0 =P n.+1)) => Hn1s0.
-        move/(_ n) : Hpart; rewrite !nth_incr_nth Hn1s0 eq_refl eq_sym ieqi1F.
+        move/(_ n) : Hpart; rewrite !nth_incr_nth Hn1s0 eq_refl eq_sym ltn_eqF //.
         by rewrite !add0n !add1n !nth_evalseq.
       + move/(_ 0 n) : Hrec; by rewrite !add0n drop0.
     - elim: s => [//= | s0 s IHs] H.
@@ -238,7 +238,7 @@ Section Yama.
     is_yam (l0 :: s) -> is_rem_corner (evalseq (l0 :: s)) l0.
   Proof.
     move/is_yam_tl/is_part_eval_yam/is_partP => [] _ Hpart.
-    rewrite /is_rem_corner !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS.
+    rewrite /is_rem_corner !nth_incr_nth ltn_eqF // eq_refl add0n add1n ltnS.
     exact: Hpart.
   Qed.
 
@@ -251,7 +251,7 @@ Section Yama.
       case: l0 H1 H2 => //= l0 _; by elim: l0.
     move=> /is_partP [] _ /( _ l0) /=.
     rewrite -/(incr_nth (sh0 :: sh) l0.+1) !nth_incr_nth eq_refl add1n.
-    by rewrite eq_sym ieqi1F add0n.
+    by rewrite eq_sym ltn_eqF // add0n.
   Qed.
 
   (** ** Hyperstandard Yamanouchi word : 33 2222 11111 0000000 *)
