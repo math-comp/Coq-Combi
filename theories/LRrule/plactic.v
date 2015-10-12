@@ -745,20 +745,21 @@ Qed.
 Lemma last_ins_lt r l b : l <A b -> last b r <A b -> last b (ins r l) <A b.
 Proof.
   rewrite -!nth_last => Hl Hlast.
-  rewrite (nth_any b l); first last.
+  rewrite (set_nth_default l b); first last.
     have : (ins r l) != [::] by apply: set_nth_non_nil.
     by case : (ins r l).
   rewrite nth_set_nth size_set_nth /= maxnC /maxn ltnS.
   case (leqP (size r) (inspos r l)) => H /=; first by rewrite eq_refl.
   case (boolP ((size r).-1 == inspos r l)) => _; first exact: Hl.
-  by rewrite (nth_any l b); last by move: Hlast; case r => /=; first by rewrite ltnXnn.
+  rewrite (set_nth_default b l) //.
+  by move: Hlast; case r => /=; first by rewrite ltnXnn.
 Qed.
 
 Lemma bumped_lt r b l : is_row r -> l <A b -> last b r <A b -> bumped r l <A b.
 Proof.
   rewrite -!nth_last /bumped => /is_rowP Hrow Hl Hlast.
   case (ltnP (inspos r l) (size r)) => H.
-  + rewrite (nth_any l b H).
+  + rewrite (set_nth_default b l H).
     apply: (@leqX_ltnX_trans _ (nth b r (size r).-1)); last exact Hlast.
     apply: Hrow; move: H; case: (size r) => [//=| s].
     by rewrite ltnS /= => -> /=.

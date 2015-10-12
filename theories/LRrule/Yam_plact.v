@@ -34,11 +34,11 @@ Proof.
     move/(_ j'): Hpartij; rewrite !nth_incr_nth.
     rewrite eq_refl (ltn_eqF (ltnW Hij)).
     rewrite ltnS in Hij; rewrite (ltn_eqF Hij) /=.
-    by rewrite eq_sym ieqi1F /= !add0n /= add1n.
+    by rewrite eq_sym ltn_eqF //= !add0n /= add1n.
   - case H : i => [//= | i'] /=; subst i.
     move/(_ i'): Hpartij; rewrite !nth_incr_nth.
     rewrite eq_refl (gtn_eqF (ltnW Hij)) (gtn_eqF (ltnW (ltnW Hij))).
-    by rewrite eq_sym ieqi1F /= !add0n /= add1n.
+    by rewrite eq_sym ltn_eqF //= !add0n /= add1n.
 Qed.
 
 Lemma is_part_incr_nth1E sh i :
@@ -49,7 +49,7 @@ Proof.
     case: i Hparti => [//= | i] /is_partP [] _ Hparti /=.
     move/(_ i): Hparti.
     rewrite !nth_incr_nth /= eq_refl.
-    rewrite eq_sym ieqi1F eq_sym ieqi1F.
+    rewrite eq_sym ltn_eqF // eq_sym ltn_eqF //.
     have -> /= : (i.+2 == i) = false by elim i.
     by rewrite !add0n /= add1n.
   - rewrite incr_nthC; apply (is_part_incr_nth Hparti) => /=.
@@ -122,7 +122,7 @@ Proof.
       subst c.
       apply (is_part_incr_nth (is_part_eval_yam Hyam)) => /=.
       move: H1 => /is_partP [] _ /(_ a).
-      by rewrite !nth_incr_nth !eq_refl ieqi1F eq_sym ieqi1F !add0n !add1n ltnS.
+      by rewrite !nth_incr_nth !eq_refl ltn_eqF // eq_sym ltn_eqF // !add0n !add1n ltnS.
   - move=> b1 cw b2 /andP [] Hpart Hyam Hrew.
     rewrite (IHaw _ _ _ Hyam Hrew) andbT.
     suff -> : (evalseq (aw ++ b2 ++ cw)) = (evalseq (aw ++ b1 ++ cw)) by [].

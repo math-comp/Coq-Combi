@@ -26,9 +26,6 @@ Unset Strict Implicit.
 
 Hint Resolve nth_nil.
 
-Lemma ieqi1F i : (i == i.+1) = false.
-Proof. apply: negbTE; by elim i. Qed.
-
 Lemma bad_if_leq i j : i <= j -> (if i < j then i else j) = i.
 Proof. move=> Hi; case (ltnP i j) => //= Hj; apply/eqP; by rewrite eqn_leq Hi Hj. Qed.
 
@@ -65,11 +62,8 @@ Lemma last_behead_rcons x l s :
   last (head x (rcons s l)) (behead (rcons s l)) = l.
 Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= last_rcons. Qed.
 
-Lemma head_any s a b : s != [::] -> head a s = head b s.
+Lemma set_head_default s b a : s != [::] -> head a s = head b s.
 Proof. by elim: s. Qed.
-
-Lemma nth_any s a b i : i < size s -> nth a s i = nth b s i.
-Proof. elim: s i => //= s0 s IHs [//=|i] Hsize /=. exact: IHs. Qed.
 
 Lemma rcons_set_nth a s l : set_nth a s (size s) l = rcons s l.
 Proof. elim: s => [//=| l0 s IHs]. by rewrite rcons_cons -IHs /=. Qed.
@@ -130,11 +124,12 @@ Lemma nth_set_nth_any a b l i c j :
 Proof.
   case eqP => [<- | /eqP Hneq].
   - have Hj : j < size (set_nth b l j c) by rewrite size_set_nth; apply: leq_maxl.
-    by rewrite (nth_any a b Hj) nth_set_nth /= eq_refl.
+    by rewrite (set_nth_default b a Hj) nth_set_nth /= eq_refl.
   - case (ltnP j (size l)) => Hjsz.
     + have Hj : j < size (set_nth b l i c)
         by rewrite size_set_nth; apply: (leq_trans Hjsz); apply: leq_maxr.
-      by rewrite (nth_any a b Hj) nth_set_nth /= (negbTE Hneq) (nth_any a b Hjsz).
+      rewrite (set_nth_default b a Hj) nth_set_nth /= (negbTE Hneq).
+      exact: set_nth_default.
     + case (leqP j i) => Hij.
       * apply: nth_set_nth_expand; by rewrite Hjsz /= ltn_neqAle Hneq Hij.
       * rewrite nth_default; first by [].
