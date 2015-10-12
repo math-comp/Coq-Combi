@@ -28,7 +28,7 @@ Definition int_to_rat : int -> rat := intmul (GRing.one rat_Ring).
 Coercion int_to_rat : int >-> rat.
 
 Lemma int_to_ratD : {morph int_to_rat : n m / (n + m)%R >-> (n + m)%R}.
-Proof. move => m n /=; by apply mulrzDl. Qed.
+Proof. move => m n /=; exact: mulrzDl. Qed.
 
 Lemma int_to_ratM : {morph int_to_rat : n m / (n * m)%R >-> (n * m)%R}.
 Proof. move => m n /=; by rewrite -intrM. Qed.

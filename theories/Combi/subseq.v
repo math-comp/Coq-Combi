@@ -38,8 +38,8 @@ Section RCons.
     - by rewrite -!cats1 => H; apply: cat_subseq => //=; rewrite (eq_refl _).
     - elim: w s => [|w0 w IHw s] /=.
       case=> //= s0 s; case (altP (s0 =P l)) => _ //=; by rewrite rcons_nilF.
-    - case: s IHw => //= s0 s; case (altP (s0 =P w0)) => _ //= H1 H2; first by apply: H1.
-      rewrite -rcons_cons in H2; by apply: H1.
+    - case: s IHw => //= s0 s; case (altP (s0 =P w0)) => _ //= H1 H2; first exact: H1.
+      rewrite -rcons_cons in H2; exact: H1.
   Qed.
 
   Lemma subseq_rcons_neq s si w wn :
@@ -49,7 +49,7 @@ Section RCons.
     - case: s => [| s0 s] /=; first by case: eqP H.
       case (altP (s0 =P wn)) => //= ->; by rewrite rcons_nilF.
     - case: s => [/=| s0 s].
-      * case eqP => [_ |] _; first by apply: sub0seq.
+      * case eqP => [_ |] _; first exact: sub0seq.
         rewrite -[ [:: si] ]/(rcons [::] si); exact (IHw _ _ H).
       * rewrite !rcons_cons /=; case (altP (s0 =P w0)) => _; first exact (IHw _ _ H).
         rewrite -rcons_cons; exact (IHw _ _ H).
@@ -60,9 +60,9 @@ Section RCons.
     elim: w s => [/= s /eqP -> //= | w0 w IHw] s //=.
     case: s => [_ | s0 s /=]; first by rewrite {1}/rev /=; case (rev _).
     rewrite !rev_cons; case eqP => [-> | _].
-    - move/IHw; by apply subseq_rcons_eq.
+    - move/IHw; by rewrite -subseq_rcons_eq.
     - move/IHw; rewrite rev_cons => {IHw} IHw; apply: (@subseq_trans _ (rev w) _ _ IHw).
-      by apply: subseq_rcons.
+      exact: subseq_rcons.
   Qed.
 
 End RCons.
@@ -117,7 +117,7 @@ Proof.
     by rewrite eq_refl.
   - case: s => [//= | s0 s].
     move=> /IHw Hsubs; case eqP => Hs0.
-    + apply: (@subseq_trans _ (s0 :: s)); first by apply: subseq_cons.
+    + apply: (@subseq_trans _ (s0 :: s)); first exact: subseq_cons.
       exact Hsubs.
     + exact Hsubs.
 Qed.
@@ -154,7 +154,7 @@ Proof. by case: s => /= s. Qed.
 
 Lemma enum_subseqsE :
   map val (enum subseqs) = undup (enum_subseqs w).
-Proof. rewrite /=; by apply enum_sub_undupE. Qed.
+Proof. rewrite /=; exact: enum_sub_undupE. Qed.
 
 Lemma uniq_enum_subseqsE :
   uniq w -> map val (enum subseqs) = enum_subseqs w.
@@ -164,43 +164,39 @@ Definition sub_nil  : subseqs := Subseqs (sub0seq w).
 Definition sub_full : subseqs := Subseqs (subseq_refl w).
 
 Lemma size_le (s : subseqs) : size s <= size w.
-Proof. case: s => s Ps /=; by apply: size_subseq. Qed.
+Proof. case: s => s Ps /=; exact: size_subseq. Qed.
 
 End Fintype.
+
+Require Import sorted.
 
 (** ** Relating sub sequences of [iota] and being sorted *)
 Lemma sorted_subseq_iota_rcons s n : subseq s (iota 0 n) = sorted ltn (rcons s n).
 Proof.
-  apply (sameP idP); apply (iffP idP).
+  apply/idP/idP.
+  - move=> Hsubs.
+    apply: (subseq_sorted ltn_trans (s2 := (iota 0 n.+1))).
+    + by rewrite -addn1 iota_add add0n /= cats1 -subseq_rcons_eq.
+    + exact: iota_ltn_sorted.
   - elim: n s => [/= [//=| s0 s]| n IHn s].
       rewrite rcons_cons /= => /(order_path_min ltn_trans) /= /allP Hall.
       exfalso.
       suff /Hall : 0 \in rcons s 0 by [].
       by rewrite mem_rcons inE eq_refl.
     case/lastP: s => [_| s sn]; first exact: sub0seq.
-    case: (ltnP sn n) => Hsn Hsort.
-    + have {Hsort} Hsort : sorted ltn (rcons s sn).
-        case: s Hsort => [//= | s0 s].
-        by rewrite !rcons_cons /= rcons_path => /andP [].
-      have /IHn : sorted ltn (rcons (rcons s sn) n).
-        case: s Hsort => [_ /= | s0 s]; first by rewrite andbT.
-        rewrite !rcons_cons /=.
-        by rewrite (rcons_path ltn s0 (rcons s sn) n) /= last_rcons Hsn => ->.
+    case: (ltnP sn n) => Hsn.
+    + move/sorted_rconsK => Hsort.
+      have:= Hsn; rewrite -{1}(last_rcons n s sn) => /(sorted_rcons Hsort)/IHn.
       move/subseq_trans; apply.
       rewrite -addn1 iota_add add0n cats1.
       exact: subseq_rcons.
-    + have H : sn = n.
+    + move=> Hsort; have H : sn = n.
         apply anti_leq; rewrite Hsn andbT.
         move: Hsort.
-        case: s => [/= /andP []| s0 s]/=; first by rewrite ltnS.
-        by rewrite rcons_path /= last_rcons ltnS => /andP [].
+        rewrite -!cats1 -catA => /sorted_catR => /= /andP [].
+        by rewrite ltnS.
       subst sn.
       rewrite -addn1 iota_add add0n /= cats1.
       rewrite -subseq_rcons_eq; apply IHn.
-      case: s Hsort => [//= | s0 s].
-      by rewrite !rcons_cons /= rcons_path => /andP [].
-  - move=> Hsubs.
-    apply: (subseq_sorted ltn_trans (s2 := (iota 0 n.+1))).
-    + by rewrite -addn1 iota_add add0n /= cats1 -subseq_rcons_eq.
-    + exact: iota_ltn_sorted.
+      exact: (sorted_rconsK Hsort).
 Qed.

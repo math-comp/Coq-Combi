@@ -79,9 +79,9 @@ Proof. by rewrite /al_length /leg_length addnC => /conj_partK ->. Qed.
 Lemma arm_length_ler sh r c j :
   is_part sh -> r < j -> is_in_shape sh j c -> arm_length sh j c <= arm_length sh r c.
 Proof.
-  rewrite /al_length /is_in_shape /leg_length /arm_length => /is_part_ijP [] _ Hpart Hr Hc.
-  have Hshjr := Hpart _ _ (ltnW Hr).
-  rewrite -ltnS !prednK; first by apply leq_sub2r.
+  rewrite /al_length /is_in_shape /leg_length /arm_length=> /is_part_ijP [] _ Hpart Hr Hc.
+  move/(_ _ _ (ltnW Hr)): Hpart => Hshjr.
+  rewrite -ltnS !prednK; first exact: leq_sub2r.
   - rewrite subn_gt0; exact: leq_trans Hc Hshjr.
   - rewrite subn_gt0; exact: Hc.
 Qed.
@@ -90,9 +90,9 @@ Lemma arm_length_ltl sh r c j :
   is_part sh -> c < j -> is_in_shape sh r j -> arm_length sh r j < arm_length sh r c.
 Proof.
   rewrite /al_length /is_in_shape /leg_length /arm_length => /is_part_ijP [] _ Hpart Hc Hr.
-  have Hshjr := Hpart _ _ (ltnW Hr).
+  move/(_ _ _ (ltnW Hr)): Hpart => Hshjr.
   have Hcr := ltn_trans Hc Hr.
-  rewrite -ltnS !prednK; first by apply ltn_sub2l.
+  rewrite -ltnS !prednK; first exact: ltn_sub2l.
   - rewrite subn_gt0; exact: Hcr.
   - rewrite subn_gt0; exact: Hr.
 Qed.
@@ -179,10 +179,10 @@ Proof.
   rewrite /is_corner_box /is_rem_corner => Hr Hc /andP [] Hcorn /eqP Hv.
   subst v.
   rewrite /arm_length.
-  have {Hpart Hr} := Hpart _ _ Hr.
+  move/(_ _ _ Hr): Hpart => {Hr}.
   move: Hc Hcorn; case: (nth 0 sh u) => [//= | pu].
   rewrite [_.+1.-1]/= => Hcpu; rewrite (subSn Hcpu) => _ Hpu.
-  have := leq_ltn_trans Hcpu Hpu.
+  have:= leq_ltn_trans Hcpu Hpu.
   case: (nth 0 sh r) Hpu => [//= | pr].
   rewrite !ltnS => Hpu Hcpr.
   by rewrite !subSn //= addnC addnBA // subnK.
@@ -213,7 +213,7 @@ Lemma arm_length_incr_nth_row sh r c :
 Proof.
   rewrite /is_in_shape /arm_length nth_incr_nth eq_refl add1n => Hc.
   rewrite prednK; last by rewrite subn_gt0.
-  by rewrite subSn; last by apply ltnW.
+  by rewrite subSn; last exact: ltnW.
 Qed.
 
 Lemma arm_length_incr_nth_nrow sh r c i :
@@ -272,8 +272,8 @@ Lemma prod_al_length_quot_row p Alpha Beta :
   \prod_(0 <= j < Beta) (1 + (al_length p Alpha j)%:Q^-1).
 Proof.
   move=> Hpart Hcorn.
-  have := Hcorn => /andP [] Hcrn /eqP HBeta.
-  have:= (decr_nthK Hpart Hcrn); set p' := decr_nth p Alpha => Hp.
+  have:= Hcorn => /andP [] Hcrn /eqP HBeta.
+  have:= decr_nthK Hpart Hcrn; set p' := decr_nth p Alpha => Hp.
   rewrite big_seq_cond.
   rewrite (eq_bigr (fun i => (1 + (al_length p Alpha i.2)%:Q^-1))); first last.
     move=> [r c] /= /andP []; rewrite mem_enum_box_in unfold_in /= => Hin /eqP Hr.
@@ -281,8 +281,8 @@ Proof.
     rewrite -Hp al_length_incr_nth_row; first last.
     - exact: Hin.
     - rewrite /p'.
-    - by apply add_corner_decr_nth.
-    - by apply is_part_decr_nth.
+    - exact: add_corner_decr_nth.
+    - exact: is_part_decr_nth.
     move: (al_length p' Alpha c) => n.
     have Hn : n.+1%:Q != 0 by rewrite intr_eq0.
     rewrite -{3}(divff Hn) -{3}div1r -mulrDl; congr (_ / _).
@@ -319,7 +319,7 @@ Section FindCorner.
 
 Variable p : intpart.
 
-Fact is_part_p : is_part p. Proof. by apply intpartP. Qed.
+Fact is_part_p : is_part p. Proof. exact: intpartP. Qed.
 Hint Resolve is_part_p.
 
 (* Hook Seq ****************************************)
@@ -374,16 +374,7 @@ Qed.
 Lemma in_hook_seqP (r c : nat) (k l : nat) :
    (k,l) \in (hook_seq r c) = is_in_hook r c k l.
 Proof.
-  apply/(sameP idP); apply(iffP idP).
-  - rewrite /is_in_hook => /orP [] /and3P [] /eqP <-.
-    + move => {k} Hc Hr.
-      apply/mapP; exists (inr l); last by [].
-      rewrite mem_cat; apply/orP; right; rewrite mem_map; last by move=> u v [].
-      by rewrite mem_iota Hc /= iota_hookE.
-    + move => {l} Hr Hc.
-      apply/mapP; exists (inl k); last by [].
-      rewrite mem_cat; apply/orP; left; rewrite mem_map; last by move=> u v [].
-      by rewrite mem_iota Hr /= iota_hookE.
+  apply/idP/idP.
   - move=> /mapP [] [] x; rewrite mem_cat => /orP [] /=.
     + rewrite mem_map; last by move=> u v [].
       rewrite mem_iota => /andP [] Hrx Hxr /= [] -> -> {k l}.
@@ -395,6 +386,15 @@ Proof.
       rewrite mem_iota => /andP [] Hcx Hxc /= [] -> -> {k l}.
       rewrite /is_in_hook; apply/orP; left.
       by rewrite eq_refl Hcx /= -(iota_hookE _ Hcx).
+  - rewrite /is_in_hook => /orP [] /and3P [] /eqP <-.
+    + move => {k} Hc Hr.
+      apply/mapP; exists (inr l); last by [].
+      rewrite mem_cat; apply/orP; right; rewrite mem_map; last by move=> u v [].
+      by rewrite mem_iota Hc /= iota_hookE.
+    + move => {l} Hr Hc.
+      apply/mapP; exists (inl k); last by [].
+      rewrite mem_cat; apply/orP; left; rewrite mem_map; last by move=> u v [].
+      by rewrite mem_iota Hr /= iota_hookE.
 Qed.
 
 Lemma hook_seq_empty (r c : nat) :
@@ -446,7 +446,7 @@ Proof.
   - subst a => {IHA}.
     elim: A A0 Hpart => [//= | A1 A IHA] A0 /= /andP [] /ltnW H01 /IHA{IHA}.
     exact: leq_trans H01.
-  - have {IHA Hpart} := IHA _ (path_sorted Hpart) Ha.
+  - move/(_ _ (path_sorted Hpart) Ha): IHA => {Hpart}.
     by case: A Ha.
 Qed.
 
@@ -520,7 +520,10 @@ Lemma is_trace_corner_nil (a b : nat) (A B : seq nat) :
   (size (hook_next_seq a b) == 0) = (A == [::]) && (B == [::]).
 Proof.
   rewrite size_hook_next_seq.
-  move=> Htrace; apply (sameP idP); apply (iffP idP).
+  move=> Htrace; apply/idP/idP.
+  - move=> /eqP Hal.
+    have:= size_tracel Htrace; have:= size_tracer Htrace.
+    by rewrite Hal !leqn0 => /nilP -> /nilP ->.
   - move=> /andP [] /eqP HA /eqP HB; subst.
     move: Htrace => /and5P [] _ _ _ _ /=.
     rewrite /is_corner_box /al_length /leg_length /arm_length /is_rem_corner.
@@ -533,9 +536,6 @@ Proof.
     apply/eqP; rewrite nth_conjE //.
     move: Ha; case: (nth 0 p a) => [//= | pa].
     by rewrite !ltnS => -> /=.
-  - move=> /eqP Hal.
-    have := size_tracel Htrace; have := size_tracer Htrace.
-    by rewrite Hal !leqn0 => /nilP -> /nilP ->.
 Qed.
 
 Lemma al_length_last_rectangle (a b : nat) (A B : seq nat) :
@@ -606,17 +606,17 @@ Lemma enum_traceP (Alpha Beta : nat) :
     [&& (is_trace A B), (last 0 A == Alpha) & (last 0 B == Beta)].
 Proof.
   move=> Hcorn A B.
-  apply (sameP idP); apply (iffP idP).
-  - move=> /and3P [] Htrace /eqP HlA /eqP HlB.
-    apply/allpairsP; exists (A, B) => /=; split.
-    + rewrite -HlA; exact: (trace_seqlP Htrace).
-    + rewrite -HlB; exact: (trace_seqrP Htrace).
-    + by [].
+  apply/idP/idP.
   - move=> /allpairsP [] [eA eB] /= [] HA HB [] H1 H2; subst eA eB.
     apply/and3P; split.
     + exact: (trace_corner_box Hcorn).
     + move: HA => /mapP [] A' _ ->; by rewrite last_rcons.
     + move: HB => /mapP [] B' _ ->; by rewrite last_rcons.
+  - move=> /and3P [] Htrace /eqP HlA /eqP HlB.
+    apply/allpairsP; exists (A, B) => /=; split.
+    + rewrite -HlA; exact: (trace_seqlP Htrace).
+    + rewrite -HlB; exact: (trace_seqrP Htrace).
+    + by [].
 Qed.
 
 
@@ -775,7 +775,7 @@ Proof.
         rewrite mem_iota (iota_hookE _ Ha) Ha /=.
         have Hh : (head O A \in a :: A).
           move: HA; case A => [//= | n l] _; by rewrite !inE eq_refl orbT.
-        have:= (is_trace_in_in_shape Ht Hh (mem_head _ _)).
+        have:= is_trace_in_in_shape Ht Hh (mem_head _ _).
         case: p => /= part Hpart.
         by rewrite is_in_conj_part.
 Qed.
@@ -892,7 +892,7 @@ Proof.
     have Blen0 : Blen != O.
       rewrite /Blen /lB -size_hook_next_seq.
       by rewrite (is_trace_corner_nil (is_trace_lastr Htrace)).
-    have := @addf_div rat_fieldType 1 Alen%:Q 1 Blen%:~R.
+    have:= @addf_div rat_fieldType 1 Alen%:Q 1 Blen%:~R.
     rewrite addrC !div1r !mul1r => ->; rewrite ?intr_eq0 ?eqz_nat //.
     rewrite addrC [LHS]mulrC mulrA mulVf; first by rewrite mul1r invfM mulrC.
     rewrite -mulrzDl /= intr_eq0 eqz_nat.
@@ -1020,7 +1020,7 @@ Proof.
     exact: flatten_coordP.
   rewrite -[RHS]addr0; congr (_ + _).
   rewrite big_filter_cond; apply big_pred0 => i.
-  have:= (reshape_coordK p i); case: (reshape_coord p i) => [r c] <-.
+  have:= reshape_coordK p i; case: (reshape_coord p i) => [r c] <-.
   rewrite /starts_at.
   case: (boolP ((head 0 A) == r)%N) => //= /eqP <-.
   case: (boolP ((head 0 B) == c)%N) => //= /eqP <-.
@@ -1054,7 +1054,7 @@ End Formule.
 Let p' := decr_nth p Alpha.
 
 Fact Hcrn : is_rem_corner p Alpha.
-Proof. by have := Hcorn => /andP [] Hcrn /eqP HBeta. Qed.
+Proof. by have:= Hcorn => /andP [] Hcrn /eqP HBeta. Qed.
 Hint Resolve Hcrn.
 
 Fact Hp : incr_nth p' Alpha = p. Proof. exact: decr_nthK. Qed.
@@ -1063,7 +1063,7 @@ Let Hpartc' : is_part (conj_part p') := is_part_conj Hpart'.
 Hint Resolve Hpart' Hpartc'.
 
 Fact HBeta : Beta = (nth O p Alpha).-1.
-Proof. by have := Hcorn => /andP [] Hcrn /eqP HBeta. Qed.
+Proof. by have:= Hcorn => /andP [] Hcrn /eqP HBeta. Qed.
 Fact HBeta' : Beta = (nth O p' Alpha).
 Proof. by rewrite HBeta -Hp nth_incr_nth eq_refl add1n. Qed.
 
@@ -1117,8 +1117,7 @@ Proof.
     + rewrite (map_inj_uniq swap_inj).
       apply filter_uniq; exact: enum_box_in_uniq.
     + move=> [r c] /=.
-      have {2}-> : (r, c) = swap (c, r) by [].
-      rewrite (mem_map swap_inj) !mem_filter /=.
+      rewrite -/(swap (c, r)) (mem_map swap_inj) !mem_filter /=.
       rewrite !mem_enum_box_in !unfold_in /= /is_in_shape -!/(is_in_shape _ _ _).
       rewrite -is_in_conj_part //.
       case: (boolP (is_in_shape p' r c)) => Hrc; last by rewrite !andbF.
@@ -1251,7 +1250,7 @@ Lemma HLprod_nat (p : intpart) : #|stdtabsh_finType p| * (F_deno p) = (sumn p)`!
 Proof.
   apply /eqP; rewrite -eqz_nat PoszM.
   rewrite -(@eqr_int rat_numDomainType) intrM /=.
-  have /= := (HookLengthFormula_rat p).
+  have /= := HookLengthFormula_rat p.
   rewrite /int_to_rat /= => ->.
   apply/eqP; rewrite /HLF -mulrA -[RHS]mulr1; congr (_ * _)%R.
   rewrite mulrC divff // intr_eq0.
