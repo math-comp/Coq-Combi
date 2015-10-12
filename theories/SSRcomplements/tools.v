@@ -69,7 +69,7 @@ Lemma head_any s a b : s != [::] -> head a s = head b s.
 Proof. by elim: s. Qed.
 
 Lemma nth_any s a b i : i < size s -> nth a s i = nth b s i.
-Proof. elim: s i => //= s0 s IHs [//=|i] Hsize /=. by apply: IHs. Qed.
+Proof. elim: s i => //= s0 s IHs [//=|i] Hsize /=. exact: IHs. Qed.
 
 Lemma rcons_set_nth a s l : set_nth a s (size s) l = rcons s l.
 Proof. elim: s => [//=| l0 s IHs]. by rewrite rcons_cons -IHs /=. Qed.
@@ -170,7 +170,7 @@ Lemma sumnE s : \sum_(i <- s) i = sumn s.
 Proof. by rewrite sumn_mapE map_id. Qed.
 
 Lemma perm_sumn l1 l2 : perm_eq l1 l2 -> sumn l1 = sumn l2.
-Proof. rewrite -!sumnE; by apply eq_big_perm. Qed.
+Proof. rewrite -!sumnE; exact: eq_big_perm. Qed.
 
 Lemma sumn_take r s : sumn (take r s) = \sum_(0 <= i < r) nth 0 s i.
 Proof.
@@ -242,7 +242,7 @@ Proof. elim: t => [//= | t0 t IHt /=]. by rewrite count_cat IHt. Qed.
 
 Lemma map_flatten (T1 T2 : eqType) (f : T1 -> T2) (t : seq (seq T1)) :
   map f (flatten t) = flatten (map (map f) t).
-Proof. elim: t => [//= | t0 t /= <-]; by apply map_cat. Qed.
+Proof. elim: t => [//= | t0 t /= <-]; exact: map_cat. Qed.
 
 Lemma filter_flatten t (P : pred T) :
   filter P (flatten t) = flatten [seq filter P i | i <- t].
@@ -250,7 +250,7 @@ Proof. elim: t => [//= | t0 t /= <-]; exact: filter_cat. Qed.
 
 Lemma sumn_flatten (t : seq (seq nat)) :
   sumn (flatten t) = sumn (map sumn t).
-Proof. elim: t => [//= | t0 t /= <-]; by apply sumn_cat. Qed.
+Proof. elim: t => [//= | t0 t /= <-]; exact: sumn_cat. Qed.
 
 
 Lemma nth_shape t i : nth 0 (shape t) i = size (nth [::] t i).
@@ -462,7 +462,7 @@ Lemma perm_eq_rev (T : eqType) (u : seq T) : perm_eq u (rev u).
 Proof.
   elim: u => [//= | u0 u]; rewrite rev_cons -(perm_cons u0).
   move /perm_eq_trans; apply.
-  rewrite perm_eq_sym; apply/perm_eqlP; by apply: perm_rcons.
+  rewrite perm_eq_sym; apply/perm_eqlP; exact: perm_rcons.
 Qed.
 
 Lemma filter_perm_eq (T : eqType) (u v : seq T) P :
@@ -470,7 +470,7 @@ Lemma filter_perm_eq (T : eqType) (u v : seq T) P :
 Proof.
   move=> /perm_eqP Hcount.
   apply/perm_eqP => Q; rewrite !count_filter.
-  by apply Hcount.
+  exact: Hcount.
 Qed.
 
 Lemma all_perm_eq (T : eqType) (u v : seq T) P : perm_eq u v -> all P u -> all P v.

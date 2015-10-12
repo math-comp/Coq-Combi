@@ -53,8 +53,8 @@ Lemma seq_of_stpshK p : (stpsh_of_seq (stpshP p)) = p.
 Proof.
   apply/eqP; rewrite /stpsh_of_seq /eq_op /=.
   apply/andP; split; case: p => [[p1 H1] [p2 H2]] /=; apply /eqP => /=.
-  - case: (elimTF _ _) => /= H _; by apply val_inj.
-  - case: (elimTF _ _) => /= _ H; by apply val_inj.
+  - case: (elimTF _ _) => /= H _; exact: val_inj.
+  - case: (elimTF _ _) => /= _ H; exact: val_inj.
 Qed.
 
 Lemma stpsh_of_seqK p (Hp : is_stdtab_pair_of_shape sh p) :
@@ -145,8 +145,7 @@ Qed.
 
 Lemma RSstdmapP (s : stdwordn n) : is_stdtab_pair_of_n n (RStabmap s).
 Proof.
-  have := RStabmap_spec s.
-  have := RStabmapE s.
+  have:= RStabmap_spec s; have:= RStabmapE s.
   rewrite /is_stdtab_pair_of_n /is_RStabpair /=.
   move H : (RStabmap s) => [p q] /= HRS /and3P [] Hp Hq /eqP Hsh.
   rewrite /size_tab -Hsh Hq eq_refl /= !andbT.
@@ -164,30 +163,26 @@ Definition rspair_stpn (p : stpn) : (rstabpair nat_ordType) := RSTabPair (rspair
 Lemma RSstdmap_invP (p : stpn) : is_std_of_n n (RStabinv (rspair_stpn p)).
 Proof.
   have /= := RStabinvK (rspair_stpn p).
-  rewrite /RStab /= => Hcan.
-  have := erefl (val (rspair_stpn p)).
-  rewrite -{1}Hcan {Hcan} /= => Hp.
+  rewrite /RStab /= => /(congr1 (@val _ _ _)) => /= Hp.
   rewrite /is_std_of_n /=; apply/andP; split.
-  - rewrite -RSstdE -RStabmapE Hp {Hp}.
+  - rewrite -RSstdE -RStabmapE {}Hp.
     case: p => [[p q]]; by rewrite /is_stdtab_pair_of_n /= => /andP [] /andP [].
-  - rewrite -size_RS -RStabmapE Hp {Hp}.
+  - rewrite -size_RS -RStabmapE {}Hp.
     case: p => [[p q]]; by rewrite /is_stdtab_pair_of_n /= => /andP [] /andP [].
 Qed.
 Definition RSstdinv (p : stpn) : stdwordn n := StdWordN (RSstdmap_invP p).
 
 Lemma RSstdinvK : cancel RSstdinv RSstd.
 Proof.
-  move=> pq; have := RStabinvK (rspair_stpn pq).
-  rewrite /RStab /= => Hcan.
-  have := erefl (val (rspair_stpn pq)).
-  rewrite -{1}Hcan {Hcan} /= => Hpq.
+  move=> pq; have:= RStabinvK (rspair_stpn pq).
+  rewrite /RStab /= => /(congr1 (@val _ _ _)) => /= Hpq.
   move: pq Hpq => [[p q]] Hpq; rewrite /RSstd /RSstdinv /= => H.
-  by apply val_inj => /=.
+  exact: val_inj.
 Qed.
 Lemma RSstdK : cancel RSstd RSstdinv.
 Proof.
   move=> s /=; apply val_inj; rewrite /= -(RStabK s).
-  congr (RStabinv _); by apply val_inj => /=.
+  congr (RStabinv _); exact: val_inj.
 Qed.
 Lemma bijRSstd : bijective RSstd.
 Proof. split with (g := RSstdinv). exact: RSstdK. exact: RSstdinvK. Qed.
@@ -212,7 +207,7 @@ Proof.
       rewrite -[LHS]mulr1 -{2}(@divff _ (F_deno p)%:Q); first last.
         rewrite intr_eq0 eqz_nat /=; exact: (F_deno_non0 p).
       rewrite !mulrA -intrM -PoszM.
-      have := divF_deno p.
+      have:= divF_deno p.
       by rewrite intpartn_sumn dvdn_eq => /eqP ->.
     by rewrite -expr2 expr_div_n mulrC mul1r.
   rewrite -!(big_morph intr (@intrD _) (id2 := 0)) //=.

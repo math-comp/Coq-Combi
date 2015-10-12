@@ -43,7 +43,7 @@ Proof.
   move: Hx; rewrite /ksupp unfold_in => /and3P [] Hcard _ /forallP Hall.
   case Hc: #|x| => [/= | c ].
     move: Hc => /eqP; rewrite cards_eq0 => /eqP ->.
-    exists [::]; repeat split; first by apply sub0seq.
+    exists [::]; repeat split; first exact: sub0seq.
     by rewrite /cover big_set0 cards0.
   have {Hcard Hc} : #|x| == 1.
     move: Hcard; rewrite Hc.
@@ -52,8 +52,8 @@ Proof.
   move/(_ x0) : Hall; rewrite inE eq_refl /=.
   set sol := extractpred _ _ => Hsol.
   exists sol; repeat split.
-  + by apply extsubsm.
-  + exact Hsol.
+  + exact: extsubsm.
+  + exact: Hsol.
   + rewrite /sol size_extract.
     by rewrite /= /cover big_set1.
 Qed.
@@ -68,8 +68,7 @@ Proof.
     have Hpart := is_part_sht (is_tableau_RS s).
     apply/orP; move: Hsize; rewrite -(size_RS s) /size_tab.
     apply contraLR; rewrite negb_or -!leqNgt => /andP [] Hn Hm.
-    apply (leq_trans (part_sumn_rectangle Hpart)).
-    by apply leq_mul.
+    apply (leq_trans (part_sumn_rectangle Hpart)); exact: leq_mul.
   move=> [] Hltn.
   - right => {m}.
     have := Greene_col_RS 1 s.

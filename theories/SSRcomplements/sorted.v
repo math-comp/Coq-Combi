@@ -115,7 +115,7 @@ Section Sorted.
     split => H.
     - move=> i Hi.
       have : i <= i.+1 < size r by rewrite Hi andbT.
-      by apply: H.
+      exact: H.
     - move=> i j; move Hdiff : (j - i) => diff.
       elim: diff i j Hdiff => [| diff IHdiff] i j /=.
       + move/eqP; rewrite -/(leq j i) => H1 /andP [] H2 Hj.
@@ -123,7 +123,7 @@ Section Sorted.
       + move=> Hdiff => /andP [] _ Hj.
         have Hiltj : i < j by rewrite -subn_gt0 Hdiff.
         apply: (Rtrans (y := nth Z r i.+1)).
-        * apply: H; by apply: (leq_ltn_trans Hiltj).
+        * apply: H; exact: (leq_ltn_trans Hiltj).
         * apply: IHdiff => //=; first by rewrite subnS Hdiff.
           by rewrite Hiltj Hj.
   Qed.
@@ -142,8 +142,8 @@ Section Sorted.
 
   Lemma head_leq_last_sorted l r : sorted (l :: r) -> (l <=R last l r).
   Proof.
-    elim: r l => [//=| t0 r IHr] l /= /andP [] Hl.
-    move/IHr {IHr}; by apply: (Rtrans Hl).
+    elim: r l => [//=| t0 r IHr] l /= /andP [] Hl /IHr {IHr}.
+    exact: Rtrans Hl.
   Qed.
 
   Hypothesis Hanti : antisymmetric R.
@@ -172,7 +172,7 @@ Proof.
     rewrite (_ : val a = head 0 (map val (enum 'I_N))); last by rewrite Henum.
     rewrite -behead_map val_enum_ord.
     case: N {a l Henum} => [//= | N] /=.
-    by apply: (iota_sorted 0 N.+1).
+    exact: (iota_sorted 0 N.+1).
   - by [].
   - by rewrite (eq_has (a2 := pred0)); first by rewrite has_pred0.
 Qed.
