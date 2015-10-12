@@ -488,7 +488,7 @@ Section Partition.
   Proof.
     elim: n sh => [//= | n IHn]; first by case.
     case => [/= | s0 s /=].
-    + rewrite (_ : sumn (nseq n 1) = n); first last.
+    + have -> : sumn (nseq n 1) = n.
         elim: n {IHn} => //= n ->; by rewrite add1n.
       by rewrite add0n add1n.
     + by rewrite IHn addnA addnS !addSn.
@@ -635,7 +635,7 @@ Section Partition.
       case: sh Hpart (part_head_non0 Hpart) => [//= | s0 sh] /= /andP [] Hs0 Hpart Hs0n0.
       apply/orP; right.
       rewrite !nth_incr_first_n ltnn.
-      rewrite (_ : s0.-1 < s0); last by move: Hs0n0; case s0.
+      have -> : s0.-1 < s0 by move: Hs0n0; case s0.
       rewrite ltnS {Hs0}.
       case: s0 Hs0n0 => [//= | s0] _.
       move/is_part_conj/is_partP: Hpart => [] _; by apply.

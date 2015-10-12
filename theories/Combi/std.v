@@ -322,7 +322,7 @@ Proof.
     case (ltnP (posbig s).+1 (size s)) => Hpos; first by rewrite Hpos.
     by rewrite ltnn.
   rewrite /LR size_take size_std_rec HposLR !Hif /std.
-  rewrite (_ : size (s0 :: rembig s) = size s); first last.
+  have -> : size (s0 :: rembig s) = size s.
     rewrite /= size_rembig; move: Hmax; by case s.
   rewrite -{1}[std_rec _ _](cat_take_drop (size LR)) allLtn_catE => /andP [] H1 ->.
   rewrite andbT; exact: allLtnW.
@@ -489,11 +489,11 @@ Proof.
   - rewrite Hij /=; apply: (ltn_trans Hj).
     move: Hj; by case (size u).
   - rewrite (leq_trans Hij (leqnSn _)) /=.
-    rewrite (_ : (size u) = (size u).-1.+1); first by rewrite ltnS.
+    suff -> : (size u) = (size u).-1.+1 by rewrite ltnS.
     by move: Hj; rewrite -ltnS; case (size u).
   - exfalso; have:= leq_trans (leq_trans Hjpos Hipos) Hij; by rewrite ltnn.
   - rewrite ltnS Hij /=.
-    rewrite (_ : (size u) = (size u).-1.+1); first by rewrite ltnS.
+    suff -> : (size u) = (size u).-1.+1 by rewrite ltnS.
     by move: Hj; rewrite -ltnS; case (size u).
 Qed.
 

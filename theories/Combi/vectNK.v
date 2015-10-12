@@ -150,7 +150,7 @@ Definition cut3 s : seq ((seq T) * (seq T) * (seq T)) := [seq match3 ss | ss <- 
 
 Lemma cat3_equiv_cut3 s a b c : s == a ++ b ++ c <-> (a, b, c) \in cut3 s.
 Proof.
-  rewrite (_ : (a ++ b ++ c) = flatten [:: a; b; c]); last by rewrite /= cats0.
+  have -> : (a ++ b ++ c) = flatten [:: a; b; c] by rewrite /= cats0.
   rewrite flatten_equiv_cut_k /cut3; split.
   - move=> H; apply/mapP; by exists [:: a; b; c].
   - move=> /mapP [] t.

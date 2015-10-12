@@ -89,7 +89,7 @@ Proof.
   + move=> j Hi.
     rewrite nth_incr_nth (nth_map [::]) /=; last by move: Hi; rewrite size_map.
     rewrite nth_set_nth /= eq_sym.
-    rewrite (_ : nth 0 [seq size i | i <- t] j = size (nth [::] t j)); first last.
+    have -> : nth 0 [seq size i | i <- t] j = size (nth [::] t j).
       case (ltnP j (size t)) => Hcase.
       * by rewrite (nth_map [::] _ _ Hcase).
       * by rewrite (nth_default _ Hcase) nth_default; last by rewrite size_map.
@@ -325,7 +325,7 @@ Lemma std_of_yam y : is_std (to_word (stdtab_of_yam y)).
 Proof.
   rewrite /is_std size_to_word size_stdtab_of_yam.
   elim: y => [//= | y0 y IHy].
-  rewrite (_ : iota 0 (size (y0 :: y)) = rcons (iota 0 (size y)) (size y)); first last.
+  have -> : iota 0 (size (y0 :: y)) = rcons (iota 0 (size y)) (size y).
     rewrite [size (y0 :: y)]/= -addn1 iota_add add0n /=.
     exact: cats1.
   apply: (perm_eq_trans (perm_eq_append_nth _ _ _)).
@@ -359,7 +359,7 @@ Proof.
       apply/dominateP; split; rewrite size_rcons; first by [].
       move=> i Hi; rewrite nth_rcons; case (ltnP i (size T1)) => Hi1.
       * exact: Hdom.
-      * rewrite (_ : i == size T1); last by rewrite eqn_leq Hi1 andbT -ltnS.
+      * have -> : i == size T1 by rewrite eqn_leq Hi1 andbT -ltnS.
         move: Hall0 => /allP Hall0.
         have /Hall0 /= := (mem_nth (inhabitant nat_ordType) (leq_trans Hi Hsize)).
         by rewrite ltnXnatE.

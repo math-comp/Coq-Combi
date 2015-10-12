@@ -500,8 +500,7 @@ Section Dominate.
         by rewrite size_take Hsize /= bad_if_leq; last exact: leq_addl.
       move/(shape_skew_reshape (hb_strip_included Hstrip)).
       set sh := skew_reshape _ _ _ => Hshape.
-      rewrite (_ : size (head [::] sh) = head 0 (shape sh));
-        last by rewrite /shape; case sh.
+      have -> : size (head [::] sh) = head 0 (shape sh) by rewrite /shape; case sh.
       rewrite Hshape {IHinn Hsize Hrow sh Hshape Hstrip}.
       case: inn => [| inn1 inn] /=; first by rewrite subn0.
       case: out Hhead0 {Hpartout} => [//= | out1 out]/= H.
@@ -673,8 +672,7 @@ Proof.
   elim: t => [//= | t0 t /= IHt] /and4P [] Hnnil Hrow0 Hdom Htab.
   case H: [seq x <- t0 | (x < n)%Ord] => [//= | f0 f] /=.
   - rewrite (filter_leqX_first_row0 Htab Hdom H) {IHt}.
-    rewrite (_ : [seq r <- nseq (size t) [::] | r != [::]] = [::]);
-      last by elim: (size t).
+    have -> : [seq r <- nseq (size t) [::] | r != [::]] = [::] by elim: (size t).
     rewrite cat0s /= (filter_leqX_row n Hrow0) -!size_filter /= H /= drop0.
     congr (_ :: _).
     rewrite (filter_gtnX_first_row0 Htab Hdom H).
@@ -772,14 +770,12 @@ Proof.
   rewrite -/Z1 -/Z2 in Hinv.
   rewrite !nth_drop !ltnXNgeqX; apply contra.
   move : Hi1 Hi2; rewrite !size_drop !ltn_subRL => Hi2 Hi1.
-  rewrite (_ : nth Z1 _ _ = nth Z1 (u1 ++ v1) (s + i));
-    last by rewrite nth_cat Hi1.
-  rewrite (_ : nth Z2 _ _ = nth Z2 (u2 ++ v2) (s + i));
-    last by rewrite nth_cat Hi2.
-  rewrite (_ : nth Z1 v1 i = nth Z1 (u1 ++ v1) (size u1 + i));
-    last by rewrite nth_cat ltnNge leq_addr /= addKn.
-  rewrite (_ : nth Z2 v2 i = nth Z2 (u2 ++ v2) (size u2 + i));
-    last by rewrite nth_cat ltnNge leq_addr /= addKn.
+  have -> : nth Z1 u1 (s + i) = nth Z1 (u1 ++ v1) (s + i) by rewrite nth_cat Hi1.
+  have -> : nth Z2 u2 (s + i) = nth Z2 (u2 ++ v2) (s + i) by rewrite nth_cat Hi2.
+  have -> : nth Z1 v1 i = nth Z1 (u1 ++ v1) (size u1 + i)
+    by rewrite nth_cat ltnNge leq_addr /= addKn.
+  have -> : nth Z2 v2 i = nth Z2 (u2 ++ v2) (size u2 + i)
+    by rewrite nth_cat ltnNge leq_addr /= addKn.
   rewrite Hinv Hszu // {Hinv Z1 Z2}.
   rewrite leq_add2r ltn_add2l; apply/andP; split.
   apply ltnW; apply: (leq_ltn_trans _ Hi2); exact: leq_addr.
