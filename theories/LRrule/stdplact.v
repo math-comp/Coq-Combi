@@ -397,7 +397,7 @@ Proof.
   have Hszt : size t < size (rcons t tn) by rewrite size_rcons.
   have:= linvseq_ltn_szt Hts Hszt; rewrite nth_rcons ltnn eq_refl (size_invseq Hinv) => Htn.
   have:= invseq_nthE Hinv Hpos Hszt.
-  rewrite (nth_any _ (inhabitant _) Hpos) nth_posbig.
+  rewrite (set_nth_default (inhabitant _) _ Hpos) nth_posbig.
   rewrite nth_rcons ltnn eq_refl => ->.
   rewrite (std_max (invseq_is_std Hinv)).
   move: Hinv => /size_invseq; rewrite size_rcons /= => /eqP; by rewrite eqSS => /eqP.
@@ -409,7 +409,7 @@ Proof.
   case: s => [//= | s0 s] Hstd Hi Hipos.
   rewrite [nth _ _ _ < _]ltn_neqAle -ltnS; apply/andP; split.
   - rewrite /= -(std_max Hstd) -(nth_posbig s0 s).
-    rewrite (nth_any x (inhabitant nat_ordType) Hi).
+    rewrite (set_nth_default (inhabitant _) x Hi).
     by rewrite (nth_uniq _ Hi (posbig_size_cons s0 s) (std_uniq Hstd)).
   - rewrite -[(size (s0 :: s)).-1.+1]/(size (s0 :: s)).
     rewrite -(mem_std _ Hstd); exact: mem_nth.
@@ -422,7 +422,7 @@ Proof.
   rewrite (std_rcons_shiftinv (invseq_is_std (invseq_sym Hinv))).
   have := Hinv; rewrite /invseq => /andP [] /linvseqP Hst /linvseqP Hts.
   apply/linvseqP => i Hi.
-  rewrite (nth_any _ (inhabitant nat_ordType) Hi) -nth_rembig.
+  rewrite (set_nth_default (inhabitant _) _ Hi) -nth_rembig.
   rewrite (nth_map (size (s0 :: s))); first last.
     set si := shift_pos _ _; have Hsipos : si != posbig (s0 :: s).
       rewrite /si /shift_pos; case: (ltnP i (posbig (s0 :: s))).
@@ -440,7 +440,7 @@ Proof.
     move: Hi; rewrite /shift_pos size_rembig /=.
     case (i < tn); last by [].
     move/leq_trans; by apply.
-  rewrite (nth_any (inhabitant _) (size (rcons t tn)) Hpos).
+  rewrite (set_nth_default (size (rcons t tn)) (inhabitant _) Hpos).
   move: (Hst _ Hpos); rewrite nth_rcons.
   rewrite (_ : nth _ _ _ < size t); first by move ->; rewrite shift_posK.
   have -> : size t = (size (s0 :: s)).-1 by rewrite (size_invseq Hinv) size_rcons.

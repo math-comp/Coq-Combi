@@ -298,7 +298,7 @@ Proof.
 Qed.
 
 Lemma pos01F : (pos0 == pos1) = false.
-Proof. by rewrite /eq_op /= ieqi1F. Qed.
+Proof. by rewrite /eq_op /= ltn_eqF. Qed.
 
 Definition swap i : 'I_(size x) :=
   if i == pos0 then pos1 else if i == pos1 then pos0 else i.
