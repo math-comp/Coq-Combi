@@ -88,8 +88,8 @@ Lemma mu_pos_cond (A : Type) (m : distr A) (f : A -> bool) (g : A -> rat) :
   mu m (fun x => (g x)) = mu m (fun x => ((f x)%:Q * g x)).
 Proof.
   move=> Hg H.
-  have H0g x : 0 <= g x by have := Hg x => /andP [].
-  have Hg1 x : g x <= 1 by have := Hg x => /andP [].
+  have H0g x : 0 <= g x by have:= Hg x => /andP [].
+  have Hg1 x : g x <= 1 by have:= Hg x => /andP [].
   apply ler_asym; apply/andP; split.
   - rewrite -[X in (_ <= X)]addr0.
     have <- : (mu m) (fun x : A => ((~~ f x)%:Q * g x)) = 0.
