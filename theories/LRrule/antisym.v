@@ -245,47 +245,6 @@ Proof.
   by rewrite (perm_eq_mem (msuppN _)).
 Qed.
 
-Lemma notuniq_witnessE (T : eqType) (x0 : T) (s : seq T) :
-  [exists i : 'I_(size s),
-     [exists j : 'I_(size s), (i != j) && (nth x0 s i == nth x0 s j)]] =
-  ~~ uniq s.
-Proof.
-  rewrite -[LHS]negbK; congr (~~ _).
-  rewrite negb_exists; apply (sameP idP); apply (iffP idP).
-  - move=> Huniq; apply /forallP => [[i Hi]] /=.
-    rewrite negb_exists; apply /forallP => [[j Hj]].
-    rewrite negb_and -implybE; apply/implyP; apply contra => /=.
-    rewrite (nth_uniq _ Hi Hj Huniq) => /eqP /= Heq.
-    by apply/eqP/val_inj.
-  - elim : s => [//=| s0 s IHs] /forallP /= H.
-    rewrite {}IHs ?andbT.
-    + move/(_ (inord 0%N)): H; apply contra => Hin.
-      apply/existsP; exists (inord (index s0 s).+1); apply/andP; split.
-      * by rewrite /eq_op /= inordK // inordK // ltnS index_mem.
-      * by rewrite inordK //= inordK //= ?(nth_index _ Hin) // ltnS index_mem.
-    + apply/forallP => i.
-      move/(_ (inord i.+1)): H; apply contra => /existsP [] j /andP [] Hneq Hnth.
-      apply/existsP; exists (inord j.+1).
-      rewrite {1}/eq_op /=.
-      rewrite inordK /=; last exact: ltn_ord.
-      rewrite inordK /=; last exact: ltn_ord.
-      by rewrite eqSS Hneq Hnth.
-Qed.
-
-Lemma notuniq_witnessP (T : eqType) (x0 : T) (s : seq T) :
-  reflect (exists i j, [/\ i < size s, j < size s, i != j & nth x0 s i = nth x0 s j])
-  (~~ uniq s).
-Proof.
-  rewrite -(notuniq_witnessE x0); apply (iffP idP).
-  - move=> /existsP [[i Hi]] /existsP [[j Hj]].
-    rewrite {1}/eq_op /= => /andP [] Hneq /eqP Hnth.
-    by exists i; exists j.
-  - move=> [] i [] j [] Hi Hj Hneq Hnth.
-    apply/existsP; exists (Ordinal Hi); apply/existsP; exists (Ordinal Hj).
-    by rewrite {1}/eq_op /= Hneq Hnth /=.
-Qed.
-
-
 
 Lemma mlead_antisym_sorted (p : {mpoly R[n]}) : p \is antisym ->
   forall (i j : 'I_n), i <= j -> (mlead p) j <= (mlead p) i.
@@ -386,14 +345,15 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
 Lemma isantisym_msupp_uniq (m : 'X_{1..n}) : m \in msupp p -> uniq m.
 Proof.
   rewrite mcoeff_msupp => Hsupp.
-  case: (boolP (uniq m)) => // /notuniq_witnessP H.
-  move/(_ 0%N): H => [] i [] j []; rewrite size_tuple => Hi Hj Hneq Hnth.
-  move/isantisymP/(_ (tperm (Ordinal Hi) (Ordinal Hj))) : Hpanti.
-  rewrite odd_tperm /eq_op /= Hneq expr1 scaleN1r.
+  case: (boolP (uniq m)) => // /(notuniq_witnessP 0%N).
+  move=> [] i [] j []; rewrite size_tuple => /andP [] Hi Hj Hnth.
+  move/isantisymP/(_ (tperm (Ordinal (ltn_trans Hi Hj)) (Ordinal Hj))) : Hpanti.
+  rewrite odd_tperm /eq_op /=.
+  rewrite (ltn_eqF Hi) expr1 scaleN1r.
   move/(congr1 (mcoeff m)); rewrite mcoeffN mcoeff_sym.
-  have -> : m#tperm (Ordinal Hi) (Ordinal Hj) = m.
+  have -> : m#tperm (Ordinal (ltn_trans Hi Hj)) (Ordinal Hj) = m.
     rewrite mnmP => k; rewrite mnmE.
-    case: (tpermP (Ordinal Hi) (Ordinal Hj) k) => [-> | -> |] //;
+    case: (tpermP _ _ k) => [-> | -> |] //;
     by rewrite !(mnm_nth 0) /= Hnth.
   move/eqP; rewrite -addr_eq0.
   rewrite -mulr2n -mulr_natr mulf_eq0.
