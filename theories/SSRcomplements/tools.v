@@ -474,6 +474,27 @@ Proof.
   by rewrite -Hperm => /Hall.
 Qed.
 
+(** ** Unicity related lemmas *)
+Lemma notuniq_witnessP (T : eqType) (x0 : T) (s : seq T) :
+  reflect (exists i j, i < j < size s /\ nth x0 s i = nth x0 s j)
+  (~~ uniq s).
+Proof.
+  apply (iffP idP).
+  - elim: s => [//= | s0 s IHs] /=.
+    rewrite negb_and => /orP [].
+    + rewrite negbK => Hin.
+      exists 0; exists (index s0 s).+1 => /=; split; first by rewrite ltnS index_mem.
+      by rewrite nth_index.
+    + move/IHs => {IHs} [] i [] j [] Hij Hnth.
+      by exists i.+1; exists j.+1; split; first by rewrite !ltnS.
+  - elim: s => [| s0 s IHs ] /= [] i [] j [] /andP [] //=.
+    rewrite negb_and negbK; case: i => [| i].
+    + case: j => [//= | j _]; rewrite ltnS /= => Hj ->; by rewrite mem_nth.
+    + case: j => [//= | j]; rewrite !ltnS /= => Hi Hj Hnth.
+      apply/orP; right; apply IHs.
+      exists i; exists j; by rewrite Hi Hj Hnth.
+Qed.
+
 
 (** ** Bigop lemmas *)
 Section BigInterv.
