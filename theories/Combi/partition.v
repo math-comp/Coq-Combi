@@ -91,7 +91,7 @@ Section Partition.
   Proof.
     apply: (iffP idP).
     - elim: sh => [ //= | sh0 sh IHsh] /= /andP [] Hhead Hpart.
-      move/(_ Hpart) : IHsh => [] [] Hlast Hi.
+      move/(_ Hpart) : IHsh => [] Hlast Hi.
       split; first by case: sh Hhead Hpart Hlast Hi => [/= | sh1 sh //=]; case sh0.
       case => [|i] /=; first by move: Hhead; case sh.
       exact (Hi i).
