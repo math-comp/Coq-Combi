@@ -34,13 +34,11 @@ Variable n : nat.
 Variable R : comRingType.
 
 
-Definition alternpol f : {mpoly R[n]} := \sum_(s : 'S_n) (-1) ^+ s *: msym s f.
-Definition rho := [multinom (n - 1 - i)%N | i < n].
 Definition mpart (s : seq nat) := [multinom (nth 0 s i)%N | i < n].
 
-
-Local Notation "''e_' k" := (@mesym _ _ k) (at level 8, k at level 2, format "''e_' k").
-Local Notation "''a_' k" := (alternpol 'X_[k])
+Local Notation rho := (rho n).
+Local Notation "''e_' k" := (@mesym n R k) (at level 8, k at level 2, format "''e_' k").
+Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
 
 Lemma alt_anti m : 'a_m \is antisym.
@@ -70,10 +68,8 @@ Qed.
 
 Lemma rho_uniq : uniq rho.
 Proof.
-  suff : perm_eq rho (iota 0 n).
-    move/perm_eq_uniq ->; exact: iota_uniq.
-  rewrite rho_iota perm_eq_sym.
-  exact: perm_eq_rev.
+  suff : perm_eq rho (iota 0 n) by move/perm_eq_uniq ->; exact: iota_uniq.
+  rewrite rho_iota perm_eq_sym; exact: perm_eq_rev.
 Qed.
 
 Lemma alt_uniq_non0 (m : 'X_{1..n}) : uniq m -> 'a_m != 0.
@@ -564,6 +560,15 @@ Proof.
   have Hi := ltn_ord (p i); by rewrite -ltnS (ltn_predK Hi).
 Qed.
 
+Corollary Vandet_vdmprodE : Vandet = vdmprod.
+Proof.
+  rewrite /Vandet Vandmx_antimE.
+  suff -> : antim [::] = antim (0%MM : 'X_{1..n}).
+    by rewrite -alt_detE add0m vdmprod_alt.
+  rewrite /antim -matrixP => i j; by rewrite !mxE nth_nil -mnm_nth mnm0E.
+Qed.
+
+(* TODO : Unused *)
 Lemma tperm_antim_xrow s i j :
  msym (tperm i j) (\det (antim s)) = \det (xrow i j (antim s)).
 Proof.
@@ -578,6 +583,7 @@ Proof.
   - by move/eqP ->; rewrite tpermK.
 Qed.
 
+(* TODO : Unused *)
 Lemma antimP s : \det (antim s) \is antisym.
 Proof.
   apply/isantisym_tpermP => i j.
@@ -586,9 +592,11 @@ Proof.
   by rewrite odd_tperm Hij /= expr1 mulN1r.
 Qed.
 
+(* TODO : Unused *)
 Corollary Vandet_anti : Vandet \is antisym.
 Proof. rewrite /Vandet Vandmx_antimE. exact: antimP. Qed.
 
+(* TODO : Unused *)
 Lemma antim_add1_0 (s : seq nat) i :
   i.+1 < n -> (nth 0%N s i).+1 = nth 0%N s i.+1 -> \det (antim s) = 0.
 Proof.
