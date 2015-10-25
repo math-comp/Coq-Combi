@@ -260,7 +260,7 @@ Qed.
 Lemma shape_RS_yam y : is_yam y -> shape (RS y) = evalseq y.
 Proof.
   move => Hyam.
-  have:= congr_RS y => /gencongr_homog.
+  have:= congr_RS y => /plact_homog.
   rewrite perm_eq_evalseq => /eqP ->.
   rewrite {2}(RS_yam_RS Hyam) to_word_yamtab evalseq_hyper_yam //=.
   apply is_part_sht; exact: is_tableau_RS.

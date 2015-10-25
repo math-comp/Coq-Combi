@@ -12,8 +12,8 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
-Require Import Recdef path.
+Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype seq.
+Require Import Recdef path tuple.
 Require Import permuted vectNK.
 (******************************************************************************)
 (** * Equivalence and congruence closure of a rewriting rule on words
@@ -22,17 +22,17 @@ Require Import permuted vectNK.
 - The closure is a relation (type : [rel word])
 
 We suppose that equivalence classes are _finite_, this is sufficient for
-out purpose here that is the construction of the plactic monoid. This also
+our purpose here, that is the construction of the plactic monoid. This also
 ensure that the generated equivalence relation is decidable by bounding
-the lenght of the rewriting paths. Concretely, this is done by requiring
+the length of the rewriting paths. Concretely, this is done by requiring
 that [rule] is included in a refexive relation [invar] which is invariant by
 rewriting rule, that is:
 
   [Hypothesis Hinvar : forall x0 x, invar x0 x -> all (invar x0) (rule x).]
 
-We show that this is true for homogeneous rules (ie: that permutes words):
+We show that this is true for multi-homogeneous rules (ie: that permutes words):
 
-  [Hypothesis Hhomog : forall u : word, all (perm_eq u) (rule u).]
+  [Hypothesis Hmulthom : forall u : word, all (perm_eq u) (rule u).]
 
 Also to simplify the code, we assume that the rule are symmetric, that is
 
@@ -50,54 +50,6 @@ the congruence transitive closure of rule. The main results here are
 
 Set Implicit Arguments.
 Unset Strict Implicit.
-
-
-(** ** Basic facts on congruences:                                            *)
-(** equivalence of various definitions and immediate consequences             *)
-Section CongruenceFacts.
-
-Variable Alph : eqType.
-Notation word := (seq Alph).
-
-Definition congruence_rel (r : rel word) :=
-  forall a b1 c b2, r b1 b2 -> r (a ++ b1 ++ c) (a ++ b2 ++ c).
-
-Definition congruence_rule (rule : word -> seq word) :=
-  congruence_rel (fun a b => a \in rule b).
-
-Variable r : rel word.
-Hypothesis Hcongr : congruence_rel r.
-Hypothesis Hequiv : equivalence_rel r.
-
-Lemma congr_cons w1 w2 a : r w1 w2 -> r (a :: w1) (a :: w2).
-Proof.
-  rewrite -[a :: w1]cat1s -[[:: a] ++ w1]cats0 -catA.
-  rewrite -[a :: w2]cat1s -[[:: a] ++ w2]cats0 -catA.
-  exact: Hcongr.
-Qed.
-
-Lemma congr_rcons w1 w2 a : r w1 w2 -> r (rcons w1 a) (rcons w2 a).
-Proof.
-  rewrite -[rcons w1 a]cats1 -[w1 ++ [:: a]]cat0s.
-  rewrite -[rcons w2 a]cats1 -[w2 ++ [:: a]]cat0s.
-  exact: Hcongr.
-Qed.
-
-Lemma congr_catl u1 u2 v : r u1 u2 -> r (u1 ++ v) (u2 ++ v).
-Proof. rewrite -[u1 ++ v]cat0s -[u2 ++ v]cat0s; exact: Hcongr. Qed.
-
-Lemma congr_catr u v1 v2 : r v1 v2 -> r (u ++ v1) (u ++ v2).
-Proof. rewrite -[u ++ v1]cats0 -[u ++ v2]cats0 -!catA; exact: Hcongr. Qed.
-
-Lemma congr_cat u1 u2 v1 v2 : r u1 u2 -> r v1 v2 -> r (u1 ++ v1) (u2 ++ v2).
-Proof.
-  move: Hequiv => /equivalence_relP [] Hrefl Htrans.
-  move=> Hu Hv; rewrite (Htrans _ (u1 ++ v2)).
-  - exact: congr_catl.
-  - exact: congr_catr.
-Qed.
-
-End CongruenceFacts.
 
 
 (** ** Transitive closure of a rule with finite classes                          *)
@@ -273,15 +225,15 @@ Variable rule : T -> seq T.
 Record invariant_context :=
   InvariantContext {
       invar : T -> pred T;
-      Hinvar_all : forall x, invar x x;
-      Hinvar : forall x0 x, invar x0 x -> all (invar x0) (rule x);
+      Hinvar_refl : forall x, invar x x;
+      Hinvar_all : forall x0 x, invar x0 x -> all (invar x0) (rule x);
       bound : T -> nat;
       Hbound: forall x s, all (invar x) s -> uniq s -> size s <= bound x
     }.
 Variable inv : invariant_context.
 Hypothesis Hsym : forall x y, x \in rule y -> y \in rule x.
 
-Definition rclass x := trans (@Hinvar inv x) (@Hbound inv x) [:: x].
+Definition rclass x := trans (@Hinvar_all inv x) (@Hbound inv x) [:: x].
 Definition rtrans : rel T := fun x y => y \in rclass x.
 
 Lemma rtransP x y : reflect (rewrite_path rule y x) (rtrans y x).
@@ -291,11 +243,11 @@ Proof.
   - move/transP => H.
     have: (all (invar inv y) [:: y]).
       apply/allP=> z; rewrite mem_seq1 => /eqP ->.
-      exact: Hinvar_all.
+      exact: Hinvar_refl.
     by move/H => [] z []; rewrite mem_seq1 => /eqP ->.
   - move=> H; apply/transP.
     + apply/allP=> x0; rewrite mem_seq1 => /eqP ->.
-      exact: Hinvar_all.
+      exact: Hinvar_refl.
     + by exists y; rewrite mem_seq1.
 Qed.
 
@@ -344,70 +296,66 @@ Proof. move/rewrite_path_min=> H/H{H} H x y /rtransP Hrew; exact: H. Qed.
 End Depend.
 
 
-(** ** Given a rule which is a congruence, we show that the transitive closure
-       is a congruence as well *)
+Definition congruence_rel (T : eqType) (r : rel (seq T)) :=
+  forall a b1 c b2, r b1 b2 -> r (a ++ b1 ++ c) (a ++ b2 ++ c).
+
+Definition congruence_rule (T : eqType) (rule : seq T -> seq (seq T)) :=
+  congruence_rel (fun a b => a \in rule b).
+
+
+(** ** Basic facts on congruences:                                            *)
+(** equivalence of various definitions and immediate consequences             *)
+Section CongruenceFacts.
+
+Variable Alph : eqType.
+Notation word := (seq Alph).
+
+
+Variable r : rel word.
+Hypothesis Hcongr : congruence_rel r.
+Hypothesis Hequiv : equivalence_rel r.
+
+Lemma congr_cons w1 w2 a : r w1 w2 -> r (a :: w1) (a :: w2).
+Proof.
+  rewrite -[a :: w1]cat1s -[[:: a] ++ w1]cats0 -catA.
+  rewrite -[a :: w2]cat1s -[[:: a] ++ w2]cats0 -catA.
+  exact: Hcongr.
+Qed.
+
+Lemma congr_rcons w1 w2 a : r w1 w2 -> r (rcons w1 a) (rcons w2 a).
+Proof.
+  rewrite -[rcons w1 a]cats1 -[w1 ++ [:: a]]cat0s.
+  rewrite -[rcons w2 a]cats1 -[w2 ++ [:: a]]cat0s.
+  exact: Hcongr.
+Qed.
+
+Lemma congr_catl u1 u2 v : r u1 u2 -> r (u1 ++ v) (u2 ++ v).
+Proof. rewrite -[u1 ++ v]cat0s -[u2 ++ v]cat0s; exact: Hcongr. Qed.
+
+Lemma congr_catr u v1 v2 : r v1 v2 -> r (u ++ v1) (u ++ v2).
+Proof. rewrite -[u ++ v1]cats0 -[u ++ v2]cats0 -!catA; exact: Hcongr. Qed.
+
+Lemma congr_cat u1 u2 v1 v2 : r u1 u2 -> r v1 v2 -> r (u1 ++ v1) (u2 ++ v2).
+Proof.
+  move: Hequiv => /equivalence_relP [] Hrefl Htrans.
+  move=> Hu Hv; rewrite (Htrans _ (u1 ++ v2)).
+  - exact: congr_catl.
+  - exact: congr_catr.
+Qed.
+
+End CongruenceFacts.
+
+
+(** ** Congruence closure of a bounded rule *)
 Section CongruenceClosure.
 
 Variable Alph : eqType.
 Notation word := (seq_eqType Alph).
 
 Variable rule : word -> seq word.
+
 Hypothesis Hsym : forall u v : word, v \in rule u -> u \in rule v.
-Hypothesis Hhomog : forall u : word, all (perm_eq u) (rule u).
-Hypothesis Hcongr : congruence_rule rule.
-
-Lemma perm_eq_bound (x : word) (s : seq word) :
-  all (perm_eq x) s -> uniq s -> size s <= (size x)`!.
-Proof. rewrite -(size_permuted x); apply: full_bound; exact: eq_seqE. Qed.
-
-Lemma Hinvar_perm (x0 x : word) : perm_eq x0 x -> all (perm_eq x0) (rule x).
-Proof.
-  move: perm_eq_trans; rewrite /transitive => Ptrans.
-  move=> H; apply/allP => x1 Hx1; apply: (@Ptrans _ x _ _ H).
-  move/(_ x)/allP : Hhomog; by apply.
-Qed.
-
-Let inv := InvariantContext (@perm_eq_refl _) Hinvar_perm perm_eq_bound.
-Definition congr := rtrans inv.
-Definition congr_class := rclass inv.
-
-Lemma rule_congr x y : y \in rule x -> congr x y.
-Proof. exact: rule_rtrans. Qed.
-
-Lemma congr_ind (P : word -> Prop) x :
-  P x -> (forall y z, P y -> z \in rule y -> P z) -> forall t, congr x t -> P t.
-Proof. exact: rtrans_ind. Qed.
-
-Lemma equiv_congr : equivalence_rel congr.
-Proof.
-  apply: equiv_rtrans; last by move=> x y H; apply: Hsym.
-Qed.
-
-Lemma congr_is_congr : congruence_rel congr.
-Proof.
-  move: equiv_congr => /equivalence_relP [] Hrefl Htrans.
-  move=> a b1 c; apply: congr_ind.
-  + exact: Hrefl.
-  + move=> x y Hx Hrule.
-    rewrite (@Htrans _ (a ++ x ++ c)); last apply: Hx.
-    by apply: rule_congr; apply: Hcongr.
-Qed.
-
-Lemma congr_classP x y : congr x y = (y \in congr_class x).
-Proof. by rewrite /congr /congr_class /rtrans. Qed.
-
-End CongruenceClosure.
-
-
-(** ** The congruence closure of an homogeneous symmetric rule *)
-Section CongruenceRule.
-
-  Variable Alph : eqType.
-Notation word := (seq_eqType Alph).
-
-Variable rule : word -> seq word.
-Hypothesis Hhomog : forall u : word, all (perm_eq u) (rule u).
-Hypothesis Hsym : forall u v : word, v \in rule u -> u \in rule v.
+Variable inv : invariant_context rule.
 
 Definition congrrule s :=
   flatten [seq
@@ -443,12 +391,19 @@ Proof.
   apply/mapP; by exists j2; first exact: Hj2.
 Qed.
 
-Lemma congrrule_homog u : all (perm_eq u) (congrrule u).
+Hypothesis Hinvar_congr :
+  forall u a b1 b2 c,
+    invar inv b1 b2 -> invar inv u (a ++ b1 ++ c) -> invar inv u (a ++ b2 ++ c).
+
+Lemma congrrule_invar u v :
+ invar inv u v -> all (invar inv u) (congrrule v).
 Proof.
-  apply/allP => v /flatten_mapP [] [[i j1] k] /=.
-  rewrite -cat3_equiv_cut3 /= => /eqP -> /mapP [] j2 Hj2 ->.
-  rewrite perm_cat2l perm_cat2r.
-  move/(_ j1)/allP : Hhomog; by apply.
+  move=> Huv.
+  apply/allP => w /flatten_mapP [] [[i j1] k] /=.
+  rewrite -cat3_equiv_cut3 /= => /eqP Hv; subst v.
+  move=> /mapP [] j2 Hj2 ->.
+  apply: (Hinvar_congr _ Huv).
+  exact: (allP (Hinvar_all (Hinvar_refl inv j1)) _ Hj2).
 Qed.
 
 Lemma congrrule_sym u v : v \in congrrule u -> u \in congrrule v.
@@ -458,36 +413,28 @@ Proof.
   apply: congrrule_is_congr; exact: rule_congrrule.
 Qed.
 
-End CongruenceRule.
+Definition invcont_congr :=
+  InvariantContext (Hinvar_refl inv) congrrule_invar (@Hbound _ _ inv).
 
-
-(** ** Main results                                                               *)
-Section Final.
-
-Variable Alph : eqType.
-Notation word := (seq_eqType Alph).
-
-Variable rule : word -> seq word.
-Hypothesis Hsym : forall u v : word, v \in rule u -> u \in rule v.
-Hypothesis Hhomog : forall u : word, all (perm_eq u) (rule u).
-
-Definition gencongr := (congr (congrrule_homog Hhomog)).
-Definition genclass := (congr_class (congrrule_homog Hhomog)).
-
-Lemma genclassP x y : gencongr x y = (y \in genclass x).
-Proof. rewrite /gencongr /gencongr. exact: congr_classP. Qed.
+Definition gencongr := rtrans invcont_congr.
+Definition gencongr_class := rclass invcont_congr.
 
 Lemma gencongr_equiv : equivalence_rel gencongr.
-Proof. apply: equiv_congr; exact: congrrule_sym. Qed.
+Proof. apply: equiv_rtrans => x y; exact: congrrule_sym. Qed.
 
 Lemma gencongr_is_congr : congruence_rel gencongr.
 Proof.
-  apply: congr_is_congr; first exact: congrrule_sym.
-  exact: congrrule_is_congr.
+  move: gencongr_equiv => /equivalence_relP [] Hrefl Htrans.
+  move=> a b1 c; apply: rtrans_ind.
+  + exact: Hrefl.
+  + move=> x y Hx Hrule.
+    rewrite (@Htrans _ (a ++ x ++ c)); last apply: Hx.
+    rewrite {Hx}; apply rule_rtrans.
+    exact: congrrule_is_congr.
 Qed.
 
 Lemma rule_gencongr u v : v \in rule u -> v \in gencongr u.
-Proof. move=> H; apply: rule_congr; exact: rule_congrrule. Qed.
+Proof. move=> H; apply rule_rtrans; exact: rule_congrrule. Qed.
 
 Lemma gencongr_min (r : rel word) :
   equivalence_rel r -> congruence_rel r ->
@@ -513,17 +460,11 @@ Proof.
   exact: (@IH _ j1).
 Qed.
 
-Lemma gencongr_homog u v : v \in gencongr u -> perm_eq u v.
+Lemma gencongr_invar u v : gencongr u v-> invar inv u v.
 Proof.
-  move: v; apply: gencongr_ind; first exact: perm_eq_refl.
-  move=> a b1 c b2 => H Hrule.
-  rewrite (perm_eq_trans H); first by [].
-  rewrite perm_cat2l perm_cat2r.
-  move: (Hhomog b1) => /allP; by apply.
+  move: v; apply rtrans_ind; first exact: Hinvar_refl.
+  move=> v w /congrrule_invar /allP; by apply.
 Qed.
-
-(** [Generated_EquivCongruence grel] == [grel] is the minimimal congruence
-    which contains [rule] *)
 
 CoInductive Generated_EquivCongruence (grel : rel word) :=
   GenCongr : equivalence_rel grel ->
@@ -566,4 +507,81 @@ Proof.
   rewrite Heq; move: y; exact: gencongr_ind.
 Qed.
 
-End Final.
+
+End CongruenceClosure.
+
+
+
+(** ** Invariant contect for multi-homgeneous congruence rules *)
+Section InvarContMultHom.
+
+Variable Alph : eqType.
+Notation word := (seq_eqType Alph).
+
+Variable rule : word -> seq word.
+Hypothesis Hmulthom : forall u : word, all (perm_eq u) (rule u).
+
+Lemma perm_eq_bound (x : word) (s : seq word) :
+  all (perm_eq x) s -> uniq s -> size s <= (size x)`!.
+Proof. rewrite -(size_permuted x); apply: full_bound; exact: eq_seqE. Qed.
+
+Lemma perm_invar (x0 x : word) : perm_eq x0 x -> all (perm_eq x0) (rule x).
+Proof.
+  move: perm_eq_trans; rewrite /transitive => Ptrans.
+  move=> H; apply/allP => x1 Hx1; apply: (@Ptrans _ x _ _ H).
+  move/(_ x)/allP : Hmulthom; by apply.
+Qed.
+
+Definition invcont_perm := InvariantContext (@perm_eq_refl _) perm_invar perm_eq_bound.
+
+Hypothesis Hsym : forall u v : word, v \in rule u -> u \in rule v.
+Hypothesis Hcongr : congruence_rule rule.
+
+Lemma perm_invar_congr u (a b1 b2 c : word) :
+  invar invcont_perm b1 b2 ->
+  invar invcont_perm u (a ++ b1 ++ c) -> invar invcont_perm u (a ++ b2 ++ c).
+Proof. rewrite /= => Hb1b2 /perm_eqlP ->; by rewrite perm_cat2l perm_cat2r. Qed.
+
+Definition gencongr_multhom := gencongr perm_invar_congr.
+
+End InvarContMultHom.
+
+
+(** ** Invariant contect for homogeneous congruence rules on a finite type *)
+Section InvarContHom.
+
+Variable Alph : finType.
+Notation word := (seq_eqType Alph).
+
+Variable rule : word -> seq word.
+Let szinvar (u : word) := [pred v : word | size v == size u].
+Hypothesis Hhom : forall u : word, all (szinvar u) (rule u).
+
+Lemma size_bound (x : word) (s : seq word) :
+  all (szinvar x) s -> uniq s -> size s <= #|Alph|^(size x).
+Proof.
+  pose T := tuple_subType (size x) Alph.
+  rewrite -card_tuple cardE all_count => /eqP Hall /(pmap_sub_uniq T).
+  have := size_pmap_sub T s; rewrite Hall => <-.
+  apply: (full_bound _ (all_predT _)) => u _; by rewrite mem_enum.
+Qed.
+
+Lemma size_invar (x0 x : word) : szinvar x0 x -> all (szinvar x0) (rule x).
+Proof. rewrite /szinvar /= => /eqP <-. exact: Hhom. Qed.
+
+Lemma size_invar_refl (x : word) : szinvar x x.
+Proof. by rewrite /=. Qed.
+
+Definition invcont_size := InvariantContext size_invar_refl size_invar size_bound.
+
+Hypothesis Hcongr : congruence_rule rule.
+
+Lemma size_invar_congr u (a b1 b2 c : word) :
+  invar invcont_size b1 b2 ->
+  invar invcont_size u (a ++ b1 ++ c) -> invar invcont_size u (a ++ b2 ++ c).
+Proof. by rewrite /= !size_cat => /eqP ->. Qed.
+
+Definition gencongr_hom := gencongr size_invar_congr.
+
+End InvarContHom.
+

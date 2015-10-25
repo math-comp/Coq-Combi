@@ -1478,7 +1478,7 @@ Theorem plactic_RS u v : u =Pl v <-> RS u == RS v.
 Proof.
   split; last exact: Sch_plact.
   move Hu : (size u) => n Hpl.
-  have:= perm_eq_size (gencongr_homog Hpl) => /esym; rewrite Hu.
+  have:= perm_eq_size (plact_homog Hpl) => /esym; rewrite Hu.
   elim: n u v Hpl Hu => [| n IHn] u v;
     first by move=> _ /eqP/nilP -> /eqP/nilP ->; rewrite /RS.
   move=> Hpl Hu Hv.
@@ -1489,7 +1489,7 @@ Proof.
   case: v Hv     => [//= | v0 v'] _ => Hpl Hplrem.
   have:= rembig_RS u0 u' => [] [] iu Hiu.
   have:= rembig_RS v0 v' => [] [] iv; rewrite -Hplrem {Hplrem} => Hiv.
-  rewrite -(maxL_perm_eq (gencongr_homog Hpl)) in Hiv.
+  rewrite -(maxL_perm_eq (plact_homog Hpl)) in Hiv.
   have:= plactic_shapeRS Hpl.
   rewrite Hiu Hiv {Hiu Hiv} !shape_append_nth => H.
   by rewrite -(incr_nth_inj H).

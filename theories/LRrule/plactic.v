@@ -179,7 +179,7 @@ Proof.
   move=> u; by rewrite !all_cat plact1_homog plact1i_homog plact2_homog plact2i_homog.
 Qed.
 
-Definition plactcongr := (gencongr plactrule_homog).
+Definition plactcongr := gencongr_multhom plactrule_homog.
 
 Lemma plact_equiv : equivalence_rel plactcongr.
 Proof. apply: gencongr_equiv; exact: plactrule_sym. Qed.
@@ -212,7 +212,7 @@ Definition plact_catr := congr_catr plact_is_congr.
 Definition plact_cat := congr_cat plact_is_congr plact_equiv.
 
 Lemma plact_homog u v : plactcongr u v -> perm_eq u v.
-Proof. exact: gencongr_homog. Qed.
+Proof. exact: gencongr_invar. Qed.
 
 Lemma size_plact u v : plactcongr u v -> size u = size v.
 Proof. by move/plact_homog/perm_eq_size. Qed.
