@@ -870,20 +870,13 @@ Proof. rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE nth_default. Q
 
 Lemma alt_detE s : 'a_(s + rho) = \det (antim s).
 Proof.
-  rewrite /alternpol.
-  have H : injective (fun (f : 'S_n) => (f ^-1)%g) by apply inv_inj; exact: invgK.
-  rewrite (reindex_inj H) /=.
-  apply eq_bigr => p _; rewrite odd_permV.
-  rewrite scaler_sign -mulr_sign.
-  congr (_ * _).
+  rewrite /alternpol (reindex_inj (inv_inj invgK)) /=; apply eq_bigr => p _.
+  rewrite odd_permV scaler_sign -mulr_sign; congr (_ * _).
   rewrite (eq_bigr (fun j => 'X_j ^+ (nth 0%N s (p j) + (n - 1) - (p j)))); first last.
     by move => i _; rewrite mxE.
-  rewrite msymX mpolyXE_id.
-  apply eq_bigr => i _; congr (_ ^+ _).
-  rewrite mnmE /= mnmDE invgK.
-  rewrite mnmE (mnm_nth 0%N).
-  rewrite subn1 addnBA //.
-  have Hi := ltn_ord (p i); by rewrite -ltnS (ltn_predK Hi).
+  rewrite msymX mpolyXE_id; apply eq_bigr => i _; congr (_ ^+ _).
+  rewrite mnmE /= mnmDE invgK mnmE (mnm_nth 0%N) subn1 addnBA //.
+  by rewrite -ltnS (ltn_predK (ltn_ord i)).
 Qed.
 
 Corollary Vandet_vdmprodE : Vandet = vdmprod.
