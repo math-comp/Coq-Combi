@@ -15,7 +15,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
-Require Import fingroup perm zmodp binomial poly.
+Require Import fingroup perm zmodp binomial.
 Require Import ssrcomplements poset freeg mpoly.
 
 Require Import tools sym_group.
@@ -80,6 +80,35 @@ Qed.
 Import GRing.Theory.
 
 Local Open Scope ring_scope.
+
+
+Section ScalarChange.
+
+Variable n : nat.
+Variable R : ringType.
+
+
+Definition tensR := [rmorphism of @map_mpoly n int_Ring R intr].
+
+Lemma tensRX m : tensR 'X_[m] = 'X_[m].
+Proof.
+  rewrite -mpolyP => mm; rewrite mcoeff_map_mpoly /= !mcoeffX; by case: eqP.
+Qed.
+
+Lemma msym_tensR s p : msym s (tensR p) = tensR (msym s p).
+Proof.
+  rewrite (mpolyE p).
+  rewrite [tensR _]raddf_sum [msym s _]raddf_sum.
+  rewrite [msym s _]raddf_sum [tensR _]raddf_sum.
+  apply eq_bigr => i _ /=.
+  rewrite -(intz (p@_i)) scaler_int.
+  by rewrite !raddfMz /= tensRX !msymX tensRX.
+Qed.
+
+End ScalarChange.
+
+Arguments tensR {n} R.
+
 
 Section CharMPoly.
 
@@ -291,12 +320,14 @@ Proof.
       by case: (odd_perm _); rewrite !simplexp.
 Qed.
 
-Definition alternpol n (R : ringType) (f : {mpoly R[n]})
-  := \sum_(s : 'S_n) (-1) ^+ s *: msym s f.
 
 
 
-Section MPolyIDomain.
+(** * Alternating polynomials *)
+Definition alternpol n (R : ringType) (f : {mpoly R[n]}) :=
+  \sum_(s : 'S_n) (-1) ^+ s *: msym s f.
+
+Section AlternIDomain.
 
 Variable n : nat.
 Variable R : idomainType.
@@ -387,6 +418,7 @@ Definition mpart (s : seq nat) := [multinom (nth 0 s i)%N | i < n].
 Local Notation "''e_' k" := (@mesym n R k) (at level 8, k at level 2, format "''e_' k").
 Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
+
 Lemma rho_iota : rho = rev (iota 0 n) :> seq nat.
 Proof.
   apply (eq_from_nth (x0 := 0%N)).
@@ -456,7 +488,7 @@ Proof.
   have:= ltn_ord i => /ltn_predK {1 5}<-; by rewrite !subSKn.
 Qed.
 
-End MPolyIDomain.
+End AlternIDomain.
 
 
 Definition vdmprod n (R : ringType) : {mpoly R[n]} :=
@@ -807,127 +839,52 @@ End VdMProdIDomain.
 Lemma vdmprod_alt n (R : ringType) :
   vdmprod = alternpol 'X_[(rho n)] :> {mpoly R[n]}.
 Proof.
-  pose tensR := [rmorphism of @map_mpoly n _ R intr].
-  have tensRX m : tensR 'X_[m] = 'X_[m].
-    rewrite -mpolyP => mm; rewrite mcoeff_map_mpoly /= !mcoeffX; by case: eqP.
-  have /(vdmprod_alt_idomain n)/(congr1 tensR) : 2 \notin [char int] by [].
+  have /(vdmprod_alt_idomain n)/(congr1 (tensR R)) : 2 \notin [char int] by [].
   rewrite /vdmprod raddf_sum rmorph_prod.
   rewrite (eq_bigr (fun i => 'X_i.1 - 'X_i.2)); first last.
     move=> [i j] _ /=; by rewrite raddfB /= !tensRX.
   move ->; apply eq_bigr => s _; by rewrite raddfZsign !msymX /= tensRX.
 Qed.
 
+Require Import matrix.
 
 
-(* TODO : Unused *)
-Definition vdmfact n (R : comRingType) : {mpoly R[n.+1]} :=
-  (\prod_(i < n.+1 | i < n) ('X_i - 'X_(ord_max))).
+Section VandermondeDet.
 
+Variable n : nat.
+Variable R : comRingType.
 
-(* TODO : Unused *)
-Lemma mwiden_inord n (R : ringType) (k : 'I_n) :
-  'X_(inord k) = mwiden ('X_k : {mpoly R[n]}).
+Local Notation "''a_' k" := (alternpol 'X_[k])
+                              (at level 8, k at level 2, format "''a_' k").
+Local Notation rho := (rho n).
+
+Definition antim (s : seq nat) : 'M[ {mpoly R[n]} ]_n :=
+  \matrix_(i, j < n) 'X_i ^+ (nth 0 s j + (n - 1) - j)%N.
+Definition Vandmx : 'M[ {mpoly R[n]} ]_n := \matrix_(i, j < n) 'X_i ^+ (n - 1 - j).
+Definition Vandet := \det Vandmx.
+
+Local Open Scope ring_scope.
+
+Lemma Vandmx_antimE : Vandmx = antim [::].
+Proof. rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE nth_default. Qed.
+
+Lemma alt_detE s : 'a_(s + rho) = \det (antim s).
 Proof.
-  rewrite mwidenX; congr mpolyX.
-  rewrite /mnmwiden /= /mnm1 mnmP => i.
-  rewrite mnmE (mnm_nth 0) nth_rcons size_map size_enum_ord.
-  case: (ssrnat.ltnP i n) => Hi.
-  - rewrite (nth_map k); last by rewrite size_enum_ord.
-    rewrite /eq_op /= nth_enum_ord //.
-    by rewrite !(inordK (ltn_trans _ (ltnSn _))).
-  - rewrite {1}/eq_op /=.
-    have -> : i = n :> nat.
-      apply anti_leq; rewrite Hi.
-      by have:= ltn_ord i; rewrite ltnS => ->.
-    rewrite eq_refl !(inordK (ltn_trans (ltn_ord k) (ltnSn _))).
-    by rewrite (ltn_eqF (ltn_ord k)).
+  rewrite /alternpol (reindex_inj (inv_inj invgK)) /=; apply eq_bigr => p _.
+  rewrite odd_permV scaler_sign -mulr_sign; congr (_ * _).
+  rewrite (eq_bigr (fun j => 'X_j ^+ (nth 0%N s (p j) + (n - 1) - (p j)))); first last.
+    by move => i _; rewrite mxE.
+  rewrite msymX mpolyXE_id; apply eq_bigr => i _; congr (_ ^+ _).
+  rewrite mnmE /= mnmDE invgK mnmE (mnm_nth 0%N) subn1 addnBA //.
+  by rewrite -ltnS (ltn_predK (ltn_ord i)).
 Qed.
 
-(* TODO : Unused *)
-Lemma vander_rec n (R : comRingType) :
-  vdmprod = mwiden vdmprod * (vdmfact n R).
+Corollary Vandet_vdmprodE : Vandet = vdmprod.
 Proof.
-  rewrite /vdmfact /vdmprod /=.
-  rewrite (bigID (fun p : 'II_n.+1 => p.2 == ord_max)) /=.
-  rewrite mulrC; congr (_ * _).
-  - rewrite rmorph_prod.
-    case: (altP (n =P 0%N)) => Hn.
-      subst n; rewrite !big_pred0 //.
-      * move=> [i j] /=; exfalso; by have := ltn_ord i.
-      * move=> [[i Hi] [j Hj]] /=.
-        move: Hi; rewrite !ltnS leqn0 => /eqP ->.
-        have:= Hj; rewrite ltnS leqn0 => /eqP {1}->.
-        by rewrite ltnn.
-    rewrite (reindex (fun i : 'II_n => (inord i.1, inord i.2))) /=.
-    + rewrite (eq_bigl (fun i : 'II_n => i.1 < i.2)); first last.
-        move=> [[i Hi] [j Hj]] /=.
-        rewrite !(inordK (ltn_trans _ (ltnSn _))) //.
-        case: (i < j) => //=; apply/(introN idP) => /eqP/(congr1 val).
-        rewrite /= !(inordK (ltn_trans _ (ltnSn _))) // => H.
-        move: Hj; by rewrite H ltnn.
-      apply (eq_bigr) => [[i j]] /= _.
-      by rewrite mwidenB !mwiden_inord.
-    move: Hn; rewrite -lt0n => Hn.
-    pose Z := Ordinal Hn.
-    pose F (i : 'I_n.+1) := nth Z (enum 'I_n) i.
-    have FP (i : 'I_n.+1) : i < n -> inord (F i) = i.
-      case: i => [i Hordi] Hi; apply val_inj => /=.
-      by rewrite inordK /F /= nth_enum_ord.
-    exists (fun i : 'II_n.+1 => (F i.1, F i.2)).
-    + move=> [[i Hi] [j Hj]] /=; rewrite !inE /=; rewrite /F /=.
-      rewrite !(inordK (ltn_trans _ (ltnSn _))) // => /andP [] Hij Hjn.
-      apply/eqP; rewrite xpair_eqE; apply/andP.
-      split; apply/eqP; apply val_inj; by rewrite /= nth_enum_ord.
-    + move => [i j] /=; rewrite inE /= => /andP [] Hij Hjmax.
-      have Hj : j < n.
-        rewrite ltn_neqAle -ltnS (ltn_ord j) andbT.
-        move: Hjmax; apply contra => /eqP Hj.
-        apply/eqP; by apply val_inj.
-      rewrite FP; last exact: ltn_trans Hij Hj.
-      by rewrite FP.
-  - rewrite (eq_bigr (fun i => 'X_i.1 - 'X_ord_max)); first last.
-      by move=> [i j] /= /andP [] _ /eqP ->.
-    rewrite (reindex (fun i : 'I_(n.+1) => (i, ord_max))) /=.
-    + apply eq_bigl => i; by rewrite eq_refl andbT.
-    + exists (fun i => i.1); first by [].
-      by move=> [i j] /=; rewrite inE /= => /andP [] _ /eqP ->.
+  rewrite /Vandet Vandmx_antimE.
+  suff -> : antim [::] = antim (0%MM : 'X_{1..n}).
+    by rewrite -alt_detE add0m vdmprod_alt.
+  rewrite /antim -matrixP => i j; by rewrite !mxE nth_nil -mnm_nth mnm0E.
 Qed.
 
-(* TODO : Unused *)
-Theorem sym_anti_iso2 (R : idomainType) (p : {mpoly R[2]}) :
-  ~~ (2 \in [char R]) ->
-  p \is antisym ->
-  { q : {mpoly R[2]} | q \is symmetric & p = ('X_0 - 'X_1) * q }.
-Proof.
-  move=> Hchar /isantisymP /(_ (eltr 1 0)%N).
-  rewrite odd_tperm.
-  have -> : inord 0 != (inord 1 : 'I_2) by rewrite /eq_op /= !inordK.
-  rewrite expr1 scaleN1r => /(congr1 -%R); rewrite opprK.
-  pose T := [tuple ('X_0 : {mpoly R[2]}); 'X_0].
-  move/(congr1 (comp_mpoly T)); rewrite comp_mpolyN msym_mPo.
-  set t := [tuple _ | i < 2]; have {t} -> : t = T.
-    apply eq_from_tnth => i.
-    rewrite !tnth_mktuple {t} /T.
-    case: tpermP => // -> /=; by rewrite !(tnth_nth 'X_0) !inordK.
-  move=> /eqP; rewrite eq_sym -addr_eq0.
-  rewrite -mulr2n -mulr_natr mulf_eq0.
-  move: Hchar; rewrite (char_mpoly 2 R); rewrite inE /= => /negbTE ->.
-  rewrite orbF /T {T} => /eqP.
-  admit.
-Qed.
-
-(* TODO : Unused *)
-Theorem sym_anti_iso n (R : comRingType) (q : {mpoly R[n]}) :
-  q \is antisym ->
-  { p : {mpoly R[n]} | p \is symmetric & q = vdmprod * p }.
-Proof.
-  elim: n q => [| n IHn] q /=.
-    move=> _; exists q.
-    - apply/issymP => s.
-      have -> : s = 1%g by rewrite -permP => i; have := ltn_ord i.
-      by rewrite msym1m.
-    - rewrite /vdmprod.
-      rewrite big_pred0; last by move=> [[u Hu] v].
-      by rewrite mul1r.
-   admit.
-Qed.
+End VandermondeDet.

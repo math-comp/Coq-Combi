@@ -12,9 +12,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
+Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
-Require Import fingroup perm zmodp binomial poly matrix.
+Require Import fingroup perm.
 Require Import ssrcomplements poset freeg mpoly.
 Require Import tools ordtype sorted partition skewtab Schur therule.
 Require Import sym_group antisym.
@@ -40,31 +40,6 @@ Local Notation rho := (rho n).
 Local Notation "''e_' k" := (@mesym n R k) (at level 8, k at level 2, format "''e_' k").
 Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
-
-Lemma alt_anti m : 'a_m \is antisym.
-Proof.
-  apply/isantisymP => S.
-  rewrite /alternpol.
-  rewrite (big_morph (msym S) (@msymD _ _ _) (@msym0 _ _ _)).
-  rewrite scaler_sumr.
-  rewrite [RHS](reindex_inj (mulIg S)); apply: eq_big => //= s _.
-  rewrite msymZ -msymMm scalerA; congr (_ *: _).
-  by rewrite odd_permM signr_addb [X in (_  = _ * X)]mulrC signrMK.
-Qed.
-
-Lemma rho_iota : rho = rev (iota 0 n) :> seq nat.
-Proof.
-  apply (eq_from_nth (x0 := 0%N)).
-    by rewrite size_tuple size_rev size_iota.
-  move=> i; rewrite size_tuple => Hi.
-  rewrite /= nth_rev size_iota //.
-  rewrite (eq_map (f2 := (fun i => (n - 1 - i)%N) \o (@val _ _ _))) //.
-  rewrite map_comp val_enum_ord (nth_map 0%N); last by rewrite size_iota.
-  rewrite !nth_iota //.
-    rewrite ?add0n subn1; by case: n Hi.
-  case: n Hi => [// | m] _.
-  rewrite subSS ltnS; exact: leq_subr.
-Qed.
 
 Lemma rho_uniq : uniq rho.
 Proof.
@@ -497,7 +472,7 @@ Qed.
 End Alternant.
 
 
-Section Idomain.
+Section IdomainSchurSym.
 
 Variable n : nat.
 Variable R : idomainType.
@@ -511,102 +486,37 @@ Theorem alt_uniq d (P : intpartn d) (s : {mpoly R[n]}) :
   size P <= n -> 'a_(rho n) * s = 'a_(mpart n P + rho n) -> s = 's_P.
 Proof. by move=> /(alt_SchurE R Hn) <- /(mulfI (alt_rho_non0 n R)). Qed.
 
-Theorem Schur_sym d (P : intpartn d) : size P <= n -> 's_P \is symmetric.
+Theorem Schur_sym_idomain d (P : intpartn d) : 's_P \is symmetric.
 Proof.
-  move=> HP.
-  have := alt_anti R (mpart n P + rho n).
-  rewrite -(alt_SchurE _ _ HP).
-  rewrite -sym_antiE //; last exact: alt_anti.
-  exact: alt_rho_non0.
+  case: (leqP (size P) n) => [HP|].
+  - have := alt_anti R (mpart n P + rho n).
+    rewrite -(alt_SchurE _ _ HP).
+    rewrite -sym_antiE //; last exact: alt_anti.
+    exact: alt_rho_non0.
+  - move/Schur_oversize ->; exact: rpred0.
 Qed.
 
-End Idomain.
+End IdomainSchurSym.
 
 
-Section VandermondeDet.
+Section CommringSchurSym.
 
 Variable n : nat.
 Variable R : comRingType.
 
-Local Notation "''a_' k" := (alternpol 'X_[k])
-                              (at level 8, k at level 2, format "''a_' k").
-Local Notation rho := (rho n).
+Hypothesis Hn : n != 0%N.
+Local Notation "''s_' k" := (Schur Hn R k) (at level 8, k at level 2, format "''s_' k").
 
-Definition antim (s : seq nat) : 'M[ {mpoly R[n]} ]_n :=
-  \matrix_(i, j < n) 'X_i ^+ (nth 0 s j + (n - 1) - j)%N.
-Definition Vandmx : 'M[ {mpoly R[n]} ]_n := \matrix_(i, j < n) 'X_i ^+ (n - 1 - j).
-Definition Vandet := \det Vandmx.
-
-Local Open Scope ring_scope.
-
-Lemma Vandmx_antimE : Vandmx = antim [::].
-Proof. rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE nth_default. Qed.
-
-Lemma alt_detE s : 'a_(s + rho) = \det (antim s).
+Theorem Schur_sym d (P : intpartn d) : 's_P \is symmetric.
 Proof.
-  rewrite /alternpol.
-  have H : injective (fun (f : 'S_n) => (f ^-1)%g) by apply inv_inj; exact: invgK.
-  rewrite (reindex_inj H) /=.
-  apply eq_bigr => p _; rewrite odd_permV.
-  rewrite scaler_sign -mulr_sign.
-  congr (_ * _).
-  rewrite (eq_bigr (fun j => 'X_j ^+ (nth 0%N s (p j) + (n - 1) - (p j)))); first last.
-    by move => i _; rewrite mxE.
-  rewrite msymX mpolyXE_id.
-  apply eq_bigr => i _; congr (_ ^+ _).
-  rewrite mnmE /= mnmDE invgK.
-  rewrite mnmE (mnm_nth 0%N).
-  rewrite subn1 addnBA //.
-  have Hi := ltn_ord (p i); by rewrite -ltnS (ltn_predK Hi).
+  have -> : 's_P = tensR R (Schur Hn int_iDomain P).
+    rewrite /Schur /polylang /commword raddf_sum /=; apply eq_bigr => i _ /=.
+    rewrite rmorph_prod /=; apply eq_bigr => {i} i _ ; by rewrite tensRX.
+  apply/issymP => s.
+  have:= Schur_sym_idomain int_iDomain Hn P => /issymP/(_ s) {2}<-.
+  by rewrite msym_tensR.
 Qed.
 
-Corollary Vandet_vdmprodE : Vandet = vdmprod.
-Proof.
-  rewrite /Vandet Vandmx_antimE.
-  suff -> : antim [::] = antim (0%MM : 'X_{1..n}).
-    by rewrite -alt_detE add0m vdmprod_alt.
-  rewrite /antim -matrixP => i j; by rewrite !mxE nth_nil -mnm_nth mnm0E.
-Qed.
+End CommringSchurSym.
 
-(* TODO : Unused *)
-Lemma tperm_antim_xrow s i j :
- msym (tperm i j) (\det (antim s)) = \det (xrow i j (antim s)).
-Proof.
-  rewrite /antim -det_map_mx /=; congr (\det _).
-  rewrite /map_mx -matrixP => r c /=.
-  rewrite !mxE rmorphX /= msymX /=.
-  congr (mpolyX _ _ ^+ _) => {c}.
-  rewrite mnmP => u /=; rewrite !mnm_tnth /=.
-  rewrite !tnth_map /= tnth_ord_tuple /= mnm1E tpermV.
-  congr (nat_of_bool _); apply (sameP idP); apply (iffP idP).
-  - by move/eqP <-; rewrite tpermK.
-  - by move/eqP ->; rewrite tpermK.
-Qed.
 
-(* TODO : Unused *)
-Lemma antimP s : \det (antim s) \is antisym.
-Proof.
-  apply/isantisym_tpermP => i j.
-  case: (altP (i =P j)) => [-> | Hij] /=; first by rewrite tperm1 msym1m.
-  rewrite tperm_antim_xrow xrowE det_mulmx det_perm.
-  by rewrite odd_tperm Hij /= expr1 mulN1r.
-Qed.
-
-(* TODO : Unused *)
-Corollary Vandet_anti : Vandet \is antisym.
-Proof. rewrite /Vandet Vandmx_antimE. exact: antimP. Qed.
-
-(* TODO : Unused *)
-Lemma antim_add1_0 (s : seq nat) i :
-  i.+1 < n -> (nth 0%N s i).+1 = nth 0%N s i.+1 -> \det (antim s) = 0.
-Proof.
-  move=> Hi1n; have Hi : i < n by rewrite ltnW.
-  pose i0 := Ordinal Hi; pose i1 := Ordinal Hi1n.
-  have : i0 != i1.
-    apply (introN idP) => /eqP/(congr1 val)/=/eqP; by rewrite ieqi1F.
-  move => H Heq; rewrite -det_tr.
-  apply: (determinant_alternate H) => j.
-  by rewrite /antim !mxE -Heq /= addSn subSS.
-Qed.
-
-End VandermondeDet.
