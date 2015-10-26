@@ -81,6 +81,35 @@ Import GRing.Theory.
 
 Local Open Scope ring_scope.
 
+
+Section ScalarChange.
+
+Variable n : nat.
+Variable R : ringType.
+
+
+Definition tensR := [rmorphism of @map_mpoly n int_Ring R intr].
+
+Lemma tensRX m : tensR 'X_[m] = 'X_[m].
+Proof.
+  rewrite -mpolyP => mm; rewrite mcoeff_map_mpoly /= !mcoeffX; by case: eqP.
+Qed.
+
+Lemma msym_tensR s p : msym s (tensR p) = tensR (msym s p).
+Proof.
+  rewrite (mpolyE p).
+  rewrite [tensR _]raddf_sum [msym s _]raddf_sum.
+  rewrite [msym s _]raddf_sum [tensR _]raddf_sum.
+  apply eq_bigr => i _ /=.
+  rewrite -(intz (p@_i)) scaler_int.
+  by rewrite !raddfMz /= tensRX !msymX tensRX.
+Qed.
+
+End ScalarChange.
+
+Arguments tensR {n} R.
+
+
 Section CharMPoly.
 
 Variable n : nat.
@@ -291,12 +320,14 @@ Proof.
       by case: (odd_perm _); rewrite !simplexp.
 Qed.
 
-Definition alternpol n (R : ringType) (f : {mpoly R[n]})
-  := \sum_(s : 'S_n) (-1) ^+ s *: msym s f.
 
 
 
-Section MPolyIDomain.
+(** * Alternating polynomials *)
+Definition alternpol n (R : ringType) (f : {mpoly R[n]}) :=
+  \sum_(s : 'S_n) (-1) ^+ s *: msym s f.
+
+Section AlternIDomain.
 
 Variable n : nat.
 Variable R : idomainType.
@@ -387,6 +418,7 @@ Definition mpart (s : seq nat) := [multinom (nth 0 s i)%N | i < n].
 Local Notation "''e_' k" := (@mesym n R k) (at level 8, k at level 2, format "''e_' k").
 Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
+
 Lemma rho_iota : rho = rev (iota 0 n) :> seq nat.
 Proof.
   apply (eq_from_nth (x0 := 0%N)).
@@ -456,7 +488,7 @@ Proof.
   have:= ltn_ord i => /ltn_predK {1 5}<-; by rewrite !subSKn.
 Qed.
 
-End MPolyIDomain.
+End AlternIDomain.
 
 
 Definition vdmprod n (R : ringType) : {mpoly R[n]} :=
@@ -807,10 +839,7 @@ End VdMProdIDomain.
 Lemma vdmprod_alt n (R : ringType) :
   vdmprod = alternpol 'X_[(rho n)] :> {mpoly R[n]}.
 Proof.
-  pose tensR := [rmorphism of @map_mpoly n _ R intr].
-  have tensRX m : tensR 'X_[m] = 'X_[m].
-    rewrite -mpolyP => mm; rewrite mcoeff_map_mpoly /= !mcoeffX; by case: eqP.
-  have /(vdmprod_alt_idomain n)/(congr1 tensR) : 2 \notin [char int] by [].
+  have /(vdmprod_alt_idomain n)/(congr1 (tensR R)) : 2 \notin [char int] by [].
   rewrite /vdmprod raddf_sum rmorph_prod.
   rewrite (eq_bigr (fun i => 'X_i.1 - 'X_i.2)); first last.
     move=> [i j] _ /=; by rewrite raddfB /= !tensRX.
@@ -931,3 +960,94 @@ Proof.
       by rewrite mul1r.
    admit.
 Qed.
+
+Require Import matrix.
+
+
+Section VandermondeDet.
+
+Variable n : nat.
+Variable R : comRingType.
+
+Local Notation "''a_' k" := (alternpol 'X_[k])
+                              (at level 8, k at level 2, format "''a_' k").
+Local Notation rho := (rho n).
+
+Definition antim (s : seq nat) : 'M[ {mpoly R[n]} ]_n :=
+  \matrix_(i, j < n) 'X_i ^+ (nth 0 s j + (n - 1) - j)%N.
+Definition Vandmx : 'M[ {mpoly R[n]} ]_n := \matrix_(i, j < n) 'X_i ^+ (n - 1 - j).
+Definition Vandet := \det Vandmx.
+
+Local Open Scope ring_scope.
+
+Lemma Vandmx_antimE : Vandmx = antim [::].
+Proof. rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE nth_default. Qed.
+
+Lemma alt_detE s : 'a_(s + rho) = \det (antim s).
+Proof.
+  rewrite /alternpol.
+  have H : injective (fun (f : 'S_n) => (f ^-1)%g) by apply inv_inj; exact: invgK.
+  rewrite (reindex_inj H) /=.
+  apply eq_bigr => p _; rewrite odd_permV.
+  rewrite scaler_sign -mulr_sign.
+  congr (_ * _).
+  rewrite (eq_bigr (fun j => 'X_j ^+ (nth 0%N s (p j) + (n - 1) - (p j)))); first last.
+    by move => i _; rewrite mxE.
+  rewrite msymX mpolyXE_id.
+  apply eq_bigr => i _; congr (_ ^+ _).
+  rewrite mnmE /= mnmDE invgK.
+  rewrite mnmE (mnm_nth 0%N).
+  rewrite subn1 addnBA //.
+  have Hi := ltn_ord (p i); by rewrite -ltnS (ltn_predK Hi).
+Qed.
+
+Corollary Vandet_vdmprodE : Vandet = vdmprod.
+Proof.
+  rewrite /Vandet Vandmx_antimE.
+  suff -> : antim [::] = antim (0%MM : 'X_{1..n}).
+    by rewrite -alt_detE add0m vdmprod_alt.
+  rewrite /antim -matrixP => i j; by rewrite !mxE nth_nil -mnm_nth mnm0E.
+Qed.
+
+(* TODO : Unused *)
+Lemma tperm_antim_xrow s i j :
+ msym (tperm i j) (\det (antim s)) = \det (xrow i j (antim s)).
+Proof.
+  rewrite /antim -det_map_mx /=; congr (\det _).
+  rewrite /map_mx -matrixP => r c /=.
+  rewrite !mxE rmorphX /= msymX /=.
+  congr (mpolyX _ _ ^+ _) => {c}.
+  rewrite mnmP => u /=; rewrite !mnm_tnth /=.
+  rewrite !tnth_map /= tnth_ord_tuple /= mnm1E tpermV.
+  congr (nat_of_bool _); apply (sameP idP); apply (iffP idP).
+  - by move/eqP <-; rewrite tpermK.
+  - by move/eqP ->; rewrite tpermK.
+Qed.
+
+(* TODO : Unused *)
+Lemma antimP s : \det (antim s) \is antisym.
+Proof.
+  apply/isantisym_tpermP => i j.
+  case: (altP (i =P j)) => [-> | Hij] /=; first by rewrite tperm1 msym1m.
+  rewrite tperm_antim_xrow xrowE det_mulmx det_perm.
+  by rewrite odd_tperm Hij /= expr1 mulN1r.
+Qed.
+
+(* TODO : Unused *)
+Corollary Vandet_anti : Vandet \is antisym.
+Proof. rewrite /Vandet Vandmx_antimE. exact: antimP. Qed.
+
+(* TODO : Unused *)
+Lemma antim_add1_0 (s : seq nat) i :
+  i.+1 < n -> (nth 0%N s i).+1 = nth 0%N s i.+1 -> \det (antim s) = 0.
+Proof.
+  move=> Hi1n; have Hi : i < n by rewrite ltnW.
+  pose i0 := Ordinal Hi; pose i1 := Ordinal Hi1n.
+  have : i0 != i1.
+    apply (introN idP) => /eqP/(congr1 val)/=/eqP; by rewrite ieqi1F.
+  move => H Heq; rewrite -det_tr.
+  apply: (determinant_alternate H) => j.
+  by rewrite /antim !mxE -Heq /= addSn subSS.
+Qed.
+
+End VandermondeDet.

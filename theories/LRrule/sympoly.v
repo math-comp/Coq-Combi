@@ -292,10 +292,7 @@ Hypothesis Hnpos : n != 0%N.
 Local Notation Alph := (Alph Hnpos).
 
 Definition Schur_sympoly d (k : intpartn d) : {sympoly R[n]} :=
-  match (boolP ((size k) <= n)) with
-    | AltTrue pf => SymPoly (Schur_sym R Hnpos pf)
-    | AltFalse _ => 0
-  end.
+  SymPoly (Schur_sym R Hnpos k).
 
 Local Notation "''s_' k" := (Schur Hnpos R k) (at level 8, k at level 2, format "''s_' k").
 
