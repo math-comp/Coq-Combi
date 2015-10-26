@@ -23,36 +23,37 @@ This library was supported by additional discussions with:
 Contents
 ========================================================================
 
-*  the **Littlewood-Richardson** rule using Schützeberger approach, it includes
+* the **Littlewood-Richardson** rule using Schützeberger approach, it includes
 
-   - the *Robinson-Schensted* correspondance
+  - the *Robinson-Schensted* correspondance
 
-   - the construction of the *plactic monoïd*
+  - the construction of the *plactic monoïd*
 
-   - the equivalence of the combinatorial and algebraic (Jacobi) definition of
-     *Schur functions*
+  - the equivalence of the combinatorial and algebraic (Jacobi) definition of
+    *Schur functions*
 
-   - the *Littlewood-Richardson* and *Pieri* rules
+  - the *Littlewood-Richardson* and *Pieri* rules
 
-   After A. Lascoux, B. Leclerc and J.-Y. Thibon, "The Plactic Monoid" in
-   Lothaire, M. (2011), Algebraic combinatorics on words, Cambridge University
-   Press With variant described in G. Duchamp, F. Hivert, and J.-Y. Thibon,
-   Noncommutative symmetric functions VI. Free quasi-symmetric functions and
-   related algebras. Internat. J. Algebra Comput. 12 (2002), 671–717.
+  After A. Lascoux, B. Leclerc and J.-Y. Thibon, "The Plactic Monoid" in
+  Lothaire, M. (2011), Algebraic combinatorics on words, Cambridge University
+  Press With variant described in G. Duchamp, F. Hivert, and J.-Y. Thibon,
+  Noncommutative symmetric functions VI. Free quasi-symmetric functions and
+  related algebras. Internat. J. Algebra Comput. 12 (2002), 671–717.
 
-*  the **Hook-Length Formula** for standard Young tableaux
-   (toghether with Christine Paulin and Olivier Stietel)
+* the **Hook-Length Formula** for standard Young tableaux
+  (toghether with Christine Paulin and Olivier Stietel)
 
-   After Greene–Nijenhuis–Wilf proof, Discrete Math. 51 (1984), 101–108.
+  After Greene–Nijenhuis–Wilf proof, Discrete Math. 51 (1984), 101–108.
 
-*  the **Erdös Szekeres theorem** about increassing and decreassing subsequences
+* the **Erdös Szekeres theorem** about increassing and decreassing subsequences
 
-*  various **Combinatorial objects** including
-   - partition,
-   - tableaux, standard tableaux, skew tableaux,
-   - subsequence, integer vectors,
-   - standard words, and permutations
-   - Yamanouchi words
+* various **Combinatorial objects** including
+
+  - partitions,
+  - tableaux, standard tableaux, skew tableaux,
+  - subsequences, integer vectors,
+  - standard words and permutations,
+  - Yamanouchi words
 
 *  bijection m-trees <-> m-dyck words.
    See the [trees branch on Github](https://github.com/hivert/Coq-Combi/tree/trees).
@@ -83,7 +84,10 @@ It needs an [extended version](https://github.com/hivert/multinomials-ssr)
 of Pierre-Yves Strub [Multinomials](https://github.com/strub/multinomials-ssr)
 library.
 
+
 Note: A standalone version not using [Multinomials] is available in the
 [Legacy branch](https://github.com/hivert/Coq-Combi/tree/Legacy). It only
 includes a bare proof of the LR-rule without formalizing anything on
-multivariate polynomials.
+multivariate polynomials. The proofs given here would be valid for any
+elements in any commutative rings.
+
