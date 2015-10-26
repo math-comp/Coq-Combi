@@ -12,9 +12,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
+Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
-Require Import fingroup perm zmodp binomial poly.
+Require Import fingroup perm.
 Require Import ssrcomplements poset freeg mpoly.
 Require Import tools ordtype sorted partition skewtab Schur therule.
 Require Import sym_group antisym.

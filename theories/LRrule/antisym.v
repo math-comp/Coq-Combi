@@ -15,7 +15,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
-Require Import fingroup perm zmodp binomial poly.
+Require Import fingroup perm zmodp binomial.
 Require Import ssrcomplements poset freeg mpoly.
 
 Require Import tools sym_group.
