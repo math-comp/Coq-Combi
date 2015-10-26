@@ -1,3 +1,4 @@
+(** * Combi.LRrule.antisym : Antisymmetric multivariate polynomials *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -22,10 +23,6 @@ Require Import tools sym_group.
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
-
-(* TODO : Move in Tools *)
-Lemma sumn_rcons s i : sumn (rcons s i) = sumn s + i.
-Proof. elim: s => [//= | s0 s IHs]; by rewrite rcons_cons /= IHs addnA. Qed.
 
 Lemma binomial_sumn_iota n : 'C(n, 2) = sumn (iota 0 n).
 Proof. by rewrite -triangular_sum sumnE /index_iota subn0. Qed.
@@ -56,7 +53,8 @@ Lemma sorted_ltn_ind s :
 Proof.
   elim/last_ind: s => [//=| s sn IHs] /= Hsort.
   move/(_ (sorted_rconsK Hsort)): IHs => [] Hsum Hlast; split.
-  - rewrite sumn_rcons size_rcons -addn1 iota_add /= sumn_cat /= add0n addn0.
+  - rewrite -{2}(revK (rcons s sn)) rev_rcons sumn_rev /= [sn + _]addnC sumn_rev.
+    rewrite size_rcons -addn1 iota_add /= sumn_cat /= add0n addn0.
     apply (leq_add Hsum).
     case/lastP: s Hsort Hlast {Hsum} => [//= | s sn1] /=.
     rewrite !size_rcons !last_rcons /= -!cats1 -catA cat1s => /sorted_catR /=.
@@ -72,7 +70,8 @@ Lemma sorted_sumn_iotaE s :
 Proof.
   elim/last_ind: s => [//= | s sn IHs] /= Hsort.
   have:= sorted_ltn_ind Hsort.
-  rewrite sumn_rcons size_rcons -{1 3 4}addn1 iota_add /= sumn_cat /= add0n addn0 cats1.
+  rewrite -{2 5}(revK (rcons s sn)) rev_rcons sumn_rev /= [sn + _]addnC sumn_rev.
+  rewrite size_rcons -{1 3 4}addn1 iota_add /= sumn_cat /= add0n addn0 cats1.
   rewrite last_rcons => [] [] _ Hsn.
   have:= sorted_ltn_ind (sorted_rconsK Hsort) => [] [] Hsum _ /esym.
   by move=> /(leq_addE Hsum Hsn) [] /esym/(IHs (sorted_rconsK Hsort)) <- <-.
@@ -459,18 +458,21 @@ Qed.
 
 End MPolyIDomain.
 
-Definition vandermonde n (R : ringType) : {mpoly R[n]} :=
+
+Definition vdmprod n (R : ringType) : {mpoly R[n]} :=
   \prod_(p : 'II_n | p.1 < p.2) ('X_p.1 - 'X_p.2).
 
-Implicit Arguments vandermonde [n R].
+Implicit Arguments vdmprod [n R].
 
+Section EltrP.
 
-Definition eltrp n i (p : 'II_n.+1) := (eltr n i p.1, eltr n i p.2).
+Variable n i : nat.
+Implicit Type (p : 'II_n.+1).
 
-Definition predi n i (p : 'II_n.+1) := (p.1 < p.2) && (p != (inord i, inord i.+1)).
+Definition eltrp p := (eltr n i p.1, eltr n i p.2).
+Definition predi p := (p.1 < p.2) && (p != (inord i, inord i.+1)).
 
-Lemma predi_eltrp n i (p : 'II_n.+1) :
-  i < n -> predi i p -> predi i (eltrp i p).
+Lemma predi_eltrp p : i < n -> predi p -> predi (eltrp p).
 Proof.
   move=> Hi.
   have Hii1 : val (@inord n i.+1) = (@inord n i).+1.
@@ -513,8 +515,7 @@ Proof.
   by rewrite tpermD.
 Qed.
 
-Lemma predi_eltrpE n i (p : 'II_n.+1) :
-  i < n -> predi i p = predi i (eltr n i p.1, eltr n i p.2).
+Lemma predi_eltrpE p : i < n -> predi p = predi (eltr n i p.1, eltr n i p.2).
 Proof.
   move=> Hi; apply/(sameP idP); apply(iffP idP); last by apply predi_eltrp.
   set p1 := ( _, _).
@@ -523,14 +524,16 @@ Proof.
   by case: p.
 Qed.
 
-Lemma vander_anti n (R : comRingType) : @vandermonde n R \is antisym.
+End EltrP.
+
+Lemma vdmprod_anti n (R : comRingType) : @vdmprod n R \is antisym.
 Proof.
   case: n => [| n].
     apply/isantisymP => s.
     have -> : s = 1%g by rewrite -permP => i; have := ltn_ord i.
     by rewrite msym1m odd_perm1 simplexp.
   apply/isantisym_eltrP => i Hi.
-  rewrite /vandermonde.
+  rewrite /vdmprod.
   rewrite (bigD1 (inord i, inord i.+1)) /=; last by rewrite !inordK //=; apply (leq_trans Hi).
   rewrite msymM -mulNr; congr (_ * _).
     rewrite msymB opprB; congr (_ - _); rewrite /msym mmapX mmap1U /eltr.
@@ -557,23 +560,23 @@ Proof.
   - by apply enum_uniq.
 Qed.
 
-Lemma sym_vanderM n (R : comRingType) (p : {mpoly R[n]}) :
-  p \is symmetric -> vandermonde * p \is antisym.
-Proof. apply sym_anti; by apply vander_anti. Qed.
+Lemma sym_vdmprodM n (R : comRingType) (p : {mpoly R[n]}) :
+  p \is symmetric -> vdmprod * p \is antisym.
+Proof. apply sym_anti; by apply vdmprod_anti. Qed.
 
 
-Section VanderIDomain.
+Section VdMProdIDomain.
 
 Variable n : nat.
 Variable R : idomainType.
 
-Local Notation D := (@vandermonde n R).
+Local Notation D := (@vdmprod n R).
 Local Notation "'X_ i" := (@mpolyX n R U_(i)).
 
 
-Lemma vander_homog : D \is homog [measure of mdeg].
+Lemma vdmprod_homog : D \is homog [measure of mdeg].
 Proof.
-  rewrite /vandermonde -big_filter.
+  rewrite /vdmprod -big_filter.
   set F := BIG_F; rewrite (eq_bigl (fun x => xpredT (F x))) //.
   rewrite -(big_map F xpredT id) /F {F}.
   apply prod_homog; apply/allP => X /mapP [[i j]] /= _ -> {X}.
@@ -595,18 +598,18 @@ Proof. by apply contra; rewrite subr_eq0 => /eqP /polyX_inj ->. Qed.
 Lemma msuppX1 i : msupp 'X_i = [:: U_(i)%MM].
 Proof. rewrite msuppE /= unlock /= domU //; exact: oner_neq0. Qed.
 
-Lemma vander_neq0 : D != 0.
+Lemma vdmprod_neq0 : D != 0.
 Proof.
-  rewrite /vandermonde -big_filter prodf_seq_neq0.
+  rewrite /vdmprod -big_filter prodf_seq_neq0.
   apply/allP => [[i j]]; rewrite mem_filter /= => /andP [].
   rewrite ltn_neqAle => /andP [] Hij _ _; exact: diffX_neq0.
 Qed.
 
-Lemma vander_dhomog : D \is 'C(n, 2).-homog.
+Lemma vdmprod_dhomog : D \is 'C(n, 2).-homog.
 Proof.
-  have:= vander_homog; rewrite homog_msize.
+  have:= vdmprod_homog; rewrite homog_msize.
   suff -> : (msize D).-1 = 'C(n, 2) by [].
-  rewrite /vandermonde -big_filter; set s := filter _ _.
+  rewrite /vdmprod -big_filter; set s := filter _ _.
   have <-: size s = 'C(n, 2).
     rewrite /s{s} /index_enum.
     rewrite (eq_filter (a2 := mem [set i : 'II_n | i.1 < i.2])); first last.
@@ -644,6 +647,14 @@ Local Notation rho := (rho n).
 Let abound b  : {mpoly R[n]} :=
   \prod_(p : 'II_n | p.1 < p.2 <= b) ('X_p.1 - 'X_p.2).
 Let rbound b := [multinom (b - i)%N | i < n].
+
+Lemma mesymlm_rbound b : (mesymlm n b <= rbound b)%MM.
+Proof.
+  apply/mnm_lepP => i.
+  rewrite !mnmE inE.
+  case (ssrnat.ltnP i b) => [/= Hb| //].
+  by rewrite subn_gt0.
+Qed.
 
 Hypothesis Hchar : ~~ (2 \in [char R]).
 
@@ -746,21 +757,15 @@ Proof.
   have /= := @coeff_prodXdiff ordb1.
   rewrite (eq_bigl (fun i : 'I_(_) => i <= b)); last by move=> i /=; rewrite ltnS.
   move=> Hprod.
-  (* TODO : make a Lemma *)
-  have lepmr : (mesymlm n b.+1 <= rbound b.+1)%MM.
-    apply/mnm_lepP => i.
-    rewrite !mnmE inE ltnS.
-    case: (leqP i b) => [/= Hb| //].
-    by rewrite subn_gt0 ltnS.
   have Hmesymlm : mdeg (mesymlm n b.+1) < (mdeg (rbound b.+1)).+1.
     rewrite ltnS /mdeg !big_tuple; apply leq_sum => i _.
-    rewrite -!mnm_tnth; by move: lepmr => /mnm_lepP; apply.
+    rewrite -!mnm_tnth; by move: (mesymlm_rbound b.+1) => /mnm_lepP; apply.
   pose msmb := BMultinom Hmesymlm.
   rewrite (bigID (xpred1 msmb)) /=.
   rewrite (eq_bigl (xpred1 msmb)); first last.
     move=> m /=; case: eqP => [->|]; last by rewrite andbF.
-    by rewrite /= lepmr.
-  rewrite big_pred1_eq /= {}Hprod // eq_refl mul1r.
+    by rewrite /= mesymlm_rbound.
+  rewrite big_pred1_eq /= {}Hprod ?mesymlm_rbound // eq_refl mul1r.
   rewrite big1 ?addr0; first last.
     move=> m /andP [] Hm Hneq.
     rewrite (eq_bigl (fun i : 'I_(_) => i < b.+1)); last by move=> i /=; rewrite ltnS.
@@ -775,9 +780,9 @@ Proof.
     have := ltnW Hi; by rewrite /leq => /eqP ->.
 Qed.
 
-Lemma vander_coeff_rho : D@_rho = 1.
+Lemma vdmprod_coeff_rho : D@_rho = 1.
 Proof.
-  rewrite /vandermonde.
+  rewrite /vdmprod.
   case: (altP (n =P 0%N)) => [Hn |].
   - rewrite big1; last by move=> [[i Hi]]; exfalso; rewrite Hn in Hi.
     suff -> : rho = 0%MM by rewrite mcoeff1 eq_refl.
@@ -790,23 +795,23 @@ Proof.
     by rewrite -(ltnS j) ltn_ord andbT.
 Qed.
 
-Lemma vander_alt_idomain : D = 'a_rho.
+Lemma vdmprod_alt_idomain : D = 'a_rho.
 Proof.
   rewrite (isantisym_alt Hchar
-            vander_neq0 (vander_anti _ _) vander_dhomog).
-  by rewrite vander_coeff_rho scale1r.
+            vdmprod_neq0 (vdmprod_anti _ _) vdmprod_dhomog).
+  by rewrite vdmprod_coeff_rho scale1r.
 Qed.
 
-End VanderIDomain.
+End VdMProdIDomain.
 
-Lemma vander_alt n (R : ringType) :
-  vandermonde = alternpol 'X_[(rho n)] :> {mpoly R[n]}.
+Lemma vdmprod_alt n (R : ringType) :
+  vdmprod = alternpol 'X_[(rho n)] :> {mpoly R[n]}.
 Proof.
   pose tensR := [rmorphism of @map_mpoly n _ R intr].
   have tensRX m : tensR 'X_[m] = 'X_[m].
     rewrite -mpolyP => mm; rewrite mcoeff_map_mpoly /= !mcoeffX; by case: eqP.
-  have /(vander_alt_idomain n)/(congr1 tensR) : 2 \notin [char int] by [].
-  rewrite /vandermonde raddf_sum rmorph_prod.
+  have /(vdmprod_alt_idomain n)/(congr1 tensR) : 2 \notin [char int] by [].
+  rewrite /vdmprod raddf_sum rmorph_prod.
   rewrite (eq_bigr (fun i => 'X_i.1 - 'X_i.2)); first last.
     move=> [i j] _ /=; by rewrite raddfB /= !tensRX.
   move ->; apply eq_bigr => s _; by rewrite raddfZsign !msymX /= tensRX.
@@ -814,11 +819,12 @@ Qed.
 
 
 
-
+(* TODO : Unused *)
 Definition vander_fact n (R : comRingType) : {mpoly R[n.+1]} :=
   (\prod_(i < n.+1 | i < n) ('X_i - 'X_(ord_max))).
 
 
+(* TODO : Unused *)
 Lemma mwiden_inord n (R : ringType) (k : 'I_n) :
   'X_(inord k) = mwiden ('X_k : {mpoly R[n]}).
 Proof.
@@ -837,6 +843,7 @@ Proof.
     by rewrite (ltn_eqF (ltn_ord k)).
 Qed.
 
+(* TODO : Unused *)
 Lemma vander_rec n (R : comRingType) :
   vandermonde = mwiden vandermonde * (vander_fact n R).
 Proof.
@@ -886,6 +893,7 @@ Proof.
       by move=> [i j] /=; rewrite inE /= => /andP [] _ /eqP ->.
 Qed.
 
+(* TODO : Unused *)
 Theorem sym_anti_iso2 (R : idomainType) (p : {mpoly R[2]}) :
   ~~ (2 \in [char R]) ->
   p \is antisym ->
@@ -908,6 +916,7 @@ Proof.
   admit.
 Qed.
 
+(* TODO : Unused *)
 Theorem sym_anti_iso n (R : comRingType) (q : {mpoly R[n]}) :
   q \is antisym ->
   { p : {mpoly R[n]} | p \is symmetric & q = vandermonde * p }.
