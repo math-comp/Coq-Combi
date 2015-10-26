@@ -1,4 +1,4 @@
-(** * Combi.LRrule.antisym : Antisymmetric multivariate polynomials *)
+(** * Combi.MPoly.antisym : Antisymmetric multivariate polynomials *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -18,7 +18,7 @@ Require Import finset fintype finfun tuple bigop ssralg ssrint.
 Require Import fingroup perm zmodp binomial.
 Require Import ssrcomplements poset freeg mpoly.
 
-Require Import tools sym_group.
+Require Import tools symgroup.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

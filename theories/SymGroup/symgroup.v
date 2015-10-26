@@ -1,4 +1,4 @@
-(** * Combi.LRrule.sym_group : The symmetric group *)
+(** * Combi.SymGroup.symgroup : The symmetric group *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
