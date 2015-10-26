@@ -1,3 +1,4 @@
+(** * Combi.Basic.congr : Rewriting rule and congruencies of words *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)

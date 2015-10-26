@@ -1,4 +1,4 @@
-(** * Combi.Combi.combclass : Fintypes for Combinatorics *)
+(** * Combi.Basic.combclass : Fintypes for Combinatorics *)
 (******************************************************************************)
 (*     Copyright (C) 2014 2015 Florent Hivert <florent.hivert@lri.fr>         *)
 (*                                                                            *)

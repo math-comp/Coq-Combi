@@ -17,7 +17,7 @@ Require Import finset fintype finfun tuple bigop ssralg ssrint.
 Require Import fingroup perm.
 Require Import ssrcomplements poset freeg mpoly.
 Require Import tools ordtype sorted partition skewtab Schur therule.
-Require Import sym_group antisym.
+Require Import symgroup antisym.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

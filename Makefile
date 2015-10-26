@@ -75,8 +75,10 @@ endif
 #                    #
 ######################
 
-VFILES:= theories/Combi/combclass.v\
-  theories/Combi/ordtype.v\
+VFILES:= theories/Basic/combclass.v\
+  theories/Basic/congr.v\
+  theories/Basic/ordcast.v\
+  theories/Basic/ordtype.v\
   theories/Combi/partition.v\
   theories/Combi/permuted.v\
   theories/Combi/shape.v\
@@ -99,23 +101,21 @@ VFILES:= theories/Combi/combclass.v\
   theories/HookFormula/distr.v\
   theories/HookFormula/hook.v\
   theories/HookFormula/recyama.v\
-  theories/LRrule/congr.v\
+  theories/MPoly/antisym.v\
   theories/LRrule/extract.v\
   theories/LRrule/Greene_inv.v\
   theories/LRrule/Greene.v\
   theories/LRrule/implem.v\
-  theories/LRrule/ordcast.v\
   theories/LRrule/plactic.v\
   theories/LRrule/Schensted.v\
   theories/LRrule/Schur.v\
   theories/LRrule/shuffle.v\
-  theories/LRrule/sym_group.v\
   theories/LRrule/sympoly.v\
   theories/LRrule/stdplact.v\
   theories/LRrule/therule.v\
-  theories/LRrule/antisym.v\
   theories/LRrule/Schur_alt.v\
   theories/LRrule/Yam_plact.v\
+  theories/SymGroup/symgroup.v\
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))

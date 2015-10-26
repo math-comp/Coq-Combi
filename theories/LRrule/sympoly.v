@@ -16,7 +16,7 @@ Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
 Require Import ssrcomplements poset freeg bigenough mpoly.
 
-Require Import partition skewtab Schur sym_group therule Schur_alt.
+Require Import partition skewtab Schur symgroup therule Schur_alt.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
