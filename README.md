@@ -12,7 +12,7 @@ Contributors:
 
 - Jean Christophe Filliâtre
 - Christine Paulin
-- Olivier Stietel.
+- Olivier Stietel
 
 This library was supported by additional discussions with:
 
