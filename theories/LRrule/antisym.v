@@ -820,7 +820,7 @@ Qed.
 
 
 (* TODO : Unused *)
-Definition vander_fact n (R : comRingType) : {mpoly R[n.+1]} :=
+Definition vdmfact n (R : comRingType) : {mpoly R[n.+1]} :=
   (\prod_(i < n.+1 | i < n) ('X_i - 'X_(ord_max))).
 
 
@@ -845,9 +845,9 @@ Qed.
 
 (* TODO : Unused *)
 Lemma vander_rec n (R : comRingType) :
-  vandermonde = mwiden vandermonde * (vander_fact n R).
+  vdmprod = mwiden vdmprod * (vdmfact n R).
 Proof.
-  rewrite /vander_fact /vandermonde /=.
+  rewrite /vdmfact /vdmprod /=.
   rewrite (bigID (fun p : 'II_n.+1 => p.2 == ord_max)) /=.
   rewrite mulrC; congr (_ * _).
   - rewrite rmorph_prod.
@@ -919,14 +919,14 @@ Qed.
 (* TODO : Unused *)
 Theorem sym_anti_iso n (R : comRingType) (q : {mpoly R[n]}) :
   q \is antisym ->
-  { p : {mpoly R[n]} | p \is symmetric & q = vandermonde * p }.
+  { p : {mpoly R[n]} | p \is symmetric & q = vdmprod * p }.
 Proof.
   elim: n q => [| n IHn] q /=.
     move=> _; exists q.
     - apply/issymP => s.
       have -> : s = 1%g by rewrite -permP => i; have := ltn_ord i.
       by rewrite msym1m.
-    - rewrite /vandermonde.
+    - rewrite /vdmprod.
       rewrite big_pred0; last by move=> [[u Hu] v].
       by rewrite mul1r.
    admit.
