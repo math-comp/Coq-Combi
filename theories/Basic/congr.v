@@ -418,7 +418,10 @@ Definition invcont_congr :=
   InvariantContext (Hinvar_refl inv) congrrule_invar (@Hbound _ _ inv).
 
 Definition gencongr := rtrans invcont_congr.
-Definition gencongr_class := rclass invcont_congr.
+Definition genclass := rclass invcont_congr.
+
+Lemma genclassE u v : (u \in genclass v) = (u \in gencongr v).
+Proof. by rewrite unfold_in. Qed.
 
 Lemma gencongr_equiv : equivalence_rel gencongr.
 Proof. apply: equiv_rtrans => x y; exact: congrrule_sym. Qed.
@@ -544,6 +547,7 @@ Lemma perm_invar_congr u (a b1 b2 c : word) :
 Proof. rewrite /= => Hb1b2 /perm_eqlP ->; by rewrite perm_cat2l perm_cat2r. Qed.
 
 Definition gencongr_multhom := gencongr perm_invar_congr.
+Definition genclass_multhom := genclass perm_invar_congr.
 
 End InvarContMultHom.
 
@@ -583,6 +587,7 @@ Lemma size_invar_congr u (a b1 b2 c : word) :
 Proof. by rewrite /= !size_cat => /eqP ->. Qed.
 
 Definition gencongr_hom := gencongr size_invar_congr.
+Definition genclass_hom := genclass size_invar_congr.
 
 End InvarContHom.
 
