@@ -779,6 +779,42 @@ Qed.
 End Length.
 
 Hint Resolve cocodeP.
+Hint Resolve codeszP.
+
+(** * Let's do some real combinatorics !!! *)
+Section Combi.
+
+Local Notation "''s_' i" := (eltr _ i) (at level 8, i at level 2).
+Local Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i) (at level 8, w at level 2).
+
+Require Import ssralg poly ssrint.
+
+Import GRing.Theory.
+Open Scope ring_scope.
+
+Corollary genfun_length n :
+  \sum_(s in 'S_n.+1) 'X^(length s) =
+  \prod_(0 <= i < n.+1) \sum_(0 <= j < i.+1) 'X^j : {poly int}.
+Proof.
+  rewrite (reindex _ (onW_bij predT (prods_codesz_bij n))) /=.
+  rewrite (eq_bigr (fun c : codesz _ => 'X^(sumn c))); first last.
+    move=> i _; rewrite (length_permcd (codeszP _)) //.
+    by rewrite size_codesz.
+  rewrite /prods_codesz {1}/index_enum -enumT /=.
+  rewrite -(big_map (@cdval _) xpredT (fun i : seq nat => 'X^(sumn i))).
+  elim: n => [/= | n].
+    by rewrite enum_codeszE /index_iota !big_seq1 /= addn0.
+  move: (n.+1) => {n} n. (* Workaround of shifting of n *)
+  rewrite /index_iota !enum_codeszE big_flatten big_map -/enum_codesz.
+  rewrite !subn0 -{2}addn1 iota_add add0n [iota 0 n.+1]lock /=.
+  rewrite big_cat /= big_seq1 {2}[(0 :: iota 1 n)%N]lock /= => <-.
+  rewrite big_distrr /=; apply eq_bigr => i _.
+  rewrite big_distrl /= big_map; apply eq_bigr => j _.
+  by rewrite -sumn_rev rev_rcons /= sumn_rev exprD mulrC.
+Qed.
+
+End Combi.
+
 
 
 (** * Reduced words *)
