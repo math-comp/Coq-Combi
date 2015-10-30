@@ -104,7 +104,6 @@ VFILES:= theories/Basic/combclass.v\
   theories/MPoly/antisym.v\
   theories/MPoly/sympoly.v\
   theories/MPoly/Schur_basis.v\
-  theories/MPoly/Schur_alt.v\
   theories/LRrule/extract.v\
   theories/LRrule/Greene_inv.v\
   theories/LRrule/Greene.v\
