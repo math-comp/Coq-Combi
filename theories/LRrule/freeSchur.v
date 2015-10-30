@@ -86,6 +86,38 @@ Qed.
 End CommutativeImage.
 
 
+Section TableauReading.
+
+Variable A : ordType.
+
+Definition tabsh_reading_RS (sh : seq nat) (w : seq A) :=
+  (to_word (RS w) == w) && (shape (RS (w)) == sh).
+
+Lemma tabsh_reading_RSP (sh : seq nat) (w : seq A) :
+  reflect
+    (exists tab, [/\ is_tableau tab, shape tab = sh & to_word tab = w])
+    (tabsh_reading_RS sh w).
+Proof.
+  apply (iffP idP).
+  - move=> /andP [] /eqP HRS /eqP Hsh.
+    exists (RS w); split => //; exact: is_tableau_RS.
+  - move=> [] tab [] Htab Hsh Hw; apply/andP.
+    have:= RS_tabE Htab; rewrite Hw => ->.
+    by rewrite Hw Hsh.
+Qed.
+
+Lemma tabsh_reading_RSE sh :
+  tabsh_reading sh =1 tabsh_reading_RS sh.
+Proof.
+  move=> w.
+  apply/idP/idP.
+  - by move /tabsh_readingP/tabsh_reading_RSP.
+  - by move /tabsh_reading_RSP/tabsh_readingP.
+Qed.
+
+End TableauReading.
+
+
 Section FreeSchur.
 
 Variable R : comRingType.

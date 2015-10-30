@@ -30,6 +30,8 @@ denoted [T].
 - [size_tab t] == the size (number of boxes) of t
 - [filter_gtnX_tab n t] == the sub-tableau of t formed by the element smaller
                    than [n].
+
+- [tabsh_reading sh w] == w is the row reading of a tableau of shape sh
 *****)
 
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
@@ -431,3 +433,31 @@ Proof.
 Qed.
 
 End Tableau.
+
+
+Section TableauReading.
+
+Variable A : ordType.
+
+Definition tabsh_reading (sh : seq nat) (w : seq A) :=
+  (size w == sumn sh) && (is_tableau (rev (reshape (rev sh) w))).
+
+Lemma tabsh_readingP (sh : seq nat) (w : seq A) :
+  reflect
+    (exists tab, [/\ is_tableau tab, shape tab = sh & to_word tab = w])
+    (tabsh_reading sh w).
+Proof.
+  apply (iffP idP).
+  - move=> /andP [] /eqP Hsz Htab.
+    exists (rev (reshape (rev sh) w)); split => //.
+    rewrite shape_rev -{2}(revK sh); congr (rev _).
+    apply: reshapeKl; by rewrite sumn_rev Hsz.
+    rewrite /to_word revK; apply: reshapeKr; by rewrite sumn_rev Hsz.
+  - move=> [] tab [] Htab Hsh Hw; apply/andP; split.
+    + by rewrite -Hw size_to_word /size_tab Hsh.
+    + rewrite -Hw /to_word -Hsh.
+      by rewrite /shape -map_rev -/(shape _) flattenK revK.
+Qed.
+
+End TableauReading.
+
