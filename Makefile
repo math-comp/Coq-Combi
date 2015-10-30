@@ -32,8 +32,8 @@ $(call includecmdwithout@,$(COQBIN)coqtop -config)
 #                        #
 ##########################
 
-COQLIBS?= -R theories Combi
-COQDOCLIBS?=-R theories Combi
+COQLIBS?= -R theories Combi -R 3rdparty/ALEA ALEA
+COQDOCLIBS?=-R theories Combi -R 3rdparty/ALEA ALEA
 COQEXTLIBS:=--external http://ssr.msr-inria.inria.fr/doc/mathcomp-1.5/ MathComp \
             --external http://ssr.msr-inria.inria.fr/doc/ssreflect-1.5/ Ssreflect
 
@@ -94,8 +94,6 @@ VFILES:= theories/Basic/combclass.v\
   theories/SSRcomplements/sorted.v\
   theories/SSRcomplements/tools.v\
   theories/Erdos_Szekeres/Erdos_Szekeres.v\
-  theories/HookFormula/ALEA/Ccpo.v\
-  theories/HookFormula/ALEA/Misc.v\
   theories/HookFormula/Qmeasure.v\
   theories/HookFormula/RSident.v\
   theories/HookFormula/distr.v\
@@ -116,6 +114,8 @@ VFILES:= theories/Basic/combclass.v\
   theories/LRrule/therule.v\
   theories/LRrule/Yam_plact.v\
   theories/SymGroup/symgroup.v\
+  3rdparty/ALEA/Ccpo.v\
+  3rdparty/ALEA/Misc.v\
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))
