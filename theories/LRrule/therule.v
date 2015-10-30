@@ -64,7 +64,7 @@ Require Import mpoly.
 
 Require Import tools ordcast combclass partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted congr plactic Greene_inv stdplact Yam_plact skewtab.
-Require Import shuffle Schur.
+Require Import shuffle sympoly freeSchur.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -602,8 +602,8 @@ Variable (n : nat) (R : comRingType).
 Hypothesis Hnpos : n != 0%N.
 
 Notation Schur p := (Schur Hnpos R p).
-Notation complete p := (complete Hnpos R p).
-Notation elementary p := (elementary Hnpos R p).
+Notation complete p := (complete n R p).
+Notation elementary p := (elementary n R p).
 
 (* TODO : move in Yamanouchi *)
 Lemma yamrowP : is_yam_of_eval (intpart_of_intpartn (rowpartn d2)) (ncons d2 0%N [::]).
@@ -670,7 +670,7 @@ Qed.
 Theorem Pieri_complete (P1 : intpartn d1) :
   Schur P1 * complete d2 = \sum_(P : intpartn (d1 + d2) | hb_strip P1 P) Schur P.
 Proof.
-  rewrite /Schur.complete LRtab_coeffP.
+  rewrite completeE LRtab_coeffP.
   rewrite [LHS]big_mkcond [RHS]big_mkcond /=.
   apply eq_bigr => p _.
   case: (boolP (included P1 p)) => Hincl; first last.
@@ -695,7 +695,7 @@ Qed.
 Theorem Pieri_elementary (P1 : intpartn d1) :
   Schur P1 * elementary d2 = \sum_(P : intpartn (d1 + d2) | vb_strip P1 P) Schur P.
 Proof.
-  rewrite /Schur.elementary LRtab_coeffP.
+  rewrite elementaryE LRtab_coeffP.
   rewrite [LHS]big_mkcond [RHS]big_mkcond /=.
   apply eq_bigr => p _.
   case: (boolP (included P1 p)) => Hincl; first last.

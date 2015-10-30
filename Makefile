@@ -102,18 +102,19 @@ VFILES:= theories/Basic/combclass.v\
   theories/HookFormula/hook.v\
   theories/HookFormula/recyama.v\
   theories/MPoly/antisym.v\
+  theories/MPoly/sympoly.v\
+  theories/MPoly/Schur_basis.v\
+  theories/MPoly/Schur_alt.v\
   theories/LRrule/extract.v\
   theories/LRrule/Greene_inv.v\
   theories/LRrule/Greene.v\
   theories/LRrule/implem.v\
   theories/LRrule/plactic.v\
   theories/LRrule/Schensted.v\
-  theories/LRrule/Schur.v\
+  theories/LRrule/freeSchur.v\
   theories/LRrule/shuffle.v\
-  theories/LRrule/sympoly.v\
   theories/LRrule/stdplact.v\
   theories/LRrule/therule.v\
-  theories/LRrule/Schur_alt.v\
   theories/LRrule/Yam_plact.v\
   theories/SymGroup/symgroup.v\
 

@@ -16,7 +16,7 @@ Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
 Require Import fingroup perm.
 Require Import ssrcomplements poset freeg mpoly.
-Require Import tools ordtype sorted partition skewtab Schur therule.
+Require Import tools ordtype sorted partition skewtab sympoly freeSchur therule.
 Require Import symgroup antisym.
 
 Set Implicit Arguments.
@@ -430,7 +430,7 @@ Proof.
     by case: (conj_part P) => [| c0 [| c1 c]] //= /andP [].
   have := alt_mpart_elementary k HszP1.
   have {IHb HszP1 Hd1} <- := IHb _ Hd1 (conj_intpartn P1) HszP1.
-  rewrite -mulrA elementaryE Pieri_elementary.
+  rewrite -mulrA Pieri_elementary.
   rewrite (bigID (fun P0 : intpartn (d1 + k) => (size P0 <= n))) /= addrC.
   rewrite big1 ?add0r; first last.
     move=> i /andP [] _; rewrite -ltnNge; exact: Schur_oversize.

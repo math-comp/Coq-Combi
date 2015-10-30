@@ -16,7 +16,7 @@ Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
 Require Import ssrcomplements poset freeg bigenough mpoly.
 
-Require Import partition skewtab Schur symgroup therule Schur_alt.
+Require Import partition skewtab freeSchur symgroup therule sympoly Schur_alt.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -138,7 +138,7 @@ Qed.
 
 Lemma Schur_dec_mesym k : Schur_dec 'e_k.
 Proof.
-  rewrite /= elementaryE /elementary.
+  rewrite -elementary_mesymE elementaryE.
   exists (HomCoeff (fun p : intpartn k => (p == colpartn k)%:R)) => /=.
   rewrite (bigID (fun p => p == colpartn k)) /=.
   rewrite big_pred1_eq eq_refl /= scale1r.
@@ -155,7 +155,7 @@ Proof.
   rewrite (eq_bigr
              (fun sh : intpartn d =>
                  (\sum_(p : intpartn (d + k) | vb_strip sh p) coe sh *: 's_p))); first last.
-    by move=> p _; rewrite -scalerAl elementaryE Pieri_elementary scaler_sumr.
+    by move=> p _; rewrite -scalerAl  Pieri_elementary scaler_sumr.
   rewrite (exchange_big_dep xpredT) //=.
   apply eq_bigr => sh _; by rewrite scaler_suml.
 Qed.
@@ -179,7 +179,7 @@ Proof.
   rewrite exchange_big /=; apply eq_bigr => sh1 _.
   rewrite -scaler_sumr -scalerAl; congr (c1 sh1 *: _).
   rewrite exchange_big /= mulr_sumr; apply eq_bigr => sh2 _.
-  rewrite -scalerAr Schur.LRtab_coeffP.
+  rewrite -scalerAr freeSchur.LRtab_coeffP.
   rewrite scaler_sumr; apply eq_bigr => sh _.
   by rewrite -scalerA scaler_nat.
 Qed.
@@ -273,7 +273,7 @@ Bind Scope ring_scope with sympoly.
 Notation "{ 'sympoly' T [ n ] }" := (sympoly_of n (Phant T)).
 
 
-
+(*
 Section SchurSym.
 
 Variable n : nat.
@@ -297,3 +297,4 @@ Definition Schur_sympoly d (k : intpartn d) : {sympoly R[n]} :=
 Local Notation "''s_' k" := (Schur Hnpos R k) (at level 8, k at level 2, format "''s_' k").
 
 End SchurSym.
+*)
