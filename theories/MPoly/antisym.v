@@ -1,4 +1,4 @@
-(** * Combi.MPoly.antisym : Antisymmetric multivariate polynomials *)
+(** * Combi.MPoly.antisym : Antisymmetric polynomials and Vandermonde product *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -13,6 +13,38 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * Antisymmetric polynomials
+
+We start by general Polynomials stuff:
+
+- tensR == the scalar extension morphism from [{mpoly Z[n]}] to [{mpoly R[n]}]
+           obtained by tensoring the coefficients rings. This is a ring
+           morphism.
+
+Antisymmetric polynomials:
+
+- p \is antisym == p is an antisymmetric polynomial. This is a keyed predicate
+                   closed by submodule operations [submodPred].
+
+Vandermonde products and determinants:
+
+- alternpol f == the alternating sunm of the permuted of f.
+- rho         == the multi-monomial [[n-1, n-2, ..., 1, 0]]
+- mpart       == the multi-monomial associated to a partition
+- vdmprod n R == the vandermonde product in [{mpoly R[n]}], that is the product
+                 << \prod_(i < j) ('X_i - 'X_j) >>.
+
+- antim s     == the n x n - matrix whose (i, j) coefficient is
+                 << 'X_i^(s_j - rho_j) >>
+- Vandmx      == the Vandermonde matrix << 'X_i^(n - 1 - j) = 'X_i^(rho_j) >>.
+- Vandet      == the vandermonde determinant
+
+The main results are the Vandermonde determinant expansion:
+
+- [ vdmprod_alt     : vdmprod = alternpol 'X_[(rho n)] ]
+- [ Vandet_vdmprodE : Vandet = vdmprod ]
+
+*******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
 Require Import fingroup perm zmodp binomial.
@@ -81,7 +113,7 @@ Import GRing.Theory.
 
 Local Open Scope ring_scope.
 
-
+(** ** Change of scalar in multivariate polynomials *)
 Section ScalarChange.
 
 Variable n : nat.
@@ -110,6 +142,7 @@ End ScalarChange.
 Arguments tensR {n} R.
 
 
+(** ** Characteristic of multivariate polynomials *)
 Section CharMPoly.
 
 Variable n : nat.
@@ -129,6 +162,7 @@ Qed.
 End CharMPoly.
 
 
+(** * Symmetric and Antisymmetric multivariate polynomials *)
 Section MPolySym.
 
 Variable n : nat.
@@ -491,6 +525,7 @@ Qed.
 End AlternIDomain.
 
 
+(** ** Vandermonde product *)
 Definition vdmprod n (R : ringType) : {mpoly R[n]} :=
   \prod_(p : 'II_n | p.1 < p.2) ('X_p.1 - 'X_p.2).
 
@@ -501,6 +536,7 @@ Section EltrP.
 Variable n i : nat.
 Implicit Type (p : 'II_n.+1).
 
+(* TODO : This should only be locaa *)
 Definition eltrp p := (eltr n i p.1, eltr n i p.2).
 Definition predi p := (p.1 < p.2) && (p != (inord i, inord i.+1)).
 
@@ -849,6 +885,7 @@ Qed.
 Require Import matrix.
 
 
+(** ** Vandermonde matrix and determinant *)
 Section VandermondeDet.
 
 Variable n : nat.

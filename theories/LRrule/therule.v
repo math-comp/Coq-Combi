@@ -1,3 +1,4 @@
+(** * Combi.LRrule.therule : The Littlewood-Richardson rule *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,6 +13,51 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * The Littlewood-Richardson rule
+
+The goal of this file is to formalize the final step ot the proof: a bijection
+beetween LR-standard tableau as defined in Schur and LR-Yamanouchi tableaux.
+
+Below we use the following notation:
+- [d1] and [d2] are [nat],
+- [P1] : a partition of d1 (of type: [inpartn d1]).
+- [P2] : a partition of d2 (of type: [inpartn d2]).
+- [P] : a partition of d1 + d2 (of type: [inpartn d1 + d2]).
+
+
+We define the following:
+- [is_skew_reshape_tableau P P1 w] == w is the row reading of a skew tableau of
+             shape P/P1. Equivalently, the P/P1-reshape of w is a skew tableau.
+- [bijLRyam P P1] == a map from [seq nat] to [seq (seq nat)] which defined a
+             bijection between LR yamanouchi tableaux and LR-standard tableaux
+- [bijLR P P1] == the sigma-type version of bijLRyam:
+                  [(yam : yameval P2) -> stdtabn (d1 + d2)]
+
+- [LRyam_set P1 P2 P] == the set of LR Yamanouchi words.
+- [LRyam_coeff P1 P2 P] == the LR coefficient defined as the cardinality of
+             the set of LR Yamanouchi words.
+
+- [LRyam_enum P1 P2 P] == a list for the LR Yamanouchi words.
+- [LRyam_compute P1 P2 P] == the length LRyam_enum, allows to compute LR-coeffs
+             and LR-tableaux from the definition inside coq. As an
+             implementation, its a very slow way to compute LR-coeff. Indeed,
+             the set of Yamanouchi words where we are looking for LR words is
+             much too large. The module [implem] will provide a much efficient
+             way using backtracking instead of filtering to enumerate those.
+
+- [yamrow n] == the trivial Yamanouchi word of size n whis is constant to 0
+
+
+The main theorem is [Theorem LRtab_coeffP]:
+
+[
+  Schur P1 * Schur P2 =
+  \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
+]
+
+As a corollary we provide the two Pieri rules [Pieri_complete] and
+[Pieri_elementary].
+*******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop path ssralg.
 Require Import mpoly.
@@ -24,11 +70,9 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-(** * The Littlewood-Richardson Rule *)
-
 Open Scope N.
 
-
+(** * Gluing a standard tableaux with a skew tableau *)
 Section LR.
 
 Notation Z := (inhabitant nat_ordType).
@@ -186,6 +230,7 @@ Proof.
   - by rewrite to_word_cons IHt.
 Qed.
 
+(** * Littlewood-Richardson Yamanouchi tableaux *)
 Section OneCoeff.
 
 Variable P : intpartn (d1 + d2).
@@ -196,6 +241,9 @@ Proof. by rewrite (sumn_diff_shape Hincl) !intpartn_sumn addKn. Qed.
 
 Definition is_skew_reshape_tableau (P P1 : seq nat) (w : seq nat) :=
   is_skew_tableau P1 (skew_reshape P1 P w).
+Definition LRyam_set :=
+  [set y : yameval_finType P2 | is_skew_reshape_tableau P P1 y].
+Definition LRyam_coeff := #|LRyam_set|.
 
 Lemma is_skew_reshape_tableauP (w : seq nat) :
   size w = sumn (diff_shape P1 P) ->
@@ -223,6 +271,7 @@ Proof.
   rewrite size_skew_reshape; exact: size_included.
 Qed.
 
+(** ** The final bijection *)
 Definition bijLRyam :=
   [fun y : seq nat =>
      join_tab (hyper_stdtabn P1) (map (shiftn d1) (skew_reshape P1 P (std y)))].
@@ -281,9 +330,6 @@ Proof.
     exact: (allP (std_shsh Hstd1 Hz)).
 Qed.
 
-Definition LRyam_set :=
-  [set y : yameval_finType P2 | is_skew_reshape_tableau P P1 y].
-Definition LRyam_coeff := #|LRyam_set|.
 Definition bijLR (yam : yameval P2) : stdtabn (d1 + d2) :=
   if (boolP (is_skew_reshape_tableau P P1 yam)) is AltTrue pf then
     StdtabN (bijLRyamP pf)
@@ -467,7 +513,13 @@ Proof.
   exact: bijLR_image.
 Qed.
 
-(* Unused ************************)
+(** ** A slow way to compute LR coefficients in coq:
+
+We enumerate Yamanouchi words and filter those who are row reading of the skew
+tableaux of shape P/P1. This is very innefficient. A better way is to use
+backtracking as in [implem].
+************************)
+
 Definition LRyam_enum (P1 P2 P : seq nat) :=
   [seq x <- enum_yameval P2 | is_skew_reshape_tableau P P1 x].
 Definition LRyam_compute (P1 P2 P : seq nat) := size (LRyam_enum P1 P2 P).
@@ -480,7 +532,6 @@ Proof.
   - by rewrite -(size_map val) map_filter_comp enum_yamevalE map_id.
   - by move=> i /=; rewrite unfold_in.
 Qed.
-(* End of Unused *****************)
 
 End OneCoeff.
 
@@ -507,7 +558,7 @@ Proof.
   exact: included_shape_filter_gtnX_tab.
 Qed.
 
-
+(** * The statement of the Littlewood-Richardson rule *)
 Local Open Scope ring_scope.
 Import GRing.Theory.
 
@@ -540,7 +591,7 @@ Qed.
 End TheRule.
 
 
-(** ** Pieri's rules *)
+(** * Pieri's rules *)
 Section Pieri.
 
 Local Open Scope ring_scope.
@@ -554,6 +605,7 @@ Notation Schur p := (Schur Hnpos R p).
 Notation complete p := (complete Hnpos R p).
 Notation elementary p := (elementary Hnpos R p).
 
+(* TODO : move in Yamanouchi *)
 Lemma yamrowP : is_yam_of_eval (intpart_of_intpartn (rowpartn d2)) (ncons d2 0%N [::]).
 Proof.
   rewrite /is_yam_of_eval; elim: d2 => [//= | d] /andP [] /= -> /eqP ->.

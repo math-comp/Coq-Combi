@@ -516,7 +516,7 @@ End CongruenceClosure.
 
 
 
-(** ** Invariant contect for multi-homgeneous congruence rules *)
+(** * Multi-homogeneous congruence rules *)
 Section InvarContMultHom.
 
 Variable Alph : eqType.
@@ -552,7 +552,7 @@ Definition genclass_multhom := genclass perm_invar_congr.
 End InvarContMultHom.
 
 
-(** ** Invariant contect for homogeneous congruence rules on a finite type *)
+(** * Homogeneous congruence rules on a finite type *)
 Section InvarContHom.
 
 Variable Alph : finType.

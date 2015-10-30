@@ -13,7 +13,8 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(**
+(** * Young Tableaux over an [ordtype]
+
 We define the notion of (semistandard) Young tableau over an [ordType]
 denoted [T].
 
@@ -158,7 +159,7 @@ Qed.
 End Dominate.
 
 
-(** ** Tableaux : definition and basic properties *)
+(** * Tableaux : definition and basic properties *)
 Section Tableau.
 
   Variable T : ordType.

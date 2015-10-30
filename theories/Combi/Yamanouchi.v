@@ -13,8 +13,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(**
-Yamanouchi word are stored as [seq nat].
+(** * Yamanouchi words.
+
+Yamanouchi words are stored as [seq nat].
 
 - [evalseq s] == the evaluation of the sequence s stored as a sequenc, that is
                  the sequence counting whose i-th entry is the number of
@@ -54,7 +55,7 @@ Section Yama.
 
   Implicit Type s : seq nat.
 
-  (** ** Evaluation of a sequence of integer (mostly Yamanouchi word) *)
+  (** * Evaluation of a sequence of integer (mostly Yamanouchi word) *)
   Fixpoint evalseq s :=
     if s is s0 :: s'
     then incr_nth (evalseq s') s0
@@ -141,7 +142,7 @@ Section Yama.
   Lemma evalseq_eq_size y : sumn (evalseq y) = size y.
   Proof. elim: y => [//= | y0 y] /=; by rewrite sumn_incr_nth => ->. Qed.
 
-  (** ** Yamanouchi words                                                            *)
+  (** * Yamanouchi words:                                                            *)
   (*       sequence of rows of the corners for an increasing sequence of partitions. *)
   (*       they are in bijection with standard tableaux                              *)
   Fixpoint is_yam s :=
@@ -325,8 +326,7 @@ Proof.
 Qed.
 
 
-(** ** Enumeration of Yamanouchi words *)
-
+(** * Enumeration of Yamanouchi words *)
 Fixpoint enum_yamevaln n ev :=
   if n is n'.+1 then
     flatten [seq [seq i :: y | y <- enum_yamevaln n' (decr_nth ev i)] |
@@ -383,6 +383,7 @@ Proof.
     by case: (ltnP y0 (size (evalseq y))).
 Qed.
 
+(** * Sigma types for Yamanouchi words *)
 Section YamOfEval.
 
 Variable ev : intpart.
