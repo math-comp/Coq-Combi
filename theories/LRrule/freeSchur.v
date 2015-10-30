@@ -252,15 +252,13 @@ Proof.
 
   rewrite (big_setID [set set0]) /=.
   rewrite [X in X + _](_ : _ = 0) ?add0r; first last.
-    rewrite (eq_bigr (fun=> 0)).
-      rewrite big_const; elim: (card _) => [//=| i IHi] /=; by rewrite IHi add0r.
+    rewrite (eq_bigr (fun=> 0)); first by rewrite sumr_const mul0rn.
     move=> i; rewrite inE => /andP [] _; rewrite inE => /eqP ->.
     by rewrite /polylang big_set0.
 
   rewrite (big_setID [set x | freeSchur x == set0]) /=.
   rewrite [X in X + _](_ : _ = 0) ?add0r; first last.
-    rewrite (eq_bigr (fun=> 0)).
-      rewrite big_const; elim: (card _) => [//=| i IHi] /=; by rewrite IHi add0r.
+    rewrite (eq_bigr (fun=> 0)); first by rewrite sumr_const mul0rn.
     move=> i; rewrite inE => /andP [] _; rewrite inE => /eqP ->.
     by rewrite /polylang big_set0.
 
@@ -269,9 +267,7 @@ Proof.
     rewrite inE => /andP []; rewrite inE => /set0Pn [] x1 Hx1 _ _.
     move: Hx1; rewrite /freeSchur inE => /eqP Hx1.
     rewrite -setP => /(_ x1); rewrite !inE Hx1.
-    rewrite eq_refl => /esym/eqP.
-    exact: val_inj.
-  rewrite /polylang.
+    rewrite eq_refl => /esym/eqP; exact: val_inj.
 
   apply: eq_bigl => s; rewrite !inE.
   apply/idP/idP.
@@ -323,12 +319,8 @@ Proof.
   rewrite (partition_big (@shape_deg (d1 + d2)) predT) //=.
   apply: eq_bigr => P _.
   rewrite (eq_bigr (fun i => (Schur P))); last by move=> T /andP [] _ /eqP ->.
-  rewrite big_const.
-  set c1 := card _; set c2 := card _.
-  suff -> : c1 = c2 by elim: c2 => [//= | c IHc] /=; rewrite IHc mulrS.
-  rewrite /c1 /c2 {c1 c2}.
-  apply: eq_card => i /=.
-  by rewrite unfold_in inE.
+  rewrite sumr_const; congr (_ *+ _).
+  apply: eq_card => i /=; by rewrite unfold_in inE.
 Qed.
 
 Lemma size_RSmapinv2_yam d (Typ : ordType) (tab : seq (seq Typ)) (T : stdtabn d) :

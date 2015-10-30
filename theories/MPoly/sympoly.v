@@ -26,6 +26,30 @@ Unset Printing Implicit Defensive.
 Local Open Scope ring_scope.
 Import GRing.Theory.
 
+Lemma mdeg1P n m : reflect (exists i : 'I_n, m = U_(i))%MM (mdeg m == 1)%N.
+Proof.
+  apply (iffP idP) => [/eqP Hdeg | [] i ->]; last by rewrite mdeg1.
+  have : (#|[set i | m i != 0]| = 1)%N.
+    apply/anti_leq/andP; split.
+    - move: Hdeg; rewrite mdegE => <-.
+      rewrite -sum1dep_card [X in _ <= X](bigID (fun x => m x != 0%N)) /=.
+      rewrite [X in _ <= _ + X](eq_bigr (fun _ => 0%N)); first last.
+        by move=> i /=; rewrite negbK => /eqP.
+      rewrite big1_eq addn0; apply leq_sum => i; by rewrite lt0n.
+    rewrite lt0n; move: Hdeg => /eqP; apply contraL.
+    rewrite cards_eq0 => /eqP; rewrite -setP => H.
+    suff -> : mdeg m = 0%N by [].
+    rewrite mdegE big1 // => i _.
+    have := H i; by rewrite !inE => /negbT; rewrite negbK => /eqP.
+  move/eqP/cards1P => [] i; rewrite -setP => H.
+  exists i; rewrite mnmP => j.
+  have:= H j; rewrite !inE mnm1E [j == i]eq_sym => <-.
+  case: eqP => [-> // | /eqP] Hmj.
+  move: Hdeg; rewrite mdegE (bigD1 j) //=.
+  by case: (m j) Hmj => [| [|d]].
+Qed.
+
+
 Section TableauReading.
 
 Variable A : ordType.
@@ -99,7 +123,24 @@ Definition Schur d (sh : intpartn d) : {mpoly R[n]} :=
 Lemma elementary_mesymE d : elementary d = mesym n R d.
 Proof. by []. Qed.
 
-(* TODO:  All agrees at degree 1 *)
+
+(** All basis agrees at degree 0 *)
+Lemma elementary0 : elementary 0 = 1.
+Proof. by rewrite elementary_mesymE mesym0E. Qed.
+
+Lemma powersum0 : power_sum 0 = n%:R.
+Proof.
+  rewrite /power_sum (eq_bigr (fun _ => 1)); last by move=> i _; rewrite expr0.
+  by rewrite sumr_const card_ord.
+Qed.
+
+Lemma complete0 : complete 0 = 1.
+Proof.
+  have Hd0 : (mdeg (0%MM : 'X_{1..n})) < 1 by rewrite mdeg0.
+  rewrite /complete (big_pred1 (BMultinom Hd0)); first last.
+    move=> m /=; by rewrite mdeg_eq0 {2}/eq_op /=.
+  by rewrite /= mpolyX0.
+Qed.
 
 Lemma Schur0 (sh : intpartn 0) : Schur sh = 1.
 Proof.
@@ -107,6 +148,37 @@ Proof.
     move=> i /=; by rewrite tuple0 [RHS]eq_refl intpartn0.
   by rewrite big_pred1_eq big_nil.
 Qed.
+
+(** All basis agrees at degree 1 *)
+Lemma elementary1 : elementary 1 = \sum_(i < n) 'X_i.
+Proof. by rewrite elementary_mesymE mesym1E. Qed.
+
+Lemma power_sum1 : power_sum 1 = \sum_(i < n) 'X_i.
+Proof. by apply eq_bigr => i _; rewrite expr1. Qed.
+
+Lemma complete1 : complete 1 = \sum_(i < n) 'X_i.
+Proof.
+  rewrite /complete -mpolyP => m.
+  rewrite !raddf_sum /=.
+  case: (boolP (mdeg m == 1%N)) => [/mdeg1P [] i -> | Hm].
+  - have Hdm : (mdeg U_(i))%MM < 2 by rewrite mdeg1.
+    rewrite (bigD1 (BMultinom Hdm)) /=; last by rewrite mdeg1.
+    rewrite mcoeffX eq_refl big1; first last.
+      move=> mm /andP [] _ /negbTE.
+      by rewrite mcoeffX {1}/eq_op /= => ->.
+    rewrite /= (bigD1 i) // mcoeffX eq_refl /= big1 // => j /negbTE H.
+    rewrite mcoeffX.
+    case eqP => //; rewrite mnmP => /(_ i).
+    by rewrite !mnm1E H eq_refl.
+  - rewrite big1; first last.
+      move=> p /eqP Hp; rewrite mcoeffX.
+      case eqP => // Hpm; subst m.
+      by move: Hm; rewrite Hp.
+    rewrite big1 // => p _.
+    rewrite mcoeffX; case eqP => // Hmm; subst m.
+    by rewrite mdeg1 in Hm.
+Qed.
+
 
 Lemma Schur_oversize d (sh : intpartn d) : size sh > n -> Schur sh = 0.
 Proof.
@@ -262,6 +334,13 @@ Proof.
     exists (rev_tuple t) => /=.
     + by rewrite mem_enum.
     + apply val_inj; by rewrite /= revK.
+Qed.
+
+
+Lemma Schur1 (sh : intpartn 1) : Schur sh = \sum_(i<n) 'X_i.
+Proof.
+  suff -> : sh = rowpartn 1 by rewrite -completeE complete1.
+  apply val_inj => /=; exact: intpartn1.
 Qed.
 
 End Bases.
