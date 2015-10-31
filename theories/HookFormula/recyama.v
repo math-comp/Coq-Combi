@@ -83,9 +83,8 @@ Section RecYama.
     suff : all (is_stdtab_of_shape p) (enum_stdtabsh p).
       by rewrite all_count => /eqP ->; rewrite size_map.
     rewrite /enum_stdtabsh; apply/allP => t /mapP [] y Hy -> {t}.
-    have /allP Hall := enum_yamevalP (intpartP p).
-    have {Hy Hall} := Hall _ Hy.
--    rewrite /is_yam_of_eval /is_stdtab_of_shape /= => /andP [] /stdtab_of_yamP -> /=.
+    have /allP/(_ _ Hy) := enum_yamevalP (intpartP p).
+    rewrite /is_yam_of_eval /is_stdtab_of_shape /= => /andP [] /stdtab_of_yamP -> /=.
     move=> /eqP <-.
     by rewrite shape_stdtab_of_yam.
   Qed.
@@ -122,8 +121,7 @@ Section RecYama.
     have -> : p = pdep by rewrite -Htmp.
     elim/intpart_rem_corner_ind: pdep {p Hp Htmp} => [| p Hp IHp] //=.
     apply (Hrec p (intpartP p) Hp) => i Hi.
-    have /= := (IHp i Hi).
-    by rewrite /decr_nth_part_def Hi.
+    move/(_ i Hi): IHp; by rewrite /= /decr_nth_part_def Hi.
   Qed.
 
   Lemma card_stdtabsh_rec (f : intpart -> nat) :

@@ -32,8 +32,8 @@ $(call includecmdwithout@,$(COQBIN)coqtop -config)
 #                        #
 ##########################
 
-COQLIBS?= -R theories Combi
-COQDOCLIBS?=-R theories Combi
+COQLIBS?= -R theories Combi -R 3rdparty/ALEA ALEA
+COQDOCLIBS?=-R theories Combi -R 3rdparty/ALEA ALEA
 COQEXTLIBS:=--external http://ssr.msr-inria.inria.fr/doc/mathcomp-1.5/ MathComp \
             --external http://ssr.msr-inria.inria.fr/doc/ssreflect-1.5/ Ssreflect
 
@@ -75,8 +75,10 @@ endif
 #                    #
 ######################
 
-VFILES:= theories/Combi/combclass.v\
-  theories/Combi/ordtype.v\
+VFILES:= theories/Basic/combclass.v\
+  theories/Basic/congr.v\
+  theories/Basic/ordcast.v\
+  theories/Basic/ordtype.v\
   theories/Combi/partition.v\
   theories/Combi/permuted.v\
   theories/Combi/shape.v\
@@ -92,27 +94,29 @@ VFILES:= theories/Combi/combclass.v\
   theories/SSRcomplements/sorted.v\
   theories/SSRcomplements/tools.v\
   theories/Erdos_Szekeres/Erdos_Szekeres.v\
-  theories/HookFormula/ALEA/Ccpo.v\
-  theories/HookFormula/ALEA/Misc.v\
   theories/HookFormula/Qmeasure.v\
   theories/HookFormula/RSident.v\
   theories/HookFormula/distr.v\
   theories/HookFormula/hook.v\
   theories/HookFormula/recyama.v\
-  theories/LRrule/congr.v\
+  theories/MPoly/antisym.v\
+  theories/MPoly/sympoly.v\
+  theories/MPoly/Schur_basis.v\
   theories/LRrule/extract.v\
   theories/LRrule/Greene_inv.v\
   theories/LRrule/Greene.v\
   theories/LRrule/implem.v\
-  theories/LRrule/ordcast.v\
   theories/LRrule/plactic.v\
   theories/LRrule/Schensted.v\
-  theories/LRrule/Schur.v\
+  theories/LRrule/freeSchur.v\
   theories/LRrule/shuffle.v\
   theories/LRrule/stdplact.v\
   theories/LRrule/therule.v\
   theories/LRrule/Yam_plact.v\
   theories/Poset/poset.v
+  theories/SymGroup/symgroup.v\
+  3rdparty/ALEA/Ccpo.v\
+  3rdparty/ALEA/Misc.v\
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))

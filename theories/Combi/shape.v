@@ -67,10 +67,9 @@ Proof.
     rewrite mem_iota add1n => /andP [] Hr _ /mapP [] c.
     rewrite mem_iota add0n /= => Hc -> {x} /mapP [] r' _ [] Hr1 _.
     move: Hr; by rewrite Hr1.
-  - set l0 := (X in uniq X) in IHs; set l1 := (X in uniq X).
-    have -> : l1 = [seq (x.1.+1, x.2) | x <- l0].
-      rewrite /l0 /l1 {l0 l1 IHs}.
-      rewrite map_flatten; congr flatten.
+  - set l0 := (X in uniq X) in IHs.
+    rewrite [X in uniq X](_ : _ = [seq (x.1.+1, x.2) | x <- l0]); first last.
+      rewrite /l0 {l0 IHs} map_flatten; congr flatten.
       rewrite -(addn0 1) iota_addl -!map_comp; apply eq_map => r /=.
       rewrite -!map_comp; apply eq_map => c /=.
       by rewrite add1n.
@@ -105,7 +104,7 @@ Lemma box_inP (rc : box_in) : is_in_shape sh rc.1 rc.2.
 Proof. by case: rc. Qed.
 
 Lemma enum_box_inE : map val (enum box_in) = enum_box_in.
-Proof. rewrite /=; by apply enum_subE. Qed.
+Proof. exact: enum_subE. Qed.
 
 Lemma mem_enum_box_in : enum_box_in =i is_box_in_shape.
 Proof. exact: (sub_enumE enum_box_inP count_enum_box_inP). Qed.
@@ -142,13 +141,13 @@ Proof.
   - exact: enum_box_in_uniq.
   - move=> [r c]; rewrite inE !mem_enum_box_in.
     rewrite /is_box_in_shape !unfold_in /is_in_shape /=.
-    apply (sameP idP); apply (iffP idP).
-    + rewrite nth_incr_nth {2}/eq_op /= eq_sym.
-      case: eqP => [-> {r} | Hri] /=; last by rewrite add0n.
-      by rewrite add1n ltnS leq_eqVlt.
+    apply/idP/idP.
     + move/orP => [/eqP [] -> ->|].
       * by rewrite nth_incr_nth eq_refl add1n ltnS.
       * move => /leq_trans; apply.
-        rewrite nth_incr_nth; by apply leq_addl.
+        rewrite nth_incr_nth; exact: leq_addl.
+    + rewrite nth_incr_nth {2}/eq_op /= eq_sym.
+      case: eqP => [-> {r} | Hri] /=; last by rewrite add0n.
+      by rewrite add1n ltnS leq_eqVlt.
 Qed.
 

@@ -13,7 +13,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import ordtype tableau Yamanouchi stdtab shuffle Schur skewtab therule implem.
+Require Import ordtype tableau Yamanouchi stdtab shuffle freeSchur skewtab therule implem.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
