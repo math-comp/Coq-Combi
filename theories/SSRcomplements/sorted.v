@@ -15,12 +15,17 @@
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import path.
 
+(******************************************************************************)
+(** * Various Lemmas about [path] and [sorted] which are missing in MathComp  *)
+(*                                                                            *)
+(** TODO: these probably should be contributed to path.v                      *)
+(******************************************************************************)
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 
 Open Scope N.
 
-(* TODO : Those lemmas should be contributed to path *)
 
 Section Sorted.
 
@@ -43,8 +48,8 @@ Section Sorted.
   Lemma sorted_take r n : sorted r -> sorted (take n r).
   Proof.
     elim: r n => [//= | r0 r IHr] [//=| n] /= H.
-    case: r r0 H IHr => [//=| r1 r] r0 /= /andP [] H Hp IHr.
-    have:= IHr n Hp. case: n => [//=|n] /= ->; by rewrite H.
+    case: r r0 H IHr => [//=| r1 r] r0 /= /andP [] H Hp /(_ n Hp).
+    case: n => [//=|n] /= ->; by rewrite H.
   Qed.
 
   Lemma sorted_drop r n : sorted r -> sorted (drop n r).
@@ -110,16 +115,15 @@ Section Sorted.
     split => H.
     - move=> i Hi.
       have : i <= i.+1 < size r by rewrite Hi andbT.
-      by apply: H.
+      exact: H.
     - move=> i j; move Hdiff : (j - i) => diff.
       elim: diff i j Hdiff => [| diff IHdiff] i j /=.
       + move/eqP; rewrite -/(leq j i) => H1 /andP [] H2 Hj.
-        have -> : i = j by apply/eqP; rewrite eqn_leq H1 H2.
-        by [].
+        by rewrite (_ : i = j); last by apply/eqP; rewrite eqn_leq H1 H2.
       + move=> Hdiff => /andP [] _ Hj.
         have Hiltj : i < j by rewrite -subn_gt0 Hdiff.
         apply: (Rtrans (y := nth Z r i.+1)).
-        * apply: H; by apply: (leq_ltn_trans Hiltj).
+        * apply: H; exact: (leq_ltn_trans Hiltj).
         * apply: IHdiff => //=; first by rewrite subnS Hdiff.
           by rewrite Hiltj Hj.
   Qed.
@@ -138,8 +142,8 @@ Section Sorted.
 
   Lemma head_leq_last_sorted l r : sorted (l :: r) -> (l <=R last l r).
   Proof.
-    elim: r l => [//=| t0 r IHr] l /= /andP [] Hl.
-    move/IHr {IHr}; by apply: (Rtrans Hl).
+    elim: r l => [//=| t0 r IHr] l /= /andP [] Hl /IHr {IHr}.
+    exact: Rtrans Hl.
   Qed.
 
   Hypothesis Hanti : antisymmetric R.
@@ -150,7 +154,7 @@ Section Sorted.
   Proof.
     move=> /sortedP Hsort Hp Hq /andP [] Hneq Hpq.
     have H : q <= p -> (nth Z r q <=R nth Z r p).
-      by move=> H; apply Hsort; rewrite H Hp.
+      by move=> Hqp; apply Hsort; rewrite Hqp Hp.
     have:= contra H; rewrite ltnNge; apply.
     apply (introN idP) => Hqp.
     move: Hneq; suff -> : nth Z r p = nth Z r q by rewrite eq_refl.
@@ -164,11 +168,11 @@ Lemma sorted_enum_ord N :
 Proof.
   rewrite /sorted; case Henum : (enum 'I_N) => [//= | a l].
   rewrite -(map_path (h := val) (e := leq) (b := pred0)).
-  - have -> : l = behead (enum 'I_N) by rewrite Henum.
-    have -> : val a = head 0 (map val (enum 'I_N)) by rewrite Henum.
+  - rewrite (_ : l = behead (enum 'I_N)); last by rewrite Henum.
+    rewrite (_ : val a = head 0 (map val (enum 'I_N))); last by rewrite Henum.
     rewrite -behead_map val_enum_ord.
     case: N {a l Henum} => [//= | N] /=.
-    by apply: (iota_sorted 0 N.+1).
+    exact: (iota_sorted 0 N.+1).
   - by [].
   - by rewrite (eq_has (a2 := pred0)); first by rewrite has_pred0.
 Qed.

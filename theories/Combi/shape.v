@@ -1,3 +1,4 @@
+(** * Combi.Combi.shape : Coordinates of Boxes Inside a Shape *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,9 +13,16 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * A finite type for coordinate of boxes inside a shape *)
+(**
+Currently, a shape is a sequence of ragged left rows, the length of which
+are stored in a [seq nat]. Therefore [(r, c)] is in [sh] if [r < sh[i]]
+*)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
 Require Import tools combclass.
+
+
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -27,6 +35,7 @@ Proof.
   by rewrite (nth_default _ Hr).
 Qed.
 
+(** ** Canonical [finType] structure for box in [sh] *)
 Section BoxIn.
 
 Variable sh : seq nat.
@@ -58,10 +67,9 @@ Proof.
     rewrite mem_iota add1n => /andP [] Hr _ /mapP [] c.
     rewrite mem_iota add0n /= => Hc -> {x} /mapP [] r' _ [] Hr1 _.
     move: Hr; by rewrite Hr1.
-  - set l0 := (X in uniq X) in IHs; set l1 := (X in uniq X).
-    have -> : l1 = [seq (x.1.+1, x.2) | x <- l0].
-      rewrite /l0 /l1 {l0 l1 IHs}.
-      rewrite map_flatten; congr flatten.
+  - set l0 := (X in uniq X) in IHs.
+    rewrite [X in uniq X](_ : _ = [seq (x.1.+1, x.2) | x <- l0]); first last.
+      rewrite /l0 {l0 IHs} map_flatten; congr flatten.
       rewrite -(addn0 1) iota_addl -!map_comp; apply eq_map => r /=.
       rewrite -!map_comp; apply eq_map => c /=.
       by rewrite add1n.
@@ -96,11 +104,12 @@ Lemma box_inP (rc : box_in) : is_in_shape sh rc.1 rc.2.
 Proof. by case: rc. Qed.
 
 Lemma enum_box_inE : map val (enum box_in) = enum_box_in.
-Proof. rewrite /=; by apply enum_subE. Qed.
+Proof. exact: enum_subE. Qed.
 
 Lemma mem_enum_box_in : enum_box_in =i is_box_in_shape.
 Proof. exact: (sub_enumE enum_box_inP count_enum_box_inP). Qed.
 
+(** ** Rewriting bigops running along the boxes of a shape *)
 Lemma big_enum_box_in (R : Type) (idx : R) (op : Monoid.law idx) (f : nat -> nat -> R):
   \big[op/idx]_(b <- enum_box_in) f b.1 b.2 =
   \big[op/idx]_(0 <= r < size sh) \big[op/idx]_(0 <= c < nth 0 sh r) f r c.
@@ -121,6 +130,7 @@ Qed.
 
 End BoxIn.
 
+(** ** Adding a box to a shape *)
 Lemma box_in_incr_nth sh i :
   perm_eq ((i, nth 0 sh i) :: enum_box_in sh) (enum_box_in (incr_nth sh i)).
 Proof.
@@ -131,13 +141,13 @@ Proof.
   - exact: enum_box_in_uniq.
   - move=> [r c]; rewrite inE !mem_enum_box_in.
     rewrite /is_box_in_shape !unfold_in /is_in_shape /=.
-    apply (sameP idP); apply (iffP idP).
-    + rewrite nth_incr_nth {2}/eq_op /= eq_sym.
-      case: eqP => [-> {r} | Hri] /=; last by rewrite add0n.
-      by rewrite add1n ltnS leq_eqVlt.
+    apply/idP/idP.
     + move/orP => [/eqP [] -> ->|].
       * by rewrite nth_incr_nth eq_refl add1n ltnS.
       * move => /leq_trans; apply.
-        rewrite nth_incr_nth; by apply leq_addl.
+        rewrite nth_incr_nth; exact: leq_addl.
+    + rewrite nth_incr_nth {2}/eq_op /= eq_sym.
+      case: eqP => [-> {r} | Hri] /=; last by rewrite add0n.
+      by rewrite add1n ltnS leq_eqVlt.
 Qed.
 

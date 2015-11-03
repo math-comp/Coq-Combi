@@ -1,3 +1,4 @@
+(** * Combi.Combi.vectNK : Integer Vector of Given Sums and Sizes *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,17 +13,22 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(******************************************************************************)
+(** * Integer vectors of sum n and size k
+
+- [vect_n_k n k] == the list of integer vectors of sum n and size k
+- [cut_k k s] == the list of the cutting of s in k slices (the result is of
+                 type [seq (seq T)])
+- [cut3 s] == the list of the cutting of s in 3 slices (the result is of type
+              [seq (seq T) * (seq T) * (seq T)])
+
+*****)
+
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
 Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
-
-(******************************************************************************)
-(** Integer vectors of sum [[n]] and size [[k]]                               *)
-(**                                                                           *)
-(** TODO: make this a proper [[finType]].                                     *)
-(******************************************************************************)
 
 Section VectNK.
 
@@ -39,7 +45,7 @@ Proof.
     apply/flattenP; rewrite -/vect_n_k /mkseq.
     exists (map (cons s0) (vect_n_k (n - s0) k)).
     * apply/mapP; exists s0; last by [].
-      rewrite mem_iota leq0n add0n /= ltnS -Hsum /=; by apply: leq_addr.
+      rewrite mem_iota leq0n add0n /= ltnS -Hsum /=; exact: leq_addr.
     * apply/mapP; exists s; last by [].
       apply: IHk; first by rewrite -Hsum /= -{2}[s0]addn0 subnDl subn0.
       by move: Hsize => /=.
@@ -57,8 +63,8 @@ Qed.
 
 Lemma vect_n_kP n k s : s \in vect_n_k n k = (sumn s == n) && (size s == k).
 Proof.
-  apply/(sameP idP); apply(iffP idP); last by apply: in_vect_n_k.
-  move=> /andP []; by apply: vect_n_k_in.
+  apply/idP/idP; first exact: in_vect_n_k.
+  move=> /andP []; exact: vect_n_k_in.
 Qed.
 
 Lemma vect_0_k k : vect_n_k 0 k = [:: nseq k 0].
@@ -72,20 +78,16 @@ Proof.
   move/flatten_mapP; rewrite -/vect_n_k => [] [] i.
   rewrite mem_iota [iota _ _]lock add0n => Hs0.
   move/mapP => [] t Ht [] H1 H2; subst i; subst t.
-  set f := _ \o _; have : f =1 (fun i : nat => i == s0).
-    move=> i; rewrite /f {f} /= count_map /=.
-    set p := preim _ _; have: p =1 (fun t => (i == s0) && (s == t)).
-      rewrite /p /= /preim => t /=.
-      apply/(sameP idP); apply(iffP idP) => [/andP [] /eqP -> /eqP -> //=| /eqP [] -> ->].
-      by rewrite !eq_refl.
-    move/eq_count -> => {p}.
-    case H : (i == s0) => /=; last by rewrite count_pred0.
-    set p := ([eta _]); have : p =1 (pred_of_simpl (pred1 s)).
-      rewrite /p => t /=; by rewrite eq_sym.
-    move/eq_count -> => {p}.
-    apply: IHk; by rewrite (eqP H).
-  move/eq_map -> => {IHk Ht f s k}; unlock.
-  by apply: sumn_iota; rewrite add0n.
+  rewrite (eq_map (f2 := (fun i : nat => i == s0 : nat))).
+    unlock; exact: sumn_iota; rewrite add0n.
+  move=> i; rewrite /= count_map /=.
+  rewrite (eq_count (a2 := fun t => (i == s0) && (s == t))); first last.
+    rewrite /= /preim => t /=.
+    apply/idP/idP => [/eqP [] -> -> | /andP [] /eqP -> /eqP -> //].
+    by rewrite !eq_refl.
+  case H : (i == s0) => /=; last by rewrite count_pred0.
+  rewrite (eq_count (a2 := (xpred1 s))); last exact: eq_sym.
+  apply: IHk; by rewrite (eqP H).
 Qed.
 
 Lemma uniq_vect_n_k n k : uniq (vect_n_k n k).
@@ -95,15 +97,10 @@ Proof.
   by move: H => /count_memPn ->.
 Qed.
 
-
 End VectNK.
 
 
-(******************************************************************************)
-(** Cutting a seq in [[k]] slices                                             *)
-(**                                                                           *)
-(** The result is of type [[seq seq T]]                                       *)
-(******************************************************************************)
+(** Cutting a seq in k slices : the result is of type [seq (seq T)] *)
 
 Section CutK.
 
@@ -132,17 +129,13 @@ Qed.
 Lemma size_cut_k k s ss : ss \in (cut_k k s) -> size ss = k.
 Proof.
   rewrite /cut_k => /mapP [] sh /in_vect_n_k /andP [] /eqP Hsum /eqP Hsize -> {ss}.
-  have -> : forall ss, size ss = size (shape ss) by move=> ss; rewrite /shape size_map.
-  by rewrite reshapeKl; last by rewrite Hsum.
+  by rewrite -(size_map size _) -/(shape _) reshapeKl; last by rewrite Hsum.
 Qed.
 
 End CutK.
 
-(******************************************************************************)
-(** Cutting a seq in 3 slices                                                 *)
-(**                                                                           *)
-(** The result is of type (seq T) * (seq T) * (seq T)                         *)
-(******************************************************************************)
+
+(** Cutting a seq in 3 slices : the result is of type [seq (seq T) * (seq T) * (seq T)] *)
 
 Section Cut3.
 

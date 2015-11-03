@@ -1,3 +1,4 @@
+(** * Combi.Combi.Yamanouchi : Yamanouchi Words *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,6 +13,37 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * Yamanouchi words.
+
+Yamanouchi words are stored as [seq nat].
+
+- [evalseq s] == the evaluation of the sequence s stored as a sequenc, that is
+                 the sequence counting whose i-th entry is the number of
+                 occurences of i in s; the final zeroes are not stored so that
+                 the sequence ends with a non zero entry.
+- [evalseq_count] == an alternate definition of the previous sequence
+- [is_yam s] == s is a Yamanouchi word
+- [is_yam_of_eval ev s] == s is a Yamanouchi word of evaluation ev.
+- [decr_yam s] == the Yamanouchi word obtained by removing the zero and
+                   decrassing all the other entries by 1
+- [hyper_yam ev] == the hyperstandard (decreassing) Yamanouchi word of
+                    evaluation ev such as 33 2222 11111 0000000
+
+Enumeration of Yamanouchi words:
+
+- [is_yam_of_eval ev y] == y is a yamanouchi word of evalutation ev
+- [is_yam_of_size n y] == y is a yamanouchi word of size n
+- [enum_yameval ev] == the lists of all yamanouchi word of evalutation ev
+
+
+Sigma types of Yamanouchi words:
+
+- [yameval ev] == a type for [seq nat] which are Yamanouchi words of
+                  evaluation ev; it is canonically a [finType]
+- [yamn n] == a type for [seq nat] which are Yamanouchi words of
+              size n; it is canonically a [finType]
+******)
+
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import bigop.
 Require Import tools combclass partition.
@@ -23,8 +55,7 @@ Section Yama.
 
   Implicit Type s : seq nat.
 
-
-  (* Evaluation of a sequence of integer (mostly Yamanouchi word) *)
+  (** * Evaluation of a sequence of integer (mostly Yamanouchi word) *)
   Fixpoint evalseq s :=
     if s is s0 :: s'
     then incr_nth (evalseq s') s0
@@ -76,33 +107,30 @@ Section Yama.
 
   Lemma perm_eq_evalseq s t : perm_eq s t = (evalseq s == evalseq t).
   Proof.
-    apply/(sameP idP); apply(iffP idP).
-    - move/eqP.
-      rewrite -!evalseq_countE /evalseq_count /=.
+    apply/idP/idP => [Hperm | /eqP].
+    - rewrite -!evalseq_countE /evalseq_count /=.
+      rewrite !foldr_maxn (eq_big_perm _ Hperm) /=.
+      apply/eqP; apply eq_map => i.
+      by move: Hperm => /perm_eqP ->.
+    - rewrite -!evalseq_countE /evalseq_count /=.
       set mx := foldr _ _ _ => H.
-      have := erefl (size [seq (count_mem i) s | i <- iota 0 mx]).
-      rewrite {2}H !size_map !size_iota => Hmax.
+      have:= congr1 size H; rewrite !size_map !size_iota => Hmax.
       rewrite /perm_eq; apply /allP => i /= Hi.
       have {Hi} Hi : i < mx.
         move: Hi; rewrite mem_cat => /orP [].
         + rewrite /mx; elim s => [//= | s0 s' IHs] /=.
-          rewrite inE => /orP [/eqP -> | Hi]; first by apply leq_maxl.
+          rewrite inE => /orP [/eqP -> | Hi]; first exact: leq_maxl.
           rewrite leq_max; apply/orP; right.
-          by apply IHs.
+          exact: IHs.
         + rewrite Hmax; elim t => [//= | t0 t' IHt] /=.
-          rewrite inE => /orP [/eqP -> | Hi]; first by apply leq_maxl.
+          rewrite inE => /orP [/eqP -> | Hi]; first exact: leq_maxl.
           rewrite leq_max; apply/orP; right.
-          by apply IHt.
-      have := erefl (nth 0 [seq (count_mem i) s | i <- iota 0 mx] i).
-      rewrite {2}H (nth_map 0); last by rewrite -Hmax size_iota.
+          exact: IHt.
+      move/(congr1 (fun s => nth 0 s i)) : H.
       rewrite (nth_map 0); last by rewrite size_iota.
+      rewrite (nth_map 0); last by rewrite -Hmax size_iota.
       rewrite (nth_iota _ Hi) nth_iota; last by rewrite -Hmax.
       by rewrite !add0n => ->.
-    - move=> Hperm.
-      rewrite -!evalseq_countE /evalseq_count /=.
-      rewrite !foldr_maxn (eq_big_perm _ Hperm) /=.
-      apply/eqP; apply eq_map => i.
-      by move: Hperm => /perm_eqP ->.
   Qed.
 
   Lemma evalseq0 y : evalseq y = [::] -> y = [::].
@@ -114,9 +142,9 @@ Section Yama.
   Lemma evalseq_eq_size y : sumn (evalseq y) = size y.
   Proof. elim: y => [//= | y0 y] /=; by rewrite sumn_incr_nth => ->. Qed.
 
-  (* Yamanouchi word:                                                            *)
-  (*   sequence of rows of the corners for an increasing sequence of partitions. *)
-  (*   they are in bijection with standard tableaux                              *)
+  (** * Yamanouchi words:                                                            *)
+  (*       sequence of rows of the corners for an increasing sequence of partitions. *)
+  (*       they are in bijection with standard tableaux                              *)
   Fixpoint is_yam s :=
     if s is s0 :: s'
     then is_part (evalseq s) && is_yam s'
@@ -132,20 +160,18 @@ Section Yama.
     - elim: s => [| s0 s IHs] //= /andP [] /is_partP [] _ Hpart /IHs Hrec {IHs}.
       case => [| i] n //=.
       + case: (altP (s0 =P n)) => Hns0.
-        subst s0; rewrite ieqi1F add0n add1n.
-        have:= Hrec 0 n; rewrite drop0 => /leq_trans; by apply.
+        subst s0; rewrite ltn_eqF // add0n add1n.
+        move/(_ 0 n) : Hrec; rewrite drop0 => /leq_trans; by apply.
       + case: (altP (s0 =P n.+1)) => Hn1s0.
-        have:= Hpart n; rewrite !nth_incr_nth Hn1s0 eq_refl eq_sym ieqi1F.
+        move/(_ n) : Hpart; rewrite !nth_incr_nth Hn1s0 eq_refl eq_sym ltn_eqF //.
         by rewrite !add0n !add1n !nth_evalseq.
-      + rewrite !add0n.
-        have:= Hrec 0 n; by rewrite drop0.
+      + move/(_ 0 n) : Hrec; by rewrite !add0n drop0.
     - elim: s => [//= | s0 s IHs] H.
       apply/andP; split.
-      + move: H {IHs}. move: (s0 :: s) => {s0 s} s Hs.
-        have {Hs} := Hs 0; rewrite drop0 => Hs.
+      + move: (s0 :: s) {IHs} H => {s0 s} s /(_ 0); rewrite drop0 => Hs.
         apply /is_partP; split; last by move=> i; rewrite !nth_evalseq.
         * elim: s {Hs} => [//= | s0 s IHs] /=.
-          by apply last_incr_nth_non0.
+          exact: last_incr_nth_non0.
       + apply: IHs => i n; exact (H i.+1 n).
   Qed.
 
@@ -156,13 +182,12 @@ Section Yama.
   Proof.
     apply (iffP idP).
     - move=> /is_yamP Hyam d i j Hij.
-      have {Hyam} Hsuff := Hyam d.
+      move/(_ d) : Hyam => Hsuff.
       rewrite -(subnKC Hij).
       elim: (j-i) => [| r IHr]; first by rewrite addn0.
       apply: (leq_trans _ IHr).
       rewrite addnS; exact: Hsuff.
-    - move=> H; apply/is_yamP => i d.
-      exact: H.
+    - move=> H; apply/is_yamP => i d; exact: H.
   Qed.
 
   Lemma is_part_eval_yam s : is_yam s -> is_part (evalseq s).
@@ -184,7 +209,7 @@ Section Yama.
     move=> /andP [] _; exact IHy.
   Qed.
 
-  (* Remove the zeroes from a yam and decrease all the other entries by 1 *)
+  (** Remove the zeroes from a yam and decrease all the other entries by 1 *)
   Fixpoint decr_yam s :=
     if s is s0 :: s'
     then if s0 is s0'.+1
@@ -210,28 +235,27 @@ Section Yama.
     by case s0'.
   Qed.
 
-  Lemma is_out_corner_yam l0 s :
-    is_yam (l0 :: s) -> is_out_corner (evalseq (l0 :: s)) l0.
+  Lemma is_rem_corner_yam l0 s :
+    is_yam (l0 :: s) -> is_rem_corner (evalseq (l0 :: s)) l0.
   Proof.
-    move=> Hyam; have:= is_part_eval_yam (is_yam_tl Hyam) => /is_partP [] _ Hpart.
-    rewrite /is_out_corner !nth_incr_nth ieqi1F eq_refl add0n add1n ltnS.
-    by apply: Hpart.
+    move/is_yam_tl/is_part_eval_yam/is_partP => [] _ Hpart.
+    rewrite /is_rem_corner !nth_incr_nth ltn_eqF // eq_refl add0n add1n ltnS.
+    exact: Hpart.
   Qed.
 
-  Lemma is_in_corner_yam l0 s :
-    is_yam (l0 :: s) -> is_in_corner (evalseq s) l0.
+  Lemma is_add_corner_yam l0 s :
+    is_yam (l0 :: s) -> is_add_corner (evalseq s) l0.
   Proof.
-    rewrite /is_in_corner /=; case: l0 => [//= | l0] /=.
-    case: (evalseq s) => [//= | sh0 sh].
-      move=> /andP [] /andP [] H1 H2 _; exfalso.
+    rewrite /is_add_corner /=; case: l0 => [//= | l0] /=.
+    case: (evalseq s) => [| sh0 sh] /andP [].
+      move=> /andP [] H1 H2 _; exfalso.
       case: l0 H1 H2 => //= l0 _; by elim: l0.
-    move=> /andP [] /is_partP [] _ Hpart _.
-    have /= {Hpart} := Hpart l0.
+    move=> /is_partP [] _ /( _ l0) /=.
     rewrite -/(incr_nth (sh0 :: sh) l0.+1) !nth_incr_nth eq_refl add1n.
-    by rewrite eq_sym ieqi1F add0n.
+    by rewrite eq_sym ltn_eqF // add0n.
   Qed.
 
-  (* Hyperstandard Yamanouchi word : 33 2222 11111 0000000 *)
+  (** ** Hyperstandard Yamanouchi word : 33 2222 11111 0000000 *)
   Fixpoint hyper_yam_rev ev :=
     if ev is s0 :: s then
       nseq s0 (size s) ++ hyper_yam_rev s
@@ -252,7 +276,7 @@ Section Yama.
   Proof.
     elim: s => [//= | s0 s IHs] /=.
     move => /andP [] Hhead /IHs {IHs} ->; rewrite andbT.
-    case: s Hhead => [//= | s1 s]; first by apply: ltn_trans.
+    case: s Hhead => [//= | s1 s]; first exact: ltn_trans.
     by rewrite !rcons_cons.
   Qed.
 
@@ -267,7 +291,7 @@ Section Yama.
     move=> Hpart; rewrite IHsn {IHsn IHs}.
     - rewrite size_rev {Hpart}; elim: s => [//= | s0 s IHs] /=.
       by rewrite IHs.
-    - by apply: part_rcons_ind.
+    - exact: part_rcons_ind.
   Qed.
 
   Lemma hyper_yamP ev : is_part ev -> is_yam (hyper_yam ev).
@@ -278,8 +302,8 @@ Section Yama.
     elim: sn => [/= | sn /= IHsn].
       move=> Hpart1; have Hpart := is_part_rconsK Hpart1.
       by rewrite (IHs Hpart) size_rev (evalseq_hyper_yam Hpart) incr_nth_size Hpart1.
-    move=> Hpart2; have {IHsn} /andP [] := IHsn (part_rcons_ind Hpart2).
-    move=> -> ->; rewrite !andbT.
+    move=> Hpart2.
+    move/(_ (part_rcons_ind Hpart2))/andP : IHsn => [] -> ->; rewrite !andbT.
     have:= Hpart2; by rewrite -{1}(evalseq_hyper_yam Hpart2) /hyper_yam rev_rcons.
   Qed.
 
@@ -295,16 +319,18 @@ Lemma is_yam_cat_any y0 y1 z :
   is_yam (z ++ y0) -> is_yam (z ++ y1).
 Proof.
   elim: z => [//= | z0 z IHz] /= Hy0 Hy1 H /andP [] Hpart Hyam.
-  apply/andP; split; last by apply IHz.
+  apply/andP; split; last exact: IHz.
   suff <- : evalseq (z ++ y0) = evalseq (z ++ y1) by [].
   apply /eqP; rewrite -perm_eq_evalseq.
   by rewrite perm_cat2l perm_eq_evalseq H.
 Qed.
 
+
+(** * Enumeration of Yamanouchi words *)
 Fixpoint enum_yamevaln n ev :=
   if n is n'.+1 then
     flatten [seq [seq i :: y | y <- enum_yamevaln n' (decr_nth ev i)] |
-                  i <- iota 0 (size ev) & is_out_corner ev i]
+                  i <- iota 0 (size ev) & is_rem_corner ev i]
   else [:: [::]].
 Definition enum_yameval ev := enum_yamevaln (sumn ev) ev.
 Definition is_yam_of_size n y := (is_yam y) && (size y == n).
@@ -322,7 +348,7 @@ Proof.
   - move/flatten_mapP => [] i; rewrite mem_filter mem_iota add0n => /and3P [] Hcorn _ Hi.
     move/mapP => [] x Hx [] Hitmp Hxtmp; subst i x.
     have Hsum : sumn (decr_nth ev y0) = n by rewrite sumn_decr_nth //= Hev.
-    have:= IHn _ (is_part_decr_nth Hpart Hcorn) Hsum _ Hx =>  /andP [] -> /eqP ->.
+    move/(_ _ (is_part_decr_nth Hpart Hcorn) Hsum _ Hx) : IHn =>  /andP [] -> /eqP ->.
     by rewrite decr_nthK //= Hpart /=.
 Qed.
 
@@ -336,27 +362,28 @@ Proof.
   move=> ev Hev Hpart [/= | y0 y] /=.
   - by have -> : [::] == ev = false by move: Hev; case ev.
   - move => /andP [] /andP [] _ Hyam /eqP Htmp; subst ev.
-    rewrite count_flatten -map_comp; set ci := (X in map X _).
-    have {ci} /eq_map -> : ci =1 fun i => i == y0.
-      rewrite /ci {ci} => i /=; rewrite count_map /=.
+    rewrite count_flatten -map_comp.
+    rewrite (eq_map (f2 := fun i => i == y0 : nat)); first last.
+      move=> i /=; rewrite count_map /=.
       case (altP (i =P y0)) => [Heq | /negbTE Hneq].
-      + subst i; rewrite (eq_count (a2 := pred_of_simpl (pred1 y))); first last.
+      + subst i; rewrite (eq_count (a2 := xpred1 y)); first last.
           move=> s; by rewrite /= -eqseqE /= eq_refl /=.
         rewrite (incr_nthK (is_part_eval_yam Hyam) Hpart) IHn //=.
         * move: Hev; rewrite sumn_incr_nth => /eqP; by rewrite eqSS => /eqP.
-        * by apply: is_part_eval_yam.
+        * exact: is_part_eval_yam.
         * by rewrite Hyam eq_refl.
       + rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
         move=> s; by rewrite /= -eqseqE /= Hneq.
     rewrite sumn_count count_filter.
-    rewrite (eq_count (a2 := pred_of_simpl (pred1 y0))); first last.
+    rewrite (eq_count (a2 := xpred1 y0)); first last.
       move=> i /=; case (altP (i =P y0)) => //= ->.
-      apply: is_out_corner_yam; by rewrite /= Hpart Hyam.
+      apply: is_rem_corner_yam; by rewrite /= Hpart Hyam.
     rewrite -sumn_count /=.
     rewrite sumn_iota //= add0n size_incr_nth.
     by case: (ltnP y0 (size (evalseq y))).
 Qed.
 
+(** * Sigma types for Yamanouchi words *)
 Section YamOfEval.
 
 Variable ev : intpart.
@@ -386,7 +413,7 @@ Lemma size_yameval (y : yameval) : size y = sumn ev.
 Proof. by rewrite -evalseq_eq_size eval_yameval. Qed.
 
 Lemma enum_yamevalE : map val (enum yameval) = enum_yameval ev.
-Proof. rewrite /=; by apply enum_subE. Qed.
+Proof. rewrite /=; exact: enum_subE. Qed.
 
 End YamOfEval.
 
@@ -421,8 +448,9 @@ Definition yamn_countMixin := Eval hnf in [countMixin of yamn by <:].
 Canonical yamn_countType := Eval hnf in CountType yamn yamn_countMixin.
 Canonical yamn_subCountType := Eval hnf in [subCountType of yamn].
 Let type := union_finType
-    (fun p : intpartn_subFinType n => (yameval_subFinType p))
-    yamn_PredEq yamn_partition_evalseq yamn_subCountType.
+              yamn_subCountType
+              (fun p : intpartn_subFinType n => (yameval_subFinType p))
+              yamn_PredEq yamn_partition_evalseq.
 Canonical yamn_finType := Eval hnf in [finType of yamn for type].
 Canonical yamn_subFinType := Eval hnf in [subFinType of yamn].
 
