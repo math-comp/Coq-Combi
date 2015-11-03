@@ -232,6 +232,9 @@ Section Tableau.
     by move/IHt ->.
   Qed.
 
+  Lemma to_wordK t : rev (reshape (rev (shape t)) (to_word t)) = t.
+  Proof. by rewrite -shape_rev /to_word flattenK revK. Qed.
+
   Lemma tableau_is_row r t : is_tableau (r :: t) -> is_row r.
   Proof. by move=> /= /and4P []. Qed.
 
@@ -461,3 +464,98 @@ Qed.
 
 End TableauReading.
 
+
+Section FinType.
+
+Variable n : nat.
+Hypothesis Hnpos : n != 0.
+Let Alph := Eval hnf in OrdType 'I_n (ord_ordMixin Hnpos).
+
+(* Should be Variable A : finOrdType *)
+
+Variable d : nat.
+Variable sh : intpartn d.
+
+Definition is_tab_of_shape sh := [pred t | (is_tableau (T := Alph) t) && (shape t == sh) ].
+
+Structure tabsh : predArgType :=
+  TabSh {tabshval :> seq (seq 'I_n); _ : is_tab_of_shape sh tabshval}.
+Canonical tabsh_subType := Eval hnf in [subType for tabshval].
+Definition tabsh_eqMixin := Eval hnf in [eqMixin of tabsh by <:].
+Canonical tabsh_eqType := Eval hnf in EqType tabsh tabsh_eqMixin.
+Definition tabsh_choiceMixin := Eval hnf in [choiceMixin of tabsh by <:].
+Canonical tabsh_choiceType := Eval hnf in ChoiceType tabsh tabsh_choiceMixin.
+Definition tabsh_countMixin := Eval hnf in [countMixin of tabsh by <:].
+Canonical tabsh_countType := Eval hnf in CountType tabsh tabsh_countMixin.
+Canonical tabsh_subCountType := Eval hnf in [subCountType of tabsh].
+
+Lemma tabshP (t : tabsh) : is_tableau (T := Alph) t.
+Proof. by case: t => t /= /andP []. Qed.
+
+Lemma shape_tabsh (t : tabsh) : shape t = sh.
+Proof. by case: t => t /= /andP [] _ /eqP. Qed.
+
+Require Import tuple.
+
+Lemma tabsh_to_wordK (t : tabsh) :
+  rev (reshape (rev sh) (to_word (T := Alph) (val t))) = t.
+Proof. rewrite /= -(shape_tabsh t); exact: (to_wordK (T := Alph)). Qed.
+
+Let tabsh_enum : seq tabsh :=
+  pmap insub [seq rev (reshape (rev sh) (val w)) | w in [finType of d.-tuple 'I_n]].
+Lemma finite_tabsh : Finite.axiom tabsh_enum.
+Proof.
+  case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
+  rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
+    by rewrite isSome_insub; case: eqP=> // ->.
+  move: Ht => /andP [] Htab /eqP Hsh.
+  rewrite count_map.
+  have Htw : size (to_word (T := Alph) t) == d.
+    by rewrite size_to_word /size_tab Hsh intpartn_sumn.
+  rewrite (eq_in_count (a2 := pred1 (Tuple Htw))).
+    rewrite enumT; exact: enumP (Tuple Htw).
+  move=> w _ /=; apply/idP/idP.
+  - move=> /eqP Ht; subst t.
+    apply/eqP/val_inj => /=; rewrite /to_word revK.
+    apply esym; apply: reshapeKr; by rewrite sumn_rev size_tuple intpartn_sumn.
+  - move=> /eqP Hw; subst w; rewrite /=.
+    by rewrite /to_word -Hsh -shape_rev flattenK revK.
+Qed.
+
+Canonical tabsh_finMixin := Eval hnf in FinMixin finite_tabsh.
+Canonical tabsh_finType := Eval hnf in FinType tabsh tabsh_finMixin.
+Canonical tabsh_subFinType := Eval hnf in [subFinType of tabsh_countType].
+
+
+Lemma to_word_enum_tabsh :
+  perm_eq
+    [seq to_word (T := Alph) (tabshval t) | t <- enum tabsh]
+    [seq x <- [seq val i | i <- enum [finType of d.-tuple 'I_n]]
+    | tabsh_reading (A := Alph) sh x].
+Proof.
+  apply uniq_perm_eq.
+  - rewrite map_inj_in_uniq; first exact: enum_uniq.
+    move=> t u _ _ /= Heq; apply val_inj.
+    by rewrite /= -(tabsh_to_wordK t) -(tabsh_to_wordK u) Heq /=.
+  - apply filter_uniq; rewrite map_inj_uniq; last exact: val_inj.
+    exact: enum_uniq.
+  move=> w /=; rewrite /tabsh_reading mem_filter; apply/idP/idP.
+  - move=> /mapP [] t _ -> {w}.
+    rewrite size_to_word /size_tab shape_tabsh eq_refl /=.
+    rewrite tabsh_to_wordK tabshP /=.
+    have Ht : size (to_word (T := Alph) (val t)) == d.
+      by rewrite size_to_word /size_tab shape_tabsh intpartn_sumn.
+    have -> : to_word (T := Alph) (val t) = val (Tuple Ht) by [].
+    rewrite mem_map; last exact: val_inj.
+    exact: mem_enum.
+  - move=> /andP [] /andP [] /eqP Hsz Htab /mapP [] tpl _ hw; subst w.
+    have Htsh : is_tab_of_shape sh (rev (reshape (rev sh) tpl)).
+      rewrite /is_tab_of_shape /= Htab /= shape_rev reshapeKl ?revK //.
+      by rewrite sumn_rev Hsz.
+    suff -> : val tpl = to_word (T := Alph) (TabSh Htsh).
+      apply/mapP; exists (TabSh Htsh) => //; exact: mem_enum.
+    rewrite /= /to_word revK reshapeKr //.
+    by rewrite sumn_rev Hsz.
+Qed.
+
+End FinType.

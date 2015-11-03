@@ -65,8 +65,7 @@ Definition complete (d : nat) : {mpoly R[n]} :=
 Definition power_sum (d : nat) : {mpoly R[n]} :=
   \sum_(i < n) 'X_i^+d.
 Definition Schur d (sh : intpartn d) : {mpoly R[n]} :=
-  \sum_(t : d.-tuple 'I_n | tabsh_reading sh t)
-   \prod_(v <- t) 'X_v.
+  \sum_(t : tabsh Hnpos sh) \prod_(v <- to_word t) 'X_v.
 
 Lemma elementary_mesymE d : elementary d = mesym n R d.
 Proof. by []. Qed.
@@ -90,9 +89,22 @@ Proof.
   by rewrite /= mpolyX0.
 Qed.
 
+Lemma Schur_tabsh_readingE  d (sh : intpartn d) :
+  Schur sh =  \sum_(t : d.-tuple 'I_n | tabsh_reading sh t)
+               \prod_(v <- t) 'X_v.
+Proof.
+  rewrite /Schur /index_enum -!enumT.
+  rewrite -[LHS](big_map (fun t => to_word (val t)) xpredT
+                         (fun w => \prod_(v <- w) 'X_v)).
+  rewrite -[RHS](big_map val (tabsh_reading sh)
+                         (fun w => \prod_(v <- w) 'X_v)).
+  rewrite -[RHS]big_filter.
+  by rewrite (eq_big_perm _ (to_word_enum_tabsh Hnpos sh)) /=.
+Qed.
+
 Lemma Schur0 (sh : intpartn 0) : Schur sh = 1.
 Proof.
-  rewrite /Schur (eq_bigl (xpred1 [tuple])); first last.
+  rewrite Schur_tabsh_readingE (eq_bigl (xpred1 [tuple])); first last.
     move=> i /=; by rewrite tuple0 [RHS]eq_refl intpartn0.
   by rewrite big_pred1_eq big_nil.
 Qed.
@@ -130,7 +142,7 @@ Qed.
 
 Lemma Schur_oversize d (sh : intpartn d) : size sh > n -> Schur sh = 0.
 Proof.
-  rewrite /Schur=> Hn; rewrite big_pred0 // => w.
+  rewrite Schur_tabsh_readingE=> Hn; rewrite big_pred0 // => w.
   apply (introF idP) => /tabsh_readingP [] tab [] Htab Hsh _ {w}.
   suff F0 i : i < size sh -> nth (inhabitant Alph) (nth [::] tab i) 0 >= i.
     have H := ltn_ord (nth (inhabitant Alph) (nth [::] tab n) 0).
@@ -211,7 +223,7 @@ Qed.
 (** Equivalent definition of complete symmetric function *)
 Lemma complete_basisE d : \sum_(s in (basis n d)) 'X_[s2m s] = Schur (rowpartn d).
 Proof.
-  rewrite /Schur (eq_bigl _ _ (@tabwordshape_row d)).
+  rewrite Schur_tabsh_readingE (eq_bigl _ _ (@tabwordshape_row d)).
   rewrite [RHS](eq_bigr (fun s : d.-tuple 'I_n => 'X_[s2m s])); first last.
     move=> [s _] /= _; rewrite /s2m; elim: s => [| s0 s IHs]/=.
       by rewrite big_nil -/mnm0 mpolyX0.
@@ -256,7 +268,7 @@ Qed.
     function agrees with the one from mpoly *)
 Lemma elementaryE d : elementary d = Schur (colpartn d).
 Proof.
-  rewrite elementary_mesymE mesym_tupleE /tmono /elementary/Schur.
+  rewrite elementary_mesymE mesym_tupleE /tmono /elementary Schur_tabsh_readingE.
   rewrite (eq_bigl _ _ (@tabwordshape_col d)).
   set f := BIG_F.
   rewrite (eq_bigr (fun x => f(rev_tuple x))); first last.

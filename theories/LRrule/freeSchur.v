@@ -202,7 +202,7 @@ End Degree.
 Lemma SchurE d (Q : stdtabn d) :
   Schur (shape_deg Q) = polylang R (tabwordshape (shape_deg Q)).
 Proof.
-  rewrite /sympoly.Schur /polylang /commword; apply eq_bigl => i /=.
+  rewrite Schur_tabsh_readingE /polylang /commword; apply eq_bigl => i /=.
   by rewrite inE.
 Qed.
 

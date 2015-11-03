@@ -612,7 +612,7 @@ Local Notation S := [tuple mesym n R i.+1 | i < n].
 
 Lemma Schur_homog (d : nat) (sh : intpartn d) : 's_sh \is d.-homog.
 Proof.
-  rewrite /Schur /polylang /commword; apply rpred_sum => [[t Ht]] _ /=.
+  rewrite Schur_tabsh_readingE /polylang /commword; apply rpred_sum => [[t Ht]] _ /=.
   move: Ht => /eqP <-; elim: t => [| s0 s IHs]/=.
     rewrite big_nil; exact: dhomog1.
   rewrite big_cons -add1n; apply dhomogM; last exact: IHs.
