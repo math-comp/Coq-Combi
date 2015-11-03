@@ -337,13 +337,6 @@ Proof.
       by case: (i \in S); rewrite ?addn0 ?addn1 ?ltnSn ?ltnn.
 Qed.
 
-Hypothesis Hn : n != 0%N.
-Local Notation "''s_' k" := (Schur Hn R k) (at level 8, k at level 2, format "''s_' k").
-
-Lemma Schur_cast d d' (P : intpartn d) (Heq : d = d') :
-  's_P = Schur Hn R (intpartn_cast Heq P).
-Proof. subst d'; by congr Schur. Qed.
-
 Lemma vb_strip_rem_col0 d (P : intpartn d) :
   vb_strip (conj_part (behead (conj_part P))) P.
 Proof.
@@ -397,11 +390,26 @@ Proof.
   by rewrite leqXE /=; apply.
 Qed.
 
+End Alternant.
+
+Section SchurAltenantDef.
+
+Variable (n0 : nat) (R : comRingType).
+Local Notation n := (n0.+1).
+Local Notation "''s_' k" := (Schur n0 R k) (at level 8, k at level 2, format "''s_' k").
+Local Notation rho := (rho n).
+Local Notation "''a_' k" := (@alternpol n R 'X_[k])
+                              (at level 8, k at level 2, format "''a_' k").
+
+Lemma Schur_cast d d' (P : intpartn d) (Heq : d = d') :
+  's_P = Schur n0 R (intpartn_cast Heq P).
+Proof. subst d'; by congr Schur. Qed.
+
 Theorem alt_SchurE d (P : intpartn d) :
-  size P <= n -> 'a_rho * 's_P = 'a_(mpart P + rho).
+  size P <= n -> 'a_rho * 's_P = 'a_(mpart n P + rho).
 Proof.
   suff {d P} H : forall b d, d <= b -> forall (P : intpartn d),
-    size P <= n -> 'a_rho * 's_P = 'a_(mpart P + rho) by apply: (H d).
+    size P <= n -> 'a_rho * 's_P = 'a_(mpart n P + rho) by apply: (H d).
   elim=> [ |b IHb] d Hd P.
     move: Hd; rewrite leqn0 => /eqP Hd; subst d.
     rewrite Schur0 mulr1 -{1}(add0m rho)=> _; congr 'a_(_ + rho).
@@ -429,7 +437,7 @@ Proof.
     rewrite conj_partK // => ->.
     have:= (intpartnP (conj_intpartn P)) => /=.
     by case: (conj_part P) => [| c0 [| c1 c]] //= /andP [].
-  have := alt_mpart_elementary k HszP1.
+  have := alt_mpart_elementary R k HszP1.
   have {IHb HszP1 Hd1} <- := IHb _ Hd1 (conj_intpartn P1) HszP1.
   rewrite -mulrA Pieri_elementary.
   rewrite (bigID (fun P0 : intpartn (d1 + k) => (size P0 <= n))) /= addrC.
@@ -470,29 +478,28 @@ Proof.
   by rewrite intpartn_castE.
 Qed.
 
-End Alternant.
+End SchurAltenantDef.
+
 
 
 Section IdomainSchurSym.
 
-Variable n : nat.
-Variable R : idomainType.
-
-Hypothesis Hn : n != 0%N.
-Local Notation "''s_' k" := (Schur Hn R k) (at level 8, k at level 2, format "''s_' k").
-Local Notation "''a_' k" := (alternpol 'X_[k])
+Variable (n0 : nat) (R : idomainType).
+Local Notation n := (n0.+1).
+Local Notation "''s_' k" := (Schur n0 R k) (at level 8, k at level 2, format "''s_' k").
+Local Notation rho := (rho n).
+Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
 
 Theorem alt_uniq d (P : intpartn d) (s : {mpoly R[n]}) :
-  size P <= n -> 'a_(rho n) * s = 'a_(mpart n P + rho n) -> s = 's_P.
-Proof. by move=> /(alt_SchurE R Hn) <- /(mulfI (alt_rho_non0 n R)). Qed.
+  size P <= n -> 'a_rho * s = 'a_(mpart n P + rho) -> s = 's_P.
+Proof. by move=> /(alt_SchurE R) <- /(mulfI (alt_rho_non0 n R)). Qed.
 
 Theorem Schur_sym_idomain d (P : intpartn d) : 's_P \is symmetric.
 Proof.
   case: (leqP (size P) n) => [HP|].
-  - have := alt_anti R (mpart n P + rho n).
-    rewrite -(alt_SchurE _ _ HP).
-    rewrite -sym_antiE //; last exact: alt_anti.
+  - have := alt_anti R (mpart n P + rho).
+    rewrite -(alt_SchurE _ HP) -sym_antiE //; last exact: alt_anti.
     exact: alt_rho_non0.
   - move/Schur_oversize ->; exact: rpred0.
 Qed.
@@ -502,19 +509,17 @@ End IdomainSchurSym.
 
 Section CommringSchurSym.
 
-Variable n : nat.
-Variable R : comRingType.
-
-Hypothesis Hn : n != 0%N.
-Local Notation "''s_' k" := (Schur Hn R k) (at level 8, k at level 2, format "''s_' k").
+Variable (n0 : nat) (R : comRingType).
+Local Notation n := (n0.+1).
+Local Notation "''s_' k" := (Schur n0 R k) (at level 8, k at level 2, format "''s_' k").
 
 Theorem Schur_sym d (P : intpartn d) : 's_P \is symmetric.
 Proof.
-  have -> : 's_P = tensR R (Schur Hn int_iDomain P).
+  have -> : 's_P = tensR R (Schur _ int_iDomain P).
     rewrite /Schur /polylang /commword raddf_sum /=; apply eq_bigr => i _ /=.
     rewrite rmorph_prod /=; apply eq_bigr => {i} i _ ; by rewrite tensRX.
   apply/issymP => s.
-  have:= Schur_sym_idomain int_iDomain Hn P => /issymP/(_ s) {2}<-.
+  have:= Schur_sym_idomain n0 int_iDomain P => /issymP/(_ s) {2}<-.
   by rewrite msym_tensR.
 Qed.
 
@@ -526,8 +531,8 @@ Import GRing.Theory BigEnough.
 
 Section MPoESymHomog.
 
-Variable n : nat.
-Variable R : comRingType.
+Variable (n0 : nat) (R : comRingType).
+Local Notation n := (n0.+1).
 
 Implicit Types p q r : {mpoly R[n]}.
 Implicit Types m : 'X_{1..n}.
@@ -600,14 +605,14 @@ End MPoESymHomog.
 
 Section SchurBasis.
 
-Variable n : nat.
-Variable R : idomainType.
-Hypothesis Hnpos : n != 0%N.
-Local Notation Alph := (Alph Hnpos).
-
+Variable (n0 : nat) (R : idomainType).
+Local Notation n := (n0.+1).
+Local Notation "''s_' k" := (Schur n0 R k) (at level 8, k at level 2, format "''s_' k").
+Local Notation rho := (rho n).
+Local Notation "''a_' k" := (@alternpol n R 'X_[k])
+                              (at level 8, k at level 2, format "''a_' k").
 Local Notation "''e_' k" := (@mesym n R k)
                               (at level 8, k at level 2, format "''e_' k").
-Local Notation "''s_' k" := (Schur Hnpos R k) (at level 8, k at level 2, format "''s_' k").
 Local Notation S := [tuple mesym n R i.+1 | i < n].
 
 Lemma Schur_homog (d : nat) (sh : intpartn d) : 's_sh \is d.-homog.
@@ -615,7 +620,7 @@ Proof.
   rewrite Schur_tabsh_readingE /polylang /commword; apply rpred_sum => [[t Ht]] _ /=.
   move: Ht => /eqP <-; elim: t => [| s0 s IHs]/=.
     rewrite big_nil; exact: dhomog1.
-  rewrite big_cons -add1n; apply dhomogM; last exact: IHs.
+  rewrite big_cons -(add1n (size s)); apply dhomogM; last exact: IHs.
   by rewrite dhomogX /= mdeg1.
 Qed.
 
@@ -666,7 +671,7 @@ Proof.
   rewrite (eq_bigr
              (fun sh : intpartn (d1 + d2) =>
                 (\sum_sh1 c1 sh1 *: \sum_sh2 c2 sh2 * (LRtab_coeff sh1 sh2 sh)%:R
-                  *: Schur Hnpos R sh)));
+                  *: Schur n0 R sh)));
     first last.
     move=> sh _; rewrite scaler_suml; apply eq_bigr => sh1 _.
     rewrite scaler_suml scaler_sumr; apply eq_bigr => sh2 _.
@@ -693,7 +698,7 @@ Proof.
   move=> Hp [[d1 co /= Hco]].
   case: (altP (p =P 0)) => [-> | Hn0].
     exists (fun=> 0); apply esym; apply big1 => sh _; by rewrite scale0r.
-  have : \sum_p0 co p0 *: Schur Hnpos R p0 \is d1.-homog.
+  have : \sum_p0 co p0 *: Schur n0 R p0 \is d1.-homog.
     apply rpred_sum => sh _; apply rpredZ; exact: Schur_homog.
   rewrite -Hco => /(dhomog_uniq Hn0 Hp) Hd; subst d1.
   exists co; by rewrite Hco.
@@ -766,31 +771,3 @@ Bind Scope ring_scope with sympoly_of.
 Bind Scope ring_scope with sympoly.
 
 Notation "{ 'sympoly' T [ n ] }" := (sympoly_of n (Phant T)).
-
-
-(*
-Section SchurSym.
-
-Variable n : nat.
-Variable R : idomainType.
-
-Definition mesym_sympoly k : {sympoly R[n]} := SymPoly (mesym_sym n R k).
-
-Local Notation "''e_' k" := (@mesym_sympoly k)
-                              (at level 8, k at level 2, format "''e_' k").
-
-Definition mesym_part (s : seq nat) : {sympoly R[n]} := \prod_(i <- s) 'e_i.
-
-Local Notation "''e_(' s ')'" := (@mesym_part s).
-
-Hypothesis Hnpos : n != 0%N.
-Local Notation Alph := (Alph Hnpos).
-
-Definition Schur_sympoly d (k : intpartn d) : {sympoly R[n]} :=
-  SymPoly (Schur_sym R Hnpos k).
-
-Local Notation "''s_' k" := (Schur Hnpos R k) (at level 8, k at level 2, format "''s_' k").
-
-End SchurSym.
-*)
-

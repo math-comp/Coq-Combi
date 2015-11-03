@@ -896,17 +896,15 @@ Require Import ssralg.
 Local Open Scope ring_scope.
 Import GRing.Theory.
 
-Variable (n : nat) (R : comRingType).
-
-Hypothesis Hnpos : n != 0%N.
-
-Notation Schur p := (Schur Hnpos R p).
+Variable (n0 : nat) (R : comRingType).
+Local Notation n := (n0.+1).
+Notation Schur p := (Schur n0 R p).
 
 Theorem LRtab_coeffP :
   Schur P1 * Schur P2 =
   \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRcoeff P1 P2 P.
 Proof.
-  rewrite (LRtab_coeffP P1 P2 R Hnpos).
+  rewrite (LRtab_coeffP P1 P2).
   by apply eq_bigr => outer /LRcoeffE ->.
 Qed.
 

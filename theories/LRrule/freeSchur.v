@@ -122,12 +122,10 @@ Section FreeSchur.
 
 Variable R : comRingType.
 
-Variable n : nat.
-Hypothesis Hnpos : n != 0%N.
-Canonical Alph := Eval hnf in OrdType 'I_n (ord_ordMixin Hnpos).
-
-Local Notation Schur sh := (Schur Hnpos R sh).
-Local Notation homlang d := {set d.-tuple Alph}.
+Variable n0 : nat.
+Local Notation n := (n0.+1).
+Local Notation Schur sh := (Schur n0 R sh).
+Local Notation homlang d := {set d.-tuple 'I_n}.
 
 Section Degree.
 
@@ -135,21 +133,21 @@ Variable d : nat.
 
 (* set of tableaux words on 'I_n of a given shape *)
 Definition tabwordshape (sh : intpartn d) : homlang d :=
-  [set t : d.-tuple Alph | tabsh_reading sh t ].
+  [set t : d.-tuple 'I_n | tabsh_reading sh t ].
 (* set of tableaux words on 'I_n of a given Q-symbol *)
 Definition freeSchur (Q : stdtabn d) : homlang d  :=
-  [set t : d.-tuple Alph | (RStabmap t).2 == Q].
+  [set t : d.-tuple 'I_n | (RStabmap t).2 == Q].
 
-Lemma freeSchurP Q (t : d.-tuple Alph) : t \in freeSchur Q = (val t \in langQ Q).
+Lemma freeSchurP Q (t : d.-tuple 'I_n) : t \in freeSchur Q = (val t \in langQ Q).
 Proof. by rewrite /freeSchur /langQ !inE /=. Qed.
 
-Lemma size_RS_tuple (t : d.-tuple Alph) : size (to_word (RS t)) == d.
+Lemma size_RS_tuple (t : d.-tuple 'I_n) : size (to_word (RS t)) == d.
 Proof. by rewrite size_to_word -{2}(size_tuple t) size_RS. Qed.
 
 (* Bijection freeSchur -> tabwordshape *)
-Definition tabword_of_tuple (t : d.-tuple Alph) : d.-tuple Alph := Tuple (size_RS_tuple t).
+Definition tabword_of_tuple (t : d.-tuple 'I_n) : d.-tuple 'I_n := Tuple (size_RS_tuple t).
 
-Lemma perm_eq_tabword_of_tuple (t : d.-tuple Alph) : perm_eq t (tabword_of_tuple t).
+Lemma perm_eq_tabword_of_tuple (t : d.-tuple 'I_n) : perm_eq t (tabword_of_tuple t).
 Proof. rewrite /tabword_of_tuple /=; exact: perm_eq_RS. Qed.
 
 Lemma tabword_of_tuple_freeSchur_inj (Q : stdtabn d) :
@@ -157,10 +155,10 @@ Lemma tabword_of_tuple_freeSchur_inj (Q : stdtabn d) :
 Proof.
   move=> /= u v.
   rewrite /freeSchur !inE => /eqP Hu /eqP Hv /(congr1 (@tval _ _)) /= H.
-  case: (bijRStab Alph) => RSinv HK _.
+  case: (bijRStab [ordType of 'I_n]) => RSinv HK _.
   apply: val_inj; rewrite -[val u]HK -[val v]HK; congr (RSinv _).
   rewrite {RSinv HK} /RStab /=. apply: pqpair_inj => /=.
-  have/(_ Hnpos) := (is_tableau_RS u). have/(_ Hnpos) := is_tableau_RS v.
+  have:= (is_tableau_RS u). have:= is_tableau_RS v.
   move: Hu Hv H; rewrite -!RStabmapE /RStabmap.
   case: RSmap => [pu qu] /= ->; case: RSmap => [pv qv] /= -> Heq Hv Hu.
   by rewrite -(RS_tabE Hu) -(RS_tabE Hv) Heq.
@@ -176,9 +174,9 @@ Proof.
     rewrite (RS_tabE (is_tableau_RS t)) eq_refl /= {w}.
     by rewrite -HQ -!RStabmapE shape_RStabmapE.
   - move/andP => [] /eqP Hw /eqP Hsh; apply/imsetP.
-    have Hpair : is_RStabpair (T := Alph) ((RS w), val Q).
+    have Hpair : is_RStabpair (RS w, val Q).
       by rewrite /is_RStabpair is_tableau_RS stdtabnP Hsh eq_refl.
-    have Hpr : is_RSpair (T := Alph) (RS w, yam_of_stdtab Q).
+    have Hpr : is_RSpair (RS w, yam_of_stdtab Q).
       have:= Hpair; rewrite /is_RStabpair /= => /andP [] -> /=.
       move=> /andP [] /yam_of_stdtabP -> /= /eqP ->.
       by rewrite shape_yam_of_stdtab.
@@ -252,7 +250,7 @@ Proof.
     pose t2 := Tuple Hsz2.
     have Hcat : t = cat_tuple t1 t2.
       apply: val_inj => /=; by rewrite cat_take_drop.
-    have : val t1 \in langQ (Alph := Alph) Q1 /\ val t2 \in langQ (Alph := Alph) Q2.
+    have : val t1 \in langQ Q1 /\ val t2 \in langQ Q2.
       rewrite LRtriple_cat_equiv // !size_tuple !size_tab_stdtabn //; split; try by [].
       exists Q; split.
       + apply/LRtripleP => //; by rewrite LRtriple_fastE.

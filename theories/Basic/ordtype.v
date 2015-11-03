@@ -940,12 +940,7 @@ Section Ordinal.
 
 Variable n : nat.
 
-Hypothesis Hnpos : n != 0%N.
-
-Lemma inhabIn : 'I_n.
-Proof. move: Hnpos; rewrite -lt0n; exact: Ordinal. Qed.
-
-Definition leqOrd (i j : 'I_n) := (i <= j)%N.
+Definition leqOrd (i j : 'I_n.+1) := (i <= j)%N.
 
 Fact leqOrd_order : Order.axiom leqOrd.
 Proof.
@@ -956,8 +951,8 @@ Proof.
   - exact leq_total.
 Qed.
 
-Definition ord_ordMixin := Order.Mixin inhabIn leqOrd_order.
-Definition ord_ordType := Eval hnf in OrdType 'I_n ord_ordMixin.
+Definition ord_ordMixin := Order.Mixin ord0 leqOrd_order.
+Canonical ord_ordType := Eval hnf in OrdType 'I_n.+1 ord_ordMixin.
 
 End Ordinal.
 

@@ -51,10 +51,8 @@ Qed.
 
 Section Bases.
 
-Variable n : nat.
-Hypothesis Hnpos : n != 0%N.
-Canonical Alph := Eval hnf in OrdType 'I_n (ord_ordMixin Hnpos).
-
+Variable n0 : nat.
+Local Notation n := (n0.+1).
 Variable R : comRingType.
 
 
@@ -65,7 +63,7 @@ Definition complete (d : nat) : {mpoly R[n]} :=
 Definition power_sum (d : nat) : {mpoly R[n]} :=
   \sum_(i < n) 'X_i^+d.
 Definition Schur d (sh : intpartn d) : {mpoly R[n]} :=
-  \sum_(t : tabsh Hnpos sh) \prod_(v <- to_word t) 'X_v.
+  \sum_(t : tabsh n0 sh) \prod_(v <- to_word t) 'X_v.
 
 Lemma elementary_mesymE d : elementary d = mesym n R d.
 Proof. by []. Qed.
@@ -99,7 +97,7 @@ Proof.
   rewrite -[RHS](big_map val (tabsh_reading sh)
                          (fun w => \prod_(v <- w) 'X_v)).
   rewrite -[RHS]big_filter.
-  by rewrite (eq_big_perm _ (to_word_enum_tabsh Hnpos sh)) /=.
+  by rewrite (eq_big_perm _ (to_word_enum_tabsh _ sh)) /=.
 Qed.
 
 Lemma Schur0 (sh : intpartn 0) : Schur sh = 1.
@@ -144,8 +142,8 @@ Lemma Schur_oversize d (sh : intpartn d) : size sh > n -> Schur sh = 0.
 Proof.
   rewrite Schur_tabsh_readingE=> Hn; rewrite big_pred0 // => w.
   apply (introF idP) => /tabsh_readingP [] tab [] Htab Hsh _ {w}.
-  suff F0 i : i < size sh -> nth (inhabitant Alph) (nth [::] tab i) 0 >= i.
-    have H := ltn_ord (nth (inhabitant Alph) (nth [::] tab n) 0).
+  suff F0 i : i < size sh -> nth (inhabitant _) (nth [::] tab i) 0 >= i.
+    have H := ltn_ord (nth (inhabitant _) (nth [::] tab n) 0).
     have:= leq_trans H (F0 _ Hn); by rewrite ltnn.
   rewrite -Hsh size_map; elim: i => [//= | i IHi] Hi.
   have := IHi (ltn_trans (ltnSn i) Hi); move/leq_ltn_trans; apply.

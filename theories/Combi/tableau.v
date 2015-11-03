@@ -468,18 +468,16 @@ End TableauReading.
 Section FinType.
 
 Variable n : nat.
-Hypothesis Hnpos : n != 0.
-Let Alph := Eval hnf in OrdType 'I_n (ord_ordMixin Hnpos).
-
 (* Should be Variable A : finOrdType *)
 
 Variable d : nat.
 Variable sh : intpartn d.
 
-Definition is_tab_of_shape sh := [pred t | (is_tableau (T := Alph) t) && (shape t == sh) ].
+Definition is_tab_of_shape sh :=
+  [pred t | (is_tableau (T := ord_ordType n) t) && (shape t == sh) ].
 
 Structure tabsh : predArgType :=
-  TabSh {tabshval :> seq (seq 'I_n); _ : is_tab_of_shape sh tabshval}.
+  TabSh {tabshval :> seq (seq 'I_n.+1); _ : is_tab_of_shape sh tabshval}.
 Canonical tabsh_subType := Eval hnf in [subType for tabshval].
 Definition tabsh_eqMixin := Eval hnf in [eqMixin of tabsh by <:].
 Canonical tabsh_eqType := Eval hnf in EqType tabsh tabsh_eqMixin.
@@ -489,7 +487,7 @@ Definition tabsh_countMixin := Eval hnf in [countMixin of tabsh by <:].
 Canonical tabsh_countType := Eval hnf in CountType tabsh tabsh_countMixin.
 Canonical tabsh_subCountType := Eval hnf in [subCountType of tabsh].
 
-Lemma tabshP (t : tabsh) : is_tableau (T := Alph) t.
+Lemma tabshP (t : tabsh) : is_tableau t.
 Proof. by case: t => t /= /andP []. Qed.
 
 Lemma shape_tabsh (t : tabsh) : shape t = sh.
@@ -498,11 +496,11 @@ Proof. by case: t => t /= /andP [] _ /eqP. Qed.
 Require Import tuple.
 
 Lemma tabsh_to_wordK (t : tabsh) :
-  rev (reshape (rev sh) (to_word (T := Alph) (val t))) = t.
-Proof. rewrite /= -(shape_tabsh t); exact: (to_wordK (T := Alph)). Qed.
+  rev (reshape (rev sh) (to_word (val t))) = t.
+Proof. rewrite /= -(shape_tabsh t); exact: to_wordK. Qed.
 
 Let tabsh_enum : seq tabsh :=
-  pmap insub [seq rev (reshape (rev sh) (val w)) | w in [finType of d.-tuple 'I_n]].
+  pmap insub [seq rev (reshape (rev sh) (val w)) | w in [finType of d.-tuple 'I_n.+1]].
 Lemma finite_tabsh : Finite.axiom tabsh_enum.
 Proof.
   case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
@@ -510,7 +508,7 @@ Proof.
     by rewrite isSome_insub; case: eqP=> // ->.
   move: Ht => /andP [] Htab /eqP Hsh.
   rewrite count_map.
-  have Htw : size (to_word (T := Alph) t) == d.
+  have Htw : size (to_word t) == d.
     by rewrite size_to_word /size_tab Hsh intpartn_sumn.
   rewrite (eq_in_count (a2 := pred1 (Tuple Htw))).
     rewrite enumT; exact: enumP (Tuple Htw).
@@ -529,9 +527,9 @@ Canonical tabsh_subFinType := Eval hnf in [subFinType of tabsh_countType].
 
 Lemma to_word_enum_tabsh :
   perm_eq
-    [seq to_word (T := Alph) (tabshval t) | t <- enum tabsh]
-    [seq x <- [seq val i | i <- enum [finType of d.-tuple 'I_n]]
-    | tabsh_reading (A := Alph) sh x].
+    [seq to_word (tabshval t) | t <- enum tabsh]
+    [seq x <- [seq val i | i <- enum [finType of d.-tuple 'I_n.+1]]
+    | tabsh_reading sh x].
 Proof.
   apply uniq_perm_eq.
   - rewrite map_inj_in_uniq; first exact: enum_uniq.
@@ -543,16 +541,16 @@ Proof.
   - move=> /mapP [] t _ -> {w}.
     rewrite size_to_word /size_tab shape_tabsh eq_refl /=.
     rewrite tabsh_to_wordK tabshP /=.
-    have Ht : size (to_word (T := Alph) (val t)) == d.
+    have Ht : size (to_word (val t)) == d.
       by rewrite size_to_word /size_tab shape_tabsh intpartn_sumn.
-    have -> : to_word (T := Alph) (val t) = val (Tuple Ht) by [].
+    have -> : to_word (val t) = val (Tuple Ht) by [].
     rewrite mem_map; last exact: val_inj.
     exact: mem_enum.
   - move=> /andP [] /andP [] /eqP Hsz Htab /mapP [] tpl _ hw; subst w.
     have Htsh : is_tab_of_shape sh (rev (reshape (rev sh) tpl)).
       rewrite /is_tab_of_shape /= Htab /= shape_rev reshapeKl ?revK //.
       by rewrite sumn_rev Hsz.
-    suff -> : val tpl = to_word (T := Alph) (TabSh Htsh).
+    suff -> : val tpl = to_word (TabSh Htsh).
       apply/mapP; exists (TabSh Htsh) => //; exact: mem_enum.
     rewrite /= /to_word revK reshapeKr //.
     by rewrite sumn_rev Hsz.

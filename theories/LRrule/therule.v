@@ -562,13 +562,9 @@ Qed.
 Local Open Scope ring_scope.
 Import GRing.Theory.
 
-Variable (n : nat) (R : comRingType).
-
-Hypothesis Hnpos : n != 0%N.
-
-Notation Schur p := (Schur Hnpos R p).
-Notation complete p := (complete Hnpos R p).
-Notation elementary p := (elementary Hnpos R p).
+Variable (n0 : nat) (R : comRingType).
+Local Notation n := (n0.+1).
+Notation Schur p := (Schur n0 R p).
 
 Theorem LRtab_coeffP :
   Schur P1 * Schur P2 =
@@ -597,13 +593,11 @@ Section Pieri.
 Local Open Scope ring_scope.
 Import GRing.Theory.
 
-Variable (n : nat) (R : comRingType).
-
-Hypothesis Hnpos : n != 0%N.
-
-Notation Schur p := (Schur Hnpos R p).
-Notation complete p := (complete n R p).
-Notation elementary p := (elementary n R p).
+Variable (n0 : nat) (R : comRingType).
+Local Notation n := (n0.+1).
+Notation Schur p := (Schur n0 R p).
+Notation complete p := (complete n0 R p).
+Notation elementary p := (elementary n0 R p).
 
 (* TODO : move in Yamanouchi *)
 Lemma yamrowP : is_yam_of_eval (intpart_of_intpartn (rowpartn d2)) (ncons d2 0%N [::]).
