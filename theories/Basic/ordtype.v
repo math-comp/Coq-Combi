@@ -1219,23 +1219,14 @@ Definition dual_pordMixin := PartOrder.Mixin geqX_order.
 Definition dual_pordType := Eval hnf in POrdType T dual_pordMixin.
 (* Canonical dual_pordType := Eval hnf in POrdType T dual_pordMixin. *)
 
-Definition to_dual : T -> dual_pordType := id.
-Definition from_dual : dual_pordType -> T := id.
-
 Lemma dual_leqX m n : (@leqX_op dual_pordType m n) = (@leqX_op T n m).
 Proof. by rewrite leqXE /=. Qed.
 
-Lemma dual_eq m n : (to_dual m == to_dual n) = (n == m).
-Proof. by rewrite !eqn_leqX !dual_leqX. Qed.
+Lemma dual_eq m n : (m == n :> dual_pordType) = (n == m).
+Proof. by rewrite !eqn_leqX !dual_leqX andbC. Qed.
 
 Lemma dual_ltnX m n : (@ltnX_op dual_pordType m n) = (@ltnX_op T n m).
 Proof. by rewrite /ltnX_op dual_leqX dual_eq. Qed.
-
-Lemma dualK : cancel to_dual from_dual.
-Proof. by []. Qed.
-
-Lemma from_dualK : cancel from_dual to_dual.
-Proof. by []. Qed.
 
 End DualPOrder.
 

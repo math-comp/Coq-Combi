@@ -339,23 +339,17 @@ Let word := seq Alph.
 Notation Dual := (dual_inhOrdType Alph).
 Implicit Type u v w : word.
 
-Definition revdual := [fun s : seq Alph => rev (map (@to_dual Alph) s) : seq Dual].
-Definition from_revdual := [fun s  : seq Dual => (map (@from_dual Alph) (rev s))].
+Definition revdual := [fun s : seq Alph => rev s : seq Dual].
+Definition from_revdual := [fun s : seq Dual => (rev s) : seq Alph].
 
 Lemma revdualK : cancel revdual from_revdual.
-Proof.
-  move=> u; rewrite /= revK -map_comp.
-  by rewrite (eq_map (f2 := id)) // map_id.
-Qed.
+Proof. move=> u; by rewrite /= revK. Qed.
 
 Lemma from_revdualK : cancel from_revdual revdual.
-Proof.
-  move=> u; rewrite /= -map_comp.
-  by rewrite (eq_map (f2 := id)) // map_id revK.
-Qed.
+Proof. move=> u; by rewrite /= revK. Qed.
 
 Lemma size_revdual u : size u = size (revdual u).
-Proof. by rewrite /revdual /= size_rev size_map. Qed.
+Proof. by rewrite /= size_rev. Qed.
 
 Lemma plact2dual u v : u \in plact2 v = (revdual u \in plact1 (revdual v)).
 Proof.
@@ -364,11 +358,7 @@ Proof.
     by rewrite /revdual /= (dual_leqX c b) (dual_ltnX b a) andbC Habc /rev /= mem_seq1.
   + move /plact1P => [] a' [] b' [] c' [] Habc'.
     rewrite /revdual /= => /(congr1 from_revdual) /= H1 /(congr1 from_revdual) /= H2.
-    move: H1; rewrite revK -map_comp.
-    rewrite (eq_map (f2 := id)); last by move=> i; rewrite /= dualK.
-    move: H2; rewrite revK -map_comp.
-    rewrite (eq_map (f2 := id)); last by move=> i; rewrite /= dualK.
-    rewrite !map_id => -> -> /=.
+    move: H1 H2; rewrite !revK /rev => -> -> /=.
     by rewrite -dual_leqX -dual_ltnX andbC Habc' /= mem_seq1.
 Qed.
 
@@ -379,11 +369,7 @@ Proof.
     by rewrite /revdual /= (dual_leqX b a) (dual_ltnX c b) andbC Habc /rev /= mem_seq1.
   + move /plact2P => [] a' [] b' [] c' [] Habc'.
     rewrite /revdual /= => /(congr1 from_revdual) /= H1 /(congr1 from_revdual) /= H2.
-    move: H1; rewrite revK -map_comp.
-    rewrite (eq_map (f2 := id)); last by move=> i; rewrite /= dualK.
-    move: H2; rewrite revK -map_comp.
-    rewrite (eq_map (f2 := id)); last by move=> i; rewrite /= dualK.
-    rewrite !map_id => -> -> /=.
+    move: H1 H2; rewrite !revK => -> -> /=.
     by rewrite -dual_leqX -dual_ltnX andbC Habc' /= mem_seq1.
 Qed.
 
@@ -411,7 +397,7 @@ Proof.
   move: v; apply: gencongr_ind; first exact: plact_refl.
   move=> a b1 c b2 Hu Hplact.
   move: Hu => /plact_trans; apply => {u}.
-  rewrite /revdual /= !map_cat !rev_cat.
+  rewrite /revdual /= !rev_cat.
   apply: plact_catl; apply: plact_catr.
   apply: rule_gencongr => /=; move: Hplact => /plactruleP [].
   + rewrite !mem_cat plact1dual /revdual /= => -> ; by rewrite /= !orbT.
@@ -426,11 +412,11 @@ Proof.
   move: v; apply: (@gencongr_ind Dual); first exact: plact_refl.
   move=> a b1 c b2 Hu Hplact.
   move: Hu => /plact_trans; apply => {u}.
-  rewrite /from_revdual /= !rev_cat !map_cat.
+  rewrite /from_revdual /= !rev_cat.
   apply: plact_catl. apply: plact_catr.
   apply: rule_gencongr => /=.
   move: Hplact; rewrite -{1}[b1]from_revdualK -{1}[b2]from_revdualK => /plactruleP [].
-  + rewrite !mem_cat -plact2dual /from_revdual /= => -> ; by rewrite /= !orbT.
+  + rewrite !mem_cat -plact2dual /from_revdual /= => ->; by rewrite /= !orbT.
   + rewrite !mem_cat -plact2idual /from_revdual /= => -> ; by rewrite /= !orbT.
   + rewrite !mem_cat -plact1dual /from_revdual /= => -> ; by rewrite /=.
   + rewrite !mem_cat -plact1idual /from_revdual /= => -> ; by rewrite /= !orbT.
@@ -957,15 +943,13 @@ Notation gtnXL := (@gtnX Dual L).
 
 Lemma leqXL_geqXLdualE u : filter leqXL u = from_revdual (filter geqXL (revdual u)).
 Proof.
-  rewrite /= filter_rev revK -filter_map -map_comp.
-  rewrite (eq_map (@dualK _)) map_id.
+  rewrite /= filter_rev revK.
   apply/eq_filter => i /=; by rewrite -dual_leqX.
 Qed.
 
 Lemma ltnXL_gtnXLdualE u : filter ltnXL u = from_revdual (filter gtnXL (revdual u)).
 Proof.
-  rewrite /= filter_rev revK -filter_map -map_comp.
-  rewrite (eq_map (@dualK _)) map_id.
+  rewrite /= filter_rev revK.
   apply/eq_filter => i /=; by rewrite -dual_ltnX.
 Qed.
 

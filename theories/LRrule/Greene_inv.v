@@ -141,7 +141,7 @@ Proof.
   apply: (inj_map val_inj); rewrite /=.
   rewrite val_enum_ord map_rev -map_comp.
   rewrite [map (_ \o _) _](eq_map (f2 := (fun i => size w - i.+1) \o val)) //.
-  rewrite map_comp val_enum_ord size_rev size_map.
+  rewrite map_comp val_enum_ord size_rev.
   apply: (eq_from_nth (x0 := 0)); first by rewrite size_rev size_map.
   move=> i; rewrite size_iota => Hi; rewrite nth_rev; last by rewrite size_map size_iota.
   rewrite (nth_iota _ Hi) add0n size_map (nth_map 0);
@@ -159,33 +159,29 @@ Proof.
     by move=> i /=; rewrite mem_imset_inj; last exact rev_ord_cast_inj.
   rewrite map_rev -!map_comp; congr (rev _).
   apply: eq_map => i /=; rewrite !(tnth_nth (inhabitant Alph)) /=.
-  rewrite -map_rev -{4}[w]revK nth_rev size_rev; last exact: ltn_ord.
-  rewrite (nth_map (inhabitant Alph)); first by [].
-  rewrite size_rev; apply: irev_w; exact: ltn_ord.
+  rewrite nth_rev; last exact: irev_w.
+  by rewrite subnSK // subKn; last exact: ltnW.
 Qed.
 
 Lemma is_row_dual T :
-  is_seq (@leqX Alph) (extract (in_tuple w) T) <->
+  is_seq (@leqX Alph) (extract (in_tuple w) T) =
   is_seq (@leqX (dual_ordType Alph)) (extract (in_tuple (revdual w)) (revSet T)).
 Proof.
   rewrite extract_revSet.
   case: (extract _ _) => [//= | l0 l] /=.
   rewrite -rev_sorted revK /sorted.
-  suff <- : l = [seq to_dual i | i <- l] by [].
-  by rewrite map_id.
+  by apply eq_path.
 Qed.
 
 Lemma is_col_dual T :
-  is_seq (@gtnX Alph) ((extract (in_tuple w)) T) <->
+  is_seq (@gtnX Alph) ((extract (in_tuple w)) T) =
   is_seq (@gtnX (dual_ordType Alph)) (extract (in_tuple (revdual w)) (revSet T)).
 Proof.
   rewrite extract_revSet.
   case: (extract _ _) => [//= | l0 l] /=.
   rewrite -rev_sorted revK /sorted /=.
-  rewrite (map_path (e' := gtnX) (b := pred0)); first by [].
-  - rewrite /rel_base => x y _.
-    by rewrite /gtnX /= -dual_ltnX.
-  - by rewrite has_pred0.
+  apply eq_path => i j /=.
+  by rewrite -dual_ltnX.
 Qed.
 
 Lemma size_rev_ksupp P : #|rev_ksupp P| = #|P|.
@@ -225,7 +221,7 @@ Proof.
   - move=> HS; move/(_ (revSet S)): Hall.
     rewrite (_ : _ \in _) /=; first last.
       by rewrite mem_imset_inj; last exact revSet_inj.
-    by rewrite is_col_dual.
+    by have /= -> := is_col_dual S.
 Qed.
 
 Lemma scover_rev P : scover (rev_ksupp P) = scover P.
@@ -1330,7 +1326,7 @@ Proof.
   rewrite [Greene_row (_ ++ v1 ++ _) k]Greene_row_dual.
   rewrite [Greene_row (_ ++ v2 ++ _) k]Greene_row_dual.
   move/(_ (revdual w) (revdual u) k): H.
-  by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
+  by rewrite /revdual -!rev_cat !catA.
 Qed.
 
 Lemma Greene_row_leq_plact1 u v1 w v2 k :
@@ -1340,7 +1336,7 @@ Proof.
   rewrite [Greene_row (_ ++ v1 ++ _) k]Greene_row_dual.
   rewrite [Greene_row (_ ++ v2 ++ _) k]Greene_row_dual.
   move/(_ (revdual w) (revdual u) k): H.
-  by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
+  by rewrite /revdual -!rev_cat -!catA.
 Qed.
 
 Lemma Greene_row_invar_plact1 u v1 w v2 k :
@@ -1375,7 +1371,7 @@ Proof.
   rewrite [Greene_col (_ ++ v1 ++ _) k]Greene_col_dual.
   rewrite [Greene_col (_ ++ v2 ++ _) k]Greene_col_dual.
   move/(_ (revdual w) (revdual u) k): H.
-  by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
+  by rewrite /revdual -!rev_cat -!catA.
 Qed.
 
 Lemma Greene_col_leq_plact2 u v1 w v2 k :
@@ -1385,7 +1381,7 @@ Proof.
   rewrite [Greene_col (_ ++ v1 ++ _) k]Greene_col_dual.
   rewrite [Greene_col (_ ++ v2 ++ _) k]Greene_col_dual.
   move/(_ (revdual w) (revdual u) k): H.
-  by rewrite /revdual /= -!rev_cat -!map_cat -!catA.
+  by rewrite /revdual -!rev_cat -!catA.
 Qed.
 
 Lemma Greene_col_invar_plact1 u v1 w v2 k :
