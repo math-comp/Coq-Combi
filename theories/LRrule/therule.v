@@ -75,7 +75,7 @@ Open Scope N.
 (** * Gluing a standard tableaux with a skew tableau *)
 Section LR.
 
-Notation Z := (inhabitant nat_ordType).
+Notation Z := (inhabitant nat_inhOrdType).
 
 Lemma to_word_map_shiftn sh t : to_word (map (shiftn sh) t) = shiftn sh (to_word t).
 Proof.
@@ -210,7 +210,7 @@ Proof.
   exact: congr_RS.
 Qed.
 
-Lemma filter_gtnX_to_word (T : ordType) n (t : seq (seq T)) :
+Lemma filter_gtnX_to_word (T : inhOrdType) n (t : seq (seq T)) :
   filter (gtnX n) (to_word t) = to_word (filter_gtnX_tab n t).
 Proof.
   elim: t => [//= | t0 t IHt] /=.
@@ -220,7 +220,7 @@ Proof.
   - by rewrite to_word_cons IHt.
 Qed.
 
-Lemma filter_leqX_to_word (T : ordType) n (t : seq (seq T)) :
+Lemma filter_leqX_to_word (T : inhOrdType) n (t : seq (seq T)) :
   filter (leqX n) (to_word t) = to_word (filter_leqX_tab n t).
 Proof.
   elim: t => [//= | t0 t IHt] /=.
@@ -535,7 +535,7 @@ Qed.
 
 End OneCoeff.
 
-Lemma included_shape_filter_gtnX_tab (T : ordType) (n : T) t :
+Lemma included_shape_filter_gtnX_tab (T : inhOrdType) (n : T) t :
   is_tableau t -> included (shape (filter_gtnX_tab n t)) (shape t).
 Proof.
   elim: t => [//= | r0 t /= IHt] /= /and4P [] Hnnil Hrow Hdom Htab.

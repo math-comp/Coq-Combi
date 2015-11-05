@@ -27,7 +27,7 @@ Import OrdNotations.
 
 Section Defs.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -224,7 +224,7 @@ Hint Resolve plact_refl.
 
 Section RowsAndCols.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 Implicit Type u v w : word.
 
@@ -278,7 +278,7 @@ End RowsAndCols.
 
 Section Rev.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 Implicit Type u v w : word.
 
@@ -333,14 +333,14 @@ End Rev.
 
 Section DualRule.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 
-Let Dual := dual_ordType Alph.
+Notation Dual := (dual_inhOrdType Alph).
 Implicit Type u v w : word.
 
-Definition revdual := [fun s : seq Alph => rev (map (@to_dual Alph) s)].
-Definition from_revdual := [fun s : seq Dual => (map (@from_dual Alph) (rev s))].
+Definition revdual := [fun s : seq Alph => rev (map (@to_dual Alph) s) : seq Dual].
+Definition from_revdual := [fun s  : seq Dual => (map (@from_dual Alph) (rev s))].
 
 Lemma revdualK : cancel revdual from_revdual.
 Proof.
@@ -361,7 +361,7 @@ Lemma plact2dual u v : u \in plact2 v = (revdual u \in plact1 (revdual v)).
 Proof.
   apply/idP/idP.
   + move /plact2P => [] a [] b [] c [] Habc -> ->.
-    by rewrite /revdual /= dual_leqX dual_ltnX andbC Habc /rev /= mem_seq1.
+    by rewrite /revdual /= (dual_leqX c b) (dual_ltnX b a) andbC Habc /rev /= mem_seq1.
   + move /plact1P => [] a' [] b' [] c' [] Habc'.
     rewrite /revdual /= => /(congr1 from_revdual) /= H1 /(congr1 from_revdual) /= H2.
     move: H1; rewrite revK -map_comp.
@@ -369,14 +369,14 @@ Proof.
     move: H2; rewrite revK -map_comp.
     rewrite (eq_map (f2 := id)); last by move=> i; rewrite /= dualK.
     rewrite !map_id => -> -> /=.
-    by rewrite -dual_leqX -dual_ltnX !from_dualK andbC Habc' /= mem_seq1.
+    by rewrite -dual_leqX -dual_ltnX andbC Habc' /= mem_seq1.
 Qed.
 
 Lemma plact1dual u v : u \in plact1 v = (revdual u \in plact2 (revdual v)).
 Proof.
   apply/idP/idP.
   + move /plact1P => [] a [] b [] c [] Habc -> ->.
-    by rewrite /revdual /= dual_leqX dual_ltnX andbC Habc /rev /= mem_seq1.
+    by rewrite /revdual /= (dual_leqX b a) (dual_ltnX c b) andbC Habc /rev /= mem_seq1.
   + move /plact2P => [] a' [] b' [] c' [] Habc'.
     rewrite /revdual /= => /(congr1 from_revdual) /= H1 /(congr1 from_revdual) /= H2.
     move: H1; rewrite revK -map_comp.
@@ -384,7 +384,7 @@ Proof.
     move: H2; rewrite revK -map_comp.
     rewrite (eq_map (f2 := id)); last by move=> i; rewrite /= dualK.
     rewrite !map_id => -> -> /=.
-    by rewrite -dual_leqX -dual_ltnX !from_dualK andbC Habc' /= mem_seq1.
+    by rewrite -dual_leqX -dual_ltnX andbC Habc' /= mem_seq1.
 Qed.
 
 Lemma plact1idual u v : u \in plact1i v = (revdual u \in plact2i (revdual v)).
@@ -400,10 +400,10 @@ Arguments from_revdual [Alph].
 
 Section PlactDual.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 
-Let Dual := dual_ordType Alph.
+Let Dual := dual_inhOrdType Alph.
 Implicit Type u v w : word.
 
 Theorem plact_revdual u v : u =Pl v -> revdual u =Pl revdual v.
@@ -453,7 +453,7 @@ End PlactDual.
 
 Section RSToPlactic.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -580,7 +580,7 @@ End RSToPlactic.
 
 Section RemoveBig.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -632,7 +632,7 @@ Lemma shape_append_nth T b i : shape (append_nth T b i) = incr_nth (shape T) i.
 Proof.
   rewrite /shape /=; apply: (@eq_from_nth _ 0).
   + rewrite size_map size_set_nth size_incr_nth size_map /maxn.
-    case (ltngtP i.+1 (size T)).
+    case: (ltngtP i.+1 (size T)).
     - by move/ltnW ->.
     - by rewrite ltnNge => /negbTE ->.
     - by move => ->; rewrite leqnn.
@@ -640,7 +640,7 @@ Proof.
     rewrite nth_incr_nth (nth_map [::]) /=; last by move: Hi; rewrite size_map.
     rewrite nth_set_nth /= eq_sym.
     rewrite (_ : nth 0 _ _ = size (nth [::] T j)); first last.
-      case (ltnP j (size T)) => Hcase.
+      case: (ltnP j (size T)) => Hcase.
       * by rewrite (nth_map [::] _ _ Hcase).
       * by rewrite (nth_default _ Hcase) nth_default; last by rewrite size_map.
     case eqP => [->|].
@@ -749,8 +749,8 @@ Proof.
     have : (ins r l) != [::] by apply: set_nth_non_nil.
     by case : (ins r l).
   rewrite nth_set_nth size_set_nth /= maxnC /maxn ltnS.
-  case (leqP (size r) (inspos r l)) => H /=; first by rewrite eq_refl.
-  case (boolP ((size r).-1 == inspos r l)) => _; first exact: Hl.
+  case: (leqP (size r) (inspos r l)) => H /=; first by rewrite eq_refl.
+  case: (boolP ((size r).-1 == inspos r l)) => _; first exact: Hl.
   rewrite (set_nth_default b l) //.
   by move: Hlast; case r => /=; first by rewrite ltnXnn.
 Qed.
@@ -758,7 +758,7 @@ Qed.
 Lemma bumped_lt r b l : is_row r -> l <A b -> last b r <A b -> bumped r l <A b.
 Proof.
   rewrite -!nth_last /bumped => /is_rowP Hrow Hl Hlast.
-  case (ltnP (inspos r l) (size r)) => H.
+  case: (ltnP (inspos r l) (size r)) => H.
   + rewrite (set_nth_default b l H).
     apply: (@leqX_ltnX_trans _ (nth b r (size r).-1)); last exact Hlast.
     apply: Hrow; move: H; case: (size r) => [//=| s].
@@ -862,7 +862,7 @@ End RemoveBig.
 
 Section RestrIntervSmall.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -875,7 +875,7 @@ Proof.
   move/plact1P => [] a [] b [] c [] Habc -> ->.
   rewrite !filter_cat /=.
   apply: plact_catr; apply: plact_catl.
-  case (leqXP c L) => Hc; last exact: plact_refl.
+  case: (leqXP c L) => Hc; last exact: plact_refl.
   have:= Habc => /andP [] Hab Hbc.
   have HbL := leqX_trans (ltnXW Hbc) Hc.
   rewrite HbL (leqX_trans Hab HbL).
@@ -890,7 +890,7 @@ Proof.
   move/plact2P => [] a [] b [] c [] Habc -> ->.
   rewrite !filter_cat /=.
   apply: plact_catr; apply: plact_catl.
-  case (leqXP c L) => Hc; last exact: plact_refl.
+  case: (leqXP c L) => Hc; last exact: plact_refl.
   have:= Habc => /andP [] Hab Hbc.
   have HbL := leqX_trans Hbc Hc.
   rewrite HbL (leqX_trans (ltnXW Hab) HbL).
@@ -942,8 +942,8 @@ End RestrIntervSmall.
 
 Section RestrIntervBig.
 
-Variable Alph : ordType.
-Let Dual := dual_ordType Alph.
+Variable Alph : inhOrdType.
+Notation Dual := (dual_inhOrdType Alph).
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -959,16 +959,14 @@ Lemma leqXL_geqXLdualE u : filter leqXL u = from_revdual (filter geqXL (revdual 
 Proof.
   rewrite /= filter_rev revK -filter_map -map_comp.
   rewrite (eq_map (@dualK _)) map_id.
-  apply/eq_filter => i /=.
-  by rewrite dual_leqX.
+  apply/eq_filter => i /=; by rewrite -dual_leqX.
 Qed.
 
 Lemma ltnXL_gtnXLdualE u : filter ltnXL u = from_revdual (filter gtnXL (revdual u)).
 Proof.
   rewrite /= filter_rev revK -filter_map -map_comp.
   rewrite (eq_map (@dualK _)) map_id.
-  apply/eq_filter => i /=.
-  by rewrite dual_ltnX.
+  apply/eq_filter => i /=; by rewrite -dual_ltnX.
 Qed.
 
 Lemma plactic_filter_leqX u v : u =Pl v -> filter leqXL u =Pl filter leqXL v.
@@ -990,7 +988,7 @@ End RestrIntervBig.
 
 Section IncrMap.
 
-Variable T1 T2 : ordType.
+Variable T1 T2 : inhOrdType.
 Variable F : T1 -> T2.
 Variable u v : seq T1.
 Hypothesis Hincr : {in u &, forall x y, x <A y -> F x <A F y}.

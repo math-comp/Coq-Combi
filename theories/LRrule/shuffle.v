@@ -383,7 +383,7 @@ End ShiftedShuffle.
 
 Section LRTriple.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -475,7 +475,7 @@ Qed.
 
 Lemma index_invstd l i :
   is_std l -> i < size l ->
-  (index i (invstd l)) = nth (inhabitant nat_ordType) l i.
+  (index i (invstd l)) = nth (inhabitant nat_inhOrdType) l i.
 Proof. move=> Hstd Hi; by rewrite -{2}(invstdK Hstd) /invstd nth_mkseq //= size_mkseq. Qed.
 
 Lemma invstd_catgtn u v :
@@ -589,7 +589,7 @@ Proof.
     + rewrite /= -Hp2 RSmapE; exact: mem_RSclass.
 Qed.
 
-Lemma filter_gtnX_RS (T : ordType) (w : seq T) n :
+Lemma filter_gtnX_RS (T : inhOrdType) (w : seq T) n :
   RS (filter (gtnX n) w) = filter_gtnX_tab n (RS w).
 Proof.
   apply/eqP.

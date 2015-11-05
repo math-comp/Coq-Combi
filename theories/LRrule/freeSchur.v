@@ -88,7 +88,7 @@ End CommutativeImage.
 
 Section TableauReading.
 
-Variable A : ordType.
+Variable A : inhOrdType.
 
 Definition tabsh_reading_RS (sh : seq nat) (w : seq A) :=
   (to_word (RS w) == w) && (shape (RS (w)) == sh).
@@ -155,7 +155,7 @@ Lemma tabword_of_tuple_freeSchur_inj (Q : stdtabn d) :
 Proof.
   move=> /= u v.
   rewrite /freeSchur !inE => /eqP Hu /eqP Hv /(congr1 (@tval _ _)) /= H.
-  case: (bijRStab [ordType of 'I_n]) => RSinv HK _.
+  case: (bijRStab [inhOrdType of 'I_n]) => RSinv HK _.
   apply: val_inj; rewrite -[val u]HK -[val v]HK; congr (RSinv _).
   rewrite {RSinv HK} /RStab /=. apply: pqpair_inj => /=.
   have:= (is_tableau_RS u). have:= is_tableau_RS v.
@@ -353,7 +353,7 @@ Proof.
   apply: eq_card => i /=; by rewrite unfold_in inE.
 Qed.
 
-Lemma size_RSmapinv2_yam d (Typ : ordType) (tab : seq (seq Typ)) (T : stdtabn d) :
+Lemma size_RSmapinv2_yam d (Typ : inhOrdType) (tab : seq (seq Typ)) (T : stdtabn d) :
   size (RSmapinv2 (tab, yam_of_stdtab T)) = d.
 Proof.
   rewrite -{2}(size_tab_stdtabn T) -size_yam_of_stdtab // /RSmapinv2 /=.
@@ -373,7 +373,7 @@ Hypothesis Hsh2 : shape U2 = shape T2.
 
 Section TakeDrop.
 
-Variable T : ordType.
+Variable T : inhOrdType.
 
 Lemma RStabE (w : seq T) : (RStab w).1 = (RS w).
 Proof. by rewrite RStabmapE. Qed.
@@ -425,7 +425,7 @@ Qed.
 
 End TakeDrop.
 
-Lemma changeUTK (T : ordType) (w : seq T) :
+Lemma changeUTK (T : inhOrdType) (w : seq T) :
   (take d1 w) \in langQ U1 ->
   (drop d1 w) \in langQ U2 ->
   changeUT U1 U2 (changeUT T1 T2 w) = w.

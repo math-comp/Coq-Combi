@@ -236,7 +236,6 @@ End StdCombClass.
 Section Standardisation.
 
 Variable Alph : ordType.
-Let Z := (inhabitant Alph).
 Implicit Type s u v w : seq Alph.
 
 Fixpoint std_rec n s :=
@@ -310,7 +309,7 @@ Proof.
   set pos := (posbig s).+1; set LR := take _ _.
   have HposLR : pos = size LR.
     rewrite /LR size_take /pos size_std_rec.
-    case (ltnP (posbig s).+1 (size s)) => Hpos; first by [].
+    case: (ltnP (posbig s).+1 (size s)) => Hpos; first by [].
     apply/eqP; rewrite eqn_leq Hpos andbT.
     have: s != [::] by move: Hmax; case s.
     exact: posbig_size.
@@ -319,7 +318,7 @@ Proof.
   rewrite size_take size_std_rec HposLR.
   have Hif : (if size LR < size s then size LR else size s) = size LR.
     rewrite /LR /pos size_take size_std_rec.
-    case (ltnP (posbig s).+1 (size s)) => Hpos; first by rewrite Hpos.
+    case: (ltnP (posbig s).+1 (size s)) => Hpos; first by rewrite Hpos.
     by rewrite ltnn.
   rewrite /LR size_take size_std_rec HposLR !Hif /std.
   have -> : size (s0 :: rembig s) = size s.
@@ -343,16 +342,16 @@ Proof.
     rewrite (IHn _ Hszrem Hprem) Hs {IHn}.
     have:= Hperm; rewrite {1}Hs => /maxL_perm_eq.
     rewrite maxL_iota_n => <-.
-    exact: posbig_take_dropE. 
+    exact: posbig_take_dropE.
 Qed.
 
-Lemma std_stdE (T : ordType) (s : seq T) : std (std s) = std s.
+Lemma std_stdE (T : inhOrdType) (s : seq T) : std (std s) = std s.
 Proof. apply: std_std; exact: std_is_std. Qed.
 
 (** ** Inversion sets and standardization *)
 Section Spec.
 
-Implicit Type S T : ordType.
+Implicit Type S T : inhOrdType.
 
 Definition versions T (w : seq T) : rel nat :=
   fun i j => (i <= j < size w) && (nth (inhabitant T) w i <=A nth (inhabitant T) w j).
@@ -487,14 +486,14 @@ Proof.
   case (ltnP i (posbig u)) => Hipos;
     case (ltnP j (posbig u)) => Hjpos; apply: Heq.
   - rewrite Hij /=; apply: (ltn_trans Hj).
-    move: Hj; by case (size u).
+    move: Hj; by case: (size u).
   - rewrite (leq_trans Hij (leqnSn _)) /=.
     suff -> : (size u) = (size u).-1.+1 by rewrite ltnS.
-    by move: Hj; rewrite -ltnS; case (size u).
+    by move: Hj; rewrite -ltnS; case: (size u).
   - exfalso; have:= leq_trans (leq_trans Hjpos Hipos) Hij; by rewrite ltnn.
   - rewrite ltnS Hij /=.
     suff -> : (size u) = (size u).-1.+1 by rewrite ltnS.
-    by move: Hj; rewrite -ltnS; case (size u).
+    by move: Hj; rewrite -ltnS; case: (size u).
 Qed.
 
 Lemma std_eq_inv S T (u : seq S) (v : seq T) :
@@ -530,10 +529,10 @@ Proof.
   have Hpossz : posbig u <= size (rembig u).
     have /posbig_size : u != [::] by rewrite Hu.
     by rewrite Hszrem Hn.
-  rewrite !(nth_inspos _ _ Hpossz).
+  rewrite !(nth_inspos _ _ _ Hpossz).
   have Hposszstd : posbig u <= size (std_rec n (rembig u)).
     by rewrite size_std_rec -Hszrem.
-  rewrite !(nth_inspos _ _ Hposszstd).
+  rewrite !(nth_inspos _ _ _ Hposszstd).
   case (altP (i =P posbig u)) => Hipos.
   - subst i.
     case (altP (j =P posbig u)) => Hjpos; first by rewrite !leqXnn.
@@ -696,7 +695,7 @@ End PermEq.
 (** ** Standardization and elementary transpositions of a word *)
 Section Transp.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let Z := (inhabitant Alph).
 Implicit Type u v : seq Alph.
 
@@ -729,7 +728,7 @@ Qed.
 
 End Transp.
 
-Lemma eq_inv_transp (s T : ordType) (u v : seq s) a b
+Lemma eq_inv_transp (s T : inhOrdType) (u v : seq s) a b
                                  (U V : seq T) A B :
   a <A b -> A <A B -> size u = size U ->
   eq_inv (u ++ [:: a; b] ++ v) (U ++ [:: A; B] ++ V) ->
@@ -799,7 +798,7 @@ Proof.
       by apply.
 Qed.
 
-Lemma std_transp (T : ordType) (u v : seq T) a b
+Lemma std_transp (T : inhOrdType) (u v : seq T) a b
                                (U V : seq nat) A B :
   a <A b -> size u = size U ->
   std (u ++ [:: a; b] ++ v) = (U ++ [:: A; B] ++ V) ->

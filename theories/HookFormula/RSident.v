@@ -159,7 +159,8 @@ Proof.
   rewrite /is_RStabpair; case: p => [[p q]] /=.
   by rewrite /is_stdtab_pair_of_n /= => /and3P [] /andP [] /andP [] -> _ _ /andP [] -> _ ->.
 Qed.
-Definition rspair_stpn (p : stpn) : (rstabpair nat_ordType) := RSTabPair (rspair_stpnP p).
+Definition rspair_stpn (p : stpn) : (rstabpair [inhOrdType of nat]) :=
+  RSTabPair (rspair_stpnP p).
 Lemma RSstdmap_invP (p : stpn) : is_std_of_n n (RStabinv (rspair_stpn p)).
 Proof.
   have /= := RStabinvK (rspair_stpn p).

@@ -265,7 +265,7 @@ End BigTrivISeq.
 
 Section GreeneDef.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 
 Definition extractpred n (wt : n.-tuple Alph) (P : pred 'I_n) :=
   [seq tnth wt i | i <- enum P].
@@ -457,7 +457,7 @@ End GreeneDef.
 
 Arguments scover [N].
 
-Lemma eq_Greene_rel_t (T : ordType) (R1 R2 : rel T) N (u : N.-tuple T) :
+Lemma eq_Greene_rel_t (T : inhOrdType) (R1 R2 : rel T) N (u : N.-tuple T) :
   R1 =2 R2 -> Greene_rel_t R1 u  =1  Greene_rel_t R2 u.
 Proof.
   rewrite /Greene_rel_t /= => H k.
@@ -467,11 +467,11 @@ Proof.
   by rewrite (eq_path H).
 Qed.
 
-Lemma Greene_rel_t_cast (Alph : ordType) R M N (Heq : M = N) k (V : M.-tuple Alph) :
+Lemma Greene_rel_t_cast (Alph : inhOrdType) R M N (Heq : M = N) k (V : M.-tuple Alph) :
   Greene_rel_t R (tcast Heq V) k = Greene_rel_t R V k.
 Proof. by subst M. Qed.
 
-Lemma Greene_rel_t_uniq (T : ordType) (leT : rel T) N (u : N.-tuple T) :
+Lemma Greene_rel_t_uniq (T : inhOrdType) (leT : rel T) N (u : N.-tuple T) :
   uniq u -> Greene_rel_t leT u  =1  Greene_rel_t (fun x y => (x != y) && (leT x y)) u.
 Proof.
   rewrite /Greene_rel_t => Huniq k.
@@ -486,7 +486,7 @@ Qed.
 
 Section GreeneCat.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 
 Variable comp : rel Alph.
 Hypothesis Hcomp : transitive comp.
@@ -628,7 +628,7 @@ End GreeneCat.
 
 Section GreeneSeq.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Implicit Type u v w : seq Alph.
 
 Variable comp : rel Alph.
@@ -671,11 +671,11 @@ Qed.
 End GreeneSeq.
 
 
-Lemma eq_Greene_rel (T : ordType) (R1 R2 : rel T) u :
+Lemma eq_Greene_rel (T : inhOrdType) (R1 R2 : rel T) u :
   R1 =2 R2 -> Greene_rel R1 u  =1  Greene_rel R2 u.
 Proof. exact: eq_Greene_rel_t. Qed.
 
-Lemma Greene_rel_uniq (T : ordType) (leT : rel T) u :
+Lemma Greene_rel_uniq (T : inhOrdType) (leT : rel T) u :
   uniq u -> Greene_rel leT u  =1  Greene_rel (fun x y => (x != y) && (leT x y)) u.
 Proof. move=> Hu; rewrite /Greene_rel => k /=; exact: Greene_rel_t_uniq. Qed.
 
@@ -692,7 +692,7 @@ Qed.
 
 Section GreeneInj.
 
-Variable T1 T2 : ordType.
+Variable T1 T2 : inhOrdType.
 Variable R1 : rel T1.
 Variable R2 : rel T2.
 
@@ -718,7 +718,7 @@ End GreeneInj.
 
 Section Rev.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let Z := (inhabitant Alph).
 Implicit Type u v w : seq Alph.
 Implicit Type p : seq nat.
@@ -803,7 +803,7 @@ End Rev.
 
 Section GreeneRec.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Implicit Type u v w : seq Alph.
 Implicit Type t : seq (seq Alph).
 
@@ -918,7 +918,7 @@ Proof.
   move: (#|S|) => i {S HS}.
   elim: t Hpart i => [//= | t0 t IHt] Hpart i /=.
   rewrite inE => /orP [/eqP -> |].
-  - move: Hpart => /part_head_non0 /=; by case (size t0).
+  - move: Hpart => /part_head_non0 /=; by case: (size t0).
   - apply: IHt; exact: (is_part_consK Hpart).
 Qed.
 
@@ -1422,7 +1422,7 @@ End GreeneRec.
 
 Section GreeneTab.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 
 Implicit Type t : seq (seq Alph).
 
@@ -1552,9 +1552,11 @@ End GreeneTab.
 
 
 
-Theorem Greene_row_tab_eq_shape (T1 T2 : ordType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
+Theorem Greene_row_tab_eq_shape
+        (T1 T2 : inhOrdType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
   is_tableau t1 -> is_tableau t2 ->
-  (forall k, Greene_row (to_word t1) k = Greene_row (to_word t2) k) -> (shape t1 = shape t2).
+  (forall k, Greene_row (to_word t1) k = Greene_row (to_word t2) k) ->
+  (shape t1 = shape t2).
 Proof.
   move=> Htab1 Htab2 Heq.
   have Hsh1 := is_part_sht Htab1; have Hsh2 := is_part_sht Htab2.
@@ -1563,9 +1565,11 @@ Proof.
   exact: Heq.
 Qed.
 
-Theorem Greene_col_tab_eq_shape (T1 T2 : ordType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
+Theorem Greene_col_tab_eq_shape
+        (T1 T2 : inhOrdType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
   is_tableau t1 -> is_tableau t2 ->
-  (forall k, Greene_col (to_word t1) k = Greene_col (to_word t2) k) -> (shape t1 = shape t2).
+  (forall k, Greene_col (to_word t1) k = Greene_col (to_word t2) k) ->
+  (shape t1 = shape t2).
 Proof.
   move=> Htab1 Htab2 Heq.
   have Hsh1 := is_part_sht Htab1; have Hsh2 := is_part_sht Htab2.

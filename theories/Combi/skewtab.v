@@ -115,7 +115,7 @@ Qed.
 
 Section Dominate.
 
-  Variable T : ordType.
+  Variable T : inhOrdType.
   Notation Z := (inhabitant T).
 
   Implicit Type u v : seq T.
@@ -516,7 +516,7 @@ End Dominate.
 
 Section FilterLeqGeq.
 
-Variable T : ordType.
+Variable T : inhOrdType.
 Notation Z := (inhabitant T).
 
 Implicit Type l : T.
@@ -752,7 +752,7 @@ End FilterLeqGeq.
 
 Section EqInvSkewTab.
 
-Implicit Type T : ordType.
+Implicit Type T : inhOrdType.
 
 Lemma eq_inv_skew_dominate T1 T2 (u1 v1 : seq T1) (u2 v2 : seq T2) s :
   eq_inv (u1 ++ v1) (u2 ++ v2) ->

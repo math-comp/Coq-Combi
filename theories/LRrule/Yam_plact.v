@@ -186,14 +186,14 @@ Proof.
   by rewrite IHsh addSnnS.
 Qed.
 
-Lemma is_tableau_catl (T : ordType) (t1 t2 : seq (seq T)) :
+Lemma is_tableau_catl (T : inhOrdType) (t1 t2 : seq (seq T)) :
   is_tableau (t1 ++ t2) -> is_tableau t1.
 Proof.
   elim: t1 => [//= | t t1 IHt1] /= /and4P [] -> -> /= Hdom /IHt1 {IHt1} ->.
   rewrite andbT; by case: t1 Hdom => [//= | r1 t1].
 Qed.
 
-Lemma is_tableau_catr (T : ordType) (t1 t2 : seq (seq T)) :
+Lemma is_tableau_catr (T : inhOrdType) (t1 t2 : seq (seq T)) :
   is_tableau (t1 ++ t2) -> is_tableau t2.
 Proof. by elim: t1 => [//= | r t1 IHt1] /= /and4P [] _ _ _. Qed.
 

@@ -57,7 +57,7 @@ The bijections preserve the shape and therefore the size:
 
 Section AppendNth.
 
-Variable T : ordType.
+Variable T : inhOrdType.
 Implicit Type b : T.
 Implicit Type t : seq (seq T).
 
@@ -82,7 +82,7 @@ Lemma shape_append_nth t b i : shape (append_nth t b i) = incr_nth (shape t) i.
 Proof.
   rewrite /shape /=; apply: (@eq_from_nth _ 0).
   + rewrite size_map size_set_nth size_incr_nth size_map /maxn.
-    case (ltngtP i.+1 (size t)).
+    case: (ltngtP i.+1 (size t)).
     - by move/ltnW ->.
     - by rewrite ltnNge => /negbTE ->.
     - by move => ->; rewrite leqnn.
@@ -90,7 +90,7 @@ Proof.
     rewrite nth_incr_nth (nth_map [::]) /=; last by move: Hi; rewrite size_map.
     rewrite nth_set_nth /= eq_sym.
     have -> : nth 0 [seq size i | i <- t] j = size (nth [::] t j).
-      case (ltnP j (size t)) => Hcase.
+      case: (ltnP j (size t)) => Hcase.
       * by rewrite (nth_map [::] _ _ Hcase).
       * by rewrite (nth_default _ Hcase) nth_default; last by rewrite size_map.
     case eqP => [->|].
@@ -357,11 +357,11 @@ Proof.
       by rewrite /dominate /= ltnXnatE Hn.
     + move/dominateP => [] _ Hdom Hsize.
       apply/dominateP; split; rewrite size_rcons; first by [].
-      move=> i Hi; rewrite nth_rcons; case (ltnP i (size T1)) => Hi1.
+      move=> i Hi; rewrite nth_rcons; case: (ltnP i (size T1)) => Hi1.
       * exact: Hdom.
       * have -> : i == size T1 by rewrite eqn_leq Hi1 andbT -ltnS.
         move: Hall0 => /allP Hall0.
-        have /Hall0 /= := (mem_nth (inhabitant nat_ordType) (leq_trans Hi Hsize)).
+        have /Hall0 /= := (mem_nth (inhabitant nat_inhOrdType) (leq_trans Hi Hsize)).
         by rewrite ltnXnatE.
 Qed.
 
@@ -441,7 +441,7 @@ Proof.
   + move/IHu ->; by rewrite orbT.
 Qed.
 
-Lemma append_nth_injl (T : ordType) u v (l : T) p :
+Lemma append_nth_injl (T : inhOrdType) u v (l : T) p :
   [::] \notin u -> [::] \notin v -> append_nth u l p = append_nth v l p -> u = v.
 Proof.
   move=> Hu Hv Heq; have:= congr1 shape Heq.
@@ -517,7 +517,7 @@ Qed.
 End Bijection.
 
 
-Lemma eq_inv_is_row (T1 T2 : ordType) (u1 : seq T1) (u2 : seq T2) :
+Lemma eq_inv_is_row (T1 T2 : inhOrdType) (u1 : seq T1) (u2 : seq T2) :
   eq_inv u1 u2 -> is_row u1 -> is_row u2.
 Proof.
   move/eq_invP => [] Hsz.
@@ -527,7 +527,7 @@ Proof.
   exact: Hrow.
 Qed.
 
-Lemma is_row_stdE (T : ordType) (w : seq T) : is_row (std w) = is_row w.
+Lemma is_row_stdE (T : inhOrdType) (w : seq T) : is_row (std w) = is_row w.
 Proof.
   apply/idP/idP; apply eq_inv_is_row; first apply eq_inv_sym; exact: eq_inv_std.
 Qed.
@@ -535,7 +535,7 @@ Qed.
 
 Section ConjTab.
 
-Variable T : ordType.
+Variable T : inhOrdType.
 
 Definition conj_tab (t : seq (seq T)) : seq (seq T) :=
   let c := conj_part (shape t) in

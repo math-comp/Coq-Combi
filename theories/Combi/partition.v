@@ -1254,12 +1254,14 @@ Variable n : nat.
 Variable P : intpartn n -> Type.
 Implicit Types p : intpartn n.
 
-Hypothesis IH : forall p1, (forall p2, val p2 <A p1 -> P p2) -> P p1.
+Let lex := (lex_ordType nat_ordType).
+
+Hypothesis IH : forall p1, (forall p2, (p2 : lex) <A p1 -> P p2) -> P p1.
 
 Lemma lex_inpart_wf p : P p.
 Proof.
-  have := leqnn #|[set y : intpartn n | val y <A p ]|.
-  move: {2}#|[set y | val y <A val p]| => c.
+  have := leqnn #|[set y : intpartn n | (y : lex) <A p]|.
+  move: {2}#|_| => c.
   elim: c p => [| c IHc] p.
     rewrite leqn0 cards_eq0 => /eqP Hp.
     apply IH => P2 Hp2; exfalso.

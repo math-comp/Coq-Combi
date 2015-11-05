@@ -25,7 +25,7 @@ Open Scope N.
 
 Section OrderedType.
 
-Variable T : ordType.
+Variable T : inhOrdType.
 
 Lemma Greene_rel_one (s : seq T) (R : rel T) :
   exists t : seq T, subseq t s /\ sorted R t /\ size t = (Greene_rel R s) 1.

@@ -33,7 +33,7 @@ Qed.
 Lemma eq_size (T : Type) (w1 w2 : seq T) : w1 = w2 -> size w1 = size w2.
 Proof. by move->. Qed.
 
-Lemma ksupp_cast (T : ordType) R (w1 w2 : seq T) (H : w1 = w2) k Q :
+Lemma ksupp_cast (T : inhOrdType) R (w1 w2 : seq T) (H : w1 = w2) k Q :
   ksupp R (in_tuple w1) k Q ->
   ksupp R (in_tuple w2) k ((cast_set (eq_size H)) @: Q).
 Proof.
@@ -48,7 +48,7 @@ Open Scope bool.
 
 Section ExtractCuti.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 Variable N : nat.
 Variable wt : N.-tuple Alph.
@@ -84,7 +84,7 @@ End ExtractCuti.
 
 Section Duality.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -184,7 +184,7 @@ Proof.
   rewrite -rev_sorted revK /sorted /=.
   rewrite (map_path (e' := gtnX) (b := pred0)); first by [].
   - rewrite /rel_base => x y _.
-    by rewrite /gtnX /= dual_ltnX.
+    by rewrite /gtnX /= -dual_ltnX.
   - by rewrite has_pred0.
 Qed.
 
@@ -233,30 +233,32 @@ Proof. by rewrite !/scover /= -size_cover_inj; last exact rev_ord_cast_inj. Qed.
 
 Lemma Greene_col_dual : Greene_col w k = Greene_col (revdual w) k.
 Proof.
-  rewrite /Greene_col /=.
+  rewrite /Greene_col.
   apply/eqP; rewrite eqn_leq; apply/andP; split.
-  - apply: (@leq_Greene _ (dual_ordType _)).
+  - apply: (@leq_Greene _ (dual_inhOrdType _)).
     rewrite /ksupp_inj => S HS; exists (rev_ksupp S).
-    by rewrite scover_rev eq_refl /= -rev_is_ksupp_col.
-  - apply: (@leq_Greene (dual_ordType _) _).
+    rewrite scover_rev eq_refl /=.
+    by rewrite (rev_is_ksupp_col S) in HS.
+  - apply: (@leq_Greene (dual_inhOrdType _) _).
     rewrite /ksupp_inj => S HS.
     pose U := rev_ksupp_inv S.
     exists U; rewrite [S]rev_ksuppKV /U scover_rev eq_refl /=.
-    by move: HS; rewrite {1}[S]rev_ksuppKV -rev_is_ksupp_col.
+    move: HS; by rewrite {1}[S]rev_ksuppKV rev_is_ksupp_col.
 Qed.
 
 Lemma Greene_row_dual : Greene_row w k = Greene_row (revdual w) k.
 Proof.
-  rewrite /Greene_col /=.
+  rewrite /Greene_col.
   apply/eqP; rewrite eqn_leq; apply/andP; split.
-  - apply: (@leq_Greene _ (dual_ordType _)).
+  - apply: (@leq_Greene _ (dual_inhOrdType _)).
     rewrite /ksupp_inj => S HS; exists (rev_ksupp S).
-    by rewrite scover_rev eq_refl /= -rev_is_ksupp_row.
-  - apply: (@leq_Greene (dual_ordType _) _).
+    rewrite scover_rev eq_refl /=.
+    by rewrite rev_is_ksupp_row in HS.
+  - apply: (@leq_Greene (dual_inhOrdType _) _).
     rewrite /ksupp_inj => S HS.
     pose U := rev_ksupp_inv S.
     exists U; rewrite [S]rev_ksuppKV /U scover_rev eq_refl /=.
-    by move: HS; rewrite {1}[S]rev_ksuppKV -rev_is_ksupp_row.
+    by move: HS; rewrite {1}[S]rev_ksuppKV rev_is_ksupp_row.
 Qed.
 
 End Duality.
@@ -388,7 +390,7 @@ Module NoSetContainingBoth.
 
 Section Case.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -541,7 +543,7 @@ Module SetContainingBothLeft.
 
 Section Case.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 
 Implicit Type u v w r : word.
@@ -644,7 +646,7 @@ Proof.
   rewrite (_ : setI _ _ = S :&: [set j : 'I_(size x) | j < size u]); first last.
     rewrite -!setIdE -setP => i; rewrite !inE.
     case: (ltnP i (size u)) => Hi; first by rewrite (ltn_trans Hi).
-    case (ltnP i (size u).+1) => Hi2; last by rewrite andbF.
+    case: (ltnP i (size u).+1) => Hi2; last by rewrite andbF.
     have -> : i = posb.
       apply: val_inj => /=; apply/eqP; by rewrite eqn_leq Hi andbT -ltnS.
     by rewrite posbinSF.
@@ -659,7 +661,7 @@ Proof.
   have /= -> := (extract0 (in_tuple x)); rewrite cat0s.
   rewrite tnth_posc; congr (_ :: extractpred (in_tuple x) (mem (pred_of_set _))).
   rewrite /LS {LS HposcLS} -setP => i; rewrite !inE.
-  case (ltnP (size u).+2 i) => Hi2; last by rewrite !andbF.
+  case: (ltnP (size u).+2 i) => Hi2; last by rewrite !andbF.
   by rewrite (ltn_trans (ltnSn _) Hi2) !andbT.
 Qed.
 
@@ -684,8 +686,8 @@ Proof.
   have /= -> :=  (extract_cuti (in_tuple x) HposcLS).
   have -> : LS :&: [set j : 'I_(size x) | j < (size u).+2] = set0.
     rewrite /LS -setP => i; rewrite !inE /=.
-    case (ltnP (size u) i) => Hi; last by rewrite andbF.
-    case (ltnP i (size u).+2) => Hi2; last by rewrite andbF.
+    case: (ltnP (size u) i) => Hi; last by rewrite andbF.
+    case: (ltnP i (size u).+2) => Hi2; last by rewrite andbF.
     rewrite (_ : i = posa); first last.
       by apply: val_inj => /=; apply/eqP; rewrite eqn_leq Hi andbT -ltnS.
     rewrite -Swap.swap0 mem_imset_inj //=; last exact: Swap.swap_inj.
@@ -693,7 +695,7 @@ Proof.
   have /= -> :=  (extract0 (in_tuple x)); rewrite cat0s.
   rewrite tnth_posc; congr (_ :: extractpred (in_tuple x) (mem (pred_of_set _))).
   rewrite /LS {LS HposcLS} -setP => i; rewrite !inE.
-  case (ltnP (size u).+2 i) => Hi; last by rewrite !andbF.
+  case: (ltnP (size u).+2 i) => Hi; last by rewrite !andbF.
   rewrite -{1}(Swap.swapR (ltnW Hi)) mem_imset_inj //=; last exact: Swap.swap_inj.
   rewrite andbT; congr (_ && _).
   exact: (ltn_trans (ltn_trans (ltnSn _) (ltnSn _)) Hi).
@@ -811,8 +813,8 @@ Proof.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> i; rewrite !inE.
   - move/or3P => [/orP [] | | ] /andP [] -> _ //=; by rewrite orbT.
   - move/orP => [] Hi; rewrite Hi /=.
-    + by case (ltnP (size u).+1 i); first rewrite !orbT.
-    + case (leqP i (size u)) => Hiu; first by rewrite orbT.
+    + by case: (ltnP (size u).+1 i); first rewrite !orbT.
+    + case: (leqP i (size u)) => Hiu; first by rewrite orbT.
       rewrite /=; apply/orP; left; apply/orP; right.
       have:= TS_disjoint => /disjoint_setI0; rewrite -setP => Hdisj.
       case: (ltnP (size u).+2 i) => //= Hi2.
@@ -1072,9 +1074,9 @@ Proof. by rewrite /T1 !inE Hposb leqnn. Qed.
 Lemma Qbin_noboth U : U \in Qbin -> ~ ((posa \in U) && ((posc \in U))).
 Proof.
   rewrite /Qbin !inE.
-  case (altP (U =P S1)) => [-> _ |HneqS1] /=.
+  case: (altP (U =P S1)) => [-> _ |HneqS1] /=.
   + by rewrite /S1 !inE Hposa /= !ltnn !andbF.
-  case (altP (U =P T1)) => [-> _ |HneqT1] /=.
+  case: (altP (U =P T1)) => [-> _ |HneqT1] /=.
   + by rewrite /T1 !inE Hposa /= posa_inTF /= ltnn.
   + move/andP => []; rewrite negb_or => /andP [] HUS HUT HU.
     move: Px => /and3P [] _ /trivIsetP Htriv _.
@@ -1132,7 +1134,7 @@ Qed.
 End Case.
 End SetContainingBothLeft.
 
-Lemma RabcLeqX (Alph : ordType) (a b c : Alph) :
+Lemma RabcLeqX (Alph : inhOrdType) (a b c : Alph) :
   (a < b <= c)%Ord -> SetContainingBothLeft.hypRabc leqX a b c.
 Proof.
   move=> H; constructor.
@@ -1143,7 +1145,7 @@ Proof.
   + move: H => /andP /= [] H1 _ /= x H2; exact: (leqX_trans (ltnXW H1) H2).
 Qed.
 
-Lemma RabcGtnX (Alph : ordType) (a b c : Alph) :
+Lemma RabcGtnX (Alph : inhOrdType) (a b c : Alph) :
   (a < b <= c)%Ord -> SetContainingBothLeft.hypRabc gtnX c b a.
 Proof.
   move=> H; constructor.
@@ -1156,7 +1158,7 @@ Qed.
 
 Section GreeneInvariantsRule.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 
 Variable u v1 w v2 : word.
@@ -1317,7 +1319,7 @@ End GreeneInvariantsRule.
 
 Section GreeneInvariantsDual.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 Implicit Type u v w : word.
 
@@ -1415,13 +1417,14 @@ End GreeneInvariantsDual.
 
 Section GreeneInvariants.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
 
-Theorem Greene_row_invar_plactic u v : u =Pl v -> forall k, Greene_row u k = Greene_row v k.
+Theorem Greene_row_invar_plactic u v :
+  u =Pl v -> forall k, Greene_row u k = Greene_row v k.
 Proof.
   move=> Hpl k.
   move: v Hpl; apply: gencongr_ind; first exact: erefl.
@@ -1509,7 +1512,7 @@ Qed.
 
 End GreeneInvariants.
 
-Corollary Greene_row_eq_shape_RS (S T : ordType) (s : seq S) (t : seq T) :
+Corollary Greene_row_eq_shape_RS (S T : inhOrdType) (s : seq S) (t : seq T) :
   (forall k, Greene_row s k = Greene_row t k) -> (shape (RS s) = shape (RS t)).
 Proof.
   move=> HGreene; apply: Greene_row_tab_eq_shape; try apply: is_tableau_RS.
@@ -1519,7 +1522,7 @@ Proof.
   exact: HGreene.
 Qed.
 
-Corollary Greene_col_eq_shape_RS (S T : ordType) (s : seq S) (t : seq T) :
+Corollary Greene_col_eq_shape_RS (S T : inhOrdType) (s : seq S) (t : seq T) :
   (forall k, Greene_col s k = Greene_col t k) -> (shape (RS s) = shape (RS t)).
 Proof.
   move=> HGreene; apply: Greene_col_tab_eq_shape; try apply: is_tableau_RS.
@@ -1532,7 +1535,7 @@ Qed.
 
 Section RevConj.
 
-Variable T : ordType.
+Variable T : inhOrdType.
 Implicit Type s : seq T.
 
 Lemma shape_RS_rev s : uniq s -> shape (RS (rev s)) = conj_part (shape (RS s)).

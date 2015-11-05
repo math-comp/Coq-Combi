@@ -46,7 +46,7 @@ Open Scope N.
 (** ** Specialization of sorted Lemmas *)
 Section Rows.
 
-  Variable T : ordType.
+  Variable T : inhOrdType.
 
   Implicit Type l : T.
   Implicit Type r : seq T.
@@ -78,7 +78,7 @@ Notation is_row r := (sorted (@leqX_op _) r).
 (** ** Dominance order for rows *)
 Section Dominate.
 
-  Variable T : ordType.
+  Variable T : inhOrdType.
   Notation Z := (inhabitant T).
 
   Implicit Type l : T.
@@ -131,7 +131,7 @@ Qed.
     move /dominateP => [] Hsz Hlt.
     apply/dominateP; split => [|i Hi]; first by rewrite size_rcons; apply: leqW.
     move/(_ _ Hi) : Hlt; rewrite nth_rcons.
-    case (ltnP i (size v)) => //= /(leq_trans Hsz)/leq_ltn_trans/(_ Hi).
+    case: (ltnP i (size v)) => //= /(leq_trans Hsz)/leq_ltn_trans/(_ Hi).
     by rewrite ltnn.
   Qed.
 
@@ -164,7 +164,7 @@ End Dominate.
 (** * Tableaux : definition and basic properties *)
 Section Tableau.
 
-  Variable T : ordType.
+  Variable T : inhOrdType.
   Notation Z := (inhabitant T).
 
   Implicit Type l : T.
@@ -440,7 +440,7 @@ End Tableau.
 
 Section TableauReading.
 
-Variable A : ordType.
+Variable A : inhOrdType.
 
 Definition tabsh_reading (sh : seq nat) (w : seq A) :=
   (size w == sumn sh) && (is_tableau (rev (reshape (rev sh) w))).
@@ -474,7 +474,7 @@ Variable d : nat.
 Variable sh : intpartn d.
 
 Definition is_tab_of_shape sh :=
-  [pred t | (is_tableau (T := ord_ordType n) t) && (shape t == sh) ].
+  [pred t | (is_tableau (T := [inhOrdType of 'I_n.+1]) t) && (shape t == sh) ].
 
 Structure tabsh : predArgType :=
   TabSh {tabshval :> seq (seq 'I_n.+1); _ : is_tab_of_shape sh tabshval}.

@@ -27,7 +27,7 @@ Import OrdNotations.
 
 Section StdRS.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let Z := (inhabitant Alph).
 Implicit Type s u v w : seq Alph.
 Implicit Type p : seq nat.
@@ -132,7 +132,7 @@ Proof.
   case: (enum (mem S)) => [//= | i0 l] {S} /=.
   elim: l i0 => [//= | i1 l IHl] i0 /= /andP [] Hleqi Hpath.
   rewrite -(IHl i1 Hpath) {IHl Hpath}; congr (_ && _).
-  rewrite !(tnth_nth Z) !(tnth_nth (inhabitant (nat_ordType))) /=.
+  rewrite !(tnth_nth Z) !(tnth_nth (inhabitant (nat_inhOrdType))) /=.
   have:= eq_inv_std u => /eq_invP [] Hsz; apply.
   move: Hleqi; rewrite /leqI => -> /=.
   exact: ltn_ord.
@@ -189,7 +189,7 @@ Proof. apply: Greene_row_eq_shape_RS; exact: Greene_std. Qed.
 
 End StdRS.
 
-Theorem RSmap_std (T : ordType) (w : seq T) : (RSmap (std w)).2 = (RSmap w).2.
+Theorem RSmap_std (T : inhOrdType) (w : seq T) : (RSmap (std w)).2 = (RSmap w).2.
 Proof.
   move Hn : (size w) => n.
   elim: n T w Hn => [/= | n IHn] T w; first by move/eqP/nilP => ->.
@@ -219,7 +219,7 @@ Proof.
   by move/incr_nth_inj ->.
 Qed.
 
-Corollary RStabmap_std (T : ordType) (w : seq T) : (RStabmap (std w)).2 = (RStabmap w).2.
+Corollary RStabmap_std (T : inhOrdType) (w : seq T) : (RStabmap (std w)).2 = (RStabmap w).2.
 Proof.
   rewrite /RStabmap.
   move H : (RSmap w) => [P Q].
@@ -351,8 +351,8 @@ Proof.
     + by rewrite size_map size_iota.
   - apply/eq_invP; split; first by rewrite size_map.
     move=> i j /andP [] Hij Hj.
-    rewrite (nth_map (inhabitant nat_ordType)); last exact (leq_ltn_trans Hij Hj).
-    rewrite (nth_map (inhabitant nat_ordType)); last exact Hj.
+    rewrite (nth_map (inhabitant nat_inhOrdType)); last exact (leq_ltn_trans Hij Hj).
+    rewrite (nth_map (inhabitant nat_inhOrdType)); last exact Hj.
     rewrite !leqXnatE.
     apply/idP/idP; first exact: shiftinv_pos_incr.
     apply: contraLR; rewrite -!ltnNge !ltn_neqAle => /andP [] Hneq /shiftinv_pos_incr ->.
@@ -408,7 +408,7 @@ Lemma nth_std_pos s i x :
 Proof.
   case: s => [//= | s0 s] Hstd Hi Hipos.
   rewrite [nth _ _ _ < _]ltn_neqAle -ltnS; apply/andP; split.
-  - rewrite /= -(std_max Hstd) -(nth_posbig s0 s).
+  - rewrite /= -(std_max Hstd) -(nth_posbig 0 s0 s).
     rewrite (set_nth_default (inhabitant _) x Hi).
     by rewrite (nth_uniq _ Hi (posbig_size_cons s0 s) (std_uniq Hstd)).
   - rewrite -[(size (s0 :: s)).-1.+1]/(size (s0 :: s)).
@@ -515,14 +515,14 @@ Proof.
   by rewrite (invseqRSE (invseq_invstd Hstd)) H.
 Qed.
 
-Corollary RSTabmapstdE (T : ordType) (w : seq T) :
+Corollary RSTabmapstdE (T : inhOrdType) (w : seq T) :
   (RStabmap (invstd (std w))).1 = (RStabmap (std w)).2.
 Proof.
   have := invstdRSE (std_is_std w).
   by case (RStabmap (invstd (std w))) => [P Q] /= ->.
 Qed.
 
-Corollary RSinvstdE (T : ordType) (w : seq T) :
+Corollary RSinvstdE (T : inhOrdType) (w : seq T) :
   RS (invstd (std w)) = (RStabmap w).2.
 Proof.
   rewrite -RStabmapE RSTabmapstdE /RStabmap.
