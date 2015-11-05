@@ -79,36 +79,6 @@ Qed.
 Require Import sorted.
 Open Scope nat_scope.
 
-(* TODO : Move in Sorted *)
-Lemma sorted_ltn_ind s :
-  sorted ltn s -> sumn (iota 0 (size s)) <= sumn s /\ last 0 s >= (size s).-1.
-Proof.
-  elim/last_ind: s => [//=| s sn IHs] /= Hsort.
-  move/(_ (sorted_rconsK Hsort)): IHs => [] Hsum Hlast; split.
-  - rewrite -{2}(revK (rcons s sn)) rev_rcons sumn_rev /= [sn + _]addnC sumn_rev.
-    rewrite size_rcons -addn1 iota_add /= sumn_cat /= add0n addn0.
-    apply (leq_add Hsum).
-    case/lastP: s Hsort Hlast {Hsum} => [//= | s sn1] /=.
-    rewrite !size_rcons !last_rcons /= -!cats1 -catA cat1s => /sorted_catR /=.
-    by rewrite andbT => /(leq_ltn_trans _); apply.
-  - case/lastP: s Hsort Hlast {Hsum} => [//= | s sn1] /=.
-    rewrite !size_rcons !last_rcons /= -!cats1 -catA cat1s => /sorted_catR /=.
-    by rewrite andbT => /(leq_ltn_trans _); apply.
-Qed.
-
-(* TODO : Move in Sorted *)
-Lemma sorted_sumn_iotaE s :
-  sorted ltn s -> sumn s = sumn (iota 0 (size s)) -> s = iota 0 (size s).
-Proof.
-  elim/last_ind: s => [//= | s sn IHs] /= Hsort.
-  have:= sorted_ltn_ind Hsort.
-  rewrite -{2 5}(revK (rcons s sn)) rev_rcons sumn_rev /= [sn + _]addnC sumn_rev.
-  rewrite size_rcons -{1 3 4}addn1 iota_add /= sumn_cat /= add0n addn0 cats1.
-  rewrite last_rcons => [] [] _ Hsn.
-  have:= sorted_ltn_ind (sorted_rconsK Hsort) => [] [] Hsum _ /esym.
-  by move=> /(leq_addE Hsum Hsn) [] /esym/(IHs (sorted_rconsK Hsort)) <- <-.
-Qed.
-
 Import GRing.Theory.
 
 Local Open Scope ring_scope.

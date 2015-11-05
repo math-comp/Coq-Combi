@@ -599,7 +599,6 @@ Notation Schur p := (Schur n0 R p).
 Notation complete p := (complete n0 R p).
 Notation elementary p := (elementary n0 R p).
 
-(* TODO : move in Yamanouchi *)
 Lemma yamrowP : is_yam_of_eval (intpart_of_intpartn (rowpartn d2)) (ncons d2 0%N [::]).
 Proof.
   rewrite /is_yam_of_eval; elim: d2 => [//= | d] /andP [] /= -> /eqP ->.

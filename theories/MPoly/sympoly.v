@@ -25,29 +25,6 @@ Unset Printing Implicit Defensive.
 Local Open Scope ring_scope.
 Import GRing.Theory.
 
-Lemma mdeg1P n m : reflect (exists i : 'I_n, m = U_(i))%MM (mdeg m == 1)%N.
-Proof.
-  apply (iffP idP) => [/eqP Hdeg | [] i ->]; last by rewrite mdeg1.
-  have : (#|[set i | m i != 0]| = 1)%N.
-    apply/anti_leq/andP; split.
-    - move: Hdeg; rewrite mdegE => <-.
-      rewrite -sum1dep_card [X in _ <= X](bigID (fun x => m x != 0%N)) /=.
-      rewrite [X in _ <= _ + X](eq_bigr (fun _ => 0%N)); first last.
-        by move=> i /=; rewrite negbK => /eqP.
-      rewrite big1_eq addn0; apply leq_sum => i; by rewrite lt0n.
-    rewrite lt0n; move: Hdeg => /eqP; apply contraL.
-    rewrite cards_eq0 => /eqP; rewrite -setP => H.
-    suff -> : mdeg m = 0%N by [].
-    rewrite mdegE big1 // => i _.
-    have := H i; by rewrite !inE => /negbT; rewrite negbK => /eqP.
-  move/eqP/cards1P => [] i; rewrite -setP => H.
-  exists i; rewrite mnmP => j.
-  have:= H j; rewrite !inE mnm1E [j == i]eq_sym => <-.
-  case: eqP => [-> // | /eqP] Hmj.
-  move: Hdeg; rewrite mdegE (bigD1 j) //=.
-  by case: (m j) Hmj => [| [|d]].
-Qed.
-
 
 Section Bases.
 
@@ -118,7 +95,7 @@ Lemma complete1 : complete 1 = \sum_(i < n) 'X_i.
 Proof.
   rewrite /complete -mpolyP => m.
   rewrite !raddf_sum /=.
-  case: (boolP (mdeg m == 1%N)) => [/mdeg1P [] i -> | Hm].
+  case: (boolP (mdeg m == 1%N)) => [/mdeg1P [] i /eqP -> | Hm].
   - have Hdm : (mdeg U_(i))%MM < 2 by rewrite mdeg1.
     rewrite (bigD1 (BMultinom Hdm)) /=; last by rewrite mdeg1.
     rewrite mcoeffX eq_refl big1; first last.
@@ -173,13 +150,6 @@ Lemma conj_rowpartn d : conj_intpartn (rowpartn d) = colpartn d.
 Proof. apply val_inj => /=; rewrite /rowpart /colpart; by case: d. Qed.
 Lemma conj_colpartn d : conj_intpartn (colpartn d) = rowpartn d.
 Proof. rewrite -[RHS]conj_intpartnK; by rewrite conj_rowpartn. Qed.
-
-
-Lemma rev_nseq (T : eqType) (x : T) d : rev (nseq d x) = nseq d x.
-Proof.
-  elim: d => [//= | d IHd].
-  by rewrite -{1}(addn1 d) nseqD rev_cat IHd /=.
-Qed.
 
 
 Lemma tabwordshape_row d (w : d.-tuple 'I_n) :

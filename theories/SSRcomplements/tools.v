@@ -38,6 +38,16 @@ Proof.
   have:= leq_sub2l (m1 + n1) Hn; by rewrite {1}H !addnK.
 Qed.
 
+Lemma nseqD T n1 n2 (x : T):
+  nseq (n1 + n2) x = nseq n1 x ++ nseq n2 x.
+Proof. by rewrite cat_nseq /nseq /ncons iter_add. Qed.
+
+Lemma rev_nseq (T : eqType) (x : T) d : rev (nseq d x) = nseq d x.
+Proof.
+  elim: d => [//= | d IHd].
+  by rewrite -{1}(addn1 d) nseqD rev_cat IHd /=.
+Qed.
+
 (** ** [rcons] and [cons] related lemmas *)
 Section SeqLemmas.
 
