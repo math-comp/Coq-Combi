@@ -575,7 +575,7 @@ Proof.
     by move=> i _ /=; rewrite !tnth_mktuple mulnC.
   rewrite -(big_tuple _ _ dt xpredT id).
   apply prod_homog => i.
-  rewrite !tnth_mktuple {mt dt}; apply: dhomog_expr.
+  rewrite !tnth_mktuple {mt dt}; apply: dhomogMn.
   exact: mesym_homog.
 Qed.
 

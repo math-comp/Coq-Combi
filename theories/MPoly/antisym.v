@@ -647,7 +647,7 @@ Proof.
   rewrite /vdmprod -big_filter.
   set F := BIG_F; rewrite (eq_bigl (fun x => xpredT (F x))) //.
   rewrite -(big_map F xpredT id) /F {F}.
-  apply prod_homog; apply/allP => X /mapP [[i j]] /= _ -> {X}.
+  apply homog_prod; apply/allP => X /mapP [[i j]] /= _ -> {X}.
   apply/homogP; exists 1%N; apply rpredB; by rewrite dhomogX /= mdeg1.
 Qed.
 
