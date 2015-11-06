@@ -1,3 +1,4 @@
+(** * Combi.Erdos_Szekeres.Erdos_Szekeres : The Erdös-Szekeres theorem *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,8 +13,12 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import tuple finfun finset bigop path.
+(** A proof of the Erdös Szekeres theorem about longest increassing and
+decreassing subsequences. We prove it as a corollary of Greene's theorem on
+the Robinson-Schensted correspondance.  *****)
+
+Require Import ssreflect ssrfun ssrbool eqtype
+ssrnat seq fintype.  Require Import tuple finfun finset bigop path.
 
 Require Import partition tableau Schensted ordtype Greene Greene_inv.
 

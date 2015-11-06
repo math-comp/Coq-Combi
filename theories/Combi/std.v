@@ -345,7 +345,7 @@ Proof.
     exact: posbig_take_dropE.
 Qed.
 
-Lemma std_stdE (T : inhOrdType) (s : seq T) : std (std s) = std s.
+Lemma std_stdE (T : ordType) (s : seq T) : std (std s) = std s.
 Proof. apply: std_std; exact: std_is_std. Qed.
 
 (** ** Inversion sets and standardization *)

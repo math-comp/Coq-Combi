@@ -924,13 +924,6 @@ Notation "x >=A y" := (x >= y)%Ord (at level 70, y at next level, only parsing).
 Notation "x <A y"  := (x < y)%Ord (at level 70, y at next level).
 Notation "x >A y"  := (x > y)%Ord (at level 70, y at next level, only parsing).
 
-(*
-Notation "[A m <= n < p ]" := ((m <=A n) && (n <A p)) (at level 71).
-Notation "[A m <= n <= p ]" := ((m <=A n) && (n <=A p)) (at level 71).
-Notation "[A m < n <= p ]" := ((m <A n) && (n <=A p)) (at level 71).
-Notation "[A m < n < p ]" := ((m <A n) && (n <A p)) (at level 71).
-*)
-
 End OrdNotations.
 
 
