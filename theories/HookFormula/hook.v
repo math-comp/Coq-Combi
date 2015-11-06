@@ -24,7 +24,7 @@ Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
 Require Import tools subseq partition stdtab.
-Require Import rat_coerce distr shape bigallpairs recyama.
+Require Import rat_coerce Qmeasure shape bigallpairs recyama.
 
 Import GRing.Theory.
 Import Num.Theory.

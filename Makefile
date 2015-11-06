@@ -96,7 +96,6 @@ VFILES:= theories/Basic/combclass.v\
   theories/Erdos_Szekeres/Erdos_Szekeres.v\
   theories/HookFormula/Qmeasure.v\
   theories/HookFormula/RSident.v\
-  theories/HookFormula/distr.v\
   theories/HookFormula/hook.v\
   theories/HookFormula/recyama.v\
   theories/MPoly/antisym.v\
