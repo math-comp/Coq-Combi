@@ -16,7 +16,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 Require Import finset perm fingroup.
-Require Import tools combclass shape partition Yamanouchi ordtype std tableau.
+Require Import tools combclass partition Yamanouchi ordtype std tableau.
 
 Import OrdNotations.
 

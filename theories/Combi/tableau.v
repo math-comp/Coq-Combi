@@ -36,7 +36,7 @@ denoted [T].
 
 Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 Require Import path sorted.
-Require Import tools shape partition ordtype sorted.
+Require Import tools partition ordtype sorted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
