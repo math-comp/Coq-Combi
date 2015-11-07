@@ -147,11 +147,8 @@ html: $(GLOBFILES) $(VFILES)
 	- mkdir -p html
 	$(COQDOC) -toc $(COQDOCFLAGS) -html $(COQDOCLIBS) -d html $(COQEXTLIBS) $(VFILES)
 
-gallinahtml: $(GLOBFILES) $(VFILES) depend.dot
-	- mkdir -p html
+gallinahtml: $(GLOBFILES) $(VFILES) html/depend.png html/depend.svg
 	$(COQDOC) -toc $(COQDOCFLAGS) -html -g $(COQDOCLIBS) -d html $(COQEXTLIBS) $(VFILES)
-	dot -Tpng -o html/depend.png -Tcmapx -o html/depend.map depend.dot
-	dot -Tsvg -o html/depend.svg depend.dot
 	rm -f html/index_lib.html
 	mv html/index.html html/index_lib.html
 	cat scripts/header.html html/depend.map scripts/footer.html > html/index.html
@@ -209,7 +206,7 @@ install-doc:
 clean:
 	rm -f $(VOFILES) $(VIFILES) $(GFILES) $(VFILES:.v=.v.d) $(VFILES:=.beautified) $(VFILES:=.old)
 	rm -f all.ps all-gal.ps all.pdf all-gal.pdf all.glob $(VFILES:.v=.glob) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex) all-mli.tex
-	- rm -rf depend depend.dot depend.pdf html scripts/ocamldot scripts/ocamldot.ml scripts/ocamldot.cmi scripts/ocamldot.cmo mlihtml
+	- rm -rf depend.d depend.dot depend.pdf html scripts/ocamldot scripts/ocamldot.ml scripts/ocamldot.cmi scripts/ocamldot.cmo mlihtml
 
 archclean:
 	rm -f *.cmx *.o
@@ -276,6 +273,14 @@ depend.dot: depend.d scripts/ocamldot
 	scripts/ocamldot depend.d > depend.dot
 	sed -i -e "s/Theories/Combi/g" -e "s/\//./g" depend.dot
 
+html/depend.png: depend.dot
+	- mkdir -p html
+	dot -Tpng -o html/depend.png -Tcmapx -o html/depend.map depend.dot
+
+html/depend.svg: depend.dot
+	- mkdir -p html
+	dot -Tsvg -o html/depend.svg depend.dot
+
 depend.pdf: depend.dot
 	rm -f depend.pdf
-	dot -Tpdf depend.dot > depend.pdf
+	dot -Tpdf -o depend.pdf depend.dot
