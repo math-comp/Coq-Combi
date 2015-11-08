@@ -13,7 +13,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import tuple finfun finset bigop ssralg path.
+Require Import tuple finfun finset bigop ssralg path perm fingroup.
 Require Import ssrcomplements poset freeg bigenough mpoly.
 
 Require Import tools ordtype partition Yamanouchi std tableau stdtab.
@@ -32,8 +32,12 @@ Variable n0 : nat.
 Local Notation n := (n0.+1).
 Variable R : comRingType.
 
+Local Notation "m # s" := [multinom m (s i) | i < n]
+  (at level 40, left associativity, format "m # s").
 
 (* From  mpoly.v : \sum_(h : {set 'I_n} | #|h| == k) \prod_(i in h) 'X_i. *)
+Definition monomial d (sh : intpartn d) : {mpoly R[n]} :=
+  \sum_(m : 'X_{1..n < d.+1} | sort leq m == sh :> seq nat) 'X_[m].
 Definition elementary (k : nat) : {mpoly R[n]} := mesym n R k.
 Definition complete (d : nat) : {mpoly R[n]} :=
   \sum_(m : 'X_{1..n < d.+1} | mdeg m == d) 'X_[m].
@@ -44,6 +48,105 @@ Definition Schur d (sh : intpartn d) : {mpoly R[n]} :=
 
 Lemma elementary_mesymE d : elementary d = mesym n R d.
 Proof. by []. Qed.
+
+Lemma mesym_homog d : mesym n R d \is d.-homog.
+Proof.
+  apply/dhomogP => m.
+  rewrite msupp_mesymP => /existsP [] s /andP [] /eqP <- {d} /eqP -> {m}.
+  exact: mdeg_mesym1.
+Qed.
+
+
+Lemma elementary_homog d : elementary d \is d.-homog.
+Proof. by rewrite elementary_mesymE mesym_homog. Qed.
+
+Lemma complete_homog d : complete d \is d.-homog.
+Proof.
+  rewrite /complete; apply rpred_sum => m /eqP H.
+  by rewrite dhomogX /= H.
+Qed.
+
+Lemma power_sum_homog d : power_sum d \is d.-homog.
+Proof.
+  rewrite /power_sum; apply rpred_sum => m _.
+  have /(dhomogMn d) : ('X_m : {mpoly R[n]}) \is 1.-homog.
+    by rewrite dhomogX /= mdeg1.
+  by rewrite mul1n.
+Qed.
+
+Lemma monomial_homog d (sh : intpartn d) : monomial sh \is d.-homog.
+Proof.
+  rewrite /monomial; apply rpred_sum => m /eqP Hm.
+  rewrite dhomogX /= -{2}(intpartn_sumn sh) /mdeg.
+  have Hperm : perm_eq m sh.
+    by rewrite -(perm_sort leq) Hm perm_eq_refl.
+  by rewrite (eq_big_perm _ Hperm) /= sumnE.
+Qed.
+
+Lemma elementary_sym d : elementary d \is symmetric.
+Proof. rewrite elementary_mesymE; exact: mesym_sym. Qed.
+
+Lemma complete_sym d : complete d \is symmetric.
+Proof.
+  apply/issymP => s; rewrite -mpolyP => m.
+  rewrite /complete mcoeff_sym !raddf_sum /=.
+  case: (altP (mdeg m =P d%N)) => [<- | Hd].
+  - have Hsm : mdeg (m#s) < (mdeg m).+1.
+      by rewrite mdeg_mperm.
+    rewrite (bigD1 (BMultinom Hsm)) /=; last by rewrite mdeg_mperm.
+    rewrite mcoeffX eq_refl big1 ?addr0 /=; first last.
+      move=> n /= /andP [] _ /negbTE.
+      by rewrite {1}/eq_op /= mcoeffX => ->.
+    have Hm : mdeg m < (mdeg m).+1 by [].
+    rewrite (bigD1 (BMultinom Hm)) //=.
+    rewrite mcoeffX eq_refl big1 ?addr0 //=.
+    move=> n /= /andP [] _ /negbTE.
+    by rewrite {1}/eq_op /= mcoeffX => ->.
+  - rewrite big1; first last.
+      move=> n /eqP Hd1; rewrite mcoeffX.
+      suff /= : val n != m#s by move/negbTE ->.
+      move: Hd; rewrite -{1}Hd1; apply contra=> /eqP ->.
+      by rewrite mdeg_mperm.
+    rewrite big1 //.
+    move=> n /eqP Hd1; rewrite mcoeffX.
+    suff /= : val n != m by move/negbTE ->.
+    by move: Hd; rewrite -{1}Hd1; apply contra=> /eqP ->.
+Qed.
+
+Lemma power_sum_sym d : power_sum d \is symmetric.
+Proof.
+  rewrite /power_sum; apply/issymP => s.
+  rewrite raddf_sum /= (reindex_inj (h := s^-1))%g /=; last by apply/perm_inj.
+  apply eq_bigr => i _; rewrite rmorphX /=; congr (_ ^+ _).
+  rewrite msymX /=; congr mpolyX.
+  rewrite mnmP => j; rewrite !mnmE /=; congr nat_of_bool.
+  apply/eqP/eqP => [|->//].
+  exact: perm_inj.
+Qed.
+
+Lemma monomial_sym d (sh : intpartn d) : monomial sh \is symmetric.
+Proof.
+  apply/issymP => s; rewrite /monomial raddf_sum /=.
+  pose fm := fun m : 'X_{1..n < d.+1} => m#s.
+  have Hfm m : mdeg (fm m) < d.+1 by rewrite /fm mdeg_mperm bmdeg.
+  rewrite (reindex_inj (h := fun m => BMultinom (Hfm m))) /=; first last.
+    rewrite /fm => m n /= /(congr1 val) /=.
+    rewrite mnmP => Heq; apply val_inj; rewrite mnmP /= => i.
+    have:= Heq ((s^-1)%g i).
+    by rewrite !mnmE permKV.
+  apply congr_big => //.
+  - move=> m /=; rewrite [sort _ _](_ : _ = sort leq m) //.
+    apply (eq_sorted leq_trans anti_leq); try exact: (sort_sorted leq_total).
+    do 2 rewrite perm_eq_sym (perm_sort leq _).
+    apply/tuple_perm_eqP; exists s.
+    by apply (eq_from_nth (x0 := 0%N)); rewrite size_map.
+  - move=> m _.
+    rewrite msymX /fm /=; congr mpolyX.
+    rewrite mnmP => j; rewrite !mnmE /=.
+    by rewrite permKV.
+Qed.
+
+
 
 
 (** All basis agrees at degree 0 *)

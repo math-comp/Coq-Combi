@@ -555,13 +555,6 @@ Qed.
 
 Local Notation E := [tuple mesym n R i.+1  | i < n].
 
-Lemma mesym_homog k : mesym n R k \is k.-homog.
-Proof.
-  apply/dhomogP => m.
-  rewrite msupp_mesymP => /existsP [] s /andP [] /eqP <- {k} /eqP -> {m}.
-  exact: mdeg_mesym1.
-Qed.
-
 Lemma homog_X_mPo_elem (m : 'X_{1..n}) :
   'X_[m] \mPo E \is (mnmwgt m).-homog.
 Proof.
