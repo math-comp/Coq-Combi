@@ -1,0 +1,312 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>Combi.SymGroup.reprSn: Basic representations of the Symmetric Groups</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Combi.SymGroup.reprSn: Basic representations of the Symmetric Groups</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+
+</div>
+<div class="code">
+</div>
+
+<div class="doc">
+<a id="lab301"></a><h1 class="section">Basic representation of the Symmetric Groups</h1>
+
+
+<div class="paragraph"> </div>
+
+We define the two representations of dimension 1 together with the natural
+representation, and show that <span class="inlinecode">'<span class="id" title="var">S_2</span></span> has only 2 representations. More precisely,
+for a fixed <span class="inlinecode"><span class="id" title="var">n</span></span> and  <span class="inlinecode"><span class="id" title="var">g</span></span> <span class="inlinecode">:</span> <span class="inlinecode">'<span class="id" title="var">S_n</span></span>:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">triv_mx</span></span> <span class="inlinecode"><span class="id" title="var">g</span></span> == the 1x1 identity matrix.
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">sign_mx</span></span> <span class="inlinecode"><span class="id" title="var">g</span></span> == the 1x1 scalar matrix equal to the sign of <span class="inlinecode"><span class="id" title="var">g</span></span>.
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">signed_mx</span></span> <span class="inlinecode"><span class="id" title="var">R</span></span> <span class="inlinecode"><span class="id" title="var">g</span></span> == given a representation <span class="inlinecode"><span class="id" title="var">R</span></span> the matrix <span class="inlinecode"><span class="id" title="var">sign</span></span> <span class="inlinecode"><span class="id" title="var">g</span></span> <span class="inlinecode">*</span> <span class="inlinecode"><span class="id" title="var">R</span></span> <span class="inlinecode"><span class="id" title="var">g</span></span>
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">nat_mx</span></span> <span class="inlinecode"><span class="id" title="var">g</span></span> == the permutation matrix associated to <span class="inlinecode"><span class="id" title="var">g</span></span>
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+These four matrices are actually representation matrices:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">triv_repr</span></span> == the trivial representation
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">sign_repr</span></span> == the sign representation
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">signed_repr</span></span> <span class="inlinecode"><span class="id" title="var">R</span></span> == the representation <span class="inlinecode"><span class="id" title="var">R</span></span> times the sign
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">nat_repr</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> == the natural representation of degree <span class="inlinecode"><span class="id" title="var">n</span></span>
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+We show in Lemmas <span class="inlinecode"><span class="id" title="var">repr1</span></span> and <span class="inlinecode"><span class="id" title="var">repr_S2</span></span> that <span class="inlinecode"><span class="id" title="var">triv_repr</span></span> and <span class="inlinecode"><span class="id" title="var">sign_repr</span></span>
+exhausts all representations of <span class="inlinecode">'<span class="id" title="var">S_n</span></span> of degree 1 and all irreducible
+representations of of <span class="inlinecode">'<span class="id" title="var">S_2</span></span>.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">mathcomp.ssreflect.ssreflect</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">ssreflect</span> <span class="id" title="library">ssrfun</span> <span class="id" title="library">ssrbool</span> <span class="id" title="library">eqtype</span> <span class="id" title="library">ssrnat</span> <span class="id" title="library">seq</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">fintype</span> <span class="id" title="library">tuple</span> <span class="id" title="library">finfun</span> <span class="id" title="library">bigop</span> <span class="id" title="library">finset</span> <span class="id" title="library">fingroup</span> <span class="id" title="library">perm</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">ssralg</span> <span class="id" title="library">fingroup</span> <span class="id" title="library">morphism</span> <span class="id" title="library">perm</span> <span class="id" title="library">action</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">zmodp</span>. <span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">vector</span> <span class="id" title="library">matrix</span> <span class="id" title="library">mxalgebra</span> <span class="id" title="library">ssrnum</span> <span class="id" title="library">algC</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">mxrepresentation</span> <span class="id" title="library">classfun</span> <span class="id" title="library">character</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Combi.SSRcomplements.permcomp.html#"><span class="id" title="library">permcomp</span></a> <a class="idref" href="Combi.SSRcomplements.tools.html#"><span class="id" title="library">tools</span></a> <a class="idref" href="Combi.Combi.partition.html#"><span class="id" title="library">partition</span></a> <a class="idref" href="Combi.Basic.congr.html#"><span class="id" title="library">congr</span></a> <a class="idref" href="Combi.SymGroup.cycles.html#"><span class="id" title="library">cycles</span></a> <a class="idref" href="Combi.SymGroup.cycletype.html#"><span class="id" title="library">cycletype</span></a> <a class="idref" href="Combi.SymGroup.presentSn.html#"><span class="id" title="library">presentSn</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set Implicit Arguments</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">GroupScope</span> <span class="id" title="var">GRing.Theory</span> <span class="id" title="var">Num.Theory</span>.<br/>
+<span class="id" title="keyword">Local Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ring_scope</span>.<br/>
+
+<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="TcastVal" class="idref" href="#TcastVal"><span class="id" title="section">TcastVal</span></a>.<br/>
+<span class="id" title="keyword">Variable</span> (<a id="TcastVal.T" class="idref" href="#TcastVal.T"><span class="id" title="variable">T</span></a> : <span class="id" title="abbreviation">eqType</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="tval_tcastE" class="idref" href="#tval_tcastE"><span class="id" title="lemma">tval_tcastE</span></a> <a id="m:2" class="idref" href="#m:2"><span class="id" title="binder">m</span></a> <a id="n:3" class="idref" href="#n:3"><span class="id" title="binder">n</span></a> (<a id="eq_mn:4" class="idref" href="#eq_mn:4"><span class="id" title="binder">eq_mn</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#m:2"><span class="id" title="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#n:3"><span class="id" title="variable">n</span></a>) (<a id="t:5" class="idref" href="#t:5"><span class="id" title="binder">t</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#m:2"><span class="id" title="variable">m</span></a><span class="id" title="notation">.-</span><span class="id" title="notation">tuple</span> <span class="id" title="notation">T</span>) :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">tcast</span> <a class="idref" href="Combi.SymGroup.reprSn.html#eq_mn:4"><span class="id" title="variable">eq_mn</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#t:5"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#b8b2ebc8e1a8b9aa935c0702efb5dccf"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#t:5"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#b8b2ebc8e1a8b9aa935c0702efb5dccf"><span class="id" title="notation">:&gt;</span></a> <span class="id" title="abbreviation">seq</span> <a class="idref" href="Combi.SymGroup.reprSn.html#TcastVal.T"><span class="id" title="variable">T</span></a>.<br/>
+ 
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.SymGroup.reprSn.html#TcastVal"><span class="id" title="section">TcastVal</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="LinRepr" class="idref" href="#LinRepr"><span class="id" title="section">LinRepr</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variables</span> (<a id="LinRepr.gT" class="idref" href="#LinRepr.gT"><span class="id" title="variable">gT</span></a> : <span class="id" title="abbreviation">finGroupType</span>) (<a id="LinRepr.G" class="idref" href="#LinRepr.G"><span class="id" title="variable">G</span></a> : <span class="id" title="notation">{</span><span class="id" title="notation">group</span> <a class="idref" href="Combi.SymGroup.reprSn.html#gT:6"><span class="id" title="variable">gT</span></a><span class="id" title="notation">}</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="cfRepr1_lin_char" class="idref" href="#cfRepr1_lin_char"><span class="id" title="lemma">cfRepr1_lin_char</span></a> (<a id="rG:8" class="idref" href="#rG:8"><span class="id" title="binder">rG</span></a> : <span class="id" title="record">mx_representation</span> <a class="idref" href="Combi.SymGroup.reprSn.html#algCF"><span class="id" title="abbreviation">algCF</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#LinRepr.G"><span class="id" title="variable">G</span></a> 1) :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">cfRepr</span> <a class="idref" href="Combi.SymGroup.reprSn.html#rG:8"><span class="id" title="variable">rG</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#f6c65697fefaf4504de1d4d641cd4409"><span class="id" title="notation">\</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#f6c65697fefaf4504de1d4d641cd4409"><span class="id" title="notation">is</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#f6c65697fefaf4504de1d4d641cd4409"><span class="id" title="notation">a</span></a> <span class="id" title="definition">linear_char</span>.<br/>
+ 
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="lin_char_reprP" class="idref" href="#lin_char_reprP"><span class="id" title="lemma">lin_char_reprP</span></a> <a id="xi:9" class="idref" href="#xi:9"><span class="id" title="binder">xi</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#reflect"><span class="id" title="abbreviation">reflect</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="rG:10" class="idref" href="#rG:10"><span class="id" title="binder">rG</span></a> : <span class="id" title="record">mx_representation</span> <a class="idref" href="Combi.SymGroup.reprSn.html#algCF"><span class="id" title="abbreviation">algCF</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#LinRepr.G"><span class="id" title="variable">G</span></a> 1<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#xi:9"><span class="id" title="variable">xi</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">cfRepr</span> <a class="idref" href="Combi.SymGroup.reprSn.html#rG:10"><span class="id" title="variable">rG</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="Combi.SymGroup.reprSn.html#xi:9"><span class="id" title="variable">xi</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#f6c65697fefaf4504de1d4d641cd4409"><span class="id" title="notation">\</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#f6c65697fefaf4504de1d4d641cd4409"><span class="id" title="notation">is</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#f6c65697fefaf4504de1d4d641cd4409"><span class="id" title="notation">a</span></a> <span class="id" title="definition">linear_char</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.SymGroup.reprSn.html#LinRepr"><span class="id" title="section">LinRepr</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="NirrSn" class="idref" href="#NirrSn"><span class="id" title="lemma">NirrSn</span></a> <a id="n:11" class="idref" href="#n:11"><span class="id" title="binder">n</span></a> : <span class="id" title="abbreviation">Nirr</span> <a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">#|</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#fa3b33ae9d0a52de608b305a09f3b881"><span class="id" title="notation">{:</span></a><a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">P_n</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#fa3b33ae9d0a52de608b305a09f3b881"><span class="id" title="notation">}</span></a><span class="id" title="notation">|</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="EltrConj" class="idref" href="#EltrConj"><span class="id" title="section">EltrConj</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="EltrConj.n" class="idref" href="#EltrConj.n"><span class="id" title="variable">n</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="cycle_type_eltr" class="idref" href="#cycle_type_eltr"><span class="id" title="lemma">cycle_type_eltr</span></a> <a id="i:13" class="idref" href="#i:13"><span class="id" title="binder">i</span></a> :<br/>
+&nbsp;&nbsp;(<a class="idref" href="Combi.SymGroup.reprSn.html#i:13"><span class="id" title="variable">i</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="Combi.SymGroup.reprSn.html#EltrConj.n"><span class="id" title="variable">n</span></a>)%<span class="id" title="var">N</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Combi.SymGroup.cycletype.html#cycle_typeSn"><span class="id" title="definition">cycle_typeSn</span></a> (<a class="idref" href="Combi.SymGroup.presentSn.html#eltr"><span class="id" title="definition">eltr</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#EltrConj.n"><span class="id" title="variable">n</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#i:13"><span class="id" title="variable">i</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.Combi.partition.html#hookpartn"><span class="id" title="definition">hookpartn</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#EltrConj.n"><span class="id" title="variable">n</span></a><span class="id" title="notation">.+1</span> 1.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="eltr_conj" class="idref" href="#eltr_conj"><span class="id" title="lemma">eltr_conj</span></a> <a id="i:14" class="idref" href="#i:14"><span class="id" title="binder">i</span></a> <a id="j:15" class="idref" href="#j:15"><span class="id" title="binder">j</span></a> :<br/>
+&nbsp;&nbsp;(<a class="idref" href="Combi.SymGroup.reprSn.html#i:14"><span class="id" title="variable">i</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="Combi.SymGroup.reprSn.html#EltrConj.n"><span class="id" title="variable">n</span></a>)%<span class="id" title="var">N</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> (<a class="idref" href="Combi.SymGroup.reprSn.html#j:15"><span class="id" title="variable">j</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="Combi.SymGroup.reprSn.html#EltrConj.n"><span class="id" title="variable">n</span></a>)%<span class="id" title="var">N</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="t:16" class="idref" href="#t:16"><span class="id" title="binder">t</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <a class="idref" href="Combi.SymGroup.presentSn.html#eltr"><span class="id" title="definition">eltr</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#EltrConj.n"><span class="id" title="variable">n</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#i:14"><span class="id" title="variable">i</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> (<span class="id" title="notation">(</span><a class="idref" href="Combi.SymGroup.presentSn.html#eltr"><span class="id" title="definition">eltr</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#EltrConj.n"><span class="id" title="variable">n</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#j:15"><span class="id" title="variable">j</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">^</span> <a class="idref" href="Combi.SymGroup.reprSn.html#t:16"><span class="id" title="variable">t</span></a>)%<span class="id" title="var">g</span>.<br/>
+ 
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.SymGroup.reprSn.html#EltrConj"><span class="id" title="section">EltrConj</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab302"></a><h1 class="section">Representation of dimension 1 and natural representation</h1>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="DefTrivSign" class="idref" href="#DefTrivSign"><span class="id" title="section">DefTrivSign</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variables</span> <a id="DefTrivSign.n" class="idref" href="#DefTrivSign.n"><span class="id" title="variable">n</span></a> <a id="DefTrivSign.d" class="idref" href="#DefTrivSign.d"><span class="id" title="variable">d</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="triv_mx" class="idref" href="#triv_mx"><span class="id" title="definition">triv_mx</span></a> (<a id="g:19" class="idref" href="#g:19"><span class="id" title="binder">g</span></a> : <span class="id" title="notation">'</span><span class="id" title="notation">S_n</span>) : <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><span class="id" title="abbreviation">algC</span><span class="id" title="notation">]</span><span class="id" title="notation">_1</span> := 1.<br/>
+<span class="id" title="keyword">Definition</span> <a id="sign_mx" class="idref" href="#sign_mx"><span class="id" title="definition">sign_mx</span></a> (<a id="g:20" class="idref" href="#g:20"><span class="id" title="binder">g</span></a> : <span class="id" title="notation">'</span><span class="id" title="notation">S_n</span>) : <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><span class="id" title="abbreviation">algC</span><span class="id" title="notation">]</span><span class="id" title="notation">_1</span> := <span class="id" title="notation">(</span>-1<span class="id" title="notation">)</span> <span class="id" title="notation">^+</span> <span class="id" title="notation">(</span><span class="id" title="definition">odd_perm</span> <a class="idref" href="Combi.SymGroup.reprSn.html#g:20"><span class="id" title="variable">g</span></a><span class="id" title="notation">)</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="signed_mx" class="idref" href="#signed_mx"><span class="id" title="definition">signed_mx</span></a> (<a id="rho:21" class="idref" href="#rho:21"><span class="id" title="binder">rho</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#reprS"><span class="id" title="abbreviation">reprS</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#DefTrivSign.n"><span class="id" title="variable">n</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#DefTrivSign.d"><span class="id" title="variable">d</span></a>) (<a id="g:22" class="idref" href="#g:22"><span class="id" title="binder">g</span></a> : <span class="id" title="notation">'</span><span class="id" title="notation">S_n</span>) : <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><span class="id" title="abbreviation">algC</span><span class="id" title="notation">]</span><span class="id" title="notation">_d</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="notation">(</span>-1<span class="id" title="notation">)</span> <span class="id" title="notation">^+</span> <span class="id" title="notation">(</span><span class="id" title="definition">odd_perm</span> <a class="idref" href="Combi.SymGroup.reprSn.html#g:22"><span class="id" title="variable">g</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">*:</span> <a class="idref" href="Combi.SymGroup.reprSn.html#rho:21"><span class="id" title="variable">rho</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#g:22"><span class="id" title="variable">g</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="nat_mx" class="idref" href="#nat_mx"><span class="id" title="definition">nat_mx</span></a> (<a id="g:23" class="idref" href="#g:23"><span class="id" title="binder">g</span></a> : <span class="id" title="notation">'</span><span class="id" title="notation">S_n</span>) : <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><span class="id" title="abbreviation">algC</span><span class="id" title="notation">]</span><span class="id" title="notation">_n</span> := <span class="id" title="definition">perm_mx</span> <a class="idref" href="Combi.SymGroup.reprSn.html#g:23"><span class="id" title="variable">g</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="triv_mx_repr" class="idref" href="#triv_mx_repr"><span class="id" title="lemma">triv_mx_repr</span></a> : <span class="id" title="definition">mx_repr</span> <a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_n</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#triv_mx"><span class="id" title="definition">triv_mx</span></a>.<br/>
+ <span class="id" title="keyword">Canonical</span> <a id="triv_repr" class="idref" href="#triv_repr"><span class="id" title="definition">triv_repr</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#reprS"><span class="id" title="abbreviation">reprS</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#DefTrivSign.n"><span class="id" title="variable">n</span></a> 1 := <span class="id" title="constructor">MxRepresentation</span> <a class="idref" href="Combi.SymGroup.reprSn.html#triv_mx_repr"><span class="id" title="lemma">triv_mx_repr</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="triv_irr" class="idref" href="#triv_irr"><span class="id" title="lemma">triv_irr</span></a> : <span class="id" title="definition">mx_irreducible</span> <a class="idref" href="Combi.SymGroup.reprSn.html#triv_repr"><span class="id" title="definition">triv_repr</span></a>.<br/>
+ 
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sign_mx_repr" class="idref" href="#sign_mx_repr"><span class="id" title="lemma">sign_mx_repr</span></a> : <span class="id" title="definition">mx_repr</span> <a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_n</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_mx"><span class="id" title="definition">sign_mx</span></a>.<br/>
+<span class="id" title="keyword">Canonical</span> <a id="sign_repr" class="idref" href="#sign_repr"><span class="id" title="definition">sign_repr</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#reprS"><span class="id" title="abbreviation">reprS</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#DefTrivSign.n"><span class="id" title="variable">n</span></a> 1 := <span class="id" title="constructor">MxRepresentation</span> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_mx_repr"><span class="id" title="lemma">sign_mx_repr</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sign_irr" class="idref" href="#sign_irr"><span class="id" title="lemma">sign_irr</span></a> : <span class="id" title="definition">mx_irreducible</span> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_repr"><span class="id" title="definition">sign_repr</span></a>.<br/>
+ 
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="signed_mx_repr" class="idref" href="#signed_mx_repr"><span class="id" title="lemma">signed_mx_repr</span></a> <a id="rho:24" class="idref" href="#rho:24"><span class="id" title="binder">rho</span></a> : <span class="id" title="definition">mx_repr</span> <a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_n</span></a> (<a class="idref" href="Combi.SymGroup.reprSn.html#signed_mx"><span class="id" title="definition">signed_mx</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#rho:24"><span class="id" title="variable">rho</span></a>).<br/>
+<span class="id" title="keyword">Canonical</span> <a id="signed_repr" class="idref" href="#signed_repr"><span class="id" title="definition">signed_repr</span></a> <a id="rho:25" class="idref" href="#rho:25"><span class="id" title="binder">rho</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#reprS"><span class="id" title="abbreviation">reprS</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#DefTrivSign.n"><span class="id" title="variable">n</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#DefTrivSign.d"><span class="id" title="variable">d</span></a> := <span class="id" title="constructor">MxRepresentation</span> (<a class="idref" href="Combi.SymGroup.reprSn.html#signed_mx_repr"><span class="id" title="lemma">signed_mx_repr</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#rho:25"><span class="id" title="variable">rho</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="nat_mx_repr" class="idref" href="#nat_mx_repr"><span class="id" title="lemma">nat_mx_repr</span></a> : <span class="id" title="definition">mx_repr</span> <a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_n</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#nat_mx"><span class="id" title="definition">nat_mx</span></a>.<br/>
+ <span class="id" title="keyword">Canonical</span> <a id="nat_repr" class="idref" href="#nat_repr"><span class="id" title="definition">nat_repr</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#reprS"><span class="id" title="abbreviation">reprS</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#DefTrivSign.n"><span class="id" title="variable">n</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#DefTrivSign.n"><span class="id" title="variable">n</span></a> := <span class="id" title="constructor">MxRepresentation</span> <a class="idref" href="Combi.SymGroup.reprSn.html#nat_mx_repr"><span class="id" title="lemma">nat_mx_repr</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="cfRepr_triv" class="idref" href="#cfRepr_triv"><span class="id" title="lemma">cfRepr_triv</span></a> : <span class="id" title="definition">cfRepr</span> <a class="idref" href="Combi.SymGroup.reprSn.html#triv_repr"><span class="id" title="definition">triv_repr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 1.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="cfRepr_trivE" class="idref" href="#cfRepr_trivE"><span class="id" title="lemma">cfRepr_trivE</span></a> : <span class="id" title="definition">cfRepr</span> <a class="idref" href="Combi.SymGroup.reprSn.html#triv_repr"><span class="id" title="definition">triv_repr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">'</span><span class="id" title="notation">chi_0</span>.<br/>
+<span class="id" title="keyword">Lemma</span> <a id="triv_Chi" class="idref" href="#triv_Chi"><span class="id" title="lemma">triv_Chi</span></a> : <span class="id" title="inductive">mx_rsim</span> <a class="idref" href="Combi.SymGroup.reprSn.html#triv_repr"><span class="id" title="definition">triv_repr</span></a> <span class="id" title="notation">'</span><span class="id" title="notation">Chi_0</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sign_char_subproof" class="idref" href="#sign_char_subproof"><span class="id" title="lemma">sign_char_subproof</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">is_class_fun</span> <span class="id" title="notation">&lt;&lt;</span><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_n</span></a><span class="id" title="notation">&gt;&gt;</span> <span class="id" title="notation">[</span><span class="id" title="notation">ffun</span> <a id="g:26" class="idref" href="#g:26"><span class="id" title="binder">g</span></a> <span class="id" title="notation">=&gt;</span> <span class="id" title="notation">(</span>-1<span class="id" title="notation">)</span> <span class="id" title="notation">^+</span> <span class="id" title="notation">(</span><span class="id" title="definition">odd_perm</span> <a class="idref" href="Combi.SymGroup.reprSn.html#g:26"><span class="id" title="variable">g</span></a><span class="id" title="notation">)</span><span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="sign_char" class="idref" href="#sign_char"><span class="id" title="definition">sign_char</span></a> := <span class="id" title="definition">Cfun</span> 0 <a class="idref" href="Combi.SymGroup.reprSn.html#sign_char_subproof"><span class="id" title="lemma">sign_char_subproof</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="cfRepr_sign" class="idref" href="#cfRepr_sign"><span class="id" title="lemma">cfRepr_sign</span></a> : <span class="id" title="definition">cfRepr</span> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_repr"><span class="id" title="definition">sign_repr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_char"><span class="id" title="definition">sign_char</span></a>.<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sign_charP" class="idref" href="#sign_charP"><span class="id" title="lemma">sign_charP</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#sign_char"><span class="id" title="definition">sign_char</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#f6c65697fefaf4504de1d4d641cd4409"><span class="id" title="notation">\</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#f6c65697fefaf4504de1d4d641cd4409"><span class="id" title="notation">is</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#f6c65697fefaf4504de1d4d641cd4409"><span class="id" title="notation">a</span></a> <span class="id" title="definition">linear_char</span>.<br/>
+ 
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="cfRepr_signed" class="idref" href="#cfRepr_signed"><span class="id" title="lemma">cfRepr_signed</span></a> (<a id="rho:27" class="idref" href="#rho:27"><span class="id" title="binder">rho</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#reprS"><span class="id" title="abbreviation">reprS</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#DefTrivSign.n"><span class="id" title="variable">n</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#DefTrivSign.d"><span class="id" title="variable">d</span></a>) :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">cfRepr</span> (<a class="idref" href="Combi.SymGroup.reprSn.html#signed_repr"><span class="id" title="definition">signed_repr</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#rho:27"><span class="id" title="variable">rho</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_char"><span class="id" title="definition">sign_char</span></a> <span class="id" title="notation">*</span> <span class="id" title="definition">cfRepr</span> <a class="idref" href="Combi.SymGroup.reprSn.html#rho:27"><span class="id" title="variable">rho</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.SymGroup.reprSn.html#DefTrivSign"><span class="id" title="section">DefTrivSign</span></a>.<br/>
+
+<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab303"></a><h1 class="section">Representations of the symmetric Group for n = 0 and 1</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="row_free1" class="idref" href="#row_free1"><span class="id" title="lemma">row_free1</span></a> : <span class="id" title="definition">row_free</span> (1 <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssreflect.html#::core_scope:x_':'_x"><span class="id" title="notation">:</span></a> <span class="id" title="notation">'</span><span class="id" title="notation">M</span><span class="id" title="notation">[</span><span class="id" title="abbreviation">algC</span><span class="id" title="notation">]</span><span class="id" title="notation">_1</span>).<br/>
+ 
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="charSG0" class="idref" href="#charSG0"><span class="id" title="lemma">charSG0</span></a> <a id="X:28" class="idref" href="#X:28"><span class="id" title="binder">X</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#X:28"><span class="id" title="variable">X</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#b09457274bcb94927e289b8a9e9cd3f7"><span class="id" title="notation">\</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#b09457274bcb94927e289b8a9e9cd3f7"><span class="id" title="notation">in</span></a> <span class="id" title="definition">irr</span> <a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_0</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#X:28"><span class="id" title="variable">X</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 1.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="charSG1" class="idref" href="#charSG1"><span class="id" title="lemma">charSG1</span></a> <a id="X:29" class="idref" href="#X:29"><span class="id" title="binder">X</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#X:29"><span class="id" title="variable">X</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#b09457274bcb94927e289b8a9e9cd3f7"><span class="id" title="notation">\</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#b09457274bcb94927e289b8a9e9cd3f7"><span class="id" title="notation">in</span></a> <span class="id" title="definition">irr</span> <a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#X:29"><span class="id" title="variable">X</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 1.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="repr1_S0" class="idref" href="#repr1_S0"><span class="id" title="lemma">repr1_S0</span></a> (<a id="rho:30" class="idref" href="#rho:30"><span class="id" title="binder">rho</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#reprS"><span class="id" title="abbreviation">reprS</span></a> 0 1) : <span class="id" title="inductive">mx_rsim</span> <a class="idref" href="Combi.SymGroup.reprSn.html#rho:30"><span class="id" title="variable">rho</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#triv_repr"><span class="id" title="definition">triv_repr</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="repr1_S1" class="idref" href="#repr1_S1"><span class="id" title="lemma">repr1_S1</span></a> (<a id="rho:31" class="idref" href="#rho:31"><span class="id" title="binder">rho</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#reprS"><span class="id" title="abbreviation">reprS</span></a> 1 1) : <span class="id" title="inductive">mx_rsim</span> <a class="idref" href="Combi.SymGroup.reprSn.html#rho:31"><span class="id" title="variable">rho</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#triv_repr"><span class="id" title="definition">triv_repr</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab304"></a><h1 class="section">Representations of dimension 1 the symmetric Group for n &gt; 1</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="triv_sign_neq" class="idref" href="#triv_sign_neq"><span class="id" title="lemma">triv_sign_neq</span></a> <a id="n:32" class="idref" href="#n:32"><span class="id" title="binder">n</span></a> : (<a class="idref" href="Combi.SymGroup.reprSn.html#n:32"><span class="id" title="variable">n</span></a> <span class="id" title="notation">&gt;</span> 1)%<span class="id" title="var">N</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> 1 <span class="id" title="notation">!=</span> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_char"><span class="id" title="definition">sign_char</span></a> <span class="id" title="notation">:&gt;</span> <span class="id" title="notation">'</span><span class="id" title="notation">CF</span><span class="id" title="notation">(</span><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_n</span></a><span class="id" title="notation">)</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="triv_sign_not_sim" class="idref" href="#triv_sign_not_sim"><span class="id" title="lemma">triv_sign_not_sim</span></a> <a id="n:33" class="idref" href="#n:33"><span class="id" title="binder">n</span></a> :<br/>
+&nbsp;&nbsp;(<a class="idref" href="Combi.SymGroup.reprSn.html#n:33"><span class="id" title="variable">n</span></a> <span class="id" title="notation">&gt;</span> 1)%<span class="id" title="var">N</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <span class="id" title="inductive">mx_rsim</span> (<span class="id" title="var">G</span> := <span class="id" title="notation">[</span><span class="id" title="notation">group</span> <span class="id" title="notation">of</span> <a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_n</span></a><span class="id" title="notation">]</span>) <a class="idref" href="Combi.SymGroup.reprSn.html#triv_repr"><span class="id" title="definition">triv_repr</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_repr"><span class="id" title="definition">sign_repr</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="lin_char_Sn" class="idref" href="#lin_char_Sn"><span class="id" title="lemma">lin_char_Sn</span></a> <a id="n:34" class="idref" href="#n:34"><span class="id" title="binder">n</span></a> (<a id="xi:35" class="idref" href="#xi:35"><span class="id" title="binder">xi</span></a> : <span class="id" title="notation">'</span><span class="id" title="notation">CF</span><span class="id" title="notation">(</span><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_n</span></a><span class="id" title="notation">)</span>) :<br/>
+&nbsp;&nbsp;<a class="idref" href="Combi.SymGroup.reprSn.html#xi:35"><span class="id" title="variable">xi</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#f6c65697fefaf4504de1d4d641cd4409"><span class="id" title="notation">\</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#f6c65697fefaf4504de1d4d641cd4409"><span class="id" title="notation">is</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#f6c65697fefaf4504de1d4d641cd4409"><span class="id" title="notation">a</span></a> <span class="id" title="definition">linear_char</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#xi:35"><span class="id" title="variable">xi</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 1 <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#xi:35"><span class="id" title="variable">xi</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_char"><span class="id" title="definition">sign_char</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="repr1" class="idref" href="#repr1"><span class="id" title="lemma">repr1</span></a> <a id="n:38" class="idref" href="#n:38"><span class="id" title="binder">n</span></a> (<a id="rho:39" class="idref" href="#rho:39"><span class="id" title="binder">rho</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#reprS"><span class="id" title="abbreviation">reprS</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#n:38"><span class="id" title="variable">n</span></a> 1) :<br/>
+&nbsp;&nbsp;<span class="id" title="inductive">mx_rsim</span> <a class="idref" href="Combi.SymGroup.reprSn.html#rho:39"><span class="id" title="variable">rho</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#triv_repr"><span class="id" title="definition">triv_repr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <span class="id" title="inductive">mx_rsim</span> <a class="idref" href="Combi.SymGroup.reprSn.html#rho:39"><span class="id" title="variable">rho</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_repr"><span class="id" title="definition">sign_repr</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab305"></a><h1 class="section">Representations of the symmetric Group for n=2</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="NirrS2" class="idref" href="#NirrS2"><span class="id" title="lemma">NirrS2</span></a> : <span class="id" title="abbreviation">Nirr</span> <a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 2.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="cast_IirrS2" class="idref" href="#cast_IirrS2"><span class="id" title="lemma">cast_IirrS2</span></a> (<a id="i:40" class="idref" href="#i:40"><span class="id" title="binder">i</span></a> : <span class="id" title="abbreviation">Iirr</span> <a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_2</span></a>) :<br/>
+&nbsp;&nbsp;<a class="idref" href="Combi.SymGroup.reprSn.html#i:40"><span class="id" title="variable">i</span></a> <span class="id" title="notation">!=</span> 0 <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#i:40"><span class="id" title="variable">i</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">cast_ord</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#esym"><span class="id" title="definition">esym</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#NirrS2"><span class="id" title="lemma">NirrS2</span></a>) 1.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sign_char2" class="idref" href="#sign_char2"><span class="id" title="lemma">sign_char2</span></a> : <a class="idref" href="Combi.SymGroup.reprSn.html#sign_char"><span class="id" title="definition">sign_char</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">'</span><span class="id" title="notation">chi_</span><span class="id" title="notation">(</span><span class="id" title="definition">cast_ord</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#esym"><span class="id" title="definition">esym</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#NirrS2"><span class="id" title="lemma">NirrS2</span></a>) 1<span class="id" title="notation">)</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="cfRepr_sign2" class="idref" href="#cfRepr_sign2"><span class="id" title="lemma">cfRepr_sign2</span></a> : <span class="id" title="definition">cfRepr</span> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_repr"><span class="id" title="definition">sign_repr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">'</span><span class="id" title="notation">chi_</span><span class="id" title="notation">(</span><span class="id" title="definition">cast_ord</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#esym"><span class="id" title="definition">esym</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#NirrS2"><span class="id" title="lemma">NirrS2</span></a>) 1<span class="id" title="notation">)</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sign_Chi2" class="idref" href="#sign_Chi2"><span class="id" title="lemma">sign_Chi2</span></a> : <span class="id" title="inductive">mx_rsim</span> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_repr"><span class="id" title="definition">sign_repr</span></a> <span class="id" title="notation">'</span><span class="id" title="notation">Chi_</span><span class="id" title="notation">(</span><span class="id" title="definition">cast_ord</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#esym"><span class="id" title="definition">esym</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#NirrS2"><span class="id" title="lemma">NirrS2</span></a>) 1<span class="id" title="notation">)</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="irr_S2" class="idref" href="#irr_S2"><span class="id" title="lemma">irr_S2</span></a> : <span class="id" title="definition">irr</span> <a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">tcast</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#esym"><span class="id" title="definition">esym</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#NirrS2"><span class="id" title="lemma">NirrS2</span></a>) <span class="id" title="notation">[</span><span class="id" title="notation">tuple</span> 1<span class="id" title="notation">;</span> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_char"><span class="id" title="definition">sign_char</span></a><span class="id" title="notation">]</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="repr_S2" class="idref" href="#repr_S2"><span class="id" title="lemma">repr_S2</span></a> (<a id="rho:41" class="idref" href="#rho:41"><span class="id" title="binder">rho</span></a> : <span class="id" title="record">representation</span> <a class="idref" href="Combi.SymGroup.reprSn.html#algCF"><span class="id" title="abbreviation">algCF</span></a> <span class="id" title="notation">[</span><span class="id" title="notation">group</span> <span class="id" title="notation">of</span> <a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.SymGroup.presentSn.html#:::'''SG_'_x"><span class="id" title="notation">SG_2</span></a><span class="id" title="notation">]</span>) :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">mx_irreducible</span> <a class="idref" href="Combi.SymGroup.reprSn.html#rho:41"><span class="id" title="variable">rho</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="inductive">mx_rsim</span> <a class="idref" href="Combi.SymGroup.reprSn.html#rho:41"><span class="id" title="variable">rho</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#triv_repr"><span class="id" title="definition">triv_repr</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <span class="id" title="inductive">mx_rsim</span> <a class="idref" href="Combi.SymGroup.reprSn.html#rho:41"><span class="id" title="variable">rho</span></a> <a class="idref" href="Combi.SymGroup.reprSn.html#sign_repr"><span class="id" title="definition">sign_repr</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>Combi.Erdos_Szekeres.Erdos_Szekeres: The Erdös-Szekeres theorem</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Combi.Erdos_Szekeres.Erdos_Szekeres: The Erdös-Szekeres theorem</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+
+</div>
+<div class="code">
+</div>
+
+<div class="doc">
+<a id="lab105"></a><h1 class="section">The Erdös-Szekeres theorem on monotonic subsequences.</h1>
+
+
+<div class="paragraph"> </div>
+
+A proof of the Erdös Szekeres theorem about longest increasing and
+decreasing subsequences. The theorem is <span class="inlinecode"><span class="id" title="var">Erdos_Szekeres</span></span> and
+says that any sequence <span class="inlinecode"><span class="id" title="var">s</span></span> of length at least <span class="inlinecode"><span class="id" title="var">n</span>*<span class="id" title="var">m</span>+1</span> over a totally ordered
+type contains
+<ul class="doclist">
+<li> either a nondecreasing subsequence of length <span class="inlinecode"><span class="id" title="var">n</span>+1</span>;
+
+</li>
+<li> or a strictly decreasing subsequence of length <span class="inlinecode"><span class="id" title="var">m</span>+1</span>.
+
+</li>
+</ul>
+We prove it as a corollary of Greene's theorem on the Robinson-Schensted
+correspondance. Note that there are other proof which require less theory.
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">mathcomp.ssreflect.ssreflect</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">ssrfun</span> <span class="id" title="library">ssrbool</span> <span class="id" title="library">eqtype</span> <span class="id" title="library">ssrnat</span> <span class="id" title="library">seq</span> <span class="id" title="library">fintype</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">tuple</span> <span class="id" title="library">finfun</span> <span class="id" title="library">finset</span> <span class="id" title="library">bigop</span> <span class="id" title="library">path</span> <span class="id" title="library">order</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Combi.Combi.partition.html#"><span class="id" title="library">partition</span></a> <a class="idref" href="Combi.Combi.tableau.html#"><span class="id" title="library">tableau</span></a> <a class="idref" href="Combi.LRrule.Schensted.html#"><span class="id" title="library">Schensted</span></a> <a class="idref" href="Combi.Basic.ordtype.html#"><span class="id" title="library">ordtype</span></a> <a class="idref" href="Combi.LRrule.Greene.html#"><span class="id" title="library">Greene</span></a> <a class="idref" href="Combi.LRrule.Greene_inv.html#"><span class="id" title="library">Greene_inv</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set Implicit Arguments</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">Order.TTheory</span>.<br/>
+<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">N</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="OrderedType" class="idref" href="#OrderedType"><span class="id" title="section">OrderedType</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variables</span> (<a id="OrderedType.disp" class="idref" href="#OrderedType.disp"><span class="id" title="variable">disp</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a>) (<a id="OrderedType.T" class="idref" href="#OrderedType.T"><span class="id" title="variable">T</span></a> : <a class="idref" href="Combi.Basic.ordtype.html#InhTotal.Exports.inhOrderType"><span class="id" title="abbreviation">inhOrderType</span></a> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#disp:1"><span class="id" title="variable">disp</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="Greene_rel_one" class="idref" href="#Greene_rel_one"><span class="id" title="lemma">Greene_rel_one</span></a> (<a id="s:3" class="idref" href="#s:3"><span class="id" title="binder">s</span></a> : <span class="id" title="abbreviation">seq</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#OrderedType.T"><span class="id" title="variable">T</span></a>) (<a id="R:4" class="idref" href="#R:4"><span class="id" title="binder">R</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#rel"><span class="id" title="definition">rel</span></a> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#OrderedType.T"><span class="id" title="variable">T</span></a>) :<br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="t:5" class="idref" href="#t:5"><span class="id" title="binder">t</span></a> : <span class="id" title="abbreviation">seq</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#OrderedType.T"><span class="id" title="variable">T</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <span class="id" title="definition">subseq</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#t:5"><span class="id" title="variable">t</span></a> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#s:3"><span class="id" title="variable">s</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <span class="id" title="definition">sorted</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#R:4"><span class="id" title="variable">R</span></a> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#t:5"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <span class="id" title="definition">size</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#t:5"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> (<a class="idref" href="Combi.LRrule.Greene.html#Greene_rel"><span class="id" title="definition">Greene_rel</span></a> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#R:4"><span class="id" title="variable">R</span></a> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#s:3"><span class="id" title="variable">s</span></a>) 1.<br/>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <a id="Erdos_Szekeres" class="idref" href="#Erdos_Szekeres"><span class="id" title="lemma">Erdos_Szekeres</span></a> (<a id="m:10" class="idref" href="#m:10"><span class="id" title="binder">m</span></a> <a id="n:11" class="idref" href="#n:11"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) (<a id="s:12" class="idref" href="#s:12"><span class="id" title="binder">s</span></a> : <span class="id" title="abbreviation">seq</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#OrderedType.T"><span class="id" title="variable">T</span></a>) :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">size</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#s:12"><span class="id" title="variable">s</span></a> <span class="id" title="notation">&gt;</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#m:10"><span class="id" title="variable">m</span></a> <span class="id" title="notation">*</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#n:11"><span class="id" title="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="t:13" class="idref" href="#t:13"><span class="id" title="binder">t</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <span class="id" title="definition">subseq</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#t:13"><span class="id" title="variable">t</span></a> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#s:12"><span class="id" title="variable">s</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <span class="id" title="definition">sorted</span> <span class="id" title="notation">&lt;=%</span><span class="id" title="notation">O</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#t:13"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <span class="id" title="definition">size</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#t:13"><span class="id" title="variable">t</span></a> <span class="id" title="notation">&gt;</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#m:10"><span class="id" title="variable">m</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="t:14" class="idref" href="#t:14"><span class="id" title="binder">t</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <span class="id" title="definition">subseq</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#t:14"><span class="id" title="variable">t</span></a> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#s:12"><span class="id" title="variable">s</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <span class="id" title="definition">sorted</span> <span class="id" title="notation">&gt;%</span><span class="id" title="notation">O</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#t:14"><span class="id" title="variable">t</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <span class="id" title="definition">size</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#t:14"><span class="id" title="variable">t</span></a> <span class="id" title="notation">&gt;</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#n:11"><span class="id" title="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.Erdos_Szekeres.Erdos_Szekeres.html#OrderedType"><span class="id" title="section">OrderedType</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

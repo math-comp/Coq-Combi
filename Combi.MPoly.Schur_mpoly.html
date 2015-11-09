@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>Combi.MPoly.Schur_mpoly: Schur symmetric polynomials</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Combi.MPoly.Schur_mpoly: Schur symmetric polynomials</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+
+</div>
+<div class="code">
+</div>
+
+<div class="doc">
+<a id="lab361"></a><h1 class="section">Combinatorial definition of Schur symmetric polynomials</h1>
+
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">Schur</span></span> <span class="inlinecode"><span class="id" title="var">n0</span></span> <span class="inlinecode"><span class="id" title="var">R</span></span> <span class="inlinecode"><span class="id" title="var">la</span></span> == The Schur polynomial associated to the partition <span class="inlinecode"><span class="id" title="var">la</span></span> in
+                     <span class="inlinecode">{<span class="id" title="var">mpoly</span></span> <span class="inlinecode"><span class="id" title="var">R</span>[<span class="id" title="var">n0</span>.+1]}</span> as the sum of all tableau of shape
+                     <span class="inlinecode"><span class="id" title="var">la</span></span> over the alphabet <span class="inlinecode">'<span class="id" title="var">I_n0</span>.+1</span>.
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+We give some values for particular partition such as small one, rows and columns.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">mathcomp.ssreflect.ssreflect</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">ssrfun</span> <span class="id" title="library">ssrbool</span> <span class="id" title="library">eqtype</span> <span class="id" title="library">ssrnat</span> <span class="id" title="library">seq</span> <span class="id" title="library">choice</span> <span class="id" title="library">fintype</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">tuple</span> <span class="id" title="library">finfun</span> <span class="id" title="library">finset</span> <span class="id" title="library">bigop</span> <span class="id" title="library">ssralg</span> <span class="id" title="library">order</span> <span class="id" title="library">path</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">SsrMultinomials</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">ssrcomplements</span> <span class="id" title="library">freeg</span> <span class="id" title="library">mpoly</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Combi.SSRcomplements.tools.html#"><span class="id" title="library">tools</span></a> <a class="idref" href="Combi.Basic.ordtype.html#"><span class="id" title="library">ordtype</span></a> <a class="idref" href="Combi.Combi.partition.html#"><span class="id" title="library">partition</span></a> <a class="idref" href="Combi.Combi.tableau.html#"><span class="id" title="library">tableau</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set Implicit Arguments</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">Order.TTheory</span>.<br/>
+<span class="id" title="keyword">Local Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ring_scope</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">GRing.Theory</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Schur" class="idref" href="#Schur"><span class="id" title="section">Schur</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="Schur.n0" class="idref" href="#Schur.n0"><span class="id" title="variable">n0</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="Schur.R" class="idref" href="#Schur.R"><span class="id" title="variable">R</span></a> : <span class="id" title="abbreviation">ringType</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="mons2mE" class="idref" href="#mons2mE"><span class="id" title="lemma">mons2mE</span></a> <a id="s:3" class="idref" href="#s:3"><span class="id" title="binder">s</span></a> : <span class="id" title="notation">'</span><span class="id" title="notation">X_</span><span class="id" title="notation">[</span><span class="id" title="definition">s2m</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#s:3"><span class="id" title="variable">s</span></a><span class="id" title="notation">]</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#b8b2ebc8e1a8b9aa935c0702efb5dccf"><span class="id" title="notation">=</span></a> <span class="id" title="notation">\</span><span class="id" title="notation">prod_</span><span class="id" title="notation">(</span><a id="i:6" class="idref" href="#i:6"><span class="id" title="binder">i</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#s:3"><span class="id" title="variable">s</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">'</span><span class="id" title="notation">X_i</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#b8b2ebc8e1a8b9aa935c0702efb5dccf"><span class="id" title="notation">:&gt;</span></a> <span class="id" title="notation">{</span><span class="id" title="notation">mpoly</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#Schur.R"><span class="id" title="variable">R</span></a><span class="id" title="notation">[</span><a class="idref" href="Combi.MPoly.Schur_mpoly.html#n"><span class="id" title="abbreviation">n</span></a><span class="id" title="notation">]}</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="Schur" class="idref" href="#Schur"><span class="id" title="definition">Schur</span></a> <a id="d:7" class="idref" href="#d:7"><span class="id" title="binder">d</span></a> (<a id="sh:8" class="idref" href="#sh:8"><span class="id" title="binder">sh</span></a> : <a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">P_d</span></a>) : <span class="id" title="notation">{</span><span class="id" title="notation">mpoly</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#Schur.R"><span class="id" title="variable">R</span></a><span class="id" title="notation">[</span><a class="idref" href="Combi.MPoly.Schur_mpoly.html#n"><span class="id" title="abbreviation">n</span></a><span class="id" title="notation">]}</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">sum_</span><span class="id" title="notation">(</span><a id="t:11" class="idref" href="#t:11"><span class="id" title="binder">t</span></a> <span class="id" title="notation">:</span> <a class="idref" href="Combi.Combi.tableau.html#tabsh"><span class="id" title="record">tabsh</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#sh:8"><span class="id" title="variable">sh</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">\</span><span class="id" title="notation">prod_</span><span class="id" title="notation">(</span><a id="i:14" class="idref" href="#i:14"><span class="id" title="binder">i</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="Combi.Combi.tableau.html#to_word"><span class="id" title="definition">to_word</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#t:9"><span class="id" title="variable">t</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">'</span><span class="id" title="notation">X_i</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="Schur_tabsh_readingE" class="idref" href="#Schur_tabsh_readingE"><span class="id" title="lemma">Schur_tabsh_readingE</span></a>  <a id="d:15" class="idref" href="#d:15"><span class="id" title="binder">d</span></a> (<a id="sh:16" class="idref" href="#sh:16"><span class="id" title="binder">sh</span></a> : <a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">P_d</span></a>) :<br/>
+&nbsp;&nbsp;<a class="idref" href="Combi.MPoly.Schur_mpoly.html#Schur"><span class="id" title="definition">Schur</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#sh:16"><span class="id" title="variable">sh</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">sum_</span><span class="id" title="notation">(</span><a id="t:19" class="idref" href="#t:19"><span class="id" title="binder">t</span></a> <span class="id" title="notation">:</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:15"><span class="id" title="variable">d</span></a><span class="id" title="notation">.-</span><span class="id" title="notation">tuple</span> <span class="id" title="notation">'</span><span class="id" title="notation">I_n</span> <span class="id" title="notation">|</span> <a class="idref" href="Combi.Combi.tableau.html#tabsh_reading"><span class="id" title="definition">tabsh_reading</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#sh:16"><span class="id" title="variable">sh</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#t:17"><span class="id" title="variable">t</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">\</span><span class="id" title="notation">prod_</span><span class="id" title="notation">(</span><a id="i:22" class="idref" href="#i:22"><span class="id" title="binder">i</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#t:17"><span class="id" title="variable">t</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">'</span><span class="id" title="notation">X_i</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab362"></a><h2 class="section">Some particular Schur functions</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="Schur0" class="idref" href="#Schur0"><span class="id" title="lemma">Schur0</span></a> (<a id="sh:30" class="idref" href="#sh:30"><span class="id" title="binder">sh</span></a> : <a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">P_0</span></a>) : <a class="idref" href="Combi.MPoly.Schur_mpoly.html#Schur"><span class="id" title="definition">Schur</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#sh:30"><span class="id" title="variable">sh</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 1.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="Schur_oversize" class="idref" href="#Schur_oversize"><span class="id" title="lemma">Schur_oversize</span></a> <a id="d:31" class="idref" href="#d:31"><span class="id" title="binder">d</span></a> (<a id="sh:32" class="idref" href="#sh:32"><span class="id" title="binder">sh</span></a> : <a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">P_d</span></a>) : (<span class="id" title="definition">size</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#sh:32"><span class="id" title="variable">sh</span></a> <span class="id" title="notation">&gt;</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#n"><span class="id" title="abbreviation">n</span></a>)%<span class="id" title="var">N</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#Schur"><span class="id" title="definition">Schur</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#sh:32"><span class="id" title="variable">sh</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 0.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Equivalent definition of symh symmetric function 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="tabwordshape_row" class="idref" href="#tabwordshape_row"><span class="id" title="lemma">tabwordshape_row</span></a> <a id="d:33" class="idref" href="#d:33"><span class="id" title="binder">d</span></a> (<a id="w:34" class="idref" href="#w:34"><span class="id" title="binder">w</span></a> : <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:33"><span class="id" title="variable">d</span></a><span class="id" title="notation">.-</span><span class="id" title="notation">tuple</span> <span class="id" title="notation">'</span><span class="id" title="notation">I_n</span>) :<br/>
+&nbsp;&nbsp;<a class="idref" href="Combi.Combi.tableau.html#tabsh_reading"><span class="id" title="definition">tabsh_reading</span></a> (<a class="idref" href="Combi.Combi.partition.html#rowpartn"><span class="id" title="definition">rowpartn</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:33"><span class="id" title="variable">d</span></a>) <a class="idref" href="Combi.MPoly.Schur_mpoly.html#w:34"><span class="id" title="variable">w</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">sorted</span> <span class="id" title="definition">leq</span> <span class="id" title="notation">[</span><span class="id" title="notation">seq</span> <span class="id" title="projection">val</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#i:35"><span class="id" title="variable">i</span></a> <span class="id" title="notation">|</span> <a id="i:35" class="idref" href="#i:35"><span class="id" title="binder">i</span></a> <span class="id" title="notation">&lt;-</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#w:34"><span class="id" title="variable">w</span></a><span class="id" title="notation">]</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="symh_basisE" class="idref" href="#symh_basisE"><span class="id" title="lemma">symh_basisE</span></a> <a id="d:36" class="idref" href="#d:36"><span class="id" title="binder">d</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">sum_</span><span class="id" title="notation">(</span><a id="s:41" class="idref" href="#s:41"><span class="id" title="binder">s</span></a> <span class="id" title="notation">in</span> <span class="id" title="definition">basis</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#n"><span class="id" title="abbreviation">n</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:36"><span class="id" title="variable">d</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">'</span><span class="id" title="notation">X_</span><span class="id" title="notation">[</span><span class="id" title="definition">s2m</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#s:37"><span class="id" title="variable">s</span></a><span class="id" title="notation">]</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#Schur"><span class="id" title="definition">Schur</span></a> (<a class="idref" href="Combi.Combi.partition.html#rowpartn"><span class="id" title="definition">rowpartn</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:36"><span class="id" title="variable">d</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#Schur"><span class="id" title="section">Schur</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="SchurComRingType" class="idref" href="#SchurComRingType"><span class="id" title="section">SchurComRingType</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="SchurComRingType.n0" class="idref" href="#SchurComRingType.n0"><span class="id" title="variable">n0</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="SchurComRingType.R" class="idref" href="#SchurComRingType.R"><span class="id" title="variable">R</span></a> : <span class="id" title="abbreviation">comRingType</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="perm_enum_basis" class="idref" href="#perm_enum_basis"><span class="id" title="lemma">perm_enum_basis</span></a> <a id="d:44" class="idref" href="#d:44"><span class="id" title="binder">d</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">perm_eq</span> <span class="id" title="notation">[</span><span class="id" title="notation">seq</span> <span class="id" title="definition">s2m</span> (<span class="id" title="projection">tval</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#s:47"><span class="id" title="variable">s</span></a>) <span class="id" title="notation">|</span> <a id="s:47" class="idref" href="#s:47"><span class="id" title="binder">s</span></a> <span class="id" title="notation">in</span> <span class="id" title="definition">basis</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#n"><span class="id" title="abbreviation">n</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:44"><span class="id" title="variable">d</span></a><span class="id" title="notation">]</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[</span><span class="id" title="notation">seq</span> <span class="id" title="projection">val</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#m:45"><span class="id" title="variable">m</span></a> <span class="id" title="notation">|</span> <a id="m:45" class="idref" href="#m:45"><span class="id" title="binder">m</span></a> <span class="id" title="notation">in</span> <span class="id" title="notation">[</span><span class="id" title="notation">set</span> <a id="m:46" class="idref" href="#m:46"><span class="id" title="binder">m</span></a> <span class="id" title="notation">:</span> <span class="id" title="notation">'</span><span class="id" title="notation">X_</span><span class="id" title="notation">{1</span>..<a class="idref" href="Combi.MPoly.Schur_mpoly.html#n"><span class="id" title="abbreviation">n</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:44"><span class="id" title="variable">d</span></a><span class="id" title="notation">.+1</span><span class="id" title="notation">}</span> <span class="id" title="notation">|</span> <span class="id" title="definition">mdeg</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#m:46"><span class="id" title="variable">m</span></a> <span class="id" title="notation">==</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:44"><span class="id" title="variable">d</span></a><span class="id" title="notation">]</span><span class="id" title="notation">]</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="Schur_rowpartn" class="idref" href="#Schur_rowpartn"><span class="id" title="lemma">Schur_rowpartn</span></a> <a id="d:48" class="idref" href="#d:48"><span class="id" title="binder">d</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">sum_</span><span class="id" title="notation">(</span><a id="m:51" class="idref" href="#m:51"><span class="id" title="binder">m</span></a> <span class="id" title="notation">:</span> <span class="id" title="notation">'</span><span class="id" title="notation">X_</span><span class="id" title="notation">{1</span>..<a class="idref" href="Combi.MPoly.Schur_mpoly.html#n"><span class="id" title="abbreviation">n</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:48"><span class="id" title="variable">d</span></a><span class="id" title="notation">.+1</span><span class="id" title="notation">}</span> <span class="id" title="notation">|</span> <span class="id" title="definition">mdeg</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#m:49"><span class="id" title="variable">m</span></a> <span class="id" title="notation">==</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:48"><span class="id" title="variable">d</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">'</span><span class="id" title="notation">X_</span><span class="id" title="notation">[</span><a class="idref" href="Combi.MPoly.Schur_mpoly.html#m:49"><span class="id" title="variable">m</span></a><span class="id" title="notation">]</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#Schur"><span class="id" title="definition">Schur</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#SchurComRingType.n0"><span class="id" title="variable">n0</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#SchurComRingType.R"><span class="id" title="variable">R</span></a> (<a class="idref" href="Combi.Combi.partition.html#rowpartn"><span class="id" title="definition">rowpartn</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:48"><span class="id" title="variable">d</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The definition of column Schur symmetric polynomials agrees with mesym
+    from mpoly 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="tabwordshape_col" class="idref" href="#tabwordshape_col"><span class="id" title="lemma">tabwordshape_col</span></a> <a id="d:60" class="idref" href="#d:60"><span class="id" title="binder">d</span></a> (<a id="w:61" class="idref" href="#w:61"><span class="id" title="binder">w</span></a> : <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:60"><span class="id" title="variable">d</span></a><span class="id" title="notation">.-</span><span class="id" title="notation">tuple</span> <span class="id" title="notation">'</span><span class="id" title="notation">I_n</span>) :<br/>
+&nbsp;&nbsp;<a class="idref" href="Combi.Combi.tableau.html#tabsh_reading"><span class="id" title="definition">tabsh_reading</span></a> (<a class="idref" href="Combi.Combi.partition.html#colpartn"><span class="id" title="definition">colpartn</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:60"><span class="id" title="variable">d</span></a>) <a class="idref" href="Combi.MPoly.Schur_mpoly.html#w:61"><span class="id" title="variable">w</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">sorted</span> <span class="id" title="notation">&gt;%</span><span class="id" title="notation">O</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#w:61"><span class="id" title="variable">w</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="mesym_SchurE" class="idref" href="#mesym_SchurE"><span class="id" title="lemma">mesym_SchurE</span></a> <a id="d:63" class="idref" href="#d:63"><span class="id" title="binder">d</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">mesym</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#n"><span class="id" title="abbreviation">n</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#SchurComRingType.R"><span class="id" title="variable">R</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:63"><span class="id" title="variable">d</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#Schur"><span class="id" title="definition">Schur</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#SchurComRingType.n0"><span class="id" title="variable">n0</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#SchurComRingType.R"><span class="id" title="variable">R</span></a> (<a class="idref" href="Combi.Combi.partition.html#colpartn"><span class="id" title="definition">colpartn</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#d:63"><span class="id" title="variable">d</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="Schur1" class="idref" href="#Schur1"><span class="id" title="lemma">Schur1</span></a> (<a id="sh:67" class="idref" href="#sh:67"><span class="id" title="binder">sh</span></a> : <a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">P_1</span></a>) : <a class="idref" href="Combi.MPoly.Schur_mpoly.html#Schur"><span class="id" title="definition">Schur</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#SchurComRingType.n0"><span class="id" title="variable">n0</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#SchurComRingType.R"><span class="id" title="variable">R</span></a> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#sh:67"><span class="id" title="variable">sh</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">\</span><span class="id" title="notation">sum_</span><span class="id" title="notation">(</span><a id="i:70" class="idref" href="#i:70"><span class="id" title="binder">i</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#n"><span class="id" title="abbreviation">n</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">'</span><span class="id" title="notation">X_i</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.MPoly.Schur_mpoly.html#SchurComRingType"><span class="id" title="section">SchurComRingType</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

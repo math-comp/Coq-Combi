@@ -1,0 +1,107 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>Combi.HookFormula.Frobenius_ident</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Combi.HookFormula.Frobenius_ident</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+<a id="lab217"></a><h1 class="section">Combi.hook.Frobenius_ident : Frobenius identity</h1>
+
+</div>
+<div class="code">
+</div>
+
+<div class="doc">
+<a id="lab218"></a><h1 class="section">A proof of Frobenius identity:</h1>
+
+
+<div class="paragraph"> </div>
+
+The goal of this file is to prove the following identities:
+<br/>
+<span class="inlinecode"><span class="id" title="var">Frobenius_ident</span> <span class="id" title="var">n</span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">n</span>`! = \<span class="id" title="var">sum_</span>(<span class="id" title="var">p</span> : '<span class="id" title="var">P_n</span>) (<span class="id" title="var">n</span>`! %/ (<span class="id" title="var">hook_length_prod</span> <span class="id" title="var">p</span>))^2.
+<div class="paragraph"> </div>
+
+</span>and
+<br/>
+<span class="inlinecode"><span class="id" title="keyword">Theorem</span> <span class="id" title="var">Frobenius_ident_rat</span> <span class="id" title="var">n</span> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;1 / (<span class="id" title="var">n</span>`!)%:<span class="id" title="var">Q</span> = \<span class="id" title="var">sum_</span>(<span class="id" title="var">p</span> : '<span class="id" title="var">P_n</span>) 1 / (<span class="id" title="var">hook_length_prod</span> <span class="id" title="var">p</span>)%:<span class="id" title="var">Q</span> ^+ 2.
+<div class="paragraph"> </div>
+
+</span> 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">mathcomp.ssreflect.ssreflect</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">ssrfun</span> <span class="id" title="library">ssrbool</span> <span class="id" title="library">eqtype</span> <span class="id" title="library">choice</span> <span class="id" title="library">ssrnat</span> <span class="id" title="library">seq</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="library">ssrint</span> <span class="id" title="library">div</span> <span class="id" title="library">rat</span> <span class="id" title="library">fintype</span> <span class="id" title="library">finset</span> <span class="id" title="library">bigop</span> <span class="id" title="library">path</span> <span class="id" title="library">ssralg</span> <span class="id" title="library">ssrnum</span> <span class="id" title="library">order</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set Implicit Arguments</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Combi.Basic.ordtype.html#"><span class="id" title="library">ordtype</span></a> <a class="idref" href="Combi.Combi.partition.html#"><span class="id" title="library">partition</span></a> <a class="idref" href="Combi.Combi.tableau.html#"><span class="id" title="library">tableau</span></a> <a class="idref" href="Combi.LRrule.Schensted.html#"><span class="id" title="library">Schensted</span></a> <a class="idref" href="Combi.Combi.std.html#"><span class="id" title="library">std</span></a> <a class="idref" href="Combi.Combi.stdtab.html#"><span class="id" title="library">stdtab</span></a> <a class="idref" href="Combi.HookFormula.hook.html#"><span class="id" title="library">hook</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Identity" class="idref" href="#Identity"><span class="id" title="section">Identity</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="Identity.n" class="idref" href="#Identity.n"><span class="id" title="variable">n</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="card_stpn_shape" class="idref" href="#card_stpn_shape"><span class="id" title="lemma">card_stpn_shape</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="notation">#|</span><span class="id" title="notation">[</span><span class="id" title="notation">set</span> <a id="p:2" class="idref" href="#p:2"><span class="id" title="binder">p</span></a> <span class="id" title="notation">:</span> <a class="idref" href="Combi.HookFormula.Frobenius_ident.html#stpn"><span class="id" title="abbreviation">stpn</span></a> <span class="id" title="notation">|</span> <span class="id" title="definition">shape</span> <a class="idref" href="Combi.HookFormula.Frobenius_ident.html#p:2"><span class="id" title="variable">p</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#::pair_scope:x_'.1'"><span class="id" title="notation">.1</span></a> <span class="id" title="notation">==</span> <span class="id" title="definition">shape</span> <a class="idref" href="Combi.HookFormula.Frobenius_ident.html#p:2"><span class="id" title="variable">p</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#::pair_scope:x_'.2'"><span class="id" title="notation">.2</span></a><span class="id" title="notation">]</span><span class="id" title="notation">|</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">sum_</span><span class="id" title="notation">(</span><a id="sh:5" class="idref" href="#sh:5"><span class="id" title="binder">sh</span></a> <span class="id" title="notation">:</span> <a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">P_n</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">#|</span><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#fa3b33ae9d0a52de608b305a09f3b881"><span class="id" title="notation">{:</span></a><a class="idref" href="Combi.Combi.stdtab.html#stdtabsh"><span class="id" title="record">stdtabsh</span></a> <a class="idref" href="Combi.HookFormula.Frobenius_ident.html#sh:3"><span class="id" title="variable">sh</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#fa3b33ae9d0a52de608b305a09f3b881"><span class="id" title="notation">}</span></a><span class="id" title="notation">|</span><span class="id" title="notation">^</span>2.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="card_stpn_shape_hook" class="idref" href="#card_stpn_shape_hook"><span class="id" title="lemma">card_stpn_shape_hook</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="notation">#|</span><span class="id" title="notation">[</span><span class="id" title="notation">set</span> <a id="p:16" class="idref" href="#p:16"><span class="id" title="binder">p</span></a> <span class="id" title="notation">:</span> <a class="idref" href="Combi.HookFormula.Frobenius_ident.html#stpn"><span class="id" title="abbreviation">stpn</span></a> <span class="id" title="notation">|</span> <span class="id" title="definition">shape</span> <a class="idref" href="Combi.HookFormula.Frobenius_ident.html#p:16"><span class="id" title="variable">p</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#::pair_scope:x_'.1'"><span class="id" title="notation">.1</span></a> <span class="id" title="notation">==</span> <span class="id" title="definition">shape</span> <a class="idref" href="Combi.HookFormula.Frobenius_ident.html#p:16"><span class="id" title="variable">p</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#::pair_scope:x_'.2'"><span class="id" title="notation">.2</span></a><span class="id" title="notation">]</span><span class="id" title="notation">|</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">sum_</span><span class="id" title="notation">(</span><a id="sh:19" class="idref" href="#sh:19"><span class="id" title="binder">sh</span></a> <span class="id" title="notation">:</span> <a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">P_n</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">(</span><a class="idref" href="Combi.HookFormula.Frobenius_ident.html#Identity.n"><span class="id" title="variable">n</span></a><span class="id" title="notation">`!</span> <span class="id" title="notation">%/</span> <span class="id" title="notation">(</span><a class="idref" href="Combi.HookFormula.hook.html#hook_length_prod"><span class="id" title="definition">hook_length_prod</span></a> <a class="idref" href="Combi.HookFormula.Frobenius_ident.html#sh:17"><span class="id" title="variable">sh</span></a><span class="id" title="notation">)</span><span class="id" title="notation">)^</span>2.<br/>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <a id="Frobenius_ident" class="idref" href="#Frobenius_ident"><span class="id" title="lemma">Frobenius_ident</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="Combi.HookFormula.Frobenius_ident.html#Identity.n"><span class="id" title="variable">n</span></a><span class="id" title="notation">`!</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">\</span><span class="id" title="notation">sum_</span><span class="id" title="notation">(</span><a id="p:22" class="idref" href="#p:22"><span class="id" title="binder">p</span></a> <span class="id" title="notation">:</span> <a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">P_n</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">(</span><a class="idref" href="Combi.HookFormula.Frobenius_ident.html#Identity.n"><span class="id" title="variable">n</span></a><span class="id" title="notation">`!</span> <span class="id" title="notation">%/</span> <span class="id" title="notation">(</span><a class="idref" href="Combi.HookFormula.hook.html#hook_length_prod"><span class="id" title="definition">hook_length_prod</span></a> <a class="idref" href="Combi.HookFormula.Frobenius_ident.html#p:20"><span class="id" title="variable">p</span></a><span class="id" title="notation">)</span><span class="id" title="notation">)^</span>2.<br/>
+
+<br/>
+<span class="id" title="keyword">Local Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">ring_scope</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">GRing.Theory</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">Num.Theory</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Theorem</span> <a id="Frobenius_ident_rat" class="idref" href="#Frobenius_ident_rat"><span class="id" title="lemma">Frobenius_ident_rat</span></a> :<br/>
+&nbsp;&nbsp;1 <span class="id" title="notation">/</span> <span class="id" title="notation">(</span><a class="idref" href="Combi.HookFormula.Frobenius_ident.html#Identity.n"><span class="id" title="variable">n</span></a><span class="id" title="notation">`!</span><span class="id" title="notation">)%:</span><span class="id" title="notation">Q</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">\</span><span class="id" title="notation">sum_</span><span class="id" title="notation">(</span><a id="p:33" class="idref" href="#p:33"><span class="id" title="binder">p</span></a> <span class="id" title="notation">:</span> <a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">'</span></a><a class="idref" href="Combi.Combi.partition.html#:::'''P_'_x"><span class="id" title="notation">P_n</span></a><span class="id" title="notation">)</span> 1 <span class="id" title="notation">/</span> <span class="id" title="notation">(</span><a class="idref" href="Combi.HookFormula.hook.html#hook_length_prod"><span class="id" title="definition">hook_length_prod</span></a> <a class="idref" href="Combi.HookFormula.Frobenius_ident.html#p:31"><span class="id" title="variable">p</span></a><span class="id" title="notation">)%:</span><span class="id" title="notation">Q</span> <span class="id" title="notation">^+</span> 2.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.HookFormula.Frobenius_ident.html#Identity"><span class="id" title="section">Identity</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

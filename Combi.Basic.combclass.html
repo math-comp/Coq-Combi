@@ -1,0 +1,379 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>Combi.Basic.combclass: Fintypes for Combinatorics</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library Combi.Basic.combclass: Fintypes for Combinatorics</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+
+</div>
+<div class="code">
+</div>
+
+<div class="doc">
+<a id="lab226"></a><h1 class="section">Fintypes for Combinatorics</h1>
+
+
+<div class="paragraph"> </div>
+
+The goal of this file is to define various way to easily build finite
+subtype of a countable type knowing a lists of its elements. We provide four
+ways, three from a list (see <span class="inlinecode"><span class="id" title="var">sub_subFinType</span></span>, <span class="inlinecode"><span class="id" title="var">sub_uniq_subFinType</span></span> and
+<span class="inlinecode"><span class="id" title="var">sub_undup_subFinType</span></span> below) and one by taking the disjoint union of already
+constructed subfintypes (see <span class="inlinecode"><span class="id" title="var">union_subFinType</span></span> below).  
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">mathcomp.ssreflect.ssreflect</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">ssrbool</span> <span class="id" title="library">ssrfun</span> <span class="id" title="library">ssrnat</span> <span class="id" title="library">eqtype</span> <span class="id" title="library">fintype</span> <span class="id" title="library">choice</span> <span class="id" title="library">seq</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">mathcomp</span> <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">bigop</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Combi.SSRcomplements.tools.html#"><span class="id" title="library">tools</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set Implicit Arguments</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A missing lemma: fintypes in bijection have the same cardinality          
+<div class="paragraph"> </div>
+
+ TODO : Contribute to SSReflect/fintype.v                                  
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="BijCard" class="idref" href="#BijCard"><span class="id" title="section">BijCard</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variables</span> <a id="BijCard.U" class="idref" href="#BijCard.U"><span class="id" title="variable">U</span></a> <a id="BijCard.V" class="idref" href="#BijCard.V"><span class="id" title="variable">V</span></a> : <span class="id" title="abbreviation">finType</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="BijCard.f" class="idref" href="#BijCard.f"><span class="id" title="variable">f</span></a> : <a class="idref" href="Combi.Basic.combclass.html#BijCard.U"><span class="id" title="variable">U</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Combi.Basic.combclass.html#BijCard.V"><span class="id" title="variable">V</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="bij_card" class="idref" href="#bij_card"><span class="id" title="lemma">bij_card</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#bijective"><span class="id" title="inductive">bijective</span></a> <a class="idref" href="Combi.Basic.combclass.html#BijCard.f"><span class="id" title="variable">f</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="notation">#|</span><a class="idref" href="Combi.Basic.combclass.html#BijCard.U"><span class="id" title="variable">U</span></a><span class="id" title="notation">|</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">#|</span><a class="idref" href="Combi.Basic.combclass.html#BijCard.V"><span class="id" title="variable">V</span></a><span class="id" title="notation">|</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.Basic.combclass.html#BijCard"><span class="id" title="section">BijCard</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Summing <span class="inlinecode"><span class="id" title="var">count_mem</span></span> in a <span class="inlinecode"><span class="id" title="var">finType</span></span> 
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <a id="sum_count_mem" class="idref" href="#sum_count_mem"><span class="id" title="lemma">sum_count_mem</span></a> (<a id="T:4" class="idref" href="#T:4"><span class="id" title="binder">T</span></a> : <span class="id" title="abbreviation">finType</span>) (<a id="P:5" class="idref" href="#P:5"><span class="id" title="binder">P</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#pred"><span class="id" title="definition">pred</span></a> <a class="idref" href="Combi.Basic.combclass.html#T:4"><span class="id" title="variable">T</span></a>) <a id="l:6" class="idref" href="#l:6"><span class="id" title="binder">l</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">sum_</span><span class="id" title="notation">(</span><a id="i:9" class="idref" href="#i:9"><span class="id" title="binder">i</span></a> <span class="id" title="notation">|</span> <a class="idref" href="Combi.Basic.combclass.html#P:5"><span class="id" title="variable">P</span></a> <a class="idref" href="Combi.Basic.combclass.html#i:7"><span class="id" title="variable">i</span></a><span class="id" title="notation">)</span> (<span class="id" title="abbreviation">count_mem</span> <a class="idref" href="Combi.Basic.combclass.html#i:7"><span class="id" title="variable">i</span></a>) <a class="idref" href="Combi.Basic.combclass.html#l:6"><span class="id" title="variable">l</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">count</span> <a class="idref" href="Combi.Basic.combclass.html#P:5"><span class="id" title="variable">P</span></a> <a class="idref" href="Combi.Basic.combclass.html#l:6"><span class="id" title="variable">l</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab227"></a><h1 class="section">Building subtype from a sequence</h1>
+
+
+<div class="paragraph"> </div>
+
+Here is how to construct a fintype from a list: we are given
+<ul class="doclist">
+<li> a type <span class="inlinecode"><span class="id" title="var">T</span></span> which is a <span class="inlinecode"><span class="id" title="var">countType</span></span>
+
+</li>
+<li> a type <span class="inlinecode"><span class="id" title="var">TP</span></span> which is <span class="inlinecode"><span class="id" title="var">subCountType</span></span> of <span class="inlinecode"><span class="id" title="var">T</span></span> for a predicate <span class="inlinecode"><span class="id" title="var">P</span></span>.
+
+</li>
+<li> a list <span class="inlinecode"><span class="id" title="var">lst</span></span> of element from <span class="inlinecode"><span class="id" title="var">T</span></span> whose element veryfies the predicate <span class="inlinecode"><span class="id" title="var">P</span></span>.
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+We define three possible ways to provide <span class="inlinecode"><span class="id" title="var">TP</span></span> with a <span class="inlinecode"><span class="id" title="var">subFinType</span></span> structure:
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">sub_subFinType</span></span> which suppose that any element verifying <span class="inlinecode"><span class="id" title="var">P</span></span> appears only
+  once in <span class="inlinecode"><span class="id" title="var">lst</span></span>;
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">sub_uniq_subFinType</span></span> which suppose that any element verifying <span class="inlinecode"><span class="id" title="var">P</span></span> appears in
+  <span class="inlinecode"><span class="id" title="var">lst</span></span> and that <span class="inlinecode"><span class="id" title="var">lst</span></span> is duplicate free (<span class="inlinecode"><span class="id" title="var">uniq</span></span>);
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">sub_undup_subFinType</span></span> which suppose that any element verifying <span class="inlinecode"><span class="id" title="var">P</span></span> appears in
+  <span class="inlinecode"><span class="id" title="var">lst</span></span> and remove the duplicate elements.
+ 
+
+</li>
+</ul>
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="SubtypeSeq" class="idref" href="#SubtypeSeq"><span class="id" title="section">SubtypeSeq</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypeSeq.T" class="idref" href="#SubtypeSeq.T"><span class="id" title="variable">T</span></a> : <span class="id" title="abbreviation">countType</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypeSeq.P" class="idref" href="#SubtypeSeq.P"><span class="id" title="variable">P</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#pred"><span class="id" title="definition">pred</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.T"><span class="id" title="variable">T</span></a>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypeSeq.TP" class="idref" href="#SubtypeSeq.TP"><span class="id" title="variable">TP</span></a> : <span class="id" title="record">subCountType</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.P"><span class="id" title="variable">P</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="subType_seq" class="idref" href="#subType_seq"><span class="id" title="definition">subType_seq</span></a> <a id="l:13" class="idref" href="#l:13"><span class="id" title="binder">l</span></a> {<span class="id" title="keyword">struct</span> <span class="id" title="var">l</span>} :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Combi.Basic.combclass.html#l:13"><span class="id" title="variable">l</span></a> <span class="id" title="keyword">as</span> <span class="id" title="var">l1</span> <span class="id" title="keyword">return</span> <span class="id" title="definition">all</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.P"><span class="id" title="variable">P</span></a> <a class="idref" href="Combi.Basic.combclass.html#l1:15"><span class="id" title="variable">l1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="abbreviation">seq</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.TP"><span class="id" title="variable">TP</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="notation">[::]</span>     =&gt; <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#94502d422d70bbaf4f390946d9885b7c"><span class="id" title="notation">fun</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#94502d422d70bbaf4f390946d9885b7c"><span class="id" title="notation">=&gt;</span></a> <span class="id" title="notation">[::]</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">l0</span> <span class="id" title="notation">::</span> <span class="id" title="var">ll</span> =&gt; <span class="id" title="keyword">fun</span> <a id="Hall:16" class="idref" href="#Hall:16"><span class="id" title="binder">Hall</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#elimTF"><span class="id" title="lemma">elimTF</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#andP"><span class="id" title="lemma">andP</span></a> <a class="idref" href="Combi.Basic.combclass.html#Hall:16"><span class="id" title="variable">Hall</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#conj"><span class="id" title="constructor">conj</span></a> <span class="id" title="var">H0</span> <span class="id" title="var">Hl</span> =&gt; <span class="id" title="notation">(</span><span class="id" title="projection">Sub</span> <span class="id" title="var">l0</span> <span class="id" title="var">H0</span><span class="id" title="notation">)</span> <span class="id" title="notation">::</span> <span class="id" title="notation">(</span><a class="idref" href="Combi.Basic.combclass.html#subType_seq:14"><span class="id" title="definition">subType_seq</span></a> <span class="id" title="var">ll</span> <span class="id" title="var">Hl</span><span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypeSeq.lst" class="idref" href="#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a> : <span class="id" title="abbreviation">seq</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.T"><span class="id" title="variable">T</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab228"></a><h2 class="section">Method 1 - Each element appears only once</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="SubtypeSeq.SubCount" class="idref" href="#SubtypeSeq.SubCount"><span class="id" title="section">SubCount</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="SubtypeSeq.SubCount.HallP" class="idref" href="#SubtypeSeq.SubCount.HallP"><span class="id" title="variable">HallP</span></a> : <span class="id" title="definition">all</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.P"><span class="id" title="variable">P</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a>.<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="SubtypeSeq.SubCount.Hcount" class="idref" href="#SubtypeSeq.SubCount.Hcount"><span class="id" title="variable">Hcount</span></a> : <span class="id" title="keyword">forall</span> <a id="x:19" class="idref" href="#x:19"><span class="id" title="binder">x</span></a> : <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.T"><span class="id" title="variable">T</span></a>, <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.P"><span class="id" title="variable">P</span></a> <a class="idref" href="Combi.Basic.combclass.html#x:19"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="abbreviation">count_mem</span> <a class="idref" href="Combi.Basic.combclass.html#x:19"><span class="id" title="variable">x</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 1.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="subType_seqP" class="idref" href="#subType_seqP"><span class="id" title="lemma">subType_seqP</span></a> : <span class="id" title="definition">map</span> <span class="id" title="projection">val</span> (<a class="idref" href="Combi.Basic.combclass.html#subType_seq"><span class="id" title="definition">subType_seq</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.SubCount.HallP"><span class="id" title="variable">HallP</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sub_enumE" class="idref" href="#sub_enumE"><span class="id" title="lemma">sub_enumE</span></a> : <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#1e6a438ff685c38fcd9034a94f271777"><span class="id" title="notation">=</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#1e6a438ff685c38fcd9034a94f271777"><span class="id" title="notation">i</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.P"><span class="id" title="variable">P</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="finite_subP" class="idref" href="#finite_subP"><span class="id" title="lemma">finite_subP</span></a> : <span class="id" title="definition">Finite.axiom</span> (<a class="idref" href="Combi.Basic.combclass.html#subType_seq"><span class="id" title="definition">subType_seq</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.SubCount.HallP"><span class="id" title="variable">HallP</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="sub_finMixin" class="idref" href="#sub_finMixin"><span class="id" title="definition">sub_finMixin</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">FinMixin</span> <a class="idref" href="Combi.Basic.combclass.html#finite_subP"><span class="id" title="lemma">finite_subP</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="sub_finType" class="idref" href="#sub_finType"><span class="id" title="definition">sub_finType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">FinType</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.TP"><span class="id" title="variable">TP</span></a> <a class="idref" href="Combi.Basic.combclass.html#sub_finMixin"><span class="id" title="definition">sub_finMixin</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="sub_subFinType" class="idref" href="#sub_subFinType"><span class="id" title="definition">sub_subFinType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="notation">[</span><span class="id" title="notation">subFinType</span> <span class="id" title="notation">of</span> <a class="idref" href="Combi.Basic.combclass.html#sub_finType"><span class="id" title="definition">sub_finType</span></a><span class="id" title="notation">]</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="enum_subE" class="idref" href="#enum_subE"><span class="id" title="lemma">enum_subE</span></a> : <span class="id" title="definition">map</span> <span class="id" title="projection">val</span> (<span class="id" title="abbreviation">enum</span> <a class="idref" href="Combi.Basic.combclass.html#sub_finType"><span class="id" title="definition">sub_finType</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="card_subE" class="idref" href="#card_subE"><span class="id" title="lemma">card_subE</span></a> : <span class="id" title="notation">#|</span><a class="idref" href="Combi.Basic.combclass.html#sub_finType"><span class="id" title="definition">sub_finType</span></a><span class="id" title="notation">|</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">size</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.SubCount"><span class="id" title="section">SubCount</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab229"></a><h2 class="section">Method 2 - Each element appears and the lists is uniq</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="SubtypeSeq.SubUniq" class="idref" href="#SubtypeSeq.SubUniq"><span class="id" title="section">SubUniq</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="SubtypeSeq.SubUniq.Huniq" class="idref" href="#SubtypeSeq.SubUniq.Huniq"><span class="id" title="variable">Huniq</span></a> : <span class="id" title="definition">uniq</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a>.<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="SubtypeSeq.SubUniq.HE" class="idref" href="#SubtypeSeq.SubUniq.HE"><span class="id" title="variable">HE</span></a> : <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#1e6a438ff685c38fcd9034a94f271777"><span class="id" title="notation">=</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#1e6a438ff685c38fcd9034a94f271777"><span class="id" title="notation">i</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.P"><span class="id" title="variable">P</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="Hallp" class="idref" href="#Hallp"><span class="id" title="lemma">Hallp</span></a> : <span class="id" title="definition">all</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.P"><span class="id" title="variable">P</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="Hcount" class="idref" href="#Hcount"><span class="id" title="lemma">Hcount</span></a> <a id="x:23" class="idref" href="#x:23"><span class="id" title="binder">x</span></a> : <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.P"><span class="id" title="variable">P</span></a> <a class="idref" href="Combi.Basic.combclass.html#x:23"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="abbreviation">count_mem</span> <a class="idref" href="Combi.Basic.combclass.html#x:23"><span class="id" title="variable">x</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 1.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="sub_uniq_finMixin" class="idref" href="#sub_uniq_finMixin"><span class="id" title="definition">sub_uniq_finMixin</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <a class="idref" href="Combi.Basic.combclass.html#sub_finMixin"><span class="id" title="definition">sub_finMixin</span></a> <a class="idref" href="Combi.Basic.combclass.html#Hallp"><span class="id" title="lemma">Hallp</span></a> <a class="idref" href="Combi.Basic.combclass.html#Hcount"><span class="id" title="lemma">Hcount</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="sub_uniq_finType" class="idref" href="#sub_uniq_finType"><span class="id" title="definition">sub_uniq_finType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">FinType</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.TP"><span class="id" title="variable">TP</span></a> <a class="idref" href="Combi.Basic.combclass.html#sub_uniq_finMixin"><span class="id" title="definition">sub_uniq_finMixin</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="sub_uniq_subFinType" class="idref" href="#sub_uniq_subFinType"><span class="id" title="definition">sub_uniq_subFinType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="notation">[</span><span class="id" title="notation">subFinType</span> <span class="id" title="notation">of</span> <a class="idref" href="Combi.Basic.combclass.html#sub_uniq_finType"><span class="id" title="definition">sub_uniq_finType</span></a><span class="id" title="notation">]</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.SubUniq"><span class="id" title="section">SubUniq</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab230"></a><h2 class="section">Method 3 - Each element appears, we remove the duplicates</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="SubtypeSeq.SubUndup" class="idref" href="#SubtypeSeq.SubUndup"><span class="id" title="section">SubUndup</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="SubtypeSeq.SubUndup.HallP" class="idref" href="#SubtypeSeq.SubUndup.HallP"><span class="id" title="variable">HallP</span></a> : <span class="id" title="definition">all</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.P"><span class="id" title="variable">P</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a>.<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="SubtypeSeq.SubUndup.HPin" class="idref" href="#SubtypeSeq.SubUndup.HPin"><span class="id" title="variable">HPin</span></a> : <span class="id" title="keyword">forall</span> <a id="x:25" class="idref" href="#x:25"><span class="id" title="binder">x</span></a> : <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.T"><span class="id" title="variable">T</span></a>, <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.P"><span class="id" title="variable">P</span></a> <a class="idref" href="Combi.Basic.combclass.html#x:25"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Combi.Basic.combclass.html#x:25"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#b09457274bcb94927e289b8a9e9cd3f7"><span class="id" title="notation">\</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#b09457274bcb94927e289b8a9e9cd3f7"><span class="id" title="notation">in</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="finite_sub_undupP" class="idref" href="#finite_sub_undupP"><span class="id" title="lemma">finite_sub_undupP</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">Finite.axiom</span> (<span class="id" title="definition">undup</span> (<a class="idref" href="Combi.Basic.combclass.html#subType_seq"><span class="id" title="definition">subType_seq</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.SubUndup.HallP"><span class="id" title="variable">HallP</span></a>)).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="sub_undup_finMixin" class="idref" href="#sub_undup_finMixin"><span class="id" title="definition">sub_undup_finMixin</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">FinMixin</span> <a class="idref" href="Combi.Basic.combclass.html#finite_sub_undupP"><span class="id" title="lemma">finite_sub_undupP</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="sub_undup_finType" class="idref" href="#sub_undup_finType"><span class="id" title="definition">sub_undup_finType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">FinType</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.TP"><span class="id" title="variable">TP</span></a> <a class="idref" href="Combi.Basic.combclass.html#sub_undup_finMixin"><span class="id" title="definition">sub_undup_finMixin</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="sub_undup_subFinType" class="idref" href="#sub_undup_subFinType"><span class="id" title="definition">sub_undup_subFinType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="notation">[</span><span class="id" title="notation">subFinType</span> <span class="id" title="notation">of</span> <a class="idref" href="Combi.Basic.combclass.html#sub_undup_finType"><span class="id" title="definition">sub_undup_finType</span></a><span class="id" title="notation">]</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="enum_sub_undupE" class="idref" href="#enum_sub_undupE"><span class="id" title="lemma">enum_sub_undupE</span></a> : <span class="id" title="definition">map</span> <span class="id" title="projection">val</span> (<span class="id" title="abbreviation">enum</span> <a class="idref" href="Combi.Basic.combclass.html#sub_undup_finType"><span class="id" title="definition">sub_undup_finType</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">undup</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.lst"><span class="id" title="variable">lst</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq.SubUndup"><span class="id" title="section">SubUndup</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypeSeq"><span class="id" title="section">SubtypeSeq</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab231"></a><h1 class="section">Finite subtype obtained as a finite the dijoint union of finite subtypes</h1>
+
+
+<div class="paragraph"> </div>
+
+Here is how to construct a union of disjoint finite subtype of a countable
+type. More precisely, we want to define a type for
+
+<div class="paragraph"> </div>
+
+    <code>U := Union_(i : TI | Pi i) TPi i</code>
+
+<div class="paragraph"> </div>
+
+For the constructed type <span class="inlinecode"><span class="id" title="var">U</span></span>, we need the following data:
+<ul class="doclist">
+<li> a type <span class="inlinecode"><span class="id" title="var">T</span></span> which is a <span class="inlinecode"><span class="id" title="var">countType</span></span>.
+
+</li>
+<li> a type <span class="inlinecode"><span class="id" title="var">TP</span></span> which is <span class="inlinecode"><span class="id" title="var">subCountType</span></span> of <span class="inlinecode"><span class="id" title="var">T</span></span> for a predicate <span class="inlinecode"><span class="id" title="var">P</span></span>.
+
+</li>
+</ul>
+The index type must be also countable, it should be given by
+<ul class="doclist">
+<li> a type <span class="inlinecode"><span class="id" title="var">TI</span></span> which is a <span class="inlinecode"><span class="id" title="var">countType</span></span>.
+
+</li>
+<li> a type <span class="inlinecode"><span class="id" title="var">TPI</span></span> which is <span class="inlinecode"><span class="id" title="var">subCountType</span></span> of <span class="inlinecode"><span class="id" title="var">TI</span></span> for a predicate <span class="inlinecode"><span class="id" title="var">PI</span></span>.
+
+</li>
+</ul>
+For all index <span class="inlinecode"><span class="id" title="var">i</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">TPI</span></span>, there must be a finite type, given by
+<ul class="doclist">
+<li> a type <span class="inlinecode"><span class="id" title="var">TPi</span></span> <span class="inlinecode"><span class="id" title="var">i</span></span> which is a <span class="inlinecode"><span class="id" title="var">subFinType</span></span> <span class="inlinecode">(<span class="id" title="var">Pi</span></span> <span class="inlinecode">(<span class="id" title="var">val</span></span> <span class="inlinecode"><span class="id" title="var">i</span>))</span> for a predicate <span class="inlinecode"><span class="id" title="var">Pi</span></span> <span class="inlinecode"><span class="id" title="var">i</span></span>.
+
+</li>
+</ul>
+Finally the sets <code>{ { x | Pi i } | PI i }</code> should define a partition
+of <code>{ x | P x }</code>. This is ensured by providing
+<ul class="doclist">
+<li> a map <span class="inlinecode"><span class="id" title="var">FI</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">T</span></span> <span class="inlinecode">-&gt;</span> <span class="inlinecode"><span class="id" title="var">TI</span></span> which recover the index of an element <span class="inlinecode"><span class="id" title="var">x</span></span> of <span class="inlinecode"><span class="id" title="var">T</span></span>.
+
+</li>
+</ul>
+Together with the two following requirements:
+<ul class="doclist">
+<li> for all index <span class="inlinecode"><span class="id" title="var">i</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">TPi</span></span> and <span class="inlinecode"><span class="id" title="var">x</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">T</span></span>, the statement <span class="inlinecode"><span class="id" title="var">Pi</span></span> <span class="inlinecode"><span class="id" title="var">i</span></span> <span class="inlinecode"><span class="id" title="var">x</span></span> must be
+  equivalent to <span class="inlinecode"><span class="id" title="var">P</span></span> <span class="inlinecode"><span class="id" title="var">x</span></span> <span class="inlinecode">&amp;&amp;</span> <span class="inlinecode"><span class="id" title="var">i</span></span> <span class="inlinecode">==</span> <span class="inlinecode"><span class="id" title="var">FI</span></span> <span class="inlinecode"><span class="id" title="var">x</span></span>.
+
+</li>
+<li> forall <span class="inlinecode"><span class="id" title="var">x</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">T</span></span>, such that <span class="inlinecode"><span class="id" title="var">P</span></span> <span class="inlinecode"><span class="id" title="var">x</span></span> the assertion <span class="inlinecode"><span class="id" title="var">PI</span></span> <span class="inlinecode">(<span class="id" title="var">FI</span></span> <span class="inlinecode"><span class="id" title="var">x</span>)</span> must holds.
+
+</li>
+</ul>
+From all these data <span class="inlinecode"><span class="id" title="var">union_subFinType</span></span> is a <span class="inlinecode"><span class="id" title="var">subFinType</span></span> of <span class="inlinecode"><span class="id" title="var">T</span></span> for the
+predicate <span class="inlinecode"><span class="id" title="var">P</span></span> that is a <span class="inlinecode"><span class="id" title="var">subFinType</span></span> structure for <span class="inlinecode"><span class="id" title="var">TP</span></span>.
+
+<div class="paragraph"> </div>
+
+See <span class="inlinecode"><span class="id" title="var">stpn_subFinType</span></span> and <span class="inlinecode"><span class="id" title="var">yamn_subFinType</span></span> for example of usage.
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="SubtypesDisjointUnion" class="idref" href="#SubtypesDisjointUnion"><span class="id" title="section">SubtypesDisjointUnion</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypesDisjointUnion.T" class="idref" href="#SubtypesDisjointUnion.T"><span class="id" title="variable">T</span></a> : <span class="id" title="abbreviation">countType</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypesDisjointUnion.P" class="idref" href="#SubtypesDisjointUnion.P"><span class="id" title="variable">P</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#pred"><span class="id" title="definition">pred</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.T"><span class="id" title="variable">T</span></a>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypesDisjointUnion.TP" class="idref" href="#SubtypesDisjointUnion.TP"><span class="id" title="variable">TP</span></a> : <span class="id" title="record">subCountType</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.P"><span class="id" title="variable">P</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypesDisjointUnion.TI" class="idref" href="#SubtypesDisjointUnion.TI"><span class="id" title="variable">TI</span></a> : <span class="id" title="abbreviation">countType</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypesDisjointUnion.PI" class="idref" href="#SubtypesDisjointUnion.PI"><span class="id" title="variable">PI</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#pred"><span class="id" title="definition">pred</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.TI"><span class="id" title="variable">TI</span></a>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypesDisjointUnion.TPI" class="idref" href="#SubtypesDisjointUnion.TPI"><span class="id" title="variable">TPI</span></a> : <span class="id" title="record">subFinType</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.PI"><span class="id" title="variable">PI</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypesDisjointUnion.Pi" class="idref" href="#SubtypesDisjointUnion.Pi"><span class="id" title="variable">Pi</span></a> : <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.TI"><span class="id" title="variable">TI</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#pred"><span class="id" title="definition">pred</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.T"><span class="id" title="variable">T</span></a>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypesDisjointUnion.TPi" class="idref" href="#SubtypesDisjointUnion.TPi"><span class="id" title="variable">TPi</span></a> : <span class="id" title="keyword">forall</span> <a id="i:34" class="idref" href="#i:34"><span class="id" title="binder">i</span></a> : <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.TPI"><span class="id" title="variable">TPI</span></a>, <span class="id" title="record">subFinType</span> (<a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.Pi"><span class="id" title="variable">Pi</span></a> (<span class="id" title="projection">val</span> <a class="idref" href="Combi.Basic.combclass.html#i:34"><span class="id" title="variable">i</span></a>)).<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="SubtypesDisjointUnion.FI" class="idref" href="#SubtypesDisjointUnion.FI"><span class="id" title="variable">FI</span></a> : <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.T"><span class="id" title="variable">T</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.TI"><span class="id" title="variable">TI</span></a>.<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="SubtypesDisjointUnion.HPTi" class="idref" href="#SubtypesDisjointUnion.HPTi"><span class="id" title="variable">HPTi</span></a> : <span class="id" title="keyword">forall</span> <a id="i:37" class="idref" href="#i:37"><span class="id" title="binder">i</span></a> : <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.TPI"><span class="id" title="variable">TPI</span></a>, <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#876aa133fb3472bffd492f74ff496035"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrbool.html#predI"><span class="id" title="definition">predI</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.P"><span class="id" title="variable">P</span></a> (<span class="id" title="definition">pred1</span> (<span class="id" title="projection">val</span> <a class="idref" href="Combi.Basic.combclass.html#i:37"><span class="id" title="variable">i</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#8b4742e3f67816503ce4ab2f3b81c27e"><span class="id" title="notation">\</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#8b4742e3f67816503ce4ab2f3b81c27e"><span class="id" title="notation">o</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.FI"><span class="id" title="variable">FI</span></a>)<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#876aa133fb3472bffd492f74ff496035"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#876aa133fb3472bffd492f74ff496035"><span class="id" title="notation">=1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#876aa133fb3472bffd492f74ff496035"><span class="id" title="notation">(</span></a><a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.Pi"><span class="id" title="variable">Pi</span></a> (<span class="id" title="projection">val</span> <a class="idref" href="Combi.Basic.combclass.html#i:37"><span class="id" title="variable">i</span></a>)<a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.ssr.ssrfun.html#876aa133fb3472bffd492f74ff496035"><span class="id" title="notation">)</span></a>.<br/>
+<span class="id" title="keyword">Hypothesis</span> <a id="SubtypesDisjointUnion.Hpart" class="idref" href="#SubtypesDisjointUnion.Hpart"><span class="id" title="variable">Hpart</span></a> : <span class="id" title="keyword">forall</span> <a id="x:39" class="idref" href="#x:39"><span class="id" title="binder">x</span></a> : <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.T"><span class="id" title="variable">T</span></a>, <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.P"><span class="id" title="variable">P</span></a> <a class="idref" href="Combi.Basic.combclass.html#x:39"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.PI"><span class="id" title="variable">PI</span></a> (<a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.FI"><span class="id" title="variable">FI</span></a> <a class="idref" href="Combi.Basic.combclass.html#x:39"><span class="id" title="variable">x</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="enum_union" class="idref" href="#enum_union"><span class="id" title="definition">enum_union</span></a> := <span class="id" title="definition">flatten</span> <span class="id" title="notation">[</span><span class="id" title="notation">seq</span> <span class="id" title="definition">map</span> <span class="id" title="projection">val</span> (<span class="id" title="abbreviation">enum</span> (<a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.TPi"><span class="id" title="variable">TPi</span></a> <a class="idref" href="Combi.Basic.combclass.html#i:41"><span class="id" title="variable">i</span></a>)) <span class="id" title="notation">|</span> <a id="i:41" class="idref" href="#i:41"><span class="id" title="binder">i</span></a> <span class="id" title="notation">:</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.TPI"><span class="id" title="variable">TPI</span></a><span class="id" title="notation">]</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="all_unionP" class="idref" href="#all_unionP"><span class="id" title="lemma">all_unionP</span></a> : <span class="id" title="definition">all</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.P"><span class="id" title="variable">P</span></a> <a class="idref" href="Combi.Basic.combclass.html#enum_union"><span class="id" title="definition">enum_union</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="count_unionP" class="idref" href="#count_unionP"><span class="id" title="lemma">count_unionP</span></a> <a id="x:42" class="idref" href="#x:42"><span class="id" title="binder">x</span></a> : <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.P"><span class="id" title="variable">P</span></a> <a class="idref" href="Combi.Basic.combclass.html#x:42"><span class="id" title="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="abbreviation">count_mem</span> <a class="idref" href="Combi.Basic.combclass.html#x:42"><span class="id" title="variable">x</span></a> <a class="idref" href="Combi.Basic.combclass.html#enum_union"><span class="id" title="definition">enum_union</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 1.<br/>
+
+<br/>
+<span class="id" title="keyword">Let</span> <a id="SubtypesDisjointUnion.union_enum" class="idref" href="#SubtypesDisjointUnion.union_enum"><span class="id" title="variable">union_enum</span></a> := <a class="idref" href="Combi.Basic.combclass.html#subType_seq"><span class="id" title="definition">subType_seq</span></a> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.TP"><span class="id" title="variable">TP</span></a> <a class="idref" href="Combi.Basic.combclass.html#all_unionP"><span class="id" title="lemma">all_unionP</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="subType_unionE" class="idref" href="#subType_unionE"><span class="id" title="lemma">subType_unionE</span></a> : <span class="id" title="definition">map</span> <span class="id" title="projection">val</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.union_enum"><span class="id" title="variable">union_enum</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.Basic.combclass.html#enum_union"><span class="id" title="definition">enum_union</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="finite_unionP" class="idref" href="#finite_unionP"><span class="id" title="lemma">finite_unionP</span></a> : <span class="id" title="definition">Finite.axiom</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.union_enum"><span class="id" title="variable">union_enum</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="union_finMixin" class="idref" href="#union_finMixin"><span class="id" title="definition">union_finMixin</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">FinMixin</span> <a class="idref" href="Combi.Basic.combclass.html#finite_unionP"><span class="id" title="lemma">finite_unionP</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="union_finType" class="idref" href="#union_finType"><span class="id" title="definition">union_finType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">FinType</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.TP"><span class="id" title="variable">TP</span></a> <a class="idref" href="Combi.Basic.combclass.html#union_finMixin"><span class="id" title="definition">union_finMixin</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="union_subFinType" class="idref" href="#union_subFinType"><span class="id" title="definition">union_subFinType</span></a> := <span class="id" title="keyword">Eval</span> <span class="id" title="tactic">hnf</span> <span class="id" title="tactic">in</span> <span class="id" title="notation">[</span><span class="id" title="notation">subFinType</span> <span class="id" title="notation">of</span> <a class="idref" href="Combi.Basic.combclass.html#union_finType"><span class="id" title="definition">union_finType</span></a><span class="id" title="notation">]</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="enum_unionE" class="idref" href="#enum_unionE"><span class="id" title="lemma">enum_unionE</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">map</span> <span class="id" title="projection">val</span> (<span class="id" title="abbreviation">enum</span> <a class="idref" href="Combi.Basic.combclass.html#union_finType"><span class="id" title="definition">union_finType</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Combi.Basic.combclass.html#enum_union"><span class="id" title="definition">enum_union</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="card_unionE" class="idref" href="#card_unionE"><span class="id" title="lemma">card_unionE</span></a> : <span class="id" title="notation">#|</span><a class="idref" href="Combi.Basic.combclass.html#union_finType"><span class="id" title="definition">union_finType</span></a><span class="id" title="notation">|</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.13.2/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">\</span><span class="id" title="notation">sum_</span><span class="id" title="notation">(</span><a id="i:48" class="idref" href="#i:48"><span class="id" title="binder">i</span></a> <span class="id" title="notation">:</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.TPI"><span class="id" title="variable">TPI</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">#|</span><a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion.TPi"><span class="id" title="variable">TPi</span></a> <a class="idref" href="Combi.Basic.combclass.html#i:46"><span class="id" title="variable">i</span></a><span class="id" title="notation">|</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Combi.Basic.combclass.html#SubtypesDisjointUnion"><span class="id" title="section">SubtypesDisjointUnion</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
