@@ -80,7 +80,7 @@ More unstable stuff:
 Documentation
 ========================================================================
 
-The [documentation](https://www.lri.fr/~hivert/Coq-Combi/) is currently in progress.
+The [documentation](http://hivert.github.io/Coq-Combi/) is currently in progress.
 
 Installation
 ========================================================================

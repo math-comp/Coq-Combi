@@ -1,3 +1,4 @@
+(** * Combi.LRrule.freeSchur : free Schur functions *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,6 +13,53 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** The main goal of this file is to lift the multiplication of Schur
+multivariate polynomials to the non commutative setting.
+
+- [commword n R w] == the commutative image of the word [w] as a multivariate
+                      polynomial (of type [{mpoly R[n]}]).
+- [homlang n d] == the type of homogenous langage over ['I_n.+1] of degre [d].
+                      that is [{set d.-tuple 'I_n}].
+- [polylang n R s] == the commutative image of the langage [s] where s is of
+                      type [homlang n d].
+- [catlang l1 l2] == the concatenation of homogeneous language: given
+                      [s1] of degree [d1] and [s2] of degree [d2] return an
+                      homogeneous language of degree [d1 + d2].
+- [tabwordshape n sh] == the set of reading of tableaux over ['I_n.+1] of
+                      shape [sh], where [sh] is of type [intpartn d]
+- [freeSchur n t] == the set of words whose recording tableau over ['I_n.+1]
+                      is [t], where [t] is of type [stdtabn]
+- [tabword_of_tuple w] == the bijection freeSchur -> tabwordshape as stated
+                      in Theorem [tabword_of_tuple_freeSchur]:
+
+  [
+    forall Q : stdtabn d,
+      [set tabword_of_tuple x | x in freeSchur n0 Q] = tabwordshape n0 (shape_deg Q)
+  ]
+
+- [LRsupport Q1 Q2] == the set of standard Littlewood-Richardson Q-tableau in
+                      the product of the free Schur function indexed by [Q1]
+                      and [Q2]. The main result here is the free LR rule
+                      [free_LR_rule]:
+
+  [
+      catlang (freeSchur Q1) (freeSchur Q2) = \bigcup_(Q in LRsupport) freeSchur Q.
+  ]
+
+- [hyper_stdtab sh] == the hyper standard tableau of shape sh as a [seq (seq nat)].
+- [hyper_stdtabn sh] == the hyper standard tableau of shape sh as a
+                         [stdtabn d] where sh is a [intpartn d].
+- [LRtab_set Q1 Q2 Q] == the set of standard Littlewood-Richardson Q-tableau in
+                      the product of the free Schur function indexed by [Q1]
+                      and [Q2] of shape [Q].
+
+- [LRtab_coeff Q1 Q2] == the Littlewood-Richardson coefficient defined as the cardinality of
+                      [LRtab_set Q1 Q2 Q].
+
+
+
+****************************************************************************)
+
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop ssralg.
 Require Import ssrcomplements poset freeg bigenough mpoly.
@@ -19,10 +67,6 @@ Require Import ssrcomplements poset freeg bigenough mpoly.
 Require Import tools ordtype partition Yamanouchi std tableau stdtab sympoly.
 Require Import Schensted congr plactic stdplact Yam_plact Greene_inv shuffle.
 
-(******************************************************************************)
-(* The main goal of this file is to lift the multiplication of multivariate   *)
-(* polynomials to the non commutative setting.                                *)
-(******************************************************************************)
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -31,7 +75,7 @@ Unset Printing Implicit Defensive.
 Local Open Scope ring_scope.
 Import GRing.Theory.
 
-
+(** * Commutative image of an homogeneous langage *)
 Section CommutativeImage.
 
 Variable n : nat.
@@ -49,7 +93,7 @@ Lemma commtuple_morph d1 d2 (u : d1.-tuple 'I_n) (v : d2.-tuple 'I_n) :
   commword (cat_tuple u v) = (commword u) * (commword v).
 Proof. by rewrite commword_morph. Qed.
 
-Local Notation homlang d := {set d.-tuple 'I_n}.
+Definition homlang d := {set d.-tuple 'I_n}.
 
 Definition polylang d (s : homlang d) := \sum_(w in s) commword w.
 
@@ -118,6 +162,7 @@ Qed.
 End TableauReading.
 
 
+(** * Free Schur function : lifting Schur function is the free algebra *)
 Section FreeSchur.
 
 Variable R : comRingType.
@@ -125,7 +170,7 @@ Variable R : comRingType.
 Variable n0 : nat.
 Local Notation n := (n0.+1).
 Local Notation Schur sh := (Schur n0 R sh).
-Local Notation homlang d := {set d.-tuple 'I_n}.
+Local Notation homlang d := (homlang n d).
 
 Section Degree.
 
@@ -215,6 +260,7 @@ Proof.
 Qed.
 
 
+(** * The free Littlewood-Richardson rule *)
 Section FreeLRrule.
 
 Variables (d1 d2 : nat).
@@ -223,7 +269,6 @@ Variables (Q1 : stdtabn d1) (Q2 : stdtabn d2).
 Definition LRsupport :=
   [set Q : stdtabn (d1 + d2) | pred_LRtriple_fast Q1 Q2 Q ].
 
-(** * The free Littlewood-Richardson rule *)
 Lemma free_LR_rule :
   catlang (freeSchur Q1) (freeSchur Q2) = \bigcup_(Q in LRsupport) freeSchur Q.
 Proof.
@@ -363,6 +408,7 @@ Proof.
 Qed.
 
 
+(** ** Dependency with the choice of the Q-Tableau *)
 Section Bij_LRsupport.
 
 Section ChangeUT.
@@ -601,7 +647,7 @@ End Coeffs.
 
 End FreeSchur.
 
-
+(** ** Conjugating tableaux in the free LR rule *)
 Section Conj.
 
 Variables d1 d2 : nat.
@@ -649,7 +695,3 @@ Proof.
 Qed.
 
 End Conj.
-
-
-
-

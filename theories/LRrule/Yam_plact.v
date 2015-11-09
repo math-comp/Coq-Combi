@@ -1,3 +1,4 @@
+(** * Combi.LRrule.Yam_plact : Plactic class and Yamanouchi words *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,6 +13,27 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** The goal of this file is to show that the Yamanouchi words of a given
+evaluation form a plactic class.
+
+- [yamtab sh] == the uniq Yamanouchi tableau of shape sh: the i-th line
+                 contains only i's as in: 33 2222 11111 0000000.
+
+The main result is [Corollary yam_plactic_shape]
+
+[
+  is_yam y -> ( y =Pl z <-> (is_yam z /\ evalseq y = evalseq z)).
+]
+
+We also show that for all partition sh standardization defines a bijection
+from Yamanouchi words of evaluation sh and a plactic class. In particular, it
+is surjective [Theorem plact_from_yam]:
+
+[
+  is_part sh -> w =Pl std (hyper_yam sh) -> { y | is_yam_of_eval sh y & std y = w }.
+]
+****)
+
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset path bigop.
 
@@ -134,7 +156,7 @@ Proof.
     by move: Hperm => /perm_eqP ->.
 Qed.
 
-(* Yamanouchi tableau : 33 2222 11111 0000000 *)
+(** * The Yamanouchi tableau *)
 Fixpoint yamtab_rec i sh :=
   if sh is s0 :: s then
     nseq s0 i :: yamtab_rec (i.+1) s
@@ -288,6 +310,7 @@ Proof.
     by rewrite (RS_yam Hyam) (RS_yam Hyamz) Hsh.
 Qed.
 
+(** * Yamanouchi words, standardization and plactic classes*)
 Lemma yam_std_inj : {in is_yam &, injective (@std _) }.
 Proof.
   move=> y w /=; rewrite !unfold_in -/is_yam => Hy Hw Hstd.
