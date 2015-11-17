@@ -483,6 +483,19 @@ Proof.
   by rewrite tpermL tpermR.
 Qed.
 
+Lemma length_desc s (i : 'I_(n.+1)) :
+  i < n -> (s i < s (inord (i.+1))) = (length ('s_i * s) > length s).
+Proof.
+  move=> Hi.
+  case: (ltngtP (s i) (s (inord (i.+1)))) => Hsi; apply esym.
+  - by rewrite (length_add1L  Hi Hsi) ltnS leqnn.
+  - by rewrite (length_sub1L Hi Hsi) ltnNge leqnSn.
+  - exfalso.
+    have {Hsi} : s i = s (inord i.+1) by apply val_inj.
+    move=> /perm_inj /(congr1 val) /= /eqP.
+    by rewrite inordK ?ltnS // trivSimpl.
+Qed.
+
 Lemma length_add1R s (i : 'I_(n.+1)) :
   i < n -> s^-1 i < s^-1 (inord (i.+1)) -> length (s * 's_i) = (length s).+1.
 Proof.
@@ -497,6 +510,13 @@ Proof.
   move=> Hi Hdesc.
   rewrite -length_permV -[length (s * _)]length_permV invMg tpermV -/(eltr i).
   exact: length_sub1L.
+Qed.
+
+Lemma length_rec s (i : 'I_(n.+1)) :
+  i < n -> (s^-1 i < s^-1 (inord (i.+1))) = (length (s * 's_i) > length s).
+Proof.
+  move/length_desc ->.
+  by rewrite /eltr -{1}tpermV -/(eltr n i) -invMg !length_permV.
 Qed.
 
 Lemma length_prods (w : seq 'I_n) : length 's_[w] <= size w.
