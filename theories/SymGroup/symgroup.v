@@ -756,9 +756,9 @@ Definition canword s : seq 'I_n := pmap insub (wordcd (cocode s)).
 Lemma canwordE s : [seq nat_of_ord i | i <- canword s] = wordcd (cocode s).
 Proof. apply (insub_wordcdK (cocodeP _)); by rewrite size_cocode. Qed.
 
-Theorem canwordP s : s = 's_[canword s].
+Theorem canwordP s : 's_[canword s] = s.
 Proof.
-  rewrite /= {1}(cocodeE s).
+  rewrite /= {2}(cocodeE s).
   rewrite -(big_map (@nat_of_ord _) xpredT) /=; apply congr_big => //.
   by rewrite canwordE.
 Qed.
@@ -885,8 +885,8 @@ Proof. apply: (reduced_sprod_code (cocodeP _)); by rewrite size_cocode. Qed.
 Corollary lengthM u v : length (u * v) <= length u + length v.
 Proof.
   have:= canword_reduced u; have:= canword_reduced v.
-  rewrite !unfold_in -!canwordP => /eqP -> /eqP ->.
-  rewrite {1}(canwordP u) {1}(canwordP v) -big_cat /=.
+  rewrite !unfold_in !canwordP => /eqP -> /eqP ->.
+  rewrite -{1}(canwordP u) -{1}(canwordP v) -big_cat /=.
   apply: (leq_trans (length_prods _)); by rewrite size_cat.
 Qed.
 
@@ -911,16 +911,23 @@ Proof. rewrite -cat1s; exact: reduced_catr. Qed.
 Lemma reduced_rconsK u i : rcons u i \is reduced -> u \is reduced.
 Proof. rewrite -cats1; exact: reduced_catl. Qed.
 
+Lemma reducedM (s t : 'S_(n.+1)) :
+  length (s * t) = length s + length t -> canword s ++ canword t \is reduced.
+Proof.
+  rewrite unfold_in big_cat /= size_cat !size_canword => <-.
+  by rewrite !canwordP.
+Qed.
+
 Lemma canword1 : canword (1 : 'S_n.+1) = [::].
 Proof.
-  have:= canword_reduced 1; by rewrite unfold_in -canwordP length1 eq_sym => /nilP.
+  have:= canword_reduced 1; by rewrite unfold_in canwordP length1 eq_sym => /nilP.
 Qed.
 
 Theorem eltr_ind (P : 'S_n.+1 -> Type) :
   P 1 -> (forall s i, i < n -> P s -> P ('s_i * s)) ->
   forall s, P s.
 Proof.
-  move=> H1 IH s; rewrite (canwordP s).
+  move=> H1 IH s; rewrite -(canwordP s).
   elim: (canword s)  => [| t0 t IHt] /=; first by rewrite big_nil.
   rewrite big_cons; by apply IH; first exact: ltn_ord.
 Qed.
@@ -1451,7 +1458,7 @@ Qed.
 Corollary cocode_straightenE w :
   rev (straighten w) = cocode 's_[w].
 Proof.
-  have:= (prods_straighten w); rewrite {1}(canwordP 's_[w]).
+  have:= (prods_straighten w); rewrite -{1}(canwordP 's_[w]).
   rewrite -!(big_map (@nat_of_ord _) xpredT) /= canwordE /wcord -map_comp.
   rewrite [map _ _](_ : _ = wordcd (rev (straighten w))); first last.
     rewrite -[RHS](map_id) -eq_in_map => i.
@@ -1552,7 +1559,7 @@ Proof.
   rewrite /= !xpair_eqE /=; apply/and4P; split.
   - rewrite eqEsubset subsetT /=.
     apply/subsetP => s _.
-    have /= -> := canwordP s.
+    rewrite -(canwordP s).
     elim: (canword s) => [| t0 t IHt] /=.
       rewrite big_nil; exact: group1.
     rewrite big_cons; apply groupM => /=.
@@ -1587,7 +1594,7 @@ Proof.
   rewrite /= !xpair_eqE /=; apply/and5P; split; last apply/and3P; try split.
   - rewrite eqEsubset subsetT /=.
     apply/subsetP => s _.
-    have /= -> := canwordP s.
+    rewrite -(canwordP s).
     elim: (canword s) => [| t0 t IHt] /=.
       rewrite big_nil; exact: group1.
     rewrite big_cons; apply groupM => /=.

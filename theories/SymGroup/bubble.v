@@ -228,6 +228,13 @@ Qed.
 Corollary bubble_red (u : seq 'I_n) : u \is reduced -> 'pi_[u] =1 'pi_{ 's_[u] }.
 Proof. by move/braid_to_canword/bubble_braid_congr. Qed.
 
+Corollary reduced_bubbleM (s t : 'S_(n.+1)) :
+  length (s * t) = length s + length t -> 'pi_{ s } \o 'pi_{ t } =1 'pi_{ s * t }.
+Proof.
+  rewrite -big_cat /= => /reducedM/bubble_red => H i.
+  by rewrite H big_cat /= !canwordP.
+Qed.
+
 Corollary bubble_perm (u : seq 'I_n) : exists s : 'S_(n.+1), 'pi_[u] =1 'pi_{ s }.
 Proof.
   move Hsz : {2}(size u) => l.
@@ -247,5 +254,6 @@ Proof.
   apply eq_comp => //=; apply eq_comp => //=.
   exact: bubbleK.
 Qed.
+
 
 End Bubble.
