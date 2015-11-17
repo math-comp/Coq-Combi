@@ -112,6 +112,7 @@ VFILES:= theories/Basic/combclass.v\
   theories/LRrule/therule.v\
   theories/LRrule/Yam_plact.v\
   theories/SymGroup/symgroup.v\
+  theories/SymGroup/bubble.v\
   3rdparty/ALEA/Ccpo.v\
   3rdparty/ALEA/Misc.v\
 
