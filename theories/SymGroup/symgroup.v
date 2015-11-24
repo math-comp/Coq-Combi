@@ -38,15 +38,25 @@ Lemma ieqi2F i : (i == i.+2) = false. Proof. apply: negbTE; by elim i. Qed.
 Lemma i1eqiF i : (i.+1 == i) = false. Proof. apply: negbTE; by elim i. Qed.
 Lemma i2eqiF i : (i.+2 == i) = false. Proof. apply: negbTE; by elim i. Qed.
 
-Definition trivSimpl := (eq_refl, eqSS, ieqi1F, ieqi2F, i1eqiF, i2eqiF).
+Lemma inordi n i : i < n -> (@inord n i = i :> nat).
+Proof. move=> Hi; rewrite inordK // ltnS; exact: ltnW. Qed.
 
-Lemma inordi1 n i : i < n -> (@inord n i != @inord n i.+1).
+Lemma inordi1 n i : i < n -> (@inord n i.+1 = i.+1 :> nat).
+Proof. move=> Hi; by rewrite inordK. Qed.
+
+Lemma inord1i n i : i.+1 < n -> (@inord n i = i :> nat).
+Proof. move=> Hi; rewrite inordK //; apply ltnW; exact: ltnW. Qed.
+
+Lemma inordi_neq_i1 n i : i < n -> (@inord n i != @inord n i.+1).
 Proof.
   move=> Hi.
   rewrite /eq_op /= inordK; last by apply (leq_trans Hi).
   rewrite inordK; last exact: Hi.
   by rewrite ieqi1F.
 Qed.
+
+Definition trivSimpl := (eq_refl, eqSS, ieqi1F, ieqi2F, i1eqiF, i2eqiF).
+
 
 Section Codes.
 
@@ -270,30 +280,21 @@ Lemma eltr_braid i :
 Proof.
   rewrite /eltr => Hi.
   apply: tperm_braid; rewrite /eq_op /=.
-  - rewrite inordK; last by rewrite ltnS; apply ltnW; apply ltnW.
-    rewrite inordK; last by rewrite ltnS; apply ltnW.
-    by rewrite !trivSimpl.
-  - rewrite inordK; last by rewrite ltnS; apply ltnW.
-    rewrite inordK; last by rewrite ltnS.
-    by rewrite !trivSimpl.
+  - by rewrite inord1i // inordi // !trivSimpl.
+  - by rewrite inordi // inordi1 // !trivSimpl.
 Qed.
 
 Lemma eltr_comm i j :
   i.+1 < j < n -> 's_i * 's_j = 's_j * 's_i.
 Proof.
   move => /andP [] Hij Hj.
+  have Hi := ltn_trans Hij Hj.
   apply: tpermC; rewrite /eq_op /=.
-  - rewrite inordK; last by apply (leq_trans (ltnW Hij)); apply ltnW; apply ltnW.
-    rewrite inordK; last by apply ltnW.
-    by rewrite (ltn_eqF (ltnW Hij)).
-  - rewrite inordK; last by apply (leq_trans (ltnW Hij)); apply ltnW.
-    rewrite inordK; last by apply ltnW.
-    by rewrite (ltn_eqF Hij).
-  - rewrite inordK; last by apply (leq_trans (ltnW Hij)); apply ltnW; apply ltnW.
-    rewrite inordK; last exact Hj.
+  - by rewrite inord1i // inordi // (ltn_eqF (ltnW Hij)).
+  - by rewrite !inordi // (ltn_eqF Hij).
+  - rewrite inord1i // inordi1 //.
     by rewrite (ltn_eqF (leq_trans (ltnW Hij) (leqnSn j))).
-  - rewrite inordK; last by apply (leq_trans (ltnW Hij)); apply ltnW.
-    rewrite inordK; last exact Hj.
+  - rewrite inordi // inordi1 //.
     by rewrite eqSS (ltn_eqF (ltnW Hij)).
 Qed.
 
@@ -390,85 +391,81 @@ Qed.
 Lemma eltr_exchange i (a b : 'I_(n.+1)) :
   i < n -> a < b -> 's_i a < 's_i b = (i != a) || (i.+1 != b).
 Proof.
-  rewrite -ltnS => Hi1n Hab.
-  have : (inord i) = Ordinal (ltnW Hi1n).
-    apply val_inj => /=; rewrite inordK //; exact: ltnW.
-  set io  := Ordinal (ltnW Hi1n) => Hi.
-  have : (inord i.+1) = Ordinal Hi1n by apply val_inj => /=; rewrite inordK.
-  set i1o := Ordinal Hi1n => Hi1.
-  move: Hab; rewrite /eltr Hi Hi1.
+  rewrite /eltr => Hi.
   case: tpermP => [-> | -> | /eqP Ha1 /eqP Hai1];
     case: tpermP => [-> | -> | /eqP Hb1 /eqP Hbi1];
-    rewrite /= ?ltnn ?trivSimpl //=.
+    rewrite ?(inordi Hi) ?(inordi1 Hi) /= ?ltnn ?trivSimpl //=.
   - by move=> /ltnW; rewrite leqNgt => /negbTE ->.
   - rewrite (ltn_neqAle i.+1 b) => ->; by rewrite andbT.
   - by rewrite ltnS leqnn.
-  - by rewrite ltn_neqAle eq_sym Hbi1 /= => ->.
+  - by move/ltnW => ->.
   - by rewrite ltnS (ltn_neqAle a i) eq_sym => /andP [] -> ->.
   - rewrite ltnS ltn_neqAle => -> /=; by rewrite eq_sym andbT orbF.
-  - by rewrite eq_sym Ha1 eq_sym Hbi1 => ->.
+  - move=> ->; apply esym; apply/orP; left.
+    move: Ha1; apply contra => /eqP Hia.
+    by apply/eqP/val_inj; rewrite /= -Hia inordi.
 Qed.
 
 Lemma length_add1L s (i : 'I_(n.+1)) :
   i < n -> s i < s (inord (i.+1)) -> length ('s_i * s) = (length s).+1.
 Proof.
-  rewrite -ltnS => Hi1n.
-  have Hi : (inord i) = i by apply val_inj => /=; rewrite inordK.
-  have : (inord i.+1) = Ordinal Hi1n by apply val_inj => /=; rewrite inordK.
-  set i1 := Ordinal Hi1n => Hi1.
-  rewrite /length Hi1 => Hfwd.
+  move=> Hi.
+  have Hio : (inord i) = i by apply val_inj => /=; rewrite inordK.
+  rewrite /length => Hfwd.
   suff -> : invset ('s_i * s) =
-            (i, Ordinal Hi1n) |: [set ('s_i p.1, 's_i p.2) | p in invset s].
+            (i, inord i.+1) |: [set ('s_i p.1, 's_i p.2) | p in invset s].
     rewrite cardsU1 (card_imset _ (@inv_inj _ _ _)); first last.
       move=> [u v] /=; by rewrite !tpermK.
     rewrite (_ : (_, _) \in _ = false) //.
     apply (introF idP) => /imsetP [[u v]].
     rewrite inE /= => /andP [] Huv Hsvu [].
-    move/(congr1 's_i); rewrite /eltr Hi Hi1 tpermK tpermL => Hu; subst u.
-    move/(congr1 's_i); rewrite /eltr Hi Hi1 tpermK tpermR => Hv; subst v.
-    move: Huv => /ltnW /=; by rewrite ltnn.
+    move/(congr1 's_i); rewrite /eltr Hio tpermK tpermL => Hu; subst u.
+    move/(congr1 's_i); rewrite /eltr Hio tpermK tpermR => Hv; subst v.
+    move: Huv => /ltnW; by rewrite inordi1 // ltnn.
   rewrite -setP => [[u v]] /=; rewrite !inE /= !permM.
   apply/idP/idP.
   - move=> /andP [] Huv.
-    rewrite /eltr Hi Hi1 -/i1; case: tpermP => /= [Hv | Hv | /eqP Hvi /eqP Hvi1].
+    rewrite /eltr Hio; case: tpermP => /= [Hv | Hv | /eqP Hvi /eqP Hvi1].
     + subst v.
-      have Htu : tperm i i1 u = u.
-        rewrite tpermD // eq_sym; move: Huv; apply contraL => /eqP ->; by rewrite /= -leqNgt.
-      rewrite Htu => Hs; apply/orP; right; apply/imsetP; exists (u, i1); first last.
+      have Htu : tperm i (inord i.+1) u = u.
+        rewrite tpermD // eq_sym.
+        move: Huv; apply contraL => /eqP ->; by rewrite ltnn.
+        move: Huv; apply contraL => /eqP ->; by rewrite /= -leqNgt inordi1.
+      rewrite Htu => Hs; apply/orP; right; apply/imsetP; exists (u, inord i.+1); first last.
         by rewrite /= tpermR Htu.
-      rewrite inE /= Hs andbT; by apply/(ltn_trans Huv).
+      rewrite inE /= Hs andbT inordi1 //; by apply/(ltn_trans Huv).
     + subst v; case: tpermP.
       * move=> ->; by rewrite eq_refl.
       * move=> Hu; move: Huv; by rewrite Hu ltnn.
       move=> /eqP Hiu /eqP Hi1u.
-      have Htu : tperm i i1 u = u by rewrite tpermD // eq_sym.
+      have Htu : tperm i (inord i.+1) u = u by rewrite tpermD // eq_sym.
       move=> Hsiu; apply/orP; right; apply/imsetP; exists (u, i); first last.
         by rewrite tpermL Htu.
-      by rewrite inE /= Hsiu andbT ltn_neqAle Hiu -ltnS /= Huv.
+      by rewrite inE /= Hsiu andbT ltn_neqAle Hiu -ltnS -(inordi1 Hi) /= Huv.
     case: tpermP => [Hu | Hu | /eqP Hui /eqP Hui1].
     + subst u => Hsvi1.
-      have Htv : tperm i i1 v = v by rewrite tpermD // eq_sym.
-      apply/orP; right; apply/imsetP; exists (i1, v); first last.
+      have Htv : tperm i (inord i.+1) v = v by rewrite tpermD // eq_sym.
+      apply/orP; right; apply/imsetP; exists ((inord i.+1), v); first last.
         by rewrite Htv tpermR.
-      by rewrite inE /= Hsvi1 ltn_neqAle Huv !andbT eq_sym Hvi1.
+      by rewrite inE /= Hsvi1 ltn_neqAle inordi1 // Huv !andbT eq_sym -(inordi1 Hi) Hvi1.
     + subst u => Hsvi1.
-      have Htv : tperm i i1 v = v by rewrite tpermD // eq_sym.
+      have Htv : tperm i (inord i.+1) v = v by rewrite tpermD // eq_sym.
       apply/orP; right; apply/imsetP; exists (i, v); first last.
         by rewrite Htv tpermL.
       rewrite inE /= Hsvi1 ltn_neqAle eq_sym Hvi !andbT /=.
-      by apply: ltnW; apply ltnW.
+      by move: Huv; rewrite inordi1 // => /ltnW/ltnW.
     + move=> Hsvu.
       apply/orP; right; apply/imsetP; exists (u, v); first last.
         by rewrite !tpermD // eq_sym.
       by rewrite inE /= Huv Hsvu.
   - move/orP => [].
       move=> /eqP [] -> ->.
-      by rewrite /eltr Hi Hi1 tpermL tpermR /= ltnS leqnn Hfwd.
+      by rewrite /eltr inordi1 // Hio ltnS leqnn /= tpermL tpermR.
     move=> /imsetP [[a b]]; rewrite inE /= => /andP [] Hab Hsba [] -> -> {u v}.
-    rewrite !tpermK Hsba andbT (eltr_exchange Hi1n Hab) -negb_and.
+    rewrite !tpermK Hsba andbT (eltr_exchange Hi Hab) -negb_and.
     move: Hsba; apply contraL; rewrite -leqNgt => /andP [] /eqP Hia /eqP Hib.
     have -> : a = i by apply val_inj.
-    have -> : b = i1 by apply val_inj.
+    have -> : b = (inord i.+1) by apply val_inj; rewrite /= -Hib inordi1.
     exact: ltnW.
 Qed.
 
@@ -937,7 +934,7 @@ Lemma odd_size_permE ts :
 Proof.
   elim: ts => [_ | t0 t IHt] /=; first by rewrite big_nil odd_perm1.
   move=> /andP [] Ht0 /IHt{IHt} ->.
-  by rewrite big_cons odd_mul_tperm (inordi1 Ht0) addTb.
+  by rewrite big_cons odd_mul_tperm (inordi_neq_i1 Ht0) addTb.
 Qed.
 
 

@@ -316,11 +316,12 @@ Proof.
   apply (iffP idP).
   - move=> /forallP Hanti i Hi.
     have /eqP -> := Hanti (eltr n i).
-    by rewrite /eltr odd_tperm (inordi1 Hi) !simplexp.
+    rewrite /eltr odd_tperm.
+    by rewrite /eq_op /= inordi // inordi1 // trivSimpl simplexp.
   - move=> Heltr; apply/forallP; elim/eltr_ind => [| S i Hi /eqP IH].
     + by rewrite odd_perm1 /= msym1m !simplexp.
     + rewrite msymMm (Heltr i Hi).
-      rewrite msymN IH odd_mul_tperm (inordi1 Hi) addTb.
+      rewrite msymN IH odd_mul_tperm /eq_op /= inordi // inordi1 // trivSimpl addTb.
       by case: (odd_perm _); rewrite !simplexp.
 Qed.
 
