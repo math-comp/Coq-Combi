@@ -689,7 +689,7 @@ Proof.
   rewrite rev_cons -cats1 big_cat /= {1}subnS prednK; last by rewrite subn_gt0.
   rewrite big_seq1 mulgA.
   have H : m - i.+1 < n.
-    rewrite -ltnS subnSK //; apply: (leq_trans _ (ltn_ord _)); rewrite ltnS; exact: leq_subr.
+    rewrite -ltnS subnSK //; apply: (leq_trans _ (ltn_ord m)); rewrite ltnS; exact: leq_subr.
   have:= H; rewrite -ltnS => /ltnW Ho.
   have -> : (m - i.+1) = Ordinal Ho by [].
   rewrite length_add1R.
