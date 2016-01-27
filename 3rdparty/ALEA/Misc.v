@@ -220,7 +220,7 @@ apply Plt2; inversion H; auto.
 Defined.
 
 (** Decidability *)
-Require Omega.
+Require Import Omega.
 
 Lemma dec_sig_lt : forall P : nat -> Prop, (forall x, {P x}+{ ~ P x})
   -> forall n, {i | i < n /\ P i}+{forall i, i < n -> ~ P i}.

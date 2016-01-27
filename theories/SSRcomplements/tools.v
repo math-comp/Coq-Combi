@@ -17,8 +17,9 @@
 (*                                                                            *)
 (** TODO: these probably should be contributed to SSReflect itself            *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import bigop.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
+From mathcomp Require Import bigop.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
