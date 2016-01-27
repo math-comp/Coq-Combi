@@ -408,7 +408,7 @@ Proof.
     by rewrite (Hhomog _ (mlead_supp Hpn0)).
   rewrite ltn_sorted_uniq_leq rev_uniq Huniq /=.
   rewrite {Huniq Hhomog} rev_sorted.
-  apply/sortedP.
+  apply/(sortedP 0%N).
     - by move=> i j k /= /(leq_trans _); apply.
     - by move=> i /=.
   move=> i j; rewrite size_tuple=> /andP [] Hij Hj.

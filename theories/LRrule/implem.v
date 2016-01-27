@@ -275,7 +275,8 @@ Proof.
   move=> /mapP [] rec Hrec -> {res}; rewrite to_word_cons -catA.
   have Hshshift := yamtab_shiftP (yamtab_rowP Hrow) Hshift Hy.
   move: Hrow => /(yamtab_row_included Hincl)/yamtab_shift_included/(_ _ _ Hshift).
-  move/IHout; by apply; last exact: Hrec.
+  move/IHout => H.
+  exact: (H _ _ _ _ Hshshift _ Hrec).
 Qed.
 
 
