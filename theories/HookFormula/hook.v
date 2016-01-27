@@ -14,7 +14,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 
-Require Import Misc Ccpo Qmeasure.
+Require Import Misc Ccpo.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
