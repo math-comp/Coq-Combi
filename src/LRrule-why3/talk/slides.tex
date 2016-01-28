@@ -288,6 +288,7 @@ Littlewood-Richardson coefficients\\[5mm]}
   \item Dozens of theses and papers about this proof (Zelevinsky 1981, Macdonald
     1995, Gasharov 1998, Duchamp-H-Thibon 2001, van Leeuwen 2001, Stembridge
     2002)
+  \item \#-P complete (Narayanan, 2005)
   \end{itemize}
 
   \begin{quotation}\small
@@ -298,12 +299,26 @@ Littlewood-Richardson coefficients\\[5mm]}
     it: even the original example in D. E. Littlewood and A. R. Richardson
     (1934) contains an error.
  \end{quotation}
- \begin{itemize}
- \item \#-P complete (Narayanan, 2005)
- \end{itemize}
 \end{frame}
 
-% $\#P$-hard problem
+\begin{frame}\frametitle{quoting Gordon James}
+  \begin{quote}
+    Unfortunately the Littlewood–Richardson rule is much harder to
+    prove than was at first suspected. The author was once told that
+    the Littlewood–Richardson rule helped to get men on the moon but
+    was not proved until after they got there.
+    The first part of this story might be
+    an exaggeration.
+  \end{quote}
+
+
+  \bigskip\small\begin{flushright}
+    The representation theory of the symmetric
+    groups. \\
+    Encyclopedia of mathematics and its application,
+    vol. 16. 1987
+  \end{flushright}
+\end{frame}
 
 \begin{frame}{applications}
   \begin{itemize}
@@ -317,6 +332,26 @@ Littlewood-Richardson coefficients\\[5mm]}
   \item extension of Abelian groups (Hall algebra)
   \item application in quantum physics (spectrum rays of the Hydrogen atoms)
   \end{itemize}
+\end{frame}
+
+\begin{frame}\frametitle{quoting Gordon James}
+  \begin{quote}
+    It seems that for a long time the entire body of experts in the
+    field was convinced by these proofs; at any rate it was not until
+    1976 that McConnell pointed out a subtle ambiguity in part of
+    the construction underlying the argument.
+
+    [...]
+
+    How was it possible for an incorrect proof of such a central
+    result in the theory of $S_n$ to have been accepted for close to
+    forty years? The level of rigor customary among mathematicians
+    when a combinatorial argument is required, is (probably quite
+    rightly) of the nonpedantic hand-waving kind; perhaps one lesson
+    to be drawn is that \emph{a higher degree of care will be needed} in
+    dealing with such combinatorial complexities as occur in the
+    present level of development of Young's approach.
+  \end{quote}
 \end{frame}
 
 \begin{frame}
@@ -337,11 +372,22 @@ Littlewood-Richardson coefficients\\[5mm]}
 \end{frame}
 
 \begin{frame}[fragile]\frametitle{outline of the proof}
-  first introduce Schur functions and coefficients $c_{\lambda, \mu}^{\nu}$
+  first introduce coefficients $c_{\lambda, \mu}^{\nu}$
+\begin{coq}
+Definition LRtab_coeff P1 P2 P :=
+  #|LRtab_set P1 P2 P|.
+\end{coq}
+(yet another combinatorial definition, not suitable for computation)
+
+\bigskip
+and prove
 \begin{coq}
 Schur P1 * Schur P2 =
   \sum_P (Schur P) *+ LRtab_coeff P1 P2 P
 \end{coq}
+\end{frame}
+
+\begin{frame}[fragile]\frametitle{outline of the proof}
   then introduce tableaux, Yamanouchi words, and define
 \begin{coq}
 Definition LRyam_set P1 P2 P :=
@@ -495,7 +541,7 @@ with glue code to parse the command line, we can play with it
 \end{frame}
 
 \begin{frame}\frametitle{proof}
-  we prove
+  we want to prove
   \begin{itemize}
   \item termination
   \item absence of array access out of bounds
@@ -791,7 +837,7 @@ Definition partw (l: nat) (p: seq nat) : array int :=
   \bigskip
   long-term goal: have such verified software integrated in SageMath
 
-  (Florent is one of the main developers of SageMath)
+  (Florent is a developer of SageMath)
 \end{frame}
 
 \end{document}
