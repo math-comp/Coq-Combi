@@ -48,7 +48,7 @@ The main results are the Vandermonde determinant expansion:
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
 Require Import finset fintype finfun tuple bigop ssralg ssrint.
 Require Import fingroup perm zmodp binomial.
-Require Import ssrcomplements poset freeg mpoly.
+From SsrMultinomials Require Import ssrcomplements poset freeg mpoly.
 
 Require Import tools symgroup.
 

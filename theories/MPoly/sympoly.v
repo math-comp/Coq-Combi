@@ -14,7 +14,7 @@
 (******************************************************************************)
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 Require Import tuple finfun finset bigop ssralg path perm fingroup.
-Require Import ssrcomplements poset freeg bigenough mpoly.
+From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
 Require Import tools ordtype partition Yamanouchi std tableau stdtab.
 

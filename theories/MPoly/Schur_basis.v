@@ -15,7 +15,7 @@
 Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
 Require Import choice fintype finfun tuple bigop ssralg ssrint.
 Require Import finset fingroup perm.
-Require Import ssrcomplements poset freeg bigenough mpoly.
+From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
 Require Import tools ordtype sorted partition skewtab sympoly freeSchur therule.
 Require Import symgroup antisym.
