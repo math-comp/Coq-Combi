@@ -77,6 +77,9 @@ More unstable stuff:
 *  Formal Power series. See the series branch on Github.
    See the [series branch on Github](https://github.com/hivert/Coq-Combi/tree/series).
 
+* Set-partitions 
+  See the [SetPartition branch on Github](https://github.com/hivert/Coq-Combi/tree/SetPartition).
+
 Documentation
 ========================================================================
 
