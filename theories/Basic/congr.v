@@ -394,7 +394,7 @@ Proof.
   apply: (iffP idP).
   + move/flatten_mapP => [] [] [] a v2 b /=.
     rewrite -cat3_equiv_cut3 => /eqP H2 /mapP [] v1 Hrule H1.
-    by exists a; exists v1; exists b; exists v2.
+    by exists a, v1, b, v2.
   + move=> [] a [] v1 [] b [] v2 [] H1 H2 Hrule.
     apply/flatten_mapP. exists (a, v2, b); first by rewrite -cat3_equiv_cut3 H2.
     rewrite H1 /=; apply/mapP; by exists v1.

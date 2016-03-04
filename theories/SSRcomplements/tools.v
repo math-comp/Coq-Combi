@@ -493,16 +493,16 @@ Proof.
   - elim: s => [//= | s0 s IHs] /=.
     rewrite negb_and => /orP [].
     + rewrite negbK => Hin.
-      exists 0; exists (index s0 s).+1 => /=; split; first by rewrite ltnS index_mem.
+      exists 0, (index s0 s).+1 => /=; split; first by rewrite ltnS index_mem.
       by rewrite nth_index.
     + move/IHs => {IHs} [] i [] j [] Hij Hnth.
-      by exists i.+1; exists j.+1; split; first by rewrite !ltnS.
+      by exists i.+1, j.+1; split; first by rewrite !ltnS.
   - elim: s => [| s0 s IHs ] /= [] i [] j [] /andP [] //=.
     rewrite negb_and negbK; case: i => [| i].
     + case: j => [//= | j _]; rewrite ltnS /= => Hj ->; by rewrite mem_nth.
     + case: j => [//= | j]; rewrite !ltnS /= => Hi Hj Hnth.
       apply/orP; right; apply IHs.
-      exists i; exists j; by rewrite Hi Hj Hnth.
+      exists i, j; by rewrite Hi Hj Hnth.
 Qed.
 
 

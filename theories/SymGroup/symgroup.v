@@ -960,7 +960,7 @@ Proof.
     case H : ((u0 == u2) && ((u0.+1 == u1) || (u1.+1 == u0))).
     - move: H => /andP [] /eqP <- Heq.
       rewrite mem_seq1 => /eqP ->.
-      by exists u0; exists u1.
+      by exists u0, u1.
     - by rewrite in_nil.
   + move=> [] a [] b [] H -> ->.
     by rewrite unfold_in H eq_refl /= eq_refl.
@@ -975,7 +975,7 @@ Proof.
   + case: u => [//=|u0[//=|u1[]//=]].
     case H : ((u0.+1 < u1) || (u1.+1 < u0)).
     - rewrite mem_seq1 => /eqP ->.
-      by exists u0; exists u1.
+      by exists u0, u1.
     - by rewrite in_nil.
   + move=> [] a [] b [] H -> ->.
     by rewrite H mem_seq1 eq_refl.

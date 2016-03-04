@@ -634,11 +634,11 @@ Proof.
   move=> Hwb; apply: (iffP idP).
   - elim: wb Hwb w => [//= | w0 wb IHwb _] w /=.
     case H : (allLtn wb w0) => /eqP -> {w}.
-    * exists [::]; exists w0; exists wb; rewrite H !cat0s; by split.
+    * exists [::], w0, wb; rewrite H !cat0s; by split.
     * have Hwb : wb != [::] by move: H; case wb.
       move Hw : (rembig wb) => w; move: Hw => /eqP; rewrite eq_sym => Hw.
       have:= IHwb Hwb w Hw => [] [] u [] b [] v [] Hcatw Hcatwb Hub Hvb.
-      exists (w0 :: u); exists b; exists v; split; last exact Hvb.
+      exists (w0 :: u), b, v; split; last exact Hvb.
       - by rewrite Hcatw.
       - by rewrite Hcatwb.
       - move: H; rewrite Hcatwb /= Hub andbT => /negbT.
@@ -707,7 +707,7 @@ Proof.
   rewrite cat_uniq => /and3P [] _ _ /= /andP [].
   rewrite mem_rev => Hbu _.
   apply/eqP/rembigP; first by case: (rev v).
-  exists (rev v); exists b; exists (rev u); split => //.
+  exists (rev v), b, (rev u); split => //.
   - rewrite allLeq_rev; exact: allLtnW.
   - rewrite allLtn_rev; exact: allLtn_notin.
 Qed.
@@ -813,7 +813,7 @@ Lemma rembigE l s :
 Proof.
   apply/eqP/rembigP; first by [].
   set ss := l :: s; set pos := posbig (l :: s).
-  exists (take pos ss); exists (nth Z ss pos); exists (drop pos.+1 ss).
+  exists (take pos ss), (nth Z ss pos), (drop pos.+1 ss).
   split; first by [].
   + set sr := (X in _ ++ X); suff -> : sr = drop pos ss by rewrite cat_take_drop.
     rewrite /sr /ss /pos /= {ss pos sr}.
@@ -965,8 +965,10 @@ End Exports.
 End Inhabited.
 Export Inhabited.Exports.
 
-Definition inhabitant (T : inhType) : T :=
+Definition inhabitant_def (T : inhType) : T :=
   let: Inhabited.Pack _ (Inhabited.Mixin x) _ := T in x.
+
+Definition inhabitant (T : inhType) : T := nosimpl inhabitant_def T.
 
 (******************************************************************************)
 (*                                                                            *)
