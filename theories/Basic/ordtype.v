@@ -136,7 +136,7 @@ Lemma gtnX_eqF m n : m < n -> n == m = false.
 Proof. rewrite [(n == m)]eq_sym. exact: ltnX_eqF. Qed.
 
 Lemma leqX_eqVltnX m n : (m <= n) = (m == n) || (m < n).
-Proof. rewrite /ltnX_op; by case eqP => [/= -> | /= _]; first by rewrite (leqXnn n). Qed.
+Proof. rewrite /ltnX_op; by case eqP => [/= -> | /= _]; first by rewrite leqXnn. Qed.
 
 Lemma ltnX_neqAleqX m n : (m < n) = (m != n) && (m <= n).
 Proof. by []. Qed.
@@ -1203,7 +1203,7 @@ Variable T : pordType.
 Fact geqX_order : PartOrder.axiom (@geqX T).
 Proof.
   split.
-  - move=> n /=; by apply: leqXnn.
+  - by move=> n /=.
   - move=> m n /= /andP [] H1 H2; apply/eqP; by rewrite eqn_leqX H1 H2.
   - move=> m n p /= H1 H2; by apply: (leqX_trans H2 H1).
 Qed.
