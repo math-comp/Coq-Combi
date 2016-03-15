@@ -12,12 +12,13 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
-Require Import tuple finfun finset bigop path.
-Require Import mpoly.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
+From mathcomp Require Import tuple finfun finset bigop path.
+From SsrMultinomials Require Import mpoly.
 
-Require Import tools combclass partition Yamanouchi ordtype tableau.
-Require Import skewtab sympoly freeSchur therule.
+From Combi Require Import tools combclass partition Yamanouchi ordtype tableau.
+From Combi Require Import skewtab sympoly freeSchur therule.
 
 (******************************************************************************)
 (** This file contains a Coq implementation of the Littlewood-Richardson rule *)
@@ -892,7 +893,7 @@ Section LR.
 Variables d1 d2 : nat.
 Variables (P1 : intpartn d1) (P2 : intpartn d2).
 
-Require Import ssralg.
+From mathcomp Require Import ssralg.
 
 Local Open Scope ring_scope.
 Import GRing.Theory.

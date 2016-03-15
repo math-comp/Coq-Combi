@@ -12,10 +12,11 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm binomial bigop.
-Require Import tools vectNK subseq partition Yamanouchi ordtype std tableau stdtab.
-Require Import Schensted plactic Greene_inv stdplact.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
+From mathcomp Require Import finset perm binomial bigop.
+From Combi Require Import tools vectNK subseq partition Yamanouchi ordtype std tableau stdtab.
+From Combi Require Import Schensted plactic Greene_inv stdplact.
 
 
 Set Implicit Arguments.
@@ -554,7 +555,7 @@ Proof.
   by rewrite shape_stdtab_of_yam.
 Qed.
 
-Record LRtriple t1 t2 t : Prop :=
+Variant LRtriple t1 t2 t : Prop :=
   LRTriple :
     forall p1 p2 p, RS p1 = t1 -> RS p2 = t2 -> RS p = t ->
                     p \in shsh p1 p2 -> LRtriple t1 t2 t.

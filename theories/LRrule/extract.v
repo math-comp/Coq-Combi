@@ -12,9 +12,10 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm.
-Require Import subseq partition ordtype Schensted congr plactic Greene Greene_inv
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
+From mathcomp Require Import finset perm.
+From Combi Require Import subseq partition ordtype Schensted congr plactic Greene Greene_inv
         std stdtab skewtab therule implem.
 
 Require Import Wf_nat.

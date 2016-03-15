@@ -43,10 +43,10 @@ Sigma types of Yamanouchi words:
 - [yamn n] == a type for [seq nat] which are Yamanouchi words of
               size n; it is canonically a [finType]
 ******)
-
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import bigop.
-Require Import tools combclass partition.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
+From mathcomp Require Import bigop.
+From Combi Require Import tools combclass partition.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -388,7 +388,7 @@ Section YamOfEval.
 
 Variable ev : intpart.
 
-Structure yameval : predArgType :=
+Structure yameval : Set :=
   YamEval {yamevalval :> seq nat; _ : is_yam_of_eval ev yamevalval}.
 Canonical yameval_subType := Eval hnf in [subType for yamevalval].
 Definition yameval_eqMixin := Eval hnf in [eqMixin of yameval by <:].
@@ -412,7 +412,7 @@ Proof. by case: y => /= y /andP [] _ /eqP. Qed.
 Lemma size_yameval (y : yameval) : size y = sumn ev.
 Proof. by rewrite -evalseq_eq_size eval_yameval. Qed.
 
-Lemma enum_yamevalE : map val (enum yameval) = enum_yameval ev.
+Lemma enum_yamevalE : map val (enum {:yameval}) = enum_yameval ev.
 Proof. rewrite /=; exact: enum_subE. Qed.
 
 End YamOfEval.
@@ -437,7 +437,7 @@ Proof.
   by rewrite /is_yam_of_size /= evalseq_eq_size => /andP [] /is_part_eval_yam -> ->.
 Qed.
 
-Structure yamn : predArgType :=
+Structure yamn : Set :=
   Yamn {yamnval :> seq nat; _ : is_yam_of_size n yamnval}.
 Canonical yamn_subType := Eval hnf in [subType for yamnval].
 Definition yamn_eqMixin := Eval hnf in [eqMixin of yamn by <:].
@@ -462,7 +462,7 @@ Proof. by case: y => /= y /andP [] _ /eqP. Qed.
 
 (* Check of disjoint union enumeration *)
 Lemma enum_yamnE :
-  map val (enum yamn) = flatten [seq enum_yameval p | p <- enum_partn n].
+  map val (enum {:yamn}) = flatten [seq enum_yameval p | p <- enum_partn n].
 Proof.
   rewrite enum_unionE /=; congr flatten.
   rewrite (eq_map (f2 := enum_yameval \o val)).

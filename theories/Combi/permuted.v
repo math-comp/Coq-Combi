@@ -14,8 +14,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype seq tuple.
-Require Import finset perm.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype seq tuple.
+From mathcomp Require Import finset perm.
 
 (** * The list of the permuted tuple of a given tuple                        *)
 (*

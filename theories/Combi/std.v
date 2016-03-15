@@ -43,11 +43,11 @@ is the same as having the same standardized.
                 which sorts w in a stable way.
 
 *****)
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
+From mathcomp Require Import finset perm fingroup path.
 
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm fingroup path.
-
-Require Import tools combclass ordtype permuted.
+From Combi Require Import tools combclass ordtype permuted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -180,7 +180,7 @@ Variable n : nat.
 
 Definition is_std_of_n := [pred w | (is_std w) && (size w == n) ].
 
-Structure stdwordn : predArgType :=
+Structure stdwordn : Set :=
   StdWordN {stdwordnval :> seq nat; _ : is_std_of_n stdwordnval}.
 Canonical stdwordn_subType := Eval hnf in [subType for stdwordnval].
 Definition stdwordn_eqMixin := Eval hnf in [eqMixin of stdwordn by <:].
@@ -226,7 +226,7 @@ Canonical stdwordn_finMixin :=
   Eval hnf in sub_uniq_finMixin stdwordnn_subCountType enum_stdwordn_uniq enum_stdwordnE.
 Canonical stdwordn_finType := Eval hnf in FinType stdwordn stdwordn_finMixin.
 
-Lemma card_stdwordn : #|stdwordn| = n`!.
+Lemma card_stdwordn : #|{:stdwordn}| = n`!.
 Proof. by rewrite card_sub_uniqE size_map -card_Sn cardE. Qed.
 
 End StdCombClass.

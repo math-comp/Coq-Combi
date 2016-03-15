@@ -12,11 +12,12 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import tuple finfun finset bigop ssralg path perm fingroup.
-Require Import ssrcomplements poset freeg bigenough mpoly.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
+From mathcomp Require Import tuple finfun finset bigop ssralg path perm fingroup.
+From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
-Require Import tools ordtype partition Yamanouchi std tableau stdtab.
+From Combi Require Import tools ordtype partition Yamanouchi std tableau stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

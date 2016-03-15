@@ -13,8 +13,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
-Require Import tools.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype choice fintype seq.
+From Combi Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

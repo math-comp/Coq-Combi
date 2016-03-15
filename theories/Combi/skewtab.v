@@ -29,10 +29,11 @@
 ******)
 
 
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import tuple finfun finset bigop path.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
+From mathcomp Require Import tuple finfun finset bigop path.
 
-Require Import tools partition Yamanouchi ordtype tableau std stdtab.
+From Combi Require Import tools partition Yamanouchi ordtype tableau std stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

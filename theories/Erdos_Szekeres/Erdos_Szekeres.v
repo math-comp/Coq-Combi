@@ -17,10 +17,11 @@
 decreassing subsequences. We prove it as a corollary of Greene's theorem on
 the Robinson-Schensted correspondance.  *****)
 
-Require Import ssreflect ssrfun ssrbool eqtype
-ssrnat seq fintype.  Require Import tuple finfun finset bigop path.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
+From mathcomp Require Import tuple finfun finset bigop path.
 
-Require Import partition tableau Schensted ordtype Greene Greene_inv.
+From Combi Require Import partition tableau Schensted ordtype Greene Greene_inv.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

@@ -21,11 +21,12 @@ the symmetric groups as a Coxeter group.
 - eltr n i == the i-th elementary transposition in 'S_n.+1.
 - cocode s == the recursively defined Lehmer code of s^-1.
 ***************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
-Require Import tuple finfun bigop finset binomial fingroup perm.
-Require Import morphism presentation.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
+From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm.
+From mathcomp Require Import morphism presentation.
 
-Require Import tools permuted combclass congr.
+From Combi Require Import tools permuted combclass congr.
 
 
 Set Implicit Arguments.
@@ -165,7 +166,7 @@ Section FinType.
 
 Variable n : nat.
 
-Structure codesz : predArgType :=
+Structure codesz : Set :=
   CodeSZ {cdval :> seq nat; _ : (cdval \is a code) && (size cdval == n)}.
 Canonical codesz_subType := Eval hnf in [subType for cdval].
 Definition codesz_eqMixin := Eval hnf in [eqMixin of codesz by <:].
@@ -188,12 +189,12 @@ Proof. by case: c => c /= /andP []. Qed.
 Lemma size_codesz c : size c = n.
 Proof. by case: c => c /= /andP [] _ /eqP. Qed.
 
-Lemma enum_codeszE : map val (enum codesz) = enum_codesz n.
+Lemma enum_codeszE : map val (enum {:codesz}) = enum_codesz n.
 Proof. rewrite /=; exact: enum_subE. Qed.
 
 End FinType.
 
-Lemma card_codesz n : #|codesz n| = n`!.
+Lemma card_codesz n : #|{:codesz n}| = n`!.
 Proof.
   rewrite factE /= cardE -(size_map val) enum_codeszE.
   elim: n => [//=| n IHn].
@@ -777,7 +778,7 @@ Proof.
   apply inj_card_bij; last by rewrite card_codesz card_Sn.
   move=> c1 c2 Heq.
   suff /image_injP Hinj :
-    (#|image prods_codesz (codesz n.+1)| == #|(codesz n.+1)|) by exact: (Hinj c1 c2).
+    (#|image prods_codesz ({:codesz n.+1})| == #|({:codesz n.+1})|) by exact: (Hinj c1 c2).
   rewrite {c1 c2 Heq} card_codesz (eq_card (B := 'S_n.+1)) ?card_Sn //.
   move=> s; rewrite !inE; apply/mapP.
   have Hcode : is_code_of_size n.+1 (cocode s).
@@ -807,7 +808,7 @@ Section Combi.
 Local Notation "''s_' i" := (eltr _ i) (at level 8, i at level 2).
 Local Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i) (at level 8, w at level 2).
 
-Require Import ssralg poly ssrint.
+From mathcomp Require Import ssralg poly ssrint.
 
 Import GRing.Theory.
 Open Scope ring_scope.
@@ -1337,7 +1338,7 @@ Proof.
 Qed.
 
 
-Require Import path.
+From mathcomp Require Import path.
 
 Implicit Type (u v w : seq 'I_n).
 

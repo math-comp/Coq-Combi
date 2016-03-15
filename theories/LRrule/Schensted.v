@@ -12,9 +12,10 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import path bigop finset perm fingroup.
-Require Import tools partition Yamanouchi ordtype subseq tableau std stdtab.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
+From mathcomp Require Import path bigop finset perm fingroup.
+From Combi Require Import tools partition Yamanouchi ordtype subseq tableau std stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

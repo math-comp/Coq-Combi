@@ -77,10 +77,12 @@ Sigma types for integer partitions:
                 it is canonically a [finType]
 - [conj_intpartn] == the conjugate of a [intpartn] as a [intpartn]
 ******)
+Set Printing Universes.
 
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import bigop path.
-Require Import tools combclass sorted.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
+From mathcomp Require Import bigop path.
+From Combi Require Import tools combclass sorted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -98,11 +100,12 @@ Qed.
 (** ** A finite type [finType] for coordinate of boxes inside a shape *)
 Section BoxIn.
 
+  
 Variable sh : seq nat.
-
+  
 Definition is_box_in_shape b := is_in_shape sh b.1 b.2.
 
-Structure box_in : predArgType :=
+Structure box_in : Set :=
   BoxIn {coord :> nat * nat; _ : is_box_in_shape coord}.
 Canonical box_in_subType := Eval hnf in [subType for coord].
 Definition box_in_eqMixin := Eval hnf in [eqMixin of box_in by <:].
@@ -163,7 +166,7 @@ Canonical box_in_subFinType := Eval hnf in [subFinType of box_in].
 Lemma box_inP (rc : box_in) : is_in_shape sh rc.1 rc.2.
 Proof. by case: rc. Qed.
 
-Lemma enum_box_inE : map val (enum box_in) = enum_box_in.
+Lemma enum_box_inE : map val (enum {:box_in}) = enum_box_in.
 Proof. exact: enum_subE. Qed.
 
 Lemma mem_enum_box_in : enum_box_in =i is_box_in_shape.
@@ -1276,7 +1279,7 @@ Section PartOfn.
 
 Variable n : nat.
 
-Structure intpartn : predArgType :=
+Structure intpartn : Set :=
   IntPartN {pnval :> seq nat; _ : is_part_of_n n pnval}.
 Canonical intpartn_subType := Eval hnf in [subType for pnval].
 Definition intpartn_eqMixin := Eval hnf in [eqMixin of intpartn by <:].
@@ -1300,7 +1303,7 @@ Coercion intpart_of_intpartn : intpartn >-> intpart.
 Lemma intpartn_sumn (p : intpartn) : sumn p = n.
 Proof. by case: p => /= p /andP [] /eqP. Qed.
 
-Lemma enum_intpartnE : map val (enum intpartn) = enum_partn n.
+Lemma enum_intpartnE : map val (enum {:intpartn}) = enum_partn n.
 Proof. rewrite /=; exact: enum_subE. Qed.
 
 Lemma conj_intpartnP (sh : intpartn) : is_part_of_n n (conj_part sh).
@@ -1370,7 +1373,7 @@ Proof.
   by rewrite size_enum_partns.
 Qed.
 
-Lemma card_intpartn sm : #|intpartn sm| = intpartn_nb sm.
+Lemma card_intpartn sm : #|{:intpartn sm}| = intpartn_nb sm.
 Proof.
   rewrite [#|_|]cardT enumT unlock /=.
   by rewrite -(size_map val) subType_seqP -size_enum_partn.
@@ -1381,7 +1384,8 @@ End PartCombClass.
 Hint Resolve intpartP intpartnP.
 
 
-Require Import ordtype finset.
+From Combi Require Import ordtype.
+From mathcomp Require Import finset.
 
 (** * TODO: Generalize and move in finOrdType *)
 Section WFIntPartN.

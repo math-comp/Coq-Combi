@@ -34,9 +34,10 @@ denoted [T].
 - [tabsh_reading sh w] == w is the row reading of a tableau of shape sh
 *****)
 
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import path sorted.
-Require Import tools partition ordtype sorted.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
+From mathcomp Require Import path.
+From Combi Require Import tools partition ordtype sorted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -493,7 +494,7 @@ Proof. by case: t => t /= /andP []. Qed.
 Lemma shape_tabsh (t : tabsh) : shape t = sh.
 Proof. by case: t => t /= /andP [] _ /eqP. Qed.
 
-Require Import tuple.
+From mathcomp Require Import tuple.
 
 Lemma tabsh_to_wordK (t : tabsh) :
   rev (reshape (rev sh) (to_word (val t))) = t.

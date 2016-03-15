@@ -59,13 +59,13 @@ multivariate polynomials to the non commutative setting.
 
 
 ****************************************************************************)
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
+From mathcomp Require Import tuple finfun finset bigop ssralg.
+From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import tuple finfun finset bigop ssralg.
-Require Import ssrcomplements poset freeg bigenough mpoly.
-
-Require Import tools ordtype partition Yamanouchi std tableau stdtab sympoly.
-Require Import Schensted congr plactic stdplact Yam_plact Greene_inv shuffle.
+From Combi Require Import tools ordtype partition Yamanouchi std tableau stdtab sympoly.
+From Combi Require Import Schensted congr plactic stdplact Yam_plact Greene_inv shuffle.
 
 
 Set Implicit Arguments.

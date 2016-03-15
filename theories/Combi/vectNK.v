@@ -23,9 +23,9 @@
               [seq (seq T) * (seq T) * (seq T)])
 
 *****)
-
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
-Require Import tools.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype seq.
+From Combi Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
