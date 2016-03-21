@@ -196,6 +196,21 @@ Proof.
     exact: modn_mod.
 Qed.
 
+Lemma rot_eq_refl s : rot_eq s s.
+Proof.
+  admit.
+Admitted.
+
+Lemma rot_eq_sym s t : rot_eq s t -> rot_eq t s.
+Proof.
+  admit.
+Admitted.
+
+Lemma rot_eq_trans t s u: rot_eq s t -> rot_eq t u -> rot_eq s u.
+Proof.
+  admit.
+Admitted.
+
 End Blabla.
 
 
