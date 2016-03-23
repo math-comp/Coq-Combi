@@ -1,0 +1,11 @@
+- rot / rotate.
+- intégration stdlib
+- variante de trivIset/seq
+- groupe / sous-groupes (class {group 'S_n}   vs.   class 'S_n.
+
+
+
+Florent:
+- types ordonnée et héritage (multiple)
+- Gotchas / wiki
+
