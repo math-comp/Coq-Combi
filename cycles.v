@@ -98,6 +98,21 @@ Section RotaterLemmas.
 Variables (n0 : nat) (T : Type) (T' : eqType).
 Implicit Type s : seq T.
 
+Lemma rotater_isrotate s :
+  (rotater n0 s) = rotate (size s - n0%%(size s)) s.
+Proof.
+  case: (posnP (size s)) => [/eqP /nilP -> /=| H0].
+    by rewrite rotate_nil.
+  rewrite /rotater /rotate /rotr.
+  case: (posnP (n0%%size s)) => [->|H1].
+    by rewrite subn0 rot_size modnn rot0 //.
+  congr rot.
+  rewrite [RHS]modn_small //.
+  rewrite -subn_gt0 subnBA.
+  by rewrite addnC addnK.
+  by apply: ltnW; apply: ltn_pmod.
+Qed.  
+
 Lemma size_rotater s : size (rotater n0 s) = size s.
 Proof. by apply: size_rotr. Qed.
 
@@ -183,15 +198,37 @@ Proof.
     by rewrite rot_size rot0.                                              
 Qed.
 
-Lemma rotate_rotate m n s : rotate m (rotate n s) = rotate n (rotate m s).
+Lemma rotate_rotate m n s :
+  rotate m (rotate n s) = rotate n (rotate m s).
 Proof. by rewrite -!rotate_addn addnC. Qed.
 
 
-Lemma rotate_rotater m n s : rotate m (rotater n s) = rotater n (rotate m s).
+Lemma rotate_rotater m n s :
+  rotate m (rotater n s) = rotater n (rotate m s).
 Proof. by rewrite /rotater /rotr size_rotate /rotate rot_rot size_rot. Qed.
   
 Lemma rotater_rotater m n s : rotater m (rotater n s) = rotater n (rotater m s).
 Proof. by rewrite /rotater /rotr !size_rot rot_rot. Qed.
+
+Lemma nth_rotate x i n s :
+  i<size s -> nth x (rotate n s) i = nth x s ((n+i)%%size s).
+Proof.
+  elim: n s => [|m IHm] s Hs /=.
+    by rewrite rotate0 add0n modn_small.
+  rewrite -{1}addn1 rotate_addn {}IHm size_rotate //.
+  case: s Hs => [//|s0 s Hs].    
+  rewrite rotate1_cons nth_rcons.
+  case: (ltngtP ((m + i) %% size (s0 :: s)) (size s)) => Hineg.
+  - rewrite addSn -addn1 (nth_ncons _ 1) -(modnDml (m+i) 1).
+    rewrite [((m + i) %% size (s0 :: s) + 1)%%size(s0::s)] modn_small.  
+    + by rewrite {1}addn1 ltnS ltn0 addnK.
+    + by rewrite /= addn1 ltnS. 
+  - exfalso; move: Hineg.    
+    apply /negP; rewrite -leqNgt /= -ltnS.
+    exact: ltn_pmod.
+  - rewrite addSn -addn1 -(modnDml (m+i) 1) Hineg /= addn1 modnn.
+    by rewrite (nth_ncons _ 1).
+Qed.
 
 End RotateCompLemmas.
 
@@ -266,14 +303,14 @@ Lemma map_rot s : map (rot n0 s) = rot n0 (map s).
 Lemma map_rotr s : map (rotr n0 s) = rotr n0 (map s).
  *)
 
-Section CycleLists.
+Section CycleSeq.
 Variable T: eqType.
   
-Definition cycleSeq := {x:seq T|uniq x}.
+Record cycleSeq := {x :> seq T; _: uniq x}.
 
-End CycleLists.
+End CycleSeq.
 
-Section Cylces.
+Section Cycles.
 From mathcomp Require Import finfun.
 Variable T: eqType.
 
@@ -284,36 +321,73 @@ Definition cycle (s: seq T) :=
   [ffun x => nth x (rcons s x) (index x (rcons s x)).+1].
 *)
 
-Definition cycle (s: seq T) :=
+(*Definition cycle (s: seq T) :=
   (fun (x: T) => if s is a::l then
                    nth x (rcons s a) ((index x (rcons s a)) + 1)
                  else x).
+ *)
 
-Lemma uniq_next_rotate1 s x:
-  uniq s -> x \in s -> cycle s x = cycle (rotate 1 s) x. 
+Definition cycle_of_seq s x := nth x (rotate 1 s) (index x s).
+
+Definition cycle_inv_of_seq s x := nth x (rotater 1 s) (index x s).
+
+
+Lemma uniq_index_rotate s x n:
+  uniq s -> x \in s -> (index x s) = ((index x (rotate n s)) + n)%%size s.
 Proof.
   move => Huniq.
-  case s => // s0 l Hx.
-  rewrite rotate1_cons /=.
+  rewrite -index_mem => Hindex.
+  apply /eqP.
+  rewrite -(nth_uniq x Hindex) ?nth_index //;
+       move: Hindex; rewrite index_mem // => Hin.
+  rewrite addnC -nth_rotate ?nth_index //.
+  by rewrite mem_rotate.
+  by move: Hin; rewrite -(mem_rotate n) -index_mem size_rotate.
+  case: (posnP (size s)) Huniq Hin => [/eqP /nilP -> //|Hsize _ _].
+  by apply: ltn_pmod.
+Qed.
+
+Lemma eq_perm_cycle s t:
+  uniq s -> rot_eq s t -> cycle_of_seq s =1 cycle_of_seq t.  
+Proof.
+  move => Huniq /existsP [] n /eqP <- x.
+  case: (boolP (x \in s)) => [Hin|].
+  - rewrite /cycle_of_seq -rotate_addn (uniq_index_rotate n) //.
+    rewrite !nth_rotate.
+    by rewrite addnAC -modnDm modn_mod modnDm addnA //.
+    by move: Hin; rewrite -(mem_rotate n) -index_mem size_rotate.
+    case: (posnP (size s)) Hin => [/eqP /nilP {1}-> // |Hsize _].
+    exact: ltn_pmod.
+  - rewrite /cycle_of_seq => Hineg.
+    rewrite !nth_default //; move: Hineg.
+    by rewrite -(mem_rotate n) -index_mem -leqNgt -{1}(size_rotate 1).
+    by rewrite -index_mem -leqNgt -{1}(size_rotate 1).      
+Qed.
+
+Lemma uniq_cycle_of_seq s:
+  uniq s -> bijective(cycle_of_seq s).
+Proof.
+  move => Huniq.
+  case: (posnP (size s)) => [/eqP /nilP ->|Hsize].
+  - rewrite /cycle_of_seq /=.
+    by exists id.  
+  - exists (cycle_inv_of_seq (rotate 1 s)).
+    move => x.
+    rewrite /cycle_inv_of_seq /cycle_of_seq.
+    rewrite index_uniq.
+    rewrite rotater_isrotate -rotate_addn size_rotate.
+    case: (altP (size s =P 1)) => Hsize1. 
+    + rewrite Hsize1 modnn subn0 rotate_addn -Hsize1 !rotate_size.
+      by rewrite nth_uniq.
+      rewrite {2}nth_rotate. rewrite index_uniq.
+  rewrite rotater_isrotate. rewrite nth_rotate. 
+  rewrite modnDm. 
+  
   
 
 Qed.
 
-Lemma eq_perm_cycle s t: uniq s -> rot_eq s t -> cycle s =1 cycle t.  
-Proof.
-  move => Huniq.
-  case s.
-    by move => /rot_eq_sym /rot_eq_nil -> //.
-  move => a l /existsP [] n /eqP <- x.
-  (*Trois cas à distinguer : x=a, x\in l et x\notin (a::l)*)
-  case: (posnP (size l)) => [/eqP /nilP -> /=|].
 
-  case: (altP (x =P a)) => [-> /=|Hx1].
-
-    rewrite eq_refl /=.  
-    case: (posnP (size l)) => [/eqP /nilP H|].
-    rewrite H.
-Qed.
 
 
 Fixpoint cycle_aux (l: cycleSeq T) (fst: T) (x: T) :=
@@ -332,3 +406,19 @@ Definition cycle (l: seq T) :=
   end.
 
 End Cycles.
+
+
+(*
+cycle_of_seq: seqT -> T -> T
+uniq s -> bijective (cycle_of_seq s)
+cas où T:finType cycle_of_seq s : finfun
+       T:finType s:cycleSeq cycle_of_seq s: perm
+
+seq_of_cycle : fonction réciproque
+is_cycle: 'S_T -> bool (utiliser la décomposition en support de cycles)
+
+Lemma decomp sigma exists! D:{set 'S_T}, [&& all is_cycle D, trivIseq [:: support d| d \in enum D] & \prod _{c\inD}c = sigma
+
+
+Définition du type et coercion naturelle : regarder dans le fichier std.v
+*)
