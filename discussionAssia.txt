@@ -13,4 +13,4 @@
 Florent:
 - types ordonnée et héritage (multiple)
 - Gotchas / wiki
-
+- Compat coq 8.4 8.5
