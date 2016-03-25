@@ -312,6 +312,7 @@ End CycleSeq.
 
 Section Cycles.
 From mathcomp Require Import finfun.
+
 Variable T: eqType.
 
 Implicit Type s: seq T.
@@ -371,46 +372,42 @@ Proof.
   case: (posnP (size s)) => [/eqP /nilP ->|Hsize].
   - rewrite /cycle_of_seq /=.
     by exists id.  
-  - exists (cycle_inv_of_seq (rotate 1 s)).
-    move => x.
-    rewrite /cycle_inv_of_seq /cycle_of_seq.
-    rewrite index_uniq.
-    rewrite rotater_isrotate -rotate_addn size_rotate.
-    case: (altP (size s =P 1)) => Hsize1. 
-    + rewrite Hsize1 modnn subn0 rotate_addn -Hsize1 !rotate_size.
-      by rewrite nth_uniq.
-      rewrite {2}nth_rotate. rewrite index_uniq.
-  rewrite rotater_isrotate. rewrite nth_rotate. 
-  rewrite modnDm. 
-  
-  
-
+  - exists (cycle_inv_of_seq (rotate 1 s)) => x;
+     case (boolP (x \in s)) => Hin;
+     rewrite /cycle_inv_of_seq /cycle_of_seq rotateK /=.
+    + rewrite index_uniq;
+         [|by move: Hin; rewrite -index_mem -(size_rotate 1)
+          |by rewrite rotate_uniq].
+       by rewrite nth_index.
+    + rewrite !nth_default //.
+      by move: Hin; rewrite -index_mem -leqNgt size_rotate.
+      by move: Hin; rewrite -(mem_rotate 1) -index_mem -leqNgt size_rotate.  
+      by move: Hin; rewrite -index_mem -leqNgt size_rotate.
+    + rewrite index_uniq // ?nth_index //.   
+        by rewrite mem_rotate.
+        by move: Hin; rewrite -(mem_rotate 1) -index_mem size_rotate.
+    + rewrite !nth_default //.
+      by move: Hin; rewrite -(mem_rotate 1) -index_mem -leqNgt size_rotate.
+      by move: Hin; rewrite -index_mem -leqNgt -(size_rotate 1).  
+      by move: Hin; rewrite -(mem_rotate 1) -index_mem -leqNgt size_rotate.
 Qed.
-
-
-
-
-Fixpoint cycle_aux (l: cycleSeq T) (fst: T) (x: T) :=
-  match l with
-    |h1::l1 =>  if h1 == x then
-                    if l1 is (h2::t) then h2 else fst
-                  else cycle_aux l1 fst x                              
-    |[::] => x
-  end.
-
-
-Definition cycle (l: seq T) :=
-  match l with
-    |h::t => (fun x => cycle_aux l h x)
-    |[::] => (fun x => x)
-  end.
 
 End Cycles.
 
+Section PermCycles.
+
+Variable T: finType.
+
+Implicit Type s: seq T.
+
+Definition permCycle s := finfun (cycle_of_seq s). 
+
+End PermCycles.
+
 
 (*
-cycle_of_seq: seqT -> T -> T
-uniq s -> bijective (cycle_of_seq s)
+OK: cycle_of_seq: seqT -> T -> T
+OK: uniq s -> bijective (cycle_of_seq s)
 cas où T:finType cycle_of_seq s : finfun
        T:finType s:cycleSeq cycle_of_seq s: perm
 
