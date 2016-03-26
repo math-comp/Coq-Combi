@@ -52,6 +52,45 @@ Proof.
 Admitted.
 
 
+(**************************** Spoiler *************************)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Fixpoint dec_cycles_rec n s : {set {perm T}} :=
+  if n is n'.+1 then
+    if pick (mem (support s)) is Some x then
+      (cycle_of s x) |: (dec_cycles_rec n' (s * (cycle_of s x)^-1))
+    else set0
+  else [set s].
+Definition dec_cycles s := dec_cycles_rec #|support s| s.
 
 End Definitions.
 
