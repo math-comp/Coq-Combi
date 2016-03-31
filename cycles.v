@@ -1,6 +1,6 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype div.
-From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm automorphism action.
+From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm.
 
 From Combi Require Import symgroup partition.
 
@@ -306,7 +306,18 @@ Lemma map_rotr s : map (rotr n0 s) = rotr n0 (map s).
 Section CycleSeq.
 Variable T: eqType.
   
-Record cycleSeq := {x :> seq T; _: uniq x}.
+Record cycleSeq := {x :> seq T; Huniq: uniq x}.
+
+Canonical cycleSeq_subType := Eval hnf in [subType for x].
+Definition cycleSeq_eqMixin := Eval hnf in [eqMixin of cycleSeq by <:].
+Canonical cycleSeq_eqType := Eval hnf in EqType cycleSeq cycleSeq_eqMixin.
+(*
+Definition cycleSeq_choiceMixin := Eval hnf in [choiceMixin of cycleSeq by <:].
+Canonical cycleSeq_choiceType := Eval hnf in ChoiceType cycleSeq cycleSeq_choiceMixin.
+Definition cycleSeq_countMixin := Eval hnf in [countMixin of cycleSeq by <:].
+Canonical cycleSeq_countType := Eval hnf in CountType cycleSeq cycleSeq_countMixin.
+Canonical cycelSeq_subCountType := Eval hnf in [subCountType of cycleSeq].
+*)
 
 End CycleSeq.
 
@@ -316,17 +327,6 @@ From mathcomp Require Import finfun.
 Variable T: eqType.
 
 Implicit Type s: seq T.
-
-(*
-Definition cycle (s: seq T) := 
-  [ffun x => nth x (rcons s x) (index x (rcons s x)).+1].
-*)
-
-(*Definition cycle (s: seq T) :=
-  (fun (x: T) => if s is a::l then
-                   nth x (rcons s a) ((index x (rcons s a)) + 1)
-                 else x).
- *)
 
 Definition cycle_of_seq s x := nth x (rotate 1 s) (index x s).
 
@@ -392,24 +392,182 @@ Proof.
       by move: Hin; rewrite -(mem_rotate 1) -index_mem -leqNgt size_rotate.
 Qed.
 
+Lemma uniq_cycle_of_seq_inj s:
+    uniq s -> injective(cycle_of_seq s).
+Proof.
+  move => Huniq.
+  apply: bij_inj; exact: uniq_cycle_of_seq.
+Qed.
+
 End Cycles.
 
-Section PermCycles.
+From mathcomp Require Import perm.
 
+Section PermCycles.
 Variable T: finType.
 
-Implicit Type s: seq T.
+Definition permCycle (s: cycleSeq T) := perm (uniq_cycle_of_seq_inj (Huniq s)). 
 
-Definition permCycle s := finfun (cycle_of_seq s). 
+Definition support (s: {perm T}) := [set x | s x != x].
+
+Definition is_cycle (s : {perm T}) :=
+  #|[set x in pcycles s | #|x| != 1 ]| == 1.
+
+(*
+Definition is_cycle s :=
+ all (fun c : {set T} => (#|c| != 1) ==> all (fun d: {set T} => (d == c) || (#|d| == 1)) (enum (pcycles s))) (enum (pcycles s)).
+*)
+
+Definition cyclefun_of s x y : T :=
+  if y \in pcycle s x then s y else y.
+
+Lemma cyclefun_ofP s x : injective (cyclefun_of s x).
+Proof.
+  move => x1 x2.
+  case (boolP (x1 \in pcycle s x)); case (boolP (x2 \in pcycle s x)).
+  - rewrite /cyclefun_of => -> ->.
+    by apply: perm_inj.
+  - rewrite /cyclefun_of => /negbTE H1 H2; rewrite H1 H2; move => Heq; move: H2. 
+    rewrite -eq_pcycle_mem => /eqP.
+    rewrite -(pcycle_perm s 1 x1) expg1 Heq => /eqP.
+    rewrite eq_pcycle_mem.
+    by move: H1 => /negbT /negP.
+  - rewrite /cyclefun_of => H1 /negbTE H2; rewrite H1 H2; move => Heq; move: H1. 
+    rewrite -eq_pcycle_mem => /eqP.
+    rewrite -(pcycle_perm s 1 x2) expg1 -Heq => /eqP.
+    rewrite eq_pcycle_mem.
+    by move: H2 => /negbT /negP.
+  - by rewrite /cyclefun_of => /negbTE -> /negbTE ->.
+Qed.
+
+Definition cycle_of s x : {perm T} := perm (@cyclefun_ofP s x).
+
+Lemma cycle_ofE s x : cycle_of s x =1 cyclefun_of s x.
+Proof. by move => y; rewrite permE. Qed.
+
+Lemma pcycleP (s: {perm T}) x y :
+  reflect (exists n, y = (s ^+ n)%g x) (y \in pcycle s x).
+Proof.
+  apply (iffP idP).
+  - rewrite /pcycle => /imsetP [] s0 /cycleP [] i Hs0 ->.  
+    by exists i; rewrite /aperm Hs0.
+  - move => [] n ->.
+    apply /imsetP; exists (s ^+ n)%g; last by rewrite /aperm.
+    by apply mem_cycle.
+Qed.  
+
+  
+Lemma pcyclefixP (s: {perm T}) x :
+  reflect (pcycle s x = [set x]) (s x == x). 
+Proof.
+  apply (iffP idP) => [/eqP Heq|/setP H].  
+  - rewrite -setP => z.
+    rewrite in_set1.
+    apply /pcycleP /eqP => [ [] n -> |->].
+    + by elim: n => [|n];[rewrite expg0 perm1 |rewrite expgS permM Heq].
+    + by exists 0; rewrite expg0 perm1.
+  - rewrite -in_set1 -H /pcycle.
+    apply /imsetP => /=.  
+    by exists s; [apply: cycle_id|rewrite /aperm].                           
+Qed.
+
+Lemma pcyclecardfix (s: {perm T}) x :
+  (#|pcycle s x| != 1) = (x \in support s).
+Proof.
+  rewrite neq_ltn ltnS leqn0 cards_eq0.
+  have /negbTE -> /= : pcycle s x != set0.
+    apply /set0Pn; exists x; exact: pcycle_id.
+  rewrite inE; apply /idP /idP.
+  - apply contraL => /pcyclefixP ->.
+    by rewrite cards1.
+  - apply contraR; rewrite -leqNgt => H.
+    apply /pcyclefixP /eqP; rewrite eq_sym eqEcard cards1 H andbT.
+    apply /subsetP => y; rewrite inE => /eqP ->; exact: pcycle_id.
+Qed.
+
+Lemma pcyclecardfixP (s: {perm T}) x :
+  reflect (#|pcycle s x| = 1) (s x == x).
+Proof.
+  apply (iffP idP) => [/pcyclefixP -> /=|].
+    by rewrite cards1.
+  move => /eqP /cards1P [] x0 => H; apply /pcyclefixP.
+  rewrite H.
+  have H0: x \in [set x0].
+    by rewrite -H pcycle_id.
+  move: H0.
+  by rewrite in_set1 => /eqP ->.
+Qed.
+
+Lemma cycle_of_nsupp s x :
+  x \notin (support s) -> cycle_of s x = (perm_one T).
+Proof.
+  rewrite in_set negbK => /pcyclefixP Heq.
+  rewrite /cycle_of /perm_one; apply permP => y.
+  rewrite !permE /cyclefun_of.
+  case: (boolP (y \in pcycle s x)) => //.
+  rewrite Heq in_set1 => /eqP ->.
+  by move: Heq => /pcyclefixP /eqP.
+Qed.
+
+Lemma supp_of_cycle s x :
+  x \in (support s) -> support (cycle_of s x) = pcycle s x.
+Proof.
+  rewrite inE => /pcyclefixP Hs.
+  apply /setP => y.
+  rewrite /support inE /cycle_of permE /cyclefun_of.
+  case: (boolP (y \in pcycle s x)); last by move => _; apply /negbTE; rewrite negbK.
+  rewrite -eq_pcycle_mem => /eqP Hpcycle; rewrite -Hpcycle in Hs.
+  apply /negbT; apply /pcyclefixP.
+  move => Habs; move: Hpcycle.
+  rewrite Habs => Hpcycle.
+  have Hyp: x \in [set y].
+    by rewrite Hpcycle; apply: pcycle_id.
+  move: Hyp; rewrite in_set => /eqP Heq.
+  by rewrite Heq in Hs.
+Qed.
+
+(*
+Lemma cycle_ofE s x y :
+  is_cycle s -> x \in support s -> y \in support s ->
+                                         cycle_of s x = cycle_of s y.
+Proof.
+  rewrite /is_cycle => H.
+  rewrite /support !in_set => /pcyclecardfixP H1 /pcyclecardfixP H2.
+ 
+  
+
+Admitted.
+*)
+
+
+Lemma cycle_ofP s :
+  reflect (exists x, x \in (support s) /\ cycle_of s x = s) (is_cycle s).
+Proof.
+  apply (iffP idP).
+  - rewrite /is_cycle.
+    move => /cards1P [] /= C /setP => Hcycle.
+    have Hc := (Hcycle C).
+    move: Hc; rewrite !inE eq_refl /pcycles => /andP [] /imsetP [] x _ ->.
+    rewrite pcyclecardfix => Hin.
+    exists x; split => //.
+    rewrite cycle_ofE.
+    
+Admitted.
+
+Lemma perm_cycle_ofK s x :
+  support (s * (cycle_of s x)^-1) = support s :\: pcycle s x.
+Proof.
+Admitted.
 
 End PermCycles.
+
 
 
 (*
 OK: cycle_of_seq: seqT -> T -> T
 OK: uniq s -> bijective (cycle_of_seq s)
-cas où T:finType cycle_of_seq s : finfun
-       T:finType s:cycleSeq cycle_of_seq s: perm
+   cas où T:finType cycle_of_seq s : finfun (inutile)
+OK:       T:finType s:cycleSeq cycle_of_seq s: perm
 
 seq_of_cycle : fonction réciproque
 is_cycle: 'S_T -> bool (utiliser la décomposition en support de cycles)
