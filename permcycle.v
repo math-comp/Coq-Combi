@@ -52,7 +52,7 @@ Proof.
   by rewrite H inE.
 Qed.
 
-Lemma support_stable s x : x \in support s = (s x \in support s).
+Lemma support_stable s x : (x \in support s) = (s x \in support s).
 Proof.
   rewrite !inE; congr negb; apply/idP/idP => [/eqP -> // | /eqP H].
   by rewrite -[s x](permK s) H permK.
@@ -68,7 +68,7 @@ Proof.
   by rewrite Hy.
 Qed.
 
-Lemma support_card s x : x \in support s = (#|pcycle s x| != 1).
+Lemma support_card s x : (x \in support s) = (#|pcycle s x| != 1).
 Proof.
   rewrite neq_ltn ltnS leqn0 cards_eq0.
   have /negbTE -> /= : pcycle s x != set0.
@@ -84,7 +84,7 @@ Qed.
 Lemma support_disjointC s t :
   [disjoint support s & support t] -> (s * t = t * s)%g.
 Proof.
-  rewrite -permP => Hdisj x; rewrite !permM.
+  move=> Hdisj; apply/permP => x; rewrite !permM.
   case: (boolP (x \in support s)) => [Hs |].
   - have:= Hdisj; rewrite disjoints_subset => /subsetP H.
     have:= H x Hs; rewrite !inE negbK => /eqP ->.
@@ -109,9 +109,9 @@ Admitted.
 
 Definition cyclefun_of s x := [fun y => if y \in pcycle s x then s y else y].
 
-Lemma cyclefun_ofP s x : injective (finfun (cyclefun_of s x)).
+Lemma cyclefun_ofP s x : injective (cyclefun_of s x).
 Proof.
-  move=> y z; rewrite !ffunE /=.
+  move=> y z /=.
   case: (boolP (y \in pcycle s x)) => Hy;
     case: (boolP (z \in pcycle s x)) => Hz // Heq.
   - exact: (perm_inj Heq).
@@ -121,12 +121,9 @@ Qed.
 
 Definition cycle_of s x : {perm T} := perm (@cyclefun_ofP s x).
 
-Lemma cycle_ofE s x : cycle_of s x =1 cyclefun_of s x.
-Proof. by move=> y; rewrite permE ffunE. Qed.
-
 Lemma cycle_ofK s x y : (cycle_of s^-1 x) ((cycle_of s x) y) = y.
 Proof.
-  rewrite !cycle_ofE /=.
+  rewrite !permE /=.
   case: (boolP (y \in pcycle s x)); rewrite pcycleV.
   - by move=> /pcycle_s ->; rewrite permK.
   - by move=> /negbTE ->.
@@ -143,7 +140,7 @@ Lemma cycle_of_nsupp s x :
 Proof.
   rewrite inE negbK => /eqP/pcycle1 Hx.
   rewrite -permP => y.
-  rewrite cycle_ofE /= Hx inE perm1.
+  rewrite permE /= Hx inE perm1.
   by case: eqP => [-> | //]; rewrite pcycle1.
 Qed.
 
@@ -151,7 +148,7 @@ Lemma support_cycle_of s x :
   x \in support s -> support (cycle_of s x) = pcycle s x.
 Proof.
   move=> H; rewrite -setP => y.
-  rewrite /support inE cycle_ofE /=.
+  rewrite /support inE permE /=.
   case: (boolP (y \in pcycle s x)); last by rewrite eq_refl.
   rewrite pcycle_sym=> Hcy; move: H; rewrite /support inE.
   apply contra => /eqP; rewrite pcycle1 => Hy.
@@ -162,7 +159,7 @@ Qed.
 Lemma exp_cycle_of s x n : (cycle_of s x ^+ n)%g x = (s ^+ n)%g x.
 Proof.
   elim: n => [// | n IHn].
-  by rewrite !expgSr !permM {}IHn cycle_ofE /= mem_pcycle.
+  by rewrite !expgSr !permM {}IHn permE /= mem_pcycle.
 Qed.
 
 Lemma pcycle_cycle_ofE s x : pcycle (cycle_of s x) x = pcycle s x.
@@ -183,7 +180,7 @@ Proof.
     subst C; rewrite -support_card => Hx.
     exists x; split; first exact Hx.
     suff Heq : support s = pcycle s x.
-      by rewrite -permP => y; rewrite cycle_ofE /= -Heq inE; case: eqP.
+      by rewrite -permP => y; rewrite permE /= -Heq inE; case: eqP.
     rewrite -setP => y.
     by rewrite -eq_pcycle_mem -in_set1 -HC inE mem_imset //= support_card.
   - move=> [x [Hx Hcy]].
@@ -198,9 +195,9 @@ Qed.
 Lemma cycle_ofP s x : x \in support s -> is_cycle (cycle_of s x).
 Proof.
   move=> H; apply/is_cycleP; exists x; split.
-  - by move: H; rewrite !inE cycle_ofE /= pcycle_id.
-  - rewrite -permP => y; rewrite cycle_ofE /=.
-    by rewrite pcycle_cycle_ofE cycle_ofE /=; case: (y \in _).
+  - by move: H; rewrite !inE permE /= pcycle_id.
+  - rewrite -permP => y; rewrite permE /=.
+    by rewrite pcycle_cycle_ofE permE /=; case: (y \in _).
 Qed.
 
 Lemma perm_cycle_ofK s x :
@@ -209,9 +206,9 @@ Proof.
   rewrite -setP => y; rewrite !inE -negb_or orbC; congr negb.
   case: (altP (s y =P y)) => /= Hy.
   - have Hcy : cycle_of s x y = y.
-      by rewrite cycle_ofE /= Hy if_same.
+      by rewrite permE /= Hy if_same.
     by rewrite -{1}Hcy permM permK Hy eq_refl.
-  - rewrite cycle_ofV permM cycle_ofE /= pcycleV.
+  - rewrite cycle_ofV permM permE /= pcycleV.
     case: (y \in pcycle s x).
     + by rewrite permKV eq_refl.
     + exact: negbTE.
@@ -233,16 +230,13 @@ Fixpoint dec_cycles_rec n s : seq {perm T} :=
       (cycle_of s x) :: (dec_cycles_rec n' ((cycle_of s x)^-1 * s))
     else [::]
   else [::].
-Definition dec_cycles s := dec_cycles_rec #|support s| s.
+Definition dec_cycles s := dec_cycles_rec #|support s|.+1 s.
 
 Lemma dec_cycles_recE s : (\prod_(c <- dec_cycles s) c = s)%g.
 Proof.
   rewrite /dec_cycles.
-  move: {2 3}#|support s| (leqnn #|support s|) => n.
-  elim: n s => [| n IHn] s /=.
-    rewrite leqn0 cards_eq0 => /eqP /support0 ->.
-    by rewrite big_nil.
-  move=> Hcard.
+  move: {2 3}_.+1 (ltnSn #|support s|) => n.
+  elim: n s => [// | n IHn] s Hcard /=.
   case: pickP => [x /= Hx |]/=.
   - rewrite big_cons {}IHn; first by rewrite mulgA mulgV mul1g.
     rewrite -ltnS; apply: (leq_trans _ Hcard); exact: supp_decr.
@@ -253,9 +247,9 @@ Qed.
 Lemma all_dec_cyclesP s : all is_cycle (dec_cycles s).
 Proof.
   rewrite /dec_cycles.
-  move: {2 3}#|support s| (leqnn #|support s|) => n.
-  elim: n s => [// | n IHn] s /=.
-  case: pickP => [x /= Hx Hcard | //].
+  move: {2 3}_.+1 (ltnSn #|support s|) => n.
+  elim: n s => [// | n IHn] s Hcard /=.
+  case: pickP => [x /= Hx | //].
   rewrite cycle_ofP //=; apply: IHn.
   rewrite -ltnS; apply: (leq_trans _ Hcard); exact: supp_decr.
 Qed.
@@ -271,27 +265,25 @@ Proof.
     apply sub_all => mu /subset_trans; apply.
     apply/subsetP => y; rewrite !inE.
     apply contra => /eqP.
-    rewrite permM cycle_ofV cycle_ofE /= pcycleV.
+    rewrite permM cycle_ofV permE /= pcycleV.
     case: (y \in _) => [|-> //];  by rewrite permKV.
 Qed.
 
 Lemma trivIseq_dec s : trivIseq [seq support C | C <- dec_cycles s].
 Proof.
   rewrite /dec_cycles.
-  move: {2 3}#|support s| (leqnn #|support s|) => n.
-  elim: n s => [| n IHn] s /=.
-    by move=> _ i j /= /andP [].
-  case: pickP => [x /= Hx Hcard | Hsupp0 _ /=].
-  - case=> [ |i] [| j] //=; rewrite !ltnS.
-    + move=> /(mem_nth set0).
-      move: (nth _ _ _) => S /mapP [] mu.
-      move=> /(allP (support_dec_cycles_rec ((cycle_of s x)^-1 * s) n)).
-      rewrite perm_cycle_ofK support_cycle_of // => Hsubs -> {S}.
-      rewrite disjoint_sym disjoints_subset.
-      apply (subset_trans Hsubs); rewrite setDE; exact: subsetIr.
-    + apply IHn.
-      rewrite -ltnS; apply: (leq_trans _ Hcard); exact: supp_decr.
-  - by move=> i j /= /andP [].
+  move: {2 3}_.+1 (ltnSn #|support s|) => n.
+  elim: n s => [// | n IHn] s Hcard /=.
+  case: pickP => [x /= Hx | _ i j /= /andP [] //].
+  case=> [ |i] [| j] //=; rewrite !ltnS.
+  + move=> /(mem_nth set0).
+    move: (nth _ _ _) => S /mapP [] mu.
+    move=> /(allP (support_dec_cycles_rec ((cycle_of s x)^-1 * s) n)).
+    rewrite perm_cycle_ofK support_cycle_of // => Hsubs -> {S}.
+    rewrite disjoint_sym disjoints_subset.
+    apply (subset_trans Hsubs); rewrite setDE; exact: subsetIr.
+  + apply IHn.
+    rewrite -ltnS; apply: (leq_trans _ Hcard); exact: supp_decr.
 Qed.
 
 End Definitions.
