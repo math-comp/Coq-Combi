@@ -6,57 +6,11 @@
    Coq 8.4pl5
 *)
 
-theory Sum
-
-  use import int.Int
-  use HighOrd
-
-  function sum (a b: int) (f: int -> int) : int
-  (** sum of [f n] for [a <= n < b] *)
-
-  axiom sum_def1:
-    forall f: int -> int, a b: int.
-    b <= a -> sum a b f = 0
-
-  axiom sum_def2:
-    forall f: int -> int, a b: int.
-    a < b -> sum a b f = sum a (b - 1) f + f (b - 1)
-
-  lemma sum_left:
-    forall f: int -> int, a b: int.
-    a < b -> sum a b f = f a + sum (a + 1) b f
-
-  lemma sum_ext:
-    forall f g: int -> int, a b: int.
-    (forall i. a <= i < b -> f i = g i) ->
-    sum a b f = sum a b g
-
-  lemma sum_le:
-    forall f g: int -> int, a b: int.
-    (forall i. a <= i < b -> f i <= g i) ->
-    sum a b f <= sum a b g
-
-  lemma sum_nonneg:
-    forall f: int -> int, a b: int.
-    (forall i. a <= i < b -> 0 <= f i) ->
-    0 <= sum a b f
-
-  lemma sum_decomp:
-    forall f: int -> int, a b c: int. a <= b <= c ->
-    sum a c f = sum a b f + sum b c f
-
-  lemma sum_zero:
-    forall f: int -> int, a b: int.
-    (forall i. a <= i < b -> f i = 0) ->
-    sum a b f = 0
-
-end
-
 module ArraySum
 
   use import int.Int
   use import array.Array
-  use import Sum
+  use import int.Sum
 
   function sum_sub_array (a: array int) (lo hi: int) : int =
     sum lo hi (\i: int. a[i])
@@ -88,7 +42,7 @@ module Spec
   use import map.Map
   use import array.Array
   use import matrix.Matrix
-  use import Sum
+  use import int.Sum
   use import ArraySum
   use import int.NumOf
 
@@ -97,37 +51,13 @@ module Spec
     (forall i j: int. 0 <= i <= j < length shape -> shape[i] >= shape[j] ) /\
     (shape[length shape - 1] >= 0)
 
-  lemma is_part_nonneg:
-    forall sh. is_part sh -> forall i: int. 0 <= i < length sh -> 0 <= sh[i]
-
   predicate included (inner: array int) (outer: array int) =
     (length inner = length outer) /\
     (forall i:int. 0 <= i < length outer -> inner[i] <= outer[i])
 
-  let rec lemma sum_le_eq (f g: int -> int) (a b: int)
-    requires { forall i. a <= i < b -> f i <= g i }
-    requires { sum a b f = sum a b g }
-    ensures  { forall i. a <= i < b -> f i = g i }
-    variant  { b - a }
-  = if a < b then sum_le_eq f g (a+1) b
-
-  lemma included_parts_eq:
-    forall innev eval.
-    included innev eval -> sum_array innev = sum_array eval ->
-    forall i. 0 <= i < length innev -> innev[i] = eval[i]
-
   (** number of i a[i] = v st lo <= i < hi *)
   function numeq (a: array int) (v: int) (lo hi: int) : int =
     numof (\i: int. a[i] = v) lo hi
-
-  let rec lemma numeq_shift (a1 a2: array int) (v lo hi: int) : unit
-    requires { forall i. lo <= i < hi -> a1[i] = a2[i+1] }
-    ensures  { numeq a1 v lo hi = numeq a2 v (lo+1) (hi+1) } variant { hi - lo }
-  = if lo < hi then numeq_shift a1 a2 v (lo+1) hi
-
-  lemma numeq0:
-    forall w k. (forall i. 0 <= i < length w -> w[i] < k) ->
-    numeq w k 0 (length w) = 0
 
   predicate valid_input (outer inner: array int) =
     included inner outer /\
@@ -141,58 +71,13 @@ module Spec
     eq_prefix s1 s2 (length s1)
 
   predicate valid_eval (eval: array int) =
-    1 <= length eval /\ is_part eval /\
+    is_part eval /\
     eval[length eval - 1] = 0 (* sentinel: eval ends with a zero *)
 
-  predicate valid_innev
-    (outer inner eval innev: array int)
-    (work: matrix int) (row idx lastinnev: int)
-  = 0 <= lastinnev < length eval /\
-    is_part innev /\
-    included innev eval /\
-    (forall r. 0 <= r < row ->
-       forall i. 0 <= i < outer[r] - inner[r] ->
-         0 <= Matrix.get work r i < lastinnev) /\
-    (row < length outer ->
-      forall i. idx < i < outer[row] - inner[row] ->
-         0 <= Matrix.get work row i < lastinnev) /\
-    (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
-    (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
-
-  lemma is_part_eq:
-    forall a1 a2: array int. is_part a1 -> eq_array a1 a2 -> is_part a2
+  (* tableau condition *)
 
   function width (outer inner: array int) : int -> int =
     \r. outer[r] - inner[r]
-
-  (* two matrices coincide up to cell (row, idx), excluded *)
-  predicate frame (outer inner: array int) (w1 w2: matrix int) (row idx: int) =
-    (forall r. 0 <= r < row ->
-       forall i. 0 <= i < width outer inner r ->
-         Matrix.get w2 r i = Matrix.get w1 r i)
-    /\
-    (row < length outer ->
-       forall i. idx < i < width outer inner row ->
-         Matrix.get w2 row i = Matrix.get w1 row i)
-
-  lemma valid_innev_framed:
-    forall outer inner eval innev work1 work2 row idx lastinnev.
-    valid_innev outer inner eval innev work1 row idx lastinnev ->
-    frame outer inner work1 work2 row idx ->
-    valid_innev outer inner eval innev work2 row idx lastinnev
-
-  lemma frame_weakening:
-    forall outer inner work1 work2 row idx.
-    frame outer inner work1 work2 row (idx - 1) ->
-    frame outer inner work1 work2 row idx
-
-  lemma frame_trans:
-    forall outer inner work1 work2 work3 row idx.
-    frame outer inner work1 work2 row idx ->
-    frame outer inner work2 work3 row idx ->
-    frame outer inner work1 work3 row idx
-
-  (* tableau condition *)
 
   predicate non_decreasing_row_suffix
     (outer inner: array int) (work: matrix int) (r start: int)
@@ -202,7 +87,7 @@ module Spec
   (* cell (r,i) is smaller than the cell right below, if it exists *)
   predicate increasing_column
     (outer inner: array int) (work: matrix int) (r i: int)
-  = r > 0 && i >= inner[r - 1] - inner[r] -> (* if there a cell below *)
+  = r > 0 && i >= inner[r - 1] - inner[r] -> (* if there is a cell below *)
     Matrix.get work r i >
     Matrix.get work (r - 1) (i - (inner[r - 1] - inner[r])) (* it is smaller *)
 
@@ -224,9 +109,7 @@ module Spec
   predicate is_tableau_reading (outer inner: array int) (work: matrix int) =
     is_tableau_reading_suffix outer inner work (length outer) 0
 
-  (* to_word: matrix -> array
-
-     #rows = s = length outer
+  (* #rows = s = length outer
      width r = outer[r] - inner[r]
 
       _____________________
@@ -265,17 +148,9 @@ module Spec
     forall i. 0 <= i < width outer inner r ->
     (to_word outer inner w)[word_index outer inner r i] = Matrix.get w r i
 
-  let lemma valid_word_index (outer inner: array int) (r i: int)
-    requires { included inner outer }
-    requires { 0 <= r < length outer }
-    requires { 0 <= i < width outer inner r }
-    ensures  { 0 <= word_index outer inner r i < word_length outer inner }
-  = assert { word_length outer inner                        =
-             sum 0 r                    (width outer inner) +
-             width outer inner r                            +
-             sum (r + 1) (length outer) (width outer inner) }
-
   (* Yamanouchi condition *)
+
+  (* first for suffixes *)
 
   predicate is_yam_suffix (w: array int) (len: int) =
     let n = length w in
@@ -284,22 +159,24 @@ module Spec
     (forall p: int. 0 <= p <= len ->
        forall v1 v2. 0 <= v1 <= v2 -> numeq w v2 (n-p) n <= numeq w v1 (n-p) n)
 
-  predicate is_yam (w: array int) =
-    is_yam_suffix w (length w)
-
   predicate is_of_eval_suffix (eval: array int) (w: array int) (len: int) =
     let n = length w in
     (forall i: int. n - len <= i < n -> 0 <= w[i] < length eval) /\
     (forall v: int. 0 <= v < length eval -> numeq w v (n-len) n <= eval[v])
 
+  predicate is_yam_of_eval_suffix (eval: array int) (w: array int) (len: int) =
+    is_yam_suffix w len /\
+    is_of_eval_suffix eval w len
+
+  (* then for whole words *)
+
+  predicate is_yam (w: array int) =
+    is_yam_suffix w (length w)
+
   predicate is_of_eval (eval: array int) (w: array int) =
     let n = length w in
     (forall i: int. 0 <= i < n -> 0 <= w[i] < length eval) /\
     (forall v: int. 0 <= v < length eval -> numeq w v 0 n = eval[v])
-
-  predicate is_yam_of_eval_suffix (eval: array int) (w: array int) (len: int) =
-    is_yam_suffix w len /\
-    is_of_eval_suffix eval w len
 
   predicate is_yam_of_eval (eval: array int) (w: array int) =
     is_yam w /\
@@ -323,13 +200,6 @@ module Spec
     is_yam_of_eval eval (to_word outer inner w) /\
     is_tableau_reading outer inner w
 
-  lemma sols_pos:
-    forall outer inner eval sol.
-    included inner outer ->
-    is_solution outer inner eval sol ->
-    forall r i. 0 <= r < length outer -> 0 <= i < width outer inner r  ->
-    0 <= Matrix.get sol r i
-
   (* solutions are found in lexicographic order *)
 
   predicate eq_rows (outer inner: array int) (w1 w2: matrix int) (row: int) =
@@ -346,21 +216,9 @@ module Spec
           Matrix.get w1 row i = Matrix.get w2 row i) /\
         Matrix.get w1 row col < Matrix.get w2 row col
 
-  lemma frame_lt_sol:
-    forall outer inner w1 w2 row idx.
-    frame outer inner w1 w2 row idx ->
-    0 <= row < length outer ->
-    0 <= idx < width outer inner row ->
-    Matrix.get w1 row idx < Matrix.get w2 row idx ->
-    lt_sol outer inner w1 w2
-
   predicate eq_sol (outer inner: array int) (w1 w2: matrix int) =
     (* rows w1 = rows w2 = length outer /\ columns w1 = columns w2 /\ *)
     eq_rows outer inner w1 w2 (length outer)
-
-  lemma lt_not_eq:
-    forall outer inner: array int, w1 w2: matrix int.
-    lt_sol outer inner w1 w2 -> not (eq_sol outer inner w1 w2)
 
   (* a type to store solutions *)
 
@@ -383,13 +241,6 @@ module Spec
       lo <= i < j < hi ->
       lt_sol outer inner (s2m (Map.get s.sols i)) (s2m (Map.get s.sols j))
 
-  (* a sorted array of solutions contains no duplicate *)
-  lemma no_duplicate:
-    forall outer inner: array int, s: solutions, lo hi: int.
-    sorted outer inner s lo hi ->
-    forall i j: int. lo <= i < j < hi ->
-      not (eq_sol outer inner (s2m (Map.get s.sols i)) (s2m (Map.get s.sols j)))
-
   predicate good_solutions (outer inner eval: array int) (s: solutions) =
     0 <= s.next /\
     sorted outer inner s 0 s.next /\
@@ -401,13 +252,159 @@ module Spec
 
 end
 
+module Innev
+
+  use import int.Int
+  use import array.Array
+  use import matrix.Matrix
+  use import Spec
+
+  predicate valid_innev
+    (outer inner eval innev: array int)
+    (work: matrix int) (row idx lastinnev: int)
+  = 0 <= lastinnev < length eval /\
+    is_part innev /\
+    included innev eval /\
+    (forall r. 0 <= r < row ->
+       forall i. 0 <= i < outer[r] - inner[r] ->
+         0 <= Matrix.get work r i < lastinnev) /\
+    (row < length outer ->
+      forall i. idx < i < outer[row] - inner[row] ->
+         0 <= Matrix.get work row i < lastinnev) /\
+    (lastinnev = 0 \/ 0 < innev[lastinnev - 1]) /\
+    (forall i: int. lastinnev <= i < length innev -> innev[i] = 0)
+
+end
+
+module Lemmas
+
+  use import int.Int
+  use import map.Map
+  use import array.Array
+  use import matrix.Matrix
+  use import int.Sum
+  use import ArraySum
+  use import int.NumOf
+  use import Spec
+  use import Innev
+
+  lemma is_part_nonneg:
+    forall sh. is_part sh -> forall i: int. 0 <= i < length sh -> 0 <= sh[i]
+
+  let rec lemma sum_le_eq (f g: int -> int) (a b: int)
+    requires { forall i. a <= i < b -> f i <= g i }
+    requires { sum a b f = sum a b g }
+    ensures  { forall i. a <= i < b -> f i = g i }
+    variant  { b - a }
+  = if a < b then sum_le_eq f g (a+1) b
+
+  lemma included_parts_eq:
+    forall innev eval.
+    included innev eval -> sum_array innev = sum_array eval ->
+    forall i. 0 <= i < length innev -> innev[i] = eval[i]
+
+  let rec lemma numeq_shift (a1 a2: array int) (v lo hi: int) : unit
+    requires { forall i. lo <= i < hi -> a1[i] = a2[i+1] }
+    ensures  { numeq a1 v lo hi = numeq a2 v (lo+1) (hi+1) } variant { hi - lo }
+  = if lo < hi then numeq_shift a1 a2 v (lo+1) hi
+
+  lemma numeq0:
+    forall w k. (forall i. 0 <= i < length w -> w[i] < k) ->
+    numeq w k 0 (length w) = 0
+
+  lemma is_part_eq:
+    forall a1 a2: array int. is_part a1 -> eq_array a1 a2 -> is_part a2
+
+  lemma sum_eq:
+    forall a1 a2: array int. eq_array a1 a2 -> sum_array a1 = sum_array a2
+
+  let lemma valid_word_index (outer inner: array int) (r i: int)
+    requires { included inner outer }
+    requires { 0 <= r < length outer }
+    requires { 0 <= i < width outer inner r }
+    ensures  { 0 <= word_index outer inner r i < word_length outer inner }
+  = assert { word_length outer inner                        =
+             sum 0 r                    (width outer inner) +
+             width outer inner r                            +
+             sum (r + 1) (length outer) (width outer inner) }
+
+  lemma sols_pos:
+    forall outer inner eval sol.
+    included inner outer ->
+    is_solution outer inner eval sol ->
+    forall r i. 0 <= r < length outer -> 0 <= i < width outer inner r  ->
+    0 <= Matrix.get sol r i
+
+end
+
+module Frame
+
+  use import int.Int
+  use import map.Map
+  use import array.Array
+  use import matrix.Matrix
+  use import int.Sum
+  use import ArraySum
+  use import int.NumOf
+  use import Spec
+  use import Innev
+  use import Lemmas
+
+  (* two matrices coincide up to cell (row, idx), excluded *)
+  predicate frame (outer inner: array int) (w1 w2: matrix int) (row idx: int) =
+    (forall r. 0 <= r < row ->
+       forall i. 0 <= i < width outer inner r ->
+         Matrix.get w2 r i = Matrix.get w1 r i)
+    /\
+    (row < length outer ->
+       forall i. idx < i < width outer inner row ->
+         Matrix.get w2 row i = Matrix.get w1 row i)
+
+  lemma valid_innev_framed:
+    forall outer inner eval innev work1 work2 row idx lastinnev.
+    valid_innev outer inner eval innev work1 row idx lastinnev ->
+    frame outer inner work1 work2 row idx ->
+    valid_innev outer inner eval innev work2 row idx lastinnev
+
+  lemma frame_weakening:
+    forall outer inner work1 work2 row idx.
+    frame outer inner work1 work2 row (idx - 1) ->
+    frame outer inner work1 work2 row idx
+
+  lemma frame_trans:
+    forall outer inner work1 work2 work3 row idx.
+    frame outer inner work1 work2 row idx ->
+    frame outer inner work2 work3 row idx ->
+    frame outer inner work1 work3 row idx
+
+  lemma frame_lt_sol:
+    forall outer inner w1 w2 row idx.
+    frame outer inner w1 w2 row idx ->
+    0 <= row < length outer ->
+    0 <= idx < width outer inner row ->
+    Matrix.get w1 row idx < Matrix.get w2 row idx ->
+    lt_sol outer inner w1 w2
+
+  lemma lt_not_eq:
+    forall outer inner: array int, w1 w2: matrix int.
+    lt_sol outer inner w1 w2 -> not (eq_sol outer inner w1 w2)
+
+  (* a sorted array of solutions contains no duplicate *)
+  lemma no_duplicate:
+    forall outer inner: array int, s: solutions, lo hi: int.
+    sorted outer inner s lo hi ->
+    forall i j: int. lo <= i < j < hi ->
+      not (eq_sol outer inner (s2m (Map.get s.sols i)) (s2m (Map.get s.sols j)))
+
+end
+
 module ToWord
   use import int.Int
   use import int.MinMax
   use import ref.Refint
   use import array.Array
   use import matrix.Matrix
-  use import Sum
+  use import int.Sum
   use import Spec
 
   let ghost to_word (outer inner: array int) (w: matrix int) : array int
@@ -455,10 +452,13 @@ module LRrule
   use import array.Array
   use import matrix.Matrix
 
-  use import Sum
+  use import int.Sum
   use import int.NumOf
   use import ArraySum
   use import Spec
+  use import Innev
+  use import Lemmas
+  use import Frame
 
   val ghost solutions: solutions
 
@@ -517,6 +517,19 @@ module LRrule
   lemma sum_width_nonneg:
     forall outer inner r1 r2. included inner outer ->
     0 <= r1 <= r2 <= length outer -> 0 <= sum r1 r2 (width outer inner)
+
+  (*
+     row = current row, in [0 .. length outer]
+     idx = current index in row (from left to right),
+           in [0 .. outer[row]-inner[row][
+
+   ^  _____________________
+   |  |_______|___        |
+  row |  |________|___    |
+   |  |    |__________|___|
+   0  |_______|___________|
+               0 -> idx -->
+  *)
 
   (** [(row, idx)] is a valid cell for the algorithm
       i.e. it can be an argument of recursive function [count] *)
@@ -822,18 +835,30 @@ module LRrule
     is_solution outer inner eval w ->
     length (to_word outer inner w) = sum_array eval
 
-  (*
-     row = current row, in [0 .. length outer[
-     idx = current index in row (from left to left),
-           in [0 .. outer[row]-inner[row][
+  predicate innev_restored (a1 a2 a3 a4: array int) (v: int)
+  = a2[v] = a3[v] = a1[v] + 1 = a4[v] + 1 /\
+    forall i. 0 <= i < length a4 -> i <> v -> a1[i] = a2[i] = a3[i] = a4[i]
 
-   ^  _____________________
-   |  |_______|___        |
-  row |  |________|___    |
-   |  |    |__________|___|
-   0  |_______|___________|
-               0 -> idx -->
-  *)
+  predicate sum_array_decomp (a: array int) (v: int) =
+   sum_array a = sum_sub_array a 0 v + a[v] + sum_sub_array a (v+1) (length a)
+
+  let lemma bounds_for_v (outer inner eval innev: array int)
+                         (work: matrix int) (row idx lastinnev: int) : unit
+    requires { valid_input outer inner }
+    requires { valid_eval eval }
+    requires { sum_array eval = sum_array outer - sum_array inner }
+    requires { valid_cell outer inner row idx }
+    requires { row < length outer && 0 <= idx }
+    requires { valid_innev outer inner eval innev work row idx lastinnev }
+    ensures  { let min = if row > 0 && idx >= inner[row-1] - inner[row]
+                 then Matrix.get work (row - 1)
+                        (idx - (inner[row-1] - inner[row])) + 1 else 0 in
+               let max = if idx = (outer[row] - inner[row]) - 1 then lastinnev
+                 else MinMax.min lastinnev (Matrix.get work row (idx + 1)) in
+               forall w. is_solution outer inner eval w ->
+                 min <= Matrix.get w row idx <= max }
+  = if row > 0 && idx >= inner[row-1]-inner[row] then () else ();
+    if idx = (outer[row] - inner[row]) - 1 then () else ()
 
   let lrrule (outer inner eval: array int) : int =
     requires { valid_input outer inner }
@@ -858,7 +883,7 @@ module LRrule
       requires { is_solution_suffix outer inner eval work row idx }
       variant  { szshape - row, idx + 1 }
       ensures  { !lastinnev = old !lastinnev }
-      ensures  { forall i. 0 <= i < length innev -> innev[i] = (old innev)[i] }
+      ensures  { eq_array innev (old innev) }
       ensures  { "expl:frame" frame outer inner (old work) work row idx }
       ensures  { result = solutions.next - old solutions.next >= 0 }
       ensures  { forall i. 0 <= i < old solutions.next ->
@@ -887,22 +912,18 @@ module LRrule
             if row + 1 < szshape then width[row + 1] - 1 else -1 }*)
             if row + 1 < szshape then width[row + 1] - 1 else -1 end)
       else begin
-        let min = abstract (*ensures { result =
-          if row > 0 && idx >= shift[row]
-          then Matrix.get work (row - 1) (idx - shift[row]) + 1 else 0 }*)
+        let min = abstract
           if row > 0 && idx >= shift[row]
           then Matrix.get work (row - 1) (idx - shift[row]) + 1 else 0 end in
-        let max = abstract (*ensures { result =
-          if idx = width[row] - 1 then !lastinnev
-          else MinMax.min !lastinnev (Matrix.get work row (idx + 1)) }*)
+        let max = abstract
           if idx = width[row] - 1 then !lastinnev
           else MinMax.min !lastinnev (Matrix.get work row (idx + 1)) end in
+        ghost bounds_for_v outer inner eval innev work row idx !lastinnev;
         let sum = ref 0 in
         'Init:
         for v = min to max do
           invariant { !lastinnev = at !lastinnev 'Init }
-          invariant { forall i. 0 <= i < length innev ->
-                      innev[i] = (at innev 'Init)[i] }
+          invariant { eq_array innev (at innev 'Init) }
           invariant { "expl:frame"
                       frame outer inner (at work 'Init) work row idx }
           invariant { "expl:valid_innev"
@@ -926,22 +947,22 @@ module LRrule
                       min <= Matrix.get w row idx < v ->
                   exists i. at solutions.next 'Init <= i < solutions.next /\
                   frame outer inner w (s2m (Map.get solutions.sols i)) row idx }
-          'L:
-          if abstract (*ensures { result <->
-            innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v]) }*)
+'L:       if abstract
             innev[v] < eval[v] && (v = 0 || innev[v-1] > innev[v])
           end then begin
             innev[v] <- innev[v] + 1;
-            if v = !lastinnev then lastinnev += 1;
+            assert { sum_array innev = sum_array (at innev 'L) + 1
+                     by sum_array_decomp innev v &&
+                        sum_array_decomp (at innev 'L) v };
+'A:         if v = !lastinnev then lastinnev += 1;
             assert { 0 <= v < !lastinnev };
             Matrix.set work row idx v;
             sum += count_rec row (idx - 1);
-            innev[v] <- innev[v] - 1;
-            assert { eq_array innev (at innev 'L) };
-           if abstract (*ensures { result <->
-             !lastinnev = v+1 && innev[v] = 0 }*)
-             !lastinnev = v+1 && innev[v] = 0
-           end then lastinnev -= 1
+'B:         innev[v] <- innev[v] - 1;
+            assert { eq_array innev (at innev 'L)
+                     by innev_restored (at innev 'L) (at innev 'A)
+                                       (at innev 'B) innev v };
+            if abstract !lastinnev = v+1 && innev[v] = 0 end then lastinnev -= 1
           end
         done;
         !sum
