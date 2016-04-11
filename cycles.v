@@ -72,7 +72,7 @@ Proof.
   - by move => /afix1P /= /eqP.
   - by apply /afix1P => /=; rewrite apermE.  
 Qed.
-  
+
 Lemma support_perm_on S s:
   (perm_on S s) = (support s \subset S).
 Proof.
@@ -110,26 +110,27 @@ Lemma partition_support s :
 Proof.
   apply /and3P; split.
   - rewrite /cover.
-    apply /eqP /setP => y; apply /bigcupP.
-    case: (boolP (y \in support s)) => [/setCP Hy|].
-    + exists (pcycle s y); last by apply: pcycle_id.
+    apply /eqP /setP => y; apply/bigcupP/idP.
+    + move=> [Y]; rewrite inE => /andP [] /imsetP [x _ -> {Y}] Hcard.
+      rewrite in_support -eq_pcycle_mem => /eqP Heq.
+      move: Hcard; rewrite -Heq pcycleE; apply contra => /eqP.
+      rewrite -apermE => /afix1P.
+      rewrite -afix_cycle => /orbit1P ->.
+      by rewrite cards1.
+    + move=> /setCP Hy.
+      exists (pcycle s y); last by apply: pcycle_id.
       rewrite inE; apply /andP; split; first by rewrite /pcycles; apply /imsetP; exists y.
       apply /negP; rewrite pcycleE => /eqP /card_orbit1 /orbit1P.
       by rewrite afix_cycle //; rewrite inE.
-    + rewrite inE negbK -afix_cycle => /orbit1P Hy [] X.
-      rewrite inE => /andP [] /imsetP [] z _ -> Hz.
-      rewrite -eq_pcycle_mem => /eqP Heq.
-      by move: Hz; rewrite -Heq pcycleE Hy cards1.
   - apply /trivIsetP => A B.
     rewrite !inE => /andP [] /imsetP [] x1 _ -> _ /andP [] /imsetP [] x2 _ -> _ Hdiff.
-    rewrite -setI_eq0.
-    apply /set0Pn => Hy; destruct Hy as (y,Hy).
-    move: Hy; rewrite inE => /andP [].
+    rewrite -setI_eq0; apply /set0Pn => [] [y].
+    rewrite inE => /andP [].
     by rewrite -!eq_pcycle_mem => /eqP ->; apply /negP.
   - apply /negP; rewrite inE.
     move => /andP [] H _.
     move: H => /imsetP [] x _ Heq.
-    have:= (pcycle_id s x).
+    have:= pcycle_id s x.
     by rewrite -Heq inE.
 Qed.
 
@@ -141,9 +142,10 @@ Proof.
   apply /subsetP => x /= Hx.
   move: HX; rewrite !inE apermE => /andP [] /imsetP [] x0 _ HX _.
   move: Hx; rewrite HX -!eq_pcycle_mem => /eqP <-.
-  by have:= mem_pcycle s 1 x; rewrite -eq_pcycle_mem expg1.  
+  by have:= mem_pcycle s 1 x; rewrite -eq_pcycle_mem expg1.
 Qed.
 
+(* Prove before partition_support and use in it *)
 Lemma in_psupportP s (X: {set T}) x:
   reflect  (exists2 i, i \in psupport s & x \in i) (s x != x).
 Proof.
@@ -156,6 +158,16 @@ Qed.
 
 Definition is_cycle s :=
   #|psupport s| == 1.
+
+Definition cycle_dec s := [set restr_perm C s | C in psupport s].
+
+Lemma is_cycle_dec s : {in (cycle_dec s), forall C, is_cycle C}.
+Proof.
+Admitted.
+
+Lemma cycle_decE s : \prod_(C in cycle_dec s) C = s.
+Proof.
+Admitted.
 
 Definition pickcycle s :=
   odflt set0 [pick X in psupport s].
