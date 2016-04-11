@@ -43,7 +43,18 @@ Proof.
   by rewrite H1 inE.
 Qed.
 
-  
+Lemma pcycleP (s: {perm T}) x y : reflect (exists i, y = (s ^+ i)%g x) (y \in pcycle s x).
+Proof.
+  apply (iffP idP).
+  - rewrite pcycle_traject => H.
+    have:= H; rewrite -index_mem size_traject => Hlt.
+    exists (index y (traject s x #|pcycle s x|)).
+    have {Hlt} := nth_traject s Hlt x; rewrite (nth_index _ H) => {H} {1}->.
+    elim: (index _ _) => [|n IHn] /=; first by rewrite expg0 perm1.
+    by rewrite expgSr permM IHn.
+  - move => [i ->]; exact: mem_pcycle.
+Qed.
+
 End SSRComplements.
   
 
@@ -146,27 +157,92 @@ Qed.
 Definition is_cycle s :=
   #|psupport s| == 1.
 
-Definition cycle_of s : {perm T} :=
-  let C := odflt set0 [pick X in psupport s]
-  in restr_perm C s.
+Definition pickcycle s :=
+  odflt set0 [pick X in psupport s].
 
-Lemma perm_on_cycle_of s: perm_on (odflt set0 [pick X in psupport s]) (cycle_of s).
+Definition cycle_of s : {perm T} :=
+  let C := pickcycle s in restr_perm C s.
+
+Lemma perm_on_cycle_of s: perm_on (pickcycle s) (cycle_of s).
 Proof. by exact: restr_perm_on. Qed.
 
-Lemma out_cycle_of s x : x \notin (odflt set0 [pick X in psupport s]) -> cycle_of s x = x.
+Lemma out_cycle_of s x : x \notin (pickcycle s) -> cycle_of s x = x.
 Proof. apply: out_perm; exact: perm_on_cycle_of. Qed.
 
-Lemma in_cycle_of s x : x \in (odflt set0 [pick X in psupport s]) -> cycle_of s x = s x.
+Lemma in_cycle_of s x : x \in (pickcycle s) -> cycle_of s x = s x.
 Proof.
-  apply: restr_permE.
+  apply: restr_permE; rewrite /pickcycle.
   case: pickP => [X|_] /=.
   - by apply: psupport_astabs.
   - by rewrite /astabs !inE; apply /andP; split => //; apply: sub0set.
 Qed.
 
 Lemma cycle_of_comp s x:
-  cycle_of s x = (if x \in odflt set0 [pick X in psupport s] then s x else x).
+  cycle_of s x = (if x \in pickcycle s then s x else x).
 Proof. by case: (boolP (x \in _)) => H; [rewrite in_cycle_of|rewrite out_cycle_of]. Qed.
+
+Lemma support_cycle_of s:
+  support (cycle_of s) = pickcycle s.
+Proof.
+  apply /setP => x; rewrite in_support cycle_of_comp /pickcycle.
+  case: (boolP (x \in _)); last by rewrite eqxx.
+  case: pickP => [/= X H1 H2|/=]; last by rewrite in_set0.
+  by apply /in_psupportP => //; exists X.
+Qed.
+
+Lemma pickcycle_stab s x n:
+  x \in pickcycle s -> (s^+n)%g x \in pickcycle s.
+Proof.
+  rewrite /pickcycle. 
+  case: pickP => [X /=|_ /=]; last by rewrite inE.
+  rewrite inE => /andP [] /imsetP [] y _ -> _.
+  rewrite -!eq_pcycle_mem => /eqP <-.
+  by rewrite pcycle_perm.
+Qed.
+  
+Lemma pcycle_cycle_of s x :
+  x \in pickcycle s -> pcycle (cycle_of s) x = pcycle s x.
+Proof.
+  rewrite -setP => H y.
+  apply /pcycleP/pcycleP.
+  - move => [] n H0; exists n; rewrite {}H0; move: n; elim => [|n Hn].
+    + by rewrite expg0 perm1.
+    + rewrite !expgSr !permM Hn in_cycle_of //.
+      by apply: pickcycle_stab.
+  - move => [] n H0; exists n; rewrite {}H0; move: n; elim => [|n Hn].
+    + by rewrite expg0 perm1.
+    + rewrite !expgSr !permM -Hn in_cycle_of //.
+      by apply: pickcycle_stab.
+Qed.
+
+Lemma psupport_cycle_of s:
+  support (cycle_of s) != set0 -> psupport (cycle_of s) = [set (support (cycle_of s))]. 
+Proof.
+  rewrite support_cycle_of => H0.
+  rewrite /psupport; apply /setP => X.
+  rewrite !inE.
+  apply /andP/idP.
+  - move => [] /imsetP [] x0 _ -> HX.
+    apply /eqP.
+    case: (boolP (x0 \in pickcycle s)) => [Hx0|/out_cycle_of Hx0].
+    + rewrite pcycle_cycle_of //.
+      move: H0 Hx0; rewrite  /pickcycle.  
+      case: pickP => [Y/=| /=]; last by rewrite eqxx.
+      rewrite inE => /andP [] /imsetP [] y0 _ -> _ _.
+      by rewrite -eq_pcycle_mem => /eqP.
+    + exfalso.
+      move: HX; rewrite pcycleE; apply /negP; rewrite negbK.
+      apply /cards1P; exists x0; apply /orbit1P.
+      by rewrite afix_cycle; apply /afix1P => /=.
+  - move => /eqP ->; move: H0; rewrite /cycle_of /pickcycle.      
+    case pickP => [Y| ]/=; last by rewrite eqxx.
+    rewrite inE => /andP [] => H ->.
+    case: (set_0Vmem Y); first by move => ->; rewrite eqxx.
+    move => [] x Hx _; split => //.
+    apply /imsetP; exists x => //.
+    
+Qed.
+
 
 Lemma cycle_ofE s :
   is_cycle s -> cycle_of s = s.
