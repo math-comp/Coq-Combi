@@ -11,6 +11,12 @@ Unset Strict Implicit.
 Section SSRComplements.
 Variable T: finType.
 
+Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
+
+Lemma big_enum (S : {set T}) :
+  \big[op/idx]_(s in S) F s = \big[op/idx]_(s <- enum S) F s.
+Proof. by rewrite /index_enum big_filter; apply congr_big. Qed.
+
 Lemma triv_part (P:{set {set T}}) (X:{set T}) (D:{set T}):
   partition P D -> X \in P -> D \subset X -> P = [set X].
 Proof.
@@ -291,6 +297,50 @@ Proof.
   by apply (Hal C); rewrite in_cons; apply /orP; right.
 Qed.
 
+
+
+(************** FLORENT ******************)
+Lemma cycle_decE_florent s : (\prod_(C in cycle_dec s) C)%g = s.
+Proof.
+  move: {2}(#|cycle_dec s|) (erefl #|cycle_dec s|) => n.
+  elim: n s => [| n IHn] s Hsn.
+    admit.
+  rewrite big_enum.
+  have := erefl (pick (mem (cycle_dec s))).
+  rewrite {1}/pick.
+  case: {1}(pickP (mem (cycle_dec s))) => [ x /= Hx|].
+  - rewrite (_ : enum (mem (cycle_dec s)) = enum (cycle_dec s)); first last.
+      by apply eq_enum.
+    case Henum: (enum (cycle_dec s)) => [|C l]; rewrite /ohead //.
+    move=> [] HxC; subst x.
+    rewrite big_cons.
+    have HC : C |: (cycle_dec (C^-1 * s)) = cycle_dec s.
+      admit.
+    have HCcycle : C \notin (cycle_dec (C^-1 * s)).
+      admit.
+    have Hl : l = enum (cycle_dec (C^-1 * s)%g).
+      move: Henum; rewrite /enum_mem -HC -enumT /=.
+      move: HCcycle; move: (cycle_dec _) => D HD.
+      have:= enum_uniq {perm T}.
+      elim: (enum {perm T}) => [// | E0 E IHE] /= /andP [HE0 Huniq].
+      rewrite !inE; case: eqP => HE0C /=.
+      - subst E0 => /= [] [] <-.
+        move: HD => /negbTE ->.
+        apply eq_in_filter => X HX; rewrite !inE.
+        suff /negbTE -> : X != C by [].
+        by move: HE0; apply contra => /eqP <-.
+      - case: (boolP (E0 \in D)) => HE0D.
+        + move=> [HE0eqC]; by subst E0.
+        + exact: IHE.
+    subst l; rewrite -big_enum IHn.
+    - by rewrite mulgA mulgV mul1g.
+    - move: Hsn; rewrite cardE Henum /= => [] [] <-.
+      by rewrite -cardE.
+  - move=> Habs; exfalso.
+    move: Hsn; suff -> : cycle_dec s = set0 by rewrite cards0.
+    rewrite -setP => i.
+    rewrite !inE; exact: Habs i.
+Admitted.
 
 (*A peut être supprimer:
 Pas moyen d'écrire simplement exists!
