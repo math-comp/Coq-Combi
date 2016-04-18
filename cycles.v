@@ -237,10 +237,109 @@ Proof.
   exact: H.
 Qed.
 
-Lemma cycle_decE s : (\prod_(C in cycle_dec s) C)%g = s.
+Lemma support_cycle_dec s :
+  [set support C| C in cycle_dec s] = psupport s.
+Proof.
+  apply /setP => X.
+  apply /imsetP/idP.
+  - move => [x /imsetP[x0 Hx0 ->] ->].
+    rewrite support_restr_perm //.
+  - rewrite inE => /andP [HX1 HX2].
+    have HX: X \in psupport s by rewrite inE; apply /andP.
+    exists (restr_perm X s); last by rewrite support_restr_perm.
+    by apply /imsetP; exists X.
+Qed.
+
+(*Problème de Curryfication:
+signifie: forall C1 in cycle_dec, forall C2, support C1 = C2 -> C1 = C2
+Ce qui est faux.*)
+(*Lemma no_repetition s:
+  {in cycle_dec s, injective support}.
+Proof.
+  move => C1 HC1 C2 Heq.
+Qed.
+ *)
+
+
+Lemma support_inj s:
+ forall C1 C2, C1 \in cycle_dec s -> C2 \in cycle_dec s -> support C1 = support C2 -> C1 = C2.
+Proof.
+  move => C1 C2 /imsetP [c1 Hc1 ->] /imsetP [c2 HC2 ->].
+  by rewrite !support_restr_perm // => ->.
+Qed.
+
+
+  
+Lemma out_perm_prod (A: seq {perm T}) x:
+  {in A, forall C, x \notin support C} -> (\prod_(C <- A) C)%g x = x.
+Proof.
+  elim: A => [_|a l Hl Hal]; first by rewrite big_nil perm1.
+  rewrite big_cons permM.
+  have:= (Hal a); rewrite mem_head in_support negbK => Ha.
+  have:= (Ha isT) => /eqP ->.
+  rewrite Hl // => C HC.
+  by apply (Hal C); rewrite in_cons; apply /orP; right.
+Qed.
+
+
+(*A peut être supprimer:
+Pas moyen d'écrire simplement exists!
+{in P, exists! ...}
+*)
+Lemma partitionP (P: {set {set T}}) (D:{set T}):
+  reflect [forall x in D, [exists X in P, (x \in X) && [forall Y in P, (X != Y) ==> (x \notin Y)]]] (partition P D).
+Proof.
+  admit.
+Admitted.
+
+
+
+Lemma cycle_decE s : (\prod_(C <- enum(cycle_dec s)) C)%g = s.
 Proof.
   apply /permP => x.
-  case: (boolP (x \in support s)).
+  case: (boolP (x \in support s)) => [|].
+  - have:= partition_support s; rewrite - support_cycle_dec.
+    move => /partitionP /forallP => H Hx; have:= H x => {H}. 
+    rewrite {}Hx => /implyP H; have:= H isT => {H}.
+    move => /existsP [X] /and3P [/imsetP [C HC ->] Hx].
+    move => /forallP Hnotin.
+    have Hdecomp: exists l1 l2, enum (cycle_dec s) = l1++(C::l2).
+      move: HC; rewrite -mem_enum. 
+      elim: (enum (cycle_dec s)) => [|a l Hl]; first by rewrite in_nil.
+      rewrite in_cons => /orP [/eqP ->| /Hl]; first by exists [::]; exists l.
+      move => {Hl} [l1] [l2] ->.
+      by exists (a::l1); exists l2.
+    move: Hdecomp => [l1] [l2] Hdecomp; rewrite Hdecomp.
+    rewrite big_cat /= big_cons /=.
+    rewrite permM out_perm_prod ?permM ?out_perm_prod.        
+    + move: HC Hx => /imsetP [X0 HX0 ->]; rewrite support_restr_perm // => Hx.
+      by rewrite restr_permE //; by apply psupport_astabs. 
+      (*Pour les 2 prochains sous-buts utiliser Hnotin*)
+    + move => C0.
+      admit.
+    + move => C0 HC0.
+      have: C0 \in (cycle_dec s).
+        by rewrite -mem_enum Hdecomp mem_cat; apply /orP; left.
+      move => HC01.
+      have:= Hnotin (support C0) => /implyP.
+      have HsC0 :support C0 \in [set support C1 | C1 in cycle_dec s].
+        by apply /imsetP; exists C0.
+      move => {Hnotin} Hnotin.
+      have:= Hnotin HsC0 => /implyP {Hnotin HsC0} Hnotin.
+      apply: Hnotin; apply /negP => /eqP Heq.
+      have:= support_inj HC HC01 Heq => {Heq} Heq.
+      move: HC0; rewrite -Heq => Hcontra.
+      (*have := (@enum_uniq T (cycle_dec s)); rewrite Hdecomp.*)
+      have: uniq(l1++C::l2) by admit.
+      rewrite cat_uniq => /and3P [_ H _]; move: H.
+      apply /negP; rewrite negbK.
+      by apply /hasP; exists C => //; apply mem_head.
+  - rewrite in_support negbK => /eqP Heq.
+    rewrite out_perm_prod // => C.
+    rewrite mem_enum => /imsetP [X HX -> {C}]. 
+    rewrite support_restr_perm //.
+    apply /negP => Hx; move: Heq => /eqP; apply /negP/in_psupportP; first exact: support s.
+  by exists X.
 Admitted.
 
 Lemma uniqueness_cycle_dec A s:
@@ -255,4 +354,8 @@ Lemma support_disjointC s t :
   [disjoint support s & support t] -> (s * t = t * s)%g.
 Proof.
 Admitted.
+
+Definition cycle_type (s:{perm T}):=
+  sort (geq) [seq #|(x: {set T})| |x <- enum(pcycles s)].
+
 
