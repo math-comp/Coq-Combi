@@ -65,6 +65,15 @@ Proof.
   by exists (a :: l1); exists l2.
 Qed.
 
+Lemma enum_eq0P (s : {set T}):
+  reflect (enum s = [::]) (s == set0).
+Proof.
+  apply (iffP idP) => [/eqP -> | ]; first by rewrite enum_set0.
+  case: (set_0Vmem s) => [-> //| [x]].
+  rewrite -mem_enum => Hx Hnil.
+  by rewrite Hnil in_nil in Hx.
+Qed.
+
 End SSRComplements.
 
 
@@ -97,7 +106,7 @@ Proof.
     exact: H.
 Qed.
 
-Lemma triv_supportP s:
+Lemma support_eq0 s:
   (s == perm_one T) = (support s == set0).
 Proof.
   apply /idP/idP => [/eqP -> |/eqP ].
@@ -111,7 +120,7 @@ Qed.
 
 Lemma support1 :
   (support (perm_one T)) = set0.
-Proof. by apply /eqP; rewrite -triv_supportP. Qed.
+Proof. by apply /eqP; rewrite -support_eq0. Qed.
 
 Definition psupport s := [set x in pcycles s | #|x| != 1 ].
 
@@ -166,6 +175,12 @@ Proof.
   move: Hx; rewrite HX -!eq_pcycle_mem => /eqP <-.
   by have:= mem_pcycle s 1 x; rewrite -eq_pcycle_mem expg1.
 Qed.
+
+Lemma psupport_eq0 s:
+  (s == perm_one T) = (psupport s == set0).
+Proof.
+  admit.
+Admitted.
 
 Definition is_cycle s :=
   #|psupport s| == 1.
@@ -293,10 +308,6 @@ Proof.
 Admitted.
 
 (*
-  [forall x in D, [exists X in P,
-     (x \in X) && [forall Y in P, (X != Y) ==> (x \notin Y)]]] =
-  (partition P D).
-
 Lemma partitionP (P: {set {set T}}) (D:{set T}):
   [forall x in D, [exists X in P,
      (x \in X) && [forall Y in P, (X != Y) ==> (x \notin Y)]]] =
@@ -304,7 +315,39 @@ Lemma partitionP (P: {set {set T}}) (D:{set T}):
 Proof.
   admit.
 Admitted.
-*)
+ *)
+
+Lemma cycle_dec_eq0 s:
+  (cycle_dec s == set0) = (s == perm_one T).
+Proof.
+  apply /idP/idP => [/eqP Heq| /eqP ->].
+  - have:= support_cycle_dec s.
+    rewrite Heq support_eq0.
+  - Focus 2.
+    rewrite /cycle_dec; apply /eqP/setP => x.
+    rewrite inE; apply /imsetP.
+Admitted.
+
+Lemma cycle_dec_cons s a l:
+  enum(cycle_dec s) = (a::l) -> enum(cycle_dec (a ^-1 * s)) = l.
+Proof.
+  move => Hs.
+  
+
+Admitted.
+
+
+Lemma cycle_decE s:
+  forall (l : seq {perm T}), enum (cycle_dec s) = l -> (\prod_(C <- l) C)%g = s.
+Proof.
+  move => l; move: s.
+  elim: l => [s /enum_eq0P| a l Hl s /cycle_dec_cons Henum].
+  - by rewrite cycle_dec_eq0 big_nil => /eqP ->.
+  - apply /permP => x.
+    rewrite big_cons permM.
+    have -> := Hl (a^-1 * s)%g Henum.
+    by rewrite -permM mulgA mulgV mul1g.
+Qed.
 
 
 Lemma cycle_decE s : (\prod_(C <- enum(cycle_dec s)) C)%g = s.
