@@ -56,6 +56,15 @@ Proof.
   - move => [i ->]; exact: mem_pcycle.
 Qed.
 
+Lemma in_seq (l : seq T) (x : T) :
+ x \in l -> exists l1 l2, l = l1 ++ (x :: l2).
+Proof.
+  elim: l => [|a l Hl]; first by rewrite in_nil.
+  rewrite in_cons => /orP [/eqP ->| /Hl]; first by exists [::]; exists l.
+  move => {Hl} [l1] [l2] ->.
+  by exists (a :: l1); exists l2.
+Qed.
+
 End SSRComplements.
 
 
@@ -297,7 +306,49 @@ Proof.
 Admitted.
 *)
 
+
+Lemma cycle_decE s : (\prod_(C <- enum(cycle_dec s)) C)%g = s.
+Proof.
+  apply /permP => x.
+  case: (boolP (x \in support s)) => [Hx |].
+  - have /partitionP /(_ x) := partition_support s.
+    rewrite -support_cycle_dec {}Hx.
+    (*move => /(_ isT) [X] [/imsetP [C HC ->] Hx] Hnotin.*)
+    move => /(_ isT) [X] [/imsetP [C]].
+    rewrite -mem_enum => HC -> Hx Hnotin.
+    have:= in_seq HC.
+    move => [l1] [l2] Hdecomp; rewrite Hdecomp.
+    rewrite big_cat /= big_cons /=.
+    rewrite permM out_perm_prod ?permM ?out_perm_prod.
+    + move: HC Hx => /imsetP [X0 HX0 ->]; rewrite support_restr_perm // => Hx.
+      by rewrite restr_permE //; by apply psupport_astabs.
+      (*Pour les 2 prochains sous-buts utiliser Hnotin*)
+    + move => C0.
+      admit.
+    + move => C0 HC0.
+      have HC01 : C0 \in (cycle_dec s).
+        by rewrite -mem_enum Hdecomp mem_cat; apply /orP; left.
+      have {Hnotin} := Hnotin (support C0).
+      rewrite (_ : support C0 \in _ = true) /=; last by apply /imsetP; exists C0.
+      move=> /implyP; apply.
+      apply /negP => /eqP /(support_inj HC HC01) {HC01} Heq.
+      move: HC0; rewrite -{}Heq => Hcontra.
+      have := enum_uniq (mem (cycle_dec s)); rewrite Hdecomp.
+      rewrite cat_uniq => /and3P [_ H _]; move: H.
+      apply /negP; rewrite negbK.
+      by apply /hasP; exists C => //; apply mem_head.
+  - rewrite in_support negbK => /eqP Heq.
+    rewrite out_perm_prod // => C.
+    rewrite mem_enum => /imsetP [X HX -> {C}].
+    rewrite support_restr_perm //.
+    apply /negP => Hx; move: Heq => /eqP.
+    apply /negP/in_psupportP; first exact: support s.
+  by exists X.
+Admitted.
+
+
 (* TODO: Florent : try to remove the enum here *)
+(*
 Lemma cycle_decE s : (\prod_(C <- enum(cycle_dec s)) C)%g = s.
 Proof.
   apply /permP => x.
@@ -343,6 +394,7 @@ Proof.
     apply /negP/in_psupportP; first exact: support s.
   by exists X.
 Admitted.
+*)
 
 Lemma uniqueness_cycle_dec A s:
   {in A, forall C, is_cycle C} ->
