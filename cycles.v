@@ -118,7 +118,7 @@ Qed.
 Lemma support1 : (support (perm_one T)) = set0.
 Proof. by apply /eqP; rewrite -support_eq0. Qed.
 
-Lemma support_stab s x : (x \in support s) = (s x \in support s).
+Lemma support_stable s x : (x \in support s) = (s x \in support s).
 Proof.
   rewrite !in_support; congr negb; apply/idP/idP => [/eqP -> // | /eqP H].
   by rewrite -[s x](permK s) H permK.
@@ -336,17 +336,16 @@ Proof.
   - have:= partition_support s.
     rewrite /partition => /and3P [/eqP <- _ _].
     rewrite /cover => /bigcupP [c] => Hc.
-    have:= Hc; rewrite -support_cycle_dec => /imsetP [C HC HcC] Hx.
+    have:= Hc; rewrite -support_cycle_dec => /imsetP [C HC HcC] Hx; subst c.
     have:= HC; rewrite -mem_enum => /in_seq.
     move => [l1] [l2] Hdecomp; rewrite Hdecomp.
     rewrite big_cat /= big_cons /=.
-    subst c.
     rewrite permM out_perm_prod ?permM ?out_perm_prod.
     + move: HC Hx => /imsetP [X0 HX0 ->].
       rewrite support_restr_perm // => Hx.
       by rewrite restr_permE //; by apply psupport_astabs.
     + move => C0 HC0.
-      rewrite support_stab in Hx.
+      rewrite support_stable in Hx.
       have:= (out_of_cycle HC Hdecomp Hx) => /(_ C0).
       by rewrite mem_cat HC0 orbT => /(_ isT).
     + move => C0 HC0.
@@ -369,17 +368,26 @@ Lemma uniqueness_cycle_dec (A : {set {perm T}}) s:
     A = cycle_dec s.
 Proof.
   move=> Hcy Hinj_supp Htriv Hprod.
-  - have Hcov : cover [set support C| C in A] = support s.
-      rewrite /cover -setP => x; apply/idP/idP.
-      move=> /bigcupP [C] /imsetP [c Hc] ->{C}.
-      rewrite !in_support -Hprod.
+  have Hcov : cover [set support C| C in A] = support s.
+    rewrite /cover -setP => x; apply/idP/idP.
+    - move=> /bigcupP [C] /imsetP [c Hc] ->{C} Hsupp.
+      rewrite in_support -Hprod.
+      have:= Hc; rewrite -mem_enum big_enum => /in_seq => [] [l1] [l2] Henum.
+      rewrite Henum big_cat big_cons /= !permM.
+      have Hout := out_of_bla Htriv Hinj_supp Hc Henum.
+      rewrite !out_perm_prod -?in_support //.
+      + by move=> C HC; apply: (Hout _ Hsupp); rewrite mem_cat HC.
+      + move=> C HC; rewrite support_stable in Hsupp.
+        by apply: (Hout _ Hsupp); rewrite mem_cat HC orbT.
+      + by move=> C HC; apply: (Hout _ Hsupp); rewrite mem_cat HC.
+    - apply contraLR; rewrite in_support negbK -Hprod => Hnotin.
+      apply/eqP; rewrite big_enum; apply out_perm_prod => C.
+      rewrite mem_enum => HC.
+      move: Hnotin; apply contra => HX.
+      apply/bigcupP; exists (support C) => //.
+      exact: mem_imset.
 Admitted.
 
-Lemma support_stable s x : (x \in support s) = (s x \in support s).
-Proof.
-  rewrite !in_support; congr negb; apply/idP/idP => [/eqP -> // | /eqP H].
-  by rewrite -[s x](permK s) H permK.
-Qed.
 
 Lemma support_disjointC s t :
   [disjoint support s & support t] -> (s * t = t * s)%g.
