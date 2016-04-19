@@ -87,61 +87,49 @@ Section PermCycles.
 Variable T: finType.
 Implicit Type (s: {perm T}).
 
-Definition support s :=
-  ~:'Fix_('P)([set s])%g.
+Definition support s := ~:'Fix_('P)([set s])%g.
 
-Lemma in_support s x:
-  (x \in support s) = (s x != x).
+Lemma in_support s x : (x \in support s) = (s x != x).
 Proof.
   apply /idP/idP => [| /eqP H]; rewrite inE.
   - by move => /afix1P /= /eqP.
   - by apply /afix1P => /=; rewrite apermE.
 Qed.
 
-Lemma support_perm_on S s:
-  (perm_on S s) = (support s \subset S).
+Lemma support_perm_on S s : (perm_on S s) = (support s \subset S).
 Proof.
-  apply /idP/idP.
-  - rewrite /perm_on => /subsetP H.
-    apply /subsetP => x.
-    rewrite in_support.
-    exact: H.
-  - rewrite /perm_on => /subsetP H.
-    apply /subsetP => x; rewrite inE.
-    rewrite -in_support.
-    exact: H.
+  apply/subsetP/subsetP => H x.
+  - rewrite in_support; exact: H.
+  - rewrite inE -in_support; exact: H.
 Qed.
 
 Lemma support_eq0 s:
   (s == perm_one T) = (support s == set0).
 Proof.
-  apply /idP/idP => [/eqP -> |/eqP ].
-  - apply /eqP; case: (set_0Vmem (support (perm_one T))) => [//|[] x].
+  apply/eqP/eqP => [ -> |].
+  - case: (set_0Vmem (support (perm_one T))) => [//|[] x].
     rewrite inE => /afix1P /=; rewrite apermE.
     by rewrite perm1.
   - rewrite -setCT => /setC_inj /= H.
-    apply /eqP; rewrite -permP => x.
+    rewrite -permP => x.
     by rewrite perm1 -apermE; apply /afix1P; rewrite H.
 Qed.
 
-Lemma support1 :
-  (support (perm_one T)) = set0.
+Lemma support1 : (support (perm_one T)) = set0.
 Proof. by apply /eqP; rewrite -support_eq0. Qed.
 
 Definition psupport s := [set x in pcycles s | #|x| != 1 ].
 
 Lemma in_psupportP s (X: {set T}) x:
-  reflect  (exists2 X, X \in psupport s & x \in X) (s x != x).
+  reflect (exists2 X, X \in psupport s & x \in X) (s x != x).
 Proof.
-  rewrite -in_support.
-  apply (iffP idP).
-  - move=> /setCP Hy.
-    exists (pcycle s x); last by apply: pcycle_id.
+  rewrite -in_support; apply (iffP idP) => [/setCP Hy | [Y]].
+  - exists (pcycle s x); last by apply: pcycle_id.
     rewrite inE; apply /andP; split.
     + by rewrite /pcycles; apply /imsetP; exists x.
     + apply /negP; rewrite pcycleE => /eqP /card_orbit1 /orbit1P.
-      by rewrite afix_cycle //; rewrite inE.
-  - move=> [Y]; rewrite inE => /andP [] /imsetP [y _ ->{Y}] Hcard.
+      by rewrite afix_cycle // inE.
+  - rewrite inE => /andP [] /imsetP [y _ ->{Y}] Hcard.
     rewrite in_support -eq_pcycle_mem => /eqP Heq.
     move: Hcard; rewrite -Heq pcycleE; apply contra => /eqP.
     rewrite -apermE => /afix1P.
@@ -185,8 +173,16 @@ Qed.
 Lemma psupport_eq0 s:
   (s == perm_one T) = (psupport s == set0).
 Proof.
-  admit.
-Admitted.
+  rewrite support_eq0.
+  apply/eqP/eqP => H0; have:= partition_support s.
+  - rewrite {}H0 /partition /cover => /and3P [/eqP Hcov _ Hn0].
+    apply/eqP; rewrite -subset0; apply/subsetP => B HB; exfalso.
+    have := eq_refl B; rewrite eqEsubset => /andP [_] /(bigcup_max _ HB) /=.
+    rewrite Hcov subset0 => /eqP HB0.
+    by move: Hn0; rewrite -HB0 HB.
+  - rewrite {}H0 /partition /cover => /and3P [/eqP <- _ Hn0].
+    by rewrite big_set0.
+Qed.
 
 Definition is_cycle s :=
   #|psupport s| == 1.
