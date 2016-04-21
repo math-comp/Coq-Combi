@@ -281,23 +281,6 @@ Qed.
 Definition disjoint_supports (l: {set {perm T}}):=
   trivIset [set support C| C in l] /\ {in l &, injective support}.
 
-  (*
-Lemma disjoint_cycle_dec s :
-  trivIset [set support C| C in cycle_dec s].
-Proof.
-  have:= partition_support s.
-  rewrite -support_cycle_dec.
-  by rewrite /partition => /and3P [].
-Qed.
-
-Lemma support_inj s:
-  {in cycle_dec s &, injective support}.
-Proof.
-  move => C1 C2 /imsetP [c1 Hc1 ->] /imsetP [c2 HC2 ->].
-  by rewrite !support_restr_perm // => ->.
-Qed.
- *)
-
 Lemma disjoint_cycle_dec s:
   disjoint_supports (cycle_dec s).
 Proof.
@@ -353,39 +336,50 @@ Proof.
   by move => /negbTE; rewrite Hy.
 Qed.
 
-Lemma out_of_cycle y s C l1 l2:
-  C \in cycle_dec s ->
-  enum (cycle_dec s) = l1 ++ C :: l2 ->
-  y \in support C ->
-  {in l1++l2, forall C0, y \notin support C0}.
+Lemma prod_of_disjoint (A : {set {perm T}}) C0 x:
+  C0 \in A ->
+  disjoint_supports A -> x \in support C0 -> (\prod_(C in A) C)%g x = C0 x.
 Proof.
-  move=> /out_of_disjoint; apply.
-  exact: disjoint_cycle_dec.
+  move => HC0; have:= HC0.
+  rewrite -mem_enum => /in_seq [l1] [l2] Hdecomp Hdisj Hx.
+  rewrite big_enum Hdecomp big_cat big_cons /=.
+  rewrite permM out_perm_prod ?permM ?out_perm_prod => // C HC.
+  - rewrite support_stable in Hx.
+    apply: (out_of_disjoint Hdisj HC0 Hdecomp Hx).
+    by rewrite mem_cat; apply /orP; right.
+  - apply: (out_of_disjoint Hdisj HC0 Hdecomp Hx).
+    by rewrite mem_cat; apply /orP; left.
 Qed.
+
+Lemma expg_prod_of_disjoint (A : {set {perm T}}) C0 x i:
+  C0 \in A ->
+  disjoint_supports A -> x \in support C0 ->
+  ((\prod_(C in A) C)^+i)%g x = (C0^+i)%g x.
+Proof.
+  move => HC0 Hdisj Hx.
+  have Hin j : (C0 ^+j)%g x \in support C0.
+    elim j => [|k Hk]; first by rewrite expg0 perm1. 
+    by rewrite expgSr permM -support_stable.
+  elim: i => [|j Hj].
+  - by rewrite !expg0 perm1.
+  - by rewrite !expgSr !permM Hj (prod_of_disjoint HC0 Hdisj (Hin j)).
+Qed.
+
+
 
 Lemma cycle_decE s : (\prod_(C in cycle_dec s) C)%g = s.
 Proof.
-  rewrite big_enum; apply /permP => x.
+  apply /permP => x.
   case: (boolP (x \in support s)) => [|].
   - have:= partition_support s.
     rewrite /partition => /and3P [/eqP <- _ _].
     rewrite /cover => /bigcupP [c] => Hc.
     have:= Hc; rewrite -support_cycle_dec => /imsetP [C HC HcC] Hx; subst c.
-    have:= HC; rewrite -mem_enum => /in_seq.
-    move => [l1] [l2] Hdecomp; rewrite Hdecomp.
-    rewrite big_cat /= big_cons /=.
-    rewrite permM out_perm_prod ?permM ?out_perm_prod.
-    + move: HC Hx => /imsetP [X0 HX0 ->].
-      rewrite support_restr_perm // => Hx.
-      by rewrite restr_permE //; by apply psupport_astabs.
-    + move => C0 HC0.
-      rewrite support_stable in Hx.
-      have:= (out_of_cycle HC Hdecomp Hx) => /(_ C0).
-      by rewrite mem_cat HC0 orbT => /(_ isT).
-    + move => C0 HC0.
-      have:= (out_of_cycle HC Hdecomp Hx) => /(_ C0).
-      by rewrite mem_cat HC0 orTb => /(_ isT).
-  - rewrite in_support negbK => /eqP Heq.
+    rewrite (prod_of_disjoint HC (disjoint_cycle_dec s) Hx).
+    move: HC Hx => /imsetP [X0 HX0 ->].
+    rewrite support_restr_perm // => Hx.
+    by rewrite restr_permE //; by apply psupport_astabs.
+  - rewrite in_support negbK big_enum => /eqP Heq.
     rewrite out_perm_prod // => C.
     rewrite mem_enum => /imsetP [X HX -> {C}].
     rewrite support_restr_perm //.
@@ -394,30 +388,68 @@ Proof.
   by exists X.
 Qed.
 
+
 Lemma disjoint_supports_of_decomp (A : {set {perm T}}) (B : {set {perm T}}):
   disjoint_supports A -> disjoint_supports B ->
     (\prod_(C in A) C)%g = (\prod_(C in B) C)%g ->
     {in A, forall c1, {in B, forall c2, support c1 = support c2 -> c1 = c2}}.
 Proof.
-  admit.
-Admitted.
+  move => HdisjA HdisjB  /permP Heq c1 Hc1 c2 Hc2 /setP Hsupp.
+  apply /permP => x.
+  case (boolP (x \in support c1)) => H0;
+  have := H0; rewrite {}Hsupp;  have := H0 => {H0}.
+  - move => Hx1 Hx2; have := (Heq x) => {Heq}.
+    by rewrite (prod_of_disjoint Hc1) ?(prod_of_disjoint Hc2).
+  - by rewrite !in_support !negbK => /eqP -> /eqP ->.
+Qed.
+
 
 Lemma disjoint_supports_cycles (A: {set {perm T}}):
   {in A, forall C, is_cycle C} ->
     disjoint_supports A ->
     {in A, forall C, support C \in pcycles (\prod_(C in A) C)%g}.
 Proof.
-  admit.
-Admitted.
+  move => Hcycle Hdisj C HC.
+  have := (Hcycle C HC) => {Hcycle}.
+  rewrite /is_cycle => /cards1P [X] Hpsupp.
+  have := eqxx X; rewrite -in_set1 -Hpsupp inE => /andP.
+  move => [/imsetP [x _] Hx]; subst X; rewrite pcycleE=> Hcard.
+  have := cover_partition (partition_support C); rewrite Hpsupp.
+  rewrite /cover big_set1 => <-; apply /imsetP; exists x => //.
+  have Hx : x \in support C.                       
+    rewrite in_support; apply /eqP; rewrite -apermE => /afix1P.
+    rewrite -afix_cycle => /orbit1P => Hcontra.
+    by move: Hcard; rewrite Hcontra cards1.
+  apply /setP => y; apply /pcycleP/pcycleP;  
+  move => [i] ->; exists i; apply /eqP; rewrite eq_sym; apply /eqP;
+  by rewrite (expg_prod_of_disjoint i HC) //.                       
+Qed.
 
-Lemma disjoint_supports_pcycles (A: {set {perm T}}) s:
+
+Lemma disjoint_supports_pcycles (A: {set {perm T}}):
   {in A, forall C, is_cycle C} ->
     disjoint_supports A ->
-    (\prod_(C in A) C)%g = s ->
-    {in pcycles s, forall X, exists C, C \in A /\ support C = X}.
+    {in psupport (\prod_(C in A) C)%g, forall X, exists C, C \in A /\ support C = X}.
 Proof.
-  admit.
-Admitted.
+  move => Hcycle Hdisj X. rewrite inE => /andP [/imsetP [x] _ -> {X} Hcard].
+  case: (boolP (x \in (support (\prod_(C in A) C)%g))) => [Hin|].
+  - have: exists2 C0, (C0 \in A) & (x \in support C0).
+      apply /exists_inP.
+      move: Hin; apply contraLR; rewrite negb_exists => /forallP Hnotin.
+      rewrite in_support negbK big_enum; apply /eqP; apply out_perm_prod.
+      move => C; rewrite mem_enum => HC.
+      by have:= Hnotin C; rewrite HC andTb.
+    move => [C0] [HC0 Hx].
+    exists C0; split => //; move: Hx.
+    have: support C0 \in (pcycles (\prod_(C in A) C)).
+      exact: disjoint_supports_cycles.
+    move => /imsetP [y] _ ->.
+    by rewrite -eq_pcycle_mem => /eqP.
+  - rewrite in_support negbK pcycleE -apermE => /eqP /afix1P.
+    rewrite -afix_cycle => /orbit1P.
+    rewrite -pcycleE => Hcontra; move: Hcard.
+    by rewrite Hcontra cards1.
+Qed.
 
 
 Lemma uniqueness_cycle_dec (A : {set {perm T}}) s:
@@ -442,13 +474,13 @@ Proof.
     move => /(_ Heq C HC (restr_perm (pcycle s x) s)).
     apply; last by rewrite support_restr_perm.
     by apply /imsetP; exists (pcycle s x).
-  - move => [X HX1]; have:= HX1;  rewrite inE =>/andP [HX2 _] ->.
-    have := disjoint_supports_pcycles Hcy Hdisj Hprod HX2.
+  - rewrite -{1}Hprod => [] [X HX1] ->.
+    have := disjoint_supports_pcycles Hcy Hdisj HX1.
     move => [x] [] Hx; rewrite -{1}(support_restr_perm HX1).
     move => /(disjoint_supports_of_decomp Hdisj (disjoint_cycle_dec s)).
     rewrite Hprod cycle_decE; have Heq : s=s by done.
     move => /(_ Heq Hx) <- //.
-    by apply /imsetP; exists X.
+    by apply /imsetP; exists X; rewrite -?Hprod.
 Qed.
 
 Lemma support_disjointC s t :
