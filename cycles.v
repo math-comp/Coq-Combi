@@ -129,7 +129,7 @@ Lemma card_support_noteq1 s:
 Proof.
   apply /cards1P => [] [x] Hsupp.
   have: s x == x.
-  - by rewrite -in_set1 -Hsupp -support_stable Hsupp inE. 
+  - by rewrite -in_set1 -Hsupp -support_stable Hsupp inE.
   - by move => /eqP; apply /eqP; rewrite -in_support Hsupp inE.
 Qed.
 
@@ -257,7 +257,7 @@ Proof.
     by rewrite /cover big_set0 eq_sym -support_eq0.
 Qed.
 
-  
+
 
 Lemma is_cycle_dec s : {in (cycle_dec s), forall C, is_cycle C}.
 Proof.
@@ -306,10 +306,10 @@ Proof.
     rewrite -support_cycle_dec.
     by rewrite /partition => /and3P [].
   - move => C1 C2 /imsetP [c1 Hc1 ->] /imsetP [c2 HC2 ->].
-    by rewrite !support_restr_perm // => ->.   
+    by rewrite !support_restr_perm // => ->.
 Qed.
 
-  
+
 Lemma out_perm_prod (A: seq {perm T}) x:
   {in A, forall C, x \notin support C} -> (\prod_(C <- A) C)%g x = x.
 Proof.
@@ -441,7 +441,7 @@ Proof.
     rewrite Hprod cycle_decE; have Heq : s=s by done.
     move => /(_ Heq C HC (restr_perm (pcycle s x) s)).
     apply; last by rewrite support_restr_perm.
-    by apply /imsetP; exists (pcycle s x). 
+    by apply /imsetP; exists (pcycle s x).
   - move => [X HX1]; have:= HX1;  rewrite inE =>/andP [HX2 _] ->.
     have := disjoint_supports_pcycles Hcy Hdisj Hprod HX2.
     move => [x] [] Hx; rewrite -{1}(support_restr_perm HX1).
@@ -472,12 +472,12 @@ End PermCycles.
 
 Section cycle_type.
 Variable T : finType.
-Implicit Types (s t : {perm T}) (n : nat).  
-  
-Definition cycle_type (s:{perm T}):=
+Implicit Types (s t : {perm T}) (n : nat).
+
+Definition cycle_type (s : {perm T}):=
   sort geq [seq #|(x: {set T})| |x <- enum (pcycles s)].
 
-Lemma cycle_type_part s:
+Lemma cycle_type_is_part s:
   is_part (cycle_type s).
 Proof.
   apply /is_partP.
@@ -485,17 +485,35 @@ Proof.
   - rewrite (_: cycle_type s = [::]) // /cycle_type /pcycles.
     rewrite (_ :[set pcycle s x | x : T] = set0) ?enum_set0 /= //.
     apply /setP => X; rewrite inE.
-    by apply /imsetP => [] [] x; rewrite HT inE.    
+    by apply /imsetP => [] [] x; rewrite HT inE.
   - admit.
 Admitted.
 
-Lemma cycle_type_of_conjugate s t:
-  (exists a, (s ^ a)%g = t) -> cycle_type s = cycle_type t.
+Lemma cycle_type_partn s:
+  is_part_of_n #|T| (cycle_type s).
 Proof.
-  rewrite /conjg => [][a] <-.
+Admitted.
+
+Definition cycle_type_part (s : {perm T}) := IntPartN (cycle_type_partn s).
+
+Lemma cycle_type_of_conjugate s t a:
+  (s ^ a)%g = t -> cycle_type s = cycle_type t.
+Proof.
+  rewrite /conjg => <-.
   rewrite /cycle_type; congr (sort).
   rewrite (_: pcycles s = pcycles (a^-1 * (s * a))) //.
   apply /setP => C.
+Admitted.
+
+(* Ici il faut ayant supposé cycle_type s = cycle_type t, construire un
+bijection entre pcycles s et pcycle t *)
+
+
+Lemma bla s t :
+  cycle_type s = cycle_type t ->
+  exists f : {set T} -> {set T},
+    {in pcycles s, bijective f} /\ {on pcycles t, bijective f}.
+Proof.
 Admitted.
 
 Lemma classes_of_permP s t:
@@ -508,38 +526,47 @@ Admitted.
 (* Lemma cycle_type réalise une bijection de classes [set: {perm T}] sur enum_partn (#|T|) *)
 
 (*
-The action of the permutation (n, n+1, ... ,n+l) on (enum T) 
+The action of the permutation (n, n+1, ... ,n+l-1) on (enum T)
 *)
 
-Definition cyclefun_of n l: T -> T:=
-  if l == 1
-  then (fun x => x)
-  else (fun x => match (index x (enum T)) with
-                 |i => if n <= i < n+l-1 then (nth x (enum T) (i+1))
-                            else if i == n+l-1 then (nth x (enum T) n)
-                                 else x
-                 end).
+Definition cyclefun_of (n l : nat) : T -> T :=
+  fun x =>
+    let i := index x (enum T) in
+    if n <= i < n+l-1 then (nth x (enum T) (i+1))
+    else if i == n+l-1 then (nth x (enum T) n)
+         else x.
 
 Lemma injective_cyclefun_of n l:
-  injective(cyclefun_of n l).
+  injective (cyclefun_of n l).
 Proof.
   admit.
 Admitted.
 
-Definition cycle_of n l :{perm T} :=
+Definition cycle_of n l : {perm T} :=
   perm (@injective_cyclefun_of n l).
-                
-Fixpoint perm_of_part_rec l n: {perm T}:=
-  match l with
-  |[::] => perm_one T
-  |a::l1 => (cycle_of (a + n) a) * (perm_of_part_rec l1 n.+1)
+
+Lemma cycle_ofP n l : n + l <= #|T| -> is_cycle (cycle_of n l).
+Proof.
+  admit.
+Admitted.
+
+Fixpoint perm_of_part_rec (part : seq nat) (n : nat) : seq {perm T} :=
+  match part with
+  | [::] => [::]
+  | a :: l1 =>
+    if a == 1 then (perm_of_part_rec l1 n.+1)
+    else (cycle_of n a) :: (perm_of_part_rec l1 (a + n))
   end.
 
-Definition perm_of_part l: {perm T}:=
-  perm_of_part_rec l 0.
+Definition perm_of_part l : {perm T} :=
+  \prod_(c <- perm_of_part_rec l 0) c.
 
-Lemma perm_of_partE l:
-  is_part_of_n (#|T|) l -> cycle_type (perm_of_part l) = l.
+Lemma blabla l : cycle_dec (perm_of_part l) = [set i in perm_of_part_rec l 0].
+Proof.
+  admit.
+Admitted.
+
+Lemma perm_of_partE (l : intpartn #|T|) : cycle_type (perm_of_part l) = l.
 Proof.
   admit.
 Admitted.
