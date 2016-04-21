@@ -512,7 +512,7 @@ bijection entre pcycles s et pcycle t *)
 Lemma bla s t :
   cycle_type s = cycle_type t ->
   exists f : {set T} -> {set T},
-    {in pcycles s, bijective f} /\ {on pcycles t, bijective f}.
+    {in pcycles s, injective f} /\ [set f x | x in pcycles s] = (pcycles t).
 Proof.
 Admitted.
 
