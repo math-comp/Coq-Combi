@@ -629,10 +629,10 @@ Proof.
 Qed.
 
 
-Lemma cycle_type_of_conjg s t a:
-  (s ^ a)%g = t -> cycle_type s = cycle_type t.
+Lemma cycle_type_of_conjg s a:
+  cycle_type s = cycle_type (s ^ a)%g.
 Proof.
-  move => <-; apply congr_intpart.
+  apply congr_intpart.
   rewrite /cycle_type_seq.
   rewrite pcycles_conjg; apply /(perm_sortP geq_total geq_trans anti_geq).
   apply /perm_eqP => y.
@@ -727,25 +727,49 @@ Proof.
   - apply : conjg_of_disjoint_supports.
     exact: disjoint_cycle_dec.
   - (*rewrite big_imset. ??*)
-    admit.
+    have -> : (\prod_(C in [set c ^ a | c in cycle_dec (T:=T) s])C)%g =  (\prod_(C in cycle_dec (T:=T) s) C ^ a)%g.
+      admit.
+    by rewrite -conjg_prod cycle_decE.
 Admitted.
 
 (* Ici il faut ayant supposé cycle_type s = cycle_type t, construire un
-bijection entre pcycles s et pcycle t *)
+bijection entre pcycles s et pcycles t *)
 
 
 Lemma bla s t :
   cycle_type s = cycle_type t ->
   exists f : {set T} -> {set T},
-    {in pcycles s, injective f} /\ [set f x | x in pcycles s] = (pcycles t).
+    {in pcycles s &, injective f} /\ [set f x | x in pcycles s] = (pcycles t).
 Proof.
+Admitted.
+
+(*Définir la conjugaison sur les pcycles : partir de x, choisir un élément y de f (pcycle s x) {Cet ensemble est non vide, par égalité des cardinaux}, on pose arbitrairement f x = y, et on renvoye f s^i x = t^i y, on épuise ainsi tous les éléments de (pcycle s x), et la fonction est correctement définie *)
+(*Definition conjg_on_pcycle s x :=*)
+  
+
+Lemma bla1 s t :
+  cycle_type s = cycle_type t ->
+  exists f : T -> T,
+    injective f /\ 
+    forall x, f (s x) = t (f x).
+Proof.
+
+
+
 Admitted.
 
 Lemma classes_of_permP s t:
   reflect (t \in (s ^: [set: {perm T}])%g) (cycle_type s == cycle_type t).
 Proof.
-  admit.
-Admitted.
+  apply (iffP eqP) => [/bla1 [f] [Hinj Hcom]| /imsetP [a] _ ->].
+  - apply /imsetP; exists (perm (Hinj)); rewrite ?inE //.
+    apply /permP => x; rewrite conjgE !permM permE.
+    have:= (Hcom (((perm Hinj)^-1)%g x)). 
+    have -> : f (((perm Hinj)^-1)%g x) = (perm Hinj) (((perm Hinj)^-1)%g x).
+      by rewrite -permE.
+    by rewrite permKV.
+  -  by exact: cycle_type_of_conjg.
+Qed.
 
 
 (* Lemma cycle_type réalise une bijection de classes [set: {perm T}] sur enum_partn (#|T|) *)
