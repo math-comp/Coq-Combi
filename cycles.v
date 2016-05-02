@@ -462,14 +462,14 @@ Proof.
       + by rewrite -Hsupp; rewrite card_support_noteq1.
     exists (pcycle s x) => //.
     have:= disjoint_supports_of_decomp Hdisj (disjoint_cycle_dec s).
-    rewrite Hprod cycle_decE => /(_ (erefl ) C HC (restr_perm (pcycle s x) s)).
+    rewrite Hprod cycle_decE => /(_ erefl C HC (restr_perm (pcycle s x) s)).
     apply; last by rewrite support_restr_perm.
     by apply /imsetP; exists (pcycle s x).
   - rewrite -{1}Hprod => [] [X HX1] ->.
     have:= disjoint_supports_pcycles Hcy Hdisj HX1.
     move=> [x] [] Hx; rewrite -{1}(support_restr_perm HX1).
     move=> /(disjoint_supports_of_decomp Hdisj (disjoint_cycle_dec s)).
-    rewrite Hprod cycle_decE => /(_ (erefl _) Hx) <- //.
+    rewrite Hprod cycle_decE => /(_ erefl Hx) <- //.
     by apply /imsetP; exists X; rewrite -?Hprod.
 Qed.
 
