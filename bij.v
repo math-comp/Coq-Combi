@@ -41,7 +41,7 @@ Proof.
   by move=> /bij_in_slice /imsetP [x0]; rewrite inE => /andP [] Hx0 _ ->.
 Qed.
 
-Lemma equi_bij x : x \in U -> stat (s := V) (bij V x) = stat (s := U) x.
+Lemma equi_bij x : x \in U -> stat (bij V x) = stat x.
 Proof.
   move=> /bij_in_slice.
   by move=> /imsetP [im0]; rewrite inE => /andP [_ /eqP <- ->].
