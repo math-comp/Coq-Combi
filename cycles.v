@@ -606,25 +606,39 @@ Proof.
   - exact: geq_trans.
   - exact: anti_geq.
 Qed.
-  
+
+Lemma conjg_cycle s a :
+  (<[s]> :^ a = <[s ^ a]>)%g.
+Proof.
+  apply /setP => x.
+  apply /imsetP/cycleP => [[x0 /cycleP [i] ->] ->|[i] ->].
+  - by exists i; exact: conjXg.
+  - by exists (s ^+i)%g; [apply /cycleP; exists i|rewrite conjXg].
+Qed.
+
 Lemma pcycle_conjg s a x :
-  pcycle ((s ^ a)%g) x = [set a y | y in pcycle s x].
+  pcycle ((s ^ a)%g) (a x) = [set a y | y in pcycle s x].
 Proof.
   rewrite !pcycleE; apply /setP => y.
   apply /idP/imsetP => [|[x0] Hx0 ->].
-  admit.
-  (*apply orbit_conjsg.*)
-Admitted.
+  - rewrite -conjg_cycle => Hy.
+    exists ((a ^-1)%g y); last by rewrite permKV.
+    move: Hy; rewrite {1}(_: y = a ((a ^-1)%g (y))); last by rewrite permKV.
+    by rewrite -{1}apermE orbit_conjsg.
+  - by rewrite -conjg_cycle -apermE orbit_conjsg.
+Qed.
+
 
 Lemma pcycles_conjg s a :
   pcycles (s ^ a)%g = [set [set a y | y in (X : {set T})] | X in pcycles s].
 Proof.
   apply /setP => X0.
   apply /imsetP/imsetP => [[x _]|[x /imsetP [x0 _] ->] ->]. 
-  - rewrite pcycle_conjg => ->.
-    exists (pcycle s x) => //.
-    by apply /imsetP; exists x.
-  - exists x0 => //.
+  - rewrite (_: x = a ((a ^-1)%g (x))); last by rewrite permKV.
+    rewrite pcycle_conjg => ->.
+    exists (pcycle s ((a^-1)%g x)) => //.
+    by apply /imsetP; exists ((a^-1)%g x).
+  - exists (a x0) => //.
     by rewrite pcycle_conjg.
 Qed.
 
@@ -687,8 +701,14 @@ Lemma disjoint_imset (f: T -> T) (A B : {set T}):
   injective f ->
     [disjoint A & B] -> [disjoint [set f x | x in A] & [set f x | x in B]]. 
 Proof.
-  admit.
-Admitted.
+  move => Hinj; rewrite -!setI_eq0; apply contraLR.
+  move => /eqP => HAB.
+  case: (set_0Vmem ([set f x | x in A] :&: [set f x | x in B])) => //.
+  move => [x]; rewrite inE => /andP [/imsetP [y0 Hy0 ->] /imsetP [y1 Hy1]].
+  move => /Hinj => Hsub; subst y0.
+  have Hint: y1 \in A:&:B by rewrite inE; apply /andP.
+  by apply /eqP => /setP /(_ y1); rewrite Hint !inE.
+Qed.
 
 Lemma conjg_of_disjoint_supports (A : {set {perm T}}) a:
   disjoint_supports A -> disjoint_supports [set (s ^ a)%g | s in A].
@@ -753,9 +773,6 @@ Lemma bla1 s t :
     injective f /\ 
     forall x, f (s x) = t (f x).
 Proof.
-
-
-
 Admitted.
 
 Lemma classes_of_permP s t:
@@ -803,6 +820,13 @@ Proof.
   admit.
 Admitted.
 
+Lemma support_cycle_of n l :
+  n + l <= #|T| ->
+    (support (cycle_of n l) = [set x | n <= index x (enum T) <= n+l-1]).
+Proof.
+  admit.
+Admitted.
+
 Fixpoint perm_of_part_rec (part : seq nat) (n : nat) : seq {perm T} :=
   match part with
   | [::] => [::]
@@ -811,15 +835,38 @@ Fixpoint perm_of_part_rec (part : seq nat) (n : nat) : seq {perm T} :=
     else (cycle_of n a) :: (perm_of_part_rec l1 (a + n))
   end.
 
-Definition perm_of_part l : {perm T} :=
-  \prod_(c <- perm_of_part_rec l 0) c.
+Definition perm_of_part (part : seq nat) : {perm T} :=
+  \prod_(c <- perm_of_part_rec part 0) c.
 
-Lemma blabla l : cycle_dec (perm_of_part l) = [set i in perm_of_part_rec l 0].
+Lemma perm_of_part_recP (part : intpartn #|T|) c :
+  c \in perm_of_part_rec part 0 -> exists n l, n+l <= #|T| /\ c = cycle_of n l.
 Proof.
   admit.
 Admitted.
 
-Lemma perm_of_partE (l : intpartn #|T|) : cycle_type (perm_of_part l) = l.
+
+Lemma blabla (part : intpartn #|T|) :
+  [set i in perm_of_part_rec part 0] = cycle_dec (perm_of_part part).
+Proof.
+  apply uniqueness_cycle_dec => [C||]; last rewrite /perm_of_part.
+  - by rewrite inE => /perm_of_part_recP [n [l [/cycle_ofP Hcy] ->]].
+  - split.
+    + apply /trivIsetP => A B.
+      move => /imsetP [CA]; rewrite inE => /perm_of_part_recP [n1 [l1 [H1 ->] ->]].
+      move => /imsetP [CB]; rewrite inE => /perm_of_part_recP [n2 [l2 [H2 ->] ->]].
+      rewrite !support_cycle_of //.
+      admit. (*besoin de plus de précisions sur qui sont n et l, par rapport a la partition initiale*)
+    + move => C1 C2.
+      rewrite inE => /perm_of_part_recP [n1 [l1 [H1 ->]]]. 
+      rewrite inE => /perm_of_part_recP [n2 [l2 [H2 ->]]]. 
+      rewrite !support_cycle_of // => /setP Heq.
+      have : n1 = n2 /\ l1 = l2.
+        admit.
+      by move => [-> ->].
+  - admit. (*big_imset, encore ...*)
+Admitted.
+
+Lemma perm_of_partE (part : intpartn #|T|) : cycle_type (perm_of_part part) = part.
 Proof.
   admit.
 Admitted.
