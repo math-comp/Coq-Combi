@@ -1,7 +1,7 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype div.
 From mathcomp Require Import tuple finfun path bigop finset binomial.
-From mathcomp Require Import fingroup perm automorphism action.
+From mathcomp Require Import fingroup perm automorphism action ssralg.
 
 From Combi Require Import symgroup partition Greene tools sorted.
 
@@ -490,6 +490,7 @@ Proof.
     + by rewrite in_support negbK => /eqP ->; rewrite Hs.
 Qed.
 
+
 End PermCycles.
 
 Section Ordergeq.
@@ -628,6 +629,7 @@ Proof.
     by rewrite pcycle_conjg.
 Qed.
 
+Require Import ordcast.
 
 Lemma cycle_type_of_conjg s a:
   cycle_type s = cycle_type (s ^ a)%g.
@@ -635,11 +637,19 @@ Proof.
   apply val_inj => /=.
   rewrite /cycle_type_seq.
   rewrite pcycles_conjg; apply /(perm_sortP geq_total geq_trans anti_geq).
-  apply /perm_eqP => y.
-  rewrite !count_map.
-  admit.
-Admitted.
-
+  rewrite (_ : [seq _ | x <- _] =
+               [seq #|[set a y | y in (x : {set T})]| | x <- enum (pcycles s)]);
+    last by apply eq_map => x;  apply esym; apply card_imset; exact: perm_inj.
+  - rewrite (map_comp (fun x : {set T} => #|x|)); apply perm_map.
+    apply uniq_perm_eq.
+    + rewrite map_inj_uniq; first exact: enum_uniq.
+      apply imset_inj; exact: perm_inj.
+    + exact: enum_uniq.
+    + move=> x; rewrite mem_enum.
+      apply/mapP/imsetP => [] [x0].
+      * by rewrite mem_enum => Hx0 -> {x}; exists x0.
+      * by move=> Hx0 -> {x}; exists x0; rewrite ?mem_enum.
+Qed.
 
 Lemma conjg_of_cycle s a:
   is_cycle s -> is_cycle (s ^ a)%g.
@@ -691,7 +701,7 @@ Proof.
   rewrite -imsetI; last by move=> x y _ _; exact: Hinj.
   by rewrite imset_eq0 Hdisj.
 Qed.
-
+ 
 Lemma conjg_of_disjoint_supports (A : {set {perm T}}) a:
   disjoint_supports A -> disjoint_supports [set (s ^ a)%g | s in A].
 Proof.
@@ -713,19 +723,54 @@ Proof.
       by rewrite -Hsupp => /imsetP [y] Hy /perm_inj ->.
 Qed.
 
+From mathcomp Require finmodule.
+Import finmodule.FiniteModule morphism.
+
+Lemma abelian_disjoint_supports (A : {set {perm T}}) :
+  disjoint_supports A -> abelian <<A>>.
+Proof.
+  move=> [] /trivIsetP Htriv Hinj.
+  rewrite abelian_gen abelianE; apply/subsetP => C HC.
+  apply/centP => D HD.
+  case: (altP (C =P D)) => [-> // | HCD].
+  apply support_disjointC.
+  apply Htriv; try exact: mem_imset.
+  move: HCD; apply contra => /eqP Hsupp; apply /eqP.
+  exact: Hinj.
+Qed.
+
+Lemma abelian_cycle_dec s : abelian <<cycle_dec s>>.
+Proof.
+  apply abelian_disjoint_supports.
+  exact: disjoint_cycle_dec.
+Qed.
+
 Lemma cycle_dec_of_conjg s a:
   [set (c ^ a)%g | c in cycle_dec s] = cycle_dec (s ^ a)%g.
 Proof.
+  have abel : abelian <<[set (c ^ a)%g | c in cycle_dec s]>>.
+    apply abelian_disjoint_supports.
+    apply: conjg_of_disjoint_supports.
+    exact: disjoint_cycle_dec.
   apply: uniqueness_cycle_dec => [x /imsetP [x0 Hx0 ->]||].
   - apply: conjg_of_cycle; apply: is_cycle_dec.
     exact: Hx0.
   - apply: conjg_of_disjoint_supports.
     exact: disjoint_cycle_dec.
-  - (*rewrite big_imset. ??*)
-    have -> : (\prod_(C in [set c ^ a | c in cycle_dec (T:=T) s])C)%g =  (\prod_(C in cycle_dec (T:=T) s) C ^ a)%g.
-      admit.
+  - rewrite [LHS](_ : _ =
+      val (\sum_(i in [set (c ^ a)%g | c in cycle_dec s]) fmod abel i)%R);
+      first last.
+      rewrite -(morph_prod [morphism of fmod abel]);
+        last by move=> i; exact: mem_gen.
+      rewrite -[LHS](fmodK abel) //.
+      by apply group_prod => i; exact: mem_gen.
+    rewrite big_imset /=; last by move=> x y _ _; exact: conjg_inj.
+    rewrite -(morph_prod [morphism of fmod abel]); first last.
+      move=> i Hi; apply mem_gen; exact: mem_imset.
+    rewrite fmodK; first last.
+      apply group_prod => i Hi; apply mem_gen; exact: mem_imset.
     by rewrite -conjg_prod cycle_decE.
-Admitted.
+Qed.
 
 (* Ici il faut ayant supposé cycle_type s = cycle_type t, construire un
 bijection entre pcycles s et pcycles t *)
@@ -734,7 +779,9 @@ bijection entre pcycles s et pcycles t *)
 Lemma bla s t :
   cycle_type s = cycle_type t ->
   exists f : {set T} -> {set T},
-    {in pcycles s &, injective f} /\ [set f x | x in pcycles s] = (pcycles t).
+    {in pcycles s &, injective f} /\
+    [set f x | x in pcycles s] = (pcycles t) /\
+    forall x, x \in pcycles s -> #|f x| = #|x|.
 Proof.
 Admitted.
 
@@ -782,7 +829,7 @@ Lemma injective_cyclefun_of n l:
 Proof.
   move => x1 x2.
   rewrite /cyclefun_of.
-  case: (boolP (n <= index x1 (enum T) < n+l-1));
+  case: leqP; rewrite ?andbT ?andbF.
       case: (boolP (n <= index x2 (enum T) < n+l-1)).
   admit.
 Admitted.
@@ -802,6 +849,10 @@ Proof.
   admit.
 Admitted.
 
+Definition cycle_dec_of_part (part : seq nat) : seq {perm T} :=
+  let pp := [seq i | i <- part & i > 1] in
+  mkseq (fun i => cycle_of (part_sum pp i) (nth 0 pp i)) (size pp).
+(*
 Fixpoint perm_of_part_rec (part : seq nat) (n : nat) : seq {perm T} :=
   match part with
   | [::] => [::]
@@ -810,8 +861,28 @@ Fixpoint perm_of_part_rec (part : seq nat) (n : nat) : seq {perm T} :=
     else (cycle_of n a) :: (perm_of_part_rec l1 (a + n))
   end.
 
+*)
+
+Definition parts_of_part (part : seq nat) : {set {set T}} :=
+  [set C in [seq [set x in X] | X <- reshape part (enum T)]].
+
+Definition bla_of_part (part : seq nat) : {set {perm T}} :=
+  [set C in [seq [set x in X] | X <- reshape part (enum T)]].
+
+(*
+Definition parts_of_part (part : seq nat) : {set {set T}} :=
+  \bigcup_(S in [seq [set x in X] | X <- reshape part (enum T)]) [set S].
+
+Definition parts_of_part (part : seq nat) : {set {set T}} :=
+  \bigcup_(X <- reshape part (enum T)) [set [set x in X]].
+
+Definition parts_of_part (part : seq nat) : {set {set T}} :=
+  [set [set x in (X : seq T)] | X in reshape part (enum T)].
+  \prod_(c <- cycle_dec_of_part part) c.
+*)
+
 Definition perm_of_part (part : seq nat) : {perm T} :=
-  \prod_(c <- perm_of_part_rec part 0) c.
+  \prod_(c <- cycle_dec_of_part part) c.
 
 Lemma perm_of_part_recP (part : intpartn #|T|) c :
   c \in perm_of_part_rec part 0 -> exists n l, n+l <= #|T| /\ c = cycle_of n l.
