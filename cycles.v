@@ -5,6 +5,12 @@ From mathcomp Require Import fingroup perm automorphism action ssralg.
 
 From Combi Require Import symgroup partition Greene tools sorted.
 
+From ReprSG Require Import bij.
+
+Definition slice_part (P : {set {set T}}) :=
+  SlicedSet set0 P (fun x : {set T} => #|x|).
+
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 
