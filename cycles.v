@@ -433,7 +433,7 @@ Proof.
       rewrite in_support negbK big_enum; apply /eqP; apply out_perm_prod.
       move => C; rewrite mem_enum => HC.
       by have:= Hnotin C; rewrite HC andTb.
-    move => [C0] [HC0 Hx].
+    move => [C0] HC0 Hx.
     exists C0; split => //; move: Hx.
     have: support C0 \in (pcycles (\prod_(C in A) C)).
       exact: disjoint_supports_cycles.
@@ -629,7 +629,7 @@ Proof.
     by rewrite pcycle_conjg.
 Qed.
 
-Require Import ordcast.
+Require Import ordcast. (* for imset_inj TODO : move in tools *)
 
 Lemma cycle_type_of_conjg s a:
   cycle_type s = cycle_type (s ^ a)%g.
@@ -701,7 +701,7 @@ Proof.
   rewrite -imsetI; last by move=> x y _ _; exact: Hinj.
   by rewrite imset_eq0 Hdisj.
 Qed.
- 
+
 Lemma conjg_of_disjoint_supports (A : {set {perm T}}) a:
   disjoint_supports A -> disjoint_supports [set (s ^ a)%g | s in A].
 Proof.
@@ -743,6 +743,66 @@ Lemma abelian_cycle_dec s : abelian <<cycle_dec s>>.
 Proof.
   apply abelian_disjoint_supports.
   exact: disjoint_cycle_dec.
+Qed.
+
+Lemma support_card_pcycle s x : (#|pcycle s x| != 1) = (x \in support s).
+Proof.
+  rewrite in_support; congr negb; apply/eqP/eqP.
+  - by rewrite -{3}(iter_pcycle s x) => -> /=.
+  - move=> Hx; apply/eqP/cards1P; exists x.
+    rewrite -setP => y; rewrite !inE.
+    apply/idP/eqP => [/pcycleP [i ->] | ->]; last exact: pcycle_id.
+    elim: i => [| i IHi]; first by rewrite expg0 perm1.
+    by rewrite expgSr permM IHi.
+Qed.
+
+
+Lemma restr_perm_inj s : {in psupport s &, injective ((restr_perm (T:=T))^~ s)}.
+Proof.
+  by move=> C D /support_restr_perm {2}<- /support_restr_perm {2}<- ->.
+Qed.
+
+
+Lemma cycle_decE_flo s : (\prod_(C in cycle_dec s) C)%g = s.
+Proof.
+  apply /permP => x.
+  case: (boolP (x \in support s)) => Hx; first last.
+  - rewrite big_enum out_perm_prod.
+    + by move: Hx; rewrite in_support negbK => /eqP ->.
+    + move=> Ctmp; rewrite mem_enum => /imsetP [C] HC -> {Ctmp}.
+      rewrite (support_restr_perm HC).
+      move: Hx; apply contra => Hx.
+      have:= partition_support s => /and3P [] /eqP <- _ _.
+      by apply/bigcupP; exists C.
+  have Hcyx : pcycle s x \in psupport s.
+    rewrite /psupport inE support_card_pcycle Hx andbT.
+    exact: mem_imset.
+  have local_rest (C : {set T}) :
+      (C \in psupport (T:=T) s) && (C != pcycle s x) ->
+      restr_perm C s \in <<[set restr_perm X s | X in psupport s]>>%g.
+    by move=> /andP [Hi _]; apply mem_gen; exact: mem_imset.
+  rewrite [X in fun_of_perm X](_ : _ =
+      val (\sum_(C in cycle_dec s) fmod (abelian_cycle_dec s) C)%R); first last.
+    rewrite -morph_prod; last by move=> i; exact: mem_gen.
+    rewrite -[LHS](fmodK (abelian_cycle_dec s)) //.
+    by apply group_prod => i; exact: mem_gen.
+  rewrite /cycle_dec big_imset /=; last exact: restr_perm_inj.
+  rewrite (bigD1 (pcycle s x)) //= GRing.addrC.
+  rewrite -morph_prod //= -fmodM /=; first last.
+  - by apply mem_gen; apply/imsetP; exists (pcycle s x).
+  - exact: group_prod.
+  rewrite fmodK; first last.
+    apply groupM; first exact: group_prod.
+    apply mem_gen; exact: mem_imset.
+  rewrite permM (_ : _ x = x).
+    rewrite restr_permE ?psupport_astabs // -?in_support; last exact: pcycle_id.
+  apply big_rec; first exact: perm1.
+  move=> C S /andP [HC Hcy] {2}<-.
+  rewrite permM; congr fun_of_perm.
+  apply/eqP; rewrite -[_ == _]negbK -in_support support_restr_perm //.
+  have:= partition_support s => /and3P [_ /trivIsetP Htriv _].
+  have:= Htriv _ _ HC Hcyx Hcy => /disjoint_setI0.
+  by rewrite -setP => /(_ x); rewrite !inE pcycle_id andbT => ->.
 Qed.
 
 Lemma cycle_dec_of_conjg s a:
@@ -866,9 +926,6 @@ Fixpoint perm_of_part_rec (part : seq nat) (n : nat) : seq {perm T} :=
 Definition parts_of_part (part : seq nat) : {set {set T}} :=
   [set C in [seq [set x in X] | X <- reshape part (enum T)]].
 
-Definition bla_of_part (part : seq nat) : {set {perm T}} :=
-  [set C in [seq [set x in X] | X <- reshape part (enum T)]].
-
 (*
 Definition parts_of_part (part : seq nat) : {set {set T}} :=
   \bigcup_(S in [seq [set x in X] | X <- reshape part (enum T)]) [set S].
@@ -883,6 +940,7 @@ Definition parts_of_part (part : seq nat) : {set {set T}} :=
 
 Definition perm_of_part (part : seq nat) : {perm T} :=
   \prod_(c <- cycle_dec_of_part part) c.
+
 
 Lemma perm_of_part_recP (part : intpartn #|T|) c :
   c \in perm_of_part_rec part 0 -> exists n l, n+l <= #|T| /\ c = cycle_of n l.
