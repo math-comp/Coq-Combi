@@ -208,7 +208,7 @@ Proof.
 Qed.
 
 Lemma pcycle_restr_perm s x y :
-  pcycle s x \in psupport s ->
+  pcycle s x \in psupport s -> (* TODO remove this uneeded hypothesis *)
   y \in pcycle s x ->
   pcycle (restr_perm (pcycle s x) s) y = pcycle s y.
 Proof.
