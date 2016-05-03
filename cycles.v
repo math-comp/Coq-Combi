@@ -207,41 +207,43 @@ Proof.
     by apply /bigcupP; exists X.
 Qed.
 
+Lemma pcycle_restr_perm s x y :
+  pcycle s x \in psupport s ->
+  y \in pcycle s x ->
+  pcycle (restr_perm (pcycle s x) s) y = pcycle s y.
+Proof.
+  move=> Hx Hy.
+  have Hiter (i:nat): ((restr_perm (pcycle s x) s)^+i)%g y = (s^+i)%g y.
+    elim: i => [|n Hn]; first by rewrite !expg0 !perm1.
+    rewrite !expgSr !permM {}Hn restr_permE //; first exact: psupport_astabs.
+    by rewrite -eq_pcycle_mem pcycle_perm eq_pcycle_mem.
+  apply /setP => z; apply /pcycleP/pcycleP => [[] n| [] n].
+  - by rewrite Hiter => ->; exists n.
+  - by rewrite -Hiter => ->; exists n.
+Qed.
+
 Lemma psupport_restr s X:
   X \in psupport s -> psupport (restr_perm X s) = [set X].
 Proof.
-  move => H; have:= H; rewrite inE => /andP [/imsetP [x _ Hx] HX].
+  move => H; have:= H; rewrite inE => /andP [/imsetP [x _ Hx] HX]; subst X.
   apply /setP => Y; rewrite [RHS]inE.
   apply /idP/idP => [HY | /eqP -> {Y}].
-  - have HYX : Y \subset X.
+  - have HYX : Y \subset (pcycle s x).
       rewrite -(support_restr_perm H).
-      rewrite -(cover_partition (partition_support (restr_perm X s))).
+      rewrite -(cover_partition (partition_support _)).
       by apply (bigcup_max _ HY).
     rewrite eqEsubset; apply /andP; split => //.
     move: HYX => /subsetP HYX.
-    move: HY; rewrite inE => /andP [/imsetP[y _ Hy] HY].
-    have Hiter (i:nat): ((restr_perm X s)^+i)%g y = (s^+i)%g y.
-      elim: i => [|n Hn]; first by rewrite !expg0 !perm1.
-      rewrite !expgSr !permM Hn restr_permE //; first exact: psupport_astabs.
-      apply HYX; rewrite Hy -Hn -(pcycle_perm _ n); exact: pcycle_id.
-    have Hrew: pcycle (restr_perm X s) y = pcycle s y.
-      apply /setP => z; apply /pcycleP/pcycleP => [[] n| [] n].
-      + by rewrite Hiter => ->; exists n.
-      + by rewrite -Hiter => ->; exists n.
-    rewrite {}Hrew {Hiter} in Hy.
-    apply/subsetP => z.
-    have:= pcycle_id s y; rewrite -Hy => /HYX.
-    by rewrite Hx -eq_pcycle_mem Hy => /eqP <-.
+    move: HY; rewrite inE => /andP [/imsetP[y _ Hy] _].
+    have {Hy} Hy : Y = pcycle s y.
+      rewrite Hy pcycle_restr_perm //.
+      apply HYX; rewrite Hy; exact: pcycle_id.
+    subst Y; apply/subsetP => z.
+    have:= pcycle_id s y => /HYX.
+    by rewrite -eq_pcycle_mem => /eqP <-.
  -  rewrite inE HX andbT.
     apply /imsetP; exists x => //.
-    rewrite Hx; apply /setP => y.
-    have Hiter (i:nat) : ((restr_perm X s)^+i)%g x = (s^+i)%g x.
-      elim: i => [|n Hn]; first by rewrite !expg0 !perm1.
-      rewrite !expgSr !permM Hn restr_permE //; first exact: psupport_astabs.
-      rewrite Hx -(pcycle_perm _ n); exact: pcycle_id.
-    apply /pcycleP/pcycleP => [] [n].
-    + by rewrite -Hiter Hx => H0; exists n.
-    + by rewrite -Hx Hiter => H0; exists n.
+    rewrite pcycle_restr_perm //; exact: pcycle_id.
 Qed.
 
 Lemma psupport_eq0 s : (s == perm_one T) = (psupport s == set0).
