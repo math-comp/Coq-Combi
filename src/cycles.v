@@ -13,6 +13,23 @@ Unset Strict Implicit.
 
 
 
+Section Bla.
+
+Variable T1 T2 : eqType.
+Variable P : T1 -> T2 -> Prop.
+Hypothesis H : forall x, {y | P x y}.
+
+
+Definition F (x : T1) : T2 := let (y, _) := H x in y.
+
+Lemma bla : forall x, P x (F x).
+Proof.
+  rewrite /F => x /=.
+  by case: (H x) => y Py /=.
+Qed.
+
+End Bla.
+
 Section SSRComplements.
 Variable T: finType.
 
@@ -60,6 +77,17 @@ Proof.
     elim: (index _ _) => [|n IHn] /=; first by rewrite expg0 perm1.
     by rewrite expgSr permM IHn.
   - move=> [i ->]; exact: mem_pcycle.
+Qed.
+
+Lemma pcycle_setP (s: {perm T}) x y :
+  (y \in pcycle s x) -> {i | y = (s ^+ i)%g x}.
+Proof.
+  rewrite pcycle_traject => H.
+  have:= H; rewrite -index_mem size_traject => Hlt.
+  exists (index y (traject s x #|pcycle s x|)).
+  move: Hlt => /(nth_traject s)/(_ x); rewrite (nth_index _ H) => {H} {1}->.
+  elim: (index _ _) => [|n IHn] /=; first by rewrite expg0 perm1.
+  by rewrite expgSr permM IHn.
 Qed.
 
 Lemma enum_eq0P (s : {set T}):
