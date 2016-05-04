@@ -6,8 +6,12 @@ From mathcomp Require finmodule.
 
 From Combi Require Import symgroup partition Greene tools sorted.
 
+Require Import bij.
+
 Set Implicit Arguments.
 Unset Strict Implicit.
+
+
 
 Section SSRComplements.
 Variable T: finType.
@@ -805,20 +809,56 @@ Qed.
 (* Ici il faut ayant supposé cycle_type s = cycle_type t, construire un
 bijection entre pcycles s et pcycles t *)
 
+Definition slice_part (P : {set {set T}}) :=
+  SlicedSet set0 P (fun x : {set T} => #|x|).
 
-Lemma bla s t :
+Definition slpcycles s :=
+  slice_part (pcycles s).
+
+Lemma cycle_type_eq s t:
   cycle_type s = cycle_type t ->
-  exists f : {set T} -> {set T},
-    {in pcycles s &, injective f} /\
-    [set f x | x in pcycles s] = (pcycles t) /\
-    forall x, x \in pcycles s -> #|f x| = #|x|.
+    forall i, #|slice (slpcycles s) i| = #|slice (slpcycles t) i|.
 Proof.
+  rewrite /cycle_type => H i.
+  have {H}: cycle_type_seq s = cycle_type_seq t.
+  admit.
+  move => /(perm_sortP geq_total geq_trans anti_geq) /perm_eqP.
+  move => /(_ (fun x => x == i)) => H.
+  rewrite /slice.
 Admitted.
 
-(*Définir la conjugaison sur les pcycles : partir de x, choisir un élément y de f (pcycle s x) {Cet ensemble est non vide, par égalité des cardinaux}, on pose arbitrairement f x = y, et on renvoye f s^i x = t^i y, on épuise ainsi tous les éléments de (pcycle s x), et la fonction est correctement définie *)
+  
+Definition conjg_pcycles s t:=
+  bij (U := slpcycles s) (slpcycles t).
+
+Lemma conjg_pcyclesP s t:
+  cycle_type s = cycle_type t ->
+  [/\ {in slpcycles s &, injective (conjg_pcycles (s := s) t)},
+   [set (conjg_pcycles t x) | x in (slpcycles s)] = slpcycles t &
+   {in (slpcycles s), forall x, #|(conjg_pcycles t x)| = #|x| } ].
+Proof. by move => /cycle_type_eq; exact: (bijP). Qed. 
+
+
+Lemma bla1 s t :
+  cycle_type s = cycle_type t ->
+  forall A, A \in slpcycles s ->
+    exists f : T -> T,
+    [/\ {in A &, injective f},
+        {in A,  forall x, f (s x) = t (f x)} &
+        forall x, x \notin A -> f x = x].
+Proof.
+  move => /conjg_pcyclesP [H1 H2 H3] A HA.
+  have {H3} H3:= H3 A HA.
+Admitted.
+
+
+
+(* COMMENT ==========================================================
+
+  (*Définir la conjugaison sur les pcycles : partir de x, choisir un élément y de f (pcycle s x) {Cet ensemble est non vide, par égalité des cardinaux}, on pose arbitrairement f x = y, et on renvoie f s^i x = t^i y, on épuise ainsi tous les éléments de (pcycle s x), et la fonction est correctement définie *)
 (*Definition conjg_on_pcycle s x :=*)
 
-
+(*
 Lemma bla1 s t :
   cycle_type s = cycle_type t ->
   exists f : T -> T,
@@ -826,6 +866,7 @@ Lemma bla1 s t :
     forall x, f (s x) = t (f x).
 Proof.
 Admitted.
+*)
 
 Lemma classes_of_permP s t:
   reflect (t \in (s ^: [set: {perm T}])%g) (cycle_type s == cycle_type t).
@@ -945,4 +986,5 @@ Proof.
   admit.
 Admitted.
 
+======================= *)
 End cycle_type.
