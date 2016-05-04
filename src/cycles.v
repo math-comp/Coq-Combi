@@ -838,25 +838,30 @@ Qed.
 bijection entre pcycles s et pcycles t *)
 
 Definition slice_part (P : {set {set T}}) :=
-  SlicedSet set0 P (fun x : {set T} => #|x|).
+ SlicedSet set0 P (fun x : {set T} => #|x|).
 
-Definition slpcycles s :=
-  slice_part (pcycles s).
+Definition slpcycles s := slice_part (pcycles s).
+
+Lemma slice_slpcycleE s i :
+  #|slice (slpcycles s) i| = count_mem i (cycle_type s).
+Proof.
+  rewrite /cycle_type /slice /cycle_type_seq /set_partition_shape /=.
+  rewrite [RHS](_ : _ =
+      (count_mem i) [seq #|(x : {set _})| | x <- enum (pcycles s)]);
+      last by apply/perm_eqP/perm_eqlP; exact: perm_sort.
+  rewrite cardE /enum_mem -enumT /=.
+  rewrite size_filter count_map count_filter.
+  apply eq_count => C /=; apply/imsetP/idP => [[X] | HC].
+  - by rewrite inE andbC => H ->.
+  - by exists C => //; rewrite inE andbC.
+Qed.
 
 Lemma cycle_type_eq s t:
   cycle_type s = cycle_type t ->
     forall i, #|slice (slpcycles s) i| = #|slice (slpcycles t) i|.
-Proof.
-  rewrite /cycle_type => H i.
-  have {H}: cycle_type_seq s = cycle_type_seq t.
-  admit.
-  move => /(perm_sortP geq_total geq_trans anti_geq) /perm_eqP.
-  move => /(_ (fun x => x == i)) => H.
-  rewrite /slice.
-Admitted.
+Proof. by move=> H i; rewrite !slice_slpcycleE H. Qed.
 
-  
-Definition conjg_pcycles s t:=
+Definition conjg_pcycles s t :=
   bij (U := slpcycles s) (slpcycles t).
 
 Lemma conjg_pcyclesP s t:
@@ -864,7 +869,104 @@ Lemma conjg_pcyclesP s t:
   [/\ {in slpcycles s &, injective (conjg_pcycles (s := s) t)},
    [set (conjg_pcycles t x) | x in (slpcycles s)] = slpcycles t &
    {in (slpcycles s), forall x, #|(conjg_pcycles t x)| = #|x| } ].
-Proof. by move => /cycle_type_eq; exact: (bijP). Qed. 
+Proof. by move => /cycle_type_eq; exact: bijP. Qed.
+
+
+Definition canpcycle s x := odflt x [pick y in pcycle s x].
+
+Lemma canpcycleP s x : x \in pcycle s (canpcycle s x).
+Proof.
+  rewrite /canpcycle /= pcycle_sym.
+  case: pickP => [x0 //|].
+  by move => /(_ x) /=; rewrite pcycle_id.
+Qed.
+
+Lemma canpcycleE s x y :
+  x \in pcycle s y -> canpcycle s x = canpcycle s y.
+Proof.
+  move=> H; have:= H; rewrite /canpcycle -eq_pcycle_mem => /eqP ->.
+  case: pickP => [x0 //|].
+  by move => /(_ y) /=; rewrite pcycle_id.
+Qed.
+
+Lemma pcycleE (s: {perm T}) x y :
+  y \in pcycle s x -> exists i, y == (s ^+ i)%g x.
+Proof.
+  move=> /pcycleP H.
+  move: H => [i Hi]; exists i; by rewrite Hi.
+Qed.
+
+Definition indpcycle s (x : T) : nat := ex_minn (pcycleE (canpcycleP s x)).
+
+Lemma indpcycleP s x : x = ((s ^+ (indpcycle s x)) (canpcycle s x))%g.
+Proof. rewrite /indpcycle; by case: ex_minnP => i /eqP. Qed.
+
+Lemma indpcyclecan s x : indpcycle s (canpcycle s x) = 0.
+Proof.
+  rewrite /indpcycle; case: ex_minnP => m /eqP Hm Hmin.
+  apply/eqP; rewrite -leqn0; apply Hmin.
+  rewrite expg0 perm1.
+  apply/eqP; apply canpcycleE.
+  exact: canpcycleP.
+Qed.
+
+(* Retourne le canonique de l'image de x *)
+Definition conjbijcan s t :=
+  let pbij := (@conjg_pcycles s t) in
+  fun (x : T) =>
+    let imcycle := pbij (pcycle s x) in
+    odflt x [pick y in imcycle].
+
+Definition conjbij s t x :=
+    ((t ^+ (indpcycle s x)) (conjbijcan s t x))%g.
+
+Lemma conjbijP s t :
+  cycle_type s = cycle_type t ->
+  forall x, conjbij s t (s x) = t (conjbij s t x).
+Proof.
+  rewrite /conjbij => Heq x.
+  have -> : conjbijcan s t (s x) = conjbijcan s t x.
+    rewrite /conjbijcan.
+    have -> : pcycle s (s x) = pcycle s x.
+      apply/eqP; rewrite eq_pcycle_mem.
+      rewrite -{1}(expg1 s); exact: mem_pcycle.
+    set imcycle := conjg_pcycles _ _.
+    have: imcycle \in pcycles t.
+      move: Heq => /conjg_pcyclesP [] /= _ Himage _.
+      by rewrite -Himage; apply mem_imset; apply mem_imset.
+    move=> /imsetP [y0 _ ->].
+    by case: pickP => // /(_ y0); rewrite pcycle_id.
+  
+
+    
+Lemma conjbijcanP s t :
+  cycle_type s = cycle_type t ->
+  forall x, conjbijcan s t x = canpcycle t (conjbij s t x).
+Proof.
+  rewrite /conjbij /conjbijcan => Heq x.
+  set imcycle := conjg_pcycles _ _; set defim := odflt _ _.
+  have:= erefl defim; rewrite {1 3 4}/defim.
+  case: pickP => [im Him | Habs] /=.
+  - rewrite {}/defim => Hdefim.
+    rewrite /canpcycle (_ : [pick y in  _] = some im) //.
+    rewrite [LHS](_ : _ = [pick y in imcycle]); first last.
+      apply eq_pick => y /=; congr (y \in _).
+      rewrite pcycle_perm.
+      have: imcycle \in pcycles t.
+        move: Heq => /conjg_pcyclesP [] /= _ Himage _.
+        by rewrite -Himage; apply mem_imset; apply mem_imset.
+      move=> /imsetP [y0 _ Hy0].
+      by move: Him; rewrite Hy0 /= -eq_pcycle_mem => /eqP ->.
+    rewrite Hdefim.
+    by case: pickP => // /(_ im); rewrite Him.
+  - exfalso.
+    move: Heq => /conjg_pcyclesP [] /= _ _ Heq.
+    have {Heq} /Heq Hcard : (pcycle s x) \in pcycles s by exact: mem_imset.
+    have : #|pcycle s x| != 0.
+      rewrite cards_eq0; apply/set0Pn; exists x; exact: pcycle_id.
+    rewrite -Hcard cards_eq0 => /set0Pn [w Hw].
+    by have := Habs w; rewrite /= Hw.
+Qed.
 
 
 Lemma bla1 s t :
@@ -875,13 +977,14 @@ Lemma bla1 s t :
         {in A,  forall x, f (s x) = t (f x)} &
         forall x, x \notin A -> f x = x].
 Proof.
+  rewrite /=.
   move => /conjg_pcyclesP [H1 H2 H3] A HA.
   have {H3} H3:= H3 A HA.
 Admitted.
 
 
 
-(* COMMENT ==========================================================
+(* COMMENT ========================================================== *)
 
   (*Définir la conjugaison sur les pcycles : partir de x, choisir un élément y de f (pcycle s x) {Cet ensemble est non vide, par égalité des cardinaux}, on pose arbitrairement f x = y, et on renvoie f s^i x = t^i y, on épuise ainsi tous les éléments de (pcycle s x), et la fonction est correctement définie *)
 (*Definition conjg_on_pcycle s x :=*)
@@ -899,7 +1002,9 @@ Admitted.
 Lemma classes_of_permP s t:
   reflect (t \in (s ^: [set: {perm T}])%g) (cycle_type s == cycle_type t).
 Proof.
-  apply (iffP eqP) => [/bla1 [f] [Hinj Hcom]| /imsetP [a] _ ->].
+  apply (iffP eqP).
+  move=> /bla1.
+  => [/bla1 [f] [Hinj Hcom]|]. /imsetP [a] _ ->].
   - apply /imsetP; exists (perm (Hinj)); rewrite ?inE //.
     apply /permP => x; rewrite conjgE !permM permE.
     have:= (Hcom (((perm Hinj)^-1)%g x)).
