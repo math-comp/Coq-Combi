@@ -1,0 +1,4 @@
+-R ../Coq-Combi/theories Combi 
+-R src SymGroup
+src/bij.v
+src/cycles.v

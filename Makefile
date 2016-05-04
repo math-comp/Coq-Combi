@@ -50,10 +50,11 @@ vo_to_obj = $(addsuffix .o,\
 ##########################
 
 COQLIBS?=\
-  -R "." Top\
-  -I "."
+  -R "../Coq-Combi/theories" Combi\
+  -R "src" SymGroup
 COQDOCLIBS?=\
-  -R "." Top
+  -R "../Coq-Combi/theories" Combi\
+  -R "src" SymGroup
 
 ##########################
 #                        #
@@ -95,9 +96,8 @@ endif
 #                    #
 ######################
 
-VFILES:=bij.v\
-  cycle_type.v\
-  cycles.v
+VFILES:=src/bij.v\
+  src/cycles.v
 
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
 -include $(addsuffix .d,$(VFILES))
@@ -111,6 +111,7 @@ endif
 
 VO=vo
 VOFILES:=$(VFILES:.v=.$(VO))
+VOFILES2=$(patsubst src/%,%,$(filter src/%,$(VOFILES)))
 GLOBFILES:=$(VFILES:.v=.glob)
 GFILES:=$(VFILES:.v=.g)
 HTMLFILES:=$(VFILES:.v=.html)
@@ -118,6 +119,7 @@ GHTMLFILES:=$(VFILES:.v=.g.html)
 OBJFILES=$(call vo_to_obj,$(VOFILES))
 ALLNATIVEFILES=$(OBJFILES:.o=.cmi) $(OBJFILES:.o=.cmo) $(OBJFILES:.o=.cmx) $(OBJFILES:.o=.cmxs)
 NATIVEFILES=$(foreach f, $(ALLNATIVEFILES), $(wildcard $f))
+NATIVEFILES2=$(patsubst src/%,%,$(filter src/%,$(NATIVEFILES)))
 ifeq '$(HASNATDYNLINK)' 'true'
 HASNATDYNLINK_OR_EMPTY := yes
 else
@@ -130,14 +132,7 @@ endif
 #                                     #
 #######################################
 
-all: $(VOFILES) ./-\
-  ./R\
-  ./src\
-  ./SymGroup\
-  ./-\
-  ./R\
-  ./../Coq-Combi/theories\
-  ./Combi
+all: $(VOFILES) 
 
 quick: $(VOFILES:.vo=.vio)
 
@@ -175,37 +170,7 @@ beautify: $(VFILES:=.beautified)
 	@echo 'Do not do "make clean" until you are sure that everything went well!'
 	@echo 'If there were a problem, execute "for file in $$(find . -name \*.v.old -print); do mv $${file} $${file%.old}; done" in your shell/'
 
-.PHONY: all archclean beautify byte clean cleanall gallina gallinahtml html install install-doc install-natdynlink install-toploop opt printenv quick uninstall userinstall validate vio2vo ./- ./R ./src ./SymGroup ./- ./R ./../Coq-Combi/theories ./Combi
-
-###################
-#                 #
-# Subdirectories. #
-#                 #
-###################
-
-./-:
-	+cd "./-" && $(MAKE) all
-
-./R:
-	+cd "./R" && $(MAKE) all
-
-./src:
-	+cd "./src" && $(MAKE) all
-
-./SymGroup:
-	+cd "./SymGroup" && $(MAKE) all
-
-./-:
-	+cd "./-" && $(MAKE) all
-
-./R:
-	+cd "./R" && $(MAKE) all
-
-./../Coq-Combi/theories:
-	+cd "./../Coq-Combi/theories" && $(MAKE) all
-
-./Combi:
-	+cd "./Combi" && $(MAKE) all
+.PHONY: all archclean beautify byte clean cleanall gallina gallinahtml html install install-doc install-natdynlink install-toploop opt printenv quick uninstall userinstall validate vio2vo
 
 ####################
 #                  #
@@ -223,31 +188,24 @@ userinstall:
 	+$(MAKE) USERINSTALL=true install
 
 install:
-	cd "." && for i in $(VOFILES) $(VFILES) $(GLOBFILES) $(NATIVEFILES) $(CMOFILES) $(CMIFILES) $(CMAFILES); do \
-	 install -d "`dirname "$(DSTROOT)"$(COQLIBINSTALL)/Top/$$i`"; \
-	 install -m 0644 $$i "$(DSTROOT)"$(COQLIBINSTALL)/Top/$$i; \
+	cd "src" && for i in $(NATIVEFILES2) $(GLOBFILES2) $(VFILES2) $(VOFILES2); do \
+	 install -d "`dirname "$(DSTROOT)"$(COQLIBINSTALL)/SymGroup/$$i`"; \
+	 install -m 0644 $$i "$(DSTROOT)"$(COQLIBINSTALL)/SymGroup/$$i; \
 	done
-	+cd ./- && $(MAKE) DSTROOT="$(DSTROOT)" INSTALLDEFAULTROOT="$(INSTALLDEFAULTROOT)/./-" install
-	+cd ./R && $(MAKE) DSTROOT="$(DSTROOT)" INSTALLDEFAULTROOT="$(INSTALLDEFAULTROOT)/./R" install
-	+cd ./src && $(MAKE) DSTROOT="$(DSTROOT)" INSTALLDEFAULTROOT="$(INSTALLDEFAULTROOT)/./src" install
-	+cd ./SymGroup && $(MAKE) DSTROOT="$(DSTROOT)" INSTALLDEFAULTROOT="$(INSTALLDEFAULTROOT)/./SymGroup" install
-	+cd ./- && $(MAKE) DSTROOT="$(DSTROOT)" INSTALLDEFAULTROOT="$(INSTALLDEFAULTROOT)/./-" install
-	+cd ./R && $(MAKE) DSTROOT="$(DSTROOT)" INSTALLDEFAULTROOT="$(INSTALLDEFAULTROOT)/./R" install
-	+cd ./../Coq-Combi/theories && $(MAKE) DSTROOT="$(DSTROOT)" INSTALLDEFAULTROOT="$(INSTALLDEFAULTROOT)/./../Coq-Combi/theories" install
-	+cd ./Combi && $(MAKE) DSTROOT="$(DSTROOT)" INSTALLDEFAULTROOT="$(INSTALLDEFAULTROOT)/./Combi" install
 
 install-doc:
-	install -d "$(DSTROOT)"$(COQDOCINSTALL)/Top/html
+	install -d "$(DSTROOT)"$(COQDOCINSTALL)/$(INSTALLDEFAULTROOT)/html
 	for i in html/*; do \
-	 install -m 0644 $$i "$(DSTROOT)"$(COQDOCINSTALL)/Top/$$i;\
+	 install -m 0644 $$i "$(DSTROOT)"$(COQDOCINSTALL)/$(INSTALLDEFAULTROOT)/$$i;\
 	done
 
 uninstall_me.sh: Makefile
 	echo '#!/bin/sh' > $@
-	printf 'cd "$${DSTROOT}"$(COQLIBINSTALL)/Top && rm -f $(VOFILES) $(VFILES) $(GLOBFILES) $(NATIVEFILES) $(CMOFILES) $(CMIFILES) $(CMAFILES) && find . -type d -and -empty -delete\ncd "$${DSTROOT}"$(COQLIBINSTALL) && find "Top" -maxdepth 0 -and -empty -exec rmdir -p \{\} \;\n' >> "$@"
-	printf 'cd "$${DSTROOT}"$(COQDOCINSTALL)/Top \\\n' >> "$@"
+	printf 'cd "$${DSTROOT}"$(COQLIBINSTALL)/SymGroup && rm -f $(NATIVEFILES2) $(GLOBFILES2) $(VFILES2) $(VOFILES2) && find . -type d -and -empty -delete\ncd "$${DSTROOT}"$(COQLIBINSTALL) && find "SymGroup" -maxdepth 0 -and -empty -exec rmdir -p \{\} \;\n' >> "$@"
+	printf 'cd "$${DSTROOT}"$(COQLIBINSTALL)/Combi && find . -type d -and -empty -delete\ncd "$${DSTROOT}"$(COQLIBINSTALL) && find "Combi" -maxdepth 0 -and -empty -exec rmdir -p \{\} \;\n' >> "$@"
+	printf 'cd "$${DSTROOT}"$(COQDOCINSTALL)/$(INSTALLDEFAULTROOT) \\\n' >> "$@"
 	printf '&& rm -f $(shell find "html" -maxdepth 1 -and -type f -print)\n' >> "$@"
-	printf 'cd "$${DSTROOT}"$(COQDOCINSTALL) && find Top/html -maxdepth 0 -and -empty -exec rmdir -p \{\} \;\n' >> "$@"
+	printf 'cd "$${DSTROOT}"$(COQDOCINSTALL) && find $(INSTALLDEFAULTROOT)/html -maxdepth 0 -and -empty -exec rmdir -p \{\} \;\n' >> "$@"
 	chmod +x $@
 
 uninstall: uninstall_me.sh
@@ -259,28 +217,12 @@ clean::
 	rm -f $(VOFILES) $(VOFILES:.vo=.vio) $(GFILES) $(VFILES:.v=.v.d) $(VFILES:=.beautified) $(VFILES:=.old)
 	rm -f all.ps all-gal.ps all.pdf all-gal.pdf all.glob $(VFILES:.v=.glob) $(VFILES:.v=.tex) $(VFILES:.v=.g.tex) all-mli.tex
 	- rm -rf html mlihtml uninstall_me.sh
-	+cd ./- && $(MAKE) clean
-	+cd ./R && $(MAKE) clean
-	+cd ./src && $(MAKE) clean
-	+cd ./SymGroup && $(MAKE) clean
-	+cd ./- && $(MAKE) clean
-	+cd ./R && $(MAKE) clean
-	+cd ./../Coq-Combi/theories && $(MAKE) clean
-	+cd ./Combi && $(MAKE) clean
 
 cleanall:: clean
 	rm -f $(patsubst %.v,.%.aux,$(VFILES))
 
 archclean::
 	rm -f *.cmx *.o
-	+cd ./- && $(MAKE) archclean
-	+cd ./R && $(MAKE) archclean
-	+cd ./src && $(MAKE) archclean
-	+cd ./SymGroup && $(MAKE) archclean
-	+cd ./- && $(MAKE) archclean
-	+cd ./R && $(MAKE) archclean
-	+cd ./../Coq-Combi/theories && $(MAKE) archclean
-	+cd ./Combi && $(MAKE) archclean
 
 printenv:
 	@"$(COQBIN)coqtop" -config
@@ -295,14 +237,6 @@ Makefile: _CoqProject
 	mv -f $@ $@.bak
 	"$(COQBIN)coq_makefile" -f $< -o $@
 
-	+cd ./- && $(MAKE) Makefile
-	+cd ./R && $(MAKE) Makefile
-	+cd ./src && $(MAKE) Makefile
-	+cd ./SymGroup && $(MAKE) Makefile
-	+cd ./- && $(MAKE) Makefile
-	+cd ./R && $(MAKE) Makefile
-	+cd ./../Coq-Combi/theories && $(MAKE) Makefile
-	+cd ./Combi && $(MAKE) Makefile
 
 ###################
 #                 #
