@@ -79,6 +79,9 @@ Proof.
   - move=> [i ->]; exact: mem_pcycle.
 Qed.
 
+Lemma pcycle_perm1 (s: {perm T}) x : pcycle s (s x) = pcycle s x.
+Proof. by rewrite -{2}(expg1 s); exact: pcycle_perm. Qed.
+
 Lemma pcycle_setP (s: {perm T}) x y :
   (y \in pcycle s x) -> {i | y = (s ^+ i)%g x}.
 Proof.
@@ -231,7 +234,7 @@ Proof.
   apply /subsetP => x /= Hx.
   move: HX; rewrite !inE apermE => /andP [] /imsetP [] x0 _ HX _.
   move: Hx; rewrite HX -!eq_pcycle_mem => /eqP <-.
-  by have:= mem_pcycle s 1 x; rewrite -eq_pcycle_mem expg1.
+  by rewrite pcycle_perm1.
 Qed.
 
 
@@ -872,6 +875,34 @@ Lemma conjg_pcyclesP s t:
 Proof. by move => /cycle_type_eq; exact: bijP. Qed.
 
 
+Lemma exp_pcycle s x : (s ^+ #|pcycle s x|)%g x = x.
+Proof. rewrite permX; exact: iter_pcycle. Qed.
+
+Lemma expM_pcycle s x i : (s ^+ (i * #|pcycle s x|))%g x = x.
+Proof.
+  elim: i => [//= | i IHi]; first by rewrite mul0n expg0 perm1.
+  by rewrite mulSn expgD permM exp_pcycle.
+Qed.
+
+From mathcomp Require Import div.
+
+Lemma pcycle_mod s x i:
+  (s ^+ i)%g x = (s ^+ (i %% #|pcycle s x|))%g x.
+Proof. by rewrite {1}(divn_eq i #|pcycle s x|) expgD permM expM_pcycle. Qed.
+
+Lemma eq_in_pcycle s x i j :
+  ((s ^+ i)%g x == (s ^+ j)%g x) = (i == j %[mod #|pcycle s x|]).
+Proof.
+  apply/idP/idP.
+  - rewrite [X in X == _]pcycle_mod [X in _ == X]pcycle_mod !permX.
+    have HC : 0 < #|pcycle s x|.
+      rewrite card_gt0; apply/set0Pn; exists x; exact: pcycle_id.
+    rewrite -!(nth_traject _ (ltn_pmod _ HC)).
+    rewrite nth_uniq // ?size_traject ?ltn_pmod //.
+    exact: uniq_traject_pcycle.
+  - by move=> /eqP H; apply/eqP; rewrite [LHS]pcycle_mod [RHS]pcycle_mod H.
+Qed.
+
 Definition canpcycle s x := odflt x [pick y in pcycle s x].
 
 Lemma canpcycleP s x : x \in pcycle s (canpcycle s x).
@@ -898,10 +929,84 @@ Qed.
 
 Definition indpcycle s (x : T) : nat := ex_minn (pcycleE (canpcycleP s x)).
 
-Lemma indpcycleP s x : x = ((s ^+ (indpcycle s x)) (canpcycle s x))%g.
+Lemma indpcycleP s x : ((s ^+ (indpcycle s x)) (canpcycle s x))%g = x.
 Proof. rewrite /indpcycle; by case: ex_minnP => i /eqP. Qed.
 
-Lemma indpcyclecan s x : indpcycle s (canpcycle s x) = 0.
+(* Retourne le cycle  de l'image de x *)
+Definition imcycle s t :=
+  let pbij := (@conjg_pcycles s t) in
+  fun (x : T) => pbij (pcycle s x).
+
+(* Retourne le canonique de l'image de x *)
+Definition conjbijcan s t x :=
+    odflt x [pick y in imcycle s t x].
+
+Definition conjbij s t x :=
+    ((t ^+ (indpcycle s x)) (conjbijcan s t x))%g.
+
+Section EqCycleType.
+
+Variable s t : {perm T}.
+Hypothesis Heq : cycle_type s = cycle_type t.
+
+Lemma mem_imcycle x : imcycle s t x \in pcycles t.
+Proof.
+  move: Heq => /conjg_pcyclesP [] /= _ Himage _.
+  by rewrite -Himage /imcycle; apply mem_imset; apply mem_imset.
+Qed.
+
+Lemma imcycle_perm x : imcycle s t (s x) = imcycle s t x.
+Proof. by rewrite /imcycle pcycle_perm1. Qed.
+
+Lemma pcycle_conjbijcan x : pcycle t (conjbijcan s t x) = imcycle s t x.
+Proof.
+  rewrite /conjbijcan /=.
+  have:= mem_imcycle x => /imsetP [y0 _ ->].
+  case: pickP => [/= y|].
+  - by rewrite -eq_pcycle_mem => /eqP ->.
+  - by move=> /(_ y0); rewrite pcycle_id.
+Qed.
+
+Lemma card_imcycle x : #|imcycle s t x| = #|pcycle s x|.
+Proof.
+  rewrite /imcycle.
+  move: Heq => /conjg_pcyclesP [_ _ /=]; apply.
+  exact: mem_imset.
+Qed.
+
+Lemma imcycleE x : conjbijcan s t x = canpcycle s (conjbij s t x).
+Proof.
+Admitted.
+
+Lemma conjbijcanE x :
+  conjbijcan s t (s x) = conjbijcan s t x.
+Proof.
+  rewrite /conjbijcan imcycle_perm.
+  have:= mem_imcycle x => /imsetP [y0 _ ->].
+  by case: pickP => // /(_ y0); rewrite pcycle_id.
+Qed.
+
+Lemma conjbijcan_expE x i :
+  conjbijcan s t ((s ^+ i)%g x) = conjbijcan s t x.
+Proof.
+  elim: i => [// | i IHi]; first by rewrite expg0 perm1.
+  by rewrite expgSr permM conjbijcanE.
+Qed.
+
+Lemma conjbijP x : conjbij s t (s x) = t (conjbij s t x).
+Proof.
+  rewrite /conjbij conjbijcanE.
+  have := card_imcycle x; rewrite -pcycle_conjbijcan.
+  move: (conjbijcan s t x) => y H.
+  apply/eqP; rewrite -permM -expgSr eq_in_pcycle {}H.
+  have:= canpcycleP s x; rewrite -eq_pcycle_mem => /eqP ->.
+  rewrite -eq_in_pcycle.
+  rewrite expgSr permM indpcycleP.
+  have:= mem_pcycle s 1 x; rewrite expg1 => /canpcycleE <-.
+  by rewrite indpcycleP.
+Qed.
+
+Lemma indpcyclecan x : indpcycle s (canpcycle s x) = 0.
 Proof.
   rewrite /indpcycle; case: ex_minnP => m /eqP Hm Hmin.
   apply/eqP; rewrite -leqn0; apply Hmin.
@@ -910,86 +1015,41 @@ Proof.
   exact: canpcycleP.
 Qed.
 
-(* Retourne le canonique de l'image de x *)
-Definition conjbijcan s t :=
-  let pbij := (@conjg_pcycles s t) in
-  fun (x : T) =>
-    let imcycle := pbij (pcycle s x) in
-    odflt x [pick y in imcycle].
-
-Definition conjbij s t x :=
-    ((t ^+ (indpcycle s x)) (conjbijcan s t x))%g.
-
-Lemma conjbijP s t :
-  cycle_type s = cycle_type t ->
-  forall x, conjbij s t (s x) = t (conjbij s t x).
+Lemma conjbijcanP x : conjbijcan s t x = canpcycle t (conjbij s t x).
 Proof.
-  rewrite /conjbij => Heq x.
-  set imcycle := conjg_pcycles (s:=s) t (pcycle s x).
-  have Himcycle: imcycle \in pcycles t.
-    move: Heq => /conjg_pcyclesP [] /= _ Himage _.
-    by rewrite -Himage; apply mem_imset; apply mem_imset.
-  have -> : conjbijcan s t (s x) = conjbijcan s t x.
-    rewrite /conjbijcan.
-    have -> : pcycle s (s x) = pcycle s x.
-      apply/eqP; rewrite eq_pcycle_mem.
-      rewrite -{1}(expg1 s); exact: mem_pcycle.
-    rewrite  -/imcycle.
-    move: Himcycle => /imsetP [y0 _ ->].
-    by case: pickP => // /(_ y0); rewrite pcycle_id.
-  have : #|pcycle t (conjbijcan s t x)| = #|pcycle s x|.
-    move: Heq => /conjg_pcyclesP [_ _ /= Heq].
-    rewrite /conjbijcan.
-    have {Heq} /Heq : (pcycle s x) \in pcycles s by exact: mem_imset.
-    rewrite -/imcycle => <-.
-    move: Himcycle => /imsetP [y0 _ -> {imcycle}].
-    case: pickP => [/= y|].
-    - by rewrite -eq_pcycle_mem => /eqP ->.
-    - by move=> /(_ y0); rewrite pcycle_id.
-  move: (conjbijcan s t x) => y {Heq imcycle Himcycle}.
-  rewrite -permM -expgSr.
-
-Lemma conjbijcanP s t :
-  cycle_type s = cycle_type t ->
-  forall x, conjbijcan s t x = canpcycle t (conjbij s t x).
-Proof.
-  rewrite /conjbij /conjbijcan => Heq x.
-  set imcycle := conjg_pcycles _ _; set defim := odflt _ _.
+  rewrite /conjbij /conjbijcan.
+  set defim := odflt _ _.
   have:= erefl defim; rewrite {1 3 4}/defim.
   case: pickP => [im Him | Habs] /=.
   - rewrite {}/defim => Hdefim.
     rewrite /canpcycle (_ : [pick y in  _] = some im) //.
-    rewrite [LHS](_ : _ = [pick y in imcycle]); first last.
+    rewrite [LHS](_ : _ = [pick y in imcycle s t x]); first last.
       apply eq_pick => y /=; congr (y \in _).
       rewrite pcycle_perm.
-      have: imcycle \in pcycles t.
-        move: Heq => /conjg_pcyclesP [] /= _ Himage _.
-        by rewrite -Himage; apply mem_imset; apply mem_imset.
-      move=> /imsetP [y0 _ Hy0].
+      have:= mem_imcycle x => /imsetP [y0 _ Hy0].
       by move: Him; rewrite Hy0 /= -eq_pcycle_mem => /eqP ->.
     rewrite Hdefim.
     by case: pickP => // /(_ im); rewrite Him.
   - exfalso.
-    move: Heq => /conjg_pcyclesP [] /= _ _ Heq.
-    have {Heq} /Heq Hcard : (pcycle s x) \in pcycles s by exact: mem_imset.
     have : #|pcycle s x| != 0.
       rewrite cards_eq0; apply/set0Pn; exists x; exact: pcycle_id.
-    rewrite -Hcard cards_eq0 => /set0Pn [w Hw].
+    rewrite -card_imcycle cards_eq0 => /set0Pn [w Hw].
     by have := Habs w; rewrite /= Hw.
 Qed.
 
+End EqCycleType.
 
-Lemma bla1 s t :
-  cycle_type s = cycle_type t ->
-  forall A, A \in slpcycles s ->
-    exists f : T -> T,
-    [/\ {in A &, injective f},
-        {in A,  forall x, f (s x) = t (f x)} &
-        forall x, x \notin A -> f x = x].
+Lemma conjbijK s t x :
+  cycle_type s = cycle_type t -> conjbij t s (conjbij s t x) = x.
 Proof.
-  rewrite /=.
-  move => /conjg_pcyclesP [H1 H2 H3] A HA.
-  have {H3} H3:= H3 A HA.
+  rewrite /conjbij => Heq.
+  have Heqs := esym Heq.
+  rewrite conjbijcan_expE //.
+  have -> : (conjbijcan t s (conjbijcan s t x)) = canpcycle s x.
+    rewrite conjbijcanP //; apply canpcycleE.
+    rewrite /conjbij -eq_pcycle_mem pcycle_perm eq_pcycle_mem.
+    rewrite /conjbijcan.
+
 Admitted.
 
 
