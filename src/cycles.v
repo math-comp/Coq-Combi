@@ -946,9 +946,9 @@ Proof.
     case: pickP => [/= y|].
     - by rewrite -eq_pcycle_mem => /eqP ->.
     - by move=> /(_ y0); rewrite pcycle_id.
-  move=> {Heq imcycle Himcycle}.
+  move: (conjbijcan s t x) => y {Heq imcycle Himcycle}.
+  rewrite -permM -expgSr.
 
-      
 Lemma conjbijcanP s t :
   cycle_type s = cycle_type t ->
   forall x, conjbijcan s t x = canpcycle t (conjbij s t x).
