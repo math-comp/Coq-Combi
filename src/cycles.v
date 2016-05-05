@@ -903,12 +903,6 @@ Proof.
   - by move=> /eqP H; apply/eqP; rewrite [LHS]pcycle_mod [RHS]pcycle_mod H.
 Qed.
 
-(*
-Lemma eq_pcycle s x i :
-  ((s ^+ i)%g x == x) = (i == 0 %[mod #|pcycle s x|]).
-Proof. by rewrite -{2}(perm1 x) -(expg0 s) eq_in_pcycle. Qed.
-*)
-
 Definition canpcycle s x := odflt x [pick y in pcycle s x].
 
 Lemma canpcycleP s x : x \in pcycle s (canpcycle s x).
