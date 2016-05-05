@@ -925,20 +925,30 @@ Lemma conjbijP s t :
   forall x, conjbij s t (s x) = t (conjbij s t x).
 Proof.
   rewrite /conjbij => Heq x.
+  set imcycle := conjg_pcycles (s:=s) t (pcycle s x).
+  have Himcycle: imcycle \in pcycles t.
+    move: Heq => /conjg_pcyclesP [] /= _ Himage _.
+    by rewrite -Himage; apply mem_imset; apply mem_imset.
   have -> : conjbijcan s t (s x) = conjbijcan s t x.
     rewrite /conjbijcan.
     have -> : pcycle s (s x) = pcycle s x.
       apply/eqP; rewrite eq_pcycle_mem.
       rewrite -{1}(expg1 s); exact: mem_pcycle.
-    set imcycle := conjg_pcycles _ _.
-    have: imcycle \in pcycles t.
-      move: Heq => /conjg_pcyclesP [] /= _ Himage _.
-      by rewrite -Himage; apply mem_imset; apply mem_imset.
-    move=> /imsetP [y0 _ ->].
+    rewrite  -/imcycle.
+    move: Himcycle => /imsetP [y0 _ ->].
     by case: pickP => // /(_ y0); rewrite pcycle_id.
-  
+  have : #|pcycle t (conjbijcan s t x)| = #|pcycle s x|.
+    move: Heq => /conjg_pcyclesP [_ _ /= Heq].
+    rewrite /conjbijcan.
+    have {Heq} /Heq : (pcycle s x) \in pcycles s by exact: mem_imset.
+    rewrite -/imcycle => <-.
+    move: Himcycle => /imsetP [y0 _ -> {imcycle}].
+    case: pickP => [/= y|].
+    - by rewrite -eq_pcycle_mem => /eqP ->.
+    - by move=> /(_ y0); rewrite pcycle_id.
+  move=> {Heq imcycle Himcycle}.
 
-    
+      
 Lemma conjbijcanP s t :
   cycle_type s = cycle_type t ->
   forall x, conjbijcan s t x = canpcycle t (conjbij s t x).
