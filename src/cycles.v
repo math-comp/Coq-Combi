@@ -903,6 +903,12 @@ Proof.
   - by move=> /eqP H; apply/eqP; rewrite [LHS]pcycle_mod [RHS]pcycle_mod H.
 Qed.
 
+(*
+Lemma eq_pcycle s x i :
+  ((s ^+ i)%g x == x) = (i == 0 %[mod #|pcycle s x|]).
+Proof. by rewrite -{2}(perm1 x) -(expg0 s) eq_in_pcycle. Qed.
+*)
+
 Definition canpcycle s x := odflt x [pick y in pcycle s x].
 
 Lemma canpcycleP s x : x \in pcycle s (canpcycle s x).
@@ -974,10 +980,6 @@ Proof.
   exact: mem_imset.
 Qed.
 
-Lemma imcycleE x : conjbijcan s t x = canpcycle s (conjbij s t x).
-Proof.
-Admitted.
-
 Lemma conjbijcanE x :
   conjbijcan s t (s x) = conjbijcan s t x.
 Proof.
@@ -1006,51 +1008,59 @@ Proof.
   by rewrite indpcycleP.
 Qed.
 
-Lemma indpcyclecan x : indpcycle s (canpcycle s x) = 0.
-Proof.
-  rewrite /indpcycle; case: ex_minnP => m /eqP Hm Hmin.
-  apply/eqP; rewrite -leqn0; apply Hmin.
-  rewrite expg0 perm1.
-  apply/eqP; apply canpcycleE.
-  exact: canpcycleP.
-Qed.
-
 Lemma conjbijcanP x : conjbijcan s t x = canpcycle t (conjbij s t x).
 Proof.
-  rewrite /conjbij /conjbijcan.
+  rewrite /conjbij /conjbijcan /canpcycle pcycle_perm.
   set defim := odflt _ _.
-  have:= erefl defim; rewrite {1 3 4}/defim.
+  have:= erefl defim; rewrite {1 3 4 5}/defim.
   case: pickP => [im Him | Habs] /=.
   - rewrite {}/defim => Hdefim.
     rewrite /canpcycle (_ : [pick y in  _] = some im) //.
     rewrite [LHS](_ : _ = [pick y in imcycle s t x]); first last.
       apply eq_pick => y /=; congr (y \in _).
-      rewrite pcycle_perm.
       have:= mem_imcycle x => /imsetP [y0 _ Hy0].
       by move: Him; rewrite Hy0 /= -eq_pcycle_mem => /eqP ->.
     rewrite Hdefim.
     by case: pickP => // /(_ im); rewrite Him.
-  - exfalso.
-    have : #|pcycle s x| != 0.
-      rewrite cards_eq0; apply/set0Pn; exists x; exact: pcycle_id.
-    rewrite -card_imcycle cards_eq0 => /set0Pn [w Hw].
-    by have := Habs w; rewrite /= Hw.
+  - exfalso; move: Habs.
+    have:= mem_imcycle x => /imsetP [y _ ->] /(_ y).
+    by rewrite pcycle_id.
+Qed.
+
+Lemma indpcycle_conjbij x :
+   indpcycle t (conjbij s t x) = indpcycle s x.
+Proof.
+  apply eq_ex_minn => i.
+  rewrite {1}/conjbij -conjbijcanP eq_in_pcycle pcycle_conjbijcan card_imcycle.
+  rewrite -{4}(indpcycleP s x) eq_in_pcycle.
+  suff -> : pcycle s x = pcycle s (canpcycle s x) by [].
+  apply/eqP; rewrite eq_pcycle_mem; exact: canpcycleP.
 Qed.
 
 End EqCycleType.
 
-Lemma conjbijK s t x :
-  cycle_type s = cycle_type t -> conjbij t s (conjbij s t x) = x.
+
+Lemma conjbijK s t :
+  cycle_type s = cycle_type t -> cancel (conjbij s t) (conjbij t s).
 Proof.
-  rewrite /conjbij => Heq.
-  have Heqs := esym Heq.
+  rewrite /conjbij => Heq x; have Heqs := esym Heq.
   rewrite conjbijcan_expE //.
   have -> : (conjbijcan t s (conjbijcan s t x)) = canpcycle s x.
     rewrite conjbijcanP //; apply canpcycleE.
-    rewrite /conjbij -eq_pcycle_mem pcycle_perm eq_pcycle_mem.
-    rewrite /conjbijcan.
+    rewrite /conjbij -eq_pcycle_mem pcycle_perm.
+    rewrite pcycle_conjbijcan //.
+    rewrite /imcycle pcycle_conjbijcan // /imcycle.
+    rewrite /conjg_pcycles bijK //=.
+    - move=> i; exact: cycle_type_eq.
+    - exact: mem_imset.
+  suff -> : indpcycle t ((t ^+ indpcycle s x)%g (conjbijcan s t x)) =
+            indpcycle s x.
+    by rewrite indpcycleP.
+  by rewrite -/(conjbij s t x) indpcycle_conjbij.
+Qed.
 
-Admitted.
+Lemma conjbij_inj s t : cycle_type s = cycle_type t -> injective (conjbij s t).
+Proof. move=> /conjbijK H; exact: can_inj. Qed.
 
 
 
