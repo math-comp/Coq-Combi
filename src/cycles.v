@@ -295,6 +295,7 @@ Proof.
   by rewrite /is_cycle psupport_restr ?cards1.
 Qed.
 
+(* I'm not sure the following definition is really worthwhile *)
 Definition support_cycles (s : {perm T}) :=
   [set support C | C in cycle_dec s].
 
@@ -392,7 +393,7 @@ Lemma prod_of_disjoint (A : {set {perm T}}) C x:
 Proof.
   move=> Hdisj HC Hx.
   have {Hx} Hnotin : {in A :\ C, forall C0 : {perm T}, x \notin support C0}.
-    move: Hdisj => [] [/trivIsetP Hdisj Hinj] C0.
+    move: Hdisj => [/trivIsetP Hdisj Hinj] C0.
     rewrite 2!inE => /andP [] HC0 HC0A.
     move/(_ _ _ (mem_imset _ HC) (mem_imset _ HC0A)): Hdisj.
     have Hdiff: support C != support C0.
@@ -613,10 +614,6 @@ Qed.
 
 Definition cycle_type_seq (s : {perm T}) := set_partition_shape (pcycles s).
 
-Definition card_support_cycles (s : {perm T}) :=
-  [seq #|(C : {set T})| | C in (support_cycles s)].
-
-
 Lemma cycle_type_partn s:
   is_part_of_n #|T| (cycle_type_seq s).
 Proof.
@@ -625,26 +622,33 @@ Proof.
 Qed.
 
 
+Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_partn s).
+
+
+(* Are the following definition and two lemmas really useful ? *)
+Definition card_support_cycles (s : {perm T}) :=
+  [seq #|(C : {set T})| | C in support_cycles s].
+
 Lemma cycle_type_dec (s : {perm T}) :
   let l := sort geq (card_support_cycles s) in
   cycle_type_seq (s : {perm T}) = l ++ (nseq (#|T| - sumn l) 1).
 Proof.
-  move => l.
-  admit.
+  rewrite /=.
+  have := perm_sort geq (card_support_cycles s) => /perm_eqlP /perm_sumn ->.
+  rewrite /card_support_cycles support_cycle_dec.
+  rewrite /cycle_type_seq/set_partition_shape.
 Admitted.
-
-
-Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_partn s).
 
 Lemma support_cycle_type s t :
   perm_eq (card_support_cycles s) (card_support_cycles t) ->
     cycle_type s = cycle_type t.
 Proof.
-  move => Heq; apply val_inj => /=; rewrite !cycle_type_dec.
+  move=> Heq; apply val_inj; rewrite /= !cycle_type_dec.
   rewrite (_ : sort geq (card_support_cycles s) =
                sort geq (card_support_cycles t)) //.
   by apply/perm_sort_geq.
 Qed.
+
 
 Lemma conjg_cycle s a :
   (<[s]> :^ a = <[s ^ a]>)%g.
@@ -1103,7 +1107,7 @@ Definition parts_of_part (part : seq nat) : {set {set T}} :=
 Definition perm_of_part (part : seq nat) : {perm T} :=
   \prod_(c <- cycle_dec_of_part part) c.
 
-
+(*
 Lemma perm_of_part_recP (part : intpartn #|T|) c :
   c \in perm_of_part_rec part 0 -> exists n l, n+l <= #|T| /\ c = cycle_of n l.
 Proof.
