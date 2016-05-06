@@ -347,7 +347,7 @@ Proof.
     move: Hout => /= /andP [] Hout0 _.
     move: Hinn => /= /andP [] Hinn0 _.
     move: Hrow => /yamtab_row_size ->.
-    rewrite !size_take bad_if_leq; last by rewrite leq_subLR.
+    rewrite !size_take_leq leq_subLR Hout0.
     rewrite /minn; case: ltnP; last rewrite /leq => /eqP ->.
     + move/ltnW => H1.
       by rewrite addnC (addnBA _ Hinn0) (subnK H1).
@@ -642,11 +642,10 @@ Proof.
   have:= skew_yam_catK Hinnev Hyam => [] [] shape Hdrop.
   move=> /(skew_yam_included (is_part_skew_yam Hinnev Hdrop)) Hshape.
   have Heq : size (drop (sh0 - inn0) row1) = size (take (inn0 + size row1 - sh0) row0).
-    rewrite size_drop size_take bad_if_leq.
-      move: Hinn => /=/andP [] /subnBA -> _.
-      by rewrite addnC.
-    move: Hout => //= /andP [] /(leq_sub2r sh0) H _.
-    by rewrite addKn in H.
+    rewrite size_drop size_take_leq.
+    move: Hinn => /=/andP [] /subnBA -> _.
+    move: Hout => //= /andP [] /(leq_sub2r sh0).
+    by rewrite addKn addnC => -> _.
   apply: (yamtab_row_countE Hinnev Heq _ (is_row_drop _ _) Hdrop Hshape).
   - move: Hskew => /= /and4P [] _ _; rewrite skew_dominate_cut /skew_dominate => Hdom _.
     suff <- : size row1 - (sh0 - inn0) = inn0 + size row1 - sh0 by exact Hdom.

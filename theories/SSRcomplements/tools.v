@@ -27,9 +27,6 @@ Unset Strict Implicit.
 
 Hint Resolve nth_nil.
 
-Lemma bad_if_leq i j : i <= j -> (if i < j then i else j) = i.
-Proof. move=> Hi; case (ltnP i j) => //= Hj; apply/eqP; by rewrite eqn_leq Hi Hj. Qed.
-
 Lemma leq_addE m1 m2 n1 n2 :
   m1 <= m2 -> n1 <= n2 -> m1 + n1 = m2 + n2 -> m1 = m2 /\ n1 = n2.
 Proof.
@@ -196,6 +193,13 @@ Lemma sum_iota_sumnE l n :
 Proof. by rewrite -sumn_take => /take_oversize ->. Qed.
 
 
+Lemma size_take_leq (T : Type) n0 (s : seq T) :
+  size (take n0 s) = (if n0 <= size s then n0 else size s).
+Proof.
+  rewrite size_take (leq_eqVlt n0).
+  by case: eqP => [->| _]/=; first by rewrite ltnn.
+Qed.
+
 Section TakeDropFlatten.
 (** ** [take] and [drop] related lemmas *)
 Variable T : eqType.
@@ -321,17 +325,18 @@ Proof.
     rewrite add0n => Hsz.
     by rewrite drop0 take_oversize; last by rewrite Hsz.
   move=> Hsize.
-  have Hs0 : (if s0 < size s then s0 else size s) = s0.
-    by rewrite bad_if_leq; last by rewrite -Hsize -addnA; apply leq_addr.
   rewrite (_ : take (s0 + sumn sh) s = take s0 s ++ take (sumn sh) (drop s0 s));
     first last.
-    rewrite -{1 3}[s](cat_take_drop s0) drop_cat take_cat size_take.
-    by rewrite Hs0 ltnNge leq_addr /= addKn ltnn subnn drop0.
-  rewrite take_cat size_take Hs0 ltnn subnn take0 cats0.
-  rewrite drop_cat size_take Hs0 ltnn subnn drop0.
+    rewrite -{1 3}[s](cat_take_drop s0) drop_cat take_cat.
+    rewrite  size_take_leq -Hsize -addnA leq_addr.
+    by rewrite ltnNge leq_addr /= addKn ltnn subnn drop0.
+  rewrite take_cat drop_cat.
+  rewrite size_take_leq -Hsize -addnA leq_addr.
+  rewrite ltnn subnn take0 cats0 drop0.
   rewrite (_ : drop (s0 + sumn sh) s = drop (sumn sh) (drop s0 s)); first last.
-    rewrite -[s](cat_take_drop s0) !drop_cat size_take.
-    by rewrite Hs0 ltnNge leq_addr /= addKn ltnn subnn drop0.
+    rewrite -[s](cat_take_drop s0) !drop_cat.
+    rewrite size_take_leq -Hsize -addnA leq_addr.
+    by rewrite ltnNge leq_addr /= addKn ltnn subnn drop0.
   by rewrite -IHsh; last by rewrite size_drop -Hsize -addnA addKn.
 Qed.
 

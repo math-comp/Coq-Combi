@@ -286,9 +286,7 @@ Proof.
     by rewrite freeSchurP.
   - move/bigcupP => [] Q; rewrite /LRsupport freeSchurP inE => Htriple /= Ht.
     have Hsz1 : size (take d1 t) == d1.
-      rewrite size_take size_tuple.
-      case: d2 => [| d2']; first by rewrite addn0 ltnn.
-      by rewrite addnS ltnS leq_addr.
+      by rewrite size_take_leq size_tuple leq_addr.
     pose t1 := Tuple Hsz1.
     have Hsz2 : size (drop d1 t) == d2.
       by rewrite size_drop size_tuple addKn.
@@ -527,7 +525,9 @@ Proof.
   have:= HTriple => /LRtripleP-/(_ (stdtabnP _) (stdtabnP _)) Htriple.
   have Hszw : size w = (d1 + d2)%N by rewrite /w size_RSmapinv2_yam.
   rewrite LRtriple_cat_equiv //; split.
-  - rewrite size_take size_tab_stdtabn Hszw bad_if_leq //; exact: leq_addr.
+  - rewrite size_take size_tab_stdtabn Hszw.
+    case: d2 => [| n]; first by rewrite addn0 ltnn.
+    by rewrite addnS ltnS leq_addr.
   - by rewrite size_drop size_tab_stdtabn Hszw addKn.
   - exists (val Q); split; first exact: Htriple.
     rewrite cat_take_drop /w inE /= /RStabmap RSmapinv2K; last exact: RSpairyamQ.
