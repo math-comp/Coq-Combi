@@ -118,6 +118,7 @@ VFILES:=theories/Combi/vectNK.v\
   theories/LRrule/stdplact.v\
   theories/LRrule/therule.v\
   theories/SSRcomplements/bigallpairs.v\
+  theories/SSRcomplements/ordcast.v\
   theories/SSRcomplements/rat_coerce.v\
   theories/SSRcomplements/sorted.v\
   theories/SSRcomplements/tools.v\
@@ -126,7 +127,6 @@ VFILES:=theories/Combi/vectNK.v\
   theories/HookFormula/hook.v\
   theories/HookFormula/recyama.v\
   theories/Basic/congr.v\
-  theories/Basic/ordcast.v\
   theories/Basic/ordtype.v\
   theories/Basic/combclass.v\
   theories/SymGroup/symgroup.v\
