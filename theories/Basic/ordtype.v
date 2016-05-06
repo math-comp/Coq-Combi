@@ -13,8 +13,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
-Require Import tools.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype choice fintype seq.
+From Combi Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -136,7 +137,7 @@ Lemma gtnX_eqF m n : m < n -> n == m = false.
 Proof. rewrite [(n == m)]eq_sym. exact: ltnX_eqF. Qed.
 
 Lemma leqX_eqVltnX m n : (m <= n) = (m == n) || (m < n).
-Proof. rewrite /ltnX_op; by case eqP => [/= -> | /= _]; first by rewrite (leqXnn n). Qed.
+Proof. rewrite /ltnX_op; by case eqP => [/= -> | /= _]; first by rewrite leqXnn. Qed.
 
 Lemma ltnX_neqAleqX m n : (m < n) = (m != n) && (m <= n).
 Proof. by []. Qed.
@@ -880,7 +881,7 @@ Lemma nth_inspos s pos i n :
 Proof.
   move=> Hpos.
   case: (altP (i =P pos)) => [-> {i} | Hipos].
-    by rewrite nth_cat size_take (bad_if_leq Hpos) ltnn subnn.
+    by rewrite nth_cat size_take_leq Hpos ltnn subnn.
   rewrite /shiftinv_pos nth_cat size_take.
   case (ltnP pos (size s)) => [{Hpos} Hpos | Hpos2].
   - case: (ltnP i pos) => Hi; first by rewrite (nth_take _ Hi).
@@ -1205,7 +1206,7 @@ Variable T : pordType.
 Fact geqX_order : PartOrder.axiom (@geqX T).
 Proof.
   split.
-  - move=> n /=; by apply: leqXnn.
+  - by move=> n /=.
   - move=> m n /= /andP [] H1 H2; apply/eqP; by rewrite eqn_leqX H1 H2.
   - move=> m n p /= H1 H2; by apply: (leqX_trans H2 H1).
 Qed.

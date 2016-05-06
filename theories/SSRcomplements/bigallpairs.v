@@ -12,8 +12,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun eqtype ssrnat seq path div fintype.
-Require Import tuple ssrnum ssralg ssrint finfun bigop.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun eqtype ssrnat seq path div fintype.
+From mathcomp Require Import tuple ssrnum ssralg ssrint finfun bigop.
 
 Import GRing.Theory.
 

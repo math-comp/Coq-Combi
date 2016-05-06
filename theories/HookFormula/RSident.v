@@ -16,12 +16,13 @@
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype choice ssrnat seq
         ssrint div rat fintype bigop path ssralg ssrnum.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
-Require Import ordtype tools combclass partition tableau Schensted std stdtab.
-Require Import hook.
+From Combi Require Import ordtype tools combclass partition tableau Schensted std stdtab.
+From Combi Require Import hook.
 
 
 Section Identity.
@@ -114,7 +115,7 @@ Proof.
   exact: (is_part_sht H).
 Qed.
 
-Structure stpn : predArgType :=
+Structure stpn : Set :=
   STPN {stpnval :> seq (seq nat) * seq (seq nat); _ : is_stdtab_pair_of_n n stpnval }.
 Canonical stpn_subType := Eval hnf in [subType for stpnval].
 Definition stpn_eqMixin := Eval hnf in [eqMixin of stpn by <:].

@@ -12,10 +12,11 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm tuple path bigop.
-Require Import sorted tools subseq partition ordtype tableau.
-Require Import Schensted congr plactic ordcast.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
+From mathcomp Require Import finset perm tuple path bigop.
+From Combi Require Import sorted tools subseq partition ordtype tableau.
+From Combi Require Import Schensted congr plactic ordcast.
 
 
 Set Implicit Arguments.

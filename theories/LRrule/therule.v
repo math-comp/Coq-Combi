@@ -58,13 +58,14 @@ The main theorem is [Theorem LRtab_coeffP]:
 As a corollary we provide the two Pieri rules [Pieri_complete] and
 [Pieri_elementary].
 *******************************************************************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import tuple finfun finset bigop path ssralg.
-Require Import mpoly.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
+From mathcomp Require Import tuple finfun finset bigop path ssralg.
+From SsrMultinomials Require Import mpoly.
 
-Require Import tools ordcast combclass partition Yamanouchi ordtype std tableau stdtab.
-Require Import Schensted congr plactic Greene_inv stdplact Yam_plact skewtab.
-Require Import shuffle sympoly freeSchur.
+From Combi Require Import tools ordcast combclass partition Yamanouchi ordtype std tableau stdtab.
+From Combi Require Import Schensted congr plactic Greene_inv stdplact Yam_plact skewtab.
+From Combi Require Import shuffle sympoly freeSchur.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

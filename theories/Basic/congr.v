@@ -13,9 +13,11 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype seq.
-Require Import Recdef path tuple.
-Require Import permuted vectNK.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype seq.
+From mathcomp Require Import path tuple.
+Require Import Recdef.
+From Combi Require Import permuted vectNK.
 (******************************************************************************)
 (** * Equivalence and congruence closure of a rewriting rule on words
 

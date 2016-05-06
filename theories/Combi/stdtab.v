@@ -14,9 +14,10 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm fingroup.
-Require Import tools combclass partition Yamanouchi ordtype std tableau.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
+From mathcomp Require Import finset perm fingroup.
+From Combi Require Import tools combclass partition Yamanouchi ordtype std tableau.
 
 Import OrdNotations.
 
@@ -692,7 +693,7 @@ Definition enum_stdtabsh sh : seq (seq (seq nat)) := map stdtab_of_yam (enum_yam
 
 Variable sh : intpart.
 
-Structure stdtabsh : predArgType :=
+Structure stdtabsh : Set :=
   StdtabSh {stdtabshval :> seq (seq nat); _ : is_stdtab_of_shape sh stdtabshval}.
 Canonical stdtabsh_subType := Eval hnf in [subType for stdtabshval].
 Definition stdtabsh_eqMixin := Eval hnf in [eqMixin of stdtabsh by <:].
@@ -741,7 +742,7 @@ Variable n : nat.
 
 Definition is_stdtab_of_n := [pred t | (is_stdtab t) && (size_tab t == n) ].
 
-Structure stdtabn : predArgType :=
+Structure stdtabn : Set :=
   StdtabN {stdtabnval :> seq (seq nat); _ : is_stdtab_of_n stdtabnval}.
 Canonical stdtabn_subType := Eval hnf in [subType for stdtabnval].
 Definition stdtabn_eqMixin := Eval hnf in [eqMixin of stdtabn by <:].
@@ -755,7 +756,7 @@ Canonical stdtabnn_subCountType := Eval hnf in [subCountType of stdtabn].
 
 
 Definition enum_stdtabn : seq (seq (seq nat)) :=
-  map (stdtab_of_yam \o val) (enum (yamn n)).
+  map (stdtab_of_yam \o val) (enum ({:yamn n})).
 Let stdtabn_enum : seq stdtabn := pmap insub enum_stdtabn.
 
 Lemma finite_stdtabn : Finite.axiom stdtabn_enum.

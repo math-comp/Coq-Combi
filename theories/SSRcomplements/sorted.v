@@ -12,8 +12,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import path.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
+From mathcomp Require Import path.
 
 (******************************************************************************)
 (** * Various Lemmas about [path] and [sorted] which are missing in MathComp  *)

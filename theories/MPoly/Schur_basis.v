@@ -12,13 +12,14 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
-Require Import choice fintype finfun tuple bigop ssralg ssrint.
-Require Import finset fingroup perm.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq.
+From mathcomp Require Import choice fintype finfun tuple bigop ssralg ssrint.
+From mathcomp Require Import finset fingroup perm.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
-Require Import tools ordtype sorted partition skewtab sympoly freeSchur therule.
-Require Import symgroup antisym.
+From Combi Require Import tools ordtype sorted partition skewtab sympoly freeSchur therule.
+From Combi Require Import symgroup antisym.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

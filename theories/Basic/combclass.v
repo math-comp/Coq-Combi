@@ -19,8 +19,11 @@ ways, three from a list (see [sub_subFinType], [sub_uniq_subFinType] and
 [sub_undup_subFinType] below) and one by taking the disjoint union of already
 constructed subfintypes (see [union_subFinType] below].  *)
 
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import bigop tools.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
+From mathcomp Require Import bigop.
+
+From Combi Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
