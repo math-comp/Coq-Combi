@@ -15,12 +15,13 @@
 (******************************************************************************)
 (** * 0-Hecke Monoid
 ***************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
-Require Import tuple finfun bigop finset binomial fingroup perm tuple.
-Require Import morphism presentation.
-Require Import ssrcomplements poset freeg bigenough mpoly.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
+From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm tuple.
+From mathcomp Require Import morphism presentation.
+From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
-Require Import tools permuted combclass congr symgroup.
+From Combi Require Import tools permuted combclass congr symgroup.
 
 
 Set Implicit Arguments.
@@ -112,7 +113,7 @@ Local Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i) (at level 8, w at level 2
 Local Notation "a =Br b" := (braidcongr a b) (at level 70).
 Local Notation "''pi_' i" := (bubble i) (at level 8, i at level 2).
 Local Notation "''pi_[' w ']'" := (\funcomp_(i <- w) 'pi_i) (at level 8, w at level 2).
-Local Notation "''pi_{' s '}'" := ('pi_[canword s]) (at level 8, w at level 2).
+Local Notation "''pi_{' s '}'" := ('pi_[canword s]) (at level 8, s at level 2).
 
 Lemma bubbleK (i : 'I_n) : 'pi_i \o 'pi_i =1 'pi_i.
 Proof.
