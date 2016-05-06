@@ -6,8 +6,8 @@ Set Implicit Arguments.
 
 Local Open Scope O_scope.
 
-Require Import ssreflect ssrfun eqtype ssrbool ssrnat seq choice fintype finfun
-                bigop ssrint rat ssralg ssrnum.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun eqtype ssrbool ssrnat seq choice fintype finfun bigop ssrint rat ssralg ssrnum.
 Import GRing.
 Import Num.Theory.
 

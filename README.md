@@ -77,6 +77,9 @@ More unstable stuff:
 *  Formal Power series. See the series branch on Github.
    See the [series branch on Github](https://github.com/hivert/Coq-Combi/tree/series).
 
+* Set-partitions 
+  See the [SetPartition branch on Github](https://github.com/hivert/Coq-Combi/tree/SetPartition).
+
 Documentation
 ========================================================================
 
@@ -85,11 +88,15 @@ The [documentation](http://hivert.github.io/Coq-Combi/) is currently in progress
 Installation
 ========================================================================
 
-This library is based on SSReflect/MathComp Library version 1.5.
+This library is based on
 
-It needs an [extended version](https://github.com/hivert/multinomials-ssr)
-of Pierre-Yves Strub [Multinomials](https://github.com/strub/multinomials-ssr)
-library.
+* Coq 8.5.
+
+* SSReflect/MathComp Library version 1.6.
+
+* It needs an [extended version](https://github.com/hivert/multinomials-ssr)
+  of Pierre-Yves Strub [Multinomials](https://github.com/strub/multinomials-ssr)
+  library.
 
 
 Note: A standalone version of the proof of the Littlewood-Richardson rule not

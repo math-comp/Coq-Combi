@@ -12,9 +12,10 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import path bigop finset perm fingroup.
-Require Import tools partition Yamanouchi ordtype subseq tableau std stdtab.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
+From mathcomp Require Import path bigop finset perm fingroup.
+From Combi Require Import tools partition Yamanouchi ordtype subseq tableau std stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -239,7 +240,7 @@ Section Insert.
   Lemma ins_leq i : i < size Row -> (nth l ins i <= nth l Row i)%Ord.
   Proof.
     rewrite -insE /insmin nth_set_nth /=.
-    case eqP => [->|_ _]; last exact: leqXnn.
+    case eqP => [->|_ _ //].
     rewrite /mininspred /inspred; case (ltnXP l (last l Row)) => [Hcase | Hcase].
     - set exP := ex_intro _ _ _; case (ex_minnP exP) => pos Hl _ _; exact: ltnXW.
     - by rewrite ltnn.
@@ -368,7 +369,7 @@ Section Schensted.
           apply: (is_rowP _ _ HSch).
           have:= Hsz; rewrite -{1}(ltn_predK Hsz) ltnS => -> /=.
           rewrite -{2}(ltn_predK Hsz); exact: ltnSn.
-        + case eqP => [_ | Habs]; first exact: leqXnn.
+        + case eqP => [// | Habs].
           exfalso; rewrite ltnS in Hsz; move: Habs => /eqP; by rewrite eqn_leq Hsz Hszlt.
 
     (* The subsequence doesn't end by wn *)

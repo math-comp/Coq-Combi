@@ -12,9 +12,10 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm path.
-Require Import tools partition ordtype tableau stdtab Schensted congr.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
+From mathcomp Require Import finset perm path.
+From Combi Require Import tools partition ordtype tableau stdtab Schensted congr.
 
 
 Set Implicit Arguments.
@@ -64,7 +65,7 @@ Lemma plact1P u v :
 Proof.
   apply: (iffP idP).
   + case: u => [//=|u0[//=|u1[//=|u2[]//=]]]; case H : ((u0 <= u2 < u1)%Ord).
-    - rewrite mem_seq1 => /eqP ->; by exists u0; exists u2; exists u1.
+    - rewrite mem_seq1 => /eqP ->; by exists u0, u2, u1.
     - by rewrite in_nil.
   + move=> [] a [] b [] c [] H -> ->; by rewrite /= H mem_seq1 eq_refl.
 Qed.
@@ -76,7 +77,7 @@ Lemma plact1iP u v :
 Proof.
   apply: (iffP idP).
   + case: u => [//=|u0[//=|u1[//=|u2[]//=]]]; case H : ((u1 <= u2 < u0)%Ord).
-    - rewrite mem_seq1 => /eqP ->; by exists u1; exists u2; exists u0.
+    - rewrite mem_seq1 => /eqP ->; by exists u1, u2, u0.
     - by rewrite in_nil.
   + move=> [] a [] b [] c [] H -> ->; by rewrite /= H mem_seq1 eq_refl.
 Qed.
@@ -89,7 +90,7 @@ Lemma plact2P u v :
 Proof.
   apply: (iffP idP).
   + case: u => [//=|u0[//=|u1[//=|u2[]//=]]]; case H : ((u1 < u0 <= u2)%Ord).
-    - rewrite mem_seq1 => /eqP ->; by exists u1; exists u0; exists u2.
+    - rewrite mem_seq1 => /eqP ->; by exists u1, u0, u2.
     - by rewrite in_nil.
   + move=> [] a [] b [] c [] H -> ->; by rewrite /= H mem_seq1 eq_refl.
 Qed.
@@ -101,7 +102,7 @@ Lemma plact2iP u v :
 Proof.
   apply: (iffP idP).
   + case: u => [//=|u0[//=|u1[//=|u2[]//=]]]; case H : ((u2 < u0 <= u1)%Ord).
-    - rewrite mem_seq1 => /eqP ->; by exists u2; exists u0; exists u1.
+    - rewrite mem_seq1 => /eqP ->; by exists u2, u0, u1.
     - by rewrite in_nil.
   + move=> [] a [] b [] c [] H -> ->; by rewrite /= H mem_seq1 eq_refl.
 Qed.

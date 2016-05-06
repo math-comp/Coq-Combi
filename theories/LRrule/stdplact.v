@@ -12,12 +12,13 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm fingroup path.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
+From mathcomp Require Import finset perm fingroup path.
 
-Require Import tools combclass ordcast partition Yamanouchi ordtype std tableau stdtab.
+From Combi Require Import tools combclass ordcast partition Yamanouchi ordtype std tableau stdtab.
 
-Require Import sorted Schensted congr plactic Greene Greene_inv.
+From Combi Require Import sorted Schensted congr plactic Greene Greene_inv.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

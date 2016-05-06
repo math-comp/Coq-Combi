@@ -13,9 +13,11 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype seq.
-Require Import Recdef path tuple.
-Require Import permuted vectNK.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype seq.
+From mathcomp Require Import path tuple.
+Require Import Recdef.
+From Combi Require Import permuted vectNK.
 (******************************************************************************)
 (** * Equivalence and congruence closure of a rewriting rule on words
 
@@ -394,7 +396,7 @@ Proof.
   apply: (iffP idP).
   + move/flatten_mapP => [] [] [] a v2 b /=.
     rewrite -cat3_equiv_cut3 => /eqP H2 /mapP [] v1 Hrule H1.
-    by exists a; exists v1; exists b; exists v2.
+    by exists a, v1, b, v2.
   + move=> [] a [] v1 [] b [] v2 [] H1 H2 Hrule.
     apply/flatten_mapP. exists (a, v2, b); first by rewrite -cat3_equiv_cut3 H2.
     rewrite H1 /=; apply/mapP; by exists v1.

@@ -13,8 +13,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
-Require Import tools.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype choice fintype seq.
+From Combi Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -136,7 +137,7 @@ Lemma gtnX_eqF m n : m < n -> n == m = false.
 Proof. rewrite [(n == m)]eq_sym. exact: ltnX_eqF. Qed.
 
 Lemma leqX_eqVltnX m n : (m <= n) = (m == n) || (m < n).
-Proof. rewrite /ltnX_op; by case eqP => [/= -> | /= _]; first by rewrite (leqXnn n). Qed.
+Proof. rewrite /ltnX_op; by case eqP => [/= -> | /= _]; first by rewrite leqXnn. Qed.
 
 Lemma ltnX_neqAleqX m n : (m < n) = (m != n) && (m <= n).
 Proof. by []. Qed.
@@ -634,11 +635,11 @@ Proof.
   move=> Hwb; apply: (iffP idP).
   - elim: wb Hwb w => [//= | w0 wb IHwb _] w /=.
     case H : (allLtn wb w0) => /eqP -> {w}.
-    * exists [::]; exists w0; exists wb; rewrite H !cat0s; by split.
+    * exists [::], w0, wb; rewrite H !cat0s; by split.
     * have Hwb : wb != [::] by move: H; case wb.
       move Hw : (rembig wb) => w; move: Hw => /eqP; rewrite eq_sym => Hw.
       have:= IHwb Hwb w Hw => [] [] u [] b [] v [] Hcatw Hcatwb Hub Hvb.
-      exists (w0 :: u); exists b; exists v; split; last exact Hvb.
+      exists (w0 :: u), b, v; split; last exact Hvb.
       - by rewrite Hcatw.
       - by rewrite Hcatwb.
       - move: H; rewrite Hcatwb /= Hub andbT => /negbT.
@@ -707,7 +708,7 @@ Proof.
   rewrite cat_uniq => /and3P [] _ _ /= /andP [].
   rewrite mem_rev => Hbu _.
   apply/eqP/rembigP; first by case: (rev v).
-  exists (rev v); exists b; exists (rev u); split => //.
+  exists (rev v), b, (rev u); split => //.
   - rewrite allLeq_rev; exact: allLtnW.
   - rewrite allLtn_rev; exact: allLtn_notin.
 Qed.
@@ -813,7 +814,7 @@ Lemma rembigE l s :
 Proof.
   apply/eqP/rembigP; first by [].
   set ss := l :: s; set pos := posbig (l :: s).
-  exists (take pos ss); exists (nth Z ss pos); exists (drop pos.+1 ss).
+  exists (take pos ss), (nth Z ss pos), (drop pos.+1 ss).
   split; first by [].
   + set sr := (X in _ ++ X); suff -> : sr = drop pos ss by rewrite cat_take_drop.
     rewrite /sr /ss /pos /= {ss pos sr}.
@@ -880,7 +881,7 @@ Lemma nth_inspos s pos i n :
 Proof.
   move=> Hpos.
   case: (altP (i =P pos)) => [-> {i} | Hipos].
-    by rewrite nth_cat size_take (bad_if_leq Hpos) ltnn subnn.
+    by rewrite nth_cat size_take_leq Hpos ltnn subnn.
   rewrite /shiftinv_pos nth_cat size_take.
   case (ltnP pos (size s)) => [{Hpos} Hpos | Hpos2].
   - case: (ltnP i pos) => Hi; first by rewrite (nth_take _ Hi).
@@ -965,8 +966,10 @@ End Exports.
 End Inhabited.
 Export Inhabited.Exports.
 
-Definition inhabitant (T : inhType) : T :=
+Definition inhabitant_def (T : inhType) : T :=
   let: Inhabited.Pack _ (Inhabited.Mixin x) _ := T in x.
+
+Definition inhabitant (T : inhType) : T := nosimpl inhabitant_def T.
 
 (******************************************************************************)
 (*                                                                            *)
@@ -1203,7 +1206,7 @@ Variable T : pordType.
 Fact geqX_order : PartOrder.axiom (@geqX T).
 Proof.
   split.
-  - move=> n /=; by apply: leqXnn.
+  - by move=> n /=.
   - move=> m n /= /andP [] H1 H2; apply/eqP; by rewrite eqn_leqX H1 H2.
   - move=> m n p /= H1 H2; by apply: (leqX_trans H2 H1).
 Qed.

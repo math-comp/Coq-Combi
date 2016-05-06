@@ -14,9 +14,10 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
-Require Import path.
-Require Import tools combclass.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype choice fintype seq.
+From mathcomp Require Import path.
+From Combi Require Import tools combclass.
 
 (******************************************************************************)
 (** TODO: these probably should be contributed to path.v                      *)

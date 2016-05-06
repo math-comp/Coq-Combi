@@ -1665,7 +1665,6 @@ Lemma lub_app2_le : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
         (F:D1 -m> D2 -m> D3) (f : nat -m> D1) (g: nat -m> D2),
         lub ((F @2 f) g) <= F (lub f) (lub g).
 intros; apply mlub_le; unfold app2; auto.
-intros; apply (fmonotonic2 F); auto.
 Save.
 Hint Resolve @lub_app2_le.
 
@@ -1732,7 +1731,6 @@ Lemma continuous2_app : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
             (F : D1 -m> D2 -m> D3) {cF:continuous2 F} (k:D1), continuous (F k).
 red; intros.
 transitivity  (F (mlub (cte nat k))  (lub h)); auto.
-apply (fmonotonic2 F); auto.
 transitivity (lub ((F @2 (mon (cte nat k))) h)); auto.
 apply lub_le_compat; simpl; auto.
 Save.

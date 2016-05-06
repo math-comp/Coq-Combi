@@ -44,13 +44,13 @@ The main results are the Vandermonde determinant expansion:
 - [ vdmprod_alt     : vdmprod = alternpol 'X_[(rho n)] ]
 - [ Vandet_vdmprodE : Vandet = vdmprod ]
 
-*******************************************************************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path choice.
-Require Import finset fintype finfun tuple bigop ssralg ssrint.
-Require Import fingroup perm zmodp binomial.
-Require Import ssrcomplements poset freeg mpoly.
+*******************************************************************************)Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq path choice.
+From mathcomp Require Import finset fintype finfun tuple bigop ssralg ssrint.
+From mathcomp Require Import fingroup perm zmodp binomial.
+From SsrMultinomials Require Import ssrcomplements poset freeg mpoly.
 
-Require Import tools symgroup.
+From Combi Require Import tools symgroup.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -853,7 +853,7 @@ Proof.
   move ->; apply eq_bigr => s _; by rewrite raddfZsign !msymX /= tensRX.
 Qed.
 
-Require Import matrix.
+From mathcomp Require Import matrix.
 
 
 (** ** Vandermonde matrix and determinant *)

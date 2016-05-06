@@ -17,7 +17,8 @@ Unset Strict Implicit.
 
 (** * Setup a coercion [int -> rat] and add a few simple lemmas *)
 
-Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq ssrint rat
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import  ssrfun ssrbool eqtype choice ssrnat seq ssrint rat
                fintype bigop path ssralg ssrnum.
 
 Import GRing.Theory.

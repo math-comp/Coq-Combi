@@ -34,11 +34,12 @@ is surjective [Theorem plact_from_yam]:
 ]
 ****)
 
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import tuple finfun finset path bigop.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
+From mathcomp Require Import tuple finfun finset path bigop.
 
-Require Import tools partition Yamanouchi ordtype std tableau stdtab.
-Require Import Schensted congr plactic Greene_inv stdplact.
+From Combi Require Import tools partition Yamanouchi ordtype std tableau stdtab.
+From Combi Require Import Schensted congr plactic Greene_inv stdplact.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
