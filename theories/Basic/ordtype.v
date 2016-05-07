@@ -109,7 +109,6 @@ Notation "m <= n < p" := ((m <= n) && (n < p)) : ord_scope.
 Notation "m < n < p" := ((m < n) && (n < p)) : ord_scope.
 
 
-
 (******************************************************************************)
 (* Totally ordered types                                                      *)
 (******************************************************************************)
@@ -324,7 +323,9 @@ Definition inhType := @Inhabited.Pack cT xclass xT.
 (* TODO: Check that this is the correct definition *)
 Definition inhPOrdType :=
   @InhPOrdType.Pack cT (@InhPOrdType.Class _ xclass (mixin xclass)) xT.
+(* TODO: Not a join ?
 Definition pord_inhType := @PartOrder.Pack inhType xclass xT.
+*)
 Definition ord_inhType := @Order.Pack inhType xclass xT.
 (* TODO: Redundant ?
 Definition pord_inhType := @Inhabited.Pack pordType xclass xT.
@@ -344,7 +345,7 @@ Canonical inhType.
 Coercion inhPOrdType : type >-> InhPOrdType.type.
 Canonical inhPOrdType.
 Coercion sort : type >-> Sortclass.
-Canonical pord_inhType.  (* TODO: Raises a warning, is it expected *)
+(* Canonical pord_inhType.  TODO: Raises a warning, should not be here ? *)
 Canonical ord_inhType.
 Notation inhOrdType := type.
 Notation "[ 'inhOrdType' 'of' T ]" := (@pack T _ _ id _ _ id)
@@ -391,31 +392,42 @@ Definition pack
   Pack (@Class T por inh fin) T.
 
 Definition eqType := @Equality.Pack cT xclass xT.
-Definition ordType := @Order.Pack cT xclass xT.
-Definition pordType := @PartOrder.Pack cT xclass xT.
-Definition inhType := @Inhabited.Pack cT xclass xT.
 Definition choiceType := @Choice.Pack cT xclass xT.
 Definition countType := @Countable.Pack cT xclass xT.
 Definition finType := @Finite.Pack cT xclass xT.
 
+Definition pordType := @PartOrder.Pack cT xclass xT.
+Definition ordType := @Order.Pack cT xclass xT.
+Definition inhType := @Inhabited.Pack cT xclass xT.
+
+Definition inhPOrdType :=
+  @InhPOrdType.Pack cT (@InhPOrdType.Class _ xclass (inh_class xclass)) xT.
+
+Definition ord_inhType := @Order.Pack inhType xclass xT.
+
 End ClassDef.
 
 Module Exports.
+Coercion sort : type >-> Sortclass.
+
+Coercion eqType : type >-> Equality.type.
+Canonical eqType.
+Coercion choiceType : type >-> Choice.type.
+Canonical choiceType.
+Coercion countType : type >-> Countable.type.
+Canonical countType.
+Coercion finType : type >-> Finite.type.
+Canonical finType.
+
 Coercion pordType : type >-> PartOrder.type.
 Canonical pordType.
 Coercion ordType : type >-> Order.type.
 Canonical ordType.
-Coercion eqType : type >-> Equality.type.
-Canonical eqType.
 Coercion inhType : type >-> Inhabited.type.
 Canonical inhType.
-Coercion countType : type >-> Countable.type.
-Canonical countType.
-Coercion choiceType : type >-> Choice.type.
-Canonical choiceType.
-Coercion finType : type >-> Finite.type.
-Canonical finType.
-Coercion sort : type >-> Sortclass.
+
+Canonical ord_inhType.
+
 Notation inhOrdFinType := type.
 Notation "[ 'inhOrdFinType' 'of' T ]" := (@pack T _ _ id _ _ id _ _ id)
   (at level 0, format "[ 'inhOrdFinType'  'of'  T ]") : form_scope.
@@ -426,6 +438,9 @@ Export InhOrdFinType.Exports.
 
 
 
+(******************************************************************************)
+(* Theories for partially and totally ordered types                           *)
+(******************************************************************************)
 
 Section POrderTheory.
 
@@ -1338,7 +1353,8 @@ End Ordinal.
 
 Definition ord_inhMixin n := Inhabited.Mixin (ord0 (n' := n)).
 Canonical ord_inhType n := Eval hnf in InhType 'I_n.+1 (ord_inhMixin n).
-Canonical ord_inhOrdFinType n := [inhOrdType of 'I_n.+1].
+Canonical ord_inhOrdType n := [inhOrdType of 'I_n.+1].
+Canonical ord_inhOrdFinType n := [inhOrdFinType of 'I_n.+1].
 
 
 
@@ -1351,7 +1367,7 @@ Section LexOrder.
 
 Variable T : ordType.
 
-Implicit Types s : seq T.
+Implicit Type s : seq T.
 
 Fixpoint lex s1 s2 :=
   if s1 is x1 :: s1' then
