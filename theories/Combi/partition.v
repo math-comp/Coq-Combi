@@ -1339,6 +1339,42 @@ Definition intpartn_cast m n (eq_mn : m = n) p :=
 Lemma intpartn_castE m n (eq_mn : m = n) p : val (intpartn_cast eq_mn p) = val p.
 Proof. subst m; by case: p. Qed.
 
+
+Definition rowpart d := if d is _.+1 then [:: d] else [::].
+Fact rowpartnP d : is_part_of_n d (rowpart d).
+Proof. case: d => [//= | d]; by rewrite /is_part_of_n /= addn0 eq_refl. Qed.
+Definition rowpartn d : intpartn d := IntPartN (rowpartnP d).
+
+Definition colpart d := nseq d 1%N.
+Fact colpartnP d : is_part_of_n d (colpart d).
+Proof.
+  elim: d => [| d ] //= /andP [] /eqP -> ->.
+  rewrite add1n eq_refl andbT /=.
+  by case: d.
+Qed.
+Definition colpartn d : intpartn d := IntPartN (colpartnP d).
+
+Lemma conj_rowpartn d : conj_intpartn (rowpartn d) = colpartn d.
+Proof. apply val_inj => /=; rewrite /rowpart /colpart; by case: d. Qed.
+Lemma conj_colpartn d : conj_intpartn (colpartn d) = rowpartn d.
+Proof. rewrite -[RHS]conj_intpartnK; by rewrite conj_rowpartn. Qed.
+
+Require Import ordtype.
+
+Definition intpartn_inhMixin n := Inhabited.Mixin (rowpartn n).
+Canonical intpartn_inhType n :=
+  Eval hnf in InhType (intpartn n) (intpartn_inhMixin n).
+
+Definition intpartn_pordMixin n := [pordMixin of intpartn n by <:].
+Canonical intpartn_pordType n :=
+  Eval hnf in POrdType (intpartn n) (intpartn_pordMixin n).
+Definition intpartn_ordMixin n := [ordMixin of intpartn_pordType n by <:].
+Canonical intpartn_ordType n :=
+  Eval hnf in OrdType (intpartn n) (intpartn_ordMixin n).
+Canonical intpartn_inhOrdType n := [inhOrdType of intpartn n].
+Canonical intpartn_inhOrdFinType n := [inhOrdFinType of intpartn n].
+
+
 (**  * Counting functions *)
 
 Fixpoint intpartnsk_nb sm sz mx : nat :=
@@ -1382,41 +1418,3 @@ Qed.
 End PartCombClass.
 
 Hint Resolve intpartP intpartnP.
-
-
-From Combi Require Import ordtype.
-From mathcomp Require Import finset.
-
-(** * TODO: Generalize and move in finOrdType *)
-Section WFIntPartN.
-
-Import OrdNotations.
-
-Variable n : nat.
-Variable P : intpartn n -> Type.
-Implicit Types p : intpartn n.
-
-Let lex := (lex_ordType nat_ordType).
-
-Hypothesis IH : forall p1, (forall p2, (p2 : lex) <A p1 -> P p2) -> P p1.
-
-Lemma lex_inpart_wf p : P p.
-Proof.
-  have := leqnn #|[set y : intpartn n | (y : lex) <A p]|.
-  move: {2}#|_| => c.
-  elim: c p => [| c IHc] p.
-    rewrite leqn0 cards_eq0 => /eqP Hp.
-    apply IH => P2 Hp2; exfalso.
-    suff : P2 \in set0 by rewrite in_set0.
-    by rewrite -Hp inE.
-  move => H; apply IH => p2 Hp2.
-  apply IHc; rewrite -ltnS.
-  apply: (leq_trans _ H) => {H}; apply proper_card.
-  rewrite /proper; apply/andP; split; apply/subsetP.
-  - move=> z; rewrite !inE => /ltnX_trans; by apply.
-  - move/(_ p2); rewrite !inE => /(_ Hp2).
-    by rewrite ltnXnn.
-Defined.
-
-End WFIntPartN.
-

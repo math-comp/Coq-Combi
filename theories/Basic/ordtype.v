@@ -110,6 +110,32 @@ Notation "m < n < p" := ((m < n) && (n < p)) : ord_scope.
 
 
 (******************************************************************************)
+(* Partially ordered Sub-types                                                *)
+(******************************************************************************)
+Section SubPOrdType.
+
+Variables (T : pordType) (P : pred T) (sT : subType P).
+
+Fact sub_porder :
+  PartOrder.axiom (fun (x y : sT) => leqX_op (val x) (val y)).
+Proof.
+  have:= @leqXpordP T => [] [Hrefl Hanti Htrans]; split.
+  - move=> x; exact: Hrefl.
+  - move=> x y H; apply val_inj; exact: Hanti.
+  - move=> x y z; exact: Htrans.
+Qed.
+
+Definition sub_pordMixin := PartOrder.Mixin sub_porder.
+Definition sub_pordClass := @PartOrder.Class sT (sub_eqMixin sT) sub_pordMixin.
+Canonical sub_pordType := PartOrder.Pack sub_pordClass sT.
+
+End SubPOrdType.
+Notation "[ 'pordMixin' 'of' T 'by' <: ]" :=
+  (sub_pordMixin _ : pordMixin T)
+  (at level 0, format "[ 'pordMixin'  'of'  T  'by'  <: ]") : form_scope.
+
+
+(******************************************************************************)
 (* Totally ordered types                                                      *)
 (******************************************************************************)
 Module Order.
@@ -172,6 +198,32 @@ Lemma leqX_total (T : ordType) : total (@leqX_op T).
 Proof. case: T => ? [] /= base [] /= H T0; by apply H. Qed.
 Arguments leqXpordP [T].
 
+
+(******************************************************************************)
+(* Totally ordered Sub-types                                                *)
+(******************************************************************************)
+Section SubOrdType.
+
+Variables (T : ordType) (P : pred T) (sT : subType P).
+
+Fact sub_order : Order.axiom (sub_pordType sT).
+Proof. by move=> x y; apply: leqX_total. Qed.
+
+Definition sub_ordMixin := Order.Mixin sub_order.
+Definition sub_ordClass :=
+  @Order.Class sT (PartOrder.class (sub_pordType sT)) sub_ordMixin.
+Canonical sub_ordType := Order.Pack sub_ordClass sT.
+
+End SubOrdType.
+Notation "[ 'ordMixin' 'of' T 'by' <: ]" :=
+  (sub_ordMixin _ : ordMixin T)
+  (at level 0, format "[ 'ordMixin'  'of'  T  'by'  <: ]") : form_scope.
+
+(* This assumes that T has both ordType and subType structures. *)
+(* Notation "[ 'subOrdType' 'of' T ]" :=
+    (@pack_subOrdType _ _ T _ _ id _ _ id)
+  (at level 0, format "[ 'subOrdType'  'of'  T ]") : form_scope.
+*)
 
 
 
@@ -645,8 +697,35 @@ Notation "x >A y"  := (x > y)%Ord (at level 70, y at next level, only parsing).
 
 End OrdNotations.
 
+From mathcomp Require Import finset.
 
+Section FinOrdTypeTheory.
 
+Variable (T : inhOrdFinType). (* TODO: remove inh *)
+Implicit Types x : T.
+Variable P : T -> Type.
+
+Hypothesis IH : forall x, (forall y, y < x -> P y) -> P x.
+
+Lemma finord_wf x : P x.
+Proof.
+  have := leqnn #|[set y : T | y < x]|.
+  move: {2}#|_| => c.
+  elim: c x => [| c IHc] x.
+    rewrite leqn0 cards_eq0 => /eqP Hx.
+    apply IH => y Hy; exfalso.
+    suff : y \in set0 by rewrite in_set0.
+    by rewrite -Hx inE.
+  move => H; apply IH => y Hy.
+  apply IHc; rewrite -ltnS.
+  apply: (leq_trans _ H) => {H}; apply proper_card.
+  rewrite /proper; apply/andP; split; apply/subsetP.
+  - move=> z; rewrite !inE => /ltnX_trans; by apply.
+  - move/(_ y); rewrite !inE => /(_ Hy).
+    by rewrite ltnXnn.
+Defined.
+
+End FinOrdTypeTheory.
 
 
 (******************************************************************************)
@@ -1326,30 +1405,12 @@ Definition dual_inhOrdFinType (T : inhOrdFinType) :=
 
 
 (* Ordinal ***)
-Section Ordinal.
+Definition ord_pordMixin n := [pordMixin of 'I_n by <:].
+Canonical ord_pordType n := Eval hnf in POrdType 'I_n (ord_pordMixin n).
+Definition ord_ordMixin n := [ordMixin of ord_pordType n by <:].
+Canonical ord_ordType n := Eval hnf in OrdType 'I_n (ord_ordMixin n).
 
-Variable n : nat.
 
-Definition leqOrd (i j : 'I_n) := (i <= j)%N.
-
-Fact leqOrd_porder : PartOrder.axiom leqOrd.
-Proof.
-split.
-- exact: leqnn.
-- move=> i j; rewrite /leqOrd => H; apply: val_inj; exact: anti_leq.
-- exact: leq_trans.
-Qed.
-
-Definition ord_pordMixin := PartOrder.Mixin leqOrd_porder.
-Canonical ord_pordType := Eval hnf in POrdType 'I_n ord_pordMixin.
-
-Fact leqOrd_order : Order.axiom ord_pordType.
-Proof. exact :leq_total. Qed.
-
-Definition ord_ordMixin := Order.Mixin leqOrd_order.
-Canonical ord_ordType := Eval hnf in OrdType 'I_n ord_ordMixin.
-
-End Ordinal.
 
 Definition ord_inhMixin n := Inhabited.Mixin (ord0 (n' := n)).
 Canonical ord_inhType n := Eval hnf in InhType 'I_n.+1 (ord_inhMixin n).

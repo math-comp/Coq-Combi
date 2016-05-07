@@ -234,26 +234,6 @@ Proof.
   rewrite lt0n; apply/nilP/eqP; exact: Hnnil.
 Qed.
 
-Definition rowpart d := if d is _.+1 then [:: d] else [::].
-Fact rowpartnP d : is_part_of_n d (rowpart d).
-Proof. case: d => [//= | d]; by rewrite /is_part_of_n /= addn0 eq_refl. Qed.
-Definition rowpartn d : intpartn d := IntPartN (rowpartnP d).
-(* Definition complete d : {mpoly R[n]} := Schur (rowpartn d). *)
-
-Definition colpart d := nseq d 1%N.
-Fact colpartnP d : is_part_of_n d (colpart d).
-Proof.
-  elim: d => [| d ] //= /andP [] /eqP -> ->.
-  rewrite add1n eq_refl andbT /=.
-  by case: d.
-Qed.
-Definition colpartn d : intpartn d := IntPartN (colpartnP d).
-(* Definition elementary d : {mpoly R[n]} := Schur (colpartn d). *)
-
-Lemma conj_rowpartn d : conj_intpartn (rowpartn d) = colpartn d.
-Proof. apply val_inj => /=; rewrite /rowpart /colpart; by case: d. Qed.
-Lemma conj_colpartn d : conj_intpartn (colpartn d) = rowpartn d.
-Proof. rewrite -[RHS]conj_intpartnK; by rewrite conj_rowpartn. Qed.
 
 
 Lemma tabwordshape_row d (w : d.-tuple 'I_n) :
@@ -332,8 +312,7 @@ Proof.
   rewrite -rev_sorted.
   case: {w} (rev w) {d Hw} => [|w0 w] //=.
   elim: w w0 => [//= | w1 w /= <-] w0 /=.
-  congr andb; rewrite /dominate /= andbT {w}.
-  by rewrite /ltnX_op leqXE /= /leqOrd -ltn_neqAle.
+  by congr andb; rewrite /dominate /= andbT {w}.
 Qed.
 
 (** The definition of elementary symmetric polynomials as column Schur

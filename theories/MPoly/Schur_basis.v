@@ -417,7 +417,7 @@ Proof.
     rewrite intpartn0 /mpart /= mnmP => i; by rewrite !mnmE /=.
   case: (leqP d b) => Hdb; first exact: (IHb _ Hdb).
   have {Hd Hdb} Hd : d = b.+1 by apply anti_leq; rewrite Hd Hdb.
-  elim/lex_inpart_wf: P => P IHP HszP.
+  elim/finord_wf: P => P IHP HszP.
   pose k := head 1%N (conj_intpartn P).
   pose p1 := behead (conj_intpartn P); pose d1 := sumn p1.
   have Hk : (d = d1 + k)%N.
