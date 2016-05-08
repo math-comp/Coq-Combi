@@ -156,7 +156,7 @@ Proof.
   by rewrite !inE Hi HiX.
 Qed.
 
-Lemma scoverI (S : {set {set T}}) B :
+Lemma size_coverI (S : {set {set T}}) B :
   trivIset S -> \sum_(i in S) #|i :&: B| = #|cover S :&: B|.
 Proof.
   move=> /trivIsetP Htriv.
@@ -207,7 +207,7 @@ Qed.
 Lemma trivIset_I (S : {set {set T}}) B :
   trivIset S -> \sum_(i in S) #|i :&: B| <= #|B|.
 Proof.
-  move/scoverI ->; apply: subset_leq_card.
+  move/size_coverI ->; apply: subset_leq_card.
   apply/subsetP => i; by rewrite !inE => /andP [].
 Qed.
 
@@ -353,8 +353,7 @@ Proof.
   + apply/forallP => A; by rewrite in_set0.
 Qed.
 
-Definition scover := [fun P : {set {set 'I_N}} => #|cover P|].
-Definition Greene_rel_t k := \max_(P | ksupp k P) scover P.
+Definition Greene_rel_t k := \max_(P | ksupp k P) #|cover P|.
 
 Notation Ik k := [set i : 'I_N | i < k].
 
@@ -417,7 +416,7 @@ Qed.
 Lemma Greene_rel_t_inf k : Greene_rel_t k >= minn N k.
 Proof.
   pose P := [set [set i ] | i in Ik k].
-  have <- : scover P = minn N k.
+  have <- : #|cover P| = minn N k.
     rewrite /= (_ : cover P = Ik k); first exact: sizeIk.
     rewrite /cover {}/P.
     apply setP => i; apply/idP/idP.
@@ -455,8 +454,6 @@ Proof.
 Qed.
 
 End GreeneDef.
-
-Arguments scover [N].
 
 Lemma eq_Greene_rel_t (T : inhOrdType) (R1 R2 : rel T) N (u : N.-tuple T) :
   R1 =2 R2 -> Greene_rel_t R1 u  =1  Greene_rel_t R2 u.
@@ -597,12 +594,14 @@ Proof.
   rewrite inE /=; exact: leq_addr.
 Qed.
 
+Notation scover := (fun x => #|cover x|).
+
 Lemma Greene_rel_t_cat k :
   Greene_rel_t comp [tuple of V ++ W] k <= Greene_rel_t comp V k + Greene_rel_t comp W k.
 Proof.
   rewrite /Greene_rel_t; set tc := [tuple of V ++ W].
   have H : 0 < #|ksupp comp tc k| by apply/card_gt0P; exists set0; apply: ksupp0.
-  case: (@eq_bigmax_cond _ (ksupp comp tc k) scover H) => ks Hks ->.
+  case: (@eq_bigmax_cond _ (ksupp comp tc k) (fun x => #|cover x|) H) => ks Hks ->.
   pose PV := lsplit @: ks; pose PW := rsplit @: ks.
   move: Hks => /and3P [] Hcard Htriv /forallP Hcol.
   have HV : ksupp comp V k PV.
@@ -697,9 +696,11 @@ Variable T1 T2 : inhOrdType.
 Variable R1 : rel T1.
 Variable R2 : rel T2.
 
+Notation scover := (fun x => #|cover x|).
+
 Definition ksupp_inj k (u1 : seq T1) (u2 : seq T2) :=
   forall s1, ksupp R1 (in_tuple u1) k s1 ->
-             exists s2, (scover s1 == scover s2) && ksupp R2 (in_tuple u2) k s2.
+             exists s2, (#|cover s1| == #|cover s2|) && ksupp R2 (in_tuple u2) k s2.
 
 Lemma leq_Greene k (u1 : seq T1) (u2 : seq T2) :
   ksupp_inj k u1 u2 -> Greene_rel R1 u1 k <= Greene_rel R2 u2 k.
@@ -742,7 +743,7 @@ Proof.
   move=> ks /and3P [] Hsz Htriv /forallP Hall.
   exists (cast_set (esym (size_rev u)) @: ((@revset _) @: ks)).
   apply/and4P; split.
-  - rewrite /scover /= cover_cast /cast_set /=.
+  - rewrite cover_cast /cast_set /=.
     rewrite card_imset; last exact: cast_ord_inj.
     rewrite -size_cover_inj //; apply inv_inj; exact: rev_ordK.
   - apply: (@leq_trans #|ks|); last exact Hsz.
@@ -1281,13 +1282,13 @@ Qed.
 
 End Induction.
 
-Lemma scover_tabrows k t :
+Lemma size_cover_tabrows k t :
   is_part (shape t) ->
-  scover [set s | s \in (tabrowsk t k)] = part_sum (shape t) k.
+  #|cover [set s | s \in (tabrowsk t k)]| = part_sum (shape t) k.
 Proof.
   move=> Hpart.
-  have:= trivIset_tabrowsk k t; rewrite /trivIset /scover /= => /eqP <-.
-  rewrite /scover /cover /= bigop_trivIseq; first last.
+  have:= trivIset_tabrowsk k t; rewrite /trivIset /= => /eqP <-.
+  rewrite /cover bigop_trivIseq; first last.
   + apply: (trivIsubseq (v := tabrows t)); first exact: subseq_take.
     rewrite /tabrows; apply: trivIseq_map; first exact: cast_ord_inj.
     exact: trivIseq_shrows.
@@ -1339,9 +1340,9 @@ Proof.
 Qed.
 
 
-Lemma scover_tabcolsk k t :
+Lemma size_cover_tabcolsk k t :
   is_part (shape t) ->
-  scover [set s | s \in (tabcolsk t k)] = \sum_(l <- (shape t)) minn l k.
+  #|cover [set s | s \in (tabcolsk t k)]| = \sum_(l <- (shape t)) minn l k.
 Proof.
   elim: t => [//= | t0 t IHt] /=; first by rewrite cover_nil big_nil.
   move/andP => [] Hhead /IHt {IHt} IHt.
@@ -1376,7 +1377,7 @@ Proof.
   apply/eqP; rewrite eqEcard; apply/andP; split; first exact: subsetT.
   have -> : tabcols t = tabcolsk t (size (head [::] t)).
     by rewrite /tabcolsk /= -size_tabcols take_size.
-  have:= scover_tabcolsk _ Hpart; rewrite /scover /= => ->.
+  rewrite (size_cover_tabcolsk _ Hpart).
   rewrite cardsT card_ord size_to_word /size_tab.
   have: head 0 (shape t) <= (size (head [::] t)) by case t.
   elim: (shape t) Hpart => [//= | p0 p IHp] /= /andP [] Hhead Hpart Hp0.
@@ -1491,7 +1492,7 @@ Lemma Greene_row_extract k t :
   is_tableau t -> Greene_row (to_word t) k <= \sum_(l <- conj_part (shape t)) minn l k.
 Proof.
   move=> Htab; rewrite (shape_tabcols Htab).
-  rewrite /Greene_row /Greene_rel /= /Greene_rel_t /scover /=.
+  rewrite /Greene_row /Greene_rel /Greene_rel_t.
   apply/bigmax_leqP => S; rewrite /ksupp => /and3P [] Hsz Htriv.
   have:= Htriv; rewrite /trivIset => /eqP <- /forallP Hall.
   rewrite (eq_bigr (fun B => \sum_(S <- tabcols t) #|B :&: S|));
@@ -1517,7 +1518,7 @@ Theorem Greene_row_tab k t :
   is_tableau t -> Greene_row (to_word t) k = part_sum (shape t) k.
 Proof.
   move=> Ht; apply/eqP; rewrite eqn_leq (Greene_row_inf_tab _ Ht) /=.
-  rewrite /Greene_row /Greene_rel_t /= -(scover_tabrows _ (is_part_sht Ht)).
+  rewrite /Greene_row /Greene_rel_t /= -(size_cover_tabrows _ (is_part_sht Ht)).
   apply: leq_bigmax_cond; exact: ksupp_leqX_tabrowsk.
 Qed.
 
@@ -1541,7 +1542,7 @@ Theorem Greene_col_tab_min k t :
   is_tableau t -> Greene_col (to_word t) k = \sum_(l <- (shape t)) minn l k.
 Proof.
   move=> Ht; apply/eqP; rewrite eqn_leq (Greene_col_inf_tab _ Ht) /=.
-  rewrite /Greene_col /Greene_rel_t /= -(scover_tabcolsk _ (is_part_sht Ht)).
+  rewrite /Greene_col /Greene_rel_t /= -(size_cover_tabcolsk _ (is_part_sht Ht)).
   apply: leq_bigmax_cond; exact: ksupp_gtnX_tabcolsk.
 Qed.
 

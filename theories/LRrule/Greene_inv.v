@@ -225,8 +225,8 @@ Proof.
     by have /= -> := is_col_dual S.
 Qed.
 
-Lemma scover_rev P : scover (rev_ksupp P) = scover P.
-Proof. by rewrite !/scover /= -size_cover_inj; last exact rev_ord_cast_inj. Qed.
+Lemma size_cover_rev P : #|cover (rev_ksupp P)| = #|cover P|.
+Proof. by rewrite -size_cover_inj; last exact rev_ord_cast_inj. Qed.
 
 Lemma Greene_col_dual : Greene_col w k = Greene_col (revdual w) k.
 Proof.
@@ -234,12 +234,12 @@ Proof.
   apply/eqP; rewrite eqn_leq; apply/andP; split.
   - apply: (@leq_Greene _ (dual_inhOrdType _)).
     rewrite /ksupp_inj => S HS; exists (rev_ksupp S).
-    rewrite scover_rev eq_refl /=.
+    rewrite size_cover_rev eq_refl /=.
     by rewrite (rev_is_ksupp_col S) in HS.
   - apply: (@leq_Greene (dual_inhOrdType _) _).
     rewrite /ksupp_inj => S HS.
     pose U := rev_ksupp_inv S.
-    exists U; rewrite [S]rev_ksuppKV /U scover_rev eq_refl /=.
+    exists U; rewrite [S]rev_ksuppKV /U size_cover_rev eq_refl /=.
     move: HS; by rewrite {1}[S]rev_ksuppKV rev_is_ksupp_col.
 Qed.
 
@@ -249,12 +249,12 @@ Proof.
   apply/eqP; rewrite eqn_leq; apply/andP; split.
   - apply: (@leq_Greene _ (dual_inhOrdType _)).
     rewrite /ksupp_inj => S HS; exists (rev_ksupp S).
-    rewrite scover_rev eq_refl /=.
+    rewrite size_cover_rev eq_refl /=.
     by rewrite rev_is_ksupp_row in HS.
   - apply: (@leq_Greene (dual_inhOrdType _) _).
     rewrite /ksupp_inj => S HS.
     pose U := rev_ksupp_inv S.
-    exists U; rewrite [S]rev_ksuppKV /U scover_rev eq_refl /=.
+    exists U; rewrite [S]rev_ksuppKV /U size_cover_rev eq_refl /=.
     by move: HS; rewrite {1}[S]rev_ksuppKV rev_is_ksupp_row.
 Qed.
 
@@ -342,8 +342,9 @@ Proof.
   + exact: imset0.
 Qed.
 
-Lemma swap_scover (P : {set {set 'I_(size x)}}) : scover (swapSet @: P) = scover P.
-Proof. by rewrite /scover /= swap_cover card_imset; last exact swap_inj. Qed.
+Lemma swap_size_cover (P : {set {set 'I_(size x)}}) :
+  #|cover (swapSet @: P)| = #|cover P|.
+Proof. by rewrite swap_cover card_imset; last exact swap_inj. Qed.
 
 Lemma enum_cut : enum 'I_(size x) =
                  [seq i | i <- enum 'I_(size x) & val i < size u]
@@ -463,10 +464,10 @@ Proof.
     move/(_ S): HallP; by rewrite HS.
 Qed.
 
-Lemma scover_noBoth : scover P == scover Q.
+Lemma size_cover_noBoth : #|cover P| == #|cover Q|.
 Proof.
-  rewrite -Swap.swap_scover.
-  rewrite /Q /swapSet imset_comp /scover /=.
+  rewrite -Swap.swap_size_cover.
+  rewrite /Q /swapSet imset_comp.
   apply/eqP; apply: size_cover_inj.
   exact: cast_ord_inj.
 Qed.
@@ -603,8 +604,8 @@ Qed.
 
 Definition Qbnotin := imset swapSet (mem P).
 
-Lemma scover_bnotin : scover P == scover Qbnotin.
-Proof. by rewrite Swap.swap_scover. Qed.
+Lemma size_cover_bnotin : #|cover P| == #|cover Qbnotin|.
+Proof. by rewrite Swap.swap_size_cover. Qed.
 
 Lemma inPQE T : T != swapSet S -> T \in Qbnotin -> T \in P.
 Proof.
@@ -1085,18 +1086,17 @@ End BIn.
 
 Theorem exists_Q_noboth :
   exists Q : {set {set 'I_(size x)}},
-    [/\ ksupp R (in_tuple x) k Q, scover Q = scover P &
+    [/\ ksupp R (in_tuple x) k Q, #|cover Q| = #|cover P| &
       forall S, S \in Q -> ~ ((posa \in S) && ((posc \in S)))].
 Proof.
-  case (boolP (posb \in (cover P))) => [|Hcov].
-  - rewrite /cover => /bigcupP [] T HT HbT.
-    exists (Qbin T); split.
+  case (boolP (posb \in (cover P))) => [/bigcupP [T HT HbT] | Hcov].
+  - exists (Qbin T); split.
     + exact: ksupp_bin.
-    + by rewrite /scover /= cover_bin.
+    + by rewrite cover_bin.
     + move=> S0; exact: Qbin_noboth.
   - exists Qbnotin; split.
     + exact: ksupp_bnotin.
-    + by rewrite (eqP (scover_bnotin)).
+    + by rewrite (eqP (size_cover_bnotin)).
     + move=> S0; exact: Qbnotin_noboth.
 Qed.
 
@@ -1107,13 +1107,13 @@ Lemma eq_xx' : x = x'. Proof. by rewrite /x /x' -catA. Qed.
 
 Theorem exists_Qy :
   exists Q : {set {set 'I_(size y)}},
-    scover Q = scover P /\ ksupp R (in_tuple y) k Q .
+    #|cover Q| = #|cover P| /\ ksupp R (in_tuple y) k Q .
 Proof.
   have:= exists_Q_noboth => [] [] Q [] Hsupp Hcover Hnoboth.
   move HcastP : ((cast_set (eq_size eq_xx')) @: Q) => Q'.
   exists (@NoSetContainingBoth.Q _ (u ++ [:: b]) v a c Q'); split.
-  - rewrite -(eqP (@NoSetContainingBoth.scover_noBoth _ (u ++ [:: b]) v a c Q')).
-    rewrite /scover /= -HcastP cover_cast /cast_set /=.
+  - rewrite -(eqP (@NoSetContainingBoth.size_cover_noBoth _ (u ++ [:: b]) v a c Q')).
+    rewrite -HcastP cover_cast /cast_set /=.
     by rewrite card_imset; last exact: cast_ord_inj.
   - apply: NoSetContainingBoth.ksupp_noBoth.
     rewrite -HcastP; exact: ksupp_cast.
@@ -1186,7 +1186,8 @@ Proof.
       by rewrite leqXNgtnX => ->.
     - by apply.
   + rewrite negb_exists => /forallP Hall.
-    exists (NoSetContainingBoth.Q S1); rewrite NoSetContainingBoth.scover_noBoth /=.
+    exists (NoSetContainingBoth.Q S1);
+      rewrite NoSetContainingBoth.size_cover_noBoth /=.
     apply: NoSetContainingBoth.ksupp_noBoth; first exact Hsupp.
     move=> S HS; have:= Hall S; by rewrite HS /= => /negbTE ->.
 Qed.
@@ -1224,9 +1225,10 @@ Proof.
     have:= SetContainingBothLeft.exists_Qy Hyp Hsupp' HS'in Hpos1 Hpos2.
     move=> [] Q [] Hcover HsuppQ.
     exists Q; apply/andP; split; last exact HsuppQ.
-    rewrite Hcover -HcastP /scover /= -size_cover_inj //=; exact: cast_ord_inj.
+    rewrite Hcover -HcastP -size_cover_inj //=; exact: cast_ord_inj.
   - rewrite negb_exists => /forallP Hall.
-    exists (NoSetContainingBoth.Q P); rewrite NoSetContainingBoth.scover_noBoth /=.
+    exists (NoSetContainingBoth.Q P);
+      rewrite NoSetContainingBoth.size_cover_noBoth /=.
     apply: NoSetContainingBoth.ksupp_noBoth; first exact Hsupp.
     move=> S HS; have:= Hall S; by rewrite HS /= => /negbTE ->.
 Qed.
@@ -1260,7 +1262,8 @@ Proof.
       by rewrite leqXNgtnX => /negbTE ->.
     - by apply.
   + rewrite negb_exists => /forallP Hall.
-    exists (NoSetContainingBoth.Q S1); rewrite NoSetContainingBoth.scover_noBoth /=.
+    exists (NoSetContainingBoth.Q S1);
+      rewrite NoSetContainingBoth.size_cover_noBoth /=.
     apply: NoSetContainingBoth.ksupp_noBoth; first exact Hsupp.
     move=> S HS; have:= Hall S; by rewrite HS /= => /negbTE ->.
 Qed.
@@ -1298,9 +1301,10 @@ Proof.
     have:= SetContainingBothLeft.exists_Qy Hyp Hsupp' HS'in Hpos1 Hpos2.
     move=> [] Q [] Hcover HsuppQ.
     exists Q; apply/andP; split; last exact HsuppQ.
-    rewrite Hcover -HcastP /scover /= -size_cover_inj //=; exact: cast_ord_inj.
+    rewrite Hcover -HcastP -size_cover_inj //=; exact: cast_ord_inj.
   - rewrite negb_exists => /forallP Hall.
-    exists (NoSetContainingBoth.Q P); rewrite NoSetContainingBoth.scover_noBoth /=.
+    exists (NoSetContainingBoth.Q P);
+      rewrite NoSetContainingBoth.size_cover_noBoth /=.
     apply: NoSetContainingBoth.ksupp_noBoth; first exact Hsupp.
     move=> S HS; have:= Hall S; by rewrite HS /= => /negbTE ->.
 Qed.

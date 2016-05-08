@@ -44,7 +44,7 @@ Proof.
     apply/andP; split.
     + apply/trivIsetP => s1 s2; by rewrite inE.
     + apply/forallP => x; by rewrite inE.
-  rewrite /P {P} => /(eq_bigmax_cond scover).
+  rewrite /P {P} => /(eq_bigmax_cond (fun x => #|cover x|)).
   case=> x Hx Hmax; rewrite Hmax.
   move: Hx; rewrite /ksupp unfold_in => /and3P [] Hcard _ /forallP Hall.
   case Hc: #|x| => [/= | c ].

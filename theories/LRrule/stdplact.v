@@ -144,7 +144,7 @@ Proof.
   rewrite /ksupp_inj /ksupp => ks /and3P [] Hsz Htriv /forallP Hall.
   exists (cast_set (esym (size_std u)) @: ks).
   apply/and4P; split.
-  - rewrite /scover /= cover_cast /cast_set /=.
+  - rewrite cover_cast /cast_set /=.
     by rewrite card_imset; last exact: cast_ord_inj.
   - apply: (@leq_trans #|ks|); last exact: Hsz.
     exact: leq_imset_card.
@@ -160,7 +160,7 @@ Proof.
   rewrite /ksupp_inj /ksupp => ks /and3P [] Hsz Htriv /forallP Hall.
   exists (cast_set (size_std u) @: ks).
   apply/and4P; split.
-  - rewrite /scover /= cover_cast /cast_set /=.
+  - rewrite cover_cast /cast_set /=.
     by rewrite card_imset; last exact: cast_ord_inj.
   - apply: (@leq_trans #|ks|); last exact: Hsz.
     exact: leq_imset_card.
