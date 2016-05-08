@@ -309,6 +309,7 @@ Definition eqType := @Equality.Pack cT xclass xT.
 Definition pordType := @PartOrder.Pack cT xclass xT.
 Definition inhType := @Inhabited.Pack cT xclass xT.
 Definition pord_inhType := @PartOrder.Pack inhType xclass xT.
+(* TODO: should there be other join ? *)
 (* TODO: Is the following redudant with the previous ?  
 Definition inh_pordType := @Inhabited.Pack pordType xclass xT.
 *)

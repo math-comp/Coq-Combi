@@ -100,9 +100,8 @@ Qed.
 (** ** A finite type [finType] for coordinate of boxes inside a shape *)
 Section BoxIn.
 
-  
 Variable sh : seq nat.
-  
+
 Definition is_box_in_shape b := is_in_shape sh b.1 b.2.
 
 Structure box_in : Set :=
@@ -893,233 +892,230 @@ Section Partition.
 End Partition.
 
 (** * Inclusion of Partitions and Skew Partitions *)
-Section SkewShape.
 
-  Fixpoint included inner outer :=
-    if inner is inn0 :: inn then
-      if outer is out0 :: out then
-        (inn0 <= out0) && (included inn out)
-      else false
-    else true.
+Fixpoint included inner outer :=
+  if inner is inn0 :: inn then
+    if outer is out0 :: out then
+      (inn0 <= out0) && (included inn out)
+    else false
+  else true.
 
-  Lemma includedP inner outer :
-    reflect (size inner <= size outer /\ forall i, nth 0 inner i <= nth 0 outer i)
-            (included inner outer).
-  Proof.
-    apply (iffP idP).
-    - elim: inner outer => [//= | inn0 inn IHinn] /=.
-        move=> outer _; by split; last by move=> i; rewrite nth_nil.
-      case=> [//= | out0 out] /= /andP [] H0 /IHinn{IHinn} [] Hsize H.
-      split; first by rewrite ltnS.
-      by case.
-    - elim: inner outer => [//= | inn0 inn IHinn] /=.
-      case=> [ [] //= | out0 out] [] /=.
-      rewrite ltnS => Hsize H.
-      apply/andP; split; first exact: (H 0).
-      apply: IHinn; split; first exact: Hsize.
-      move=> i; exact: (H i.+1).
-  Qed.
+Lemma includedP inner outer :
+  reflect (size inner <= size outer /\ forall i, nth 0 inner i <= nth 0 outer i)
+          (included inner outer).
+Proof.
+  apply (iffP idP).
+  - elim: inner outer => [//= | inn0 inn IHinn] /=.
+      move=> outer _; by split; last by move=> i; rewrite nth_nil.
+    case=> [//= | out0 out] /= /andP [] H0 /IHinn{IHinn} [] Hsize H.
+    split; first by rewrite ltnS.
+    by case.
+  - elim: inner outer => [//= | inn0 inn IHinn] /=.
+    case=> [ [] //= | out0 out] [] /=.
+    rewrite ltnS => Hsize H.
+    apply/andP; split; first exact: (H 0).
+    apply: IHinn; split; first exact: Hsize.
+    move=> i; exact: (H i.+1).
+Qed.
 
-  Lemma included_behead p1 p2 :
-    included p1 p2 -> included (behead p1) (behead p2).
-  Proof.
-    case: p1 => [//=|a l].
-      by case: p2 => [//=|b s] /= /andP [].
-  Qed.
+Lemma included_behead p1 p2 :
+  included p1 p2 -> included (behead p1) (behead p2).
+Proof.
+  case: p1 => [//=|a l].
+    by case: p2 => [//=|b s] /= /andP [].
+Qed.
 
-  Lemma included_refl sh : included sh sh.
-  Proof. elim: sh => [//= | s0 sh /= -> ]; by rewrite leqnn. Qed.
+Lemma included_refl sh : included sh sh.
+Proof. elim: sh => [//= | s0 sh /= -> ]; by rewrite leqnn. Qed.
 
-  Lemma included_trans sha shb shc :
-    included sha shb -> included shb shc -> included sha shc.
-  Proof.
-    move=> /includedP [] Hsza Hincla /includedP [] Hszb Hinclb.
-    apply/includedP; split; first exact (leq_trans Hsza Hszb).
-    move=> i; exact: (leq_trans (Hincla i) (Hinclb i)).
-  Qed.
+Lemma included_trans sha shb shc :
+  included sha shb -> included shb shc -> included sha shc.
+Proof.
+  move=> /includedP [] Hsza Hincla /includedP [] Hszb Hinclb.
+  apply/includedP; split; first exact (leq_trans Hsza Hszb).
+  move=> i; exact: (leq_trans (Hincla i) (Hinclb i)).
+Qed.
 
-  Lemma included_incr_nth sh i :
-    included sh (incr_nth sh i).
-  Proof.
-    apply/includedP; split.
-    - rewrite size_incr_nth; case ltnP => Hi //=.
-      exact: (leq_trans Hi).
-    - move=> j; rewrite nth_incr_nth.
-      exact: leq_addl.
-  Qed.
+Lemma included_incr_nth sh i :
+  included sh (incr_nth sh i).
+Proof.
+  apply/includedP; split.
+  - rewrite size_incr_nth; case ltnP => Hi //=.
+    exact: (leq_trans Hi).
+  - move=> j; rewrite nth_incr_nth.
+    exact: leq_addl.
+Qed.
 
-  Lemma included_decr_nth u i : included (decr_nth u i) u.
-  Proof.
-    elim: u i => [| u0 u IHu] [| i] //=.
-      case: u0 => [| [| u0]] //=.
-      by rewrite ltnS (leqnSn u0) (included_refl u).
-    by rewrite (leqnn u0) (IHu i).
-  Qed.
+Lemma included_decr_nth u i : included (decr_nth u i) u.
+Proof.
+  elim: u i => [| u0 u IHu] [| i] //=.
+    case: u0 => [| [| u0]] //=.
+    by rewrite ltnS (leqnSn u0) (included_refl u).
+  by rewrite (leqnn u0) (IHu i).
+Qed.
 
-  Lemma included_incr_nth_inner inner outer i :
-    nth 0 inner i < nth 0 outer i ->
-    included inner outer -> included (incr_nth inner i) outer.
-  Proof.
-    move=> Hnth /includedP [] Hsize Hincl.
-    apply/includedP; split.
-    - rewrite size_incr_nth; case ltnP => _; first exact Hsize.
-      rewrite ltnNge; apply (introN idP) => Hout.
-      move: Hnth; by rewrite (nth_default _ Hout).
-    - move=> j; rewrite nth_incr_nth.
-      case eqP => [<- | _].
-      - by rewrite add1n.
-      - by rewrite add0n.
-  Qed.
+Lemma included_incr_nth_inner inner outer i :
+  nth 0 inner i < nth 0 outer i ->
+  included inner outer -> included (incr_nth inner i) outer.
+Proof.
+  move=> Hnth /includedP [] Hsize Hincl.
+  apply/includedP; split.
+  - rewrite size_incr_nth; case ltnP => _; first exact Hsize.
+    rewrite ltnNge; apply (introN idP) => Hout.
+    move: Hnth; by rewrite (nth_default _ Hout).
+  - move=> j; rewrite nth_incr_nth.
+    case eqP => [<- | _].
+    - by rewrite add1n.
+    - by rewrite add0n.
+Qed.
 
-  Lemma size_included inner outer : included inner outer -> size inner <= size outer.
-  Proof.
-    elim: inner outer => [//= | inn0 inn IHinn] /=.
-    case=> [//= | outer0 outer] /= /andP [] _ /IHinn.
-    by rewrite ltnS.
-  Qed.
+Lemma size_included inner outer : included inner outer -> size inner <= size outer.
+Proof.
+  elim: inner outer => [//= | inn0 inn IHinn] /=.
+  case=> [//= | outer0 outer] /= /andP [] _ /IHinn.
+  by rewrite ltnS.
+Qed.
 
-  Lemma sumn_included inner outer : included inner outer -> sumn inner <= sumn outer.
-  Proof.
-    elim: inner outer => [//= | inn0 inn IHinn] /=.
-    case=> [//= | outer0 outer] /= /andP [] H0 /IHinn.
-    exact: leq_add.
-  Qed.
+Lemma sumn_included inner outer : included inner outer -> sumn inner <= sumn outer.
+Proof.
+  elim: inner outer => [//= | inn0 inn IHinn] /=.
+  case=> [//= | outer0 outer] /= /andP [] H0 /IHinn.
+  exact: leq_add.
+Qed.
 
-  Lemma included_sumnE inner outer :
-    is_part outer ->
-    included inner outer ->
-    sumn inner = sumn outer ->
-    inner = outer.
-  Proof.
-    elim: inner outer => [| inn0 inn IHinn] /=.
-      by move=> outer Houter _ /esym/(part0 Houter) ->.
-    case=> [//= | outer0 out] /= /andP [] _ /IHinn{IHinn}Hrec /andP [] H0 Hincl Heq.
-    by have:= leq_addE H0 (sumn_included Hincl) Heq => [] [] -> /(Hrec Hincl) ->.
-  Qed.
+Lemma included_sumnE inner outer :
+  is_part outer ->
+  included inner outer ->
+  sumn inner = sumn outer ->
+  inner = outer.
+Proof.
+  elim: inner outer => [| inn0 inn IHinn] /=.
+    by move=> outer Houter _ /esym/(part0 Houter) ->.
+  case=> [//= | outer0 out] /= /andP [] _ /IHinn{IHinn}Hrec /andP [] H0 Hincl Heq.
+  by have:= leq_addE H0 (sumn_included Hincl) Heq => [] [] -> /(Hrec Hincl) ->.
+Qed.
 
-  Lemma included_conj_part inner outer :
-    is_part inner -> is_part outer ->
-    included inner outer -> included (conj_part inner) (conj_part outer).
-  Proof.
-    move=> Hinn Hout /includedP [] Hsz Hincl.
-    apply/includedP; split; first by rewrite !size_conj_part // -!nth0; exact: Hincl.
-    move=> i.
-    rewrite -conj_leqE //; apply (leq_trans (Hincl _)); by rewrite conj_leqE.
-  Qed.
+Lemma included_conj_part inner outer :
+  is_part inner -> is_part outer ->
+  included inner outer -> included (conj_part inner) (conj_part outer).
+Proof.
+  move=> Hinn Hout /includedP [] Hsz Hincl.
+  apply/includedP; split; first by rewrite !size_conj_part // -!nth0; exact: Hincl.
+  move=> i.
+  rewrite -conj_leqE //; apply (leq_trans (Hincl _)); by rewrite conj_leqE.
+Qed.
 
-  Lemma included_conj_partE inner outer :
-    is_part inner -> is_part outer ->
-    included inner outer = included (conj_part inner) (conj_part outer).
-  Proof.
-    move=> Hinn Hout; apply/idP/idP; first exact: included_conj_part.
-    rewrite -{2}(conj_partK Hinn) -{2}(conj_partK Hout).
-    apply: included_conj_part; exact: is_part_conj.
-  Qed.
+Lemma included_conj_partE inner outer :
+  is_part inner -> is_part outer ->
+  included inner outer = included (conj_part inner) (conj_part outer).
+Proof.
+  move=> Hinn Hout; apply/idP/idP; first exact: included_conj_part.
+  rewrite -{2}(conj_partK Hinn) -{2}(conj_partK Hout).
+  apply: included_conj_part; exact: is_part_conj.
+Qed.
 
-  Fixpoint diff_shape inner outer :=
-    if inner is inn0 :: inn then
-      if outer is out0 :: out then
-        out0 - inn0 :: diff_shape inn out
-      else [::] (* Unused case *)
-    else outer.
+Fixpoint diff_shape inner outer :=
+  if inner is inn0 :: inn then
+    if outer is out0 :: out then
+      out0 - inn0 :: diff_shape inn out
+    else [::] (* Unused case *)
+  else outer.
 
-  Definition pad (T : Type) (x : T) sz := [fun s => s ++ nseq (sz - size s) x].
+Definition pad (T : Type) (x : T) sz := [fun s => s ++ nseq (sz - size s) x].
 
-  Definition outer_shape inner size_seq :=
-    [seq p.1 + p.2 | p <- zip (pad 0 (size (size_seq)) inner) size_seq].
+Definition outer_shape inner size_seq :=
+  [seq p.1 + p.2 | p <- zip (pad 0 (size (size_seq)) inner) size_seq].
 
-  Lemma size_diff_shape inner outer : size (diff_shape inner outer) = size outer.
-  Proof.
-    elim: inner outer => [//= | inn0 inn IHinn] /= [//= | out0 out] /=.
-    by rewrite IHinn.
-  Qed.
+Lemma size_diff_shape inner outer : size (diff_shape inner outer) = size outer.
+Proof.
+  elim: inner outer => [//= | inn0 inn IHinn] /= [//= | out0 out] /=.
+  by rewrite IHinn.
+Qed.
 
-  Lemma nth_diff_shape inn out i : nth 0 (diff_shape inn out) i = nth 0 out i - nth 0 inn i.
-  Proof.
-    elim: inn out i => [| inn0 inn IHinn] out i //=.
-      by rewrite (@nth_default _ _ [::]) // subn0.
-    case: out => [| out0 out] /=.
-      by rewrite nth_default.
-    by case: i => [| i] //=.
-  Qed.
+Lemma nth_diff_shape inn out i : nth 0 (diff_shape inn out) i = nth 0 out i - nth 0 inn i.
+Proof.
+  elim: inn out i => [| inn0 inn IHinn] out i //=.
+    by rewrite (@nth_default _ _ [::]) // subn0.
+  case: out => [| out0 out] /=.
+    by rewrite nth_default.
+  by case: i => [| i] //=.
+Qed.
 
-  Lemma sumn_diff_shape inner outer :
-    included inner outer -> sumn (diff_shape inner outer) = sumn outer - sumn inner.
-  Proof.
-    elim: inner outer => [//= | inn0 inn IHinn] /= [//= | out0 out] /=.
-      by rewrite subn0.
-    move/andP => [] Hleq Hincl.
-    rewrite (IHinn _ Hincl) {IHinn}.
-    have Hsumn : sumn inn <= sumn out.
-      elim: inn out Hincl => [//= | inn1 inn IHinn] /= [//= | out1 out] /=.
-      move/andP => [] H1 /IHinn; exact: leq_add.
-    by rewrite subnDA (addnBA _ Hsumn) addnC (addnBA _ Hleq) [out0 + _]addnC.
-  Qed.
+Lemma sumn_diff_shape inner outer :
+  included inner outer -> sumn (diff_shape inner outer) = sumn outer - sumn inner.
+Proof.
+  elim: inner outer => [//= | inn0 inn IHinn] /= [//= | out0 out] /=.
+    by rewrite subn0.
+  move/andP => [] Hleq Hincl.
+  rewrite (IHinn _ Hincl) {IHinn}.
+  have Hsumn : sumn inn <= sumn out.
+    elim: inn out Hincl => [//= | inn1 inn IHinn] /= [//= | out1 out] /=.
+    move/andP => [] H1 /IHinn; exact: leq_add.
+  by rewrite subnDA (addnBA _ Hsumn) addnC (addnBA _ Hleq) [out0 + _]addnC.
+Qed.
 
-  Lemma diff_shape_pad0 inner outer :
-    diff_shape ((pad 0 (size outer)) inner) outer = diff_shape inner outer.
-  Proof.
-    elim: inner outer => [//= | inn0 inn IHinn] //=.
-      elim=> [//= | out0 out] /=; by rewrite !subn0 => ->.
-    case=> [//= | out0 out] /=.
-    by rewrite subSS IHinn.
-  Qed.
+Lemma diff_shape_pad0 inner outer :
+  diff_shape ((pad 0 (size outer)) inner) outer = diff_shape inner outer.
+Proof.
+  elim: inner outer => [//= | inn0 inn IHinn] //=.
+    elim=> [//= | out0 out] /=; by rewrite !subn0 => ->.
+  case=> [//= | out0 out] /=.
+  by rewrite subSS IHinn.
+Qed.
 
-  Lemma diff_shapeK inner outer :
-    included inner outer ->
-    outer_shape inner (diff_shape inner outer) = outer.
-  Proof.
-    rewrite /outer_shape.
-    elim: inner outer => [//= | inn0 inn IHinn] /= outer.
-      rewrite subn0 => _; elim: outer => [//= | out0 out /= ->].
-      by rewrite add0n.
-   case: outer => [//= | out0 out] /= /andP [] Hin /IHinn{IHinn} ->.
-   by rewrite addnC subnK.
-  Qed.
+Lemma diff_shapeK inner outer :
+  included inner outer ->
+  outer_shape inner (diff_shape inner outer) = outer.
+Proof.
+  rewrite /outer_shape.
+  elim: inner outer => [//= | inn0 inn IHinn] /= outer.
+    rewrite subn0 => _; elim: outer => [//= | out0 out /= ->].
+    by rewrite add0n.
+ case: outer => [//= | out0 out] /= /andP [] Hin /IHinn{IHinn} ->.
+ by rewrite addnC subnK.
+Qed.
 
-  Lemma outer_shapeK inner diff :
-    size inner <= size diff ->
-    diff_shape inner (outer_shape inner diff) = diff.
-  Proof.
-    rewrite /outer_shape.
-    elim: inner diff => [//= | inn0 inn IHinn] /= diff.
-      rewrite subn0 => _; elim: diff => [//= | d0 diff /= ->].
-      by rewrite add0n.
-    case: diff => [//=| t0 t] /=; rewrite ltnS subSS => /IHinn /= ->.
-    by rewrite addKn.
-  Qed.
+Lemma outer_shapeK inner diff :
+  size inner <= size diff ->
+  diff_shape inner (outer_shape inner diff) = diff.
+Proof.
+  rewrite /outer_shape.
+  elim: inner diff => [//= | inn0 inn IHinn] /= diff.
+    rewrite subn0 => _; elim: diff => [//= | d0 diff /= ->].
+    by rewrite add0n.
+  case: diff => [//=| t0 t] /=; rewrite ltnS subSS => /IHinn /= ->.
+  by rewrite addKn.
+Qed.
 
 
-  Lemma outer_shape_pad0 inner sz :
-    outer_shape (pad 0 (size sz) inner) sz = outer_shape inner sz.
-  Proof.
-    rewrite /outer_shape; congr map; congr zip.
-    rewrite /= size_cat size_nseq.
-    set n := (X in (_++ _) ++ nseq X _).
-    suff -> : n = 0 by rewrite /= cats0.
-    rewrite /n{n}.
-    move: (size sz) (size inner) => a b.
-    case: (ltnP a b) => [/ltnW | ] H.
-    - move: H; rewrite /leq => /eqP H; by rewrite H addn0 H.
-    - by rewrite (subnKC H) subnn.
-  Qed.
+Lemma outer_shape_pad0 inner sz :
+  outer_shape (pad 0 (size sz) inner) sz = outer_shape inner sz.
+Proof.
+  rewrite /outer_shape; congr map; congr zip.
+  rewrite /= size_cat size_nseq.
+  set n := (X in (_++ _) ++ nseq X _).
+  suff -> : n = 0 by rewrite /= cats0.
+  rewrite /n{n}.
+  move: (size sz) (size inner) => a b.
+  case: (ltnP a b) => [/ltnW | ] H.
+  - move: H; rewrite /leq => /eqP H; by rewrite H addn0 H.
+  - by rewrite (subnKC H) subnn.
+Qed.
 
-  Lemma head_pad0 (T : Type) n (p : T) s : head p (pad p n s) = head p s.
-  Proof. elim: s => [| s0 s IHs] //=; rewrite subn0; by case: n. Qed.
+Lemma head_pad0 (T : Type) n (p : T) s : head p (pad p n s) = head p s.
+Proof. elim: s => [| s0 s IHs] //=; rewrite subn0; by case: n. Qed.
 
-  Lemma included_pad0 inner outer :
-    included inner outer = included (pad 0 (size outer) inner) outer.
-  Proof.
-    elim: inner outer => [//= | inn0 inn IHinn] /= outer /=.
-     rewrite subn0; by elim: outer.
-    case: outer => [//= | out0 out] /=.
-    by rewrite subSS IHinn.
-  Qed.
+Lemma included_pad0 inner outer :
+  included inner outer = included (pad 0 (size outer) inner) outer.
+Proof.
+  elim: inner outer => [//= | inn0 inn IHinn] /= outer /=.
+   rewrite subn0; by elim: outer.
+  case: outer => [//= | out0 out] /=.
+  by rewrite subSS IHinn.
+Qed.
 
-End SkewShape.
 
 (** * Sigma Types for Partitions *)
-Section PartCombClass.
 
 Structure intpart : Type := IntPart {pval :> seq nat; _ : is_part pval}.
 Canonical intpart_subType := Eval hnf in [subType for pval].
@@ -1141,7 +1137,7 @@ Lemma conj_intpartK : involutive conj_intpart.
 Proof. move=> p; apply: val_inj => /=; by rewrite conj_partK. Qed.
 
 Lemma intpart_sum_inj (s t : intpart) :
-  (forall k, part_sum s k = part_sum t k) -> s = t.
+(forall k, part_sum s k = part_sum t k) -> s = t.
 Proof.
   move=> H; apply: val_inj => /=.
   by apply: part_sum_inj; last exact H.
@@ -1150,14 +1146,19 @@ Qed.
 
 Fixpoint enum_partnsk sm sz mx : (seq (seq nat)) :=
   if sz is sz.+1 then
-    flatten [seq [seq i :: p | p <- enum_partnsk (sm - i) sz i] | i <- iota 1 (minn sm mx)]
+    flatten [seq [seq i :: p | p <- enum_partnsk (sm - i) sz i] |
+             i <- iota 1 (minn sm mx)]
   else if sm is sm.+1 then [::] else [:: [::]].
+
 Definition enum_partns sm sz := enum_partnsk sm sz sm.
 Definition enum_partn sm := flatten [seq enum_partns sm sz | sz <- iota 0 sm.+1 ].
 
-Definition is_part_of_n   sm       := [pred p | (sumn p == sm)   & is_part p ].
-Definition is_part_of_ns  sm sz    := [pred p | (size p == sz)   & is_part_of_n sm p].
-Definition is_part_of_nsk sm sz mx := [pred p | (head 1 p <= mx) & is_part_of_ns sm sz p].
+Definition is_part_of_n   sm :=
+  [pred p | (sumn p == sm)   & is_part p ].
+Definition is_part_of_ns  sm sz :=
+  [pred p | (size p == sz)   & is_part_of_n sm p].
+Definition is_part_of_nsk sm sz mx :=
+  [pred p | (head 1 p <= mx) & is_part_of_ns sm sz p].
 
 Lemma enum_partnsk_allP sm sz mx :
   mx >= 1 -> all (is_part_of_nsk sm sz mx) (enum_partnsk sm sz mx).
@@ -1359,6 +1360,9 @@ Proof. apply val_inj => /=; rewrite /rowpart /colpart; by case: d. Qed.
 Lemma conj_colpartn d : conj_intpartn (colpartn d) = rowpartn d.
 Proof. rewrite -[RHS]conj_intpartnK; by rewrite conj_rowpartn. Qed.
 
+
+Module IntPartNLex.
+
 Require Import ordtype.
 
 Definition intpartn_inhMixin n := Inhabited.Mixin (rowpartn n).
@@ -1374,6 +1378,7 @@ Canonical intpartn_ordType n :=
 Canonical intpartn_inhOrdType n := [inhOrdType of intpartn n].
 Canonical intpartn_inhOrdFinType n := [inhOrdFinType of intpartn n].
 
+End IntPartNLex.
 
 (**  * Counting functions *)
 
@@ -1414,7 +1419,5 @@ Proof.
   rewrite [#|_|]cardT enumT unlock /=.
   by rewrite -(size_map val) subType_seqP -size_enum_partn.
 Qed.
-
-End PartCombClass.
 
 Hint Resolve intpartP intpartnP.

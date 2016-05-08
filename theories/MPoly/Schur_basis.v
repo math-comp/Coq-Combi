@@ -397,7 +397,8 @@ Section SchurAltenantDef.
 
 Variable (n0 : nat) (R : comRingType).
 Local Notation n := (n0.+1).
-Local Notation "''s_' k" := (Schur n0 R k) (at level 8, k at level 2, format "''s_' k").
+Local Notation "''s_' k" := (Schur n0 R k)
+                              (at level 8, k at level 2, format "''s_' k").
 Local Notation rho := (rho n).
 Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
@@ -405,6 +406,7 @@ Local Notation "''a_' k" := (@alternpol n R 'X_[k])
 Lemma Schur_cast d d' (P : intpartn d) (Heq : d = d') :
   's_P = Schur n0 R (intpartn_cast Heq P).
 Proof. subst d'; by congr Schur. Qed.
+
 
 Theorem alt_SchurE d (P : intpartn d) :
   size P <= n -> 'a_rho * 's_P = 'a_(mpart n P + rho).
@@ -417,7 +419,7 @@ Proof.
     rewrite intpartn0 /mpart /= mnmP => i; by rewrite !mnmE /=.
   case: (leqP d b) => Hdb; first exact: (IHb _ Hdb).
   have {Hd Hdb} Hd : d = b.+1 by apply anti_leq; rewrite Hd Hdb.
-  elim/finord_wf: P => P IHP HszP.
+  elim/(finord_wf (T := IntPartNLex.intpartn_inhOrdFinType d)) : P => P IHP HszP.
   pose k := head 1%N (conj_intpartn P).
   pose p1 := behead (conj_intpartn P); pose d1 := sumn p1.
   have Hk : (d = d1 + k)%N.
