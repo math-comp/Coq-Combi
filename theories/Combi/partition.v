@@ -1365,16 +1365,17 @@ Module IntPartNLex.
 
 Require Import ordtype.
 
-Definition intpartn_inhMixin n := Inhabited.Mixin (rowpartn n).
-Canonical intpartn_inhType n :=
-  Eval hnf in InhType (intpartn n) (intpartn_inhMixin n).
-
 Definition intpartn_pordMixin n := [pordMixin of intpartn n by <:].
 Canonical intpartn_pordType n :=
   Eval hnf in POrdType (intpartn n) (intpartn_pordMixin n).
 Definition intpartn_ordMixin n := [ordMixin of intpartn_pordType n by <:].
 Canonical intpartn_ordType n :=
   Eval hnf in OrdType (intpartn n) (intpartn_ordMixin n).
+Canonical intpartn_finPOrdType n := [finPOrdType of intpartn n].
+
+Definition intpartn_inhMixin n := Inhabited.Mixin (rowpartn n).
+Canonical intpartn_inhType n :=
+  Eval hnf in InhType (intpartn n) (intpartn_inhMixin n).
 Canonical intpartn_inhOrdType n := [inhOrdType of intpartn n].
 Canonical intpartn_inhOrdFinType n := [inhOrdFinType of intpartn n].
 

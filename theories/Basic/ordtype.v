@@ -226,6 +226,74 @@ Notation "[ 'ordMixin' 'of' T 'by' <: ]" :=
 *)
 
 
+(******************************************************************************)
+(* Partially ordered finite types                                             *)
+(******************************************************************************)
+Module FinPOrdType.
+
+Section ClassDef.
+
+Record class_of (T : Type) : Type := Class {
+  pord_class : PartOrder.class_of T;
+  fin_class : Finite.class_of T
+}.
+
+Structure type := Pack {sort; _ : class_of sort; _ : Type}.
+
+Local Coercion sort : type >-> Sortclass.
+Definition base_ord T m : PartOrder.class_of T := pord_class m.
+Local Coercion base_ord : class_of >-> PartOrder.class_of.
+Definition base_fin T m : Finite.class_of T := fin_class m.
+Local Coercion base_fin : class_of >-> Finite.class_of.
+
+Variables (T : Type) (cT : type).
+Definition class := let: Pack _ c _ := cT return class_of cT in c.
+Let xT := let: Pack T _ _ := cT in T.
+Notation xclass := (class : class_of xT).
+
+Definition pack :=
+  fun porT por & phant_id (PartOrder.class porT) por =>
+  fun finT fin & phant_id (Finite.class finT) fin =>
+  Pack (@Class T por fin) T.
+
+Definition eqType := @Equality.Pack cT xclass xT.
+Definition choiceType := @Choice.Pack cT xclass xT.
+Definition countType := @Countable.Pack cT xclass xT.
+Definition finType := @Finite.Pack cT xclass xT.
+
+Definition pordType := @PartOrder.Pack cT xclass xT.
+Definition fin_pordType := @PartOrder.Pack finType xclass xT.
+
+
+End ClassDef.
+
+Module Exports.
+Coercion sort : type >-> Sortclass.
+
+Coercion eqType : type >-> Equality.type.
+Canonical eqType.
+Coercion choiceType : type >-> Choice.type.
+Canonical choiceType.
+Coercion countType : type >-> Countable.type.
+Canonical countType.
+Coercion finType : type >-> Finite.type.
+Canonical finType.
+
+Coercion pordType : type >-> PartOrder.type.
+Canonical pordType.
+
+Canonical fin_pordType.
+
+Notation finPOrdType := type.
+Notation "[ 'finPOrdType' 'of' T ]" := (@pack T _ _ id _ _ id)
+  (at level 0, format "[ 'finPOrdType'  'of'  T ]") : form_scope.
+End Exports.
+
+End FinPOrdType.
+Export FinPOrdType.Exports.
+
+
+
 
 (******************************************************************************)
 (* Inhabited types                                                            *)
@@ -702,7 +770,7 @@ From mathcomp Require Import finset.
 
 Section FinOrdTypeTheory.
 
-Variable (T : inhOrdFinType). (* TODO: remove inh *)
+Variable (T : finPOrdType).
 Implicit Types x : T.
 Variable P : T -> Type.
 
