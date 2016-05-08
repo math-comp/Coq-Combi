@@ -672,9 +672,9 @@ Proof.
   move=> Hstd.
   have:= size_rembig v; rewrite Hn /= => Hszrem.
   have Hpermrem := perm_eq_rembig Hperm.
-  have:= congr1 (@rembig _) Hstd; rewrite -!std_rembig => Hstdrem.
+  have:= congr1 rembig Hstd; rewrite -!std_rembig => Hstdrem.
   move/(_ _ _ Hszrem Hpermrem Hstdrem) : IHn => Hrem {Hszrem Hpermrem Hstdrem}.
-  have:= congr1 (@posbig _) Hstd; rewrite !std_posbig => Hstdpos.
+  have:= congr1 posbig Hstd; rewrite !std_posbig => Hstdpos.
   have:= Hn; case Hv : v => [//= | v0 v'] /= _.
   have:= Hperm => /perm_eq_size; rewrite Hn.
   case Hu : u => [//= | u0 u'] /= _.

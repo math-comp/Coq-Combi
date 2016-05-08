@@ -24,6 +24,7 @@ From mathcomp Require Import bigop.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+Prenex Implicits nat_of_ord.
 
 Hint Resolve nth_nil.
 

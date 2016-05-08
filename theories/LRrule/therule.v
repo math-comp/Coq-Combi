@@ -476,7 +476,7 @@ Proof.
   move=> x y; rewrite !inE /bijLR => Hx Hy.
   case (boolP (is_skew_reshape_tableau P P1 x)) => /=; last by rewrite Hx.
   case (boolP (is_skew_reshape_tableau P P1 y)) => /=; last by rewrite Hy.
-  move=> Hy1 Hx1 /(congr1 (@val _ _ _))/(congr1 (@to_word _)) /= {Hx1 Hy1 Hx Hy} => H.
+  move=> Hy1 Hx1 /(congr1 (@val _ _ _))/(congr1 to_word) /= {Hx1 Hy1 Hx Hy} => H.
   apply val_inj => /=.
   pose f := [fun s : seq nat =>
                to_word (join_tab (hyper_stdtabn P1) (map (shiftn d1) (skew_reshape P1 P s)))].

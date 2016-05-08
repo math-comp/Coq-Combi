@@ -33,7 +33,6 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-
 Lemma ieqi1F i : (i == i.+1) = false. Proof. apply: negbTE; by elim i. Qed.
 Lemma ieqi2F i : (i == i.+2) = false. Proof. apply: negbTE; by elim i. Qed.
 Lemma i1eqiF i : (i.+1 == i) = false. Proof. apply: negbTE; by elim i. Qed.
@@ -532,7 +531,7 @@ Proof.
   - move: Hlen; rewrite (length_sub1L Hw0' H) => /ltnW.
     by rewrite -ltnS => /ltnW.
   - exfalso; move: H => /val_inj/perm_inj => H.
-    have {H} /= /eqP := (congr1 (@nat_of_ord _) H).
+    have {H} /= /eqP := (congr1 nat_of_ord H).
     by rewrite inordK // ieqi1F.
 Qed.
 
@@ -635,10 +634,10 @@ Proof.
   have Hjm := ltn_trans Hji Him.
   rewrite /perm_on; apply/subsetP => u; rewrite inE unfold_in.
   apply contraR; rewrite -leqNgt => Hu; apply/eqP/tpermD.
-  - apply/(introN idP) => /eqP/(congr1 (@nat_of_ord _)).
+  - apply/(introN idP) => /eqP/(congr1 nat_of_ord).
     rewrite (inordK (leq_trans Hjm Hm)) => Hju.
     by have:= leq_trans Hjm Hu; rewrite Hju ltnn.
-  - apply/(introN idP) => /eqP/(congr1 (@nat_of_ord _)).
+  - apply/(introN idP) => /eqP/(congr1 nat_of_ord).
     rewrite (inordK (leq_trans Hj1m Hm)) => Hju.
     by have:= leq_trans Hj1m Hu; rewrite Hju ltnn.
 Qed.
@@ -760,7 +759,7 @@ Proof. apply (insub_wordcdK (cocodeP _)); by rewrite size_cocode. Qed.
 Theorem canwordP s : s = 's_[canword s].
 Proof.
   rewrite /= {1}(cocodeE s).
-  rewrite -(big_map (@nat_of_ord _) xpredT) /=; apply congr_big => //.
+  rewrite -(big_map nat_of_ord xpredT) /=; apply congr_big => //.
   by rewrite canwordE.
 Qed.
 
@@ -862,7 +861,7 @@ Lemma reduced_rev w : w \is reduced -> rev w \is reduced.
 Proof.
   rewrite !unfold_in size_rev => /eqP <-.
   rewrite -length_permV.
-  by rewrite -!(big_map (@nat_of_ord _) xpredT) -prodsV map_rev revK.
+  by rewrite -!(big_map nat_of_ord xpredT) -prodsV map_rev revK.
 Qed.
 
 Lemma reduced_revE w : w \is reduced = (rev w \is reduced).
@@ -876,7 +875,7 @@ Lemma reduced_sprod_code c :
 Proof.
   move=> Hcode Hsz.
   have:= Hsz => /(length_permcd Hcode) Hlength.
-  rewrite unfold_in -(big_map (@nat_of_ord _) xpredT) /=.
+  rewrite unfold_in -(big_map nat_of_ord xpredT) /=.
   by rewrite -(size_map val) /= insub_wordcdK // Hlength size_wordcd.
 Qed.
 
@@ -1453,7 +1452,7 @@ Corollary cocode_straightenE w :
   rev (straighten w) = cocode 's_[w].
 Proof.
   have:= (prods_straighten w); rewrite {1}(canwordP 's_[w]).
-  rewrite -!(big_map (@nat_of_ord _) xpredT) /= canwordE /wcord -map_comp.
+  rewrite -!(big_map nat_of_ord xpredT) /= canwordE /wcord -map_comp.
   rewrite [map _ _](_ : _ = wordcd (rev (straighten w))); first last.
     rewrite -[RHS](map_id) -eq_in_map => i.
     rewrite /= /wordcd => /flatten_mapP [] j.

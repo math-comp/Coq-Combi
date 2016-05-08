@@ -298,7 +298,7 @@ Proof.
 Qed.
 
 Lemma tabwordshape_col d (w : d.-tuple 'I_n) :
-    tabsh_reading (colpartn d) w = sorted (@gtnX _) w.
+    tabsh_reading (colpartn d) w = sorted gtnX w.
 Proof.
   rewrite /tabsh_reading /= /colpart ; case: w => w /=/eqP Hw.
   have -> : sumn (nseq d 1%N) = d.

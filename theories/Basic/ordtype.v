@@ -81,7 +81,7 @@ Arguments leqXpordP [T].
 
 Definition ltnX_op T m n := ((m != n) && (@leqX_op T m n)).
 
-Prenex Implicits leqX_op leqXpordP.
+Prenex Implicits leqX_op leqXpordP ltnX_op.
 
 (* Declare legacy Arith operators in new scope. *)
 
@@ -610,7 +610,7 @@ apply/eqP/idP => [->|]; first by rewrite leqXnn.
 by rewrite andbC => /anti_leqX ->.
 Qed.
 
-Lemma leqX_trans n m p : m <= n -> n <= p -> m <= p.
+Lemma leqX_trans : transitive (@leqX_op T).
 Proof. by move: (@leqXpordP T) => [_ _]; apply. Qed.
 
 Lemma leqXNgtnX_impl n m : (m <= n) -> ~~ (n < m).
@@ -640,8 +640,8 @@ Qed.
 Lemma ltnXW m n : m < n -> m <= n.
 Proof. by move/andP => []. Qed.
 
-Lemma ltnX_trans n m p : m < n -> n < p -> m < p.
-Proof. move=> lt_mn /ltnXW. exact: ltnX_leqX_trans. Qed.
+Lemma ltnX_trans m n p : m < n -> n < p -> m < p.
+Proof. move=> lt_mn /ltnXW; exact: ltnX_leqX_trans. Qed.
 
 Lemma geqX_trans : transitive geqX.
 Proof. move=> m n p /= H1 H2; exact: leqX_trans H2 H1. Qed.
@@ -656,6 +656,7 @@ Arguments geqX [T].
 Arguments ltnX [T].
 Arguments gtnX [T].
 
+Prenex Implicits leqX geqX ltnX gtnX.
 
 Section OrdTheory.
 
@@ -756,7 +757,7 @@ Qed.
 End OrdTheory.
 
 Hint Resolve leqXnn ltnXnn ltnXW.
-
+Prenex Implicits maxX minX.
 
 
 Module OrdNotations.
@@ -809,7 +810,7 @@ Variable T : ordType.
 Implicit Type a b c : T.
 Implicit Type u v : seq T.
 
-Definition maxL l := foldl (@maxX T) l.
+Definition maxL a := foldl maxX a.
 
 Lemma maxXb a u : a <= maxL a u.
 Proof.
@@ -1185,7 +1186,6 @@ Qed.
 Lemma rembig_uniq s : uniq s -> uniq (rembig s).
 Proof. by apply: subseq_uniq; apply: rembig_subseq. Qed.
 
-
 Open Scope nat_scope.
 
 Lemma posbig_size_cons l s : posbig (l :: s) < size (l :: s).
@@ -1375,7 +1375,7 @@ Qed.
 
 End RemoveBig.
 
-
+Prenex Implicits rembig posbig.
 
 
 (******************************************************************************)

@@ -302,7 +302,7 @@ Proof.
   - apply/forallP => ptmp; apply/implyP => /imsetP [] p Hp -> {ptmp}.
     move/(_ p): Hall; rewrite Hp /= /extractpred.
     move/val2pos_enum ->; rewrite -map_comp /=.
-    rewrite (eq_map (f2 := @nat_of_ord _)); first last.
+    rewrite (eq_map (f2 := nat_of_ord)); first last.
       move=> i /=; rewrite (tnth_nth (size s)) /=.
       by have:= Hinvst => /linvseqP ->.
     set l := map _ _; have : subseq l [seq val x | x  <- enum 'I_(size s)].

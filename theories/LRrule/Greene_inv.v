@@ -1173,9 +1173,8 @@ Proof.
   case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
   + move/existsP => [] S /and3P [] HSin HSa HSb.
     exfalso; move: Hsupp; rewrite /ksupp => /and3P [] _ _ /forallP Hall.
-    have Htrans: transitive (@leqX Alph) by move=> d e f /= H1 H2; apply: (leqX_trans H1 H2).
     move/(_ S): Hall; rewrite HSin /=.
-    move/(is_seq_extract_cond Htrans [set posa; posc]).
+    move/(is_seq_extract_cond (@leqX_trans _) [set posa; posc]).
     have -> : S :&: [set posa; posc] = [set posa; posc].
       apply/setP/subset_eqP/andP; split; apply/subsetP=> i; first by rewrite inE => /andP [].
       rewrite !inE => /orP [] => /eqP ->; rewrite eq_refl /=; first by rewrite HSa.
@@ -1248,9 +1247,8 @@ Proof.
   case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
   + move/existsP => [] S /and3P [] HSin HSa HSb.
     exfalso; move: Hsupp; rewrite /ksupp => /and3P [] _ _ /forallP Hall.
-    have Htrans: transitive (@gtnX Alph) by move=> d e f /= H1 H2; apply: (ltnX_trans H2 H1).
     move/(_ S): Hall; rewrite HSin /= => Hsort.
-    have:= is_seq_extract_cond Htrans [set posa; posc] Hsort.
+    have:= is_seq_extract_cond (@gtnX_trans _) [set posa; posc] Hsort.
     have -> : S :&: [set posa; posc] = [set posa; posc].
       apply/setP/subset_eqP/andP; split; apply/subsetP=> i; first by rewrite inE => /andP [].
       rewrite !inE => /orP [] => /eqP ->; rewrite eq_refl /=; first by rewrite HSa.

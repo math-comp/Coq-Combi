@@ -473,3 +473,4 @@ Qed.
 End YamOfSize.
 
 Hint Resolve yamnP yamevalP.
+Prenex Implicits yamnP yamevalP yamn_PredEq.

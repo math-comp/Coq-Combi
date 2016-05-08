@@ -289,7 +289,7 @@ Proof.
   rewrite Hsize /= => [] [] Htab Happ.
   move: Hstdtab; rewrite /is_stdtab Htab /= /is_std.
   rewrite !size_to_word {1}Hsize => /andP [] _ Hperm.
-  have/(congr1 (@size_tab _)) := Happ.
+  have/(congr1 size_tab) := Happ.
   rewrite size_append_nth Hsize => /eqP; rewrite eqSS => /eqP Hsz.
   have:= perm_eq_append_nth (remn t) n (last_big t n).
   rewrite {}Happ Hsz (perm_eqlP Hperm) perm_eq_sym.
@@ -463,7 +463,7 @@ Qed.
 Lemma stdtab_of_yam_inj x y :
   is_yam x -> is_yam y -> stdtab_of_yam x = stdtab_of_yam y -> x = y.
 Proof.
-  move=> Hx Hy Heq; have:= congr1 (@size_tab _) Heq.
+  move=> Hx Hy Heq; have:= congr1 size_tab Heq.
   rewrite !size_stdtab_of_yam => Hsz.
   elim: x y Hsz Heq Hx Hy => [| x0 x IHx]; case=> [//= | y0 y] //= /eqP.
   rewrite eqSS => /eqP Heqsz; rewrite Heqsz => Heq.
@@ -770,12 +770,12 @@ Proof.
   rewrite !enumT unlock subType_seqP.
   rewrite count_map.
   rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
-    move=> y /(allP (all_unionP _ (@yamn_PredEq _))) /=.
+    move=> y /(allP (all_unionP _ yamn_PredEq)) /=.
     rewrite /is_yam_of_size => /andP [] Hyam /eqP Hszy /=.
     apply/idP/idP => /eqP H; apply/eqP.
     + by rewrite -H stdtab_of_yamK.
     + by rewrite H yam_of_stdtabK.
-  apply: (count_unionP _ (@yamn_PredEq _)).
+  apply: (count_unionP _ yamn_PredEq).
   - exact: yamn_partition_evalseq.
   - by rewrite /is_yam_of_size yam_of_stdtabP //= Hszt.
 Qed.

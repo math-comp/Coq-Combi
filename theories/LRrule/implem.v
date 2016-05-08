@@ -832,14 +832,14 @@ Proof.
 Qed.
 
 Lemma LRyamtab_all :
-  all (is_yam_of_eval P2) (map (@to_word _) (LRyamtab_list P1 P2 P)).
+  all (is_yam_of_eval P2) (map to_word (LRyamtab_list P1 P2 P)).
 Proof. by apply/allP => w /mapP [] tab /LRyamtabP Htab ->. Qed.
 Let bla := Eval hnf in [subCountType of yameval P2].
 Definition LRyam_list := subType_seq bla LRyamtab_all.
 
 Lemma LRyamtab_spec_recip yam :
   yam \in LRyam_set P1 P2 P ->
-  count_mem (val yam) (map (@to_word _) (LRyamtab_list P1 P2 P)) = 1.
+  count_mem (val yam) (map to_word (LRyamtab_list P1 P2 P)) = 1.
 Proof.
   rewrite inE => Hyam.
   have Hszyam : size yam = sumn (diff_shape P1 P).
@@ -869,7 +869,7 @@ Qed.
 
 Theorem LRcoeffE : LRyam_coeff P1 P2 P = LRcoeff P1 P2 P.
 Proof.
-  rewrite /LRyam_coeff -LRcoeffP -(size_map (@to_word _)).
+  rewrite /LRyam_coeff -LRcoeffP -(size_map to_word).
   rewrite -sum1dep_card (eq_bigr (fun y => count_mem y LRyam_list)); first last.
     by move=> yam Hyam; rewrite LRyam_spec_recip //= inE.
   rewrite sum_count_mem.

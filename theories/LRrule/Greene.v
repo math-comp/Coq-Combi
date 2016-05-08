@@ -810,12 +810,14 @@ Implicit Type t : seq (seq Alph).
 
 Let sym_cast m n (i : 'I_(m + n)) : 'I_(n + m) := cast_ord (addnC m n) i.
 
+Prenex Implicits sym_cast.
+
 Definition shiftset s0 sh :=
-  [fun s : {set 'I_(sumn sh)} => ((@sym_cast _ _) \o (@lshift (sumn sh) s0)) @: s].
+  [fun s : {set 'I_(sumn sh)} => (sym_cast \o (@lshift (sumn sh) s0)) @: s].
 
 Fixpoint shrows sh : seq {set 'I_(sumn sh)} :=
   if sh is s0 :: sh then
-    [set ((@sym_cast _ _) \o (@rshift (sumn sh) s0)) i | i in 'I_s0] ::
+    [set (sym_cast \o (@rshift (sumn sh) s0)) i | i in 'I_s0] ::
     map (@shiftset s0 sh) (shrows sh)
   else [::].
 Fixpoint shcols sh : seq {set 'I_(sumn sh)} :=
@@ -890,7 +892,7 @@ Proof.
       rewrite -[1]addn0 iota_addl -map_comp.
       pose f := fun i => (nth 0 l i).+1.
       rewrite (eq_map (f2 := f)) //; apply esym.
-      rewrite (eq_map (f2 := f \o @nat_of_ord _)) //.
+      rewrite (eq_map (f2 := f \o nat_of_ord)) //.
       by rewrite [map _ (enum _)]map_comp val_enum_ord /=.
 Qed.
 
@@ -1075,13 +1077,13 @@ Qed.
 
 Lemma lcast_com :
   (cast_ord (esym (size_to_word (t0 :: t))))
-    \o (@sym_cast _ _) \o (@lshift (sumn (shape t)) (size t0))
+    \o sym_cast \o (@lshift (sumn (shape t)) (size t0))
   =1  linj_rec \o (cast_ord (esym (size_to_word t))).
 Proof. move=> i; apply/eqP; by rewrite /rinj_rec /= /eq_op /=. Qed.
 
 Lemma rcast_com :
  (cast_ord (esym (size_to_word (t0 :: t))))
-   \o (@sym_cast _ _) \o (@rshift (sumn (shape t)) (size t0))  =1  rinj_rec.
+   \o sym_cast \o (@rshift (sumn (shape t)) (size t0))  =1  rinj_rec.
 Proof. move=> i; apply/eqP; rewrite /rinj_rec /= /eq_op /=; by rewrite size_to_word. Qed.
 
 
@@ -1418,8 +1420,6 @@ Proof.
 Qed.
 
 End GreeneRec.
-
-
 
 Section GreeneTab.
 

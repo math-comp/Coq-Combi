@@ -230,7 +230,7 @@ Section Dominate.
           by case inner => [|_ [| inn]] //=; rewrite [nth 0 [::] i]nth_default.
   Qed.
 
-  Lemma is_skew_tableau0 : is_skew_tableau [::] =1 (@is_tableau T).
+  Lemma is_skew_tableau0 : is_skew_tableau [::] =1 is_tableau.
   Proof.
     elim => //= t0 t IHt; rewrite add0n subn0 skew_dominate0 IHt.
     by case t0.

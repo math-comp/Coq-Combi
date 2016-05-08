@@ -52,9 +52,9 @@ Section Rows.
   Implicit Type l : T.
   Implicit Type r : seq T.
 
-  Notation is_row r := (sorted (@leqX_op T) r).
+  Notation is_row r := (sorted leqX_op r).
 
-  Definition is_row1P Z r := sorted1P Z (@leqX_op T) r.
+  Definition is_row1P Z r := sorted1P Z leqX_op r.
   Definition is_rowP Z r := sortedP Z (@leqX_trans T) (@leqXnn T) r.
   Definition is_row_cons := sorted_cons (@leqXnn T).
   Definition is_row_consK := sorted_consK (R := @leqX_op T).
@@ -74,7 +74,7 @@ Section Rows.
 
 End Rows.
 
-Notation is_row r := (sorted (@leqX_op _) r).
+Notation is_row r := (sorted leqX_op r).
 
 (** ** Dominance order for rows *)
 Section Dominate.
@@ -271,7 +271,9 @@ Section Tableau.
 
   Lemma is_tableau_sorted_dominate (t : seq (seq T)) :
     is_tableau t =
-    [&& is_part (shape t), all (sorted (@leqX_op T)) t & sorted (fun x y => dominate y x) t].
+    [&& is_part (shape t),
+     all (sorted leqX_op) t &
+     sorted (fun x y => dominate y x) t].
   Proof.
     apply/idP/idP; elim: t => [//= | t0 t IHt].
     - move=> /=/and4P [] Hnnil Hrow0 Hdom /IHt /and3P [] Hpart Hall Hsort.
@@ -438,6 +440,7 @@ Qed.
 
 End Tableau.
 
+Prenex Implicits is_tableau to_word size_tab.
 
 Section TableauReading.
 

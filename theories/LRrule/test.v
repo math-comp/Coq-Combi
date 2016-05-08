@@ -27,7 +27,7 @@ Fixpoint subs_eval eval i :=
 
 Definition yam_from_LRtab inner eval (tab : seq (seq nat)) :=
   let sinn := sumn inner in
-    map (subs_eval eval) (sfilterleq sinn ((@to_word _) tab)).
+    map (subs_eval eval) (sfilterleq sinn (to_word tab)).
 
 
 Goal
@@ -82,7 +82,7 @@ Goal LRyamtab_list [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2]
            [:: [:: 0; 0]; [:: 1]; [:: 1; 2]; [:: 0; 3]]].
 Proof. compute; exact erefl. Qed.
 
-Goal map (@to_word _) (LRyamtab_list [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2])
+Goal map to_word (LRyamtab_list [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2])
      = [:: [:: 1; 3; 0; 2; 1; 0; 0]; [:: 0; 3; 1; 2; 1; 0; 0]].
 Proof. compute; exact erefl. Qed.
 
@@ -95,7 +95,7 @@ Goal LRyam_enum [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2].
 13    03
 *)
 
-Goal map (@to_word _) (LRyamtab_list [:: 3; 3; 1] [:: 4; 2; 1] [:: 5; 4; 3; 2])
+Goal map to_word (LRyamtab_list [:: 3; 3; 1] [:: 4; 2; 1] [:: 5; 4; 3; 2])
      = [:: [:: 1; 2; 0; 0; 1; 0; 0]; [:: 0; 2; 0; 1; 1; 0; 0];
            [:: 0; 1; 0; 2; 1; 0; 0]].
 Proof. compute; exact erefl. Qed.
