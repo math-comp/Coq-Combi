@@ -235,6 +235,8 @@ Section ClassDef.
 
 Record class_of (T : Type) : Type := Class {
   pord_class : PartOrder.class_of T;
+  (* TODO: I can't replace the following by a mixin because I don't have
+     the Choice base to get a proper fintype *)
   fin_class : Finite.class_of T
 }.
 
@@ -768,7 +770,7 @@ End OrdNotations.
 
 From mathcomp Require Import finset.
 
-Section FinOrdTypeTheory.
+Section FinPOrdTypeTheory.
 
 Variable (T : finPOrdType).
 Implicit Types x : T.
@@ -794,7 +796,7 @@ Proof.
     by rewrite ltnXnn.
 Defined.
 
-End FinOrdTypeTheory.
+End FinPOrdTypeTheory.
 
 
 (******************************************************************************)
