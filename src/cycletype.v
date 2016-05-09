@@ -495,7 +495,10 @@ Qed.
 
 Section Permofcycletype.
 
-Implicit Types (l : nat) (ct : intpartn #|T|). 
+Implicit Types (l : nat) (ct : intpartn #|T|).
+
+Definition cyclefun_of (n l : nat) : T -> T :=
+  let C := take l (drop n (enum T)) in next C.
 
 Definition cyclefun_of (n l : nat) : T -> T :=
   let a := take l (drop n (enum T)) in
