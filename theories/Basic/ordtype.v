@@ -1560,3 +1560,50 @@ Canonical lex_ordType := Eval hnf in OrdType (seq T) lex_ordMixin.
 
 End LexOrder.
 
+
+Section Tests.
+
+From mathcomp Require Import div.
+
+Definition nat_div := nat.
+
+Fact div_porder : PartOrder.axiom (fun m n : nat_div => m %| n).
+Proof.
+  split.
+  - move=> x; exact: dvdnn.
+  - by move=> x y; rewrite -eqn_dvd => /eqP.
+  - move=> x y z; exact: dvdn_trans.
+Qed.
+Definition nat_divMixin := PartOrder.Mixin div_porder.
+Canonical nat_divType := Eval hnf in POrdType nat_div nat_divMixin.
+
+(* Tests *)
+Goal (3 <= 5) = true.
+  exact: erefl. Qed.
+Goal ((3 : nat_div) <= (5 : nat_div)) = false.
+  exact: erefl. Qed.
+
+Goal (@leqX_op (dual_pordType nat_pordType) 3 5) = false.
+  exact: erefl. Qed.
+Goal (@leqX_op (dual_pordType nat_pordType) 5 3).
+  exact: erefl. Qed.
+
+Definition dnat := nat.
+
+Definition nat_dualMixin := dual_pordMixin nat_pordType.
+Canonical nat_dualType := Eval hnf in POrdType dnat nat_dualMixin.
+
+Goal (5 <= 3) = false.
+  exact: erefl. Qed.
+Goal ((3 : dual_pordType _) <= (5 : dual_pordType _)) = false.
+  exact: erefl. Qed.
+
+
+Goal ((5 : dnat) <= (3 : dnat)) = true.
+  exact: erefl. Qed.
+Goal ((5 : nat_dualType) <= (3 : nat_dualType)) = true.
+  exact: erefl. Qed.
+Goal ((5 : dual_pordType _) <= (3 : dual_pordType _)) = true.
+  exact: erefl. Qed.
+
+End Tests.
