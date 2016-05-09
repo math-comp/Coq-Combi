@@ -66,7 +66,7 @@ Definition append_nth t b i := set_nth [::] t i (rcons (nth [::] t i) b).
 
 Lemma perm_eq_append_nth t x pos :
   perm_eq (to_word (append_nth t x pos)) (x :: to_word t).
-Proof.
+Proof using .
   rewrite /append_nth; elim: t pos => [//= | t0 t IHt] /=.
   + elim => [//= | pos IHpos].
     move: IHpos; rewrite /= to_word_cons cats0.
@@ -80,7 +80,7 @@ Proof.
 Qed.
 
 Lemma shape_append_nth t b i : shape (append_nth t b i) = incr_nth (shape t) i.
-Proof.
+Proof using .
   rewrite /shape /=; apply: (@eq_from_nth _ 0).
   + rewrite size_map size_set_nth size_incr_nth size_map /maxn.
     case: (ltngtP i.+1 (size t)).
@@ -100,12 +100,12 @@ Proof.
 Qed.
 
 Lemma size_append_nth t b i : size_tab (append_nth t b i) = (size_tab t).+1.
-Proof. by rewrite /size_tab shape_append_nth sumn_incr_nth. Qed.
+Proof using . by rewrite /size_tab shape_append_nth sumn_incr_nth. Qed.
 
 Lemma get_tab_append_nth (t : seq (seq T)) l i r c :
   get_tab (append_nth t l i) r c =
   if (r == i) && (c == nth 0 (shape t) i) then l else get_tab t r c.
-Proof.
+Proof using .
   rewrite /get_tab /append_nth nth_set_nth /=.
   case: (altP (r =P i)) => [-> | //=] /=.
   rewrite nth_rcons nth_shape.
@@ -121,15 +121,15 @@ Fixpoint last_big t b :=
   else 0.
 
 Lemma allLeq_to_word_hd r t b : allLeq (to_word (r :: t)) b -> allLeq r b.
-Proof. by rewrite to_word_cons allLeq_catE => /andP [] _. Qed.
+Proof using . by rewrite to_word_cons allLeq_catE => /andP [] _. Qed.
 Lemma allLeq_to_word_tl r t b : allLeq (to_word (r :: t)) b -> allLeq (to_word t) b.
-Proof. by rewrite to_word_cons allLeq_catE => /andP []. Qed.
+Proof using . by rewrite to_word_cons allLeq_catE => /andP []. Qed.
 
 Lemma last_bigP t b i :
   is_tableau t -> allLeq (to_word t) b ->
   reflect (last b (nth [::] t i) = b /\ forall j, j < i -> last b (nth [::] t j) <A b)
           (i == last_big t b).
-Proof.
+Proof using .
   move=> Htab Hmax; apply: (iffP idP).
   + move/eqP ->; split.
     * elim: t Htab {Hmax} => [//= | t0 t IHt] /= /and4P [] _ _ _ Htab.
@@ -152,7 +152,7 @@ Qed.
 Lemma last_big_append_nth t b lb :
   (forall j : nat, j < lb -> last b (nth [::] t j) <A b) ->
   last_big (append_nth t b lb) b = lb.
-Proof.
+Proof using .
   elim: t lb =>[/= | t0 t IHt /=].
   + case => [/= _| lb Hj /=]; first by rewrite eq_refl.
     exfalso; have:= Hj 0 (ltn0Sn _); by rewrite ltnXnn.
@@ -543,10 +543,10 @@ Definition conj_tab (t : seq (seq T)) : seq (seq T) :=
   mkseq (fun i => mkseq (fun j => get_tab t j i) (nth 0 c i)) (size c).
 
 Lemma size_conj_tab t : size (conj_tab t) = size (conj_part (shape t)).
-Proof. by rewrite /conj_tab size_mkseq. Qed.
+Proof using . by rewrite /conj_tab size_mkseq. Qed.
 
 Lemma shape_conj_tab t : shape (conj_tab t) = conj_part (shape t).
-Proof.
+Proof using .
   rewrite /conj_tab /shape -map_comp.
   rewrite (eq_map (f2 := fun i => (nth 0 (conj_part [seq size i | i <- t]) i))); first last.
     move => i /=; by rewrite size_mkseq.
@@ -555,7 +555,7 @@ Qed.
 
 Lemma get_conj_tab t :
   is_part (shape t) -> forall i j, get_tab (conj_tab t) i j = get_tab t j i.
-Proof.
+Proof using .
   move=> Ht i j.
   case: (boolP (is_in_shape (shape t) j i)) => Hin;
     have:= Hin; rewrite (is_in_conj_part Ht) => Hconj.
@@ -570,7 +570,7 @@ Qed.
 
 Lemma eq_from_shape_get_tab (t u : seq (seq T)) :
   shape t = shape u -> get_tab t =2 get_tab u -> t = u.
-Proof.
+Proof using .
   move=> Hsh Hget; apply (eq_from_nth (x0 := [::])).
     by rewrite -!(size_map size) -!/(shape _) Hsh.
   move=> r _; apply (eq_from_nth (x0 := (inhabitant T))).
@@ -579,7 +579,7 @@ Proof.
 Qed.
 
 Lemma conj_tab_shapeK t : is_part (shape t) -> conj_tab (conj_tab t) = t.
-Proof.
+Proof using .
   move=> Hpart; apply eq_from_shape_get_tab.
   - by rewrite !shape_conj_tab conj_partK.
   - move=> r c; rewrite get_conj_tab; last by rewrite shape_conj_tab; exact: is_part_conj.
@@ -587,13 +587,13 @@ Proof.
 Qed.
 
 Lemma conj_tabK t : is_tableau t -> conj_tab (conj_tab t) = t.
-Proof. move=> /is_part_sht; exact :conj_tab_shapeK. Qed.
+Proof using . move=> /is_part_sht; exact :conj_tab_shapeK. Qed.
 
 Lemma append_nth_conj_tab (t : seq (seq T)) l i :
   is_part (shape t) ->
   is_add_corner (shape t) i ->
   conj_tab (append_nth t l i) = append_nth (conj_tab t) l (nth 0 (shape t) i).
-Proof.
+Proof using .
   move=> Hsh Hcorn; apply eq_from_shape_get_tab.
   - rewrite shape_conj_tab !shape_append_nth shape_conj_tab.
     exact: conj_part_incr_nth.
@@ -707,7 +707,7 @@ Canonical stdtabsh_subCountType := Eval hnf in [subCountType of stdtabsh].
 Let stdtabsh_enum : seq stdtabsh := pmap insub (enum_stdtabsh sh).
 
 Lemma finite_stdtabsh : Finite.axiom stdtabsh_enum.
-Proof.
+Proof using .
   case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
   rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
     by rewrite isSome_insub; case: eqP=> // ->.
@@ -729,10 +729,10 @@ Canonical stdtabsh_finType := Eval hnf in FinType stdtabsh stdtabsh_finMixin.
 Canonical stdtabsh_subFinType := Eval hnf in [subFinType of stdtabsh_countType].
 
 Lemma stdtabshP (t : stdtabsh) : is_stdtab t.
-Proof. by case: t => /= t /andP []. Qed.
+Proof using . by case: t => /= t /andP []. Qed.
 
 Lemma stdtabsh_shape (t : stdtabsh) : shape t = sh.
-Proof. by case: t => /= t /andP [] _ /eqP. Qed.
+Proof using . by case: t => /= t /andP [] _ /eqP. Qed.
 
 End StdtabOfShape.
 
@@ -760,7 +760,7 @@ Definition enum_stdtabn : seq (seq (seq nat)) :=
 Let stdtabn_enum : seq stdtabn := pmap insub enum_stdtabn.
 
 Lemma finite_stdtabn : Finite.axiom stdtabn_enum.
-Proof.
+Proof using .
   case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
   rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
     by rewrite isSome_insub; case: eqP=> // ->.
@@ -785,16 +785,16 @@ Canonical stdtabn_finType := Eval hnf in FinType stdtabn stdtabn_finMixin.
 Canonical stdtabn_subFinType := Eval hnf in [subFinType of stdtabn_countType].
 
 Lemma stdtabnP (s : stdtabn) : is_stdtab s.
-Proof. by case: s => s /= /andP []. Qed.
+Proof using . by case: s => s /= /andP []. Qed.
 
 Lemma size_tab_stdtabn (s : stdtabn) : size_tab s = n.
-Proof. by case: s => s /= /andP [] _ /eqP. Qed.
+Proof using . by case: s => s /= /andP [] _ /eqP. Qed.
 
 Lemma sumn_shape_stdtabnE (Q : stdtabn) : (sumn (shape Q)) = n.
-Proof. case: Q => q; by rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP. Qed.
+Proof using . case: Q => q; by rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP. Qed.
 
 Lemma is_part_shape_deg (Q : stdtabn) : is_part_of_n n (shape Q).
-Proof.
+Proof using .
   rewrite /=; apply/andP; split.
   - by rewrite -/(size_tab _) size_tab_stdtabn.
   - apply: is_part_sht; apply stdtabP; exact: stdtabnP.

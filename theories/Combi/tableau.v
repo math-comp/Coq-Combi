@@ -68,7 +68,7 @@ Section Rows.
   Definition head_leq_last_row := head_leq_last_sorted (@leqX_trans T) (@leqXnn T).
   Lemma row_lt_by_pos Z r p q:
     is_row r -> p < size r -> q < size r -> (nth Z r p < nth Z r q)%Ord -> p < q.
-  Proof.
+  Proof using .
     rewrite /ltnX_op. apply: (sorted_lt_by_pos (@leqX_trans T) (@leqXnn T) (@anti_leqX T)). 
   Qed.
 
@@ -88,7 +88,7 @@ Section Dominate.
 Lemma is_row_set_nth l r pos :
   is_row r -> (l < nth l r pos)%Ord ->
   (forall n : nat, (l < nth l r n)%Ord -> pos <= n) -> is_row (set_nth l r pos l).
-Proof.
+Proof using .
   move=> /is_row1P Hrow Hl Hmin. apply/(is_row1P l) => i.
   rewrite (lock (i.+1)) !nth_set_nth /=; unlock.
   case: (ltnP pos (size r)) Hl => [Hpos Hl |HH]; last by rewrite (nth_default l HH) ltnXnn.
@@ -107,7 +107,7 @@ Qed.
   Lemma dominateP u v :
     reflect ((size u) <= (size v) /\ forall i, i < size u -> (nth Z u i > nth Z v i)%Ord)
             (dominate u v).
-  Proof.
+  Proof using .
     rewrite /dominate /mkseq ; apply/(iffP idP).
     - move=> /andP [] Hsz /allP Hall; split; first by exact Hsz.
       move=> i Hi; apply: Hall; by rewrite mem_iota add0n.
@@ -115,11 +115,11 @@ Qed.
   Qed.
 
   Lemma dominate_nil u : dominate [::] u.
-  Proof. apply/dominateP => /=; by split. Qed.
+  Proof using . apply/dominateP => /=; by split. Qed.
 
   Lemma dominate_trans r0 r1 r2 :
     dominate r0 r1 -> dominate r1 r2 -> dominate r0 r2.
-  Proof.
+  Proof using .
     move=> /dominateP [] Hsz0 Hdom0 /dominateP [] Hsz1 Hdom1.
     apply/dominateP; split; first exact: (leq_trans Hsz0 Hsz1).
     move => i Hi.
@@ -128,7 +128,7 @@ Qed.
   Qed.
 
   Lemma dominate_rcons v u l : dominate u v -> dominate u (rcons v l).
-  Proof.
+  Proof using .
     move /dominateP => [] Hsz Hlt.
     apply/dominateP; split => [|i Hi]; first by rewrite size_rcons; apply: leqW.
     move/(_ _ Hi) : Hlt; rewrite nth_rcons.
@@ -138,14 +138,14 @@ Qed.
 
   Lemma dominate_rconsK u v l :
     size u <= size v -> dominate u (rcons v l) -> dominate u v.
-  Proof.
+  Proof using .
     move=> Hsz /dominateP [] _ Hlt.
     apply/dominateP; split => [|i Hi]; first exact Hsz.
     move/(_ _ Hi) : Hlt; by rewrite nth_rcons (leq_trans Hi Hsz).
   Qed.
 
   Lemma dominate_head u v : u != [::] -> dominate u v -> (head Z v < head Z u)%Ord.
-  Proof.
+  Proof using .
     move=> Hu /dominateP []; case: u Hu => [//=|u0 u _]; case: v => [|v0 v _] /=.
     - by rewrite ltn0.
     - move=> Hdom; exact: (Hdom 0 (ltn0Sn _)).
@@ -153,7 +153,7 @@ Qed.
 
   Lemma dominate_tl a u b v :
     dominate (a :: u) (b :: v) -> dominate u v.
-  Proof.
+  Proof using .
     move=> /dominateP [] /=; rewrite ltnS => Hsize Hdom.
     apply/dominateP; split; first exact Hsize.
     move=> i Hi; exact: (Hdom i.+1 Hi).
@@ -190,7 +190,7 @@ Section Tableau.
      forall i, is_row (nth [::] t i) &
      forall i j, i < j -> dominate (nth [::] t j) (nth [::] t i)]
     (is_tableau t).
-  Proof.
+  Proof using .
     apply (iffP idP).
     - elim: t => [_ | t0 t IHt] /=.
         split=> i //=; first by rewrite nth_default.
@@ -216,16 +216,16 @@ Section Tableau.
   Qed.
 
   Lemma get_tab_default t (r c : nat) : ~~ is_in_shape (shape t) r c -> get_tab t r c = Z.
-  Proof. rewrite /is_in_shape /get_tab -leqNgt nth_shape => Hc; exact: nth_default. Qed.
+  Proof using . rewrite /is_in_shape /get_tab -leqNgt nth_shape => Hc; exact: nth_default. Qed.
 
   Lemma to_word_cons r t : to_word (r :: t) = to_word t ++ r.
-  Proof. by rewrite /to_word rev_cons flatten_rcons. Qed.
+  Proof using . by rewrite /to_word rev_cons flatten_rcons. Qed.
   Lemma to_word_rcons r t : to_word (rcons t r) = r ++ to_word t.
-  Proof. by rewrite /to_word rev_rcons /=. Qed.
+  Proof using . by rewrite /to_word rev_rcons /=. Qed.
 
   Lemma mem_to_word t (r c : nat) :
     is_in_shape (shape t) r c -> (get_tab t r c) \in (to_word t).
-  Proof.
+  Proof using .
     rewrite /is_in_shape /get_tab.
     elim: t r c => [//= | t0 t IHt] /= r c; first by rewrite nth_default.
     rewrite to_word_cons mem_cat => H.
@@ -234,20 +234,20 @@ Section Tableau.
   Qed.
 
   Lemma to_wordK t : rev (reshape (rev (shape t)) (to_word t)) = t.
-  Proof. by rewrite -shape_rev /to_word flattenK revK. Qed.
+  Proof using . by rewrite -shape_rev /to_word flattenK revK. Qed.
 
   Lemma tableau_is_row r t : is_tableau (r :: t) -> is_row r.
-  Proof. by move=> /= /and4P []. Qed.
+  Proof using . by move=> /= /and4P []. Qed.
 
   Lemma  is_tableau_rconsK t (tn : seq T) :
     is_tableau (rcons t tn) -> is_tableau t.
-  Proof.
+  Proof using .
     elim: t => [//= | t0 t IHt] /= /and4P [] -> -> Hdom /IHt -> /= {IHt}.
     case: t Hdom => [//=| t1 t]; by rewrite rcons_cons /= => ->.
   Qed.
 
   Lemma is_part_sht t : is_tableau t -> is_part (shape t).
-  Proof.
+  Proof using .
     elim: t => [//= | t0 t IHt] /= /and4P [] Ht0 _ /dominateP [] Hdom _ Htab.
     rewrite (IHt Htab) andbT {IHt Htab} /shape.
     case: t Hdom => //=; by case: t0 Ht0.
@@ -255,7 +255,7 @@ Section Tableau.
 
   Lemma tab_eqP p q :
     is_tableau p -> is_tableau q -> reflect (forall i, nth [::] p i = nth [::] q i) (p == q).
-  Proof.
+  Proof using .
     move=> Hp Hq.
     apply (iffP idP) => [/eqP -> //| H].
     have Hnth t i : nth 0 (shape t) i = size (nth [::] t i).
@@ -274,7 +274,7 @@ Section Tableau.
     [&& is_part (shape t),
      all (sorted leqX_op) t &
      sorted (fun x y => dominate y x) t].
-  Proof.
+  Proof using .
     apply/idP/idP; elim: t => [//= | t0 t IHt].
     - move=> /=/and4P [] Hnnil Hrow0 Hdom /IHt /and3P [] Hpart Hall Hsort.
       rewrite Hpart Hrow0 Hall {Hpart Hrow0 Hall IHt} !andbT /=; apply/andP; split.
@@ -299,7 +299,7 @@ Section Tableau.
        (forall (r c : nat), is_in_shape (shape t) r.+1 c ->
                     ((get_tab t r c) < (get_tab t r.+1 c)))%Ord]
       (is_tableau t).
-  Proof.
+  Proof using .
     apply/(iffP idP).
     - move=> Htab; split.
       + exact: is_part_sht.
@@ -332,7 +332,7 @@ Section Tableau.
 
 Lemma filter_gtnX_row r n :
   is_row r -> filter (gtnX n) r = take (count (gtnX n) r) r.
-Proof.
+Proof using .
   elim: r => [//= | r0 r IHr] Hrow /=.
   case: (ltnXP r0 n) => Hr0.
   - by rewrite add1n (IHr (is_row_consK Hrow)).
@@ -346,7 +346,7 @@ Qed.
 
 Lemma count_gtnX_dominate r1 r0 n :
   dominate r1 r0 -> (count (gtnX n) r1) <= (count (gtnX n) r0).
-Proof.
+Proof using .
   move=> /dominateP [] Hsz Hdom.
   rewrite -[r0](mkseq_nth Z) -[r1](mkseq_nth Z) /mkseq !count_map.
   rewrite -(subnKC Hsz).
@@ -368,7 +368,7 @@ Qed.
 Lemma filter_gtnX_dominate r1 r0 n :
     is_row r0 -> is_row r1 -> dominate r1 r0 ->
     dominate (filter (gtnX n) r1) (filter (gtnX n) r0).
-Proof.
+Proof using .
   move=> Hrow0 Hrow1 Hdom.
   have Hsize := count_gtnX_dominate n Hdom.
   move: Hdom => /dominateP [] Hsz Hdom.
@@ -386,7 +386,7 @@ Definition filter_gtnX_tab n :=
                                    [seq [seq x <- i | gtnX n x] | i <- t]].
 
 Lemma to_word_filter_nnil t : to_word (filter (fun r => r != [::]) t) = to_word t.
-Proof.
+Proof using .
   elim: t => [//= | t0 t IHt] /=.
   rewrite to_word_cons -IHt.
   case: (altP (t0 =P [::])) => [-> | _] /=; first by rewrite cats0.
@@ -394,7 +394,7 @@ Proof.
 Qed.
 
 Lemma filter_to_word t p : filter p (to_word t) = to_word (map (filter p) t).
-Proof.
+Proof using .
     elim: t => [//= | t0 t IHt] /=.
     by rewrite !to_word_cons -IHt filter_cat.
 Qed.
@@ -402,7 +402,7 @@ Qed.
 Lemma head_filter_gtnX_tab n t :
   is_tableau t ->
   head [::] (filter_gtnX_tab n t) = [seq x <- head [::] t | (x < n)%Ord].
-Proof.
+Proof using .
   elim: t => [//= | t0 t /= IHt] /and4P [] Hnnil0 Hrow0 Hdom Htab.
   case: (altP ([seq x <- t0 | (x < n)%Ord] =P [::])) => Ht0 //=.
   rewrite (IHt Htab) Ht0 {IHt}.
@@ -412,7 +412,7 @@ Proof.
 Qed.
 
 Lemma is_tableau_filter_gtnX t n : is_tableau t -> is_tableau (filter_gtnX_tab n t).
-Proof.
+Proof using .
   elim: t => [//= | t0 t /= IHt] /and4P [] Hnnil Hrow Hdom Htab.
   case: (altP ([seq x <- t0 | (x < n)%Ord] =P [::])) => Ht0 /=; first exact: IHt.
   rewrite Ht0 /=; apply/and3P; split; last exact: IHt.
@@ -427,13 +427,13 @@ Qed.
 Definition size_tab t := sumn (shape t).
 
 Lemma tab0 t : is_tableau t -> size_tab t = 0 -> t = [::].
-Proof.
+Proof using .
   move/is_part_sht; rewrite /size_tab => /part0 H/H{H}.
   rewrite /shape; by case t.
 Qed.
 
 Lemma size_to_word t : size (to_word t) = size_tab t.
-Proof.
+Proof using .
   rewrite /size_tab; elim: t => [//= | t0 t IHt] /=.
   by rewrite to_word_cons size_cat IHt addnC.
 Qed.
@@ -453,7 +453,7 @@ Lemma tabsh_readingP (sh : seq nat) (w : seq A) :
   reflect
     (exists tab, [/\ is_tableau tab, shape tab = sh & to_word tab = w])
     (tabsh_reading sh w).
-Proof.
+Proof using .
   apply (iffP idP).
   - move=> /andP [] /eqP Hsz Htab.
     exists (rev (reshape (rev sh) w)); split => //.
@@ -492,21 +492,21 @@ Canonical tabsh_countType := Eval hnf in CountType tabsh tabsh_countMixin.
 Canonical tabsh_subCountType := Eval hnf in [subCountType of tabsh].
 
 Lemma tabshP (t : tabsh) : is_tableau t.
-Proof. by case: t => t /= /andP []. Qed.
+Proof using . by case: t => t /= /andP []. Qed.
 
 Lemma shape_tabsh (t : tabsh) : shape t = sh.
-Proof. by case: t => t /= /andP [] _ /eqP. Qed.
+Proof using . by case: t => t /= /andP [] _ /eqP. Qed.
 
 From mathcomp Require Import tuple.
 
 Lemma tabsh_to_wordK (t : tabsh) :
   rev (reshape (rev sh) (to_word (val t))) = t.
-Proof. rewrite /= -(shape_tabsh t); exact: to_wordK. Qed.
+Proof using . rewrite /= -(shape_tabsh t); exact: to_wordK. Qed.
 
 Let tabsh_enum : seq tabsh :=
   pmap insub [seq rev (reshape (rev sh) (val w)) | w in [finType of d.-tuple 'I_n.+1]].
 Lemma finite_tabsh : Finite.axiom tabsh_enum.
-Proof.
+Proof using .
   case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
   rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
     by rewrite isSome_insub; case: eqP=> // ->.
@@ -534,7 +534,7 @@ Lemma to_word_enum_tabsh :
     [seq to_word (tabshval t) | t <- enum tabsh]
     [seq x <- [seq val i | i <- enum [finType of d.-tuple 'I_n.+1]]
     | tabsh_reading sh x].
-Proof.
+Proof using .
   apply uniq_perm_eq.
   - rewrite map_inj_in_uniq; first exact: enum_uniq.
     move=> t u _ _ /= Heq; apply val_inj.

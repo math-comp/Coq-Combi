@@ -34,7 +34,7 @@ Section RCons.
   Implicit Type a b l : T.
 
   Lemma subseq_rcons_eq s w l : subseq s w <-> subseq (rcons s l) (rcons w l).
-  Proof.
+  Proof using .
     split.
     - by rewrite -!cats1 => H; apply: cat_subseq => //=; rewrite (eq_refl _).
     - elim: w s => [|w0 w IHw s] /=.
@@ -45,7 +45,7 @@ Section RCons.
 
   Lemma subseq_rcons_neq s si w wn :
     si != wn -> subseq (rcons s si) (rcons w wn) -> subseq (rcons s si) w.
-  Proof.
+  Proof using .
     elim: w s si=> [/=| w0 w IHw] s si H.
     - case: s => [| s0 s] /=; first by case: eqP H.
       case (altP (s0 =P wn)) => //= ->; by rewrite rcons_nilF.
@@ -57,7 +57,7 @@ Section RCons.
   Qed.
 
   Lemma subseq_rev s w : subseq s w -> subseq (rev s) (rev w).
-  Proof.
+  Proof using .
     elim: w s => [/= s /eqP -> //= | w0 w IHw] s //=.
     case: s => [_ | s0 s /=]; first by rewrite {1}/rev /=; case (rev _).
     rewrite !rev_cons; case eqP => [-> | _].
@@ -87,7 +87,7 @@ Fixpoint enum_subseqs w :=
 
 Lemma cons_in_enum_subseq x0 x s :
   x0 :: x \in enum_subseqs s -> x0 \in s.
-Proof.
+Proof using .
   elim: s => [//= | s0 s IHs] /=.
   rewrite inE mem_cat => /orP [].
   - move=> /mapP [] x1 _ [] -> _.
@@ -96,7 +96,7 @@ Proof.
 Qed.
 
 Lemma enum_subseqs_uniq s : uniq s -> uniq (enum_subseqs s).
-Proof.
+Proof using .
   elim: s => [//= | s0 s IHs] /= /andP [] Hs0 /IHs{IHs} Huniq.
   rewrite cat_uniq; apply/and3P; split.
   - by rewrite map_inj_uniq // => i j [].
@@ -110,7 +110,7 @@ Qed.
 Variable (w : seq T).
 
 Lemma enum_subseqsP : all (fun s => subseq s w) (enum_subseqs w).
-Proof.
+Proof using .
   apply/allP; elim: w => [| w0 wtl IHw] s /=.
     by rewrite mem_seq1 => /eqP ->.
   rewrite mem_cat => /orP [].
@@ -125,7 +125,7 @@ Qed.
 
 Lemma mem_enum_subseqs s :
   subseq s w -> s \in (enum_subseqs w).
-Proof.
+Proof using .
   elim: w s => [| w0 wtl IHw] s /=.
     move/eqP ->; by rewrite mem_seq1.
   case: s => [/= _ | s0 s].
@@ -151,21 +151,21 @@ Canonical subseqs_finType := [finType of subseqs for type].
 Canonical subseqs_subFinType := Eval hnf in [subFinType of subseqs].
 
 Lemma subseqsP (s : subseqs) : subseq s w.
-Proof. by case: s => /= s. Qed.
+Proof using . by case: s => /= s. Qed.
 
 Lemma enum_subseqsE :
   map val (enum subseqs) = undup (enum_subseqs w).
-Proof. rewrite /=; exact: enum_sub_undupE. Qed.
+Proof using . rewrite /=; exact: enum_sub_undupE. Qed.
 
 Lemma uniq_enum_subseqsE :
   uniq w -> map val (enum subseqs) = enum_subseqs w.
-Proof. move/enum_subseqs_uniq/undup_id <-. exact: enum_subseqsE. Qed.
+Proof using . move/enum_subseqs_uniq/undup_id <-. exact: enum_subseqsE. Qed.
 
 Definition sub_nil  : subseqs := Subseqs (sub0seq w).
 Definition sub_full : subseqs := Subseqs (subseq_refl w).
 
 Lemma size_le (s : subseqs) : size s <= size w.
-Proof. case: s => s Ps /=; exact: size_subseq. Qed.
+Proof using . case: s => s Ps /=; exact: size_subseq. Qed.
 
 End Fintype.
 

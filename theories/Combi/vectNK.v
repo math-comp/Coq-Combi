@@ -108,26 +108,26 @@ Variable T : eqType.
 Implicit Type (s : seq T) (ss : seq (seq T)).
 
 Lemma mem_shape_vect_n_k ss : (shape ss) \in vect_n_k (size (flatten ss)) (size ss).
-Proof. apply: vect_n_k_in; first by rewrite size_flatten. by rewrite size_map. Qed.
+Proof using . apply: vect_n_k_in; first by rewrite size_flatten. by rewrite size_map. Qed.
 
 Definition cut_k k s := [seq reshape sh s | sh <- vect_n_k (size s) k].
 
 Lemma cut_k_flatten ss : ss \in cut_k (size ss) (flatten ss).
-Proof.
+Proof using .
   rewrite /cut_k; apply/mapP.
   exists (shape ss); first exact (mem_shape_vect_n_k ss).
   by rewrite flattenK.
 Qed.
 
 Lemma flatten_equiv_cut_k s ss : s == flatten ss <-> ss \in cut_k (size ss) s.
-Proof.
+Proof using .
   split; first by move=> /eqP ->; exact (cut_k_flatten ss).
   move => /mapP [] sh; rewrite vect_n_kP => /andP [] /eqP Hsum _ H; subst ss.
   by rewrite reshapeKr; last by rewrite Hsum.
 Qed.
 
 Lemma size_cut_k k s ss : ss \in (cut_k k s) -> size ss = k.
-Proof.
+Proof using .
   rewrite /cut_k => /mapP [] sh /in_vect_n_k /andP [] /eqP Hsum /eqP Hsize -> {ss}.
   by rewrite -(size_map size _) -/(shape _) reshapeKl; last by rewrite Hsum.
 Qed.
@@ -149,7 +149,7 @@ Let match3 :=
 Definition cut3 s : seq ((seq T) * (seq T) * (seq T)) := [seq match3 ss | ss <- cut_k 3 s].
 
 Lemma cat3_equiv_cut3 s a b c : s == a ++ b ++ c <-> (a, b, c) \in cut3 s.
-Proof.
+Proof using .
   have -> : (a ++ b ++ c) = flatten [:: a; b; c] by rewrite /= cats0.
   rewrite flatten_equiv_cut_k /cut3; split.
   - move=> H; apply/mapP; by exists [:: a; b; c].

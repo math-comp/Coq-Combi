@@ -100,11 +100,13 @@ Variable m : M A.
 Hypothesis Mstable_sub : stable_sub m.
 
 Lemma Mstable_eq : stable m.
+Proof using .
 apply monotonic_stable; trivial.
 Save.
 Hint Resolve Mstable_eq.
 
 Lemma Mstable0 : m \0 = 0.
+Proof using Mstable_sub.
 transitivity (m \0 - m \0).
 transitivity (m (\0 \- \0)).
 apply Mstable_eq; auto.
@@ -114,6 +116,7 @@ Save.
 Hint Resolve Mstable0.
 
 Lemma Mstable_opp : stable_opp m.
+Proof using Mstable_sub.
 move => f; transitivity (m \0 - m f).
 rewrite -Mstable_sub.
 apply Mstable_eq; intro x.
@@ -123,6 +126,7 @@ Save.
 Hint Resolve Mstable_opp.
 
 Lemma Mstable_add : stable_add m.
+Proof using Mstable_sub.
 move => f g; transitivity (m f - m (fun x => - g x)).
 transitivity (m (f \- (fun x => - g x))).
 apply Mstable_eq; intro x.
@@ -133,6 +137,7 @@ Save.
 Hint Resolve Mstable_add.
 
 Lemma Mstable_addn (f : MF A) (n : nat) : m (fun x => f x *+ n) = (m f) *+ n.
+Proof using Mstable_sub.
 move:n; elim => [|n].
 rewrite mulr0n.
 transitivity (m \0); auto.
@@ -144,11 +149,13 @@ by congr +%R.
 Save.
 
 Lemma Mstable_subn (f : MF A) (n : nat) : m (fun x => f x *- n) = (m f) *- n.
+Proof using Mstable_sub.
 rewrite Mstable_opp.
 by rewrite Mstable_addn.
 Save.
 
 Lemma Mstable_divn (f : MF A) (n : nat) : m (fun x => f x / n%:Q) = (m f) / (n%:Q).
+Proof using Mstable_sub.
 case :n => [|n].
 rewrite rat0 invr0 mulr0.
 rewrite -{2}Mstable0.
@@ -167,6 +174,7 @@ rewrite mulrVK; trivial.
 Save.
 
 Lemma Mstable_addi (f : MF A) (n : int) : m (fun x => f x *~ n) = (m f) *~ n.
+Proof using Mstable_sub.
 move:n => [np|nn].
 rewrite -pmulrn.
 apply Mstable_addn.
@@ -175,12 +183,14 @@ apply Mstable_subn.
 Save.
 
 Lemma Mstable_muli (f : MF A) (n : int) : m (fun x => n%:Q * f x) = (n%:Q) * (m f).
+Proof using Mstable_sub.
 rewrite mulrzl -Mstable_addi.
 apply Mstable_eq; move=> x /=.
 apply mulrzl.
 Save.
 
 Lemma Mstable_divi (f : MF A) (n : int) : m (fun x => f x / n%:Q) = (m f) / (n%:Q).
+Proof using Mstable_sub.
 move:n => [np|nn].
 rewrite -pmulrn.
 apply Mstable_divn.
@@ -193,6 +203,7 @@ by rewrite mulrN.
 Save.
 
 Lemma Mstable_mull : stable_mull m.
+Proof using Mstable_sub.
 rewrite /stable_mull; move => n f.
 rewrite -{2}(divq_num_den n).
 rewrite -mulrA.
@@ -205,6 +216,7 @@ Save.
 
 Lemma Mstable_linear : forall (p q : rat) (f g : MF A), 
     m ((p \*o f) \+ (q \*o g)) = p * (m f) + q * (m g).
+Proof using Mstable_sub.
 by intros; rewrite Mstable_add !Mstable_mull.
 Save.
 
@@ -839,12 +851,14 @@ Variable p : seq A.
 Definition weight (c : A -> rat) : rat := \sum_(i <- p | 0 < c i) (c i).
 
 Lemma weight_nonneg c : 0 <= weight c.
+Proof using .
 apply Num.Theory.sumr_ge0.
 auto.
 Save.
 Hint Resolve weight_nonneg.
 
 Lemma weight_case c : (weight c = 0) \/ 0 < (weight c)^-1.
+Proof using .
 have :((weight c == 0) || (0 < weight c)).
 rewrite -(Num.Theory.le0r (weight c)); auto.
 move=> /orP [/eqP ->|]; first auto.
@@ -854,6 +868,7 @@ Save.
 
 Instance finite_mon (c : A -> rat) : 
    monotonic (fun f => (\sum_(i <- p | 0 < c i) (c i * f i))/weight c).
+Proof using .
 intros f g Hfg.
 rewrite /Ole /=.
 case (weight_case c) => [Hci|Hci].
@@ -873,10 +888,12 @@ Definition mfinite (c : A -> rat) : M A :=
 
 Lemma finite_simpl (c : A -> rat) f : 
      mfinite c f = (\sum_(i <- p | 0 < c i) (c i * f i))/weight c.
+Proof using .
 trivial.
 Save.
 
 Lemma finite_stable_sub (c : A -> rat) : stable_sub (mfinite c).
+Proof using .
 red; intros.
 rewrite !finite_simpl.
 case (weight_case c) => [Hci|Hci].

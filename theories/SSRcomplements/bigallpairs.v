@@ -38,7 +38,7 @@ Local Notation "x * y" := (op x y).
 Lemma big_allpairs I J (rI : seq I) (rJ : seq J) F :
   \big[*%M/idx]_(X <- [seq (A, B) | A <- rI, B <- rJ]) F X =
     \big[*%M/idx]_(A <- rI) \big[*%M/idx]_(B <- rJ) F (A, B).
-Proof.
+Proof using .
   elim: rI => [//= | i0 rI IHrI] /=; first by rewrite !big_nil.
   by rewrite big_cat big_cons IHrI {IHrI} big_map.
 Qed.

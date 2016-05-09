@@ -119,7 +119,7 @@ Definition enum_box_in :=
   flatten [seq [seq (r, c) | c <- iota 0 (nth 0 sh r) ] | r <- iota 0 (size sh)].
 
 Lemma enum_box_in_uniq : uniq enum_box_in.
-Proof.
+Proof using .
   rewrite /enum_box_in.
   elim: sh => [//= | s0 s IHs] /=.
   rewrite cat_uniq; apply/and3P; split.
@@ -140,14 +140,14 @@ Proof.
 Qed.
 
 Lemma enum_box_inP : all (fun c => is_in_shape sh c.1 c.2) enum_box_in.
-Proof.
+Proof using .
   apply/allP => [[r c]] /= /flatten_mapP [] r0.
   rewrite mem_iota add0n /= => Hr0 /mapP [] c0.
   by rewrite mem_iota add0n /= => Hc0 [] -> ->.
 Qed.
 
 Lemma count_enum_box_inP rc : is_in_shape sh rc.1 rc.2 -> count_mem rc enum_box_in = 1.
-Proof.
+Proof using .
   case: rc => [r c] /=.
   rewrite /is_in_shape => H.
   rewrite (count_uniq_mem _ enum_box_in_uniq).
@@ -163,19 +163,19 @@ Canonical box_in_finType := Eval hnf in [finType of box_in for type].
 Canonical box_in_subFinType := Eval hnf in [subFinType of box_in].
 
 Lemma box_inP (rc : box_in) : is_in_shape sh rc.1 rc.2.
-Proof. by case: rc. Qed.
+Proof using . by case: rc. Qed.
 
 Lemma enum_box_inE : map val (enum {:box_in}) = enum_box_in.
-Proof. exact: enum_subE. Qed.
+Proof using . exact: enum_subE. Qed.
 
 Lemma mem_enum_box_in : enum_box_in =i is_box_in_shape.
-Proof. exact: (sub_enumE enum_box_inP count_enum_box_inP). Qed.
+Proof using . exact: (sub_enumE enum_box_inP count_enum_box_inP). Qed.
 
 (** ** Rewriting bigops running along the boxes of a shape *)
 Lemma big_enum_box_in (R : Type) (idx : R) (op : Monoid.law idx) (f : nat -> nat -> R):
   \big[op/idx]_(b <- enum_box_in) f b.1 b.2 =
   \big[op/idx]_(0 <= r < size sh) \big[op/idx]_(0 <= c < nth 0 sh r) f r c.
-Proof.
+Proof using .
   rewrite /enum_box_in.
   rewrite big_flatten /index_iota big_map !subn0; apply eq_bigr => r _.
   by rewrite big_map !subn0; apply eq_bigr.
@@ -183,7 +183,7 @@ Qed.
 
 Lemma big_box_in (R : Type) (idx : R) (op : Monoid.law idx) (f : nat -> nat -> R):
   \big[op/idx]_(b : box_in) f b.1 b.2 = \big[op/idx]_(b <- enum_box_in) f b.1 b.2.
-Proof.
+Proof using .
   rewrite -enum_box_inE.
   - rewrite /index_enum /= enumT /=.
     elim: (Finite.enum box_in_finType) => [| b0 b] /=; first by rewrite !big_nil.
@@ -1296,26 +1296,26 @@ Canonical intpartn_finType := Eval hnf in [finType of intpartn for type].
 Canonical intpartn_subFinType := Eval hnf in [subFinType of intpartn].
 
 Lemma intpartnP (p : intpartn) : is_part p.
-Proof. by case: p => /= p /andP []. Qed.
+Proof using . by case: p => /= p /andP []. Qed.
 Hint Resolve intpartnP.
 Definition intpart_of_intpartn (p : intpartn) := IntPart (intpartnP p).
 Coercion intpart_of_intpartn : intpartn >-> intpart.
 
 Lemma intpartn_sumn (p : intpartn) : sumn p = n.
-Proof. by case: p => /= p /andP [] /eqP. Qed.
+Proof using . by case: p => /= p /andP [] /eqP. Qed.
 
 Lemma enum_intpartnE : map val (enum {:intpartn}) = enum_partn n.
-Proof. rewrite /=; exact: enum_subE. Qed.
+Proof using . rewrite /=; exact: enum_subE. Qed.
 
 Lemma conj_intpartnP (sh : intpartn) : is_part_of_n n (conj_part sh).
-Proof.
+Proof using .
   case: sh => sh /= /andP [] /eqP <- Hpart.
   by rewrite is_part_conj // sumn_conj_part /= eq_refl.
 Qed.
 Canonical conj_intpartn (sh : intpartn) := IntPartN (conj_intpartnP sh).
 
 Lemma conj_intpartnK : involutive conj_intpartn.
-Proof. move=> p; apply: val_inj => /=; by rewrite conj_partK. Qed.
+Proof using . move=> p; apply: val_inj => /=; by rewrite conj_partK. Qed.
 
 End PartOfn.
 

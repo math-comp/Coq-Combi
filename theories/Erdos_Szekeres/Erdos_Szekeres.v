@@ -35,7 +35,7 @@ Variable T : inhOrdType.
 
 Lemma Greene_rel_one (s : seq T) (R : rel T) :
   exists t : seq T, subseq t s /\ sorted R t /\ size t = (Greene_rel R s) 1.
-Proof.
+Proof using .
   rewrite /Greene_rel /= /Greene_rel_t.
   set P := (X in \max_(_ | X _) _).
   have : #|P| > 0.
@@ -68,7 +68,7 @@ Theorem Erdos_Szekeres (m n : nat) (s : seq T) :
   (size s) > (m * n) ->
   (exists t, subseq t s /\ sorted leqX t /\ size t > m) \/
   (exists t, subseq t s /\ sorted gtnX t /\ size t > n).
-Proof.
+Proof using .
   move=> Hsize; pose tab := RS s.
   have {Hsize} : (n < size (shape tab)) \/ (m < head 0 (shape tab)).
     have Hpart := is_part_sht (is_tableau_RS s).

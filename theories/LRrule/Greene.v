@@ -90,10 +90,10 @@ Variable T : finType.
 
 Lemma bigcup_seq_cover (u : seq {set T}) :
   \bigcup_(s <- u) s = cover [set s in u].
-Proof. rewrite /cover bigcup_seq; apply: eq_bigl => i; by rewrite inE. Qed.
+Proof using . rewrite /cover bigcup_seq; apply: eq_bigl => i; by rewrite inE. Qed.
 
 Lemma card_seq (s : seq T) : #|[set i in s]| <= size s.
-Proof.
+Proof using .
   elim: s => [//= | s0 s IHs]; set t := [set i | i \in _].
   - suff -> : t = set0 by rewrite cards0.
     rewrite -setP => i /=; by rewrite inE.
@@ -105,11 +105,11 @@ Definition trivIseq (u : seq {set T}) : Prop :=
   forall i j, i < j < size u -> [disjoint (nth set0 u i) & (nth set0 u j)].
 
 Lemma trivIseq_consK u0 u : trivIseq (u0 :: u) -> trivIseq u.
-Proof. rewrite /trivIseq => H i j Hij; apply: (H i.+1 j.+1); by rewrite /= !ltnS. Qed.
+Proof using . rewrite /trivIseq => H i j Hij; apply: (H i.+1 j.+1); by rewrite /= !ltnS. Qed.
 
 Lemma trivIsubseq u v :
   subseq u v -> trivIseq v -> trivIseq u.
-Proof.
+Proof using .
   elim: v u => [/= v1 /eqP -> //=| v1 v IHv] u.
   case: u => [/= _ _|u1 u /=]; first by move=> i j /= /andP [] _.
   case eqP => [->|_] Hsubs Htriv i j Hij.
@@ -124,7 +124,7 @@ Proof.
 Qed.
 
 Lemma trivIs u : trivIseq u -> trivIset [set i | i \in u].
-Proof.
+Proof using .
   rewrite /trivIseq => H; apply/trivIsetP => A B.
   rewrite !inE => HAin HBin.
   have:= HAin; have:= HBin; rewrite -!index_mem.
@@ -140,7 +140,7 @@ Proof.
 Qed.
 
 Lemma trivIseq_cover S : trivIseq S -> \sum_(i <- S) #|i| = #|\bigcup_(i <- S) i|.
-Proof.
+Proof using .
   elim: S => [_ | s0 s IHs] /=; first by rewrite !big_nil cards0.
   move=> Htriv; move/(_ (trivIseq_consK Htriv)): IHs => IHs.
   move: Htriv; rewrite !big_cons /trivIseq => Htriv.
@@ -158,7 +158,7 @@ Qed.
 
 Lemma size_coverI (S : {set {set T}}) B :
   trivIset S -> \sum_(i in S) #|i :&: B| = #|cover S :&: B|.
-Proof.
+Proof using .
   move=> /trivIsetP Htriv.
   have : trivIset [set i :&: B | i in S].
     apply/trivIsetP => U1 V1 /imsetP [] U HU -> /imsetP [] V HV -> {U1 V1} Hneq.
@@ -206,7 +206,7 @@ Qed.
 
 Lemma trivIset_I (S : {set {set T}}) B :
   trivIset S -> \sum_(i in S) #|i :&: B| <= #|B|.
-Proof.
+Proof using .
   move/size_coverI ->; apply: subset_leq_card.
   apply/subsetP => i; by rewrite !inE => /andP [].
 Qed.
@@ -246,7 +246,7 @@ Variables (R : Type) (idx : R) (op : Monoid.com_law idx).
 Lemma bigop_trivIseq (S : seq {set T}) F :
   all (fun s => s != set0) S ->
   trivIseq S -> \big[op/idx]_(i in [set x in S]) F i  =  \big[op/idx]_(i <- S) F i.
-Proof.
+Proof using .
   elim: S => [//= _| S0 S IHS] /=.
   - rewrite set_nil big_nil big_pred0 //=.
     move => i /=; by rewrite in_set0.
@@ -273,11 +273,11 @@ Definition extractpred n (wt : n.-tuple Alph) (P : pred 'I_n) :=
 
 Lemma extractIE n (wt : n.-tuple Alph) P :
   extractpred wt P = [seq tnth wt i | i <- enum 'I_n & P i].
-Proof. by rewrite /extractpred {1}/enum_mem -enumT /=. Qed.
+Proof using . by rewrite /extractpred {1}/enum_mem -enumT /=. Qed.
 
 Lemma extractmaskE n (wt : n.-tuple Alph) P :
   extractpred wt P = mask [seq P i | i <- enum 'I_n] wt.
-Proof.
+Proof using .
   rewrite extractIE.
   elim: n wt P => [//= | n IHn].
   + by rewrite enum0.
@@ -292,7 +292,7 @@ Qed.
 
 Lemma extsubsIm n wt (P1 P2 : pred 'I_n) :
   subpred P1 P2 -> subseq (extractpred wt P1) (extractpred wt P2).
-Proof.
+Proof using .
   rewrite !extractmaskE; case: wt => w /= _.
   elim: n w P1 P2 => [//= | n IHn] w P1 P2 H; first by rewrite enum0.
   case: w => [//= | w0 w]; first by rewrite !mask0.
@@ -308,7 +308,7 @@ Proof.
 Qed.
 
 Lemma extsubsm n (w : n.-tuple Alph) (P : pred 'I_n) : subseq (extractpred w P) w.
-Proof.
+Proof using .
   suff -> /= : tval w = mask [seq predT i | i <- enum 'I_n] w
     by rewrite -extractmaskE; apply: extsubsIm.
   rewrite (_ : map _ _ = nseq n true); first last.
@@ -328,17 +328,17 @@ Variable wt : N.-tuple Alph.
 Definition extract := [fun s : {set 'I_N} => extractpred wt (mem s)].
 
 Lemma size_extract s : size (extract s) = #|s|.
-Proof. by rewrite /extractpred size_map cardE. Qed.
+Proof using . by rewrite /extractpred size_map cardE. Qed.
 
 Lemma extsubsI (s1 s2 : {set 'I_N}) :
   s1 \subset s2 -> subseq (extract s1) (extract s2).
-Proof. move/subsetP=> Hincl; apply: extsubsIm=> i /=; exact: Hincl. Qed.
+Proof using . move/subsetP=> Hincl; apply: extsubsIm=> i /=; exact: Hincl. Qed.
 
 Definition is_seq := [fun r => (sorted comp r)].
 
 Lemma is_seq_extract_cond s P :
   is_seq (extract s) -> is_seq (extract (s :&: P)).
-Proof.
+Proof using Hcomp.
   apply: subseq_sorted; first by move=> a b c /= H1 H2; apply: (Hcomp H1 H2).
   apply: extsubsI; rewrite -{2}[s]setIT; apply: setIS; exact: subsetT.
 Qed.
@@ -347,7 +347,7 @@ Definition ksupp k (P : {set {set 'I_N}}) :=
   [&& #|P| <= k, trivIset P & [forall (s | s \in P), is_seq (extract s)]].
 
 Lemma ksupp0 k : ksupp k set0.
-Proof.
+Proof using .
   rewrite /ksupp cards0 leq0n /=; apply/andP; split.
   + apply/trivIsetP => A B; by rewrite in_set0.
   + apply/forallP => A; by rewrite in_set0.
@@ -358,7 +358,7 @@ Definition Greene_rel_t k := \max_(P | ksupp k P) #|cover P|.
 Notation Ik k := [set i : 'I_N | i < k].
 
 Lemma iotagtnk k : [seq x <- iota 0 N | gtn k x] = iota 0 (minn N k).
-Proof.
+Proof using .
   rewrite /minn; case ltnP => Hn.
   + rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT.
     move=> i; rewrite mem_iota add0n /= => Hi.
@@ -373,21 +373,21 @@ Proof.
 Qed.
 
 Lemma sizeIk k : #|Ik k| = minn N k.
-Proof.
+Proof using .
   rewrite !cardE size_filter.
   rewrite (eq_count (a2 := (gtn k) \o val)); last by move=> i /=; rewrite in_set.
   by rewrite -count_map /enum_mem -enumT /= val_enum_ord -size_filter iotagtnk size_iota.
 Qed.
 
 Lemma extract0 : extract set0 = [::].
-Proof.
+Proof using .
   rewrite /= extractIE /=.
   rewrite (eq_filter (a2 := pred0)); last by move=> i /=; rewrite in_set0.
   by rewrite filter_pred0.
 Qed.
 
 Lemma extract1 i : extract [set i] = [:: tnth wt i].
-Proof.
+Proof using .
   rewrite /= extractIE.
   rewrite [filter _ _](_ : _ = [:: i]) //.
   rewrite (eq_filter (a2 := pred1 i)); last by move=> j /=; rewrite in_set1.
@@ -398,7 +398,7 @@ Qed.
 Lemma extractS (l : seq 'I_N) :
   sorted (fun i j : 'I_N => val i < val j) l ->
   extract [set i in l] = [seq tnth wt i | i <- l].
-Proof.
+Proof using .
   move=> HS; rewrite /= extractIE.
   congr ([seq tnth wt i | i <- _]).
   rewrite (eq_filter (a2 := mem l)); last by move => i; rewrite !inE.
@@ -406,7 +406,7 @@ Proof.
 Qed.
 
 Lemma extract2 i j : val i < val j -> extract [set i; j] = [:: tnth wt i; tnth wt j].
-Proof.
+Proof using .
   move=> Hij.
   have : sorted (fun i j : 'I_N => val i < val j) [:: i; j] by rewrite /sorted /path Hij.
   move/extractS => /= <-; congr (extractpred wt (mem (pred_of_set _))).
@@ -414,7 +414,7 @@ Proof.
 Qed.
 
 Lemma Greene_rel_t_inf k : Greene_rel_t k >= minn N k.
-Proof.
+Proof using .
   pose P := [set [set i ] | i in Ik k].
   have <- : #|cover P| = minn N k.
     rewrite /= (_ : cover P = Ik k); first exact: sizeIk.
@@ -437,14 +437,14 @@ Proof.
 Qed.
 
 Lemma Greene_rel_t_sup k : Greene_rel_t k <= N.
-Proof.
+Proof using .
   rewrite /Greene_rel_t /=; apply/bigmax_leqP => P _.
   move: (cover P) => cover {P}; rewrite -{5}[N]card_ord.
   exact: max_card.
 Qed.
 
 Lemma Greene_rel_t_0 : Greene_rel_t 0 = 0.
-Proof.
+Proof using .
   rewrite /Greene_rel_t /=.
   apply/eqP; rewrite eqn_leq; apply/andP; split; last by [].
   apply/bigmax_leqP => S.
@@ -497,7 +497,7 @@ Local Notation linj := (@lshift M N).
 Local Notation rinj := (@rshift M N).
 
 Lemma enumIMN : enum 'I_(M + N) = map linj (enum 'I_M) ++ map rinj (enum 'I_N).
-Proof.
+Proof using .
   apply: (inj_map (@ord_inj (M + N))).
   rewrite map_cat -map_comp -map_comp !val_enum_ord.
   rewrite (eq_map (f2 := (addn M) \o val)); last by [].
@@ -508,16 +508,16 @@ Let lsplit := [fun s : {set 'I_(M+N)} => linj @^-1: s].
 Let rsplit := [fun s : {set 'I_(M+N)} => rinj @^-1: s].
 
 Lemma linjP : injective linj.
-Proof.
+Proof using .
   move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /=.
 Qed.
 Lemma rinjP : injective rinj.
-Proof.
+Proof using .
   move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /= eqn_add2l.
 Qed.
 
 Lemma lrinjF i j : (linj i == rinj j) = false.
-Proof.
+Proof using .
   apply: (introF idP); case: i j => [] i Hi [] j Hj.
   rewrite /eq_op /= => /eqP H.
   move: Hi; by rewrite H ltnNge leq_addr.
@@ -525,14 +525,14 @@ Qed.
 
 Lemma disjoint_inj (sM : {set 'I_M}) (sN : {set 'I_N}) :
   [disjoint linj @: sM & rinj @: sN].
-Proof.
+Proof using .
   rewrite /disjoint; apply/pred0P=> i /=; apply: negbTE; apply: (introN idP) => /andP [].
   move/imsetP=> [] [] l HlM Hl -> {i} /imsetP [] [] r HrN Hr /eqP.
   by rewrite lrinjF.
 Qed.
 
 Lemma splitsetK (s : {set 'I_(M+N)}) : s = (linj @: lsplit s) :|: (rinj @: rsplit s).
-Proof.
+Proof using .
   rewrite /=; apply/setP/subset_eqP/andP; split; apply/subsetP=> i Hi.
   + apply/setUP.
     have:= splitK i; case: fintype.splitP => j Hj; rewrite /unsplit => Hinj.
@@ -545,7 +545,7 @@ Qed.
 
 Lemma cutcover (p : {set {set 'I_(M + N)}}) :
   cover p = linj @: (cover (lsplit @: p)) :|: rinj @: (cover (rsplit @: p)).
-Proof.
+Proof using .
   rewrite /cover /=.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> i.
   * move/bigcupP=> [] part Hpart Hi.
@@ -562,7 +562,7 @@ Qed.
 
 Lemma extlsplit s :
    extract V (lsplit s) = extract [tuple of V ++ W] (s :&: [set i : 'I_(M+N)| i < M]).
-Proof.
+Proof using .
   rewrite /= !extractmaskE enumIMN map_cat.
   rewrite mask_cat; last by rewrite 2!size_map size_enum_ord size_tuple.
   rewrite (_ : map _ (map rinj _) = nseq N false); first last.
@@ -579,7 +579,7 @@ Qed.
 
 Lemma extrsplit s :
    extract W (rsplit s) = extract [tuple of V ++ W] (s :&: [set i : 'I_(M+N)| i >= M]).
-Proof.
+Proof using .
   rewrite /= !extractmaskE enumIMN map_cat.
   rewrite mask_cat; last by rewrite 2!size_map size_enum_ord size_tuple.
   rewrite (_ : map _ (map linj _) = nseq M false); first last.
@@ -598,7 +598,7 @@ Notation scover := (fun x => #|cover x|).
 
 Lemma Greene_rel_t_cat k :
   Greene_rel_t comp [tuple of V ++ W] k <= Greene_rel_t comp V k + Greene_rel_t comp W k.
-Proof.
+Proof using Hcomp.
   rewrite /Greene_rel_t; set tc := [tuple of V ++ W].
   have H : 0 < #|ksupp comp tc k| by apply/card_gt0P; exists set0; apply: ksupp0.
   case: (@eq_bigmax_cond _ (ksupp comp tc k) scover H) => ks Hks ->.
@@ -637,7 +637,7 @@ Hypothesis Hcomp : transitive comp.
 Definition Greene_rel u := [fun k => Greene_rel_t comp (in_tuple u) k].
 
 Lemma Greene_rel_cat k v w : Greene_rel (v ++ w) k <= Greene_rel v k + Greene_rel w k.
-Proof.
+Proof using Hcomp.
   rewrite /disjoint /=.
   rewrite (_ :  Greene_rel_t _ _ _ =
                 Greene_rel_t comp [tuple of (in_tuple v) ++ (in_tuple w)] k);
@@ -651,7 +651,7 @@ Let negcomp := (fun a b => ~~(comp a b)).
 Hypothesis Hnegcomp : transitive negcomp.
 
 Lemma Greene_rel_seq r k : is_seq negcomp r -> Greene_rel r k = minn (size r) k.
-Proof.
+Proof using Hnegcomp.
   move=> Hrow /=.
   apply/eqP; rewrite eqn_leq; apply/andP; split; last exact: Greene_rel_t_inf.
   rewrite leq_min Greene_rel_t_sup /=; apply/bigmax_leqP => s.
@@ -704,7 +704,7 @@ Definition ksupp_inj k (u1 : seq T1) (u2 : seq T2) :=
 
 Lemma leq_Greene k (u1 : seq T1) (u2 : seq T2) :
   ksupp_inj k u1 u2 -> Greene_rel R1 u1 k <= Greene_rel R2 u2 k.
-Proof.
+Proof using .
   move=> Hinj; rewrite /= /Greene_rel /Greene_rel_t.
   set P1 := ksupp R1 (in_tuple u1) k.
   have : #|P1| > 0.
@@ -729,7 +729,7 @@ Implicit Type t : seq (seq Alph).
 Definition revset n (s : {set 'I_n}) : {set 'I_n} := [set rev_ord x | x in s].
 
 Lemma revsetK {n} : involutive (@revset n).
-Proof.
+Proof using .
   rewrite /revset => s.
   rewrite -imset_comp -setP => i /=.
   apply/idP/idP.
@@ -739,7 +739,7 @@ Qed.
 
 
 Lemma ksupp_inj_rev (leT : rel Alph) u k : ksupp_inj leT (fun y x => leT x y) k u (rev u).
-Proof.
+Proof using .
   move=> ks /and3P [] Hsz Htriv /forallP Hall.
   exists (cast_set (esym (size_rev u)) @: ((@revset _) @: ks)).
   apply/and4P; split.
@@ -790,7 +790,7 @@ Qed.
 
 Lemma Greene_rel_rev (leT : rel Alph) u :
   Greene_rel leT u =1 Greene_rel (fun y x => leT x y) (rev u).
-Proof.
+Proof using .
   move=> k; apply anti_leq; apply/andP; split.
   - apply leq_Greene; first exact: ksupp_inj_rev.
   - rewrite [X in (_ <= X)](eq_Greene_rel
@@ -837,24 +837,24 @@ Definition tabrowsk t := [fun k => take k (tabrows t)].
 Definition tabcolsk t := [fun k => take k (tabcols t)].
 
 Lemma size_shcols_cons s0 sh : size (shcols (s0 :: sh)) = s0.
-Proof. by rewrite /= size_map size_enum_ord. Qed.
+Proof using . by rewrite /= size_map size_enum_ord. Qed.
 
 Lemma size_shcols sh : size (shcols sh) = head 0 sh.
-Proof. by case sh => [//= | s0 s]; apply: size_shcols_cons. Qed.
+Proof using . by case sh => [//= | s0 s]; apply: size_shcols_cons. Qed.
 
 Lemma size_tabcols t : size (tabcols t) = size (head [::] t).
-Proof. rewrite /tabcols /= size_map size_shcols. by case t. Qed.
+Proof using . rewrite /tabcols /= size_map size_shcols. by case t. Qed.
 
 Lemma size_shrows sh : size (shrows sh) = size sh.
-Proof. elim: sh => [//= | sh0 sh] /=; by rewrite !size_map => ->. Qed.
+Proof using . elim: sh => [//= | sh0 sh] /=; by rewrite !size_map => ->. Qed.
 
 Lemma size_tabrows t : size (tabrows t) = size t.
-Proof. by rewrite /tabrows /= size_map size_shrows size_map. Qed.
+Proof using . by rewrite /tabrows /= size_map size_shrows size_map. Qed.
 
 Lemma shcol_cards sh :
   is_part sh ->
   map (fun S : {set 'I_(sumn sh)} => #|S|) (shcols sh) = conj_part sh.
-Proof.
+Proof using .
   elim: sh => [//= | s0 sh IHsh] /= /andP [] Hhead Hpart.
   rewrite -map_comp.
   rewrite (eq_map (f2 := fun i : 'I_(_) => (nth 0 (conj_part sh) i).+1)); first last.
@@ -899,7 +899,7 @@ Qed.
 
 Lemma shrows_cards sh :
   map (fun S : {set 'I_(sumn sh)} => #|S|) (shrows sh) = sh.
-Proof.
+Proof using .
   elim: sh => [//= | s0 sh IHsh] /=.
   rewrite imset_comp card_imset; last exact: cast_ord_inj.
   rewrite card_imset; last exact: rinjP.
@@ -912,7 +912,7 @@ Qed.
 
 Lemma tabrows_non0 t :
   is_part (shape t) -> forall s, s \in tabrows t -> s != set0.
-Proof.
+Proof using .
   move=> Hpart S'.
   rewrite /tabrows => /mapP [] S HS -> {S'}.
   rewrite -card_gt0 card_imset; last exact: cast_ord_inj.
@@ -927,7 +927,7 @@ Proof.
 Qed.
 
 Lemma trivIseq_shrows sh : trivIseq (shrows sh).
-Proof.
+Proof using .
   elim: sh => [/= | s0 sh /= IHsh]; first by rewrite /trivIseq => i j /= /andP [].
   rewrite /trivIseq /= size_map => i j /andP [] Hij Hj.
   rewrite /disjoint; apply/pred0P => l /=; apply: (introF idP) => /andP [].
@@ -945,7 +945,7 @@ Proof.
 Qed.
 
 Lemma trivIset_tabrowsk k t : trivIset [set s | s \in (tabrowsk t k)].
-Proof.
+Proof using .
   apply: trivIs; rewrite /tabrowsk /tabrows /= -map_take.
   apply: trivIseq_map; first exact: cast_ord_inj.
   apply: (trivIsubseq (v := (shrows (shape t)))).
@@ -955,7 +955,7 @@ Proof.
 Qed.
 
 Lemma trivIseq_shcols sh : trivIseq (shcols sh).
-Proof.
+Proof using .
   elim: sh => [/= | s0 sh /= IHsh]; first by rewrite /trivIseq => i j /= /andP [].
   rewrite /trivIseq size_shcols_cons => i j /andP [] Hij Hj.
   have Hi := ltn_trans Hij Hj.
@@ -979,10 +979,10 @@ Proof.
 Qed.
 
 Lemma trivIseq_tabcols (t : seq (seq Alph)) : trivIseq (tabcols t).
-Proof. apply: trivIseq_map; first by apply: cast_ord_inj. exact: trivIseq_shcols. Qed.
+Proof using . apply: trivIseq_map; first by apply: cast_ord_inj. exact: trivIseq_shcols. Qed.
 
 Lemma trivIset_tabcolsk k t : trivIset [set s | s \in (tabcolsk t k)].
-Proof.
+Proof using .
   apply: trivIs; rewrite /tabcolsk /=.
   apply: (trivIsubseq (v := (tabcols t))); last exact: trivIseq_tabcols.
   rewrite -{2}[tabcols t](cat_take_drop k).
@@ -995,23 +995,23 @@ Section Induction.
 Variable (t0 : seq Alph) (t : seq (seq Alph)).
 
 Lemma size_to_word_cons : size (to_word t) + size t0 = size (to_word (t0 :: t)).
-Proof. by rewrite !size_to_word /size_tab /= addnC. Qed.
+Proof using . by rewrite !size_to_word /size_tab /= addnC. Qed.
 
 Let cast_cons := cast_ord size_to_word_cons.
 Let rinj_rec := (cast_cons \o (@rshift (size (to_word t)) (size t0))).
 Let linj_rec := (cast_cons \o (@lshift (size (to_word t)) (size t0))).
 
 Lemma linj_recP : injective linj_rec.
-Proof.
+Proof using .
   move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /=.
 Qed.
 Lemma rinj_recP : injective rinj_rec.
-Proof.
+Proof using .
   move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /= eqn_add2l.
 Qed.
 
 Lemma lrinj_recF i j : (linj_rec i == rinj_rec j) = false.
-Proof.
+Proof using .
   apply: (introF idP); case: i j => [] i Hi [] j Hj.
   rewrite /eq_op /= => /eqP H.
   move: Hi; by rewrite H ltnNge leq_addr.
@@ -1019,17 +1019,17 @@ Qed.
 
 Lemma rinj_in_linj_recF i (s : {set 'I_(size (to_word t))}) :
   rinj_rec i \in [set linj_rec x | x in s] = false.
-Proof.
+Proof using .
   apply: negbTE; apply: (introN idP) => /imsetP [] j _ /eqP; by rewrite eq_sym lrinj_recF.
 Qed.
 
 Lemma linj_in_rinj_recF i (s : {set 'I_(size t0)}) :
   linj_rec i \in [set rinj_rec x | x in s] = false.
-Proof. apply: negbTE; apply: (introN idP) => /imsetP [] j _ /eqP; by rewrite lrinj_recF. Qed.
+Proof using . apply: negbTE; apply: (introN idP) => /imsetP [] j _ /eqP; by rewrite lrinj_recF. Qed.
 
 Lemma disjoint_inj_rec (st : {set 'I_(size (to_word t))}) (s0 : {set 'I_(size t0)}) :
   [disjoint linj_rec @: st & rinj_rec @: s0].
-Proof.
+Proof using .
   rewrite /linj_rec /rinj_rec !imset_comp.
   rewrite -setI_eq0 -imsetI; last by move=> i j _ _ /= /cast_ord_inj.
   have := (disjoint_inj st s0); rewrite -setI_eq0 => /eqP ->.
@@ -1042,7 +1042,7 @@ Let rsplit_rec := [fun s : {set 'I_(size (to_word (t0 :: t)))} => rinj_rec @^-1:
 (* I didn't manage to use this lemma getting it pass through \bigcup *)
 Lemma split_recabK (s : {set 'I_(size (to_word (t0 :: t)))}) :
   s = (linj_rec @: lsplit_rec s) :|: (rinj_rec @: rsplit_rec s).
-Proof.
+Proof using .
   rewrite /lsplit_rec /rsplit_rec /linj_rec /rinj_rec.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> i Hi.
   + apply/setUP; rewrite -(cast_ordKV size_to_word_cons i) !imset_comp !mem_cast.
@@ -1057,7 +1057,7 @@ Qed.
 
 Lemma split_rec_cover (p : {set {set 'I_(size (to_word (t0 :: t)))}}) :
   cover p = linj_rec @: (cover (lsplit_rec @: p)) :|: rinj_rec @: (cover (rsplit_rec @: p)).
-Proof.
+Proof using .
   rewrite /lsplit_rec /rsplit_rec /linj_rec /rinj_rec /cover.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> i.
   * move/bigcupP=> [] part Hpart Hi.
@@ -1080,18 +1080,18 @@ Lemma lcast_com :
   (cast_ord (esym (size_to_word (t0 :: t))))
     \o sym_cast \o (@lshift (sumn (shape t)) (size t0))
   =1  linj_rec \o (cast_ord (esym (size_to_word t))).
-Proof. move=> i; apply/eqP; by rewrite /rinj_rec /= /eq_op /=. Qed.
+Proof using . move=> i; apply/eqP; by rewrite /rinj_rec /= /eq_op /=. Qed.
 
 Lemma rcast_com :
  (cast_ord (esym (size_to_word (t0 :: t))))
    \o sym_cast \o (@rshift (sumn (shape t)) (size t0))  =1  rinj_rec.
-Proof. move=> i; apply/eqP; rewrite /rinj_rec /= /eq_op /=; by rewrite size_to_word. Qed.
+Proof using . move=> i; apply/eqP; rewrite /rinj_rec /= /eq_op /=; by rewrite size_to_word. Qed.
 
 
 Lemma enumIsize_to_word :
   enum 'I_(size (to_word (t0 :: t))) =
   map linj_rec (enum 'I_(size (to_word t)))  ++  map rinj_rec (enum 'I_(size t0)).
-Proof.
+Proof using .
   rewrite /rinj_rec /linj_rec (enum_cast_ord size_to_word_cons).
   rewrite !map_comp /cast_cons -map_cat; congr (map (cast_ord size_to_word_cons) _).
   by rewrite map_id enumIMN.
@@ -1099,11 +1099,11 @@ Qed.
 
 Lemma compA (T1 T2 T3 T4: eqType)
       (f : T3 -> T4) (g : T2 -> T3) (h : T1 -> T2) : (f \o g) \o h =1 f \o (g \o h).
-Proof. by move=> i. Qed.
+Proof using . by move=> i. Qed.
 
 Lemma extract_tabrows_0 :
   extract (in_tuple (to_word (t0 :: t))) (nth set0 (tabrows (t0 :: t)) 0) = t0.
-Proof.
+Proof using .
   rewrite /tabrows /= imset_comp -!imset_comp extractIE.
   rewrite [imset _ _](_ : _ = [set rinj_rec i | i in 'I_(size t0)]); first last.
     rewrite -setP => i; apply/idP/idP.
@@ -1133,7 +1133,7 @@ Lemma extract_tabrows_rec i :
   i < size t ->
   extract (in_tuple (to_word (t0 :: t))) (nth set0 (tabrows (t0 :: t)) i.+1) =
   extract (in_tuple (to_word t)) (nth set0 (tabrows t) i).
-Proof.
+Proof using .
   move=> Hi.
   rewrite /tabrows /= /shiftset /= map_comp -!map_comp !extractIE.
   set f := (X in nth _ (map X _)).
@@ -1161,7 +1161,7 @@ Qed.
 Lemma tabcols_cons :
   tabcols (t0 :: t) =
     [seq rinj_rec i |: (linj_rec @: (nth set0 (tabcols t) i)) | i <- enum 'I_(size t0)].
-Proof.
+Proof using .
   rewrite /tabcols /cast_cons /=.
   apply: (@eq_from_nth _ set0); first by rewrite !size_map.
   move=> i; rewrite 2!size_map => Hienum; have:= Hienum; rewrite size_enum_ord => Hi.
@@ -1180,14 +1180,14 @@ Proof.
 Qed.
 
 Lemma size_tabcols_cons : size (tabcols (t0 :: t)) = size t0.
-Proof. by rewrite tabcols_cons /= size_map size_enum_ord. Qed.
+Proof using . by rewrite tabcols_cons /= size_map size_enum_ord. Qed.
 
 Lemma extract_tabcols_rec i :
   i < size t0 ->
   extract (in_tuple (to_word (t0 :: t))) (nth set0 (tabcols (t0 :: t)) i) =
   rcons (extract (in_tuple (to_word t)) (nth set0 (tabcols t) i))
         (nth (inhabitant Alph) t0 i).
-Proof.
+Proof using .
   move => Hi; rewrite /= !extractmaskE tabcols_cons enumIsize_to_word /=.
   rewrite (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
   rewrite nth_enum_ord //= {13}to_word_cons.
@@ -1213,7 +1213,7 @@ Lemma lsplit_rec_tab k :
   head 0 (shape t) <= size t0 ->
   cover [set lsplit_rec x | x in [set s in tabcolsk (t0 :: t) k]] =
   cover [set s in tabcolsk t k].
-Proof.
+Proof using .
   move => Hsize; rewrite cover_imset /tabcolsk /= tabcols_cons /cover /preimset.
   apply/setP/subset_eqP/andP; split; apply/subsetP => i.
   - move/bigcupP => [] S0; rewrite !inE.
@@ -1245,7 +1245,7 @@ Qed.
 Lemma rsplit_rec_tab k :
   cover [set rsplit_rec x | x in [set s in (tabcolsk (t0 :: t)) k]] =
   [set i : 'I_(size t0) | i < k].
-Proof.
+Proof using .
   rewrite /tabcolsk /= tabcols_cons.
   apply/setP/subset_eqP/andP; split; apply/subsetP => i.
   - rewrite in_set /= /preimset.
@@ -1276,7 +1276,7 @@ Lemma cover_tabcols_rec k :
   cover [set s in (tabcolsk (t0 :: t) k)] =
   rinj_rec @: [set s : 'I_(size t0) | s < k]
            :|:  linj_rec @: cover [set s in (tabcolsk t k)].
-Proof.
+Proof using .
   move => Hsize; by rewrite split_rec_cover setUC rsplit_rec_tab (lsplit_rec_tab _ Hsize).
 Qed.
 
@@ -1285,7 +1285,7 @@ End Induction.
 Lemma size_cover_tabrows k t :
   is_part (shape t) ->
   #|cover [set s | s \in (tabrowsk t k)]| = part_sum (shape t) k.
-Proof.
+Proof using .
   move=> Hpart.
   have:= trivIset_tabrowsk k t; rewrite /trivIset /= => /eqP <-.
   rewrite /cover bigop_trivIseq; first last.
@@ -1315,7 +1315,7 @@ Qed.
 Lemma sorted_leqX_tabrows t i :
   is_tableau t -> i < size (tabrows t) ->
   sorted leqX (extract (in_tuple (to_word t)) (nth set0 (tabrows t) i)).
-Proof.
+Proof using .
   rewrite size_tabrows.
   elim: t i => [//= | t0 t IHt] i.
   rewrite [X in X -> _]/=; move=> /and4P [] _ Hrow _ Htab.
@@ -1327,7 +1327,7 @@ Qed.
 
 Lemma ksupp_leqX_tabrowsk k t :
   is_tableau t -> ksupp leqX (in_tuple (to_word t)) k [set s | s \in (tabrowsk t k)].
-Proof.
+Proof using .
   move=> Htab; rewrite /ksupp /tabrowsk; apply/and3P; split.
   + apply: (leq_trans (card_seq (tabrowsk t k))).
     rewrite /tabrowsk /= size_take; exact: geq_minl.
@@ -1343,7 +1343,7 @@ Qed.
 Lemma size_cover_tabcolsk k t :
   is_part (shape t) ->
   #|cover [set s | s \in (tabcolsk t k)]| = \sum_(l <- (shape t)) minn l k.
-Proof.
+Proof using .
   elim: t => [//= | t0 t IHt] /=; first by rewrite cover_nil big_nil.
   move/andP => [] Hhead /IHt {IHt} IHt.
   have {Hhead} Hhead : head 0 (shape t) <= size t0.
@@ -1372,7 +1372,7 @@ Qed.
 
 Lemma cover_tabcols t :
   is_part (shape t) -> cover [set s | s \in tabcols t] = setT.
-Proof.
+Proof using .
   move=> Hpart.
   apply/eqP; rewrite eqEcard; apply/andP; split; first exact: subsetT.
   have -> : tabcols t = tabcolsk t (size (head [::] t)).
@@ -1389,7 +1389,7 @@ Qed.
 Lemma sorted_gtnX_tabcols t i :
   is_tableau t -> i < size (tabcols t) ->
   sorted gtnX (extract (in_tuple (to_word t)) (nth set0 (tabcols t) i)).
-Proof.
+Proof using .
   elim: t => [//= | t0 t IHt].
   rewrite [X in X -> _]/=; move=> /and4P [] _ _ /dominateP [] Hsz Hdom Htab.
   rewrite size_tabcols_cons => Hi; rewrite (extract_tabcols_rec _ Hi).
@@ -1408,7 +1408,7 @@ Qed.
 
 Lemma ksupp_gtnX_tabcolsk k t :
   is_tableau t -> ksupp gtnX (in_tuple (to_word t)) k [set s | s \in (tabcolsk t k)].
-Proof.
+Proof using .
   move=> Htab; rewrite /ksupp /tabcolsk; apply/and3P; split.
   + apply: (leq_trans (card_seq (tabcolsk t k))).
     rewrite /tabcolsk /= size_take; exact: geq_minl.
@@ -1435,7 +1435,7 @@ Lemma size_row_extract t S T :
   is_tableau t -> T \in (tabcols t) ->
   sorted leqX (extract (in_tuple (to_word t)) S) ->
   #|S :&: T| <= 1.
-Proof.
+Proof using .
   move=> Htab HT Hleq.
   have: S :&: T \subset S by apply/subsetP => j; rewrite !inE=> /andP [].
   move/(extsubsI (in_tuple (to_word t)))/(subseq_sorted (@leqX_trans _)).
@@ -1453,7 +1453,7 @@ Qed.
 
 Lemma tabcol_cut t :
   is_part (shape t) -> forall B, \sum_(S <- tabcols t) #|B :&: S| = #|B|.
-Proof.
+Proof using .
   move=> Hpart B.
   rewrite (_ : \sum_(S <- _) _ =
            \sum_(S <- [seq B :&: S | S <- tabcols t]) #|S|); last by rewrite big_map.
@@ -1476,7 +1476,7 @@ Qed.
 Lemma shape_tabcols t:
   is_tableau t ->
   conj_part (shape t) = [seq #|s : {set 'I_(size (to_word t))}| | s <- tabcols t].
-Proof.
+Proof using .
   move=> Htab.
   rewrite -shcol_cards; last exact: is_part_sht.
   rewrite /tabcols; apply: (@eq_from_nth _ 0).
@@ -1490,7 +1490,7 @@ Qed.
 
 Lemma Greene_row_extract k t :
   is_tableau t -> Greene_row (to_word t) k <= \sum_(l <- conj_part (shape t)) minn l k.
-Proof.
+Proof using .
   move=> Htab; rewrite (shape_tabcols Htab).
   rewrite /Greene_row /Greene_rel /Greene_rel_t.
   apply/bigmax_leqP => S; rewrite /ksupp => /and3P [] Hsz Htriv.
@@ -1509,14 +1509,14 @@ Qed.
 
 Lemma Greene_row_inf_tab k t :
   is_tableau t -> Greene_row (to_word t) k <= part_sum (shape t) k.
-Proof.
+Proof using .
   move=> Htab.
   have:= Greene_row_extract k Htab; by rewrite sum_conj (conj_partK (is_part_sht Htab)).
 Qed.
 
 Theorem Greene_row_tab k t :
   is_tableau t -> Greene_row (to_word t) k = part_sum (shape t) k.
-Proof.
+Proof using .
   move=> Ht; apply/eqP; rewrite eqn_leq (Greene_row_inf_tab _ Ht) /=.
   rewrite /Greene_row /Greene_rel_t /= -(size_cover_tabrows _ (is_part_sht Ht)).
   apply: (leq_bigmax_cond (F := (fun x => #|cover x|))).
@@ -1525,7 +1525,7 @@ Qed.
 
 Lemma Greene_col_inf_tab k t :
   is_tableau t -> Greene_col (to_word t) k <= \sum_(l <- (shape t)) minn l k.
-Proof.
+Proof using .
   elim: t => [_ | t0 t IHt] /=.
     by apply: (@leq_trans 0); first exact: Greene_rel_t_sup.
   move=> /and4P [] _ Hrow _ /IHt => {IHt} Ht; rewrite to_word_cons.
@@ -1541,7 +1541,7 @@ Qed.
 
 Theorem Greene_col_tab_min k t :
   is_tableau t -> Greene_col (to_word t) k = \sum_(l <- (shape t)) minn l k.
-Proof.
+Proof using .
   move=> Ht; apply/eqP; rewrite eqn_leq (Greene_col_inf_tab _ Ht) /=.
   rewrite /Greene_col /Greene_rel_t /= -(size_cover_tabcolsk _ (is_part_sht Ht)).
   apply: (leq_bigmax_cond (F := (fun x => #|cover x|))).
@@ -1550,7 +1550,7 @@ Qed.
 
 Theorem Greene_col_tab k t :
   is_tableau t -> Greene_col (to_word t) k = part_sum (conj_part (shape t)) k.
-Proof. move/Greene_col_tab_min ->; exact: sum_conj. Qed.
+Proof using . move/Greene_col_tab_min ->; exact: sum_conj. Qed.
 
 End GreeneTab.
 
