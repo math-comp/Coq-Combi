@@ -601,7 +601,7 @@ Lemma Greene_rel_t_cat k :
 Proof.
   rewrite /Greene_rel_t; set tc := [tuple of V ++ W].
   have H : 0 < #|ksupp comp tc k| by apply/card_gt0P; exists set0; apply: ksupp0.
-  case: (@eq_bigmax_cond _ (ksupp comp tc k) (fun x => #|cover x|) H) => ks Hks ->.
+  case: (@eq_bigmax_cond _ (ksupp comp tc k) scover H) => ks Hks ->.
   pose PV := lsplit @: ks; pose PW := rsplit @: ks.
   move: Hks => /and3P [] Hcard Htriv /forallP Hcol.
   have HV : ksupp comp V k PV.
