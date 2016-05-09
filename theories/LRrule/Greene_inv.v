@@ -26,7 +26,7 @@ Lemma bigcup_set1 (T1 : finType) (S : {set T1}) :
   \bigcup_(i in [set S]) i = S.
 Proof.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> i.
-  - by move/bigcupP => [] T; rewrite in_set1 => /eqP ->.
+  - by move/bigcupP => [T]; rewrite in_set1 => /eqP ->.
   - move=> Hi; apply/bigcupP; exists S => //=; by rewrite in_set1.
 Qed.
 
@@ -126,7 +126,7 @@ Proof.
   suff /eq_imset -> : f =1 id by rewrite imset_id.
   rewrite /f {f} /revSet => s /=.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> i.
-  - move=> /imsetP [] t; rewrite inE => Ht Hi; by subst i.
+  - move=> /imsetP [t]; rewrite inE => Ht Hi; by subst i.
   - move=> Hi; apply/imsetP.
     exists (rev_ord ((cast_ord (esym (size_revdual w))) i)).
     + by rewrite /rev_ord_cast inE /= rev_ordK cast_ordKV.
@@ -202,7 +202,7 @@ Lemma rev_is_ksupp_row P :
 Proof.
   rewrite /ksupp size_rev_ksupp trivIset_setrev; congr [&& _, _ & _].
   apply/idP/idP => /forallP Hall; apply/forallP => S; apply/implyP.
-  - move=> /imsetP [] T HT -> {S}.
+  - move=> /imsetP [T HT -> {S}].
     rewrite -is_row_dual.
     move/(_ T) : Hall; by rewrite HT.
   - move=> HS; move/(_ (revSet S)) : Hall.
@@ -216,7 +216,7 @@ Lemma rev_is_ksupp_col P :
 Proof.
   rewrite /ksupp size_rev_ksupp trivIset_setrev; congr [&& _, _ & _].
   apply/idP/idP => /forallP Hall; apply/forallP => S; apply/implyP.
-  - move=> /imsetP [] T HT -> {S}.
+  - move=> /imsetP [T HT -> {S}].
     rewrite -is_col_dual.
     move/(_ T): Hall; by rewrite HT.
   - move=> HS; move/(_ (revSet S)): Hall.
@@ -366,7 +366,7 @@ Proof.
     congr (_ ++ _).
     * by rewrite /= !addnS addn0 ltnSn (ltn_trans (ltnSn _) (ltnSn _)).
     * rewrite (eq_in_filter (a2 := pred0)); first by rewrite filter_pred0.
-      by move=> i; rewrite mem_iota /= leqNgt => /andP [] /negbTE => ->.
+      by move=> i; rewrite mem_iota /= leqNgt => /andP [/negbTE ->].
 Qed.
 
 Lemma size_cut_sizeu :
@@ -438,7 +438,7 @@ Proof.
   rewrite !mem_cast.
   congr (mask _ u ++ _ ++ mask _ v).
   + rewrite -!map_comp; apply eq_in_map => i /=.
-    rewrite mem_filter => /andP [] Hi _.
+    rewrite mem_filter => /andP [Hi _].
     by rewrite mem_cast -{1}[i](Swap.swapL Hi) /Swap.swapSet /= mem_imset_inj;
       last exact: Swap.swap_inj.
   + rewrite -{1}Swap.swap1 mem_imset_inj //=; last exact: Swap.swap_inj.
@@ -452,14 +452,14 @@ Qed.
 
 Lemma ksupp_noBoth : ksupp R (in_tuple y) k Q.
 Proof.
-  move: Px => /and3P [] HszP HtrivP /forallP HallP.
+  move: Px => /and3P [HszP HtrivP /forallP HallP].
   apply/and3P; split.
   - by rewrite card_imset; last exact swapSet_inj.
   - rewrite /Q /swapSet imset_comp.
     apply: imset_trivIset; first exact: cast_ord_inj.
     apply: imset_trivIset; first exact: Swap.swap_inj.
     exact HtrivP.
-  - apply/forallP => S2; apply/implyP => /imsetP [] S HS -> {S2}.
+  - apply/forallP => S2; apply/implyP => /imsetP [S HS -> {S2}].
     rewrite (extract_swapSet HS).
     move/(_ S): HallP; by rewrite HS.
 Qed.
@@ -491,7 +491,7 @@ Variable P Q : {set {set 'I_N}}.
 
 Lemma trivIset_coverU1 : trivIset P -> [disjoint S & cover P] -> trivIset (S |: P).
 Proof.
-  move=> Htriv Hdis; case (set_0Vmem S) => [-> | [] s Hs].
+  move=> Htriv Hdis; case (set_0Vmem S) => [-> | [s Hs]].
   + case (boolP (set0 \in P)); first by move/setU1E ->.
     apply (@trivIsetU1 _ set0 P) => //= T _.
     by rewrite -setI_eq0 set0I.
@@ -512,7 +512,7 @@ Proof.
   rewrite -!setI_eq0 => /eqP; rewrite -setP => Hcov HA HB.
   apply/eqP; rewrite -setP => i; rewrite in_set0.
   apply/idP/idP; move/(_ i): Hcov; rewrite !inE /cover => /negbT.
-  apply contra => /andP [] HiA HiB.
+  apply contra => /andP [HiA HiB].
   by apply/andP; split; apply/bigcupP; [exists A | exists B].
 Qed.
 
@@ -530,7 +530,7 @@ Qed.
 Lemma trivIset_coverD1 : trivIset P -> S \in P -> [disjoint S & cover (P :\ S)].
 Proof.
   move=> /trivIsetP Htriv HS; rewrite /cover bigcup_disjoint //=.
-  move=> T; rewrite inE in_set1 eq_sym => /andP [] Hneq HT.
+  move=> T; rewrite inE in_set1 eq_sym => /andP [Hneq HT].
   exact: Htriv.
 Qed.
 
@@ -609,19 +609,19 @@ Proof. by rewrite Swap.swap_size_cover. Qed.
 
 Lemma inPQE T : T != swapSet S -> T \in Qbnotin -> T \in P.
 Proof.
-  rewrite /Qbnotin => Hneq /imsetP [] TP HTP Hswap; subst T.
+  rewrite /Qbnotin => Hneq /imsetP [TP HTP Hswap]; subst T.
   have {Hneq} Hneq : TP != S by move: Hneq; apply: contra => /eqP ->.
   suff -> : swapSet TP = TP by [].
   rewrite /swapSet /= -setP /swap => i.
   rewrite (eq_in_imset (g := id)); first by rewrite imset_id.
   move=> {i} i /= Hi.
   have -> : (i == posb) = false.
-    apply/(introF idP) => //= /eqP Hib; subst i.
+    apply/(introF eqP) => //= Hib; subst i.
     have Hcov : posb \in cover P by rewrite /cover; apply/bigcupP; exists TP.
     by move: HbNin; rewrite Hcov.
   suff -> : (i == posa) = false by [].
-  apply/(introF idP) => //= /eqP Hib; subst i.
-  move: Px; rewrite /ksupp => /and3P [] _ /trivIsetP Htriv _.
+  apply/(introF eqP) => //= Hib; subst i.
+  move: Px; rewrite /ksupp => /and3P [_ /trivIsetP Htriv _].
   move/(_  _ _ HTP HS Hneq) : Htriv => /disjoint_setI0.
   rewrite -setP => /(_ posa); rewrite in_set0 in_setI Hi.
   by rewrite Hposa.
@@ -630,7 +630,7 @@ Qed.
 Lemma extract_swapSet T :
   T != swapSet S -> T \in Qbnotin -> is_seq R (extract (in_tuple x) T).
 Proof.
-  move/inPQE => H/H{H} HT; move: Px => /and3P [] _ _ /forallP/(_ T).
+  move/inPQE => H/H{H} HT; move: Px => /and3P [_ _ /forallP/(_ T)].
   by rewrite HT.
 Qed.
 
@@ -654,7 +654,7 @@ Proof.
   have /= -> := (extract_cuti (in_tuple x) HposcLS).
   have -> : LS :&: [set j : 'I_(size x) | j < (size u).+2] = set0.
     rewrite /LS -setP => i; rewrite !inE /=.
-    apply/(introF idP) => //= /andP [] /andP [] Hi H1 H2.
+    apply/(introF andP) => //= [] [/andP [Hi H1] H2].
     have:= leq_ltn_trans H1 H2; by rewrite ltnn.
   have /= -> := (extract0 (in_tuple x)); rewrite cat0s.
   rewrite tnth_posc; congr (_ :: extractpred (in_tuple x) (mem (pred_of_set _))).
@@ -703,26 +703,27 @@ Lemma extract_swapSet_S : is_seq R (extract (in_tuple x) (swapSet S)).
 Proof.
   rewrite extract_swapSetSE.
   have : is_seq R (extract (in_tuple x) S).
-    move: Px; rewrite /ksupp => /and3P [] _ _ /forallP Hall.
+    move: Px; rewrite /ksupp => /and3P [_ _ /forallP Hall].
     have := Hall S; by rewrite HS.
   rewrite extract_SE.
   set LL := extract _ _; set LR := extract _ _; rewrite /= => Hsort.
   have HacR := subseq_sorted (Rtrans HRabc) (suffix_subseq _ _) Hsort.
-  have HbcR : sorted R [:: b, c & LR] by move: HacR; rewrite /= (Hbc HRabc)=> /andP [] _ ->.
+  have HbcR : sorted R [:: b, c & LR].
+    by move: HacR; rewrite /= (Hbc HRabc)=> /andP [_ ->].
   case: LL Hsort => [//= | LL0 LL] /=.
-  rewrite !cat_path => /andP [] -> /= /and3P [] /(Hxba HRabc) -> _ ->.
+  rewrite !cat_path => /andP [-> /= /and3P [/(Hxba HRabc) -> _ ->]].
   by rewrite Hbc.
 Qed.
 
 Lemma ksupp_bnotin : ksupp R (in_tuple x) k Qbnotin.
 Proof.
-  move: Px => /and3P [] HszP HtrivP /forallP HallP.
+  move: Px => /and3P [HszP HtrivP /forallP HallP].
   apply/and3P; split.
   - by rewrite card_imset; last apply: Swap.swapSet_inj.
   - rewrite /Qbnotin /swapSet.
     apply: imset_trivIset; first exact: Swap.swap_inj.
     exact HtrivP.
-  - apply/forallP => T2; apply/implyP => /imsetP [] T HT -> {T2}.
+  - apply/forallP => T2; apply/implyP => /imsetP [T HT -> {T2}].
     case: (altP (T =P S)) => Heq.
     + subst T; exact: extract_swapSet_S.
     + apply: extract_swapSet.
@@ -732,14 +733,14 @@ Qed.
 
 Lemma Qbnotin_noboth T : T \in Qbnotin -> ~ ((posa \in T) && (posc \in T)).
 Proof.
-  rewrite /Qbnotin => /imsetP [] U HU -> {T}.
+  rewrite /Qbnotin => /imsetP [U HU -> {T}].
   case: (altP (U =P S)) => Heq.
   + subst U; rewrite -Swap.swap0 /swapSet /=.
     rewrite mem_imset_inj; last apply: Swap.swap_inj.
     by rewrite posbinSF.
   + rewrite -Swap.swap0 /swapSet /=.
     rewrite mem_imset_inj; last apply: Swap.swap_inj.
-    move/andP => [] Hb _; move: HbNin.
+    move/andP => [Hb _]; move: HbNin.
     by rewrite (_ : _ \in _); last by rewrite /cover; apply/bigcupP; exists U.
 Qed.
 
@@ -755,11 +756,12 @@ Lemma TSneq : T != S.
 Proof.
   apply/eqP=> Heq; subst T.
   have:= Hba HRabc; suff -> : R b a by [].
-  move: Px; rewrite /ksupp => /and3P [] _ _ /forallP Hall.
+  move: Px; rewrite /ksupp => /and3P [_ _ /forallP Hall].
   move/(_ S): Hall; rewrite HS.
   move/(is_seq_extract_cond (Rtrans HRabc) [set posb; posa]).
   have -> : S :&: [set posb; posa] = [set posb; posa].
-    apply/setP/subset_eqP/andP; split; apply/subsetP=> i; first by rewrite inE => /andP [].
+    apply/setP/subset_eqP/andP.
+    split; apply/subsetP=> i; first by rewrite inE => /andP [].
     rewrite !inE => /orP [] => /eqP ->; rewrite eq_refl /=; first by rewrite Hposb.
     by rewrite Hposa orbT.
   have /extract2 -> : posb < posa by [].
@@ -768,7 +770,7 @@ Qed.
 
 Lemma TS_disjoint : [disjoint S & T].
 Proof.
-  move: Px => /and3P [] _ /trivIsetP Hdisj _.
+  move: Px => /and3P [_ /trivIsetP Hdisj _].
   move/(_ _ _ HT HS TSneq): Hdisj; by rewrite disjoint_sym.
 Qed.
 
@@ -797,19 +799,19 @@ Definition T1 := (T :&: [set j : 'I_(size x) | j <= posb])
 
 Lemma S1_subsST : S1 \subset (S :|: T).
 Proof.
-  apply/subsetP=> i; by rewrite /S1 !inE => /orP [] /andP [] -> _; last by rewrite orbT.
+  apply/subsetP=> i; by rewrite /S1 !inE => /orP [] /andP [-> _]; last rewrite orbT.
 Qed.
 
 Lemma T1_subsST : T1 \subset (S :|: T).
 Proof.
-  apply/subsetP=> i; by rewrite /S1 !inE => /orP [] /andP [] -> _; first by rewrite orbT.
+  apply/subsetP=> i; by rewrite /S1 !inE => /orP [] /andP [-> _]; first rewrite orbT.
 Qed.
 
 Lemma coverS1T1 : cover [set S1; T1] =  (S :|: T).
 Proof.
   rewrite /cover bigcup_setU !bigcup_set1.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> i; rewrite !inE.
-  - move/or3P => [/orP [] | | ] /andP [] -> _ //=; by rewrite orbT.
+  - move/or3P => [/orP [] | | ] /andP [-> _] //=; by rewrite orbT.
   - move/orP => [] Hi; rewrite Hi /=.
     + by case: (ltnP (size u).+1 i); first rewrite !orbT.
     + case: (leqP i (size u)) => Hiu; first by rewrite orbT.
@@ -831,7 +833,7 @@ Proof.
   apply/(introF idP).
   rewrite /S1 /T1 !inE => /andP [].
   have:= TS_disjoint => /disjoint_setI0; rewrite -setP => Hdisj.
-  move=> /orP [] /andP [] Hi1 /= H1 /orP [] /andP [] Hi2 /= H2.
+  move=> /orP [] /andP [Hi1 /= H1] /orP [] /andP [Hi2 /= H2].
   + move/(_ i): Hdisj; by rewrite inE Hi1 Hi2 in_set0.
   + have:= leq_trans H2 H1; by rewrite ltnn.
   + have Hu2 := ltn_trans (ltnSn (size u)) (ltnSn _).
@@ -843,9 +845,9 @@ Lemma ST_cover_disjoint : [disjoint S :|: T & cover (P :\: [set S; T])].
 Proof.
   rewrite -setI_eq0; apply/eqP; rewrite -setP => i; rewrite in_set0.
   apply/(introF idP).
-  move: Px; rewrite /ksupp => /and3P [] _ /trivIsetP Htriv _.
-  rewrite !inE => /andP [] /orP [] Hi /bigcupP [] U;
-    rewrite !inE negb_or => /andP [] /andP [] HUS HUT HU HiU.
+  move: Px; rewrite /ksupp => /and3P [_ /trivIsetP Htriv _].
+  rewrite !inE => /andP [] /orP [] Hi /bigcupP [U];
+    rewrite !inE negb_or => /andP [/andP [HUS HUT] HU] HiU.
   + move/(_ _ _ HU HS HUS): Htriv; rewrite -setI_eq0 => /eqP.
     rewrite -setP => /(_ i); by rewrite in_set0 !inE Hi HiU.
   + move/(_ _ _ HU HT HUT): Htriv; rewrite -setI_eq0 => /eqP.
@@ -863,7 +865,7 @@ Proof.
     * move=> _; rewrite disjoint_sym; exact: disjointS1T1.
     * by rewrite eq_refl.
   + apply: (@trivIsetS _ _ P); first exact: subsetDl.
-    move: Px; by rewrite /ksupp => /and3P [] _.
+    move: Px; by rewrite /ksupp => /and3P [_].
   + rewrite coverS1T1; apply: ST_cover_disjoint.
 Qed.
 
@@ -874,9 +876,9 @@ Proof.
   - rewrite !inE => /orP []; first move=> /orP [].
     + move=> Hi; apply/bigcupP; by exists S.
     + move=> Hi; apply/bigcupP; by exists T.
-    + move/bigcupP => [] U; rewrite inE => /andP [] _ HU Hi.
+    + move/bigcupP => [U]; rewrite inE => /andP [_ HU Hi].
       apply/bigcupP; by exists U.
-  - move/bigcupP => [] U HU Hi; rewrite !inE.
+  - move/bigcupP => [U HU Hi]; rewrite !inE.
     case (altP (U =P S)) => HUS; last case (altP (U =P T)) => HUT.
     + subst U; by rewrite Hi.
     + subst U; by rewrite Hi orbT.
@@ -907,8 +909,8 @@ Lemma extract_S1E :
   extract (in_tuple x) (T :&: [set j : 'I_(size x) | j > posc]).
 Proof.
   rewrite /S1 /extract /= /extractpred (enumUltV (d := posa)); first by rewrite map_cat.
-  + by move=> i; rewrite !inE => /andP [] _ Hi.
-  + move=> i; rewrite !inE => /andP [] _ Hi /=.
+  + by move=> i; rewrite !inE => /andP [_ Hi].
+  + move=> i; rewrite !inE => /andP [_ Hi] /=.
     exact: (ltn_trans (ltnSn _)).
 Qed.
 
@@ -918,8 +920,8 @@ Lemma extract_T1E :
   extract (in_tuple x) (S :&: [set j : 'I_(size x) | j >= posc]).
 Proof.
   rewrite /T1 /extract /= /extractpred (enumUltV (d := posb)); first by rewrite map_cat.
-  + by move=> i; rewrite !inE => /andP [] _ Hi.
-  + move=> i; rewrite !inE => /andP [] _ Hi /=.
+  + by move=> i; rewrite !inE => /andP [_ Hi].
+  + move=> i; rewrite !inE => /andP [_ Hi] /=.
     exact: (ltn_trans (ltnSn _)).
 Qed.
 
@@ -938,7 +940,7 @@ Proof.
   + rewrite (tnth_nth a) /x /=; by elim: u.
   + set s := (X in extract _ X); suff -> : s = set0 by rewrite extract0.
     rewrite /s {s} -setP => i; rewrite !inE -andbA.
-    apply/(introF idP) => /and3P [] _ H1 H2.
+    apply/(introF and3P) => [] [_ H1 H2].
     have:= leq_trans H2 H1; by rewrite ltnn.
 Qed.
 
@@ -952,7 +954,7 @@ Proof.
   congr (_ ++ _ ++ (extract (in_tuple x) _)).
   + set s := (X in extract _ X); suff -> : s = set0 by rewrite extract0.
     rewrite /s {s} -setP => i; rewrite !inE -andbA.
-    apply/(introF idP) => /and3P [] _ H1 H2.
+    apply/(introF and3P) => [] [_ H1 H2].
     have:= leq_trans H2 H1; by rewrite ltnn.
   + rewrite (tnth_nth a) /x /=; by elim: u.
   + rewrite -setP => i; rewrite !inE.
@@ -976,7 +978,7 @@ Proof.
   + rewrite (tnth_nth a) /x /=; by elim: u.
   + set s := (X in extract _ X); suff -> : s = set0 by rewrite extract0.
     rewrite /s {s} -setP => i; rewrite !inE -andbA.
-    apply/(introF idP) => /and3P [] _ H1 H2.
+    apply/(introF and3P) => [] [_ H1 H2].
     have:= leq_trans H2 H1; by rewrite ltnn.
 Qed.
 
@@ -990,14 +992,14 @@ Proof.
   congr (_ ++ _ ++ (extract (in_tuple x) _)).
   + set s := (X in extract _ X); suff -> : s = set0 by rewrite extract0.
     rewrite /s {s} -setP => i; rewrite !inE -andbA.
-    apply/(introF idP) => /and3P [] _ H1 H2.
+    apply/(introF and3P) => [] [_ H1 H2].
     have:= leq_trans H2 H1; by rewrite ltnn.
   + rewrite (tnth_nth a) /x /=; by elim: u.
   + rewrite -setP => i; rewrite !inE.
     case (boolP (i \in T)) => //= Hi.
     case: (ltnP (size u).+2 i).
     * move/ltnW/ltnW => H; by rewrite H (ltnW H).
-    * move=> Hi1; apply/(introF idP) => /andP [] _ H2.
+    * move=> Hi1; apply/(introF andP) => [] [_ H2].
       have:= TS_disjoint => /disjoint_setI0; rewrite -setP => Hdisj.
       case: (ltnP (size u).+1 i) => Hi2.
       - have Htmp : i = posc by apply: val_inj => /=; apply/eqP; rewrite eqn_leq Hi2 Hi1.
@@ -1010,7 +1012,7 @@ Qed.
 
 Lemma extract_S1 : is_seq R (extract (in_tuple x) S1).
 Proof.
-  move: Px => /and3P [] _ _ /forallP Hall.
+  move: Px => /and3P [_ _ /forallP Hall].
   rewrite extract_S1E; set lL := (X in X ++ _); set lR := (X in _ ++ X).
   have:= Hall S; rewrite HS => /= HseqS.
   have:= Hall T; rewrite HT => /= HseqT {Hall}.
@@ -1021,16 +1023,16 @@ Proof.
   case HlR : lR => [//=| r0 lR'] /= ->; rewrite andbT.
   have -> : last l0 lL' = a.
     have := extract_Sa; rewrite -/lL HlL.
-    case: (extract _ _) => [/= [] -> -> //=| y z [] -> ->].
+    case: (extract _ _) => [/= [-> ->] //=| y z [-> ->]].
     by rewrite last_rcons.
   apply: (Hbax HRabc).
   have:= (is_seq_extract_cond (Rtrans HRabc) [set j : 'I_(size x) | j >= posb] HseqT).
-  by rewrite extract_bT -/lR HlR /= => /andP [] ->.
+  by rewrite extract_bT -/lR HlR /= => /andP [-> _].
 Qed.
 
 Lemma extract_T1 : is_seq R (extract (in_tuple x) T1).
 Proof.
-  move: Px => /and3P [] _ _ /forallP Hall.
+  move: Px => /and3P [_ _ /forallP Hall].
   rewrite extract_T1E; set lL := (X in X ++ _); set lR := (X in _ ++ X).
   have:= Hall S; rewrite HS => /= HseqS.
   have:= Hall T; rewrite HT => /= HseqT {Hall}.
@@ -1041,14 +1043,14 @@ Proof.
   rewrite /lR extract_cS /= => ->; rewrite andbT.
   have -> : last l0 lL' = b.
     have := extract_Tb; rewrite -/lL HlL.
-    case: (extract _ _) => [/= [] -> -> //=| y z [] -> ->].
+    case: (extract _ _) => [/= [-> ->] //=| y z [-> ->]].
     by rewrite last_rcons.
   exact: (Hbc HRabc).
 Qed.
 
 Lemma ksupp_bin : ksupp R (in_tuple x) k Qbin.
 Proof.
-  move: Px => /and3P [] HszP HtrivP /forallP HallP.
+  move: Px => /and3P [HszP HtrivP /forallP HallP].
   rewrite /Qbin; apply/and3P; split.
   - move: HszP.
     rewrite -setDDl (cardsD1 S P) (cardsD1 T (P :\ S)) HS /=.
@@ -1060,7 +1062,7 @@ Proof.
   - apply/forallP => U; apply/implyP; rewrite !inE => /orP []; first move => /orP [].
     + move/eqP => H; subst U; exact: extract_S1.
     + move/eqP => H; subst U; exact: extract_T1.
-    + rewrite negb_or => /andP [] _ HU; have := HallP U; by rewrite HU /=.
+    + rewrite negb_or => /andP [_ HU]; have := HallP U; by rewrite HU /=.
 Qed.
 
 Lemma posaS1_bin : posa \in S1.
@@ -1076,8 +1078,8 @@ Proof.
   + by rewrite /S1 !inE Hposa /= !ltnn !andbF.
   case: (altP (U =P T1)) => [-> _ |HneqT1] /=.
   + by rewrite /T1 !inE Hposa /= posa_inTF /= ltnn.
-  + move/andP => []; rewrite negb_or => /andP [] HUS HUT HU.
-    move: Px => /and3P [] _ /trivIsetP Htriv _.
+  + move/andP => []; rewrite negb_or => /andP [HUS HUT] HU.
+    move: Px => /and3P [_ /trivIsetP Htriv _].
     move/(_  _ _ HU HS HUS)/disjoint_setI0 : Htriv.
     rewrite -setP => /(_ posa); by rewrite in_set0 in_setI Hposa andbT => ->.
 Qed.
@@ -1109,7 +1111,7 @@ Theorem exists_Qy :
   exists Q : {set {set 'I_(size y)}},
     #|cover Q| = #|cover P| /\ ksupp R (in_tuple y) k Q .
 Proof.
-  have:= exists_Q_noboth => [] [] Q [] Hsupp Hcover Hnoboth.
+  have:= exists_Q_noboth => [] [Q [Hsupp Hcover Hnoboth]].
   move HcastP : ((cast_set (eq_size eq_xx')) @: Q) => Q'.
   exists (@NoSetContainingBoth.Q _ (u ++ [:: b]) v a c Q'); split.
   - rewrite -(eqP (@NoSetContainingBoth.size_cover_noBoth _ (u ++ [:: b]) v a c Q')).
@@ -1117,7 +1119,7 @@ Proof.
     by rewrite card_imset; last exact: cast_ord_inj.
   - apply: NoSetContainingBoth.ksupp_noBoth.
     rewrite -HcastP; exact: ksupp_cast.
-  - move=> S1; rewrite -HcastP => /imsetP [] S0 HS0 -> {S1}.
+  - move=> S1; rewrite -HcastP => /imsetP [S0 HS0 -> {S1}].
     rewrite /cast_set /=. set x0 := (Swap.pos0 _ _ _ _); set x1 := (Swap.pos1 _ _ _ _).
     have:= Hnoboth S0 HS0.
     rewrite -(cast_ordKV (eq_size eq_xx') x0) -(cast_ordKV (eq_size eq_xx') x1).
@@ -1138,8 +1140,8 @@ Proof.
   + move=> x y z; exact: leqX_trans.
   + by move: H => /andP /= [].
   + move: H => /andP /= []; by rewrite ltnXNgeqX.
-  + move: H => /andP /= [] H1 _ /= x H2; exact: (leqX_trans H2 (ltnXW H1)).
-  + move: H => /andP /= [] H1 _ /= x H2; exact: (leqX_trans (ltnXW H1) H2).
+  + move: H => /andP /= [H1 _] /= x H2; exact: (leqX_trans H2 (ltnXW H1)).
+  + move: H => /andP /= [H1 _] /= x H2; exact: (leqX_trans (ltnXW H1) H2).
 Qed.
 
 Lemma RabcGtnX (Alph : inhOrdType) (a b c : Alph) :
@@ -1149,8 +1151,8 @@ Proof.
   + exact: gtnX_trans.
   + by move: H => /andP /= [].
   + move: H => /andP /= [] _; by rewrite -!leqXNgtnX.
-  + move: H => /andP /= [] _ H1 /= x H2; exact: (leqX_ltnX_trans H1 H2).
-  + move: H => /andP /= [] _ H1 /= x H2; exact: (ltnX_leqX_trans H2 H1).
+  + move: H => /andP /= [_ H1] /= x H2; exact: (leqX_ltnX_trans H1 H2).
+  + move: H => /andP /= [_ H1] /= x H2; exact: (ltnX_leqX_trans H2 H1).
 Qed.
 
 Section GreeneInvariantsRule.
@@ -1166,23 +1168,23 @@ Variable k : nat.
 Lemma ksuppRow_inj_plact1i :
   v2 \in plact1i v1 -> ksupp_inj leqX leqX k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof.
-  move/plact1iP => [] a [] b [] c [] Hord -> ->.
+  move/plact1iP => [a] [b] [c] [Hord -> ->].
   rewrite /ksupp_inj  => S1 Hsupp.
   pose posa := (Swap.pos0 u (b :: w) c a).
   pose posc := (Swap.pos1 u (b :: w) c a).
   case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
-  + move/existsP => [] S /and3P [] HSin HSa HSb.
-    exfalso; move: Hsupp; rewrite /ksupp => /and3P [] _ _ /forallP Hall.
+  + move/existsP => [S /and3P [HSin HSa HSb]].
+    exfalso; move: Hsupp; rewrite /ksupp => /and3P [_ _ /forallP Hall].
     move/(_ S): Hall; rewrite HSin /=.
     move/(is_seq_extract_cond (@leqX_trans _) [set posa; posc]).
     have -> : S :&: [set posa; posc] = [set posa; posc].
       apply/setP/subset_eqP/andP; split; apply/subsetP=> i; first by rewrite inE => /andP [].
-      rewrite !inE => /orP [] => /eqP ->; rewrite eq_refl /=; first by rewrite HSa.
+      rewrite !inE => /orP [] /eqP ->; rewrite eq_refl /=; first by rewrite HSa.
       by rewrite HSb orbT.
     have /extract2 -> : posa < posc by [].
     rewrite !(tnth_nth b) /= andbT.
     elim u => [| u0 u'] /=.
-    - move: Hord => /andP [] /leqX_ltnX_trans H/H{H}.
+    - move: Hord => /andP [/leqX_ltnX_trans H/H{H}].
       by rewrite leqXNgtnX => ->.
     - by apply.
   + rewrite negb_exists => /forallP Hall.
@@ -1200,7 +1202,7 @@ Proof. by move /ksuppRow_inj_plact1i; apply: leq_Greene. Qed.
 Lemma ksuppRow_inj_plact2 :
   v2 \in plact2 v1 -> ksupp_inj leqX leqX k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof.
-  move/plact2P => [] a [] b [] c [] Hord -> ->.
+  move/plact2P => [a] [b] [c] [Hord -> ->].
   have Hyp := RabcLeqX Hord.
   have Hbac : ((u ++ [:: b]) ++ [:: a; c] ++ w) = (u ++ [:: b; a; c] ++ w) by rewrite -catA.
   have Hbca : ((u ++ [:: b]) ++ [:: c; a] ++ w) = (u ++ [:: b; c; a] ++ w) by rewrite -catA.
@@ -1208,7 +1210,7 @@ Proof.
   pose posa := (Swap.pos0 (u ++ [:: b]) w a c).
   pose posc := (Swap.pos1 (u ++ [:: b]) w a c).
   case (boolP [exists S, [&& S \in P, posa \in S & posc \in S] ]).
-  - move/existsP => [] S /and3P [] HSin HSa HSc.
+  - move/existsP => [S /and3P [HSin HSa HSc]].
     move HcastP : ((cast_set (eq_size Hbac)) @: P) => P'.
     have Hsupp' : ksupp leqX (in_tuple (u ++ [:: b; a; c] ++ w)) k P'.
       rewrite -HcastP; exact: ksupp_cast.
@@ -1223,7 +1225,7 @@ Proof.
        suff -> //= : cast_ord (esym (eq_size Hbac)) pos2 = posc by [].
        by apply: val_inj; rewrite /= size_cat /= addn1.
     have:= SetContainingBothLeft.exists_Qy Hyp Hsupp' HS'in Hpos1 Hpos2.
-    move=> [] Q [] Hcover HsuppQ.
+    move=> [Q [Hcover HsuppQ]].
     exists Q; apply/andP; split; last exact HsuppQ.
     rewrite Hcover -HcastP -size_cover_inj //=; exact: cast_ord_inj.
   - rewrite negb_exists => /forallP Hall.
@@ -1242,13 +1244,13 @@ Proof. by move /ksuppRow_inj_plact2; apply: leq_Greene. Qed.
 Lemma ksuppCol_inj_plact1 :
   v2 \in plact1 v1 -> ksupp_inj gtnX gtnX k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof.
-  move/plact1P => [] a [] b [] c [] Hord -> ->.
+  move/plact1P => [a] [b] [c] [Hord -> ->].
   rewrite /ksupp_inj  => S1 Hsupp.
   pose posa := (Swap.pos0 u (b :: w) a c).
   pose posc := (Swap.pos1 u (b :: w) a c).
   case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
-  + move/existsP => [] S /and3P [] HSin HSa HSb.
-    exfalso; move: Hsupp; rewrite /ksupp => /and3P [] _ _ /forallP Hall.
+  + move/existsP => [S /and3P [HSin HSa HSb]].
+    exfalso; move: Hsupp; rewrite /ksupp => /and3P [_ _ /forallP Hall].
     move/(_ S): Hall; rewrite HSin /= => Hsort.
     have:= is_seq_extract_cond (@gtnX_trans _) [set posa; posc] Hsort.
     have -> : S :&: [set posa; posc] = [set posa; posc].
@@ -1258,7 +1260,7 @@ Proof.
     have /extract2 -> : posa < posc by [].
     rewrite !(tnth_nth b) /= andbT.
     elim u => [| u0 u'] /=.
-    - move: Hord => /andP [] /leqX_ltnX_trans H/H{H} /ltnXW.
+    - move: Hord => /andP [/leqX_ltnX_trans H/H{H} /ltnXW].
       by rewrite leqXNgtnX => /negbTE ->.
     - by apply.
   + rewrite negb_exists => /forallP Hall.
@@ -1276,7 +1278,7 @@ Proof. by move /ksuppCol_inj_plact1; apply: leq_Greene. Qed.
 Lemma ksuppCol_inj_plact2i :
   v2 \in plact2i v1 -> ksupp_inj gtnX gtnX k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof.
-  move/plact2iP => [] a [] b [] c [] Hord -> ->.
+  move/plact2iP => [a] [b] [c] [Hord -> ->].
   have Hyp := RabcGtnX Hord.
   have Hbca : ((u ++ [:: b]) ++ [:: c; a] ++ w) = (u ++ [:: b; c; a] ++ w) by rewrite -catA.
   have Hbac : ((u ++ [:: b]) ++ [:: a; c] ++ w) = (u ++ [:: b; a; c] ++ w) by rewrite -catA.
@@ -1284,7 +1286,7 @@ Proof.
   pose posa := (Swap.pos0 (u ++ [:: b]) w c a).
   pose posc := (Swap.pos1 (u ++ [:: b]) w c a).
   case (boolP [exists S, [&& S \in P, posa \in S & posc \in S] ]).
-  - move/existsP => [] S /and3P [] HSin HSa HSc.
+  - move/existsP => [S /and3P [HSin HSa HSc]].
     move HcastP : ((cast_set (eq_size Hbca)) @: P) => P'.
     have Hsupp' : ksupp gtnX (in_tuple (u ++ [:: b; c; a] ++ w)) k P'.
       rewrite -HcastP; exact: ksupp_cast.
@@ -1299,7 +1301,7 @@ Proof.
        suff -> //= : cast_ord (esym (eq_size Hbca)) pos2 = posc by [].
        by apply: val_inj; rewrite /= size_cat /= addn1.
     have:= SetContainingBothLeft.exists_Qy Hyp Hsupp' HS'in Hpos1 Hpos2.
-    move=> [] Q [] Hcover HsuppQ.
+    move=> [Q [Hcover HsuppQ]].
     exists Q; apply/andP; split; last exact HsuppQ.
     rewrite Hcover -HcastP -size_cover_inj //=; exact: cast_ord_inj.
   - rewrite negb_exists => /forallP Hall.
@@ -1489,8 +1491,8 @@ Proof.
   move/(_ _ _ (rembig_plactcongr Hpl) Hszu Hszv): IHn => /eqP {Hszu Hszv}.
   case: u Hu Hpl => [//= | u0 u'] _.
   case: v Hv     => [//= | v0 v'] _ => Hpl Hplrem.
-  have:= rembig_RS u0 u' => [] [] iu Hiu.
-  have:= rembig_RS v0 v' => [] [] iv; rewrite -Hplrem {Hplrem} => Hiv.
+  have:= rembig_RS u0 u' => [] [iu Hiu].
+  have:= rembig_RS v0 v' => [] [iv]; rewrite -Hplrem {Hplrem} => Hiv.
   rewrite -(maxL_perm_eq (plact_homog Hpl)) in Hiv.
   have:= plactic_shapeRS Hpl.
   rewrite Hiu Hiv {Hiu Hiv} !shape_append_nth => H.
@@ -1560,9 +1562,9 @@ Proof.
   rewrite (rembig_rev_uniq Huniq).
   move: Huniq => /shape_RS_rev.
   case Hs: s Hsz => [//= | s0 s'] Hsz.
-  have:= rembig_RS s0 s' => [] [] iu; rewrite -Hs => Hrem; rewrite Hrem.
+  have:= rembig_RS s0 s' => [] [iu]; rewrite -Hs => Hrem; rewrite Hrem.
   case/lastP Hrs: s Hsz Hs => [//= | t tn] _ Hs; rewrite -Hrs => Hsh Heq.
-  have:= rembig_RS tn (rev t) => [] [] iv; rewrite -rev_rcons -Hrs => HRSr.
+  have:= rembig_RS tn (rev t) => [] [iv]; rewrite -rev_rcons -Hrs => HRSr.
   move: Hsh; rewrite HRSr {HRSr}.
   have Hpart := is_part_sht (is_tableau_RS (rembig s)).
   have: is_add_corner (shape (RS (rembig s))) iu.
