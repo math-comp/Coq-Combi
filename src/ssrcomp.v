@@ -4,10 +4,12 @@ From mathcomp Require Import tuple finfun path bigop finset binomial.
 From mathcomp Require Import fingroup perm automorphism action ssralg.
 From mathcomp Require finmodule.
 
+Set Implicit Arguments.
+Unset Strict Implicit.
+
 
 Section SSRComplements.
 
-Section bla.  
 Variable T: finType.
 
 Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
@@ -65,8 +67,7 @@ Proof.
   by rewrite Hnil in_nil in Hx.
 Qed.
 
-End bla.
-
+End SSRComplements.
 
 Section uniq.
 Variable (T : eqType).        
@@ -84,5 +85,3 @@ Proof.
   admit.
 Admitted.
 End uniq.
-
-End SSRComplements.
