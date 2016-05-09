@@ -492,11 +492,81 @@ Proof.
   - by apply: mem_imset; rewrite inE.
   - by move=> /imsetP [c Hc ->]; exists c.
 Qed.
-
+      
 Section Permofcycletype.
 
 Implicit Types (l : nat) (ct : intpartn #|T|).
 
+Definition parts_of_partn ct : {set {set T}} :=
+  [set C in [seq [set x in X] | X <- reshape ct (enum T)]].
+
+Lemma parts_of_partnE ct :
+  partition (parts_of_partn ct) [set: T].
+Proof.
+  apply /and3P; split.
+  - apply /eqP /setP => x; rewrite inE; apply /bigcupP.
+    pose eT := flatten (reshape ct (enum T)).
+    have Hx: x \in eT.
+      by rewrite /eT reshapeKr ?mem_enum // -cardT intpartn_sumn.
+
+
+  - apply /trivIsetP.
+    admit.
+  - rewrite inE; apply /mapP => [][X HX].
+    move => /setP.
+    case: (set_0Vmem [set: T]).
+    + admit.
+    + move=> [x _] => /(_ x); rewrite !inE.
+      
+      
+    admit.
+Admitted.
+
+Definition cyclefun_of (s : {set T}) := next (enum s).
+
+Lemma cyclefun_inj (s : {set T}) : injective (cyclefun_of s). 
+Proof.
+  admit.
+Admitted.
+
+Definition cycle_of_set (s : {set T}) := perm (@cyclefun_inj s).
+
+Lemma support_cycle_of_set (s : {set T}) : #|s| > 1 -> support (cycle_of_set s) = s.
+Proof.
+  admit.
+Admitted.
+  
+Lemma cycle_of_setE (s : {set T}): #|s| > 1 -> is_cycle (cycle_of_set s). 
+Proof.
+  admit.
+Admitted.
+
+Definition cycle_of_part ct := (\prod_(C in [set cycle_of_set s | s in parts_of_partn ct]) C)%g.
+
+
+(********************************************
+IL FAUT CHOISIR UN LEMME PARMI LES 2 SUIVANTS
+*********************************************)
+
+(*Sans les identites (a reformuler, cette formulation est fausse) *)
+Lemma cycle_of_dec ct :
+  cycle_dec (cycle_of_part ct) = [set cycle_of_set s | s in parts_of_partn ct].
+Proof.
+  admit.
+Admitted.
+
+(*Avec les identites*)
+Lemma pcycles_cycle_of ct :
+  pcycles (cycle_of_part ct) = parts_of_partn ct.
+Proof.
+  admit.
+Admitted.
+
+
+Lemma cycle_of_partE ct :
+  cycle_type (cycle_of_part ct) = ct.
+  
+(*
 Definition cyclefun_of (n l : nat) : T -> T :=
   let C := take l (drop n (enum T)) in next C.
 
@@ -614,7 +684,7 @@ Lemma perm_of_partE (part : intpartn #|T|) : cycle_type (perm_of_part part) = pa
 Proof.
   admit.
 Admitted.
-*)
+*)*)
 End Permofcycletype.
 
 End cycle_type.
