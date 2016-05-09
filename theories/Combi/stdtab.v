@@ -17,7 +17,7 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 From mathcomp Require Import finset perm fingroup.
-From Combi Require Import tools combclass partition Yamanouchi ordtype std tableau.
+Require Import tools combclass partition Yamanouchi ordtype std tableau.
 
 Import OrdNotations.
 

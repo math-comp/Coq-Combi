@@ -63,9 +63,9 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop path ssralg.
 From SsrMultinomials Require Import mpoly.
 
-From Combi Require Import tools ordcast combclass partition Yamanouchi ordtype std tableau stdtab.
-From Combi Require Import Schensted congr plactic Greene_inv stdplact Yam_plact skewtab.
-From Combi Require Import shuffle sympoly freeSchur.
+Require Import tools ordcast combclass partition Yamanouchi ordtype std tableau stdtab.
+Require Import Schensted congr plactic Greene_inv stdplact Yam_plact skewtab.
+Require Import shuffle sympoly freeSchur.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

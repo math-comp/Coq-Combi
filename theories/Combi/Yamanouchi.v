@@ -46,7 +46,7 @@ Sigma types of Yamanouchi words:
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import bigop.
-From Combi Require Import tools combclass partition.
+Require Import tools combclass partition.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

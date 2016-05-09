@@ -18,8 +18,8 @@ From mathcomp Require Import choice fintype finfun tuple bigop ssralg ssrint.
 From mathcomp Require Import finset fingroup perm.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
-From Combi Require Import tools ordtype sorted partition skewtab sympoly freeSchur therule.
-From Combi Require Import symgroup antisym.
+Require Import tools ordtype sorted partition skewtab sympoly freeSchur therule.
+Require Import symgroup antisym.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

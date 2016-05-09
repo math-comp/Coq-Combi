@@ -82,7 +82,7 @@ Set Printing Universes.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import bigop path.
-From Combi Require Import tools combclass sorted.
+Require Import tools combclass sorted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

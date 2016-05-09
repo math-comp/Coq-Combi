@@ -15,8 +15,8 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 From mathcomp Require Import finset perm binomial bigop.
-From Combi Require Import tools vectNK subseq partition Yamanouchi ordtype std tableau stdtab.
-From Combi Require Import Schensted plactic Greene_inv stdplact.
+Require Import tools vectNK subseq partition Yamanouchi ordtype std tableau stdtab.
+Require Import Schensted plactic Greene_inv stdplact.
 
 
 Set Implicit Arguments.

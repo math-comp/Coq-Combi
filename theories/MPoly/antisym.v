@@ -50,7 +50,7 @@ From mathcomp Require Import finset fintype finfun tuple bigop ssralg ssrint.
 From mathcomp Require Import fingroup perm zmodp binomial.
 From SsrMultinomials Require Import ssrcomplements poset freeg mpoly.
 
-From Combi Require Import tools symgroup.
+Require Import tools symgroup.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

@@ -24,8 +24,8 @@ From mathcomp Require Import ssrfun ssrbool eqtype choice ssrnat seq
         ssrint div rat fintype bigop path ssralg ssrnum.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
-From Combi Require Import tools subseq partition stdtab.
-From Combi Require Import rat_coerce Qmeasure bigallpairs recyama.
+Require Import tools subseq partition stdtab.
+Require Import rat_coerce Qmeasure bigallpairs recyama.
 
 Import GRing.Theory.
 Import Num.Theory.

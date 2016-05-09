@@ -25,7 +25,7 @@
 *****)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype seq.
-From Combi Require Import tools.
+Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

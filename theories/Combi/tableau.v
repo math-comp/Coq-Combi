@@ -37,7 +37,7 @@ denoted [T].
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import path.
-From Combi Require Import tools partition ordtype sorted.
+Require Import tools partition ordtype sorted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

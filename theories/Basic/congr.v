@@ -17,7 +17,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype seq.
 From mathcomp Require Import path tuple.
 Require Import Recdef.
-From Combi Require Import permuted vectNK.
+Require Import permuted vectNK.
 (******************************************************************************)
 (** * Equivalence and congruence closure of a rewriting rule on words
 

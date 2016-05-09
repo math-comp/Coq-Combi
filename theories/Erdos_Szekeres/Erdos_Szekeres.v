@@ -21,7 +21,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop path.
 
-From Combi Require Import partition tableau Schensted ordtype Greene Greene_inv.
+Require Import partition tableau Schensted ordtype Greene Greene_inv.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

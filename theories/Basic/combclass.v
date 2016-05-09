@@ -23,7 +23,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import bigop.
 
-From Combi Require Import tools.
+Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

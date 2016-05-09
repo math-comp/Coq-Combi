@@ -17,7 +17,7 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop ssralg path perm fingroup.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
-From Combi Require Import tools ordtype partition Yamanouchi std tableau stdtab.
+Require Import tools ordtype partition Yamanouchi std tableau stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

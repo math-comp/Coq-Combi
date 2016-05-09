@@ -17,8 +17,8 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop path.
 From SsrMultinomials Require Import mpoly.
 
-From Combi Require Import tools combclass partition Yamanouchi ordtype tableau.
-From Combi Require Import skewtab sympoly freeSchur therule.
+Require Import tools combclass partition Yamanouchi ordtype tableau.
+Require Import skewtab sympoly freeSchur therule.
 
 (******************************************************************************)
 (** This file contains a Coq implementation of the Littlewood-Richardson rule *)

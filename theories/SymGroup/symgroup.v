@@ -26,7 +26,7 @@ From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice f
 From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm.
 From mathcomp Require Import morphism presentation.
 
-From Combi Require Import tools permuted combclass congr.
+Require Import tools permuted combclass congr.
 
 
 Set Implicit Arguments.

@@ -15,7 +15,7 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import bigop ssrint rat ssralg ssrnum.
-From Combi Require Import tools combclass partition Yamanouchi stdtab.
+Require Import tools combclass partition Yamanouchi stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
