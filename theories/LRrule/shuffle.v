@@ -555,7 +555,7 @@ Proof.
   by rewrite shape_stdtab_of_yam.
 Qed.
 
-Variant LRtriple t1 t2 t : Prop :=
+Inductive LRtriple t1 t2 t : Prop :=
   LRTriple :
     forall p1 p2 p, RS p1 = t1 -> RS p2 = t2 -> RS p = t ->
                     p \in shsh p1 p2 -> LRtriple t1 t2 t.

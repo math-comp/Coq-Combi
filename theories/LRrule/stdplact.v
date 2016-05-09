@@ -235,9 +235,9 @@ Variable s t : seq nat.
 Hypothesis Hinv : invseq s t.
 
 
-Local Lemma Hinvst : linvseq s t.
+Let Hinvst : linvseq s t.
 Proof. have:= Hinv; by rewrite /invseq => /andP []. Qed.
-Local Lemma Hinvts : linvseq t s.
+Let Hinvts : linvseq t s.
 Proof. have:= Hinv; by rewrite /invseq => /andP []. Qed.
 
 Definition val2pos := fun (i : 'I_(size s)) => Ordinal (linvseq_ltn_szt Hinvst (ltn_ord i)).

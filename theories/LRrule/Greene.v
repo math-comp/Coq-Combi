@@ -433,7 +433,7 @@ Proof.
       exact: set1_disjoint.
     - apply/forallP => s; apply/implyP => /imsetP [] i Hi ->; rewrite inE in Hi.
       by rewrite extract1 /sorted.
-  rewrite /Greene_rel_t; exact: leq_bigmax_cond.
+  rewrite /Greene_rel_t; exact: (leq_bigmax_cond (F := (fun x => #|cover x|))).
 Qed.
 
 Lemma Greene_rel_t_sup k : Greene_rel_t k <= N.
@@ -712,7 +712,7 @@ Proof.
     exists set0; rewrite in_set; exact: ksupp0.
   move/(eq_bigmax_cond scover) => [] ks1 Hks1 ->.
   move/(_ _ Hks1): Hinj => [] [] ks2 /andP [] /eqP -> Hks2.
-  exact: leq_bigmax_cond.
+  exact: (leq_bigmax_cond (F := (fun x => #|cover x|))).
 Qed.
 
 End GreeneInj.
@@ -1519,7 +1519,8 @@ Theorem Greene_row_tab k t :
 Proof.
   move=> Ht; apply/eqP; rewrite eqn_leq (Greene_row_inf_tab _ Ht) /=.
   rewrite /Greene_row /Greene_rel_t /= -(size_cover_tabrows _ (is_part_sht Ht)).
-  apply: leq_bigmax_cond; exact: ksupp_leqX_tabrowsk.
+  apply: (leq_bigmax_cond (F := (fun x => #|cover x|))).
+  exact: ksupp_leqX_tabrowsk.
 Qed.
 
 Lemma Greene_col_inf_tab k t :
@@ -1543,7 +1544,8 @@ Theorem Greene_col_tab_min k t :
 Proof.
   move=> Ht; apply/eqP; rewrite eqn_leq (Greene_col_inf_tab _ Ht) /=.
   rewrite /Greene_col /Greene_rel_t /= -(size_cover_tabcolsk _ (is_part_sht Ht)).
-  apply: leq_bigmax_cond; exact: ksupp_gtnX_tabcolsk.
+  apply: (leq_bigmax_cond (F := (fun x => #|cover x|))).
+  exact: ksupp_gtnX_tabcolsk.
 Qed.
 
 Theorem Greene_col_tab k t :
