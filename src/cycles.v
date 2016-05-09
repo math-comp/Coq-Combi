@@ -11,23 +11,6 @@ Require Import ssrcomp bij.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Section bla.
-
-Variable T1 T2: eqType.  
-Variable P: T1 -> T2 -> Prop.  
-Hypothesis H: forall x, {y | P x y}.  
-
-Definition F (x : T1) : T2 := let (y, _) := H x in y.
-
-Lemma sko: forall x, P x (F x).
-Proof.
-  rewrite /F => x.
-  by case: (H x) => y.
-Qed.
-
-End bla.
-  
-
 
 Section PermCycles.
 Variable T: finType.
@@ -158,7 +141,7 @@ Proof.
   apply /subsetP => x /= Hx.
   move: HX; rewrite !inE apermE => /andP [] /imsetP [] x0 _ HX _.
   move: Hx; rewrite HX -!eq_pcycle_mem => /eqP <-.
-  by have:= mem_pcycle s 1 x; rewrite -eq_pcycle_mem expg1.
+  by rewrite -{2}(expg1 s) pcycle_perm.
 Qed.
 
 
@@ -244,6 +227,7 @@ Proof.
   by rewrite /is_cycle psupport_restr ?cards1.
 Qed.
 
+(* I'm not sure the following definition is really worthwhile *)
 Definition support_cycles (s : {perm T}) :=
   [set support C | C in cycle_dec s].
 
@@ -262,7 +246,7 @@ Qed.
 Definition disjoint_supports (l: {set {perm T}}):=
   trivIset [set support C| C in l] /\ {in l &, injective support}.
 
-Lemma disjoint_cycle_dec s:
+Lemma disjoint_cycle_dec s :
   disjoint_supports (cycle_dec s).
 Proof.
   split.
@@ -308,7 +292,8 @@ Proof.
   exact: disjoint_cycle_dec.
 Qed.
 
-Lemma restr_perm_inj s : {in psupport s &, injective ((restr_perm (T:=T))^~ s)}.
+Lemma restr_perm_inj s :
+  {in psupport s &, injective ((restr_perm (T:=T))^~ s)}.
 Proof.
   by move=> C D /support_restr_perm {2}<- /support_restr_perm {2}<- ->.
 Qed.
@@ -332,22 +317,6 @@ Proof.
   move=> C; rewrite mem_enum; exact: H.
 Qed.
 
-Lemma out_of_disjoint (A : {set {perm T}}) C x :
-  disjoint_supports A ->
-  C \in A ->
-  x \in support C ->
-  {in A :\ C, forall C0, x \notin support C0}.
-Proof.
-  rewrite /disjoint_supports => [] [/trivIsetP Hdisj Hinj] HC Hx C0.
-  rewrite 2!inE => /andP [] HC0 HC0A.
-  move/(_ (support C) (support C0) (mem_imset _ HC) (mem_imset _ HC0A)): Hdisj.
-  have Hdiff: support C != support C0.
-    by move: HC0; apply contra => /eqP/Hinj ->.
-  move => /(_ Hdiff) /disjoint_setI0 /setP /(_ x).
-  rewrite inE in_set0 => /nandP [] //.
-  by move => /negbTE; rewrite Hx.
-Qed.
-
 Import finmodule.FiniteModule morphism.
 
 Lemma prod_of_disjoint (A : {set {perm T}}) C x:
@@ -355,7 +324,15 @@ Lemma prod_of_disjoint (A : {set {perm T}}) C x:
   x \in support C -> (\prod_(C0 in A) C0)%g x = C x.
 Proof.
   move=> Hdisj HC Hx.
-  have {Hx} Hnotin := out_of_disjoint Hdisj HC Hx.
+  have {Hx} Hnotin : {in A :\ C, forall C0 : {perm T}, x \notin support C0}.
+    move: Hdisj => [/trivIsetP Hdisj Hinj] C0.
+    rewrite 2!inE => /andP [] HC0 HC0A.
+    move/(_ _ _ (mem_imset _ HC) (mem_imset _ HC0A)): Hdisj.
+    have Hdiff: support C != support C0.
+      by move: HC0; apply contra => /eqP/Hinj ->.
+    move=> /(_ Hdiff) /disjoint_setI0 /setP /(_ x).
+    rewrite inE in_set0 => /nandP [] //.
+    by move => /negbTE; rewrite Hx.
   have Hin : forall i : {perm T}, (i \in A) && (i != C) -> i \in <<A>>%g.
     move => c /andP [Hi _]; exact: mem_gen.
   have abel := abelian_disjoint_supports Hdisj.
@@ -376,18 +353,17 @@ Proof.
   by apply Hnotin; rewrite !inE andbC.
 Qed.
 
-Lemma expg_prod_of_disjoint (A : {set {perm T}}) C0 x i:
-  C0 \in A ->
-  disjoint_supports A -> x \in support C0 ->
-  ((\prod_(C in A) C)^+i)%g x = (C0^+i)%g x.
+Lemma expg_prod_of_disjoint (A : {set {perm T}}) C x i:
+  disjoint_supports A -> C \in A ->
+  x \in support C -> ((\prod_(C0 in A) C0) ^+ i)%g x = (C ^+ i)%g x.
 Proof.
-  move => HC0 Hdisj Hx.
-  have Hin j : (C0 ^+j)%g x \in support C0.
+  move => Hdisj HC Hx.
+  have Hin j : (C ^+ j)%g x \in support C.
     elim j => [|k Hk]; first by rewrite expg0 perm1.
     by rewrite expgSr permM -support_stable.
   elim: i => [|j Hj].
   - by rewrite !expg0 perm1.
-  - by rewrite !expgSr !permM Hj (prod_of_disjoint Hdisj HC0 (Hin j)).
+  - by rewrite !expgSr !permM Hj (prod_of_disjoint Hdisj HC (Hin j)).
 Qed.
 
 Lemma cycle_decE s : (\prod_(C in cycle_dec s) C)%g = s.
@@ -428,12 +404,12 @@ Qed.
 
 Lemma disjoint_supports_cycles (A: {set {perm T}}):
   {in A, forall C, is_cycle C} ->
-    disjoint_supports A ->
-    {in A, forall C, support C \in pcycles (\prod_(C in A) C)%g}.
+  disjoint_supports A ->
+  {in A, forall C, support C \in pcycles (\prod_(C in A) C)%g}.
 Proof.
   move=> Hcycle Hdisj C HC; move/(_ C HC): Hcycle.
   rewrite /is_cycle => /cards1P [X] Hpsupp.
-  have:= eqxx X; rewrite -in_set1 -Hpsupp inE => /andP [/imsetP [x _] Hx].
+  have:= eq_refl X; rewrite -in_set1 -Hpsupp inE => /andP [/imsetP [x _] Hx].
   subst X; rewrite pcycleE=> Hcard.
   have:= cover_partition (partition_support C); rewrite Hpsupp.
   rewrite /cover big_set1 => <-; apply /imsetP; exists x => //.
@@ -442,14 +418,15 @@ Proof.
     rewrite -afix_cycle => /orbit1P Hcontra.
     by move: Hcard; rewrite Hcontra cards1.
   apply/setP => y; apply /pcycleP/pcycleP => [] [i] ->;
-    exists i; apply esym; by rewrite (expg_prod_of_disjoint i HC).
+    exists i; apply esym; by rewrite (expg_prod_of_disjoint i Hdisj HC).
 Qed.
 
 
 Lemma disjoint_supports_pcycles (A: {set {perm T}}):
   {in A, forall C, is_cycle C} ->
-    disjoint_supports A ->
-    {in psupport (\prod_(C in A) C)%g, forall X, exists C, C \in A /\ support C = X}.
+  disjoint_supports A ->
+  {in psupport (\prod_(C in A) C)%g,
+    forall X, exists2 C, C \in A & support C = X}.
 Proof.
   move => Hcycle Hdisj X; rewrite inE => /andP [/imsetP [x] _ -> {X} Hcard].
   case: (boolP (x \in (support (\prod_(C in A) C)%g))) => [Hin|].
@@ -459,7 +436,7 @@ Proof.
       rewrite in_support negbK; apply /eqP; apply out_perm_prod => C HC.
       by have:= Hnotin C; rewrite HC andTb.
     move => [C0] HC0 Hx.
-    exists C0; split => //; move: Hx.
+    exists C0 => //; move: Hx.
     have: support C0 \in (pcycles (\prod_(C in A) C)).
       exact: disjoint_supports_cycles.
     move => /imsetP [y] _ ->.
@@ -470,17 +447,27 @@ Proof.
     by rewrite Hcontra cards1.
 Qed.
 
+Inductive cycle_dec_spec s (A : {set {perm T}}) : Prop :=
+  CycleDecSpec of
+    {in A, forall C, is_cycle C} &
+    disjoint_supports A &
+    (\prod_(C in A) C)%g = s : cycle_dec_spec s A.
 
-Lemma uniqueness_cycle_dec (A : {set {perm T}}) s:
-  {in A, forall C, is_cycle C} ->
-    disjoint_supports A ->
-    (\prod_(C in A) C)%g = s ->
-    A = cycle_dec s.
+Theorem cycle_decP s : cycle_dec_spec s (cycle_dec s).
 Proof.
-  move => Hcy Hdisj Hprod.
-  apply /setP => C; apply/idP/imsetP.
-  - move=> HC; have:= HC => /disjoint_supports_cycles.
-    move=> /(_ Hcy Hdisj) /imsetP [x _]; rewrite Hprod => Hsupp.
+  constructor.
+  - exact: is_cycle_dec.
+  - exact: disjoint_cycle_dec s.
+  - exact: cycle_decE.
+Qed.
+
+Theorem uniqueness_cycle_dec s (A : {set {perm T}}) :
+  cycle_dec_spec s A -> A = cycle_dec s.
+Proof.
+  move=> [Hcy Hdisj Hprod].
+  apply /setP => C; apply/idP/imsetP => [HC |].
+  - have:= HC => /disjoint_supports_cycles /= /(_ Hcy Hdisj) /imsetP [x _].
+    rewrite Hprod => Hsupp.
     have Hx: pcycle s x \in psupport s.
       rewrite inE; apply /andP; split.
       + by apply /imsetP; exists x.
@@ -491,12 +478,11 @@ Proof.
     apply; last by rewrite support_restr_perm.
     by apply /imsetP; exists (pcycle s x).
   - rewrite -{1}Hprod => [] [X HX1] ->.
-    have:= disjoint_supports_pcycles Hcy Hdisj HX1.
-    move=> [x] [] Hx; rewrite -{1}(support_restr_perm HX1).
+    have:= disjoint_supports_pcycles Hcy Hdisj HX1 => [] [x Hx].
+    rewrite -{1}(support_restr_perm HX1).
     move=> /(disjoint_supports_of_decomp Hdisj (disjoint_cycle_dec s)).
     rewrite Hprod cycle_decE => /(_ erefl Hx) <- //.
-    by apply /imsetP; exists X; rewrite -?Hprod.
+    by apply /imsetP; exists X; rewrite -Hprod.
 Qed.
 
 End PermCycles.
-

@@ -12,26 +12,18 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 
 
-Section Ordergeq.
-
-Lemma geq_total : total geq.
-Proof.
-  admit.
-Admitted.
-
-Lemma geq_trans : transitive geq.
-Proof.
-  admit.
-Admitted.
-
-Lemma anti_geq : antisymmetric geq.
-Proof.
-  admit.
-Admitted.
-End Ordergeq.
-
 
 Section cycle_type.
+
+Local Definition geq_total : total geq :=
+  fun x y => leq_total y x.
+Local Definition geq_trans : transitive geq :=
+  fun x y z H1 H2 => leq_trans H2 H1.
+Local Definition anti_geq : antisymmetric geq :=
+  fun x y H => esym (anti_leq H).
+Local Definition perm_sort_geq :=
+  perm_sortP geq_total geq_trans anti_geq.
+
 Variable T : finType.
 Implicit Types (s t : {perm T}) (n : nat).
 
@@ -79,10 +71,6 @@ Qed.
 
 Definition cycle_type_seq (s : {perm T}) := set_partition_shape (pcycles s).
 
-Definition card_support_cycles (s : {perm T}) :=
-  [seq #|(C : {set T})| | C in (support_cycles s)].
-
-
 Lemma cycle_type_partn s:
   is_part_of_n #|T| (cycle_type_seq s).
 Proof.
@@ -90,28 +78,34 @@ Proof.
   exact: partition_pcycles.
 Qed.
 
+
+Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_partn s).
+
+
+(* Are the following definition and two lemmas really useful ? *)
+Definition card_support_cycles (s : {perm T}) :=
+  [seq #|(C : {set T})| | C in support_cycles s].
+
 Lemma cycle_type_dec (s : {perm T}) :
   let l := sort geq (card_support_cycles s) in
   cycle_type_seq (s : {perm T}) = l ++ (nseq (#|T| - sumn l) 1).
 Proof.
-  move => l.
-  admit.
+  rewrite /=.
+  have := perm_sort geq (card_support_cycles s) => /perm_eqlP /perm_sumn ->.
+  rewrite /card_support_cycles support_cycle_dec.
+  rewrite /cycle_type_seq/set_partition_shape.
 Admitted.
-
-Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_partn s).
 
 Lemma support_cycle_type s t :
   perm_eq (card_support_cycles s) (card_support_cycles t) ->
     cycle_type s = cycle_type t.
 Proof.
-  move => Heq; apply val_inj => /=; rewrite !cycle_type_dec.
-  suff -> : sort geq (card_support_cycles s) =
-            sort geq (card_support_cycles t) by [].
-  apply /perm_sortP => //.
-  - exact: geq_total.
-  - exact: geq_trans.
-  - exact: anti_geq.
+  move=> Heq; apply val_inj; rewrite /= !cycle_type_dec.
+  rewrite (_ : sort geq (card_support_cycles s) =
+               sort geq (card_support_cycles t)) //.
+  by apply/perm_sort_geq.
 Qed.
+
 
 Lemma conjg_cycle s a :
   (<[s]> :^ a = <[s ^ a]>)%g.
@@ -151,23 +145,23 @@ Qed.
 Require Import ordcast. (* for imset_inj TODO : move in tools *)
 
 Lemma cycle_type_of_conjg s a:
-  cycle_type s = cycle_type (s ^ a)%g.
+  cycle_type (s ^ a)%g = cycle_type s.
 Proof.
-  apply val_inj => /=.
+  apply esym; apply val_inj => /=.
   rewrite /cycle_type_seq.
-  rewrite pcycles_conjg; apply /(perm_sortP geq_total geq_trans anti_geq).
-  rewrite (_ : [seq _ | x <- _] =
-               [seq #|[set a y | y in (x : {set T})]| | x <- enum (pcycles s)]);
-    last by apply eq_map => x;  apply esym; apply card_imset; exact: perm_inj.
-  - rewrite (map_comp (fun x : {set T} => #|x|)); apply perm_map.
-    apply uniq_perm_eq.
-    + rewrite map_inj_uniq; first exact: enum_uniq.
-      apply imset_inj; exact: perm_inj.
-    + exact: enum_uniq.
-    + move=> x; rewrite mem_enum.
-      apply/mapP/imsetP => [] [x0].
-      * by rewrite mem_enum => Hx0 -> {x}; exists x0.
-      * by move=> Hx0 -> {x}; exists x0; rewrite ?mem_enum.
+  rewrite pcycles_conjg; apply/perm_sort_geq.
+  have -> : [seq #|(x : {set T})| | x <- enum (pcycles s)] =
+            [seq #|[set a y | y in (x : {set T})]| | x <- enum (pcycles s)].
+    by apply eq_map => x;  apply esym; apply card_imset; exact: perm_inj.
+  rewrite (map_comp (fun x : {set T} => #|x|)); apply perm_map.
+  apply uniq_perm_eq.
+  - rewrite map_inj_uniq; first exact: enum_uniq.
+    apply imset_inj; exact: perm_inj.
+  - exact: enum_uniq.
+  - move=> x; rewrite mem_enum.
+    apply/mapP/imsetP => [] [x0].
+    + by rewrite mem_enum => Hx0 -> {x}; exists x0.
+    + by move=> Hx0 -> {x}; exists x0; rewrite ?mem_enum.
 Qed.
 
 Lemma conjg_of_cycle s a:
@@ -178,7 +172,7 @@ Proof.
   apply /setP => y.
   rewrite !inE.
   apply /andP/eqP => [| -> ]; rewrite pcycles_conjg.
-  - move => [][/imsetP [Y HY ->]].
+  - move => [/imsetP [Y HY ->]].
     rewrite card_imset => Hcard; last by exact: perm_inj.
     have: Y \in psupport s by  rewrite inE; apply /andP.
     by rewrite HX inE => /eqP ->.
@@ -251,7 +245,7 @@ Proof.
     apply abelian_disjoint_supports.
     apply: conjg_of_disjoint_supports.
     exact: disjoint_cycle_dec.
-  apply: uniqueness_cycle_dec => [x /imsetP [x0 Hx0 ->]||].
+  apply: uniqueness_cycle_dec; constructor => [x /imsetP [x0 Hx0 ->]||].
   - apply: conjg_of_cycle; apply: is_cycle_dec.
     exact: Hx0.
   - apply: conjg_of_disjoint_supports.
@@ -488,7 +482,7 @@ Proof.
   - pose c := perm (conjbij_inj Heq); exists c.
     rewrite -permP => x.
     by rewrite !permM permE conjbijP // -(permE (conjbij_inj Heq)) permKV.
-  - by rewrite -cycle_type_of_conjg.
+  - by rewrite cycle_type_of_conjg.
 Qed.
 
 Lemma classes_of_permP s t:
@@ -584,7 +578,7 @@ Definition parts_of_part (part : seq nat) : {set {set T}} :=
 Definition perm_of_part (part : seq nat) : {perm T} :=
   \prod_(c <- cycle_dec_of_part part) c.
 
-
+(*
 Lemma perm_of_part_recP (part : intpartn #|T|) c :
   c \in perm_of_part_rec part 0 -> exists n l, n+l <= #|T| /\ c = cycle_of n l.
 Proof.
@@ -617,5 +611,7 @@ Lemma perm_of_partE (part : intpartn #|T|) : cycle_type (perm_of_part part) = pa
 Proof.
   admit.
 Admitted.
+*)
+End Permofcycletype.
 
 End cycle_type.
