@@ -503,13 +503,27 @@ Definition parts_of_partn ct : {set {set T}} :=
 Lemma parts_of_partnE ct :
   partition (parts_of_partn ct) [set: T].
 Proof.
+  have Hsumn : sumn ct = size (enum T) by rewrite -cardT intpartn_sumn.
   apply /and3P; split.
   - apply /eqP /setP => x; rewrite inE; apply /bigcupP.
-    pose eT := flatten (reshape ct (enum T)).
-    have Hx: x \in eT.
-      by rewrite /eT reshapeKr ?mem_enum // -cardT intpartn_sumn.
-
-
+    have := nth_flatten x (reshape ct (enum T)) (index x (enum T)).
+    have : x \in (enum T) by rewrite mem_enum.
+    rewrite -index_mem -Hsumn => /reshape_coordP.
+    rewrite reshapeKl ?Hsumn //.
+    set eT := flatten _.
+    have HeT : eT = enum T.
+      by rewrite /eT reshapeKr ?mem_enum ?Hsumn.
+    have Hx: x \in eT by rewrite HeT mem_enum.
+    case: (reshape_coord _ _) => r c [Hr Hc].
+    rewrite HeT nth_index; last by rewrite mem_enum //.
+    move=> Hxnth.
+    exists [set x in nth [::] (reshape ct (enum T)) r].
+    + rewrite /parts_of_partn inE; apply/mapP.
+      exists (nth [::] (reshape ct (enum T)) r); last by [].
+      by apply: mem_nth; first rewrite size_reshape.
+    + rewrite Hxnth inE; apply mem_nth.
+      rewrite -(nth_map _ 0); last by rewrite size_reshape.
+      by rewrite -/(shape _) reshapeKl ?Hsumn.
   - apply /trivIsetP.
     admit.
   - rewrite inE; apply /mapP => [][X HX].
