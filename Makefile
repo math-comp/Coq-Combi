@@ -97,7 +97,9 @@ endif
 ######################
 
 VFILES:=src/bij.v\
-  src/cycles.v
+  src/cycles.v\
+  src/ssrcomp.v\
+  src/cycletype.v
 
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
 -include $(addsuffix .d,$(VFILES))

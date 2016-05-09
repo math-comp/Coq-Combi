@@ -2,3 +2,5 @@
 -R src SymGroup
 src/bij.v
 src/cycles.v
+src/ssrcomp.v
+src/cycletype.v
