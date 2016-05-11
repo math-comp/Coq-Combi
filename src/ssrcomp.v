@@ -35,14 +35,15 @@ Proof.
     by rewrite HXY inE.
 Qed.
 
-Lemma partition_of0 (P:{set {set T}}):
-  partition P set0 -> P = set0.
+Lemma partition_of0 (P : {set {set T}}):
+  reflect (P = set0) (partition P set0).
 Proof.
-  rewrite /partition => /and3P [] /eqP H1 _ H2.
-  case: (set_0Vmem P) => [// | [] X].
-  case: (set_0Vmem X) => [-> H3 | [] x Hx HX]; first by move: H2 => /negP.
-  have: x \in cover P by apply /bigcupP; exists X.
-  by rewrite H1 inE.
+  rewrite /partition; apply (iffP and3P) => [[/eqP H1 _ H2] | ->].
+  - case: (set_0Vmem P) => [// | [] X].
+    case: (set_0Vmem X) => [-> H3 | [] x Hx HX]; first by move: H2 => /negP.
+    have: x \in cover P by apply /bigcupP; exists X.
+    by rewrite H1 inE.
+  - by split; rewrite ?inE // /trivIset /cover !big_set0 ?cards0.
 Qed.
 
 Lemma pcycleP (s: {perm T}) x y :
@@ -85,3 +86,60 @@ Proof.
   admit.
 Admitted.
 End uniq.
+
+Require Import binomial.
+
+Section CutSet.
+
+Variable (T : finType).
+
+Lemma ex_subset_card (B : {set T}) k :
+  k <= #|B| -> exists2 A : {set T}, A \subset B & #|A| == k.
+Proof.
+  rewrite -bin_gt0 -(cards_draws B k) card_gt0 => /set0Pn [x].
+  rewrite inE => /andP [H1 H2]; by exists x.
+Qed.
+
+Lemma ex_partition_shape (s : seq nat) (A : {set T}) :
+  0 \notin s -> sumn s = #|A| ->
+  exists P : seq {set T},
+    [/\ uniq P,
+     partition [set X in P] A &
+     [seq #|(X : {set T})| | X <- P] = s].
+Proof.
+  elim: s A => [| i s IHs] A /=.
+  - move=> _ /esym/cards0_eq ->; exists [::]; split => //.
+    apply/partition_of0;apply/setP => x.
+    by rewrite !inE in_nil.
+  - rewrite inE => /norP [] ine0 ins0 Hi.
+    have : i <= #|A| by rewrite -Hi; exact: leq_addr.
+    move=> /ex_subset_card [B BsubA /eqP cardB].
+    have : sumn s = #|A :\: B|.
+      by rewrite cardsD (setIidPr BsubA) cardB -Hi addKn.
+    move=> /(IHs _ ins0) [P [Puniq]].
+    rewrite /partition inE => /and3P [/eqP covP trivP set0P] Ps.
+    have BninP : B \notin P.
+      move: ine0; apply contra => BinP.
+      rewrite eq_sym -cardB cards_eq0.
+      rewrite -subset0 -(setICr B); apply/subsetIP; split; first by [].
+      have : B \subset A :\: B.
+        rewrite -covP /cover; apply (bigcup_max B) => //.
+        by rewrite inE.
+      by rewrite setDE => /subsetIP [].
+    have H : [set X in B :: P] = B |: [set X in P].
+      by apply/setP => X; rewrite !inE.
+    have {ine0} Bne0 : B != set0.
+      move: ine0; rewrite -cardB; apply contra => /eqP ->.
+      by rewrite cards0.
+    exists (B :: P); split; [|apply/and3P; split|].
+    + rewrite /= Puniq andbT; exact: BninP.
+    + rewrite H /cover big_setU1 /= ?inE // -/(cover _) covP.
+      by rewrite -{1}(setIidPr BsubA) setID.
+    + move: trivP; rewrite /trivIset H /cover !big_setU1 ?inE //= -/(cover _).
+      move=> /eqP ->.
+      rewrite covP cardsU (_ : B :&: (A :\: B) = set0) ?cards0 ?subn0 //.
+      apply/eqP; rewrite -subset0; apply/subsetP => X.
+      by rewrite !inE; case: (X \in B).
+    + by rewrite !inE negb_or eq_sym Bne0.
+    + by rewrite /= cardB Ps.
+Qed.
