@@ -629,7 +629,8 @@ Lemma pcycles_of_set (s : {set T}):
 Proof.
   case: (set_0Vmem s) => [->|]; first by rewrite cards0.
   move=> [x Hx] Hsize.
-  apply /imsetP; exists x => //.
+  apply /imsetP; exists (head x (enum s)) => //.
+  by exact: cycle_of_setE.
 Qed.
 
   
@@ -638,30 +639,21 @@ Lemma psupport_of_set (s : {set T}):
 Proof.
   move=> Hsize; apply /setP => X.
   rewrite !inE.
-  apply/andP/eqP => [[/imsetP [x _ ->] Hcard]|->].
-  - apply /setP => y; apply/idP/idP.
-    + rewrite -eq_pcycle_mem -{3}(support_cycle_of_set Hsize).
-      by rewrite -support_card_pcycle => /eqP ->.
-    + move: Hcard; rewrite support_card_pcycle support_cycle_of_set // => Hx Hy.
-      admit.
-  - split; last by rewrite -(support_cycle_of_set Hsize) card_support_noteq1.
-    apply /imsetP.
+  apply/andP/eqP => [[/imsetP [x _ ->]]|->].
+  - rewrite support_card_pcycle support_cycle_of_set // => Hx.
+    rewrite [RHS](cycle_of_setE Hx).
+    by apply/eqP; rewrite eq_pcycle_mem -cycle_of_setE.
+  - split; first by exact: pcycles_of_set.
+    by rewrite -(support_cycle_of_set Hsize) card_support_noteq1.  
+Qed.
 
-      
-Lemma cycle_of_setE (s : {set T}): #|s| > 1 -> is_cycle (cycle_of_set s). 
+
+Lemma iscycle_of_set (s : {set T}): #|s| > 1 -> is_cycle (cycle_of_set s). 
 Proof.
   move => Hsize.
   apply /cards1P; exists s.
-  apply /setP => X; rewrite !inE -{2}(support_cycle_of_set Hsize).  
-  apply /andP/eqP => [[/imsetP [x _ ->] Hcard]|->].
-  - apply /setP => y; apply/idP/idP.
-    + by rewrite -eq_pcycle_mem -support_card_pcycle => /eqP ->.
-    + move: Hcard; rewrite support_card_pcycle support_cycle_of_set // => Hx Hy.
-      admit.
-  - split; last by rewrite -(support_cycle_of_set Hsize) card_support_noteq1.
-    apply /imsetP.
-    admit.
-Admitted.
+  by exact: psupport_of_set.
+Qed.
 
 Definition cycle_of_part ct := (\prod_(C in [set cycle_of_set s | s in parts_of_partn ct]) C)%g.
 
@@ -671,11 +663,13 @@ IL FAUT CHOISIR UN LEMME PARMI LES 2 SUIVANTS
 *********************************************)
 
 (*Sans les identites (a reformuler, cette formulation est fausse) *)
+(*
 Lemma cycle_of_dec ct :
   cycle_dec (cycle_of_part ct) = [set cycle_of_set s | s in parts_of_partn ct].
 Proof.
   admit.
 Admitted.
+ *)
 
 (*Avec les identites*)
 Lemma pcycles_cycle_of ct :
@@ -687,6 +681,13 @@ Admitted.
 
 Lemma cycle_of_partE ct :
   cycle_type (cycle_of_part ct) = ct.
+Proof.
+  apply (congr1 intpartn).
+  rewrite /cycle_type.
+
+  admit.
+Admitted.
+
   
 (*
 Definition cyclefun_of (n l : nat) : T -> T :=
