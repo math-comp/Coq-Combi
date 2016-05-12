@@ -70,22 +70,22 @@ Qed.
 
 End SSRComplements.
 
-Section uniq.
-Variable (T : eqType).        
+Section Uniq.
+Variable (T : eqType).
 Variable (s : seq T).
 Implicit Types (n : nat).
 
 Lemma take_uniq n : uniq s -> uniq (take n s).
 Proof.
-  admit.
-Admitted.
-
+by apply: subseq_uniq; rewrite -{2}(cat_take_drop n s); apply: prefix_subseq.
+Qed.
 
 Lemma drop_uniq n : uniq s -> uniq (drop n s).
 Proof.
-  admit.
-Admitted.
-End uniq.
+by apply: subseq_uniq; rewrite -{2}(cat_take_drop n s); apply: suffix_subseq.
+Qed.
+
+End Uniq.
 
 From mathcomp Require Import binomial.
 
@@ -101,7 +101,7 @@ Proof.
 Qed.
 
 Lemma ex_partition_shape (s : seq nat) (A : {set T}) :
-  sumn s = #|A| -> 0 \notin s -> 
+  sumn s = #|A| -> 0 \notin s ->
   exists P : seq {set T},
     [/\ uniq P,
      partition [set X in P] A &
@@ -111,35 +111,31 @@ elim: s A => [| i s IHs] A /=.
   move=> /esym/cards0_eq -> _; exists [::]; split => //.
   apply/partition_of0; apply/setP => x.
   by rewrite !inE in_nil.
-rewrite inE => Hi /norP [] ine0 /IHs{IHs} Hrec.
-have : i <= #|A| by rewrite -Hi; apply: leq_addr.
-move=> /ex_subset_card [B BsubA /eqP cardB].
-have /Hrec{Hrec} [P []] : sumn s = #|A :\: B|.
-  by rewrite cardsD (setIidPr BsubA) cardB -Hi addKn.
-rewrite /partition inE => Puniq /and3P [/eqP covP trivP set0P] Ps.
+rewrite inE eq_sym => Hi /norP [Bne0 /IHs{IHs} Hrec].
+have: i <= #|A| by rewrite -Hi; apply: leq_addr.
+move=> /ex_subset_card [B BsubA /eqP cardB]; subst i.
+have /Hrec{Hrec} [P [Puniq]] : sumn s = #|A :\: B|.
+  by rewrite cardsD (setIidPr BsubA) -Hi addKn.
+move=> /and3P [/eqP covP trivP set0P] Ps; rewrite inE in set0P.
 have BninP : B \notin P.
-  move: ine0; apply contra => BinP; rewrite eq_sym -cardB cards_eq0.
+  move: Bne0; apply contra => BinP; rewrite cards_eq0.
   have : B \subset A :\: B.
     by rewrite -covP /cover; apply (bigcup_max B); rewrite // inE.
   rewrite setDE => /subsetIP [_].
   by rewrite -disjoints_subset -setI_eq0 setIid.
-have {ine0} Bne0 : B != set0.
-  move: ine0; rewrite -cardB; apply contra => /eqP ->.
-  by rewrite cards0.
+rewrite -lt0n card_gt0 in Bne0.
 have Hcons : [set X in B :: P] = B |: [set X in P].
   by apply/setP => X; rewrite !inE.
-exists (B :: P); split; [|apply/and3P; split|].
-- by rewrite /= Puniq andbT; exact: BninP.
+exists (B :: P); split => /=; [|apply/and3P; split|].
+- by rewrite Puniq BninP.
 - rewrite Hcons /cover big_setU1 /= ?inE // -/(cover _) covP.
   by rewrite -{1}(setIidPr BsubA) setID.
--  move: trivP; rewrite /trivIset Hcons.
+- move: trivP; rewrite /trivIset Hcons.
   rewrite /cover !big_setU1 ?inE //= -/(cover _) => /eqP ->.
   rewrite covP cardsU (_ : B :&: (A :\: B) = set0) ?cards0 ?subn0 //.
-  apply/eqP; rewrite -subset0; apply/subsetP => X.
-  by rewrite !inE; case: (X \in B).
+  by rewrite setDE setIC -setIA [X in A :&: X]setIC setICr setI0.
 - by rewrite !inE negb_or eq_sym Bne0.
-- by rewrite /= cardB Ps.
+- by rewrite Ps.
 Qed.
 
 End CutSet.
-
