@@ -69,6 +69,21 @@ Proof.
     by rewrite mem_enum => Hx /esym/cards0_eq <-.
 Qed.
 
+Lemma ex_set_partition_shape (A : {set T}) sh :
+  is_part_of_n #|A| sh ->
+  exists2 P, partition P A & set_partition_shape P = sh.
+Proof.
+rewrite /is_part_of_n /= is_part_sortedE => /andP [/eqP shsum /andP [shsort]].
+move=> /(ex_partition_shape shsum) [P [Puniq Ppart Psh]].
+exists [set X in P]; first exact: Ppart.
+apply/(eq_sorted geq_trans anti_geq).
+- exact: (sort_sorted geq_total).
+- exact: shsort.
+- rewrite /set_partition_shape -Psh perm_sort; apply: perm_map.
+  apply: (uniq_perm_eq (enum_uniq _) Puniq) => x.
+  by rewrite mem_enum inE.
+Qed.
+
 Definition cycle_type_seq (s : {perm T}) := set_partition_shape (pcycles s).
 
 Lemma cycle_type_partn s:
