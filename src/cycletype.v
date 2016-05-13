@@ -358,14 +358,14 @@ Proof.
   by move => /(_ y) /=; rewrite pcycle_id.
 Qed.
 
-Lemma pcycleE (s: {perm T}) x y :
+Lemma pcyclePb (s: {perm T}) x y :
   y \in pcycle s x -> exists i, y == (s ^+ i)%g x.
 Proof.
   move=> /pcycleP H.
   move: H => [i Hi]; exists i; by rewrite Hi.
 Qed.
 
-Definition indpcycle s (x : T) : nat := ex_minn (pcycleE (canpcycleP s x)).
+Definition indpcycle s (x : T) : nat := ex_minn (pcyclePb (canpcycleP s x)).
 
 Lemma indpcycleP s x : ((s ^+ (indpcycle s x)) (canpcycle s x))%g = x.
 Proof. rewrite /indpcycle; by case: ex_minnP => i /eqP. Qed.
@@ -633,7 +633,6 @@ Proof.
   by exact: cycle_of_setE.
 Qed.
 
-  
 Lemma psupport_of_set (s : {set T}):
   #|s| > 1 -> psupport (cycle_of_set s) = [set s]. 
 Proof.
@@ -655,7 +654,7 @@ Proof.
   by exact: psupport_of_set.
 Qed.
 
-Definition cycle_of_part ct := (\prod_(C in [set cycle_of_set s | s in parts_of_partn ct]) C)%g.
+Definition perm_of_part ct := (\prod_(C in [set cycle_of_set s | s in [set X in parts_of_partn ct |#|X|>1]]) C)%g.
 
 
 (********************************************
@@ -672,19 +671,58 @@ Admitted.
  *)
 
 (*Avec les identites*)
-Lemma pcycles_cycle_of ct :
-  pcycles (cycle_of_part ct) = parts_of_partn ct.
+Lemma pcycles_perm_of_part ct :
+  pcycles (perm_of_part ct) = parts_of_partn ct.
 Proof.
-  admit.
+  apply /setP => X.
+  apply /idP/idP => [HX|HX].
+  - case: (boolP (X \in psupport (perm_of_part ct))).
+    + rewrite psupport_of_disjoint; last admit. 
+      move => /bigcupP [C] /imsetP [X0].
+      rewrite inE => /andP [H HX0] ->.
+      by rewrite psupport_of_set // inE => /eqP ->.
+    + rewrite inE => /nandP []; first by rewrite HX.
+      rewrite negbK; move: HX => /imsetP [x Hx ->].
+      rewrite {1}pcycleE => /eqP /card_orbit1 /orbit1P.
+      rewrite afix_cycle => /afix1P /=; rewrite apermE => /eqP Hfix.
+      have:= Hfix.
+      rewrite -[_ == x]negbK -in_support support_of_disjoint; last admit.
+      move: Hfix; rewrite pcycle_fix => /eqP ->.
+      move => /bigcupP.
+      admit.
+  - case: (boolP (#|X| == 1)).
+    + move => /cards1P [x Hx]; subst X.
+      apply /imsetP; exists x => //.
+      apply esym; apply /orbit1P; rewrite afix_cycle; apply /afix1P => /=.
+      rewrite apermE; apply /eqP.
+      rewrite -[_ == x]negbK -in_support support_of_disjoint; last admit.
+      apply /bigcupP => /exists_inP; apply /negP; rewrite negb_exists_in.
+      apply /forallP => C; apply /implyP.
+      move => /imsetP [x0]; rewrite inE => /andP [Hx0 Hcard] ->.
+      rewrite support_cycle_of_set //.
+      have:= (parts_of_partnE ct) => /and3P [_ /trivIsetP /(_ [set x] x0) Hxx0 _].
+      move: Hxx0 => /(_ HX Hx0).
+      have /eqP ->: [set x] <> x0
+        by move => Heq; move: Hcard; rewrite -Heq cards1.
+      move => /(_ isT); rewrite -setI_eq0 => /eqP Hxx0.
+      apply /negP => Hx.
+      suff: x \in set0 by rewrite inE.
+      by rewrite -Hxx0 inE Hx andbT inE.
+    + have:= (parts_of_partnE ct) => /and3P [_ _ Hset0].
+      move=> H; move: H HX Hset0.
+      rewrite neq_ltn => /orP [|Hcard HX Hset0].
+        by rewrite ltnS leqn0 cards_eq0 => /eqP -> ->.
+      suff: X \in psupport (perm_of_part ct) by rewrite inE => /andP [].
+      rewrite psupport_of_disjoint; last admit.
+      apply /bigcupP; exists (cycle_of_set X); last by rewrite psupport_of_set ?inE.
+      apply /imsetP; exists X => //.
+      by rewrite inE; apply /andP; split.
 Admitted.
 
 
 Lemma cycle_of_partE ct :
   cycle_type (cycle_of_part ct) = ct.
 Proof.
-  apply (congr1 intpartn).
-  rewrite /cycle_type.
-
   admit.
 Admitted.
 

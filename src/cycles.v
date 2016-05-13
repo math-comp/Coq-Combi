@@ -366,6 +366,41 @@ Proof.
   - by rewrite !expgSr !permM Hj (prod_of_disjoint Hdisj HC (Hin j)).
 Qed.
 
+Lemma support_of_disjoint (A : {set {perm T}}):
+  disjoint_supports A ->
+  support (\prod_(C0 in A) C0) = \bigcup_(C0 in A) support C0.
+Proof.
+  move=> Hdisj.
+  apply /setP => x.
+  rewrite in_support; apply /idP/bigcupP => [| [C] HC Hx].
+  - move=> H; apply/ exists_inP; move: H.
+    apply contraR; rewrite negb_exists_in => /forallP Hsupp.
+    apply /eqP; apply out_perm_prod => C.
+    by move: (Hsupp C)=> /implyP.
+  - by rewrite (prod_of_disjoint Hdisj HC Hx) -in_support.
+Qed.    
+
+Lemma psupport_of_disjoint (A : {set {perm T}}):
+  disjoint_supports A ->
+  psupport (\prod_(C0 in A) C0) = \bigcup_(C0 in A) psupport C0.
+Proof.
+  move=> Hdisj; apply /setP => X; rewrite inE.
+  apply /andP/bigcupP => [[]/imsetP [x _ ->] Hcard|[C] HC].
+  - have:= Hcard; rewrite support_card_pcycle support_of_disjoint //.
+    move=> /bigcupP => [][C HC Hx]; exists C => //.
+    rewrite inE; apply /andP; split => //.
+    apply /imsetP; exists x => //.
+    apply /setP => y.
+    apply /pcycleP/pcycleP =>[][i ->];
+      exists i; by rewrite (expg_prod_of_disjoint _ _ HC).
+  - rewrite inE => /andP [/imsetP[x _ ->] Hcard].
+    split =>//.
+    apply /imsetP; exists x => //.
+    apply /setP=> y; rewrite support_card_pcycle in Hcard.
+    apply /pcycleP/pcycleP =>[][i ->];
+     exists i; rewrite (expg_prod_of_disjoint _ _ HC) =>//.
+Qed.
+    
 Lemma cycle_decE s : (\prod_(C in cycle_dec s) C)%g = s.
 Proof.
   apply /permP => x.
