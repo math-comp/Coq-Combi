@@ -378,7 +378,7 @@ Proof.
     apply /eqP; apply out_perm_prod => C.
     by move: (Hsupp C)=> /implyP.
   - by rewrite (prod_of_disjoint Hdisj HC Hx) -in_support.
-Qed.    
+Qed.
 
 Lemma psupport_of_disjoint (A : {set {perm T}}):
   disjoint_supports A ->
@@ -391,16 +391,16 @@ Proof.
     rewrite inE; apply /andP; split => //.
     apply /imsetP; exists x => //.
     apply /setP => y.
-    apply /pcycleP/pcycleP =>[][i ->];
-      exists i; by rewrite (expg_prod_of_disjoint _ _ HC).
+    by apply /pcycleP/pcycleP =>[][i ->];
+      exists i; rewrite (expg_prod_of_disjoint _ _ HC).
   - rewrite inE => /andP [/imsetP[x _ ->] Hcard].
     split =>//.
     apply /imsetP; exists x => //.
     apply /setP=> y; rewrite support_card_pcycle in Hcard.
-    apply /pcycleP/pcycleP =>[][i ->];
-     exists i; rewrite (expg_prod_of_disjoint _ _ HC) =>//.
+    by apply /pcycleP/pcycleP =>[][i ->];
+     exists i; rewrite (expg_prod_of_disjoint _ _ HC).
 Qed.
-    
+
 Lemma cycle_decE s : (\prod_(C in cycle_dec s) C)%g = s.
 Proof.
   apply /permP => x.

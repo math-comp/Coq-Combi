@@ -507,7 +507,7 @@ Proof.
   - by apply: mem_imset; rewrite inE.
   - by move=> /imsetP [c Hc ->]; exists c.
 Qed.
-      
+
 Section Permofcycletype.
 
 Implicit Types (l : nat) (ct : intpartn #|T|).
@@ -545,20 +545,20 @@ Proof.
     move => /setP.
     case: (set_0Vmem [set: T]).
     + admit.
-    + move=> [x _] => /(_ x); rewrite !inE.      
+    + move=> [x _] => /(_ x); rewrite !inE.
     admit.
 Admitted.
 
 Definition cyclefun_of (s : {set T}) := next (enum s).
 
-Lemma uniq_next (p : seq T) : uniq p -> injective (next p). 
+Lemma uniq_next (p : seq T) : uniq p -> injective (next p).
 Proof.
   move=> Huniq x y Heq.
   by rewrite -(prev_next Huniq x) Heq prev_next.
 Qed.
 
 
-Lemma cyclefun_inj (s : {set T}) : injective (cyclefun_of s). 
+Lemma cyclefun_inj (s : {set T}) : injective (cyclefun_of s).
 Proof. by apply uniq_next; exact: enum_uniq. Qed.
 
 Definition cycle_of_set (s : {set T}) := perm (@cyclefun_inj s).
@@ -570,56 +570,55 @@ Proof.
   rewrite in_support permE.
   apply /idP/idP => [|Hx]; rewrite /cyclefun_of next_nth.
   - by apply contraR; rewrite -mem_enum => /negbTE ->.
-  - have := Hx; rewrite -mem_enum => ->.
+  - rewrite mem_enum Hx.
     move: Hsize Hx; rewrite -mem_enum cardE.
-    have: uniq (enum s) by exact: enum_uniq.
-    case: (enum s) => // a.
-    case => // b l /=.
+    case: (enum s) (enum_uniq (pred_of_set s)) => // a [// | b l] /=.
     move=> /and3P []; rewrite inE => /norP [/negbTE Hab Ha] Hb Huniq _.
     rewrite !inE => /orP [/eqP -> |/orP [/eqP -> |Hx]].
     + by rewrite eq_refl /= eq_sym Hab.
     + rewrite Hab eq_refl /=.
-      have:= (erefl l); case: {2 3} l => [|c l0 Hl]; first by rewrite Hab.
+      case: {2 3}l (erefl l) => [|c l0 Hl]; first by rewrite Hab.
       by apply /eqP => Heq; move: Hb; rewrite -Heq Hl mem_head.
     + have /negbTE Hbx: (b != x).
         by apply /eqP => Heq; move: Hb; rewrite Heq Hx.
       have /negbTE Hax: (a != x).
         by apply /eqP => Heq; move: Ha; rewrite Heq Hx.
-      have Hxb: x \in (b::l) by rewrite inE Hx orbT.      
+      have Hxb: x \in (b :: l) by rewrite inE Hx orbT.
       rewrite Hax Hbx.
-      case (ltnP (index x l).+2 (size (b::l))) => Hindex.
+      case (ltnP (index x l).+2 (size (b :: l))) => Hindex.
       * have:= Hxb; rewrite -index_mem => Hindex1.
         rewrite -{2}(nth_index a Hxb) nth_uniq //=; last by apply /andP.
         by rewrite Hbx gtn_eqF.
       * by rewrite nth_default ?Hax.
 Qed.
 
+
 Lemma cycle_of_setE (s : {set T}) (x : T):
   x \in s -> s = pcycle (cycle_of_set s) (head x (enum s)).
 Proof.
   rewrite -mem_enum; have:= erefl (enum s).
   case: {2 3 4}(enum s) => [|a l Hs _ /=]; first by rewrite in_nil.
-  apply /setP => y; apply /idP/pcycleP => [|[]].
-  - rewrite -mem_enum => Hy.
-    exists (index y (enum s)); have:= erefl (index y (enum s)).
-    move: {2 3} (index _ _) => n; move: y Hy; elim: n => [y Hy H0|m IHm y Hy Hind].
-    + have:= (nth_index y Hy); rewrite H0 Hs /= => <-.
+  apply /setP => y; apply /idP/pcycleP => [| [n ->]].
+  - rewrite -mem_enum => Hy; exists (index y (enum s)).
+    elim: (index y _) {1 2 4}y Hy (erefl (index y (enum s))) =>
+                                        [| m IHm] {y} y Hy Hind.
+      have:= nth_index y Hy; rewrite Hind Hs /= => <-.
       by rewrite expg0 perm1.
-    + have Hm: m < size (enum s).
-        by move: Hy; rewrite -index_mem Hind; apply leq_trans.
-      have Hnth : index (nth y (enum s) m) (enum s) = m.
-        by rewrite index_uniq ?enum_uniq. 
-      have Hnthin: (nth y (enum s) m) \in enum s.
-        by rewrite -index_mem Hnth.
-      rewrite expgSr permM -(IHm (nth y (enum s) m)) //.
-      rewrite permE /cyclefun_of next_nth Hnthin Hs -Hs Hnth.
-      have /negbTE Hya: y != a.
-        by apply /eqP => Heq; move: Hind; rewrite Heq Hs index_head.
-      move: Hind; rewrite Hs -cat1s index_cat.
-      rewrite inE Hya /= add1n => /eqP; rewrite eqSS => /eqP <-.
-      rewrite nth_index //.
-      by move: Hy; rewrite Hs inE Hya /=.
-  -  move=> n ->; elim: n => [|m IHm].
+    have Hm : m < size (enum s).
+      by move: Hy; rewrite -index_mem Hind; apply leq_trans.
+    have Hnth : index (nth y (enum s) m) (enum s) = m.
+      by rewrite index_uniq // enum_uniq.
+    have Hnthin : (nth y (enum s) m) \in enum s.
+      by rewrite -index_mem Hnth.
+    rewrite expgSr permM -(IHm (nth y (enum s) m)) //.
+    rewrite permE /cyclefun_of next_nth Hnthin {1}Hs Hnth.
+    have /negbTE Hya : y != a.
+      by apply /eqP => Heq; move: Hind; rewrite Heq Hs index_head.
+    move: Hind; rewrite Hs -cat1s index_cat.
+    rewrite inE Hya /= add1n => [[]] <-.
+    rewrite nth_index //.
+    by move: Hy; rewrite Hs inE Hya.
+  - elim: n => [|m IHm].
     + by rewrite expg0 perm1 -mem_enum Hs mem_head.
     + by rewrite expgSr permM permE /cyclefun_of -mem_enum mem_next mem_enum.
 Qed.
@@ -630,11 +629,11 @@ Proof.
   case: (set_0Vmem s) => [->|]; first by rewrite cards0.
   move=> [x Hx] Hsize.
   apply /imsetP; exists (head x (enum s)) => //.
-  by exact: cycle_of_setE.
+  exact: cycle_of_setE.
 Qed.
 
 Lemma psupport_of_set (s : {set T}):
-  #|s| > 1 -> psupport (cycle_of_set s) = [set s]. 
+  #|s| > 1 -> psupport (cycle_of_set s) = [set s].
 Proof.
   move=> Hsize; apply /setP => X.
   rewrite !inE.
@@ -642,19 +641,99 @@ Proof.
   - rewrite support_card_pcycle support_cycle_of_set // => Hx.
     rewrite [RHS](cycle_of_setE Hx).
     by apply/eqP; rewrite eq_pcycle_mem -cycle_of_setE.
-  - split; first by exact: pcycles_of_set.
-    by rewrite -(support_cycle_of_set Hsize) card_support_noteq1.  
+  - split; first exact: pcycles_of_set.
+    by rewrite -(support_cycle_of_set Hsize) card_support_noteq1.
 Qed.
 
 
-Lemma iscycle_of_set (s : {set T}): #|s| > 1 -> is_cycle (cycle_of_set s). 
+Lemma iscycle_of_set (s : {set T}): #|s| > 1 -> is_cycle (cycle_of_set s).
 Proof.
   move => Hsize.
   apply /cards1P; exists s.
-  by exact: psupport_of_set.
+  exact: psupport_of_set.
 Qed.
 
-Definition perm_of_part ct := (\prod_(C in [set cycle_of_set s | s in [set X in parts_of_partn ct |#|X|>1]]) C)%g.
+(*
+Definition perm_of_parts (P : {set {set T}}) :=
+  (\prod_(X in P | #|X| > 1) cycle_of_set X)%g.
+*)
+
+Definition perm_of_parts (P : {set {set T}}) :=
+  (\prod_(C in [set cycle_of_set s | s in [set X in P |#|X|>1]]) C)%g.
+
+Lemma bla (P : {set {set T}}) :
+  [set support (cycle_of_set s) | s in [set X in P | 1 < #|X| ]] =
+  [set X in P | 1 < #|X|].
+Proof.
+  rewrite -[RHS]imset_id.
+  apply eq_in_imset => i; rewrite inE => /andP [_ Hi].
+  by rewrite support_cycle_of_set.
+Qed.
+
+Lemma pcycles_perm_of_parts P :
+  partition P [set: T] -> pcycles (perm_of_parts P) = P.
+Proof.
+  move=> Hpart; apply /setP => X.
+  apply /idP/idP => HX.
+  - case: (boolP (X \in psupport (perm_of_parts P))).
+    + rewrite psupport_of_disjoint; last admit.
+      move => /bigcupP [C] /imsetP [X0].
+      rewrite inE => /andP [H HX0] ->.
+      by rewrite psupport_of_set // inE => /eqP ->.
+    + rewrite inE => /nandP []; first by rewrite HX.
+      move: HX => /imsetP [x _ ->].
+      rewrite support_card_pcycle => Hsupp.
+      have:= Hsupp; rewrite in_support negbK pcycle_fix => /eqP ->.
+      move: Hsupp; rewrite support_of_disjoint; last admit.
+      rewrite -(big_imset id) /=; first last.
+        move=> C D /imsetP [c]; rewrite inE => /andP [_ cardc ->{C}].
+        move=>     /imsetP [d]; rewrite inE => /andP [_ cardd ->{D}].
+        by rewrite !support_cycle_of_set // => ->.
+      rewrite -imset_comp bla => /bigcupP.
+      move=> /exists_inP; rewrite -[X in (is_true X) -> _]negbK.
+      have xinP : x \in cover P by rewrite (cover_partition Hpart).
+      have:= xinP; rewrite -mem_pblock => xPblock.
+      rewrite negb_exists_in => /forall_inP/(_ (pblock P x))/contraL/(_ xPblock).
+      rewrite inE => /nandP []; first by rewrite pblock_mem.
+      rewrite -leqNgt leq_eqVlt => /orP [/cards1P [y Hy]|].
+      * move: xPblock; rewrite Hy inE => /eqP ->.
+        by rewrite -Hy; apply pblock_mem.
+      * rewrite ltnS leqn0 cards_eq0 => /eqP H.
+        by move: xPblock; rewrite H inE.
+  - case: (boolP (#|X| == 1)).
+    + move => /cards1P [x Hx]; subst X.
+      apply /imsetP; exists x => //.
+      apply esym; apply/eqP; rewrite -pcycle_fix.
+      rewrite -[_ == x]negbK -in_support support_of_disjoint; last admit.
+      apply /bigcupP => /exists_inP; apply /negP; rewrite negb_exists_in.
+      apply /forall_inP => C /imsetP [x0]; rewrite inE => /andP [Hx0 Hcard] ->.
+      rewrite support_cycle_of_set //.
+      move: Hpart => /and3P [_ /trivIsetP /(_ [set x] x0) Hxx0 _].
+      move: Hxx0 => /(_ HX Hx0) Htmp.
+      have {Htmp} /eqP/Htmp : [set x] <> x0
+        by move => Heq; move: Hcard; rewrite -Heq cards1.
+      rewrite -setI_eq0 => /eqP Hxx0.
+      apply /negP => Hx.
+      suff: x \in set0 by rewrite inE.
+      by rewrite -Hxx0 inE Hx andbT inE.
+    + move: Hpart => /and3P [_ _ Hset0].
+      move=> H; move: H HX Hset0.
+      rewrite neq_ltn => /orP [|Hcard HX Hset0].
+        by rewrite ltnS leqn0 cards_eq0 => /eqP -> ->.
+      suff: X \in psupport (perm_of_parts P) by rewrite inE => /andP [].
+      rewrite psupport_of_disjoint; last admit.
+      apply /bigcupP; exists (cycle_of_set X); last by rewrite psupport_of_set ?inE.
+      apply /imsetP; exists X => //.
+      by rewrite inE; apply /andP; split.
+Admitted.
+
+Definition perm_of_part ct :=
+  (\prod_(C in [set cycle_of_set s | s in [set X in parts_of_partn ct |#|X|>1]]) C)%g.
+
+(*
+Definition cycle_of_part ct :=
+  (\prod_(X in parts_of_partn ct | #|X| > 1) cycle_of_set X)%g.
+*)
 
 
 (********************************************
@@ -726,7 +805,7 @@ Proof.
   admit.
 Admitted.
 
-  
+
 (*
 Definition cyclefun_of (n l : nat) : T -> T :=
   let C := take l (drop n (enum T)) in next C.
@@ -742,7 +821,7 @@ Proof.
   rewrite /cyclefun_of; set a := take l (drop n (enum T)).
   case: (boolP (x1 \in a)); case (boolP (x2 \in a)).
   - rewrite -!index_mem -(size_rot 1) => Hx2 Hx1 /eqP.
-    rewrite (set_nth_default x2) ?nth_uniq // ?/index => [/eqP Hind|]. 
+    rewrite (set_nth_default x2) ?nth_uniq // ?/index => [/eqP Hind|].
     + rewrite size_rot -has_find in Hx2; rewrite size_rot index_mem in Hx1.
       have := (nth_find _ Hx2) => /(_ x1) /=; rewrite -Hind.
       rewrite - (_ : index x1 a = find (pred1 x1) a) // nth_index //.
@@ -753,16 +832,16 @@ Proof.
   - rewrite -!index_mem ltnNge negbK -(size_rot 1) => Hx2 Hx1.
     rewrite [RHS]nth_default // => Heq.
     contradict Hx2; rewrite size_rot leqNgt index_mem.
-    apply /negP; rewrite negbK -Heq -(mem_rot 1).        
+    apply /negP; rewrite negbK -Heq -(mem_rot 1).
     by exact:  mem_nth.
   - rewrite -!index_mem -(size_rot 1) => Hx2.
     rewrite ltnNge negbK => Hx1.
     rewrite nth_default // => Heq.
-    contradict Hx1; rewrite size_rot leqNgt index_mem.    
-    apply /negP; rewrite negbK Heq -(mem_rot 1).        
+    contradict Hx1; rewrite size_rot leqNgt index_mem.
+    apply /negP; rewrite negbK Heq -(mem_rot 1).
     by exact:  mem_nth.
   - rewrite -!index_mem !ltnNge !negbK -(size_rot 1) => Hx1 Hx2.
-    by rewrite !nth_default. 
+    by rewrite !nth_default.
 Qed.
 
 Definition cycle_of n l : {perm T} :=
@@ -832,8 +911,8 @@ Proof.
       rewrite !support_cycle_of //.
       admit. (*besoin de plus de précisions sur qui sont n et l, par rapport a la partition initiale*)
     + move => C1 C2.
-      rewrite inE => /perm_of_part_recP [n1 [l1 [H1 ->]]]. 
-      rewrite inE => /perm_of_part_recP [n2 [l2 [H2 ->]]]. 
+      rewrite inE => /perm_of_part_recP [n1 [l1 [H1 ->]]].
+      rewrite inE => /perm_of_part_recP [n2 [l2 [H2 ->]]].
       rewrite !support_cycle_of // => /setP Heq.
       have : n1 = n2 /\ l1 = l2.
         admit.
