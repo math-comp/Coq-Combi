@@ -512,43 +512,6 @@ Section Permofcycletype.
 
 Implicit Types (l : nat) (ct : intpartn #|T|).
 
-Definition parts_of_partn ct : {set {set T}} :=
-  [set C in [seq [set x in X] | X <- reshape ct (enum T)]].
-
-Lemma parts_of_partnE ct :
-  partition (parts_of_partn ct) [set: T].
-Proof.
-  have Hsumn : sumn ct = size (enum T) by rewrite -cardT intpartn_sumn.
-  apply /and3P; split.
-  - apply /eqP /setP => x; rewrite inE; apply /bigcupP.
-    have := nth_flatten x (reshape ct (enum T)) (index x (enum T)).
-    have : x \in (enum T) by rewrite mem_enum.
-    rewrite -index_mem -Hsumn => /reshape_coordP.
-    rewrite reshapeKl ?Hsumn //.
-    set eT := flatten _.
-    have HeT : eT = enum T.
-      by rewrite /eT reshapeKr ?mem_enum ?Hsumn.
-    have Hx: x \in eT by rewrite HeT mem_enum.
-    case: (reshape_coord _ _) => r c [Hr Hc].
-    rewrite HeT nth_index; last by rewrite mem_enum //.
-    move=> Hxnth.
-    exists [set x in nth [::] (reshape ct (enum T)) r].
-    + rewrite /parts_of_partn inE; apply/mapP.
-      exists (nth [::] (reshape ct (enum T)) r); last by [].
-      by apply: mem_nth; first rewrite size_reshape.
-    + rewrite Hxnth inE; apply mem_nth.
-      rewrite -(nth_map _ 0); last by rewrite size_reshape.
-      by rewrite -/(shape _) reshapeKl ?Hsumn.
-  - apply /trivIsetP => A B HA HB HAB.
-    admit.
-  - rewrite inE; apply /mapP => [][X HX].
-    move => /setP.
-    case: (set_0Vmem [set: T]).
-    + admit.
-    + move=> [x _] => /(_ x); rewrite !inE.
-    admit.
-Admitted.
-
 Definition cyclefun_of (s : {set T}) := next (enum s).
 
 Lemma uniq_next (p : seq T) : uniq p -> injective (next p).
@@ -727,8 +690,6 @@ Proof.
       by rewrite inE; apply /andP; split.
 Admitted.
 
-Definition perm_of_part ct :=
-  (\prod_(C in [set cycle_of_set s | s in [set X in parts_of_partn ct |#|X|>1]]) C)%g.
 
 (*
 Definition cycle_of_part ct :=
@@ -749,54 +710,6 @@ Proof.
 Admitted.
  *)
 
-(*Avec les identites*)
-Lemma pcycles_perm_of_part ct :
-  pcycles (perm_of_part ct) = parts_of_partn ct.
-Proof.
-  apply /setP => X.
-  apply /idP/idP => [HX|HX].
-  - case: (boolP (X \in psupport (perm_of_part ct))).
-    + rewrite psupport_of_disjoint; last admit. 
-      move => /bigcupP [C] /imsetP [X0].
-      rewrite inE => /andP [H HX0] ->.
-      by rewrite psupport_of_set // inE => /eqP ->.
-    + rewrite inE => /nandP []; first by rewrite HX.
-      rewrite negbK; move: HX => /imsetP [x Hx ->].
-      rewrite {1}pcycleE => /eqP /card_orbit1 /orbit1P.
-      rewrite afix_cycle => /afix1P /=; rewrite apermE => /eqP Hfix.
-      have:= Hfix.
-      rewrite -[_ == x]negbK -in_support support_of_disjoint; last admit.
-      move: Hfix; rewrite pcycle_fix => /eqP ->.
-      move => /bigcupP.
-      admit.
-  - case: (boolP (#|X| == 1)).
-    + move => /cards1P [x Hx]; subst X.
-      apply /imsetP; exists x => //.
-      apply esym; apply /orbit1P; rewrite afix_cycle; apply /afix1P => /=.
-      rewrite apermE; apply /eqP.
-      rewrite -[_ == x]negbK -in_support support_of_disjoint; last admit.
-      apply /bigcupP => /exists_inP; apply /negP; rewrite negb_exists_in.
-      apply /forallP => C; apply /implyP.
-      move => /imsetP [x0]; rewrite inE => /andP [Hx0 Hcard] ->.
-      rewrite support_cycle_of_set //.
-      have:= (parts_of_partnE ct) => /and3P [_ /trivIsetP /(_ [set x] x0) Hxx0 _].
-      move: Hxx0 => /(_ HX Hx0).
-      have /eqP ->: [set x] <> x0
-        by move => Heq; move: Hcard; rewrite -Heq cards1.
-      move => /(_ isT); rewrite -setI_eq0 => /eqP Hxx0.
-      apply /negP => Hx.
-      suff: x \in set0 by rewrite inE.
-      by rewrite -Hxx0 inE Hx andbT inE.
-    + have:= (parts_of_partnE ct) => /and3P [_ _ Hset0].
-      move=> H; move: H HX Hset0.
-      rewrite neq_ltn => /orP [|Hcard HX Hset0].
-        by rewrite ltnS leqn0 cards_eq0 => /eqP -> ->.
-      suff: X \in psupport (perm_of_part ct) by rewrite inE => /andP [].
-      rewrite psupport_of_disjoint; last admit.
-      apply /bigcupP; exists (cycle_of_set X); last by rewrite psupport_of_set ?inE.
-      apply /imsetP; exists X => //.
-      by rewrite inE; apply /andP; split.
-Admitted.
 
 
 Lemma cycle_of_partE ct :
