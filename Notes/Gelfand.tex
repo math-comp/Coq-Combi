@@ -8,9 +8,11 @@
 \usepackage[T1]{fontenc}
 \usepackage{babel}
 
-\title{Critère de Gelfand}
+\title{Notes sur le critère de Gelfand}
 
+\author{Florent Hivert}
 
+\date{Juin 2016}
 
 \theoremstyle{plain}
   \newtheorem{THEO}{\bf Théorème}[section]
@@ -106,9 +108,12 @@ resp. $A$ et $B$), alors $H$ est simple sur $Z$.
   (\phi\act a) := u\mapsto \phi(a\act u)\,.
 \end{equation}
 \end{NOTE}
+\bigskip
 
-L'espace vectoriel sous-jacent à $B$ est aussi un $(B\tensor_k A)$ bimodule
-par les multiplication à gauches et à droite. On considère l'espace vetoriel
+L'espace vectoriel sous-jacent à $B$ est aussi un $(B\tensor_k A)$-bimodule
+par les multiplication à gauches et à droite. Il y a donc un sens à considèrer
+l'espace vectoriel des morphismes de $(B\tensor_k A)$-bimodules de $B$ dans
+$\Lin(U,V)$.
 \begin{equation}
   L := \hom_{B\tensor_K A}(B, \Lin(U, V))\,.
 \end{equation}
@@ -126,6 +131,10 @@ par les multiplication à gauches et à droite. On considère l'espace vetoriel
     =b \mapsto l(b (zz')) \eqcom{def}(zz') \act l\,.\qedhere
   \end{multline}
 \end{proof}
+
+L'idée est de transformer le $\Hom_A$ de la définition de $H$ en un $\Lin$ ou
+ce qui revient au même, un produit tensoriel sur $A$ en un produit tensoriel
+sur $k$.
 \begin{PROP}
   Pour $h\in H$ et $l\in L$, on pose
   \begin{equation}
