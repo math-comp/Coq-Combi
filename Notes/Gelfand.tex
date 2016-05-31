@@ -1,4 +1,4 @@
-\documentclass[francais,a4paper,11pt]{amsart}
+\documentclass[francais,a4paper,11pt,reqno]{amsart}
 
 \usepackage[active]{srcltx}
 \usepackage{array,delarray}
@@ -138,20 +138,36 @@ par les multiplication à gauches et à droite. On considère l'espace vetoriel
   sont isomorphes.
 \end{PROP}
 \begin{proof}
-  \begin{enumerate}
-  \item Si $h\in H$ alors $\hat{h}\in L$.
+  \begin{itemize}
+  \item[$\bullet$] Si $h\in H$ alors $\hat{h}\in L$.
+    \begin{equation}
+      \hat h(b'\act b\act a) = \hat h(b'ba) = u\mapsto b'ba \act h(u)
+      = b'\act b\act h(a\act u) = b' \act \hat{h} \act a.
+    \end{equation}
+  \item[$\bullet$] $\hat{.}$ est un $Z$-morphisme.
+    \begin{align}
+      \widehat{z\act h} = \widehat{u\mapsto z\act h(u)}
+      &\eqcom{def}b\mapsto(u\mapsto b\act(z\act h(u)))\\
+      &\eqcom{act}b\mapsto(u\mapsto bz\act h(u))\\
+      &\eqcom{def}z\act(b\mapsto(u\mapsto b\act h(u)))\\
+      &=z\act\hat{h}\,.
+    \end{align}
+  \item[$\bullet$] Si $l\in L$ alors $\tilde{l}\in H$.
     \TODO{}
-  \item $\hat{.}$ est un $Z$-morphisme.
+  \item[$\bullet$] $\tilde{.}$ est un $Z$-morphisme.
     \TODO{}
-  \item Si $l\in L$ alors $\tilde{l}\in H$.
-    \TODO{}
-  \item $\tilde{.}$ est un $Z$-morphisme.
-    \TODO{}
-  \item Pour tout $h\in H$, on a l'égalité $\tilde{\hat{h}} = h$.
-    \TODO{}
-  \item Pour tout $l\in L$, on a l'égalité $\hat{\tilde{l}} = l$.
-    \TODO{}
-  \end{enumerate}
+  \item[$\bullet$] Pour tout $h\in H$, on a l'égalité $\tilde{\hat{h}} = h$.
+    \begin{equation}
+      \tilde{\hat{h}} = \widetilde{b \mapsto (u \mapsto b\act h(u))}
+      = u \mapsto 1\act h(u) = h
+    \end{equation}
+  \item[$\bullet$] Pour tout $l\in L$, on a l'égalité $\hat{\tilde{l}} = l$.
+    \begin{align}
+      \hat{\tilde{l}} &= \widehat{u \mapsto l(1)(u)}\\
+      &\eqcom{def}b \mapsto (u \mapsto b\act l(1)(u)) \\
+      &\eqcom{morph}b \mapsto u \mapsto l(b)(u) = l\,.\qedhere
+    \end{align}
+  \end{itemize}
 \end{proof}
 
 \begin{PROP}
