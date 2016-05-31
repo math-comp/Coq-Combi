@@ -1,0 +1,175 @@
+\documentclass[francais,a4paper,11pt]{amsart}
+
+\usepackage[active]{srcltx}
+\usepackage{array,delarray}
+\usepackage{amsmath,amssymb,amsthm,amsfonts,amsbsy}
+\usepackage{latexsym}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{babel}
+
+\title{Critère de Gelfand}
+
+
+
+\theoremstyle{plain}
+  \newtheorem{THEO}{\bf Théorème}[section]
+  \newtheorem{COR}[THEO]{\bf Corollaire}
+  \newtheorem{PROP}[THEO]{\bf Proposition}
+  \newtheorem{LEMME}[THEO]{\bf Lemme}
+  \newtheorem{CONJ}[THEO]{\bf Conjecture}
+
+\theoremstyle{definition}
+  \newtheorem{NOTAT}[THEO]{\bf Notation}
+  \newtheorem{DEF}[THEO]{\bf Définition}
+  \newtheorem{DEFS}[THEO]{\bf Définitions}
+  \newtheorem{ALGO}[THEO]{\bf Algorithme}
+  \newtheorem{PROB}[THEO]{\bf Problème}
+
+\theoremstyle{remark}
+   \newtheorem{EXPL}[THEO]{\bf Exemple}
+   \newtheorem{NOTE}[THEO]{\bf Note}
+
+\input{notations}
+\newcommand{\act}{\cdot}
+\newcommand{\simple}{S}
+
+\newcommand\eqcom[1]{\mathrel{\overset{\text{#1}}{=}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\maketitle
+
+\section{Restrictions et modules sur le commutant}
+
+Soit $B$ une algèbre sur $\CC$ et $A$ une sous-algèbre. Soit $U$ un $A$-module
+et $V$ un $B$-module. On considère l'espace vectoriel
+\begin{equation}
+H := \Hom_A(U, \res^B_A V)\,.
+\end{equation}
+On note $Z := Z(B, A)$ la sous algèbre de $B$ des éléments qui commutent avec
+$A$.
+\begin{LEMME}
+  $H$ est un $Z$-module pour l'action
+  \begin{equation}
+    z\act h := u\mapsto z \act h(u).
+  \end{equation}
+\end{LEMME}
+\begin{proof}
+  On montre que $z\act h\in H$:
+  \begin{multline}
+    (z\act h)(a\act u) \eqcom{def} z\act h(a\act u)
+    \eqcom{morph} z\act (a \act h(u)) \\
+    \eqcom{act}(za)\act h(u)
+    \eqcom{def $Z$}(az)\act h(u)
+    \eqcom{act}a\act(z\act h(u))
+    \eqcom{def}a\act(z\act h)(u)\,.
+  \end{multline}
+  De plus,
+  \begin{equation}
+    (z\act (z'\act h))(u) = (zz'\act h(u)) = (zz'\act h)(u)\,.
+  \end{equation}
+  $H$ est donc bien un $Z$-module.
+\end{proof}
+Le but ce cette section est de montrer que si $U$ et $V$ sont simples (sur
+resp. $A$ et $B$), alors $H$ est simple sur $Z$.
+
+
+\begin{LEMME}
+  On note $\Lin(U, V)$ l'ensemble des applications $\CC$-linéaire de $U$ dans
+  $V$. C'est un $(B\tensor_k A)$ bimodule ($B$-mod-$A$) avec les actions
+  suivantes:
+  \begin{equation}
+    b\act f := u\mapsto b\act f(u)
+    \qandq
+    f\act a := u\mapsto f(a\act u)\,.
+  \end{equation}
+\end{LEMME}
+\begin{proof}
+  \begin{equation}
+    b\act (b'\act f) = u\mapsto b \act (b'\act(f(u)))
+    = u\mapsto b b'\act(f(u)) = bb'\act f\,.
+  \end{equation}
+  \begin{multline}
+    (f\act a) \act a'
+    \eqcom{def}(u\mapsto f(a\act u)) \act a'
+    \eqcom{def}u\mapsto f(a\act (a' \act u))\\
+    \eqcom{act}u\mapsto f(aa'\act u)
+    \eqcom{def}f\act aa'\,.\qedhere
+  \end{multline}
+\end{proof}
+\begin{NOTE}
+  On peux aussi écrire $\Lin(U, V)$ comme $V\tensor_k U^*$ où $U^*$ est le
+  module dual de $U$, c'est-à-dire l'espace des formes linéaire sur $U$ avec
+  l'action
+  \begin{equation}
+  (\phi\act a) := u\mapsto \phi(a\act u)\,.
+\end{equation}
+\end{NOTE}
+
+L'espace vectoriel sous-jacent à $B$ est aussi un $(B\tensor_k A)$ bimodule
+par les multiplication à gauches et à droite. On considère l'espace vetoriel
+\begin{equation}
+  L := \hom_{B\tensor_K A}(B, \Lin(U, V))\,.
+\end{equation}
+\begin{LEMME}
+  $L$ est un $Z$-module pour l'action
+  \begin{equation}
+    z\act l := b\mapsto l(bz)
+  \end{equation}
+\end{LEMME}
+\begin{proof}
+  \begin{multline}
+    z\act(z'\act l)
+    \eqcom{def}z\act(b \mapsto l(b z'))
+    \eqcom{def}b \mapsto l((b z) z') \\
+    =b \mapsto l(b (zz')) \eqcom{def}(zz') \act l\,.\qedhere
+  \end{multline}
+\end{proof}
+\begin{PROP}
+  Pour $h\in H$ et $l\in L$, on pose
+  \begin{equation}
+    \hat{h} := b \mapsto (u \mapsto b\act h(u))
+    \qandq
+    \tilde{l} := u \mapsto l(1)(u)\,.
+  \end{equation}
+  Alors, les applications $h\mapsto\hat{h}$ et $l\mapsto\tilde{l}$ sont deux
+  isomorphismes réciproques des $Z$-modules $H$ et $L$. En particulier, ils
+  sont isomorphes.
+\end{PROP}
+\begin{proof}
+  \begin{enumerate}
+  \item Si $h\in H$ alors $\hat{h}\in L$.
+    \TODO{}
+  \item $\hat{.}$ est un $Z$-morphisme.
+    \TODO{}
+  \item Si $l\in L$ alors $\tilde{l}\in H$.
+    \TODO{}
+  \item $\tilde{.}$ est un $Z$-morphisme.
+    \TODO{}
+  \item Pour tout $h\in H$, on a l'égalité $\tilde{\hat{h}} = h$.
+    \TODO{}
+  \item Pour tout $l\in L$, on a l'égalité $\hat{\tilde{l}} = l$.
+    \TODO{}
+  \end{enumerate}
+\end{proof}
+
+\begin{PROP}
+  Si $U$ et $V$ sont des modules simples, alors le $Z$-module $L$ est
+  simple. Par conséquent $H$ est aussi simple.
+\end{PROP}
+\begin{proof}
+  \TODO{}
+\end{proof}
+\begin{THEO}[Critère de Gelfand]
+  $B$ est sans multiplicité sur $A$ si et seulement si $Z(B, A)$ est
+  commutatif.
+\end{THEO}
+\begin{proof}
+  \TODO{}
+\end{proof}
+\end{document}
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
