@@ -88,10 +88,12 @@ resp. $A$ et $B$), alors $H$ est simple sur $Z$.
   \end{equation}
 \end{LEMME}
 \begin{proof}
+  C'est un $B$-mod:
   \begin{equation}
     b\act (b'\act f) = u\mapsto b \act (b'\act(f(u)))
     = u\mapsto b b'\act(f(u)) = bb'\act f\,.
   \end{equation}
+  C'est un mod-$A$:
   \begin{multline}
     (f\act a) \act a'
     \eqcom{def}(u\mapsto f(a\act u)) \act a'
@@ -99,6 +101,10 @@ resp. $A$ et $B$), alors $H$ est simple sur $Z$.
     \eqcom{act}u\mapsto f(aa'\act u)
     \eqcom{def}f\act aa'\,.\qedhere
   \end{multline}
+  Les deux structures de module commutent:
+  \begin{equation}
+    b\act (f\act a) = u\mapsto b\act f(a\act u) = (b\act f)\act a\,.
+  \end{equation}
 \end{proof}
 \begin{NOTE}
   On peux aussi écrire $\Lin(U, V)$ comme $V\tensor_k U^*$ où $U^*$ est le
@@ -124,6 +130,9 @@ $\Lin(U,V)$.
   \end{equation}
 \end{LEMME}
 \begin{proof}
+  Montrons que $z\act l\in L$\TODO{}
+
+  C'est une action:
   \begin{multline}
     z\act(z'\act l)
     \eqcom{def}z\act(b \mapsto l(b z'))
@@ -158,13 +167,22 @@ sur $k$.
       \widehat{z\act h} = \widehat{u\mapsto z\act h(u)}
       &\eqcom{def}b\mapsto(u\mapsto b\act(z\act h(u)))\\
       &\eqcom{act}b\mapsto(u\mapsto bz\act h(u))\\
-      &\eqcom{def}z\act(b\mapsto(u\mapsto b\act h(u)))\\
-      &=z\act\hat{h}\,.
+      &\eqcom{def}z\act(b\mapsto(u\mapsto b\act h(u)))=z\act\hat{h}\,.
     \end{align}
   \item[$\bullet$] Si $l\in L$ alors $\tilde{l}\in H$.
-    \TODO{}
+    \begin{multline}
+      \tilde{l}(a\act u) = l(1)(a\act u)
+      \eqcom{morph A}l(1\act a)(u)\\
+      = l(a\act 1)(u)
+      \eqcom{morph B}a\act l(1)(u) = (a\act \tilde{l})(u)\,.
+    \end{multline}
   \item[$\bullet$] $\tilde{.}$ est un $Z$-morphisme.
-    \TODO{}
+    \begin{align}
+      \widetilde{z\act l}&=u\mapsto (z\act l)(1)(u)\\
+      &\eqcom{def}u\mapsto l(1z)(u)\\
+      &=u\mapsto l(z\act 1)(u)\\
+      &\eqcom{morph}z\act (u\mapsto l(1)(u))= z\act \tilde{l}
+    \end{align}
   \item[$\bullet$] Pour tout $h\in H$, on a l'égalité $\tilde{\hat{h}} = h$.
     \begin{equation}
       \tilde{\hat{h}} = \widetilde{b \mapsto (u \mapsto b\act h(u))}
@@ -184,14 +202,22 @@ sur $k$.
   simple. Par conséquent $H$ est aussi simple.
 \end{PROP}
 \begin{proof}
-  \TODO{}
+  Soit $f,g\in H$ deux éléments non nuls. On veut trouver un $z\in Z$ que
+  $z\act f = g$. Les modules $U$ et $V$ étant simple, le module $\Lin(U,V)$
+  est simple sur $B\tensor_k A$. En particulier, comme les morphismes $f$ et
+  $g$ sont non nuls, ils sont surjectifs. On peut donc trouver un $b\in B$ tel
+  que $g(b) = f(1)$. \TODO{Question: est-ce que $b\in Z$ ?}
 \end{proof}
 \begin{THEO}[Critère de Gelfand]
   $B$ est sans multiplicité sur $A$ si et seulement si $Z(B, A)$ est
   commutatif.
 \end{THEO}
 \begin{proof}
-  \TODO{}
+  Supposons $B$ sans multiplicité sur $A$. \TODO{}
+  
+  Inversement, supposons que $Z(B, A)$ est commutatif. On a montré que pour
+  tout $U$, $V$ simples, l'espace $\Hom_A(U, \res^B_A V)$ est un $Z$-module
+  simple, il est donc de dimension $1$.
 \end{proof}
 \end{document}
 %%% Local Variables:
