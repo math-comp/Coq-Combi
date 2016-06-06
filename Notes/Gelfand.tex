@@ -198,8 +198,8 @@ sur $k$.
 \end{proof}
 
 \begin{PROP}
-  Si $U$ et $V$ sont des modules simples, alors le $Z$-module $L$ est
-  simple. Par conséquent $H$ est aussi simple.
+  Si $A$ et $B$ sont semi-simple et si $U$ et $V$ sont des modules simples,
+  alors le $Z$-module $L$ est simple. Par conséquent $H$ est aussi simple.
 \end{PROP}
 \begin{proof}
   Soit $f,g\in H$ deux éléments non nuls. On veut trouver un $z\in Z$ que
@@ -219,6 +219,146 @@ sur $k$.
   tout $U$, $V$ simples, l'espace $\Hom_A(U, \res^B_A V)$ est un $Z$-module
   simple, il est donc de dimension $1$.
 \end{proof}
+
+
+\section{Centre et application du critère de Gelfand}
+
+\subsection{Le centre d'une algèbre de groupe}
+
+Rappel sur l'algèbre de groupe $\CC G$.
+\begin{LEMME}
+  Si $c\in\Center(\CC G)$ alors $c$ agit par un scalaire sur toute les
+  représentations.
+\end{LEMME}
+\begin{proof}
+  C'est une conséquence du lemme de Schur.
+\end{proof}
+
+\begin{LEMME}
+  L'application $f\mapsto \sum_g f(g^{-1})g$ est un isomorphisme linéaire
+  des fonctions centrales dans $\Center(\CC G)$.
+\end{LEMME}
+
+\begin{PROP}[Caractère et centre]
+  Soit $(\rho, V)$ une représentations et $f$ une fonction
+  centrale. Alors
+  \begin{equation}
+    \tr_V\left(\sum_g f(g^{-1})g\right) = |G|\langle f\mid\chi_\rho\rangle\,.
+  \end{equation}
+\end{PROP}
+En particulier les caractères irréductibles sont à un scalaire près les
+idempotents centraux:
+\begin{PROP}[Caractère irréductible et idempotents centraux]
+  Soit $(\rho, V)$ et $(\eta, W)$ deux représentations irréductibles.  On pose
+  $e_\rho := \frac{\chi_\rho(1)}{|G|} z(\rho)$.
+  \begin{itemize}
+  \item si $\rho$ et $\eta$ ne sont pas isomorphes alors $e_\rho$ agit par $0$
+    sur $W$.
+  \item si $\rho$ et $\eta$ sont isomorphes alors $e_\rho$ agit par $1$ sur $W$.
+  \end{itemize}
+  Par conséquent $e_\rho$ est un idempotent tel que pour toute représentation
+  $(\eta,W)$, l'espace $\eta(e_\rho)(W)$ est la composante isotypique associée
+  à $\rho$ de $W$.
+\end{PROP}
+\begin{NOTE}
+  Interprétation à la lumière de Wederburn:
+  \begin{equation}
+    \CC G \isom \bigoplus_{\rho\in\hat{G}} M_{\dim \rho}(\CC)
+  \end{equation}
+  Les idempotents centraux sont les identités des $M_{\dim \rho}(\CC)$.
+\end{NOTE}
+Why do we care ?
+\begin{COR}
+  Les composantes isotypiques sont canoniques et ne dépende pas de la
+  décomposition choisie.
+\end{COR}
+
+\subsection{Graphe de branchement et base de Gelfand-Tzetlin}
+Voir section 1 article Vershik-Okounkov.
+
+\begin{DEF}[Graphe de branchement (diagramme de Bratelli) d'une chaine de
+  groupe]
+  \begin{equation}
+    G_0=\{1\} \subset G_1 \subset G_2 \subset G_3 \subset \dots
+  \end{equation}
+  Multi-graphe gradué:
+  \begin{itemize}
+  \item les sommets de degré $n$ sont les $\lambda\in\hat{G_n}$.
+  \item pour $\lambda\in\hat{G_n}$ et $\mu\in\hat{G_{n+1}}$ le nombre d'arètes
+    entre $\lambda$ et $\mu$ est égale à $\dim\Hom(V_\lambda, \Res^{n+1}_nV_\mu)$.
+  \end{itemize}
+\end{DEF}
+\begin{PROP}
+  Pour toute irrep $(\lambda, V)$, alors $\dim(V)$ est le nombre de chemin de $0$
+  à $\lambda$ dans le graphe de branchement.
+\end{PROP}
+Si la chaîne est sans multiplicité, le multigraphe est un graphe. Comme la
+décomposition en isotypique est canonique, on obtient une décomposition
+canonique de $V_\lambda$ en droites. À des scalaires près on obtient une base
+canonique de $V_\lambda$ qui est appelée la base de Gelfand-Tzetlin.
+\begin{DEF}
+  Algèbres de Gelfand-Tzetlin $GZ_n$ sous algèbre $\CC G_n$ engendrée par
+  les $\Center(\CC G_i)$ pour $i\leq n$.
+\end{DEF}
+C'est une sous-algèbre commutative de $\CC G_n$ (en fait elle est maximale).
+
+D'où l'intérêt du critère de Gelfand.
+
+\subsection{Le cas des groupes symétriques}
+
+La chaînes des groupes symétriques est sans multiplicités:
+\begin{THEO}
+  L'algèbre $\Center_{n-1,n} := \Center(\CC \SG_n, \CC \SG_{n-1})$ est commutative.
+\end{THEO}
+\begin{LEMME}
+  Tout élément de $\sigma\in\SG_n$ est conjugué à son inverse $\sigma^{-1}$
+  par un élément de $\SG_{n-1}$.
+\end{LEMME}
+Pour $x=\sum_g x_g g\in\CC G$ notons $x^* := \sum_g x_g g^{-1}$. C'est un
+anti-isomorphisme d'algèbre.
+\begin{LEMME}
+  Pour $c\in\Center_{n-1,n}$, on a $c^* = c$.
+\end{LEMME}
+
+\begin{proof}[Démonstration du théorème]
+  Si $a,b\in\Center_{n-1,n}$ alors
+  \begin{equation}
+    (a-ib)(a+ib) = (a^*-ib^*)(a^*+ib^*) =  ((a-ib)(a+ib))^* = (a+ib)(a-ib)
+  \end{equation}
+  On en déduit que $ab=ba$.
+\end{proof}
+
+Ce qu'il faut maintenant faire: Décrire $\Center_{n-1,n}$ et l'algèbre de
+Gelfand-Tzetlin des groupes symétrique.
+
+\subsection{Éléments de Jucis-Murphy}
+
+La somme de toute les transpositions $\sum_{i<j\leq n} (i,j)$ est un élément du
+centre de $\CC\SG_n$. Par conséquent, l'élément de Jucis-Murphy défini par
+\begin{equation}
+  X_n := \sum_{i<n} (i,n) = \sum_{i<j\leq n} (i,j) - \sum_{i<j\leq n-1} (i,j)
+\end{equation}
+est un élément de $\Center_{n-1,n}$ et de $GZ(n)$. En particulier, les
+$(X_i)_{i\leq n}$ commutent.
+\begin{THEO}
+  \begin{equation}
+    \Center(\CC\SG_n) \subset \langle \Center(\CC\SG_{n-1}), X_n\rangle
+  \end{equation}
+\end{THEO}
+\begin{proof}
+  A détailler dans une autre séance. Relier au fait que les fonctions
+  puissances engendrent les polynômes symétriques.
+\end{proof}
+\begin{COR}
+  L'algèbre de Gelfand-Tzetlin est engendré par les éléments de Jucis-Murphy:
+  \begin{equation}
+    GZ_n = \langle X_1, X_2, \dots, X_n \rangle\,.
+  \end{equation}
+\end{COR}
+\begin{THEO}
+  $\Center(\CC \SG_n, \CC \SG_{n-1}) =
+  \langle \Center(\CC\SG_{n-1}), X_n\rangle$.
+\end{THEO}
 \end{document}
 %%% Local Variables:
 %%% mode: latex
