@@ -202,12 +202,38 @@ sur $k$.
   alors le $Z$-module $L$ est simple. Par conséquent $H$ est aussi simple.
 \end{PROP}
 \begin{proof}
-  Soit $f,g\in H$ deux éléments non nuls. On veut trouver un $z\in Z$ que
-  $z\act f = g$. Les modules $U$ et $V$ étant simple, le module $\Lin(U,V)$
-  est simple sur $B\tensor_k A$. En particulier, comme les morphismes $f$ et
-  $g$ sont non nuls, ils sont surjectifs. On peut donc trouver un $b\in B$ tel
-  que $g(b) = f(1)$. \TODO{Question: est-ce que $b\in Z$ ?}
+  Soit $f,g\in L$ deux éléments non nuls. Ce sont donc deux homorphismes de
+  $(B, A)$-bimodule de $B$ dans $\Lin(U,V)$. Le problème est de trouver un
+  $z\in Z$ que $z\act g = f$.
+
+  Les modules $U$ et $V$ étant simple sur $A$ et $B$, le bi-module $\Lin(U,V)$
+  est simple sur $B\tensor_k A$. Comme $f$ et $g$ sont non nuls, par le lemme
+  de Schur il sont surjectifs. Ils définissent donc deux isomorphismes:
+  \begin{equation}
+    B / \ker{f} \isom \Lin(U,V)
+    \qandq
+    B / \ker{g} \isom \Lin(U,V)\,.
+  \end{equation}
+  Par semi-simplicité de $B\tensor_k A$, on peut trouver des supplémentaires
+  stables $M_f$ et $M_g$ à $\ker{f}$ et $\ker{g}$ qui sont donc également
+  isomorphe. On peut donc construire un isomorphisme $\phi$ de
+  $(B,A)$-bimodule qui envoie $\ker f$ sur $\ker g$ et $M_f$ sur $M_g$.
+  Ainsi:
+  \begin{itemize}
+  \item si $b\in\ker f$, alors $\phi(b)\in\ker g$ et donc
+    $g\circ \phi(b) = f(b)$.
+  \item si $b\in M_f$, alors $g\circ \phi(b) = f(b)$ par les isomorphismes ci
+    dessus.
+  \end{itemize}
+  Ainsi $g\circ \phi = f$. Mais comme $\phi$ commute avec l'action de $b$, il
+  existe un $z\in B$ tel que pour tout $b\in B$, on a $\phi(b) = bz$. Pour
+  tout $b\in b$, on a donc $g\circ \phi(b) = g(bz) = (z\act g)(b)$. Il reste à
+  montrer que $z\in Z$. Soit donc $a\in A$. On vérifie que:
+  \begin{equation}
+    az = \phi(a) = \phi(1)\act a = z\act a = za\,.\qedhere
+  \end{equation}
 \end{proof}
+
 \begin{THEO}[Critère de Gelfand]
   $B$ est sans multiplicité sur $A$ si et seulement si $Z(B, A)$ est
   commutatif.
