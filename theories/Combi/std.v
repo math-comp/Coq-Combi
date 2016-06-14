@@ -43,9 +43,9 @@ is the same as having the same standardized.
                 which sorts w in a stable way.
 
 *****)
-
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm fingroup path.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
+From mathcomp Require Import finset perm fingroup path.
 
 Require Import tools combclass ordtype permuted.
 
@@ -139,7 +139,7 @@ Proof.
   pose fp := finfun (fun i : 'I_(size s) => Ordinal (Hfpi i)).
   have Hfp : injective fp.
     move=> i j; rewrite /fp /= !ffunE => Heq; apply/eqP.
-    have:= eq_refl (val (Ordinal (Hfpi i))); rewrite {2}Heq /=.
+    move: Heq => /(congr1 val)/eqP /=.
     rewrite /fpn (nth_uniq _ (ltn_ord _) (ltn_ord _)) //=.
     exact: std_uniq.
   exists (perm Hfp); rewrite /wordperm /=.
@@ -149,7 +149,8 @@ Proof.
   by rewrite nth_ord_enum /= permE /fp /= ffunE /= /fpn /=.
 Qed.
 
-Lemma is_std_wordpermP s : reflect (exists p : 'S_(size s), s = wordperm p) (is_std s).
+Lemma is_std_wordpermP s :
+  reflect (exists p : 'S_(size s), s = wordperm p) (is_std s).
 Proof.
   apply: (iffP idP).
   + move/perm_of_std => [] p Hp; by exists p.
@@ -180,7 +181,7 @@ Variable n : nat.
 
 Definition is_std_of_n := [pred w | (is_std w) && (size w == n) ].
 
-Structure stdwordn : predArgType :=
+Structure stdwordn : Set :=
   StdWordN {stdwordnval :> seq nat; _ : is_std_of_n stdwordnval}.
 Canonical stdwordn_subType := Eval hnf in [subType for stdwordnval].
 Definition stdwordn_eqMixin := Eval hnf in [eqMixin of stdwordn by <:].
@@ -192,26 +193,26 @@ Canonical stdwordn_countType := Eval hnf in CountType stdwordn stdwordn_countMix
 Canonical stdwordnn_subCountType := Eval hnf in [subCountType of stdwordn].
 
 Lemma stdwordnP (s : stdwordn) : is_std (val s).
-Proof. by case: s => s /= /andP []. Qed.
+Proof using . by case: s => s /= /andP []. Qed.
 
 Lemma size_sdtn (s : stdwordn) : size (val s) = n.
-Proof. by case: s => s /= /andP [] _ /eqP. Qed.
+Proof using . by case: s => s /= /andP [] _ /eqP. Qed.
 
 Definition enum_stdwordn := [seq wordperm p | p <- enum 'S_n].
 
 Lemma enum_stdwordnE : enum_stdwordn =i is_std_of_n.
 (* (is_std_of_n s) = (s \in enum_stdwordn). *)
-Proof.
+Proof using .
   move=> s; apply/idP/idP.
   + move/mapP => [] p _ -> /=.
-    by rewrite unfold_in /is_std_of_n /= wordperm_std /= /wordperm size_map size_enum_ord.
-  + rewrite /enum_stdwordn => /andP [] /is_std_wordpermP [] p Hstd /eqP Hsize.
+    by rewrite unfold_in /= wordperm_std /= size_map size_enum_ord.
+  + move=> /andP [] /is_std_wordpermP [] p Hstd /eqP Hsize.
     apply/mapP; rewrite -Hsize; exists p; last exact Hstd.
     by rewrite mem_enum.
 Qed.
 
 Lemma wordperm_inj : injective (@wordperm n).
-Proof.
+Proof using .
   move=> p q; rewrite /wordperm => Heq.
   rewrite -permP => i; have:= congr1 (fun s => nth 0 s i) Heq.
   have Hi : i < size (enum 'I_n) by rewrite size_enum_ord; apply: ltn_ord.
@@ -220,14 +221,14 @@ Proof.
 Qed.
 
 Lemma enum_stdwordn_uniq : uniq enum_stdwordn.
-Proof. rewrite/enum_stdwordn (map_inj_uniq wordperm_inj). exact: enum_uniq. Qed.
+Proof using . rewrite/enum_stdwordn (map_inj_uniq wordperm_inj). exact: enum_uniq. Qed.
 
 Canonical stdwordn_finMixin :=
   Eval hnf in sub_uniq_finMixin stdwordnn_subCountType enum_stdwordn_uniq enum_stdwordnE.
 Canonical stdwordn_finType := Eval hnf in FinType stdwordn stdwordn_finMixin.
 
-Lemma card_stdwordn : #|stdwordn| = n`!.
-Proof. by rewrite card_sub_uniqE size_map -card_Sn cardE. Qed.
+Lemma card_stdwordn : #|{:stdwordn}| = n`!.
+Proof using . by rewrite card_sub_uniqE size_map -card_Sn cardE. Qed.
 
 End StdCombClass.
 
@@ -236,7 +237,6 @@ End StdCombClass.
 Section Standardisation.
 
 Variable Alph : ordType.
-Let Z := (inhabitant Alph).
 Implicit Type s u v w : seq Alph.
 
 Fixpoint std_rec n s :=
@@ -248,16 +248,16 @@ Fixpoint std_rec n s :=
 Definition std s := std_rec (size s) s.
 
 Lemma size_std_rec n s : size (std_rec n s) = n.
-Proof.
+Proof using .
   elim: n s => [//= | n IHn] s /=.
   by rewrite size_cat /= addnS -size_cat cat_take_drop IHn.
 Qed.
 
 Lemma size_std s : size (std s) = size s.
-Proof. exact: size_std_rec. Qed.
+Proof using . exact: size_std_rec. Qed.
 
 Lemma std_is_std s : is_std (std s).
-Proof.
+Proof using .
   rewrite /is_std /std size_std_rec perm_eq_sym.
   move Hn : (size s) => n; elim: n s Hn => [//= | n IHn] s Hn.
   apply: (@perm_eq_trans _ (n :: (iota 0 n))).
@@ -271,26 +271,23 @@ Proof.
 Qed.
 
 Lemma in_std_ltn_size s i : i \in std s = (i < size s).
-Proof. by rewrite (mem_std _ (std_is_std s)) size_std_rec. Qed.
-
-Lemma std_all_gtnX_size s : all (gtnX (size s)) (std s).
-Proof. apply/allP=> i /=; by rewrite ltnXnatE in_std_ltn_size. Qed.
+Proof using . by rewrite (mem_std _ (std_is_std s)) size_std_rec. Qed.
 
 Lemma allLtn_std_rec s : allLtn (std s) (size s).
-Proof. exact: std_all_gtnX_size. Qed.
+Proof using . apply/allP=> i /=; by rewrite ltnXnatE in_std_ltn_size. Qed.
 
 Lemma rembig_ins_std s pos :
   rembig (take pos (std s) ++ size s :: drop pos (std s)) = std s.
-Proof.
+Proof using .
   apply: esym; apply/eqP/rembigP; first by case: (take _ _).
   have:= allLtn_std_rec s.
   rewrite -{1}[std s](cat_take_drop pos) allLtn_catE => /andP [].
   set ll := take _ _; set lr := drop _ _ => /allLtnW Hll Hlr.
-  exists ll; exists (size s); exists lr; by split; first by rewrite cat_take_drop.
+  exists ll, (size s), lr; by split; first by rewrite cat_take_drop.
 Qed.
 
 Lemma std_rembig s : std (rembig s) = rembig (std s).
-Proof.
+Proof using .
   rewrite /std.
   elim: s => [//= | s0 s IHs] /=.
   case (boolP (allLtn s s0)) => [_ | Hmax].
@@ -302,7 +299,7 @@ Proof.
 Qed.
 
 Lemma std_posbig s : posbig (std s) = posbig s.
-Proof.
+Proof using .
   rewrite /std.
   case: s => [//= | s0 s] /=.
   case (boolP (allLtn s s0)) => [/= | Hmax] /=;
@@ -310,7 +307,7 @@ Proof.
   set pos := (posbig s).+1; set LR := take _ _.
   have HposLR : pos = size LR.
     rewrite /LR size_take /pos size_std_rec.
-    case (ltnP (posbig s).+1 (size s)) => Hpos; first by [].
+    case: (ltnP (posbig s).+1 (size s)) => Hpos; first by [].
     apply/eqP; rewrite eqn_leq Hpos andbT.
     have: s != [::] by move: Hmax; case s.
     exact: posbig_size.
@@ -319,7 +316,7 @@ Proof.
   rewrite size_take size_std_rec HposLR.
   have Hif : (if size LR < size s then size LR else size s) = size LR.
     rewrite /LR /pos size_take size_std_rec.
-    case (ltnP (posbig s).+1 (size s)) => Hpos; first by rewrite Hpos.
+    case: (ltnP (posbig s).+1 (size s)) => Hpos; first by rewrite Hpos.
     by rewrite ltnn.
   rewrite /LR size_take size_std_rec HposLR !Hif /std.
   have -> : size (s0 :: rembig s) = size s.
@@ -343,7 +340,7 @@ Proof.
     rewrite (IHn _ Hszrem Hprem) Hs {IHn}.
     have:= Hperm; rewrite {1}Hs => /maxL_perm_eq.
     rewrite maxL_iota_n => <-.
-    exact: posbig_take_dropE. 
+    exact: posbig_take_dropE.
 Qed.
 
 Lemma std_stdE (T : ordType) (s : seq T) : std (std s) = std s.
@@ -352,7 +349,7 @@ Proof. apply: std_std; exact: std_is_std. Qed.
 (** ** Inversion sets and standardization *)
 Section Spec.
 
-Implicit Type S T : ordType.
+Implicit Type S T : inhOrdType.
 
 Definition versions T (w : seq T) : rel nat :=
   fun i j => (i <= j < size w) && (nth (inhabitant T) w i <=A nth (inhabitant T) w j).
@@ -380,20 +377,16 @@ Proof.
   exact (etrans (H12 i j) (H23 i j)).
 Qed.
 
-Lemma eq_inv_size_leq T1 T2 (w1 : seq T1) (w2 : seq T2) :
-  eq_inv w1 w2 -> size w1 <= size w2.
-Proof.
-  rewrite /eq_inv /versions => Hinv.
-  case H : (size w1) => [//= | n].
-  move/(_ n n) : Hinv; rewrite H leqnn ltnSn leqXnn /=.
-  by move/eqP/andP => [].
-Qed.
-
 Lemma eq_inv_size T1 T2 (w1 : seq T1) (w2 : seq T2) :
   eq_inv w1 w2 -> size w1 = size w2.
 Proof.
-  move=> H; apply/eqP; rewrite eqn_leq.
-  by rewrite (eq_inv_size_leq H) (eq_inv_size_leq (eq_inv_sym H)).
+  move=> Hinv.
+  wlog suff Hwlog : T1 T2 w1 w2 Hinv / size w1 <= size w2.
+    by apply anti_leq; rewrite !Hwlog.
+  rewrite /eq_inv /versions in Hinv.
+  case H : (size w1) => [//= | n].
+  move/(_ n n) : Hinv; rewrite H leqnn ltnSn leqXnn /=.
+  by move/eqP/andP => [].
 Qed.
 
 Lemma eq_invP  T1 T2 (w1 : seq T1) (w2 : seq T2) :
@@ -448,10 +441,10 @@ Qed.
 Lemma eq_inv_allgtnXimply S T (a : S) u (b : T) v :
   eq_inv (a :: u) (b :: v) -> (allLtn u a) -> (allLtn v b).
 Proof.
-  move=> H; have:= (eq_inv_size H).
+  move=> H; have:= eq_inv_size H.
   move: H; rewrite /eq_inv /versions => H /= /eqP; rewrite eqSS => /eqP Hsz.
   move/(all_nthP (inhabitant S)) => Hall; apply/(all_nthP (inhabitant T)).
-  rewrite -Hsz => i Hi; move/(_ i Hi) : Hall => /= Hleq.
+  rewrite -Hsz => i Hi; move/(_ i Hi) : Hall => Hleq.
   move/(_ 0 i.+1) : H => /=.
   move: Hi; rewrite -Hsz -ltnS => -> /=.
   rewrite ltnXNgeqX => <-; by rewrite -ltnXNgeqX.
@@ -487,14 +480,14 @@ Proof.
   case (ltnP i (posbig u)) => Hipos;
     case (ltnP j (posbig u)) => Hjpos; apply: Heq.
   - rewrite Hij /=; apply: (ltn_trans Hj).
-    move: Hj; by case (size u).
+    move: Hj; by case: (size u).
   - rewrite (leq_trans Hij (leqnSn _)) /=.
     suff -> : (size u) = (size u).-1.+1 by rewrite ltnS.
-    by move: Hj; rewrite -ltnS; case (size u).
+    by move: Hj; rewrite -ltnS; case: (size u).
   - exfalso; have:= leq_trans (leq_trans Hjpos Hipos) Hij; by rewrite ltnn.
   - rewrite ltnS Hij /=.
     suff -> : (size u) = (size u).-1.+1 by rewrite ltnS.
-    by move: Hj; rewrite -ltnS; case (size u).
+    by move: Hj; rewrite -ltnS; case: (size u).
 Qed.
 
 Lemma std_eq_inv S T (u : seq S) (v : seq T) :
@@ -530,10 +523,10 @@ Proof.
   have Hpossz : posbig u <= size (rembig u).
     have /posbig_size : u != [::] by rewrite Hu.
     by rewrite Hszrem Hn.
-  rewrite !(nth_inspos _ _ Hpossz).
+  rewrite !(nth_inspos _ _ _ Hpossz).
   have Hposszstd : posbig u <= size (std_rec n (rembig u)).
     by rewrite size_std_rec -Hszrem.
-  rewrite !(nth_inspos _ _ Hposszstd).
+  rewrite !(nth_inspos _ _ _ Hposszstd).
   case (altP (i =P posbig u)) => Hipos.
   - subst i.
     case (altP (j =P posbig u)) => Hjpos; first by rewrite !leqXnn.
@@ -671,7 +664,7 @@ Variable Alph : ordType.
 Implicit Type u v : seq Alph.
 
 Theorem perm_eq_stdE u v : perm_eq u v -> std u = std v -> u = v.
-Proof.
+Proof using .
   move=> Hperm.
   move Hn : (size v) => n; elim: n u v Hn Hperm => [| n IHn] u v Hn Hperm /=.
     move: Hperm => /perm_eq_size; rewrite Hn => /eqP/nilP -> _.
@@ -679,9 +672,9 @@ Proof.
   move=> Hstd.
   have:= size_rembig v; rewrite Hn /= => Hszrem.
   have Hpermrem := perm_eq_rembig Hperm.
-  have:= congr1 (@rembig _) Hstd; rewrite -!std_rembig => Hstdrem.
+  have:= congr1 rembig Hstd; rewrite -!std_rembig => Hstdrem.
   move/(_ _ _ Hszrem Hpermrem Hstdrem) : IHn => Hrem {Hszrem Hpermrem Hstdrem}.
-  have:= congr1 (@posbig _) Hstd; rewrite !std_posbig => Hstdpos.
+  have:= congr1 posbig Hstd; rewrite !std_posbig => Hstdpos.
   have:= Hn; case Hv : v => [//= | v0 v'] /= _.
   have:= Hperm => /perm_eq_size; rewrite Hn.
   case Hu : u => [//= | u0 u'] /= _.
@@ -696,14 +689,14 @@ End PermEq.
 (** ** Standardization and elementary transpositions of a word *)
 Section Transp.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let Z := (inhabitant Alph).
 Implicit Type u v : seq Alph.
 
 Lemma nth_transp u v a b i :
   i != size u -> i != (size u).+1 ->
   nth Z (u ++ [:: a; b] ++ v) i =  nth Z (u ++ [:: b; a] ++ v) i.
-Proof.
+Proof using .
   move=> Hi Hi1; rewrite !nth_cat.
   case: (ltnP i (size u)) => //= Hui.
   have {Hui Hi} Hi: (size u) < i by rewrite ltn_neqAle eq_sym Hui Hi.
@@ -714,22 +707,22 @@ Qed.
 
 Lemma nth_sizeu u v a b :
   nth Z (u ++ [:: a; b] ++ v) (size u) = a.
-Proof. by rewrite nth_cat ltnn subnn. Qed.
+Proof using . by rewrite nth_cat ltnn subnn. Qed.
 
 Lemma nth_sizeu1 u v a b :
   nth Z (u ++ [:: a; b] ++ v) (size u).+1 = b.
-Proof. by rewrite nth_cat ltnNge leqnSn /= subSnn /=. Qed.
+Proof using . by rewrite nth_cat ltnNge leqnSn /= subSnn /=. Qed.
 
 Lemma nth_sizeu2 u v a b c :
   nth Z (u ++ [:: a; b; c] ++ v) (size u).+2 = c.
-Proof.
+Proof using .
   rewrite nth_cat ltnNge (leq_trans (leqnSn _) (leqnSn _)) /=.
   by rewrite -add1n -[(size u).+1]add1n addnA addn1 (addnK (size u) 2).
 Qed.
 
 End Transp.
 
-Lemma eq_inv_transp (s T : ordType) (u v : seq s) a b
+Lemma eq_inv_transp (s T : inhOrdType) (u v : seq s) a b
                                  (U V : seq T) A B :
   a <A b -> A <A B -> size u = size U ->
   eq_inv (u ++ [:: a; b] ++ v) (U ++ [:: A; B] ++ V) ->
@@ -799,7 +792,7 @@ Proof.
       by apply.
 Qed.
 
-Lemma std_transp (T : ordType) (u v : seq T) a b
+Lemma std_transp (T : inhOrdType) (u v : seq T) a b
                                (U V : seq nat) A B :
   a <A b -> size u = size U ->
   std (u ++ [:: a; b] ++ v) = (U ++ [:: A; B] ++ V) ->

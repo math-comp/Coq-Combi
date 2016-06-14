@@ -14,8 +14,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype seq tuple.
-Require Import finset perm.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype seq tuple.
+From mathcomp Require Import finset perm.
 
 (** * The list of the permuted tuple of a given tuple                        *)
 (*
@@ -36,7 +37,7 @@ Section SizeN.
 Variable n : nat.
 
 Lemma card_Sn : #|'S_(n)| = n`!.
-Proof.
+Proof using .
   rewrite (eq_card (B := perm_on [set : 'I_n])).
     by rewrite card_perm /= cardsE /= card_ord.
   move=> p; rewrite inE unfold_in /perm_on /=.
@@ -47,11 +48,11 @@ Definition permuted_tuple (t : n.-tuple T) :=
   [seq [tuple tnth t (aperm i p) | i < n] | p <- enum 'S_n ].
 
 Lemma size_permuted_tuple (t : n.-tuple T) : size (permuted_tuple t) = n`!.
-Proof. rewrite /permuted_tuple size_map -cardE; exact card_Sn. Qed.
+Proof using . rewrite /permuted_tuple size_map -cardE; exact card_Sn. Qed.
 
 Lemma perm_eq_permuted_tuple (s : seq T) (H : size s == n) :
   forall s1, perm_eq s s1 -> s1 \in [seq tval t | t <- permuted_tuple (Tuple H)].
-Proof.
+Proof using .
   set t := Tuple H; have Ht : perm_eq s t by [].
   move=> s1 Hss1; rewrite perm_eq_sym in Hss1.
   have:= perm_eq_trans Hss1 Ht => /tuple_perm_eqP [] p Hs1.
@@ -66,10 +67,10 @@ Definition permuted s :=
   [seq tval t | t <- permuted_tuple (Tuple (eq_refl (size s)))].
 
 Lemma size_permuted s : size (permuted s) = (size s)`!.
-Proof. by rewrite /permuted size_map size_permuted_tuple. Qed.
+Proof using . by rewrite /permuted size_map size_permuted_tuple. Qed.
 
 Lemma eq_seqE s s1 : perm_eq s s1 -> s1 \in permuted s.
-Proof. exact: perm_eq_permuted_tuple. Qed.
+Proof using . exact: perm_eq_permuted_tuple. Qed.
 
 End Permuted.
 

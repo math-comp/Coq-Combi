@@ -10,9 +10,9 @@ Florent Hivert <Florent.Hivert@lri.fr>
 
 Contributors:
 
-- Jean Christophe Filliâtre
-- Christine Paulin
-- Olivier Stietel
+- Jean Christophe Filliâtre (Why3 implementation)
+- Christine Paulin (ALEA + hook length formula)
+- Olivier Stietel (hook length formula)
 
 This library was supported by additional discussions with:
 
@@ -49,11 +49,16 @@ Contents
 
 * various **Combinatorial objects** including
 
+  - totally and partially ordered types,
   - partitions,
   - tableaux, standard tableaux, skew tableaux,
   - subsequences, integer vectors,
   - standard words and permutations,
   - Yamanouchi words
+
+*  the **Coxeter presentation of the symmetric group**.
+
+*  the **factorization** of the Vandermonde determinant as the product of differences.
 
 *  bijection m-trees <-> m-dyck words.
    See the [trees branch on Github](https://github.com/hivert/Coq-Combi/tree/trees).
@@ -64,8 +69,6 @@ In progress:
    (together with Jean Christophe Filliâtre).
    See the [Why3 branch on Github](https://github.com/hivert/Coq-Combi/tree/Why3).
 
-*  the **Coxeter presentation of the symmetric group**.
-
 More unstable stuff:
 
 *  Poset.
@@ -74,20 +77,33 @@ More unstable stuff:
 *  Formal Power series. See the series branch on Github.
    See the [series branch on Github](https://github.com/hivert/Coq-Combi/tree/series).
 
+* Set-partitions 
+  See the [SetPartition branch on Github](https://github.com/hivert/Coq-Combi/tree/SetPartition).
+
+Documentation
+========================================================================
+
+The [documentation](http://hivert.github.io/Coq-Combi/) is currently in progress.
 
 Installation
 ========================================================================
 
-This library is based on SSReflect/MathComp Library version 1.5.
+This library is based on
 
-It needs an [extended version](https://github.com/hivert/multinomials-ssr)
-of Pierre-Yves Strub [Multinomials](https://github.com/strub/multinomials-ssr)
-library.
+* Coq 8.5 (it should work to with Coq-8.4 if you ignore the warning at the
+  beginning of Make).
+
+* SSReflect/MathComp Library version 1.6.
+
+* It needs an [extended version](https://github.com/hivert/multinomials-ssr)
+  of Pierre-Yves Strub [Multinomials](https://github.com/strub/multinomials-ssr)
+  library.
 
 
-Note: A standalone version not using [Multinomials] is available in the
-[Legacy branch](https://github.com/hivert/Coq-Combi/tree/Legacy). It only
-includes a bare proof of the LR-rule without formalizing anything on
-multivariate polynomials. The proofs given here would be valid for any
-elements in any commutative rings.
+Note: A standalone version of the proof of the Littlewood-Richardson rule not
+using [Multinomials] is available in the [Legacy
+branch](https://github.com/hivert/Coq-Combi/tree/Legacy). It only includes a
+bare proof of the LR-rule without formalizing anything on multivariate
+polynomials. The proofs given here would be valid for any elements in any
+commutative rings.
 

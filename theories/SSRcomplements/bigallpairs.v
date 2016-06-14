@@ -12,8 +12,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun eqtype ssrnat seq path div fintype.
-Require Import tuple ssrnum ssralg ssrint finfun bigop.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun eqtype ssrnat seq path div fintype.
+From mathcomp Require Import tuple ssrnum ssralg ssrint finfun bigop.
 
 Import GRing.Theory.
 
@@ -37,7 +38,7 @@ Local Notation "x * y" := (op x y).
 Lemma big_allpairs I J (rI : seq I) (rJ : seq J) F :
   \big[*%M/idx]_(X <- [seq (A, B) | A <- rI, B <- rJ]) F X =
     \big[*%M/idx]_(A <- rI) \big[*%M/idx]_(B <- rJ) F (A, B).
-Proof.
+Proof using .
   elim: rI => [//= | i0 rI IHrI] /=; first by rewrite !big_nil.
   by rewrite big_cat big_cons IHrI {IHrI} big_map.
 Qed.

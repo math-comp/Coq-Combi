@@ -12,8 +12,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm fingroup path.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
+From mathcomp Require Import finset perm fingroup path.
 
 Require Import tools combclass ordcast partition Yamanouchi ordtype std tableau stdtab.
 
@@ -27,7 +28,7 @@ Import OrdNotations.
 
 Section StdRS.
 
-Variable Alph : ordType.
+Variable Alph : inhOrdType.
 Let Z := (inhabitant Alph).
 Implicit Type s u v w : seq Alph.
 Implicit Type p : seq nat.
@@ -35,7 +36,7 @@ Implicit Type t : seq (seq Alph).
 
 Lemma std_plact1 (u v1 w v2 : seq Alph) :
   v2 \in plact1 v1 -> std (u ++ v1 ++ w) =Pl std (u ++ v2 ++ w).
-Proof.
+Proof using .
   move/plact1P => [] a [] b [] c [] Habc -> ->.
   have:= std_cutabc u w a c b => [] [] U [] V [] A [] C [] B [] Hsz Hstd.
   have Hac : a <A c by move: Habc => /andP []; apply: leqX_ltnX_trans.
@@ -62,7 +63,7 @@ Qed.
 
 Lemma std_plact2 (u v1 w v2 : seq Alph) :
   v2 \in plact2 v1 -> std (u ++ v1 ++ w) =Pl std (u ++ v2 ++ w).
-Proof.
+Proof using .
   have reorg3 (T : eqType) (U W : seq T) b a c :
     U ++ [:: b; a; c] ++ W = (U ++ [:: b]) ++ [:: a; c] ++ W by rewrite -catA.
   move/plact2P => [] a [] b [] c [] Habc -> ->.
@@ -94,7 +95,7 @@ Proof.
 Qed.
 
 Theorem std_plact u v : u =Pl v -> std u =Pl std v.
-Proof.
+Proof using .
   move: v; apply: gencongr_ind; first exact: plact_refl.
   move=> a b1 c b2 H Hplact.
   rewrite (plact_ltrans H).
@@ -108,7 +109,7 @@ Qed.
 Lemma cast_enum u (S : {set 'I_(size u)}) :
   enum (mem (cast_set (esym (size_std u)) S)) =
   map (cast_ord (esym (size_std u))) (enum (mem S)).
-Proof.
+Proof using .
   rewrite {1}/enum_mem -enumT /=.
   rewrite -[filter _ _]map_id (cast_map_cond _ _ (esym (size_std u))).
   congr (map _ _).
@@ -120,7 +121,7 @@ Qed.
 Lemma sorted_std_extract u (S : {set 'I_(size u)}) :
    sorted leqX (extractpred (in_tuple u) (mem S)) =
    sorted leqX (extractpred (in_tuple (std u)) (mem (cast_set (esym (size_std u)) S))).
-Proof.
+Proof using .
   rewrite /extractpred cast_enum /= /sorted.
   set leqI := (fun i j : 'I_(size u) => i <= j).
   have leqI_trans : transitive leqI.
@@ -132,18 +133,18 @@ Proof.
   case: (enum (mem S)) => [//= | i0 l] {S} /=.
   elim: l i0 => [//= | i1 l IHl] i0 /= /andP [] Hleqi Hpath.
   rewrite -(IHl i1 Hpath) {IHl Hpath}; congr (_ && _).
-  rewrite !(tnth_nth Z) !(tnth_nth (inhabitant (nat_ordType))) /=.
+  rewrite !(tnth_nth Z) !(tnth_nth (inhabitant (nat_inhOrdType))) /=.
   have:= eq_inv_std u => /eq_invP [] Hsz; apply.
   move: Hleqi; rewrite /leqI => -> /=.
   exact: ltn_ord.
 Qed.
 
 Lemma ksupp_inj_std u k : ksupp_inj leqX leqX k u (std u).
-Proof.
+Proof using .
   rewrite /ksupp_inj /ksupp => ks /and3P [] Hsz Htriv /forallP Hall.
   exists (cast_set (esym (size_std u)) @: ks).
   apply/and4P; split.
-  - rewrite /scover /= cover_cast /cast_set /=.
+  - rewrite cover_cast /cast_set /=.
     by rewrite card_imset; last exact: cast_ord_inj.
   - apply: (@leq_trans #|ks|); last exact: Hsz.
     exact: leq_imset_card.
@@ -155,11 +156,11 @@ Proof.
 Qed.
 
 Lemma ksupp_inj_stdI u k : ksupp_inj leqX leqX k (std u) u.
-Proof.
+Proof using .
   rewrite /ksupp_inj /ksupp => ks /and3P [] Hsz Htriv /forallP Hall.
   exists (cast_set (size_std u) @: ks).
   apply/and4P; split.
-  - rewrite /scover /= cover_cast /cast_set /=.
+  - rewrite cover_cast /cast_set /=.
     by rewrite card_imset; last exact: cast_ord_inj.
   - apply: (@leq_trans #|ks|); last exact: Hsz.
     exact: leq_imset_card.
@@ -177,7 +178,7 @@ Proof.
 Qed.
 
 Lemma Greene_std u k : Greene_row (std u) k = Greene_row u k.
-Proof.
+Proof using .
   apply/eqP; rewrite eqn_leq; apply/andP; split;
     apply: leq_Greene.
   + exact: ksupp_inj_stdI.
@@ -185,11 +186,11 @@ Proof.
 Qed.
 
 Theorem shape_RS_std u : shape (RS (std u)) = shape (RS u).
-Proof. apply: Greene_row_eq_shape_RS; exact: Greene_std. Qed.
+Proof using . apply: Greene_row_eq_shape_RS; exact: Greene_std. Qed.
 
 End StdRS.
 
-Theorem RSmap_std (T : ordType) (w : seq T) : (RSmap (std w)).2 = (RSmap w).2.
+Theorem RSmap_std (T : inhOrdType) (w : seq T) : (RSmap (std w)).2 = (RSmap w).2.
 Proof.
   move Hn : (size w) => n.
   elim: n T w Hn => [/= | n IHn] T w; first by move/eqP/nilP => ->.
@@ -219,7 +220,7 @@ Proof.
   by move/incr_nth_inj ->.
 Qed.
 
-Corollary RStabmap_std (T : ordType) (w : seq T) : (RStabmap (std w)).2 = (RStabmap w).2.
+Corollary RStabmap_std (T : inhOrdType) (w : seq T) : (RStabmap (std w)).2 = (RStabmap w).2.
 Proof.
   rewrite /RStabmap.
   move H : (RSmap w) => [P Q].
@@ -242,10 +243,10 @@ Proof. have:= Hinv; by rewrite /invseq => /andP []. Qed.
 Definition val2pos := fun (i : 'I_(size s)) => Ordinal (linvseq_ltn_szt Hinvst (ltn_ord i)).
 
 Lemma val2posE : val \o val2pos =1 nth (size t) s.
-Proof. by []. Qed.
+Proof using . by []. Qed.
 
 Lemma val2pos_inj : injective val2pos.
-Proof.
+Proof using .
   move: Hinvst => /linvseqP Hv.
   move=> i j; rewrite /val2pos; set posi := Ordinal _ => /(congr1 val) /= Heq.
   apply/val_inj; by rewrite /= -(Hv i (ltn_ord i)) -(Hv j (ltn_ord j)) Heq.
@@ -255,7 +256,7 @@ Lemma val2pos_enum (p : {set 'I_(size s)}) :
   (* Hypothesis : val2pos sorted in p *)
   sorted leqX [seq tnth (in_tuple s) i | i <- enum (mem p)] ->
   enum (mem [set val2pos x | x in p]) = [seq val2pos x | x <- enum p].
-Proof.
+Proof using .
   rewrite /enum_mem (eq_filter (a2 := mem p)) // -!enumT /= => H.
   apply: (inj_map val_inj).
   rewrite -map_comp (eq_map val2posE).
@@ -291,7 +292,7 @@ Proof.
 Qed.
 
 Lemma ksupp_inj_invseq k : ksupp_inj leqX leqX k s t.
-Proof.
+Proof using Hinvst.
   rewrite /ksupp_inj /ksupp => ks /and3P [] Hsz Htriv /forallP Hall.
   exists [set val2pos @: (p : {set 'I_(size s)}) | p in ks].
   apply/and4P; split.
@@ -301,7 +302,7 @@ Proof.
   - apply/forallP => ptmp; apply/implyP => /imsetP [] p Hp -> {ptmp}.
     move/(_ p): Hall; rewrite Hp /= /extractpred.
     move/val2pos_enum ->; rewrite -map_comp /=.
-    rewrite (eq_map (f2 := @nat_of_ord _)); first last.
+    rewrite (eq_map (f2 := nat_of_ord)); first last.
       move=> i /=; rewrite (tnth_nth (size s)) /=.
       by have:= Hinvst => /linvseqP ->.
     set l := map _ _; have : subseq l [seq val x | x  <- enum 'I_(size s)].
@@ -351,8 +352,8 @@ Proof.
     + by rewrite size_map size_iota.
   - apply/eq_invP; split; first by rewrite size_map.
     move=> i j /andP [] Hij Hj.
-    rewrite (nth_map (inhabitant nat_ordType)); last exact (leq_ltn_trans Hij Hj).
-    rewrite (nth_map (inhabitant nat_ordType)); last exact Hj.
+    rewrite (nth_map (inhabitant nat_inhOrdType)); last exact (leq_ltn_trans Hij Hj).
+    rewrite (nth_map (inhabitant nat_inhOrdType)); last exact Hj.
     rewrite !leqXnatE.
     apply/idP/idP; first exact: shiftinv_pos_incr.
     apply: contraLR; rewrite -!ltnNge !ltn_neqAle => /andP [] Hneq /shiftinv_pos_incr ->.
@@ -408,7 +409,7 @@ Lemma nth_std_pos s i x :
 Proof.
   case: s => [//= | s0 s] Hstd Hi Hipos.
   rewrite [nth _ _ _ < _]ltn_neqAle -ltnS; apply/andP; split.
-  - rewrite /= -(std_max Hstd) -(nth_posbig s0 s).
+  - rewrite /= -(std_max Hstd) -(nth_posbig 0 s0 s).
     rewrite (set_nth_default (inhabitant _) x Hi).
     by rewrite (nth_uniq _ Hi (posbig_size_cons s0 s) (std_uniq Hstd)).
   - rewrite -[(size (s0 :: s)).-1.+1]/(size (s0 :: s)).
@@ -515,14 +516,14 @@ Proof.
   by rewrite (invseqRSE (invseq_invstd Hstd)) H.
 Qed.
 
-Corollary RSTabmapstdE (T : ordType) (w : seq T) :
+Corollary RSTabmapstdE (T : inhOrdType) (w : seq T) :
   (RStabmap (invstd (std w))).1 = (RStabmap (std w)).2.
 Proof.
   have := invstdRSE (std_is_std w).
   by case (RStabmap (invstd (std w))) => [P Q] /= ->.
 Qed.
 
-Corollary RSinvstdE (T : ordType) (w : seq T) :
+Corollary RSinvstdE (T : inhOrdType) (w : seq T) :
   RS (invstd (std w)) = (RStabmap w).2.
 Proof.
   rewrite -RStabmapE RSTabmapstdE /RStabmap.

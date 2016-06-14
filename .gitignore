@@ -1,6 +1,7 @@
 *.glob
 *.v.d
 *.vo
+*.vio
 *.aux
 *.log
 *.nav

@@ -1,3 +1,4 @@
+(** * Combi.LRrule.Yam_plact : Plactic class and Yamanouchi words *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,8 +13,30 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import tuple finfun finset path bigop.
+(** The goal of this file is to show that the Yamanouchi words of a given
+evaluation form a plactic class.
+
+- [yamtab sh] == the uniq Yamanouchi tableau of shape sh: the i-th line
+                 contains only i's as in: 33 2222 11111 0000000.
+
+The main result is [Corollary yam_plactic_shape]
+
+[
+  is_yam y -> ( y =Pl z <-> (is_yam z /\ evalseq y = evalseq z)).
+]
+
+We also show that for all partition sh standardization defines a bijection
+from Yamanouchi words of evaluation sh and a plactic class. In particular, it
+is surjective [Theorem plact_from_yam]:
+
+[
+  is_part sh -> w =Pl std (hyper_yam sh) -> { y | is_yam_of_eval sh y & std y = w }.
+]
+****)
+
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
+From mathcomp Require Import tuple finfun finset path bigop.
 
 Require Import tools partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted congr plactic Greene_inv stdplact.
@@ -134,7 +157,7 @@ Proof.
     by move: Hperm => /perm_eqP ->.
 Qed.
 
-(* Yamanouchi tableau : 33 2222 11111 0000000 *)
+(** * The Yamanouchi tableau *)
 Fixpoint yamtab_rec i sh :=
   if sh is s0 :: s then
     nseq s0 i :: yamtab_rec (i.+1) s
@@ -186,14 +209,14 @@ Proof.
   by rewrite IHsh addSnnS.
 Qed.
 
-Lemma is_tableau_catl (T : ordType) (t1 t2 : seq (seq T)) :
+Lemma is_tableau_catl (T : inhOrdType) (t1 t2 : seq (seq T)) :
   is_tableau (t1 ++ t2) -> is_tableau t1.
 Proof.
   elim: t1 => [//= | t t1 IHt1] /= /and4P [] -> -> /= Hdom /IHt1 {IHt1} ->.
   rewrite andbT; by case: t1 Hdom => [//= | r1 t1].
 Qed.
 
-Lemma is_tableau_catr (T : ordType) (t1 t2 : seq (seq T)) :
+Lemma is_tableau_catr (T : inhOrdType) (t1 t2 : seq (seq T)) :
   is_tableau (t1 ++ t2) -> is_tableau t2.
 Proof. by elim: t1 => [//= | r t1 IHt1] /= /and4P [] _ _ _. Qed.
 
@@ -288,6 +311,7 @@ Proof.
     by rewrite (RS_yam Hyam) (RS_yam Hyamz) Hsh.
 Qed.
 
+(** * Yamanouchi words, standardization and plactic classes*)
 Lemma yam_std_inj : {in is_yam &, injective (@std _) }.
 Proof.
   move=> y w /=; rewrite !unfold_in -/is_yam => Hy Hw Hstd.

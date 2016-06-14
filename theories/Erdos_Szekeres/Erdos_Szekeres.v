@@ -1,3 +1,4 @@
+(** * Combi.Erdos_Szekeres.Erdos_Szekeres : The Erdös-Szekeres theorem *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,8 +13,13 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
-Require Import tuple finfun finset bigop path.
+(** A proof of the Erdös Szekeres theorem about longest increassing and
+decreassing subsequences. We prove it as a corollary of Greene's theorem on
+the Robinson-Schensted correspondance.  *****)
+
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
+From mathcomp Require Import tuple finfun finset bigop path.
 
 Require Import partition tableau Schensted ordtype Greene Greene_inv.
 
@@ -25,11 +31,11 @@ Open Scope N.
 
 Section OrderedType.
 
-Variable T : ordType.
+Variable T : inhOrdType.
 
 Lemma Greene_rel_one (s : seq T) (R : rel T) :
   exists t : seq T, subseq t s /\ sorted R t /\ size t = (Greene_rel R s) 1.
-Proof.
+Proof using .
   rewrite /Greene_rel /= /Greene_rel_t.
   set P := (X in \max_(_ | X _) _).
   have : #|P| > 0.
@@ -38,7 +44,7 @@ Proof.
     apply/andP; split.
     + apply/trivIsetP => s1 s2; by rewrite inE.
     + apply/forallP => x; by rewrite inE.
-  rewrite /P {P} => /(eq_bigmax_cond scover).
+  rewrite /P {P} => /(eq_bigmax_cond (fun x => #|cover x|)).
   case=> x Hx Hmax; rewrite Hmax.
   move: Hx; rewrite /ksupp unfold_in => /and3P [] Hcard _ /forallP Hall.
   case Hc: #|x| => [/= | c ].
@@ -62,7 +68,7 @@ Theorem Erdos_Szekeres (m n : nat) (s : seq T) :
   (size s) > (m * n) ->
   (exists t, subseq t s /\ sorted leqX t /\ size t > m) \/
   (exists t, subseq t s /\ sorted gtnX t /\ size t > n).
-Proof.
+Proof using .
   move=> Hsize; pose tab := RS s.
   have {Hsize} : (n < size (shape tab)) \/ (m < head 0 (shape tab)).
     have Hpart := is_part_sht (is_tableau_RS s).

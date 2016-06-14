@@ -12,8 +12,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
+From mathcomp Require Import finset perm.
 Require Import subseq partition ordtype Schensted congr plactic Greene Greene_inv
         std stdtab skewtab therule implem.
 
@@ -46,10 +47,10 @@ Extract Constant eqn => "( = )".
 Extract Constant leq => "( <= )".
 *)
 
-Let RSbijnat := (@RSbij nat_ordType).
-Let RSbijinvnat := (@RSbijinv nat_ordType).
-Let RStabnat := (@RStab nat_ordType).
-Let RStabinvnat := (@RStabinv nat_ordType).
+Let RSbijnat := (@RSbij nat_inhOrdType).
+Let RSbijinvnat := (@RSbijinv nat_inhOrdType).
+Let RStabnat := (@RStab nat_inhOrdType).
+Let RStabinvnat := (@RStabinv nat_inhOrdType).
 
 Extraction "src/LRrule/schensted.ml"
            RS RSbijnat RSbijinvnat

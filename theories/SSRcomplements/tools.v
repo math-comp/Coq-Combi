@@ -17,17 +17,16 @@
 (*                                                                            *)
 (** TODO: these probably should be contributed to SSReflect itself            *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
-Require Import bigop.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
+From mathcomp Require Import bigop.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+Prenex Implicits nat_of_ord.
 
 Hint Resolve nth_nil.
-
-Lemma bad_if_leq i j : i <= j -> (if i < j then i else j) = i.
-Proof. move=> Hi; case (ltnP i j) => //= Hj; apply/eqP; by rewrite eqn_leq Hi Hj. Qed.
 
 Lemma leq_addE m1 m2 n1 n2 :
   m1 <= m2 -> n1 <= n2 -> m1 + n1 = m2 + n2 -> m1 = m2 /\ n1 = n2.
@@ -38,6 +37,16 @@ Proof.
   have:= leq_sub2l (m1 + n1) Hn; by rewrite {1}H !addnK.
 Qed.
 
+Lemma nseqD T n1 n2 (x : T):
+  nseq (n1 + n2) x = nseq n1 x ++ nseq n2 x.
+Proof. by rewrite cat_nseq /nseq /ncons iter_add. Qed.
+
+Lemma rev_nseq (T : eqType) (x : T) d : rev (nseq d x) = nseq d x.
+Proof.
+  elim: d => [//= | d IHd].
+  by rewrite -{1}(addn1 d) nseqD rev_cat IHd /=.
+Qed.
+
 (** ** [rcons] and [cons] related lemmas *)
 Section SeqLemmas.
 
@@ -46,33 +55,33 @@ Implicit Type s w : seq T.
 Implicit Type a b : T.
 
 Lemma flatten_rcons s t : flatten (rcons t s) = flatten t ++ s.
-Proof.
+Proof using .
   elim: t => [//= | t0 t IHt /=]; first by rewrite cats0.
   by rewrite IHt catA.
 Qed.
 
 Lemma cons_head_behead x s : (s != [::]) -> head x s :: behead s = s.
-Proof. by case s. Qed.
+Proof using . by case s. Qed.
 
 Lemma belast_behead_rcons x l s :
   belast (head x (rcons s l)) (behead (rcons s l)) = s.
-Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= belast_rcons. Qed.
+Proof using . case: s => [//= | s0 s]; by rewrite rcons_cons /= belast_rcons. Qed.
 
 Lemma last_behead_rcons x l s :
   last (head x (rcons s l)) (behead (rcons s l)) = l.
-Proof. case: s => [//= | s0 s]; by rewrite rcons_cons /= last_rcons. Qed.
+Proof using . case: s => [//= | s0 s]; by rewrite rcons_cons /= last_rcons. Qed.
 
 Lemma set_head_default s b a : s != [::] -> head a s = head b s.
-Proof. by elim: s. Qed.
+Proof using . by elim: s. Qed.
 
 Lemma rcons_set_nth a s l : set_nth a s (size s) l = rcons s l.
-Proof. elim: s => [//=| l0 s IHs]. by rewrite rcons_cons -IHs /=. Qed.
+Proof using . elim: s => [//=| l0 s IHs]. by rewrite rcons_cons -IHs /=. Qed.
 
 Lemma set_nth_rcons x0 s x n y :
   set_nth x0 (rcons s x) n y =
   if n < size s then rcons (set_nth x0 s n y) x
   else if n == size s then rcons s y else (rcons s x) ++ ncons (n - size s).-1 x0 [:: y].
-Proof.
+Proof using .
   elim: s n => [//= | s0 s IHs] n.
   + case eqP => [-> //= |]; by case: n => [| []].
   + rewrite rcons_cons /=; case: n => [//= | n] /=.
@@ -81,7 +90,7 @@ Proof.
 Qed.
 
 Lemma rconsK a u v : rcons u a = rcons v a -> u = v.
-Proof.
+Proof using .
   elim: u v => [| u0 u IHu]; case=> [|v0 v] //= [].
   + move=> _; by case v.
   + move=> _; by case u.
@@ -90,24 +99,24 @@ Qed.
 
 Lemma cons_in_map_cons a b s w :
   forall l : seq (seq T), a :: s \in [seq b :: s1 | s1 <- l] -> a == b.
-Proof.
+Proof using .
   elim=> [//=| l0 l H]; rewrite map_cons in_cons; move/orP => []; last by exact H.
   by move=> /eqP [] ->.
 Qed.
 
 Lemma rcons_nilF s l : ((rcons s l) == [::]) = false.
-Proof. case eqP=>//= H; have:= eq_refl (size (rcons s l)). by rewrite {2}H size_rcons. Qed.
+Proof using . case eqP=>//= H; have:= eq_refl (size (rcons s l)). by rewrite {2}H size_rcons. Qed.
 
 Lemma count_mem_rcons w l i : count_mem i (rcons w l) = count_mem i w + (l == i).
-Proof. by rewrite -count_rev rev_rcons /= count_rev addnC. Qed.
+Proof using . by rewrite -count_rev rev_rcons /= count_rev addnC. Qed.
 
 (** ** [set_nth] related lemmas *)
 Lemma set_nth_non_nil d s n y : set_nth d s n y != [::].
-Proof. elim: s => [|s0 s]; by case n. Qed.
+Proof using . elim: s => [|s0 s]; by case n. Qed.
 
 Lemma nth_set_nth_expand a b l i c j :
   (size l <= j < i) -> nth a (set_nth b l i c) j = b.
-Proof.
+Proof using .
   elim: l i j => [/= | l0 l IHl].
   - elim => [//= | i' Hi] /=.
     case => [//= | j /=]; by rewrite nth_ncons /leq subSS => ->.
@@ -121,7 +130,7 @@ Lemma nth_set_nth_any a b l i c j :
   if j == i then c else
     if j < size l then nth a l j else
       if j <= i then b else a.
-Proof.
+Proof using .
   case eqP => [<- | /eqP Hneq].
   - have Hj : j < size (set_nth b l j c) by rewrite size_set_nth; apply: leq_maxl.
     by rewrite (set_nth_default b a Hj) nth_set_nth /= eq_refl.
@@ -185,6 +194,13 @@ Lemma sum_iota_sumnE l n :
 Proof. by rewrite -sumn_take => /take_oversize ->. Qed.
 
 
+Lemma size_take_leq (T : Type) n0 (s : seq T) :
+  size (take n0 s) = (if n0 <= size s then n0 else size s).
+Proof.
+  rewrite size_take (leq_eqVlt n0).
+  by case: eqP => [->| _]/=; first by rewrite ltnn.
+Qed.
+
 Section TakeDropFlatten.
 (** ** [take] and [drop] related lemmas *)
 Variable T : eqType.
@@ -192,7 +208,7 @@ Implicit Type l s w : seq T.
 Implicit Type t : seq (seq T).
 
 Lemma take_rev l i : take i (rev l) = rev (drop (size l - i) l).
-Proof.
+Proof using .
   elim: i l => [| i IHi] l.
     by rewrite take0 subn0 drop_size.
   case/lastP: l => [//= | l' ln].
@@ -207,7 +223,7 @@ Proof.
 Qed.
 
 Lemma drop_rev l i : drop i (rev l) = rev (take (size l - i) l).
-Proof.
+Proof using .
   elim: i l => [| i IHi] l.
     by rewrite drop0 subn0 take_size.
   case/lastP: l => [//= | l' ln].
@@ -219,7 +235,7 @@ Proof.
 Qed.
 
 Lemma drop_drop s n1 n2 : drop n1 (drop n2 s) = drop (n1 + n2) s.
-Proof.
+Proof using .
   elim: s n1 n2 => [| s0 s IHs] //=.
   case=> [//= | n1] n2; first by rewrite drop0 add0n.
   rewrite addSn; case: n2 => [//=| n2]; first by rewrite addn0.
@@ -229,37 +245,37 @@ Qed.
 (** ** [flatten], [shape] and [reshape] related lemmas *)
 
 Lemma flatten_seq1 s : flatten [seq [:: x] | x <- s] = s.
-Proof. by elim: s => [//= | s0 s /= ->]. Qed.
+Proof using . by elim: s => [//= | s0 s /= ->]. Qed.
 
 Lemma count_flatten t P :
   count P (flatten t) = sumn [seq count P x | x <- t].
-Proof. elim: t => [//= | t0 t IHt /=]. by rewrite count_cat IHt. Qed.
+Proof using . elim: t => [//= | t0 t IHt /=]. by rewrite count_cat IHt. Qed.
 
 Lemma map_flatten (T1 T2 : eqType) (f : T1 -> T2) (t : seq (seq T1)) :
   map f (flatten t) = flatten (map (map f) t).
-Proof. elim: t => [//= | t0 t /= <-]; exact: map_cat. Qed.
+Proof using . elim: t => [//= | t0 t /= <-]; exact: map_cat. Qed.
 
 Lemma filter_flatten t (P : pred T) :
   filter P (flatten t) = flatten [seq filter P i | i <- t].
-Proof. elim: t => [//= | t0 t /= <-]; exact: filter_cat. Qed.
+Proof using . elim: t => [//= | t0 t /= <-]; exact: filter_cat. Qed.
 
 Lemma sumn_flatten (t : seq (seq nat)) :
   sumn (flatten t) = sumn (map sumn t).
-Proof. elim: t => [//= | t0 t /= <-]; exact: sumn_cat. Qed.
+Proof using . elim: t => [//= | t0 t /= <-]; exact: sumn_cat. Qed.
 
 
 Lemma nth_shape t i : nth 0 (shape t) i = size (nth [::] t i).
-Proof.
+Proof using .
   rewrite /shape; case: (ltnP i (size t)) => Hi; first exact: nth_map.
   by rewrite !nth_default // size_map.
 Qed.
 
 Lemma shape_rev t : shape (rev t) = rev (shape t).
-Proof. rewrite /shape; elim: t => [//= | t0 t IHt] /=; by rewrite map_rev. Qed.
+Proof using . rewrite /shape; elim: t => [//= | t0 t IHt] /=; by rewrite map_rev. Qed.
 
 Lemma eq_from_flatten_shape (u v : seq (seq T)) :
   (u = v) <-> ((flatten u = flatten v) /\ (shape u = shape v)).
-Proof.
+Proof using .
   split; first by move ->.
   move=> [] Hflat Hshape.
   by rewrite -(flattenK u) -(flattenK v) Hflat Hshape.
@@ -267,14 +283,14 @@ Qed.
 
 Lemma rev_flatten (t : seq (seq T)) :
   rev (flatten t) = flatten (rev (map rev t)).
-Proof.
+Proof using .
   elim: t => [| t0 t IHt] //=.
   by rewrite rev_cons flatten_rcons -IHt rev_cat.
 Qed.
 
 Lemma rev_reshape (s : seq nat) (l : seq T) :
   size l = sumn s -> rev (map rev (reshape (rev s) (rev l))) = reshape s l.
-Proof.
+Proof using .
   move=> H; apply eq_from_flatten_shape; split.
   - rewrite reshapeKr; last by rewrite H.
     rewrite -rev_flatten reshapeKr; first by rewrite revK.
@@ -288,7 +304,7 @@ Qed.
 
 Lemma nth_reshape (s : seq nat) (l : seq T) n :
   nth [::] (reshape s l) n = take (nth 0 s n) (drop (sumn (take n s)) l).
-Proof.
+Proof using .
   elim: n s l => [| n IHn] [| s0 s] l; rewrite ?take0 ?drop0 //=.
   rewrite addnC -drop_drop; exact: IHn.
 Qed.
@@ -310,17 +326,18 @@ Proof.
     rewrite add0n => Hsz.
     by rewrite drop0 take_oversize; last by rewrite Hsz.
   move=> Hsize.
-  have Hs0 : (if s0 < size s then s0 else size s) = s0.
-    by rewrite bad_if_leq; last by rewrite -Hsize -addnA; apply leq_addr.
   rewrite (_ : take (s0 + sumn sh) s = take s0 s ++ take (sumn sh) (drop s0 s));
     first last.
-    rewrite -{1 3}[s](cat_take_drop s0) drop_cat take_cat size_take.
-    by rewrite Hs0 ltnNge leq_addr /= addKn ltnn subnn drop0.
-  rewrite take_cat size_take Hs0 ltnn subnn take0 cats0.
-  rewrite drop_cat size_take Hs0 ltnn subnn drop0.
+    rewrite -{1 3}[s](cat_take_drop s0) drop_cat take_cat.
+    rewrite  size_take_leq -Hsize -addnA leq_addr.
+    by rewrite ltnNge leq_addr /= addKn ltnn subnn drop0.
+  rewrite take_cat drop_cat.
+  rewrite size_take_leq -Hsize -addnA leq_addr.
+  rewrite ltnn subnn take0 cats0 drop0.
   rewrite (_ : drop (s0 + sumn sh) s = drop (sumn sh) (drop s0 s)); first last.
-    rewrite -[s](cat_take_drop s0) !drop_cat size_take.
-    by rewrite Hs0 ltnNge leq_addr /= addKn ltnn subnn drop0.
+    rewrite -[s](cat_take_drop s0) !drop_cat.
+    rewrite size_take_leq -Hsize -addnA leq_addr.
+    by rewrite ltnNge leq_addr /= addKn ltnn subnn drop0.
   by rewrite -IHsh; last by rewrite size_drop -Hsize -addnA addKn.
 Qed.
 
@@ -396,7 +413,7 @@ Proof.
   + rewrite IHb; first by rewrite (ltn_eqF H1).
     by rewrite H1 addSnnS.
   + rewrite eqn_leq H1 H2 /= {H2 H3 IHb}.
-    apply/eqP; rewrite eqSS; apply/eqP.
+    apply/eqP; rewrite eqSS; apply/eqP => /=.
     elim: b a H1 => [//= | b IHb] a Ha /=.
     rewrite IHb; first by rewrite gtn_eqF; last by rewrite ltnS.
     by rewrite leqW.
@@ -483,16 +500,16 @@ Proof.
   - elim: s => [//= | s0 s IHs] /=.
     rewrite negb_and => /orP [].
     + rewrite negbK => Hin.
-      exists 0; exists (index s0 s).+1 => /=; split; first by rewrite ltnS index_mem.
+      exists 0, (index s0 s).+1 => /=; split; first by rewrite ltnS index_mem.
       by rewrite nth_index.
     + move/IHs => {IHs} [] i [] j [] Hij Hnth.
-      by exists i.+1; exists j.+1; split; first by rewrite !ltnS.
+      by exists i.+1, j.+1; split; first by rewrite !ltnS.
   - elim: s => [| s0 s IHs ] /= [] i [] j [] /andP [] //=.
     rewrite negb_and negbK; case: i => [| i].
     + case: j => [//= | j _]; rewrite ltnS /= => Hj ->; by rewrite mem_nth.
     + case: j => [//= | j]; rewrite !ltnS /= => Hi Hj Hnth.
       apply/orP; right; apply IHs.
-      exists i; exists j; by rewrite Hi Hj Hnth.
+      exists i, j; by rewrite Hi Hj Hnth.
 Qed.
 
 
@@ -505,7 +522,7 @@ Variable op : Monoid.law idx.
 
 Lemma big_nat_widen0 a b c F :
   b <= c -> \big[op/idx]_(a <= i < b) F i = \big[op/idx]_(0 <= i < c | a <= i < b) F i.
-Proof.
+Proof using .
   move=> Hbc.
   rewrite {1}/index_iota -iota_geq -{1}(subn0 b) big_filter -/(index_iota 0 b).
   by rewrite (big_nat_widen _ _ _ _ _ Hbc).

@@ -14,9 +14,10 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm fingroup.
-Require Import tools combclass shape partition Yamanouchi ordtype std tableau.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
+From mathcomp Require Import finset perm fingroup.
+Require Import tools combclass partition Yamanouchi ordtype std tableau.
 
 Import OrdNotations.
 
@@ -57,7 +58,7 @@ The bijections preserve the shape and therefore the size:
 
 Section AppendNth.
 
-Variable T : ordType.
+Variable T : inhOrdType.
 Implicit Type b : T.
 Implicit Type t : seq (seq T).
 
@@ -65,7 +66,7 @@ Definition append_nth t b i := set_nth [::] t i (rcons (nth [::] t i) b).
 
 Lemma perm_eq_append_nth t x pos :
   perm_eq (to_word (append_nth t x pos)) (x :: to_word t).
-Proof.
+Proof using .
   rewrite /append_nth; elim: t pos => [//= | t0 t IHt] /=.
   + elim => [//= | pos IHpos].
     move: IHpos; rewrite /= to_word_cons cats0.
@@ -79,10 +80,10 @@ Proof.
 Qed.
 
 Lemma shape_append_nth t b i : shape (append_nth t b i) = incr_nth (shape t) i.
-Proof.
+Proof using .
   rewrite /shape /=; apply: (@eq_from_nth _ 0).
   + rewrite size_map size_set_nth size_incr_nth size_map /maxn.
-    case (ltngtP i.+1 (size t)).
+    case: (ltngtP i.+1 (size t)).
     - by move/ltnW ->.
     - by rewrite ltnNge => /negbTE ->.
     - by move => ->; rewrite leqnn.
@@ -90,7 +91,7 @@ Proof.
     rewrite nth_incr_nth (nth_map [::]) /=; last by move: Hi; rewrite size_map.
     rewrite nth_set_nth /= eq_sym.
     have -> : nth 0 [seq size i | i <- t] j = size (nth [::] t j).
-      case (ltnP j (size t)) => Hcase.
+      case: (ltnP j (size t)) => Hcase.
       * by rewrite (nth_map [::] _ _ Hcase).
       * by rewrite (nth_default _ Hcase) nth_default; last by rewrite size_map.
     case eqP => [->|].
@@ -99,12 +100,12 @@ Proof.
 Qed.
 
 Lemma size_append_nth t b i : size_tab (append_nth t b i) = (size_tab t).+1.
-Proof. by rewrite /size_tab shape_append_nth sumn_incr_nth. Qed.
+Proof using . by rewrite /size_tab shape_append_nth sumn_incr_nth. Qed.
 
 Lemma get_tab_append_nth (t : seq (seq T)) l i r c :
   get_tab (append_nth t l i) r c =
   if (r == i) && (c == nth 0 (shape t) i) then l else get_tab t r c.
-Proof.
+Proof using .
   rewrite /get_tab /append_nth nth_set_nth /=.
   case: (altP (r =P i)) => [-> | //=] /=.
   rewrite nth_rcons nth_shape.
@@ -120,15 +121,15 @@ Fixpoint last_big t b :=
   else 0.
 
 Lemma allLeq_to_word_hd r t b : allLeq (to_word (r :: t)) b -> allLeq r b.
-Proof. by rewrite to_word_cons allLeq_catE => /andP [] _. Qed.
+Proof using . by rewrite to_word_cons allLeq_catE => /andP [] _. Qed.
 Lemma allLeq_to_word_tl r t b : allLeq (to_word (r :: t)) b -> allLeq (to_word t) b.
-Proof. by rewrite to_word_cons allLeq_catE => /andP []. Qed.
+Proof using . by rewrite to_word_cons allLeq_catE => /andP []. Qed.
 
 Lemma last_bigP t b i :
   is_tableau t -> allLeq (to_word t) b ->
   reflect (last b (nth [::] t i) = b /\ forall j, j < i -> last b (nth [::] t j) <A b)
           (i == last_big t b).
-Proof.
+Proof using .
   move=> Htab Hmax; apply: (iffP idP).
   + move/eqP ->; split.
     * elim: t Htab {Hmax} => [//= | t0 t IHt] /= /and4P [] _ _ _ Htab.
@@ -151,7 +152,7 @@ Qed.
 Lemma last_big_append_nth t b lb :
   (forall j : nat, j < lb -> last b (nth [::] t j) <A b) ->
   last_big (append_nth t b lb) b = lb.
-Proof.
+Proof using .
   elim: t lb =>[/= | t0 t IHt /=].
   + case => [/= _| lb Hj /=]; first by rewrite eq_refl.
     exfalso; have:= Hj 0 (ltn0Sn _); by rewrite ltnXnn.
@@ -288,7 +289,7 @@ Proof.
   rewrite Hsize /= => [] [] Htab Happ.
   move: Hstdtab; rewrite /is_stdtab Htab /= /is_std.
   rewrite !size_to_word {1}Hsize => /andP [] _ Hperm.
-  have/(congr1 (@size_tab _)) := Happ.
+  have/(congr1 size_tab) := Happ.
   rewrite size_append_nth Hsize => /eqP; rewrite eqSS => /eqP Hsz.
   have:= perm_eq_append_nth (remn t) n (last_big t n).
   rewrite {}Happ Hsz (perm_eqlP Hperm) perm_eq_sym.
@@ -357,11 +358,11 @@ Proof.
       by rewrite /dominate /= ltnXnatE Hn.
     + move/dominateP => [] _ Hdom Hsize.
       apply/dominateP; split; rewrite size_rcons; first by [].
-      move=> i Hi; rewrite nth_rcons; case (ltnP i (size T1)) => Hi1.
+      move=> i Hi; rewrite nth_rcons; case: (ltnP i (size T1)) => Hi1.
       * exact: Hdom.
       * have -> : i == size T1 by rewrite eqn_leq Hi1 andbT -ltnS.
         move: Hall0 => /allP Hall0.
-        have /Hall0 /= := (mem_nth (inhabitant nat_ordType) (leq_trans Hi Hsize)).
+        have /Hall0 /= := (mem_nth (inhabitant nat_inhOrdType) (leq_trans Hi Hsize)).
         by rewrite ltnXnatE.
 Qed.
 
@@ -441,7 +442,7 @@ Proof.
   + move/IHu ->; by rewrite orbT.
 Qed.
 
-Lemma append_nth_injl (T : ordType) u v (l : T) p :
+Lemma append_nth_injl (T : inhOrdType) u v (l : T) p :
   [::] \notin u -> [::] \notin v -> append_nth u l p = append_nth v l p -> u = v.
 Proof.
   move=> Hu Hv Heq; have:= congr1 shape Heq.
@@ -462,7 +463,7 @@ Qed.
 Lemma stdtab_of_yam_inj x y :
   is_yam x -> is_yam y -> stdtab_of_yam x = stdtab_of_yam y -> x = y.
 Proof.
-  move=> Hx Hy Heq; have:= congr1 (@size_tab _) Heq.
+  move=> Hx Hy Heq; have:= congr1 size_tab Heq.
   rewrite !size_stdtab_of_yam => Hsz.
   elim: x y Hsz Heq Hx Hy => [| x0 x IHx]; case=> [//= | y0 y] //= /eqP.
   rewrite eqSS => /eqP Heqsz; rewrite Heqsz => Heq.
@@ -517,7 +518,7 @@ Qed.
 End Bijection.
 
 
-Lemma eq_inv_is_row (T1 T2 : ordType) (u1 : seq T1) (u2 : seq T2) :
+Lemma eq_inv_is_row (T1 T2 : inhOrdType) (u1 : seq T1) (u2 : seq T2) :
   eq_inv u1 u2 -> is_row u1 -> is_row u2.
 Proof.
   move/eq_invP => [] Hsz.
@@ -527,7 +528,7 @@ Proof.
   exact: Hrow.
 Qed.
 
-Lemma is_row_stdE (T : ordType) (w : seq T) : is_row (std w) = is_row w.
+Lemma is_row_stdE (T : inhOrdType) (w : seq T) : is_row (std w) = is_row w.
 Proof.
   apply/idP/idP; apply eq_inv_is_row; first apply eq_inv_sym; exact: eq_inv_std.
 Qed.
@@ -535,17 +536,17 @@ Qed.
 
 Section ConjTab.
 
-Variable T : ordType.
+Variable T : inhOrdType.
 
 Definition conj_tab (t : seq (seq T)) : seq (seq T) :=
   let c := conj_part (shape t) in
   mkseq (fun i => mkseq (fun j => get_tab t j i) (nth 0 c i)) (size c).
 
 Lemma size_conj_tab t : size (conj_tab t) = size (conj_part (shape t)).
-Proof. by rewrite /conj_tab size_mkseq. Qed.
+Proof using . by rewrite /conj_tab size_mkseq. Qed.
 
 Lemma shape_conj_tab t : shape (conj_tab t) = conj_part (shape t).
-Proof.
+Proof using .
   rewrite /conj_tab /shape -map_comp.
   rewrite (eq_map (f2 := fun i => (nth 0 (conj_part [seq size i | i <- t]) i))); first last.
     move => i /=; by rewrite size_mkseq.
@@ -554,7 +555,7 @@ Qed.
 
 Lemma get_conj_tab t :
   is_part (shape t) -> forall i j, get_tab (conj_tab t) i j = get_tab t j i.
-Proof.
+Proof using .
   move=> Ht i j.
   case: (boolP (is_in_shape (shape t) j i)) => Hin;
     have:= Hin; rewrite (is_in_conj_part Ht) => Hconj.
@@ -569,7 +570,7 @@ Qed.
 
 Lemma eq_from_shape_get_tab (t u : seq (seq T)) :
   shape t = shape u -> get_tab t =2 get_tab u -> t = u.
-Proof.
+Proof using .
   move=> Hsh Hget; apply (eq_from_nth (x0 := [::])).
     by rewrite -!(size_map size) -!/(shape _) Hsh.
   move=> r _; apply (eq_from_nth (x0 := (inhabitant T))).
@@ -578,7 +579,7 @@ Proof.
 Qed.
 
 Lemma conj_tab_shapeK t : is_part (shape t) -> conj_tab (conj_tab t) = t.
-Proof.
+Proof using .
   move=> Hpart; apply eq_from_shape_get_tab.
   - by rewrite !shape_conj_tab conj_partK.
   - move=> r c; rewrite get_conj_tab; last by rewrite shape_conj_tab; exact: is_part_conj.
@@ -586,13 +587,13 @@ Proof.
 Qed.
 
 Lemma conj_tabK t : is_tableau t -> conj_tab (conj_tab t) = t.
-Proof. move=> /is_part_sht; exact :conj_tab_shapeK. Qed.
+Proof using . move=> /is_part_sht; exact :conj_tab_shapeK. Qed.
 
 Lemma append_nth_conj_tab (t : seq (seq T)) l i :
   is_part (shape t) ->
   is_add_corner (shape t) i ->
   conj_tab (append_nth t l i) = append_nth (conj_tab t) l (nth 0 (shape t) i).
-Proof.
+Proof using .
   move=> Hsh Hcorn; apply eq_from_shape_get_tab.
   - rewrite shape_conj_tab !shape_append_nth shape_conj_tab.
     exact: conj_part_incr_nth.
@@ -692,7 +693,7 @@ Definition enum_stdtabsh sh : seq (seq (seq nat)) := map stdtab_of_yam (enum_yam
 
 Variable sh : intpart.
 
-Structure stdtabsh : predArgType :=
+Structure stdtabsh : Set :=
   StdtabSh {stdtabshval :> seq (seq nat); _ : is_stdtab_of_shape sh stdtabshval}.
 Canonical stdtabsh_subType := Eval hnf in [subType for stdtabshval].
 Definition stdtabsh_eqMixin := Eval hnf in [eqMixin of stdtabsh by <:].
@@ -706,7 +707,7 @@ Canonical stdtabsh_subCountType := Eval hnf in [subCountType of stdtabsh].
 Let stdtabsh_enum : seq stdtabsh := pmap insub (enum_stdtabsh sh).
 
 Lemma finite_stdtabsh : Finite.axiom stdtabsh_enum.
-Proof.
+Proof using .
   case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
   rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
     by rewrite isSome_insub; case: eqP=> // ->.
@@ -728,10 +729,10 @@ Canonical stdtabsh_finType := Eval hnf in FinType stdtabsh stdtabsh_finMixin.
 Canonical stdtabsh_subFinType := Eval hnf in [subFinType of stdtabsh_countType].
 
 Lemma stdtabshP (t : stdtabsh) : is_stdtab t.
-Proof. by case: t => /= t /andP []. Qed.
+Proof using . by case: t => /= t /andP []. Qed.
 
 Lemma stdtabsh_shape (t : stdtabsh) : shape t = sh.
-Proof. by case: t => /= t /andP [] _ /eqP. Qed.
+Proof using . by case: t => /= t /andP [] _ /eqP. Qed.
 
 End StdtabOfShape.
 
@@ -741,7 +742,7 @@ Variable n : nat.
 
 Definition is_stdtab_of_n := [pred t | (is_stdtab t) && (size_tab t == n) ].
 
-Structure stdtabn : predArgType :=
+Structure stdtabn : Set :=
   StdtabN {stdtabnval :> seq (seq nat); _ : is_stdtab_of_n stdtabnval}.
 Canonical stdtabn_subType := Eval hnf in [subType for stdtabnval].
 Definition stdtabn_eqMixin := Eval hnf in [eqMixin of stdtabn by <:].
@@ -755,11 +756,11 @@ Canonical stdtabnn_subCountType := Eval hnf in [subCountType of stdtabn].
 
 
 Definition enum_stdtabn : seq (seq (seq nat)) :=
-  map (stdtab_of_yam \o val) (enum (yamn n)).
+  map (stdtab_of_yam \o val) (enum ({:yamn n})).
 Let stdtabn_enum : seq stdtabn := pmap insub enum_stdtabn.
 
 Lemma finite_stdtabn : Finite.axiom stdtabn_enum.
-Proof.
+Proof using .
   case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
   rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
     by rewrite isSome_insub; case: eqP=> // ->.
@@ -769,12 +770,12 @@ Proof.
   rewrite !enumT unlock subType_seqP.
   rewrite count_map.
   rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
-    move=> y /(allP (all_unionP _ (@yamn_PredEq _))) /=.
+    move=> y /(allP (all_unionP _ yamn_PredEq)) /=.
     rewrite /is_yam_of_size => /andP [] Hyam /eqP Hszy /=.
     apply/idP/idP => /eqP H; apply/eqP.
     + by rewrite -H stdtab_of_yamK.
     + by rewrite H yam_of_stdtabK.
-  apply: (count_unionP _ (@yamn_PredEq _)).
+  apply: (count_unionP _ yamn_PredEq).
   - exact: yamn_partition_evalseq.
   - by rewrite /is_yam_of_size yam_of_stdtabP //= Hszt.
 Qed.
@@ -784,16 +785,16 @@ Canonical stdtabn_finType := Eval hnf in FinType stdtabn stdtabn_finMixin.
 Canonical stdtabn_subFinType := Eval hnf in [subFinType of stdtabn_countType].
 
 Lemma stdtabnP (s : stdtabn) : is_stdtab s.
-Proof. by case: s => s /= /andP []. Qed.
+Proof using . by case: s => s /= /andP []. Qed.
 
 Lemma size_tab_stdtabn (s : stdtabn) : size_tab s = n.
-Proof. by case: s => s /= /andP [] _ /eqP. Qed.
+Proof using . by case: s => s /= /andP [] _ /eqP. Qed.
 
 Lemma sumn_shape_stdtabnE (Q : stdtabn) : (sumn (shape Q)) = n.
-Proof. case: Q => q; by rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP. Qed.
+Proof using . case: Q => q; by rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP. Qed.
 
 Lemma is_part_shape_deg (Q : stdtabn) : is_part_of_n n (shape Q).
-Proof.
+Proof using .
   rewrite /=; apply/andP; split.
   - by rewrite -/(size_tab _) size_tab_stdtabn.
   - apply: is_part_sht; apply stdtabP; exact: stdtabnP.
