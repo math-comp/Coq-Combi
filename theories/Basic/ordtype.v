@@ -1433,19 +1433,36 @@ Section DualPOrder.
 
 Variable T : pordType.
 
-Fact geqX_order : PartOrder.axiom (@geqX T).
+Definition dual := T.
+
+Definition dual_comp := (fun x y : dual => (y : T) <= (x : T)).
+
+Fact geqX_order : PartOrder.axiom dual_comp.
 Proof using .
-  split.
+  rewrite /dual_comp; split.
   - by move=> n /=.
   - move=> m n /= /andP [] H1 H2; apply/eqP; by rewrite eqn_leqX H1 H2.
   - move=> m n p /= H1 H2; by apply: (leqX_trans H2 H1).
 Qed.
 
 Definition dual_pordMixin := PartOrder.Mixin geqX_order.
-Definition dual_pordType := Eval hnf in POrdType T dual_pordMixin.
+Canonical dual_pordType := Eval hnf in POrdType dual dual_pordMixin.
 
 Lemma dual_leqX m n : (@leqX_op dual_pordType m n) = (@leqX_op T n m).
 Proof using . by rewrite leqXE /=. Qed.
+
+(*
+Lemma dual_leqX_cast (m n : T) : ((m : dual) <= (n : dual)) = (n <= m).
+Proof using . rewrite /dual !leqXE /=. Qed.
+*)
+(* Lemma bla : (@leqX_op dual) =2 dual_comp.
+Proof.
+  move=> i j; rewrite /dual leqXE /=.
+*)
+(*
+Lemma dual_leqX (m n : T) : (@leqX_op dual (m : dual) (n: dual)) = (@leqX_op T n m).
+Proof using . rewrite leqXE. /= /Tdual. Qed.
+*)
 
 Lemma dual_eq m n : (m == n :> dual_pordType) = (n == m).
 Proof using . by rewrite !eqn_leqX !dual_leqX andbC. Qed.
