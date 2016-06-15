@@ -12,8 +12,9 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-Require Import finset perm fingroup matrix ssralg.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
+From mathcomp Require Import finset perm fingroup matrix ssralg.
 Require Import tools combclass subseq partition Yamanouchi permuted ordtype Schensted plactic Greene_inv std.
 
 Set Implicit Arguments.
@@ -30,17 +31,12 @@ Definition word_of_mat m n (M : 'M[nat]_(m, n)) : seq 'I_n :=
 Section Defs.
 
 Variables (m n : nat).
-Hypothesis Hmpos : m != 0%N.
-Hypothesis Hnpos : n != 0%N.
-
-Canonical Im := Eval hnf in OrdType 'I_m (ord_ordMixin Hmpos).
-Canonical In := Eval hnf in OrdType 'I_n (ord_ordMixin Hnpos).
 
 Definition bimon_of_mat (M : 'M[nat]_(m, n)) : seq ('I_m * 'I_n) :=
   flatten [seq nseq (M a b) (a, b) | a <- enum 'I_m, b <- enum 'I_n].
 
-Definition RSK (M : 'M[nat]_(m, n)) :=
-  (RS (T := In) (word_of_mat M), RS (word_of_mat M^T)).
+Definition RSK (M : 'M[nat]_(m.+1, n.+1)) :=
+  (RS (word_of_mat M), RS (word_of_mat M^T)).
 
 End Defs.
 
