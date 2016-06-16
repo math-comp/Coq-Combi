@@ -487,6 +487,7 @@ Inductive cycle_dec_spec s (A : {set {perm T}}) : Prop :=
     {in A, forall C, is_cycle C} &
     disjoint_supports A &
     (\prod_(C in A) C)%g = s : cycle_dec_spec s A.
+                             
 
 Theorem cycle_decP s : cycle_dec_spec s (cycle_dec s).
 Proof.
