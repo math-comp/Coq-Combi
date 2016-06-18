@@ -13,8 +13,8 @@ Import GRing.Theory.
 Section Hello.
 Variable m n: nat.
 
-Definition bimon_of_mat (M : 'M[nat]_(m, n)) : seq (nat * nat) :=
-  flatten [seq nseq (M a b) ((a:nat), (b:nat)) | a <- enum 'I_m, b <- enum 'I_n].
+Definition bimon_of_mat (M : 'M[nat]_(m, n)) : seq ('I_m * 'I_n) :=
+  flatten [seq nseq (M a b) (a,b) | a <- enum 'I_m, b <- enum 'I_n].
 
 Definition M := \matrix_(i<2,j<3) 1%N.
 
@@ -25,32 +25,36 @@ Check M (Ordinal (lt0n 2)) (Ordinal (lt0n 3)).
 Check bimon_of_mat (m:=2) (n:=3) M.
 Eval compute in bimon_of_mat M.
 
-Section Lexico.
+Section Lexico2.
 
-Variable T: eqType.
+Variable T R: eqType.
 Variable r: rel T.
-Axiom order: [/\ reflexive r, antisymmetric r & transitive r].
+Variable r': rel R.
+Variable order: [/\ reflexive r, antisymmetric r & transitive r].
+Variable order': [/\ reflexive r', antisymmetric r' & transitive r'].
 
-Definition lexico : rel (T*T) :=
-  fun (p1: T*T) => fun(p2: T*T) =>
+
+Definition lexico2 : rel (T*R) :=
+  fun (p1: T*R) => fun(p2: T*R) =>
   match p1 with
   |pair i j => match p2 with
-               |pair k l => (r i k && (i!=k))||((i==k) && r j l)
+               |pair k l => (r i k && (i!=k))||((i==k) && r' j l)
                end
   end.
 
-Lemma lexico_refl: reflexive lexico.
+Lemma lexico2_refl: reflexive lexico2.
 Proof.
   case => a b /=.
   apply /orP; right.
   rewrite eqxx andTb.
-  by apply order.
+  by apply order'.
 Qed.
 
-Lemma lexico_antisym: antisymmetric lexico.
+Lemma lexico2_antisym: antisymmetric lexico2.
 Proof.
   case => a b; case => c d => /= /andP [].
   have anti: antisymmetric r by apply order.
+  have anti': antisymmetric r' by apply order'.
   move => /orP; case => /andP [H1 H2];
   move => /orP; case => /andP [].
   - move => H3.
@@ -63,13 +67,14 @@ Proof.
   - move => _ H3.
     move: H1 => /eqP ->. 
     rewrite (_: b=d) //.
-    by apply anti; apply /andP.
+    by apply anti'; apply /andP.
 Qed.
 
 
-Lemma lexico_trans: transitive lexico.
+Lemma lexico2_trans: transitive lexico2.
 Proof.
   case => a b; case => c d; case => e f /=.
+  have trans': transitive r' by apply order'.
   have trans: transitive r by apply order.
   have anti: antisymmetric r by apply order.
   move => /orP [] /andP [H1 H2]; 
@@ -90,8 +95,37 @@ Proof.
   - right.
     apply /andP; split.
     + by move: H1 => /eqP ->.
-    + by apply (trans b d f).
+    + by apply (trans' b d f).
 Qed.
+
+Lemma order_lexico2: [/\ reflexive lexico2, antisymmetric lexico2 & transitive lexico2].
+Proof.
+  split.
+  - exact: lexico2_refl.
+  - exact: lexico2_antisym.
+  - exact: lexico2_trans.
+Qed.
+
+End Lexico2.
+
+Section Lexico.
+
+
+Variable T: eqType.
+Variable r: rel T.
+Variable order: [/\ reflexive r, antisymmetric r & transitive r].
+
+Definition lexico : rel (T*T) := lexico2 r r. 
+
+Lemma lexico_refl: reflexive lexico.
+Proof. by apply lexico2_refl. Qed.
+
+Lemma lexico_antisym: antisymmetric lexico.
+Proof. by apply lexico2_antisym. Qed.
+
+
+Lemma lexico_trans: transitive lexico.
+Proof. by apply lexico2_trans. Qed.
 
 Lemma order_lexico: [/\ reflexive lexico, antisymmetric lexico & transitive lexico].
 Proof.
@@ -100,7 +134,6 @@ Proof.
   - exact: lexico_antisym.
   - exact: lexico_trans.
 Qed.
-
 End Lexico.
 
 Section add_mx.
@@ -126,9 +159,11 @@ Fixpoint mat_of_bimon (w:seq ('I_m*'I_n)) : 'M_(m,n):=
              end
   end.
   
-  
+Lemma bimon_lex (M:'M_(m,n)): sorted (lexico leq) (bimon_of_mat M).
+Proof.
+Admitted.
 
-
+Lemma matK (M:'M_(m,n)): mat_of_bimon (bimon_of_mat M) = M.
 
   
 End bimon_mat.
