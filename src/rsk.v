@@ -9,6 +9,7 @@ Unset Printing Implicit Defensive.
 
 Local Open Scope ring_scope.
 Import GRing.Theory.
+Open Local Scope ring_scope.
 
 Section Hello.
 Variable m n: nat.
@@ -23,7 +24,8 @@ End Hello.
 Check @bimon_of_mat 2 3.
 Check M (Ordinal (lt0n 2)) (Ordinal (lt0n 3)).
 Check bimon_of_mat (m:=2) (n:=3) M.
-Eval compute in bimon_of_mat M.
+(*Eval compute in ((bimon_of_mat M == [:: (0,0); (0,1); (0,2); (1,0); (1,1); (1,2)])%N).*)
+
 
 Section Lexico2.
 
@@ -156,6 +158,7 @@ End leq_m.
 
 Section bimon_mat.
 Variables m n: nat.
+Variable T: eqType.
 
 Fixpoint mat_of_bimon (w:seq ('I_m*'I_n)) : 'M_(m,n):=
   match w with
@@ -166,9 +169,20 @@ Fixpoint mat_of_bimon (w:seq ('I_m*'I_n)) : 'M_(m,n):=
              end
   end.
 
+  (*Par récurrence sur le nombre de lignes => utiliser row' ou [u|d]submx ?
+    Dans tous les cas, il faut définir ce qu'est une matrice à laquelle on ajoute une ligne, col_mx doit pouvoir marcher la dessus
+*)
+
+Check row (Ordinal (ltnSn m)).
+
+Definition col_mx_ind (A:'M[T]_(m.+1,n)) := let M':= row' (Ordinal (ltnSn m)) A in let r := row (Ordinal (ltnSn m)) A in A = col_mx M' r.
 
 Lemma bimon_lex (M:'M_(m,n)): sorted (lexico2 (@leqm m)  (@leqm n)) (bimon_of_mat M).
 Proof.
+  elim: m M => [|m0 IHm0 M0].
+  - admit.
+  - 
+
 Admitted.
 
 Lemma matK (M:'M_(m,n)): mat_of_bimon (bimon_of_mat M) = M.
@@ -182,5 +196,4 @@ Admitted.
 End bimon_mat.
   
 
-(* - mat_of_bimon et bimon_of_mat sont réciproques pour des w dans l'ordre lexico
-   - utiliser la correspondance RSK (cf) Schensted.v en remplacant les 1,2,3... qui apparaissent dans Q, par 1,1,1,2,2,3,3,... et montrer que c'est un tableau*)
+(* - utiliser la correspondance RSK (cf) Schensted.v en remplacant les 1,2,3... qui apparaissent dans Q, par 1,1,1,2,2,3,3,... et montrer que c'est un tableau*)
