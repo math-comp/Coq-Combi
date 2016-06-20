@@ -147,6 +147,13 @@ Definition add_mx m n (A:'M_(m,n)) k i0 j0 : 'M_(m,n):=
 End add_mx.
 
 
+Section leq_m.
+  
+Definition leqm m: rel ('I_m) :=
+  fun x => fun y => x <= y.
+  
+End leq_m.
+
 Section bimon_mat.
 Variables m n: nat.
 
@@ -158,13 +165,19 @@ Fixpoint mat_of_bimon (w:seq ('I_m*'I_n)) : 'M_(m,n):=
                           
              end
   end.
-  
-Lemma bimon_lex (M:'M_(m,n)): sorted (lexico leq) (bimon_of_mat M).
+
+
+Lemma bimon_lex (M:'M_(m,n)): sorted (lexico2 (@leqm m)  (@leqm n)) (bimon_of_mat M).
 Proof.
 Admitted.
 
 Lemma matK (M:'M_(m,n)): mat_of_bimon (bimon_of_mat M) = M.
-
+Proof.
+Admitted.
+  
+Lemma bimonK (w: seq ('I_m*'I_n)) : sorted (lexico2 (@leqm m)  (@leqm n)) w -> bimon_of_mat (mat_of_bimon w) = w.
+Proof.
+Admitted.
   
 End bimon_mat.
   
