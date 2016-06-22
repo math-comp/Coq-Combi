@@ -340,6 +340,15 @@ Definition inhabitant_def (T : inhType) : T :=
 Definition inhabitant (T : inhType) : T := nosimpl inhabitant_def T.
 
 
+Section ProdInhType.
+
+Variable T R : inhType.
+
+Definition prod_inhMixin := Inhabited.Mixin (inhabitant T, inhabitant R).
+Canonical prod_inhType := Eval hnf in InhType (T * R) prod_inhMixin.
+
+End ProdInhType.
+
 
 (******************************************************************************)
 (* Inhabited partially ordered types                                          *)
@@ -696,7 +705,7 @@ CoInductive compareX m n : bool -> bool -> bool -> Set :=
   | CompareXGt of m > n : compareX m n false true false
   | CompareXEq of m = n : compareX m n false false true.
 
-Lemma compareP m n : compareX m n (m < n) (n < m) (m == n).
+Lemma compareXP m n : compareX m n (m < n) (n < m) (m == n).
 Proof using .
 rewrite {1}/ltnX_op eqn_leqX; case: ltnXP; first by constructor.
 rewrite leqX_eqVltnX orbC.
@@ -707,7 +716,7 @@ Definition maxX m n := if m < n then n else m.
 Definition minX m n := if m < n then m else n.
 
 Lemma maxXC : commutative maxX.
-Proof using . move=> m n; rewrite /maxX; by case (compareP m n). Qed.
+Proof using . move=> m n; rewrite /maxX; by case (compareXP m n). Qed.
 
 Lemma maxXA : associative maxX.
 Proof using .
@@ -1512,6 +1521,68 @@ Definition seq_inhMixin (T : eqType) := Inhabited.Mixin ([::] : seq T).
 Canonical seq_inhType (T : eqType) :=
   Eval hnf in InhType (seq T) (seq_inhMixin T).
 
+
+Section ProdLexPOrder.
+
+Variable T R : pordType.
+
+Definition prodlex : rel (T * R) :=
+  fun p1 => fun p2 =>
+      let: (i, j) := p1 in
+          let: (k, l) := p2 in
+              (i < k) || ((i == k) && (j <= l)).
+
+Fact prodlex_porder : PartOrder.axiom prodlex.
+Proof.
+  rewrite /prodlex; split.
+  - by case=> [i j] /=; rewrite leqXnn eq_refl /= orbT.
+  - case => a b; case => c d => /= /andP [].
+    move => /orP; case => /andP [H1 H2];
+    move => /orP; case => /andP [H3 H4].
+    * by exfalso; move: H1; rewrite eqn_leqX H2 H4.
+    * by exfalso; move: H1; rewrite (eqP H3) eq_refl.
+    * by exfalso; move: H3; rewrite (eqP H1) eq_refl.
+    * by rewrite (eqP H1); congr (_, _); apply anti_leqX; rewrite H2 H4.
+  - case => a b; case => c d; case => e f /=.
+    move => /orP [] /andP [H1 H2]; move => /orP [] /andP [H3 H4]; apply /orP.
+    * left.
+      rewrite ltnX_neqAleqX (leqX_trans H2 H4) andbT.
+      move: H3; apply contra => /eqP H; subst c.
+      by rewrite eqn_leqX H4 H2.
+    * left; move: H3 => /eqP H; subst a.
+      by rewrite ltnX_neqAleqX H1 H2.
+    * left; move: H1 => /eqP H; subst c.
+      by rewrite ltnX_neqAleqX H3 H4.
+    * right; move: H1 => /eqP ->.
+      by rewrite H3 /= (leqX_trans H2 H4).
+Qed.
+
+Definition prodlex_pordMixin := PartOrder.Mixin prodlex_porder.
+Definition prodlex_pordType := Eval hnf in POrdType (T * R) prodlex_pordMixin.
+
+End ProdLexPOrder.
+
+Section ProdLexOrder.
+
+Variable T R : ordType.
+
+Lemma prodlex_total : total (@prodlex T R).
+Proof using .
+case=> [i j] [k l] /=.
+case (compareXP i k) => [|| ->] //=; first by rewrite orbT.
+rewrite eq_refl /=.
+exact: leqX_total.
+Qed.
+
+Definition prodlex_ordMixin :=
+  Order.Mixin (T := prodlex_pordType T R) prodlex_total.
+Definition prodlex_ordType :=
+  Eval hnf in OrdType (prodlex_pordType T R) prodlex_ordMixin.
+
+End ProdLexOrder.
+
+
+
 Section LexOrder.
 
 Variable T : ordType.
@@ -1622,5 +1693,15 @@ Goal ((5 : nat_dualType) <= (3 : nat_dualType)) = true.
   exact: erefl. Qed.
 Goal ((5 : dual_pordType _) <= (3 : dual_pordType _)) = true.
   exact: erefl. Qed.
+
+
+(* Commented out because lex order is not canonical
+***************************************************
+Goal (ord0 (n' := 2), ord0 (n' := 3)) <= (ord0 (n' := 2), ord0 (n' := 3)) = true.
+  exact: erefl. Qed.
+
+Goal (ord0 (n' := 2), ord0 (n' := 3)) <= (inhabitant _) = true.
+  exact: erefl. Qed.
+*)
 
 End Tests.
