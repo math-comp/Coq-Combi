@@ -26,13 +26,12 @@ From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice f
 From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm.
 From mathcomp Require Import morphism presentation.
 
-From Combi Require Import tools permuted combclass congr.
+Require Import tools permuted combclass congr.
 
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
-
 
 Lemma ieqi1F i : (i == i.+1) = false. Proof. apply: negbTE; by elim i. Qed.
 Lemma ieqi2F i : (i == i.+2) = false. Proof. apply: negbTE; by elim i. Qed.
@@ -194,13 +193,13 @@ Canonical codesz_subFinType := Eval hnf in [subFinType of codesz].
 Implicit Type (c : codesz).
 
 Lemma codeszP c : val c \is a code.
-Proof. by case: c => c /= /andP []. Qed.
+Proof using . by case: c => c /= /andP []. Qed.
 
 Lemma size_codesz c : size c = n.
-Proof. by case: c => c /= /andP [] _ /eqP. Qed.
+Proof using . by case: c => c /= /andP [] _ /eqP. Qed.
 
 Lemma enum_codeszE : map val (enum {:codesz}) = enum_codesz n.
-Proof. rewrite /=; exact: enum_subE. Qed.
+Proof using . rewrite /=; exact: enum_subE. Qed.
 
 End FinType.
 
@@ -229,7 +228,7 @@ Implicit Types (x y z t : T).
 Lemma tperm_braid x y z :
   x != y -> y != z ->
   tperm x y * tperm y z * tperm x y = tperm y z * tperm x y * tperm y z.
-Proof.
+Proof using .
   move=> Hxy Hyz.
   rewrite -{1}(tpermV x y) -mulgA -/(conjg _ _) tpermJ tpermR.
   rewrite -{1}(tpermV y z) -mulgA -/(conjg _ _) tpermJ tpermL.
@@ -244,7 +243,7 @@ Qed.
 Lemma tpermC x y a b :
   x != a -> y != a -> x != b -> y != b ->
   tperm x y * tperm a b = tperm a b * tperm x y.
-Proof.
+Proof using .
   move=> Hxa Hya Hxb Hyb.
   rewrite -permP => i; rewrite !permM.
   case: (tpermP a b i) => [-> | -> |].
@@ -278,7 +277,7 @@ Implicit Type s t : 'S_n.+1.
 
 Lemma eltr_braid i :
   i.+1 < n -> 's_i * 's_i.+1 * 's_i = 's_i.+1 * 's_i * 's_i.+1.
-Proof.
+Proof using .
   rewrite /eltr => Hi.
   apply: tperm_braid; rewrite /eq_op /=.
   - by rewrite inord1i // inordi // !trivSimpl.
@@ -287,7 +286,7 @@ Qed.
 
 Lemma eltr_comm i j :
   i.+1 < j < n -> 's_i * 's_j = 's_j * 's_i.
-Proof.
+Proof using .
   move => /andP [] Hij Hj.
   have Hi := ltn_trans Hij Hj.
   apply: tpermC; rewrite /eq_op /=.
@@ -301,7 +300,7 @@ Qed.
 
 Lemma Tij_j (i j : 'I_(n.+1)) :
   i <= j -> 's_[iota i (j - i)] i = j.
-Proof.
+Proof using .
   move=> Hij; rewrite -{3}(inord_val i) -{1 3}(subKn Hij).
   elim: (j - i) (leq_subr i j) {Hij} => [_ | d IHd] {i}.
     by rewrite subn0 /= big_nil perm1 inord_val.
@@ -311,7 +310,7 @@ Qed.
 
 Lemma perm_on_Tij (i j : 'I_(n.+1)) :
   perm_on [set k : 'I_n.+1 | k <= j] 's_[iota i (j - i)].
-Proof.
+Proof using .
   rewrite /perm_on; apply/subsetP => k; rewrite !inE.
   apply contraR; rewrite -ltnNge => Hjk.
   case (ltnP j i) => [/ltnW | Hij].
@@ -332,7 +331,7 @@ Qed.
 
 Lemma prodsK w :
   's_[w] * 's_[rev w] = 1.
-Proof.
+Proof using .
   elim/last_ind: w => [| w wn IHw] /=.
     by rewrite /rev /= !big_nil mulg1.
   rewrite rev_rcons -cat1s -cats1 -big_cat /=.
@@ -342,7 +341,7 @@ Proof.
 Qed.
 
 Lemma prodsV w : 's_[rev w] = 's_[w]^-1.
-Proof. apply/eqP; by rewrite eq_sym eq_invg_mul prodsK. Qed.
+Proof using . apply/eqP; by rewrite eq_sym eq_invg_mul prodsK. Qed.
 
 End ElemTransp.
 
@@ -363,7 +362,7 @@ Definition invset (s : 'S_n.+1) :=
 Definition length s := #|invset s|.
 
 Lemma length1 : length 1 = 0.
-Proof.
+Proof using .
   rewrite /length /invset.
   apply/eqP; rewrite cards_eq0; apply/eqP.
   rewrite -setP => [[i j]]; rewrite !inE /= !perm1.
@@ -372,7 +371,7 @@ Proof.
 Qed.
 
 Lemma length_permV s : length s^-1 = length s.
-Proof.
+Proof using .
   rewrite /length /invset.
   pose f t := fun p : 'II_n.+1 => (t p.2, t p.1) : 'II_n.+1.
   have fcan t : cancel (f t^-1) (f t).
@@ -391,7 +390,7 @@ Qed.
 
 Lemma eltr_exchange i (a b : 'I_(n.+1)) :
   i < n -> a < b -> 's_i a < 's_i b = (i != a) || (i.+1 != b).
-Proof.
+Proof using .
   rewrite /eltr => Hi.
   case: tpermP => [-> | -> | /eqP Ha1 /eqP Hai1];
     case: tpermP => [-> | -> | /eqP Hb1 /eqP Hbi1];
@@ -409,7 +408,7 @@ Qed.
 
 Lemma length_add1L s (i : 'I_(n.+1)) :
   i < n -> s i < s (inord (i.+1)) -> length ('s_i * s) = (length s).+1.
-Proof.
+Proof using .
   move=> Hi.
   have Hio : (inord i) = i by apply val_inj => /=; rewrite inordK.
   rewrite /length => Hfwd.
@@ -472,7 +471,7 @@ Qed.
 
 Lemma length_sub1L s (i : 'I_(n.+1)) :
   i < n -> s i > s (inord (i.+1)) -> length s = (length ('s_i * s)).+1.
-Proof.
+Proof using .
   move=> Hi Hs.
   rewrite -{1}(mul1g s) -(mulVg 's_i) -mulgA tpermV -/(eltr i).
   apply (length_add1L Hi).
@@ -483,7 +482,7 @@ Qed.
 
 Lemma length_desc s (i : 'I_(n.+1)) :
   i < n -> (s i < s (inord (i.+1))) = (length ('s_i * s) > length s).
-Proof.
+Proof using .
   move=> Hi.
   case: (ltngtP (s i) (s (inord (i.+1)))) => Hsi; apply esym.
   - by rewrite (length_add1L  Hi Hsi) ltnS leqnn.
@@ -496,7 +495,7 @@ Qed.
 
 Lemma length_add1R s (i : 'I_(n.+1)) :
   i < n -> s^-1 i < s^-1 (inord (i.+1)) -> length (s * 's_i) = (length s).+1.
-Proof.
+Proof using .
   move=> Hi Hdesc.
   rewrite -length_permV -[length s]length_permV invMg tpermV -/(eltr i).
   exact: length_add1L.
@@ -504,7 +503,7 @@ Qed.
 
 Lemma length_sub1R s (i : 'I_(n.+1)) :
   i < n -> s^-1 i > s^-1 (inord (i.+1)) -> length s = (length (s * 's_i)).+1.
-Proof.
+Proof using .
   move=> Hi Hdesc.
   rewrite -length_permV -[length (s * _)]length_permV invMg tpermV -/(eltr i).
   exact: length_sub1L.
@@ -512,13 +511,13 @@ Qed.
 
 Lemma length_rec s (i : 'I_(n.+1)) :
   i < n -> (s^-1 i < s^-1 (inord (i.+1))) = (length (s * 's_i) > length s).
-Proof.
+Proof using .
   move/length_desc ->.
   by rewrite /eltr -{1}tpermV -/(eltr n i) -invMg !length_permV.
 Qed.
 
 Lemma length_prods (w : seq 'I_n) : length 's_[w] <= size w.
-Proof.
+Proof using .
   elim: w => [/=| w0 w]; first by rewrite big_nil length1.
   rewrite big_cons /=; move: ('s_[w]) => s Hlen.
   pose w0' := inord (n' := n) w0.
@@ -529,7 +528,7 @@ Proof.
   - move: Hlen; rewrite (length_sub1L Hw0' H) => /ltnW.
     by rewrite -ltnS => /ltnW.
   - exfalso; move: H => /val_inj/perm_inj => H.
-    have {H} /= /eqP := (congr1 (@nat_of_ord _) H).
+    have {H} /= /eqP := (congr1 nat_of_ord H).
     by rewrite inordK // ieqi1F.
 Qed.
 
@@ -548,7 +547,7 @@ Definition Lehmer (s : 'S_n.+1) (i : 'I_n.+1) :=
 *)
 
 Lemma cocode_rec_cat m c s : cocode_rec m c s = (cocode_rec m [::] s ++ c).
-Proof.
+Proof using .
   elim: m c s => [//= | m IHm] c s /=.
   by rewrite IHm [X in _ = X ++ _]IHm -cat1s catA.
 Qed.
@@ -556,13 +555,13 @@ Qed.
 Lemma wordcdE c :
   's_[wordcd c] =
   \prod_(i <- iota 0 (size c)) 's_[rev (iota (i - nth 0 c i) (nth 0 c i))].
-Proof. by rewrite big_flatten /= big_map. Qed.
+Proof using . by rewrite big_flatten /= big_map. Qed.
 
 Lemma size_cocode_rec m s c : size (cocode_rec m c s) = m + size c.
-Proof. by elim: m s c => [| m IHm] //= s c; rewrite IHm /= addSnnS. Qed.
+Proof using . by elim: m s c => [| m IHm] //= s c; rewrite IHm /= addSnnS. Qed.
 
 Lemma size_cocode s : size (cocode s) = n.+1.
-Proof. by rewrite size_cocode_rec addn0. Qed.
+Proof using . by rewrite size_cocode_rec addn0. Qed.
 
 
 (** ** Partial codes *)
@@ -580,7 +579,7 @@ Lemma perm_on_cocode_recP m c s0 s :
   s0 = s * 's_[word_of_partcocode m c] ->
   perm_on [set k : 'I_n.+1 | k < m] s ->
   let cf := cocode_rec m c s in cf \is a code /\ s0 = 's_[wordcd cf].
-Proof.
+Proof using .
   move=> Hm Hcode -> {s0}.
   elim: m c s Hm Hcode => [| m IHm] c s Hm Hcode Hon /=.
     split; first by apply/is_codeP => i; rewrite -{3}(addn0 i); apply Hcode.
@@ -621,7 +620,7 @@ Lemma perm_on_prods c m :
   c \is a code -> m <= size c -> m <= n.+1 ->
   perm_on [set k : 'I_n.+1 | k < m]
           (\prod_(i <- iota 0 m) 's_[(rev (iota (i - nth 0 c i) (nth 0 c i)))]).
-Proof.
+Proof using .
   move=> /is_codeP Hc Hmsz Hm.
   rewrite big_seq; apply big_rec => [| i s]; first exact: perm_on1.
   rewrite mem_iota /= add0n => Him /(perm_onM _); apply => {s}.
@@ -632,16 +631,16 @@ Proof.
   have Hjm := ltn_trans Hji Him.
   rewrite /perm_on; apply/subsetP => u; rewrite inE unfold_in.
   apply contraR; rewrite -leqNgt => Hu; apply/eqP/tpermD.
-  - apply/(introN idP) => /eqP/(congr1 (@nat_of_ord _)).
+  - apply/(introN idP) => /eqP/(congr1 nat_of_ord).
     rewrite (inordK (leq_trans Hjm Hm)) => Hju.
     by have:= leq_trans Hjm Hu; rewrite Hju ltnn.
-  - apply/(introN idP) => /eqP/(congr1 (@nat_of_ord _)).
+  - apply/(introN idP) => /eqP/(congr1 nat_of_ord).
     rewrite (inordK (leq_trans Hj1m Hm)) => Hju.
     by have:= leq_trans Hj1m Hu; rewrite Hju ltnn.
 Qed.
 
 Lemma perm_onV H s : perm_on H s -> perm_on H s^-1.
-Proof.
+Proof using .
   rewrite /perm_on => /subsetP Hsub; apply/subsetP => i.
   rewrite inE => Hi; apply Hsub; rewrite inE.
   move: Hi; apply contra => /eqP {1}<-.
@@ -649,7 +648,7 @@ Proof.
 Qed.
 
 Lemma prods_mi (m : 'I_n.+1) i : i <= m -> 's_[(iota (m - i) i)] (inord (m - i)) = m.
-Proof.
+Proof using .
   elim: i => [| i IHi] /= Hm.
     by rewrite subn0 inord_val big_nil perm1.
   rewrite big_cons permM tpermL.
@@ -659,7 +658,7 @@ Qed.
 
 Lemma prods_ltmi i (m u : 'I_n.+1) :
   i <= m -> u < m - i -> 's_[(iota (m - i) i)] u = u.
-Proof.
+Proof using .
   elim: i => [| i IHi] /= Hm Hu.
     by rewrite big_nil perm1.
   rewrite big_cons permM tpermD; first last.
@@ -682,7 +681,7 @@ Qed.
 Lemma perm_on_prods_length_ord s i (m : 'I_n.+1) :
   i <= m -> perm_on [set k : 'I_n.+1 | k < m] s ->
   length (s * 's_[(rev (iota (m - i) i))]) = length s + i.
-Proof.
+Proof using .
   elim: i s => [/= | i IHi] /= s Hm Hon; first by rewrite big_nil mulg1 addn0.
   rewrite rev_cons -cats1 big_cat /= {1}subnS prednK; last by rewrite subn_gt0.
   rewrite big_seq1 mulgA.
@@ -714,14 +713,14 @@ Qed.
 Lemma perm_on_prods_length s i m :
   m < n.+1 -> i <= m -> perm_on [set k : 'I_n.+1 | k < m] s ->
   length (s * 's_[(rev (iota (m - i) i))]) = length s + i.
-Proof.
+Proof using .
   move=> Hm; have -> : m = Ordinal Hm by [].
   exact: perm_on_prods_length_ord.
 Qed.
 
 Lemma length_permcd c :
   c \is a code -> size c <= n.+1 -> length 's_[wordcd c] = sumn c.
-Proof.
+Proof using .
   rewrite wordcdE => Hcode.
   have:= Hcode => /is_codeP Hcd Hsz.
   rewrite -(sum_iota_sumnE (n := size c)) // /index_iota subn0.
@@ -737,32 +736,32 @@ Qed.
 
 Lemma cocode2P s :
   let c := cocode s in c \is a code /\ s = 's_[wordcd c].
-Proof.
+Proof using .
   rewrite /cocode; apply perm_on_cocode_recP => //.
   - by rewrite /= big_nil mulg1.
   - rewrite /perm_on; apply/subsetP => k _; rewrite !inE; exact: ltn_ord.
 Qed.
 
 Lemma cocodeP s : cocode s \is a code.
-Proof. by have:= cocode2P s => /= [] []. Qed.
+Proof using . by have:= cocode2P s => /= [] []. Qed.
 
 Lemma cocodeE s : s = 's_[wordcd (cocode s)].
-Proof. by have:= cocode2P s => /= [] []. Qed.
+Proof using . by have:= cocode2P s => /= [] []. Qed.
 
 Definition canword s : seq 'I_n := pmap insub (wordcd (cocode s)).
 
 Lemma canwordE s : [seq nat_of_ord i | i <- canword s] = wordcd (cocode s).
-Proof. apply (insub_wordcdK (cocodeP _)); by rewrite size_cocode. Qed.
+Proof using . apply (insub_wordcdK (cocodeP _)); by rewrite size_cocode. Qed.
 
 Theorem canwordP s : 's_[canword s] = s.
-Proof.
+Proof using .
   rewrite /= {2}(cocodeE s).
-  rewrite -(big_map (@nat_of_ord _) xpredT) /=; apply congr_big => //.
+  rewrite -(big_map nat_of_ord xpredT) /=; apply congr_big => //.
   by rewrite canwordE.
 Qed.
 
 Theorem size_canword s : length s = size (canword s).
-Proof.
+Proof using .
   rewrite -(size_map val) canwordE size_wordcd.
   have /= := cocode2P s => [] [] Hcode {1}->.
   by rewrite -length_permcd // size_cocode.
@@ -771,7 +770,7 @@ Qed.
 Definition prods_codesz (c : codesz n.+1) : 'S_n.+1 := 's_[wordcd c].
 
 Lemma prods_codesz_bij : bijective prods_codesz.
-Proof.
+Proof using .
   apply inj_card_bij; last by rewrite card_codesz card_Sn.
   move=> c1 c2 Heq.
   suff /image_injP Hinj :
@@ -787,7 +786,7 @@ Qed.
 Lemma prods_wordcd_inj c1 c2 :
   c1 \is a code -> c2 \is a code -> size c1 = n.+1 -> size c2 = n.+1 ->
   's_[wordcd c1] = 's_[wordcd c2] -> c1 = c2.
-Proof.
+Proof using .
   move=> Hc1 Hc2 Hsz1 Hsz2.
   have HC1 : is_code_of_size n.+1 c1 by rewrite /is_code_of_size Hc1 Hsz1 /=.
   have HC2 : is_code_of_size n.+1 c2 by rewrite /is_code_of_size Hc2 Hsz2 /=.
@@ -848,40 +847,40 @@ Definition reduced_word := [qualify w : seq 'I_n | length 's_[w] == size w ].
 Notation reduced := reduced_word.
 
 Lemma reduced_nil : [::] \is reduced.
-Proof. by rewrite unfold_in big_nil length1. Qed.
+Proof using . by rewrite unfold_in big_nil length1. Qed.
 
 Hint Resolve reduced_nil.
 
 Lemma reduced_iiF i : [:: i; i] \is reduced = false.
-Proof. by rewrite unfold_in /= big_cons big_seq1 tperm2 length1. Qed.
+Proof using . by rewrite unfold_in /= big_cons big_seq1 tperm2 length1. Qed.
 
 Lemma reduced_rev w : w \is reduced -> rev w \is reduced.
-Proof.
+Proof using .
   rewrite !unfold_in size_rev => /eqP <-.
   rewrite -length_permV.
-  by rewrite -!(big_map (@nat_of_ord _) xpredT) -prodsV map_rev revK.
+  by rewrite -!(big_map nat_of_ord xpredT) -prodsV map_rev revK.
 Qed.
 
 Lemma reduced_revE w : w \is reduced = (rev w \is reduced).
-Proof.
+Proof using .
   apply/idP/idP; first exact: reduced_rev.
   move/reduced_rev; by rewrite revK.
 Qed.
 
 Lemma reduced_sprod_code c :
   c \is a code -> size c <= n.+1 -> pmap insub (wordcd c) \is reduced.
-Proof.
+Proof using .
   move=> Hcode Hsz.
   have:= Hsz => /(length_permcd Hcode) Hlength.
-  rewrite unfold_in -(big_map (@nat_of_ord _) xpredT) /=.
+  rewrite unfold_in -(big_map nat_of_ord xpredT) /=.
   by rewrite -(size_map val) /= insub_wordcdK // Hlength size_wordcd.
 Qed.
 
 Theorem canword_reduced s : canword s \is reduced.
-Proof. apply: (reduced_sprod_code (cocodeP _)); by rewrite size_cocode. Qed.
+Proof using . apply: (reduced_sprod_code (cocodeP _)); by rewrite size_cocode. Qed.
 
 Corollary lengthM u v : length (u * v) <= length u + length v.
-Proof.
+Proof using .
   have:= canword_reduced u; have:= canword_reduced v.
   rewrite !unfold_in !canwordP => /eqP -> /eqP ->.
   rewrite -{1}(canwordP u) -{1}(canwordP v) -big_cat /=.
@@ -889,7 +888,7 @@ Proof.
 Qed.
 
 Lemma reduced_catr u v : u ++ v \is reduced -> v \is reduced.
-Proof.
+Proof using .
   rewrite !unfold_in size_cat => /eqP H.
   have {H} Huv : length 's_[u] + length 's_[v] =size u + size v.
     apply/eqP; rewrite eqn_leq (leq_add (length_prods u) (length_prods v)).
@@ -898,16 +897,16 @@ Proof.
 Qed.
 
 Lemma reduced_catl u v : u ++ v \is reduced -> u \is reduced.
-Proof.
+Proof using .
   move/reduced_rev; rewrite rev_cat => /reduced_catr.
   by rewrite -reduced_revE.
 Qed.
 
 Lemma reduced_consK i u : i :: u \is reduced -> u \is reduced.
-Proof. rewrite -cat1s; exact: reduced_catr. Qed.
+Proof using . rewrite -cat1s; exact: reduced_catr. Qed.
 
 Lemma reduced_rconsK u i : rcons u i \is reduced -> u \is reduced.
-Proof. rewrite -cats1; exact: reduced_catl. Qed.
+Proof using . rewrite -cats1; exact: reduced_catl. Qed.
 
 Lemma reducedM (s t : 'S_(n.+1)) :
   length (s * t) = length s + length t -> canword s ++ canword t \is reduced.
@@ -917,14 +916,14 @@ Proof.
 Qed.
 
 Lemma canword1 : canword (1 : 'S_n.+1) = [::].
-Proof.
+Proof using .
   have:= canword_reduced 1; by rewrite unfold_in canwordP length1 eq_sym => /nilP.
 Qed.
 
 Theorem eltr_ind (P : 'S_n.+1 -> Type) :
   P 1 -> (forall s i, i < n -> P s -> P ('s_i * s)) ->
   forall s, P s.
-Proof.
+Proof using .
   move=> H1 IH s; rewrite -(canwordP s).
   elim: (canword s)  => [| t0 t IHt] /=; first by rewrite big_nil.
   rewrite big_cons; by apply IH; first exact: ltn_ord.
@@ -932,7 +931,7 @@ Qed.
 
 Lemma odd_size_permE ts :
   all (gtn n) ts -> odd (size ts) = odd_perm 's_[ts].
-Proof.
+Proof using .
   elim: ts => [_ | t0 t IHt] /=; first by rewrite big_nil odd_perm1.
   move=> /andP [] Ht0 /IHt{IHt} ->.
   by rewrite big_cons odd_mul_tperm (inordi_neq_i1 Ht0) addTb.
@@ -959,7 +958,7 @@ Lemma braid_abaP (u v : seq 'I_n) :
   reflect (exists a b : 'I_n,
              [/\ ((a.+1 == b) || (b.+1 == a)), u = [:: a; b; a] & v = [:: b; a; b] ] )
           (v \in braid_aba u).
-Proof.
+Proof using .
   rewrite /braid_aba /=; apply: (iffP idP).
   + case: u => [//=|u0[//=|u1[//=|u2[]//=]]].
     case H : ((u0 == u2) && ((u0.+1 == u1) || (u1.+1 == u0))).
@@ -975,7 +974,7 @@ Lemma braidCP (u v : seq 'I_n) :
   reflect (exists a b : 'I_n,
              [/\ ((a.+1 < b) || (b.+1 < a)), u = [:: a; b] & v = [:: b; a] ] )
           (v \in braidC u).
-Proof.
+Proof using .
   rewrite /braidC /=; apply: (iffP idP).
   + case: u => [//=|u0[//=|u1[]//=]].
     case H : ((u0.+1 < u1) || (u1.+1 < u0)).
@@ -987,7 +986,7 @@ Proof.
 Qed.
 
 Lemma braidrule_sym (u v : seq 'I_n) : v \in (braidrule u) -> u \in (braidrule v).
-Proof.
+Proof using .
   rewrite !mem_cat => /orP [] /= Hbr; apply/orP.
   - left; move: Hbr => /braid_abaP [] a [] b [] Hab -> -> .
     by rewrite /braid_aba /= eq_refl orbC Hab /= mem_seq1 eq_refl.
@@ -997,7 +996,7 @@ Qed.
 
 Lemma braidrule_homog (u : seq 'I_n) :
   all [pred v | size v == size u] (braidrule u).
-Proof.
+Proof using .
   apply/allP => /= v.
   by rewrite mem_cat => /orP [/braid_abaP | /braidCP] [] a [] b [] _ -> ->.
 Qed.
@@ -1008,31 +1007,31 @@ Definition braidclass := genclass_hom braidrule_homog.
 Local Notation "a =Br b" := (braidcongr a b) (at level 70).
 
 Lemma braid_equiv : equivalence_rel braidcongr.
-Proof. apply: gencongr_equiv; exact: braidrule_sym. Qed.
+Proof using . apply: gencongr_equiv; exact: braidrule_sym. Qed.
 
 Lemma braid_refl : reflexive braidcongr.
-Proof. have:= braid_equiv; by rewrite equivalence_relP => [] [] Hrefl Hltr. Qed.
+Proof using . have:= braid_equiv; by rewrite equivalence_relP => [] [] Hrefl Hltr. Qed.
 
 Lemma braidww w : braidcongr w w.
-Proof. exact: braid_refl. Qed.
+Proof using . exact: braid_refl. Qed.
 
 Lemma braid_sym : symmetric braidcongr.
-Proof.
+Proof using .
   have:= braid_equiv; rewrite equivalence_relP => [] [] Hrefl Hltr.
   by move=> i j; apply/idP/idP => /Hltr <-.
 Qed.
 
 Lemma braid_ltrans : left_transitive braidcongr.
-Proof. have:= braid_equiv; by rewrite equivalence_relP => [] [] Hrefl Hltr. Qed.
+Proof using . have:= braid_equiv; by rewrite equivalence_relP => [] [] Hrefl Hltr. Qed.
 
 Lemma braid_trans : transitive braidcongr.
-Proof.
+Proof using .
   have:= braid_equiv; rewrite equivalence_relP => [] [] Hrefl Hltr.
   by move=> i j k => /Hltr <-.
 Qed.
 
 Lemma braid_is_congr : congruence_rel braidcongr.
-Proof. apply: gencongr_is_congr; exact: braidrule_sym. Qed.
+Proof using . apply: gencongr_is_congr; exact: braidrule_sym. Qed.
 
 Definition braid_cons := congr_cons braid_is_congr.
 Definition braid_rcons := congr_rcons braid_is_congr.
@@ -1041,10 +1040,10 @@ Definition braid_catr := congr_catr braid_is_congr.
 Definition braid_cat := congr_cat braid_is_congr braid_equiv.
 
 Lemma size_braid u v : u =Br v -> size u = size v.
-Proof. by move=> /gencongr_invar /= /eqP ->. Qed.
+Proof using . by move=> /gencongr_invar /= /eqP ->. Qed.
 
 Lemma braid_rev u v : u =Br v -> rev u =Br rev v.
-Proof.
+Proof using .
   move: v; apply gencongr_ind; first exact: braid_refl.
   move=> a b1 c b2 /braid_ltrans -> {u} Hrule.
   rewrite !rev_cat -!catA; apply braid_is_congr; apply rule_gencongr.
@@ -1056,7 +1055,7 @@ Proof.
 Qed.
 
 Theorem braid_prods (v w : seq 'I_n) : v =Br w -> 's_[v] = 's_[w].
-Proof.
+Proof using .
   move=> H; apply/esym; move: w H; apply gencongr_ind => // a b1 c b2 <- Hrule.
   rewrite !big_cat /=; congr (_ * (_ * _)).
   move: Hrule; rewrite {a c} /braidrule /= mem_cat => /orP [].
@@ -1072,7 +1071,7 @@ Qed.
 
 Corollary braid_reduced (v w : seq 'I_n) :
   v =Br w -> v \is reduced -> w \is reduced.
-Proof.
+Proof using .
   rewrite unfold_in => Hbr.
   by rewrite (braid_prods Hbr) (size_braid Hbr).
 Qed.
@@ -1090,7 +1089,7 @@ Lemma reducesP (u v : seq 'I_n) :
   reflect
     (exists x i y, u = x ++ [:: i; i] ++ y /\ v = x ++ y)
     (reduces u v).
-Proof.
+Proof using .
   elim: u v => [| a u IHu] v.
     apply (iffP idP) => /=; first by case v.
     move=> [] x [] i [] y []; by case x.
@@ -1117,13 +1116,13 @@ Proof.
 Qed.
 
 Lemma reduces_catl u v w : reduces u v -> reduces (u ++ w) (v ++ w).
-Proof.
+Proof using .
   move/reducesP => [] x [] i [] y [] -> ->.
   apply/reducesP; exists x, i, (y ++ w); by rewrite -!catA.
 Qed.
 
 Lemma prods_reducesE u v : reduces u v -> 's_[u] = 's_[v].
-Proof.
+Proof using .
   move/reducesP => [] x [] i [] y [] -> {u} -> {v}.
   by rewrite !big_cat big_cons !big_seq1 /= tperm2 mul1g.
 Qed.
@@ -1132,13 +1131,13 @@ Definition braid_reduces (u v : seq 'I_n) := (u =Br v) || (reduces u v).
 
 Lemma braidred_catl (u v w : seq 'I_n) :
   braid_reduces u v -> braid_reduces (u ++ w) (v ++ w).
-Proof.
+Proof using .
   rewrite /braid_reduces => /orP [/braid_catl -> // |] /reduces_catl ->.
   by rewrite orbT.
 Qed.
 
 Lemma braidredE u v : braid_reduces u v -> 's_[u] = 's_[v].
-Proof. by move=> /orP []; [apply braid_prods|apply prods_reducesE]. Qed.
+Proof using . by move=> /orP []; [apply braid_prods|apply prods_reducesE]. Qed.
 
 End Reduced.
 
@@ -1169,7 +1168,7 @@ Fixpoint inscode (c : seq nat) (i : 'I_n) :=
   else [::].
 
 Lemma size_inscode c i : size (inscode c i) = size c.
-Proof.
+Proof using .
   elim: c i => [| c0 c IHc] //= i.
   case: ltnP => _ /=; first by rewrite IHc.
   case: eqP => _ //=.
@@ -1177,21 +1176,21 @@ Proof.
 Qed.
 
 Lemma head_revcode c0 c : rev (c0 :: c) \is a code -> c0 <= size c.
-Proof.
+Proof using .
   have H : size c < size (rev (c0 :: c)) by rewrite size_rev /= ltnS.
   move=> /is_codeP/(_ _ H).
   by rewrite rev_cons nth_rcons size_rev ltnn eq_refl.
 Qed.
 
 Lemma inord_predS (i : 'I_n) a b : a < i -> i < b -> (inord (n' := n0) i.-1).+1 < b.
-Proof.
+Proof using .
   move=> Ha Hb; rewrite inordK; last by apply (leq_ltn_trans (leq_pred _)).
   by rewrite (ltn_predK Ha).
 Qed.
 
 Lemma inscodeP c (i : 'I_n) :
   rev c \is a code -> i.+1 < size c -> rev (inscode c i) \is a code.
-Proof.
+Proof using .
   elim: c i => [//= | c0 c IHc] i /= => Hcode.
   have:= Hcode; rewrite rev_cons => /is_code_rconsK Hcd.
   move/(_ _ Hcd): IHc => Hrec.
@@ -1223,7 +1222,7 @@ Let wcord c : seq 'I_n := map inord (wordcd (rev c)).
 
 Lemma wcordE c :
   rev c \is a code -> size c <= n.+1 -> wcord c = pmap insub (wordcd (rev c)).
-Proof.
+Proof using .
   rewrite /wcord => Hcode; have:= Hcode => /wordcd_ltn/allP.
   rewrite size_rev => Hall Hsz.
   apply (inj_map (@val_inj _ _ _)) => /=.
@@ -1235,13 +1234,13 @@ Qed.
 
 Lemma reduced_wcord c :
   rev c \is a code -> size c <= n.+1 -> wcord c \is reduced.
-Proof.
+Proof using .
   move=> Hc Hsz; rewrite wcordE //.
   by apply reduced_sprod_code; last by rewrite size_rev.
 Qed.
 
 Lemma wcord_cons c i : wcord (i :: c) = wcord c ++ map inord (rev (iota (size c - i) i)).
-Proof.
+Proof using .
   rewrite /wcord /wordcd -map_cat; congr (map _ _).
   rewrite size_rev [size (_ :: _)]/= -(addn1 (size c)) iota_add.
   rewrite !map_cat !flatten_cat /= cats0 !add0n !rev_cons.
@@ -1253,7 +1252,7 @@ Qed.
 
 Lemma ltn_braidC (s : seq 'I_n) (i : 'I_n) :
   (forall u, u \in s -> u.+1 < i) -> [:: i] ++ s =Br s ++ [:: i].
-Proof.
+Proof using .
   rewrite cat1s cats1.
   move=> Hs; elim: s Hs => [| s0 s IHs] //= Hs.
   apply (braid_trans (y := [:: s0, i & s])).
@@ -1267,7 +1266,7 @@ Qed.
 
 Lemma gtn_braidC (s : seq 'I_n) (i : 'I_n) :
   (forall u, u \in s -> i.+1 < u) -> [:: i] ++ s =Br s ++ [:: i].
-Proof.
+Proof using .
   rewrite cat1s cats1.
   move=> Hs; elim: s Hs => [| s0 s IHs] //= Hs.
   apply (braid_trans (y := [:: s0, i & s])).
@@ -1282,7 +1281,7 @@ Qed.
 Lemma iota_cut_i (l b : nat) (i : 'I_n) :
   l <= b -> b - l < i -> i < b -> iota (b - l) l =
   (iota (b - l) (i.-1 - (b - l))) ++ [:: i.-1; nat_of_ord i] ++ (iota i.+1 (b - i.+1)).
-Proof.
+Proof using .
   move=> Hbl Hi1 Hi2.
   have Hbli : b - l <= i.-1 by rewrite -ltnS (ltn_predK Hi1).
   have -> : [:: i.-1; nat_of_ord i] = iota i.-1 2 by rewrite /= (ltn_predK Hi1).
@@ -1299,7 +1298,7 @@ Local Notation "''I[' a '..' b ']'" :=  [seq inord i | i <- rev (iota (b - a) a)
 Lemma braid_pred_lineC (i : 'I_n) (sz c : nat) :
   sz <= n -> i < sz -> c <= sz -> sz - c < i ->
   ([:: inord i.-1] ++ 'I[c .. sz]) =Br ('I[c .. sz] ++ [:: i]).
-Proof.
+Proof using .
   rewrite /= cats1 => Hsz Hisz Hc0 Hi.
   rewrite (iota_cut_i Hc0 Hi Hisz) !rev_cat !map_cat -cats1 -!catA.
   set A := map _ _; rewrite {1 3}/rev [map _ _]/= inord_val; set B := map _ _.
@@ -1333,7 +1332,7 @@ Qed.
 Lemma braid_ltn_lineC (i : 'I_n) (sz c : nat) :
   sz <= n -> i.+1 < sz - c -> c <= sz ->
   [:: i] ++ 'I[c .. sz] =Br 'I[c .. sz] ++ [:: i].
-Proof.
+Proof using .
   move=> Hsz Hi Hc0; apply gtn_braidC => u /mapP [] x.
   rewrite mem_rev mem_iota => /andP [] Hix Hx -> {u} /=.
   rewrite subnK // in Hx.
@@ -1350,7 +1349,7 @@ Definition path_catl p w := [seq v ++ w | v <- p].
 
 Lemma path_catlP p u w :
   path braidred u p -> path braidred (u ++ w) (path_catl p w).
-Proof.
+Proof using .
   elim: p u => [//= | p0 p IHp] u /= /andP [] Hbr /IHp ->.
   by rewrite braidred_catl.
 Qed.
@@ -1359,7 +1358,7 @@ Lemma braidred_inscode_path c (i : 'I_n) :
   rev c \is a code -> size c <= n.+1 -> i.+1 < size c ->
   { p | path braidred ((wcord c) ++ [:: i]) p /\
         last ((wcord c) ++ [:: i]) p = wcord (inscode c i) }.
-Proof.
+Proof using .
   elim: c i => [//= | c0 c IHc] i /= Hcode.
   have:= Hcode; rewrite rev_cons => /is_code_rconsK /IHc{IHc} Hrec.
   move/head_revcode : Hcode => Hc0.
@@ -1409,14 +1408,14 @@ Fixpoint straighten_rev w :=
 Definition straighten w := straighten_rev (rev w).
 
 Lemma size_straighten w : size (straighten w) = n.+1.
-Proof.
+Proof using .
   rewrite /straighten; elim/last_ind: w => [//= | w wn IHw] /=.
     by rewrite size_nseq.
   by rewrite rev_rcons /= size_inscode.
 Qed.
 
 Lemma is_code_straighten w : rev (straighten w) \is a code.
-Proof.
+Proof using .
   rewrite /straighten; elim/last_ind: w => [| w wn IHw /=].
     rewrite {2}/rev /=.
     have -> : [:: 0, 0 & nseq n0 0] = nseq n.+1 0 by [].
@@ -1430,7 +1429,7 @@ Qed.
 
 Lemma straighten_path_npos w :
   { p | path braidred w p /\ last w p = wcord (straighten w) }.
-Proof.
+Proof using .
   rewrite /straighten; elim/last_ind: w => [| w wn].
     exists [::]; split; first by [].
     rewrite [LHS]/=; apply esym; apply/nilP.
@@ -1447,7 +1446,7 @@ Proof.
 Qed.
 
 Theorem prods_straighten w : 's_[wcord (straighten w)] = 's_[w].
-Proof.
+Proof using .
   move: (straighten_path_npos w) => [] p [] Hpath <-.
   elim: p w Hpath => [| p0 p IHp] //= w /andP [] /braidredE -> {w}.
   exact: IHp.
@@ -1455,9 +1454,9 @@ Qed.
 
 Corollary cocode_straightenE w :
   rev (straighten w) = cocode 's_[w].
-Proof.
+Proof using .
   have:= (prods_straighten w); rewrite -{1}(canwordP 's_[w]).
-  rewrite -!(big_map (@nat_of_ord _) xpredT) /= canwordE /wcord -map_comp.
+  rewrite -!(big_map nat_of_ord xpredT) /= canwordE /wcord -map_comp.
   rewrite [map _ _](_ : _ = wordcd (rev (straighten w))); first last.
     rewrite -[RHS](map_id) -eq_in_map => i.
     rewrite /= /wordcd => /flatten_mapP [] j.
@@ -1472,14 +1471,14 @@ Proof.
 Qed.
 
 Corollary canword_straightenE w : wcord (straighten w) = canword 's_[w].
-Proof.
+Proof using .
   rewrite /canword -cocode_straightenE -(wcordE (is_code_straighten w)) //.
   by rewrite size_straighten.
 Qed.
 
 Corollary canword_path_npos w :
   { p | path braidred w p /\ last w p = canword 's_[w] }.
-Proof. rewrite -canword_straightenE; exact: straighten_path_npos. Qed.
+Proof using . rewrite -canword_straightenE; exact: straighten_path_npos. Qed.
 
 End Nnon0.
 

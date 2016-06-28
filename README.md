@@ -90,7 +90,8 @@ Installation
 
 This library is based on
 
-* Coq 8.5.
+* Coq 8.5 (it should work to with Coq-8.4 if you ignore the warning at the
+  beginning of Make).
 
 * SSReflect/MathComp Library version 1.6.
 

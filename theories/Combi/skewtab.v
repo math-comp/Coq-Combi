@@ -33,7 +33,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop path.
 
-From Combi Require Import tools partition Yamanouchi ordtype tableau std stdtab.
+Require Import tools partition Yamanouchi ordtype tableau std stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -142,11 +142,11 @@ Section Dominate.
   Definition skew_dominate sh u v := dominate (drop sh u) v.
 
   Lemma skew_dominate0 : skew_dominate 0 =2 (@dominate T).
-  Proof. move=> u v /=; by rewrite /skew_dominate drop0. Qed.
+  Proof using . move=> u v /=; by rewrite /skew_dominate drop0. Qed.
 
   Lemma skew_dominate_take n sh u v :
     skew_dominate sh u (take n v) -> skew_dominate sh u v.
-  Proof.
+  Proof using .
     move/dominateP => [].
     rewrite size_take -/(minn _ _) => Hsize Hdom.
     apply/dominateP; split.
@@ -158,11 +158,11 @@ Section Dominate.
 
   Lemma skew_dominate_no_overlap sh u v :
     size u <= sh -> skew_dominate sh u v.
-  Proof. rewrite /skew_dominate => /drop_oversize ->; exact: dominate_nil. Qed.
+  Proof using . rewrite /skew_dominate => /drop_oversize ->; exact: dominate_nil. Qed.
 
   Lemma skew_dominate_consl sh l u v :
     skew_dominate sh u v -> skew_dominate sh.+1 (l :: u) v.
-  Proof.
+  Proof using .
     move/dominateP => [] Hsize Hdom.
     apply/dominateP; split; first by move: Hsize; rewrite !size_drop.
     by move=> i /= /Hdom.
@@ -170,7 +170,7 @@ Section Dominate.
 
   Lemma skew_dominate_cut sh u v :
     skew_dominate sh u v = skew_dominate sh u (take (size u - sh) v).
-  Proof.
+  Proof using .
     rewrite /skew_dominate /dominate; congr (_ &&_ ).
     - rewrite size_drop size_take -/(minn _ _).
       case: leqP => [/minn_idPl -> | H]; first by rewrite leqnn.
@@ -195,7 +195,7 @@ Section Dominate.
      forall i, skew_dominate ((nth 0 inner i) - (nth 0 inner i.+1))
                              (nth [::] t i.+1) (nth [::] t i)]
     (is_skew_tableau inner t).
-  Proof.
+  Proof using .
     apply (iffP idP).
     - elim: t inner => [| t0 t IHt] /= inner.
         move=> /eqP ->; by split=> // i; rewrite !nth_default.
@@ -230,15 +230,15 @@ Section Dominate.
           by case inner => [|_ [| inn]] //=; rewrite [nth 0 [::] i]nth_default.
   Qed.
 
-  Lemma is_skew_tableau0 : is_skew_tableau [::] =1 (@is_tableau T).
-  Proof.
+  Lemma is_skew_tableau0 : is_skew_tableau [::] =1 is_tableau.
+  Proof using .
     elim => //= t0 t IHt; rewrite add0n subn0 skew_dominate0 IHt.
     by case t0.
   Qed.
 
   Lemma is_skew_tableau_pad0 inner t :
     is_skew_tableau inner t = is_skew_tableau (pad 0 (size t) inner) t.
-  Proof.
+  Proof using .
     elim: t inner => [| t0 t IHt] /= inner; first by rewrite cats0.
     case: inner => [| inn0 inn] /=.
       rewrite (IHt [::]) /= add0n.
@@ -253,7 +253,7 @@ Section Dominate.
 
   Lemma size_skew_reshape inner outer s :
     size (skew_reshape inner outer s) = size outer.
-  Proof.
+  Proof using .
     by rewrite /skew_reshape size_rev size_reshape size_rev size_diff_shape.
   Qed.
 
@@ -261,7 +261,7 @@ Section Dominate.
     included inner outer ->
     size s = sumn (diff_shape inner outer) ->
     shape (skew_reshape inner outer s) = diff_shape inner outer.
-  Proof.
+  Proof using .
     rewrite /shape /skew_reshape.
     elim: inner outer s => [| inn0 inn IHinn] /= outer s.
       move=> _; elim: outer s => [s /eqP/nilP -> //= | out0 out IHout] /= s Hsz.
@@ -280,7 +280,7 @@ Section Dominate.
     included inner outer ->
     size s = sumn (diff_shape inner outer) ->
     to_word (skew_reshape inner outer s) = s.
-  Proof.
+  Proof using .
     rewrite /skew_reshape /to_word revK.
     elim: inner outer s => [| inn0 inn IHinn] /= outer s.
       move=> _; elim: outer s => [s /eqP/nilP -> // | out0 out IHout] /= s Hsz.
@@ -298,7 +298,7 @@ Section Dominate.
   Lemma skew_reshapeK inner t :
     size inner <= size t ->
     skew_reshape inner (outer_shape inner (shape t)) (to_word t) = t.
-  Proof.
+  Proof using .
     rewrite -(size_map size) => H.
     by rewrite /skew_reshape (outer_shapeK H) -shape_rev flattenK revK.
   Qed.
@@ -320,14 +320,14 @@ Section Dominate.
 
   Lemma hb_strip_included inner outer :
     hb_strip inner outer -> included inner outer.
-  Proof.
+  Proof using .
     elim: inner outer => [| inn0 inn IHinn] [| out0 out] //=.
     by move=> /andP [] /andP [] _ -> /IHinn ->.
   Qed.
 
   Lemma vb_strip_included inner outer :
     vb_strip inner outer -> included inner outer.
-  Proof.
+  Proof using .
     elim: inner outer => [| inn0 inn IHinn] [| out0 out] //=.
     by move=> /andP [] /andP [] -> _ /IHinn ->.
   Qed.
@@ -337,7 +337,7 @@ Section Dominate.
     reflect
       (forall i, nth 0 outer i.+1 <= nth 0 inner i <= nth 0 outer i)
       (hb_strip inner outer).
-  Proof.
+  Proof using .
     move=> Hinn Hout; apply (iffP idP).
     - elim: inner outer {Hinn Hout} => [| inn0 inn IHinn] /= [| out0 out] //=.
         move=> /eqP -> i; by rewrite leqnn /= nth_default.
@@ -359,7 +359,7 @@ Section Dominate.
     reflect
       (forall i, nth 0 inner i <= nth 0 outer i <= (nth 0 inner i).+1)
       (vb_strip inner outer).
-  Proof.
+  Proof using .
     move=> Hinn Hout; apply (iffP idP) => [Hstrip|].
     - elim: outer inner Hstrip Hout Hinn => [| out0 out IHout] //= [| inn0 inn].
       + move=> _ _ _ i; by rewrite nth_default.
@@ -398,7 +398,7 @@ Section Dominate.
   Lemma vb_strip_conj inner outer :
     is_part inner -> is_part outer ->
     vb_strip inner outer -> hb_strip (conj_part inner) (conj_part outer).
-  Proof.
+  Proof using .
     move=> Hinn Hout.
     have Hcinn := is_part_conj Hinn; have Hcout := is_part_conj Hout.
     move => /(vb_stripP Hinn Hout) H.
@@ -413,7 +413,7 @@ Section Dominate.
   Lemma hb_strip_conj inner outer :
     is_part inner -> is_part outer ->
     hb_strip inner outer -> vb_strip (conj_part inner) (conj_part outer).
-  Proof.
+  Proof using .
     move=> Hinn Hout.
     have Hcinn := is_part_conj Hinn; have Hcout := is_part_conj Hout.
     move => /(hb_stripP Hinn Hout) H.
@@ -428,7 +428,7 @@ Section Dominate.
   Lemma hb_strip_conjE inner outer :
     is_part inner -> is_part outer ->
     hb_strip (conj_part inner) (conj_part outer) = vb_strip inner outer.
-  Proof.
+  Proof using .
     move=> Hinn Hout; apply/idP/idP; last exact: vb_strip_conj.
     rewrite -{2}(conj_partK Hinn) -{2}(conj_partK Hout).
     exact: hb_strip_conj (is_part_conj Hinn) (is_part_conj Hout).
@@ -437,7 +437,7 @@ Section Dominate.
   Lemma vb_strip_conjE inner outer :
     is_part inner -> is_part outer ->
     vb_strip (conj_part inner) (conj_part outer) = hb_strip inner outer.
-  Proof.
+  Proof using .
     move=> Hinn Hout; apply/idP/idP; last exact: hb_strip_conj.
     rewrite -{2}(conj_partK Hinn) -{2}(conj_partK Hout).
     exact: vb_strip_conj (is_part_conj Hinn) (is_part_conj Hout).
@@ -445,7 +445,7 @@ Section Dominate.
 
   Lemma row_dominate u v :
     is_row (u ++ v) -> dominate u v -> u = [::].
-  Proof.
+  Proof using .
     case: u => [//= | u0 u] /=.
     case: v => [//= | v0 v] /= /order_path_min Hpath.
     have {Hpath} /Hpath /allP Hall : transitive (@leqX_op T)
@@ -460,7 +460,7 @@ Section Dominate.
     is_part inner ->
     is_skew_tableau inner t -> is_row (to_word t) ->
     hb_strip inner (outer_shape inner (shape t)).
-  Proof.
+  Proof using .
     rewrite /outer_shape.
     elim: t inner => [| t0 t IHt] /= inner Hpart.
       by rewrite cats0 => /eqP -> _ /=.
@@ -496,7 +496,7 @@ Section Dominate.
     included inner outer &&
              is_skew_tableau inner (skew_reshape inner outer u) =
     hb_strip inner outer.
-  Proof.
+  Proof using .
     move=> Hpartin Hpartout Hrow Hsize.
     apply/andP/idP => [[] Hincl /(row_hb_strip Hpartin) | Hstrip].
       rewrite (to_word_skew_reshape Hincl Hsize) => /(_ Hrow).
@@ -550,7 +550,7 @@ Implicit Type t : seq (seq T).
 
 Lemma filter_leqX_row n r :
   is_row r -> filter (leqX n) r = drop (count (gtnX n) r) r.
-Proof.
+Proof using .
   elim: r => //= r0 r IHr Hrow /=.
   case: (leqXP n r0) => Hr0.
   - rewrite add0n; have Hcount : count (gtnX n) r = 0.
@@ -565,7 +565,7 @@ Lemma filter_leqX_dominate n r1 r0 :
     is_row r0 -> is_row r1 -> dominate r1 r0 ->
     skew_dominate ((count (gtnX n) r0) - (count (gtnX n) r1))
       (filter (leqX n) r1) (filter (leqX n) r0).
-Proof.
+Proof using .
   move=> Hrow0 Hrow1 Hdom.
   have Hsize := count_gtnX_dominate n Hdom.
   move: Hdom => /dominateP [Hsz Hdom].
@@ -588,7 +588,7 @@ Lemma is_skew_tableau_filter_leqX_tmp n t :
   is_tableau t -> is_skew_tableau
                     (shape ([seq [seq x <- i | (x < n)%Ord] | i <- t]))
                     (filter_leqX_tab n t).
-Proof.
+Proof using .
   elim: t => //= t0 t IHt /and4P [Hnnil Hrow Hdom Htab].
   apply/and4P; split.
   - rewrite !size_filter /=.
@@ -609,7 +609,7 @@ Lemma filter_gtnX_first_row0 n r t :
   dominate (head [::] t) r ->
   [seq x <- r | (x < n)%Ord] = [::] ->
   [seq [seq x <- i | (n <= x)%Ord] | i <- t] = t.
-Proof.
+Proof using .
   elim: t r => //= t0 t IHt r.
   move=> /and4P [_ Hrow Hdom Htab] Hdomr Hr.
   move/(count_gtnX_dominate n) : Hdomr.
@@ -624,7 +624,7 @@ Lemma filter_leqX_first_row0 n r t :
   dominate (head [::] t) r ->
   [seq x <- r | (x < n)%Ord] = [::] ->
   [seq [seq x <- i | (x < n)%Ord] | i <- t] = nseq (size t) [::].
-Proof.
+Proof using .
   elim: t r => //= t0 t IHt r.
   move=> /and4P [_ Hrow Hdom Htab] Hdomr Hr.
   move/(count_gtnX_dominate n) : Hdomr.
@@ -636,7 +636,7 @@ Lemma shape_inner_filter_leqX n t :
   is_tableau t ->
   shape ([seq [seq x <- i | (x < n)%Ord] | i <- t]) =
   pad 0 (size t) (shape (filter_gtnX_tab n t)).
-Proof.
+Proof using .
   rewrite /pad /=.
   elim: t => //= t0 t IHt /and4P [Hnnil0 Hrow0 Hdom Htab].
   case/altP: ([seq x <- t0 | (x < n)%Ord] =P [::]) => Ht0 /=;
@@ -650,7 +650,7 @@ Qed.
 Lemma is_skew_tableau_filter_leqX n t:
   is_tableau t ->
   is_skew_tableau (shape (filter_gtnX_tab n t)) (filter_leqX_tab n t).
-Proof.
+Proof using .
   move=> Htab.
   rewrite is_skew_tableau_pad0 /filter_leqX_tab size_map.
   rewrite -(shape_inner_filter_leqX n Htab).
@@ -663,7 +663,7 @@ Definition join_tab s t :=
 Lemma size_join_tab s t :
   size s <= size t ->
   size_tab (join_tab s t) = size_tab s + size_tab t.
-Proof.
+Proof using .
   rewrite /join_tab /size_tab.
   elim: s t => [| s0 s IHs] /= t.
     by rewrite add0n subn0; elim: t => //= t0 t /= ->.
@@ -676,7 +676,7 @@ Qed.
 Lemma perm_eq_join_tab s t :
   size s <= size t ->
   perm_eq (to_word (join_tab s t)) (to_word s ++ to_word t).
-Proof.
+Proof using .
   rewrite /join_tab /=.
   elim: t s => [//= | t0 t IHt] /= s; first by rewrite leqn0 => /nilP -> /=.
   case: s => [_ | s0 s] /=.
@@ -693,7 +693,7 @@ Qed.
 
 Lemma join_tab_filter n t :
   is_tableau t -> join_tab (filter_gtnX_tab n t) (filter_leqX_tab n t) = t.
-Proof.
+Proof using .
   rewrite /join_tab.
   elim: t => //= t0 t IHt /and4P [Hnnil Hrow0 Hdom Htab].
   case H: [seq x <- t0 | (x < n)%Ord] => [| f0 f] /=.
@@ -710,7 +710,7 @@ Qed.
 
 Lemma all_allLtn_cat (s0 s1 s : seq T) :
   all (allLtn (s0 ++ s1)) s -> all (allLtn s0) s /\ all (allLtn s1) s.
-Proof.
+Proof using .
   rewrite (eq_all (a2 := predI (allLtn s0) (allLtn s1))); first last.
     rewrite /allLtn => i /=; by rewrite all_cat.
   by rewrite all_predI => /andP [].
@@ -720,7 +720,7 @@ Lemma join_tab_skew s t :
   all (allLtn (to_word s)) (to_word t) ->
   is_tableau s -> is_skew_tableau (shape s) t ->
   is_tableau (join_tab s t).
-Proof.
+Proof using .
   rewrite /join_tab.
   elim: s t => [| s0 s IHs] /= t.
     move => _ _ Ht; rewrite subn0 /=.
@@ -895,7 +895,7 @@ Proof.
   - by rewrite diff_shape_pad0.
 Qed.
 
-Theorem is_skew_tableau_reshape_std inner outer T  (u : seq T) :
+Theorem is_skew_tableau_reshape_std inner outer T (u : seq T) :
   size inner <= size outer ->
   size u = sumn (diff_shape inner outer) ->
   is_skew_tableau inner (skew_reshape inner outer u) =
@@ -906,6 +906,24 @@ Proof.
   - exact: eq_inv_std.
   - apply eq_inv_sym; exact: eq_inv_std.
   - by rewrite size_std.
+Qed.
+
+Theorem is_tableau_reshape_std sh T (u : seq T) :
+  size u = sumn sh ->
+  is_tableau (rev (reshape (rev sh) u)) =
+  is_tableau (rev (reshape (rev sh) (std u))).
+Proof.
+  move=> Hzs.
+  rewrite -!is_skew_tableau0 -[sh]/(diff_shape [::] sh) -!/(skew_reshape _ _ _).
+  by apply is_skew_tableau_reshape_std.
+Qed.
+
+
+Theorem is_tableau_std T (t : seq (seq T)) :
+  is_tableau t = is_tableau (rev (reshape (rev (shape t)) (std (to_word t)))).
+Proof.
+  rewrite -{1}(to_wordK t); apply is_tableau_reshape_std.
+  by rewrite size_to_word.
 Qed.
 
 End EqInvSkewTab.

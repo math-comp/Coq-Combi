@@ -46,7 +46,7 @@ Sigma types of Yamanouchi words:
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import bigop.
-From Combi Require Import tools combclass partition.
+Require Import tools combclass partition.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -404,16 +404,16 @@ Canonical yameval_finType := Eval hnf in [finType of yameval for type].
 Canonical yameval_subFinType := Eval hnf in [subFinType of yameval].
 
 Lemma yamevalP (y : yameval) : is_yam y.
-Proof. by case: y => /= y /andP []. Qed.
+Proof using . by case: y => /= y /andP []. Qed.
 
 Lemma eval_yameval (y : yameval) : evalseq y = ev.
-Proof. by case: y => /= y /andP [] _ /eqP. Qed.
+Proof using . by case: y => /= y /andP [] _ /eqP. Qed.
 
 Lemma size_yameval (y : yameval) : size y = sumn ev.
-Proof. by rewrite -evalseq_eq_size eval_yameval. Qed.
+Proof using . by rewrite -evalseq_eq_size eval_yameval. Qed.
 
 Lemma enum_yamevalE : map val (enum {:yameval}) = enum_yameval ev.
-Proof. rewrite /=; exact: enum_subE. Qed.
+Proof using . rewrite /=; exact: enum_subE. Qed.
 
 End YamOfEval.
 
@@ -424,7 +424,7 @@ Variable n : nat.
 
 Lemma yamn_PredEq (ev : intpartn_subFinType n) :
   predI (is_yam_of_size n) (pred1 (val ev) \o evalseq) =1 is_yam_of_eval (val ev).
-Proof.
+Proof using .
   move=> y; rewrite /is_yam_of_size /is_yam_of_eval /= -andbA; congr (_ && _).
   case: (altP (evalseq y =P ev)) => /=; last by rewrite andbF.
   rewrite -evalseq_eq_size => ->.
@@ -433,7 +433,7 @@ Qed.
 
 Lemma yamn_partition_evalseq yam :
   is_yam_of_size n yam -> (is_part_of_n n) (evalseq yam).
-Proof.
+Proof using .
   by rewrite /is_yam_of_size /= evalseq_eq_size => /andP [] /is_part_eval_yam -> ->.
 Qed.
 
@@ -455,15 +455,15 @@ Canonical yamn_finType := Eval hnf in [finType of yamn for type].
 Canonical yamn_subFinType := Eval hnf in [subFinType of yamn].
 
 Lemma yamnP (y : yamn) : is_yam y.
-Proof. by case: y => /= y /andP []. Qed.
+Proof using . by case: y => /= y /andP []. Qed.
 
 Lemma size_yamn (y : yamn) : size y = n.
-Proof. by case: y => /= y /andP [] _ /eqP. Qed.
+Proof using . by case: y => /= y /andP [] _ /eqP. Qed.
 
 (* Check of disjoint union enumeration *)
 Lemma enum_yamnE :
   map val (enum {:yamn}) = flatten [seq enum_yameval p | p <- enum_partn n].
-Proof.
+Proof using .
   rewrite enum_unionE /=; congr flatten.
   rewrite (eq_map (f2 := enum_yameval \o val)).
   - by rewrite map_comp enum_intpartnE.
@@ -473,3 +473,4 @@ Qed.
 End YamOfSize.
 
 Hint Resolve yamnP yamevalP.
+Prenex Implicits yamnP yamevalP yamn_PredEq.

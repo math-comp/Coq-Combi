@@ -41,39 +41,39 @@ Section Sorted.
   Local Notation "x <=R y" := (R x y) (at level 70, y at next level).
 
   Lemma sorted_consK l r : sorted (cons l r) -> sorted r.
-  Proof. by case: r => [//=| r0 r] => /andP []. Qed.
+  Proof using . by case: r => [//=| r0 r] => /andP []. Qed.
 
   Lemma sorted_rconsK l r : sorted (rcons r l) -> sorted r.
-  Proof. case: r => [//=| r0 r] /=; by rewrite rcons_path => /andP []. Qed.
+  Proof using . case: r => [//=| r0 r] /=; by rewrite rcons_path => /andP []. Qed.
 
   Lemma sorted_take r n : sorted r -> sorted (take n r).
-  Proof.
+  Proof using .
     elim: r n => [//= | r0 r IHr] [//=| n] /= H.
     case: r r0 H IHr => [//=| r1 r] r0 /= /andP [] H Hp /(_ n Hp).
     case: n => [//=|n] /= ->; by rewrite H.
   Qed.
 
   Lemma sorted_drop r n : sorted r -> sorted (drop n r).
-  Proof.
+  Proof using .
     elim: n r => [//= | n IHn ]; first by case.
     case => [//= | r0 r /=] H; apply IHn => {IHn}.
     by case: r H => [//=|r1 r] /andP [].
   Qed.
 
   Lemma sorted_catL u v : sorted (u ++ v) -> sorted u.
-  Proof. move/(sorted_take (size u)); by rewrite take_size_cat. Qed.
+  Proof using . move/(sorted_take (size u)); by rewrite take_size_cat. Qed.
 
   Lemma sorted_catR u v : sorted (u ++ v) -> sorted v.
-  Proof. move/(sorted_drop (size u)); by rewrite drop_size_cat. Qed.
+  Proof using . move/(sorted_drop (size u)); by rewrite drop_size_cat. Qed.
 
   Lemma sorted1P r :
     reflect
       (forall (i : nat), i.+1 < (size r) -> (nth Z r i <=R nth Z r i.+1))
       (sorted r).
-  Proof. case: r => [| r0 r] /=; first by apply/(iffP idP). by apply/pathP. Qed.
+  Proof using . case: r => [| r0 r] /=; first by apply/(iffP idP). by apply/pathP. Qed.
 
   Lemma sorted_rcons l r : sorted r -> (last l r <=R l) -> sorted (rcons r l).
-  Proof. case: r => [//=| r0 r] /=; by rewrite rcons_path => -> ->. Qed.
+  Proof using . case: r => [//=| r0 r] /=; by rewrite rcons_path => -> ->. Qed.
 
   Hypothesis Rtrans : transitive R.
 
@@ -81,7 +81,7 @@ Section Sorted.
     (forall (i j : nat), i < j < (size r) -> nth Z r i <=R nth Z r j)
     <->
     (forall (i : nat), i.+1 < (size r) -> nth Z r i <=R nth Z r i.+1).
-  Proof.
+  Proof using Rtrans.
     split => H.
     - move=> i Hi; by apply: H; rewrite Hi ltnSn.
     - move=> i j; move Hdiff : (j - i.+1) => diff.
@@ -104,7 +104,7 @@ Section Sorted.
     reflect
       (forall (i j : nat), i < j < (size r) -> (nth Z r i <=R nth Z r j))
       (sorted r).
-  Proof. apply/(iffP idP); by rewrite incr_equiv => /sorted1P. Qed.
+  Proof using Rtrans. apply/(iffP idP); by rewrite incr_equiv => /sorted1P. Qed.
 
   Hypothesis Rrefl : reflexive R.
 
@@ -112,7 +112,7 @@ Section Sorted.
     (forall (i j : nat), i <= j < (size r) -> nth Z r i <=R nth Z r j)
     <->
     (forall (i : nat), i.+1 < (size r) -> nth Z r i <=R nth Z r i.+1).
-  Proof.
+  Proof using Rrefl Rtrans.
     split => H.
     - move=> i Hi.
       have : i <= i.+1 < size r by rewrite Hi andbT.
@@ -133,16 +133,16 @@ Section Sorted.
     reflect
       (forall (i j : nat), i <= j < (size r) -> (nth Z r i <=R nth Z r j))
       (sorted r).
-  Proof. apply/(iffP idP); by rewrite non_decr_equiv => /sorted1P. Qed.
+  Proof using Rrefl Rtrans. apply/(iffP idP); by rewrite non_decr_equiv => /sorted1P. Qed.
 
   Lemma sorted_cons l r : sorted (cons l r) -> (l <=R head l r) /\ sorted r.
-  Proof. case: r => [//=| r0 r]; by move => /andP [] /= ->. Qed.
+  Proof using Rrefl. case: r => [//=| r0 r]; by move => /andP [] /= ->. Qed.
 
   Lemma sorted_last l r : sorted (rcons r l) -> (last l r <=R l).
-  Proof. case: r => [//=| r0 r] /=; by rewrite rcons_path => /andP []. Qed.
+  Proof using Rrefl. case: r => [//=| r0 r] /=; by rewrite rcons_path => /andP []. Qed.
 
   Lemma head_leq_last_sorted l r : sorted (l :: r) -> (l <=R last l r).
-  Proof.
+  Proof using Rrefl Rtrans.
     elim: r l => [//=| t0 r IHr] l /= /andP [] Hl /IHr {IHr}.
     exact: Rtrans Hl.
   Qed.
@@ -152,7 +152,7 @@ Section Sorted.
   Lemma sorted_lt_by_pos r p q :
     sorted r -> p < size r -> q < size r ->
      (nth Z r p != nth Z r q) && (nth Z r p <=R nth Z r q) -> p < q.
-  Proof.
+  Proof using Hanti Rrefl Rtrans.
     move=> /sortedP Hsort Hp Hq /andP [] Hneq Hpq.
     have H : q <= p -> (nth Z r q <=R nth Z r p).
       by move=> Hqp; apply Hsort; rewrite Hqp Hp.

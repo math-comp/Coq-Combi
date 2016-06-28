@@ -1,3 +1,5 @@
+# OPT=-load-vernac-source init.v
+
 include Makefile.coq
 
 TAGS: $(VFILES)

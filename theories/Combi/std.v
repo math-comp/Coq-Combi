@@ -47,7 +47,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 From mathcomp Require Import finset perm fingroup path.
 
-From Combi Require Import tools combclass ordtype permuted.
+Require Import tools combclass ordtype permuted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -193,16 +193,16 @@ Canonical stdwordn_countType := Eval hnf in CountType stdwordn stdwordn_countMix
 Canonical stdwordnn_subCountType := Eval hnf in [subCountType of stdwordn].
 
 Lemma stdwordnP (s : stdwordn) : is_std (val s).
-Proof. by case: s => s /= /andP []. Qed.
+Proof using . by case: s => s /= /andP []. Qed.
 
 Lemma size_sdtn (s : stdwordn) : size (val s) = n.
-Proof. by case: s => s /= /andP [] _ /eqP. Qed.
+Proof using . by case: s => s /= /andP [] _ /eqP. Qed.
 
 Definition enum_stdwordn := [seq wordperm p | p <- enum 'S_n].
 
 Lemma enum_stdwordnE : enum_stdwordn =i is_std_of_n.
 (* (is_std_of_n s) = (s \in enum_stdwordn). *)
-Proof.
+Proof using .
   move=> s; apply/idP/idP.
   + move/mapP => [] p _ -> /=.
     by rewrite unfold_in /= wordperm_std /= size_map size_enum_ord.
@@ -212,7 +212,7 @@ Proof.
 Qed.
 
 Lemma wordperm_inj : injective (@wordperm n).
-Proof.
+Proof using .
   move=> p q; rewrite /wordperm => Heq.
   rewrite -permP => i; have:= congr1 (fun s => nth 0 s i) Heq.
   have Hi : i < size (enum 'I_n) by rewrite size_enum_ord; apply: ltn_ord.
@@ -221,14 +221,14 @@ Proof.
 Qed.
 
 Lemma enum_stdwordn_uniq : uniq enum_stdwordn.
-Proof. rewrite/enum_stdwordn (map_inj_uniq wordperm_inj). exact: enum_uniq. Qed.
+Proof using . rewrite/enum_stdwordn (map_inj_uniq wordperm_inj). exact: enum_uniq. Qed.
 
 Canonical stdwordn_finMixin :=
   Eval hnf in sub_uniq_finMixin stdwordnn_subCountType enum_stdwordn_uniq enum_stdwordnE.
 Canonical stdwordn_finType := Eval hnf in FinType stdwordn stdwordn_finMixin.
 
 Lemma card_stdwordn : #|{:stdwordn}| = n`!.
-Proof. by rewrite card_sub_uniqE size_map -card_Sn cardE. Qed.
+Proof using . by rewrite card_sub_uniqE size_map -card_Sn cardE. Qed.
 
 End StdCombClass.
 
@@ -248,16 +248,16 @@ Fixpoint std_rec n s :=
 Definition std s := std_rec (size s) s.
 
 Lemma size_std_rec n s : size (std_rec n s) = n.
-Proof.
+Proof using .
   elim: n s => [//= | n IHn] s /=.
   by rewrite size_cat /= addnS -size_cat cat_take_drop IHn.
 Qed.
 
 Lemma size_std s : size (std s) = size s.
-Proof. exact: size_std_rec. Qed.
+Proof using . exact: size_std_rec. Qed.
 
 Lemma std_is_std s : is_std (std s).
-Proof.
+Proof using .
   rewrite /is_std /std size_std_rec perm_eq_sym.
   move Hn : (size s) => n; elim: n s Hn => [//= | n IHn] s Hn.
   apply: (@perm_eq_trans _ (n :: (iota 0 n))).
@@ -271,14 +271,14 @@ Proof.
 Qed.
 
 Lemma in_std_ltn_size s i : i \in std s = (i < size s).
-Proof. by rewrite (mem_std _ (std_is_std s)) size_std_rec. Qed.
+Proof using . by rewrite (mem_std _ (std_is_std s)) size_std_rec. Qed.
 
 Lemma allLtn_std_rec s : allLtn (std s) (size s).
-Proof. apply/allP=> i /=; by rewrite ltnXnatE in_std_ltn_size. Qed.
+Proof using . apply/allP=> i /=; by rewrite ltnXnatE in_std_ltn_size. Qed.
 
 Lemma rembig_ins_std s pos :
   rembig (take pos (std s) ++ size s :: drop pos (std s)) = std s.
-Proof.
+Proof using .
   apply: esym; apply/eqP/rembigP; first by case: (take _ _).
   have:= allLtn_std_rec s.
   rewrite -{1}[std s](cat_take_drop pos) allLtn_catE => /andP [].
@@ -287,7 +287,7 @@ Proof.
 Qed.
 
 Lemma std_rembig s : std (rembig s) = rembig (std s).
-Proof.
+Proof using .
   rewrite /std.
   elim: s => [//= | s0 s IHs] /=.
   case (boolP (allLtn s s0)) => [_ | Hmax].
@@ -299,7 +299,7 @@ Proof.
 Qed.
 
 Lemma std_posbig s : posbig (std s) = posbig s.
-Proof.
+Proof using .
   rewrite /std.
   case: s => [//= | s0 s] /=.
   case (boolP (allLtn s s0)) => [/= | Hmax] /=;
@@ -664,7 +664,7 @@ Variable Alph : ordType.
 Implicit Type u v : seq Alph.
 
 Theorem perm_eq_stdE u v : perm_eq u v -> std u = std v -> u = v.
-Proof.
+Proof using .
   move=> Hperm.
   move Hn : (size v) => n; elim: n u v Hn Hperm => [| n IHn] u v Hn Hperm /=.
     move: Hperm => /perm_eq_size; rewrite Hn => /eqP/nilP -> _.
@@ -672,9 +672,9 @@ Proof.
   move=> Hstd.
   have:= size_rembig v; rewrite Hn /= => Hszrem.
   have Hpermrem := perm_eq_rembig Hperm.
-  have:= congr1 (@rembig _) Hstd; rewrite -!std_rembig => Hstdrem.
+  have:= congr1 rembig Hstd; rewrite -!std_rembig => Hstdrem.
   move/(_ _ _ Hszrem Hpermrem Hstdrem) : IHn => Hrem {Hszrem Hpermrem Hstdrem}.
-  have:= congr1 (@posbig _) Hstd; rewrite !std_posbig => Hstdpos.
+  have:= congr1 posbig Hstd; rewrite !std_posbig => Hstdpos.
   have:= Hn; case Hv : v => [//= | v0 v'] /= _.
   have:= Hperm => /perm_eq_size; rewrite Hn.
   case Hu : u => [//= | u0 u'] /= _.
@@ -696,7 +696,7 @@ Implicit Type u v : seq Alph.
 Lemma nth_transp u v a b i :
   i != size u -> i != (size u).+1 ->
   nth Z (u ++ [:: a; b] ++ v) i =  nth Z (u ++ [:: b; a] ++ v) i.
-Proof.
+Proof using .
   move=> Hi Hi1; rewrite !nth_cat.
   case: (ltnP i (size u)) => //= Hui.
   have {Hui Hi} Hi: (size u) < i by rewrite ltn_neqAle eq_sym Hui Hi.
@@ -707,15 +707,15 @@ Qed.
 
 Lemma nth_sizeu u v a b :
   nth Z (u ++ [:: a; b] ++ v) (size u) = a.
-Proof. by rewrite nth_cat ltnn subnn. Qed.
+Proof using . by rewrite nth_cat ltnn subnn. Qed.
 
 Lemma nth_sizeu1 u v a b :
   nth Z (u ++ [:: a; b] ++ v) (size u).+1 = b.
-Proof. by rewrite nth_cat ltnNge leqnSn /= subSnn /=. Qed.
+Proof using . by rewrite nth_cat ltnNge leqnSn /= subSnn /=. Qed.
 
 Lemma nth_sizeu2 u v a b c :
   nth Z (u ++ [:: a; b; c] ++ v) (size u).+2 = c.
-Proof.
+Proof using .
   rewrite nth_cat ltnNge (leq_trans (leqnSn _) (leqnSn _)) /=.
   by rewrite -add1n -[(size u).+1]add1n addnA addn1 (addnK (size u) 2).
 Qed.
@@ -1009,9 +1009,9 @@ Section Test.
   Let v := [:: 0;4;3;3].
 
   Goal std u = [:: 4; 0; 1; 2; 5; 3].
-  Proof. compute; exact: erefl. Qed.
+  Proof using . compute; exact: erefl. Qed.
 
   Goal invstd (std u) = filter (gtn (size u)) (invstd (std (u ++ v))).
-  Proof. compute; exact: erefl. Qed.
+  Proof using . compute; exact: erefl. Qed.
 
 End Test.

@@ -38,8 +38,8 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset path bigop.
 
-From Combi Require Import tools partition Yamanouchi ordtype std tableau stdtab.
-From Combi Require Import Schensted congr plactic Greene_inv stdplact.
+Require Import tools partition Yamanouchi ordtype std tableau stdtab.
+Require Import Schensted congr plactic Greene_inv stdplact.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

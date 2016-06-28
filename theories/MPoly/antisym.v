@@ -50,7 +50,7 @@ From mathcomp Require Import finset fintype finfun tuple bigop ssralg ssrint.
 From mathcomp Require Import fingroup perm zmodp binomial.
 From SsrMultinomials Require Import ssrcomplements poset freeg mpoly.
 
-From Combi Require Import tools symgroup.
+Require Import tools symgroup.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -93,12 +93,12 @@ Variable R : ringType.
 Definition tensR := [rmorphism of @map_mpoly n int_Ring R intr].
 
 Lemma tensRX m : tensR 'X_[m] = 'X_[m].
-Proof.
+Proof using .
   rewrite -mpolyP => mm; rewrite mcoeff_map_mpoly /= !mcoeffX; by case: eqP.
 Qed.
 
 Lemma msym_tensR s p : msym s (tensR p) = tensR (msym s p).
-Proof.
+Proof using .
   rewrite (mpolyE p).
   rewrite [tensR _]raddf_sum [msym s _]raddf_sum.
   rewrite [msym s _]raddf_sum [tensR _]raddf_sum.
@@ -121,7 +121,7 @@ Variable R : ringType.
 Implicit Types p q r : {mpoly R[n]}.
 
 Lemma char_mpoly : [char R] =i [char {mpoly R[n]}].
-Proof.
+Proof using .
   move=> p; rewrite !unfold_in /= -mpolyC_nat.
   case: (prime.prime p) => //=.
   apply (sameP idP); apply (iffP idP) => [/eqP | /eqP -> //=].
@@ -143,7 +143,7 @@ Implicit Types p q r : {mpoly R[n]}.
 Lemma issym_tpermP p :
   reflect (forall i j, msym (tperm i j) p = p)
           (p \is symmetric).
-Proof.
+Proof using .
   apply (iffP idP).
   - move=> /forallP Hsym i j.
     by rewrite (eqP (Hsym (tperm _ _))).
@@ -158,12 +158,12 @@ Qed.
 Definition antisym : qualifier 0 {mpoly R[n]} :=
   [qualify p | [forall s, msym s p == (-1) ^+ s *: p]].
 
-Fact antisym_key : pred_key antisym. Proof. by []. Qed.
+Fact antisym_key : pred_key antisym. Proof using . by []. Qed.
 Canonical antisym_keyed := KeyedQualifier antisym_key.
 
 Lemma isantisymP p :
   reflect (forall s, msym s p = (-1) ^+ s *: p) (p \is antisym).
-Proof.
+Proof using .
   apply (iffP idP).
   - move=> /forallP Hanti s.
     by rewrite (eqP (Hanti s )).
@@ -176,7 +176,7 @@ Definition simplexp := (expr0, expr1, scale1r, scaleN1r, mulrN, mulNr, mulrNN, o
 Lemma isantisym_tpermP p :
   reflect (forall i j, msym (tperm i j) p = if (i != j) then - p else p)
           (p \is antisym).
-Proof.
+Proof using .
   apply (iffP idP).
   - move=> /forallP Hanti i j.
     rewrite (eqP (Hanti (tperm _ _))) odd_tperm.
@@ -192,7 +192,7 @@ Proof.
 Qed.
 
 Lemma antisym_char2 : (2 \in [char R]) -> symmetric =i antisym.
-Proof.
+Proof using .
   move=> Hchar p /=.
   apply (sameP idP); apply (iffP idP).
   - move=> /isantisymP H; apply/issymP => s.
@@ -202,7 +202,7 @@ Proof.
 Qed.
 
 Lemma perm_smalln : n <= 1 -> forall s : 'S_n, s = 1%g.
-Proof.
+Proof using .
   move=> Hn s; rewrite -permP => i.
   rewrite perm1.
   case: n Hn s i => [| [| n']] //= Hn s; first by case.
@@ -212,21 +212,21 @@ Proof.
 Qed.
 
 Lemma sym_smalln : n <= 1 -> (@symmetric n R) =i predT.
-Proof.
+Proof using .
   move=> Hn p /=; rewrite [RHS]unfold_in /=.
   apply/issymP => s.
   by rewrite (perm_smalln Hn s) msym1m.
 Qed.
 
 Lemma antisym_smalln : n <= 1 -> antisym =i predT.
-Proof.
+Proof using .
   move=> Hn p /=; rewrite [RHS]unfold_in /=.
   apply/isantisymP => s.
   by rewrite (perm_smalln Hn s) odd_perm1 msym1m expr0 scale1r.
 Qed.
 
 Lemma antisym_zmod : zmod_closed antisym.
-Proof.
+Proof using .
 split=> [|p q /isantisymP sp /isantisymP sq]; apply/isantisymP=> s.
   by rewrite msym0 scaler0.
 by rewrite msymB sp sq scalerBr.
@@ -238,7 +238,7 @@ Canonical antisym_zmodPred := ZmodPred antisym_zmod.
 
 
 Lemma antisym_submod_closed : submod_closed antisym.
-Proof.
+Proof using .
 split=> [|c p q /isantisymP sp /isantisymP sq]; apply/isantisymP=> s.
   by rewrite msym0 scaler0.
 rewrite msymD msymZ sp sq.
@@ -249,7 +249,7 @@ Canonical antisym_submodPred := SubmodPred antisym_submod_closed.
 
 Lemma sym_anti p q :
   p \is antisym -> q \is symmetric -> p * q \is antisym.
-Proof.
+Proof using .
   move=> /isantisymP Hsym /issymP Hanti.
   apply/isantisymP => s.
   rewrite msymM Hsym Hanti.
@@ -258,7 +258,7 @@ Qed.
 
 Lemma anti_anti p q :
   p \is antisym -> q \is antisym -> p * q \is symmetric.
-Proof.
+Proof using .
   move=> /isantisymP Hp /isantisymP Hq.
   apply/issymP => s.
   rewrite msymM Hp Hq.
@@ -270,7 +270,7 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
 
 Lemma isantisym_msupp p (s : 'S_n) (m : 'X_{1..n}) : p \is antisym ->
   (m#s \in msupp p) = (m \in msupp p).
-Proof.
+Proof using .
   rewrite !mcoeff_msupp -mcoeff_sym => /isantisymP ->.
   case: (odd_perm s); last by rewrite expr0 scale1r.
   rewrite expr1 scaleN1r !mcoeff_eq0.
@@ -280,7 +280,7 @@ Qed.
 
 Lemma mlead_antisym_sorted (p : {mpoly R[n]}) : p \is antisym ->
   forall (i j : 'I_n), i <= j -> (mlead p) j <= (mlead p) i.
-Proof.
+Proof using .
 move=> sym_p i j le_ij; have [->|nz_p] := eqVneq p 0.
   by rewrite mlead0 !mnm0E.
 set m := mlead p; case: leqP=> // h.
@@ -341,7 +341,7 @@ Hypothesis Hchar : ~~ (2 \in [char R]).
 
 Lemma sym_antisym_char2 :
   n >= 2 -> forall p : {mpoly R[n]}, p \is symmetric -> p \is antisym -> p = 0.
-Proof.
+Proof using Hchar.
   move: Hchar; rewrite (char_mpoly n R) => Hchp Hn p /= /issymP Hsym /isantisymP Hanti.
   have H0 : 0 < n by apply: (ltn_trans _ Hn).
   pose s := (tperm (Ordinal H0) (Ordinal Hn)).
@@ -362,7 +362,7 @@ Hypothesis Hpn0 : p != 0.
 Hypothesis Hpanti : p \is antisym.
 
 Lemma sym_antiE q :(q \is symmetric) = (p * q \is antisym).
-Proof.
+Proof using Hpanti Hpn0.
   case: (leqP n 1) => Hn.
     by rewrite !(sym_smalln Hn) !(antisym_smalln Hn) !unfold_in /=.
   apply (sameP idP); apply (iffP idP); last exact: (sym_anti Hpanti).
@@ -378,7 +378,7 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
   (at level 40, left associativity, format "m # s").
 
 Lemma isantisym_msupp_uniq (m : 'X_{1..n}) : m \in msupp p -> uniq m.
-Proof.
+Proof using Hchar Hpanti.
   rewrite mcoeff_msupp => Hsupp.
   case: (boolP (uniq m)) => // /(notuniq_witnessP 0%N).
   move=> [] i [] j []; rewrite size_tuple => /andP [] Hi Hj Hnth.
@@ -399,7 +399,7 @@ Qed.
 Hypothesis Hphomog : p \is 'C(n , 2).-homog.
 
 Lemma isantisym_mlead_iota : mlead p = rev (iota 0 n) :> seq nat.
-Proof.
+Proof using Hchar Hpanti Hphomog Hpn0.
   move: Hphomog; rewrite binomial_sumn_iota => /dhomogP Hhomog.
   have Huniq := isantisym_msupp_uniq (mlead_supp Hpn0).
   rewrite -(revK (mlead p)) -{4}(size_tuple (mlead p)) -size_rev; congr rev.
@@ -425,7 +425,7 @@ Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
 
 Lemma rho_iota : rho = rev (iota 0 n) :> seq nat.
-Proof.
+Proof using .
   apply (eq_from_nth (x0 := 0%N)).
     by rewrite size_rev size_iota size_map size_enum_ord.
   move=> i; rewrite size_map size_enum_ord => Hi.
@@ -436,7 +436,7 @@ Proof.
 Qed.
 
 Lemma alt_homog : 'a_rho \is 'C(n, 2).-homog.
-Proof.
+Proof using .
   apply rpred_sum => s _; rewrite rpredZsign msymX dhomogX /=.
   have -> : mdeg (rho#(s^-1)%g) = mdeg rho.
     rewrite /mdeg; apply eq_big_perm; apply/tuple_perm_eqP; by exists (s^-1)%g.
@@ -445,7 +445,7 @@ Proof.
 Qed.
 
 Lemma alt_anti m : 'a_m \is antisym.
-Proof.
+Proof using .
   apply/isantisymP => S.
   rewrite /alternpol.
   rewrite (big_morph (msym S) (@msymD _ _ _) (@msym0 _ _ _)).
@@ -456,7 +456,7 @@ Proof.
 Qed.
 
 Lemma isantisym_mlead_rho : mlead p = rho.
-Proof.
+Proof using Hchar Hpanti Hphomog Hpn0.
   apply val_inj => /=; apply val_inj => /=; by rewrite isantisym_mlead_iota rho_iota.
 Qed.
 
@@ -469,7 +469,7 @@ Local Notation "''a_' k" := (alternpol 'X_[k])
 
 Lemma isantisym_alt (p : {mpoly R[n]}) :
   p != 0 -> p \is antisym -> p \is ('C(n, 2)).-homog -> p = p@_rho *: 'a_rho.
-Proof.
+Proof using Hchar.
   move=> Hpn0 Hanti Hhom.
   apply/eqP; rewrite -subr_eq0; apply contraT => Habs.
   have /(isantisym_mlead_rho Habs) H : p - p@_rho *: 'a_rho \is antisym.
@@ -512,7 +512,7 @@ Definition eltrp p := (eltr n i p.1, eltr n i p.2).
 Definition predi p := (p.1 < p.2) && (p != (inord i, inord i.+1)).
 
 Lemma predi_eltrp p : i < n -> predi p -> predi (eltrp p).
-Proof.
+Proof using .
   move=> Hi.
   have Hii1 : val (@inord n i.+1) = (@inord n i).+1.
     rewrite /= inordK; last by apply (leq_trans Hi).
@@ -555,7 +555,7 @@ Proof.
 Qed.
 
 Lemma predi_eltrpE p : i < n -> predi p = predi (eltr n i p.1, eltr n i p.2).
-Proof.
+Proof using .
   move=> Hi; apply/(sameP idP); apply(iffP idP); last by apply predi_eltrp.
   set p1 := ( _, _).
   suff -> : p = ((eltr n i) p1.1, (eltr n i) p1.2) by apply predi_eltrp.
@@ -614,7 +614,7 @@ Local Notation "'X_ i" := (@mpolyX n R U_(i)).
 
 
 Lemma vdmprod_homog : D \is homog [measure of mdeg].
-Proof.
+Proof using .
   rewrite /vdmprod -big_filter.
   set F := BIG_F; rewrite (eq_bigl (fun x => xpredT (F x))) //.
   rewrite -(big_map F xpredT id) /F {F}.
@@ -623,7 +623,7 @@ Proof.
 Qed.
 
 Lemma polyX_inj (i j : 'I_n) : 'X_i = 'X_j -> i = j.
-Proof.
+Proof using .
   move/(congr1 (mcoeff U_(j))); rewrite !mcoeffX eq_refl /=.
   case: (altP (U_(i)%MM =P U_(j)%MM)) => [H _ | _ /esym /= /eqP] /=; first last.
     by have:= oner_neq0 R => /negbTE ->.
@@ -632,20 +632,20 @@ Proof.
 Qed.
 
 Lemma diffX_neq0 (i j : 'I_n) : i != j -> 'X_i - 'X_j != 0.
-Proof. by apply contra; rewrite subr_eq0 => /eqP /polyX_inj ->. Qed.
+Proof using . by apply contra; rewrite subr_eq0 => /eqP /polyX_inj ->. Qed.
 
 Lemma msuppX1 i : msupp 'X_i = [:: U_(i)%MM].
-Proof. rewrite msuppE /= unlock /= domU //; exact: oner_neq0. Qed.
+Proof using . rewrite msuppE /= unlock /= domU //; exact: oner_neq0. Qed.
 
 Lemma vdmprod_neq0 : D != 0.
-Proof.
+Proof using .
   rewrite /vdmprod -big_filter prodf_seq_neq0.
   apply/allP => [[i j]]; rewrite mem_filter /= => /andP [].
   rewrite ltn_neqAle => /andP [] Hij _ _; exact: diffX_neq0.
 Qed.
 
 Lemma vdmprod_dhomog : D \is 'C(n, 2).-homog.
-Proof.
+Proof using .
   have:= vdmprod_homog; rewrite homog_msize.
   suff -> : (msize D).-1 = 'C(n, 2) by [].
   rewrite /vdmprod -big_filter; set s := filter _ _.
@@ -688,7 +688,7 @@ Let abound b  : {mpoly R[n]} :=
 Let rbound b := [multinom (b - i)%N | i < n].
 
 Lemma mesymlm_rbound b : (mesymlm n b <= rbound b)%MM.
-Proof.
+Proof using .
   apply/mnm_lepP => i.
   rewrite !mnmE inE.
   case (ssrnat.ltnP i b) => [/= Hb| //].
@@ -699,7 +699,7 @@ Hypothesis Hchar : ~~ (2 \in [char R]).
 
 Lemma coeffXdiff (b : 'I_n) (k : 'X_{1..n}) (i : 'I_n) :
   (k <= rbound b)%MM -> ('X_i - 'X_b)@_k = (k == U_(i)%MM)%:R.
-Proof.
+Proof using .
   rewrite mcoeffB !mcoeffX => Hk.
   suff -> : (U_(b)%MM == k) = false by rewrite subr0 eq_sym.
   apply/(introF idP) => /eqP; rewrite mnmP => /(_ b).
@@ -711,7 +711,7 @@ Qed.
 Lemma coeff_prodXdiff (b : 'I_n) (k : 'X_{1..n}) :
   (k <= rbound b)%MM ->
   (\prod_(i < n | i < b) ('X_i - 'X_b))@_k = (k == mesymlm n b)%:R.
-Proof.
+Proof using .
   case: b => b /=.
   elim: {1 5 7}b (leqnn b) k => [| c IHc] Hc k Hb Hk.
     rewrite big1 //.
@@ -763,7 +763,7 @@ Proof.
 Qed.
 
 Lemma mcoeff_arbound b : b < n -> (abound b)@_(rbound b) = 1.
-Proof.
+Proof using .
   elim: b => [Hb | b IHb Hb1].
     rewrite /abound {Hb} big1; first last.
       by move=> [i j] /= /andP [] /leq_trans H/H{H}.
@@ -820,7 +820,7 @@ Proof.
 Qed.
 
 Lemma vdmprod_coeff_rho : D@_rho = 1.
-Proof.
+Proof using .
   rewrite /vdmprod.
   case: (altP (n =P 0%N)) => [Hn |].
   - rewrite big1; last by move=> [[i Hi]]; exfalso; rewrite Hn in Hi.
@@ -835,7 +835,7 @@ Proof.
 Qed.
 
 Lemma vdmprod_alt_idomain : D = 'a_rho.
-Proof.
+Proof using Hchar.
   rewrite (isantisym_alt Hchar
             vdmprod_neq0 (vdmprod_anti _ _) vdmprod_dhomog).
   by rewrite vdmprod_coeff_rho scale1r.
@@ -874,10 +874,10 @@ Definition Vandet := \det Vandmx.
 Local Open Scope ring_scope.
 
 Lemma Vandmx_antimE : Vandmx = antim [::].
-Proof. rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE nth_default. Qed.
+Proof using . rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE nth_default. Qed.
 
 Lemma alt_detE s : 'a_(s + rho) = \det (antim s).
-Proof.
+Proof using .
   rewrite /alternpol (reindex_inj (inv_inj invgK)) /=; apply eq_bigr => p _.
   rewrite odd_permV scaler_sign -mulr_sign; congr (_ * _).
   rewrite (eq_bigr (fun j => 'X_j ^+ (nth 0%N s (p j) + (n - 1) - (p j)))); first last.
@@ -888,7 +888,7 @@ Proof.
 Qed.
 
 Corollary Vandet_vdmprodE : Vandet = vdmprod.
-Proof.
+Proof using .
   rewrite /Vandet Vandmx_antimE.
   suff -> : antim [::] = antim (0%MM : 'X_{1..n}).
     by rewrite -alt_detE add0m vdmprod_alt.

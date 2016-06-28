@@ -21,8 +21,8 @@ From mathcomp Require Import ssrfun ssrbool eqtype choice ssrnat seq
         ssrint div rat fintype bigop path ssralg ssrnum.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
-From Combi Require Import ordtype tools combclass partition tableau Schensted std stdtab.
-From Combi Require Import hook.
+Require Import ordtype tools combclass partition tableau Schensted std stdtab.
+Require Import hook.
 
 
 Section Identity.
@@ -44,14 +44,14 @@ Definition stpsh_of_seq p : is_stdtab_pair_of_shape sh p -> stpsh.
 Proof. move=> /andP [] /(@StdtabSh sh) p1 /(@StdtabSh sh) p2; exact: (p1, p2). Defined.
 
 Lemma stpshP (p : stpsh) : is_stdtab_pair_of_shape sh (seq_of_stpsh p).
-Proof.
+Proof using .
   rewrite /is_stdtab_pair_of_shape.
   case: p => [p1 p2] /=.
   by rewrite !stdtabshP !stdtabsh_shape !eq_refl.
 Qed.
 
 Lemma seq_of_stpshK p : (stpsh_of_seq (stpshP p)) = p.
-Proof.
+Proof using .
   apply/eqP; rewrite /stpsh_of_seq /eq_op /=.
   apply/andP; split; case: p => [[p1 H1] [p2 H2]] /=; apply /eqP => /=.
   - case: (elimTF _ _) => /= H _; exact: val_inj.
@@ -60,7 +60,7 @@ Qed.
 
 Lemma stpsh_of_seqK p (Hp : is_stdtab_pair_of_shape sh p) :
   seq_of_stpsh (@stpsh_of_seq p Hp) = p.
-Proof.
+Proof using .
   rewrite /stpsh_of_seq /=.
   case: (elimTF _ _) => /= _ _.
   by case: p {Hp}.
@@ -70,14 +70,14 @@ Lemma stpsh_val_rect :
   forall F : stpsh -> Type,
     (forall p Px, F (@stpsh_of_seq p Px)) ->
     forall u : stpsh, F u.
-Proof. move=> F H p; rewrite -(seq_of_stpshK p); exact: H. Qed.
+Proof using . move=> F H p; rewrite -(seq_of_stpshK p); exact: H. Qed.
 
 Canonical stpsh_subType := SubType _ seq_of_stpsh stpsh_of_seq stpsh_val_rect stpsh_of_seqK.
 Definition stpsh_eqMixin := Eval hnf in [eqMixin of stpsh by <:].
 Definition stpsh_subCountType := Eval hnf in [subCountType of stpsh_subType].
 
 Lemma enum_stpshP : Finite.axiom (T:=stpsh_subCountType) (enum stpsh).
-Proof.
+Proof using .
   rewrite /Finite.axiom => [[p1 p2]].
   rewrite enumT /= -(@enumP _ (p1, p2)).
   by apply eq_count => [[x1 x2]] /=.
@@ -88,7 +88,7 @@ Definition stpsh_finType := Eval hnf in FinType stpsh_subCountType stpsh_finMixi
 Definition stpsh_subFinType := Eval hnf in [subFinType of stpsh_finType].
 
 Lemma card_stpsh : #|stpsh_finType| = #|stdtabsh_finType sh|^2.
-Proof.
+Proof using .
   rewrite -mulnn -card_prod.
   by rewrite !cardE enumT unlock /=.
 Qed.
@@ -99,7 +99,7 @@ End Shape.
 Lemma stpn_PredEq (ev : intpartn_subFinType n) :
   predI (is_stdtab_pair_of_n n) (pred1 (val ev) \o shape \o (fun x => x.1)) =1
   is_stdtab_pair_of_shape ev.
-Proof.
+Proof using .
   move=> [p1 p2] /=; rewrite /is_stdtab_pair_of_n /is_stdtab_pair_of_shape /=.
   case: (altP (shape p1 =P ev)) => [Hsh1|]; last by rewrite !andbF /=.
   rewrite [shape p1 == _]eq_sym Hsh1 !andbT.
@@ -109,7 +109,7 @@ Qed.
 
 Lemma stpn_partition_shape tabp :
   is_stdtab_pair_of_n n tabp -> is_part_of_n n ((shape \o (fun x => x.1)) tabp).
-Proof.
+Proof using .
   rewrite /is_stdtab_pair_of_n; move: tabp => [p1 p2] /= /andP [].
   rewrite /size_tab => /andP [] /andP [] H _ -> _ /=.
   exact: (is_part_sht H).
@@ -136,7 +136,7 @@ Canonical stpn_finType := Eval hnf in [finType of stpn for type].
 Canonical stpn_subFinType := Eval hnf in [subFinType of stpn].
 
 Lemma card_stpn : #|stpn_finType| = \sum_(p : intpartn n) (n`! %/ (F_deno p))^2.
-Proof.
+Proof using .
   rewrite card_unionE.
   rewrite (eq_bigr (fun sh : intpartn_subFinType n => #|stdtabsh_finType sh|^2)); first last.
   move=> i _; by rewrite card_stpsh.
@@ -145,7 +145,7 @@ Proof.
 Qed.
 
 Lemma RSstdmapP (s : stdwordn n) : is_stdtab_pair_of_n n (RStabmap s).
-Proof.
+Proof using .
   have:= RStabmap_spec s; have:= RStabmapE s.
   rewrite /is_stdtab_pair_of_n /is_RStabpair /=.
   move H : (RStabmap s) => [p q] /= HRS /and3P [] Hp Hq /eqP Hsh.
@@ -156,14 +156,14 @@ Qed.
 Definition RSstd (s : stdwordn n) : stpn := STPN (RSstdmapP s).
 
 Lemma rspair_stpnP (p : stpn) : is_RStabpair (val p).
-Proof.
+Proof using .
   rewrite /is_RStabpair; case: p => [[p q]] /=.
   by rewrite /is_stdtab_pair_of_n /= => /and3P [] /andP [] /andP [] -> _ _ /andP [] -> _ ->.
 Qed.
 Definition rspair_stpn (p : stpn) : (rstabpair [inhOrdType of nat]) :=
   RSTabPair (rspair_stpnP p).
 Lemma RSstdmap_invP (p : stpn) : is_std_of_n n (RStabinv (rspair_stpn p)).
-Proof.
+Proof using .
   have /= := RStabinvK (rspair_stpn p).
   rewrite /RStab /= => /(congr1 (@val _ _ _)) => /= Hp.
   rewrite /is_std_of_n /=; apply/andP; split.
@@ -175,22 +175,22 @@ Qed.
 Definition RSstdinv (p : stpn) : stdwordn n := StdWordN (RSstdmap_invP p).
 
 Lemma RSstdinvK : cancel RSstdinv RSstd.
-Proof.
+Proof using .
   move=> pq; have:= RStabinvK (rspair_stpn pq).
   rewrite /RStab /= => /(congr1 (@val _ _ _)) => /= Hpq.
   move: pq Hpq => [[p q]] Hpq; rewrite /RSstd /RSstdinv /= => H.
   exact: val_inj.
 Qed.
 Lemma RSstdK : cancel RSstd RSstdinv.
-Proof.
+Proof using .
   move=> s /=; apply val_inj; rewrite /= -(RStabK s).
   congr (RStabinv _); exact: val_inj.
 Qed.
 Lemma bijRSstd : bijective RSstd.
-Proof. split with (g := RSstdinv). exact: RSstdK. exact: RSstdinvK. Qed.
+Proof using . split with (g := RSstdinv). exact: RSstdK. exact: RSstdinvK. Qed.
 
 Theorem Ident : n`! = \sum_(p : intpartn n) (n`! %/ (F_deno p))^2.
-Proof. rewrite -{1}card_stdwordn -card_stpn; exact: bij_card bijRSstd. Qed.
+Proof using . rewrite -{1}card_stdwordn -card_stpn; exact: bij_card bijRSstd. Qed.
 
 Open Scope ring_scope.
 
@@ -198,7 +198,7 @@ Import GRing.Theory.
 Import Num.Theory.
 
 Theorem IdentBis : 1 / (n`!)%:Q = \sum_(p : intpartn n) 1 / (F_deno p)%:Q ^+ 2.
-Proof.
+Proof using .
   rewrite -[RHS]mulr1.
   have Hfn0 : n`!%:Q != 0 by rewrite intr_eq0 eqz_nat -lt0n fact_gt0.
   rewrite -{5}(@divff _ ((n`!%:Q) ^+ 2)); last by rewrite sqrf_eq0.
