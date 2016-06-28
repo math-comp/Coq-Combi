@@ -895,7 +895,7 @@ Proof.
   - by rewrite diff_shape_pad0.
 Qed.
 
-Theorem is_skew_tableau_reshape_std inner outer T  (u : seq T) :
+Theorem is_skew_tableau_reshape_std inner outer T (u : seq T) :
   size inner <= size outer ->
   size u = sumn (diff_shape inner outer) ->
   is_skew_tableau inner (skew_reshape inner outer u) =
@@ -906,6 +906,24 @@ Proof.
   - exact: eq_inv_std.
   - apply eq_inv_sym; exact: eq_inv_std.
   - by rewrite size_std.
+Qed.
+
+Theorem is_tableau_reshape_std sh T (u : seq T) :
+  size u = sumn sh ->
+  is_tableau (rev (reshape (rev sh) u)) =
+  is_tableau (rev (reshape (rev sh) (std u))).
+Proof.
+  move=> Hzs.
+  rewrite -!is_skew_tableau0 -[sh]/(diff_shape [::] sh) -!/(skew_reshape _ _ _).
+  by apply is_skew_tableau_reshape_std.
+Qed.
+
+
+Theorem is_tableau_std T (t : seq (seq T)) :
+  is_tableau t = is_tableau (rev (reshape (rev (shape t)) (std (to_word t)))).
+Proof.
+  rewrite -{1}(to_wordK t); apply is_tableau_reshape_std.
+  by rewrite size_to_word.
 Qed.
 
 End EqInvSkewTab.

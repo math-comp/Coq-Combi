@@ -1009,9 +1009,9 @@ Section Test.
   Let v := [:: 0;4;3;3].
 
   Goal std u = [:: 4; 0; 1; 2; 5; 3].
-  Proof. compute; exact: erefl. Qed.
+  Proof using . compute; exact: erefl. Qed.
 
   Goal invstd (std u) = filter (gtn (size u)) (invstd (std (u ++ v))).
-  Proof. compute; exact: erefl. Qed.
+  Proof using . compute; exact: erefl. Qed.
 
 End Test.
