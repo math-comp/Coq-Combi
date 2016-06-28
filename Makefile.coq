@@ -114,6 +114,7 @@ VFILES:=theories/Combi/vectNK.v\
   theories/LRrule/freeSchur.v\
   theories/LRrule/implem.v\
   theories/LRrule/plactic.v\
+  theories/LRrule/RSK.v\
   theories/LRrule/shuffle.v\
   theories/LRrule/stdplact.v\
   theories/LRrule/therule.v\
