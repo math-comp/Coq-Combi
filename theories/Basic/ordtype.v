@@ -1527,34 +1527,32 @@ Section ProdLexPOrder.
 Variable T R : pordType.
 
 Definition prodlex : rel (T * R) :=
-  fun p1 => fun p2 =>
+  fun p1 p2 =>
       let: (i, j) := p1 in
           let: (k, l) := p2 in
               (i < k) || ((i == k) && (j <= l)).
 
 Fact prodlex_porder : PartOrder.axiom prodlex.
 Proof using .
-  rewrite /prodlex; split.
-  - by case=> [i j] /=; rewrite leqXnn eq_refl /= orbT.
-  - case => a b; case => c d => /= /andP [].
-    move => /orP; case => /andP [H1 H2];
-    move => /orP; case => /andP [H3 H4].
-    * by exfalso; move: H1; rewrite eqn_leqX H2 H4.
-    * by exfalso; move: H1; rewrite (eqP H3) eq_refl.
-    * by exfalso; move: H3; rewrite (eqP H1) eq_refl.
-    * by rewrite (eqP H1); congr (_, _); apply anti_leqX; rewrite H2 H4.
-  - case => a b; case => c d; case => e f /=.
-    move => /orP [] /andP [H1 H2]; move => /orP [] /andP [H3 H4]; apply /orP.
-    * left.
-      rewrite ltnX_neqAleqX (leqX_trans H2 H4) andbT.
-      move: H3; apply contra => /eqP H; subst c.
-      by rewrite eqn_leqX H4 H2.
-    * left; move: H3 => /eqP H; subst a.
-      by rewrite ltnX_neqAleqX H1 H2.
-    * left; move: H1 => /eqP H; subst c.
-      by rewrite ltnX_neqAleqX H3 H4.
-    * right; move: H1 => /eqP ->.
-      by rewrite H3 /= (leqX_trans H2 H4).
+rewrite /prodlex; split.
+- by case=> [i j] /=; rewrite leqXnn eq_refl /= orbT.
+- case=> [a b] [c d] /= /andP [] /orP [] /andP [H1 H2] /orP [] /andP [H3 H4].
+  + by exfalso; move: H1; rewrite eqn_leqX H2 H4.
+  + by exfalso; move: H1; rewrite (eqP H3) eq_refl.
+  + by exfalso; move: H3; rewrite (eqP H1) eq_refl.
+  + by rewrite (eqP H1); congr (_, _); apply anti_leqX; rewrite H2 H4.
+- case=> [a b] [c d] [e f] /=.
+  move=> /orP [] /andP [H1 H2] /orP [] /andP [H3 H4]; apply /orP.
+  + left.
+    rewrite ltnX_neqAleqX (leqX_trans H2 H4) andbT.
+    move: H3; apply contra => /eqP H; subst c.
+    by rewrite eqn_leqX H4 H2.
+  + left; move: H3 => /eqP H; subst a.
+    by rewrite ltnX_neqAleqX H1 H2.
+  + left; move: H1 => /eqP H; subst c.
+    by rewrite ltnX_neqAleqX H3 H4.
+  + right; move: H1 => /eqP ->.
+    by rewrite H3 /= (leqX_trans H2 H4).
 Qed.
 
 Definition prodlex_pordMixin := PartOrder.Mixin prodlex_porder.
@@ -1583,56 +1581,51 @@ End ProdLexOrder.
 
 
 
-Section LexOrder.
+Section ListLexOrder.
 
 Variable T : ordType.
 
 Implicit Type s : seq T.
 
-Fixpoint lex s1 s2 :=
+Fixpoint listlex s1 s2 :=
   if s1 is x1 :: s1' then
     if s2 is x2 :: s2' then
-      (x1 < x2) || ((x1 == x2) && lex s1' s2')
+      (x1 < x2) || ((x1 == x2) && listlex s1' s2')
     else
       false
   else
     true.
 
-Lemma lex_le_head x sx y sy :
-  lex (x :: sx) (y :: sy) -> x <= y.
+Lemma listlex_le_head x sx y sy :
+  listlex (x :: sx) (y :: sy) -> x <= y.
 Proof using . by case/orP => [/ltnXW|/andP [/eqP-> _]]. Qed.
 
-Lemma lex_refl : reflexive lex.
-Proof using . by elim => [|x s ih] //=; rewrite eqxx ih orbT. Qed.
-
-Lemma lex_antisym : antisymmetric lex.
+Fact listlex_porder : PartOrder.axiom listlex.
 Proof using .
-elim=> [|x sx ih] [|y sy] //= /andP []; case/orP=> [h|].
-  rewrite [y<x]ltnX_neqAleqX andbC {2}eq_sym (ltnX_eqF h).
-  by move: h; rewrite ltnXNgeqX => /negbTE ->.
-case/andP => /eqP->; rewrite eqxx ltnXnn /= => h1 h2.
-by rewrite (ih sy) // h1 h2.
+split.
+- by elim => [|x s ih] //=; rewrite eqxx ih orbT.
+- elim=> [|x sx ih] [|y sy] //= /andP []; case/orP=> [h|].
+    rewrite [y<x]ltnX_neqAleqX andbC {2}eq_sym (ltnX_eqF h).
+    by move: h; rewrite ltnXNgeqX => /negbTE ->.
+  case/andP => /eqP->; rewrite eqxx ltnXnn /= => h1 h2.
+  by rewrite (ih sy) // h1 h2.
+- elim=> [|y sy ih] [|x sx] [|z sz] // h1 h2.
+  have le := leqX_trans (listlex_le_head h1) (listlex_le_head h2).
+  have := h2 => /= /orP []; have := h1 => /= /orP [].
+  + by move=> lt1 lt2; rewrite (ltnX_trans lt1 lt2).
+  + by case/andP=> /eqP-> _ ->.
+  + by move=> lt /andP [/eqP<- _]; rewrite lt.
+  + move=> /andP [_ l1] /andP [_ l2]; rewrite ih // andbT.
+    by rewrite orbC -leqX_eqVltnX.
 Qed.
 
-Lemma lex_trans : transitive lex.
-Proof using .
-elim=> [|y sy ih] [|x sx] [|z sz] // h1 h2.
-have le := leqX_trans (lex_le_head h1) (lex_le_head h2).
-have := h2 => /= /orP []; have := h1 => /= /orP [].
-  by move=> lt1 lt2; rewrite (ltnX_trans lt1 lt2).
-  by case/andP=> /eqP-> _ ->.
-  by move=> lt /andP [/eqP<- _]; rewrite lt.
-move=> /andP [_ l1] /andP [_ l2]; rewrite ih // andbT.
-by rewrite orbC -leqX_eqVltnX.
-Qed.
+Definition listlex_pordMixin := PartOrder.Mixin listlex_porder.
+Canonical listlex_pordType := Eval hnf in POrdType (seq T) listlex_pordMixin.
 
-Fact lex_porder : PartOrder.axiom lex.
-Proof using . split. exact: lex_refl. exact lex_antisym. exact lex_trans. Qed.
+Lemma listlexE : @leqX_op listlex_pordType = listlex.
+Proof. by rewrite /leqX_op. Qed.
 
-Definition lex_pordMixin := PartOrder.Mixin lex_porder.
-Canonical lex_pordType := Eval hnf in POrdType (seq T) lex_pordMixin.
-
-Lemma lex_total : total lex.
+Lemma listlex_total : total listlex.
 Proof using .
 elim=> [|x sx ih] [|y sy] //=; case: (boolP (x < y))=> //=.
 rewrite -leqXNgtnX // leqX_eqVltnX; case/orP=> [/eqP->|].
@@ -1640,13 +1633,13 @@ rewrite -leqXNgtnX // leqX_eqVltnX; case/orP=> [/eqP->|].
 by move=> lt; rewrite [x==y]eq_sym (ltnX_eqF lt) /= orbF.
 Qed.
 
-Fact lex_order : Order.axiom lex_pordType.
-Proof using . exact lex_total. Qed.
+Fact listlex_order : Order.axiom listlex_pordType.
+Proof using . exact listlex_total. Qed.
 
-Definition lex_ordMixin := Order.Mixin lex_order.
-Canonical lex_ordType := Eval hnf in OrdType (seq T) lex_ordMixin.
+Definition listlex_ordMixin := Order.Mixin listlex_order.
+Canonical listlex_ordType := Eval hnf in OrdType (seq T) listlex_ordMixin.
 
-End LexOrder.
+End ListLexOrder.
 
 
 Section Tests.
@@ -1695,7 +1688,7 @@ Goal ((5 : dual_pordType _) <= (3 : dual_pordType _)) = true.
   exact: erefl. Qed.
 
 
-(* Commented out because lex order is not canonical
+(* Commented out because prodlex order is not canonical
 ***************************************************
 Goal (ord0 (n' := 2), ord0 (n' := 3)) <= (ord0 (n' := 2), ord0 (n' := 3)) = true.
   exact: erefl. Qed.
