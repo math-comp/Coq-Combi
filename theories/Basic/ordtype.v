@@ -1533,7 +1533,7 @@ Definition prodlex : rel (T * R) :=
               (i < k) || ((i == k) && (j <= l)).
 
 Fact prodlex_porder : PartOrder.axiom prodlex.
-Proof.
+Proof using .
   rewrite /prodlex; split.
   - by case=> [i j] /=; rewrite leqXnn eq_refl /= orbT.
   - case => a b; case => c d => /= /andP [].

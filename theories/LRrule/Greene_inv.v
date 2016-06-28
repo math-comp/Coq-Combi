@@ -332,7 +332,7 @@ Proof using .
   by rewrite !(mem_imset_inj _ _ swap_inj).
 Qed.
 Lemma swapSet_inj : injective swapSet.
-Proof. apply: imset_inj; exact (can_inj swap_invol). Qed.
+Proof using . apply: imset_inj; exact (can_inj swap_invol). Qed.
 
 Lemma swap_cover (P : {set {set 'I_(size x)}}) :
   cover (swapSet @: P) = swapSet (cover P).

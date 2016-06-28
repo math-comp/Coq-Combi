@@ -236,11 +236,12 @@ Hypothesis Hinv : invseq s t.
 
 
 Let Hinvst : linvseq s t.
-Proof. have:= Hinv; by rewrite /invseq => /andP []. Qed.
+Proof using Hinv. have:= Hinv; by rewrite /invseq => /andP []. Qed.
 Let Hinvts : linvseq t s.
-Proof. have:= Hinv; by rewrite /invseq => /andP []. Qed.
+Proof using Hinv. have:= Hinv; by rewrite /invseq => /andP []. Qed.
 
-Definition val2pos := fun (i : 'I_(size s)) => Ordinal (linvseq_ltn_szt Hinvst (ltn_ord i)).
+Definition val2pos :=
+  fun (i : 'I_(size s)) => Ordinal (linvseq_ltn_szt Hinvst (ltn_ord i)).
 
 Lemma val2posE : val \o val2pos =1 nth (size t) s.
 Proof using . by []. Qed.

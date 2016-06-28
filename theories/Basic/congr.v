@@ -150,7 +150,7 @@ Function trans (s : seq T) {measure (fun s => bound - size (undup s))} : seq T :
     if size news > size us then trans news
     else us
   else us.
-Proof.
+Proof using Hbound Hinvar.
   move=> s Hinv H; rewrite undup_step; apply/ltP.
   have Hszus:= Hbound Hinv (undup_uniq s).
   rewrite invar_undupE in Hinv.
