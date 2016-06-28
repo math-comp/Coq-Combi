@@ -15,7 +15,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype seq tuple.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype choice finfun fintype seq tuple.
 From mathcomp Require Import finset perm.
 
 (** * The list of the permuted tuple of a given tuple                        *)
@@ -61,16 +61,59 @@ Proof using .
   by exists p; first by rewrite mem_enum.
 Qed.
 
+Lemma mem_enum_permuted (s t : n.-tuple T) :
+  perm_eq s t -> t \in permuted_tuple s.
+Proof.
+  rewrite perm_eq_sym => /tuple_perm_eqP [perm Hperm].
+  apply/mapP; exists perm; first by rewrite mem_enum.
+  by apply val_inj => /=; rewrite Hperm => /=.
+Qed.
+
+Lemma all_permuted (s : n.-tuple T) :
+  all (fun x : n.-tuple T => perm_eq s x) (permuted_tuple s).
+Proof.
+  apply/allP => t /mapP /= [perm _] -> {t}.
+  by rewrite perm_eq_sym; apply/tuple_perm_eqP; exists perm.
+Qed.
+
 End SizeN.
 
-Definition permuted s :=
+Definition permuted_list s :=
   [seq tval t | t <- permuted_tuple (Tuple (eq_refl (size s)))].
 
-Lemma size_permuted s : size (permuted s) = (size s)`!.
-Proof using . by rewrite /permuted size_map size_permuted_tuple. Qed.
+Lemma size_permuted s : size (permuted_list s) = (size s)`!.
+Proof using . by rewrite /permuted_list size_map size_permuted_tuple. Qed.
 
-Lemma eq_seqE s s1 : perm_eq s s1 -> s1 \in permuted s.
+Lemma eq_seqE s s1 : perm_eq s s1 -> s1 \in permuted_list s.
 Proof using . exact: perm_eq_permuted_tuple. Qed.
 
+
 End Permuted.
+
+Require Import combclass.
+
+Section FinType.
+
+Variable T : countType.
+Variable n : nat.
+Variable w : n.-tuple T.
+
+Structure permuted : predArgType :=
+  Permuted { tpval :> n.-tuple T; _ : perm_eq w tpval }.
+
+Canonical permuted_subType := Eval hnf in [subType for tpval].
+Definition permuted_eqMixin := Eval hnf in [eqMixin of permuted by <:].
+Canonical permuted_eqType := Eval hnf in EqType permuted permuted_eqMixin.
+Definition permuted_choiceMixin := Eval hnf in [choiceMixin of permuted by <:].
+Canonical permuted_choiceType := Eval hnf in ChoiceType permuted permuted_choiceMixin.
+Definition permuted_countMixin := Eval hnf in [countMixin of permuted by <:].
+Canonical permuted_countType := Eval hnf in CountType permuted permuted_countMixin.
+Canonical permuted_subCountType := Eval hnf in [subCountType of permuted].
+
+Let type := sub_undup_finType permuted_subCountType
+                              (all_permuted w) (mem_enum_permuted (s := w)).
+Canonical permuted_finType := [finType of permuted for type].
+Canonical permuted_subFinType := Eval hnf in [subFinType of permuted].
+
+End FinType.
 
