@@ -298,8 +298,6 @@ Proof.
   by move=> C D /support_restr_perm {2}<- /support_restr_perm {2}<- ->.
 Qed.
 
-
-
 Lemma out_perm_prod_seq (A: seq {perm T}) x:
   {in A, forall C, x \notin support C} -> (\prod_(C <- A) C)%g x = x.
 Proof.
@@ -482,7 +480,7 @@ Proof.
     by rewrite Hcontra cards1.
 Qed.
 
-Inductive cycle_dec_spec s (A : {set {perm T}}) : Prop :=
+CoInductive cycle_dec_spec s (A : {set {perm T}}) : Prop :=
   CycleDecSpec of
     {in A, forall C, is_cycle C} &
     disjoint_supports A &

@@ -27,69 +27,12 @@ Local Definition perm_sort_geq :=
 Variable T : finType.
 Implicit Types (s t : {perm T}) (n : nat).
 
-Definition set_partition_shape (s : {set {set T}}) :=
-  sort geq [seq #|(x: {set T})| | x <- enum s].
-
-Lemma is_part_sortedE sh :
-  (is_part sh) = (sorted geq sh) && (0 \notin sh).
-Proof.
-  apply/idP/andP => [Hpart|].
-  - split.
-    + apply/sorted1P => i _.
-      by move: Hpart=> /is_partP [_]; apply.
-    + move: Hpart; elim: sh => [// | s0 sh IHsh] Hpart.
-      rewrite inE negb_or eq_sym.
-      have /= -> /= := (part_head_non0 Hpart).
-      by apply IHsh; move: Hpart => /andP [].
-  - move=> [/sorted1P Hsort Hnotin].
-    apply/is_partP; split => [| i].
-    + case: sh Hnotin {Hsort} => [// | s0 sh].
-      rewrite inE negb_or eq_sym => /andP [Hs0 Hnot] /=.
-      elim: sh s0 Hs0 Hnot => [// | s1 sh IHsh] s0 _.
-      rewrite inE negb_or eq_sym /= => /andP [].
-      exact: IHsh.
-    + case: (ltnP i.+1 (size sh)) => Hsz; first exact: Hsort.
-      by rewrite (nth_default _ Hsz).
-Qed.
-
-Lemma set_partition_shapeP (s : {set {set T}}) D :
-  partition s D -> is_part_of_n #|D| (set_partition_shape s).
-Proof.
-  rewrite /set_partition_shape => /and3P [/eqP Hcov Htriv Hnon0].
-  rewrite /is_part_of_n /= is_part_sortedE.
-  apply/and3P; split.
-  - have:= perm_sort geq  [seq #|(x: {set T})| | x <- enum s].
-    move=> /perm_eqlP/perm_sumn ->.
-    rewrite -sumnE big_map -big_enum.
-    move: Htriv; rewrite /trivIset => /eqP ->.
-    by rewrite Hcov.
-  - apply sort_sorted => m n /=; exact: leq_total.
-  - move: Hnon0; apply contra.
-    rewrite mem_sort => /mapP [] x.
-    by rewrite mem_enum => Hx /esym/cards0_eq <-.
-Qed.
-
-Lemma ex_set_partition_shape (A : {set T}) sh :
-  is_part_of_n #|A| sh ->
-  exists2 P, partition P A & set_partition_shape P = sh.
-Proof.
-rewrite /is_part_of_n /= is_part_sortedE => /andP [/eqP shsum /andP [shsort]].
-move=> /(ex_partition_shape shsum) [P [Puniq Ppart Psh]].
-exists [set X in P]; first exact: Ppart.
-apply/(eq_sorted geq_trans anti_geq).
-- exact: (sort_sorted geq_total).
-- exact: shsort.
-- rewrite /set_partition_shape -Psh perm_sort; apply: perm_map.
-  apply: (uniq_perm_eq (enum_uniq _) Puniq) => x.
-  by rewrite mem_enum inE.
-Qed.
-
-Definition cycle_type_seq (s : {perm T}) := set_partition_shape (pcycles s).
+Definition cycle_type_seq (s : {perm T}) := parts_shape (pcycles s).
 
 Lemma cycle_type_partn s:
   is_part_of_n #|T| (cycle_type_seq s).
 Proof.
-  rewrite /cycle_type_seq -cardsT; apply set_partition_shapeP.
+  rewrite /cycle_type_seq -cardsT; apply parts_shapeP.
   exact: partition_pcycles.
 Qed.
 
@@ -98,7 +41,7 @@ Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_partn s).
 
 
 (* Are the following definition and two lemmas really useful ? *)
-Definition card_support_cycles (s : {perm T}) :=
+(*Definition card_support_cycles (s : {perm T}) :=
   [seq #|(C : {set T})| | C in support_cycles s].
 
 Lemma cycle_type_dec (s : {perm T}) :
@@ -108,7 +51,7 @@ Proof.
   rewrite /=.
   have := perm_sort geq (card_support_cycles s) => /perm_eqlP /perm_sumn ->.
   rewrite /card_support_cycles support_cycle_dec.
-  rewrite /cycle_type_seq/set_partition_shape.
+  rewrite /cycle_type_seq/parts_shape.
 Admitted.
 
 Lemma support_cycle_type s t :
@@ -120,7 +63,7 @@ Proof.
                sort geq (card_support_cycles t)) //.
   by apply/perm_sort_geq.
 Qed.
-
+*)
 
 Lemma conjg_cycle s a :
   (<[s]> :^ a = <[s ^ a]>)%g.
@@ -291,7 +234,7 @@ Definition slpcycles s := slice_part (pcycles s).
 Lemma slice_slpcycleE s i :
   #|slice (slpcycles s) i| = count_mem i (cycle_type s).
 Proof.
-  rewrite /cycle_type /slice /cycle_type_seq /set_partition_shape /=.
+  rewrite /cycle_type /slice /cycle_type_seq /parts_shape /=.
   rewrite [RHS](_ : _ =
       (count_mem i) [seq #|(x : {set _})| | x <- enum (pcycles s)]);
       last by apply/perm_eqP/perm_eqlP; exact: perm_sort.
@@ -616,10 +559,6 @@ Proof.
   exact: psupport_of_set.
 Qed.
 
-(*
-Definition perm_of_parts (P : {set {set T}}) :=
-  (\prod_(X in P | #|X| > 1) cycle_of_set X)%g.
-*)
 
 Definition perm_of_parts (P : {set {set T}}) :=
   (\prod_(C in [set cycle_of_set s | s in [set X in P |#|X|>1]]) C)%g.
@@ -704,13 +643,23 @@ Proof.
       by rewrite inE; apply /andP; split.
 Qed.
 
-
-
-Lemma cycle_of_partE ct :
-  cycle_type (cycle_of_part ct) = ct.
+Lemma perm_of_partsE P :
+  partition P [set: T] -> (cycle_type (perm_of_parts P): seq nat) = parts_shape P.
 Proof.
-  admit.
-Admitted.
+  move => /pcycles_perm_of_parts pcy.
+  by rewrite /= /cycle_type_seq pcy.
+Qed.
+
+
+Lemma perm_of_partn (tc : intpartn #|T|) :
+  exists s, cycle_type s = tc.
+Proof.
+  move: (valP (intpartn_cast (esym (cardsT T)) tc)).
+  rewrite intpartn_castE => /ex_set_parts_shape [P /perm_of_partsE /= ct shape].
+  exists (perm_of_parts P); apply val_inj => /=; rewrite ct.
+  by exact: shape.
+Qed.
+
 End Permofcycletype.
 
 End cycle_type.

@@ -4,6 +4,8 @@ From mathcomp Require Import tuple finfun path bigop finset binomial.
 From mathcomp Require Import fingroup perm automorphism action ssralg.
 From mathcomp Require finmodule.
 
+From Combi Require Import symgroup partition Greene tools sorted.
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 
@@ -89,9 +91,62 @@ End Uniq.
 
 From mathcomp Require Import binomial.
 
-Section CutSet.
+Section SetPartitionShape.
 
-Variable (T : finType).
+Local Definition geq_total : total geq :=
+  fun x y => leq_total y x.
+Local Definition geq_trans : transitive geq :=
+  fun x y z H1 H2 => leq_trans H2 H1.
+Local Definition anti_geq : antisymmetric geq :=
+  fun x y H => esym (anti_leq H).
+Local Definition perm_sort_geq :=
+  perm_sortP geq_total geq_trans anti_geq.
+
+Variable T : finType.
+Implicit Types (s t : {perm T}) (n : nat).
+
+Definition parts_shape (s : {set {set T}}) :=
+  sort geq [seq #|(x: {set T})| | x <- enum s].
+
+Lemma is_partn_sortedE sh :
+  (is_part sh) = (sorted geq sh) && (0 \notin sh).
+Proof.
+  apply/idP/andP => [Hpart|].
+  - split.
+    + apply/sorted1P => i _.
+      by move: Hpart=> /is_partP [_]; apply.
+    + move: Hpart; elim: sh => [// | s0 sh IHsh] Hpart.
+      rewrite inE negb_or eq_sym.
+      have /= -> /= := (part_head_non0 Hpart).
+      by apply IHsh; move: Hpart => /andP [].
+  - move=> [/sorted1P Hsort Hnotin].
+    apply/is_partP; split => [| i].
+    + case: sh Hnotin {Hsort} => [// | s0 sh].
+      rewrite inE negb_or eq_sym => /andP [Hs0 Hnot] /=.
+      elim: sh s0 Hs0 Hnot => [// | s1 sh IHsh] s0 _.
+      rewrite inE negb_or eq_sym /= => /andP [].
+      exact: IHsh.
+    + case: (ltnP i.+1 (size sh)) => Hsz; first exact: Hsort.
+      by rewrite (nth_default _ Hsz).
+Qed.
+
+Lemma parts_shapeP (s : {set {set T}}) D :
+  partition s D -> is_part_of_n #|D| (parts_shape s).
+Proof.
+  rewrite /parts_shape => /and3P [/eqP Hcov Htriv Hnon0].
+  rewrite /is_part_of_n /= is_partn_sortedE.
+  apply/and3P; split.
+  - have:= perm_sort geq  [seq #|(x: {set T})| | x <- enum s].
+    move=> /perm_eqlP/perm_sumn ->.
+    rewrite -sumnE big_map -big_enum.
+    move: Htriv; rewrite /trivIset => /eqP ->.
+    by rewrite Hcov.
+  - apply sort_sorted => m n /=; exact: leq_total.
+  - move: Hnon0; apply contra.
+    rewrite mem_sort => /mapP [] x.
+    by rewrite mem_enum => Hx /esym/cards0_eq <-.
+Qed.
+
 
 Lemma ex_subset_card (B : {set T}) k :
   k <= #|B| -> exists2 A : {set T}, A \subset B & #|A| == k.
@@ -100,7 +155,7 @@ Proof.
   rewrite inE => /andP [H1 H2]; by exists x.
 Qed.
 
-Lemma ex_partition_shape (s : seq nat) (A : {set T}) :
+Lemma ex_parts_shape (s : seq nat) (A : {set T}) :
   sumn s = #|A| -> 0 \notin s ->
   exists P : seq {set T},
     [/\ uniq P,
@@ -138,4 +193,19 @@ exists (B :: P); split => /=; [|apply/and3P; split|].
 - by rewrite Ps.
 Qed.
 
-End CutSet.
+
+Lemma ex_set_parts_shape (A : {set T}) sh :
+  is_part_of_n #|A| sh ->
+  exists2 P, partition P A & parts_shape P = sh.
+Proof.
+rewrite /is_part_of_n /= is_partn_sortedE => /andP [/eqP shsum /andP [shsort]].
+move=> /(ex_parts_shape shsum) [P [Puniq Ppart Psh]].
+exists [set X in P]; first exact: Ppart.
+apply/(eq_sorted geq_trans anti_geq).
+- exact: (sort_sorted geq_total).
+- exact: shsort.
+- rewrite /parts_shape -Psh perm_sort; apply: perm_map.
+  apply: (uniq_perm_eq (enum_uniq _) Puniq) => x.
+  by rewrite mem_enum inE.
+Qed.
+End SetPartitionShape.
