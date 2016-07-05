@@ -99,6 +99,16 @@ Section Yama.
       by rewrite geq_max => /andP [] /ltn_eqF -> /= /IHs <-.
   Qed.
 
+  Lemma last_evalseq_non0 s : last 1 (evalseq s) != 0.
+  Proof.
+    rewrite (last_nth 0) -lt0n.
+    elim: s => [| l0 s] //=.
+    rewrite size_incr_nth; case: (ltnP l0 _) => [| _ _] /=.
+    - case: (evalseq s) => [//= | e0 e] /= _ /leq_trans; apply.
+      by rewrite nth_incr_nth; apply leq_addl.
+    - by rewrite nth_incr_nth eq_refl add1n.
+  Qed.
+
   Lemma evalseq_nseq0 n : evalseq (nseq n.+1 0) = [:: n.+1].
   Proof. by elim: n => [| n] //= ->. Qed.
 

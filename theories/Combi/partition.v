@@ -214,6 +214,36 @@ Proof.
 Qed.
 
 
+(** Equality of sequences of int not ending by zero *)
+Lemma last_non_0_nth_len_eq p q :
+  (forall i, nth 0 p i = nth 0 q i) ->
+  last 1 p != 0 -> last 1 q != 0 ->
+  size p = size q.
+Proof.
+  wlog Hwlog: p q / (size p) <= (size q).
+  move=> Hwlog Hnth.
+    by case: (leqP (size p) (size q)) => [|/ltnW] /Hwlog H/H{H}H/H{H} ->.
+  move=> Hnth Hlastp Hlastq.
+  apply anti_leq; rewrite Hwlog {Hwlog} /=.
+  case: q Hnth Hlastq => [//=|q0 q] Hnth Hlastq.
+  rewrite leqNgt; apply (introN idP) => Habs.
+  move: Hlastq.
+  have:= Hnth (size q).
+  have:= nth_last 0 (q0 :: q) => /= -> <-.
+  by rewrite nth_default //.
+Qed.
+
+Lemma last_non_0_eqP p q :
+  last 1 p != 0 -> last 1 q != 0 ->
+  reflect (forall i, nth 0 p i = nth 0 q i) (p == q).
+Proof.
+  move=> Hp Hq.
+  apply (iffP idP) => [/eqP -> //| H].
+  apply/eqP; apply (eq_from_nth (x0 := 0)).
+  - exact: last_non_0_nth_len_eq.
+  - move=> i _; exact: H.
+Qed.
+
 (** * Integer Partitions *)
 (** ** Definitions and basic properties *)
 Section Partition.
@@ -284,29 +314,12 @@ Section Partition.
   Qed.
 
   (** Equality of partitons *)
-  Lemma part_nth_len_eq p q :
-    (forall i, nth 0 p i = nth 0 q i) -> is_part p -> is_part q -> size p = size q.
-  Proof.
-    wlog Hwlog: p q / (size p) <= (size q).
-      move=> Hwlog Hnth.
-      by case: (leqP (size p) (size q)) => [|/ltnW] /Hwlog H/H{H}H/H{H} ->.
-    move=> Hnth /is_part_ijP [] Hlastp Hp /is_part_ijP [] Hlastq Hq.
-    apply anti_leq; rewrite Hwlog {Hwlog} /=.
-    case: q Hnth Hlastq Hq => [//=|q0 q] Hnth Hlastq Hq.
-    rewrite leqNgt; apply (introN idP) => Habs.
-    move: Hlastq.
-    have:= Habs; rewrite -(ltn_predK Habs) ltnS => /(Hq _ _).
-    by rewrite nth_last /= -Hnth nth_default // leqn0 => /eqP ->.
-  Qed.
-
   Lemma part_eqP p q :
     is_part p -> is_part q -> reflect (forall i, nth 0 p i = nth 0 q i) (p == q).
   Proof.
-    move=> Hp Hq.
-    apply (iffP idP) => [/eqP -> //| H].
-    apply/eqP; apply (eq_from_nth (x0 := 0)).
-    - exact: part_nth_len_eq.
-    - move=> i _; exact: H.
+    move=> Hp Hq; apply last_non_0_eqP.
+    - by move: Hp => /is_partP [].
+    - by move: Hq => /is_partP [].
   Qed.
 
   (** Partitions don't have 0 parts *)
