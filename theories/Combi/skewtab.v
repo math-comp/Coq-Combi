@@ -15,17 +15,18 @@
 (******************************************************************************)
 (** * Skew tableau and yamanouchi words:
 
-- [is_skew_yam inn out y] == [y ++ y0] is Yamanouchi ov evaluation out for
-         any [y0] of evaluation inn.
-- [skew_dominate s u v] == the row u dominate the row v when shifted by [s].
+- [is_skew_yam inn out y] == [y ++ y0] is Yamanouchi of evaluation [out] for
+         any [y0] of evaluation [inn].
+- [skew_dominate s u v] == the row [u] dominate the row [v] when shifted by [s].
 - [is_skew_tableau inn t] == [t] is a skew tableau with inner shape [t].
 - [skew_reshape inn out s] == reshape the sequence [s] by the skew shape [out/inn].
-- filter_leqX_tab n t] == keeps only the entries greater than [n] in [t].
+- [filter_leqX_tab n t] == keeps only the entries greater than [n] in [t].
 - [join_tab t st] == join the tableau [t] with the skew tableau [st].
        this gives a tableau if the inner shape of [st] is the shape of [t] and
-       the entries of t are smaller than the entries of st.
+       the entries of [t] are smaller than the entries of [st].
 - [hb_strip inn out] == [inn/out] is an horizontal border strip.
 - [vb_strip inn out] == [inn/out] is a vertical border strip.
+- [std_of_tab t] == the standardized tableau of [t].
 ******)
 
 
@@ -947,15 +948,39 @@ Proof.
   by apply is_skew_tableau_reshape_std.
 Qed.
 
+End EqInvSkewTab.
 
-Theorem is_tableau_std T (t : seq (seq T)) :
-  is_tableau t = is_tableau (rev (reshape (rev (shape t)) (std (to_word t)))).
+Section StdOfTab.
+
+Variable T : inhOrdType.
+Implicit Type t : seq (seq T).
+
+Definition std_of_tab t := skew_reshape [::] (shape t) (std (to_word t)).
+
+Theorem std_of_tabE t : is_tableau t = is_tableau (std_of_tab t).
 Proof.
   rewrite -{1}(to_wordK t); apply is_tableau_reshape_std.
   by rewrite size_to_word.
 Qed.
 
-End EqInvSkewTab.
+Lemma shape_std_of_tab t : shape (std_of_tab t) = shape t.
+Proof.
+  rewrite /std_of_tab shape_skew_reshape //.
+  by rewrite size_std size_to_word sumn_diff_shape //= subn0.
+Qed.
 
+Lemma to_word_std_of_tab t : to_word (std_of_tab t) = std (to_word t).
+Proof.
+  rewrite /std_of_tab to_word_skew_reshape //.
+  by rewrite size_std size_to_word sumn_diff_shape //= subn0.
+Qed.
 
+Lemma std_of_tabP t s :
+  shape s = shape t -> to_word s = std (to_word t) -> s = std_of_tab t.
+Proof.
+  rewrite /std_of_tab => Hword Hsh.
+  rewrite -(skew_reshapeK (inner := [::]) (t := s)) //.
+  by rewrite Hword diff_shapeK // -Hsh.
+Qed.
 
+End StdOfTab.
