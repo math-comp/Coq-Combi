@@ -99,6 +99,27 @@ Section Yama.
       by rewrite geq_max => /andP [] /ltn_eqF -> /= /IHs <-.
   Qed.
 
+  Lemma evalseq_nseq0 n : evalseq (nseq n.+1 0) = [:: n.+1].
+  Proof. by elim: n => [| n] //= ->. Qed.
+
+  Lemma evalseq_size1 n s : evalseq s = [:: n] -> s = nseq n 0.
+  Proof.
+    elim: n s => [| n IHn] //= s Hs.
+      exfalso; suff {Hs} : last 1 (evalseq s) != 0 by rewrite Hs.
+      elim: s => [| s0 s] //=; exact: last_incr_nth_non0.
+    case: n IHn Hs => [_| n IHn].
+    - case: s => [| s0 [|s1 s]] //=; first by case: s0.
+      by move=> /(congr1 sumn) /=; rewrite !sumn_incr_nth addn0.
+    - case: s => [| s0 s] //=.
+      case: s0 => [//=|s0].
+      + case H : (evalseq s) => [//= | e0 e] [] He0 He; subst e0 e.
+        by move: H => /IHn ->.
+      + case H : (evalseq s) => [//= | e0 e] /=.
+        move=> /(congr1 size) /=; rewrite size_incr_nth.
+        case: ltnP => //= Hs0 [] Hsz.
+        by rewrite Hsz in Hs0.
+  Qed.
+
   Lemma foldr_maxn s : foldr maxn 0 [seq i.+1 | i <- s] = (\max_(i <- s) S i).
   Proof.
     elim: s => [| s0 s IHs] /=; first by rewrite big_nil.

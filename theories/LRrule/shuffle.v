@@ -555,6 +555,31 @@ Proof using .
   by rewrite shape_stdtab_of_yam.
 Qed.
 
+Lemma is_row_langQE r :
+  (is_row r) = (r \in langQ (stdtab_of_yam (nseq (size r) 0))).
+Proof.
+  apply/idP/idP.
+  - case: (altP (r =P [::])) => [-> //=| Hnnil].
+    rewrite inE => Hrow.
+    have Htabr : is_tableau [:: r] by rewrite /= Hnnil Hrow.
+    have:= shape_RStabmapE r.
+    have {Hnnil Hrow Htabr} := RS_tabE Htabr; rewrite /to_word /= cats0.
+    rewrite -RStabmapE /RStabmap; case: (RSmap r) => [P Q] /= -> /= /esym.
+    by rewrite shape_stdtab_of_yam => /evalseq_size1 ->.
+  - rewrite inE /RStabmap => /eqP /= /(congr1 shape).
+    have:= shape_RSmap_eq r; rewrite (RSmapE r).
+    case: (RSmap r) => [P Q] /= HP.
+    rewrite !shape_stdtab_of_yam -{}HP.
+    case Hn : (size r) => [/=| n]; first by move: Hn => /eqP/nilP ->.
+    rewrite evalseq_nseq0 -Hn => Hsh.
+    have {Hsh} HSch : size (Sch r) = size r by rewrite SchE -nth_shape {}Hsh.
+    have : n < size r by rewrite Hn.
+    rewrite -HSch => /Sch_exists [sub /andP [_ /and3P [Hsub]]].
+    rewrite -Hn => Hsz Hrow.
+    have:= size_subseq_leqif Hsub => Htmp.
+    by have:= Htmp.2; rewrite Hsz => /esym/eqP <-.
+Qed.
+
 Inductive LRtriple t1 t2 t : Prop :=
   LRTriple :
     forall p1 p2 p, RS p1 = t1 -> RS p2 = t2 -> RS p = t ->

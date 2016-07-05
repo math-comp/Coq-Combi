@@ -21,59 +21,6 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-(* TODO: Move in Yamanouchi *)
-Lemma evalseq_nseq0 n : evalseq (nseq n.+1 0) = [:: n.+1].
-Proof. by elim: n => [| n] //= ->. Qed.
-
-Lemma evalseq_size1 n s : evalseq s = [:: n] -> s = nseq n 0.
-Proof.
-  elim: n s => [| n IHn] //= s Hs.
-    exfalso; suff {Hs} : last 1 (evalseq s) != 0 by rewrite Hs.
-    elim: s => [| s0 s] //=; exact: last_incr_nth_non0.
-  case: n IHn Hs => [_| n IHn].
-  - case: s => [| s0 [|s1 s]] //=; first by case: s0.
-    by move=> /(congr1 sumn) /=; rewrite !sumn_incr_nth addn0.
-  - case: s => [| s0 s] //=.
-    case: s0 => [//=|s0].
-    + case H : (evalseq s) => [//= | e0 e] [] He0 He; subst e0 e.
-      by move: H => /IHn ->.
-    + case H : (evalseq s) => [//= | e0 e] /=.
-      move=> /(congr1 size) /=; rewrite size_incr_nth.
-      case: ltnP => //= Hs0 [] Hsz.
-      by rewrite Hsz in Hs0.
-Qed.
-
-(* TODO : move in skewtab *)
-Lemma shape_join_tab (S : inhOrdType) (s t : seq (seq S)) :
-  shape (join_tab s t) =
-  ([seq r.1 + r.2 | r <- zip (pad 0 (size t) (shape s)) (shape t)])%N.
-Proof using .
-  rewrite /shape /join_tab -map_comp.
-  rewrite (eq_map (f2 := (fun p => p.1 + p.2) \o
-                         (fun p => (size p.1, size p.2)))); first last.
-    by move=> [a b] /=; rewrite size_cat.
-  rewrite map_comp; congr map.
-  elim: t s => [| t0 t IHt] [| s0 s] //=.
-    by have /= := (IHt [::]); rewrite subn0 => ->.
-  by rewrite IHt /= subSS.
-Qed.
-
-Lemma shape_join_tab_skew_reshape
-      (S : inhOrdType) (t : seq (seq S)) sh w:
-  included (shape t) sh ->
-  size w = sumn (diff_shape (shape t) sh) ->
-  shape (join_tab t (skew_reshape (shape t) sh w)) = sh.
-Proof using.
-  move=> Hincl Hsz.
-  rewrite shape_join_tab size_skew_reshape shape_skew_reshape // {Hsz w}.
-  move: (shape t) Hincl => inner {t}.
-  elim: sh inner => [| s0 sh IHsh] [|in0 inn] //=.
-    rewrite add0n => _ {IHsh}; congr (_ :: _) => {s0}.
-    by elim: sh => //= s0 sh ->.
-  move=> /andP [Hin0 /IHsh {IHsh}]; rewrite /pad /= => Hrec.
-  by rewrite subSS (subnKC Hin0) Hrec.
-Qed.
-
 
 Section RSKSeqRow.
 
@@ -82,18 +29,6 @@ Notation Z := (inhabitant T).
 
 Implicit Type s r : seq T.
 Implicit Type sr : seq (seq T).
-
-Lemma included_shape_RS_cat w r :
-  included (shape (RS w)) (shape (RS (w ++ r))).
-Proof.
-  elim/last_ind: r => [| r rn IHr] /=.
-    rewrite cats0; exact: included_refl.
-  apply (included_trans IHr) => /=.
-  rewrite {2}/RS rev_cat rev_rcons /= -rev_cat -/(RS _) -instabnrowE.
-  have:= shape_instabnrow rn (is_tableau_RS (w ++ r)).
-  case: (instabnrow _ _) => [tr nrow] /= ->.
-  exact: included_incr_nth.
-Qed.
 
 Fixpoint RS_insrow (P : seq (seq T)) r :=
   if r is r0 :: r then RS_insrow (instab P r0) r
@@ -107,10 +42,6 @@ Proof using  .
   exact: IHr.
 Qed.
 
-Lemma RS_insrow_rcons P r rn :
-  RS_insrow P (rcons r rn) = instab (RS_insrow P r) rn.
-Proof using. by elim: r P => [| r0 r IHr] P /=. Qed.
-
 
 Fixpoint RSKSeqRow_rev sr : seq (seq T) * seq (seq nat) :=
   if sr is r :: sr then
@@ -119,20 +50,8 @@ Fixpoint RSKSeqRow_rev sr : seq (seq T) * seq (seq nat) :=
     (Pres, join_tab Q (skew_reshape (shape P) (shape Pres)
                                     (nseq (size r) (size sr))))
   else ([::], [::]).
-
 Definition RSKSeqRow sr : seq (seq T) * seq (seq nat) := RSKSeqRow_rev (rev sr).
 
-Lemma row_langQ r :
-  is_row r -> r \in langQ (stdtab_of_yam (nseq (size r) 0)).
-Proof.
-  case: (altP (r =P [::])) => [-> //=| Hnnil].
-  rewrite inE => Hrow.
-  have Htabr : is_tableau [:: r] by rewrite /= Hnnil Hrow.
-  have:= shape_RStabmapE r.
-  have {Hnnil Hrow Htabr} := RS_tabE Htabr; rewrite /to_word /= cats0.
-  rewrite -RStabmapE /RStabmap; case: (RSmap r) => [P Q] /= -> /= /esym.
-  by rewrite shape_stdtab_of_yam => /evalseq_size1 ->.
-Qed.
 
 Lemma is_stdtab_of_n_RStabmap2 s : is_stdtab_of_n (size s) (RStabmap s).2.
 Proof.
@@ -158,7 +77,7 @@ Proof.
   pose tabres := StdtabN Hstnres.
   have {Hrow} Htriple : LRtriple tab1 tab2 tabres.
     apply LRtriple_cat_langQ; rewrite // inE //.
-    exact: row_langQ Hrow.
+    by move: Hrow; rewrite is_row_langQE inE.
   have {Htriple} Hsupp : tabres \in LRsupport tab1 tab2.
     by rewrite /LRsupport inE -LRtriple_fastE //; apply/LRtripleP.
   have Hincl : included (shape_deg tab1) (shape_deg tabres).

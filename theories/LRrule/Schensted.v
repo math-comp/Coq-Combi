@@ -679,6 +679,15 @@ Section Tableaux.
     exact: is_tableau_instab.
   Qed.
 
+  Lemma SchE w : Sch w = nth [::] (RS w) 0.
+  Proof.
+    elim/last_ind: w => [//= | w l0 /=].
+    have:= is_tableau_RS w.
+    rewrite /Sch /RS rev_rcons /= -/(RS w) => Htab ->.
+    case: (RS w) Htab => [//= | r0 t] /and3P [] _ /(head_instab t l0) <- _.
+    by case: (instab _ _).
+  Qed.
+
 End Tableaux.
 
 
@@ -804,6 +813,24 @@ Section InverseBump.
       by rewrite (bump_size_ins Hrow Hbump).
     - have:= nbump_bumprowE Hrow Hnbump => -> [] <- <- /=.
       by rewrite (nbump_size_ins Hrow Hnbump).
+  Qed.
+
+  Lemma included_instab t l :
+    is_tableau t -> included (shape t) (shape (instab t l)).
+  Proof.
+    rewrite -instabnrowE => /(shape_instabnrow l).
+    case H : (instabnrow t l) => [tr nrow] /= ->.
+    exact: included_incr_nth.
+  Qed.
+
+  Lemma included_shape_RS_cat w r :
+    included (shape (RS w)) (shape (RS (w ++ r))).
+  Proof.
+    elim/last_ind: r => [| r rn IHr] /=.
+      rewrite cats0; exact: included_refl.
+    apply (included_trans IHr) => /=.
+    rewrite {2}/RS rev_cat rev_rcons /= -rev_cat -/(RS _).
+    apply: included_instab; exact: is_tableau_RS.
   Qed.
 
 End InverseBump.
