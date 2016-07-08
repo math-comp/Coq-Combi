@@ -21,7 +21,6 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-
 Section RSKSeqRow.
 
 Variable T : inhOrdType.
@@ -41,7 +40,6 @@ Proof using  .
   have -> : instab (RS w) r0 = RS (rcons w r0) by rewrite /RS rev_rcons /=.
   exact: IHr.
 Qed.
-
 
 Fixpoint RSKSeqRow_rev sr : seq (seq T) * seq (seq nat) :=
   if sr is r :: sr then
@@ -205,7 +203,7 @@ Proof.
   by rewrite eq_refl.
 Qed.
 
-Lemma eval_RSKSeqRowP sr i :
+Lemma count_mem_to_word_RSKSeqRowP sr i :
   count_mem i (to_word (RSKSeqRow sr).2) = size (nth [::] sr i).
 Proof.
   elim/last_ind: sr i => [| sr r IHsr] i //=; first by rewrite nth_default.
@@ -228,14 +226,51 @@ Proof.
     by elim: (size r) => //= n ->; rewrite eq_refl add1n.
 Qed.
 
+Lemma eval_RSKSeqRowP sr :
+  last 1 (shape sr) != 0 -> evalseq (to_word (RSKSeqRow sr).2) = shape sr.
+Proof.
+  move=> /(last_non_0_eqP (last_evalseq_non0 _)) H.
+  apply/eqP/H => {H} i.
+  by rewrite nth_shape nth_evalseq count_mem_to_word_RSKSeqRowP.
+Qed.
+
 Lemma std_RSKSeqRow_QP (sr : seq (seq T)) :
   all (sorted leqX_op) sr ->
-  (RStabmap (to_word sr)).2 =
-  skew_reshape [::] (shape (RSKSeqRow sr).1) (std (to_word (RSKSeqRow sr).2)).
+  (RStabmap (flatten sr)).2 = std_of_tab (RSKSeqRow sr).2.
 Proof.
 Admitted.
 
+
+Definition RSKSeqRowinv (P : seq (seq T)) Q :=
+  reshape (evalseq (to_word Q))
+          (RSmapinv P (yam_of_stdtab (std_of_tab Q))).
+
+Lemma RSKSeqRowK sr :
+  last 1 (shape sr) != 0 -> all (sorted leqX_op) sr ->
+  let: (P, Q) := RSKSeqRow sr in sr = RSKSeqRowinv P Q.
+Proof.
+  rewrite /RSKSeqRowinv => /eval_RSKSeqRowP Hnnil Hall.
+  have:= RSKSeqRow_PE sr.
+  have:= std_RSKSeqRow_QP Hall.
+  case: (RSKSeqRow sr) Hnnil => [P Q] /= Hnnil <- HP.
+  subst P; rewrite /RStabmap.
+  have:= RSmapE (flatten sr).
+  have:= is_yam_RSmap2 (flatten sr).
+  case HPQyam : (RSmap (flatten sr)) => [P Qyam] /= /stdtab_of_yamK -> <-.
+  have:= RSmapK (flatten sr); rewrite HPQyam /RSmapinv2 /= => ->.
+  by rewrite -{1}(flattenK sr) Hnnil.
+Qed.
+
+Lemma RSKSeqRowinvK P Q :
+  is_tableau P -> is_tableau Q -> shape P = shape Q ->
+  RSKSeqRow (RSKSeqRowinv P Q) = (P, Q).
+Proof.
+  rewrite /RSKSeqRowinv => HP HQ Hsh.
+  apply/eqP; rewrite -pair_eqE /=.
+Admitted.
+
 End RSKSeqRow.
+
 
 
 
