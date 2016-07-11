@@ -344,6 +344,13 @@ Proof using . apply/eqP; by rewrite eq_sym eq_invg_mul prodsK. Qed.
 
 End ElemTransp.
 
+Lemma odd_eltr n i : (i < n)%N -> odd_perm (eltr n i).
+Proof.
+  rewrite odd_tperm => Hi.
+  apply (introN idP) => /eqP/(congr1 val)/eqP/=.
+  rewrite !inordK // ?ltnS ?ieqi1F //.
+  exact: ltnW.
+Qed.
 
 Section Length.
 

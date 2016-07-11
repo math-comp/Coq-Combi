@@ -130,6 +130,7 @@ VFILES:=theories/Combi/vectNK.v\
   theories/Basic/ordtype.v\
   theories/Basic/combclass.v\
   theories/SymGroup/symgroup.v\
+  theories/SymGroup/rep1.v\
   theories/MPoly/Schur_basis.v\
   theories/MPoly/antisym.v\
   theories/MPoly/sympoly.v\
