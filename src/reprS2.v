@@ -22,25 +22,23 @@ Lemma NirrSn n : Nirr [set: 'S_n] = #|{:intpartn n}|.
 Proof. by rewrite NirrE card_class_perm card_ord. Qed.
 
 Lemma char_S2 :
-  perm_eq [:: cfRepr triv_mx_repr; cfRepr sign_mx_repr]
-          (irr [set: 'S_2]).
+  perm_eq [:: cfRepr triv_repr; cfRepr sign_repr] (irr [set: 'S_2]).
 Proof.
-  have Huniq : uniq [:: cfRepr (triv_mx_repr (n := 2)); cfRepr sign_mx_repr].
+  have Huniq : uniq [:: cfRepr (triv_repr (n := 2)); cfRepr sign_repr].
     rewrite /= andbT inE; apply/cfRepr_rsimP.
     exact: triv_sign_not_sim.
   apply uniq_perm_eq => //; first by apply free_uniq; exact: irr_free.
   apply leq_size_perm => //.
   move=> i; rewrite !inE => /orP [] /eqP ->; apply/irr_reprP.
-  - by exists (Representation triv_mx_repr); first exact: triv_irr.
-  - by exists (Representation sign_mx_repr); first exact: sign_irr.
+  - by exists (Representation triv_repr); first exact: triv_irr.
+  - by exists (Representation sign_repr); first exact: sign_irr.
     have:= NirrSn 2; rewrite card_intpartn /=.
     have -> : intpartn_nb 2 = 2 by [].
     by rewrite size_tuple /= => ->.
 Qed.
 
 Lemma repr_S2 (rho : representation [fieldType of algC] [set: 'S_2]) :
-  mx_irreducible rho ->
-  mx_rsim rho triv_mx_repr \/ mx_rsim rho sign_mx_repr.
+  mx_irreducible rho -> mx_rsim rho triv_repr \/ mx_rsim rho sign_repr.
 Proof.
   move=> Hirr.
   have : cfRepr rho \in (irr [set: 'S_2]).
