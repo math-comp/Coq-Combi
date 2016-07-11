@@ -38,60 +38,61 @@ Section DefTrivSign.
 Variable n d : nat.
 Variable rho : reprS n d.
 
-Definition triv_mx_reprf :=
-  [fun g : 'S_n => 1 : 'M[algC]_1].
-Definition sign_mx_reprf :=
-  [fun g : 'S_n => if odd_perm g then -1 else 1 : 'M[algC]_1].
-Definition signed_mx_reprf :=
-  [fun g : 'S_n => if odd_perm g then -(rho g) else rho g].
+Definition triv_mx (g : 'S_n) : 'M[algC]_1 := 1.
+Definition sign_mx (g : 'S_n) : 'M[algC]_1 :=
+  if odd_perm g then -1 else 1.
+Definition signed_mx (g : 'S_n) : 'M[algC]_d :=
+  if odd_perm g then -(rho g) else rho g.
 
-Lemma triv_mx_reprP : mx_repr [set: 'S_n] triv_mx_reprf.
+Lemma triv_mx_repr : mx_repr [set: 'S_n] triv_mx.
 Proof.
   split; first by [].
   by move=> g1 g2 _ _; rewrite mul1mx.
 Qed.
-Definition triv_mx_repr : reprS n 1 := MxRepresentation triv_mx_reprP.
+Canonical triv_repr : reprS n 1 := MxRepresentation triv_mx_repr.
 
-Lemma triv_irr : mx_irreducible triv_mx_repr.
+Lemma triv_irr : mx_irreducible triv_repr.
 Proof. apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
 
-Lemma sign_mx_reprP : mx_repr [set: 'S_n] sign_mx_reprf.
+Lemma sign_mx_repr : mx_repr [set: 'S_n] sign_mx.
 Proof.
-  split; first by rewrite /= odd_perm1.
+  rewrite /sign_mx; split; first by rewrite /= odd_perm1.
   move=> g1 g2 _ _; rewrite /= odd_permM /=.
   by case: (odd_perm g1); case: (odd_perm g2);
     rewrite /= ?mulNmx ?mulmxN ?opprK mul1mx //.
 Qed.
-Definition sign_mx_repr : reprS n 1 := MxRepresentation sign_mx_reprP.
+Canonical sign_repr : reprS n 1 := MxRepresentation sign_mx_repr.
 
-Lemma signed_mx_reprP : mx_repr [set: 'S_n] signed_mx_reprf.
+Lemma signed_mx_repr : mx_repr [set: 'S_n] signed_mx.
 Proof.
-  split; first by rewrite /= odd_perm1 repr_mx1.
-Proof.
+  rewrite /signed_mx; split; first by rewrite /= odd_perm1 repr_mx1.
   move=> g1 g2 _ _; rewrite /= odd_permM /=.
   by case: (odd_perm g1); case: (odd_perm g2);
     rewrite /=  ?mulNmx ?mulmxN ?opprK repr_mxM // inE.
 Qed.
-Definition signed_mx_repr : reprS n d := MxRepresentation signed_mx_reprP.
+Canonical signed_repr : reprS n d := MxRepresentation signed_mx_repr.
 
-Lemma sign_irr : mx_irreducible sign_mx_repr.
+Lemma sign_irr : mx_irreducible sign_repr.
 Proof. apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
+
 
 End DefTrivSign.
 Arguments triv_mx_repr [n].
+Arguments triv_repr [n].
 Arguments sign_mx_repr [n].
+Arguments sign_repr [n].
 
 Lemma row_free1 : row_free (1 : 'M[algC]_1).
 Proof. by apply/row_freeP; exists 1; rewrite mul1mx. Qed.
 
-Lemma repr1_S0 (rho : reprS 0 1) : mx_rsim rho triv_mx_repr.
+Lemma repr1_S0 (rho : reprS 0 1) : mx_rsim rho triv_repr.
 Proof.
 apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
 rewrite /triv_mx_repr /= => g _ /=.
 by rewrite mul1mx mulmx1 (permS0 g) repr_mx1.
 Qed.
 
-Lemma repr1_S1 (rho : reprS 1 1) : mx_rsim rho triv_mx_repr.
+Lemma repr1_S1 (rho : reprS 1 1) : mx_rsim rho triv_repr.
 Proof.
 apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
 rewrite /triv_mx_repr /= => g _ /=.
@@ -99,12 +100,12 @@ by rewrite mul1mx mulmx1 (permS1 g) repr_mx1.
 Qed.
 
 Lemma triv_sign_not_sim n :
-  (n >= 2)%N -> ~ mx_rsim (G := [set: 'S_n]) triv_mx_repr sign_mx_repr.
+  (n >= 2)%N -> ~ mx_rsim (G := [set: 'S_n]) triv_repr sign_repr.
 Proof.
   case: n => // n; rewrite ltnS => Hn [B _].
   rewrite row_free_unit => /mulrI HB Hsim.
   have {Hsim} /Hsim : (eltr n 0) \in [set: 'S_n.+1] by [].
-  rewrite /triv_mx_repr /= mul1mx (odd_eltr Hn).
+  rewrite /triv_repr /sign_repr /triv_mx /sign_mx /= mul1mx (odd_eltr Hn).
   rewrite -[LHS]mulmx1 => /HB/eqP; rewrite -addr_eq0 -mulr2n => /eqP.
   rewrite -matrixP => /(_ ord0 ord0).
   rewrite !mxE eq_refl /= => /eqP.
@@ -112,7 +113,7 @@ Proof.
 Qed.
 
 Lemma repr1 n (rho : reprS n 1) :
-  mx_rsim rho triv_mx_repr \/ mx_rsim rho sign_mx_repr.
+  mx_rsim rho triv_repr \/ mx_rsim rho sign_repr.
 Proof.
   case: n rho => [| n] rho; first by left; exact: repr1_S0.
   have Hs0 : eltr n 0 \in [set: 'S_n.+1] by [].
@@ -135,7 +136,7 @@ Proof.
     rewrite big_cons repr_mxM ?inE // IHw mulmx1.
     exact: Heltr.
   - right; apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
-    rewrite /sign_mx_repr /= => g _; rewrite mul1mx mulmx1.
+    rewrite /sign_mx_repr /= => g _; rewrite mul1mx mulmx1 /sign_mx.
     have Heltr i : (i < n)%N -> rho (eltr _ i) = -1.
       elim: i => [| i IHi] Hi.
         by rewrite -/M (mx11_scalar M) HM -[RHS]scaleN1r -scalemx1.
