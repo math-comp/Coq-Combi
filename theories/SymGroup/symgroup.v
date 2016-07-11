@@ -48,6 +48,17 @@ Proof.
   by rewrite ieqi1F.
 Qed.
 
+
+Lemma permS0 (g : 'S_0) : g = 1%g.
+Proof. by rewrite -permP => x; case x. Qed.
+Lemma permS1 (g : 'S_1) : g = 1%g.
+Proof.
+rewrite -permP => x; case x => i Hi.
+apply val_inj => /=; rewrite permE.
+case: (g (Ordinal Hi)) => a Ha /=.
+by move: Hi Ha; rewrite !ltnS !leqn0 => /eqP -> /eqP ->.
+Qed.
+
 Section Codes.
 
 Definition code := [qualify a c : seq nat |
@@ -1613,3 +1624,5 @@ Proof.
   - apply/eqP; rewrite /eltr; apply: tperm_braid; by rewrite /eq_op /= !inordK.
   - apply/eqP; rewrite /eltr; apply: tpermC; by rewrite /eq_op /= !inordK.
 Qed.
+
+

@@ -52,6 +52,9 @@ Proof.
 Qed.
 Definition triv_mx_repr : reprS n 1 := MxRepresentation triv_mx_reprP.
 
+Lemma triv_irr : mx_irreducible triv_mx_repr.
+Proof. apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
+
 Lemma sign_mx_reprP : mx_repr [set: 'S_n] sign_mx_reprf.
 Proof.
   split; first by rewrite /= odd_perm1.
@@ -71,19 +74,12 @@ Proof.
 Qed.
 Definition signed_mx_repr : reprS n d := MxRepresentation signed_mx_reprP.
 
+Lemma sign_irr : mx_irreducible sign_mx_repr.
+Proof. apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
+
 End DefTrivSign.
 Arguments triv_mx_repr [n].
 Arguments sign_mx_repr [n].
-
-Lemma permS0 (g : 'S_0) : g = 1%g.
-Proof. by rewrite -permP => x; case x. Qed.
-Lemma permS1 (g : 'S_1) : g = 1%g.
-Proof.
-rewrite -permP => x; case x => i Hi.
-apply val_inj => /=; rewrite permE.
-case: (g (Ordinal Hi)) => a Ha /=.
-by move: Hi Ha; rewrite !ltnS !leqn0 => /eqP -> /eqP ->.
-Qed.
 
 Lemma row_free1 : row_free (1 : 'M[algC]_1).
 Proof. by apply/row_freeP; exists 1; rewrite mul1mx. Qed.
@@ -155,4 +151,3 @@ Proof.
       rewrite mulmxE mulN1r //.
     exact: opprK.
 Qed.
-
