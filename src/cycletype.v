@@ -650,9 +650,14 @@ Proof.
   by rewrite /= /cycle_type_seq pcy.
 Qed.
 
+End Permofcycletype.
 
-Lemma perm_of_partn (tc : intpartn #|T|) :
-  exists s, cycle_type s = tc.
+
+Section Classes.
+
+Variable tc : intpartn #|T|.
+
+Lemma perm_of_partn_exists : exists s, cycle_type s = tc.
 Proof.
   move: (valP (intpartn_cast (esym (cardsT T)) tc)).
   rewrite intpartn_castE => /ex_set_parts_shape [P /perm_of_partsE /= ct shape].
@@ -660,6 +665,50 @@ Proof.
   by exact: shape.
 Qed.
 
-End Permofcycletype.
+Lemma perm_of_partn_set : {s | cycle_type s == tc}.
+Proof. by apply sigW; have:= perm_of_partn_exists => [[p <-]]; exists p. Qed.
+
+Definition perm_of_partn := val perm_of_partn_set.
+Lemma perm_of_partnP : cycle_type perm_of_partn = tc.
+Proof.
+  rewrite /perm_of_partn.
+  by case: perm_of_partn_set => s /= /eqP ->.
+Qed.
+
+Definition class_of_partn := class (perm_of_partn) [set: {perm T}].
+
+Lemma class_of_partnP s :
+  (cycle_type s == tc) = (s \in class_of_partn).
+Proof.
+  rewrite /class_of_partn -perm_of_partnP /class eq_sym.
+  by apply/classes_of_permP/idP.
+Qed.
+
+End Classes.
+
+Lemma class_of_partn_inj : injective class_of_partn.
+Proof.
+  rewrite /class_of_partn => t1 t2 /class_eqP.
+  rewrite -class_of_partnP => /eqP <-.
+  by rewrite perm_of_partnP.
+Qed.
+
+Lemma imset_class_of_partn :
+  [set class_of_partn p | p in setT] = classes [set: {perm T}].
+Proof.
+  rewrite -setP => C.
+  apply/imsetP/imsetP => [] [s _ Hs].
+  - by exists (perm_of_partn s); rewrite // inE.
+  - exists (cycle_type s) => //.
+    by rewrite Hs; apply /class_eqP; rewrite -class_of_partnP.
+Qed.
+
+Lemma card_class_perm :
+  #|classes [set: {perm T}]| = #|{: intpartn #|T| }|.
+Proof.
+  rewrite -imset_class_of_partn card_imset; last exact: class_of_partn_inj.
+  by apply eq_card => s; rewrite !inE.
+Qed.
 
 End cycle_type.
+
