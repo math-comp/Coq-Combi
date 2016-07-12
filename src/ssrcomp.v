@@ -16,6 +16,16 @@ Variable T: finType.
 
 Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
 
+
+Lemma enum_eq0P (s : {set T}):
+  reflect (enum s = [::]) (s == set0).
+Proof.
+  apply (iffP eqP) => [-> |]; first exact: enum_set0.
+  case: (set_0Vmem s) => [-> //| [x]].
+  rewrite -mem_enum => Hx Hnil.
+  by rewrite Hnil in_nil in Hx.
+Qed.
+
 Lemma big_enum (S : {set T}) :
   \big[op/idx]_(s in S) F s = \big[op/idx]_(s <- enum S) F s.
 Proof. by rewrite /index_enum big_filter; apply congr_big. Qed.
@@ -61,15 +71,6 @@ Proof.
   - move=> [i ->]; exact: mem_pcycle.
 Qed.
 
-Lemma enum_eq0P (s : {set T}):
-  reflect (enum s = [::]) (s == set0).
-Proof.
-  apply (iffP eqP) => [-> |]; first exact: enum_set0.
-  case: (set_0Vmem s) => [-> //| [x]].
-  rewrite -mem_enum => Hx Hnil.
-  by rewrite Hnil in_nil in Hx.
-Qed.
-
 End SSRComplements.
 
 Section Uniq.
@@ -108,33 +109,11 @@ Implicit Types (s t : {perm T}) (n : nat).
 Definition parts_shape (s : {set {set T}}) :=
   sort geq [seq #|(x: {set T})| | x <- enum s].
 
-Lemma is_partn_sortedE sh :
-  (is_part sh) = (sorted geq sh) && (0 \notin sh).
-Proof.
-  apply/idP/andP => [Hpart|].
-  - split.
-    + apply/sorted1P => i _.
-      by move: Hpart=> /is_partP [_]; apply.
-    + move: Hpart; elim: sh => [// | s0 sh IHsh] Hpart.
-      rewrite inE negb_or eq_sym.
-      have /= -> /= := (part_head_non0 Hpart).
-      by apply IHsh; move: Hpart => /andP [].
-  - move=> [/sorted1P Hsort Hnotin].
-    apply/is_partP; split => [| i].
-    + case: sh Hnotin {Hsort} => [// | s0 sh].
-      rewrite inE negb_or eq_sym => /andP [Hs0 Hnot] /=.
-      elim: sh s0 Hs0 Hnot => [// | s1 sh IHsh] s0 _.
-      rewrite inE negb_or eq_sym /= => /andP [].
-      exact: IHsh.
-    + case: (ltnP i.+1 (size sh)) => Hsz; first exact: Hsort.
-      by rewrite (nth_default _ Hsz).
-Qed.
-
 Lemma parts_shapeP (s : {set {set T}}) D :
   partition s D -> is_part_of_n #|D| (parts_shape s).
 Proof.
   rewrite /parts_shape => /and3P [/eqP Hcov Htriv Hnon0].
-  rewrite /is_part_of_n /= is_partn_sortedE.
+  rewrite /is_part_of_n /= is_part_sortedE.
   apply/and3P; split.
   - have:= perm_sort geq  [seq #|(x: {set T})| | x <- enum s].
     move=> /perm_eqlP/perm_sumn ->.
@@ -198,7 +177,7 @@ Lemma ex_set_parts_shape (A : {set T}) sh :
   is_part_of_n #|A| sh ->
   exists2 P, partition P A & parts_shape P = sh.
 Proof.
-rewrite /is_part_of_n /= is_partn_sortedE => /andP [/eqP shsum /andP [shsort]].
+rewrite /is_part_of_n /= is_part_sortedE => /andP [/eqP shsum /andP [shsort]].
 move=> /(ex_parts_shape shsum) [P [Puniq Ppart Psh]].
 exists [set X in P]; first exact: Ppart.
 apply/(eq_sorted geq_trans anti_geq).
