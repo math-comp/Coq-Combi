@@ -225,7 +225,29 @@ Section Partition.
     then (sh0 >= head 1 sh') && (is_part sh')
     else true.
 
-  (** Two equivalent definitions *)
+  (** Partitions don't have 0 parts *)
+  Lemma part_head0F sh : head 1 sh == 0 -> is_part sh = false.
+  Proof.
+    elim: sh => [//= | sh0 sh IHsh] /= /eqP ->.
+    rewrite leqn0; by case (boolP (head 1 sh == 0)).
+  Qed.
+
+  Lemma part_head_non0 sh : is_part sh -> head 1 sh != 0.
+  Proof.
+    elim: sh => [//= | sh0 sh IHsh] /= /andP [] Head.
+    move/IHsh; apply: contraLR; rewrite !negbK => /eqP Hsh0.
+    by move: Head; rewrite Hsh0 leqn0.
+  Qed.
+
+  Lemma nth_part_non0 sh i : is_part sh -> i < size sh -> nth 0 sh i != 0.
+  Proof.
+    elim: i sh => [//= | i IHi] [//=| s0 s].
+      by move=> /part_head_non0.
+    move=> /= /andP [] _.
+    exact: IHi.
+  Qed.
+
+  (** Three equivalent definitions *)
   Lemma is_partP sh :
     reflect (last 1 sh != 0 /\ forall i, (nth 0 sh i) >= nth 0 sh i.+1) (is_part sh).
   Proof.
@@ -257,7 +279,29 @@ Section Partition.
       exact: H.
   Qed.
 
-(** Sub-partitions *)
+  Lemma is_part_sortedE sh :
+    (is_part sh) = (sorted geq sh) && (0 \notin sh).
+  Proof.
+    apply/idP/andP => [Hpart|].
+    - split.
+      + apply/sorted1P => i _.
+        by move: Hpart=> /is_partP [_]; apply.
+      + move: Hpart; elim: sh => [// | s0 sh IHsh] Hpart.
+        rewrite inE negb_or eq_sym.
+        have /= -> /= := (part_head_non0 Hpart).
+        by apply IHsh; move: Hpart => /andP [].
+    - move=> [/sorted1P Hsort Hnotin].
+      apply/is_partP; split => [| i].
+      + case: sh Hnotin {Hsort} => [// | s0 sh].
+        rewrite inE negb_or eq_sym => /andP [Hs0 Hnot] /=.
+        elim: sh s0 Hs0 Hnot => [// | s1 sh IHsh] s0 _.
+        rewrite inE negb_or eq_sym /= => /andP [].
+        exact: IHsh.
+      + case: (ltnP i.+1 (size sh)) => Hsz; first exact: Hsort.
+        by rewrite (nth_default _ Hsz).
+  Qed.
+
+  (** Sub-partitions *)
 
   Lemma is_part_consK l0 sh : is_part (l0 :: sh) -> is_part sh.
   Proof. by move=> /= /andP []. Qed.
@@ -307,28 +351,6 @@ Section Partition.
     apply/eqP; apply (eq_from_nth (x0 := 0)).
     - exact: part_nth_len_eq.
     - move=> i _; exact: H.
-  Qed.
-
-  (** Partitions don't have 0 parts *)
-  Lemma part_head0F sh : head 1 sh == 0 -> is_part sh = false.
-  Proof.
-    elim: sh => [//= | sh0 sh IHsh] /= /eqP ->.
-    rewrite leqn0; by case (boolP (head 1 sh == 0)).
-  Qed.
-
-  Lemma part_head_non0 sh : is_part sh -> head 1 sh != 0.
-  Proof.
-    elim: sh => [//= | sh0 sh IHsh] /= /andP [] Head.
-    move/IHsh; apply: contraLR; rewrite !negbK => /eqP Hsh0.
-    by move: Head; rewrite Hsh0 leqn0.
-  Qed.
-
-  Lemma nth_part_non0 sh i : is_part sh -> i < size sh -> nth 0 sh i != 0.
-  Proof.
-    elim: i sh => [//= | i IHi] [//=| s0 s].
-      by move=> /part_head_non0.
-    move=> /= /andP [] _.
-    exact: IHi.
   Qed.
 
   (** Partitions and sumn *)
