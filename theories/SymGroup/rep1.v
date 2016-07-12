@@ -43,6 +43,9 @@ Definition sign_mx (g : 'S_n) : 'M[algC]_1 :=
   if odd_perm g then -1 else 1.
 Definition signed_mx (g : 'S_n) : 'M[algC]_d :=
   if odd_perm g then -(rho g) else rho g.
+Definition nat_mx (g : 'S_n) : 'M[algC]_n :=
+  perm_mx g.
+
 
 Lemma triv_mx_repr : mx_repr [set: 'S_n] triv_mx.
 Proof.
@@ -63,6 +66,9 @@ Proof.
 Qed.
 Canonical sign_repr : reprS n 1 := MxRepresentation sign_mx_repr.
 
+Lemma sign_irr : mx_irreducible sign_repr.
+Proof. apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
+
 Lemma signed_mx_repr : mx_repr [set: 'S_n] signed_mx.
 Proof.
   rewrite /signed_mx; split; first by rewrite /= odd_perm1 repr_mx1.
@@ -72,8 +78,12 @@ Proof.
 Qed.
 Canonical signed_repr : reprS n d := MxRepresentation signed_mx_repr.
 
-Lemma sign_irr : mx_irreducible sign_repr.
-Proof. apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
+Lemma nat_mx_repr : mx_repr [set: 'S_n] nat_mx.
+Proof.
+  rewrite /nat_mx; split; first exact: perm_mx1.
+  move=> g1 g2 _ _; exact: perm_mxM.
+Qed.
+Canonical nat_repr : reprS n n := MxRepresentation nat_mx_repr.
 
 
 End DefTrivSign.
