@@ -85,7 +85,8 @@ endif
 VFILES:=src/cycletype.v\
   src/ssrcomp.v\
   src/cycles.v\
-  src/bij.v
+  src/bij.v\
+  src/reprS2.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))

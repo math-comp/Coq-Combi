@@ -39,32 +39,6 @@ Qed.
 
 Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_partn s).
 
-
-(* Are the following definition and two lemmas really useful ? *)
-(*Definition card_support_cycles (s : {perm T}) :=
-  [seq #|(C : {set T})| | C in support_cycles s].
-
-Lemma cycle_type_dec (s : {perm T}) :
-  let l := sort geq (card_support_cycles s) in
-  cycle_type_seq (s : {perm T}) = l ++ (nseq (#|T| - sumn l) 1).
-Proof.
-  rewrite /=.
-  have := perm_sort geq (card_support_cycles s) => /perm_eqlP /perm_sumn ->.
-  rewrite /card_support_cycles support_cycle_dec.
-  rewrite /cycle_type_seq/parts_shape.
-Admitted.
-
-Lemma support_cycle_type s t :
-  perm_eq (card_support_cycles s) (card_support_cycles t) ->
-    cycle_type s = cycle_type t.
-Proof.
-  move=> Heq; apply val_inj; rewrite /= !cycle_type_dec.
-  rewrite (_ : sort geq (card_support_cycles s) =
-               sort geq (card_support_cycles t)) //.
-  by apply/perm_sort_geq.
-Qed.
-*)
-
 Lemma conjg_cycle s a :
   (<[s]> :^ a = <[s ^ a]>)%g.
 Proof.
@@ -563,7 +537,7 @@ Qed.
 Definition perm_of_parts (P : {set {set T}}) :=
   (\prod_(C in [set cycle_of_set s | s in [set X in P |#|X|>1]]) C)%g.
 
-Lemma bla (P : {set {set T}}) :
+Lemma supports_cycle_of_set (P : {set {set T}}) :
   [set support (cycle_of_set s) | s in [set X in P | 1 < #|X| ]] =
   [set X in P | 1 < #|X|].
 Proof.
@@ -577,7 +551,7 @@ Lemma disj_perm_of_parts (P : {set {set T}}):
   disjoint_supports (T:=T) [set cycle_of_set s| s in [set X0 in P | 1 < #|X0|]].
 Proof.
   move => Hpart; split => [|C D].
-  - rewrite -imset_comp bla.
+  - rewrite -imset_comp supports_cycle_of_set.
     apply /trivIsetP => A B; rewrite !inE.
     move => /andP [AinP _] /andP [BinP _].
     by move: Hpart => /and3P [_ /trivIsetP /(_ A B AinP BinP) ].
@@ -605,7 +579,7 @@ Proof.
         move=> C D /imsetP [c]; rewrite inE => /andP [_ cardc ->{C}].
         move=>     /imsetP [d]; rewrite inE => /andP [_ cardd ->{D}].
         by rewrite !support_cycle_of_set // => ->.
-      rewrite -imset_comp bla => /bigcupP.
+      rewrite -imset_comp supports_cycle_of_set => /bigcupP.
       move=> /exists_inP; rewrite -[X in (is_true X) -> _]negbK.
       have xinP : x \in cover P by rewrite (cover_partition Hpart).
       have:= xinP; rewrite -mem_pblock => xPblock.
