@@ -20,7 +20,10 @@ Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
 Section StdRepr.
-
+(*This section can be moved into the rep1 file, and generalised for all n easily*)
+(*To show: \rank trivline = 1*)
+(*The standard representation is irreducible*)  
+  
 Notation natS3 := (nat_repr 3).
   
 Definition trivline : 'M[algC]_(3,3) :=
@@ -97,6 +100,15 @@ Proof.
   by move=> /(_ rGirr).
 Qed.
 
+Lemma degree_std : \rank std_mod = 2.
+Proof.
+  move /mxdirectP : (std_mod_direct) => /=. 
+  rewrite std_mod_sum mxrank1.
+  rewrite (_: \rank trivline = 1%N).
+  - by rewrite add1n => /eqP; rewrite eqSS => /eqP <-.
+  - admit.
+Admitted.
+
 End StdRepr.
 
 Local Open Scope ring_scope.
@@ -115,25 +127,30 @@ Qed.
 
 Lemma std_sign_nrsim : ~ mx_rsim sign_repr std_repr.
 Proof.
-  admit.
-Admitted.
+  by move=> /mxrank_rsim; rewrite degree_std.
+Qed.
 
-Lemma char_sign_std_neq : cfRepr sign_repr != cfRepr std_repr.
+Lemma char_std_sign_neq : cfRepr sign_repr != cfRepr std_repr.
 Proof.
-  admit.
-Admitted.
+  by apply /cfRepr_rsimP; exact: std_sign_nrsim.
+Qed.
+
+Lemma std_triv_nrsim : ~ mx_rsim triv_repr std_repr.
+Proof.
+  by move=> /mxrank_rsim; rewrite degree_std.
+Qed.
+
 
 Lemma char_triv_std_neq : cfRepr triv_repr != cfRepr std_repr.
 Proof.
-  admit.
-Admitted.
-
+  by apply /cfRepr_rsimP; exact: std_triv_nrsim.
+Qed.
 
 Lemma perm_eq_char_S3 :
   perm_eq [:: cfRepr triv_repr; cfRepr sign_repr; cfRepr std_repr] (irr [set: 'S_3]).
 Proof.
   have Huniq : uniq [:: cfRepr (triv_repr (n := 3)); cfRepr sign_repr; cfRepr std_repr].
-    rewrite /= andbT !inE char_sign_std_neq andbT; apply /norP; split.
+    rewrite /= andbT !inE char_std_sign_neq andbT; apply /norP; split.
     - by apply/cfRepr_rsimP; exact: triv_sign_not_sim.
     - by exact: char_triv_std_neq.
   apply uniq_perm_eq => //; first by apply free_uniq; exact: irr_free.
