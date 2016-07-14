@@ -3,6 +3,7 @@ From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice f
 From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm.
 From mathcomp Require Import fintype tuple finfun bigop prime ssralg poly finset.
 From mathcomp Require Import fingroup morphism perm automorphism quotient finalg action.
+From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum ssralg pgroup.
 From mathcomp Require Import presentation all_character.
 
@@ -18,7 +19,7 @@ Unset Printing Implicit Defensive.
 Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
-Section Repr21.
+Section StdRepr.
 
 Notation natS3 := (nat_repr 3).
   
@@ -84,7 +85,6 @@ Qed.
 
 Definition std_repr := submod_repr std_modP.
 
-
 Lemma std_irr : cfRepr (std_repr) \in irr [set: 'S_3].
 Proof.
   rewrite irrEchar cfRepr_char andTb.
@@ -93,7 +93,69 @@ Admitted.
 
 Lemma std_irreducible : mx_irreducible std_repr.
 Proof.
-  admit.
-Admitted.  
+  move /irr_reprP : std_irr => [rG rGirr /eqP /cfRepr_rsimP /mx_rsim_sym /mx_rsim_irr].  
+  by move=> /(_ rGirr).
+Qed.
 
-End Repr21.
+End StdRepr.
+
+Local Open Scope ring_scope.
+
+Lemma NirrS3 : Nirr [set: 'S_3] = 3.
+Proof. by rewrite NirrSn card_intpartn. Qed.
+
+Lemma IirrS3_non0 (i : Iirr [set: 'S_3]%G) :
+  i != 0 -> (i == cast_ord (esym NirrS3) 1)||(i == cast_ord (esym NirrS3) (@Ordinal 3 2 isT)).
+Proof.
+  move=> in0; case: (boolP (_ == _)) => /= [|in1]; first by [].
+  apply /eqP; apply val_inj => /=.
+  case: i in0 in1 => [[|[|i]]] //=; rewrite NirrS3.
+  by rewrite !ltnS leqn0 => /eqP ->.
+Qed.
+
+Lemma std_sign_nrsim : ~ mx_rsim sign_repr std_repr.
+Proof.
+  admit.
+Admitted.
+
+Lemma char_sign_std_neq : cfRepr sign_repr != cfRepr std_repr.
+Proof.
+  admit.
+Admitted.
+
+Lemma char_triv_std_neq : cfRepr triv_repr != cfRepr std_repr.
+Proof.
+  admit.
+Admitted.
+
+
+Lemma perm_eq_char_S3 :
+  perm_eq [:: cfRepr triv_repr; cfRepr sign_repr; cfRepr std_repr] (irr [set: 'S_3]).
+Proof.
+  have Huniq : uniq [:: cfRepr (triv_repr (n := 3)); cfRepr sign_repr; cfRepr std_repr].
+    rewrite /= andbT !inE char_sign_std_neq andbT; apply /norP; split.
+    - by apply/cfRepr_rsimP; exact: triv_sign_not_sim.
+    - by exact: char_triv_std_neq.
+  apply uniq_perm_eq => //; first by apply free_uniq; exact: irr_free.
+  apply leq_size_perm => //.
+  move=> i; rewrite !inE=> /orP [/eqP -> | /orP [] /eqP ->]; apply/irr_reprP.
+  - by exists (Representation triv_repr); first exact: triv_irr.
+  - by exists (Representation sign_repr); first exact: sign_irr.
+  - by exists (Representation std_repr); first exact: std_irreducible.                     
+  - have:= NirrSn 3; rewrite card_intpartn /=.
+    have -> : intpartn_nb 3 = 3 by [].
+    by rewrite size_tuple /= => ->.
+Qed.
+
+
+Lemma repr_S3 (rho : representation [fieldType of algC] [set: 'S_3]) :
+  mx_irreducible rho -> mx_rsim rho triv_repr \/ mx_rsim rho sign_repr \/ mx_rsim rho std_repr.
+Proof.
+  move=> Hirr.
+  have : cfRepr rho \in (irr [set: 'S_3]).
+    apply/irr_reprP; by exists rho.
+  by rewrite -(perm_eq_mem perm_eq_char_S3) !inE =>
+    /orP [/cfRepr_rsimP|/orP []/cfRepr_rsimP]; [left | right;left | right;right].
+Qed.
+
+
