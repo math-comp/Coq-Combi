@@ -84,8 +84,10 @@ Qed.
 
 Definition std_repr := submod_repr std_modP.
 
+
 Lemma std_irr : cfRepr (std_repr) \in irr [set: 'S_3].
 Proof.
+  rewrite irrEchar cfRepr_char andTb.
   admit.
 Admitted.
 
