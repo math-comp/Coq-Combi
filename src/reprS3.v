@@ -47,23 +47,23 @@ Proof.
   by move: i0jneq; rewrite -i0jeq permK eqxx.
 Qed.
 
-addsmx_module
-  
-Definition stdS3 := val_factmod 
+Definition trivline_sq :'M_3 := (trivline + (0:'M[algC]_(2,3)))%MS.
+
+Definition trivline_sqE : mxmodule natS3 trivline_sq.
+Proof.
+  apply: addsmx_module; [exact: trivlineE|exact: mxmodule0].
+Qed.
                       
-Lemma stdP : mxsplits natS3 1%:M trivline.
+Lemma stdP : mxsplits natS3 1%:M trivline_sq.
 Proof.
   apply mx_Maschke => /=.
-  - rewrite /= /pgroup cardsT /= -natf_neq0 card_Sn.
-    by have /charf0P := Cchar => ->; rewrite -lt0n fact_gt0.
-  - by exact: trivlineE.
+  - by exact: algC'G.
+  - by exact: trivline_sqE.
   - by exact: submx1.
 Qed.
 
-Definition std_mod : 'M[algC]_(3,3).
-  case stdP => W _ _ _.
-  exact: W.
-Defined.
+Definition std_mod : 'M[algC]_(3,3) :=
+  let: MxSplits W _ _ _ := stdP in W.
 
 Lemma std_modP : mxmodule natS3 std_mod.
 Proof.
@@ -71,20 +71,24 @@ Proof.
   by case stdP => W.
 Qed.
 
-Lemma std_mod_sum : (trivline + std_mod :=: 1%:M)%MS.
+Lemma std_mod_sum : (trivline_sq + std_mod :=: 1%:M)%MS.
 Proof.
   rewrite /std_mod.
   by case stdP => W.
 Qed.
+  
+Lemma std_mod_direct : mxdirect (std_mod + trivline_sq).
+Proof.
+  rewrite /std_mod.
+  case stdP => W _ _ /=. rewrite mxdirectC.
+
+
+
 
   
-Lemma std_mod_direct : mxdirect (trivline + std_mod).
-Proof.
-  rewrite /std_mod.
-  by case stdP => W.
-Qed.
+  admit.
+Admitted.
 
-(*Lemma std_simple : mxsimple natS3 std_mod.*)
 
 Definition std_repr := submod_repr std_modP.
 
@@ -102,11 +106,15 @@ Qed.
 
 Lemma degree_std : \rank std_mod = 2.
 Proof.
-  move /mxdirectP : (std_mod_direct) => /=. 
-  rewrite std_mod_sum mxrank1.
-  rewrite (_: \rank trivline = 1%N).
+   move /mxdirectP : (std_mod_direct) => /=.
+   rewrite std_mod_sum mxrank1 mxrank0 addn0.
+   rewrite (_: \rank trivline = 1%N).
   - by rewrite add1n => /eqP; rewrite eqSS => /eqP <-.
-  - admit.
+  - move: (rank_leq_row trivline).
+    case : (boolP (\rank trivline == 0)%N).
+    + rewrite mxrank_eq0.
+    admit.
+    admit.
 Admitted.
 
 End StdRepr.
