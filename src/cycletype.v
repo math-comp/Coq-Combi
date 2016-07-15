@@ -711,6 +711,7 @@ Proof.
     by rewrite -class_of_partnP cycle_type_of_conjg.
 Qed.
 
+End ClassFun.
 
 End cycle_type.
 
