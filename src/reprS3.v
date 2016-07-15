@@ -77,24 +77,26 @@ Proof.
   by case stdP => W.
 Qed.
   
-Lemma std_mod_direct : mxdirect (std_mod + trivline_sq).
+Lemma std_mod_direct : mxdirect (trivline_sq + std_mod).
 Proof.
-  rewrite /std_mod.
-  case stdP => W _ _ /=. rewrite mxdirectC.
-
-
-
-
-  
-  admit.
-Admitted.
-
+  rewrite /std_mod /=.
+  case stdP => W _ _ /=.
+  rewrite /trivline_sq.
+  move=> /mxdirectP /= H.
+  apply/mxdirectP => /=.
+  rewrite H mxrank0 addn0.
+  congr (_ + _)%N.
+  apply eqmx_rank.
+  apply/eqmxP.
+  exact: addsmx0.
+Qed.
 
 Definition std_repr := submod_repr std_modP.
 
 Lemma std_irr : cfRepr (std_repr) \in irr [set: 'S_3].
 Proof.
   rewrite irrEchar cfRepr_char andTb.
+  rewrite cfdotE.
   admit.
 Admitted.
 
