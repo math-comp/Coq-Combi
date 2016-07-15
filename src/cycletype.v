@@ -710,5 +710,33 @@ Proof.
   by apply eq_card => s; rewrite !inE.
 Qed.
 
+From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum.
+From mathcomp Require Import presentation all_character.
+
+Import GroupScope GRing.Theory Num.Theory.
+Local Open Scope ring_scope.
+
+Section ClassFun.
+
+Variable tc : intpartn #|T|.
+
+Definition classfun_part :=
+  cfun_indicator [set: {perm T}] (class_of_partn tc).
+
+Lemma classfun_partE s :
+  (classfun_part s) = (cycle_type s == tc)%:R.
+Proof.
+  rewrite /classfun_part cfunElock genGid inE /=.
+  suff -> : s ^: [set: {perm T}] \subset class_of_partn tc = (cycle_type s == tc).
+    by []. (* Better way to write that ? *)
+  apply/idP/idP.
+  - rewrite class_of_partnP => /subsetP; apply.
+    apply /imsetP; exists 1%g; first by rewrite inE.
+    by rewrite conjg1.
+  - move=> /eqP <-; apply/subsetP => t /imsetP [c] _ -> {t}.
+    by rewrite -class_of_partnP cycle_type_of_conjg.
+Qed.
+
+
 End cycle_type.
 
