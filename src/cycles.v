@@ -292,6 +292,7 @@ Proof.
   exact: disjoint_cycle_dec.
 Qed.
 
+(*This lemma is not used later*)
 Lemma restr_perm_inj s :
   {in psupport s &, injective ((restr_perm (T:=T))^~ s)}.
 Proof.
