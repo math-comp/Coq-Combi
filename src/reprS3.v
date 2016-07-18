@@ -53,7 +53,7 @@ Definition trivline_sqE : mxmodule natS3 trivline_sq.
 Proof.
   apply: addsmx_module; [exact: trivlineE|exact: mxmodule0].
 Qed.
-                      
+
 Lemma stdP : mxsplits natS3 1%:M trivline_sq.
 Proof.
   apply mx_Maschke => /=.
@@ -76,7 +76,7 @@ Proof.
   rewrite /std_mod.
   by case stdP => W.
 Qed.
-  
+
 Lemma std_mod_direct : mxdirect (trivline_sq + std_mod).
 Proof.
   rewrite /std_mod /=.
@@ -93,10 +93,35 @@ Qed.
 
 Definition std_repr := submod_repr std_modP.
 
+Definition std_rep := Representation std_repr.
+Definition trivline_rep := Representation (submod_repr (trivline_sqE)).
+
+Lemma sum : Representation natS3 = dadd_grepr std_rep trivline_rep.
+Proof.
+  admit.
+Admitted.
+
+Lemma norm_natchar : '[cfRepr (Representation natS3)] == 2%:R.
+Proof.
+  admit.
+Admitted.
+  
+Lemma chartrivline : cfRepr trivline_rep = 'chi_0.
+Proof.
+  admit.
+Admitted.
+
+Lemma cfdot_triv : '['chi_0, cfRepr std_rep] = 0.
+Proof.
+  admit.
+Admitted.
+
 Lemma std_irr : cfRepr (std_repr) \in irr [set: 'S_3].
 Proof.
   rewrite irrEchar cfRepr_char andTb.
-  rewrite cfdotE.
+  move: norm_natchar; rewrite sum cfRepr_dadd cfdotDl !cfdotDr addrA.
+  rewrite chartrivline /= cfnorm_irr ['[_,'chi_0]]cfdotC cfdot_triv.
+
   admit.
 Admitted.
 
@@ -114,9 +139,10 @@ Proof.
   - by rewrite add1n => /eqP; rewrite eqSS => /eqP <-.
   - move: (rank_leq_row trivline).
     case : (boolP (\rank trivline == 0)%N).
-    + rewrite mxrank_eq0.
+    + rewrite mxrank_eq0 /trivline => /eqP.
     admit.
-    admit.
+    + rewrite -lt0n=> lt0 leq1; apply: anti_leq.
+      by rewrite lt0 leq1.
 Admitted.
 
 End StdRepr.
