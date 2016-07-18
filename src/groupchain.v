@@ -20,6 +20,11 @@ Import GroupScope GRing.Theory Num.Theory.
 
 Variables (n m : nat).
 
+Local Notation ct := cycle_type.
+Local Notation npart := (intpartn_cast (card_ord n)).
+Local Notation mpart := (intpartn_cast (card_ord m)).
+Local Notation partmn := (intpartn_cast (esym (card_ord (m+n)))).
+
 Definition pval (s : 'S_m * 'S_n) :=
   fun (x : 'I_(m+n)) => let y := split x in
   match y with
@@ -50,7 +55,17 @@ Admitted.
 Definition unionpart l1 l2 := IntPartN (unionpartvalE l1 l2).
 
 Lemma cycle_typep s l1 l2:
- cycle_type s.1 = l1 -> cycle_type s.2 = l2 -> cycle_type (p s) = unionpart l1 l2.  
+  ct s.1 = l1 ->
+  ct s.2 = l2 ->
+  (cycle_type (p s)) = partmn (unionpart (mpart l1) (npart l2)).  
+Proof.
+  admit.
+Admitted.
 
-  
+Lemma classfunp s l:
+  classfun_part l (p s) = ((l == partmn (unionpart (mpart (ct s.1)) (npart (ct s.2))))%:R)%R.
+Proof.
+  admit.
+Admitted.
+
   
