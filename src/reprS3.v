@@ -91,46 +91,6 @@ Proof.
   exact: addsmx0.
 Qed.
 
-Definition std_repr := submod_repr std_modP.
-
-Definition std_rep := Representation std_repr.
-Definition trivline_rep := Representation (submod_repr (trivline_sqE)).
-
-Lemma sum : Representation natS3 = dadd_grepr std_rep trivline_rep.
-Proof.
-  admit.
-Admitted.
-
-Lemma norm_natchar : '[cfRepr (Representation natS3)] == 2%:R.
-Proof.
-  admit.
-Admitted.
-  
-Lemma chartrivline : cfRepr trivline_rep = 'chi_0.
-Proof.
-  admit.
-Admitted.
-
-Lemma cfdot_triv : '['chi_0, cfRepr std_rep] = 0.
-Proof.
-  admit.
-Admitted.
-
-Lemma std_irr : cfRepr (std_repr) \in irr [set: 'S_3].
-Proof.
-  rewrite irrEchar cfRepr_char andTb.
-  move: norm_natchar; rewrite sum cfRepr_dadd cfdotDl !cfdotDr addrA.
-  rewrite chartrivline /= cfnorm_irr ['[_,'chi_0]]cfdotC cfdot_triv.
-
-  admit.
-Admitted.
-
-Lemma std_irreducible : mx_irreducible std_repr.
-Proof.
-  move /irr_reprP : std_irr => [rG rGirr /eqP /cfRepr_rsimP /mx_rsim_sym /mx_rsim_irr].  
-  by move=> /(_ rGirr).
-Qed.
-
 Lemma degree_std : \rank std_mod = 2.
 Proof.
    move /mxdirectP : (std_mod_direct) => /=.
@@ -144,6 +104,56 @@ Proof.
     + rewrite -lt0n=> lt0 leq1; apply: anti_leq.
       by rewrite lt0 leq1.
 Admitted.
+
+Definition std_repr := submod_repr std_modP.
+
+Definition std_rep := Representation std_repr.
+Definition trivline_rep := Representation (submod_repr (trivline_sqE)).
+
+Lemma std_rep_sum : mx_rsim natS3 (dadd_grepr trivline_rep std_rep).
+Proof.
+  apply (mx_rsim_trans (rG2 := submod_repr (mxmodule1 natS3))).
+  - by apply mx_rsim_sym; apply rsim_submod1.
+  - apply: (mx_rsim_dadd (mxmodule1 natS3) std_mod_sum).
+    + by exact: trivline_sqE.
+    + by exact: std_modP.
+    + (*This line should be cleaned using the correct version of std_mod_direct*)
+      rewrite /std_mod; by case stdP => W.
+    + by move => H0; apply mx_rsim_iso; exact: mx_iso_refl.
+    + by move => H0; apply mx_rsim_iso; exact: mx_iso_refl.
+Qed.
+
+Lemma norm_natchar : '[cfRepr (Representation natS3)] = 2%:R.
+Proof.
+  admit.
+Admitted.
+  
+Lemma chartrivline : cfRepr trivline_rep = 'chi_0.
+Proof.
+  rewrite -cfunP irr0 => s.
+  rewrite cfunE cfun1E !inE mulr1n /=.  
+  admit.
+Admitted.
+
+Lemma cfdot_triv : '['chi_0, cfRepr std_rep] = 0.
+Proof.
+  admit.
+Admitted.
+
+Lemma std_irr : cfRepr (std_repr) \in irr [set: 'S_3].
+Proof.
+  rewrite irrEchar cfRepr_char andTb.
+  move: norm_natchar; rewrite (cfRepr_sim std_rep_sum) cfRepr_dadd cfdotDl.
+  rewrite !cfdotDr addrA chartrivline /= cfnorm_irr.
+  rewrite ['[_,'chi_0]]cfdotC cfdot_triv conjC0 !addr0.
+  by rewrite (_: 2%:R = 1+1); first by move => /addrI /eqP -> //.
+Qed.
+
+Lemma std_irreducible : mx_irreducible std_repr.
+Proof.
+  move /irr_reprP : std_irr => [rG rGirr /eqP /cfRepr_rsimP /mx_rsim_sym /mx_rsim_irr].  
+  by move=> /(_ rGirr).
+Qed.
 
 End StdRepr.
 
