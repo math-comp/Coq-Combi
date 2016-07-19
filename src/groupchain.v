@@ -18,7 +18,34 @@ Unset Printing Implicit Defensive.
 
 Import GroupScope GRing.Theory Num.Theory.
 
-Variables (n m : nat).
+Section cfExtProd.
+(*
+Variables (gT aT : baseFinGroupType).        
+Variables (G : {set gT}) (H : {set aT}).
+
+Definition cfExtProd (f1 : 'CF(G)) (f2 : 'CF(H)):=
+  [ffun x : (gT*aT) => ((f1 x.1) * (f2 x.2))%R].
+
+Lemma cfExtProd_subproof f1 f2 : is_class_fun (G*H) (cfExtProd f1 f2).
+ *)
+
+Variables (m n : nat).
+
+Definition cfExtProd (f1 : 'CF([set: 'S_m])) (f2 : 'CF([set: 'S_n])):=
+  [ffun x : ('S_m*'S_n) => ((f1 x.1) * (f2 x.2))%R].
+
+Lemma cfExtProd_subproof f1 f2 : is_class_fun <<[set: 'S_m*'S_n]>> (cfExtProd f1 f2).
+Proof.
+  admit.
+Admitted.
+
+Canonical cf_of_cfExtProd f1 f2:= Classfun (cfExtProd_subproof f1 f2).
+
+Notation "u \* v" := (cfExtProd u v) : ring_scope.
+
+End cfExtProd.
+        
+Variables (m n: nat).
 
 Local Notation ct := cycle_type.
 Local Notation npart := (intpartn_cast (card_ord n)).
@@ -47,15 +74,62 @@ Proof.
   admit.
 Admitted.
 
-Lemma pmorph: {in [set: 'S_m*'S_n] &, {morph p : x y / x *y >-> x * y}}. 
+Lemma pmorphM: {in [set: 'S_m*'S_n] &, {morph p : x y / x *y >-> x * y}}. 
 Proof.
   admit.
 Admitted.
   
-Canonical morph_of_p := Morphism pmorph.
+Canonical morph_of_p := Morphism pmorphM.
 
 (*the image of 'S_m*'S_n via p endowed with a group structure of type 'S_(m+n)*)
 Definition split := p @* ('dom p).
+
+(*i1 and i2 are canonical injection from S_m and S_n to S_m*S_n*)
+Local Notation i1 := (@pairg1 (perm_of_finGroupType (ordinal_finType m))(perm_of_finGroupType
+            (ordinal_finType n))).
+Local Notation i2 := (@pair1g (perm_of_finGroupType (ordinal_finType m))(perm_of_finGroupType
+                                                                           (ordinal_finType n))).
+
+
+Definition p1 := p \o i1.
+
+Lemma p1morphM : {in [set: 'S_m] &, {morph p1 : x y / x *y >-> x * y}}.
+Proof.
+  admit.
+Admitted.
+
+Canonical porh_of_p1 := Morphism p1morphM.
+
+Definition p2 := p \o i2.
+
+Lemma p2morphM : {in [set: 'S_n] &, {morph p2 : x y / x *y >-> x * y}}.
+Proof.
+  admit.
+Admitted.
+
+Canonical porh_of_p2 := Morphism p2morphM.
+
+(*injm and injn are the images of 'S_m and 'S_n in S_(m+n) via p \o i1 and p \o i2*)
+Definition injm := p1@*('dom p1).
+Definition injn := p2@*('dom p2).
+
+
+
+Lemma isomp : isom [set: 'S_m*'S_n] split p.
+Proof.
+  admit.
+Admitted.
+
+Lemma isomp1 : isom [set: 'S_m] injm p1.
+Proof.
+  admit.
+Admitted.
+
+Lemma isomp2 : isom [set: 'S_n] injn (p \o i2).
+Proof.
+  admit.
+Admitted.
+
 
 Definition unionpartval (l1 : intpartn m) (l2 : intpartn n) := sort geq l1++l2.
 
@@ -84,5 +158,9 @@ Proof.
 Admitted.
 
 Lemma classfun_Res (l: intpartn #|'I_(m+n)|):
-  ('Res[split] (classfun_part l))%R = \sum_(x | (l == partmn (unionpart (mpart (x.1)) (npart (x.2)))))  (classfun_part x.1 * classfun_part x.2)%R. (*replace this using prod of repr*)
-
+  ('Res[split] (classfun_part l) =
+    cfIsom isomp (\sum_(x | (l == partmn (unionpart (mpart (x.1)) (npart (x.2)))))
+    cf_of_cfExtProd (classfun_part x.1)  (classfun_part x.2)))%R. 
+Proof.
+  admit.
+Admitted.
