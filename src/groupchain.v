@@ -1,7 +1,7 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype path.
 From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm.
-From mathcomp Require Import fintype tuple finfun bigop prime ssralg poly finset.
+From mathcomp Require Import fintype prime ssralg poly finset gproduct.
 From mathcomp Require Import fingroup morphism perm automorphism quotient finalg action.
 From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum ssralg pgroup.
@@ -42,6 +42,21 @@ Admitted.
 
 Definition p s :'S_(m+n) := perm (@pval_inj s).
 
+Lemma pM (s1 s2 : 'S_m*'S_n) : (p (s1*s2)%g) = (p s1)*(p s2)%g. 
+Proof.
+  admit.
+Admitted.
+
+Lemma pmorph: {in [set: 'S_m*'S_n] &, {morph p : x y / x *y >-> x * y}}. 
+Proof.
+  admit.
+Admitted.
+  
+Canonical morph_of_p := Morphism pmorph.
+
+(*the image of 'S_m*'S_n via p endowed with a group structure of type 'S_(m+n)*)
+Definition split := p @* ('dom p).
+
 Definition unionpartval (l1 : intpartn m) (l2 : intpartn n) := sort geq l1++l2.
 
 Lemma unionpartvalE l1 l2 : is_part_of_n (m+n) (unionpartval l1 l2).
@@ -68,4 +83,6 @@ Proof.
   admit.
 Admitted.
 
-  
+Lemma classfun_Res (l: intpartn #|'I_(m+n)|):
+  ('Res[split] (classfun_part l))%R = \sum_(x | (l == partmn (unionpart (mpart (x.1)) (npart (x.2)))))  (classfun_part x.1 * classfun_part x.2)%R. (*replace this using prod of repr*)
+
