@@ -29,7 +29,7 @@ Implicit Types (s t : {perm T}) (n : nat).
 
 Definition cycle_type_seq (s : {perm T}) := parts_shape (pcycles s).
 
-Lemma cycle_type_partn s:
+Lemma cycle_type_partCT s:
   is_part_of_n #|T| (cycle_type_seq s).
 Proof.
   rewrite /cycle_type_seq -cardsT; apply parts_shapeP.
@@ -37,7 +37,7 @@ Proof.
 Qed.
 
 
-Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_partn s).
+Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_partCT s).
 
 Lemma conjg_cycle s a :
   (<[s]> :^ a = <[s ^ a]>)%g.
@@ -631,7 +631,7 @@ Section Classes.
 
 Variable tc : intpartn #|T|.
 
-Lemma perm_of_partn_exists : exists s, cycle_type s = tc.
+Lemma perm_of_partCT_exists : exists s, cycle_type s = tc.
 Proof.
   move: (valP (intpartn_cast (esym (cardsT T)) tc)).
   rewrite intpartn_castE => /ex_set_parts_shape [P /perm_of_partsE /= ct shape].
@@ -639,48 +639,48 @@ Proof.
   by exact: shape.
 Qed.
 
-Lemma perm_of_partn_set : {s | cycle_type s == tc}.
-Proof. by apply sigW; have:= perm_of_partn_exists => [[p <-]]; exists p. Qed.
+Lemma perm_of_partCT_set : {s | cycle_type s == tc}.
+Proof. by apply sigW; have:= perm_of_partCT_exists => [[p <-]]; exists p. Qed.
 
-Definition perm_of_partn := val perm_of_partn_set.
-Lemma perm_of_partnP : cycle_type perm_of_partn = tc.
+Definition perm_of_partCT := val perm_of_partCT_set.
+Lemma perm_of_partCTP : cycle_type perm_of_partCT = tc.
 Proof.
-  rewrite /perm_of_partn.
-  by case: perm_of_partn_set => s /= /eqP ->.
+  rewrite /perm_of_partCT.
+  by case: perm_of_partCT_set => s /= /eqP ->.
 Qed.
 
-Definition class_of_partn := class (perm_of_partn) [set: {perm T}].
+Definition class_of_partCT := class (perm_of_partCT) [set: {perm T}].
 
-Lemma class_of_partnP s :
-  (cycle_type s == tc) = (s \in class_of_partn).
+Lemma class_of_partCTP s :
+  (cycle_type s == tc) = (s \in class_of_partCT).
 Proof.
-  rewrite /class_of_partn -perm_of_partnP /class eq_sym.
+  rewrite /class_of_partCT -perm_of_partCTP /class eq_sym.
   by apply/classes_of_permP/idP.
 Qed.
 
 End Classes.
 
-Lemma class_of_partn_inj : injective class_of_partn.
+Lemma class_of_partCT_inj : injective class_of_partCT.
 Proof.
-  rewrite /class_of_partn => t1 t2 /class_eqP.
-  rewrite -class_of_partnP => /eqP <-.
-  by rewrite perm_of_partnP.
+  rewrite /class_of_partCT => t1 t2 /class_eqP.
+  rewrite -class_of_partCTP => /eqP <-.
+  by rewrite perm_of_partCTP.
 Qed.
 
-Lemma imset_class_of_partn :
-  [set class_of_partn p | p in setT] = classes [set: {perm T}].
+Lemma imset_class_of_partCT :
+  [set class_of_partCT p | p in setT] = classes [set: {perm T}].
 Proof.
   rewrite -setP => C.
   apply/imsetP/imsetP => [] [s _ Hs].
-  - by exists (perm_of_partn s); rewrite // inE.
+  - by exists (perm_of_partCT s); rewrite // inE.
   - exists (cycle_type s) => //.
-    by rewrite Hs; apply /class_eqP; rewrite -class_of_partnP.
+    by rewrite Hs; apply /class_eqP; rewrite -class_of_partCTP.
 Qed.
 
 Lemma card_class_perm :
   #|classes [set: {perm T}]| = #|{: intpartn #|T| }|.
 Proof.
-  rewrite -imset_class_of_partn card_imset; last exact: class_of_partn_inj.
+  rewrite -imset_class_of_partCT card_imset; last exact: class_of_partCT_inj.
   by apply eq_card => s; rewrite !inE.
 Qed.
 
@@ -695,23 +695,66 @@ Section ClassFun.
 Variable tc : intpartn #|T|.
 
 Definition classfun_part :=
-  cfun_indicator [set: {perm T}] (class_of_partn tc).
+  cfun_indicator [set: {perm T}] (class_of_partCT tc).
 
 Lemma classfun_partE s :
   (classfun_part s) = (cycle_type s == tc)%:R.
 Proof.
   rewrite /classfun_part cfunElock genGid inE /=.
-  suff -> : s ^: [set: {perm T}] \subset class_of_partn tc = (cycle_type s == tc).
+  suff -> : s ^: [set: {perm T}] \subset class_of_partCT tc = (cycle_type s == tc).
     by []. (* Better way to write that ? *)
   apply/idP/idP.
-  - rewrite class_of_partnP => /subsetP; apply.
+  - rewrite class_of_partCTP => /subsetP; apply.
     apply /imsetP; exists 1%g; first by rewrite inE.
     by rewrite conjg1.
   - move=> /eqP <-; apply/subsetP => t /imsetP [c] _ -> {t}.
-    by rewrite -class_of_partnP cycle_type_of_conjg.
+    by rewrite -class_of_partCTP cycle_type_of_conjg.
 Qed.
 
 End ClassFun.
 
 End cycle_type.
+
+
+Coercion partCT_of_partn n := intpartn_cast (esym (card_ord n)).
+
+Import GroupScope GRing.Theory Num.Theory.
+Local Open Scope ring_scope.
+
+
+Section Sn.
+
+Variable n : nat.
+Definition partn_of_partCT :=
+  intpartn_cast (card_ord n) : intpartn #|'I_n| -> intpartn n .
+Definition cycle_typeSN (s : 'S_n) : intpartn n :=
+  partn_of_partCT (cycle_type s).
+
+Lemma partCT_of_partnK (p : intpartn n) :
+  partn_of_partCT p = p.
+Proof.
+  rewrite /partn_of_partCT; apply val_inj => /=.
+  by rewrite !intpartn_castE.
+Qed.
+
+Lemma partn_of_partCTE p1 p2 :
+  (p1 == p2) = (partn_of_partCT p1 == partn_of_partCT p2).
+Proof.
+  rewrite /partn_of_partCT.
+  apply/eqP/eqP => [-> //|].
+  case: p1 p2 => [p1 Hp1] [p2 Hp2].
+  move/(congr1 val); rewrite !intpartn_castE /= => Hp.
+  exact: val_inj.
+Qed.
+
+
+Lemma classfun_partnE (tc : intpartn n) (s : 'S_n) :
+  (classfun_part tc s) = (cycle_typeSN s == tc)%:R.
+Proof.
+  rewrite classfun_partE /cycle_typeSN /=.
+  by rewrite partn_of_partCTE partCT_of_partnK.
+Qed.
+
+End Sn.
+
 

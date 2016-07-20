@@ -33,10 +33,8 @@ Lemma cfExtProd_subproof f1 f2 : is_class_fun (G*H) (cfExtProd f1 f2).
 
 Variables (m n : nat).
 
-Local Notation i1 := (@pairg1 (perm_of_finGroupType (ordinal_finType m))
-                              (perm_of_finGroupType (ordinal_finType n))).
-Local Notation i2 := (@pair1g (perm_of_finGroupType (ordinal_finType m))
-                              (perm_of_finGroupType (ordinal_finType n))).
+Local Notation i1 := (@pairg1 [finGroupType of 'S_m] [finGroupType of 'S_n]).
+Local Notation i2 := (@pair1g [finGroupType of 'S_m] [finGroupType of 'S_n]).
 
 Definition cfExtProd (f1 : 'CF([set: 'S_m])) (f2 : 'CF([set: 'S_n])):=
   [ffun x : ('S_m*'S_n) => ((f1 x.1) * (f2 x.2))%R].
@@ -92,10 +90,11 @@ Proof.
   admit.
 Admitted.
 
-Local Notation ct := cycle_type.
-Local Notation npart := (intpartn_cast (card_ord n)).
+Local Notation ct := cycle_typeSN.
+(* Local Notation npart := (intpartn_cast (card_ord n)).
 Local Notation mpart := (intpartn_cast (card_ord m)).
 Local Notation partmn := (intpartn_cast (esym (card_ord (m+n)))).
+*)
 
 Definition pval (s : 'S_m * 'S_n) :=
   fun (x : 'I_(m+n)) => let y := split x in
@@ -130,10 +129,9 @@ Canonical morph_of_p := Morphism pmorphM.
 Definition prodIm := p @* ('dom p).
 
 (*i1 and i2 are canonical injection from S_m and S_n to S_m*S_n*)
-Local Notation i1 := (@pairg1 (perm_of_finGroupType (ordinal_finType m))(perm_of_finGroupType
-            (ordinal_finType n))).
-Local Notation i2 := (@pair1g (perm_of_finGroupType (ordinal_finType m))(perm_of_finGroupType
-                                                                           (ordinal_finType n))).
+
+Local Notation i1 := (@pairg1 [finGroupType of 'S_m] [finGroupType of 'S_n]).
+Local Notation i2 := (@pair1g [finGroupType of 'S_m] [finGroupType of 'S_n]).
 
 Definition p1 := p \o i1.
 
@@ -162,9 +160,10 @@ Proof.
   admit.
 Admitted.
 
-Definition unionpartval (l1 : intpartn m) (l2 : intpartn n) := sort geq l1++l2.
+Definition unionpartval (lpair : intpartn m * intpartn n) :=
+  sort geq (lpair.1 ++ lpair.2).
 
-Lemma unionpartvalE l1 l2 : is_part_of_n (m+n) (unionpartval l1 l2).
+Lemma unionpartvalE lpair : is_part_of_n (m+n) (unionpartval lpair).
 Proof.
   apply /andP; split.
   - rewrite /unionpartval.
@@ -172,26 +171,25 @@ Proof.
   - admit.
 Admitted.
 
-Definition unionpart l1 l2 := IntPartN (unionpartvalE l1 l2).
+Definition unionpart lpair := IntPartN (unionpartvalE lpair).
 
-Lemma cycle_typep s l1 l2:
-  ct s.1 = l1 ->
-  ct s.2 = l2 ->
-  (cycle_type (p s)) = partmn (unionpart (mpart l1) (npart l2)).  
+Lemma cycle_typep s lpair :
+  (ct s.1, ct s.2) = lpair ->
+  (cycle_type (p s)) = (unionpart lpair).
 Proof.
   admit.
 Admitted.
 
-Lemma classfunp s l:
-  classfun_part l (p s) = ((l == partmn (unionpart (mpart (ct s.1)) (npart (ct s.2))))%:R)%R.
+Lemma classfunp s l :
+  classfun_part l (p s) = ((l == unionpart (ct s.1, ct s.2))%:R)%R.
 Proof.
   admit.
 Admitted.
 
-Lemma classfun_Res (l: intpartn #|'I_(m+n)|):
+Lemma classfun_Res (l: intpartn (m+n)):
   ('Res[prodIm] (classfun_part l) =
-    cfIsom isomp (\sum_(x | (l == partmn (unionpart (mpart (x.1)) (npart (x.2)))))
-    cf_of_cfExtProd (classfun_part x.1)  (classfun_part x.2)))%R. 
+    cfIsom isomp (\sum_(x | (l == unionpart x))
+    cf_of_cfExtProd (classfun_part x.1) (classfun_part x.2)))%R. 
 Proof.
   admit.
 Admitted.
