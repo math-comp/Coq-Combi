@@ -18,6 +18,8 @@ Unset Printing Implicit Defensive.
 
 Import GroupScope GRing.Theory Num.Theory.
 
+Local Notation algCF := [fieldType of algC].
+
 Section cfExtProd.
 (*
 Variables (gT aT : baseFinGroupType).        
@@ -31,6 +33,11 @@ Lemma cfExtProd_subproof f1 f2 : is_class_fun (G*H) (cfExtProd f1 f2).
 
 Variables (m n : nat).
 
+Local Notation i1 := (@pairg1 (perm_of_finGroupType (ordinal_finType m))
+                              (perm_of_finGroupType (ordinal_finType n))).
+Local Notation i2 := (@pair1g (perm_of_finGroupType (ordinal_finType m))
+                              (perm_of_finGroupType (ordinal_finType n))).
+
 Definition cfExtProd (f1 : 'CF([set: 'S_m])) (f2 : 'CF([set: 'S_n])):=
   [ffun x : ('S_m*'S_n) => ((f1 x.1) * (f2 x.2))%R].
 
@@ -41,11 +48,47 @@ Admitted.
 
 Canonical cf_of_cfExtProd f1 f2:= Classfun (cfExtProd_subproof f1 f2).
 
-Notation "u \* v" := (cfExtProd u v) : ring_scope.
+Lemma cfExtProdl f1 f2: (cfExtProd f1 f2) \o i1 = f1.
+Proof.
+  admit.
+Admitted.
+
+Lemma cfExtProdr f1 f2 : (cfExtProd f1 f2) \o i2 = f2.
+Proof.
+  admit.
+Admitted.
 
 End cfExtProd.
-        
+
+Section ProdRepr.
+(*
+Variables (gT rT : finGroupType).
+Variables (G : {group gT}) (H : {group rT}).
+Variables (n1 n2 : nat) (rG : mx_representation algCF G n1) (rH : mx_representation algCF H n2).
+Lemma extprod_mx_repr : mx_repr (G*H) (fun g => tprod (rG g.1) (rH g.2)).
+*)
+
+Variables (m n : nat).
+Variables (n1 n2 : nat). 
+Variables (rSm : mx_representation algCF [set: 'S_m] n1)
+          (rSn : mx_representation algCF [set: 'S_n] n2).
+
+  
+Lemma extprod_mx_repr : mx_repr [set: 'S_m*'S_n] (fun g => tprod (rSm g.1) (rSn g.2)).
+Proof.
+  admit.
+Admitted.
+
+Definition extprod_repr := MxRepresentation extprod_mx_repr.
+
+End ProdRepr.
+
 Variables (m n: nat).
+
+
+Lemma cfRepr_prod  n1 n2 (rSm : mx_representation algCF [set: 'S_m] n1) (rSn : mx_representation algCF [set: 'S_n] n2):
+  cf_of_cfExtProd (cfRepr rSm) (cfRepr rSn) = cfRepr (extprod_repr rSm rSn).
+
 
 Local Notation ct := cycle_type.
 Local Notation npart := (intpartn_cast (card_ord n)).
@@ -113,23 +156,10 @@ Canonical porh_of_p2 := Morphism p2morphM.
 Definition injm := p1@*('dom p1).
 Definition injn := p2@*('dom p2).
 
-
-
 Lemma isomp : isom [set: 'S_m*'S_n] split p.
 Proof.
   admit.
 Admitted.
-
-Lemma isomp1 : isom [set: 'S_m] injm p1.
-Proof.
-  admit.
-Admitted.
-
-Lemma isomp2 : isom [set: 'S_n] injn (p \o i2).
-Proof.
-  admit.
-Admitted.
-
 
 Definition unionpartval (l1 : intpartn m) (l2 : intpartn n) := sort geq l1++l2.
 
@@ -164,3 +194,5 @@ Lemma classfun_Res (l: intpartn #|'I_(m+n)|):
 Proof.
   admit.
 Admitted.
+
+
