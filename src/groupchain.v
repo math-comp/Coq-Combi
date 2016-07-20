@@ -88,7 +88,9 @@ Variables (m n: nat).
 
 Lemma cfRepr_prod  n1 n2 (rSm : mx_representation algCF [set: 'S_m] n1) (rSn : mx_representation algCF [set: 'S_n] n2):
   cf_of_cfExtProd (cfRepr rSm) (cfRepr rSn) = cfRepr (extprod_repr rSm rSn).
-
+Proof.
+  admit.
+Admitted.
 
 Local Notation ct := cycle_type.
 Local Notation npart := (intpartn_cast (card_ord n)).
@@ -125,14 +127,13 @@ Admitted.
 Canonical morph_of_p := Morphism pmorphM.
 
 (*the image of 'S_m*'S_n via p endowed with a group structure of type 'S_(m+n)*)
-Definition split := p @* ('dom p).
+Definition prodIm := p @* ('dom p).
 
 (*i1 and i2 are canonical injection from S_m and S_n to S_m*S_n*)
 Local Notation i1 := (@pairg1 (perm_of_finGroupType (ordinal_finType m))(perm_of_finGroupType
             (ordinal_finType n))).
 Local Notation i2 := (@pair1g (perm_of_finGroupType (ordinal_finType m))(perm_of_finGroupType
                                                                            (ordinal_finType n))).
-
 
 Definition p1 := p \o i1.
 
@@ -141,7 +142,7 @@ Proof.
   admit.
 Admitted.
 
-Canonical porh_of_p1 := Morphism p1morphM.
+Canonical morh_of_p1 := Morphism p1morphM.
 
 Definition p2 := p \o i2.
 
@@ -150,13 +151,13 @@ Proof.
   admit.
 Admitted.
 
-Canonical porh_of_p2 := Morphism p2morphM.
+Canonical morh_of_p2 := Morphism p2morphM.
 
 (*injm and injn are the images of 'S_m and 'S_n in S_(m+n) via p \o i1 and p \o i2*)
 Definition injm := p1@*('dom p1).
 Definition injn := p2@*('dom p2).
 
-Lemma isomp : isom [set: 'S_m*'S_n] split p.
+Lemma isomp : isom [set: 'S_m*'S_n] prodIm p.
 Proof.
   admit.
 Admitted.
@@ -188,7 +189,7 @@ Proof.
 Admitted.
 
 Lemma classfun_Res (l: intpartn #|'I_(m+n)|):
-  ('Res[split] (classfun_part l) =
+  ('Res[prodIm] (classfun_part l) =
     cfIsom isomp (\sum_(x | (l == partmn (unionpart (mpart (x.1)) (npart (x.2)))))
     cf_of_cfExtProd (classfun_part x.1)  (classfun_part x.2)))%R. 
 Proof.
