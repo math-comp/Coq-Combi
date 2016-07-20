@@ -36,22 +36,33 @@ Variables (m n : nat).
 Local Notation i1 := (@pairg1 [finGroupType of 'S_m] [finGroupType of 'S_n]).
 Local Notation i2 := (@pair1g [finGroupType of 'S_m] [finGroupType of 'S_n]).
 
+
+Lemma cfExtProd_subproof (f1 : 'CF([set: 'S_m])) (f2 : 'CF([set: 'S_n])) :
+  is_class_fun <<[set: 'S_m * 'S_n]>>
+               [ffun x : ('S_m * 'S_n) => ((f1 x.1) * (f2 x.2))%R].
+Proof.
+  admit.
+Admitted.
+
+(*
 Definition cfExtProd (f1 : 'CF([set: 'S_m])) (f2 : 'CF([set: 'S_n])):=
-  [ffun x : ('S_m*'S_n) => ((f1 x.1) * (f2 x.2))%R].
-
-Lemma cfExtProd_subproof f1 f2 : is_class_fun <<[set: 'S_m*'S_n]>> (cfExtProd f1 f2).
+  [ffun x : ('S_m * 'S_n) => ((f1 x.1) * (f2 x.2))%R].
+Lemma cfExtProd_subproof f1 f2 :
+  is_class_fun <<[set: 'S_m*'S_n]>> (cfExtProd f1 f2).
 Proof.
   admit.
 Admitted.
+*)
+    
+Definition cfExtProd f1 f2 := Cfun 0 (cfExtProd_subproof f1 f2).
 
-Canonical cf_of_cfExtProd f1 f2:= Classfun (cfExtProd_subproof f1 f2).
-
-Lemma cfExtProdl f1 f2: (cfExtProd f1 f2) \o i1 = f1.
+Lemma cfExtProdl f1 f2 : (cfExtProd f1 f2) \o i1 =1 f1.
 Proof.
+  move=> s /=; rewrite /cfExtProd /= cfunE /=.
   admit.
 Admitted.
 
-Lemma cfExtProdr f1 f2 : (cfExtProd f1 f2) \o i2 = f2.
+Lemma cfExtProdr f1 f2 : (cfExtProd f1 f2) \o i2 =1 f2.
 Proof.
   admit.
 Admitted.
@@ -72,7 +83,8 @@ Variables (rSm : mx_representation algCF [set: 'S_m] n1)
           (rSn : mx_representation algCF [set: 'S_n] n2).
 
   
-Lemma extprod_mx_repr : mx_repr [set: 'S_m*'S_n] (fun g => tprod (rSm g.1) (rSn g.2)).
+Lemma extprod_mx_repr : mx_repr [set: 'S_m * 'S_n]
+                                (fun g => tprod (rSm g.1) (rSn g.2)).
 Proof.
   admit.
 Admitted.
@@ -84,8 +96,10 @@ End ProdRepr.
 Variables (m n: nat).
 
 
-Lemma cfRepr_prod  n1 n2 (rSm : mx_representation algCF [set: 'S_m] n1) (rSn : mx_representation algCF [set: 'S_n] n2):
-  cf_of_cfExtProd (cfRepr rSm) (cfRepr rSn) = cfRepr (extprod_repr rSm rSn).
+Lemma cfRepr_prod n1 n2
+      (rSm : mx_representation algCF [set: 'S_m] n1)
+      (rSn : mx_representation algCF [set: 'S_n] n2):
+  cfExtProd (cfRepr rSm) (cfRepr rSn) = cfRepr (extprod_repr rSm rSn).
 Proof.
   admit.
 Admitted.
@@ -107,33 +121,36 @@ Lemma pval_inj s: injective (pval s).
 Proof.
   move=> x y.
   rewrite /pval.
-  case: {2 3}(split x) (erefl (split x));
-    case: {2 3} (split y) (erefl (split y)). 
-Admitted.    
+  case: {2 3}(split x) (erefl (split x)) => [] a Ha;
+    case: {2 3} (split y) (erefl (split y)) => [] b Hb;
+      move=> /(congr1 (@split _ _)); rewrite !unsplitK => [] // [];
+      move=> /perm_inj Hab; subst a;
+      by rewrite -(splitK x) Ha -Hb splitK.
+Qed.
 
-Definition p s :'S_(m+n) := perm (@pval_inj s).
+Definition tinj s :'S_(m + n) := perm (@pval_inj s).
 
-Lemma pM (s1 s2 : 'S_m*'S_n) : (p (s1*s2)%g) = (p s1)*(p s2)%g. 
+Lemma tinjM (s1 s2 : 'S_m * 'S_n) : (tinj (s1 * s2)%g) = (tinj s1) * (tinj s2)%g. 
 Proof.
   admit.
 Admitted.
 
-Lemma pmorphM: {in [set: 'S_m*'S_n] &, {morph p : x y / x *y >-> x * y}}. 
+Lemma pmorphM: {in [set: 'S_m*'S_n] &, {morph tinj : x y / x *y >-> x * y}}. 
 Proof.
   admit.
 Admitted.
   
-Canonical morph_of_p := Morphism pmorphM.
+Canonical morph_of_tinj := Morphism pmorphM.
 
-(*the image of 'S_m*'S_n via p endowed with a group structure of type 'S_(m+n)*)
-Definition prodIm := p @* ('dom p).
+(*the image of 'S_m*'S_n via tinj endowed with a group structure of type 'S_(m+n)*)
+Definition prodIm := tinj @* ('dom tinj).
 
 (*i1 and i2 are canonical injection from S_m and S_n to S_m*S_n*)
 
 Local Notation i1 := (@pairg1 [finGroupType of 'S_m] [finGroupType of 'S_n]).
 Local Notation i2 := (@pair1g [finGroupType of 'S_m] [finGroupType of 'S_n]).
 
-Definition p1 := p \o i1.
+Definition p1 := tinj \o i1.
 
 Lemma p1morphM : {in [set: 'S_m] &, {morph p1 : x y / x *y >-> x * y}}.
 Proof.
@@ -142,7 +159,7 @@ Admitted.
 
 Canonical morh_of_p1 := Morphism p1morphM.
 
-Definition p2 := p \o i2.
+Definition p2 := tinj \o i2.
 
 Lemma p2morphM : {in [set: 'S_n] &, {morph p2 : x y / x *y >-> x * y}}.
 Proof.
@@ -151,11 +168,11 @@ Admitted.
 
 Canonical morh_of_p2 := Morphism p2morphM.
 
-(*injm and injn are the images of 'S_m and 'S_n in S_(m+n) via p \o i1 and p \o i2*)
+(*injm and injn are the images of 'S_m and 'S_n in S_(m+n) via tinj \o i1 and tinj \o i2*)
 Definition injm := p1@*('dom p1).
 Definition injn := p2@*('dom p2).
 
-Lemma isomp : isom [set: 'S_m*'S_n] prodIm p.
+Lemma isomtinj : isom [set: 'S_m*'S_n] prodIm tinj.
 Proof.
   admit.
 Admitted.
@@ -173,23 +190,23 @@ Admitted.
 
 Definition unionpart lpair := IntPartN (unionpartvalE lpair).
 
-Lemma cycle_typep s lpair :
+Lemma cycle_typetinj s lpair :
   (ct s.1, ct s.2) = lpair ->
-  (cycle_type (p s)) = (unionpart lpair).
+  (cycle_type (tinj s)) = (unionpart lpair).
 Proof.
   admit.
 Admitted.
 
-Lemma classfunp s l :
-  classfun_part l (p s) = ((l == unionpart (ct s.1, ct s.2))%:R)%R.
+Lemma classfuntinj s l :
+  classfun_part l (tinj s) = ((l == unionpart (ct s.1, ct s.2))%:R)%R.
 Proof.
   admit.
 Admitted.
 
 Lemma classfun_Res (l: intpartn (m+n)):
   ('Res[prodIm] (classfun_part l) =
-    cfIsom isomp (\sum_(x | (l == unionpart x))
-    cf_of_cfExtProd (classfun_part x.1) (classfun_part x.2)))%R. 
+    cfIsom isomtinj (\sum_(x | (l == unionpart x))
+    cfExtProd (classfun_part x.1) (classfun_part x.2)))%R. 
 Proof.
   admit.
 Admitted.
