@@ -104,7 +104,7 @@ Definition tinjval (s : 'S_m * 'S_n) :=
   fun (x : 'I_(m+n)) => let y := split x in
   match y with
   |inl a => unsplit (inl (s.1 a))
-  |inr a => unsplit (inr (s.2 a))                  
+  |inr a => unsplit (inr (s.2 a))
   end.
 
 Lemma tinjval_inj s: injective (tinjval s).
@@ -120,17 +120,17 @@ Qed.
 
 Definition tinj s :'S_(m + n) := perm (@tinjval_inj s).
 
-Lemma tinjM (s1 s2 : 'S_m * 'S_n) : (tinj (s1 * s2)%g) = (tinj s1) * (tinj s2)%g. 
+Lemma tinjM (s1 s2 : 'S_m * 'S_n) : (tinj (s1 * s2)%g) = (tinj s1) * (tinj s2)%g.
 Proof.
   admit.
 Admitted.
 
 Lemma pmorphM:
-  {in (setX [set: 'S_m] [set: 'S_n]) &, {morph tinj : x y / x *y >-> x * y}}. 
+  {in (setX [set: 'S_m] [set: 'S_n]) &, {morph tinj : x y / x *y >-> x * y}}.
 Proof.
   move=> /= s1 s2 _ _.
   rewrite /tinj; apply /permP => /= x.
-  rewrite permM -(splitK x) !permE.  
+  rewrite permM -(splitK x) !permE.
   case: splitP => [] j _;
   by rewrite /tinjval !unsplitK /= permM.
 Qed.
@@ -205,9 +205,7 @@ Admitted.
 Lemma classfun_Res (l: intpartn (m+n)):
   ('Res[prodIm] (classfun_part l) =
     cfIsom isomtinj (\sum_(x | (l == unionpart x))
-    cfExtProd (classfun_part x.1) (classfun_part x.2)))%R. 
+    cfExtProd (classfun_part x.1) (classfun_part x.2)))%R.
 Proof.
   admit.
 Admitted.
-
-
