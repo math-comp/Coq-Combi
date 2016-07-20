@@ -21,15 +21,20 @@ Import GroupScope GRing.Theory Num.Theory.
 Local Notation algCF := [fieldType of algC].
 
 Section cfExtProd.
-(*
-Variables (gT aT : baseFinGroupType).        
-Variables (G : {set gT}) (H : {set aT}).
 
-Definition cfExtProd (f1 : 'CF(G)) (f2 : 'CF(H)):=
-  [ffun x : (gT*aT) => ((f1 x.1) * (f2 x.2))%R].
+Variables (gT aT : finGroupType).
+Variables (G : {group gT}) (H : {group aT}).
 
-Lemma cfExtProd_subproof f1 f2 : is_class_fun (G*H) (cfExtProd f1 f2).
- *)
+
+Lemma cfExtProd_subproof (f1 : 'CF(G)) (f2 : 'CF(H)) :
+  is_class_fun <<[set (x, y) | x in G, y in H]>>
+               [ffun x : (gT * aT) => ((f1 x.1) * (f2 x.2))%R].
+Proof.
+  apply intro_class_fun => [x y|].
+  rewrite genGid.
+Admitted.
+
+Definition cfExtProd f1 f2 := Cfun 0 (cfExtProd_subproof f1 f2).
 
 Variables (m n : nat).
 
