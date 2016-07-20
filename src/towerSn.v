@@ -206,21 +206,27 @@ Proof.
 Qed.
 Definition unionpart lpair := IntPartN (unionpartvalE lpair).
 
+Lemma cycle_type_tinj s :
+  ct (tinj s) = unionpart (ct s.1, ct s.2).
+Proof.
+  admit.
+Admitted.
+
+(* Ancien enoncé :
 Lemma cycle_typetinj s lpair :
   (ct s.1, ct s.2) = lpair ->
   cycle_type (tinj s) = unionpart lpair.
 Proof.
   admit.
 Admitted.
+*)
 
 Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
-Lemma classfuntinj s (l : intpartn (m + n)) :
+Lemma classfun_tinj s (l : intpartn (m + n)) :
   classfun_part l (tinj s) = (l == unionpart (ct s.1, ct s.2))%:R.
-Proof.
-  admit.
-Admitted.
+Proof. by rewrite classfun_partnE cycle_type_tinj eq_sym. Qed.
 
 Theorem classfun_Res (l : intpartn (m+n)):
   'Res[prodIm] (classfun_part l) =
@@ -233,7 +239,7 @@ Proof.
   rewrite (cfResE _ _ Hs); last exact: subsetT.
   move: Hs => /imsetP/= [[s1 s2]].
   rewrite inE => /andP [H1 _] -> {s}.
-  rewrite classfuntinj /= (cfIsomE _ _ H1).
+  rewrite classfun_tinj /= (cfIsomE _ _ H1).
   rewrite /cfExtProd /= sum_cfunE.
   rewrite (eq_bigr (fun x : intpartn m * intpartn n =>
                       ((classfun_part x.1 s1) * (classfun_part x.2 s2))));
