@@ -173,8 +173,18 @@ Definition injn := p2@*('dom p2).
 *)
 Lemma isomtinj : isom (setX [set: 'S_m] [set: 'S_n]) prodIm tinj.
 Proof.
-  admit.
-Admitted.
+  apply/isomP; split; last by [].
+  apply/subsetP => [] /= [s1 s2]; rewrite inE => /andP [_].
+  rewrite !inE /= => /eqP/permP H.
+  rewrite -[1]/(1,1) /xpair_eqE /=.
+  apply/andP; split; apply/eqP/permP => x; rewrite !perm1.
+  - have := H (unsplit (inl x)).
+    rewrite /tinj permE /tinjval unsplitK perm1 /=.
+    exact: linjP.
+  - have := H (unsplit (inr x)).
+    rewrite /tinj permE /tinjval unsplitK perm1 /=.
+    exact: rinjP.
+Qed.
 
 Definition unionpartval (lpair : intpartn m * intpartn n) :=
   sort geq (lpair.1 ++ lpair.2).
@@ -183,29 +193,60 @@ Lemma unionpartvalE lpair : is_part_of_n (m+n) (unionpartval lpair).
 Proof.
   apply /andP; split.
   - rewrite /unionpartval.
-    admit. (*use sort_perm_eq and big_cat*)
-  - admit.
-Admitted.
-
+    have /perm_eqlP/perm_sumn -> := perm_sort geq (lpair.1 ++ lpair.2).
+    by rewrite sumn_cat !intpartn_sumn.
+  - rewrite is_part_sortedE; apply/andP; split.
+    + rewrite /unionpartval; apply sort_sorted.
+      by move=> x y; exact: leq_total.
+    + rewrite /unionpartval.
+      have /perm_eqlP/perm_eq_mem -> := perm_sort geq (lpair.1 ++ lpair.2).
+      rewrite mem_cat negb_or.
+      have := intpartnP lpair.1; have := intpartnP lpair.2.
+      by rewrite !is_part_sortedE => /andP [_ ->] /andP [_ ->].
+Qed.
 Definition unionpart lpair := IntPartN (unionpartvalE lpair).
 
 Lemma cycle_typetinj s lpair :
   (ct s.1, ct s.2) = lpair ->
-  (cycle_type (tinj s)) = (unionpart lpair).
+  cycle_type (tinj s) = unionpart lpair.
 Proof.
   admit.
 Admitted.
 
-Lemma classfuntinj s l :
-  classfun_part l (tinj s) = ((l == unionpart (ct s.1, ct s.2))%:R)%R.
+Import GroupScope GRing.Theory Num.Theory.
+Local Open Scope ring_scope.
+
+Lemma classfuntinj s (l : intpartn (m + n)) :
+  classfun_part l (tinj s) = (l == unionpart (ct s.1, ct s.2))%:R.
 Proof.
   admit.
 Admitted.
 
-Lemma classfun_Res (l: intpartn (m+n)):
-  ('Res[prodIm] (classfun_part l) =
-    cfIsom isomtinj (\sum_(x | (l == unionpart x))
-    cfExtProd (classfun_part x.1) (classfun_part x.2)))%R.
+Theorem classfun_Res (l : intpartn (m+n)):
+  'Res[prodIm] (classfun_part l) =
+  cfIsom isomtinj
+         (\sum_(x | l == unionpart x)
+           cfExtProd (classfun_part x.1) (classfun_part x.2)).
 Proof.
-  admit.
-Admitted.
+  apply/cfunP => /= s.
+  case: (boolP (s \in prodIm)) => Hs; last by rewrite !cfun0gen // genGid.
+  rewrite (cfResE _ _ Hs); last exact: subsetT.
+  move: Hs => /imsetP/= [[s1 s2]].
+  rewrite inE => /andP [H1 _] -> {s}.
+  rewrite classfuntinj /= (cfIsomE _ _ H1).
+  rewrite /cfExtProd /= sum_cfunE.
+  rewrite (eq_bigr (fun x : intpartn m * intpartn n =>
+                      ((classfun_part x.1 s1) * (classfun_part x.2 s2))));
+    last by move=> i _; rewrite cfunE.
+  case: (altP (l =P unionpart (ct s1, ct s2))) => [->| Hl] /=.
+  - rewrite (bigD1 (ct s1, ct s2)) //=.
+    rewrite !classfun_partnE !eqxx /= mulr1.
+    rewrite big1 ?addr0 // => [[t1 t2]] /andP [_].
+    rewrite !classfun_partnE eq_sym xpair_eqE.
+    by move=> /nandP [] /negbTE -> /=; rewrite ?mulr0 ?mul0r.
+  - rewrite big1 // => [[t1 t2]] /= /eqP Hll; subst l.
+    have {Hl} : (t1, t2) != (ct s1, ct s2).
+      by move: Hl; apply contra => /eqP ->.
+    rewrite !classfun_partnE eq_sym xpair_eqE.
+    by move=> /nandP [] /negbTE -> /=; rewrite ?mulr0 ?mul0r.
+Qed.
