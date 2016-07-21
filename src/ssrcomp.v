@@ -58,6 +58,7 @@ Proof.
   - by split; rewrite ?inE // /trivIset /cover !big_set0 ?cards0.
 Qed.
 
+(* TODO: Check with pcyclePb *)
 Lemma pcycleP (s: {perm T}) x y :
   reflect (exists i, y = (s ^+ i)%g x) (y \in pcycle s x).
 Proof.
