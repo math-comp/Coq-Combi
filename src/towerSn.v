@@ -279,20 +279,37 @@ Proof.
       by rewrite -(unsplitK (inr y)) /=.
 Qed.
 
-Lemma parts_shape_union (A: {set {set 'I_(m+n)}}) B :
+Lemma parts_shape_union (A: {set {set 'I_(m+n)}}) (B: {set {set 'I_(m+n)}}) :
+  [disjoint A & B] ->
   parts_shape (A:|:B) = sort geq (parts_shape A ++ parts_shape B). 
 Proof.
-  rewrite /parts_shape.
+  rewrite /parts_shape => disj.
   apply /perm_sortP.
-  admit.
-  admit.
-  admit.
-  apply (@ perm_eq_trans _
-           ([seq #|(x: {set _})| | x <- enum A] ++
-            [seq #|(x: {set _})| | x <- enum B]) _).
-  - admit.
-  - admit.
-Admitted.
+  - by move=> x y; exact: leq_total.
+  - by move=> x y z yx xz; exact: (leq_trans xz yx).
+  - by move=> x y; rewrite andbC; exact: anti_leq.
+  - have : perm_eq (enum (A :|: B)) (enum A ++ enum B).
+      rewrite/perm_eq; apply/allP => /= x _.
+      rewrite count_uniq_mem; last by exact: enum_uniq.
+      rewrite mem_enum inE count_cat; apply/eqP.
+      rewrite !count_uniq_mem; first 2 [by exact: enum_uniq|by exact: enum_uniq].
+      rewrite !mem_enum.
+      case: (boolP (x \in A)); case: (boolP (x \in B)); first 2 [by[]|by[]|by[]].
+      move=> xiB xiA; contradict disj.
+      move/disjoint_setI0 /setP /(_ x).
+      by rewrite !inE xiB xiA.
+    move/(perm_map (fun x => #|(x: {set 'I_(m + n)})|)).
+    rewrite map_cat => H.
+    rewrite (perm_eq_trans H) //=.
+    apply/perm_eqP => x; rewrite !count_cat.
+    have count_sort :
+      forall l, count ^~ [seq #|(x0 : {set 'I_(m + n)})| | x0 <- l] =1
+                count ^~ (sort geq [seq #|(x0 : {set 'I_(m + n)})| | x0 <- l]).
+      by move=> l; apply/perm_eqP; rewrite perm_eq_sym perm_sort perm_eq_refl.
+    by rewrite !count_sort.
+Qed.
+
+
 
 Lemma parts_shape_lshift (A: {set {set 'I_m}}):
   parts_shape [set (@lshift m n) @: (x : {set 'I_m}) | x in A] = parts_shape A.
