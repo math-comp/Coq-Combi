@@ -93,17 +93,9 @@ Qed.
 
 Lemma degree_std : \rank std_mod = 2.
 Proof.
-   move /mxdirectP : (std_mod_direct) => /=.
-   rewrite std_mod_sum mxrank1 mxrank0 addn0.
-   rewrite (_: \rank trivline = 1%N).
-  - by rewrite add1n => /eqP; rewrite eqSS => /eqP <-.
-  - move: (rank_leq_row trivline).
-    case : (boolP (\rank trivline == 0)%N).
-    + rewrite mxrank_eq0 /trivline => /eqP.
-    admit.
-    + rewrite -lt0n=> lt0 leq1; apply: anti_leq.
-      by rewrite lt0 leq1.
+  admit.
 Admitted.
+
 
 Definition std_repr := submod_repr std_modP.
 

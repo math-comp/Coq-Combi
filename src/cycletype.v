@@ -747,6 +747,20 @@ Proof.
   exact: val_inj.
 Qed.
 
+Lemma partn_of_partCTK (p : intpartn #|'I_n|) :
+  p = partn_of_partCT p.
+Proof.
+  rewrite /partCT_of_partn; apply val_inj => /=.
+  by rewrite !intpartn_castE.
+Qed.
+
+Lemma partn_of_partCT_congr p1 (p2 : intpartn n) :
+  (partn_of_partCT p1 == p2) = (p1 == p2).
+Proof.
+  apply/eqP/eqP => [<-|->].
+  - by rewrite -partn_of_partCTK.
+  - by rewrite partCT_of_partnK.
+Qed.
 
 Lemma classfun_partnE (tc : intpartn n) (s : 'S_n) :
   (classfun_part tc s) = (cycle_typeSN s == tc)%:R.

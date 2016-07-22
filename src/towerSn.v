@@ -206,11 +206,126 @@ Proof.
 Qed.
 Definition unionpart lpair := IntPartN (unionpartvalE lpair).
 
-Lemma cycle_type_tinj s :
-  ct (tinj s) = unionpart (ct s.1, ct s.2).
+Lemma expg_tinj_l s x a i: 
+  split x = inl a -> (tinj s ^+ i) x = lshift n ((s.1 ^+ i) a).
+Proof.
+  move=> splitx.
+  elim: i => [|i IHi].
+  - by rewrite !expg0 !perm1 -(splitK x) splitx /=.
+  - rewrite !expgSr !permM IHi permE /tinjval /=.
+    pose y := inl ((s.1 ^+ i) a) => /=.
+    rewrite (_: lshift _ _ = unsplit (y _)) //.
+    by rewrite unsplitK.
+Qed.
+
+Lemma expg_tinj_r s x a i: 
+  split x = inr a -> (tinj s ^+ i) x = rshift m (n:=n) ((s.2 ^+ i) a).
+Proof.
+  move=> splitx.
+  elim: i => [|i IHi].
+  - by rewrite !expg0 !perm1 -(splitK x) splitx /=.
+  - rewrite !expgSr !permM IHi permE /tinjval /=.
+    pose y := inr ((s.2 ^+ i) a) => /=.
+    rewrite (_: rshift _ _ = unsplit (y _)) //.
+    by rewrite unsplitK.
+Qed.
+
+Lemma pcycle_tinj_l s x a:
+  split x = inl a -> pcycle (tinj s) x = imset (lshift n) (mem (pcycle s.1 a)).
+Proof.
+  move=> splitx.
+  apply /setP => /= Y.
+  apply/pcycleP/imsetP => /= [[i ->]|[y]].
+  - exists ((s.1 ^+ i) a); first by apply /pcycleP; exists i.
+    by exact: expg_tinj_l.
+  - move /pcycleP => [i ->] ->.
+    by exists i; rewrite (expg_tinj_l _ _ splitx).
+Qed.
+
+
+Lemma pcycle_tinj_r s x a:
+  split x = inr a -> 
+  pcycle (tinj s) x = imset (rshift m (n:=n)) (mem (pcycle s.2 a)).
+Proof.
+  move=> splitx.
+  apply /setP => /= Y.
+  apply/pcycleP/imsetP => /= [[i ->]|[y]].
+  - exists ((s.2 ^+ i) a); first by apply /pcycleP; exists i.
+    by exact: expg_tinj_r.
+  - move /pcycleP => [i ->] ->.
+    by exists i; rewrite (expg_tinj_r _ _ splitx).
+Qed.
+                
+Lemma pcycles_tinj s :
+  pcycles (tinj s) =
+  [set (@lshift m n) @: (x : {set 'I_m}) | x in pcycles s.1]
+    :|:
+    [set (@rshift m n) @: (x : {set 'I_n}) | x in pcycles s.2 ].
+Proof.
+  apply /setP /subset_eqP /andP; split; apply /subsetP => /= X. 
+  - move/imsetP => /= [x _ ->].
+    rewrite inE; apply /orP.
+    case: {2}(split x) (erefl (split x)) => a splitx; [left|right]; apply/imsetP.
+    + exists (pcycle s.1 a); first by apply/imsetP; exists a.
+      by exact: pcycle_tinj_l.
+    + exists (pcycle s.2 a); first by apply/imsetP; exists a.
+      by exact: pcycle_tinj_r.
+  - rewrite inE; move/orP => [|]/imsetP /= [Y /imsetP /= [y _ ->]] ->.
+    + apply/imsetP; exists (lshift n y) => //.
+      rewrite (@pcycle_tinj_l s (lshift n y) y) //.
+      by rewrite -(unsplitK (inl y)) /=.
+    + apply/imsetP. exists (rshift m (n:=n) y) => //.
+      rewrite (@pcycle_tinj_r s (rshift m (n:=n) y) y) //.
+      by rewrite -(unsplitK (inr y)) /=.
+Qed.
+
+Lemma parts_shape_union (A: {set {set 'I_(m+n)}}) B :
+  parts_shape (A:|:B) = sort geq (parts_shape A ++ parts_shape B). 
+Proof.
+  rewrite /parts_shape.
+  apply /perm_sortP.
+  admit.
+  admit.
+  admit.
+  apply (@ perm_eq_trans _
+           ([seq #|(x: {set _})| | x <- enum A] ++
+            [seq #|(x: {set _})| | x <- enum B]) _).
+  - admit.
+  - admit.
+Admitted.
+
+Lemma parts_shape_lshift (A: {set {set 'I_m}}):
+  parts_shape [set (@lshift m n) @: (x : {set 'I_m}) | x in A] = parts_shape A.
+Proof.
+  rewrite /parts_shape; congr sort.
+  elim: {2 3}(enum A) (erefl (enum A)).
+  - rewrite enum_eq0.
+  
+Lemma pcycles_lshift s :
+  parts_shape [set (@lshift m n) @: (x : {set 'I_m}) | x in pcycles s] = parts_shape (pcycles s).
 Proof.
   admit.
 Admitted.
+
+Lemma pcycles_rshift s :
+  parts_shape [set (@rshift m n) @: (x : {set 'I_n}) | x in pcycles s ] = parts_shape (pcycles s).
+Proof.
+  admit.
+Admitted.
+
+Lemma cycle_type_tinj s :
+  ct (tinj s) = unionpart (ct s.1, ct s.2).
+Proof.
+  apply val_inj => /=; rewrite /unionpartval /=.
+  rewrite intpartn_castE /= /cycle_type_seq /=.
+  rewrite pcycles_tinj parts_shape_union.  
+  congr sort.
+  rewrite /ct !intpartn_castE /=.
+  rewrite /cycle_type_seq.
+  congr (_++_).
+  - exact: pcycles_lshift.
+  - exact: pcycles_rshift.
+Qed.
 
 (* Ancien enoncé :
 Lemma cycle_typetinj s lpair :
