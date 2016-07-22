@@ -86,9 +86,10 @@ Definition sympoly_lalgMixin :=
 Canonical sympoly_lalgType :=
   Eval hnf in LalgType R {sympoly R[n]} sympoly_lalgMixin.
 
-Lemma spol_is_additive : additive (fun x : {sympoly R[n]} => spol x).
-Proof. by move=> x y. Qed.
-Canonical spol_additive := Additive spol_is_additive.
+Definition symtopol := fun x : {sympoly R[n]} => spol x.
+Lemma symtopol_is_lrmorphism : lrmorphism symtopol.
+Proof. by []. Qed.
+Canonical symtopol_lrmorphism := RMorphism symtopol_is_lrmorphism.
 
 End SymPolyRingType.
 
@@ -259,7 +260,7 @@ Proof using .
   apply /val_inj.
   rewrite /= (eq_bigr (fun _ => 1)); last by move=> i _; rewrite expr0.
   rewrite sumr_const card_ord /=.
-  by rewrite [RHS](raddfMn (@spol_additive _ _) n).
+  by rewrite [RHS](raddfMn (@symtopol_lrmorphism _ _) n).
 Qed.
 
 Lemma complete0 : complete 0 = 1.
@@ -267,8 +268,8 @@ Proof using .
   have Hd0 : (mdeg (0%MM : 'X_{1..n})) < 1 by rewrite mdeg0.
   apply val_inj => /=.
   rewrite /complete (big_pred1 (BMultinom Hd0)); first last.
-    move=> m /=; by rewrite mdeg_eq0 {2}/eq_op /=.
-  by rewrite /= mpolyX0.
+    by move=> m; rewrite /= mdeg_eq0 {2}/eq_op.
+  by rewrite mpolyX0.
 Qed.
 
 
@@ -323,13 +324,13 @@ Proof using .
   rewrite -[RHS](big_map val (tabsh_reading sh)
                          (fun w => \prod_(v <- w) 'X_v)).
   rewrite -[RHS]big_filter.
-  by rewrite (eq_big_perm _ (to_word_enum_tabsh _ sh)) /=.
+  by rewrite (eq_big_perm _ (to_word_enum_tabsh _ sh)).
 Qed.
 
 Lemma Schur0 (sh : intpartn 0) : Schur sh = 1.
 Proof using .
   rewrite Schur_tabsh_readingE (eq_bigl (xpred1 [tuple])); first last.
-    move=> i /=; by rewrite tuple0 [RHS]eq_refl intpartn0.
+    by move=> i /=; rewrite tuple0 [RHS]eq_refl intpartn0.
   by rewrite big_pred1_eq big_nil.
 Qed.
 
@@ -340,7 +341,7 @@ Proof using .
   apply (introF idP) => /tabsh_readingP [] tab [] Htab Hsh _ {w}.
   suff F0 i : i < size sh -> nth (inhabitant _) (nth [::] tab i) 0 >= i.
     have H := ltn_ord (nth (inhabitant _) (nth [::] tab n) 0).
-    have:= leq_trans H (F0 _ Hn); by rewrite ltnn.
+    by have:= leq_trans H (F0 _ Hn); rewrite ltnn.
   rewrite -Hsh size_map; elim: i => [//= | i IHi] Hi.
   have := IHi (ltn_trans (ltnSn i) Hi); move/leq_ltn_trans; apply.
   rewrite -ltnXnatE.
@@ -395,8 +396,8 @@ Proof using .
     move=> [s _] /= _; rewrite /s2m; elim: s => [| s0 s IHs]/=.
       by rewrite big_nil -/mnm0 mpolyX0.
     rewrite big_cons {}IHs -mpolyXD; congr ('X_[_]).
-    rewrite mnmP => i; by rewrite mnmDE !mnmE.
-  apply eq_bigl => m;  by rewrite inE /=.
+    by rewrite mnmP => i; rewrite mnmDE !mnmE.
+  by apply eq_bigl => m; rewrite inE /=.
 Qed.
 
 End Schur.
@@ -414,19 +415,20 @@ Proof using .
   rewrite -(big_map (@bmnm n d.+1) (fun m => mdeg m == d) (fun m => 'X_[m])).
   rewrite /index_enum -enumT -big_filter.
   set tmp := filter _ _.
-  have {tmp} -> : tmp = [seq val m | m <- enum [set m :  'X_{1..n < d.+1} | mdeg m == d]].
+  have {tmp} -> : tmp = [seq val m |
+                          m <- enum [set m : 'X_{1..n < d.+1} | mdeg m == d]].
     rewrite {}/tmp /enum_mem filter_map -filter_predI; congr map.
-    apply eq_filter => s /=; by rewrite !inE andbT.
+    by apply eq_filter => s /=; rewrite !inE andbT.
   rewrite -(eq_big_perm _ (perm_eq_enum_basis _ d)) /=.
   by rewrite big_map -[RHS]big_filter.
 Qed.
 
 Lemma tabwordshape_col d (w : d.-tuple 'I_n) :
-    tabsh_reading (colpartn d) w = sorted gtnX w.
+  tabsh_reading (colpartn d) w = sorted gtnX w.
 Proof using .
   rewrite /tabsh_reading /= /colpart ; case: w => w /=/eqP Hw.
   have -> : sumn (nseq d 1%N) = d.
-    elim: d {Hw} => //= d /= ->; by rewrite add1n.
+    by elim: d {Hw} => //= d /= ->; rewrite add1n.
   rewrite Hw eq_refl /= rev_nseq.
   have -> : rev (reshape (nseq d 1%N) w) = [seq [:: i] | i <- rev w].
     rewrite map_rev; congr rev.
@@ -441,41 +443,41 @@ Qed.
 
 (** The definition of elementary symmetric polynomials as column Schur
     function agrees with the one from mpoly *)
-Lemma elementaryE d : elementary n R d = Schur n0 R (colpartn d) :> {mpoly R[n]}.
+Lemma elementaryE d :
+  elementary n R d = Schur n0 R (colpartn d) :> {mpoly R[n]}.
 Proof using .
   rewrite /= mesym_tupleE /tmono /elementary Schur_tabsh_readingE.
   rewrite (eq_bigl _ _ (@tabwordshape_col d)).
   set f := BIG_F.
-  rewrite (eq_bigr (fun x => f(rev_tuple x))); first last.
-    rewrite /f => i _ /=; apply: eq_big_perm; exact: perm_eq_rev.
+  rewrite (eq_bigr (fun x => f(rev_tuple x))) /f {f}; first last.
+    by move => i _ /=; apply: eq_big_perm; exact: perm_eq_rev.
   rewrite (eq_bigl (fun i => sorted gtnX (rev_tuple i))); first last.
     move=> [t /= _]; rewrite rev_sorted.
     case: t => [//= | t0 t] /=.
     apply: (map_path (b := pred0)).
-    + move=> x y /= _; by rewrite -ltnXnatE.
+    + by move=> x y /= _; rewrite -ltnXnatE.
     + by apply/hasPn => x /=.
-  rewrite /f {f}.
   rewrite [RHS](eq_big_perm
                   (map (@rev_tuple _ _)
                        (enum (tuple_finType d (ordinal_finType n))))) /=.
-  rewrite big_map /=; first by rewrite /index_enum /= enumT.
+    rewrite big_map /=; first by rewrite /index_enum /= enumT.
   apply uniq_perm_eq.
   - rewrite /index_enum -enumT; exact: enum_uniq.
   - rewrite map_inj_uniq; first exact: enum_uniq.
     apply (can_inj (g := (@rev_tuple _ _))).
-    move=> t; apply val_inj => /=; by rewrite revK.
+    by move=> t; apply val_inj => /=; rewrite revK.
   - rewrite /index_enum -enumT /= => t.
     rewrite mem_enum /= inE; apply esym; apply/mapP.
     exists (rev_tuple t) => /=.
     + by rewrite mem_enum.
-    + apply val_inj; by rewrite /= revK.
+    + by apply val_inj; rewrite /= revK.
 Qed.
 
 
 Lemma Schur1 (sh : intpartn 1) : Schur n0 R sh = \sum_(i<n) 'X_i.
 Proof using .
   suff -> : sh = rowpartn 1 by rewrite -completeE complete1.
-  apply val_inj => /=; exact: intpartn1.
+  by apply val_inj => /=; exact: intpartn1.
 Qed.
 
 End SchurComRingType.
