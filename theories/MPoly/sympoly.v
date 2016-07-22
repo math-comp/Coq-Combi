@@ -13,7 +13,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop ssralg path perm fingroup.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
@@ -27,96 +27,158 @@ Local Open Scope ring_scope.
 Import GRing.Theory.
 
 
+Reserved Notation "{ 'sympoly' T [ n ] }"
+  (at level 0, T, n at level 2, format "{ 'sympoly'  T [ n ] }").
+
+
+Section DefType.
+
+Variable n : nat.
+Variable R : ringType.
+
+Structure sympoly : predArgType :=
+  SymPoly {spol :> {mpoly R[n]}; _ : spol \in symmetric}.
+
+Canonical sympoly_subType := Eval hnf in [subType for spol].
+Definition sympoly_eqMixin := Eval hnf in [eqMixin of sympoly by <:].
+Canonical sympoly_eqType := Eval hnf in EqType sympoly sympoly_eqMixin.
+Definition sympoly_choiceMixin := Eval hnf in [choiceMixin of sympoly by <:].
+Canonical sympoly_choiceType :=
+  Eval hnf in ChoiceType sympoly sympoly_choiceMixin.
+
+Definition sympoly_of of phant R := sympoly.
+
+Identity Coercion type_sympoly_of : sympoly_of >-> sympoly.
+
+Lemma spol_inj : injective spol. Proof. exact: val_inj. Qed.
+
+End DefType.
+
+(* We need to break off the section here to let the argument scope *)
+(* directives take effect.                                         *)
+Bind Scope ring_scope with sympoly_of.
+Bind Scope ring_scope with sympoly.
+Arguments Scope spol [_ ring_scope].
+Arguments Scope spol_inj [_ ring_scope ring_scope _].
+
+Notation "{ 'sympoly' T [ n ] }" := (sympoly_of n (Phant T)).
+
+
+Section SymPolyRingType.
+
+Variable n : nat.
+Variable R : ringType.
+
+Definition sympoly_zmodMixin :=
+  Eval hnf in [zmodMixin of {sympoly R[n]} by <:].
+Canonical sympoly_zmodType :=
+  Eval hnf in ZmodType {sympoly R[n]} sympoly_zmodMixin.
+Definition sympoly_ringMixin :=
+  Eval hnf in [ringMixin of {sympoly R[n]} by <:].
+Canonical sympoly_ringType :=
+  Eval hnf in RingType {sympoly R[n]} sympoly_ringMixin.
+Definition sympoly_lmodMixin :=
+  Eval hnf in [lmodMixin of {sympoly R[n]} by <:].
+Canonical sympoly_lmodType :=
+  Eval hnf in LmodType R {sympoly R[n]} sympoly_lmodMixin.
+Definition sympoly_lalgMixin :=
+  Eval hnf in [lalgMixin of {sympoly R[n]} by <:].
+Canonical sympoly_lalgType :=
+  Eval hnf in LalgType R {sympoly R[n]} sympoly_lalgMixin.
+
+Lemma spol_is_additive : additive (fun x : {sympoly R[n]} => spol x).
+Proof. by move=> x y. Qed.
+Canonical spol_additive := Additive spol_is_additive.
+
+End SymPolyRingType.
+
+Section SymPolyComRingType.
+
+Variable n : nat.
+Variable R : comRingType.
+
+Definition sympoly_comRingMixin :=
+  Eval hnf in [comRingMixin of {sympoly R[n]} by <:].
+Canonical sympoly_comRingType :=
+  Eval hnf in ComRingType {sympoly R[n]} sympoly_comRingMixin.
+Definition sympoly_algMixin :=
+  Eval hnf in [algMixin of {sympoly R[n]} by <:].
+Canonical sympoly_algType :=
+  Eval hnf in AlgType R {sympoly R[n]} sympoly_algMixin.
+
+End SymPolyComRingType.
+
+Section SymPolyIdomainType.
+
+Variable n : nat.
+Variable R : idomainType.
+
+Definition sympoly_unitRingMixin :=
+  Eval hnf in [unitRingMixin of {sympoly R[n]} by <:].
+Canonical sympoly_unitRingType :=
+  Eval hnf in UnitRingType {sympoly R[n]} sympoly_unitRingMixin.
+Canonical sympoly_comUnitRingType :=
+  Eval hnf in [comUnitRingType of {sympoly R[n]}].
+Definition sympoly_idomainMixin :=
+  Eval hnf in [idomainMixin of {sympoly R[n]} by <:].
+Canonical sympoly_idomainType :=
+  Eval hnf in IdomainType {sympoly R[n]} sympoly_idomainMixin.
+Canonical sympoly_unitAlgType :=
+  Eval hnf in [unitAlgType R of {sympoly R[n]}].
+
+End SymPolyIdomainType.
+
+
+
 Section Bases.
 
-Variable n0 : nat.
-Local Notation n := (n0.+1).
-Variable R : comRingType.
+Variable n : nat.
+Variable R : ringType.
+
 
 Local Notation "m # s" := [multinom m (s i) | i < n]
   (at level 40, left associativity, format "m # s").
 
+
 (* From  mpoly.v : \sum_(h : {set 'I_n} | #|h| == k) \prod_(i in h) 'X_i. *)
-Definition monomial d (sh : intpartn d) : {mpoly R[n]} :=
-  \sum_(m : 'X_{1..n < d.+1} | sort leq m == sh :> seq nat) 'X_[m].
-Definition elementary (k : nat) : {mpoly R[n]} := mesym n R k.
-Definition complete (d : nat) : {mpoly R[n]} :=
-  \sum_(m : 'X_{1..n < d.+1} | mdeg m == d) 'X_[m].
-Definition power_sum (d : nat) : {mpoly R[n]} :=
-  \sum_(i < n) 'X_i^+d.
-Definition Schur d (sh : intpartn d) : {mpoly R[n]} :=
-  \sum_(t : tabsh n0 sh) \prod_(v <- to_word t) 'X_v.
-
-Lemma elementary_mesymE d : elementary d = mesym n R d.
-Proof using . by []. Qed.
-
-Lemma mesym_homog d : mesym n R d \is d.-homog.
-Proof using .
-  apply/dhomogP => m.
-  rewrite msupp_mesymP => /existsP [] s /andP [] /eqP <- {d} /eqP -> {m}.
-  exact: mdeg_mesym1.
-Qed.
+Fact elementary_sym d : mesym n R d \is symmetric.
+Proof using . exact: mesym_sym. Qed.
+Definition elementary d : {sympoly R[n]} := SymPoly (elementary_sym d).
 
 
-Lemma elementary_homog d : elementary d \is d.-homog.
-Proof using . by rewrite elementary_mesymE mesym_homog. Qed.
-
-Lemma complete_homog d : complete d \is d.-homog.
-Proof using .
-  rewrite /complete; apply rpred_sum => m /eqP H.
-  by rewrite dhomogX /= H.
-Qed.
-
-Lemma power_sum_homog d : power_sum d \is d.-homog.
-Proof using .
-  rewrite /power_sum; apply rpred_sum => m _.
-  have /(dhomogMn d) : ('X_m : {mpoly R[n]}) \is 1.-homog.
-    by rewrite dhomogX /= mdeg1.
-  by rewrite mul1n.
-Qed.
-
-Lemma monomial_homog d (sh : intpartn d) : monomial sh \is d.-homog.
-Proof using .
-  rewrite /monomial; apply rpred_sum => m /eqP Hm.
-  rewrite dhomogX /= -{2}(intpartn_sumn sh) /mdeg.
-  have Hperm : perm_eq m sh.
-    by rewrite -(perm_sort leq) Hm perm_eq_refl.
-  by rewrite (eq_big_perm _ Hperm) /= sumnE.
-Qed.
-
-Lemma elementary_sym d : elementary d \is symmetric.
-Proof using . rewrite elementary_mesymE; exact: mesym_sym. Qed.
-
-Lemma complete_sym d : complete d \is symmetric.
+Fact complete_sym d :
+  (\sum_(m : 'X_{1..n < d.+1} | mdeg m == d)
+    'X_[m] : {mpoly R[n]}) \is symmetric.
 Proof using .
   apply/issymP => s; rewrite -mpolyP => m.
-  rewrite /complete mcoeff_sym !raddf_sum /=.
+  rewrite mcoeff_sym !raddf_sum /=.
   case: (altP (mdeg m =P d%N)) => [<- | Hd].
   - have Hsm : mdeg (m#s) < (mdeg m).+1.
       by rewrite mdeg_mperm.
     rewrite (bigD1 (BMultinom Hsm)) /=; last by rewrite mdeg_mperm.
     rewrite mcoeffX eq_refl big1 ?addr0 /=; first last.
-      move=> n /= /andP [] _ /negbTE.
+      move=> mon /= /andP [] _ /negbTE.
       by rewrite {1}/eq_op /= mcoeffX => ->.
     have Hm : mdeg m < (mdeg m).+1 by [].
     rewrite (bigD1 (BMultinom Hm)) //=.
     rewrite mcoeffX eq_refl big1 ?addr0 //=.
-    move=> n /= /andP [] _ /negbTE.
+    move=> mon /= /andP [] _ /negbTE.
     by rewrite {1}/eq_op /= mcoeffX => ->.
   - rewrite big1; first last.
-      move=> n /eqP Hd1; rewrite mcoeffX.
-      suff /= : val n != m#s by move/negbTE ->.
+      move=> mon /eqP Hd1; rewrite mcoeffX.
+      suff /= : val mon != m#s by move/negbTE ->.
       move: Hd; rewrite -{1}Hd1; apply contra=> /eqP ->.
       by rewrite mdeg_mperm.
     rewrite big1 //.
-    move=> n /eqP Hd1; rewrite mcoeffX.
-    suff /= : val n != m by move/negbTE ->.
+    move=> mon /eqP Hd1; rewrite mcoeffX.
+    suff /= : val mon != m by move/negbTE ->.
     by move: Hd; rewrite -{1}Hd1; apply contra=> /eqP ->.
 Qed.
+Definition complete d : {sympoly R[n]} := SymPoly (complete_sym d).
 
-Lemma power_sum_sym d : power_sum d \is symmetric.
+Fact power_sum_sym d : (\sum_(i < n) 'X_i^+d : {mpoly R[n]}) \is symmetric.
 Proof using .
-  rewrite /power_sum; apply/issymP => s.
+  apply/issymP => s.
   rewrite raddf_sum /= (reindex_inj (h := s^-1))%g /=; last by apply/perm_inj.
   apply eq_bigr => i _; rewrite rmorphX /=; congr (_ ^+ _).
   rewrite msymX /=; congr mpolyX.
@@ -124,14 +186,18 @@ Proof using .
   apply/eqP/eqP => [|->//].
   exact: perm_inj.
 Qed.
+Definition power_sum d : {sympoly R[n]} := SymPoly (power_sum_sym d).
 
-Lemma monomial_sym d (sh : intpartn d) : monomial sh \is symmetric.
+Fact monomial_sym (sh : seq nat) :
+  (\sum_(m : 'X_{1..n < (sumn sh).+1} |
+         sort leq m == sh :> seq nat) 'X_[m] : {mpoly R[n]})
+    \is symmetric.
 Proof using .
-  apply/issymP => s; rewrite /monomial raddf_sum /=.
-  pose fm := fun m : 'X_{1..n < d.+1} => m#s.
-  have Hfm m : mdeg (fm m) < d.+1 by rewrite /fm mdeg_mperm bmdeg.
+  apply/issymP => s; rewrite raddf_sum /=.
+  pose fm := fun m : 'X_{1..n < (sumn sh).+1} => m#s.
+  have Hfm m : mdeg (fm m) < (sumn sh).+1 by rewrite /fm mdeg_mperm bmdeg.
   rewrite (reindex_inj (h := fun m => BMultinom (Hfm m))) /=; first last.
-    rewrite /fm => m n /= /(congr1 val) /=.
+    rewrite /fm => m1 m2 /= /(congr1 val) /=.
     rewrite mnmP => Heq; apply val_inj; rewrite mnmP /= => i.
     have:= Heq ((s^-1)%g i).
     by rewrite !mnmE permKV.
@@ -146,56 +212,74 @@ Proof using .
     rewrite mnmP => j; rewrite !mnmE /=.
     by rewrite permKV.
 Qed.
+Definition monomial sh : {sympoly R[n]} := SymPoly (monomial_sym sh).
 
 
+Lemma mesym_homog d : mesym n R d \is d.-homog.
+Proof using .
+  apply/dhomogP => m.
+  rewrite msupp_mesymP => /existsP [] s /andP [] /eqP <- {d} /eqP -> {m}.
+  exact: mdeg_mesym1.
+Qed.
+
+Lemma elementary_homog d : (elementary d : {mpoly R[n]}) \is d.-homog.
+Proof using . by rewrite mesym_homog. Qed.
+
+Lemma complete_homog d : (complete d : {mpoly R[n]}) \is d.-homog.
+Proof using .
+  apply rpred_sum => m /eqP H.
+  by rewrite dhomogX /= H.
+Qed.
+
+Lemma power_sum_homog d : (power_sum d : {mpoly R[n]}) \is d.-homog.
+Proof using .
+  apply rpred_sum => m _.
+  have /(dhomogMn d) : ('X_m : {mpoly R[n]}) \is 1.-homog.
+    by rewrite dhomogX /= mdeg1.
+  by rewrite mul1n.
+Qed.
+
+Lemma monomial_homog d (sh : intpartn d) :
+  (monomial sh  : {mpoly R[n]}) \is d.-homog.
+Proof using .
+  apply rpred_sum => m /eqP Hm.
+  rewrite dhomogX /= -{2}(intpartn_sumn sh) /mdeg.
+  have Hperm : perm_eq m sh.
+    by rewrite -(perm_sort leq) Hm perm_eq_refl.
+  by rewrite (eq_big_perm _ Hperm) /= sumnE.
+Qed.
 
 
-(** All basis agrees at degree 0 *)
+(** Basis at degree 0 *)
 Lemma elementary0 : elementary 0 = 1.
-Proof using . by rewrite elementary_mesymE mesym0E. Qed.
+Proof using . by apply val_inj; rewrite /= mesym0E. Qed.
 
 Lemma powersum0 : power_sum 0 = n%:R.
 Proof using .
-  rewrite /power_sum (eq_bigr (fun _ => 1)); last by move=> i _; rewrite expr0.
-  by rewrite sumr_const card_ord.
+  apply /val_inj.
+  rewrite /= (eq_bigr (fun _ => 1)); last by move=> i _; rewrite expr0.
+  rewrite sumr_const card_ord /=.
+  by rewrite [RHS](raddfMn (@spol_additive _ _) n).
 Qed.
 
 Lemma complete0 : complete 0 = 1.
 Proof using .
   have Hd0 : (mdeg (0%MM : 'X_{1..n})) < 1 by rewrite mdeg0.
+  apply val_inj => /=.
   rewrite /complete (big_pred1 (BMultinom Hd0)); first last.
     move=> m /=; by rewrite mdeg_eq0 {2}/eq_op /=.
   by rewrite /= mpolyX0.
 Qed.
 
-Lemma Schur_tabsh_readingE  d (sh : intpartn d) :
-  Schur sh =  \sum_(t : d.-tuple 'I_n | tabsh_reading sh t)
-               \prod_(v <- t) 'X_v.
-Proof using .
-  rewrite /Schur /index_enum -!enumT.
-  rewrite -[LHS](big_map (fun t => to_word (val t)) xpredT
-                         (fun w => \prod_(v <- w) 'X_v)).
-  rewrite -[RHS](big_map val (tabsh_reading sh)
-                         (fun w => \prod_(v <- w) 'X_v)).
-  rewrite -[RHS]big_filter.
-  by rewrite (eq_big_perm _ (to_word_enum_tabsh _ sh)) /=.
-Qed.
-
-Lemma Schur0 (sh : intpartn 0) : Schur sh = 1.
-Proof using .
-  rewrite Schur_tabsh_readingE (eq_bigl (xpred1 [tuple])); first last.
-    move=> i /=; by rewrite tuple0 [RHS]eq_refl intpartn0.
-  by rewrite big_pred1_eq big_nil.
-Qed.
 
 (** All basis agrees at degree 1 *)
-Lemma elementary1 : elementary 1 = \sum_(i < n) 'X_i.
-Proof using . by rewrite elementary_mesymE mesym1E. Qed.
+Lemma elementary1 : elementary 1 = \sum_(i < n) 'X_i :> {mpoly R[n]}.
+Proof using . by rewrite /= mesym1E. Qed.
 
-Lemma power_sum1 : power_sum 1 = \sum_(i < n) 'X_i.
+Lemma power_sum1 : power_sum 1 = \sum_(i < n) 'X_i :> {mpoly R[n]}.
 Proof using . by apply eq_bigr => i _; rewrite expr1. Qed.
 
-Lemma complete1 : complete 1 = \sum_(i < n) 'X_i.
+Lemma complete1 : complete 1 = \sum_(i < n) 'X_i :> {mpoly R[n]}.
 Proof using .
   rewrite /complete -mpolyP => m.
   rewrite !raddf_sum /=.
@@ -216,6 +300,37 @@ Proof using .
     rewrite big1 // => p _.
     rewrite mcoeffX; case eqP => // Hmm; subst m.
     by rewrite mdeg1 in Hm.
+Qed.
+
+End Bases.
+
+Section Schur.
+
+Variable n0 : nat.
+Local Notation n := (n0.+1).
+Variable R : ringType.
+
+Definition Schur d (sh : intpartn d) : {mpoly R[n]} :=
+  \sum_(t : tabsh n0 sh) \prod_(v <- to_word t) 'X_v.
+
+Lemma Schur_tabsh_readingE  d (sh : intpartn d) :
+  Schur sh =  \sum_(t : d.-tuple 'I_n | tabsh_reading sh t)
+               \prod_(v <- t) 'X_v.
+Proof using .
+  rewrite /Schur /index_enum -!enumT.
+  rewrite -[LHS](big_map (fun t => to_word (val t)) xpredT
+                         (fun w => \prod_(v <- w) 'X_v)).
+  rewrite -[RHS](big_map val (tabsh_reading sh)
+                         (fun w => \prod_(v <- w) 'X_v)).
+  rewrite -[RHS]big_filter.
+  by rewrite (eq_big_perm _ (to_word_enum_tabsh _ sh)) /=.
+Qed.
+
+Lemma Schur0 (sh : intpartn 0) : Schur sh = 1.
+Proof using .
+  rewrite Schur_tabsh_readingE (eq_bigl (xpred1 [tuple])); first last.
+    move=> i /=; by rewrite tuple0 [RHS]eq_refl intpartn0.
+  by rewrite big_pred1_eq big_nil.
 Qed.
 
 
@@ -284,16 +399,25 @@ Proof using .
   apply eq_bigl => m;  by rewrite inE /=.
 Qed.
 
-Lemma completeE d : complete d = Schur (rowpartn d).
+End Schur.
+
+
+Section SchurComRingType.
+
+Variable n0 : nat.
+Local Notation n := (n0.+1).
+Variable R : comRingType.
+
+Lemma completeE d : complete n R d = Schur _ R (rowpartn d) :> {mpoly R[n]}.
 Proof using .
-  rewrite /complete -complete_basisE.
+  rewrite /= -complete_basisE.
   rewrite -(big_map (@bmnm n d.+1) (fun m => mdeg m == d) (fun m => 'X_[m])).
   rewrite /index_enum -enumT -big_filter.
   set tmp := filter _ _.
   have {tmp} -> : tmp = [seq val m | m <- enum [set m :  'X_{1..n < d.+1} | mdeg m == d]].
     rewrite {}/tmp /enum_mem filter_map -filter_predI; congr map.
     apply eq_filter => s /=; by rewrite !inE andbT.
-  rewrite -(eq_big_perm _ (perm_eq_enum_basis d)) /=.
+  rewrite -(eq_big_perm _ (perm_eq_enum_basis _ d)) /=.
   by rewrite big_map -[RHS]big_filter.
 Qed.
 
@@ -317,9 +441,9 @@ Qed.
 
 (** The definition of elementary symmetric polynomials as column Schur
     function agrees with the one from mpoly *)
-Lemma elementaryE d : elementary d = Schur (colpartn d).
+Lemma elementaryE d : elementary n R d = Schur n0 R (colpartn d) :> {mpoly R[n]}.
 Proof using .
-  rewrite elementary_mesymE mesym_tupleE /tmono /elementary Schur_tabsh_readingE.
+  rewrite /= mesym_tupleE /tmono /elementary Schur_tabsh_readingE.
   rewrite (eq_bigl _ _ (@tabwordshape_col d)).
   set f := BIG_F.
   rewrite (eq_bigr (fun x => f(rev_tuple x))); first last.
@@ -348,10 +472,10 @@ Proof using .
 Qed.
 
 
-Lemma Schur1 (sh : intpartn 1) : Schur sh = \sum_(i<n) 'X_i.
+Lemma Schur1 (sh : intpartn 1) : Schur n0 R sh = \sum_(i<n) 'X_i.
 Proof using .
   suff -> : sh = rowpartn 1 by rewrite -completeE complete1.
   apply val_inj => /=; exact: intpartn1.
 Qed.
 
-End Bases.
+End SchurComRingType.

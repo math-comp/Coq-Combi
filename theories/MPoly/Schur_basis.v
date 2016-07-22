@@ -29,7 +29,6 @@ Import GRing.Theory.
 
 Local Open Scope ring_scope.
 
-
 Section Alternant.
 
 Variable n : nat.
@@ -634,12 +633,12 @@ Qed.
 
 Lemma Schur_dec_mesym k : Schur_dec 'e_k.
 Proof using .
-  rewrite -elementary_mesymE elementaryE.
+  rewrite /=.
   exists (HomCoeff (fun p : intpartn k => (p == colpartn k)%:R)) => /=.
   rewrite (bigID (fun p => p == colpartn k)) /=.
   rewrite big_pred1_eq eq_refl /= scale1r.
   rewrite (eq_bigr (fun p => 0)); last by move=> i /negbTE ->; rewrite scale0r.
-  by rewrite big1_eq addr0.
+  by rewrite big1_eq addr0 -elementaryE.
 Qed.
 
 Lemma Schur_dec_mesym_pow k i : Schur_dec ('e_k ^+ i).
@@ -720,50 +719,3 @@ Proof using .
 Qed.
 
 End SchurBasis.
-
-Reserved Notation "{ 'sympoly' T [ n ] }"
-  (at level 0, T, n at level 2, format "{ 'sympoly'  T [ n ] }").
-
-
-Section Canonical.
-
-Variable n : nat.
-Variable R : idomainType.
-
-Structure sympoly : predArgType :=
-  SymPoly {spol :> {mpoly R[n]}; _ : spol \in symmetric}.
-
-Canonical sympoly_subType := [subType for spol].
-Definition sympoly_eqMixin := [eqMixin of sympoly by <:].
-Canonical sympoly_eqType := EqType sympoly sympoly_eqMixin.
-Definition sympoly_choiceMixin := [choiceMixin of sympoly by <:].
-Canonical sympoly_choiceType := ChoiceType sympoly sympoly_choiceMixin.
-Definition sympoly_zmodMixin := [zmodMixin of sympoly by <:].
-Canonical sympoly_zmodType := ZmodType sympoly sympoly_zmodMixin.
-Definition sympoly_ringMixin := [ringMixin of sympoly by <:].
-Canonical sympoly_ringType := RingType sympoly sympoly_ringMixin.
-Definition sympoly_comRingMixin := [comRingMixin of sympoly by <:].
-Canonical sympoly_comRingType := ComRingType sympoly sympoly_comRingMixin.
-Definition sympoly_unitRingMixin := [unitRingMixin of sympoly by <:].
-Canonical sympoly_unitRingType := UnitRingType sympoly sympoly_unitRingMixin.
-Canonical sympoly_comUnitRingType := [comUnitRingType of sympoly].
-Definition sympoly_idomainMixin := [idomainMixin of sympoly by <:].
-Canonical sympoly_idomainType := IdomainType sympoly sympoly_idomainMixin.
-Definition sympoly_lmodMixin := [lmodMixin of sympoly by <:].
-Canonical sympoly_lmodType := LmodType R sympoly sympoly_lmodMixin.
-Definition sympoly_lalgMixin := [lalgMixin of sympoly by <:].
-Canonical sympoly_lalgType := LalgType R sympoly sympoly_lalgMixin.
-Definition sympoly_algMixin := [algMixin of sympoly by <:].
-Canonical sympoly_algType := AlgType R sympoly sympoly_algMixin.
-Canonical sympoly_unitAlgType := [unitAlgType R of sympoly].
-
-Definition sympoly_of of phant R := sympoly.
-
-Identity Coercion type_sympoly_of : sympoly_of >-> sympoly.
-
-End Canonical.
-
-Bind Scope ring_scope with sympoly_of.
-Bind Scope ring_scope with sympoly.
-
-Notation "{ 'sympoly' T [ n ] }" := (sympoly_of n (Phant T)).

@@ -597,8 +597,8 @@ Import GRing.Theory.
 Variable (n0 : nat) (R : comRingType).
 Local Notation n := (n0.+1).
 Notation Schur p := (Schur n0 R p).
-Notation complete p := (complete n0 R p).
-Notation elementary p := (elementary n0 R p).
+Notation complete p := (complete n R p).
+Notation elementary p := (elementary n R p).
 
 Lemma yamrowP : is_yam_of_eval (intpart_of_intpartn (rowpartn d2)) (ncons d2 0%N [::]).
 Proof using .
