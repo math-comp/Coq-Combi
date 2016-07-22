@@ -114,6 +114,6 @@ Let type := sub_undup_finType permuted_subCountType
                               (all_permuted w) (mem_enum_permuted (s := w)).
 Canonical permuted_finType := [finType of permuted for type].
 Canonical permuted_subFinType := Eval hnf in [subFinType of permuted].
-
 End FinType.
+
 
