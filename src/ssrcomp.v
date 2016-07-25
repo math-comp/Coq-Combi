@@ -10,7 +10,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 
 
-Module GeqOrder.
+Module LeqGeqOrder.
 
 Definition geq_total : total geq :=
   fun x y => leq_total y x.
@@ -19,77 +19,45 @@ Definition geq_trans : transitive geq :=
 Definition anti_geq : antisymmetric geq :=
   fun x y H => esym (anti_leq H).
 
-Hint Resolve geq_total geq_trans anti_geq.
+Hint Resolve leq_total leq_trans anti_leq geq_total geq_trans anti_geq.
 
-End GeqOrder.
+End LeqGeqOrder.
+
+Import LeqGeqOrder.
 
 Section SSRComplements.
 
 Variable T: finType.
 Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
 
-Lemma triv_part (P:{set {set T}}) (X:{set T}) (D:{set T}):
-  partition P D -> X \in P -> D \subset X -> P = [set X].
-Proof.
-  rewrite /partition => /and3P [] /eqP Hcov /trivIsetP /(_ X) H H0 HXP /subsetP HD.
-  case: (set_0Vmem (P :\ X)) => [/eqP | [Y]].
-  - rewrite setD_eq0 subset1 => /orP [] /eqP // Hcontra.
-    by move: HXP; rewrite Hcontra inE.
-  - rewrite in_setD1 => /andP [].
-    rewrite eq_sym => Hdiff HYP.
-    move/(_ Y HXP HYP Hdiff): H => /disjoint_setI0 HXY.
-    case: (set_0Vmem Y) => [HY | [] x HxY]; first by move: H0; rewrite -HY => /negP.
-    have: x \in cover P by apply /bigcupP; exists Y.
-    rewrite Hcov => /(HD x) HxX.
-    have: x \in X :&: Y by rewrite inE; apply /andP.
-    by rewrite HXY inE.
-Qed.
-
 Lemma partition_of0 (P : {set {set T}}):
   reflect (P = set0) (partition P set0).
 Proof.
-  rewrite /partition; apply (iffP and3P) => [[/eqP H1 _ H2] | ->].
-  - case: (set_0Vmem P) => [// | [] X].
-    case: (set_0Vmem X) => [-> H3 | [] x Hx HX]; first by move: H2 => /negP.
-    have: x \in cover P by apply /bigcupP; exists X.
-    by rewrite H1 inE.
+  apply (iffP and3P) => [[/eqP Hcov _ H0] | ->].
+  - case: (set_0Vmem P) => [// | [X HXP]].
+    exfalso; suff HX : X = set0 by subst X; rewrite HXP in H0.
+    by apply/eqP; rewrite -subset0; rewrite -Hcov (bigcup_max X).
   - by split; rewrite ?inE // /trivIset /cover !big_set0 ?cards0.
 Qed.
 
 Lemma pcycleP (s: {perm T}) x y :
   reflect (exists i, y = (s ^+ i)%g x) (y \in pcycle s x).
 Proof.
-  apply (iffP idP).
-  - rewrite pcycle_traject => H.
-    have:= H; rewrite -index_mem size_traject => Hlt.
-    exists (index y (traject s x #|pcycle s x|)).
-    move: Hlt => /(nth_traject s)/(_ x); rewrite (nth_index _ H) => {H} {1}->.
-    elim: (index _ _) => [|n IHn] /=; first by rewrite expg0 perm1.
-    by rewrite expgSr permM IHn.
-  - move=> [i ->]; exact: mem_pcycle.
+  apply (iffP idP) => [| [i ->]]; last exact: mem_pcycle.
+  rewrite pcycle_traject => H.
+  have:= H; rewrite -index_mem size_traject => Hlt.
+  exists (index y (traject s x #|pcycle s x|)).
+  move: Hlt => /(nth_traject s)/(_ x); rewrite (nth_index _ H) => {H} {1}->.
+  elim: (index _ _) => [|n IHn] /=; first by rewrite expg0 perm1.
+  by rewrite expgSr permM IHn.
 Qed.
 
 End SSRComplements.
 
-Section Uniq.
-Variable (T : eqType).
-Variable (s : seq T).
-Implicit Types (n : nat).
 
-Lemma take_uniq n : uniq s -> uniq (take n s).
-Proof.
-by apply: subseq_uniq; rewrite -{2}(cat_take_drop n s); apply: prefix_subseq.
-Qed.
-
-Lemma drop_uniq n : uniq s -> uniq (drop n s).
-Proof.
-by apply: subseq_uniq; rewrite -{2}(cat_take_drop n s); apply: suffix_subseq.
-Qed.
-
-End Uniq.
-
-
-
+Lemma sumn_sort l S : sumn (sort S l) = sumn l.
+Proof. by have:= perm_sort S l => /perm_eqlP/perm_sumn. Qed.
+  
 From mathcomp Require Import binomial.
 
 Section SetPartitionShape.
@@ -104,26 +72,21 @@ Definition parts_shape (s : {set {set T}}) :=
 Lemma parts_shapeP (s : {set {set T}}) D :
   partition s D -> is_part_of_n #|D| (parts_shape s).
 Proof.
-  rewrite /parts_shape => /and3P [/eqP Hcov Htriv Hnon0].
-  rewrite /is_part_of_n /= is_part_sortedE.
-  apply/and3P; split.
-  - have:= perm_sort geq [seq #|(x: {set T})| | x <- enum s].
-    move=> /perm_eqlP/perm_sumn ->.
-    rewrite -sumnE big_map -big_enum.
-    move: Htriv; rewrite /trivIset => /eqP ->.
-    by rewrite Hcov.
-  - apply sort_sorted => m n /=; exact: leq_total.
-  - move: Hnon0; apply contra.
-    rewrite mem_sort => /mapP [] x.
-    by rewrite mem_enum => Hx /esym/cards0_eq <-.
+rewrite /parts_shape => /and3P [/eqP Hcov Htriv Hnon0].
+rewrite /is_part_of_n /= is_part_sortedE.
+apply/and3P; split.
+- by rewrite sumn_sort -sumnE big_map -big_enum -Hcov.
+- by apply sort_sorted => m n.
+- move: Hnon0; apply contra.
+  rewrite mem_sort => /mapP [] x.
+  by rewrite mem_enum => Hx /esym/cards0_eq <-.
 Qed.
-
 
 Lemma ex_subset_card (B : {set T}) k :
   k <= #|B| -> exists2 A : {set T}, A \subset B & #|A| == k.
 Proof.
-  rewrite -bin_gt0 -(cards_draws B k) card_gt0 => /set0Pn [x].
-  rewrite inE => /andP [H1 H2]; by exists x.
+rewrite -bin_gt0 -(cards_draws B k) card_gt0 => /set0Pn [x].
+rewrite inE => /andP [H1 H2]; by exists x.
 Qed.
 
 Lemma ex_parts_shape (s : seq nat) (A : {set T}) :
@@ -164,8 +127,6 @@ exists (B :: P); split => /=; [|apply/and3P; split|].
 - by rewrite Ps.
 Qed.
 
-Import GeqOrder.
-
 Lemma ex_set_parts_shape (A : {set T}) sh :
   is_part_of_n #|A| sh ->
   exists2 P, partition P A & parts_shape P = sh.
@@ -173,9 +134,8 @@ Proof.
 rewrite /is_part_of_n /= is_part_sortedE => /andP [/eqP shsum /andP [shsort]].
 move=> /(ex_parts_shape shsum) [P [Puniq Ppart Psh]].
 exists [set X in P]; first exact: Ppart.
-apply/(eq_sorted geq_trans anti_geq).
+apply (eq_sorted (leT := geq)) => //.
 - exact: sort_sorted.
-- exact: shsort.
 - rewrite /parts_shape -Psh perm_sort; apply: perm_map.
   apply: (uniq_perm_eq (enum_uniq _) Puniq) => x.
   by rewrite mem_enum inE.
