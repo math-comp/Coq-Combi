@@ -39,24 +39,7 @@ Proof.
     + by rewrite [f2 _]cfun0gen ?mulr0 ?genGid.
 Qed.
 
-
 Definition cfExtProd f1 f2 := Cfun 0 (cfExtProd_subproof f1 f2).
-
-(*
-Local Notation i1 := (@pairg1 gT aT).
-Local Notation i2 := (@pair1g gT aT).
-
-Lemma cfExtProdl f1 f2 : (cfExtProd f1 f2) \o i1 =1 f1.
-Proof.
-  move=> s /=; rewrite /cfExtProd /= cfunE /=.
-  admit.
-Admitted.
-
-Lemma cfExtProdr f1 f2 : (cfExtProd f1 f2) \o i2 =1 f2.
-Proof.
-  admit.
-Admitted.
-*)
 
 End cfExtProd.
 
@@ -96,7 +79,11 @@ Qed.
 
 End cfRepr_ExtProd.
 
-Variables (m n: nat).
+
+
+Section Restriction.
+
+Variables (m n : nat).
 
 Local Notation ct := cycle_typeSN.
 
@@ -107,7 +94,7 @@ Definition tinjval (s : 'S_m * 'S_n) :=
   |inr a => unsplit (inr (s.2 a))
   end.
 
-Lemma tinjval_inj s: injective (tinjval s).
+Lemma tinjval_inj s : injective (tinjval s).
 Proof.
   move=> x y.
   rewrite /tinjval.
@@ -118,15 +105,10 @@ Proof.
       by rewrite -(splitK x) Ha -Hb splitK.
 Qed.
 
-Definition tinj s :'S_(m + n) := perm (@tinjval_inj s).
-
-Lemma tinjM (s1 s2 : 'S_m * 'S_n) : (tinj (s1 * s2)%g) = (tinj s1) * (tinj s2)%g.
-Proof.
-  admit.
-Admitted.
+Definition tinj s : 'S_(m + n) := perm (@tinjval_inj s).
 
 Lemma pmorphM:
-  {in (setX [set: 'S_m] [set: 'S_n]) &, {morph tinj : x y / x *y >-> x * y}}.
+  {in (setX [set: 'S_m] [set: 'S_n]) &, {morph tinj : x y / x * y >-> x * y}}.
 Proof.
   move=> /= s1 s2 _ _.
   rewrite /tinj; apply /permP => /= x.
@@ -140,37 +122,6 @@ Canonical morph_of_tinj := Morphism pmorphM.
 (*the image of 'S_m*'S_n via tinj endowed with a group structure of type 'S_(m+n)*)
 Definition prodIm := tinj @* ('dom tinj).
 
-(*i1 and i2 are canonical injection from S_m and S_n to S_m*S_n*)
-Local Notation i1 := (@pairg1 [finGroupType of 'S_m] [finGroupType of 'S_n]).
-Local Notation i2 := (@pair1g [finGroupType of 'S_m] [finGroupType of 'S_n]).
-
-
-(*
-Definition p1 := tinj \o i1.
-
-Lemma p1morphM : {in [set: 'S_m] &, {morph p1 : x y / x *y >-> x * y}}.
-Proof.
-  admit.
-Admitted.
-
-Canonical morh_of_p1 := Morphism p1morphM.
-
-Definition p2 := tinj \o i2.
-
-Lemma p2morphM : {in [set: 'S_n] &, {morph p2 : x y / x *y >-> x * y}}.
-Proof.
-  admit.
-Admitted.
-
-Canonical morh_of_p2 := Morphism p2morphM.
- *)
-
-
-
-(*injm and injn are the images of 'S_m and 'S_n in S_(m+n) via tinj \o i1 and tinj \o i2*)
-(*Definition injm := p1@*('dom p1).
-Definition injn := p2@*('dom p2).
-*)
 Lemma isomtinj : isom (setX [set: 'S_m] [set: 'S_n]) prodIm tinj.
 Proof.
   apply/isomP; split; last by [].
@@ -186,25 +137,20 @@ Proof.
     exact: rinjP.
 Qed.
 
-Definition unionpartval (lpair : intpartn m * intpartn n) :=
-  sort geq (lpair.1 ++ lpair.2).
-
-Lemma unionpartvalE lpair : is_part_of_n (m + n) (unionpartval lpair).
+Lemma unionpart_subproof (lpair : intpartn m * intpartn n) :
+  is_part_of_n (m + n) (sort geq (lpair.1 ++ lpair.2)).
 Proof.
   apply /andP; split.
-  - rewrite /unionpartval.
-    have /perm_eqlP/perm_sumn -> := perm_sort geq (lpair.1 ++ lpair.2).
+  - have /perm_eqlP/perm_sumn -> := perm_sort geq (lpair.1 ++ lpair.2).
     by rewrite sumn_cat !intpartn_sumn.
   - rewrite is_part_sortedE; apply/andP; split.
-    + rewrite /unionpartval; apply sort_sorted.
-      by move=> x y; exact: leq_total.
-    + rewrite /unionpartval.
-      have /perm_eqlP/perm_eq_mem -> := perm_sort geq (lpair.1 ++ lpair.2).
+    + by apply sort_sorted => x y; exact: leq_total.
+    + have /perm_eqlP/perm_eq_mem -> := perm_sort geq (lpair.1 ++ lpair.2).
       rewrite mem_cat negb_or.
       have := intpartnP lpair.1; have := intpartnP lpair.2.
       by rewrite !is_part_sortedE => /andP [_ ->] /andP [_ ->].
 Qed.
-Definition unionpart lpair := IntPartN (unionpartvalE lpair).
+Definition unionpart lpair := IntPartN (unionpart_subproof lpair).
 
 Lemma expg_tinj_lshift s a i :
  (tinj s ^+ i) (lshift n a) = lshift n ((s.1 ^+ i) a).
@@ -239,7 +185,6 @@ Proof.
     by exists i; rewrite expg_tinj_lshift.
 Qed.
 
-
 Lemma pcycle_tinj_rshift s a :
   pcycle (tinj s) (rshift m a) = imset (@rshift m n) (mem (pcycle s.2 a)).
 Proof.
@@ -273,7 +218,7 @@ Proof.
       by rewrite pcycle_tinj_rshift.
 Qed.
 
-Lemma count_card (T : finType) (p : pred nat) (s : {set {set T}}) :
+Lemma count_set_of_card (T : finType) (p : pred nat) (s : {set {set T}}) :
   count p [seq #|(x : {set T})| | x <- enum s] =
   #|s :&: [set x : {set T} | p #|x|]|.
 Proof.
@@ -295,7 +240,7 @@ Proof.
   apply/perm_eqP => P.
   have count_sort l : count ^~ (sort geq l) =1 count ^~ l.
     by apply/perm_eqP; rewrite perm_sort perm_eq_refl.
-  rewrite count_cat !count_sort !count_card.
+  rewrite count_cat !count_sort !count_set_of_card.
   rewrite setIUl cardsU -[RHS]subn0; congr(_ - _).
   apply/eqP; rewrite cards_eq0 -subset0 -disj.
   by apply/subsetP => x; rewrite !inE => /andP [/andP [-> _] /andP [-> _]].
@@ -307,7 +252,7 @@ Lemma parts_shape_inj
 Proof.
   rewrite /parts_shape /= => Hinj.
   apply/ssrcomp.perm_sort_geq/perm_eqP => P.
-  rewrite !count_card.
+  rewrite !count_set_of_card.
   rewrite -(card_imset _ (imset_inj Hinj)).
   rewrite imsetI; first last.
     move=> B C _ _; exact: imset_inj.
@@ -322,7 +267,7 @@ Qed.
 Lemma cycle_type_tinj s :
   ct (tinj s) = unionpart (ct s.1, ct s.2).
 Proof.
-  apply val_inj => /=; rewrite /unionpartval /=.
+  apply val_inj => /=.
   rewrite intpartn_castE /= /cycle_type_seq /=.
   rewrite pcycles_tinj parts_shape_union; first last.
     rewrite -setI_eq0; apply/eqP/setP => S.
