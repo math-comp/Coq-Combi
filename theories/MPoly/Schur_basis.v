@@ -38,7 +38,8 @@ Variable R : comRingType.
 Definition mpart (s : seq nat) := [multinom (nth 0 s i)%N | i < n].
 
 Local Notation rho := (rho n).
-Local Notation "''e_' k" := (@mesym n R k) (at level 8, k at level 2, format "''e_' k").
+Local Notation "''e_' k" := (@mesym n R k)
+                              (at level 8, k at level 2, format "''e_' k").
 Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
 
@@ -115,7 +116,8 @@ Qed.
 
 
 Lemma alt_elementary (m : 'X_{1..n}) k :
-  'a_(m + rho) * 'e_k = \sum_(h : {set 'I_n} | #|h| == k) 'a_(m + mesym1 h + rho).
+  'a_(m + rho) * 'e_k =
+  \sum_(h : {set 'I_n} | #|h| == k) 'a_(m + mesym1 h + rho).
 Proof using .
   rewrite /alternpol exchange_big /=.
   rewrite mulr_suml; apply eq_bigr => s _.
@@ -187,7 +189,8 @@ Proof using .
 Qed.
 
 Let add_mpart_mesym :=
-  if [&& size P1 <= n, #|h| == k & ~~ hasincr] then (rem_trail0 ((mpart P1) + mesym1 h)%MM)
+  if [&& size P1 <= n, #|h| == k & ~~ hasincr]
+  then (rem_trail0 ((mpart P1) + mesym1 h)%MM)
   else rowpart (d + k) (* unused *).
 Lemma add_mpart_mesymP : is_part_of_n (d + k) add_mpart_mesym.
 Proof using P1 h.
@@ -371,7 +374,8 @@ Proof using .
     - move=> i; have /= := Hstr i.+1.
       by rewrite !nth_nil.
   case: sh Hstr => sh Hsh /= Hstr.
-  case: k Hsh => [| k] Hsh Hd1; subst d1; rewrite -/(is_part (p0 :: p)) /= => /andP [] _ Hp.
+  case: k Hsh => [| k] Hsh Hd1; subst d1;
+                 rewrite -/(is_part (p0 :: p)) /= => /andP [] _ Hp.
     have Hincl := vb_strip_included Hstr.
     move: Hsh; rewrite addn0 /= -/(sumn (p0 :: p)) => /andP [] /eqP /esym Heq Hsh.
     by rewrite (included_sumnE Hsh Hincl Heq).
@@ -412,7 +416,7 @@ Theorem alt_SchurE d (P : intpartn d) :
 Proof using .
   suff {d P} H : forall b d, d <= b -> forall (P : intpartn d),
     size P <= n -> 'a_rho * 's_P = 'a_(mpart n P + rho) by apply: (H d).
-  elim=> [ |b IHb] d Hd P.
+  elim=> [|b IHb] d Hd P.
     move: Hd; rewrite leqn0 => /eqP Hd; subst d.
     rewrite Schur0 mulr1 -{1}(add0m rho)=> _; congr 'a_(_ + rho).
     rewrite intpartn0 /mpart /= mnmP => i; by rewrite !mnmE /=.
@@ -513,7 +517,8 @@ Section CommringSchurSym.
 
 Variable (n0 : nat) (R : comRingType).
 Local Notation n := (n0.+1).
-Local Notation "''s_' k" := (Schur n0 R k) (at level 8, k at level 2, format "''s_' k").
+Local Notation "''s_' k" := (Schur n0 R k)
+                              (at level 8, k at level 2, format "''s_' k").
 
 Theorem Schur_sym d (P : intpartn d) : 's_P \is symmetric.
 Proof using .
@@ -575,7 +580,8 @@ Proof using .
 Qed.
 
 Lemma pihomog_mPo p d :
-  pihomog [measure of mdeg] d (p \mPo E) = (pihomog [measure of mnmwgt] d p) \mPo E.
+  pihomog [measure of mdeg] d (p \mPo E) =
+  (pihomog [measure of mnmwgt] d p) \mPo E.
 Proof using .
   elim/mpolyind: p => [| c m p Hm Hc IHp] /=; first by rewrite !linear0.
   rewrite !linearP /= {}IHp; congr (c *: _ + _).

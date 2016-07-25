@@ -87,10 +87,10 @@ Proof using . by rewrite /permuted_list size_map size_permuted_tuple. Qed.
 Lemma eq_seqE s s1 : perm_eq s s1 -> s1 \in permuted_list s.
 Proof using . exact: perm_eq_permuted_tuple. Qed.
 
-
 End Permuted.
 
 Require Import combclass.
+
 
 Section FinType.
 
@@ -114,6 +114,10 @@ Let type := sub_undup_finType permuted_subCountType
                               (all_permuted w) (mem_enum_permuted (s := w)).
 Canonical permuted_finType := [finType of permuted for type].
 Canonical permuted_subFinType := Eval hnf in [subFinType of permuted].
+Lemma permutedP (p : permuted) : perm_eq w p.
+Proof. by case: p. Qed.
+
 End FinType.
 
 
+Hint Resolve permutedP.
