@@ -66,7 +66,6 @@ Section cfRepr_ExtProd.
 Variables (gT aT : finGroupType).
 Variables (G : {group gT}) (H : {group aT}).
 
-
 Lemma cfRepr_extprod n1 n2
       (rG : mx_representation algCF G n1)
       (rH : mx_representation algCF H n2):
@@ -315,3 +314,84 @@ Proof.
     rewrite !classfun_partnE eq_sym xpair_eqE.
     by move=> /nandP [] /negbTE -> /=; rewrite ?mulr0 ?mul0r.
 Qed.
+
+End Restriction.
+
+Section Scalar.
+
+Import GroupScope GRing.Theory Num.Theory.
+Local Open Scope ring_scope.
+
+  
+Variables m n : nat.
+
+Lemma cfExtProd_classfun (p1 : intpartn m) (p2 : intpartn n):
+  cfExtProd (classfun_part p1) (classfun_part p2) =
+  cfun_indicator (setX [set: 'S_m] [set: 'S_n]) ((perm_of_partCT p1,perm_of_partCT p2)^:(setX [set: 'S_m] [set: 'S_n])). 
+Proof.
+  admit.
+Admitted.
+
+Lemma cfdot_indicator (gT : finGroupType) (G : {group gT}) A B:
+  '[cfun_indicator G A, cfun_indicator G B] =
+  (A == B)%:R * (#|A|)%:R/(#|G|)%:R.
+Proof.
+  admit.
+Admitted.
+
+(**cfdot_cfuni**)
+  
+Lemma cfdot_classfun_part (p1 : intpartn n) (p2 : intpartn n) :
+  '[classfun_part p1, classfun_part p2] =
+    (p1 == p2)%:R * (#|class_of_partCT p1|)%:R/(#|'S_n|)%:R.
+Proof.
+  admit.
+Admitted.
+
+Lemma decomp_cf_triv :
+  \sum_(p : (intpartn n)) classfun_part p = 1.
+Proof.
+  admit.
+Admitted.
+
+Notation G := [set : 'S_(m + n)].
+
+Lemma cfdot_Ind_classfun_part (p1 : intpartn m) (p2 : intpartn n) (l : intpartn (m + n)):
+  '['Ind[G] (cfIsom (isomtinj m n) (cfExtProd (classfun_part p1) (classfun_part p2))), classfun_part l] =
+  (unionpart (p1,p2) == l)%:R *(#|class_of_partCT p1|)%:R * (#|class_of_partCT p2|)%:R/(#|'S_n|)%:R.
+Proof.
+  rewrite -cfdot_Res_r classfun_Res cfIsom_iso cfdot_sumr.
+  (*rewrite (eq_bigr (fun (i : intpartn m * intpartn n) =>
+       '[cfExtProd (classfun_part p1)(classfun_part p2),
+         '1_((perm_of_partCT i.1, perm_of_partCT i.2) ^: setX [set: 'S_m] [set: 'S_n])])).  rewrite !cfExtProd_classfun.*)
+  rewrite (eq_bigr (fun (i : intpartn m * intpartn n) => #|((perm_of_partCT p1,perm_of_partCT p2)^: setX [set: 'S_m] [set: 'S_n]) :&: ((perm_of_partCT i.1,perm_of_partCT i.2)^: setX [set: 'S_m] [set: 'S_n])|%:R / #|setX [set: 'S_m] [set: 'S_n]|%:R)); first last.
+  - move => i _.
+    rewrite !cfExtProd_classfun cfdot_cfuni //=.
+    admit.
+    admit.
+    
+
+
+
+Admitted.
+
+Lemma e_subproof k (p : intpartn k) :
+  is_class_fun <<[set: 'S_k]>> [ffun s =>  classfun_part p s/ (#|class_of_partCT p|)%:R].
+Proof.
+  admit.
+Admitted.
+
+Definition e k (p : intpartn k):= Cfun 0 (e_subproof p).
+
+
+Lemma Ind_classfun_part (p1 : intpartn m) (p2 : intpartn n) (l : intpartn (m + n)):
+  'Ind[G] (cfIsom (isomtinj m n) (cfExtProd (e p1) (e p2))) = e l.
+Proof.
+  admit.
+Admitted.
+
+
+
+End Scalar.
+
+
