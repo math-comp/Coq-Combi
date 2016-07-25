@@ -202,20 +202,15 @@ Lemma pcycles_tinj s :
     :|:
     [set (@rshift m n) @: (x : {set 'I_n}) | x in pcycles s.2 ].
 Proof.
-  apply/setP/subset_eqP/andP; split; apply /subsetP => /= X.
-  - move/imsetP => /= [x _ ->].
-    rewrite inE; apply /orP.
-    rewrite -(splitK x).
-    case: (splitP x) => a /= Hx; [left|right]; apply/imsetP.
-    + exists (pcycle s.1 a); first by apply/imsetP; exists a.
-      by rewrite pcycle_tinj_lshift.
-    + exists (pcycle s.2 a); first by apply/imsetP; exists a.
-      by rewrite pcycle_tinj_rshift.
-  - rewrite inE; move/orP => [|] /imsetP /= [Y /imsetP /= [y _ ->]] ->.
-    + apply/imsetP; exists (lshift n y) => //.
-      by rewrite pcycle_tinj_lshift.
-    + apply/imsetP; exists (rshift m (n:=n) y) => //.
-      by rewrite pcycle_tinj_rshift.
+  apply/setP => S; rewrite /pcycles inE.
+  apply/imsetP/orP => [[x _ -> {S}] | [] /imsetP [T /imsetP [x _] -> {T}] -> {S}].
+  - rewrite -(splitK x); case: splitP => j _ {x}.
+    + left; apply/imsetP; exists (pcycle s.1 j); first exact: mem_imset.
+      rewrite /=; exact: pcycle_tinj_lshift.
+    + right; apply/imsetP; exists (pcycle s.2 j); first exact: mem_imset.
+      rewrite /=; exact: pcycle_tinj_rshift.
+  - by exists (lshift n x); rewrite // pcycle_tinj_lshift.
+  - by exists (rshift m x); rewrite // pcycle_tinj_rshift.
 Qed.
 
 Lemma count_set_of_card (T : finType) (p : pred nat) (s : {set {set T}}) :
