@@ -19,7 +19,7 @@
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import bigop.
+From mathcomp Require Import finset bigop.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -565,3 +565,25 @@ Proof.
     rewrite -big_nat_widen0 //; exact: leq_subr.
 Qed.
 
+
+
+Section Enum.
+
+Variable T: finType.
+
+Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
+
+Lemma enum_eq0P (s : {set T}):
+  reflect (enum s = [::]) (s == set0).
+Proof.
+  apply (iffP eqP) => [-> |]; first exact: enum_set0.
+  case: (set_0Vmem s) => [-> //| [x]].
+  rewrite -mem_enum => Hx Hnil.
+  by rewrite Hnil in_nil in Hx.
+Qed.
+
+Lemma big_enum (S : {set T}) :
+  \big[op/idx]_(s in S) F s = \big[op/idx]_(s <- enum S) F s.
+Proof. by rewrite /index_enum big_filter; apply congr_big. Qed.
+
+End Enum.
