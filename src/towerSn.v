@@ -7,7 +7,7 @@ From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum ssralg pgroup.
 From mathcomp Require Import presentation all_character.
 
-From Combi Require Import tools permuted symgroup partition Greene sorted rep1.
+From Combi Require Import tools ordcast permuted symgroup partition Greene sorted rep1.
 
 Require Import ssrcomp bij cycles cycletype reprS2.
 
@@ -189,7 +189,7 @@ Qed.
 Definition unionpartval (lpair : intpartn m * intpartn n) :=
   sort geq (lpair.1 ++ lpair.2).
 
-Lemma unionpartvalE lpair : is_part_of_n (m+n) (unionpartval lpair).
+Lemma unionpartvalE lpair : is_part_of_n (m + n) (unionpartval lpair).
 Proof.
   apply /andP; split.
   - rewrite /unionpartval.
@@ -206,164 +206,139 @@ Proof.
 Qed.
 Definition unionpart lpair := IntPartN (unionpartvalE lpair).
 
-Lemma expg_tinj_l s x a i: 
-  split x = inl a -> (tinj s ^+ i) x = lshift n ((s.1 ^+ i) a).
+Lemma expg_tinj_lshift s a i :
+ (tinj s ^+ i) (lshift n a) = lshift n ((s.1 ^+ i) a).
 Proof.
-  move=> splitx.
   elim: i => [|i IHi].
-  - by rewrite !expg0 !perm1 -(splitK x) splitx /=.
+  - by rewrite !expg0 !perm1.
   - rewrite !expgSr !permM IHi permE /tinjval /=.
     pose y := inl ((s.1 ^+ i) a) => /=.
     rewrite (_: lshift _ _ = unsplit (y _)) //.
     by rewrite unsplitK.
 Qed.
 
-Lemma expg_tinj_r s x a i: 
-  split x = inr a -> (tinj s ^+ i) x = rshift m (n:=n) ((s.2 ^+ i) a).
+Lemma expg_tinj_rshift s a i :
+  (tinj s ^+ i) (rshift m a) = rshift m ((s.2 ^+ i) a).
 Proof.
-  move=> splitx.
   elim: i => [|i IHi].
-  - by rewrite !expg0 !perm1 -(splitK x) splitx /=.
+  - by rewrite !expg0 !perm1.
   - rewrite !expgSr !permM IHi permE /tinjval /=.
     pose y := inr ((s.2 ^+ i) a) => /=.
     rewrite (_: rshift _ _ = unsplit (y _)) //.
     by rewrite unsplitK.
 Qed.
 
-Lemma pcycle_tinj_l s x a:
-  split x = inl a -> pcycle (tinj s) x = imset (lshift n) (mem (pcycle s.1 a)).
+Lemma pcycle_tinj_lshift s a :
+  pcycle (tinj s) (lshift n a) = imset (lshift n) (mem (pcycle s.1 a)).
 Proof.
-  move=> splitx.
-  apply /setP => /= Y.
+  apply/setP => /= Y.
   apply/pcycleP/imsetP => /= [[i ->]|[y]].
   - exists ((s.1 ^+ i) a); first by apply /pcycleP; exists i.
-    by exact: expg_tinj_l.
+    exact: expg_tinj_lshift.
   - move /pcycleP => [i ->] ->.
-    by exists i; rewrite (expg_tinj_l _ _ splitx).
+    by exists i; rewrite expg_tinj_lshift.
 Qed.
 
 
-Lemma pcycle_tinj_r s x a:
-  split x = inr a -> 
-  pcycle (tinj s) x = imset (rshift m (n:=n)) (mem (pcycle s.2 a)).
+Lemma pcycle_tinj_rshift s a :
+  pcycle (tinj s) (rshift m a) = imset (@rshift m n) (mem (pcycle s.2 a)).
 Proof.
-  move=> splitx.
-  apply /setP => /= Y.
+  apply/setP => /= Y.
   apply/pcycleP/imsetP => /= [[i ->]|[y]].
   - exists ((s.2 ^+ i) a); first by apply /pcycleP; exists i.
-    by exact: expg_tinj_r.
+    exact: expg_tinj_rshift.
   - move /pcycleP => [i ->] ->.
-    by exists i; rewrite (expg_tinj_r _ _ splitx).
+    by exists i; rewrite expg_tinj_rshift.
 Qed.
-                
+
 Lemma pcycles_tinj s :
   pcycles (tinj s) =
   [set (@lshift m n) @: (x : {set 'I_m}) | x in pcycles s.1]
     :|:
     [set (@rshift m n) @: (x : {set 'I_n}) | x in pcycles s.2 ].
 Proof.
-  apply /setP /subset_eqP /andP; split; apply /subsetP => /= X. 
+  apply/setP/subset_eqP/andP; split; apply /subsetP => /= X.
   - move/imsetP => /= [x _ ->].
     rewrite inE; apply /orP.
-    case: {2}(split x) (erefl (split x)) => a splitx; [left|right]; apply/imsetP.
+    rewrite -(splitK x).
+    case: (splitP x) => a /= Hx; [left|right]; apply/imsetP.
     + exists (pcycle s.1 a); first by apply/imsetP; exists a.
-      by exact: pcycle_tinj_l.
+      by rewrite pcycle_tinj_lshift.
     + exists (pcycle s.2 a); first by apply/imsetP; exists a.
-      by exact: pcycle_tinj_r.
-  - rewrite inE; move/orP => [|]/imsetP /= [Y /imsetP /= [y _ ->]] ->.
+      by rewrite pcycle_tinj_rshift.
+  - rewrite inE; move/orP => [|] /imsetP /= [Y /imsetP /= [y _ ->]] ->.
     + apply/imsetP; exists (lshift n y) => //.
-      rewrite (@pcycle_tinj_l s (lshift n y) y) //.
-      by rewrite -(unsplitK (inl y)) /=.
-    + apply/imsetP. exists (rshift m (n:=n) y) => //.
-      rewrite (@pcycle_tinj_r s (rshift m (n:=n) y) y) //.
-      by rewrite -(unsplitK (inr y)) /=.
+      by rewrite pcycle_tinj_lshift.
+    + apply/imsetP; exists (rshift m (n:=n) y) => //.
+      by rewrite pcycle_tinj_rshift.
 Qed.
 
-Lemma parts_shape_union (A: {set {set 'I_(m+n)}}) (B: {set {set 'I_(m+n)}}) :
-  [disjoint A & B] ->
-  parts_shape (A:|:B) = sort geq (parts_shape A ++ parts_shape B). 
+Lemma count_card (T : finType) (p : pred nat) (s : {set {set T}}) :
+  count p [seq #|(x : {set T})| | x <- enum s] =
+  #|s :&: [set x : {set T} | p #|x|]|.
 Proof.
-  rewrite /parts_shape => disj.
+  rewrite cardE -size_filter /enum_mem -enumT /=.
+  rewrite filter_map size_map; congr size.
+  rewrite -filter_predI; apply eq_filter.
+  by move=> S; rewrite !inE andbC.
+Qed.
+
+Lemma parts_shape_union (T : finType) (A: {set {set T}}) (B: {set {set T}}) :
+  [disjoint A & B] ->
+  parts_shape (A :|: B) = sort geq (parts_shape A ++ parts_shape B).
+Proof.
+  rewrite /parts_shape -setI_eq0 => /eqP disj.
   apply /perm_sortP.
   - by move=> x y; exact: leq_total.
   - by move=> x y z yx xz; exact: (leq_trans xz yx).
   - by move=> x y; rewrite andbC; exact: anti_leq.
-  - have : perm_eq (enum (A :|: B)) (enum A ++ enum B).
-      rewrite/perm_eq; apply/allP => /= x _.
-      rewrite count_uniq_mem; last by exact: enum_uniq.
-      rewrite mem_enum inE count_cat; apply/eqP.
-      rewrite !count_uniq_mem; first 2 [by exact: enum_uniq|by exact: enum_uniq].
-      rewrite !mem_enum.
-      case: (boolP (x \in A)); case: (boolP (x \in B)); first 2 [by[]|by[]|by[]].
-      move=> xiB xiA; contradict disj.
-      move/disjoint_setI0 /setP /(_ x).
-      by rewrite !inE xiB xiA.
-    move/(perm_map (fun x => #|(x: {set 'I_(m + n)})|)).
-    rewrite map_cat => H.
-    rewrite (perm_eq_trans H) //=.
-    apply/perm_eqP => x; rewrite !count_cat.
-    have count_sort :
-      forall l, count ^~ [seq #|(x0 : {set 'I_(m + n)})| | x0 <- l] =1
-                count ^~ (sort geq [seq #|(x0 : {set 'I_(m + n)})| | x0 <- l]).
-      by move=> l; apply/perm_eqP; rewrite perm_eq_sym perm_sort perm_eq_refl.
-    by rewrite !count_sort.
+  apply/perm_eqP => P.
+  have count_sort l : count ^~ (sort geq l) =1 count ^~ l.
+    by apply/perm_eqP; rewrite perm_sort perm_eq_refl.
+  rewrite count_cat !count_sort !count_card.
+  rewrite setIUl cardsU -[RHS]subn0; congr(_ - _).
+  apply/eqP; rewrite cards_eq0 -subset0 -disj.
+  by apply/subsetP => x; rewrite !inE => /andP [/andP [-> _] /andP [-> _]].
 Qed.
 
-
-
-Lemma parts_shape_lshift (A: {set {set 'I_m}}):
-  parts_shape [set (@lshift m n) @: (x : {set 'I_m}) | x in A] = parts_shape A.
+Lemma parts_shape_inj
+      (T1 T2 : finType) (f : T1 -> T2) (A : {set {set T1}}) :
+  injective f -> parts_shape [set f @: (x : {set T1}) | x in A] = parts_shape A.
 Proof.
-  rewrite (_: [set (@lshift m n) @: (x : {set 'I_m}) | x in A] = [set (@lshift m n) @: (x : {set 'I_m}) | x in enum A]).
-  rewrite /parts_shape /=; congr sort.
-  elim: (enum A).
-  - rewrite /map.
-    rewrite (_: (mem [::]) = (mem set0)).
-    rewrite imset0 /=.
-    enum0.
-    
-
-  elim: {2 3}(enum A) (erefl (enum A))=> [Anil|].
-  - rewrite [RHS]/map.
-    have := (mem_enum (mem A)); rewrite Anil{Anil}=> Anil.
-    case: (boolP ([seq #|(x : {set 'I_(m + n)})| | x <- enum (imset (fun (x : {set 'I_m}) => imset (lshift n) (mem x)) (mem A))] == [::])).
-    + by move/eqP.
-
-
-Lemma pcycles_lshift s :
-  parts_shape [set (@lshift m n) @: (x : {set 'I_m}) | x in pcycles s] = parts_shape (pcycles s).
-Proof.
-  admit.
-Admitted.
-
-Lemma pcycles_rshift s :
-  parts_shape [set (@rshift m n) @: (x : {set 'I_n}) | x in pcycles s ] = parts_shape (pcycles s).
-Proof.
-  admit.
-Admitted.
+  rewrite /parts_shape /= => Hinj.
+  apply/ssrcomp.perm_sort_geq/perm_eqP => P.
+  rewrite !count_card.
+  rewrite -(card_imset _ (imset_inj Hinj)).
+  rewrite imsetI; first last.
+    move=> B C _ _; exact: imset_inj.
+  congr #|pred_of_set _|; apply/setP => S; rewrite !inE.
+  case: (boolP (S \in (imset _ _))) => //= /imsetP [U _ -> {S}].
+  rewrite (card_imset _ Hinj).
+  apply/idP/imsetP => [| [] V].
+  - by exists U; rewrite // inE.
+  - by rewrite inE => HP /(imset_inj Hinj) ->.
+Qed.
 
 Lemma cycle_type_tinj s :
   ct (tinj s) = unionpart (ct s.1, ct s.2).
 Proof.
   apply val_inj => /=; rewrite /unionpartval /=.
   rewrite intpartn_castE /= /cycle_type_seq /=.
-  rewrite pcycles_tinj parts_shape_union.  
+  rewrite pcycles_tinj parts_shape_union; first last.
+    rewrite -setI_eq0; apply/eqP/setP => S.
+    rewrite !inE; apply/(introF idP) => /andP [].
+    move=> /imsetP [X /imsetP [x _ ->]] -> {X}.
+    move=> /imsetP [X /imsetP [y _ ->]].
+    move/setP => /(_ (lshift n x)).
+    rewrite mem_imset; last exact: pcycle_id.
+    move=> /esym/imsetP => [] [z _] /eqP.
+    by rewrite lrinjF.
   congr sort.
-  rewrite /ct !intpartn_castE /=.
-  rewrite /cycle_type_seq.
+  rewrite /ct !intpartn_castE /= /cycle_type_seq.
   congr (_++_).
-  - exact: pcycles_lshift.
-  - exact: pcycles_rshift.
+  - apply parts_shape_inj; exact: linjP.
+  - apply parts_shape_inj; exact: rinjP.
 Qed.
-
-(* Ancien enoncé :
-Lemma cycle_typetinj s lpair :
-  (ct s.1, ct s.2) = lpair ->
-  cycle_type (tinj s) = unionpart lpair.
-Proof.
-  admit.
-Admitted.
-*)
 
 Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.

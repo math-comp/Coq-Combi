@@ -17,12 +17,16 @@ Local Open Scope ring_scope.
 
 Section Bla.
 
+Notation sympoly := (sympoly _ _ ).
+
 Variable n nvar : nat.
 
-Canonical psum k := SymPoly (power_sum_sym nvar [fieldType of algC] k).
+Canonical psum k : sympoly := SymPoly (power_sum_sym nvar [fieldType of algC] k).
 
-Local Notation "''p_' k" := (psum k)
+Local Notation "''p_' k" := (power_sum nvar [fieldType of algC] k)
                               (at level 8, k at level 2, format "''p_' k").
+
+Let bla : sympoly := 'p_2.
 
 Definition frob_iso (x : 'CF([set: 'S_n])) : {sympoly algC[nvar.+1] } :=
   \sum_(l : intpartn #|'I_n|) (x (perm_of_partn l)) *: \prod_(i <- l) 'p_i.
