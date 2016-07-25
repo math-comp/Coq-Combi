@@ -10,6 +10,19 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 
 
+Module GeqOrder.
+
+Definition geq_total : total geq :=
+  fun x y => leq_total y x.
+Definition geq_trans : transitive geq :=
+  fun x y z H1 H2 => leq_trans H2 H1.
+Definition anti_geq : antisymmetric geq :=
+  fun x y H => esym (anti_leq H).
+
+Hint Resolve geq_total geq_trans anti_geq.
+
+End GeqOrder.
+
 Section SSRComplements.
 
 Variable T: finType.
@@ -43,7 +56,6 @@ Proof.
   - by split; rewrite ?inE // /trivIset /cover !big_set0 ?cards0.
 Qed.
 
-(* TODO: Check with pcyclePb *)
 Lemma pcycleP (s: {perm T}) x y :
   reflect (exists i, y = (s ^+ i)%g x) (y \in pcycle s x).
 Proof.
@@ -76,18 +88,12 @@ Qed.
 
 End Uniq.
 
+
+
 From mathcomp Require Import binomial.
 
 Section SetPartitionShape.
 
-Local Definition geq_total : total geq :=
-  fun x y => leq_total y x.
-Local Definition geq_trans : transitive geq :=
-  fun x y z H1 H2 => leq_trans H2 H1.
-Local Definition anti_geq : antisymmetric geq :=
-  fun x y H => esym (anti_leq H).
-Local Definition perm_sort_geq :=
-  perm_sortP geq_total geq_trans anti_geq.
 
 Variable T : finType.
 Implicit Types (s t : {perm T}) (n : nat).
@@ -101,7 +107,7 @@ Proof.
   rewrite /parts_shape => /and3P [/eqP Hcov Htriv Hnon0].
   rewrite /is_part_of_n /= is_part_sortedE.
   apply/and3P; split.
-  - have:= perm_sort geq  [seq #|(x: {set T})| | x <- enum s].
+  - have:= perm_sort geq [seq #|(x: {set T})| | x <- enum s].
     move=> /perm_eqlP/perm_sumn ->.
     rewrite -sumnE big_map -big_enum.
     move: Htriv; rewrite /trivIset => /eqP ->.
@@ -158,6 +164,7 @@ exists (B :: P); split => /=; [|apply/and3P; split|].
 - by rewrite Ps.
 Qed.
 
+Import GeqOrder.
 
 Lemma ex_set_parts_shape (A : {set T}) sh :
   is_part_of_n #|A| sh ->
@@ -167,10 +174,11 @@ rewrite /is_part_of_n /= is_part_sortedE => /andP [/eqP shsum /andP [shsort]].
 move=> /(ex_parts_shape shsum) [P [Puniq Ppart Psh]].
 exists [set X in P]; first exact: Ppart.
 apply/(eq_sorted geq_trans anti_geq).
-- exact: (sort_sorted geq_total).
+- exact: sort_sorted.
 - exact: shsort.
 - rewrite /parts_shape -Psh perm_sort; apply: perm_map.
   apply: (uniq_perm_eq (enum_uniq _) Puniq) => x.
   by rewrite mem_enum inE.
 Qed.
+
 End SetPartitionShape.

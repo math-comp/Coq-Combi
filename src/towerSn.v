@@ -11,6 +11,7 @@ From Combi Require Import tools ordcast permuted symgroup partition Greene sorte
 
 Require Import ssrcomp bij cycles cycletype reprS2.
 
+Import GeqOrder.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -19,6 +20,7 @@ Unset Printing Implicit Defensive.
 Import GroupScope GRing.Theory Num.Theory.
 
 Local Notation algCF := [fieldType of algC].
+
 
 Section cfExtProd.
 
@@ -30,24 +32,15 @@ Lemma cfExtProd_subproof (f1 : 'CF(G)) (f2 : 'CF(H)) :
   is_class_fun <<setX G H>>
                [ffun x : (gT * aT) => ((f1 x.1) * (f2 x.2))%R].
 Proof.
-  rewrite genGid.
-  apply intro_class_fun => [x y|].
+  rewrite genGid; apply intro_class_fun => [x y|].
   - rewrite !inE => /andP [x1 x2] /andP [y1 y2].
-  by rewrite !cfunJgen ?genGid.
-  - move => x; rewrite inE => /nandP [x1|x2].
+    by rewrite !cfunJgen ?genGid.
+  - move=> x; rewrite inE => /nandP [x1|x2].
     + by rewrite cfun0gen ?mul0r ?genGid.
     + by rewrite [f2 _]cfun0gen ?mulr0 ?genGid.
 Qed.
-
 Definition cfExtProd f1 f2 := Cfun 0 (cfExtProd_subproof f1 f2).
 
-End cfExtProd.
-
-
-Section ProdRepr.
-
-Variables (gT aT : finGroupType).
-Variables (G : {group gT}) (H : {group aT}).
 Variables (n1 n2 : nat).
 Variables (rG : mx_representation algCF G n1)
           (rH : mx_representation algCF H n2).
@@ -58,26 +51,15 @@ Proof.
   rewrite !inE => /andP [i1 i2] /andP [j1 j2].
   by rewrite !repr_mxM // tprodE.
 Qed.
-
 Definition extprod_repr := MxRepresentation extprod_mx_repr.
-End ProdRepr.
 
-Section cfRepr_ExtProd.
-Variables (gT aT : finGroupType).
-Variables (G : {group gT}) (H : {group aT}).
-
-
-Lemma cfRepr_extprod n1 n2
-      (rG : mx_representation algCF G n1)
-      (rH : mx_representation algCF H n2):
-  cfExtProd (cfRepr rG) (cfRepr rH) = cfRepr (extprod_repr rG rH).
+Lemma cfRepr_extprod : cfExtProd (cfRepr rG) (cfRepr rH) = cfRepr extprod_repr.
 Proof.
   apply/cfun_inP=> x GXHx.
-  have := GXHx; rewrite !inE => /andP [Gx Hx].
-  by rewrite !cfunE /= Gx Hx GXHx mxtrace_prod.
+  by have:= GXHx; rewrite !inE !cfunE GXHx mxtrace_prod => /andP [-> ->] /=.
 Qed.
 
-End cfRepr_ExtProd.
+End cfExtProd.
 
 
 
@@ -94,7 +76,7 @@ Definition tinjval (s : 'S_m * 'S_n) :=
   |inr a => unsplit (inr (s.2 a))
   end.
 
-Lemma tinjval_inj s : injective (tinjval s).
+Fact tinjval_inj s : injective (tinjval s).
 Proof.
   move=> x y.
   rewrite /tinjval.
@@ -104,10 +86,9 @@ Proof.
       move=> /perm_inj Hab; subst a;
       by rewrite -(splitK x) Ha -Hb splitK.
 Qed.
-
 Definition tinj s : 'S_(m + n) := perm (@tinjval_inj s).
 
-Lemma pmorphM:
+Fact pmorphM:
   {in (setX [set: 'S_m] [set: 'S_n]) &, {morph tinj : x y / x * y >-> x * y}}.
 Proof.
   move=> /= s1 s2 _ _.
@@ -116,7 +97,6 @@ Proof.
   case: splitP => [] j _;
   by rewrite /tinjval !unsplitK /= permM.
 Qed.
-
 Canonical morph_of_tinj := Morphism pmorphM.
 
 (*the image of 'S_m*'S_n via tinj endowed with a group structure of type 'S_(m+n)*)
@@ -228,11 +208,7 @@ Lemma parts_shape_union (T : finType) (A: {set {set T}}) (B: {set {set T}}) :
   parts_shape (A :|: B) = sort geq (parts_shape A ++ parts_shape B).
 Proof.
   rewrite /parts_shape -setI_eq0 => /eqP disj.
-  apply /perm_sortP.
-  - by move=> x y; exact: leq_total.
-  - by move=> x y z yx xz; exact: (leq_trans xz yx).
-  - by move=> x y; rewrite andbC; exact: anti_leq.
-  apply/perm_eqP => P.
+  apply/perm_sortP/perm_eqP => // P.
   have count_sort l : count ^~ (sort geq l) =1 count ^~ l.
     by apply/perm_eqP; rewrite perm_sort perm_eq_refl.
   rewrite count_cat !count_sort !count_set_of_card.
@@ -246,7 +222,7 @@ Lemma parts_shape_inj
   injective f -> parts_shape [set f @: (x : {set T1}) | x in A] = parts_shape A.
 Proof.
   rewrite /parts_shape /= => Hinj.
-  apply/ssrcomp.perm_sort_geq/perm_eqP => P.
+  apply/perm_sortP/perm_eqP => // P.
   rewrite !count_set_of_card.
   rewrite -(card_imset _ (imset_inj Hinj)).
   rewrite imsetI; first last.
@@ -263,7 +239,7 @@ Lemma cycle_type_tinj s :
   ct (tinj s) = unionpart (ct s.1, ct s.2).
 Proof.
   apply val_inj => /=.
-  rewrite intpartn_castE /= /cycle_type_seq /=.
+  rewrite intpartn_castE /=.
   rewrite pcycles_tinj parts_shape_union; first last.
     rewrite -setI_eq0; apply/eqP/setP => S.
     rewrite !inE; apply/(introF idP) => /andP [].
@@ -274,7 +250,7 @@ Proof.
     move=> /esym/imsetP => [] [z _] /eqP.
     by rewrite lrinjF.
   congr sort.
-  rewrite /ct !intpartn_castE /= /cycle_type_seq.
+  rewrite /ct !intpartn_castE /=.
   congr (_++_).
   - apply parts_shape_inj; exact: linjP.
   - apply parts_shape_inj; exact: rinjP.
@@ -315,3 +291,5 @@ Proof.
     rewrite !classfun_partnE eq_sym xpair_eqE.
     by move=> /nandP [] /negbTE -> /=; rewrite ?mulr0 ?mul0r.
 Qed.
+
+End Restriction.

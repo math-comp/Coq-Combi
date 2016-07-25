@@ -11,32 +11,19 @@ Require Import ssrcomp bij cycles.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-
+Import GeqOrder.
 
 Section cycle_type.
-
-Local Definition geq_total : total geq :=
-  fun x y => leq_total y x.
-Local Definition geq_trans : transitive geq :=
-  fun x y z H1 H2 => leq_trans H2 H1.
-Local Definition anti_geq : antisymmetric geq :=
-  fun x y H => esym (anti_leq H).
-Local Definition perm_sort_geq :=
-  perm_sortP geq_total geq_trans anti_geq.
 
 Variable T : finType.
 Implicit Types (s t : {perm T}) (n : nat).
 
-Definition cycle_type_seq (s : {perm T}) := parts_shape (pcycles s).
-
-Lemma cycle_type_partCT s:
-  is_part_of_n #|T| (cycle_type_seq s).
+Fact cycle_type_partCT (s : {perm T}) :
+  is_part_of_n #|T| (parts_shape (pcycles s)).
 Proof.
-  rewrite /cycle_type_seq -cardsT; apply parts_shapeP.
+  rewrite -cardsT; apply parts_shapeP.
   exact: partition_pcycles.
 Qed.
-
-
 Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_partCT s).
 
 Lemma conjg_cycle s a :
@@ -80,8 +67,7 @@ Lemma cycle_type_of_conjg s a:
   cycle_type (s ^ a)%g = cycle_type s.
 Proof.
   apply esym; apply val_inj => /=.
-  rewrite /cycle_type_seq.
-  rewrite pcycles_conjg; apply/perm_sort_geq.
+  rewrite pcycles_conjg; apply/perm_sortP => //.
   have -> : [seq #|(x : {set T})| | x <- enum (pcycles s)] =
             [seq #|[set a y | y in (x : {set T})]| | x <- enum (pcycles s)].
     by apply eq_map => x;  apply esym; apply card_imset; exact: perm_inj.
@@ -208,7 +194,7 @@ Definition slpcycles s := slice_part (pcycles s).
 Lemma slice_slpcycleE s i :
   #|slice (slpcycles s) i| = count_mem i (cycle_type s).
 Proof.
-  rewrite /cycle_type /slice /cycle_type_seq /parts_shape /=.
+  rewrite /cycle_type /slice /parts_shape /=.
   rewrite [RHS](_ : _ =
       (count_mem i) [seq #|(x : {set _})| | x <- enum (pcycles s)]);
       last by apply/perm_eqP/perm_eqlP; exact: perm_sort.
@@ -619,10 +605,7 @@ Qed.
 
 Lemma perm_of_partsE P :
   partition P [set: T] -> (cycle_type (perm_of_parts P): seq nat) = parts_shape P.
-Proof.
-  move => /pcycles_perm_of_parts pcy.
-  by rewrite /= /cycle_type_seq pcy.
-Qed.
+Proof. by move=> /pcycles_perm_of_parts pcy; rewrite /= pcy. Qed.
 
 End Permofcycletype.
 
