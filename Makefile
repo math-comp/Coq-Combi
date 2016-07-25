@@ -85,7 +85,7 @@ endif
 VFILES:=src/cycletype.v\
   src/ssrcomp.v\
   src/cycles.v\
-  src/bij.v\
+  src/slicedbij.v\
   src/reprS2.v\
   src/towerSn.v
 
@@ -224,7 +224,7 @@ Makefile: _CoqProject
 	$(COQDOC) $(COQDOCFLAGS)  -html -g $< -o $@
 
 %.v.d: %.v
-	$(COQDEP) -slash $(COQLIBS) "$<" > "$@" || ( RV=$$?; rm -f "$@"; exit $${RV} )
+	$(COQDEP) $(COQLIBS) "$<" > "$@" || ( RV=$$?; rm -f "$@"; exit $${RV} )
 
 %.v.beautified:
 	$(COQC) $(COQDEBUG) $(COQFLAGS) -beautify $*

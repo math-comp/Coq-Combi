@@ -1,17 +1,16 @@
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype path.
-From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm.
-From mathcomp Require Import fintype prime ssralg poly finset gproduct.
-From mathcomp Require Import fingroup morphism perm automorphism quotient finalg action.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
+From mathcomp Require Import finfun fintype tuple finset bigop.
+From mathcomp Require Import ssralg fingroup morphism perm gproduct.
 From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
-From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum ssralg pgroup.
-From mathcomp Require Import presentation all_character.
+From mathcomp Require Import ssralg matrix vector mxalgebra falgebra ssrnum algC.
+From mathcomp Require Import presentation classfun character mxrepresentation.
 
 From Combi Require Import tools ordcast permuted symgroup partition Greene sorted rep1.
 
-Require Import ssrcomp bij cycles cycletype reprS2.
+Require Import ssrcomp slicedbij cycles cycletype reprS2.
 
-Import GeqOrder.
+Import LeqGeqOrder.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -30,7 +29,7 @@ Variables (G : {group gT}) (H : {group aT}).
 
 Lemma cfExtProd_subproof (f1 : 'CF(G)) (f2 : 'CF(H)) :
   is_class_fun <<setX G H>>
-               [ffun x : (gT * aT) => ((f1 x.1) * (f2 x.2))%R].
+               [ffun x : (gT * aT) => (f1 x.1) * (f2 x.2)]%R.
 Proof.
   rewrite genGid; apply intro_class_fun => [x y|].
   - rewrite !inE => /andP [x1 x2] /andP [y1 y2].
@@ -69,17 +68,16 @@ Variables (m n : nat).
 
 Local Notation ct := cycle_typeSN.
 
-Definition tinjval (s : 'S_m * 'S_n) :=
-  fun (x : 'I_(m+n)) => let y := split x in
+Definition tinjval (s : ('S_m * 'S_n)) :=
+  fun (x : 'I_(m + n)) => let y := split x in
   match y with
-  |inl a => unsplit (inl (s.1 a))
-  |inr a => unsplit (inr (s.2 a))
+  | inl a => unsplit (inl (s.1 a))
+  | inr a => unsplit (inr (s.2 a))
   end.
 
 Fact tinjval_inj s : injective (tinjval s).
 Proof.
-  move=> x y.
-  rewrite /tinjval.
+  rewrite /tinjval => x y.
   case: {2 3}(split x) (erefl (split x)) => [] a Ha;
     case: {2 3} (split y) (erefl (split y)) => [] b Hb;
       move=> /(congr1 (@split _ _)); rewrite !unsplitK => [] // [];
@@ -88,18 +86,16 @@ Proof.
 Qed.
 Definition tinj s : 'S_(m + n) := perm (@tinjval_inj s).
 
-Fact pmorphM:
-  {in (setX [set: 'S_m] [set: 'S_n]) &, {morph tinj : x y / x * y >-> x * y}}.
+Fact pmorphM : {morph tinj : x y / x * y >-> x * y}.
 Proof.
-  move=> /= s1 s2 _ _.
-  rewrite /tinj; apply /permP => /= x.
+  rewrite /tinj => /= s1 s2; apply /permP => /= x.
   rewrite permM -(splitK x) !permE.
-  case: splitP => [] j _;
-  by rewrite /tinjval !unsplitK /= permM.
+  by case: splitP => [] j _; rewrite /tinjval !unsplitK /= permM.
 Qed.
-Canonical morph_of_tinj := Morphism pmorphM.
+Canonical morph_of_tinj :=
+  Morphism (D := setX [set: 'S_m] [set: 'S_n]) (in2W pmorphM).
 
-(*the image of 'S_m*'S_n via tinj endowed with a group structure of type 'S_(m+n)*)
+(* The image of 'S_m * 'S_n via tinj with a 'S_(m + n) group structure *)
 Definition prodIm := tinj @* ('dom tinj).
 
 Lemma isomtinj : isom (setX [set: 'S_m] [set: 'S_n]) prodIm tinj.
@@ -242,7 +238,7 @@ Proof.
   rewrite intpartn_castE /=.
   rewrite pcycles_tinj parts_shape_union; first last.
     rewrite -setI_eq0; apply/eqP/setP => S.
-    rewrite !inE; apply/(introF idP) => /andP [].
+    rewrite !inE; apply/negP => /andP [].
     move=> /imsetP [X /imsetP [x _ ->]] -> {X}.
     move=> /imsetP [X /imsetP [y _ ->]].
     move/setP => /(_ (lshift n x)).

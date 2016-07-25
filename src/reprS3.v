@@ -9,7 +9,7 @@ From mathcomp Require Import presentation all_character.
 
 From Combi Require Import tools permuted symgroup partition Greene sorted rep1.
 
-Require Import ssrcomp bij cycles cycletype reprS2.
+Require Import ssrcomp cycles cycletype reprS2.
 
 
 Set Implicit Arguments.

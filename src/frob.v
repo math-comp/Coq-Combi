@@ -10,7 +10,7 @@ From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
 From Combi Require Import symgroup partition Greene tools sorted rep1 sympoly Schur_basis.
 
-Require Import ssrcomp bij cycles cycletype.
+Require Import ssrcomp cycles cycletype.
 
 Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.

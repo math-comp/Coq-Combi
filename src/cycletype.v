@@ -6,12 +6,12 @@ From mathcomp Require finmodule.
 
 From Combi Require Import symgroup partition Greene tools sorted.
 
-Require Import ssrcomp bij cycles.
+Require Import ssrcomp slicedbij cycles.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 
-Import GeqOrder.
+Import LeqGeqOrder.
 
 Section cycle_type.
 
