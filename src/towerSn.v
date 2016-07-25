@@ -314,10 +314,22 @@ Qed.
 Lemma parts_shape_lshift (A: {set {set 'I_m}}):
   parts_shape [set (@lshift m n) @: (x : {set 'I_m}) | x in A] = parts_shape A.
 Proof.
-  rewrite /parts_shape; congr sort.
-  elim: {2 3}(enum A) (erefl (enum A)).
-  - rewrite enum_eq0.
-  
+  rewrite (_: [set (@lshift m n) @: (x : {set 'I_m}) | x in A] = [set (@lshift m n) @: (x : {set 'I_m}) | x in enum A]).
+  rewrite /parts_shape /=; congr sort.
+  elim: (enum A).
+  - rewrite /map.
+    rewrite (_: (mem [::]) = (mem set0)).
+    rewrite imset0 /=.
+    enum0.
+    
+
+  elim: {2 3}(enum A) (erefl (enum A))=> [Anil|].
+  - rewrite [RHS]/map.
+    have := (mem_enum (mem A)); rewrite Anil{Anil}=> Anil.
+    case: (boolP ([seq #|(x : {set 'I_(m + n)})| | x <- enum (imset (fun (x : {set 'I_m}) => imset (lshift n) (mem x)) (mem A))] == [::])).
+    + by move/eqP.
+
+
 Lemma pcycles_lshift s :
   parts_shape [set (@lshift m n) @: (x : {set 'I_m}) | x in pcycles s] = parts_shape (pcycles s).
 Proof.
