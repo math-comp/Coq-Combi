@@ -50,7 +50,7 @@ From mathcomp Require Import finset fintype finfun tuple bigop ssralg ssrint.
 From mathcomp Require Import fingroup perm zmodp binomial.
 From SsrMultinomials Require Import ssrcomplements poset freeg mpoly.
 
-Require Import tools symgroup.
+Require Import tools symgroup sorted partition.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -76,8 +76,120 @@ Proof.
     by apply val_inj.
 Qed.
 
-Require Import sorted.
 Open Scope nat_scope.
+
+
+Section MonomPart.
+
+Variable n : nat.
+Implicit Type m : 'X_{1.. n}.
+
+Definition mpart (s : seq nat) := [multinom (nth 0 s i)%N | i < n].
+Definition is_dominant (m : 'X_{1.. n}) := sorted geq m.
+Definition partm_seq m := sort geq [seq d <- m | d != 0].
+
+Fact partmP m : is_part (partm_seq m).
+Proof.
+  rewrite is_part_sortedE; apply/andP; split.
+  - by apply sort_sorted=> x y; exact: leq_total.
+  - by rewrite mem_sort mem_filter eq_refl.
+Qed.
+Definition partm m := IntPart (partmP m).
+
+Lemma mpartE sh : mpart sh = take n (pad 0 n sh) :> seq nat.
+Proof.
+  rewrite /mpart /=.
+  apply (eq_from_nth (x0 := 0)) => [|i]; rewrite size_map.
+  - rewrite -cardE card_ord size_take_leq size_cat size_nseq.
+    case: (leqP (size sh) n) => [/subnKC ->| /ltnW H]; first by rewrite leqnn.
+    have:= H; rewrite /leq => /eqP ->; rewrite addn0.
+    by move: H; rewrite /leq => ->.
+  - case: n => [|m Hm]; first by rewrite -cardE card_ord.
+    rewrite (nth_map ord0 _ _ Hm) -(nth_map ord0 0 _ Hm) val_enum_ord.
+    move: Hm; rewrite -cardE card_ord => Hm.
+    rewrite nth_iota // add0n nth_take // nth_cat.
+    case: leqP => //= Hi.
+    rewrite nth_default // nth_nseq ltn_sub2r //.
+    exact: leq_ltn_trans Hi Hm.
+Qed.
+
+Lemma is_dominant_mpart sh : is_part sh -> is_dominant (mpart sh).
+Proof.
+  rewrite is_part_sortedE => /andP [Hpart _].
+  rewrite /is_dominant mpartE /pad /=.
+  apply sorted_take; elim: (n - size sh) => [/=|i Hi]; first by rewrite cats0.
+  by rewrite -addn1 nseqD /= catA cats1; apply sorted_rcons.
+Qed.
+
+Lemma is_dominant_partm m :
+  is_dominant m -> partm m = [seq d <- m | d != 0] :> seq nat.
+Proof.
+  rewrite /is_dominant /partm /= => Hsort.
+  have geq_total : total geq := fun x y => leq_total y x.
+  have geq_anti : antisymmetric geq := fun x y H => esym (anti_leq H).
+  have geq_trans : transitive geq := fun x y z H1 H2 => leq_trans H2 H1.
+  apply: (eq_sorted geq_trans geq_anti).
+  - exact: sort_sorted.
+  - exact: sorted_filter.
+  - apply/perm_eqlP; exact: perm_sort.
+Qed.
+
+Lemma is_dominant_mpart_partm m :
+  is_dominant m -> mpart (partm m) = m.
+Proof.
+  move=> H; rewrite (is_dominant_partm H).
+  rewrite /mpart; apply/mnmP => i /=; rewrite !mnmE.
+  case: m H => //= [[l Hl]] /=.
+  rewrite /is_dominant (mnm_nth 0) /= {Hl}.
+  case: i => i /= _; elim: l i => [//= | l0 l IHl] i Hsort /=.
+  case: eqP => /= [Hl0|_].
+  - subst l0 => {IHl}.
+    have {Hsort} -> : l = nseq (size l) 0.
+      elim: l Hsort => [//| l0 l IHl] /= /andP [].
+      rewrite leqn0 -/(sorted _ (l0 :: l)) => /eqP -> /IHl {IHl} ->.
+      by rewrite size_nseq.
+    rewrite [filter _ _](_ : _ = [::]); last by elim: (size l) => [|m IHm].
+    by case: i => //= i; rewrite nth_nseq; case: leqP.
+  - by case: i IHl => //= i /(_ _ (sorted_consK Hsort)).
+Qed.
+
+Local Notation "m # s" := [multinom m (s i) | i < n]
+  (at level 40, left associativity, format "m # s").
+
+Lemma mpart_partm m : {s : 'S_n | (mpart (partm m)) # s == m}.
+Proof.
+  have Hperm : perm_eq m (mpart (partm m)).
+    rewrite mpartE /= take_oversize; first last.
+      rewrite size_cat size_sort size_nseq subnKC //.
+      rewrite size_filter -{3}(size_tuple m).
+      exact: (leq_trans (count_size _ _)).
+    rewrite -(perm_filterC (fun d => d != 0)).
+    set s1 := (X in X ++ _); set s2 := (X in perm_eq _ (_ ++ X)).
+    apply (perm_eq_trans (y := s1 ++ s2)); rewrite /s1 /s2 {s1 s2}.
+    - rewrite perm_cat2l size_sort.
+      set s1 := (X in perm_eq X _); set s2 := (X in perm_eq _ X).
+      suff -> : s1 = s2 by exact: perm_eq_refl.
+      have Hsz : size s1 = size s2.
+        rewrite /s1 /s2 size_nseq -{3}(size_tuple m).
+        have /perm_eqlP/perm_eq_size <- := perm_filterC (fun d => d != 0) m.
+        by rewrite size_cat addKn.
+      apply (eq_from_nth (x0 := 0) Hsz) => i Hi; subst s1 s2.
+      rewrite size_nseq in Hsz.
+      rewrite nth_nseq -{}Hsz {}Hi.
+      case: m => [] [] /= s _; elim: s i => [//= | s0 s IHs].
+      case=> [| i] /=; rewrite negbK; case: eqP => // _.
+      + exact: IHs 0.
+      + exact: IHs i.+1.
+    - by rewrite perm_cat2r perm_eq_sym perm_sort.
+  apply sigW; move: Hperm => /tuple_perm_eqP [s /val_inj Hs].
+  exists s; apply/eqP; apply val_inj => /=.
+  rewrite [RHS]Hs /partm /=.
+  by apply eq_from_tnth => i; rewrite tnth_mktuple.
+Qed.
+
+End MonomPart.
+
+Arguments mpart [n] s.
 
 Import GRing.Theory.
 
@@ -338,7 +450,7 @@ Variable R : idomainType.
 Hypothesis Hchar : ~~ (2 \in [char R]).
 
 
-Lemma sym_antisym_char2 :
+Lemma sym_antisym_char_not2 :
   n >= 2 -> forall p : {mpoly R[n]}, p \is symmetric -> p \is antisym -> p = 0.
 Proof using Hchar.
   move: Hchar; rewrite (char_mpoly n R) => Hchp Hn p /= /issymP Hsym /isantisymP Hanti.
@@ -351,6 +463,7 @@ Proof using Hchar.
   by move: Hchp; rewrite negb_and H2 eq_refl.
 Qed.
 
+
 Section Lead.
 
 Variable p : {mpoly R[n]}.
@@ -360,7 +473,7 @@ Implicit Types q r : {mpoly R[n]}.
 Hypothesis Hpn0 : p != 0.
 Hypothesis Hpanti : p \is antisym.
 
-Lemma sym_antiE q :(q \is symmetric) = (p * q \is antisym).
+Lemma sym_antiE q : (q \is symmetric) = (p * q \is antisym).
 Proof using Hpanti Hpn0.
   case: (leqP n 1) => Hn.
     by rewrite !(sym_smalln Hn) !(antisym_smalln Hn) !unfold_in /=.
@@ -417,7 +530,6 @@ Proof using Hchar Hpanti Hphomog Hpn0.
 Qed.
 
 Definition rho := [multinom (n - 1 - i)%N | i < n].
-Definition mpart (s : seq nat) := [multinom (nth 0 s i)%N | i < n].
 
 Local Notation "''e_' k" := (@mesym n R k) (at level 8, k at level 2, format "''e_' k").
 Local Notation "''a_' k" := (@alternpol n R 'X_[k])
@@ -494,21 +606,18 @@ Qed.
 
 End AlternIDomain.
 
-
 (** ** Vandermonde product *)
-Definition vdmprod n (R : ringType) : {mpoly R[n]} :=
+Definition vdmprod {n} {R : ringType} : {mpoly R[n]} :=
   \prod_(p : 'II_n | p.1 < p.2) ('X_p.1 - 'X_p.2).
 
-Implicit Arguments vdmprod [n R].
 
 Section EltrP.
 
 Variable n i : nat.
 Implicit Type (p : 'II_n.+1).
 
-(* TODO : This should only be locaa *)
-Definition eltrp p := (eltr n i p.1, eltr n i p.2).
-Definition predi p := (p.1 < p.2) && (p != (inord i, inord i.+1)).
+Local Definition eltrp p := (eltr n i p.1, eltr n i p.2).
+Local Definition predi p := (p.1 < p.2) && (p != (inord i, inord i.+1)).
 
 Lemma predi_eltrp p : i < n -> predi p -> predi (eltrp p).
 Proof using .
