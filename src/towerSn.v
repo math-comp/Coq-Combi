@@ -347,6 +347,7 @@ Local Open Scope ring_scope.
   
 Variables m n : nat.
 
+Local Notation ct := cycle_typeSN.
 Local Notation G := [set : 'S_(m + n)].
 Local Notation Smn := (setX [set: 'S_m] [set: 'S_n]).
 Local Notation classX p1 p2 := ((perm_of_partCT p1, perm_of_partCT p2) ^: Smn).
@@ -355,10 +356,14 @@ Local Notation class p := (class_of_partCT p).
 Lemma classXE (p1 : intpartn m) (p2 : intpartn n):
   classX p1 p2  = setX (class p1) (class p2).
 Proof.
-  admit.
-Admitted.
-
-
+  apply /setP => /= x; rewrite inE.
+  apply /imsetP/andP => /= [[i _ ]|[/imsetP [i1 _ xi1] /imsetP[i2 _ xi2]]].
+  - rewrite prod_conjg /= => -> /=.
+    by split; apply memJ_class; rewrite inE.
+  - exists (i1, i2); first by rewrite inE; apply /andP; split; rewrite inE.
+    by rewrite prod_conjg -xi1{xi1} -xi2{xi2}; case: x => /=.
+Qed.    
+    
 Lemma cfExtProd_classfun (p1 : intpartn m) (p2 : intpartn n):
   cfExtProd (classfun_part p1) (classfun_part p2) =
   '1_(classX p1 p2).
@@ -374,42 +379,43 @@ Proof.
       rewrite prod_conjg inE /=; apply /andP; split.
       * by move: (Hx1 (x.1^x0.1)); apply; apply: memJ_class; rewrite genGid inE.
       * by move: (Hx2 (x.2^x0.2)); apply; apply: memJ_class; rewrite genGid inE.
-    +  case (boolP ((x \in _) && (x ^: _ \subset _))) => //=.
-       move=> /andP [_ /subsetP]; rewrite classXE=> Hx.
-       move: Hx2; rewrite genGid inE andTb.
-       move=> /subsetP [] => /= y /imsetP /= [x0 _] {y} ->.
-       suff /andP []: ((x.1\in class p1) && (x.2 ^ x0 \in class p2)) => //.
-       move: (Hx (x.1,x.2^x0)); rewrite inE /=; apply.
-       apply /imsetP; exists (1%g, x0); last by rewrite prod_conjg conjg1.
-       by rewrite genGid inE; apply/andP; split; rewrite inE.
-    +  case (boolP ((x \in _) && (x ^: _ \subset _))) => //=.
-       move=> /andP [_ /subsetP]; rewrite classXE=> Hx.
-       move: Hx1; rewrite genGid inE andTb.
-       move=> /subsetP [] => /= y /imsetP /= [x0 _] {y} ->.
-       suff /andP []: ((x.1 ^ x0 \in class p1) && (x.2 \in class p2)) => //.
-       move: (Hx (x.1^x0,x.2)); rewrite inE /=; apply.
-       apply /imsetP; exists (x0, 1%g); last by rewrite prod_conjg conjg1.
-       by rewrite genGid inE; apply/andP; split; rewrite inE.
+    + case (boolP ((x \in _) && (x ^: _ \subset _))) => //=.
+      move=> /andP [_ /subsetP]; rewrite classXE=> Hx.
+      move: Hx2; rewrite genGid inE andTb.
+      move=> /subsetP [] => /= y /imsetP /= [x0 _] {y} ->.
+      suff /andP []: ((x.1\in class p1) && (x.2 ^ x0 \in class p2)) => //.
+      move: (Hx (x.1,x.2^x0)); rewrite inE /=; apply.
+      apply /imsetP; exists (1%g, x0); last by rewrite prod_conjg conjg1.
+      by rewrite genGid inE; apply/andP; split; rewrite inE.
+  - case (boolP ((x \in _) && (x ^: _ \subset _))) => //=.
+    move=> /andP [_ /subsetP]; rewrite classXE=> Hx.
+    move: Hx1; rewrite genGid inE andTb.
+    move=> /subsetP [] => /= y /imsetP /= [x0 _] {y} ->.
+    suff /andP []: ((x.1 ^ x0 \in class p1) && (x.2 \in class p2)) => //.
+    move: (Hx (x.1^x0,x.2)); rewrite inE /=; apply.
+    apply /imsetP; exists (x0, 1%g); last by rewrite prod_conjg conjg1.
+    by rewrite genGid inE; apply/andP; split; rewrite inE.
 Qed.
       
-
+(*
 Lemma cfdot_classfun_part (p1 : intpartn n) (p2 : intpartn n) :
   '[classfun_part p1, classfun_part p2] =
     (p1 == p2)%:R * (#|class_of_partCT p1|)%:R/(#|'S_n|)%:R.
 Proof.
   admit.
 Admitted.
+ *)
+
 
 Lemma decomp_cf_triv :
   \sum_(p : (intpartn n)) classfun_part p = 1.
 Proof.
-  admit.
-Admitted.
-
-Notation G := [set : 'S_(m + n)].
-Notation classX p1 p2 := ((perm_of_partCT p1, perm_of_partCT p2) ^: setX [set: 'S_m] [set: 'S_n]).
-Notation class p := (class_of_partCT p).
-Notation Smn := (setX [set: 'S_m] [set: 'S_n]).
+  apply/cfunP => /= x.
+  rewrite cfun1Egen genGid inE /=.
+  rewrite sum_cfunE (bigD1 (ct x)) //=.
+  rewrite big1 ?addr0 ?classfun_partE -?partn_of_partCT_congr ?eqxx //=.
+  by move=> p /negbTE pct; rewrite classfun_partE -partn_of_partCT_congr eq_sym pct.
+Qed.
 
 Lemma classXI (p1 i1: intpartn m) (p2 i2 : intpartn n):
   (i1,i2) != (p1,p2) -> (classX p1 p2) :&: (classX i1 i2) = set0.
