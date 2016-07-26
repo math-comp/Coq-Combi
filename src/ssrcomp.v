@@ -30,7 +30,7 @@ Section SSRComplements.
 Variable T: finType.
 Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
 
-Lemma partition_of0 (P : {set {set T}}):
+Lemma partition0P (P : {set {set T}}):
   reflect (P = set0) (partition P set0).
 Proof.
   apply (iffP and3P) => [[/eqP Hcov _ H0] | ->].
@@ -98,7 +98,7 @@ Lemma ex_parts_shape (s : seq nat) (A : {set T}) :
 Proof.
 elim: s A => [| i s IHs] A /=.
   move=> /esym/cards0_eq -> _; exists [::]; split => //.
-  apply/partition_of0; apply/setP => x.
+  apply/partition0P; apply/setP => x.
   by rewrite !inE in_nil.
 rewrite inE eq_sym => Hi /norP [Bne0 /IHs{IHs} Hrec].
 have: i <= #|A| by rewrite -Hi; apply: leq_addr.

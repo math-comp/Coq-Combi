@@ -83,7 +83,7 @@ Proof.
 Qed.
 
 Lemma conjg_of_cycle s a:
-  is_cycle s -> is_cycle (s ^ a)%g.
+  cyclic s -> cyclic (s ^ a)%g.
 Proof.
   move => /cards1P [X] HX.
   apply /cards1P; exists [set a x | x in X].
@@ -164,7 +164,7 @@ Proof.
     apply: conjg_of_disjoint_supports.
     exact: disjoint_cycle_dec.
   apply: uniqueness_cycle_dec; constructor => [x /imsetP [x0 Hx0 ->]||].
-  - apply: conjg_of_cycle; apply: is_cycle_dec.
+  - apply: conjg_of_cycle; apply: cyclic_dec.
     exact: Hx0.
   - apply: conjg_of_disjoint_supports.
     exact: disjoint_cycle_dec.
@@ -512,7 +512,7 @@ Proof.
 Qed.
 
 
-Lemma iscycle_of_set (s : {set T}): #|s| > 1 -> is_cycle (cycle_of_set s).
+Lemma iscycle_of_set (s : {set T}): #|s| > 1 -> cyclic (cycle_of_set s).
 Proof.
   move => Hsize.
   apply /cards1P; exists s.
