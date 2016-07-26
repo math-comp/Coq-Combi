@@ -22,15 +22,22 @@ Local Notation algCF := [fieldType of algC].
 
 Section classGroup.
 
-Variable gT : finGroupType.
-Variable G : {group gT}.  
+Variables gT aT: finGroupType.
+Variable G H : {group gT}.  
 
 Lemma class_disj x y :
   y \notin x ^: G -> x ^: G :&: y ^: G = set0.
 Proof.
-  admit.
-Admitted.
-  
+  move/class_eqP=> xy.
+  apply /setP=> a; rewrite !inE.
+  apply /andP => [][/class_eqP ax /class_eqP ay].
+  by apply xy; rewrite -ax -ay.
+Qed.
+
+Lemma prod_conjg (x y: gT * aT) :
+  x^y = (x.1^y.1, x.2^y.2).
+Proof. by []. Qed.
+
 End classGroup.
 
 
@@ -340,22 +347,52 @@ Local Open Scope ring_scope.
   
 Variables m n : nat.
 
+Local Notation G := [set : 'S_(m + n)].
+Local Notation Smn := (setX [set: 'S_m] [set: 'S_n]).
+Local Notation classX p1 p2 := ((perm_of_partCT p1, perm_of_partCT p2) ^: Smn).
+Local Notation class p := (class_of_partCT p).
+
+Lemma classXE (p1 : intpartn m) (p2 : intpartn n):
+  classX p1 p2  = setX (class p1) (class p2).
+Proof.
+  admit.
+Admitted.
+
+
 Lemma cfExtProd_classfun (p1 : intpartn m) (p2 : intpartn n):
   cfExtProd (classfun_part p1) (classfun_part p2) =
-  cfun_indicator (setX [set: 'S_m] [set: 'S_n]) ((perm_of_partCT p1,perm_of_partCT p2)^:(setX [set: 'S_m] [set: 'S_n])). 
+  '1_(classX p1 p2).
 Proof.
-  admit.
-Admitted.
+  apply/cfunP => /= x.
+  rewrite !cfunElock.
+  case: (boolP (_&&_))=> /= [/andP [_ /subsetP]|] Hx1; [rewrite mul1r|rewrite mul0r].
+  - case (boolP ((x.2 \in _ )&&(x.2 ^: _ \subset _))) => /= [/andP [_ /subsetP]|] Hx2.
+    + case (boolP ((x \in _) && (x ^: _ \subset _))) => //=.
+      move/negP => []; apply /andP.
+      split; first by rewrite genGid inE; apply /andP; split; rewrite inE.
+      rewrite classXE; apply /subsetP => y /imsetP /= [x0 _]{y} ->.
+      rewrite prod_conjg inE /=; apply /andP; split.
+      * by move: (Hx1 (x.1^x0.1)); apply; apply: memJ_class; rewrite genGid inE.
+      * by move: (Hx2 (x.2^x0.2)); apply; apply: memJ_class; rewrite genGid inE.
+    +  case (boolP ((x \in _) && (x ^: _ \subset _))) => //=.
+       move=> /andP [_ /subsetP]; rewrite classXE=> Hx.
+       move: Hx2; rewrite genGid inE andTb.
+       move=> /subsetP [] => /= y /imsetP /= [x0 _] {y} ->.
+       suff /andP []: ((x.1\in class p1) && (x.2 ^ x0 \in class p2)) => //.
+       move: (Hx (x.1,x.2^x0)); rewrite inE /=; apply.
+       apply /imsetP; exists (1%g, x0); last by rewrite prod_conjg conjg1.
+       by rewrite genGid inE; apply/andP; split; rewrite inE.
+    +  case (boolP ((x \in _) && (x ^: _ \subset _))) => //=.
+       move=> /andP [_ /subsetP]; rewrite classXE=> Hx.
+       move: Hx1; rewrite genGid inE andTb.
+       move=> /subsetP [] => /= y /imsetP /= [x0 _] {y} ->.
+       suff /andP []: ((x.1 ^ x0 \in class p1) && (x.2 \in class p2)) => //.
+       move: (Hx (x.1^x0,x.2)); rewrite inE /=; apply.
+       apply /imsetP; exists (x0, 1%g); last by rewrite prod_conjg conjg1.
+       by rewrite genGid inE; apply/andP; split; rewrite inE.
+Qed.
+      
 
-Lemma cfdot_indicator (gT : finGroupType) (G : {group gT}) A B:
-  '[cfun_indicator G A, cfun_indicator G B] =
-  (A == B)%:R * (#|A|)%:R/(#|G|)%:R.
-Proof.
-  admit.
-Admitted.
-
-(**cfdot_cfuni**)
-  
 Lemma cfdot_classfun_part (p1 : intpartn n) (p2 : intpartn n) :
   '[classfun_part p1, classfun_part p2] =
     (p1 == p2)%:R * (#|class_of_partCT p1|)%:R/(#|'S_n|)%:R.
@@ -377,6 +414,8 @@ Notation Smn := (setX [set: 'S_m] [set: 'S_n]).
 Lemma classXI (p1 i1: intpartn m) (p2 i2 : intpartn n):
   (i1,i2) != (p1,p2) -> (classX p1 p2) :&: (classX i1 i2) = set0.
 Proof.
+  move=> ip; apply class_disj.
+  apply/imsetP => []/= [x _].
   admit.
 Admitted.
 
