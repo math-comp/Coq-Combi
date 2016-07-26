@@ -20,6 +20,21 @@ Import GroupScope GRing.Theory Num.Theory.
 
 Local Notation algCF := [fieldType of algC].
 
+Section classGroup.
+
+Variable gT : finGroupType.
+Variable G : {group gT}.  
+
+Lemma class_disj x y :
+  y \notin x ^: G -> x ^: G :&: y ^: G = set0.
+Proof.
+  admit.
+Admitted.
+  
+End classGroup.
+
+
+
 Section cfExtProd.
 
 Variables (gT aT : finGroupType).
@@ -355,25 +370,43 @@ Proof.
 Admitted.
 
 Notation G := [set : 'S_(m + n)].
+Notation classX p1 p2 := ((perm_of_partCT p1, perm_of_partCT p2) ^: setX [set: 'S_m] [set: 'S_n]).
+Notation class p := (class_of_partCT p).
+Notation Smn := (setX [set: 'S_m] [set: 'S_n]).
+
+Lemma classXI (p1 i1: intpartn m) (p2 i2 : intpartn n):
+  (i1,i2) != (p1,p2) -> (classX p1 p2) :&: (classX i1 i2) = set0.
+Proof.
+  admit.
+Admitted.
+
+Lemma card_classX (p1 : intpartn m) (p2 : intpartn n) :
+  (#|classX p1 p2| = #|class p1| * #|class p2|)%N.
+Proof.
+  admit.
+Admitted.
+
 
 Lemma cfdot_Ind_classfun_part (p1 : intpartn m) (p2 : intpartn n) (l : intpartn (m + n)):
   '['Ind[G] (cfIsom (isomtinj m n) (cfExtProd (classfun_part p1) (classfun_part p2))), classfun_part l] =
-  (unionpart (p1,p2) == l)%:R *(#|class_of_partCT p1|)%:R * (#|class_of_partCT p2|)%:R/(#|'S_n|)%:R.
+  (unionpart (p1,p2) == l)%:R *(#|class p1|)%:R * (#|class p2|)%:R/(#|Smn|)%:R.
 Proof.
   rewrite -cfdot_Res_r classfun_Res cfIsom_iso cfdot_sumr.
-  (*rewrite (eq_bigr (fun (i : intpartn m * intpartn n) =>
-       '[cfExtProd (classfun_part p1)(classfun_part p2),
-         '1_((perm_of_partCT i.1, perm_of_partCT i.2) ^: setX [set: 'S_m] [set: 'S_n])])).  rewrite !cfExtProd_classfun.*)
-  rewrite (eq_bigr (fun (i : intpartn m * intpartn n) => #|((perm_of_partCT p1,perm_of_partCT p2)^: setX [set: 'S_m] [set: 'S_n]) :&: ((perm_of_partCT i.1,perm_of_partCT i.2)^: setX [set: 'S_m] [set: 'S_n])|%:R / #|setX [set: 'S_m] [set: 'S_n]|%:R)); first last.
+  rewrite (eq_bigr (fun (i : intpartn m * intpartn n) =>
+    #|(classX p1 p2) :&: (classX i.1 i.2)|%:R / #|setX [set: 'S_m] [set: 'S_n]|%:R)); first last.
   - move => i _.
-    rewrite !cfExtProd_classfun cfdot_cfuni //=.
-    admit.
-    admit.
-    
-
-
-
-Admitted.
+    rewrite !cfExtProd_classfun cfdot_cfuni //=;
+    by apply: class_normal; rewrite inE; apply /andP; split; rewrite inE /=.
+  - case (boolP (unionpart(p1,p2) == l)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
+    + rewrite (bigD1 (p1,p2)) /=; last by rewrite eq_sym.
+      rewrite setIid big1 ?addr0 ?card_classX ?natrM //=.
+      move=> i /andP [] _ ip.
+      by rewrite classXI ?cards0 ?mul0r.
+    + rewrite big1 //= => i unioni.
+      have ip: i != (p1,p2).
+        by move: unionp; apply contraR; rewrite negbK=> /eqP <-; rewrite eq_sym.
+      by rewrite classXI ?cards0 ?mul0r.
+Qed.
 
 Lemma e_subproof k (p : intpartn k) :
   is_class_fun <<[set: 'S_k]>> [ffun s =>  classfun_part p s/ (#|class_of_partCT p|)%:R].
