@@ -363,7 +363,9 @@ Proof.
   - exists (i1, i2); first by rewrite inE; apply /andP; split; rewrite inE.
     by rewrite prod_conjg -xi1{xi1} -xi2{xi2}; case: x => /=.
 Qed.    
-    
+
+
+
 Lemma cfExtProd_classfun (p1 : intpartn m) (p2 : intpartn n):
   cfExtProd (classfun_part p1) (classfun_part p2) =
   '1_(classX p1 p2).
@@ -420,16 +422,15 @@ Qed.
 Lemma classXI (p1 i1: intpartn m) (p2 i2 : intpartn n):
   (i1,i2) != (p1,p2) -> (classX p1 p2) :&: (classX i1 i2) = set0.
 Proof.
-  move=> ip; apply class_disj.
+  move=> /eqP ip; apply class_disj.
   apply/imsetP => []/= [x _].
-  admit.
-Admitted.
-
-Lemma card_classX (p1 : intpartn m) (p2 : intpartn n) :
-  (#|classX p1 p2| = #|class p1| * #|class p2|)%N.
-Proof.
-  admit.
-Admitted.
+  rewrite prod_conjg /= => [] [] ip1 ip2.
+  apply ip; congr (_,_);
+    rewrite -[LHS]partCT_of_partnK -[RHS]partCT_of_partnK; congr partn_of_partCT;
+    rewrite -[LHS]perm_of_partCTP -[RHS]perm_of_partCTP.
+  - by rewrite ip1 cycle_type_of_conjg.
+  - by rewrite ip2 cycle_type_of_conjg.
+Qed.
 
 
 Lemma cfdot_Ind_classfun_part (p1 : intpartn m) (p2 : intpartn n) (l : intpartn (m + n)):
@@ -444,9 +445,8 @@ Proof.
     by apply: class_normal; rewrite inE; apply /andP; split; rewrite inE /=.
   - case (boolP (unionpart(p1,p2) == l)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
     + rewrite (bigD1 (p1,p2)) /=; last by rewrite eq_sym.
-      rewrite setIid big1 ?addr0 ?card_classX ?natrM //=.
-      move=> i /andP [] _ ip.
-      by rewrite classXI ?cards0 ?mul0r.
+      rewrite setIid big1; first by rewrite addr0 classXE cardsX natrM //=.
+      by move=> i /andP [] _ ip; rewrite classXI ?cards0 ?mul0r.
     + rewrite big1 //= => i unioni.
       have ip: i != (p1,p2).
         by move: unionp; apply contraR; rewrite negbK=> /eqP <-; rewrite eq_sym.
