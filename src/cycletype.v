@@ -210,14 +210,14 @@ Lemma cycle_type_eq s t:
     forall i, #|slice (slpcycles s) i| = #|slice (slpcycles t) i|.
 Proof. by move=> H i; rewrite !slice_slpcycleE H. Qed.
 
-Definition conjg_pcycles s t :=
+Definition conjg_pcycles s t : {set T} -> {set T} :=
   bij (U := slpcycles s) (slpcycles t).
 
 Lemma conjg_pcyclesP s t:
   cycle_type s = cycle_type t ->
-  [/\ {in slpcycles s &, injective (conjg_pcycles (s := s) t)},
-   [set (conjg_pcycles t x) | x in (slpcycles s)] = slpcycles t &
-   {in (slpcycles s), forall x, #|(conjg_pcycles t x)| = #|x| } ].
+  [/\ {in slpcycles s &, injective (conjg_pcycles s t)},
+   [set (conjg_pcycles s t x) | x in (slpcycles s)] = slpcycles t &
+   {in (slpcycles s), forall x, #|(conjg_pcycles s t x)| = #|x| } ].
 Proof. by move => /cycle_type_eq; exact: bijP. Qed.
 
 From mathcomp Require Import div.
@@ -254,10 +254,9 @@ Proof.
 Qed.
 
 Lemma canpcycleE s x y :
-  x \in pcycle s y -> canpcycle s x = canpcycle s y.
+  pcycle s x = pcycle s y -> canpcycle s x = canpcycle s y.
 Proof.
-  move=> H; have:= H; rewrite /canpcycle -eq_pcycle_mem => /eqP ->.
-  case: pickP => [x0 //|].
+  rewrite /canpcycle => ->; case: pickP => [x0 //|].
   by move => /(_ y) /=; rewrite pcycle_id.
 Qed.
 
@@ -334,10 +333,9 @@ Proof.
   have:= canpcycleP s x; rewrite -eq_pcycle_mem => /eqP ->.
   rewrite -eq_in_pcycle.
   rewrite expgSr permM indpcycleP.
-  have:= mem_pcycle s 1 x; rewrite expg1 => /canpcycleE <-.
+  have:= mem_pcycle s 1 x; rewrite expg1 -eq_pcycle_mem => /eqP/canpcycleE <-.
   by rewrite indpcycleP.
 Qed.
-
 
 Lemma canpcycle_conjbij x : canpcycle t (conjbij s t x) = conjbijcan s t x.
 Proof.
@@ -378,8 +376,7 @@ Proof.
   rewrite conjbijcan_perm //.
   have -> : (conjbijcan t s (conjbijcan s t x)) = canpcycle s x.
     rewrite -canpcycle_conjbij //; apply canpcycleE.
-    rewrite /conjbij -eq_pcycle_mem pcycle_perm.
-    rewrite pcycle_conjbijcan //.
+    rewrite /conjbij pcycle_perm pcycle_conjbijcan //.
     rewrite /imcycle pcycle_conjbijcan // /imcycle.
     rewrite /conjg_pcycles bijK //=.
     - move=> i; exact: cycle_type_eq.
@@ -545,7 +542,7 @@ Proof.
     move => /imsetP [B]; rewrite inE => /andP [_ cardB] ->.
     by rewrite !support_cycle_of_set // => ->.
 Qed.
-    
+
 Lemma pcycles_perm_of_parts P :
   partition P [set: T] -> pcycles (perm_of_parts P) = P.
 Proof.

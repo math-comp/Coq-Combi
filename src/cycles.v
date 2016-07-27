@@ -33,14 +33,12 @@ Qed.
 Lemma support1 : support (perm_one T) = set0.
 Proof. by apply/setP => x; rewrite in_support inE perm1 eq_refl. Qed.
 
-(* Unused
 Lemma support_eq0 s : (s == perm_one T) = (support s == set0).
 Proof.
   apply/eqP/eqP => [ -> |]; first exact: support1.
   move/setP => Heq; rewrite -permP => x.
   by move/(_ x): Heq; rewrite in_support inE perm1 => /eqP.
 Qed.
-*)
 
 Lemma support_stable s x : (x \in support s) = (s x \in support s).
 Proof.
@@ -111,7 +109,6 @@ Proof.
     by have:= pcycle_id s x; rewrite -Heq inE.
 Qed.
 
-(* Unused.
 Lemma psupport_eq0 s : (s == perm_one T) = (psupport s == set0).
 Proof.
   rewrite -subset0 /psupport; apply/eqP/subsetP => [-> C| H].
@@ -121,7 +118,6 @@ Proof.
     have:= H (pcycle s x); rewrite !inE mem_imset //= => /contraT.
     by apply contraLR; rewrite -in_support support_card_pcycle.
 Qed.
-*)
 
 Lemma psupport_astabs s X : X \in psupport s -> s \in ('N(X | 'P))%g.
 Proof.
