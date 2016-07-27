@@ -183,43 +183,6 @@ Proof.
     by rewrite -conjg_prod cycle_decE.
 Qed.
 
-(* Ici il faut ayant supposé cycle_type s = cycle_type t, construire un
-bijection entre pcycles s et pcycles t *)
-
-Definition slice_part (P : {set {set T}}) :=
- SlicedSet set0 P (fun x : {set T} => #|x|).
-
-Definition slpcycles s := slice_part (pcycles s).
-
-Lemma slice_slpcycleE s i :
-  #|slice (slpcycles s) i| = count_mem i (cycle_type s).
-Proof.
-  rewrite /cycle_type /slice /parts_shape /=.
-  rewrite [RHS](_ : _ =
-      (count_mem i) [seq #|(x : {set _})| | x <- enum (pcycles s)]);
-      last by apply/perm_eqP/perm_eqlP; exact: perm_sort.
-  rewrite cardE /enum_mem -enumT /=.
-  rewrite size_filter count_map count_filter.
-  apply eq_count => C /=; apply/imsetP/idP => [[X] | HC].
-  - by rewrite inE andbC => H ->.
-  - by exists C => //; rewrite inE andbC.
-Qed.
-
-Lemma cycle_type_eq s t:
-  cycle_type s = cycle_type t ->
-    forall i, #|slice (slpcycles s) i| = #|slice (slpcycles t) i|.
-Proof. by move=> H i; rewrite !slice_slpcycleE H. Qed.
-
-Definition conjg_pcycles s t : {set T} -> {set T} :=
-  bij (U := slpcycles s) (slpcycles t).
-
-Lemma conjg_pcyclesP s t:
-  cycle_type s = cycle_type t ->
-  [/\ {in slpcycles s &, injective (conjg_pcycles s t)},
-   [set (conjg_pcycles s t x) | x in (slpcycles s)] = slpcycles t &
-   {in (slpcycles s), forall x, #|(conjg_pcycles s t x)| = #|x| } ].
-Proof. by move => /cycle_type_eq; exact: bijP. Qed.
-
 From mathcomp Require Import div.
 
 Lemma pcycle_mod s x i:
@@ -272,63 +235,67 @@ Definition indpcycle s (x : T) : nat := ex_minn (pcyclePb (canpcycleP s x)).
 Lemma indpcycleP s x : ((s ^+ (indpcycle s x)) (canpcycle s x))%g = x.
 Proof. rewrite /indpcycle; by case: ex_minnP => i /eqP. Qed.
 
+End cycle_type.
+
+Section PCycleBijection.
+
+Variables (U V : finType).
+Variables (s : {perm U}) (t : {perm V}).
+Variable (fset : {set U} -> {set V}).
+Hypothesis fsetinj : {in pcycles s &, injective fset}.
+Hypothesis fsetsurj : fset @: pcycles s = pcycles t.
+Hypothesis fsethomog : {in pcycles s, forall C, #|fset C| = #|C| }.
+
 (* The image of the cycle of x *)
-Definition imcycle s t :=
-  let pbij := (@conjg_pcycles s t) in
-  fun (x : T) => pbij (pcycle s x).
+Definition im_cycle x := fset (pcycle s x).
 
-(* The canonical element of the image of the cycle of x *)
-Definition conjbijcan s t x :=
-    odflt x [pick y in imcycle s t x].
-
-Definition conjbij s t x :=
-    ((t ^+ (indpcycle s x)) (conjbijcan s t x))%g.
-
-Section EqCycleType.
-
-Variable s t : {perm T}.
-Hypothesis Heq : cycle_type s = cycle_type t.
-
-Lemma mem_imcycle x : imcycle s t x \in pcycles t.
+Definition in_fset_pcycle x : {y | y \in fset (pcycle s x)}.
 Proof.
-  move: Heq => /conjg_pcyclesP [] /= _ Himage _.
-  by rewrite -Himage /imcycle; apply mem_imset; apply mem_imset.
+  apply sigW; apply/set0Pn.
+  rewrite -card_gt0 fsethomog ?mem_imset // card_gt0.
+  by apply/set0Pn; exists x; exact: pcycle_id.
 Qed.
 
-Lemma imcycle_perm i x : imcycle s t ((s ^+ i)%g x) = imcycle s t x.
-Proof. by rewrite /imcycle pcycle_perm. Qed.
+Definition fromfsetcan x :=
+    odflt (val (in_fset_pcycle x)) [pick y in im_cycle x].
 
-Lemma pcycle_conjbijcan x : pcycle t (conjbijcan s t x) = imcycle s t x.
+Definition fromfset x := ((t ^+ (indpcycle s x)) (fromfsetcan x))%g.
+
+Lemma mem_im_cycle x : im_cycle x \in pcycles t.
 Proof.
-  rewrite /conjbijcan /=.
-  have:= mem_imcycle x => /imsetP [y0 _ ->].
+  have : pcycle s x \in pcycles s by exact: mem_imset.
+  by move=> /(mem_imset fset); rewrite fsetsurj.
+Qed.
+
+
+Lemma im_cycle_perm i x : im_cycle ((s ^+ i)%g x) = im_cycle x.
+Proof. by rewrite /im_cycle pcycle_perm. Qed.
+
+Lemma pcycle_fromfsetcan x : pcycle t (fromfsetcan x) = im_cycle x.
+Proof.
+  rewrite /fromfsetcan /=.
+  have:= mem_im_cycle x => /imsetP [y0 _ ->].
   case: pickP => [/= y|].
   - by rewrite -eq_pcycle_mem => /eqP ->.
   - by move=> /(_ y0); rewrite pcycle_id.
 Qed.
 
-Lemma card_imcycle x : #|imcycle s t x| = #|pcycle s x|.
-Proof.
-  rewrite /imcycle.
-  move: Heq => /conjg_pcyclesP [_ _ /=]; apply.
-  exact: mem_imset.
-Qed.
+Lemma card_im_cycle x : #|im_cycle x| = #|pcycle s x|.
+Proof. exact: (fsethomog (mem_imset _ _)). Qed.
 
-
-Lemma conjbijcan_perm i x :
-  conjbijcan s t ((s ^+ i)%g x) = conjbijcan s t x.
+Lemma fromfsetcan_perm i x :
+  fromfsetcan ((s ^+ i)%g x) = fromfsetcan x.
 Proof.
-  rewrite /conjbijcan imcycle_perm.
-  have:= mem_imcycle x => /imsetP [y0 _ ->].
+  rewrite /fromfsetcan im_cycle_perm.
+  have:= mem_im_cycle x => /imsetP [y0 _ ->].
   by case: pickP => // /(_ y0); rewrite pcycle_id.
 Qed.
 
-
-Lemma conjbijP x : conjbij s t (s x) = t (conjbij s t x).
+Lemma fromfsetP x : fromfset (s x) = t (fromfset x).
 Proof.
-  rewrite /conjbij -{4}(expg1 s) conjbijcan_perm.
-  have := card_imcycle x; rewrite -pcycle_conjbijcan.
-  move: (conjbijcan s t x) => y H.
+  rewrite /fromfset -{3}(expg1 s) fromfsetcan_perm.
+  have := card_im_cycle x; rewrite -pcycle_fromfsetcan.
+  move: (fromfsetcan x) => y H.
   apply/eqP; rewrite -permM -expgSr eq_in_pcycle {}H.
   have:= canpcycleP s x; rewrite -eq_pcycle_mem => /eqP ->.
   rewrite -eq_in_pcycle.
@@ -337,66 +304,144 @@ Proof.
   by rewrite indpcycleP.
 Qed.
 
-Lemma canpcycle_conjbij x : canpcycle t (conjbij s t x) = conjbijcan s t x.
+Lemma canpcycle_fromfset x : canpcycle t (fromfset x) = fromfsetcan x.
 Proof.
-  rewrite /conjbij /conjbijcan /canpcycle pcycle_perm.
-  set defim := odflt x [pick y in imcycle s t x ].
-  have:= erefl defim; rewrite {1 3 4 5}/defim.
-  case: pickP => [im Him | Habs] /=.
-  - rewrite {}/defim => Hdefim.
-    rewrite /canpcycle (_ : [pick y in  _] = some im) //.
-    rewrite [LHS](_ : _ = [pick y in imcycle s t x]); first last.
+  rewrite /fromfset /fromfsetcan /canpcycle pcycle_perm.
+  have := erefl (fromfsetcan x).
+  rewrite {1}/fromfsetcan.
+  case: pickP => [im Him /= Hdefim | Habs] /=.
+  - rewrite /canpcycle (_ : [pick y in  _] = some im) //.
+    rewrite [LHS](_ : _ = [pick y in im_cycle x]); first last.
       apply eq_pick => y /=; congr (y \in _).
-      have:= mem_imcycle x => /imsetP [y0 _ Hy0].
+      have:= mem_im_cycle x => /imsetP [y0 _ Hy0].
       by move: Him; rewrite Hy0 /= -eq_pcycle_mem => /eqP ->.
-    rewrite Hdefim.
+    rewrite Hdefim /fromfsetcan.
     by case: pickP => // /(_ im); rewrite Him.
   - exfalso; move: Habs.
-    have:= mem_imcycle x => /imsetP [y _ ->] /(_ y).
+    have:= mem_im_cycle x => /imsetP [y _ ->] /(_ y).
     by rewrite pcycle_id.
 Qed.
 
-Lemma indpcycle_conjbij x :
-   indpcycle t (conjbij s t x) = indpcycle s x.
+Lemma indpcycle_fromfset x :
+   indpcycle t (fromfset x) = indpcycle s x.
 Proof.
   apply eq_ex_minn => i.
-  rewrite {1}/conjbij canpcycle_conjbij eq_in_pcycle pcycle_conjbijcan.
-  rewrite card_imcycle -{4}(indpcycleP s x) eq_in_pcycle.
+  rewrite {1}/fromfset canpcycle_fromfset eq_in_pcycle pcycle_fromfsetcan.
+  rewrite card_im_cycle -{4}(indpcycleP s x) eq_in_pcycle.
   suff -> : pcycle s x = pcycle s (canpcycle s x) by [].
   apply/eqP; rewrite eq_pcycle_mem; exact: canpcycleP.
 Qed.
 
-End EqCycleType.
+End PCycleBijection.
 
+Section Bla.
 
-Lemma conjbijK s t :
-  cycle_type s = cycle_type t -> cancel (conjbij s t) (conjbij t s).
+(* Ici il faut ayant supposé cycle_type s = cycle_type t, construire un
+bijection entre pcycles s et pcycles t *)
+
+Variable (T : finType).
+
+Definition slice_part (P : {set {set T}}) :=
+ SlicedSet set0 P (fun x : {set T} => #|x|).
+
+Definition slpcycles s := slice_part (pcycles s).
+
+Lemma slice_slpcycleE s i :
+  #|slice (slpcycles s) i| = count_mem i (cycle_type s).
 Proof.
-  rewrite /conjbij => Heq x; have Heqs := esym Heq.
-  rewrite conjbijcan_perm //.
-  have -> : (conjbijcan t s (conjbijcan s t x)) = canpcycle s x.
-    rewrite -canpcycle_conjbij //; apply canpcycleE.
-    rewrite /conjbij pcycle_perm pcycle_conjbijcan //.
-    rewrite /imcycle pcycle_conjbijcan // /imcycle.
+  rewrite /cycle_type /slice /parts_shape /=.
+  rewrite [RHS](_ : _ =
+      (count_mem i) [seq #|(x : {set _})| | x <- enum (pcycles s)]);
+      last by apply/perm_eqP/perm_eqlP; exact: perm_sort.
+  rewrite cardE /enum_mem -enumT /=.
+  rewrite size_filter count_map count_filter.
+  apply eq_count => C /=; apply/imsetP/idP => [[X] | HC].
+  - by rewrite inE andbC => H ->.
+  - by exists C => //; rewrite inE andbC.
+Qed.
+
+End Bla.
+
+Section Blo.
+
+Variables (U V : finType).
+Variables (s : {perm U}) (t : {perm V}).
+Hypothesis eqct : cycle_type s = cycle_type t :> seq nat.
+
+Lemma cycle_type_eq :
+  forall i, #|slice (slpcycles s) i| = #|slice (slpcycles t) i|.
+Proof. by move=> i; rewrite !slice_slpcycleE eqct. Qed.
+
+Definition conjg_pcycles : {set U} -> {set V} :=
+  bij (U := slpcycles s) (slpcycles t).
+
+Lemma conjg_pcyclesP :
+  [/\ {in slpcycles s &, injective conjg_pcycles},
+   [set conjg_pcycles x | x in (slpcycles s)] = slpcycles t &
+   {in (slpcycles s), forall x, #|conjg_pcycles x| = #|x| } ].
+Proof. by move: cycle_type_eq; exact: bijP. Qed.
+
+Lemma conjg_pcycles_surj :
+  [set conjg_pcycles x | x in (slpcycles s)] = slpcycles t.
+Proof. by have := conjg_pcyclesP => [] []. Qed.
+
+Lemma conjg_pcycle_homog :
+  {in pcycles s, forall C, #|conjg_pcycles C| = #|C| }.
+Proof. by have := conjg_pcyclesP => [] []. Qed.
+
+Definition conjbij := fromfset t conjg_pcycle_homog.
+
+End Blo.
+
+Section Blu.
+
+Variables (U V : finType).
+Variables (s : {perm U}) (t : {perm V}).
+Hypothesis eqct : cycle_type s = cycle_type t :> seq nat.
+
+Lemma conjbijK :
+  cancel (conjbij eqct) (conjbij (esym eqct)).
+Proof.
+  rewrite /conjbij /fromfset /= => x.
+  have surj  := conjg_pcycles_surj eqct.
+  have surji := conjg_pcycles_surj (esym eqct).
+  rewrite (fromfsetcan_perm surji) //.
+  rewrite (_ : (fromfsetcan _ (fromfsetcan _ x)) = canpcycle s x); first last.
+    rewrite -(canpcycle_fromfset surji) //.
+    apply canpcycleE.
+    rewrite /conjbij pcycle_perm pcycle_fromfsetcan //.
+    rewrite /im_cycle (pcycle_fromfsetcan surj) // /im_cycle.
     rewrite /conjg_pcycles bijK //=.
     - move=> i; exact: cycle_type_eq.
     - exact: mem_imset.
-  suff -> : indpcycle t ((t ^+ indpcycle s x)%g (conjbijcan s t x)) =
+  suff -> : indpcycle t ((t ^+ indpcycle s x)%g
+               (fromfsetcan (conjg_pcycle_homog eqct) x)) =
             indpcycle s x.
     by rewrite indpcycleP.
-  by rewrite -/(conjbij s t x) indpcycle_conjbij.
+  by rewrite indpcycle_fromfset.
 Qed.
 
-Lemma conjbij_inj s t : cycle_type s = cycle_type t -> injective (conjbij s t).
-Proof. move=> /conjbijK H; exact: can_inj. Qed.
+End Blu.
+
+Section Toto.
+
+Variable T : finType.
+Implicit Types (s t : {perm T}).
+
+Lemma conjbij_inj s t (H : cycle_type s = cycle_type t) :
+  injective (conjbij (congr1 val H)).
+Proof. have := conjbijK (congr1 val H); exact: can_inj. Qed.
 
 Theorem conj_permP s t :
   reflect (exists c, t = (s ^ c)%g) (cycle_type s == cycle_type t).
 Proof.
-  apply (iffP eqP) => [Heq | [x ->]].
-  - pose c := perm (conjbij_inj Heq); exists c.
-    rewrite -permP => x.
-    by rewrite !permM permE conjbijP // -(permE (conjbij_inj Heq)) permKV.
+  apply (iffP eqP) => [/(congr1 val)/= eqct | [x ->]].
+  - have surj  := conjg_pcycles_surj eqct.
+    have conjbij_inj : injective (conjbij eqct).
+       by have := conjbijK eqct; exact: can_inj.
+    exists (perm conjbij_inj); rewrite -permP => x.
+    rewrite !permM permE /= /conjbij fromfsetP //.
+    by rewrite -/(conjbij eqct) -(permE conjbij_inj) permKV.
   - by rewrite cycle_type_of_conjg.
 Qed.
 
@@ -407,6 +452,12 @@ Proof.
   - by apply: mem_imset; rewrite inE.
   - by move=> /imsetP [c Hc ->]; exists c.
 Qed.
+
+End Toto.
+
+Section CycleType.
+
+Variable T : finType.
 
 Section Permofcycletype.
 
@@ -693,8 +744,7 @@ Qed.
 
 End ClassFun.
 
-End cycle_type.
-
+End CycleType.
 
 Coercion partCT_of_partn n := intpartn_cast (esym (card_ord n)).
 
@@ -750,5 +800,4 @@ Proof.
 Qed.
 
 End Sn.
-
 
