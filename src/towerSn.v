@@ -453,15 +453,34 @@ Proof.
       by rewrite classXI ?cards0 ?mul0r.
 Qed.
 
-Lemma e_subproof k (p : intpartn k) :
-  is_class_fun <<[set: 'S_k]>> [ffun s =>  classfun_part p s/ (#|class_of_partCT p|)%:R].
+Lemma cfExtProd_biscal (f1 : 'CF([set: 'S_m])) (f2 : 'CF([set: 'S_n])) (a b : algC):
+  cfExtProd (a *: f1) (b *: f2) = (a * b) *: (cfExtProd f1 f2). 
 Proof.
   admit.
 Admitted.
 
-Definition e k (p : intpartn k):= Cfun 0 (e_subproof p).
+Local Notation ebasis p:= ((#|Smn|%:R /(#|class_of_partCT p|)%:R) *: classfun_part p).
 
+Lemma cfdot_Ind_ebasis (p1 : intpartn m) (p2 : intpartn n) (l : intpartn (m + n)):
+  '['Ind[G] (cfIsom (isomtinj m n) (cfExtProd (ebasis p1) (ebasis p2))), ebasis l] =
+  (unionpart (p1,p2) == l)%:R * #|class_of_partCT l|%:R / #|Smn|%:R .
+Proof.
+  rewrite cfExtProd_biscal.
+  rewrite !linearZ /=.
+  rewrite -cfdotrE linearZ /= cfdotC -cfdotrE linearZ /= cfdotC.
+  rewrite rmorphismMP conjCK cfdot_Ind_classfun_part /=.
+  rewrite -[LHS]conjCK !rmorphismMP !conjCK.
+  admit.
+Admitted.
+(*
+  rewrite -[(_==_)%:R * _ * _]mulrA [(_==_)%:R * _]mulrC [(_)^* * _]mulrC !mulrA.
+  rewrite -[_^-1 / _ * _]mulrA [_^-1 * _] mulrC.
+  rewrite mulrK .
+  !mulrA.
+  rewrite -mulKr.
+*)
 
+  
 Lemma Ind_classfun_part (p1 : intpartn m) (p2 : intpartn n) (l : intpartn (m + n)):
   'Ind[G] (cfIsom (isomtinj m n) (cfExtProd (e p1) (e p2))) = e l.
 Proof.
