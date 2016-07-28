@@ -11,6 +11,8 @@ Require Import ssrcomp slicedbij cycles.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+Unset Printing Implicit Defensive.
+
 Import LeqGeqOrder.
 
 (* TODO: Move elsewhere *)
@@ -91,9 +93,6 @@ Variable (fset : {set U} -> {set V}).
 Hypothesis fsetsurj : fset @: pcycles s = pcycles t.
 Hypothesis fsethomog : {in pcycles s, forall C, #|fset C| = #|C| }.
 
-(* The image of the cycle of x *)
-Definition im_cycle x := fset (pcycle s x).
-
 Definition in_fset_pcycle x : {y | y \in fset (pcycle s x)}.
 Proof using fsethomog.
   apply sigW; apply/set0Pn.
@@ -101,9 +100,10 @@ Proof using fsethomog.
   by apply/set0Pn; exists x; exact: pcycle_id.
 Qed.
 
+(* The image of the cycle of x *)
+Definition im_cycle x := fset (pcycle s x).
 Definition fromfsetcan x :=
     odflt (val (in_fset_pcycle x)) [pick y in im_cycle x].
-
 Definition fromfset x := ((t ^+ (indpcycle s x)) (fromfsetcan x))%g.
 
 Lemma mem_im_cycle x : im_cycle x \in pcycles t.
@@ -111,7 +111,6 @@ Proof using fsetsurj.
   have : pcycle s x \in pcycles s by exact: mem_imset.
   by move=> /(mem_imset fset); rewrite fsetsurj.
 Qed.
-
 
 Lemma im_cycle_perm i x : im_cycle ((s ^+ i)%g x) = im_cycle x.
 Proof using. by rewrite /im_cycle pcycle_perm. Qed.
@@ -179,6 +178,52 @@ Qed.
 
 End PCycleBijection.
 
+Lemma fromfsetE (U V : finType) (s : {perm U}) (t : {perm V})
+      (fset : {set U} -> {set V})
+      (fsetsurj : fset @: pcycles s = pcycles t)
+      (H1 H2 : {in pcycles s, forall C, #|fset C| = #|C| }) :
+  fromfset t H1 =1 fromfset t H2.
+Proof.
+move=> x; rewrite /fromfset /fromfsetcan /=.
+case: pickP => // Habs.
+exfalso; move: Habs.
+have:= mem_im_cycle fsetsurj x => /imsetP [y _ ->] /(_ y).
+by rewrite pcycle_id.
+Qed.
+
+Lemma fromfset_id (U : finType) (s : {perm U})
+      (fsetsurj : id @: pcycles s = pcycles s)
+      (H : {in pcycles s, forall C : {set U}, #|id C| = #|C| }) :
+  fromfset s H =1 id.
+Proof.
+move=> x; rewrite /fromfset /=.
+rewrite -[RHS](indpcycleP s).
+rewrite /fromfsetcan /canpcycle /im_cycle.
+case: pickP => // /(_ x); by rewrite pcycle_id.
+Qed.
+
+Lemma fromfset_comp (U V W: finType)
+      (u : {perm U}) (v : {perm V}) (w : {perm W})
+      (fsetu : {set U} -> {set V}) (fsetv : {set V} -> {set W})
+      (fsetusurj : fsetu @: pcycles u = pcycles v)
+      (fsetvsurj : fsetv @: pcycles v = pcycles w)
+      (Hu : {in pcycles u, forall C, #|fsetu C| = #|C| })
+      (Hv : {in pcycles v, forall C : {set V}, #|fsetv C| = #|C| })
+      (Huv : {in pcycles u, forall C : {set U}, #|(fsetv \o fsetu) C| = #|C| }) :
+  (fromfset w Hv) \o (fromfset v Hu) =1 fromfset w Huv.
+Proof.
+move=> x; rewrite /fromfset /=.
+rewrite {2}/fromfsetcan /= im_cycle_perm.
+rewrite /im_cycle (pcycle_fromfsetcan fsetusurj).
+rewrite (indpcycle_fromfset fsetusurj); congr (_ _).
+rewrite {3}/fromfsetcan /im_cycle /=.
+case: pickP => // Habs.
+exfalso.
+have:= mem_im_cycle fsetusurj x => /imsetP [y _ Hy].
+have:= mem_im_cycle fsetvsurj y => /imsetP [z _ Hz].
+have:= Habs z; move: Hy Hz; rewrite /im_cycle => -> ->.
+by rewrite pcycle_id.
+Qed.
 
 Section CycleTypeConj.
 
