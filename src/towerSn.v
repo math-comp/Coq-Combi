@@ -20,6 +20,18 @@ Import GroupScope GRing.Theory Num.Theory.
 
 Local Notation algCF := [fieldType of algC].
 
+Variables m n : nat.
+
+Implicit Types (p : intpartn m) (q : intpartn n).
+
+Local Notation ct := cycle_typeSN.
+Local Notation G := [set : 'S_(m + n)].
+Local Notation Smn := (setX [set: 'S_m] [set: 'S_n]).
+Local Notation classX p q := ((perm_of_partCT p, perm_of_partCT q) ^: Smn).
+Local Notation class p := (class_of_partCT p).
+
+
+
 Section classGroup.
 
 Variables gT aT: finGroupType.
@@ -84,10 +96,6 @@ End cfExtProd.
 
 
 Section Restriction.
-
-Variables (m n : nat).
-
-Local Notation ct := cycle_typeSN.
 
 Definition tinjval (s : ('S_m * 'S_n)) :=
   fun (x : 'I_(m + n)) => let y := split x in
@@ -316,16 +324,6 @@ Section Induction.
 Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
-Variables m n : nat.
-
-Implicit Types (p : intpartn m) (q : intpartn n).
-
-Local Notation ct := cycle_typeSN.
-Local Notation G := [set : 'S_(m + n)].
-Local Notation Smn := (setX [set: 'S_m] [set: 'S_n]).
-Local Notation classX p q := ((perm_of_partCT p, perm_of_partCT q) ^: Smn).
-Local Notation class p := (class_of_partCT p).
-
 Lemma classXE p q : classX p q  = setX (class p) (class q).
 Proof.
   apply /setP => /= x; rewrite inE.
@@ -340,32 +338,26 @@ Lemma cfExtProd_classfun p q :
   cfExtProd (classfun_part p) (classfun_part q) = '1_(classX p q).
 Proof.
   apply/cfunP => /= x; rewrite !cfunElock /=.
-  (* TODO: simplify using : rewrite !genGid !inE /=. *)
-  case: (boolP (_&&_))=> /= [/andP [_ /subsetP]|] Hx1; [rewrite mul1r|rewrite mul0r].
-  - case (boolP ((x.2 \in _ )&&(x.2 ^: _ \subset _))) => /= [/andP [_ /subsetP]|] Hx2.
-    + case (boolP ((x \in _) && (x ^: _ \subset _))) => //=.
-      move/negP => []; apply /andP.
-      split; first by rewrite genGid inE; apply /andP; split; rewrite inE.
+  rewrite !genGid !inE /=.
+  case: (boolP (_ \subset _)) => /subsetP Hx1; [rewrite mul1r|rewrite mul0r].
+  - case (boolP (_ \subset class q)) => /= /subsetP Hx2.
+    + case (boolP ( _ \subset classX _ _)) => //= /negP => [][].
       rewrite classXE; apply /subsetP => y /imsetP /= [x0 _]{y} ->.
       rewrite prod_conjg inE /=; apply /andP; split.
-      * by move: (Hx1 (x.1^x0.1)); apply; apply: memJ_class; rewrite genGid inE.
-      * by move: (Hx2 (x.2^x0.2)); apply; apply: memJ_class; rewrite genGid inE.
-    + case (boolP ((x \in _) && (x ^: _ \subset _))) => //=.
-      move=> /andP [_ /subsetP]; rewrite classXE=> Hx.
-      move: Hx2; rewrite genGid inE andTb.
-      move=> /subsetP [] => /= y /imsetP /= [x0 _] {y} ->.
+      * by move: (Hx1 (x.1^x0.1)); apply; apply: memJ_class; rewrite inE.
+      * by move: (Hx2 (x.2^x0.2)); apply; apply: memJ_class; rewrite inE.
+    + case (boolP (_ \subset classX _ _)) => //= /subsetP.
+      rewrite classXE=> Hx.
+      move: Hx2 => [] /= y /imsetP /= [x0 _] {y} ->.
       suff /andP []: ((x.1\in class p) && (x.2 ^ x0 \in class q)) => //.
       move: (Hx (x.1,x.2^x0)); rewrite inE /=; apply.
-      apply /imsetP; exists (1%g, x0); last by rewrite prod_conjg conjg1.
-      by rewrite genGid inE; apply/andP; split; rewrite inE.
-  - case (boolP ((x \in _) && (x ^: _ \subset _))) => //=.
-    move=> /andP [_ /subsetP]; rewrite classXE=> Hx.
-    move: Hx1; rewrite genGid inE andTb.
-    move=> /subsetP [] => /= y /imsetP /= [x0 _] {y} ->.
+      by apply /imsetP; exists (1%g, x0); rewrite ?prod_conjg ?conjg1 ?inE.
+  - case (boolP ( _ \subset classX _ _)) => //= /subsetP.
+    rewrite classXE=> Hx.
+    move: Hx1=> [] /= y /imsetP /= [x0 _] {y} ->.
     suff /andP []: ((x.1 ^ x0 \in class p) && (x.2 \in class q)) => //.
     move: (Hx (x.1^x0,x.2)); rewrite inE /=; apply.
-    apply /imsetP; exists (x0, 1%g); last by rewrite prod_conjg conjg1.
-    by rewrite genGid inE; apply/andP; split; rewrite inE.
+    by apply /imsetP; exists (x0, 1%g); rewrite ?prod_conjg ?conjg1 ?inE.
 Qed.
 
 (*
@@ -402,7 +394,7 @@ Qed.
 
 (* Application of Frobenius duality : cfdot_Res_r *)
 Lemma cfdot_Ind_classfun_part p q (l : intpartn (m + n)):
-  '['Ind[G] (cfIsom (isomtinj m n) (cfExtProd (classfun_part p) (classfun_part q))), classfun_part l] =
+  '['Ind[G] (cfIsom isomtinj (cfExtProd (classfun_part p) (classfun_part q))), classfun_part l] =
   (unionpart (p, q) == l)%:R *(#|class p|)%:R * (#|class q|)%:R/(#|Smn|)%:R.
 Proof.
   rewrite -cfdot_Res_r classfun_Res cfIsom_iso cfdot_sumr.
@@ -421,17 +413,25 @@ Proof.
       by rewrite classXI ?cards0 ?mul0r.
 Qed.
 
-Lemma cfExtProd_biscal (f1 : 'CF([set: 'S_m])) (f2 : 'CF([set: 'S_n])) (a b : algC):
-  cfExtProd (a *: f1) (b *: f2) = (a * b) *: (cfExtProd f1 f2).
+
+(*TODO : move these two lemmas and complete to have linearity*)
+Lemma cfExtProdZl (f1 : 'CF([set: 'S_m])) (f2 : 'CF([set: 'S_n])) (a: algC):
+  cfExtProd (a *: f1)  f2 = a *: (cfExtProd f1 f2).
 Proof.
-  apply/cfunP => /= x.
-  by rewrite !cfunE mulrA -[a * _ * _]mulrA [f1 _ * _]mulrC !mulrA.
+  apply/cfunP=> /= x.
+  by rewrite !cfunE mulrA.
 Qed.
+
+Lemma cfExtProdZr (f1 : 'CF([set: 'S_m])) (f2 : 'CF([set: 'S_n])) (a: algC):
+  cfExtProd f1  (a *: f2) = a *: (cfExtProd f1 f2).
+Proof.
+  apply/cfunP=> /= x.
+  by rewrite !cfunE mulrC [(f1 _ * _)]mulrC mulrA.
+Qed.
+
 
 Definition ebasis (k : nat) (p : intpartn k) :=
   #|[set: 'S_k]|%:R /#|class_of_partCT p|%:R *: classfun_part p.
-
-(*Local Notation ebasis p:= ((#|Smn|%:R /(#|class_of_partCT p|)%:R) *: classfun_part p).*)
 
 (* TODO: move in cycletype.v *)
 Lemma card_class_of_partCT k (p : intpartn k) : #|class p| != 0%N.
@@ -441,11 +441,11 @@ Proof.
 Qed.
 
 Lemma cfdot_Ind_ebasis p q (l : intpartn (m + n)):
-  '['Ind[G] (cfIsom (isomtinj m n) (cfExtProd (ebasis p) (ebasis q))), ebasis l] =
+  '['Ind[G] (cfIsom isomtinj (cfExtProd (ebasis p) (ebasis q))), ebasis l] =
   (unionpart (p, q) == l)%:R * #|G|%:R/#|class_of_partCT l|%:R.
 Proof.
-  rewrite cfExtProd_biscal.
-  rewrite !linearZ /= cfdotZl cfdotZr cfdot_Ind_classfun_part /= cardsX.
+  rewrite cfExtProdZl cfExtProdZr.
+  rewrite !linearZ /= !cfdotZl cfdotZr cfdot_Ind_classfun_part /= cardsX.
   (* TODO: This computation could be done certainly in an easier way *)
   rewrite !mulrA [_ * (_ == _)%:R]mulrC -!mulrA; congr (_ * _).
   rewrite [(_)^* * _]mulrC !mulrA -[RHS]mul1r; congr (_ * _); first last.
@@ -484,17 +484,26 @@ Proof.
   rewrite cfdot_cfuni; try (by apply: class_normal; rewrite inE).
   rewrite setIid.
   rewrite big1 ?addr0.
-  - admit.
+  - have: (perm_of_partCT (ct x)) \in x^:[set: 'S_(m + n)].
+      apply /classes_of_permP; rewrite perm_of_partCTP.
+      by rewrite (partn_of_partCTK (cycle_type x)).
+    move/imsetP => [y _ ->]; rewrite cfunJgen ?genGid ?inE //.
+    rewrite -[LHS]mulr1 -!mulrA; congr (_ * _).
+    rewrite mulKf; last exact: neq0CG.
+    rewrite [_^-1 * _]mulrC mulrA mulrC mulKf;
+      last by rewrite pnatr_eq0 card_class_of_partCT.
+    rewrite mulrC fmorph_div !conjC_nat -mulrA mulKf; last exact: neq0CG.
+    by rewrite divff ?pnatr_eq0 ?card_class_of_partCT. 
   - move=> p /negbTE pct.
     rewrite !cfdotZl cfdotZr.
     rewrite cfdot_cfuni; try (by apply: class_normal; rewrite inE).
     rewrite class_disj; first by rewrite cards0 mul0r !mulr0.
     apply/negP=> /classes_of_permP; rewrite !perm_of_partCTP.
     by rewrite partn_of_partCTE !partCT_of_partnK pct.
-Admitted.
+Qed.
 
 Theorem Ind_classfun_part p q :
-  'Ind[G] (cfIsom (isomtinj m n) (cfExtProd (ebasis p) (ebasis q))) = ebasis (unionpart (p, q)).
+  'Ind[G] (cfIsom isomtinj (cfExtProd (ebasis p) (ebasis q))) = ebasis (unionpart (p, q)).
 Proof.
   apply/cfunP => /= x; rewrite cfunE.
   rewrite cfdotr_ebasis cfdot_Ind_ebasis.
