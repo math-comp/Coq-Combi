@@ -697,6 +697,8 @@ Proof.
   - move=> /eqP <-; apply/subsetP => t /imsetP [c] _ -> {t}.
     by rewrite -class_of_partCTP cycle_type_of_conjg.
 Qed.
+
+
 End CFunIndicator.
 End cycle_type.
 
