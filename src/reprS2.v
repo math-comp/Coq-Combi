@@ -8,7 +8,7 @@ From mathcomp Require Import classfun character.
 
 From Combi Require Import symgroup partition Greene tools sorted rep1.
 
-Require Import ssrcomp bij cycles cycletype.
+Require Import ssrcomp cycles cycletype.
 
 
 Set Implicit Arguments.
