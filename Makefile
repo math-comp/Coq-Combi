@@ -87,7 +87,8 @@ VFILES:=src/cycletype.v\
   src/cycles.v\
   src/slicedbij.v\
   src/reprS2.v\
-  src/towerSn.v
+  src/towerSn.v\
+  src/commutant.v
 
 -include $(addsuffix .d,$(VFILES))
 .SECONDARY: $(addsuffix .d,$(VFILES))
