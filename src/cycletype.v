@@ -15,6 +15,12 @@ Unset Printing Implicit Defensive.
 
 Import LeqGeqOrder.
 
+Reserved Notation "''1_[' G ]"
+         (at level 8, G at level 2, format "''1_[' G ]").
+
+
+
+
 (* TODO: Move elsewhere *)
 Lemma disjoint_imset (T : finType) (f : T -> T) (A B : {set T}) :
   injective f ->
@@ -711,19 +717,20 @@ From mathcomp Require Import presentation all_character.
 Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
-Section ClassFun.
+Section CFunIndicator.
 
 Variable tc : intpartn #|T|.
 
-Definition classfun_part :=
+Definition cfuni_part :=
   cfun_indicator [set: {perm T}] (class_of_partCT tc).
 
-Lemma classfun_partE s :
-  (classfun_part s) = (cycle_type s == tc)%:R.
+Local Notation "''1_[' p ]" := (cfuni_part p) : ring_scope.
+
+Lemma cfuni_partE s :
+  ('1_[s]) = (cycle_type s == tc)%:R.
 Proof using.
-  rewrite /classfun_part cfunElock genGid inE /=.
-  suff -> : s ^: [set: {perm T}] \subset class_of_partCT tc = (cycle_type s == tc).
-    by []. (* Better way to write that ? *)
+  rewrite /cfuni_part cfunElock genGid inE /=.
+  congr ((nat_of_bool _) %:R).  
   apply/idP/idP.
   - rewrite class_of_partCTP => /subsetP; apply.
     apply /imsetP; exists 1%g; first by rewrite inE.
@@ -732,9 +739,11 @@ Proof using.
     by rewrite -class_of_partCTP cycle_type_of_conjg.
 Qed.
 
-End ClassFun.
 
+End CFunIndicator.
 End CycleType.
+Notation "''1_[' p ]" := (cfuni_part p) : ring_scope.
+
 
 Coercion partCT_of_partn n := intpartn_cast (esym (card_ord n)).
 
@@ -782,10 +791,10 @@ Proof using.
   - by rewrite partCT_of_partnK.
 Qed.
 
-Lemma classfun_partnE (tc : intpartn n) (s : 'S_n) :
-  (classfun_part tc s) = (cycle_typeSN s == tc)%:R.
+Lemma cfuni_partnE (tc : intpartn n) (s : 'S_n) :
+  '1_[tc] s = (cycle_typeSN s == tc)%:R.
 Proof using.
-  rewrite classfun_partE /cycle_typeSN /=.
+  rewrite cfuni_partE /cycle_typeSN /=.
   by rewrite partn_of_partCTE partCT_of_partnK.
 Qed.
 
