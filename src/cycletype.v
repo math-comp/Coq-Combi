@@ -10,10 +10,15 @@ Require Import ssrcomp slicedbij cycles.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
-
 Unset Printing Implicit Defensive.
 
 Import LeqGeqOrder.
+
+Reserved Notation "''1_[' G ]"
+         (at level 8, G at level 2, format "''1_[' G ]").
+
+
+
 
 (* TODO: Move elsewhere *)
 Lemma disjoint_imset (T : finType) (f : T -> T) (A B : {set T}) :
@@ -95,13 +100,13 @@ Section PCycleBijection.
 Variables (U V : finType).
 Variables (s : {perm U}) (t : {perm V}).
 
-Record cycle_map := CycleMap {
-                        fs :> {set U} -> {set V};
-                        fs_surj : fs @: pcycles s = pcycles t;
-                        fs_homog : {in pcycles s, forall C, #|fs C| = #|C| }
-                      }.
+Record pcycles_map := PCycleMap {
+                          fs :> {set U} -> {set V};
+                          fs_stab : fs @: pcycles s \subset pcycles t;
+                          fs_homog : {in pcycles s, forall C, #|fs C| = #|C| }
+                        }.
 
-Variable CM : cycle_map.
+Variable CM : pcycles_map.
 
 Lemma aux (x : U) : V.
 Proof using CM.
@@ -111,16 +116,15 @@ have : fs CM (pcycle s x) != set0.
 by move/set0Pn/sigW => H; apply H.
 Qed.
 
-Definition cymapcan x := odflt (aux x) [pick y in fs CM (pcycle s x)].
+Definition cymapcan x := odflt (aux x) [pick y in CM (pcycle s x)].
 Definition cymap x := ((t ^+ (indpcycle s x)) (cymapcan x))%g.
 
-Lemma fs_pcycleP x : fs CM (pcycle s x) \in pcycles t.
+Lemma fs_pcycleP x : CM (pcycle s x) \in pcycles t.
 Proof using.
-  have : pcycle s x \in pcycles s by exact: mem_imset.
-  by move=> /(mem_imset (fs CM)); rewrite fs_surj.
+    by apply (subsetP (fs_stab CM)); apply mem_imset; apply mem_imset.
 Qed.
 
-Lemma pcycle_cymapcan x : pcycle t (cymapcan x) = fs CM (pcycle s x).
+Lemma pcycle_cymapcan x : pcycle t (cymapcan x) = CM (pcycle s x).
 Proof using.
   rewrite /cymapcan /=.
   have:= fs_pcycleP x => /imsetP [y0 _ ->].
@@ -156,7 +160,7 @@ Proof using CM.
   rewrite {1}/cymapcan.
   case: pickP => [im Him /= Hdefim | Habs] /=.
   - rewrite /canpcycle (_ : [pick y in  _] = some im) //.
-    rewrite [LHS](_ : _ = [pick y in fs CM (pcycle s x)]); first last.
+    rewrite [LHS](_ : _ = [pick y in CM (pcycle s x)]); first last.
       apply eq_pick => y /=; congr (y \in _).
       have:= fs_pcycleP x => /imsetP [y0 _ Hy0].
       by move: Him; rewrite Hy0 /= -eq_pcycle_mem => /eqP ->.
@@ -178,11 +182,14 @@ Qed.
 
 End PCycleBijection.
 
+Fact pcycles_stab_id (U : finType) (s : {perm U}) :
+  id @: pcycles s \subset pcycles s.
+Proof. by rewrite imset_id. Qed.
 Definition CMid (U : finType) (s : {perm U}) :=
-  @CycleMap U U s s id (imset_id (pcycles s)) (fun x _ => erefl #|x|).
+  @PCycleMap U U s s id (pcycles_stab_id s) (fun x _ => erefl #|x|).
 
 Lemma cymapE (U V : finType) (s : {perm U}) (t : {perm V})
-      (CM1 CM2 : cycle_map s t) :
+      (CM1 CM2 : pcycles_map s t) :
    {in pcycles s, CM1 =1 CM2} -> cymap CM1 =1 cymap CM2.
 Proof.
 move=> Heq x; rewrite /cymap /cymapcan /=.
@@ -193,7 +200,7 @@ have:= fs_pcycleP CM1 x => /imsetP [y _ ->] /(_ y).
 by rewrite pcycle_id.
 Qed.
 
-Lemma cymap_id (U : finType) (s : {perm U}) (CM : cycle_map s s) :
+Lemma cymap_id (U : finType) (s : {perm U}) (CM : pcycles_map s s) :
   {in pcycles s, CM =1 id} -> cymap CM =1 id.
 Proof.
 move=> H x; rewrite /cymap /=.
@@ -204,7 +211,7 @@ Qed.
 
 Lemma cymap_comp (U V W: finType)
       (u : {perm U}) (v : {perm V}) (w : {perm W})
-      (CMuv : cycle_map u v) (CMvw : cycle_map v w) (CMuw : cycle_map u w) :
+      (CMuv : pcycles_map u v) (CMvw : pcycles_map v w) (CMuw : pcycles_map u w) :
   {in pcycles u, CMvw \o CMuv =1 CMuw} ->
   (cymap CMvw) \o (cymap CMuv) =1 (cymap CMuw).
 Proof.
@@ -405,13 +412,13 @@ Lemma cycle_type_eq :
   forall i, #|slice (slpcycles s) i| = #|slice (slpcycles t) i|.
 Proof using eqct. by move=> i; rewrite !slice_slpcycleE eqct. Qed.
 
-Fact conjg_pcycles_surj :
-  [set bij (slpcycles t) x | x in (slpcycles s)] = slpcycles t.
-Proof using eqct. by have := bijP cycle_type_eq => [] []. Qed.
+Fact conjg_pcycles_stab :
+  [set bij (slpcycles t) x | x in (slpcycles s)] \subset slpcycles t.
+Proof using eqct. by have := bijP cycle_type_eq => [] [] _ ->. Qed.
 Fact conjg_pcycles_homog :
   {in pcycles s, forall C, #|bij (U := slpcycles s) (slpcycles t) C| = #|C| }.
 Proof using eqct. by have := bijP cycle_type_eq => [] []. Qed.
-Definition CMbij := CycleMap conjg_pcycles_surj conjg_pcycles_homog.
+Definition CMbij := PCycleMap conjg_pcycles_stab conjg_pcycles_homog.
 Definition conjbij := cymap CMbij.
 
 End Defs.
@@ -711,19 +718,20 @@ From mathcomp Require Import presentation all_character.
 Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
-Section ClassFun.
+Section CFunIndicator.
 
 Variable tc : intpartn #|T|.
 
-Definition classfun_part :=
+Definition cfuni_part :=
   cfun_indicator [set: {perm T}] (class_of_partCT tc).
 
-Lemma classfun_partE s :
-  (classfun_part s) = (cycle_type s == tc)%:R.
+Local Notation "''1_[' p ]" := (cfuni_part p) : ring_scope.
+
+Lemma cfuni_partE s :
+  ('1_[s]) = (cycle_type s == tc)%:R.
 Proof using.
-  rewrite /classfun_part cfunElock genGid inE /=.
-  suff -> : s ^: [set: {perm T}] \subset class_of_partCT tc = (cycle_type s == tc).
-    by []. (* Better way to write that ? *)
+  rewrite /cfuni_part cfunElock genGid inE /=.
+  congr ((nat_of_bool _) %:R).  
   apply/idP/idP.
   - rewrite class_of_partCTP => /subsetP; apply.
     apply /imsetP; exists 1%g; first by rewrite inE.
@@ -732,9 +740,11 @@ Proof using.
     by rewrite -class_of_partCTP cycle_type_of_conjg.
 Qed.
 
-End ClassFun.
 
+End CFunIndicator.
 End CycleType.
+Notation "''1_[' p ]" := (cfuni_part p) : ring_scope.
+
 
 Coercion partCT_of_partn n := intpartn_cast (esym (card_ord n)).
 
@@ -782,10 +792,10 @@ Proof using.
   - by rewrite partCT_of_partnK.
 Qed.
 
-Lemma classfun_partnE (tc : intpartn n) (s : 'S_n) :
-  (classfun_part tc s) = (cycle_typeSN s == tc)%:R.
+Lemma cfuni_partnE (tc : intpartn n) (s : 'S_n) :
+  '1_[tc] s = (cycle_typeSN s == tc)%:R.
 Proof using.
-  rewrite classfun_partE /cycle_typeSN /=.
+  rewrite cfuni_partE /cycle_typeSN /=.
   by rewrite partn_of_partCTE partCT_of_partnK.
 Qed.
 
