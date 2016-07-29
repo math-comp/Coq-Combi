@@ -101,13 +101,13 @@ Section PCycleBijection.
 Variables (U V : finType).
 Variables (s : {perm U}) (t : {perm V}).
 
-Record cycle_map := CycleMap {
-                        fs :> {set U} -> {set V};
-                        fs_surj : fs @: pcycles s = pcycles t;
-                        fs_homog : {in pcycles s, forall C, #|fs C| = #|C| }
-                      }.
+Record pcycles_map := PCycleMap {
+                          fs :> {set U} -> {set V};
+                          fs_stab : fs @: pcycles s \subset pcycles t;
+                          fs_homog : {in pcycles s, forall C, #|fs C| = #|C| }
+                        }.
 
-Variable CM : cycle_map.
+Variable CM : pcycles_map.
 
 Lemma aux (x : U) : V.
 Proof using CM.
@@ -117,16 +117,15 @@ have : fs CM (pcycle s x) != set0.
 by move/set0Pn/sigW => H; apply H.
 Qed.
 
-Definition cymapcan x := odflt (aux x) [pick y in fs CM (pcycle s x)].
+Definition cymapcan x := odflt (aux x) [pick y in CM (pcycle s x)].
 Definition cymap x := ((t ^+ (indpcycle s x)) (cymapcan x))%g.
 
-Lemma fs_pcycleP x : fs CM (pcycle s x) \in pcycles t.
+Lemma fs_pcycleP x : CM (pcycle s x) \in pcycles t.
 Proof using.
-  have : pcycle s x \in pcycles s by exact: mem_imset.
-  by move=> /(mem_imset (fs CM)); rewrite fs_surj.
+    by apply (subsetP (fs_stab CM)); apply mem_imset; apply mem_imset.
 Qed.
 
-Lemma pcycle_cymapcan x : pcycle t (cymapcan x) = fs CM (pcycle s x).
+Lemma pcycle_cymapcan x : pcycle t (cymapcan x) = CM (pcycle s x).
 Proof using.
   rewrite /cymapcan /=.
   have:= fs_pcycleP x => /imsetP [y0 _ ->].
@@ -162,7 +161,7 @@ Proof using CM.
   rewrite {1}/cymapcan.
   case: pickP => [im Him /= Hdefim | Habs] /=.
   - rewrite /canpcycle (_ : [pick y in  _] = some im) //.
-    rewrite [LHS](_ : _ = [pick y in fs CM (pcycle s x)]); first last.
+    rewrite [LHS](_ : _ = [pick y in CM (pcycle s x)]); first last.
       apply eq_pick => y /=; congr (y \in _).
       have:= fs_pcycleP x => /imsetP [y0 _ Hy0].
       by move: Him; rewrite Hy0 /= -eq_pcycle_mem => /eqP ->.
@@ -184,11 +183,14 @@ Qed.
 
 End PCycleBijection.
 
+Fact pcycles_stab_id (U : finType) (s : {perm U}) :
+  id @: pcycles s \subset pcycles s.
+Proof. by rewrite imset_id. Qed.
 Definition CMid (U : finType) (s : {perm U}) :=
-  @CycleMap U U s s id (imset_id (pcycles s)) (fun x _ => erefl #|x|).
+  @PCycleMap U U s s id (pcycles_stab_id s) (fun x _ => erefl #|x|).
 
 Lemma cymapE (U V : finType) (s : {perm U}) (t : {perm V})
-      (CM1 CM2 : cycle_map s t) :
+      (CM1 CM2 : pcycles_map s t) :
    {in pcycles s, CM1 =1 CM2} -> cymap CM1 =1 cymap CM2.
 Proof.
 move=> Heq x; rewrite /cymap /cymapcan /=.
@@ -199,7 +201,7 @@ have:= fs_pcycleP CM1 x => /imsetP [y _ ->] /(_ y).
 by rewrite pcycle_id.
 Qed.
 
-Lemma cymap_id (U : finType) (s : {perm U}) (CM : cycle_map s s) :
+Lemma cymap_id (U : finType) (s : {perm U}) (CM : pcycles_map s s) :
   {in pcycles s, CM =1 id} -> cymap CM =1 id.
 Proof.
 move=> H x; rewrite /cymap /=.
@@ -210,7 +212,7 @@ Qed.
 
 Lemma cymap_comp (U V W: finType)
       (u : {perm U}) (v : {perm V}) (w : {perm W})
-      (CMuv : cycle_map u v) (CMvw : cycle_map v w) (CMuw : cycle_map u w) :
+      (CMuv : pcycles_map u v) (CMvw : pcycles_map v w) (CMuw : pcycles_map u w) :
   {in pcycles u, CMvw \o CMuv =1 CMuw} ->
   (cymap CMvw) \o (cymap CMuv) =1 (cymap CMuw).
 Proof.
@@ -411,13 +413,13 @@ Lemma cycle_type_eq :
   forall i, #|slice (slpcycles s) i| = #|slice (slpcycles t) i|.
 Proof using eqct. by move=> i; rewrite !slice_slpcycleE eqct. Qed.
 
-Fact conjg_pcycles_surj :
-  [set bij (slpcycles t) x | x in (slpcycles s)] = slpcycles t.
-Proof using eqct. by have := bijP cycle_type_eq => [] []. Qed.
+Fact conjg_pcycles_stab :
+  [set bij (slpcycles t) x | x in (slpcycles s)] \subset slpcycles t.
+Proof using eqct. by have := bijP cycle_type_eq => [] [] _ ->. Qed.
 Fact conjg_pcycles_homog :
   {in pcycles s, forall C, #|bij (U := slpcycles s) (slpcycles t) C| = #|C| }.
 Proof using eqct. by have := bijP cycle_type_eq => [] []. Qed.
-Definition CMbij := CycleMap conjg_pcycles_surj conjg_pcycles_homog.
+Definition CMbij := PCycleMap conjg_pcycles_stab conjg_pcycles_homog.
 Definition conjbij := cymap CMbij.
 
 End Defs.
