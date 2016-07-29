@@ -82,31 +82,26 @@ Qed.
 
 Lemma partition_pcycles s : partition (pcycles s) setT.
 Proof.
-  apply/and3P; split.
-  - apply/eqP/setP => y; rewrite inE; apply/bigcupP; exists (pcycle s y).
-    + exact: mem_imset. + exact: pcycle_id.
-  - apply/trivIsetP => A B /imsetP [] x1 _ -> /imsetP [] x2 _ -> Hdiff.
-    rewrite -setI_eq0; apply/set0Pn => [] [y].
-    rewrite inE => /andP [].
-    by rewrite -!eq_pcycle_mem => /eqP ->; apply/negP.
-  - apply/negP => /imsetP [] x _ Heq.
-    by have:= pcycle_id s x; rewrite -Heq inE.
+  rewrite /pcycles pcycleE.
+  have /orbit_partition : [acts (<[s]>)%g, on [set: T] | 'P].
+    by apply/actsP => x _ t; rewrite !inE.
+  congr partition; apply/setP => x.
+  by apply/imsetP/imsetP => [] [y _ Hy]; exists y.
 Qed.
 
 Lemma partition_support s : partition (psupport s) (support s).
 Proof.
-  apply/and3P; split.
-  - rewrite /cover; apply/eqP/setP => y.
-    rewrite in_support; by apply/bigcupP/in_psupportP => //; exact: support s.
-  - apply/trivIsetP => A B.
-    rewrite !inE => /andP [] /imsetP [] x1 _ -> _
-                    /andP [] /imsetP [] x2 _ -> _ Hdiff.
-    rewrite -setI_eq0; apply/set0Pn => [] [y].
-    rewrite inE => /andP [].
-    by rewrite -!eq_pcycle_mem => /eqP ->; apply/negP.
-  - apply/negP; rewrite inE => /andP [] H _.
-    move: H => /imsetP [] x _ Heq.
-    by have:= pcycle_id s x; rewrite -Heq inE.
+  rewrite /psupport /pcycles pcycleE.
+  have /orbit_partition : [acts (<[s]>)%g, on support s | 'P].
+    apply/actsP => t /cycleP [i -> {t}] x; rewrite !in_support /=.
+    rewrite -permM -expgSr expgS permM; congr negb.
+    by apply/eqP/eqP => [/perm_inj| ->].
+  congr partition; apply/setP => x.
+  rewrite !inE; apply/imsetP/andP => [[y Hy -> {x}] | [/imsetP [y _ -> {x}]]].
+  - split; first exact: mem_imset.
+    by rewrite -pcycleE support_card_pcycle.
+  - rewrite -pcycleE support_card_pcycle => Hy.
+    by exists y.
 Qed.
 
 Lemma psupport_eq0 s : (s == perm_one T) = (psupport s == set0).
@@ -159,9 +154,9 @@ Proof.
     + by rewrite -Hiter => ->; exists n.
   - (* This case is still complicated and actually not needed *)
     rewrite inE mem_imset //= support_card_pcycle in_support negbK => H.
-    have := H; rewrite pcycle_fix => /eqP Hpcycle.
+    have:= H; rewrite pcycle_fix => /eqP Hpcycle.
     rewrite Hpcycle inE => /eqP -> {y}.
-    rewrite Hpcycle; apply/eqP; rewrite -pcycle_fix restr_permE ?inE //=.
+    apply/eqP; rewrite Hpcycle -pcycle_fix restr_permE ?inE //=.
     by apply/subsetP => y; rewrite !inE => /eqP ->.
 Qed.
 
@@ -178,6 +173,7 @@ Proof.
     rewrite eqEsubset; apply/andP; split => //.
     move: HYX => /subsetP HYX.
     move: HY; rewrite inE => /andP [/imsetP [y _ Hy] _].
+    (* TODO: check proof here *)
     have {Hy} Hy : Y = pcycle s y.
       rewrite Hy; apply pcycle_restr_perm.
       by apply HYX; rewrite Hy; exact: pcycle_id.
