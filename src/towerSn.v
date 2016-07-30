@@ -291,9 +291,12 @@ Lemma cfuni_tinj s (l : intpartn (m + n)) :
   '1_[l] (tinj s) = (l == unionpart (ct s.1, ct s.2))%:R.
 Proof. by rewrite cfuni_partnE cycle_type_tinj eq_sym. Qed.
 
-Theorem cfuni_Res (l : intpartn (m+n)):
+(*m and n can be inferred by the type of phi : 'CF('S_m * 'S_n)*)
+Local Notation "phi |^" := (cfIsom isomtinj phi) (at level 40).
+
+Theorem cfuni_Res (l : intpartn (m + n)):
   'Res[prodIm] ('1_[l]) =
-  cfIsom isomtinj (\sum_(x | l == unionpart x) ('1_[x.1]) \ox ('1_[x.2])).
+  (\sum_(x | l == unionpart x) ('1_[x.1]) \ox ('1_[x.2]))|^.
 Proof.
   apply/cfunP => /= s.
   case: (boolP (s \in prodIm)) => Hs; last by rewrite !cfun0gen // genGid.
@@ -324,6 +327,8 @@ Section Induction.
 Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
+Local Notation "phi |^" := (cfIsom isomtinj phi) (at level 40).
+
 Lemma classXE p q : classX p q  = setX (class p) (class q).
 Proof.
   apply /setP => /= x; rewrite inE.
@@ -335,7 +340,7 @@ Proof.
 Qed.
 
 Lemma cfExtProd_cfuni p q :
-  cfExtProd ('1_[p]) ('1_[q]) = '1_(classX p q).
+  ('1_[p]) \ox ('1_[q]) = '1_(classX p q).
 Proof.
   apply/cfunP => /= x.
   rewrite cfunE !cfuni_partnE /= cfunElock genGid !inE /= -natrM mulnb.
@@ -389,14 +394,13 @@ Qed.
 
 (* Application of Frobenius duality : cfdot_Res_r *)
 Lemma cfdot_Ind_cfuni_part p q (l : intpartn (m + n)):
-  '['Ind[G] (cfIsom isomtinj  ('1_[p] \ox '1_[q])), '1_[l]] =
+  '['Ind[G] (('1_[p] \ox '1_[q])|^), '1_[l]] =
   (unionpart (p, q) == l)%:R *(#|class p|)%:R * (#|class q|)%:R/(#|Smn|)%:R.
 Proof.
   rewrite -cfdot_Res_r cfuni_Res cfIsom_iso cfdot_sumr.
   rewrite (eq_bigr (fun (i : intpartn m * intpartn n) =>
-    #|(classX p q) :&: (classX i.1 i.2)|%:R / #|setX [set: 'S_m] [set: 'S_n]|%:R)); first last.
-  - move => i _.
-    rewrite !cfExtProd_cfuni cfdot_cfuni //=;
+   #|(classX p q) :&: (classX i.1 i.2)|%:R / #|setX [set: 'S_m] [set: 'S_n]|%:R)); first last.
+  - move => i _; rewrite !cfExtProd_cfuni cfdot_cfuni //=;
     by apply: class_normal; rewrite inE; apply /andP; split; rewrite inE /=.
   - case (boolP (unionpart(p, q) == l)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
     + rewrite (bigD1 (p, q)) /=; last by rewrite eq_sym.
@@ -409,7 +413,7 @@ Proof.
 Qed.
 
 
-(*TODO : move these two lemmas and complete to have linearity*)
+(*TODO : move these four lemmas*)
 Lemma cfExtProdZl (f1 : 'CF([set: 'S_m])) (f2 : 'CF([set: 'S_n])) (a: algC):
   (a *: f1) \ox f2 = a *: (f1 \ox f2).
 Proof.
@@ -424,9 +428,34 @@ Proof.
   by rewrite !cfunE mulrC [(f1 _ * _)]mulrC mulrA.
 Qed.
 
+Lemma cfExtProdDl (f1 g: 'CF([set: 'S_m])) (f2 : 'CF([set: 'S_n])):
+  (f1 + g) \ox f2 = (f1 \ox f2) + (g \ox f2).
+Proof.
+  apply /cfunP=> /= x.
+  by rewrite !cfunE mulrDl.
+Qed.
 
-Definition ebasis (k : nat) (p : intpartn k) :=
-  #|[set: 'S_k]|%:R /#|class_of_partCT p|%:R *: '1_[p].
+Lemma cfExtProdDr (f1 : 'CF([set: 'S_m])) (f2 g : 'CF([set: 'S_n])):
+  f1 \ox (f2 + g) = (f1 \ox f2) + (f1 \ox g).
+Proof.
+  apply /cfunP=> /= x.
+  by rewrite !cfunE mulrDr.
+Qed.
+
+Definition zcoeff (k : nat) (p : intpartn k) : algC :=
+  #|[set: 'S_k]|%:R / #|class_of_partCT p|%:R.
+
+Local Notation "'z_ p " := (zcoeff p) (at level 2).
+
+Lemma neq0zcoeff (k : nat) (p : intpartn k) : 'z_p != 0.
+Proof.
+  admit.
+Admitted.
+
+Definition pbasis (k : nat) (p : intpartn k) :=
+  'z_p *: '1_[p].
+
+Local Notation "''P_[' p ]" := (pbasis p).
 
 (* TODO: move in cycletype.v *)
 Lemma card_class_of_partCT k (p : intpartn k) : #|class p| != 0%N.
@@ -435,9 +464,8 @@ Proof.
   by exists (perm_of_partCT p); exact: class_refl.
 Qed.
 
-Lemma cfdot_Ind_ebasis p q (l : intpartn (m + n)):
-  '['Ind[G] (cfIsom isomtinj ((ebasis p) \ox (ebasis q))), ebasis l] =
-  (unionpart (p, q) == l)%:R * #|G|%:R/#|class_of_partCT l|%:R.
+Lemma cfdot_Ind_pbasis p q (l : intpartn (m + n)):
+  '['Ind[G] (('P_[p] \ox 'P_[q])|^), 'P_[l]] = (unionpart (p, q) == l)%:R * 'z_l.
 Proof.
   rewrite cfExtProdZl cfExtProdZr.
   rewrite !linearZ /= !cfdotZl cfdotZr cfdot_Ind_cfuni_part /= cardsX.
@@ -454,14 +482,13 @@ Proof.
   by apply divff; apply neq0CG.
 Qed.
 
-Lemma ebasis_gen (f : 'CF(G)) :
-  f = \sum_(p : intpartn (m + n)) f (perm_of_partCT p) * (#|class p|%:R / #|G|%:R) *: ebasis p.
+Lemma pbasis_gen (f : 'CF(G)) :
+  f = \sum_(p : intpartn (m + n)) f (perm_of_partCT p) / 'z_p *: 'P_[p].
 Proof.
   apply/cfunP => /= x.
   rewrite (bigD1 (ct x)) //= cfunE sum_cfunE big1.
   - rewrite addr0 !cfunE cfuni_partnE eqxx /= mulr1.
-    rewrite -!mulrA mulKf; last exact: neq0CG.
-    rewrite mulrA mulfK; last by rewrite pnatr_eq0 card_class_of_partCT.
+    rewrite -mulrA [_^-1 *_]mulrC mulrA mulfK; last exact: neq0zcoeff.
     have: (perm_of_partCT (ct x)) \in x^:[set: 'S_(m + n)].
       apply /classes_of_permP; rewrite perm_of_partCTP.
       by rewrite (partn_of_partCTK (cycle_type x)).
@@ -469,10 +496,10 @@ Proof.
   - by move=> p /negbTE pct; rewrite !cfunE cfuni_partnE eq_sym pct /= !mulr0.
 Qed.
 
-Lemma cfdotr_ebasis (f : 'CF(G)) x :
-  (f x) = '[f, ebasis (ct x)].
+Lemma cfdotr_pbasis (f : 'CF(G)) x :
+  (f x) = '[f, 'P_[ct x]].
 Proof.
-  rewrite {2}(ebasis_gen f) cfdot_suml.
+  rewrite {2}(pbasis_gen f) cfdot_suml.
   rewrite (bigD1 (ct x)) //= !cfdotZl cfdotZr.
   rewrite cfdot_cfuni; try (by apply: class_normal; rewrite inE).
   rewrite setIid.
@@ -481,7 +508,7 @@ Proof.
       apply /classes_of_permP; rewrite perm_of_partCTP.
       by rewrite (partn_of_partCTK (cycle_type x)).
     move/imsetP => [y _ ->]; rewrite cfunJgen ?genGid ?inE //.
-    rewrite -[LHS]mulr1 -!mulrA; congr (_ * _).
+    rewrite /zcoeff invf_div -[LHS]mulr1 -!mulrA; congr (_ * _).
     rewrite mulKf; last exact: neq0CG.
     rewrite [_^-1 * _]mulrC mulrA mulrC mulKf;
       last by rewrite pnatr_eq0 card_class_of_partCT.
@@ -495,13 +522,12 @@ Proof.
     by rewrite partn_of_partCTE !partCT_of_partnK pct.
 Qed.
 
-Theorem Ind_cfuni p q :
-  'Ind[G] (cfIsom isomtinj (ebasis p \ox ebasis q)) = ebasis (unionpart (p, q)).
+Theorem Ind_pbasis p q :
+  'Ind[G] (('P_[p] \ox 'P_[q])|^) = 'P_[unionpart (p, q)].
 Proof.
   apply/cfunP => /= x; rewrite cfunE.
-  rewrite cfdotr_ebasis cfdot_Ind_ebasis.
-  rewrite cfuni_partnE eq_sym.
-  rewrite -[LHS]mulrA mulrC.
+  rewrite cfdotr_pbasis cfdot_Ind_pbasis.
+  rewrite cfuni_partnE eq_sym mulrC.
   by case: (boolP (_ == _)) => [/eqP ->|] //=; rewrite !mulr0.
 Qed.
 
