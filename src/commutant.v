@@ -190,6 +190,10 @@ Qed.
 Definition bijbla t : {perm {set T}} * {perm T} :=
   (setact_cent1 t,  t * (cyperm t^-1)).
 
+
+End PermCycles.
+
+(*
 Definition cyact := (fun S => comm_cymap^~ S).
 
 Lemma cyact_is_action : is_action 'C[s] cyact.
@@ -212,21 +216,20 @@ case: (boolP (X \in pcycles s)) => HX.
 Qed.
 Canonical pcyact := Action act_on_pcyclesP.
 
-(*
 Lemma actpermset_normE (X : {set {set T}}) t :
-  (actperm ('P)^* t \in 'N(X | 'P)) = (t \in 'N(X | ('P)^*)).
+  (actperm ('P)^* t \in 'N(X | 'P)) = (t \in 'N(X | ('P)^* )).
 Proof.
   by apply/idP/idP => /astabsP H; apply/astabsP => Y;
      rewrite -[RHS]H /= apermE actpermE.
 Qed.
 
 Definition on_pcycles t : {perm {set T}} :=
-  restr_perm (pcycles s) (actperm ('P^*) t).
+  restr_perm (pcycles s) (actperm ('P^* ) t).
 Definition act_on_pcycles := (fun S => on_pcycles^~ S).
 
 Lemma on_pcycles1 : on_pcycles 1 = 1.
 Proof.
-have actsetid (X : {set T}) : actperm ('P^*) 1 X = X.
+have actsetid (X : {set T}) : actperm ('P^* ) 1 X = X.
   rewrite actpermE /= setactE /=.
   rewrite (eq_imset (g := id)) ?imset_id // => x.
   by rewrite apermE perm1.
@@ -270,7 +273,7 @@ Proof.
     apply/subsetP => Ctmp; rewrite !inE => /eqP -> {Ctmp}.
     apply/eqP/setP => C; apply/imsetP/idP => [[D HD -> {C}] | HC] /=.
     + by rewrite actpermK /= (astabs_act D commute_pcycle_stable).
-    + exists ((('P)^*)%act C (t^-1)%g).
+    + exists ((('P)^* )%act C (t^-1)%g).
       * by rewrite (astabs_act C (groupVr commute_pcycle_stable)).
       * by rewrite actpermK -actM mulVg act1.
 Qed.
