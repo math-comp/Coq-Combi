@@ -17,9 +17,6 @@ Import LeqGeqOrder.
 Reserved Notation "''1_[' G ]"
          (at level 8, G at level 2, format "''1_[' G ]").
 
-
-
-
 (* TODO: Move elsewhere *)
 Lemma disjoint_imset (T : finType) (f : T -> T) (A B : {set T}) :
   injective f ->
