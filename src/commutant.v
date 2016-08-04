@@ -1,10 +1,10 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple path bigop finset.
-From mathcomp Require Import fingroup perm action ssralg.
+From mathcomp Require Import fingroup perm action ssralg gproduct.
 From mathcomp Require finmodule.
 
-From Combi Require Import tools.
+From Combi Require Import tools partition.
 
 Require Import ssrcomp cycles cycletype.
 
@@ -72,37 +72,62 @@ apply (iffP cards1P) => [[sc Hsc]|[x Hx Hsc]].
   + by rewrite -Hsc; exact: partition_support.
 Qed.
 
-Lemma commute_cyclic c s :
-  cyclic c -> commute c s -> perm_on (support c) s ->
-  exists i, s = c ^+ i.
+From mathcomp Require Import div.
+
+Lemma cycle_cyclic t : cyclic t -> cycle t = [set t ^+ i | i : 'I_#|support t|].
 Proof using.
-  move=> /cyclicP [x Hx Hsupp].
-  rewrite Hsupp => /commute_sym Hcomm Hon.
-  have cx_stable : ('P)^* (pcycle c x) s = (pcycle c x).
-    rewrite -Hsupp; apply setC_inj.
-    rewrite /support setactC !setCK.
-    apply/setP => z; apply/imsetP/afix1P => /= [[y]| /afix1P Hz].
-    - move=> /afix1P /= => Hy ->.
-      by rewrite -actM Hcomm actM /= Hy.
-    - exists z; first by [].
-      apply/eqP; move: Hz => /afix1P /= /eqP.
-      rewrite -[_ == _]negbK -in_support Hsupp eq_sym; apply contraR => H.
-      by move: Hon => /subsetP/(_ z); rewrite inE; apply.
-  have /= := mem_setact ('P) s (pcycle_id c x).
-  rewrite cx_stable => /pcycleP [i Hi].
-  exists i; apply/permP => z.
-  case: (boolP (z \in (pcycle c x))) => [/pcycleP [j -> {z}]|].
-  - by rewrite -!permM -(commuteX j Hcomm) -expgD addnC expgD !permM -{}Hi.
-  - move=> Hz; move: Hon => /subsetP/(_ z)/contra/(_ Hz).
-    rewrite inE negbK => /eqP ->.
-    move: Hz; rewrite -Hsupp in_support negbK => /eqP Hz.
-    elim: i {Hi} => [/=|i IHi]; first by rewrite expg0 perm1.
-    by rewrite expgS permM Hz.
+move/cyclicP => [x Hx Hsupp]; rewrite Hsupp.
+apply/setP => C; apply/cycleP/imsetP => [[i -> {C}] | [i Hi -> {C}]].
+- have /(ltn_pmod i) Hmod : 0 < #|pcycle t x|.
+    by rewrite card_gt0; apply/set0Pn; exists x; apply: pcycle_id.
+  exists (Ordinal Hmod) => //=; apply/permP => y /=.
+  case: (boolP (y \in pcycle t x)).
+  + by rewrite -eq_pcycle_mem => /eqP <-; exact: pcycle_mod.
+  + rewrite -Hsupp in_support negbK => /eqP Ht.
+    have Hfix n : (t ^+ n) y = y.
+      elim: n => [|n IHn]; first by rewrite expg0 perm1.
+      by rewrite expgS permM Ht.
+    by rewrite !Hfix.
+- by exists i.
 Qed.
 
-Variable s : {perm T}.
+Lemma order_cyclic t : cyclic t -> #[t] = #|support t|.
+Proof.
+  rewrite /order => Hcy.
+  rewrite (cycle_cyclic Hcy) card_imset ?card_ord //.
+  move: Hcy => /cyclicP [x Hx Hsupp].
+  move=> [i Hi] [j Hj] /= /(congr1 (fun s => s x)) Hij.
+  apply val_inj => /=; apply/eqP.
+  rewrite -(nth_uniq x _ _ (uniq_traject_pcycle t x)) ?size_traject -?Hsupp //.
+  by rewrite !nth_traject // -!permX Hij.
+Qed.
 
-Lemma cent1_act_pcycle t x :
+Definition pcyclesgrp s : {set {perm T}} :=
+  'C[s] :&: \bigcap_(i < #|T|.+1) 'N(pcycles s :&: 'SC_i | ('P)^* ).
+(* pcyclesgrp is canonicaly a group *)
+
+Lemma pcyclegrpE s : pcyclesgrp s = \big[dprod/1]_(c in cycle_dec s) <[c]>.
+Proof.
+Admitted.
+
+Lemma card_pcyclegrpE s : #|pcyclesgrp s| = (\prod_(i <- cycle_type s) i)%N.
+Proof.
+  rewrite -(bigdprod_card (esym (pcyclegrpE s))).
+  rewrite /cycle_type /= /parts_shape /cycle_dec big_imset /=; first last.
+    by move=> u v /support_restr_perm {2}<- /support_restr_perm {2}<- ->.
+  rewrite [RHS](eq_big_perm [seq #|(x : {set _})| | x <- enum (pcycles s)]);
+    last by apply/perm_eqlP; apply perm_sort.
+  rewrite /= [RHS]big_map -big_enum.
+  rewrite [RHS](bigID (fun X : {set T} => #|X| == 1%N)) /=.
+  rewrite [X in _ = (X * _)%N]big1 ?mul1n; last by move=> i /andP [_ /eqP].
+  rewrite [RHS](eq_bigl (mem (psupport s))) /=; first last.
+    by move=> C; rewrite /psupport !inE.
+  apply eq_bigr => X HX; rewrite -orderE.
+  rewrite order_cyclic; last by rewrite /cyclic (psupport_restr HX) cards1.
+  by rewrite support_restr_perm.
+Qed.
+
+Lemma cent1_act_pcycle s t x :
   t \in 'C[s] -> ('P)^* (pcycle s x) t = pcycle s (t x).
 Proof.
   move=> /cent1P Hcom.
@@ -115,7 +140,7 @@ Proof.
 Qed.
 
 (* Rewriting of 'C[s] \subset 'N(pcycles s | ('P)^* *)
-Lemma cent1_act_on_pcycles : [acts 'C[s], on pcycles s | ('P)^*].
+Lemma cent1_act_on_pcycles s : [acts 'C[s], on pcycles s | ('P)^*].
 Proof using.
   apply/subsetP => t Hcent; rewrite /astabs !inE /=.
   apply/subsetP => C; rewrite inE => /imsetP [x _ -> {C}].
@@ -123,18 +148,59 @@ Proof using.
   exact: cent1_act_pcycle.
 Qed.
 
-Lemma cent1_act_on_pcyclesi i :
+
+Lemma cent1_act_on_ipcycles s i :
   [acts 'C[s], on pcycles s :&: 'SC_i | ('P)^*].
 Proof using.
   apply/subsetP => t Ht; apply (subsetP (astabsI _ _ _)).
-  rewrite inE (subsetP cent1_act_on_pcycles) //=.
+  rewrite inE (subsetP (cent1_act_on_pcycles s)) //=.
   rewrite /astabs !inE /=; apply/subsetP => P; rewrite !inE.
   by rewrite card_setact.
 Qed.
 
+
+Lemma commute_cyclic c t :
+  cyclic c -> t \in 'C[c] -> perm_on (support c) t -> exists i, t = c ^+ i.
+Proof using.
+  move=> /cyclicP [x Hx Hsupp] Hcent1 Hon.
+  have /= := cent1_act_pcycle x Hcent1.
+  have:= Hx; rewrite -(perm_closed _ Hon).
+  move: Hon; rewrite Hsupp -eq_pcycle_mem => Hon /eqP -> cx_stable.
+  move: Hcent1 => /cent1P Hcomm.
+  have /= := mem_setact ('P) t (pcycle_id c x).
+  rewrite cx_stable => /pcycleP [i]; rewrite apermE => Hi.
+  exists i; apply/permP => z.
+  case: (boolP (z \in (pcycle c x))) => [/pcycleP [j -> {z}]|].
+  - by rewrite -!permM -(commuteX j Hcomm) -expgD addnC expgD !permM Hi.
+  - move=> Hz; move: Hon => /subsetP/(_ z)/contra/(_ Hz).
+    rewrite inE negbK => /eqP ->.
+    move: Hz; rewrite -Hsupp in_support negbK => /eqP Hz.
+    elim: i {Hi} => [/=|i IHi]; first by rewrite expg0 perm1.
+    by rewrite expgS permM Hz.
+Qed.
+
+
+Definition norm_ipcycle s t :=
+  [forall i : 'I_#|T|.+1, t \in 'N(pcycles s :&: 'SC_i | ('P)^* )].
+
+Lemma norm_ipcycleP s t :
+  reflect (forall i : nat, t \in 'N(pcycles s :&: 'SC_i | ('P)^* ))
+    (norm_ipcycle s t).
+Proof.
+  apply(iffP forallP) => /= [H i|H [i /= _]]; last exact: H.
+  case: (ltnP i #|T|.+1) => Hi.
+  - by rewrite -[i]/(val (Ordinal Hi)); apply: H.
+  - suff -> : pcycles s :&: 'SC_i = set0 by apply/astabsP => X; rewrite !inE.
+    apply/eqP; rewrite -subset0; apply/subsetP => C.
+    rewrite !inE => /andP [] _ /eqP HcardC; subst i.
+    have /(leq_trans Hi) := subset_leqif_cards (subsetT C).
+    by rewrite cardsT ltnn.
+Qed.
+
+
 Section CM.
 
-Variable t : {perm T}.
+Variable s t : {perm T}.
 
 Definition setact_cent1 : {perm {set T}} :=
   if t \in 'C[s] then actperm ('P^*) t else 1.
@@ -144,7 +210,7 @@ Proof using.
 rewrite /setact_cent1.
 case: (boolP (t \in 'C[s])) => Ht; last by rewrite imset1.
 apply/subsetP => X /imsetP [Y HY -> {X}].
-move: Ht => /groupVr/(acts_act cent1_act_on_pcycles) <-.
+move: Ht => /groupVr/(acts_act (cent1_act_on_pcycles s)) <-.
 by rewrite actpermE -actM mulgV act1.
 Qed.
 
@@ -168,8 +234,8 @@ Definition cyperm := perm comm_cymap_inj.
 
 End CM.
 
-Lemma cypermP t :
-  t \in 'C[s] -> t * (cyperm t^-1) \in 'C(pcycles s | ('P)^*).
+Lemma cypermP s t :
+  t \in 'C[s] -> t * (cyperm s t^-1) \in 'C(pcycles s | ('P)^*).
 Proof.
 move=> Ht; have:= Ht; rewrite -groupV => HtV.
 apply/astabP => X /imsetP [x _ -> {X}].
@@ -177,7 +243,7 @@ apply /setP => y; apply/imsetP/idP => [[z Hz -> {y}] | Hy] /=.
 - rewrite apermE permM -eq_pcycle_mem /cyperm permE /comm_cymap /=.
   rewrite pcycle_cymap /= /setact_cent1 HtV actpermE /=.
   by rewrite cent1_act_pcycle // permK eq_pcycle_mem.
-- exists (((cyperm t) * t^-1) y).
+- exists (((cyperm s t) * t^-1) y).
   + rewrite -eq_pcycle_mem permM -cent1_act_pcycle //.
     rewrite /cyperm permE /comm_cymap /= pcycle_cymap /=.
     by rewrite /setact_cent1 Ht actpermE -actM mulgV act1 eq_pcycle_mem.
@@ -187,8 +253,8 @@ apply /setP => y; apply/imsetP/idP => [[z Hz -> {y}] | Hy] /=.
     by move=> C HC; rewrite /= /setact_cent1 Ht HtV !actpermE -actM mulgV act1.
 Qed.
 
-Definition bijbla t : {perm {set T}} * {perm T} :=
-  (setact_cent1 t,  t * (cyperm t^-1)).
+Definition bijbla s t : {perm {set T}} * {perm T} :=
+  (setact_cent1 s t,  t * (cyperm s t^-1)).
 
 
 End PermCycles.
