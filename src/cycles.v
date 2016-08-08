@@ -35,7 +35,7 @@ Qed.
 Lemma support1 : support (perm_one T) = set0.
 Proof. by apply/setP => x; rewrite in_support inE perm1 eq_refl. Qed.
 
-Lemma support_eq0 s : (s == perm_one T) = (support s == set0).
+Lemma support_eq0 s : (s == 1) = (support s == set0).
 Proof.
   apply/eqP/eqP => [ -> |]; first exact: support1.
   move/setP => Heq; rewrite -permP => x.
