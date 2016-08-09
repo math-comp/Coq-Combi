@@ -1,7 +1,7 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple path bigop finset.
-From mathcomp Require Import fingroup perm action ssralg gproduct.
+From mathcomp Require Import fingroup perm action ssralg gproduct morphism.
 From mathcomp Require finmodule.
 
 From Combi Require Import tools partition.
@@ -47,7 +47,7 @@ move=> HYP; rewrite eq_sym; move/(_ Y HYP): H => /contraR; apply.
 have /set0Pn [y Hy] : Y != set0
   by apply/negP => /eqP HY; move: H0; rewrite -HY HYP.
 apply/negP => /disjoint_setI0/setP/(_ y).
-rewrite !inE Hy -Hcov andbT => /bigcupP; apply; by exists Y.
+by rewrite !inE Hy -Hcov andbT => /bigcupP; apply; exists Y.
 Qed.
 
 Lemma cyclicP c :
@@ -134,10 +134,8 @@ Lemma cent1_act_on_pcycles s : [acts 'C[s], on pcycles s | ('P)^*].
 Proof using.
   apply/subsetP => t Hcent; rewrite /astabs !inE /=.
   apply/subsetP => C; rewrite inE => /imsetP [x _ -> {C}].
-  apply/imsetP; exists (t x); first by [].
-  exact: cent1_act_pcycle.
+  by apply/imsetP; exists (t x); [| apply: cent1_act_pcycle].
 Qed.
-
 
 Lemma cent1_act_on_ipcycles s i :
   [acts 'C[s], on pcycles s :&: 'SC_i | ('P)^*].
@@ -249,7 +247,7 @@ case: (altP (X =P C)) => [-> |] /=.
 Qed.
 
 Lemma pcyclegrpE s :
-  'C[s] :&: 'C(pcycles s | ('P)^* ) = \big[dprod/1]_(c in cycle_dec s) <[c]>.
+  'C_('C[s])(pcycles s | ('P)^* ) = \big[dprod/1]_(c in cycle_dec s) <[c]>.
 Proof.
 rewrite disjoint_support_dprodE; last exact: disjoint_cycle_dec.
 apply/setP => /= t; apply/idP/idP.
@@ -294,32 +292,127 @@ Proof.
   by rewrite support_restr_perm.
 Qed.
 
+Definition stab_ipcycles s : {set {perm {set T}}} :=
+  'C(~: pcycles s | 'P) :&:
+    \bigcap_(i : 'I_#|T|.+1) 'N(pcycles s :&: 'SC_i | 'P).
+(* stab_ipcycles is canonicaly a group *)
+Definition stab_ipcycles_group s := [group of (stab_ipcycles s)].
 
+Definition inpcycles s := restr_perm (pcycles s) \o actperm ('P^*).
+(* inpcycles is canonicaly a morphism *)
+Definition inpcycles_morph s := [morphism of (inpcycles s)].
 
-Definition norm_ipcycle s t :=
-  [forall i : 'I_#|T|.+1, t \in 'N(pcycles s :&: 'SC_i | ('P)^* )].
-
-Lemma norm_ipcycleP s t :
-  reflect (forall i : nat, t \in 'N(pcycles s :&: 'SC_i | ('P)^* ))
-    (norm_ipcycle s t).
+Lemma inpcyclesP s t : t \in 'C[s] -> inpcycles s t \in stab_ipcycles s.
 Proof.
-  apply(iffP forallP) => /= [H i|H [i /= _]]; last exact: H.
-  case: (ltnP i #|T|.+1) => Hi.
-  - by rewrite -[i]/(val (Ordinal Hi)); apply: H.
-  - suff -> : pcycles s :&: 'SC_i = set0 by apply/astabsP => X; rewrite !inE.
-    apply/eqP; rewrite -subset0; apply/subsetP => C.
-    rewrite !inE => /andP [] _ /eqP HcardC; subst i.
-    have /(leq_trans Hi) := subset_leqif_cards (subsetT C).
-    by rewrite cardsT ltnn.
+move=> Ht; rewrite inE; apply/andP; split.
+- apply/astabP => X; rewrite inE => HX.
+  exact: (out_perm (restr_perm_on _ _) HX).
+- apply/bigcapP => [[i Hi] _] /=; apply/astabsP => X.
+  have/actsP/(_ t Ht X)/= := cent1_act_on_ipcycles s i.
+  rewrite !inE !apermE; case: (boolP (X \in pcycles s)) => /= [HX| HX _].
+  + rewrite restr_permE // ?actpermE // {X HX}.
+    apply/astabsP => X /=; rewrite apermE actpermE /=.
+    exact: (actsP (cent1_act_on_pcycles s)).
+  + rewrite (out_perm (restr_perm_on _ _) HX).
+    by move: HX => /negbTE ->.
 Qed.
 
+Section CM.
+
+Variables (s : {perm T}) (P : {perm {set T}}).
+
+Lemma stab_ipcycles_stab :
+  (if P \in stab_ipcycles s then P else 1) @: pcycles s \subset pcycles s.
+Proof using.
+case: (boolP (_ \in _)) => [|_].
+- rewrite inE => /andP [HP _].
+  move: HP => /(subsetP (astab_sub _ _)); rewrite astabsC => /astabsP HP.
+  apply/subsetP => Xtmp /imsetP [/= X HX ->{Xtmp}].
+  by rewrite HP.
+- rewrite (eq_imset (g := id)) ?imset_id // => x.
+  by rewrite perm1.
+Qed.
+
+Lemma stab_ipcycles_homog :
+  {in pcycles s, forall C,
+       #|(if P \in stab_ipcycles s then P else 1) C| = #|C| }.
+Proof using.
+case: (boolP (_ \in _)) => [|_].
+- rewrite inE => /andP [_ /bigcapP HP] C HC; rewrite /inpcycles /=.
+  have:= subsetT C => /subset_leqif_cards []; rewrite -ltnS cardsT => cardC _.
+  move/(_ (Ordinal cardC) isT): HP => /= /astabsP/(_ C).
+  by rewrite !inE HC eq_refl /= => /andP [_ /eqP].
+- by move=> C _; rewrite perm1.
+Qed.
+
+Local Definition stab_ipcycles_pcyclemap :=
+  PCycleMap stab_ipcycles_stab stab_ipcycles_homog.
+Local Definition stab_ipcycles_map := cymap stab_ipcycles_pcyclemap.
+
+Lemma stab_ipcycles_map_inj : injective stab_ipcycles_map.
+Proof. by apply: cymap_inj => X Y /=; case: (P \in _); apply perm_inj. Qed.
+Definition permcycles := perm stab_ipcycles_map_inj.
+
+Lemma permcyclesC : commute permcycles s.
+Proof. apply esym; apply/permP => x; rewrite !permM !permE; exact: cymapP. Qed.
+
+Lemma permcyclesP : permcycles \in 'C[s].
+Proof. apply/cent1P; exact: permcyclesC. Qed.
+
+Lemma pcycle_permcycles x :
+  P \in stab_ipcycles s ->
+  pcycle s (permcycles x) = P (pcycle s x).
+Proof. by rewrite permE pcycle_cymap /= => ->. Qed.
+
+End CM.
+
+Lemma permcyclesM s :
+  {in stab_ipcycles s &, {morph permcycles s : x y / x * y}}.
+Proof.
+move=> /= P Q HP HQ /=; apply/permP => X.
+rewrite permM !permE -[RHS]/((_ \o _) X).
+apply esym; apply cymap_comp => C HC /=.
+by rewrite groupM // HP HQ permM.
+Qed.
+Canonical stab_ipcycles_morphism s := Morphism (permcyclesM (s := s)).
+
+Lemma permcyclesK s :
+  {in stab_ipcycles s, cancel (permcycles s) (inpcycles s)}.
+Proof.
+move=> /= P HP; apply/permP => C /=.
+rewrite /inpcycles /=.
+case: (boolP (C \in pcycles s)) => HC.
+- rewrite !restr_permE // ?actpermE /=; first last.
+    apply/astabsP => {C HC} C; rewrite /= apermE actpermE /=.
+    apply (actsP (cent1_act_on_pcycles s)).
+    exact: permcyclesP.
+  move: HC => /imsetP [x _ ->{C}].
+  rewrite cent1_act_pcycle; last exact: permcyclesP.
+  exact: pcycle_permcycles.
+- rewrite (out_perm (restr_perm_on _ _) HC).
+  move: HP; rewrite inE => /andP [] /astabP/(_ C).
+  by rewrite inE /= apermE => /(_ HC) -> _.
+Qed.
+
+Lemma permcycles_inj s : 'injm (permcycles s).
+Proof. apply/injmP; apply: can_in_inj; exact: permcyclesK. Qed.
+
+Lemma inpcycles_im s : inpcycles s @: 'C[s] = stab_ipcycles s.
+Proof.
+  apply/setP => /= P.
+  apply/imsetP/idP => /= [[/= x Hx ->] | HP]; first exact: inpcyclesP.
+  by exists (permcycles s P); [apply: permcyclesP | rewrite permcyclesK].
+Qed.
+
+End PermCycles.
+(*
 
 Section CM.
 
 Variable s t : {perm T}.
 
 Definition setact_cent1 : {perm {set T}} :=
-  if t \in 'C[s] then actperm ('P^*) t else 1.
+  if t \in 'C[s] then actperm ('P^* ) t else 1.
 
 Lemma on_pcycles_stab : setact_cent1 @: pcycles s \subset pcycles s.
 Proof using.
@@ -351,7 +444,7 @@ Definition cyperm := perm comm_cymap_inj.
 End CM.
 
 Lemma cypermP s t :
-  t \in 'C[s] -> t * (cyperm s t^-1) \in 'C(pcycles s | ('P)^*).
+  t \in 'C[s] -> t * (cyperm s t^-1) \in 'C(pcycles s | ('P)^* ).
 Proof.
 move=> Ht; have:= Ht; rewrite -groupV => HtV.
 apply/astabP => X /imsetP [x _ -> {X}].
@@ -375,7 +468,6 @@ Definition bijbla s t : {perm {set T}} * {perm T} :=
 
 End PermCycles.
 
-(*
 Definition cyact := (fun S => comm_cymap^~ S).
 
 Lemma cyact_is_action : is_action 'C[s] cyact.
