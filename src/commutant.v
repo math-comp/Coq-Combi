@@ -30,7 +30,24 @@ Proof. by rewrite -[RHS]imset_id; apply eq_imset => x; rewrite perm1. Qed.
 Local Notation "''SC_' i " := (finset (fun x : {set _} => #|x| == i))
     (at level 0).
 
-Open Scope group_scope.
+Import GroupScope.
+
+Section PermOnG.
+
+Variable T : finType.
+
+Definition perm_ong S : {set {perm T}} := [set s | perm_on S s].
+Lemma group_set_perm_ong S : group_set (perm_ong S).
+Proof.
+  apply/group_setP; split => [| s t]; rewrite !inE;
+    [exact: perm_on1 | exact: perm_onM].
+Qed.
+Canonical perm_ong_group S : {group {perm T}} := Group (group_set_perm_ong S).
+Lemma card_perm_ong S : #|perm_ong S| = (#|S|)`!.
+Proof. by rewrite cardsE /= card_perm. Qed.
+
+End PermOnG.
+
 
 Section PermCycles.
 
@@ -399,12 +416,111 @@ Proof. apply/injmP; apply: can_in_inj; exact: permcyclesK. Qed.
 
 Lemma inpcycles_im s : inpcycles s @: 'C[s] = stab_ipcycles s.
 Proof.
-  apply/setP => /= P.
-  apply/imsetP/idP => /= [[/= x Hx ->] | HP]; first exact: inpcyclesP.
-  by exists (permcycles s P); [apply: permcyclesP | rewrite permcyclesK].
+apply/setP => /= P.
+apply/imsetP/idP => /= [[/= x Hx ->] | HP]; first exact: inpcyclesP.
+by exists (permcycles s P); [apply: permcyclesP | rewrite permcyclesK].
 Qed.
 
+Lemma trivIset_ipcycles s : trivIset [set pcycles s :&: 'SC_i | i : 'I_#|T|.+1].
+Proof.
+apply/trivIsetP => A B /imsetP [i _ ->{A}] /imsetP [j _ ->{B}] Hij.
+have {Hij} Hij : i != j by move: Hij; apply contra => /eqP -> .
+rewrite -setI_eq0; apply/eqP/setP => x.
+rewrite !inE -!andbA; apply/negP => /and4P [_ /eqP -> _] /eqP /val_inj Hieqj.
+by rewrite Hieqj eq_refl in Hij.
+Qed.
+
+Lemma cover_ipcycles s :
+  cover [set pcycles s :&: 'SC_i | i : 'I_#|T|.+1] = pcycles s.
+Proof.
+apply/setP => C; apply/bigcupP/idP => [[/= X] | Hx].
+- by move/imsetP => [/= i _ ->{X}]; rewrite inE => /andP [].
+- have:= subsetT C => /subset_leqif_cards []; rewrite -ltnS cardsT => cardC _.
+  exists (pcycles s :&: 'SC_(Ordinal cardC)); first exact: mem_imset.
+  by rewrite !inE Hx /=.
+Qed.
+
+Lemma stab_ipcyclesE_prod s :
+  stab_ipcycles s = (\prod_(i : 'I_#|T|.+1) perm_ong_group (pcycles s :&: 'SC_i))%G.
+Proof.
+apply/setP => t.
+rewrite inE bigprodGE; apply/andP/idP => [| Ht].
+- move=> [Ht /bigcapP Hcyi].
+  rewrite -(perm_decE (s := t) (trivIset_ipcycles s)); first last.
+  + apply/astabP => /= CS /imsetP [/= i _ ->{CS}].
+    apply/astab1P; rewrite astab1_set; exact: Hcyi.
+  + rewrite -support_perm_on cover_ipcycles; apply/subsetP => /= X.
+    rewrite inE; apply contraR => HX.
+    move: Ht => /astabP/(_ X).
+    by rewrite inE /= apermE => ->.
+  apply group_prod => u /imsetP [/= X /imsetP [/= i _ ->{X}] ->{u}].
+  apply mem_gen; apply/bigcupP; exists i; first by [].
+  by rewrite inE; exact: restr_perm_on.
+split; move: t Ht; apply/subsetP; rewrite gen_subG;
+  apply/subsetP => /= P /bigcupP [/= i _]; rewrite inE => HP.
+- apply/astabP => X; rewrite inE /= apermE => HX.
+  by apply (out_perm HP); rewrite inE negb_and HX.
+- apply/bigcapP => /= j _; apply/astabsP => /= X; rewrite apermE.
+  case: (altP (P X =P X)) => [-> //| HPX].
+  have:= HP => /subsetP/(_ X); rewrite inE => /(_ HPX) H.
+  have:= H; rewrite -(perm_closed _ HP).
+  by move: H; rewrite !inE => /andP [-> /eqP ->] /andP [-> /eqP ->].
+Qed.
+
+Lemma stab_ipcyclesE s :
+  stab_ipcycles s = \big[dprod/1]_(i : 'I_#|T|.+1) perm_ong (pcycles s :&: 'SC_i).
+Proof.
+rewrite stab_ipcyclesE_prod; apply/esym/eqP/bigdprodYP => i /= _.
+apply/subsetP => /= t Ht; rewrite !inE negb_and negbK.
+have {Ht} : t \in perm_ong (pcycles s :&: [set x : {set T} | #|x| != i]).
+  move: Ht; rewrite bigprodGE => /gen_prodgP [n [/= f Hf ->{t}]].
+  apply group_prod => j _; move/(_ j): Hf => /bigcupP [k Hk].
+  rewrite !inE /perm_on => /subset_trans; apply; apply setIS.
+  by apply/subsetP => C; rewrite !inE => /eqP ->.
+rewrite inE => on_neqi; apply/andP; split.
+- case: (altP (_ =P _)) => //=; apply contra => on_eqi.
+  apply/eqP/permP => C; rewrite perm1.
+  case: (boolP (#|C| == i)) => [HC | /negbTE HC].
+  + by rewrite (out_perm on_neqi) // !inE HC andbF.
+  + by rewrite (out_perm on_eqi) // !inE HC andbF.
+- apply/centP => /= u; rewrite inE support_perm_on => /subsetP on_eqi.
+  move: on_neqi; rewrite support_perm_on => /subsetP => on_neqi.
+  apply support_disjointC; rewrite -setI_eq0; apply/eqP/setP => x.
+  rewrite inE [RHS]inE; apply/negP => /andP [].
+  move=> /on_neqi; rewrite 2!inE => /andP [_ /negbTE Hcard].
+  move=> /on_eqi; rewrite 2!inE => /andP [_].
+  by rewrite Hcard.
+Qed.
+
+Lemma card_stab_ipcycles s :
+  #|stab_ipcycles s| =
+    (\prod_(i : 'I_#|T|.+1) (count_mem (i : nat) (cycle_type s))`!)%N.
+Proof.
+rewrite -(bigdprod_card (esym (stab_ipcyclesE s))).
+apply eq_bigr => [[i Hi]] _ /=.
+rewrite card_perm_ong /parts_shape; congr (_)`!.
+have:= perm_sort geq [seq #|(x : {set T})| | x <- enum (pcycles s)].
+move/perm_eqlP/perm_eqP ->.
+rewrite !cardE -size_filter /= /enum_mem.
+rewrite filter_map size_map -filter_predI; congr size.
+by apply eq_filter => C; rewrite !inE andbC.
+Qed.
+
+Lemma bla s :
+  'C[s] = 'C_('C[s])(pcycles s | ('P)^* ) ><| (permcycles s) @* (stab_ipcycles s).
+Proof.
+apply esym; apply/sdprod_normal_complP.
+- apply/normalP; split; first exact: subsetIl.
+  move=> t.
+  admit.
+rewrite inE; apply/andP; split.
+-
+- 
+
 End PermCycles.
+
+
+    
 (*
 
 Section CM.
