@@ -19,7 +19,7 @@ Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
 Lemma NirrSn n : Nirr [set: 'S_n] = #|{:intpartn n}|.
-Proof. by rewrite NirrE card_class_perm card_ord. Qed.
+Proof. by rewrite NirrE card_classes_perm card_ord. Qed.
 
 Lemma NirrS2 : Nirr [set: 'S_2] = 2.
 Proof. by rewrite NirrSn card_intpartn. Qed.

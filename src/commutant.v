@@ -89,7 +89,8 @@ Qed.
 
 From mathcomp Require Import div.
 
-Lemma cycle_cyclic t : cyclic t -> cycle t = [set t ^+ i | i : 'I_#|support t|].
+Lemma cycle_cyclic t :
+  cyclic t -> cycle t = [set t ^+ i | i : 'I_#|support t|].
 Proof using.
 move/cyclicP => [x Hx Hsupp]; rewrite Hsupp.
 apply/setP => C; apply/cycleP/imsetP => [[i -> {C}] | [i Hi -> {C}]].
@@ -576,12 +577,35 @@ Lemma card_cent1_perm s :
   #|'C[s]| = (\prod_(i <- cycle_type s) i *
     \prod_(i : 'I_#|T|.+1) (count_mem (i : nat) (cycle_type s))`!)%N.
 Proof.
-  have /sdprod_card <- := cent1_permE s.
-  rewrite card_pcyclegrpE card_in_imset ?setIid ?card_stab_ipcycles //.
-  apply: can_in_inj; exact: permcyclesK.
+have /sdprod_card <- := cent1_permE s.
+rewrite card_pcyclegrpE card_in_imset ?setIid ?card_stab_ipcycles //.
+apply: can_in_inj; exact: permcyclesK.
+Qed.
+
+Lemma card_class_perm s :
+  #|class s [set: {perm T}]| =
+  (#|T|`! %/
+    (\prod_(i <- cycle_type s) i *
+     \prod_(i : 'I_#|T|.+1) (count_mem (i : nat) (cycle_type s))`!))%N.
+Proof.
+rewrite -card_cent1_perm -index_cent1 /= -divgI.
+rewrite (eq_card (B := perm_on setT)); first last.
+  move=> p; rewrite inE unfold_in /perm_on /=.
+  apply/esym/subsetP => i _; by rewrite in_set.
+rewrite card_perm cardsE setTI; congr (_ %/ #|_|)%N.
+by rewrite /= setTI.
 Qed.
 
 End PermCycles.
 
+Require Import cycletype.
+
+Lemma card_class_of_part n (l : intpartn n) :
+  #|class_of_partCT l| =
+    (n`! %/ (\prod_(i <- l) i * \prod_(i : 'I_n.+1) (count_mem (i : nat) l)`!))%N.
+Proof.
+rewrite /class_of_partCT card_class_perm {1}card_ord perm_of_partCTP /=.
+congr (_ %/ (_ * _)).
+Admitted.
 
 (* NOTE : astabs_act !!!! TODO check if this cannot simplify proofs *)

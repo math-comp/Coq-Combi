@@ -725,7 +725,7 @@ Proof using.
     by rewrite Hs; apply /class_eqP; rewrite -class_of_partCTP.
 Qed.
 
-Lemma card_class_perm :
+Lemma card_classes_perm :
   #|classes [set: {perm T}]| = #|{: intpartn #|T| }|.
 Proof using.
   rewrite -imset_class_of_partCT card_imset; last exact: class_of_partCT_inj.
