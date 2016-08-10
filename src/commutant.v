@@ -391,7 +391,7 @@ rewrite permM !permE -[RHS]/((_ \o _) X).
 apply esym; apply cymap_comp => C HC /=.
 by rewrite groupM // HP HQ permM.
 Qed.
-Canonical stab_ipcycles_morphism s := Morphism (permcyclesM (s := s)).
+Canonical permpcycles_morphism s := Morphism (permcyclesM (s := s)).
 
 Lemma permcyclesK s :
   {in stab_ipcycles s, cancel (permcycles s) (inpcycles s)}.
@@ -506,167 +506,82 @@ rewrite filter_map size_map -filter_predI; congr size.
 by apply eq_filter => C; rewrite !inE andbC.
 Qed.
 
-Lemma bla s :
-  'C[s] = 'C_('C[s])(pcycles s | ('P)^* ) ><| (permcycles s) @* (stab_ipcycles s).
+Lemma conj_pcyclegrp s y z :
+  y \in 'C[s] ->
+    z \in 'C_('C[s])(pcycles s | ('P)^*) ->
+    z ^ y \in 'C_('C[s])(pcycles s | ('P)^*).
 Proof.
-apply esym; apply/sdprod_normal_complP.
-- apply/normalP; split; first exact: subsetIl.
-  move=> t.
-  admit.
+move=> Hy; rewrite inE => /andP [zC /astabP zCpcycles].
+have /= HyV := groupVr Hy.
 rewrite inE; apply/andP; split.
--
-- 
+- by apply groupM; last exact: groupM.
+- apply/astabP => C /imsetP [x _ ->{C}].
+  rewrite !actM /= cent1_act_pcycle // zCpcycles; last exact: mem_imset.
+  by rewrite -cent1_act_pcycle // -!actM mulVg act1.
+Qed.
+
+Lemma inpcycles1 s t : t \in 'C(pcycles s | ('P)^*) -> inpcycles s t = 1.
+Proof.
+move=> Ht; have tfix := astab_act Ht.
+apply/permP => /= X; rewrite /inpcycles perm1.
+case: (boolP (X \in pcycles s)) => HX.
+- rewrite restr_permE //= ?actpermE ?tfix // {X HX}.
+  apply/astabsP => X /=; rewrite actpermK.
+  apply astabs_act; move: Ht; apply/subsetP; exact: astab_sub.
+- exact: (out_perm (restr_perm_on _ _ ) HX).
+Qed.
+
+Lemma cent1_permE s :
+  'C_('C[s])(pcycles s | ('P)^* ) ><| (permcycles s) @* (stab_ipcycles s) = 'C[s].
+Proof.
+apply/sdprod_normal_complP.
+- apply/normalP; split; first exact: subsetIl.
+  move=> /= y Hy; apply/setP => /= x; have /= HyV := groupVr Hy.
+  apply/imsetP/idP => [[/= z Hz] ->{x} | Hx].
+  + exact: conj_pcyclegrp.
+  + exists (x ^ (y^-1)); last by rewrite conjgKV.
+    exact: conj_pcyclegrp.
+set GP := bigcap_group _ _.
+rewrite inE; apply/andP; split.
+- apply/eqP/trivgP; apply/subsetP => t.
+  rewrite 2!inE => /andP [/imsetP [/= P]] {GP}.
+  rewrite setIid => HP Ht /andP [] tC tCpcycles; rewrite inE.
+  suff : P = 1 by rewrite Ht => ->; rewrite morphism.morph1.
+  rewrite -(permcyclesK HP) -Ht {P HP Ht}.
+  exact: inpcycles1.
+- rewrite /=; apply/eqP/setP => /= t.
+  apply/idP/idP => [/mulsgP [/= t' u /imsetP [P]] | Ht].
+  + rewrite setIid => HP ->{t'} Hu ->{t}.
+    apply groupM; first exact: permcyclesP.
+    by move: Hu; rewrite inE => /andP [].
+  + pose str := permcycles s (inpcycles s t^-1).
+    have Hstr : str \in 'C[s] by apply: permcyclesP.
+    rewrite -(mulKg str t); apply mem_mulg.
+    * rewrite groupV; apply mem_imset; rewrite setIid.
+      by apply: inpcyclesP; apply groupVr.
+    * rewrite inE; apply/andP.
+      split; first exact: groupM.
+      apply/astabP => C /imsetP [x _ ->{C}].
+      rewrite !actM /= cent1_act_pcycle //=.
+      rewrite pcycle_permcycles; last by apply inpcyclesP; apply groupVr.
+      rewrite /inpcycles /= restr_permE; first last.
+      - exact: mem_imset.
+      - apply/astabsP => X /=; rewrite actpermK.
+        apply astabs_act; move: Ht => /groupVr; apply/subsetP => /=.
+        exact: cent1_act_on_pcycles.
+      by rewrite actpermE /= -actM mulVg act1.
+Qed.
+
+Lemma card_cent1_perm s :
+  #|'C[s]| = (\prod_(i <- cycle_type s) i *
+    \prod_(i : 'I_#|T|.+1) (count_mem (i : nat) (cycle_type s))`!)%N.
+Proof.
+  have /sdprod_card <- := cent1_permE s.
+  rewrite card_pcyclegrpE card_in_imset ?setIid ?card_stab_ipcycles //.
+  apply: can_in_inj; exact: permcyclesK.
+Qed.
 
 End PermCycles.
 
 
-    
-(*
-
-Section CM.
-
-Variable s t : {perm T}.
-
-Definition setact_cent1 : {perm {set T}} :=
-  if t \in 'C[s] then actperm ('P^* ) t else 1.
-
-Lemma on_pcycles_stab : setact_cent1 @: pcycles s \subset pcycles s.
-Proof using.
-rewrite /setact_cent1.
-case: (boolP (t \in 'C[s])) => Ht; last by rewrite imset1.
-apply/subsetP => X /imsetP [Y HY -> {X}].
-move: Ht => /groupVr/(acts_act (cent1_act_on_pcycles s)) <-.
-by rewrite actpermE -actM mulgV act1.
-Qed.
-
-Lemma on_pcycles_homog :
-  {in pcycles s, forall C, #|setact_cent1 C| = #|C| }.
-Proof using.
-rewrite /setact_cent1 => C _.
-case: (boolP (t \in 'C[s])) => Ht; last by rewrite perm1.
-rewrite actpermE; apply: card_imset; exact: act_inj.
-Qed.
-
-Definition comm_on_pcycles_map := PCycleMap on_pcycles_stab on_pcycles_homog.
-Definition comm_cymap := cymap comm_on_pcycles_map.
-
-Lemma comm_cymap_inj : injective comm_cymap.
-Proof.
-apply: cymap_inj; rewrite /= /setact_cent1.
-by case: (t \in 'C[s]); apply perm_inj.
-Qed.
-Definition cyperm := perm comm_cymap_inj.
-
-End CM.
-
-Lemma cypermP s t :
-  t \in 'C[s] -> t * (cyperm s t^-1) \in 'C(pcycles s | ('P)^* ).
-Proof.
-move=> Ht; have:= Ht; rewrite -groupV => HtV.
-apply/astabP => X /imsetP [x _ -> {X}].
-apply /setP => y; apply/imsetP/idP => [[z Hz -> {y}] | Hy] /=.
-- rewrite apermE permM -eq_pcycle_mem /cyperm permE /comm_cymap /=.
-  rewrite pcycle_cymap /= /setact_cent1 HtV actpermE /=.
-  by rewrite cent1_act_pcycle // permK eq_pcycle_mem.
-- exists (((cyperm s t) * t^-1) y).
-  + rewrite -eq_pcycle_mem permM -cent1_act_pcycle //.
-    rewrite /cyperm permE /comm_cymap /= pcycle_cymap /=.
-    by rewrite /setact_cent1 Ht actpermE -actM mulgV act1 eq_pcycle_mem.
-  + rewrite apermE !permE /= permKV.
-    rewrite /cyperm /= !permE /comm_cymap /=.
-    rewrite -[RHS]/((_ \o _) y) (cymap_comp (CMuw := CMid s)) ?cymap_id //.
-    by move=> C HC; rewrite /= /setact_cent1 Ht HtV !actpermE -actM mulgV act1.
-Qed.
-
-Definition bijbla s t : {perm {set T}} * {perm T} :=
-  (setact_cent1 s t,  t * (cyperm s t^-1)).
-
-
-End PermCycles.
-
-Definition cyact := (fun S => comm_cymap^~ S).
-
-Lemma cyact_is_action : is_action 'C[s] cyact.
-Proof.
-rewrite /cyact; split => [t X Y | X].
-- case: (boolP (t \in 'C[s])) => Ht.
-  + 
-case: boolP.
-
-have Cact t : t\in 'C[s] -> actperm ('P)^* t \in 'N(pcycles s | 'P).
-  by rewrite actpermset_normE; exact: (subsetP cent1_act_on_pcycles).
-rewrite /act_on_pcycles /on_pcycles => u v Hu Hv.
-case: (boolP (X \in pcycles s)) => HX.
-- rewrite !(restr_permE _ HX); first last.
-    + by apply: Cact; apply: groupM.
-    + exact: Cact.
-  rewrite actpermM // permM restr_permE //; first exact: Cact.
-  by rewrite (astabs_act _ (Cact u Hu)).
-- by rewrite !(out_perm (restr_perm_on _ _)).
-Qed.
-Canonical pcyact := Action act_on_pcyclesP.
-
-Lemma actpermset_normE (X : {set {set T}}) t :
-  (actperm ('P)^* t \in 'N(X | 'P)) = (t \in 'N(X | ('P)^* )).
-Proof.
-  by apply/idP/idP => /astabsP H; apply/astabsP => Y;
-     rewrite -[RHS]H /= apermE actpermE.
-Qed.
-
-Definition on_pcycles t : {perm {set T}} :=
-  restr_perm (pcycles s) (actperm ('P^* ) t).
-Definition act_on_pcycles := (fun S => on_pcycles^~ S).
-
-Lemma on_pcycles1 : on_pcycles 1 = 1.
-Proof.
-have actsetid (X : {set T}) : actperm ('P^* ) 1 X = X.
-  rewrite actpermE /= setactE /=.
-  rewrite (eq_imset (g := id)) ?imset_id // => x.
-  by rewrite apermE perm1.
-apply/permP=> X /=; case: (boolP (X \in pcycles s)) => HX.
-- rewrite (restr_permE _ HX); first by rewrite perm1 actsetid.
-  rewrite actpermset_normE.
-  apply (subsetP (astab_sub _ _)); exact: group1.
-- by rewrite perm1 /on_pcycles (out_perm (restr_perm_on _ _)).
-Qed.
-
-Lemma act_on_pcyclesP : is_action 'C[s] act_on_pcycles.
-Proof.
-split => [t X Y /perm_inj //| X].
-have Cact t : t\in 'C[s] -> actperm ('P)^* t \in 'N(pcycles s | 'P).
-  by rewrite actpermset_normE; exact: (subsetP cent1_act_on_pcycles).
-rewrite /act_on_pcycles /on_pcycles => u v Hu Hv.
-case: (boolP (X \in pcycles s)) => HX.
-- rewrite !(restr_permE _ HX); first last.
-    + by apply: Cact; apply: groupM.
-    + exact: Cact.
-  rewrite actpermM // permM restr_permE //; first exact: Cact.
-  by rewrite (astabs_act _ (Cact u Hu)).
-- by rewrite !(out_perm (restr_perm_on _ _)).
-Qed.
-Canonical pcyact := Action act_on_pcyclesP.
-
-Lemma acts_pcyact : [acts 'C[s], on pcycles s | pcyact].
-Proof.
-  apply/subsetP => t.
-  
-Lemma on_pcycle_stab t : t \in 'C[s] -> on_pcycles t @: pcycles s \subset pcycles s.
-Proof.
-  move=> Ht; apply/subsetP => X.
-  have := acts_act act_on_pcycles.
-  acts_on
-  have := act_on_pcycles t.
-  rewrite /on_pcycles;                           apply/subsetP => Ctmp /imsetP [C HC -> {Ctmp}].
-  rewrite restr_permE //=.
-  - by rewrite actpermE (astabs_act C commute_pcycle_stable).
-  - rewrite -astab1_set !inE /= {C HC}.
-    apply/subsetP => Ctmp; rewrite !inE => /eqP -> {Ctmp}.
-    apply/eqP/setP => C; apply/imsetP/idP => [[D HD -> {C}] | HC] /=.
-    + by rewrite actpermK /= (astabs_act D commute_pcycle_stable).
-    + exists ((('P)^* )%act C (t^-1)%g).
-      * by rewrite (astabs_act C (groupVr commute_pcycle_stable)).
-      * by rewrite actpermK -actM mulVg act1.
-Qed.
-
-              fs_homog : {in pcycles s, forall C, #|fs C| = #|C| }
-*)
+(* NOTE : astabs_act !!!! TODO check if this cannot simplify proofs *)
