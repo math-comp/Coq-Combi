@@ -8,6 +8,7 @@ From Combi Require Import tools partition.
 
 Require Import ssrcomp cycles cycletype.
 
+Import GroupScope.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -30,7 +31,21 @@ Proof. by rewrite -[RHS]imset_id; apply eq_imset => x; rewrite perm1. Qed.
 Local Notation "''SC_' i " := (finset (fun x : {set _} => #|x| == i))
     (at level 0).
 
-Import GroupScope.
+(* In fingroup.v, this is only defined for fintype bigop
+Section Nary.
+
+Variable gT : finGroupType.
+Variables (I : Type) (S : seq I) (P : pred I) (F : I -> {group gT}).
+
+Lemma group_set_bigcap : group_set (\bigcap_(i <- S | P i) F i).
+Proof.
+by elim/big_rec: _ => [|i G _ gG]; rewrite -1?(insubdK 1%G gG) groupP.
+Qed.
+
+Canonical bigcap_group_seq := group group_set_bigcap.
+
+End Nary.
+ *)
 
 Section PermOnG.
 
@@ -239,8 +254,8 @@ Qed.
 
 Lemma restr_perm_commute C s : commute (restr_perm C s) s.
 Proof.
-case: (boolP (s \in 'N(C | 'P))) => [HC | /triv_restr_perm ->];
-                                   last exact: (commute_sym (commute1 _)).
+case: (boolP (s \in 'N(C | 'P))) =>
+    [HC | /triv_restr_perm ->]; last exact: (commute_sym (commute1 _)).
 apply/permP => x; case: (boolP (x \in C)) => Hx; rewrite !permM.
 - by rewrite !restr_permE //; move: HC => /astabsP/(_ x)/= ->.
 - have:= restr_perm_on C s => /out_perm Hout.
@@ -310,6 +325,9 @@ Proof.
   by rewrite support_restr_perm.
 Qed.
 
+(* We can't difine this using iota because in fingroup.v, the Canonical
+bigcap_group structure is only defined for fintype bigop. Moreover, it's not
+possible to overload it *)
 Definition stab_ipcycles s : {set {perm {set T}}} :=
   'C(~: pcycles s | 'P) :&:
     \bigcap_(i : 'I_#|T|.+1) 'N(pcycles s :&: 'SC_i | 'P).
@@ -495,16 +513,27 @@ Qed.
 
 Lemma card_stab_ipcycles s :
   #|stab_ipcycles s| =
-    (\prod_(i : 'I_#|T|.+1) (count_mem (i : nat) (cycle_type s))`!)%N.
+    (\prod_(i <- iota 1 #|T|) (count_mem i (cycle_type s))`!)%N.
 Proof.
 rewrite -(bigdprod_card (esym (stab_ipcyclesE s))).
-apply eq_bigr => [[i Hi]] _ /=.
-rewrite card_perm_ong /parts_shape; congr (_)`!.
-have:= perm_sort geq [seq #|(x : {set T})| | x <- enum (pcycles s)].
-move/perm_eqlP/perm_eqP ->.
-rewrite !cardE -size_filter /= /enum_mem.
-rewrite filter_map size_map -filter_predI; congr size.
-by apply eq_filter => C; rewrite !inE andbC.
+rewrite [RHS](_ : _ =
+              (\prod_(i <- iota 0 #|T|.+1) (count_mem i (cycle_type s))`!)%N).
+- rewrite -val_enum_ord big_map /index_enum enumT.
+  apply eq_bigr => [[i Hi]] _ /=.
+  rewrite card_perm_ong /parts_shape; congr (_)`!.
+  have:= perm_sort geq [seq #|(x : {set T})| | x <- enum (pcycles s)].
+  move/perm_eqlP/perm_eqP ->.
+  rewrite !cardE -size_filter /= /enum_mem.
+  rewrite filter_map size_map -filter_predI; congr size.
+  by apply eq_filter => C; rewrite !inE andbC.
+- rewrite /= big_cons.
+  suff /count_memPn -> : 0 \notin (parts_shape (pcycles s))
+      by rewrite fact0 mul1n.
+  rewrite mem_sort /parts_shape.
+  apply/negP => /mapP [C]; rewrite mem_enum => /imsetP [x _ ->{C}] /eqP.
+  (* TODO Make a lemma here *)
+  apply/negP; rewrite eq_sym -lt0n.
+  by rewrite card_gt0; apply/set0Pn; exists x; exact: pcycle_id.
 Qed.
 
 Lemma conj_pcyclegrp s y z :
@@ -575,7 +604,7 @@ Qed.
 
 Lemma card_cent1_perm s :
   #|'C[s]| = (\prod_(i <- cycle_type s) i *
-    \prod_(i : 'I_#|T|.+1) (count_mem (i : nat) (cycle_type s))`!)%N.
+                  \prod_(i <- iota 1 #|T|) (count_mem i (cycle_type s))`!)%N.
 Proof.
 have /sdprod_card <- := cent1_permE s.
 rewrite card_pcyclegrpE card_in_imset ?setIid ?card_stab_ipcycles //.
@@ -586,7 +615,7 @@ Lemma card_class_perm s :
   #|class s [set: {perm T}]| =
   (#|T|`! %/
     (\prod_(i <- cycle_type s) i *
-     \prod_(i : 'I_#|T|.+1) (count_mem (i : nat) (cycle_type s))`!))%N.
+     \prod_(i <- iota 1 #|T|) (count_mem i (cycle_type s))`!))%N.
 Proof.
 rewrite -card_cent1_perm -index_cent1 /= -divgI.
 rewrite (eq_card (B := perm_on setT)); first last.
@@ -602,10 +631,10 @@ Require Import cycletype.
 
 Lemma card_class_of_part n (l : intpartn n) :
   #|class_of_partCT l| =
-    (n`! %/ (\prod_(i <- l) i * \prod_(i : 'I_n.+1) (count_mem (i : nat) l)`!))%N.
+    (n`! %/ (\prod_(i <- l) i * \prod_(i <- iota 1 n) (count_mem (i : nat) l)`!))%N.
 Proof.
-rewrite /class_of_partCT card_class_perm {1}card_ord perm_of_partCTP /=.
-congr (_ %/ (_ * _)).
-Admitted.
+rewrite /class_of_partCT card_class_perm perm_of_partCTP /=.
+by rewrite intpartn_castE /= card_ord.
+Qed.
 
 (* NOTE : astabs_act !!!! TODO check if this cannot simplify proofs *)
