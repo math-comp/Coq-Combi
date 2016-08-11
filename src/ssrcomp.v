@@ -40,16 +40,15 @@ Proof.
   - by split; rewrite ?inE // /trivIset /cover !big_set0 ?cards0.
 Qed.
 
+Lemma pcyclePmin (s: {perm T}) x y :
+  y \in pcycle s x -> exists2 i, i < (#[s])%g & y = (s ^+ i)%g x.
+Proof. by move=> /imsetP [z /cyclePmin[ i Hi ->{z}] ->{y}]; exists i. Qed.
+
 Lemma pcycleP (s: {perm T}) x y :
   reflect (exists i, y = (s ^+ i)%g x) (y \in pcycle s x).
 Proof.
-  apply (iffP idP) => [| [i ->]]; last exact: mem_pcycle.
-  rewrite pcycle_traject => H.
-  have:= H; rewrite -index_mem size_traject => Hlt.
-  exists (index y (traject s x #|pcycle s x|)).
-  move: Hlt => /(nth_traject s)/(_ x); rewrite (nth_index _ H) => {H} {1}->.
-  elim: (index _ _) => [|n IHn] /=; first by rewrite expg0 perm1.
-  by rewrite expgSr permM IHn.
+  apply (iffP idP) => [/pcyclePmin [i _ ->]| [i ->]]; last exact: mem_pcycle.
+  by exists i.
 Qed.
 
 End SSRComplements.
