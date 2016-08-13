@@ -14,6 +14,8 @@ Unset Printing Implicit Defensive.
 
 Import LeqGeqOrder.
 
+Hint Resolve pcycle_id.
+
 Reserved Notation "''1_[' G ]"
          (at level 8, G at level 2, format "''1_[' G ]").
 
@@ -39,7 +41,7 @@ Lemma canpcycleP x : x \in pcycle s (canpcycle x).
 Proof using.
   rewrite /canpcycle /= pcycle_sym.
   case: pickP => [x0 //|].
-  by move => /(_ x) /=; rewrite pcycle_id.
+  by move => /(_ x) /= _.
 Qed.
 
 Lemma canpcycleE x y :
@@ -83,7 +85,7 @@ Proof using.
   apply/idP/idP.
   - rewrite [X in X == _]pcycle_mod [X in _ == X]pcycle_mod !permX.
     have HC : 0 < #|pcycle s x|.
-      rewrite card_gt0; apply/set0Pn; exists x; exact: pcycle_id.
+      by rewrite card_gt0; apply/set0Pn; exists x.
     rewrite -!(nth_traject _ (ltn_pmod _ HC)).
     rewrite nth_uniq // ?size_traject ?ltn_pmod //.
     exact: uniq_traject_pcycle.
@@ -109,7 +111,7 @@ Lemma aux (x : U) : V.
 Proof using CM.
 have : fs CM (pcycle s x) != set0.
   rewrite -card_gt0 fs_homog ?mem_imset // card_gt0.
-  by apply/set0Pn; exists x; exact: pcycle_id.
+  by apply/set0Pn; exists x.
 by move/set0Pn/sigW => H; apply H.
 Qed.
 

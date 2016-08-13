@@ -14,6 +14,8 @@ Unset Strict Implicit.
 
 Import GroupScope.
 
+Hint Resolve pcycle_id.
+
 Section PermCycles.
 Variable T : finType.
 Implicit Type (s : {perm T}).
@@ -75,11 +77,10 @@ Definition psupport s := [set x in pcycles s | #|x| != 1%N].
 Lemma in_psupportP s X x:
   reflect (exists2 X, X \in psupport s & x \in X) (s x != x).
 Proof.
-  rewrite -in_support; apply (iffP idP) => [Hy | [Y]].
-  - exists (pcycle s x); last by apply: pcycle_id.
-    by rewrite inE mem_imset //= support_card_pcycle.
-  - rewrite inE => /andP [] /imsetP [y _ -> {Y}] Hcard.
-    by rewrite -support_card_pcycle -eq_pcycle_mem => /eqP ->.
+rewrite -in_support; apply (iffP idP) => [Hy | [Y]].
+- by exists (pcycle s x); first by rewrite inE mem_imset ?support_card_pcycle.
+- rewrite inE => /andP [] /imsetP [y _ -> {Y}] Hcard.
+  by rewrite -support_card_pcycle -eq_pcycle_mem => /eqP ->.
 Qed.
 
 Lemma partition_pcycles s : partition (pcycles s) setT.
@@ -195,7 +196,7 @@ case: (boolP (pcycle s x \in psupport s)) => [Hx|].
 - have Hiter (i : nat) : (restr_perm (pcycle s x) s ^+ i) x = (s^+i) x.
     elim: i => [|n Hn]; first by rewrite !expg0 !perm1.
     rewrite !expgSr !permM {}Hn (restr_permE (psupport_astabs _)) //.
-    by rewrite -eq_pcycle_mem pcycle_perm eq_pcycle_mem pcycle_id.
+    by rewrite -eq_pcycle_mem pcycle_perm eq_pcycle_mem.
   apply/setP => z; apply/pcycleP/pcycleP => [] [n].
   + by rewrite Hiter => ->; exists n.
   + by rewrite -Hiter => ->; exists n.
@@ -220,9 +221,9 @@ Proof.
     have:= pcycle_id (restr_perm (T:=T) (pcycle s x) s) y.
     rewrite -Hy => /HYX; rewrite -eq_pcycle_mem => /eqP Heq.
     by rewrite Hy -Heq pcycle_restr_perm.
- -  rewrite inE HX andbT.
+  - rewrite inE HX andbT.
     apply/imsetP; exists x => //.
-    apply esym; apply pcycle_restr_perm; exact: pcycle_id.
+    by apply esym; apply pcycle_restr_perm.
 Qed.
 
 Lemma cyclic_dec s : {in (cycle_dec s), forall C, cyclic C}.
