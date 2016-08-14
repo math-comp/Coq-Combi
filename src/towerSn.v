@@ -350,14 +350,14 @@ Proof.
   - move=> /= y /imsetP [/= x0 _ ] -> {y}.
     rewrite inE; apply/andP; split.
     + apply/classes_of_permP; rewrite perm_of_partCTP prod_conjg /=.
-      rewrite cycle_type_of_conjg.
+      rewrite cycle_type_conjg.
       by rewrite partn_of_partCTE partCT_of_partnK eq_sym ct1.
     + apply/classes_of_permP; rewrite perm_of_partCTP prod_conjg /=.
-      rewrite cycle_type_of_conjg.
+      rewrite cycle_type_conjg.
       by rewrite partn_of_partCTE partCT_of_partnK eq_sym ct2.
   - move=> /(_ x); rewrite class_refl=> /(_ isT).
     rewrite inE=> /andP [/imsetP[y1 _ ->] /imsetP [y2 _ ->]].
-    by rewrite /ct !cycle_type_of_conjg !perm_of_partCTP !partCT_of_partnK !eqxx.
+    by rewrite /ct !cycle_type_conjg !perm_of_partCTP !partCT_of_partnK !eqxx.
 Qed.
 
 (*
@@ -388,8 +388,8 @@ Proof.
   apply qp; congr (_, _);
     rewrite -[LHS]partCT_of_partnK -[RHS]partCT_of_partnK; congr partn_of_partCT;
     rewrite -[LHS]perm_of_partCTP -[RHS]perm_of_partCTP.
-  - by rewrite qp1 cycle_type_of_conjg.
-  - by rewrite qp2 cycle_type_of_conjg.
+  - by rewrite qp1 cycle_type_conjg.
+  - by rewrite qp2 cycle_type_conjg.
 Qed.
 
 (* Application of Frobenius duality : cfdot_Res_r *)

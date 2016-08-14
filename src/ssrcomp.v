@@ -29,6 +29,15 @@ Import LeqGeqOrder.
 Lemma imset1 (T : finType) (S : {set T}) : [set fun_of_perm 1 x | x in S] = S.
 Proof using. by rewrite -[RHS]imset_id; apply eq_imset => x; rewrite perm1. Qed.
 
+Lemma disjoint_imset (T1 T2 : finType) (f : T1 -> T2) (A B : {set T1}) :
+  injective f ->
+  [disjoint A & B] -> [disjoint [set f x | x in A] & [set f x | x in B]].
+Proof using.
+  rewrite -!setI_eq0 => Hinj /eqP Hdisj.
+  rewrite -imsetI; last by move=> x y _ _; exact: Hinj.
+  by rewrite imset_eq0 Hdisj.
+Qed.
+
 Lemma uniq_next (T : eqType) (p : seq T) : uniq p -> injective (next p).
 Proof using.
   move=> Huniq x y Heq.
@@ -37,7 +46,7 @@ Qed.
 
 Section SSRComplements.
 
-Variable T: finType.
+Variable T : finType.
 Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
 Implicit Type (s : {perm T}) (X : {set T}) (P : {set {set T}}).
 
