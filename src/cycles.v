@@ -1,6 +1,6 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
-From mathcomp Require Import tuple path bigop finset.
+From mathcomp Require Import tuple path bigop finset div.
 From mathcomp Require Import fingroup perm action ssralg.
 From mathcomp Require finmodule.
 
@@ -22,10 +22,16 @@ Implicit Type (s : {perm T}).
 Implicit Type (X : {set T}).
 Implicit Type (A : {set {perm T}}).
 
+(* Support of a permutation *)
 Definition support s := ~: 'Fix_('P)([set s]).
 
 Lemma in_support s x : (x \in support s) = (s x != x).
 Proof. by rewrite inE; apply/afix1P; case: eqP. Qed.
+
+Lemma support_expg s n : support (s ^+ n) \subset support s.
+Proof using.
+by apply/subsetP => x; rewrite !in_support; apply contra => /eqP/permX_fix ->.
+Qed.
 
 Lemma support_perm_on S s : (perm_on S s) = (support s \subset S).
 Proof.
@@ -65,6 +71,8 @@ Proof.
     by move/orbit1P; rewrite /orbit /= => ->; rewrite cards1.
 Qed.
 
+
+(* Complement on pcycle *)
 Lemma pcycle_fix s x : (s x == x) = (pcycle s x == [set x]).
 Proof.
   rewrite -[LHS]negbK -in_support -support_card_pcycle negbK.
@@ -72,6 +80,30 @@ Proof.
   by move/card_orbit1.
 Qed.
 
+Lemma pcycle_mod s x i :
+  (s ^+ i)%g x = (s ^+ (i %% #|pcycle s x|))%g x.
+Proof using.
+  rewrite {1}(divn_eq i #|pcycle s x|) expgD permM; congr aperm.
+  elim: (i %/ #|pcycle s x|) => [| {i} i IHi].
+  - by rewrite mul0n expg0 perm1.
+  - by rewrite mulSnr expgD permM IHi permX; exact: iter_pcycle.
+Qed.
+
+Lemma eq_in_pcycle s x i j :
+  ((s ^+ i)%g x == (s ^+ j)%g x) = (i == j %[mod #|pcycle s x|]).
+Proof using.
+  apply/idP/idP.
+  - rewrite [X in X == _]pcycle_mod [X in _ == X]pcycle_mod !permX.
+    have HC : 0 < #|pcycle s x|.
+      by rewrite card_gt0; apply/set0Pn; exists x.
+    rewrite -!(nth_traject _ (ltn_pmod _ HC)).
+    rewrite nth_uniq // ?size_traject ?ltn_pmod //.
+    exact: uniq_traject_pcycle.
+  - by move=> /eqP H; apply/eqP; rewrite [LHS]pcycle_mod [RHS]pcycle_mod H.
+Qed.
+
+
+(* PSupport of a permutation *)
 Definition psupport s := [set x in pcycles s | #|x| != 1%N].
 
 Lemma in_psupportP s X x:
@@ -125,12 +157,58 @@ Proof.
   by rewrite -{2}(expg1 s) pcycle_perm.
 Qed.
 
-
+(* Cyclic permutations *)
 Definition cyclic s := #|psupport s| == 1%N.
-Definition perm_dec (S : {set {set T}}) s : {set {perm T}} :=
-  [set restr_perm X s | X in S].
-Definition cycle_dec s : {set {perm T}} := perm_dec (psupport s) s.
 
+Lemma cyclicP c :
+  reflect (exists2 x, x \in support c & support c = pcycle c x)
+          (cyclic c).
+Proof using.
+apply (iffP cards1P) => [[sc Hsc] | [x Hx Hsc]].
+- have:= partition_support c; rewrite Hsc => /cover_partition.
+  rewrite /cover big_set1 => Hsupp; subst sc.
+  have : support c != set0.
+    rewrite -support_eq0 psupport_eq0 Hsc.
+    apply/negP => /eqP Habs.
+    by have:= set11 (support c); rewrite Habs in_set0.
+  move=> /set0Pn [x Hx]; exists x; first by [].
+  have : pcycle c x \in psupport c.
+    by rewrite inE mem_imset //= support_card_pcycle.
+  by rewrite Hsc in_set1 => /eqP ->.
+- exists (pcycle c x); apply triv_part.
+  + by rewrite inE mem_imset //= support_card_pcycle.
+  + by rewrite -Hsc; exact: partition_support.
+Qed.
+
+Lemma cycle_cyclic t :
+  cyclic t -> cycle t = [set t ^+ i | i : 'I_#|support t|].
+Proof using.
+move/cyclicP => [x Hx Hsupp]; rewrite Hsupp.
+apply/setP => C; apply/cycleP/imsetP => [[i -> {C}] | [i Hi -> {C}]].
+- have /(ltn_pmod i) Hmod : 0 < #|pcycle t x|.
+    by rewrite card_gt0; apply/set0Pn; exists x.
+  exists (Ordinal Hmod) => //=; apply/permP => y /=.
+  case: (boolP (y \in pcycle t x)).
+  + by rewrite -eq_pcycle_mem => /eqP <-; exact: pcycle_mod.
+  + rewrite -Hsupp in_support negbK => /eqP Ht.
+    by rewrite !permX_fix.
+- by exists i.
+Qed.
+
+Lemma order_cyclic t : cyclic t -> #[t] = #|support t|.
+Proof using.
+  rewrite /order => Hcy.
+  rewrite (cycle_cyclic Hcy) card_imset ?card_ord //.
+  move: Hcy => /cyclicP [x Hx Hsupp].
+  move=> [i Hi] [j Hj] /= /(congr1 (fun s => s x)) Hij.
+  apply val_inj => /=; apply/eqP.
+  rewrite -(nth_uniq x _ _ (uniq_traject_pcycle t x)) ?size_traject -?Hsupp //.
+  by rewrite !nth_traject // -!permX Hij.
+Qed.
+
+
+
+(* Complement about restr_perm *)
 Lemma support_restr_perm_incl X s :
   support (restr_perm X s) \subset X.
 Proof.
@@ -226,6 +304,12 @@ Proof.
     by apply esym; apply pcycle_restr_perm.
 Qed.
 
+
+(* Decomposition of a permutation by restriction to disjoint stable subsets *)
+Definition perm_dec (S : {set {set T}}) s : {set {perm T}} :=
+  [set restr_perm X s | X in S].
+Definition cycle_dec s : {set {perm T}} := perm_dec (psupport s) s.
+
 Lemma cyclic_dec s : {in (cycle_dec s), forall C, cyclic C}.
 Proof.
   move => C /imsetP [X HX ->].
@@ -246,6 +330,16 @@ Qed.
 
 Definition disjoint_supports A :=
   trivIset [set support C| C in A] /\ {in A &, injective support}.
+
+Lemma disjoint_support_subset (S1 S2 : {set {perm T}}) :
+  S1 \subset S2 -> disjoint_supports S2 -> disjoint_supports S1.
+Proof using.
+rewrite /disjoint_supports => Hsubs [Htriv Hinj].
+split.
+- exact: (trivIsetS (imsetS _ Hsubs) Htriv).
+- move/subsetP in Hsubs.
+  by move=> s t /Hsubs Hs /Hsubs; exact: Hinj.
+Qed.
 
 Lemma disjoint_perm_dec S s :
   trivIset S -> disjoint_supports (perm_dec S s).

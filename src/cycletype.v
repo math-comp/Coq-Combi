@@ -68,30 +68,6 @@ Definition indpcycle (x : T) : nat := ex_minn (pcyclePb (canpcycleP x)).
 Lemma indpcycleP x : ((s ^+ (indpcycle x)) (canpcycle x))%g = x.
 Proof using. rewrite /indpcycle; by case: ex_minnP => i /eqP. Qed.
 
-From mathcomp Require Import div.
-
-Lemma pcycle_mod x i :
-  (s ^+ i)%g x = (s ^+ (i %% #|pcycle s x|))%g x.
-Proof using.
-  rewrite {1}(divn_eq i #|pcycle s x|) expgD permM; congr aperm.
-  elim: (i %/ #|pcycle s x|) => [| {i} i IHi].
-  - by rewrite mul0n expg0 perm1.
-  - by rewrite mulSnr expgD permM IHi permX; exact: iter_pcycle.
-Qed.
-
-Lemma eq_in_pcycle x i j :
-  ((s ^+ i)%g x == (s ^+ j)%g x) = (i == j %[mod #|pcycle s x|]).
-Proof using.
-  apply/idP/idP.
-  - rewrite [X in X == _]pcycle_mod [X in _ == X]pcycle_mod !permX.
-    have HC : 0 < #|pcycle s x|.
-      by rewrite card_gt0; apply/set0Pn; exists x.
-    rewrite -!(nth_traject _ (ltn_pmod _ HC)).
-    rewrite nth_uniq // ?size_traject ?ltn_pmod //.
-    exact: uniq_traject_pcycle.
-  - by move=> /eqP H; apply/eqP; rewrite [LHS]pcycle_mod [RHS]pcycle_mod H.
-Qed.
-
 End CanPCycle.
 
 Section PCycleBijection.
@@ -298,9 +274,8 @@ Lemma cycle_type_of_conjg s a : cycle_type (s ^ a)%g = cycle_type s.
 Proof using.
   apply esym; apply val_inj => /=.
   rewrite pcycles_conjg; apply/perm_sortP => //.
-  have -> : [seq #|(x : {set T})| | x <- enum (pcycles s)] =
-            [seq #|[set a y | y in (x : {set T})]| | x <- enum (pcycles s)].
-    by apply eq_map => x;  apply esym; apply card_imset; exact: perm_inj.
+  rewrite (eq_map (f2 := fun X : {set T} => #|a @: X|)); first last.
+    by move => x;  apply esym; apply card_imset; exact: perm_inj.
   rewrite (map_comp (fun x : {set T} => #|x|)); apply perm_map.
   apply uniq_perm_eq.
   - rewrite map_inj_uniq; first exact: enum_uniq.
@@ -312,42 +287,42 @@ Proof using.
     + by move=> Hx0 -> {x}; exists x0; rewrite ?mem_enum.
 Qed.
 
-Lemma conjg_of_cycle s a : cyclic s -> cyclic (s ^ a)%g.
-Proof using.
-  move => /cards1P [X] HX.
-  apply /cards1P; exists [set a x | x in X].
-  apply /setP => y.
-  rewrite !inE.
-  apply /andP/eqP => [| -> ]; rewrite pcycles_conjg.
-  - move => [/imsetP [Y HY ->]].
-    rewrite card_imset => Hcard; last by exact: perm_inj.
-    have: Y \in psupport s by  rewrite inE; apply /andP.
-    by rewrite HX inE => /eqP ->.
-  - have: X \in [set X] by rewrite inE.
-    rewrite -{}HX inE => /andP [HX1 HX2].
-    split; first by apply /imsetP; exists X.
-    by rewrite card_imset //; exact: perm_inj.
+Lemma card_pred_card_pcycles s (P : pred nat) :
+  #|[set x in pcycles s | P #|x| ]| = count P (cycle_type s).
+Proof.
+rewrite /cycle_type /= /psupport /parts_shape.
+have /perm_eqlP/perm_eqP -> :=
+  perm_sort geq [seq #|(x : {set _})| | x <- enum (pcycles s)].
+rewrite cardE /enum_mem size_filter /= count_map count_filter.
+by apply eq_count => X; rewrite !inE andbC.
 Qed.
+
+Lemma cycle_type_cyclic s :
+  (cyclic s) = (count (fun x => x != 1) (cycle_type s) == 1).
+Proof. by rewrite -card_pred_card_pcycles /psupport. Qed.
+
+Lemma conjg_of_cycle s a : cyclic s -> cyclic (s ^ a)%g.
+Proof using. by rewrite !cycle_type_cyclic cycle_type_of_conjg. Qed.
 
 Lemma support_conjg s a : support (s ^ a) = [set a x | x in support s].
 Proof using.
-  apply /setP => x.
-  rewrite in_support; apply /idP/imsetP => [|[x0]].
-  - rewrite conjgE !permM => /eqP Hx.
-    exists (a^-1 x)%g; last by rewrite -permM mulVg perm1.
-    rewrite in_support; apply /eqP => Hx'.
-    by move : Hx; rewrite Hx'; rewrite -permM mulVg perm1.
-  - rewrite in_support => Hx0 ->.
-    rewrite conjgE -!permM mulKVg permM.
-    move: Hx0; apply contra => /eqP Hx0.
-    by apply /eqP; apply (perm_inj Hx0).
+rewrite -!(cover_partition (partition_support _)) /psupport.
+rewrite pcycles_conjg /cover (big_morph _ (imsetU _) (imset0 _)).
+rewrite -[RHS](big_imset id) /=; first last.
+  by move=> X Y _ _; apply: imset_inj; apply perm_inj.
+apply/eq_bigl => X; rewrite !inE.
+apply/andP/imsetP => [[/imsetP [/= C HC ->{X}]] | [/= C]].
+- rewrite card_imset; last exact: perm_inj.
+  by move=> cardC; exists C; rewrite // inE HC cardC.
+- rewrite inE => /andP [HC cardC] ->{X}; split; first exact: mem_imset.
+  by rewrite card_imset; last exact: perm_inj.
 Qed.
 
 Lemma card_support_conjg s a : #|support s| = #|support (s ^ a)%g|.
 Proof using.
   rewrite support_conjg.
   apply esym; apply card_imset.
-  by exact: perm_inj.
+  exact: perm_inj.
 Qed.
 
 Lemma conjg_of_disjoint_supports (A : {set {perm T}}) a :
@@ -404,22 +379,17 @@ Qed.
 bijection entre pcycles s et pcycles t *)
 
 Definition slice_part (P : {set {set T}}) :=
- SlicedSet set0 P (fun x : {set T} => #|x|).
+  SlicedSet set0 P (fun x : {set T} => #|x|).
 
 Definition slpcycles s := slice_part (pcycles s).
 
 Lemma slice_slpcycleE s i :
   #|slice (slpcycles s) i| = count_mem i (cycle_type s).
 Proof using.
-  rewrite /cycle_type /slice /parts_shape /=.
-  rewrite [RHS](_ : _ =
-      (count_mem i) [seq #|(x : {set _})| | x <- enum (pcycles s)]);
-      last by apply/perm_eqP/perm_eqlP; exact: perm_sort.
-  rewrite cardE /enum_mem -enumT /=.
-  rewrite size_filter count_map count_filter.
-  apply eq_count => C /=; apply/imsetP/idP => [[X] | HC].
-  - by rewrite inE andbC => H ->.
-  - by exists C => //; rewrite inE andbC.
+rewrite -card_pred_card_pcycles /slice /=.
+congr #|(_ : {set _})|; apply/setP => X.
+apply/imsetP/idP => [[/= Y HY ->{X} //] | HX].
+by exists X.
 Qed.
 
 End CycleTypeConj.
@@ -484,13 +454,6 @@ Qed.
 Section Permofcycletype.
 
 Implicit Types (l : nat) (ct : intpartn #|T|).
-
-
-Lemma uniq_next (p : seq T) : uniq p -> injective (next p).
-Proof using.
-  move=> Huniq x y Heq.
-  by rewrite -(prev_next Huniq x) Heq prev_next.
-Qed.
 
 Fact cycle_of_set_subproof (s : {set T}) : injective (next (enum s)).
 Proof using. by apply uniq_next; exact: enum_uniq. Qed.

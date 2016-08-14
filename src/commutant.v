@@ -16,20 +16,6 @@ Unset Printing Implicit Defensive.
 
 Hint Resolve pcycle_id.
 
-Lemma setactC (aT : finGroupType) (D : {set aT})
-      (rT : finType) (to : action D rT) S a :
-  to^* (~: S) a = ~: to^* S a.
-Proof using.
-apply/eqP; rewrite eqEcard; apply/andP; split.
-- apply/subsetP => x /imsetP [y]; rewrite !inE => Hy -> {x}.
-  by move: Hy; apply contra => /imsetP [z Hz] /act_inj ->.
-- rewrite card_setact [X in _ <= X]cardsCs setCK.
-  by rewrite cardsCs setCK card_setact.
-Qed.
-
-Lemma imset1 (T : finType) (S : {set T}) : [set fun_of_perm 1 x | x in S] = S.
-Proof using. by rewrite -[RHS]imset_id; apply eq_imset => x; rewrite perm1. Qed.
-
 Local Notation "''SC_' i " := (finset (fun x : {set _} => #|x| == i))
     (at level 0).
 
@@ -52,6 +38,7 @@ End Nary.
 Section PermOnG.
 
 Variable T : finType.
+Implicit Type (s t c : {perm T}).
 
 Definition perm_ong S : {set {perm T}} := [set s | perm_on S s].
 Lemma group_set_perm_ong S : group_set (perm_ong S).
@@ -71,6 +58,17 @@ apply/setP => s; rewrite inE; apply/idP/astabP => [Hperm x | Hstab].
   by move/(_ x): Hstab; rewrite inE /= apermE => ->.
 Qed.
 
+Lemma restr_perm_commute C s : commute (restr_perm C s) s.
+Proof using.
+case: (boolP (s \in 'N(C | 'P))) =>
+    [HC | /triv_restr_perm ->]; last exact: (commute_sym (commute1 _)).
+apply/permP => x; case: (boolP (x \in C)) => Hx; rewrite !permM.
+- by rewrite !restr_permE //; move: HC => /astabsP/(_ x)/= ->.
+- have:= restr_perm_on C s => /out_perm Hout.
+  rewrite (Hout _ Hx) {}Hout //.
+  by move: Hx; apply contra; move: HC => /astabsP/(_ x)/= ->.
+Qed.
+
 End PermOnG.
 
 
@@ -79,84 +77,33 @@ Section PermCycles.
 Variable T : finType.
 Implicit Type (s t c : {perm T}).
 
-Lemma triv_part (P : {set {set T}}) (X : {set T}) :
-  X \in P -> partition P X -> P = [set X].
+Lemma disjoint_support_dprodE (S : {set {perm T}}) :
+  disjoint_supports S -> \big[dprod/1]_(s in S) <[s]> = (\prod_(s in S) <[s]>)%G.
 Proof using.
-move=> HXP /and3P [/eqP Hcov /trivIsetP /(_ X _ HXP) H H0].
-apply/setP => Y; rewrite inE; apply/idP/idP => [HYP | /eqP -> //].
-rewrite eq_sym; move/(_ Y HYP): H => /contraR; apply.
-have /set0Pn [y Hy] : Y != set0
-  by apply/negP => /eqP HY; move: H0; rewrite -HY HYP.
-apply/negP => /disjoint_setI0/setP/(_ y).
-by rewrite !inE Hy -Hcov andbT => /bigcupP; apply; exists Y.
-Qed.
-
-
-Lemma cyclicP c :
-  reflect (exists2 x, x \in support c & support c = pcycle c x)
-          (cyclic c).
-Proof using.
-apply (iffP cards1P) => [[sc Hsc] | [x Hx Hsc]].
-- have:= partition_support c; rewrite Hsc => /cover_partition.
-  rewrite /cover big_set1 => Hsupp; subst sc.
-  have : support c != set0.
-    rewrite -support_eq0 psupport_eq0 Hsc.
-    apply/negP => /eqP Habs.
-    by have:= set11 (support c); rewrite Habs in_set0.
-  move=> /set0Pn [x Hx]; exists x; first by [].
-  have : pcycle c x \in psupport c.
-    by rewrite inE mem_imset //= support_card_pcycle.
-  by rewrite Hsc in_set1 => /eqP ->.
-- exists (pcycle c x); apply triv_part.
-  + by rewrite inE mem_imset //= support_card_pcycle.
-  + by rewrite -Hsc; exact: partition_support.
-Qed.
-
-Lemma permX_fix s x n : s x = x -> (s ^+ n) x = x.
-Proof using.
-move=> Hs; elim: n => [|n IHn]; first by rewrite expg0 perm1.
-by rewrite expgS permM Hs.
-Qed.
-
-Lemma cycle_cyclic t :
-  cyclic t -> cycle t = [set t ^+ i | i : 'I_#|support t|].
-Proof using.
-move/cyclicP => [x Hx Hsupp]; rewrite Hsupp.
-apply/setP => C; apply/cycleP/imsetP => [[i -> {C}] | [i Hi -> {C}]].
-- have /(ltn_pmod i) Hmod : 0 < #|pcycle t x|.
-    by rewrite card_gt0; apply/set0Pn; exists x.
-  exists (Ordinal Hmod) => //=; apply/permP => y /=.
-  case: (boolP (y \in pcycle t x)).
-  + by rewrite -eq_pcycle_mem => /eqP <-; exact: pcycle_mod.
-  + rewrite -Hsupp in_support negbK => /eqP Ht.
-    by rewrite !permX_fix.
-- by exists i.
-Qed.
-
-Lemma order_cyclic t : cyclic t -> #[t] = #|support t|.
-Proof using.
-  rewrite /order => Hcy.
-  rewrite (cycle_cyclic Hcy) card_imset ?card_ord //.
-  move: Hcy => /cyclicP [x Hx Hsupp].
-  move=> [i Hi] [j Hj] /= /(congr1 (fun s => s x)) Hij.
-  apply val_inj => /=; apply/eqP.
-  rewrite -(nth_uniq x _ _ (uniq_traject_pcycle t x)) ?size_traject -?Hsupp //.
-  by rewrite !nth_traject // -!permX Hij.
-Qed.
-
-Lemma disjoint_support_subset (S1 S2 : {set {perm T}}) :
-  S1 \subset S2 -> disjoint_supports S2 -> disjoint_supports S1.
-Proof using.
-rewrite /disjoint_supports => Hsubs [Htriv Hinj].
-split.
-- exact: (trivIsetS (imsetS _ Hsubs) Htriv).
-- move/subsetP in Hsubs.
-  by move=> s t /Hsubs Hs /Hsubs; exact: Hinj.
-Qed.
-
-Lemma support_expg s n : support (s ^+ n) \subset support s.
-Proof using.
-by apply/subsetP => x; rewrite !in_support; apply contra => /eqP/permX_fix ->.
+move=> [/trivIsetP Htriv Hinj]; apply/eqP/bigdprodYP => /= s Hs.
+apply/subsetP => t; rewrite !inE negb_and negbK.
+rewrite bigprodGEgen => /gen_prodgP [n [/= f Hf ->{t}]].
+apply/andP; split.
+- case: (altP (_ =P _)) => //=; apply contra => Hin.
+  rewrite support_eq0 -subset0; apply/subsetP => x Hx.
+  have [i Hxf] : exists i : 'I_n, x \in support (f i).
+    apply/existsP; move: Hx; apply contraLR => /=.
+    rewrite negb_exists => /forallP /= Hall; rewrite in_support negbK.
+    apply big_rec => [ | i rec _ Hrec]; first by rewrite perm1.
+    by have := Hall i; rewrite permM in_support negbK => /eqP ->.
+  move/(_ i): Hf => /bigcupP [/= t /andP [tinS tneqs]].
+  rewrite inE => /eqP Hfi; rewrite {}Hfi in Hxf.
+  move: Hin Hx => /cycleP [j ->] {f} /(subsetP (support_expg _ _)) Hxs.
+  suff : [disjoint support t & support s].
+    by rewrite -setI_eq0 => /eqP/setP/(_ x) <-; rewrite inE Hxf Hxs.
+  apply Htriv; try exact: mem_imset.
+  by move: tneqs; apply contra => /eqP/Hinj ->.
+- apply group_prod => i _.
+  have:= Hf i => /bigcupP [/= t /andP [tinS sneqt]].
+  rewrite inE cent_cycle => /eqP -> {i f Hf}.
+  apply/cent1P; apply: support_disjointC.
+  apply Htriv; try exact: mem_imset.
+  by move: sneqt; apply contra => /eqP/Hinj ->.
 Qed.
 
 Lemma cent1_act_pcycle s t x :
@@ -226,47 +173,6 @@ apply/cycleP; apply commute_cyclic.
   by rewrite Hcomm.
 - rewrite support_perm_on (support_restr_perm HC).
   exact: support_restr_perm_incl.
-Qed.
-
-Lemma disjoint_support_dprodE (S : {set {perm T}}) :
-  disjoint_supports S -> \big[dprod/1]_(s in S) <[s]> = (\prod_(s in S) <[s]>)%G.
-Proof using.
-move=> [/trivIsetP Htriv Hinj]; apply/eqP/bigdprodYP => /= s Hs.
-apply/subsetP => t; rewrite !inE negb_and negbK.
-rewrite bigprodGEgen => /gen_prodgP [n [/= f Hf ->{t}]].
-apply/andP; split.
-- case: (altP (_ =P _)) => //=; apply contra => Hin.
-  rewrite support_eq0 -subset0; apply/subsetP => x Hx.
-  have [i Hxf] : exists i : 'I_n, x \in support (f i).
-    apply/existsP; move: Hx; apply contraLR => /=.
-    rewrite negb_exists => /forallP /= Hall; rewrite in_support negbK.
-    apply big_rec => [ | i rec _ Hrec]; first by rewrite perm1.
-    by have := Hall i; rewrite permM in_support negbK => /eqP ->.
-  move/(_ i): Hf => /bigcupP [/= t /andP [tinS tneqs]].
-  rewrite inE => /eqP Hfi; rewrite {}Hfi in Hxf.
-  move: Hin Hx => /cycleP [j ->] {f} /(subsetP (support_expg _ _)) Hxs.
-  suff : [disjoint support t & support s].
-    by rewrite -setI_eq0 => /eqP/setP/(_ x) <-; rewrite inE Hxf Hxs.
-  apply Htriv; try exact: mem_imset.
-  by move: tneqs; apply contra => /eqP/Hinj ->.
-- apply group_prod => i _.
-  have:= Hf i => /bigcupP [/= t /andP [tinS sneqt]].
-  rewrite inE cent_cycle => /eqP -> {i f Hf}.
-  apply/cent1P; apply: support_disjointC.
-  apply Htriv; try exact: mem_imset.
-  by move: sneqt; apply contra => /eqP/Hinj ->.
-Qed.
-
-
-Lemma restr_perm_commute C s : commute (restr_perm C s) s.
-Proof using.
-case: (boolP (s \in 'N(C | 'P))) =>
-    [HC | /triv_restr_perm ->]; last exact: (commute_sym (commute1 _)).
-apply/permP => x; case: (boolP (x \in C)) => Hx; rewrite !permM.
-- by rewrite !restr_permE //; move: HC => /astabsP/(_ x)/= ->.
-- have:= restr_perm_on C s => /out_perm Hout.
-  rewrite (Hout _ Hx) {}Hout //.
-  by move: Hx; apply contra; move: HC => /astabsP/(_ x)/= ->.
 Qed.
 
 Lemma stab_pcycle S s :
@@ -516,11 +422,6 @@ rewrite inE => on_neqi; apply/andP; split.
   apply support_disjointC; rewrite disjoints_subset.
   apply: (subset_trans on_neqi); apply: (subset_trans _ on_eqi).
   by apply/subsetP => X; rewrite !inE => /andP [ -> ->].
-Qed.
-
-Lemma card_pcycle_non0 s x : #|pcycle s x| != 0.
-Proof using.
-by rewrite -lt0n card_gt0; apply/set0Pn; exists x; exact: pcycle_id.
 Qed.
 
 Lemma card_stab_ipcycles s :

@@ -9,6 +9,7 @@ From Combi Require Import symgroup partition Greene tools sorted.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+Import GroupScope.
 
 Module LeqGeqOrder.
 
@@ -25,13 +26,22 @@ End LeqGeqOrder.
 
 Import LeqGeqOrder.
 
+Lemma imset1 (T : finType) (S : {set T}) : [set fun_of_perm 1 x | x in S] = S.
+Proof using. by rewrite -[RHS]imset_id; apply eq_imset => x; rewrite perm1. Qed.
+
+Lemma uniq_next (T : eqType) (p : seq T) : uniq p -> injective (next p).
+Proof using.
+  move=> Huniq x y Heq.
+  by rewrite -(prev_next Huniq x) Heq prev_next.
+Qed.
+
 Section SSRComplements.
 
 Variable T: finType.
 Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
+Implicit Type (s : {perm T}) (X : {set T}) (P : {set {set T}}).
 
-Lemma partition0P (P : {set {set T}}):
-  reflect (P = set0) (partition P set0).
+Lemma partition0P P : reflect (P = set0) (partition P set0).
 Proof.
   apply (iffP and3P) => [[/eqP Hcov _ H0] | ->].
   - case: (set_0Vmem P) => [// | [X HXP]].
@@ -40,11 +50,44 @@ Proof.
   - by split; rewrite ?inE // /trivIset /cover !big_set0 ?cards0.
 Qed.
 
-Lemma pcyclePmin (s: {perm T}) x y :
+Lemma triv_part P X : X \in P -> partition P X -> P = [set X].
+Proof using.
+move=> HXP /and3P [/eqP Hcov /trivIsetP /(_ X _ HXP) H H0].
+apply/setP => Y; rewrite inE; apply/idP/idP => [HYP | /eqP -> //].
+rewrite eq_sym; move/(_ Y HYP): H => /contraR; apply.
+have /set0Pn [y Hy] : Y != set0
+  by apply/negP => /eqP HY; move: H0; rewrite -HY HYP.
+apply/negP => /disjoint_setI0/setP/(_ y).
+by rewrite !inE Hy -Hcov andbT => /bigcupP; apply; exists Y.
+Qed.
+
+Lemma permX_fix s x n : s x = x -> (s ^+ n) x = x.
+Proof using.
+move=> Hs; elim: n => [|n IHn]; first by rewrite expg0 perm1.
+by rewrite expgS permM Hs.
+Qed.
+
+Lemma setactC (aT : finGroupType) (D : {set aT})
+      (rT : finType) (to : action D rT) S a :
+  to^* (~: S) a = ~: to^* S a.
+Proof using.
+apply/eqP; rewrite eqEcard; apply/andP; split.
+- apply/subsetP => x /imsetP [y]; rewrite !inE => Hy -> {x}.
+  by move: Hy; apply contra => /imsetP [z Hz] /act_inj ->.
+- rewrite card_setact [X in _ <= X]cardsCs setCK.
+  by rewrite cardsCs setCK card_setact.
+Qed.
+
+Lemma card_pcycle_non0 s x : #|pcycle s x| != 0.
+Proof using.
+by rewrite -lt0n card_gt0; apply/set0Pn; exists x; exact: pcycle_id.
+Qed.
+
+Lemma pcyclePmin s x y :
   y \in pcycle s x -> exists2 i, i < (#[s])%g & y = (s ^+ i)%g x.
 Proof. by move=> /imsetP [z /cyclePmin[ i Hi ->{z}] ->{y}]; exists i. Qed.
 
-Lemma pcycleP (s: {perm T}) x y :
+Lemma pcycleP s x y :
   reflect (exists i, y = (s ^+ i)%g x) (y \in pcycle s x).
 Proof.
   apply (iffP idP) => [/pcyclePmin [i _ ->]| [i ->]]; last exact: mem_pcycle.
@@ -56,11 +99,10 @@ End SSRComplements.
 
 Lemma sumn_sort l S : sumn (sort S l) = sumn l.
 Proof. by have:= perm_sort S l => /perm_eqlP/perm_sumn. Qed.
-  
+
 From mathcomp Require Import binomial.
 
 Section SetPartitionShape.
-
 
 Variable T : finType.
 Implicit Types (s t : {perm T}) (n : nat).
