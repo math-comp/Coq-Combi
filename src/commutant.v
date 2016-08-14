@@ -547,9 +547,7 @@ rewrite [RHS](_ : _ =
 Qed.
 
 Lemma conj_pcyclegrp s y z :
-  y \in 'C[s] ->
-    z \in 'C_('C[s])(pcycles s | ('P)^*) ->
-    z ^ y \in 'C_('C[s])(pcycles s | ('P)^*).
+  y \in 'C[s] -> z \in 'CC(s) -> z ^ y \in 'CC(s).
 Proof using.
 move=> Hy; rewrite inE => /andP [zC /astabP zCpcycles].
 have /= HyV := groupVr Hy.
@@ -572,7 +570,7 @@ case: (boolP (X \in pcycles s)) => HX.
 Qed.
 
 Theorem cent1_permE s :
-  'C_('C[s])(pcycles s | ('P)^* ) ><| (permcycles s) @* (stab_ipcycles s) = 'C[s].
+  'CC(s) ><| (permcycles s) @* (stab_ipcycles s) = 'C[s].
 Proof using.
 apply/sdprod_normal_complP.
 - apply/normalP; split; first exact: subsetIl.
