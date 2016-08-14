@@ -671,7 +671,8 @@ Proof using.
 Qed.
 
 Lemma perm_of_partsE P :
-  partition P [set: T] -> (cycle_type (perm_of_parts P): seq nat) = parts_shape P.
+  partition P [set: T] ->
+  cycle_type (perm_of_parts P) = parts_shape P :> seq nat.
 Proof using. by move=> /pcycles_perm_of_parts pcy; rewrite /= pcy. Qed.
 
 End Permofcycletype.
@@ -690,13 +691,14 @@ Proof using.
 Qed.
 
 Lemma perm_of_partCT_set : {s | cycle_type s == tc}.
-Proof using. by apply sigW; have:= perm_of_partCT_exists => [[p <-]]; exists p. Qed.
+Proof using.
+by apply sigW; have:= perm_of_partCT_exists => [[p <-]]; exists p.
+Qed.
 
 Definition perm_of_partCT := val perm_of_partCT_set.
 Lemma perm_of_partCTP : cycle_type perm_of_partCT = tc.
 Proof using.
-  rewrite /perm_of_partCT.
-  by case: perm_of_partCT_set => s /= /eqP ->.
+by rewrite /perm_of_partCT; case: perm_of_partCT_set => s /= /eqP ->.
 Qed.
 
 Definition class_of_partCT := class (perm_of_partCT) [set: {perm T}].
