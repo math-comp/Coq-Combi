@@ -40,9 +40,7 @@ Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 *)
 
-Section Bla.
-
-Notation sympoly := (sympoly _ _ ).
+Section Defs.
 
 Variable nvar n : nat.
 
@@ -76,11 +74,11 @@ rewrite mulr1 divff ?scale1r //.
 exact: neq0zcoeff.
 Qed.
 
-End Bla.
+End Defs.
 
 Lemma frob_ind_morph nvar n m (f : 'CF([set: 'S_m])) (g : 'CF([set: 'S_n])) :
   frob_iso nvar ('Ind[[set: 'S_(m + n)]] ((f \ox g)|^)) =
-  (frob_iso nvar f) * (frob_iso nvar g).
+  frob_iso nvar f * frob_iso nvar g.
 Proof.
 rewrite (pbasis_gen f) (pbasis_gen g).
 rewrite cfExtProd_suml !linear_sum [RHS]mulr_suml.
