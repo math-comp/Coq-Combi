@@ -50,19 +50,18 @@ Variables (G : {group gT}) (H : {group aT}).
 
 Local Open Scope ring_scope.
 
-Lemma cfExtProd_subproof (f1 : 'CF(G)) (f2 : 'CF(H)) :
-  is_class_fun <<setX G H>>
-               [ffun x => (f1 x.1) * (f2 x.2)].
+Lemma cfExtProd_subproof (g : 'CF(G)) (h : 'CF(H)) :
+  is_class_fun <<setX G H>> [ffun x => (g x.1) * (h x.2)].
 Proof.
   rewrite genGid; apply intro_class_fun => [x y|].
   - rewrite !inE => /andP [x1 x2] /andP [y1 y2].
     by rewrite !cfunJgen ?genGid.
   - move=> x; rewrite inE => /nandP [x1|x2].
     + by rewrite cfun0gen ?mul0r ?genGid.
-    + by rewrite [f2 _]cfun0gen ?mulr0 ?genGid.
+    + by rewrite [h _]cfun0gen ?mulr0 ?genGid.
 Qed.
-Definition cfExtProd f1 f2 := Cfun 0 (cfExtProd_subproof f1 f2).
-Definition cfExtProdr_head k f1 f2 := let: tt := k in cfExtProd f1 f2.
+Definition cfExtProd g h := Cfun 0 (cfExtProd_subproof g h).
+Definition cfExtProdr_head k g h := let: tt := k in cfExtProd h g.
 
 End cfExtProdDefs.
 
@@ -74,42 +73,68 @@ Section cfExtProdTheory.
 
 Variables (gT aT : finGroupType).
 Variables (G : {group gT}) (H : {group aT}).
+Implicit Type (g : 'CF(G)) (h : 'CF(H)).
 
 Local Open Scope ring_scope.
 
-Lemma cfExtProdZl (f1 : 'CF(G)) (f2 : 'CF(H)) (a : algC):
-  (a *: f1) \ox f2 = a *: (f1 \ox f2).
-Proof.
-  apply/cfunP=> /= x.
-  by rewrite !cfunE mulrA.
-Qed.
+Lemma cfExtProdrE h g : cfExtProdr h g = g \ox h.
+Proof. by []. Qed.
 
-Lemma cfExtProdZr (f1 : 'CF(G)) (f2 : 'CF(H)) (a : algC):
-  f1 \ox (a *: f2) = a *: (f1 \ox f2).
+Lemma cfExtProd_is_linear g : linear (cfExtProd g : 'CF(H) -> 'CF(setX G H)).
 Proof.
-  apply/cfunP=> /= x.
-  by rewrite !cfunE mulrC [(f1 _ * _)]mulrC mulrA.
+move=> /= a h1 h2.
+apply/cfunP=> /= x.
+by rewrite !cfunE !mulrDr mulrA [g _ * _]mulrC mulrA.
 Qed.
+Canonical cfExtProd_additive g := Additive (cfExtProd_is_linear g).
+Canonical cfExtProd_linear g := Linear (cfExtProd_is_linear g).
 
-Lemma cfExtProdDl (f1 g: 'CF(G)) (f2 : 'CF(H)):
-  (f1 + g) \ox f2 = (f1 \ox f2) + (g \ox f2).
-Proof.
-  apply /cfunP=> /= x.
-  by rewrite !cfunE mulrDl.
-Qed.
+Lemma cfExtProd0r g : g \ox (0 : 'CF(H)) = 0.
+Proof. by rewrite linear0. Qed.
+Lemma cfExtProdNr g h : g \ox - h = - (g \ox h).
+Proof. by rewrite linearN. Qed.
+Lemma cfExtProdDr g h1 h2 : g \ox (h1 + h2) = g \ox h1 + g \ox h2.
+Proof. by rewrite linearD. Qed.
+Lemma cfExtProdBr g h1 h2 : g \ox (h1 - h2) = g \ox h1 - g \ox h2.
+Proof. by rewrite linearB. Qed.
+Lemma cfExtProdMnr h g n : g \ox (h *+ n) = (g \ox h) *+ n.
+Proof. by rewrite linearMn. Qed.
+Lemma cfExtProd_sumr g I r (P : pred I) (phi : I -> 'CF(H)) :
+  g \ox (\sum_(i <- r | P i) phi i) = \sum_(i <- r | P i) g \ox phi i.
+Proof. by rewrite linear_sum. Qed.
+Lemma cfExtProdZr g a h : g \ox (a *: h) = a *: (g \ox h).
+Proof. by rewrite linearZ. Qed.
 
-Lemma cfExtProdDr (f1 : 'CF(G)) (f2 g : 'CF(H)):
-  f1 \ox (f2 + g) = (f1 \ox f2) + (f1 \ox g).
+Lemma cfExtProdr_is_linear h : linear (cfExtProdr h : 'CF(G) -> 'CF(setX G H)).
 Proof.
-  apply /cfunP=> /= x.
-  by rewrite !cfunE mulrDr.
+move=> /= a g1 g2; rewrite !cfExtProdrE.
+apply/cfunP=> /= x.
+by rewrite !cfunE !mulrDl -mulrA.
 Qed.
+Canonical cfExtProdr_additive h := Additive (cfExtProdr_is_linear h).
+Canonical cfExtProdr_linear h := Linear (cfExtProdr_is_linear h).
+
+Lemma cfExtProd0l h : (0 : 'CF(G)) \ox h = 0.
+Proof. by rewrite -cfExtProdrE linear0. Qed.
+Lemma cfExtProdNl h g : - g \ox h = - g \ox h.
+Proof. by rewrite -!cfExtProdrE linearN. Qed.
+Lemma cfExtProdDl h g1 g2 : (g1 + g2) \ox h = g1 \ox h + g2 \ox h.
+Proof. by rewrite -!cfExtProdrE linearD. Qed.
+Lemma cfExtProdBl h g1 g2 : (g1 - g2) \ox h = g1 \ox h - g2 \ox h.
+Proof. by rewrite -!cfExtProdrE linearB. Qed.
+Lemma cfExtProdMnl h g n : g *+ n \ox h = g \ox h *+ n.
+Proof. by rewrite -!cfExtProdrE linearMn. Qed.
+Lemma cfExtProd_suml h I r (P : pred I) (phi : I -> 'CF(G)) :
+  (\sum_(i <- r | P i) phi i) \ox h = \sum_(i <- r | P i) phi i \ox h.
+Proof. by rewrite -!cfExtProdrE linear_sum. Qed.
+Lemma cfExtProdZl h a g : (a *: g) \ox h = a *: (g \ox h).
+Proof. by rewrite -!cfExtProdrE linearZ. Qed.
 
 Variables (n1 n2 : nat).
 Variables (rG : mx_representation algCF G n1)
           (rH : mx_representation algCF H n2).
 
-Lemma extprod_mx_repr : mx_repr (setX G H) (fun g => tprod (rG g.1) (rH g.2)).
+Lemma extprod_mx_repr : mx_repr (setX G H) (fun x => tprod (rG x.1) (rH x.2)).
 Proof.
   split=>[|i j]; first by rewrite !repr_mx1 tprod1.
   rewrite !inE => /andP [i1 i2] /andP [j1 j2].
