@@ -16,7 +16,7 @@ Unset Printing Implicit Defensive.
 
 Hint Resolve pcycle_id.
 
-Local Notation "''SC_' i " := (finset (fun x : {set _} => #|x| == i))
+Local Notation "''SC_' i " := (finset (fun x => #{x} == i))
     (at level 0).
 
 (* In fingroup.v, this is only defined for fintype bigop
@@ -243,10 +243,10 @@ Proof using.
   rewrite -(bigdprod_card (esym (pcyclegrpE s))).
   rewrite /cycle_type /= /parts_shape /cycle_dec.
   rewrite big_imset /=; last exact: restr_perm_inj.
-  rewrite [RHS](eq_big_perm [seq #|(x : {set _})| | x <- enum (pcycles s)]);
+  rewrite [RHS](eq_big_perm [seq #{x} | x <- enum (pcycles s)]);
     last by apply/perm_eqlP; apply perm_sort.
   rewrite /= [RHS]big_map -big_enum.
-  rewrite [RHS](bigID (fun X : {set T} => #|X| == 1%N)) /=.
+  rewrite [RHS](bigID (fun X => #{X} == 1%N)) /=.
   rewrite [X in _ = (X * _)%N]big1 ?mul1n; last by move=> i /andP [_ /eqP].
   rewrite [RHS](eq_bigl (mem (psupport s))) /=;
     last by move=> C; rewrite /psupport !inE.
@@ -410,7 +410,7 @@ Theorem stab_ipcyclesE s :
 Proof using.
 rewrite stab_ipcyclesE_prod; apply/esym/eqP/bigdprodYP => i /= _.
 apply/subsetP => /= t Ht; rewrite !inE negb_and negbK.
-have {Ht} : t \in perm_ong (pcycles s :&: [set x : {set T} | #|x| != i]).
+have {Ht} : t \in perm_ong (pcycles s :&: [set x | #{x} != i]).
   move: Ht; rewrite bigprodGE => /gen_prodgP [n [/= f Hf ->{t}]].
   apply group_prod => j _; move/(_ j): Hf => /bigcupP [k Hk].
   rewrite !inE /perm_on => /subset_trans; apply; apply setIS.
@@ -438,7 +438,7 @@ rewrite [RHS](_ : _ =
 - rewrite -val_enum_ord big_map /index_enum enumT.
   apply eq_bigr => [[i Hi]] _ /=.
   rewrite card_perm_ong /parts_shape; congr (_)`!.
-  have:= perm_sort geq [seq #|(x : {set T})| | x <- enum (pcycles s)].
+  have:= perm_sort geq [seq #{x} | x <- enum (pcycles s)].
   move/perm_eqlP/perm_eqP ->.
   rewrite !cardE -size_filter /= /enum_mem.
   rewrite filter_map size_map -filter_predI; congr size.

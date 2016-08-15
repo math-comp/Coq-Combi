@@ -222,8 +222,7 @@ Proof.
 Qed.
 
 Lemma count_set_of_card (T : finType) (p : pred nat) (s : {set {set T}}) :
-  count p [seq #|(x : {set T})| | x <- enum s] =
-  #|s :&: [set x : {set T} | p #|x|]|.
+  count p [seq #{x} | x <- enum s] = #|s :&: [set x | p #{x}]|.
 Proof.
   rewrite cardE -size_filter /enum_mem -enumT /=.
   rewrite filter_map size_map; congr size.
@@ -255,7 +254,7 @@ Proof.
   rewrite -(card_imset _ (imset_inj Hinj)).
   rewrite imsetI; first last.
     move=> B C _ _; exact: imset_inj.
-  congr #|pred_of_set _|; apply/setP => S; rewrite !inE.
+  congr #{_}; apply/setP => S; rewrite !inE.
   case: (boolP (S \in (imset _ _))) => //= /imsetP [U _ -> {S}].
   rewrite (card_imset _ Hinj).
   apply/idP/imsetP => [| [] V].

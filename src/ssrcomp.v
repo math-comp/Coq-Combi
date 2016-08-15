@@ -6,6 +6,8 @@ From mathcomp Require finmodule.
 
 From Combi Require Import symgroup partition Greene tools sorted.
 
+Reserved Notation "#{ x }" (at level 0, x at level 10, format "#{ x }").
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 
@@ -25,6 +27,9 @@ Hint Resolve leq_total leq_trans anti_leq geq_total geq_trans anti_geq.
 End LeqGeqOrder.
 
 Import LeqGeqOrder.
+
+Notation "#{ x }" :=  #|(x: {set _})|
+                      (at level 0, x at level 10, format "#{ x }").
 
 Lemma imset1 (T : finType) (S : {set T}) : [set fun_of_perm 1 x | x in S] = S.
 Proof using. by rewrite -[RHS]imset_id; apply eq_imset => x; rewrite perm1. Qed.
@@ -115,12 +120,12 @@ Section SetPartitionShape.
 
 Variable T : finType.
 Implicit Types (s t : {perm T}) (n : nat).
+Implicit Types (A B X : {set T}) (P : {set {set T}}).
 
-Definition parts_shape (s : {set {set T}}) :=
-  sort geq [seq #|(x: {set T})| | x <- enum s].
+Definition parts_shape P := sort geq [seq #{X} | X <- enum P].
 
-Lemma parts_shapeP (s : {set {set T}}) D :
-  partition s D -> is_part_of_n #|D| (parts_shape s).
+Lemma parts_shapeP P D :
+  partition P D -> is_part_of_n #|D| (parts_shape P).
 Proof.
 rewrite /parts_shape => /and3P [/eqP Hcov Htriv Hnon0].
 rewrite /is_part_of_n /= is_part_sortedE.
@@ -132,8 +137,8 @@ apply/and3P; split.
   by rewrite mem_enum => Hx /esym/cards0_eq <-.
 Qed.
 
-Lemma ex_subset_card (B : {set T}) k :
-  k <= #|B| -> exists2 A : {set T}, A \subset B & #|A| == k.
+Lemma ex_subset_card B k :
+ k <= #{B} -> exists2 A : {set T}, A \subset B & #{A} == k.
 Proof.
 rewrite -bin_gt0 -(cards_draws B k) card_gt0 => /set0Pn [x].
 rewrite inE => /andP [H1 H2]; by exists x.
@@ -142,9 +147,7 @@ Qed.
 Lemma ex_parts_shape (s : seq nat) (A : {set T}) :
   sumn s = #|A| -> 0 \notin s ->
   exists P : seq {set T},
-    [/\ uniq P,
-     partition [set X in P] A &
-     [seq #|(X : {set T})| | X <- P] = s].
+    [/\ uniq P, partition [set X in P] A & [seq #{X} | X <- P] = s].
 Proof.
 elim: s A => [| i s IHs] A /=.
   move=> /esym/cards0_eq -> _; exists [::]; split => //.
@@ -177,9 +180,8 @@ exists (B :: P); split => /=; [|apply/and3P; split|].
 - by rewrite Ps.
 Qed.
 
-Lemma ex_set_parts_shape (A : {set T}) sh :
-  is_part_of_n #|A| sh ->
-  exists2 P, partition P A & parts_shape P = sh.
+Lemma ex_set_parts_shape A sh :
+  is_part_of_n #|A| sh -> exists2 P, partition P A & parts_shape P = sh.
 Proof.
 rewrite /is_part_of_n /= is_part_sortedE => /andP [/eqP shsum /andP [shsort]].
 move=> /(ex_parts_shape shsum) [P [Puniq Ppart Psh]].
