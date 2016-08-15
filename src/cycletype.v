@@ -124,8 +124,7 @@ Qed.
 Lemma canpcycle_cymap x : canpcycle t (cymap x) = cymapcan x.
 Proof using CM.
   rewrite /cymap /cymapcan /canpcycle pcycle_perm.
-  have := erefl (cymapcan x).
-  rewrite {1}/cymapcan.
+  have:= erefl (cymapcan x); rewrite {1}/cymapcan.
   case: pickP => [im Him /= Hdefim | Habs] /=.
   - rewrite /canpcycle (_ : [pick y in  _] = some im) //.
     rewrite [LHS](_ : _ = [pick y in CM (pcycle s x)]); first last.
@@ -148,6 +147,7 @@ Proof using CM.
   apply/eqP; rewrite eq_pcycle_mem; exact: canpcycleP.
 Qed.
 
+(* Not used anymore *)
 Lemma cymap_inj : injective CM -> injective cymap.
 Proof using.
 rewrite /cymap=> Hinj x y H.
@@ -210,6 +210,17 @@ case: (pickP (mem (CMuw _))) => // Habs; exfalso.
 have:= fs_pcycleP CMuw x => /imsetP [z _ Hz].
 by have:= Habs z; rewrite Hz /= pcycle_id.
 Qed.
+
+Lemma cymapK (U V : finType)
+      (u : {perm U}) (v : {perm V})
+      (CM : pcycles_map u v) (CMi : pcycles_map v u) :
+  {in pcycles u, cancel CM CMi} -> cancel (cymap CM) (cymap CMi).
+Proof.
+move=> H x /=.
+rewrite [LHS](cymap_comp (CMuw := (CMid u))); first exact: cymap_id.
+move=> y Hy /=; exact: H.
+Qed.
+
 
 Section CycleTypeConj.
 
@@ -361,26 +372,19 @@ Proof using.
     by rewrite -conjg_prod cycle_decE.
 Qed.
 
-(* Ici il faut ayant supposé cycle_type s = cycle_type t, construire un
-bijection entre pcycles s et pcycles t *)
-
-Definition slice_part (P : {set {set T}}) :=
-  SlicedSet set0 P (fun x : {set T} => #|x|).
-
-Definition slpcycles s := slice_part (pcycles s).
-
-Lemma slice_slpcycleE s i :
-  #|slice (slpcycles s) i| = count_mem i (cycle_type s).
-Proof using.
-rewrite -card_pred_card_pcycles /slice /=.
-congr #|(_ : {set _})|; apply/setP => X.
-apply/imsetP/idP => [[/= Y HY ->{X} //] | HX].
-by exists X.
-Qed.
-
 End CycleTypeConj.
 
-Section Defs.
+
+Definition slice_part (T : finType) (P : {set {set T}}) :=
+  SlicedSet set0 P (fun x : {set T} => #|x|).
+
+Definition slpcycles (T : finType) (s : {perm T}) := slice_part (pcycles s).
+
+Lemma slice_slpcycleE (T : finType) (s : {perm T}) i :
+  #|slice (slpcycles s) i| = count_mem i (cycle_type s).
+Proof using. by rewrite -card_pred_card_pcycles /slice /= imset_id. Qed.
+
+Section DefsSlice.
 
 Variables (U V : finType).
 Variables (s : {perm U}) (t : {perm V}).
@@ -399,17 +403,14 @@ Proof using eqct. by have := bijP cycle_type_eq => [] []. Qed.
 Definition CMbij := PCycleMap conjg_pcycles_stab conjg_pcycles_homog.
 Definition conjbij := cymap CMbij.
 
-End Defs.
+End DefsSlice.
 
 Lemma conjbijK
       (U V : finType) (s : {perm U}) (t : {perm V})
       (eqct : cycle_type s = cycle_type t :> seq nat) :
   cancel (conjbij eqct) (conjbij (esym eqct)).
 Proof using.
-  rewrite /conjbij => x /=.
-  rewrite [LHS](cymap_comp (CMuw := (CMid s))); first exact: cymap_id.
-  move=> y Hy /=; rewrite bijK //.
-  exact: cycle_type_eq.
+apply cymapK => C HC; rewrite /= bijK //; exact: cycle_type_eq.
 Qed.
 
 

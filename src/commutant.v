@@ -265,9 +265,10 @@ Definition inpcycles s := restr_perm (pcycles s) \o actperm ('P^*).
 
 Section CM.
 
-Variables (s : {perm T}) (P : {perm {set T}}).
+Variables (s : {perm T}).
+Implicit Type P : {perm {set T}}.
 
-Lemma stab_ipcycles_stab :
+Lemma stab_ipcycles_stab P :
   (if P \in stab_ipcycles s then P else 1) @: pcycles s \subset pcycles s.
 Proof using.
 case: (boolP (_ \in _)) => [|_].
@@ -275,7 +276,7 @@ case: (boolP (_ \in _)) => [|_].
 - by rewrite (eq_imset (g := id)) ?imset_id // => x; rewrite perm1.
 Qed.
 
-Lemma stab_ipcycles_homog :
+Lemma stab_ipcycles_homog P :
   {in pcycles s, forall C,
        #|(if P \in stab_ipcycles s then P else 1) C| = #|C| }.
 Proof using.
@@ -287,32 +288,35 @@ case: (boolP (_ \in _)) => [|_].
 - by move=> C _; rewrite perm1.
 Qed.
 
-Local Definition stab_ipcycles_pcyclemap :=
-  PCycleMap stab_ipcycles_stab stab_ipcycles_homog.
-Local Definition stab_ipcycles_map := cymap stab_ipcycles_pcyclemap.
+Local Definition stab_ipcycles_pcyclemap P :=
+  PCycleMap (stab_ipcycles_stab P) (stab_ipcycles_homog P).
+Local Definition stab_ipcycles_map P := cymap (stab_ipcycles_pcyclemap P).
 
-Lemma stab_ipcycles_map_inj : injective stab_ipcycles_map.
+Lemma stab_ipcycles_map_inj P : injective (stab_ipcycles_map P).
 Proof using.
-by apply: cymap_inj => X Y /=; case: (P \in _); apply perm_inj.
+apply (can_inj (g := stab_ipcycles_map P^-1)) => X /=.
+rewrite /stab_ipcycles_map cymapK //= {X} => C HC.
+rewrite groupV /= -/(stab_ipcycles s).
+by case: (boolP (P \in _)) => [| HP]; rewrite ?perm1 ?permK.
 Qed.
-Definition permcycles := perm stab_ipcycles_map_inj.
+Definition permcycles P := perm (@stab_ipcycles_map_inj P).
 
-Lemma permcyclesC : commute permcycles s.
+Lemma permcyclesC P : commute (permcycles P) s.
 Proof using.
 apply esym; apply/permP => x; rewrite !permM !permE; exact: cymapP.
 Qed.
 
-Lemma permcyclesP : permcycles \in 'C[s].
+Lemma permcyclesP P : (permcycles P) \in 'C[s].
 Proof using. apply/cent1P; exact: permcyclesC. Qed.
 
-Lemma pcycle_permcycles x :
-  P \in stab_ipcycles s -> pcycle s (permcycles x) = P (pcycle s x).
+Lemma pcycle_permcycles P x :
+  P \in stab_ipcycles s -> pcycle s (permcycles P x) = P (pcycle s x).
 Proof using. by rewrite permE pcycle_cymap /= => ->. Qed.
 
 End CM.
 
 Lemma permcyclesM s :
-  {in stab_ipcycles s &, {morph permcycles s : x y / x * y}}.
+  {in stab_ipcycles s &, {morph permcycles s : P Q / P * Q}}.
 Proof using.
 move=> /= P Q HP HQ /=; apply/permP => X.
 rewrite permM !permE -[RHS]/((_ \o _) X).
