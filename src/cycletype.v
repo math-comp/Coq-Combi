@@ -147,27 +147,6 @@ Proof using CM.
   apply/eqP; rewrite eq_pcycle_mem; exact: canpcycleP.
 Qed.
 
-(* Not used anymore *)
-Lemma cymap_inj : injective CM -> injective cymap.
-Proof using.
-rewrite /cymap=> Hinj x y H.
-have Hpcycle : pcycle s x = pcycle s y.
-  move: H => /(congr1 (pcycle t)).
-  rewrite !pcycle_perm !pcycle_cymapcan; exact: Hinj.
-move: H; have <- : cymapcan x = cymapcan y.
-  rewrite /cymapcan -{}Hpcycle.
-  case: pickP => // Habs; exfalso.
-  move: Habs; have:= fs_pcycleP x => {y} /imsetP [y _ ->] /(_ y).
-  by rewrite pcycle_id.
-move=> /eqP; rewrite eq_in_pcycle pcycle_cymapcan.
-rewrite (fs_homog CM); last exact: mem_imset.
-move=> Hind.
-rewrite -(indpcycleP s x) -(indpcycleP s y).
-move: Hpcycle => /eqP; rewrite canpcycleE => /eqP <-.
-apply/eqP; rewrite eq_in_pcycle.
-by have:= canpcycleP s x; rewrite -eq_pcycle_mem => /eqP <-.
-Qed.
-
 End PCycleBijection.
 
 Fact pcycles_stab_id (U : finType) (s : {perm U}) :
