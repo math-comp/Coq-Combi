@@ -218,9 +218,9 @@ Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_partCT s).
 Lemma conjg_cycle s a : (<[s]> :^ a = <[s ^ a]>)%g.
 Proof using.
 apply /setP => x.
-apply /imsetP/cycleP => [[x0 /cycleP [i] ->] ->|[i] ->].
+apply /imsetP/cycleP => [[x0 /cycleP [i] ->] -> | [i] ->].
 - by exists i; apply: conjXg.
-- by exists (s ^+i)%g; [apply /cycleP; exists i|rewrite conjXg].
+- by exists (s ^+i)%g; [apply /cycleP; exists i | rewrite conjXg].
 Qed.
 
 Lemma pcycle_conjg s a x :
