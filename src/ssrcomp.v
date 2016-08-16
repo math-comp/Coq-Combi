@@ -6,6 +6,8 @@ From mathcomp Require finmodule.
 
 From Combi Require Import symgroup partition Greene tools sorted.
 
+From Combi Require Import ordcast. (* TODO : for imset_inj *)
+
 Reserved Notation "#{ x }" (at level 0, x at level 10, format "#{ x }").
 
 Set Implicit Arguments.
@@ -92,7 +94,7 @@ apply/eqP; rewrite eqEcard; apply/andP; split.
   by rewrite cardsCs setCK card_setact.
 Qed.
 
-Lemma card_pcycle_non0 s x : #|pcycle s x| != 0.
+Lemma card_pcycle_neq0 s x : #|pcycle s x| != 0.
 Proof using.
 by rewrite -lt0n card_gt0; apply/set0Pn; exists x; exact: pcycle_id.
 Qed.
@@ -114,13 +116,22 @@ End SSRComplements.
 Lemma sumn_sort l S : sumn (sort S l) = sumn l.
 Proof. by have:= perm_sort S l => /perm_eqlP/perm_sumn. Qed.
 
+Lemma count_set_of_card (T : finType) (p : pred nat) (s : {set {set T}}) :
+  count p [seq #{x} | x <- enum s] = #|s :&: [set x | p #{x}]|.
+Proof.
+  rewrite cardE -size_filter /enum_mem -enumT /=.
+  rewrite filter_map size_map; congr size.
+  rewrite -filter_predI; apply eq_filter.
+  by move=> S; rewrite !inE andbC.
+Qed.
+
 From mathcomp Require Import binomial.
 
 Section SetPartitionShape.
 
 Variable T : finType.
 Implicit Types (s t : {perm T}) (n : nat).
-Implicit Types (A B X : {set T}) (P : {set {set T}}).
+Implicit Types (A B X : {set T}) (P Q : {set {set T}}).
 
 Definition parts_shape P := sort geq [seq #{X} | X <- enum P].
 
@@ -193,4 +204,35 @@ apply (eq_sorted (leT := geq)) => //.
   by rewrite mem_enum inE.
 Qed.
 
+(* TODO rewrite using union_part *)
+Lemma parts_shape_union P Q :
+  [disjoint P & Q] ->
+  parts_shape (P :|: Q) = sort geq (parts_shape P ++ parts_shape Q).
+Proof.
+rewrite /parts_shape -setI_eq0 => /eqP disj.
+apply/perm_sortP/perm_eqP => // Prd.
+have count_sort l : count ^~ (sort geq l) =1 count ^~ l.
+  by apply/perm_eqP; rewrite perm_sort perm_eq_refl.
+rewrite count_cat !count_sort !count_set_of_card.
+rewrite setIUl cardsU -[RHS]subn0; congr(_ - _).
+apply/eqP; rewrite cards_eq0 -subset0 -disj.
+by apply/subsetP => x; rewrite !inE => /andP [/andP [-> _] /andP [-> _]].
+Qed.
+
 End SetPartitionShape.
+
+Lemma parts_shape_inj
+      (T1 T2 : finType) (f : T1 -> T2) (A : {set {set T1}}) :
+  injective f -> parts_shape [set f @: (x : {set T1}) | x in A] = parts_shape A.
+Proof.
+rewrite /parts_shape /= => Hinj.
+apply/perm_sortP/perm_eqP => // P.
+rewrite !count_set_of_card -(card_imset _ (imset_inj Hinj)).
+rewrite imsetI; last by move=> B C _ _; exact: imset_inj.
+congr #{_}; apply/setP => S; rewrite !inE.
+case: (boolP (S \in (imset _ _))) => //= /imsetP [U _ -> {S}].
+rewrite (card_imset _ Hinj).
+apply/idP/imsetP => [| [] V].
+- by exists U; rewrite // inE.
+- by rewrite inE => HP /(imset_inj Hinj) ->.
+Qed.

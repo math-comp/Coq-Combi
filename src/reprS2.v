@@ -34,7 +34,7 @@ Qed.
 Lemma triv_Chi n : mx_rsim (triv_repr (n := n)) 'Chi_0.
 Proof. by apply/cfRepr_rsimP; rewrite cfRepr_triv irrRepr. Qed.
 
-Lemma IirrS2_non0 (i : Iirr [set: 'S_2]%G) :
+Lemma cast_IirrS2 (i : Iirr [set: 'S_2]%G) :
   i != 0 -> i = cast_ord (esym NirrS2) 1.
 Proof.
   move=> Hi; apply val_inj => /=.
@@ -49,7 +49,7 @@ Proof.
   move=> /irrP [j]; rewrite -!irrRepr => /eqP/cfRepr_rsimP/mx_rsim_sym Hj.
   apply/eqP/cfRepr_rsimP.
   apply (mx_rsim_trans (mx_rsim_sym Hj)).
-  rewrite (IirrS2_non0 (i := j)); first exact: mx_rsim_refl.
+  rewrite (cast_IirrS2 (i := j)); first exact: mx_rsim_refl.
   apply/eqP => Hj0; subst j.
   apply: (triv_sign_not_sim (n := 2)) => //.
   exact: mx_rsim_trans (triv_Chi 2) Hj.
@@ -63,7 +63,7 @@ Proof.
   apply eq_from_tnth => i.
   case: (altP (i =P 0)) => [-> | Hi].
   - by rewrite tcastE {2}/tnth /= cfRepr_triv; congr 'chi_(_); exact: val_inj.
-  - by rewrite tcastE {2}/tnth /= cfRepr_sign2 (IirrS2_non0 Hi) /=.
+  - by rewrite tcastE {2}/tnth /= cfRepr_sign2 (cast_IirrS2 Hi) /=.
 Qed.
 
 Lemma perm_eq_char_S2 :

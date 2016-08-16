@@ -448,7 +448,7 @@ rewrite [RHS](_ : _ =
     by rewrite fact0 mul1n.
   rewrite mem_sort /parts_shape.
   apply/negP => /mapP [C]; rewrite mem_enum => /imsetP [x _ ->{C}] /eqP.
-  by apply/negP; rewrite eq_sym; apply card_pcycle_non0.
+  by apply/negP; rewrite eq_sym; apply card_pcycle_neq0.
 Qed.
 
 Lemma conj_pcyclegrp s y z :

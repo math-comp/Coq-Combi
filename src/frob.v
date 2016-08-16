@@ -75,15 +75,15 @@ Qed.
 End Defs.
 
 Lemma frob_ind_morph nvar n m (f : 'CF([set: 'S_m])) (g : 'CF([set: 'S_n])) :
-  frob_iso nvar ('Ind[[set: 'S_(m + n)]] ((f \ox g)|^)) =
+  frob_iso nvar ('Ind[[set: 'S_(m + n)]] (f \o^ g)) =
   frob_iso nvar f * frob_iso nvar g.
 Proof.
 rewrite (pbasis_gen f) (pbasis_gen g).
-rewrite cfExtProd_suml !linear_sum [RHS]mulr_suml.
+rewrite cfextprod_suml !linear_sum [RHS]mulr_suml.
 apply eq_bigr => /= l _.
-rewrite cfExtProd_sumr !linear_sum [RHS]mulr_sumr.
+rewrite cfextprod_sumr !linear_sum [RHS]mulr_sumr.
 apply eq_bigr => /= k _.
-rewrite cfExtProdZr cfExtProdZl scalerA.
+rewrite cfextprodZr cfextprodZl scalerA.
 rewrite 3!linearZ /= Ind_pbasis frob_pbasis.
 do 2 rewrite linearZ /= frob_pbasis.
 by rewrite -scalerAr -scalerAl scalerA prod_genM.

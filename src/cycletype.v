@@ -636,6 +636,12 @@ Proof using.
   by apply/classes_of_permP/idP.
 Qed.
 
+Lemma card_class_of_partCT_neq0 : #|class_of_partCT| != 0%N.
+Proof.
+rewrite cards_eq0; apply /set0Pn.
+by exists perm_of_partCT; exact: class_refl.
+Qed.
+
 End Classes.
 
 Lemma class_of_partCT_inj : injective class_of_partCT.
