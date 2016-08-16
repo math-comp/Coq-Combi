@@ -44,13 +44,11 @@ Section Defs.
 
 Variable nvar n : nat.
 
-Local Notation "''p_' k" := (prod_power_sum nvar [fieldType of algC] k)
-                              (at level 8, k at level 2, format "''p_' k").
 Local Notation "'z_ p " := (zcoeff p) (at level 2).
 Local Notation "''P_[' p ]" := (pbasis p).
 
 Definition frob_iso (f : 'CF([set: 'S_n])) : {sympoly algC[nvar]} :=
-  \sum_(l : intpartn n) (f (perm_of_partCT l) / 'z_l) *: 'p_l.
+  \sum_(l : intpartn n) (f (perm_of_partCT l) / 'z_l) *: 'p[l].
 
 Lemma frob_iso_is_linear : linear frob_iso.
 Proof.
@@ -60,7 +58,7 @@ by rewrite scalerA mulrA -scalerDl mulrDl.
 Qed.
 Canonical frob_iso_linear := Linear frob_iso_is_linear.
 
-Lemma frob_pbasis l : frob_iso 'P_[l] = 'p_l.
+Lemma frob_pbasis l : frob_iso 'P_[l] = 'p[l].
 Proof.
 rewrite /frob_iso /pbasis (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hm /=.
@@ -88,8 +86,5 @@ apply eq_bigr => /= k _.
 rewrite cfExtProdZr cfExtProdZl scalerA.
 rewrite 3!linearZ /= Ind_pbasis frob_pbasis.
 do 2 rewrite linearZ /= frob_pbasis.
-rewrite -scalerAr -scalerAl scalerA; congr (_ *: _).
-rewrite /prod_power_sum /prod_gen /unionpart /=.
-have /perm_eqlP/(eq_big_perm _) -> /= := perm_sort geq (l ++ k).
-by rewrite big_cat /=.
+by rewrite -scalerAr -scalerAl scalerA prod_genM.
 Qed.

@@ -207,21 +207,6 @@ Proof.
     exact: rinjP.
 Qed.
 
-Lemma unionpart_subproof (lpair : intpartn m * intpartn n) :
-  is_part_of_n (m + n) (sort geq (lpair.1 ++ lpair.2)).
-Proof.
-  apply /andP; split.
-  - have /perm_eqlP/perm_sumn -> := perm_sort geq (lpair.1 ++ lpair.2).
-    by rewrite sumn_cat !intpartn_sumn.
-  - rewrite is_part_sortedE; apply/andP; split.
-    + by apply sort_sorted => x y; exact: leq_total.
-    + have /perm_eqlP/perm_eq_mem -> := perm_sort geq (lpair.1 ++ lpair.2).
-      rewrite mem_cat negb_or.
-      have := intpartnP lpair.1; have := intpartnP lpair.2.
-      by rewrite !is_part_sortedE => /andP [_ ->] /andP [_ ->].
-Qed.
-Definition unionpart lpair := IntPartN (unionpart_subproof lpair).
-
 Lemma expg_tinj_lshift s a i :
  (tinj s ^+ i) (lshift n a) = lshift n ((s.1 ^+ i) a).
 Proof.
@@ -325,30 +310,27 @@ Proof.
 Qed.
 
 Lemma cycle_type_tinj s :
-  ct (tinj s) = unionpart (ct s.1, ct s.2).
+  ct (tinj s) = union_intpartn (ct s.1) (ct s.2).
 Proof.
-  apply val_inj => /=.
-  rewrite intpartn_castE /=.
-  rewrite pcycles_tinj parts_shape_union; first last.
-    rewrite -setI_eq0; apply/eqP/setP => S.
-    rewrite !inE; apply/negP => /andP [].
-    move=> /imsetP [X /imsetP [x _ ->]] -> {X}.
-    move=> /imsetP [X /imsetP [y _ ->]].
-    move/setP => /(_ (lshift n x)).
-    rewrite mem_imset; last exact: pcycle_id.
-    move=> /esym/imsetP => [] [z _] /eqP.
-    by rewrite lrinjF.
-  congr sort.
-  rewrite /ct !intpartn_castE /=.
-  congr (_++_).
-  - apply parts_shape_inj; exact: linjP.
-  - apply parts_shape_inj; exact: rinjP.
+apply val_inj; rewrite union_intpartnE intpartn_castE /=.
+rewrite pcycles_tinj parts_shape_union; first last.
+  rewrite -setI_eq0; apply/eqP/setP => S.
+  rewrite !inE; apply/negP => /andP [].
+  move=> /imsetP [X /imsetP [x _ ->]] -> {X}.
+  move=> /imsetP [X /imsetP [y _ ->]].
+  move/setP => /(_ (lshift n x)).
+  rewrite mem_imset; last exact: pcycle_id.
+  move=> /esym/imsetP => [] [z _] /eqP.
+  by rewrite lrinjF.
+congr sort.
+rewrite /ct !intpartn_castE /=.
+by congr (_++_); apply parts_shape_inj; [exact: linjP | exact: rinjP].
 Qed.
 
 Local Open Scope ring_scope.
 
 Lemma cfuni_tinj s (l : intpartn (m + n)) :
-  '1_[l] (tinj s) = (l == unionpart (ct s.1, ct s.2))%:R.
+  '1_[l] (tinj s) = (l == union_intpartn (ct s.1) (ct s.2))%:R.
 Proof. by rewrite cfuni_partnE cycle_type_tinj eq_sym. Qed.
 
 (*m and n can be inferred by the type of phi : 'CF('S_m * 'S_n)*)
@@ -356,7 +338,7 @@ Local Notation "phi |^" := (cfIsom isomtinj phi) (at level 40).
 
 Theorem cfuni_Res (l : intpartn (m + n)):
   'Res[prodIm] ('1_[l]) =
-  (\sum_(x | l == unionpart x) ('1_[x.1]) \ox ('1_[x.2]))|^.
+  (\sum_(x | l == union_intpartn x.1 x.2) ('1_[x.1]) \ox ('1_[x.2]))|^.
 Proof.
   apply/cfunP => /= s.
   case: (boolP (s \in prodIm)) => Hs; last by rewrite !cfun0gen // genGid.
@@ -367,7 +349,7 @@ Proof.
   rewrite /cfExtProd /= sum_cfunE.
   rewrite (eq_bigr (fun x : intpartn m * intpartn n => ('1_[x.1] s1) * ('1_[x.2] s2)));
     last by move=> i _; rewrite cfunE.
-  case: (altP (l =P unionpart (ct s1, ct s2))) => [->| Hl] /=.
+  case: (altP (l =P _ )) => [->| Hl] /=.
   - rewrite (bigD1 (ct s1, ct s2)) //=.
     rewrite !cfuni_partnE !eqxx /= mulr1.
     rewrite big1 ?addr0 // => [[t1 t2]] /andP [_].
@@ -375,7 +357,7 @@ Proof.
     by move=> /nandP [] /negbTE -> /=; rewrite ?mulr0 ?mul0r.
   - rewrite big1 // => [[t1 t2]] /= /eqP Hll; subst l.
     have {Hl} : (t1, t2) != (ct s1, ct s2).
-      by move: Hl; apply contra => /eqP ->.
+      by move: Hl; apply contra => /eqP [-> ->].
     rewrite !cfuni_partnE eq_sym xpair_eqE.
     by move=> /nandP [] /negbTE -> /=; rewrite ?mulr0 ?mul0r.
 Qed.
@@ -465,20 +447,21 @@ Qed.
 (* Application of Frobenius duality : cfdot_Res_r *)
 Lemma cfdot_Ind_cfuni_part p q (l : intpartn (m + n)):
   '['Ind[S] (('1_[p] \ox '1_[q])|^), '1_[l]] =
-  (unionpart (p, q) == l)%:R * (#|class p|)%:R * (#|class q|)%:R / (#|Smn|)%:R.
+  (union_intpartn p q == l)%:R * (#|class p|)%:R * (#|class q|)%:R / (#|Smn|)%:R.
 Proof.
   rewrite -cfdot_Res_r cfuni_Res cfIsom_iso cfdot_sumr.
   rewrite (eq_bigr (fun (i : intpartn m * intpartn n) =>
    #|(classX p q) :&: (classX i.1 i.2)|%:R / #|Smn|%:R)); first last.
   - move => i _; rewrite !cfExtProd_cfuni cfdot_cfuni //=;
     by apply: class_normal; rewrite inE; apply /andP; split; rewrite inE /=.
-  - case (boolP (unionpart(p, q) == l)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
+  - case: (boolP (_ == _)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
     + rewrite (bigD1 (p, q)) /=; last by rewrite eq_sym.
       rewrite setIid big1; first by rewrite addr0 classXE cardsX natrM //=.
       by move=> i /andP [] _ ip; rewrite classXI ?cards0 ?mul0r.
-    + rewrite big1 //= => i unioni.
+    + rewrite big1 //= => i /eqP unioni.
       have ip: i != (p, q).
-        by move: unionp; apply contraR; rewrite negbK=> /eqP <-; rewrite eq_sym.
+        move: unionp; apply contraR; rewrite negbK {}unioni => /eqP.
+        by case: i => [i1 i2] [-> ->].
       by rewrite classXI ?cards0 ?mul0r.
 Qed.
 
@@ -509,7 +492,8 @@ Definition pbasis (k : nat) (p : intpartn k) :=
 Local Notation "''P_[' p ]" := (pbasis p).
 
 Lemma cfdot_Ind_pbasis p q (l : intpartn (m + n)):
-  '['Ind[S] (('P_[p] \ox 'P_[q])|^), 'P_[l]] = (unionpart (p, q) == l)%:R * 'z_l.
+  '['Ind[S] (('P_[p] \ox 'P_[q])|^), 'P_[l]] =
+  (union_intpartn p q == l)%:R * 'z_l.
 Proof.
   rewrite cfExtProdZl cfExtProdZr.
   rewrite !linearZ /= !cfdotZl cfdotZr cfdot_Ind_cfuni_part /= cardsX.
@@ -566,7 +550,7 @@ Proof.
 Qed.
 
 Theorem Ind_pbasis p q :
-  'Ind[S] (('P_[p] \ox 'P_[q])|^) = 'P_[unionpart (p, q)].
+  'Ind[S] (('P_[p] \ox 'P_[q])|^) = 'P_[union_intpartn p q].
 Proof.
   apply/cfunP => /= x; rewrite cfunE.
   rewrite cfdotr_pbasis cfdot_Ind_pbasis.
