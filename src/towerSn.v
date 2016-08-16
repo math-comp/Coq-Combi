@@ -291,20 +291,12 @@ Section Assoc.
 
 Variables (m n p : nat).
 
-Definition perm_castA_val (s : 'S_(m + (n + p))) :=
-  fun x : 'I_(m + n + p) =>
-    cast_ord (addnA m n p) (s (cast_ord (esym (addnA m n p)) x)).
-
-Fact perm_castA_inj s : injective (perm_castA_val s).
-Proof. by move=> x y /cast_ord_inj/perm_inj/cast_ord_inj. Qed.
-Definition perm_castA s : 'S_(m + n + p) := perm (@perm_castA_inj s).
-
 Lemma tinjA (s : 'S_m) (t : 'S_n) (u : 'S_p) :
-  tinj (tinj(s, t), u) = perm_castA (tinj (s, tinj (t, u))).
+  tinj (tinj(s, t), u) = cast_perm (addnA m n p) (tinj (s, tinj (t, u))).
 Proof.
 apply/permP => /= itmp.
 rewrite -(splitK itmp) !permE.
-case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= /perm_castA_val.
+case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= /cast_perm_val.
 - rewrite -(splitK i) !permE.
   case: splitP => j _ {i}; rewrite /tinjval !unsplitK /=.
   + rewrite [cast_ord (esym _) _](_ : _ = unsplit (inl j));

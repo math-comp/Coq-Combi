@@ -1,7 +1,7 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype div.
 From mathcomp Require Import tuple finfun path bigop finset binomial.
-From mathcomp Require Import fingroup perm automorphism action ssralg.
+From mathcomp Require Import fingroup perm morphism action ssralg.
 From mathcomp Require finmodule.
 
 From Combi Require Import symgroup partition Greene tools sorted.
@@ -50,6 +50,59 @@ Proof using.
   move=> Huniq x y Heq.
   by rewrite -(prev_next Huniq x) Heq prev_next.
 Qed.
+
+
+Section CastSn.
+
+Definition cast_perm_val m n (eq_m_n : m = n) (s : 'S_m) :=
+  fun x : 'I_n => cast_ord eq_m_n (s (cast_ord (esym eq_m_n) x)).
+
+Fact cast_perm_proof m n eq_m_n s : injective (@cast_perm_val m n eq_m_n s).
+Proof. by move=> x y /cast_ord_inj/perm_inj/cast_ord_inj. Qed.
+Definition cast_perm m n eq_m_n s : 'S_n :=
+  perm (@cast_perm_proof m n eq_m_n s).
+
+Lemma cast_permE m n eq_m_n (s : 'S_m) i :
+  @cast_ord m n eq_m_n (s i) = (cast_perm eq_m_n s) (cast_ord eq_m_n i).
+Proof. by rewrite permE /cast_perm_val cast_ordK. Qed.
+
+Lemma cast_perm_id n eq_n s : cast_perm eq_n s = s :> 'S_n.
+Proof. by apply/permP => i /=; rewrite permE /cast_perm_val !cast_ord_id. Qed.
+
+Lemma cast_permK m n eq_m_n :
+  cancel (@cast_perm m n eq_m_n) (cast_perm (esym eq_m_n)).
+Proof.
+move=> s /=; apply/permP => i /=; do 2 rewrite permE /cast_perm_val.
+by rewrite esymK !cast_ordK.
+Qed.
+
+Lemma cast_permKV m n eq_m_n :
+  cancel (cast_perm (esym eq_m_n)) (@cast_perm m n eq_m_n).
+Proof. move=> s /=; rewrite -{1}(esymK eq_m_n); exact: cast_permK. Qed.
+
+Lemma cast_perm_inj m n eq_m_n : injective (@cast_perm m n eq_m_n).
+Proof. exact: can_inj (cast_permK eq_m_n). Qed.
+
+Lemma cast_perm_morphM m n eq_m_n :
+  {morph @cast_perm m n eq_m_n : x y / x * y >-> x * y}.
+Proof.
+rewrite /cast_perm => /= s1 s2; apply /permP => /= i.
+apply val_inj => /=.
+by rewrite permM /= !permE /cast_perm_val cast_ordK permM.
+Qed.
+Canonical morph_of_cast_perm m n eq_m_n :=
+  Morphism (D := setT) (in2W (@cast_perm_morphM m n eq_m_n)).
+
+Lemma isom_cast_perm m n eq_m_n : isom setT setT (@cast_perm m n eq_m_n).
+Proof.
+apply/isomP; split.
+- apply/injmP=> i j _ _; exact: cast_perm_inj.
+- apply/setP => /= s; rewrite inE.
+  apply/imsetP; exists (cast_perm (esym eq_m_n) s); first by rewrite !inE.
+  by rewrite /= cast_permKV.
+Qed.
+
+End CastSn.
 
 Section SSRComplements.
 
