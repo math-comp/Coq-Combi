@@ -30,7 +30,6 @@ Import GRing.Theory.
 Reserved Notation "{ 'sympoly' T [ n ] }"
   (at level 0, T, n at level 2, format "{ 'sympoly'  T [ n ] }").
 
-
 Section DefType.
 
 Variable n : nat.
@@ -250,31 +249,6 @@ Lemma sym_monomialE (p : {mpoly R[n]}) :
 Proof.
 Admitted.
 
-(** Prod of generator *)
-
-Section ProdGen.
-
-Variable gen : nat -> {sympoly R[n]}.
-Hypothesis gen_homog : forall d, symtopol (gen d) \is d.-homog.
-
-Definition prod_gen d (sh : intpartn d) := \prod_(i <- sh) gen i.
-Lemma prod_gen_homog d (sh : intpartn d) :
-  symtopol (prod_gen sh) \is d.-homog.
-Proof.
-  rewrite /prod_gen; case: sh => sh /= /andP [/eqP <- _] {d}.
-  elim: sh => [| d sh IHsh] /=; first by rewrite big_nil /= dhomog1.
-  by rewrite big_cons; apply dhomogM; first exact: gen_homog.
-Qed.
-
-End ProdGen.
-
-Definition prod_elementary d (sh : intpartn d) := prod_gen elementary.
-Definition prod_elementary_homog := prod_gen_homog elementary_homog.
-Definition prod_complete d (sh : intpartn d) := prod_gen complete.
-Definition prod_complete_homog := prod_gen_homog complete_homog.
-Definition prod_power_sum d (sh : intpartn d) := prod_gen power_sum.
-Definition prod_power_sum_homog := prod_gen_homog power_sum_homog.
-
 (** Basis at degree 0 *)
 Lemma elementary0 : elementary 0 = 1.
 Proof using . by apply val_inj; rewrite /= mesym0E. Qed.
@@ -328,8 +302,53 @@ Proof using .
     by rewrite mdeg1 in Hm.
 Qed.
 
-
 End Bases.
+
+
+(** Prod of generator *)
+
+Section ProdGen.
+
+Variable n : nat.
+Variable R : comRingType.
+
+Section Defs.
+
+Variable gen : nat -> {sympoly R[n]}.
+Hypothesis gen_homog : forall d, symtopol (gen d) \is d.-homog.
+
+Definition prod_gen d (sh : intpartn d) := \prod_(i <- sh) gen i.
+Lemma prod_gen_homog d (sh : intpartn d) :
+  symtopol (prod_gen sh) \is d.-homog.
+Proof using gen_homog.
+  rewrite /prod_gen; case: sh => sh /= /andP [/eqP <- _] {d}.
+  elim: sh => [| d sh IHsh] /=; first by rewrite big_nil /= dhomog1.
+  by rewrite big_cons; apply dhomogM; first exact: gen_homog.
+Qed.
+
+Lemma prod_genM c d (l : intpartn c) (k : intpartn d) :
+  (prod_gen l) * (prod_gen k) = (prod_gen (union_intpartn l k)).
+Proof using.
+by rewrite /prod_gen (eq_big_perm _ (perm_union_intpartn l k)) big_cat.
+Qed.
+
+End Defs.
+
+Definition prod_elementary := prod_gen (@elementary n R).
+Definition prod_elementary_homog := prod_gen_homog (@elementary_homog n R).
+Definition prod_complete := prod_gen (@complete n R).
+Definition prod_complete_homog := prod_gen_homog (@complete_homog n R).
+Definition prod_power_sum := prod_gen (@power_sum n R).
+Definition prod_power_sum_homog := prod_gen_homog (@power_sum_homog n R).
+
+End ProdGen.
+
+Notation "''e[' k ]" := (prod_elementary _ _ k)
+                              (at level 8, k at level 2, format "''e[' k ]").
+Notation "''h[' k ]" := (prod_complete _ _ k)
+                              (at level 8, k at level 2, format "''h[' k ]").
+Notation "''p[' k ]" := (prod_power_sum _ _ k)
+                              (at level 8, k at level 2, format "''p[' k ]").
 
 From mathcomp Require Import vector.
 
