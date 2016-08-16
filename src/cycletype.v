@@ -271,8 +271,7 @@ Lemma card_pred_card_pcycles s (P : pred nat) :
   #|[set x in pcycles s | P #|x| ]| = count P (cycle_type s).
 Proof using.
 rewrite /cycle_type /= /psupport /parts_shape.
-have /perm_eqlP/perm_eqP -> :=
-  perm_sort geq [seq #|(x : {set _})| | x <- enum (pcycles s)].
+have /perm_eqlP/perm_eqP -> := perm_sort geq [seq #{x} | x <- enum (pcycles s)].
 rewrite cardE /enum_mem size_filter /= count_map count_filter.
 by apply eq_count => X; rewrite !inE andbC.
 Qed.
@@ -612,10 +611,10 @@ Variable tc : intpartn #|T|.
 
 Lemma perm_of_partCT_exists : exists s, cycle_type s = tc.
 Proof using.
-move: (valP (intpartn_cast (esym (cardsT T)) tc)).
-rewrite intpartn_castE => /ex_set_parts_shape [P /perm_of_partsE /= ct shape].
+have:= ex_set_parts_shape (intpartn_cast (esym (cardsT T)) tc).
+move=> [P /perm_of_partsE /= ct shape].
 exists (perm_of_parts P); apply val_inj => /=; rewrite ct.
-exact: shape.
+by rewrite shape intpartn_castE.
 Qed.
 
 Lemma perm_of_partCT_set : {s | cycle_type s == tc}.

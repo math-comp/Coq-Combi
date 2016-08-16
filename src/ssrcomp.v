@@ -248,9 +248,10 @@ exists (B :: P); split => /=; [|apply/and3P; split|].
 - by rewrite Ps.
 Qed.
 
-Lemma ex_set_parts_shape A sh :
-  is_part_of_n #|A| sh -> exists2 P, partition P A & parts_shape P = sh.
+Lemma ex_set_parts_shape A (sh : intpartn #|A|) :
+  exists2 P, partition P A & parts_shape P = sh.
 Proof using.
+case: sh => sh.
 rewrite /is_part_of_n /= is_part_sortedE => /andP [/eqP shsum /andP [shsort]].
 move=> /(ex_parts_shape shsum) [P [Puniq Ppart Psh]].
 exists [set X in P]; first exact: Ppart.
