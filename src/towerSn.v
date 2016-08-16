@@ -179,9 +179,9 @@ Definition tinj s : 'S_(m + n) := perm (@tinjval_inj s).
 
 Fact tinj_morphM : {morph tinj : x y / x * y >-> x * y}.
 Proof.
-  rewrite /tinj => /= s1 s2; apply /permP => /= x.
-  rewrite permM -(splitK x) !permE.
-  by case: splitP => [] j _; rewrite /tinjval !unsplitK /= permM.
+rewrite /tinj => /= s1 s2; apply /permP => /= x.
+rewrite permM -(splitK x) !permE.
+by case: splitP => [] j _; rewrite /tinjval !unsplitK /= permM.
 Qed.
 Canonical morph_of_tinj := Morphism (D := Smn) (in2W tinj_morphM).
 
@@ -287,6 +287,43 @@ Arguments tinj_im {m n}.
 
 Notation "f \o^ g" := (cfIsom (isom_tinj _ _) (cfextprod f g)) (at level 40).
 
+Section Assoc.
+
+Variables (m n p : nat).
+
+Definition perm_castA_val (s : 'S_(m + (n + p))) :=
+  fun x : 'I_(m + n + p) =>
+    cast_ord (addnA m n p) (s (cast_ord (esym (addnA m n p)) x)).
+
+Fact perm_castA_inj s : injective (perm_castA_val s).
+Proof. by move=> x y /cast_ord_inj/perm_inj/cast_ord_inj. Qed.
+Definition perm_castA s : 'S_(m + n + p) := perm (@perm_castA_inj s).
+
+Lemma tinjA (s : 'S_m) (t : 'S_n) (u : 'S_p) :
+  tinj (tinj(s, t), u) = perm_castA (tinj (s, tinj (t, u))).
+Proof.
+apply/permP => /= itmp.
+rewrite -(splitK itmp) !permE.
+case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= /perm_castA_val.
+- rewrite -(splitK i) !permE.
+  case: splitP => j _ {i}; rewrite /tinjval !unsplitK /=.
+  + rewrite [cast_ord (esym _) _](_ : _ = unsplit (inl j));
+      last exact: val_inj.
+    by rewrite !unsplitK /=; apply val_inj.
+  + rewrite [cast_ord (esym _) _](_ : _ = unsplit (inr (lshift _ j)));
+      last exact: val_inj.
+    rewrite !unsplitK /=; apply val_inj => /=.
+    rewrite (_: lshift _ _ = unsplit (inl j)) //.
+    by rewrite !permE /tinjval !unsplitK /=.
+- rewrite [cast_ord (esym _) _](_ : _ = unsplit (inr (rshift _ i)));
+    last by apply: val_inj => /=; rewrite addnA.
+  rewrite !permE /tinjval !unsplitK /=.
+  rewrite (_: rshift n _ = unsplit (inr i)) //.
+  rewrite !permE /tinjval !unsplitK /=.
+  by apply val_inj; rewrite /= addnA.
+Qed.
+
+End Assoc.
 
 Local Open Scope ring_scope.
 
