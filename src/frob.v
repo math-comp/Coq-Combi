@@ -20,25 +20,6 @@ Import GroupScope GRing.Theory Num.Theory.
 Open Scope ring_scope.
 
 Local Notation algCF := [fieldType of algC].
-(*
-
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun eqtype ssrnat seq path choice.
-From mathcomp Require Import fintype tuple finfun bigop ssralg finset.
-From mathcomp Require Import fingroup morphism perm automorphism quotient finalg action.
-From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
-From mathcomp Require Import matrix mxalgebra mxpoly mxrepresentation vector ssrnum algC.
-From mathcomp Require Import classfun character.
-
-From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
-
-From Combi Require Import symgroup partition Greene tools sorted rep1 sympoly.
-
-Require Import ssrcomp cycles cycletype towerSn.
-
-Import GroupScope GRing.Theory Num.Theory.
-Local Open Scope ring_scope.
-*)
 
 Section Defs.
 
@@ -51,7 +32,7 @@ Definition frob_iso (f : 'CF([set: 'S_n])) : {sympoly algC[nvar]} :=
   \sum_(l : intpartn n) (f (perm_of_partCT l) / 'z_l) *: 'p[l].
 
 Lemma frob_iso_is_linear : linear frob_iso.
-Proof.
+Proof using.
 move=> a f g; rewrite /frob_iso scaler_sumr -big_split /=.
 apply eq_bigr => l _; rewrite !cfunElock.
 by rewrite scalerA mulrA -scalerDl mulrDl.
@@ -59,7 +40,7 @@ Qed.
 Canonical frob_iso_linear := Linear frob_iso_is_linear.
 
 Lemma frob_pbasis l : frob_iso 'P_[l] = 'p[l].
-Proof.
+Proof using.
 rewrite /frob_iso /pbasis (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hm /=.
   rewrite cfunElock cfuni_partE /=.
@@ -77,7 +58,7 @@ End Defs.
 Lemma frob_ind_morph nvar n m (f : 'CF([set: 'S_m])) (g : 'CF([set: 'S_n])) :
   frob_iso nvar ('Ind[[set: 'S_(m + n)]] (f \o^ g)) =
   frob_iso nvar f * frob_iso nvar g.
-Proof.
+Proof using.
 rewrite (pbasis_gen f) (pbasis_gen g).
 rewrite cfextprod_suml !linear_sum [RHS]mulr_suml.
 apply eq_bigr => /= l _.

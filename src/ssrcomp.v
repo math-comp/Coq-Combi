@@ -34,21 +34,23 @@ Notation "#{ x }" :=  #|(x: {set _})|
                       (at level 0, x at level 10, format "#{ x }").
 
 Lemma imset1 (T : finType) (S : {set T}) : [set fun_of_perm 1 x | x in S] = S.
-Proof using. by rewrite -[RHS]imset_id; apply eq_imset => x; rewrite perm1. Qed.
+Proof using.
+by rewrite -[RHS]imset_id; apply eq_imset => x; rewrite perm1.
+Qed.
 
 Lemma disjoint_imset (T1 T2 : finType) (f : T1 -> T2) (A B : {set T1}) :
   injective f ->
   [disjoint A & B] -> [disjoint [set f x | x in A] & [set f x | x in B]].
 Proof using.
-  rewrite -!setI_eq0 => Hinj /eqP Hdisj.
-  rewrite -imsetI; last by move=> x y _ _; exact: Hinj.
-  by rewrite imset_eq0 Hdisj.
+rewrite -!setI_eq0 => Hinj /eqP Hdisj.
+rewrite -imsetI; last by move=> x y _ _; exact: Hinj.
+by rewrite imset_eq0 Hdisj.
 Qed.
 
 Lemma uniq_next (T : eqType) (p : seq T) : uniq p -> injective (next p).
 Proof using.
-  move=> Huniq x y Heq.
-  by rewrite -(prev_next Huniq x) Heq prev_next.
+move=> Huniq x y Heq.
+by rewrite -(prev_next Huniq x) Heq prev_next.
 Qed.
 
 
@@ -58,34 +60,36 @@ Definition cast_perm_val m n (eq_m_n : m = n) (s : 'S_m) :=
   fun x : 'I_n => cast_ord eq_m_n (s (cast_ord (esym eq_m_n) x)).
 
 Fact cast_perm_proof m n eq_m_n s : injective (@cast_perm_val m n eq_m_n s).
-Proof. by move=> x y /cast_ord_inj/perm_inj/cast_ord_inj. Qed.
+Proof using. by move=> x y /cast_ord_inj/perm_inj/cast_ord_inj. Qed.
 Definition cast_perm m n eq_m_n s : 'S_n :=
   perm (@cast_perm_proof m n eq_m_n s).
 
 Lemma cast_permE m n eq_m_n (s : 'S_m) i :
   @cast_ord m n eq_m_n (s i) = (cast_perm eq_m_n s) (cast_ord eq_m_n i).
-Proof. by rewrite permE /cast_perm_val cast_ordK. Qed.
+Proof using. by rewrite permE /cast_perm_val cast_ordK. Qed.
 
 Lemma cast_perm_id n eq_n s : cast_perm eq_n s = s :> 'S_n.
-Proof. by apply/permP => i /=; rewrite permE /cast_perm_val !cast_ord_id. Qed.
+Proof using.
+by apply/permP => i /=; rewrite permE /cast_perm_val !cast_ord_id.
+Qed.
 
 Lemma cast_permK m n eq_m_n :
   cancel (@cast_perm m n eq_m_n) (cast_perm (esym eq_m_n)).
-Proof.
+Proof using.
 move=> s /=; apply/permP => i /=; do 2 rewrite permE /cast_perm_val.
 by rewrite esymK !cast_ordK.
 Qed.
 
 Lemma cast_permKV m n eq_m_n :
   cancel (cast_perm (esym eq_m_n)) (@cast_perm m n eq_m_n).
-Proof. move=> s /=; rewrite -{1}(esymK eq_m_n); exact: cast_permK. Qed.
+Proof using. move=> s /=; rewrite -{1}(esymK eq_m_n); exact: cast_permK. Qed.
 
 Lemma cast_perm_inj m n eq_m_n : injective (@cast_perm m n eq_m_n).
-Proof. exact: can_inj (cast_permK eq_m_n). Qed.
+Proof using. exact: can_inj (cast_permK eq_m_n). Qed.
 
 Lemma cast_perm_morphM m n eq_m_n :
   {morph @cast_perm m n eq_m_n : x y / x * y >-> x * y}.
-Proof.
+Proof using.
 rewrite /cast_perm => /= s1 s2; apply /permP => /= i.
 apply val_inj => /=.
 by rewrite permM /= !permE /cast_perm_val cast_ordK permM.
@@ -94,7 +98,7 @@ Canonical morph_of_cast_perm m n eq_m_n :=
   Morphism (D := setT) (in2W (@cast_perm_morphM m n eq_m_n)).
 
 Lemma isom_cast_perm m n eq_m_n : isom setT setT (@cast_perm m n eq_m_n).
-Proof.
+Proof using.
 apply/isomP; split.
 - apply/injmP=> i j _ _; exact: cast_perm_inj.
 - apply/setP => /= s; rewrite inE.
@@ -111,7 +115,7 @@ Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
 Implicit Type (s : {perm T}) (X : {set T}) (P : {set {set T}}).
 
 Lemma partition0P P : reflect (P = set0) (partition P set0).
-Proof.
+Proof using.
   apply (iffP and3P) => [[/eqP Hcov _ H0] | ->].
   - case: (set_0Vmem P) => [// | [X HXP]].
     exfalso; suff HX : X = set0 by subst X; rewrite HXP in H0.
@@ -154,11 +158,11 @@ Qed.
 
 Lemma pcyclePmin s x y :
   y \in pcycle s x -> exists2 i, i < (#[s])%g & y = (s ^+ i)%g x.
-Proof. by move=> /imsetP [z /cyclePmin[ i Hi ->{z}] ->{y}]; exists i. Qed.
+Proof using. by move=> /imsetP [z /cyclePmin[ i Hi ->{z}] ->{y}]; exists i. Qed.
 
 Lemma pcycleP s x y :
   reflect (exists i, y = (s ^+ i)%g x) (y \in pcycle s x).
-Proof.
+Proof using.
   apply (iffP idP) => [/pcyclePmin [i _ ->]| [i ->]]; last exact: mem_pcycle.
   by exists i.
 Qed.
@@ -167,11 +171,11 @@ End SSRComplements.
 
 
 Lemma sumn_sort l S : sumn (sort S l) = sumn l.
-Proof. by have:= perm_sort S l => /perm_eqlP/perm_sumn. Qed.
+Proof using. by have:= perm_sort S l => /perm_eqlP/perm_sumn. Qed.
 
 Lemma count_set_of_card (T : finType) (p : pred nat) (s : {set {set T}}) :
   count p [seq #{x} | x <- enum s] = #|s :&: [set x | p #{x}]|.
-Proof.
+Proof using.
   rewrite cardE -size_filter /enum_mem -enumT /=.
   rewrite filter_map size_map; congr size.
   rewrite -filter_predI; apply eq_filter.
@@ -190,7 +194,7 @@ Definition parts_shape P := sort geq [seq #{X} | X <- enum P].
 
 Lemma parts_shapeP P D :
   partition P D -> is_part_of_n #|D| (parts_shape P).
-Proof.
+Proof using.
 rewrite /parts_shape => /and3P [/eqP Hcov Htriv Hnon0].
 rewrite /is_part_of_n /= is_part_sortedE.
 apply/and3P; split.
@@ -203,7 +207,7 @@ Qed.
 
 Lemma ex_subset_card B k :
  k <= #{B} -> exists2 A : {set T}, A \subset B & #{A} == k.
-Proof.
+Proof using.
 rewrite -bin_gt0 -(cards_draws B k) card_gt0 => /set0Pn [x].
 rewrite inE => /andP [H1 H2]; by exists x.
 Qed.
@@ -212,7 +216,7 @@ Lemma ex_parts_shape (s : seq nat) (A : {set T}) :
   sumn s = #|A| -> 0 \notin s ->
   exists P : seq {set T},
     [/\ uniq P, partition [set X in P] A & [seq #{X} | X <- P] = s].
-Proof.
+Proof using.
 elim: s A => [| i s IHs] A /=.
   move=> /esym/cards0_eq -> _; exists [::]; split => //.
   apply/partition0P; apply/setP => x.
@@ -246,7 +250,7 @@ Qed.
 
 Lemma ex_set_parts_shape A sh :
   is_part_of_n #|A| sh -> exists2 P, partition P A & parts_shape P = sh.
-Proof.
+Proof using.
 rewrite /is_part_of_n /= is_part_sortedE => /andP [/eqP shsum /andP [shsort]].
 move=> /(ex_parts_shape shsum) [P [Puniq Ppart Psh]].
 exists [set X in P]; first exact: Ppart.
@@ -261,7 +265,7 @@ Qed.
 Lemma parts_shape_union P Q :
   [disjoint P & Q] ->
   parts_shape (P :|: Q) = sort geq (parts_shape P ++ parts_shape Q).
-Proof.
+Proof using.
 rewrite /parts_shape -setI_eq0 => /eqP disj.
 apply/perm_sortP/perm_eqP => // Prd.
 have count_sort l : count ^~ (sort geq l) =1 count ^~ l.
@@ -277,7 +281,7 @@ End SetPartitionShape.
 Lemma parts_shape_inj
       (T1 T2 : finType) (f : T1 -> T2) (A : {set {set T1}}) :
   injective f -> parts_shape [set f @: (x : {set T1}) | x in A] = parts_shape A.
-Proof.
+Proof using.
 rewrite /parts_shape /= => Hinj.
 apply/perm_sortP/perm_eqP => // P.
 rewrite !count_set_of_card -(card_imset _ (imset_inj Hinj)).
