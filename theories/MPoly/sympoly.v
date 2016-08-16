@@ -17,7 +17,7 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop ssralg path perm fingroup.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
-Require Import tools ordtype partition Yamanouchi std tableau stdtab.
+Require Import tools ordtype permuted partition Yamanouchi std tableau stdtab antisym.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -30,14 +30,13 @@ Import GRing.Theory.
 Reserved Notation "{ 'sympoly' T [ n ] }"
   (at level 0, T, n at level 2, format "{ 'sympoly'  T [ n ] }").
 
-
 Section DefType.
 
 Variable n : nat.
 Variable R : ringType.
 
 Structure sympoly : predArgType :=
-  SymPoly {spol :> {mpoly R[n]}; _ : spol \in symmetric}.
+  SymPoly {spol :> {mpoly R[n]}; _ : spol \is symmetric}.
 
 Canonical sympoly_subType := Eval hnf in [subType for spol].
 Definition sympoly_eqMixin := Eval hnf in [eqMixin of sympoly by <:].
@@ -89,9 +88,15 @@ Canonical sympoly_lalgType :=
 Definition symtopol := fun x : {sympoly R[n]} => spol x.
 Lemma symtopol_is_lrmorphism : lrmorphism symtopol.
 Proof. by []. Qed.
-Canonical symtopol_lrmorphism := RMorphism symtopol_is_lrmorphism.
+Canonical symtopol_lrmorphism := LRMorphism symtopol_is_lrmorphism.
+
+Lemma symtypol_is_symmetric x : symtopol x \is symmetric.
+Proof. by case: x. Qed.
 
 End SymPolyRingType.
+
+Hint Resolve symtypol_is_symmetric.
+
 
 Section SymPolyComRingType.
 
@@ -145,42 +150,47 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
 Fact elementary_sym d : mesym n R d \is symmetric.
 Proof using . exact: mesym_sym. Qed.
 Definition elementary d : {sympoly R[n]} := SymPoly (elementary_sym d).
-
-
-Fact complete_sym d :
-  (\sum_(m : 'X_{1..n < d.+1} | mdeg m == d)
-    'X_[m] : {mpoly R[n]}) \is symmetric.
+Lemma mesym_homog d : mesym n R d \is d.-homog.
 Proof using .
-  apply/issymP => s; rewrite -mpolyP => m.
-  rewrite mcoeff_sym !raddf_sum /=.
-  case: (altP (mdeg m =P d%N)) => [<- | Hd].
-  - have Hsm : mdeg (m#s) < (mdeg m).+1.
-      by rewrite mdeg_mperm.
-    rewrite (bigD1 (BMultinom Hsm)) /=; last by rewrite mdeg_mperm.
-    rewrite mcoeffX eq_refl big1 ?addr0 /=; first last.
-      move=> mon /= /andP [] _ /negbTE.
-      by rewrite {1}/eq_op /= mcoeffX => ->.
-    have Hm : mdeg m < (mdeg m).+1 by [].
-    rewrite (bigD1 (BMultinom Hm)) //=.
-    rewrite mcoeffX eq_refl big1 ?addr0 //=.
-    move=> mon /= /andP [] _ /negbTE.
+  apply/dhomogP => m.
+  rewrite msupp_mesymP => /existsP [] s /andP [] /eqP <- {d} /eqP -> {m}.
+  exact: mdeg_mesym1.
+Qed.
+Lemma elementary_homog d : symtopol (elementary d) \is d.-homog.
+Proof using . by rewrite mesym_homog. Qed.
+
+Definition complete_pol d  : {mpoly R[n]} :=
+  \sum_(m : 'X_{1..n < d.+1} | mdeg m == d) 'X_[m].
+Lemma mcoeff_complete d m : (complete_pol d)@_m = (mdeg m == d)%:R.
+Proof.
+  rewrite linear_sum /=.
+  case: (altP (mdeg m =P d%N)) => [<- | Hd] /=.
+  - have Hsm : mdeg m < (mdeg m).+1 by [].
+    rewrite (bigD1 (BMultinom Hsm)) //=.
+    rewrite mcoeffX eq_refl big1 ?addr0 //= => mon /andP [_ /negbTE].
     by rewrite {1}/eq_op /= mcoeffX => ->.
-  - rewrite big1; first last.
-      move=> mon /eqP Hd1; rewrite mcoeffX.
-      suff /= : val mon != m#s by move/negbTE ->.
-      move: Hd; rewrite -{1}Hd1; apply contra=> /eqP ->.
-      by rewrite mdeg_mperm.
-    rewrite big1 //.
-    move=> mon /eqP Hd1; rewrite mcoeffX.
+  - rewrite big1 // => mon /eqP Hd1; rewrite mcoeffX.
     suff /= : val mon != m by move/negbTE ->.
     by move: Hd; rewrite -{1}Hd1; apply contra=> /eqP ->.
 Qed.
+Fact complete_sym d : complete_pol d \is symmetric.
+Proof using .
+  apply/issymP => s; rewrite -mpolyP => m.
+  rewrite mcoeff_sym !mcoeff_complete.
+  by rewrite mdeg_mperm.
+Qed.
 Definition complete d : {sympoly R[n]} := SymPoly (complete_sym d).
+Lemma complete_homog d : symtopol (complete d) \is d.-homog.
+Proof using .
+  apply rpred_sum => m /eqP H.
+  by rewrite dhomogX /= H.
+Qed.
 
-Fact power_sum_sym d : (\sum_(i < n) 'X_i^+d : {mpoly R[n]}) \is symmetric.
+Definition power_sum_pol d  : {mpoly R[n]} := \sum_(i < n) 'X_i ^+ d.
+Fact power_sum_sym d : power_sum_pol d \is symmetric.
 Proof using .
   apply/issymP => s.
-  rewrite raddf_sum /= (reindex_inj (h := s^-1))%g /=; last by apply/perm_inj.
+  rewrite linear_sum /= (reindex_inj (h := s^-1))%g /=; last by apply/perm_inj.
   apply eq_bigr => i _; rewrite rmorphX /=; congr (_ ^+ _).
   rewrite msymX /=; congr mpolyX.
   rewrite mnmP => j; rewrite !mnmE /=; congr nat_of_bool.
@@ -188,51 +198,7 @@ Proof using .
   exact: perm_inj.
 Qed.
 Definition power_sum d : {sympoly R[n]} := SymPoly (power_sum_sym d).
-
-Fact monomial_sym (sh : seq nat) :
-  (\sum_(m : 'X_{1..n < (sumn sh).+1} |
-         sort leq m == sh :> seq nat) 'X_[m] : {mpoly R[n]})
-    \is symmetric.
-Proof using .
-  apply/issymP => s; rewrite raddf_sum /=.
-  pose fm := fun m : 'X_{1..n < (sumn sh).+1} => m#s.
-  have Hfm m : mdeg (fm m) < (sumn sh).+1 by rewrite /fm mdeg_mperm bmdeg.
-  rewrite (reindex_inj (h := fun m => BMultinom (Hfm m))) /=; first last.
-    rewrite /fm => m1 m2 /= /(congr1 val) /=.
-    rewrite mnmP => Heq; apply val_inj; rewrite mnmP /= => i.
-    have:= Heq ((s^-1)%g i).
-    by rewrite !mnmE permKV.
-  apply congr_big => //.
-  - move=> m /=; rewrite [sort _ _](_ : _ = sort leq m) //.
-    apply (eq_sorted leq_trans anti_leq); try exact: (sort_sorted leq_total).
-    do 2 rewrite perm_eq_sym (perm_sort leq _).
-    apply/tuple_perm_eqP; exists s.
-    by apply (eq_from_nth (x0 := 0%N)); rewrite size_map.
-  - move=> m _.
-    rewrite msymX /fm /=; congr mpolyX.
-    rewrite mnmP => j; rewrite !mnmE /=.
-    by rewrite permKV.
-Qed.
-Definition monomial sh : {sympoly R[n]} := SymPoly (monomial_sym sh).
-
-
-Lemma mesym_homog d : mesym n R d \is d.-homog.
-Proof using .
-  apply/dhomogP => m.
-  rewrite msupp_mesymP => /existsP [] s /andP [] /eqP <- {d} /eqP -> {m}.
-  exact: mdeg_mesym1.
-Qed.
-
-Lemma elementary_homog d : (elementary d : {mpoly R[n]}) \is d.-homog.
-Proof using . by rewrite mesym_homog. Qed.
-
-Lemma complete_homog d : (complete d : {mpoly R[n]}) \is d.-homog.
-Proof using .
-  apply rpred_sum => m /eqP H.
-  by rewrite dhomogX /= H.
-Qed.
-
-Lemma power_sum_homog d : (power_sum d : {mpoly R[n]}) \is d.-homog.
+Lemma power_sum_homog d : symtopol (power_sum d) \is d.-homog.
 Proof using .
   apply rpred_sum => m _.
   have /(dhomogMn d) : ('X_m : {mpoly R[n]}) \is 1.-homog.
@@ -240,16 +206,48 @@ Proof using .
   by rewrite mul1n.
 Qed.
 
+
+Definition monomial_pol (sh : n.-tuple nat) : {mpoly R[n]} :=
+  (\sum_(p : permuted sh) 'X_[Multinom p] ).
+Lemma mcoeff_monomial sh m : (monomial_pol sh)@_m = (perm_eq sh m)%:R.
+Proof.
+  rewrite linear_sum /=.
+  case: (boolP (perm_eq sh m)) => /= [| /(elimN idP)] Hperm.
+  - rewrite (bigD1 (Permuted Hperm)) //= (_ : [multinom m] = m);
+      last exact: val_inj.
+    rewrite mcoeffX eq_refl /= big1 ?addr0 // => p /eqP Hp.
+    rewrite mcoeffX; case: (altP (_ =P _)) => //= Heq.
+    by exfalso; apply: Hp; apply val_inj; rewrite /= -Heq.
+  - rewrite big1 // => p _.
+    rewrite mcoeffX; case: (altP (_ =P _)) => //= Heq.
+    by exfalso; apply Hperm; rewrite -Heq /=; exact: permutedP.
+Qed.
+Fact monomial_sym sh : monomial_pol sh \is symmetric.
+Proof.
+  apply/issymP => s; apply/mpolyP => m.
+  rewrite mcoeff_sym !mcoeff_monomial.
+  have: perm_eq (m#s) m by apply/tuple_perm_eqP; exists s.
+  by move=> /perm_eqrP ->.
+Qed.
+Definition monomial sh : {sympoly R[n]} :=
+  if size sh < n then SymPoly (monomial_sym (mpart sh)) else 0 : {sympoly R[n]}.
 Lemma monomial_homog d (sh : intpartn d) :
-  (monomial sh  : {mpoly R[n]}) \is d.-homog.
+  symtopol (monomial sh) \is d.-homog.
 Proof using .
-  apply rpred_sum => m /eqP Hm.
+  rewrite /monomial; case: leqP => [/= _| /ltnW Hsz]; first exact: dhomog0.
+  apply rpred_sum => m _.
   rewrite dhomogX /= -{2}(intpartn_sumn sh) /mdeg.
-  have Hperm : perm_eq m sh.
-    by rewrite -(perm_sort leq) Hm perm_eq_refl.
-  by rewrite (eq_big_perm _ Hperm) /= sumnE.
+  rewrite -(eq_big_perm _ (permutedP m)) sumnE.
+  rewrite mpartE take_oversize /=.
+    by rewrite sumn_cat sumn_nseq mul0n addn0.
+  by rewrite size_cat size_nseq subnKC.
 Qed.
 
+Lemma sym_monomialE (p : {mpoly R[n]}) :
+  p \is symmetric ->
+  p = \sum_(m <- msupp p | is_dominant m) p@_m *: monomial (partm m).
+Proof.
+Admitted.
 
 (** Basis at degree 0 *)
 Lemma elementary0 : elementary 0 = 1.
@@ -258,7 +256,8 @@ Proof using . by apply val_inj; rewrite /= mesym0E. Qed.
 Lemma powersum0 : power_sum 0 = n%:R.
 Proof using .
   apply /val_inj.
-  rewrite /= (eq_bigr (fun _ => 1)); last by move=> i _; rewrite expr0.
+  rewrite /= /power_sum_pol (eq_bigr (fun _ => 1));
+    last by move=> i _; rewrite expr0.
   rewrite sumr_const card_ord /=.
   by rewrite [RHS](raddfMn (@symtopol_lrmorphism _ _) n).
 Qed.
@@ -267,7 +266,7 @@ Lemma complete0 : complete 0 = 1.
 Proof using .
   have Hd0 : (mdeg (0%MM : 'X_{1..n})) < 1 by rewrite mdeg0.
   apply val_inj => /=.
-  rewrite /complete (big_pred1 (BMultinom Hd0)); first last.
+  rewrite /complete_pol (big_pred1 (BMultinom Hd0)); first last.
     by move=> m; rewrite /= mdeg_eq0 {2}/eq_op.
   by rewrite mpolyX0.
 Qed.
@@ -305,6 +304,134 @@ Qed.
 
 End Bases.
 
+
+(** Prod of generator *)
+
+Section ProdGen.
+
+Variable n : nat.
+Variable R : comRingType.
+
+Section Defs.
+
+Variable gen : nat -> {sympoly R[n]}.
+Hypothesis gen_homog : forall d, symtopol (gen d) \is d.-homog.
+
+Definition prod_gen d (sh : intpartn d) := \prod_(i <- sh) gen i.
+Lemma prod_gen_homog d (sh : intpartn d) :
+  symtopol (prod_gen sh) \is d.-homog.
+Proof using gen_homog.
+  rewrite /prod_gen; case: sh => sh /= /andP [/eqP <- _] {d}.
+  elim: sh => [| d sh IHsh] /=; first by rewrite big_nil /= dhomog1.
+  by rewrite big_cons; apply dhomogM; first exact: gen_homog.
+Qed.
+
+Lemma prod_genM c d (l : intpartn c) (k : intpartn d) :
+  (prod_gen l) * (prod_gen k) = (prod_gen (union_intpartn l k)).
+Proof using.
+by rewrite /prod_gen (eq_big_perm _ (perm_union_intpartn l k)) big_cat.
+Qed.
+
+End Defs.
+
+Definition prod_elementary := prod_gen (@elementary n R).
+Definition prod_elementary_homog := prod_gen_homog (@elementary_homog n R).
+Definition prod_complete := prod_gen (@complete n R).
+Definition prod_complete_homog := prod_gen_homog (@complete_homog n R).
+Definition prod_power_sum := prod_gen (@power_sum n R).
+Definition prod_power_sum_homog := prod_gen_homog (@power_sum_homog n R).
+
+End ProdGen.
+
+Notation "''e[' k ]" := (prod_elementary _ _ k)
+                              (at level 8, k at level 2, format "''e[' k ]").
+Notation "''h[' k ]" := (prod_complete _ _ k)
+                              (at level 8, k at level 2, format "''h[' k ]").
+Notation "''p[' k ]" := (prod_power_sum _ _ k)
+                              (at level 8, k at level 2, format "''p[' k ]").
+
+From mathcomp Require Import vector.
+
+
+Section Homogeneous.
+
+Variable n : nat.
+Variable R : fieldType.
+Variable d : nat.
+
+Definition hommonomial (l : intpartn d) := DHomog (monomial_homog n.+1 R l).
+Definition dsym := span [seq hommonomial l | l <- enum [set: intpartn d]].
+
+Lemma hommonomialE (f : dhomog n.+1 R d) :
+  mpoly_of_dhomog f \is symmetric ->
+  f = \sum_(p : intpartn d) f@_(mpart p) *: hommonomial p.
+Proof.
+  move=> /sym_monomialE Hf.
+  apply val_inj => /=; rewrite {1}Hf {Hf}.
+  rewrite [LHS](linear_sum (@symtopol_lrmorphism _ _)) linear_sum /=.
+  rewrite (bigID (fun i : intpartn d => mpart i \in msupp f)) /=.
+  rewrite [X in _ + X]big1 ?addr0;
+    last by move=> i /memN_msupp_eq0 ->; rewrite scale0r.
+  rewrite (eq_bigr (fun i : intpartn d =>
+             f@_(mpart i) *:
+              symtopol (monomial n.+1 R (partm (n := n.+1) (mpart i)))));
+      first last.
+    move=> i Hi; congr (_ *: _); congr symtopol; congr monomial.
+(*    rewrite mpartE.
+    
+is_dominant_mpart is_dominant_mpart_partm
+      rewrite big_map /=.
+    *)
+Admitted.
+
+Lemma dsymP f : (f \in dsym) = (mpoly_of_dhomog f \is symmetric).
+Proof.
+  apply/idP/idP.
+  - move=> /coord_span -> /=.
+    rewrite linear_sum; apply rpred_sum => p _.
+    rewrite linearZZ; apply rpredZ => /=.
+    by rewrite (nth_map (rowpartn d)) /=; last by move: p; rewrite cardE => i.
+  - move/hommonomialE ->.
+    rewrite /dsym span_def.
+    apply rpred_sum => p _; apply rpredZ => /=.
+    rewrite big_map -big_enum (bigD1 p) //= -[X in X \in _]addr0.
+    apply memv_add; first exact: memv_line.
+    exact: mem0v.
+Qed.
+(*
+Definition hom_elementary (l : intpartn d) :=
+  DHomog (prod_elementary_homog n.+1 R l).
+
+Definition dsym := span [seq hom_elementary l | l <- enum [set: intpartn d]].
+
+Lemma dsymP f : (f \in dsym) = (mpoly_of_dhomog f \is symmetric).
+Proof.
+  apply/idP/idP.
+  - move=> /coord_span -> /=.
+    rewrite linear_sum; apply rpred_sum => p _.
+    rewrite linearZZ; apply rpredZ => /=.
+    rewrite (nth_map (rowpartn d)); last by move: p; rewrite cardE => i.
+    exact: symtypol_is_symmetric.
+  - move/sym_fundamental => [t [Ht _]].
+    have -> : f = meval (fun i => elementary _ R i) t. [tuple elementary n.+1 R i.+1  | i < n.+1].
+    
+    move=> Hsym.
+    rewrite /dsym span_def.
+    have -> : f = \sum_(p : intpartn d)
+                   (mpoly_of_dhomog f)@_(mpart n.+1 p) *: hommonomial p.
+      apply val_inj => /=; apply/mpolyP => m.
+      rewrite linear_sum.
+      admit.
+    apply rpred_sum => p _; apply rpredZ => /=.
+    rewrite big_map -big_enum.
+    rewrite (bigD1 p) //= -[X in X \in _]addr0.
+    apply memv_add; first exact: memv_line.
+    exact: mem0v.
+Admitted.
+*)
+
+End Homogeneous.
+
 Section Schur.
 
 Variable n0 : nat.
@@ -335,7 +462,7 @@ Proof using .
 Qed.
 
 
-Lemma Schur_oversize d (sh : intpartn d) : size sh > n -> Schur sh = 0.
+Lemma Schur_oversize d (sh : intpartn d) : (size sh > n)%N -> Schur sh = 0.
 Proof using .
   rewrite Schur_tabsh_readingE=> Hn; rewrite big_pred0 // => w.
   apply (introF idP) => /tabsh_readingP [] tab [] Htab Hsh _ {w}.
@@ -409,9 +536,9 @@ Variable n0 : nat.
 Local Notation n := (n0.+1).
 Variable R : comRingType.
 
-Lemma completeE d : complete n R d = Schur _ R (rowpartn d) :> {mpoly R[n]}.
+Lemma completeE d : complete n R d = Schur n0 R (rowpartn d) :> {mpoly R[n]}.
 Proof using .
-  rewrite /= -complete_basisE.
+  rewrite /= -complete_basisE /complete_pol.
   rewrite -(big_map (@bmnm n d.+1) (fun m => mdeg m == d) (fun m => 'X_[m])).
   rewrite /index_enum -enumT -big_filter.
   set tmp := filter _ _.
@@ -481,3 +608,5 @@ Proof using .
 Qed.
 
 End SchurComRingType.
+
+

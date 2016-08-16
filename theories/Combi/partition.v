@@ -74,8 +74,17 @@ Sigma types for integer partitions:
 - [conj_intpart] == the conjugate of a [intpart] as a [intpart]
 
 - [intpart n] == a type for [seq (seq nat)] which are partitions of n;
-                it is canonically a [finType]
+               it is canonically a [finType]
 - [conj_intpartn] == the conjugate of a [intpartn] as a [intpartn]
+
+
+Operations on partitions:
+
+- [union_intpart l k] == the partition of type [intpart] obtained by
+               gathering the parts of [l] and [k]
+- [union_intpartn l k] == the partition of type [intpartn] obtained by
+               gathering the parts of [l] and [k]
+
 ******)
 Set Printing Universes.
 
@@ -1151,7 +1160,10 @@ Canonical intpart_countType := Eval hnf in CountType intpart intpart_countMixin.
 Lemma intpartP (p : intpart) : is_part p.
 Proof. by case: p. Qed.
 
-Hint Resolve intpartP.
+Lemma intpart_sorted (p : intpart) : sorted geq p.
+Proof. by have:= intpartP p; rewrite is_part_sortedE => /andP []. Qed.
+
+Hint Resolve intpartP intpart_sorted.
 
 Canonical conj_intpart p := IntPart (is_part_conj (intpartP p)).
 
@@ -1319,7 +1331,12 @@ Canonical intpartn_subFinType := Eval hnf in [subFinType of intpartn].
 
 Lemma intpartnP (p : intpartn) : is_part p.
 Proof using . by case: p => /= p /andP []. Qed.
-Hint Resolve intpartnP.
+
+Lemma intpartn_sorted (p : intpartn) : sorted geq p.
+Proof. by have:= intpartnP p; rewrite is_part_sortedE => /andP []. Qed.
+
+Hint Resolve intpartnP intpartn_sorted.
+
 Definition intpart_of_intpartn (p : intpartn) := IntPart (intpartnP p).
 Coercion intpart_of_intpartn : intpartn >-> intpart.
 
@@ -1443,4 +1460,78 @@ Proof.
   by rewrite -(size_map val) subType_seqP -size_enum_partn.
 Qed.
 
-Hint Resolve intpartP intpartnP.
+Hint Resolve intpartP intpart_sorted intpartnP intpartn_sorted.
+
+
+Section UnionPart.
+
+Lemma union_part_is_part l k :
+  is_part l -> is_part k -> is_part (merge geq l k).
+Proof.
+rewrite !is_part_sortedE => /andP [sortl l0] /andP [sortk k0].
+apply/andP; split; first exact: merge_sorted.
+by rewrite mem_merge mem_cat negb_or l0 k0.
+Qed.
+
+Lemma sumn_union_part l k : sumn (merge geq l k) = sumn l + sumn k.
+Proof.
+have:= perm_merge geq l k => /perm_eqlP/perm_sumn ->.
+by rewrite sumn_cat.
+Qed.
+
+Fact union_intpart_subproof (l : intpart) (k : intpart) :
+  is_part (merge geq l k).
+Proof. exact: union_part_is_part. Qed.
+Definition union_intpart (l : intpart) (k : intpart) :=
+  IntPart (union_intpart_subproof l k).
+
+Lemma union_intpartE l k : val (union_intpart l k) = sort geq (l ++ k).
+Proof.
+rewrite /=; apply (eq_sorted (leT := geq)) => //.
+- exact: merge_sorted.
+- exact: sort_sorted.
+- by rewrite perm_merge perm_eq_sym perm_sort.
+Qed.
+
+Lemma perm_union_intpart l k : perm_eq (union_intpart l k) (l ++ k).
+Proof. by rewrite /= perm_merge. Qed.
+
+Lemma union_intpartC l k : union_intpart l k = union_intpart k l.
+Proof.
+apply val_inj; rewrite !union_intpartE.
+by apply/perm_sortP; rewrite // perm_catC.
+Qed.
+
+Lemma union_intpartA l k j :
+  union_intpart l (union_intpart k j) = union_intpart (union_intpart k l) j.
+Proof.
+apply val_inj; rewrite !union_intpartE; apply/perm_sortP => //.
+apply (perm_eq_trans (y := l ++ (k ++ j))).
+- by rewrite perm_cat2l perm_sort.
+- apply (perm_eq_trans (y := (k ++ l) ++ j)).
+  + by rewrite catA perm_cat2r perm_catC.
+  + by rewrite perm_cat2r perm_eq_sym perm_sort.
+Qed.
+
+Variables (m n : nat) (l : intpartn m) (k : intpartn n).
+
+Lemma union_intpartn_subproof : is_part_of_n (m + n) (merge geq l k).
+Proof.
+apply /andP; split.
+- by rewrite sumn_union_part !intpartn_sumn.
+- exact: union_part_is_part.
+Qed.
+Definition union_intpartn := IntPartN union_intpartn_subproof.
+
+Lemma union_intpartnE : val union_intpartn = sort geq (l ++ k).
+Proof.
+rewrite /=; apply (eq_sorted (leT := geq)) => //.
+- apply: merge_sorted => //.
+- exact: sort_sorted.
+- by rewrite perm_merge perm_eq_sym perm_sort.
+Qed.
+
+Lemma perm_union_intpartn : perm_eq (union_intpart l k) (l ++ k).
+Proof. by rewrite /= perm_merge. Qed.
+
+End UnionPart.
