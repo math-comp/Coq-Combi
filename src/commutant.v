@@ -546,11 +546,33 @@ Qed.
 
 End PermCycles.
 
-Require Import cycletype.
+From mathcomp Require Import ssralg ssrnum algC.
+Import GRing.Theory Num.Theory.
+Local Open Scope ring_scope.
+From Combi Require Import permuted.
+Require Import cycletype towerSn.
+
+Lemma dvdn_zcard_fact n (l : intpartn n) : zcard l %| n`!.
+Proof.
+pose l' := (partCT_of_partn l).
+have -> : zcard l = zcard l' by rewrite intpartn_castE /=.
+rewrite -(perm_of_partCTP l') -(card_cent1_perm (perm_of_partCT l')).
+rewrite -card_Sn -cardsT; apply cardSg.
+exact: subsetT.
+Qed.
 
 Theorem card_class_of_part n (l : intpartn n) :
   #|class_of_partCT l| = (n`! %/ zcard l)%N.
 Proof using.
 rewrite /class_of_partCT card_class_perm perm_of_partCTP /=.
 by rewrite intpartn_castE /= card_ord.
+Qed.
+
+Lemma zcoeffE n (l : intpartn n) : zcoeff l = (zcard l)%:R.
+Proof.
+rewrite /zcoeff card_class_of_part card_Sn char0_natf_div; first last.
+- exact: dvdn_zcard_fact.
+- exact: Cchar.
+rewrite invf_div mulrC mulfVK //.
+by rewrite pnatr_eq0 -lt0n; apply: fact_gt0.
 Qed.

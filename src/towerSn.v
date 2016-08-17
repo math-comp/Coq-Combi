@@ -6,9 +6,9 @@ From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import ssralg matrix vector mxalgebra falgebra ssrnum algC.
 From mathcomp Require Import presentation classfun character mxrepresentation.
 
-From Combi Require Import tools ordcast permuted symgroup partition Greene sorted rep1.
+From Combi Require Import tools ordcast permuted symgroup partition Greene sorted.
 
-Require Import ssrcomp slicedbij cycles cycletype reprS2.
+Require Import ssrcomp slicedbij cycles cycletype.
 
 Import LeqGeqOrder.
 
