@@ -27,6 +27,13 @@ Local Open Scope ring_scope.
 Import GRing.Theory.
 
 
+Lemma boolRP (R : ringType) (b : bool) : reflect (b%:R = 0 :> R)%R (~~b).
+Proof using.
+apply (iffP idP) => [/negbTE -> // | H].
+apply/negP => Hb; move: H; rewrite Hb /= => /eqP.
+by rewrite oner_eq0.
+Qed.
+
 Reserved Notation "{ 'sympoly' T [ n ] }"
   (at level 0, T, n at level 2, format "{ 'sympoly'  T [ n ] }").
 
@@ -90,12 +97,12 @@ Lemma symtopol_is_lrmorphism : lrmorphism symtopol.
 Proof. by []. Qed.
 Canonical symtopol_lrmorphism := LRMorphism symtopol_is_lrmorphism.
 
-Lemma symtypol_is_symmetric x : symtopol x \is symmetric.
+Lemma symtopol_is_symmetric x : symtopol x \is symmetric.
 Proof. by case: x. Qed.
 
 End SymPolyRingType.
 
-Hint Resolve symtypol_is_symmetric.
+Hint Resolve symtopol_is_symmetric.
 
 
 Section SymPolyComRingType.
@@ -170,8 +177,7 @@ Proof.
     rewrite mcoeffX eq_refl big1 ?addr0 //= => mon /andP [_ /negbTE].
     by rewrite {1}/eq_op /= mcoeffX => ->.
   - rewrite big1 // => mon /eqP Hd1; rewrite mcoeffX.
-    suff /= : val mon != m by move/negbTE ->.
-    by move: Hd; rewrite -{1}Hd1; apply contra=> /eqP ->.
+    by apply/boolRP; move: Hd; rewrite -{1}Hd1; apply contra=> /eqP ->.
 Qed.
 Fact complete_sym d : complete_pol d \is symmetric.
 Proof using .
@@ -304,6 +310,12 @@ Qed.
 
 End Bases.
 
+Notation "''e_' k" := (elementary _ _ k)
+                              (at level 8, k at level 2, format "''e_' k").
+Notation "''h_' k" := (complete _ _ k)
+                              (at level 8, k at level 2, format "''h_' k").
+Notation "''p_' k" := (power_sum _ _ k)
+                              (at level 8, k at level 2, format "''p_' k").
 
 (** Prod of generator *)
 
@@ -349,6 +361,89 @@ Notation "''h[' k ]" := (prod_complete _ _ k)
                               (at level 8, k at level 2, format "''h[' k ]").
 Notation "''p[' k ]" := (prod_power_sum _ _ k)
                               (at level 8, k at level 2, format "''p[' k ]").
+
+
+Section NewtonFormula.
+
+Variable nvar : nat.
+Variable R : comRingType.
+
+Lemma mult_complete_U k d i m :
+  ((@symtopol nvar R 'h_k) * 'X_i ^+ d  )@_m =
+  ((mdeg m == (k + d)%N) && (m i >= d))%:R.
+Proof using.
+rewrite /complete_pol mulr_suml linear_sum /=; case: leqP => /= H.
+- pose Ud := (U_(i) *+ d)%MM.
+  have Hleq : (Ud <= m)%MM.
+    apply/mnm_lepP => j; rewrite mulmnE mnm1E.
+    by case: eqP => /= [<- | _]; rewrite ?muln1 ?muln0.
+  rewrite andbT -(submK Hleq).
+  case: (altP (_ =P _)) => Hdeg /=.
+  + move: Hdeg => /eqP; rewrite mdegD mdegMn mdeg1 mul1n eqn_add2r => /eqP Hdeg.
+    have Hbound : mdeg (m - Ud) < k.+1 by rewrite Hdeg.
+    rewrite (bigD1 (BMultinom Hbound)) /=; last by rewrite Hdeg.
+    rewrite mpolyXn -mpolyXD mcoeffX eq_refl /=.
+    rewrite big1 ?addr0 // => m' /andP [_ ] Hneq.
+    rewrite -mpolyXD mcoeffX.
+    apply/boolRP; move: Hneq; apply contra.
+    rewrite eqm_add2r => /eqP Heq.
+    by apply/eqP/val_inj => /=.
+  + rewrite big1 // => m' /eqP Hm'.
+    rewrite mpolyXn -mpolyXD mcoeffX.
+    apply/boolRP; move: Hdeg; apply contra => /eqP <-.
+    by rewrite mdegD Hm' mdegMn mdeg1 mul1n.
+- rewrite andbF big1 // => m' _.
+  rewrite mpolyXn -mpolyXD mcoeffX.
+  apply/boolRP/eqP/mnmP => /(_ i).
+  rewrite mnmDE mulmnE mnm1E eq_refl muln1 => Habs.
+  by move: H; rewrite -Habs ltnNge leq_addl.
+Qed.
+
+Lemma mult_complete_powersum k d m :
+  (('h_k * 'p_d) : {sympoly R[nvar]})@_m =
+  (mdeg m == (k + d)%N)%:R * \sum_(i < nvar) (m i >= d)%:R.
+Proof using.
+rewrite -[spol _]/(symtopol_lrmorphism nvar R _) rmorphM /=.
+rewrite /power_sum_pol !mulr_sumr linear_sum.
+apply eq_bigr=> i _ /=; rewrite mult_complete_U.
+by case: eqP => _ //=; rewrite ?mul0r ?mul1r.
+Qed.
+
+Lemma Newton_complete (k : nat) :
+  k%:R *: 'h_k = \sum_(i < k) 'h_i * 'p_(k - i) :> {sympoly R[nvar]}.
+Proof using.
+apply val_inj => /=; apply/mpolyP => m.
+rewrite mcoeffZ mcoeff_complete.
+rewrite -[spol _]/(symtopol_lrmorphism nvar R _) !linear_sum.
+rewrite (eq_bigr
+           (fun i : 'I_k =>
+              (mdeg m == k)%:R *
+                \sum_(j < nvar) (m j >= (k - i)%N)%:R)) /=; first last.
+  move=> i _ /=; rewrite mult_complete_powersum.
+  by rewrite subnKC //; apply ltnW.
+rewrite -mulr_sumr mulrC.
+case: (altP (mdeg m =P k)) => Hdegm; rewrite /= ?mul1r ?mul0r //.
+rewrite exchange_big /=.
+rewrite (eq_bigr (fun i : 'I_nvar => (m i)%:R)).
+  by rewrite -Hdegm mdegE -natr_sum; congr (_%:R).
+move=> i _ /=; rewrite -natr_sum; congr (_%:R).
+have : m i <= k.
+  move: Hdegm; rewrite mdegE => <-.
+  by rewrite (bigD1 i) //=; apply leq_addr.
+rewrite (reindex_inj rev_ord_inj) /=.
+rewrite (eq_bigr (fun j : 'I_k => nat_of_bool (j < m i))); first last.
+  by move=> j _; rewrite subKn //.
+move: (m i) => n {m Hdegm i} Hn.
+rewrite (bigID (fun i : 'I_k => i < n)) /=.
+rewrite (eq_bigr (fun i => 1%N)); last by move=> i ->.
+rewrite sum_nat_const /= muln1 big1 ?addn0; last by move=> i /negbTE ->.
+rewrite cardE /= /enum_mem -enumT /=.
+rewrite (eq_filter (a2 := (preim nat_of_ord (fun i => i < n)))) //.
+rewrite -(size_map nat_of_ord).
+by rewrite -filter_map val_enum_ord iota_ltn // size_iota.
+Qed.
+
+End NewtonFormula.
 
 From mathcomp Require Import vector.
 
