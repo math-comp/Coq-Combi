@@ -100,6 +100,7 @@ VFILES:=theories/Combi/vectNK.v\
   theories/Combi/Yamanouchi.v\
   theories/Combi/partition.v\
   theories/Combi/permuted.v\
+  theories/Combi/composition.v\
   theories/Combi/skewtab.v\
   theories/Combi/std.v\
   theories/Combi/tableau.v\
