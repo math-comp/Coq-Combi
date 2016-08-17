@@ -368,8 +368,10 @@ Section NewtonFormula.
 Variable nvar : nat.
 Variable R : comRingType.
 
+Local Notation SF := {sympoly R[nvar]}.
+
 Lemma mult_complete_U k d i m :
-  ((@symtopol nvar R 'h_k) * 'X_i ^+ d  )@_m =
+  (('h_k : {mpoly R[nvar]}) * 'X_i ^+ d)@_m =
   ((mdeg m == (k + d)%N) && (m i >= d))%:R.
 Proof using.
 rewrite /complete_pol mulr_suml linear_sum /=; case: leqP => /= H.
@@ -400,7 +402,7 @@ rewrite /complete_pol mulr_suml linear_sum /=; case: leqP => /= H.
 Qed.
 
 Lemma mult_complete_powersum k d m :
-  (('h_k * 'p_d) : {sympoly R[nvar]})@_m =
+  ('h_k * 'p_d : SF)@_m =
   (mdeg m == (k + d)%N)%:R * \sum_(i < nvar) (m i >= d)%:R.
 Proof using.
 rewrite -[spol _]/(symtopol_lrmorphism nvar R _) rmorphM /=.
@@ -410,7 +412,7 @@ by case: eqP => _ //=; rewrite ?mul0r ?mul1r.
 Qed.
 
 Lemma Newton_complete (k : nat) :
-  k%:R *: 'h_k = \sum_(i < k) 'h_i * 'p_(k - i) :> {sympoly R[nvar]}.
+  k%:R *: 'h_k = \sum_(i < k) 'h_i * 'p_(k - i) :> SF.
 Proof using.
 apply val_inj => /=; apply/mpolyP => m.
 rewrite mcoeffZ mcoeff_complete.
@@ -428,8 +430,7 @@ rewrite (eq_bigr (fun i : 'I_nvar => (m i)%:R)).
   by rewrite -Hdegm mdegE -natr_sum; congr (_%:R).
 move=> i _ /=; rewrite -natr_sum; congr (_%:R).
 have : m i <= k.
-  move: Hdegm; rewrite mdegE => <-.
-  by rewrite (bigD1 i) //=; apply leq_addr.
+  by move: Hdegm; rewrite mdegE => <-; rewrite (bigD1 i) //=; apply leq_addr.
 rewrite (reindex_inj rev_ord_inj) /=.
 rewrite (eq_bigr (fun j : 'I_k => nat_of_bool (j < m i))); first last.
   by move=> j _; rewrite subKn //.
