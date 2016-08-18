@@ -78,6 +78,37 @@ Definition enum_compn n := enum_compn_rec n n.
 
 Definition is_comp_of_n sm := [pred s | (sumn s == sm) & is_comp s].
 
+Lemma enum_compn_rec_any aux1 aux2 n :
+  n <= aux1 -> n <= aux2 -> enum_compn_rec aux1 n = enum_compn_rec aux2 n.
+Proof.
+elim: aux1 aux2 n => [| aux1 IHaux1] aux2 n /=.
+  rewrite leqn0 => /eqP -> //=; by case aux2.
+case: (altP (n =P 0)) => [-> | Hn Haux1] //=; first by case aux2.
+case: aux2 => [| aux2 /= Haux2].
+  by rewrite leqn0 => /eqP H; rewrite H eq_refl in Hn.
+rewrite (negbTE Hn); congr flatten; apply eq_in_map => i.
+rewrite mem_iota add1n ltnS => /andP [Hi _].
+congr map; apply: IHaux1; rewrite leq_subLR.
+- by apply: (leq_trans Haux1); rewrite -{1}(add0n aux1) ltn_add2r.
+- by apply: (leq_trans Haux2); rewrite -{1}(add0n aux2) ltn_add2r.
+Qed.
+
+Lemma enum_compn_any aux n :
+  n <= aux -> enum_compn_rec aux n = enum_compn n.
+Proof. by rewrite /enum_compn => Hn; apply enum_compn_rec_any. Qed.
+
+Lemma enum_compnE n :
+  n != 0 ->
+  enum_compn n = flatten [seq [seq i :: p | p <- enum_compn (n - i) ] |
+                          i <- iota 1 n].
+Proof.
+rewrite -(enum_compn_any (leqnSn n)) /= => /negbTE ->.
+congr flatten; apply eq_in_map => i.
+rewrite mem_iota add1n ltnS => /andP [Hi _].
+congr map; apply enum_compn_any.
+by rewrite leq_subLR; apply: leq_addl.
+Qed.
+
 Lemma enum_compn_allP n : all (is_comp_of_n n) (enum_compn n).
 Proof.
 rewrite /is_comp_of_n /is_comp /enum_compn.
@@ -131,6 +162,7 @@ Proof.
 apply/idP/idP; last by move/(allP (enum_compn_allP n)).
 rewrite -has_pred1 has_count; by move/enum_compn_countE ->.
 Qed.
+
 
 Section CompOfn.
 
