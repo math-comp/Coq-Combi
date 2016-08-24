@@ -2,7 +2,6 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple path bigop finset div.
 From mathcomp Require Import fingroup perm action gproduct morphism.
-From mathcomp Require finmodule.
 
 From Combi Require Import tools partition.
 
@@ -78,7 +77,8 @@ Variable T : finType.
 Implicit Type (s t c : {perm T}).
 
 Lemma disjoint_support_dprodE (S : {set {perm T}}) :
-  disjoint_supports S -> \big[dprod/1]_(s in S) <[s]> = (\prod_(s in S) <[s]>)%G.
+  disjoint_supports S ->
+  (\big[dprod/1]_(s in S) <[s]>) = (\prod_(s in S) <[s]>)%G.
 Proof using.
 move=> [/trivIsetP Htriv Hinj]; apply/eqP/bigdprodYP => /= s Hs.
 apply/subsetP => t; rewrite !inE negb_and negbK.
@@ -114,7 +114,7 @@ apply/setP => y; apply/imsetP/pcycleP.
 - move=> [z /pcycleP [i -> {z}] -> {y}].
   by exists i => /=; rewrite -!permM (commuteX i Hcom) permM.
 - move=> [i -> {y}].
-  exists ((s ^+ i) x)%g; first exact: mem_pcycle.
+  exists ((s ^+ i) x); first exact: mem_pcycle.
   by rewrite -!permM (commuteX i Hcom) permM.
 Qed.
 
@@ -178,14 +178,14 @@ Qed.
 Lemma stab_pcycle S s :
   s \in 'N(S | 'P) -> forall x, (x \in S) = (pcycle s x \subset S).
 Proof using.
-move=> Hs x; apply/idP/subsetP => [[Hx y /pcycleP [i ->{y}]] | Hsubs].
+move=> Hs x; apply/idP/subsetP => [Hx y /pcycleP [i ->{y}] | Hsubs].
 - elim: i => [|i]; first by rewrite expg0 perm1.
   by rewrite expgSr permM; move: Hs => /astabsP <- /=.
 - exact: Hsubs (pcycle_id s x).
 Qed.
 
 Lemma restr_perm_pcycles S s :
-  restr_perm S s \in 'C(pcycles s | ('P)^*).
+  restr_perm S s \in 'C(pcycles s | ('P)^* ).
 Proof using.
 case: (boolP (s \in 'N(S | 'P))) => [nSs | /triv_restr_perm -> //].
 apply/astabP => /= X /imsetP [x _ ->{X}].
@@ -260,12 +260,12 @@ Definition stab_ipcycles s : {set {perm {set T}}} :=
     \bigcap_(i : 'I_#|T|.+1) 'N(pcycles s :&: 'SC_i | 'P).
 (* stab_ipcycles is canonicaly a group *)
 
-Definition inpcycles s := restr_perm (pcycles s) \o actperm ('P^*).
+Definition inpcycles s := restr_perm (pcycles s) \o actperm 'P^*.
 (* inpcycles is canonicaly a group morphism *)
 
 Section CM.
 
-Variables (s : {perm T}).
+Variable s : {perm T}.
 Implicit Type P : {perm {set T}}.
 
 Lemma stab_ipcycles_stab P :
@@ -463,7 +463,7 @@ rewrite inE; apply/andP; split.
   by rewrite -cent1_act_pcycle // -!actM mulVg act1.
 Qed.
 
-Lemma inpcycles1 s t : t \in 'C(pcycles s | ('P)^*) -> inpcycles s t = 1.
+Lemma inpcycles1 s t : t \in 'C(pcycles s | ('P)^* ) -> inpcycles s t = 1.
 Proof using.
 move=> Ht; have tfix := astab_act Ht.
 apply/permP => /= X; rewrite /inpcycles perm1.
@@ -522,8 +522,10 @@ rewrite inE; apply/andP; split.
   + exact: (subsetP (cent1_stab_ipcycle_pcyclegrpS s)).
 Qed.
 
+Local Open Scope nat_scope.
+
 Definition zcard l :=
-  (\prod_(i <- l) i * \prod_(i <- iota 1 (sumn l)) (count_mem i l)`!)%N.
+  \prod_(i <- l) i * \prod_(i <- iota 1 (sumn l)) (count_mem i l)`!.
 
 Corollary card_cent1_perm s : #|'C[s]| = zcard (cycle_type s).
 Proof using.
@@ -534,23 +536,19 @@ by rewrite /zcard card_stab_ipcycles // intpartn_sumn.
 Qed.
 
 Theorem card_class_perm s :
-  #|class s [set: {perm T}]| = (#|T|`! %/ zcard (cycle_type s))%N.
+  #|class s [set: {perm T}]| = #|T|`! %/ zcard (cycle_type s).
 Proof using.
 rewrite -card_cent1_perm -index_cent1 /= -divgI.
 rewrite (eq_card (B := perm_on setT)); first last.
   move=> p; rewrite inE unfold_in /perm_on /=.
   apply/esym/subsetP => i _; by rewrite in_set.
-rewrite card_perm cardsE setTI; congr (_ %/ #|_|)%N.
+rewrite card_perm cardsE setTI; congr (_ %/ #|_|).
 by rewrite /= setTI.
 Qed.
 
 End PermCycles.
 
-From mathcomp Require Import ssralg ssrnum algC.
-Import GRing.Theory Num.Theory.
-Local Open Scope ring_scope.
 From Combi Require Import permuted.
-Require Import cycletype towerSn.
 
 Lemma dvdn_zcard_fact n (l : intpartn n) : zcard l %| n`!.
 Proof.
@@ -562,17 +560,21 @@ exact: subsetT.
 Qed.
 
 Theorem card_class_of_part n (l : intpartn n) :
-  #|class_of_partCT l| = (n`! %/ zcard l)%N.
+  #|class_of_partCT l| = n`! %/ zcard l.
 Proof using.
 rewrite /class_of_partCT card_class_perm perm_of_partCTP /=.
 by rewrite intpartn_castE /= card_ord.
 Qed.
 
-Lemma zcoeffE n (l : intpartn n) : zcoeff l = (zcard l)%:R.
+
+From mathcomp Require Import ssralg ssrnum algC.
+Import GRing.Theory Num.Theory.
+Require Import cycletype towerSn.
+
+Lemma zcoeffE n (l : intpartn n) : zcoeff l = ((zcard l)%:R)%R.
 Proof.
-rewrite /zcoeff card_class_of_part card_Sn char0_natf_div; first last.
-- exact: dvdn_zcard_fact.
-- exact: Cchar.
+rewrite /zcoeff card_class_of_part card_Sn.
+rewrite char0_natf_div; [| exact: Cchar | exact: dvdn_zcard_fact].
 rewrite invf_div mulrC mulfVK //.
 by rewrite pnatr_eq0 -lt0n; apply: fact_gt0.
 Qed.
