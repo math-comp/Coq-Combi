@@ -67,7 +67,7 @@ Proof.
   pose f := (fun i : 'II_n => [tuple i.1; i.2]).
   have /card_imset <- : injective f by rewrite /f => [] [i1 i2] [j1 j2] /= [] -> ->.
   congr (card (mem (pred_of_set _))).
-  rewrite -setP => [] [[| s0 [| s1 [|s]]]] // Hs.
+  apply/setP => [] [[| s0 [| s1 [|s]]]] // Hs.
   rewrite !inE; apply/idP/idP.
   - rewrite /f {f} => /imsetP [[i j]].
     by rewrite inE /= andbT => Hij /(congr1 val) /= [] -> ->.

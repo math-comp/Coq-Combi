@@ -81,7 +81,7 @@ End SizeN.
 Definition permuted_list s :=
   [seq tval t | t <- permuted_tuple (Tuple (eq_refl (size s)))].
 
-Lemma size_permuted s : size (permuted_list s) = (size s)`!.
+Lemma size_permuted_list s : size (permuted_list s) = (size s)`!.
 Proof using . by rewrite /permuted_list size_map size_permuted_tuple. Qed.
 
 Lemma eq_seqE s s1 : perm_eq s s1 -> s1 \in permuted_list s.

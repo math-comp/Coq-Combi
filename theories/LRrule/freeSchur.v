@@ -338,8 +338,7 @@ Proof using .
   rewrite -big_imset /=; first last.
     move=> T1 T2 /=.
     rewrite inE => /andP []; rewrite inE => /set0Pn [] x1 Hx1 _ _.
-    move: Hx1; rewrite /freeSchur inE => /eqP Hx1.
-    rewrite -setP => /(_ x1); rewrite !inE Hx1.
+    move: Hx1; rewrite inE => /eqP Hx1 /setP/(_ x1); rewrite !inE Hx1.
     rewrite eq_refl => /esym/eqP; exact: val_inj.
 
   apply: eq_bigl => s; rewrite !inE.
@@ -582,7 +581,7 @@ Proof using Hsh1 Hsh2.
   have Hsimpl A B C :
       [set Q in (LRsupport A B) | (shape Q == C)] =
       [set Q : stdtabn (d1 + d2) | pred_LRtriple A B Q & (shape Q == C)].
-    rewrite -setP => Q; rewrite /LRsupport 2!inE [RHS]inE.
+    apply/setP => Q; rewrite /LRsupport 2!inE [RHS]inE.
     congr (_ && _); by rewrite LRtriple_fastE.
   rewrite !{}Hsimpl.
   rewrite -(card_in_imset (f := bij_LRsupport)).
@@ -655,7 +654,7 @@ Variables d1 d2 : nat.
 Lemma LRsupport_conj (T1 : stdtabn d1) (T2 : stdtabn d2):
   LRsupport (conj_stdtabn T1) (conj_stdtabn T2) = (@conj_stdtabn _) @: (LRsupport T1 T2).
 Proof using .
-  rewrite /LRsupport -setP => T; rewrite inE.
+  apply/setP => T; rewrite inE.
   apply/idP/idP.
   - rewrite -LRtriple_fastE; try exact: is_stdtab_conj => //; last exact: stdtabnP.
     move=> H.
@@ -664,7 +663,7 @@ Proof using .
       rewrite pred_LRtriple_conj // conj_tabK; first exact H.
       * exact: stdtabP.
       * apply val_inj; rewrite /= conj_tabK //; exact: stdtabP.
-  - move => /imsetP [] U; rewrite inE -LRtriple_fastE //.
+  - move=> /imsetP [] U; rewrite inE -LRtriple_fastE //.
     rewrite pred_LRtriple_conj // => H -> {T}.
     rewrite -LRtriple_fastE; try exact: is_stdtab_conj.
     exact: H.
@@ -685,7 +684,7 @@ Proof using .
   rewrite -(@card_imset _ _ (@conj_stdtabn _)) //.
   rewrite !setIdE imsetI; last by move=> a b /= _ _; exact: Hinj.
   congr (card (mem (_ :&: _))).
-  rewrite -setP => T; rewrite !inE.
+  apply/setP => T; rewrite !inE.
   apply/idP/idP.
   - move/imsetP => [] U; rewrite inE => /eqP HU -> /=.
     by rewrite shape_conj_tab HU.

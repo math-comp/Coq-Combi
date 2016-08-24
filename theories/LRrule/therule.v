@@ -498,8 +498,7 @@ Qed.
 
 Lemma bijLR_image : LRtab_set P1 P2 P = [set bijLR x | x in LRyam_set].
 Proof using .
-  rewrite -setP => Q.
-  apply/idP/idP.
+  apply setP => Q; apply/idP/idP.
   - move/bijLR_surj => [] y Hy <-.
     exact: mem_imset.
   - move/imsetP => [] y Hy ->.
@@ -635,7 +634,7 @@ Proof using .
   set LRset := (X in #|pred_of_set X|).
   case: (boolP (hb_strip P1 P)) => Hstrip /=.
   - suff -> : LRset = [set yamrow] by rewrite cards1.
-    rewrite -setP => y; rewrite !inE {LRset}.
+    apply setP => y; rewrite !inE {LRset}.
     case: y => y Hy /=.
     have -> : (YamEval Hy == yamrow) = (y == (ncons d2 0%N [::])).
       apply/idP/idP => /eqP Heq.

@@ -381,8 +381,7 @@ Definition length s := #|invset s|.
 Lemma length1 : length 1 = 0.
 Proof using .
   rewrite /length /invset.
-  apply/eqP; rewrite cards_eq0; apply/eqP.
-  rewrite -setP => [[i j]]; rewrite !inE /= !perm1.
+  apply/eqP; rewrite cards_eq0; apply/eqP/setP => [[i j]]; rewrite !inE !perm1.
   apply (introF idP) => /andP [] /ltn_trans H/H{H}.
   by rewrite ltnn.
 Qed.
@@ -395,7 +394,7 @@ Proof using .
     rewrite /f => [[i j]]; by rewrite !permKV.
   rewrite -(card_imset _ (can_inj (fcan s))).
   congr (card (mem (pred_of_set _))).
-  rewrite -setP => [[i j]]; rewrite !inE /=.
+  apply setP => [[i j]]; rewrite !inE /=.
   apply/idP/idP.
   - move/imsetP => [[u v]]; rewrite inE /= => /andP [] Huv Hsuv.
     rewrite /f /= => [] [] -> ->.
@@ -445,7 +444,7 @@ Proof using .
     move/(congr1 's_i); rewrite /eltr Hi Hi1 tpermK tpermL => Hu; subst u.
     move/(congr1 's_i); rewrite /eltr Hi Hi1 tpermK tpermR => Hv; subst v.
     move: Huv => /ltnW /=; by rewrite ltnn.
-  rewrite -setP => [[u v]] /=; rewrite !inE /= !permM.
+  apply setP => [[u v]] /=; rewrite !inE /= !permM.
   apply/idP/idP.
   - move=> /andP [] Huv.
     rewrite /eltr Hi Hi1 -/i1; case: tpermP => /= [Hv | Hv | /eqP Hvi /eqP Hvi1].

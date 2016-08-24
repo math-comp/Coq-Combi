@@ -328,7 +328,7 @@ Qed.
 Definition swapSet := [fun s : {set 'I_(size x)} => swap @: s].
 Lemma swapSet_invol : involutive swapSet.
 Proof using .
-  move=> S; rewrite -setP => i; rewrite -{1}[i]swap_invol.
+  move=> S; apply/setP => i; rewrite -{1}[i]swap_invol.
   by rewrite !(mem_imset_inj _ _ swap_inj).
 Qed.
 Lemma swapSet_inj : injective swapSet.
@@ -499,7 +499,7 @@ Proof using .
       move: Hdis; rewrite -setI_eq0; apply: contraLR => /negbNE HS.
       have {Hs} Hs : s \in S :&: cover P.
         by rewrite in_setI Hs /= /cover; apply/bigcupP; exists S.
-      by apply/eqP; rewrite -setP => H; have := H s; rewrite Hs in_set0.
+      by apply/eqP/setP => H; have := H s; rewrite Hs in_set0.
     move: Htriv; rewrite /trivIset big_setU1 //=.
     * move/eqP ->; rewrite {2}/cover big_setU1 //=.
       rewrite cardsU; move: Hdis; rewrite -setI_eq0 => /eqP ->.
@@ -510,7 +510,7 @@ Lemma disjoint_cover (A B : {set 'I_N}) :
   [disjoint cover P & cover Q] -> A \in P -> B \in Q -> [disjoint A & B].
 Proof using .
   rewrite -!setI_eq0 => /eqP; rewrite -setP => Hcov HA HB.
-  apply/eqP; rewrite -setP => i; rewrite in_set0.
+  apply/eqP/setP => i; rewrite in_set0.
   apply/idP/idP; move/(_ i): Hcov; rewrite !inE /cover => /negbT.
   apply contra => /andP [HiA HiB].
   by apply/andP; split; apply/bigcupP; [exists A | exists B].
@@ -519,7 +519,8 @@ Qed.
 Lemma trivIset_coverU :
   trivIset P -> trivIset Q -> [disjoint cover P & cover Q] -> trivIset (P :|: Q).
 Proof using .
-  move=> /trivIsetP HtrivP /trivIsetP HtrivQ Hdis; apply/trivIsetP => A B; rewrite !inE.
+  move=> /trivIsetP HtrivP /trivIsetP HtrivQ Hdis.
+  apply/trivIsetP => A B; rewrite !inE.
   move=> /orP [] HA /orP [] HB Hneq.
   + exact: HtrivP.
   + exact: disjoint_cover.
@@ -623,7 +624,7 @@ Proof using HS HbNin Hposa Px.
   apply/(introF eqP) => //= Hib; subst i.
   move: Px; rewrite /ksupp => /and3P [_ /trivIsetP Htriv _].
   move/(_  _ _ HTP HS Hneq) : Htriv => /disjoint_setI0.
-  rewrite -setP => /(_ posa); rewrite in_set0 in_setI Hi.
+  apply/setP => /(_ posa); rewrite in_set0 in_setI Hi.
   by rewrite Hposa.
 Qed.
 
@@ -776,19 +777,19 @@ Qed.
 
 Lemma posb_inSF : (posb \in S) = false.
 Proof using HRabc HS HT Hposa Hposb Px.
-  have:= TS_disjoint; rewrite -setI_eq0 => /eqP; rewrite -setP => /(_ posb).
+  have:= TS_disjoint; rewrite -setI_eq0 => /eqP/setP => /(_ posb).
   by rewrite in_set0 !inE Hposb andbT.
 Qed.
 
 Lemma posa_inTF : (posa \in T) = false.
 Proof using HRabc HS HT Hposa Hposb Px.
-  have:= TS_disjoint; rewrite -setI_eq0 => /eqP; rewrite -setP => /(_ posa).
+  have:= TS_disjoint; rewrite -setI_eq0 => /eqP/setP => /(_ posa).
   by rewrite in_set0 !inE Hposa.
 Qed.
 
 Lemma posc_inTF : (posc \in T) = false.
 Proof using HRabc HS HT Hposa Hposb Hposc Px.
-  have:= TS_disjoint; rewrite -setI_eq0 => /eqP; rewrite -setP => /(_ posc).
+  have:= TS_disjoint; rewrite -setI_eq0 => /eqP/setP => /(_ posc).
   by rewrite in_set0 !inE Hposc.
 Qed.
 
@@ -816,7 +817,7 @@ Proof using HRabc HS HT Hposa Hposb Hposc Px.
     + by case: (ltnP (size u).+1 i); first rewrite !orbT.
     + case: (leqP i (size u)) => Hiu; first by rewrite orbT.
       rewrite /=; apply/orP; left; apply/orP; right.
-      have:= TS_disjoint => /disjoint_setI0; rewrite -setP => Hdisj.
+      have:= TS_disjoint => /disjoint_setI0/setP => Hdisj.
       case: (ltnP (size u).+2 i) => //= Hi2.
       case: (ltnP (size u).+1 i) => Hi1.
       - have Htmp : i = posc by apply: val_inj => /=; apply/eqP; rewrite eqn_leq Hi2 Hi1.
@@ -829,10 +830,10 @@ Qed.
 
 Lemma disjointS1T1 : [disjoint S1 & T1].
 Proof using HRabc HS HT Hposa Hposb Px.
-  rewrite -setI_eq0; apply/eqP; rewrite -setP => i; rewrite in_set0.
+  rewrite -setI_eq0; apply/eqP/setP => i; rewrite in_set0.
   apply/(introF idP).
   rewrite /S1 /T1 !inE => /andP [].
-  have:= TS_disjoint => /disjoint_setI0; rewrite -setP => Hdisj.
+  have:= TS_disjoint => /disjoint_setI0/setP => Hdisj.
   move=> /orP [] /andP [Hi1 /= H1] /orP [] /andP [Hi2 /= H2].
   + move/(_ i): Hdisj; by rewrite inE Hi1 Hi2 in_set0.
   + have:= leq_trans H2 H1; by rewrite ltnn.
@@ -843,15 +844,15 @@ Qed.
 
 Lemma ST_cover_disjoint : [disjoint S :|: T & cover (P :\: [set S; T])].
 Proof using HS HT Px.
-  rewrite -setI_eq0; apply/eqP; rewrite -setP => i; rewrite in_set0.
+  rewrite -setI_eq0; apply/eqP/setP => i; rewrite in_set0.
   apply/(introF idP).
   move: Px; rewrite /ksupp => /and3P [_ /trivIsetP Htriv _].
   rewrite !inE => /andP [] /orP [] Hi /bigcupP [U];
     rewrite !inE negb_or => /andP [/andP [HUS HUT] HU] HiU.
   + move/(_ _ _ HU HS HUS): Htriv; rewrite -setI_eq0 => /eqP.
-    rewrite -setP => /(_ i); by rewrite in_set0 !inE Hi HiU.
+    apply/setP => /(_ i); by rewrite in_set0 !inE Hi HiU.
   + move/(_ _ _ HU HT HUT): Htriv; rewrite -setI_eq0 => /eqP.
-    rewrite -setP => /(_ i); by rewrite in_set0 !inE Hi HiU.
+    apply/setP => /(_ i); by rewrite in_set0 !inE Hi HiU.
 Qed.
 
 Definition Qbin :=  [set S1; T1] :|: (P :\: [set S; T]).
@@ -933,7 +934,7 @@ Proof using Hposa.
   have : posa \in S' by rewrite /S' !inE leqnn Hposa.
   rewrite /S'; move /extract_cuti ->; rewrite -cats1 -{21}[[:: a]]cats0 -[tnth _ _ :: _]cat1s.
   congr ((extract (in_tuple x) _) ++ _ ++ _).
-  + rewrite -setP => i; rewrite !inE.
+  + apply/setP => i; rewrite !inE.
     case (boolP (i \in S)) => //= _.
     case: (ltnP i (size u).+1); last by rewrite andbF.
     by move/ltnW ->.
@@ -957,7 +958,7 @@ Proof using Hposc.
     apply/(introF and3P) => [] [_ H1 H2].
     have:= leq_trans H2 H1; by rewrite ltnn.
   + rewrite (tnth_nth a) /x /=; by elim: u.
-  + rewrite -setP => i; rewrite !inE.
+  + apply/setP => i; rewrite !inE.
     case (boolP (i \in S)) => //= _.
     case: (ltnP (size u).+2 i); last by rewrite andbF.
     by move/ltnW ->.
@@ -971,7 +972,7 @@ Proof using Hposb.
   have : posb \in T' by rewrite /T' !inE leqnn Hposb.
   move /extract_cuti ->; rewrite -cats1 -[[:: b]]cats0 -[tnth _ _ :: _]cat1s.
   congr ((extract (in_tuple x) _) ++ _ ++ _).
-  + rewrite -setP => i; rewrite !inE.
+  + apply/setP => i; rewrite !inE.
     case (boolP (i \in T)) => //= _.
     case: (ltnP i (size u)); last by rewrite andbF.
     by move/ltnW ->.
@@ -995,12 +996,12 @@ Proof using HRabc HS HT Hposa Hposb Hposc Px.
     apply/(introF and3P) => [] [_ H1 H2].
     have:= leq_trans H2 H1; by rewrite ltnn.
   + rewrite (tnth_nth a) /x /=; by elim: u.
-  + rewrite -setP => i; rewrite !inE.
+  + apply/setP => i; rewrite !inE.
     case (boolP (i \in T)) => //= Hi.
     case: (ltnP (size u).+2 i).
     * move/ltnW/ltnW => H; by rewrite H (ltnW H).
     * move=> Hi1; apply/(introF andP) => [] [_ H2].
-      have:= TS_disjoint => /disjoint_setI0; rewrite -setP => Hdisj.
+      have:= TS_disjoint => /disjoint_setI0; apply/setP => Hdisj.
       case: (ltnP (size u).+1 i) => Hi2.
       - have Htmp : i = posc by apply: val_inj => /=; apply/eqP; rewrite eqn_leq Hi2 Hi1.
         subst i => {Hi1 H2 Hi2}.
@@ -1080,8 +1081,8 @@ Proof using HRabc HS HT Hposa Hposb Px.
   + by rewrite /T1 !inE Hposa /= posa_inTF /= ltnn.
   + move/andP => []; rewrite negb_or => /andP [HUS HUT] HU.
     move: Px => /and3P [_ /trivIsetP Htriv _].
-    move/(_  _ _ HU HS HUS)/disjoint_setI0 : Htriv.
-    rewrite -setP => /(_ posa); by rewrite in_set0 in_setI Hposa andbT => ->.
+    move/(_  _ _ HU HS HUS)/disjoint_setI0/setP/(_ posa) : Htriv.
+    by rewrite in_set0 in_setI Hposa andbT => ->.
 Qed.
 
 End BIn.

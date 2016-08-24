@@ -327,7 +327,7 @@ Proof using .
     + rewrite /add_mesym /= Hsz H /=.
       apply (leq_trans (size_rem_trail0 _)).
       by rewrite size_map size_enum_ord.
-    + rewrite /setdiff; apply/eqP; rewrite -setP => i.
+    + rewrite /setdiff; apply/eqP/setP => i.
       rewrite inE /= Hsz H /= nth_rem_trail0.
       have H0 : 0 < n by apply: (leq_ltn_trans _ (ltn_ord i)).
       rewrite (nth_map (Ordinal H0)); last by rewrite size_enum_ord.

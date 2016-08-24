@@ -96,7 +96,7 @@ Lemma card_seq (s : seq T) : #|[set i in s]| <= size s.
 Proof using .
   elim: s => [//= | s0 s IHs]; set t := [set i | i \in _].
   - suff -> : t = set0 by rewrite cards0.
-    rewrite -setP => i /=; by rewrite inE.
+    apply setP => i /=; by rewrite inE.
   - rewrite /t set_cons cardsU1 /= -add1n.
     by apply: leq_add; first by case: (s0 \notin [set i in s]).
 Qed.
@@ -146,13 +146,13 @@ Proof using .
   move: Htriv; rewrite !big_cons /trivIseq => Htriv.
   rewrite cardsU -IHs.
   suff -> : #|s0 :&: \big[setU (T:=T)/set0]_(j <- s) j| = 0 by rewrite subn0.
-  apply/eqP; rewrite cards_eq0; apply/eqP; rewrite -setP => i.
+  apply/eqP; rewrite cards_eq0; apply/eqP/setP => i.
   rewrite !inE; apply/(introF idP) => /andP [] Hi.
   rewrite bigcup_seq => /bigcupP [] X HX HiX.
   have:= HX; rewrite -!index_mem => Hind.
   have: 0 < (index X s).+1 < size (s0 :: s) by rewrite /= ltnS Hind.
   move/Htriv => /=; rewrite (nth_index set0 HX).
-  move/disjoint_setI0; rewrite -setP => /(_ i).
+  move/disjoint_setI0; apply/setP => /(_ i).
   by rewrite !inE Hi HiX.
 Qed.
 
@@ -195,7 +195,7 @@ Proof using .
     rewrite -setI_eq0 => /eqP; rewrite -setP => Hneq.
     move: HiB => /set0Pn [] x; rewrite inE => /andP [] Hx HxB.
     move/(_ x): Hneq; rewrite !inE Hx /= => Hxj.
-    apply/eqP; rewrite -setP => /(_ x); by rewrite !inE Hx Hxj HxB.
+    apply/eqP/setP => /(_ x); by rewrite !inE Hx Hxj HxB.
   apply: esym; rewrite (bigID (fun S => S :&: B == set0)) /=.
   rewrite (eq_bigr (fun=> 0)); first last.
     move=> i /andP [] _ /eqP ->.
@@ -227,7 +227,7 @@ Qed.
 
 
 Lemma set_nil (T : finType) : [set s : T in [::]] = set0.
-Proof. by rewrite -setP => i; rewrite inE. Qed.
+Proof. by apply/setP => i; rewrite inE. Qed.
 
 Lemma cover_nil (T : finType) : #|cover [set s : {set T} in [::]]| = 0.
 Proof.
@@ -258,7 +258,7 @@ Proof using .
       rewrite inE => HS; have:= HS; rewrite -index_mem => HS1.
       set j := index S0 S; have H : 0 < j.+1 < size (S0 :: S) by [].
       move/(_ 0 j.+1 H): Htriv.
-      rewrite /= /j nth_index //= -setI_eq0 => /eqP; rewrite -setP => HH.
+      rewrite /= /j nth_index //= -setI_eq0 => /eqP; apply/setP => HH.
       move/(_ x): HH; by rewrite !inE Hx.
 Qed.
 
@@ -419,7 +419,7 @@ Proof using .
   have <- : #|cover P| = minn N k.
     rewrite /= (_ : cover P = Ik k); first exact: sizeIk.
     rewrite /cover {}/P.
-    apply setP => i; apply/idP/idP.
+    apply/setP => i; apply/idP/idP.
     - move/bigcupP => [] St /imsetP [] j Hj -> {St}.
       by rewrite in_set1 => /eqP ->.
     - move=> Hi; apply/bigcupP; exists [set i]; last by rewrite in_set1.
@@ -863,7 +863,7 @@ Proof using .
     rewrite card_imset; last exact: linjP.
     rewrite add1n -(IHsh Hpart).
     rewrite [X in _ - #|pred_of_set X|](_ : _ = set0); first last.
-      rewrite -setP => j; rewrite !inE.
+      apply/setP => j; rewrite !inE.
       apply/(introF idP) => /andP [] /eqP -> {j}.
       rewrite mem_imset_inj; last exact: cast_ord_inj.
       move/imsetP => [] j _ /eqP; by rewrite eq_sym lrinjF.
@@ -1106,7 +1106,7 @@ Lemma extract_tabrows_0 :
 Proof using .
   rewrite /tabrows /= imset_comp -!imset_comp extractIE.
   rewrite [imset _ _](_ : _ = [set rinj_rec i | i in 'I_(size t0)]); first last.
-    rewrite -setP => i; apply/idP/idP.
+    apply/setP => i; apply/idP/idP.
     * move/imsetP => [] x _ ->; apply/imsetP; exists x => //=.
       by rewrite -rcast_com /=.
     * move/imsetP => [] x _ ->; apply/imsetP; exists x => //=.
