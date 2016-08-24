@@ -245,10 +245,6 @@ Admitted.
 
 Hint Resolve intcompP intcompnP.
 
-(* TODO : move in tools *)
-Lemma sumn_sort l S : sumn (sort S l) = sumn l.
-Proof using. by have:= perm_sort S l => /perm_eqlP/perm_sumn. Qed.
-
 Lemma part_of_comp_subproof n (c : intcompn n) :
   is_part_of_n n (sort geq c).
 Proof.

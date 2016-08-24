@@ -50,10 +50,10 @@ Qed.
 
 
 Lemma permS0 (g : 'S_0) : g = 1%g.
-Proof. by rewrite -permP => x; case x. Qed.
+Proof. by apply permP => x; case x. Qed.
 Lemma permS1 (g : 'S_1) : g = 1%g.
 Proof.
-rewrite -permP => x; case x => i Hi.
+apply permP => x; case x => i Hi.
 apply val_inj => /=; rewrite permE.
 case: (g (Ordinal Hi)) => a Ha /=.
 by move: Hi Ha; rewrite !ltnS !leqn0 => /eqP -> /eqP ->.
@@ -246,7 +246,7 @@ Lemma tpermC x y a b :
   tperm x y * tperm a b = tperm a b * tperm x y.
 Proof using .
   move=> Hxa Hya Hxb Hyb.
-  rewrite -permP => i; rewrite !permM.
+  apply permP => i; rewrite !permM.
   case: (tpermP a b i) => [-> | -> |].
   - by rewrite (tpermD Hxa Hya) tpermL (tpermD Hxb Hyb).
   - by rewrite (tpermD Hxa Hya) (tpermD Hxb Hyb) tpermR.
@@ -604,7 +604,7 @@ Proof using .
   elim: m c s Hm Hcode => [| m IHm] c s Hm Hcode Hon /=.
     split; first by apply/is_codeP => i; rewrite -{3}(addn0 i); apply Hcode.
     suff -> : s = 1 by rewrite mul1g.
-    rewrite -permP => i; rewrite perm1.
+    apply permP => i; rewrite perm1.
     apply: (out_perm Hon); by rewrite inE.
   pose mo := Ordinal Hm.
   have -> : inord m = mo by apply val_inj; rewrite /= inordK.

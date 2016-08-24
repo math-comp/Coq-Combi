@@ -19,7 +19,7 @@
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import finset bigop.
+From mathcomp Require Import finset bigop path.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -587,3 +587,10 @@ Lemma big_enum (S : {set T}) :
 Proof. by rewrite /index_enum big_filter; apply congr_big. Qed.
 
 End Enum.
+
+
+
+
+(* New lemmas *)
+Lemma sumn_sort l S : sumn (sort S l) = sumn l.
+Proof using. by have:= perm_sort S l => /perm_eqlP/perm_sumn. Qed.

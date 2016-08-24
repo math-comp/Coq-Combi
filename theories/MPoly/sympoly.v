@@ -703,10 +703,10 @@ Proof using .
   rewrite /= -complete_basisE /complete_pol.
   rewrite -(big_map (@bmnm n d.+1) (fun m => mdeg m == d) (fun m => 'X_[m])).
   rewrite /index_enum -enumT -big_filter.
-  set tmp := filter _ _.
-  have {tmp} -> : tmp = [seq val m |
-                          m <- enum [set m : 'X_{1..n < d.+1} | mdeg m == d]].
-    rewrite {}/tmp /enum_mem filter_map -filter_predI; congr map.
+  rewrite [filter _ _](_ : _ =
+      [seq val m | m <- enum [set m : 'X_{1..n < d.+1} | mdeg m == d]]);
+    first last.
+    rewrite /enum_mem filter_map -filter_predI; congr map.
     by apply eq_filter => s /=; rewrite !inE andbT.
   rewrite -(eq_big_perm _ (perm_eq_enum_basis _ d)) /=.
   by rewrite big_map -[RHS]big_filter.

@@ -105,19 +105,21 @@ Canonical permuted_subType := Eval hnf in [subType for tpval].
 Definition permuted_eqMixin := Eval hnf in [eqMixin of permuted by <:].
 Canonical permuted_eqType := Eval hnf in EqType permuted permuted_eqMixin.
 Definition permuted_choiceMixin := Eval hnf in [choiceMixin of permuted by <:].
-Canonical permuted_choiceType := Eval hnf in ChoiceType permuted permuted_choiceMixin.
+Canonical permuted_choiceType :=
+  Eval hnf in ChoiceType permuted permuted_choiceMixin.
 Definition permuted_countMixin := Eval hnf in [countMixin of permuted by <:].
-Canonical permuted_countType := Eval hnf in CountType permuted permuted_countMixin.
+Canonical permuted_countType :=
+  Eval hnf in CountType permuted permuted_countMixin.
 Canonical permuted_subCountType := Eval hnf in [subCountType of permuted].
 
 Let type := sub_undup_finType permuted_subCountType
                               (all_permuted w) (mem_enum_permuted (s := w)).
 Canonical permuted_finType := [finType of permuted for type].
 Canonical permuted_subFinType := Eval hnf in [subFinType of permuted].
+
 Lemma permutedP (p : permuted) : perm_eq w p.
 Proof. by case: p. Qed.
 
 End FinType.
-
 
 Hint Resolve permutedP.
