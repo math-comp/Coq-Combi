@@ -444,7 +444,73 @@ rewrite -(size_map nat_of_ord).
 by rewrite -filter_map val_enum_ord iota_ltn // size_iota.
 Qed.
 
+Lemma Newton_complete_iota (k : nat) :
+  k%:R *: 'h_k = \sum_(i <- iota 1 k) 'p_i * 'h_(k - i) :> SF.
+Proof using.
+rewrite Newton_complete (reindex_inj rev_ord_inj) /=.
+rewrite -(addn0 1%N) iota_addl big_map -val_enum_ord big_map.
+rewrite /index_enum /= enumT; apply eq_bigr => i _.
+by rewrite mulrC add1n subKn.
+Qed.
+
 End NewtonFormula.
+
+From mathcomp Require Import rat ssrnum.
+Require Import composition.
+
+Section ChangeBasisCompletePowerSum.
+
+Import Num.Theory.
+
+Variable nvar : nat.
+
+Local Notation SF := {sympoly rat[nvar]}.
+Local Notation "''l_' k" := (1/k%:R *: 'p_k)
+                              (at level 8, k at level 2, format "''l_' k").
+
+Lemma complete_to_power_sum (n : nat) :
+  'h_n = \sum_(c : intcompn n)
+          1/((size c)`! *
+             (\prod_(i <- c) i)%N)%:R *: 'p[partn_of_compn c] :> SF.
+Proof.
+rewrite (eq_bigr
+      (fun c : intcompn n => ((size c)`!)%:R^-1 *: \prod_(i <- c) 'l_i)); first last.
+  move=> c _; rewrite /prod_power_sum /prod_gen /=.
+  have:= perm_sort geq c => /perm_eqlP/(eq_big_perm _) -> /=.
+  rewrite div1r natrM invfM -scalerA; congr (_ *: _).
+  rewrite scaler_prod; congr (_ *: _).
+  rewrite -div1r natr_prod -prodfV mul1r.
+  by apply eq_bigr => i _; rewrite div1r.
+rewrite /index_enum -enumT /=.
+rewrite -[RHS](big_map (@cnval n) xpredT
+   (fun c : seq nat => (size c)`!%:R^-1 *: \prod_(i <- c) 'l_i)).
+rewrite enum_intcompnE.
+elim: n {1 3 4}n (leqnn n) => [| m IHm] n.
+  rewrite leqn0 => /eqP ->.
+  by rewrite big_seq1 big_nil complete0 /= fact0 invr1 scale1r.
+rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
+have /enum_compnE -> : n != 0%N by rewrite Hm.
+rewrite big_flatten /=.
+have /scalerI : (n%:R : rat) != 0 by rewrite pnatr_eq0 Hm.
+apply; rewrite Newton_complete_iota.
+rewrite scaler_sumr big_map; apply eq_big_seq => i.
+rewrite mem_iota add1n ltnS => /andP [Hi _].
+rewrite big_map.
+rewrite (eq_bigr
+    (fun s : seq nat => ('l_i *
+                        ( (size s).+1`!%:R^-1 *:
+                        \prod_(i0 <- s) 'l_i0)))); first last.
+  by move=> s _; rewrite /= big_cons scalerAr.
+rewrite -mulr_sumr IHm; first last.
+  by rewrite leq_subLR Hm -(add1n m) leq_add2r.
+rewrite -scalerAl scalerA scalerAr; congr(_ * _).
+rewrite scaler_sumr; apply eq_big_seq => s.
+rewrite -enum_compnP /is_comp_of_n /= => /andP [sumns mem0s].
+rewrite scalerA; congr (_ *: _).
+(* The proof argument is wrong *)
+Admitted.
+
+End ChangeBasisCompletePowerSum.
 
 From mathcomp Require Import vector.
 
@@ -531,7 +597,7 @@ End Homogeneous.
 Section Schur.
 
 Variable n0 : nat.
-Local Notation n := (n0.+1).
+Local Notation n := n0.+1.
 Variable R : ringType.
 
 Definition Schur d (sh : intpartn d) : {mpoly R[n]} :=
@@ -562,7 +628,7 @@ Lemma Schur_oversize d (sh : intpartn d) : (size sh > n)%N -> Schur sh = 0.
 Proof using .
   rewrite Schur_tabsh_readingE=> Hn; rewrite big_pred0 // => w.
   apply (introF idP) => /tabsh_readingP [] tab [] Htab Hsh _ {w}.
-  suff F0 i : i < size sh -> nth (inhabitant _) (nth [::] tab i) 0 >= i.
+  suff F0 i : (i < size sh)%N -> (nth (inhabitant _) (nth [::] tab i) 0 >= i)%N.
     have H := ltn_ord (nth (inhabitant _) (nth [::] tab n) 0).
     by have:= leq_trans H (F0 _ Hn); rewrite ltnn.
   rewrite -Hsh size_map; elim: i => [//= | i IHi] Hi.
@@ -606,7 +672,7 @@ Proof using .
     have mdegs : mdeg (s2m s) = d.
       rewrite /s2m /mdeg mnm_valK /= big_map enumT -/(index_enum _).
       by rewrite combclass.sum_count_mem count_predT size_tuple.
-    have mdegsP : mdeg (s2m s) < d.+1 by rewrite mdegs.
+    have mdegsP : (mdeg (s2m s) < d.+1)%N by rewrite mdegs.
     apply/mapP; exists (BMultinom mdegsP) => //.
     by rewrite mem_enum inE /= mdegs.
 Qed.
