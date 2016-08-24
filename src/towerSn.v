@@ -289,7 +289,7 @@ Notation "f \o^ g" := (cfIsom (isom_tinj _ _) (cfextprod f g)) (at level 40).
 
 Section Assoc.
 
-Variables (m n p : nat).
+Variables m n p : nat.
 
 Lemma tinjA (s : 'S_m) (t : 'S_n) (u : 'S_p) :
   tinj (tinj(s, t), u) = cast_perm (addnA m n p) (tinj (s, tinj (t, u))).
@@ -485,17 +485,14 @@ Lemma cfdot_Ind_pbasis p q (l : intpartn (m + n)):
 Proof using.
 rewrite cfextprodZl cfextprodZr.
 rewrite !linearZ /= !cfdotZl cfdotZr cfdot_Ind_cfuni_part /= cardsX.
-(* TODO: This computation could be done certainly in an easier way *)
 rewrite !mulrA [_ * (_ == _)%:R]mulrC -!mulrA; congr (_ * _).
 rewrite [(_)^* * _]mulrC !mulrA -[RHS]mul1r; congr (_ * _); first last.
   by rewrite fmorph_div !conjC_nat.
-rewrite -3!mulrA [(#|class p|%:R * _)]mulrC.
-rewrite -[((#|class q|%:R * _) * _)]mulrA mulKf; first last.
-  by rewrite pnatr_eq0 card_class_of_partCT_neq0.
-rewrite mulnC natrM invfM !mulrA -!cardsT mulfK //; last apply neq0CG.
-rewrite -mulrA [X in _ * X]mulrC -!mulrA mulKf; first last.
-  by rewrite pnatr_eq0 card_class_of_partCT_neq0.
-by apply divff; apply neq0CG.
+rewrite -!cardsT /= !natrM !invfM.
+rewrite -!mulrA ![#|[set: 'S_n]|%:R * _]mulrC !mulrA mulfVK; last apply neq0CG.
+rewrite -!mulrA ![#|[set: 'S_m]|%:R * _]mulrC !mulrA mulfVK; last apply neq0CG.
+rewrite -invfM -mulrA mulrC; apply divff.
+by rewrite -natrM pnatr_eq0 muln_eq0 negb_or !card_class_of_partCT_neq0.
 Qed.
 
 Lemma pbasis_gen k (f : 'CF([set: 'S_k])) :
