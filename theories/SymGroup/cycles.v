@@ -612,19 +612,18 @@ CoInductive cycle_dec_spec s A : Prop :=
     disjoint_supports A &
     \prod_(C in A) C = s : cycle_dec_spec s A.
 
-Theorem cycle_decP s : cycle_dec_spec s (cycle_dec s).
+Theorem cycle_decP s : unique (cycle_dec_spec s) (cycle_dec s).
 Proof using.
-constructor.
-- exact: cyclic_dec.
-- exact: disjoint_cycle_dec s.
-- exact: cycle_decE.
-Qed.
-
-Theorem uniqueness_cycle_dec s A :
-  cycle_dec_spec s A -> A = cycle_dec s.
-Proof using.
-move=> [Hcy Hdisj Hprod].
-apply/setP => C; apply/idP/imsetP => [HC |].
+split; first by constructor;
+    [ exact: cyclic_dec |  exact: disjoint_cycle_dec | exact: cycle_decE].
+move=> A [Hcy Hdisj Hprod].
+apply/setP => C; apply/imsetP/idP=> [| HC].
+- rewrite -{1}Hprod => [] [X HX1] ->.
+  have:= disjoint_supports_pcycles Hcy Hdisj HX1 => [] [x Hx].
+  rewrite -{1}(support_restr_perm HX1).
+  move=> /(disjoint_supports_of_decomp Hdisj (disjoint_cycle_dec s)).
+  rewrite Hprod cycle_decE => /(_ erefl Hx) <- //.
+  by apply/imsetP; exists X; rewrite -Hprod.
 - have:= HC => /disjoint_supports_cycles /= /(_ Hcy Hdisj) /imsetP [x _].
   rewrite Hprod => Hsupp.
   have Hx: pcycle s x \in psupport s.
@@ -636,12 +635,6 @@ apply/setP => C; apply/idP/imsetP => [HC |].
   rewrite Hprod cycle_decE => /(_ erefl C (restr_perm (pcycle s x) s) HC).
   apply; last by rewrite support_restr_perm.
   by apply/imsetP; exists (pcycle s x).
-- rewrite -{1}Hprod => [] [X HX1] ->.
-  have:= disjoint_supports_pcycles Hcy Hdisj HX1 => [] [x Hx].
-  rewrite -{1}(support_restr_perm HX1).
-  move=> /(disjoint_supports_of_decomp Hdisj (disjoint_cycle_dec s)).
-  rewrite Hprod cycle_decE => /(_ erefl Hx) <- //.
-  by apply/imsetP; exists X; rewrite -Hprod.
 Qed.
 
 End PermCycles.
