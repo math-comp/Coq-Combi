@@ -7,9 +7,8 @@ From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum ssralg pgroup.
 From mathcomp Require Import presentation all_character.
 
-From Combi Require Import tools permuted symgroup partition Greene sorted rep1.
-
-Require Import ssrcomp cycles cycletype reprS2.
+Require Import tools permuted symgroup partition Greene sorted.
+Require Import ssrcomp cycles cycletype reprdim1 reprS2.
 
 
 Set Implicit Arguments.
@@ -20,7 +19,7 @@ Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
 Section StdRepr.
-(*This section can be moved into the rep1 file, and generalised for all n easily*)
+(*This section can be moved into the reprS1 file, and generalised for all n easily*)
 (*To show: \rank trivline = 1*)
 (*The standard representation is irreducible*)
 

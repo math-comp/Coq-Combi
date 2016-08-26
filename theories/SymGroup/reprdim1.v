@@ -1,4 +1,4 @@
-(** * Combi.SymGroup.rep1 : Representation of Dimension 1 of the symmetric group *)
+(** * Combi.SymGroup.reprdim1 : Representation of Dimension 1 of the Symmetric Groups *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)

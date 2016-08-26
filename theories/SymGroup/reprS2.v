@@ -6,8 +6,7 @@ From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import matrix mxalgebra mxpoly mxrepresentation vector ssrnum algC.
 From mathcomp Require Import classfun character.
 
-From Combi Require Import symgroup partition Greene tools sorted rep1.
-
+Require Import symgroup partition Greene tools sorted reprdim1.
 Require Import ssrcomp cycles cycletype.
 
 

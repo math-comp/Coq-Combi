@@ -138,7 +138,7 @@ VFILES:=theories/Combi/vectNK.v\
   theories/SymGroup/frob.v\
   theories/Basic/combclass.v\
   theories/SymGroup/symgroup.v\
-  theories/SymGroup/reprS1.v\
+  theories/SymGroup/reprdim1.v\
   theories/SymGroup/reprS2.v\
   theories/SymGroup/reprS3.v\
   theories/SymGroup/towerSn.v\
