@@ -396,10 +396,10 @@ rewrite classXE.
 apply /andP/subsetP => [[ct1 ct2]|].
 - move=> /= y /imsetP [/= x0 _ ] -> {y}.
   rewrite inE; apply/andP; split.
-  + apply/classes_of_permP; rewrite perm_of_partCTP prod_conjg /=.
+  + rewrite classes_of_permP perm_of_partCTP prod_conjg /=.
     rewrite cycle_type_conjg.
     by rewrite partn_of_partCTE partCT_of_partnK eq_sym ct1.
-  + apply/classes_of_permP; rewrite perm_of_partCTP prod_conjg /=.
+  + rewrite classes_of_permP perm_of_partCTP prod_conjg /=.
     rewrite cycle_type_conjg.
     by rewrite partn_of_partCTE partCT_of_partnK eq_sym ct2.
 - move=> /(_ x); rewrite class_refl=> /(_ isT).
@@ -499,7 +499,7 @@ rewrite (bigD1 (ct x)) //= cfunE sum_cfunE big1.
 - rewrite addr0 !cfunE cfuni_partnE eqxx /= mulr1.
   rewrite -mulrA [_^-1 *_]mulrC mulrA mulfK; last exact: neq0zcoeff.
   have: (perm_of_partCT (ct x)) \in x ^: [set: 'S_k].
-    apply /classes_of_permP; rewrite perm_of_partCTP.
+    rewrite classes_of_permP perm_of_partCTP.
     by rewrite (partn_of_partCTK (cycle_type x)).
   by move/imsetP => [y _ ->]; rewrite cfunJgen ?genGid ?inE.
 - by move=> p /negbTE pct; rewrite !cfunE cfuni_partnE eq_sym pct /= !mulr0.
@@ -512,7 +512,7 @@ rewrite (bigD1 (ct x)) //= !cfdotZl cfdotZr.
 rewrite cfdot_cfuni; try (by apply: class_normal; rewrite inE).
 rewrite setIid big1 ?addr0.
 - have: (perm_of_partCT (ct x)) \in x ^: [set: 'S_k].
-    apply /classes_of_permP; rewrite perm_of_partCTP.
+    rewrite classes_of_permP perm_of_partCTP.
     by rewrite (partn_of_partCTK (cycle_type x)).
   move/imsetP => [y _ ->]; rewrite cfunJgen ?genGid ?inE //.
   rewrite /zcoeff invf_div -[LHS]mulr1 -!mulrA; congr (_ * _).
@@ -525,7 +525,7 @@ rewrite setIid big1 ?addr0.
   rewrite !cfdotZl cfdotZr.
   rewrite cfdot_cfuni; try (by apply: class_normal; rewrite inE).
   rewrite class_disj; first by rewrite cards0 mul0r !mulr0.
-  apply/negP=> /classes_of_permP; rewrite !perm_of_partCTP.
+  apply/negP; rewrite classes_of_permP !perm_of_partCTP.
   by rewrite partn_of_partCTE !partCT_of_partnK pct.
 Qed.
 

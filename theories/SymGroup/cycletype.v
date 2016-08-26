@@ -407,11 +407,11 @@ apply (iffP eqP) => [/(congr1 val)/= eqct | [x ->]].
 Qed.
 
 Lemma classes_of_permP s t :
-  reflect (t \in (s ^: [set: {perm T}])%g) (cycle_type s == cycle_type t).
+  (t \in (s ^: [set: {perm T}])%g) = (cycle_type s == cycle_type t).
 Proof using.
-apply (iffP (conj_permP s t)) => [[c ->] |].
-- by apply: mem_imset; rewrite inE.
+apply /idP/conj_permP => [| [c ->]].
 - by move=> /imsetP [c Hc ->]; exists c.
+- by apply: mem_imset; rewrite inE.
 Qed.
 
 Section Permofcycletype.
@@ -629,10 +629,7 @@ Definition class_of_partCT := class (perm_of_partCT) [set: {perm T}].
 
 Lemma class_of_partCTP s :
   (cycle_type s == tc) = (s \in class_of_partCT).
-Proof using.
-rewrite /class_of_partCT -perm_of_partCTP /class eq_sym.
-by apply/classes_of_permP/idP.
-Qed.
+Proof using. by rewrite -perm_of_partCTP classes_of_permP. Qed.
 
 Lemma card_class_of_partCT_neq0 : #|class_of_partCT| != 0%N.
 Proof using.
