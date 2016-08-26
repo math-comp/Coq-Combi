@@ -4,7 +4,7 @@ From mathcomp Require Import tuple path bigop finset div.
 From mathcomp Require Import fingroup perm action ssralg.
 From mathcomp Require finmodule.
 
-From Combi Require Import tools.
+Require Import tools partition.
 
 Require Import ssrcomp.
 

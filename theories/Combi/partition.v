@@ -85,6 +85,10 @@ Operations on partitions:
 - [union_intpartn l k] == the partition of type [intpartn] obtained by
                gathering the parts of [l] and [k]
 
+Relation with set partitions:
+
+- [parts_shape P] == the shape of a set partition, i.e.
+               the sorted list of the cardinal of the parts
 ******)
 Set Printing Universes.
 
@@ -1535,3 +1539,149 @@ Lemma perm_union_intpartn : perm_eq (union_intpart l k) (l ++ k).
 Proof. by rewrite /= perm_merge. Qed.
 
 End UnionPart.
+
+
+
+From mathcomp Require Import binomial finset.
+
+Section SetPartitionShape.
+
+Local Notation "#{ x }" :=  #|(x: {set _})|
+                      (at level 0, x at level 10, format "#{ x }").
+
+Variable T : finType.
+Implicit Types (A B X : {set T}) (P Q : {set {set T}}).
+
+Lemma partition0P P : reflect (P = set0) (partition P set0).
+Proof using.
+  apply (iffP and3P) => [[/eqP Hcov _ H0] | ->].
+  - case: (set_0Vmem P) => [// | [X HXP]].
+    exfalso; suff HX : X = set0 by subst X; rewrite HXP in H0.
+    by apply/eqP; rewrite -subset0; rewrite -Hcov (bigcup_max X).
+  - by split; rewrite ?inE // /trivIset /cover !big_set0 ?cards0.
+Qed.
+
+Lemma triv_part P X : X \in P -> partition P X -> P = [set X].
+Proof using.
+move=> HXP /and3P [/eqP Hcov /trivIsetP /(_ X _ HXP) H H0].
+apply/setP => Y; rewrite inE; apply/idP/idP => [HYP | /eqP -> //].
+rewrite eq_sym; move/(_ Y HYP): H => /contraR; apply.
+have /set0Pn [y Hy] : Y != set0
+  by apply/negP => /eqP HY; move: H0; rewrite -HY HYP.
+apply/negP => /disjoint_setI0/setP/(_ y).
+by rewrite !inE Hy -Hcov andbT => /bigcupP; apply; exists Y.
+Qed.
+
+Lemma count_set_of_card (p : pred nat) (P : {set {set T}}) :
+  count p [seq #{x} | x <- enum P] = #|P :&: [set x | p #{x}]|.
+Proof using.
+  rewrite cardE -size_filter /enum_mem -enumT /=.
+  rewrite filter_map size_map; congr size.
+  rewrite -filter_predI; apply eq_filter.
+  by move=> S; rewrite !inE andbC.
+Qed.
+
+Definition parts_shape P := sort geq [seq #{X} | X <- enum P].
+
+Lemma parts_shapeP P D :
+  partition P D -> is_part_of_n #|D| (parts_shape P).
+Proof using.
+rewrite /parts_shape => /and3P [/eqP Hcov Htriv Hnon0].
+rewrite /is_part_of_n /= is_part_sortedE.
+apply/and3P; split.
+- by rewrite sumn_sort -sumnE big_map -big_enum -Hcov.
+- by apply sort_sorted => m n.
+- move: Hnon0; apply contra.
+  rewrite mem_sort => /mapP [] x.
+  by rewrite mem_enum => Hx /esym/cards0_eq <-.
+Qed.
+
+Lemma ex_subset_card B k :
+ k <= #{B} -> exists2 A : {set T}, A \subset B & #{A} == k.
+Proof using.
+rewrite -bin_gt0 -(cards_draws B k) card_gt0 => /set0Pn [x].
+rewrite inE => /andP [H1 H2]; by exists x.
+Qed.
+
+Lemma ex_parts_shape (s : seq nat) (A : {set T}) :
+  sumn s = #|A| -> 0 \notin s ->
+  exists P : seq {set T},
+    [/\ uniq P, partition [set X in P] A & [seq #{X} | X <- P] = s].
+Proof using.
+elim: s A => [| i s IHs] A /=.
+  move=> /esym/cards0_eq -> _; exists [::]; split => //.
+  apply/partition0P; apply/setP => x.
+  by rewrite !inE in_nil.
+rewrite inE eq_sym => Hi /norP [Bne0 /IHs{IHs} Hrec].
+have: i <= #|A| by rewrite -Hi; apply: leq_addr.
+move=> /ex_subset_card [B BsubA /eqP cardB]; subst i.
+have /Hrec{Hrec} [P [Puniq]] : sumn s = #|A :\: B|.
+  by rewrite cardsD (setIidPr BsubA) -Hi addKn.
+move=> /and3P [/eqP covP trivP set0P] Ps; rewrite inE in set0P.
+have BninP : B \notin P.
+  move: Bne0; apply contra => BinP; rewrite cards_eq0.
+  have : B \subset A :\: B.
+    by rewrite -covP /cover; apply (bigcup_max B); rewrite // inE.
+  rewrite setDE => /subsetIP [_].
+  by rewrite -disjoints_subset -setI_eq0 setIid.
+rewrite -lt0n card_gt0 in Bne0.
+have Hcons : [set X in B :: P] = B |: [set X in P].
+  by apply/setP => X; rewrite !inE.
+exists (B :: P); split => /=; [|apply/and3P; split|].
+- by rewrite Puniq BninP.
+- rewrite Hcons /cover big_setU1 /= ?inE // -/(cover _) covP.
+  by rewrite -{1}(setIidPr BsubA) setID.
+- move: trivP; rewrite /trivIset Hcons.
+  rewrite /cover !big_setU1 ?inE //= -/(cover _) => /eqP ->.
+  rewrite covP cardsU (_ : B :&: (A :\: B) = set0) ?cards0 ?subn0 //.
+  by rewrite setDE setIC -setIA [X in A :&: X]setIC setICr setI0.
+- by rewrite !inE negb_or eq_sym Bne0.
+- by rewrite Ps.
+Qed.
+
+Lemma ex_set_parts_shape A (sh : intpartn #|A|) :
+  exists2 P, partition P A & parts_shape P = sh.
+Proof using.
+case: sh => sh.
+rewrite /is_part_of_n /= is_part_sortedE => /andP [/eqP shsum /andP [shsort]].
+move=> /(ex_parts_shape shsum) [P [Puniq Ppart Psh]].
+exists [set X in P]; first exact: Ppart.
+apply (eq_sorted (leT := geq)) => //.
+- exact: sort_sorted.
+- rewrite /parts_shape -Psh perm_sort; apply: perm_map.
+  apply: (uniq_perm_eq (enum_uniq _) Puniq) => x.
+  by rewrite mem_enum inE.
+Qed.
+
+(* TODO rewrite using union_part *)
+Lemma parts_shape_union P Q :
+  [disjoint P & Q] ->
+  parts_shape (P :|: Q) = sort geq (parts_shape P ++ parts_shape Q).
+Proof using.
+rewrite /parts_shape -setI_eq0 => /eqP disj.
+apply/perm_sortP/perm_eqP => // Prd.
+have count_sort l : count ^~ (sort geq l) =1 count ^~ l.
+  by apply/perm_eqP; rewrite perm_sort perm_eq_refl.
+rewrite count_cat !count_sort !count_set_of_card.
+rewrite setIUl cardsU -[RHS]subn0; congr(_ - _).
+apply/eqP; rewrite cards_eq0 -subset0 -disj.
+by apply/subsetP => x; rewrite !inE => /andP [/andP [-> _] /andP [-> _]].
+Qed.
+
+End SetPartitionShape.
+
+Lemma parts_shape_inj
+      (T1 T2 : finType) (f : T1 -> T2) (A : {set {set T1}}) :
+  injective f -> parts_shape [set f @: (x : {set T1}) | x in A] = parts_shape A.
+Proof using.
+rewrite /parts_shape /= => Hinj.
+apply/perm_sortP/perm_eqP => // P.
+rewrite !count_set_of_card -(card_imset _ (imset_inj Hinj)).
+rewrite imsetI; last by move=> B C _ _; exact: imset_inj.
+congr #|(_ : {set _})|; apply/setP => S; rewrite !inE.
+case: (boolP (S \in (imset _ _))) => //= /imsetP [U _ -> {S}].
+rewrite (card_imset _ Hinj).
+apply/idP/imsetP => [| [] V].
+- by exists U; rewrite // inE.
+- by rewrite inE => HP /(imset_inj Hinj) ->.
+Qed.
