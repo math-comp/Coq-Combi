@@ -66,7 +66,7 @@ Contents
 
 In progress:
 
-*  the representation theory of the symmetric Groups (together with Thibaut
+*  the **representation theory of the symmetric Groups** (together with Thibaut
    Benjamin).
    See the [ReprSn branch on Github](https://github.com/hivert/Coq-Combi/tree/ReprSn).
 
