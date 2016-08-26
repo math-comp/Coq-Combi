@@ -4,9 +4,7 @@ From mathcomp Require Import tuple path bigop finset div.
 From mathcomp Require Import fingroup perm action ssralg.
 From mathcomp Require finmodule.
 
-Require Import tools partition.
-
-Require Import ssrcomp.
+Require Import tools partition permcomp.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

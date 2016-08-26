@@ -124,7 +124,7 @@ VFILES:=theories/Combi/vectNK.v\
   theories/SSRcomplements/ordcast.v\
   theories/SSRcomplements/rat_coerce.v\
   theories/SSRcomplements/sorted.v\
-  theories/SSRcomplements/ssrcomp.v\
+  theories/SSRcomplements/permcomp.v\
   theories/SSRcomplements/tools.v\
   theories/HookFormula/Qmeasure.v\
   theories/HookFormula/RSident.v\

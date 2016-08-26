@@ -7,7 +7,7 @@ From mathcomp Require Import ssralg matrix vector mxalgebra falgebra ssrnum algC
 From mathcomp Require Import presentation classfun character mxrepresentation.
 
 Require Import tools ordcast permuted symgroup partition Greene sorted sympoly.
-Require Import ssrcomp slicedbij cycles cycletype reprdim1 reprS2 towerSn.
+Require Import permcomp slicedbij cycles cycletype reprdim1 reprS2 towerSn.
 
 Import LeqGeqOrder.
 

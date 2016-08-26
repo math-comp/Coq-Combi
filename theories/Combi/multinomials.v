@@ -20,9 +20,8 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import tuple bigop path div finset.
 From mathcomp Require Import perm fingroup action gproduct.
-From Combi Require Import tools combclass sorted partition composition permuted.
-
-Require Import cycles cycletype.
+Require Import tools combclass sorted partition composition permuted.
+Require Import cycles cycletype symgroup.
 
 
 Set Implicit Arguments.
@@ -107,8 +106,6 @@ exists s; first by rewrite inE.
 apply val_inj => /=; apply eq_from_tnth => /= i.
 by rewrite {1}Hs !tnth_mktuple permKV.
 Qed.
-
-From Combi Require Import Greene symgroup.
 
 Lemma stab_tuple_prod :
   'C[wp | pact] =

@@ -7,7 +7,7 @@ From mathcomp Require Import matrix mxalgebra mxpoly mxrepresentation vector ssr
 From mathcomp Require Import classfun character.
 
 Require Import symgroup partition Greene tools sorted reprdim1.
-Require Import ssrcomp cycles cycletype.
+Require Import permcomp cycles cycletype.
 
 
 Set Implicit Arguments.

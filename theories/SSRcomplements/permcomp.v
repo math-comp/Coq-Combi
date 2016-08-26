@@ -4,9 +4,7 @@ From mathcomp Require Import tuple finfun path bigop finset binomial.
 From mathcomp Require Import fingroup perm morphism action ssralg.
 From mathcomp Require finmodule.
 
-From Combi Require Import symgroup partition Greene tools sorted.
-
-From Combi Require Import ordcast. (* TODO : for imset_inj *)
+Require Import symgroup partition Greene tools sorted.
 
 Reserved Notation "#{ x }" (at level 0, x at level 10, format "#{ x }").
 
@@ -77,7 +75,7 @@ Qed.
 
 End CastSn.
 
-Section SSRComplements.
+Section PermComp.
 
 Variable T : finType.
 Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
@@ -116,6 +114,6 @@ Proof using.
   by exists i.
 Qed.
 
-End SSRComplements.
+End PermComp.
 
 

@@ -8,7 +8,7 @@ From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum
 From mathcomp Require Import presentation all_character.
 
 Require Import tools permuted symgroup partition Greene sorted.
-Require Import ssrcomp cycles cycletype reprdim1 reprS2.
+Require Import permcomp cycles cycletype reprdim1 reprS2.
 
 
 Set Implicit Arguments.

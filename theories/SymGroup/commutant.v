@@ -3,9 +3,8 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple path bigop finset div.
 From mathcomp Require Import fingroup perm action gproduct morphism.
 
-From Combi Require Import tools partition.
-
-Require Import ssrcomp cycles cycletype.
+Require Import tools partition permuted.
+Require Import permcomp cycles cycletype.
 
 Import GroupScope.
 
@@ -547,8 +546,6 @@ by rewrite /= setTI.
 Qed.
 
 End PermCycles.
-
-From Combi Require Import permuted.
 
 Lemma dvdn_zcard_fact n (l : intpartn n) : zcard l %| n`!.
 Proof.

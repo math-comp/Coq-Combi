@@ -4,9 +4,8 @@ From mathcomp Require Import tuple finfun path bigop finset binomial.
 From mathcomp Require Import fingroup perm automorphism action ssralg.
 From mathcomp Require finmodule.
 
-From Combi Require Import symgroup partition Greene tools sorted.
-
-Require Import ssrcomp slicedbij cycles.
+Require Import symgroup partition Greene tools sorted.
+Require Import permcomp slicedbij cycles.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -247,8 +246,6 @@ apply /imsetP/imsetP => [[x _]|[x /imsetP [x0 _] ->] ->].
 - exists (a x0) => //.
   by rewrite pcycle_conjg.
 Qed.
-
-Require Import ordcast. (* for imset_inj TODO : move in tools *)
 
 Lemma cycle_type_conjg s a : cycle_type (s ^ a)%g = cycle_type s.
 Proof using.
