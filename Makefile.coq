@@ -101,9 +101,11 @@ VFILES:=theories/Combi/vectNK.v\
   theories/Combi/partition.v\
   theories/Combi/permuted.v\
   theories/Combi/composition.v\
+  theories/Combi/multinomials.v\
   theories/Combi/skewtab.v\
   theories/Combi/std.v\
   theories/Combi/tableau.v\
+  theories/Combi/slicedbij.v\
   theories/Combi/stdtab.v\
   theories/Combi/subseq.v\
   theories/Erdos_Szekeres/Erdos_Szekeres.v\
@@ -122,6 +124,7 @@ VFILES:=theories/Combi/vectNK.v\
   theories/SSRcomplements/ordcast.v\
   theories/SSRcomplements/rat_coerce.v\
   theories/SSRcomplements/sorted.v\
+  theories/SSRcomplements/ssrcomp.v\
   theories/SSRcomplements/tools.v\
   theories/HookFormula/Qmeasure.v\
   theories/HookFormula/RSident.v\
@@ -129,15 +132,25 @@ VFILES:=theories/Combi/vectNK.v\
   theories/HookFormula/recyama.v\
   theories/Basic/congr.v\
   theories/Basic/ordtype.v\
+  theories/SymGroup/commutant.v\
+  theories/SymGroup/cycles.v\
+  theories/SymGroup/cycletype.v\
+  theories/SymGroup/frob.v\
   theories/Basic/combclass.v\
   theories/SymGroup/symgroup.v\
   theories/SymGroup/rep1.v\
+  theories/SymGroup/reprS2.v\
+  theories/SymGroup/reprS3.v\
+  theories/SymGroup/towerSn.v\
   theories/MPoly/Schur_basis.v\
   theories/MPoly/antisym.v\
   theories/MPoly/sympoly.v\
   3rdparty/ALEA/Ccpo.v\
   3rdparty/ALEA/Misc.v
 
+
+
+  
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
 -include $(addsuffix .d,$(VFILES))
 else
