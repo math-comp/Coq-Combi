@@ -21,7 +21,7 @@ From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import tuple bigop path div finset.
 From mathcomp Require Import perm fingroup action gproduct.
 Require Import tools combclass sorted partition composition permuted.
-Require Import cycles cycletype symgroup.
+Require Import permcomp cycles cycletype symgroup.
 
 
 Set Implicit Arguments.
@@ -29,42 +29,6 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Import GroupScope.
-
-Section PermOnG.
-
-Variable T : finType.
-Implicit Type (s t c : {perm T}).
-
-Definition perm_ong S : {set {perm T}} := [set s | perm_on S s].
-Lemma group_set_perm_ong S : group_set (perm_ong S).
-Proof using.
-  apply/group_setP; split => [| s t]; rewrite !inE;
-    [exact: perm_on1 | exact: perm_onM].
-Qed.
-Canonical perm_ong_group S : {group {perm T}} := Group (group_set_perm_ong S).
-Lemma card_perm_ong S : #|perm_ong S| = #|S|`!.
-Proof using. by rewrite cardsE /= card_perm. Qed.
-
-Lemma perm_ongE S : perm_ong S = 'C(~:S | 'P).
-Proof using.
-apply/setP => s; rewrite inE; apply/idP/astabP => [Hperm x | Hstab].
-- by rewrite inE /= apermE => /out_perm; apply.
-- apply/subsetP => x; rewrite unfold_in; apply contraR => H.
-  by move/(_ x): Hstab; rewrite inE /= apermE => ->.
-Qed.
-
-Lemma restr_perm_commute C s : commute (restr_perm C s) s.
-Proof using.
-case: (boolP (s \in 'N(C | 'P))) =>
-    [HC | /triv_restr_perm ->]; last exact: (commute_sym (commute1 _)).
-apply/permP => x; case: (boolP (x \in C)) => Hx; rewrite !permM.
-- by rewrite !restr_permE //; move: HC => /astabsP/(_ x)/= ->.
-- have:= restr_perm_on C s => /out_perm Hout.
-  rewrite (Hout _ Hx) {}Hout //.
-  by move: Hx; apply contra; move: HC => /astabsP/(_ x)/= ->.
-Qed.
-
-End PermOnG.
 
 Section ActOnTuple.
 
