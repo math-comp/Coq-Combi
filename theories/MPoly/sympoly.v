@@ -465,7 +465,7 @@ Fixpoint prod_partsum (s : seq nat) :=
 
 Local Notation "\Pi s" := (prod_partsum s)%:R^-1 (at level 0, s at level 2).
 
-Lemma complete_to_power_sum_prod_partsum (n : nat) :
+Lemma complete_to_power_sum_prod_partsum n :
   'h_n = \sum_(c : intcompn n) \Pi c *: \prod_(i <- c) 'p_i :> SF.
 Proof using.
 rewrite /index_enum -enumT /=.
@@ -495,7 +495,7 @@ Qed.
 
 Import LeqGeqOrder.
 
-Lemma complete_to_power_sum_intpartn (n : nat) :
+Lemma complete_to_power_sum_intpartn n :
   'h_n = \sum_(l : intpartn n)
            (\sum_(c : intcompn n | perm_eq l c) \Pi c) *: 'p[l] :> SF.
 Proof.
@@ -509,6 +509,37 @@ apply eq_bigr => l _; rewrite scaler_suml; apply eq_big.
 - move=> c /eqP <-; congr (_ *: _).
   rewrite /prod_power_sum /prod_gen; apply eq_big_perm.
   by rewrite perm_eq_sym; apply: perm_partn_of_compn.
+Qed.
+
+Lemma Pi_perm n (l : intpartn n) :
+  \sum_(c : intcompn n | perm_eq l c) \Pi c =
+  \sum_(c : permuted (in_tuple l)) \Pi c :> rat.
+Proof.
+rewrite -[LHS](big_map (@cnval n) _ (fun c : seq nat => \Pi c)).
+rewrite -big_filter.
+rewrite -[RHS](big_map (@tpval _ _ (in_tuple l)) xpredT
+                       (fun c : (size l).-tuple nat => \Pi c)).
+rewrite -[RHS](big_map (@tval _ _) xpredT
+                       (fun c : seq nat => \Pi c)).
+rewrite /index_enum -!enumT; apply eq_big_perm; apply uniq_perm_eq.
+- apply filter_uniq; rewrite map_inj_uniq; [exact: enum_uniq | exact: val_inj].
+- rewrite -map_comp; rewrite map_inj_uniq; first exact: enum_uniq.
+  by move=> p q /val_inj/val_inj.
+- move=> /= s; rewrite mem_filter.
+  apply/andP/mapP=> [[Hperm /mapP [/= c _ Hs]] | [t /mapP [/= tp _ ->{t}] Hs]].
+  + subst s.
+    have Hc : size c == size l by rewrite (perm_eq_size Hperm).
+    exists (Tuple Hc) => //; apply/mapP.
+    have Hpermt : perm_eq (in_tuple l) (Tuple Hc) by [].
+    by exists (Permuted Hpermt); rewrite // mem_enum.
+  + split; first by rewrite Hs; apply: permutedP.
+    apply/mapP => /=; rewrite {s}Hs.
+    case: tp => /= [t Ht].
+    have Hct : is_comp_of_n n t.
+      rewrite /is_comp_of_n /= /is_comp -(perm_eq_mem Ht) -(perm_sumn Ht).
+      rewrite  intpartn_sumn eq_refl /=.
+      by have:= intpartnP l; rewrite is_part_sortedE => /andP [].
+    by exists (IntCompN Hct); rewrite // mem_enum.
 Qed.
 
 End ChangeBasisCompletePowerSum.
