@@ -1,0 +1,977 @@
+\documentclass[11pt, a4paper]{report}
+
+\usepackage[latin1]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{stmaryrd}
+\usepackage{amsfonts}
+\usepackage{graphicx}
+\usepackage{xspace}
+\usepackage[all]{xy}
+\usepackage{setspace}
+\setstretch{1,4}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{listings}
+\usepackage{hyperref}
+
+\theoremstyle{plain}
+\newtheorem{thm}{Théorème}
+\newtheorem{ppst}{Proposition}
+\newtheorem{coro}{Corollaire}
+\newtheorem*{lemma}{Lemme}
+\newtheorem*{props}{Propiétés}
+
+
+\theoremstyle{definition}
+\newtheorem{defi}{Définition}
+\newtheorem*{nota}{Notation}
+
+\theoremstyle{remark}
+\newtheorem*{rem}{Remarque}
+\newtheorem*{ex}{Exemple}
+
+
+\DeclareMathOperator{\Res}{Res}
+\DeclareMathOperator{\Reg}{Reg}
+\DeclareMathOperator{\sym}{\mathfrak{S}}
+\DeclareMathOperator{\Hom}{Hom}
+\DeclareMathOperator{\Conj}{Conj}
+\DeclareMathOperator{\Aut}{Aut}
+\DeclareMathOperator{\End}{End}
+\DeclareMathOperator{\Id}{Id}
+\DeclareMathOperator{\Vect}{Vect}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\triv}{triv}
+\DeclareMathOperator{\GL}{GL}
+\DeclareMathOperator{\im}{Im}
+
+
+
+
+
+\title{Rapport de Stage}
+\author{Thibaut BENJAMIN}
+
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\chapter*{Introduction}
+Le présent rapport a été réalisé dans le cadre d'un stage de recherche effectué LRI (Laboratoire de Recherche en Informatique) sous la direction de Florent Hivert. L'objectif visé pour ce stage est de formaliser des éléments de combinatoires issus de la théorie des représentations des groupes symétriques dans l'outil de preuves assistées par ordinateur Coq/SSReflect.
+
+Le travail au cours de ce stage s'est articulé en trois phases assez distinctes \begin{itemize}
+\item Dans un premier temps, l'enjeu a d'abord été de manipuler suffisamment l'outil de preuve sur des exemples élémentaires, afin d'être ensuite à l'aise pour aborder des exemples plus théoriques.
+\item Une deuxième partie a été consacrée à la mise en place du cadre théorique des représentations des groupes symétriques, en étudiant les différentes preuves qui ont été données, afin de choisir celle à formaliser
+\item Enfin la troisième partie, qui n'a pas encore été abordée à la date d'écriture de ce rapport, sera consacrée à l'intégration de cette théorie en Coq/SSReflect.
+\end{itemize}
+
+Coq est un assistant de preuves formelles développé par l'INRIA, depuis 1984. A l'origine, il était plutôt développé pour formaliser des preuves de programmes informatiques, mais plusieurs projets ont été menés avec cet outils, dans le but de formaliser des mathématiques. C'est la cas de la bibliothèque Mathematical Components (MathComp), développée entre 2005 et 2013 par Microsoft Research et l'INRIA dans le but de montrer les possibilités de Coq en terme de formalisation mathématique. Cette bibliothèque, que nous allons utiliser, introduit un nouveau langage appelé SSReflect, ainsi que de nombreux résultats d'algèbre, pour une formalisation complète du théorème de Feit-Thomson. L'objectif de ce stage est de s'appuyer sur les résultats déjà présents dans cette bibliothèque pour formaliser les résultats sur les représentations des groupes symétriques.
+
+Ce rapport présentera les résultats partiels obtenus jusqu'alors, en commençant par donner un aperçu du fonctionnement du logiciel Coq, et de sa variante SSReflect. Il s'agit en effet d'un outil très riches, qui repose sur de nombreuses bases théoriques qu'il est important de maîtriser. Ensuite le travail réalisé sur la combinatoire élémentaire des groupes symétriques sera présenté, et cela permettra d'illustrer l'utilisation pratique du logiciel. Enfin, la théorie générale des représentations, et plus particulièrement son application aux groupes symétriques et à leur combinatoire sera abordée. Cela permettra de comprendre à la fois ce qui a déjà été formalisé dans la bibliothèque MathComp, et de cibler les résultats qu'il reste à y intégrer pour développer la combinatoire des groupes symétriques.
+
+
+\part{Le Langage Coq/SSReflect}
+
+\chapter{Introduction}
+
+La formalisation en Coq/SSReflect est soumise à un certain nombre de contraintes techniques et théoriques liées au système en lui-même et c'est pourquoi nous allons d'abord présenter les enjeux théoriques derrière la preuve formelle, ainsi que les partis pris dans Coq/SSReflect pour répondre à ces enjeux.
+
+\section{Le vocabulaire utilisé dans Coq}
+\subsection{Le langage Gallina}
+Coq contient en premier lieu un langage de programmation, nommé Gallina, qui est essentiellement un langage fonctionnel proche du Caml. Il permet de définir des types inductifs (par exemple, ici une liste d'entiers)
+\begin{verbatim}
+Inductive liste : Type :=
+ |nil
+ |cons: nat -> liste -> liste.
+\end{verbatim} 
+ainsi que des fonctions récursives sur ces types inductifs (par exemple, ici la taille d'une liste d'entiers)
+\begin{verbatim}
+Fixpoint taille (l:liste) := match l with
+  |nil => 0
+  |(cons _ l1)=> 1 + (taille l1)
+  end.
+\end{verbatim}
+
+\begin{rem}
+La réponse de Coq à cette dernière commande est alors \begin{verbatim}taille is defined
+taille is recursively defined (decreasing on 1st argument)\end{verbatim}
+Cela signifie que le système accepte notre définition car il a trouvé un argument strictement décroissant. En effet la spécificité de ce langage est qu'on ne peut définir des fonctions que si l'on prouve leur terminaison en même temps. Cela rend la logique sous-jacente très cohérente, mais signifie aussi qu'il ne peut pas être Turing-complet.
+\end{rem}
+
+\subsection{L'environnement de preuve et le langage des tactiques}
+
+Coq est également un outil de preuve qui permet d'énoncer des propositions. Ainsi, par exemple, on peut énoncer la proposition suivante:
+%%%%%%%TODO
+
+\subsection{Le vernaculaire}
+
+Le vernaculaire est la sur-couche qui permet à Coq de délimiter ses modes de fonctionnement, en particulier, il sépare les endroits où on est en mode interactif avec utilisation des tactiques des endroits où l'on utilise la programmation Gallina.
+
+\section{La Bibliothèque MathComp}
+MathComp a été développée dans le but de se servir de Coq pour formaliser des mathématiques, et il s'agit en réalité de plus qu'une simple bibliothèque puisqu'elle vient avec son propre langage de tactiques, SSReflect.
+
+Nous nous placeront ici dans le cadre de la syntaxe SSReflect uniquement, avec les tactiques qui lui sont propres, sans présenter les tactiques de Coq en général, car ces dernières sont moins adaptées à l'utilisation que l'on souhaite en faire. De plus, SSReflect a été développé avec un grand soin apporté aux conventions de notations, afin que les noms des différents lemmes et théorèmes à utiliser soient faciles à retrouver lorsque l'on connaît ces notations. Ce n'est pas le cas de la librairie standard dont les notations ne sont pas du tout unifiées, ce qui impose de rechercher beaucoup plus souvent dans la base des lemmes.
+
+\chapter{Correspondance de Curry-Howard et logique intuitionniste}
+
+\section{Fonctionnement de Coq}
+Coq met en oeuvre la correspondance de Curry-Howard, qui établit un isomorphismes entre les règles de typage du $\lambda$-calcul et les règles de la logique intuitionniste. Ainsi, il devient équivalent de donner une preuve d'un énoncé, et de construire un $\lambda$-terme dont le type est donné. C'est de cette manière que la formalisation se fait, et prouver des énoncés en Coq revient exactement à donner des programmes dont le type est donné.
+
+Il arrive par exemple au cours d'une preuve de voir comme sous-but \verb?nat?, ce qui peut sembler étrange, mais comme pour Coq "démontrer A" est synonyme de "donner un terme dont le type est A", il s'agit en fait juste d'une façon de demander un terme de type \verb?nat?
+
+\subsubsection{la correspondance de Curry-Howard en action}
+Supposons que l'on ait deux propositions $A$ et $B$ et une hypothèse $H: A\implies B$. Si l'on se rappelle que pour le système, \verb?H? est un $\lambda$-terme, de type \verb?A -> B?, il est logique de se dire que l'on peut l'évaluer en un argument. On a donc besoin d'un argument \verb?a? de type \verb?A?, c'est à dire en fait une preuve de $A$, et l'élément \verb?H a? est de type \verb?B? , autrement dit, c'est une preuve $B$. Ainsi l'hypothèse \verb?H: A->B? est en fait un programme qui transforme toute preuve de $A$ en une preuve de $B$. 
+
+Nous pouvons même observer pousser cet exemple encore plus loin pour comprendre comment fonctionne le langage des tactiques. Il revient en fait à construire un terme dont le type est le type recherché, en indiquant à chaque étape quel est la règle de typage utilisée. Ici, étant donné un but \verb?B?, la tactique \verb?apply H? va remplacer le but \verb?B? par le but \verb?A?. En réalité dans la mémoire, le système est en train de construire un objet de type \verb? B ? de la forme \verb?H a ?, où \verb?a? est de type \verb?A?. Il ne reste donc plus qu'à construire un objet de type \verb?A?. De la même manière, si l'on dispose d'une hypothèse \verb?H0? de type \verb?A?, alors la tactique \verb?apply H in H0? va changer le type de \verb?H0? en \verb?B?, c'est à dire qu'il nous signifie qu'il s'ait construire un objet de type \verb?B?, en l'occurence \verb?H H0?
+
+\section{Conséquences pratiques}
+Lorsque l'on fait de la preuve, on ne s'intéresse en général qu'au type des objets. Ainsi, les termes de preuve ne sont en général pas complètement explicites, car on s'autorise à utiliser des objets génériques sur un type, à condition d'avoir préalablement construit un objet de ce type. On indique par le contexte si l'on souhaite que le système s'intéresse à l'objet construit ou juste au fait que le type est non vide.
+
+Cette correspondance explique également pourquoi les mots-clef \verb?Definition? et \verb?Theorem?, ainsi que toutes leurs variantes sont synonymes. Les objets peuvent être construits explicitement ou implicitement, via le langage des tactiques, dans les deux cas, que ca soit pour définir une fonction ou établir une preuve, la démarche est de construire un objet dont on a annoncé. De la même manière les mots-clefs \verb?Axiom?, \verb?Hypothesis? et \verb?Variable? sont synonymes. Il s'agit à chaque fois de choisir un objet générique d'un type donné. L'axiomatisation se fait sur le fait que le type en question est non vide. Cela explique que la syntaxe est la même, la multiplicité des mots-clef ne sert en fait qu'à faciliter la lecture.
+
+La conséquence pratique la plus importante de ce fonctionnement est que la correspondance de Curry-Howard impose de raisonner en logique intuitionniste. La grande majorité des mathématiques s'exprime généralement dans le cadre de la logique classique et faire le lien entre les deux est grand enjeu de la formalisation mathématique en Coq. En effet, en toute généralité, il est impossible en Coq d'effectuer un raisonnement par l'absurde, ou de discuter suivant la valeur de vérité d'une proposition. Comme ce sont des raisonnements très utilisés en mathématiques, il est très important de trouver une alternative. Une solution possible est de déclarer comme axiome la proposition $A\vee \neg A$. Cependant, il s'agit là d'un parti pris relativement fort, et il nécessiterait un certain travail afin de rendre cet axiome utilisable en pratique. Dans la suite nous allons présenter l'alternative qui a été optée pour développer la bibliothèque SSReflect.
+
+
+\chapter{La Réflection Booléenne}
+\section{Qu'est-ce que la réflection booléenne?}
+\subsection{Booléens versus Propositions}
+Remarquons que l'on dispose en Coq de deux types qui peuvent sembler redondant: les booléens et les propositions. En particulier il existe un \verb?/\? propositionnel et un \verb?&&? booléens, un \verb?\/? propositionnel, et un \verb?||? booléen, et ainsi de suite pour les opérateurs habituels. La différence entre ces deux types est en fait fondamentale, prenons l'exemple de la conjonction pour l'expliquer: 
+\begin{itemize}
+\item Dans le cas des propositions, \verb?/\? est un constructeur du type \verb?Prop?, qui est défini inductivement.
+\item dans le cas des booléens, \verb?&&? est une fonction, c'est à dire un objet de type \verb?bool -> bool -> bool?
+\end{itemize}
+La différence entre ces deux visions réside dans le fait que l'on impose dans le langage Coq que les fonctions, par définition, terminent. Ainsi, le type \verb?bool? est construit comme ayant deux valeurs, qui sont \verb?true? et \verb?false?, et possède un certain nombre de fonctions sur lui même, dont la terminaison est prouvée. Par définition, un booléen peut donc s'évaluer, et le résultat sera toujours \verb?true? ou \verb?false?. A l'inverse, le type \verb?Prop? est construit inductivement à partir de deux constantes \verb?True? et \verb?False? et de plusieurs constructeurs de type. Il existe ensuite une procédure de réduction, mais l'arrêt de cette procédure n'est pas jamais garanti, et les propositions permettent donc d'exprimer des énoncés qui sont indécidables, contrairement aux booléens.
+
+\subsection{Utiliser les booléens}
+Remarquons cependant que les booléens permettent naturellement d'exprimer des propositions. Plus précisément, si \verb?A? est une formule booléenne, alors la proposition correspondant \verb?A = true? exprime réellement le même énoncé mathématique. L'idée de la réflection booléenne est d'utiliser cette ambivalence. Ainsi, lorsque c'est possible, on définit une formule booléenne et une proposition pour chacun des énoncés mathématiques que l'on cherche à définir, et on exprime le fait que ces deux formules expriment le même énoncé. On utilise pour cela le mot \verb?reflect?\footnote{\verb?Inductive reflect (P : Prop) : bool -> Set :=
+    ReflectT : P -> reflect P true
+  | ReflectF : ~ P -> reflect P false
+?}
+
+L'avantage de cette démarche est de rétablir en partie la logique classique, du moins pour une certaine classe de propositions. En effet, pour un booléen \verb?b?, on est capable de construire une preuve en Coq de \verb?b = true \/ b = false?. Ainsi, Pour les propositions \verb?P? qui se reflètent sur des booléens, on dispose effectivement de la proposition $P\vee \neg P$, que l'on a démontré, et pour ces propositions, la logique intuitionniste coincide avec la logique classique. C'est en fait le cas dès que l'on est capable de prouver qu'une proposition est décidable, car alors $P\vee \neg P$ est toujours vrai, mais dans la pratique, on montrera toujours qu'une proposition est décidable en établissant une réflection booléenne.
+
+\section{Travailler sur un type fini}
+
+Ce système de réflexion booléenne est intéressant dans le cas où l'on travaille sur des types dont l'égalité est décidable, et tout particulièrement lorsque que l'on prête attention aux types finis. Les types avec une égalité décidable, formalisés dans SSReflect sous le nom \verb?eqType? sont intéressant car les propositions de logique non quantifiées traitant de l'égalité peuvent être abordées de la même manière qu'en logique classique. Pour ce qui est des types finis, formalisés sous le nom de \verb?finType?, ce sont déjà des types dont l'égalité est décidable, mais de plus il est tout à fait possible de donner une version booléenne des quantificateurs sur les types finis. En effet, si le type est fini, l'algorithme qui consiste à énumérer tous les éléments du type et à vérifier pour chacun si une propriété donnée est vrai est un algorithme qui termine, et qui peut donc être écrit comme une formule booléenne. Ainsi, sur les types finis, toutes les formules de logique du premier ordre peuvent s'exprimer comme des booléens, et on a une reflection booléenne sur une large classe de proposition. De plus la majorité des constructeurs de type\footnote{sauf constructeur \verb?seq?, qui construit les listes} préservent la finitude, ainsi lorsque \verb?A? et \verb?B? sont des types finis, alors \verb?{set A}? et \verb?A-> B? sont encore des types finis, on peut donc quantifier sur ces types et travailler sur la logique d'ordre supérieur de manière classique. 
+
+\chapter{Des Mathématiques en Coq}
+Le théorème de Feit-Thomson porte sur les groupes finis, et donc permet d'exploiter la reflexion booléenne de façon optimale, c'est donc cohérent que ca soit ce théorème qui ait servi d'objectif à la bibliothèque MathComp. Cependant le formalisme développé s'applique également bien à beaucoup de résultats de combinatoire, qui établissent des bijections entre des ensembles finis.
+
+\section{La bibliothèque MathComp}
+Il s'agit de la bibliothèque principale sur laquelle nous allons nous appuyer, et nous détaillons donc son contenu. Il est réparti en plusieurs sous-répertoires:
+\begin{itemize}
+\item ssreflect: Il s'agit du noyau, qui contient le langage de tactiques SSReflect ainsi que les manipulations sur les types primitifs. Ainsi, on y trouve entre autres, la définition de la réflection booléenne, tous les lemmes sur les booléens (\verb?bool?), les entiers (\verb?nat?), les listes sur un type \verb?T? (\verb?seq T?), les types à égalité décidable (\verb?eqType?), les types pour lesquels on dispose d'une procédure de choix (\verb?choiceType?), les types pour lesquels on dispose d'une procédure d'énumération (\verb?finType?), ainsi que les ensembles sur un tel type (\verb?{set T}?).
+\item fingroup: Il s'agit de la partie contenant des informations sur les groupes finis, en particulier leur définition, les morphismes et automorphismes, groupes quotients les actions de groupe et leurs orbites, et la notion de présentation.
+\item algebra: C'est la partie contenant tout ce qui est relatif aux anneaux, modules, matrices et polynômes.
+\item solvable: La partie contenant les propriétés des groupes résolubles.
+\item field: Le répertoire contenant la définition des corps, et en particulier du corps des complexes algébriques, sur lequel nous nous placeront.
+\item character: Il s'agit du répertoire contenant une formalisation de la théorie des représentations, et en particulier de la théorie des caractères.
+\end{itemize}
+Elle est disponible à l'adresse suivante:  \url{http://math-comp.github.io/math-comp/}
+
+\section{La bibliothèque Coq-Combi}
+Nous utiliseront également dans une moindre mesure la bibliothèque Coq-Combi, développée par Florent Hivert dans le but de formaliser des preuves combinatoires en Coq/SSReflect. Il s'agit s'une formalisation du calcul des coefficients de Littlewood-Richardson sur les fonctions symétriques, et on trouve dans cette bibliothèques les ingrédients combinatoires nécessaires à la formalisation des représentations des groupes symétriques.
+
+Il y a notament de nombreux résultats sur les partitions d'un entiers, leurs représentations en diagrammes, les tableaux d'Young et leurs manipulations, en particulier l'algorithme d'insertion de Schensted, le tri et les fonctions symétriques. 
+
+Cette bibliothèque se trouve à l'adresse suivante: \url{https://github.com/hivert/Coq-Combi}
+
+\part{Elements de Combinatoire sur les Groupes Symétriques et Leur Formalisation en Coq/SSReflect}
+
+\chapter{La décomposition en cycle}
+Nous allons commencer par présenter un théorème bien connu:
+\begin{thm}[décomposition en cycle]
+Soit $\sigma \in \sym_n$, alors il existe une famille de cycles à supports disjoints $c_1,...,c_m\in \sym_n$ telle que $\sigma = \prod\limits_{i=1}^n c_i$. De plus cette famille est unique à l'ordre près.
+\end{thm}
+
+Si l'énoncé de ce théorème peut sembler élémentaire, il faut cependant se rappeler que de nombreuses notions manquent dans la bibliothèque MathComp. En particulier, les notions de cycles et de support d'une permutation ne sont pas implémentées. Il est donc nécessaire de les définir, et savoir de quelle manière définir ces notions pour qu'elles soient faciles d'utilisation et bien compatibles avec le travail qui est déjà intégré dans MathComp n'est pas une question évidente. 
+
+\section{Les notions déjà présentes dans MathComp}
+Avant de donner les définitions finalement retenues pour les différentes notions dont nous auront besoin, commençons par nous pencher sur ce qui est déjà présent dans MathComp, et qui pourrait nous être utile. Dans la partie concernant les groupes finis, on trouve une formalisation de la notion d'ensemble de points fixes sous des actions, la notion d'orbit d'une action, ainsi que l'action par permutation. On dispose également de la notion de restriction, qui nous sera utile pour la suite.
+%%%%%% TODO: AJOUTER LES NOMS DES NOTIONS EN CODE
+\section{Définition des notions}
+Afin de s'appuyer le plus possible sur les notions déjà développées dans la bibliothèque, on définit le support d'une permutation \verb?s? comme étant le complémentaire de l'ensemble des points fixe de l'application. \begin{verbatim} Definition support s := ~:'Fix_('P)([set s])%g. \end{verbatim}
+On est ensuite amené à démontrer de nombreux lemmes sur le support, qui ne sont qu'une simple reformulation de ce qu'est le support, mais que nous allons utiliser très souvent, et qu'il est donc utile de démontrer comme des lemmes. Une autre notion nous sera très utile, il s'agit de la partition du support en orbites non triviales sous l'action de la permutation. \begin{verbatim} Definition psupport s := [set x in pcycles s | #|x| != 1]. \end{verbatim} Cela nous permet très naturellement de définir la notion de cycle, il s'agit simplement d'une permutation qui possède une unique orbite non triviale. Notons que suivant cette convention, l'identité n'est pas un cycle, et la décomposition en cycle de l'identité est donnée par la famille vide, qui est effectivement une famille de cycles à supports disjoints. \begin{verbatim} Definition is_cycle s := #|psupport s| == 1.\end{verbatim}.
+On peut maintenant donner une construction explicite de la décomposition en cycle, en donnant simplement les restrictions de notre permutation sur chacune de ses orbites non triviales \begin{verbatim} Definition cycle_dec s : {set {perm T}} := [set restr_perm X s | X in psupport s]. \end{verbatim}
+L'objectif de la suite est de vérifier que cette décomposition est effectivement une décomposition en cycles à support disjoints, et qu'elle est unique.
+
+\section{La démonstration Formelle}
+Pour démontrer le théorème annoncé nous allons tout d'abord montrer que la décomposition que nous avons définie convient bien. Il y a trois conditions à vérifier pour cela:
+\begin{itemize}
+\item Les éléments qui apparaissent dans cette décomposition sont des cycles. Cela est prouvé par le lemme suivant: \begin{verbatim}
+Lemma is_cycle_dec s : {in (cycle_dec s), forall C, is_cycle C}.
+\end{verbatim}
+\item Ils sont à support disjoints. Il est d'abord nécessaire de bien préciser ce que l'on entend par support disjoint \begin{verbatim} 
+Definition disjoint_supports (l: {set {perm T}}):= 
+  trivIset [set support C| C in l] /\ {in l &, injective support}.
+\end{verbatim}
+Notons que la condition d'injectivité est primordial car elle permet d'assurer qu'il n'y ait pas dans notre ensemble deux permutations qui ont le même support. On passerai à côté de ce phénomène sans cette condition, car on travail en termes ensemblistes, et les répetitions sont invisibles dans les ensembles. Avec cette définition, on démontre le lemme suivant: \begin{verbatim} Lemma disjoint_cycle_dec s : disjoint_supports (cycle_dec s).\end{verbatim}
+\item Leur produit est égal à \verb?s?: Cette condition est donnée par le lemme: \begin{verbatim} Lemma cycle_decE s : (\prod_(C in cycle_dec s) C)%g = s. \end{verbatim}
+\end{itemize}
+La troisième condition est particulièrement délicate à démontrer, car il s'agit d'évaluer un produit de permutations sur un élément. Cependant on sait que les permutations sont à support disjoint par le point précédent, et cela va beaucoup simplifier la preuve. Nous avons prouvé de deux manières la valeur du produit $(\prod\limits_{i=1}^m c_i) x$, où les $c_i$ sont des cycles à support disjoints. Le résultat final est donné sous le nom: \begin{verbatim} Lemma prod_of_disjoint (A : {set {perm T}}) C x:
+  disjoint_supports A -> C \in A ->
+  x \in support C -> (\prod_(C0 in A) C0)%g x = C x.\end{verbatim}
+\begin{itemize}
+\item La première approche consiste à suivre l'élément $x$ à travers chacune des permutations $c_i$. S'il n'est dans le support d'aucune permutation, alors il est fixé par le produit. Sinon il est dans le support d'exactement l'une d'entre elles, notons $i_0$ son indice. On a alors \begin{eqnarray*} \left( \prod\limits_{i=1}^m c_i \right) x &=& \left( \prod\limits_{i=i_0+1}^m c_i \right) \left( c_{i_0} \left( \left(\prod\limits_{i=1}^{i_0-1}  c_i \right) x\right) \right)\\ 
+&=& \left( \prod\limits_{i=i_0+1}^m c_i \right) \left( c_{i_0}(x)\right)\\
+&=& c_{i_0} (x)
+\end{eqnarray*}
+Cela se justifie par le fait que $x$ n'est dans aucun des supports des $\{c_i\}_{i = 1 ... i_0-1}$, et $c_{i_0}(x)$ n'est dans aucun des supports des $\{c_i\}_{i = i_0+1 ... m}$, car il est également dans le support de $c_{i_0}$.
+\item La seconde approche consiste à intervertir l'ordre des permutations, en remarquant que comme elles sont à support disjoint, elles commutent. Ainsi, si $x$ est dans le support de $c_{i_0}$, on écrit:
+\begin{eqnarray*}
+ \left( \prod\limits_{i=1}^m c_i \right) x &=& c_{i_0}\left( \left( \prod\limits_{i=1, i\neq i_0}^m c_i \right) x\right)\\
+ &=& c_{i_0}(x)
+\end{eqnarray*}
+C'est la solution qui a été finalement retenue, mais elle est un petit peu plus technique à mettre en oeuvre. En effet, le produit est implémenté sur une loi de groupe, et on peut permuter les élements si cette loi est commutative. Or ici, nous n'avons pas une loi de groupe commutative, mais une famille d'éléments qui commutent. Il s'agit donc de se placer sur le sous groupe engendré par ces éléments pour faire le calcul et vérifier que le produit sur ce sous-groupe coincide bien avec le produit initial. 
+\end{itemize} 
+
+Les trois critères que nous avons définis peuvent être réunis dans une même formule:  
+\begin{verbatim}Inductive cycle_dec_spec s (A : {set {perm T}}) : Prop :=
+  CycleDecSpec of
+    {in A, forall C, is_cycle C} &
+    disjoint_supports A &
+    (\prod_(C in A) C)%g = s : cycle_dec_spec s A. \end{verbatim}
+    
+ Après avoir montré ces trois critères, démontrer l'unicité de la décomposition en cycles est ne demande pas d'introduire plus de notions. On a donc démontré notre théorème:
+ \begin{verbatim}Theorem cycle_decP s : cycle_dec_spec s (cycle_dec s).
+Theorem uniqueness_cycle_dec s (A : {set {perm T}}) : cycle_dec_spec s A -> A = cycle_dec s.
+ \end{verbatim}
+
+
+\chapter{Type Cyclique et Classes de Conjugaison}
+
+
+\part{Théorie des Représentations et Application à la Combinatoire des Groupes Symmétriques}
+Dans cette partie nous allons présenter des éléments théoriques de la théorie des représentations. Parmi ces éléments, les deux premiers chapitres sont déjà formalisés dans la bibliothèque MathComp, ils constituent la théorie des représentations classique. Puis les deux chapitres suivant sont plus spécifiques, ils suivent l'approche développée par Vershik et Okounkov (%%%%%TODO: AJOUTER UNE REFERENCE
+) qui permet de calculer effectivement les représentations des groupes symétriques et de mettre en avant leur combinatoire. Les deux premiers chapitres étant essentiellement déjà formalisés, on pourra se permettre de présenter des résultats en donnant simplement une référence pour la démonstration, lorsque celle ci n'aide pas fondamentalement à la compréhension de la théorie. La théorie sera présenté dans le vocabulaire habituel des représentations, qui ne correspond pas complètement à la manière dont sont formalisées les choses dans MathComp. La majorité du travail restant consistera à faire la traduction effective entre le langage des représentations usuel et la formalisation.
+
+
+Dans toute la suite, on se donne un corps $k$ que l'on supposera toujours algébriquement clos et de caractéristique 0. En pratique, on se place très souvent sur $\mathbb{C}$ pour raisonner intuitivement, mais l'implémentation dans Coq/SSReflect nous poussera plutôt à choisir le corps des nombres complexes algébriques.
+
+\chapter{Représentations de Groupes et Représentations d'Algèbre}
+\section{Premières définitions}
+
+Dans un premier temps, nous allons définir la notion de représentation de groupe et d'algèbre.
+
+\subsection{Représentations des groupes et algèbres}
+\subsubsection{Définition des représentations}
+\begin{defi}[Représentation d'un groupe]
+Soit $G$ un groupe fini (resp. $A$ une $k$-algèbre), une représentation de $G$ sur $k$ (resp. une représentation de $A$) est la donnée d'un couple $(\mu, V_\mu)$, où $V_\mu$ est un $k$-espace vectoriel de dimension finie, et $\mu: G \longrightarrow \Aut(V_\mu)$ est un morphisme de groupes (resp. $\mu : A \longrightarrow \Hom_k(V_\mu)$ est un morphisme d'algèbres).
+\end{defi}
+
+\subsubsection{l'algèbre de groupe}
+\begin{defi}
+Soit $G=\{g_1, ... , g_n\}$ un groupe fini, on appelle l'algèbre du groupe $G$ sur $k$, notée $k[G]$, l'algèbre sur $k$ dont une base est $G$ et dont la multiplication est donnée sur cette base par le produit dans $G$.
+\end{defi}
+
+\begin{ppst}
+Une $k$-algèbre de dimension finie est une algèbre de groupe si et seulement si elle possède une base qui est un groupe
+\end{ppst}
+
+\begin{rem}
+Dans le cas échéant, une telle base n'est pas nécessairement unique et une algèbre peut être l'algèbre de deux groupes non isomorphes.
+\end{rem}
+
+Nous allons maintenant donner une description un peu plus explicite de l'algèbre de groupe.
+\begin{ppst}
+L'espace $k[G]$ est en fait isomorphe, en tant qu'espace vectoriel, à l'espace $k^G$
+\end{ppst}
+\begin{proof}
+Il suffit d'exhiber deux isomorphismes réciproques, or on a les applications suivantes: 
+\begin{center}
+\begin{tabular}{cc}
+\begin{tabular}{clll}
+$\Phi :$& $k^G$ & $\longrightarrow$ & $k[G]$\\
+&$f$ & $\longmapsto$ & $\sum\limits_{g\in G} f(g)g$
+\end{tabular} & 
+\begin{tabular}{crll}
+$\Psi :$& $k[G]$ & $\longrightarrow$ & $k^G$\\
+&$a = \sum\limits_{g\in G}a_g g$ & $\longmapsto$ & $(g\mapsto a_g)$
+\end{tabular} 
+\end{tabular}
+\end{center}
+On vérifie alors sans difficulté que ce sont deux morphismes et qu'ils sont bien réciproques l'un de l'autre.
+\end{proof}
+
+\begin{rem}
+$k[G]$ et $k^G$ sont tous deux des $k$-algèbres, mais elles ne sont pas isomorphes. Cependant on peut définir un produit sur $k^G$ pour que l'isomorphisme précédent soit un isomorphisme d'algèbre.
+\end{rem}
+
+\begin{defi}[produit de convolution sur $k^G$]
+On pose $*:k^G\times k^G \longrightarrow k^G$ défini par $\forall f_1,f_2 \in k^G, f_1*f_2: g \mapsto \sum\limits_{h \in G} f_1(gh^{-1})f_2(h)$
+\end{defi}
+
+\begin{ppst}
+$(k^G,*)$ est une algèbre, et l'isomorphisme entre $k[G]$ et $k^G$ est un isomorphisme d'algèbre pour le produit $*$ de $k^G$
+\end{ppst}
+
+\subsubsection{La représentation régulière}
+
+\begin{defi}[Représentation Régulière]\leavevmode
+Soit $G$ un groupe, alors $k[G]$ est une représentation de $G$ pour le morphisme $\mu: G \longrightarrow k[G]$ défini par $\mu(g)(\sum\limits_{h\in G} a_h h) = \sum\limits_{h\in G} a_h (gh)$
+
+On appelle cette représentation la représentation régulière de G, notée $\Reg_G$ 
+\end{defi}
+
+\begin{rem}
+Se donner une représentation du groupe $G$ sur $k$ est équivalent à se donner une représentation de l'algèbre $k[G]$
+\end{rem}
+
+\begin{defi}
+La dimension d'une représentation $(\mu, V_\mu)$ est la dimension de l'espace $V_\mu$ en tant qu'espace vectoriel
+\end{defi}
+
+\begin{rem}
+Il arrivera très souvent que l'on note une représentation en donnant simplement l'espace $V_\mu$, ou le morphisme $\mu$, l'autre élément du couple sera alors sous-entendu.
+\end{rem}
+
+
+\subsection{Un exemple de représentation}
+Nous allons ici construire une représentation, qui nous servira d'exemple pour illustrer les différentes notions relatives aux représentations que nous allons définir. On se place sur l'espace vectoriel $\mathbb{C}^6$, et on considère l'action de $\sym_3$ suivante définie de la manière suivante:
+$$\forall \sigma \in \sym_3, \forall (c_1,c_2,c_3,c_4,c_5,c_6) \in \mathbb{C}^6, \sigma\cdot (c_1,c_2,c_3,c_4,c_5,c_6) = (c_{\sigma(1)},c_{\sigma(2)},c_{\sigma(3)},c_{\sigma(1)+3},c_{\sigma(2)+3},c_{\sigma(3)+3} )$$
+
+On obtient de cette façon un $k[\sym_3]$-module, cela nous définit donc une représentation du groupe $\sym_3$. On peut donner une expression de cette représentation. 
+
+Rappelons qu'une permutation peut s'écrire comme une matrice de 0 et 1, dans laquelle chaque colonne et chaque ligne contient exactement une fois le nombre 1. On lit alors la permutation de la manière suivante: si la case $(i,j)$ contient le nombre $1$, alors la permutation envoie le nombre $i$ sur le nombre $j$. Etant donné une permutation $\sigma$, on note alors $M_\sigma$ la matrice correspondante. 
+
+Alors on a le morphisme de groupe suivant, qui définit la représentation:
+\begin{center}
+\begin{tabular}{crcl}
+$\nu:$ & $\sym_3$ & $\longrightarrow$ & $\GL_6(\mathbb{C}) \simeq \Aut\mathbb{C}^6)$ \\
+& $\sigma$ & $\longmapsto$ & $\begin{pmatrix} M_\sigma & 0\\
+                                            0 & M_\sigma \\ \end{pmatrix}$
+\end{tabular}
+\end{center}
+
+Dans la suite, la lettre $\nu$ sera réservée à cette représentation.
+
+\section{Réductions et représentations irréductibles}
+
+Dans cette partie, on se donne une algèbre $A$ et une base $\{a_1,...,a_n\}$ de $A$, lorsque que l'on parle de représentation d'un groupe $G$,  choisira $A = k[G]$ et cette base sera toujours $G$.
+
+\subsection{Irréductibilité}
+
+
+\begin{defi}[sous-représentation]
+Soit $(\mu, V_\mu)$ une représentation de A, une sous-représentation de $V_\mu$ est un sous-espace vectoriel $W$ de $V_\mu$ qui est stable par tous les $\mu(a), a\in A$
+\end{defi}
+
+\begin{rem}
+Il suffit en fait de vérifier que $W$ est stable par tous les $\mu(a_i)$
+\end{rem}
+
+\begin{ex} \leavevmode
+\begin{itemize}
+\item $\{0\}$ et $V_\mu$ sont toujours deux sous-représentations de $V_\mu$.
+\item Reprenons notre représentation $\nu$, et remarquons que le sous espace vectoriel $\mathbb{C}^3\times\{0\}^3$ de $\mathbb{C}^6$ est stable sous l'action de tous les éléments de $\sym_3$. Ainsi il s'agit d'une sous-représentation de $\nu$
+\end{itemize}
+\end{ex}
+
+\begin{defi}[représentation irréductible]
+On dit qu'une représentation $(\mu, V_\mu)$ de A est irréductible si ses seules sous-représentations sont $\{0\}$ et $V_\mu$
+\end{defi}
+
+\begin{ex}
+Une représentation de dimension 1 est toujours irréductible, en effet, si $V$ est une représentation de dimension 1, une sous-représentation $W$ est en particulier un sous-espace vectoriel de $V$, donc il est de dimension 0 ou 1, c'est à dire, $W = \{0\}$ ou $W = V$
+\end{ex}
+
+\subsection{Semi-simplicité}
+
+\begin{defi}[somme directe de représentation]
+Etant donné deux représentations $(\mu, V_\mu)$ et $(\lambda, V_\lambda)$, on définit la somme directe de ces deux représentations (ou la somme directe de deux modules), qui est la représentation sur l'espace $V_\mu\oplus V_\lambda$ avec le morphisme défini par $$V_\mu\oplus V_\lambda \ni x_\mu + x_\lambda \longmapsto \mu(x_\mu) + \lambda(x_\lambda)$$
+\end{defi}
+
+\begin{defi}[représentation complètement réductible]
+On dit qu'une représentation $V$ est complètement réductible il existe une famille de représentations irréductibles $V_\rho$ tels que $V = \bigoplus V_\rho$
+\end{defi}
+
+\begin{defi}[représentation semi-simple]
+On dit qu'une représentation $V$ est semi-simple si toute sous-représentation de $V$ admet un supplémentaire qui est stable par l'action de $A$
+\end{defi}
+
+\begin{defi}[anneau semi-simple]
+Un anneau $A$ est dit semi-simple si toute les représentations sur $A$ est semi-simple
+\end{defi}
+
+\begin{ex}
+En reprenant notre représentation $\nu$, on peut remarquer que la sous-représentation $\mathbb{C}^3\times \{0\}^3$ possède comme supplémentaire l'espace $\{0\}^3\times\mathbb{C}^3$ qui est également une sous-représentation.
+\end{ex}
+
+\begin{thm}
+Les notions de représentation complètement réductibles semi-simples sont équivalentes
+\end{thm}
+\begin{proof}
+La preuve de ce théorème est se fait par récurrence sur la dimension. 
+\begin{itemize}
+\item Pour des représentations de dimension $1$, elles sont déjà irréductible, donc ne possèdent pas de sous représentations, et s'écrivent comme somme directe d'une représentation irréductible.
+\item Soit $n\in \mathbb{N}$, supposons que ces notions soient équivalentes pour les représentations de dimension $k\leq n$. Choisissons alors une représentation $V$ de dimension $n+1$. 
+\begin{itemize}
+\item Supposons donc que cette représentation est semi-simple, et montrons qu'elle est alors complètement réductible.
+Si cette représentation est simple, il n'y a rien à montrer, supposons donc que cette représentation admette une sous-représentation $W$ qui est donc de dimension $k \leq n$, alors $W$ admet un supplémentaire $W'$ qui est également une sous-représentation, et $\dim W' = k' \leq n$. De plus $W$ et $W'$ sont semi-simples, donc totalement réductibles, et en écrivant $W = \bigoplus\limits_{i=1}^m W_i$ et $W' = \bigoplus\limits_{j=1}^{m'} W'_j$ leurs décompositions en représentations irréductibles, on obtient une décomposition en représentations irréductibles de $V$ sous la forme $$ V = \bigoplus\limits_{i=1}^m W_i \oplus \bigoplus\limits_{j=1}^{m'} W'_j$$ Et ainsi, $V$ est complètement réductible. 
+\item Réciproquement, si $V$ est complètement réductible, alors si l'on considère une sous-représentation $W$, on peut la décomposer comme somme d'irréductibles $W = \bigoplus\limits_{i = 1}^m W_i$. Mais alors en décomposant $V$ comme somme d'irréductibles, on obtient $V = \bigoplus\limits_{i=1}^m W_i \oplus \bigoplus\limits_{j=1}^{m'} W'_j$ et la sous représentation $\bigoplus\limits_{j=1}^{m'} W'_j$ est un supplémentaire stable de $W$. Ainsi V est semi-simple.
+\end{itemize}
+\end{itemize}
+Ainsi, les notions de semi-simples et complètement réductibles coincident pour les représentations de groupes et d'algèbres.
+\end{proof}
+
+\begin{ex}
+Nous allons montrer que la représentation $\nu$ est complètement réductible en calculant sa décomposition en somme directe de représentations irréductibles.
+
+On a déjà remarqué que $$\nu = (\mathbb{C}^3\times\{0\}) \oplus (\{0\}\times \mathbb{C}^3)$$ où l'action de $\sym_3$ sur chacune des composantes est donnée par permutation des composantes.
+
+Sur $\mathbb{C}^3\times \{0\}$, notons $e_1 = (1,1,1,0,0,0)$. On remarque qu'alors $k\cdot e_1$ est stable sous l'action de $\sym_3$, c'est donc une sous représentation, et comme elle est de dimension 1, on en déduit qu'elle est irréductible. L'action de $\sym_3$ sur $k\cdot e_1$ est triviale. On peut également noter qu'en notant $e_2 = (1,-1,0,0,0,0)$ et $e_3 = (1,0,-1,0,0,0)$, alors $\Vect(e1,e2)$ est le plan d'équation $c_1+c_2+c_3 = 0$ qui est donc stable sous l'action de $\sym_3$. De plus, $\Vect(e1,e2)$ est supplémentaire de $k\cdot e_1$, et on peut vérifier qu'il ne contient pas de sous-représentation stricte (car alors cette représentation serait nécessairement une droite, et aucune droite de ce plan n'est stable).
+
+En procédant de même pour le sous-espace $\{0\}\times \mathbb{C}^3$, on note $e_4 = (0,0,0,1,1,1)$, $e_5 = (0,0,0,1,-1,0)$ et $e_6 = (0,0,0,1,0,-1)$. On obtient alors la décomposition en représentations irréductibles de la représentation $\nu$ 
+$$\nu = \Vect(e_1)\oplus \Vect(e_2,e_3)\oplus \Vect(e_4) \oplus \Vect(e_5,e_6)$$
+\end{ex}
+
+\section{Morphismes de représentation et lemme de Schur}
+
+\subsection{Lemme de Schur}
+
+\begin{defi}[morphisme de représentations]
+Soient deux représentations $(\mu, V_\mu)$ et $(\lambda, V_\lambda)$. On dit que $f$ est un morphisme de représentations (ou un morphisme de $A$-module) si $f : V_\mu \longrightarrow V_\lambda$ est une application linéaire, et que de plus, $$\forall a \in A, f\circ \mu(a) = \lambda(a)\circ f$$
+
+On note $\Hom_A(V_\mu, V_\lambda)$ l'ensemble des morphismes de représentation (ou morphismes de $A$-modules) de $V_\mu$ dans $V_\lambda$
+\end{defi}
+
+\begin{defi}[isomorphisme de représentations]
+Un morphisme de représentations bijectif est appelé un isomorphisme de représentations. On dit que deux représentations sont isomorphes s'il existe un isomorphisme de représentations de l'une à l'autre
+\end{defi}
+
+\begin{rem}
+Par la suite, nous considèreront les représentations à isomorphisme près, et on simplifiera donc les notations. De plus on note $\widehat{G}$ l'ensemble des représentations irréductibles de $G$ à isomorphisme près.
+\end{rem}
+
+\begin{ex}
+La décomposition de la représentation $\nu$ peut donc se réécrire de la manière suivante: 
+$$ \nu = \triv^{\oplus{2}}\oplus \rho_2^{\oplus{2}}$$
+où $\triv$ désigne la représentation triviale de $\sym_3$ et $\rho_2$ désigne la représentation irréductible de dimension $2$, $\Vect((1,-1,0),(1,0,-1))$ où l'action de $\sym_3$ est donnée par permutation des composantes
+\end{ex}
+
+L'ensemble $\Hom_A(V,W)$ va donner de nombreuses informations sur la représentation que l'on étudie, via le lemme suivant: 
+\begin{thm}[Lemme de Schur]
+Soient $\mu, \lambda$ deux représentations irréductibles, alors
+\begin{itemize}
+\item si $\mu$ et $\lambda$ ne sont pas isomorphes, $\Hom_A(V_\mu, V_\lambda) = \{0\}$
+\item $\Hom_A(V_\mu, V_\mu) = \{c.\Id_{V_\mu}, c\in k\}$, en particulier $\dim_k \Hom_A(V_\mu, V_\mu) = 1$
+\end{itemize}
+\end{thm}
+
+\subsection{Le cas des représentations complètement réductibles}
+
+\subsubsection{Composantes Isotypiques et Multiplicités}
+\begin{defi}[Composantes Isotypiques et Multiplicités]
+Soit $(\mu,V)$ une représentation totalement réductible, alors par définition, il existe une famille de représentations irréductibles $V_\rho$ et des entiers $m_\rho$ tels que
+$V = \bigoplus V_\rho^{\oplus m_\rho}$
+
+L'espace $V_\rho^{\oplus m_\rho} $ est alors appelé la composante isotypique de $\rho$ dans $\mu$ et $m_\rho$ est appelé la multiplicité de $\rho$ dans $\mu$.
+\end{defi}
+
+\begin{rem}
+La décomposition en composantes isotypiques de $V$ est unique
+\end{rem}
+
+\begin{defi}
+On dit qu'une représentation est sans multiplicité, si les $m_\rho$ sont égaux à $0$ ou $1$
+\end{defi}
+
+\subsubsection{Lemme de Schur et Multiplicités}
+Dans cette section, nous nous intéresseront aux représentations complètement réductibles, et nous allons appliquer le lemme de Schur à plusieurs reprises pour donner une caractérisation des composantes isotypiques.
+
+Commençons donc par un lemme calculatoire: 
+\begin{lemma} L'opérateur $\Hom$ est compatible aux sommes directes à gauche et à droite, c'est à dire
+\begin{itemize}
+\item Soient trois représentations $V_1, V_2, W$ alors $\Hom_G(V_1\oplus V_2, W) = \Hom_G(V_1,W) \oplus \Hom_G(V_2,W)$
+\item Soient trois représentations $V, W_1, W_2$ alors $\Hom_G(V, W_1 \oplus W_2) = \Hom_G(V,W_1) \oplus \Hom_G(V,W_2)$
+\end{itemize}
+\end{lemma}
+
+On se fixe maintenant une représentation $\mu$ quelconque, et pour une représentation irréductible $\rho$, on note $m_\rho$ la multiplicité de $\rho$ dans $\mu$. On peut alors calculer $m_\rho$ de la manière suivante:
+
+\begin{thm}
+$m_\rho = \dim \Hom_G(V_\rho,V_\mu)$
+\end{thm}
+
+\begin{proof}
+En utilisant le lemme de Schur : \\
+\begin{tabular}{cll}
+$\Hom_G(V_\rho,\mu)$ & $=  \Hom_G(V_\rho, \bigoplus\limits_{\sigma\in\widehat{G}} V_\sigma^{\oplus m_\sigma})$ & \\
+                              & $= \bigoplus\limits_{\sigma\in\widehat{G}} \Hom_G(V_\rho, V_\sigma)^{\oplus m_\sigma}$  & \\
+                              & $= \Hom_G(V_\rho, V_\rho)^{\oplus m_\rho}$ & car $\Hom_G(V_\rho,V_\sigma) = 0$ si $\rho$ et $\sigma$ ne sont pas isomorphes\\
+                              & $= k^{m_\rho}$ &
+\end{tabular}
+\end{proof}
+
+Ce théorème montre que calculer les composantes isotypiques de $\mu$ revient à calculer les espaces $\Hom_G(\rho,\alpha)$
+
+\subsubsection{Le Commutant d'une représentation}
+
+\begin{defi}
+Si V est une représentation, $\Hom_G(V,V)$ est appelé le commutant de $V$.
+\end{defi}
+
+On va donner une expression explicite du commutant d'une représentation en fonction de ses composantes isotypiques.
+
+\begin{thm}
+Si $(\rho,V_\rho)$ est une représentation irréductible, $\Hom_G(V_\rho^{\oplus n},V_\rho^{\oplus l}) = \mathcal{M}_{n,l}(k)$
+\end{thm}
+
+\begin{proof}
+A nouveau avec le lemme de Schur: \\
+\begin{tabular}{cl}
+$\Hom_G(V_\rho^{\oplus n},V_\rho^{\oplus k})$ & $=  \Hom_G(\rho, \rho) ^ {\oplus (n\times k)}$ \\
+                              & $= k^{n\times l}$ \\
+                              & $= \mathcal{M}_{n,l}(k)$
+\end{tabular}
+\end{proof}
+
+\begin{thm}
+Si $V_\mu$ est la représentation de $G$ caractérisée par les multiplicités $\{m_\rho\}$, alors $$\Hom_G(V_\mu,V_\mu) = \bigoplus\limits_{\rho\in\widehat{G}} \mathcal{M}_{m_\rho}(k)$$
+De plus, la composition des endomorphismes dans $\Hom_G(V_\mu,V_\mu)$ correspond au produit matriciel.
+\end{thm}
+
+\begin{proof}
+De la même façon, on décompose $V_\mu$ en composantes isotypiques et on remplace cette expression dans $\Hom_G(V_\mu,V_\mu)$
+\end{proof}
+
+On peut alors utiliser cette écriture pour caractériser les représentations qui sont sans multiplicité:
+\begin{thm}
+$V_\mu$ est sans multiplicité si et seulement si $\Hom_G(V_\mu,V_\mu)$ est commutatif
+\end{thm}
+
+\chapter{Représentations de groupes et théorie des caractères}
+Maintenant que nous avons défini des notions sur les représentations des algèbres en générale, qui pourront nous être utiles par la suite, nous allons nous focaliser au cas des groupes, pour lequel beaucoup de ces notions se simplifient.
+
+\section{Propriétés sur les représentations des groupes}
+\begin{thm}[de Maschke]
+L'algèbre d'un groupe est semi-simple. C'est à dire, toutes les représentations de groupes sont complètement réductibles, et la notion de composante isotypique est toujours correctement définie pour les représentations de groupes
+\end{thm}
+
+\begin{proof}
+Faire le calcul avec la moyenne.
+\end{proof}
+
+
+\section{Théorie des caractères}
+
+\subsection{Définitions et premières propriétés}
+
+\begin{defi}[fonction centrale]
+On dit qu'une fonction $f$ sur $G$ est centrale si $\forall g,h \in G, f(gh)=f(hg)$ ou de façon équivalente $\forall g h \in G, f(h^{-1}gh) = f(g)$
+\end{defi}
+
+\begin{defi}[caractère]
+Soit $\mu$ une représentation d'un groupe $G$. Son caractère, noté $\chi_\mu$ est la fonction 
+\begin{center}
+\begin{tabular}{clll}
+$\chi_\mu :$& $G$ & $\longrightarrow$ & $k$\\
+&$g$ & $\longmapsto$ & $\Tr(\mu(g))$
+\end{tabular} 
+\end{center}
+\end{defi}
+
+\begin{props} \leavevmode
+\begin{itemize}
+\item $\chi_\mu(1) = \dim V_\mu$
+\item $\chi_\mu$ est une fonction centrale 
+\item si $\mu$ et $\mu'$ sont isomorphes, $\chi_\mu = \chi_{\mu'}$
+\item $\chi_{\mu\oplus\mu'} = \chi_\mu + \chi_{\mu'}$
+\end{itemize}
+\end{props}
+
+\begin{ex}
+Nous allons calculer le caractère de la représentation $\chi_\nu$ qui nous sert d'exemple. Comme c'est une fonction centrale, il s'agit de déterminer sa valeur sur chacune des classes de conjugaison de $\sym_3$.
+
+On a déjà $\chi_\nu (1) = 6$. Il reste à déterminer $\chi_\nu$ sur les éléments $(12)$ et $(123)$
+
+Or $\nu(12) = \begin{pmatrix}
+					 0 & 1 & 0 & 0 & 0 & 0 \\
+					 1 & 0 & 0 & 0 & 0 & 0 \\
+				 	 0 & 0 & 1 & 0 & 0 & 0 \\
+			        		 0 & 0 & 0 & 0 & 1 & 0 \\
+			          	 0 & 0 & 0 & 1 & 0 & 0 \\
+				 	 0 & 0 & 0 & 0 & 0 & 1 \\
+					 \end{pmatrix}$
+et $\nu(123) = \begin{pmatrix}
+					 0 & 1 & 0 & 0 & 0 & 0 \\
+					 0 & 0 & 1 & 0 & 0 & 0 \\
+				 	 1 & 0 & 0 & 0 & 0 & 0 \\
+			        		 0 & 0 & 0 & 0 & 1 & 0 \\
+			          	 0 & 0 & 0 & 0 & 0 & 1 \\
+				 	 0 & 0 & 0 & 1 & 0 & 0 \\
+					 \end{pmatrix}$
+\end{ex}
+
+Ainsi, on a entièrement déterminé $\chi_\nu$: \\
+\begin{center}
+\begin{tabular}{l|ccc}
+ & 1 & (12) & (123)\\
+ \hline
+ $\chi_\nu$ & 6 & 2 & 0
+\end{tabular}
+\end{center}
+
+\begin{defi}[table des caractères]
+On appelle table des caractères d'un groupe un tableau dont les colones sont paramétrées par les classes de conjugaison de ce groupe, et les ligne par ses caractères irréductible. Chaque case contient alors la valeur du caractère irréductible correspondant à sa ligne sur la classe de conjugaison correspondant à sa colonne.
+\end{defi}
+
+\subsection{Caractères et composantes isotypiques}
+
+\begin{defi}[Produit scalaire sur les fonctions centrales]
+Soient $\phi,\psi: G \longrightarrow k$ deux fonctions centrales, on définit leur produit scalaire $(\phi|\psi) = \frac{1}{|G|}\sum\limits_{g\in G} \phi(g)\psi(g^{-1})$
+\end{defi}
+
+\begin{thm}[orthonormalité des caractères] \leavevmode
+\begin{itemize}
+\item Si $\chi$ est un caractère irréductible, $(\chi|\chi) = 1$
+\item Si $\chi$ et $\chi'$ sont deux caractères irréductibles non égaux, $(\chi|\chi') = 0$
+\end{itemize}
+\end{thm}
+
+\begin{proof}
+A faire en faisant des moyennes 
+%%%%%%%% TODO
+\end{proof}
+
+\begin{coro}
+L'ensemble des caractères est une famille orthonormée de l'ensemble des fonctions centrales de $G$, en particulier, c'est donc une famille libre. De plus, l'ensemble des fonctions centrales de $G$ est un espace vectoriel de dimension $|\Conj(G)|$, d'où $|\widehat{G}| \leq |\Conj(G)|$
+\end{coro}
+
+\begin{thm}
+Soit $\mu$ une représentation de $G$, alors pour toute représentation irréductible $\rho$, la multiplicité de $\rho$ dans $\mu$ est $(\chi_\rho|\chi_\mu)$
+\end{thm}
+\begin{proof}
+A faire mais OK %%%%%%%%TODO
+\end{proof}
+
+\begin{coro}
+Un caractère $\chi$ est irréductible si et seulement si $(\chi|\chi) = 1$
+\end{coro}
+
+\subsection{Caractère de la représentation régulière}
+
+Dans cette section, on se place sur la représentation régulière (à gauche), et nous allons étudier son caractère et obtenir des propriétés intéressantes grâce à ce caractère.
+\subsubsection{calcul du caractère}
+
+On rappelle que la représentation régulière de $G$ est donnée sur $k[G]$ par la multiplication à gauche. Ainsi, l'action est donnée sur la base de $k[G]$ par $[\mu(g)](g') = gg'$. Ainsi, la matrice de $\mu(g)$ est une matrice de permutation, de plus cette permutation ne contient aucun point fixe, si $g\neq 1$. Cela permet de calculer le caractère de cette représentation.
+\begin{ppst}
+$\chi_{\Reg_G} (g) = \left\{ \begin{tabular}{cc}
+$|G|$ & si  $g=1$\\
+$0$ & sinon
+\end{tabular} \right. $
+\end{ppst}
+
+\subsubsection{Décomposition en composantes isotypiques}
+
+D'après ce que l'on a démontré sur les caractères, pour décomposer la représentation régulière en composantes isotypiques, il suffit de calculer $(\chi_\rho|\chi_{\Reg_G})$ pour toute représentation irréductible $\rho$. Or par ce qui précède, $(\chi_\rho|\chi_{\Reg_G}) = \chi_\rho(1) = \dim V_\rho$
+
+Ainsi, on obtient la décomposition en composantes isotypiques de la représentation régulière.
+
+\begin{thm}
+$\Reg_G = \bigoplus\limits_{\rho \in \widehat{G}} V_\rho^{\oplus{\dim V_\rho}}$
+\end{thm}
+
+De plus, on a $(\chi_{\Reg_G}|\chi_{\Reg_G}) = |G|$, ce qui se traduit, en décomposant sur les caractères irrédcutibles, $\sum\limits_{\rho,\rho'\in\widehat{G}} (\dim V_\rho)(\dim V_{\rho'}) (\chi_\rho|\chi_{\rho'}) = |G|$.
+
+Cela permet finalement d'aboutir au théorème suivant:
+\begin{thm}
+$|G| = \sum\limits_{\rho\in\widehat{G}} (\dim V_\rho)^2 = \sum\limits_{\rho\in\widehat{G}} (\chi_\rho(1))^2$
+\end{thm}
+Ce théorème possède un intérêt pratique pour établir les tables de caractères.
+\subsection{Nombre de représentations irréductibles}
+
+Nous allons maintenant calculer le nombre exact de caractères, ce qui nous permettra de connaître le nombre représentations irréductibles.
+\begin{thm}
+Les caractères irréductibles forment une base orthonormée de l'espace des fonctions centrales
+\end{thm}
+
+\begin{proof}
+Nous avons déjà vu le caractère orthonormal de cette famille, il reste à démontrer qu'il s'agit bien d'une base. Soit $f$ une fonction centrale, qui est orthogonale à tous les caractères irréductibles, alors en particulier, elle est orthogonale à la représentation régulière.
+$$(\chi_{\Reg_G}|f) = 0 $$ D'où en fait $f(1) = 0$ %%%%% TODO
+\end{proof}
+
+\begin{coro}
+Il y autant de représentations irréductibles de $G$ que de classes de conjugaison dans $G$
+\end{coro}
+
+
+\subsection{Calculs de tables de caractères : $\sym_3$, $\sym_4$}
+Remarquons que pour tout groupe, on connait déjà la représentation triviale, qui est irréductible, et dont le caractère vaut $1$ sur toutes les classes de conjugaisons.
+
+\subsubsection{Table de caractère de $\sym_3$}
+Pour les groupes symétriques, on dispose d'un autre caractère connu, qui est la signature. En effet, la signature peut être vue comme un morphisme de $\sym_n \longrightarrow \mathbb{C}^* \simeq \Aut(\mathbb{C})$. Cela permet de remplir deux lignes de la table des caractères de $\sym_3$, et on dispose donc de la table suivante.
+\begin{center}
+\begin{tabular}{l|ccc}
+& 1 & (12) & (123)\\
+\hline
+$\chi_{\triv}$ & 1 & 1 & 1\\
+$\chi_\varepsilon$ & 1 & -1 & 1
+\end{tabular}
+\end{center}
+Comme le nombre de caractères irréductibles est égale au nombre de classes de conjugaison, on sait qu'il reste une ligne à remplir dans ce tableau. De plus la somme des carrés des nombres de la première colonne doit valoir $|\sym_3| = 6$, donc la représentation restante est nécessairement de dimension $2$. Il ne reste plus qu'à compléter le tableau par orthogonalité des colonnes. On obtient alors la table de caractères de $\sym_3$
+\begin{center}
+\begin{tabular}{l|ccc}
+& 1 & (12) & (123)\\
+\hline
+$\chi_{\triv}$ & 1 & 1 & 1\\
+$\chi_\varepsilon$ & 1 & -1 & 1\\
+$\chi$ & 2 & 0 & -1
+\end{tabular}
+\end{center}
+
+Remarquons que pour notre représentation d'exemple $\nu$, on a: $\chi_\nu = 2\chi_{\triv} + 2\chi$, ce qui correspond bien à la décomposition en composantes isotypiques que l'on avait trouvée
+
+\subsubsection{table des caractères de $\sym_4$}
+
+Pour le groupe $\sym_4$, on a toujours les deux caractères $\chi_{\triv}$ et $\chi_\varepsilon$, on va donc compléter la table de caractères suivante:
+\begin{center}
+\begin{tabular}{l|ccccc}
+& 1 & (12)  & (123) & (1234) &(12)(34)\\
+\hline
+$\chi_{\triv}$ & 1 & 1 & 1 & 1 & 1\\
+$\chi_\varepsilon$ & 1 & -1 & 1 & -1 & 1
+\end{tabular}
+\end{center}
+
+On peut dès à présent remplir la première colonne, en utilisant la propriété sur la somme des carrés. On cherche ainsi trois nombres dont la somme des carrés est $22$. L'unique possibilité est donc $(2,3,3)$. 
+
+Procédons par analogie avec $\sym_3$ et définissons une représentation de $\sym_4$ sur $\mathbb{C}^4$ par permutation des variables. On peut calculer le caractère de cette représentation
+\begin{center}
+\begin{tabular}{l|ccccc}
+& 1 & (12)  & (123) & (1234) &(12)(34)\\
+\hline
+$\chi$ & 4 & 2 & 1 & 0 & 0
+\end{tabular}
+\end{center}
+
+Comme dans le cas de $\sym_3$, on peut remarquer que la droite $k\cdot (1,1,1,1)$ est stable sous l'action de $\sym_4$, et que de plus l'action de $\sym_4$ est triviale sur cette droite. Ainsi, cette représentation se décompose en $\triv\oplus \rho_1$. De plus le caratère de $\rho_1$ est donné par $\chi_{\rho_1} = \chi - \chi_{\triv}$. Ainsi, on obtient
+
+\begin{center}
+\begin{tabular}{l|ccccc}
+& 1 & (12)  & (123) & (1234) &(12)(34)\\
+\hline
+$\chi_{\rho_1}$ & 3 & 1 & 0 & -1 & -1
+\end{tabular}
+\end{center}
+
+On peut alors vérifier que $(\chi_{\rho_1}|\chi_{\rho_1}) = 1$, ce qui montre que la représentation correspondante est irréductible.
+
+Il reste donc deux représentations irréductibles à déterminer, on peut en trouver une en regardant la représentation de dimension $3$ $\rho_2 = \varepsilon\rho_1$. Son caractère est donné par $\chi_{\rho_2} = \chi_\varepsilon\chi_{\rho_1}$, on obtient donc: 
+
+\begin{center}
+\begin{tabular}{l|ccccc}
+& 1 & (12)  & (123) & (1234) &(12)(34)\\
+\hline
+$\chi_{\rho_2}$ & 3 & -1 & 0 & 1 & -1
+\end{tabular}
+\end{center}
+Et à nouveau, on a $(\chi_{\rho_2}|\chi_{\rho_2}) = 1$, donc cette représentation est également irréductible.
+
+Il reste à trouver une représentation irréductible de dimension 2, dont on peut calculer le caractère par orthogonalité des colonnes.
+
+\begin{center}
+\begin{tabular}{l|ccccc}
+& 1 & (12)  & (123) & (1234) &(12)(34)\\
+\hline
+$\chi_{\triv}$ & 1 & 1 & 1 & 1 & 1\\
+$\chi_\varepsilon$ & 1 & -1 & 1 & -1 & 1\\
+$\chi_{\rho_1}$ & 3 & 1 & 0 & -1 & -1\\
+$\chi_{\rho_2}$ & 3 & -1 & 0 & 1 & -1\\
+$\chi_{\rho_3}$ & 2 & 0 & -1 & 0 & -2\\
+\end{tabular}
+\end{center}
+
+
+\chapter{Le critère de Gelfand}
+
+\section{Représentation des algèbres abéliennes}
+\begin{rem}
+Les représentations irréductibles des groupes abéliens sont toutes de dimension 1
+\end{rem}
+
+\begin{proof} 
+Avec la théorie des caractères, si $G$ est abélien, $|\widehat{G}| = |\Conj(G)| = |G|$, et comme $\sum\limits_{\rho\in\widehat{G}} \chi_{\rho}(1)^2 = |G|$, on en déduit, que pour tout $\rho\in \widehat{G}$$\chi_{\rho}(1) = 1$ 
+\end{proof}
+
+Le résultat est en fait plus général, et reste vrai sur les algèbres, c'est d'ailleurs dans ce contexte que nous allons l'utiliser: 
+\begin{thm}
+Les représentations irréductibles d'une algèbre commutative de dimension finie sont de dimension 1
+\end{thm}
+
+\begin{proof}
+Choisissons une base $\{a_1 \cdots a_n \}$ de notre algèbre, et $(\rho, V_\rho)$ une représentation irréductible.
+
+$\rho(a_1)$ est alors un endomorphisme du $k$-espace vectoriel $V_\rho$. $k$ étant algébriquement clos, cet opérateur possède une valeur propre $\alpha_1$, avec l'espace propre correspondant $E_1$. De plus $\rho(a_2)$ est un opérateur qui commute avec $\rho(a_1)$ (car $\rho(a_1)\rho(a_2) = \rho(a_1 a_2) = \rho(a_2 a_1) = rho(a_2)\rho(a_1)$). Ainsi $E_1$ est stable par $\rho(a_2)$, et $\rho(a_2)|_{E_1}$ possède une valeur propre $\lambda_2$ d'espace propre associé $E_2 \subset E_1$.
+
+En itérant ce processus, comme tous les $\rho(a_i)$ commutent entre eux, on construit un vecteur $x$ qui est un vecteur propre pour tous les $\rho(a_i)$. Ainsi, $k.x$ est une sous-représentation de $V_\rho$ de dimension 1, mais comme $V_\rho$ est irréductible, cela implique $V_\rho = k.x$ et donc $V_\rho$ est de dimension 1. 
+\end{proof}
+
+\section{Restriction}
+
+\subsection{Définition}
+\begin{defi}
+Soit $B$ une algèbre, $A$ une sous-algèbre de $B$ et $(\mu, V_\mu)$ une représentation de $B$. Alors en regardant uniquement l'action de $A$ sur $V_\mu$ par $\mu$, on obtient une représentation de $A$ que l'on appelle restriction de $(\mu,V_\mu)$ sur $A$, notée $\Res^B_A V_\mu$. Formellement,  $$\Res^B_A V_\mu = (\mu|_A, V_\mu)$$
+\end{defi}
+
+\begin{defi}
+Lorsque toutes les représentations irréductible de $B$ ont une restriction sur $A$ sans multiplicité, on dit que $A$ est sans multiplicité dans $A$
+\end{defi}
+
+\subsection{Exemple: les restrictions de $\sym_4$ sur $\sym_3$}
+
+On peut décomposer les restrictions des irréductibles de $\sym_4$ sur $\sym_3$, faisons-le grâce aux caractères
+\begin{center}
+\begin{tabular}{c|ccc|c}
+&$1$ & $(12)$ & $(123)$& Décomposition sur la base de $\sym_3$\\
+\hline
+$\chi_{\triv_{\sym_4}}$ & 1 & 1 & 1 & $\chi_{\triv_{\sym_3}}$\\
+$\chi_{\varepsilon_{\sym_4}}$ & 1 & -1 & 1 & $\chi_{\varepsilon_{\sym_3}}$\\
+$\chi_{\rho_1}$ & 3 & 1 & 0 & $\chi + \chi_{\triv_{\sym_3}}$\\
+$\chi_{\rho_2}$ & 3 & -1 & 0 & $\chi + \chi_{\varepsilon_{\sym_3}}$ \\
+$\chi_{\rho_3}$ & 2 & 0 & -1 & $\chi $
+\end{tabular}
+\end{center}
+
+\begin{rem}
+On remarque dans cet exemple, que $\sym_4$ est sans multiplicité dans $\sym_3$. C'est ce résultat que nous allons généraliser.
+\end{rem}
+
+\section{Critère de Gelfand}
+\begin{defi}
+On note $Z := Z(B,A) = \{ x \in B \ | \ \forall y \in A, xy = yx\}$ le centralisateur de $A$ dans $B$
+\end{defi}
+
+Nous allons montrer le théorème suivant, qui nous sera ensuite très utile pour réduire le problème dans le cas des groupes symétriques.
+
+\begin{thm}[Critère de Gelfand]
+Si $Z$ est commutatif alors $H$ est sans multiplicité dans $G$
+\end{thm}
+
+\begin{proof}[idée de démonstration]
+Soit $U_\mu$ et $V_\lambda$ des représentations irréductibles sur $A$ et $B$, il s'agit de calculer la dimension de l'espace vectoriel $H:= \Hom_A(U_\mu,\Res^B_A V_\lambda)$.
+
+Or, on peut vérifier que $H$ est une représentation de $Z$, pour l'action $\theta$ définie par : $$\forall z\in Z, \forall h \in H, [\theta(z) h]: u \mapsto \lambda(z)(h(u))$$
+Nous allons montrer que cette représentation est irréductible
+
+Remarquons que $B$ et $\mathcal{L}(U,V)$ sont des représentation de $B\otimes_k A^{op}$, données par les actions suivantes:
+\begin{center}
+\begin{tabular}{ccc}
+$\eta(b\otimes a)(b') = bb'a$ & et & $ \kappa(b\otimes a)(f): u\mapsto \lambda(b)f(\mu(a) u)$
+\end{tabular}
+\end{center}
+On peut donc considérer l'espace $L:= \Hom_{B\otimes_k A^{op}} (B,\mathcal{L}(U,V) )$, qui une représentation de $Z$, avec l'action suivante: $$ \iota(z) l: b \mapsto l(bz)$$
+Alors, $H$ et $L$ sont isomorphes et tant que $Z$-modules, via les applications suivantes: \\
+\begin{center}
+\begin{tabular}{crrlcrrrl}
+$\Phi:$ & $H$ & $\longrightarrow$ & $L$ & et & $\Psi:$ & $L$ & $\longrightarrow$ & $H$\\
+ & $h$ & $\longmapsto $ & $b\mapsto(u\mapsto \lambda(b)h(u))$ & & & $l$ & $\longmapsto$ & $u \mapsto l(1)(u)$
+\end{tabular}
+\end{center}
+
+Mais, on peut vérifier que $L$ est en fait une représentation irréductible de $Z$, en effet, on va montrer que l'action de $Z$ est transitive sur $L$. Soient, $f,g \in L$, on cherche $z \in Z$ tel que $\iota(z)(g) = f$. Or $\mathcal{L}(U,V)$ est irréductible en tant que $B\otimes_kA^{op}$-représentation, $\im f$ et $\im g$ sont donc des sous-représentations de $\mathcal{L}(U,V)$, donc $f$ et $g$ sont surjectives sur $\mathcal{L}(U,V)$. Ainsi ils définissent deux isomorphismes:
+\begin{center}
+\begin{tabular}{ccc}
+$B / \ker{f} \simeq \mathcal{L}(U,V)$ & et & $B / \ker{g} \simeq \mathcal{L}(U,V)$
+\end{tabular}
+\end{center}
+
+$B\otimes_k A^{op}$ étant semi-simple, on peut choisir deux supplémentaires stables de $\ker f$ et $\ker g$, appelons-les $M_f$ et $M_g$. Alors $M_f$ et $M_g$ sont isomorphes, on peut donc construire un isomorphisme de représentations sur $B\otimes_k A^{op}$, $\varphi: B \longrightarrow B$, qui envoie $\ker f$ sur $\ker g$ et $M_f$ sur $M_g$.%%%%%FAIRE LE TIKZCD
+
+Ainsi, $g\circ\varphi = f$. De plus comme $\phi \in \Hom_{B\otimes A^{op}}(B,B)$, en particulier, $\phi\in\Hom_{B}(B,B)$, donc $\varphi(b) = b\varphi(1)$. De plus, $\varphi(1)\in Z$, en effet, pour tout $a\in A$, $$a\varphi(1) = \eta(a\otimes 1)\varphi(1) = \varphi(\eta(a \otimes 1)(1)) = \varphi(a) = \varphi(\eta(1\otimes a) 1) = \eta(1\otimes a)\varphi(1) = \varphi(1) a$$ Ainsi, pour $b\in B$, on a $f(b) = g(b\varphi(1)) = [\iota(\varphi(1))g] (b)$, et donc $f = (\iota \phi(1))(g)$.
+
+On a donc montré que $L$ est une représentation irréductible, et ainsi, $H$ est une représentation irréductible, mais si on suppose que $Z$ est commutatif, alors c'est une représentation irréductible sur une algèbre commutative, elle est donc de dimension 1, c'est à dire $A$ est sans multiplicité dans $B$.
+\end{proof}
+
+\subsection{application aux cas des groupes symétriques}
+Si l'on applique ce critère pour les groupes symétriques, on obtient le résultat suivant:
+\begin{thm}
+Le groupe $\sym_n$ est sans multiplicité dans $\sym_{n+1}$
+\end{thm}
+
+\begin{proof}
+Pour démontrer ce résultat, il suffit de vérifier que $Z_{n+1,n} := Z(k[\sym_{n+1}],k[\sym_n])$ commute.
+\begin{itemize}
+\item Commençons par remarquer que si $\sigma\in \sym_{n+1}$, alors $\sigma$ est conjugué à $\sigma^{-1}$ par un élément de $\sym_n$
+\item Soit $x = \sum\limits_{g\in \sym_{n+1}} x_g g \in k[\sym_{n+1}]$, on note $x^* = \sum\limits_{g \in \sym_{n+1}}x_g g^{-1}$. $x\mapsto x^*$ est alors un anti-isomorphisme d'algèbre, et si $z \in Z_{n+1,n}$, on a $z^*=z$
+\item Soit donc $a,b\in Z_{n+1,n}$. On peut alors considérer le produit: \footnote{Le corps $k$ étant algébriquement clos, on note $i$ une racine du polynôme $X^2+1$ dans $k$} $$(a-ib)(a+ib) = (a^*-ib^*)(a^*+ib^*) = ((a+ib)(a-ib))^* = (a+ib)(a-ib)$$
+%%%%%TODO: COMPLETER CE RESULTAT
+
+On en déduit donc que $a$ et $b$ commutent, et donc $\sym_n$ est sans multiplicité sur $\sym_{n+1}$
+\end{itemize}
+\end{proof}
+
+\chapter{Le graphe de branchements et Application aux représentations des groupes symétriques}
+\section{Le graphe de branchements}
+\begin{defi}[Graphe de Branchements]
+Soit $\{1\} = G_0 \subset G_1 \subset G_2 \subset ...$ une chaîne de groupes. On appelle graphe de branchement de cette chaîne le multi-graphe gradué dont les sommets de degré $n$ sont les $\lambda \in \widehat{G_n}$, et étant donné deux sommets $\lambda \in \widehat{G_n}$ et $\mu\in \widehat{G_{n+1}}$, le nombre d'arrêtes reliant $\lambda$ et $\mu$ est égal à la multiplicité de $\lambda$ dans $\Res^{G_{n+1}}_{G_n} \mu$
+\end{defi}
+
+\begin{rem}
+Il s'agit en réalité d'un multi-graphe, mais dans le cas où pour tout $n\in\mathbb{N}, G_{n}$ est sans multiplicité dans $G_{n+1}$ (on dira alors que la chaîne est sans multiplicité), le graphe de branchements est réellement un graphe
+\end{rem}
+
+\begin{nota}
+Il n'y a toujours qu'un seul sommet de degré $0$, on note ce somme $0$. Il s'agit de l'unique représentation irréductible du groupe trivial.
+\end{nota}
+
+\begin{ppst}
+Soit $\rho$ une représentation irréductible de $G_n$, alors $\dim V_\rho$ est le nombre de chemins de $0$ à $\rho$ dans le graphe de branchements.
+\end{ppst}
+
+\begin{proof}
+Prouvons ce résultat par récurrence.
+\begin{itemize}
+\item Cette relation est bien sur vraie au rang 0
+\item Supposons cette relation vraie au rang $n$, alors prenons une représentation $\lambda \in \widehat{G_{n+1}}$, et supposons qu'elle est reliée dans le graphe à des représentations $\mu_1,...,\mu_i \in \widehat{G_n}$, respectivement par $k_1,...,k_i$ arrêtes. Alors, on a une décomposition de la forme $\Res^{G_{n+1}}_{G_n}\lambda = \bigoplus\limits_{j=1}^i \mu_j^{k_j}$, donc en tant qu'espace vectoriel, $V_\lambda = \bigoplus\limits_{j=1}^i V_{\mu_j}^{k_j}$. Mais alors, le nombre de chemins de 0 à $\lambda$ est égal à $\sum\limits_{j=1}^i k_j\dim V_{\mu_j} = \dim V_\lambda$
+\end{itemize}
+\end{proof}
+
+\section{Base et Algèbre de Gelfand-Tzetlin}
+On se place dans le cas où la chaîne est sans multiplicité.
+
+\begin{rem}
+On considère une représentation $V_\lambda\in\widehat{G_n}$. Alors, en descendant le long de tous les chemins de 0 à $\lambda$ dans le graphe de branchements, on obtient une décomposition canonique de $V_\lambda$ en droites, chacune des droites étant indexée par un chemin de 0à $\lambda$ dans le graphe de branchement
+\end{rem}
+
+\begin{defi} [base de Gelfand-Tsetlin]
+On appelle base de Gelfand-Tsetlin la base de $V_\lambda$ associée à cette décomposition en droite. Il s'agit donc d'une base canonique (à un scalaire près), dont les éléments sont naturellement paramétrés par les chemins de 0 de à $\lambda$ dans le graphe de branchements
+\end{defi}
+
+\begin{defi} [algèbre de Gelfand-Tsetlin]
+L'algèbre de Gelfand-Tsetlin (notée $GZ_n$) est la sous-algèbre de $k[G_n]$ engendrée par les $Z(k[G_i])$ pour $i\leq n$
+\end{defi}
+
+%%%%%%%AJOUTER TOUTES LES REFERENCES
+
+%%%%%%%%%%INDEX DES NOTATIONS%%%%%%%%%
+%A^{op}
+%\Hom_k
+%\Hom_G
+%\Hom_A
+%\Aut
+%\GL
+%\mathcal{M}
+%\Res
+%\Reg
+%\sym
+%\Conj
+%\Id
+%\Vect
+%\Tr
+%\triv
+%k^G
+%k[G]
+%\mathcal{L}
+%\widehat{G}
+%Z(B,A)
+%Z(A)
+
+%%%%%% TODO: AJOUTER UN LIEN VERS LE DOC COMPLET + ENVOYER LE DOC COMPLET AU GROUPE DE TRAVAIL.
+\end{document}

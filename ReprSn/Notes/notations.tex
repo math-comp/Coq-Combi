@@ -1,0 +1,217 @@
+%-*-Latex-*-$Id: notations.tex,v 1.2 2004/10/01 06:39:12 averell Exp $
+
+
+\newcommand{\NN}{{\mathbb N}}			% Entiers naturels
+\newcommand{\ZZ}{{\mathbb Z}}			% Anneau des entiers relatifs
+\newcommand{\FF}{{\mathbb F}}			% Corps fini
+\newcommand{\QQ}{{\mathbb Q}}			% Corps des rationnels
+\newcommand{\CC}{{\mathbb C}}			% Corps des complexes
+\newcommand{\KK}{{\mathbb K}}			% Corps de base
+
+\newcommand{\pairing}[2]{\left\langle#1|#2\right\rangle} % Crochet de dualite
+\newcommand{\partie}{\operatorname{\mathcal P}}	% Ensemble des parties
+\newcommand{\card}{\operatorname{\#}}		% Cardinal d'un ensemble
+\newcommand{\Endom}{\operatorname{End}}		% Endomorphisme
+\newcommand{\Lin}{\operatorname{\mathcal L}}		% Endomorphisme
+
+
+% Quelques abbreviations
+\def\FCT.{fonction}
+\def\POL.{polynôme}
+\def\SY.{symétrique}
+\def\QS.{quasi-symétrique}
+\def\NC.{non commutative}
+\newcommand{\SF}{\FCT.s \SY.s}
+\newcommand{\QSF}{\FCT.s \QS.s}
+\newcommand{\NCSF}{\FCT.s \SY.s \NC.s}
+
+\newcommand{\question}{\Large\bf}
+\newcommand{\ie}{{\it i.e.\ }}
+\newcommand{\cf}{{\it cf.\ }}
+\newcommand{\eg}{{\it e.g.\ }}
+\newcommand{\resp}{{\it resp.\ }}
+
+
+% Ensembles divers et varies
+\newcommand{\X}{{X}}				% Alphabet
+\newcommand{\SG}{{\mathfrak S}}			% Groupe symetrique
+\newcommand{\idSG}{\operatorname{Id}}
+\newcommand{\Heck}{{H}}				% Algebre de Hecke
+\newcommand{\AffHeck}{\widetilde{H}}		% Algebre de Hecke
+\newcommand{\sym}{\mbox{Sym}}			% Fonctions symetriques
+\newcommand{\QSym}{\mbox{\rm QSym}}		% Fonctions quasi-symetriques
+\newcommand{\Sym}{\mbox{\bf Sym}}		% Fonctions non commutative
+\newcommand{\FSym}{\mbox{\bf FSym}}
+\newcommand{\PBT}{\mbox{\bf PBT}}
+\newcommand{\FQSym}{\mbox{\bf FQSym}}
+\newcommand{\WQSym}{\mbox{\bf WQSym}}
+\newcommand{\MQSym}{\mbox{\bf MQSym}}		% commutative
+\newcommand{\pol}[1]{[#1]}			% algebre des polynomes en X
+\newcommand{\free}[1]{\langle#1\rangle}		% algebre libre sur x
+\newcommand{\Prim}{\operatorname{Prim}}		% primitive elements
+\newcommand{\Lie}{\operatorname{\mathcal L}}	% algebre de Lie libre sur x
+\newcommand{\Shuffle}{\operatorname{Shuf}}	% algebre de Lie libre sur x
+\newcommand{\Hilb}{\operatorname{Hilb}}	        % Serie de Hilbert
+\newcommand{\mat}[1]{\{#1\}}			% algebre des multimots. 
+
+% Operateur divers et varies
+						% quasi-symetrique
+\newcommand{\tr}{\operatorname{Tr}}		% Trace
+\newcommand{\caract}{\operatorname{ch}}		% Caracteristique
+\newcommand{\carac}{\chi}			% Caractere
+\newcommand{\ind}{\operatorname{Ind}}		% Rep. induite
+\newcommand{\res}{\operatorname{Res}}		% Rep. restreinte
+\newcommand{\rien}{{\!}}			% Vecteur vide pour egalite
+						% entre operateurs
+\newcommand{\compl}{\backslash}			% Complementaire
+\newcommand{\isom}{\simeq}			% isomorphe.
+\newcommand{\inti}[2]{[\![#1,#2]\!]} 
+
+% operateurs de Sn et Hn(q)
+\newcommand{\id}{\operatorname{Id}}		% Identite
+\newcommand{\sgn}{\operatorname{Sgn}}		% Signe
+\newcommand{\maxperm}{\operatorname{\omega}}	% Permutation maximale
+\newcommand{\sign}{\operatorname{\epsilon}}	% Signe d'une permutation
+\newcommand{\perm}{\operatorname{\sigma}}	% Permutation
+\newcommand{\Qperm}{\operatorname{\boldsymbol{\sigma}}}
+\newcommand{\heck}{\operatorname{\mathit{T}}}	% generateur de Hn(q)
+\newcommand{\Qheck}{\operatorname{\mathbfit{T}}}
+\newcommand{\heckb}%
+   {\operatorname{\,\overline{\mathit{\!T}}}}	% generateur de Hn(q)
+\newcommand{\Qheckb}%
+   {\operatorname{\overline{\mathbfit{T}}}}	% generateur de Hn(q)
+\newcommand{\Dun}{\operatorname{\mathit{Y}}}
+\newcommand{\QDun}{\operatorname{\mathbfit{Y}}}
+\newcommand{\Rot}{\operatorname{\Omega}}	%
+\newcommand{\QRot}{\operatorname{\boldsymbol\Omega}}
+\newcommand{\ddd}{\operatorname{\partial}}
+\newcommand{\dd}{\operatorname{\pi}}		% difference divisee pi_i
+\newcommand{\Qdd}{\operatorname{\boldsymbol\pi}}	
+\newcommand{\ddb}{\operatorname{\overline\pi}}	% difference divisee pibar_i
+\newcommand{\Qddb}{\operatorname{\overline{\boldsymbol\pi}}}
+\newcommand{\ddT}{\operatorname{\mathit{T}}}	% difference divisee T_i
+\newcommand{\QddT}{\operatorname{\mathbfit{T}}}
+\newcommand{\ddC}{\operatorname{\Box}}		% difference divisee Carre_i
+%\newcommand{\QddC}{\operatorname{\pmb{\boldsymbol{\Box}}}}
+\newcommand{\QddC}{\operatorname{\pmb{\Box}}}
+\newcommand{\ddN}{\operatorname{\nabla}}	% difference divisee Nabla_i
+\newcommand{\QddN}{\operatorname{\boldsymbol{\nabla}}}		
+\newcommand{\Tab}{\operatorname{Tab}}
+
+\newcommand{\charact}{\operatorname{ch}}        % Caracteristique
+\newcommand{\charac}{\chi}                      % Caractere
+
+% definition de U(Gln)
+\newcommand{\Univ}{\operatorname{U}}	        % Algebre envelopante
+\newcommand{\gl}{{gl}}				% Algebre de lie
+\newcommand{\GL}{{GL}}				% Groupe lineaire
+\newcommand{\Ugl}{\Univ_0(\gl_N)}		% U_0(GL_N)
+\newcommand{\cartan}{\mathfrak{h}}
+\newcommand{\Cartan}{{H}}			% Groupe lineaire
+\newcommand{\borel}{\mathfrak{b}_{+}}
+\newcommand{\Borel}{{B^{+}}}
+\newcommand{\eGen}{\operatorname{\mathit{e}}}	% generateur de U(gl_n)
+\newcommand{\fGen}{\operatorname{\mathit{f}}}	% generateur de U(gl_n)
+\newcommand{\kGen}{\operatorname{\mathit{k}}}	% generateur de U(gl_n)
+\newcommand{\copro}{\Delta}			% Co-produit
+\newcommand{\coun}{\epsilon}			% Co-unite
+\newcommand{\tensor}{\otimes}			% Produit tensoriel
+\newcommand{\diag}{\operatorname{Diag}}
+
+\newcommand{\F}{\mathbf{F}}
+
+\newcommand{\Space}{{V}}                        % Espace vectoriel
+\newcommand{\Dim}{{N}}                          % Dimension de V
+\newcommand{\base}{\xi}              		% Vecteur de la base
+\newcommand{\baset}{\boldsymbol{\xi}}		%  ... en gras
+\newcommand{\baseend}{{E}}                      % base des endomorphismes
+\newcommand{\funrep}{\rho}                      % representation
+\newcommand{\irred}{\operatorname{\mathbf{D}}}	% module irreductible
+\newcommand{\qcrys}{\Gamma}			% graph quasi-cristallin
+\newcommand{\weyl}{{W}}				% groupe de Weyl
+
+% Compositions
+\newcommand{\lon}{\operatorname{\ell}}          % Longeur
+\newcommand{\des}{\operatorname{Des}}           % Ensemble des descentes
+\newcommand{\sumcomp}{\triangleright}           % Somme de deux compositions
+\newcommand{\sumvect}[1]{|#1|}			% Somme totale d'un vecteur
+\newcommand{\catcomp}{\cdot}			% Concatenation "
+\newcommand{\cset}{\operatorname{C}}            % ensemble de descente
+\newcommand{\bre}{\operatorname{\#}}            % Breaking composition
+\newcommand{\fin}{{\succeq}}                    % Ordre de raffinement
+\newcommand{\sfin}{{\succ}}			%  ... Strict
+\newcommand{\conj}[1]{#1\,\tilde{}\,}		% Conjugaison
+\newcommand{\mir}[1]{\overline#1}		% Image mirroir
+\newcommand{\maj}{\operatorname{Maj}}           % Indice majeur
+\newcommand{\partof}{\vdash}                    % Partition de
+\newcommand{\compof}{\vDash}                    % Composisition de
+\newcommand{\domin}{\trianglerighteq}
+
+\newcommand{\comp}{K}
+\newcommand{\compe}{k}
+\newcommand{\kip}{\comp=(\compe_1,\ldots,\compe_p)}
+\newcommand{\pseudo}[1]{[#1]}
+\newcommand{\suite}[2]{#1_1,\ldots,#1_{#2}}
+\newcommand{\parsum}[2]{#1_1+\cdots+#1_{#2}}
+\newcommand{\spec}[1]{_{/_{\scriptstyle#1}}}      % Specialisation
+
+% Mots
+\newcommand{\nat}{\operatorname{Nat}}
+\newcommand{\motu}{\mathbf{u}}
+\newcommand{\motun}{\motu=u_1\ldots u_n}
+\newcommand{\motv}{\mathbf{v}}
+\newcommand{\motvn}{\mott=v_1\ldots v_n}
+\newcommand{\eval}{\operatorname{Eval}}
+\newcommand{\evalt}{\trans\eval}
+\newcommand{\QR}{\operatorname{QR}}
+
+\newcommand{\Sh}{\shuffle}
+\newcommand{\ShBar}{\shufflebar}
+\newcommand{\std}{\operatorname{Std}}
+
+% Algèbre de Hopf
+\newcommand{\hopf}{\mahtcal{H}}
+\newcommand{\conc}{\mathrm{conc}}
+\newcommand{\produ}{\times}
+\newcommand{\Produ}{\mu}
+\newcommand{\cprod}{\delta}
+\newcommand{\Cprod}{\mathbf{c}}
+\newcommand{\dtb}{\underline\cprod}
+\newcommand{\cunit}{\epsilon}
+\newcommand{\Cunit}{\mathbf{e}}
+\newcommand{\apode}{\alpha}
+\newcommand{\Apode}{\mathbf{a}}
+\newcommand{\p}{\operatorname{\!\cdot\!}}
+\newcommand{\vide}{e}
+\newcommand{\convol}{\operatorname{Convol}}
+
+\newcommand{\Rel}[1][{}]{\,\mathcal{R}_{#1}\,}
+\newcommand{\TODO}[1]{\textbf{\large To Do : #1}}
+\newcommand{\qandq}{\quad\text{et}\quad}
+\newcommand{\Peak}{\operatorname{\sf Peak}}
+\newcommand{\Ind}{\operatorname{Ind}}
+\newcommand{\Res}{\operatorname{Res}}
+\newcommand{\Hom}{\operatorname{Hom}}
+\newcommand{\Center}{\operatorname{Z}}
+
+
+
+% texte de definition des groupe symetrique et algebre de hecke
+\newcommand{\forallini}{\text{pour $1\leq i \leq n-1$,}}
+\newcommand{\foralliji}{\text{pour $|i-j|>1$,}}
+\newcommand{\forallind}{\text{pour $1\leq i \leq n-2$.}}
+\newcommand{\defhecke}[4]{%
+  \begin{alignat}{2}\label{#4}
+   #1_i^2&=#2                                \qquad&&\forallini\notag\\
+   #1_i#1_j&=#1_j#1_i                        \qquad&&\foralliji\\
+   #1_i#1_{i+1}#1_i &=#1_{i+1}#1_i#1_{i+1}#3 \qquad&&\forallind\notag
+   \end{alignat}%
+}
+
+\newenvironment{DefCases}{\begin{array}\{{c>{\ $}l<{$}}.}{\end{array}}
+\newenvironment{EquCases}{\begin{array}\{{r@{}l>{\qquad$}l<{$}}.}{\end{array}}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "GenQSym"
+%%% End: 
