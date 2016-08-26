@@ -330,7 +330,7 @@ Proof using.
 have abel : abelian <<[set (c ^ a)%g | c in cycle_dec s]>>.
   apply abelian_disjoint_supports; apply: disjoint_supports_conjg.
   exact: disjoint_cycle_dec.
-apply: uniqueness_cycle_dec; constructor => [x /imsetP [x0 Hx0 ->]||].
+apply esym; apply cycle_decP; constructor => [x /imsetP [x0 Hx0 ->]||].
 - by apply: cyclic_conjg; apply: cyclic_dec; apply: Hx0.
 - by apply: disjoint_supports_conjg; apply disjoint_cycle_dec.
 - rewrite [LHS](_ : _ =
