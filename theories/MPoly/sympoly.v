@@ -458,52 +458,58 @@ Section ChangeBasisCompletePowerSum.
 Import Num.Theory.
 
 Variable nvar : nat.
-
 Local Notation SF := {sympoly rat[nvar]}.
-Local Notation "''l_' k" := (1/k%:R *: 'p_k)
-                              (at level 8, k at level 2, format "''l_' k").
 
-Lemma complete_to_power_sum (n : nat) :
-  'h_n = \sum_(c : intcompn n)
-          1/((size c)`! *
-             (\prod_(i <- c) i)%N)%:R *: 'p[partn_of_compn c] :> SF.
-Proof.
-rewrite (eq_bigr
-      (fun c : intcompn n => ((size c)`!)%:R^-1 *: \prod_(i <- c) 'l_i)); first last.
-  move=> c _; rewrite /prod_power_sum /prod_gen /=.
-  have:= perm_sort geq c => /perm_eqlP/(eq_big_perm _) -> /=.
-  rewrite div1r natrM invfM -scalerA; congr (_ *: _).
-  rewrite scaler_prod; congr (_ *: _).
-  rewrite -div1r natr_prod -prodfV mul1r.
-  by apply eq_bigr => i _; rewrite div1r.
+Fixpoint prod_partsum (s : seq nat) :=
+  if s is _ :: s' then (sumn s * prod_partsum s')%N else 1%N.
+
+Local Notation "\Pi s" := (prod_partsum s)%:R^-1 (at level 0, s at level 2).
+
+Lemma complete_to_power_sum_prod_partsum (n : nat) :
+  'h_n = \sum_(c : intcompn n) \Pi c *: \prod_(i <- c) 'p_i :> SF.
+Proof using.
 rewrite /index_enum -enumT /=.
 rewrite -[RHS](big_map (@cnval n) xpredT
-   (fun c : seq nat => (size c)`!%:R^-1 *: \prod_(i <- c) 'l_i)).
+   (fun c : seq nat => \Pi c *: \prod_(i <- c) 'p_i)).
 rewrite enum_intcompnE.
 elim: n {1 3 4}n (leqnn n) => [| m IHm] n.
   rewrite leqn0 => /eqP ->.
-  by rewrite big_seq1 big_nil complete0 /= fact0 invr1 scale1r.
+  by rewrite big_seq1 big_nil complete0 /= invr1 scale1r.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
-have /enum_compnE -> : n != 0%N by rewrite Hm.
-rewrite big_flatten /=.
-have /scalerI : (n%:R : rat) != 0 by rewrite pnatr_eq0 Hm.
-apply; rewrite Newton_complete_iota.
+rewrite enum_compnE Hm // -Hm big_flatten /=.
+have Hn : (n%:R : rat) != 0 by rewrite pnatr_eq0 Hm.
+apply (scalerI Hn); rewrite Newton_complete_iota.
 rewrite scaler_sumr big_map; apply eq_big_seq => i.
-rewrite mem_iota add1n ltnS => /andP [Hi _].
-rewrite big_map.
+rewrite mem_iota add1n ltnS => /andP [Hi Hin].
+rewrite big_map big_seq.
 rewrite (eq_bigr
-    (fun s : seq nat => ('l_i *
-                        ( (size s).+1`!%:R^-1 *:
-                        \prod_(i0 <- s) 'l_i0)))); first last.
-  by move=> s _; rewrite /= big_cons scalerAr.
-rewrite -mulr_sumr IHm; first last.
+    (fun c : seq nat => (n%:R^-1 *: 'p_i) *
+         (\Pi c *: \prod_(j <- c) 'p_j))); first last.
+  move=> s; rewrite -enum_compnP /is_comp_of_n /= => /andP [/eqP -> _].
+  rewrite subnKC // big_cons scalerAr.
+  by rewrite natrM invfM -!scalerAr -scalerAl scalerA mulrC.
+rewrite -big_seq -mulr_sumr {}IHm; first last.
   by rewrite leq_subLR Hm -(add1n m) leq_add2r.
-rewrite -scalerAl scalerA scalerAr; congr(_ * _).
-rewrite scaler_sumr; apply eq_big_seq => s.
-rewrite -enum_compnP /is_comp_of_n /= => /andP [sumns mem0s].
-rewrite scalerA; congr (_ *: _).
-(* The proof argument is wrong *)
-Admitted.
+by rewrite -scalerAl scalerA divff // scale1r; congr(_ * _).
+Qed.
+
+Import LeqGeqOrder.
+
+Lemma complete_to_power_sum_intpartn (n : nat) :
+  'h_n = \sum_(l : intpartn n)
+           (\sum_(c : intcompn n | perm_eq l c) \Pi c) *: 'p[l] :> SF.
+Proof.
+rewrite complete_to_power_sum_prod_partsum.
+rewrite (partition_big (@partn_of_compn n) xpredT) //=.
+apply eq_bigr => l _; rewrite scaler_suml; apply eq_big.
+- move=> c; apply/eqP/idP => [<- | Hperm]; first exact: perm_partn_of_compn.
+  apply val_inj => /=; apply (eq_sorted geq_trans) => //.
+  + exact: sort_sorted.
+  + by rewrite (perm_eqrP Hperm) perm_sort.
+- move=> c /eqP <-; congr (_ *: _).
+  rewrite /prod_power_sum /prod_gen; apply eq_big_perm.
+  by rewrite perm_eq_sym; apply: perm_partn_of_compn.
+Qed.
 
 End ChangeBasisCompletePowerSum.
 
