@@ -411,9 +411,6 @@ Qed.
 Lemma cfdot_classfun_part p1 p2 :
   '[classfun_part p1, classfun_part p2] =
     (p1 == p2)%:R * (#|class_of_partCT p1|)%:R/(#|'S_n|)%:R.
-Proof using.
-  admit.
-Admitted.
  *)
 
 (*This lemma is of no use and a much more general case is stated below*)

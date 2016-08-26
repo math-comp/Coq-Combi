@@ -240,7 +240,6 @@ Definition colcompn d : intcompn d := IntCompN (colcompnP d).
 
 (* TODO : bijection with set and cardinality 
 Lemma card_intcompn n : #|{:intcompn n}| = 2 ^ (n.-1).
-Admitted.
 *)
 
 Hint Resolve intcompP intcompnP.
@@ -259,11 +258,12 @@ Definition partn_of_compn n (c : intcompn n) :=
 Lemma perm_partn_of_compn n (c : intcompn n) : perm_eq (partn_of_compn c) c.
 Proof. by rewrite /= perm_sort. Qed.
 
+(*
 From mathcomp Require Import finset div.
 
 Lemma card_preim_part_of_compn n (sh : intpartn n) :
   #|[set c | partn_of_compn c == sh]| =
   n`! %/ \prod_(i <- iota 1 n) (count_mem i sh)`!.
 Proof.
-Admitted.
+*)
 
