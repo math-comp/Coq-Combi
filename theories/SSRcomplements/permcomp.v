@@ -1,3 +1,18 @@
+(** * Combi.SScomplement.perrcomp : complement on permutations *)
+(******************************************************************************)
+(*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
+(*                                                                            *)
+(*  Distributed under the terms of the GNU General Public License (GPL)       *)
+(*                                                                            *)
+(*    This code is distributed in the hope that it will be useful,            *)
+(*    but WITHOUT ANY WARRANTY; without even the implied warranty of          *)
+(*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *)
+(*    General Public License for more details.                                *)
+(*                                                                            *)
+(*  The full text of the GPL is available at:                                 *)
+(*                                                                            *)
+(*                  http://www.gnu.org/licenses/                              *)
+(******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype div.
 From mathcomp Require Import tuple finfun path bigop finset binomial.
@@ -6,15 +21,10 @@ From mathcomp Require finmodule.
 
 Require Import symgroup partition Greene tools sorted.
 
-Reserved Notation "#{ x }" (at level 0, x at level 10, format "#{ x }").
-
 Set Implicit Arguments.
 Unset Strict Implicit.
 
 Import GroupScope.
-
-Notation "#{ x }" :=  #|(x: {set _})|
-                      (at level 0, x at level 10, format "#{ x }").
 
 Lemma imset1 (T : finType) (S : {set T}) : [set fun_of_perm 1 x | x in S] = S.
 Proof using.
@@ -104,14 +114,14 @@ by rewrite -lt0n card_gt0; apply/set0Pn; exists x; exact: pcycle_id.
 Qed.
 
 Lemma pcyclePmin s x y :
-  y \in pcycle s x -> exists2 i, i < (#[s])%g & y = (s ^+ i)%g x.
+  y \in pcycle s x -> exists2 i, i < #[s] & y = (s ^+ i) x.
 Proof using. by move=> /imsetP [z /cyclePmin[ i Hi ->{z}] ->{y}]; exists i. Qed.
 
 Lemma pcycleP s x y :
-  reflect (exists i, y = (s ^+ i)%g x) (y \in pcycle s x).
+  reflect (exists i, y = (s ^+ i) x) (y \in pcycle s x).
 Proof using.
-  apply (iffP idP) => [/pcyclePmin [i _ ->]| [i ->]]; last exact: mem_pcycle.
-  by exists i.
+apply (iffP idP) => [/pcyclePmin [i _ ->]| [i ->]]; last exact: mem_pcycle.
+by exists i.
 Qed.
 
 End PermComp.
@@ -125,8 +135,8 @@ Implicit Type (s t c : {perm T}).
 Definition perm_ong S : {set {perm T}} := [set s | perm_on S s].
 Lemma group_set_perm_ong S : group_set (perm_ong S).
 Proof using.
-  apply/group_setP; split => [| s t]; rewrite !inE;
-    [exact: perm_on1 | exact: perm_onM].
+apply/group_setP; split => [| s t]; rewrite !inE;
+   [exact: perm_on1 | exact: perm_onM].
 Qed.
 Canonical perm_ong_group S : {group {perm T}} := Group (group_set_perm_ong S).
 Lemma card_perm_ong S : #|perm_ong S| = #|S|`!.

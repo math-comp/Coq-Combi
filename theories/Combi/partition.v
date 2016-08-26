@@ -1546,9 +1546,6 @@ From mathcomp Require Import binomial finset.
 
 Section SetPartitionShape.
 
-Local Notation "#{ x }" :=  #|(x: {set _})|
-                      (at level 0, x at level 10, format "#{ x }").
-
 Variable T : finType.
 Implicit Types (A B X : {set T}) (P Q : {set {set T}}).
 
@@ -1678,7 +1675,7 @@ rewrite /parts_shape /= => Hinj.
 apply/perm_sortP/perm_eqP => // P.
 rewrite !count_set_of_card -(card_imset _ (imset_inj Hinj)).
 rewrite imsetI; last by move=> B C _ _; exact: imset_inj.
-congr #|(_ : {set _})|; apply/setP => S; rewrite !inE.
+congr #{_}; apply/setP => S; rewrite !inE.
 case: (boolP (S \in (imset _ _))) => //= /imsetP [U _ -> {S}].
 rewrite (card_imset _ Hinj).
 apply/idP/imsetP => [| [] V].

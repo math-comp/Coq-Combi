@@ -253,7 +253,7 @@ apply esym; apply val_inj => /=.
 rewrite pcycles_conjg; apply/perm_sortP => //.
 rewrite (eq_map (f2 := fun X : {set T} => #|a @: X|)); first last.
   by move => x;  apply esym; apply card_imset; exact: perm_inj.
-rewrite (map_comp (fun x : {set T} => #|x|)); apply perm_map.
+rewrite (map_comp (fun x => #{x})); apply perm_map.
 apply uniq_perm_eq.
 - rewrite map_inj_uniq; first exact: enum_uniq.
   by apply imset_inj; apply: perm_inj.
@@ -352,7 +352,7 @@ End CycleTypeConj.
 
 
 Definition slice_part (T : finType) (P : {set {set T}}) :=
-  SlicedSet set0 P (fun x : {set T} => #|x|).
+  SlicedSet set0 P (fun x => #{x}).
 
 Definition slpcycles (T : finType) (s : {perm T}) := slice_part (pcycles s).
 

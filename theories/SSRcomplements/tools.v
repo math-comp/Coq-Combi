@@ -675,6 +675,10 @@ by rewrite -(prev_next Huniq x) Heq prev_next.
 Qed.
 
 
+Reserved Notation "#{ x }" (at level 0, x at level 10, format "#{ x }").
+Notation "#{ x }" :=  #|(x : {set _})|
+                      (at level 0, x at level 10, format "#{ x }").
+
 
 Module LeqGeqOrder.
 
