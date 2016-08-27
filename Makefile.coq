@@ -140,7 +140,6 @@ VFILES:=theories/Combi/vectNK.v\
   theories/SymGroup/symgroup.v\
   theories/SymGroup/reprdim1.v\
   theories/SymGroup/reprS2.v\
-  theories/SymGroup/reprS3.v\
   theories/SymGroup/towerSn.v\
   theories/MPoly/Schur_basis.v\
   theories/MPoly/antisym.v\

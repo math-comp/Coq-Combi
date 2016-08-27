@@ -244,12 +244,6 @@ rewrite mpartE take_oversize /=.
 by rewrite size_cat size_nseq subnKC.
 Qed.
 
-Lemma sym_monomialE (p : {mpoly R[n]}) :
-  p \is symmetric ->
-  p = \sum_(m <- msupp p | is_dominant m) p@_m *: monomial (partm m).
-Proof.
-Admitted.
-
 (** Basis at degree 0 *)
 Lemma elementary0 : elementary 0 = 1.
 Proof using. by apply val_inj; rewrite /= mesym0E. Qed.
@@ -700,84 +694,6 @@ End ChangeBasisCompletePowerSum.
 From mathcomp Require Import vector.
 
 
-Section Homogeneous.
-
-Variable n : nat.
-Variable R : fieldType.
-Variable d : nat.
-
-Definition hommonomial (l : intpartn d) := DHomog (monomial_homog n.+1 R l).
-Definition dsym := span [seq hommonomial l | l <- enum [set: intpartn d]].
-
-Lemma hommonomialE (f : dhomog n.+1 R d) :
-  mpoly_of_dhomog f \is symmetric ->
-  f = \sum_(p : intpartn d) f@_(mpart p) *: hommonomial p.
-Proof.
-move=> /sym_monomialE Hf.
-apply val_inj => /=; rewrite {1}Hf {Hf}.
-rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)) linear_sum /=.
-rewrite (bigID (fun i : intpartn d => mpart i \in msupp f)) /=.
-rewrite [X in _ + X]big1 ?addr0;
-  last by move=> i /memN_msupp_eq0 ->; rewrite scale0r.
-rewrite (eq_bigr (fun i : intpartn d =>
-           f@_(mpart i) *:
-            sympol (monomial n.+1 R (partm (n := n.+1) (mpart i)))));
-    first last.
-  move=> i Hi; congr (_ *: _); congr sympol; congr monomial.
-(*  rewrite mpartE.
-    
-is_dominant_mpart is_dominant_mpart_partm
-      rewrite big_map /=.
-    *)
-Admitted.
-
-Lemma dsymP f : (f \in dsym) = (mpoly_of_dhomog f \is symmetric).
-Proof.
-apply/idP/idP.
-- move=> /coord_span -> /=.
-  rewrite linear_sum; apply rpred_sum => p _.
-  rewrite linearZZ; apply rpredZ => /=.
-  by rewrite (nth_map (rowpartn d)) /=; last by move: p; rewrite cardE => i.
-- move/hommonomialE ->.
-  rewrite /dsym span_def.
-  apply rpred_sum => p _; apply rpredZ => /=.
-  rewrite big_map -big_enum (bigD1 p) //= -[X in X \in _]addr0.
-  apply memv_add; first exact: memv_line.
-  exact: mem0v.
-Qed.
-(*
-Definition hom_elementary (l : intpartn d) :=
-  DHomog (prod_elementary_homog n.+1 R l).
-
-Definition dsym := span [seq hom_elementary l | l <- enum [set: intpartn d]].
-
-Lemma dsymP f : (f \in dsym) = (mpoly_of_dhomog f \is symmetric).
-Proof.
-apply/idP/idP.
-- move=> /coord_span -> /=.
-  rewrite linear_sum; apply rpred_sum => p _.
-  rewrite linearZZ; apply rpredZ => /=.
-  rewrite (nth_map (rowpartn d)); last by move: p; rewrite cardE => i.
-  exact: symtypol_is_symmetric.
-- move/sym_fundamental => [t [Ht _]].
-  have -> : f = meval (fun i => elementary _ R i) t. [tuple elementary n.+1 R i.+1  | i < n.+1].
-    
-  move=> Hsym.
-  rewrite /dsym span_def.
-  have -> : f = \sum_(p : intpartn d)
-                 (mpoly_of_dhomog f)@_(mpart n.+1 p) *: hommonomial p.
-    apply val_inj => /=; apply/mpolyP => m.
-    rewrite linear_sum.
-    admit.
-  apply rpred_sum => p _; apply rpredZ => /=.
-  rewrite big_map -big_enum.
-  rewrite (bigD1 p) //= -[X in X \in _]addr0.
-  apply memv_add; first exact: memv_line.
-  exact: mem0v.
-Admitted.
-*)
-
-End Homogeneous.
 
 Section Schur.
 
