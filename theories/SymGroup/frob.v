@@ -52,6 +52,22 @@ rewrite mulr1 divff ?scale1r //.
 exact: neq0zcoeff.
 Qed.
 
+From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
+Require Import commutant.
+From mathcomp Require Import rat ssrnum algC.
+Import Num.Theory.
+
+Lemma frob_triv : frob_iso 1 = 'h_n.
+Proof.
+rewrite -decomp_cf_triv linear_sum.
+rewrite (eq_bigr (fun i => 'z_i^-1 *: 'p[i])); first last.
+  move=> l _; rewrite -frob_pbasis /= linearZ scalerA mulrC divff ?scale1r //.
+  exact: neq0zcoeff.
+rewrite -QtoCcomplete complete_to_power_sum /=.
+rewrite rmorph_sum /=; apply eq_bigr => l _.
+by rewrite zcoeffE scale_rat_QtoC QtoCpower_sum_prod fmorphV /= ratr_nat.
+Qed.
+
 End Defs.
 
 Lemma frob_ind_morph nvar n m (f : 'CF([set: 'S_m])) (g : 'CF([set: 'S_n])) :

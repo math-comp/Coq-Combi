@@ -695,37 +695,6 @@ rewrite complete_to_power_sum_intpartn; apply eq_bigr => l _.
 by rewrite coeff_complete_to_power_sum.
 Qed.
 
-Lemma Pi_perm n (l : intpartn n) :
-  \sum_(c : intcompn n | perm_eq l c) \Pi c =
-  \sum_(c : permuted (in_tuple l)) \Pi c :> rat.
-Proof.
-rewrite -[LHS](big_map (@cnval n) _ (fun c : seq nat => \Pi c)).
-rewrite -big_filter.
-rewrite -[RHS](big_map (@tpval _ _ (in_tuple l)) xpredT
-                       (fun c : (size l).-tuple nat => \Pi c)).
-rewrite -[RHS](big_map (@tval _ _) xpredT
-                       (fun c : seq nat => \Pi c)).
-rewrite /index_enum -!enumT; apply eq_big_perm; apply uniq_perm_eq.
-- apply filter_uniq; rewrite map_inj_uniq; [exact: enum_uniq | exact: val_inj].
-- rewrite -map_comp; rewrite map_inj_uniq; first exact: enum_uniq.
-  by move=> p q /val_inj/val_inj.
-- move=> /= s; rewrite mem_filter.
-  apply/andP/mapP=> [[Hperm /mapP [/= c _ Hs]] | [t /mapP [/= tp _ ->{t}] Hs]].
-  + subst s.
-    have Hc : size c == size l by rewrite (perm_eq_size Hperm).
-    exists (Tuple Hc) => //; apply/mapP.
-    have Hpermt : perm_eq (in_tuple l) (Tuple Hc) by [].
-    by exists (Permuted Hpermt); rewrite // mem_enum.
-  + split; first by rewrite Hs; apply: permutedP.
-    apply/mapP => /=; rewrite {s}Hs.
-    case: tp => /= [t Ht].
-    have Hct : is_comp_of_n n t.
-      rewrite /is_comp_of_n /= /is_comp -(perm_eq_mem Ht) -(perm_sumn Ht).
-      rewrite  intpartn_sumn eq_refl /=.
-      by have:= intpartnP l; rewrite is_part_sortedE => /andP [].
-    by exists (IntCompN Hct); rewrite // mem_enum.
-Qed.
-
 End ChangeBasisCompletePowerSum.
 
 From mathcomp Require Import vector.
@@ -976,7 +945,7 @@ apply uniq_perm_eq.
   + by apply val_inj; rewrite /= revK.
 Qed.
 
-Lemma Schur1 (sh : intpartn 1) : Schur n0 R sh = \sum_(i<n) 'X_i.
+Lemma Schur1 (sh : intpartn 1) : Schur n0 R sh = \sum_(i < n) 'X_i.
 Proof using.
 suff -> : sh = rowpartn 1 by rewrite -completeE complete1.
 by apply val_inj => /=; exact: intpartn1.
@@ -984,4 +953,96 @@ Qed.
 
 End SchurComRingType.
 
+Notation "''s[' l ]" := (Schur _ _ l)
+                              (at level 8, l at level 2, format "''s[' l ]").
+
+
+From mathcomp Require Import ssrnum algC.
+Import Num.Theory.
+
+Section RatToAlgC.
+
+Variable n : nat.
+
+Definition tens_algC :=
+  Eval hnf in [rmorphism of @map_mpoly n rat_fieldType algCfield ratr].
+
+Lemma tens_algCX m : tens_algC 'X_[m] = 'X_[m].
+Proof using.
+rewrite -mpolyP => mm; rewrite mcoeff_map_mpoly /= !mcoeffX.
+by case: eqP; rewrite ratr_nat.
+Qed.
+
+Lemma msym_tensR s p : msym s (tens_algC p) = tens_algC (msym s p).
+Proof using.
+rewrite (mpolyE p).
+rewrite [tens_algC _]raddf_sum [msym s _]raddf_sum.
+rewrite [msym s _]raddf_sum [tens_algC _]raddf_sum.
+apply eq_bigr => i _ /=; apply/mpolyP => m.
+by rewrite mcoeff_map_mpoly /= !mcoeff_sym mcoeff_map_mpoly /=.
+Qed.
+
+Lemma tens_algC_issym (f : {sympoly rat[n]}) : tens_algC f \is symmetric.
+Proof.
+apply/issymP => s.
+by rewrite msym_tensR (issymP _ (sympol_is_symmetric f)).
+Qed.
+Definition tens_algC_sym (f : {sympoly rat[n]}) : {sympoly algC[n]} :=
+           SymPoly (tens_algC_issym f).
+
+Lemma tens_algC_sym_is_rmorphism : rmorphism tens_algC_sym.
+Proof.
+rewrite /tens_algC_sym; repeat split.
+- by move=> i j /=; apply val_inj; rewrite /= rmorphB.
+- by move=> i j /=; apply val_inj; rewrite /= rmorphM.
+- by apply val_inj; rewrite /= rmorph1.
+Qed.
+Canonical tens_algC_sym_rmorphism := RMorphism tens_algC_sym_is_rmorphism.
+
+Notation QtoC := tens_algC_sym.
+
+Lemma scale_rat_QtoC (r : rat) (p : {sympoly rat[n]}) :
+  QtoC (r *: p) = (ratr r) *: (QtoC p).
+Proof.
+apply val_inj => /=.
+rewrite (mpolyE p) raddf_sum /=.
+apply/mpolyP => m.
+rewrite mcoeffZ !mcoeff_map_mpoly /= -rmorphM /=; congr ratr.
+rewrite !linear_sum /= mulr_sumr.
+apply eq_bigr => i _ /=.
+by rewrite !linearZ /=.
+Qed.
+
+Lemma QtoCelementary d : QtoC 'e_d = 'e_d.
+Proof.
+apply val_inj; rewrite /= /mesym rmorph_sum /=.
+apply eq_bigr => X _; rewrite rmorph_prod /=.
+by apply eq_bigr => i _; rewrite tens_algCX.
+Qed.
+Lemma QtoCelementary_prod d (l : intpartn d) : QtoC 'e[l] = 'e[l].
+Proof.
+by rewrite rmorph_prod; apply eq_bigr => i _; exact: QtoCelementary.
+Qed.
+
+Lemma QtoCcomplete d : QtoC 'h_d = 'h_d.
+Proof.
+apply val_inj; rewrite /= /complete_pol rmorph_sum /=.
+by apply eq_bigr => X _; rewrite tens_algCX.
+Qed.
+Lemma QtoCcomplete_prod d (l : intpartn d) : QtoC 'h[l] = 'h[l].
+Proof.
+by rewrite rmorph_prod; apply eq_bigr => i _; exact: QtoCcomplete.
+Qed.
+
+Lemma QtoCpower_sum d : QtoC 'p_d = 'p_d.
+Proof.
+apply val_inj; rewrite /= /power_sum_pol rmorph_sum /=.
+by apply eq_bigr => X _; rewrite rmorphX /= tens_algCX.
+Qed.
+Lemma QtoCpower_sum_prod d (l : intpartn d) : QtoC 'p[l] = 'p[l].
+Proof.
+by rewrite rmorph_prod; apply eq_bigr => i _; exact: QtoCpower_sum.
+Qed.
+
+End RatToAlgC.
 
