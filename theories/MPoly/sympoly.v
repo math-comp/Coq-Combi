@@ -511,6 +511,190 @@ apply eq_bigr => l _; rewrite scaler_suml; apply eq_big.
   by rewrite perm_eq_sym; apply: perm_partn_of_compn.
 Qed.
 
+Require Import commutant.
+
+
+Lemma intcompn_cons_sub_proof i n (c : intcompn (n - i)) :
+  i != 0%N -> (i <= n)%N -> is_comp_of_n n (i :: c).
+Proof.
+move=> Hi Hin.
+rewrite /is_comp_of_n /= intcompn_sumn subnKC // eq_refl /=.
+rewrite /is_comp inE negb_or eq_sym Hi /=.
+exact: intcompnP.
+Qed.
+Definition intcompn_cons i (Hi : i != 0%N) n (Hin : (i <= n)%N) c :=
+  IntCompN (intcompn_cons_sub_proof c Hi Hin).
+
+Lemma intcompn_behead_sub_proof i n (c : intcompn n) :
+  i != 0%N -> (i <= n)%N ->
+  is_comp_of_n (n - i)%N (if head 0%N c == i then behead c else rowcompn (n-i)).
+Proof.
+case: c => [[|c0 c] /= /andP [/eqP <- Hcomp]] Hi0 Hin.
+  by exfalso; move: Hin Hi0; rewrite leqn0 => /eqP ->; rewrite eq_refl.
+case: (altP (c0 =P i)) => Hc0 /=; last exact: rowcompnP.
+subst c0; rewrite addKn eq_refl /=.
+move: Hcomp; rewrite /is_comp inE; apply contra => ->.
+by rewrite orbT.
+Qed.
+Definition intcompn_behead i (Hi : i != 0%N) n (Hin : (i <= n)%N) c :=
+  IntCompN (intcompn_behead_sub_proof c Hi Hin).
+
+Lemma zcard_rem i l :
+  i != 0%N -> i \in l ->
+  (zcard (rem i l))%:R = (i * (count_mem i l))%:R^-1 * (zcard l)%:R :> rat.
+Proof.
+rewrite /zcard => Hi /perm_to_rem Hrem.
+rewrite (eq_big_perm _ Hrem) /= big_cons.
+rewrite !natrM invfM !mulrA ![_ * i%:R]mulrC mulrA divff ?pnatr_eq0 //.
+rewrite mul1r [RHS]mulrC [RHS]mulrA [RHS]mulrC; congr (_ * _).
+have Huniq := iota_uniq 1 (sumn l).
+have Hiiota : i \in iota 1 (sumn l).
+  rewrite mem_iota lt0n Hi /= add1n ltnS.
+  by move/perm_sumn: Hrem => -> /=; apply leq_addr.
+rewrite ![X in X%:R / _](bigD1_seq i) //=.
+rewrite mulnC !natrM (perm_eqP Hrem) /= eq_refl /= add1n.
+rewrite factS mulnC natrM -!mulrA divff ?pnatr_eq0 // mulr1 mulrC.
+rewrite [in RHS](eq_bigr (fun j => (count_mem j (rem i l))`!)); first last.
+  move=> j /negbTE Hj; move/perm_eqP: Hrem => -> /=.
+  by rewrite eq_sym Hj add0n.
+rewrite -natrM -[X in _ = X%:R]bigD1_seq //=.
+have /subnKC <- : (sumn (rem i l) <= sumn l)%N.
+  by move/perm_sumn: Hrem => -> /=; apply leq_addl.
+rewrite iota_add big_cat /= -[X in X%:R]muln1; congr (_ * _)%:R.
+rewrite big_seq big1 // => j; rewrite mem_iota add1n => /andP [Hj _].
+suff -> : count_mem j (rem i l) = 0%N by rewrite fact0.
+apply /count_memPn; move: Hj; apply contraL.
+rewrite -leqNgt => /perm_to_rem/perm_sumn -> /=.
+exact: leq_addr.
+Qed.
+
+Lemma part_sumn_count l :
+  is_part l ->
+  (\sum_(i <- iota 1 (sumn l) | i \in l) i * (count_mem i) l)%N = sumn l.
+Proof.
+move: {2 3}(sumn l) (leqnn (sumn l)) => b Hb.
+have {Hb} Hb : all (geq b) l.
+  elim: l Hb => //= l0 l IHl H; apply/andP; split.
+  - exact: (leq_trans (leq_addr _ _) H).
+  - by apply IHl; exact: (leq_trans (leq_addl _ _) H).
+elim: l Hb => [_ _ | l0 l IHl]; first by apply big1.
+move=> /andP [Hb /IHl{IHl}Hrec] Hpart; rewrite /= in Hb.
+have /= Hl0 := part_head_non0 Hpart.
+move: Hpart => /andP [_] /Hrec{Hrec}Hrec.
+case: (boolP (l0 \in l)) => Hl0l.
+- rewrite (eq_bigl (fun i => i \in l)); first last.
+    by move=> i; rewrite inE; case: (altP (i =P l0)) => [-> |].
+  have Huniq : uniq [seq i <- iota 1 b | i \in l].
+    by apply filter_uniq; apply iota_uniq.
+  have H1 : l0 \in [seq i <- iota 1 b | i \in l].
+    by rewrite mem_filter Hl0l /= mem_iota add1n ltnS lt0n Hl0 Hb.
+  rewrite -big_filter (bigD1_seq l0) //=.
+  rewrite eq_refl /= mulnDr muln1 -addnA; congr (_ + _)%N.
+  rewrite (eq_bigr (fun i => i * (count_mem i l)))%N; first last.
+    move=> i; rewrite eq_sym => /negbTE -> /=.
+    by rewrite add0n.
+  by apply esym; rewrite -Hrec -big_filter (bigD1_seq l0).
+- have Huniq : uniq [seq i <- iota 1 b | i \in l0 :: l].
+    by apply filter_uniq; apply iota_uniq.
+  have H1 : l0 \in [seq i <- iota 1 b | i \in l0 :: l].
+    by rewrite mem_filter /= mem_iota inE eq_refl /= add1n ltnS lt0n Hl0 Hb.
+  rewrite -big_filter (bigD1_seq l0) //=.
+  rewrite eq_refl (count_memPn Hl0l) addn0 muln1; congr (_ + _)%N.
+  rewrite (eq_bigr (fun i => i * (count_mem i l)))%N; first last.
+    move=> i; rewrite eq_sym => /negbTE -> /=.
+    by rewrite add0n.
+  rewrite -big_filter -filter_predI big_filter.
+  rewrite (eq_bigl (fun i => i \in l)); first last.
+    move=> i /=; rewrite inE; case: (altP (i =P l0)) => [-> | Hil0] //=.
+    by rewrite (negbTE Hl0l).
+  exact: Hrec.
+Qed.
+
+Lemma coeff_complete_to_power_sum n (l : intpartn n) :
+  (\sum_(c : intcompn n | perm_eq l c) \Pi c) = (zcard l)%:R^-1 :> rat.
+Proof.
+case: l => l /= /andP [/eqP].
+elim: n {1 3 4 5 6 7 8 9}n (leqnn n) l => [| m IHm] n.
+  rewrite leqn0 => /eqP -> l /part0 H/H{H} ->{l}.
+  rewrite /zcard /= !big_nil muln1.
+  rewrite (eq_bigl (xpred1 (IntCompN (cnval := [::]) (n := 0%N) isT))); first last.
+    move=> i; apply/idP/eqP => [Hperm | /(congr1 val)/= -> //].
+    by apply val_inj => /=; apply/nilP; rewrite /nilp -(perm_eq_size Hperm).
+  by rewrite big_pred1_eq.
+rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
+move => l Hsum Hpart.
+have head_intcompn (c : intcompn n) : (head 0 c < n.+1)%N.
+  rewrite ltnS; case: c => [[|c0 c]] //= /andP [/eqP <- _].
+  exact: leq_addr.
+pose headcomp c := Ordinal (head_intcompn c).
+rewrite (partition_big headcomp xpredT) //=.
+rewrite (eq_bigr
+           (fun j : 'I_n.+1 =>
+              \sum_(i : intcompn n |
+                    perm_eq l i && (head 0%N i == nat_of_ord j)) \Pi i));
+    last by move=> i _; apply eq_bigl => c.
+rewrite -[LHS](big_map nat_of_ord xpredT
+    (fun j : nat =>
+       \sum_(i : intcompn n | perm_eq l i && (head 0%N i == j)) \Pi i)).
+rewrite {1}/index_enum -enumT val_enum_ord {head_intcompn headcomp}.
+rewrite -(add1n n) iota_add add0n /= big_cons.
+rewrite big1 ?add0r; first last.
+  case=> [[|i0 i] /= /andP [_ Hcomp] /andP [Hperm /eqP Hhead]]; exfalso.
+  - by move/perm_sumn: Hperm; rewrite /= Hsum Hm.
+  - by move: Hcomp; rewrite /is_comp inE negb_or Hhead eq_refl.
+rewrite (bigID (fun j => j \in l)) /= [X in _ + X]big1 ?addr0; first last.
+  move=> i Hi; apply big1 => [] [[|c0 c] /= _ /andP [Hperm /eqP Hhead]]; exfalso.
+  - by move/perm_sumn: Hperm; rewrite /= Hsum Hm.
+  - subst c0; move/perm_eq_mem: Hperm Hi => /(_ i).
+    by rewrite inE eq_refl /= => ->.
+rewrite big_seq_cond.
+rewrite (eq_bigr (fun i => n%:R^-1 * (zcard (rem i l))%:R^-1)); first last.
+  move=> /= i /andP []; rewrite mem_iota add1n ltnS => /andP [H0i Hin] Hi.
+  rewrite lt0n in H0i.
+  rewrite (reindex (intcompn_cons H0i Hin)) /=; first last.
+    exists (intcompn_behead H0i Hin).
+    + move=> c; rewrite inE /= => /andP [Hperm _].
+      by apply val_inj; rewrite /= eq_refl.
+    + move=> c; rewrite inE /= => /andP [Hperm Hhead].
+      apply val_inj; rewrite /= Hhead.
+      case: c Hperm Hhead => [[|c0 c]] //= _.
+      * by move/perm_sumn; rewrite /= Hsum Hm.
+      * by move=> _ /eqP ->.
+  rewrite (eq_bigl (fun c : intcompn (n - i)%N =>
+                      perm_eq (rem i l) c)); first last.
+    move=> c; rewrite eq_refl andbT.
+    have /perm_eqlP -> := perm_to_rem Hi.
+    by rewrite perm_cons.
+  rewrite (eq_bigr (fun c : intcompn (n - i)%N => n%:R^-1 * \Pi c)); first last.
+    by move=> c _; rewrite intcompn_sumn subnKC // natrM invfM.
+  rewrite -mulr_sumr IHm //.
+  - rewrite -ltnS -Hm -{2}(subnK Hin).
+    move: H0i; case i => //= i' _.
+    by rewrite addnS ltnS leq_addr.
+  - rewrite -[LHS](addKn i).
+    have /perm_sumn /= <- := perm_to_rem Hi.
+    by rewrite Hsum.
+  - move: Hpart; rewrite !is_part_sortedE => /andP [Hsort H0].
+    have Hrem := rem_subseq i l; apply/andP; split.
+    + exact: (subseq_sorted _ Hrem).
+    + by move: H0; apply contra; apply (mem_subseq Hrem).
+rewrite {IHm} -mulr_sumr.
+rewrite (eq_bigr
+      (fun i => (i * (count_mem i l))%:R * (zcard l)%:R^-1)); first last.
+  move=> i /andP []; rewrite mem_iota lt0n => /andP [Hi0 _ Hi].
+  by rewrite (zcard_rem Hi0 Hi) invfM invrK.
+rewrite -big_seq_cond -mulr_suml mulrA -[RHS]mul1r; congr (_ * _).
+rewrite -natr_sum -Hsum part_sumn_count // mulrC divff //.
+by rewrite Hsum Hm pnatr_eq0.
+Qed.
+
+Lemma complete_to_power_sum n :
+  'h_n = \sum_(l : intpartn n) (zcard l)%:R^-1 *: 'p[l] :> SF.
+Proof.
+rewrite complete_to_power_sum_intpartn; apply eq_bigr => l _.
+by rewrite coeff_complete_to_power_sum.
+Qed.
+
 Lemma Pi_perm n (l : intpartn n) :
   \sum_(c : intcompn n | perm_eq l c) \Pi c =
   \sum_(c : permuted (in_tuple l)) \Pi c :> rat.
