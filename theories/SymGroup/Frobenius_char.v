@@ -1,13 +1,30 @@
+(** * Combi.SymGroup.Frobenius_char : Frobenius characteristic *)
+(******************************************************************************)
+(*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
+(*                                                                            *)
+(*  Distributed under the terms of the GNU General Public License (GPL)       *)
+(*                                                                            *)
+(*    This code is distributed in the hope that it will be useful,            *)
+(*    but WITHOUT ANY WARRANTY; without even the implied warranty of          *)
+(*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *)
+(*    General Public License for more details.                                *)
+(*                                                                            *)
+(*  The full text of the GPL is available at:                                 *)
+(*                                                                            *)
+(*                  http://www.gnu.org/licenses/                              *)
+(******************************************************************************)
+(** * Frobenius characteristic
+*)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import finfun fintype tuple finset bigop.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
 From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
-From mathcomp Require Import ssralg matrix vector mxalgebra falgebra ssrnum algC.
-From mathcomp Require Import presentation classfun character mxrepresentation.
+From mathcomp Require Import rat ssralg mxalgebra ssrnum algC.
+From mathcomp Require Import classfun character mxrepresentation.
 
-Require Import tools ordcast permuted symgroup partition Greene sorted sympoly.
-Require Import permcomp slicedbij cycles cycletype reprdim1 reprS2 towerSn.
+Require Import tools partition sympoly.
+Require Import permcomp symgroup cycles cycletype towerSn commutant.
 
 Import LeqGeqOrder.
 
@@ -27,20 +44,20 @@ Variable nvar n : nat.
 Local Notation "'z_ p " := (zcoeff p) (at level 2).
 Local Notation "''P_[' p ]" := (pbasis p).
 
-Definition frob_iso (f : 'CF([set: 'S_n])) : {sympoly algC[nvar]} :=
+Definition Fchar (f : 'CF('SG_n)) : {sympoly algC[nvar]} :=
   \sum_(l : intpartn n) (f (perm_of_partCT l) / 'z_l) *: 'p[l].
 
-Lemma frob_iso_is_linear : linear frob_iso.
+Lemma Fchar_is_linear : linear Fchar.
 Proof using.
-move=> a f g; rewrite /frob_iso scaler_sumr -big_split /=.
+move=> a f g; rewrite /Fchar scaler_sumr -big_split /=.
 apply eq_bigr => l _; rewrite !cfunElock.
 by rewrite scalerA mulrA -scalerDl mulrDl.
 Qed.
-Canonical frob_iso_linear := Linear frob_iso_is_linear.
+Canonical Fchar_linear := Linear Fchar_is_linear.
 
-Lemma frob_pbasis l : frob_iso 'P_[l] = 'p[l].
+Lemma Fchar_pbasis l : Fchar 'P_[l] = 'p[l].
 Proof using.
-rewrite /frob_iso /pbasis (bigD1 l) //= big1 ?addr0; first last.
+rewrite /Fchar /pbasis (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hm /=.
   rewrite cfunElock cfuni_partE /=.
   rewrite /cycle_typeSN perm_of_partCTP.
@@ -52,16 +69,11 @@ rewrite mulr1 divff ?scale1r //.
 exact: neq0zcoeff.
 Qed.
 
-From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
-Require Import commutant.
-From mathcomp Require Import rat ssrnum algC.
-Import Num.Theory.
-
-Lemma frob_triv : frob_iso 1 = 'h_n.
+Lemma Fchar_triv : Fchar 1 = 'h_n.
 Proof.
 rewrite -decomp_cf_triv linear_sum.
 rewrite (eq_bigr (fun i => 'z_i^-1 *: 'p[i])); first last.
-  move=> l _; rewrite -frob_pbasis /= linearZ scalerA mulrC divff ?scale1r //.
+  move=> l _; rewrite -Fchar_pbasis /= linearZ scalerA mulrC divff ?scale1r //.
   exact: neq0zcoeff.
 rewrite -QtoCcomplete complete_to_power_sum /=.
 rewrite rmorph_sum /=; apply eq_bigr => l _.
@@ -69,10 +81,11 @@ by rewrite zcoeffE scale_rat_QtoC QtoCpower_sum_prod fmorphV /= ratr_nat.
 Qed.
 
 End Defs.
+Arguments Fchar [nvar n] f.
 
-Lemma frob_ind_morph nvar n m (f : 'CF([set: 'S_m])) (g : 'CF([set: 'S_n])) :
-  frob_iso nvar ('Ind[[set: 'S_(m + n)]] (f \o^ g)) =
-  frob_iso nvar f * frob_iso nvar g.
+
+Lemma Fchar_ind_morph nv n m (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
+  Fchar ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f * Fchar g :> {sympoly algC[nv]}.
 Proof using.
 rewrite (pbasis_gen f) (pbasis_gen g).
 rewrite cfextprod_suml !linear_sum [RHS]mulr_suml.
@@ -80,7 +93,7 @@ apply eq_bigr => /= l _.
 rewrite cfextprod_sumr !linear_sum [RHS]mulr_sumr.
 apply eq_bigr => /= k _.
 rewrite cfextprodZr cfextprodZl scalerA.
-rewrite 3!linearZ /= Ind_pbasis frob_pbasis.
-do 2 rewrite linearZ /= frob_pbasis.
+rewrite 3!linearZ /= Ind_pbasis Fchar_pbasis.
+do 2 rewrite linearZ /= Fchar_pbasis.
 by rewrite -scalerAr -scalerAl scalerA prod_genM.
 Qed.
