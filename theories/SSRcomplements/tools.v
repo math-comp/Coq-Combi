@@ -786,3 +786,25 @@ Qed.
 
 Lemma enum0 : enum 'I_0 = [::].
 Proof. apply/nilP; by rewrite /nilp size_enum_ord. Qed.
+
+Section LRShift.
+
+Variables (m n : nat).
+
+Lemma lshift_inj : injective (@lshift m n).
+Proof using .
+  move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /=.
+Qed.
+Lemma rshift_inj : injective (@rshift m n).
+Proof using .
+  move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /= eqn_add2l.
+Qed.
+
+Lemma lrshiftF i j : ((@lshift m n i) == (@rshift m n j)) = false.
+Proof using .
+  apply: (introF idP); case: i j => [] i Hi [] j Hj.
+  rewrite /eq_op /= => /eqP H.
+  move: Hi; by rewrite H ltnNge leq_addr.
+Qed.
+
+End LRShift.

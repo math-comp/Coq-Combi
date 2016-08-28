@@ -36,7 +36,7 @@ From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import ssralg matrix vector mxalgebra falgebra ssrnum algC.
 From mathcomp Require Import presentation classfun character mxrepresentation.
 
-Require Import tools ordcast permuted symgroup partition Greene sorted.
+Require Import tools ordcast permuted symgroup partition sorted.
 Require Import permcomp slicedbij cycles cycletype.
 
 Import LeqGeqOrder.
@@ -226,10 +226,10 @@ rewrite -[1]/(1,1) /xpair_eqE /=.
 apply/andP; split; apply/eqP/permP => x; rewrite !perm1.
 - have := H (unsplit (inl x)).
   rewrite /tinj permE /tinjval unsplitK perm1 /=.
-  exact: linjP.
+  exact: lshift_inj.
 - have := H (unsplit (inr x)).
   rewrite /tinj permE /tinjval unsplitK perm1 /=.
-  exact: rinjP.
+  exact: rshift_inj.
 Qed.
 
 Lemma expg_tinj_lshift s a i :
@@ -304,9 +304,9 @@ rewrite pcycles_tinj parts_shape_union; first last.
   move/setP => /(_ (lshift n x)).
   rewrite mem_imset; last exact: pcycle_id.
   move=> /esym/imsetP => [] [z _] /eqP.
-  by rewrite lrinjF.
-congr sort; rewrite /ct !intpartn_castE /=.
-by congr (_ ++ _); apply parts_shape_inj; [exact: linjP | exact: rinjP].
+  by rewrite lrshiftF.
+by congr sort; rewrite /ct !intpartn_castE /=; congr (_ ++ _);
+  apply parts_shape_inj; [exact: lshift_inj | exact: rshift_inj].
 Qed.
 
 End TowerMorphism.
