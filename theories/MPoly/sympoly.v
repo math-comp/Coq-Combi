@@ -533,29 +533,6 @@ Qed.
 Definition intcompn_behead i (Hi : i != 0%N) n (Hin : (i <= n)%N) c :=
   IntCompN (intcompn_behead_sub_proof c Hi Hin).
 
-(*
-Lemma zcard_rem i l :
-  i != 0%N -> i \in l ->
-  (zcard (rem i l))%:R = (i * (count_mem i l))%:R^-1 * (zcard l)%:R :> rat.
-Proof.
-move => Hi /perm_to_rem Hrem.
-have /zcard_any <- : (sumn (rem i l) < (sumn l).+1)%N.
-  by rewrite ltnS (perm_sumn Hrem) /=; apply leq_addl.
-have Hil : (i < (sumn l).+1)%N.
-  by rewrite ltnS (perm_sumn Hrem) /=; apply leq_addr.
-rewrite /zcard (eq_big_perm _ Hrem) /= big_cons.
-rewrite !natrM invfM !mulrA ![_ * i%:R]mulrC mulrA divff ?pnatr_eq0 //.
-rewrite mul1r [RHS]mulrC [RHS]mulrA [RHS]mulrC; congr (_ * _).
-rewrite  [in RHS](bigD1 (Ordinal Hil)) //=.
-rewrite mulnC !natrM (perm_eqP Hrem) /= eq_refl /= add1n.
-rewrite factS mulnC natrM -!mulrA divff ?pnatr_eq0 // mulr1 mulrC.
-rewrite (bigD1 (Ordinal Hil)) //= -natrM; congr (_ * _)%:R.
-rewrite [in LHS](eq_bigl (fun j => (nat_of_ord j) != i)) //.
-rewrite [in RHS](eq_bigl (fun j => (nat_of_ord j) != i)) //.
-apply eq_bigr => j /negbTE Hj; move/perm_eqP: Hrem => -> /=.
-by rewrite eq_sym Hj add0n.
-Qed.
-*)
 
 Lemma part_sumn_count_bound b l :
   (sumn l < b)%N ->
