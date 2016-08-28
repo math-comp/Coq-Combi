@@ -26,7 +26,7 @@ From mathcomp Require Import rat ssralg mxalgebra ssrnum algC.
 From mathcomp Require Import classfun character mxrepresentation.
 
 Require Import tools partition sympoly.
-Require Import permcomp symgroup cycles cycletype towerSn commutant.
+Require Import permcomp symgroup cycles cycletype towerSn permcent.
 
 Import LeqGeqOrder.
 

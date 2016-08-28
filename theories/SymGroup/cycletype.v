@@ -1,3 +1,18 @@
+(** * Combi.SymGroup.cycletype : The Cycle Type of a Permutation *)
+(******************************************************************************)
+(*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
+(*                                                                            *)
+(*  Distributed under the terms of the GNU General Public License (GPL)       *)
+(*                                                                            *)
+(*    This code is distributed in the hope that it will be useful,            *)
+(*    but WITHOUT ANY WARRANTY; without even the implied warranty of          *)
+(*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *)
+(*    General Public License for more details.                                *)
+(*                                                                            *)
+(*  The full text of the GPL is available at:                                 *)
+(*                                                                            *)
+(*                  http://www.gnu.org/licenses/                              *)
+(******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype div.
 From mathcomp Require Import tuple finfun path bigop finset binomial.

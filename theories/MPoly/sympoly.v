@@ -1,3 +1,4 @@
+(** * Combi.MPoly.sympol : Symmetric Polynomials *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,6 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * The Ring of Symmetric Polynomials *)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop ssralg path perm fingroup.
@@ -505,7 +507,7 @@ apply eq_bigr => l _; rewrite scaler_suml; apply eq_big.
   by rewrite perm_eq_sym; apply: perm_partn_of_compn.
 Qed.
 
-Require Import commutant.
+Require Import permcent.
 
 
 Lemma intcompn_cons_sub_proof i n (c : intcompn (n - i)) :

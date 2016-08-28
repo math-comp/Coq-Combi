@@ -132,7 +132,7 @@ VFILES:=theories/Combi/vectNK.v\
   theories/HookFormula/recyama.v\
   theories/Basic/congr.v\
   theories/Basic/ordtype.v\
-  theories/SymGroup/commutant.v\
+  theories/SymGroup/permcent.v\
   theories/SymGroup/cycles.v\
   theories/SymGroup/cycletype.v\
   theories/SymGroup/Frobenius_char.v\

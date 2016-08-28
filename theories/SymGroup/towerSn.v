@@ -20,7 +20,7 @@
 - [cfextprodr g h] == [cfextprod h g]
 - [extprod_repr P Q] == the external product of matrix representation.
 
-- [tinj]     == the injection morphism : 'S_m * 'S_n -> 'S_(m + n)
+- [tinj]     == the tower injection morphism : 'S_m * 'S_n -> 'S_(m + n)
 - [tinj_im]  == the image of [tinj]
 
 - [zcoeff p] == The cardinality of the centralizator of any permutation of
@@ -32,7 +32,6 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import finfun fintype tuple finset bigop.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
-From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import ssralg matrix vector mxalgebra falgebra ssrnum algC.
 From mathcomp Require Import presentation classfun character mxrepresentation.
 
@@ -71,7 +70,7 @@ Proof using. by []. Qed.
 End classGroup.
 
 
-
+(** * External product of class functions *)
 Section CFExtProdDefs.
 
 Variables (gT aT : finGroupType).
@@ -179,6 +178,7 @@ Qed.
 End CFExtProdTheory.
 
 
+(** * Injection morphism of the tower of the symmetric groups *)
 Section TowerMorphism.
 
 Variables m n : nat.
@@ -316,6 +316,7 @@ Arguments tinj_im {m n}.
 
 Notation "f \o^ g" := (cfIsom (isom_tinj _ _) (cfextprod f g)) (at level 40).
 
+(** The tower is associative (upto isomorphism) *)
 Section Assoc.
 
 Variables m n p : nat.
@@ -348,6 +349,7 @@ End Assoc.
 
 Local Open Scope ring_scope.
 
+(** * Restriction formula *)
 Section Restriction.
 
 Variables m n : nat.
@@ -390,6 +392,7 @@ Qed.
 End Restriction.
 
 
+(** * Induction formula *)
 Section Induction.
 
 Variables m n : nat.
@@ -464,7 +467,7 @@ apply qp; congr (_, _);
 - by rewrite qp2 cycle_type_conjg.
 Qed.
 
-(* Application of Frobenius duality : cfdot_Res_r *)
+(** Application of Frobenius duality : cfdot_Res_r *)
 Lemma cfdot_Ind_cfuni_part p q (l : intpartn (m + n)):
   '['Ind['SG_(m + n)] ('1_[p] \o^ '1_[q]), '1_[l]] =
   (union_intpartn p q == l)%:R * #|class p|%:R * #|class q|%:R / #|SnXm|%:R.

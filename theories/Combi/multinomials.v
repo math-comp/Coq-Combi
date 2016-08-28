@@ -1,4 +1,4 @@
-(** * Combi.Combi.multinomials : Multinomial coefficients *)
+(** * Combi.Combi.multinomials : Multinomial Coefficients *)
 (******************************************************************************)
 (*       Copyright (C) 2016 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -13,7 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * Multinomial coefficients
+(** * Multinomial Coefficients
 
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
