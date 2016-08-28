@@ -2,6 +2,8 @@
 
 include Makefile.coq
 
+COQDOCFLAGS += --lib-subtitles
+
 TAGS: $(VFILES)
 	coqtags $(VFILES)
 
