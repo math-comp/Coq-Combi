@@ -1,3 +1,33 @@
+(** * Combi.SymGroup.towerSn : The Tower of the Symmetric Groups *)
+(******************************************************************************)
+(*       Copyright (C) 2016 Florent Hivert <florent.hivert@lri.fr>            *)
+(*                                                                            *)
+(*  Distributed under the terms of the GNU General Public License (GPL)       *)
+(*                                                                            *)
+(*    This code is distributed in the hope that it will be useful,            *)
+(*    but WITHOUT ANY WARRANTY; without even the implied warranty of          *)
+(*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *)
+(*    General Public License for more details.                                *)
+(*                                                                            *)
+(*  The full text of the GPL is available at:                                 *)
+(*                                                                            *)
+(*                  http://www.gnu.org/licenses/                              *)
+(******************************************************************************)
+(** * The Tower of the Symmetric Groups
+
+- [cfextprod g h]  == the external product of class function for
+                      [g : 'CF(G)] [h : 'CF(H)].
+- [cfextprodr g h] == [cfextprod h g]
+- [extprod_repr P Q] == the external product of matrix representation.
+
+- [tinj]     == the injection morphism : 'S_m * 'S_n -> 'S_(m + n)
+- [tinj_im]  == the image of [tinj]
+
+- [zcoeff p] == The cardinality of the centralizator of any permutation of
+                cycle type [p] in [algC], that is [#|'S_k| / #|class p|].
+- [pbasis p] == the normalized indicator class function for cycle type [p].
+ *)
+
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import finfun fintype tuple finset bigop.

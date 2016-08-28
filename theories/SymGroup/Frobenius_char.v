@@ -1,6 +1,6 @@
 (** * Combi.SymGroup.Frobenius_char : Frobenius characteristic *)
 (******************************************************************************)
-(*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
+(*       Copyright (C) 2016 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
 (*  Distributed under the terms of the GNU General Public License (GPL)       *)
 (*                                                                            *)
@@ -14,12 +14,14 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 (** * Frobenius characteristic
-*)
+
+- [Fchar f] == the Frobenius characteristic of the class function [f].
+               the number of variable is inferred from the context.
+ *)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import finfun fintype tuple finset bigop.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
-From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import rat ssralg mxalgebra ssrnum algC.
 From mathcomp Require Import classfun character mxrepresentation.
 
