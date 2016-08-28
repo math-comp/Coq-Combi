@@ -344,7 +344,7 @@ Qed.
 
 Lemma stab_ipcyclesE_prod s :
   stab_ipcycles s =
-  (\prod_(i : 'I_#|T|.+1) perm_ong_group (pcycles s :&: 'SC_i))%G.
+  (\prod_(i < #|T|.+1) perm_ong_group (pcycles s :&: 'SC_i))%G.
 Proof using.
 apply/setP => t.
 rewrite inE bigprodGE; apply/andP/idP => [[Ht /bigcapP/(_ _ isT) Hcyi] | Ht].
@@ -368,7 +368,7 @@ split; move: t Ht; apply/subsetP; rewrite gen_subG;
 Qed.
 
 Theorem stab_ipcyclesE s :
-  stab_ipcycles s = \big[dprod/1]_(i : 'I_#|T|.+1) perm_ong (pcycles s :&: 'SC_i).
+  stab_ipcycles s = \big[dprod/1]_(i < #|T|.+1) perm_ong (pcycles s :&: 'SC_i).
 Proof using.
 rewrite stab_ipcyclesE_prod; apply/esym/eqP/bigdprodYP => i /= _.
 apply/subsetP => /= t Ht; rewrite !inE negb_and negbK.
@@ -392,25 +392,16 @@ Qed.
 
 Lemma card_stab_ipcycles s :
   #|stab_ipcycles s| =
-    (\prod_(i <- iota 1 #|T|) (count_mem i (cycle_type s))`!)%N.
+    (\prod_(i < #|T|.+1) (count_mem (nat_of_ord i) (cycle_type s))`!)%N.
 Proof using.
 rewrite -(bigdprod_card (esym (stab_ipcyclesE s))).
-rewrite [RHS](_ : _ =
-              (\prod_(i <- iota 0 #|T|.+1) (count_mem i (cycle_type s))`!)%N).
-- rewrite -val_enum_ord big_map /index_enum enumT.
-  apply eq_bigr => [[i Hi]] _ /=.
-  rewrite card_perm_ong /parts_shape; congr (_)`!.
-  have:= perm_sort geq [seq #{x} | x <- enum (pcycles s)].
-  move/perm_eqlP/perm_eqP ->.
-  rewrite !cardE -size_filter /= /enum_mem.
-  rewrite filter_map size_map -filter_predI; congr size.
-  by apply eq_filter => C; rewrite !inE andbC.
-- rewrite /= big_cons.
-  suff /count_memPn -> : 0 \notin (parts_shape (pcycles s))
-    by rewrite fact0 mul1n.
-  rewrite mem_sort /parts_shape.
-  apply/negP => /mapP [C]; rewrite mem_enum => /imsetP [x _ ->{C}] /eqP.
-  by apply/negP; rewrite eq_sym; apply card_pcycle_neq0.
+apply eq_bigr => i _.
+rewrite card_perm_ong /parts_shape; congr (_)`!.
+have:= perm_sort geq [seq #{x} | x <- enum (pcycles s)].
+move/perm_eqlP/perm_eqP ->.
+rewrite !cardE -size_filter /= /enum_mem.
+rewrite filter_map size_map -filter_predI; congr size.
+by apply eq_filter => C; rewrite !inE andbC.
 Qed.
 
 Lemma conj_pcyclegrp s y z :
@@ -487,7 +478,50 @@ Qed.
 Local Open Scope nat_scope.
 
 Definition zcard l :=
-  \prod_(i <- l) i * \prod_(i <- iota 1 (sumn l)) (count_mem i l)`!.
+  \prod_(i <- l) i * \prod_(i < (sumn l).+1) (count_mem (nat_of_ord i) l)`!.
+
+Lemma zcard_nil : zcard [::] = 1.
+Proof.
+rewrite /zcard big_nil mul1n /=.
+rewrite (eq_bigr (fun _ => 1)) // big_const /=.
+by rewrite eq_cardT // size_enum_ord /= mul1n.
+Qed.
+
+Lemma zcard_any l b :
+  (sumn l < b) ->
+  (\prod_(i <- l) i * \prod_(i < b) (count_mem (i : nat) l)`! = zcard l).
+Proof.
+rewrite /zcard => /(big_ord_widen _ (fun i : nat => (count_mem i l)`!)) ->.
+congr (_ * _).
+rewrite (bigID (fun i : 'I_(_) => i < (sumn l).+1)) /=.
+rewrite -[RHS]muln1; congr (_ * _).
+apply big1 => i Hi.
+suff -> : count_mem (i : nat) l = 0 by rewrite fact0.
+apply /count_memPn; move: Hi; apply contra.
+rewrite ltnS  => /perm_to_rem/perm_sumn -> /=.
+exact: leq_addr.
+Qed.
+
+Lemma zcard_rem i l :
+  i != 0 -> i \in l -> i * (count_mem i l) * (zcard (rem i l)) = zcard l.
+Proof.
+move => Hi /perm_to_rem Hrem.
+have /zcard_any <- : sumn (rem i l) < (sumn l).+1.
+  by rewrite ltnS (perm_sumn Hrem) /=; apply leq_addl.
+have Hil : i < (sumn l).+1.
+  by rewrite ltnS (perm_sumn Hrem) /=; apply leq_addr.
+rewrite /zcard (eq_big_perm _ Hrem) /= big_cons -!mulnA; congr (_ * _).
+rewrite mulnC -mulnA; congr (_ * _).
+rewrite  [in RHS](bigD1 (Ordinal Hil)) //=.
+rewrite mulnC (perm_eqP Hrem) /= eq_refl /= add1n.
+rewrite factS -!mulnA; congr (_ * _).
+rewrite  [in LHS](bigD1 (Ordinal Hil)) //=; congr (_ * _).
+apply eq_bigr => j Hj; move/perm_eqP: Hrem => -> /=.
+(* TODO : Factorize *)
+have : j != i :> nat by [].
+rewrite eq_sym => /negbTE ->.
+by rewrite add0n.
+Qed.
 
 Corollary card_cent1_perm s : #|'C[s]| = zcard (cycle_type s).
 Proof using.
