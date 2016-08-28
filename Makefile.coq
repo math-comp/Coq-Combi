@@ -135,7 +135,7 @@ VFILES:=theories/Combi/vectNK.v\
   theories/SymGroup/commutant.v\
   theories/SymGroup/cycles.v\
   theories/SymGroup/cycletype.v\
-  theories/SymGroup/frob.v\
+  theories/SymGroup/Frobenius_char.v\
   theories/Basic/combclass.v\
   theories/SymGroup/symgroup.v\
   theories/SymGroup/reprdim1.v\

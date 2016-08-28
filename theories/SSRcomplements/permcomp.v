@@ -15,16 +15,16 @@
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype div.
-From mathcomp Require Import tuple finfun path bigop finset binomial.
-From mathcomp Require Import fingroup perm morphism action ssralg.
-From mathcomp Require finmodule.
+From mathcomp Require Import finset fingroup perm morphism action.
 
-Require Import symgroup partition Greene tools sorted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 
 Import GroupScope.
+
+Notation "''SG_' n" := [set: 'S_n]%G
+  (at level 8, n at level 2, format "''SG_' n").
 
 Lemma imset1 (T : finType) (S : {set T}) : [set fun_of_perm 1 x | x in S] = S.
 Proof using.
