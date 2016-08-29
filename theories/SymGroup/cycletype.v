@@ -19,7 +19,7 @@ From mathcomp Require Import tuple finfun path bigop finset binomial.
 From mathcomp Require Import fingroup perm automorphism action ssralg.
 From mathcomp Require finmodule.
 
-Require Import symgroup partition tools sorted.
+Require Import partition tools sorted.
 Require Import permcomp slicedbij cycles.
 
 Set Implicit Arguments.
