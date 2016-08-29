@@ -786,3 +786,48 @@ Qed.
 
 Lemma enum0 : enum 'I_0 = [::].
 Proof. apply/nilP; by rewrite /nilp size_enum_ord. Qed.
+
+Section LRShift.
+
+Variables (m n : nat).
+
+Lemma lshift_inj : injective (@lshift m n).
+Proof using .
+  move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /=.
+Qed.
+Lemma rshift_inj : injective (@rshift m n).
+Proof using .
+  move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /= eqn_add2l.
+Qed.
+
+Lemma lrshiftF i j : ((@lshift m n i) == (@rshift m n j)) = false.
+Proof using .
+  apply: (introF idP); case: i j => [] i Hi [] j Hj.
+  rewrite /eq_op /= => /eqP H.
+  move: Hi; by rewrite H ltnNge leq_addr.
+Qed.
+
+End LRShift.
+
+Section SeqSub.
+
+Variables (T : countType) (R : Type).
+
+Variable idx : R.
+Variable op : Monoid.com_law idx.
+
+Lemma big_seq_sub (s : seq T) F :
+  \big[op/idx]_(x : seq_sub s) F (ssval x) = \big[op/idx]_(x <- undup s) F x.
+Proof.
+rewrite /index_enum.
+rewrite -[LHS](big_map (ssval (s := s)) xpredT (fun x : T => F x)).
+apply eq_big_perm; apply uniq_perm_eq.
+- rewrite map_inj_uniq; last exact: val_inj.
+  by rewrite -enumT; exact: enum_uniq.
+- exact: undup_uniq.
+- move=> x; rewrite mem_undup; apply/mapP/idP => [/= [y _ ->] | Hx].
+  + by case: y => y /= Hy.
+  + by exists (SeqSub Hx); rewrite // -enumT mem_enum.
+Qed.
+
+End SeqSub.

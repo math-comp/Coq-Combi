@@ -47,7 +47,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 From mathcomp Require Import finset perm fingroup path.
 
-Require Import tools combclass ordtype permuted.
+Require Import tools combclass ordtype permcomp.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

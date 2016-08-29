@@ -21,7 +21,7 @@ From mathcomp Require Import fingroup morphism perm automorphism quotient finalg
 From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum.
 From mathcomp Require Import presentation all_character.
 
-Require Import tools permuted combclass congr symgroup.
+Require Import permcomp tools permuted combclass congr symgroup.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -31,7 +31,7 @@ Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
 Local Notation reprS n d :=
-  (mx_representation [fieldType of algC] [set: 'S_n] d).
+  (mx_representation [fieldType of algC] 'SG_n d).
 
 Section DefTrivSign.
 
@@ -47,7 +47,7 @@ Definition nat_mx (g : 'S_n) : 'M[algC]_n :=
   perm_mx g.
 
 
-Lemma triv_mx_repr : mx_repr [set: 'S_n] triv_mx.
+Lemma triv_mx_repr : mx_repr 'SG_n triv_mx.
 Proof.
   split; first by [].
   by move=> g1 g2 _ _; rewrite mul1mx.
@@ -57,7 +57,7 @@ Canonical triv_repr : reprS n 1 := MxRepresentation triv_mx_repr.
 Lemma triv_irr : mx_irreducible triv_repr.
 Proof. apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
 
-Lemma sign_mx_repr : mx_repr [set: 'S_n] sign_mx.
+Lemma sign_mx_repr : mx_repr 'SG_n sign_mx.
 Proof.
   rewrite /sign_mx; split; first by rewrite /= odd_perm1.
   move=> g1 g2 _ _; rewrite /= odd_permM /=.
@@ -69,7 +69,7 @@ Canonical sign_repr : reprS n 1 := MxRepresentation sign_mx_repr.
 Lemma sign_irr : mx_irreducible sign_repr.
 Proof. apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
 
-Lemma signed_mx_repr : mx_repr [set: 'S_n] signed_mx.
+Lemma signed_mx_repr : mx_repr 'SG_n signed_mx.
 Proof.
   rewrite /signed_mx; split; first by rewrite /= odd_perm1 repr_mx1.
   move=> g1 g2 _ _; rewrite /= odd_permM /=.
@@ -78,7 +78,7 @@ Proof.
 Qed.
 Canonical signed_repr : reprS n d := MxRepresentation signed_mx_repr.
 
-Lemma nat_mx_repr : mx_repr [set: 'S_n] nat_mx.
+Lemma nat_mx_repr : mx_repr 'SG_n nat_mx.
 Proof.
   rewrite /nat_mx; split; first exact: perm_mx1.
   move=> g1 g2 _ _; exact: perm_mxM.
@@ -109,12 +109,13 @@ rewrite /triv_mx_repr /= => g _ /=.
 by rewrite mul1mx mulmx1 (permS1 g) repr_mx1.
 Qed.
 
+
 Lemma triv_sign_not_sim n :
-  (n >= 2)%N -> ~ mx_rsim (G := [set: 'S_n]) triv_repr sign_repr.
+  (n >= 2)%N -> ~ mx_rsim (G := [group of 'SG_n]) triv_repr sign_repr.
 Proof.
   case: n => // n; rewrite ltnS => Hn [B _].
   rewrite row_free_unit => /mulrI HB Hsim.
-  have {Hsim} /Hsim : (eltr n 0) \in [set: 'S_n.+1] by [].
+  have {Hsim} /Hsim : (eltr n 0) \in 'SG_n.+1 by [].
   rewrite /triv_repr /sign_repr /triv_mx /sign_mx /= mul1mx (odd_eltr Hn).
   rewrite -[LHS]mulmx1 => /HB/eqP; rewrite -addr_eq0 -mulr2n => /eqP.
   rewrite -matrixP => /(_ ord0 ord0).
@@ -126,7 +127,7 @@ Lemma repr1 n (rho : reprS n 1) :
   mx_rsim rho triv_repr \/ mx_rsim rho sign_repr.
 Proof.
   case: n rho => [| n] rho; first by left; exact: repr1_S0.
-  have Hs0 : eltr n 0 \in [set: 'S_n.+1] by [].
+  have Hs0 : eltr n 0 \in 'SG_n.+1 by [].
   have /esym := repr_mxMr rho Hs0 Hs0.
   set M := rho (eltr n 0).
   rewrite tperm2 repr_mx1 (mx11_scalar M).
@@ -139,7 +140,7 @@ Proof.
       have /(congr1 rho) := eltr_braid Hi.
       rewrite !repr_mxMr ?inE //= IHi; last exact: ltnW.
       rewrite !mulr1.
-      have: eltr n i.+1 \in [set: 'S_n.+1] by [].
+      have: eltr n i.+1 \in 'SG_n.+1 by [].
       by move=> /(repr_mx_unit rho)/mulIr H/H <-.
     rewrite (canwordP g); elim: (canword g) => [| w0 w IHw] /=.
       by rewrite big_nil repr_mx1.
@@ -153,7 +154,7 @@ Proof.
       have /(congr1 rho) := eltr_braid Hi.
       rewrite !repr_mxMr ?inE //= IHi; last exact: ltnW.
       rewrite !mulrN1 mulNr => /eqP; rewrite eqr_opp => /eqP.
-      have: eltr n i.+1 \in [set: 'S_n.+1] by [].
+      have: eltr n i.+1 \in 'SG_n.+1 by [].
       by move=> /(repr_mx_unit rho)/mulIr H/H <-.
     rewrite (canwordP g); elim: (canword g) => [| w0 w IHw] /=.
       by rewrite big_nil repr_mx1 odd_perm1.

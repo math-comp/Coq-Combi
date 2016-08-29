@@ -10,13 +10,14 @@ Florent Hivert <Florent.Hivert@lri.fr>
 
 Contributors:
 
+- Thibaut Benjamin (representation theory of the symmetric groups)
 - Jean Christophe Filliâtre (Why3 implementation)
 - Christine Paulin (ALEA + hook length formula)
-- Thibaut Benjamin (Representation theory of the symmetric Groups)
 - Olivier Stietel (hook length formula)
 
 This library was supported by additional discussions with:
 
+- Georges Gonthier
 - Assia Mahoubi
 - Pierre Yves Strub
 - the SSReflect mailing list

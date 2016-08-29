@@ -26,8 +26,7 @@ From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice f
 From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm.
 From mathcomp Require Import morphism presentation.
 
-Require Import tools permuted combclass congr.
-
+Require Import permcomp tools permuted combclass congr.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -1563,7 +1562,7 @@ Qed.
 
 
 Lemma homg_S_3 :
-  [set: 'S_3] \homg Grp ( s0 : s1 : (s0^+2, s1^+2, s0*s1*s0 = s1*s0*s1) ).
+  'SG_3 \homg Grp ( s0 : s1 : (s0^+2, s1^+2, s0*s1*s0 = s1*s0*s1) ).
 Proof.
   apply/existsP; exists (eltr 2 0, eltr 2 1).
   rewrite /= !xpair_eqE /=; apply/and4P; split.
@@ -1583,7 +1582,7 @@ Qed.
 
 (*
 Lemma presentation_S_3 :
-  [set: 'S_3] \isog Grp ( s1 : s2 : (s1*s1 = s2*s2 = 1, s1*s2*s1 = s2*s1*s2) ).
+  'SG_3 \isog Grp ( s1 : s2 : (s1*s1 = s2*s2 = 1, s1*s2*s1 = s2*s1*s2) ).
 Proof.
   apply intro_isoGrp; first exact homg_S_3.
   move=> Gt H; case/existsP => /= [] [x1 x2] /eqP [] Hgen Hx1 Hx2 H3.
@@ -1593,12 +1592,12 @@ Qed.
 *)
 
 Lemma homg_S4 :
-  [set: 'S_4] \homg Grp (
-                s1 : s2 : s3 :
-                  (s1^+2, s2^+2, s3^+2,
-                   s1*s2*s1 = s2*s1*s2, s2*s3*s2 = s3*s2*s3,
-                   s1*s3 = s3*s1
-              ) ).
+  'SG_4 \homg Grp (
+          s1 : s2 : s3 :
+            (s1^+2, s2^+2, s3^+2,
+             s1*s2*s1 = s2*s1*s2, s2*s3*s2 = s3*s2*s3,
+             s1*s3 = s3*s1
+        ) ).
 Proof.
   apply/existsP; exists (eltr 3 0, eltr 3 1, eltr 3 2).
   rewrite /= !xpair_eqE /=; apply/and5P; split; last apply/and3P; try split.

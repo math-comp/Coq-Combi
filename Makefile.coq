@@ -101,7 +101,7 @@ VFILES:=theories/Combi/vectNK.v\
   theories/Combi/partition.v\
   theories/Combi/permuted.v\
   theories/Combi/composition.v\
-  theories/Combi/multinomials.v\
+  theories/Combi/multinomial.v\
   theories/Combi/skewtab.v\
   theories/Combi/std.v\
   theories/Combi/tableau.v\
@@ -132,10 +132,10 @@ VFILES:=theories/Combi/vectNK.v\
   theories/HookFormula/recyama.v\
   theories/Basic/congr.v\
   theories/Basic/ordtype.v\
-  theories/SymGroup/commutant.v\
+  theories/SymGroup/permcent.v\
   theories/SymGroup/cycles.v\
   theories/SymGroup/cycletype.v\
-  theories/SymGroup/frob.v\
+  theories/SymGroup/Frobenius_char.v\
   theories/Basic/combclass.v\
   theories/SymGroup/symgroup.v\
   theories/SymGroup/reprdim1.v\

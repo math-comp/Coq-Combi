@@ -2,6 +2,8 @@
 
 include Makefile.coq
 
+COQDOCFLAGS += --lib-subtitles
+
 TAGS: $(VFILES)
 	coqtags $(VFILES)
 
@@ -10,6 +12,7 @@ clean::
 
 # dependency on all instead of $(GLOBFILES) to workaround for Coq Bug 4660
 dochtml: all $(VFILES) html/depend.png html/depend.svg
+	rm -f html/*.html
 	$(COQDOC) -toc $(COQDOCFLAGS) -html -g $(COQDOCLIBS) -d html $(COQEXTLIBS) $(VFILES)
 	rm -f html/index_lib.html
 	mv html/index.html html/index_lib.html
@@ -40,3 +43,10 @@ html/depend.svg: depend.dot
 depend.pdf: depend.dot
 	rm -f depend.pdf
 	dot -Tpdf -o depend.pdf depend.dot
+
+update-github-doc: dochtml
+	rm -rf /tmp/doctmp
+	git clone git@github.com:hivert/Coq-Combi.git -b gh-pages /tmp/doctmp
+	rsync -avP --delete --exclude .git --exclude README.md html/ /tmp/doctmp
+	cd /tmp/doctmp && git add --all && git commit -m "Updated doc"
+	cd /tmp/doctmp && git push
