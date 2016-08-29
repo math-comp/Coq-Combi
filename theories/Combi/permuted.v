@@ -33,12 +33,14 @@ are only finitely many sequences [s'] which are a permutation of [s] (that is
 - [permuted_seq s] == a sequence of seqs containing (with duplicates) all seqs
              [s'] such that [perm_eq s s']
 - [permuted t] == sigma typle for tuple [t'] such that [perm_eq t t'].  this
-             is canonically a [fintype], provided the typle of the element of
+             is canonically a [fintype], provided the type of the elements of
              [t] is a [countType].
 
 - [permutedact t s] == the [n] tuple [t] permuted by the permutation [s]
 - [permuted_action] == the corresponding action of the symmetric group ['S_n]
 
+The main result is the cardinality of the set of permuted of a tuple expressed
+as a multinomial [card_permuted_multinomial].
  *)
 
 Set Implicit Arguments.
@@ -56,32 +58,33 @@ Definition permuted_tuple (t : n.-tuple T) :=
   [seq [tuple tnth t (aperm i p) | i < n] | p <- enum 'S_n ].
 
 Lemma size_permuted_tuple (t : n.-tuple T) : size (permuted_tuple t) = n`!.
-Proof using . rewrite /permuted_tuple size_map -cardE; exact: card_Sn. Qed.
+Proof using. rewrite /permuted_tuple size_map -cardE; exact: card_Sn. Qed.
 
 Lemma perm_eq_permuted_tuple (s : seq T) (H : size s == n) :
-  forall s1, perm_eq s s1 -> s1 \in [seq tval t | t <- permuted_tuple (Tuple H)].
-Proof using .
-  set t := Tuple H; have Ht : perm_eq s t by [].
-  move=> s1 Hss1; rewrite perm_eq_sym in Hss1.
-  have:= perm_eq_trans Hss1 Ht => /tuple_perm_eqP [] p Hs1.
-  apply/mapP; set t1 := (X in _ = tval X) in Hs1; exists t1; last exact Hs1.
-  rewrite /permuted_tuple; apply/mapP.
-  by exists p; first by rewrite mem_enum.
+  forall s1, perm_eq s s1 ->
+             s1 \in [seq tval t | t <- permuted_tuple (Tuple H)].
+Proof using.
+set t := Tuple H; have Ht : perm_eq s t by [].
+move=> s1 Hss1; rewrite perm_eq_sym in Hss1.
+have:= perm_eq_trans Hss1 Ht => /tuple_perm_eqP [p Hs1].
+apply/mapP; set t1 := (X in _ = tval X) in Hs1; exists t1; last exact Hs1.
+rewrite /permuted_tuple; apply/mapP.
+by exists p; first by rewrite mem_enum.
 Qed.
 
 Lemma mem_enum_permuted (s t : n.-tuple T) :
   perm_eq s t -> t \in permuted_tuple s.
-Proof.
-  rewrite perm_eq_sym => /tuple_perm_eqP [perm Hperm].
-  apply/mapP; exists perm; first by rewrite mem_enum.
-  by apply val_inj => /=; rewrite Hperm => /=.
+Proof using.
+rewrite perm_eq_sym => /tuple_perm_eqP [perm Hperm].
+apply/mapP; exists perm; first by rewrite mem_enum.
+by apply val_inj; rewrite /= Hperm.
 Qed.
 
 Lemma all_permuted (s : n.-tuple T) :
   all (fun x : n.-tuple T => perm_eq s x) (permuted_tuple s).
-Proof.
-  apply/allP => t /mapP /= [perm _] -> {t}.
-  by rewrite perm_eq_sym; apply/tuple_perm_eqP; exists perm.
+Proof using.
+apply/allP => t /mapP [/= perm _] ->{t}.
+by rewrite perm_eq_sym; apply/tuple_perm_eqP; exists perm.
 Qed.
 
 End SizeN.
@@ -90,14 +93,12 @@ Definition permuted_seq s :=
   [seq tval t | t <- permuted_tuple (Tuple (eq_refl (size s)))].
 
 Lemma size_permuted_seq s : size (permuted_seq s) = (size s)`!.
-Proof using . by rewrite /permuted_seq size_map size_permuted_tuple. Qed.
+Proof using. by rewrite /permuted_seq size_map size_permuted_tuple. Qed.
 
 Lemma eq_seqE s s1 : perm_eq s s1 -> s1 \in permuted_seq s.
-Proof using . exact: perm_eq_permuted_tuple. Qed.
+Proof using. exact: perm_eq_permuted_tuple. Qed.
 
 End Permuted.
-
-Require Import combclass.
 
 
 Section FinType.
@@ -112,13 +113,16 @@ Structure permuted : predArgType :=
 Canonical permuted_subType := Eval hnf in [subType for tpval].
 Definition permuted_eqMixin := Eval hnf in [eqMixin of permuted by <:].
 Canonical permuted_eqType := Eval hnf in EqType permuted permuted_eqMixin.
-Definition permuted_choiceMixin := Eval hnf in [choiceMixin of permuted by <:].
+Definition permuted_choiceMixin :=
+  Eval hnf in [choiceMixin of permuted by <:].
 Canonical permuted_choiceType :=
   Eval hnf in ChoiceType permuted permuted_choiceMixin.
-Definition permuted_countMixin := Eval hnf in [countMixin of permuted by <:].
+Definition permuted_countMixin :=
+  Eval hnf in [countMixin of permuted by <:].
 Canonical permuted_countType :=
   Eval hnf in CountType permuted permuted_countMixin.
-Canonical permuted_subCountType := Eval hnf in [subCountType of permuted].
+Canonical permuted_subCountType :=
+  Eval hnf in [subCountType of permuted].
 
 Let type := sub_undup_finType permuted_subCountType
                               (all_permuted w) (mem_enum_permuted (s := w)).
@@ -126,7 +130,7 @@ Canonical permuted_finType := [finType of permuted for type].
 Canonical permuted_subFinType := Eval hnf in [subFinType of permuted].
 
 Lemma permutedP (p : permuted) : perm_eq w p.
-Proof. by case: p. Qed.
+Proof using. by case: p. Qed.
 
 End FinType.
 
@@ -135,6 +139,18 @@ Hint Resolve permutedP.
 
 Import GroupScope.
 
+(** * Action of ['S_n] on permuted for and [n.-tuple T].
+
+There is no use defining an action on general tuple because most of the lemmas
+on actions assume that the type acted upon is a [finType]. We could require
+that the underlying type is a [fintype] so that the set of tuple is a
+[fintype] too, but the use we have in mind is [T = nat] allowing to deal with
+the action on monomials. Instead of that, we decide to act only on the sigma
+type [permuted].
+
+*)
+
+
 Section ActOnTuple.
 
 Variables (T : countType) (n : nat) (w : n.-tuple T).
@@ -142,24 +158,24 @@ Implicit Type (t : permuted w).
 
 Local Notation wp := (Permuted (perm_eq_refl w)).
 
-Lemma perm_eq_act_tuple t (s : 'S_n) :
+Lemma permutedact_subproof t (s : 'S_n) :
   perm_eq w [tuple tnth t (s^-1 i) | i < n].
-Proof.
-  apply: (perm_eq_trans (permutedP t)).
-  by rewrite /= perm_eq_sym; apply/tuple_perm_eqP; exists s^-1.
+Proof using.
+apply: (perm_eq_trans (permutedP t)).
+by rewrite /= perm_eq_sym; apply/tuple_perm_eqP; exists s^-1.
 Qed.
-Definition permutedact t s := Permuted (perm_eq_act_tuple t s).
+Definition permutedact t s := Permuted (permutedact_subproof t s).
 
 Local Notation "t # s" := (permutedact t s)
   (at level 40, left associativity, format "t # s").
 
 Lemma permutedact_is_action : is_action 'SG_n permutedact.
-Proof.
-split.
-- move=> /= s t1 t2 Heq; apply val_inj; apply eq_from_tnth => i.
+Proof using.
+split => /= [s t1 t2 Heq | t s1 s2 _ _].
+- apply val_inj; apply eq_from_tnth => i.
   move: Heq => /(congr1 (fun t => tnth t (s i))).
   by rewrite !tnth_mktuple permK.
-- move=> t /= s1 s2 _ _; apply val_inj; apply eq_from_tnth => /= i.
+- apply val_inj; apply eq_from_tnth => /= i.
   by rewrite !tnth_mktuple invMg permM.
 Qed.
 Canonical permuted_action := Action permutedact_is_action.
@@ -167,7 +183,7 @@ Local Notation pact := permuted_action.
 
 Lemma permuted_action_trans :
   [transitive 'SG_n, on [set: permuted w] | pact].
-Proof.
+Proof using.
 apply/imsetP; exists (Permuted (perm_eq_refl w)); first by [].
 apply/setP => /= t; rewrite !inE; apply/esym/orbitP => /=.
 have:= permutedP t => /tuple_perm_eqP [s /val_inj Hs].
@@ -178,9 +194,9 @@ Qed.
 
 Lemma stab_tuple_prod :
   'C[wp | pact] =
-  (\prod_(x : seq_sub w) perm_ong_group [set i : 'I_n | tnth w i == val x])%G.
-Proof.
-have Htriv : trivIset [set [set i : 'I_n | tnth w i == val x] | x : seq_sub w].
+  (\prod_(x : seq_sub w) perm_ong_group [set i | tnth w i == val x])%G.
+Proof using.
+have Htriv : trivIset [set [set i | tnth w i == val x] | x : seq_sub w].
   apply/trivIsetP => /= X Y.
   move=> /imsetP [/= [x Hx _ /= ->{X}]].
   move=> /imsetP [/= [y Hy _ /= ->{Y}]] Hneq.
@@ -218,8 +234,8 @@ Qed.
 
 Lemma stab_tuple_dprod :
   'C[wp | pact] =
-  \big[dprod/1]_(x : seq_sub w) perm_ong [set i : 'I_n | tnth w i == val x].
-Proof.
+  \big[dprod/1]_(x : seq_sub w) perm_ong [set i | tnth w i == val x].
+Proof using.
 rewrite stab_tuple_prod; apply/esym/eqP/bigdprodYP => x /= _.
 apply/subsetP => /= s; rewrite !inE negb_and negbK => Ht.
 have {Ht} : s \in perm_ong [set i | tnth w i != val x].
@@ -242,8 +258,8 @@ Qed.
 
 Close Scope group_scope.
 
-Lemma card_stab_ipcycles :
-  #|('C[wp | pact])%G| = (\prod_(x : seq_sub w) (count_mem (val x) w)`!).
+Lemma card_stab_tuple :
+  #|('C[wp | pact])%G| = \prod_(x : seq_sub w) (count_mem (val x) w)`!.
 Proof using.
 rewrite -(bigdprod_card (esym stab_tuple_dprod)).
 apply eq_bigr => [[i _]] _ /=.
@@ -255,39 +271,44 @@ Qed.
 
 Lemma card_permuted_prod :
   #|[set: permuted w]| * \prod_(x : seq_sub w) (count_mem (val x) w)`! = n`!.
-Proof.
-rewrite -card_Sn -card_stab_ipcycles.
+Proof using.
+rewrite -card_Sn -card_stab_tuple.
 rewrite -(atransPin (subxx _) permuted_action_trans (x := wp)) ?inE //.
 by rewrite -cardsT /= -(card_orbit_in_stab pact wp (subxx _)) /= setTI.
 Qed.
 
 Lemma dvdn_card_permuted :
   \prod_(x : seq_sub w) (count_mem (val x) w)`! %| n`!.
-Proof.
+Proof using.
 by apply/dvdnP; exists #|[set: permuted w]|; rewrite card_permuted_prod.
 Qed.
 
 Lemma card_permuted_seq_sub :
   #|[set: permuted w]| = n`! %/ \prod_(x : seq_sub w) (count_mem (val x) w)`!.
-Proof.
+Proof using.
 rewrite -card_permuted_prod mulnK //.
 by apply prodn_gt0 => i; apply: fact_gt0.
 Qed.
 
 Lemma card_permuted :
   #|[set: permuted w]| = n`! %/ \prod_(x <- undup w) (count_mem x w)`!.
-Proof. by rewrite card_permuted_seq_sub -big_seq_sub. Qed.
+Proof using. by rewrite card_permuted_seq_sub -big_seq_sub. Qed.
 
-Lemma card_permuted_multinomial :
-  #|[set: permuted w]| = 'C[[seq count_mem x w | x <- undup w]].
-Proof.
-rewrite card_permuted multinomial_factd big_map; congr (_`! %/ _).
-rewrite -sumnE big_map -{1}(size_tuple w); case: w => s /= _.
+Lemma size_count_mem_undup (s : seq T) :
+  size s = \sum_(j <- undup s) count_mem j s.
+Proof using.
 have -> : size s = \sum_(i <- s) 1.
   by elim: s => [|s0 s /= ->] /=; rewrite ?big_nil // big_cons add1n.
 rewrite -big_undup_iterop_count /=; apply eq_bigr => i _.
 rewrite Monoid.iteropE /=.
 by elim: (count_mem i s) => {i} //= i ->.
+Qed.
+
+Theorem card_permuted_multinomial :
+  #|[set: permuted w]| = 'C[[seq count_mem x w | x <- undup w]].
+Proof using.
+rewrite card_permuted multinomial_factd big_map; congr (_`! %/ _).
+by rewrite -sumnE  -{1}(size_tuple w) big_map size_count_mem_undup.
 Qed.
 
 End ActOnTuple.
