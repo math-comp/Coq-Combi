@@ -26,7 +26,7 @@ Require Import permcomp cycles cycletype.
 
 The main goal is to show that, given a sequence [s] over an [eqType] there
 are only finitely many sequences [s'] which are a permutation of [s] (that is
-[perm_eq s s'])
+[perm_eq s s']) and to show that the number is a multinomial coefficient.
 
 - [permuted_tuple t] == a sequence of tuples containing (with duplicates) all
              tuple [t'] such that [perm_eq t t']
@@ -140,7 +140,7 @@ Section ActOnTuple.
 Variables (T : countType) (n : nat) (w : n.-tuple T).
 Implicit Type (t : permuted w).
 
-Let wp := (Permuted (perm_eq_refl w)).
+Local Notation wp := (Permuted (perm_eq_refl w)).
 
 Lemma perm_eq_act_tuple t (s : 'S_n) :
   perm_eq w [tuple tnth t (s^-1 i) | i < n].
@@ -240,9 +240,10 @@ rewrite inE => on_neqi; apply/andP; split.
   by apply/subsetP => X; rewrite !inE.
 Qed.
 
+Close Scope group_scope.
 
 Lemma card_stab_ipcycles :
-  #|'C[wp | pact]| = (\prod_(x : seq_sub w) (count_mem (val x) w)`!)%N.
+  #|('C[wp | pact])%G| = (\prod_(x : seq_sub w) (count_mem (val x) w)`!).
 Proof using.
 rewrite -(bigdprod_card (esym stab_tuple_dprod)).
 apply eq_bigr => [[i _]] _ /=.
@@ -252,8 +253,8 @@ rewrite cardE /enum_mem size_filter /= count_map count_filter.
 by apply eq_count => X; rewrite !inE andbC.
 Qed.
 
-Lemma card_permuted_prodE :
-  (#|[set: permuted w]| * \prod_(x : seq_sub w) (count_mem (val x) w)`!)%N = n`!.
+Lemma card_permuted_prod :
+  #|[set: permuted w]| * \prod_(x : seq_sub w) (count_mem (val x) w)`! = n`!.
 Proof.
 rewrite -card_Sn -card_stab_ipcycles.
 rewrite -(atransPin (subxx _) permuted_action_trans (x := wp)) ?inE //.
@@ -261,49 +262,32 @@ by rewrite -cardsT /= -(card_orbit_in_stab pact wp (subxx _)) /= setTI.
 Qed.
 
 Lemma dvdn_card_permuted :
-  (\prod_(x : seq_sub w) (count_mem (val x) w)`! %| n`!)%N.
+  \prod_(x : seq_sub w) (count_mem (val x) w)`! %| n`!.
 Proof.
-by apply/dvdnP; exists #|[set: permuted w]|; rewrite card_permuted_prodE.
+by apply/dvdnP; exists #|[set: permuted w]|; rewrite card_permuted_prod.
 Qed.
 
-Lemma card_permuted_seq_subE :
-  #|[set: permuted w]| = (n`! %/ \prod_(x : seq_sub w) (count_mem (val x) w)`!)%N.
+Lemma card_permuted_seq_sub :
+  #|[set: permuted w]| = n`! %/ \prod_(x : seq_sub w) (count_mem (val x) w)`!.
 Proof.
-rewrite -card_permuted_prodE mulnK //.
+rewrite -card_permuted_prod mulnK //.
 by apply prodn_gt0 => i; apply: fact_gt0.
 Qed.
 
-Lemma prod_gact_count_memE (s : seq T) :
-  uniq s -> all (mem s) w ->
-  (\prod_(x : seq_sub w) (count_mem (val x) w)`! =
-   \prod_(x <- s)        (count_mem      x  w)`!)%N.
-Proof.
-move=> Huniq /allP H.
-rewrite [RHS](bigID (fun x => x \in w)) /= [X in (_ * X)%N]big1 ?muln1; first last.
-  by move=> i /count_memPn ->.
-rewrite /index_enum.
-rewrite -[LHS](big_map (ssval (s := w)) xpredT (fun x : T => (count_mem x w)`!)).
-rewrite -[RHS]big_filter; apply eq_big_perm; apply uniq_perm_eq.
-- rewrite map_inj_uniq; last exact: val_inj.
-  by rewrite -enumT; exact: enum_uniq.
-- exact: filter_uniq.
-- move=> x; rewrite mem_filter; apply/mapP/idP => [/= [y _ ->] | /andP [Hx Hxs]].
-  + by case: y => y /= Hy; rewrite Hy /=; apply: H.
-  + exists (SeqSub Hx) => //.
-    by rewrite -enumT mem_enum.
-Qed.
+Lemma card_permuted :
+  #|[set: permuted w]| = n`! %/ \prod_(x <- undup w) (count_mem x w)`!.
+Proof. by rewrite card_permuted_seq_sub -big_seq_sub. Qed.
 
-Lemma prod_gact_count_undupE :
-  (\prod_(x : seq_sub w) (count_mem (val x) w)`! =
-   \prod_(x <- undup w)  (count_mem      x  w)`!)%N.
+Lemma card_permuted_multinomial :
+  #|[set: permuted w]| = 'C[[seq count_mem x w | x <- undup w]].
 Proof.
-apply prod_gact_count_memE; first exact: undup_uniq.
-rewrite (eq_in_all (a2 := predT)); first exact: all_predT.
-by move=> i /=; rewrite mem_undup => ->.
+rewrite card_permuted multinomial_factd big_map; congr (_`! %/ _).
+rewrite -sumnE big_map -{1}(size_tuple w); case: w => s /= _.
+have -> : size s = \sum_(i <- s) 1.
+  by elim: s => [|s0 s /= ->] /=; rewrite ?big_nil // big_cons add1n.
+rewrite -big_undup_iterop_count /=; apply eq_bigr => i _.
+rewrite Monoid.iteropE /=.
+by elim: (count_mem i s) => {i} //= i ->.
 Qed.
-
-Lemma card_permutedE :
-  #|[set: permuted w]| = (n`! %/ \prod_(x <- undup w) (count_mem x w)`!)%N.
-Proof. by rewrite card_permuted_seq_subE prod_gact_count_undupE. Qed.
 
 End ActOnTuple.
