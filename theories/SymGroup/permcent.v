@@ -18,8 +18,7 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple path bigop finset div.
 From mathcomp Require Import fingroup perm action gproduct morphism.
 
-Require Import tools partition permuted.
-Require Import permcomp cycles cycletype.
+Require Import tools partition permcomp cycles cycletype towerSn.
 
 Import GroupScope.
 
@@ -577,8 +576,8 @@ Qed.
 
 
 From mathcomp Require Import ssralg ssrnum algC.
+
 Import GRing.Theory Num.Theory.
-Require Import cycletype towerSn.
 
 Lemma zcoeffE n (l : intpartn n) : zcoeff l = ((zcard l)%:R)%R.
 Proof.

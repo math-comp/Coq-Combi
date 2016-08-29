@@ -35,7 +35,7 @@ From mathcomp Require Import ssralg fingroup morphism perm gproduct.
 From mathcomp Require Import ssralg matrix vector mxalgebra falgebra ssrnum algC.
 From mathcomp Require Import presentation classfun character mxrepresentation.
 
-Require Import tools ordcast permuted symgroup partition sorted.
+Require Import tools ordcast partition sorted.
 Require Import permcomp slicedbij cycles cycletype.
 
 Import LeqGeqOrder.

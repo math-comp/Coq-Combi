@@ -101,7 +101,7 @@ VFILES:=theories/Combi/vectNK.v\
   theories/Combi/partition.v\
   theories/Combi/permuted.v\
   theories/Combi/composition.v\
-  theories/Combi/multinomials.v\
+  theories/Combi/multinomial.v\
   theories/Combi/skewtab.v\
   theories/Combi/std.v\
   theories/Combi/tableau.v\
