@@ -63,8 +63,7 @@ apply /andP => [][/class_eqP ax /class_eqP ay].
 by apply xy; rewrite -ax -ay.
 Qed.
 
-Lemma prod_conjg (x y : gT * aT) :
-  x ^ y = (x.1 ^ y.1, x.2 ^ y.2).
+Lemma prod_conjg (x y : gT * aT) : x ^ y = (x.1 ^ y.1, x.2 ^ y.2).
 Proof using. by []. Qed.
 
 End classGroup.
@@ -79,7 +78,7 @@ Variables (G : {group gT}) (H : {group aT}).
 Local Open Scope ring_scope.
 
 Lemma cfextprod_subproof (g : 'CF(G)) (h : 'CF(H)) :
-  is_class_fun <<setX G H>> [ffun x => (g x.1) * (h x.2)].
+  is_class_fun <<setX G H>> [ffun x => g x.1 * h x.2].
 Proof using.
 rewrite genGid; apply intro_class_fun => [x y|].
 - rewrite !inE => /andP [x1 x2] /andP [y1 y2].
@@ -200,9 +199,8 @@ Implicit Types (p : intpartn m) (q : intpartn n).
 Local Notation ct := cycle_typeSn.
 Local Notation SnXm := (setX 'SG_m 'SG_n).
 
-Definition tinjval (s : ('S_m * 'S_n)) :=
-  fun (x : 'I_(m + n)) => let y := split x in
-  match y with
+Definition tinjval (s : 'S_m * 'S_n) :=
+  fun (x : 'I_(m + n)) => match split x  with
   | inl a => unsplit (inl (s.1 a))
   | inr a => unsplit (inr (s.2 a))
   end.
@@ -236,34 +234,28 @@ apply/subsetP => [] /= [s1 s2]; rewrite inE => /andP [_].
 rewrite !inE /= => /eqP/permP H.
 rewrite -[1]/(1,1) /xpair_eqE /=.
 apply/andP; split; apply/eqP/permP => x; rewrite !perm1.
-- have := H (unsplit (inl x)).
-  rewrite /tinj permE /tinjval unsplitK perm1 /=.
-  exact: lshift_inj.
-- have := H (unsplit (inr x)).
-  rewrite /tinj permE /tinjval unsplitK perm1 /=.
-  exact: rshift_inj.
+- have:= H (unsplit (inl x)).
+  by rewrite permE /tinjval unsplitK perm1 /=; apply: lshift_inj.
+- have:= H (unsplit (inr x)).
+  by rewrite permE /tinjval unsplitK perm1 /=; apply: rshift_inj.
 Qed.
 
 Lemma expg_tinj_lshift s a i :
  (tinj s ^+ i) (lshift n a) = lshift n ((s.1 ^+ i) a).
 Proof using.
-elim: i => [|i IHi].
-  by rewrite !expg0 !perm1.
+elim: i => [|i IHi]; first by rewrite !expg0 !perm1.
 rewrite !expgSr !permM IHi permE /tinjval /=.
-pose y := inl ((s.1 ^+ i) a) => /=.
-rewrite (_: lshift _ _ = unsplit (y _)) //.
-by rewrite unsplitK.
+pose y := inl ((s.1 ^+ i) a).
+by rewrite (_: lshift _ _ = unsplit (y _)) // unsplitK.
 Qed.
 
 Lemma expg_tinj_rshift s a i :
   (tinj s ^+ i) (rshift m a) = rshift m ((s.2 ^+ i) a).
 Proof using.
-elim: i => [|i IHi].
-  by rewrite !expg0 !perm1.
+elim: i => [|i IHi]; first by rewrite !expg0 !perm1.
 rewrite !expgSr !permM IHi permE /tinjval /=.
-pose y := inr ((s.2 ^+ i) a) => /=.
-rewrite (_: rshift _ _ = unsplit (y _)) //.
-by rewrite unsplitK.
+pose y := inr ((s.2 ^+ i) a).
+by rewrite (_: rshift _ _ = unsplit (y _)) // unsplitK.
 Qed.
 
 Lemma pcycle_tinj_lshift s a :
@@ -375,8 +367,8 @@ Lemma cfuni_tinj s (l : intpartn (m + n)) :
 Proof using. by rewrite cfuni_partnE cycle_type_tinj eq_sym. Qed.
 
 Theorem cfuni_Res (l : intpartn (m + n)):
-  'Res[tinj_im] ('1_[l]) =
-  \sum_(x | l == union_intpartn x.1 x.2) ('1_[x.1] \o^ '1_[x.2]).
+  'Res[tinj_im] '1_[l] =
+  \sum_(x | l == union_intpartn x.1 x.2) '1_[x.1] \o^ '1_[x.2].
 Proof using.
 apply/cfunP => /= s.
 case: (boolP (s \in tinj_im)) => Hs; last by rewrite !cfun0gen // genGid.
@@ -494,6 +486,8 @@ apply qp; congr (_, _);
 - by rewrite qp2 cycle_type_conjg.
 Qed.
 
+
+(** The normalized cycle type indicator basis *)
 Definition zcoeff (k : nat) (p : intpartn k) : algC :=
   #|'SG_k|%:R / #|classCT p|%:R.
 
@@ -511,44 +505,6 @@ Qed.
 Definition pbasis (k : nat) (p : intpartn k) := 'z_p *: '1_[p].
 
 Local Notation "''P_[' p ]" := (pbasis p)  (format "''P_[' p ]").
-
-(** Application of Frobenius duality : cfdot_Res_r *)
-Lemma cfdot_Ind_cfuni_part p q (l : intpartn (m + n)):
-  '[ 'Ind['SG_(m + n)] ('1_[p] \o^ '1_[q]), '1_[l] ] =
-  (union_intpartn p q == l)%:R / 'z_p / 'z_q.
-Proof using.
-rewrite -cfdot_Res_r cfuni_Res -linear_sum cfIsom_iso cfdot_sumr.
-rewrite (eq_bigr
-  (fun i : intpartn m * intpartn n =>
-     #|(classX p q) :&: (classX i.1 i.2)|%:R / #|SnXm|%:R)); first last.
-- move => i _; rewrite !cfextprod_cfuni.
-  by rewrite cfdot_cfuni //=; apply: class_normal; rewrite !inE.
-- case: (boolP (_ == _)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
-  + rewrite (bigD1 (p, q)) /=; last by rewrite eq_sym.
-    rewrite setIid big1.
-      rewrite addr0 classXE !cardsX natrM /zcoeff.
-      rewrite !invfM !invrK.
-      rewrite [_ * #|classCT p|%:R]mulrC -!mulrA; congr (_ * _).
-      by rewrite [RHS]mulrA [RHS]mulrC natrM invfM.
-    by move=> i /andP [] _ ip; rewrite classXI ?cards0 ?mul0r.
-  + rewrite big1 //= => i /eqP unioni.
-    have ip: i != (p, q).
-      move: unionp; apply contraR; rewrite negbK {}unioni => /eqP.
-      by case: i => [i1 i2] [-> ->].
-    by rewrite classXI ?cards0 ?mul0r.
-Qed.
-
-Lemma cfdot_Ind_pbasis p q (l : intpartn (m + n)):
-  '['Ind['SG_(m + n)] ('P_[p] \o^ 'P_[q]), 'P_[l]] =
-  (union_intpartn p q == l)%:R * 'z_l.
-Proof using.
-rewrite cfextprodZl cfextprodZr.
-rewrite !linearZ /= !cfdotZl cfdotZr cfdot_Ind_cfuni_part.
-case: eqP => _ /=; rewrite ?mul0r ?mulr0 // !mul1r.
-rewrite 2!mulrA mulrC mulrA [X in (X * _)]mulrC -invfM divff ?mul1r.
-  by rewrite fmorph_div !conjC_nat.
-by apply mulf_neq0; apply neq0zcoeff.
-Qed.
 
 Lemma pbasis_gen k (f : 'CF('SG_k)) :
   f = \sum_(p : intpartn k) f (permCT p) / 'z_p *: 'P_[p].
@@ -583,6 +539,44 @@ rewrite setIid big1 ?addr0.
   rewrite class_disj; first by rewrite cards0 mul0r !mulr0.
   apply/negP; rewrite classes_of_permP !permCTP.
   by rewrite partnCTE !CTpartnK pct.
+Qed.
+
+(** Application of Frobenius duality : cfdot_Res_r *)
+Lemma cfdot_Ind_cfuni_part p q (l : intpartn (m + n)):
+  '[ 'Ind['SG_(m + n)] ('1_[p] \o^ '1_[q]), '1_[l] ] =
+  (union_intpartn p q == l)%:R / 'z_p / 'z_q.
+Proof using.
+rewrite -cfdot_Res_r cfuni_Res -linear_sum cfIsom_iso cfdot_sumr.
+rewrite (eq_bigr
+  (fun i : intpartn m * intpartn n =>
+     #|(classX p q) :&: (classX i.1 i.2)|%:R / #|SnXm|%:R)); first last.
+- move => i _; rewrite !cfextprod_cfuni.
+  by rewrite cfdot_cfuni //=; apply: class_normal; rewrite !inE.
+- case: (boolP (_ == _)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
+  + rewrite (bigD1 (p, q)) /=; last by rewrite eq_sym.
+    rewrite setIid big1.
+      rewrite addr0 classXE !cardsX natrM /zcoeff.
+      rewrite !invfM !invrK.
+      rewrite [_ * #|classCT p|%:R]mulrC -!mulrA; congr (_ * _).
+      by rewrite [RHS]mulrA [RHS]mulrC natrM invfM.
+    by move=> i /andP [] _ ip; rewrite classXI ?cards0 ?mul0r.
+  + rewrite big1 //= => i /eqP unioni.
+    have ip: i != (p, q).
+      move: unionp; apply contraR; rewrite negbK {}unioni => /eqP.
+      by case: i => [i1 i2] [-> ->].
+    by rewrite classXI ?cards0 ?mul0r.
+Qed.
+
+Lemma cfdot_Ind_pbasis p q (l : intpartn (m + n)):
+  '[ 'Ind['SG_(m + n)] ('P_[p] \o^ 'P_[q]), 'P_[l] ] =
+  (union_intpartn p q == l)%:R * 'z_l.
+Proof using.
+rewrite cfextprodZl cfextprodZr.
+rewrite !linearZ /= !cfdotZl cfdotZr cfdot_Ind_cfuni_part.
+case: eqP => _ /=; rewrite ?mul0r ?mulr0 // !mul1r.
+rewrite 2!mulrA mulrC mulrA [X in (X * _)]mulrC -invfM divff ?mul1r.
+  by rewrite fmorph_div !conjC_nat.
+by apply mulf_neq0; apply neq0zcoeff.
 Qed.
 
 Theorem Ind_pbasis p q :
