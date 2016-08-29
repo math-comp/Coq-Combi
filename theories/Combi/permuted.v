@@ -36,6 +36,9 @@ are only finitely many sequences [s'] which are a permutation of [s] (that is
              is canonically a [fintype], provided the typle of the element of
              [t] is a [countType].
 
+- [permutedact t s] == the [n] tuple [t] permuted by the permutation [s]
+- [permuted_action] == the corresponding action of the symmetric group ['S_n]
+
  *)
 
 Set Implicit Arguments.
@@ -128,7 +131,6 @@ Proof. by case: p. Qed.
 End FinType.
 
 Hint Resolve permutedP.
-
 
 
 Import GroupScope.
