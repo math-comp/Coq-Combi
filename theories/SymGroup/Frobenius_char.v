@@ -59,7 +59,7 @@ Canonical Fchar_linear := Linear Fchar_is_linear.
 
 Lemma Fchar_pbasis l : Fchar '1z_[l] = 'p[l].
 Proof using.
-rewrite /Fchar /pbasis (bigD1 l) //= big1 ?addr0; first last.
+rewrite /Fchar (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hm /=.
   rewrite cfunElock cfuniCTE /=.
   rewrite /cycle_typeSn permCTP.
@@ -98,7 +98,7 @@ dependent equality but I'm not sure this is really needed.
 Theorem Fchar_ind_morph nv n m (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
   Fchar ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f * Fchar g :> {sympoly algC[nv]}.
 Proof using.
-rewrite (pbasis_gen f) (pbasis_gen g).
+rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
 rewrite cfextprod_suml !linear_sum [RHS]mulr_suml.
 apply eq_bigr => /= l _.
 rewrite cfextprod_sumr !linear_sum [RHS]mulr_sumr.
