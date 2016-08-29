@@ -560,17 +560,16 @@ End PermCycles.
 
 Lemma dvdn_zcard_fact n (l : intpartn n) : zcard l %| n`!.
 Proof.
-pose l' := (partCT_of_partn l).
+pose l' := (CTpartn l).
 have -> : zcard l = zcard l' by rewrite intpartn_castE /=.
-rewrite -(perm_of_partCTP l') -(card_cent1_perm (perm_of_partCT l')).
+rewrite -(permCTP l') -(card_cent1_perm (permCT l')).
 rewrite -card_Sn -cardsT; apply cardSg.
 exact: subsetT.
 Qed.
 
-Theorem card_class_of_part n (l : intpartn n) :
-  #|class_of_partCT l| = n`! %/ zcard l.
+Theorem card_class_of_part n (l : intpartn n) : #|classCT l| = n`! %/ zcard l.
 Proof using.
-rewrite /class_of_partCT card_class_perm perm_of_partCTP /=.
+rewrite /classCT card_class_perm permCTP /=.
 by rewrite intpartn_castE /= card_ord.
 Qed.
 
