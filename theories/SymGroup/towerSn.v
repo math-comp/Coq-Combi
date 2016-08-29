@@ -25,7 +25,7 @@
 
 - [zcoeff p] == The cardinality of the centralizator of any permutation of
                 cycle type [p] in [algC], that is [#|'S_k| / #|class p|].
-- [pbasis p] == the normalized indicator class function for cycle type [p].
+- [ncfuniCT p] == the normalized indicator class function for cycle type [p].
  *)
 
 Require Import mathcomp.ssreflect.ssreflect.
@@ -364,7 +364,7 @@ Local Notation ct := cycle_typeSn.
 
 Lemma cfuni_tinj s (l : intpartn (m + n)) :
   '1_[l] (tinj s) = (l == union_intpartn (ct s.1) (ct s.2))%:R.
-Proof using. by rewrite cfuni_partnE cycle_type_tinj eq_sym. Qed.
+Proof using. by rewrite cfuniCTnE cycle_type_tinj eq_sym. Qed.
 
 Theorem cfuni_Res (l : intpartn (m + n)):
   'Res[tinj_im] '1_[l] =
@@ -382,14 +382,14 @@ rewrite (eq_bigr
   last by move=> i _; rewrite cfunE.
 case: (altP (l =P _ )) => [->| Hl] /=.
 - rewrite (bigD1 (ct s1, ct s2)) //=.
-  rewrite !cfuni_partnE !eqxx /= mulr1.
+  rewrite !cfuniCTnE !eqxx /= mulr1.
   rewrite big1 ?addr0 // => [[t1 t2]] /andP [_].
-  rewrite !cfuni_partnE eq_sym xpair_eqE.
+  rewrite !cfuniCTnE eq_sym xpair_eqE.
   by move=> /nandP [] /negbTE -> /=; rewrite ?mulr0 ?mul0r.
 - rewrite big1 // => [[t1 t2]] /= /eqP Hll; subst l.
   have {Hl} : (t1, t2) != (ct s1, ct s2).
     by move: Hl; apply contra => /eqP [-> ->].
-  rewrite !cfuni_partnE eq_sym xpair_eqE.
+  rewrite !cfuniCTnE eq_sym xpair_eqE.
   by move=> /nandP [] /negbTE -> /=; rewrite ?mulr0 ?mul0r.
 Qed.
 
@@ -424,7 +424,7 @@ Lemma cfextprod_cfuni p q :
   '1_[p] \ox '1_[q] = '1_(classX p q).
 Proof using.
 apply/cfunP => /= x.
-rewrite cfunE !cfuni_partnE /= cfunElock genGid !inE /= -natrM mulnb.
+rewrite cfunE !cfuniCTnE /= cfunElock genGid !inE /= -natrM mulnb.
 congr ((nat_of_bool _)%:R).
 rewrite classXE.
 apply /andP/subsetP => [[ct1 ct2]|].
@@ -451,15 +451,15 @@ case: (altP (p1 =P p2)) => [<-{p2} | /negbTE Hneq]; rewrite /= ?mulr1 ?mulr0.
 - rewrite (bigID (fun x => x \in classCT p1)) /=.
   rewrite (eq_bigr (fun _ => 1)); first last.
     move=> i => /andP [_].
-    rewrite -classCTP !cfuni_partE => -> /=.
+    rewrite -classCTP !cfuniCTE => -> /=.
     by rewrite mul1r conjC1.
   rewrite sumr_const /= big1 ?addr0; first last.
     move=> i => /andP [_].
-    rewrite -classCTP !cfuni_partE => /negbTE -> /=.
+    rewrite -classCTP !cfuniCTE => /negbTE -> /=.
     by rewrite mul0r.
   congr _%:R; apply eq_card => /= x.
   by rewrite unfold_in inE.
-- apply big1 => i _; rewrite !cfuni_partE.
+- apply big1 => i _; rewrite !cfuniCTE.
   case: (altP (_ =P _)) => [-> | Hi]; rewrite /= ?mul0r // mul1r {i}.
   by rewrite partnCTE /= !CTpartnK Hneq /= conjC0.
 Qed.
@@ -469,8 +469,8 @@ Proof using.
 apply/cfunP => /= x.
 rewrite cfun1Egen genGid inE /=.
 rewrite sum_cfunE (bigD1 (ct x)) //=.
-rewrite big1 ?addr0 ?cfuni_partnE ?eqxx //=.
-by move=> p /negbTE pct; rewrite cfuni_partnE eq_sym pct.
+rewrite big1 ?addr0 ?cfuniCTnE ?eqxx //=.
+by move=> p /negbTE pct; rewrite cfuniCTnE eq_sym pct.
 Qed.
 
 Lemma classXI p1 p2 q1 q2 :
@@ -502,27 +502,27 @@ apply mulf_neq0.
 - rewrite invr_eq0 neq0; exact: card_classCT_neq0.
 Qed.
 
-Definition pbasis (k : nat) (p : intpartn k) := 'z_p *: '1_[p].
+Definition ncfuniCT (k : nat) (p : intpartn k) := 'z_p *: '1_[p].
 
-Local Notation "''P_[' p ]" := (pbasis p)  (format "''P_[' p ]").
+Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
 
-Lemma pbasis_gen k (f : 'CF('SG_k)) :
-  f = \sum_(p : intpartn k) f (permCT p) / 'z_p *: 'P_[p].
+Lemma ncfuniCT_gen k (f : 'CF('SG_k)) :
+  f = \sum_(p : intpartn k) f (permCT p) / 'z_p *: '1z_[p].
 Proof using.
 apply/cfunP => /= x.
 rewrite (bigD1 (ct x)) //= cfunE sum_cfunE big1.
-- rewrite addr0 !cfunE cfuni_partnE eqxx /= mulr1.
+- rewrite addr0 !cfunE cfuniCTnE eqxx /= mulr1.
   rewrite -mulrA [_^-1 *_]mulrC mulrA mulfK; last exact: neq0zcoeff.
   have: (permCT (ct x)) \in x ^: 'SG_k.
     rewrite classes_of_permP permCTP.
     by rewrite (partnCTK (cycle_type x)).
   by move/imsetP => [y _ ->]; rewrite cfunJgen ?genGid ?inE.
-- by move=> p /negbTE pct; rewrite !cfunE cfuni_partnE eq_sym pct /= !mulr0.
+- by move=> p /negbTE pct; rewrite !cfunE cfuniCTnE eq_sym pct /= !mulr0.
 Qed.
 
-Lemma cfdotr_pbasis k (f : 'CF('SG_k)) (s : 'S_k) : (f s) = '[f, 'P_[ct s]].
+Lemma cfdotr_ncfuniCT k (f : 'CF('SG_k)) (s : 'S_k) : (f s) = '[f, '1z_[ct s]].
 Proof using.
-rewrite {2}(pbasis_gen f) cfdot_suml.
+rewrite {2}(ncfuniCT_gen f) cfdot_suml.
 rewrite (bigD1 (ct s)) //= !cfdotZl cfdotZr.
 rewrite mulrA (divfK (neq0zcoeff _)).
 rewrite cfdot_cfuni; try (by apply: class_normal; rewrite inE).
@@ -542,7 +542,7 @@ rewrite setIid big1 ?addr0.
 Qed.
 
 (** Application of Frobenius duality : cfdot_Res_r *)
-Lemma cfdot_Ind_cfuni_part p q (l : intpartn (m + n)):
+Lemma cfdot_Ind_cfuniCT p q (l : intpartn (m + n)):
   '[ 'Ind['SG_(m + n)] ('1_[p] \o^ '1_[q]), '1_[l] ] =
   (union_intpartn p q == l)%:R / 'z_p / 'z_q.
 Proof using.
@@ -567,24 +567,24 @@ rewrite (eq_bigr
     by rewrite classXI ?cards0 ?mul0r.
 Qed.
 
-Lemma cfdot_Ind_pbasis p q (l : intpartn (m + n)):
-  '[ 'Ind['SG_(m + n)] ('P_[p] \o^ 'P_[q]), 'P_[l] ] =
+Lemma cfdot_Ind_ncfuniCT p q (l : intpartn (m + n)):
+  '[ 'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]), '1z_[l] ] =
   (union_intpartn p q == l)%:R * 'z_l.
 Proof using.
 rewrite cfextprodZl cfextprodZr.
-rewrite !linearZ /= !cfdotZl cfdotZr cfdot_Ind_cfuni_part.
+rewrite !linearZ /= !cfdotZl cfdotZr cfdot_Ind_cfuniCT.
 case: eqP => _ /=; rewrite ?mul0r ?mulr0 // !mul1r.
 rewrite 2!mulrA mulrC mulrA [X in (X * _)]mulrC -invfM divff ?mul1r.
   by rewrite fmorph_div !conjC_nat.
 by apply mulf_neq0; apply neq0zcoeff.
 Qed.
 
-Theorem Ind_pbasis p q :
-  'Ind['SG_(m + n)] ('P_[p] \o^ 'P_[q]) = 'P_[union_intpartn p q].
+Theorem Ind_ncfuniCT p q :
+  'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]) = '1z_[union_intpartn p q].
 Proof using.
 apply/cfunP => /= x; rewrite cfunE.
-rewrite cfdotr_pbasis cfdot_Ind_pbasis.
-rewrite cfuni_partnE eq_sym mulrC.
+rewrite cfdotr_ncfuniCT cfdot_Ind_ncfuniCT.
+rewrite cfuniCTnE eq_sym mulrC.
 by case: (boolP (_ == _)) => [/eqP ->|] //=; rewrite !mulr0.
 Qed.
 

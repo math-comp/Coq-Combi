@@ -44,7 +44,7 @@ Section Defs.
 Variable nvar n : nat.
 
 Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
-Local Notation "''P_[' p ]" := (pbasis p)  (format "''P_[' p ]").
+Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
 
 Definition Fchar (f : 'CF('SG_n)) : {sympoly algC[nvar]} :=
   \sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'p[l].
@@ -57,15 +57,15 @@ by rewrite scalerA mulrA -scalerDl mulrDl.
 Qed.
 Canonical Fchar_linear := Linear Fchar_is_linear.
 
-Lemma Fchar_pbasis l : Fchar 'P_[l] = 'p[l].
+Lemma Fchar_pbasis l : Fchar '1z_[l] = 'p[l].
 Proof using.
 rewrite /Fchar /pbasis (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hm /=.
-  rewrite cfunElock cfuni_partE /=.
+  rewrite cfunElock cfuniCTE /=.
   rewrite /cycle_typeSn permCTP.
   rewrite partnCTE /= !CTpartnK Hm /=.
   by rewrite mulr0 mul0r scale0r.
-rewrite cfunElock cfuni_partE /=.
+rewrite cfunElock cfuniCTE /=.
 rewrite /cycle_typeSn permCTP eq_refl /=.
 rewrite mulr1 divff ?scale1r //.
 exact: neq0zcoeff.

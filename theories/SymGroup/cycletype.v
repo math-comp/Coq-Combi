@@ -679,15 +679,15 @@ Section CFunIndicator.
 
 Variable ct : intpartn #|T|.
 
-Definition cfuni_part :=
+Definition cfuniCT :=
   cfun_indicator [set: {perm T}] (classCT ct).
 
-Local Notation "''1_[' p ]" := (cfuni_part p) : ring_scope.
+Local Notation "''1_[' p ]" := (cfuniCT p) : ring_scope.
 
-Lemma cfuni_partE s :
+Lemma cfuniCTE s :
   ('1_[s]) = (cycle_type s == ct)%:R.
 Proof using.
-rewrite /cfuni_part cfunElock genGid inE /=.
+rewrite /cfuniCT cfunElock genGid inE /=.
 congr ((nat_of_bool _) %:R); apply/idP/idP.
 - rewrite classCTP => /subsetP; apply.
   apply /imsetP; exists 1%g; first by rewrite inE.
@@ -699,7 +699,7 @@ Qed.
 End CFunIndicator.
 End CycleType.
 
-Notation "''1_[' p ]" := (cfuni_part p) : ring_scope.
+Notation "''1_[' p ]" := (cfuniCT p) : ring_scope.
 
 Coercion CTpartn n := intpartn_cast (esym (card_ord n)).
 
@@ -741,10 +741,10 @@ Proof using.
 by apply/eqP/eqP => [<- | ->]; [rewrite -partnCTK | rewrite CTpartnK].
 Qed.
 
-Lemma cfuni_partnE (ct : intpartn n) (s : 'S_n) :
+Lemma cfuniCTnE (ct : intpartn n) (s : 'S_n) :
   '1_[ct] s = (cycle_typeSn s == ct)%:R.
 Proof using.
-rewrite cfuni_partE /cycle_typeSn /=.
+rewrite cfuniCTE /cycle_typeSn /=.
 by rewrite partnCTE CTpartnK.
 Qed.
 
