@@ -17,7 +17,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype seq.
 From mathcomp Require Import path tuple.
 Require Import Recdef.
-Require Import permuted vectNK.
+Require Import permcomp permuted vectNK.
 (******************************************************************************)
 (** * Equivalence and congruence closure of a rewriting rule on words
 
@@ -570,7 +570,7 @@ Hypothesis Hmulthom : forall u : word, all (perm_eq u) (rule u).
 Lemma perm_eq_bound (x : word) (s : seq word) :
   all (perm_eq x) s -> uniq s -> size s <= (size x)`!.
 Proof using.
-  rewrite -(size_permuted_list x); apply: full_bound; exact: eq_seqE.
+  rewrite -(size_permuted_seq x); apply: full_bound; exact: eq_seqE.
 Qed.
 
 Lemma perm_invar (x0 x : word) : perm_eq x0 x -> all (perm_eq x0) (rule x).

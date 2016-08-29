@@ -31,6 +31,15 @@ Proof using.
 by rewrite -[RHS]imset_id; apply eq_imset => x; rewrite perm1.
 Qed.
 
+Lemma card_Sn n : #|'S_(n)| = n`!.
+Proof using .
+rewrite (eq_card (B := perm_on [set : 'I_n])).
+  by rewrite card_perm /= cardsE /= card_ord.
+move=> p; rewrite inE unfold_in /perm_on /=.
+apply/esym/subsetP => i _; by rewrite in_set.
+Qed.
+
+
 Section CastSn.
 
 Definition cast_perm_val m n (eq_m_n : m = n) (s : 'S_m) :=

@@ -1,4 +1,4 @@
-(** * Combi.Combi.permuted : Listing the Permutations of a seq *)
+(** * Combi.Combi.permuted : Listing the Permutations of a tuple or seq *)
 
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
@@ -15,15 +15,27 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype choice finfun fintype seq tuple.
-From mathcomp Require Import finset perm.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
+From mathcomp Require Import tuple bigop path div finset binomial.
+From mathcomp Require Import perm.
 
-(** * The list of the permuted tuple of a given tuple                        *)
-(*
+Require Import tools permcomp.
+
+(** * The list of the permuted tuple of a given tuple
+
 The main goal is to show that, given a sequence [s] over an [eqType] there
 are only finitely many sequences [s'] which are a permutation of [s] (that is
-[perm_eq s s']
-*)
+[perm_eq s s'])
+
+- [permuted_tuple t] == a sequence of tuples containing (with duplicates) all
+             tuple [t'] such that [perm_eq t t']
+- [permuted_seq s] == a sequence of seqs containing (with duplicates) all seqs
+             [s'] such that [perm_eq s s']
+- [permuted t] == sigma typle for tuple [t'] such that [perm_eq t t'].  this
+             is canonically a [fintype], provided the typle of the element of
+             [t] is a [countType].
+
+ *)
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -36,19 +48,11 @@ Section SizeN.
 
 Variable n : nat.
 
-Lemma card_Sn : #|'S_(n)| = n`!.
-Proof using .
-  rewrite (eq_card (B := perm_on [set : 'I_n])).
-    by rewrite card_perm /= cardsE /= card_ord.
-  move=> p; rewrite inE unfold_in /perm_on /=.
-  apply/esym/subsetP => i _; by rewrite in_set.
-Qed.
-
 Definition permuted_tuple (t : n.-tuple T) :=
   [seq [tuple tnth t (aperm i p) | i < n] | p <- enum 'S_n ].
 
 Lemma size_permuted_tuple (t : n.-tuple T) : size (permuted_tuple t) = n`!.
-Proof using . rewrite /permuted_tuple size_map -cardE; exact card_Sn. Qed.
+Proof using . rewrite /permuted_tuple size_map -cardE; exact: card_Sn. Qed.
 
 Lemma perm_eq_permuted_tuple (s : seq T) (H : size s == n) :
   forall s1, perm_eq s s1 -> s1 \in [seq tval t | t <- permuted_tuple (Tuple H)].
@@ -78,13 +82,13 @@ Qed.
 
 End SizeN.
 
-Definition permuted_list s :=
+Definition permuted_seq s :=
   [seq tval t | t <- permuted_tuple (Tuple (eq_refl (size s)))].
 
-Lemma size_permuted_list s : size (permuted_list s) = (size s)`!.
-Proof using . by rewrite /permuted_list size_map size_permuted_tuple. Qed.
+Lemma size_permuted_seq s : size (permuted_seq s) = (size s)`!.
+Proof using . by rewrite /permuted_seq size_map size_permuted_tuple. Qed.
 
-Lemma eq_seqE s s1 : perm_eq s s1 -> s1 \in permuted_list s.
+Lemma eq_seqE s s1 : perm_eq s s1 -> s1 \in permuted_seq s.
 Proof using . exact: perm_eq_permuted_tuple. Qed.
 
 End Permuted.
