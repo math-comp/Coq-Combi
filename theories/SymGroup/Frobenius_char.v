@@ -57,7 +57,7 @@ by rewrite scalerA mulrA -scalerDl mulrDl.
 Qed.
 Canonical Fchar_linear := Linear Fchar_is_linear.
 
-Lemma Fchar_pbasis l : Fchar '1z_[l] = 'p[l].
+Lemma Fchar_ncfuniCT l : Fchar '1z_[l] = 'p[l].
 Proof using.
 rewrite /Fchar (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hm /=.
@@ -75,7 +75,7 @@ Lemma Fchar_triv : Fchar 1 = 'h_n.
 Proof.
 rewrite -decomp_cf_triv linear_sum.
 rewrite (eq_bigr (fun i => 'z_i^-1 *: 'p[i])); first last.
-  move=> l _; rewrite -Fchar_pbasis /= linearZ scalerA mulrC divff ?scale1r //.
+  move=> l _; rewrite -Fchar_ncfuniCT /= linearZ scalerA mulrC divff ?scale1r //.
   exact: neq0zcoeff.
 rewrite -QtoCcomplete complete_to_power_sum /=.
 rewrite rmorph_sum /=; apply eq_bigr => l _.
@@ -104,7 +104,7 @@ apply eq_bigr => /= l _.
 rewrite cfextprod_sumr !linear_sum [RHS]mulr_sumr.
 apply eq_bigr => /= k _.
 rewrite cfextprodZr cfextprodZl scalerA.
-rewrite 3!linearZ /= Ind_pbasis Fchar_pbasis.
-do 2 rewrite linearZ /= Fchar_pbasis.
+rewrite 3!linearZ /= Ind_ncfuniCT Fchar_ncfuniCT.
+do 2 rewrite linearZ /= Fchar_ncfuniCT.
 by rewrite -scalerAr -scalerAl scalerA prod_genM.
 Qed.
