@@ -90,8 +90,6 @@ Relation with set partitions:
 - [parts_shape P] == the shape of a set partition, i.e.
                the sorted list of the cardinal of the parts
 ******)
-Set Printing Universes.
-
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import bigop path.
@@ -1467,6 +1465,7 @@ Qed.
 Hint Resolve intpartP intpart_sorted intpartnP intpartn_sorted.
 
 
+(** * The union of two integer partitions *)
 Section UnionPart.
 
 Lemma union_part_is_part l k :
@@ -1544,6 +1543,7 @@ End UnionPart.
 
 From mathcomp Require Import binomial finset.
 
+(** * Shape of set partitions and integer partitions *)
 Section SetPartitionShape.
 
 Variable T : finType.
@@ -1650,7 +1650,6 @@ apply (eq_sorted (leT := geq)) => //.
   by rewrite mem_enum inE.
 Qed.
 
-(* TODO rewrite using union_part *)
 Lemma parts_shape_union P Q :
   [disjoint P & Q] ->
   parts_shape (P :|: Q) = sort geq (parts_shape P ++ parts_shape Q).
