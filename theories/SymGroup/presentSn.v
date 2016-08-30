@@ -260,8 +260,10 @@ Variable n : nat.
 
 Definition eltr i : 'S_n.+1 := tperm (inord i) (inord i.+1).
 
-Local Notation "''s_' i" := (eltr i) (at level 8, i at level 2).
-Local Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i) (at level 8, w at level 2).
+Local Notation "''s_' i" :=
+  (eltr i) (at level 8, i at level 2, format "''s_' i").
+Local Notation "''s_' [ w ]" :=
+  (\prod_(i <- w) 's_i) (at level 8, w at level 100, format "''s_' [ w ]").
 
 Implicit Type s t : 'S_n.+1.
 
@@ -328,8 +330,7 @@ Proof using .
       rewrite -ltnS; apply (leq_trans Hjk); apply ltnW; exact: ltn_ord.
 Qed.
 
-Lemma prodsK w :
-  's_[w] * 's_[rev w] = 1.
+Lemma prodsK w : 's_[w] * 's_[rev w] = 1.
 Proof using .
   elim/last_ind: w => [| w wn IHw] /=.
     by rewrite /rev /= !big_nil mulg1.
@@ -342,9 +343,7 @@ Qed.
 Lemma prodsV w : 's_[rev w] = 's_[w]^-1.
 Proof using . apply/eqP; by rewrite eq_sym eq_invg_mul prodsK. Qed.
 
-End ElemTransp.
-
-Lemma odd_eltr n i : (i < n)%N -> odd_perm (eltr n i).
+Lemma odd_eltr i : (i < n)%N -> odd_perm 's_i.
 Proof.
   rewrite odd_tperm => Hi.
   apply (introN idP) => /eqP/(congr1 val)/eqP/=.
@@ -352,17 +351,11 @@ Proof.
   exact: ltnW.
 Qed.
 
-Section Length.
-
-Variable n : nat.
-
-Implicit Type s t : 'S_n.+1.
-
-Local Notation "''s_' i" := (eltr n i) (at level 8, i at level 2).
-Local Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i) (at level 8, w at level 2).
-Local Notation "''II_' n" := ('I_n * 'I_n)%type (at level 8, n at level 2).
 
 (** * Length of a permutation *)
+
+Local Notation "''II_' n" := ('I_n * 'I_n)%type (at level 8, n at level 2).
+
 Definition invset (s : 'S_n.+1) :=
   [set p : 'I_n.+1 * 'I_n.+1 | (p.1 < p.2) && (s p.1 > s p.2) ].
 Definition length s := #|invset s|.
@@ -769,6 +762,28 @@ Proof using .
   by rewrite canwordE.
 Qed.
 
+Corollary eltr_genSn : 'SG_n.+1 = <<[set 's_(i : 'I_n) | i in 'I_n]>>%G.
+Proof.
+apply/setP => s; apply/idP/gen_prodgP => /=.
+- move=> Hs; exists (size (canword s)).
+  exists (fun i => 's_(tnth (in_tuple (canword s)) i)).
+  + by move=> i; apply: mem_imset.
+  + rewrite {1}(canwordP s).
+    by rewrite -{1}[canword s]/(tval (in_tuple (canword s))) big_tuple.
+- move=> [l [fi Hfi] ->{s}]; apply group_prod => i _.
+  by rewrite inE.
+Qed.
+
+Corollary morph_eltr (gT : finGroupType)
+          (f g : {morphism 'SG_n.+1 >-> gT}) :
+  (forall i : 'I_n, f 's_i = g 's_i) -> f =1 g.
+Proof.
+move => Heq /= s; rewrite (canwordP s) !morph_prod; first last.
+- by move=> i _; rewrite inE.
+- by move=> i _; rewrite inE.
+apply eq_bigr => i _; apply Heq.
+Qed.
+
 Theorem size_canword s : length s = size (canword s).
 Proof using .
   rewrite -(size_map val) canwordE size_wordcd.
@@ -802,7 +817,7 @@ Proof using .
   by move/((bij_inj prods_codesz_bij) (CodeSZ HC1) (CodeSZ HC2))/(congr1 val).
 Qed.
 
-End Length.
+End ElemTransp.
 
 Hint Resolve cocodeP.
 Hint Resolve codeszP.
@@ -810,8 +825,10 @@ Hint Resolve codeszP.
 (** * Let's do some real combinatorics !!! *)
 Section Combi.
 
-Local Notation "''s_' i" := (eltr _ i) (at level 8, i at level 2).
-Local Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i) (at level 8, w at level 2).
+Local Notation "''s_' i" :=
+  (eltr i) (at level 8, i at level 2, format "''s_' i").
+Local Notation "''s_' [ w ]" :=
+  (\prod_(i <- w) 's_i) (at level 8, w at level 100, format "''s_' [ w ]").
 
 From mathcomp Require Import ssralg poly ssrint.
 
@@ -848,8 +865,10 @@ Section Reduced.
 
 Variable n : nat.
 
-Local Notation "''s_' i" := (eltr n i) (at level 8, i at level 2).
-Local Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i) (at level 8, w at level 2).
+Local Notation "''s_' i" :=
+  (eltr n i) (at level 8, i at level 2, format "''s_' i").
+Local Notation "''s_' [ w ]" :=
+  (\prod_(i <- w) 's_i) (at level 8, w at level 100, format "''s_' [ w ]").
 Local Notation length := (length (n := n)).
 
 Definition reduced_word := [qualify w : seq 'I_n | length 's_[w] == size w ].
@@ -1056,6 +1075,14 @@ Proof using .
     by rewrite /rev /= orbC Hxy mem_seq1 eq_refl.
 Qed.
 
+Lemma class_braid1 i s : s =Br [:: i] -> s = [:: i].
+Proof.
+rewrite braid_sym.
+move: s; apply: gencongr_ind => //= a b1 c b2 /(congr1 size) /= Hsize.
+rewrite mem_cat => /orP [/braid_abaP | /braidCP] [x [y]] [] _ Hb1 _;
+  by exfalso; move: Hsize; rewrite Hb1 !size_cat /= !addnS.
+Qed.
+
 Theorem braid_prods (v w : seq 'I_n) : v =Br w -> 's_[v] = 's_[w].
 Proof using .
   move=> H; apply/esym; move: w H; apply gencongr_ind => // a b1 c b2 <- Hrule.
@@ -1155,10 +1182,11 @@ Section Nnon0.
 Variable (n0 : nat).
 Local Notation n := n0.+1.
 
+Local Notation "''s_' i" :=
+  (eltr n i) (at level 8, i at level 2, format "''s_' i").
+Local Notation "''s_' [ w ]" :=
+  (\prod_(i <- w) 's_i) (at level 8, w at level 100, format "''s_' [ w ]").
 Local Notation "a =Br b" := (braidcongr a b) (at level 70).
-Local Notation "''s_' i" := (eltr n i) (at level 8, i at level 2).
-Local Notation "''s_[' w ']'" :=
-  (\prod_(i <- w) 's_i) (at level 8, w at level 2).
 
 Fixpoint inscode (c : seq nat) (i : 'I_n) :=
   if c is c0 :: c' then
@@ -1550,6 +1578,75 @@ Proof.
   - by move/braid_prods ->.
 Qed.
 
+Lemma canword_eltr n (i : 'I_n) : canword 's_i = [:: i].
+Proof.
+suff /braid_to_canword : [:: i] \is reduced.
+  by rewrite big_seq1 braid_sym => /class_braid1.
+apply contraT => /reduceP [/= v [w []]].
+rewrite braid_sym => /class_braid1 ->{v}.
+move=> /reducesP [v [a [b]]] [] /(congr1 size) /=.
+by rewrite size_cat /= !addnS.
+Qed.
+
+Section PresentatioSn.
+
+Variable n : nat.
+Variables (gT : finGroupType) (G : {group gT}).
+Variable eltrG : nat -> gT.
+
+Local Notation "''g_' i" :=
+  (eltrG i) (at level 8, i at level 2, format "''g_' i").
+
+CoInductive relat_Sn : Prop :=
+  RelatSn of
+    (forall i, i < n -> 'g_i \in G) &
+    (forall i, i < n -> 'g_i^+2 = 1) &
+    (forall i, i.+1 < n -> 'g_i * 'g_i.+1 * 'g_i = 'g_i.+1 * 'g_i * 'g_i.+1) &
+    (forall i j, i.+1 < j < n -> 'g_i * 'g_j = 'g_j * 'g_i)
+  : relat_Sn.
+
+Theorem presentation_Sn_eltr :
+  relat_Sn ->
+  exists2 f : {morphism 'SG_n.+1 >-> gT},
+             f @* 'SG_n.+1 \subset G &
+             forall i, i < n -> f 's_i = 'g_i.
+Proof using.
+move=> [HeltrG Hsq Hbraid Hcom].
+pose morph_eltr_fun (s : 'S_n.+1) := \prod_(i <- canword s) 'g_i.
+have morph_eltrP : {morph morph_eltr_fun : x y / x * y}.
+  move=> i j.
+  have:= braidred_to_canword (canword i ++ canword j) => [[redpath [Hpath]]].
+  rewrite big_cat /= -!canwordP /morph_eltr_fun -big_cat /= => Hlast.
+  elim: redpath (_ ++ _) Hpath Hlast =>
+      [c _ <- //|] w0 wp IHwp /= c /andP [Hbr] /IHwp H/H{IHwp H} ->.
+  move: Hbr => /orP [].
+  - rewrite braid_sym; move: c; apply: gencongr_ind => //.
+    move=> a b1 c b2 ->{w0} Hbr; rewrite !big_cat /=; congr (_ * (_ * _)) => {a c}.
+    move: Hbr; rewrite /= mem_cat => /orP [].
+    + move=> /braid_abaP [a [b [Heq ->{b1} ->{b2}]]].
+      rewrite !big_cons !big_nil !mulg1 !mulgA.
+      move: Heq => /orP [] /eqP Heq.
+      * by rewrite -Heq; apply Hbraid; rewrite Heq.
+      * by rewrite -Heq; symmetry; apply Hbraid; rewrite Heq.
+    + move=> /braidCP [a [b [Heq ->{b1} ->{b2}]]].
+      rewrite !big_cons !big_nil !mulg1.
+      move: Heq => /orP [] Heq.
+      * by apply Hcom; rewrite Heq /=.
+      * by symmetry; apply Hcom; rewrite Heq /=.
+  - move=> /reducesP [a [l [b [->{c} ->{w0}]]]].
+    rewrite !big_cat /= !big_cons !big_nil !mulg1.
+    have:= Hsq l (ltn_ord l); rewrite expgS expg1 => ->.
+    by rewrite mul1g.
+exists (Morphism (in2W morph_eltrP)).
+- apply/subsetP => /= x /imsetP [/= s _ ->{x}].
+  by apply group_prod => i _; apply HeltrG.
+- move=> i Hi /=.
+  rewrite /morph_eltr_fun.
+  have /= -> := (canword_eltr (Ordinal Hi)).
+  by rewrite big_seq1.
+Qed.
+
+End PresentatioSn.
 
 Lemma homg_S_3 :
   'SG_3 \homg Grp ( s0 : s1 : (s0^+2, s1^+2, s0*s1*s0 = s1*s0*s1) ).
@@ -1570,7 +1667,7 @@ Proof.
   - apply/eqP; rewrite /eltr; apply: tperm_braid; by rewrite /eq_op /= !inordK.
 Qed.
 
-(*
+
 Lemma presentation_S_3 :
   'SG_3 \isog Grp ( s1 : s2 : (s1*s1 = s2*s2 = 1, s1*s2*s1 = s2*s1*s2) ).
 Proof.
