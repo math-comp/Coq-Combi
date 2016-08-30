@@ -21,7 +21,7 @@ From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import matrix mxalgebra mxpoly mxrepresentation vector ssrnum algC.
 From mathcomp Require Import classfun character.
 
-Require Import tools sorted reprdim1 partition symgroup.
+Require Import tools sorted reprdim1 partition presentSn.
 Require Import permcomp cycles cycletype.
 
 

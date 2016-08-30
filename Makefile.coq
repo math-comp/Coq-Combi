@@ -130,26 +130,23 @@ VFILES:=theories/Combi/vectNK.v\
   theories/HookFormula/RSident.v\
   theories/HookFormula/hook.v\
   theories/HookFormula/recyama.v\
+  theories/Basic/combclass.v\
   theories/Basic/congr.v\
   theories/Basic/ordtype.v\
-  theories/SymGroup/permcent.v\
   theories/SymGroup/cycles.v\
   theories/SymGroup/cycletype.v\
   theories/SymGroup/Frobenius_char.v\
-  theories/Basic/combclass.v\
-  theories/SymGroup/symgroup.v\
+  theories/SymGroup/permcent.v\
+  theories/SymGroup/presentSn.v\
   theories/SymGroup/reprdim1.v\
   theories/SymGroup/reprS2.v\
   theories/SymGroup/towerSn.v\
-  theories/MPoly/Schur_basis.v\
   theories/MPoly/antisym.v\
   theories/MPoly/sympoly.v\
+  theories/MPoly/Schur_basis.v\
   3rdparty/ALEA/Ccpo.v\
   3rdparty/ALEA/Misc.v
 
-
-
-  
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
 -include $(addsuffix .d,$(VFILES))
 else

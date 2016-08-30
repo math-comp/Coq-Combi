@@ -1,4 +1,4 @@
-(** * Combi.SymGroup.symgroup : The symmetric group *)
+(** * Combi.SymGroup.presentSn : The Coxeter Presentation of the Symmetric Group *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -47,16 +47,6 @@ Proof.
   by rewrite ieqi1F.
 Qed.
 
-
-Lemma permS0 (g : 'S_0) : g = 1%g.
-Proof. by apply permP => x; case x. Qed.
-Lemma permS1 (g : 'S_1) : g = 1%g.
-Proof.
-apply permP => x; case x => i Hi.
-apply val_inj => /=; rewrite permE.
-case: (g (Ordinal Hi)) => a Ha /=.
-by move: Hi Ha; rewrite !ltnS !leqn0 => /eqP -> /eqP ->.
-Qed.
 
 Section Codes.
 

@@ -31,6 +31,16 @@ Proof using.
 by rewrite -[RHS]imset_id; apply eq_imset => x; rewrite perm1.
 Qed.
 
+Lemma permS0 (g : 'S_0) : g = 1%g.
+Proof. by apply permP => x; case x. Qed.
+Lemma permS1 (g : 'S_1) : g = 1%g.
+Proof.
+apply permP => x; case x => i Hi.
+apply val_inj => /=; rewrite permE.
+case: (g (Ordinal Hi)) => a Ha /=.
+by move: Hi Ha; rewrite !ltnS !leqn0 => /eqP -> /eqP ->.
+Qed.
+
 Lemma card_Sn n : #|'S_(n)| = n`!.
 Proof using .
 rewrite (eq_card (B := perm_on [set : 'I_n])).
