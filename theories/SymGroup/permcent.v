@@ -580,7 +580,7 @@ Import GRing.Theory Num.Theory.
 
 Lemma zcoeffE n (l : intpartn n) : zcoeff l = ((zcard l)%:R)%R.
 Proof.
-rewrite /zcoeff card_class_of_part card_Sn.
+rewrite /zcoeff card_class_of_part cardsT card_Sn.
 rewrite char0_natf_div; [| exact: Cchar | exact: dvdn_zcard_fact].
 rewrite invf_div mulrC mulfVK //.
 by rewrite pnatr_eq0 -lt0n; apply: fact_gt0.
