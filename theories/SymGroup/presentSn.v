@@ -1652,24 +1652,21 @@ Lemma presentation_S2 :
 Proof.
 apply intro_isoGrp.
 - apply/existsP; exists (eltr 1 0).
-  rewrite /= !xpair_eqE /=; apply/andP; split.
-  + rewrite eqEsubset subsetT /=.
-    apply/subsetP => s _.
+  rewrite /= !xpair_eqE /=; apply/andP; split; try by rewrite expgS expg1 tperm2.
+  + rewrite eqEsubset subsetT /=; apply/subsetP => s _.
     have /= -> := canwordP s.
     elim: (canword s) => [| t0 t IHt] /=; first by rewrite big_nil group1.
-    rewrite big_cons; apply groupM => /=.
-    * apply/bigcapP => S /subsetP; apply => {S t IHt}; rewrite inE.
-      by case: t0 => [] [| //=] /= _.
-    * by apply: IHt => i Hi /=.
-  + by rewrite expgS expg1 tperm2.
+    rewrite big_cons; apply groupM => /=; last exact: IHt.
+    apply (subsetP (subset_gen _)); rewrite !inE.
+    by case: t0 => [] [| //=] /= _.
 - move=> Gt H; case/existsP => /= s0 /eqP [] <-{H} Hx0.
   apply/homgP.
   pose fs := fun i => match i with 0 => s0 | _ => 1 end.
   suff /presentation_Sn_eltr [f Hf Himf] : relat_Sn 1 <[s0]> fs.
     exists f; apply/eqP; rewrite eqEsubset Hf /=.
-    rewrite gen_subG; apply/subsetP => x.
+    rewrite !gen_subG; apply/subsetP => x.
     rewrite inE => /eqP ->; apply/imsetP; rewrite setIid.
-    by exists 's_0; rewrite ?inE // (Himf 0%N).
+    + by exists 's_0; rewrite ?inE // (Himf 0%N).
   constructor.
   + by case=> [|[|i]] => //= _; rewrite cycle_id.
   + by case=> [|i].
@@ -1680,33 +1677,32 @@ Qed.
 Lemma presentation_S3 :
   'SG_3 \isog Grp ( s0 : s1 : (s0^+2 = s1^+2 = 1, s0*s1*s0 = s1*s0*s1) ).
 Proof.
+have Gen2 (gt : finGroupType) (a b : gt) :
+    <[a]> <*> <[b]> = <<[set a; b]>>.
+  by rewrite joing_idl joing_idr joingE.
 apply intro_isoGrp.
 - apply/existsP; exists (eltr 2 0, eltr 2 1).
-  rewrite /= !xpair_eqE /=; apply/and4P; split.
-  + rewrite eqEsubset subsetT /=.
-    apply/subsetP => s _.
+  rewrite /= !xpair_eqE /=; apply/and4P; split; try by rewrite expgS expg1 tperm2.
+  + rewrite Gen2 eqEsubset subsetT /=; apply/subsetP => s _.
     have /= -> := canwordP s.
     elim: (canword s) => [| t0 t IHt] /=; first by rewrite big_nil group1.
-    rewrite big_cons; apply groupM => /=.
-    * apply/bigcapP => S /subsetP; apply => {S t IHt}; rewrite inE.
-      case: t0 => [] [| [| //=]] /= _; apply/orP; [left|right]; exact: cycle_id.
-    * by apply: IHt => i Hi /=.
-  + by rewrite expgS expg1 tperm2.
-  + by rewrite expgS expg1 tperm2.
-  + by apply/eqP; rewrite /eltr; apply: tperm_braid; rewrite /eq_op /= !inordK.
+    rewrite big_cons; apply groupM; last exact: IHt.
+    apply (subsetP (subset_gen _)); rewrite !inE.
+    by case: t0 => [] [| [| //=]] /= _; rewrite eq_refl /= ?orbT.
+  + by apply/eqP/eltr_braid.
 - move=> Gt H; case/existsP => /= [] [s0 s1] /eqP [] <-{H} Hx0 Hx1 H3.
+  rewrite joing_idl joing_idr joingE.
   apply/homgP.
   pose fs := fun i => match i with 0 => s0 | 1 => s1 | _ => 1 end.
-  suff /presentation_Sn_eltr [f Hf Himf] : relat_Sn 2 (<[s0]> <*> <[s1]>) fs.
+  suff /presentation_Sn_eltr [f Hf Himf] : relat_Sn 2 (<<[set s0; s1]>>) fs.
     exists f; apply/eqP; rewrite eqEsubset Hf /=.
-    rewrite gen_subG; apply/subsetP => x.
-    rewrite inE => /orP []; move: x; apply/subsetP; rewrite cycle_subG;
-      apply/imsetP; rewrite setIid.
+    rewrite !gen_subG; apply/subsetP => x.
+    rewrite !inE => /orP [] /eqP ->{x}; apply/imsetP; rewrite setIid.
     + by exists 's_0; rewrite ?inE // (Himf 0%N).
     + by exists 's_1; rewrite ?inE // (Himf 1%N).
   constructor.
-  + by case=> [|[|i]] => //= _; rewrite joingE;
-      apply (subsetP (subset_gen _)); rewrite inE cycle_id // orbT.
+  + by case=> [|[|i]] => //= _; apply (subsetP (subset_gen _));
+                         rewrite !inE eq_refl ?orbT.
   + by case=> [|[|i]].
   + by case=> [|[|i]].
   + by case=> [|i] j // /andP [] /leq_ltn_trans H'/H'.
@@ -1720,42 +1716,31 @@ Lemma presentation_S4 :
              s0*s2 = s2*s0
         ) ).
 Proof.
+have Gen3 (gt : finGroupType) (a b c : gt) :
+    <[a]> <*> <[b]> <*> <[c]> = <<[set a; b; c]>>.
+  rewrite [X in (X <*> _)]joing_idl -joingA [X in (_ <*> X)]joing_idr joing_idl.
+  by rewrite joingA joing_idl joingE.
 apply intro_isoGrp.
 - apply/existsP; exists (eltr 3 0, eltr 3 1, eltr 3 2).
-  rewrite /= !xpair_eqE /=.
-  apply/and5P; split; try by rewrite expgS expg1 tperm2.
-  + rewrite eqEsubset subsetT /=.
-    apply/subsetP => s _.
+  rewrite /= !xpair_eqE /=; apply/and5P; split; try by rewrite expgS expg1 tperm2.
+  + rewrite Gen3 eqEsubset subsetT /=; apply/subsetP => s _.
     have /= -> := canwordP s.
-    elim: (canword s) => [| t0 t IHt] /=.
-      rewrite big_nil; exact: group1.
-    rewrite big_cons; apply groupM => /=.
-    * apply/bigcapP => S /subsetP; apply => {S t IHt}; rewrite inE.
-      case: t0 => [] [| [| [| //=]]] /= _.
-      * apply/orP; left; apply/bigcapP => S /subsetP; apply => {S}.
-        rewrite inE; apply/orP; left; by apply cycle_id.
-      * apply/orP; left; apply/bigcapP => S /subsetP; apply => {S}.
-        rewrite inE; apply/orP; right; by apply cycle_id.
-      * apply/orP; right; apply cycle_id.
-    * apply: IHt => i Hi /=.
-  apply/and3P; split; apply/eqP; rewrite /eltr.
-  + by apply: tperm_braid; rewrite /eq_op /= !inordK.
-  + by apply: tperm_braid; rewrite /eq_op /= !inordK.
-  + by apply: tpermC; rewrite /eq_op /= !inordK.
+    elim: (canword s) => [| t0 t IHt] /=; first by rewrite big_nil group1.
+    rewrite big_cons; apply groupM; last exact: IHt.
+    apply (subsetP (subset_gen _)); rewrite !inE.
+    by case: t0 => [] [| [| [| //=]]] /= _; rewrite eq_refl /= ?orbT.
+  + apply/and3P; split; apply/eqP; try exact: eltr_braid; try exact: eltr_comm.
 - move=> Gt H; case/existsP => /= [] [[s0 s1] s2] /eqP []
-                                <- Hx0 Hx1 Hx2 H010 H121 H02 {H}.
-  rewrite [X in X \homg _](_ : _ = <<[set s0; s1; s2]>>); first last.
-    rewrite [X in (X <*> _)]joing_idl -joingA [X in (_ <*> X)]joing_idr joing_idl.
-    by rewrite joingA joing_idl joingE.
-  apply/homgP.
+                                <-{H} Hx0 Hx1 Hx2 H010 H121 H02.
+  rewrite Gen3; apply/homgP.
   pose fs := fun i => match i with 0 => s0 | 1 => s1 | 2 => s2 | _ => 1 end.
   suff /presentation_Sn_eltr [f Hf Himf] : relat_Sn 3 <<[set s0; s1; s2]>> fs.
     exists f; apply/eqP; rewrite eqEsubset Hf /=.
     rewrite !gen_subG; apply/subsetP => x.
-        rewrite !inE -orbA => /or3P [] /eqP ->.
-    + by apply/imsetP; rewrite setIid; exists 's_0; rewrite ?inE // (Himf 0%N).
-    + by apply/imsetP; rewrite setIid; exists 's_1; rewrite ?inE // (Himf 1%N).
-    + by apply/imsetP; rewrite setIid; exists 's_2; rewrite ?inE // (Himf 2%N).
+    rewrite !inE -orbA => /or3P [] /eqP ->; apply/imsetP; rewrite setIid.
+    + by exists 's_0; rewrite ?inE // (Himf 0%N).
+    + by exists 's_1; rewrite ?inE // (Himf 1%N).
+    + by exists 's_2; rewrite ?inE // (Himf 2%N).
   constructor.
   + by case=> [|[|[|i]]] //= _; apply mem_gen; rewrite !inE eq_refl /= ?orbT.
   + by case=> [|[|[|i]]].
