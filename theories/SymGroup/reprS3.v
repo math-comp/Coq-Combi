@@ -7,7 +7,7 @@ From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum ssralg pgroup.
 From mathcomp Require Import presentation all_character.
 
-Require Import tools permuted symgroup partition Greene sorted.
+Require Import tools permuted presentSn partition Greene sorted.
 Require Import permcomp cycles cycletype reprdim1 reprS2.
 
 
