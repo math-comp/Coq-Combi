@@ -238,12 +238,15 @@ Lemma monomial_homog d (sh : intpartn d) :
   sympol (monomial sh) \is d.-homog.
 Proof using.
 rewrite /monomial; case: leqP => [/= _| /ltnW Hsz]; first exact: dhomog0.
-apply rpred_sum => m _.
-rewrite dhomogX /= -{2}(intpartn_sumn sh) /mdeg.
-rewrite -(eq_big_perm _ (permutedP m)) sumnE.
-rewrite mpartE take_oversize /=.
-  by rewrite sumn_cat sumn_nseq mul0n addn0.
-by rewrite size_cat size_nseq subnKC.
+rewrite /= unfold_in; apply/allP => /= m.
+rewrite mcoeff_msupp mcoeff_monomial.
+case: (boolP (perm_eq _ _)) => [Hperm _ | _]; last by rewrite /= eq_refl.
+rewrite /mdeg sumnE -(intpartn_sumn sh).
+move: Hperm => /perm_sumn <-{m}.
+rewrite -{2}(mpartK _ Hsz) // is_dominant_partm; last exact: mpart_is_dominant.
+apply/eqP; rewrite -!sumnE big_filter.
+rewrite [LHS](bigID (fun i => i == 0%N)) /= big1 ?add1n //.
+by move=> i /eqP.
 Qed.
 
 (** Basis at degree 0 *)
@@ -743,18 +746,18 @@ apply uniq_perm_eq.
 - rewrite map_inj_in_uniq; first exact: enum_uniq.
   move=> i j; rewrite !mem_enum => Hi Hj; exact: inj_s2m.
 - rewrite map_inj_uniq; [exact: enum_uniq | exact: val_inj].
-move=> m; apply (sameP idP); apply (iffP idP).
-- move=> /mapP [] mb; rewrite mem_enum inE => /eqP Hmb ->.
-  have Ht : size (m2s mb) == d by rewrite -{2}Hmb size_m2s.
-  apply/mapP; exists (Tuple Ht) => /=; last by rewrite s2mK.
-  rewrite mem_enum inE /=; exact: srt_m2s.
-- move=> /mapP [] s; rewrite mem_enum inE /= => Hsort ->.
+move=> m; apply/mapP/mapP => [[] s | [] mb].
+- rewrite mem_enum inE /= => Hsort ->.
   have mdegs : mdeg (s2m s) = d.
     rewrite /s2m /mdeg mnm_valK /= big_map enumT -/(index_enum _).
     by rewrite combclass.sum_count_mem count_predT size_tuple.
   have mdegsP : (mdeg (s2m s) < d.+1)%N by rewrite mdegs.
-  apply/mapP; exists (BMultinom mdegsP) => //.
+  exists (BMultinom mdegsP) => //.
   by rewrite mem_enum inE /= mdegs.
+- rewrite mem_enum inE => /eqP Hmb ->.
+  have Ht : size (m2s mb) == d by rewrite -{2}Hmb size_m2s.
+  exists (Tuple Ht) => /=; last by rewrite s2mK.
+  rewrite mem_enum inE /=; exact: srt_m2s.
 Qed.
 
 (** Equivalent definition of complete symmetric function *)
