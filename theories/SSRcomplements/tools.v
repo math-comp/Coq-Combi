@@ -682,6 +682,8 @@ Notation "#{ x }" :=  #|(x : {set _})|
 
 Module LeqGeqOrder.
 
+Definition geq_refl : reflexive geq :=
+  fun x => leqnn x.
 Definition geq_total : total geq :=
   fun x y => leq_total y x.
 Definition geq_trans : transitive geq :=
@@ -689,7 +691,7 @@ Definition geq_trans : transitive geq :=
 Definition anti_geq : antisymmetric geq :=
   fun x y H => esym (anti_leq H).
 
-Hint Resolve leq_total leq_trans anti_leq geq_total geq_trans anti_geq.
+Hint Resolve leq_total leq_trans anti_leq geq_refl geq_total geq_trans anti_geq.
 
 End LeqGeqOrder.
 

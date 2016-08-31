@@ -301,19 +301,16 @@ Theorem alt_mpart_elementary d (P1 : intpartn d) k :
   'a_(mpart P1 + rho) * 'e_k =
   \sum_(P : intpartn (d + k) | vb_strip P1 P && (size P <= n)) 'a_(mpart P + rho).
 Proof using .
-  rewrite alt_elementary => Hsz.
+ rewrite alt_elementary => Hsz.
   rewrite (bigID (hasincr P1)) /=.
   rewrite (eq_bigr (fun x => 0)); last by move=> i /andP [] _ /hasincr0.
   rewrite sumr_const mul0rn add0r.
   rewrite (eq_bigr (fun h => 'a_(mpart (add_mesym k P1 h) + rho))); first last.
     move=> i /andP [] Hk Hincr; by rewrite add_mesymE.
   rewrite (reindex_onto _ _ (add_mesymK Hsz)).
-  apply eq_bigl => S; rewrite inE.
-  apply (sameP idP); apply (iffP idP).
-  - move=> /andP [] /andP [] Hstrip Hszle /eqP HS.
-    rewrite -HS card_setdiff // eq_refl andTb.
-    exact: nohasincr_setdiff.
-  - move=> H; apply/andP; split; first (apply/andP; split).
+  apply eq_bigl => S; rewrite inE -andbA.
+  apply/idP/and3P => [H | [Hstrip Hszle /eqP HS]].
+  - split.
     + apply/(vb_stripP (intpartnP _) (intpartnP _)) => i /=.
       rewrite Hsz H /= nth_rem_trail0.
       case: (ssrnat.ltnP i n) => Hi; first last.
@@ -336,6 +333,8 @@ Proof using .
       rewrite (nth_map (Ordinal H0)); last by rewrite size_enum_ord.
       rewrite nth_ord_enum.
       by case: (i \in S); rewrite ?addn0 ?addn1 ?ltnSn ?ltnn.
+  - rewrite -HS card_setdiff // eq_refl andTb.
+    exact: nohasincr_setdiff.
 Qed.
 
 Lemma vb_strip_rem_col0 d (P : intpartn d) :

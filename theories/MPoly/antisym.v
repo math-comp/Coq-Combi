@@ -56,6 +56,8 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Import LeqGeqOrder.
+
 Lemma binomial_sumn_iota n : 'C(n, 2) = sumn (iota 0 n).
 Proof. by rewrite -triangular_sum sumnE /index_iota subn0. Qed.
 
@@ -84,73 +86,97 @@ Section MonomPart.
 Variable n : nat.
 Implicit Type m : 'X_{1.. n}.
 
-Definition mpart (s : seq nat) := [multinom (nth 0 s i)%N | i < n].
-Definition is_dominant (m : 'X_{1.. n}) := sorted geq m.
-Definition partm_seq m := sort geq [seq d <- m | d != 0].
+Definition mpart (s : seq nat) :=
+  if size s <= n then [multinom (nth 0 s i)%N | i < n] else mnm0.
+Definition dominant : qualifier 0 'X_{1.. n} :=
+  [qualify m : 'X_{1.. n} | sorted geq m].
 
-Fact partmP m : is_part (partm_seq m).
+Fact partmP m : is_part (sort geq [seq d <- m | d != 0]).
 Proof.
-  rewrite is_part_sortedE; apply/andP; split.
-  - by apply sort_sorted=> x y; exact: leq_total.
-  - by rewrite mem_sort mem_filter eq_refl.
+rewrite is_part_sortedE; apply/andP; split.
+- by apply sort_sorted=> x y; exact: leq_total.
+- by rewrite mem_sort mem_filter eq_refl.
 Qed.
 Definition partm m := IntPart (partmP m).
-
-Lemma mpartE sh : mpart sh = take n (pad 0 n sh) :> seq nat.
+Lemma size_partm m : size (partm m) <= n.
 Proof.
-  rewrite /mpart /=.
-  apply (eq_from_nth (x0 := 0)) => [|i]; rewrite size_map.
-  - rewrite -cardE card_ord size_take_leq size_cat size_nseq.
-    case: (leqP (size sh) n) => [/subnKC ->| /ltnW H]; first by rewrite leqnn.
-    have:= H; rewrite /leq => /eqP ->; rewrite addn0.
-    by move: H; rewrite /leq => ->.
-  - case: n => [|m Hm]; first by rewrite -cardE card_ord.
-    rewrite (nth_map ord0 _ _ Hm) -(nth_map ord0 0 _ Hm) val_enum_ord.
-    move: Hm; rewrite -cardE card_ord => Hm.
-    rewrite nth_iota // add0n nth_take // nth_cat.
-    case: leqP => //= Hi.
-    rewrite nth_default // nth_nseq ltn_sub2r //.
-    exact: leq_ltn_trans Hi Hm.
+rewrite /partm /= size_sort size_filter -[X in _ <= X](size_tuple m).
+exact: count_size.
 Qed.
 
-Lemma is_dominant_mpart sh : is_part sh -> is_dominant (mpart sh).
+Lemma mpart_is_dominant sh : is_part sh -> mpart sh \is dominant.
 Proof.
-  rewrite is_part_sortedE => /andP [Hpart _].
-  rewrite /is_dominant mpartE /pad /=.
-  apply sorted_take; elim: (n - size sh) => [/=|i Hi]; first by rewrite cats0.
-  by rewrite -addn1 nseqD /= catA cats1; apply sorted_rcons.
+rewrite /mpart /dominant; case: leqP => [Hsz|_ _].
+- rewrite is_part_sortedE => /andP [Hpart _].
+  + apply/(sortedP 0) => // i j; rewrite size_tuple => /andP [Hij Hj].
+    have Hi := leq_ltn_trans Hij Hj.
+    rewrite -[i]/(val (Ordinal Hi)) -[j]/(val (Ordinal Hj)) -!mnm_nth !mnmE /=.
+    case: (ssrnat.ltnP j (size sh)) => [Hjsz | /(nth_default _) -> //].
+    by apply: (sortedP _ _ _ _ Hpart) => //; rewrite Hij Hjsz.
+- apply/(sortedP 0) => // i j; rewrite size_tuple => /andP [Hij Hj] /=.
+  by rewrite (nth_map (Ordinal Hj)) // -cardE card_ord.
 Qed.
 
 Lemma is_dominant_partm m :
-  is_dominant m -> partm m = [seq d <- m | d != 0] :> seq nat.
+  m \is dominant -> partm m = [seq d <- m | d != 0] :> seq nat.
 Proof.
-  rewrite /is_dominant /partm /= => Hsort.
-  have geq_total : total geq := fun x y => leq_total y x.
-  have geq_anti : antisymmetric geq := fun x y H => esym (anti_leq H).
-  have geq_trans : transitive geq := fun x y z H1 H2 => leq_trans H2 H1.
-  apply: (eq_sorted geq_trans geq_anti).
-  - exact: sort_sorted.
-  - exact: sorted_filter.
-  - apply/perm_eqlP; exact: perm_sort.
+rewrite unfold_in /partm /= => Hsort.
+apply: (eq_sorted (leT := geq)) => //.
+- exact: sort_sorted.
+- exact: sorted_filter.
+- apply/perm_eqlP; exact: perm_sort.
 Qed.
 
-Lemma is_dominant_mpart_partm m :
-  is_dominant m -> mpart (partm m) = m.
+Lemma is_dominant_nth_partm m (i : 'I_n) :
+  m \is dominant -> nth 0 (partm m) i = m i.
 Proof.
-  move=> H; rewrite (is_dominant_partm H).
-  rewrite /mpart; apply/mnmP => i /=; rewrite !mnmE.
-  case: m H => //= [[l Hl]] /=.
-  rewrite /is_dominant (mnm_nth 0) /= {Hl}.
-  case: i => i /= _; elim: l i => [//= | l0 l IHl] i Hsort /=.
-  case: eqP => /= [Hl0|_].
-  - subst l0 => {IHl}.
-    have {Hsort} -> : l = nseq (size l) 0.
-      elim: l Hsort => [//| l0 l IHl] /= /andP [].
-      rewrite leqn0 -/(sorted _ (l0 :: l)) => /eqP -> /IHl {IHl} ->.
-      by rewrite size_nseq.
-    rewrite [filter _ _](_ : _ = [::]); last by elim: (size l) => [|m IHm].
-    by case: i => //= i; rewrite nth_nseq; case: leqP.
-  - by case: i IHl => //= i /(_ _ (sorted_consK Hsort)).
+move=> Hdom; rewrite (is_dominant_partm Hdom).
+case: m Hdom => [[s Hs /=]].
+rewrite unfold_in (mnm_nth 0) /=.
+case: i => [i /= _] {Hs}; elim: s i => [| s0 s IHs] i // Hsort /=.
+case: (altP (s0 =P 0)) Hsort => [->{s0} /= {IHs} Hpath|_].
+- have -> : s = nseq (size s) 0.
+    elim: s Hpath => [//= | s0 s IHs] /= /andP [].
+    by rewrite leqn0 => /eqP -> /IHs {1}->.
+  rewrite (eq_in_filter (a2 := pred0)) ?filter_pred0;
+    last by move=> x /nseqP [-> _].
+  by case: i => //= i; rewrite nth_nseq if_same.
+- move=> /sorted_consK/IHs {IHs} /= Hrec.
+  by case: i.
+Qed.
+
+Lemma partmK m : m \is dominant -> mpart (partm m) = m.
+Proof.
+move=> Hdom; rewrite /mpart size_partm.
+apply/mnmP => i.
+by rewrite mnmE is_dominant_nth_partm.
+Qed.
+
+Lemma mpartK sh : is_part sh -> size sh <= n -> partm (mpart sh) = sh :> seq nat.
+Proof.
+move=> Hpart Hsize; apply/eqP/part_eqP => // i.
+case: (ssrnat.ltnP i n) => Hi.
+- have /is_dominant_nth_partm Hdom := mpart_is_dominant Hpart.
+  have:= Hdom (Ordinal Hi) => /= ->.
+  by rewrite /mpart Hsize mnmE /=.
+- rewrite !nth_default //; apply: leq_trans _ Hi => //.
+  exact: size_partm.
+Qed.
+
+Lemma perm_eq_partm m1 m2 : perm_eq m1 m2 -> partm m1 = partm m2.
+Proof.
+move=> Hperm; apply val_inj => /=; apply/perm_sortP => //.
+exact: perm_eq_filter.
+Qed.
+
+Lemma partm_perm_eqK m : perm_eq m (mpart (partm m)).
+Proof.
+have Hsm : size (sort geq m) == n by rewrite size_sort size_tuple.
+pose sm := [multinom Tuple Hsm].
+have Hperm : perm_eq sm m by rewrite /= perm_sort.
+rewrite -(perm_eq_partm Hperm) partmK; first last.
+  rewrite unfold_in; exact: sort_sorted.
+by rewrite perm_eq_sym.
 Qed.
 
 Local Notation "m # s" := [multinom m (s i) | i < n]
@@ -158,38 +184,17 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
 
 Lemma mpart_partm m : {s : 'S_n | (mpart (partm m)) # s == m}.
 Proof.
-  have Hperm : perm_eq m (mpart (partm m)).
-    rewrite mpartE /= take_oversize; first last.
-      rewrite size_cat size_sort size_nseq subnKC //.
-      rewrite size_filter -{3}(size_tuple m).
-      exact: (leq_trans (count_size _ _)).
-    rewrite -(perm_filterC (fun d => d != 0)).
-    set s1 := (X in X ++ _); set s2 := (X in perm_eq _ (_ ++ X)).
-    apply (perm_eq_trans (y := s1 ++ s2)); rewrite /s1 /s2 {s1 s2}.
-    - rewrite perm_cat2l size_sort.
-      set s1 := (X in perm_eq X _); set s2 := (X in perm_eq _ X).
-      suff -> : s1 = s2 by exact: perm_eq_refl.
-      have Hsz : size s1 = size s2.
-        rewrite /s1 /s2 size_nseq -{3}(size_tuple m).
-        have /perm_eqlP/perm_eq_size <- := perm_filterC (fun d => d != 0) m.
-        by rewrite size_cat addKn.
-      apply (eq_from_nth (x0 := 0) Hsz) => i Hi; subst s1 s2.
-      rewrite size_nseq in Hsz.
-      rewrite nth_nseq -{}Hsz {}Hi.
-      case: m => [] [] /= s _; elim: s i => [//= | s0 s IHs].
-      case=> [| i] /=; rewrite negbK; case: eqP => // _.
-      + exact: IHs 0.
-      + exact: IHs i.+1.
-    - by rewrite perm_cat2r perm_eq_sym perm_sort.
-  apply sigW; move: Hperm => /tuple_perm_eqP [s /val_inj Hs].
-  exists s; apply/eqP; apply val_inj => /=.
-  rewrite [RHS]Hs /partm /=.
-  by apply eq_from_tnth => i; rewrite tnth_mktuple.
+apply sigW; have:= partm_perm_eqK m => /tuple_perm_eqP [s /val_inj Hs].
+exists s; apply/eqP; apply val_inj => /=.
+rewrite [RHS]Hs /partm /=.
+by apply eq_from_tnth => i; rewrite tnth_mktuple.
 Qed.
 
 End MonomPart.
 
 Arguments mpart [n] s.
+Arguments dominant [n].
+
 
 Import GRing.Theory.
 
@@ -236,7 +241,7 @@ Lemma char_mpoly : [char R] =i [char {mpoly R[n]}].
 Proof using .
   move=> p; rewrite !unfold_in /= -mpolyC_nat.
   case: (prime.prime p) => //=.
-  apply (sameP idP); apply (iffP idP) => [/eqP | /eqP -> //=].
+  apply/eqP/eqP => [-> //|].
   rewrite -(mpolyP) => /(_ 0%MM).
   by rewrite mcoeff0 raddfMn /= mcoeffMn mcoeff1 eq_refl /= => ->.
 Qed.
@@ -305,36 +310,30 @@ Qed.
 
 Lemma antisym_char2 : (2 \in [char R]) -> symmetric =i antisym.
 Proof using .
-  move=> Hchar p /=.
-  apply (sameP idP); apply (iffP idP).
-  - move=> /isantisymP H; apply/issymP => s.
-    by rewrite H oppr_char2; first by rewrite expr1n scale1r.
-  - move => /issymP H; apply/isantisymP => s.
-    by rewrite H oppr_char2; first by rewrite expr1n scale1r.
+move=> Hchar p /=; apply/issymP/isantisymP => H s;
+  by rewrite H oppr_char2; first by rewrite expr1n scale1r.
 Qed.
 
 Lemma perm_smalln : n <= 1 -> forall s : 'S_n, s = 1%g.
 Proof using .
-  move=> Hn s; rewrite -permP => i.
-  rewrite perm1.
-  case: n Hn s i => [| [| n']] //= Hn s; first by case.
-  move=> i; case: (s i) => a Ha; case: i => b Hb.
-  apply val_inj => /=.
-  by case: a b Ha Hb => [|a][|b].
+move=> Hn s; rewrite -permP => i; rewrite perm1.
+case: n Hn s i => [| [| n']] //= Hn s; first by case.
+move=> i; case: (s i) => a Ha; case: i => b Hb.
+by apply val_inj => /=; case: a b Ha Hb => [|a] [|b].
 Qed.
 
 Lemma sym_smalln : n <= 1 -> (@symmetric n R) =i predT.
 Proof using .
-  move=> Hn p /=; rewrite [RHS]unfold_in /=.
-  apply/issymP => s.
-  by rewrite (perm_smalln Hn s) msym1m.
+move=> Hn p /=; rewrite [RHS]unfold_in /=.
+apply/issymP => s.
+by rewrite (perm_smalln Hn s) msym1m.
 Qed.
 
 Lemma antisym_smalln : n <= 1 -> antisym =i predT.
 Proof using .
-  move=> Hn p /=; rewrite [RHS]unfold_in /=.
-  apply/isantisymP => s.
-  by rewrite (perm_smalln Hn s) odd_perm1 msym1m expr0 scale1r.
+move=> Hn p /=; rewrite [RHS]unfold_in /=.
+apply/isantisymP => s.
+by rewrite (perm_smalln Hn s) odd_perm1 msym1m expr0 scale1r.
 Qed.
 
 Lemma antisym_zmod : zmod_closed antisym.
@@ -362,19 +361,19 @@ Canonical antisym_submodPred := SubmodPred antisym_submod_closed.
 Lemma sym_anti p q :
   p \is antisym -> q \is symmetric -> p * q \is antisym.
 Proof using .
-  move=> /isantisymP Hsym /issymP Hanti.
-  apply/isantisymP => s.
-  rewrite msymM Hsym Hanti.
-  by case: (odd_perm _); rewrite !simplexp.
+move=> /isantisymP Hsym /issymP Hanti.
+apply/isantisymP => s.
+rewrite msymM Hsym Hanti.
+by case: (odd_perm _); rewrite !simplexp.
 Qed.
 
 Lemma anti_anti p q :
   p \is antisym -> q \is antisym -> p * q \is symmetric.
 Proof using .
-  move=> /isantisymP Hp /isantisymP Hq.
-  apply/issymP => s.
-  rewrite msymM Hp Hq.
-  by case: (odd_perm _); rewrite !simplexp.
+move=> /isantisymP Hp /isantisymP Hq.
+apply/issymP => s.
+rewrite msymM Hp Hq.
+by case: (odd_perm _); rewrite !simplexp.
 Qed.
 
 Local Notation "m # s" := [multinom m (s i) | i < n]
@@ -383,10 +382,10 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
 Lemma isantisym_msupp p (s : 'S_n) (m : 'X_{1..n}) : p \is antisym ->
   (m#s \in msupp p) = (m \in msupp p).
 Proof using .
-  rewrite !mcoeff_msupp -mcoeff_sym => /isantisymP ->.
-  case: (odd_perm s); last by rewrite expr0 scale1r.
-  rewrite expr1 scaleN1r !mcoeff_eq0.
-  by rewrite (perm_eq_mem (msuppN _)).
+rewrite !mcoeff_msupp -mcoeff_sym => /isantisymP ->.
+case: (odd_perm s); last by rewrite expr0 scale1r.
+rewrite expr1 scaleN1r !mcoeff_eq0.
+by rewrite (perm_eq_mem (msuppN _)).
 Qed.
 
 
@@ -414,29 +413,25 @@ Implicit Arguments antisym [n R].
 Lemma issym_eltrP n (R : ringType) (p : {mpoly R[n.+1]}) :
   reflect (forall i, i < n -> msym (eltr n i) p = p) (p \is symmetric).
 Proof.
-  apply (iffP idP).
-  - move=> /forallP Hanti i Hi.
-    by have /eqP -> := Hanti (eltr n i).
-  - move=> Heltr; apply/forallP; elim/eltr_ind => [| S i Hi /eqP IH].
-    + by rewrite msym1m.
-    + by rewrite msymMm (Heltr i Hi) IH.
+apply/(iffP forallP) => [Hanti i Hi | Heltr].
+- by have /eqP -> := Hanti (eltr n i).
+- elim/eltr_ind => [| S i Hi /eqP IH].
+  + by rewrite msym1m.
+  + by rewrite msymMm (Heltr i Hi) IH.
 Qed.
 
 Lemma isantisym_eltrP n (R : ringType) (p : {mpoly R[n.+1]}) :
   reflect (forall i, i < n -> msym (eltr n i) p = - p) (p \is antisym).
 Proof.
-  apply (iffP idP).
-  - move=> /forallP Hanti i Hi.
-    have /eqP -> := Hanti (eltr n i).
-    by rewrite /eltr odd_tperm (inordi1 Hi) !simplexp.
-  - move=> Heltr; apply/forallP; elim/eltr_ind => [| S i Hi /eqP IH].
-    + by rewrite odd_perm1 /= msym1m !simplexp.
-    + rewrite msymMm (Heltr i Hi).
-      rewrite msymN IH odd_mul_tperm (inordi1 Hi) addTb.
-      by case: (odd_perm _); rewrite !simplexp.
+apply/(iffP forallP) => [Hanti i Hi | Heltr].
+- have /eqP -> := Hanti (eltr n i).
+  by rewrite /eltr odd_tperm (inordi1 Hi) !simplexp.
+- elim/eltr_ind => [| S i Hi /eqP IH].
+  + by rewrite odd_perm1 /= msym1m !simplexp.
+  + rewrite msymMm (Heltr i Hi).
+    rewrite msymN IH odd_mul_tperm (inordi1 Hi) addTb.
+    by case: (odd_perm _); rewrite !simplexp.
 Qed.
-
-
 
 
 (** * Alternating polynomials *)
@@ -453,14 +448,14 @@ Hypothesis Hchar : ~~ (2 \in [char R]).
 Lemma sym_antisym_char_not2 :
   n >= 2 -> forall p : {mpoly R[n]}, p \is symmetric -> p \is antisym -> p = 0.
 Proof using Hchar.
-  move: Hchar; rewrite (char_mpoly n R) => Hchp Hn p /= /issymP Hsym /isantisymP Hanti.
-  have H0 : 0 < n by apply: (ltn_trans _ Hn).
-  pose s := (tperm (Ordinal H0) (Ordinal Hn)).
-  have := Hanti s; rewrite Hsym.
-  rewrite odd_tperm /= => /eqP; rewrite !simplexp -addr_eq0.
-  rewrite -mulr2n -mulr_natr mulf_eq0 => /orP [/eqP -> //|] /= /eqP /= H2.
-  exfalso; rewrite {Hsym Hanti H0 s}.
-  by move: Hchp; rewrite negb_and H2 eq_refl.
+move: Hchar; rewrite (char_mpoly n R) => Hchp Hn p /= /issymP Hsym /isantisymP Hanti.
+have H0 : 0 < n by apply: (ltn_trans _ Hn).
+pose s := (tperm (Ordinal H0) (Ordinal Hn)).
+have := Hanti s; rewrite Hsym.
+rewrite odd_tperm /= => /eqP; rewrite !simplexp -addr_eq0.
+rewrite -mulr2n -mulr_natr mulf_eq0 => /orP [/eqP -> //|] /= /eqP /= H2.
+exfalso; rewrite {Hsym Hanti H0 s}.
+by move: Hchp; rewrite negb_and H2 eq_refl.
 Qed.
 
 
@@ -475,14 +470,14 @@ Hypothesis Hpanti : p \is antisym.
 
 Lemma sym_antiE q : (q \is symmetric) = (p * q \is antisym).
 Proof using Hpanti Hpn0.
-  case: (leqP n 1) => Hn.
-    by rewrite !(sym_smalln Hn) !(antisym_smalln Hn) !unfold_in /=.
-  apply (sameP idP); apply (iffP idP); last exact: (sym_anti Hpanti).
-  move: Hpanti => /isantisymP Hsym /isantisymP Hpq.
-  apply/issymP => s.
-  have:= Hpq s; rewrite msymM Hsym => H; apply (mulfI Hpn0).
-  move: H; case: (odd_perm s); rewrite !simplexp; last by [].
-  by move=> /oppr_inj.
+case: (leqP n 1) => Hn.
+  by rewrite !(sym_smalln Hn) !(antisym_smalln Hn) !unfold_in /=.
+apply/idP/idP; first exact: sym_anti Hpanti.
+move: Hpanti => /isantisymP Hsym /isantisymP Hpq.
+apply/issymP => s.
+have:= Hpq s; rewrite msymM Hsym => H; apply (mulfI Hpn0).
+move: H; case: (odd_perm s); rewrite !simplexp; last by [].
+by move=> /oppr_inj.
 Qed.
 
 
@@ -491,42 +486,42 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
 
 Lemma isantisym_msupp_uniq (m : 'X_{1..n}) : m \in msupp p -> uniq m.
 Proof using Hchar Hpanti.
-  rewrite mcoeff_msupp => Hsupp.
-  case: (boolP (uniq m)) => // /(notuniq_witnessP 0%N).
-  move=> [] i [] j []; rewrite size_tuple => /andP [] Hi Hj Hnth.
-  move/isantisymP/(_ (tperm (Ordinal (ltn_trans Hi Hj)) (Ordinal Hj))) : Hpanti.
-  rewrite odd_tperm /eq_op /=.
-  rewrite (ltn_eqF Hi) expr1 scaleN1r.
-  move/(congr1 (mcoeff m)); rewrite mcoeffN mcoeff_sym.
-  have -> : m#tperm (Ordinal (ltn_trans Hi Hj)) (Ordinal Hj) = m.
-    rewrite mnmP => k; rewrite mnmE.
-    case: (tpermP _ _ k) => [-> | -> |] //;
-    by rewrite !(mnm_nth 0) /= Hnth.
-  move/eqP; rewrite -addr_eq0.
-  rewrite -mulr2n -mulr_natr mulf_eq0.
-  move: Hchar; rewrite negb_and => /negbTE ->.
-  by move: Hsupp => /negbTE ->.
+rewrite mcoeff_msupp => Hsupp.
+case: (boolP (uniq m)) => // /(notuniq_witnessP 0%N).
+move=> [] i [] j []; rewrite size_tuple => /andP [] Hi Hj Hnth.
+move/isantisymP/(_ (tperm (Ordinal (ltn_trans Hi Hj)) (Ordinal Hj))) : Hpanti.
+rewrite odd_tperm /eq_op /=.
+rewrite (ltn_eqF Hi) expr1 scaleN1r.
+move/(congr1 (mcoeff m)); rewrite mcoeffN mcoeff_sym.
+have -> : m#tperm (Ordinal (ltn_trans Hi Hj)) (Ordinal Hj) = m.
+  rewrite mnmP => k; rewrite mnmE.
+  case: (tpermP _ _ k) => [-> | -> |] //;
+  by rewrite !(mnm_nth 0) /= Hnth.
+move/eqP; rewrite -addr_eq0.
+rewrite -mulr2n -mulr_natr mulf_eq0.
+move: Hchar; rewrite negb_and => /negbTE ->.
+by move: Hsupp => /negbTE ->.
 Qed.
 
 Hypothesis Hphomog : p \is 'C(n , 2).-homog.
 
 Lemma isantisym_mlead_iota : mlead p = rev (iota 0 n) :> seq nat.
 Proof using Hchar Hpanti Hphomog Hpn0.
-  move: Hphomog; rewrite binomial_sumn_iota => /dhomogP Hhomog.
-  have Huniq := isantisym_msupp_uniq (mlead_supp Hpn0).
-  rewrite -(revK (mlead p)) -{4}(size_tuple (mlead p)) -size_rev; congr rev.
-  apply sorted_sumn_iotaE; first last.
-    rewrite size_rev size_tuple sumn_rev -sumnE -/(mdeg _).
-    by rewrite (Hhomog _ (mlead_supp Hpn0)).
-  rewrite ltn_sorted_uniq_leq rev_uniq Huniq /=.
-  rewrite {Huniq Hhomog} rev_sorted.
-  apply/(sortedP 0%N).
-    - by move=> i j k /= /(leq_trans _); apply.
-    - by move=> i /=.
-  move=> i j; rewrite size_tuple=> /andP [] Hij Hj.
-  have H := mlead_antisym_sorted Hpanti.
-  have /= := H (Ordinal (leq_ltn_trans Hij Hj)) (Ordinal Hj) Hij.
-  by rewrite !(mnm_nth 0) /=; apply.
+move: Hphomog; rewrite binomial_sumn_iota => /dhomogP Hhomog.
+have Huniq := isantisym_msupp_uniq (mlead_supp Hpn0).
+rewrite -(revK (mlead p)) -{4}(size_tuple (mlead p)) -size_rev; congr rev.
+apply sorted_sumn_iotaE; first last.
+  rewrite size_rev size_tuple sumn_rev -sumnE -/(mdeg _).
+  by rewrite (Hhomog _ (mlead_supp Hpn0)).
+rewrite ltn_sorted_uniq_leq rev_uniq Huniq /=.
+rewrite {Huniq Hhomog} rev_sorted.
+apply/(sortedP 0%N).
+  - by move=> i j k /= /(leq_trans _); apply.
+  - by move=> i /=.
+move=> i j; rewrite size_tuple=> /andP [] Hij Hj.
+have H := mlead_antisym_sorted Hpanti.
+have /= := H (Ordinal (leq_ltn_trans Hij Hj)) (Ordinal Hj) Hij.
+by rewrite !(mnm_nth 0) /=; apply.
 Qed.
 
 Definition rho := [multinom (n - 1 - i)%N | i < n].
@@ -537,38 +532,38 @@ Local Notation "''a_' k" := (@alternpol n R 'X_[k])
 
 Lemma rho_iota : rho = rev (iota 0 n) :> seq nat.
 Proof using .
-  apply (eq_from_nth (x0 := 0%N)).
-    by rewrite size_rev size_iota size_map size_enum_ord.
-  move=> i; rewrite size_map size_enum_ord => Hi.
-  rewrite nth_rev size_iota // (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
-  rewrite nth_enum_ord // nth_iota; first last.
-    case: n Hi => [// | m] _; by rewrite ltnS subSS; exact: leq_subr.
-  rewrite add0n; case: n Hi => [// | m] _; by rewrite !subSS subn0.
+apply (eq_from_nth (x0 := 0%N)).
+  by rewrite size_rev size_iota size_map size_enum_ord.
+move=> i; rewrite size_map size_enum_ord => Hi.
+rewrite nth_rev size_iota // (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
+rewrite nth_enum_ord // nth_iota; first last.
+  case: n Hi => [// | m] _; by rewrite ltnS subSS; exact: leq_subr.
+rewrite add0n; case: n Hi => [// | m] _; by rewrite !subSS subn0.
 Qed.
 
 Lemma alt_homog : 'a_rho \is 'C(n, 2).-homog.
 Proof using .
-  apply rpred_sum => s _; rewrite rpredZsign msymX dhomogX /=.
-  have -> : mdeg (rho#(s^-1)%g) = mdeg rho.
-    rewrite /mdeg; apply eq_big_perm; apply/tuple_perm_eqP; by exists (s^-1)%g.
-  rewrite /mdeg binomial_sumn_iota -sumnE; apply/eqP.
-  apply eq_big_perm; rewrite rho_iota perm_eq_sym; exact: perm_eq_rev.
+apply rpred_sum => s _; rewrite rpredZsign msymX dhomogX /=.
+have -> : mdeg (rho#(s^-1)%g) = mdeg rho.
+  rewrite /mdeg; apply eq_big_perm; apply/tuple_perm_eqP; by exists (s^-1)%g.
+rewrite /mdeg binomial_sumn_iota -sumnE; apply/eqP.
+apply eq_big_perm; rewrite rho_iota perm_eq_sym; exact: perm_eq_rev.
 Qed.
 
 Lemma alt_anti m : 'a_m \is antisym.
 Proof using .
-  apply/isantisymP => S.
-  rewrite /alternpol.
-  rewrite (big_morph (msym S) (@msymD _ _ _) (@msym0 _ _ _)).
-  rewrite scaler_sumr.
-  rewrite [RHS](reindex_inj (mulIg S)); apply: eq_big => //= s _.
-  rewrite msymZ -msymMm scalerA; congr (_ *: _).
-  by rewrite odd_permM signr_addb [X in (_  = _ * X)]mulrC signrMK.
+apply/isantisymP => S.
+rewrite /alternpol.
+rewrite (big_morph (msym S) (@msymD _ _ _) (@msym0 _ _ _)).
+rewrite scaler_sumr.
+rewrite [RHS](reindex_inj (mulIg S)); apply: eq_big => //= s _.
+rewrite msymZ -msymMm scalerA; congr (_ *: _).
+by rewrite odd_permM signr_addb [X in (_  = _ * X)]mulrC signrMK.
 Qed.
 
 Lemma isantisym_mlead_rho : mlead p = rho.
 Proof using Hchar Hpanti Hphomog Hpn0.
-  apply val_inj => /=; apply val_inj => /=; by rewrite isantisym_mlead_iota rho_iota.
+apply val_inj => /=; apply val_inj => /=; by rewrite isantisym_mlead_iota rho_iota.
 Qed.
 
 End Lead.
@@ -581,27 +576,27 @@ Local Notation "''a_' k" := (alternpol 'X_[k])
 Lemma isantisym_alt (p : {mpoly R[n]}) :
   p != 0 -> p \is antisym -> p \is ('C(n, 2)).-homog -> p = p@_rho *: 'a_rho.
 Proof using Hchar.
-  move=> Hpn0 Hanti Hhom.
-  apply/eqP; rewrite -subr_eq0; apply contraT => Habs.
-  have /(isantisym_mlead_rho Habs) H : p - p@_rho *: 'a_rho \is antisym.
-    apply (rpredD Hanti); apply rpredNr; apply rpredZ; exact: alt_anti.
-  move: Habs => /mlead_supp.
-  have /H{H} ->: p - p@_rho *: 'a_rho \is ('C(n, 2)).-homog.
-    apply (rpredD Hhom); apply rpredNr; apply rpredZ; exact: alt_homog.
-  rewrite mcoeff_msupp linearB /= linearZ linear_sum /=.
-  rewrite (bigID (xpred1 1%g)) /= big_pred1_eq.
-  rewrite odd_perm1 /= expr0 scale1r msym1m mcoeffX eq_refl /=.
-  rewrite big1; first by rewrite addr0 mulr1 subrr eq_refl.
-  move=> s Hs; apply /eqP; move: Hs; apply contraR.
-  rewrite linearZ /= msymX mcoeffX.
-  case: (altP ( _ =P rho)); last by rewrite mulr0 eq_refl.
-  rewrite mnmP => H _; rewrite -eq_invg1; apply/eqP.
-  rewrite -permP => i; rewrite perm1.
-  move /(_ i) : H => /=.
-  rewrite /rho !mnm_tnth !tnth_mktuple !mnm_tnth !tnth_mktuple !subn1 => H.
-  rewrite -[LHS]rev_ordK -[RHS]rev_ordK; congr rev_ord.
-  apply val_inj => /=; rewrite !subnS.
-  have:= ltn_ord i => /ltn_predK {1 5}<-; by rewrite !subSKn.
+move=> Hpn0 Hanti Hhom.
+apply/eqP; rewrite -subr_eq0; apply contraT => Habs.
+have /(isantisym_mlead_rho Habs) H : p - p@_rho *: 'a_rho \is antisym.
+  apply (rpredD Hanti); apply rpredNr; apply rpredZ; exact: alt_anti.
+move: Habs => /mlead_supp.
+have /H{H} ->: p - p@_rho *: 'a_rho \is ('C(n, 2)).-homog.
+  apply (rpredD Hhom); apply rpredNr; apply rpredZ; exact: alt_homog.
+rewrite mcoeff_msupp linearB /= linearZ linear_sum /=.
+rewrite (bigID (xpred1 1%g)) /= big_pred1_eq.
+rewrite odd_perm1 /= expr0 scale1r msym1m mcoeffX eq_refl /=.
+rewrite big1; first by rewrite addr0 mulr1 subrr eq_refl.
+move=> s Hs; apply /eqP; move: Hs; apply contraR.
+rewrite linearZ /= msymX mcoeffX.
+case: (altP ( _ =P rho)); last by rewrite mulr0 eq_refl.
+rewrite mnmP => H _; rewrite -eq_invg1; apply/eqP.
+rewrite -permP => i; rewrite perm1.
+move /(_ i) : H => /=.
+rewrite /rho !mnm_tnth !tnth_mktuple !mnm_tnth !tnth_mktuple !subn1 => H.
+rewrite -[LHS]rev_ordK -[RHS]rev_ordK; congr rev_ord.
+apply val_inj => /=; rewrite !subnS.
+have:= ltn_ord i => /ltn_predK {1 5}<-; by rewrite !subSKn.
 Qed.
 
 End AlternIDomain.
@@ -621,90 +616,90 @@ Local Definition predi p := (p.1 < p.2) && (p != (inord i, inord i.+1)).
 
 Lemma predi_eltrp p : i < n -> predi p -> predi (eltrp p).
 Proof using .
-  move=> Hi.
-  have Hii1 : val (@inord n i.+1) = (@inord n i).+1.
-    rewrite /= inordK; last by apply (leq_trans Hi).
-    by rewrite /= inordK; last by apply (leq_trans Hi).
-  move: p => [u v] /=; rewrite /predi /= /eltrp /eltr => /andP [] Hlt Hneq.
-  case: (altP (inord i =P u)) => Hu.
-    subst u; rewrite tpermL.
-    case: (altP (v =P inord i.+1)) Hneq Hlt => Hu; first by subst v => /=; rewrite eq_refl.
-    move=> _ Hlt.
-    rewrite tpermD; first last.
-      by rewrite eq_sym.
-      by rewrite neq_ltn Hlt.
-    apply/andP; split.
-    - rewrite ltn_neqAle eq_sym Hu /=.
-      by rewrite Hii1.
-    - rewrite /eq_op /= eq_sym.
-      apply/nandP; left.
-      rewrite /eq_op /= Hii1.
-      by rewrite ieqi1F.
-  case: (altP (inord i.+1 =P u)) => Hu1.
-    subst u; rewrite tpermR /=.
-    rewrite tpermD; first last.
-    - move: Hlt; by rewrite ltn_neqAle => /andP [].
-    - move: Hlt; rewrite Hii1 => /ltnW.
-      by rewrite ltn_neqAle => /andP [].
-    apply/andP; split.
-    - apply: (ltn_trans _ Hlt).
-      by rewrite Hii1.
-    - rewrite /eq_op /= eq_refl /= eq_sym.
-      move: Hlt; by rewrite ltn_neqAle => /andP [].
-  rewrite (tpermD Hu Hu1); apply/andP; split; first last.
-    apply/nandP => /=; left; by rewrite eq_sym.
-  case: (altP (inord i =P v)) => Hv.
-    subst v; rewrite tpermL Hii1.
-    by apply (leq_trans Hlt).
-  case: (altP (inord i.+1 =P v)) => Hv1.
-    subst v; rewrite tpermR.
-    move: Hlt; by rewrite Hii1 ltnS ltn_neqAle eq_sym Hu /=.
-  by rewrite tpermD.
+move=> Hi.
+have Hii1 : val (@inord n i.+1) = (@inord n i).+1.
+  rewrite /= inordK; last by apply (leq_trans Hi).
+  by rewrite /= inordK; last by apply (leq_trans Hi).
+move: p => [u v] /=; rewrite /predi /= /eltrp /eltr => /andP [] Hlt Hneq.
+case: (altP (inord i =P u)) => Hu.
+  subst u; rewrite tpermL.
+  case: (altP (v =P inord i.+1)) Hneq Hlt => Hu; first by subst v => /=; rewrite eq_refl.
+  move=> _ Hlt.
+  rewrite tpermD; first last.
+    by rewrite eq_sym.
+    by rewrite neq_ltn Hlt.
+  apply/andP; split.
+  - rewrite ltn_neqAle eq_sym Hu /=.
+    by rewrite Hii1.
+  - rewrite /eq_op /= eq_sym.
+    apply/nandP; left.
+    rewrite /eq_op /= Hii1.
+    by rewrite ieqi1F.
+case: (altP (inord i.+1 =P u)) => Hu1.
+  subst u; rewrite tpermR /=.
+  rewrite tpermD; first last.
+  - move: Hlt; by rewrite ltn_neqAle => /andP [].
+  - move: Hlt; rewrite Hii1 => /ltnW.
+    by rewrite ltn_neqAle => /andP [].
+  apply/andP; split.
+  - apply: (ltn_trans _ Hlt).
+    by rewrite Hii1.
+  - rewrite /eq_op /= eq_refl /= eq_sym.
+    move: Hlt; by rewrite ltn_neqAle => /andP [].
+rewrite (tpermD Hu Hu1); apply/andP; split; first last.
+  apply/nandP => /=; left; by rewrite eq_sym.
+case: (altP (inord i =P v)) => Hv.
+  subst v; rewrite tpermL Hii1.
+  by apply (leq_trans Hlt).
+case: (altP (inord i.+1 =P v)) => Hv1.
+  subst v; rewrite tpermR.
+  move: Hlt; by rewrite Hii1 ltnS ltn_neqAle eq_sym Hu /=.
+by rewrite tpermD.
 Qed.
 
 Lemma predi_eltrpE p : i < n -> predi p = predi (eltr n i p.1, eltr n i p.2).
 Proof using .
-  move=> Hi; apply/(sameP idP); apply(iffP idP); last by apply predi_eltrp.
-  set p1 := ( _, _).
-  suff -> : p = ((eltr n i) p1.1, (eltr n i) p1.2) by apply predi_eltrp.
-  rewrite /p1 /= !tpermK {p1}.
-  by case: p.
+move=> Hi; apply/idP/idP; first exact: predi_eltrp.
+set p1 := ( _, _).
+suff -> : p = ((eltr n i) p1.1, (eltr n i) p1.2) by apply predi_eltrp.
+rewrite /p1 /= !tpermK {p1}.
+by case: p.
 Qed.
 
 End EltrP.
 
 Lemma vdmprod_anti n (R : comRingType) : @vdmprod n R \is antisym.
 Proof.
-  case: n => [| n].
-    apply/isantisymP => s.
-    have -> : s = 1%g by rewrite -permP => i; have := ltn_ord i.
-    by rewrite msym1m odd_perm1 simplexp.
-  apply/isantisym_eltrP => i Hi.
-  rewrite /vdmprod.
-  rewrite (bigD1 (inord i, inord i.+1)) /=; last by rewrite !inordK //=; apply (leq_trans Hi).
-  rewrite msymM -mulNr; congr (_ * _).
-    rewrite msymB opprB; congr (_ - _); rewrite /msym mmapX mmap1U /eltr.
-    - by rewrite tpermL.
-    - by rewrite tpermR.
-  rewrite (big_morph _ (msymM (eltr n i)) (msym1 _ (eltr n i))) /=.
-  rewrite (eq_bigl (fun p : 'II_n.+1 => predi i (eltrp i p))); first last.
-    move=> [u v] /=; by rewrite -/(predi i (u,v)) (predi_eltrpE (u, v) Hi) /=.
-  rewrite (eq_bigr (fun p => 'X_(eltrp i p).1 - 'X_(eltrp i p).2)); first last.
-    move => [u v] /= _; by rewrite msymB /msym !mmapX !mmap1U.
-  rewrite -(big_map (@eltrp n i) (predi i) (fun p => ('X_p.1 - 'X_p.2))) /=.
-  rewrite /index_enum -enumT /=.
-  set en := enum _.
-  rewrite (eq_big_perm en) //=.
-  have Hin : map (eltrp i) en =i en.
-    move=> [u v].
-    rewrite mem_enum inE.
-    have -> : (u, v) = eltrp i (eltrp i (u, v)) by rewrite /eltrp /= !tpermK.
-    apply map_f.
-    by rewrite mem_enum inE.
-  apply: (uniq_perm_eq _ _ Hin).
-  - rewrite (perm_uniq Hin); first by apply enum_uniq.
-    by rewrite size_map.
-  - by apply enum_uniq.
+case: n => [| n].
+  apply/isantisymP => s.
+  have -> : s = 1%g by rewrite -permP => i; have := ltn_ord i.
+  by rewrite msym1m odd_perm1 simplexp.
+apply/isantisym_eltrP => i Hi.
+rewrite /vdmprod.
+rewrite (bigD1 (inord i, inord i.+1)) /=; last by rewrite !inordK //=; apply (leq_trans Hi).
+rewrite msymM -mulNr; congr (_ * _).
+  rewrite msymB opprB; congr (_ - _); rewrite /msym mmapX mmap1U /eltr.
+  - by rewrite tpermL.
+  - by rewrite tpermR.
+rewrite (big_morph _ (msymM (eltr n i)) (msym1 _ (eltr n i))) /=.
+rewrite (eq_bigl (fun p : 'II_n.+1 => predi i (eltrp i p))); first last.
+  move=> [u v] /=; by rewrite -/(predi i (u,v)) (predi_eltrpE (u, v) Hi) /=.
+rewrite (eq_bigr (fun p => 'X_(eltrp i p).1 - 'X_(eltrp i p).2)); first last.
+  move => [u v] /= _; by rewrite msymB /msym !mmapX !mmap1U.
+rewrite -(big_map (@eltrp n i) (predi i) (fun p => ('X_p.1 - 'X_p.2))) /=.
+rewrite /index_enum -enumT /=.
+set en := enum _.
+rewrite (eq_big_perm en) //=.
+have Hin : map (eltrp i) en =i en.
+  move=> [u v].
+  rewrite mem_enum inE.
+  have -> : (u, v) = eltrp i (eltrp i (u, v)) by rewrite /eltrp /= !tpermK.
+  apply map_f.
+  by rewrite mem_enum inE.
+apply: (uniq_perm_eq _ _ Hin).
+- rewrite (perm_uniq Hin); first by apply enum_uniq.
+  by rewrite size_map.
+- by apply enum_uniq.
 Qed.
 
 Lemma sym_vdmprodM n (R : comRingType) (p : {mpoly R[n]}) :
@@ -723,20 +718,20 @@ Local Notation "'X_ i" := (@mpolyX n R U_(i)).
 
 Lemma vdmprod_homog : D \is homog [measure of mdeg].
 Proof using .
-  rewrite /vdmprod -big_filter.
-  set F := BIG_F; rewrite (eq_bigl (fun x => xpredT (F x))) //.
-  rewrite -(big_map F xpredT id) /F {F}.
-  apply homog_prod; apply/allP => X /mapP [[i j]] /= _ -> {X}.
-  apply/homogP; exists 1%N; apply rpredB; by rewrite dhomogX /= mdeg1.
+rewrite /vdmprod -big_filter.
+set F := BIG_F; rewrite (eq_bigl (fun x => xpredT (F x))) //.
+rewrite -(big_map F xpredT id) /F {F}.
+apply homog_prod; apply/allP => X /mapP [[i j]] /= _ -> {X}.
+apply/homogP; exists 1%N; apply rpredB; by rewrite dhomogX /= mdeg1.
 Qed.
 
 Lemma polyX_inj (i j : 'I_n) : 'X_i = 'X_j -> i = j.
 Proof using .
-  move/(congr1 (mcoeff U_(j))); rewrite !mcoeffX eq_refl /=.
-  case: (altP (U_(i)%MM =P U_(j)%MM)) => [H _ | _ /esym /= /eqP] /=; first last.
-    by have:= oner_neq0 R => /negbTE ->.
-  have:= congr1 (fun x : 'X_{1..n} => x j) H.
-  rewrite !mnm1E eq_refl eq_sym; by case: eqP.
+move/(congr1 (mcoeff U_(j))); rewrite !mcoeffX eq_refl /=.
+case: (altP (U_(i)%MM =P U_(j)%MM)) => [H _ | _ /esym /= /eqP] /=; first last.
+  by have:= oner_neq0 R => /negbTE ->.
+have:= congr1 (fun x : 'X_{1..n} => x j) H.
+rewrite !mnm1E eq_refl eq_sym; by case: eqP.
 Qed.
 
 Lemma diffX_neq0 (i j : 'I_n) : i != j -> 'X_i - 'X_j != 0.
@@ -747,45 +742,45 @@ Proof using . rewrite msuppE /= unlock /= domU //; exact: oner_neq0. Qed.
 
 Lemma vdmprod_neq0 : D != 0.
 Proof using .
-  rewrite /vdmprod -big_filter prodf_seq_neq0.
-  apply/allP => [[i j]]; rewrite mem_filter /= => /andP [].
-  rewrite ltn_neqAle => /andP [] Hij _ _; exact: diffX_neq0.
+rewrite /vdmprod -big_filter prodf_seq_neq0.
+apply/allP => [[i j]]; rewrite mem_filter /= => /andP [].
+rewrite ltn_neqAle => /andP [] Hij _ _; exact: diffX_neq0.
 Qed.
 
 Lemma vdmprod_dhomog : D \is 'C(n, 2).-homog.
 Proof using .
-  have:= vdmprod_homog; rewrite homog_msize.
-  suff -> : (msize D).-1 = 'C(n, 2) by [].
-  rewrite /vdmprod -big_filter; set s := filter _ _.
-  have <-: size s = 'C(n, 2).
-    rewrite /s{s} /index_enum.
-    rewrite (eq_filter (a2 := mem [set i : 'II_n | i.1 < i.2])); first last.
-      by move => i /=; rewrite inE.
-    by rewrite -cardE card_triangle.
+have:= vdmprod_homog; rewrite homog_msize.
+suff -> : (msize D).-1 = 'C(n, 2) by [].
+rewrite /vdmprod -big_filter; set s := filter _ _.
+have <-: size s = 'C(n, 2).
+  rewrite /s{s} /index_enum.
+  rewrite (eq_filter (a2 := mem [set i : 'II_n | i.1 < i.2])); first last.
+    by move => i /=; rewrite inE.
+  by rewrite -cardE card_triangle.
  have : all (fun i => i.1 != i.2) s.
-    rewrite {}/s; apply/allP => [[i j]] /=.
-    rewrite mem_filter /= => /andP [].
-    by rewrite ltn_neqAle => /andP [] ->.
-  elim: s => [| [i j] s IHs] /=; first by rewrite big_nil msize1.
-  move=> /andP [] Hs Hall; move /(_ Hall) : IHs => Hrec.
-  have Hprodn0: \prod_(j0 <- s) ('X_j0.1 - 'X_j0.2) != 0.
-    rewrite {i j Hs} prodf_seq_neq0; apply/allP => [[i j]] /= /(allP Hall) /=.
-    exact: diffX_neq0.
-  rewrite big_cons (msizeM (diffX_neq0 Hs) Hprodn0).
-  have -> : msize ('X_i - 'X_j : {mpoly R[n]}) = 2.
-    rewrite msizeE.
-    have : perm_eq (msupp ('X_i - 'X_j : {mpoly R[n]})) [:: U_(i); U_(j)]%MM.
-      apply: (perm_eq_trans (msuppD _)).
-        move=> m /=; rewrite (perm_eq_mem (msuppN _)) !mcoeff_msupp !mcoeffX.
-        case: (altP (U_(j)%MM =P m)) => /= [<- {m} |]; last by rewrite eq_refl andbF.
-        suff -> : U_(i)%MM == U_(j)%MM = false by rewrite eq_refl.
-        apply negbTE; move: Hs; apply contra => /eqP/(congr1 (fun x : 'X_{1..n} => x j)).
-        rewrite !mnm1E eq_refl eq_sym; by case: eqP.
-      by rewrite !msuppX1 cat1s perm_cons -msuppX1 msuppN.
-    move=> /(eq_big_perm _) -> /=; by rewrite !big_cons big_nil !mdeg1.
-  rewrite addSn add1n /= -Hrec.
-  move: Hprodn0; rewrite -msize_poly_eq0.
-  by case: (msize _).
+  rewrite {}/s; apply/allP => [[i j]] /=.
+  rewrite mem_filter /= => /andP [].
+  by rewrite ltn_neqAle => /andP [] ->.
+elim: s => [| [i j] s IHs] /=; first by rewrite big_nil msize1.
+move=> /andP [] Hs Hall; move /(_ Hall) : IHs => Hrec.
+have Hprodn0: \prod_(j0 <- s) ('X_j0.1 - 'X_j0.2) != 0.
+  rewrite {i j Hs} prodf_seq_neq0; apply/allP => [[i j]] /= /(allP Hall) /=.
+  exact: diffX_neq0.
+rewrite big_cons (msizeM (diffX_neq0 Hs) Hprodn0).
+have -> : msize ('X_i - 'X_j : {mpoly R[n]}) = 2.
+  rewrite msizeE.
+  have : perm_eq (msupp ('X_i - 'X_j : {mpoly R[n]})) [:: U_(i); U_(j)]%MM.
+    apply: (perm_eq_trans (msuppD _)).
+      move=> m /=; rewrite (perm_eq_mem (msuppN _)) !mcoeff_msupp !mcoeffX.
+      case: (altP (U_(j)%MM =P m)) => /= [<- {m} |]; last by rewrite eq_refl andbF.
+      suff -> : U_(i)%MM == U_(j)%MM = false by rewrite eq_refl.
+      apply negbTE; move: Hs; apply contra => /eqP/(congr1 (fun x : 'X_{1..n} => x j)).
+      rewrite !mnm1E eq_refl eq_sym; by case: eqP.
+    by rewrite !msuppX1 cat1s perm_cons -msuppX1 msuppN.
+  move=> /(eq_big_perm _) -> /=; by rewrite !big_cons big_nil !mdeg1.
+rewrite addSn add1n /= -Hrec.
+move: Hprodn0; rewrite -msize_poly_eq0.
+by case: (msize _).
 Qed.
 
 Local Notation "''a_' k" := (alternpol 'X_[k])
@@ -797,10 +792,10 @@ Let rbound b := [multinom (b - i)%N | i < n].
 
 Lemma mesymlm_rbound b : (mesymlm n b <= rbound b)%MM.
 Proof using .
-  apply/mnm_lepP => i.
-  rewrite !mnmE inE.
-  case (ssrnat.ltnP i b) => [/= Hb| //].
-  by rewrite subn_gt0.
+apply/mnm_lepP => i.
+rewrite !mnmE inE.
+case (ssrnat.ltnP i b) => [/= Hb| //].
+by rewrite subn_gt0.
 Qed.
 
 Hypothesis Hchar : ~~ (2 \in [char R]).
@@ -808,145 +803,145 @@ Hypothesis Hchar : ~~ (2 \in [char R]).
 Lemma coeffXdiff (b : 'I_n) (k : 'X_{1..n}) (i : 'I_n) :
   (k <= rbound b)%MM -> ('X_i - 'X_b)@_k = (k == U_(i)%MM)%:R.
 Proof using .
-  rewrite mcoeffB !mcoeffX => Hk.
-  suff -> : (U_(b)%MM == k) = false by rewrite subr0 eq_sym.
-  apply/(introF idP) => /eqP; rewrite mnmP => /(_ b).
-  rewrite mnm1E eq_refl => /esym /= => Hkb.
-  have {Hkb} : k b != 0%N by rewrite Hkb.
-  by rewrite -lep1mP => /lepm_trans/(_ Hk); rewrite lep1mP mnmE /= subnn eq_refl.
+rewrite mcoeffB !mcoeffX => Hk.
+suff -> : (U_(b)%MM == k) = false by rewrite subr0 eq_sym.
+apply/(introF idP) => /eqP; rewrite mnmP => /(_ b).
+rewrite mnm1E eq_refl => /esym /= => Hkb.
+have {Hkb} : k b != 0%N by rewrite Hkb.
+by rewrite -lep1mP => /lepm_trans/(_ Hk); rewrite lep1mP mnmE /= subnn eq_refl.
 Qed.
 
 Lemma coeff_prodXdiff (b : 'I_n) (k : 'X_{1..n}) :
   (k <= rbound b)%MM ->
   (\prod_(i < n | i < b) ('X_i - 'X_b))@_k = (k == mesymlm n b)%:R.
 Proof using .
-  case: b => b /=.
-  elim: {1 5 7}b (leqnn b) k => [| c IHc] Hc k Hb Hk.
-    rewrite big1 //.
-    suff -> : mesymlm n 0 = 0%MM by rewrite mcoeff1.
-    rewrite mnmP => i; by rewrite !mnmE /mesymlmnm inE ltn0.
-  set ordb := Ordinal Hb.
-  move/(_ (ltnW Hc)) : IHc => Hrec.
-  have Hcn := ltn_trans Hc Hb.
-  pose ordc := Ordinal Hcn.
-  rewrite (bigID (xpred1 ordc)) /=.
-    rewrite (eq_bigl (xpred1 ordc)); first last.
-      move=> i /=; case: eqP => [->|]; last by rewrite andbF.
-      by rewrite /= ltnSn.
-    rewrite (eq_bigl (fun i : 'I_n => i < c)); first last.
-      move=> i /=; by rewrite ltnS ltn_neqAle [RHS]andbC.
-  rewrite big_pred1_eq.
-  rewrite (mcoeff_poly_mul_lin _ _ (k := (mdeg k).+2)) //.
-  case: (boolP (U_(ordc) <= k)%MM) => Hck.
-  - have ordc_bound : mdeg (U_(ordc))%MM < (mdeg k).+2 by rewrite mdeg1.
-    pose mc := BMultinom ordc_bound; rewrite (bigID (xpred1 mc)) /=.
-    rewrite (eq_bigl (xpred1 mc)); first last.
-      move=> m /=; case eqP => [->|]; last by rewrite andbF.
-      by rewrite /= Hck.
-    rewrite big_pred1_eq /= coeffXdiff; last exact: (lepm_trans Hck Hk).
-    rewrite eq_refl mul1r {}Hrec; first last.
-      apply: (lepm_trans _ Hk); apply/mnm_lepP => i.
-      rewrite mnmBE; exact: leq_subr.
-    rewrite big1 ?addr0; first last.
-      move=> m /andP [] Hmk Hmc1; rewrite coeffXdiff; last exact: (lepm_trans Hmk Hk).
-      move: Hmc1; rewrite {1}/eq_op /= => /= /negbTE /= ->; by rewrite mul0r.
-      rewrite -{2}(submK Hck).
-      have -> : mesymlm n c.+1 = (mesymlm n c + U_(ordc))%MM.
-        rewrite mnmP => i; rewrite !mnmE !inE ltnS leq_eqVlt orbC eq_sym {2}/eq_op/=.
-        case: eqP => [->|_]; first by rewrite ltnn.
-        by rewrite orbF addn0.
-        congr (nat_of_bool _)%:R; apply/idP/idP => [/eqP <- //| /eqP Heq]; apply/eqP.
-        by rewrite -[RHS](addmK (U_(ordc))%MM) -[LHS](addmK (U_(ordc))%MM) Heq.
-  - rewrite big1; first last.
-      move=> m /= Hm; rewrite coeffXdiff; last exact: (lepm_trans Hm Hk).
-      suff -> : m == U_(ordc)%MM :> 'X_{1..n} = false by rewrite mul0r.
-      apply/(introF idP) => /eqP; rewrite mnmP => /(_ ordc).
-      rewrite mnm1E eq_refl /= => Habs; move: Hck.
-      have : (U_(ordc) <= m)%MM by rewrite lep1mP {}Habs.
-      by move/lepm_trans/(_ Hm) => ->.
-    suff -> : (k == mesymlm n c.+1) = false by [].
+case: b => b /=.
+elim: {1 5 7}b (leqnn b) k => [| c IHc] Hc k Hb Hk.
+  rewrite big1 //.
+  suff -> : mesymlm n 0 = 0%MM by rewrite mcoeff1.
+  rewrite mnmP => i; by rewrite !mnmE /mesymlmnm inE ltn0.
+set ordb := Ordinal Hb.
+move/(_ (ltnW Hc)) : IHc => Hrec.
+have Hcn := ltn_trans Hc Hb.
+pose ordc := Ordinal Hcn.
+rewrite (bigID (xpred1 ordc)) /=.
+  rewrite (eq_bigl (xpred1 ordc)); first last.
+    move=> i /=; case: eqP => [->|]; last by rewrite andbF.
+    by rewrite /= ltnSn.
+  rewrite (eq_bigl (fun i : 'I_n => i < c)); first last.
+    move=> i /=; by rewrite ltnS ltn_neqAle [RHS]andbC.
+rewrite big_pred1_eq.
+rewrite (mcoeff_poly_mul_lin _ _ (k := (mdeg k).+2)) //.
+case: (boolP (U_(ordc) <= k)%MM) => Hck.
+- have ordc_bound : mdeg (U_(ordc))%MM < (mdeg k).+2 by rewrite mdeg1.
+  pose mc := BMultinom ordc_bound; rewrite (bigID (xpred1 mc)) /=.
+  rewrite (eq_bigl (xpred1 mc)); first last.
+    move=> m /=; case eqP => [->|]; last by rewrite andbF.
+    by rewrite /= Hck.
+  rewrite big_pred1_eq /= coeffXdiff; last exact: (lepm_trans Hck Hk).
+  rewrite eq_refl mul1r {}Hrec; first last.
+    apply: (lepm_trans _ Hk); apply/mnm_lepP => i.
+    rewrite mnmBE; exact: leq_subr.
+  rewrite big1 ?addr0; first last.
+    move=> m /andP [] Hmk Hmc1; rewrite coeffXdiff; last exact: (lepm_trans Hmk Hk).
+    move: Hmc1; rewrite {1}/eq_op /= => /= /negbTE /= ->; by rewrite mul0r.
+    rewrite -{2}(submK Hck).
+    have -> : mesymlm n c.+1 = (mesymlm n c + U_(ordc))%MM.
+      rewrite mnmP => i; rewrite !mnmE !inE ltnS leq_eqVlt orbC eq_sym {2}/eq_op/=.
+      case: eqP => [->|_]; first by rewrite ltnn.
+      by rewrite orbF addn0.
+      congr (nat_of_bool _)%:R; apply/idP/idP => [/eqP <- //| /eqP Heq]; apply/eqP.
+      by rewrite -[RHS](addmK (U_(ordc))%MM) -[LHS](addmK (U_(ordc))%MM) Heq.
+- rewrite big1; first last.
+    move=> m /= Hm; rewrite coeffXdiff; last exact: (lepm_trans Hm Hk).
+    suff -> : m == U_(ordc)%MM :> 'X_{1..n} = false by rewrite mul0r.
     apply/(introF idP) => /eqP; rewrite mnmP => /(_ ordc).
-    move: Hck; rewrite lep1mP negbK => /eqP ->.
-    by rewrite /mesymlm /mesymlmnm /mesym1 /= mnmE inE /= ltnSn.
+    rewrite mnm1E eq_refl /= => Habs; move: Hck.
+    have : (U_(ordc) <= m)%MM by rewrite lep1mP {}Habs.
+    by move/lepm_trans/(_ Hm) => ->.
+  suff -> : (k == mesymlm n c.+1) = false by [].
+  apply/(introF idP) => /eqP; rewrite mnmP => /(_ ordc).
+  move: Hck; rewrite lep1mP negbK => /eqP ->.
+  by rewrite /mesymlm /mesymlmnm /mesym1 /= mnmE inE /= ltnSn.
 Qed.
 
 Lemma mcoeff_arbound b : b < n -> (abound b)@_(rbound b) = 1.
 Proof using .
-  elim: b => [Hb | b IHb Hb1].
-    rewrite /abound {Hb} big1; first last.
-      by move=> [i j] /= /andP [] /leq_trans H/H{H}.
-    rewrite mcoeff1 /=.
-    suff -> : rbound 0 = 0%MM by rewrite eq_refl.
-    rewrite mnmP => i; by rewrite mnmE.
-  move/(_ (ltnW Hb1)): IHb => Hrec.
-  rewrite /abound (bigID (fun p : 'II_n => p.2 <= b)) /=.
-  rewrite (eq_bigl (fun p : 'II_n => p.1 < p.2 <= b)); first last.
-    move=> [i j]/=; case: (leqP j b); last by rewrite !andbF.
-    rewrite -ltnS => /ltnW ->; by rewrite !andbT.
-  rewrite mulrC -/(abound _).
-  pose ordb1 := Ordinal Hb1.
+elim: b => [Hb | b IHb Hb1].
+  rewrite /abound {Hb} big1; first last.
+    by move=> [i j] /= /andP [] /leq_trans H/H{H}.
+  rewrite mcoeff1 /=.
+  suff -> : rbound 0 = 0%MM by rewrite eq_refl.
+  rewrite mnmP => i; by rewrite mnmE.
+move/(_ (ltnW Hb1)): IHb => Hrec.
+rewrite /abound (bigID (fun p : 'II_n => p.2 <= b)) /=.
+rewrite (eq_bigl (fun p : 'II_n => p.1 < p.2 <= b)); first last.
+  move=> [i j]/=; case: (leqP j b); last by rewrite !andbF.
+  rewrite -ltnS => /ltnW ->; by rewrite !andbT.
+rewrite mulrC -/(abound _).
+pose ordb1 := Ordinal Hb1.
 
-  rewrite [X in X * _](_ : _ =
-             \prod_(i : 'I_n | i <= b)  ('X_i - 'X_ordb1)); first last.
-    rewrite (eq_bigl (fun p : 'II_n => (p.1 <= b) && (p.2 == ordb1))); first last.
-      move=> [i j]/=. rewrite -ltnNge -andbA -eqn_leq.
-      case: eqP => Hj.
-      - have -> : j = ordb1 by apply val_inj.
-        by rewrite eq_refl /= ltnS.
-      - suff -> : (j == ordb1) = false by rewrite !andbF.
-        by apply negbTE; move: Hj => /eqP; apply contra => /eqP ->.
-    rewrite (reindex (fun i : 'I_n => (i, ordb1))) /=.
-    - by apply eq_bigl => i; rewrite eq_refl andbT.
-    exists (fun p : 'II_n => p.1) => //.
-    by move=> [i j] /=; rewrite inE /= => /andP [] _ /eqP <-.
-  rewrite (mcoeff_poly_mul_lin _ _
-                  (k := (mdeg (rbound b.+1)).+1)) //.
-  have /= := @coeff_prodXdiff ordb1.
-  rewrite (eq_bigl (fun i : 'I_(_) => i <= b)); last by move=> i /=; rewrite ltnS.
-  move=> Hprod.
-  have Hmesymlm : mdeg (mesymlm n b.+1) < (mdeg (rbound b.+1)).+1.
-    rewrite ltnS /mdeg !big_tuple; apply leq_sum => i _.
-    rewrite -!mnm_tnth; by move: (mesymlm_rbound b.+1) => /mnm_lepP; apply.
-  pose msmb := BMultinom Hmesymlm.
-  rewrite (bigID (xpred1 msmb)) /=.
-  rewrite (eq_bigl (xpred1 msmb)); first last.
-    move=> m /=; case: eqP => [->|]; last by rewrite andbF.
-    by rewrite /= mesymlm_rbound.
-  rewrite big_pred1_eq /= {}Hprod ?mesymlm_rbound // eq_refl mul1r.
-  rewrite big1 ?addr0; first last.
-    move=> m /andP [] Hm Hneq.
-    rewrite (eq_bigl (fun i : 'I_(_) => i < b.+1)); last by move=> i /=; rewrite ltnS.
-    rewrite (@coeff_prodXdiff ordb1) //.
-    move: Hneq; rewrite {1}/eq_op/= => /negbTE -> /=; by rewrite mul0r.
-  rewrite -Hrec; congr mcoeff.
-  rewrite mnmP => i; rewrite !mnmE inE ltnS.
-  case: leqP => /= Hi.
-  - by rewrite subnAC subSS subn0.
-  - rewrite subn0.
-    have := Hi; rewrite /leq => /eqP ->.
-    have := ltnW Hi; by rewrite /leq => /eqP ->.
+rewrite [X in X * _](_ : _ =
+           \prod_(i : 'I_n | i <= b)  ('X_i - 'X_ordb1)); first last.
+  rewrite (eq_bigl (fun p : 'II_n => (p.1 <= b) && (p.2 == ordb1))); first last.
+    move=> [i j]/=. rewrite -ltnNge -andbA -eqn_leq.
+    case: eqP => Hj.
+    - have -> : j = ordb1 by apply val_inj.
+      by rewrite eq_refl /= ltnS.
+    - suff -> : (j == ordb1) = false by rewrite !andbF.
+      by apply negbTE; move: Hj => /eqP; apply contra => /eqP ->.
+  rewrite (reindex (fun i : 'I_n => (i, ordb1))) /=.
+  - by apply eq_bigl => i; rewrite eq_refl andbT.
+  exists (fun p : 'II_n => p.1) => //.
+  by move=> [i j] /=; rewrite inE /= => /andP [] _ /eqP <-.
+rewrite (mcoeff_poly_mul_lin _ _
+                (k := (mdeg (rbound b.+1)).+1)) //.
+have /= := @coeff_prodXdiff ordb1.
+rewrite (eq_bigl (fun i : 'I_(_) => i <= b)); last by move=> i /=; rewrite ltnS.
+move=> Hprod.
+have Hmesymlm : mdeg (mesymlm n b.+1) < (mdeg (rbound b.+1)).+1.
+  rewrite ltnS /mdeg !big_tuple; apply leq_sum => i _.
+  rewrite -!mnm_tnth; by move: (mesymlm_rbound b.+1) => /mnm_lepP; apply.
+pose msmb := BMultinom Hmesymlm.
+rewrite (bigID (xpred1 msmb)) /=.
+rewrite (eq_bigl (xpred1 msmb)); first last.
+  move=> m /=; case: eqP => [->|]; last by rewrite andbF.
+  by rewrite /= mesymlm_rbound.
+rewrite big_pred1_eq /= {}Hprod ?mesymlm_rbound // eq_refl mul1r.
+rewrite big1 ?addr0; first last.
+  move=> m /andP [] Hm Hneq.
+  rewrite (eq_bigl (fun i : 'I_(_) => i < b.+1)); last by move=> i /=; rewrite ltnS.
+  rewrite (@coeff_prodXdiff ordb1) //.
+  move: Hneq; rewrite {1}/eq_op/= => /negbTE -> /=; by rewrite mul0r.
+rewrite -Hrec; congr mcoeff.
+rewrite mnmP => i; rewrite !mnmE inE ltnS.
+case: leqP => /= Hi.
+- by rewrite subnAC subSS subn0.
+- rewrite subn0.
+  have := Hi; rewrite /leq => /eqP ->.
+  have := ltnW Hi; by rewrite /leq => /eqP ->.
 Qed.
 
 Lemma vdmprod_coeff_rho : D@_rho = 1.
 Proof using .
-  rewrite /vdmprod.
-  case: (altP (n =P 0%N)) => [Hn |].
-  - rewrite big1; last by move=> [[i Hi]]; exfalso; rewrite Hn in Hi.
-    suff -> : rho = 0%MM by rewrite mcoeff1 eq_refl.
-    by rewrite mnmP => [[i Hi]]; exfalso; rewrite Hn in Hi.
-  - rewrite -lt0n => /prednK/eqP; rewrite eqn_leq => /andP [].
-    move=> /mcoeff_arbound <- _.
-    congr mcoeff; first by rewrite /rho subn1.
-    apply eq_bigl => [[i j]] /=.
-    case: n i j => [//=| n'] i j /=; first by have:= ltn_ord i.
-    by rewrite -(ltnS j) ltn_ord andbT.
+rewrite /vdmprod.
+case: (altP (n =P 0%N)) => [Hn |].
+- rewrite big1; last by move=> [[i Hi]]; exfalso; rewrite Hn in Hi.
+  suff -> : rho = 0%MM by rewrite mcoeff1 eq_refl.
+  by rewrite mnmP => [[i Hi]]; exfalso; rewrite Hn in Hi.
+- rewrite -lt0n => /prednK/eqP; rewrite eqn_leq => /andP [].
+  move=> /mcoeff_arbound <- _.
+  congr mcoeff; first by rewrite /rho subn1.
+  apply eq_bigl => [[i j]] /=.
+  case: n i j => [//=| n'] i j /=; first by have:= ltn_ord i.
+  by rewrite -(ltnS j) ltn_ord andbT.
 Qed.
 
 Lemma vdmprod_alt_idomain : D = 'a_rho.
 Proof using Hchar.
-  rewrite (isantisym_alt Hchar
-            vdmprod_neq0 (vdmprod_anti _ _) vdmprod_dhomog).
-  by rewrite vdmprod_coeff_rho scale1r.
+rewrite (isantisym_alt Hchar
+          vdmprod_neq0 (vdmprod_anti _ _) vdmprod_dhomog).
+by rewrite vdmprod_coeff_rho scale1r.
 Qed.
 
 End VdMProdIDomain.
@@ -954,11 +949,11 @@ End VdMProdIDomain.
 Lemma vdmprod_alt n (R : ringType) :
   vdmprod = alternpol 'X_[(rho n)] :> {mpoly R[n]}.
 Proof.
-  have /(vdmprod_alt_idomain n)/(congr1 (tensR R)) : 2 \notin [char int] by [].
-  rewrite /vdmprod raddf_sum rmorph_prod.
-  rewrite (eq_bigr (fun i => 'X_i.1 - 'X_i.2)); first last.
-    move=> [i j] _ /=; by rewrite raddfB /= !tensRX.
-  move ->; apply eq_bigr => s _; by rewrite raddfZsign !msymX /= tensRX.
+have /(vdmprod_alt_idomain n)/(congr1 (tensR R)) : 2 \notin [char int] by [].
+rewrite /vdmprod raddf_sum rmorph_prod.
+rewrite (eq_bigr (fun i => 'X_i.1 - 'X_i.2)); first last.
+  move=> [i j] _ /=; by rewrite raddfB /= !tensRX.
+move ->; apply eq_bigr => s _; by rewrite raddfZsign !msymX /= tensRX.
 Qed.
 
 From mathcomp Require Import matrix.
@@ -986,21 +981,21 @@ Proof using . rewrite /Vandmx /antim -matrixP => i j /=; by rewrite !mxE nth_def
 
 Lemma alt_detE s : 'a_(s + rho) = \det (antim s).
 Proof using .
-  rewrite /alternpol (reindex_inj (inv_inj invgK)) /=; apply eq_bigr => p _.
-  rewrite odd_permV scaler_sign -mulr_sign; congr (_ * _).
-  rewrite (eq_bigr (fun j => 'X_j ^+ (nth 0%N s (p j) + (n - 1) - (p j)))); first last.
-    by move => i _; rewrite mxE.
-  rewrite msymX mpolyXE_id; apply eq_bigr => i _; congr (_ ^+ _).
-  rewrite mnmE /= mnmDE invgK mnmE (mnm_nth 0%N) subn1 addnBA //.
-  by rewrite -ltnS (ltn_predK (ltn_ord i)).
+rewrite /alternpol (reindex_inj (inv_inj invgK)) /=; apply eq_bigr => p _.
+rewrite odd_permV scaler_sign -mulr_sign; congr (_ * _).
+rewrite (eq_bigr (fun j => 'X_j ^+ (nth 0%N s (p j) + (n - 1) - (p j)))); first last.
+  by move => i _; rewrite mxE.
+rewrite msymX mpolyXE_id; apply eq_bigr => i _; congr (_ ^+ _).
+rewrite mnmE /= mnmDE invgK mnmE (mnm_nth 0%N) subn1 addnBA //.
+by rewrite -ltnS (ltn_predK (ltn_ord i)).
 Qed.
 
 Corollary Vandet_vdmprodE : Vandet = vdmprod.
 Proof using .
-  rewrite /Vandet Vandmx_antimE.
-  suff -> : antim [::] = antim (0%MM : 'X_{1..n}).
-    by rewrite -alt_detE add0m vdmprod_alt.
-  rewrite /antim -matrixP => i j; by rewrite !mxE nth_nil -mnm_nth mnm0E.
+rewrite /Vandet Vandmx_antimE.
+suff -> : antim [::] = antim (0%MM : 'X_{1..n}).
+  by rewrite -alt_detE add0m vdmprod_alt.
+rewrite /antim -matrixP => i j; by rewrite !mxE nth_nil -mnm_nth mnm0E.
 Qed.
 
 End VandermondeDet.
