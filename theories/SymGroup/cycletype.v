@@ -20,7 +20,7 @@ From mathcomp Require Import fingroup perm automorphism action ssralg.
 From mathcomp Require finmodule.
 
 Require Import partition tools sorted.
-Require Import permcomp slicedbij cycles.
+Require Import permcomp fibered_set cycles.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -366,42 +366,42 @@ Qed.
 End CycleTypeConj.
 
 
-Definition slice_part (T : finType) (P : {set {set T}}) :=
-  SlicedSet set0 P (fun x => #{x}).
+Definition fibered_part (T : finType) (P : {set {set T}}) :=
+  FiberedSet set0 P (fun x => #{x}).
 
-Definition slpcycles (T : finType) (s : {perm T}) := slice_part (pcycles s).
+Definition slpcycles (T : finType) (s : {perm T}) := fibered_part (pcycles s).
 
-Lemma slice_slpcycleE (T : finType) (s : {perm T}) i :
-  #|slice (slpcycles s) i| = count_mem i (cycle_type s).
-Proof using. by rewrite -card_pred_card_pcycles /slice /= imset_id. Qed.
+Lemma fiber_slpcycleE (T : finType) (s : {perm T}) i :
+  #|fiber (slpcycles s) i| = count_mem i (cycle_type s).
+Proof using. by rewrite -card_pred_card_pcycles /fiber /= imset_id. Qed.
 
-Section DefsSlice.
+Section DefsFiber.
 
 Variables (U V : finType).
 Variables (s : {perm U}) (t : {perm V}).
 Hypothesis eqct : cycle_type s = cycle_type t :> seq nat.
 
 Lemma cycle_type_eq :
-  forall i, #|slice (slpcycles s) i| = #|slice (slpcycles t) i|.
-Proof using eqct. by move=> i; rewrite !slice_slpcycleE eqct. Qed.
+  forall i, #|fiber (slpcycles s) i| = #|fiber (slpcycles t) i|.
+Proof using eqct. by move=> i; rewrite !fiber_slpcycleE eqct. Qed.
 
 Fact conjg_pcycles_stab :
-  [set bij (slpcycles t) x | x in (slpcycles s)] \subset slpcycles t.
-Proof using eqct. by have := bijP cycle_type_eq => [] [] _ ->. Qed.
+  [set fbbij (slpcycles t) x | x in (slpcycles s)] \subset slpcycles t.
+Proof using eqct. by have := fbbijP cycle_type_eq => [] [] _ ->. Qed.
 Fact conjg_pcycles_homog :
-  {in pcycles s, forall C, #|bij (U := slpcycles s) (slpcycles t) C| = #|C| }.
-Proof using eqct. by have := bijP cycle_type_eq => [] []. Qed.
+  {in pcycles s, forall C, #|fbbij (U := slpcycles s) (slpcycles t) C| = #|C| }.
+Proof using eqct. by have := fbbijP cycle_type_eq => [] []. Qed.
 Definition CMbij := PCycleMap conjg_pcycles_stab conjg_pcycles_homog.
 Definition conjbij := cymap CMbij.
 
-End DefsSlice.
+End DefsFiber.
 
 Lemma conjbijK
       (U V : finType) (s : {perm U}) (t : {perm V})
       (eqct : cycle_type s = cycle_type t :> seq nat) :
   cancel (conjbij eqct) (conjbij (esym eqct)).
 Proof using.
-apply cymapK => C HC; rewrite /= bijK //; exact: cycle_type_eq.
+apply cymapK => C HC; rewrite /= fbbijK //; exact: cycle_type_eq.
 Qed.
 
 

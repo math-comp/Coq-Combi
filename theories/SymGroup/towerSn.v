@@ -36,7 +36,7 @@ From mathcomp Require Import ssralg matrix vector mxalgebra falgebra ssrnum algC
 From mathcomp Require Import presentation classfun character mxrepresentation.
 
 Require Import tools ordcast partition sorted.
-Require Import permcomp slicedbij cycles cycletype.
+Require Import permcomp cycles cycletype.
 
 Import LeqGeqOrder.
 
