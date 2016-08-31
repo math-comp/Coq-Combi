@@ -799,6 +799,11 @@ Definition flip : M bool := mon (fun (f : bool -> rat) => [1/2] * (f true) + [1/
 
 Lemma flip_stable_sub : stable_sub flip.
 unfold flip, stable_sub; intros f g; simpl.
+rewrite !mulrDr !mulrN [in RHS]opprD.
+move: (2%:~R^-1 * f true) => ft.
+move: (2%:~R^-1 * g true) => gt.
+move: (2%:~R^-1 * f false) => ff.
+move: (2%:~R^-1 * g false) => gf.
 ring_to_rat; ring.
 Save.
 
