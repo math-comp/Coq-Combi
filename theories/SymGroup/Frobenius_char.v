@@ -26,7 +26,7 @@ From mathcomp Require Import rat ssralg mxalgebra ssrnum algC.
 From mathcomp Require Import classfun character mxrepresentation.
 
 Require Import tools partition sympoly.
-Require Import permcomp symgroup cycles cycletype towerSn permcent.
+Require Import permcomp presentSn cycles cycletype towerSn permcent.
 
 Import LeqGeqOrder.
 
@@ -43,11 +43,11 @@ Section Defs.
 
 Variable nvar n : nat.
 
-Local Notation "'z_ p " := (zcoeff p) (at level 2).
-Local Notation "''P_[' p ]" := (pbasis p).
+Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
+Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
 
 Definition Fchar (f : 'CF('SG_n)) : {sympoly algC[nvar]} :=
-  \sum_(l : intpartn n) (f (perm_of_partCT l) / 'z_l) *: 'p[l].
+  \sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'p[l].
 
 Lemma Fchar_is_linear : linear Fchar.
 Proof using.
@@ -57,16 +57,16 @@ by rewrite scalerA mulrA -scalerDl mulrDl.
 Qed.
 Canonical Fchar_linear := Linear Fchar_is_linear.
 
-Lemma Fchar_pbasis l : Fchar 'P_[l] = 'p[l].
+Lemma Fchar_ncfuniCT l : Fchar '1z_[l] = 'p[l].
 Proof using.
-rewrite /Fchar /pbasis (bigD1 l) //= big1 ?addr0; first last.
+rewrite /Fchar (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hm /=.
-  rewrite cfunElock cfuni_partE /=.
-  rewrite /cycle_typeSN perm_of_partCTP.
-  rewrite partn_of_partCTE /= !partCT_of_partnK Hm /=.
+  rewrite cfunElock cfuniCTE /=.
+  rewrite /cycle_typeSn permCTP.
+  rewrite partnCTE /= !CTpartnK Hm /=.
   by rewrite mulr0 mul0r scale0r.
-rewrite cfunElock cfuni_partE /=.
-rewrite /cycle_typeSN perm_of_partCTP eq_refl /=.
+rewrite cfunElock cfuniCTE /=.
+rewrite /cycle_typeSn permCTP eq_refl /=.
 rewrite mulr1 divff ?scale1r //.
 exact: neq0zcoeff.
 Qed.
@@ -75,7 +75,7 @@ Lemma Fchar_triv : Fchar 1 = 'h_n.
 Proof.
 rewrite -decomp_cf_triv linear_sum.
 rewrite (eq_bigr (fun i => 'z_i^-1 *: 'p[i])); first last.
-  move=> l _; rewrite -Fchar_pbasis /= linearZ scalerA mulrC divff ?scale1r //.
+  move=> l _; rewrite -Fchar_ncfuniCT /= linearZ scalerA mulrC divff ?scale1r //.
   exact: neq0zcoeff.
 rewrite -QtoCcomplete complete_to_power_sum /=.
 rewrite rmorph_sum /=; apply eq_bigr => l _.
@@ -85,17 +85,26 @@ Qed.
 End Defs.
 Arguments Fchar [nvar n] f.
 
+(**
+This cannot be written as a SSReflect [{morph Fchar : f g / ...  >-> ... }]
+because the dependency of Fchar on the degree [n]. The three [Fchar] below are
+actually three different functions.
 
-Lemma Fchar_ind_morph nv n m (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
+Note: this can be solved using a dependant record [{n; 'CF('S_n)}] with a
+dependent equality but I'm not sure this is really needed.
+
+*)
+
+Theorem Fchar_ind_morph nv n m (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
   Fchar ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f * Fchar g :> {sympoly algC[nv]}.
 Proof using.
-rewrite (pbasis_gen f) (pbasis_gen g).
+rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
 rewrite cfextprod_suml !linear_sum [RHS]mulr_suml.
 apply eq_bigr => /= l _.
 rewrite cfextprod_sumr !linear_sum [RHS]mulr_sumr.
 apply eq_bigr => /= k _.
 rewrite cfextprodZr cfextprodZl scalerA.
-rewrite 3!linearZ /= Ind_pbasis Fchar_pbasis.
-do 2 rewrite linearZ /= Fchar_pbasis.
+rewrite 3!linearZ /= Ind_ncfuniCT Fchar_ncfuniCT.
+do 2 rewrite linearZ /= Fchar_ncfuniCT.
 by rewrite -scalerAr -scalerAl scalerA prod_genM.
 Qed.

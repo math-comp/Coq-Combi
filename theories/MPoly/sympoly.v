@@ -1,4 +1,4 @@
-(** * Combi.MPoly.sympol : Symmetric Polynomials *)
+(** * Combi.MPoly.sympoly : Symmetric Polynomials *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)

@@ -19,7 +19,7 @@ From mathcomp Require Import finset fingroup perm.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
 Require Import tools ordtype sorted partition skewtab sympoly freeSchur therule.
-Require Import symgroup antisym.
+Require Import presentSn antisym.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

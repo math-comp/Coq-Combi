@@ -96,30 +96,30 @@ endif
 #                    #
 ######################
 
-VFILES:=theories/Combi/vectNK.v\
-  theories/Combi/Yamanouchi.v\
+VFILES:=theories/Combi/composition.v\
+  theories/Combi/fibered_set.v\
   theories/Combi/partition.v\
   theories/Combi/permuted.v\
-  theories/Combi/composition.v\
   theories/Combi/multinomial.v\
   theories/Combi/skewtab.v\
   theories/Combi/std.v\
-  theories/Combi/tableau.v\
-  theories/Combi/slicedbij.v\
   theories/Combi/stdtab.v\
   theories/Combi/subseq.v\
+  theories/Combi/tableau.v\
+  theories/Combi/vectNK.v\
+  theories/Combi/Yamanouchi.v\
   theories/Erdos_Szekeres/Erdos_Szekeres.v\
-  theories/LRrule/Greene.v\
-  theories/LRrule/Greene_inv.v\
-  theories/LRrule/Schensted.v\
-  theories/LRrule/Yam_plact.v\
   theories/LRrule/extract.v\
   theories/LRrule/freeSchur.v\
+  theories/LRrule/Greene.v\
+  theories/LRrule/Greene_inv.v\
   theories/LRrule/implem.v\
   theories/LRrule/plactic.v\
+  theories/LRrule/Schensted.v\
   theories/LRrule/shuffle.v\
   theories/LRrule/stdplact.v\
   theories/LRrule/therule.v\
+  theories/LRrule/Yam_plact.v\
   theories/SSRcomplements/bigallpairs.v\
   theories/SSRcomplements/ordcast.v\
   theories/SSRcomplements/rat_coerce.v\
@@ -130,27 +130,24 @@ VFILES:=theories/Combi/vectNK.v\
   theories/HookFormula/RSident.v\
   theories/HookFormula/hook.v\
   theories/HookFormula/recyama.v\
+  theories/Basic/combclass.v\
   theories/Basic/congr.v\
   theories/Basic/ordtype.v\
-  theories/SymGroup/permcent.v\
   theories/SymGroup/cycles.v\
   theories/SymGroup/cycletype.v\
   theories/SymGroup/Frobenius_char.v\
-  theories/Basic/combclass.v\
-  theories/SymGroup/symgroup.v\
+  theories/SymGroup/permcent.v\
+  theories/SymGroup/presentSn.v\
   theories/SymGroup/reprdim1.v\
   theories/SymGroup/reprS2.v\
   theories/SymGroup/reprS3.v\
   theories/SymGroup/towerSn.v\
-  theories/MPoly/Schur_basis.v\
   theories/MPoly/antisym.v\
   theories/MPoly/sympoly.v\
+  theories/MPoly/Schur_basis.v\
   3rdparty/ALEA/Ccpo.v\
   3rdparty/ALEA/Misc.v
 
-
-
-  
 ifneq ($(filter-out archclean clean cleanall printenv,$(MAKECMDGOALS)),)
 -include $(addsuffix .d,$(VFILES))
 else

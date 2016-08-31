@@ -21,7 +21,7 @@ From mathcomp Require Import fingroup morphism perm automorphism quotient finalg
 From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum.
 From mathcomp Require Import presentation all_character.
 
-Require Import permcomp tools permuted combclass congr symgroup.
+Require Import permcomp tools permuted combclass congr presentSn.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
