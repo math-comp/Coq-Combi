@@ -174,7 +174,7 @@ Definition complete_pol d  : {mpoly R[n]} :=
 Lemma mcoeff_complete d m : (complete_pol d)@_m = (mdeg m == d)%:R.
 Proof.
 rewrite linear_sum /=.
-case: (altP (mdeg m =P d%N)) => [<- | Hd] /=.
+case: (altP (mdeg m =P d)) => [<- | Hd] /=.
 - have Hsm : mdeg m < (mdeg m).+1 by [].
   rewrite (bigD1 (BMultinom Hsm)) //= mcoeffX eq_refl big1 ?addr0 //=.
   by move=> mon /andP [_ /negbTE]; rewrite {1}/eq_op /= mcoeffX => ->.
@@ -292,7 +292,7 @@ Proof. by apply val_inj => /=; apply issym_monomialE. Qed.
 
 
 Lemma size_mpart_in_supp (f : {mpoly R[n]}) d (p : intpartn d) :
-  f \is d.-homog -> mpart p \in msupp f -> (size p <= n)%N.
+  f \is d.-homog -> mpart p \in msupp f -> size p <= n.
 Proof.
 rewrite /mpart; case: leqP => //= H1 /dhomogP H/H /=.
 rewrite /= mdeg0 => Hd; subst d.

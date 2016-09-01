@@ -15,6 +15,11 @@
 (******************************************************************************)
 (** * Antisymmetric polynomials
 
+- mpart s == the multi-monomial whose exponent are [s] if [size s] is smaller
+           than the number of variables.
+- partm m == the partition obtained by sorting the exponent of [m].
+- m \is dominant == the exponent of [m] are sorted in reverse order.
+
 We start by general Polynomials stuff:
 
 - tensR == the scalar extension morphism from [{mpoly Z[n]}] to [{mpoly R[n]}]
@@ -24,13 +29,12 @@ We start by general Polynomials stuff:
 Antisymmetric polynomials:
 
 - p \is antisym == p is an antisymmetric polynomial. This is a keyed predicate
-                   closed by submodule operations [submodPred].
+           closed by submodule operations [submodPred].
 
 Vandermonde products and determinants:
 
 - alternpol f == the alternating sunm of the permuted of f.
 - rho         == the multi-monomial [[n-1, n-2, ..., 1, 0]]
-- mpart       == the multi-monomial associated to a partition
 - vdmprod n R == the vandermonde product in [{mpoly R[n]}], that is the product
                  << \prod_(i < j) ('X_i - 'X_j) >>.
 
@@ -58,6 +62,10 @@ Unset Printing Implicit Defensive.
 
 Import LeqGeqOrder.
 
+Local Definition simplexp := (expr0, expr1, scale1r, scaleN1r,
+                              mulrN, mulNr, mulrNN, opprK).
+
+
 Lemma binomial_sumn_iota n : 'C(n, 2) = sumn (iota 0 n).
 Proof. by rewrite -triangular_sum sumnE /index_iota subn0. Qed.
 
@@ -65,17 +73,17 @@ Local Notation "''II_' n" := ('I_n * 'I_n)%type (at level 8, n at level 2).
 
 Lemma card_triangle n : #|[set i : 'II_n | i.1 < i.2]| = 'C(n, 2).
 Proof.
-  rewrite -card_ltn_sorted_tuples.
-  pose f := (fun i : 'II_n => [tuple i.1; i.2]).
-  have /card_imset <- : injective f by rewrite /f => [] [i1 i2] [j1 j2] /= [] -> ->.
-  congr (card (mem (pred_of_set _))).
-  apply/setP => [] [[| s0 [| s1 [|s]]]] // Hs.
-  rewrite !inE; apply/idP/idP.
-  - rewrite /f {f} => /imsetP [[i j]].
-    by rewrite inE /= andbT => Hij /(congr1 val) /= [] -> ->.
-  - move=> /= /andP [] Hsort _.
-    apply/imsetP; exists (s0, s1); first by rewrite inE.
-    by apply val_inj.
+rewrite -card_ltn_sorted_tuples.
+pose f := (fun i : 'II_n => [tuple i.1; i.2]).
+have /card_imset <- : injective f by rewrite /f => [] [i1 i2] [j1 j2] /= [] -> ->.
+congr (card (mem (pred_of_set _))).
+apply/setP => [] [[| s0 [| s1 [|s]]]] // Hs.
+rewrite !inE; apply/idP/idP.
+- rewrite /f {f} => /imsetP [[i j]].
+  by rewrite inE /= andbT => Hij /(congr1 val) /= [] -> ->.
+- move=> /= /andP [] Hsort _.
+  apply/imsetP; exists (s0, s1); first by rewrite inE.
+  by apply val_inj.
 Qed.
 
 Open Scope nat_scope.
@@ -244,12 +252,12 @@ Qed.
 
 Lemma msym_tensR s p : msym s (tensR p) = tensR (msym s p).
 Proof using .
-  rewrite (mpolyE p).
-  rewrite [tensR _]raddf_sum [msym s _]raddf_sum.
-  rewrite [msym s _]raddf_sum [tensR _]raddf_sum.
-  apply eq_bigr => i _ /=.
-  rewrite -(intz (p@_i)) scaler_int.
-  by rewrite !raddfMz /= tensRX !msymX tensRX.
+rewrite (mpolyE p).
+rewrite [tensR _]raddf_sum [msym s _]raddf_sum.
+rewrite [msym s _]raddf_sum [tensR _]raddf_sum.
+apply eq_bigr => i _ /=.
+rewrite -(intz (p@_i)) scaler_int.
+by rewrite !raddfMz /= tensRX !msymX tensRX.
 Qed.
 
 End ScalarChange.
@@ -267,11 +275,11 @@ Implicit Types p q r : {mpoly R[n]}.
 
 Lemma char_mpoly : [char R] =i [char {mpoly R[n]}].
 Proof using .
-  move=> p; rewrite !unfold_in /= -mpolyC_nat.
-  case: (prime.prime p) => //=.
-  apply/eqP/eqP => [-> //|].
-  rewrite -(mpolyP) => /(_ 0%MM).
-  by rewrite mcoeff0 raddfMn /= mcoeffMn mcoeff1 eq_refl /= => ->.
+move=> p; rewrite !unfold_in /= -mpolyC_nat.
+case: (prime.prime p) => //=.
+apply/eqP/eqP => [-> //|].
+rewrite -(mpolyP) => /(_ 0%MM).
+by rewrite mcoeff0 raddfMn /= mcoeffMn mcoeff1 eq_refl /= => ->.
 Qed.
 
 End CharMPoly.
@@ -289,15 +297,15 @@ Lemma issym_tpermP p :
   reflect (forall i j, msym (tperm i j) p = p)
           (p \is symmetric).
 Proof using .
-  apply (iffP idP).
-  - move=> /forallP Hsym i j.
-    by rewrite (eqP (Hsym (tperm _ _))).
-  - move=> Htperm; apply/forallP => s.
-    case: (prod_tpermP s) => ts -> {s} Hall.
-    elim: ts Hall => [_ | t0 ts IHts] /=.
-      by rewrite !big_nil /= msym1m.
-    move=> /andP [] _ /IHts{IHts}/eqP Hrec.
-    by rewrite !big_cons msymMm Htperm Hrec.
+apply (iffP idP).
+- move=> /forallP Hsym i j.
+  by rewrite (eqP (Hsym (tperm _ _))).
+- move=> Htperm; apply/forallP => s.
+  case: (prod_tpermP s) => ts -> {s} Hall.
+  elim: ts Hall => [_ | t0 ts IHts] /=.
+    by rewrite !big_nil /= msym1m.
+  move=> /andP [] _ /IHts{IHts}/eqP Hrec.
+  by rewrite !big_cons msymMm Htperm Hrec.
 Qed.
 
 Definition antisym : qualifier 0 {mpoly R[n]} :=
@@ -309,31 +317,29 @@ Canonical antisym_keyed := KeyedQualifier antisym_key.
 Lemma isantisymP p :
   reflect (forall s, msym s p = (-1) ^+ s *: p) (p \is antisym).
 Proof using .
-  apply (iffP idP).
-  - move=> /forallP Hanti s.
-    by rewrite (eqP (Hanti s )).
-  - move=> H; apply/forallP => s.
-    by rewrite H.
+apply (iffP idP).
+- move=> /forallP Hanti s.
+  by rewrite (eqP (Hanti s )).
+- move=> H; apply/forallP => s.
+  by rewrite H.
 Qed.
-
-Definition simplexp := (expr0, expr1, scale1r, scaleN1r, mulrN, mulNr, mulrNN, opprK).
 
 Lemma isantisym_tpermP p :
   reflect (forall i j, msym (tperm i j) p = if (i != j) then - p else p)
           (p \is antisym).
 Proof using .
-  apply (iffP idP).
-  - move=> /forallP Hanti i j.
-    rewrite (eqP (Hanti (tperm _ _))) odd_tperm.
-    case: (i != j); by rewrite !simplexp.
-  - move=> Htperm; apply/forallP => s.
-    case: (prod_tpermP s) => ts -> {s} Hall.
-    elim: ts Hall => [_ | t0 ts IHts] /=.
-      by rewrite !big_nil odd_perm1 /= msym1m expr0 scale1r.
-    move=> /andP [] H0 /IHts{IHts}/eqP Hrec.
-    rewrite !big_cons msymMm Htperm H0 msymN Hrec.
-    rewrite odd_mul_tperm H0 /=.
-    by case: (odd_perm _); rewrite !simplexp.
+apply (iffP idP).
+- move=> /forallP Hanti i j.
+  rewrite (eqP (Hanti (tperm _ _))) odd_tperm.
+  case: (i != j); by rewrite !simplexp.
+- move=> Htperm; apply/forallP => s.
+  case: (prod_tpermP s) => ts -> {s} Hall.
+  elim: ts Hall => [_ | t0 ts IHts] /=.
+    by rewrite !big_nil odd_perm1 /= msym1m expr0 scale1r.
+  move=> /andP [] H0 /IHts{IHts}/eqP Hrec.
+  rewrite !big_cons msymMm Htperm H0 msymN Hrec.
+  rewrite odd_mul_tperm H0 /=.
+  by case: (odd_perm _); rewrite !simplexp.
 Qed.
 
 Lemma antisym_char2 : (2 \in [char R]) -> symmetric =i antisym.
