@@ -140,7 +140,6 @@ VFILES:=theories/Combi/composition.v\
   theories/SymGroup/presentSn.v\
   theories/SymGroup/reprdim1.v\
   theories/SymGroup/reprS2.v\
-  theories/SymGroup/reprS3.v\
   theories/SymGroup/towerSn.v\
   theories/MPoly/antisym.v\
   theories/MPoly/sympoly.v\
