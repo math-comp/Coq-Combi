@@ -249,7 +249,7 @@ rewrite [LHS](bigID (fun i => i == 0%N)) /= big1 ?add1n //.
 by move=> i /eqP.
 Qed.
 
-Lemma sym_monomialE (p : {mpoly R[n]}) :
+Lemma issym_monomialE (p : {mpoly R[n]}) :
   p \is symmetric ->
   p = \sum_(m <- msupp p | m \is dominant) p@_m *: monomial (partm m).
 Proof.
@@ -284,6 +284,58 @@ case: (boolP (m \in msupp p)) => Hm.
   move: Hm Hsupp; rewrite -mcoeff_eq0 mcoeff_msupp Hs.
   rewrite -mcoeff_sym (issymP p Hsym) => /eqP ->.
   by rewrite eq_refl.
+Qed.
+
+Lemma monomial_genE (p : {sympoly R[n]}) :
+  p = \sum_(m <- msupp p | m \is dominant) p@_m *: monomial (partm m).
+Proof. by apply val_inj => /=; apply issym_monomialE. Qed.
+
+
+Lemma size_mpart_in_supp (f : {mpoly R[n]}) d (p : intpartn d) :
+  f \is d.-homog -> mpart p \in msupp f -> (size p <= n)%N.
+Proof.
+rewrite /mpart; case: leqP => //= H1 /dhomogP H/H /=.
+rewrite /= mdeg0 => Hd; subst d.
+by move: H1; rewrite intpartn0.
+Qed.
+
+Lemma homog_monomialE d (p : {sympoly R[n]}) :
+  sympol p \is d.-homog ->
+  p = \sum_(l : intpartn d) p@_(mpart l) *: monomial l.
+Proof.
+move=> Hhomog; rewrite {1}(monomial_genE p).
+apply val_inj => /=.
+rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)).
+rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
+rewrite (bigID (fun i : intpartn d => mpart i \in msupp p)) /=.
+rewrite [X in _ + X]big1 ?addr0;
+  last by move=> i /memN_msupp_eq0 ->; rewrite scale0r.
+rewrite (eq_bigr (fun i : intpartn d =>
+           p@_(mpart i) *:
+            sympol (monomial (partm (n := n) (mpart i)))));
+    first last.
+  move=> i Hi; congr (_ *: _); congr sympol; congr monomial.
+  by rewrite mpartK //; apply (size_mpart_in_supp Hhomog Hi).
+rewrite /index_enum -enumT.
+transitivity (\sum_(m <- [seq mpart (i : intpartn d) |
+                          i <- enum (intpartn_finType d)] |
+                    m \in msupp p)
+      p@_m *: sympol (monomial (partm m))); last by rewrite big_map /=.
+rewrite -big_filter -[RHS]big_filter; apply eq_big_perm; apply uniq_perm_eq.
+- by apply filter_uniq; apply msupp_uniq.
+- rewrite filter_map map_inj_in_uniq; first by apply filter_uniq; apply enum_uniq.
+  move=> /= c1 c2; rewrite !mem_filter /= => /andP [Hc1 _] /andP [Hc2 _].
+  move=> /(congr1 (@partm n)) /(congr1 val) /=.
+  rewrite !mpartK // ?(size_mpart_in_supp _ Hc1) ?(size_mpart_in_supp _ Hc2) //.
+  exact: val_inj.
+- move=> /= m; rewrite !mem_filter andbC.
+  case: (boolP (m \in msupp p)) => //= Hsupp.
+  apply/idP/mapP => /= [Hdom | [l _ ->]]; last exact: mpart_is_dominant.
+  have Hp : is_part_of_n d (partm m).
+    rewrite /is_part_of_n /= intpartP andbT sumn_partm //.
+    by move: Hhomog => /dhomogP/(_ _ Hsupp) /= ->.
+  exists (IntPartN Hp); first by rewrite mem_enum.
+  by rewrite /= partmK.
 Qed.
 
 (** Basis at degree 0 *)
@@ -725,51 +777,15 @@ Implicit Type m : 'X_{1.. n.+1}.
 Definition hommonomial (l : intpartn d) := DHomog (monomial_homog n.+1 R l).
 Definition dsym := span [seq hommonomial l | l <- enum [set: intpartn d]].
 
-Lemma size_mpart_in_supp (f : dhomog n.+1 R d) (p : intpartn d) :
-  mpart p \in msupp f -> (size p <= n.+1)%N.
-Proof.
-rewrite /mpart; case: leqP => //= H1 H2.
-have /= /dhomogP/(_ _ H2) := dhomog_is_dhomog f.
-rewrite /= mdeg0 => Hd; subst d.
-by move: H1; rewrite intpartn0.
-Qed.
-
 Lemma hommonomialE (f : dhomog n.+1 R d) :
   mpoly_of_dhomog f \is symmetric ->
   f = \sum_(p : intpartn d) f@_(mpart p) *: hommonomial p.
 Proof.
-move=> /sym_monomialE Hf.
-apply val_inj => /=; rewrite {1}Hf {Hf}.
-rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)) linear_sum /=.
-rewrite (bigID (fun i : intpartn d => mpart i \in msupp f)) /=.
-rewrite [X in _ + X]big1 ?addr0;
-  last by move=> i /memN_msupp_eq0 ->; rewrite scale0r.
-rewrite (eq_bigr (fun i : intpartn d =>
-           f@_(mpart i) *:
-            sympol (monomial n.+1 R (partm (n := n.+1) (mpart i)))));
-    first last.
-  move=> i Hi; congr (_ *: _); congr sympol; congr monomial.
-  by rewrite mpartK //; apply (size_mpart_in_supp Hi).
-rewrite /index_enum -enumT.
-transitivity (\sum_(m <- [seq mpart (i : intpartn d) |
-                          i <- enum (intpartn_finType d)] |
-                    m \in msupp f)
-      f@_m *: sympol (monomial n.+1 R (partm m))); last by rewrite big_map /=.
-rewrite -big_filter -[RHS]big_filter; apply eq_big_perm; apply uniq_perm_eq.
-- by apply filter_uniq; apply msupp_uniq.
-- rewrite filter_map map_inj_in_uniq; first by apply filter_uniq; apply enum_uniq.
-  move=> /= c1 c2; rewrite !mem_filter /= => /andP [Hc1 _] /andP [Hc2 _].
-  move=> /(congr1 (@partm n.+1)) /(congr1 val) /=.
-  rewrite !mpartK // ?(size_mpart_in_supp Hc1) ?(size_mpart_in_supp Hc2) //.
-  exact: val_inj.
-- move=> /= m; rewrite !mem_filter andbC.
-  case: (boolP (m \in msupp f)) => //= Hsupp.
-  apply/idP/mapP => /= [Hdom | [p _ ->]]; last exact: mpart_is_dominant.
-  have Hp : is_part_of_n d (partm m).
-    rewrite /is_part_of_n /= intpartP andbT sumn_partm //.
-    by have /= /dhomogP/(_ _ Hsupp) /= -> := dhomog_is_dhomog f.
-  exists (IntPartN Hp); first by rewrite mem_enum.
-  by rewrite /= partmK.
+move=> Hf; apply val_inj.
+have:= dhomog_is_dhomog f.
+rewrite -[val f]/(val (SymPoly Hf)) => fhom.
+rewrite (homog_monomialE fhom) /=.
+by rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)) linear_sum.
 Qed.
 
 Lemma dsymP f : (f \in dsym) = (mpoly_of_dhomog f \is symmetric).
