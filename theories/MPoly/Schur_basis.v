@@ -146,7 +146,7 @@ Lemma not_hasincr_part :
   is_part_of_n (d + #|h|) (rem_trail0 (mpart P1 + mesym1 h)%MM).
 Proof using .
   move=> Hsz /hasPn H.
-  rewrite /mpart.
+  rewrite /mpart Hsz.
   apply/andP; split.
   - rewrite sumn_rem_trail0.
     rewrite -(@sum_iota_sumnE _ n); last by rewrite size_map size_enum_ord.
@@ -172,9 +172,8 @@ Proof using .
     have {H} /H : i \in iota 0 n.-1.
       rewrite mem_iota add0n.
       by case: n Hi1 {Hsz H Hi} => [//= | n'] /=; rewrite ltnS.
-    rewrite /mpart.
     have H0 : 0 < n by apply: (leq_ltn_trans _ Hi1).
-    rewrite !(nth_map (Ordinal H0) 0) ?size_enum_ord // !mnmE.
+    rewrite /mpart Hsz !(nth_map (Ordinal H0) 0) ?size_enum_ord // !mnmE.
     rewrite !nth_enum_ord //.
     set bi := (_ \in h); set bi1 := (_ \in h).
     have:= is_partP _ (intpartnP P1) => [] [] _ H.
@@ -207,6 +206,7 @@ Proof using .
   rewrite /mpart Hincr Hsz eq_refl /=.
   set S := (map _ _).
   rewrite mnmP => i.
+  rewrite (leq_trans (size_rem_trail0 S)); last by rewrite size_map size_enum_ord.
   rewrite mnmE nth_rem_trail0.
   have H0 : 0 < n by apply: (leq_ltn_trans _ (ltn_ord i)).
   rewrite !(nth_map (Ordinal H0) 0) ?size_enum_ord // !mnmE.
@@ -260,8 +260,9 @@ Proof using .
     - exact: leq_trans Hsz Hi.
     - by rewrite size_map size_enum_ord.
   have H0 : 0 < n by apply: (leq_ltn_trans _ Hi).
+  rewrite /mpart Hsz1.
   rewrite !(nth_map (Ordinal H0) 0) ?size_enum_ord // !mnmE.
-  rewrite inE /mpart /= (nth_enum_ord (Ordinal H0) Hi).
+  rewrite inE /= (nth_enum_ord (Ordinal H0) Hi).
   case: ssrnat.ltnP => H /=; rewrite ?addn0 ?addn1.
   - apply anti_leq; rewrite H /=.
     by have := Hstr i => /andP [].
@@ -318,8 +319,8 @@ Proof using .
         - exact: leq_trans Hsz Hi.
         - by rewrite size_map size_enum_ord.
       have H0 : 0 < n by apply: (leq_ltn_trans _ Hi).
-      rewrite (nth_map (Ordinal H0)) ?size_enum_ord // !mnmE.
-      rewrite /mpart (nth_enum_ord (Ordinal H0) Hi).
+      rewrite /mpart Hsz /= (nth_map (Ordinal H0)) ?size_enum_ord // !mnmE.
+      rewrite (nth_enum_ord (Ordinal H0) Hi).
       by case: (_ \in _); rewrite ?addn0 ?addn1 leqnn ltnW.
     + rewrite /add_mesym /= Hsz H /=.
       apply (leq_trans (size_rem_trail0 _)).
@@ -328,8 +329,7 @@ Proof using .
       rewrite inE /= Hsz H /= nth_rem_trail0.
       have H0 : 0 < n by apply: (leq_ltn_trans _ (ltn_ord i)).
       rewrite (nth_map (Ordinal H0)); last by rewrite size_enum_ord.
-      rewrite nth_ord_enum /= (mnm_nth 0) /= mnmE.
-      rewrite /mpart /=.
+      rewrite /mpart Hsz nth_ord_enum /= (mnm_nth 0) /= mnmE.
       rewrite (nth_map (Ordinal H0)); last by rewrite size_enum_ord.
       rewrite nth_ord_enum.
       by case: (i \in S); rewrite ?addn0 ?addn1 ?ltnSn ?ltnn.

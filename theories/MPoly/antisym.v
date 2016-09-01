@@ -97,10 +97,13 @@ rewrite is_part_sortedE; apply/andP; split.
 - by apply sort_sorted=> x y; exact: leq_total.
 - by rewrite mem_sort mem_filter eq_refl.
 Qed.
-Definition partm m := IntPart (partmP m).
+Definition partm m := locked (IntPart (partmP m)).
+Lemma partmE m : partm m = sort geq [seq d <- m | d != 0] :> seq nat.
+Proof. by rewrite /partm; unlock. Qed.
+
 Lemma size_partm m : size (partm m) <= n.
 Proof.
-rewrite /partm /= size_sort size_filter -[X in _ <= X](size_tuple m).
+rewrite partmE size_sort size_filter -[X in _ <= X](size_tuple m).
 exact: count_size.
 Qed.
 
@@ -120,7 +123,7 @@ Qed.
 Lemma is_dominant_partm m :
   m \is dominant -> partm m = [seq d <- m | d != 0] :> seq nat.
 Proof.
-rewrite unfold_in /partm /= => Hsort.
+rewrite unfold_in partmE => Hsort.
 apply: (eq_sorted (leT := geq)) => //.
 - exact: sort_sorted.
 - exact: sorted_filter.
@@ -165,7 +168,7 @@ Qed.
 
 Lemma perm_eq_partm m1 m2 : perm_eq m1 m2 -> partm m1 = partm m2.
 Proof.
-move=> Hperm; apply val_inj => /=; apply/perm_sortP => //.
+move=> Hperm; apply val_inj; rewrite /= !partmE; apply/perm_sortP => //.
 exact: perm_eq_filter.
 Qed.
 
@@ -179,15 +182,40 @@ rewrite -(perm_eq_partm Hperm) partmK; first last.
 by rewrite perm_eq_sym.
 Qed.
 
+Lemma sumn_partm m : sumn (partm m) = mdeg m.
+Proof.
+rewrite -sumnE.
+wlog: m / m \is dominant.
+  move=> Hdom; have Hperm := partm_perm_eqK m.
+  rewrite /mdeg (eq_big_perm _ Hperm) /= -/(mdeg _).
+  have /Hdom <- := mpart_is_dominant (intpartP (partm m)).
+  by rewrite mpartK // size_partm.
+move/is_dominant_partm ->.
+symmetry; rewrite big_filter /mdeg.
+by rewrite (bigID (fun i => i == 0)) /= big1 ?add0n // => i /eqP.
+Qed.
+
 Local Notation "m # s" := [multinom m (s i) | i < n]
   (at level 40, left associativity, format "m # s").
 
-Lemma mpart_partm m : {s : 'S_n | (mpart (partm m)) # s == m}.
+
+Lemma mnm_perm_eq m1 m2 : perm_eq m1 m2 -> {s : 'S_n | m1 == m2 # s}.
 Proof.
-apply sigW; have:= partm_perm_eqK m => /tuple_perm_eqP [s /val_inj Hs].
-exists s; apply/eqP; apply val_inj => /=.
-rewrite [RHS]Hs /partm /=.
-by apply eq_from_tnth => i; rewrite tnth_mktuple.
+move=> Hperm; apply sigW; move: Hperm => /tuple_perm_eqP [s /val_inj Hs] /=.
+by exists s; apply/eqP; apply val_inj => /=.
+Qed.
+
+Lemma perm_mpart_partm m : {s : 'S_n | (mpart (partm m)) # s == m}.
+Proof.
+apply sigW; have [/= s /eqP {2}->] := mnm_perm_eq (partm_perm_eqK m).
+by exists s.
+Qed.
+
+Lemma mpart_partm_perm m : {s : 'S_n | (mpart (partm m)) == m # s}.
+Proof.
+have [/= s /eqP {2}<-]:= perm_mpart_partm m.
+exists (s^-1)%g; apply/eqP/mnmP => i.
+by rewrite 2!mnmE permKV.
 Qed.
 
 End MonomPart.
