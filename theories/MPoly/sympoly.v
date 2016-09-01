@@ -457,17 +457,52 @@ Variable R : comRingType.
 Implicit Type m : 'X_{1.. nvar}.
 Local Notation SF := {sympoly R[nvar]}.
 
+From mathcomp Require Import binomial.
+
 Lemma sum_complete_elementary (d : nat) :
   \sum_(0 <= i < d.+1) (-1)^+i *: ('h_i * 'e_(d - i)) = 0 :> SF.
 Proof.
 apply val_inj => /=.
 rewrite -[sympol _]/(sympol_lrmorphism nvar R _) rmorph_sum /=.
-apply mpolyP => m; rewrite linear_sum /=.
+apply mpolyP => m; rewrite linear_sum /= mcoeff0.
+case: (altP (mdeg m =P d)) => Hm; first last.
+  rewrite big_nat big1 // => i /=; rewrite ltnS => Hi.
+  rewrite linearZ /= mcoeffM big1 ?mulr0 //= => [[m1 m2] /= /eqP Hmm].
+  rewrite mcoeff_complete mcoeff_mesym.
+  case: (altP (mdeg m1 =P i)) => Hm1; rewrite ?mul0r // mul1r.
+  rewrite /mechar.
+  case: (altP (mdeg m2 =P (d - i)%N)) => Hm2; rewrite ?mul0r //=.
+  exfalso; move: Hm; rewrite Hmm.
+  by rewrite mdegD Hm1 Hm2 subnKC // eq_refl.
+rewrite big_nat_rev /= add0n.
+apply/eqP; rewrite -(mulrI_eq0 _ (lreg_sign (n := d))) mulr_sumr; apply/eqP.
+transitivity
+  (\sum_(0 <= i < d.+1) (-1)^+i * (binomial #|[set j | m j != 0%N]| i)%:R : R).
+  apply eq_big_nat => /= i; rewrite ltnS => Hi.
+  rewrite subSS subKn // linearZ /= mulrA; congr (_ * _).
+    rewrite -signr_odd -[X in _ * X]signr_odd -signr_addb.
+    by rewrite odd_sub // addKb signr_odd.
+  rewrite mcoeffM.
+  rewrite (bigID (fun k : 'X_{1..nvar < _, _} => (mechar i k.2))) /=.
+  rewrite addrC big1 ?add0r; first last.
+    move=> [/= m1 m2 /andP [Hmm /negbTE Hf]].
+    by rewrite mcoeff_mesym Hf /= mulr0.
+  rewrite (eq_bigr (fun k : 'X_{1..nvar < _, _} => 1)); first last.
+    move=> [/= m1 m2 /andP [/eqP H1 H2]].
+    rewrite mcoeff_complete mcoeff_mesym H2 /= mulr1.
+    suff -> : mdeg m1 == (d - i)%N by [].
+    move: Hm; rewrite {1}H1 mdegD.
+    move: H2 => /andP [/eqP -> _] <-.
+    by rewrite addnK.
+  rewrite sumr_const /= /mechar; congr _%:R.
+  rewrite -cards_draws.
+  admit.
+
 Admitted.
 
 Lemma elementary_completeE (d : nat) :
   d != 0%N ->
-  'e_d = \sum_(1 <= i < d.+1) 'h_i * ((-1)^+(d - i) *: 'e_(d - i)) :> SF.
+  'e_d = \sum_(1 <= i < d.+1) 'h_i * ((-1)^+i.-1 *: 'e_(d - i)) :> SF.
 Proof.
 move=> Hd.
 have := sum_complete_elementary d.
@@ -476,34 +511,63 @@ rewrite (addr_eq0 'e_d) => /eqP ->; rewrite big_add1 /= -sumrN.
 rewrite !big_nat; apply eq_bigr => i /= Hi.
 rewrite scalerAr -mulrN; congr (_ * _).
 rewrite -scaleNr; congr (_ *: _).
-(*
-apply/eqP; rewrite -(subr_eq0 'e_d) -oppr_eq0 opprB; apply/eqP.
-rewrite big_add1 /=.
-rewrite -[RHS](sum_complete_elementary d) [RHS]big_nat_recl //=.
+by rewrite exprS mulN1r opprK.
+Qed.
 
-rewrite big_nat_rev /= add0n big_nat.
-(*rewrite (eq_bigr (fun i => (-1) ^+ i.+1 *: ('e_i.+1 * 'h_(d - i.+1)))); first last.
-  by move=> i /andP [_ Hi]; rewrite subKn // mulrC. *)
-rewrite -big_nat /=.
-rewrite -[RHS](sum_complete_elementary d) [RHS]big_nat_recr //=.
-congr (_ + _).
-apply val_inj => /=; apply/eqP.
-have:= sum_complete_elementary d.
-rewrite -[X in X = 0](big_mkord xpredT (fun i => (-1)^+i *: 'e_i * 'h_(d - i))).
-rewrite -[X in _ -> _ = X](big_mkord xpredT (fun i => (-1)^+(d - i) *: 'h_i * 'e_(d - i))).
-rewrite big_nat_rev /= big_nat_recl // !add0n !subSS subn0 subnn.
-rewrite complete0 mulr1 => /eqP.
-rewrite addr_eq0.
-apply val_inj => /=.
-rewrite -[sympol _]/(sympol_lrmorphism nvar R _) rmorph_sum /=.
-apply mpolyP => m; rewrite linear_sum /=.
-*)
-Admitted.
-
-Lemma elementaty_to_complete_partsum n :
-  'e_n = \sum_(c : intcompn n) (-1)^+(size c) *: \prod_(i <- c) 'h_i :> SF.
+Lemma elementary_to_complete_partsum n :
+  'e_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: (\prod_(i <- c) 'h_i) :> SF.
 Proof.
-Admitted.
+rewrite /index_enum -enumT /=.
+rewrite -[RHS](big_map (@cnval n) xpredT
+   (fun c : seq nat => (-1)^+(n - size c) *: \prod_(i <- c) 'h_i)).
+rewrite enum_intcompnE.
+elim: n {1 3 4 5}n (leqnn n) => [| m IHm] n.
+  rewrite leqn0 => /eqP ->.
+  by rewrite /enum_compn /= big_seq1 /= subnn expr0 scale1r big_nil elementary0.
+rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
+rewrite enum_compnE Hm // -Hm big_flatten /=.
+rewrite elementary_completeE; last by rewrite Hm.
+rewrite big_map /index_iota subSS subn0; apply eq_big_seq => i.
+rewrite mem_iota add1n ltnS => /andP [Hi Hin].
+rewrite big_map.
+rewrite (eq_big_seq
+    (fun c : seq nat => - 'h_i * ((-1) ^+ (n - size c) *: \prod_(i0 <- c) 'h_i0)));
+  first last.
+  move=> s; rewrite -enum_compnP /is_comp_of_n /= => /andP [/eqP Hsum Hn0].
+  rewrite big_cons -scalerAr mulNr scalerN -scaleNr; congr (_ *: _).
+  subst n; rewrite subSS subSn; first last.
+    apply (leq_trans (size_comp Hn0)); rewrite {}Hsum.
+    case: i Hi {Hin} => // i' _.
+    by rewrite subSS leq_subr.
+  by rewrite exprS mulN1r opprK.
+rewrite -mulr_sumr.
+case: (altP (n-i =P 0)%N) => [/eqP | Hni] /=.
+  rewrite subn_eq0 => Hni.
+  have -> : i = n by apply anti_leq; rewrite Hin Hni.
+  subst n => /=.
+  rewrite subnn /enum_compn /= big_seq1 big_nil /=.
+  rewrite subn0 elementary0 mulNr -mulrN -scaleNr; congr (_ * (_)%:A).
+  by rewrite exprS mulN1r opprK.
+rewrite {}IHm //; first last.
+  rewrite Hm; case: i Hi {Hin Hni} => // i' _.
+  by rewrite subSS leq_subr.
+rewrite scaler_sumr mulNr -mulrN -sumrN; congr (_ * _).
+apply eq_big_seq => s.
+rewrite -enum_compnP /is_comp_of_n /= => /andP [/eqP Hsum Hn0].
+rewrite scalerA -scaleNr; congr (_ *: _).
+subst n; rewrite -exprD.
+move: Hni; rewrite subn_eq0 -leqNgt => {Hin} Hin.
+rewrite subSn //.
+case: i Hi Hsum Hin => // i _.
+rewrite subSS => Hsum Him /=.
+have Hzs : size s <= m.
+  by apply (leq_trans (size_comp Hn0)); rewrite {}Hsum leq_subr.
+rewrite -subSn // subSS subSn // exprS mulN1r opprK.
+rewrite subnAC subnKC //.
+have:= size_comp Hn0; rewrite Hsum.
+rewrite -!subn_eq0 !subnBA //; last exact: ltnW.
+by rewrite addnC.
+Qed.
 
 
 (** * Newton formula. *)
