@@ -62,9 +62,6 @@ Unset Printing Implicit Defensive.
 
 Import LeqGeqOrder.
 
-Local Definition simplexp := (expr0, expr1, scale1r, scaleN1r,
-                              mulrN, mulNr, mulrNN, opprK).
-
 
 Lemma binomial_sumn_iota n : 'C(n, 2) = sumn (iota 0 n).
 Proof. by rewrite -triangular_sum sumnE /index_iota subn0. Qed.
@@ -233,8 +230,9 @@ Arguments dominant [n].
 
 
 Import GRing.Theory.
-
 Local Open Scope ring_scope.
+Local Definition simplexp := (expr0, expr1, scale1r, scaleN1r,
+                              mulrN, mulNr, mulrNN, opprK).
 
 (** ** Change of scalar in multivariate polynomials *)
 Section ScalarChange.

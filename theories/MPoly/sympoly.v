@@ -447,14 +447,66 @@ Notation "''p[' k ]" := (prod_power_sum _ _ k)
                               (at level 8, k at level 2, format "''p[' k ]").
 
 
-Section NewtonFormula.
+
+Require Import composition.
+
+Section ChangeBasis.
 
 Variable nvar : nat.
 Variable R : comRingType.
 Implicit Type m : 'X_{1.. nvar}.
-
 Local Notation SF := {sympoly R[nvar]}.
 
+Lemma sum_complete_elementary (d : nat) :
+  \sum_(0 <= i < d.+1) (-1)^+i *: ('h_i * 'e_(d - i)) = 0 :> SF.
+Proof.
+apply val_inj => /=.
+rewrite -[sympol _]/(sympol_lrmorphism nvar R _) rmorph_sum /=.
+apply mpolyP => m; rewrite linear_sum /=.
+Admitted.
+
+Lemma elementary_completeE (d : nat) :
+  d != 0%N ->
+  'e_d = \sum_(1 <= i < d.+1) 'h_i * ((-1)^+(d - i) *: 'e_(d - i)) :> SF.
+Proof.
+move=> Hd.
+have := sum_complete_elementary d.
+rewrite big_nat_recl // expr0 scale1r complete0 mul1r subn0 => /eqP.
+rewrite (addr_eq0 'e_d) => /eqP ->; rewrite big_add1 /= -sumrN.
+rewrite !big_nat; apply eq_bigr => i /= Hi.
+rewrite scalerAr -mulrN; congr (_ * _).
+rewrite -scaleNr; congr (_ *: _).
+(*
+apply/eqP; rewrite -(subr_eq0 'e_d) -oppr_eq0 opprB; apply/eqP.
+rewrite big_add1 /=.
+rewrite -[RHS](sum_complete_elementary d) [RHS]big_nat_recl //=.
+
+rewrite big_nat_rev /= add0n big_nat.
+(*rewrite (eq_bigr (fun i => (-1) ^+ i.+1 *: ('e_i.+1 * 'h_(d - i.+1)))); first last.
+  by move=> i /andP [_ Hi]; rewrite subKn // mulrC. *)
+rewrite -big_nat /=.
+rewrite -[RHS](sum_complete_elementary d) [RHS]big_nat_recr //=.
+congr (_ + _).
+apply val_inj => /=; apply/eqP.
+have:= sum_complete_elementary d.
+rewrite -[X in X = 0](big_mkord xpredT (fun i => (-1)^+i *: 'e_i * 'h_(d - i))).
+rewrite -[X in _ -> _ = X](big_mkord xpredT (fun i => (-1)^+(d - i) *: 'h_i * 'e_(d - i))).
+rewrite big_nat_rev /= big_nat_recl // !add0n !subSS subn0 subnn.
+rewrite complete0 mulr1 => /eqP.
+rewrite addr_eq0.
+apply val_inj => /=.
+rewrite -[sympol _]/(sympol_lrmorphism nvar R _) rmorph_sum /=.
+apply mpolyP => m; rewrite linear_sum /=.
+*)
+Admitted.
+
+Lemma elementaty_to_complete_partsum n :
+  'e_n = \sum_(c : intcompn n) (-1)^+(size c) *: \prod_(i <- c) 'h_i :> SF.
+Proof.
+Admitted.
+
+
+(** * Newton formula. *)
 Lemma mult_complete_U k d i m :
   (('h_k : {mpoly R[nvar]}) * 'X_i ^+ d)@_m =
   ((mdeg m == (k + d)%N) && (m i >= d))%:R.
@@ -497,18 +549,18 @@ by case: eqP => _ //=; rewrite ?mul0r ?mul1r.
 Qed.
 
 Lemma Newton_complete (k : nat) :
-  k%:R *: 'h_k = \sum_(i < k) 'h_i * 'p_(k - i) :> SF.
+  k%:R *: 'h_k = \sum_(0 <= i < k) 'h_i * 'p_(k - i) :> SF.
 Proof using.
 apply val_inj => /=; apply/mpolyP => m.
 rewrite mcoeffZ mcoeff_complete.
-rewrite -[sympol _]/(sympol_lrmorphism nvar R _) !linear_sum.
+rewrite -[sympol _]/(sympol_lrmorphism nvar R _) !linear_sum big_nat.
 rewrite (eq_bigr
-           (fun i : 'I_k =>
+           (fun i =>
               (mdeg m == k)%:R *
                 \sum_(j < nvar) (m j >= (k - i)%N)%:R)) /=; first last.
-  move=> i _ /=; rewrite mult_complete_powersum.
+  move=> i Hi /=; rewrite mult_complete_powersum.
   by rewrite subnKC //; apply ltnW.
-rewrite -mulr_sumr mulrC.
+rewrite -big_nat -mulr_sumr mulrC.
 case: (altP (mdeg m =P k)) => Hdegm; rewrite /= ?mul1r ?mul0r //.
 rewrite exchange_big /=.
 rewrite (eq_bigr (fun i : 'I_nvar => (m i)%:R)).
@@ -516,7 +568,7 @@ rewrite (eq_bigr (fun i : 'I_nvar => (m i)%:R)).
 move=> i _ /=; rewrite -natr_sum; congr (_%:R).
 have : m i <= k.
   by move: Hdegm; rewrite mdegE => <-; rewrite (bigD1 i) //=; apply leq_addr.
-rewrite (reindex_inj rev_ord_inj) /=.
+rewrite big_mkord (reindex_inj rev_ord_inj) /=.
 rewrite (eq_bigr (fun j : 'I_k => nat_of_bool (j < m i))); first last.
   by move=> j _; rewrite subKn //.
 move: (m i) => n {m Hdegm i} Hn.
@@ -532,16 +584,16 @@ Qed.
 Lemma Newton_complete_iota (k : nat) :
   k%:R *: 'h_k = \sum_(i <- iota 1 k) 'p_i * 'h_(k - i) :> SF.
 Proof using.
-rewrite Newton_complete (reindex_inj rev_ord_inj) /=.
+rewrite Newton_complete big_mkord (reindex_inj rev_ord_inj) /=.
 rewrite -(addn0 1%N) iota_addl big_map -val_enum_ord big_map.
 rewrite /index_enum /= enumT; apply eq_bigr => i _.
 by rewrite mulrC add1n subKn.
 Qed.
 
-End NewtonFormula.
+End ChangeBasis.
 
 From mathcomp Require Import rat ssrnum.
-Require Import composition.
+
 
 Section ChangeBasisCompletePowerSum.
 

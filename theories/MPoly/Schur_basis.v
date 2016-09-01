@@ -618,6 +618,7 @@ rewrite big_cons -(add1n (size s)); apply dhomogM; last exact: IHs.
 by rewrite dhomogX /= mdeg1.
 Qed.
 
+(** We restrict ourself to [intpartn d] in order to compute big ops in a fintype *)
 Record homcoeff : Type := HomCoeff { d : nat; coe :> intpartn d -> R }.
 
 Definition Schur_dec (p : {mpoly R[n]}) :=
@@ -682,6 +683,9 @@ elim: (enum _) => [| s IHs]; first by rewrite big_nil; exact: Schur_dec1.
 rewrite big_cons; apply: Schur_decM.
 rewrite tnth_mktuple; exact: Schur_dec_mesym_pow.
 Qed.
+
+(** Note : We can't expect to prove [p \is symmetric -> Schur_dec p] because
+  the definition of Schur_dec assume that there is a degree *)
 
 Lemma Schur_dec_homog d p : p \is d.-homog -> Schur_dec p ->
   { coe : intpartn d -> R | p = \sum_(p : intpartn _) coe p *: 's_p }.
