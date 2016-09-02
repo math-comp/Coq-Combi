@@ -454,15 +454,19 @@ Section ChangeBasis.
 
 Variable nvar : nat.
 Variable R : comRingType.
-Implicit Type m : 'X_{1.. nvar}.
+
+Local Notation "''XX'" := 'X_{1.. nvar}.
+Local Notation "''XX_' m " := 'X_{1.. nvar < (mdeg m).+1, (mdeg m).+1} (at level 0).
+Implicit Type m : 'XX.
 Local Notation SF := {sympoly R[nvar]}.
 
 From mathcomp Require Import binomial.
 
 Lemma sum_complete_elementary (d : nat) :
+  d != 0%N ->
   \sum_(0 <= i < d.+1) (-1)^+i *: ('h_i * 'e_(d - i)) = 0 :> SF.
 Proof.
-apply val_inj => /=.
+move=> Hd; apply val_inj => /=.
 rewrite -[sympol _]/(sympol_lrmorphism nvar R _) rmorph_sum /=.
 apply mpolyP => m; rewrite linear_sum /= mcoeff0.
 case: (altP (mdeg m =P d)) => Hm; first last.
@@ -483,22 +487,94 @@ transitivity
     rewrite -signr_odd -[X in _ * X]signr_odd -signr_addb.
     by rewrite odd_sub // addKb signr_odd.
   rewrite mcoeffM.
-  rewrite (bigID (fun k : 'X_{1..nvar < _, _} => (mechar i k.2))) /=.
+  rewrite (bigID (fun k : 'XX_(m) => (mechar i k.2))) /=.
   rewrite addrC big1 ?add0r; first last.
     move=> [/= m1 m2 /andP [Hmm /negbTE Hf]].
     by rewrite mcoeff_mesym Hf /= mulr0.
-  rewrite (eq_bigr (fun k : 'X_{1..nvar < _, _} => 1)); first last.
+  rewrite (eq_bigr (fun k : 'XX_m => 1)); first last.
     move=> [/= m1 m2 /andP [/eqP H1 H2]].
     rewrite mcoeff_complete mcoeff_mesym H2 /= mulr1.
     suff -> : mdeg m1 == (d - i)%N by [].
     move: Hm; rewrite {1}H1 mdegD.
     move: H2 => /andP [/eqP -> _] <-.
     by rewrite addnK.
-  rewrite sumr_const /= /mechar; congr _%:R.
-  rewrite -cards_draws.
-  admit.
-
-Admitted.
+  subst d; rewrite sumr_const /= -cards_draws; congr _%:R.
+  pose f := (fun mm : 'XX => [set j | mm j != 0%N] : {set 'I_nvar}).
+  pose g := (fun S : {set 'I_nvar} => [multinom (i \in S : nat) | i < nvar]).
+  have canfg : {in mechar i, cancel f g}.
+    move=> m2.
+    rewrite unfold_in /mechar /= => /andP [_ /forallP /= Hall].
+    rewrite /f /g {f g} /=.
+    apply/mnmP => j; rewrite mnmE inE.
+    case: (altP (m2 j =P 0%N)) => [-> |] //=.
+    by move/(_ j): Hall; case: (m2 j) => [|[|k]].
+  rewrite -(card_in_imset (f := f \o (fun mm : 'XX_m => bmnm mm.2))); first last.
+    move=> /= [m1 m2] [n1 n2].
+    rewrite !unfold_in /= => /andP [/eqP Hmm Hm2] /andP [/eqP Hnn Hn2] /(congr1 g).
+    rewrite !canfg // {f g canfg} => /= [] H1.
+    congr (_ , _); apply val_inj => //=.
+    by rewrite -(addmK m2 m1) -Hmm -(addmK n2 n1) -Hnn H1.
+  congr #|pred_of_set _|; apply/setP => /= S; rewrite !inE !unfold_in.
+  apply/imsetP/andP => /= [[[m1 m2]] | [/subsetP Hsubs /eqP Hs] ].
+  - rewrite unfold_in /= /mechar =>
+      /andP [/eqP Hmm] /andP [/eqP Hmdeg /forallP /= Hall ->{S}].
+    rewrite /f /= {f g canfg}; split.
+    + apply/subsetP => j; rewrite !inE /= {2}Hmm.
+      by apply contra; rewrite mnmDE addn_eq0 => /andP [].
+    + apply/eqP; rewrite -Hmdeg /mdeg [RHS]big_tuple.
+      rewrite (bigID (mem [set j | m2 j != 0%N])) /= addnC.
+      rewrite [X in _ = (X + _)%N]big1 ?add0n; first last.
+        by move=> j; rewrite inE negbK -mnm_tnth => /eqP ->.
+      rewrite [RHS](eq_bigr (fun _ => 1%N)) ?sum1_card //.
+      move=> j; rewrite inE -mnm_tnth.
+      by move/(_ j): Hall; case: (m2 j) => [|[|k]].
+  - have : mdeg (g S) = #|S|.
+      rewrite /mdeg [LHS]big_tuple (bigID (mem S)) /= addnC.
+      rewrite [X in (X + _)%N]big1 ?add0n; first last.
+        by move=> j /negbTE; rewrite tnth_mktuple => ->.
+      rewrite [LHS](eq_bigr (fun _ => 1%N)) ?sum1_card //.
+      by move=> j; rewrite tnth_mktuple => ->.
+    rewrite Hs => HmdeggS.
+    have Hm2 : mdeg (g S) < (mdeg m).+1 by rewrite HmdeggS ltnS.
+    pose m2 := BMultinom Hm2.
+    have Hm2m : (m2 <= m)%MM.
+      apply/mnm_lepP => j; rewrite /= mnmE.
+      case: (boolP (j \in S)) => //= /Hsubs.
+      by rewrite inE lt0n.
+    have Hmm := submK Hm2m.
+    have Hm1 : mdeg (m - m2) < (mdeg m).+1.
+      by rewrite  ltnS -{3}Hmm mdegD leq_addr.
+    exists (BMultinom Hm1, m2) => /=.
+    - rewrite unfold_in Hmm /= /mechar HmdeggS !eq_refl /=.
+      apply/forallP => /= j; rewrite /g mnmE.
+      by case: (j \in S).
+    - rewrite /f /g; apply/setP => j; rewrite inE mnmE.
+      by case: (j \in S).
+subst d.
+have : #|[set j | m j != 0%N]| <= mdeg m.
+  rewrite /mdeg -sum1_card big_tuple.
+  rewrite [X in _ <= X](bigID (mem [set j | m j != 0%N])) /=.
+  rewrite [X in (_ + X)%N]big1 ?addn0; first last.
+    by move=> i; rewrite inE negbK mnm_tnth => /eqP.
+  by apply leq_sum => i; rewrite inE mnm_tnth lt0n.
+have : #|[set j | m j != 0%N]| != 0%N.
+  move: Hd; apply contra; rewrite cards_eq0 => /eqP/setP H.
+  rewrite mdeg_eq0; apply/eqP/mnmP => i.
+  by have:= H i; rewrite mnmE !inE => /negbFE => /eqP ->.
+move: (#|[set j | m j != 0%N]|) => C HC HCd.
+transitivity
+  (\sum_(i < C.+1) (-1)^+i * 1^+(C - i) * 1^+i *+ 'C(C, i) : R); first last.
+  by rewrite -exprBn subrr expr0n (negbTE HC).
+rewrite big_mkord.
+rewrite [LHS](bigID (fun i : 'I__ => i < C.+1)) /= addrC big1 ?add0r; first last.
+  move=> i; rewrite -leqNgt => /bin_small ->.
+  by rewrite mulr0.
+transitivity (\sum_(i < C.+1) (-1) ^+ i * ('C(C, i))%:R : R).
+  rewrite -ltnS in HCd.
+  by rewrite [RHS](big_ord_widen _ (fun i => (-1) ^+ i * ('C(C, i))%:R) HCd).
+apply eq_bigr => i _.
+by rewrite !expr1n !mulr1 mulr_natr.
+Qed.
 
 Lemma elementary_completeE (d : nat) :
   d != 0%N ->
