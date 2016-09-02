@@ -338,6 +338,32 @@ rewrite -big_filter -[RHS]big_filter; apply eq_big_perm; apply uniq_perm_eq.
   by rewrite /= partmK.
 Qed.
 
+Lemma monomial_unique d (p : {sympoly R[n]}) c :
+  p = \sum_(l : intpartn d) (c l) *: monomial l ->
+  forall l : intpartn d, (size l <= n)%N -> c l = p@_(mpart l).
+Proof.
+move=> -> l Hl.
+rewrite [X in X@__](linear_sum (@sympol_lrmorphism _ _)) /= linear_sum.
+rewrite (bigD1 l) //= linearZ /= /monomial /=.
+rewrite Hl mcoeff_monomial perm_eq_refl /= mulr1.
+rewrite big1 ?addr0 // => i Hil /=.
+case: leqP => [Hi | _]; last by rewrite scaler0 mcoeff0.
+rewrite linearZ /= mcoeff_monomial.
+rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
+apply negbTE; move: Hil; apply contra.
+move=> /perm_eq_partm/(congr1 pval).
+rewrite !mpartK // => Hil.
+by apply/eqP/val_inj.
+Qed.
+
+Lemma monomial_unique0 d (p : {sympoly R[n]}) c :
+  \sum_(l : intpartn d) (c l) *: monomial l = 0 ->
+  forall l : intpartn d, (size l <= n)%N -> c l = 0.
+Proof.
+move=> /esym/monomial_unique => H l /H ->.
+by rewrite mcoeff0.
+Qed.
+
 (** Basis at degree 0 *)
 Lemma syme0 : syme 0 = 1.
 Proof using. by apply val_inj; rewrite /= mesym0E. Qed.
