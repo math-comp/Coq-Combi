@@ -581,7 +581,7 @@ Lemma elementary_completeE (d : nat) :
   'e_d = \sum_(1 <= i < d.+1) 'h_i * ((-1)^+i.-1 *: 'e_(d - i)) :> SF.
 Proof.
 move=> Hd.
-have := sum_complete_elementary d.
+have := sum_complete_elementary Hd.
 rewrite big_nat_recl // expr0 scale1r complete0 mul1r subn0 => /eqP.
 rewrite (addr_eq0 'e_d) => /eqP ->; rewrite big_add1 /= -sumrN.
 rewrite !big_nat; apply eq_bigr => i /= Hi.
