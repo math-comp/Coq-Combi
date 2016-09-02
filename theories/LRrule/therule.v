@@ -55,8 +55,8 @@ The main theorem is [Theorem LRtab_coeffP]:
   \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
 ]
 
-As a corollary we provide the two Pieri rules [Pieri_complete] and
-[Pieri_elementary].
+As a corollary we provide the two Pieri rules [Pieri_symh] and
+[Pieri_syme].
 *******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
@@ -596,8 +596,6 @@ Import GRing.Theory.
 Variable (n0 : nat) (R : comRingType).
 Local Notation n := (n0.+1).
 Notation Schur p := (Schur n0 R p).
-Notation complete p := (complete n R p).
-Notation elementary p := (elementary n R p).
 
 Lemma yamrowP : is_yam_of_eval (intpart_of_intpartn (rowpartn d2)) (ncons d2 0%N [::]).
 Proof using .
@@ -660,10 +658,10 @@ Proof using .
     by rewrite Hincl Hskew.
 Qed.
 
-Theorem Pieri_complete (P1 : intpartn d1) :
-  Schur P1 * complete d2 = \sum_(P : intpartn (d1 + d2) | hb_strip P1 P) Schur P.
+Theorem Pieri_symh (P1 : intpartn d1) :
+  Schur P1 * 'h_d2 = \sum_(P : intpartn (d1 + d2) | hb_strip P1 P) Schur P.
 Proof using .
-  rewrite completeE LRtab_coeffP.
+  rewrite symhE LRtab_coeffP.
   rewrite [LHS]big_mkcond [RHS]big_mkcond /=.
   apply eq_bigr => p _.
   case: (boolP (included P1 p)) => Hincl; first last.
@@ -685,10 +683,10 @@ Proof using .
   by rewrite /= hb_strip_conjE.
 Qed.
 
-Theorem Pieri_elementary (P1 : intpartn d1) :
-  Schur P1 * elementary d2 = \sum_(P : intpartn (d1 + d2) | vb_strip P1 P) Schur P.
+Theorem Pieri_syme (P1 : intpartn d1) :
+  Schur P1 * 'e_d2 = \sum_(P : intpartn (d1 + d2) | vb_strip P1 P) Schur P.
 Proof using .
-  rewrite elementaryE LRtab_coeffP.
+  rewrite symeE LRtab_coeffP.
   rewrite [LHS]big_mkcond [RHS]big_mkcond /=.
   apply eq_bigr => p _.
   case: (boolP (included P1 p)) => Hincl; first last.

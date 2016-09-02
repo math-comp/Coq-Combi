@@ -77,9 +77,9 @@ rewrite -decomp_cf_triv linear_sum.
 rewrite (eq_bigr (fun i => 'z_i^-1 *: 'p[i])); first last.
   move=> l _; rewrite -Fchar_ncfuniCT /= linearZ scalerA mulrC divff ?scale1r //.
   exact: neq0zcoeff.
-rewrite -QtoCcomplete complete_to_power_sum /=.
+rewrite -QtoCsymh symh_to_symp /=.
 rewrite rmorph_sum /=; apply eq_bigr => l _.
-by rewrite zcoeffE scale_rat_QtoC QtoCpower_sum_prod fmorphV /= ratr_nat.
+by rewrite zcoeffE scale_rat_QtoC QtoCsymp_prod fmorphV /= ratr_nat.
 Qed.
 
 End Defs.

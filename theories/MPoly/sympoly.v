@@ -157,21 +157,21 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
 
 
 (* From  mpoly.v : \sum_(h : {set 'I_n} | #|h| == k) \prod_(i in h) 'X_i. *)
-Fact elementary_sym d : mesym n R d \is symmetric.
+Fact syme_sym d : mesym n R d \is symmetric.
 Proof using. exact: mesym_sym. Qed.
-Definition elementary d : {sympoly R[n]} := SymPoly (elementary_sym d).
+Definition syme d : {sympoly R[n]} := SymPoly (syme_sym d).
 Lemma mesym_homog d : mesym n R d \is d.-homog.
 Proof using.
 apply/dhomogP => m.
 rewrite msupp_mesymP => /existsP [] s /andP [] /eqP <- {d} /eqP -> {m}.
 exact: mdeg_mesym1.
 Qed.
-Lemma elementary_homog d : sympol (elementary d) \is d.-homog.
+Lemma syme_homog d : sympol (syme d) \is d.-homog.
 Proof using. by rewrite mesym_homog. Qed.
 
-Definition complete_pol d  : {mpoly R[n]} :=
+Definition symh_pol d  : {mpoly R[n]} :=
   \sum_(m : 'X_{1..n < d.+1} | mdeg m == d) 'X_[m].
-Lemma mcoeff_complete d m : (complete_pol d)@_m = (mdeg m == d)%:R.
+Lemma mcoeff_symh d m : (symh_pol d)@_m = (mdeg m == d)%:R.
 Proof.
 rewrite linear_sum /=.
 case: (altP (mdeg m =P d)) => [<- | Hd] /=.
@@ -181,17 +181,17 @@ case: (altP (mdeg m =P d)) => [<- | Hd] /=.
 - rewrite big1 // => mon /eqP Hd1; rewrite mcoeffX.
   by apply/boolRP; move: Hd; rewrite -{1}Hd1; apply contra=> /eqP ->.
 Qed.
-Fact complete_sym d : complete_pol d \is symmetric.
+Fact symh_sym d : symh_pol d \is symmetric.
 Proof using.
 apply/issymP => s; rewrite -mpolyP => m.
-by rewrite mcoeff_sym !mcoeff_complete mdeg_mperm.
+by rewrite mcoeff_sym !mcoeff_symh mdeg_mperm.
 Qed.
-Definition complete d : {sympoly R[n]} := SymPoly (complete_sym d).
-Lemma complete_homog d : sympol (complete d) \is d.-homog.
+Definition symh d : {sympoly R[n]} := SymPoly (symh_sym d).
+Lemma symh_homog d : sympol (symh d) \is d.-homog.
 Proof using. by apply rpred_sum => m /eqP H; rewrite dhomogX /= H. Qed.
 
-Definition power_sum_pol d  : {mpoly R[n]} := \sum_(i < n) 'X_i ^+ d.
-Fact power_sum_sym d : power_sum_pol d \is symmetric.
+Definition symp_pol d  : {mpoly R[n]} := \sum_(i < n) 'X_i ^+ d.
+Fact symp_sym d : symp_pol d \is symmetric.
 Proof using.
 apply/issymP => s.
 rewrite linear_sum /= (reindex_inj (h := s^-1))%g /=; last by apply/perm_inj.
@@ -200,8 +200,8 @@ rewrite msymX /=; congr mpolyX.
 rewrite mnmP => j; rewrite !mnmE /=; congr nat_of_bool.
 by apply/eqP/eqP => [|->//]; apply: perm_inj.
 Qed.
-Definition power_sum d : {sympoly R[n]} := SymPoly (power_sum_sym d).
-Lemma power_sum_homog d : sympol (power_sum d) \is d.-homog.
+Definition symp d : {sympoly R[n]} := SymPoly (symp_sym d).
+Lemma symp_homog d : sympol (symp d) \is d.-homog.
 Proof using.
 apply rpred_sum => m _.
 have /(dhomogMn d) : ('X_m : {mpoly R[n]}) \is 1.-homog.
@@ -339,38 +339,38 @@ rewrite -big_filter -[RHS]big_filter; apply eq_big_perm; apply uniq_perm_eq.
 Qed.
 
 (** Basis at degree 0 *)
-Lemma elementary0 : elementary 0 = 1.
+Lemma syme0 : syme 0 = 1.
 Proof using. by apply val_inj; rewrite /= mesym0E. Qed.
 
-Lemma powersum0 : power_sum 0 = n%:R.
+Lemma powersum0 : symp 0 = n%:R.
 Proof using.
 apply /val_inj.
-rewrite /= /power_sum_pol (eq_bigr (fun _ => 1));
+rewrite /= /symp_pol (eq_bigr (fun _ => 1));
   last by move=> i _; rewrite expr0.
 rewrite sumr_const card_ord /=.
 by rewrite [RHS](raddfMn (@sympol_lrmorphism _ _) n).
 Qed.
 
-Lemma complete0 : complete 0 = 1.
+Lemma symh0 : symh 0 = 1.
 Proof using.
 have Hd0 : (mdeg (0%MM : 'X_{1..n})) < 1 by rewrite mdeg0.
 apply val_inj => /=.
-rewrite /complete_pol (big_pred1 (BMultinom Hd0)); first last.
+rewrite /symh_pol (big_pred1 (BMultinom Hd0)); first last.
   by move=> m; rewrite /= mdeg_eq0 {2}/eq_op.
 by rewrite mpolyX0.
 Qed.
 
 
 (** All basis agrees at degree 1 *)
-Lemma elementary1 : elementary 1 = \sum_(i < n) 'X_i :> {mpoly R[n]}.
+Lemma syme1 : syme 1 = \sum_(i < n) 'X_i :> {mpoly R[n]}.
 Proof using. by rewrite /= mesym1E. Qed.
 
-Lemma power_sum1 : power_sum 1 = \sum_(i < n) 'X_i :> {mpoly R[n]}.
+Lemma symp1 : symp 1 = \sum_(i < n) 'X_i :> {mpoly R[n]}.
 Proof using. by apply eq_bigr => i _; rewrite expr1. Qed.
 
-Lemma complete1 : complete 1 = \sum_(i < n) 'X_i :> {mpoly R[n]}.
+Lemma symh1 : symh 1 = \sum_(i < n) 'X_i :> {mpoly R[n]}.
 Proof using.
-rewrite /complete -mpolyP => m.
+rewrite /symh -mpolyP => m.
 rewrite !raddf_sum /=.
 case: (boolP (mdeg m == 1%N)) => [/mdeg1P [] i /eqP -> | Hm].
 - have Hdm : (mdeg U_(i))%MM < 2 by rewrite mdeg1.
@@ -393,11 +393,11 @@ Qed.
 
 End Bases.
 
-Notation "''e_' k" := (elementary _ _ k)
+Notation "''e_' k" := (syme _ _ k)
                               (at level 8, k at level 2, format "''e_' k").
-Notation "''h_' k" := (complete _ _ k)
+Notation "''h_' k" := (symh _ _ k)
                               (at level 8, k at level 2, format "''h_' k").
-Notation "''p_' k" := (power_sum _ _ k)
+Notation "''p_' k" := (symp _ _ k)
                               (at level 8, k at level 2, format "''p_' k").
 
 (** Prod of generator *)
@@ -430,20 +430,20 @@ Qed.
 
 End Defs.
 
-Definition prod_elementary := prod_gen (@elementary n R).
-Definition prod_elementary_homog := prod_gen_homog (@elementary_homog n R).
-Definition prod_complete := prod_gen (@complete n R).
-Definition prod_complete_homog := prod_gen_homog (@complete_homog n R).
-Definition prod_power_sum := prod_gen (@power_sum n R).
-Definition prod_power_sum_homog := prod_gen_homog (@power_sum_homog n R).
+Definition prod_syme := prod_gen (@syme n R).
+Definition prod_syme_homog := prod_gen_homog (@syme_homog n R).
+Definition prod_symh := prod_gen (@symh n R).
+Definition prod_symh_homog := prod_gen_homog (@symh_homog n R).
+Definition prod_symp := prod_gen (@symp n R).
+Definition prod_symp_homog := prod_gen_homog (@symp_homog n R).
 
 End ProdGen.
 
-Notation "''e[' k ]" := (prod_elementary _ _ k)
+Notation "''e[' k ]" := (prod_syme _ _ k)
                               (at level 8, k at level 2, format "''e[' k ]").
-Notation "''h[' k ]" := (prod_complete _ _ k)
+Notation "''h[' k ]" := (prod_symh _ _ k)
                               (at level 8, k at level 2, format "''h[' k ]").
-Notation "''p[' k ]" := (prod_power_sum _ _ k)
+Notation "''p[' k ]" := (prod_symp _ _ k)
                               (at level 8, k at level 2, format "''p[' k ]").
 
 
@@ -462,7 +462,7 @@ Local Notation SF := {sympoly R[nvar]}.
 
 From mathcomp Require Import binomial.
 
-Lemma sum_complete_elementary (d : nat) :
+Lemma sum_symh_syme (d : nat) :
   d != 0%N ->
   \sum_(0 <= i < d.+1) (-1)^+i *: ('h_i * 'e_(d - i)) = 0 :> SF.
 Proof.
@@ -472,7 +472,7 @@ apply mpolyP => m; rewrite linear_sum /= mcoeff0.
 case: (altP (mdeg m =P d)) => Hm; first last.
   rewrite big_nat big1 // => i /=; rewrite ltnS => Hi.
   rewrite linearZ /= mcoeffM big1 ?mulr0 //= => [[m1 m2] /= /eqP Hmm].
-  rewrite mcoeff_complete mcoeff_mesym.
+  rewrite mcoeff_symh mcoeff_mesym.
   case: (altP (mdeg m1 =P i)) => Hm1; rewrite ?mul0r // mul1r.
   rewrite /mechar.
   case: (altP (mdeg m2 =P (d - i)%N)) => Hm2; rewrite ?mul0r //=.
@@ -493,7 +493,7 @@ transitivity
     by rewrite mcoeff_mesym Hf /= mulr0.
   rewrite (eq_bigr (fun k : 'XX_m => 1)); first last.
     move=> [/= m1 m2 /andP [/eqP H1 H2]].
-    rewrite mcoeff_complete mcoeff_mesym H2 /= mulr1.
+    rewrite mcoeff_symh mcoeff_mesym H2 /= mulr1.
     suff -> : mdeg m1 == (d - i)%N by [].
     move: Hm; rewrite {1}H1 mdegD.
     move: H2 => /andP [/eqP -> _] <-.
@@ -576,13 +576,13 @@ apply eq_bigr => i _.
 by rewrite !expr1n !mulr1 mulr_natr.
 Qed.
 
-Lemma elementary_completeE (d : nat) :
+Lemma syme_symhE (d : nat) :
   d != 0%N ->
   'e_d = \sum_(1 <= i < d.+1) 'h_i * ((-1)^+i.-1 *: 'e_(d - i)) :> SF.
 Proof.
 move=> Hd.
-have := sum_complete_elementary Hd.
-rewrite big_nat_recl // expr0 scale1r complete0 mul1r subn0 => /eqP.
+have := sum_symh_syme Hd.
+rewrite big_nat_recl // expr0 scale1r symh0 mul1r subn0 => /eqP.
 rewrite (addr_eq0 'e_d) => /eqP ->; rewrite big_add1 /= -sumrN.
 rewrite !big_nat; apply eq_bigr => i /= Hi.
 rewrite scalerAr -mulrN; congr (_ * _).
@@ -590,7 +590,7 @@ rewrite -scaleNr; congr (_ *: _).
 by rewrite exprS mulN1r opprK.
 Qed.
 
-Lemma elementary_to_complete_partsum n :
+Lemma syme_to_symh_partsum n :
   'e_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: (\prod_(i <- c) 'h_i) :> SF.
 Proof.
 rewrite /index_enum -enumT /=.
@@ -599,10 +599,10 @@ rewrite -[RHS](big_map (@cnval n) xpredT
 rewrite enum_intcompnE.
 elim: n {1 3 4 5}n (leqnn n) => [| m IHm] n.
   rewrite leqn0 => /eqP ->.
-  by rewrite /enum_compn /= big_seq1 /= subnn expr0 scale1r big_nil elementary0.
+  by rewrite /enum_compn /= big_seq1 /= subnn expr0 scale1r big_nil syme0.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
 rewrite enum_compnE Hm // -Hm big_flatten /=.
-rewrite elementary_completeE; last by rewrite Hm.
+rewrite syme_symhE; last by rewrite Hm.
 rewrite big_map /index_iota subSS subn0; apply eq_big_seq => i.
 rewrite mem_iota add1n ltnS => /andP [Hi Hin].
 rewrite big_map.
@@ -622,7 +622,7 @@ case: (altP (n-i =P 0)%N) => [/eqP | Hni] /=.
   have -> : i = n by apply anti_leq; rewrite Hin Hni.
   subst n => /=.
   rewrite subnn /enum_compn /= big_seq1 big_nil /=.
-  rewrite subn0 elementary0 mulNr -mulrN -scaleNr; congr (_ * (_)%:A).
+  rewrite subn0 syme0 mulNr -mulrN -scaleNr; congr (_ * (_)%:A).
   by rewrite exprS mulN1r opprK.
 rewrite {}IHm //; first last.
   rewrite Hm; case: i Hi {Hin Hni} => // i' _.
@@ -647,11 +647,11 @@ Qed.
 
 
 (** * Newton formula. *)
-Lemma mult_complete_U k d i m :
+Lemma mult_symh_U k d i m :
   (('h_k : {mpoly R[nvar]}) * 'X_i ^+ d)@_m =
   ((mdeg m == (k + d)%N) && (m i >= d))%:R.
 Proof using.
-rewrite /complete_pol mulr_suml linear_sum /=; case: leqP => /= H.
+rewrite /symh_pol mulr_suml linear_sum /=; case: leqP => /= H.
 - pose Ud := (U_(i) *+ d)%MM.
   have Hleq : (Ud <= m)%MM.
     apply/mnm_lepP => j; rewrite mulmnE mnm1E.
@@ -678,27 +678,27 @@ rewrite /complete_pol mulr_suml linear_sum /=; case: leqP => /= H.
   by move: H; rewrite -Habs ltnNge leq_addl.
 Qed.
 
-Lemma mult_complete_powersum k d m :
+Lemma mult_symh_powersum k d m :
   ('h_k * 'p_d : SF)@_m =
   (mdeg m == (k + d)%N)%:R * \sum_(i < nvar) (m i >= d)%:R.
 Proof using.
 rewrite -[sympol _]/(sympol_lrmorphism nvar R _) rmorphM /=.
-rewrite /power_sum_pol !mulr_sumr linear_sum.
-apply eq_bigr=> i _ /=; rewrite mult_complete_U.
+rewrite /symp_pol !mulr_sumr linear_sum.
+apply eq_bigr=> i _ /=; rewrite mult_symh_U.
 by case: eqP => _ //=; rewrite ?mul0r ?mul1r.
 Qed.
 
-Lemma Newton_complete (k : nat) :
+Lemma Newton_symh (k : nat) :
   k%:R *: 'h_k = \sum_(0 <= i < k) 'h_i * 'p_(k - i) :> SF.
 Proof using.
 apply val_inj => /=; apply/mpolyP => m.
-rewrite mcoeffZ mcoeff_complete.
+rewrite mcoeffZ mcoeff_symh.
 rewrite -[sympol _]/(sympol_lrmorphism nvar R _) !linear_sum big_nat.
 rewrite (eq_bigr
            (fun i =>
               (mdeg m == k)%:R *
                 \sum_(j < nvar) (m j >= (k - i)%N)%:R)) /=; first last.
-  move=> i Hi /=; rewrite mult_complete_powersum.
+  move=> i Hi /=; rewrite mult_symh_powersum.
   by rewrite subnKC //; apply ltnW.
 rewrite -big_nat -mulr_sumr mulrC.
 case: (altP (mdeg m =P k)) => Hdegm; rewrite /= ?mul1r ?mul0r //.
@@ -721,10 +721,10 @@ rewrite -(size_map nat_of_ord).
 by rewrite -filter_map val_enum_ord iota_ltn // size_iota.
 Qed.
 
-Lemma Newton_complete_iota (k : nat) :
+Lemma Newton_symh_iota (k : nat) :
   k%:R *: 'h_k = \sum_(i <- iota 1 k) 'p_i * 'h_(k - i) :> SF.
 Proof using.
-rewrite Newton_complete big_mkord (reindex_inj rev_ord_inj) /=.
+rewrite Newton_symh big_mkord (reindex_inj rev_ord_inj) /=.
 rewrite -(addn0 1%N) iota_addl big_map -val_enum_ord big_map.
 rewrite /index_enum /= enumT; apply eq_bigr => i _.
 by rewrite mulrC add1n subKn.
@@ -735,7 +735,7 @@ End ChangeBasis.
 From mathcomp Require Import rat ssrnum.
 
 
-Section ChangeBasisCompletePowerSum.
+Section ChangeBasisSymhPowerSum.
 
 Import Num.Theory.
 
@@ -747,7 +747,7 @@ Fixpoint prod_partsum (s : seq nat) :=
 
 Local Notation "\Pi s" := (prod_partsum s)%:R^-1 (at level 0, s at level 2).
 
-Lemma complete_to_power_sum_prod_partsum n :
+Lemma symh_to_symp_prod_partsum n :
   'h_n = \sum_(c : intcompn n) \Pi c *: \prod_(i <- c) 'p_i :> SF.
 Proof using.
 rewrite /index_enum -enumT /=.
@@ -756,11 +756,11 @@ rewrite -[RHS](big_map (@cnval n) xpredT
 rewrite enum_intcompnE.
 elim: n {1 3 4}n (leqnn n) => [| m IHm] n.
   rewrite leqn0 => /eqP ->.
-  by rewrite big_seq1 big_nil complete0 /= invr1 scale1r.
+  by rewrite big_seq1 big_nil symh0 /= invr1 scale1r.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
 rewrite enum_compnE Hm // -Hm big_flatten /=.
 have Hn : (n%:R : rat) != 0 by rewrite pnatr_eq0 Hm.
-apply (scalerI Hn); rewrite Newton_complete_iota.
+apply (scalerI Hn); rewrite Newton_symh_iota.
 rewrite scaler_sumr big_map; apply eq_big_seq => i.
 rewrite mem_iota add1n ltnS => /andP [Hi Hin].
 rewrite big_map big_seq.
@@ -777,11 +777,11 @@ Qed.
 
 Import LeqGeqOrder.
 
-Lemma complete_to_power_sum_intpartn n :
+Lemma symh_to_symp_intpartn n :
   'h_n = \sum_(l : intpartn n)
            (\sum_(c : intcompn n | perm_eq l c) \Pi c) *: 'p[l] :> SF.
 Proof.
-rewrite complete_to_power_sum_prod_partsum.
+rewrite symh_to_symp_prod_partsum.
 rewrite (partition_big (@partn_of_compn n) xpredT) //=.
 apply eq_bigr => l _; rewrite scaler_suml; apply eq_big.
 - move=> c; apply/eqP/idP => [<- | Hperm]; first exact: perm_partn_of_compn.
@@ -789,7 +789,7 @@ apply eq_bigr => l _; rewrite scaler_suml; apply eq_big.
   + exact: sort_sorted.
   + by rewrite (perm_eqrP Hperm) perm_sort.
 - move=> c /eqP <-; congr (_ *: _).
-  rewrite /prod_power_sum /prod_gen; apply eq_big_perm.
+  rewrite /prod_symp /prod_gen; apply eq_big_perm.
   by rewrite perm_eq_sym; apply: perm_partn_of_compn.
 Qed.
 
@@ -870,7 +870,7 @@ Lemma part_sumn_count l :
   = sumn l.
 Proof. by move/part_sumn_count_bound; apply. Qed.
 
-Lemma coeff_complete_to_power_sum n (l : intpartn n) :
+Lemma coeff_symh_to_symp n (l : intpartn n) :
   (\sum_(c : intcompn n | perm_eq l c) \Pi c) = (zcard l)%:R^-1 :> rat.
 Proof.
 case: l => l /= /andP [/eqP].
@@ -948,14 +948,14 @@ rewrite -natr_sum -Hsum part_sumn_count // mulrC divff //.
 by rewrite Hsum Hm pnatr_eq0.
 Qed.
 
-Lemma complete_to_power_sum n :
+Lemma symh_to_symp n :
   'h_n = \sum_(l : intpartn n) (zcard l)%:R^-1 *: 'p[l] :> SF.
 Proof.
-rewrite complete_to_power_sum_intpartn; apply eq_bigr => l _.
-by rewrite coeff_complete_to_power_sum.
+rewrite symh_to_symp_intpartn; apply eq_bigr => l _.
+by rewrite coeff_symh_to_symp.
 Qed.
 
-End ChangeBasisCompletePowerSum.
+End ChangeBasisSymhPowerSum.
 
 From mathcomp Require Import vector.
 
@@ -1078,8 +1078,8 @@ move=> m; apply/mapP/mapP => [[] s | [] mb].
   rewrite mem_enum inE /=; exact: srt_m2s.
 Qed.
 
-(** Equivalent definition of complete symmetric function *)
-Lemma complete_basisE d :
+(** Equivalent definition of symh symmetric function *)
+Lemma symh_basisE d :
   \sum_(s in (basis n d)) 'X_[s2m s] = Schur (rowpartn d).
 Proof using.
 rewrite Schur_tabsh_readingE (eq_bigl _ _ (@tabwordshape_row d)).
@@ -1099,9 +1099,9 @@ Variable n0 : nat.
 Local Notation n := (n0.+1).
 Variable R : comRingType.
 
-Lemma completeE d : complete n R d = Schur n0 R (rowpartn d) :> {mpoly R[n]}.
+Lemma symhE d : symh n R d = Schur n0 R (rowpartn d) :> {mpoly R[n]}.
 Proof using.
-rewrite /= -complete_basisE /complete_pol.
+rewrite /= -symh_basisE /symh_pol.
 rewrite -(big_map (@bmnm n d.+1) (fun m => mdeg m == d) (fun m => 'X_[m])).
 rewrite /index_enum -enumT -big_filter.
 rewrite [filter _ _](_ : _ =
@@ -1131,12 +1131,12 @@ elim: w w0 => [//= | w1 w /= <-] w0 /=.
 by congr andb; rewrite /dominate /= andbT {w}.
 Qed.
 
-(** The definition of elementary symmetric polynomials as column Schur
+(** The definition of syme symmetric polynomials as column Schur
     function agrees with the one from mpoly *)
-Lemma elementaryE d :
-  elementary n R d = Schur n0 R (colpartn d) :> {mpoly R[n]}.
+Lemma symeE d :
+  syme n R d = Schur n0 R (colpartn d) :> {mpoly R[n]}.
 Proof using.
-rewrite /= mesym_tupleE /tmono /elementary Schur_tabsh_readingE.
+rewrite /= mesym_tupleE /tmono /syme Schur_tabsh_readingE.
 rewrite (eq_bigl _ _ (@tabwordshape_col d)).
 set f := BIG_F.
 rewrite (eq_bigr (fun x => f (rev_tuple x))) /f {f}; first last.
@@ -1165,7 +1165,7 @@ Qed.
 
 Lemma Schur1 (sh : intpartn 1) : Schur n0 R sh = \sum_(i < n) 'X_i.
 Proof using.
-suff -> : sh = rowpartn 1 by rewrite -completeE complete1.
+suff -> : sh = rowpartn 1 by rewrite -symhE symh1.
 by apply val_inj => /=; exact: intpartn1.
 Qed.
 
@@ -1231,35 +1231,35 @@ apply eq_bigr => i _ /=.
 by rewrite !linearZ /=.
 Qed.
 
-Lemma QtoCelementary d : QtoC 'e_d = 'e_d.
+Lemma QtoCsyme d : QtoC 'e_d = 'e_d.
 Proof.
 apply val_inj; rewrite /= /mesym rmorph_sum /=.
 apply eq_bigr => X _; rewrite rmorph_prod /=.
 by apply eq_bigr => i _; rewrite tens_algCX.
 Qed.
-Lemma QtoCelementary_prod d (l : intpartn d) : QtoC 'e[l] = 'e[l].
+Lemma QtoCsyme_prod d (l : intpartn d) : QtoC 'e[l] = 'e[l].
 Proof.
-by rewrite rmorph_prod; apply eq_bigr => i _; exact: QtoCelementary.
+by rewrite rmorph_prod; apply eq_bigr => i _; exact: QtoCsyme.
 Qed.
 
-Lemma QtoCcomplete d : QtoC 'h_d = 'h_d.
+Lemma QtoCsymh d : QtoC 'h_d = 'h_d.
 Proof.
-apply val_inj; rewrite /= /complete_pol rmorph_sum /=.
+apply val_inj; rewrite /= /symh_pol rmorph_sum /=.
 by apply eq_bigr => X _; rewrite tens_algCX.
 Qed.
-Lemma QtoCcomplete_prod d (l : intpartn d) : QtoC 'h[l] = 'h[l].
+Lemma QtoCsymh_prod d (l : intpartn d) : QtoC 'h[l] = 'h[l].
 Proof.
-by rewrite rmorph_prod; apply eq_bigr => i _; exact: QtoCcomplete.
+by rewrite rmorph_prod; apply eq_bigr => i _; exact: QtoCsymh.
 Qed.
 
-Lemma QtoCpower_sum d : QtoC 'p_d = 'p_d.
+Lemma QtoCsymp d : QtoC 'p_d = 'p_d.
 Proof.
-apply val_inj; rewrite /= /power_sum_pol rmorph_sum /=.
+apply val_inj; rewrite /= /symp_pol rmorph_sum /=.
 by apply eq_bigr => X _; rewrite rmorphX /= tens_algCX.
 Qed.
-Lemma QtoCpower_sum_prod d (l : intpartn d) : QtoC 'p[l] = 'p[l].
+Lemma QtoCsymp_prod d (l : intpartn d) : QtoC 'p[l] = 'p[l].
 Proof.
-by rewrite rmorph_prod; apply eq_bigr => i _; exact: QtoCpower_sum.
+by rewrite rmorph_prod; apply eq_bigr => i _; exact: QtoCsymp.
 Qed.
 
 End RatToAlgC.

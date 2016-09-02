@@ -113,7 +113,7 @@ by rewrite subn_gt0.
 Qed.
 
 
-Lemma alt_elementary (m : 'X_{1..n}) k :
+Lemma alt_syme (m : 'X_{1..n}) k :
   'a_(m + rho) * 'e_k =
   \sum_(h : {set 'I_n} | #|h| == k) 'a_(m + mesym1 h + rho).
 Proof using .
@@ -297,12 +297,12 @@ Qed.
 
 Local Open Scope ring_scope.
 
-Theorem alt_mpart_elementary d (P1 : intpartn d) k :
+Theorem alt_mpart_syme d (P1 : intpartn d) k :
   size P1 <= n ->
   'a_(mpart P1 + rho) * 'e_k =
   \sum_(P : intpartn (d + k) | vb_strip P1 P && (size P <= n)) 'a_(mpart P + rho).
 Proof using .
-rewrite alt_elementary => Hsz.
+rewrite alt_syme => Hsz.
 rewrite (bigID (hasincr P1)) /=.
 rewrite (eq_bigr (fun x => 0)); last by move=> i /andP [] _ /hasincr0.
 rewrite sumr_const mul0rn add0r.
@@ -440,9 +440,9 @@ have HszP1 : size (conj_intpartn P1) <= n.
   rewrite conj_partK // => ->.
   have:= (intpartnP (conj_intpartn P)) => /=.
   by case: (conj_part P) => [| c0 [| c1 c]] //= /andP [].
-have := alt_mpart_elementary R k HszP1.
+have := alt_mpart_syme R k HszP1.
 have {IHb HszP1 Hd1} <- := IHb _ Hd1 (conj_intpartn P1) HszP1.
-rewrite -mulrA Pieri_elementary.
+rewrite -mulrA Pieri_syme.
 rewrite (bigID (fun P0 : intpartn (d1 + k) => (size P0 <= n))) /= addrC.
 rewrite big1 ?add0r; first last.
   by move=> i /andP [] _; rewrite -ltnNge; exact: Schur_oversize.
@@ -638,7 +638,7 @@ exists (HomCoeff (fun p : intpartn k => (p == colpartn k)%:R)) => /=.
 rewrite (bigID (fun p => p == colpartn k)) /=.
 rewrite big_pred1_eq eq_refl /= scale1r.
 rewrite (eq_bigr (fun p => 0)); last by move=> i /negbTE ->; rewrite scale0r.
-by rewrite big1_eq addr0 -elementaryE.
+by rewrite big1_eq addr0 -symeE.
 Qed.
 
 Lemma Schur_dec_mesym_pow k i : Schur_dec ('e_k ^+ i).
@@ -649,7 +649,7 @@ exists (HomCoeff (fun p : intpartn (d + k) =>
 rewrite /= exprS Hcoe mulrC mulr_suml.
 transitivity (\sum_(sh : intpartn d)
                (\sum_(p : intpartn (d + k) | vb_strip sh p) coe sh *: 's_p)).
-  by apply eq_bigr => p _; rewrite -scalerAl Pieri_elementary scaler_sumr.
+  by apply eq_bigr => p _; rewrite -scalerAl Pieri_syme scaler_sumr.
 rewrite (exchange_big_dep xpredT) //=.
 apply eq_bigr => sh _; by rewrite scaler_suml.
 Qed.
