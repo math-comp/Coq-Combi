@@ -210,9 +210,9 @@ by rewrite mul1n.
 Qed.
 
 
-Definition monomial_pol (sh : n.-tuple nat) : {mpoly R[n]} :=
+Definition symm_pol (sh : n.-tuple nat) : {mpoly R[n]} :=
   (\sum_(p : permuted sh) 'X_[Multinom p] ).
-Lemma mcoeff_monomial sh m : (monomial_pol sh)@_m = (perm_eq sh m)%:R.
+Lemma mcoeff_symm sh m : (symm_pol sh)@_m = (perm_eq sh m)%:R.
 Proof.
 rewrite linear_sum /=.
 case: (boolP (perm_eq sh m)) => /= [| /(elimN idP)] Hperm.
@@ -225,21 +225,21 @@ case: (boolP (perm_eq sh m)) => /= [| /(elimN idP)] Hperm.
   rewrite mcoeffX; case: (altP (_ =P _)) => //= Heq.
   by exfalso; apply Hperm; rewrite -Heq /=; exact: permutedP.
 Qed.
-Fact monomial_sym sh : monomial_pol sh \is symmetric.
+Fact symm_sym sh : symm_pol sh \is symmetric.
 Proof.
 apply/issymP => s; apply/mpolyP => m.
-rewrite mcoeff_sym !mcoeff_monomial.
+rewrite mcoeff_sym !mcoeff_symm.
 have: perm_eq (m#s) m by apply/tuple_perm_eqP; exists s.
 by move=> /perm_eqrP ->.
 Qed.
-Definition monomial sh : {sympoly R[n]} :=
-  if size sh <= n then SymPoly (monomial_sym (mpart sh)) else 0 : {sympoly R[n]}.
-Lemma monomial_homog d (sh : intpartn d) :
-  sympol (monomial sh) \is d.-homog.
+Definition symm sh : {sympoly R[n]} :=
+  if size sh <= n then SymPoly (symm_sym (mpart sh)) else 0 : {sympoly R[n]}.
+Lemma symm_homog d (sh : intpartn d) :
+  sympol (symm sh) \is d.-homog.
 Proof using.
-rewrite /monomial; case: leqP => [/= Hsz | _]; last exact: dhomog0.
+rewrite /symm; case: leqP => [/= Hsz | _]; last exact: dhomog0.
 rewrite /= unfold_in; apply/allP => /= m.
-rewrite mcoeff_msupp mcoeff_monomial.
+rewrite mcoeff_msupp mcoeff_symm.
 case: (boolP (perm_eq _ _)) => [Hperm _ | _]; last by rewrite /= eq_refl.
 rewrite /mdeg sumnE -(intpartn_sumn sh).
 move: Hperm => /perm_sumn <-{m}.
@@ -249,9 +249,9 @@ rewrite [LHS](bigID (fun i => i == 0%N)) /= big1 ?add1n //.
 by move=> i /eqP.
 Qed.
 
-Lemma issym_monomialE (p : {mpoly R[n]}) :
+Lemma issym_symmE (p : {mpoly R[n]}) :
   p \is symmetric ->
-  p = \sum_(m <- msupp p | m \is dominant) p@_m *: monomial (partm m).
+  p = \sum_(m <- msupp p | m \is dominant) p@_m *: symm (partm m).
 Proof.
 move=> Hsym; apply/mpolyP => m.
 case: (boolP (m \in msupp p)) => Hm.
@@ -265,12 +265,12 @@ case: (boolP (m \in msupp p)) => Hm.
   have -> : p@_(mpart (partm m)) = p@_m.
     have [/= s /eqP ->]:= mpart_partm_perm m.
     by rewrite -mcoeff_sym (issymP p Hsym).
-  have -> : (monomial (partm m))@_m = 1.
-    by rewrite /monomial size_partm /= mcoeff_monomial perm_eq_sym partm_perm_eqK.
+  have -> : (symm (partm m))@_m = 1.
+    by rewrite /symm size_partm /= mcoeff_symm perm_eq_sym partm_perm_eqK.
   rewrite mulr1 -[LHS]addr0; congr (_ + _); symmetry.
   rewrite -![sympol _]/(sympol_lrmorphism n R _) !raddf_sum /=.
   rewrite big_seq_cond; apply big1 => /= m' /and3P [_ Hdom Hm'].
-  rewrite mcoeffZ /monomial /= size_partm /= mcoeff_monomial.
+  rewrite mcoeffZ /symm /= size_partm /= mcoeff_symm.
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
   apply (introF idP) => /perm_eq_partm
                          /(congr1 (fun x : intpart => mpart (n := n) x)) H.
@@ -278,7 +278,7 @@ case: (boolP (m \in msupp p)) => Hm.
 - rewrite (memN_msupp_eq0 Hm); symmetry.
   rewrite -![sympol _]/(sympol_lrmorphism n R _) !raddf_sum /=.
   rewrite big_seq_cond; apply big1 => /= m' /andP [Hsupp Hdom].
-  rewrite mcoeffZ /monomial /= size_partm /= mcoeff_monomial partmK //.
+  rewrite mcoeffZ /symm /= size_partm /= mcoeff_symm partmK //.
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
   apply (introF idP) => /mnm_perm_eq [/= s /eqP Hs].
   move: Hm Hsupp; rewrite -mcoeff_eq0 mcoeff_msupp Hs.
@@ -286,9 +286,9 @@ case: (boolP (m \in msupp p)) => Hm.
   by rewrite eq_refl.
 Qed.
 
-Lemma monomial_genE (p : {sympoly R[n]}) :
-  p = \sum_(m <- msupp p | m \is dominant) p@_m *: monomial (partm m).
-Proof. by apply val_inj => /=; apply issym_monomialE. Qed.
+Lemma symm_genE (p : {sympoly R[n]}) :
+  p = \sum_(m <- msupp p | m \is dominant) p@_m *: symm (partm m).
+Proof. by apply val_inj => /=; apply issym_symmE. Qed.
 
 
 Lemma size_mpart_in_supp (f : {mpoly R[n]}) d (p : intpartn d) :
@@ -299,11 +299,11 @@ rewrite /= mdeg0 => Hd; subst d.
 by move: H1; rewrite intpartn0.
 Qed.
 
-Lemma homog_monomialE d (p : {sympoly R[n]}) :
+Lemma homog_symmE d (p : {sympoly R[n]}) :
   sympol p \is d.-homog ->
-  p = \sum_(l : intpartn d) p@_(mpart l) *: monomial l.
+  p = \sum_(l : intpartn d) p@_(mpart l) *: symm l.
 Proof.
-move=> Hhomog; rewrite {1}(monomial_genE p).
+move=> Hhomog; rewrite {1}(symm_genE p).
 apply val_inj => /=.
 rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)).
 rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
@@ -312,15 +312,15 @@ rewrite [X in _ + X]big1 ?addr0;
   last by move=> i /memN_msupp_eq0 ->; rewrite scale0r.
 rewrite (eq_bigr (fun i : intpartn d =>
            p@_(mpart i) *:
-            sympol (monomial (partm (n := n) (mpart i)))));
+            sympol (symm (partm (n := n) (mpart i)))));
     first last.
-  move=> i Hi; congr (_ *: _); congr sympol; congr monomial.
+  move=> i Hi; congr (_ *: _); congr sympol; congr symm.
   by rewrite mpartK //; apply (size_mpart_in_supp Hhomog Hi).
 rewrite /index_enum -enumT.
 transitivity (\sum_(m <- [seq mpart (i : intpartn d) |
                           i <- enum (intpartn_finType d)] |
                     m \in msupp p)
-      p@_m *: sympol (monomial (partm m))); last by rewrite big_map /=.
+      p@_m *: sympol (symm (partm m))); last by rewrite big_map /=.
 rewrite -big_filter -[RHS]big_filter; apply eq_big_perm; apply uniq_perm_eq.
 - by apply filter_uniq; apply msupp_uniq.
 - rewrite filter_map map_inj_in_uniq; first by apply filter_uniq; apply enum_uniq.
@@ -336,6 +336,32 @@ rewrite -big_filter -[RHS]big_filter; apply eq_big_perm; apply uniq_perm_eq.
     by move: Hhomog => /dhomogP/(_ _ Hsupp) /= ->.
   exists (IntPartN Hp); first by rewrite mem_enum.
   by rewrite /= partmK.
+Qed.
+
+Lemma symm_unique d (p : {sympoly R[n]}) c :
+  p = \sum_(l : intpartn d) (c l) *: symm l ->
+  forall l : intpartn d, (size l <= n)%N -> c l = p@_(mpart l).
+Proof.
+move=> -> l Hl.
+rewrite [X in X@__](linear_sum (@sympol_lrmorphism _ _)) /= linear_sum.
+rewrite (bigD1 l) //= linearZ /= /symm /=.
+rewrite Hl mcoeff_symm perm_eq_refl /= mulr1.
+rewrite big1 ?addr0 // => i Hil /=.
+case: leqP => [Hi | _]; last by rewrite scaler0 mcoeff0.
+rewrite linearZ /= mcoeff_symm.
+rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
+apply negbTE; move: Hil; apply contra.
+move=> /perm_eq_partm/(congr1 pval).
+rewrite !mpartK // => Hil.
+by apply/eqP/val_inj.
+Qed.
+
+Lemma symm_unique0 d c :
+  \sum_(l : intpartn d) (c l) *: symm l = 0 ->
+  forall l : intpartn d, (size l <= n)%N -> c l = 0.
+Proof.
+move=> /esym/symm_unique => H l /H ->.
+by rewrite mcoeff0.
 Qed.
 
 (** Basis at degree 0 *)
@@ -445,6 +471,9 @@ Notation "''h[' k ]" := (prod_symh _ _ k)
                               (at level 8, k at level 2, format "''h[' k ]").
 Notation "''p[' k ]" := (prod_symp _ _ k)
                               (at level 8, k at level 2, format "''p[' k ]").
+
+Notation "''m[' k ]" := (symm _ _ k)
+                              (at level 8, k at level 2, format "''m[' k ]").
 
 
 
@@ -965,34 +994,95 @@ Variable n : nat.
 Variable R : fieldType.
 Variable d : nat.
 Implicit Type m : 'X_{1.. n.+1}.
+Local Notation SF := {sympoly R[n.+1]}.
 
-Definition hommonomial (l : intpartn d) := DHomog (monomial_homog n.+1 R l).
-Definition dsym := span [seq hommonomial l | l <- enum [set: intpartn d]].
+Definition homsymm (l : intpartn d) := DHomog (symm_homog n.+1 R l).
+Definition bpartset := [set l : intpartn d | (size l <= n.+1)%N].
+Definition bpart := enum_tuple (pred_of_set bpartset).
+Definition dsym := span (map_tuple homsymm bpart).
 
-Lemma hommonomialE (f : dhomog n.+1 R d) :
+Lemma homsymmE (f : dhomog n.+1 R d) :
   mpoly_of_dhomog f \is symmetric ->
-  f = \sum_(p : intpartn d) f@_(mpart p) *: hommonomial p.
+  f = \sum_(l : intpartn d | (size l <= n.+1)%N) f@_(mpart l) *: homsymm l.
 Proof.
-move=> Hf; apply val_inj.
+-move=> Hf; apply val_inj.
 have:= dhomog_is_dhomog f.
 rewrite -[val f]/(val (SymPoly Hf)) => fhom.
-rewrite (homog_monomialE fhom) /=.
-by rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)) linear_sum.
+rewrite (homog_symmE fhom) /=.
+rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)) linear_sum /=.
+rewrite (bigID (fun  l : intpartn d => (size l <= n.+1)%N)) /= addrC.
+rewrite big1 ?add0r // => i /negbTE Hi.
+by rewrite /symm Hi scaler0.
 Qed.
 
 Lemma dsymP f : (f \in dsym) = (mpoly_of_dhomog f \is symmetric).
 Proof.
 apply/idP/idP.
 - move=> /coord_span -> /=.
-  rewrite linear_sum; apply rpred_sum => p _.
+  rewrite linear_sum; apply rpred_sum => i _.
   rewrite linearZZ; apply rpredZ => /=.
-  by rewrite (nth_map (rowpartn d)) /=; last by move: p; rewrite cardE => i.
-- move/hommonomialE ->.
+  by rewrite (nth_map (rowpartn d)) /=; last by move: i; rewrite cardE => i.
+- move/homsymmE ->.
   rewrite /dsym span_def.
-  apply rpred_sum => p _; apply rpredZ => /=.
-  rewrite big_map -big_enum (bigD1 p) //= -[X in X \in _]addr0.
-  apply memv_add; first exact: memv_line.
-  exact: mem0v.
+  apply rpred_sum => l _; apply rpredZ => /=.
+  case: (leqP (size l) n.+1) => Hl.
+  + rewrite big_map -big_enum (bigD1 l) ?inE //= -[X in X \in _]addr0.
+    apply memv_add; first exact: memv_line.
+    exact: mem0v.
+  + suff -> : homsymm l = 0 by apply: mem0v.
+    by apply val_inj => /=; rewrite /symm leqNgt Hl.
+Qed.
+
+Lemma index_part (l : intpartn d) :
+  {i : 'I_#|bpartset| | (size l <= n.+1)%N ==> (tnth bpart i == l)}.
+Proof.
+apply/sigW.
+case: (boolP (size l <= n.+1)%N) => Hsz /=.
+- suff /tnthP : l \in bpart by move=> /= [i Hi]; exists i; rewrite Hi.
+  by rewrite /bpart /enum_tuple memtE /= mem_enum inE.
+case H: #|bpartset|; last by exists ord0.
+exfalso; move: H => /eqP; apply (elimN idP).
+rewrite cards_eq0; apply/set0Pn.
+exists (rowpartn d); rewrite inE /= /rowpartn /rowpart /=.
+by case d.
+Qed.
+
+Lemma index_partK (i : 'I_#|bpartset|) : sval (index_part (tnth bpart i)) = i.
+Proof.
+have:= mem_tnth i bpart.
+rewrite {2}/bpart memtE /= mem_enum inE => Hi.
+case: (index_part _) => j /=; rewrite Hi /= => /eqP.
+rewrite /bpart !(tnth_nth (rowpartn d)) /= => /eqP.
+rewrite nth_uniq -?cardE //; first by move=> /eqP /val_inj ->.
+exact: enum_uniq.
+Qed.
+
+Lemma free_homsymm : free (map_tuple homsymm bpart).
+Proof.
+apply/freeP => co.
+pose cob := fun l : intpartn d =>
+                    if (size l <= n.+1)%N then co (val (index_part l)) else 0.
+have Hcob i : cob (tnth bpart i) = co i.
+  have:= mem_tnth i bpart.
+  rewrite {2}/bpart memtE /= mem_enum inE => Hi.
+  by rewrite /cob {1}Hi /= index_partK.
+set f := (X in X = 0).
+have {f} -> : f = \sum_(l : intpartn d) (cob l) *: homsymm l.
+  rewrite (bigID (mem bpartset)) /= addrC big1 ?add0r; first last.
+    by move=> i; rewrite inE /cob => /negbTE {1}->; rewrite scale0r.
+  rewrite big_enum -[enum bpartset]/(tval bpart).
+  rewrite big_tuple /f; apply eq_bigr => i _.
+  rewrite Hcob; congr (_ *: _).
+  rewrite (nth_map (tnth bpart i)) -?cardE //.
+  by rewrite {2}(tnth_nth (tnth bpart i)) .
+move=> /(congr1 val) /=; rewrite linear_sum /=.
+rewrite (eq_bigr (fun l : intpartn d =>
+                    sympol_lrmorphism _ _ ((cob l) *: 'm[l]))) //.
+rewrite -!linear_sum => /= H i.
+have {H} /symm_unique0 H0 : \sum_i cob i *: 'm[i] = 0 :> SF.
+  by apply sympol_inj => /=.
+rewrite -Hcob; apply: H0.
+by have:= mem_tnth i bpart; rewrite {2}/bpart memtE /= mem_enum inE.
 Qed.
 
 End Homogeneous.
