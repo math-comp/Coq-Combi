@@ -98,6 +98,7 @@ endif
 
 VFILES:=theories/Combi/composition.v\
   theories/Combi/fibered_set.v\
+  theories/Combi/Kostka.v\
   theories/Combi/partition.v\
   theories/Combi/permuted.v\
   theories/Combi/multinomial.v\
