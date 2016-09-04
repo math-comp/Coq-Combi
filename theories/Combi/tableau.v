@@ -246,6 +246,17 @@ Section Tableau.
     case: t Hdom => [//=| t1 t]; by rewrite rcons_cons /= => ->.
   Qed.
 
+  Lemma is_tableau_catl t1 t2 :
+    is_tableau (t1 ++ t2) -> is_tableau t1.
+  Proof.
+    elim: t1 => [//= | t t1 IHt1] /= /and4P [] -> -> /= Hdom /IHt1 {IHt1} ->.
+    rewrite andbT; by case: t1 Hdom => [//= | r1 t1].
+  Qed.
+
+  Lemma is_tableau_catr t1 t2 :
+    is_tableau (t1 ++ t2) -> is_tableau t2.
+  Proof. by elim: t1 => [//= | r t1 IHt1] /= /and4P [] _ _ _. Qed.
+
   Lemma is_part_sht t : is_tableau t -> is_part (shape t).
   Proof using .
     elim: t => [//= | t0 t IHt] /= /and4P [] Ht0 _ /dominateP [] Hdom _ Htab.

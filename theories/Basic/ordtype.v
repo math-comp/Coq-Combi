@@ -808,6 +808,57 @@ Defined.
 
 End FinPOrdTypeTheory.
 
+(******************************************************************************)
+(* Increassing and nondecrassing maps                                         *)
+(******************************************************************************)
+Section IncrMap.
+
+Variable T1 T2 : inhOrdType.
+Variable F : T1 -> T2.
+
+Section Local.
+
+Variable P : pred T1.
+Hypothesis Hincr : {in P &, forall x y, x < y -> F x < F y}.
+
+Lemma in_incrXE : {in P &, forall x y, (x < y) = (F x < F y)}.
+Proof.
+move=> x y Hx Hy.
+case: (compareXP x y) => [/Hincr -> //| /Hincr HFyx | ->].
+- by rewrite ltnXNgeqX leqX_eqVltnX HFyx // negb_or andbF.
+- by rewrite ltnXnn.
+Qed.
+
+Lemma in_incrX_nondecrX : {in P &, forall x y, x <= y -> F x <= F y}.
+Proof using Hincr.
+  move=> x y Hx Hy /=; rewrite leqX_eqVltnX => /orP [/eqP -> //=| H].
+  by rewrite leqX_eqVltnX (Hincr Hx Hy H) orbT.
+Qed.
+
+Lemma in_incrX_nondecrXE : {in P &, forall x y, (x <= y) = (F x <= F y)}.
+Proof using Hincr.
+move=> x y Hx Hy /=; rewrite !leqX_eqVltnX.
+case: (compareXP x y) => /= [/Hincr -> //| /Hincr HFyx | ->].
+- by rewrite orbT.
+- by rewrite -leqX_eqVltnX leqXNgtnX HFyx.
+- by rewrite eq_refl.
+Qed.
+
+Lemma in_incrX_inj : {in P &, injective F}.
+Proof using Hincr.
+move=> x y Hx Hy /eqP.
+by rewrite !eqn_leqX -!in_incrX_nondecrXE // -!eqn_leqX => /eqP.
+Qed.
+
+End Local.
+
+Definition incrXE Hincr := in2T (in_incrXE (in2W Hincr)).
+Definition incrX_nondecrX Hincr := in2T (in_incrX_nondecrX (in2W Hincr)).
+Definition incrX_nondecrXE Hincr := in2T (in_incrX_nondecrXE (in2W Hincr)).
+Definition incrX_inj Hincr := in2T (in_incrX_inj (in2W Hincr)).
+
+End IncrMap.
+
 
 (******************************************************************************)
 (* Seq over an ordered types                                                  *)

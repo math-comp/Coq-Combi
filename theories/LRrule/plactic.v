@@ -978,52 +978,48 @@ Variable F : T1 -> T2.
 Variable u v : seq T1.
 Hypothesis Hincr : {in u &, forall x y, x <A y -> F x <A F y}.
 
-Lemma Fnondecr : {in u &, forall x y, x <=A y -> F x <=A F y}.
-Proof using Hincr.
-  move=> x y Hx Hy /=; rewrite leqX_eqVltnX => /orP [/eqP -> //=| H].
-  by rewrite leqX_eqVltnX (Hincr Hx Hy H) orbT.
-Qed.
-
 Lemma subset_abc l a b c r :
   {subset l ++ [:: a; b; c] ++ r <= u} -> [/\ a \in u, b \in u & c \in u].
-Proof using . move=> H; split; apply: H; by rewrite !mem_cat !inE /= eq_refl !orbT. Qed.
+Proof using.
+move=> H; split; apply: H; by rewrite !mem_cat !inE /= eq_refl !orbT.
+Qed.
 
 Lemma plact_map_in_incr : u =Pl v -> (map F u) =Pl (map F v).
 Proof using Hincr.
-  move=> H.
-  suff : {subset v <= u} /\ [seq F i | i <- u] =Pl [seq F i | i <- v] by move => [].
-  move: v H; apply: gencongr_ind; first by split; last exact: plact_refl.
-  move=> l v1 r v2 [] Hperm Hu Hrule.
-  split.
-  - move=> i; move/(_ i): Hperm.
-    rewrite !mem_cat => Hperm /or3P [] H; apply: Hperm.
-    + by rewrite H ?orbT.
-    + have /allP := plactrule_homog v1 => /(_ _ Hrule)/perm_eq_mem ->.
-      by rewrite H ?orbT.
-    + by rewrite H ?orbT.
-  rewrite (plact_ltrans Hu) {Hu} !map_cat.
-  apply: plact_catr; apply: plact_catl.
-  apply: rule_gencongr => /=; move: Hrule => /plactruleP [].
-  + move/plact1P => [] a [] b [] c [] Hord Hv1; rewrite Hv1 => -> {v2}; subst v1.
-    rewrite !mem_cat /=; move: Hord => /andP [].
-    move: Hperm => /subset_abc [] Ha Hc Hb.
-    move => /(Fnondecr Ha Hb) -> /(Hincr Hb Hc) -> /=.
-    by rewrite mem_seq1 eq_refl ?orbT.
-  + move/plact1iP => [] a [] b [] c [] Hord -> {v2} Hv1; rewrite Hv1; subst v1.
-    rewrite !mem_cat /=; move: Hord => /andP [].
-    move: Hperm => /subset_abc [] Hc Ha Hb.
-    move => /(Fnondecr Ha Hb) -> /(Hincr Hb Hc) -> /=.
-    by rewrite mem_seq1 eq_refl ?orbT.
-  + move/plact2P => [] a [] b [] c [] Hord Hv1; rewrite Hv1 => -> {v2}; subst v1.
-    rewrite !mem_cat /=; move: Hord => /andP [].
-    move: Hperm => /subset_abc [] Hb Ha Hc.
-    move => /(Hincr Ha Hb) -> /(Fnondecr Hb Hc) -> /=.
-    by rewrite mem_seq1 eq_refl ?orbT.
-  + move/plact2iP => [] a [] b [] c [] Hord -> {v2} Hv1; rewrite Hv1; subst v1.
-    rewrite !mem_cat /=; move: Hord => /andP [].
-    move: Hperm => /subset_abc [] Hb Hc Ha.
-    move => /(Hincr Ha Hb) -> /(Fnondecr Hb Hc) -> /=.
-    by rewrite mem_seq1 eq_refl ?orbT.
+move=> H.
+suff : {subset v <= u} /\ [seq F i | i <- u] =Pl [seq F i | i <- v] by move => [].
+move: v H; apply: gencongr_ind; first by split; last exact: plact_refl.
+move=> l v1 r v2 [] Hperm Hu Hrule.
+split.
+- move=> i; move/(_ i): Hperm.
+  rewrite !mem_cat => Hperm /or3P [] H; apply: Hperm.
+  + by rewrite H ?orbT.
+  + have /allP := plactrule_homog v1 => /(_ _ Hrule)/perm_eq_mem ->.
+    by rewrite H ?orbT.
+  + by rewrite H ?orbT.
+rewrite (plact_ltrans Hu) {Hu} !map_cat.
+apply: plact_catr; apply: plact_catl.
+apply: rule_gencongr => /=; move: Hrule => /plactruleP [].
+- move/plact1P => [] a [] b [] c [] Hord Hv1; rewrite Hv1 => -> {v2}; subst v1.
+  rewrite !mem_cat /=; move: Hord => /andP [].
+  move: Hperm => /subset_abc [] Ha Hc Hb.
+  move => /(in_incrX_nondecrX Hincr Ha Hb) -> /(Hincr Hb Hc) -> /=.
+  by rewrite mem_seq1 eq_refl ?orbT.
+- move/plact1iP => [] a [] b [] c [] Hord -> {v2} Hv1; rewrite Hv1; subst v1.
+  rewrite !mem_cat /=; move: Hord => /andP [].
+  move: Hperm => /subset_abc [] Hc Ha Hb.
+  move => /(in_incrX_nondecrX Hincr Ha Hb) -> /(Hincr Hb Hc) -> /=.
+  by rewrite mem_seq1 eq_refl ?orbT.
++ move/plact2P => [] a [] b [] c [] Hord Hv1; rewrite Hv1 => -> {v2}; subst v1.
+  rewrite !mem_cat /=; move: Hord => /andP [].
+  move: Hperm => /subset_abc [] Hb Ha Hc.
+  move => /(Hincr Ha Hb) -> /(in_incrX_nondecrX Hincr Hb Hc) -> /=.
+  by rewrite mem_seq1 eq_refl ?orbT.
++ move/plact2iP => [] a [] b [] c [] Hord -> {v2} Hv1; rewrite Hv1; subst v1.
+  rewrite !mem_cat /=; move: Hord => /andP [].
+  move: Hperm => /subset_abc [] Hb Hc Ha.
+  move => /(Hincr Ha Hb) -> /(in_incrX_nondecrX Hincr Hb Hc) -> /=.
+  by rewrite mem_seq1 eq_refl ?orbT.
 Qed.
 
 End IncrMap.
