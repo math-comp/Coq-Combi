@@ -527,7 +527,12 @@ have:= Schur_sym_idomain n0 int_iDomain P => /issymP/(_ s) {2}<-.
 by rewrite msym_tensR.
 Qed.
 
+Definition syms d (P : intpartn d) : {sympoly R[n]} := SymPoly (Schur_sym P).
+
 End RingSchurSym.
+
+Local Notation "''s_' k" := (syms _ _ k)
+                              (at level 8, k at level 2, format "''s_' k").
 
 
 Section MPoESymHomog.
@@ -597,7 +602,7 @@ Qed.
 End MPoESymHomog.
 
 
-Section SchurBasis.
+Section SchurDec.
 
 Variable (n0 : nat) (R : comRingType).
 Local Notation n := (n0.+1).
@@ -611,7 +616,8 @@ Local Notation S := [tuple mesym n R i.+1 | i < n].
 
 Lemma Schur_homog (d : nat) (sh : intpartn d) : 's_sh \is d.-homog.
 Proof using .
-rewrite Schur_tabsh_readingE /polylang /commword; apply rpred_sum => [[t Ht]] _ /=.
+rewrite /syms /= Schur_tabsh_readingE /polylang /commword.
+apply rpred_sum => [[t Ht]] _ /=.
 move: Ht => /eqP <-; elim: t => [| s0 s IHs]/=.
   rewrite big_nil; exact: dhomog1.
 rewrite big_cons -(add1n (size s)); apply dhomogM; last exact: IHs.
@@ -627,8 +633,9 @@ Definition Schur_dec (p : {mpoly R[n]}) :=
 Lemma Schur_dec1 : Schur_dec 1.
 Proof using .
 exists (HomCoeff (fun p : intpartn 0 => 1)) => /=.
-rewrite (eq_bigr (fun p => 1)); last by move=> p _; rewrite scale1r; exact: Schur0.
-by rewrite sumr_const /= card_intpartn /intpartn_nb /= /intpartns_nb /= add0n.
+rewrite (eq_bigr (fun p => 1)); first last.
+   move=> p _; rewrite scale1r /syms /=; exact: Schur0.
+by rewrite sumr_const /= card_intpartn.
 Qed.
 
 Lemma Schur_dec_mesym k : Schur_dec 'e_k.
@@ -718,4 +725,84 @@ rewrite scaler_sumr -big_split /=; apply eq_bigr => sh _.
 by rewrite scalerA scalerDl.
 Qed.
 
-End SchurBasis.
+Lemma syms_dec d (p : {sympoly R[n]}) :
+  sympol p \is d.-homog -> 
+  { coe : intpartn d -> R | p = \sum_(p : intpartn _) coe p *: syms _ _ p }.
+Proof.
+move/(Schur_dec_sym_homog (sympol_is_symmetric p)) => [co Heq].
+exists co; apply val_inj; rewrite /= Heq.
+by rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
+Qed.
+
+End SchurDec.
+
+
+
+Require Import tools combclass tableau.
+
+Open Scope N.
+
+Section DefsKostkaTuple.
+
+Variables (d : nat) (sh : intpartn d) (n : nat).
+Implicit Type ev : n.+1.-tuple nat.
+Definition eval (w : seq 'I_n.+1) := [tuple count_mem i w | i < n.+1].
+Definition KostkaTab ev := [set t : tabsh n sh | eval (to_word t) == ev].
+Definition KostkaT ev := #|KostkaTab ev|.
+
+Lemma KostkaT_sumeval ev :
+  sumn ev != sumn sh -> KostkaT ev == 0.
+Proof.
+apply contraR; rewrite cards_eq0 => /set0Pn /= [t].
+rewrite inE => /eqP <-{ev}.
+rewrite -sumnE big_tuple.
+rewrite (eq_bigr (fun i => (count_mem i) (to_word t))); first last.
+  by move=> i _; rewrite /eval !tnth_mktuple.
+by rewrite sum_count_mem count_predT size_to_word /size_tab shape_tabsh.
+Qed.
+
+Lemma evalE (R : ringType) (ev : 'X_{1..n.+1}) w :
+  (\prod_(v <- w) 'X_v)@_ev = (eval w == ev)%:R :> R.
+Proof.
+rewrite -[X in X@_ev](big_map (fun i : 'I_n.+1 => (U_(i))%MM) xpredT).
+rewrite /eval mpolyX_prod mcoeffX; congr (nat_of_bool _)%:R.
+apply/eqP/eqP => [/(congr1 val) /= <- {ev}| H].
+- elim: w => [| w0 w IHw] /=; first by rewrite big_nil.
+  rewrite big_cons; apply eq_from_tnth => i.
+  have:= (congr1 (fun t => tnth t i) IHw).
+  rewrite !tnth_mktuple => ->.
+  by rewrite mnmE -mnm_tnth.
+- apply val_inj => /=; rewrite -H {ev H}.
+  elim: w => [| w0 w IHw] /=; first by rewrite big_nil.
+  rewrite big_cons; apply eq_from_tnth => i.
+  have:= (congr1 (fun t => tnth t i) IHw).
+  by rewrite !tnth_mktuple mnmE -mnm_tnth => ->.
+Qed.
+
+Lemma Kostka_Coeff (R : ringType) (ev : 'X_{1..n.+1}) :
+  (Schur n R sh)@_ev = (KostkaT ev)%:R.
+Proof.
+rewrite /Schur linear_sum /= /KostkaT.
+rewrite (bigID (fun t : tabsh n sh => t \in KostkaTab ev)) /=.
+rewrite addrC big1 ?add0r; first last.
+  by move=> i; rewrite /KostkaTab inE evalE => /negbTE ->.
+rewrite (eq_bigr (fun _ => 1%R)); first last.
+  by move=> i; rewrite /KostkaTab inE evalE => /eqP ->; rewrite eq_refl.
+by rewrite sumr_const; congr _%:R; apply eq_card => i.
+Qed.
+
+Lemma perm_KostkaT ev1 ev2 :
+  perm_eq ev1 ev2 -> KostkaT ev1 = KostkaT ev2.
+Proof.
+move=> /tuple_perm_eqP [s /val_inj Hs].
+suff: Posz (KostkaT ev1) = Posz (KostkaT ev2) by move => [].
+rewrite -!natz -!(Kostka_Coeff _ (Multinom _)).
+set m1 := Multinom ev1.
+set m2 := Multinom ev2.
+have {Hs} -> : m1 = [multinom m2 (s i) | i < n.+1].
+  apply val_inj => /=; rewrite Hs.
+  by apply eq_from_tnth => i; rewrite tnth_mktuple.
+by rewrite -mcoeff_sym (issymP _ (Schur_sym _ _ _)).
+Qed.
+
+End DefsKostkaTuple.
