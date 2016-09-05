@@ -42,6 +42,8 @@ Require Import tools partition ordtype sorted.
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+Import OrdNotations.
+
 Open Scope N.
 
 (** ** Specialization of sorted Lemmas *)
@@ -67,7 +69,7 @@ Section Rows.
   Definition is_row_catR := sorted_catR (R := @leqX_op T).
   Definition head_leq_last_row := head_leq_last_sorted (@leqX_trans T) (@leqXnn T).
   Lemma row_lt_by_pos Z r p q:
-    is_row r -> p < size r -> q < size r -> (nth Z r p < nth Z r q)%Ord -> p < q.
+    is_row r -> p < size r -> q < size r -> nth Z r p <A nth Z r q -> p < q.
   Proof using .
     rewrite /ltnX_op. apply: (sorted_lt_by_pos (@leqX_trans T) (@leqXnn T) (@anti_leqX T)). 
   Qed.
@@ -86,8 +88,8 @@ Section Dominate.
   Implicit Type r u v : seq T.
 
 Lemma is_row_set_nth l r pos :
-  is_row r -> (l < nth l r pos)%Ord ->
-  (forall n : nat, (l < nth l r n)%Ord -> pos <= n) -> is_row (set_nth l r pos l).
+  is_row r -> l <A nth l r pos ->
+  (forall n : nat, l <A nth l r n -> pos <= n) -> is_row (set_nth l r pos l).
 Proof using .
   move=> /is_row1P Hrow Hl Hmin. apply/(is_row1P l) => i.
   rewrite (lock (i.+1)) !nth_set_nth /=; unlock.
@@ -102,10 +104,10 @@ Proof using .
 Qed.
 
   Definition dominate u v :=
-    ((size u) <= (size v)) && (all (fun i => (nth Z u i > nth Z v i)%Ord) (iota 0 (size u))).
+    ((size u) <= (size v)) && (all (fun i => nth Z u i >A nth Z v i) (iota 0 (size u))).
 
   Lemma dominateP u v :
-    reflect ((size u) <= (size v) /\ forall i, i < size u -> (nth Z u i > nth Z v i)%Ord)
+    reflect ((size u) <= (size v) /\ forall i, i < size u -> nth Z u i >A nth Z v i)
             (dominate u v).
   Proof using .
     rewrite /dominate /mkseq ; apply/(iffP idP).
@@ -144,7 +146,7 @@ Qed.
     move/(_ _ Hi) : Hlt; by rewrite nth_rcons (leq_trans Hi Hsz).
   Qed.
 
-  Lemma dominate_head u v : u != [::] -> dominate u v -> (head Z v < head Z u)%Ord.
+  Lemma dominate_head u v : u != [::] -> dominate u v -> head Z v <A head Z u.
   Proof using .
     move=> Hu /dominateP []; case: u Hu => [//=|u0 u _]; case: v => [|v0 v _] /=.
     - by rewrite ltn0.
@@ -306,9 +308,9 @@ Section Tableau.
     reflect
       [/\ is_part (shape t),
        (forall (r c : nat), is_in_shape (shape t) r c.+1 ->
-                    ((get_tab t r c) <= (get_tab t r c.+1))%Ord) &
+                    get_tab t r c <=A get_tab t r c.+1) &
        (forall (r c : nat), is_in_shape (shape t) r.+1 c ->
-                    ((get_tab t r c) < (get_tab t r.+1 c)))%Ord]
+                    get_tab t r c <A get_tab t r.+1 c)]
       (is_tableau t).
   Proof using .
     apply/(iffP idP).
@@ -412,10 +414,10 @@ Qed.
 
 Lemma head_filter_gtnX_tab n t :
   is_tableau t ->
-  head [::] (filter_gtnX_tab n t) = [seq x <- head [::] t | (x < n)%Ord].
+  head [::] (filter_gtnX_tab n t) = [seq x <- head [::] t | x <A n].
 Proof using .
   elim: t => [//= | t0 t /= IHt] /and4P [] Hnnil0 Hrow0 Hdom Htab.
-  case: (altP ([seq x <- t0 | (x < n)%Ord] =P [::])) => Ht0 //=.
+  case: (altP ([seq x <- t0 | x <A n] =P [::])) => Ht0 //=.
   rewrite (IHt Htab) Ht0 {IHt}.
   case: t Hdom Htab => [//= | t1 t] /= Hdom /and3P [] Hnnil1 Hrow1 _.
   have /dominateP := filter_gtnX_dominate n Hrow0 Hrow1 Hdom => [] [].
@@ -425,7 +427,7 @@ Qed.
 Lemma is_tableau_filter_gtnX t n : is_tableau t -> is_tableau (filter_gtnX_tab n t).
 Proof using .
   elim: t => [//= | t0 t /= IHt] /and4P [] Hnnil Hrow Hdom Htab.
-  case: (altP ([seq x <- t0 | (x < n)%Ord] =P [::])) => Ht0 /=; first exact: IHt.
+  case: (altP ([seq x <- t0 | x <A n] =P [::])) => Ht0 /=; first exact: IHt.
   rewrite Ht0 /=; apply/and3P; split; last exact: IHt.
   - apply sorted_filter; last exact Hrow.
     move=> a b c; exact: leqX_trans.
@@ -572,3 +574,55 @@ Proof using .
 Qed.
 
 End FinType.
+
+
+Section IncrMap.
+
+Variable T1 T2 : inhOrdType.
+Variable F : T1 -> T2.
+
+Lemma shape_incr_tab (t : seq (seq T1)) :
+  shape [seq map F r | r <- t] = shape t.
+Proof.
+by rewrite /shape -map_comp; apply eq_map => s /=; rewrite size_map.
+Qed.
+
+Lemma get_incr_tab (t : seq (seq T1)) r c :
+  is_in_shape (shape t) r c ->
+  get_tab [seq [seq F i | i <- r0] | r0 <- t] r c = F (get_tab t r c).
+Proof.
+move=> Hin; have:= is_in_shape_size Hin; rewrite size_map => Hr.
+move: Hin; rewrite /is_in_shape (nth_map [::]) // /get_tab => Hc.
+by rewrite (nth_map [::] _ _ Hr) (nth_map (inhabitant T1)).
+Qed.
+
+Lemma incr_tab (t : seq (seq T1)) :
+  {in (to_word t) &, forall x y, x <A y -> F x <A F y} ->
+  (is_tableau t) = (is_tableau [seq map F r | r <- t]).
+Proof.
+move=> Hincr.
+have Hndecr := in_incrX_nondecrXE Hincr.
+have {Hincr} Hincr := in_incrXE Hincr.
+apply/is_tableau_getP/is_tableau_getP;
+  rewrite ?shape_incr_tab=> [] [H1 H2 H3]; split => // r c Hrc1.
+- have Hrc : is_in_shape (shape t) r c.
+    by move: Hrc1; rewrite /is_in_shape => /ltnW.
+  rewrite !get_incr_tab //.
+  rewrite -Hndecr; [exact: H2 | exact: mem_to_word | exact: mem_to_word].
+- have Hrc : is_in_shape (shape t) r c.
+    move: Hrc1; rewrite /is_in_shape => /leq_trans; apply.
+    by move: H1 => /is_partP [] _; apply.
+  rewrite !get_incr_tab //.
+  rewrite -Hincr; [exact: H3 | exact: mem_to_word | exact: mem_to_word].
+- have Hrc : is_in_shape (shape t) r c.
+    by move: Hrc1; rewrite /is_in_shape => /ltnW.
+  rewrite Hndecr; [|exact: mem_to_word | exact: mem_to_word].
+  rewrite -!get_incr_tab //; exact: H2.
+- have Hrc : is_in_shape (shape t) r c.
+    move: Hrc1; rewrite /is_in_shape => /leq_trans; apply.
+    by move: H1 => /is_partP [] _; apply.
+  rewrite Hincr; [|exact: mem_to_word | exact: mem_to_word].
+  rewrite -!get_incr_tab //; exact: H3.
+Qed.
+
+End IncrMap.
