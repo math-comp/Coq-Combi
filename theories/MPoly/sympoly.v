@@ -1271,7 +1271,7 @@ rewrite -mpolyP => mm; rewrite mcoeff_map_mpoly /= !mcoeffX.
 by case: eqP; rewrite ratr_nat.
 Qed.
 
-Lemma msym_tensR s p : msym s (tens_algC p) = tens_algC (msym s p).
+Lemma msym_tens_algC s p : msym s (tens_algC p) = tens_algC (msym s p).
 Proof using.
 rewrite (mpolyE p).
 rewrite [tens_algC _]raddf_sum [msym s _]raddf_sum.
@@ -1283,7 +1283,7 @@ Qed.
 Lemma tens_algC_issym (f : {sympoly rat[n]}) : tens_algC f \is symmetric.
 Proof.
 apply/issymP => s.
-by rewrite msym_tensR (issymP _ (sympol_is_symmetric f)).
+by rewrite msym_tens_algC (issymP _ (sympol_is_symmetric f)).
 Qed.
 Definition tens_algC_sym (f : {sympoly rat[n]}) : {sympoly algC[n]} :=
            SymPoly (tens_algC_issym f).
