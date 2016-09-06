@@ -606,9 +606,6 @@ Section SchurDec.
 Variable (n0 : nat) (R : comRingType).
 Local Notation n := (n0.+1).
 Local Notation "''s_' k" := (Schur n0 R k) (at level 8, k at level 2, format "''s_' k").
-Local Notation rho := (rho n).
-Local Notation "''a_' k" := (@alternpol n R 'X_[k])
-                              (at level 8, k at level 2, format "''a_' k").
 Local Notation "''e_' k" := (@mesym n R k)
                               (at level 8, k at level 2, format "''e_' k").
 Local Notation S := [tuple mesym n R i.+1 | i < n].
@@ -622,6 +619,9 @@ move: Ht => /eqP <-; elim: t => [| s0 s IHs]/=.
 rewrite big_cons -(add1n (size s)); apply dhomogM; last exact: IHs.
 by rewrite dhomogX /= mdeg1.
 Qed.
+
+Lemma syms_homog (d : nat) (sh : intpartn d) : sympol (syms n0 R sh) \is d.-homog.
+Proof. exact: Schur_homog. Qed.
 
 (** We restrict ourself to [intpartn d] in order to compute big ops in a fintype *)
 Record homcoeff : Type := HomCoeff { d : nat; coe :> intpartn d -> R }.
