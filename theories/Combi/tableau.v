@@ -575,6 +575,8 @@ Qed.
 
 End FinType.
 
+Hint Resolve tabshP.
+
 
 Section IncrMap.
 
