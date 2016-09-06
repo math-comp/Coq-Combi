@@ -129,6 +129,12 @@ Definition sub_pordMixin := PartOrder.Mixin sub_porder.
 Definition sub_pordClass := @PartOrder.Class sT (sub_eqMixin sT) sub_pordMixin.
 Canonical sub_pordType := PartOrder.Pack sub_pordClass sT.
 
+Lemma sub_pord_leqXE (i j : sT) : (i <= j) = (val i <= val j).
+Proof. by []. Qed.
+
+Lemma sub_pord_ltnXE (i j : sT) : (i < j) = (val i < val j).
+Proof. by []. Qed.
+
 End SubPOrdType.
 Notation "[ 'pordMixin' 'of' T 'by' <: ]" :=
   (sub_pordMixin _ : pordMixin T)
