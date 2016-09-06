@@ -942,9 +942,10 @@ rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
 apply mpolyP => m; rewrite Kostka_Coeff linear_sum /=.
 case: (altP (mdeg m =P sumn sh)) => Heq; first last.
 - rewrite (KostkaMon_sumeval Heq); symmetry; apply big1 => i _.
-  rewrite mcoeffZ /symm /=.
-  case: leqP => Hszl; last by rewrite mcoeff0 mulr0.
-  rewrite /= mcoeff_symm.
+  rewrite mcoeffZ.
+  case: (leqP (size i) n.+1) => [Hszl | /symm_oversize ->];
+                               last by rewrite mcoeff0 mulr0.
+  rewrite mcoeff_symm //=.
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
   apply (introF idP) => /perm_sumn.
   rewrite -!sumnE -!/(mdeg _) -sumn_partm mpartK // intpartn_sumn => Habs.
@@ -952,14 +953,15 @@ case: (altP (mdeg m =P sumn sh)) => Heq; first last.
 - have Hpm : is_part_of_n d (partm m).
    by rewrite /= sumn_partm Heq intpartn_sumn eq_refl /=.
   rewrite (bigD1 (IntPartN Hpm)) //= big1 ?addr0.
-  + rewrite mcoeffZ /symm /= size_partm /=.
-    rewrite mcoeff_symm perm_eq_sym partm_perm_eqK /= mulr1.
+  + rewrite mcoeffZ (mcoeff_symm _ _ (size_partm _)).
+    rewrite perm_eq_sym partm_perm_eqK /= mulr1.
     congr _%:R.
     rewrite -Kostka_any // [RHS](Kostka_any _ (size_partm m)).
     by apply perm_KostkaMon; apply: partm_perm_eqK.
-  + move=> i Hi; rewrite mcoeffZ /symm.
-    case: ssrnat.leqP => Hszi; last by rewrite mcoeff0 mulr0.
-    rewrite /= mcoeff_symm.
+  + move=> i Hi; rewrite mcoeffZ.
+    case: (leqP (size i) n.+1) => [Hszl | /symm_oversize ->];
+                                 last by rewrite mcoeff0 mulr0.
+    rewrite mcoeff_symm //=.
     suff /negbTE -> : ~~ (perm_eq (mpart n.+1 i) m) by rewrite mulr0.
     move: Hi; apply contra => /perm_eq_partm H.
     apply/eqP/val_inj => /=; rewrite -H.

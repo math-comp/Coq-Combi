@@ -171,7 +171,7 @@ Proof using. by rewrite mesym_homog. Qed.
 
 Definition symh_pol d  : {mpoly R[n]} :=
   \sum_(m : 'X_{1..n < d.+1} | mdeg m == d) 'X_[m].
-Lemma mcoeff_symh d m : (symh_pol d)@_m = (mdeg m == d)%:R.
+Lemma mcoeff_symh_pol d m : (symh_pol d)@_m = (mdeg m == d)%:R.
 Proof.
 rewrite linear_sum /=.
 case: (altP (mdeg m =P d)) => [<- | Hd] /=.
@@ -184,9 +184,11 @@ Qed.
 Fact symh_sym d : symh_pol d \is symmetric.
 Proof using.
 apply/issymP => s; rewrite -mpolyP => m.
-by rewrite mcoeff_sym !mcoeff_symh mdeg_mperm.
+by rewrite mcoeff_sym !mcoeff_symh_pol mdeg_mperm.
 Qed.
 Definition symh d : {sympoly R[n]} := SymPoly (symh_sym d).
+Lemma mcoeff_symh d m : (symh d)@_m = (mdeg m == d)%:R.
+Proof. exact: mcoeff_symh_pol. Qed.
 Lemma symh_homog d : sympol (symh d) \is d.-homog.
 Proof using. by apply rpred_sum => m /eqP H; rewrite dhomogX /= H. Qed.
 
@@ -212,7 +214,7 @@ Qed.
 
 Definition symm_pol (sh : n.-tuple nat) : {mpoly R[n]} :=
   (\sum_(p : permuted sh) 'X_[Multinom p] ).
-Lemma mcoeff_symm sh m : (symm_pol sh)@_m = (perm_eq sh m)%:R.
+Lemma mcoeff_symm_pol sh m : (symm_pol sh)@_m = (perm_eq sh m)%:R.
 Proof.
 rewrite linear_sum /=.
 case: (boolP (perm_eq sh m)) => /= [| /(elimN idP)] Hperm.
@@ -228,18 +230,23 @@ Qed.
 Fact symm_sym sh : symm_pol sh \is symmetric.
 Proof.
 apply/issymP => s; apply/mpolyP => m.
-rewrite mcoeff_sym !mcoeff_symm.
+rewrite mcoeff_sym !mcoeff_symm_pol.
 have: perm_eq (m#s) m by apply/tuple_perm_eqP; exists s.
 by move=> /perm_eqrP ->.
 Qed.
 Definition symm sh : {sympoly R[n]} :=
   if size sh <= n then SymPoly (symm_sym (mpart sh)) else 0 : {sympoly R[n]}.
+Lemma symm_oversize sh : n < size sh -> symm sh = 0.
+Proof. by rewrite ltnNge /symm => /negbTE ->. Qed.
+Lemma mcoeff_symm sh m :
+  size sh <= n -> (symm sh)@_m = (perm_eq (mpart (n := n) sh) m)%:R.
+Proof. by move=> H; rewrite /symm H mcoeff_symm_pol. Qed.
 Lemma symm_homog d (sh : intpartn d) :
   sympol (symm sh) \is d.-homog.
 Proof using.
-rewrite /symm; case: leqP => [/= Hsz | _]; last exact: dhomog0.
+case: (leqP (size sh) n) => [Hsz | /symm_oversize ->]; last exact: dhomog0.
 rewrite /= unfold_in; apply/allP => /= m.
-rewrite mcoeff_msupp mcoeff_symm.
+rewrite mcoeff_msupp mcoeff_symm //.
 case: (boolP (perm_eq _ _)) => [Hperm _ | _]; last by rewrite /= eq_refl.
 rewrite /mdeg sumnE -(intpartn_sumn sh).
 move: Hperm => /perm_sumn <-{m}.
@@ -266,11 +273,11 @@ case: (boolP (m \in msupp p)) => Hm.
     have [/= s /eqP ->]:= mpart_partm_perm m.
     by rewrite -mcoeff_sym (issymP p Hsym).
   have -> : (symm (partm m))@_m = 1.
-    by rewrite /symm size_partm /= mcoeff_symm perm_eq_sym partm_perm_eqK.
+    by rewrite (mcoeff_symm _ (size_partm _)) perm_eq_sym partm_perm_eqK.
   rewrite mulr1 -[LHS]addr0; congr (_ + _); symmetry.
   rewrite -![sympol _]/(sympol_lrmorphism n R _) !raddf_sum /=.
   rewrite big_seq_cond; apply big1 => /= m' /and3P [_ Hdom Hm'].
-  rewrite mcoeffZ /symm /= size_partm /= mcoeff_symm.
+  rewrite mcoeffZ (mcoeff_symm _ (size_partm _)).
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
   apply (introF idP) => /perm_eq_partm
                          /(congr1 (fun x : intpart => mpart (n := n) x)) H.
@@ -278,7 +285,7 @@ case: (boolP (m \in msupp p)) => Hm.
 - rewrite (memN_msupp_eq0 Hm); symmetry.
   rewrite -![sympol _]/(sympol_lrmorphism n R _) !raddf_sum /=.
   rewrite big_seq_cond; apply big1 => /= m' /andP [Hsupp Hdom].
-  rewrite mcoeffZ /symm /= size_partm /= mcoeff_symm partmK //.
+  rewrite mcoeffZ (mcoeff_symm _ (size_partm _)) partmK //.
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
   apply (introF idP) => /mnm_perm_eq [/= s /eqP Hs].
   move: Hm Hsupp; rewrite -mcoeff_eq0 mcoeff_msupp Hs.
@@ -344,11 +351,11 @@ Lemma symm_unique d (p : {sympoly R[n]}) c :
 Proof.
 move=> -> l Hl.
 rewrite [X in X@__](linear_sum (@sympol_lrmorphism _ _)) /= linear_sum.
-rewrite (bigD1 l) //= linearZ /= /symm /=.
-rewrite Hl mcoeff_symm perm_eq_refl /= mulr1.
+rewrite (bigD1 l) //= linearZ /= (mcoeff_symm _ Hl) perm_eq_refl /= mulr1.
 rewrite big1 ?addr0 // => i Hil /=.
-case: leqP => [Hi | _]; last by rewrite scaler0 mcoeff0.
-rewrite linearZ /= mcoeff_symm.
+case: (leqP (size i) n) => [Hi | /symm_oversize ->];
+                          last by rewrite scaler0 mcoeff0.
+rewrite linearZ /= mcoeff_symm //.
 rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
 apply negbTE; move: Hil; apply contra.
 move=> /perm_eq_partm/(congr1 pval).
@@ -471,7 +478,6 @@ Notation "''h[' k ]" := (prod_symh _ _ k)
                               (at level 8, k at level 2, format "''h[' k ]").
 Notation "''p[' k ]" := (prod_symp _ _ k)
                               (at level 8, k at level 2, format "''p[' k ]").
-
 Notation "''m[' k ]" := (symm _ _ k)
                               (at level 8, k at level 2, format "''m[' k ]").
 
@@ -1076,6 +1082,7 @@ Corollary dimv_homsym : dimv homsympoly = #|[set: intpartn d]|.
 Proof. by have:= free_homsymm; rewrite /free size_map -cardE => /eqP <-. Qed.
 
 End Homogeneous.
+
 
 Section Schur.
 
