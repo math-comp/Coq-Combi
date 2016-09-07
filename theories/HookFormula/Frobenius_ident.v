@@ -116,7 +116,8 @@ Proof using .
 Qed.
 
 Structure stpn : Set :=
-  STPN {stpnval :> seq (seq nat) * seq (seq nat); _ : is_stdtab_pair_of_n n stpnval }.
+  STPN {stpnval :> seq (seq nat) * seq (seq nat);
+        _ : is_stdtab_pair_of_n n stpnval }.
 Canonical stpn_subType := Eval hnf in [subType for stpnval].
 Definition stpn_eqMixin := Eval hnf in [eqMixin of stpn by <:].
 Canonical stpn_eqType := Eval hnf in EqType stpn stpn_eqMixin.
@@ -126,13 +127,13 @@ Definition stpn_countMixin := Eval hnf in [countMixin of stpn by <:].
 Canonical stpn_countType := Eval hnf in CountType stpn stpn_countMixin.
 Canonical stpn_subCountType := Eval hnf in [subCountType of stpn].
 
-Definition type :=
+Definition stpn_unionType :=
   union_finType
     stpn_subCountType
     (Pi := fun sh : seq nat => is_stdtab_pair_of_shape sh)
     (fun p : intpartn_subFinType n => (stpsh_subFinType p))
     stpn_PredEq stpn_partition_shape.
-Canonical stpn_finType := Eval hnf in [finType of stpn for type].
+Canonical stpn_finType := Eval hnf in [finType of stpn for stpn_uniontype].
 Canonical stpn_subFinType := Eval hnf in [subFinType of stpn].
 
 Lemma card_stpn : #|stpn_finType| = \sum_(p : intpartn n) (n`! %/ (F_deno p))^2.
@@ -189,7 +190,7 @@ Qed.
 Lemma bijRSstd : bijective RSstd.
 Proof using . split with (g := RSstdinv). exact: RSstdK. exact: RSstdinvK. Qed.
 
-Theorem Ident : n`! = \sum_(p : intpartn n) (n`! %/ (F_deno p))^2.
+Theorem Frobenius_ident : n`! = \sum_(p : intpartn n) (n`! %/ (F_deno p))^2.
 Proof using . rewrite -{1}card_stdwordn -card_stpn; exact: bij_card bijRSstd. Qed.
 
 Open Scope ring_scope.
@@ -197,7 +198,7 @@ Open Scope ring_scope.
 Import GRing.Theory.
 Import Num.Theory.
 
-Theorem IdentBis : 1 / (n`!)%:Q = \sum_(p : intpartn n) 1 / (F_deno p)%:Q ^+ 2.
+Theorem Frobenius_ident_rat : 1 / (n`!)%:Q = \sum_(p : intpartn n) 1 / (F_deno p)%:Q ^+ 2.
 Proof using .
   rewrite -[RHS]mulr1.
   have Hfn0 : n`!%:Q != 0 by rewrite intr_eq0 eqz_nat -lt0n fact_gt0.
