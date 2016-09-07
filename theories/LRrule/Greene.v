@@ -96,7 +96,7 @@ Lemma card_seq (s : seq T) : #|[set i in s]| <= size s.
 Proof using .
   elim: s => [//= | s0 s IHs]; set t := [set i | i \in _].
   - suff -> : t = set0 by rewrite cards0.
-    rewrite -setP => i /=; by rewrite inE.
+    apply setP => i /=; by rewrite inE.
   - rewrite /t set_cons cardsU1 /= -add1n.
     by apply: leq_add; first by case: (s0 \notin [set i in s]).
 Qed.
@@ -146,13 +146,13 @@ Proof using .
   move: Htriv; rewrite !big_cons /trivIseq => Htriv.
   rewrite cardsU -IHs.
   suff -> : #|s0 :&: \big[setU (T:=T)/set0]_(j <- s) j| = 0 by rewrite subn0.
-  apply/eqP; rewrite cards_eq0; apply/eqP; rewrite -setP => i.
+  apply/eqP; rewrite cards_eq0; apply/eqP/setP => i.
   rewrite !inE; apply/(introF idP) => /andP [] Hi.
   rewrite bigcup_seq => /bigcupP [] X HX HiX.
   have:= HX; rewrite -!index_mem => Hind.
   have: 0 < (index X s).+1 < size (s0 :: s) by rewrite /= ltnS Hind.
   move/Htriv => /=; rewrite (nth_index set0 HX).
-  move/disjoint_setI0; rewrite -setP => /(_ i).
+  move/disjoint_setI0; apply/setP => /(_ i).
   by rewrite !inE Hi HiX.
 Qed.
 
@@ -195,7 +195,7 @@ Proof using .
     rewrite -setI_eq0 => /eqP; rewrite -setP => Hneq.
     move: HiB => /set0Pn [] x; rewrite inE => /andP [] Hx HxB.
     move/(_ x): Hneq; rewrite !inE Hx /= => Hxj.
-    apply/eqP; rewrite -setP => /(_ x); by rewrite !inE Hx Hxj HxB.
+    apply/eqP/setP => /(_ x); by rewrite !inE Hx Hxj HxB.
   apply: esym; rewrite (bigID (fun S => S :&: B == set0)) /=.
   rewrite (eq_bigr (fun=> 0)); first last.
     move=> i /andP [] _ /eqP ->.
@@ -227,7 +227,7 @@ Qed.
 
 
 Lemma set_nil (T : finType) : [set s : T in [::]] = set0.
-Proof. by rewrite -setP => i; rewrite inE. Qed.
+Proof. by apply/setP => i; rewrite inE. Qed.
 
 Lemma cover_nil (T : finType) : #|cover [set s : {set T} in [::]]| = 0.
 Proof.
@@ -258,7 +258,7 @@ Proof using .
       rewrite inE => HS; have:= HS; rewrite -index_mem => HS1.
       set j := index S0 S; have H : 0 < j.+1 < size (S0 :: S) by [].
       move/(_ 0 j.+1 H): Htriv.
-      rewrite /= /j nth_index //= -setI_eq0 => /eqP; rewrite -setP => HH.
+      rewrite /= /j nth_index //= -setI_eq0 => /eqP; apply/setP => HH.
       move/(_ x): HH; by rewrite !inE Hx.
 Qed.
 
@@ -419,7 +419,7 @@ Proof using .
   have <- : #|cover P| = minn N k.
     rewrite /= (_ : cover P = Ik k); first exact: sizeIk.
     rewrite /cover {}/P.
-    apply setP => i; apply/idP/idP.
+    apply/setP => i; apply/idP/idP.
     - move/bigcupP => [] St /imsetP [] j Hj -> {St}.
       by rewrite in_set1 => /eqP ->.
     - move=> Hi; apply/bigcupP; exists [set i]; last by rewrite in_set1.
@@ -493,10 +493,10 @@ Variable M N : nat.
 Variable V : M.-tuple Alph.
 Variable W : N.-tuple Alph.
 
-Local Notation linj := (@lshift M N).
-Local Notation rinj := (@rshift M N).
+Local Notation lsh := (@lshift M N).
+Local Notation rsh := (@rshift M N).
 
-Lemma enumIMN : enum 'I_(M + N) = map linj (enum 'I_M) ++ map rinj (enum 'I_N).
+Lemma enumIMN : enum 'I_(M + N) = map lsh (enum 'I_M) ++ map rsh (enum 'I_N).
 Proof using .
   apply: (inj_map (@ord_inj (M + N))).
   rewrite map_cat -map_comp -map_comp !val_enum_ord.
@@ -504,34 +504,18 @@ Proof using .
   by rewrite map_comp !val_enum_ord -iota_addl [M + 0]addnC iota_add.
 Qed.
 
-Let lsplit := [fun s : {set 'I_(M+N)} => linj @^-1: s].
-Let rsplit := [fun s : {set 'I_(M+N)} => rinj @^-1: s].
-
-Lemma linjP : injective linj.
-Proof using .
-  move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /=.
-Qed.
-Lemma rinjP : injective rinj.
-Proof using .
-  move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /= eqn_add2l.
-Qed.
-
-Lemma lrinjF i j : (linj i == rinj j) = false.
-Proof using .
-  apply: (introF idP); case: i j => [] i Hi [] j Hj.
-  rewrite /eq_op /= => /eqP H.
-  move: Hi; by rewrite H ltnNge leq_addr.
-Qed.
+Let lsplit := [fun s : {set 'I_(M+N)} => lsh @^-1: s].
+Let rsplit := [fun s : {set 'I_(M+N)} => rsh @^-1: s].
 
 Lemma disjoint_inj (sM : {set 'I_M}) (sN : {set 'I_N}) :
-  [disjoint linj @: sM & rinj @: sN].
+  [disjoint lsh @: sM & rsh @: sN].
 Proof using .
   rewrite /disjoint; apply/pred0P=> i /=; apply: negbTE; apply: (introN idP) => /andP [].
   move/imsetP=> [] [] l HlM Hl -> {i} /imsetP [] [] r HrN Hr /eqP.
-  by rewrite lrinjF.
+  by rewrite lrshiftF.
 Qed.
 
-Lemma splitsetK (s : {set 'I_(M+N)}) : s = (linj @: lsplit s) :|: (rinj @: rsplit s).
+Lemma splitsetK (s : {set 'I_(M+N)}) : s = (lsh @: lsplit s) :|: (rsh @: rsplit s).
 Proof using .
   rewrite /=; apply/setP/subset_eqP/andP; split; apply/subsetP=> i Hi.
   + apply/setUP.
@@ -544,7 +528,7 @@ Proof using .
 Qed.
 
 Lemma cutcover (p : {set {set 'I_(M + N)}}) :
-  cover p = linj @: (cover (lsplit @: p)) :|: rinj @: (cover (rsplit @: p)).
+  cover p = lsh @: (cover (lsplit @: p)) :|: rsh @: (cover (rsplit @: p)).
 Proof using .
   rewrite /cover /=.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> i.
@@ -565,7 +549,7 @@ Lemma extlsplit s :
 Proof using .
   rewrite /= !extractmaskE enumIMN map_cat.
   rewrite mask_cat; last by rewrite 2!size_map size_enum_ord size_tuple.
-  rewrite (_ : map _ (map rinj _) = nseq N false); first last.
+  rewrite (_ : map _ (map rsh _) = nseq N false); first last.
     rewrite -map_comp.
     apply: (@eq_from_nth _ false); first by rewrite size_map size_enum_ord size_nseq.
     move=> i; rewrite size_map size_enum_ord => Hi.
@@ -573,7 +557,7 @@ Proof using .
     by rewrite inE inE /= -{7}[M]addn0 ltn_add2l ltn0 andbF.
   rewrite mask_false cats0 -[in RHS]map_comp; congr (mask _ V).
   apply: eq_map => i /=; rewrite inE in_setI.
-  suff -> : linj i \in [set i0 : 'I_(M+N) | i0 < M] by rewrite andbT.
+  suff -> : lsh i \in [set i0 : 'I_(M+N) | i0 < M] by rewrite andbT.
   rewrite inE /=; exact: ltn_ord.
 Qed.
 
@@ -582,7 +566,7 @@ Lemma extrsplit s :
 Proof using .
   rewrite /= !extractmaskE enumIMN map_cat.
   rewrite mask_cat; last by rewrite 2!size_map size_enum_ord size_tuple.
-  rewrite (_ : map _ (map linj _) = nseq M false); first last.
+  rewrite (_ : map _ (map lsh _) = nseq M false); first last.
     rewrite -map_comp.
     apply: (@eq_from_nth _ false); first by rewrite size_map size_enum_ord size_nseq.
     move => i; rewrite size_map size_enum_ord => Hi.
@@ -590,7 +574,7 @@ Proof using .
     by rewrite inE inE /= (nth_enum_ord _ Hi) leqNgt Hi /= andbF.
   rewrite mask_false cat0s -[in RHS]map_comp; congr (mask _ W).
   apply: eq_map => i /=; rewrite inE in_setI.
-  suff -> : rinj i \in [set i0 : 'I_(M+N) | M <= i0] by rewrite andbT.
+  suff -> : rsh i \in [set i0 : 'I_(M+N) | M <= i0] by rewrite andbT.
   rewrite inE /=; exact: leq_addr.
 Qed.
 
@@ -606,20 +590,20 @@ Proof using Hcomp.
   move: Hks => /and3P [] Hcard Htriv /forallP Hcol.
   have HV : ksupp comp V k PV.
     rewrite /ksupp; apply/and3P; split; first exact: (leq_trans (leq_imset_card _ _) Hcard).
-    - by apply: preimset_trivIset; first exact: linjP.
+    - by apply: preimset_trivIset; first exact: lshift_inj.
     - apply/forallP=> stmp; apply/implyP => /imsetP [] s Hs -> {stmp}.
       rewrite extlsplit; apply: is_seq_extract_cond; move/(_ s): Hcol; by rewrite Hs.
   have HleqV := (@leq_bigmax_cond _ _ scover _ HV).
   have HW : ksupp comp W k PW.
     rewrite /ksupp; apply/and3P; split; first exact: (leq_trans (leq_imset_card _ _) Hcard).
-    - by apply: preimset_trivIset; first exact: rinjP.
+    - by apply: preimset_trivIset; first exact: rshift_inj.
     - apply/forallP=> stmp; apply/implyP => /imsetP [] s Hs -> {stmp}.
       rewrite extrsplit; apply: is_seq_extract_cond; move/(_ s): Hcol; by rewrite Hs.
   have HleqW := (@leq_bigmax_cond _ _ scover _ HW).
   have -> : scover ks = scover PV + scover PW.
     rewrite /= cutcover.
     have:= disjoint_inj (cover PV) (cover PW); rewrite -((leq_card_setU _ _).2) => /eqP ->.
-    by rewrite (card_imset _ linjP) (card_imset _ rinjP).
+    by rewrite (card_imset _ (@lshift_inj _ _)) (card_imset _ (@rshift_inj _ _)).
   exact: leq_add.
 Qed.
 
@@ -860,13 +844,13 @@ Proof using .
   rewrite (eq_map (f2 := fun i : 'I_(_) => (nth 0 (conj_part sh) i).+1)); first last.
     move=> i; rewrite /= cardsU.
     rewrite cards1 imset_comp card_imset; last exact: cast_ord_inj.
-    rewrite card_imset; last exact: linjP.
+    rewrite card_imset; last exact: lshift_inj.
     rewrite add1n -(IHsh Hpart).
     rewrite [X in _ - #|pred_of_set X|](_ : _ = set0); first last.
-      rewrite -setP => j; rewrite !inE.
+      apply/setP => j; rewrite !inE.
       apply/(introF idP) => /andP [] /eqP -> {j}.
       rewrite mem_imset_inj; last exact: cast_ord_inj.
-      move/imsetP => [] j _ /eqP; by rewrite eq_sym lrinjF.
+      move/imsetP => [] j _ /eqP; by rewrite eq_sym lrshiftF.
     rewrite cards0 subn0.
     case (ltnP i (size (shcols sh))) => Hi.
     - by rewrite (nth_map set0 _ _ Hi).
@@ -902,12 +886,12 @@ Lemma shrows_cards sh :
 Proof using .
   elim: sh => [//= | s0 sh IHsh] /=.
   rewrite imset_comp card_imset; last exact: cast_ord_inj.
-  rewrite card_imset; last exact: rinjP.
+  rewrite card_imset; last exact: rshift_inj.
   rewrite card_ord; congr (_ :: _).
   rewrite -map_comp -{19}IHsh; apply: eq_map.
   move=> S /=; rewrite imset_comp.
   rewrite card_imset; last exact: cast_ord_inj.
-  by rewrite card_imset; last exact: linjP.
+  by rewrite card_imset; last exact: lshift_inj.
 Qed.
 
 Lemma tabrows_non0 t :
@@ -935,11 +919,11 @@ Proof using .
   - move=> _ /imsetP [] i Hi ->.
     rewrite (nth_map set0 _ _ Hj) /shiftset /= imset_comp.
     rewrite mem_imset_inj; last exact: cast_ord_inj.
-    move/imsetP => [] j' _ /eqP; by rewrite eq_sym lrinjF.
+    move/imsetP => [] j' _ /eqP; by rewrite eq_sym lrshiftF.
   - move=> Hij; have Hi := ltn_trans Hij Hj.
     rewrite (nth_map set0 _ _ Hj) (nth_map set0 _ _ Hi) /shiftset /=.
     move=> /imsetP [] k Hk ->.
-    rewrite mem_imset_inj => Hk'; last apply: (inj_comp (@cast_ord_inj _ _ _) (@linjP _ _)).
+    rewrite mem_imset_inj => Hk'; last apply: (inj_comp (@cast_ord_inj _ _ _) (@lshift_inj _ _)).
     have /IHsh : i < j < size (shrows sh) by rewrite Hij Hj.
     rewrite /disjoint => /pred0P /(_ k); by rewrite /= Hk Hk'.
 Qed.
@@ -966,11 +950,11 @@ Proof using .
   rewrite in_setU1 => /orP [].
   + move/eqP => ->; rewrite in_setU1 => /orP []; rewrite /sym_cast /=.
     * by rewrite /eq_op /= !nth_enum_ord //= eqn_add2l (ltn_eqF Hij).
-    * move/imsetP => [] k _ /= /cast_ord_inj /eqP; by rewrite eq_sym lrinjF.
+    * move/imsetP => [] k _ /= /cast_ord_inj /eqP; by rewrite eq_sym lrshiftF.
   + move/imsetP => [] li Hli -> {l}.
     rewrite in_setU1 => /orP [].
-    * by rewrite sym_cast_eq lrinjF.
-    * move/imsetP => [] l Hlj /= /cast_ord_inj /linjP H; move: H Hli => -> Hli.
+    * by rewrite sym_cast_eq lrshiftF.
+    * move/imsetP => [] l Hlj /= /cast_ord_inj /lshift_inj H; move: H Hli => -> Hli.
       case: (ltnP j (size (shcols sh))) => Hj1;
         last by move: Hlj; rewrite (nth_default _ Hj1) in_set0.
       have : i < j < size (shcols sh) by rewrite Hij Hj1.
@@ -998,52 +982,52 @@ Lemma size_to_word_cons : size (to_word t) + size t0 = size (to_word (t0 :: t)).
 Proof using . by rewrite !size_to_word /size_tab /= addnC. Qed.
 
 Let cast_cons := cast_ord size_to_word_cons.
-Let rinj_rec := (cast_cons \o (@rshift (size (to_word t)) (size t0))).
-Let linj_rec := (cast_cons \o (@lshift (size (to_word t)) (size t0))).
+Let rsh_rec := (cast_cons \o (@rshift (size (to_word t)) (size t0))).
+Let lsh_rec := (cast_cons \o (@lshift (size (to_word t)) (size t0))).
 
-Lemma linj_recP : injective linj_rec.
+Lemma lshift_recP : injective lsh_rec.
 Proof using .
   move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /=.
 Qed.
-Lemma rinj_recP : injective rinj_rec.
+Lemma rshift_recP : injective rsh_rec.
 Proof using .
   move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /= eqn_add2l.
 Qed.
 
-Lemma lrinj_recF i j : (linj_rec i == rinj_rec j) = false.
+Lemma lrshift_recF i j : (lsh_rec i == rsh_rec j) = false.
 Proof using .
   apply: (introF idP); case: i j => [] i Hi [] j Hj.
   rewrite /eq_op /= => /eqP H.
   move: Hi; by rewrite H ltnNge leq_addr.
 Qed.
 
-Lemma rinj_in_linj_recF i (s : {set 'I_(size (to_word t))}) :
-  rinj_rec i \in [set linj_rec x | x in s] = false.
+Lemma rshift_in_lshift_recF i (s : {set 'I_(size (to_word t))}) :
+  rsh_rec i \in [set lsh_rec x | x in s] = false.
 Proof using .
-  apply: negbTE; apply: (introN idP) => /imsetP [] j _ /eqP; by rewrite eq_sym lrinj_recF.
+  apply: negbTE; apply: (introN idP) => /imsetP [] j _ /eqP; by rewrite eq_sym lrshift_recF.
 Qed.
 
-Lemma linj_in_rinj_recF i (s : {set 'I_(size t0)}) :
-  linj_rec i \in [set rinj_rec x | x in s] = false.
-Proof using . apply: negbTE; apply: (introN idP) => /imsetP [] j _ /eqP; by rewrite lrinj_recF. Qed.
+Lemma lshift_in_rshift_recF i (s : {set 'I_(size t0)}) :
+  lsh_rec i \in [set rsh_rec x | x in s] = false.
+Proof using . apply: negbTE; apply: (introN idP) => /imsetP [] j _ /eqP; by rewrite lrshift_recF. Qed.
 
 Lemma disjoint_inj_rec (st : {set 'I_(size (to_word t))}) (s0 : {set 'I_(size t0)}) :
-  [disjoint linj_rec @: st & rinj_rec @: s0].
+  [disjoint lsh_rec @: st & rsh_rec @: s0].
 Proof using .
-  rewrite /linj_rec /rinj_rec !imset_comp.
+  rewrite /lsh_rec /rsh_rec !imset_comp.
   rewrite -setI_eq0 -imsetI; last by move=> i j _ _ /= /cast_ord_inj.
   have := (disjoint_inj st s0); rewrite -setI_eq0 => /eqP ->.
   by rewrite imset0.
 Qed.
 
-Let lsplit_rec := [fun s : {set 'I_(size (to_word (t0 :: t)))} => linj_rec @^-1: s].
-Let rsplit_rec := [fun s : {set 'I_(size (to_word (t0 :: t)))} => rinj_rec @^-1: s].
+Let lsplit_rec := [fun s : {set 'I_(size (to_word (t0 :: t)))} => lsh_rec @^-1: s].
+Let rsplit_rec := [fun s : {set 'I_(size (to_word (t0 :: t)))} => rsh_rec @^-1: s].
 
 (* I didn't manage to use this lemma getting it pass through \bigcup *)
 Lemma split_recabK (s : {set 'I_(size (to_word (t0 :: t)))}) :
-  s = (linj_rec @: lsplit_rec s) :|: (rinj_rec @: rsplit_rec s).
+  s = (lsh_rec @: lsplit_rec s) :|: (rsh_rec @: rsplit_rec s).
 Proof using .
-  rewrite /lsplit_rec /rsplit_rec /linj_rec /rinj_rec.
+  rewrite /lsplit_rec /rsplit_rec /lsh_rec /rsh_rec.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> i Hi.
   + apply/setUP; rewrite -(cast_ordKV size_to_word_cons i) !imset_comp !mem_cast.
     have:= splitK (cast_ord (esym size_to_word_cons) i).
@@ -1056,9 +1040,9 @@ Proof using .
 Qed.
 
 Lemma split_rec_cover (p : {set {set 'I_(size (to_word (t0 :: t)))}}) :
-  cover p = linj_rec @: (cover (lsplit_rec @: p)) :|: rinj_rec @: (cover (rsplit_rec @: p)).
+  cover p = lsh_rec @: (cover (lsplit_rec @: p)) :|: rsh_rec @: (cover (rsplit_rec @: p)).
 Proof using .
-  rewrite /lsplit_rec /rsplit_rec /linj_rec /rinj_rec /cover.
+  rewrite /lsplit_rec /rsplit_rec /lsh_rec /rsh_rec /cover.
   apply/setP/subset_eqP/andP; split; apply/subsetP=> i.
   * move/bigcupP=> [] part Hpart Hi.
     rewrite -(cast_ordKV size_to_word_cons i).
@@ -1067,11 +1051,11 @@ Proof using .
     - rewrite -Hinj; apply/setUP; left.
       rewrite /cast_cons imset_comp mem_cast; apply: mem_imset; apply/bigcupP.
       exists (lsplit_rec part); first exact: mem_imset.
-      by rewrite inE /linj_rec /= Hinj /cast_cons cast_ordKV.
+      by rewrite inE /lsh_rec /= Hinj /cast_cons cast_ordKV.
     - rewrite -Hinj; apply/setUP; right.
       rewrite /cast_cons imset_comp mem_cast; apply: mem_imset; apply/bigcupP.
       exists (rsplit_rec part); first exact: mem_imset.
-      by rewrite inE /rinj_rec /= Hinj /cast_cons cast_ordKV.
+      by rewrite inE /rsh_rec /= Hinj /cast_cons cast_ordKV.
   * move/setUP => [] /imsetP [] j /bigcupP [] part /imsetP [] prt Hprt Hcut Hj ->;
       apply/bigcupP; exists prt => //=; move: Hj; by rewrite Hcut inE.
 Qed.
@@ -1079,20 +1063,20 @@ Qed.
 Lemma lcast_com :
   (cast_ord (esym (size_to_word (t0 :: t))))
     \o sym_cast \o (@lshift (sumn (shape t)) (size t0))
-  =1  linj_rec \o (cast_ord (esym (size_to_word t))).
-Proof using . move=> i; apply/eqP; by rewrite /rinj_rec /= /eq_op /=. Qed.
+  =1  lsh_rec \o (cast_ord (esym (size_to_word t))).
+Proof using . move=> i; apply/eqP; by rewrite /rsh_rec /= /eq_op /=. Qed.
 
 Lemma rcast_com :
  (cast_ord (esym (size_to_word (t0 :: t))))
-   \o sym_cast \o (@rshift (sumn (shape t)) (size t0))  =1  rinj_rec.
-Proof using . move=> i; apply/eqP; rewrite /rinj_rec /= /eq_op /=; by rewrite size_to_word. Qed.
+   \o sym_cast \o (@rshift (sumn (shape t)) (size t0))  =1 rsh_rec.
+Proof using . move=> i; apply/eqP; rewrite /rsh_rec /= /eq_op /=; by rewrite size_to_word. Qed.
 
 
 Lemma enumIsize_to_word :
   enum 'I_(size (to_word (t0 :: t))) =
-  map linj_rec (enum 'I_(size (to_word t)))  ++  map rinj_rec (enum 'I_(size t0)).
+  map lsh_rec (enum 'I_(size (to_word t)))  ++  map rsh_rec (enum 'I_(size t0)).
 Proof using .
-  rewrite /rinj_rec /linj_rec (enum_cast_ord size_to_word_cons).
+  rewrite /rsh_rec /lsh_rec (enum_cast_ord size_to_word_cons).
   rewrite !map_comp /cast_cons -map_cat; congr (map (cast_ord size_to_word_cons) _).
   by rewrite map_id enumIMN.
 Qed.
@@ -1105,8 +1089,8 @@ Lemma extract_tabrows_0 :
   extract (in_tuple (to_word (t0 :: t))) (nth set0 (tabrows (t0 :: t)) 0) = t0.
 Proof using .
   rewrite /tabrows /= imset_comp -!imset_comp extractIE.
-  rewrite [imset _ _](_ : _ = [set rinj_rec i | i in 'I_(size t0)]); first last.
-    rewrite -setP => i; apply/idP/idP.
+  rewrite [imset _ _](_ : _ = [set rsh_rec i | i in 'I_(size t0)]); first last.
+    apply/setP => i; apply/idP/idP.
     * move/imsetP => [] x _ ->; apply/imsetP; exists x => //=.
       by rewrite -rcast_com /=.
     * move/imsetP => [] x _ ->; apply/imsetP; exists x => //=.
@@ -1114,7 +1098,7 @@ Proof using .
   rewrite enumIsize_to_word filter_cat map_cat -[RHS]cat0s; congr (_ ++ _).
   - rewrite (eq_in_filter (a2 := pred0)); first by rewrite filter_pred0.
     move=> i /mapP [] j Hj /= -> {i}.
-    apply: (introF idP) => /imsetP [] k _ /eqP; by rewrite lrinj_recF.
+    apply: (introF idP) => /imsetP [] k _ /eqP; by rewrite lrshift_recF.
   - rewrite (eq_in_filter (a2 := predT)); first last.
       move=> i /= /mapP [] j _ -> {i}; by rewrite mem_imset.
     rewrite filter_predT -map_comp.
@@ -1138,7 +1122,7 @@ Proof using .
   rewrite /tabrows /= /shiftset /= map_comp -!map_comp !extractIE.
   set f := (X in nth _ (map X _)).
   have /eq_map -> /= :
-    f =1 (fun s => [set linj_rec x | x in s]) \o (fun s => cast_set_tab t s).
+    f =1 (fun s => [set lsh_rec x | x in s]) \o (fun s => cast_set_tab t s).
     move=> S /=; rewrite /f {f} -setP => j.
     by apply/idP/idP; rewrite -!imset_comp /= -(eq_imset _ lcast_com) -!imset_comp.
   rewrite {f} /= enumIsize_to_word filter_cat map_cat -[RHS]cats0; congr (_ ++ _).
@@ -1148,19 +1132,19 @@ Proof using .
       rewrite /f2 {f2} => j /=; rewrite !(tnth_nth (inhabitant Alph)) /=.
       by rewrite to_word_cons nth_cat ltn_ord.
     congr (map f2 _) => {f2}.
-    apply: eq_filter => j /=; rewrite mem_imset_inj; last exact linj_recP.
+    apply: eq_filter => j /=; rewrite mem_imset_inj; last exact lshift_recP.
     rewrite (nth_map set0) /cast_set_tab //=.
     by rewrite size_shrows size_map.
   - rewrite (eq_in_filter (a2 := pred0)); first by rewrite filter_pred0.
     move=> j' /mapP [] j Hj /= -> {j'}.
     apply: (introF idP); rewrite (nth_map set0); last by rewrite size_shrows size_map.
-    move=> /imsetP [] k _ /eqP; by rewrite eq_sym lrinj_recF.
+    move=> /imsetP [] k _ /eqP; by rewrite eq_sym lrshift_recF.
 Qed.
 
 
 Lemma tabcols_cons :
   tabcols (t0 :: t) =
-    [seq rinj_rec i |: (linj_rec @: (nth set0 (tabcols t) i)) | i <- enum 'I_(size t0)].
+    [seq rsh_rec i |: (lsh_rec @: (nth set0 (tabcols t) i)) | i <- enum 'I_(size t0)].
 Proof using .
   rewrite /tabcols /cast_cons /=.
   apply: (@eq_from_nth _ set0); first by rewrite !size_map.
@@ -1195,16 +1179,16 @@ Proof using .
   rewrite -map_comp.
   set fr := (X in rcons (mask (map X _) _)).
   rewrite (eq_map (f2 := fr)); first last.
-    move=> j /=; rewrite inE in_set1 lrinj_recF /=.
-    by rewrite (mem_imset_inj _ _ linj_recP).
+    move=> j /=; rewrite inE in_set1 lrshift_recF /=.
+    by rewrite (mem_imset_inj _ _ lshift_recP).
   rewrite -map_comp.
   set f2 := (X in _ ++ mask (map X _) _).
   have {f2} /eq_map -> : f2 =1 mem ([set (Ordinal Hi)]).
     move=> j; rewrite /f2 /= !inE.
     rewrite [X in _ || X](_ : _ = false); first last.
-      apply/imsetP => [] [] k _ /eqP; by rewrite eq_sym lrinj_recF.
+      apply/imsetP => [] [] k _ /eqP; by rewrite eq_sym lrshift_recF.
     rewrite orbF.
-    by apply/idP/idP => [/eqP/rinj_recP ->|/eqP ->].
+    by apply/idP/idP => [/eqP/rshift_recP ->|/eqP ->].
   have := extract1 (in_tuple t0) (Ordinal Hi); rewrite /extract /= extractmaskE /= => ->.
   by rewrite cats1 (tnth_nth (inhabitant Alph)) /=.
 Qed.
@@ -1220,7 +1204,7 @@ Proof using .
     move/(mem_takeP set0) => [] pos [].
     rewrite size_map size_enum_ord leq_min => /andP [] Hpos Hpos0 ->.
     rewrite (nth_map (Ordinal Hpos0)); last by rewrite size_enum_ord.
-    rewrite !inE lrinj_recF /= (mem_imset_inj _ _ linj_recP) nth_ord_ltn => Hi.
+    rewrite !inE lrshift_recF /= (mem_imset_inj _ _ lshift_recP) nth_ord_ltn => Hi.
     apply/bigcupP; exists (nth set0 (tabcols t) (Ordinal Hpos0)); last exact Hi.
     rewrite inE; apply/(mem_takeP set0).
     exists pos; split; last by [].
@@ -1233,13 +1217,13 @@ Proof using .
       apply: (leq_trans Hpossz). rewrite size_tabcols.
       move: Hsize; rewrite /shape; by case t.
     apply/bigcupP.
-    exists (rinj_rec (Ordinal Hpos0)
-                  |: [set linj_rec x | x in nth set0 (tabcols t) (Ordinal Hpos0)]).
+    exists (rsh_rec (Ordinal Hpos0)
+                  |: [set lsh_rec x | x in nth set0 (tabcols t) (Ordinal Hpos0)]).
     * rewrite inE; apply/(mem_takeP set0).
       exists pos; rewrite size_map size_enum_ord leq_min; split; first by rewrite Hpos.
       rewrite (nth_map (Ordinal Hpos0)); last by rewrite size_enum_ord.
       by rewrite nth_ord_ltn.
-    * rewrite !inE lrinj_recF /=; apply/imsetP; by exists i.
+    * rewrite !inE lrshift_recF /=; apply/imsetP; by exists i.
 Qed.
 
 Lemma rsplit_rec_tab k :
@@ -1256,11 +1240,11 @@ Proof using .
     rewrite (nth_enum_ord _ Hjt0).
     rewrite (_ : nth _ _ _ = (Ordinal Hjt0)); first last.
       by apply/eqP; rewrite /eq_op /= nth_enum_ord.
-    move=> -> -> {sj stk}; rewrite inE in_setU1 rinj_in_linj_recF orbF.
-    by move=> /eqP/rinj_recP ->.
+    move=> -> -> {sj stk}; rewrite inE in_setU1 rshift_in_lshift_recF orbF.
+    by move=> /eqP/rshift_recP ->.
   - rewrite inE /cover /preimset => Hi.
     apply/bigcupP; exists [set i]; last by rewrite in_set1.
-    apply/imsetP; exists ((rinj_rec i) |: [set linj_rec x | x in nth set0 (tabcols t) i]).
+    apply/imsetP; exists ((rsh_rec i) |: [set lsh_rec x | x in nth set0 (tabcols t) i]).
     + rewrite inE; apply/(mem_takeP set0).
       exists i; rewrite size_map size_enum_ord leq_min Hi; split; first exact: ltn_ord.
       rewrite (nth_map i); last by rewrite size_enum_ord; apply: ltn_ord.
@@ -1268,14 +1252,14 @@ Proof using .
       by rewrite nth_ord_enum.
     +  apply/setP/subset_eqP/andP; split; apply/subsetP => j; rewrite in_set1.
       * move/eqP=> -> {j}; by rewrite !inE eq_refl.
-      * by rewrite !inE rinj_in_linj_recF orbF => /eqP/rinj_recP ->.
+      * by rewrite !inE rshift_in_lshift_recF orbF => /eqP/rshift_recP ->.
 Qed.
 
 Lemma cover_tabcols_rec k :
   head 0 (shape t) <= size t0 ->
   cover [set s in (tabcolsk (t0 :: t) k)] =
-  rinj_rec @: [set s : 'I_(size t0) | s < k]
-           :|:  linj_rec @: cover [set s in (tabcolsk t k)].
+  rsh_rec @: [set s : 'I_(size t0) | s < k]
+           :|:  lsh_rec @: cover [set s in (tabcolsk t k)].
 Proof using .
   move => Hsize; by rewrite split_rec_cover setUC rsplit_rec_tab (lsplit_rec_tab _ Hsize).
 Qed.
@@ -1299,7 +1283,7 @@ Proof using .
   move/(_ k): IHt; rewrite !big_cons => <-.
   rewrite /sym_cast imset_comp card_imset; last exact: cast_ord_inj.
   rewrite card_imset; last exact: cast_ord_inj.
-  rewrite card_imset; last exact: rinjP.
+  rewrite card_imset; last exact: rshift_inj.
   rewrite card_ord; congr (_ + _).
   rewrite /tabrows -!map_take /shiftset /=.
   move: (take _ _) => S.
@@ -1307,7 +1291,7 @@ Proof using .
   rewrite !big_cons.
   rewrite /sym_cast imset_comp card_imset; last exact: cast_ord_inj.
   rewrite card_imset; last exact: cast_ord_inj.
-  rewrite card_imset; last exact: linjP.
+  rewrite card_imset; last exact: lshift_inj.
   rewrite card_imset; last exact: cast_ord_inj.
   congr (_ + _); exact: IHS.
 Qed.
@@ -1358,15 +1342,15 @@ Proof using .
     apply/pred0P => l /=; apply: (introF idP) => /andP [].
     move=> /imsetP [] l1 Hl1 {l} -> /imsetP [] l Hl /cast_ord_inj H; subst l1.
     move: Hl Hl1 => /imsetP [] l1 Hl1 {l} -> /imsetP [] l Hl /eqP.
-    by rewrite lrinjF.
+    by rewrite lrshiftF.
   rewrite cards0 subn0 /s {s} => ->.
   have -> : #|sl| = minn (size t0) k.
     rewrite /sl imset_comp card_imset; last exact: cast_ord_inj.
-    rewrite card_imset; last exact: rinjP.
+    rewrite card_imset; last exact: rshift_inj.
     by rewrite sizeIk.
   apply/eqP; rewrite eqn_add2l {sl} /sr.
   rewrite imset_comp card_imset; last exact: cast_ord_inj.
-  rewrite card_imset; last exact: linjP.
+  rewrite card_imset; last exact: lshift_inj.
   by rewrite -map_take.
 Qed.
 

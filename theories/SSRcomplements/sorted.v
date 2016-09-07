@@ -27,6 +27,21 @@ Unset Strict Implicit.
 
 Open Scope N.
 
+Module LeqGeqOrder.
+
+Definition geq_total : total geq :=
+  fun x y => leq_total y x.
+Definition geq_trans : transitive geq :=
+  fun x y z H1 H2 => leq_trans H2 H1.
+Definition anti_geq : antisymmetric geq :=
+  fun x y H => esym (anti_leq H).
+
+Hint Resolve leq_total leq_trans anti_leq geq_total geq_trans anti_geq.
+
+End LeqGeqOrder.
+
+Import LeqGeqOrder.
+
 
 Section Sorted.
 

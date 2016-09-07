@@ -74,11 +74,22 @@ Sigma types for integer partitions:
 - [conj_intpart] == the conjugate of a [intpart] as a [intpart]
 
 - [intpart n] == a type for [seq (seq nat)] which are partitions of n;
-                it is canonically a [finType]
+               it is canonically a [finType]
 - [conj_intpartn] == the conjugate of a [intpartn] as a [intpartn]
-******)
-Set Printing Universes.
 
+
+Operations on partitions:
+
+- [union_intpart l k] == the partition of type [intpart] obtained by
+               gathering the parts of [l] and [k]
+- [union_intpartn l k] == the partition of type [intpartn] obtained by
+               gathering the parts of [l] and [k]
+
+Relation with set partitions:
+
+- [parts_shape P] == the shape of a set partition, i.e.
+               the sorted list of the cardinal of the parts
+******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import bigop path.
@@ -255,7 +266,29 @@ Section Partition.
     then (sh0 >= head 1 sh') && (is_part sh')
     else true.
 
-  (** Two equivalent definitions *)
+  (** Partitions don't have 0 parts *)
+  Lemma part_head0F sh : head 1 sh == 0 -> is_part sh = false.
+  Proof.
+    elim: sh => [//= | sh0 sh IHsh] /= /eqP ->.
+    rewrite leqn0; by case (boolP (head 1 sh == 0)).
+  Qed.
+
+  Lemma part_head_non0 sh : is_part sh -> head 1 sh != 0.
+  Proof.
+    elim: sh => [//= | sh0 sh IHsh] /= /andP [] Head.
+    move/IHsh; apply: contraLR; rewrite !negbK => /eqP Hsh0.
+    by move: Head; rewrite Hsh0 leqn0.
+  Qed.
+
+  Lemma nth_part_non0 sh i : is_part sh -> i < size sh -> nth 0 sh i != 0.
+  Proof.
+    elim: i sh => [//= | i IHi] [//=| s0 s].
+      by move=> /part_head_non0.
+    move=> /= /andP [] _.
+    exact: IHi.
+  Qed.
+
+  (** Three equivalent definitions *)
   Lemma is_partP sh :
     reflect (last 1 sh != 0 /\ forall i, (nth 0 sh i) >= nth 0 sh i.+1) (is_part sh).
   Proof.
@@ -287,7 +320,29 @@ Section Partition.
       exact: H.
   Qed.
 
-(** Sub-partitions *)
+  Lemma is_part_sortedE sh :
+    (is_part sh) = (sorted geq sh) && (0 \notin sh).
+  Proof.
+    apply/idP/andP => [Hpart|].
+    - split.
+      + apply/sorted1P => i _.
+        by move: Hpart=> /is_partP [_]; apply.
+      + move: Hpart; elim: sh => [// | s0 sh IHsh] Hpart.
+        rewrite inE negb_or eq_sym.
+        have /= -> /= := (part_head_non0 Hpart).
+        by apply IHsh; move: Hpart => /andP [].
+    - move=> [/sorted1P Hsort Hnotin].
+      apply/is_partP; split => [| i].
+      + case: sh Hnotin {Hsort} => [// | s0 sh].
+        rewrite inE negb_or eq_sym => /andP [Hs0 Hnot] /=.
+        elim: sh s0 Hs0 Hnot => [// | s1 sh IHsh] s0 _.
+        rewrite inE negb_or eq_sym /= => /andP [].
+        exact: IHsh.
+      + case: (ltnP i.+1 (size sh)) => Hsz; first exact: Hsort.
+        by rewrite (nth_default _ Hsz).
+  Qed.
+
+  (** Sub-partitions *)
 
   Lemma is_part_consK l0 sh : is_part (l0 :: sh) -> is_part sh.
   Proof. by move=> /= /andP []. Qed.
@@ -320,28 +375,6 @@ Section Partition.
     move=> Hp Hq; apply last_non_0_eqP.
     - by move: Hp => /is_partP [].
     - by move: Hq => /is_partP [].
-  Qed.
-
-  (** Partitions don't have 0 parts *)
-  Lemma part_head0F sh : head 1 sh == 0 -> is_part sh = false.
-  Proof.
-    elim: sh => [//= | sh0 sh IHsh] /= /eqP ->.
-    rewrite leqn0; by case (boolP (head 1 sh == 0)).
-  Qed.
-
-  Lemma part_head_non0 sh : is_part sh -> head 1 sh != 0.
-  Proof.
-    elim: sh => [//= | sh0 sh IHsh] /= /andP [] Head.
-    move/IHsh; apply: contraLR; rewrite !negbK => /eqP Hsh0.
-    by move: Head; rewrite Hsh0 leqn0.
-  Qed.
-
-  Lemma nth_part_non0 sh i : is_part sh -> i < size sh -> nth 0 sh i != 0.
-  Proof.
-    elim: i sh => [//= | i IHi] [//=| s0 s].
-      by move=> /part_head_non0.
-    move=> /= /andP [] _.
-    exact: IHi.
   Qed.
 
   (** Partitions and sumn *)
@@ -1142,7 +1175,10 @@ Canonical intpart_countType := Eval hnf in CountType intpart intpart_countMixin.
 Lemma intpartP (p : intpart) : is_part p.
 Proof. by case: p. Qed.
 
-Hint Resolve intpartP.
+Lemma intpart_sorted (p : intpart) : sorted geq p.
+Proof. by have:= intpartP p; rewrite is_part_sortedE => /andP []. Qed.
+
+Hint Resolve intpartP intpart_sorted.
 
 Canonical conj_intpart p := IntPart (is_part_conj (intpartP p)).
 
@@ -1310,7 +1346,12 @@ Canonical intpartn_subFinType := Eval hnf in [subFinType of intpartn].
 
 Lemma intpartnP (p : intpartn) : is_part p.
 Proof using . by case: p => /= p /andP []. Qed.
-Hint Resolve intpartnP.
+
+Lemma intpartn_sorted (p : intpartn) : sorted geq p.
+Proof. by have:= intpartnP p; rewrite is_part_sortedE => /andP []. Qed.
+
+Hint Resolve intpartnP intpartn_sorted.
+
 Definition intpart_of_intpartn (p : intpartn) := IntPart (intpartnP p).
 Coercion intpart_of_intpartn : intpartn >-> intpart.
 
@@ -1434,4 +1475,222 @@ Proof.
   by rewrite -(size_map val) subType_seqP -size_enum_partn.
 Qed.
 
-Hint Resolve intpartP intpartnP.
+Hint Resolve intpartP intpart_sorted intpartnP intpartn_sorted.
+
+
+(** * The union of two integer partitions *)
+Section UnionPart.
+
+Lemma union_part_is_part l k :
+  is_part l -> is_part k -> is_part (merge geq l k).
+Proof.
+rewrite !is_part_sortedE => /andP [sortl l0] /andP [sortk k0].
+apply/andP; split; first exact: merge_sorted.
+by rewrite mem_merge mem_cat negb_or l0 k0.
+Qed.
+
+Lemma sumn_union_part l k : sumn (merge geq l k) = sumn l + sumn k.
+Proof.
+have:= perm_merge geq l k => /perm_eqlP/perm_sumn ->.
+by rewrite sumn_cat.
+Qed.
+
+Fact union_intpart_subproof (l : intpart) (k : intpart) :
+  is_part (merge geq l k).
+Proof. exact: union_part_is_part. Qed.
+Definition union_intpart (l : intpart) (k : intpart) :=
+  IntPart (union_intpart_subproof l k).
+
+Lemma union_intpartE l k : val (union_intpart l k) = sort geq (l ++ k).
+Proof.
+rewrite /=; apply (eq_sorted (leT := geq)) => //.
+- exact: merge_sorted.
+- exact: sort_sorted.
+- by rewrite perm_merge perm_eq_sym perm_sort.
+Qed.
+
+Lemma perm_union_intpart l k : perm_eq (union_intpart l k) (l ++ k).
+Proof. by rewrite /= perm_merge. Qed.
+
+Lemma union_intpartC l k : union_intpart l k = union_intpart k l.
+Proof.
+apply val_inj; rewrite !union_intpartE.
+by apply/perm_sortP; rewrite // perm_catC.
+Qed.
+
+Lemma union_intpartA l k j :
+  union_intpart l (union_intpart k j) = union_intpart (union_intpart k l) j.
+Proof.
+apply val_inj; rewrite !union_intpartE; apply/perm_sortP => //.
+apply (perm_eq_trans (y := l ++ (k ++ j))).
+- by rewrite perm_cat2l perm_sort.
+- apply (perm_eq_trans (y := (k ++ l) ++ j)).
+  + by rewrite catA perm_cat2r perm_catC.
+  + by rewrite perm_cat2r perm_eq_sym perm_sort.
+Qed.
+
+Variables (m n : nat) (l : intpartn m) (k : intpartn n).
+
+Lemma union_intpartn_subproof : is_part_of_n (m + n) (merge geq l k).
+Proof.
+apply /andP; split.
+- by rewrite sumn_union_part !intpartn_sumn.
+- exact: union_part_is_part.
+Qed.
+Definition union_intpartn := IntPartN union_intpartn_subproof.
+
+Lemma union_intpartnE : val union_intpartn = sort geq (l ++ k).
+Proof.
+rewrite /=; apply (eq_sorted (leT := geq)) => //.
+- apply: merge_sorted => //.
+- exact: sort_sorted.
+- by rewrite perm_merge perm_eq_sym perm_sort.
+Qed.
+
+Lemma perm_union_intpartn : perm_eq (union_intpart l k) (l ++ k).
+Proof. by rewrite /= perm_merge. Qed.
+
+End UnionPart.
+
+
+
+From mathcomp Require Import binomial finset.
+
+(** * Shape of set partitions and integer partitions *)
+Section SetPartitionShape.
+
+Variable T : finType.
+Implicit Types (A B X : {set T}) (P Q : {set {set T}}).
+
+Lemma partition0P P : reflect (P = set0) (partition P set0).
+Proof using.
+  apply (iffP and3P) => [[/eqP Hcov _ H0] | ->].
+  - case: (set_0Vmem P) => [// | [X HXP]].
+    exfalso; suff HX : X = set0 by subst X; rewrite HXP in H0.
+    by apply/eqP; rewrite -subset0; rewrite -Hcov (bigcup_max X).
+  - by split; rewrite ?inE // /trivIset /cover !big_set0 ?cards0.
+Qed.
+
+Lemma triv_part P X : X \in P -> partition P X -> P = [set X].
+Proof using.
+move=> HXP /and3P [/eqP Hcov /trivIsetP /(_ X _ HXP) H H0].
+apply/setP => Y; rewrite inE; apply/idP/idP => [HYP | /eqP -> //].
+rewrite eq_sym; move/(_ Y HYP): H => /contraR; apply.
+have /set0Pn [y Hy] : Y != set0
+  by apply/negP => /eqP HY; move: H0; rewrite -HY HYP.
+apply/negP => /disjoint_setI0/setP/(_ y).
+by rewrite !inE Hy -Hcov andbT => /bigcupP; apply; exists Y.
+Qed.
+
+Lemma count_set_of_card (p : pred nat) (P : {set {set T}}) :
+  count p [seq #{x} | x <- enum P] = #|P :&: [set x | p #{x}]|.
+Proof using.
+  rewrite cardE -size_filter /enum_mem -enumT /=.
+  rewrite filter_map size_map; congr size.
+  rewrite -filter_predI; apply eq_filter.
+  by move=> S; rewrite !inE andbC.
+Qed.
+
+Definition parts_shape P := sort geq [seq #{X} | X <- enum P].
+
+Lemma parts_shapeP P D :
+  partition P D -> is_part_of_n #|D| (parts_shape P).
+Proof using.
+rewrite /parts_shape => /and3P [/eqP Hcov Htriv Hnon0].
+rewrite /is_part_of_n /= is_part_sortedE.
+apply/and3P; split.
+- by rewrite sumn_sort -sumnE big_map -big_enum -Hcov.
+- by apply sort_sorted => m n.
+- move: Hnon0; apply contra.
+  rewrite mem_sort => /mapP [] x.
+  by rewrite mem_enum => Hx /esym/cards0_eq <-.
+Qed.
+
+Lemma ex_subset_card B k :
+ k <= #{B} -> exists2 A : {set T}, A \subset B & #{A} == k.
+Proof using.
+rewrite -bin_gt0 -(cards_draws B k) card_gt0 => /set0Pn [x].
+rewrite inE => /andP [H1 H2]; by exists x.
+Qed.
+
+Lemma ex_parts_shape (s : seq nat) (A : {set T}) :
+  sumn s = #|A| -> 0 \notin s ->
+  exists P : seq {set T},
+    [/\ uniq P, partition [set X in P] A & [seq #{X} | X <- P] = s].
+Proof using.
+elim: s A => [| i s IHs] A /=.
+  move=> /esym/cards0_eq -> _; exists [::]; split => //.
+  apply/partition0P; apply/setP => x.
+  by rewrite !inE in_nil.
+rewrite inE eq_sym => Hi /norP [Bne0 /IHs{IHs} Hrec].
+have: i <= #|A| by rewrite -Hi; apply: leq_addr.
+move=> /ex_subset_card [B BsubA /eqP cardB]; subst i.
+have /Hrec{Hrec} [P [Puniq]] : sumn s = #|A :\: B|.
+  by rewrite cardsD (setIidPr BsubA) -Hi addKn.
+move=> /and3P [/eqP covP trivP set0P] Ps; rewrite inE in set0P.
+have BninP : B \notin P.
+  move: Bne0; apply contra => BinP; rewrite cards_eq0.
+  have : B \subset A :\: B.
+    by rewrite -covP /cover; apply (bigcup_max B); rewrite // inE.
+  rewrite setDE => /subsetIP [_].
+  by rewrite -disjoints_subset -setI_eq0 setIid.
+rewrite -lt0n card_gt0 in Bne0.
+have Hcons : [set X in B :: P] = B |: [set X in P].
+  by apply/setP => X; rewrite !inE.
+exists (B :: P); split => /=; [|apply/and3P; split|].
+- by rewrite Puniq BninP.
+- rewrite Hcons /cover big_setU1 /= ?inE // -/(cover _) covP.
+  by rewrite -{1}(setIidPr BsubA) setID.
+- move: trivP; rewrite /trivIset Hcons.
+  rewrite /cover !big_setU1 ?inE //= -/(cover _) => /eqP ->.
+  rewrite covP cardsU (_ : B :&: (A :\: B) = set0) ?cards0 ?subn0 //.
+  by rewrite setDE setIC -setIA [X in A :&: X]setIC setICr setI0.
+- by rewrite !inE negb_or eq_sym Bne0.
+- by rewrite Ps.
+Qed.
+
+Lemma ex_set_parts_shape A (sh : intpartn #|A|) :
+  exists2 P, partition P A & parts_shape P = sh.
+Proof using.
+case: sh => sh.
+rewrite /is_part_of_n /= is_part_sortedE => /andP [/eqP shsum /andP [shsort]].
+move=> /(ex_parts_shape shsum) [P [Puniq Ppart Psh]].
+exists [set X in P]; first exact: Ppart.
+apply (eq_sorted (leT := geq)) => //.
+- exact: sort_sorted.
+- rewrite /parts_shape -Psh perm_sort; apply: perm_map.
+  apply: (uniq_perm_eq (enum_uniq _) Puniq) => x.
+  by rewrite mem_enum inE.
+Qed.
+
+Lemma parts_shape_union P Q :
+  [disjoint P & Q] ->
+  parts_shape (P :|: Q) = sort geq (parts_shape P ++ parts_shape Q).
+Proof using.
+rewrite /parts_shape -setI_eq0 => /eqP disj.
+apply/perm_sortP/perm_eqP => // Prd.
+have count_sort l : count ^~ (sort geq l) =1 count ^~ l.
+  by apply/perm_eqP; rewrite perm_sort perm_eq_refl.
+rewrite count_cat !count_sort !count_set_of_card.
+rewrite setIUl cardsU -[RHS]subn0; congr(_ - _).
+apply/eqP; rewrite cards_eq0 -subset0 -disj.
+by apply/subsetP => x; rewrite !inE => /andP [/andP [-> _] /andP [-> _]].
+Qed.
+
+End SetPartitionShape.
+
+Lemma parts_shape_inj
+      (T1 T2 : finType) (f : T1 -> T2) (A : {set {set T1}}) :
+  injective f -> parts_shape [set f @: (x : {set T1}) | x in A] = parts_shape A.
+Proof using.
+rewrite /parts_shape /= => Hinj.
+apply/perm_sortP/perm_eqP => // P.
+rewrite !count_set_of_card -(card_imset _ (imset_inj Hinj)).
+rewrite imsetI; last by move=> B C _ _; exact: imset_inj.
+congr #{_}; apply/setP => S; rewrite !inE.
+case: (boolP (S \in (imset _ _))) => //= /imsetP [U _ -> {S}].
+rewrite (card_imset _ Hinj).
+apply/idP/imsetP => [| [] V].
+- by exists U; rewrite // inE.
+- by rewrite inE => HP /(imset_inj Hinj) ->.
+Qed.

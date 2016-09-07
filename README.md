@@ -10,12 +10,14 @@ Florent Hivert <Florent.Hivert@lri.fr>
 
 Contributors:
 
+- Thibaut Benjamin (representation theory of the symmetric groups)
 - Jean Christophe Filliâtre (Why3 implementation)
 - Christine Paulin (ALEA + hook length formula)
 - Olivier Stietel (hook length formula)
 
 This library was supported by additional discussions with:
 
+- Georges Gonthier
 - Assia Mahoubi
 - Pierre Yves Strub
 - the SSReflect mailing list
@@ -41,7 +43,7 @@ Contents
   related algebras. Internat. J. Algebra Comput. 12 (2002), 671–717.
 
 * the **Hook-Length Formula** for standard Young tableaux
-  (toghether with Christine Paulin and Olivier Stietel)
+  (together with Christine Paulin and Olivier Stietel)
 
   After Greene–Nijenhuis–Wilf proof, Discrete Math. 51 (1984), 101–108.
 
@@ -50,7 +52,7 @@ Contents
 * various **Combinatorial objects** including
 
   - totally and partially ordered types,
-  - partitions,
+  - integer partitions and compositions,
   - tableaux, standard tableaux, skew tableaux,
   - subsequences, integer vectors,
   - standard words and permutations,
@@ -64,6 +66,11 @@ Contents
    See the [trees branch on Github](https://github.com/hivert/Coq-Combi/tree/trees).
 
 In progress:
+
+*  the **representation theory of the symmetric Groups** (together with Thibaut
+   Benjamin).
+   See the [ReprSn branch on Github](https://github.com/hivert/Coq-Combi/tree/ReprSn).
+
 
 *  a **Why3 certified implementation** of the LR-Rule
    (together with Jean Christophe Filliâtre).

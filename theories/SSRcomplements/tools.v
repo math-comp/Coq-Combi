@@ -19,7 +19,7 @@
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import bigop.
+From mathcomp Require Import finset bigop path.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -565,3 +565,271 @@ Proof.
     rewrite -big_nat_widen0 //; exact: leq_subr.
 Qed.
 
+
+
+Section Enum.
+
+Variable T: finType.
+
+Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
+
+Lemma enum_eq0P (s : {set T}):
+  reflect (enum s = [::]) (s == set0).
+Proof.
+  apply (iffP eqP) => [-> |]; first exact: enum_set0.
+  case: (set_0Vmem s) => [-> //| [x]].
+  rewrite -mem_enum => Hx Hnil.
+  by rewrite Hnil in_nil in Hx.
+Qed.
+
+Lemma big_enum (S : {set T}) :
+  \big[op/idx]_(s in S) F s = \big[op/idx]_(s <- enum S) F s.
+Proof. by rewrite /index_enum big_filter; apply congr_big. Qed.
+
+End Enum.
+
+
+
+
+(* New lemmas *)
+Lemma sumn_sort l S : sumn (sort S l) = sumn l.
+Proof using. by have:= perm_sort S l => /perm_eqlP/perm_sumn. Qed.
+
+Section ImsetInj.
+
+Implicit Type T : finType.
+
+Lemma set1_disjoint T (i j : T) : [set i] != [set j] -> [disjoint [set i] & [set j]].
+Proof.
+  move=> Hneq; rewrite /disjoint; apply/pred0P => l /=; apply: negbTE.
+  rewrite !in_set1; move: Hneq; by apply: contra => /andP [] /eqP -> /eqP ->.
+Qed.
+
+Lemma mem_imset_inj T1 T2 (f : T1 -> T2) (i : T1) (s : {set T1}) :
+  injective f -> (f i) \in f @: s = (i \in s).
+Proof.
+  move=> H; apply/idP/idP; last exact: mem_imset.
+  by move/imsetP => [] j Hj /H ->.
+Qed.
+
+Lemma map_filter_comp (T1 T2: Type) (l : seq T1) (PP : pred T2) (F : T1 -> T2) :
+  [seq F i | i <- l & PP (F i)] = [seq i | i <- map F l & PP i ].
+Proof.
+  rewrite filter_map /= -map_comp.
+  have /eq_filter -> : (preim F [eta PP]) =1 (fun i => PP (F i)) by [].
+  by rewrite map_comp.
+Qed.
+
+Lemma subset_imsetK T1 T2 (f : T1 -> T2) (s t : {set T1}):
+  injective f -> f @: s \subset f @: t -> s \subset t.
+Proof.
+  move=> Hinj /subsetP H.
+  by apply/subsetP => x /(mem_imset f) /(H _) /imsetP [] y Hy /Hinj ->.
+Qed.
+
+Lemma imset_inj T1 T2 (f : T1 -> T2) :
+  injective f -> injective (fun s : {set T1} => (imset f (mem s))).
+Proof.
+  move=> Hinj s1 s2 /eqP; rewrite eqEsubset => /andP [] H12 H21.
+  move: Hinj => /subset_imsetK Hinj.
+  apply/eqP; rewrite eqEsubset.
+  by rewrite (Hinj _ _ H12) (Hinj _ _ H21).
+Qed.
+
+Lemma imset_trivIset T1 T2 (F : T1 -> T2) (P : {set {set T1}}) :
+  injective F -> trivIset P -> trivIset ((fun s : {set T1} => F @: s) @: P).
+Proof.
+  move=> Hinj /trivIsetP Htriv.
+  apply/trivIsetP => A B /imsetP [] FA FAP -> {A} /imsetP [] FB FBP -> Hneq.
+  have {Hneq} Hneq : FA != FB by move: Hneq; apply: contra => /eqP ->.
+  have:= Htriv _ _ FAP FBP Hneq; rewrite -!setI_eq0 -imsetI.
+  * move=> /eqP ->; by rewrite imset0.
+  * move=> i j _ _ /=; exact: Hinj.
+Qed.
+
+Lemma preimset_trivIset T1 T2 (F : T1 -> T2) (P : {set {set T2}}) :
+  injective F -> trivIset P -> trivIset ((fun s : {set T2} => F @^-1: s) @: P).
+Proof.
+  move=> Hinj /trivIsetP Htriv.
+  apply/trivIsetP => A B /imsetP [] FA FAP -> {A} /imsetP [] FB FBP -> Hneq.
+  have {Hneq} Hneq : FA != FB by move: Hneq; apply: contra => /eqP ->.
+  have:= Htriv _ _ FAP FBP Hneq; rewrite -!setI_eq0 -preimsetI => /eqP ->.
+  by rewrite preimset0.
+Qed.
+
+Lemma disjoint_imset T1 T2 (f : T1 -> T2) (A B : {set T1}) :
+  injective f ->
+  [disjoint A & B] -> [disjoint [set f x | x in A] & [set f x | x in B]].
+Proof using.
+rewrite -!setI_eq0 => Hinj /eqP Hdisj.
+rewrite -imsetI; last by move=> x y _ _; exact: Hinj.
+by rewrite imset_eq0 Hdisj.
+Qed.
+
+End ImsetInj.
+
+Lemma uniq_next (T : eqType) (p : seq T) : uniq p -> injective (next p).
+Proof using.
+move=> Huniq x y Heq.
+by rewrite -(prev_next Huniq x) Heq prev_next.
+Qed.
+
+
+Reserved Notation "#{ x }" (at level 0, x at level 10, format "#{ x }").
+Notation "#{ x }" :=  #|(x : {set _})|
+                      (at level 0, x at level 10, format "#{ x }").
+
+
+Module LeqGeqOrder.
+
+Definition geq_refl : reflexive geq :=
+  fun x => leqnn x.
+Definition geq_total : total geq :=
+  fun x y => leq_total y x.
+Definition geq_trans : transitive geq :=
+  fun x y z H1 H2 => leq_trans H2 H1.
+Definition anti_geq : antisymmetric geq :=
+  fun x y H => esym (anti_leq H).
+
+Hint Resolve leq_total leq_trans anti_leq geq_refl geq_total geq_trans anti_geq.
+
+End LeqGeqOrder.
+
+Import LeqGeqOrder.
+
+Lemma mem_takeP (T : eqType) x0 x k (s : seq T) :
+  reflect (exists i, i < minn k (size s) /\ x = nth x0 s i) (x \in take k s).
+Proof.
+  apply: (iffP idP).
+  - move=> Hx; pose ix := index x (take k s).
+    have Hix : ix < size s.
+      move: Hx; rewrite /ix -index_mem size_take.
+      case: (ltnP k (size s)) => //= H1 H2; exact: (ltn_trans H2 H1).
+    have Hix2: ix < k.
+      move: Hx; rewrite /ix -index_mem size_take /=.
+      by case: (ltnP k (size s)) => H; last by move/leq_trans; apply.
+    exists ix; split; first by rewrite leq_min Hix Hix2.
+    by rewrite -{1}(nth_index x0 Hx) nth_take.
+  - move=> [] i [] Hi ->.
+    have Hik := leq_trans Hi (geq_minl k (size s)).
+    have Hsz := leq_trans Hi (geq_minr k (size s)).
+    rewrite -(nth_take _ Hik); apply: mem_nth; rewrite size_take.
+    by case (ltnP k (size s)).
+Qed.
+
+Lemma take_iota i k n : take k (iota i n) = iota i (minn k n).
+Proof.
+  rewrite /minn; case: (ltnP k n) => H; last by apply: take_oversize; rewrite size_iota.
+  elim: k n H i => [//= | k IHk]; first by case.
+  case=> //= n H i; congr (i :: _); exact: IHk.
+Qed.
+
+Lemma drop_iota i k n : drop k (iota i n) = iota (i + k) (n - k).
+Proof.
+  elim: k i n => [/= | k IHk] i n /=; first by rewrite addn0; case: n.
+  case: n => [//= | n] /=; by rewrite IHk addSn addnS subSS.
+Qed.
+
+Lemma mem_take_enumI n (i : 'I_n) k : i \in take k (enum 'I_n) = (i < k).
+Proof.
+  case: i => i Hi /=.
+  rewrite -(mem_map val_inj) map_take val_enum_ord /= take_iota mem_iota /= add0n.
+  rewrite /minn; case: (ltnP k n) => //= H.
+  by rewrite Hi (leq_trans Hi H).
+Qed.
+
+Lemma take_enumI n k : take k (enum 'I_n) = filter ((gtn k) \o val) (enum 'I_n).
+Proof.
+  apply: (inj_map val_inj); rewrite map_take map_filter_comp val_enum_ord.
+  rewrite take_iota /minn.
+  case: (ltnP k n) => Hk.
+  - elim: k n Hk => [//= | k IHk] n Hk /=.
+    + by rewrite (eq_filter (a2 := pred0)) // filter_pred0.
+    + case: n Hk => [//= | n] Hk /=.
+      rewrite -[1]addn0 !iota_addl (IHk _ Hk).
+      by rewrite filter_map /= -!map_comp.
+  - rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT map_id.
+    move=> i /=; rewrite mem_iota add0n => /andP [] _ H2.
+    by rewrite (leq_trans H2 Hk).
+Qed.
+
+Lemma mem_drop_enumI n (i : 'I_n) k : i \in drop k (enum 'I_n) = (i >= k).
+Proof.
+  case (leqP k n) => Hkn.
+  - case: i => i Hi /=.
+    rewrite -(mem_map val_inj) map_drop val_enum_ord /= drop_iota mem_iota /= add0n.
+    by rewrite (subnKC Hkn) Hi andbT.
+  - rewrite drop_oversize; last by rewrite size_enum_ord; apply: ltnW.
+    have:= ltn_trans (ltn_ord i) Hkn.
+    by rewrite in_nil ltnNge => /negbTE => ->.
+Qed.
+
+Lemma drop_enumI n k : drop k (enum 'I_n) = filter ((leq k) \o val) (enum 'I_n).
+Proof.
+  apply: (inj_map val_inj); rewrite map_drop map_filter_comp val_enum_ord.
+  rewrite drop_iota add0n.
+  case: (leqP n k) => Hk.
+  - have:= Hk; rewrite -subn_eq0 => /eqP -> /=.
+    rewrite (eq_in_filter (a2 := pred0)); first by rewrite filter_pred0.
+    move=> i; rewrite mem_iota add0n => /andP [] _ Hi.
+    have:= leq_trans Hi Hk.
+    by rewrite ltnNge => /negbTE => ->.
+  - move Hdiff : (n - k) => d; move: Hdiff => /eqP.
+    rewrite -(eqn_add2r k) subnK; last exact: ltnW.
+    move/eqP -> => {n Hk}.
+    rewrite addnC iota_add filter_cat map_id add0n.
+    rewrite (eq_in_filter (a2 := pred0)); first last.
+      move=> i; rewrite mem_iota add0n => /andP [] _ Hi.
+      move: Hi; by rewrite ltnNge => /negbTE => ->.
+    rewrite filter_pred0 cat0s.
+    rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT.
+    by move=> i; rewrite mem_iota => /andP [] ->.
+Qed.
+
+Lemma enum0 : enum 'I_0 = [::].
+Proof. apply/nilP; by rewrite /nilp size_enum_ord. Qed.
+
+Section LRShift.
+
+Variables (m n : nat).
+
+Lemma lshift_inj : injective (@lshift m n).
+Proof using .
+  move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /=.
+Qed.
+Lemma rshift_inj : injective (@rshift m n).
+Proof using .
+  move=> [] i Hi [] j Hj /eqP H; apply/eqP; move: H; by rewrite !/eq_op /= eqn_add2l.
+Qed.
+
+Lemma lrshiftF i j : ((@lshift m n i) == (@rshift m n j)) = false.
+Proof using .
+  apply: (introF idP); case: i j => [] i Hi [] j Hj.
+  rewrite /eq_op /= => /eqP H.
+  move: Hi; by rewrite H ltnNge leq_addr.
+Qed.
+
+End LRShift.
+
+Section SeqSub.
+
+Variables (T : countType) (R : Type).
+
+Variable idx : R.
+Variable op : Monoid.com_law idx.
+
+Lemma big_seq_sub (s : seq T) F :
+  \big[op/idx]_(x : seq_sub s) F (ssval x) = \big[op/idx]_(x <- undup s) F x.
+Proof.
+rewrite /index_enum.
+rewrite -[LHS](big_map (ssval (s := s)) xpredT (fun x : T => F x)).
+apply eq_big_perm; apply uniq_perm_eq.
+- rewrite map_inj_uniq; last exact: val_inj.
+  by rewrite -enumT; exact: enum_uniq.
+- exact: undup_uniq.
+- move=> x; rewrite mem_undup; apply/mapP/idP => [/= [y _ ->] | Hx].
+  + by case: y => y /= Hy.
+  + by exists (SeqSub Hx); rewrite // -enumT mem_enum.
+Qed.
+
+End SeqSub.
