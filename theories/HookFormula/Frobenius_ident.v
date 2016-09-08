@@ -133,7 +133,7 @@ Definition stpn_unionType :=
     (Pi := fun sh : seq nat => is_stdtab_pair_of_shape sh)
     (fun p : intpartn_subFinType n => (stpsh_subFinType p))
     stpn_PredEq stpn_partition_shape.
-Canonical stpn_finType := Eval hnf in [finType of stpn for stpn_uniontype].
+Canonical stpn_finType := Eval hnf in [finType of stpn for stpn_unionType].
 Canonical stpn_subFinType := Eval hnf in [subFinType of stpn].
 
 Lemma card_stpn : #|stpn_finType| = \sum_(p : intpartn n) (n`! %/ (F_deno p))^2.
@@ -215,7 +215,7 @@ Proof using .
     by rewrite -expr2 expr_div_n mulrC mul1r.
   rewrite -!(big_morph intr (@intrD _) (id2 := 0)) //=.
   rewrite -!(big_morph Posz PoszD (id2 := 0%N)) //=.
-  rewrite -Ident expr2.
+  rewrite -Frobenius_ident expr2.
   by rewrite invfM mulrA divff.
 Qed.
 
