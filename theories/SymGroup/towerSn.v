@@ -320,10 +320,36 @@ Arguments tinj_im {m n}.
 
 Notation "f \o^ g" := (cfIsom (isom_tinj _ _) (cfextprod f g)) (at level 40).
 
-(** The tower is associative (upto isomorphism) *)
+(** The tower is associative (upto isomorphism) with unit *)
 Section Assoc.
 
 Variables m n p : nat.
+
+Lemma cast_rshift j : cast_ord (esym (add0n n)) j = rshift 0 j.
+Proof. by apply val_inj; rewrite /= add0n. Qed.
+
+Lemma cast_lshift j : cast_ord (esym (addn0 n)) j = lshift 0 j.
+Proof. by apply val_inj. Qed.
+
+Lemma tinj1E (t : 'S_n) :
+  tinj (1%g, t) = cast_perm (esym (add0n n)) t.
+Proof.
+apply/permP => /= itmp.
+rewrite -(splitK itmp) !permE.
+case: splitP => i _ {itmp}; first by case: i.
+rewrite /tinjval !unsplitK /= /cast_perm_val.
+by rewrite esymK -!cast_rshift cast_ordKV.
+Qed.
+
+Lemma tinjE1 (t : 'S_n) :
+  tinj (t, 1%g) = cast_perm (esym (addn0 n)) t.
+Proof.
+apply/permP => /= itmp.
+rewrite -(splitK itmp) !permE.
+case: splitP => i _ {itmp}; last by case: i.
+rewrite /tinjval !unsplitK /= /cast_perm_val.
+by rewrite esymK -!cast_lshift cast_ordKV.
+Qed.
 
 Lemma tinjA (s : 'S_m) (t : 'S_n) (u : 'S_p) :
   tinj (tinj(s, t), u) = cast_perm (addnA m n p) (tinj (s, tinj (t, u))).
