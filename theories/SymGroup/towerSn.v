@@ -337,8 +337,7 @@ Proof.
 apply/permP => /= itmp.
 rewrite -(splitK itmp) !permE.
 case: splitP => i _ {itmp}; first by case: i.
-rewrite /tinjval !unsplitK /= /cast_perm_val.
-by rewrite esymK -!cast_rshift cast_ordKV.
+by rewrite /tinjval !unsplitK /= -!cast_rshift cast_ord_permE.
 Qed.
 
 Lemma tinjE1 (t : 'S_n) :
@@ -347,8 +346,7 @@ Proof.
 apply/permP => /= itmp.
 rewrite -(splitK itmp) !permE.
 case: splitP => i _ {itmp}; last by case: i.
-rewrite /tinjval !unsplitK /= /cast_perm_val.
-by rewrite esymK -!cast_lshift cast_ordKV.
+by rewrite /tinjval !unsplitK /= -!cast_lshift cast_ord_permE.
 Qed.
 
 Lemma tinjA (s : 'S_m) (t : 'S_n) (u : 'S_p) :
@@ -356,7 +354,7 @@ Lemma tinjA (s : 'S_m) (t : 'S_n) (u : 'S_p) :
 Proof using.
 apply/permP => /= itmp.
 rewrite -(splitK itmp) !permE.
-case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= /cast_perm_val.
+case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= -cast_permE.
 - rewrite -(splitK i) !permE.
   case: splitP => j _ {i}; rewrite /tinjval !unsplitK /=.
   + rewrite [cast_ord (esym _) _](_ : _ = unsplit (inl j));
