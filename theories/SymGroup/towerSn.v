@@ -299,7 +299,7 @@ Qed.
 
 Lemma cycle_type_tinj s : ct (tinj s) = union_intpartn (ct s.1) (ct s.2).
 Proof using.
-apply val_inj; rewrite union_intpartnE intpartn_castE /=.
+apply val_inj; rewrite union_intpartnE cast_intpartnE /=.
 rewrite pcycles_tinj parts_shape_union; first last.
   rewrite -setI_eq0; apply/eqP/setP => S.
   rewrite !inE; apply/negP => /andP [].
@@ -309,7 +309,7 @@ rewrite pcycles_tinj parts_shape_union; first last.
   rewrite mem_imset; last exact: pcycle_id.
   move=> /esym/imsetP => [] [z _] /eqP.
   by rewrite lrshiftF.
-by congr sort; rewrite /ct !intpartn_castE /=; congr (_ ++ _);
+by congr sort; rewrite /ct !cast_intpartnE /=; congr (_ ++ _);
   apply parts_shape_inj; [exact: lshift_inj | exact: rshift_inj].
 Qed.
 
@@ -319,6 +319,8 @@ Arguments tinj {m n} s.
 Arguments tinj_im {m n}.
 
 Notation "f \o^ g" := (cfIsom (isom_tinj _ _) (cfextprod f g)) (at level 40).
+
+
 
 (** The tower is associative (upto isomorphism) with unit *)
 Section Assoc.
@@ -331,8 +333,7 @@ Proof. by apply val_inj; rewrite /= add0n. Qed.
 Lemma cast_lshift j : cast_ord (esym (addn0 n)) j = lshift 0 j.
 Proof. by apply val_inj. Qed.
 
-Lemma tinj1E (t : 'S_n) :
-  tinj (1%g, t) = cast_perm (esym (add0n n)) t.
+Lemma tinj1E (t : 'S_n) : tinj (1%g, t) = cast_perm (esym (add0n n)) t.
 Proof.
 apply/permP => /= itmp.
 rewrite -(splitK itmp) !permE.
@@ -340,8 +341,7 @@ case: splitP => i _ {itmp}; first by case: i.
 by rewrite /tinjval !unsplitK /= -!cast_rshift cast_ord_permE.
 Qed.
 
-Lemma tinjE1 (t : 'S_n) :
-  tinj (t, 1%g) = cast_perm (esym (addn0 n)) t.
+Lemma tinjE1 (t : 'S_n) : tinj (t, 1%g) = cast_perm (esym (addn0 n)) t.
 Proof.
 apply/permP => /= itmp.
 rewrite -(splitK itmp) !permE.

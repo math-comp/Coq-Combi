@@ -624,10 +624,10 @@ Variable ct : intpartn #|T|.
 Lemma permCT_exists : {s | cycle_type s == ct}.
 Proof using.
 apply sigW => /=.
-have:= ex_set_parts_shape (intpartn_cast (esym (cardsT T)) ct).
+have:= ex_set_parts_shape (cast_intpartn (esym (cardsT T)) ct).
 move=> [P /perm_of_partsE /= Hct shape].
 exists (perm_of_parts P); apply/eqP/val_inj => /=; rewrite Hct.
-by rewrite shape intpartn_castE.
+by rewrite shape cast_intpartnE.
 Qed.
 Definition permCT := val permCT_exists.
 Lemma permCTP : cycle_type permCT = ct.
@@ -701,7 +701,7 @@ End CycleType.
 
 Notation "''1_[' p ]" := (cfuniCT p) : ring_scope.
 
-Coercion CTpartn n := intpartn_cast (esym (card_ord n)).
+Coercion CTpartn n := cast_intpartn (esym (card_ord n)).
 
 Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
@@ -712,13 +712,13 @@ Section Sn.
 Variable n : nat.
 
 Definition partnCT : intpartn #|'I_n| -> intpartn n :=
-  intpartn_cast (card_ord n).
+  cast_intpartn (card_ord n).
 Definition cycle_typeSn (s : 'S_n) : intpartn n := partnCT (cycle_type s).
 
 Lemma CTpartnK (p : intpartn n) : partnCT p = p.
 Proof using.
 rewrite /partnCT; apply val_inj => /=.
-by rewrite !intpartn_castE.
+by rewrite !cast_intpartnE.
 Qed.
 
 Lemma partnCTE p1 p2 : (p1 == p2) = (partnCT p1 == partnCT p2).
@@ -726,14 +726,14 @@ Proof using.
 rewrite /partnCT.
 apply/eqP/eqP => [-> //|].
 case: p1 p2 => [p1 Hp1] [p2 Hp2].
-move/(congr1 val); rewrite !intpartn_castE /= => Hp.
+move/(congr1 val); rewrite !cast_intpartnE /= => Hp.
 exact: val_inj.
 Qed.
 
 Lemma partnCTK (p : intpartn #|'I_n|) : p = partnCT p.
 Proof using.
 rewrite /CTpartn; apply val_inj => /=.
-by rewrite !intpartn_castE.
+by rewrite !cast_intpartnE.
 Qed.
 
 Lemma partnCT_congr p1 (p2 : intpartn n) : (partnCT p1 == p2) = (p1 == p2).

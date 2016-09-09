@@ -403,7 +403,7 @@ Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
 
 Lemma Schur_cast d d' (P : intpartn d) (Heq : d = d') :
-  's_P = Schur n0 R (intpartn_cast Heq P).
+  's_P = Schur n0 R (cast_intpartn Heq P).
 Proof using . subst d'; by congr Schur. Qed.
 
 
@@ -446,24 +446,24 @@ rewrite (bigID (fun P0 : intpartn (d1 + k) => (size P0 <= n))) /= addrC.
 rewrite big1 ?add0r; first last.
   by move=> i /andP [] _; rewrite -ltnNge; exact: Schur_oversize.
 rewrite mulr_sumr.
-pose P' := intpartn_cast Hk P.
+pose P' := cast_intpartn Hk P.
 rewrite (bigID (pred1 P')) [X in _ = X](bigID (pred1 P')) /=.
 set prd := BIG_P.
 have Hprd : prd =1 pred1 P'.
   rewrite {}/prd => sh /=.
   case: eqP => [-> | _]; rewrite ?andbT ?andbF // {sh}.
-  rewrite intpartn_castE {P' P1 d1 Hk p1P} HszP andbT /p1 /=.
+  rewrite cast_intpartnE {P' P1 d1 Hk p1P} HszP andbT /p1 /=.
   exact: vb_strip_rem_col0.
-rewrite !(eq_bigl _ _ Hprd) {Hprd prd} /= !big_pred1_eq intpartn_castE.
+rewrite !(eq_bigl _ _ Hprd) {Hprd prd} /= !big_pred1_eq cast_intpartnE.
 set A := (X in _ + X); set B := (X in _ = _ + X).
 suff -> : A = B by move=> /addIr <- {A B}; rewrite -Schur_cast.
 apply eq_bigr => {A B} sh /andP [] /andP [] Hstrip Hsz Hsh.
-pose sh' := intpartn_cast (esym Hk) sh.
+pose sh' := cast_intpartn (esym Hk) sh.
 have Hlex : (val sh' < P)%Ord.
-  rewrite intpartn_castE /= {sh'}.
+  rewrite cast_intpartnE /= {sh'}.
   rewrite ltnX_neqAleqX; apply/andP; split.
     move: Hsh; apply contra => /eqP H.
-    by apply/eqP; apply val_inj; rewrite intpartn_castE.
+    by apply/eqP; apply val_inj; rewrite cast_intpartnE.
   rewrite {Hsh Hsz P'}.
   have /= -> : val P = incr_first_n (conj_part p1) k.
     move: Hk; rewrite /d1 /p1 /= -{2}(conj_intpartnK P) /=.
@@ -474,10 +474,10 @@ have Hlex : (val sh' < P)%Ord.
   have:= intpartnP (conj_intpartn P1).
   have /= {Hk p1P P1} := intpartn_sumn (conj_intpartn P1).
   exact: vb_strip_lex.
-have Hsz' : size sh' <= n by rewrite intpartn_castE.
+have Hsz' : size sh' <= n by rewrite cast_intpartnE.
 have := IHP sh' Hlex Hsz'.
 rewrite -Schur_cast => ->.
-by rewrite intpartn_castE.
+by rewrite cast_intpartnE.
 Qed.
 
 End SchurAltenantDef.
