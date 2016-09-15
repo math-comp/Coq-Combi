@@ -299,7 +299,7 @@ Qed.
 
 Lemma cycle_type_tinj s : ct (tinj s) = union_intpartn (ct s.1) (ct s.2).
 Proof using.
-apply val_inj; rewrite union_intpartnE intpartn_castE /=.
+apply val_inj; rewrite union_intpartnE cast_intpartnE /=.
 rewrite pcycles_tinj parts_shape_union; first last.
   rewrite -setI_eq0; apply/eqP/setP => S.
   rewrite !inE; apply/negP => /andP [].
@@ -309,7 +309,7 @@ rewrite pcycles_tinj parts_shape_union; first last.
   rewrite mem_imset; last exact: pcycle_id.
   move=> /esym/imsetP => [] [z _] /eqP.
   by rewrite lrshiftF.
-by congr sort; rewrite /ct !intpartn_castE /=; congr (_ ++ _);
+by congr sort; rewrite /ct !cast_intpartnE /=; congr (_ ++ _);
   apply parts_shape_inj; [exact: lshift_inj | exact: rshift_inj].
 Qed.
 
@@ -320,17 +320,41 @@ Arguments tinj_im {m n}.
 
 Notation "f \o^ g" := (cfIsom (isom_tinj _ _) (cfextprod f g)) (at level 40).
 
-(** The tower is associative (upto isomorphism) *)
+
+
+(** The tower is associative (upto isomorphism) with unit *)
 Section Assoc.
 
 Variables m n p : nat.
+
+Lemma cast_rshift j : cast_ord (esym (add0n n)) j = rshift 0 j.
+Proof. by apply val_inj; rewrite /= add0n. Qed.
+
+Lemma cast_lshift j : cast_ord (esym (addn0 n)) j = lshift 0 j.
+Proof. by apply val_inj. Qed.
+
+Lemma tinj1E (t : 'S_n) : tinj (1%g, t) = cast_perm (esym (add0n n)) t.
+Proof.
+apply/permP => /= itmp.
+rewrite -(splitK itmp) !permE.
+case: splitP => i _ {itmp}; first by case: i.
+by rewrite /tinjval !unsplitK /= -!cast_rshift cast_ord_permE.
+Qed.
+
+Lemma tinjE1 (t : 'S_n) : tinj (t, 1%g) = cast_perm (esym (addn0 n)) t.
+Proof.
+apply/permP => /= itmp.
+rewrite -(splitK itmp) !permE.
+case: splitP => i _ {itmp}; last by case: i.
+by rewrite /tinjval !unsplitK /= -!cast_lshift cast_ord_permE.
+Qed.
 
 Lemma tinjA (s : 'S_m) (t : 'S_n) (u : 'S_p) :
   tinj (tinj(s, t), u) = cast_perm (addnA m n p) (tinj (s, tinj (t, u))).
 Proof using.
 apply/permP => /= itmp.
 rewrite -(splitK itmp) !permE.
-case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= /cast_perm_val.
+case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= -cast_permE.
 - rewrite -(splitK i) !permE.
   case: splitP => j _ {i}; rewrite /tinjval !unsplitK /=.
   + rewrite [cast_ord (esym _) _](_ : _ = unsplit (inl j));
@@ -347,6 +371,17 @@ case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= /cast_perm_val.
   rewrite (_: rshift n _ = unsplit (inr i)) //.
   rewrite !permE /tinjval !unsplitK /=.
   by apply val_inj; rewrite /= addnA.
+Qed.
+
+Local Notation ct := cycle_typeSn.
+
+Lemma cycle_type_tinjC (s : 'S_m) (t : 'S_n) :
+  ct (tinj (s, t)) = ct (cast_perm (esym (addnC m n)) (tinj (t, s))).
+Proof.
+rewrite !cast_cycle_typeSN !cycle_type_tinj /=.
+apply val_inj; rewrite [RHS]cast_intpartnE !union_intpartnE /=.
+apply/perm_sortP => //.
+by rewrite perm_catC.
 Qed.
 
 End Assoc.

@@ -1375,10 +1375,10 @@ Lemma intpartn2 (sh : intpartn 2) : sh = [:: 2]  :> seq nat \/ sh = [:: 1; 1] :>
   rewrite /enum_partn /= !inE => /orP [] /eqP ->; by [left | right].
 Qed.
 
-Definition intpartn_cast m n (eq_mn : m = n) p :=
+Definition cast_intpartn m n (eq_mn : m = n) p :=
   let: erefl in _ = n := eq_mn return intpartn n in p.
 
-Lemma intpartn_castE m n (eq_mn : m = n) p : val (intpartn_cast eq_mn p) = val p.
+Lemma cast_intpartnE m n (eq_mn : m = n) p : val (cast_intpartn eq_mn p) = val p.
 Proof. subst m; by case: p. Qed.
 
 

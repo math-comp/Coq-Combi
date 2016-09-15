@@ -82,18 +82,29 @@ Definition sympoly_zmodMixin :=
   Eval hnf in [zmodMixin of {sympoly R[n]} by <:].
 Canonical sympoly_zmodType :=
   Eval hnf in ZmodType {sympoly R[n]} sympoly_zmodMixin.
+Canonical sympolynom_zmodType :=
+  Eval hnf in ZmodType (sympoly n R) sympoly_zmodMixin.
+
 Definition sympoly_ringMixin :=
   Eval hnf in [ringMixin of {sympoly R[n]} by <:].
 Canonical sympoly_ringType :=
   Eval hnf in RingType {sympoly R[n]} sympoly_ringMixin.
+Canonical sympolynom_ringType :=
+  Eval hnf in RingType (sympoly n R) sympoly_ringMixin.
+
 Definition sympoly_lmodMixin :=
   Eval hnf in [lmodMixin of {sympoly R[n]} by <:].
 Canonical sympoly_lmodType :=
   Eval hnf in LmodType R {sympoly R[n]} sympoly_lmodMixin.
+Canonical sympolynom_lmodType :=
+  Eval hnf in LmodType R (sympoly n R) sympoly_lmodMixin.
+
 Definition sympoly_lalgMixin :=
   Eval hnf in [lalgMixin of {sympoly R[n]} by <:].
 Canonical sympoly_lalgType :=
   Eval hnf in LalgType R {sympoly R[n]} sympoly_lalgMixin.
+Canonical sympolynom_lalgType :=
+  Eval hnf in LalgType R (sympoly n R) sympoly_lalgMixin.
 
 Lemma sympol_is_lrmorphism :
   lrmorphism (@sympol n R : {sympoly R[n]} -> {mpoly R[n]}).
@@ -117,10 +128,15 @@ Definition sympoly_comRingMixin :=
   Eval hnf in [comRingMixin of {sympoly R[n]} by <:].
 Canonical sympoly_comRingType :=
   Eval hnf in ComRingType {sympoly R[n]} sympoly_comRingMixin.
+Canonical sympolynom_comRingType :=
+  Eval hnf in ComRingType (sympoly n R) sympoly_comRingMixin.
+
 Definition sympoly_algMixin :=
   Eval hnf in [algMixin of {sympoly R[n]} by <:].
 Canonical sympoly_algType :=
   Eval hnf in AlgType R {sympoly R[n]} sympoly_algMixin.
+Canonical sympolynom_algType :=
+  Eval hnf in AlgType R (sympoly n R) sympoly_algMixin.
 
 End SymPolyComRingType.
 
@@ -133,17 +149,31 @@ Definition sympoly_unitRingMixin :=
   Eval hnf in [unitRingMixin of {sympoly R[n]} by <:].
 Canonical sympoly_unitRingType :=
   Eval hnf in UnitRingType {sympoly R[n]} sympoly_unitRingMixin.
+Canonical sympolynom_unitRingType :=
+  Eval hnf in UnitRingType (sympoly n R) sympoly_unitRingMixin.
+
 Canonical sympoly_comUnitRingType :=
   Eval hnf in [comUnitRingType of {sympoly R[n]}].
+Canonical sympolynom_comUnitRingType :=
+  Eval hnf in [comUnitRingType of sympoly n R].
+
 Definition sympoly_idomainMixin :=
   Eval hnf in [idomainMixin of {sympoly R[n]} by <:].
 Canonical sympoly_idomainType :=
   Eval hnf in IdomainType {sympoly R[n]} sympoly_idomainMixin.
+Canonical sympolynom_idomainType :=
+  Eval hnf in IdomainType (sympoly n R) sympoly_idomainMixin.
+
 Canonical sympoly_unitAlgType :=
   Eval hnf in [unitAlgType R of {sympoly R[n]}].
+Canonical sympolynom_unitAlgType :=
+  Eval hnf in [unitAlgType R of (sympoly n R)].
 
 End SymPolyIdomainType.
 
+
+
+(* Print Canonical Projections. *)
 
 
 Section Bases.
@@ -171,7 +201,7 @@ Proof using. by rewrite mesym_homog. Qed.
 
 Definition symh_pol d  : {mpoly R[n]} :=
   \sum_(m : 'X_{1..n < d.+1} | mdeg m == d) 'X_[m].
-Lemma mcoeff_symh d m : (symh_pol d)@_m = (mdeg m == d)%:R.
+Lemma mcoeff_symh_pol d m : (symh_pol d)@_m = (mdeg m == d)%:R.
 Proof.
 rewrite linear_sum /=.
 case: (altP (mdeg m =P d)) => [<- | Hd] /=.
@@ -184,9 +214,11 @@ Qed.
 Fact symh_sym d : symh_pol d \is symmetric.
 Proof using.
 apply/issymP => s; rewrite -mpolyP => m.
-by rewrite mcoeff_sym !mcoeff_symh mdeg_mperm.
+by rewrite mcoeff_sym !mcoeff_symh_pol mdeg_mperm.
 Qed.
 Definition symh d : {sympoly R[n]} := SymPoly (symh_sym d).
+Lemma mcoeff_symh d m : (symh d)@_m = (mdeg m == d)%:R.
+Proof. exact: mcoeff_symh_pol. Qed.
 Lemma symh_homog d : sympol (symh d) \is d.-homog.
 Proof using. by apply rpred_sum => m /eqP H; rewrite dhomogX /= H. Qed.
 
@@ -212,7 +244,7 @@ Qed.
 
 Definition symm_pol (sh : n.-tuple nat) : {mpoly R[n]} :=
   (\sum_(p : permuted sh) 'X_[Multinom p] ).
-Lemma mcoeff_symm sh m : (symm_pol sh)@_m = (perm_eq sh m)%:R.
+Lemma mcoeff_symm_pol sh m : (symm_pol sh)@_m = (perm_eq sh m)%:R.
 Proof.
 rewrite linear_sum /=.
 case: (boolP (perm_eq sh m)) => /= [| /(elimN idP)] Hperm.
@@ -228,18 +260,23 @@ Qed.
 Fact symm_sym sh : symm_pol sh \is symmetric.
 Proof.
 apply/issymP => s; apply/mpolyP => m.
-rewrite mcoeff_sym !mcoeff_symm.
+rewrite mcoeff_sym !mcoeff_symm_pol.
 have: perm_eq (m#s) m by apply/tuple_perm_eqP; exists s.
 by move=> /perm_eqrP ->.
 Qed.
 Definition symm sh : {sympoly R[n]} :=
   if size sh <= n then SymPoly (symm_sym (mpart sh)) else 0 : {sympoly R[n]}.
+Lemma symm_oversize sh : n < size sh -> symm sh = 0.
+Proof. by rewrite ltnNge /symm => /negbTE ->. Qed.
+Lemma mcoeff_symm sh m :
+  size sh <= n -> (symm sh)@_m = (perm_eq (mpart (n := n) sh) m)%:R.
+Proof. by move=> H; rewrite /symm H mcoeff_symm_pol. Qed.
 Lemma symm_homog d (sh : intpartn d) :
   sympol (symm sh) \is d.-homog.
 Proof using.
-rewrite /symm; case: leqP => [/= Hsz | _]; last exact: dhomog0.
+case: (leqP (size sh) n) => [Hsz | /symm_oversize ->]; last exact: dhomog0.
 rewrite /= unfold_in; apply/allP => /= m.
-rewrite mcoeff_msupp mcoeff_symm.
+rewrite mcoeff_msupp mcoeff_symm //.
 case: (boolP (perm_eq _ _)) => [Hperm _ | _]; last by rewrite /= eq_refl.
 rewrite /mdeg sumnE -(intpartn_sumn sh).
 move: Hperm => /perm_sumn <-{m}.
@@ -266,11 +303,11 @@ case: (boolP (m \in msupp p)) => Hm.
     have [/= s /eqP ->]:= mpart_partm_perm m.
     by rewrite -mcoeff_sym (issymP p Hsym).
   have -> : (symm (partm m))@_m = 1.
-    by rewrite /symm size_partm /= mcoeff_symm perm_eq_sym partm_perm_eqK.
+    by rewrite (mcoeff_symm _ (size_partm _)) perm_eq_sym partm_perm_eqK.
   rewrite mulr1 -[LHS]addr0; congr (_ + _); symmetry.
   rewrite -![sympol _]/(sympol_lrmorphism n R _) !raddf_sum /=.
   rewrite big_seq_cond; apply big1 => /= m' /and3P [_ Hdom Hm'].
-  rewrite mcoeffZ /symm /= size_partm /= mcoeff_symm.
+  rewrite mcoeffZ (mcoeff_symm _ (size_partm _)).
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
   apply (introF idP) => /perm_eq_partm
                          /(congr1 (fun x : intpart => mpart (n := n) x)) H.
@@ -278,7 +315,7 @@ case: (boolP (m \in msupp p)) => Hm.
 - rewrite (memN_msupp_eq0 Hm); symmetry.
   rewrite -![sympol _]/(sympol_lrmorphism n R _) !raddf_sum /=.
   rewrite big_seq_cond; apply big1 => /= m' /andP [Hsupp Hdom].
-  rewrite mcoeffZ /symm /= size_partm /= mcoeff_symm partmK //.
+  rewrite mcoeffZ (mcoeff_symm _ (size_partm _)) partmK //.
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
   apply (introF idP) => /mnm_perm_eq [/= s /eqP Hs].
   move: Hm Hsupp; rewrite -mcoeff_eq0 mcoeff_msupp Hs.
@@ -344,11 +381,11 @@ Lemma symm_unique d (p : {sympoly R[n]}) c :
 Proof.
 move=> -> l Hl.
 rewrite [X in X@__](linear_sum (@sympol_lrmorphism _ _)) /= linear_sum.
-rewrite (bigD1 l) //= linearZ /= /symm /=.
-rewrite Hl mcoeff_symm perm_eq_refl /= mulr1.
+rewrite (bigD1 l) //= linearZ /= (mcoeff_symm _ Hl) perm_eq_refl /= mulr1.
 rewrite big1 ?addr0 // => i Hil /=.
-case: leqP => [Hi | _]; last by rewrite scaler0 mcoeff0.
-rewrite linearZ /= mcoeff_symm.
+case: (leqP (size i) n) => [Hi | /symm_oversize ->];
+                          last by rewrite scaler0 mcoeff0.
+rewrite linearZ /= mcoeff_symm //.
 rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
 apply negbTE; move: Hil; apply contra.
 move=> /perm_eq_partm/(congr1 pval).
@@ -471,7 +508,6 @@ Notation "''h[' k ]" := (prod_symh _ _ k)
                               (at level 8, k at level 2, format "''h[' k ]").
 Notation "''p[' k ]" := (prod_symp _ _ k)
                               (at level 8, k at level 2, format "''p[' k ]").
-
 Notation "''m[' k ]" := (symm _ _ k)
                               (at level 8, k at level 2, format "''m[' k ]").
 
@@ -986,96 +1022,6 @@ Qed.
 
 End ChangeBasisSymhPowerSum.
 
-From mathcomp Require Import vector.
-
-Section Homogeneous.
-
-Variable n : nat.
-Variable R : fieldType.
-Variable d : nat.
-
-Hypothesis Hvar : (d <= n.+1)%N.
-
-Implicit Type m : 'X_{1.. n.+1}.
-Local Notation SF := {sympoly R[n.+1]}.
-Local Notation Pd := [set: intpartn d].
-Local Notation tPd := (enum_tuple (pred_of_set Pd)).
-Local Notation hPol := (dhomog n.+1 R d).
-
-Definition homsymm (l : intpartn d) := DHomog (symm_homog n.+1 R l).
-Definition homsympoly := span [seq homsymm l | l <- tPd].
-
-Lemma homsymmE (f : hPol) :
-  mpoly_of_dhomog f \is symmetric ->
-  f = \sum_(l : intpartn d) f@_(mpart l) *: homsymm l.
-Proof.
--move=> Hf; apply val_inj.
-have:= dhomog_is_dhomog f.
-rewrite -[val f]/(val (SymPoly Hf)) => fhom.
-rewrite (homog_symmE fhom) /=.
-rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)) linear_sum /=.
-rewrite (bigID (fun  l : intpartn d => (size l <= n.+1)%N)) /= addrC.
-rewrite big1 ?add0r // => i /negbTE Hi.
-by rewrite /symm Hi scaler0.
-Qed.
-
-Lemma dsymP f : (f \in homsympoly) = (mpoly_of_dhomog f \is symmetric).
-Proof.
-apply/idP/idP.
-- move=> /coord_span -> /=.
-  rewrite linear_sum; apply rpred_sum => i _.
-  rewrite linearZZ; apply rpredZ => /=.
-  by rewrite (nth_map (rowpartn d)) /=; last by move: i; rewrite cardE => i.
-- move/homsymmE ->.
-  rewrite /homsympoly span_def.
-  apply rpred_sum => l _; apply rpredZ.
-  rewrite big_map (bigD1_seq l) /= ?mem_enum ?inE ?enum_uniq //.
-  rewrite -[X in X \in _]addr0.
-  apply memv_add; first exact: memv_line.
-  exact: mem0v.
-Qed.
-
-Lemma indpartP (l : intpartn d) : (index l tPd < #|Pd|)%N.
-Proof. by rewrite [X in (_ < X)%N]cardE index_mem mem_enum inE. Qed.
-Definition indpart l := Ordinal (indpartP l).
-Lemma indpartE i : indpart (tnth tPd i) = i.
-Proof.
-apply val_inj => /=; apply index_uniq; last exact: enum_uniq.
-by rewrite -cardE.
-Qed.
-
-Lemma vect_to_sym co (v : intpartn d -> hPol) :
-  \sum_(i < #|Pd|) co i *: (map_tuple v tPd)`_i =
-  \sum_(l : intpartn d) (co (indpart l)) *: v l.
-Proof.
-rewrite [RHS](eq_bigl (fun l => l \in setT)); first last.
-  by move=> i /=; rewrite inE.
-rewrite [RHS]big_enum /= -[enum _]/(tval tPd).
-rewrite big_tuple; apply eq_bigr => i _.
-rewrite indpartE; congr (_ *: _).
-rewrite (nth_map (tnth tPd i)) -?cardE //.
-by rewrite {2}(tnth_nth (tnth tPd i)) .
-Qed.
-
-Lemma free_homsymm : free [seq homsymm l | l <- tPd].
-Proof.
-apply/freeP => co.
-rewrite vect_to_sym => /(congr1 val) /=; rewrite linear_sum /=.
-rewrite (eq_bigr (fun l : intpartn d =>
-                    sympol_lrmorphism _ _ ((co (indpart l)) *: 'm[l]))) //.
-rewrite -!linear_sum => /= H i.
-have {H} /symm_unique0 H0 : \sum_i (co (indpart i)) *: 'm[i] = 0 :> SF.
-  by apply sympol_inj => /=.
-rewrite -(indpartE i); apply: H0.
-apply: (leq_trans _ Hvar).
-rewrite -[X in (_ <= X)%N](intpartn_sumn (tnth tPd i)).
-exact: size_part.
-Qed.
-
-Corollary dimv_homsym : dimv homsympoly = #|[set: intpartn d]|.
-Proof. by have:= free_homsymm; rewrite /free size_map -cardE => /eqP <-. Qed.
-
-End Homogeneous.
 
 Section Schur.
 

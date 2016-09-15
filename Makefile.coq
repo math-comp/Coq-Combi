@@ -126,8 +126,8 @@ VFILES:=theories/Combi/composition.v\
   theories/SSRcomplements/sorted.v\
   theories/SSRcomplements/permcomp.v\
   theories/SSRcomplements/tools.v\
+  theories/HookFormula/Frobenius_ident.v\
   theories/HookFormula/Qmeasure.v\
-  theories/HookFormula/RSident.v\
   theories/HookFormula/hook.v\
   theories/HookFormula/recyama.v\
   theories/Basic/combclass.v\
@@ -142,6 +142,7 @@ VFILES:=theories/Combi/composition.v\
   theories/SymGroup/reprS2.v\
   theories/SymGroup/towerSn.v\
   theories/MPoly/antisym.v\
+  theories/MPoly/symhomog.v\
   theories/MPoly/sympoly.v\
   theories/MPoly/Schur_basis.v\
   3rdparty/ALEA/Ccpo.v\

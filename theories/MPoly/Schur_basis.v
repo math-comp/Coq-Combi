@@ -403,7 +403,7 @@ Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
 
 Lemma Schur_cast d d' (P : intpartn d) (Heq : d = d') :
-  's_P = Schur n0 R (intpartn_cast Heq P).
+  's_P = Schur n0 R (cast_intpartn Heq P).
 Proof using . subst d'; by congr Schur. Qed.
 
 
@@ -446,24 +446,24 @@ rewrite (bigID (fun P0 : intpartn (d1 + k) => (size P0 <= n))) /= addrC.
 rewrite big1 ?add0r; first last.
   by move=> i /andP [] _; rewrite -ltnNge; exact: Schur_oversize.
 rewrite mulr_sumr.
-pose P' := intpartn_cast Hk P.
+pose P' := cast_intpartn Hk P.
 rewrite (bigID (pred1 P')) [X in _ = X](bigID (pred1 P')) /=.
 set prd := BIG_P.
 have Hprd : prd =1 pred1 P'.
   rewrite {}/prd => sh /=.
   case: eqP => [-> | _]; rewrite ?andbT ?andbF // {sh}.
-  rewrite intpartn_castE {P' P1 d1 Hk p1P} HszP andbT /p1 /=.
+  rewrite cast_intpartnE {P' P1 d1 Hk p1P} HszP andbT /p1 /=.
   exact: vb_strip_rem_col0.
-rewrite !(eq_bigl _ _ Hprd) {Hprd prd} /= !big_pred1_eq intpartn_castE.
+rewrite !(eq_bigl _ _ Hprd) {Hprd prd} /= !big_pred1_eq cast_intpartnE.
 set A := (X in _ + X); set B := (X in _ = _ + X).
 suff -> : A = B by move=> /addIr <- {A B}; rewrite -Schur_cast.
 apply eq_bigr => {A B} sh /andP [] /andP [] Hstrip Hsz Hsh.
-pose sh' := intpartn_cast (esym Hk) sh.
+pose sh' := cast_intpartn (esym Hk) sh.
 have Hlex : (val sh' < P)%Ord.
-  rewrite intpartn_castE /= {sh'}.
+  rewrite cast_intpartnE /= {sh'}.
   rewrite ltnX_neqAleqX; apply/andP; split.
     move: Hsh; apply contra => /eqP H.
-    by apply/eqP; apply val_inj; rewrite intpartn_castE.
+    by apply/eqP; apply val_inj; rewrite cast_intpartnE.
   rewrite {Hsh Hsz P'}.
   have /= -> : val P = incr_first_n (conj_part p1) k.
     move: Hk; rewrite /d1 /p1 /= -{2}(conj_intpartnK P) /=.
@@ -474,10 +474,10 @@ have Hlex : (val sh' < P)%Ord.
   have:= intpartnP (conj_intpartn P1).
   have /= {Hk p1P P1} := intpartn_sumn (conj_intpartn P1).
   exact: vb_strip_lex.
-have Hsz' : size sh' <= n by rewrite intpartn_castE.
+have Hsz' : size sh' <= n by rewrite cast_intpartnE.
 have := IHP sh' Hlex Hsz'.
 rewrite -Schur_cast => ->.
-by rewrite intpartn_castE.
+by rewrite cast_intpartnE.
 Qed.
 
 End SchurAltenantDef.
@@ -606,9 +606,6 @@ Section SchurDec.
 Variable (n0 : nat) (R : comRingType).
 Local Notation n := (n0.+1).
 Local Notation "''s_' k" := (Schur n0 R k) (at level 8, k at level 2, format "''s_' k").
-Local Notation rho := (rho n).
-Local Notation "''a_' k" := (@alternpol n R 'X_[k])
-                              (at level 8, k at level 2, format "''a_' k").
 Local Notation "''e_' k" := (@mesym n R k)
                               (at level 8, k at level 2, format "''e_' k").
 Local Notation S := [tuple mesym n R i.+1 | i < n].
@@ -622,6 +619,9 @@ move: Ht => /eqP <-; elim: t => [| s0 s IHs]/=.
 rewrite big_cons -(add1n (size s)); apply dhomogM; last exact: IHs.
 by rewrite dhomogX /= mdeg1.
 Qed.
+
+Lemma syms_homog (d : nat) (sh : intpartn d) : sympol (syms n0 R sh) \is d.-homog.
+Proof. exact: Schur_homog. Qed.
 
 (** We restrict ourself to [intpartn d] in order to compute big ops in a fintype *)
 Record homcoeff : Type := HomCoeff { d : nat; coe :> intpartn d -> R }.
@@ -942,9 +942,10 @@ rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
 apply mpolyP => m; rewrite Kostka_Coeff linear_sum /=.
 case: (altP (mdeg m =P sumn sh)) => Heq; first last.
 - rewrite (KostkaMon_sumeval Heq); symmetry; apply big1 => i _.
-  rewrite mcoeffZ /symm /=.
-  case: leqP => Hszl; last by rewrite mcoeff0 mulr0.
-  rewrite /= mcoeff_symm.
+  rewrite mcoeffZ.
+  case: (leqP (size i) n.+1) => [Hszl | /symm_oversize ->];
+                               last by rewrite mcoeff0 mulr0.
+  rewrite mcoeff_symm //=.
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
   apply (introF idP) => /perm_sumn.
   rewrite -!sumnE -!/(mdeg _) -sumn_partm mpartK // intpartn_sumn => Habs.
@@ -952,14 +953,15 @@ case: (altP (mdeg m =P sumn sh)) => Heq; first last.
 - have Hpm : is_part_of_n d (partm m).
    by rewrite /= sumn_partm Heq intpartn_sumn eq_refl /=.
   rewrite (bigD1 (IntPartN Hpm)) //= big1 ?addr0.
-  + rewrite mcoeffZ /symm /= size_partm /=.
-    rewrite mcoeff_symm perm_eq_sym partm_perm_eqK /= mulr1.
+  + rewrite mcoeffZ (mcoeff_symm _ _ (size_partm _)).
+    rewrite perm_eq_sym partm_perm_eqK /= mulr1.
     congr _%:R.
     rewrite -Kostka_any // [RHS](Kostka_any _ (size_partm m)).
     by apply perm_KostkaMon; apply: partm_perm_eqK.
-  + move=> i Hi; rewrite mcoeffZ /symm.
-    case: ssrnat.leqP => Hszi; last by rewrite mcoeff0 mulr0.
-    rewrite /= mcoeff_symm.
+  + move=> i Hi; rewrite mcoeffZ.
+    case: (leqP (size i) n.+1) => [Hszl | /symm_oversize ->];
+                                 last by rewrite mcoeff0 mulr0.
+    rewrite mcoeff_symm //=.
     suff /negbTE -> : ~~ (perm_eq (mpart n.+1 i) m) by rewrite mulr0.
     move: Hi; apply contra => /perm_eq_partm H.
     apply/eqP/val_inj => /=; rewrite -H.
