@@ -369,6 +369,25 @@ Proof.
   by rewrite -(subSn His0) leq_subLR.
 Qed.
 
+Lemma reshape_coord_leq sh i1 i2 :
+  i1 <= i2 < sumn sh ->
+  let (r1, c1) := (reshape_coord sh i1) in
+  let (r2, c2) := (reshape_coord sh i2) in r1 < r2 \/ (r1 = r2 /\ c1 <= c2).
+Proof.
+  elim: sh i1 i2 => [i1 i2 /andP [] |] //= s0 s IHs i1 i2.
+  case: (ltnP i2 s0) => Hi2s0 //=.
+  - by move=> /andP [Hi12 _]; rewrite (leq_ltn_trans Hi12 Hi2s0); right.
+  - case: (ltnP i1 s0) => Hi1s0 //=.
+    + by move=> _ /=; case: (reshape_coord _ _) => r c; left.
+    + move=> /andP [Hi12 Hi2].
+      have /IHs : i1 - s0 <= i2 - s0 < sumn s.
+        rewrite leq_subLR subnKC // Hi12 /=.
+        by rewrite -(ltn_add2l s0) subnKC.
+      case: (reshape_coord s (i1 - s0)) => [r1 c1].
+      case: (reshape_coord s (i2 - s0)) => [r2 c2].
+      by rewrite !ltnS => [[|[H1 H2]]]; [left | right; rewrite H1].
+Qed.
+
 Lemma reshape_coordK sh i :
   let (r, c) := reshape_coord sh i in flatten_coord sh r c = i.
 Proof.
