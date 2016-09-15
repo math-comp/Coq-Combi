@@ -25,6 +25,7 @@ From mathcomp Require Import ssralg fingroup morphism perm gproduct.
 From mathcomp Require Import rat ssralg mxalgebra ssrnum algC.
 From mathcomp Require Import classfun character mxrepresentation.
 
+From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 Require Import tools partition sympoly.
 Require Import permcomp presentSn cycles cycletype towerSn permcent.
 
@@ -56,6 +57,13 @@ apply eq_bigr => l _; rewrite !cfunElock.
 by rewrite scalerA mulrA -scalerDl mulrDl.
 Qed.
 Canonical Fchar_linear := Linear Fchar_is_linear.
+
+Lemma Fchar_homog f : sympol (Fchar f) \is n.-homog.
+Proof.
+rewrite /Fchar [X in X \in _](linear_sum (@sympol_lrmorphism _ _)) //=.
+apply rpred_sum => m _; apply rpredZ.
+exact: prod_symp_homog.
+Qed.
 
 Lemma Fchar_ncfuniCT l : Fchar '1z_[l] = 'p[l].
 Proof using.
