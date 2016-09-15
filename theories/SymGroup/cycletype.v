@@ -750,3 +750,6 @@ Qed.
 
 End Sn.
 
+Lemma cast_cycle_typeSN m n (s : 'S_m) (eq_mn : m = n) :
+  cycle_typeSn (cast_perm eq_mn s) = cast_intpartn eq_mn (cycle_typeSn s).
+Proof. by subst n. Qed.

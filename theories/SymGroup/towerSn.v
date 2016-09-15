@@ -373,6 +373,17 @@ case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= -cast_permE.
   by apply val_inj; rewrite /= addnA.
 Qed.
 
+Local Notation ct := cycle_typeSn.
+
+Lemma cycle_type_tinjC (s : 'S_m) (t : 'S_n) :
+  ct (tinj (s, t)) = ct (cast_perm (esym (addnC m n)) (tinj (t, s))).
+Proof.
+rewrite !cast_cycle_typeSN !cycle_type_tinj /=.
+apply val_inj; rewrite [RHS]cast_intpartnE !union_intpartnE /=.
+apply/perm_sortP => //.
+by rewrite perm_catC.
+Qed.
+
 End Assoc.
 
 Local Open Scope ring_scope.
