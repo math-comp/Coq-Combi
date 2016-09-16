@@ -300,7 +300,7 @@ Qed.
 Lemma cycle_type_tinj s : ct (tinj s) = union_intpartn (ct s.1) (ct s.2).
 Proof using.
 apply val_inj; rewrite union_intpartnE cast_intpartnE /=.
-rewrite pcycles_tinj parts_shape_union; first last.
+rewrite pcycles_tinj setpart_shape_union; first last.
   rewrite -setI_eq0; apply/eqP/setP => S.
   rewrite !inE; apply/negP => /andP [].
   move=> /imsetP [X /imsetP [x _ ->]] -> {X}.
@@ -310,7 +310,7 @@ rewrite pcycles_tinj parts_shape_union; first last.
   move=> /esym/imsetP => [] [z _] /eqP.
   by rewrite lrshiftF.
 by congr sort; rewrite /ct !cast_intpartnE /=; congr (_ ++ _);
-  apply parts_shape_inj; [exact: lshift_inj | exact: rshift_inj].
+  apply setpart_shape_inj; [exact: lshift_inj | exact: rshift_inj].
 Qed.
 
 End TowerMorphism.

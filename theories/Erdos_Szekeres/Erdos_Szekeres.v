@@ -93,10 +93,8 @@ Proof using .
     by exists x.
   - left => {n}.
     have := Greene_row_RS 1 s.
-    rewrite (_ : part_sum (shape (RS s)) 1 = head 0 (shape (RS s))); first last.
-      rewrite /part_sum.
-      case: (shape (RS s)) => [| s0 l] /=; first by rewrite big_nil.
-      by rewrite take0 big_cons big_nil addn0.
+    rewrite (_ : sumn (take 1 (shape (RS s))) = head 0 (shape (RS s))); first last.
+      by case: (shape (RS s)) => [| s0 l] //=; rewrite take0 addn0.
     rewrite /Greene_row => Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
     case: (Greene_rel_one s leqX) => x [] Hsubs [] Hsort <- Hn.
     by exists x.

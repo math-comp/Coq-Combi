@@ -42,8 +42,6 @@ Integer Partitions:
 - [incr_first_n sh n] == adding 1 to the n'th first part of sh,
                      always gives a partitions
 - [conj_part sh] == the conjugate of a partition
-- [part_sum sh k] == the k-th partial sum of sh, that is the sum of the k
-                     first parts of sh
 - [included s t] == the Ferrer's diagram of s is included in the
                     Ferrer's diagram of t. This is an order.
 - [diff_shape s t] == the difference of the shape s and t
@@ -85,9 +83,15 @@ Operations on partitions:
 - [union_intpartn l k] == the partition of type [intpartn] obtained by
                gathering the parts of [l] and [k]
 
+Comparison of partitions:
+
+- [partdom s t] == [s] is dominated by [t], that is the partial sum of [s] are
+               smaller that the partitial sum of [t]
+- [(s <= t)%Ord] == [s] is smaller than [t] for the lexicographic order
+
 Relation with set partitions:
 
-- [parts_shape P] == the shape of a set partition, i.e.
+- [setpart_shape P] == the shape of a set partition, i.e.
                the sorted list of the cardinal of the parts
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
@@ -885,55 +889,43 @@ Section Partition.
 
 (** ** Partial sum of partitions *)
 
-  Definition part_sum s k := \sum_(l <- (take k s)) l.
-
-  Lemma part_sum0 s : part_sum s 0 = 0.
-  Proof. by rewrite /part_sum take0 big_nil. Qed.
-
-  Lemma part_sum_nil i : part_sum [::] i = 0.
-  Proof. by rewrite /part_sum /= big_nil. Qed.
-
-  Lemma part_sum_cons x s i : part_sum (x :: s) i.+1 = x + part_sum s i.
-  Proof. by rewrite /part_sum /= big_cons. Qed.
-
-  Lemma part_sum_leq s k1 k2 : k1 <= k2 -> part_sum s k1 <= part_sum s k2.
+  Lemma sumn_take_leq s k1 k2 :
+    k1 <= k2 -> sumn (take k1 s) <= sumn (take k2 s).
   Proof.
-    rewrite /part_sum !sumnE !sumn_take => H.
+    rewrite !sumn_take; move=> H.
     by rewrite (big_cat_nat _ _ _ _ H) //=; apply leq_addr.
   Qed.
 
-  Lemma sum_conj sh k : \sum_(l <- sh) minn l k = part_sum (conj_part sh) k.
+  Lemma sum_conj sh k : \sum_(l <- sh) minn l k = sumn (take k (conj_part sh)).
   Proof.
-    elim: sh => [//= | s0 sh]; first by rewrite part_sum_nil big_nil.
+    elim: sh => [//= | s0 sh]; first by rewrite big_nil.
     rewrite big_cons /= => ->; move: (conj_part sh) => c.
     elim: c s0 k => [//= | c0 c IHc] s0 k /=.
-    - rewrite part_sum_nil addn0 /part_sum.
-      elim: s0 k => [| s IHs] k /=; first by rewrite minnC minn0 big_nil.
-      case: k IHs => [_| k IHs]; first by rewrite minn0 big_nil.
-      by rewrite minSS big_cons -IHs add1n.
-    - case: s0 => [| s0]; first by rewrite minnC minn0 add0n; case: k IHc.
-      case: k => [//=| k] /=.
-      rewrite !part_sum_cons -IHc !addnA minSS.
-      congr (_ + part_sum c k).
-      by rewrite !addSn addnC.
+    - rewrite /= addn0.
+      elim: s0 k => [| s IHs] k //=; first by rewrite min0n.
+      case: k => [| k] /=; first by rewrite minn0.
+      by rewrite minSS IHs add1n.
+    - case: s0 => [| s0]; first by rewrite min0n add0n.
+      case: k => [| k] //=.
+      by rewrite -IHc !addnA minSS addSnnS [minn _ _ + _]addnC.
   Qed.
 
-  Lemma part_sum_inj s t :
-    is_part s -> is_part t -> (forall k, part_sum s k = part_sum t k) -> s = t.
+  Lemma sumn_take_inj s t :
+    is_part s -> is_part t ->
+    (forall k, sumn (take k s) = sumn (take k t)) -> s = t.
   Proof.
     elim: s t => [//= t _ | s0 s IHs t].
     + move/part_head_non0; case: t => [//= | t0 t] /= Ht0 IHs.
-      exfalso; move/(_ 1) : IHs.
-      rewrite part_sum_cons part_sum_nil part_sum0 addn0 => H.
+      exfalso; move/(_ 1) : IHs; rewrite take0 /= addn0 => H.
       by rewrite H eq_refl in Ht0.
-    + case: t s IHs => [s _ Hs _ /(_ 1) | t0 t].
-      * rewrite part_sum_cons part_sum_nil part_sum0 addn0 => Hs0.
+    + case: t s IHs => [s _ Hs _ /(_ 1) | t0 t] /=.
+      * rewrite take0 /= addn0 => Hs0.
         by exfalso; move/part_head_non0 : Hs; rewrite Hs0.
       * move=> s IHs /is_part_consK Hps /is_part_consK Hpt /= Heq.
-        have:= Heq 1; rewrite !part_sum_cons !part_sum0 !addn0 => Ht0; subst t0.
+        have:= Heq 1; rewrite !take0 /= !addn0 => Ht0; subst t0.
         congr (s0 :: _); apply: (IHs _ Hps Hpt).
-        move=> k; move/(_ k.+1) : Heq .
-        by rewrite !part_sum_cons => /eqP; rewrite eqn_add2l => /eqP.
+        move=> k; move/(_ k.+1) : Heq.
+        by move=> /= /eqP; rewrite eqn_add2l => /eqP.
   Qed.
 
 End Partition.
@@ -1186,11 +1178,11 @@ Canonical conj_intpart p := IntPart (is_part_conj (intpartP p)).
 Lemma conj_intpartK : involutive conj_intpart.
 Proof. move=> p; apply: val_inj => /=; by rewrite conj_partK. Qed.
 
-Lemma intpart_sum_inj (s t : intpart) :
-(forall k, part_sum s k = part_sum t k) -> s = t.
+Lemma intpart_sumn_take_inj (s t : intpart) :
+(forall k, sumn (take k s) = sumn (take k t)) -> s = t.
 Proof.
   move=> H; apply: val_inj => /=.
-  by apply: part_sum_inj; last exact H.
+  by apply: sumn_take_inj; last exact H.
 Qed.
 
 
@@ -1557,12 +1549,14 @@ End UnionPart.
 
 (** * Dominance order on partition *)
 Definition partdomsh n1 n2 (s1 s2 : seq nat) :=
-  all (fun i => n1 + part_sum s1 i <= n2 + part_sum s2 i) (iota 0 (size s1).+1).
+  all
+    (fun i => n1 + sumn (take i s1) <= n2 + sumn (take i s2))
+    (iota 0 (size s1).+1).
 
 Definition partdom := partdomsh 0 0.
 
 Lemma partdomshP {n1 n2 s1 s2} :
-  reflect (forall i, n1 + part_sum s1 i <= n2 + part_sum s2 i)
+  reflect (forall i, n1 + sumn (take i s1) <= n2 + sumn (take i s2))
           (partdomsh n1 n2 s1 s2).
 Proof.
 apply (iffP allP) => H i; last by move=> _; exact: H.
@@ -1570,12 +1564,12 @@ case: (ltnP i (size s1)) => Hi.
 - by apply: H; rewrite mem_iota /= add0n ltnS; apply ltnW.
 - have /H : (size s1) \in iota 0 (size s1).+1.
     by rewrite mem_iota /= add0n ltnS.
-  rewrite /part_sum take_size (take_oversize Hi) => /leq_trans; apply.
-  by rewrite leq_add2l; apply: part_sum_leq.
+  rewrite take_size (take_oversize Hi) => /leq_trans; apply.
+  by rewrite leq_add2l; apply: sumn_take_leq.
 Qed.
 
 Lemma partdomP s1 s2 :
-  reflect (forall i, part_sum s1 i <= part_sum s2 i) (partdom s1 s2).
+  reflect (forall i, sumn (take i s1) <= sumn (take i s2)) (partdom s1 s2).
 Proof.
 by apply (iffP partdomshP) => H i; have:= H i; rewrite ?add0n.
 Qed.
@@ -1588,10 +1582,10 @@ by rewrite -!addnA leq_add2l.
 Qed.
 
 Lemma partdom_nil s : partdom [::] s.
-Proof. by apply/partdomP => i; rewrite part_sum_nil. Qed.
+Proof. by apply/partdomP. Qed.
 
 Lemma partdom_refl : reflexive partdom.
-Proof. by move=> s1; apply/partdomP => i. Qed.
+Proof. by move=> s1; apply/partdomP. Qed.
 
 Hint Resolve partdom_nil partdom_refl.
 
@@ -1605,7 +1599,7 @@ Lemma partdom_anti s1 s2 :
   is_part s1 -> is_part s2 -> partdom s1 s2 -> partdom s2 s1 -> s1 = s2.
 Proof.
 move=> H1 H2 /partdomP H12 /partdomP H21.
-apply part_sum_inj => // k.
+apply sumn_take_inj => // k.
 by apply anti_leq; rewrite H12 H21.
 Qed.
 
@@ -1613,12 +1607,11 @@ Lemma partdomsh_cons2 y1 y2 s t n1 n2 :
   partdomsh n1 n2 (y1 :: s) (y2 :: t) =
   (n1 <= n2) && (partdomsh (n1 + y1) (n2 + y2) s t).
 Proof.
-apply/partdomshP/andP => [H | [Hn /partdomshP Hdom] [|i]]; first split.
-- by have:= H 0; rewrite !part_sum0 !addn0.
-- apply/partdomshP => i.
-  by have:= H i.+1; rewrite !part_sum_cons !addnA.
-- by rewrite !part_sum0 !addn0.
-- by rewrite !part_sum_cons !addnA.
+apply/partdomshP/andP => [H | [Hn /partdomshP Hdom] [|i]] /=; first split.
+- by have:= H 0; rewrite /= !addn0.
+- by apply/partdomshP => i; have:= H i.+1; rewrite /= !addnA.
+- by rewrite !addn0.
+- by rewrite !addnA.
 Qed.
 
 Lemma partdomsh_cons2E y s t n1 n2 :
@@ -1626,29 +1619,28 @@ Lemma partdomsh_cons2E y s t n1 n2 :
 Proof.
 rewrite partdomsh_cons2 ![_ + y]addnC partdomsh_add andbC.
 case: (boolP (partdomsh _ _ _ _)) => //= /partdomshP/(_ 0).
-by rewrite !part_sum0 !addn0.
+by rewrite !take0 /= !addn0.
 Qed.
 
-Lemma part_sum_merge t x i :
+Lemma sumn_take_merge t x i :
   is_part t ->
-  part_sum (merge geq [:: x] t) i.+1 =
-  maxn (part_sum t i.+1) (x + part_sum t i).
+  sumn (take i.+1 (merge geq [:: x] t)) =
+  maxn (sumn (take i.+1 t)) (x + sumn (take i t)).
 Proof.
-elim: t i => [i _| t0 t IHt i /andP [Hhead Hpart]].
-  by rewrite !part_sum_cons !part_sum_nil addn0 max0n.
+elim: t i => [i _| t0 t IHt i /andP [Hhead Hpart]] /=.
+  by rewrite addn0 max0n.
 move/(_ _ Hpart): IHt => /=.
 set mrgx := fix mrgx (s : seq nat) := _; move mrgx before x => Hrec.
 case: (leqP x t0) => [/maxn_idPl Hxt0 | /ltnW /maxn_idPr Hxt0];
-  case: i => [|i]; rewrite !part_sum_cons ?part_sum0 ?addn0 ?Hxt0 //.
+  case: i => [|i]; rewrite /= ?take0 /= ?addn0 ?Hxt0 //.
 - by rewrite Hrec [x + (t0 + _)]addnC -addnA -addn_maxr [_ + x]addnC.
 - rewrite [x + (t0 + _)]addnC -addnA -addn_maxr [_ + x]addnC.
   congr (t0 + _); apply esym; apply/maxn_idPr.
   move: Hxt0 => /maxn_idPr/(leq_trans Hhead).
   elim: t i Hpart {Hhead Hrec t0} =>
-     [i _ _| t0 t IHt [|i] /andP [Hhead Hpart] /= Ht0].
-  + by rewrite !part_sum_nil.
-  + by rewrite part_sum_cons !part_sum0 !addn0.
-  + rewrite !part_sum_cons [x + (t0 + _)]addnC -addnA leq_add2l addnC.
+     [i _ _| t0 t IHt [|i] /andP [Hhead Hpart] /= Ht0] //=.
+  + by rewrite take0 !addn0.
+  + rewrite [x + (t0 + _)]addnC -addnA leq_add2l addnC.
     exact: (IHt i Hpart (leq_trans Hhead Ht0)).
 Qed.
 
@@ -1671,9 +1663,9 @@ Lemma partdomsh_merge1 n1 n2 x t1 t2 :
 Proof.
 move=> Ht1 Ht2 /partdomshP Hdom; apply/partdomshP => i.
 case: i => [|i].
-- by move/(_ 0): Hdom; rewrite !part_sum0.
-- rewrite !part_sum_merge // !addn_maxr.
-  rewrite ![_ + (x + _)]addnC -![x + _ + _]addnA ![part_sum _ _ + _]addnC.
+- by move/(_ 0): Hdom; rewrite /= !take0.
+- rewrite !sumn_take_merge // !addn_maxr.
+  rewrite ![_ + (x + _)]addnC -![x + _ + _]addnA ![sumn _ + _]addnC.
   by rewrite geq_max !leq_max ?leq_add2l !Hdom /= orbT.
 Qed.
 
@@ -1743,12 +1735,12 @@ Proof using.
   by move=> S; rewrite !inE andbC.
 Qed.
 
-Definition parts_shape P := sort geq [seq #{X} | X <- enum P].
+Definition setpart_shape P := sort geq [seq #{X} | X <- enum P].
 
-Lemma parts_shapeP P D :
-  partition P D -> is_part_of_n #|D| (parts_shape P).
+Lemma setpart_shapeP P D :
+  partition P D -> is_part_of_n #|D| (setpart_shape P).
 Proof using.
-rewrite /parts_shape => /and3P [/eqP Hcov Htriv Hnon0].
+rewrite /setpart_shape => /and3P [/eqP Hcov Htriv Hnon0].
 rewrite /is_part_of_n /= is_part_sortedE.
 apply/and3P; split.
 - by rewrite sumn_sort -sumnE big_map -big_enum -Hcov.
@@ -1765,7 +1757,7 @@ rewrite -bin_gt0 -(cards_draws B k) card_gt0 => /set0Pn [x].
 rewrite inE => /andP [H1 H2]; by exists x.
 Qed.
 
-Lemma ex_parts_shape (s : seq nat) (A : {set T}) :
+Lemma ex_setpart_shape (s : seq nat) (A : {set T}) :
   sumn s = #|A| -> 0 \notin s ->
   exists P : seq {set T},
     [/\ uniq P, partition [set X in P] A & [seq #{X} | X <- P] = s].
@@ -1801,25 +1793,25 @@ exists (B :: P); split => /=; [|apply/and3P; split|].
 - by rewrite Ps.
 Qed.
 
-Lemma ex_set_parts_shape A (sh : intpartn #|A|) :
-  exists2 P, partition P A & parts_shape P = sh.
+Lemma ex_set_setpart_shape A (sh : intpartn #|A|) :
+  exists2 P, partition P A & setpart_shape P = sh.
 Proof using.
 case: sh => sh.
 rewrite /is_part_of_n /= is_part_sortedE => /andP [/eqP shsum /andP [shsort]].
-move=> /(ex_parts_shape shsum) [P [Puniq Ppart Psh]].
+move=> /(ex_setpart_shape shsum) [P [Puniq Ppart Psh]].
 exists [set X in P]; first exact: Ppart.
 apply (eq_sorted (leT := geq)) => //.
 - exact: sort_sorted.
-- rewrite /parts_shape -Psh perm_sort; apply: perm_map.
+- rewrite /setpart_shape -Psh perm_sort; apply: perm_map.
   apply: (uniq_perm_eq (enum_uniq _) Puniq) => x.
   by rewrite mem_enum inE.
 Qed.
 
-Lemma parts_shape_union P Q :
+Lemma setpart_shape_union P Q :
   [disjoint P & Q] ->
-  parts_shape (P :|: Q) = sort geq (parts_shape P ++ parts_shape Q).
+  setpart_shape (P :|: Q) = sort geq (setpart_shape P ++ setpart_shape Q).
 Proof using.
-rewrite /parts_shape -setI_eq0 => /eqP disj.
+rewrite /setpart_shape -setI_eq0 => /eqP disj.
 apply/perm_sortP/perm_eqP => // Prd.
 have count_sort l : count ^~ (sort geq l) =1 count ^~ l.
   by apply/perm_eqP; rewrite perm_sort perm_eq_refl.
@@ -1831,11 +1823,11 @@ Qed.
 
 End SetPartitionShape.
 
-Lemma parts_shape_inj
+Lemma setpart_shape_inj
       (T1 T2 : finType) (f : T1 -> T2) (A : {set {set T1}}) :
-  injective f -> parts_shape [set f @: (x : {set T1}) | x in A] = parts_shape A.
+  injective f -> setpart_shape [set f @: (x : {set T1}) | x in A] = setpart_shape A.
 Proof using.
-rewrite /parts_shape /= => Hinj.
+rewrite /setpart_shape /= => Hinj.
 apply/perm_sortP/perm_eqP => // P.
 rewrite !count_set_of_card -(card_imset _ (imset_inj Hinj)).
 rewrite imsetI; last by move=> B C _ _; exact: imset_inj.
