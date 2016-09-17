@@ -217,7 +217,7 @@ Qed.
 Lemma card_pcyclegrpE s : #|'CC(s)| = (\prod_(i <- cycle_type s) i)%N.
 Proof using.
 rewrite -(bigdprod_card (esym (pcyclegrpE s))).
-rewrite /cycle_type /= /parts_shape /cycle_dec.
+rewrite /cycle_type /= /setpart_shape /cycle_dec.
 rewrite big_imset /=; last exact: restr_perm_inj.
 rewrite [RHS](eq_big_perm [seq #{x} | x <- enum (pcycles s)]);
   last by apply/perm_eqlP; apply perm_sort.
@@ -410,7 +410,7 @@ Lemma card_stab_ipcycles s :
 Proof using.
 rewrite -(bigdprod_card (esym (stab_ipcyclesE s))).
 apply eq_bigr => i _.
-rewrite card_perm_ong /parts_shape; congr (_)`!.
+rewrite card_perm_ong /setpart_shape; congr (_)`!.
 have:= perm_sort geq [seq #{x} | x <- enum (pcycles s)].
 move/perm_eqlP/perm_eqP ->.
 rewrite !cardE -size_filter /= /enum_mem.

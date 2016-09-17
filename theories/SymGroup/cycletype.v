@@ -222,9 +222,9 @@ Variable T : finType.
 Implicit Types (s t : {perm T}) (n : nat).
 
 Fact cycle_type_subproof (s : {perm T}) :
-  is_part_of_n #|T| (parts_shape (pcycles s)).
+  is_part_of_n #|T| (setpart_shape (pcycles s)).
 Proof using.
-rewrite -cardsT; apply parts_shapeP.
+rewrite -cardsT; apply setpart_shapeP.
 exact: partition_pcycles.
 Qed.
 Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_subproof s).
@@ -282,7 +282,7 @@ Qed.
 Lemma card_pred_card_pcycles s (P : pred nat) :
   #|[set x in pcycles s | P #|x| ]| = count P (cycle_type s).
 Proof using.
-rewrite /cycle_type /= /psupport /parts_shape.
+rewrite /cycle_type /= /psupport /setpart_shape.
 have /perm_eqlP/perm_eqP -> := perm_sort geq [seq #{x} | x <- enum (pcycles s)].
 rewrite cardE /enum_mem size_filter /= count_map count_filter.
 by apply eq_count => X; rewrite !inE andbC.
@@ -524,7 +524,7 @@ exact: psupport_of_set.
 Qed.
 
 
-Definition perm_of_parts P : {perm T} :=
+Definition perm_of_setpart P : {perm T} :=
   (\prod_(C in [set perm_of_pcycle s | s in [set X in P |#|X|>1]]) C)%g.
 
 Lemma supports_perm_of_pcycle P :
@@ -536,7 +536,7 @@ apply eq_in_imset => i; rewrite inE => /andP [_ Hi].
 by rewrite support_perm_of_pcycle.
 Qed.
 
-Lemma disj_perm_of_parts P :
+Lemma disj_perm_of_setpart P :
   partition P [set: T] ->
   disjoint_supports [set perm_of_pcycle s| s in [set X0 in P | 1 < #|X0|]].
 Proof using.
@@ -550,13 +550,13 @@ move => Hpart; split => [|C D].
   by rewrite !support_perm_of_pcycle // => ->.
 Qed.
 
-Lemma pcycles_perm_of_parts P :
-  partition P [set: T] -> pcycles (perm_of_parts P) = P.
+Lemma pcycles_perm_of_setpart P :
+  partition P [set: T] -> pcycles (perm_of_setpart P) = P.
 Proof using.
 move=> Hpart; apply /setP => X.
 apply /idP/idP => HX.
-- case: (boolP (X \in psupport (perm_of_parts P))).
-  + rewrite psupport_of_disjoint; last exact: disj_perm_of_parts.
+- case: (boolP (X \in psupport (perm_of_setpart P))).
+  + rewrite psupport_of_disjoint; last exact: disj_perm_of_setpart.
     move => /bigcupP [C] /imsetP [X0].
     rewrite inE => /andP [H HX0] ->.
     by rewrite psupport_of_set // inE => /eqP ->.
@@ -564,7 +564,7 @@ apply /idP/idP => HX.
     move: HX => /imsetP [x _ ->].
     rewrite support_card_pcycle => Hsupp.
     have:= Hsupp; rewrite in_support negbK pcycle_fix => /eqP ->.
-    move: Hsupp; rewrite support_of_disjoint; last exact: disj_perm_of_parts.
+    move: Hsupp; rewrite support_of_disjoint; last exact: disj_perm_of_setpart.
     rewrite -(big_imset id) /=; first last.
       move=> C D /imsetP [c]; rewrite inE => /andP [_ cardc ->{C}].
       move=>     /imsetP [d]; rewrite inE => /andP [_ cardd ->{D}].
@@ -585,7 +585,7 @@ apply /idP/idP => HX.
     apply /imsetP; exists x => //.
     apply esym; apply/eqP; rewrite -pcycle_fix.
     rewrite -[_ == x]negbK -in_support support_of_disjoint;
-      last exact: disj_perm_of_parts.
+      last exact: disj_perm_of_setpart.
     apply /bigcupP => /exists_inP; apply /negP; rewrite negb_exists_in.
     apply /forall_inP => C /imsetP [x0]; rewrite inE => /andP [Hx0 Hcard] ->.
     rewrite support_perm_of_pcycle //.
@@ -601,18 +601,18 @@ apply /idP/idP => HX.
     move=> H; move: H HX Hset0.
     rewrite neq_ltn => /orP [|Hcard HX Hset0].
       by rewrite ltnS leqn0 cards_eq0 => /eqP -> ->.
-    suff: X \in psupport (perm_of_parts P) by rewrite inE => /andP [].
-    rewrite psupport_of_disjoint; last exact: disj_perm_of_parts.
+    suff: X \in psupport (perm_of_setpart P) by rewrite inE => /andP [].
+    rewrite psupport_of_disjoint; last exact: disj_perm_of_setpart.
     apply /bigcupP; exists (perm_of_pcycle X);
       last by rewrite psupport_of_set ?inE.
     apply /imsetP; exists X => //.
     by rewrite inE; apply /andP; split.
 Qed.
 
-Lemma perm_of_partsE P :
+Lemma perm_of_setpartE P :
   partition P [set: T] ->
-  cycle_type (perm_of_parts P) = parts_shape P :> seq nat.
-Proof using. by move=> /pcycles_perm_of_parts pcy; rewrite /= pcy. Qed.
+  cycle_type (perm_of_setpart P) = setpart_shape P :> seq nat.
+Proof using. by move=> /pcycles_perm_of_setpart pcy; rewrite /= pcy. Qed.
 
 End Permofcycletype.
 
@@ -624,9 +624,9 @@ Variable ct : intpartn #|T|.
 Lemma permCT_exists : {s | cycle_type s == ct}.
 Proof using.
 apply sigW => /=.
-have:= ex_set_parts_shape (cast_intpartn (esym (cardsT T)) ct).
-move=> [P /perm_of_partsE /= Hct shape].
-exists (perm_of_parts P); apply/eqP/val_inj => /=; rewrite Hct.
+have:= ex_set_setpart_shape (cast_intpartn (esym (cardsT T)) ct).
+move=> [P /perm_of_setpartE /= Hct shape].
+exists (perm_of_setpart P); apply/eqP/val_inj => /=; rewrite Hct.
 by rewrite shape cast_intpartnE.
 Qed.
 Definition permCT := val permCT_exists.
