@@ -1064,7 +1064,7 @@ have := IHi (ltn_trans (ltnSn i) Hi); move/leq_ltn_trans; apply.
 rewrite -ltnXnatE.
 move: Htab => /is_tableauP [] Hnnil _ Hdom.
 have {Hdom} := Hdom _ _ (ltnSn i) => /dominateP [] _; apply.
-rewrite lt0n; apply/nilP/eqP; exact: Hnnil.
+by rewrite lt0n; apply/nilP/eqP; apply: Hnnil.
 Qed.
 
 

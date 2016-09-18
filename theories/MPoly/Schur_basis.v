@@ -13,7 +13,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import choice fintype finfun tuple bigop ssralg ssrint.
 From mathcomp Require Import finset fingroup perm.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
@@ -418,7 +418,7 @@ elim=> [|b IHb] d Hd P.
   rewrite intpartn0 /mpart /= mnmP => i; by rewrite !mnmE /=.
 case: (leqP d b) => Hdb; first exact: (IHb _ Hdb).
 have {Hd Hdb} Hd : d = b.+1 by apply anti_leq; rewrite Hd Hdb.
-elim/(finord_wf (T := IntPartNLex.intpartn_finPOrdType d)) : P => P IHP HszP.
+elim/(finord_wf (T := IntPartNLex.intpartnlex_finPOrdType d)) : P => P IHP HszP.
 pose k := head 1%N (conj_intpartn P).
 pose p1 := behead (conj_intpartn P); pose d1 := sumn p1.
 have Hk : (d = d1 + k)%N.
@@ -598,19 +598,7 @@ rewrite !homog_piE; rewrite pihomog_mPo.
 by apply/idP/idP => [/eqP |  /eqP/msym_fundamental_un ] ->.
 Qed.
 
-End MPoESymHomog.
-
-
-Section SchurDec.
-
-Variable (n0 : nat) (R : comRingType).
-Local Notation n := (n0.+1).
-Local Notation "''s_' k" := (Schur n0 R k) (at level 8, k at level 2, format "''s_' k").
-Local Notation "''e_' k" := (@mesym n R k)
-                              (at level 8, k at level 2, format "''e_' k").
-Local Notation S := [tuple mesym n R i.+1 | i < n].
-
-Lemma Schur_homog (d : nat) (sh : intpartn d) : 's_sh \is d.-homog.
+Lemma Schur_homog (d : nat) (sh : intpartn d) : Schur n0 R sh \is d.-homog.
 Proof using .
 rewrite /syms /= Schur_tabsh_readingE /polylang /commword.
 apply rpred_sum => [[t Ht]] _ /=.
@@ -622,6 +610,20 @@ Qed.
 
 Lemma syms_homog (d : nat) (sh : intpartn d) : sympol (syms n0 R sh) \is d.-homog.
 Proof. exact: Schur_homog. Qed.
+
+End MPoESymHomog.
+
+(** Using Kotksa number this should not by useful anymore *)
+
+Section SchurDec.
+
+Variable (n0 : nat) (R : comRingType).
+Local Notation n := (n0.+1).
+Local Notation "''s_' k" := (Schur n0 R k) (at level 8, k at level 2, format "''s_' k").
+Local Notation "''e_' k" := (@mesym n R k)
+                              (at level 8, k at level 2, format "''e_' k").
+Local Notation S := [tuple mesym n R i.+1 | i < n].
+
 
 (** We restrict ourself to [intpartn d] in order to compute big ops in a fintype *)
 Record homcoeff : Type := HomCoeff { d : nat; coe :> intpartn d -> R }.
@@ -734,7 +736,7 @@ by rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
 Qed.
 
 End SchurDec.
-
+(** End of Using Kotksa number this should not by useful anymore *)
 
 
 Require Import tools combclass tableau.
@@ -747,16 +749,20 @@ Definition eval (w : seq 'I_n.+1) := [tuple count_mem i w | i < n.+1].
 Definition KostkaTab ev := [set t : tabsh n sh | eval (to_word t) == ev].
 Definition KostkaMon ev := #|KostkaTab ev|.
 
+Lemma sumn_eval w : sumn (eval w) = size w.
+Proof.
+rewrite -sumnE /eval big_tuple.
+rewrite (eq_bigr (fun i => count_mem i w)) ?sum_count_mem ?count_predT //.
+by move=> i _; rewrite !tnth_mktuple.
+Qed.
+
 Lemma KostkaMon_sumeval ev :
   mdeg ev != sumn sh -> KostkaMon ev = 0.
 Proof.
 move=> H; apply/eqP; move: H.
 apply contraR; rewrite cards_eq0 => /set0Pn /= [t].
 rewrite /mdeg sumnE inE => /eqP <-{ev}.
-rewrite -sumnE big_tuple.
-rewrite (eq_bigr (fun i => (count_mem i) (to_word t))); first last.
-  by move=> i _; rewrite /eval !tnth_mktuple.
-by rewrite sum_count_mem count_predT size_to_word /size_tab shape_tabsh.
+by rewrite sumn_eval size_to_word /size_tab shape_tabsh.
 Qed.
 
 Lemma evalE (R : ringType) ev w :
@@ -800,6 +806,59 @@ have {Hs} -> : m1 = [multinom m2 (s i) | i < n.+1].
   apply val_inj => /=; rewrite Hs.
   by apply eq_from_tnth => i; rewrite tnth_mktuple.
 by rewrite -mcoeff_sym (issymP _ (Schur_sym _ _ _)).
+Qed.
+
+Lemma all_ltn_nth_tab_ord (t : seq (seq 'I_n.+1)) :
+  is_tableau t -> forall i, all (fun x : 'I_n.+1 => i <= x) (nth [::] t i).
+Proof.
+move=> /is_tableauP [] _ _ Hdom.
+elim=> [|i /allP IHi]; apply/allP => x //.
+move/(_ _ _ (ltnSn i)): Hdom => /dominateP [Hsz]; move: (inhabitant _) => Z.
+move: (nth [::] t i) (nth [::] t i.+1) Hsz IHi => Ri Ri1 Hsz IHi Hdom Hx.
+have:= Hx; rewrite -index_mem => Hxind.
+have:= Hxind => /leq_trans/(_ Hsz)/(mem_nth Z)/IHi{IHi}/leq_ltn_trans; apply.
+move/(_ _ Hxind): Hdom; rewrite sub_pord_ltnXE ltnXnatE /=.
+by rewrite nth_index.
+Qed.
+
+Lemma size_tab_ord (t : seq (seq 'I_n.+1)) : is_tableau t -> size t <= n.+1.
+Proof.
+move=> Htab; have Hall := all_ltn_nth_tab_ord Htab.
+move: Htab => /is_tableauP [Hnnil _ _].
+apply contraT; rewrite -ltnNge => Hn.
+move/(_ n.+1): Hall; move/(_ _ Hn): Hnnil => {Hn}.
+case: (nth [::] t n.+1) => //= x s _ /andP [Hn _ {s}].
+have:= ltn_ord x; rewrite ltnS => /(leq_trans Hn).
+by rewrite ltnn.
+Qed.
+
+Lemma tab_eval_partdom (t : tabsh n sh) : partdom (eval (to_word t)) sh.
+Proof.
+apply/partdomP => i; rewrite -(shape_tabsh t).
+case: (ssrnat.leqP i n.+1) => [Hi| /ltnW Hi]; first last.
+  rewrite !take_oversize ?size_tuple //; first last.
+    by rewrite size_map (leq_trans (size_tab_ord _)).
+  by rewrite sumn_eval size_to_word.
+rewrite sumn_take big_mkord (big_ord_widen _ _ Hi).
+rewrite (eq_bigr (fun j => count_mem j (to_word t))); first last.
+  by move=> /= j _; rewrite (nth_map ord0) ?size_enum_ord // nth_ord_enum.
+rewrite sum_count_mem /= /to_word count_flatten map_rev sumn_rev.
+rewrite -{1}(cat_take_drop i t) map_cat sumn_cat addnC.
+rewrite -sumnE big_map big_seq big1 ?add0n; first last.
+  move=> /= s Hs; rewrite -(nth_index [::] Hs).
+  rewrite nth_drop; apply/eqP; rewrite -leqn0 leqNgt -has_count -all_predC.
+  rewrite (eq_all (a2 := fun i0 : 'I_n.+1 => i <= i0)); first last.
+    by move=> j /=; rewrite -leqNgt.
+  have:= all_ltn_nth_tab_ord (tabshP t) (i + index s (drop i t)); apply sub_all.
+  by move=> j; apply (leq_trans (leq_addr _ _)).
+rewrite /shape -map_take -!sumnE !big_map.
+by apply leq_sum => /= j _; apply: count_size.
+Qed.
+
+Lemma KostkaMon_partdom ev : KostkaMon ev != 0 -> partdom ev sh.
+Proof.
+rewrite cards_eq0 => /set0Pn [/= t]; rewrite inE => /eqP <-.
+exact: tab_eval_partdom.
 Qed.
 
 End DefsKostkaMon.
@@ -932,6 +991,108 @@ case: ssrnat.ltnP => Hi.
 - by apply nth_default; apply: (leq_trans _ (ltnW Hi)); apply leq_addr.
 Qed.
 
+Lemma Kostka_partdom d (sh : intpartn d) ev :
+  Kostka sh ev != 0 -> partdom ev sh.
+Proof.
+rewrite /Kostka => /KostkaMon_partdom.
+rewrite /mpart leqnSn => /partdomP Hdom.
+apply/partdomP => i; move/(_ i): Hdom; congr (_ <= _).
+rewrite !sumn_take; apply eq_bigr => {i} i _.
+case: (ssrnat.ltnP i (size ev).+1) => Hi.
+- by rewrite -{1}[i]/(nat_of_ord (Ordinal Hi)) -mnm_nth mnmE.
+- by rewrite !nth_default ?size_tuple //; apply ltnW.
+Qed.
+
+
+Lemma count_nseq (T : eqType) (P : pred T) n x :
+  count P (nseq n x) = (P x) * n.
+Proof.
+rewrite (eq_in_count (a2 := fun _ => P x)); last by move=> i /nseqP [->].
+case: (boolP (P x)) => HPx; rewrite /= ?mul0n ?count_pred0 //.
+by rewrite ?mul1n ?0count_predT size_nseq.
+Qed.
+
+Lemma Kostka_diag d (sh : intpartn d) : Kostka sh sh = 1.
+Proof.
+case Hsh : (size sh) => [|szsh].
+  rewrite /Kostka /KostkaMon Hsh.
+  move: Hsh => /eqP/nilP Hsh.
+  have {Hsh} Hd : d = 0 by rewrite -(intpartn_sumn sh) Hsh.
+  subst d.
+  have Ht : is_tab_of_shape 0 sh [::] by rewrite intpartn0.
+  rewrite [KostkaTab _ _](_ : _ = [set TabSh Ht]) ?cards1 //.
+  apply/setP => t; rewrite !inE; apply/eqP/eqP => [|->]/=.
+  - rewrite /mpart intpartn0 /= => /(congr1 (fun t : 1.-tuple nat => sumn t)).
+    rewrite sumn_eval size_to_word /=.
+    rewrite (map_comp _ nat_of_ord) val_enum_ord /= addn0.
+    by move=> /(tab0 (tabshP _)) => Ht0; apply val_inj.
+  - rewrite /to_word /=; apply eq_from_tnth => i.
+    by rewrite /mpart intpartn0 /= !tnth_mktuple /=.
+rewrite (Kostka_any sh (n := szsh)) /KostkaMon ?Hsh //.
+have Hntht j :
+  nth [::] [seq nseq (nth 0 sh (nat_of_ord i)) i | i <- enum 'I_szsh.+1] j =
+    nseq (nth 0 sh j) (inord j).
+  case: (ssrnat.ltnP j szsh.+1) => Hj.
+  - rewrite (nth_map ord0) ?size_enum_ord // nth_enum_ord //.
+    by congr nseq; apply val_inj; rewrite /= inordK // nth_enum_ord.
+  - by rewrite !nth_default ?Hsh // size_map size_enum_ord.
+have HT : is_tab_of_shape szsh sh [tuple nseq (nth 0 sh i) i | i < szsh.+1].
+  rewrite /= /shape andbC; apply/andP; split.
+  - rewrite -map_comp (eq_map (f2 := fun i : 'I__=> nth 0 sh i)); first last.
+      by move=> i /=; rewrite size_nseq.
+    apply/eqP/(eq_from_nth (x0 := 0)); rewrite size_map size_enum_ord ?Hsh //.
+    by move=> i Hi; rewrite (nth_map ord0) ?size_enum_ord // nth_enum_ord.
+  - apply/is_tableauP; rewrite size_map size_enum_ord.
+    split => [i Hi | i | i j Hij]; rewrite !{}Hntht.
+    + have : nth 0 sh i != 0 by apply nth_part_non0; rewrite // Hsh.
+      by apply contra => /eqP/nilP; rewrite /nilp size_nseq.
+    + case: (nth 0 sh i) => [|l] //=.
+      elim: l => [//= | l] /= ->; by rewrite andbT.
+    + have:= intpartnP sh => /is_part_ijP [_ /(_ _ _ (ltnW Hij)) Hnthij].
+      apply /dominateP; split; first by rewrite !size_nseq.
+      rewrite size_nseq /= => c Hc.
+      rewrite !nth_nseq Hc (leq_trans Hc Hnthij).
+      rewrite sub_pord_ltnXE ltnXnatE /=.
+      case: (ssrnat.ltnP j szsh.+1) => Hj.
+      * by rewrite !inordK // (leq_trans Hij (ltnW _)).
+      * by exfalso; move: Hc; rewrite nth_default // Hsh.
+rewrite [KostkaTab _ _](_ : _ = [set TabSh HT]) ?cards1 //.
+apply/setP => [[t Ht]]; rewrite !inE; apply/eqP/eqP => [|->]/=.
+- rewrite /mpart Hsh ltnSn => H.
+  apply/eqP/tab_eqP => // /= i; rewrite {}Hntht.
+  move: Ht => /andP [Ht /eqP Hsht].
+  elim: i.+1 {-2}i (ltnSn i) => {i} [//| i IHi] j.
+  rewrite ltnS leq_eqVlt => /orP [/eqP ->{j}|]; last exact: IHi.
+  have Hszt : size t = szsh.+1.
+    by rewrite -(size_map size) -/(shape t) Hsht Hsh.
+  case: (ssrnat.ltnP i (size sh)) => Hi; first last.
+    by rewrite !nth_default // Hszt -Hsh.
+  rewrite Hsh in Hi.
+  rewrite -Hsht nth_shape; apply/all_pred1P; rewrite all_count -nth_shape Hsht.
+  have:= congr1 (fun t => tnth t (inord i)) H.
+  rewrite /eval !tnth_mktuple inordK // => <-.
+  rewrite /to_word count_flatten map_rev sumn_rev -sumnE big_map.
+  rewrite (big_nth [::]) Hszt big_mkord.
+  rewrite (bigD1 (inord i)) //= inordK // big1 ?addn0 //.
+  move=> j Hj.
+  case: (ssrnat.ltnP j i) => [/IHi -> | Hij].
+  - rewrite count_nseq /= inord_val.
+    by move: Hj => /negbTE ->; rewrite mul0n.
+  - have {Hi Hij} Hij : i < j.
+      rewrite ltn_neqAle Hij andbT.
+      by move: Hj; apply contra => /eqP ->; rewrite inord_val.
+    rewrite (eq_in_count (a2 := pred0)) ?count_pred0 // => /= x.
+    rewrite eq_sym /eq_op /= (inordK (ltn_trans Hij _)) //.
+    by move=> /(allP (all_ltn_nth_tab_ord Ht j)) /(leq_trans Hij) /ltn_eqF ->.
+- apply eq_from_tnth => i.
+  rewrite /eval /mpart Hsh ltnSn !tnth_mktuple.
+  rewrite /to_word count_flatten map_rev sumn_rev -map_comp.
+  rewrite -sumnE big_map enumT -/(index_enum _) (bigD1 i) //=.
+  rewrite big1 ?addn0 ?count_nseq /= ?eq_refl ?mul1n //.
+  move=> j Hj; apply/count_memPn/nseqP => [] [Heq _].
+  by rewrite Heq eq_refl in Hj.
+Qed.
+
 Local Open Scope ring_scope.
 
 Lemma Kostka_monomial n (R : ringType) d (sh : intpartn d) :
@@ -943,8 +1104,8 @@ apply mpolyP => m; rewrite Kostka_Coeff linear_sum /=.
 case: (altP (mdeg m =P sumn sh)) => Heq; first last.
 - rewrite (KostkaMon_sumeval Heq); symmetry; apply big1 => i _.
   rewrite mcoeffZ.
-  case: (leqP (size i) n.+1) => [Hszl | /symm_oversize ->];
-                               last by rewrite mcoeff0 mulr0.
+  case: (leqP (size i) n.+1) => [Hszl | /symm_oversize ->]; first last.
+    by rewrite mcoeff0 mulr0.
   rewrite mcoeff_symm //=.
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
   apply (introF idP) => /perm_sumn.
@@ -959,8 +1120,8 @@ case: (altP (mdeg m =P sumn sh)) => Heq; first last.
     rewrite -Kostka_any // [RHS](Kostka_any _ (size_partm m)).
     by apply perm_KostkaMon; apply: partm_perm_eqK.
   + move=> i Hi; rewrite mcoeffZ.
-    case: (leqP (size i) n.+1) => [Hszl | /symm_oversize ->];
-                                 last by rewrite mcoeff0 mulr0.
+    case: (leqP (size i) n.+1) => [Hszl | /symm_oversize ->]; first last.
+      by rewrite mcoeff0 mulr0.
     rewrite mcoeff_symm //=.
     suff /negbTE -> : ~~ (perm_eq (mpart n.+1 i) m) by rewrite mulr0.
     move: Hi; apply contra => /perm_eq_partm H.

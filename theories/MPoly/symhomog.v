@@ -132,6 +132,10 @@ Qed.
 Lemma homsyms_basis : basis_of homsympoly [seq homsyms l | l <- tPd].
 Proof.
 rewrite basisEdim size_map size_tuple dimv_homsym leqnn andbT.
+(* TODO : rewrite using Kotksa number
+rewrite /homsympoly.
+apply/span_subvP => s /mapP [/= l]; rewrite {1}/Pd !mem_enum => _ ->{s}.
+*)
 apply/subvP => p; rewrite dsymP.
 move=> /Schur_dec_sym_homog/(_ (dhomog_is_dhomog _)) [co Hp].
 have -> : p = \sum_l co l *: homsyms l.
