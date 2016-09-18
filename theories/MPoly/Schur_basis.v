@@ -808,36 +808,12 @@ have {Hs} -> : m1 = [multinom m2 (s i) | i < n.+1].
 by rewrite -mcoeff_sym (issymP _ (Schur_sym _ _ _)).
 Qed.
 
-Lemma all_ltn_nth_tab_ord (t : seq (seq 'I_n.+1)) :
-  is_tableau t -> forall i, all (fun x : 'I_n.+1 => i <= x) (nth [::] t i).
-Proof.
-move=> /is_tableauP [] _ _ Hdom.
-elim=> [|i /allP IHi]; apply/allP => x //.
-move/(_ _ _ (ltnSn i)): Hdom => /dominateP [Hsz]; move: (inhabitant _) => Z.
-move: (nth [::] t i) (nth [::] t i.+1) Hsz IHi => Ri Ri1 Hsz IHi Hdom Hx.
-have:= Hx; rewrite -index_mem => Hxind.
-have:= Hxind => /leq_trans/(_ Hsz)/(mem_nth Z)/IHi{IHi}/leq_ltn_trans; apply.
-move/(_ _ Hxind): Hdom; rewrite sub_pord_ltnXE ltnXnatE /=.
-by rewrite nth_index.
-Qed.
-
-Lemma size_tab_ord (t : seq (seq 'I_n.+1)) : is_tableau t -> size t <= n.+1.
-Proof.
-move=> Htab; have Hall := all_ltn_nth_tab_ord Htab.
-move: Htab => /is_tableauP [Hnnil _ _].
-apply contraT; rewrite -ltnNge => Hn.
-move/(_ n.+1): Hall; move/(_ _ Hn): Hnnil => {Hn}.
-case: (nth [::] t n.+1) => //= x s _ /andP [Hn _ {s}].
-have:= ltn_ord x; rewrite ltnS => /(leq_trans Hn).
-by rewrite ltnn.
-Qed.
-
 Lemma tab_eval_partdom (t : tabsh n sh) : partdom (eval (to_word t)) sh.
 Proof.
 apply/partdomP => i; rewrite -(shape_tabsh t).
 case: (ssrnat.leqP i n.+1) => [Hi| /ltnW Hi]; first last.
   rewrite !take_oversize ?size_tuple //; first last.
-    by rewrite size_map (leq_trans (size_tab_ord _)).
+    by rewrite size_map (leq_trans (size_tabsh _)).
   by rewrite sumn_eval size_to_word.
 rewrite sumn_take big_mkord (big_ord_widen _ _ Hi).
 rewrite (eq_bigr (fun j => count_mem j (to_word t))); first last.
@@ -849,7 +825,7 @@ rewrite -sumnE big_map big_seq big1 ?add0n; first last.
   rewrite nth_drop; apply/eqP; rewrite -leqn0 leqNgt -has_count -all_predC.
   rewrite (eq_all (a2 := fun i0 : 'I_n.+1 => i <= i0)); first last.
     by move=> j /=; rewrite -leqNgt.
-  have:= all_ltn_nth_tab_ord (tabshP t) (i + index s (drop i t)); apply sub_all.
+  have:= all_ltn_nth_tabsh t (i + index s (drop i t)); apply sub_all.
   by move=> j; apply (leq_trans (leq_addr _ _)).
 rewrite /shape -map_take -!sumnE !big_map.
 by apply leq_sum => /= j _; apply: count_size.
@@ -1057,10 +1033,10 @@ have HT : is_tab_of_shape szsh sh [tuple nseq (nth 0 sh i) i | i < szsh.+1].
       * by rewrite !inordK // (leq_trans Hij (ltnW _)).
       * by exfalso; move: Hc; rewrite nth_default // Hsh.
 rewrite [KostkaTab _ _](_ : _ = [set TabSh HT]) ?cards1 //.
-apply/setP => [[t Ht]]; rewrite !inE; apply/eqP/eqP => [|->]/=.
+apply/setP => t; rewrite !inE; apply/eqP/eqP => [|->]/=.
 - rewrite /mpart Hsh ltnSn => H.
   apply/eqP/tab_eqP => // /= i; rewrite {}Hntht.
-  move: Ht => /andP [Ht /eqP Hsht].
+  have Hsht := shape_tabsh t.
   elim: i.+1 {-2}i (ltnSn i) => {i} [//| i IHi] j.
   rewrite ltnS leq_eqVlt => /orP [/eqP ->{j}|]; last exact: IHi.
   have Hszt : size t = szsh.+1.
@@ -1083,7 +1059,7 @@ apply/setP => [[t Ht]]; rewrite !inE; apply/eqP/eqP => [|->]/=.
       by move: Hj; apply contra => /eqP ->; rewrite inord_val.
     rewrite (eq_in_count (a2 := pred0)) ?count_pred0 // => /= x.
     rewrite eq_sym /eq_op /= (inordK (ltn_trans Hij _)) //.
-    by move=> /(allP (all_ltn_nth_tab_ord Ht j)) /(leq_trans Hij) /ltn_eqF ->.
+    by move=> /(allP (all_ltn_nth_tabsh _ _)) /(leq_trans Hij) /ltn_eqF ->.
 - apply eq_from_tnth => i.
   rewrite /eval /mpart Hsh ltnSn !tnth_mktuple.
   rewrite /to_word count_flatten map_rev sumn_rev -map_comp.
