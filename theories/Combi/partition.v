@@ -1420,19 +1420,21 @@ Module IntPartNLex.
 
 Require Import ordtype.
 
-Definition intpartn_pordMixin n := [pordMixin of intpartn n by <:].
-Canonical intpartn_pordType n :=
-  Eval hnf in POrdType (intpartn n) (intpartn_pordMixin n).
-Definition intpartn_ordMixin n := [ordMixin of intpartn_pordType n by <:].
-Canonical intpartn_ordType n :=
-  Eval hnf in OrdType (intpartn n) (intpartn_ordMixin n).
-Canonical intpartn_finPOrdType n := [finPOrdType of intpartn n].
+Definition intpartnlex := intpartn.
 
-Definition intpartn_inhMixin n := Inhabited.Mixin (rowpartn n).
-Canonical intpartn_inhType n :=
-  Eval hnf in InhType (intpartn n) (intpartn_inhMixin n).
-Canonical intpartn_inhOrdType n := [inhOrdType of intpartn n].
-Canonical intpartn_inhOrdFinType n := [inhOrdFinType of intpartn n].
+Definition intpartnlex_pordMixin n := [pordMixin of intpartnlex n by <:].
+Canonical intpartnlex_pordType n :=
+  Eval hnf in POrdType (intpartnlex n) (intpartnlex_pordMixin n).
+Definition intpartnlex_ordMixin n := [ordMixin of intpartnlex_pordType n by <:].
+Canonical intpartnlex_ordType n :=
+  Eval hnf in OrdType (intpartnlex n) (intpartnlex_ordMixin n).
+Canonical intpartnlex_finPOrdType n := [finPOrdType of intpartnlex n].
+
+Definition intpartnlex_inhMixin n := Inhabited.Mixin (rowpartn n).
+Canonical intpartnlex_inhType n :=
+  Eval hnf in InhType (intpartnlex n) (intpartnlex_inhMixin n).
+Canonical intpartnlex_inhOrdType n := [inhOrdType of intpartnlex n].
+Canonical intpartnlex_inhOrdFinType n := [inhOrdFinType of intpartnlex n].
 
 End IntPartNLex.
 
@@ -1703,6 +1705,33 @@ Proof.
 move=> /partdom_union_intpartr-/(_ t1)/partdom_trans Hs Ht; apply: Hs.
 by move: Ht => /partdom_union_intpartl; apply.
 Qed.
+
+Module IntPartNDom.
+
+Require Import ordtype.
+
+Definition intpartndom d := intpartn d.
+
+Fact partdom_porder d : PartOrder.axiom (fun x y : intpartndom d => partdom x y).
+Proof using.
+split.
+- exact: partdom_refl.
+- by move=> x y /andP [Hxy Hyx]; apply val_inj => /=; apply: partdom_anti.
+- exact: partdom_trans.
+Qed.
+
+Definition partdom_pordMixin d := PartOrder.Mixin (partdom_porder d).
+Canonical partdom_pordType d :=
+  Eval hnf in POrdType (intpartndom d) (partdom_pordMixin d).
+Canonical intpartndom_finPOrdType d := [finPOrdType of intpartndom d].
+Definition intpartndom_inhMixin d := Inhabited.Mixin (rowpartn d).
+Canonical intpartndom_inhType d :=
+  Eval hnf in InhType (intpartndom d) (intpartndom_inhMixin d).
+
+Lemma partdomE d : @leqX_op (partdom_pordType d) = partdom.
+Proof. by rewrite /leqX_op. Qed.
+
+End IntPartNDom.
 
 
 From mathcomp Require Import binomial finset.
