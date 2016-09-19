@@ -1731,8 +1731,30 @@ Canonical intpartndom_inhType d :=
 Lemma partdomE d : @leqX_op (partdom_pordType d) = partdom.
 Proof. by rewrite /leqX_op. Qed.
 
-End IntPartNDom.
+Lemma partdom_rowpartn d (sh : intpartn d) : partdom sh (rowpartn d).
+Proof.
+case: d sh => [|d] sh; first by rewrite /= !intpartn0.
+rewrite /=; apply/partdomP => i.
+case: i => [|i] /=; rewrite ?take0 ?addn0 //.
+by rewrite -{2}(intpartn_sumn sh) -{2}(cat_take_drop i.+1 sh) sumn_cat leq_addr.
+Qed.
 
+Lemma colpartn_partdom d (sh : intpartn d) : partdom (colpartn d) sh.
+Proof.
+apply/partdomP => i; rewrite /=.
+case: (ssrnat.ltnP i (size sh)) => Hi.
+- rewrite !sumn_take !big_nat; apply leq_sum => j /= Hj.
+  rewrite nth_nseq.
+  have:= (leq_trans (ltn_trans Hj Hi) (size_part (intpartnP sh))).
+  rewrite intpartn_sumn => ->.
+  rewrite lt0n; apply nth_part_non0 => //.
+  exact: ltn_trans Hj Hi.
+- rewrite (take_oversize Hi) intpartn_sumn.
+  rewrite -{2}(intpartn_sumn (colpartn d)) /=.
+  by rewrite -{2}(cat_take_drop i (colpart d)) sumn_cat leq_addr.
+Qed.
+
+End IntPartNDom.
 
 From mathcomp Require Import binomial finset.
 
