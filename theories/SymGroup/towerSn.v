@@ -36,7 +36,7 @@ From mathcomp Require Import ssralg ssrnum matrix vector mxalgebra algC.
 From mathcomp Require Import classfun character mxrepresentation.
 
 Require Import tools ordcast partition sorted.
-Require Import permcomp cycles cycletype.
+Require Import permcomp cycles cycletype permcent.
 
 Import LeqGeqOrder.
 
@@ -528,14 +528,18 @@ Definition zcoeff (k : nat) (p : intpartn k) : algC :=
 
 Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 
-Lemma neq0zcoeff (k : nat) (p : intpartn k) : 'z_p != 0.
-Proof using.
-have := Cchar; rewrite charf0P => neq0.
-rewrite /zcoeff /= cardsT card_Sn.
-apply mulf_neq0.
-- rewrite neq0 -lt0n; exact: fact_gt0.
-- rewrite invr_eq0 neq0; exact: card_classCT_neq0.
+Lemma zcoeffE k (l : intpartn k) : zcoeff l = (zcard l)%:R.
+Proof.
+rewrite /zcoeff card_class_of_part cardsT card_Sn.
+rewrite char0_natf_div; [| exact: Cchar | exact: dvdn_zcard_fact].
+rewrite invf_div mulrC mulfVK //.
+by rewrite pnatr_eq0 -lt0n; apply: fact_gt0.
 Qed.
+
+Lemma neq0zcoeff (k : nat) (p : intpartn k) : 'z_p != 0.
+Proof using. by rewrite zcoeffE pnatr_eq0 neq0zcard. Qed.
+
+Hint Resolve neq0zcoeff.
 
 Definition ncfuniCT (k : nat) (p : intpartn k) := 'z_p *: '1_[p].
 
@@ -547,7 +551,7 @@ Proof using.
 apply/cfunP => /= x.
 rewrite (bigD1 (ct x)) //= cfunE sum_cfunE big1.
 - rewrite addr0 !cfunE cfuniCTnE eqxx /= mulr1.
-  rewrite -mulrA [_^-1 *_]mulrC mulrA mulfK; last exact: neq0zcoeff.
+  rewrite -mulrA [_^-1 *_]mulrC mulrA mulfK //.
   have: (permCT (ct x)) \in x ^: 'SG_k.
     rewrite classes_of_permP permCTP.
     by rewrite (partnCTK (cycle_type x)).
@@ -559,7 +563,7 @@ Lemma cfdotr_ncfuniCT k (f : 'CF('SG_k)) (s : 'S_k) : (f s) = '[f, '1z_[ct s]].
 Proof using.
 rewrite {2}(ncfuniCT_gen f) cfdot_suml.
 rewrite (bigD1 (ct s)) //= !cfdotZl cfdotZr.
-rewrite mulrA (divfK (neq0zcoeff _)).
+rewrite mulrA (divfK _) //.
 rewrite cfdot_cfuni; try (by apply: class_normal; rewrite inE).
 rewrite setIid big1 ?addr0.
 - have: (permCT (ct s)) \in s ^: 'SG_k.
@@ -611,7 +615,7 @@ rewrite !linearZ /= !cfdotZl cfdotZr cfdot_Ind_cfuniCT.
 case: eqP => _ /=; rewrite ?mul0r ?mulr0 // !mul1r.
 rewrite 2!mulrA mulrC mulrA [X in (X * _)]mulrC -invfM divff ?mul1r.
   by rewrite fmorph_div !conjC_nat.
-by apply mulf_neq0; apply neq0zcoeff.
+by apply mulf_neq0.
 Qed.
 
 Theorem Ind_ncfuniCT p q :
@@ -624,3 +628,5 @@ by case: (boolP (_ == _)) => [/eqP ->|] //=; rewrite !mulr0.
 Qed.
 
 End Induction.
+
+Hint Resolve neq0zcoeff.

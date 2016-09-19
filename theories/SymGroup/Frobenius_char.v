@@ -27,7 +27,7 @@ From mathcomp Require Import classfun.
 
 From SsrMultinomials Require Import mpoly.
 Require Import tools partition sympoly.
-Require Import permcomp cycletype towerSn permcent.
+Require Import permcomp cycletype towerSn.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -74,16 +74,15 @@ rewrite /Fchar (bigD1 l) //= big1 ?addr0; first last.
   by rewrite mulr0 mul0r scale0r.
 rewrite cfunElock cfuniCTE /=.
 rewrite /cycle_typeSn permCTP eq_refl /=.
-rewrite mulr1 divff ?scale1r //.
-exact: neq0zcoeff.
+by rewrite mulr1 divff ?scale1r.
 Qed.
 
 Lemma Fchar_triv : Fchar 1 = 'h_n.
 Proof.
 rewrite -decomp_cf_triv linear_sum.
 rewrite (eq_bigr (fun i => 'z_i^-1 *: 'p[i])); first last.
-  move=> l _; rewrite -Fchar_ncfuniCT /= linearZ scalerA mulrC divff ?scale1r //.
-  exact: neq0zcoeff.
+  move=> l _.
+  by rewrite -Fchar_ncfuniCT /= linearZ scalerA mulrC divff // scale1r.
 rewrite -QtoCsymh symh_to_symp /=.
 rewrite rmorph_sum /=; apply eq_bigr => l _.
 by rewrite zcoeffE scale_rat_QtoC QtoCsymp_prod fmorphV /= ratr_nat.
