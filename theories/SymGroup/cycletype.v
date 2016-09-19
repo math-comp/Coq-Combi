@@ -14,10 +14,11 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype div.
-From mathcomp Require Import tuple finfun path bigop finset binomial.
-From mathcomp Require Import fingroup perm automorphism action ssralg.
-From mathcomp Require finmodule.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
+From mathcomp Require Import tuple finfun finset path bigop.
+From mathcomp Require Import fingroup perm action.
+From mathcomp Require Import ssralg matrix mxalgebra algC classfun.
+
 
 Require Import partition tools sorted.
 Require Import permcomp fibered_set cycles.
@@ -669,10 +670,7 @@ rewrite -imset_classCT card_imset; last exact: classCT_inj.
 by apply eq_card => s; rewrite !inE.
 Qed.
 
-From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum.
-From mathcomp Require Import presentation all_character.
-
-Import GroupScope GRing.Theory Num.Theory.
+Import GroupScope GRing.Theory.
 Local Open Scope ring_scope.
 
 Section CFunIndicator.
@@ -703,7 +701,7 @@ Notation "''1_[' p ]" := (cfuniCT p) : ring_scope.
 
 Coercion CTpartn n := cast_intpartn (esym (card_ord n)).
 
-Import GroupScope GRing.Theory Num.Theory.
+Import GroupScope GRing.Theory.
 Local Open Scope ring_scope.
 
 

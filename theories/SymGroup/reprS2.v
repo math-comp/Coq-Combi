@@ -14,12 +14,12 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun eqtype ssrnat seq path choice.
-From mathcomp Require Import fintype tuple finfun bigop ssralg finset.
-From mathcomp Require Import fingroup morphism perm automorphism quotient finalg action.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
+From mathcomp Require Import fintype tuple finfun bigop finset fingroup perm.
+From mathcomp Require Import ssralg fingroup morphism perm action.
 From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
-From mathcomp Require Import matrix mxalgebra mxpoly mxrepresentation vector ssrnum algC.
-From mathcomp Require Import classfun character.
+From mathcomp Require Import vector matrix mxalgebra ssrnum algC.
+From mathcomp Require Import mxrepresentation classfun character.
 
 Require Import tools sorted reprdim1 partition presentSn.
 Require Import permcomp cycles cycletype.

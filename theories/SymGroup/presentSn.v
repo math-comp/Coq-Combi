@@ -66,9 +66,9 @@ Here are the notion defined is this file:
 
 ***************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm.
-From mathcomp Require Import morphism presentation.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
+From mathcomp Require Import choice fintype tuple finfun bigop finset.
+From mathcomp Require Import fingroup perm morphism presentation.
 
 Require Import permcomp tools permuted combclass congr.
 

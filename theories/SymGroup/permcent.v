@@ -18,7 +18,7 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple path bigop finset div.
 From mathcomp Require Import fingroup perm action gproduct morphism.
 
-Require Import tools partition permcomp cycles cycletype towerSn.
+Require Import tools partition permcomp cycles cycletype.
 
 Import GroupScope.
 
@@ -567,21 +567,14 @@ rewrite -card_Sn -cardsT; apply cardSg.
 exact: subsetT.
 Qed.
 
+Lemma neq0zcard n (l : intpartn n) : zcard l != 0.
+Proof.
+have:= dvdn_zcard_fact l; apply contraL => /eqP ->.
+by rewrite dvd0n -lt0n fact_gt0.
+Qed.
+
 Theorem card_class_of_part n (l : intpartn n) : #|classCT l| = n`! %/ zcard l.
 Proof using.
 rewrite /classCT card_class_perm permCTP /=.
 by rewrite cast_intpartnE /= card_ord.
-Qed.
-
-
-From mathcomp Require Import ssralg ssrnum algC.
-
-Import GRing.Theory Num.Theory.
-
-Lemma zcoeffE n (l : intpartn n) : zcoeff l = ((zcard l)%:R)%R.
-Proof.
-rewrite /zcoeff card_class_of_part cardsT card_Sn.
-rewrite char0_natf_div; [| exact: Cchar | exact: dvdn_zcard_fact].
-rewrite invf_div mulrC mulfVK //.
-by rewrite pnatr_eq0 -lt0n; apply: fact_gt0.
 Qed.

@@ -586,6 +586,30 @@ move=> w /=; rewrite /tabsh_reading mem_filter; apply/idP/idP.
   by rewrite sumn_rev Hsz.
 Qed.
 
+Lemma all_ltn_nth_tabsh (t : tabsh) i :
+  all (fun x : 'I_n.+1 => i <= x) (nth [::] t i).
+Proof.
+have:= tabshP t => /is_tableauP [_ _ Hdom].
+elim: i => [|i /allP IHi]; apply/allP => x //.
+move/(_ _ _ (ltnSn i)): Hdom => /dominateP [Hsz]; move: (inhabitant _) => Z.
+move: (nth [::] t i) (nth [::] t i.+1) Hsz IHi => Ri Ri1 Hsz IHi Hdom Hx.
+have:= Hx; rewrite -index_mem => Hxind.
+have:= Hxind => /leq_trans/(_ Hsz)/(mem_nth Z)/IHi{IHi}/leq_ltn_trans; apply.
+move/(_ _ Hxind): Hdom; rewrite sub_pord_ltnXE ltnXnatE /=.
+by rewrite nth_index.
+Qed.
+
+Lemma size_tabsh (t : tabsh) : size t <= n.+1.
+Proof.
+have Hall := all_ltn_nth_tabsh t.
+have:= tabshP t => /is_tableauP [Hnnil _ _].
+apply contraT; rewrite -ltnNge => Hn.
+move/(_ n.+1): Hall; move/(_ _ Hn): Hnnil => {Hn}.
+case: (nth [::] t n.+1) => //= x s _ /andP [Hn _ {s}].
+have:= ltn_ord x; rewrite ltnS => /(leq_trans Hn).
+by rewrite ltnn.
+Qed.
+
 End FinType.
 
 Hint Resolve tabshP.

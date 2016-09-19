@@ -1051,20 +1051,11 @@ rewrite Schur_tabsh_readingE (eq_bigl (xpred1 [tuple])); first last.
 by rewrite big_pred1_eq big_nil.
 Qed.
 
-
 Lemma Schur_oversize d (sh : intpartn d) : (size sh > n)%N -> Schur sh = 0.
 Proof using.
-rewrite Schur_tabsh_readingE=> Hn; rewrite big_pred0 // => w.
-apply (introF idP) => /tabsh_readingP [] tab [] Htab Hsh _ {w}.
-suff F0 i : (i < size sh)%N -> (nth (inhabitant _) (nth [::] tab i) 0 >= i)%N.
-  have H := ltn_ord (nth (inhabitant _) (nth [::] tab n) 0).
-  by have:= leq_trans H (F0 _ Hn); rewrite ltnn.
-rewrite -Hsh size_map; elim: i => [//= | i IHi] Hi.
-have := IHi (ltn_trans (ltnSn i) Hi); move/leq_ltn_trans; apply.
-rewrite -ltnXnatE.
-move: Htab => /is_tableauP [] Hnnil _ Hdom.
-have {Hdom} := Hdom _ _ (ltnSn i) => /dominateP [] _; apply.
-rewrite lt0n; apply/nilP/eqP; exact: Hnnil.
+move=> Hn; apply big1 => t _; exfalso.
+have:= size_tabsh t; rewrite -(size_map size) -/(shape t) shape_tabsh.
+by move=> /(leq_trans Hn); rewrite ltnn.
 Qed.
 
 
