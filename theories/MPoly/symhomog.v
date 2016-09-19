@@ -16,7 +16,7 @@
 (** * The Ring of Symmetric Polynomials *)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun finset bigop ssralg path perm fingroup.
+From mathcomp Require Import tuple finfun finset bigop ssrint ssralg path perm fingroup.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 From mathcomp Require Import vector.
 
@@ -132,20 +132,18 @@ Qed.
 Lemma homsyms_basis : basis_of homsympoly [seq homsyms l | l <- tPd].
 Proof.
 rewrite basisEdim size_map size_tuple dimv_homsym leqnn andbT.
-(* TODO : rewrite using Kotksa number
 rewrite /homsympoly.
 apply/span_subvP => s /mapP [/= l]; rewrite {1}/Pd !mem_enum => _ ->{s}.
-*)
-apply/subvP => p; rewrite dsymP.
-move=> /Schur_dec_sym_homog/(_ (dhomog_is_dhomog _)) [co Hp].
-have -> : p = \sum_l co l *: homsyms l.
-  by apply val_inj => /=; rewrite Hp linear_sum /=; apply eq_bigr => l _.
+have -> :
+  homsymm l = \sum_(m : intpartn d) ((Kostkainv n R l m)%:~R) *: homsyms m.
+  apply val_inj; rewrite /=.
+  rewrite (symm_to_syms _ _ l) [LHS](linear_sum (@sympol_lrmorphism _ _)) /=.
+  by rewrite !linear_sum /=.
 rewrite span_def.
-apply rpred_sum => l _; apply rpredZ.
-rewrite big_map (bigD1_seq l) /= ?mem_enum ?inE ?enum_uniq //.
+apply rpred_sum => /= m _; apply rpredZ.
+rewrite big_map (bigD1_seq m) /= ?mem_enum ?inE ?enum_uniq //.
 rewrite -[X in X \in _]addr0.
-apply memv_add; first exact: memv_line.
-exact: mem0v.
+by apply memv_add; [exact: memv_line | exact: mem0v].
 Qed.
 
 End Homogeneous.
