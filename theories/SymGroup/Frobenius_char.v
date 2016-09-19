@@ -22,20 +22,19 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import finfun fintype tuple finset bigop.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
-From mathcomp Require Import rat ssralg mxalgebra ssrnum algC.
-From mathcomp Require Import classfun character mxrepresentation.
+From mathcomp Require Import rat ssralg ssrnum algC.
+From mathcomp Require Import classfun.
 
-From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
+From SsrMultinomials Require Import mpoly.
 Require Import tools partition sympoly.
-Require Import permcomp presentSn cycles cycletype towerSn permcent.
-
-Import LeqGeqOrder.
+Require Import permcomp cycletype towerSn permcent.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Import GroupScope GRing.Theory Num.Theory.
+Import LeqGeqOrder.
+Import GroupScope GRing.Theory.
 Open Scope ring_scope.
 
 Local Notation algCF := [fieldType of algC].

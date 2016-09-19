@@ -32,8 +32,8 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import finfun fintype tuple finset bigop.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
-From mathcomp Require Import ssralg matrix vector mxalgebra falgebra ssrnum algC.
-From mathcomp Require Import presentation classfun character mxrepresentation.
+From mathcomp Require Import ssralg ssrnum matrix vector mxalgebra algC.
+From mathcomp Require Import classfun character mxrepresentation.
 
 Require Import tools ordcast partition sorted.
 Require Import permcomp cycles cycletype.
@@ -44,7 +44,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Import GroupScope GRing.Theory Num.Theory.
+Import GroupScope GRing.Theory.
 
 Local Notation algCF := [fieldType of algC].
 
