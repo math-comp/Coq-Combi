@@ -626,7 +626,7 @@ Local Notation S := [tuple mesym n R i.+1 | i < n].
 
 
 (** We restrict ourself to [intpartn d] in order to compute big ops in a fintype *)
-Record homcoeff : Type := HomCoeff { d : nat; coe :> intpartn d -> R }.
+Record homcoeff : Type := HomCoeff { dcoe : nat; coe :> intpartn dcoe -> R }.
 
 Definition Schur_dec (p : {mpoly R[n]}) :=
   { coe : homcoeff | p = \sum_(p : intpartn _) coe p *: 's_p }.
@@ -933,6 +933,9 @@ End KostkaEq.
 Definition Kostka d (sh : intpartn d) ev :=
   KostkaMon sh (mpart (n := (size ev).+1) ev).
 
+Notation "''K' ( lambda , mu )" := (Kostka lambda mu)
+  (at level 8, format "''K' ( lambda ,  mu )") : nat_scope.
+
 Local Arguments mpart n s : clear implicits.
 
 Lemma mpartS n ev :
@@ -949,7 +952,7 @@ case: ssrnat.ltnP => Hi.
 Qed.
 
 Lemma Kostka_any d (sh : intpartn d) ev n :
-  size ev <= n.+1 -> Kostka sh ev = KostkaMon sh (mpart n.+1 ev).
+  size ev <= n.+1 -> 'K(sh, ev) = KostkaMon sh (mpart n.+1 ev).
 Proof.
 rewrite /Kostka => Hsz.
 case: (altP (size ev =P n.+1)) => [->| H].
@@ -967,8 +970,7 @@ case: ssrnat.ltnP => Hi.
 - by apply nth_default; apply: (leq_trans _ (ltnW Hi)); apply leq_addr.
 Qed.
 
-Lemma Kostka_partdom d (sh : intpartn d) ev :
-  Kostka sh ev != 0 -> partdom ev sh.
+Lemma Kostka_partdom d (sh : intpartn d) ev : 'K(sh, ev) != 0 -> partdom ev sh.
 Proof.
 rewrite /Kostka => /KostkaMon_partdom.
 rewrite /mpart leqnSn => /partdomP Hdom.
@@ -979,6 +981,10 @@ case: (ssrnat.ltnP i (size ev).+1) => Hi.
 - by rewrite !nth_default ?size_tuple //; apply ltnW.
 Qed.
 
+Lemma Kostka0 d (sh : intpartn d) ev : ~~ partdom ev sh -> 'K(sh, ev) = 0.
+Proof.
+by move=> H; apply/eqP; move: H; apply contraR; apply Kostka_partdom.
+Qed.
 
 Lemma count_nseq (T : eqType) (P : pred T) n x :
   count P (nseq n x) = (P x) * n.
@@ -988,7 +994,7 @@ case: (boolP (P x)) => HPx; rewrite /= ?mul0n ?count_pred0 //.
 by rewrite ?mul1n ?0count_predT size_nseq.
 Qed.
 
-Lemma Kostka_diag d (sh : intpartn d) : Kostka sh sh = 1.
+Lemma Kostka_diag d (sh : intpartn d) : 'K(sh, sh) = 1.
 Proof.
 case Hsh : (size sh) => [|szsh].
   rewrite /Kostka /KostkaMon Hsh.
@@ -1069,10 +1075,16 @@ apply/setP => t; rewrite !inE; apply/eqP/eqP => [|->]/=.
   by rewrite Heq eq_refl in Hj.
 Qed.
 
+
+Section SymsSymm.
+
 Local Open Scope ring_scope.
 
-Lemma Kostka_monomial n (R : ringType) d (sh : intpartn d) :
-  's_sh = \sum_(ev : intpartn d) (Kostka sh ev)%:R *: 'm[ev] :> {sympoly R[n.+1]}.
+Variable (n : nat) (R : comRingType) (d : nat).
+Implicit Type (sh ev : intpartn d).
+
+Lemma syms_to_symm sh :
+  's_sh = \sum_(ev : intpartn d) 'K(sh, ev)%:R *: 'm[ev] :> {sympoly R[n.+1]}.
 Proof.
 rewrite /Kostka; apply val_inj => /=.
 rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
@@ -1104,3 +1116,86 @@ case: (altP (mdeg m =P sumn sh)) => Heq; first last.
     apply/eqP/val_inj => /=; rewrite -H.
     by rewrite mpartK.
 Qed.
+
+Import IntPartNDom.
+Import OrdNotations.
+Local Notation P := (intpartndom d).
+Local Notation SF := {sympoly R[n.+1]}.
+
+Lemma syms_to_symm_partdom sh :
+  's_sh = 'm[sh] + \sum_(ev : P | ev <A sh) 'K(sh, ev)%:R *: 'm[ev] :> SF.
+Proof.
+rewrite syms_to_symm (bigD1 sh) //= Kostka_diag scale1r; congr (_ + _).
+rewrite (bigID (fun ev : P => ev <=A sh)) /= addrC big1 ?add0r //.
+by move=> i /andP [_ /Kostka0 ->]; rewrite scale0r.
+Qed.
+
+Local Definition decms sh coe :=
+  ('m[sh] = 's_sh + \sum_(ev : P | ev <A sh) (coe ev)%:~R *: 's_ev :> SF).
+
+(* Inversing a triangular matrix with 1 on the diagonal *)
+Lemma symm_to_syms_ex :
+  { coe : P -> P -> int | forall sh, decms sh (coe sh) }.
+Proof.
+suff rec (sh : P) : { coesh : P -> int | decms sh coesh }.
+  by exists (fun sh => sval (rec sh)) => sh; case: rec.
+elim/(finord_wf (T := intpartndom_finPOrdType d)) : sh => /= sh IHsh.
+have {IHsh} Hrec (y : P) : { coesh : P -> int | y <A sh -> decms y coesh }.
+  case: (boolP (y <A sh)) => Hy.
+  - by have [coesh Hcoesh] := IHsh y Hy; exists coesh.
+  - by exists (fun _ => 0).
+rewrite /decms.
+exists (fun ev : P =>
+          - ('K(sh, ev)%:R +
+             \sum_(p | (ev < p < sh)%Ord)
+              (sval (Hrec p) ev)%:~R * 'K(sh, p)%:R)).
+rewrite (eq_bigr (fun ev : P =>
+    - ('K(sh, ev)%:R *: 's_ev +
+       (\sum_(p | (ev < p < sh)%Ord)
+         (sval (Hrec p) ev)%:~R * 'K(sh, p)%:R *: 's_ev)))); first last.
+  move=> i Hi.
+  rewrite scaler_int mulrNz -scaler_int intrD.
+  rewrite scalerDl -scaler_suml !natz; congr (- (_ + _ *: 's_i)).
+  rewrite mulrz_sumr; apply eq_bigr => ev _.
+  by rewrite !natz !intrM mulrz_int.
+rewrite sumrN big_split /=.
+rewrite (exchange_big_dep (fun j : P => j <A sh)) /=; first last.
+  by move=> i j _ /andP [].
+rewrite -big_split /=.
+apply/eqP; rewrite eq_sym syms_to_symm_partdom subr_eq; apply/eqP; congr (_ + _).
+apply eq_bigr => ev Hev.
+rewrite (eq_bigl (fun j : P => j <A ev)) /=; first last.
+  move=> i; case: (boolP (i <A ev)); rewrite /= ?Hev ?andbT ?andbF //.
+  by move=> /ltnX_trans/(_ Hev) ->.
+case: (Hrec ev) => coesh /= /(_ Hev) ->.
+rewrite scalerDr scaler_sumr; congr (_ + _).
+by apply eq_bigr => i _; rewrite scalerA mulrC.
+Qed.
+
+Definition Kostkainv (sh ev : P) : int :=
+  if ev == sh then 1 else
+    if ev <A sh then sval symm_to_syms_ex sh ev else 0.
+
+Lemma symm_to_syms sh :
+  'm[sh] = \sum_(ev : P) (Kostkainv sh ev)%:~R *: 's_ev :> SF.
+Proof.
+rewrite /Kostkainv.
+case: symm_to_syms_ex => Kinv /= /(_ sh) ->.
+apply esym; rewrite (bigD1 sh) //= eq_refl scale1r; congr (_ + _).
+rewrite (bigID (fun ev : P => ev <=A sh)) /= addrC big1 ?add0r; first last.
+  move=> i /andP [Hd /negbTE Hdiff].
+  by rewrite ltnX_neqAleqX (negbTE Hd) Hdiff /= scale0r.
+by apply eq_bigr => i Hi; rewrite Hi (ltnX_eqF Hi).
+Qed.
+
+Lemma symm_to_syms_partdom sh :
+  'm[sh] = 's_sh + \sum_(ev : P | ev <A sh) (Kostkainv sh ev)%:~R *: 's_ev :> SF.
+Proof.
+rewrite symm_to_syms /Kostkainv (bigD1 sh) //= eq_refl scale1r; congr (_ + _).
+rewrite (bigID (fun ev : P => ev <=A sh)) /= addrC big1 ?add0r; first last.
+  move=> i /andP [Hd /negbTE Hdiff].
+  by rewrite ltnX_neqAleqX (negbTE Hd) Hdiff /= scale0r.
+by apply eq_bigr => i Hi; rewrite Hi (ltnX_eqF Hi).
+Qed.
+
+End SymsSymm.
