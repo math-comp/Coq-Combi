@@ -1188,9 +1188,6 @@ Qed.
 
 End SchurComRingType.
 
-Notation "''s[' l ]" := (Schur _ _ l)
-                              (at level 8, l at level 2, format "''s[' l ]").
-
 
 Section ScalarChange.
 
