@@ -1192,30 +1192,11 @@ Notation "''s[' l ]" := (Schur _ _ l)
                               (at level 8, l at level 2, format "''s[' l ]").
 
 
-From mathcomp Require Import ssrnum algC.
-Import Num.Theory.
-
-Section ChangeRing.
+Section ScalarChange.
 
 Variables R S : comRingType.
 Variable mor : {rmorphism R -> S}.
-
 Variable n : nat.
-
-Lemma map_mpolyX (m : 'X_{1..n}) : map_mpoly mor 'X_[m] = 'X_[m].
-Proof using.
-by rewrite /= /map_mpoly mmapX /= /mmap1 mprodXnE -multinomUE_id.
-Qed.
-
-Lemma msym_map_mpoly s (p : {mpoly R[n]}) :
-  msym s (map_mpoly mor p) = map_mpoly mor (msym s p).
-Proof using.
-rewrite (mpolyE p).
-rewrite [map_mpoly _ _]raddf_sum [msym s _]raddf_sum.
-rewrite [msym s _]raddf_sum [map_mpoly _ _]raddf_sum.
-apply eq_bigr => i _ /=; apply/mpolyP => m.
-by rewrite mcoeff_map_mpoly /= !mcoeff_sym mcoeff_map_mpoly /=.
-Qed.
 
 Lemma map_mpoly_issym (f : {sympoly R[n]}) : map_mpoly mor f \is symmetric.
 Proof.
@@ -1244,6 +1225,14 @@ rewrite mcoeffZ !mcoeff_map_mpoly /= -!rmorphM /=; congr (mor _).
 rewrite !linear_sum /= mulr_sumr.
 apply eq_bigr => i _ /=.
 by rewrite !linearZ /=.
+Qed.
+
+Lemma map_symm d : map_sympoly 'm[d] = 'm[d].
+Proof.
+apply val_inj; rewrite /= /symm.
+case: leqP => _ /=; last exact: rmorph0.
+rewrite /symm_pol rmorph_sum /=.
+apply eq_bigr => X _; exact: map_mpolyX.
 Qed.
 
 Lemma map_syme d : map_sympoly 'e_d = 'e_d.
@@ -1277,5 +1266,6 @@ Proof.
 by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_symp.
 Qed.
 
-End ChangeRing.
+End ScalarChange.
+
 

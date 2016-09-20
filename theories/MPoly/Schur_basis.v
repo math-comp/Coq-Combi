@@ -391,7 +391,7 @@ Qed.
 End Alternant.
 
 
-Section SchurAltenantDef.
+Section SchurAlternantDef.
 
 Variable (n0 : nat) (R : comRingType).
 Local Notation n := (n0.+1).
@@ -479,7 +479,7 @@ rewrite -Schur_cast => ->.
 by rewrite cast_intpartnE.
 Qed.
 
-End SchurAltenantDef.
+End SchurAlternantDef.
 
 
 
@@ -517,12 +517,12 @@ Local Notation "''s_' k" := (Schur n0 R k)
 
 Theorem Schur_sym d (P : intpartn d) : 's_P \is symmetric.
 Proof using .
-have -> : 's_P = tensR R (Schur _ int_iDomain P).
+have -> : 's_P = map_mpoly intr (Schur _ [ringType of int] P).
   rewrite /Schur /polylang /commword raddf_sum /=; apply eq_bigr => i _ /=.
-  rewrite rmorph_prod /=; apply eq_bigr => {i} i _ ; by rewrite tensRX.
+  rewrite rmorph_prod /=; apply eq_bigr => {i} i _ ; by rewrite map_mpolyX.
 apply/issymP => s.
 have:= Schur_sym_idomain n0 int_iDomain P => /issymP/(_ s) {2}<-.
-by rewrite msym_tensR.
+by rewrite msym_map_mpoly.
 Qed.
 
 Definition syms d (P : intpartn d) : {sympoly R[n]} := SymPoly (Schur_sym P).
@@ -531,6 +531,24 @@ End RingSchurSym.
 
 Local Notation "''s_' k" := (syms _ _ k)
                               (at level 8, k at level 2, format "''s_' k").
+
+
+Section ChangeRing.
+
+Variables R S : comRingType.
+Variable mor : {rmorphism R -> S}.
+
+Variable n : nat.
+
+Lemma map_syms d (sh : intpartn d) :
+  map_sympoly (n := n.+1) mor 's_sh = 's_sh.
+Proof.
+apply val_inj; rewrite /= rmorph_sum /=.
+apply eq_bigr => X _; rewrite rmorph_prod; apply eq_bigr => /= i _.
+by rewrite map_mpolyX.
+Qed.
+
+End ChangeRing.
 
 
 Section MPoESymHomog.
@@ -1028,9 +1046,9 @@ Implicit Type (sh ev : intpartn d).
 Local Notation P := (intpartndom d).
 
 Local Definition decms sh (coe : P -> int) :=
-  forall (R : comRingType) (n : nat),
-    ('m[sh] = 's_sh + \sum_(ev : P | ev <A sh) (coe ev)%:~R *: 's_ev
-                      :> {sympoly R[n.+1]}).
+  forall (n : nat),
+    ('m[sh] = 's_sh + \sum_(ev : P | ev <A sh) coe ev *: 's_ev
+                      :> {sympoly int[n.+1]}).
 
 
 (* Inversing a triangular matrix with 1 on the diagonal *)
@@ -1046,18 +1064,13 @@ have {IHsh} (y : P) : { coesh : P -> int | y <A sh -> decms y coesh }.
   - by exists (fun _ => 0).
 rewrite /decms => rec.
 exists (fun ev : P =>
-          - ('K(sh, ev)%:R +
-             \sum_(p | (ev < p < sh)%Ord)
-              (sval (rec p) ev)%:~R * 'K(sh, p)%:R)) => R n.
+          - ('K(sh, ev) +
+             \sum_(p | (ev < p < sh)%Ord) sval (rec p) ev * 'K(sh, p))) => n.
 rewrite (eq_bigr (fun ev : P =>
-    - ('K(sh, ev)%:R *: 's_ev +
+    - ('K(sh, ev) *: 's_ev +
        (\sum_(p | (ev < p < sh)%Ord)
-         (sval (rec p) ev)%:~R * 'K(sh, p)%:R *: 's_ev)))); first last.
-  move=> i Hi.
-  rewrite scaler_int mulrNz -scaler_int intrD.
-  rewrite scalerDl -scaler_suml !natz; congr (- (_ + _ *: 's_i)).
-  rewrite mulrz_sumr; apply eq_bigr => ev _.
-  by rewrite !natz !intrM mulrz_int.
+         sval (rec p) ev * 'K(sh, p) *: 's_ev)))); first last.
+  by move=> i Hi; rewrite scaleNr scalerDl -scaler_suml.
 rewrite sumrN big_split /=.
 rewrite (exchange_big_dep (fun j : P => j <A sh)) /=; first last.
   by move=> i j _ /andP [].
@@ -1072,37 +1085,43 @@ rewrite scalerDr scaler_sumr; congr (_ + _).
 by apply eq_bigr => i _; rewrite scalerA mulrC.
 Qed.
 
-Definition Kostkainv (sh ev : intpartn d) : int :=
-  if ev == sh then 1 else
-    if (ev : intpartndom d) <A sh then sval symm_to_syms_ex sh ev else 0.
-
 End KostkaInv.
 
+Definition KostkaInv d (sh ev : intpartn d) : int :=
+  if ev == sh then 1 else
+    if (ev : intpartndom d) <A sh then sval (symm_to_syms_ex d) sh ev else 0.
+
+Notation "''K^-1' ( lambda , mu )" := ((KostkaInv lambda mu)%:~R)
+  (at level 8, format "''K^-1' ( lambda ,  mu )") : ring_scope.
 
 Section SymmSyms.
 
 Variables (R : comRingType) (n : nat).
 Local Notation SF := {sympoly R[n.+1]}.
+Local Notation intR := (map_sympoly [rmorphism of intr]).
+
 Variable (d : nat).
-Implicit Type (sh ev : intpartn d).
 Local Notation P := (intpartndom d).
 
+Implicit Type sh : intpartn d.
+
 Lemma symm_to_syms sh :
-  'm[sh] = \sum_(ev : P) (Kostkainv sh ev)%:~R *: 's_ev :> SF.
+  'm[sh] = \sum_(ev : P) 'K^-1(sh, ev) *: 's_ev :> SF.
 Proof.
-rewrite /Kostkainv.
+rewrite /KostkaInv -(map_symm [rmorphism of intr]).
 case: symm_to_syms_ex => Kinv /= /(_ sh) ->.
-apply esym; rewrite (bigD1 sh) //= eq_refl scale1r; congr (_ + _).
+rewrite rmorphD /= rmorph_sum /=.
+apply esym; rewrite (bigD1 sh) //= eq_refl scale1r map_syms; congr (_ + _).
 rewrite (bigID (fun ev : P => ev <=A sh)) /= addrC big1 ?add0r; first last.
   move=> i /andP [Hd /negbTE Hdiff].
   by rewrite ltnX_neqAleqX (negbTE Hd) Hdiff /= scale0r.
-by apply eq_bigr => i Hi; rewrite Hi (ltnX_eqF Hi).
+by apply eq_bigr => i Hi; rewrite Hi (ltnX_eqF Hi) scale_map_sympoly map_syms.
 Qed.
 
 Lemma symm_to_syms_partdom sh :
-  'm[sh] = 's_sh + \sum_(ev : P | ev <A sh) (Kostkainv sh ev)%:~R *: 's_ev :> SF.
+  'm[sh] = 's_sh + \sum_(ev : P | ev <A sh) 'K^-1(sh, ev) *:'s_ev :> SF.
 Proof.
-rewrite symm_to_syms /Kostkainv (bigD1 sh) //= eq_refl scale1r; congr (_ + _).
+rewrite symm_to_syms /KostkaInv (bigD1 sh) //= eq_refl scale1r; congr (_ + _).
 rewrite (bigID (fun ev : P => ev <=A sh)) /= addrC big1 ?add0r; first last.
   move=> i /andP [Hd /negbTE Hdiff].
   by rewrite ltnX_neqAleqX (negbTE Hd) Hdiff /= scale0r.

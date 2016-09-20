@@ -20,12 +20,6 @@
 - partm m == the partition obtained by sorting the exponent of [m].
 - m \is dominant == the exponent of [m] are sorted in reverse order.
 
-We start by general Polynomials stuff:
-
-- tensR == the scalar extension morphism from [{mpoly Z[n]}] to [{mpoly R[n]}]
-           obtained by tensoring the coefficients rings. This is a ring
-           morphism.
-
 Antisymmetric polynomials:
 
 - p \is antisym == p is an antisymmetric polynomial. This is a keyed predicate
@@ -237,30 +231,26 @@ Local Definition simplexp := (expr0, expr1, scale1r, scaleN1r,
 (** ** Change of scalar in multivariate polynomials *)
 Section ScalarChange.
 
+Variables R S : ringType.
+Variable mor : {rmorphism R -> S}.
 Variable n : nat.
-Variable R : ringType.
 
-
-Definition tensR := [rmorphism of @map_mpoly n int_Ring R intr].
-
-Lemma tensRX m : tensR 'X_[m] = 'X_[m].
-Proof using .
-  rewrite -mpolyP => mm; rewrite mcoeff_map_mpoly /= !mcoeffX; by case: eqP.
+Lemma map_mpolyX (m : 'X_{1..n}) : map_mpoly mor 'X_[m] = 'X_[m].
+Proof using.
+by rewrite /= /map_mpoly mmapX /= /mmap1 mprodXnE -multinomUE_id.
 Qed.
 
-Lemma msym_tensR s p : msym s (tensR p) = tensR (msym s p).
-Proof using .
+Lemma msym_map_mpoly s (p : {mpoly R[n]}) :
+  msym s (map_mpoly mor p) = map_mpoly mor (msym s p).
+Proof using.
 rewrite (mpolyE p).
-rewrite [tensR _]raddf_sum [msym s _]raddf_sum.
-rewrite [msym s _]raddf_sum [tensR _]raddf_sum.
-apply eq_bigr => i _ /=.
-rewrite -(intz (p@_i)) scaler_int.
-by rewrite !raddfMz /= tensRX !msymX tensRX.
+rewrite [map_mpoly _ _]raddf_sum [msym s _]raddf_sum.
+rewrite [msym s _]raddf_sum [map_mpoly _ _]raddf_sum.
+apply eq_bigr => i _ /=; apply/mpolyP => m.
+by rewrite mcoeff_map_mpoly /= !mcoeff_sym mcoeff_map_mpoly /=.
 Qed.
 
 End ScalarChange.
-
-Arguments tensR {n} R.
 
 
 (** ** Characteristic of multivariate polynomials *)
@@ -981,11 +971,12 @@ End VdMProdIDomain.
 Lemma vdmprod_alt n (R : ringType) :
   vdmprod = alternpol 'X_[(rho n)] :> {mpoly R[n]}.
 Proof.
-have /(vdmprod_alt_idomain n)/(congr1 (tensR R)) : 2 \notin [char int] by [].
+have /(vdmprod_alt_idomain n) : 2 \notin [char int] by [].
+move/(congr1 (map_mpoly (S := R) intr)).
 rewrite /vdmprod raddf_sum rmorph_prod.
 rewrite (eq_bigr (fun i => 'X_i.1 - 'X_i.2)); first last.
-  move=> [i j] _ /=; by rewrite raddfB /= !tensRX.
-move ->; apply eq_bigr => s _; by rewrite raddfZsign !msymX /= tensRX.
+  by move=> [i j] _ /=; rewrite raddfB /= !map_mpolyX.
+by move ->; apply eq_bigr => s _; rewrite raddfZsign !msymX /= map_mpolyX.
 Qed.
 
 From mathcomp Require Import matrix.

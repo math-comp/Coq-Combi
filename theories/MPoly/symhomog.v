@@ -134,8 +134,7 @@ Proof.
 rewrite basisEdim size_map size_tuple dimv_homsym leqnn andbT.
 rewrite /homsympoly.
 apply/span_subvP => s /mapP [/= l]; rewrite {1}/Pd !mem_enum => _ ->{s}.
-have -> :
-  homsymm l = \sum_(m : intpartn d) ((Kostkainv l m)%:~R) *: homsyms m.
+have -> : homsymm l = \sum_(m : intpartn d) 'K^-1(l, m) *: homsyms m.
   apply val_inj; rewrite /=.
   rewrite (symm_to_syms _ _ l) [LHS](linear_sum (@sympol_lrmorphism _ _)) /=.
   by rewrite !linear_sum /=.
