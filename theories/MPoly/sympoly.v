@@ -662,7 +662,7 @@ rewrite /index_enum -enumT /=.
 rewrite -[RHS](big_map (@cnval n) xpredT
    (fun c : seq nat => (-1)^+(n - size c) *: \prod_(i <- c) 'h_i)).
 rewrite enum_intcompnE.
-elim: n {1 3 4 5}n (leqnn n) => [| m IHm] n.
+elim: n {-2}n (leqnn n) => [| m IHm] n.
   rewrite leqn0 => /eqP ->.
   by rewrite /enum_compn /= big_seq1 /= subnn expr0 scale1r big_nil syme0.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
@@ -819,7 +819,7 @@ rewrite /index_enum -enumT /=.
 rewrite -[RHS](big_map (@cnval n) xpredT
    (fun c : seq nat => \Pi c *: \prod_(i <- c) 'p_i)).
 rewrite enum_intcompnE.
-elim: n {1 3 4}n (leqnn n) => [| m IHm] n.
+elim: n {-2}n (leqnn n) => [| m IHm] n.
   rewrite leqn0 => /eqP ->.
   by rewrite big_seq1 big_nil symh0 /= invr1 scale1r.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
@@ -939,7 +939,7 @@ Lemma coeff_symh_to_symp n (l : intpartn n) :
   (\sum_(c : intcompn n | perm_eq l c) \Pi c) = (zcard l)%:R^-1 :> rat.
 Proof.
 case: l => l /= /andP [/eqP].
-elim: n {1 3 4 5 6 7 8 9}n (leqnn n) l => [| m IHm] n.
+elim: n {-2}n (leqnn n) l => [| m IHm] n.
   rewrite leqn0 => /eqP -> l /part0 H/H{H} ->{l}.
   rewrite zcard_nil /=.
   rewrite (eq_bigl (xpred1 (IntCompN (cnval := [::]) (n := 0%N) isT))); first last.
