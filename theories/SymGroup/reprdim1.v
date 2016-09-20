@@ -117,7 +117,7 @@ Proof.
   have {Hsim} /Hsim : (eltr n 0) \in 'SG_n.+1 by [].
   rewrite /triv_repr /sign_repr /triv_mx /sign_mx /= mul1mx (odd_eltr Hn).
   rewrite -[LHS]mulmx1 => /HB/eqP; rewrite -addr_eq0 -mulr2n => /eqP.
-  rewrite -matrixP => /(_ ord0 ord0).
+  apply/matrixP => /(_ ord0 ord0).
   rewrite !mxE eq_refl /= => /eqP.
   by have := Cchar; rewrite charf0P => /(_ 2) ->.
 Qed.
