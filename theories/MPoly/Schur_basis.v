@@ -34,7 +34,6 @@ Section Alternant.
 Variable n : nat.
 Variable R : comRingType.
 
-
 Local Notation rho := (rho n).
 Local Notation "''e_' k" := (@mesym n R k)
                               (at level 8, k at level 2, format "''e_' k").
@@ -540,7 +539,7 @@ Variable (n0 : nat) (R : comRingType).
 Local Notation n := (n0.+1).
 
 Implicit Types p q r : {mpoly R[n]}.
-Implicit Types m : 'X_{1..n}.
+Implicit Type m : 'X_{1..n}.
 
 Lemma prod_homog l (dt : l.-tuple nat) (mt : l.-tuple {mpoly R[n]}) :
   (forall i : 'I_l, tnth mt i \is (tnth dt i).-homog) ->
@@ -615,6 +614,8 @@ End MPoESymHomog.
 
 
 Require Import tools combclass tableau.
+Import IntPartNDom.
+Import OrdNotations.
 
 Section DefsKostkaMon.
 
@@ -804,12 +805,20 @@ Qed.
 
 End KostkaEq.
 
-(* We prepend a 0 to take care of the empty partition *)
-Definition Kostka d (sh : intpartn d) ev :=
-  KostkaMon sh (mpart (n := (size ev).+1) ev).
 
-Notation "''K' ( lambda , mu )" := (Kostka lambda mu)
+Section Kostka.
+
+Variable d : nat.
+Implicit Type sh : intpartn d.
+Local Notation P := (intpartndom d).
+
+(* We prepend a 0 to take care of the empty partition *)
+Definition Kostka sh ev :=
+  KostkaMon sh (mpart (n := (size ev).+1) ev).
+Local Notation "''K' ( lambda , mu )" := (Kostka lambda mu)
   (at level 8, format "''K' ( lambda ,  mu )") : nat_scope.
+Local Notation "''K' ( lambda , mu )" := ((Kostka lambda mu)%:R : int)
+  (at level 8, format "''K' ( lambda ,  mu )") : ring_scope.
 
 Local Arguments mpart n s : clear implicits.
 
@@ -826,7 +835,7 @@ case: ssrnat.ltnP => Hi.
 - by rewrite nth_default //; apply: (leq_trans H Hi).
 Qed.
 
-Lemma Kostka_any d (sh : intpartn d) ev n :
+Lemma Kostka_any sh ev n :
   size ev <= n.+1 -> 'K(sh, ev) = KostkaMon sh (mpart n.+1 ev).
 Proof.
 rewrite /Kostka => Hsz.
@@ -845,7 +854,7 @@ case: ssrnat.ltnP => Hi.
 - by apply nth_default; apply: (leq_trans _ (ltnW Hi)); apply leq_addr.
 Qed.
 
-Lemma Kostka_partdom d (sh : intpartn d) ev : 'K(sh, ev) != 0 -> partdom ev sh.
+Lemma Kostka_partdom (sh ev : P) : 'K(sh, ev) != 0 -> ev <=A sh.
 Proof.
 rewrite /Kostka => /KostkaMon_partdom.
 rewrite /mpart leqnSn => /partdomP Hdom.
@@ -856,7 +865,7 @@ case: (ssrnat.ltnP i (size ev).+1) => Hi.
 - by rewrite !nth_default ?size_tuple //; apply ltnW.
 Qed.
 
-Lemma Kostka0 d (sh : intpartn d) ev : ~~ partdom ev sh -> 'K(sh, ev) = 0.
+Lemma Kostka0 (sh ev : P) : ~~ (ev <=A sh) -> 'K(sh, ev) = 0.
 Proof.
 by move=> H; apply/eqP; move: H; apply contraR; apply Kostka_partdom.
 Qed.
@@ -869,7 +878,7 @@ case: (boolP (P x)) => HPx; rewrite /= ?mul0n ?count_pred0 //.
 by rewrite ?mul1n ?0count_predT size_nseq.
 Qed.
 
-Lemma Kostka_diag d (sh : intpartn d) : 'K(sh, sh) = 1.
+Lemma Kostka_diag sh : 'K(sh, sh) = 1.
 Proof.
 case Hsh : (size sh) => [|szsh].
   rewrite /Kostka /KostkaMon Hsh.
@@ -950,10 +959,16 @@ apply/setP => t; rewrite !inE; apply/eqP/eqP => [|->]/=.
   by rewrite Heq eq_refl in Hj.
 Qed.
 
-
-Section SymsSymm.
+End Kostka.
 
 Local Open Scope ring_scope.
+
+Notation "''K' ( lambda , mu )" := (Kostka lambda mu)
+  (at level 8, format "''K' ( lambda ,  mu )") : nat_scope.
+Notation "''K' ( lambda , mu )" := (Kostka lambda mu)%:R
+  (at level 8, format "''K' ( lambda ,  mu )") : ring_scope.
+
+Section SymsSymm.
 
 Variable (n : nat) (R : comRingType) (d : nat).
 Implicit Type (sh ev : intpartn d).
@@ -986,14 +1001,12 @@ case: (altP (mdeg m =P sumn sh)) => Heq; first last.
     case: (leqP (size i) n.+1) => [Hszl | /symm_oversize ->]; first last.
       by rewrite mcoeff0 mulr0.
     rewrite mcoeff_symm //=.
-    suff /negbTE -> : ~~ (perm_eq (mpart n.+1 i) m) by rewrite mulr0.
+    suff /negbTE -> : ~~ (perm_eq (mpart (n := n.+1) i) m) by rewrite mulr0.
     move: Hi; apply contra => /perm_eq_partm H.
     apply/eqP/val_inj => /=; rewrite -H.
     by rewrite mpartK.
 Qed.
 
-Import IntPartNDom.
-Import OrdNotations.
 Local Notation P := (intpartndom d).
 Local Notation SF := {sympoly R[n.+1]}.
 
@@ -1005,8 +1018,20 @@ rewrite (bigID (fun ev : P => ev <=A sh)) /= addrC big1 ?add0r //.
 by move=> i /andP [_ /Kostka0 ->]; rewrite scale0r.
 Qed.
 
-Local Definition decms sh coe :=
-  ('m[sh] = 's_sh + \sum_(ev : P | ev <A sh) (coe ev)%:~R *: 's_ev :> SF).
+End SymsSymm.
+
+
+Section KostkaInv.
+
+Variable (d : nat).
+Implicit Type (sh ev : intpartn d).
+Local Notation P := (intpartndom d).
+
+Local Definition decms sh (coe : P -> int) :=
+  forall (R : comRingType) (n : nat),
+    ('m[sh] = 's_sh + \sum_(ev : P | ev <A sh) (coe ev)%:~R *: 's_ev
+                      :> {sympoly R[n.+1]}).
+
 
 (* Inversing a triangular matrix with 1 on the diagonal *)
 Lemma symm_to_syms_ex :
@@ -1015,19 +1040,19 @@ Proof.
 suff rec (sh : P) : { coesh : P -> int | decms sh coesh }.
   by exists (fun sh => sval (rec sh)) => sh; case: rec.
 elim/(finord_wf (T := intpartndom_finPOrdType d)) : sh => /= sh IHsh.
-have {IHsh} Hrec (y : P) : { coesh : P -> int | y <A sh -> decms y coesh }.
+have {IHsh} (y : P) : { coesh : P -> int | y <A sh -> decms y coesh }.
   case: (boolP (y <A sh)) => Hy.
   - by have [coesh Hcoesh] := IHsh y Hy; exists coesh.
   - by exists (fun _ => 0).
-rewrite /decms.
+rewrite /decms => rec.
 exists (fun ev : P =>
           - ('K(sh, ev)%:R +
              \sum_(p | (ev < p < sh)%Ord)
-              (sval (Hrec p) ev)%:~R * 'K(sh, p)%:R)).
+              (sval (rec p) ev)%:~R * 'K(sh, p)%:R)) => R n.
 rewrite (eq_bigr (fun ev : P =>
     - ('K(sh, ev)%:R *: 's_ev +
        (\sum_(p | (ev < p < sh)%Ord)
-         (sval (Hrec p) ev)%:~R * 'K(sh, p)%:R *: 's_ev)))); first last.
+         (sval (rec p) ev)%:~R * 'K(sh, p)%:R *: 's_ev)))); first last.
   move=> i Hi.
   rewrite scaler_int mulrNz -scaler_int intrD.
   rewrite scalerDl -scaler_suml !natz; congr (- (_ + _ *: 's_i)).
@@ -1042,14 +1067,25 @@ apply eq_bigr => ev Hev.
 rewrite (eq_bigl (fun j : P => j <A ev)) /=; first last.
   move=> i; case: (boolP (i <A ev)); rewrite /= ?Hev ?andbT ?andbF //.
   by move=> /ltnX_trans/(_ Hev) ->.
-case: (Hrec ev) => coesh /= /(_ Hev) ->.
+case: (rec ev) => coesh /= /(_ Hev) ->.
 rewrite scalerDr scaler_sumr; congr (_ + _).
 by apply eq_bigr => i _; rewrite scalerA mulrC.
 Qed.
 
-Definition Kostkainv (sh ev : P) : int :=
+Definition Kostkainv (sh ev : intpartn d) : int :=
   if ev == sh then 1 else
-    if ev <A sh then sval symm_to_syms_ex sh ev else 0.
+    if (ev : intpartndom d) <A sh then sval symm_to_syms_ex sh ev else 0.
+
+End KostkaInv.
+
+
+Section SymmSyms.
+
+Variables (R : comRingType) (n : nat).
+Local Notation SF := {sympoly R[n.+1]}.
+Variable (d : nat).
+Implicit Type (sh ev : intpartn d).
+Local Notation P := (intpartndom d).
 
 Lemma symm_to_syms sh :
   'm[sh] = \sum_(ev : P) (Kostkainv sh ev)%:~R *: 's_ev :> SF.
@@ -1073,4 +1109,4 @@ rewrite (bigID (fun ev : P => ev <=A sh)) /= addrC big1 ?add0r; first last.
 by apply eq_bigr => i Hi; rewrite Hi (ltnX_eqF Hi).
 Qed.
 
-End SymsSymm.
+End SymmSyms.
