@@ -100,11 +100,12 @@ This library is based on
 * Coq 8.5 (it should work to with Coq-8.4 if you ignore the warning at the
   beginning of Make).
 
-* SSReflect/MathComp Library version 1.6.
+* [SSReflect/MathComp]([https://github.com/math-comp/math-comp])
+  Library version 1.6.
 
-* It needs an [extended version](https://github.com/hivert/multinomials-ssr)
-  of Pierre-Yves Strub [Multinomials](https://github.com/strub/multinomials-ssr)
-  library.
+* Pierre-Yves Strub library for
+  [Multinomials](https://github.com/math-comp/multinomials)
+
 
 
 Note: A standalone version of the proof of the Littlewood-Richardson rule not
