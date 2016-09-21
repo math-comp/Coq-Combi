@@ -146,7 +146,8 @@ by apply memv_add; [exact: memv_line | exact: mem0v].
 Qed.
 
 
-Local Notation E := [tuple mesym n.+1 R i.+1  | i < n.+1].
+Local Notation E := [tuple mesym n.+1 R i.+1 | i < n.+1].
+
 Definition monE m : seq nat :=
   rev (flatten [tuple nseq (m i) i.+1 | i < n.+1]).
 
@@ -191,34 +192,26 @@ rewrite /index_enum -!enumT /=; apply eq_bigr => i _.
 rewrite big_nseq tnth_mktuple.
 by rewrite -big_const_ord prodr_const cardT -cardE card_ord.
 Qed.
-Lemma symmon_homsyme m :
-  mnmwgt m = d ->
-  (DHomog (pihomogP _ _ ('X_[m] \mPo E))) \in <<[seq homsyme l | l <- tPd]>>%VS.
-Proof.
-move=> H; rewrite intpartn_of_monE span_def big_map.
-set S := DHomog _; have {S}-> : S = homsyme (intpartn_of_mon H).
-  rewrite {}/S; apply val_inj; rewrite /= pihomog_dE //.
-  apply: prod_syme_homog.
-rewrite (bigD1_seq (intpartn_of_mon H)) /= ?mem_enum ?inE ?enum_uniq //.
-rewrite -[X in X \in _]addr0.
-apply memv_add; first exact: memv_line.
-exact: mem0v.
-Qed.
 
 Lemma homsyme_basis : basis_of homsympoly [seq homsyme l | l <- tPd].
 Proof.
 rewrite basisEdim size_map size_tuple dimv_homsym leqnn andbT.
-apply/subvP => [[p Hhomp]] /=.
+apply/subvP => [[p Hhomp]] /=; rewrite span_def big_map.
 rewrite dsymP /= => /sym_fundamental_homog/(_ Hhomp) [t [Hp /dhomogP Hhomt]].
-have {Hp} -> : DHomog Hhomp = \sum_(m <- msupp t) t@_m *:
-               (DHomog (pihomogP _ _ ('X_[m] \mPo E))).
-  apply val_inj; rewrite /= -{1}Hp {Hp}.
-  rewrite {1}(mpolyE t).
+pose pid := fun p => @DHomog n.+1 R d _ (pihomogP [measure of mdeg] d p).
+have {Hp} -> : DHomog Hhomp = \sum_(m <- msupp t) t@_m *: pid ('X_[m] \mPo E).
+  apply val_inj; rewrite /= -{1}Hp {1}(mpolyE t) {Hp}.
   rewrite !linear_sum /=; apply eq_big_seq => m /Hhomt /= <-.
   rewrite !linearZ /=; congr (_ *: _); rewrite pihomog_dE //.
   exact: homog_X_mPo_elem.
 rewrite big_seq; apply rpred_sum => l /Hhomt /= Hl; apply rpredZ.
-exact: symmon_homsyme.
+rewrite intpartn_of_monE; move: (intpartn_of_mon Hl) => lam.
+rewrite {}/pid [DHomog _](_ : _ = homsyme lam); first last.
+  by apply val_inj; rewrite /= pihomog_dE //; apply: prod_syme_homog.
+rewrite (bigD1_seq lam) /= ?mem_enum ?inE ?enum_uniq //.
+rewrite -[X in X \in _]addr0.
+apply memv_add; first exact: memv_line.
+exact: mem0v.
 Qed.
 
 End Homogeneous.
