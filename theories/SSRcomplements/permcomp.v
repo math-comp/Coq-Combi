@@ -35,10 +35,9 @@ Lemma permS0 (g : 'S_0) : g = 1%g.
 Proof. by apply permP => x; case x. Qed.
 Lemma permS1 (g : 'S_1) : g = 1%g.
 Proof.
-apply permP => x; case x => i Hi.
-apply val_inj => /=; rewrite permE.
-case: (g (Ordinal Hi)) => a Ha /=.
-by move: Hi Ha; rewrite !ltnS !leqn0 => /eqP -> /eqP ->.
+apply/permP => i; rewrite perm1.
+case: (g i) => a Ha; case: i => b Hb.
+by apply val_inj => /=; case: a b Ha Hb => [|a] [|b].
 Qed.
 
 Lemma card_Sn n : #|'S_(n)| = n`!.
@@ -46,7 +45,7 @@ Proof using .
 rewrite (eq_card (B := perm_on [set : 'I_n])).
   by rewrite card_perm /= cardsE /= card_ord.
 move=> p; rewrite inE unfold_in /perm_on /=.
-apply/esym/subsetP => i _; by rewrite in_set.
+by apply/esym/subsetP => i _; rewrite in_set.
 Qed.
 
 

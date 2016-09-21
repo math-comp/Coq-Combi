@@ -662,7 +662,7 @@ rewrite /index_enum -enumT /=.
 rewrite -[RHS](big_map (@cnval n) xpredT
    (fun c : seq nat => (-1)^+(n - size c) *: \prod_(i <- c) 'h_i)).
 rewrite enum_intcompnE.
-elim: n {1 3 4 5}n (leqnn n) => [| m IHm] n.
+elim: n {-2}n (leqnn n) => [| m IHm] n.
   rewrite leqn0 => /eqP ->.
   by rewrite /enum_compn /= big_seq1 /= subnn expr0 scale1r big_nil syme0.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
@@ -819,7 +819,7 @@ rewrite /index_enum -enumT /=.
 rewrite -[RHS](big_map (@cnval n) xpredT
    (fun c : seq nat => \Pi c *: \prod_(i <- c) 'p_i)).
 rewrite enum_intcompnE.
-elim: n {1 3 4}n (leqnn n) => [| m IHm] n.
+elim: n {-2}n (leqnn n) => [| m IHm] n.
   rewrite leqn0 => /eqP ->.
   by rewrite big_seq1 big_nil symh0 /= invr1 scale1r.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
@@ -939,7 +939,7 @@ Lemma coeff_symh_to_symp n (l : intpartn n) :
   (\sum_(c : intcompn n | perm_eq l c) \Pi c) = (zcard l)%:R^-1 :> rat.
 Proof.
 case: l => l /= /andP [/eqP].
-elim: n {1 3 4 5 6 7 8 9}n (leqnn n) l => [| m IHm] n.
+elim: n {-2}n (leqnn n) l => [| m IHm] n.
   rewrite leqn0 => /eqP -> l /part0 H/H{H} ->{l}.
   rewrite zcard_nil /=.
   rewrite (eq_bigl (xpred1 (IntCompN (cnval := [::]) (n := 0%N) isT))); first last.
@@ -1188,96 +1188,81 @@ Qed.
 
 End SchurComRingType.
 
-Notation "''s[' l ]" := (Schur _ _ l)
-                              (at level 8, l at level 2, format "''s[' l ]").
 
+Section ScalarChange.
 
-From mathcomp Require Import ssrnum algC.
-Import Num.Theory.
-
-Section RatToAlgC.
-
+Variables R S : comRingType.
+Variable mor : {rmorphism R -> S}.
 Variable n : nat.
 
-Definition tens_algC :=
-  Eval hnf in [rmorphism of @map_mpoly n rat_fieldType algCfield ratr].
-
-Lemma tens_algCX m : tens_algC 'X_[m] = 'X_[m].
-Proof using.
-rewrite -mpolyP => mm; rewrite mcoeff_map_mpoly /= !mcoeffX.
-by case: eqP; rewrite ratr_nat.
-Qed.
-
-Lemma msym_tens_algC s p : msym s (tens_algC p) = tens_algC (msym s p).
-Proof using.
-rewrite (mpolyE p).
-rewrite [tens_algC _]raddf_sum [msym s _]raddf_sum.
-rewrite [msym s _]raddf_sum [tens_algC _]raddf_sum.
-apply eq_bigr => i _ /=; apply/mpolyP => m.
-by rewrite mcoeff_map_mpoly /= !mcoeff_sym mcoeff_map_mpoly /=.
-Qed.
-
-Lemma tens_algC_issym (f : {sympoly rat[n]}) : tens_algC f \is symmetric.
+Lemma map_mpoly_issym (f : {sympoly R[n]}) : map_mpoly mor f \is symmetric.
 Proof.
 apply/issymP => s.
-by rewrite msym_tens_algC (issymP _ (sympol_is_symmetric f)).
+by rewrite msym_map_mpoly (issymP _ (sympol_is_symmetric f)).
 Qed.
-Definition tens_algC_sym (f : {sympoly rat[n]}) : {sympoly algC[n]} :=
-           SymPoly (tens_algC_issym f).
+Definition map_sympoly (f : {sympoly R[n]}) : {sympoly S[n]} :=
+           SymPoly (map_mpoly_issym f).
 
-Lemma tens_algC_sym_is_rmorphism : rmorphism tens_algC_sym.
+Lemma map_sympoly_is_rmorphism : rmorphism map_sympoly.
 Proof.
-rewrite /tens_algC_sym; repeat split.
+rewrite /map_sympoly; repeat split.
 - by move=> i j /=; apply val_inj; rewrite /= rmorphB.
 - by move=> i j /=; apply val_inj; rewrite /= rmorphM.
 - by apply val_inj; rewrite /= rmorph1.
 Qed.
-Canonical tens_algC_sym_rmorphism := RMorphism tens_algC_sym_is_rmorphism.
+Canonical map_sympoly_rmorphism := RMorphism map_sympoly_is_rmorphism.
 
-Notation QtoC := tens_algC_sym.
-
-Lemma scale_rat_QtoC (r : rat) (p : {sympoly rat[n]}) :
-  QtoC (r *: p) = (ratr r) *: (QtoC p).
+Lemma scale_map_sympoly (r : R) (p : {sympoly R[n]}) :
+  map_sympoly (r *: p) = (mor r) *: (map_sympoly p).
 Proof.
 apply val_inj => /=.
 rewrite (mpolyE p) raddf_sum /=.
 apply/mpolyP => m.
-rewrite mcoeffZ !mcoeff_map_mpoly /= -rmorphM /=; congr ratr.
+rewrite mcoeffZ !mcoeff_map_mpoly /= -!rmorphM /=; congr (mor _).
 rewrite !linear_sum /= mulr_sumr.
 apply eq_bigr => i _ /=.
 by rewrite !linearZ /=.
 Qed.
 
-Lemma QtoCsyme d : QtoC 'e_d = 'e_d.
+Lemma map_symm d : map_sympoly 'm[d] = 'm[d].
+Proof.
+apply val_inj; rewrite /= /symm.
+case: leqP => _ /=; last exact: rmorph0.
+rewrite /symm_pol rmorph_sum /=.
+apply eq_bigr => X _; exact: map_mpolyX.
+Qed.
+
+Lemma map_syme d : map_sympoly 'e_d = 'e_d.
 Proof.
 apply val_inj; rewrite /= /mesym rmorph_sum /=.
 apply eq_bigr => X _; rewrite rmorph_prod /=.
-by apply eq_bigr => i _; rewrite tens_algCX.
+by apply eq_bigr => i _; rewrite map_mpolyX.
 Qed.
-Lemma QtoCsyme_prod d (l : intpartn d) : QtoC 'e[l] = 'e[l].
+Lemma map_syme_prod d (l : intpartn d) : map_sympoly 'e[l] = 'e[l].
 Proof.
-by rewrite rmorph_prod; apply eq_bigr => i _; exact: QtoCsyme.
+by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_syme.
 Qed.
 
-Lemma QtoCsymh d : QtoC 'h_d = 'h_d.
+Lemma map_symh d : map_sympoly 'h_d = 'h_d.
 Proof.
 apply val_inj; rewrite /= /symh_pol rmorph_sum /=.
-by apply eq_bigr => X _; rewrite tens_algCX.
+by apply eq_bigr => X _; rewrite map_mpolyX.
 Qed.
-Lemma QtoCsymh_prod d (l : intpartn d) : QtoC 'h[l] = 'h[l].
+Lemma map_symh_prod d (l : intpartn d) : map_sympoly 'h[l] = 'h[l].
 Proof.
-by rewrite rmorph_prod; apply eq_bigr => i _; exact: QtoCsymh.
+by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_symh.
 Qed.
 
-Lemma QtoCsymp d : QtoC 'p_d = 'p_d.
+Lemma map_symp d : map_sympoly 'p_d = 'p_d.
 Proof.
 apply val_inj; rewrite /= /symp_pol rmorph_sum /=.
-by apply eq_bigr => X _; rewrite rmorphX /= tens_algCX.
+by apply eq_bigr => X _; rewrite rmorphX /= map_mpolyX.
 Qed.
-Lemma QtoCsymp_prod d (l : intpartn d) : QtoC 'p[l] = 'p[l].
+Lemma map_symp_prod d (l : intpartn d) : map_sympoly 'p[l] = 'p[l].
 Proof.
-by rewrite rmorph_prod; apply eq_bigr => i _; exact: QtoCsymp.
+by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_symp.
 Qed.
 
-End RatToAlgC.
+End ScalarChange.
+
 

@@ -336,7 +336,7 @@ rewrite /std /is_std.
 move Hn : (size s) => n; elim: n s Hn => [/= | n IHn] s Hsz.
 - by move: Hsz=> /eqP/nilP ->.
 - case Hs : s Hsz => [//= | s0 s'].
-  rewrite -{2 3 4}Hs => Hsz Hperm /=.
+  rewrite -{-1}Hs => Hsz Hperm /=.
   have Hszrem : size (rembig s) = n by rewrite size_rembig Hs Hsz.
   have Hprem : perm_eq (rembig s) (iota 0 n).
     by rewrite -rembig_iota; exact: perm_eq_rembig.
@@ -830,7 +830,7 @@ exists (nth 0 (std w1) (size u)).
 exists (nth 0 (std w1) (size u).+1).
 exists (nth 0 (std w1) (size u).+2).
 split; first by rewrite size_take size_std Hsz.
-rewrite -{1 3 4 5 6}(cat_take_drop (size u) (std w1)); congr (_ ++ _).
+rewrite -{-2}(cat_take_drop (size u) (std w1)); congr (_ ++ _).
 rewrite drop_cat !nth_cat !size_take size_std Hsz ltnn.
 rewrite !ltnNge leqnSn /= (leq_trans (leqnSn _) (leqnSn _)) /=.
 rewrite (leq_trans (leq_trans (leqnSn _) (leqnSn _)) (leqnSn _)) /=.

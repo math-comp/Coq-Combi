@@ -784,38 +784,8 @@ Notation "x >A y"  := (x > y)%Ord (at level 70, y at next level, only parsing).
 
 End OrdNotations.
 
-From mathcomp Require Import finset.
-
-Section FinPOrdTypeTheory.
-
-Variable (T : finPOrdType).
-Implicit Types x : T.
-Variable P : T -> Type.
-
-Hypothesis IH : forall x, (forall y, y < x -> P y) -> P x.
-
-Lemma finord_wf x : P x.
-Proof.
-have := leqnn #|[set y : T | y < x]|.
-move: {2}#|_| => c.
-elim: c x => [| c IHc] x.
-  rewrite leqn0 cards_eq0 => /eqP Hx.
-  apply IH => y Hy; exfalso.
-  suff : y \in set0 by rewrite in_set0.
-  by rewrite -Hx inE.
-move => H; apply IH => y Hy.
-apply IHc; rewrite -ltnS.
-apply: (leq_trans _ H) => {H}; apply proper_card.
-rewrite /proper; apply/andP; split; apply/subsetP.
-- by move=> z; rewrite !inE => /ltnX_trans; apply.
-- move/(_ y); rewrite !inE => /(_ Hy).
-  by rewrite ltnXnn.
-Defined.
-
-End FinPOrdTypeTheory.
-
 (******************************************************************************)
-(* Increassing and nondecrassing maps                                         *)
+(* Increassing and nondecreassing maps                                         *)
 (******************************************************************************)
 Section IncrMap.
 
@@ -1557,6 +1527,36 @@ Definition dual_inhOrdType (T : inhOrdType) :=
 Definition dual_inhOrdFinType (T : inhOrdFinType) :=
   [inhOrdFinType of dual_ordType T].
 
+
+
+From mathcomp Require Import finset.
+
+Lemma finord_wf (T : finPOrdType) (P : T -> Type) :
+  (forall x, (forall y, y < x -> P y) -> P x) -> forall x, P x.
+Proof.
+move=> IH x.
+have := leqnn #|[set y : T | y < x]|.
+move: {2}#|_| => c.
+elim: c x => [| c IHc] x.
+  rewrite leqn0 cards_eq0 => /eqP Hx.
+  apply IH => y Hy; exfalso.
+  suff : y \in set0 by rewrite in_set0.
+  by rewrite -Hx inE.
+move => H; apply IH => y Hy.
+apply IHc; rewrite -ltnS.
+apply: (leq_trans _ H) => {H}; apply proper_card.
+rewrite /proper; apply/andP; split; apply/subsetP.
+- by move=> z; rewrite !inE => /ltnX_trans; apply.
+- move/(_ y); rewrite !inE => /(_ Hy).
+  by rewrite ltnXnn.
+Defined.
+
+Lemma finord_wf_down (T : finPOrdType) (P : T -> Type) :
+  (forall x, (forall y, y > x -> P y) -> P x) -> forall x, P x.
+Proof.
+move=> H; apply (@finord_wf [finPOrdType of dual_pordType T]) => x Hx.
+by apply H => y Hy; apply Hx; rewrite -dual_ltnX.
+Qed.
 
 (* Ordinal ***)
 Definition ord_pordMixin n := [pordMixin of 'I_n by <:].
