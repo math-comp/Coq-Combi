@@ -208,21 +208,17 @@ Qed.
 Lemma homsyme_basis : basis_of homsympoly [seq homsyme l | l <- tPd].
 Proof.
 rewrite basisEdim size_map size_tuple dimv_homsym leqnn andbT.
-apply/subvP => p; rewrite dsymP.
-move/symfP; rewrite (mpolyE (symf p)) /= => Hp.
-have -> : p = (DHomog (pihomogP _ _ p)).
-  by apply val_inj; rewrite /= pihomog_dE //; case p.
-rewrite Hp.
-
-
-move=> /Schur_dec_sym_homog/(_ (dhomog_is_dhomog _)) [co Hp].
-have -> : p = \sum_l co l *: homsyms l.
-  by apply val_inj => /=; rewrite Hp linear_sum /=; apply eq_bigr => l _.
-rewrite span_def.
-apply rpred_sum => l _; apply rpredZ.
-rewrite big_map (bigD1_seq l) /= ?mem_enum ?inE ?enum_uniq //.
-rewrite -[X in X \in _]addr0.
-apply memv_add; first exact: memv_line.
-exact: mem0v.
+apply/subvP => [[p Hhomp]] /=.
+rewrite dsymP /= => /sym_fundamental_homog/(_ Hhomp) [t [Hp /dhomogP Hhomt]].
+have {Hp} -> : DHomog Hhomp = \sum_(m <- msupp t) t@_m *:
+               (DHomog (pihomogP _ _ ('X_[m] \mPo E))).
+  apply val_inj; rewrite /= -{1}Hp {Hp}.
+  rewrite {1}(mpolyE t).
+  rewrite !linear_sum /=; apply eq_big_seq => m /Hhomt /= <-.
+  rewrite !linearZ /=; congr (_ *: _); rewrite pihomog_dE //.
+  exact: homog_X_mPo_elem.
+rewrite big_seq; apply rpred_sum => l /Hhomt /= Hl; apply rpredZ.
+exact: symmon_homsyme.
+Qed.
 
 End Homogeneous.

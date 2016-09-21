@@ -551,7 +551,7 @@ Qed.
 
 End ChangeRing.
 
-
+(* TODO : contribute to Pierre-Yves Repo *)
 Section MPoESymHomog.
 
 Variable (n0 : nat) (R : comRingType).
@@ -614,6 +614,16 @@ Lemma mwmwgt_homogE (p : {mpoly R[n]}) d :
 Proof using .
 rewrite !homog_piE; rewrite pihomog_mPo.
 by apply/idP/idP => [/eqP |  /eqP/msym_fundamental_un ] ->.
+Qed.
+
+Lemma sym_fundamental_homog (p : {mpoly R[n]}) (d : nat) :
+  p \is symmetric -> p \is d.-homog ->
+  { t | t \mPo E = p /\ t \is d.-homog for [measure of mnmwgt] }.
+Proof.
+move=> /sym_fundamental [t [Ht _]] Hhom.
+exists (pihomog [measure of mnmwgt] d t); split.
+- by rewrite -pihomog_mPo Ht pihomog_dE.
+- exact: pihomogP.
 Qed.
 
 Lemma Schur_homog (d : nat) (sh : intpartn d) : Schur n0 R sh \is d.-homog.
