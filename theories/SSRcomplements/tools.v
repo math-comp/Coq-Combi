@@ -181,7 +181,7 @@ Proof.
   elim: r s => [|r IHr] s /=.
     by rewrite take0 /index_iota /= big_nil.
   case: s => [| s0 s] /=.
-    rewrite {IHr} (eq_bigr (fun _ => 0)) //.
+    rewrite {IHr} (eq_bigr (fun => 0)) //.
     rewrite big_const_nat subn0.
     by elim: r.
   rewrite IHr /index_iota !subn0 /= big_cons /=.

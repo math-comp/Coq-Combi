@@ -408,7 +408,7 @@ Proof using. by apply val_inj; rewrite /= mesym0E. Qed.
 Lemma powersum0 : symp 0 = n%:R.
 Proof using.
 apply /val_inj.
-rewrite /= /symp_pol (eq_bigr (fun _ => 1));
+rewrite /= /symp_pol (eq_bigr (fun => 1));
   last by move=> i _; rewrite expr0.
 rewrite sumr_const card_ord /=.
 by rewrite [RHS](raddfMn (@sympol_lrmorphism _ _) n).
@@ -590,14 +590,14 @@ transitivity
       rewrite (bigID (mem [set j | m2 j != 0%N])) /= addnC.
       rewrite [X in _ = (X + _)%N]big1 ?add0n; first last.
         by move=> j; rewrite inE negbK -mnm_tnth => /eqP ->.
-      rewrite [RHS](eq_bigr (fun _ => 1%N)) ?sum1_card //.
+      rewrite [RHS](eq_bigr (fun => 1%N)) ?sum1_card //.
       move=> j; rewrite inE -mnm_tnth.
       by move/(_ j): Hall; case: (m2 j) => [|[|k]].
   - have : mdeg (g S) = #|S|.
       rewrite /mdeg [LHS]big_tuple (bigID (mem S)) /= addnC.
       rewrite [X in (X + _)%N]big1 ?add0n; first last.
         by move=> j /negbTE; rewrite tnth_mktuple => ->.
-      rewrite [LHS](eq_bigr (fun _ => 1%N)) ?sum1_card //.
+      rewrite [LHS](eq_bigr (fun => 1%N)) ?sum1_card //.
       by move=> j; rewrite tnth_mktuple => ->.
     rewrite Hs => HmdeggS.
     have Hm2 : mdeg (g S) < (mdeg m).+1 by rewrite HmdeggS ltnS.

@@ -56,7 +56,7 @@ rewrite /alternpol (reindex_inj invg_inj) /=.
 rewrite raddf_sum /= (bigID (pred1 1%g)) /=.
 rewrite big_pred1_eq odd_permV odd_perm1 expr0 scale1r invg1 msym1m.
 rewrite mcoeffX eq_refl /=.
-rewrite (eq_bigr (fun _ => 0)); first by rewrite big1_eq addr0.
+rewrite (eq_bigr (fun => 0)); first by rewrite big1_eq addr0.
 move=> s Hs; rewrite mcoeffZ msymX mcoeffX invgK.
 suff : [multinom m (s i) | i < n] != m by move=> /negbTE ->; rewrite mulr0.
 move: Hs; apply contra => /eqP; rewrite mnmP => Heq.
@@ -694,7 +694,7 @@ rewrite /Schur linear_sum /= /KostkaMon.
 rewrite (bigID (fun t : tabsh n la => t \in KostkaTab mu)) /=.
 rewrite addrC big1 ?add0r; first last.
   by move=> i; rewrite /KostkaTab inE evalE => /negbTE ->.
-rewrite (eq_bigr (fun _ => 1%R)); first last.
+rewrite (eq_bigr (fun => 1%R)); first last.
   by move=> i; rewrite /KostkaTab inE evalE => /eqP ->; rewrite eq_refl.
 by rewrite sumr_const; congr _%:R; apply eq_card => i.
 Qed.
@@ -902,7 +902,7 @@ Qed.
 Lemma count_nseq (T : eqType) (P : pred T) n x :
   count P (nseq n x) = (P x) * n.
 Proof.
-rewrite (eq_in_count (a2 := fun _ => P x)); last by move=> i /nseqP [->].
+rewrite (eq_in_count (a2 := fun => P x)); last by move=> i /nseqP [->].
 case: (boolP (P x)) => HPx; rewrite /= ?mul0n ?count_pred0 //.
 by rewrite ?mul1n ?0count_predT size_nseq.
 Qed.
@@ -997,6 +997,7 @@ Notation "''K' ( la , mu )" := (Kostka la mu)
 Notation "''K' ( la , mu )" := (Kostka la mu)%:R
   (at level 8, format "''K' ( la ,  mu )") : ring_scope.
 
+
 Section SymsSymm.
 
 Variable (n : nat) (R : comRingType) (d : nat).
@@ -1070,7 +1071,7 @@ suff rec (la : P) : { coela : P -> int | decms la coela }.
   by exists (fun la => sval (rec la)) => la; case: rec.
 elim/(finord_wf (T := intpartndom_finPOrdType d)) : la => /= la IHla.
 have {IHla} (y : P) : { coela : P -> int | y <A la -> decms y coela }.
-  case: (boolP (y <A la)) => Hy; last by exists (fun _ => 0).
+  case: (boolP (y <A la)) => Hy; last by exists (fun => 0).
   by have [coela Hcoela] := IHla y Hy; exists coela.
 rewrite /decms => rec.
 exists (fun mu : P =>
