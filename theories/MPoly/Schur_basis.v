@@ -58,8 +58,7 @@ rewrite big_pred1_eq odd_permV odd_perm1 expr0 scale1r invg1 msym1m.
 rewrite mcoeffX eq_refl /=.
 rewrite (eq_bigr (fun _ => 0)); first by rewrite big1_eq addr0.
 move=> s Hs; rewrite mcoeffZ msymX mcoeffX invgK.
-suff : [multinom m (s i) | i < n] != m.
-  move=> /negbTE -> /=; by rewrite mulr0.
+suff : [multinom m (s i) | i < n] != m by move=> /negbTE ->; rewrite mulr0.
 move: Hs; apply contra => /eqP; rewrite mnmP => Heq.
 apply/eqP; rewrite -permP => i; rewrite perm1; apply val_inj => /=.
 have /eqP := Heq i; rewrite !mnmE !(mnm_nth 0).
@@ -87,7 +86,7 @@ suff -> : msym t 'X_[m] = ('X_[m] : {mpoly R[n]}) by [].
 rewrite msymX; congr mpolyX.
 rewrite mnmP => k /=.
 rewrite !mnmE /= tpermV.
-case: (tpermP i j k) => Hk //; by rewrite Hk Heq.
+by case: (tpermP i j k) => Hk //; rewrite Hk Heq.
 Qed.
 
 Lemma alt_add1_0 (m : 'X_{1..n}) i :
@@ -96,7 +95,7 @@ Proof using .
 move=> Heq.
 have Hi1n : i.+1 < n.
   rewrite ltnNge; apply (introN idP) => Hi.
-  move: Heq; by rewrite [RHS]nth_default // size_tuple.
+  by move: Heq; rewrite [RHS]nth_default // size_tuple.
 have Hi : i < n by rewrite ltnW.
 pose i0 := Ordinal Hi; pose i1 := Ordinal Hi1n.
 have /alt_alternate : i0 != i1.
@@ -238,11 +237,11 @@ have {rhs} -> : rhs = (\sum_(0 <= i < n) (nth 0 mu i - nth 0 la i)).
 rewrite big_mkord.
 rewrite [RHS](bigID (fun i : 'I_n => nth 0 la i < nth 0 mu i)) /=.
 rewrite [X in (_ = _ + X)]big1 ?addn0; first last.
-  move=> i; by rewrite -leqNgt /leq => /eqP.
+  by move=> i; rewrite -leqNgt /leq => /eqP.
 apply eq_bigr => i H.
 have:= Hstrip i => /andP [] H1 H2.
 suff -> : nth 0 mu i = (nth 0 la i).+1 by rewrite subSn // subnn.
-apply anti_leq; by rewrite H2 H.
+by apply anti_leq; rewrite H2 H.
 Qed.
 
 Lemma nth_add_setdiff d k (la : intpartn d) (mu : intpartn (d + k)) :
@@ -346,45 +345,45 @@ by rewrite leqnn.
 Qed.
 
 
-Lemma vb_strip_lex (d1 k : nat) (la : intpartn (d1 + k)) p :
-  vb_strip p la ->
-  sumn p = d1 ->
-  is_part p -> (val la <= incr_first_n p k)%Ord.
+Lemma vb_strip_lex (d1 k : nat) (la : intpartn (d1 + k)) mu :
+  vb_strip mu la ->
+  sumn mu = d1 ->
+  is_part mu -> (val la <= incr_first_n mu k)%Ord.
 Proof using .
 rewrite /=.
-elim: p d1 k la => [| p0 p IHla] d1 k la Hstr.
+elim: mu d1 k la => /= [| m0 mu IHmu] d1 k la Hstr.
   have {Hstr} Hstr := vb_stripP (is_true_true : is_part [::]) (intpartnP _) Hstr.
   move=> Hd1 _; subst d1.
   suff /= -> : val la = nseq k 1%N by [].
   case: la Hstr => la /=; rewrite add0n => /andP [] /eqP.
-  elim: la k => [//= | s0 s IHs] /= k Hk; first by rewrite -Hk.
-  rewrite -/(is_part (s0 :: s)) => Hpart Hstr.
-  have Hs0 : s0 = 1.
+  elim: la k => [//= | l0 la IHla] /= k Hk; first by rewrite -Hk.
+  rewrite -/(is_part (l0 :: la)) => Hpart Hstr.
+  have Hl0 : l0 = 1.
     have := Hstr 0 => /=.
     have /= := part_head_non0 Hpart.
-    by case s0 => [| [| s0']].
-  subst s0; rewrite -Hk add1n /= {1}(IHs (sumn s)) //.
+    by case l0 => [| [| l0']].
+  subst l0; rewrite -Hk add1n /= {1}(IHla (sumn la)) //.
   - exact: (is_part_consK Hpart).
   - move=> i; have /= := Hstr i.+1.
     by rewrite !nth_nil.
 case: la Hstr => la Hla /= Hstr.
 case: k Hla => [| k] Hla Hd1; subst d1;
-               rewrite -/(is_part (p0 :: p)) /= => /andP [] _ Hp.
+               rewrite -/(is_part (m0 :: mu)) /= => /andP [] _ Hp.
   have Hincl := vb_strip_included Hstr.
-  move: Hla; rewrite addn0 /= -/(sumn (p0 :: p)) => /andP [] /eqP /esym Heq Hla.
+  move: Hla; rewrite addn0 /= -/(sumn (m0 :: mu)) => /andP [] /eqP /esym Heq Hla.
   by rewrite (included_sumnE Hla Hincl Heq).
 case: la Hstr Hla => [//= |s0 la] /= /andP [] H0 Hstrip.
 move=> /andP [] /eqP Heq /andP [] _ Hs.
 rewrite leqXE /= ltnXnatE ltnS.
-case: (leqP s0 p0) => //= Hp0.
-have Hs0 : s0 = p0.+1.
-  apply anti_leq; rewrite Hp0.
+case: (leqP s0 m0) => //= Hm0.
+have Hs0 : s0 = m0.+1.
+  apply anti_leq; rewrite Hm0.
   by move: H0 => /andP [] _ ->.
-subst s0; rewrite eq_refl /= {Hp0}.
+subst s0; rewrite eq_refl /= {Hm0}.
 move: Heq; rewrite addSn addnS => /eqP; rewrite eqSS -addnA => /eqP /addnI Heq.
-have Hla : is_part_of_n (sumn p + k)%N la.
+have Hla : is_part_of_n (sumn mu + k)%N la.
   by rewrite /= Heq eq_refl Hs.
-have /= := IHla _ _ (IntPartN Hla).
+have /= := IHmu _ _ (IntPartN Hla).
 by rewrite leqXE /=; apply.
 Qed.
 
@@ -403,7 +402,7 @@ Local Notation "''a_' k" := (@alternpol n R 'X_[k])
 
 Lemma Schur_cast d d' (la : intpartn d) (Heq : d = d') :
   's_la = Schur n0 R (cast_intpartn Heq la).
-Proof using . subst d'; by congr Schur. Qed.
+Proof using . by subst d'; congr Schur. Qed.
 
 Theorem alt_SchurE d (la : intpartn d) :
   size la <= n -> 'a_rho * 's_la = 'a_(mpart la + rho).
@@ -520,7 +519,7 @@ Theorem Schur_sym d (la : intpartn d) : 's_la \is symmetric.
 Proof using .
 have -> : 's_la = map_mpoly intr (Schur _ [ringType of int] la).
   rewrite /Schur /polylang /commword raddf_sum /=; apply eq_bigr => i _ /=.
-  rewrite rmorph_prod /=; apply eq_bigr => {i} i _ ; by rewrite map_mpolyX.
+  by rewrite rmorph_prod /=; apply eq_bigr => {i} i _ ; rewrite map_mpolyX.
 apply/issymP => s.
 have:= Schur_sym_idomain n0 int_iDomain la => /issymP/(_ s) {2}<-.
 by rewrite msym_map_mpoly.
@@ -569,7 +568,7 @@ elim: l dt mt => [| l IHl] dt mt H.
 case/tupleP: dt H => d dt.
 case/tupleP: mt => p mt H /=.
 rewrite !big_cons; apply dhomogM.
-  have := H ord0 => /=; by rewrite (tnth_nth 0) (tnth_nth 0%N).
+  by have := H ord0 => /=; rewrite (tnth_nth 0) (tnth_nth 0%N).
 apply IHl => i.
 have := H (inord i.+1).
 rewrite !(tnth_nth 0) !(tnth_nth 0%N) /=.
@@ -578,8 +577,7 @@ Qed.
 
 Local Notation E := [tuple mesym n R i.+1  | i < n].
 
-Lemma homog_X_mPo_elem (m : 'X_{1..n}) :
-  'X_[m] \mPo E \is (mnmwgt m).-homog.
+Lemma homog_X_mPo_elem m : 'X_[m] \mPo E \is (mnmwgt m).-homog.
 Proof using .
 rewrite comp_mpolyX.
 pose dt := [tuple (i.+1 * (m i))%N | i < n].
@@ -601,11 +599,11 @@ Lemma pihomog_mPo p d :
 Proof using .
 elim/mpolyind: p => [| c m p Hm Hc IHp] /=; first by rewrite !linear0.
 rewrite !linearP /= {}IHp; congr (c *: _ + _).
-case: (altP (mnmwgt m =P d)) => H.
-- have/eqP := H; rewrite -(dhomogX R) => /pihomog_dE ->.
-  have:= homog_X_mPo_elem m; by rewrite H => /pihomog_dE ->.
-- rewrite (pihomog_ne0 H (homog_X_mPo_elem m)).
-  rewrite (pihomog_ne0 H); first by rewrite linear0.
+case: (altP (mnmwgt m =P d)) => Hd.
+- have/eqP := Hd; rewrite -(dhomogX R) => /pihomog_dE ->.
+  by have:= homog_X_mPo_elem m; rewrite Hd => /pihomog_dE ->.
+- rewrite (pihomog_ne0 Hd (homog_X_mPo_elem m)).
+  rewrite (pihomog_ne0 Hd); first by rewrite linear0.
   by rewrite dhomogX.
 Qed.
 
@@ -944,7 +942,7 @@ have HT : is_tab_of_shape szla la [tuple nseq (nth 0 la i) i | i < szla.+1].
     + have : nth 0 la i != 0 by apply nth_part_non0; rewrite // Hla.
       by apply contra => /eqP/nilP; rewrite /nilp size_nseq.
     + case: (nth 0 la i) => [|l] //=.
-      elim: l => [//= | l] /= ->; by rewrite andbT.
+      by elim: l => [| l] //= ->; rewrite andbT.
     + have:= intpartnP la => /is_part_ijP [_ /(_ _ _ (ltnW Hij)) Hnthij].
       apply /dominateP; split; first by rewrite !size_nseq.
       rewrite size_nseq /= => c Hc.
