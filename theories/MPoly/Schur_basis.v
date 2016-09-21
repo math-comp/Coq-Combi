@@ -1050,93 +1050,105 @@ Qed.
 
 End SymsSymm.
 
+(** Inversing a matrix wich is untriangular w.r.t. a partial *)
+Section MatInv.
 
-Section KostkaInv.
+Variables (R : comRingType) (T : finPOrdType).
+Implicit Type (la mu : T).
 
-Variable (d : nat).
-Implicit Type (la mu : intpartn d).
-Local Notation P := (intpartndom d).
+Variable M : T -> T -> R.
 
-Local Definition decms la (coe : P -> int) :=
-  forall (n : nat),
-    ('m[la] = 's[la] + \sum_(mu : P | mu <A la) coe mu *: 's[mu]
-                      :> {sympoly int[n.+1]}).
+Local Definition decMS la (MI : T -> R) :=
+  forall (Mod : lmodType R) (A B : T -> Mod),
+    (forall la, A la = B la + \sum_(mu | mu <A la) M la mu *: B mu) ->
+          B la = A la + \sum_(mu | mu <A la) MI mu *: A mu.
 
-
-(* Inversing a triangular matrix with 1 on the diagonal *)
-Lemma symm_to_syms_ex :
-  { coe : P -> P -> int | forall la, decms la (coe la) }.
+Lemma decMS_ex : { MI : T -> T -> R | forall la, decMS la (MI la) }.
 Proof.
-suff rec (la : P) : { coela : P -> int | decms la coela }.
+suff rec la : { MIla : T -> R | decMS la MIla }.
   by exists (fun la => sval (rec la)) => la; case: rec.
-elim/(finord_wf (T := intpartndom_finPOrdType d)) : la => /= la IHla.
-have {IHla} (y : P) : { coela : P -> int | y <A la -> decms y coela }.
-  case: (boolP (y <A la)) => Hy; last by exists (fun => 0).
-  by have [coela Hcoela] := IHla y Hy; exists coela.
-rewrite /decms => rec.
-exists (fun mu : P =>
-          - ('K(la, mu) +
-             \sum_(p | (mu < p < la)%Ord) sval (rec p) mu * 'K(la, p))) => n.
-rewrite (eq_bigr (fun mu : P =>
-    - ('K(la, mu) *: 's[mu] +
-       (\sum_(p | (mu < p < la)%Ord)
-         sval (rec p) mu * 'K(la, p) *: 's[mu])))); first last.
+elim/finord_wf : la => /= la IHla.
+have {IHla} (mu) : { MIla : T -> R | mu <A la -> decMS mu MIla }.
+  case: (boolP (mu <A la)) => Hmu; last by exists (fun => 0).
+  by have [MIla HMIla] := IHla mu Hmu; exists MIla.
+rewrite /decMS => rec.
+exists (fun mu => - (M la mu + \sum_(p | (mu < p < la)%Ord) sval (rec p) mu * M la p)).
+move=> Mod A B H.
+rewrite (eq_bigr (fun mu =>
+    - (M la mu *: A mu +
+       (\sum_(p | (mu < p < la)%Ord) sval (rec p) mu * M la p *: A mu)))); first last.
   by move=> i Hi; rewrite scaleNr scalerDl -scaler_suml.
 rewrite sumrN big_split /=.
-rewrite (exchange_big_dep (fun j : P => j <A la)) /=; first last.
-  by move=> i j _ /andP [].
+rewrite (exchange_big_dep (fun j => j <A la)) /=; last by move=> i j _ /andP [].
 rewrite -big_split /=.
-apply/eqP; rewrite eq_sym syms_to_symm_partdom subr_eq; apply/eqP; congr (_ + _).
+apply/eqP; rewrite eq_sym H subr_eq; apply/eqP; congr (_ + _).
 apply eq_bigr => mu Hmu.
-rewrite (eq_bigl (fun j : P => j <A mu)) /=; first last.
+rewrite (eq_bigl (fun j => j <A mu)) /=; first last.
   move=> i; case: (boolP (i <A mu)); rewrite /= ?Hmu ?andbT ?andbF //.
   by move=> /ltnX_trans/(_ Hmu) ->.
-case: (rec mu) => coela /= /(_ Hmu) ->.
+case: (rec mu) => MIla /= /(_ Hmu _ A B H) ->.
 rewrite scalerDr scaler_sumr; congr (_ + _).
 by apply eq_bigr => i _; rewrite scalerA mulrC.
 Qed.
 
-End KostkaInv.
+Definition MatInv la mu : R :=
+  if mu == la then 1 else if mu <A la then sval decMS_ex la mu else 0.
 
-Definition KostkaInv d (la mu : intpartn d) : int :=
-  if mu == la then 1 else
-    if (mu : intpartndom d) <A la then sval (symm_to_syms_ex d) la mu else 0.
+Variables (Mod : lmodType R) (A B : T -> Mod).
+Hypothesis HM : forall la, A la = B la + \sum_(mu | mu <A la) M la mu *: B mu.
+
+Lemma MatInvP la : B la = A la + \sum_(mu | mu <A la) MatInv la mu *: A mu.
+Proof.
+rewrite [X in _ + X](eq_bigr (fun mu => sval decMS_ex la mu *: A mu)); first last.
+  by move=> mu Hmu; rewrite /MatInv Hmu (ltnX_eqF Hmu).
+by case: decMS_ex => /= Inv; rewrite /decMS; apply.
+Qed.
+
+Lemma MatInvE la : B la = \sum_(mu : T) MatInv la mu *: A mu.
+Proof.
+symmetry; rewrite MatInvP /MatInv (bigD1 la) //= eq_refl scale1r; congr (_ + _).
+rewrite (bigID (fun mu => mu <=A la)) /= addrC big1 ?add0r; first last.
+  move=> i /andP /= [Hd /negbTE Hdiff].
+  rewrite ltnX_neqAleqX /= Hdiff andbF.
+  (* Workaround of a bug in the hierarchy of finPOrdType *)
+  by move: Hd; case: (altP (i =P la)) => [-> |]; rewrite ?eq_refl ?scale0r.
+apply eq_bigl => mu.
+(* Workaround of a bug in the hierarchy of finPOrdType *)
+rewrite ltnX_neqAleqX; congr (~~ _ && _).
+by apply/eqP/eqP => ->.
+Qed.
+
+End MatInv.
+
+Definition KostkaInv d : intpartn d -> intpartn d -> int :=
+  MatInv (fun la mu : intpartndom d => 'K(la, mu)).
 
 Notation "''K^-1' ( la , mu )" := ((KostkaInv la mu)%:~R)
   (at level 8, format "''K^-1' ( la ,  mu )") : ring_scope.
 
 Section SymmSyms.
 
-Variables (R : comRingType) (n : nat).
+Variables (R : comRingType) (n : nat) (d : nat).
 Local Notation SF := {sympoly R[n.+1]}.
-Local Notation intR := (map_sympoly [rmorphism of intr]).
-
-Variable (d : nat).
 Local Notation P := (intpartndom d).
-
 Implicit Type la : intpartn d.
 
-Lemma symm_to_syms la :
-  'm[la] = \sum_(mu : P) 'K^-1(la, mu) *: 's[mu] :> SF.
+Lemma symm_to_syms la : 'm[la] = \sum_(mu : P) 'K^-1(la, mu) *: 's[mu] :> SF.
 Proof.
 rewrite /KostkaInv -(map_symm [rmorphism of intr]).
-case: symm_to_syms_ex => Kinv /= /(_ la) ->.
-rewrite rmorphD /= rmorph_sum /=.
-apply esym; rewrite (bigD1 la) //= eq_refl scale1r map_syms; congr (_ + _).
-rewrite (bigID (fun mu : P => mu <=A la)) /= addrC big1 ?add0r; first last.
-  move=> i /andP [Hd /negbTE Hdiff].
-  by rewrite ltnX_neqAleqX (negbTE Hd) Hdiff /= scale0r.
-by apply eq_bigr => i Hi; rewrite Hi (ltnX_eqF Hi) scale_map_sympoly map_syms.
+rewrite (MatInvE (T := [finPOrdType of P]) (@syms_to_symm_partdom n _ d) la).
+rewrite rmorph_sum /=; apply eq_bigr => mu _.
+by rewrite scale_map_sympoly map_syms.
 Qed.
 
 Lemma symm_to_syms_partdom la :
   'm[la] = 's[la] + \sum_(mu : P | mu <A la) 'K^-1(la, mu) *:'s[mu] :> SF.
 Proof.
-rewrite symm_to_syms /KostkaInv (bigD1 la) //= eq_refl scale1r; congr (_ + _).
-rewrite (bigID (fun mu : P => mu <=A la)) /= addrC big1 ?add0r; first last.
-  move=> i /andP [Hd /negbTE Hdiff].
-  by rewrite ltnX_neqAleqX (negbTE Hd) Hdiff /= scale0r.
-by apply eq_bigr => i Hi; rewrite Hi (ltnX_eqF Hi).
+rewrite /KostkaInv -(map_symm [rmorphism of intr]).
+rewrite (MatInvP (T := [finPOrdType of P]) (@syms_to_symm_partdom n _ d) la).
+rewrite rmorphD /= map_syms rmorph_sum /=; congr (_ + _).
+apply eq_bigr => mu _.
+by rewrite scale_map_sympoly map_syms.
 Qed.
 
 End SymmSyms.
