@@ -36,7 +36,7 @@ denoted [T].
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import path.
+From mathcomp Require Import path tuple.
 Require Import tools partition ordtype sorted.
 
 Set Implicit Arguments.
@@ -497,6 +497,56 @@ Section FinType.
 Variable n : nat.
 (* Should be Variable A : finOrdType *)
 
+Section TabSZ.
+
+Variable sz : nat.
+
+Definition is_tab_of_size :=
+  [pred t | (is_tableau (T := [inhOrdType of 'I_n.+1]) t) && (size_tab t == sz) ].
+
+Structure tabsz : predArgType :=
+  TabSz {tabszval :> seq (seq 'I_n.+1); _ : is_tab_of_size tabszval}.
+Canonical tabsz_subType := Eval hnf in [subType for tabszval].
+Definition tabsz_eqMixin := Eval hnf in [eqMixin of tabsz by <:].
+Canonical tabsz_eqType := Eval hnf in EqType tabsz tabsz_eqMixin.
+Definition tabsz_choiceMixin := Eval hnf in [choiceMixin of tabsz by <:].
+Canonical tabsz_choiceType := Eval hnf in ChoiceType tabsz tabsz_choiceMixin.
+Definition tabsz_countMixin := Eval hnf in [countMixin of tabsz by <:].
+Canonical tabsz_countType := Eval hnf in CountType tabsz tabsz_countMixin.
+Canonical tabsz_subCountType := Eval hnf in [subCountType of tabsz].
+
+Implicit Type (t : tabsz).
+
+Lemma tabszP t : is_tableau t.
+Proof using. by case: t => t /= /andP []. Qed.
+
+Lemma shape_tabsz t : size_tab t = sz.
+Proof using. by case: t => t /= /andP [] _ /eqP. Qed.
+
+Lemma shape_tabszP t : is_part_of_n sz (shape t).
+Proof.
+rewrite /= -(shape_tabsz t) /size_tab eq_refl /=.
+exact: (is_part_sht (tabszP t)).
+*Qed.
+Definition shapepartn_tabsz t := IntPartN (shape_tabszP t).
+
+Lemma size_to_word_tabsz t : size (to_word t) == sz.
+Proof. by rewrite size_to_word shape_tabsz. Qed.
+Definition to_word_tuple_tabsz t := Tuple (size_to_word_tabsz t).
+
+Definition tabszpair t := (shapepartn_tabsz t, to_word_tuple_tabsz t).
+Lemma tabszpairK :
+  pcancel tabszpair (fun p => insub (rev (reshape (rev p.1) p.2))).
+Proof.
+rewrite /tabszpair => [[t Ht]] /=.
+by rewrite to_wordK (insubT _ Ht) /=.
+Qed.
+
+Definition tabsz_finMixin := Eval hnf in PcanFinMixin tabszpairK.
+Canonical tabsz_finType := Eval hnf in FinType tabsz tabsz_finMixin.
+
+End TabSZ.
+
 Variable d : nat.
 Variable sh : intpartn d.
 
@@ -514,16 +564,17 @@ Definition tabsh_countMixin := Eval hnf in [countMixin of tabsh by <:].
 Canonical tabsh_countType := Eval hnf in CountType tabsh tabsh_countMixin.
 Canonical tabsh_subCountType := Eval hnf in [subCountType of tabsh].
 
-Lemma tabshP (t : tabsh) : is_tableau t.
+Implicit Type (t : tabsh).
+
+Lemma tabshP t : is_tableau t.
 Proof using. by case: t => t /= /andP []. Qed.
 
-Lemma shape_tabsh (t : tabsh) : shape t = sh.
+Lemma shape_tabsh t : shape t = sh.
 Proof using. by case: t => t /= /andP [] _ /eqP. Qed.
 
 From mathcomp Require Import tuple.
 
-Lemma tabsh_to_wordK (t : tabsh) :
-  rev (reshape (rev sh) (to_word (val t))) = t.
+Lemma tabsh_to_wordK t : rev (reshape (rev sh) (to_word (val t))) = t.
 Proof using. by rewrite /= -(shape_tabsh t); apply: to_wordK. Qed.
 
 Let tabsh_enum :
@@ -586,8 +637,7 @@ move=> w /=; rewrite /tabsh_reading mem_filter; apply/idP/idP.
   by rewrite sumn_rev Hsz.
 Qed.
 
-Lemma all_ltn_nth_tabsh (t : tabsh) i :
-  all (fun x : 'I_n.+1 => i <= x) (nth [::] t i).
+Lemma all_ltn_nth_tabsh t i : all (fun x : 'I_n.+1 => i <= x) (nth [::] t i).
 Proof.
 have:= tabshP t => /is_tableauP [_ _ Hdom].
 elim: i => [|i /allP IHi]; apply/allP => x //.
@@ -599,7 +649,7 @@ move/(_ _ Hxind): Hdom; rewrite sub_pord_ltnXE ltnXnatE /=.
 by rewrite nth_index.
 Qed.
 
-Lemma size_tabsh (t : tabsh) : size t <= n.+1.
+Lemma size_tabsh t : size t <= n.+1.
 Proof.
 have Hall := all_ltn_nth_tabsh t.
 have:= tabshP t => /is_tableauP [Hnnil _ _].
@@ -610,8 +660,13 @@ have:= ltn_ord x; rewrite ltnS => /(leq_trans Hn).
 by rewrite ltnn.
 Qed.
 
+Lemma tabszshP t : is_tab_of_size (sumn sh) t.
+Proof. by rewrite /= tabshP /= /size_tab shape_tabsh. Qed.
+Definition tabszsh t := TabSz (tabszshP t).
+
 End FinType.
 
+Hint Resolve tabszP.
 Hint Resolve tabshP.
 
 
