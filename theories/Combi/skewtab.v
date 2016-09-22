@@ -916,7 +916,7 @@ Theorem is_tableau_reshape_std sh T (u : seq T) :
   is_tableau (rev (reshape (rev sh) u)) =
   is_tableau (rev (reshape (rev sh) (std u))).
 Proof.
-move=> Hzs.
+move=> Hsz.
 rewrite -!is_skew_tableau0 -[sh]/(diff_shape [::] sh) -!/(skew_reshape _ _ _).
 by apply is_skew_tableau_reshape_std.
 Qed.

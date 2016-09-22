@@ -520,21 +520,21 @@ Implicit Type (t : tabsz).
 Lemma tabszP t : is_tableau t.
 Proof using. by case: t => t /= /andP []. Qed.
 
-Lemma shape_tabsz t : size_tab t = sz.
+Lemma size_tabsz t : size_tab t = sz.
 Proof using. by case: t => t /= /andP [] _ /eqP. Qed.
 
-Lemma shape_tabszP t : is_part_of_n sz (shape t).
+Lemma shape_tabsz_subproof t : is_part_of_n sz (shape t).
 Proof.
-rewrite /= -(shape_tabsz t) /size_tab eq_refl /=.
+rewrite /= -(size_tabsz t) /size_tab eq_refl /=.
 exact: (is_part_sht (tabszP t)).
-*Qed.
-Definition shapepartn_tabsz t := IntPartN (shape_tabszP t).
+Qed.
+Definition shape_tabsz t := IntPartN (shape_tabsz_subproof t).
 
 Lemma size_to_word_tabsz t : size (to_word t) == sz.
-Proof. by rewrite size_to_word shape_tabsz. Qed.
+Proof. by rewrite size_to_word size_tabsz. Qed.
 Definition to_word_tuple_tabsz t := Tuple (size_to_word_tabsz t).
 
-Definition tabszpair t := (shapepartn_tabsz t, to_word_tuple_tabsz t).
+Definition tabszpair t := (shape_tabsz t, to_word_tuple_tabsz t).
 Lemma tabszpairK :
   pcancel tabszpair (fun p => insub (rev (reshape (rev p.1) p.2))).
 Proof.
@@ -660,14 +660,38 @@ have:= ltn_ord x; rewrite ltnS => /(leq_trans Hn).
 by rewrite ltnn.
 Qed.
 
-Lemma tabszshP t : is_tab_of_size (sumn sh) t.
-Proof. by rewrite /= tabshP /= /size_tab shape_tabsh. Qed.
-Definition tabszsh t := TabSz (tabszshP t).
+Lemma tabszsh_subproof t : is_tab_of_size d t.
+Proof. by rewrite /= tabshP /= /size_tab shape_tabsh intpartn_sumn. Qed.
+Definition tabszsh t := TabSz (tabszsh_subproof t).
+
+Lemma tabszsh_inj : injective tabszsh.
+Proof. by move=> [t1 Ht1] [t2 Ht2] /(congr1 val) /= H; apply val_inj. Qed.
 
 End FinType.
 
 Hint Resolve tabszP.
 Hint Resolve tabshP.
+
+Definition cast_tabsz v m n (eq_mn : m = n) t :=
+  let: erefl in _ = n := eq_mn return tabsz v n in t.
+
+Lemma cast_tabszE v m n (eq_mn : m = n) (t : tabsz v m) :
+  val (cast_tabsz eq_mn t) = val t.
+Proof. subst m; by case: t. Qed.
+
+Lemma cast_tabsz_id v n eq_n (t : tabsz v n) : cast_tabsz eq_n t = t.
+Proof using. by apply val_inj => /=; rewrite cast_tabszE. Qed.
+
+Lemma cast_tabszK v m n eq_m_n :
+  cancel (@cast_tabsz v m n eq_m_n) (cast_tabsz (esym eq_m_n)).
+Proof using. by subst m. Qed.
+
+Lemma cast_tabszKV v m n eq_m_n :
+  cancel (cast_tabsz (esym eq_m_n)) (@cast_tabsz v m n eq_m_n).
+Proof using. by subst m. Qed.
+
+Lemma cast_tabsz_inj v m n eq_m_n : injective (@cast_tabsz v m n eq_m_n).
+Proof using. exact: can_inj (cast_tabszK eq_m_n). Qed.
 
 
 Section IncrMap.
