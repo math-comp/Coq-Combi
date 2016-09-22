@@ -1268,7 +1268,7 @@ End Induction.
 
 Lemma size_cover_tabrows k t :
   is_part (shape t) ->
-  #|cover [set s | s \in (tabrowsk t k)]| = part_sum (shape t) k.
+  #|cover [set s | s \in (tabrowsk t k)]| = sumn (take k (shape t)).
 Proof using .
   move=> Hpart.
   have:= trivIset_tabrowsk k t; rewrite /trivIset /= => /eqP <-.
@@ -1277,10 +1277,9 @@ Proof using .
     rewrite /tabrows; apply: trivIseq_map; first exact: cast_ord_inj.
     exact: trivIseq_shrows.
   + apply/allP => S /mem_take HS; exact: tabrows_non0.
-  rewrite /part_sum.
   elim: t k {Hpart} => [//= | t0 t IHt] /= k; first by rewrite !big_nil.
   case: k => [//= | k]; first by rewrite !big_nil.
-  move/(_ k): IHt; rewrite !big_cons => <-.
+  move/(_ k): IHt; rewrite /= big_cons => <-.
   rewrite /sym_cast imset_comp card_imset; last exact: cast_ord_inj.
   rewrite card_imset; last exact: cast_ord_inj.
   rewrite card_imset; last exact: rshift_inj.
@@ -1492,14 +1491,14 @@ Proof using .
 Qed.
 
 Lemma Greene_row_inf_tab k t :
-  is_tableau t -> Greene_row (to_word t) k <= part_sum (shape t) k.
+  is_tableau t -> Greene_row (to_word t) k <= sumn (take k (shape t)).
 Proof using .
   move=> Htab.
   have:= Greene_row_extract k Htab; by rewrite sum_conj (conj_partK (is_part_sht Htab)).
 Qed.
 
 Theorem Greene_row_tab k t :
-  is_tableau t -> Greene_row (to_word t) k = part_sum (shape t) k.
+  is_tableau t -> Greene_row (to_word t) k = sumn (take k (shape t)).
 Proof using .
   move=> Ht; apply/eqP; rewrite eqn_leq (Greene_row_inf_tab _ Ht) /=.
   rewrite /Greene_row /Greene_rel_t /= -(size_cover_tabrows _ (is_part_sht Ht)).
@@ -1533,7 +1532,7 @@ Proof using .
 Qed.
 
 Theorem Greene_col_tab k t :
-  is_tableau t -> Greene_col (to_word t) k = part_sum (conj_part (shape t)) k.
+  is_tableau t -> Greene_col (to_word t) k = sumn (take k (conj_part (shape t))).
 Proof using . move/Greene_col_tab_min ->; exact: sum_conj. Qed.
 
 End GreeneTab.
@@ -1548,7 +1547,7 @@ Theorem Greene_row_tab_eq_shape
 Proof.
   move=> Htab1 Htab2 Heq.
   have Hsh1 := is_part_sht Htab1; have Hsh2 := is_part_sht Htab2.
-  apply: (part_sum_inj Hsh1 Hsh2).
+  apply: (sumn_take_inj Hsh1 Hsh2).
   move=> k. rewrite -(Greene_row_tab k Htab1) -(Greene_row_tab k Htab2).
   exact: Heq.
 Qed.
@@ -1564,7 +1563,7 @@ Proof.
   suff : conj_part (shape t1) = conj_part (shape t2).
     move=> H; rewrite -(conj_partK Hsh1) -(conj_partK Hsh2).
     by rewrite H (conj_partK Hsh2).
-  apply: (part_sum_inj (is_part_conj Hsh1) (is_part_conj Hsh2)).
+  apply: (sumn_take_inj (is_part_conj Hsh1) (is_part_conj Hsh2)).
   move=> k. rewrite -(Greene_col_tab k Htab1) -(Greene_col_tab k Htab2).
   exact: Heq.
 Qed.

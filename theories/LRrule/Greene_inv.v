@@ -1437,7 +1437,7 @@ Proof using .
   + apply: Greene_row_invar_plact2i.
 Qed.
 
-Corollary Greene_row_RS k w : Greene_row w k = part_sum (shape (RS w)) k.
+Corollary Greene_row_RS k w : Greene_row w k = sumn (take k (shape (RS w))).
 Proof using .
   rewrite -Greene_row_tab; last exact: is_tableau_RS.
   apply: Greene_row_invar_plactic; exact: congr_RS.
@@ -1453,7 +1453,8 @@ Proof using .
 Qed.
 
 
-Theorem Greene_col_invar_plactic u v : u =Pl v -> forall k, Greene_col u k = Greene_col v k.
+Theorem Greene_col_invar_plactic u v :
+  u =Pl v -> forall k, Greene_col u k = Greene_col v k.
 Proof using .
   move=> Hpl k.
   move: v Hpl; apply: gencongr_ind; first exact: erefl.
@@ -1464,7 +1465,8 @@ Proof using .
   + exact: Greene_col_invar_plact2i.
 Qed.
 
-Corollary Greene_col_RS k w : Greene_col w k = part_sum (conj_part (shape (RS w))) k.
+Corollary Greene_col_RS k w :
+  Greene_col w k = sumn (take k (conj_part (shape (RS w)))).
 Proof using .
   rewrite -Greene_col_tab; last exact: is_tableau_RS.
   apply: Greene_col_invar_plactic; exact: congr_RS.
@@ -1543,7 +1545,7 @@ Implicit Type s : seq T.
 Lemma shape_RS_rev s : uniq s -> shape (RS (rev s)) = conj_part (shape (RS s)).
 Proof using .
   have Htr := is_tableau_RS (rev s); have Ht := is_tableau_RS s.
-  move=> Hs; apply: part_sum_inj.
+  move=> Hs; apply: sumn_take_inj.
     exact: is_part_sht.
     exact: is_part_conj (is_part_sht _).
   move=> k.

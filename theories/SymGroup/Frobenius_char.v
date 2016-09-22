@@ -22,19 +22,19 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import finfun fintype tuple finset bigop.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
-From mathcomp Require Import rat ssralg mxalgebra ssrnum algC.
-From mathcomp Require Import classfun character mxrepresentation.
+From mathcomp Require Import rat ssralg ssrnum algC.
+From mathcomp Require Import classfun.
 
+From SsrMultinomials Require Import mpoly.
 Require Import tools partition sympoly.
-Require Import permcomp presentSn cycles cycletype towerSn permcent.
-
-Import LeqGeqOrder.
+Require Import permcomp cycletype towerSn.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Import GroupScope GRing.Theory Num.Theory.
+Import LeqGeqOrder.
+Import GroupScope GRing.Theory.
 Open Scope ring_scope.
 
 Local Notation algCF := [fieldType of algC].
@@ -57,6 +57,13 @@ by rewrite scalerA mulrA -scalerDl mulrDl.
 Qed.
 Canonical Fchar_linear := Linear Fchar_is_linear.
 
+Lemma Fchar_homog f : sympol (Fchar f) \is n.-homog.
+Proof.
+rewrite /Fchar [X in X \in _](linear_sum (@sympol_lrmorphism _ _)) //=.
+apply rpred_sum => m _; apply rpredZ.
+exact: prod_symp_homog.
+Qed.
+
 Lemma Fchar_ncfuniCT l : Fchar '1z_[l] = 'p[l].
 Proof using.
 rewrite /Fchar (bigD1 l) //= big1 ?addr0; first last.
@@ -67,19 +74,18 @@ rewrite /Fchar (bigD1 l) //= big1 ?addr0; first last.
   by rewrite mulr0 mul0r scale0r.
 rewrite cfunElock cfuniCTE /=.
 rewrite /cycle_typeSn permCTP eq_refl /=.
-rewrite mulr1 divff ?scale1r //.
-exact: neq0zcoeff.
+by rewrite mulr1 divff ?scale1r.
 Qed.
 
 Lemma Fchar_triv : Fchar 1 = 'h_n.
 Proof.
 rewrite -decomp_cf_triv linear_sum.
 rewrite (eq_bigr (fun i => 'z_i^-1 *: 'p[i])); first last.
-  move=> l _; rewrite -Fchar_ncfuniCT /= linearZ scalerA mulrC divff ?scale1r //.
-  exact: neq0zcoeff.
-rewrite -QtoCsymh symh_to_symp /=.
+  move=> l _.
+  by rewrite -Fchar_ncfuniCT /= linearZ scalerA mulrC divff // scale1r.
+rewrite -(map_symh [rmorphism of ratr]) symh_to_symp /=.
 rewrite rmorph_sum /=; apply eq_bigr => l _.
-by rewrite zcoeffE scale_rat_QtoC QtoCsymp_prod fmorphV /= ratr_nat.
+by rewrite zcoeffE scale_map_sympoly map_symp_prod fmorphV /= ratr_nat.
 Qed.
 
 End Defs.

@@ -7,22 +7,22 @@ Set Implicit Arguments.
 Local Open Scope O_scope.
 
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun eqtype ssrbool ssrnat seq choice fintype finfun bigop ssrint rat ssralg ssrnum.
+From mathcomp Require Import ssrfun eqtype ssrbool ssrnat seq.
+From mathcomp Require Import choice fintype finfun bigop ssrint rat ssralg ssrnum.
 Import GRing.
 Import Num.Theory.
 
 Local Open Scope ring_scope.
 
-Instance ratO : ord rat := 
+Instance ratO : ord rat :=
      { Oeq := fun n m : rat => n = m;
        Ole := fun n m : rat => (n <= m)%R}.
-apply Build_Order.
-red.
-apply lerr.
-split.
-move /andP => H; by apply ler_asym.
-move => H; by rewrite H lerr.
-red; move => x y z; apply ler_trans.
+Proof.
+apply Build_Order => /=.
+- exact: lerr.
+- split => [/andP  H | ->]; first by apply ler_asym.
+  by rewrite lerr.
+- move=> /= x y z; apply ler_trans.
 Defined.
 
 (** Functions to be measured *)
@@ -40,8 +40,7 @@ Definition M A := MF A -m> rat.
 Instance MO (A:Type) : ord (M A) := fmono (MF A) rat.
 
 Instance app_mon (A:Type) (x:A) : monotonic (fun (f:MF A) => f x).
-red; auto.
-Save.
+Proof. by []. Qed.
 Hint Resolve app_mon.
 
 (** Monadic operators on M A *)
@@ -49,16 +48,15 @@ Hint Resolve app_mon.
 Definition munit (A:Type) (x:A) : M A := mon (fun (f:MF A) => f x).
 
 Definition mstar : forall (A B:Type), M A -> (A -> M B) -> M B.
-intros A B a F; exists (fun f => a (fun x => F x f)).
-red; intros.
-apply (fmonotonic a); intro z; simpl.
-apply (fmonotonic (F z)); trivial.
+move=> A B a F; exists (fun f => a (fun x => F x f)) => /= x y H.
+apply (fmonotonic a) => z /=.
+by apply (fmonotonic (F z)).
 Defined.
 
-Lemma star_simpl : forall (A B:Type) (a:M A) (F:A -> M B)(f:MF B),
-        mstar a F f =  a (fun x => F x f).
-trivial.
-Save.
+Lemma star_simpl : forall (A B:Type) (a:M A) (F:A -> M B) (f:MF B),
+  mstar a F f = a (fun x => F x f).
+Proof. by []. Qed.
+
 
 (** ** Properties of monadic operators *)
 Lemma law1 : forall (A B:Type) (x:A) (F:A -> M B) (f:MF B), mstar (munit x) F f == F x f.
@@ -546,13 +544,13 @@ intros;  intro f; simpl; trivial.
 Save.
 
 Lemma let_indep : forall (A B:Type) (m1:distr A) (m2: distr B) (f:MF B), 
-       mu m1 (fun _ => mu m2 f) = mu m2 f.
+       mu m1 (fun => mu m2 f) = mu m2 f.
 intros; rewrite (mu_cte m1 (mu m2 f)); auto.
 Save.
 
 
 Lemma let_indep_distr : forall (A B:Type) (m1:distr A) (m2: distr B), 
-       Mlet m1 (fun _ => m2) == m2.
+       Mlet m1 (fun => m2) == m2.
 exact let_indep.
 Save.
 
@@ -1142,8 +1140,8 @@ Save.
 
 Lemma mu_bool_0le A (m:distr A) (f:A->bool) : 0 <= mu m (fun x => (f x)%:Q).
 Proof.
-  apply mu_stable_pos => x /=.
-  by case (f x).
+apply mu_stable_pos => x /=.
+by case (f x).
 Qed.
 Hint Resolve mu_bool_0le.
 
@@ -1157,42 +1155,42 @@ Require Import rat_coerce.
 Lemma mu_stable_sum (A : Type) (m : distr A) (I : Type) (s : seq I) (f : I -> A -> rat) :
   mu m (fun a => \sum_(i <- s) f i a) = \sum_(i <- s) (mu m (f i)).
 Proof.
-  elim: s => [| s0 s IHs] /=.
-    rewrite big_nil; apply mu_zero_eq => x; by rewrite big_nil.
-  rewrite big_cons -IHs -mu_stable_add.
-  apply Mstable_eq => x /=; by rewrite big_cons.
+elim: s => [| s0 s IHs] /=.
+  rewrite big_nil; apply mu_zero_eq => x; by rewrite big_nil.
+rewrite big_cons -IHs -mu_stable_add.
+apply Mstable_eq => x /=; by rewrite big_cons.
 Qed.
 
 Lemma in_seq_sum (A : eqType) (s : seq A) x :
   uniq s -> (x \in s)%:Q = \sum_(i <- s) (x == i)%:Q.
 Proof.
-  elim: s => [| s0 s IHs] /=; first by rewrite big_nil.
-  rewrite inE big_cons => /andP [] /negbTE Hs0 /IHs <- {IHs}.
-  case: (boolP (x == s0)) => [/= /eqP -> | _ ]; last by rewrite /= add0r.
-  by rewrite Hs0 addr0.
+elim: s => [| s0 s IHs] /=; first by rewrite big_nil.
+rewrite inE big_cons => /andP [] /negbTE Hs0 /IHs <- {IHs}.
+case: (boolP (x == s0)) => [/= /eqP -> | _ ]; last by rewrite /= add0r.
+by rewrite Hs0 addr0.
 Qed.
 
 Lemma mu_in_seq (A : eqType) (m : distr A) (s : seq A) :
   uniq s ->
   mu m (fun x => (x \in s)) = \sum_(a <- s) mu m (fun x => (x == a)).
 Proof.
-  rewrite -mu_stable_sum => Hs.
-  apply Mstable_eq => x /=.
-  exact: in_seq_sum.
+rewrite -mu_stable_sum => Hs.
+apply Mstable_eq => x /=.
+exact: in_seq_sum.
 Qed.
 
 Lemma mu_bool_cond (A : Type) (m : distr A) (f g : A -> bool) :
   mu m (fun x => (f x)) = 1 ->
   mu m (fun x => (g x)) = mu m (fun x => (f x && g x)).
 Proof.
-  move=> H; apply ler_asym; apply/andP; split.
-  - rewrite -[X in (_ <= X)]addr0.
-    have <- : (mu m) (fun x : A => (~~ f x && g x)) = 0%R.
-      move: H; apply mu_bool_negb0 => x; by case: (f x).
-    rewrite -Mstable_add //.
-    apply mu_monotonic => x /=.
-    case: (f x); by rewrite ?addr0 ?add0r.
-  - by apply mu_bool_impl => x; apply/implyP => /andP [].
+move=> H; apply ler_asym; apply/andP; split.
+- rewrite -[X in (_ <= X)]addr0.
+  have <- : (mu m) (fun x : A => (~~ f x && g x)) = 0%R.
+    by move: H; apply mu_bool_negb0 => x; case: (f x).
+  rewrite -Mstable_add //.
+  apply mu_monotonic => x /=.
+  by case: (f x); rewrite ?addr0 ?add0r.
+- by apply mu_bool_impl => x; apply/implyP => /andP [].
 Qed.
 
 Lemma mu_pos_cond (A : Type) (m : distr A) (f : A -> bool) (g : A -> rat) :
@@ -1200,22 +1198,21 @@ Lemma mu_pos_cond (A : Type) (m : distr A) (f : A -> bool) (g : A -> rat) :
   mu m (fun x => (f x)) = 1 ->
   mu m (fun x => (g x)) = mu m (fun x => ((f x)%:Q * g x)).
 Proof.
-  move=> Hg H.
-  have H0g x : 0 <= g x by have:= Hg x => /andP [].
-  have Hg1 x : g x <= 1 by have:= Hg x => /andP [].
-  apply ler_asym; apply/andP; split.
-  - rewrite -[X in (_ <= X)]addr0.
-    have <- : (mu m) (fun x : A => ((~~ f x)%:Q * g x)) = 0%R.
-      apply ler_asym; apply/andP; split.
-      + rewrite -(subrr 1) -{3}H -mu_bool_negb.
-        apply mu_monotonic => x /=.
-        case: (f x) => /=; by rewrite ?mul0r ?mul1r.
-      + apply mu_stable_pos => x /=.
-        case: (f x) => /=; by rewrite ?mul0r ?mul1r.
-    rewrite -Mstable_add //.
-    apply mu_monotonic => x /=.
-    case: (f x); by rewrite /= ?mul0r ?mul1r ?addr0 ?add0r.
-  - apply mu_monotonic => x /=.
-    case: (f x) => /=; by rewrite ?mul0r ?mul1r.
+move=> Hg H.
+have H0g x : 0 <= g x by have:= Hg x => /andP [].
+have Hg1 x : g x <= 1 by have:= Hg x => /andP [].
+apply ler_asym; apply/andP; split.
+- rewrite -[X in (_ <= X)]addr0.
+  have <- : (mu m) (fun x : A => ((~~ f x)%:Q * g x)) = 0%R.
+    apply ler_asym; apply/andP; split.
+    + rewrite -(subrr 1) -{3}H -mu_bool_negb.
+      apply mu_monotonic => x /=.
+      by case: (f x) => /=; rewrite ?mul0r ?mul1r.
+    + apply mu_stable_pos => x /=.
+      by case: (f x) => /=; rewrite ?mul0r ?mul1r.
+  rewrite -Mstable_add //.
+  apply mu_monotonic => x /=.
+  by case: (f x); rewrite /= ?mul0r ?mul1r ?addr0 ?add0r.
+- apply mu_monotonic => x /=.
+  by case: (f x) => /=; rewrite ?mul0r ?mul1r.
 Qed.
-

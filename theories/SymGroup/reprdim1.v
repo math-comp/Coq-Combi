@@ -14,14 +14,13 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm.
-From mathcomp Require Import fintype tuple finfun bigop prime ssralg poly finset.
-From mathcomp Require Import fingroup morphism perm automorphism quotient finalg action.
-From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum.
-From mathcomp Require Import presentation all_character.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
+From mathcomp Require Import fintype tuple finfun bigop finset fingroup perm.
+From mathcomp Require Import ssralg fingroup morphism perm action.
+From mathcomp Require Import matrix mxalgebra ssrnum algC.
+From mathcomp Require Import mxrepresentation classfun character.
 
-Require Import permcomp tools permuted combclass congr presentSn.
+Require Import permcomp tools congr presentSn.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -118,7 +117,7 @@ Proof.
   have {Hsim} /Hsim : (eltr n 0) \in 'SG_n.+1 by [].
   rewrite /triv_repr /sign_repr /triv_mx /sign_mx /= mul1mx (odd_eltr Hn).
   rewrite -[LHS]mulmx1 => /HB/eqP; rewrite -addr_eq0 -mulr2n => /eqP.
-  rewrite -matrixP => /(_ ord0 ord0).
+  apply/matrixP => /(_ ord0 ord0).
   rewrite !mxE eq_refl /= => /eqP.
   by have := Cchar; rewrite charf0P => /(_ 2) ->.
 Qed.

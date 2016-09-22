@@ -14,10 +14,11 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype div.
-From mathcomp Require Import tuple finfun path bigop finset binomial.
-From mathcomp Require Import fingroup perm automorphism action ssralg.
-From mathcomp Require finmodule.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
+From mathcomp Require Import tuple finfun finset path bigop.
+From mathcomp Require Import fingroup perm action.
+From mathcomp Require Import ssralg matrix mxalgebra algC classfun.
+
 
 Require Import partition tools sorted.
 Require Import permcomp fibered_set cycles.
@@ -222,9 +223,9 @@ Variable T : finType.
 Implicit Types (s t : {perm T}) (n : nat).
 
 Fact cycle_type_subproof (s : {perm T}) :
-  is_part_of_n #|T| (parts_shape (pcycles s)).
+  is_part_of_n #|T| (setpart_shape (pcycles s)).
 Proof using.
-rewrite -cardsT; apply parts_shapeP.
+rewrite -cardsT; apply setpart_shapeP.
 exact: partition_pcycles.
 Qed.
 Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_subproof s).
@@ -282,7 +283,7 @@ Qed.
 Lemma card_pred_card_pcycles s (P : pred nat) :
   #|[set x in pcycles s | P #|x| ]| = count P (cycle_type s).
 Proof using.
-rewrite /cycle_type /= /psupport /parts_shape.
+rewrite /cycle_type /= /psupport /setpart_shape.
 have /perm_eqlP/perm_eqP -> := perm_sort geq [seq #{x} | x <- enum (pcycles s)].
 rewrite cardE /enum_mem size_filter /= count_map count_filter.
 by apply eq_count => X; rewrite !inE andbC.
@@ -524,7 +525,7 @@ exact: psupport_of_set.
 Qed.
 
 
-Definition perm_of_parts P : {perm T} :=
+Definition perm_of_setpart P : {perm T} :=
   (\prod_(C in [set perm_of_pcycle s | s in [set X in P |#|X|>1]]) C)%g.
 
 Lemma supports_perm_of_pcycle P :
@@ -536,7 +537,7 @@ apply eq_in_imset => i; rewrite inE => /andP [_ Hi].
 by rewrite support_perm_of_pcycle.
 Qed.
 
-Lemma disj_perm_of_parts P :
+Lemma disj_perm_of_setpart P :
   partition P [set: T] ->
   disjoint_supports [set perm_of_pcycle s| s in [set X0 in P | 1 < #|X0|]].
 Proof using.
@@ -550,13 +551,13 @@ move => Hpart; split => [|C D].
   by rewrite !support_perm_of_pcycle // => ->.
 Qed.
 
-Lemma pcycles_perm_of_parts P :
-  partition P [set: T] -> pcycles (perm_of_parts P) = P.
+Lemma pcycles_perm_of_setpart P :
+  partition P [set: T] -> pcycles (perm_of_setpart P) = P.
 Proof using.
 move=> Hpart; apply /setP => X.
 apply /idP/idP => HX.
-- case: (boolP (X \in psupport (perm_of_parts P))).
-  + rewrite psupport_of_disjoint; last exact: disj_perm_of_parts.
+- case: (boolP (X \in psupport (perm_of_setpart P))).
+  + rewrite psupport_of_disjoint; last exact: disj_perm_of_setpart.
     move => /bigcupP [C] /imsetP [X0].
     rewrite inE => /andP [H HX0] ->.
     by rewrite psupport_of_set // inE => /eqP ->.
@@ -564,7 +565,7 @@ apply /idP/idP => HX.
     move: HX => /imsetP [x _ ->].
     rewrite support_card_pcycle => Hsupp.
     have:= Hsupp; rewrite in_support negbK pcycle_fix => /eqP ->.
-    move: Hsupp; rewrite support_of_disjoint; last exact: disj_perm_of_parts.
+    move: Hsupp; rewrite support_of_disjoint; last exact: disj_perm_of_setpart.
     rewrite -(big_imset id) /=; first last.
       move=> C D /imsetP [c]; rewrite inE => /andP [_ cardc ->{C}].
       move=>     /imsetP [d]; rewrite inE => /andP [_ cardd ->{D}].
@@ -585,7 +586,7 @@ apply /idP/idP => HX.
     apply /imsetP; exists x => //.
     apply esym; apply/eqP; rewrite -pcycle_fix.
     rewrite -[_ == x]negbK -in_support support_of_disjoint;
-      last exact: disj_perm_of_parts.
+      last exact: disj_perm_of_setpart.
     apply /bigcupP => /exists_inP; apply /negP; rewrite negb_exists_in.
     apply /forall_inP => C /imsetP [x0]; rewrite inE => /andP [Hx0 Hcard] ->.
     rewrite support_perm_of_pcycle //.
@@ -601,18 +602,18 @@ apply /idP/idP => HX.
     move=> H; move: H HX Hset0.
     rewrite neq_ltn => /orP [|Hcard HX Hset0].
       by rewrite ltnS leqn0 cards_eq0 => /eqP -> ->.
-    suff: X \in psupport (perm_of_parts P) by rewrite inE => /andP [].
-    rewrite psupport_of_disjoint; last exact: disj_perm_of_parts.
+    suff: X \in psupport (perm_of_setpart P) by rewrite inE => /andP [].
+    rewrite psupport_of_disjoint; last exact: disj_perm_of_setpart.
     apply /bigcupP; exists (perm_of_pcycle X);
       last by rewrite psupport_of_set ?inE.
     apply /imsetP; exists X => //.
     by rewrite inE; apply /andP; split.
 Qed.
 
-Lemma perm_of_partsE P :
+Lemma perm_of_setpartE P :
   partition P [set: T] ->
-  cycle_type (perm_of_parts P) = parts_shape P :> seq nat.
-Proof using. by move=> /pcycles_perm_of_parts pcy; rewrite /= pcy. Qed.
+  cycle_type (perm_of_setpart P) = setpart_shape P :> seq nat.
+Proof using. by move=> /pcycles_perm_of_setpart pcy; rewrite /= pcy. Qed.
 
 End Permofcycletype.
 
@@ -624,10 +625,10 @@ Variable ct : intpartn #|T|.
 Lemma permCT_exists : {s | cycle_type s == ct}.
 Proof using.
 apply sigW => /=.
-have:= ex_set_parts_shape (intpartn_cast (esym (cardsT T)) ct).
-move=> [P /perm_of_partsE /= Hct shape].
-exists (perm_of_parts P); apply/eqP/val_inj => /=; rewrite Hct.
-by rewrite shape intpartn_castE.
+have:= ex_set_setpart_shape (cast_intpartn (esym (cardsT T)) ct).
+move=> [P /perm_of_setpartE /= Hct shape].
+exists (perm_of_setpart P); apply/eqP/val_inj => /=; rewrite Hct.
+by rewrite shape cast_intpartnE.
 Qed.
 Definition permCT := val permCT_exists.
 Lemma permCTP : cycle_type permCT = ct.
@@ -669,10 +670,7 @@ rewrite -imset_classCT card_imset; last exact: classCT_inj.
 by apply eq_card => s; rewrite !inE.
 Qed.
 
-From mathcomp Require Import matrix vector mxalgebra falgebra ssrnum algC algnum.
-From mathcomp Require Import presentation all_character.
-
-Import GroupScope GRing.Theory Num.Theory.
+Import GroupScope GRing.Theory.
 Local Open Scope ring_scope.
 
 Section CFunIndicator.
@@ -701,9 +699,9 @@ End CycleType.
 
 Notation "''1_[' p ]" := (cfuniCT p) : ring_scope.
 
-Coercion CTpartn n := intpartn_cast (esym (card_ord n)).
+Coercion CTpartn n := cast_intpartn (esym (card_ord n)).
 
-Import GroupScope GRing.Theory Num.Theory.
+Import GroupScope GRing.Theory.
 Local Open Scope ring_scope.
 
 
@@ -712,13 +710,13 @@ Section Sn.
 Variable n : nat.
 
 Definition partnCT : intpartn #|'I_n| -> intpartn n :=
-  intpartn_cast (card_ord n).
+  cast_intpartn (card_ord n).
 Definition cycle_typeSn (s : 'S_n) : intpartn n := partnCT (cycle_type s).
 
 Lemma CTpartnK (p : intpartn n) : partnCT p = p.
 Proof using.
 rewrite /partnCT; apply val_inj => /=.
-by rewrite !intpartn_castE.
+by rewrite !cast_intpartnE.
 Qed.
 
 Lemma partnCTE p1 p2 : (p1 == p2) = (partnCT p1 == partnCT p2).
@@ -726,14 +724,14 @@ Proof using.
 rewrite /partnCT.
 apply/eqP/eqP => [-> //|].
 case: p1 p2 => [p1 Hp1] [p2 Hp2].
-move/(congr1 val); rewrite !intpartn_castE /= => Hp.
+move/(congr1 val); rewrite !cast_intpartnE /= => Hp.
 exact: val_inj.
 Qed.
 
 Lemma partnCTK (p : intpartn #|'I_n|) : p = partnCT p.
 Proof using.
 rewrite /CTpartn; apply val_inj => /=.
-by rewrite !intpartn_castE.
+by rewrite !cast_intpartnE.
 Qed.
 
 Lemma partnCT_congr p1 (p2 : intpartn n) : (partnCT p1 == p2) = (p1 == p2).
@@ -750,3 +748,6 @@ Qed.
 
 End Sn.
 
+Lemma cast_cycle_typeSN m n (s : 'S_m) (eq_mn : m = n) :
+  cycle_typeSn (cast_perm eq_mn s) = cast_intpartn eq_mn (cycle_typeSn s).
+Proof. by subst n. Qed.

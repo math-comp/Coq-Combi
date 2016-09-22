@@ -16,7 +16,7 @@
 (** * The Ring of Symmetric Polynomials *)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun finset bigop ssralg path perm fingroup.
+From mathcomp Require Import tuple finfun finset bigop ssrint ssralg path perm fingroup.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 From mathcomp Require Import vector.
 
@@ -132,13 +132,83 @@ Qed.
 Lemma homsyms_basis : basis_of homsympoly [seq homsyms l | l <- tPd].
 Proof.
 rewrite basisEdim size_map size_tuple dimv_homsym leqnn andbT.
-apply/subvP => p; rewrite dsymP.
-move=> /Schur_dec_sym_homog/(_ (dhomog_is_dhomog _)) [co Hp].
-have -> : p = \sum_l co l *: homsyms l.
-  by apply val_inj => /=; rewrite Hp linear_sum /=; apply eq_bigr => l _.
+rewrite /homsympoly.
+apply/span_subvP => s /mapP [/= l]; rewrite {1}/Pd !mem_enum => _ ->{s}.
+have -> : homsymm l = \sum_(m : intpartn d) 'K^-1(l, m) *: homsyms m.
+  apply val_inj; rewrite /=.
+  rewrite (symm_to_syms _ _ l) [LHS](linear_sum (@sympol_lrmorphism _ _)) /=.
+  by rewrite !linear_sum /=.
 rewrite span_def.
-apply rpred_sum => l _; apply rpredZ.
-rewrite big_map (bigD1_seq l) /= ?mem_enum ?inE ?enum_uniq //.
+apply rpred_sum => /= m _; apply rpredZ.
+rewrite big_map (bigD1_seq m) /= ?mem_enum ?inE ?enum_uniq //.
+rewrite -[X in X \in _]addr0.
+by apply memv_add; [exact: memv_line | exact: mem0v].
+Qed.
+
+
+Local Notation E := [tuple mesym n.+1 R i.+1 | i < n.+1].
+
+Definition monE m : seq nat :=
+  rev (flatten [tuple nseq (m i) i.+1 | i < n.+1]).
+
+Lemma monEP m : mnmwgt m = d -> is_part_of_n d (monE m).
+Proof.
+rewrite /mnmwgt => H.
+rewrite /= is_part_sortedE; apply/and3P; split.
+- rewrite /monE sumn_rev sumn_flatten -H.
+  rewrite -sumnE big_map big_tuple.
+  apply/eqP/eq_bigr => /= i _.
+  by rewrite -sumnE tnth_mktuple big_nseq iter_addn_0 mulnC.
+- rewrite /monE /= rev_sorted.
+  apply/(sorted.sortedP 0%N) => //=; first exact: leq_trans.
+  move=> i j; rewrite !nth_flatten.
+  rewrite size_flatten.
+  have -> : shape [seq nseq (m i0) i0.+1 | i0 <- enum 'I_n.+1] = m.
+    rewrite /shape -map_comp (tuple_map_ord m) /=.
+    apply eq_map => k /=.
+    by rewrite size_nseq.
+  move=> Hijm; have:= Hijm => /andP [Hij Hjm]; have Him := leq_ltn_trans Hij Hjm.
+  move/reshape_coord_leq: Hijm.
+  have:= reshape_coordP Hjm; have:= reshape_coordP Him.
+  case: (reshape_coord m i) (reshape_coord m j) => [r1 c1] [r2 c2].
+  rewrite size_tuple => [] [Hr1 Hc1] [Hrc Hc2].
+  do 2 (rewrite (nth_map ord0); last by rewrite size_enum_ord).
+  rewrite !(mnm_nth 0) !nth_nseq !nth_enum_ord //=.
+  rewrite Hc1 Hc2 ltnS.
+  by move=> [Hr|[-> _]] //; apply ltnW.
+- rewrite /monE; rewrite mem_rev; apply/flatten_mapP => /= [[s _]].
+  by move=> /nseqP [].
+Qed.
+Definition intpartn_of_mon m (H : mnmwgt m = d) := IntPartN (monEP H).
+
+Lemma intpartn_of_monE m (H : mnmwgt m = d) :
+  'X_[m] \mPo E = homsyme (intpartn_of_mon H).
+Proof.
+rewrite comp_mpolyX /= /prod_gen /intpartn_of_mon /monE /=.
+rewrite [RHS](rmorph_prod (@sympol_lrmorphism _ _)) /=.
+rewrite -[RHS](eq_big_perm _ (perm_eq_rev _)) /=.
+rewrite big_flatten /= big_map /=.
+rewrite /index_enum -!enumT /=; apply eq_bigr => i _.
+rewrite big_nseq tnth_mktuple.
+by rewrite -big_const_ord prodr_const cardT -cardE card_ord.
+Qed.
+
+Lemma homsyme_basis : basis_of homsympoly [seq homsyme l | l <- tPd].
+Proof.
+rewrite basisEdim size_map size_tuple dimv_homsym leqnn andbT.
+apply/subvP => [[p Hhomp]] /=; rewrite span_def big_map.
+rewrite dsymP /= => /sym_fundamental_homog/(_ Hhomp) [t [Hp /dhomogP Hhomt]].
+pose pid := fun p => @DHomog n.+1 R d _ (pihomogP [measure of mdeg] d p).
+have {Hp} -> : DHomog Hhomp = \sum_(m <- msupp t) t@_m *: pid ('X_[m] \mPo E).
+  apply val_inj; rewrite /= -{1}Hp {1}(mpolyE t) {Hp}.
+  rewrite !linear_sum /=; apply eq_big_seq => m /Hhomt /= <-.
+  rewrite !linearZ /=; congr (_ *: _); rewrite pihomog_dE //.
+  exact: homog_X_mPo_elem.
+rewrite big_seq; apply rpred_sum => l /Hhomt /= Hl; apply rpredZ.
+rewrite intpartn_of_monE; move: (intpartn_of_mon Hl) => lam.
+rewrite {}/pid [DHomog _](_ : _ = homsyme lam); first last.
+  by apply val_inj; rewrite /= pihomog_dE //; apply: prod_syme_homog.
+rewrite (bigD1_seq lam) /= ?mem_enum ?inE ?enum_uniq //.
 rewrite -[X in X \in _]addr0.
 apply memv_add; first exact: memv_line.
 exact: mem0v.

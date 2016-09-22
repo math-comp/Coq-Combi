@@ -66,9 +66,9 @@ Here are the notion defined is this file:
 
 ***************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm.
-From mathcomp Require Import morphism presentation.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
+From mathcomp Require Import choice fintype tuple finfun bigop finset.
+From mathcomp Require Import fingroup perm morphism presentation.
 
 Require Import permcomp tools permuted combclass congr.
 
@@ -243,7 +243,7 @@ Proof.
 rewrite factE /= cardE -(size_map val) enum_codeszE.
 elim: n => [//=| n IHn].
 rewrite size_flatten -/enum_codesz /shape -map_comp.
-rewrite (eq_map (f2 := fun _ => fact_rec n)); first last.
+rewrite (eq_map (f2 := fun => fact_rec n)); first last.
   by move=> i /=; rewrite size_map.
 by rewrite -sumnE big_map big_const_seq count_predT size_iota iter_addn_0 mulnC /=.
 Qed.

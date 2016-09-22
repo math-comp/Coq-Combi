@@ -35,10 +35,9 @@ Lemma permS0 (g : 'S_0) : g = 1%g.
 Proof. by apply permP => x; case x. Qed.
 Lemma permS1 (g : 'S_1) : g = 1%g.
 Proof.
-apply permP => x; case x => i Hi.
-apply val_inj => /=; rewrite permE.
-case: (g (Ordinal Hi)) => a Ha /=.
-by move: Hi Ha; rewrite !ltnS !leqn0 => /eqP -> /eqP ->.
+apply/permP => i; rewrite perm1.
+case: (g i) => a Ha; case: i => b Hb.
+by apply val_inj => /=; case: a b Ha Hb => [|a] [|b].
 Qed.
 
 Lemma card_Sn n : #|'S_(n)| = n`!.
@@ -46,60 +45,50 @@ Proof using .
 rewrite (eq_card (B := perm_on [set : 'I_n])).
   by rewrite card_perm /= cardsE /= card_ord.
 move=> p; rewrite inE unfold_in /perm_on /=.
-apply/esym/subsetP => i _; by rewrite in_set.
+by apply/esym/subsetP => i _; rewrite in_set.
 Qed.
 
 
 Section CastSn.
 
-Definition cast_perm_val m n (eq_m_n : m = n) (s : 'S_m) :=
-  fun x : 'I_n => cast_ord eq_m_n (s (cast_ord (esym eq_m_n) x)).
-
-Fact cast_perm_proof m n eq_m_n s : injective (@cast_perm_val m n eq_m_n s).
-Proof using. by move=> x y /cast_ord_inj/perm_inj/cast_ord_inj. Qed.
-Definition cast_perm m n eq_m_n s : 'S_n :=
-  perm (@cast_perm_proof m n eq_m_n s).
-
-Lemma cast_permE m n eq_m_n (s : 'S_m) i :
-  @cast_ord m n eq_m_n (s i) = (cast_perm eq_m_n s) (cast_ord eq_m_n i).
-Proof using. by rewrite permE /cast_perm_val cast_ordK. Qed.
+Definition cast_perm m n (eq_mn : m = n) (s : 'S_m) :=
+  let: erefl in _ = n := eq_mn return 'S_n in s.
 
 Lemma cast_perm_id n eq_n s : cast_perm eq_n s = s :> 'S_n.
-Proof using.
-by apply/permP => i /=; rewrite permE /cast_perm_val !cast_ord_id.
-Qed.
+Proof using. by apply/permP => i; rewrite /cast_perm /= eq_axiomK. Qed.
+
+Lemma cast_ord_permE m n eq_m_n (s : 'S_m) i :
+  @cast_ord m n eq_m_n (s i) = (cast_perm eq_m_n s) (cast_ord eq_m_n i).
+Proof using. by subst m; rewrite cast_perm_id !cast_ord_id. Qed.
+
+Lemma cast_permE m n (eq_m_n : m = n) (s : 'S_m) (i : ordinal_finType n) :
+  cast_ord eq_m_n (s (cast_ord (esym eq_m_n) i)) = cast_perm eq_m_n s i.
+Proof. by rewrite cast_ord_permE cast_ordKV. Qed.
 
 Lemma cast_permK m n eq_m_n :
   cancel (@cast_perm m n eq_m_n) (cast_perm (esym eq_m_n)).
-Proof using.
-move=> s /=; apply/permP => i /=; do 2 rewrite permE /cast_perm_val.
-by rewrite esymK !cast_ordK.
-Qed.
+Proof using. by subst m. Qed.
 
 Lemma cast_permKV m n eq_m_n :
   cancel (cast_perm (esym eq_m_n)) (@cast_perm m n eq_m_n).
-Proof using. move=> s /=; rewrite -{1}(esymK eq_m_n); exact: cast_permK. Qed.
+Proof using. by subst m. Qed.
 
 Lemma cast_perm_inj m n eq_m_n : injective (@cast_perm m n eq_m_n).
 Proof using. exact: can_inj (cast_permK eq_m_n). Qed.
 
 Lemma cast_perm_morphM m n eq_m_n :
   {morph @cast_perm m n eq_m_n : x y / x * y >-> x * y}.
-Proof using.
-rewrite /cast_perm => /= s1 s2; apply /permP => /= i.
-apply val_inj => /=.
-by rewrite permM /= !permE /cast_perm_val cast_ordK permM.
-Qed.
+Proof using. by subst m. Qed.
 Canonical morph_of_cast_perm m n eq_m_n :=
   Morphism (D := setT) (in2W (@cast_perm_morphM m n eq_m_n)).
 
 Lemma isom_cast_perm m n eq_m_n : isom setT setT (@cast_perm m n eq_m_n).
 Proof using.
+subst m.
 apply/isomP; split.
 - apply/injmP=> i j _ _; exact: cast_perm_inj.
-- apply/setP => /= s; rewrite inE.
-  apply/imsetP; exists (cast_perm (esym eq_m_n) s); first by rewrite !inE.
-  by rewrite /= cast_permKV.
+- apply/setP => /= s; rewrite !inE.
+  by apply/imsetP; exists s; rewrite ?inE.
 Qed.
 
 End CastSn.

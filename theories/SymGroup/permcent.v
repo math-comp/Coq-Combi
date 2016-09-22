@@ -18,7 +18,7 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple path bigop finset div.
 From mathcomp Require Import fingroup perm action gproduct morphism.
 
-Require Import tools partition permcomp cycles cycletype towerSn.
+Require Import tools partition permcomp cycles cycletype.
 
 Import GroupScope.
 
@@ -217,7 +217,7 @@ Qed.
 Lemma card_pcyclegrpE s : #|'CC(s)| = (\prod_(i <- cycle_type s) i)%N.
 Proof using.
 rewrite -(bigdprod_card (esym (pcyclegrpE s))).
-rewrite /cycle_type /= /parts_shape /cycle_dec.
+rewrite /cycle_type /= /setpart_shape /cycle_dec.
 rewrite big_imset /=; last exact: restr_perm_inj.
 rewrite [RHS](eq_big_perm [seq #{x} | x <- enum (pcycles s)]);
   last by apply/perm_eqlP; apply perm_sort.
@@ -410,7 +410,7 @@ Lemma card_stab_ipcycles s :
 Proof using.
 rewrite -(bigdprod_card (esym (stab_ipcyclesE s))).
 apply eq_bigr => i _.
-rewrite card_perm_ong /parts_shape; congr (_)`!.
+rewrite card_perm_ong /setpart_shape; congr (_)`!.
 have:= perm_sort geq [seq #{x} | x <- enum (pcycles s)].
 move/perm_eqlP/perm_eqP ->.
 rewrite !cardE -size_filter /= /enum_mem.
@@ -497,7 +497,7 @@ Definition zcard l :=
 Lemma zcard_nil : zcard [::] = 1.
 Proof.
 rewrite /zcard big_nil mul1n /=.
-rewrite (eq_bigr (fun _ => 1)) // big_const /=.
+rewrite (eq_bigr (fun => 1)) // big_const /=.
 by rewrite eq_cardT // size_enum_ord /= mul1n.
 Qed.
 
@@ -561,27 +561,20 @@ End PermCycles.
 Lemma dvdn_zcard_fact n (l : intpartn n) : zcard l %| n`!.
 Proof.
 pose l' := (CTpartn l).
-have -> : zcard l = zcard l' by rewrite intpartn_castE /=.
+have -> : zcard l = zcard l' by rewrite cast_intpartnE /=.
 rewrite -(permCTP l') -(card_cent1_perm (permCT l')).
 rewrite -card_Sn -cardsT; apply cardSg.
 exact: subsetT.
 Qed.
 
+Lemma neq0zcard n (l : intpartn n) : zcard l != 0.
+Proof.
+have:= dvdn_zcard_fact l; apply contraL => /eqP ->.
+by rewrite dvd0n -lt0n fact_gt0.
+Qed.
+
 Theorem card_class_of_part n (l : intpartn n) : #|classCT l| = n`! %/ zcard l.
 Proof using.
 rewrite /classCT card_class_perm permCTP /=.
-by rewrite intpartn_castE /= card_ord.
-Qed.
-
-
-From mathcomp Require Import ssralg ssrnum algC.
-
-Import GRing.Theory Num.Theory.
-
-Lemma zcoeffE n (l : intpartn n) : zcoeff l = ((zcard l)%:R)%R.
-Proof.
-rewrite /zcoeff card_class_of_part cardsT card_Sn.
-rewrite char0_natf_div; [| exact: Cchar | exact: dvdn_zcard_fact].
-rewrite invf_div mulrC mulfVK //.
-by rewrite pnatr_eq0 -lt0n; apply: fact_gt0.
+by rewrite cast_intpartnE /= card_ord.
 Qed.
