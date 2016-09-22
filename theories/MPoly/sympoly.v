@@ -701,7 +701,7 @@ move: Hni; rewrite subn_eq0 -leqNgt => {Hin} Hin.
 rewrite subSn //.
 case: i Hi Hsum Hin => // i _.
 rewrite subSS => Hsum Him /=.
-have Hzs : size s <= m.
+have Hsz : size s <= m.
   by apply (leq_trans (size_comp Hn0)); rewrite {}Hsum leq_subr.
 rewrite -subSn // subSS subSn // exprS mulN1r opprK.
 rewrite subnAC subnKC //.

@@ -401,7 +401,7 @@ Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
 
 Lemma Schur_cast d d' (la : intpartn d) (Heq : d = d') :
-  's_la = Schur n0 R (cast_intpartn Heq la).
+  Schur n0 R (cast_intpartn Heq la) = 's_la.
 Proof using . by subst d'; congr Schur. Qed.
 
 Theorem alt_SchurE d (la : intpartn d) :
@@ -454,7 +454,7 @@ have Hprd : prd =1 pred1 la'.
   exact: vb_strip_rem_col0.
 rewrite !(eq_bigl _ _ Hprd) {Hprd prd} /= !big_pred1_eq cast_intpartnE.
 set A := (X in _ + X); set B := (X in _ = _ + X).
-suff -> : A = B by move=> /addIr <- {A B}; rewrite -Schur_cast.
+suff -> : A = B by move=> /addIr <- {A B}; rewrite Schur_cast.
 apply eq_bigr => {A B} nu /andP [] /andP [] Hstrip Hsznu Hnu.
 pose nu' := cast_intpartn (esym Hk) nu.
 have Hlex : (val nu' < la)%Ord.
@@ -474,7 +474,7 @@ have Hlex : (val nu' < la)%Ord.
   exact: vb_strip_lex.
 have Hsznu' : size nu' <= n by rewrite cast_intpartnE.
 have := IHla nu' Hlex Hsznu'.
-rewrite -Schur_cast => ->.
+rewrite Schur_cast => ->.
 by rewrite cast_intpartnE.
 Qed.
 
@@ -644,6 +644,7 @@ Local Open Scope nat_scope.
 
 Import IntPartNDom.
 Import OrdNotations.
+Close Scope ord_scope.
 
 Section DefsKostkaMon.
 
@@ -990,13 +991,13 @@ Qed.
 
 End Kostka.
 
-Local Close Scope nat_scope.
 
 Notation "''K' ( la , mu )" := (Kostka la mu)
   (at level 8, format "''K' ( la ,  mu )") : nat_scope.
 Notation "''K' ( la , mu )" := (Kostka la mu)%:R
   (at level 8, format "''K' ( la ,  mu )") : ring_scope.
 
+Local Open Scope ring_scope.
 
 Section SymsSymm.
 
@@ -1131,7 +1132,7 @@ Section SymmSyms.
 Variables (R : comRingType) (n : nat) (d : nat).
 Local Notation SF := {sympoly R[n.+1]}.
 Local Notation P := (intpartndom d).
-Implicit Type la : intpartn d.
+Implicit Type la mu : intpartn d.
 
 Lemma symm_to_syms la : 'm[la] = \sum_(mu : P) 'K^-1(la, mu) *: 's[mu] :> SF.
 Proof.
@@ -1152,3 +1153,83 @@ by rewrite scale_map_sympoly map_syms.
 Qed.
 
 End SymmSyms.
+
+Section SymhSyms.
+
+Variables (R : comRingType) (n : nat) (d : nat).
+Local Notation SF := {sympoly R[n.+1]}.
+Local Notation P := (intpartndom d).
+Implicit Type la mu : intpartn d.
+
+Lemma prod_symh_syms (s : seq nat) :
+  size s <= n ->
+  \prod_(i <- s) 'h_i =
+  \sum_(t : tabsz n (sumn s) | eval (to_word t) == mpart s)
+   's[shape_tabsz t] :> SF.
+Proof.
+elim: s => [| s0 s IHs] Hsz.
+  rewrite big_nil (bigD1 (@TabSz n 0 [::] isT)) /=; first last.
+    rewrite /eval /to_word /=; apply/eqP/eq_from_tnth => i.
+    by rewrite !tnth_mktuple nth_default.
+  rewrite big1 ?addr0; first last.
+    move=> t /andP [/eqP Heq Ht]; exfalso.
+    have := (congr1 (fun x => sumn (tval x)) Heq).
+    rewrite sumn_eval size_to_word -sumnE big_tuple.
+    rewrite (eq_bigr (fun => 0%N)); first last.
+      by move=> /= i _; rewrite tnth_mktuple nth_default.
+    rewrite sum_nat_const muln0 => /(tab0 (tabszP _)) Htnil.
+    move: Ht; apply/(elimN idP); rewrite negbK.
+    by apply/eqP/val_inj.
+  by apply val_inj; rewrite /= Schur0.
+rewrite big_cons IHs; last by  move: Hsz => /= /ltnW.
+rewrite mulr_sumr; apply val_inj => /=.
+rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)) /=.
+rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
+(* Use Pieri_symh *)
+
+Admitted.
+
+Lemma symh_syms mu :
+  d <= n -> 'h[mu] = \sum_(la : P) 'K(la, mu) *: 's[la] :> SF.
+Proof.
+move=> Hd.
+apply val_inj => /=.
+rewrite [LHS](rmorph_prod (@sympol_lrmorphism _ _)) /=.
+have:= size_part (intpartnP mu); rewrite intpartn_sumn.
+move=>/leq_trans/(_ Hd) => /prod_symh_syms/(congr1 (@sympol _ _)).
+rewrite [X in X = _ -> _](rmorph_prod (@sympol_lrmorphism _ _)) /= => ->.
+rewrite (partition_big (@shape_tabsz _ _) (fun => true)) //=.
+rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)) /=.
+rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
+rewrite (reindex (cast_intpartn (esym (intpartn_sumn mu)))) /=; first last.
+  by apply onW_bij; apply (Bijective (cast_intpartnK _) (cast_intpartnKV _)).
+apply eq_bigr => la _.
+rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)) /=.
+rewrite (eq_bigr (fun => Schur n R la)); first last.
+  by move=> t /andP [_ /eqP ->]; rewrite Schur_cast.
+rewrite (eq_bigl
+           (fun t : tabsz _ _ =>
+              (eval (to_word t) == mpart mu) && (shape t == la))); first last.
+  move=> t; congr (_ && _).
+  apply/eqP/eqP => [/(congr1 val) /= -> | H]; first exact: cast_intpartnE.
+  by apply val_inj; rewrite /= cast_intpartnE.
+rewrite sumr_const scaler_nat; congr (_ *+ _).
+have Hsz : (size mu) <= n.+1.
+  apply ltnW; apply: (leq_trans _ Hd).
+  by rewrite -{2}(intpartn_sumn mu); apply: size_part.
+rewrite (Kostka_any la Hsz) /KostkaMon /KostkaTab.
+rewrite -[LHS](card_imset _ (@cast_tabsz_inj _ _ _ (intpartn_sumn mu))).
+rewrite -[RHS](card_imset _ (@tabszsh_inj _ _ _)).
+apply eq_card => /= t.
+apply/imsetP/imsetP => [] [/= tab].
+- rewrite unfold_in => /andP [/eqP Hev Hsh ->{t}].
+  have Ht : is_tab_of_shape n la tab by rewrite /= tabszP Hsh.
+  exists (TabSh Ht); first by rewrite inE /= Hev.
+  by apply val_inj => /=; rewrite cast_tabszE.
+- rewrite inE => /eqP Hev ->{t}.
+  exists (cast_tabsz (esym (intpartn_sumn mu)) (tabszsh tab)).
+  + by rewrite unfold_in /= cast_tabszE /= Hev shape_tabsh !eq_refl.
+  + by apply val_inj; rewrite !cast_tabszE.
+Qed.
+
+End SymhSyms.
