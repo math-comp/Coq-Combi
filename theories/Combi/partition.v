@@ -1392,7 +1392,8 @@ Qed.
 Definition cast_intpartn m n (eq_mn : m = n) p :=
   let: erefl in _ = n := eq_mn return intpartn n in p.
 
-Lemma cast_intpartnE m n (eq_mn : m = n) p : cast_intpartn eq_mn p = p :> seq nat.
+Lemma cast_intpartnE m n (eq_mn : m = n) p :
+  val (cast_intpartn eq_mn p) = val p.
 Proof. subst m; by case: p. Qed.
 
 Lemma cast_intpartn_id n eq_n (s : intpartn n) : cast_intpartn eq_n s = s.
