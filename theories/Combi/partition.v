@@ -1392,8 +1392,22 @@ Qed.
 Definition cast_intpartn m n (eq_mn : m = n) p :=
   let: erefl in _ = n := eq_mn return intpartn n in p.
 
-Lemma cast_intpartnE m n (eq_mn : m = n) p : val (cast_intpartn eq_mn p) = val p.
+Lemma cast_intpartnE m n (eq_mn : m = n) p : cast_intpartn eq_mn p = p :> seq nat.
 Proof. subst m; by case: p. Qed.
+
+Lemma cast_intpartn_id n eq_n (s : intpartn n) : cast_intpartn eq_n s = s.
+Proof using. by apply val_inj => /=; rewrite cast_intpartnE. Qed.
+
+Lemma cast_intpartnK m n eq_m_n :
+  cancel (@cast_intpartn m n eq_m_n) (cast_intpartn (esym eq_m_n)).
+Proof using. by subst m. Qed.
+
+Lemma cast_intpartnKV m n eq_m_n :
+  cancel (cast_intpartn (esym eq_m_n)) (@cast_intpartn m n eq_m_n).
+Proof using. by subst m. Qed.
+
+Lemma cast_intpartn_inj m n eq_m_n : injective (@cast_intpartn m n eq_m_n).
+Proof using. exact: can_inj (cast_intpartnK eq_m_n). Qed.
 
 
 Definition rowpart d := if d is _.+1 then [:: d] else [::].
