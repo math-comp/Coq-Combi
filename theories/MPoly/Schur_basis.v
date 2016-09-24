@@ -1,3 +1,4 @@
+(** * Combi.MPoly.Schur_basis : The Basis of Schur functions *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,6 +13,19 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * Schur functions and Kostka numbers
+
+In the combinatorial definitions below, we use the following notations:
+- [la] is a partition of an integer [d]
+- [m] is a monomial for the ring of polynomials {mpoly R[n]}
+
+We define the following notions:
+
+- [add_mesym la S] == for a set [S] of ['I_n] the partition obtained by
+                     incrementing the parts in [S] if its a partition. If not
+                     the value is unspecified.
+******)
+
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import choice fintype finfun tuple bigop ssralg ssrint.
@@ -130,7 +144,7 @@ Section HasIncr.
 
 Variables (d k : nat) (la : intpartn d) (h : {set 'I_n}).
 
-Definition hasincr :=
+Local Definition hasincr :=
   has (fun i => (nth 0 (mpart la + mesym1 h)%MM i).+1 ==
                  nth 0 (mpart la + mesym1 h)%MM i.+1) (iota 0 n.-1).
 
@@ -647,7 +661,6 @@ Import OrdNotations.
 Close Scope ord_scope.
 
 Section DefsKostkaMon.
-
 
 Variables (d : nat) (la : intpartn d) (n : nat).
 Implicit Type mu : 'X_{1..n.+1}.
@@ -1167,6 +1180,20 @@ Section Bijection.
 
 Local Open Scope nat_scope.
 
+Definition eqeval m (t : tabsz n m) (la : seq nat) :=
+  eval (to_word t) == mpart la.
+
+Lemma eqevalP m (t : tabsz n m) (la : seq nat) :
+  size la <= n.+1 ->
+  reflect (forall i : 'I_n.+1, count_mem i (to_word t) = nth 0 la i)
+          (eqeval t la).
+Proof.
+rewrite /eqeval /eval /mpart => ->.
+apply (iffP eqP) => [Heq i| Hcount].
+- by move: Heq => /(congr1 (fun t => tnth t i)); rewrite !tnth_mktuple.
+- by apply eq_from_tnth => i; rewrite !tnth_mktuple.
+Qed.
+
 Variables (s : seq nat) (sm : nat).
 Hypothesis (Hsz : size s < n.+1).
 Local Notation sz := (Ordinal Hsz).
@@ -1174,39 +1201,32 @@ Local Notation sz := (Ordinal Hsz).
 Lemma sumn_rcons : (sumn s + sm)%N = sumn (rcons s sm).
 Proof. by rewrite -[RHS]sumn_rev rev_rcons /= sumn_rev addnC. Qed.
 
-Notation pair := ((tabsz n (sumn s) * intpartn (sumn (rcons s sm)))%type).
-Local Definition cond_pair :=
-  fun i : pair => (eval (to_word i.1) == mpart s) && hb_strip (shape i.1) i.2.
-Local Definition extendTab := fun p : pair =>
-  if cond_pair p then
-    join_tab p.1 (skew_reshape (shape p.1) p.2 (nseq sm sz))
+Local Notation T := (tabsz n (sumn s)).
+Local Notation Tm := (tabsz n (sumn (rcons s sm))).
+Local Notation Pm := (intpartn (sumn (rcons s sm))).
+
+Definition hb_tab_eval := fun i : T * Pm =>
+  (eqeval i.1 s) && hb_strip (shape i.1) i.2.
+Local Definition ext_tab_fun := fun p : T * Pm =>
+  if hb_tab_eval p
+  then join_tab p.1 (skew_reshape (shape p.1) p.2 (nseq sm sz))
   else locked rowtabsz _ (sumn (rcons s sm)).
-Local Definition cond_tab :=
-  fun t : tabsz n (sumn (rcons s sm)) => eval (to_word t) == mpart (rcons s sm).
-Local Definition restrictTab := fun t : tabsz n (sumn (rcons s sm)) =>
-  if cond_tab t then filter_gtnX_tab sz t
-  else locked rowtabsz _ (sumn s).
+Local Definition res_tab_fun := fun t : Tm =>
+  if eqeval t (rcons s sm)
+  then filter_gtnX_tab sz t else locked rowtabsz _ (sumn s).
 
-Lemma count_cond_tab t :
-  cond_tab t ->
+Lemma count_tab_eval (t : Tm) :
+  eqeval t (rcons s sm) ->
   forall i : 'I_n.+1, count_mem i (to_word t) = nth 0 (rcons s sm) i.
-Proof.
-move=> Hcond i; move: Hcond.
-rewrite /cond_tab => /eqP /(congr1 (fun t => tnth t i)).
-by rewrite /eval /mpart size_rcons Hsz !tnth_mktuple nth_rcons.
-Qed.
+Proof. by move=> Hev i; apply/eqevalP; first by rewrite size_rcons. Qed.
 
-Lemma count_cond_pair p :
-  cond_pair p ->
+Lemma count_hb_tab_eval p :
+  hb_tab_eval p ->
   forall i : 'I_n.+1, count_mem i (to_word p.1) = nth 0 s i.
-Proof.
-move=> /andP [/eqP Hcond _] i.
-move: Hcond => /(congr1 (fun t => tnth t i)).
-by rewrite /eval /mpart (ltnW Hsz) !tnth_mktuple.
-Qed.
+Proof. by move=> /andP [Hev _] i; apply/eqevalP; first exact: ltnW. Qed.
 
-Lemma Hsdiff t (la : intpartn (sumn (rcons s sm))) :
-  cond_pair (t, la) -> sumn (diff_shape (shape t) la) = sm.
+Lemma sumn_diff_hb t (la : Pm) :
+  hb_tab_eval (t, la) -> sumn (diff_shape (shape t) la) = sm.
 Proof.
 move=> /andP [/= /eqP Hev Hstrip].
 rewrite sumn_diff_shape ?hb_strip_included // intpartn_sumn.
@@ -1215,12 +1235,12 @@ rewrite sumn_eval size_to_word /size_tab sumn_mpart; last exact: ltnW.
 by rewrite -sumn_rcons => ->; rewrite addKn.
 Qed.
 
-Lemma extab_subproof p : is_tab_of_size n (sumn (rcons s sm)) (extendTab p).
+Lemma extab_subproof p : is_tab_of_size n (sumn (rcons s sm)) (ext_tab_fun p).
 Proof.
-rewrite /extendTab.
-case: (boolP (cond_pair p)) => [/= |_]; last by case: (locked _).
-case: p => [t la] Hp; have Hsdiff := Hsdiff Hp.
-move: Hp => /andP [/= /eqP Hev Hstrip].
+rewrite /ext_tab_fun.
+case: (boolP (hb_tab_eval p)) => [/= |_]; last by case: (locked _).
+case: p => [t la] Hp; have Hsdiff := sumn_diff_hb Hp.
+move: Hp => /andP [/= Hev Hstrip].
 have Hincl:= hb_strip_included Hstrip.
 apply/andP; split.
 - apply join_tab_skew => //.
@@ -1229,8 +1249,7 @@ apply/andP; split.
     apply/allP => /= i /count_memPn/eqP Hi.
     rewrite sub_pord_ltnXE ltnXnatE /=.
     move: Hi; apply contraR; rewrite -leqNgt => Hi.
-    move: Hev => /(congr1 (fun t => tnth t i)).
-    by rewrite /eval /mpart (ltnW Hsz) /= !tnth_mktuple nth_default // => ->.
+    by rewrite (eqevalP _ (ltnW Hsz) Hev) nth_default.
   + have:= Hstrip; rewrite -(hb_strip_rowE (u := nseq sm sz)) => //.
     * by move=> /andP [].
     * exact: is_part_sht.
@@ -1243,23 +1262,23 @@ apply/andP; split.
   rewrite {2}/size_tab shape_skew_reshape // Hsdiff ?size_nseq //.
   by rewrite size_tabsz sumn_rcons.
 Qed.
-Definition extTab (p : pair) := TabSz (extab_subproof p).
+Definition ext_tab (p : T * Pm) := TabSz (extab_subproof p).
 
-Lemma shape_extTab p :
-  cond_pair p -> shape_tabsz (extTab p) = p.2.
+Lemma shape_ext_tab p :
+  hb_tab_eval p -> shape_tabsz (ext_tab p) = p.2.
 Proof.
 case: p => [t la] Hp.
-apply val_inj => /=; rewrite /extendTab Hp /=.
-have Hsdiff := Hsdiff Hp.
+apply val_inj => /=; rewrite /ext_tab_fun Hp /=.
+have Hsdiff := sumn_diff_hb Hp.
 move: Hp => /andP [/= _ Hstrip].
 have Hincl:= hb_strip_included Hstrip.
 by rewrite shape_join_tab_skew_reshape // size_nseq Hsdiff.
 Qed.
 
-Lemma restab_subproof t : is_tab_of_size n (sumn s) (restrictTab t).
+Lemma restab_subproof t : is_tab_of_size n (sumn s) (res_tab_fun t).
 Proof.
-rewrite /restrictTab /=.
-case: (boolP (cond_tab t)) => [/= Hcond | _]; last by case: (locked _).
+rewrite /res_tab_fun /=.
+case: (boolP (eqeval t (rcons s sm))) => [/= Hev | _]; last by case: (locked _).
 rewrite is_tableau_filter_gtnX ?tabszP //=; apply /eqP.
 rewrite -size_to_word to_word_filter_nnil -filter_to_word size_filter.
 rewrite -sum_count_mem -[RHS]sumnE.
@@ -1267,20 +1286,19 @@ rewrite (eq_bigl (fun i : 'I_n.+1 => i < size s)); first last.
   by move=> i; rewrite sub_pord_ltnXE /= ltnXnatE.
 rewrite (big_nth 0) big_mkord (big_ord_widen _ _ (ltnW Hsz)).
 apply eq_bigr => i Hi.
-by rewrite (count_cond_tab Hcond) nth_rcons Hi.
+by rewrite (count_tab_eval Hev) nth_rcons Hi.
 Qed.
-Definition resTab t := (TabSz (restab_subproof t), shape_tabsz t).
+Definition res_tab t := (TabSz (restab_subproof t), shape_tabsz t).
 
 
-Lemma cond_pair_resTab t : cond_tab t -> cond_pair (resTab t).
+Lemma hb_tab_eval_res_tab t : eqeval t (rcons s sm) -> hb_tab_eval (res_tab t).
 Proof.
-move=> H; rewrite /resTab /cond_pair /= /restrictTab H.
+move=> H; rewrite /res_tab /hb_tab_eval /= /res_tab_fun {2}H.
 apply/andP; split.
-- apply/eqP/eq_from_tnth => i.
-  rewrite /eval /mpart (ltnW Hsz) !tnth_mktuple.
-  rewrite -filter_gtnX_to_word.
+- apply/eqevalP; first exact: ltnW.
+  move=> i /=; rewrite H -filter_gtnX_to_word.
   case: (ssrnat.ltnP i sz) => Hisz.
-  + have := count_cond_tab H i; rewrite nth_rcons Hisz => <-.
+  + have := count_tab_eval H i; rewrite nth_rcons Hisz => <-.
     elim: (to_word t) => //= w0 w IHw.
     case: ltnXP; rewrite /= IHw //=.
     rewrite /eq_op /=.
@@ -1312,7 +1330,7 @@ apply/andP; split.
     have /count_memPn/eqP : xabs \in to_word t.
       rewrite /to_word; apply/flattenP; exists r1; first by rewrite mem_rev.
       exact: mem_nth.
-    rewrite count_cond_tab // nth_rcons.
+    rewrite count_tab_eval // nth_rcons.
     case: (ssrnat.leqP xabs (size s)) => [Hxabs _ | Hxabs]; first last.
       by rewrite (gtn_eqF Hxabs) ltnNge (ltnW Hxabs).
     rewrite sub_pord_ltnXE ltnXnatE /= => /leq_trans/(_ Hxabs) {xabs Hxabs}.
@@ -1335,20 +1353,18 @@ apply/andP; split.
     * by rewrite !nth_default ?size_map.
 Qed.
 
-Lemma cond_tab_extTab p : cond_pair p -> cond_tab (extTab p).
+Lemma tab_eval_ext_tab p : hb_tab_eval p -> eqeval (ext_tab p) (rcons s sm).
 Proof.
-case: p => [t la] Hcond.
-apply/eqP/eq_from_tnth => i.
-rewrite /eval /mpart size_rcons Hsz !tnth_mktuple.
-rewrite /= /extendTab Hcond /=.
+case: p => [t la] Htev; apply/eqevalP; first by rewrite size_rcons.
+move => i; rewrite /= /ext_tab_fun Htev /=.
 have Hszle : size t <= size (skew_reshape (shape t) la (nseq sm sz)).
   rewrite size_skew_reshape.
-  move: Hcond => /andP [/= _ /hb_strip_included/size_included].
+  move: Htev => /andP [/= _ /hb_strip_included/size_included].
   by rewrite /shape size_map.
 move: Hszle => /perm_eq_join_tab/perm_eqP ->.
-rewrite count_cat (count_cond_pair Hcond).
-have:= Hcond => /andP [/= _ /hb_strip_included H2].
-rewrite to_word_skew_reshape // ?size_nseq ?Hsdiff //.
+rewrite count_cat (count_hb_tab_eval Htev).
+have:= Htev => /andP [/= _ /hb_strip_included H2].
+rewrite to_word_skew_reshape // ?size_nseq ?sumn_diff_hb //.
 rewrite count_nseq /= nth_rcons /= {1}/eq_op /=.
 case: (ssrnat.ltnP i (size s)) => [/gtn_eqF ->| H].
   by rewrite mul0n addn0.
@@ -1356,11 +1372,11 @@ rewrite (nth_default _ H) add0n eq_sym.
 by case: eqP => _; rewrite ?mul0n ?mul1n.
 Qed.
 
-Lemma resTabK t : cond_tab t -> extTab (resTab t) = t.
+Lemma res_tabK t : eqeval t (rcons s sm) -> ext_tab (res_tab t) = t.
 Proof.
-rewrite /extTab => H; apply val_inj => /=.
-rewrite /extendTab (cond_pair_resTab H) => /=.
-rewrite /restrictTab H.
+rewrite /ext_tab => H; apply val_inj => /=.
+rewrite /ext_tab_fun (hb_tab_eval_res_tab H) => /=.
+rewrite /res_tab_fun H.
 rewrite -[RHS](join_tab_filter sz (tabszP t)); congr join_tab.
 rewrite -[RHS](skew_reshapeK (inner := shape (filter_gtnX_tab sz t))); first last.
   rewrite /shape size_map /filter_gtnX_tab /filter_leqX_tab.
@@ -1380,10 +1396,10 @@ congr skew_reshape.
     by rewrite -leqXNgtnX.
 - have Hw : size (to_word (filter_leqX_tab sz t)) = sm.
     rewrite -filter_leqX_to_word size_filter -sum_count_mem /=.
-    rewrite (bigD1 sz) /= // (count_cond_tab H) /=.
+    rewrite (bigD1 sz) /= // (count_tab_eval H) /=.
     rewrite nth_rcons ltnn eq_refl big1 ?addn0 // => i.
     rewrite eq_sym andbC -/(ltnX_op _ _) sub_pord_ltnXE ltnXnatE /= => Hi.
-    rewrite (count_cond_tab H) nth_rcons.
+    rewrite (count_tab_eval H) nth_rcons.
     by rewrite ltnNge (ltnW Hi) (gtn_eqF Hi).
   rewrite -{1}Hw; symmetry; apply/all_pred1P/allP => /= i.
   rewrite /to_word => /flattenP [/= rtmp].
@@ -1392,21 +1408,29 @@ congr skew_reshape.
   apply/eqP/val_inj => /=; apply anti_leq; rewrite {}Hi andbT.
   have /count_memPn/eqP : i \in to_word t.
     by rewrite /to_word; apply/flattenP; exists r; first rewrite mem_rev.
-  rewrite (count_cond_tab H); apply contraR; rewrite -ltnNge => Hi.
+  rewrite (count_tab_eval H); apply contraR; rewrite -ltnNge => Hi.
   by rewrite nth_default // size_rcons.
 Qed.
 
-Lemma extTabK p : cond_pair p -> resTab (extTab p) = p.
+Lemma ext_tabK p : hb_tab_eval p -> res_tab (ext_tab p) = p.
 Proof.
-case: p => [t la] Hcond; congr (_, _); last exact: shape_extTab.
-have Htabres /= := tabszP (TabSz (restab_subproof (extTab (t, la)))).
+case: p => [t la] Htev; congr (_, _); last exact: shape_ext_tab.
+have Htabres /= := tabszP (TabSz (restab_subproof (ext_tab (t, la)))).
 apply val_inj => /=; rewrite -[RHS]to_wordK -[LHS]to_wordK.
-rewrite /restrictTab cond_tab_extTab //= /extendTab Hcond /=.
-have Hfj : [seq [seq x <- i | x <A sz]
-           | i <- join_tab t (skew_reshape (shape t) la (nseq sm sz))] =
-       pad [::] (size la) t.
-  have Hszle : size t <= size la.
-    move: Hcond => /andP [_ /hb_strip_included/size_included /=].
+rewrite /res_tab_fun tab_eval_ext_tab //= /ext_tab_fun Htev /=.
+rewrite [map _ (join_tab _ _)](_ : _ = pad [::] (size la) t).
+- rewrite /pad filter_cat {Htev Htabres}.
+  rewrite [X in _ ++ X](eq_in_filter (a2 := pred0)); first last.
+    by move=> x /nseqP [->].
+  rewrite filter_pred0 cats0.
+  case: t => t /= /andP [Ht _].
+  congr (rev (reshape (rev _) _)).
+  + by elim: t Ht => //= t0 t IHt /and4P [-> _ _ /IHt] /= ->.
+  + rewrite (eq_in_filter (a2 := predT)) ?filter_predT // => x.
+    elim: t Ht => //= t0 t IHt /and4P [Ht0 _ _ /IHt Hrec].
+    by rewrite inE => /orP [/eqP -> |].
+- have Hszle : size t <= size la.
+    move: Htev => /andP [_ /hb_strip_included/size_included /=].
     by rewrite size_map.
   rewrite {}/tt; apply (eq_from_nth (x0 := [::])).
     rewrite /join_tab !size_map size_zip !size_cat !size_nseq.
@@ -1414,58 +1438,54 @@ have Hfj : [seq [seq x <- i | x <A sz]
   move=> i; rewrite size_map => Hi.
   rewrite (nth_map [::]) // nth_cat nth_nseq if_same.
   move: Hi; rewrite /join_tab size_map => Hi.
-  rewrite /join_tab (nth_map ([::], [::])) //.
-  rewrite nth_zip /=; first last.
+  rewrite /join_tab (nth_map ([::], [::])) // nth_zip /=; first last.
     by rewrite size_skew_reshape size_cat size_nseq subnKC.
   rewrite filter_cat nth_cat.
   have Hfil : [seq x <- nth [::] (skew_reshape (shape t) la (nseq sm sz)) i
               | x <A sz] = [::].
     apply/nilP; rewrite /nilp size_filter.
     rewrite (eq_in_count (a2 := pred0)) ?count_pred0 // => x /=.
-    case: (ssrnat.ltnP i
-               (size (skew_reshape (shape t) la (nseq sm sz))))
+    case: (ssrnat.ltnP i (size (skew_reshape (shape t) la (nseq sm sz))))
          => [|Hi1]; last by rewrite nth_default.
     rewrite /skew_reshape size_rev => Hi1; rewrite nth_rev //.
     rewrite nth_reshape => /mem_take/mem_drop/nseqP [-> _].
     by rewrite ltnXnn.
-  case: (ssrnat.ltnP i (size t)) => {Hi} Hi.
-  + rewrite Hfil cats0 (eq_in_filter (a2 := predT)) ?filter_predT //.
-    move=> x /count_memPn/eqP Hcount.
-    rewrite sub_pord_ltnXE ltnXnatE /=.
-    have /= := count_cond_pair Hcond x.
-    rewrite /to_word count_flatten map_rev sumn_rev -sumnE.
-    rewrite (big_nth 0) size_map big_mkord /= (bigD1 (Ordinal Hi)) //=.
-    rewrite (nth_map [::]) // => /eqP Hnth.
-    have {Hcount Hnth} : nth 0 s x != 0.
-      move: Hcount; apply contra => /eqP H.
-      by move: Hnth; rewrite H addn_eq0 => /andP [].
+  case: (ssrnat.ltnP i (size t)) => {Hi} Hi; last by rewrite nth_nseq if_same.
+  rewrite Hfil cats0 (eq_in_filter (a2 := predT)) ?filter_predT //.
+  move=> x /count_memPn/eqP Hcount.
+  rewrite sub_pord_ltnXE ltnXnatE /=.
+  suff : nth 0 s x != 0.
     by case: ssrnat.ltnP => // H; rewrite nth_default.
-  + by rewrite nth_nseq if_same /=.
-congr (rev (reshape (rev _) _)).
-- rewrite Hfj /pad filter_cat.
-  rewrite [X in _ ++ X](eq_in_filter (a2 := pred0)); first last.
-    by move=> x /nseqP [->].
-  rewrite filter_pred0 cats0.
-  case: t {Hcond Htabres Hfj} => t /= /andP [Ht _].
-  by elim: t Ht => //= t0 t IHt /and4P [-> _ _ /IHt] /= ->.
-- rewrite Hfj /pad filter_cat.
-  rewrite (eq_in_filter (a2 := predT)) ?filter_predT //.
-  rewrite (eq_in_filter (a2 := pred0)) ?filter_pred0 ?cats0 //.
-  + by move=> x /nseqP [-> _].
-  + move=> x.
-    case: t {Hcond Htabres Hfj} => t /= /andP [Ht _].
-    elim: t Ht => //= t0 t IHt /and4P [Ht0 _ _ /IHt Hrec].
-    by rewrite inE => /orP [/eqP -> |].
+  have /= := count_hb_tab_eval Htev x.
+  rewrite /to_word count_flatten map_rev sumn_rev -sumnE.
+  rewrite (big_nth 0) size_map big_mkord /= (bigD1 (Ordinal Hi)) //=.
+  rewrite (nth_map [::]) // => /eqP Hnth.
+  move: Hcount; apply contra => /eqP H.
+  by move: Hnth; rewrite H addn_eq0 => /andP [].
 Qed.
 
-Lemma cond_eq p :
-  cond_pair p = (cond_tab (extTab p) && (resTab (extTab p) == p)).
+Corollary ext_tab_inj : {in hb_tab_eval &, injective ext_tab }.
+Proof. by move=> /= p1 p2 H1 H2 /(congr1 res_tab); rewrite !ext_tabK. Qed.
+
+Lemma hb_tab_evalE p :
+  hb_tab_eval p =
+  (eqeval (ext_tab p) (rcons s sm) && (res_tab (ext_tab p) == p)).
 Proof.
 case: p => [t la].
 apply/idP/idP => [Hcond | /andP [H /eqP Hcond]].
-- by rewrite (extTabK Hcond) eq_refl andbT cond_tab_extTab.
-- rewrite -Hcond; apply cond_pair_resTab.
-  by rewrite /cond_tab.
+- by rewrite (ext_tabK Hcond) eq_refl andbT tab_eval_ext_tab.
+- by rewrite -Hcond; apply hb_tab_eval_res_tab.
+Qed.
+
+Lemma ext_tab_card :
+  #|[set p | hb_tab_eval p]| = #|[set t : Tm | eqeval t (rcons s sm)]|.
+Proof.
+rewrite -(card_in_imset (f := ext_tab)); first last.
+  by move=> /= p1 p2; rewrite /= !inE; apply ext_tab_inj.
+congr #|pred_of_set _|; apply/setP => t; rewrite !inE.
+apply/imsetP/idP => [[[/= tl la]] | Hcond].
+- by rewrite inE => Hcond ->{t}; apply tab_eval_ext_tab.
+- by exists (res_tab t); rewrite ?res_tabK // inE hb_tab_eval_res_tab.
 Qed.
 
 End Bijection.
@@ -1473,27 +1493,24 @@ End Bijection.
 Lemma prod_symh_syms (s : seq nat) :
   size s <= n.+1 ->
   \prod_(i <- s) 'h_i =
-  \sum_(t : tabsz n (sumn s) | eval (to_word t) == mpart s)
-   's[shape_tabsz t] :> SF.
+  \sum_(t : tabsz n (sumn s) | eqeval t s) 's[shape_tabsz t] :> SF.
 Proof.
 elim/last_ind: s => [_ | s sm IHs].
   rewrite big_nil (eq_bigl (pred1 (@TabSz n 0 [::] isT))).
     by rewrite  big_pred1_eq; apply val_inj; rewrite /= Schur0.
-  move=> t /=; apply/eqP/eqP => [_| -> /=].
-  - by apply val_inj => /=; case: t => t /= /andP [/tab0 H /eqP].
-    rewrite /eval /to_word /=; apply/eq_from_tnth => i.
-  - by rewrite !tnth_mktuple nth_default.
+  move=> t; apply/eqevalP/eqP => // [_| -> /= i]; last by rewrite nth_default.
+  by apply val_inj => /=; case: t => t /= /andP [/tab0 H /eqP].
 rewrite size_rcons => Hsz.
-rewrite -{1}(revK s) -rev_cons .
+rewrite -{1}(revK s) -rev_cons.
 rewrite -(eq_big_perm _ (perm_eq_rev (sm :: rev s))) /= big_cons.
 rewrite -(eq_big_perm _ (perm_eq_rev s)) /= {}IHs; last exact: ltnW.
 rewrite mulr_sumr; apply val_inj => /=.
 rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
 rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)) /=.
 rewrite (eq_bigr
-           (fun i : tabsz n (sumn s) =>
+           (fun t =>
               \sum_(la : intpartn (sumn (rcons s sm)) |
-                    hb_strip (shape_tabsz i) la) Schur n R la)); first last.
+                    hb_strip (shape_tabsz t) la) Schur n R la)); first last.
   move=> t _; rewrite mulrC Pieri_symh.
   rewrite (reindex (cast_intpartn (sumn_rcons _ _))) /=; first last.
     by apply onW_bij; apply (Bijective (cast_intpartnK _) (cast_intpartnKV _)).
@@ -1501,9 +1518,9 @@ rewrite (eq_bigr
   - by rewrite cast_intpartnE /=.
   - by rewrite Schur_cast.
 rewrite pair_big_dep /=.
-rewrite (reindex_onto (extTab Hsz) (resTab Hsz)) /=; last exact: resTabK.
-apply eq_big => [[t la]|] /=; last by move=> [t la] Hp; rewrite shape_extTab.
-by rewrite -/(@cond_pair s sm (t, la)) -cond_eq.
+rewrite (reindex_onto (ext_tab Hsz) (res_tab Hsz)) /=; last exact: res_tabK.
+apply eq_big => [[t la]|] /=; last by move=> [t la] Hp; rewrite shape_ext_tab.
+by rewrite -hb_tab_evalE.
 Qed.
 
 Lemma symh_syms mu :

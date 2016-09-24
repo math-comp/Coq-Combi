@@ -233,7 +233,6 @@ End MonomPart.
 Arguments mpart [n] s.
 Arguments dominant [n].
 
-
 Import GRing.Theory.
 Local Open Scope ring_scope.
 Local Definition simplexp := (expr0, expr1, scale1r, scaleN1r,
