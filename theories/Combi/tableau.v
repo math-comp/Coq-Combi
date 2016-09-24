@@ -434,7 +434,8 @@ have /dominateP := filter_gtnX_dominate n Hrow0 Hrow1 Hdom => [] [].
 by rewrite Ht0 /= leqn0 => /nilP ->.
 Qed.
 
-Lemma is_tableau_filter_gtnX t n : is_tableau t -> is_tableau (filter_gtnX_tab n t).
+Lemma is_tableau_filter_gtnX t n :
+  is_tableau t -> is_tableau (filter_gtnX_tab n t).
 Proof using.
 elim: t => [//= | t0 t /= IHt] /and4P [] Hnnil Hrow Hdom Htab.
 case: (altP ([seq x <- t0 | x <A n] =P [::])) => Ht0 /=; first exact: IHt.
@@ -445,7 +446,6 @@ rewrite Ht0 /=; apply/and3P; split; last exact: IHt.
   apply filter_gtnX_dominate => //=.
   by move: Htab; case t => [//= | t1 t'] /= /and3P [].
 Qed.
-
 
 Definition size_tab t := sumn (shape t).
 
@@ -544,6 +544,18 @@ Qed.
 
 Definition tabsz_finMixin := Eval hnf in PcanFinMixin tabszpairK.
 Canonical tabsz_finType := Eval hnf in FinType tabsz tabsz_finMixin.
+
+Lemma rowtabsz_subproof :
+  is_tab_of_size (if sz == 0 then [::] else [:: nseq sz ord0]).
+Proof.
+rewrite /=; case: (altP (sz =P 0)) => [-> | Hsz]//=.
+rewrite andbT /size_tab /shape /= size_nseq addn0 eq_refl andbT.
+apply/andP; split.
+- move: Hsz; apply contra => /eqP/nilP.
+  by rewrite /nilp size_nseq.
+- case: sz Hsz => //= s _ /=; by elim: s.
+Qed.
+Definition rowtabsz := TabSz rowtabsz_subproof.
 
 End TabSZ.
 
