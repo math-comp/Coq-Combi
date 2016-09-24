@@ -1091,6 +1091,17 @@ Fixpoint diff_shape inner outer :=
 
 Definition pad (T : Type) (x : T) sz := [fun s => s ++ nseq (sz - size s) x].
 
+Lemma nth_pad (T : Type) n (p : T) (s : seq T) i :
+  nth p (pad p n s) i = nth p s i.
+Proof.
+rewrite /pad /= nth_cat.
+case: (ltnP i (size s)) => //= /(nth_default p) ->.
+by rewrite nth_nseq if_same.
+Qed.
+
+Lemma head_pad (T : Type) n (p : T) (s : seq T) : head p (pad p n s) = head p s.
+Proof. elim: s => [| s0 s IHs] //=; rewrite subn0; by case: n. Qed.
+
 Definition outer_shape inner size_seq :=
   [seq p.1 + p.2 | p <- zip (pad 0 (size (size_seq)) inner) size_seq].
 
@@ -1170,9 +1181,6 @@ case: (ltnP a b) => [/ltnW | ] H.
 - move: H; rewrite /leq => /eqP H; by rewrite H addn0 H.
 - by rewrite (subnKC H) subnn.
 Qed.
-
-Lemma head_pad0 (T : Type) n (p : T) (s : seq T) : head p (pad p n s) = head p s.
-Proof. elim: s => [| s0 s IHs] //=; rewrite subn0; by case: n. Qed.
 
 Lemma included_pad0 inner outer :
   included inner outer = included (pad 0 (size outer) inner) outer.

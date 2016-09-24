@@ -182,6 +182,16 @@ rewrite -(perm_eq_partm Hperm) partmK; first last.
 by rewrite perm_eq_sym.
 Qed.
 
+Lemma sumn_mpart sh : size sh <= n -> sumn (mpart sh) = sumn sh.
+Proof.
+move=> Hsz; rewrite /mpart Hsz -!sumnE big_tuple.
+rewrite (eq_bigr (fun i : 'I_n => nth 0 sh i)); first last.
+  by move=> i _; rewrite tnth_mktuple.
+rewrite (big_nth 0) big_mkord (big_ord_widen _ _ Hsz).
+rewrite (bigID (fun i : 'I_n => i < size sh)) /= addnC big1 ?add0n //.
+by move=> i; rewrite -leqNgt; apply: nth_default.
+Qed.
+
 Lemma sumn_partm m : sumn (partm m) = mdeg m.
 Proof.
 rewrite -sumnE.

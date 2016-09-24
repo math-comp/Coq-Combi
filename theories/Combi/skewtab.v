@@ -636,6 +636,19 @@ rewrite -!size_filter Hr /= leqn0 => /nilP Ht0.
 by rewrite Ht0 (IHt t0 Htab Hdom).
 Qed.
 
+Lemma included_shape_filter_gtnX c (t : seq (seq T)) :
+  is_tableau t -> included (shape (filter_gtnX_tab c t)) (shape t).
+Proof.
+move=> Ht; rewrite /filter_gtnX_tab.
+elim: t Ht => [//= | t0 t IHt] /and4P [Hnnil Hrow Hdom Htab] /=.
+case: (altP ([seq x <- t0 | (x < c)%Ord] =P [::])) => Hhead /=.
+- rewrite (filter_leqX_first_row0 Htab Hdom Hhead).
+  suff -> : [seq r <- nseq (size t) [::] | r != [::]] = [::] by [].
+  by move=> T0; elim: (size t).
+- rewrite (IHt Htab) andbT.
+  by rewrite size_filter; apply: (leq_trans (count_size _ _)).
+Qed.
+
 Lemma shape_inner_filter_leqX n t :
   is_tableau t ->
   shape ([seq [seq x <- i | (x < n)%Ord] | i <- t]) =
@@ -681,14 +694,14 @@ Lemma shape_join_tab s t :
   shape (join_tab s t) =
   ([seq r.1 + r.2 | r <- zip (pad 0 (size t) (shape s)) (shape t)])%N.
 Proof using .
-  rewrite /shape /join_tab -map_comp.
-  rewrite (eq_map (f2 := (fun p => p.1 + p.2) \o
+rewrite /shape /join_tab -map_comp.
+rewrite (eq_map (f2 := (fun p => p.1 + p.2) \o
                          (fun p => (size p.1, size p.2)))); first last.
-    by move=> [a b] /=; rewrite size_cat.
-  rewrite map_comp; congr map.
-  elim: t s => [| t0 t IHt] [| s0 s] //=.
-    by have /= := (IHt [::]); rewrite subn0 => ->.
-  by rewrite IHt /= subSS.
+  by move=> [a b] /=; rewrite size_cat.
+rewrite map_comp; congr map.
+elim: t s => [| t0 t IHt] [| s0 s] //=.
+  by have /= := (IHt [::]); rewrite subn0 => ->.
+by rewrite IHt /= subSS.
 Qed.
 
 Lemma perm_eq_join_tab s t :
@@ -732,6 +745,21 @@ Proof using.
 rewrite (eq_all (a2 := predI (allLtn s0) (allLtn s1))); first last.
   by rewrite /allLtn => i /=; rewrite all_cat.
 by rewrite all_predI => /andP [].
+Qed.
+
+Lemma shape_join_tab_skew_reshape t sh w :
+  included (shape t) sh ->
+  size w = sumn (diff_shape (shape t) sh) ->
+  shape (join_tab t (skew_reshape (shape t) sh w)) = sh.
+Proof using.
+move=> Hincl Hsz.
+rewrite shape_join_tab size_skew_reshape shape_skew_reshape // {Hsz w}.
+move: (shape t) Hincl => inner {t}.
+elim: sh inner => [| s0 sh IHsh] [|in0 inn] //=.
+  rewrite add0n => _ {IHsh}; congr (_ :: _) => {s0}.
+  by elim: sh => //= s0 sh ->.
+move=> /andP [Hin0 /IHsh {IHsh}]; rewrite /pad /= => Hrec.
+by rewrite subSS (subnKC Hin0) Hrec.
 Qed.
 
 Lemma shape_join_tab_skew_reshape t sh w :
