@@ -689,6 +689,20 @@ rewrite size_cat -!addnA; congr (_ + _).
 by rewrite addnA addnAC addnC.
 Qed.
 
+Lemma shape_join_tab s t :
+  shape (join_tab s t) =
+  ([seq r.1 + r.2 | r <- zip (pad 0 (size t) (shape s)) (shape t)])%N.
+Proof using .
+rewrite /shape /join_tab -map_comp.
+rewrite (eq_map (f2 := (fun p => p.1 + p.2) \o
+                         (fun p => (size p.1, size p.2)))); first last.
+  by move=> [a b] /=; rewrite size_cat.
+rewrite map_comp; congr map.
+elim: t s => [| t0 t IHt] [| s0 s] //=.
+  by have /= := (IHt [::]); rewrite subn0 => ->.
+by rewrite IHt /= subSS.
+Qed.
+
 Lemma perm_eq_join_tab s t :
   size s <= size t ->
   perm_eq (to_word (join_tab s t)) (to_word s ++ to_word t).
@@ -730,6 +744,21 @@ Proof using.
 rewrite (eq_all (a2 := predI (allLtn s0) (allLtn s1))); first last.
   by rewrite /allLtn => i /=; rewrite all_cat.
 by rewrite all_predI => /andP [].
+Qed.
+
+Lemma shape_join_tab_skew_reshape t sh w :
+  included (shape t) sh ->
+  size w = sumn (diff_shape (shape t) sh) ->
+  shape (join_tab t (skew_reshape (shape t) sh w)) = sh.
+Proof using.
+move=> Hincl Hsz.
+rewrite shape_join_tab size_skew_reshape shape_skew_reshape // {Hsz w}.
+move: (shape t) Hincl => inner {t}.
+elim: sh inner => [| s0 sh IHsh] [|in0 inn] //=.
+  rewrite add0n => _ {IHsh}; congr (_ :: _) => {s0}.
+  by elim: sh => //= s0 sh ->.
+move=> /andP [Hin0 /IHsh {IHsh}]; rewrite /pad /= => Hrec.
+by rewrite subSS (subnKC Hin0) Hrec.
 Qed.
 
 Lemma join_tab_skew s t :
