@@ -635,6 +635,19 @@ rewrite -!size_filter Hr /= leqn0 => /nilP Ht0.
 by rewrite Ht0 (IHt t0 Htab Hdom).
 Qed.
 
+Lemma included_shape_filter_gtnX c (t : seq (seq T)) :
+  is_tableau t -> included (shape (filter_gtnX_tab c t)) (shape t).
+Proof.
+move=> Ht; rewrite /filter_gtnX_tab.
+elim: t Ht => [//= | t0 t IHt] /and4P [Hnnil Hrow Hdom Htab] /=.
+case: (altP ([seq x <- t0 | (x < c)%Ord] =P [::])) => Hhead /=.
+- rewrite (filter_leqX_first_row0 Htab Hdom Hhead).
+  suff -> : [seq r <- nseq (size t) [::] | r != [::]] = [::] by [].
+  by move=> T0; elim: (size t).
+- rewrite (IHt Htab) andbT.
+  by rewrite size_filter; apply: (leq_trans (count_size _ _)).
+Qed.
+
 Lemma shape_inner_filter_leqX n t :
   is_tableau t ->
   shape ([seq [seq x <- i | (x < n)%Ord] | i <- t]) =
