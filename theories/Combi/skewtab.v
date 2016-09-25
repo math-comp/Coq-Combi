@@ -15,15 +15,15 @@
 (******************************************************************************)
 (** * Skew tableau and yamanouchi words:
 
-- [is_skew_yam inn out y] == [y ++ y0] is Yamanouchi ov evaluation out for
-         any [y0] of evaluation inn.
-- [skew_dominate s u v] == the row u dominate the row v when shifted by [s].
+- [is_skew_yam inn out y] == [y ++ y0] is Yamanouchi of evaluation [out] for
+         any [y0] of evaluation [inn].
+- [skew_dominate s u v] == the row [u] dominate the row [v] when shifted by [s].
 - [is_skew_tableau inn t] == [t] is a skew tableau with inner shape [t].
 - [skew_reshape inn out s] == reshape the sequence [s] by the skew shape [out/inn].
 - filter_leqX_tab n t] == keeps only the entries greater than [n] in [t].
 - [join_tab t st] == join the tableau [t] with the skew tableau [st].
        this gives a tableau if the inner shape of [st] is the shape of [t] and
-       the entries of t are smaller than the entries of st.
+       the entries of [t] are smaller than the entries of [st].
 - [hb_strip inn out] == [inn/out] is an horizontal border strip.
 - [vb_strip inn out] == [inn/out] is a vertical border strip.
 ******)
