@@ -1568,7 +1568,7 @@ Variable (n : nat) (R : comRingType) (d : nat).
 Local Notation SF := {sympoly R[n.+1]}.
 Implicit Type (la mu : intpartn d).
 
-Lemma syms_to_symm la :
+Lemma syms_symm la :
   's[la] = \sum_(mu : intpartn d) 'K(la, mu)%:R *: 'm[mu] :> SF.
 Proof.
 rewrite /Kostka; apply val_inj => /=.
@@ -1604,10 +1604,10 @@ Qed.
 
 Local Notation P := (intpartndom d).
 
-Lemma syms_to_symm_partdom la :
+Lemma syms_symm_partdom la :
   's[la] = 'm[la] + \sum_(mu : P | mu <A la) 'K(la, mu) *: 'm[mu] :> SF.
 Proof.
-rewrite syms_to_symm (bigD1 la) //= Kostka_diag scale1r; congr (_ + _).
+rewrite syms_symm (bigD1 la) //= Kostka_diag scale1r; congr (_ + _).
 rewrite (bigID (fun mu : P => mu <=A la)) /= addrC big1 ?add0r //.
 by move=> i /andP [_ /Kostka0 ->]; rewrite scale0r.
 Qed.
@@ -1623,19 +1623,19 @@ Local Notation SF := {sympoly R[n.+1]}.
 Local Notation P := (intpartndom d).
 Implicit Type la mu : intpartn d.
 
-Lemma symm_to_syms la : 'm[la] = \sum_(mu : P) 'K^-1(la, mu) *: 's[mu] :> SF.
+Lemma symm_syms la : 'm[la] = \sum_(mu : P) 'K^-1(la, mu) *: 's[mu] :> SF.
 Proof.
 rewrite /KostkaInv -(map_symm [rmorphism of intr]).
-rewrite (MatInvE (T := [finPOrdType of P]) (@syms_to_symm_partdom n _ d) la).
+rewrite (MatInvE (T := [finPOrdType of P]) (@syms_symm_partdom n _ d) la).
 rewrite rmorph_sum /=; apply eq_bigr => mu _.
 by rewrite scale_map_sympoly map_syms.
 Qed.
 
-Lemma symm_to_syms_partdom la :
+Lemma symm_syms_partdom la :
   'm[la] = 's[la] + \sum_(mu : P | mu <A la) 'K^-1(la, mu) *:'s[mu] :> SF.
 Proof.
 rewrite /KostkaInv -(map_symm [rmorphism of intr]).
-rewrite (MatInvP (T := [finPOrdType of P]) (@syms_to_symm_partdom n _ d) la).
+rewrite (MatInvP (T := [finPOrdType of P]) (@syms_symm_partdom n _ d) la).
 rewrite rmorphD /= map_syms rmorph_sum /=; congr (_ + _).
 apply eq_bigr => mu _.
 by rewrite scale_map_sympoly map_syms.
@@ -1678,6 +1678,15 @@ rewrite (reindex (cast_intpartn H)) /=; first last.
 apply eq_big => [nu | nu _].
 - by case: nu => nu /= Hnu; rewrite cast_intpartnE /=.
 - by rewrite Schur_cast.
+Qed.
+
+Lemma symh_syms_partdom mu :
+  'h[mu] = 's[mu] + \sum_(la : P | (mu:P) <A la ) 'K(la, mu) *: 's[la] :> SF.
+Proof.
+rewrite symh_syms (bigD1 mu) //= Kostka_diag scale1r; congr (_ + _).
+rewrite (bigID (fun la : P => (mu:P) <=A la)) /= addrC big1 ?add0r; first last.
+  by move=> i /andP [_ /Kostka0 ->]; rewrite scale0r.
+by apply eq_bigl => la; rewrite eq_sym.
 Qed.
 
 End SymhSyms.
