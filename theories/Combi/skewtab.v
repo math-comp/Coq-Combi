@@ -328,6 +328,14 @@ elim: inner outer => [| inn0 inn IHinn] [| out0 out] //=.
 by move=> /andP [] /andP [] _ -> /IHinn ->.
 Qed.
 
+Lemma hb_strip_size inner outer :
+  hb_strip inner outer -> size inner <= size outer <= (size inner).+1.
+Proof using.
+elim: inner outer => [| inn0 inn IHinn] [| out0 out] //=.
+  by move=> /eqP ->.
+by move=> /andP [_ /IHinn]; rewrite !ltnS.
+Qed.
+
 Lemma vb_strip_included inner outer :
   vb_strip inner outer -> included inner outer.
 Proof using.
