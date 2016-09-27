@@ -33,14 +33,16 @@ We define the following notions:
 
 ***** Kostka numbers:
 
-- [eval w]      == the evaluation of [w] as a [n.-tuple nat].
+- [eval w]        == the evaluation of [w] as a [n.-tuple nat].
 - [KostkaTab la m] == the set of tableaux of shape [la] and evaluation [m].
 - [KostkaMon la m] == the number of Kostka tableau : [#|KostkaTab la m|].
-- [Kostka la mu]  ==
-- ['K(la, mu)] == the Kostka number associated to [la] and [mu] as an
-           integer in [nat_scope] and as an element of [R] in [ring_scope]
+- [Kostka la mu]    ==
+- ['K(la, mu)]      == the Kostka number associated to [la] and [mu] as an
+      integer in [nat_scope] and as an element of [R] in [ring_scope].
+- [Kostak_rec la mu] == a Coq implementation of the computation of the Kostka
+      number. It suppose that [sumn la = sumn mu].
 - [MatInv M la mu]  == the inverse of the uni-triangular matrix [M_(la, mu)].
-           [la] and [mu] are supposed to belong to a finite partialy ordered
+      [la] and [mu] are supposed to belong to a finite partialy ordered
            type [T]. Both [M] and [MatInv] ar given as a function [la mu -> R]
            and are uni-triangular ro the order of [T] that is [M la la = 1] and
            [M la mu] is zero unless [mu <= la].
@@ -52,25 +54,28 @@ We define the following notions:
 
 ***** Extension of tableaux:
 
-In this section, we are given a partition sequence of integer [s] and an
-integer [sm]. Then we denote
-- [t] : a tableau (over ['I_n]) of size [sumn s]
-- [la] : a partition of [sumn (rcons s sm)]
-- [T] : a tableau of size [sumn (rcons s sm)].
+In this section, we fix
+- a non empty sequence of integer [rcons s m] whose size is less than [n].
+- [la] : a partition of [sumn s] whose size is less than [n].
+- [mu] : a partition of [(sumn s) + m] whose size is less than [n].
+We are given some proofs [Hs] [Hla] [Hmu] that all these partition are of size
+less than [n]. We suppose moreover that [mu/la] is an horizontal border
+strip. The proof is denoted [Hstrip].
 
-Then
+We denote by
+- [T] : any tableau of shape [la] and evaluation [s].
+- [Tm] : any tableau of shape [mu] and evaluation [rcons s m].
+Then we define:
 
-- [hb_tab_eval (t, la)] == boolean predicate asserting that [t] is a tableau of
-           evaluation equal to [s] whose shape [mu], is such that [la/mu] is a
-           horizontal border strip.
-- [ext_tab (t, la)] == extends the tableau [t] by filling the difference [la/mu]
-           with [size s]. This return a tableau of size [sumn (rcons s sm)]
-           (of type [tabsz n (sumn (rcons s sm))]).
-- [res_tab T] == the tableau obtained by deleting the boxes containing [size s].
+- [shape_res_tab Hsz Tm] == the shape obtained by removing from [Tm] the boxes
+      containing [size s]
+- [res_tab Hsz Hmu Hstrip Tm] == the tableau obtained by removing from [Tm]
+      the boxes containing [size s] if its of shape [la]. Otherwise the result
+      is unspecified.
+- [ext_tab Hsz Hmu Hstrip T] == the tableau obtained by filling the boxes of [mu/la]
+      with [size s].
 
-Then [ext_tab] and [res_tab] are two inverse bijections when [hb_tab_eval (t,
-la)] and the evaluation of [T] is equal to [rcons s sm].
-
+Then [ext_tab] and [res_tab] are two inverse bijections.
 ******)
 
 Require Import mathcomp.ssreflect.ssreflect.
