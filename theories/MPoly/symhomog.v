@@ -136,7 +136,7 @@ rewrite /homsympoly.
 apply/span_subvP => s /mapP [/= l]; rewrite {1}/Pd !mem_enum => _ ->{s}.
 have -> : homsymm l = \sum_(m : intpartn d) 'K^-1(l, m) *: homsyms m.
   apply val_inj; rewrite /=.
-  rewrite (symm_to_syms _ _ l) [LHS](linear_sum (@sympol_lrmorphism _ _)) /=.
+  rewrite (symm_syms _ _ l) [LHS](linear_sum (@sympol_lrmorphism _ _)) /=.
   by rewrite !linear_sum /=.
 rewrite span_def.
 apply rpred_sum => /= m _; apply rpredZ.
