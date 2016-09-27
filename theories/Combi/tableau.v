@@ -496,69 +496,6 @@ End TableauReading.
 Section FinType.
 
 Variable n : nat.
-(* Should be Variable A : finOrdType *)
-
-Section TabSZ.
-
-Variable sz : nat.
-
-Definition is_tab_of_size :=
-  [pred t | (is_tableau (T := [inhOrdType of 'I_n.+1]) t) && (size_tab t == sz) ].
-
-Structure tabsz : predArgType :=
-  TabSz {tabszval :> seq (seq 'I_n.+1); _ : is_tab_of_size tabszval}.
-Canonical tabsz_subType := Eval hnf in [subType for tabszval].
-Definition tabsz_eqMixin := Eval hnf in [eqMixin of tabsz by <:].
-Canonical tabsz_eqType := Eval hnf in EqType tabsz tabsz_eqMixin.
-Definition tabsz_choiceMixin := Eval hnf in [choiceMixin of tabsz by <:].
-Canonical tabsz_choiceType := Eval hnf in ChoiceType tabsz tabsz_choiceMixin.
-Definition tabsz_countMixin := Eval hnf in [countMixin of tabsz by <:].
-Canonical tabsz_countType := Eval hnf in CountType tabsz tabsz_countMixin.
-Canonical tabsz_subCountType := Eval hnf in [subCountType of tabsz].
-
-Implicit Type (t : tabsz).
-
-Lemma tabszP t : is_tableau t.
-Proof using. by case: t => t /= /andP []. Qed.
-
-Lemma size_tabsz t : size_tab t = sz.
-Proof using. by case: t => t /= /andP [] _ /eqP. Qed.
-
-Lemma shape_tabsz_subproof t : is_part_of_n sz (shape t).
-Proof.
-rewrite /= -(size_tabsz t) /size_tab eq_refl /=.
-exact: (is_part_sht (tabszP t)).
-Qed.
-Definition shape_tabsz t := IntPartN (shape_tabsz_subproof t).
-
-Lemma size_to_word_tabsz t : size (to_word t) == sz.
-Proof. by rewrite size_to_word size_tabsz. Qed.
-Definition to_word_tuple_tabsz t := Tuple (size_to_word_tabsz t).
-
-Definition tabszpair t := (shape_tabsz t, to_word_tuple_tabsz t).
-Lemma tabszpairK :
-  pcancel tabszpair (fun p => insub (rev (reshape (rev p.1) p.2))).
-Proof.
-rewrite /tabszpair => [[t Ht]] /=.
-by rewrite to_wordK (insubT _ Ht) /=.
-Qed.
-
-Definition tabsz_finMixin := Eval hnf in PcanFinMixin tabszpairK.
-Canonical tabsz_finType := Eval hnf in FinType tabsz tabsz_finMixin.
-
-Lemma rowtabsz_subproof :
-  is_tab_of_size (if sz == 0 then [::] else [:: nseq sz ord0]).
-Proof.
-rewrite /=; case: (altP (sz =P 0)) => [-> | Hsz]//=.
-rewrite andbT /size_tab /shape /= size_nseq addn0 eq_refl andbT.
-apply/andP; split.
-- move: Hsz; apply contra => /eqP/nilP.
-  by rewrite /nilp size_nseq.
-- case: sz Hsz => //= s _ /=; by elim: s.
-Qed.
-Definition rowtabsz := TabSz rowtabsz_subproof.
-
-End TabSZ.
 
 Variable d : nat.
 Variable sh : intpartn d.
@@ -673,13 +610,6 @@ have:= ltn_ord x; rewrite ltnS => /(leq_trans Hn).
 by rewrite ltnn.
 Qed.
 
-Lemma tabszsh_subproof t : is_tab_of_size d t.
-Proof. by rewrite /= tabshP /= /size_tab shape_tabsh intpartn_sumn. Qed.
-Definition tabszsh t := TabSz (tabszsh_subproof t).
-
-Lemma tabszsh_inj : injective tabszsh.
-Proof. by move=> [t1 Ht1] [t2 Ht2] /(congr1 val) /= H; apply val_inj. Qed.
-
 Hypothesis Hszs : size sh <= n.+1.
 Lemma tabrowconst_subproof :
   is_tab_of_shape
@@ -715,29 +645,7 @@ Definition tabrowconst := TabSh (tabrowconst_subproof).
 
 End FinType.
 
-Hint Resolve tabszP.
 Hint Resolve tabshP.
-
-Definition cast_tabsz v m n (eq_mn : m = n) t :=
-  let: erefl in _ = n := eq_mn return tabsz v n in t.
-
-Lemma cast_tabszE v m n (eq_mn : m = n) (t : tabsz v m) :
-  val (cast_tabsz eq_mn t) = val t.
-Proof. subst m; by case: t. Qed.
-
-Lemma cast_tabsz_id v n eq_n (t : tabsz v n) : cast_tabsz eq_n t = t.
-Proof using. by apply val_inj => /=; rewrite cast_tabszE. Qed.
-
-Lemma cast_tabszK v m n eq_m_n :
-  cancel (@cast_tabsz v m n eq_m_n) (cast_tabsz (esym eq_m_n)).
-Proof using. by subst m. Qed.
-
-Lemma cast_tabszKV v m n eq_m_n :
-  cancel (cast_tabsz (esym eq_m_n)) (@cast_tabsz v m n eq_m_n).
-Proof using. by subst m. Qed.
-
-Lemma cast_tabsz_inj v m n eq_m_n : injective (@cast_tabsz v m n eq_m_n).
-Proof using. exact: can_inj (cast_tabszK eq_m_n). Qed.
 
 
 Section IncrMap.
