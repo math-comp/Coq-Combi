@@ -41,6 +41,7 @@ Require Import tools partition ordtype sorted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 Import OrdNotations.
 
@@ -678,6 +679,39 @@ Definition tabszsh t := TabSz (tabszsh_subproof t).
 
 Lemma tabszsh_inj : injective tabszsh.
 Proof. by move=> [t1 Ht1] [t2 Ht2] /(congr1 val) /= H; apply val_inj. Qed.
+
+Hypothesis Hszs : size sh <= n.+1.
+Lemma tabrowconst_subproof :
+  is_tab_of_shape
+    sh (take (size sh) [tuple nseq (nth 0 sh (i : 'I_n.+1)) i | i < n.+1]).
+Proof.
+have Hsz : size (take (size sh) [tuple nseq (nth 0 sh i0) i0  | i0 < n.+1]) =
+           size sh.
+  by rewrite size_take size_tuple -/(minn _ _) (minn_idPl Hszs).
+have Hnth j (Hj : j < size sh) :
+              nth [::] [tuple nseq (nth 0 sh i) i | i < n.+1] j =
+              nseq (nth 0 sh j) (Ordinal (leq_trans Hj Hszs)).
+  by rewrite -/(nat_of_ord (Ordinal (leq_trans Hj Hszs))) -tnth_nth tnth_mktuple.
+apply/andP; split; first apply/is_tableauP; try split.
+- move=> i; rewrite Hsz => Hi; rewrite nth_take //.
+  rewrite (Hnth _ Hi) /=; apply/negP => /eqP/nilP.
+  by rewrite /nilp size_nseq; apply/negP/nth_part_non0.
+- move=> r; case: (ltnP r (size sh)) => Hr; last by rewrite nth_default // Hsz.
+  apply/(is_rowP (ord0)) => i j; rewrite nth_take // (Hnth _ Hr) /=.
+  rewrite size_nseq => /andP [Hij Hj].
+  by rewrite !nth_nseq (leq_ltn_trans Hij Hj) Hj.
+- move=> i j Hij; apply/dominateP.
+  case: (ltnP j (size sh)) => Hj; last by rewrite nth_default // Hsz.
+  have Hi := ltn_trans Hij Hj; rewrite !nth_take //.
+  rewrite (Hnth _ Hi) (Hnth _ Hj) !size_nseq.
+  have:= (is_part_ijP _ (intpartnP sh)) => [] [_] /(_ _ _ (ltnW Hij)) => Hleq.
+  split; first exact: Hleq.
+  move=> c Hc; rewrite !nth_nseq Hc (leq_trans Hc Hleq).
+  by rewrite !sub_pord_ltnXE /= ltnXnatE.
+- apply/eqP/(eq_from_nth (x0 := 0)); rewrite size_map // => i.
+  by rewrite Hsz => Hi; rewrite nth_shape nth_take // Hnth size_nseq.
+Qed.
+Definition tabrowconst := TabSh (tabrowconst_subproof).
 
 End FinType.
 
