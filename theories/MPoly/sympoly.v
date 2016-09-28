@@ -109,6 +109,9 @@ Canonical sympolynom_lalgType :=
 Lemma sympol_is_lrmorphism :
   lrmorphism (@sympol n R : {sympoly R[n]} -> {mpoly R[n]}).
 Proof. by []. Qed.
+Canonical sympol_additive   := Additive   sympol_is_lrmorphism.
+Canonical sympol_rmorphism  := RMorphism  sympol_is_lrmorphism.
+Canonical sympol_linear     := AddLinear  sympol_is_lrmorphism.
 Canonical sympol_lrmorphism := LRMorphism sympol_is_lrmorphism.
 
 Lemma sympol_is_symmetric (x : {sympoly R[n]}) : sympol x \is symmetric.
@@ -305,7 +308,7 @@ case: (boolP (m \in msupp p)) => Hm.
   have -> : (symm (partm m))@_m = 1.
     by rewrite (mcoeff_symm _ (size_partm _)) perm_eq_sym partm_perm_eqK.
   rewrite mulr1 -[LHS]addr0; congr (_ + _); symmetry.
-  rewrite -![sympol _]/(sympol_lrmorphism n R _) !raddf_sum /=.
+  rewrite !raddf_sum /=.
   rewrite big_seq_cond; apply big1 => /= m' /and3P [_ Hdom Hm'].
   rewrite mcoeffZ (mcoeff_symm _ (size_partm _)).
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
@@ -313,7 +316,7 @@ case: (boolP (m \in msupp p)) => Hm.
                          /(congr1 (fun x : intpart => mpart (n := n) x)) H.
   by move: Hm'; rewrite -{}H !(partmK Hdom) eq_refl.
 - rewrite (memN_msupp_eq0 Hm); symmetry.
-  rewrite -![sympol _]/(sympol_lrmorphism n R _) !raddf_sum /=.
+  rewrite !raddf_sum /=.
   rewrite big_seq_cond; apply big1 => /= m' /andP [Hsupp Hdom].
   rewrite mcoeffZ (mcoeff_symm _ (size_partm _)) partmK //.
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
@@ -342,9 +345,7 @@ Lemma homog_symmE d (p : {sympoly R[n]}) :
 Proof.
 move=> Hhomog; rewrite {1}(symm_genE p).
 apply val_inj => /=.
-rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)).
-rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
-rewrite (bigID (fun i : intpartn d => mpart i \in msupp p)) /=.
+rewrite !linear_sum /=  (bigID (fun i : intpartn d => mpart i \in msupp p)) /=.
 rewrite [X in _ + X]big1 ?addr0;
   last by move=> i /memN_msupp_eq0 ->; rewrite scale0r.
 rewrite (eq_bigr (fun i : intpartn d =>
@@ -380,8 +381,8 @@ Lemma symm_unique d (p : {sympoly R[n]}) c :
   forall l : intpartn d, (size l <= n)%N -> c l = p@_(mpart l).
 Proof.
 move=> -> l Hl.
-rewrite [X in X@__](linear_sum (@sympol_lrmorphism _ _)) /= linear_sum.
-rewrite (bigD1 l) //= linearZ /= (mcoeff_symm _ Hl) perm_eq_refl /= mulr1.
+rewrite !linear_sum /=.
+rewrite (bigD1 l) //= !linearZ /= (mcoeff_symm _ Hl) perm_eq_refl /= mulr1.
 rewrite big1 ?addr0 // => i Hil /=.
 case: (leqP (size i) n) => [Hi | /symm_oversize ->];
                           last by rewrite scaler0 mcoeff0.
@@ -410,8 +411,7 @@ Proof using.
 apply /val_inj.
 rewrite /= /symp_pol (eq_bigr (fun => 1));
   last by move=> i _; rewrite expr0.
-rewrite sumr_const card_ord /=.
-by rewrite [RHS](raddfMn (@sympol_lrmorphism _ _) n).
+by rewrite sumr_const card_ord /= raddfMn.
 Qed.
 
 Lemma symh0 : symh 0 = 1.
@@ -531,8 +531,7 @@ Lemma sum_symh_syme (d : nat) :
   d != 0%N ->
   \sum_(0 <= i < d.+1) (-1)^+i *: ('h_i * 'e_(d - i)) = 0 :> SF.
 Proof.
-move=> Hd; apply val_inj => /=.
-rewrite -[sympol _]/(sympol_lrmorphism nvar R _) rmorph_sum /=.
+move=> Hd; apply val_inj; rewrite /= rmorph_sum /=.
 apply mpolyP => m; rewrite linear_sum /= mcoeff0.
 case: (altP (mdeg m =P d)) => Hm; first last.
   rewrite big_nat big1 // => i /=; rewrite ltnS => Hi.
@@ -747,8 +746,7 @@ Lemma mult_symh_powersum k d m :
   ('h_k * 'p_d : SF)@_m =
   (mdeg m == (k + d)%N)%:R * \sum_(i < nvar) (m i >= d)%:R.
 Proof using.
-rewrite -[sympol _]/(sympol_lrmorphism nvar R _) rmorphM /=.
-rewrite /symp_pol !mulr_sumr linear_sum.
+rewrite rmorphM /= /symp_pol !mulr_sumr linear_sum.
 apply eq_bigr=> i _ /=; rewrite mult_symh_U.
 by case: eqP => _ //=; rewrite ?mul0r ?mul1r.
 Qed.
@@ -757,8 +755,7 @@ Lemma Newton_symh (k : nat) :
   k%:R *: 'h_k = \sum_(0 <= i < k) 'h_i * 'p_(k - i) :> SF.
 Proof using.
 apply val_inj => /=; apply/mpolyP => m.
-rewrite mcoeffZ mcoeff_symh.
-rewrite -[sympol _]/(sympol_lrmorphism nvar R _) !linear_sum big_nat.
+rewrite mcoeffZ mcoeff_symh !linear_sum big_nat.
 rewrite (eq_bigr
            (fun i =>
               (mdeg m == k)%:R *

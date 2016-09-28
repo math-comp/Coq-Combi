@@ -59,7 +59,7 @@ Canonical Fchar_linear := Linear Fchar_is_linear.
 
 Lemma Fchar_homog f : sympol (Fchar f) \is n.-homog.
 Proof.
-rewrite /Fchar [X in X \in _](linear_sum (@sympol_lrmorphism _ _)) //=.
+rewrite /Fchar !linear_sum  //=.
 apply rpred_sum => m _; apply rpredZ.
 exact: prod_symp_homog.
 Qed.

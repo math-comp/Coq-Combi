@@ -61,8 +61,7 @@ Proof.
 move=> Hf; apply val_inj.
 have:= dhomog_is_dhomog f.
 rewrite -[val f]/(val (SymPoly Hf)) => fhom.
-rewrite (homog_symmE fhom) /=.
-rewrite [LHS](linear_sum (@sympol_lrmorphism _ _)) linear_sum /=.
+rewrite (homog_symmE fhom) /= !linear_sum /=.
 rewrite (bigID (fun  l : intpartn d => (size l <= n.+1)%N)) /= addrC.
 rewrite big1 ?add0r // => i /negbTE Hi.
 by rewrite /symm Hi scaler0.
@@ -111,7 +110,7 @@ Proof.
 apply/freeP => co.
 rewrite vect_to_sym => /(congr1 val) /=; rewrite linear_sum /=.
 rewrite (eq_bigr (fun l : intpartn d =>
-                    sympol_lrmorphism _ _ ((co (indpart l)) *: 'm[l]))) //.
+                    sympol ((co (indpart l)) *: 'm[l]))) //.
 rewrite -!linear_sum => /= H i.
 have {H} /symm_unique0 H0 : \sum_i (co (indpart i)) *: 'm[i] = 0 :> SF.
   by apply sympol_inj => /=.
@@ -135,9 +134,7 @@ rewrite basisEdim size_map size_tuple dimv_homsym leqnn andbT.
 rewrite /homsympoly.
 apply/span_subvP => s /mapP [/= l]; rewrite {1}/Pd !mem_enum => _ ->{s}.
 have -> : homsymm l = \sum_(m : intpartn d) 'K^-1(l, m) *: homsyms m.
-  apply val_inj; rewrite /=.
-  rewrite (symm_syms _ _ l) [LHS](linear_sum (@sympol_lrmorphism _ _)) /=.
-  by rewrite !linear_sum /=.
+  by apply val_inj; rewrite /= (symm_syms _ _ l) !linear_sum.
 rewrite span_def.
 apply rpred_sum => /= m _; apply rpredZ.
 rewrite big_map (bigD1_seq m) /= ?mem_enum ?inE ?enum_uniq //.
@@ -185,8 +182,7 @@ Lemma intpartn_of_monE m (H : mnmwgt m = d) :
   'X_[m] \mPo E = homsyme (intpartn_of_mon H).
 Proof.
 rewrite comp_mpolyX /= /prod_gen /intpartn_of_mon /monE /=.
-rewrite [RHS](rmorph_prod (@sympol_lrmorphism _ _)) /=.
-rewrite -[RHS](eq_big_perm _ (perm_eq_rev _)) /=.
+rewrite rmorph_prod /= -[RHS](eq_big_perm _ (perm_eq_rev _)) /=.
 rewrite big_flatten /= big_map /=.
 rewrite /index_enum -!enumT /=; apply eq_bigr => i _.
 rewrite big_nseq tnth_mktuple.

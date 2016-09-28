@@ -1571,8 +1571,7 @@ Implicit Type (la mu : intpartn d).
 Lemma syms_symm la :
   's[la] = \sum_(mu : intpartn d) 'K(la, mu)%:R *: 'm[mu] :> SF.
 Proof.
-rewrite /Kostka; apply val_inj => /=.
-rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
+rewrite /Kostka; apply val_inj; rewrite /= linear_sum /=.
 apply mpolyP => m; rewrite Kostka_Coeff linear_sum /=.
 case: (altP (mdeg m =P sumn la)) => Heq; first last.
 - rewrite (KostkaMon_sumeval Heq); symmetry; apply big1 => i _.
@@ -1654,9 +1653,7 @@ Implicit Type la mu : intpartn d.
 
 Lemma symh_syms mu : 'h[mu] = \sum_(la : P) 'K(la, mu) *: 's[la] :> SF.
 Proof.
-case: mu => [mu Hmu] /=; apply val_inj.
-rewrite [LHS](rmorph_prod (@sympol_lrmorphism _ _)) /=.
-rewrite [RHS](linear_sum (@sympol_lrmorphism _ _)) /=.
+case: mu => [mu Hmu] /=; apply val_inj; rewrite /= rmorph_prod linear_sum /=.
 elim: mu d Hmu => [|m mu IHmu] deg.
   rewrite big_nil => /andP [/eqP /= /esym Hd _].
   symmetry; subst deg; rewrite (big_pred1 (rowpartn 0)); first last.
