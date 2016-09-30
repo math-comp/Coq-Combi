@@ -384,6 +384,19 @@ apply eq_big => [mz | mz /eqP Hmz].
   by rewrite ffunE /= !tnth_mktuple.
 Qed.
 
+Lemma Cauchy_syms_syms d :
+  CK d = \sum_(la : intpartn d) 's[la](X) * 's[la](Y).
+Proof.
+rewrite Cauchy_symm_symh.
+transitivity (\sum_(mu : intpartn d) \sum_(la : intpartn d)
+               'm[mu](X) * ('K(la, mu) *: 's[la])(Y)).
+  by apply eq_bigr => la _; rewrite symh_syms -mulr_sumr !linear_sum.
+rewrite exchange_big /=; apply eq_bigr => la _.
+have /= -> /= := congr1 val (syms_symm m0 R la).
+rewrite 2!linear_sum /= mulr_suml; apply eq_bigr => mu _.
+by rewrite !linearZ /= -scalerAr -scalerAl.
+Qed.
+
 End CK.
 
 Section CKRat.
