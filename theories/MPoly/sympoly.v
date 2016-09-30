@@ -202,17 +202,25 @@ Qed.
 Lemma syme_homog d : sympol (syme d) \is d.-homog.
 Proof using. by rewrite mesym_homog. Qed.
 
-Definition symh_pol d  : {mpoly R[n]} :=
-  \sum_(m : 'X_{1..n < d.+1} | mdeg m == d) 'X_[m].
-Lemma mcoeff_symh_pol d m : (symh_pol d)@_m = (mdeg m == d)%:R.
+Definition symh_pol_bound b d : {mpoly R[n]} :=
+  \sum_(m : 'X_{1..n < b} | mdeg m == d) 'X_[m].
+Definition symh_pol d : {mpoly R[n]} := symh_pol_bound d.+1 d.
+Lemma mcoeff_symh_pol_bound b d m :
+  b > d -> (symh_pol_bound b d)@_m = (mdeg m == d)%:R.
 Proof.
-rewrite linear_sum /=.
-case: (altP (mdeg m =P d)) => [<- | Hd] /=.
-- have Hsm : mdeg m < (mdeg m).+1 by [].
-  rewrite (bigD1 (BMultinom Hsm)) //= mcoeffX eq_refl big1 ?addr0 //=.
+rewrite linear_sum /= => H.
+case: (altP (mdeg m =P d)) => Hd /=.
+- have Hsm : mdeg m < b by rewrite Hd.
+  rewrite (bigD1 (BMultinom Hsm)) ?Hd //= mcoeffX eq_refl big1 ?addr0 //=.
   by move=> mon /andP [_ /negbTE]; rewrite {1}/eq_op /= mcoeffX => ->.
 - rewrite big1 // => mon /eqP Hd1; rewrite mcoeffX.
   by apply/boolRP; move: Hd; rewrite -{1}Hd1; apply contra=> /eqP ->.
+Qed.
+Lemma mcoeff_symh_pol d m : (symh_pol d)@_m = (mdeg m == d)%:R.
+Proof. exact: mcoeff_symh_pol_bound. Qed.
+Lemma symh_pol_any b d : d < b -> symh_pol d = symh_pol_bound b d.
+move=> H; apply/mpolyP => m.
+by rewrite mcoeff_symh_pol mcoeff_symh_pol_bound.
 Qed.
 Fact symh_sym d : symh_pol d \is symmetric.
 Proof using.
@@ -418,7 +426,7 @@ Lemma symh0 : symh 0 = 1.
 Proof using.
 have Hd0 : (mdeg (0%MM : 'X_{1..n})) < 1 by rewrite mdeg0.
 apply val_inj => /=.
-rewrite /symh_pol (big_pred1 (BMultinom Hd0)); first last.
+rewrite /symh_pol /symh_pol_bound (big_pred1 (BMultinom Hd0)); first last.
   by move=> m; rewrite /= mdeg_eq0 {2}/eq_op.
 by rewrite mpolyX0.
 Qed.
@@ -1115,7 +1123,7 @@ Variable R : comRingType.
 
 Lemma symhE d : symh n R d = Schur n0 R (rowpartn d) :> {mpoly R[n]}.
 Proof using.
-rewrite /= -symh_basisE /symh_pol.
+rewrite /= -symh_basisE /symh_pol /symh_pol_bound.
 rewrite -(big_map (@bmnm n d.+1) (fun m => mdeg m == d) (fun m => 'X_[m])).
 rewrite /index_enum -enumT -big_filter.
 rewrite [filter _ _](_ : _ =
