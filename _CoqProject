@@ -45,6 +45,7 @@ theories/SymGroup/reprdim1.v
 theories/SymGroup/reprS2.v
 theories/SymGroup/towerSn.v
 theories/MPoly/antisym.v
+theories/MPoly/Cauchy.v
 theories/MPoly/symhomog.v
 theories/MPoly/sympoly.v
 theories/MPoly/Schur_basis.v
