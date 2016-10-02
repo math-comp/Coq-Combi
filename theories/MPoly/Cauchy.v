@@ -17,8 +17,7 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop ssrint ssralg path div.
-From mathcomp Require Import rat ssralg ssrnum algC.
-
+From mathcomp Require Import rat ssralg ssrnum algC matrix.
 
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
@@ -40,81 +39,72 @@ elim: r => [|x r ih]; first by rewrite !big_nil mpolyX0.
 by rewrite !big_cons; case: (P x); rewrite ?(mpolyXD, mpolyXn) ih.
 Qed.
 
-Section CK.
+Section CauchyKernel.
 
 Variables (m0 n0 : nat).
 Notation m := m0.+1.
 Notation n := n0.+1.
+Notation mxvec_index := (@mxvec_index m n).
 
-Lemma card_pair : #|{: 'I_m * 'I_n}| = (m * n)%N.
-Proof. by rewrite card_prod !card_ord. Qed.
+Let vecmx_index := (enum_val \o cast_ord (esym (mxvec_cast m n))).
 
-Definition ctopair (i : 'I_(m*n)) : 'I_m * 'I_n :=
-  enum_val (cast_ord (esym card_pair) i).
-Definition pairtoc (p : 'I_m * 'I_n) : 'I_(m * n) :=
-  cast_ord card_pair (enum_rank p).
-
-Lemma ctopairK : cancel ctopair pairtoc.
-Proof. by move=> i; rewrite /ctopair/pairtoc enum_valK cast_ordKV. Qed.
-Lemma pairtocK : cancel pairtoc ctopair.
-Proof. by move=> p; rewrite /ctopair/pairtoc cast_ordK enum_rankK. Qed.
-Lemma pairtoc_inj : injective pairtoc.
-Proof. exact: can_inj pairtocK. Qed.
-Lemma ctopair_inj : injective ctopair.
-Proof. exact: can_inj ctopairK. Qed.
-Lemma pairtoc_bij : bijective pairtoc.
-Proof. by exists ctopair; [exact: pairtocK | exact: ctopairK]. Qed.
-Lemma ctopair_bij : bijective ctopair.
-Proof. by exists pairtoc; [exact: ctopairK | exact: pairtocK]. Qed.
-
+Lemma vecmx_indexK i : mxvec_index (vecmx_index i).1 (vecmx_index i).2 = i.
+Proof.
+rewrite /vecmx_index/mxvec_index/prod_curry/=.
+case H : (enum_val (cast_ord (esym (mxvec_cast m n)) i)) => /= [a b].
+by rewrite -H enum_valK cast_ordKV.
+Qed.
+Lemma mxvec_indexK i j : vecmx_index (mxvec_index i j) = (i, j).
+Proof.
+rewrite /vecmx_index/mxvec_index/prod_curry/=.
+by rewrite cast_ordK enum_rankK.
+Qed.
 Section Big.
 
-Variable R : Type.
-Variable idx : R.
+Variables (R : Type) (idx : R).
 Notation Local "1" := idx.
 Variable op : Monoid.com_law 1.
-
 Local Notation "'*%M'" := op (at level 0).
 Local Notation "x * y" := (op x y).
 
-Lemma big_pairtoc P F :
+Lemma big_mxvec_index P F :
   \big[op/idx]_(i : 'I_(m*n) | P i) F i =
-   \big[op/idx]_(i < m) \big[op/idx]_(j < n | P (pairtoc (i, j)))
-                               F (pairtoc (i, j)).
+   \big[op/idx]_(i < m)
+    \big[op/idx]_(j < n | P (mxvec_index i j)) F (mxvec_index i j).
 Proof.
 rewrite pair_big_dep.
-rewrite (reindex pairtoc) /=; last exact: onW_bij pairtoc_bij.
+rewrite (reindex (prod_curry mxvec_index)); first last.
+  by apply: (subon_bij _ (curry_mxvec_bij m n)).
 by apply eq_big => [] [i j].
 Qed.
 
 End Big.
 
 Definition monX (mon : 'X_{1.. m*n}) :=
-  [multinom (\sum_(j < n) mon (pairtoc (i, j)))%N | i < m].
+  [multinom (\sum_(j < n) mon (mxvec_index i j))%N | i < m].
 
 Lemma mdeg_monX mon : mdeg (monX mon) = mdeg mon.
 Proof.
 rewrite /mdeg /monX !big_tuple.
-rewrite big_pairtoc /=; apply eq_bigr => i _.
+rewrite big_mxvec_index /=; apply eq_bigr => i _.
 rewrite tnth_mktuple; apply eq_bigr => j _.
 by rewrite mnm_tnth.
 Qed.
 
 Definition monsY (mz : 'X_{1.. m*n}) :=
-  [tuple [multinom mz (pairtoc (i, j)) | j < n] | i < m].
+  [tuple [multinom mz (mxvec_index i j) | j < n] | i < m].
 
 Definition Ymon (ms : m.-tuple 'X_{1.. n}) :=
-  [multinom (tnth ms (ctopair i).1) (ctopair i).2 | i < m*n].
+  [multinom (tnth ms (vecmx_index i).1) (vecmx_index i).2 | i < m*n].
 
 Lemma monsYK : cancel monsY Ymon.
 Proof.
 move=> mz; apply mnmP => i.
-rewrite mnmE tnth_mktuple mnmE /= -[in RHS](ctopairK i).
-by case (ctopair i).
+by rewrite mnmE tnth_mktuple mnmE /= vecmx_indexK.
 Qed.
 Lemma YmonK : cancel Ymon monsY.
 move=> ms; apply eq_from_tnth => i.
-by rewrite tnth_mktuple; apply mnmP => j; rewrite !mnmE pairtocK.
+by rewrite tnth_mktuple; apply mnmP => j; rewrite !mnmE mxvec_indexK.
 Qed.
 Lemma monsY_bij : bijective monsY.
 Proof. by exists Ymon; [exact: monsYK | exact: YmonK]. Qed.
@@ -200,7 +190,7 @@ Proof. by rewrite mulrC mul_mpolyC. Qed.
 
 Definition evalXY : polZ -> polXY :=
   mmap ((@mpolyC m _) \o (@mpolyC n R))
-       (fun i => 'X_((ctopair i).1) (X) * 'X_((ctopair i).2) (Y)).
+       (fun i => 'X_((vecmx_index i).1) (X) * 'X_((vecmx_index i).2) (Y)).
 Notation "p '(XY)'" := (evalXY p) (at level 20, format "p '(XY)'").
 Lemma evalXY_is_lrmorphism : lrmorphism evalXY.
 Proof.
@@ -221,17 +211,17 @@ Lemma evalXY_XE mz :
 Proof.
 rewrite -rmorph_prod polyXY_scale /monX.
 transitivity (\prod_(i : 'I_(m*n))
-                 (('X_(ctopair i).2 : polY) ^+ mz i *:
-                              ('X_(ctopair i).1(X) ^+ mz i))).
+                 (('X_(vecmx_index i).2 : polY) ^+ mz i *:
+                              ('X_(vecmx_index i).1(X) ^+ mz i))).
   rewrite (multinomUE_id mz) /evalXY mmapX /mmap1.
   by apply eq_bigr => [i _]; rewrite -exprZn polyXY_scale.
-rewrite big_pairtoc.
+rewrite big_mxvec_index.
 rewrite /= mpolyXE_id rmorph_prod -scaler_prod; apply eq_bigr => i _.
 rewrite scaler_prod /=; congr (_ *: _).
 - rewrite /monsY tnth_mktuple mpolyXE_id; apply eq_bigr => j _.
-  by rewrite pairtocK /= mnmE.
+  by rewrite mxvec_indexK /= mnmE.
 - rewrite mnmE -prodrXr rmorph_prod /=; apply eq_bigr => j _.
-  by rewrite pairtocK /= rmorphX.
+  by rewrite mxvec_indexK /= rmorphX.
 Qed.
 
 Lemma evalXY_homog d p : p \is d.-homog -> p(XY) \is d.-homog.
@@ -245,10 +235,10 @@ Qed.
 
 Lemma sympXY k : 'p_k(XY) = 'p_k(X) * 'p_k(Y).
 Proof.
-rewrite /= /symp_pol /= /evalXY /= !rmorph_sum /= big_pairtoc /=.
+rewrite /= /symp_pol /= /evalXY /= !rmorph_sum /= big_mxvec_index /=.
 rewrite mulr_suml; apply eq_bigr => i _ /=.
 rewrite mulr_sumr; apply eq_bigr => j _ /=.
-by rewrite !rmorphX /= mmapX mmap1U pairtocK /= exprMn.
+by rewrite !rmorphX /= mmapX mmap1U mxvec_indexK /= exprMn.
 Qed.
 
 Lemma prod_sympXY d (la : intpartn d) : 'p[la](XY) = 'p[la](X) * 'p[la](Y).
@@ -258,10 +248,10 @@ rewrite -big_split /=; apply eq_bigr => i _.
 by rewrite [LHS]sympXY.
 Qed.
 
-Definition CK d := 'h_d(XY).
+Definition Cauchy_kernel d := 'h_d(XY).
 
-Lemma CK_dhomog d : CK d \is d.-homog.
-Proof. by rewrite /CK; apply evalXY_homog; apply: symh_homog. Qed.
+Lemma Cauchy_kernel_dhomog d : Cauchy_kernel d \is d.-homog.
+Proof. by rewrite /Cauchy_kernel; apply evalXY_homog; apply: symh_homog. Qed.
 
 Lemma symmX la : 'm[la](X) = 'm[la].
 Proof.
@@ -278,14 +268,14 @@ Lemma famY_subproof (mz : 'X_{1.. (m * n) < d.+1}) i :
     (mdeg (tnth (monsY (val mz)) i) < d.+1)%N.
 Proof.
 apply: (leq_ltn_trans _ (bmdeg mz)).
-rewrite /mdeg /monsY tnth_mktuple !big_tuple big_pairtoc /=.
-rewrite (eq_bigr (fun j => tnth mz (pairtoc (i, j)))); first last.
+rewrite /mdeg /monsY tnth_mktuple !big_tuple big_mxvec_index /=.
+rewrite (eq_bigr (fun j => tnth mz (mxvec_index i j))); first last.
   by move=> j _; rewrite tnth_mktuple -mnm_tnth.
 by rewrite (bigD1 i) //= leq_addr.
 Qed.
 Definition famY mz := [ffun i => BMultinom (famY_subproof mz i)].
 Let famYinv_fun (ff : {ffun ordinal_finType m -> 'X_{1.. n < d.+1}}) :=
-  let mz := [multinom (ff (ctopair i).1 (ctopair i).2) | i < m * n]
+  let mz := [multinom (ff (vecmx_index i).1 (vecmx_index i).2) | i < m * n]
   in if (mdeg mz < d.+1)%N then mz else 0%MM.
 Lemma famYinv_subproof ff : (mdeg (famYinv_fun ff) < d.+1)%N.
 Proof.
@@ -298,11 +288,11 @@ Definition famYinv ff := BMultinom (famYinv_subproof ff).
 End BijectionFam.
 
 Lemma Cauchy_symm_symh d :
-  CK d = \sum_(la : intpartn d) 'm[la](X) * 'h[la](Y).
+  Cauchy_kernel d = \sum_(la : intpartn d) 'm[la](X) * 'h[la](Y).
 Proof.
 apply/mpolyP => mon.
 case: (altP (mdeg mon =P d)) => Hdeg; first last.
-  rewrite (dhomog_nemf_coeff (CK_dhomog d) Hdeg).
+  rewrite (dhomog_nemf_coeff (Cauchy_kernel_dhomog d) Hdeg).
   rewrite linear_sum /= big1 ?mcoeff0 // => la _.
   rewrite polyXY_scale mcoeffZ symmX.
   case: (ssrnat.leqP (size la) m) => [Hi | /symm_oversize ->].
@@ -329,7 +319,7 @@ rewrite (bigD1 pm) ?size_partm //= ?big1 ?addr0; first last.
   rewrite mpartK // => Heq.
   by move: Hla; rewrite /eq_op /= Heq eq_refl.
 rewrite mcoeffZ mcoeff_symm ?size_partm // perm_eq_sym partm_perm_eqK mulr1.
-rewrite /CK /prod_symh /prod_gen {1}/symh /= rmorph_prod /=.
+rewrite /Cauchy_kernel /prod_symh /prod_gen {1}/symh /= rmorph_prod /=.
 rewrite rmorph_sum raddf_sum /= partmE; apply esym.
 transitivity (\prod_(i <- mon) sympol 'h_i : polY ).
   rewrite [RHS](bigID (fun i => i == 0%N)) /=.
@@ -362,16 +352,16 @@ rewrite (reindex (famY (d := d))) /=; first last.
     apply val_inj => /=.
     rewrite [[multinom _ | i < m * n]](_ : _ = val mz) /= ?bmdeg //.
     apply mnmP => c; rewrite mnmE /famY ffunE /=.
-    rewrite tnth_mktuple mnmE //= -[in RHS](ctopairK c).
-    by case (ctopair c).
+    rewrite tnth_mktuple mnmE //= -[in RHS](vecmx_indexK c).
+    by case (vecmx_index c).
   + move=> ff; rewrite inE => /familyP H /=.
     apply/ffunP => /= i; rewrite ffunE; apply val_inj => /=.
     rewrite [mdeg _](_ : _ = d) ?ltnSn; first last.
-      rewrite -[RHS]Hdeg !mdegE big_pairtoc => /=; apply eq_bigr => i' _.
+      rewrite -[RHS]Hdeg !mdegE big_mxvec_index => /=; apply eq_bigr => i' _.
       have {H} := H i'; rewrite unfold_in mnm_tnth => /eqP <-.
       rewrite mdegE; apply eq_bigr => j _.
-      by rewrite mnmE pairtocK /=.
-    by rewrite tnth_mktuple; apply mnmP => j; rewrite !mnmE pairtocK /=.
+      by rewrite mnmE mxvec_indexK /=.
+    by rewrite tnth_mktuple; apply mnmP => j; rewrite !mnmE mxvec_indexK /=.
 apply eq_big => [mz | mz /eqP Hmz].
 - apply/eqP/familyP => [/= Hmon i | Hfam].
   + rewrite unfold_in ffunE /=.
@@ -385,7 +375,7 @@ apply eq_big => [mz | mz /eqP Hmz].
 Qed.
 
 Lemma Cauchy_syms_syms d :
-  CK d = \sum_(la : intpartn d) 's[la](X) * 's[la](Y).
+  Cauchy_kernel d = \sum_(la : intpartn d) 's[la](X) * 's[la](Y).
 Proof.
 rewrite Cauchy_symm_symh.
 transitivity (\sum_(mu : intpartn d) \sum_(la : intpartn d)
@@ -397,23 +387,23 @@ rewrite 2!linear_sum /= mulr_suml; apply eq_bigr => mu _.
 by rewrite !linearZ /= -scalerAr -scalerAl.
 Qed.
 
-End CK.
+End CauchyKernel.
 
-Section CKRat.
+Section CauchyKernelRat.
 Notation "p '(Y)'" := (@polY_XY _ _ _ p) (at level 20, format "p '(Y)'").
 Notation "p '(X)'" := (@polX_XY _ _ _ p) (at level 20, format "p '(X)'").
 Notation "p '(XY)'" := (@evalXY _ _ _ p) (at level 20, format "p '(XY)'").
 
 
 Lemma Cauchy_symp_symp m n d :
-  CK m n [comRingType of rat] d =
+  Cauchy_kernel m n [comRingType of rat] d =
   \sum_(la : intpartn d) 'p[la](X) * ((zcard la)%:R^-1 *: 'p[la](Y)).
 Proof.
-rewrite /CK symh_to_symp !rmorph_sum /=; apply eq_bigr => la _.
+rewrite /Cauchy_kernel symh_to_symp !rmorph_sum /=; apply eq_bigr => la _.
 rewrite linearZ /= -scalerAr prod_sympXY; congr (_ *: _).
 rewrite -rmorphMn /= rmorphV //=.
 by rewrite unitfE pnatr_eq0 neq0zcard.
 Qed.
 
 
-End CKRat.
+End CauchyKernelRat.
