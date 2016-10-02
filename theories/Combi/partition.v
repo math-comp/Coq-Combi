@@ -86,7 +86,9 @@ Operations on partitions:
 Comparison of partitions:
 
 - [partdom s t] == [s] is dominated by [t], that is the partial sum of [s] are
-               smaller that the partitial sum of [t]
+               smaller that the partial sum of [t].
+- [intpartndom d] == a type convertible to [intpart d] which is canonically
+               finite and partially ordered by [partdom].
 - [(s <= t)%Ord] == [s] is smaller than [t] for the lexicographic order
 
 Relation with set partitions:
