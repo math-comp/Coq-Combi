@@ -348,7 +348,7 @@ rewrite /is_in_shape => /is_part_ijP [] _ Hpart Hcr /Hpart Hrj Hkc.
 exact: leq_ltn_trans Hkc (leq_trans Hcr Hrj).
 Qed.
 
-(** Equality of partitons *)
+(** Equality of partitions *)
 Lemma part_nth_len_eq p q :
   (forall i, nth 0 p i = nth 0 q i) -> is_part p -> is_part q -> size p = size q.
 Proof.
