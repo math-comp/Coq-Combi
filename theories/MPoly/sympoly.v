@@ -45,7 +45,7 @@ Section DefType.
 Variable n : nat.
 Variable R : ringType.
 
-Structure sympoly : predArgType :=
+Record sympoly : predArgType :=
   SymPoly {sympol :> {mpoly R[n]}; _ : sympol \is symmetric}.
 
 Canonical sympoly_subType := Eval hnf in [subType for sympol].
