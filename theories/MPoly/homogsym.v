@@ -234,6 +234,12 @@ Local Notation n := (n0.+1).
 Variable R : fieldType.
 Local Notation P := (intpartn n).
 
+Definition symbe := [tuple of [seq homsyme n0 R la | la <- enum {: intpartn n}]].
+Definition symbh := [tuple of [seq homsymh n0 R la | la <- enum {: intpartn n}]].
+Definition symbm := [tuple of [seq homsymm n0 R la | la <- enum {: intpartn n}]].
+Definition symbs := [tuple of [seq homsyms n0 R la | la <- enum {: intpartn n}]].
+Definition symbp := [tuple of [seq homsymp n0 R la | la <- enum {: intpartn n}]].
+
 Local Notation "''pi_' d" :=
   (pihomog [measure of mdeg] d) (at level 5, format "''pi_' d").
 
@@ -266,7 +272,7 @@ rewrite [in RHS](tnth_nth (tnth (enum_tuple {: P}) i)).
 by rewrite (nth_map (tnth (enum_tuple {: P}) i)) -?cardE.
 Qed.
 
-Lemma free_homsymm : free [seq homsymm _ R la | la <- enum {: intpartn n}].
+Lemma free_symbm : free symbm.
 Proof.
 apply/freeP => co; rewrite vect_to_homsym => /(congr1 val).
 rewrite /= linear_sum /= => /symm_unique0 H i.
@@ -275,17 +281,15 @@ rewrite -[X in _ <= X](intpartn_sumn (enum_val i)).
 exact: size_part.
 Qed.
 
-Lemma homsymm_basis :
-  basis_of fullv [seq homsymm _ R la | la <- enum {: intpartn n}].
+Lemma symbm_basis : basis_of fullv symbm.
 Proof.
-by rewrite basisEfree free_homsymm subvf dimvf size_map size_tuple /=.
+by rewrite basisEfree free_symbm subvf dimvf size_map size_tuple /=.
 Qed.
 
-Lemma homsyms_basis :
-  basis_of fullv [seq homsyms _ R la | la <- enum {: intpartn n}].
+Lemma symbs_basis : basis_of fullv symbs.
 Proof.
 rewrite basisEdim size_map size_tuple dimvf leqnn andbT.
-rewrite -(span_basis homsymm_basis).
+rewrite -(span_basis symbm_basis).
 apply/span_subvP => s /mapP [/= la]; rewrite !mem_enum => _ ->{s}.
 have -> : homsymm n0 R la = \sum_(mu : intpartn n) 'K^-1(la, mu) *: homsyms n0 R mu.
   by apply val_inj; rewrite /= (symm_syms _ _ la) !linear_sum.
@@ -360,8 +364,7 @@ have := prod_syme_homog n R (intpartn_of_mon H).
 exact: pihomog_dE.
 Qed.
 
-Lemma homsyme_basis :
-  basis_of fullv [seq homsyme _ R la | la <- enum {: intpartn n}].
+Lemma homsyme_basis : basis_of fullv symbe.
 Proof.
 rewrite basisEdim size_map size_tuple dimvf leqnn andbT.
 apply/subvP => /= p _; rewrite span_def big_map.
@@ -382,3 +385,87 @@ exact: mem0v.
 Qed.
 
 End HomSymField.
+
+From mathcomp Require Import ssrnum algC algnum.
+Import GRing.Theory Num.Theory.
+Require Import permcent.
+
+Reserved Notation "'[ p | q ]"
+  (at level 2, format "'[hv' ''[' p | '/ '  q ] ']'").
+
+Section ScalarProduct.
+
+Variable n0 : nat.
+Local Notation n := (n0.+1).
+Local Notation P := (intpartn n).
+Local Notation algCF := [fieldType of algC].
+
+Definition homsymdot (p q : {homsym algC[n, n]}) :=
+  \sum_(i < #|{: P}|) (zcard (enum_val i))%:R^-1 *
+  coord (symbp n0 algCF) i p * (coord (symbp n0 algCF) i q)^*.
+Definition homsymdotr_head k p q := let: tt := k in homsymdot q p.
+
+Notation homsymdotr := (homsymdotr_head tt).
+Notation "''[' u | v ]" := (homsymdot u v) : ring_scope.
+
+
+Lemma homsymdotrE p q : homsymdotr p q = '[q | p]. Proof. by []. Qed.
+
+Lemma homsymdotr_is_linear p :
+  linear (homsymdotr p : {homsym algC[n,n]} -> algC^o).
+Proof.
+move=> a u v.
+rewrite linear_sum -big_split; apply: eq_bigr => x _ /=.
+rewrite linearD linearZ /= mulrDr mulrDl !mulrA; congr (_ + _).
+by rewrite [_ * a]mulrC -!mulrA.
+Qed.
+Canonical homsymdotr_additive p := Additive (homsymdotr_is_linear p).
+Canonical homsymdotr_linear p := Linear (homsymdotr_is_linear p).
+
+
+Lemma homsymdot0l p : '[0 | p] = 0.
+Proof. by rewrite -homsymdotrE linear0. Qed.
+Lemma homsymdotNl p q : '[- q | p] = - '[q | p].
+Proof. by rewrite -!homsymdotrE linearN. Qed.
+Lemma homsymdotDl p q1 q2 : '[q1 + q2 | p] = '[q1 | p] + '[q2 | p].
+Proof. by rewrite -!homsymdotrE linearD. Qed.
+Lemma homsymdotBl p q1 q2 : '[q1 - q2 | p] = '[q1 | p] - '[q2 | p].
+Proof. by rewrite -!homsymdotrE linearB. Qed.
+Lemma homsymdotMnl p q n : '[q *+ n | p] = '[q | p] *+ n.
+Proof. by rewrite -!homsymdotrE linearMn. Qed.
+Lemma homsymdot_suml p I r (P : pred I) (q : I -> {homsym algC[n,n]}) :
+  '[\sum_(i <- r | P i) q i | p] = \sum_(i <- r | P i) '[q i | p].
+Proof. by rewrite -!homsymdotrE linear_sum. Qed.
+Lemma homsymdotZl p a q : '[a *: q | p] = a * '[q | p].
+Proof. by rewrite -!homsymdotrE linearZ. Qed.
+
+Lemma homsymdotC p q : '[p | q] = ('[q | p])^*.
+Proof.
+rewrite /homsymdot rmorph_sum /=.
+apply: eq_bigr=> x _; rewrite !rmorphM conjCK -!mulrA.
+have /geC0_conj -> : 0 <= ((zcard (enum_val x))%:R^-1 : algC).
+  by rewrite -nnegrE -div1r fpred_divl // ?nnegrE ?ler01 ?ler0n ?oner_neq0.
+by congr (_ * _); rewrite mulrC.
+Qed.
+
+Lemma homsymdotBr p q1 q2 : '[p | q1 - q2] = '[p | q1] - '[p | q2].
+Proof. by rewrite !(homsymdotC p) -rmorphB homsymdotBl. Qed.
+Canonical homsymdot_additive p := Additive (homsymdotBr p).
+
+Lemma homsymdot0r p : '[p | 0] = 0. Proof. exact: raddf0. Qed.
+Lemma homsymdotNr p q : '[p | - q] = - '[p | q].
+Proof. exact: raddfN. Qed.
+Lemma homsymdotDr p q1 q2 : '[p | q1 + q2] = '[p | q1] + '[p | q2].
+Proof. exact: raddfD. Qed.
+Lemma homsymdotMnr p q n : '[p | q *+ n] = '[p | q] *+ n.
+Proof. exact: raddfMn. Qed.
+Lemma homsymdot_sumr p I r (P : pred I) (q : I -> {homsym algC[n,n]}) :
+  '[p | \sum_(i <- r | P i) q i] = \sum_(i <- r | P i) '[p | q i].
+Proof. exact: raddf_sum. Qed.
+Lemma homsymdotZr a p q : '[p | a *: q] = a^* * '[p | q].
+Proof. by rewrite !(homsymdotC p) homsymdotZl rmorphM. Qed.
+
+End ScalarProduct.
+
+Notation homsymdotr := (homsymdotr_head tt).
+Notation "''[' u | v ]" := (homsymdot u v) : ring_scope.
