@@ -143,7 +143,7 @@ VFILES:=theories/Combi/composition.v\
   theories/SymGroup/towerSn.v\
   theories/MPoly/antisym.v\
   theories/MPoly/Cauchy.v\
-  theories/MPoly/symhomog.v\
+  theories/MPoly/homogsym.v\
   theories/MPoly/sympoly.v\
   theories/MPoly/Schur_basis.v\
   3rdparty/ALEA/Ccpo.v\

@@ -79,13 +79,13 @@ Qed.
 
 Lemma Fchar_triv : Fchar 1 = 'h_n.
 Proof.
-rewrite -decomp_cf_triv linear_sum.
-rewrite (eq_bigr (fun i => 'z_i^-1 *: 'p[i])); first last.
-  move=> l _.
-  by rewrite -Fchar_ncfuniCT /= linearZ scalerA mulrC divff // scale1r.
-rewrite -(map_symh [rmorphism of ratr]) symh_to_symp /=.
-rewrite rmorph_sum /=; apply eq_bigr => l _.
-by rewrite zcoeffE scale_map_sympoly map_symp_prod fmorphV /= ratr_nat.
+rewrite -decomp_cf_triv linear_sum symh_to_symp /=.
+rewrite (eq_bigr (fun la => 'z_la^-1 *: 'p[la])); first last.
+  move=> la _.
+  rewrite -Fchar_ncfuniCT /ncfuniCT /= linearZ /=.
+  by rewrite scalerA /= mulrC divff // scale1r.
+apply val_inj; rewrite /= /prod_gen /=.
+by rewrite !raddf_sum; apply eq_bigr => l _; rewrite zcoeffE.
 Qed.
 
 End Defs.

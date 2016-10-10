@@ -601,7 +601,7 @@ Proof.
   by rewrite Hnil in_nil in Hx.
 Qed.
 
-Lemma big_enum (S : {set T}) :
+Lemma big_enum (S : pred T) :
   \big[op/idx]_(s in S) F s = \big[op/idx]_(s <- enum S) F s.
 Proof. by rewrite /index_enum big_filter; apply congr_big. Qed.
 

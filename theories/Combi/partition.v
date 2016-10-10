@@ -123,8 +123,8 @@ Variable sh : seq nat.
 Definition is_box_in_shape b := is_in_shape sh b.1 b.2.
 
 Structure box_in : Set :=
-  BoxIn {coord :> nat * nat; _ : is_box_in_shape coord}.
-Canonical box_in_subType := Eval hnf in [subType for coord].
+  BoxIn {coordbox :> nat * nat; _ : is_box_in_shape coordbox}.
+Canonical box_in_subType := Eval hnf in [subType for coordbox].
 Definition box_in_eqMixin := Eval hnf in [eqMixin of box_in by <:].
 Canonical box_in_eqType := Eval hnf in EqType box_in box_in_eqMixin.
 Definition box_in_choiceMixin := Eval hnf in [choiceMixin of box_in by <:].

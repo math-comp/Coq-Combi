@@ -17,7 +17,7 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop ssrint ssralg path div.
-From mathcomp Require Import rat ssralg ssrnum algC matrix.
+From mathcomp Require Import ssralg ssrnum algC matrix.
 
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
@@ -389,14 +389,15 @@ Qed.
 
 End CauchyKernel.
 
-Section CauchyKernelRat.
+Section CauchyKernelNumField.
 Notation "p '(Y)'" := (@polY_XY _ _ _ p) (at level 20, format "p '(Y)'").
 Notation "p '(X)'" := (@polX_XY _ _ _ p) (at level 20, format "p '(X)'").
 Notation "p '(XY)'" := (@evalXY _ _ _ p) (at level 20, format "p '(XY)'").
 
+Variable R : numFieldType.
 
 Lemma Cauchy_symp_symp m n d :
-  Cauchy_kernel m n [comRingType of rat] d =
+  Cauchy_kernel m n R d =
   \sum_(la : intpartn d) 'p[la](X) * ((zcard la)%:R^-1 *: 'p[la](Y)).
 Proof.
 rewrite /Cauchy_kernel symh_to_symp !rmorph_sum /=; apply eq_bigr => la _.
@@ -405,5 +406,4 @@ rewrite -rmorphMn /= rmorphV //=.
 by rewrite unitfE pnatr_eq0 neq0zcard.
 Qed.
 
-
-End CauchyKernelRat.
+End CauchyKernelNumField.

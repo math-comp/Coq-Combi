@@ -45,7 +45,7 @@ Section DefType.
 Variable n : nat.
 Variable R : ringType.
 
-Structure sympoly : predArgType :=
+Record sympoly : predArgType :=
   SymPoly {sympol :> {mpoly R[n]}; _ : sympol \is symmetric}.
 
 Canonical sympoly_subType := Eval hnf in [subType for sympol].
@@ -802,15 +802,15 @@ Qed.
 
 End ChangeBasis.
 
-From mathcomp Require Import rat ssrnum.
-
+From mathcomp Require Import ssrnum.
 
 Section ChangeBasisSymhPowerSum.
 
 Import Num.Theory.
 
+Variable R : numFieldType.
 Variable nvar : nat.
-Local Notation SF := {sympoly rat[nvar]}.
+Local Notation SF := {sympoly R[nvar]}.
 
 Fixpoint prod_partsum (s : seq nat) :=
   if s is _ :: s' then (sumn s * prod_partsum s')%N else 1%N.
@@ -829,7 +829,7 @@ elim: n {-2}n (leqnn n) => [| m IHm] n.
   by rewrite big_seq1 big_nil symh0 /= invr1 scale1r.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
 rewrite enum_compnE Hm // -Hm big_flatten /=.
-have Hn : (n%:R : rat) != 0 by rewrite pnatr_eq0 Hm.
+have Hn : (n%:R : R) != 0 by rewrite pnatr_eq0 Hm.
 apply (scalerI Hn); rewrite Newton_symh_iota.
 rewrite scaler_sumr big_map; apply eq_big_seq => i.
 rewrite mem_iota add1n ltnS => /andP [Hi Hin].
@@ -941,7 +941,7 @@ Lemma part_sumn_count l :
 Proof. by move/part_sumn_count_bound; apply. Qed.
 
 Lemma coeff_symh_to_symp n (l : intpartn n) :
-  (\sum_(c : intcompn n | perm_eq l c) \Pi c) = (zcard l)%:R^-1 :> rat.
+  (\sum_(c : intcompn n | perm_eq l c) \Pi c) = (zcard l)%:R^-1 :> R.
 Proof.
 case: l => l /= /andP [/eqP].
 elim: n {-2}n (leqnn n) l => [| m IHm] n.
@@ -960,7 +960,7 @@ pose headcomp c := Ordinal (head_intcompn c).
 rewrite (partition_big headcomp xpredT) //=.
 transitivity (\sum_(j < n.+1)
                 \sum_(i : intcompn n |
-                 perm_eq l i && (head 0%N i == j :> nat)) \Pi i : rat).
+                 perm_eq l i && (head 0%N i == j :> nat)) \Pi i : R).
   by apply eq_bigr=> i _; apply eq_bigl => c.
 rewrite (bigID (fun j : 'I_(n.+1) => (j : nat) \in l)) /=
         [X in _ + X]big1 ?addr0; first last.
@@ -969,7 +969,7 @@ rewrite (bigID (fun j : 'I_(n.+1) => (j : nat) \in l)) /=
   - subst c0; move/perm_eq_mem: Hperm Hi => /(_ i).
     by rewrite inE eq_refl /= => ->.
 transitivity (\sum_(i < n.+1 | (i : nat) \in l)
-               n%:R^-1 * (zcard (rem (i : nat) l))%:R^-1 : rat).
+               n%:R^-1 * (zcard (rem (i : nat) l))%:R^-1 : R).
   apply eq_bigr => /= i Hi.
   have H0i : i != 0%N :> nat.
     move: Hi; apply contraL => /eqP ->.
@@ -988,7 +988,7 @@ transitivity (\sum_(i < n.+1 | (i : nat) \in l)
     have /perm_eqlP -> := perm_to_rem Hi.
     by rewrite perm_cons.
   transitivity (\sum_(c : intcompn (n - i)%N | perm_eq (rem (i :nat ) l) c)
-                 n%:R^-1 * \Pi c : rat).
+                 n%:R^-1 * \Pi c : R).
     by apply eq_bigr => c _; rewrite intcompn_sumn subnKC // natrM invfM.
   rewrite -mulr_sumr IHm //.
   - rewrite -ltnS -Hm -{3}(subnK Hin).
@@ -1004,7 +1004,7 @@ transitivity (\sum_(i < n.+1 | (i : nat) \in l)
 rewrite {IHm} -mulr_sumr.
 transitivity (n%:R^-1 *
        (\sum_(i < n.+1 | (i : nat) \in l)
-         (i * (count_mem (i : nat) l))%:R / (zcard l)%:R) : rat).
+         (i * (count_mem (i : nat) l))%:R / (zcard l)%:R) : R).
   congr (_ * _); apply eq_bigr => i Hi.
   have H0i : i != 0%N :> nat.
     move: Hi; apply contraL => /eqP ->.
