@@ -339,11 +339,11 @@ Proof.
 move=> i; rewrite (nth_map i) ?size_tuple //.
 by rewrite -tnth_nth tnth_ord_tuple mesym_sym.
 Qed.
-Local Definition proj_fun q :=
+Local Definition pisymhomog_fun q :=
   SymPoly (pihomog_sym n (mcomp_sym q Esym)) : {sympoly R[n]}.
-Local Lemma proj_funP q : proj_fun q \is n.-homsym.
+Local Lemma pisymhomog_funP q : pisymhomog_fun q \is n.-homsym.
 Proof. by rewrite homsymE /= pihomogP. Qed.
-Local Definition phom := fun q => HomogSym (proj_funP q).
+Local Definition pisymhomog := fun q => HomogSym (pisymhomog_funP q).
 
 Lemma intpartn_of_monE m (H : mnmwgt m = n) :
   'X_[m] \mPo E = homsyme n0 R (intpartn_of_mon H).
@@ -356,8 +356,8 @@ rewrite big_nseq tnth_mktuple.
 by rewrite -big_const_ord prodr_const cardT -cardE card_ord.
 Qed.
 
-Lemma phom_monE m (H : mnmwgt m = n) :
-  phom 'X_[m] = homsyme n0 R (intpartn_of_mon H).
+Lemma pisymhomog_monE m (H : mnmwgt m = n) :
+  pisymhomog 'X_[m] = homsyme n0 R (intpartn_of_mon H).
 Proof.
 apply val_inj; apply val_inj; rewrite /= intpartn_of_monE /=.
 have := prod_syme_homog n R (intpartn_of_mon H).
@@ -370,19 +370,22 @@ rewrite basisEdim size_map size_tuple dimvf leqnn andbT.
 apply/subvP => /= p _; rewrite span_def big_map.
 have:= sym_fundamental_homog (sympol_is_symmetric p) (homsym_is_dhomog p).
 move=> [t [Hp /dhomogP Hhomt]].
-have {Hp} -> : p = \sum_(m <- msupp t) t@_m *: phom 'X_[m].
+have {Hp} -> : p = \sum_(m <- msupp t) t@_m *: pisymhomog 'X_[m].
   apply val_inj; apply val_inj; rewrite /= -{1}Hp {1}(mpolyE t) {Hp}.
   rewrite !linear_sum /=; apply eq_big_seq => m /Hhomt /= Hm.
   rewrite !linearZ /=; congr (_ *: _).
   rewrite pihomog_dE // -[X in _ \is X.-homog]Hm.
   exact: homog_X_mPo_elem.
 rewrite big_seq; apply memv_suml => m Hm; apply memvZ.
-rewrite (phom_monE (Hhomt m Hm)); move: (intpartn_of_mon _) => {m Hm} la.
+rewrite (pisymhomog_monE (Hhomt m Hm)); move: (intpartn_of_mon _) => {m Hm} la.
 rewrite (bigD1_seq la) /= ?mem_enum ?inE ?enum_uniq //.
 rewrite -[X in X \in _]addr0.
 apply memv_add; first exact: memv_line.
 exact: mem0v.
 Qed.
+
+Lemma homsymp_basis : basis_of fullv symbp.
+Admitted.
 
 End HomSymField.
 
@@ -408,7 +411,16 @@ Definition homsymdotr_head k p q := let: tt := k in homsymdot q p.
 Notation homsymdotr := (homsymdotr_head tt).
 Notation "''[' u | v ]" := (homsymdot u v) : ring_scope.
 
-
+Lemma homsymdotE p q :
+  '[ p | q ] =
+  \sum_(la : intpartn n) (zcard la)%:R^-1 *
+    coord (symbp n0 algCF) (enum_rank la) p *
+    (coord (symbp n0 algCF) (enum_rank la) q)^*.
+Proof.
+rewrite /homsymdot (reindex (enum_val (A := {: intpartn n}))) /=; first last.
+  exact: (enum_val_bij_in (x0 := (rowpartn n))).
+by apply/eq_bigr => i _; rewrite enum_valK.
+Qed.
 Lemma homsymdotrE p q : homsymdotr p q = '[q | p]. Proof. by []. Qed.
 
 Lemma homsymdotr_is_linear p :
@@ -464,6 +476,24 @@ Lemma homsymdot_sumr p I r (P : pred I) (q : I -> {homsym algC[n,n]}) :
 Proof. exact: raddf_sum. Qed.
 Lemma homsymdotZr a p q : '[p | a *: q] = a^* * '[p | q].
 Proof. by rewrite !(homsymdotC p) homsymdotZl rmorphM. Qed.
+
+Lemma symbpE la : homsymp n0 algCF la = (symbp n0 algCF)`_(enum_rank la).
+Proof. by rewrite /symbp tupleE /= (nth_map la) ?nth_enum_rank // -cardE. Qed.
+Lemma coord_symbp la mu :
+  coord (symbp n0 algCF) (enum_rank mu) (homsymp n0 algCF la) = (la == mu)%:R.
+Proof.
+rewrite !symbpE !(coord_free _ _ (basis_free (homsymp_basis _ _))).
+by rewrite !(inj_eq enum_rank_inj).
+Qed.
+
+Lemma homsymdotp (la mu : intpartn n) :
+  '[ homsymp _ algCF la | homsymp _ algCF mu ] = (zcard la)%:R^-1 * (la == mu)%:R.
+Proof.
+rewrite homsymdotE (bigD1 mu) //= big1 ?addr0 => [| nu /negbTE Hneq].
+- rewrite !coord_symbp eq_refl /= conjC1 mulr1.
+  by case: eqP => [-> //| _]; rewrite !mulr0.
+- by rewrite !coord_symbp [mu == nu]eq_sym Hneq conjC0 mulr0.
+Qed.
 
 End ScalarProduct.
 

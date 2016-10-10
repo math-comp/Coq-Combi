@@ -26,7 +26,7 @@ From mathcomp Require Import rat ssralg ssrnum algC.
 From mathcomp Require Import classfun.
 
 From SsrMultinomials Require Import mpoly.
-Require Import tools partition sympoly.
+Require Import tools partition sympoly homogsym.
 Require Import permcomp cycletype towerSn.
 
 Set Implicit Arguments.
@@ -41,12 +41,17 @@ Local Notation algCF := [fieldType of algC].
 
 Section Defs.
 
-Variable nvar n : nat.
+Variable n0 : nat.
+Local Notation n := n0.+1.
 
 Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
+Local Notation "''p[' k ]" := (homsymp _ _ k)
+                              (at level 8, k at level 2, format "''p[' k ]").
+Local Notation "''h[' k ]" := (homsymh _ _ k)
+                              (at level 8, k at level 2, format "''h[' k ]").
 
-Definition Fchar (f : 'CF('SG_n)) : {sympoly algC[nvar]} :=
+Definition Fchar (f : 'CF('SG_n)) : {homsym algC[n, n]} :=
   \sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'p[l].
 
 Lemma Fchar_is_linear : linear Fchar.
@@ -56,13 +61,6 @@ apply eq_bigr => l _; rewrite !cfunElock.
 by rewrite scalerA mulrA -scalerDl mulrDl.
 Qed.
 Canonical Fchar_linear := Linear Fchar_is_linear.
-
-Lemma Fchar_homog f : sympol (Fchar f) \is n.-homog.
-Proof.
-rewrite /Fchar !linear_sum  //=.
-apply rpred_sum => m _; apply rpredZ.
-exact: prod_symp_homog.
-Qed.
 
 Lemma Fchar_ncfuniCT l : Fchar '1z_[l] = 'p[l].
 Proof using.
@@ -77,19 +75,20 @@ rewrite /cycle_typeSn permCTP eq_refl /=.
 by rewrite mulr1 divff ?scale1r.
 Qed.
 
-Lemma Fchar_triv : Fchar 1 = 'h_n.
+Lemma Fchar_triv : Fchar 1 = 'h[rowpartn n].
 Proof.
-rewrite -decomp_cf_triv linear_sum symh_to_symp /=.
+rewrite -decomp_cf_triv linear_sum.
 rewrite (eq_bigr (fun la => 'z_la^-1 *: 'p[la])); first last.
   move=> la _.
   rewrite -Fchar_ncfuniCT /ncfuniCT /= linearZ /=.
   by rewrite scalerA /= mulrC divff // scale1r.
-apply val_inj; rewrite /= /prod_gen /=.
-by rewrite !raddf_sum; apply eq_bigr => l _; rewrite zcoeffE.
+apply val_inj; rewrite /= /prod_gen /= big_seq1.
+rewrite raddf_sum symh_to_symp /=.
+by apply eq_bigr => l _; rewrite zcoeffE.
 Qed.
 
 End Defs.
-Arguments Fchar [nvar n] f.
+Arguments Fchar [n0] f.
 
 (**
 This cannot be written as a SSReflect [{morph Fchar : f g / ...  >-> ... }]
@@ -101,8 +100,9 @@ dependent equality but I'm not sure this is really needed.
 
 *)
 
-Theorem Fchar_ind_morph nv n m (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
-  Fchar ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f * Fchar g :> {sympoly algC[nv]}.
+Theorem Fchar_ind_morph n m (f : 'CF('SG_m.+1)) (g : 'CF('SG_n.+1)) :
+  Fchar ('Ind['SG_(m.+1 + n.+1)] (f \o^ g)) =
+  (Fchar f : {sympoly algC[_]}) * (Fchar g : {sympoly algC[_]}).
 Proof using.
 rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
 rewrite cfextprod_suml !linear_sum [RHS]mulr_suml.
