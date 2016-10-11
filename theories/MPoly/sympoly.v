@@ -1121,7 +1121,7 @@ Variable n0 : nat.
 Local Notation n := (n0.+1).
 Variable R : comRingType.
 
-Lemma symhE d : symh n R d = Schur n0 R (rowpartn d) :> {mpoly R[n]}.
+Lemma symhE d : val (symh n R d) = Schur n0 R (rowpartn d).
 Proof using.
 rewrite /= -symh_basisE /symh_pol /symh_pol_bound.
 rewrite -(big_map (@bmnm n d.+1) (fun m => mdeg m == d) (fun m => 'X_[m])).
@@ -1156,7 +1156,7 @@ Qed.
 (** The definition of syme symmetric polynomials as column Schur
     function agrees with the one from mpoly *)
 Lemma symeE d :
-  syme n R d = Schur n0 R (colpartn d) :> {mpoly R[n]}.
+  val (syme n R d) = Schur n0 R (colpartn d).
 Proof using.
 rewrite /= mesym_tupleE /tmono /syme Schur_tabsh_readingE.
 rewrite (eq_bigl _ _ (@tabwordshape_col d)).
@@ -1187,7 +1187,8 @@ Qed.
 
 Lemma Schur1 (sh : intpartn 1) : Schur n0 R sh = \sum_(i < n) 'X_i.
 Proof using.
-suff -> : sh = rowpartn 1 by rewrite -symhE symh1.
+suff -> : sh = rowpartn 1.
+  by rewrite -symhE [val]/= symh1.
 by apply val_inj => /=; exact: intpartn1.
 Qed.
 
@@ -1366,36 +1367,13 @@ congr ('X_[_]); apply/mnmP => j; rewrite !mnmE.
 by rewrite -widen_lift.
 Qed.
 
-Lemma restr_syme k : restr_sym 'e_k = 'e_k.
+Lemma restr_prod_symp d (la : intpartn d) : restr_sym 'p[la] = 'p[la].
 Proof.
-apply val_inj; rewrite /= !mesymE linear_sum.
-rewrite (bigID (fun s : {set _} => ord_max \in s)) /= big1 ?add0r; first last.
-  move=> S /andP [_ Hin].
-  by rewrite /mesym1 restrX0 // mnmE Hin.
-pose f (s : {set 'I_n}) := (@fintype.lift n.+1 ord_max) @: s.
-pose g (s : {set 'I_n.+1}) := (@fintype.lift n.+1 ord_max) @^-1: s.
-rewrite (reindex f) /=; first last.
-  exists g => s; rewrite inE => /andP [_ Hmax]; apply/setP => /= i.
-  - rewrite !inE; apply/imsetP/idP => /= [[j Hj] /lift_inj -> // | Hi].
-    by exists i.
-  - apply/imsetP/idP => /= [[j] | Hi].
-    + by rewrite /g inE => H ->.
-    + case: (unliftP ord_max i) => /= [j Hj | Hj]; subst i.
-      * by exists j => //; rewrite inE.
-      * by rewrite Hi in Hmax.
-apply eq_big => S.
-- rewrite card_imset; last exact: lift_inj.
-  case: eqP => //= _.
-  rewrite /f; apply/negP => /imsetP /= [x _].
-  rewrite -widen_lift => /(congr1 val) /= => /eqP.
-  by rewrite (gtn_eqF (ltn_ord x)).
-- move=> /andP [/eqP Hcard /negbTE Hmax].
-  rewrite /restr /= muniE msuppX big_seq1 mcoeffX eq_refl scale1r.
-  have -> : mesym1 (f S) ord_max = 0%N by rewrite mnmE Hmax.
-  rewrite -mul_polyC mulr1 polyseqC mpolyX_neq0 /=.
-  congr ('X_[_]); apply/mnmP => j; rewrite !mnmE widen_lift.
-  congr nat_of_bool; apply/imsetP/idP => /=[[i Hi] /lift_inj -> // | Hj].
-  by exists j.
+apply val_inj; rewrite /prod_symp /prod_gen /= !rmorph_prod /=.
+rewrite !big_seq; apply eq_bigr => /= i /(nthP 0%N) [ind Hind <-{i}].
+have := nth_part_non0 (intpartnP la) Hind.
+case: (nth 0%N la ind) => //= i _.
+exact: (congr1 val (restr_symp i)).
 Qed.
 
 Lemma restr_syms d (la : intpartn d) : restr (Schur n R la) = Schur n0 R la.
@@ -1407,101 +1385,85 @@ rewrite (bigID (fun t : tabsh n la => ord_max \in to_word t)) /= big1 ?add0r;
   elim: (to_word i) Hi => //= w0 w IHw.
   rewrite inE big_cons => /orP [/eqP <- | /IHw ->]; last by rewrite mulr0.
   by rewrite restrX0 ?mul0r // mnmE eq_refl.
-pose lt_fun := fun t : tabsh n0 la => [seq map (fintype.lift ord_max) r | r <- t].
+case: (ssrnat.ltnP n (size la)) => Hla.
+  rewrite !big_pred0 // => /= t.
+  - have:= size_tabsh t.
+    rewrite -(size_map size t) -/(shape _) shape_tabsh => /(leq_trans Hla).
+    by rewrite ltnn.
+  - apply negbF; have /allP Hall := all_ltn_nth_tabsh t n.
+    have /mem_to_word : is_in_shape (shape t) n 0.
+    rewrite /is_in_shape lt0n.
+    by apply nth_part_non0; rewrite ?shape_tabsh ?size_map.
+  suff -> : get_tab t n 0 = ord_max by [].
+  apply val_inj => /=; apply anti_leq; rewrite -ltnS ltn_ord /=.
+  apply Hall; rewrite /get_tab; apply: mem_nth.
+  rewrite -nth_shape lt0n.
+  by apply nth_part_non0; rewrite ?shape_tabsh ?size_map.
+pose lt_fun := fun t : tabsh n0 la =>
+                [seq map (fintype.lift ord_max) r | r <- t].
 have ltP t : is_tab_of_shape n la (lt_fun t).
   rewrite /= shape_incr_tab shape_tabsh eq_refl andbT.
-  rewrite -(incr_tab (F := (fintype.lift ord_max))) //.
+  rewrite -(incr_tab (F := fintype.lift ord_max)) //.
   move=> i j _ _; by rewrite !sub_pord_ltnXE !lift_ord_max.
 pose lt t := TabSh (ltP t).
+pose ult_fun :=
+  fun t : tabsh n la =>
+    if ord_max \in to_word t
+    then locked (tabrowconst Hla) : seq (seq 'I_n) (* Not used *)
+    else [seq map (fun i => odflt ord0 (unlift ord_max i)) r | r <- t].
+have ultP t : is_tab_of_shape n0 la (ult_fun t).
+  rewrite /ult_fun; case: (boolP (ord_max \in to_word t)).
+    by case: (locked (tabrowconst Hla)).
+  rewrite /= shape_incr_tab shape_tabsh eq_refl andbT => H.
+  rewrite -(incr_tab (F := fun i => odflt ord0 (unlift ord_max i))) //.
+  move=> i j Hi Hj; rewrite !sub_pord_ltnXE !ltnXnatE/=.
+  have {Hi} : ord_max != i by move: H; apply contra => /eqP ->.
+  move=> /unlift_some [ /= il -> ->]; rewrite lift_ord_max /=.
+  have {Hj} : ord_max != j by move: H; apply contra => /eqP ->.
+  by move=> /unlift_some [ /= jl -> ->]; rewrite lift_ord_max /=.
+pose ult t := TabSh (ultP t).
 rewrite (reindex lt) /=; first last.
-  
-Section NVarChange.
-
-
-Variable R : comRingType.
-Variables N n : nat.
-Hypothesis HnN : (n <= N)%N.
-
-Local Notation polN := {mpoly R[N]}.
-Local Notation poln := {mpoly R[n]}.
-Local Notation symN := {sympoly R[N]}.
-Local Notation symn := {sympoly R[n]}.
-
-Definition restr_nvar (p : polN) : poln :=
-  p \mPo [tuple nth 0 [tuple 'X_i | i < n] i | i < N].
-
-Lemma restr_nvar_sym_subproof (p : symN) : restr_nvar p \in symmetric.
-Proof.
-rewrite /restr_nvar; apply msym_comp_poly => // s.
-apply/tuple_perm_eqP.
-
-Lemma restr_nvar_msymX m :
-  restr_nvar 'X_[m] =
-  if all (pred1 0%N) (drop n m) then
-    'X_[[multinom nth 0%N m i | i < n]]
-  else 0.
-Proof.
-rewrite /restr_nvar comp_mpolyX.
-case: n HnN => [_ | n0 Hn0].
-  rewrite drop0; case: (altP (m =P 0%MM)) => [-> /= | Hm].
-  - rewrite big1 => [| i _]; last by rewrite tnth_mktuple mnmE expr0.
-    rewrite all_map (eq_all (a2 := predT)) // all_predT.
-    apply esym; rewrite [m in 'X_[m]](_ : _ = mnm0) ?mpolyX0 //.
-    by apply mnmP => [[i]].
-  - have [i Hi] : {i | m i != 0%N}.
-      apply/sigW/existsP; move: Hm; apply contraR.
-      rewrite negb_exists => /forallP Hall.
-      apply/eqP/mnmP => i.
-      by have := Hall i; rewrite negbK mnmE => /eqP ->.
-    rewrite (bigD1 i) //= tnth_mktuple nth_default; first last.
-      by rewrite size_map size_enum_ord.
-    rewrite expr0n (negbTE Hi) mul0r.
-    suff /negbTE -> : ~~ (all (pred1 0%N) m) by [].
-    rewrite -has_predC; apply/(has_nthP 0%N); exists i; rewrite ?size_tuple //=.
-    by rewrite -mnm_nth.
-case: (boolP (all _ _)) => [/allP Hall| /allPn].
-- rewrite (bigID (fun i : 'I_N => (i < n0.+1)%N)) /= mulrC big1 ?mul1r; first last.
-    move=> i; rewrite -ltnNge ltnS => Hi.
-    suff -> : (m i) = 0%N by rewrite expr0.
-    apply/eqP/Hall; rewrite (mnm_nth 0).
-    rewrite -(subnKC Hi) -nth_drop; apply mem_nth.
-    by rewrite size_drop ltn_subRL subnKC // size_tuple.
-  pose f := fun i =>
-              'X_(nth ord0 (enum 'I_n0.+1) i)^+(nth 0%N m i) : {mpoly R[_]}.
-  rewrite (eq_bigr (f \o nat_of_ord))=> [|i Hi]; first last.
-    by rewrite /f tnth_mktuple /= (nth_map ord0) ?size_enum_ord // (mnm_nth 0).
-  rewrite -big_ord_widen // /f.
-  rewrite mpolyXE_id; apply eq_bigr => i _.
-  by rewrite nth_ord_enum mnmE.
-- move=> [/= i Hidrop].
-  rewrite -(nth_index 0%N Hidrop) nth_drop.
-  set ind := (_ + _)%N => Hnthind.
-  have Hind : (ind < N)%N.
-    by move: Hidrop; rewrite -index_mem size_drop size_tuple ltn_subRL.
-  rewrite (bigD1 (Ordinal Hind)) //=.
-  rewrite tnth_mktuple (mnm_nth 0) [nat_of_ord (Ordinal Hind)]/=.
-  rewrite nth_default; first last.
-    by rewrite size_map size_enum_ord /ind addSn ltnS leq_addr.
-  by rewrite expr0n (negbTE Hnthind) mul0r.
+  exists ult => t; rewrite inE => /= Ht; apply val_inj => /=.
+  - rewrite /ult_fun /= (negbTE Ht).
+    rewrite -map_comp (eq_map (f2 := id)) ?map_id // => /= r /=.
+    rewrite -map_comp (eq_map (f2 := id)) ?map_id // {r} => /= x /=.
+    by rewrite liftK.
+  - rewrite /lt_fun /= /ult_fun (negbTE Ht).
+    rewrite -map_comp -[RHS]map_id; apply eq_in_map => r Hr /=.
+    rewrite -map_comp -[RHS]map_id; apply eq_in_map => x Hx /=.
+    have {Hx} Hx : x \in to_word t.
+      by rewrite /to_word; apply /flattenP; exists r; first rewrite mem_rev.
+    have {Hx} : ord_max != x by move: Ht; apply contra => /eqP ->.
+    by move=> /unlift_some [ /= il -> ->] /=.
+apply eq_big => t.
+- apply/flattenP => /= [[rtmp]]; rewrite mem_rev => /mapP [/= r Hr ->{rtmp}].
+  move=> /mapP [/= x Hx] /(congr1 val)/eqP; rewrite lift_ord_max /=.
+  by rewrite (gtn_eqF (ltn_ord x)).
+rewrite rmorph_prod /= /to_word.
+rewrite !big_flatten /= /lt_fun -map_rev big_map.
+move=> {lt lt_fun ltP ult ult_fun ultP}.
+elim: (rev t) => {t} /= [| r0 t IHt]; first by rewrite !big_nil.
+rewrite !big_cons mem_cat negb_or => /andP [Hr0 /IHt{IHt} ->]; congr (_ * _).
+rewrite big_map; elim: r0 Hr0 => {t} [| i r IHr]; first by rewrite !big_nil.
+rewrite !big_cons /= negb_or => /andP [Hi /IHr{IHr} ->]; congr (_ * _).
+rewrite /restr /= muniE msuppX big_seq1 mcoeffX eq_refl scale1r.
+have -> : U_( (fintype.lift ord_max i))%MM ord_max = 0%N.
+ by rewrite mnmE eq_sym (negbTE Hi).
+rewrite -mul_polyC mulr1 polyseqC mpolyX_neq0 /=.
+congr ('X_[_]); apply/mnmP => j; rewrite !mnmE.
+by rewrite -widen_lift.
 Qed.
 
-Lemma restr_nvar_symm_pol (p : symN) : restr_nvar p \in symmetric.
-
-Lemma restr_nvar_sym_subproof (p : symN) : restr_nvar p \in symmetric.
+Lemma restr_symh k : restr_sym 'h_k = 'h_k.
 Proof.
-case: p => p /= /issym_symmE ->.
-rewrite /restr_nvar !linear_sum /=; apply/issymP => s.
-rewrite linear_sum; apply eq_bigr => m Hm.
-rewrite !linearZ /=; congr (_ *: _).
-rewrite /symm size_partm /=; move: (mpart _) => {m Hm} m.
-rewrite /symm_pol.
-; apply rpred_sum => m Hm.
-rewrite linearZ; apply rpredZ => /=.
+apply val_inj; rewrite symhE /= -[X in restr X]/(val 'h_k) symhE.
+exact: restr_syms.
+Qed.
 
+Lemma restr_syme k : restr_sym 'e_k = 'e_k.
+Proof.
+apply val_inj; rewrite symeE /= -[X in restr X]/(val 'e_k) symeE.
+exact: restr_syms.
+Qed.
 
-apply/issymP => s; apply/mpolyP => m.
-rewrite /restr_nvar !linear_sum /=. apply eq_bigr => m _.
-rewrite linearZ rmorph_prod /=; congr (_ *: _); apply eq_bigr => i _.
-rewrite rmorphX /=; congr (_ ^+ _).
-rewrite tnth_mktuple; case: (ssrnat.ltnP i n) => Hi.
-- rewrite (nth_map (Ordinal Hi)).
+End KillLastVar.
