@@ -1272,6 +1272,89 @@ Qed.
 End ScalarChange.
 
 
+Section MPoESymHomog.
+
+Variable (n0 : nat) (R : comRingType).
+Local Notation n := (n0.+1).
+
+Implicit Types p q r : {mpoly R[n]}.
+Implicit Type m : 'X_{1..n}.
+
+Lemma prod_homog nv l (dt : l.-tuple nat) (mt : l.-tuple {mpoly R[nv]}) :
+  (forall i : 'I_l, tnth mt i \is (tnth dt i).-homog) ->
+  \prod_(i <- mt) i \is (\sum_(i <- dt) i).-homog.
+Proof using .
+elim: l dt mt => [| l IHl] dt mt H.
+  rewrite tuple0 big_nil tuple0 big_nil; exact: dhomog1.
+case/tupleP: dt H => d dt.
+case/tupleP: mt => p mt H /=.
+rewrite !big_cons; apply dhomogM.
+  by have := H ord0 => /=; rewrite (tnth_nth 0) (tnth_nth 0%N).
+apply IHl => i.
+have := H (inord i.+1).
+rewrite !(tnth_nth 0) !(tnth_nth 0%N) /=.
+by rewrite !inordK; last exact: (ltn_ord i).
+Qed.
+
+Local Notation E nv := [tuple mesym nv R i.+1  | i < n].
+
+Lemma homog_X_mPo_elem (nv : nat) m : 'X_[m] \mPo (E nv) \is (mnmwgt m).-homog.
+Proof using .
+rewrite comp_mpolyX.
+pose dt := [tuple (i.+1 * (m i))%N | i < n].
+pose mt := [tuple (mesym nv R i.+1) ^+ m i | i < n] : n.-tuple {mpoly R[_]}.
+rewrite (eq_bigr (fun i : 'I_n => tnth mt i)); first last.
+  by move=> k _ /=; rewrite !tnth_mktuple.
+rewrite -(big_tuple _ _ mt xpredT id).
+rewrite /mnmwgt (eq_bigr (fun i : 'I_n => tnth dt i)); first last.
+  by move=> k _ /=; rewrite !tnth_mktuple mulnC.
+rewrite -(big_tuple _ _ dt xpredT id).
+apply prod_homog => k.
+rewrite !tnth_mktuple {mt dt}; apply: dhomogMn.
+exact: mesym_homog.
+Qed.
+
+Lemma pihomog_mPo nv p d :
+  pihomog [measure of mdeg] d (p \mPo (E nv)) =
+  (pihomog [measure of mnmwgt] d p) \mPo (E nv).
+Proof using .
+elim/mpolyind: p => [| c m p Hm Hc IHp] /=; first by rewrite !linear0.
+rewrite !linearP /= {}IHp; congr (c *: _ + _).
+case: (altP (mnmwgt m =P d)) => Hd.
+- have/eqP := Hd; rewrite -(dhomogX R) => /pihomog_dE ->.
+  by have:= homog_X_mPo_elem nv m; rewrite Hd => /pihomog_dE ->.
+- rewrite (pihomog_ne0 Hd (homog_X_mPo_elem nv m)).
+  rewrite (pihomog_ne0 Hd); first by rewrite linear0.
+  by rewrite dhomogX.
+Qed.
+
+Lemma mwmwgt_homogP (p : {mpoly R[n]}) d :
+  reflect
+    (forall nv, p \mPo (E nv) \is d.-homog)
+    (p \is d.-homog for [measure of mnmwgt]).
+Proof using.
+rewrite !homog_piE.
+apply (iffP eqP) => [Homog nv | H].
+- by rewrite -Homog -pihomog_mPo pihomogP.
+- apply pihomog_dE.
+  suff -> : p = pihomog [measure of mnmwgt] d p by apply: pihomogP.
+  apply msym_fundamental_un; apply esym.
+  by rewrite -pihomog_mPo; apply pihomog_dE.
+Qed.
+
+Lemma sym_fundamental_homog (p : {mpoly R[n]}) (d : nat) :
+  p \is symmetric -> p \is d.-homog ->
+  { t | t \mPo (E n) = p /\ t \is d.-homog for [measure of mnmwgt] }.
+Proof.
+move=> /sym_fundamental [t [Ht _]] Hhom.
+exists (pihomog [measure of mnmwgt] d t); split.
+- by rewrite -pihomog_mPo Ht pihomog_dE.
+- exact: pihomogP.
+Qed.
+
+End MPoESymHomog.
+
+
 From mathcomp Require Import poly.
 Section KillLastVar.
 
