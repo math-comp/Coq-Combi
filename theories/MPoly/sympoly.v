@@ -193,6 +193,8 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
 Fact syme_sym d : mesym n R d \is symmetric.
 Proof using. exact: mesym_sym. Qed.
 Definition syme d : {sympoly R[n]} := SymPoly (syme_sym d).
+Lemma syme_geqnE d : d > n -> syme d = 0.
+Proof. by move=> Hd; apply val_inj; rewrite /= mesym_geqnE. Qed.
 Lemma mesym_homog d : mesym n R d \is d.-homog.
 Proof using.
 apply/dhomogP => m.
@@ -433,15 +435,18 @@ Qed.
 
 
 (** All basis agrees at degree 1 *)
-Lemma syme1 : syme 1 = \sum_(i < n) 'X_i :> {mpoly R[n]}.
+Lemma syme1 : val (syme 1) = \sum_(i < n) 'X_i.
 Proof using. by rewrite /= mesym1E. Qed.
 
-Lemma symp1 : symp 1 = \sum_(i < n) 'X_i :> {mpoly R[n]}.
-Proof using. by apply eq_bigr => i _; rewrite expr1. Qed.
-
-Lemma symh1 : symh 1 = \sum_(i < n) 'X_i :> {mpoly R[n]}.
+Lemma sympe1E : symp 1 = syme 1.
 Proof using.
-rewrite /symh -mpolyP => m.
+apply val_inj; rewrite syme1 /=.
+by apply eq_bigr => i _; rewrite expr1.
+Qed.
+
+Lemma symhe1E : symh 1 = syme 1.
+Proof using.
+apply val_inj; rewrite syme1 /= -mpolyP => m.
 rewrite !raddf_sum /=.
 case: (boolP (mdeg m == 1%N)) => [/mdeg1P [] i /eqP -> | Hm].
 - have Hdm : (mdeg U_(i))%MM < 2 by rewrite mdeg1.
@@ -648,38 +653,59 @@ apply eq_bigr => i _.
 by rewrite !expr1n !mulr1 mulr_natr.
 Qed.
 
-Lemma syme_symhE (d : nat) :
+Lemma sum_syme_symh (d : nat) :
   d != 0%N ->
-  'e_d = \sum_(1 <= i < d.+1) 'h_i * ((-1)^+i.-1 *: 'e_(d - i)) :> SF.
+  \sum_(0 <= i < d.+1) (-1)^+i *: ('e_i * 'h_(d - i)) = 0 :> SF.
 Proof.
-move=> Hd.
-have := sum_symh_syme Hd.
-rewrite big_nat_recl // expr0 scale1r symh0 mul1r subn0 => /eqP.
-rewrite (addr_eq0 'e_d) => /eqP ->; rewrite big_add1 /= -sumrN.
+move=> Hd; rewrite big_nat_rev /=.
+rewrite -[RHS](scaler0 _ ((-1)^+d)) -[in RHS](sum_symh_syme Hd) scaler_sumr /=.
+rewrite !big_nat; apply eq_bigr => i /andP [_ Hi].
+rewrite mulrC !add0n subSS subKn // scalerA; congr (_ *: ('h__ * 'e__)).
+by rewrite -signr_odd odd_sub // signr_addb !signr_odd.
+Qed.
+
+
+Section HandE.
+
+Variable E H : nat -> {sympoly R[nvar]}.
+
+Hypothesis E0 : E 0 = 1.
+Hypothesis H0 : H 0 = 1.
+Hypothesis Hanti : forall d : nat,
+    d != 0%N ->
+    \sum_(0 <= i < d.+1) (-1)^+i *: (H i * E (d - i)) = 0.
+
+Lemma symHE_rec (d : nat) :
+  d != 0%N ->
+  E d = \sum_(1 <= i < d.+1) H i * ((-1)^+i.-1 *: E (d - i)).
+Proof.
+move=> Hd; have:= Hanti Hd.
+rewrite big_nat_recl // expr0 scale1r H0 mul1r subn0 => /eqP.
+rewrite (addr_eq0 (E d)) => /eqP ->; rewrite big_add1 /= -sumrN.
 rewrite !big_nat; apply eq_bigr => i /= Hi.
 rewrite scalerAr -mulrN; congr (_ * _).
 rewrite -scaleNr; congr (_ *: _).
 by rewrite exprS mulN1r opprK.
 Qed.
 
-Lemma syme_to_symh_partsum n :
-  'e_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: (\prod_(i <- c) 'h_i) :> SF.
+Lemma symHE_partsum n :
+  E n = \sum_(c : intcompn n) (-1)^+(n - size c) *: (\prod_(i <- c) H i).
 Proof.
 rewrite /index_enum -enumT /=.
 rewrite -[RHS](big_map (@cnval n) xpredT
-   (fun c : seq nat => (-1)^+(n - size c) *: \prod_(i <- c) 'h_i)).
+   (fun c : seq nat => (-1)^+(n - size c) *: \prod_(i <- c) H i)).
 rewrite enum_intcompnE.
 elim: n {-2}n (leqnn n) => [| m IHm] n.
   rewrite leqn0 => /eqP ->.
-  by rewrite /enum_compn /= big_seq1 /= subnn expr0 scale1r big_nil syme0.
+  by rewrite /enum_compn /= big_seq1 /= subnn expr0 scale1r big_nil E0.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
 rewrite enum_compnE Hm // -Hm big_flatten /=.
-rewrite syme_symhE; last by rewrite Hm.
+rewrite symHE_rec; last by rewrite Hm.
 rewrite big_map /index_iota subSS subn0; apply eq_big_seq => i.
 rewrite mem_iota add1n ltnS => /andP [Hi Hin].
 rewrite big_map.
 rewrite (eq_big_seq
-    (fun c : seq nat => - 'h_i * ((-1) ^+ (n - size c) *: \prod_(i0 <- c) 'h_i0)));
+    (fun c : seq nat => - H i * ((-1) ^+ (n - size c) *: \prod_(i0 <- c) H i0)));
   first last.
   move=> s; rewrite -enum_compnP /is_comp_of_n /= => /andP [/eqP Hsum Hn0].
   rewrite big_cons -scalerAr mulNr scalerN -scaleNr; congr (_ *: _).
@@ -694,7 +720,7 @@ case: (altP (n-i =P 0)%N) => [/eqP | Hni] /=.
   have -> : i = n by apply anti_leq; rewrite Hin Hni.
   subst n => /=.
   rewrite subnn /enum_compn /= big_seq1 big_nil /=.
-  rewrite subn0 syme0 mulNr -mulrN -scaleNr; congr (_ * (_)%:A).
+  rewrite subn0 E0 mulNr -mulrN -scaleNr; congr (_ * (_)%:A).
   by rewrite exprS mulN1r opprK.
 rewrite {}IHm //; first last.
   rewrite Hm; case: i Hi {Hin Hni} => // i' _.
@@ -715,6 +741,35 @@ rewrite subnAC subnKC //.
 have:= size_comp Hn0; rewrite Hsum.
 rewrite -!subn_eq0 !subnBA //; last exact: ltnW.
 by rewrite addnC.
+Qed.
+
+End HandE.
+
+
+Lemma syme_symhE (d : nat) :
+  d != 0%N ->
+  'e_d = \sum_(1 <= i < d.+1) 'h_i * ((-1)^+i.-1 *: 'e_(d - i)) :> SF.
+Proof.
+apply: (symHE_rec (symh0 _ _)); exact: sum_symh_syme.
+Qed.
+
+Lemma symh_symeE (d : nat) :
+  d != 0%N ->
+  'h_d = \sum_(1 <= i < d.+1) 'e_i * ((-1)^+i.-1 *: 'h_(d - i)) :> SF.
+Proof.
+apply: (symHE_rec (syme0 _ _)); exact: sum_syme_symh.
+Qed.
+
+Lemma syme_to_symh_partsum n :
+  'e_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: (\prod_(i <- c) 'h_i) :> SF.
+Proof.
+apply: (symHE_partsum (syme0 _ _) (symh0 _ _)); exact: sum_symh_syme.
+Qed.
+
+Lemma symh_to_syme_partsum n :
+  'h_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: (\prod_(i <- c) 'e_i) :> SF.
+Proof.
+apply: (symHE_partsum (symh0 _ _) (syme0 _ _)); exact: sum_syme_symh.
 Qed.
 
 
@@ -987,7 +1042,7 @@ transitivity (\sum_(i < n.+1 | (i : nat) \in l)
     move=> c; rewrite eq_refl andbT.
     have /perm_eqlP -> := perm_to_rem Hi.
     by rewrite perm_cons.
-  transitivity (\sum_(c : intcompn (n - i)%N | perm_eq (rem (i :nat ) l) c)
+  transitivity (\sum_(c : intcompn (n - i)%N | perm_eq (rem (i : nat ) l) c)
                  n%:R^-1 * \Pi c : R).
     by apply eq_bigr => c _; rewrite intcompn_sumn subnKC // natrM invfM.
   rewrite -mulr_sumr IHm //.
@@ -1188,7 +1243,7 @@ Qed.
 Lemma Schur1 (sh : intpartn 1) : Schur n0 R sh = \sum_(i < n) 'X_i.
 Proof using.
 suff -> : sh = rowpartn 1.
-  by rewrite -symhE [val]/= symh1.
+  by rewrite -symhE [val]/= symhe1E syme1.
 by apply val_inj => /=; exact: intpartn1.
 Qed.
 
@@ -1550,3 +1605,126 @@ exact: restr_syms.
 Qed.
 
 End KillLastVar.
+
+
+Section SymPolF.
+
+Variable R : comRingType.
+Variable m : nat.
+Implicit Type p : {sympoly R[m]}.
+
+Local Notation E := [tuple syme m R i.+1 | i < m.+1].
+Local Notation SF p := (sym_fundamental (sympol_is_symmetric p)).
+
+Definition sympolyf p := let: exist t _  := SF p in t.
+
+Lemma sympolyf_is_lrmorphism : lrmorphism sympolyf.
+Proof.
+rewrite /sympolyf; repeat split.
+- move=> u v.
+  case: (SF (u - v)) (SF u) (SF v) => [puv [Hpuv _]] [pu [Hpu _]] [pv [Hpv _]].
+  by apply msym_fundamental_un; rewrite [RHS]raddfB /= Hpu Hpv Hpuv.
+- move=> u v.
+  case: (SF (u * v)) (SF u) (SF v) => [puv [Hpuv _]] [pu [Hpu _]] [pv [Hpv _]].
+  apply msym_fundamental_un.
+  by rewrite [RHS]rmorphM /= -/(pu \mPo _) -/(pv \mPo _) Hpu Hpv Hpuv.
+- case: (SF 1) => [p1 [Hp1 _]].
+  by apply msym_fundamental_un; rewrite Hp1 comp_mpoly1.
+- move=> a u.
+  case: (SF (a *: u)) (SF u) => [pau [Hpau _]] [pu [Hpu _]].
+  by apply msym_fundamental_un; rewrite linearZ /= Hpau Hpu.
+Qed.
+Canonical sympolyf_additive   := Additive   sympolyf_is_lrmorphism.
+Canonical sympolyf_rmorphism  := RMorphism  sympolyf_is_lrmorphism.
+Canonical sympolyf_linear     := AddLinear  sympolyf_is_lrmorphism.
+Canonical sympolyf_lrmorphism := LRMorphism sympolyf_is_lrmorphism.
+
+End SymPolF.
+
+
+Section ChangeNVar.
+
+Variable R : comRingType.
+Variable m n : nat.
+
+Local Notation SF p := (sym_fundamental (sympol_is_symmetric p)).
+Local Notation E := [tuple mesym n R i.+1 | i < m].
+
+Lemma cnvarsym_subproof (p : {sympoly R[m]}) : sympolyf p \mPo E \is symmetric.
+Proof. by apply mcomp_sym => i; rewrite -tnth_nth tnth_mktuple mesym_sym. Qed.
+Definition cnvarsym p : {sympoly R[n]} := SymPoly (cnvarsym_subproof p).
+
+Lemma cnvarsym_is_lrmorphism : lrmorphism cnvarsym.
+Proof.
+rewrite /cnvarsym; repeat split.
+- by move=> u v; apply val_inj; rewrite /= !raddfB /=.
+- move=> u v; apply val_inj; rewrite /= rmorphM /=.
+  by rewrite /comp_mpoly rmorphM /=.
+  (* TODO: Add the proper canonical in Pierre-Yves code *)
+- by apply val_inj; rewrite /= /comp_mpoly !rmorph1.
+- by move=> a u; apply val_inj; rewrite /= !linearZ.
+Qed.
+Canonical cnvarsym_additive   := Additive   cnvarsym_is_lrmorphism.
+Canonical cnvarsym_rmorphism  := RMorphism  cnvarsym_is_lrmorphism.
+Canonical cnvarsym_linear     := AddLinear  cnvarsym_is_lrmorphism.
+Canonical cnvarsym_lrmorphism := LRMorphism cnvarsym_is_lrmorphism.
+
+Lemma cnvar_leq_symeE i : (i <= m)%N -> cnvarsym 'e_i = 'e_i.
+Proof.
+move=> Hi; apply val_inj; rewrite /= /sympolyf.
+case: (SF 'e_i) => /= p [Hp _].
+case: i Hi Hp => [_ |i Hi Hp] /=.
+  rewrite !mesym0E /= => Hp.
+  have {Hp} -> : p = 1 by apply msym_fundamental_un; rewrite Hp comp_mpoly1.
+  by rewrite comp_mpoly1.
+have {Hp} -> : p = 'X_(Ordinal Hi).
+  apply msym_fundamental_un; rewrite Hp comp_mpolyXU.
+  by rewrite -tnth_nth tnth_mktuple.
+by rewrite comp_mpolyXU -tnth_nth tnth_mktuple.
+Qed.
+
+Lemma cnvarsymeE i : (i <= m)%N || (n <= m)%N -> cnvarsym 'e_i = 'e_i.
+Proof.
+move=> /orP [] H; first exact: cnvar_leq_symeE.
+case: (ssrnat.leqP i m) => [] H1; first exact: cnvar_leq_symeE.
+by rewrite !syme_geqnE ?raddf0 // (leq_ltn_trans H H1).
+Qed.
+
+Lemma cnvarsymhE i : (i <= m)%N || (n <= m)%N -> cnvarsym 'h_i = 'h_i.
+Proof.
+move=> Hi; rewrite !symh_to_syme_partsum.
+rewrite linear_sum /=; apply eq_bigr => la _.
+rewrite linearZ rmorph_prod /=; congr(_ *: _); apply eq_big_seq => j Hj.
+apply cnvarsymeE.
+move: Hi => /orP [Hi | ->]; last by rewrite orbT.
+apply/orP; left; apply: (leq_trans _ Hi).
+have:= (intcompn_sumn la); rewrite -sumnE (big_rem j Hj) /= => <-.
+exact: leq_addr.
+Qed.
+
+Lemma cnvarsympE i : (i < m)%N || (n <= m)%N -> cnvarsym 'p_i.+1 = 'p_i.+1.
+Proof.
+elim: i {-2}i (leqnn i) => [/= | i IHi] d.
+  rewrite leqn0 => /eqP -> H.
+  by rewrite !sympe1E cnvarsymeE.
+rewrite leq_eqVlt => /orP [/eqP ->{d} | ] Hi; last exact: IHi.
+have:= Newton_symh m R i.+2 => /(congr1 cnvarsym).
+rewrite linearZ /= cnvarsymhE // Newton_symh.
+rewrite big_ltn // symh0 mul1r subn0 => /esym.
+rewrite linear_sum big_ltn //= rmorphM /= symh0 rmorph1 mul1r subn0.
+suff -> : \sum_(1 <= i0 < i.+2) cnvarsym ('h_i0 * 'p_(i.+2 - i0)) = 
+          \sum_(1 <= i0 < i.+2) 'h_i0 * 'p_(i.+2 - i0).
+  by apply: addIr.
+rewrite !big_nat; apply eq_bigr => d /andP [H0d Hd].
+rewrite rmorphM /= cnvarsymhE; first last.
+  move: Hi => /orP [Hi | ->]; last by rewrite orbT.
+  by apply/orP; left; exact: (leq_trans (ltnW Hd) Hi).
+congr (_ * _); rewrite subSn //; apply IHi.
+- case: d H0d Hd => d //= _ _.
+  by rewrite subSS; apply leq_subr.
+- move: Hi => /orP [Hi | ->]; last by rewrite orbT.
+  apply/orP; left; apply: (leq_trans _ Hi).
+  by rewrite ltnS; apply leq_subr.
+Qed.
+
+End ChangeNVar.
