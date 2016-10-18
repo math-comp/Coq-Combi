@@ -145,7 +145,8 @@ VFILES:=theories/Combi/composition.v\
   theories/MPoly/Cauchy.v\
   theories/MPoly/homogsym.v\
   theories/MPoly/sympoly.v\
-  theories/MPoly/Schur_basis.v\
+  theories/MPoly/Schur_mpoly.v\
+  theories/MPoly/Schur_altdef.v\
   3rdparty/ALEA/Ccpo.v\
   3rdparty/ALEA/Misc.v
 
