@@ -21,7 +21,7 @@ From mathcomp Require Import perm fingroup matrix vector zmodp.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
 Require Import tools ordtype permuted partition Yamanouchi std tableau stdtab.
-Require Import antisym sympoly Schur_basis.
+Require Import antisym Schur_mpoly Schur_altdef sympoly.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -156,10 +156,10 @@ Variable d : nat.
 Local Notation SF := {sympoly R[n]}.
 Implicit Type (la : intpartn d).
 
-Definition homsymm la : {homsym R[n, d]} := HomogSym (symm_homog n R la).
-Definition homsyme la : {homsym R[n, d]} := HomogSym (prod_syme_homog n R la).
-Definition homsymh la : {homsym R[n, d]} := HomogSym (prod_symh_homog n R la).
-Definition homsymp la : {homsym R[n, d]} := HomogSym (prod_symp_homog n R la).
+Definition homsymm la : {homsym R[n, d]} := HomogSym (symm_homog n0 R la).
+Definition homsyme la : {homsym R[n, d]} := HomogSym (prod_syme_homog n0 R la).
+Definition homsymh la : {homsym R[n, d]} := HomogSym (prod_symh_homog n0 R la).
+Definition homsymp la : {homsym R[n, d]} := HomogSym (prod_symp_homog n0 R la).
 Definition homsyms la : {homsym R[n, d]} := HomogSym (syms_homog n0 R la).
 
 Lemma homsymmE (f : {homsym R[n, d]}) :
@@ -360,7 +360,7 @@ Lemma phom_monE m (H : mnmwgt m = n) :
   phom 'X_[m] = homsyme n0 R (intpartn_of_mon H).
 Proof.
 apply val_inj; apply val_inj; rewrite /= intpartn_of_monE /=.
-have := prod_syme_homog n R (intpartn_of_mon H).
+have := prod_syme_homog n0 R (intpartn_of_mon H).
 exact: pihomog_dE.
 Qed.
 

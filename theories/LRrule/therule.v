@@ -48,15 +48,15 @@ We define the following:
 - [yamrow n] == the trivial Yamanouchi word of size n whis is constant to 0
 
 
-The main theorem is [Theorem LRtab_coeffP]:
+The main theorem is [Theorem LRyam_coeffP]:
 
 [
   Schur P1 * Schur P2 =
   \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
 ]
 
-As a corollary we provide the two Pieri rules [Pieri_symh] and
-[Pieri_syme].
+As a corollary we provide the two Pieri rules [Pieri_rowpartn] and
+[Pieri_colpartn].
 *******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
@@ -65,7 +65,7 @@ From SsrMultinomials Require Import mpoly.
 
 Require Import tools ordcast combclass partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted congr plactic Greene_inv stdplact Yam_plact skewtab.
-Require Import shuffle sympoly freeSchur.
+Require Import shuffle Schur_mpoly freeSchur.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -566,7 +566,7 @@ Variable (n0 : nat) (R : comRingType).
 Local Notation n := (n0.+1).
 Notation Schur p := (Schur n0 R p).
 
-Theorem LRtab_coeffP :
+Theorem LRyam_coeffP :
   Schur P1 * Schur P2 =
   \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
 Proof using .
@@ -658,10 +658,11 @@ Proof using .
     by rewrite Hincl Hskew.
 Qed.
 
-Theorem Pieri_symh (P1 : intpartn d1) :
-  Schur P1 * 'h_d2 = \sum_(P : intpartn (d1 + d2) | hb_strip P1 P) Schur P.
+Theorem Pieri_rowpartn (P1 : intpartn d1) :
+  Schur P1 * Schur (rowpartn d2) =
+  \sum_(P : intpartn (d1 + d2) | hb_strip P1 P) Schur P.
 Proof using .
-  rewrite symhE LRtab_coeffP.
+  rewrite LRyam_coeffP.
   rewrite [LHS]big_mkcond [RHS]big_mkcond /=.
   apply eq_bigr => p _.
   case: (boolP (included P1 p)) => Hincl; first last.
@@ -671,7 +672,7 @@ Proof using .
   case: (hb_strip P1 p); by rewrite /= ?mulr1n ?mulr0n.
 Qed.
 
-Theorem LRyam_coeff_colpart (P1 : intpartn d1) (P : intpartn (d1 + d2)) :
+Theorem LRyam_coeff_colpartn (P1 : intpartn d1) (P : intpartn (d1 + d2)) :
   included P1 P -> LRyam_coeff P1 (colpartn d2) P = vb_strip P1 P.
 Proof using .
   move=> Hincl.
@@ -683,21 +684,20 @@ Proof using .
   by rewrite /= hb_strip_conjE.
 Qed.
 
-Theorem Pieri_syme (P1 : intpartn d1) :
-  Schur P1 * 'e_d2 = \sum_(P : intpartn (d1 + d2) | vb_strip P1 P) Schur P.
+Theorem Pieri_colpartn (P1 : intpartn d1) :
+  Schur P1 * Schur (colpartn d2) =
+  \sum_(P : intpartn (d1 + d2) | vb_strip P1 P) Schur P.
 Proof using .
-  rewrite symeE LRtab_coeffP.
+  rewrite LRyam_coeffP.
   rewrite [LHS]big_mkcond [RHS]big_mkcond /=.
   apply eq_bigr => p _.
   case: (boolP (included P1 p)) => Hincl; first last.
     suff /negbTE -> : ~~ vb_strip P1 p by [].
     move: Hincl; apply contra; exact: vb_strip_included.
-  rewrite (LRyam_coeff_colpart Hincl).
+  rewrite (LRyam_coeff_colpartn Hincl).
   case: (vb_strip P1 p); by rewrite /= ?mulr1n ?mulr0n.
 Qed.
 
 End Pieri.
 
 End LR.
-
-

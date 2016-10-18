@@ -64,9 +64,9 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop ssralg.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
-Require Import tools ordtype partition Yamanouchi std tableau stdtab sympoly.
+Require Import tools ordtype partition Yamanouchi std tableau stdtab.
 Require Import Schensted congr plactic stdplact Yam_plact Greene_inv shuffle.
-
+Require Import Schur_mpoly.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -652,7 +652,8 @@ Section Conj.
 Variables d1 d2 : nat.
 
 Lemma LRsupport_conj (T1 : stdtabn d1) (T2 : stdtabn d2):
-  LRsupport (conj_stdtabn T1) (conj_stdtabn T2) = (@conj_stdtabn _) @: (LRsupport T1 T2).
+  LRsupport (conj_stdtabn T1) (conj_stdtabn T2) =
+            (@conj_stdtabn _) @: (LRsupport T1 T2).
 Proof using .
   apply/setP => T; rewrite inE.
   apply/idP/idP.
@@ -669,7 +670,8 @@ Proof using .
     exact: H.
 Qed.
 
-Theorem LRtab_coeff_conj (P1 : intpartn d1) (P2 : intpartn d2) (P : intpartn (d1 + d2)) :
+Theorem LRtab_coeff_conj (P1 : intpartn d1) (P2 : intpartn d2)
+        (P : intpartn (d1 + d2)) :
   LRtab_coeff P1 P2 P =
   LRtab_coeff (conj_intpartn P1) (conj_intpartn P2) (conj_intpartn P).
 Proof using .

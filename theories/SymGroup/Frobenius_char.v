@@ -41,8 +41,8 @@ Local Notation algCF := [fieldType of algC].
 
 Section Defs.
 
-Variable nvar n : nat.
-
+Variable nvar0 n : nat.
+Local Notation nvar := nvar0.+1.
 Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
 
@@ -89,7 +89,7 @@ by rewrite !raddf_sum; apply eq_bigr => l _; rewrite zcoeffE.
 Qed.
 
 End Defs.
-Arguments Fchar [nvar n] f.
+Arguments Fchar [nvar0 n] f.
 
 (**
 This cannot be written as a SSReflect [{morph Fchar : f g / ...  >-> ... }]
@@ -101,8 +101,9 @@ dependent equality but I'm not sure this is really needed.
 
 *)
 
-Theorem Fchar_ind_morph nv n m (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
-  Fchar ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f * Fchar g :> {sympoly algC[nv]}.
+Theorem Fchar_ind_morph nv0 n m (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
+  Fchar ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f * Fchar g
+    :> {sympoly algC[nv0.+1]}.
 Proof using.
 rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
 rewrite cfextprod_suml !linear_sum [RHS]mulr_suml.
