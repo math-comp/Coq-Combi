@@ -1657,10 +1657,8 @@ Definition cnvarsym p : {sympoly R[n]} := SymPoly (cnvarsym_subproof p).
 Lemma cnvarsym_is_lrmorphism : lrmorphism cnvarsym.
 Proof.
 rewrite /cnvarsym; repeat split.
-- by move=> u v; apply val_inj; rewrite /= !raddfB /=.
-- move=> u v; apply val_inj; rewrite /= rmorphM /=.
-  by rewrite /comp_mpoly rmorphM /=.
-  (* TODO: Add the proper canonical in Pierre-Yves code *)
+- by move=> u v; apply val_inj; rewrite /= !raddfB.
+- by move=> u v; apply val_inj; rewrite /= !rmorphM.
 - by apply val_inj; rewrite /= /comp_mpoly !rmorph1.
 - by move=> a u; apply val_inj; rewrite /= !linearZ.
 Qed.
@@ -1683,40 +1681,40 @@ have {Hp} -> : p = 'X_(Ordinal Hi).
 by rewrite comp_mpolyXU -tnth_nth tnth_mktuple.
 Qed.
 
-Lemma cnvarsymeE i : (i <= m)%N || (n <= m)%N -> cnvarsym 'e_i = 'e_i.
+Lemma cnvarsyme i : (i <= m)%N || (n <= m)%N -> cnvarsym 'e_i = 'e_i.
 Proof.
 move=> /orP [] H; first exact: cnvar_leq_symeE.
 case: (ssrnat.leqP i m) => [] H1; first exact: cnvar_leq_symeE.
 by rewrite !syme_geqnE ?raddf0 // (leq_ltn_trans H H1).
 Qed.
 
-Lemma cnvarsymhE i : (i <= m)%N || (n <= m)%N -> cnvarsym 'h_i = 'h_i.
+Lemma cnvarsymh i : (i <= m)%N || (n <= m)%N -> cnvarsym 'h_i = 'h_i.
 Proof.
 move=> Hi; rewrite !symh_to_syme_partsum.
 rewrite linear_sum /=; apply eq_bigr => la _.
 rewrite linearZ rmorph_prod /=; congr(_ *: _); apply eq_big_seq => j Hj.
-apply cnvarsymeE.
+apply cnvarsyme.
 move: Hi => /orP [Hi | ->]; last by rewrite orbT.
 apply/orP; left; apply: (leq_trans _ Hi).
 have:= (intcompn_sumn la); rewrite -sumnE (big_rem j Hj) /= => <-.
 exact: leq_addr.
 Qed.
 
-Lemma cnvarsympE i : (i < m)%N || (n <= m)%N -> cnvarsym 'p_i.+1 = 'p_i.+1.
+Lemma cnvarsymp i : (i < m)%N || (n <= m)%N -> cnvarsym 'p_i.+1 = 'p_i.+1.
 Proof.
 elim: i {-2}i (leqnn i) => [/= | i IHi] d.
   rewrite leqn0 => /eqP -> H.
-  by rewrite !sympe1E cnvarsymeE.
+  by rewrite !sympe1E cnvarsyme.
 rewrite leq_eqVlt => /orP [/eqP ->{d} | ] Hi; last exact: IHi.
 have:= Newton_symh m R i.+2 => /(congr1 cnvarsym).
-rewrite linearZ /= cnvarsymhE // Newton_symh.
+rewrite linearZ /= cnvarsymh // Newton_symh.
 rewrite big_ltn // symh0 mul1r subn0 => /esym.
 rewrite linear_sum big_ltn //= rmorphM /= symh0 rmorph1 mul1r subn0.
-suff -> : \sum_(1 <= i0 < i.+2) cnvarsym ('h_i0 * 'p_(i.+2 - i0)) = 
-          \sum_(1 <= i0 < i.+2) 'h_i0 * 'p_(i.+2 - i0).
+suff -> : \sum_(1 <= j < i.+2) cnvarsym ('h_j * 'p_(i.+2 - j)) =
+          \sum_(1 <= j < i.+2) 'h_j * 'p_(i.+2 - j).
   by apply: addIr.
 rewrite !big_nat; apply eq_bigr => d /andP [H0d Hd].
-rewrite rmorphM /= cnvarsymhE; first last.
+rewrite rmorphM /= cnvarsymh; first last.
   move: Hi => /orP [Hi | ->]; last by rewrite orbT.
   by apply/orP; left; exact: (leq_trans (ltnW Hd) Hi).
 congr (_ * _); rewrite subSn //; apply IHi.
@@ -1725,6 +1723,46 @@ congr (_ * _); rewrite subSn //; apply IHi.
 - move: Hi => /orP [Hi | ->]; last by rewrite orbT.
   apply/orP; left; apply: (leq_trans _ Hi).
   by rewrite ltnS; apply leq_subr.
+Qed.
+
+Section ProdGen.
+
+Variable Gen : forall nvar d : nat, {sympoly R[nvar]}.
+Hypothesis Hcnvargen :
+  forall d : nat, (d < m)%N || (n <= m)%N -> cnvarsym (Gen _ d.+1) = (Gen _ d.+1).
+
+Lemma cnvar_prodgen d (la : intpartn d) :
+  (d <= m)%N || (n <= m)%N ->
+  cnvarsym (prod_gen (Gen _) la) = prod_gen (Gen _) la.
+Proof.
+move=> Hd; rewrite /prod_gen rmorph_prod.
+apply eq_big_seq => i /mem_intpartn /andP [H0i Hi].
+case: i H0i Hi => //= i _ Hi; apply Hcnvargen.
+move: Hd => /orP [Hd | ->]; last by rewrite orbT.
+by apply/orP; left; apply: (leq_trans Hi Hd).
+Qed.
+
+End ProdGen.
+
+Lemma cnvar_prodsyme d (la : intpartn d) :
+  (d <= m)%N || (n <= m)%N -> cnvarsym 'e[la] = 'e[la].
+Proof.
+rewrite /prod_syme => Hd; apply (@cnvar_prodgen (syme^~ R)); last by [].
+by move=> i Hi; apply: cnvarsyme.
+Qed.
+
+Lemma cnvar_prodsymh d (la : intpartn d) :
+  (d <= m)%N || (n <= m)%N -> cnvarsym 'h[la] = 'h[la].
+Proof.
+rewrite /prod_symh => Hd; apply (@cnvar_prodgen (symh^~ R)); last by [].
+by move=> i Hi; apply: cnvarsymh.
+Qed.
+
+Lemma cnvar_prodsymp d (la : intpartn d) :
+  (d <= m)%N || (n <= m)%N -> cnvarsym 'p[la] = 'p[la].
+Proof.
+rewrite /prod_symp => Hd; apply (@cnvar_prodgen (symp^~ R)); last by [].
+by move=> i Hi; apply: cnvarsymp.
 Qed.
 
 End ChangeNVar.
