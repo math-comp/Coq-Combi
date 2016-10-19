@@ -1386,83 +1386,22 @@ Notation "''K' ( la , mu )" := (Kostka la mu)
 Notation "''K' ( la , mu )" := (Kostka la mu)%:R
   (at level 8, format "''K' ( la ,  mu )") : ring_scope.
 
-(** ** Inversing a matrix wich is untriangular w.r.t. a partial *)
-Section MatInv.
+Require Import unitriginv.
 
-Local Open Scope ring_scope.
-
-Variables (R : comRingType) (T : finPOrdType).
-Implicit Type (la mu : T).
-
-Variable M : T -> T -> R.
-
-Local Definition decMS la (MI : T -> R) :=
-  forall (Mod : lmodType R) (A B : T -> Mod),
-    (forall la, A la = B la + \sum_(mu | mu <A la) M la mu *: B mu) ->
-          B la = A la + \sum_(mu | mu <A la) MI mu *: A mu.
-
-Lemma decMS_ex : { MI : T -> T -> R | forall la, decMS la (MI la) }.
+Lemma Kostka_unitrig d :
+  unitrig (fun (la mu : intpartndom d) => 'K(la, mu)%:R : int).
 Proof.
-suff rec la : { MIla : T -> R | decMS la MIla }.
-  by exists (fun la => sval (rec la)) => la; case: rec.
-elim/finord_wf : la => /= la IHla.
-have {IHla} (mu) : { MIla : T -> R | mu <A la -> decMS mu MIla }.
-  case: (boolP (mu <A la)) => Hmu; last by exists (fun => 0).
-  by have [MIla HMIla] := IHla mu Hmu; exists MIla.
-rewrite /decMS => rec.
-exists (fun mu => - (M la mu + \sum_(p | (mu < p < la)%Ord) sval (rec p) mu * M la p)).
-move=> Mod A B H.
-rewrite (eq_bigr (fun mu =>
-    - (M la mu *: A mu +
-       (\sum_(p | (mu < p < la)%Ord) sval (rec p) mu * M la p *: A mu)))); first last.
-  by move=> i Hi; rewrite scaleNr scalerDl -scaler_suml.
-rewrite sumrN big_split /=.
-rewrite (exchange_big_dep (fun j => j <A la)) /=; last by move=> i j _ /andP [].
-rewrite -big_split /=.
-apply/eqP; rewrite eq_sym H subr_eq; apply/eqP; congr (_ + _).
-apply eq_bigr => mu Hmu.
-rewrite (eq_bigl (fun j => j <A mu)) /=; first last.
-  move=> i; case: (boolP (i <A mu)); rewrite /= ?Hmu ?andbT ?andbF //.
-  by move=> /ltnX_trans/(_ Hmu) ->.
-case: (rec mu) => MIla /= /(_ Hmu _ A B H) ->.
-rewrite scalerDr scaler_sumr; congr (_ + _).
-by apply eq_bigr => i _; rewrite scalerA mulrC.
+apply/unitrigP; split => [la | la mu].
+- by rewrite Kostka_diag.
+- by apply contraR => /Kostka0 ->.
 Qed.
-
-Definition MatInv la mu : R :=
-  if mu == la then 1 else if mu <A la then sval decMS_ex la mu else 0.
-
-Variables (Mod : lmodType R) (A B : T -> Mod).
-Hypothesis HM : forall la, A la = B la + \sum_(mu | mu <A la) M la mu *: B mu.
-
-Lemma MatInvP la : B la = A la + \sum_(mu | mu <A la) MatInv la mu *: A mu.
-Proof.
-rewrite [X in _ + X](eq_bigr (fun mu => sval decMS_ex la mu *: A mu)); first last.
-  by move=> mu Hmu; rewrite /MatInv Hmu (ltnX_eqF Hmu).
-by case: decMS_ex => /= Inv; rewrite /decMS; apply.
-Qed.
-
-Lemma MatInvE la : B la = \sum_(mu : T) MatInv la mu *: A mu.
-Proof.
-symmetry; rewrite MatInvP /MatInv (bigD1 la) //= eq_refl scale1r; congr (_ + _).
-rewrite (bigID (fun mu => mu <=A la)) /= addrC big1 ?add0r; first last.
-  move=> i /andP /= [Hd /negbTE Hdiff].
-  rewrite ltnX_neqAleqX /= Hdiff andbF.
-  (* Workaround of a bug in the hierarchy of finPOrdType *)
-  by move: Hd; case: (altP (i =P la)) => [-> |]; rewrite ?eq_refl ?scale0r.
-apply eq_bigl => mu.
-(* Workaround of a bug in the hierarchy of finPOrdType *)
-rewrite ltnX_neqAleqX; congr (~~ _ && _).
-by apply/eqP/eqP => ->.
-Qed.
-
-End MatInv.
-
-Local Open Scope ring_scope.
 
 (** ** Inverse Kostka numbers *)
-Definition KostkaInv d : intpartn d -> intpartn d -> int :=
-  MatInv (fun la mu : intpartndom d => 'K(la, mu)).
+Definition KostkaInv d : intpartndom d -> intpartndom d -> int :=
+  Minv (fun la mu : intpartndom d => 'K(la, mu)%:R : int).
+
+Lemma KostkaInv_unitrig d : unitrig (@KostkaInv d).
+Proof. exact: (Minv_unitrig (@Kostka_unitrig d)). Qed.
 
 Notation "''K^-1' ( la , mu )" := ((KostkaInv la mu)%:~R)
   (at level 8, format "''K^-1' ( la ,  mu )") : ring_scope.

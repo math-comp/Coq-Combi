@@ -126,6 +126,7 @@ VFILES:=theories/Combi/composition.v\
   theories/SSRcomplements/sorted.v\
   theories/SSRcomplements/permcomp.v\
   theories/SSRcomplements/tools.v\
+  theories/SSRcomplements/unitriginv.v\
   theories/HookFormula/Frobenius_ident.v\
   theories/HookFormula/Qmeasure.v\
   theories/HookFormula/hook.v\

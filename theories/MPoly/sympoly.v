@@ -16,11 +16,12 @@
 (** * The Ring of Symmetric Polynomials *)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun finset bigop ssralg path perm fingroup.
+From mathcomp Require Import tuple finfun finset.
+From mathcomp Require Import bigop ssralg ssrint path perm fingroup.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
 Require Import tools ordtype permuted partition Yamanouchi std tableau stdtab.
-Require Import skewtab antisym Schur_mpoly therule Schur_altdef.
+Require Import skewtab antisym Schur_mpoly therule Schur_altdef unitriginv.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -1008,13 +1009,14 @@ Import OrdNotations.
 Close Scope ord_scope.
 
 (** * Basis change from Schur to monomial *)
-Section SymsSymm.
+Section SymsSymmInt.
 
-Variable (n : nat) (R : comRingType) (d : nat).
-Local Notation SF := {sympoly R[n.+1]}.
+Variable (n : nat) (d : nat).
+Local Notation SF := {sympoly int[n.+1]}.
 Implicit Type (la mu : intpartn d).
+Local Notation P := (intpartndom d).
 
-Lemma syms_symm la :
+Lemma syms_symm_int la :
   's[la] = \sum_(mu : intpartn d) 'K(la, mu)%:R *: 'm[mu] :> SF.
 Proof.
 rewrite /Kostka; apply val_inj; rewrite /= linear_sum /=.
@@ -1047,57 +1049,84 @@ case: (altP (mdeg m =P sumn la)) => Heq; first last.
     by rewrite mpartK.
 Qed.
 
+Lemma syms_symm_partdom_int la :
+  's[la] = 'm[la] + \sum_(mu : P | mu <A la) 'K(la, mu) *: 'm[mu] :> SF.
+Proof.
+rewrite -(unitrig_sum1l (fun mu : P => 'm[mu]) la (@Kostka_unitrig d)).
+by rewrite -syms_symm_int.
+Qed.
+
+Lemma symm_syms_int la : 'm[la] = \sum_(mu : P) KostkaInv la mu *: 's[mu] :> SF.
+Proof.
+rewrite /KostkaInv.
+apply (Minv_lincombl (@Kostka_unitrig d)
+         (F := fun mu : P => 's[mu]) (G := fun mu : P => 'm[mu])).
+exact: syms_symm_int.
+Qed.
+
+Lemma symm_syms_partdom_int la :
+  'm[la] = 's[la] + \sum_(mu : P | mu <A la) KostkaInv la mu *:'s[mu] :> SF.
+Proof.
+rewrite -(unitrig_sum1l (fun mu : P => 's[mu]) la (@KostkaInv_unitrig d)).
+by rewrite -symm_syms_int.
+Qed.
+
+End SymsSymmInt.
+
+
+Section SymsSymm.
+
+Variable (n : nat) (R : comRingType) (d : nat).
+Local Notation SF := {sympoly R[n.+1]}.
+Implicit Type (la mu : intpartn d).
 Local Notation P := (intpartndom d).
+
+Lemma syms_symm la :
+  's[la] = \sum_(mu : intpartn d) 'K(la, mu)%:R *: 'm[mu] :> SF.
+Proof.
+rewrite -(map_syms [rmorphism of intr]) syms_symm_int.
+rewrite rmorph_sum /=; apply eq_bigr => i _.
+rewrite scale_map_sympoly map_symm /=; congr (_ *: _).
+by rewrite mulrz_nat.
+Qed.
 
 Lemma syms_symm_partdom la :
   's[la] = 'm[la] + \sum_(mu : P | mu <A la) 'K(la, mu) *: 'm[mu] :> SF.
 Proof.
-rewrite syms_symm (bigD1 la) //= Kostka_diag scale1r; congr (_ + _).
-rewrite (bigID (fun mu : P => mu <=A la)) /= addrC big1 ?add0r //.
-by move=> i /andP [_ /Kostka0 ->]; rewrite scale0r.
+rewrite -(map_syms [rmorphism of intr]) syms_symm_partdom_int.
+rewrite rmorphD rmorph_sum /= map_symm; congr (_ + _); apply eq_bigr => i _.
+rewrite scale_map_sympoly map_symm /=; congr (_ *: _).
+by rewrite mulrz_nat.
 Qed.
 
-End SymsSymm.
-
-From mathcomp Require Import ssrint.
-(** * Basis change from monomial to Schur *)
-Section SymmSyms.
-
-Variables (R : comRingType) (n : nat) (d : nat).
-Local Notation SF := {sympoly R[n.+1]}.
-Local Notation P := (intpartndom d).
-Implicit Type la mu : intpartn d.
-
-Lemma symm_syms la : 'm[la] = \sum_(mu : P) 'K^-1(la, mu) *: 's[mu] :> SF.
+Lemma symm_syms la :
+  'm[la] = \sum_(mu : P) 'K^-1(la, mu) *: 's[mu] :> SF.
 Proof.
-rewrite /KostkaInv -(map_symm [rmorphism of intr]).
-rewrite (MatInvE (T := [finPOrdType of P]) (@syms_symm_partdom n _ d) la).
-rewrite rmorph_sum /=; apply eq_bigr => mu _.
+rewrite -(map_symm [rmorphism of intr]) symm_syms_int.
+rewrite rmorph_sum /=; apply eq_bigr => i _.
 by rewrite scale_map_sympoly map_syms.
 Qed.
 
 Lemma symm_syms_partdom la :
-  'm[la] = 's[la] + \sum_(mu : P | mu <A la) 'K^-1(la, mu) *:'s[mu] :> SF.
+  'm[la] = 's[la] + \sum_(mu : P | mu <A la) 'K^-1(la, mu) *: 's[mu] :> SF.
 Proof.
-rewrite /KostkaInv -(map_symm [rmorphism of intr]).
-rewrite (MatInvP (T := [finPOrdType of P]) (@syms_symm_partdom n _ d) la).
-rewrite rmorphD /= map_syms rmorph_sum /=; congr (_ + _).
-apply eq_bigr => mu _.
+rewrite -(map_symm [rmorphism of intr]) symm_syms_partdom_int.
+rewrite rmorphD rmorph_sum /= map_syms; congr (_ + _); apply eq_bigr => i _.
 by rewrite scale_map_sympoly map_syms.
 Qed.
 
-End SymmSyms.
+End SymsSymm.
 
 
 (** * Basis change from complete to Schur *)
-Section SymhSyms.
+Section SymhSymsInt.
 
-Variables (R : comRingType) (n : nat) (d : nat).
-Local Notation SF := {sympoly R[n.+1]}.
+Variables (n : nat) (d : nat).
+Local Notation SF := {sympoly int[n.+1]}.
 Local Notation P := (intpartndom d).
 Implicit Type la mu : intpartn d.
 
-Lemma symh_syms mu : 'h[mu] = \sum_(la : P) 'K(la, mu) *: 's[la] :> SF.
+Lemma symh_syms_int mu : 'h[mu] = \sum_(la : P) 'K(la, mu) *: 's[la] :> SF.
 Proof.
 case: mu => [mu Hmu] /=; rewrite /prod_symh /prod_gen /=.
 elim: mu d Hmu => [|m mu IHmu] deg.
@@ -1123,13 +1152,69 @@ apply eq_big => [nu | nu _].
 - by apply val_inj; rewrite /= Schur_cast.
 Qed.
 
+Lemma symh_syms_partdom_int mu :
+  'h[mu] = 's[mu] + \sum_(la : P | (mu:P) <A la ) 'K(la, mu) *: 's[la] :> SF.
+Proof.
+rewrite -(unitrig_sum1r (fun la : P => 's[la]) mu (@Kostka_unitrig d)).
+by rewrite -symh_syms_int.
+Qed.
+
+Lemma syms_symh_int mu : 's[mu] = \sum_(la : P) KostkaInv la mu *: 'h[la] :> SF.
+Proof.
+rewrite /KostkaInv.
+apply (Minv_lincombr (@Kostka_unitrig d)
+         (G := fun mu : P => 's[mu]) (F := fun mu : P => 'h[mu])).
+exact: symh_syms_int.
+Qed.
+
+Lemma syms_symh_partdom_int mu :
+  's[mu] = 'h[mu] + \sum_(la : P | (mu:P) <A la) KostkaInv la mu *: 'h[la] :> SF.
+Proof.
+rewrite -(unitrig_sum1r (fun la : P => 'h[la]) mu (@KostkaInv_unitrig d)).
+by rewrite -syms_symh_int.
+Qed.
+
+End SymhSymsInt.
+
+
+
+Section SymhSyms.
+
+Variables (R : comRingType) (n : nat) (d : nat).
+Local Notation SF := {sympoly R[n.+1]}.
+Local Notation P := (intpartndom d).
+Implicit Type la mu : intpartn d.
+
+Lemma symh_syms mu : 'h[mu] = \sum_(la : P) 'K(la, mu) *: 's[la] :> SF.
+Proof.
+rewrite -(map_symh_prod [rmorphism of intr]) symh_syms_int.
+rewrite rmorph_sum /=; apply eq_bigr => i _.
+rewrite scale_map_sympoly map_syms /=; congr (_ *: _).
+by rewrite mulrz_nat.
+Qed.
+
 Lemma symh_syms_partdom mu :
   'h[mu] = 's[mu] + \sum_(la : P | (mu:P) <A la ) 'K(la, mu) *: 's[la] :> SF.
 Proof.
-rewrite symh_syms (bigD1 mu) //= Kostka_diag scale1r; congr (_ + _).
-rewrite (bigID (fun la : P => (mu:P) <=A la)) /= addrC big1 ?add0r; first last.
-  by move=> i /andP [_ /Kostka0 ->]; rewrite scale0r.
-by apply eq_bigl => la; rewrite eq_sym.
+rewrite -(map_symh_prod [rmorphism of intr]) symh_syms_partdom_int.
+rewrite rmorphD rmorph_sum /= map_syms; congr (_ + _); apply eq_bigr => i _.
+rewrite scale_map_sympoly map_syms /=; congr (_ *: _).
+by rewrite mulrz_nat.
+Qed.
+
+Lemma syms_symh mu : 's[mu] = \sum_(la : P) 'K^-1(la, mu) *: 'h[la] :> SF.
+Proof.
+rewrite -(map_syms [rmorphism of intr]) syms_symh_int.
+rewrite rmorph_sum /=; apply eq_bigr => i _.
+by rewrite scale_map_sympoly map_symh_prod.
+Qed.
+
+Lemma syms_symh_partdom mu :
+  's[mu] = 'h[mu] + \sum_(la : P | (mu:P) <A la) 'K^-1(la, mu) *: 'h[la] :> SF.
+Proof.
+rewrite -(map_syms [rmorphism of intr]) syms_symh_partdom_int.
+rewrite rmorphD rmorph_sum /= map_symh_prod; congr (_ + _); apply eq_bigr => i _.
+by rewrite scale_map_sympoly map_symh_prod.
 Qed.
 
 End SymhSyms.
