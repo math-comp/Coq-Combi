@@ -387,6 +387,16 @@ have /part_head_non0 /= : is_part (s0 :: sh) by rewrite /= Hhead Hpart.
 by rewrite lt0n.
 Qed.
 
+Lemma mem_part sh i : is_part sh -> i \in sh -> 0 < i <= sumn sh.
+Proof.
+elim: sh i => [//= | s0 sh IHsh] i Hpart.
+have /= Hs0 := part_head_non0 Hpart.
+move: Hpart => /andP [_ Hpart].
+rewrite inE => /orP [/eqP -> | /(IHsh _ Hpart)/andP [-> /=]].
+- by rewrite leq_addr andbT; case: s0 Hs0.
+- by move/leq_trans; apply; apply leq_addl.
+Qed.
+
 Lemma part_sumn_rectangle (sh : seq nat) :
   is_part sh -> sumn sh <= (head 0 sh) * (size sh).
 Proof.
@@ -1364,6 +1374,9 @@ Coercion intpart_of_intpartn : intpartn >-> intpart.
 
 Lemma intpartn_sumn (p : intpartn) : sumn p = n.
 Proof using. by case: p => /= p /andP [] /eqP. Qed.
+
+Lemma mem_intpartn (p : intpartn) i : i \in pnval p -> 0 < i <= n.
+Proof. by rewrite -(intpartn_sumn p); apply mem_part. Qed.
 
 Lemma enum_intpartnE : map val (enum {:intpartn}) = enum_partn n.
 Proof using. rewrite /=; exact: enum_subE. Qed.

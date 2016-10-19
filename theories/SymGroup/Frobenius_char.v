@@ -43,7 +43,6 @@ Section Defs.
 
 Variable n0 : nat.
 Local Notation n := n0.+1.
-
 Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
 Local Notation "''p[' k ]" := (homsymp _ _ k)
@@ -100,17 +99,33 @@ dependent equality but I'm not sure this is really needed.
 
 *)
 
-Theorem Fchar_ind_morph n m (f : 'CF('SG_m.+1)) (g : 'CF('SG_n.+1)) :
-  Fchar ('Ind['SG_(m.+1 + n.+1)] (f \o^ g)) =
-  (Fchar f : {sympoly algC[_]}) * (Fchar g : {sympoly algC[_]}).
+Section IndMorph.
+
+Variables n0 m0 : nat.
+Local Notation n := n0.+1.
+Local Notation m := m0.+1.
+
+Theorem Fchar_ind_morph (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
+  cnvarsym _ (Fchar ('Ind['SG_(m + n)] (f \o^ g))) =
+  (cnvarsym _ (Fchar f) : {sympoly algC[(m0 + n).+1]}) *
+  (cnvarsym _ (Fchar g) : {sympoly algC[(m0 + n).+1]}).
 Proof using.
 rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
-rewrite cfextprod_suml !linear_sum [RHS]mulr_suml.
-apply eq_bigr => /= l _.
-rewrite cfextprod_sumr !linear_sum [RHS]mulr_sumr.
-apply eq_bigr => /= k _.
+rewrite cfextprod_suml [cfIsom _ _]linear_sum ['Ind[_] _]linear_sum.
+rewrite ![Fchar _]linear_sum ![X in cnvarsym _ X]linear_sum /=.
+rewrite ![cnvarsym _ _]linear_sum /=.
+rewrite ![X in cnvarsym _ X]linear_sum ![cnvarsym _ _]linear_sum /=.
+rewrite mulr_suml /=; apply eq_bigr => /= l _.
+rewrite cfextprod_sumr [cfIsom _ _]linear_sum ['Ind[_] _]linear_sum.
+rewrite [Fchar _]linear_sum ![X in cnvarsym _ X]linear_sum [LHS]linear_sum /=.
+rewrite ![Fchar _]linearZ /= Fchar_ncfuniCT /=.
+rewrite 2![in RHS]linear_sum mulr_sumr /=; apply eq_bigr => /= k _.
 rewrite cfextprodZr cfextprodZl scalerA.
-rewrite 3!linearZ /= Ind_ncfuniCT Fchar_ncfuniCT.
-do 2 rewrite linearZ /= Fchar_ncfuniCT.
+rewrite ![Fchar _ in RHS]linearZ /= Fchar_ncfuniCT /=.
+rewrite 2!linearZ /= Ind_ncfuniCT linearZ /= Fchar_ncfuniCT.
+rewrite !linearZ /= !cnvar_prodsymp /= ?ltnS ?leqnn //.
 by rewrite -scalerAr -scalerAl scalerA prod_genM.
 Qed.
+
+End IndMorph.
+
