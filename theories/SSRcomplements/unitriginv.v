@@ -12,6 +12,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** Triangular matrix with 1 on the diagonal *)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat.
 From mathcomp Require Import fintype bigop ssralg.
@@ -111,7 +112,6 @@ Hypothesis Munitrig : unitrig M.
 Local Notation n := #|{: T}|.
 Definition Mat : 'M[R]_n := \matrix_(i, j < n) M (enum_val i) (enum_val j).
 
-(* Triangular (for dominance order) matrix with 1 on the diagonal *)
 Lemma det_unitrig : \det Mat = 1.
 Proof.
 have [Muni Mtrig] := unitrigP _ Munitrig.
