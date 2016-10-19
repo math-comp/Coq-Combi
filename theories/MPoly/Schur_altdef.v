@@ -1389,7 +1389,7 @@ Notation "''K' ( la , mu )" := (Kostka la mu)%:R
 Require Import unitriginv.
 
 Lemma Kostka_unitrig d :
-  unitrig (fun (la mu : intpartndom d) => 'K(la, mu)%:R : int).
+  unitrig (fun la mu : intpartndom d => 'K(la, mu)%:R : int).
 Proof.
 apply/unitrigP; split => [la | la mu].
 - by rewrite Kostka_diag.
@@ -1397,10 +1397,11 @@ apply/unitrigP; split => [la | la mu].
 Qed.
 
 (** ** Inverse Kostka numbers *)
-Definition KostkaInv d : intpartndom d -> intpartndom d -> int :=
+Definition KostkaInv d : intpartn d -> intpartn d -> int :=
   Minv (fun la mu : intpartndom d => 'K(la, mu)%:R : int).
 
-Lemma KostkaInv_unitrig d : unitrig (@KostkaInv d).
+Lemma KostkaInv_unitrig d :
+  unitrig (fun la mu : intpartndom d => KostkaInv la mu).
 Proof. exact: (Minv_unitrig (@Kostka_unitrig d)). Qed.
 
 Notation "''K^-1' ( la , mu )" := ((KostkaInv la mu)%:~R)
