@@ -27,6 +27,57 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory.
 Local Open Scope ring_scope.
 
+Section UniTriangular.
+
+Variable R : comUnitRingType.
+Variable T : finPOrdType.
+Implicit Type M : T -> T -> R.
+Implicit Types t u v : T.
+
+Definition unitrig M :=
+  [forall t, M t t == 1] && [forall t, [forall (u | M u t != 0), (t <= u)%Ord]].
+Lemma unitrigP M :
+  reflect ((forall t, M t t = 1) /\ (forall t u, M u t != 0 -> (t <= u)%Ord))
+          (unitrig M).
+Proof.
+apply/(iffP andP) => [[/forallP Huni /forallP Htrig] | [Huni Htrig]].
+- split => [t | t u]; first by apply/eqP.
+  by have:= Htrig t => /forall_inP; apply.
+- split; apply/forallP => t; first by rewrite Huni.
+  by apply/forall_inP; apply Htrig.
+Qed.
+
+Lemma unitrig1 : unitrig (fun x y => (x == y)%:R).
+Proof.
+apply/unitrigP; split => [u | u v] /=; first by rewrite eq_refl.
+by case: (altP (v =P u)) => [-> |] //=; rewrite eq_refl.
+Qed.
+
+(* TODO : construct the group of unitriangular matrix *)
+
+Lemma unitrig_sum M (Mod : lmodType R) (F : T -> Mod) u :
+  unitrig M ->
+  \sum_(t : T) M u t *: F t = \sum_(t | (t <= u)%Ord) M u t *: F t.
+Proof.
+move=> /unitrigP [Muni Mtrig].
+rewrite (bigID (fun t => (t <= u)%Ord)) /= addrC big1 ?add0r // => i.
+by move=> /(contraR (@Mtrig _ _))/eqP ->; rewrite scale0r.
+Qed.
+
+Lemma unitrig_sum1 M (Mod : lmodType R) (F : T -> Mod) u :
+  unitrig M ->
+  \sum_(t : T) M u t *: F t = F u + \sum_(t | (t < u)%Ord) M u t *: F t.
+Proof.
+move=> Hut; rewrite unitrig_sum // (bigD1 u) //=.
+move: Hut => /unitrigP [-> _]; rewrite scale1r; congr (_ + _).
+apply eq_bigl => t.
+(* Work around finOrdType double inheritance bug *)
+rewrite ltnX_neqAleqX andbC; congr (negb _ && _).
+by apply/eqP/eqP.
+Qed.
+
+End UniTriangular.
+
 Section TriangularInv.
 
 Variable R : comUnitRingType.
@@ -34,8 +85,7 @@ Variable T : finPOrdType.
 Variable M : T -> T -> R.
 Implicit Types t u v : T.
 
-Hypothesis Muni : forall t, M t t = 1.
-Hypothesis Mtrig : forall t u, M u t != 0 -> (t <= u)%Ord.
+Hypothesis Munitrig : unitrig M.
 
 Local Notation n := #|{: T}|.
 Definition Mat : 'M[R]_n := \matrix_(i, j < n) M (enum_val i) (enum_val j).
@@ -43,6 +93,7 @@ Definition Mat : 'M[R]_n := \matrix_(i, j < n) M (enum_val i) (enum_val j).
 (* Triangular (for dominance order) matrix with 1 on the diagonal *)
 Lemma det_unitrig : \det Mat = 1.
 Proof.
+have [Muni Mtrig] := unitrigP _ Munitrig.
 rewrite /Mat /determinant (bigD1 1%g) //=.
 rewrite !big1 ?mulr1 ?odd_perm1 ?expr0 ?addr0 //.
 - move=> s Hs.
@@ -87,6 +138,7 @@ Qed.
 
 Lemma Minv_trig t u : Minv u t != 0 -> (t <= u)%Ord.
 Proof.
+have [Muni Mtrig] := unitrigP _ Munitrig.
 apply contraR => H; apply/eqP; elim/finord_wf: u H => /= u IHu Hu.
 have:= Minvr u t.
 rewrite [X in  _ = (nat_of_bool X)%:R](_ : _ = false) /=; first last.
@@ -95,7 +147,7 @@ rewrite (bigID (fun v => v <= u)%Ord) /= [X in _ + X]big1 ?addr0; first last.
   by move=> v /(contraR (@Mtrig _ _)) /eqP ->; rewrite mul0r.
 rewrite (bigD1 u) //= Muni mul1r big1 ?addr0 // => i /andP [Hneq Hlt].
 rewrite IHu ?mulr0 //.
-- (*Work around finOrdType double inheritance bug *)
+- (* Work around finOrdType double inheritance bug *)
   rewrite ltnX_neqAleqX Hneq andbT.
   by move: Hlt; apply contra => /eqP ->.
 - by move: Hu; apply contra => /leqX_trans; apply.
@@ -103,6 +155,7 @@ Qed.
 
 Lemma Minv_uni t : Minv t t = 1.
 Proof.
+have [Muni Mtrig] := unitrigP _ Munitrig.
 have:= Minvr t t; rewrite eq_refl /= -[1%:R]/1 => <-.
 rewrite (bigID (fun v => v <= t)%Ord) /= [X in _ + X]big1 ?addr0; first last.
   by move=> v /(contraR (@Mtrig _ _))/eqP ->; rewrite mul0r.
@@ -110,6 +163,41 @@ rewrite (bigID (fun v => t <= v)%Ord) /= [X in _ + X]big1 ?addr0; first last.
   by move=> v /andP [_ /(contraR (@Minv_trig _ _))/eqP ->]; rewrite mulr0.
 rewrite (big_pred1 t) ?Muni ?mul1r // => v /=.
 by rewrite -eqn_leqX; apply/eqP/eqP. (* finOrdType bug *)
+Qed.
+
+Lemma Minv_unitrig : unitrig Minv.
+Proof. apply/unitrigP; split; [exact: Minv_uni | exact: Minv_trig]. Qed.
+
+Lemma Minv_lincombl (Mod : lmodType R) (F G : T -> Mod) :
+  (forall t, F t = \sum_u M t u *: G u) ->
+  (forall t, G t = \sum_u Minv t u *: F u).
+Proof.
+move=> H t.
+rewrite (eq_bigr (fun u => (\sum_v (Minv t u * M u v) *: G v))); first last.
+  move=> i _; rewrite H scaler_sumr; apply eq_bigr => v _.
+  by rewrite scalerA.
+rewrite exchange_big /= (bigD1 t) //= -scaler_suml Minvl eq_refl scale1r.
+rewrite big1 ?addr0 // => i Hi.
+rewrite -scaler_suml Minvl.
+(* Work around finOrdType double inheritance bug *)
+case: (altP (i =P t)) => [Habs | _]; last by rewrite scale0r.
+by move: Hi; rewrite Habs eq_refl.
+Qed.
+
+Lemma Minv_lincombr (Mod : lmodType R) (F G : T -> Mod) :
+  (forall t, F t = \sum_u M u t *: G u) ->
+  (forall t, G t = \sum_u Minv u t *: F u).
+Proof.
+move=> H t.
+rewrite (eq_bigr (fun u => (\sum_v (M v u * Minv u t) *: G v))); first last.
+  move=> i _; rewrite H scaler_sumr; apply eq_bigr => v _.
+  by rewrite scalerA mulrC.
+rewrite exchange_big /= (bigD1 t) //= -scaler_suml Minvr eq_refl scale1r.
+rewrite big1 ?addr0 // => i Hi.
+rewrite -scaler_suml Minvr.
+(* Work around finOrdType double inheritance bug *)
+case: (altP (t =P i)) => [Habs | _]; last by rewrite scale0r.
+by move: Hi; rewrite Habs eq_refl.
 Qed.
 
 End TriangularInv.
