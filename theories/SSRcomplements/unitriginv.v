@@ -55,7 +55,7 @@ Qed.
 
 (* TODO : construct the group of unitriangular matrix *)
 
-Lemma unitrig_sum M (Mod : lmodType R) (F : T -> Mod) u :
+Lemma unitrig_suml M (Mod : lmodType R) (F : T -> Mod) u :
   unitrig M ->
   \sum_(t : T) M u t *: F t = \sum_(t | (t <= u)%Ord) M u t *: F t.
 Proof.
@@ -64,13 +64,34 @@ rewrite (bigID (fun t => (t <= u)%Ord)) /= addrC big1 ?add0r // => i.
 by move=> /(contraR (@Mtrig _ _))/eqP ->; rewrite scale0r.
 Qed.
 
-Lemma unitrig_sum1 M (Mod : lmodType R) (F : T -> Mod) u :
+Lemma unitrig_sum1l M (Mod : lmodType R) (F : T -> Mod) u :
   unitrig M ->
   \sum_(t : T) M u t *: F t = F u + \sum_(t | (t < u)%Ord) M u t *: F t.
 Proof.
-move=> Hut; rewrite unitrig_sum // (bigD1 u) //=.
+move=> Hut; rewrite unitrig_suml // (bigD1 u) //=.
 move: Hut => /unitrigP [-> _]; rewrite scale1r; congr (_ + _).
 apply eq_bigl => t.
+(* Work around finOrdType double inheritance bug *)
+rewrite ltnX_neqAleqX andbC; congr (negb _ && _).
+by apply/eqP/eqP.
+Qed.
+
+Lemma unitrig_sumr M (Mod : lmodType R) (F : T -> Mod) t :
+  unitrig M ->
+  \sum_(u : T) M u t *: F u = \sum_(u | (t <= u)%Ord) M u t *: F u.
+Proof.
+move=> /unitrigP [Muni Mtrig].
+rewrite (bigID (fun u => (t <= u)%Ord)) /= addrC big1 ?add0r // => i.
+by move=> /(contraR (@Mtrig _ _))/eqP ->; rewrite scale0r.
+Qed.
+
+Lemma unitrig_sum1r M (Mod : lmodType R) (F : T -> Mod) t :
+  unitrig M ->
+  \sum_(u : T) M u t *: F u = F t + \sum_(u | (t < u)%Ord) M u t *: F u.
+Proof.
+move=> Hut; rewrite unitrig_sumr // (bigD1 t) //=.
+move: Hut => /unitrigP [-> _]; rewrite scale1r; congr (_ + _).
+apply eq_bigl => u.
 (* Work around finOrdType double inheritance bug *)
 rewrite ltnX_neqAleqX andbC; congr (negb _ && _).
 by apply/eqP/eqP.
