@@ -485,7 +485,7 @@ Proof. by rewrite /symbp tupleE /= (nth_map la) ?nth_enum_rank // -cardE. Qed.
 Lemma coord_symbp (Hd : (d <= n)%N) la mu :
   coord (symbp n0 d algCF) (enum_rank mu) (homsymp n0 algCF la) = (la == mu)%:R.
 Proof.
-rewrite !symbpE !(coord_free _ _ (basis_free (homsymp_basis _ Hd))).
+rewrite !symbpE !(coord_free _ _ (basis_free (symbp_basis _ Hd))).
 by rewrite !(inj_eq enum_rank_inj).
 Qed.
 

@@ -539,13 +539,8 @@ Definition prod_symh_homog := prod_gen_homog (@symh_homog n0 R).
 Definition prod_symp := prod_gen (@symp n0 R).
 Definition prod_symp_homog := prod_gen_homog (@symp_homog n0 R).
 
-Section ChangeProdGen.
 
-Variable gA gB : nat -> {sympoly R[n]}.
-Hypothesis gA_homog : forall d, sympol (gA d) \is d.-homog.
-Hypothesis gB_homog : forall d, sympol (gB d) \is d.-homog.
-
-Lemma prod_prodgen :
+Lemma prod_prodgen (gA gB : nat -> {sympoly R[n]}) :
   (forall d, { co : intpartn d -> R |
           gA d = \sum_(la : _) co la *: prod_gen gB la })
   ->
@@ -575,7 +570,6 @@ rewrite mulr_suml; apply eq_bigr => nu _.
 by rewrite mulr_sumr.
 Qed.
 
-End ChangeProdGen.
 
 End ProdGen.
 
@@ -872,51 +866,51 @@ rewrite -scaleNr; congr (_ *: _).
 by rewrite exprS mulN1r opprK.
 Qed.
 
-Lemma symHE_prod_intcomp n :
-  E n = \sum_(c : intcompn n) (-1)^+(n - size c) *: (\prod_(i <- c) H i).
+Lemma symHE_prod_intcomp d :
+  E d = \sum_(c : intcompn d) (-1)^+(d - size c) *: (\prod_(i <- c) H i).
 Proof.
 rewrite /index_enum -enumT /=.
--rewrite -[RHS](big_map (@cnval n) xpredT
-   (fun c : seq nat => (-1)^+(n - size c) *: \prod_(i <- c) H i)).
+rewrite -[RHS](big_map (@cnval d) xpredT
+   (fun c : seq nat => (-1)^+(d - size c) *: \prod_(i <- c) H i)).
 rewrite enum_intcompnE.
-elim: n {-2}n (leqnn n) => [| m IHm] n.
+elim: d {-2}d (leqnn d) => [| m IHm] d.
   rewrite leqn0 => /eqP ->.
   by rewrite /enum_compn /= big_seq1 /= subnn expr0 scale1r big_nil E0.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
 rewrite enum_compnE Hm // -Hm big_flatten /=.
 rewrite symHE_rec; last by rewrite Hm.
 rewrite big_map /index_iota subSS subn0; apply eq_big_seq => i.
-rewrite mem_iota add1n ltnS => /andP [Hi Hin].
+rewrite mem_iota add1n ltnS => /andP [Hi Hid].
 rewrite big_map.
 rewrite (eq_big_seq
-    (fun c : seq nat => - H i * ((-1) ^+ (n - size c) *: \prod_(i0 <- c) H i0)));
+    (fun c : seq nat => - H i * ((-1) ^+ (d - size c) *: \prod_(i0 <- c) H i0)));
   first last.
-  move=> s; rewrite -enum_compnP /is_comp_of_n /= => /andP [/eqP Hsum Hn0].
+  move=> s; rewrite -enum_compnP /is_comp_of_n /= => /andP [/eqP Hsum Hcomp].
   rewrite big_cons -scalerAr mulNr scalerN -scaleNr; congr (_ *: _).
-  subst n; rewrite subSS subSn; first last.
-    apply (leq_trans (size_comp Hn0)); rewrite {}Hsum.
-    case: i Hi {Hin} => // i' _.
+  subst d; rewrite subSS subSn; first last.
+    apply (leq_trans (size_comp Hcomp)); rewrite {}Hsum.
+    case: i Hi {Hid} => // i' _.
     by rewrite subSS leq_subr.
   by rewrite exprS mulN1r opprK.
 rewrite -mulr_sumr.
-case: (altP (n-i =P 0)%N) => [/eqP | Hni] /=.
-  rewrite subn_eq0 => Hni.
-  have -> : i = n by apply anti_leq; rewrite Hin Hni.
-  subst n => /=.
+case: (altP (d - i =P 0)%N) => [/eqP | Hdi] /=.
+  rewrite subn_eq0 => Hdi.
+  have -> : i = d by apply anti_leq; rewrite Hid Hdi.
+  subst d => /=.
   rewrite subnn /enum_compn /= big_seq1 big_nil /=.
   rewrite subn0 E0 mulNr -mulrN -scaleNr; congr (_ * (_)%:A).
   by rewrite exprS mulN1r opprK.
 rewrite {}IHm //; first last.
-  rewrite Hm; case: i Hi {Hin Hni} => // i' _.
+  rewrite Hm; case: i Hi {Hid Hdi} => // i' _.
   by rewrite subSS leq_subr.
 rewrite scaler_sumr mulNr -mulrN -sumrN; congr (_ * _).
 apply eq_big_seq => s.
 rewrite -enum_compnP /is_comp_of_n /= => /andP [/eqP Hsum Hn0].
 rewrite scalerA -scaleNr; congr (_ *: _).
-subst n; rewrite -exprD.
-move: Hni; rewrite subn_eq0 -leqNgt => {Hin} Hin.
+subst d; rewrite -exprD.
+move: Hdi; rewrite subn_eq0 -leqNgt => {Hid} Hid.
 rewrite subSn //.
-case: i Hi Hsum Hin => // i _.
+case: i Hi Hsum Hid => // i _.
 rewrite subSS => Hsum Him /=.
 have Hsz : size s <= m.
   by apply (leq_trans (size_comp Hn0)); rewrite {}Hsum leq_subr.
@@ -925,6 +919,31 @@ rewrite subnAC subnKC //.
 have:= size_comp Hn0; rewrite Hsum.
 rewrite -!subn_eq0 !subnBA //; last exact: ltnW.
 by rewrite addnC.
+Qed.
+
+Lemma symHE_intcompn d :
+  E d = \sum_(c : intcompn d) (-1)^+(d - size c) *: prod_gen H (partn_of_compn c).
+Proof.
+rewrite symHE_prod_intcomp; apply eq_bigr => c _; congr (_ *: _).
+rewrite /prod_symh /prod_gen; apply eq_big_perm.
+by rewrite perm_eq_sym; apply: perm_partn_of_compn.
+Qed.
+
+Definition signed_sum_compn d (la : intpartn d) :=
+  \sum_(c | la == partn_of_compn c) (-1)^+(d - size c) : R.
+
+Lemma symHE_intpartn d :
+  E d = \sum_(la : intpartn d) signed_sum_compn la *: prod_gen H la.
+Proof.
+rewrite /signed_sum_compn symHE_intcompn; symmetry.
+transitivity
+  (\sum_(la : intpartn d)
+      (\sum_(c | la == partn_of_compn c) (-1) ^+ (d - size c) *:
+        prod_gen H la)).
+  by apply eq_bigr => la _; rewrite scaler_suml.
+rewrite (exchange_big_dep xpredT) //=.
+apply eq_bigr => la _.
+by rewrite big_pred1_eq.
 Qed.
 
 End HandE.
@@ -944,32 +963,16 @@ Proof.
 apply: (symHE_rec (syme0 _ _)); exact: sum_syme_symh.
 Qed.
 
-Lemma syme_to_prod_symh_intcomp n :
-  'e_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: (\prod_(i <- c) 'h_i) :> SF.
+Lemma syme_to_symh n :
+  'e_n = \sum_(la : intpartn n) signed_sum_compn la *: 'h[la] :> SF.
 Proof.
-apply: (symHE_prod_intcomp (syme0 _ _) (symh0 _ _)); exact: sum_symh_syme.
+apply: (symHE_intpartn (syme0 _ _) (symh0 _ _)); exact: sum_symh_syme.
 Qed.
 
-Lemma syme_to_symh_intcomp n :
-  'e_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: 'h[partn_of_compn c] :> SF.
+Lemma symh_to_syme n :
+  'h_n = \sum_(la : intpartn n) signed_sum_compn la *: 'e[la] :> SF.
 Proof.
-rewrite syme_to_prod_symh_intcomp; apply eq_bigr => i _; congr (_ *: _).
-rewrite /prod_symh /prod_gen; apply eq_big_perm.
-by rewrite perm_eq_sym; apply: perm_partn_of_compn.
-Qed.
-
-Lemma symh_to_prod_syme_intcomp n :
-  'h_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: (\prod_(i <- c) 'e_i) :> SF.
-Proof.
-apply: (symHE_prod_intcomp (symh0 _ _) (syme0 _ _)); exact: sum_syme_symh.
-Qed.
-
-Lemma syme_to_symh_partsum n :
-  'h_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: 'e[partn_of_compn c] :> SF.
-Proof.
-rewrite symh_to_prod_syme_intcomp; apply eq_bigr => i _; congr (_ *: _).
-rewrite /prod_symh /prod_gen; apply eq_big_perm.
-by rewrite perm_eq_sym; apply: perm_partn_of_compn.
+apply: (symHE_intpartn (symh0 _ _) (syme0 _ _)); exact: sum_syme_symh.
 Qed.
 
 
@@ -1668,13 +1671,13 @@ Qed.
 
 Lemma cnvarsymh i : (i <= m)%N || (n <= m)%N -> cnvarsym 'h_i = 'h_i.
 Proof.
-move=> Hi; rewrite !symh_to_syme_partsum.
+move=> Hi; rewrite !symh_to_syme.
 rewrite linear_sum /=; apply eq_bigr => la _.
 rewrite linearZ rmorph_prod /=; congr(_ *: _); apply eq_big_seq => j Hj.
 apply cnvarsyme.
 move: Hi => /orP [Hi | ->]; last by rewrite orbT.
 apply/orP; left; apply: (leq_trans _ Hi).
-have:= (intcompn_sumn la); rewrite -sumnE (big_rem j Hj) /= => <-.
+have:= (intpartn_sumn la); rewrite -sumnE (big_rem j Hj) /= => <-.
 exact: leq_addr.
 Qed.
 
