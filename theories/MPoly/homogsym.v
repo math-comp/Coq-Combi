@@ -410,7 +410,7 @@ Local Notation algCF := [fieldType of algC].
 Local Notation symH := {homsym algC[n, d]}.
 
 Definition homsymdot (p q : symH) :=
-  \sum_(i < #|{: P}|) (zcard (enum_val i))%:R^-1 *
+  \sum_(i < #|{: P}|) (zcard (enum_val i))%:R *
   coord (symbp n0 d algCF) i p * (coord (symbp n0 d algCF) i q)^*.
 Definition homsymdotr_head k p q := let: tt := k in homsymdot q p.
 
@@ -419,7 +419,7 @@ Notation "''[' u | v ]" := (homsymdot u v) : ring_scope.
 
 Lemma homsymdotE p q :
   '[ p | q ] =
-  \sum_(la : intpartn d) (zcard la)%:R^-1 *
+  \sum_(la : intpartn d) (zcard la)%:R *
     coord (symbp n0 d algCF) (enum_rank la) p *
     (coord (symbp n0 d algCF) (enum_rank la) q)^*.
 Proof.
@@ -461,8 +461,8 @@ Lemma homsymdotC p q : '[p | q] = ('[q | p])^*.
 Proof.
 rewrite /homsymdot rmorph_sum /=.
 apply: eq_bigr=> x _; rewrite !rmorphM conjCK -!mulrA.
-have /geC0_conj -> : 0 <= ((zcard (enum_val x))%:R^-1 : algC).
-  by rewrite -nnegrE -div1r fpred_divl // ?nnegrE ?ler01 ?ler0n ?oner_neq0.
+have /geC0_conj -> : 0 <= ((zcard (enum_val x))%:R : algC).
+  by rewrite -nnegrE ?nnegrE ?ler01 ?ler0n ?oner_neq0.
 by congr (_ * _); rewrite mulrC.
 Qed.
 
@@ -493,7 +493,7 @@ by rewrite !(inj_eq enum_rank_inj).
 Qed.
 
 Lemma homsymdotp (Hd : (d <= n)%N) la mu :
-  '[ homsymp _ algCF la | homsymp _ algCF mu ] = (zcard la)%:R^-1 * (la == mu)%:R.
+  '[ homsymp _ algCF la | homsymp _ algCF mu ] = (zcard la)%:R * (la == mu)%:R.
 Proof.
 rewrite homsymdotE (bigD1 mu) //= big1 ?addr0 => [| nu /negbTE Hneq].
 - rewrite !(coord_symbp Hd) eq_refl /= conjC1 mulr1.

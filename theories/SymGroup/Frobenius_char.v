@@ -87,6 +87,25 @@ rewrite raddf_sum symh_to_symp /=.
 by apply eq_bigr => l _; rewrite zcoeffE.
 Qed.
 
+Lemma Fchar_isometry (f g : 'CF('SG_n)) :
+  (n <= nvar)%N -> '[Fchar f | Fchar g] = '[f, g].
+Proof.
+move=> Hn.
+rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) !linear_sum /=.
+rewrite homsymdot_suml cfdot_suml; apply eq_bigr => la _.
+rewrite homsymdot_sumr cfdot_sumr; apply eq_bigr => mu _.
+rewrite ![Fchar (_ *: '1z_[_])]linearZ /= !Fchar_ncfuniCT.
+rewrite homsymdotZl homsymdotZr cfdotZl cfdotZr; congr (_ * (_ * _)).
+rewrite homsymdotp // cfdotZl cfdotZr cfdot_classfun_part.
+case: (altP (la =P mu)) => [<-{mu} | _]; rewrite ?mulr0 ?mulr1 //.
+rewrite -zcoeffE -[LHS]mulr1; congr (_ * _).
+rewrite /zcoeff rmorphM rmorphV; first last.
+  by rewrite unitfE Num.Theory.pnatr_eq0 card_classCT_neq0.
+rewrite !conjC_nat -mulrA [X in _ * X]mulrC - mulrA divff; first last.
+  by rewrite Num.Theory.pnatr_eq0 card_classCT_neq0.
+by rewrite mulr1 divff // Num.Theory.pnatr_eq0 -lt0n cardsT card_Sn fact_gt0.
+Qed.
+
 End Defs.
 Arguments Fchar [nvar0 n0] f.
 
