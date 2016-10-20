@@ -362,7 +362,7 @@ have := prod_syme_homog n0 R (intpartn_of_mon H).
 exact: pihomog_dE.
 Qed.
 
-Lemma homsyme_basis : d <= n -> basis_of fullv symbe.
+Lemma symbe_basis : d <= n -> basis_of fullv symbe.
 Proof.
 move=> Hd.
 rewrite basisEdim size_map size_tuple (dim_homsym Hd) leqnn andbT.
@@ -383,13 +383,10 @@ apply memv_add; first exact: memv_line.
 exact: mem0v.
 Qed.
 
-Lemma homsymh_basis : d <= n -> basis_of fullv symbh.
+Lemma symbh_basis : d <= n -> basis_of fullv symbh.
 Admitted.
 
-Lemma homsyms_basis : d <= n -> basis_of fullv symbs.
-Admitted.
-
-Lemma homsymp_basis : d <= n -> basis_of fullv symbp.
+Lemma symbp_basis : d <= n -> basis_of fullv symbp.
 Admitted.
 
 End HomSymField.

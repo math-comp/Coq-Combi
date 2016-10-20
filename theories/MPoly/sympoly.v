@@ -509,7 +509,6 @@ Section ProdGen.
 Variable n0 : nat.
 Local Notation n := n0.+1.
 Variable R : comRingType.
-Implicit Type m : 'X_{1.. n}.
 
 Section Defs.
 
@@ -539,6 +538,44 @@ Definition prod_symh := prod_gen (@symh n0 R).
 Definition prod_symh_homog := prod_gen_homog (@symh_homog n0 R).
 Definition prod_symp := prod_gen (@symp n0 R).
 Definition prod_symp_homog := prod_gen_homog (@symp_homog n0 R).
+
+Section ChangeProdGen.
+
+Variable gA gB : nat -> {sympoly R[n]}.
+Hypothesis gA_homog : forall d, sympol (gA d) \is d.-homog.
+Hypothesis gB_homog : forall d, sympol (gB d) \is d.-homog.
+
+Lemma prod_prodgen :
+  (forall d, { co : intpartn d -> R |
+          gA d = \sum_(la : _) co la *: prod_gen gB la })
+  ->
+  forall d (la : intpartn d),
+    { co : intpartn d -> R |
+      prod_gen gA la = \sum_(mu : _) co mu *: prod_gen gB mu}.
+Proof.
+rewrite {2}/prod_gen => H d [la /= /andP [/eqP Hsumn _]] /=; subst d.
+elim: la => [| l la [cla Hcla]] /=.
+- exists (fun _ => 1); rewrite big_nil.
+  rewrite (big_pred1 (rowpartn 0)) /prod_gen /= ?scale1r ?big_nil // => la.
+  by symmetry; apply/eqP/val_inj; rewrite /= intpartn0.
+move/(_ l): H => [cl Hcl].
+exists (fun mu => \sum_(p | mu == (union_intpartn p.1 p.2)) cl p.1 * cla p.2).
+rewrite big_cons Hcl Hcla; symmetry.
+transitivity
+  (\sum_(mu : _) \sum_(p | mu == union_intpartn p.1 p.2)
+    (cl p.1 * cla p.2) *: prod_gen gB mu).
+  by apply eq_bigr => mu _; rewrite scaler_suml.
+rewrite (exchange_big_dep xpredT) //=.
+pose f mu nu := (cl mu *: prod_gen gB mu) * (cla nu *: prod_gen gB nu).
+transitivity (\sum_(p : _) f p.1 p.2).
+  apply eq_bigr => [[mu nu] _] /=; rewrite big_pred1_eq.
+  by rewrite /f -scalerAl -scalerAr scalerA prod_genM.
+rewrite -(pair_big xpredT xpredT) /=.
+rewrite mulr_suml; apply eq_bigr => nu _.
+by rewrite mulr_sumr.
+Qed.
+
+End ChangeProdGen.
 
 End ProdGen.
 
@@ -835,11 +872,11 @@ rewrite -scaleNr; congr (_ *: _).
 by rewrite exprS mulN1r opprK.
 Qed.
 
-Lemma symHE_partsum n :
+Lemma symHE_prod_intcomp n :
   E n = \sum_(c : intcompn n) (-1)^+(n - size c) *: (\prod_(i <- c) H i).
 Proof.
 rewrite /index_enum -enumT /=.
-rewrite -[RHS](big_map (@cnval n) xpredT
+-rewrite -[RHS](big_map (@cnval n) xpredT
    (fun c : seq nat => (-1)^+(n - size c) *: \prod_(i <- c) H i)).
 rewrite enum_intcompnE.
 elim: n {-2}n (leqnn n) => [| m IHm] n.
@@ -907,16 +944,32 @@ Proof.
 apply: (symHE_rec (syme0 _ _)); exact: sum_syme_symh.
 Qed.
 
-Lemma syme_to_symh_partsum n :
+Lemma syme_to_prod_symh_intcomp n :
   'e_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: (\prod_(i <- c) 'h_i) :> SF.
 Proof.
-apply: (symHE_partsum (syme0 _ _) (symh0 _ _)); exact: sum_symh_syme.
+apply: (symHE_prod_intcomp (syme0 _ _) (symh0 _ _)); exact: sum_symh_syme.
 Qed.
 
-Lemma symh_to_syme_partsum n :
+Lemma syme_to_symh_intcomp n :
+  'e_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: 'h[partn_of_compn c] :> SF.
+Proof.
+rewrite syme_to_prod_symh_intcomp; apply eq_bigr => i _; congr (_ *: _).
+rewrite /prod_symh /prod_gen; apply eq_big_perm.
+by rewrite perm_eq_sym; apply: perm_partn_of_compn.
+Qed.
+
+Lemma symh_to_prod_syme_intcomp n :
   'h_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: (\prod_(i <- c) 'e_i) :> SF.
 Proof.
-apply: (symHE_partsum (symh0 _ _) (syme0 _ _)); exact: sum_syme_symh.
+apply: (symHE_prod_intcomp (symh0 _ _) (syme0 _ _)); exact: sum_syme_symh.
+Qed.
+
+Lemma syme_to_symh_partsum n :
+  'h_n = \sum_(c : intcompn n) (-1)^+(n - size c) *: 'e[partn_of_compn c] :> SF.
+Proof.
+rewrite symh_to_prod_syme_intcomp; apply eq_bigr => i _; congr (_ *: _).
+rewrite /prod_symh /prod_gen; apply eq_big_perm.
+by rewrite perm_eq_sym; apply: perm_partn_of_compn.
 Qed.
 
 
