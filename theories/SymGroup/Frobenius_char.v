@@ -41,7 +41,8 @@ Local Notation algCF := [fieldType of algC].
 
 Section Defs.
 
-Variable n0 : nat.
+Variable nvar0 n0 : nat.
+Local Notation nvar := nvar0.+1.
 Local Notation n := n0.+1.
 Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
@@ -50,7 +51,7 @@ Local Notation "''p[' k ]" := (homsymp _ _ k)
 Local Notation "''h[' k ]" := (homsymh _ _ k)
                               (at level 8, k at level 2, format "''h[' k ]").
 
-Definition Fchar (f : 'CF('SG_n)) : {homsym algC[n, n]} :=
+Definition Fchar (f : 'CF('SG_n)) : {homsym algC[nvar, n]} :=
   \sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'p[l].
 
 Lemma Fchar_is_linear : linear Fchar.
@@ -87,7 +88,7 @@ by apply eq_bigr => l _; rewrite zcoeffE.
 Qed.
 
 End Defs.
-Arguments Fchar [n0] f.
+Arguments Fchar [nvar0 n0] f.
 
 (**
 This cannot be written as a SSReflect [{morph Fchar : f g / ...  >-> ... }]
@@ -101,30 +102,28 @@ dependent equality but I'm not sure this is really needed.
 
 Section IndMorph.
 
-Variables n0 m0 : nat.
+Variables nvar0 n0 m0 : nat.
+Local Notation nvar := nvar0.+1.
 Local Notation n := n0.+1.
 Local Notation m := m0.+1.
+Local Notation SF := {sympoly algC[nvar]}.
 
 Theorem Fchar_ind_morph (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
-  cnvarsym _ (Fchar ('Ind['SG_(m + n)] (f \o^ g))) =
-  (cnvarsym _ (Fchar f) : {sympoly algC[(m0 + n).+1]}) *
-  (cnvarsym _ (Fchar g) : {sympoly algC[(m0 + n).+1]}).
+  Fchar ('Ind['SG_(m + n)] (f \o^ g)) =
+  (Fchar f : SF) * (Fchar g : SF) :> SF.
 Proof using.
 rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
 rewrite cfextprod_suml [cfIsom _ _]linear_sum ['Ind[_] _]linear_sum.
-rewrite ![Fchar _]linear_sum ![X in cnvarsym _ X]linear_sum /=.
-rewrite ![cnvarsym _ _]linear_sum /=.
-rewrite ![X in cnvarsym _ X]linear_sum ![cnvarsym _ _]linear_sum /=.
-rewrite mulr_suml /=; apply eq_bigr => /= l _.
+rewrite ![Fchar _]linear_sum /= ![homsym _]linear_sum /= mulr_suml.
+apply eq_bigr => /= l _.
+rewrite [in RHS]linearZ /= Fchar_ncfuniCT /=.
 rewrite cfextprod_sumr [cfIsom _ _]linear_sum ['Ind[_] _]linear_sum.
-rewrite [Fchar _]linear_sum ![X in cnvarsym _ X]linear_sum [LHS]linear_sum /=.
-rewrite ![Fchar _]linearZ /= Fchar_ncfuniCT /=.
-rewrite 2![in RHS]linear_sum mulr_sumr /=; apply eq_bigr => /= k _.
+rewrite ![Fchar _]linear_sum /= ![homsym _]linear_sum /=.
+rewrite mulr_sumr /=; apply eq_bigr => /= k _.
 rewrite cfextprodZr cfextprodZl scalerA.
-rewrite ![Fchar _ in RHS]linearZ /= Fchar_ncfuniCT /=.
-rewrite 2!linearZ /= Ind_ncfuniCT linearZ /= Fchar_ncfuniCT.
-rewrite !linearZ /= !cnvar_prodsymp /= ?ltnS ?leqnn //.
-by rewrite -scalerAr -scalerAl scalerA prod_genM.
+rewrite [in RHS]linearZ /= Fchar_ncfuniCT /=.
+rewrite -scalerAr -scalerAl scalerA prod_genM.
+by rewrite 2!linearZ /= Ind_ncfuniCT linearZ /= Fchar_ncfuniCT /=.
 Qed.
 
 End IndMorph.
