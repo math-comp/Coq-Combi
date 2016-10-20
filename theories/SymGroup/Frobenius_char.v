@@ -114,15 +114,15 @@ Theorem Fchar_ind_morph (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
 Proof using.
 rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
 rewrite cfextprod_suml [cfIsom _ _]linear_sum ['Ind[_] _]linear_sum.
-rewrite ![Fchar _]linear_sum /= ![homsym _]linear_sum /= mulr_suml.
-apply eq_bigr => /= l _.
+rewrite ![Fchar _]linear_sum /= ![homsym _]linear_sum /=.
+rewrite mulr_suml /=; apply eq_bigr => /= l _.
 rewrite [in RHS]linearZ /= Fchar_ncfuniCT /=.
 rewrite cfextprod_sumr [cfIsom _ _]linear_sum ['Ind[_] _]linear_sum.
 rewrite ![Fchar _]linear_sum /= ![homsym _]linear_sum /=.
 rewrite mulr_sumr /=; apply eq_bigr => /= k _.
-rewrite cfextprodZr cfextprodZl scalerA.
 rewrite [in RHS]linearZ /= Fchar_ncfuniCT /=.
 rewrite -scalerAr -scalerAl scalerA prod_genM.
+rewrite cfextprodZr cfextprodZl scalerA.
 by rewrite 2!linearZ /= Ind_ncfuniCT linearZ /= Fchar_ncfuniCT /=.
 Qed.
 
