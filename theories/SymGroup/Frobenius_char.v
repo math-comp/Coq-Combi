@@ -13,7 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * Frobenius characteristic
+(** * Frobenius characteristic associated to a class function of ['SG_n].
 
 - [Fchar f] == the Frobenius characteristic of the class function [f].
                the number of variable is inferred from the context.
@@ -125,11 +125,10 @@ Variables nvar0 n0 m0 : nat.
 Local Notation nvar := nvar0.+1.
 Local Notation n := n0.+1.
 Local Notation m := m0.+1.
-Local Notation SF := {sympoly algC[nvar]}.
+Local Notation FcharSF f := (Fchar f : {sympoly algC[nvar]}).
 
 Theorem Fchar_ind_morph (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
-  Fchar ('Ind['SG_(m + n)] (f \o^ g)) =
-  (Fchar f : SF) * (Fchar g : SF) :> SF.
+  FcharSF ('Ind['SG_(m + n)] (f \o^ g)) = FcharSF f * FcharSF g.
 Proof using.
 rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
 rewrite cfextprod_suml [cfIsom _ _]linear_sum ['Ind[_] _]linear_sum.

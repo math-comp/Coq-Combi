@@ -1,4 +1,4 @@
-(** * Combi.MPoly.Schur_basis : The Basis of Schur polynomials *)
+(** * Combi.MPoly.Schur_basis : Alternants definition of Schur polynomials *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -13,7 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** Schur polynomials and Kostka numbers
+(** Definition of Schur polynomials as quotient of alternant and Kostka numbers
 
 In the combinatorial definitions below, we use the following notations:
 - [n] : an integer denoting the number of variable.
@@ -29,7 +29,6 @@ We define the following notions:
            the value is unspecified.
 - [setdiff la mu] == the set of elements [i] of ['I_n] for which the
            [i]-th part of [la] is smaller than the one of [mu].
-- ['s[la]]       == the Schur symmetric polynomials in [{sympoly R[n]}]
 
 ***** Kostka numbers:
 
@@ -37,17 +36,13 @@ We define the following notions:
 - [KostkaTab la m] == the set of tableaux of shape [la] and evaluation [m].
 - [KostkaMon la m] == the number of Kostka tableau : [#|KostkaTab la m|].
 - [Kostka la mu]    ==
-- ['K(la, mu)]      == the Kostka number associated to [la] and [mu] as an
-      integer in [nat_scope] and as an element of [R] in [ring_scope].
+- ['K(la, mu)]      == the Kostka number associated to [la] and [mu]
+           as a [nat] in [nat_scope] and as an element of [R] (inferred from
+           the context) in [ring_scope].
 - [Kostak_rec la mu] == a Coq implementation of the computation of the Kostka
       number. It suppose that [sumn la = sumn mu].
-- [MatInv M la mu]  == the inverse of the uni-triangular matrix [M_(la, mu)].
-      [la] and [mu] are supposed to belong to a finite partialy ordered
-           type [T]. Both [M] and [MatInv] ar given as a function [la mu -> R]
-           and are uni-triangular ro the order of [T] that is [M la la = 1] and
-           [M la mu] is zero unless [mu <= la].
 - ['K^-1(la, mu)] == the inverse Kostka number, that is the coefficient of the
-           inverse Kostka matrix computed using [MatInv].
+           inverse Kostka matrix computed using matrix inversion.
 - [eqeval t la] == the evaluation of [t] is [la]. More precisely, the evaluation
            of the row reading of the tableau [t] is equal to the monomial
            associated to [la]
