@@ -383,6 +383,12 @@ apply memv_add; first exact: memv_line.
 exact: mem0v.
 Qed.
 
+Lemma homsymh_basis : d <= n -> basis_of fullv symbh.
+Admitted.
+
+Lemma homsyms_basis : d <= n -> basis_of fullv symbs.
+Admitted.
+
 Lemma homsymp_basis : d <= n -> basis_of fullv symbp.
 Admitted.
 
