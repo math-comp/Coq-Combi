@@ -10,6 +10,15 @@
 *.toc
 *.vrb
 .depend
+depend.d
+depend.dot
 *.cmi
 *.cmo
 *.o
+TAGS
+scripts/ocamldot
+scripts/ocamldot.ml
+src/LRrule/lrcoeff.ml
+src/LRrule/lrcoeff.mli
+src/LRrule/schensted.ml
+src/LRrule/schensted.mli

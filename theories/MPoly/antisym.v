@@ -166,6 +166,24 @@ case: (ssrnat.ltnP i n) => Hi.
   exact: size_partm.
 Qed.
 
+Lemma perm_eq_mpart s1 s2 : perm_eq s1 s2 -> perm_eq (mpart s1) (mpart s2).
+Proof.
+move=> Hperm; have Hsz := perm_eq_size Hperm; rewrite /mpart -Hsz.
+case: leqP => Hszle; last exact: perm_eq_refl.
+apply/perm_eqP => P.
+have H s : size s <= n ->
+           count P [multinom nth 0 s i | i < n] =
+           count P s + \sum_(i < n | (P 0) && ~~(i < size s)) 1.
+  move=> {Hsz} Hsz.
+  rewrite -!sum1_count /= big_map enumT -/(index_enum _).
+  rewrite (bigID (fun i : 'I_n => i < size s)) /=; congr (_ + _).
+  - rewrite (big_nth 0) big_mkord.
+    by rewrite (big_ord_widen_cond n (fun i => P (nth 0 s i)) (fun => 1)).
+  - apply eq_bigl => i; rewrite [LHS]andbC [RHS]andbC.
+    by case: (ssrnat.ltnP i (size s)) => //= H; rewrite nth_default.
+by rewrite !{}H -?Hsz // -(perm_eqP Hperm).
+Qed.
+
 Lemma perm_eq_partm m1 m2 : perm_eq m1 m2 -> partm m1 = partm m2.
 Proof.
 move=> Hperm; apply val_inj; rewrite /= !partmE; apply/perm_sortP => //.
@@ -180,6 +198,16 @@ have Hperm : perm_eq sm m by rewrite /= perm_sort.
 rewrite -(perm_eq_partm Hperm) partmK; first last.
   by rewrite unfold_in; apply: sort_sorted.
 by rewrite perm_eq_sym.
+Qed.
+
+Lemma sumn_mpart sh : size sh <= n -> sumn (mpart sh) = sumn sh.
+Proof.
+move=> Hsz; rewrite /mpart Hsz -!sumnE big_tuple.
+rewrite (eq_bigr (fun i : 'I_n => nth 0 sh i)); first last.
+  by move=> i _; rewrite tnth_mktuple.
+rewrite (big_nth 0) big_mkord (big_ord_widen _ _ Hsz).
+rewrite (bigID (fun i : 'I_n => i < size sh)) /= addnC big1 ?add0n //.
+by move=> i; rewrite -leqNgt; apply: nth_default.
 Qed.
 
 Lemma sumn_partm m : sumn (partm m) = mdeg m.
@@ -222,7 +250,6 @@ End MonomPart.
 
 Arguments mpart [n] s.
 Arguments dominant [n].
-
 
 Import GRing.Theory.
 Local Open Scope ring_scope.

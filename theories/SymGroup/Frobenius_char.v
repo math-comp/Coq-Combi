@@ -13,7 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * Frobenius characteristic
+(** * Frobenius characteristic associated to a class function of ['SG_n].
 
 - [Fchar f] == the Frobenius characteristic of the class function [f].
                the number of variable is inferred from the context.
@@ -26,7 +26,7 @@ From mathcomp Require Import rat ssralg ssrnum algC.
 From mathcomp Require Import classfun.
 
 From SsrMultinomials Require Import mpoly.
-Require Import tools partition sympoly.
+Require Import tools partition sympoly homogsym.
 Require Import permcomp cycletype towerSn.
 
 Set Implicit Arguments.
@@ -41,32 +41,34 @@ Local Notation algCF := [fieldType of algC].
 
 Section Defs.
 
-Variable nvar n : nat.
-
+Variable nvar0 n0 : nat.
+Local Notation nvar := nvar0.+1.
+Local Notation n := n0.+1.
 Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
+Local Notation "''p[' k ]" := (homsymp _ _ k)
+                              (at level 8, k at level 2, format "''p[' k ]").
+Local Notation "''h[' k ]" := (homsymh _ _ k)
+                              (at level 8, k at level 2, format "''h[' k ]").
 
-Definition Fchar (f : 'CF('SG_n)) : {sympoly algC[nvar]} :=
-  \sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'p[l].
+Definition Fchar (f : 'CF('SG_n)) : {homsym algC[nvar, n]} :=
+  locked (\sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'p[l]).
+
+Lemma FcharE f :
+  Fchar f = \sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'p[l].
+Proof. by rewrite /Fchar; unlock. Qed.
 
 Lemma Fchar_is_linear : linear Fchar.
 Proof using.
-move=> a f g; rewrite /Fchar scaler_sumr -big_split /=.
+move=> a f g; rewrite !FcharE scaler_sumr -big_split /=.
 apply eq_bigr => l _; rewrite !cfunElock.
 by rewrite scalerA mulrA -scalerDl mulrDl.
 Qed.
 Canonical Fchar_linear := Linear Fchar_is_linear.
 
-Lemma Fchar_homog f : sympol (Fchar f) \is n.-homog.
-Proof.
-rewrite /Fchar [X in X \in _](linear_sum (@sympol_lrmorphism _ _)) //=.
-apply rpred_sum => m _; apply rpredZ.
-exact: prod_symp_homog.
-Qed.
-
 Lemma Fchar_ncfuniCT l : Fchar '1z_[l] = 'p[l].
 Proof using.
-rewrite /Fchar (bigD1 l) //= big1 ?addr0; first last.
+rewrite !FcharE (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hm /=.
   rewrite cfunElock cfuniCTE /=.
   rewrite /cycle_typeSn permCTP.
@@ -77,19 +79,39 @@ rewrite /cycle_typeSn permCTP eq_refl /=.
 by rewrite mulr1 divff ?scale1r.
 Qed.
 
-Lemma Fchar_triv : Fchar 1 = 'h_n.
+Lemma Fchar_triv : Fchar 1 = 'h[rowpartn n].
 Proof.
 rewrite -decomp_cf_triv linear_sum.
-rewrite (eq_bigr (fun i => 'z_i^-1 *: 'p[i])); first last.
-  move=> l _.
-  by rewrite -Fchar_ncfuniCT /= linearZ scalerA mulrC divff // scale1r.
-rewrite -(map_symh [rmorphism of ratr]) symh_to_symp /=.
-rewrite rmorph_sum /=; apply eq_bigr => l _.
-by rewrite zcoeffE scale_map_sympoly map_symp_prod fmorphV /= ratr_nat.
+rewrite (eq_bigr (fun la => 'z_la^-1 *: 'p[la])); first last.
+  move=> la _.
+  rewrite -Fchar_ncfuniCT /ncfuniCT /= linearZ /=.
+  by rewrite scalerA /= mulrC divff // scale1r.
+apply val_inj; rewrite /= /prod_gen /= big_seq1.
+rewrite raddf_sum symh_to_symp /=.
+by apply eq_bigr => l _; rewrite zcoeffE.
+Qed.
+
+Lemma Fchar_isometry (f g : 'CF('SG_n)) :
+  (n <= nvar)%N -> '[Fchar f | Fchar g] = '[f, g].
+Proof.
+move=> Hn.
+rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) !linear_sum /=.
+rewrite homsymdot_suml cfdot_suml; apply eq_bigr => la _.
+rewrite homsymdot_sumr cfdot_sumr; apply eq_bigr => mu _.
+rewrite ![Fchar (_ *: '1z_[_])]linearZ /= !Fchar_ncfuniCT.
+rewrite homsymdotZl homsymdotZr cfdotZl cfdotZr; congr (_ * (_ * _)).
+rewrite homsymdotp // cfdotZl cfdotZr cfdot_classfun_part.
+case: (altP (la =P mu)) => [<-{mu} | _]; rewrite ?mulr0 ?mulr1 //.
+rewrite -zcoeffE -[LHS]mulr1; congr (_ * _).
+rewrite /zcoeff rmorphM rmorphV; first last.
+  by rewrite unitfE Num.Theory.pnatr_eq0 card_classCT_neq0.
+rewrite !conjC_nat -mulrA [X in _ * X]mulrC - mulrA divff; first last.
+  by rewrite Num.Theory.pnatr_eq0 card_classCT_neq0.
+by rewrite mulr1 divff // Num.Theory.pnatr_eq0 -lt0n cardsT card_Sn fact_gt0.
 Qed.
 
 End Defs.
-Arguments Fchar [nvar n] f.
+Arguments Fchar [nvar0 n0] f.
 
 (**
 This cannot be written as a SSReflect [{morph Fchar : f g / ...  >-> ... }]
@@ -101,16 +123,26 @@ dependent equality but I'm not sure this is really needed.
 
 *)
 
-Theorem Fchar_ind_morph nv n m (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
-  Fchar ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f * Fchar g :> {sympoly algC[nv]}.
+Section IndMorph.
+
+Variables nvar0 n0 m0 : nat.
+Local Notation nvar := nvar0.+1.
+Local Notation n := n0.+1.
+Local Notation m := m0.+1.
+
+Theorem Fchar_ind_morph (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
+  Fchar (nvar0 := nvar0) ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f *h Fchar g.
 Proof using.
-rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
-rewrite cfextprod_suml !linear_sum [RHS]mulr_suml.
-apply eq_bigr => /= l _.
-rewrite cfextprod_sumr !linear_sum [RHS]mulr_sumr.
-apply eq_bigr => /= k _.
+rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) [Fchar _ in RHS]linear_sum /=.
+rewrite homsymprod_suml cfextprod_suml !linear_sum; apply eq_bigr => /= l _.
+rewrite [Fchar _ in RHS]linearZ /= Fchar_ncfuniCT.
+rewrite homsymprod_sumr cfextprod_sumr !linear_sum; apply eq_bigr => /= k _.
+rewrite [Fchar _ in RHS]linearZ /= Fchar_ncfuniCT.
 rewrite cfextprodZr cfextprodZl scalerA.
-rewrite 3!linearZ /= Ind_ncfuniCT Fchar_ncfuniCT.
-do 2 rewrite linearZ /= Fchar_ncfuniCT.
-by rewrite -scalerAr -scalerAl scalerA prod_genM.
+rewrite 2!linearZ /= Ind_ncfuniCT linearZ /= Fchar_ncfuniCT /=.
+rewrite homsymprodZr homsymprodZl scalerA; congr (_ *: _).
+by apply val_inj => /=; rewrite prod_genM.
 Qed.
+
+End IndMorph.
+

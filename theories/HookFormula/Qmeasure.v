@@ -544,13 +544,13 @@ intros;  intro f; simpl; trivial.
 Save.
 
 Lemma let_indep : forall (A B:Type) (m1:distr A) (m2: distr B) (f:MF B), 
-       mu m1 (fun _ => mu m2 f) = mu m2 f.
+       mu m1 (fun => mu m2 f) = mu m2 f.
 intros; rewrite (mu_cte m1 (mu m2 f)); auto.
 Save.
 
 
 Lemma let_indep_distr : forall (A B:Type) (m1:distr A) (m2: distr B), 
-       Mlet m1 (fun _ => m2) == m2.
+       Mlet m1 (fun => m2) == m2.
 exact let_indep.
 Save.
 

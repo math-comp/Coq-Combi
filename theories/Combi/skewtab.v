@@ -15,15 +15,15 @@
 (******************************************************************************)
 (** * Skew tableau and yamanouchi words:
 
-- [is_skew_yam inn out y] == [y ++ y0] is Yamanouchi ov evaluation out for
-         any [y0] of evaluation inn.
-- [skew_dominate s u v] == the row u dominate the row v when shifted by [s].
+- [is_skew_yam inn out y] == [y ++ y0] is Yamanouchi of evaluation [out] for
+         any [y0] of evaluation [inn].
+- [skew_dominate s u v] == the row [u] dominate the row [v] when shifted by [s].
 - [is_skew_tableau inn t] == [t] is a skew tableau with inner shape [t].
 - [skew_reshape inn out s] == reshape the sequence [s] by the skew shape [out/inn].
 - filter_leqX_tab n t] == keeps only the entries greater than [n] in [t].
 - [join_tab t st] == join the tableau [t] with the skew tableau [st].
        this gives a tableau if the inner shape of [st] is the shape of [t] and
-       the entries of t are smaller than the entries of st.
+       the entries of [t] are smaller than the entries of [st].
 - [hb_strip inn out] == [inn/out] is an horizontal border strip.
 - [vb_strip inn out] == [inn/out] is a vertical border strip.
 ******)
@@ -326,6 +326,14 @@ Lemma hb_strip_included inner outer :
 Proof using.
 elim: inner outer => [| inn0 inn IHinn] [| out0 out] //=.
 by move=> /andP [] /andP [] _ -> /IHinn ->.
+Qed.
+
+Lemma hb_strip_size inner outer :
+  hb_strip inner outer -> size inner <= size outer <= (size inner).+1.
+Proof using.
+elim: inner outer => [| inn0 inn IHinn] [| out0 out] //=.
+  by move=> /eqP ->.
+by move=> /andP [_ /IHinn]; rewrite !ltnS.
 Qed.
 
 Lemma vb_strip_included inner outer :
@@ -635,6 +643,19 @@ rewrite -!size_filter Hr /= leqn0 => /nilP Ht0.
 by rewrite Ht0 (IHt t0 Htab Hdom).
 Qed.
 
+Lemma included_shape_filter_gtnX c (t : seq (seq T)) :
+  is_tableau t -> included (shape (filter_gtnX_tab c t)) (shape t).
+Proof.
+move=> Ht; rewrite /filter_gtnX_tab.
+elim: t Ht => [//= | t0 t IHt] /and4P [Hnnil Hrow Hdom Htab] /=.
+case: (altP ([seq x <- t0 | (x < c)%Ord] =P [::])) => Hhead /=.
+- rewrite (filter_leqX_first_row0 Htab Hdom Hhead).
+  suff -> : [seq r <- nseq (size t) [::] | r != [::]] = [::] by [].
+  by move=> T0; elim: (size t).
+- rewrite (IHt Htab) andbT.
+  by rewrite size_filter; apply: (leq_trans (count_size _ _)).
+Qed.
+
 Lemma shape_inner_filter_leqX n t :
   is_tableau t ->
   shape ([seq [seq x <- i | (x < n)%Ord] | i <- t]) =
@@ -674,6 +695,20 @@ case: t => //= t0 t.
 rewrite ltnS subSS => /IHs -> {IHs}.
 rewrite size_cat -!addnA; congr (_ + _).
 by rewrite addnA addnAC addnC.
+Qed.
+
+Lemma shape_join_tab s t :
+  shape (join_tab s t) =
+  ([seq r.1 + r.2 | r <- zip (pad 0 (size t) (shape s)) (shape t)])%N.
+Proof using .
+rewrite /shape /join_tab -map_comp.
+rewrite (eq_map (f2 := (fun p => p.1 + p.2) \o
+                         (fun p => (size p.1, size p.2)))); first last.
+  by move=> [a b] /=; rewrite size_cat.
+rewrite map_comp; congr map.
+elim: t s => [| t0 t IHt] [| s0 s] //=.
+  by have /= := (IHt [::]); rewrite subn0 => ->.
+by rewrite IHt /= subSS.
 Qed.
 
 Lemma perm_eq_join_tab s t :
@@ -717,6 +752,21 @@ Proof using.
 rewrite (eq_all (a2 := predI (allLtn s0) (allLtn s1))); first last.
   by rewrite /allLtn => i /=; rewrite all_cat.
 by rewrite all_predI => /andP [].
+Qed.
+
+Lemma shape_join_tab_skew_reshape t sh w :
+  included (shape t) sh ->
+  size w = sumn (diff_shape (shape t) sh) ->
+  shape (join_tab t (skew_reshape (shape t) sh w)) = sh.
+Proof using.
+move=> Hincl Hsz.
+rewrite shape_join_tab size_skew_reshape shape_skew_reshape // {Hsz w}.
+move: (shape t) Hincl => inner {t}.
+elim: sh inner => [| s0 sh IHsh] [|in0 inn] //=.
+  rewrite add0n => _ {IHsh}; congr (_ :: _) => {s0}.
+  by elim: sh => //= s0 sh ->.
+move=> /andP [Hin0 /IHsh {IHsh}]; rewrite /pad /= => Hrec.
+by rewrite subSS (subnKC Hin0) Hrec.
 Qed.
 
 Lemma join_tab_skew s t :
@@ -916,7 +966,7 @@ Theorem is_tableau_reshape_std sh T (u : seq T) :
   is_tableau (rev (reshape (rev sh) u)) =
   is_tableau (rev (reshape (rev sh) (std u))).
 Proof.
-move=> Hzs.
+move=> Hsz.
 rewrite -!is_skew_tableau0 -[sh]/(diff_shape [::] sh) -!/(skew_reshape _ _ _).
 by apply is_skew_tableau_reshape_std.
 Qed.

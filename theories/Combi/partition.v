@@ -86,7 +86,9 @@ Operations on partitions:
 Comparison of partitions:
 
 - [partdom s t] == [s] is dominated by [t], that is the partial sum of [s] are
-               smaller that the partitial sum of [t]
+               smaller that the partial sum of [t].
+- [intpartndom d] == a type convertible to [intpart d] which is canonically
+               finite and partially ordered by [partdom].
 - [(s <= t)%Ord] == [s] is smaller than [t] for the lexicographic order
 
 Relation with set partitions:
@@ -121,8 +123,8 @@ Variable sh : seq nat.
 Definition is_box_in_shape b := is_in_shape sh b.1 b.2.
 
 Structure box_in : Set :=
-  BoxIn {coord :> nat * nat; _ : is_box_in_shape coord}.
-Canonical box_in_subType := Eval hnf in [subType for coord].
+  BoxIn {coordbox :> nat * nat; _ : is_box_in_shape coordbox}.
+Canonical box_in_subType := Eval hnf in [subType for coordbox].
 Definition box_in_eqMixin := Eval hnf in [eqMixin of box_in by <:].
 Canonical box_in_eqType := Eval hnf in EqType box_in box_in_eqMixin.
 Definition box_in_choiceMixin := Eval hnf in [choiceMixin of box_in by <:].
@@ -346,7 +348,7 @@ rewrite /is_in_shape => /is_part_ijP [] _ Hpart Hcr /Hpart Hrj Hkc.
 exact: leq_ltn_trans Hkc (leq_trans Hcr Hrj).
 Qed.
 
-(** Equality of partitons *)
+(** Equality of partitions *)
 Lemma part_nth_len_eq p q :
   (forall i, nth 0 p i = nth 0 q i) -> is_part p -> is_part q -> size p = size q.
 Proof.
@@ -383,6 +385,16 @@ apply: (leq_ltn_trans (IHsh Hpart)).
 rewrite -{1}[sumn sh]add0n ltn_add2r.
 have /part_head_non0 /= : is_part (s0 :: sh) by rewrite /= Hhead Hpart.
 by rewrite lt0n.
+Qed.
+
+Lemma mem_part sh i : is_part sh -> i \in sh -> 0 < i <= sumn sh.
+Proof.
+elim: sh i => [//= | s0 sh IHsh] i Hpart.
+have /= Hs0 := part_head_non0 Hpart.
+move: Hpart => /andP [_ Hpart].
+rewrite inE => /orP [/eqP -> | /(IHsh _ Hpart)/andP [-> /=]].
+- by rewrite leq_addr andbT; case: s0 Hs0.
+- by move/leq_trans; apply; apply leq_addl.
 Qed.
 
 Lemma part_sumn_rectangle (sh : seq nat) :
@@ -1062,6 +1074,17 @@ Fixpoint diff_shape inner outer :=
 
 Definition pad (T : Type) (x : T) sz := [fun s => s ++ nseq (sz - size s) x].
 
+Lemma nth_pad (T : Type) n (p : T) (s : seq T) i :
+  nth p (pad p n s) i = nth p s i.
+Proof.
+rewrite /pad /= nth_cat.
+case: (ltnP i (size s)) => //= /(nth_default p) ->.
+by rewrite nth_nseq if_same.
+Qed.
+
+Lemma head_pad (T : Type) n (p : T) (s : seq T) : head p (pad p n s) = head p s.
+Proof. elim: s => [| s0 s IHs] //=; rewrite subn0; by case: n. Qed.
+
 Definition outer_shape inner size_seq :=
   [seq p.1 + p.2 | p <- zip (pad 0 (size (size_seq)) inner) size_seq].
 
@@ -1141,9 +1164,6 @@ case: (ltnP a b) => [/ltnW | ] H.
 - move: H; rewrite /leq => /eqP H; by rewrite H addn0 H.
 - by rewrite (subnKC H) subnn.
 Qed.
-
-Lemma head_pad0 (T : Type) n (p : T) (s : seq T) : head p (pad p n s) = head p s.
-Proof. elim: s => [| s0 s IHs] //=; rewrite subn0; by case: n. Qed.
 
 Lemma included_pad0 inner outer :
   included inner outer = included (pad 0 (size outer) inner) outer.
@@ -1355,6 +1375,9 @@ Coercion intpart_of_intpartn : intpartn >-> intpart.
 Lemma intpartn_sumn (p : intpartn) : sumn p = n.
 Proof using. by case: p => /= p /andP [] /eqP. Qed.
 
+Lemma mem_intpartn (p : intpartn) i : i \in pnval p -> 0 < i <= n.
+Proof. by rewrite -(intpartn_sumn p); apply mem_part. Qed.
+
 Lemma enum_intpartnE : map val (enum {:intpartn}) = enum_partn n.
 Proof using. rewrite /=; exact: enum_subE. Qed.
 
@@ -1392,8 +1415,23 @@ Qed.
 Definition cast_intpartn m n (eq_mn : m = n) p :=
   let: erefl in _ = n := eq_mn return intpartn n in p.
 
-Lemma cast_intpartnE m n (eq_mn : m = n) p : val (cast_intpartn eq_mn p) = val p.
+Lemma cast_intpartnE m n (eq_mn : m = n) p :
+  val (cast_intpartn eq_mn p) = val p.
 Proof. subst m; by case: p. Qed.
+
+Lemma cast_intpartn_id n eq_n (s : intpartn n) : cast_intpartn eq_n s = s.
+Proof using. by apply val_inj => /=; rewrite cast_intpartnE. Qed.
+
+Lemma cast_intpartnK m n eq_m_n :
+  cancel (@cast_intpartn m n eq_m_n) (cast_intpartn (esym eq_m_n)).
+Proof using. by subst m. Qed.
+
+Lemma cast_intpartnKV m n eq_m_n :
+  cancel (cast_intpartn (esym eq_m_n)) (@cast_intpartn m n eq_m_n).
+Proof using. by subst m. Qed.
+
+Lemma cast_intpartn_inj m n eq_m_n : injective (@cast_intpartn m n eq_m_n).
+Proof using. exact: can_inj (cast_intpartnK eq_m_n). Qed.
 
 
 Definition rowpart d := if d is _.+1 then [:: d] else [::].

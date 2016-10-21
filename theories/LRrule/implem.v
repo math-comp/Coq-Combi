@@ -18,7 +18,7 @@ From mathcomp Require Import tuple finfun finset bigop path.
 From SsrMultinomials Require Import mpoly.
 
 Require Import tools combclass partition Yamanouchi ordtype tableau.
-Require Import skewtab sympoly freeSchur therule.
+Require Import skewtab Schur_mpoly freeSchur therule.
 
 (******************************************************************************)
 (** This file contains a Coq implementation of the Littlewood-Richardson rule *)
@@ -905,7 +905,7 @@ Theorem LRtab_coeffP :
   Schur P1 * Schur P2 =
   \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRcoeff P1 P2 P.
 Proof using .
-  rewrite (LRtab_coeffP P1 P2).
+  rewrite (LRyam_coeffP P1 P2).
   by apply eq_bigr => outer /LRcoeffE ->.
 Qed.
 

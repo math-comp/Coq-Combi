@@ -36,11 +36,12 @@ denoted [T].
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import path.
+From mathcomp Require Import path tuple.
 Require Import tools partition ordtype sorted.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 Import OrdNotations.
 
@@ -434,7 +435,8 @@ have /dominateP := filter_gtnX_dominate n Hrow0 Hrow1 Hdom => [] [].
 by rewrite Ht0 /= leqn0 => /nilP ->.
 Qed.
 
-Lemma is_tableau_filter_gtnX t n : is_tableau t -> is_tableau (filter_gtnX_tab n t).
+Lemma is_tableau_filter_gtnX t n :
+  is_tableau t -> is_tableau (filter_gtnX_tab n t).
 Proof using.
 elim: t => [//= | t0 t /= IHt] /and4P [] Hnnil Hrow Hdom Htab.
 case: (altP ([seq x <- t0 | x <A n] =P [::])) => Ht0 /=; first exact: IHt.
@@ -445,7 +447,6 @@ rewrite Ht0 /=; apply/and3P; split; last exact: IHt.
   apply filter_gtnX_dominate => //=.
   by move: Htab; case t => [//= | t1 t'] /= /and3P [].
 Qed.
-
 
 Definition size_tab t := sumn (shape t).
 
@@ -495,7 +496,6 @@ End TableauReading.
 Section FinType.
 
 Variable n : nat.
-(* Should be Variable A : finOrdType *)
 
 Variable d : nat.
 Variable sh : intpartn d.
@@ -514,16 +514,17 @@ Definition tabsh_countMixin := Eval hnf in [countMixin of tabsh by <:].
 Canonical tabsh_countType := Eval hnf in CountType tabsh tabsh_countMixin.
 Canonical tabsh_subCountType := Eval hnf in [subCountType of tabsh].
 
-Lemma tabshP (t : tabsh) : is_tableau t.
+Implicit Type (t : tabsh).
+
+Lemma tabshP t : is_tableau t.
 Proof using. by case: t => t /= /andP []. Qed.
 
-Lemma shape_tabsh (t : tabsh) : shape t = sh.
+Lemma shape_tabsh t : shape t = sh.
 Proof using. by case: t => t /= /andP [] _ /eqP. Qed.
 
 From mathcomp Require Import tuple.
 
-Lemma tabsh_to_wordK (t : tabsh) :
-  rev (reshape (rev sh) (to_word (val t))) = t.
+Lemma tabsh_to_wordK t : rev (reshape (rev sh) (to_word (val t))) = t.
 Proof using. by rewrite /= -(shape_tabsh t); apply: to_wordK. Qed.
 
 Let tabsh_enum :
@@ -586,8 +587,7 @@ move=> w /=; rewrite /tabsh_reading mem_filter; apply/idP/idP.
   by rewrite sumn_rev Hsz.
 Qed.
 
-Lemma all_ltn_nth_tabsh (t : tabsh) i :
-  all (fun x : 'I_n.+1 => i <= x) (nth [::] t i).
+Lemma all_ltn_nth_tabsh t i : all (fun x : 'I_n.+1 => i <= x) (nth [::] t i).
 Proof.
 have:= tabshP t => /is_tableauP [_ _ Hdom].
 elim: i => [|i /allP IHi]; apply/allP => x //.
@@ -599,7 +599,7 @@ move/(_ _ Hxind): Hdom; rewrite sub_pord_ltnXE ltnXnatE /=.
 by rewrite nth_index.
 Qed.
 
-Lemma size_tabsh (t : tabsh) : size t <= n.+1.
+Lemma size_tabsh t : size t <= n.+1.
 Proof.
 have Hall := all_ltn_nth_tabsh t.
 have:= tabshP t => /is_tableauP [Hnnil _ _].
@@ -609,6 +609,39 @@ case: (nth [::] t n.+1) => //= x s _ /andP [Hn _ {s}].
 have:= ltn_ord x; rewrite ltnS => /(leq_trans Hn).
 by rewrite ltnn.
 Qed.
+
+Hypothesis Hszs : size sh <= n.+1.
+Lemma tabrowconst_subproof :
+  is_tab_of_shape
+    sh (take (size sh) [tuple nseq (nth 0 sh (i : 'I_n.+1)) i | i < n.+1]).
+Proof.
+have Hsz : size (take (size sh) [tuple nseq (nth 0 sh i0) i0  | i0 < n.+1]) =
+           size sh.
+  by rewrite size_take size_tuple -/(minn _ _) (minn_idPl Hszs).
+have Hnth j (Hj : j < size sh) :
+              nth [::] [tuple nseq (nth 0 sh i) i | i < n.+1] j =
+              nseq (nth 0 sh j) (Ordinal (leq_trans Hj Hszs)).
+  by rewrite -/(nat_of_ord (Ordinal (leq_trans Hj Hszs))) -tnth_nth tnth_mktuple.
+apply/andP; split; first apply/is_tableauP; try split.
+- move=> i; rewrite Hsz => Hi; rewrite nth_take //.
+  rewrite (Hnth _ Hi) /=; apply/negP => /eqP/nilP.
+  by rewrite /nilp size_nseq; apply/negP/nth_part_non0.
+- move=> r; case: (ltnP r (size sh)) => Hr; last by rewrite nth_default // Hsz.
+  apply/(is_rowP (ord0)) => i j; rewrite nth_take // (Hnth _ Hr) /=.
+  rewrite size_nseq => /andP [Hij Hj].
+  by rewrite !nth_nseq (leq_ltn_trans Hij Hj) Hj.
+- move=> i j Hij; apply/dominateP.
+  case: (ltnP j (size sh)) => Hj; last by rewrite nth_default // Hsz.
+  have Hi := ltn_trans Hij Hj; rewrite !nth_take //.
+  rewrite (Hnth _ Hi) (Hnth _ Hj) !size_nseq.
+  have:= (is_part_ijP _ (intpartnP sh)) => [] [_] /(_ _ _ (ltnW Hij)) => Hleq.
+  split; first exact: Hleq.
+  move=> c Hc; rewrite !nth_nseq Hc (leq_trans Hc Hleq).
+  by rewrite !sub_pord_ltnXE /= ltnXnatE.
+- apply/eqP/(eq_from_nth (x0 := 0)); rewrite size_map // => i.
+  by rewrite Hsz => Hi; rewrite nth_shape nth_take // Hnth size_nseq.
+Qed.
+Definition tabrowconst := TabSh (tabrowconst_subproof).
 
 End FinType.
 

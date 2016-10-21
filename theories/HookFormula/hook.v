@@ -308,11 +308,11 @@ case: (ltnP Alpha (size p')) => Halpha.
   + exact: iota_uniq.
   + rewrite mem_iota add0n.
     by rewrite Halpha.
-  rewrite big_filter big_map (eq_bigl (fun _ => true));
+  rewrite big_filter big_map (eq_bigl (fun => true));
     last by move=> i; rewrite /= eq_refl.
   rewrite /p' nth_decr_nth -HBeta (eq_bigr F) //.
   rewrite /index_iota subn0 mulrC.
-  rewrite (eq_bigr (fun _ => 1)); first by rewrite big1 // mul1r.
+  rewrite (eq_bigr (fun => 1)); first by rewrite big1 // mul1r.
   move=> i /negbTE Hi.
   by rewrite big_filter big_map big_pred0.
 - move: HBeta; rewrite -nth_decr_nth (nth_default _ Halpha) => ->.
@@ -1226,7 +1226,7 @@ have Hsum : ((sumn p) != 0)%N.
   by move: Hp; apply contra => /eqP/(part0 (intpartP p)) ->.
 have -> : (sumn p).-1.+1 = (sumn p) by case: (sumn p) Hsum.
 rewrite big_nat_0cond.
-rewrite (eq_bigr (fun _ => 1)).
+rewrite (eq_bigr (fun => 1)).
   rewrite -big_nat_0cond big_const_seq count_predT size_iota subn0 iter_plus1.
   by rat_to_ring; rewrite divff // intr_eq0.
 move=> i /reshape_coordP.

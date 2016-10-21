@@ -243,7 +243,7 @@ Proof.
 rewrite factE /= cardE -(size_map val) enum_codeszE.
 elim: n => [//=| n IHn].
 rewrite size_flatten -/enum_codesz /shape -map_comp.
-rewrite (eq_map (f2 := fun _ => fact_rec n)); first last.
+rewrite (eq_map (f2 := fun => fact_rec n)); first last.
   by move=> i /=; rewrite size_map.
 by rewrite -sumnE big_map big_const_seq count_predT size_iota iter_addn_0 mulnC /=.
 Qed.

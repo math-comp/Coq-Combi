@@ -67,6 +67,9 @@ Contents
 
 In progress:
 
+*  basic **theory of symmetric functions** including various basis change and the 
+   Cauchy formula. 
+
 *  the **representation theory of the symmetric Groups** (together with Thibaut
    Benjamin).
    See the [ReprSn branch on Github](https://github.com/hivert/Coq-Combi/tree/ReprSn).

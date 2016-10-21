@@ -484,7 +484,7 @@ Proof.
 rewrite /cfdot /= -mulrA; congr (_ * _).
 case: (altP (p1 =P p2)) => [<-{p2} | /negbTE Hneq]; rewrite /= ?mulr1 ?mulr0.
 - rewrite (bigID (fun x => x \in classCT p1)) /=.
-  rewrite (eq_bigr (fun _ => 1)); first last.
+  rewrite (eq_bigr (fun => 1)); first last.
     move=> i => /andP [_].
     rewrite -classCTP !cfuniCTE => -> /=.
     by rewrite mul1r conjC1.

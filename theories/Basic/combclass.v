@@ -92,7 +92,7 @@ Variable TP : subCountType P.
 
 Fixpoint subType_seq l {struct l} :=
   match l as l1 return all P l1 -> seq TP with
-  | [::]     => fun _ : true = true => [::]
+  | [::]     => fun => [::]
   | l0 :: ll => fun Hall =>
                   match elimTF andP Hall with
                   | conj H0 Hl => (Sub l0 H0) :: (subType_seq ll Hl)
