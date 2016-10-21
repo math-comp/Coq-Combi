@@ -132,13 +132,11 @@ dependent equality but I'm not sure this is really needed.
 Theorem Fchar_ind_morph m n (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
   Fchar ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f *h Fchar g.
 Proof using.
-rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
-rewrite !linear_sum /=; apply eq_bigr => /= l _.
-rewrite homsymprod_suml cfextprod_suml !linear_sum; apply eq_bigr => /= k _.
+rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) !linear_sum; apply eq_bigr => /= l _.
+rewrite cfextprod_suml homsymprod_suml !linear_sum; apply eq_bigr => /= k _.
 do 2 rewrite [in RHS]linearZ /= Fchar_ncfuniCT.
-rewrite cfextprodZr cfextprodZl scalerA.
-rewrite 2!linearZ /= Ind_ncfuniCT linearZ /= Fchar_ncfuniCT /=.
-rewrite homsymprodZr homsymprodZl scalerA; congr (_ *: _).
+rewrite cfextprodZr cfextprodZl homsymprodZr homsymprodZl !scalerA.
+rewrite 2!linearZ /= Ind_ncfuniCT linearZ /= Fchar_ncfuniCT /=; congr (_ *: _).
 by apply val_inj => /=; rewrite prod_genM.
 Qed.
 
