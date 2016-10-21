@@ -27,7 +27,7 @@ From mathcomp Require Import classfun.
 
 From SsrMultinomials Require Import mpoly.
 Require Import tools partition sympoly homogsym.
-Require Import permcomp cycletype towerSn.
+Require Import permcomp cycletype towerSn permcent.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -41,9 +41,9 @@ Local Notation algCF := [fieldType of algC].
 
 Section Defs.
 
-Variable nvar0 n0 : nat.
+Variable nvar0 n : nat.
 Local Notation nvar := nvar0.+1.
-Local Notation n := n0.+1.
+(* Local Notation n := n0.+1. *)
 Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
 Local Notation "''p[' k ]" := (homsymp _ _ k)
@@ -86,8 +86,17 @@ rewrite (eq_bigr (fun la => 'z_la^-1 *: 'p[la])); first last.
   move=> la _.
   rewrite -Fchar_ncfuniCT /ncfuniCT /= linearZ /=.
   by rewrite scalerA /= mulrC divff // scale1r.
-apply val_inj; rewrite /= /prod_gen /= big_seq1.
-rewrite raddf_sum symh_to_symp /=.
+apply val_inj; rewrite /= /prod_gen /=.
+case: n => [|n0]/=.
+  rewrite big_nil (big_pred1 (rowpartn 0)); first last.
+    by move=> la /=; symmetry; apply/eqP/val_inj; rewrite /= intpartn0.
+  rewrite linearZ /= /prod_gen /= big_nil.
+  rewrite zcoeffE /zcard big_nil mul1n /=.
+  rewrite (big_pred1 ord0); first last.
+    move=> i /=; symmetry; apply/eqP/val_inj/eqP.
+    by rewrite /= -leqn0 -ltnS ltn_ord.
+  by rewrite fact0 invr1 scale1r.
+rewrite big_seq1 raddf_sum symh_to_symp /=.
 by apply eq_bigr => l _; rewrite zcoeffE.
 Qed.
 
@@ -111,7 +120,8 @@ by rewrite mulr1 divff // Num.Theory.pnatr_eq0 -lt0n cardsT card_Sn fact_gt0.
 Qed.
 
 End Defs.
-Arguments Fchar [nvar0 n0] f.
+Arguments Fchar [nvar0 n] f.
+
 
 (**
 This cannot be written as a SSReflect [{morph Fchar : f g / ...  >-> ... }]
@@ -125,10 +135,8 @@ dependent equality but I'm not sure this is really needed.
 
 Section IndMorph.
 
-Variables nvar0 n0 m0 : nat.
+Variables nvar0 n m : nat.
 Local Notation nvar := nvar0.+1.
-Local Notation n := n0.+1.
-Local Notation m := m0.+1.
 
 Theorem Fchar_ind_morph (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
   Fchar (nvar0 := nvar0) ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f *h Fchar g.
