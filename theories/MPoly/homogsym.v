@@ -144,6 +144,76 @@ End HomogSymLModType.
 Import GRing.Theory.
 Local Open Scope ring_scope.
 
+Section HomogSymProd.
+
+Variable n : nat.
+Variable R : comRingType.
+Variable c d : nat.
+
+Lemma homsymprod_subproof (p : {homsym R[n, c]}) (q : {homsym R[n, d]}) :
+  homsym p * homsym q \is (c + d).-homsym.
+Proof. by apply: dhomogM => /=; apply: homsym_is_dhomog. Qed.
+Definition homsymprod p q : {homsym R[n, c + d]} :=
+  HomogSym (homsymprod_subproof p q).
+Definition homsymprodr_head k p q := let: tt := k in homsymprod q p.
+
+Notation homsymprodr := (homsymprodr_head tt).
+Local Notation "p *h q" := (homsymprod p q)
+                             (at level 20, format "p  *h  q").
+
+Lemma homsymprod_is_linear p : linear (homsymprod p).
+Proof.
+by move=> a /= u v; apply val_inj; rewrite /= mulrDr -scalerAr.
+Qed.
+Canonical homsymprod_additive p := Additive (homsymprod_is_linear p).
+Canonical homsymprod_linear p := Linear (homsymprod_is_linear p).
+
+Lemma homsymprodrE p q : homsymprodr p q = q *h p. Proof. by []. Qed.
+Lemma homsymprodr_is_linear p : linear (homsymprodr p).
+Proof.
+by move=> a /= u v; apply val_inj; rewrite /= mulrDl -scalerAl.
+Qed.
+Canonical homsymprodr_additive p := Additive (homsymprodr_is_linear p).
+Canonical homsymprodr_linear p := Linear (homsymprodr_is_linear p).
+
+
+Lemma homsymprod0r p : p *h 0 = 0. Proof. exact: raddf0. Qed.
+Lemma homsymprodBr p q1 q2 : p *h (q1 - q2) = p *h q1 - p *h q2.
+Proof. exact: raddfB. Qed.
+Lemma homsymprodNr p q : p *h (- q) = - p *h q.
+Proof. exact: raddfN. Qed.
+Lemma homsymprodDr p q1 q2 : p *h (q1 + q2) = p *h q1 + p *h q2.
+Proof. exact: raddfD. Qed.
+Lemma homsymprodMnr p q m : p *h (q *+ m) = (p *h q) *+ m.
+Proof. exact: raddfMn. Qed.
+Lemma homsymprod_sumr p I r (P : pred I) (q : I -> {homsym R[n, d]}) :
+  p *h (\sum_(i <- r | P i) q i) = \sum_(i <- r | P i) p *h q i.
+Proof. exact: raddf_sum. Qed.
+Lemma homsymprodZr a p q : p *h (a *: q) = a *: (p *h q).
+Proof. by rewrite linearZ. Qed.
+
+Lemma homsymprod0l p : 0 *h p = 0.
+Proof. by rewrite -homsymprodrE linear0. Qed.
+Lemma homsymprodNl p q : (- q) *h p = - q *h p.
+Proof. by rewrite -!homsymprodrE linearN. Qed.
+Lemma homsymprodDl p q1 q2 : (q1 + q2) *h p = q1 *h p + q2 *h p.
+Proof. by rewrite -!homsymprodrE linearD. Qed.
+Lemma homsymprodBl p q1 q2 : (q1 - q2) *h p = q1 *h p - q2 *h p.
+Proof. by rewrite -!homsymprodrE linearB. Qed.
+Lemma homsymprodMnl p q m : (q *+ m) *h p = q *h p *+ m.
+Proof. by rewrite -!homsymprodrE linearMn. Qed.
+Lemma homsymprod_suml p I r (P : pred I) (q : I -> {homsym R[n, c]}) :
+  (\sum_(i <- r | P i) q i) *h p = \sum_(i <- r | P i) q i *h p.
+Proof. by rewrite -!homsymprodrE linear_sum. Qed.
+Lemma homsymprodZl p a q : (a *: q) *h p = a *: q *h p.
+Proof. by rewrite -!homsymprodrE linearZ. Qed.
+
+End HomogSymProd.
+
+Notation homsymprodr := (homsymprodr_head tt).
+Notation "p *h q" := (homsymprod p q)
+                       (at level 20, format "p  *h  q").
+
 
 Section Vector.
 
@@ -417,7 +487,7 @@ Qed.
 
 End HomSymField.
 
-From mathcomp Require Import ssrnum algC algnum.
+From mathcomp Require Import ssrnum algC.
 Import GRing.Theory Num.Theory.
 Require Import permcent.
 

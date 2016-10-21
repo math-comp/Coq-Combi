@@ -52,11 +52,15 @@ Local Notation "''h[' k ]" := (homsymh _ _ k)
                               (at level 8, k at level 2, format "''h[' k ]").
 
 Definition Fchar (f : 'CF('SG_n)) : {homsym algC[nvar, n]} :=
-  \sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'p[l].
+  locked (\sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'p[l]).
+
+Lemma FcharE f :
+  Fchar f = \sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'p[l].
+Proof. by rewrite /Fchar; unlock. Qed.
 
 Lemma Fchar_is_linear : linear Fchar.
 Proof using.
-move=> a f g; rewrite /Fchar scaler_sumr -big_split /=.
+move=> a f g; rewrite !FcharE scaler_sumr -big_split /=.
 apply eq_bigr => l _; rewrite !cfunElock.
 by rewrite scalerA mulrA -scalerDl mulrDl.
 Qed.
@@ -64,7 +68,7 @@ Canonical Fchar_linear := Linear Fchar_is_linear.
 
 Lemma Fchar_ncfuniCT l : Fchar '1z_[l] = 'p[l].
 Proof using.
-rewrite /Fchar (bigD1 l) //= big1 ?addr0; first last.
+rewrite !FcharE (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hm /=.
   rewrite cfunElock cfuniCTE /=.
   rewrite /cycle_typeSn permCTP.
@@ -125,23 +129,19 @@ Variables nvar0 n0 m0 : nat.
 Local Notation nvar := nvar0.+1.
 Local Notation n := n0.+1.
 Local Notation m := m0.+1.
-Local Notation FcharSF f := (Fchar f : {sympoly algC[nvar]}).
 
 Theorem Fchar_ind_morph (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
-  FcharSF ('Ind['SG_(m + n)] (f \o^ g)) = FcharSF f * FcharSF g.
+  Fchar (nvar0 := nvar0) ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f *h Fchar g.
 Proof using.
-rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
-rewrite cfextprod_suml [cfIsom _ _]linear_sum ['Ind[_] _]linear_sum.
-rewrite ![Fchar _]linear_sum /= ![homsym _]linear_sum /=.
-rewrite mulr_suml /=; apply eq_bigr => /= l _.
-rewrite [in RHS]linearZ /= Fchar_ncfuniCT /=.
-rewrite cfextprod_sumr [cfIsom _ _]linear_sum ['Ind[_] _]linear_sum.
-rewrite ![Fchar _]linear_sum /= ![homsym _]linear_sum /=.
-rewrite mulr_sumr /=; apply eq_bigr => /= k _.
-rewrite [in RHS]linearZ /= Fchar_ncfuniCT /=.
-rewrite -scalerAr -scalerAl scalerA prod_genM.
+rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) [Fchar _ in RHS]linear_sum /=.
+rewrite homsymprod_suml cfextprod_suml !linear_sum; apply eq_bigr => /= l _.
+rewrite [Fchar _ in RHS]linearZ /= Fchar_ncfuniCT.
+rewrite homsymprod_sumr cfextprod_sumr !linear_sum; apply eq_bigr => /= k _.
+rewrite [Fchar _ in RHS]linearZ /= Fchar_ncfuniCT.
 rewrite cfextprodZr cfextprodZl scalerA.
-by rewrite 2!linearZ /= Ind_ncfuniCT linearZ /= Fchar_ncfuniCT /=.
+rewrite 2!linearZ /= Ind_ncfuniCT linearZ /= Fchar_ncfuniCT /=.
+rewrite homsymprodZr homsymprodZl scalerA; congr (_ *: _).
+by apply val_inj => /=; rewrite prod_genM.
 Qed.
 
 End IndMorph.
