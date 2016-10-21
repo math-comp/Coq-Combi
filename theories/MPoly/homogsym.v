@@ -18,6 +18,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop ssrint ssralg path.
 From mathcomp Require Import perm fingroup matrix vector zmodp.
+From mathcomp Require ssrnum.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
 Require Import tools ordtype permuted partition Yamanouchi std tableau stdtab.
@@ -210,9 +211,11 @@ End Vector.
 
 Section HomSymField.
 
+Import ssrnum Num.Theory.
+
 Variable n0 d : nat.
 Local Notation n := (n0.+1).
-Variable R : fieldType.
+Variable R : numFieldType.
 Local Notation P := (intpartn d).
 
 Definition symbe := [tuple of [seq homsyme n0 R la | la <- enum {: P}]].
@@ -253,41 +256,40 @@ rewrite [in RHS](tnth_nth (tnth (enum_tuple {: P}) i)).
 by rewrite (nth_map (tnth (enum_tuple {: P}) i)) -?cardE.
 Qed.
 
-Lemma basis_homsym : d <= n -> [set p : intpartn d | size p <= n] =i {: P}.
-Proof.
-move=> Hd la.
+Hypothesis Hd : (d <= n)%N.
+
+Lemma basis_homsym : [set p : intpartn d | (size p <= n)%N] =i {: P}.
+Proof using Hd.
+move=> la.
 rewrite !inE; apply: (leq_trans _ Hd).
-by rewrite -[X in _ <= X](intpartn_sumn la); apply: size_part.
+by rewrite -[X in (_ <= X)%N](intpartn_sumn la); apply: size_part.
 Qed.
 
 Lemma dim_homsym :
-  d <= n -> \dim (fullv (vT := [vectType R of {homsym R[n, d]}])) = #|{: P}|.
-Proof.
-by rewrite dimvf /Vector.dim /= => Hd; apply eq_card; apply basis_homsym.
+  \dim (fullv (vT := [vectType R of {homsym R[n, d]}])) = #|{: P}|.
+Proof using Hd.
+by rewrite dimvf /Vector.dim /=; apply eq_card; apply basis_homsym.
 Qed.
 
-Lemma free_symbm : d <= n -> free symbm.
-Proof.
-move=> Hd.
+Lemma free_symbm : free symbm.
+Proof using Hd.
 apply/freeP => co; rewrite vect_to_homsym => /(congr1 val).
 rewrite /= linear_sum /= => /symm_unique0 H i.
 rewrite -(enum_valK i); apply H.
 apply: (leq_trans _ Hd).
-rewrite -[X in _ <= X](intpartn_sumn (enum_val i)).
+rewrite -[X in (_ <= X)%N](intpartn_sumn (enum_val i)).
 exact: size_part.
 Qed.
 
-Lemma symbm_basis : d <= n -> basis_of fullv symbm.
-Proof.
-move=> Hd.
-by rewrite basisEfree (free_symbm Hd) subvf size_map size_tuple /= dim_homsym.
+Lemma symbm_basis : basis_of fullv symbm.
+Proof using Hd.
+by rewrite basisEfree free_symbm subvf size_map size_tuple /= dim_homsym.
 Qed.
 
-Lemma symbs_basis : d <= n -> basis_of fullv symbs.
-Proof.
-move=> Hd.
-rewrite basisEdim size_map size_tuple (dim_homsym Hd) leqnn andbT.
-rewrite -(span_basis (symbm_basis Hd)).
+Lemma symbs_basis : basis_of fullv symbs.
+Proof using Hd.
+rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
+rewrite -(span_basis symbm_basis).
 apply/span_subvP => s /mapP [/= la]; rewrite !mem_enum => _ ->{s}.
 have -> : homsymm n0 R la = \sum_(mu : intpartn d) 'K^-1(la, mu) *: homsyms n0 R mu.
   by apply val_inj; rewrite /= (symm_syms _ _ la) !linear_sum.
@@ -303,7 +305,7 @@ Definition monE m : seq nat :=
   rev (flatten [tuple nseq (m i) i.+1 | i < n]).
 
 Lemma monEP m : mnmwgt m = d -> is_part_of_n d (monE m).
-Proof.
+Proof using.
 rewrite /mnmwgt => H.
 rewrite /= is_part_sortedE; apply/and3P; split.
 - rewrite /monE sumn_rev sumn_flatten -[X in _ == X]H.
@@ -333,19 +335,19 @@ Qed.
 Definition intpartn_of_mon m (H : mnmwgt m = d) := IntPartN (monEP H).
 
 Local Lemma Esym : (forall i : 'I_n, E`_i \is symmetric).
-Proof.
+Proof using.
 move=> i; rewrite (nth_map i) ?size_tuple //.
 by rewrite -tnth_nth tnth_ord_tuple mesym_sym.
 Qed.
 Local Definition pisymhomog_fun q :=
   SymPoly (pihomog_sym (mcomp_sym q Esym)) : {sympoly R[n]}.
 Local Lemma pisymhomog_funP q : pisymhomog_fun q \is d.-homsym.
-Proof. by rewrite homsymE /= pihomogP. Qed.
+Proof using. by rewrite homsymE /= pihomogP. Qed.
 Local Definition pisymhomog := fun q => HomogSym (pisymhomog_funP q).
 
 Lemma intpartn_of_monE m (H : mnmwgt m = d) :
   'X_[m] \mPo E = homsyme n0 R (intpartn_of_mon H).
-Proof.
+Proof using.
 rewrite comp_mpolyX /= /prod_gen /intpartn_of_mon /monE /=.
 rewrite rmorph_prod /= -[RHS](eq_big_perm _ (perm_eq_rev _)) /=.
 rewrite big_flatten /= big_map /=.
@@ -356,16 +358,15 @@ Qed.
 
 Lemma pisymhomog_monE m (H : mnmwgt m = d) :
   pisymhomog 'X_[m] = homsyme n0 R (intpartn_of_mon H).
-Proof.
+Proof using.
 apply val_inj; apply val_inj; rewrite /= intpartn_of_monE /=.
 have := prod_syme_homog n0 R (intpartn_of_mon H).
 exact: pihomog_dE.
 Qed.
 
-Lemma symbe_basis : d <= n -> basis_of fullv symbe.
-Proof.
-move=> Hd.
-rewrite basisEdim size_map size_tuple (dim_homsym Hd) leqnn andbT.
+Lemma symbe_basis : basis_of fullv symbe.
+Proof using Hd.
+rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
 apply/subvP => /= p _; rewrite span_def big_map.
 have:= sym_fundamental_homog (sympol_is_symmetric p) (homsym_is_dhomog p).
 move=> [t [Hp /dhomogP Hhomt]].
@@ -383,11 +384,36 @@ apply memv_add; first exact: memv_line.
 exact: mem0v.
 Qed.
 
-Lemma symbh_basis : d <= n -> basis_of fullv symbh.
-Admitted.
+Lemma symbh_basis : basis_of fullv symbh.
+Proof using Hd.
+rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
+rewrite -(span_basis symbe_basis).
+apply/span_subvP => s /mapP [/= la]; rewrite !mem_enum => _ ->{s}.
+have -> : homsyme n0 R la =
+         \sum_(mu : intpartn d)
+          coeff_prodgen_intpartn (signed_sum_compn R) la mu *: homsymh n0 R mu.
+  by apply val_inj; rewrite /= linear_sum /= (prod_prodgen (syme_to_symh n0 R)).
+rewrite span_def; apply memv_suml => mu _; apply memvZ.
+rewrite big_map (bigD1_seq mu) /= ?mem_enum ?inE ?enum_uniq //.
+rewrite -[X in X \in _]addr0.
+by apply memv_add; [exact: memv_line | exact: mem0v].
+Qed.
 
-Lemma symbp_basis : d <= n -> basis_of fullv symbp.
-Admitted.
+Lemma symbp_basis : basis_of fullv symbp.
+Proof using Hd.
+rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
+rewrite -(span_basis symbh_basis).
+apply/span_subvP => s /mapP [/= la]; rewrite !mem_enum => _ ->{s}.
+pose co := fun (n : nat) (l : intpartn n) => (permcent.zcard l)%:R^-1 : R.
+have -> : homsymh n0 R la =
+         \sum_(mu : intpartn d)
+          coeff_prodgen_intpartn co la mu *: homsymp n0 R mu.
+  by apply val_inj; rewrite /= linear_sum /= (prod_prodgen (symh_to_symp n0 R)).
+rewrite span_def; apply memv_suml => mu _; apply memvZ.
+rewrite big_map (bigD1_seq mu) /= ?mem_enum ?inE ?enum_uniq //.
+rewrite -[X in X \in _]addr0.
+by apply memv_add; [exact: memv_line | exact: mem0v].
+Qed.
 
 End HomSymField.
 
@@ -403,7 +429,7 @@ Section ScalarProduct.
 Variable n0 d : nat.
 Local Notation n := (n0.+1).
 Local Notation P := (intpartn d).
-Local Notation algCF := [fieldType of algC].
+Local Notation algCF := [numFieldType of algC].
 Local Notation symH := {homsym algC[n, d]}.
 
 Definition homsymdot (p q : symH) :=

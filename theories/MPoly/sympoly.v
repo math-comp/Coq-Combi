@@ -18,6 +18,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset.
 From mathcomp Require Import bigop ssralg ssrint path perm fingroup.
+From mathcomp Require ssrnum.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
 Require Import tools ordtype permuted partition Yamanouchi std tableau stdtab.
@@ -509,10 +510,11 @@ Section ProdGen.
 Variable n0 : nat.
 Local Notation n := n0.+1.
 Variable R : comRingType.
+Local Notation SF := {sympoly R[n]}.
 
 Section Defs.
 
-Variable gen : nat -> {sympoly R[n]}.
+Variable gen : nat -> SF.
 Hypothesis gen_homog : forall d, sympol (gen d) \is d.-homog.
 
 Definition prod_gen d (sh : intpartn d) := \prod_(i <- sh) gen i.
@@ -539,37 +541,55 @@ Definition prod_symh_homog := prod_gen_homog (@symh_homog n0 R).
 Definition prod_symp := prod_gen (@symp n0 R).
 Definition prod_symp_homog := prod_gen_homog (@symp_homog n0 R).
 
+Variable gA gB : nat -> SF.
+Variable co : forall (d : nat), intpartn d -> R.
 
-Lemma prod_prodgen (gA gB : nat -> {sympoly R[n]}) :
-  (forall d, { co : intpartn d -> R |
-          gA d = \sum_(la : _) co la *: prod_gen gB la })
-  ->
-  forall d (la : intpartn d),
-    { co : intpartn d -> R |
-      prod_gen gA la = \sum_(mu : _) co mu *: prod_gen gB mu}.
+Fixpoint coeff_prodgen_seq l : intpartn (sumn l) -> R :=
+  if l is l0 :: l' then
+    fun la : intpartn (sumn (l0 :: l')) =>
+             \sum_(p : intpartn l0 * intpartn (sumn l') |
+                   la == union_intpartn p.1 p.2)
+              co p.1 * coeff_prodgen_seq p.2
+  else fun _ => 1.
+Definition coeff_prodgen_intpartn d (la mu : intpartn d) : R :=
+  coeff_prodgen_seq (l := la) (cast_intpartn (esym (intpartn_sumn la)) mu).
+
+Lemma coeff_prodgen_cast l k nu
+      (eqlamu : l = k) (eqsum : sumn l = sumn k) :
+  coeff_prodgen_seq (cast_intpartn eqsum nu) = coeff_prodgen_seq nu.
 Proof.
-rewrite {2}/prod_gen => H d [la /= /andP [/eqP Hsumn _]] /=; subst d.
-elim: la => [| l la [cla Hcla]] /=.
-- exists (fun _ => 1); rewrite big_nil.
-  rewrite (big_pred1 (rowpartn 0)) /prod_gen /= ?scale1r ?big_nil // => la.
+by subst k; congr coeff_prodgen_seq; apply val_inj; rewrite cast_intpartnE.
+Qed.
+
+Lemma prod_prodgen :
+  (forall d, gA d = \sum_(la : intpartn d) co la *: prod_gen gB la :> SF) ->
+  forall d (la : intpartn d),
+    prod_gen gA la = \sum_(mu : intpartn d)
+                      coeff_prodgen_intpartn la mu *: prod_gen gB mu :> SF.
+Proof.
+rewrite /coeff_prodgen_intpartn /= {2}/prod_gen => H d la.
+have := intpartn_sumn la.
+case: la => [la /= Hla] Hd; subst d.
+rewrite (eq_bigr (fun mu => coeff_prodgen_seq mu *: prod_gen gB mu)); first last.
+  by move=> mu _; congr (_ *: _); rewrite coeff_prodgen_cast /=.
+elim: la {Hla} => [| l la IHla] /=.
+  rewrite big_nil (big_pred1 (rowpartn 0)) /prod_gen /= ?scale1r ?big_nil // => la.
   by symmetry; apply/eqP/val_inj; rewrite /= intpartn0.
-move/(_ l): H => [cl Hcl].
-exists (fun mu => \sum_(p | mu == (union_intpartn p.1 p.2)) cl p.1 * cla p.2).
-rewrite big_cons Hcl Hcla; symmetry.
+rewrite big_cons H; symmetry.
 transitivity
   (\sum_(mu : _) \sum_(p | mu == union_intpartn p.1 p.2)
-    (cl p.1 * cla p.2) *: prod_gen gB mu).
+    (co (d := l) p.1 * coeff_prodgen_seq (l := la) p.2) *: prod_gen gB mu).
   by apply eq_bigr => mu _; rewrite scaler_suml.
 rewrite (exchange_big_dep xpredT) //=.
-pose f mu nu := (cl mu *: prod_gen gB mu) * (cla nu *: prod_gen gB nu).
+pose f mu nu := (co (d := l) mu *: prod_gen gB mu) *
+                (coeff_prodgen_seq (l := la) nu *: prod_gen gB nu).
 transitivity (\sum_(p : _) f p.1 p.2).
   apply eq_bigr => [[mu nu] _] /=; rewrite big_pred1_eq.
   by rewrite /f -scalerAl -scalerAr scalerA prod_genM.
 rewrite -(pair_big xpredT xpredT) /=.
 rewrite mulr_suml; apply eq_bigr => nu _.
-by rewrite mulr_sumr.
+by rewrite /f -mulr_sumr -IHla.
 Qed.
-
 
 End ProdGen.
 
@@ -1276,14 +1296,12 @@ Qed.
 End SymhSyms.
 
 
-From mathcomp Require Import ssrnum.
-
 Section ChangeBasisSymhPowerSum.
 
-Import Num.Theory.
+Import ssrnum Num.Theory.
 
-Variable R : numFieldType.
 Variable n0 : nat.
+Variable R : numFieldType.
 Local Notation n := n0.+1.
 Local Notation SF := {sympoly R[n]}.
 
