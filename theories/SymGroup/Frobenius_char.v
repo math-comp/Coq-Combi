@@ -86,17 +86,17 @@ rewrite (eq_bigr (fun la => 'z_la^-1 *: 'p[la])); first last.
   move=> la _.
   rewrite -Fchar_ncfuniCT /ncfuniCT /= linearZ /=.
   by rewrite scalerA /= mulrC divff // scale1r.
-apply val_inj; rewrite /= /prod_gen /=.
-case: n => [|n0]/=.
-  rewrite big_nil (big_pred1 (rowpartn 0)); first last.
+apply val_inj; case: n => [|n0]/=.
+  rewrite /= prod_gen0.
+  rewrite (big_pred1 (rowpartn 0)); first last.
     by move=> la /=; symmetry; apply/eqP/val_inj; rewrite /= intpartn0.
-  rewrite linearZ /= /prod_gen /= big_nil.
+  rewrite linearZ /= prod_gen0.
   rewrite zcoeffE /zcard big_nil mul1n /=.
   rewrite (big_pred1 ord0); first last.
     move=> i /=; symmetry; apply/eqP/val_inj/eqP.
     by rewrite /= -leqn0 -ltnS ltn_ord.
   by rewrite fact0 invr1 scale1r.
-rewrite big_seq1 raddf_sum symh_to_symp /=.
+rewrite /prod_gen big_seq1 raddf_sum symh_to_symp /=.
 by apply eq_bigr => l _; rewrite zcoeffE.
 Qed.
 

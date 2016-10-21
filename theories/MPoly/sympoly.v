@@ -526,6 +526,9 @@ elim: sh => [| d sh IHsh] /=; first by rewrite big_nil /= dhomog1.
 by rewrite big_cons; apply dhomogM; first exact: gen_homog.
 Qed.
 
+Lemma prod_gen0 (l : intpartn 0) : prod_gen l = 1.
+Proof. by rewrite /prod_gen intpartn0 big_nil. Qed.
+
 Lemma prod_genM c d (l : intpartn c) (k : intpartn d) :
   (prod_gen l) * (prod_gen k) = (prod_gen (union_intpartn l k)).
 Proof using.
@@ -573,7 +576,7 @@ case: la => [la /= Hla] Hd; subst d.
 rewrite (eq_bigr (fun mu => coeff_prodgen_seq mu *: prod_gen gB mu)); first last.
   by move=> mu _; congr (_ *: _); rewrite coeff_prodgen_cast /=.
 elim: la {Hla} => [| l la IHla] /=.
-  rewrite big_nil (big_pred1 (rowpartn 0)) /prod_gen /= ?scale1r ?big_nil // => la.
+  rewrite big_nil (big_pred1 (rowpartn 0)) ?prod_gen0 ?scale1r // => la.
   by symmetry; apply/eqP/val_inj; rewrite /= intpartn0.
 rewrite big_cons H; symmetry.
 transitivity
