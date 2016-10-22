@@ -492,7 +492,7 @@ Qed.
 Local Open Scope nat_scope.
 
 Definition zcard l :=
-  \prod_(i <- l) i * \prod_(i < (sumn l).+1) (count_mem (nat_of_ord i) l)`!.
+  \prod_(i <- l) i * \prod_(i < (sumn l).+1) (count_mem (i : nat) l)`!.
 
 Lemma zcard_nil : zcard [::] = 1.
 Proof.
@@ -503,7 +503,7 @@ Qed.
 
 Lemma zcard_any l b :
   (sumn l < b) ->
-  (\prod_(i <- l) i * \prod_(i < b) (count_mem (i : nat) l)`! = zcard l).
+  \prod_(i <- l) i * \prod_(i < b) (count_mem (i : nat) l)`! = zcard l.
 Proof.
 rewrite /zcard => /(big_ord_widen _ (fun i : nat => (count_mem i l)`!)) ->.
 congr (_ * _).

@@ -15,13 +15,13 @@
 (******************************************************************************)
 (** * The Tower of the Symmetric Groups
 
-- [cfextprod g h]  == the external product of class function for
-                      [g : 'CF(G)] [h : 'CF(H)].
+- [f \ox g] = [cfextprod g h]  == the external product of class function,
+                that is a term of type ['CF(setX G H)] when [g : 'CF(G)] and
+                [h : 'CF(H)].
 - [cfextprodr g h] == [cfextprod h g]
 - [extprod_repr P Q] == the external product of matrix representation.
 
 - [tinj]     == the tower injection morphism : 'S_m * 'S_n -> 'S_(m + n)
-- [tinj_im]  == the image of [tinj]
 
 - [zcoeff p] == The cardinality of the centralizator of any permutation of
                 cycle type [p] in [algC], that is [#|'S_k| / #|class p|].
@@ -224,10 +224,7 @@ by case: splitP => [] j _; rewrite /tinjval !unsplitK /= permM.
 Qed.
 Canonical morph_of_tinj := Morphism (D := SnXm) (in2W tinj_morphM).
 
-(* The image of 'S_m * 'S_n via tinj with a 'S_(m + n) group structure *)
-Definition tinj_im := tinj @* ('dom tinj).
-
-Lemma isom_tinj : isom SnXm tinj_im tinj.
+Lemma isom_tinj : isom SnXm (tinj @* ('dom tinj)) tinj.
 Proof using.
 apply/isomP; split; last by [].
 apply/subsetP => [] /= [s1 s2]; rewrite inE => /andP [_].
@@ -316,7 +313,6 @@ Qed.
 End TowerMorphism.
 
 Arguments tinj {m n} s.
-Arguments tinj_im {m n}.
 
 Notation "f \o^ g" := (cfIsom (isom_tinj _ _) (cfextprod f g)) (at level 40).
 
@@ -402,19 +398,20 @@ Lemma cfuni_tinj s (l : intpartn (m + n)) :
 Proof using. by rewrite cfuniCTnE cycle_type_tinj eq_sym. Qed.
 
 Theorem cfuni_Res (l : intpartn (m + n)):
-  'Res[tinj_im] '1_[l] =
-  \sum_(x | l == union_intpartn x.1 x.2) '1_[x.1] \o^ '1_[x.2].
+  'Res[tinj @* ('dom tinj)] '1_[l] =
+  \sum_(pp | l == union_intpartn pp.1 pp.2) '1_[pp.1] \o^ '1_[pp.2].
 Proof using.
 apply/cfunP => /= s.
-case: (boolP (s \in tinj_im)) => Hs; last by rewrite !cfun0gen // genGid.
+case: (boolP (s \in tinj @* ('dom tinj))) => Hs; first last.
+  by rewrite !cfun0gen // genGid.
 rewrite (cfResE _ _ Hs); last exact: subsetT.
 move: Hs => /imsetP/= [[s1 s2]].
 rewrite inE => /andP [H1 _] -> {s}.
 rewrite cfuni_tinj /= -linear_sum (cfIsomE _ _ H1).
 rewrite /cfextprod /= sum_cfunE.
-rewrite (eq_bigr
-           (fun x : intpartn m * intpartn n => ('1_[x.1] s1) * ('1_[x.2] s2)));
-  last by move=> i _; rewrite cfunE.
+symmetry; transitivity
+  (\sum_(pp | l == union_intpartn pp.1 pp.2) '1_[pp.1] s1 * '1_[pp.2] s2).
+  by apply eq_bigr => i _; rewrite cfunE.
 case: (altP (l =P _ )) => [->| Hl] /=.
 - rewrite (bigD1 (ct s1, ct s2)) //=.
   rewrite !cfuniCTnE !eqxx /= mulr1.
@@ -586,24 +583,24 @@ Lemma cfdot_Ind_cfuniCT p q (l : intpartn (m + n)):
   (union_intpartn p q == l)%:R / 'z_p / 'z_q.
 Proof using.
 rewrite -cfdot_Res_r cfuni_Res -linear_sum cfIsom_iso cfdot_sumr.
-rewrite (eq_bigr
-  (fun i : intpartn m * intpartn n =>
-     #|(classX p q) :&: (classX i.1 i.2)|%:R / #|SnXm|%:R)); first last.
-- move => i _; rewrite !cfextprod_cfuni.
+transitivity
+  (\sum_(i | l == union_intpartn i.1 i.2)
+    #|(classX p q) :&: (classX i.1 i.2)|%:R / #|SnXm|%:R : algC).
+  apply eq_bigr => i _; rewrite !cfextprod_cfuni.
   by rewrite cfdot_cfuni //=; apply: class_normal; rewrite !inE.
-- case: (boolP (_ == _)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
-  + rewrite (bigD1 (p, q)) /=; last by rewrite eq_sym.
-    rewrite setIid big1.
-      rewrite addr0 classXE !cardsX natrM /zcoeff.
-      rewrite !invfM !invrK.
-      rewrite [_ * #|classCT p|%:R]mulrC -!mulrA; congr (_ * _).
-      by rewrite [RHS]mulrA [RHS]mulrC natrM invfM.
-    by move=> i /andP [] _ ip; rewrite classXI ?cards0 ?mul0r.
-  + rewrite big1 //= => i /eqP unioni.
-    have ip: i != (p, q).
-      move: unionp; apply contraR; rewrite negbK {}unioni => /eqP.
-      by case: i => [i1 i2] [-> ->].
-    by rewrite classXI ?cards0 ?mul0r.
+case: (boolP (_ == _)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
+- rewrite (bigD1 (p, q)) /=; last by rewrite eq_sym.
+  rewrite setIid big1.
+    rewrite addr0 classXE !cardsX natrM /zcoeff.
+    rewrite !invfM !invrK.
+    rewrite [_ * #|classCT p|%:R]mulrC -!mulrA; congr (_ * _).
+    by rewrite [RHS]mulrA [RHS]mulrC natrM invfM.
+  by move=> i /andP [] _ ip; rewrite classXI ?cards0 ?mul0r.
+- rewrite big1 //= => i /eqP unioni.
+  have ip: i != (p, q).
+    move: unionp; apply contraR; rewrite negbK {}unioni => /eqP.
+    by case: i => [i1 i2] [-> ->].
+  by rewrite classXI ?cards0 ?mul0r.
 Qed.
 
 Lemma cfdot_Ind_ncfuniCT p q (l : intpartn (m + n)):
