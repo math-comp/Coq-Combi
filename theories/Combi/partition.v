@@ -1588,7 +1588,7 @@ Definition union_intpartn := IntPartN union_intpartn_subproof.
 Lemma union_intpartnE : val union_intpartn = sort geq (l ++ k).
 Proof. by rewrite /= merge_sortedE. Qed.
 
-Lemma perm_union_intpartn : perm_eq (union_intpart l k) (l ++ k).
+Lemma perm_union_intpartn : perm_eq union_intpartn (l ++ k).
 Proof. by rewrite /= perm_merge. Qed.
 
 End UnionPart.
