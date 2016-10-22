@@ -20,7 +20,7 @@ From mathcomp Require Import tuple bigop path div finset binomial.
 From mathcomp Require Import perm fingroup action gproduct.
 
 Require Import tools combclass sorted partition composition multinomial.
-Require Import permcomp cycles cycletype.
+Require Import permcomp cycles.
 
 (** * The list of the permuted tuple of a given tuple
 
