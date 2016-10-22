@@ -530,7 +530,7 @@ Lemma prod_gen0 (l : intpartn 0) : prod_gen l = 1.
 Proof. by rewrite /prod_gen intpartn0 big_nil. Qed.
 
 Lemma prod_genM c d (l : intpartn c) (k : intpartn d) :
-  (prod_gen l) * (prod_gen k) = (prod_gen (union_intpartn l k)).
+  (prod_gen l) * (prod_gen k) = prod_gen (l +|+ k).
 Proof using.
 by rewrite /prod_gen (eq_big_perm _ (perm_union_intpartn l k)) big_cat.
 Qed.
@@ -550,9 +550,7 @@ Variable co : forall (d : nat), intpartn d -> R.
 Fixpoint coeff_prodgen_seq l : intpartn (sumn l) -> R :=
   if l is l0 :: l' then
     fun la : intpartn (sumn (l0 :: l')) =>
-             \sum_(p : intpartn l0 * intpartn (sumn l') |
-                   la == union_intpartn p.1 p.2)
-              co p.1 * coeff_prodgen_seq p.2
+             \sum_(p | la == p.1 +|+ p.2) co p.1 * coeff_prodgen_seq p.2
   else fun _ => 1.
 Definition coeff_prodgen_intpartn d (la mu : intpartn d) : R :=
   coeff_prodgen_seq (l := la) (cast_intpartn (esym (intpartn_sumn la)) mu).
@@ -580,7 +578,7 @@ elim: la {Hla} => [| l la IHla] /=.
   by symmetry; apply/eqP/val_inj; rewrite /= intpartn0.
 rewrite big_cons H; symmetry.
 transitivity
-  (\sum_(mu : _) \sum_(p | mu == union_intpartn p.1 p.2)
+  (\sum_(mu : _) \sum_(p | mu == p.1 +|+ p.2)
     (co (d := l) p.1 * coeff_prodgen_seq (l := la) p.2) *: prod_gen gB mu).
   by apply eq_bigr => mu _; rewrite scaler_suml.
 rewrite (exchange_big_dep xpredT) //=.
@@ -1505,7 +1503,7 @@ transitivity (n%:R^-1 *
   have H0i : i != 0%N :> nat.
     move: Hi; apply contraL => /eqP ->.
     by move: Hpart; rewrite is_part_sortedE => /andP [].
-  rewrite -(zcard_rem H0i Hi) [X in _/X]natrM invfM -[LHS]mul1r !mulrA.
+  rewrite -(zcard_rem H0i Hi) [X in _ / X]natrM invfM -[LHS]mul1r !mulrA.
   congr (_ * _); rewrite divff // pnatr_eq0.
   rewrite muln_eq0 negb_or H0i /=.
   by move: Hi; apply contraL => /eqP H; apply/count_memPn.
@@ -1642,6 +1640,7 @@ Canonical sympolyf_lrmorphism := LRMorphism sympolyf_is_lrmorphism.
 
 End SymPolF.
 
+Local Close Scope Combi_scope.
 
 Section ChangeNVar.
 

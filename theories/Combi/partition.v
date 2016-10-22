@@ -44,7 +44,7 @@ Integer Partitions:
 - [conj_part sh] == the conjugate of a partition
 - [included s t] == the Ferrer's diagram of s is included in the
                     Ferrer's diagram of t. This is an order.
-- [diff_shape s t] == the difference of the shape s and t
+- [s / t] = [diff_shape s t] == the difference of the shape s and t
 - [outer_shape s t] == add t to the shape s
 
 
@@ -80,8 +80,8 @@ Operations on partitions:
 
 - [union_intpart l k] == the partition of type [intpart] obtained by
                gathering the parts of [l] and [k]
-- [union_intpartn l k] == the partition of type [intpartn] obtained by
-               gathering the parts of [l] and [k]
+- [l +|+ k] = [union_intpartn l k] == the partition of type [intpartn]
+               obtained by gathering the parts of [l] and [k]
 
 Comparison of partitions:
 
@@ -105,6 +105,8 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Delimit Scope Combi_scope with Combi.
+Open Scope Combi_scope.
 
 (** * Shapes *)
 Definition is_in_shape sh r c := c < nth 0 sh r.
@@ -1072,6 +1074,8 @@ Fixpoint diff_shape inner outer :=
     else [::] (* Unused case *)
   else outer.
 
+Notation "outer / inner" := (diff_shape inner outer) : Combi_scope.
+
 Definition pad (T : Type) (x : T) sz := [fun s => s ++ nseq (sz - size s) x].
 
 Lemma nth_pad (T : Type) n (p : T) (s : seq T) i :
@@ -1088,14 +1092,14 @@ Proof. elim: s => [| s0 s IHs] //=; rewrite subn0; by case: n. Qed.
 Definition outer_shape inner size_seq :=
   [seq p.1 + p.2 | p <- zip (pad 0 (size (size_seq)) inner) size_seq].
 
-Lemma size_diff_shape inner outer : size (diff_shape inner outer) = size outer.
+Lemma size_diff_shape inner outer : size (outer / inner) = size outer.
 Proof.
 elim: inner outer => [//= | inn0 inn IHinn] /= [//= | out0 out] /=.
 by rewrite IHinn.
 Qed.
 
 Lemma nth_diff_shape inn out i :
-  nth 0 (diff_shape inn out) i = nth 0 out i - nth 0 inn i.
+  nth 0 (out / inn) i = nth 0 out i - nth 0 inn i.
 Proof.
 elim: inn out i => [| inn0 inn IHinn] out i //=.
   by rewrite (@nth_default _ _ [::]) // subn0.
@@ -1105,7 +1109,7 @@ by case: i => [| i] //=.
 Qed.
 
 Lemma sumn_diff_shape inner outer :
-  included inner outer -> sumn (diff_shape inner outer) = sumn outer - sumn inner.
+  included inner outer -> sumn (outer / inner) = sumn outer - sumn inner.
 Proof.
 elim: inner outer => [//= | inn0 inn IHinn] /= [//= | out0 out] /=.
   by rewrite subn0.
@@ -1118,7 +1122,7 @@ by rewrite subnDA (addnBA _ Hsumn) addnC (addnBA _ Hleq) [out0 + _]addnC.
 Qed.
 
 Lemma diff_shape_pad0 inner outer :
-  diff_shape ((pad 0 (size outer)) inner) outer = diff_shape inner outer.
+  outer / ((pad 0 (size outer)) inner) = outer / inner.
 Proof.
 elim: inner outer => [//= | inn0 inn IHinn] //=.
   elim=> [//= | out0 out] /=; by rewrite !subn0 => ->.
@@ -1128,7 +1132,7 @@ Qed.
 
 Lemma diff_shapeK inner outer :
   included inner outer ->
-  outer_shape inner (diff_shape inner outer) = outer.
+  outer_shape inner (outer / inner) = outer.
 Proof.
 rewrite /outer_shape.
 elim: inner outer => [//= | inn0 inn IHinn] /= outer.
@@ -1140,7 +1144,7 @@ Qed.
 
 Lemma outer_shapeK inner diff :
   size inner <= size diff ->
-  diff_shape inner (outer_shape inner diff) = diff.
+  (outer_shape inner diff) / inner = diff.
 Proof.
 rewrite /outer_shape.
 elim: inner diff => [//= | inn0 inn IHinn] /= diff.
@@ -1593,6 +1597,8 @@ Proof. by rewrite /= perm_merge. Qed.
 
 End UnionPart.
 
+Notation "a +|+ b" := (union_intpartn a b) (at level 50) : Combi_scope.
+Bind Scope Combi_scope with intpartn.
 
 (** * Dominance order on partition *)
 Definition partdomsh n1 n2 (s1 s2 : seq nat) :=

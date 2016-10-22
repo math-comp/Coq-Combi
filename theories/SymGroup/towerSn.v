@@ -45,6 +45,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Import GroupScope GRing.Theory.
+Local Open Scope Combi_scope.
 
 Local Notation algCF := [fieldType of algC].
 
@@ -194,8 +195,6 @@ Section TowerMorphism.
 
 Variables m n : nat.
 
-Implicit Types (p : intpartn m) (q : intpartn n).
-
 Local Notation ct := cycle_typeSn.
 Local Notation SnXm := (setX 'SG_m 'SG_n).
 
@@ -294,7 +293,8 @@ apply/imsetP/orP => [[x _ ->{S}] | [] /imsetP [T /imsetP [x _] ->{T}] ->{S}].
   - by exists (rshift m x); rewrite // pcycle_tinj_rshift.
 Qed.
 
-Lemma cycle_type_tinj s : ct (tinj s) = union_intpartn (ct s.1) (ct s.2).
+
+Lemma cycle_type_tinj s : ct (tinj s) = ct s.1 +|+ ct s.2.
 Proof using.
 apply val_inj; rewrite union_intpartnE cast_intpartnE /=.
 rewrite pcycles_tinj setpart_shape_union; first last.
@@ -388,18 +388,15 @@ Local Open Scope ring_scope.
 Section Restriction.
 
 Variables m n : nat.
-
-Implicit Types (p : intpartn m) (q : intpartn n).
-
 Local Notation ct := cycle_typeSn.
 
 Lemma cfuni_tinj s (l : intpartn (m + n)) :
-  '1_[l] (tinj s) = (l == union_intpartn (ct s.1) (ct s.2))%:R.
+  '1_[l] (tinj s) = (l == ct s.1 +|+ ct s.2)%:R.
 Proof using. by rewrite cfuniCTnE cycle_type_tinj eq_sym. Qed.
 
 Theorem cfuni_Res (l : intpartn (m + n)):
   'Res[tinj @* ('dom tinj)] '1_[l] =
-  \sum_(pp | l == union_intpartn pp.1 pp.2) '1_[pp.1] \o^ '1_[pp.2].
+  \sum_(pp | l == pp.1 +|+ pp.2) '1_[pp.1] \o^ '1_[pp.2].
 Proof using.
 apply/cfunP => /= s.
 case: (boolP (s \in tinj @* ('dom tinj))) => Hs; first last.
@@ -410,7 +407,7 @@ rewrite inE => /andP [H1 _] -> {s}.
 rewrite cfuni_tinj /= -linear_sum (cfIsomE _ _ H1).
 rewrite /cfextprod /= sum_cfunE.
 symmetry; transitivity
-  (\sum_(pp | l == union_intpartn pp.1 pp.2) '1_[pp.1] s1 * '1_[pp.2] s2).
+  (\sum_(pp | l == pp.1 +|+ pp.2) '1_[pp.1] s1 * '1_[pp.2] s2).
   by apply eq_bigr => i _; rewrite cfunE.
 case: (altP (l =P _ )) => [->| Hl] /=.
 - rewrite (bigD1 (ct s1, ct s2)) //=.
@@ -445,38 +442,30 @@ Local Open Scope ring_scope.
 Lemma classXE p q : classX p q = setX (classCT p) (classCT q).
 Proof using.
 apply /setP => /= x; rewrite inE.
-apply /imsetP/andP => /= [[i _ ]|[/imsetP [i1 _ xi1] /imsetP[i2 _ xi2]]].
+apply /imsetP/andP => /= [[i _ ] | [/imsetP/=[i1 _ xi1] /imsetP/=[i2 _ xi2]]].
 - rewrite prod_conjg /= => -> /=.
   by split; apply memJ_class; rewrite inE.
 - exists (i1, i2); first by rewrite inE; apply /andP; split; rewrite inE.
   by rewrite prod_conjg -xi1{xi1} -xi2{xi2}; case: x => /=.
 Qed.
 
-Lemma cfextprod_cfuni p q :
-  '1_[p] \ox '1_[q] = '1_(classX p q).
+Lemma cfextprod_cfuni p q : '1_[p] \ox '1_[q] = '1_(classX p q).
 Proof using.
 apply/cfunP => /= x.
 rewrite cfunE !cfuniCTnE /= cfunElock genGid !inE /= -natrM mulnb.
-congr ((nat_of_bool _)%:R).
-rewrite classXE.
-apply /andP/subsetP => [[ct1 ct2]|].
-- move=> /= y /imsetP [/= x0 _ ] -> {y}.
-  rewrite inE; apply/andP; split.
-  + rewrite classes_of_permP permCTP prod_conjg /=.
-    rewrite cycle_type_conjg.
-    by rewrite partnCTE CTpartnK eq_sym ct1.
-  + rewrite classes_of_permP permCTP prod_conjg /=.
-    rewrite cycle_type_conjg.
-    by rewrite partnCTE CTpartnK eq_sym ct2.
-- move=> /(_ x); rewrite class_refl=> /(_ isT).
-  rewrite inE=> /andP [/imsetP[y1 _ ->] /imsetP [y2 _ ->]].
+congr ((nat_of_bool _)%:R); rewrite classXE.
+apply /andP/subsetP => [[ct1 ct2] /= y /imsetP[/= x0 _ ] -> {y} | /(_ x)].
+- rewrite inE; apply/andP.
+  by split; rewrite classes_of_permP permCTP prod_conjg /=;
+         rewrite cycle_type_conjg partnCTE CTpartnK eq_sym ?ct1 ?ct2.
+- rewrite class_refl => /(_ isT).
+  rewrite inE => /andP [/imsetP/=[y1 _ ->] /imsetP/=[y2 _ ->]].
   by rewrite /ct !cycle_type_conjg !permCTP !CTpartnK !eqxx.
 Qed.
 
 
 Lemma cfdot_classfun_part p1 p2 :
-  '[ '1_[p1], '1_[p2] ] =
-  #|'SG_m|%:R^-1 * #|classCT p1|%:R * (p1 == p2)%:R.
+  '[ '1_[p1], '1_[p2] ] = #|'SG_m|%:R^-1 * #|classCT p1|%:R * (p1 == p2)%:R.
 Proof.
 rewrite /cfdot /= -mulrA; congr (_ * _).
 case: (altP (p1 =P p2)) => [<-{p2} | /negbTE Hneq]; rewrite /= ?mulr1 ?mulr0.
@@ -511,11 +500,9 @@ Proof using.
 move=> /eqP qp; apply class_disj.
 apply/imsetP => []/= [x _].
 rewrite prod_conjg /= => [] [] qp1 qp2.
-apply qp; congr (_, _);
+by apply qp; congr (_, _);
   rewrite -[LHS]CTpartnK -[RHS]CTpartnK; congr partnCT;
-  rewrite -[LHS]permCTP -[RHS]permCTP.
-- by rewrite qp1 cycle_type_conjg.
-- by rewrite qp2 cycle_type_conjg.
+  rewrite -[LHS]permCTP -[RHS]permCTP ?qp1 ?qp2 cycle_type_conjg.
 Qed.
 
 
@@ -580,11 +567,11 @@ Qed.
 (** Application of Frobenius duality : cfdot_Res_r *)
 Lemma cfdot_Ind_cfuniCT p q (l : intpartn (m + n)):
   '[ 'Ind['SG_(m + n)] ('1_[p] \o^ '1_[q]), '1_[l] ] =
-  (union_intpartn p q == l)%:R / 'z_p / 'z_q.
+  (p +|+ q == l)%:R / 'z_p / 'z_q.
 Proof using.
 rewrite -cfdot_Res_r cfuni_Res -linear_sum cfIsom_iso cfdot_sumr.
 transitivity
-  (\sum_(i | l == union_intpartn i.1 i.2)
+  (\sum_(i | l == i.1 +|+ i.2)
     #|(classX p q) :&: (classX i.1 i.2)|%:R / #|SnXm|%:R : algC).
   apply eq_bigr => i _; rewrite !cfextprod_cfuni.
   by rewrite cfdot_cfuni //=; apply: class_normal; rewrite !inE.
@@ -605,7 +592,7 @@ Qed.
 
 Lemma cfdot_Ind_ncfuniCT p q (l : intpartn (m + n)):
   '[ 'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]), '1z_[l] ] =
-  (union_intpartn p q == l)%:R * 'z_l.
+  (p +|+ q == l)%:R * 'z_l.
 Proof using.
 rewrite cfextprodZl cfextprodZr.
 rewrite !linearZ /= !cfdotZl cfdotZr cfdot_Ind_cfuniCT.
@@ -616,7 +603,7 @@ by apply mulf_neq0.
 Qed.
 
 Theorem Ind_ncfuniCT p q :
-  'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]) = '1z_[union_intpartn p q].
+  'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]) = '1z_[p +|+ q].
 Proof using.
 apply/cfunP => /= x; rewrite cfunE.
 rewrite cfdotr_ncfuniCT cfdot_Ind_ncfuniCT.

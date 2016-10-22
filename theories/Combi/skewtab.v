@@ -40,6 +40,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Open Scope N.
+Open Scope Combi.
 
 Definition is_skew_yam innev outev sy :=
   (forall y, is_yam_of_eval innev y -> is_yam_of_eval outev (sy ++ y)).
@@ -252,7 +253,7 @@ by case: inn => //=; case: (size t - 0).
 Qed.
 
 Definition skew_reshape (inner outer : seq nat) (s : seq T) :=
-  rev (reshape (rev (diff_shape inner outer)) s).
+  rev (reshape (rev (outer / inner)) s).
 
 Lemma size_skew_reshape inner outer s :
   size (skew_reshape inner outer s) = size outer.
@@ -262,8 +263,8 @@ Qed.
 
 Lemma shape_skew_reshape inner outer s :
   included inner outer ->
-  size s = sumn (diff_shape inner outer) ->
-  shape (skew_reshape inner outer s) = diff_shape inner outer.
+  size s = sumn (outer / inner) ->
+  shape (skew_reshape inner outer s) = outer / inner.
 Proof using.
 rewrite /shape /skew_reshape.
 elim: inner outer s => [| inn0 inn IHinn] /= outer s.
@@ -281,7 +282,7 @@ Qed.
 
 Lemma to_word_skew_reshape inner outer s :
   included inner outer ->
-  size s = sumn (diff_shape inner outer) ->
+  size s = sumn (outer / inner) ->
   to_word (skew_reshape inner outer s) = s.
 Proof using.
 rewrite /skew_reshape /to_word revK.
@@ -503,7 +504,7 @@ Qed.
 
 Lemma hb_strip_rowE inner outer u :
   is_part inner -> is_part outer ->
-  is_row u -> size u = sumn (diff_shape inner outer) ->
+  is_row u -> size u = sumn (outer / inner) ->
   included inner outer &&
            is_skew_tableau inner (skew_reshape inner outer u) =
   hb_strip inner outer.
@@ -520,7 +521,7 @@ apply/andP/idP => [[] Hincl /(row_hb_strip Hpartin) | Hstrip].
     rewrite addn0 add0n => Hsize.
     rewrite -Hsize take_size => /andP [] /lt0n_neq0 -> _.
     by rewrite Hrow eq_refl.
-  set dsh := diff_shape inn out.
+  set dsh := out / inn.
   move=> Hpartout /= u Hsize Hrow /andP [] /andP [] Hhead0 H0 Hstrip.
   rewrite /skew_reshape /= rev_cons reshape_rcons; first last.
     by rewrite sumn_rev Hsize /= addnC.
@@ -756,7 +757,7 @@ Qed.
 
 Lemma shape_join_tab_skew_reshape t sh w :
   included (shape t) sh ->
-  size w = sumn (diff_shape (shape t) sh) ->
+  size w = sumn (sh / (shape t)) ->
   shape (join_tab t (skew_reshape (shape t) sh w)) = sh.
 Proof using.
 move=> Hincl Hsz.
@@ -868,7 +869,7 @@ Qed.
 Lemma eq_inv_is_skew_tableau_reshape_size
       inner outer T1 T2 (u1 : seq T1) (u2 : seq T2) :
   size inner = size outer -> (* complete with 0 if needed *)
-  eq_inv u1 u2 -> size u1 = sumn (diff_shape inner outer) ->
+  eq_inv u1 u2 -> size u1 = sumn (outer / inner) ->
   is_skew_tableau inner (skew_reshape inner outer u1) ->
   is_skew_tableau inner (skew_reshape inner outer u2).
 Proof.
@@ -876,7 +877,7 @@ rewrite /skew_reshape.
 elim: inner outer u1 u2 => [| inn0 inn IHinn] /=; first by case.
 case=> //= out0 out u1 u2 /eqP.
 move out0 after inn0; move out after inn.
-set shres := diff_shape inn out.
+set shres := out / inn.
 rewrite eqSS => /eqP Hsz Hinv Hszeq /=.
 have Hszres : sumn shres <= size u1 by rewrite Hszeq; apply leq_addl.
 have:= Hinv => /eq_invP [Hszu _]; move Hszu after Hinv.
@@ -899,9 +900,9 @@ have /eq_inv_is_row -> //= : eq_inv r1 r2.
                       -{1}(cat_take_drop (sumn shres) u2).
   by move/eq_inv_catr; apply; rewrite !size_take -Hszu.
 rewrite {r1}/r2.
-move: Hdom; case/lastP Hd : (rev (diff_shape inn out)) => [//= | d dl] /=.
+move: Hdom; case/lastP Hd : (rev (out / inn)) => [//= | d dl] /=.
 have Hsumn : sumn d + dl = sumn shres.
-  rewrite -(sumn_rev (diff_shape _ _)) Hd.
+  rewrite -(sumn_rev (_ / _)) Hd.
   by rewrite -(sumn_rev (rcons _ _)) rev_rcons /= sumn_rev addnC.
 rewrite !reshape_rcons ?size_take_leq -?Hszu ?Hszres // !rev_rcons /=.
 apply: eq_inv_skew_dominate; last by rewrite !size_drop !size_take Hszu.
@@ -933,7 +934,7 @@ Theorem eq_inv_is_skew_tableau_reshape
         inner outer T1 T2 (u1 : seq T1) (u2 : seq T2) :
   size inner <= size outer ->
   eq_inv u1 u2 ->
-  size u1 = sumn (diff_shape inner outer) ->
+  size u1 = sumn (outer / inner) ->
   is_skew_tableau inner (skew_reshape inner outer u1) ->
   is_skew_tableau inner (skew_reshape inner outer u2).
 Proof.
@@ -950,7 +951,7 @@ Qed.
 
 Theorem is_skew_tableau_reshape_std inner outer T (u : seq T) :
   size inner <= size outer ->
-  size u = sumn (diff_shape inner outer) ->
+  size u = sumn (outer / inner) ->
   is_skew_tableau inner (skew_reshape inner outer u) =
   is_skew_tableau inner (skew_reshape inner outer (std u)).
 Proof.
@@ -967,7 +968,7 @@ Theorem is_tableau_reshape_std sh T (u : seq T) :
   is_tableau (rev (reshape (rev sh) (std u))).
 Proof.
 move=> Hsz.
-rewrite -!is_skew_tableau0 -[sh]/(diff_shape [::] sh) -!/(skew_reshape _ _ _).
+rewrite -!is_skew_tableau0 -[sh]/(sh / [::]) -!/(skew_reshape _ _ _).
 by apply is_skew_tableau_reshape_std.
 Qed.
 

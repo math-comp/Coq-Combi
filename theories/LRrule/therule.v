@@ -72,6 +72,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Open Scope N.
+Local Open Scope Combi.
 
 (** * Gluing a standard tableaux with a skew tableau *)
 Section LR.
@@ -237,7 +238,7 @@ Section OneCoeff.
 Variable P : intpartn (d1 + d2).
 Hypothesis Hincl : included P1 P.
 
-Lemma sumn_diff_shape_intpartE : sumn (diff_shape P1 P) = sumn P2.
+Lemma sumn_diff_shape_intpartE : sumn (P / P1) = sumn P2.
 Proof using Hincl. by rewrite (sumn_diff_shape Hincl) !intpartn_sumn addKn. Qed.
 
 Definition is_skew_reshape_tableau (P P1 : seq nat) (w : seq nat) :=
@@ -247,9 +248,9 @@ Definition LRyam_set :=
 Definition LRyam_coeff := #|LRyam_set|.
 
 Lemma is_skew_reshape_tableauP (w : seq nat) :
-  size w = sumn (diff_shape P1 P) ->
+  size w = sumn (P / P1) ->
   reflect
-    (exists tab, [/\ is_skew_tableau P1 tab, shape tab = diff_shape P1 P & to_word tab = w])
+    (exists tab, [/\ is_skew_tableau P1 tab, shape tab = P / P1 & to_word tab = w])
     (is_skew_reshape_tableau P P1 w).
 Proof using Hincl.
   rewrite /is_skew_reshape_tableau => Hsize; apply (iffP idP).
@@ -378,13 +379,13 @@ Proof using .
     rewrite shape_RS_yam; last by apply hyper_yamP; apply intpartnP.
     rewrite (evalseq_hyper_yam (intpartnP P1)).
     by rewrite map_nseq.
-  rewrite (_ : map size _ = diff_shape P1 P); first last.
+  rewrite (_ : map size _ = P / P1); first last.
     rewrite /= -map_comp.
     rewrite (eq_map (f2 := size)); last by move=> i /=; rewrite size_map.
     rewrite -/(shape _) shape_skew_reshape //=.
     by rewrite size_std size_yameval sumn_diff_shape_intpartE.
   rewrite -(size_diff_shape P1 P).
-  rewrite -/(outer_shape P1 (diff_shape P1 P)).
+  rewrite -/(outer_shape P1 (P / P1)).
   exact: diff_shapeK.
 Qed.
 

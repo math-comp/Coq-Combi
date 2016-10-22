@@ -89,6 +89,7 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory.
 
 Local Open Scope ring_scope.
+Local Open Scope Combi_scope.
 
 (** Alternating and symmetric polynomial *)
 Section Alternant.
@@ -1102,7 +1103,7 @@ Local Definition ext_tab_fun (t : T) :=
   if eqeval t s then join_tab t (skew_reshape la mu (nseq m sz))
   else locked (tabrowconst Hmu).
 
-Local Lemma sumndiff : sumn (diff_shape la mu) = m.
+Local Lemma sumndiff : sumn (mu / la) = m.
 Proof.
 by rewrite sumn_diff_shape ?hb_strip_included // !intpartn_sumn addKn.
 Qed.
@@ -1190,8 +1191,7 @@ rewrite -[RHS](skew_reshapeK (inner := shape (filter_gtnX_tab sz t))); first las
 move: Hsh => /eqP Hsh.
 congr skew_reshape.
 - by rewrite Hsh.
-- suff -> : shape (filter_leqX_tab sz t) =
-           diff_shape (shape (filter_gtnX_tab sz t)) mu.
+- suff -> : shape (filter_leqX_tab sz t) = mu / (shape (filter_gtnX_tab sz t)).
     by rewrite diff_shapeK // -(shape_tabsh t); apply included_shape_filter_gtnX.
   apply (eq_from_nth (x0 := 0)).
   - by rewrite size_diff_shape /filter_leqX_tab -(shape_tabsh t) !size_map.

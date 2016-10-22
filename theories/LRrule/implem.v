@@ -333,7 +333,7 @@ Lemma LRyamtab_list_shape0 innev inner outer sh0 row0 :
   sorted geq (sh0 :: inner) -> is_part (sh0 + size row0 :: outer) ->
   included inner outer -> size inner = size outer ->
   forall res, res \in LRyamtab_list_rec innev inner outer sh0 row0 ->
-  shape res = diff_shape inner outer.
+  shape res = outer / inner.
 Proof using .
   elim: outer innev inner sh0 row0 => [//= | out0 out IHout]
               innev inner sh0 row0 Hinn Hout /= Hincl Hsize res.
@@ -681,7 +681,7 @@ Qed.
 
 Lemma LRyamtab_shape inner eval outer tab :
   is_part inner -> is_part outer -> included inner outer ->
-  tab \in (LRyamtab_list inner eval outer) -> shape tab = diff_shape inner outer.
+  tab \in (LRyamtab_list inner eval outer) -> shape tab = outer / inner.
 Proof.
   move=> Hinn Hout Hincl.
   rewrite /LRyamtab_list LRyamtab_list_pad0 -diff_shape_pad0.
@@ -721,7 +721,7 @@ Qed.
 
 Lemma LRyamtab_eval inner eval outer tab:
   is_part inner -> is_part outer -> included inner outer ->
-  is_part eval -> sumn eval = sumn (diff_shape inner outer) ->
+  is_part eval -> sumn eval = sumn (outer / inner) ->
   tab \in (LRyamtab_list inner eval outer) -> evalseq (to_word tab) = eval.
 Proof.
   move=> Hinn Hout Hincl Hev Hsumn Htab.
@@ -732,7 +732,7 @@ Qed.
 
 Lemma count_mem_LRyamtab_list inner eval outer yamtab :
   is_part inner -> is_part outer -> included inner outer ->
-  is_skew_tableau inner yamtab -> shape yamtab = diff_shape inner outer ->
+  is_skew_tableau inner yamtab -> shape yamtab = outer / inner ->
   is_yam_of_eval eval (to_word yamtab) ->
   count_mem yamtab (LRyamtab_list inner eval outer) = 1.
 Proof.
@@ -784,13 +784,13 @@ Record inputSpec :=
       outer_part : is_part outer;
       incl       : included inner outer;
       eval_part  : is_part eval;
-      sumn_eq    : sumn eval = sumn (diff_shape inner outer)
+      sumn_eq    : sumn eval = sumn (outer / inner)
     }.
 
 Record outputSpec (tab : seq (seq nat)) :=
   OutputSpec {
       skew        : is_skew_tableau inner tab;
-      shaps_eq    : shape tab = diff_shape inner outer;
+      shaps_eq    : shape tab = outer / inner;
       yam_to_word : is_yam (to_word tab);
       eval_eq     : evalseq (to_word tab) = eval
     }.
@@ -842,7 +842,7 @@ Lemma LRyamtab_spec_recip yam :
   count_mem (val yam) (map to_word (LRyamtab_list P1 P2 P)) = 1.
 Proof using Hincl.
   rewrite inE => Hyam.
-  have Hszyam : size yam = sumn (diff_shape P1 P).
+  have Hszyam : size yam = sumn (P / P1).
     by rewrite -evalseq_eq_size eval_yameval (sumn_diff_shape_intpartE P2).
   rewrite -[val yam](to_word_skew_reshape Hincl Hszyam).
   rewrite count_map.
