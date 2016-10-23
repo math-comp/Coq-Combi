@@ -1515,8 +1515,7 @@ Qed.
 
 Lemma card_intpartn sm : #|{:intpartn sm}| = intpartn_nb sm.
 Proof.
-rewrite [#|_|]cardT enumT unlock /=.
-by rewrite -(size_map val) subType_seqP -size_enum_partn.
+by rewrite [#|_|]cardT -(size_map val) /= enum_intpartnE -size_enum_partn.
 Qed.
 
 Hint Resolve intpartP intpart_sorted intpartnP intpartn_sorted.

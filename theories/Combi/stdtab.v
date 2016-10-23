@@ -744,6 +744,14 @@ Proof using. by case: t => /= t /andP []. Qed.
 Lemma stdtabsh_shape (t : stdtabsh) : shape t = sh.
 Proof using. by case: t => /= t /andP [] _ /eqP. Qed.
 
+Lemma enum_stdtabshE : map val (enum {:stdtabsh}) = enum_stdtabsh sh.
+Proof.
+rewrite enumT unlock /= /stdtabsh_enum /enum_stdtabsh.
+elim: (enum_yameval sh) (enum_yamevalP (intpartP sh)) => //= y ly IHly.
+move=> /andP [/andP [Hyam Heval] /IHly{IHly}Hrec].
+by rewrite insubT /= stdtab_of_yamP //= ?shape_stdtab_of_yam // Hrec.
+Qed.
+
 End StdtabOfShape.
 
 Section StdtabCombClass.

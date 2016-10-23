@@ -76,8 +76,11 @@ Proof using. by move=> F H p; rewrite -(seq_of_stpshK p); apply: H. Qed.
 
 Canonical stpsh_subType :=
   SubType _ seq_of_stpsh stpsh_of_seq stpsh_val_rect stpsh_of_seqK.
-Definition stpsh_eqMixin := Eval hnf in [eqMixin of stpsh by <:].
 Definition stpsh_subCountType := Eval hnf in [subCountType of stpsh_subType].
+(* We can't write simply
+Canonical stpsh_finType := [finType of stpsh].
+Canonical stpsh_subFinType := Eval hnf in [subFinType of stpsh_finType].
+because there is a discrepancy on the mixin fot the choiceType *)
 
 Lemma enum_stpshP : Finite.axiom (T:=stpsh_subCountType) (enum stpsh).
 Proof using.
@@ -92,8 +95,7 @@ Definition stpsh_subFinType := Eval hnf in [subFinType of stpsh_finType].
 
 Lemma card_stpsh : #|stpsh_finType| = #|stdtabsh_finType sh|^2.
 Proof using.
-rewrite -mulnn -card_prod.
-by rewrite !cardE enumT unlock /=.
+by rewrite -mulnn -card_prod !cardE enumT unlock /=.
 Qed.
 
 End Shape.
