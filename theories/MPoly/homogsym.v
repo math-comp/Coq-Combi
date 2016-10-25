@@ -324,7 +324,7 @@ Lemma pihomog_sym nv (p : {mpoly R[nv]}) :
   p \is symmetric -> 'pi_d p \is symmetric.
 Proof. by move=> /issymP Hp; apply/issymP => s; rewrite msym_pihomog Hp. Qed.
 
-Definition in_homsym (p : Pol) :=
+Definition in_homsym (p : Pol) : SF :=
   \sum_(la : intpartn d) p@_(mpart la) *: ('hm[la] : SF).
 
 Lemma in_homsym_is_linear : linear in_homsym.
@@ -456,11 +456,6 @@ Proof using.
 move=> i; rewrite (nth_map i) ?size_tuple //.
 by rewrite -tnth_nth tnth_ord_tuple mesym_sym.
 Qed.
-Local Definition pisymhomog_fun q :=
-  SymPoly (pihomog_sym d (mcomp_sym q Esym)) : {sympoly R[n]}.
-Local Lemma pisymhomog_funP q : pisymhomog_fun q \is d.-homsym.
-Proof using. by rewrite homsymE /= pihomogP. Qed.
-Local Definition pisymhomog := fun q => HomogSym (pisymhomog_funP q).
 
 Lemma intpartn_of_monE m (H : mnmwgt m = d) :
   'X_[m] \mPo E = 'he[intpartn_of_mon H].
@@ -474,12 +469,8 @@ by rewrite -big_const_ord prodr_const cardT -cardE card_ord.
 Qed.
 
 Lemma pisymhomog_monE m (H : mnmwgt m = d) :
-  pisymhomog 'X_[m] = 'he[intpartn_of_mon H].
-Proof using.
-apply val_inj; apply val_inj; rewrite /= intpartn_of_monE /=.
-have := prod_syme_homog n0 R (intpartn_of_mon H).
-exact: pihomog_dE.
-Qed.
+  in_homsym d ('X_[m] \mPo E) = 'he[intpartn_of_mon H].
+Proof using. by rewrite intpartn_of_monE in_homsymE. Qed.
 
 Lemma symbe_basis : basis_of fullv symbe.
 Proof using Hd.
@@ -487,12 +478,11 @@ rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
 apply/subvP => /= p _; rewrite span_def big_map.
 have:= sym_fundamental_homog (sympol_is_symmetric p) (homsym_is_dhomog p).
 move=> [t [Hp /dhomogP Hhomt]].
-have {Hp} -> : p = \sum_(m <- msupp t) t@_m *: pisymhomog 'X_[m].
+have {Hp} -> : p = \sum_(m <- msupp t) t@_m *: in_homsym d ('X_[m] \mPo E).
   apply val_inj; apply val_inj; rewrite /= -{1}Hp {1}(mpolyE t) {Hp}.
   rewrite !linear_sum /=; apply eq_big_seq => m /Hhomt /= Hm.
   rewrite !linearZ /=; congr (_ *: _).
-  rewrite pihomog_dE // -[X in _ \is X.-homog]Hm.
-  exact: homog_X_mPo_elem.
+  by rewrite pisymhomog_monE /= intpartn_of_monE /=.
 rewrite big_seq; apply memv_suml => m Hm; apply memvZ.
 rewrite (pisymhomog_monE (Hhomt m Hm)); move: (intpartn_of_mon _) => {m Hm} la.
 rewrite (bigD1_seq la) /= ?mem_enum ?inE ?enum_uniq //.
