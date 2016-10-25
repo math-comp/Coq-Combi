@@ -445,3 +445,68 @@ Qed.
 
 End CauchyKernelNumField.
 
+From mathcomp Require Import vector.
+
+Section Scalar.
+
+Variable n0 d : nat.
+Local Notation n := n0.+1.
+Local Notation P := (intpartn d).
+
+Local Notation algCF := [numFieldType of algC].
+Local Notation SF := {homsym algC[n, d]}.
+Local Notation polXY := (polXY n0 n0 algCF).
+Local Notation "p '(Y)'" := (@polY_XY n0 n0 _ p)
+                             (at level 20, format "p '(Y)'").
+Local Notation "p '(X)'" := (@polX_XY n0 n0 _ p)
+                             (at level 20, format "p '(X)'").
+
+Local Notation "''hs[' la ]" := ('hs[la] : SF).
+
+Lemma homsymdotss la mu :
+  (d <= n)%N -> '[ 'hs[la] | 'hs[mu] ] = (la == mu)%:R.
+Proof.
+move=> Hd.
+have to_p (nu : intpartn d) : ('hs[nu] : SF) \in span 'hp.
+  by rewrite (span_basis (symbp_basis _ Hd)) memvf.
+rewrite (coord_span (to_p la)) (coord_span (to_p mu)).
+transitivity
+  (\sum_i (coord 'hp i 'hs[la]) * (coord 'hp i 'hs[mu])^* * (zcard (enum_val i))%:R).
+  rewrite homsymdot_suml; apply eq_bigr => /= l _.
+  rewrite homsymdotZl homsymdot_sumr (bigD1 l) //= big1 ?addr0; first last.
+    move=> m /negbTE Hlm; rewrite homsymdotZr.
+    rewrite [X in '[X | _]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
+    rewrite [X in '[_ | X]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
+    rewrite homsymdotp // nth_uniq ?enum_uniq -?cardE ?ltn_ord // eq_sym.
+    by rewrite (inj_eq (@ord_inj _)) Hlm !mulr0.
+  rewrite homsymdotZr mulrA.
+  rewrite [X in '[X | _]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
+  rewrite [X in '[_ | X]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
+  rewrite homsymdotp // eq_refl mulr1.
+  by rewrite -enum_val_nth.
+have : \sum_(nu : intpartn d) 'hs[nu](X) * 'hs[nu](Y) =
+       \sum_(nu : intpartn d) 'hp[nu](X) * ((zcard nu)%:R^-1 *: 'hp[nu](Y)).
+  by rewrite -Cauchy_syms_syms Cauchy_homsymp_zhomsymp.
+rewrite (eq_bigr (fun nu : intpartn d =>
+                    (\sum_px (coord 'hp (enum_rank px) 'hs[nu]) *: 'hp[px](X)) *
+                    (\sum_py (coord 'hp (enum_rank py) 'hs[nu]) *: 'hp[py](Y))
+        )); first last.
+  move=> nu _; rewrite {1 2}(coord_span (to_p nu)).
+  rewrite !(reindex (enum_val (A := {: P}))) /=; first last.
+    by apply (enum_val_bij_in (x0 := (rowpartn d))).
+    by apply (enum_val_bij_in (x0 := (rowpartn d))).
+  congr (_ * _).
+  - rewrite !linear_sum /=; apply eq_bigr => i _.
+    rewrite linearZ enum_valK /=; congr (_ *: (_)(X)).
+    by rewrite (nth_map (rowpartn _)) /= -?cardE ?ltn_ord // -enum_val_nth.
+  - rewrite !linear_sum /=; apply eq_bigr => i _.
+    rewrite linearZ enum_valK /=; congr (_ *: (_)(Y)).
+    by rewrite (nth_map (rowpartn _)) /= -?cardE ?ltn_ord // -enum_val_nth.
+move=> Heq {to_p}.
+rewrite !(reindex (enum_rank)) /=; first last.
+  by apply onW_bij; apply enum_rank_bij.
+rewrite (eq_bigr (fun nu : intpartn d =>
+                    (coord 'hp (enum_rank nu) 'hs[la]) *
+                    ((coord 'hp (enum_rank nu) 'hs[mu]))^* * (zcard nu)%:R
+        )); first last.
+  by move=> nu _; rewrite enum_rankK.
