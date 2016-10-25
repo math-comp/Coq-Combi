@@ -22,7 +22,7 @@ From mathcomp Require Import ssralg ssrnum algC matrix.
 From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
 
 Require Import tools ordtype permuted partition Yamanouchi std tableau stdtab.
-Require Import antisym Schur_mpoly Schur_altdef sympoly permcent.
+Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym permcent.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -120,11 +120,11 @@ Qed.
 
 Variable (R : comRingType).
 
-Let polZ := {mpoly R[m*n]}.
-Let polX := {mpoly R[m]}.
-Let polY := {mpoly R[n]}.
-Let polXY := {mpoly polY[m]}.
-Definition polXY_scale (c : R) (p : polXY) := c%:MP *: p.
+Local Notation polZ := {mpoly R[m*n]}.
+Local Notation polX := {mpoly R[m]}.
+Local Notation polY := {mpoly R[n]}.
+Definition polXY := {mpoly polY[m]}.
+Definition polXY_scale (c : R) (p : polXY) : polXY := c%:MP *: p.
 Local Notation "c *:M p" := (polXY_scale c p)
   (at level 40, left associativity).
 
@@ -141,16 +141,20 @@ Proof. by rewrite /polXY_scale rmorphD /= scalerDl. Qed.
 
 Definition polXY_lmodMixin :=
   LmodMixin scale_polXYA scale_polXY1m scale_polXYDr scale_polXYDl.
-Canonical polXY_lmodType :=
-  Eval hnf in LmodType R polXY polXY_lmodMixin.
-
+Canonical polXY_lmodType := Eval hnf in LmodType R polXY polXY_lmodMixin.
 Lemma scale_polXYE (c : R) (p : polXY) : c *: p = c *:M p.
 Proof. by []. Qed.
 
 Lemma polXY_scaleAl (c : R) (p q : polXY) : c *: (p * q : polXY) = (c *: p) * q.
 Proof. by rewrite !scale_polXYE /polXY_scale /= -!mul_mpolyC mulrA. Qed.
-Canonical polXY_lalgType :=
-  Eval hnf in LalgType R polXY polXY_scaleAl.
+Canonical polXY_lalgType := Eval hnf in LalgType R polXY polXY_scaleAl.
+
+Lemma polXY_scaleAr (c : R) (p q : polXY) : c *: (p * q : polXY) = p * (c *: q).
+Proof.
+rewrite !scale_polXYE /polXY_scale /= -!mul_mpolyC.
+by rewrite mulrA [_ * p]mulrC mulrA.
+Qed.
+Canonical polXY_algType := Eval hnf in AlgType R polXY polXY_scaleAr.
 
 Definition polX_XY : polX -> polXY := map_mpoly (mpolyC n (R := R)).
 Lemma polX_XY_is_lrmorphism : lrmorphism polX_XY.
@@ -241,7 +245,7 @@ rewrite mulr_sumr; apply eq_bigr => j _ /=.
 by rewrite !rmorphX /= mmapX mmap1U mxvec_indexK /= exprMn.
 Qed.
 
-Lemma prod_sympXY d (la : intpartn d) : 'p[la](XY) = 'p[la](X) * 'p[la](Y).
+Lemma prod_sympXY d (la : intpartn d) : 'hp[la](XY) = 'hp[la](X) * 'hp[la](Y).
 Proof.
 rewrite /prod_symp /prod_gen /= !rmorph_prod /=.
 rewrite -big_split /=; apply eq_bigr => i _.
@@ -253,9 +257,9 @@ Definition Cauchy_kernel d := 'h_d(XY).
 Lemma Cauchy_kernel_dhomog d : Cauchy_kernel d \is d.-homog.
 Proof. by rewrite /Cauchy_kernel; apply evalXY_homog; apply: symh_homog. Qed.
 
-Lemma symmX la : 'm[la](X) = 'm[la].
+Lemma symmX d (la : intpartn d) : 'hm[la](X) = 'hm[la].
 Proof.
-have : map_sympoly (n0 := m0) [rmorphism of (mpolyC n (R:=R))] 'm[la] = 'm[la].
+have : map_sympoly (n0 := m0) [rmorphism of (mpolyC n (R:=R))] 'hm[la] = 'hm[la].
   exact: map_symm.
 by rewrite /polX_XY => /(congr1 val).
 Qed.
@@ -288,13 +292,13 @@ Definition famYinv ff := BMultinom (famYinv_subproof ff).
 End BijectionFam.
 
 Lemma Cauchy_symm_symh d :
-  Cauchy_kernel d = \sum_(la : intpartn d) 'm[la](X) * 'h[la](Y).
+  Cauchy_kernel d = \sum_(la : intpartn d) ('h[la] : polY) *: ('m[la] : polXY).
 Proof.
 apply/mpolyP => mon.
 case: (altP (mdeg mon =P d)) => Hdeg; first last.
   rewrite (dhomog_nemf_coeff (Cauchy_kernel_dhomog d) Hdeg).
   rewrite linear_sum /= big1 ?mcoeff0 // => la _.
-  rewrite polyXY_scale mcoeffZ symmX.
+  rewrite mcoeffZ.
   case: (ssrnat.leqP (size la) m) => [Hi | /symm_oversize ->].
   - rewrite mcoeff_symm //.
     suff /negbTE -> : ~~ perm_eq (mpart (n := m) la) mon by rewrite mulr0.
@@ -302,8 +306,6 @@ case: (altP (mdeg mon =P d)) => Hdeg; first last.
     rewrite sumn_mpart // intpartn_sumn -sumnE -/(mdeg _) => Hd.
     by rewrite -Hd eq_refl in Hdeg.
   - by rewrite mcoeff0 mulr0.
-rewrite (eq_bigr (fun la => ('h[la] : polY) *: ('m[la] : polXY))); first last.
-  by move=> la _; rewrite polyXY_scale symmX.
 have Hpm : is_part_of_n d (partm mon) by rewrite /= intpartP andbT sumn_partm Hdeg.
 pose pm := IntPartN Hpm.
 rewrite (bigID (fun mu : intpartn d => (size mu <= m)%N)) /=.
@@ -374,13 +376,50 @@ apply eq_big => [mz | mz /eqP Hmz].
   by rewrite ffunE /= !tnth_mktuple.
 Qed.
 
-Lemma Cauchy_syms_syms d :
-  Cauchy_kernel d = \sum_(la : intpartn d) 's[la](X) * 's[la](Y).
+Lemma Cauchy_homsymm_homsymh d :
+  Cauchy_kernel d = \sum_(la : intpartn d) 'hm[la](X) * 'hh[la](Y).
 Proof.
 rewrite Cauchy_symm_symh.
+by apply eq_bigr => i _; rewrite polyXY_scale symmX.
+Qed.
+
+Lemma Cauchy_kernel_symmetric d : Cauchy_kernel d \is symmetric.
+Proof.
+rewrite Cauchy_symm_symh; apply rpred_sum => la _.
+by apply rpredZ; apply sympol_is_symmetric.
+Qed.
+
+Lemma Cauchy_kernel_coeff_symmetric d mon :
+  (Cauchy_kernel d)@_mon \is symmetric.
+Proof.
+rewrite Cauchy_symm_symh linear_sum /=; apply rpred_sum => la _.
+rewrite linearZ /= rpredM ?sympol_is_symmetric //.
+case: (ssrnat.leqP (size la) m) => [/mcoeff_symm -> | /symm_oversize ->].
+- by case: (perm_eq _ _) => /=; [exact: rpred1 | exact: rpred0].
+- by rewrite mcoeff0 rpred0.
+Qed.
+
+Lemma Cauchy_kernel_coeff_homog d mon :
+  (Cauchy_kernel d)@_mon \is d.-homog.
+Proof.
+rewrite Cauchy_symm_symh linear_sum /=; apply rpred_sum => la _.
+rewrite linearZ /=.
+case: (ssrnat.leqP (size la) m) => [/mcoeff_symm -> | /symm_oversize ->].
+- case: (perm_eq _ _) => /=; rewrite ?mulr1 ?mulr0 ?rpred0 //.
+  exact: prod_symh_homog.
+- by rewrite mcoeff0 mulr0 rpred0.
+Qed.
+
+
+Lemma Cauchy_syms_syms d :
+  Cauchy_kernel d = \sum_(la : intpartn d) 'hs[la](X) * 'hs[la](Y).
+Proof.
+rewrite Cauchy_homsymm_homsymh.
 transitivity (\sum_(mu : intpartn d) \sum_(la : intpartn d)
-               'm[mu](X) * ('K(la, mu) *: 's[la])(Y)).
-  by apply eq_bigr => la _; rewrite symh_syms -mulr_sumr !linear_sum.
+               'hm[mu](X) * ('K(la, mu) *: 'hs[la])(Y)).
+  apply eq_bigr => la _.
+  rewrite [X in X(Y)](_ : _ = sympol 'h[la]) //.
+  by rewrite symh_syms -mulr_sumr !linear_sum.
 rewrite exchange_big /=; apply eq_bigr => la _.
 have /= -> /= := congr1 val (syms_symm m0 R la).
 rewrite 2!linear_sum /= mulr_suml; apply eq_bigr => mu _.
@@ -396,14 +435,13 @@ Notation "p '(XY)'" := (@evalXY _ _ _ p) (at level 20, format "p '(XY)'").
 
 Variable R : numFieldType.
 
-Lemma Cauchy_symp_symp m n d :
+Lemma Cauchy_homsymp_zhomsymp m n d :
   Cauchy_kernel m n R d =
-  \sum_(la : intpartn d) 'p[la](X) * ((zcard la)%:R^-1 *: 'p[la](Y)).
+  \sum_(la : intpartn d) 'hp[la](X) * ((zcard la)%:R^-1 *: 'hp[la](Y)).
 Proof.
 rewrite /Cauchy_kernel symh_to_symp !rmorph_sum /=; apply eq_bigr => la _.
-rewrite linearZ /= -scalerAr prod_sympXY; congr (_ *: _).
-rewrite -rmorphMn /= rmorphV //=.
-by rewrite unitfE pnatr_eq0 neq0zcard.
+by rewrite linearZ /= -scalerAr prod_sympXY; congr (_ *: _).
 Qed.
 
 End CauchyKernelNumField.
+

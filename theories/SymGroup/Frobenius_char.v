@@ -43,19 +43,14 @@ Section Defs.
 
 Variable nvar0 : nat.
 Local Notation nvar := nvar0.+1.
-(* Local Notation n := n0.+1. *)
 Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
-Local Notation "''p[' k ]" := (homsymp _ _ k)
-                              (at level 8, k at level 2, format "''p[' k ]").
-Local Notation "''h[' k ]" := (homsymh _ _ k)
-                              (at level 8, k at level 2, format "''h[' k ]").
 
 Definition Fchar n (f : 'CF('SG_n)) : {homsym algC[nvar, n]} :=
-  locked (\sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'p[l]).
+  locked (\sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'hp[l]).
 
 Lemma FcharE n (f : 'CF('SG_n)) :
-  Fchar f = \sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'p[l].
+  Fchar f = \sum_(l : intpartn n) (f (permCT l) / 'z_l) *: 'hp[l].
 Proof. by rewrite /Fchar; unlock. Qed.
 
 Lemma Fchar_is_linear n : linear (@Fchar n).
@@ -66,7 +61,7 @@ by rewrite scalerA mulrA -scalerDl mulrDl.
 Qed.
 Canonical Fchar_linear n := Linear (@Fchar_is_linear n).
 
-Lemma Fchar_ncfuniCT n (l : intpartn n) : Fchar '1z_[l] = 'p[l].
+Lemma Fchar_ncfuniCT n (l : intpartn n) : Fchar '1z_[l] = 'hp[l].
 Proof using.
 rewrite !FcharE (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hm /=.
@@ -79,10 +74,10 @@ rewrite /cycle_typeSn permCTP eq_refl /=.
 by rewrite mulr1 divff ?scale1r.
 Qed.
 
-Lemma Fchar_triv n : Fchar 1 = 'h[rowpartn n].
+Lemma Fchar_triv n : Fchar 1 = 'hh[rowpartn n].
 Proof.
 rewrite -decomp_cf_triv linear_sum.
-rewrite (eq_bigr (fun la => 'z_la^-1 *: 'p[la])); first last.
+rewrite (eq_bigr (fun la => 'z_la^-1 *: 'hp[la])); first last.
   move=> la _.
   rewrite -Fchar_ncfuniCT /ncfuniCT /= linearZ /=.
   by rewrite scalerA /= mulrC divff // scale1r.
