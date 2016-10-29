@@ -456,12 +456,145 @@ Local Notation P := (intpartn d).
 Local Notation algCF := [numFieldType of algC].
 Local Notation SF := {homsym algC[n, d]}.
 Local Notation polXY := (polXY n0 n0 algCF).
+Local Notation pol := {mpoly algC[n]}.
 Local Notation "p '(Y)'" := (@polY_XY n0 n0 _ p)
                              (at level 20, format "p '(Y)'").
 Local Notation "p '(X)'" := (@polX_XY n0 n0 _ p)
                              (at level 20, format "p '(X)'").
 
 Local Notation "''hs[' la ]" := ('hs[la] : SF).
+
+
+Definition co_hp (la : intpartn d) : pol -> algC :=
+  homsymdotr 'hp[la] \o @in_homsym n0 d _.
+Definition co_hpXY (la mu : intpartn d) : polXY -> algC :=
+  locked (co_hp la \o map_mpoly (co_hp mu)).
+
+Lemma co_hp_is_additive la : additive (co_hp la).
+Proof. by rewrite /co_hp => p q; rewrite raddfB. Qed.
+Canonical co_hp_additive la := Additive (co_hp_is_additive la).
+Lemma scale_co_hp la p a : co_hp la (a *: p) = a * co_hp la p.
+Proof. by rewrite /co_hp /= linearZ homsymdotZl. Qed.
+Lemma co_hp_hp la mu :
+  (d <= n)%N -> co_hp la 'hp[mu] = (zcard mu)%:R * (mu == la)%:R.
+Proof.
+move=> Hd.
+by rewrite /co_hp /= -![prod_gen _ _]/(homsym 'hp[_]) in_homsymE homsymdotp.
+Qed.
+
+Lemma co_hpXY_is_additive la mu : additive (co_hpXY la mu).
+Proof. by rewrite /co_hpXY; unlock => p q; rewrite raddfB. Qed.
+Canonical co_hpXY_additive la mu := Additive (co_hpXY_is_additive la mu).
+
+Lemma co_hpYE la (p q : pol) :
+  map_mpoly (co_hp la) (p(X) * q(Y)) = co_hp la q *: p.
+Proof.
+rewrite polyXY_scale /=; apply/mpolyP => /= m.
+rewrite linearZ /= mcoeff_map_mpoly /= linearZ /= mulrC.
+rewrite /polX_XY /= mcoeff_map_mpoly /= mul_mpolyC.
+by rewrite mulrC -scale_co_hp.
+Qed.
+
+Lemma co_hprXYE la mu (p q : pol) :
+  co_hpXY la mu (p(X) * q(Y)) = (co_hp la p) * (co_hp mu q).
+Proof. by rewrite /co_hpXY; unlock; rewrite /= co_hpYE scale_co_hp mulrC. Qed.
+
+Lemma coord_zsympsps (la mu : P) :
+  (d <= n)%N ->
+  (\sum_nu
+    (coord 'hp (enum_rank la) 'hs[nu]) *
+    ((zcard mu)%:R * coord 'hp (enum_rank mu) 'hs[nu]))
+  = (la == mu)%:R.
+Proof.
+move=> Hd.
+have to_p (nu : intpartn d) : ('hs[nu] : SF) \in span 'hp.
+  by rewrite (span_basis (symbp_basis _ Hd)) memvf.
+have : \sum_(nu : intpartn d) 'hs[nu](X) * 'hs[nu](Y) =
+       \sum_(nu : intpartn d) 'hp[nu](X) * ((zcard nu)%:R^-1 *: 'hp[nu](Y)).
+  by rewrite -Cauchy_syms_syms Cauchy_homsymp_zhomsymp.
+have sum_coord (p : SF) :
+  \sum_i homsym (coord 'hp i p *: ('hp)`_i : SF) =
+  \sum_px coord 'hp (enum_rank px) p *: 'hp[px] :> pol.
+  rewrite !(reindex (enum_val (A := {: P}))) /=; first last.
+    by apply (enum_val_bij_in (x0 := (rowpartn d))).
+  rewrite !linear_sum /=; apply eq_bigr => i _.
+  rewrite enum_valK /= (nth_map (rowpartn d)) /= -?enum_val_nth //.
+  by rewrite -cardE ltn_ord.
+rewrite (eq_bigr (fun nu : intpartn d =>
+                    (\sum_px (coord 'hp (enum_rank px) 'hs[nu]) *: 'hp[px])(X) *
+                    (\sum_py (coord 'hp (enum_rank py) 'hs[nu]) *: 'hp[py])(Y)
+        )); first last.
+  move=> nu _; rewrite {1 2}(coord_span (to_p nu)).
+  by rewrite linear_sum; congr ((_)(X) * (_)(Y)); rewrite sum_coord.
+move=> {sum_coord} /(congr1 (co_hpXY la mu)).
+rewrite !raddf_sum /= => /esym.
+rewrite (bigD1 la) //= -[(zcard la)%:R^-1 *: 'hp[la](Y)]linearZ /=.
+rewrite -![prod_gen _ _]/(homsym 'hp[_]).
+rewrite co_hprXYE scale_co_hp co_hp_hp //.
+rewrite eq_refl mulr1 !mulrA divff ?mul1r; last by rewrite pnatr_eq0 neq0zcard.
+rewrite big1 ?addr0; first last => [nu /negbTE Hnu |].
+  rewrite -![prod_gen _ _]/(homsym 'hp[_]).
+  rewrite -[(zcard nu)%:R^-1 *: 'hp[nu](Y)]linearZ /=.
+  rewrite -![prod_gen _ _]/(homsym 'hp[_]).
+  rewrite co_hprXYE scale_co_hp co_hp_hp //.
+  move: Hnu; rewrite -(inj_eq (@val_inj _ _ _)) /= => ->.
+  by rewrite mulr0 !mul0r.
+rewrite co_hp_hp // => /(congr1 (fun x => (zcard la)%:R^-1 * x)).
+rewrite mulrA [X in X * _]mulrC divff; last by rewrite pnatr_eq0 neq0zcard.
+rewrite mul1r !mulr_sumr => -> .
+apply eq_bigr => nu _.
+rewrite co_hprXYE.
+have dot_sumhp (eta tau : intpartn d) :
+  co_hp eta (\sum_px coord 'hp (enum_rank px) 'hs[tau] *: 'hp[px] : SF) =
+  coord 'hp (enum_rank eta) 'hs[tau] * (zcard eta)%:R.
+  rewrite !raddf_sum /= (bigD1 eta) //=.
+  rewrite -![prod_gen _ _]/(homsym 'hp[_]).
+  rewrite scale_co_hp co_hp_hp // eq_refl mulr1.
+  rewrite big1 ?addr0 // => p => /negbTE Hp.
+  rewrite -![prod_gen _ _]/(homsym 'hp[_]).
+  rewrite scale_co_hp co_hp_hp //.
+  move: Hp; rewrite -(inj_eq (@val_inj _ _ _)) /= => ->.
+  by rewrite !mulr0.
+rewrite !dot_sumhp ![_ * (zcard _)%:R]mulrC !mulrA.
+by rewrite ![_ * (zcard la)%:R]mulrC divff ?mul1r // pnatr_eq0 neq0zcard.
+Qed.
+
+Let matsp : 'M[algCF]_#|{: P}| :=
+  \matrix_(i, j < #|{: P}|) (coord 'hp i 'hs[enum_val j]).
+Let matzsp : 'M[algCF]_#|{: P}| :=
+  \matrix_(i, j < #|{: P}|)
+   ((zcard (enum_val j))%:R * (coord 'hp j 'hs[enum_val i])).
+
+Lemma matspzsp : (d <= n)%N -> matsp *m matzsp = 1%:M.
+Proof.
+move=> Hd.
+apply/matrixP => i j /=.
+rewrite /matsp /matzsp /= !mxE.
+rewrite (reindex enum_rank) /=; first last.
+  by apply onW_bij; apply enum_rank_bij.
+rewrite -(inj_eq (@enum_val_inj _ _)) /= -coord_zsympsps //.
+apply eq_bigr => /= nu _.
+by rewrite !mxE !enum_valK !enum_rankK.
+Qed.
+
+Lemma matzspsp : (d <= n)%N -> matzsp *m matsp = 1%:M.
+Proof. by move=> Hd; apply mulmx1C; apply matspzsp. Qed.
+
+Lemma coord_zsymspsp (la mu : P) :
+  (d <= n)%N ->
+  (\sum_nu
+    (coord 'hp (enum_rank nu) 'hs[la]) *
+    ((zcard nu)%:R * coord 'hp (enum_rank nu) 'hs[mu]))
+  = (la == mu)%:R.
+Proof.
+move=> /matzspsp /matrixP/(_ (enum_rank mu) (enum_rank la)).
+rewrite /matsp /matzsp /= !mxE.
+rewrite (inj_eq (@enum_rank_inj _)) eq_sym => <-.
+rewrite (reindex enum_rank) /=; first last.
+  by apply onW_bij; apply enum_rank_bij.
+apply eq_bigr => /= nu _.
+by rewrite !mxE !enum_rankK mulrC.
+Qed.
 
 Lemma homsymdotss la mu :
   (d <= n)%N -> '[ 'hs[la] | 'hs[mu] ] = (la == mu)%:R.
@@ -471,7 +604,7 @@ have to_p (nu : intpartn d) : ('hs[nu] : SF) \in span 'hp.
   by rewrite (span_basis (symbp_basis _ Hd)) memvf.
 rewrite (coord_span (to_p la)) (coord_span (to_p mu)).
 transitivity
-  (\sum_i (coord 'hp i 'hs[la]) * (coord 'hp i 'hs[mu])^* * (zcard (enum_val i))%:R).
+  (\sum_i (coord 'hp i 'hs[la]) * (zcard (enum_val i))%:R * (coord 'hp i 'hs[mu])).
   rewrite homsymdot_suml; apply eq_bigr => /= l _.
   rewrite homsymdotZl homsymdot_sumr (bigD1 l) //= big1 ?addr0; first last.
     move=> m /negbTE Hlm; rewrite homsymdotZr.
@@ -483,30 +616,10 @@ transitivity
   rewrite [X in '[X | _]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
   rewrite [X in '[_ | X]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
   rewrite homsymdotp // eq_refl mulr1.
-  by rewrite -enum_val_nth.
-have : \sum_(nu : intpartn d) 'hs[nu](X) * 'hs[nu](Y) =
-       \sum_(nu : intpartn d) 'hp[nu](X) * ((zcard nu)%:R^-1 *: 'hp[nu](Y)).
-  by rewrite -Cauchy_syms_syms Cauchy_homsymp_zhomsymp.
-rewrite (eq_bigr (fun nu : intpartn d =>
-                    (\sum_px (coord 'hp (enum_rank px) 'hs[nu]) *: 'hp[px](X)) *
-                    (\sum_py (coord 'hp (enum_rank py) 'hs[nu]) *: 'hp[py](Y))
-        )); first last.
-  move=> nu _; rewrite {1 2}(coord_span (to_p nu)).
-  rewrite !(reindex (enum_val (A := {: P}))) /=; first last.
-    by apply (enum_val_bij_in (x0 := (rowpartn d))).
-    by apply (enum_val_bij_in (x0 := (rowpartn d))).
-  congr (_ * _).
-  - rewrite !linear_sum /=; apply eq_bigr => i _.
-    rewrite linearZ enum_valK /=; congr (_ *: (_)(X)).
-    by rewrite (nth_map (rowpartn _)) /= -?cardE ?ltn_ord // -enum_val_nth.
-  - rewrite !linear_sum /=; apply eq_bigr => i _.
-    rewrite linearZ enum_valK /=; congr (_ *: (_)(Y)).
-    by rewrite (nth_map (rowpartn _)) /= -?cardE ?ltn_ord // -enum_val_nth.
-move=> Heq {to_p}.
-rewrite !(reindex (enum_rank)) /=; first last.
+  rewrite -enum_val_nth ![_ * (zcard _)%:R]mulrC mulrA; congr (_ * _ * _).
+  admit.
+rewrite (reindex enum_rank) /=; first last.
   by apply onW_bij; apply enum_rank_bij.
-rewrite (eq_bigr (fun nu : intpartn d =>
-                    (coord 'hp (enum_rank nu) 'hs[la]) *
-                    ((coord 'hp (enum_rank nu) 'hs[mu]))^* * (zcard nu)%:R
-        )); first last.
-  by move=> nu _; rewrite enum_rankK.
+rewrite -coord_zsymspsp //; apply eq_bigr => /= nu _.
+by rewrite enum_rankK mulrA.
+Admitted.
