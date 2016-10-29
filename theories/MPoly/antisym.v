@@ -49,7 +49,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq path choice.
 From mathcomp Require Import finset fintype finfun tuple bigop ssralg ssrint.
 From mathcomp Require Import fingroup perm zmodp binomial.
-From SsrMultinomials Require Import ssrcomplements poset freeg mpoly.
+From SsrMultinomials Require Import ssrcomplements freeg order mpoly.
 
 Require Import tools permcomp presentSn sorted partition.
 
@@ -416,6 +416,8 @@ by rewrite (perm_eq_mem (msuppN _)).
 Qed.
 
 
+Import Order Order.Syntax Order.TotalTheory.
+
 Lemma mlead_antisym_sorted (p : {mpoly R[n]}) : p \is antisym ->
   forall (i j : 'I_n), i <= j -> (mlead p) j <= (mlead p) i.
 Proof using.
@@ -423,12 +425,12 @@ move=> sym_p i j le_ij; have [->|nz_p] := eqVneq p 0.
   by rewrite mlead0 !mnm0E.
 set m := mlead p; case: leqP=> // h.
 pose s := tperm i j; pose ms := m#s; have: (m < ms)%O.
-  apply/lemP; first by rewrite mdeg_mperm.
+  apply/ltmcP; first by rewrite mdeg_mperm.
   exists i=> [k lt_ki|]; last by rewrite mnmE tpermL.
   rewrite mnmE tpermD // neq_ltn orbC ?lt_ki //.
   by move/leq_trans: lt_ki => /(_ _ le_ij) ->.
 have: ms \in msupp p by rewrite isantisym_msupp // mlead_supp.
-by move/msupp_le_mlead/leoNgt/negbTE=> ->.
+by move/msupp_le_mlead; rewrite leNgt => /negbTE ->.
 Qed.
 
 End MPolySym.

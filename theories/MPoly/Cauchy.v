@@ -19,7 +19,7 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop ssrint ssralg path div.
 From mathcomp Require Import ssralg ssrnum algC matrix.
 
-From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
+From SsrMultinomials Require Import ssrcomplements freeg bigenough mpoly.
 
 Require Import tools ordtype permuted partition Yamanouchi std tableau stdtab.
 Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym permcent.
