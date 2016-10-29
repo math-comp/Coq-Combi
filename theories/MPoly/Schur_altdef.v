@@ -77,7 +77,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import choice fintype finfun tuple bigop ssralg ssrint.
 From mathcomp Require Import finset fingroup perm.
-From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
+From SsrMultinomials Require Import ssrcomplements freeg bigenough mpoly.
 
 Require Import tools combclass ordtype sorted partition tableau skewtab.
 Require Import presentSn antisym Schur_mpoly freeSchur therule.
