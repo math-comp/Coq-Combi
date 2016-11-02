@@ -534,6 +534,65 @@ Notation "''hp'" := (symbp _ _ _) (at level 8, format "''hp'").
 Notation "''hm'" := (symbm _ _ _) (at level 8, format "''hm'").
 Notation "''hs'" := (symbs _ _ _) (at level 8, format "''hs'").
 
+
+Section ChangeField.
+
+Variable R S : numFieldType.
+Variable mor : {rmorphism R -> S}.
+
+Variable n0 d : nat.
+Local Notation n := (n0.+1).
+Local Notation P := (intpartn d).
+Local Notation SFR := {homsym R[n, d]}.
+Local Notation SFS := {homsym S[n, d]}.
+
+Lemma map_sympoly_d_homog (f : SFR) : map_sympoly mor f \is d.-homsym.
+Proof.
+rewrite homsymE /=; apply/dhomogP => /= m.
+rewrite mcoeff_msupp mcoeff_map_mpoly => Hm.
+have {Hm} : f@_m != 0.
+  move: Hm; apply contra => /eqP ->.
+  by apply/eqP; apply: (rmorph0 mor).
+rewrite -mcoeff_msupp => Hm.
+by have /dhomogP/(_ _ Hm) := homsym_is_dhomog f.
+Qed.
+Definition map_homsym (f : SFR) : SFS := HomogSym (map_sympoly_d_homog f).
+
+Lemma map_homsym_is_additive : additive map_homsym.
+Proof.
+move=> /= p q; apply val_inj; by rewrite /= rmorphB.
+Qed.
+Canonical map_homsym_additive := Additive map_homsym_is_additive.
+
+Lemma scale_map_homsym (r : R) (p : SFR) :
+  map_homsym (r *: p) = (mor r) *: (map_homsym p).
+Proof. by apply val_inj; rewrite /= scale_map_sympoly. Qed.
+
+Lemma map_homsymm la : map_homsym 'hm[la] = 'hm[la].
+Proof. by apply val_inj; rewrite /= map_symm. Qed.
+Lemma map_homsyme la : map_homsym 'he[la] = 'he[la].
+Proof. by apply val_inj; rewrite /= map_syme_prod. Qed.
+Lemma map_homsymh la : map_homsym 'hh[la] = 'hh[la].
+Proof. by apply val_inj; rewrite /= map_symh_prod. Qed.
+Lemma map_homsymp la : map_homsym 'hp[la] = 'hp[la].
+Proof. by apply val_inj; rewrite /= map_symp_prod. Qed.
+Lemma map_homsyms la : map_homsym 'hs[la] = 'hs[la].
+Proof. by apply val_inj; rewrite /= map_syms. Qed.
+
+Lemma map_homsymbm : map_tuple map_homsym 'hm = 'hm.
+Proof. by apply eq_from_tnth => i; rewrite !tnth_map map_homsymm. Qed.
+Lemma map_homsymbe : map_tuple map_homsym 'he = 'he.
+Proof. by apply eq_from_tnth => i; rewrite !tnth_map map_homsyme. Qed.
+Lemma map_homsymbh : map_tuple map_homsym 'hh = 'hh.
+Proof. by apply eq_from_tnth => i; rewrite !tnth_map map_homsymh. Qed.
+Lemma map_homsymbp : map_tuple map_homsym 'hp = 'hp.
+Proof. by apply eq_from_tnth => i; rewrite !tnth_map map_homsymp. Qed.
+Lemma map_homsymbs : map_tuple map_homsym 'hs = 'hs.
+Proof. by apply eq_from_tnth => i; rewrite !tnth_map map_homsyms. Qed.
+
+End ChangeField.
+
+
 Section ScalarProduct.
 
 Variable n0 d : nat.
