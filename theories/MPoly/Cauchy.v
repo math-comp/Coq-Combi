@@ -445,7 +445,7 @@ Qed.
 
 End CauchyKernelNumField.
 
-From mathcomp Require Import vector.
+From mathcomp Require Import vector rat.
 
 Section Scalar.
 
@@ -453,8 +453,10 @@ Variable n0 d : nat.
 Local Notation n := n0.+1.
 Local Notation P := (intpartn d).
 
+Local Notation ratF := [numFieldType of rat].
 Local Notation algCF := [numFieldType of algC].
 Local Notation SF := {homsym algC[n, d]}.
+Local Notation SFR := {homsym rat[n, d]}.
 Local Notation polXY := (polXY n0 n0 algCF).
 Local Notation pol := {mpoly algC[n]}.
 Local Notation "p '(Y)'" := (@polY_XY n0 n0 _ p)
@@ -462,7 +464,8 @@ Local Notation "p '(Y)'" := (@polY_XY n0 n0 _ p)
 Local Notation "p '(X)'" := (@polX_XY n0 n0 _ p)
                              (at level 20, format "p '(X)'").
 
-Local Notation "''hs[' la ]" := ('hs[la] : SF).
+Local Notation "''hsF[' la ]" := ('hs[la] : SF).
+Local Notation "''hsR[' la ]" := ('hs[la] : SFR).
 
 
 Definition co_hp (la : intpartn d) : pol -> algC :=
@@ -502,14 +505,14 @@ Proof. by rewrite /co_hpXY; unlock; rewrite /= co_hpYE scale_co_hp mulrC. Qed.
 Lemma coord_zsympsps (la mu : P) :
   (d <= n)%N ->
   (\sum_nu
-    (coord 'hp (enum_rank la) 'hs[nu]) *
-    ((zcard mu)%:R * coord 'hp (enum_rank mu) 'hs[nu]))
+    (coord 'hp (enum_rank la) 'hsF[nu]) *
+    ((zcard mu)%:R * coord 'hp (enum_rank mu) 'hsF[nu]))
   = (la == mu)%:R.
 Proof.
 move=> Hd.
-have to_p (nu : intpartn d) : ('hs[nu] : SF) \in span 'hp.
+have to_p (nu : intpartn d) : ('hsF[nu] : SF) \in span 'hp.
   by rewrite (span_basis (symbp_basis _ Hd)) memvf.
-have : \sum_(nu : intpartn d) 'hs[nu](X) * 'hs[nu](Y) =
+have : \sum_(nu : intpartn d) 'hsF[nu](X) * 'hsF[nu](Y) =
        \sum_(nu : intpartn d) 'hp[nu](X) * ((zcard nu)%:R^-1 *: 'hp[nu](Y)).
   by rewrite -Cauchy_syms_syms Cauchy_homsymp_zhomsymp.
 have sum_coord (p : SF) :
@@ -521,8 +524,8 @@ have sum_coord (p : SF) :
   rewrite enum_valK /= (nth_map (rowpartn d)) /= -?enum_val_nth //.
   by rewrite -cardE ltn_ord.
 rewrite (eq_bigr (fun nu : intpartn d =>
-                    (\sum_px (coord 'hp (enum_rank px) 'hs[nu]) *: 'hp[px])(X) *
-                    (\sum_py (coord 'hp (enum_rank py) 'hs[nu]) *: 'hp[py])(Y)
+                    (\sum_px (coord 'hp (enum_rank px) 'hsF[nu]) *: 'hp[px])(X) *
+                    (\sum_py (coord 'hp (enum_rank py) 'hsF[nu]) *: 'hp[py])(Y)
         )); first last.
   move=> nu _; rewrite {1 2}(coord_span (to_p nu)).
   by rewrite linear_sum; congr ((_)(X) * (_)(Y)); rewrite sum_coord.
@@ -545,8 +548,8 @@ rewrite mul1r !mulr_sumr => -> .
 apply eq_bigr => nu _.
 rewrite co_hprXYE.
 have dot_sumhp (eta tau : intpartn d) :
-  co_hp eta (\sum_px coord 'hp (enum_rank px) 'hs[tau] *: 'hp[px] : SF) =
-  coord 'hp (enum_rank eta) 'hs[tau] * (zcard eta)%:R.
+  co_hp eta (\sum_px coord 'hp (enum_rank px) 'hsF[tau] *: 'hp[px]) =
+  coord 'hp (enum_rank eta) 'hsF[tau] * (zcard eta)%:R.
   rewrite !raddf_sum /= (bigD1 eta) //=.
   rewrite -![prod_gen _ _]/(homsym 'hp[_]).
   rewrite scale_co_hp co_hp_hp // eq_refl mulr1.
@@ -560,10 +563,10 @@ by rewrite ![_ * (zcard la)%:R]mulrC divff ?mul1r // pnatr_eq0 neq0zcard.
 Qed.
 
 Let matsp : 'M[algCF]_#|{: P}| :=
-  \matrix_(i, j < #|{: P}|) (coord 'hp i 'hs[enum_val j]).
+  \matrix_(i, j < #|{: P}|) (coord 'hp i 'hsF[enum_val j]).
 Let matzsp : 'M[algCF]_#|{: P}| :=
   \matrix_(i, j < #|{: P}|)
-   ((zcard (enum_val j))%:R * (coord 'hp j 'hs[enum_val i])).
+   ((zcard (enum_val j))%:R * (coord 'hp j 'hsF[enum_val i])).
 
 Lemma matspzsp : (d <= n)%N -> matsp *m matzsp = 1%:M.
 Proof.
@@ -583,8 +586,8 @@ Proof. by move=> Hd; apply mulmx1C; apply matspzsp. Qed.
 Lemma coord_zsymspsp (la mu : P) :
   (d <= n)%N ->
   (\sum_nu
-    (coord 'hp (enum_rank nu) 'hs[la]) *
-    ((zcard nu)%:R * coord 'hp (enum_rank nu) 'hs[mu]))
+    (coord 'hp (enum_rank nu) 'hsF[la]) *
+    ((zcard nu)%:R * coord 'hp (enum_rank nu) 'hsF[mu]))
   = (la == mu)%:R.
 Proof.
 move=> /matzspsp /matrixP/(_ (enum_rank mu) (enum_rank la)).
@@ -596,15 +599,17 @@ apply eq_bigr => /= nu _.
 by rewrite !mxE !enum_rankK mulrC.
 Qed.
 
+From mathcomp Require Import rat.
+
 Lemma homsymdotss la mu :
-  (d <= n)%N -> '[ 'hs[la] | 'hs[mu] ] = (la == mu)%:R.
+  (d <= n)%N -> '[ 'hsF[la] | 'hsF[mu] ] = (la == mu)%:R.
 Proof.
 move=> Hd.
-have to_p (nu : intpartn d) : ('hs[nu] : SF) \in span 'hp.
+have to_p (nu : intpartn d) : 'hsF[nu] \in span 'hp.
   by rewrite (span_basis (symbp_basis _ Hd)) memvf.
 rewrite (coord_span (to_p la)) (coord_span (to_p mu)).
 transitivity
-  (\sum_i (coord 'hp i 'hs[la]) * (zcard (enum_val i))%:R * (coord 'hp i 'hs[mu])).
+  (\sum_i (coord 'hp i 'hsF[la]) * (zcard (enum_val i))%:R * (coord 'hp i 'hsF[mu])).
   rewrite homsymdot_suml; apply eq_bigr => /= l _.
   rewrite homsymdotZl homsymdot_sumr (bigD1 l) //= big1 ?addr0; first last.
     move=> m /negbTE Hlm; rewrite homsymdotZr.
@@ -617,9 +622,27 @@ transitivity
   rewrite [X in '[_ | X]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
   rewrite homsymdotp // eq_refl mulr1.
   rewrite -enum_val_nth ![_ * (zcard _)%:R]mulrC mulrA; congr (_ * _ * _).
-  admit.
+  suff -> : coord 'hp l 'hsF[mu] = ratr (coord 'hp l ('hs[mu] : SFR)).
+    by apply/CrealP; apply Creal_Crat; apply Crat_rat.
+  have to_pR (nu : intpartn d) : 'hsR[nu] \in span 'hp.
+    by rewrite (span_basis (symbp_basis _ Hd)) memvf.
+  rewrite -(map_homsyms (ratr_rmorphism algCF)).
+  rewrite {1}(coord_span (to_pR mu)) raddf_sum.
+  rewrite (eq_bigr (fun i : 'I_#|{:P}| =>
+                      ratr (coord 'hp i 'hsR[mu]) *: ('hp)`_i ));
+    first last.
+    move=> i _; rewrite /= scale_map_homsym.
+    have /= := map_homsymbp (@ratr_rmorphism algCF) n0 d.
+    move=> /(congr1 (fun p : _.-tuple _ => p`_i)) /= => <-.
+    congr (_ *: _); apply esym; apply nth_map.
+    by rewrite size_map -cardE ltn_ord.
+  rewrite coord_sum_free //.
+  exact: (basis_free (symbp_basis _ Hd)).
 rewrite (reindex enum_rank) /=; first last.
   by apply onW_bij; apply enum_rank_bij.
 rewrite -coord_zsymspsp //; apply eq_bigr => /= nu _.
 by rewrite enum_rankK mulrA.
-Admitted.
+Qed.
+
+End Scalar.
+
