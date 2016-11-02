@@ -659,6 +659,7 @@ rewrite /map_sympoly; repeat split.
 - by move=> i j /=; apply val_inj; rewrite /= rmorphM.
 - by apply val_inj; rewrite /= rmorph1.
 Qed.
+Canonical map_sympol_additive   := Additive  map_sympoly_is_rmorphism.
 Canonical map_sympoly_rmorphism := RMorphism map_sympoly_is_rmorphism.
 
 Lemma scale_map_sympoly (r : R) (p : {sympoly R[n]}) :
