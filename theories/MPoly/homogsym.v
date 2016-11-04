@@ -249,13 +249,10 @@ pose b := [set p : intpartn d | size p <= n].
 pose t := enum_tuple (pred_of_set b).
 have sztntht k : size (tnth t k) <= n.
   by have := mem_tnth k t; rewrite /t mem_enum inE.
-pose f (p : {homsym R[n, d]}) := \row_(i < #|b|) p@_(mpart (tnth t i)).
-exists f => /= [c p q|].
-  by apply/matrixP=> i j; rewrite !mxE /= mcoeffD mcoeffZ.
-pose g (r : 'rV[R]_(#|b|)) : {homsym R[n, d]} :=
-  \sum_(i < #|b|) (r 0 i) *: (homsymm (tnth t i)).
-exists g.
-- move=> p; rewrite /g /f [RHS]homsymmE.
+exists (fun p : {homsym R[n, d]} => \row_(i < #|b|) p@_(mpart (tnth t i))).
+  by move=> c p q; apply/matrixP=> i j; rewrite !mxE /= mcoeffD mcoeffZ.
+exists (fun r : 'rV[R]_(#|b|) => \sum_(i < #|b|) (r 0 i) *: (homsymm (tnth t i))).
+- move=> p; rewrite [RHS]homsymmE.
   rewrite (bigID (mem b)) /= [X in _ + X]big1 ?addr0 => [|la]; first last.
     rewrite inE => /negbTE H .
     by apply val_inj; apply val_inj; rewrite /= /symm H scaler0.
@@ -264,7 +261,7 @@ exists g.
   rewrite [RHS]big_enum /= -[enum _]/(tval t).
   rewrite big_tuple; apply eq_bigr => i _; congr (_ *: _).
   by rewrite mxE.
-- move=> r; rewrite /g /f /=; apply/matrixP=> i j.
+- move=> r /=; apply/matrixP=> i j.
   rewrite mxE !raddf_sum ord1 /= (bigD1 j) //=.
   rewrite !linearZ /= mcoeff_symm ?sztntht //.
   rewrite perm_eq_refl mulr1 big1 ?addr0 //.
@@ -344,11 +341,9 @@ End InHomSym.
 
 Section HomSymField.
 
-Import ssrnum Num.Theory.
-
 Variable n0 d : nat.
 Local Notation n := (n0.+1).
-Variable R : numFieldType.
+Variable R : fieldType.
 Local Notation P := (intpartn d).
 Local Notation "''pi_' d" :=
   (pihomog [measure of mdeg] d) (at level 5, format "''pi_' d").
@@ -506,8 +501,9 @@ rewrite -[X in X \in _]addr0.
 by apply memv_add; [exact: memv_line | exact: mem0v].
 Qed.
 
-Lemma symbp_basis : basis_of fullv symbp.
+Lemma symbp_basis : [char R] =i pred0 -> basis_of fullv symbp.
 Proof using Hd.
+move=> Hchar.
 rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
 rewrite -(span_basis symbh_basis).
 apply/span_subvP => s /mapP [/= la]; rewrite !mem_enum => _ ->{s}.
@@ -515,7 +511,8 @@ pose co := fun (n : nat) (l : intpartn n) => (permcent.zcard l)%:R^-1 : R.
 have -> : 'hh[la] =
          \sum_(mu : intpartn d)
           coeff_prodgen_intpartn co la mu *: 'hp[mu] :> SF.
-  by apply val_inj; rewrite /= linear_sum /= (prod_prodgen (symh_to_symp n0 R)).
+  apply val_inj; rewrite /= linear_sum /=.
+  by rewrite (prod_prodgen (fun n => symh_to_symp n0 n Hchar)).
 rewrite span_def; apply memv_suml => mu _; apply memvZ.
 rewrite big_map (bigD1_seq mu) /= ?mem_enum ?inE ?enum_uniq //.
 rewrite -[X in X \in _]addr0.
@@ -524,9 +521,15 @@ Qed.
 
 End HomSymField.
 
-From mathcomp Require Import ssrnum algC.
+From mathcomp Require Import ssrnum rat algC.
 Import GRing.Theory Num.Theory.
 Require Import permcent.
+
+Lemma char0_rat : [char rat] =i pred0.
+Proof. exact: Num.Theory.char_num. Qed.
+Lemma char0_algC : [char algC] =i pred0.
+Proof. exact: Num.Theory.char_num. Qed.
+Hint Resolve char0_algC char0_rat.
 
 Notation "''he'" := (symbe _ _ _) (at level 8, format "''he'").
 Notation "''hh'" := (symbh _ _ _) (at level 8, format "''hh'").
@@ -537,7 +540,7 @@ Notation "''hs'" := (symbs _ _ _) (at level 8, format "''hs'").
 
 Section ChangeField.
 
-Variable R S : numFieldType.
+Variable R S : fieldType.
 Variable mor : {rmorphism R -> S}.
 
 Variable n0 d : nat.
@@ -680,7 +683,7 @@ Proof. by rewrite /symbp tupleE /= (nth_map la) ?nth_enum_rank // -cardE. Qed.
 Lemma coord_symbp (Hd : (d <= n)%N) la mu :
   coord (vT := [vectType algC of SF]) 'hp (enum_rank mu) 'hp[la] = (la == mu)%:R.
 Proof.
-rewrite !symbpE !(coord_free _ _ (basis_free (symbp_basis _ Hd))).
+rewrite !symbpE !(coord_free _ _ (basis_free (symbp_basis _ _))) //.
 by rewrite !(inj_eq enum_rank_inj).
 Qed.
 

@@ -1303,7 +1303,7 @@ Section ChangeBasisSymhPowerSum.
 Import ssrnum Num.Theory.
 
 Variable n0 : nat.
-Variable R : numFieldType.
+Variable R : fieldType.
 Local Notation n := n0.+1.
 Local Notation SF := {sympoly R[n]}.
 
@@ -1313,9 +1313,10 @@ Fixpoint prod_partsum (s : seq nat) :=
 Local Notation "\Pi s" := (prod_partsum s)%:R^-1 (at level 0, s at level 2).
 
 Lemma symh_to_symp_prod_partsum n :
+  [char R] =i pred0 ->
   'h_n = \sum_(c : intcompn n) \Pi c *: \prod_(i <- c) 'p_i :> SF.
 Proof using.
-rewrite /index_enum -enumT /=.
+rewrite /index_enum -enumT /= charf0P => Hchar.
 rewrite -[RHS](big_map (@cnval n) xpredT
    (fun c : seq nat => \Pi c *: \prod_(i <- c) 'p_i)).
 rewrite enum_intcompnE.
@@ -1324,7 +1325,7 @@ elim: n {-2}n (leqnn n) => [| m IHm] n.
   by rewrite big_seq1 big_nil symh0 /= invr1 scale1r.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
 rewrite enum_compnE Hm // -Hm big_flatten /=.
-have Hn : (n%:R : R) != 0 by rewrite pnatr_eq0 Hm.
+have Hn : (n%:R : R) != 0 by rewrite Hchar Hm.
 apply (scalerI Hn); rewrite Newton_symh_iota.
 rewrite scaler_sumr big_map; apply eq_big_seq => i.
 rewrite mem_iota add1n ltnS => /andP [Hi Hin].
@@ -1343,10 +1344,11 @@ Qed.
 Import LeqGeqOrder.
 
 Lemma symh_to_symp_intpartn n :
+  [char R] =i pred0 ->
   'h_n = \sum_(l : intpartn n)
            (\sum_(c : intcompn n | perm_eq l c) \Pi c) *: 'p[l] :> SF.
 Proof.
-rewrite symh_to_symp_prod_partsum.
+move/symh_to_symp_prod_partsum => ->.
 rewrite (partition_big (@partn_of_compn n) xpredT) //=.
 apply eq_bigr => l _; rewrite scaler_suml; apply eq_big.
 - move=> c; apply/eqP/idP => [<- | Hperm]; first exact: perm_partn_of_compn.
@@ -1436,8 +1438,10 @@ Lemma part_sumn_count l :
 Proof. by move/part_sumn_count_bound; apply. Qed.
 
 Lemma coeff_symh_to_symp n (l : intpartn n) :
+  [char R] =i pred0 ->
   (\sum_(c : intcompn n | perm_eq l c) \Pi c) = (zcard l)%:R^-1 :> R.
 Proof.
+rewrite charf0P => Hchar.
 case: l => l /= /andP [/eqP].
 elim: n {-2}n (leqnn n) l => [| m IHm] n.
   rewrite leqn0 => /eqP -> l /part0 H/H{H} ->{l}.
@@ -1505,18 +1509,20 @@ transitivity (n%:R^-1 *
     move: Hi; apply contraL => /eqP ->.
     by move: Hpart; rewrite is_part_sortedE => /andP [].
   rewrite -(zcard_rem H0i Hi) [X in _ / X]natrM invfM -[LHS]mul1r !mulrA.
-  congr (_ * _); rewrite divff // pnatr_eq0.
+  congr (_ * _); rewrite divff // Hchar.
   rewrite muln_eq0 negb_or H0i /=.
   by move: Hi; apply contraL => /eqP H; apply/count_memPn.
 rewrite -mulr_suml mulrA -[RHS]mul1r; congr (_ * _).
 rewrite -natr_sum -Hsum part_sumn_count // mulrC divff //.
-by rewrite Hsum Hm pnatr_eq0.
+by rewrite Hchar Hsum Hm.
 Qed.
 
 Lemma symh_to_symp n :
+  [char R] =i pred0 ->
   'h_n = \sum_(l : intpartn n) (zcard l)%:R^-1 *: 'p[l] :> SF.
 Proof.
-rewrite symh_to_symp_intpartn; apply eq_bigr => l _.
+move=> Hchar.
+rewrite symh_to_symp_intpartn //; apply eq_bigr => l _.
 by rewrite coeff_symh_to_symp.
 Qed.
 

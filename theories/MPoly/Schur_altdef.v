@@ -480,8 +480,8 @@ elim=> [|b IHb] d Hd la.
   by rewrite intpartn0 /mpart /= mnmP => i; rewrite !mnmE /=.
 case: (leqP d b) => Hdb; first exact: (IHb _ Hdb).
 have {Hd Hdb} Hd : d = b.+1 by apply anti_leq; rewrite Hd Hdb.
-elim/(finord_wf (T := IntPartNLex.intpartnlex_finPOrdType d)) : la =>
-    la IHla Hszla.
+pose P := IntPartNLex.intpartnlex_finPOrdType d.
+elim/(finord_wf (T := P)) : la => la IHla Hszla.
 pose k := head 1%N (conj_intpartn la).
 pose p1 := behead (conj_intpartn la); pose d1 := sumn p1.
 have Hk : (d = d1 + k)%N.

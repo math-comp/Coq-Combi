@@ -31,6 +31,7 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
+
 Lemma mprodXnE R nv (I : Type) (F : I -> 'X_{1..nv}) P m (r : seq _) :
   \prod_(i <- r | P i) 'X_[R, F i] ^+ m i = 'X_[\sum_(i <- r | P i) (F i *+ m i)].
 Proof.
@@ -439,13 +440,15 @@ Notation "p '(Y)'" := (@polY_XY _ _ _ p) (at level 20, format "p '(Y)'").
 Notation "p '(X)'" := (@polX_XY _ _ _ p) (at level 20, format "p '(X)'").
 Notation "p '(XY)'" := (@evalXY _ _ _ p) (at level 20, format "p '(XY)'").
 
-Variable R : numFieldType.
+Variable R : fieldType.
 
 Lemma Cauchy_homsymp_zhomsymp m n d :
+  [char R] =i pred0 ->
   Cauchy_kernel m n R d =
   \sum_(la : intpartn d) 'hp[la](X) * ((zcard la)%:R^-1 *: 'hp[la](Y)).
 Proof.
-rewrite /Cauchy_kernel symh_to_symp !rmorph_sum /=; apply eq_bigr => la _.
+move=> Hchar.
+rewrite /Cauchy_kernel symh_to_symp // !rmorph_sum /=; apply eq_bigr => la _.
 by rewrite linearZ /= -scalerAr prod_sympXY; congr (_ *: _).
 Qed.
 
@@ -514,7 +517,7 @@ Lemma coord_zsympsps (la mu : P) :
   = (la == mu)%:R.
 Proof using Hd.
 have to_p (nu : intpartn d) : ('hsF[nu] : HSC) \in span 'hp.
-  by rewrite (span_basis (symbp_basis _ Hd)) memvf.
+  by rewrite (span_basis (symbp_basis Hd _)) // memvf.
 have : \sum_(nu : intpartn d) 'hsF[nu](X) * 'hsF[nu](Y) =
        \sum_(nu : intpartn d) 'hp[nu](X) * ((zcard nu)%:R^-1 *: 'hp[nu](Y)).
   by rewrite -Cauchy_homsyms_homsyms Cauchy_homsymp_zhomsymp.
@@ -594,7 +597,7 @@ Qed.
 Lemma homsymdotss la mu : '[ 'hsF[la] | 'hsF[mu] ] = (la == mu)%:R.
 Proof using Hd.
 have to_p (nu : intpartn d) : 'hsF[nu] \in span 'hp.
-  by rewrite (span_basis (symbp_basis _ Hd)) memvf.
+  by rewrite (span_basis (symbp_basis Hd _)) // memvf.
 rewrite (coord_span (to_p la)) (coord_span (to_p mu)).
 transitivity
   (\sum_i (coord 'hp i 'hsF[la]) * (zcard (enum_val i))%:R * (coord 'hp i 'hsF[mu])).
@@ -614,12 +617,12 @@ transitivity
     by apply/CrealP; apply Creal_Crat; apply Crat_rat.
   rewrite -(map_homsyms (ratr_rmorphism algCF)).
   have to_pR (nu : intpartn d) : 'hsR[nu] \in span 'hp.
-    by rewrite (span_basis (symbp_basis _ Hd)) memvf.
+    by rewrite (span_basis (symbp_basis Hd _)) // memvf.
   rewrite {1}(coord_span (to_pR mu)) raddf_sum.
   rewrite (eq_bigr
              (fun i : 'I_#|{:P}| => ratr (coord 'hp i 'hsR[mu]) *: ('hp)`_i )).
     rewrite coord_sum_free //.
-    exact: (basis_free (symbp_basis _ Hd)).
+    exact: (basis_free (symbp_basis Hd _)).
   move=> i _; rewrite /= scale_map_homsym.
   have /= := map_homsymbp (@ratr_rmorphism algCF) n0 d.
   move=> /(congr1 (fun p : _.-tuple _ => p`_i)) /= => <-.
