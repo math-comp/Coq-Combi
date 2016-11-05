@@ -297,7 +297,7 @@ case: eqP => H; last by rewrite mulr0.
 by rewrite -H Hmu in Hl0l.
 Qed.
 
-Theorem irrP :
+Theorem irrSG_nvarP :
   perm_eq [seq 'irrSG[la] | la <- enum {: intpartn n}] (irr 'SG_n).
 Proof.
 pose irrChs := [seq Fchar_inv f | f <- 'hs : seq HS].
@@ -341,6 +341,10 @@ Notation "''irrSG[' l ']'" := (irrSG l).
 Require Import therule.
 Open Scope ring_scope.
 
+Theorem irrSGP n :
+  perm_eq [seq 'irrSG[la] | la <- enum {: intpartn n}] (irr 'SG_n).
+Proof. exact: irrSG_nvarP. Qed.
+
 Lemma Fchar_irrSGE nvar0 n (la : intpartn n) :
   Fchar nvar0 'irrSG[la] = 'hs[la].
 Proof.
@@ -348,7 +352,7 @@ rewrite /irrSG -(FcharNvar (nvar0 := n) _) ?leqnSn //=.
 by rewrite Fchar_invK ?leqnSn //= cnvarhomsyms ?leqnSn.
 Qed.
 
-Theorem LR_rule_irr c d (la : intpartn c) (mu : intpartn d) :
+Theorem LR_rule_irrSG c d (la : intpartn c) (mu : intpartn d) :
   'Ind['SG_(c + d)] ('irrSG[la] \o^ 'irrSG[mu]) =
   \sum_(nu : intpartn (c + d) | included la nu) 'irrSG[nu] *+ LRyam_coeff la mu nu.
 Proof.
