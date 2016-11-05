@@ -596,6 +596,58 @@ Proof. by apply eq_from_tnth => i; rewrite !tnth_map map_homsyms. Qed.
 End ChangeField.
 
 
+Section ChangeNVar.
+
+Variable R : comRingType.
+Variable m0 n0 : nat.
+Local Notation m := m0.+1.
+Local Notation n := n0.+1.
+Variable d : nat.
+Hypothesis Hd : (d <= m)%N || (n0 < m)%N.
+
+Lemma cnvarhomsym_subproof (p : {homsym R[m, d]}) :
+  (cnvarsym n0 p) \is d.-homsym.
+Proof using.
+case: p => [p] /=; rewrite unfold_in /= => Hp; rewrite unfold_in.
+rewrite /cnvarsym /=; apply/mwmwgt_homogP.
+have [f [Hf Hfhom]] := sym_fundamental_homog (sympol_is_symmetric p) Hp.
+rewrite /sympolyf; case: (sym_fundamental _) => [g []] /=.
+by rewrite -Hf => H _; rewrite (msym_fundamental_un H).
+Qed.
+Definition cnvarhomsym (p : {homsym R[m, d]}) : {homsym R[n, d]} :=
+  HomogSym (cnvarhomsym_subproof p).
+Lemma cnvarhomsym_is_linear : linear cnvarhomsym.
+Proof. by move=> a f g; apply val_inj; rewrite /= !linearD !linearZ /=. Qed.
+Canonical cnvarhomsym_additive   := Additive  cnvarhomsym_is_linear.
+Canonical cnvarhomsym_linear     := AddLinear cnvarhomsym_is_linear.
+
+Lemma cnvarhomsyme la : cnvarhomsym 'he[la] = 'he[la].
+Proof using Hd.
+by apply val_inj; rewrite /= -![prod_gen _ _]/'e[_] cnvar_prodsyme.
+Qed.
+
+Lemma cnvarhomsymh la : cnvarhomsym 'hh[la] = 'hh[la].
+Proof using Hd.
+by apply val_inj; rewrite /= -![prod_gen _ _]/'h[_] cnvar_prodsymh.
+Qed.
+
+Lemma cnvarhomsymp la : cnvarhomsym 'hp[la] = 'hp[la].
+Proof using Hd.
+by apply val_inj; rewrite /= -![prod_gen _ _]/'p[_] cnvar_prodsymp.
+Qed.
+
+Lemma cnvarhomsymm la : cnvarhomsym 'hm[la] = 'hm[la].
+Proof using Hd.
+by apply val_inj; rewrite /= cnvar_symm.
+Qed.
+
+Lemma cnvarhomsyms la : cnvarhomsym 'hs[la] = 'hs[la].
+Proof using Hd.
+by apply val_inj; rewrite /= cnvar_syms.
+Qed.
+
+End ChangeNVar.
+
 Section ScalarProduct.
 
 Variable n0 d : nat.
