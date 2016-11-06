@@ -32,7 +32,7 @@ Unset Printing Implicit Defensive.
 Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
-Lemma NirrSn n : Nirr 'SG_n = #|{:intpartn n}|.
+Lemma NirrSn n : Nirr 'SG_n = #|{:'P_n}|.
 Proof using. by rewrite NirrE card_classes_perm card_ord. Qed.
 
 Lemma NirrS2 : Nirr 'SG_2 = 2.

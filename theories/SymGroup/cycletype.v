@@ -432,7 +432,7 @@ Qed.
 
 Section Permofcycletype.
 
-Implicit Types (l : nat) (ct : intpartn #|T|).
+Implicit Types (l : nat) (ct : 'P_#|T|).
 
 Fact perm_of_pcycle_subproof C : injective (next (enum C)).
 Proof using. by apply uniq_next; exact: enum_uniq. Qed.
@@ -620,7 +620,7 @@ End Permofcycletype.
 
 Section Classes.
 
-Variable ct : intpartn #|T|.
+Variable ct : 'P_#|T|.
 
 Lemma permCT_exists : {s | cycle_type s == ct}.
 Proof using.
@@ -664,7 +664,7 @@ apply/imsetP/imsetP => [] [/= p _ Hp].
 Qed.
 
 Lemma card_classes_perm :
-  #|classes [set: {perm T}]| = #|{: intpartn #|T| }|.
+  #|classes [set: {perm T}]| = #|{: 'P_#|T| }|.
 Proof using.
 rewrite -imset_classCT card_imset; last exact: classCT_inj.
 by apply eq_card => s; rewrite !inE.
@@ -675,7 +675,7 @@ Local Open Scope ring_scope.
 
 Section CFunIndicator.
 
-Variable ct : intpartn #|T|.
+Variable ct : 'P_#|T|.
 
 Definition cfuniCT :=
   cfun_indicator [set: {perm T}] (classCT ct).
@@ -709,11 +709,11 @@ Section Sn.
 
 Variable n : nat.
 
-Definition partnCT : intpartn #|'I_n| -> intpartn n :=
+Definition partnCT : 'P_#|'I_n| -> 'P_n :=
   cast_intpartn (card_ord n).
-Definition cycle_typeSn (s : 'S_n) : intpartn n := partnCT (cycle_type s).
+Definition cycle_typeSn (s : 'S_n) : 'P_n := partnCT (cycle_type s).
 
-Lemma CTpartnK (p : intpartn n) : partnCT p = p.
+Lemma CTpartnK (p : 'P_n) : partnCT p = p.
 Proof using.
 rewrite /partnCT; apply val_inj => /=.
 by rewrite !cast_intpartnE.
@@ -728,18 +728,18 @@ move/(congr1 val); rewrite !cast_intpartnE /= => Hp.
 exact: val_inj.
 Qed.
 
-Lemma partnCTK (p : intpartn #|'I_n|) : p = partnCT p.
+Lemma partnCTK (p : 'P_#|'I_n|) : p = partnCT p.
 Proof using.
 rewrite /CTpartn; apply val_inj => /=.
 by rewrite !cast_intpartnE.
 Qed.
 
-Lemma partnCT_congr p1 (p2 : intpartn n) : (partnCT p1 == p2) = (p1 == p2).
+Lemma partnCT_congr p1 (p2 : 'P_n) : (partnCT p1 == p2) = (p1 == p2).
 Proof using.
 by apply/eqP/eqP => [<- | ->]; [rewrite -partnCTK | rewrite CTpartnK].
 Qed.
 
-Lemma cfuniCTnE (ct : intpartn n) (s : 'S_n) :
+Lemma cfuniCTnE (ct : 'P_n) (s : 'S_n) :
   '1_[ct] s = (cycle_typeSn s == ct)%:R.
 Proof using.
 rewrite cfuniCTE /cycle_typeSn /=.

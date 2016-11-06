@@ -498,7 +498,7 @@ Section FinType.
 Variable n : nat.
 
 Variable d : nat.
-Variable sh : intpartn d.
+Variable sh : 'P_d.
 
 Definition is_tab_of_shape sh :=
   [pred t | (is_tableau (T := [inhOrdType of 'I_n.+1]) t) && (shape t == sh) ].

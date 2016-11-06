@@ -52,7 +52,7 @@ The main theorem is [Theorem LRyam_coeffP]:
 
 [
   Schur P1 * Schur P2 =
-  \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
+  \sum_(P : 'P_(d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
 ]
 
 As a corollary we provide the two Pieri rules [Pieri_rowpartn] and
@@ -185,7 +185,7 @@ Variables d1 d2 : nat.
 
 Section TheRule.
 
-Variables (P1 : intpartn d1) (P2 : intpartn d2).
+Variables (P1 : 'P_d1) (P2 : 'P_d2).
 
 Lemma sfilterleq_LRsupportP Q :
   Q \in LRsupport (hyper_stdtabn P1) (hyper_stdtabn P2) ->
@@ -235,7 +235,7 @@ Qed.
 (** * Littlewood-Richardson Yamanouchi tableaux *)
 Section OneCoeff.
 
-Variable P : intpartn (d1 + d2).
+Variable P : 'P_(d1 + d2).
 Hypothesis Hincl : included P1 P.
 
 Lemma sumn_diff_shape_intpartE : sumn (P / P1) = sumn P2.
@@ -546,7 +546,7 @@ Proof using .
   by rewrite size_filter count_size (IHt Htab).
 Qed.
 
-Lemma LRtab_set_included (P : intpartn (d1 + d2)) Q :
+Lemma LRtab_set_included (P : 'P_(d1 + d2)) Q :
   Q \in LRtab_set P1 P2 P -> included P1 P.
 Proof using .
   rewrite !inE => /andP [] Hhas /eqP <-.
@@ -569,10 +569,10 @@ Notation Schur p := (Schur n0 R p).
 
 Theorem LRyam_coeffP :
   Schur P1 * Schur P2 =
-  \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
+  \sum_(P : 'P_(d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
 Proof using .
   rewrite LRtab_coeffP.
-  rewrite (bigID (fun P : intpartn (d1 + d2) => included P1 P) predT) /=.
+  rewrite (bigID (fun P : 'P_(d1 + d2) => included P1 P) predT) /=.
   rewrite [X in _ + X](_ : _ = 0); first last.
     rewrite (eq_bigr (fun=> 0)).
     - by rewrite sumr_const mul0rn.
@@ -625,7 +625,7 @@ Proof using .
   * exfalso; by case: (evalseq y) y0 Heval => [| a [| l0 l]] [|y0].
 Qed.
 
-Theorem LRyam_coeff_rowpart (P1 : intpartn d1) (P : intpartn (d1 + d2)) :
+Theorem LRyam_coeff_rowpart (P1 : 'P_d1) (P : 'P_(d1 + d2)) :
   included P1 P -> LRyam_coeff P1 (rowpartn d2) P = hb_strip P1 P.
 Proof using .
   rewrite /LRyam_coeff /LRyam_set => Hincl.
@@ -659,9 +659,9 @@ Proof using .
     by rewrite Hincl Hskew.
 Qed.
 
-Theorem Pieri_rowpartn (P1 : intpartn d1) :
+Theorem Pieri_rowpartn (P1 : 'P_d1) :
   Schur P1 * Schur (rowpartn d2) =
-  \sum_(P : intpartn (d1 + d2) | hb_strip P1 P) Schur P.
+  \sum_(P : 'P_(d1 + d2) | hb_strip P1 P) Schur P.
 Proof using .
   rewrite LRyam_coeffP.
   rewrite [LHS]big_mkcond [RHS]big_mkcond /=.
@@ -673,7 +673,7 @@ Proof using .
   case: (hb_strip P1 p); by rewrite /= ?mulr1n ?mulr0n.
 Qed.
 
-Theorem LRyam_coeff_colpartn (P1 : intpartn d1) (P : intpartn (d1 + d2)) :
+Theorem LRyam_coeff_colpartn (P1 : 'P_d1) (P : 'P_(d1 + d2)) :
   included P1 P -> LRyam_coeff P1 (colpartn d2) P = vb_strip P1 P.
 Proof using .
   move=> Hincl.
@@ -685,9 +685,9 @@ Proof using .
   by rewrite /= hb_strip_conjE.
 Qed.
 
-Theorem Pieri_colpartn (P1 : intpartn d1) :
+Theorem Pieri_colpartn (P1 : 'P_d1) :
   Schur P1 * Schur (colpartn d2) =
-  \sum_(P : intpartn (d1 + d2) | vb_strip P1 P) Schur P.
+  \sum_(P : 'P_(d1 + d2) | vb_strip P1 P) Schur P.
 Proof using .
   rewrite LRyam_coeffP.
   rewrite [LHS]big_mkcond [RHS]big_mkcond /=.

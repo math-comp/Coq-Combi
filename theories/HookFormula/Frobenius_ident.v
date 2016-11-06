@@ -36,7 +36,7 @@ Variable n : nat.
 
 Section Shape.
 
-Variable sh : intpartn n.
+Variable sh : 'P_n.
 
 Definition stpsh : predArgType := ((stdtabsh sh) * (stdtabsh sh))%type.
 Definition seq_of_stpsh (p : stpsh) := let: (p1, p2) := p in (val p1, val p2).
@@ -136,15 +136,15 @@ Definition stpn_unionType :=
   union_finType
     stpn_subCountType
     (Pi := fun sh : seq nat => is_stdtab_pair_of_shape sh)
-    (fun p : intpartn n => (stpsh_subFinType p))
+    (fun p : 'P_n => (stpsh_subFinType p))
     stpn_PredEq stpn_partition_shape.
 Canonical stpn_finType := Eval hnf in [finType of stpn for stpn_unionType].
 Canonical stpn_subFinType := Eval hnf in [subFinType of stpn].
 
-Lemma card_stpn : #|stpn_finType| = \sum_(p : intpartn n) (n`! %/ (F_deno p))^2.
+Lemma card_stpn : #|stpn_finType| = \sum_(p : 'P_n) (n`! %/ (F_deno p))^2.
 Proof using.
 rewrite card_unionE.
-rewrite (eq_bigr (fun sh : intpartn n => #|stdtabsh_finType sh|^2)); first last.
+rewrite (eq_bigr (fun sh : 'P_n => #|stdtabsh_finType sh|^2)); first last.
   by move=> i _; rewrite card_stpsh.
 apply eq_bigr => sh _.
 by rewrite HookLengthFormula intpartn_sumn.
@@ -196,7 +196,7 @@ Qed.
 Lemma bijRSstd : bijective RSstd.
 Proof using. split with (g := RSstdinv). exact: RSstdK. exact: RSstdinvK. Qed.
 
-Theorem Frobenius_ident : n`! = \sum_(p : intpartn n) (n`! %/ (F_deno p))^2.
+Theorem Frobenius_ident : n`! = \sum_(p : 'P_n) (n`! %/ (F_deno p))^2.
 Proof using.
 by rewrite -{1}card_stdwordn -card_stpn; apply: bij_card bijRSstd.
 Qed.
@@ -207,13 +207,13 @@ Import GRing.Theory.
 Import Num.Theory.
 
 Theorem Frobenius_ident_rat :
-  1 / (n`!)%:Q = \sum_(p : intpartn n) 1 / (F_deno p)%:Q ^+ 2.
+  1 / (n`!)%:Q = \sum_(p : 'P_n) 1 / (F_deno p)%:Q ^+ 2.
 Proof using.
 rewrite -[RHS]mulr1.
 have Hfn0 : n`!%:Q != 0 by rewrite intr_eq0 eqz_nat -lt0n fact_gt0.
 rewrite -{5}(@divff _ ((n`!%:Q) ^+ 2)); last by rewrite sqrf_eq0.
 rewrite mulrA mulr_suml.
-rewrite (eq_bigr (fun p : intpartn n => ((n`! %/ (F_deno p)) ^ 2)%N%:Q)); first last.
+rewrite (eq_bigr (fun p : 'P_n => ((n`! %/ (F_deno p)) ^ 2)%N%:Q)); first last.
   move=> p _; rewrite PoszM intrM.
   have -> : (n`! %/ F_deno p)%:Q = (n`!)%:Q / (F_deno p)%:Q.
     rewrite -[LHS]mulr1 -{2}(@divff _ (F_deno p)%:Q); first last.

@@ -71,23 +71,23 @@ Sigma types for integer partitions:
                canonically a [subCountType] of [seq (seq nat)]
 - [conj_intpart] == the conjugate of a [intpart] as a [intpart]
 
-- [intpart n] == a type for [seq (seq nat)] which are partitions of n;
+- ['P_n]    == a type for [seq (seq nat)] which are partitions of [n];
                it is canonically a [finType]
-- [conj_intpartn] == the conjugate of a [intpartn] as a [intpartn]
+- [conj_intpartn] == the conjugate of a ['P_n] as a ['P_n]
 
 
 Operations on partitions:
 
 - [union_intpart l k] == the partition of type [intpart] obtained by
                gathering the parts of [l] and [k]
-- [l +|+ k] = [union_intpartn l k] == the partition of type [intpartn]
+- [l +|+ k] = [union_intpartn l k] == the partition of type ['P_n]
                obtained by gathering the parts of [l] and [k]
 
 Comparison of partitions:
 
 - [partdom s t] == [s] is dominated by [t], that is the partial sum of [s] are
                smaller that the partial sum of [t].
-- [intpartndom d] == a type convertible to [intpart d] which is canonically
+- [intpartndom d] == a type convertible to ['P_n] which is canonically
                finite and partially ordered by [partdom].
 - [(s <= t)%Ord] == [s] is smaller than [t] for the lexicographic order
 
@@ -1365,51 +1365,56 @@ Let type := sub_finType
 Canonical intpartn_finType := Eval hnf in [finType of intpartn for type].
 Canonical intpartn_subFinType := Eval hnf in [subFinType of intpartn].
 
-Lemma intpartnP (p : intpartn) : is_part p.
+Local Notation "''P'" := intpartn.
+
+Lemma intpartnP (p : 'P) : is_part p.
 Proof using. by case: p => /= p /andP []. Qed.
 
-Lemma intpartn_sorted (p : intpartn) : sorted geq p.
+Lemma intpartn_sorted (p : 'P) : sorted geq p.
 Proof. by have:= intpartnP p; rewrite is_part_sortedE => /andP []. Qed.
 
 Hint Resolve intpartnP intpartn_sorted.
 
-Definition intpart_of_intpartn (p : intpartn) := IntPart (intpartnP p).
+Definition intpart_of_intpartn (p : 'P) := IntPart (intpartnP p).
 Coercion intpart_of_intpartn : intpartn >-> intpart.
 
-Lemma intpartn_sumn (p : intpartn) : sumn p = n.
+Lemma intpartn_sumn (p : 'P) : sumn p = n.
 Proof using. by case: p => /= p /andP [] /eqP. Qed.
 
-Lemma mem_intpartn (p : intpartn) i : i \in pnval p -> 0 < i <= n.
+Lemma mem_intpartn (p : 'P) i : i \in pnval p -> 0 < i <= n.
 Proof. by rewrite -(intpartn_sumn p); apply mem_part. Qed.
 
-Lemma enum_intpartnE : map val (enum {:intpartn}) = enum_partn n.
+Lemma enum_intpartnE : map val (enum {:'P}) = enum_partn n.
 Proof using. rewrite /=; exact: enum_subE. Qed.
 
-Lemma conj_intpartnP (sh : intpartn) : is_part_of_n n (conj_part sh).
+Lemma conj_intpartnP (sh : 'P) : is_part_of_n n (conj_part sh).
 Proof using.
 case: sh => sh /= /andP [] /eqP <- Hpart.
 by rewrite is_part_conj // sumn_conj_part /= eq_refl.
 Qed.
-Canonical conj_intpartn (sh : intpartn) := IntPartN (conj_intpartnP sh).
+Canonical conj_intpartn (sh : 'P) := IntPartN (conj_intpartnP sh).
 
 Lemma conj_intpartnK : involutive conj_intpartn.
 Proof using. move=> p; apply: val_inj => /=; by rewrite conj_partK. Qed.
 
 End PartOfn.
 
-Lemma intpartn0 (sh : intpartn 0) : sh = [::] :> seq nat.
+Notation "''P_' n" := (intpartn n)
+  (at level 8, n at level 2, format "''P_' n").
+
+Lemma intpartn0 (sh : 'P_0) : sh = [::] :> seq nat.
 Proof.
 case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
 by rewrite /enum_partn /= inE => /eqP.
 Qed.
 
-Lemma intpartn1 (sh : intpartn 1) : sh = [:: 1] :> seq nat.
+Lemma intpartn1 (sh : 'P_1) : sh = [:: 1] :> seq nat.
 Proof.
 case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
 by rewrite /enum_partn /= inE => /eqP.
 Qed.
 
-Lemma intpartn2 (sh : intpartn 2) :
+Lemma intpartn2 (sh : 'P_2) :
   sh = [:: 2]  :> seq nat \/ sh = [:: 1; 1] :> seq nat.
 Proof.
 case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
@@ -1417,13 +1422,13 @@ by rewrite /enum_partn /= !inE => /orP [] /eqP ->; [left | right].
 Qed.
 
 Definition cast_intpartn m n (eq_mn : m = n) p :=
-  let: erefl in _ = n := eq_mn return intpartn n in p.
+  let: erefl in _ = n := eq_mn return 'P_n in p.
 
 Lemma cast_intpartnE m n (eq_mn : m = n) p :
   val (cast_intpartn eq_mn p) = val p.
 Proof. subst m; by case: p. Qed.
 
-Lemma cast_intpartn_id n eq_n (s : intpartn n) : cast_intpartn eq_n s = s.
+Lemma cast_intpartn_id n eq_n (s : 'P_n) : cast_intpartn eq_n s = s.
 Proof using. by apply val_inj => /=; rewrite cast_intpartnE. Qed.
 
 Lemma cast_intpartnK m n eq_m_n :
@@ -1441,7 +1446,7 @@ Proof using. exact: can_inj (cast_intpartnK eq_m_n). Qed.
 Definition rowpart d := if d is _.+1 then [:: d] else [::].
 Fact rowpartnP d : is_part_of_n d (rowpart d).
 Proof. case: d => [//= | d]; by rewrite /is_part_of_n /= addn0 eq_refl. Qed.
-Definition rowpartn d : intpartn d := IntPartN (rowpartnP d).
+Definition rowpartn d : 'P_d := IntPartN (rowpartnP d).
 
 Definition colpart d := nseq d 1%N.
 Fact colpartnP d : is_part_of_n d (colpart d).
@@ -1450,7 +1455,7 @@ elim: d => [| d ] //= /andP [] /eqP -> ->.
 rewrite add1n eq_refl andbT /=.
 by case: d.
 Qed.
-Definition colpartn d : intpartn d := IntPartN (colpartnP d).
+Definition colpartn d : 'P_d := IntPartN (colpartnP d).
 
 Lemma conj_rowpartn d : conj_intpartn (rowpartn d) = colpartn d.
 Proof. apply val_inj => /=; rewrite /rowpart /colpart; by case: d. Qed.
@@ -1513,7 +1518,7 @@ rewrite -{1}[n.+1]addn1 iota_add add0n !map_cat sumn_cat IHn /= addn0.
 by rewrite size_enum_partns.
 Qed.
 
-Lemma card_intpartn sm : #|{:intpartn sm}| = intpartn_nb sm.
+Lemma card_intpartn sm : #|{:'P_sm}| = intpartn_nb sm.
 Proof.
 by rewrite [#|_|]cardT -(size_map val) /= enum_intpartnE -size_enum_partn.
 Qed.
@@ -1578,7 +1583,7 @@ Qed.
 
 Section UnionPart.
 
-Variables (m n : nat) (l : intpartn m) (k : intpartn n).
+Variables (m n : nat) (l : 'P_m) (k : 'P_n).
 
 Lemma union_intpartn_subproof : is_part_of_n (m + n) (merge geq l k).
 Proof.
@@ -1753,7 +1758,7 @@ Module IntPartNDom.
 
 Require Import ordtype.
 
-Definition intpartndom d := intpartn d.
+Definition intpartndom d := 'P_d.
 
 Fact partdom_porder d : PartOrder.axiom (fun x y : intpartndom d => partdom x y).
 Proof using.
@@ -1774,7 +1779,7 @@ Canonical intpartndom_inhType d :=
 Lemma partdomE d : @leqX_op (partdom_pordType d) = partdom.
 Proof. by rewrite /leqX_op. Qed.
 
-Lemma partdom_rowpartn d (sh : intpartn d) : partdom sh (rowpartn d).
+Lemma partdom_rowpartn d (sh : 'P_d) : partdom sh (rowpartn d).
 Proof.
 case: d sh => [|d] sh; first by rewrite /= !intpartn0.
 rewrite /=; apply/partdomP => i.
@@ -1782,7 +1787,7 @@ case: i => [|i] /=; rewrite ?take0 ?addn0 //.
 by rewrite -{2}(intpartn_sumn sh) -{2}(cat_take_drop i.+1 sh) sumn_cat leq_addr.
 Qed.
 
-Lemma colpartn_partdom d (sh : intpartn d) : partdom (colpartn d) sh.
+Lemma colpartn_partdom d (sh : 'P_d) : partdom (colpartn d) sh.
 Proof.
 apply/partdomP => i; rewrite /=.
 case: (ssrnat.ltnP i (size sh)) => Hi.
@@ -1894,7 +1899,7 @@ exists (B :: P); split => /=; [|apply/and3P; split|].
 - by rewrite Ps.
 Qed.
 
-Lemma ex_set_setpart_shape A (sh : intpartn #|A|) :
+Lemma ex_set_setpart_shape A (sh : 'P_#|A|) :
   exists2 P, partition P A & setpart_shape P = sh.
 Proof using.
 case: sh => sh.

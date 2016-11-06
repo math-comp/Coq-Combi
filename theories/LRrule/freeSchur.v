@@ -26,7 +26,7 @@ multivariate polynomials to the non commutative setting.
                       [s1] of degree [d1] and [s2] of degree [d2] return an
                       homogeneous language of degree [d1 + d2].
 - [tabwordshape n sh] == the set of reading of tableaux over ['I_n.+1] of
-                      shape [sh], where [sh] is of type [intpartn d]
+                      shape [sh], where [sh] is of type ['P_d]
 - [freeSchur n t] == the set of words whose recording tableau over ['I_n.+1]
                       is [t], where [t] is of type [stdtabn]
 - [tabword_of_tuple w] == the bijection freeSchur -> tabwordshape as stated
@@ -48,7 +48,7 @@ multivariate polynomials to the non commutative setting.
 
 - [hyper_stdtab sh] == the hyper standard tableau of shape sh as a [seq (seq nat)].
 - [hyper_stdtabn sh] == the hyper standard tableau of shape sh as a
-                         [stdtabn d] where sh is a [intpartn d].
+                         [stdtabn d] where sh is a ['P_d].
 - [LRtab_set Q1 Q2 Q] == the set of standard Littlewood-Richardson Q-tableau in
                       the product of the free Schur function indexed by [Q1]
                       and [Q2] of shape [Q].
@@ -177,7 +177,7 @@ Section Degree.
 Variable d : nat.
 
 (* set of tableaux words on 'I_n of a given shape *)
-Definition tabwordshape (sh : intpartn d) : homlang d :=
+Definition tabwordshape (sh : 'P_d) : homlang d :=
   [set t : d.-tuple 'I_n | tabsh_reading sh t ].
 (* set of tableaux words on 'I_n of a given Q-symbol *)
 Definition freeSchur (Q : stdtabn d) : homlang d  :=
@@ -355,30 +355,30 @@ Definition hyper_stdtab sh := RS (std (hyper_yam sh)).
 Lemma hyper_stdtabP sh : is_stdtab (hyper_stdtab sh).
 Proof using . by rewrite /hyper_stdtab /= RSstdE std_is_std. Qed.
 
-Lemma hyper_stdtabnP d (P : intpartn d) : is_stdtab_of_n d (hyper_stdtab P).
+Lemma hyper_stdtabnP d (P : 'P_d) : is_stdtab_of_n d (hyper_stdtab P).
 Proof using .
   rewrite /is_stdtab_of_n /= hyper_stdtabP /= size_RS.
   rewrite size_std -evalseq_eq_size (evalseq_hyper_yam (intpartnP P)).
   by rewrite intpartn_sumn.
 Qed.
-Definition hyper_stdtabn d (P : intpartn d) := StdtabN (hyper_stdtabnP P).
+Definition hyper_stdtabn d (P : 'P_d) := StdtabN (hyper_stdtabnP P).
 
-Lemma shape_hyper_stdtabnP d (P : intpartn d) : shape (hyper_stdtabn P) = P.
+Lemma shape_hyper_stdtabnP d (P : 'P_d) : shape (hyper_stdtabn P) = P.
 Proof using .
   rewrite shape_RS_std (shape_RS_yam (hyper_yamP (intpartnP P))).
   by rewrite (evalseq_hyper_yam (intpartnP P)).
 Qed.
-Lemma shaped_hyper_stdtabnP d (P : intpartn d) : shape_deg (hyper_stdtabn P) = P.
+Lemma shaped_hyper_stdtabnP d (P : 'P_d) : shape_deg (hyper_stdtabn P) = P.
 Proof using . apply: val_inj => /=; exact: shape_hyper_stdtabnP. Qed.
 
 Section Coeffs.
 
 Variables d1 d2 : nat.
-Variables (P1 : intpartn d1) (P2 : intpartn d2).
+Variables (P1 : 'P_d1) (P2 : 'P_d2).
 
-Definition LRtab_set (P : intpartn (d1 + d2)) :=
+Definition LRtab_set (P : 'P_(d1 + d2)) :=
   [set Q in (LRsupport (hyper_stdtabn P1) (hyper_stdtabn P2)) | (shape Q == P)].
-Definition LRtab_coeff (P : intpartn (d1 + d2)) := #|LRtab_set P|.
+Definition LRtab_coeff (P : 'P_(d1 + d2)) := #|LRtab_set P|.
 
 
 Theorem LRtab_coeffP :
@@ -670,8 +670,7 @@ Proof using .
     exact: H.
 Qed.
 
-Theorem LRtab_coeff_conj (P1 : intpartn d1) (P2 : intpartn d2)
-        (P : intpartn (d1 + d2)) :
+Theorem LRtab_coeff_conj (P1 : 'P_d1) (P2 : 'P_d2) (P : 'P_(d1 + d2)) :
   LRtab_coeff P1 P2 P =
   LRtab_coeff (conj_intpartn P1) (conj_intpartn P2) (conj_intpartn P).
 Proof using .

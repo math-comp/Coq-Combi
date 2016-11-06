@@ -191,7 +191,7 @@ Local Open Scope nat_scope.
 
 Section HasIncr.
 
-Variables (d k : nat) (la : intpartn d) (h : {set 'I_n}).
+Variables (d k : nat) (la : 'P_d) (h : {set 'I_n}).
 
 Local Definition hasincr :=
   has (fun i => (nth 0 (mpart la + mesym1 h)%MM i).+1 ==
@@ -255,7 +255,7 @@ case: (boolP [&& _, _ & _]) => [/and3P [] Hsz /eqP <- Hincr | _].
 - exact: not_hasincr_part.
 - exact: rowpartnP.
 Qed.
-Definition add_mesym : intpartn (d + k) := IntPartN add_mpart_mesymP.
+Definition add_mesym : 'P_(d + k) := IntPartN add_mpart_mesymP.
 
 Lemma add_mesymE :
   size la <= n -> #|h| == k -> ~~ hasincr ->
@@ -277,7 +277,7 @@ End HasIncr.
 Definition setdiff (la mu : seq nat) : {set 'I_n} :=
   [set i : 'I_n | nth 0 la i < nth 0 mu i].
 
-Lemma card_setdiff d k (la : intpartn d) (mu : intpartn (d + k)) :
+Lemma card_setdiff d k (la : 'P_d) (mu : 'P_(d + k)) :
   size mu <= n -> size la <= n -> vb_strip la mu -> #|setdiff la mu| = k.
 Proof using .
 move=> Hszmu Hszla /(vb_stripP (intpartnP _) (intpartnP _)) Hstrip.
@@ -307,7 +307,7 @@ suff -> : nth 0 mu i = (nth 0 la i).+1 by rewrite subSn // subnn.
 by apply anti_leq; rewrite H2 H.
 Qed.
 
-Lemma nth_add_setdiff d k (la : intpartn d) (mu : intpartn (d + k)) :
+Lemma nth_add_setdiff d k (la : 'P_d) (mu : 'P_(d + k)) :
   size mu <= n -> size la <= n -> vb_strip la mu ->
   forall i,
   nth 0 [seq (mpart la) i0 + (mesym1 (setdiff la mu)) i0 | i0 <- enum 'I_n] i =
@@ -329,7 +329,7 @@ case: ssrnat.ltnP => H /=; rewrite ?addn0 ?addn1.
   by have := Hstrip i => /andP [].
 Qed.
 
-Lemma nohasincr_setdiff d k (la : intpartn d) (mu : intpartn (d + k)) :
+Lemma nohasincr_setdiff d k (la : 'P_d) (mu : 'P_(d + k)) :
   size mu <= n -> size la <= n ->
   vb_strip la mu -> ~~ hasincr la (setdiff la mu).
 Proof using .
@@ -341,10 +341,10 @@ have := (is_partP _ (intpartnP mu)) => [] [] _.
 by apply.
 Qed.
 
-Lemma add_mesymK d k (la : intpartn d) :
+Lemma add_mesymK d k (la : 'P_d) :
   size la <= n ->
-  {in [pred mu : intpartn (d + k) | vb_strip la mu && (size mu <= n)],
-  cancel (fun mu : intpartn (d + k) => setdiff la (val mu)) (add_mesym k la)}.
+  {in [pred mu : 'P_(d + k) | vb_strip la mu && (size mu <= n)],
+  cancel (fun mu : 'P_(d + k) => setdiff la (val mu)) (add_mesym k la)}.
 Proof using .
 move=> Hszla mu /=; rewrite inE => /andP [] Hstrip Hsz.
 have:= vb_stripP (intpartnP _) (intpartnP _) Hstrip => Hstr.
@@ -356,10 +356,10 @@ Qed.
 
 
 (** * Piery's rule for alternating polynomials *)
-Theorem alt_mpart_syme d (la : intpartn d) k :
+Theorem alt_mpart_syme d (la : 'P_d) k :
   size la <= n ->
   ('a_(mpart la + rho) * 'e_k =
-  \sum_(mu : intpartn (d + k) | vb_strip la mu && (size mu <= n))
+  \sum_(mu : 'P_(d + k) | vb_strip la mu && (size mu <= n))
      'a_(mpart mu + rho))%R.
 Proof using .
 rewrite alt_syme => Hszla.
@@ -397,7 +397,7 @@ apply/idP/and3P => [H | [Hstrip Hszle /eqP HS]].
   exact: nohasincr_setdiff.
 Qed.
 
-Lemma vb_strip_rem_col0 d (la : intpartn d) :
+Lemma vb_strip_rem_col0 d (la : 'P_d) :
   vb_strip (conj_part (behead (conj_part la))) la.
 Proof using .
 rewrite -{2}(conj_intpartnK la) /=.
@@ -409,7 +409,7 @@ by rewrite leqnn.
 Qed.
 
 
-Lemma vb_strip_lex (d1 k : nat) (la : intpartn (d1 + k)) mu :
+Lemma vb_strip_lex (d1 k : nat) (la : 'P_(d1 + k)) mu :
   vb_strip mu la ->
   sumn mu = d1 ->
   is_part mu -> (val la <= incr_first_n mu k)%Ord.
@@ -465,14 +465,14 @@ Local Notation rho := (rho n).
 Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
 
-Lemma Schur_cast d d' (la : intpartn d) (Heq : d = d') :
+Lemma Schur_cast d d' (la : 'P_d) (Heq : d = d') :
   Schur n0 R (cast_intpartn Heq la) = 's_la.
 Proof using . by subst d'; congr Schur. Qed.
 
-Theorem alt_SchurE d (la : intpartn d) :
+Theorem alt_SchurE d (la : 'P_d) :
   size la <= n -> 'a_rho * 's_la = 'a_(mpart la + rho).
 Proof using .
-suff {d la} H : forall b d, d <= b -> forall (la : intpartn d),
+suff {d la} H : forall b d, d <= b -> forall (la : 'P_d),
   size la <= n -> 'a_rho * 's_la = 'a_(mpart la + rho) by apply: H.
 elim=> [|b IHb] d Hd la.
   move: Hd; rewrite leqn0 => /eqP Hd; subst d.
@@ -505,7 +505,7 @@ have Hszmu : size (conj_intpartn mu) <= n.
 have := alt_mpart_syme R k Hszmu.
 have {IHb Hszmu Hd1} <- := IHb _ Hd1 (conj_intpartn mu) Hszmu.
 rewrite -mulrA mesym_SchurE Pieri_colpartn.
-rewrite (bigID (fun P0 : intpartn (d1 + k) => (size P0 <= n))) /= addrC.
+rewrite (bigID (fun P0 : 'P_(d1 + k) => (size P0 <= n))) /= addrC.
 rewrite big1 ?add0r; first last.
   by move=> i /andP [] _; rewrite -ltnNge; exact: Schur_oversize.
 rewrite mulr_sumr.
@@ -559,11 +559,11 @@ Local Notation rho := (rho n).
 Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
 
-Theorem alt_uniq d (la : intpartn d) (s : {mpoly R[n]}) :
+Theorem alt_uniq d (la : 'P_d) (s : {mpoly R[n]}) :
   size la <= n -> 'a_rho * s = 'a_(mpart la + rho) -> s = 's_la.
 Proof using . by move=> /(alt_SchurE R) <- /(mulfI (alt_rho_non0 n R)). Qed.
 
-Theorem Schur_sym_idomain d (la : intpartn d) : 's_la \is symmetric.
+Theorem Schur_sym_idomain d (la : 'P_d) : 's_la \is symmetric.
 Proof using .
 case: (leqP (size la) n) => [Hla|].
 - have := alt_anti R (mpart la + rho).
@@ -582,7 +582,7 @@ Local Notation n := (n0.+1).
 Local Notation "''s_' k" := (Schur n0 R k)
                               (at level 8, k at level 2, format "''s_' k").
 
-Theorem Schur_sym d (la : intpartn d) : 's_la \is symmetric.
+Theorem Schur_sym d (la : 'P_d) : 's_la \is symmetric.
 Proof using .
 have -> : 's_la = map_mpoly intr (Schur _ [ringType of int] la).
   rewrite /Schur /polylang /commword raddf_sum /=; apply eq_bigr => i _ /=.
@@ -602,7 +602,7 @@ Local Notation n := (n0.+1).
 Implicit Types p q r : {mpoly R[n]}.
 Implicit Type m : 'X_{1..n}.
 
-Lemma Schur_homog (d : nat) (la : intpartn d) : Schur n0 R la \is d.-homog.
+Lemma Schur_homog (d : nat) (la : 'P_d) : Schur n0 R la \is d.-homog.
 Proof using .
 rewrite Schur_tabsh_readingE /polylang /commword.
 apply rpred_sum => [[t Ht]] _ /=.
@@ -624,7 +624,7 @@ Close Scope ord_scope.
 
 Section DefsKostkaMon.
 
-Variables (d : nat) (la : intpartn d) (n : nat).
+Variables (d : nat) (la : 'P_d) (n : nat).
 Implicit Type m : 'X_{1..n.+1}.
 Definition eval (w : seq 'I_n.+1) := [tuple count_mem i w | i < n.+1].
 Definition KostkaTab m := [set t : tabsh n la | eval (to_word t) == m].
@@ -724,7 +724,7 @@ End DefsKostkaMon.
 
 Section KostkaEq.
 
-Variables (d : nat) (la : intpartn d).
+Variables (d : nat) (la : 'P_d).
 
 Lemma Kostka_mnmwiden n (m : 'X_{1..n.+1}) :
   KostkaMon la m = KostkaMon la (mnmwiden m).
@@ -814,7 +814,7 @@ End KostkaEq.
 Section Kostka.
 
 Variable d : nat.
-Implicit Type la : intpartn d.
+Implicit Type la : 'P_d.
 Local Notation P := (intpartndom d).
 
 (* We prepend a 0 to take care of the empty partition *)
@@ -1015,8 +1015,8 @@ Local Notation sz := (Ordinal Hsz).
 Local Lemma Hszrcons : size (rcons s m) <= n.+1.
 Proof. by rewrite size_rcons. Qed.
 
-Local Notation P := (intpartn (sumn s)).
-Local Notation Pm := (intpartn ((sumn s) + m)).
+Local Notation P := ('P_(sumn s)).
+Local Notation Pm := ('P_((sumn s) + m)).
 Variable (mu : Pm).
 Local Notation Tm := (tabsh n mu).
 Hypothesis Hmu : size mu <= n.+1.
@@ -1309,10 +1309,10 @@ Section KostkaRec.
 Local Open Scope nat_scope.
 
 
-Lemma Kostka_ind d (la : intpartn d) m mu :
+Lemma Kostka_ind d (la : 'P_d) m mu :
   d = m + sumn mu ->
   Kostka la (m :: mu) =
-  \sum_(nu : intpartn (sumn mu) | hb_strip nu la) Kostka nu mu.
+  \sum_(nu : 'P_(sumn mu) | hb_strip nu la) Kostka nu mu.
 Proof.
 case: (ssrnat.leqP (size la) (size mu).+1) => Hszla; first last.
   move=> _; rewrite Kostka_size0 //.
@@ -1327,7 +1327,7 @@ rewrite -sum1dep_card.
 have Hszmu := ltnSn (size mu).
 pose sht := @shape_res_tab (size mu) mu m Hszmu la.
 rewrite (partition_big sht
-                       (fun nu : intpartn (sumn mu) => hb_strip nu la)); first last.
+                       (fun nu : 'P_(sumn mu) => hb_strip nu la)); first last.
   by move=> t Ht; apply hb_strip_shape_res_tab.
 apply eq_bigr => /= nu Hstrip; rewrite sum1dep_card.
 pose res := res_tab Hszmu Hszla Hstrip.
@@ -1361,7 +1361,7 @@ rewrite -sumn_map_condE; apply big1 => nu Hnu.
 by apply IHmu; have := hb_strip_size Hnu => /andP [_ /(leq_trans H)].
 Qed.
 
-Lemma Kostka_recE d (la : intpartn d) mu :
+Lemma Kostka_recE d (la : 'P_d) mu :
   sumn mu = d -> Kostka_rec la mu = Kostka la mu.
 Proof.
 elim: mu d la => [| m0 mu IHmu] d la /= Hd.
@@ -1392,7 +1392,7 @@ apply/unitrigP; split => [la | la mu].
 Qed.
 
 (** ** Inverse Kostka numbers *)
-Definition KostkaInv d : intpartn d -> intpartn d -> int :=
+Definition KostkaInv d : 'P_d -> 'P_d -> int :=
   Minv (fun la mu : intpartndom d => 'K(la, mu)%:R : int).
 
 Lemma KostkaInv_unitrig d :

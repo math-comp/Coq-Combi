@@ -558,7 +558,7 @@ Qed.
 
 End PermCycles.
 
-Lemma dvdn_zcard_fact n (l : intpartn n) : zcard l %| n`!.
+Lemma dvdn_zcard_fact n (l : 'P_n) : zcard l %| n`!.
 Proof.
 pose l' := (CTpartn l).
 have -> : zcard l = zcard l' by rewrite cast_intpartnE /=.
@@ -567,13 +567,13 @@ rewrite -card_Sn -cardsT; apply cardSg.
 exact: subsetT.
 Qed.
 
-Lemma neq0zcard n (l : intpartn n) : zcard l != 0.
+Lemma neq0zcard n (l : 'P_n) : zcard l != 0.
 Proof.
 have:= dvdn_zcard_fact l; apply contraL => /eqP ->.
 by rewrite dvd0n -lt0n fact_gt0.
 Qed.
 
-Theorem card_class_of_part n (l : intpartn n) : #|classCT l| = n`! %/ zcard l.
+Theorem card_class_of_part n (l : 'P_n) : #|classCT l| = n`! %/ zcard l.
 Proof using.
 rewrite /classCT card_class_perm permCTP /=.
 by rewrite cast_intpartnE /= card_ord.

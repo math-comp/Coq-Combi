@@ -259,7 +259,7 @@ Proof. by rewrite /= perm_sort. Qed.
 (*
 From mathcomp Require Import finset div.
 
-Lemma card_preim_part_of_compn n (sh : intpartn n) :
+Lemma card_preim_part_of_compn n (sh : 'P_n) :
   #|[set c | partn_of_compn c == sh]| =
   n`! %/ \prod_(i <- iota 1 n) (count_mem i sh)`!.
 Proof.

@@ -34,10 +34,10 @@ Variable n0 : nat.
 Local Notation n := n0.+1.
 Variable R : ringType.
 
-Definition Schur d (sh : intpartn d) : {mpoly R[n]} :=
+Definition Schur d (sh : 'P_d) : {mpoly R[n]} :=
   \sum_(t : tabsh n0 sh) \prod_(v <- to_word t) 'X_v.
 
-Lemma Schur_tabsh_readingE  d (sh : intpartn d) :
+Lemma Schur_tabsh_readingE  d (sh : 'P_d) :
   Schur sh =
   \sum_(t : d.-tuple 'I_n | tabsh_reading sh t) \prod_(v <- t) 'X_v.
 Proof using.
@@ -49,14 +49,14 @@ rewrite -[RHS]big_filter.
 by rewrite (eq_big_perm _ (to_word_enum_tabsh _ sh)).
 Qed.
 
-Lemma Schur0 (sh : intpartn 0) : Schur sh = 1.
+Lemma Schur0 (sh : 'P_0) : Schur sh = 1.
 Proof using.
 rewrite Schur_tabsh_readingE (eq_bigl (xpred1 [tuple])); first last.
   by move=> i /=; rewrite tuple0 [RHS]eq_refl intpartn0.
 by rewrite big_pred1_eq big_nil.
 Qed.
 
-Lemma Schur_oversize d (sh : intpartn d) : (size sh > n)%N -> Schur sh = 0.
+Lemma Schur_oversize d (sh : 'P_d) : (size sh > n)%N -> Schur sh = 0.
 Proof using.
 move=> Hn; apply big1 => t _; exfalso.
 have:= size_tabsh t; rewrite -(size_map size) -/(shape t) shape_tabsh.
@@ -186,7 +186,7 @@ apply uniq_perm_eq.
   + by apply val_inj; rewrite /= revK.
 Qed.
 
-Lemma Schur1 (sh : intpartn 1) : Schur n0 R sh = \sum_(i < n) 'X_i.
+Lemma Schur1 (sh : 'P_1) : Schur n0 R sh = \sum_(i < n) 'X_i.
 Proof using.
 suff -> : sh = colpartn 1 by rewrite -mesym_SchurE mesym1E.
 by apply val_inj => /=; exact: intpartn1.

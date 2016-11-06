@@ -78,17 +78,17 @@ Variable n : nat.
 Local Notation HS := {homsym algC[nvar, n]}.
 
 Definition Fchar (f : 'CF('SG_n)) : HS :=
-  locked (\sum_(la : intpartn n) (f (permCT la) / 'z_la) *: 'hp[la]).
+  locked (\sum_(la : 'P_n) (f (permCT la) / 'z_la) *: 'hp[la]).
 
 Definition Fchar_inv (p : HS) : 'CF('SG_n) :=
-  locked (\sum_(la : intpartn n) (coord 'hp (enum_rank la) p) *: '1z_[la]).
+  locked (\sum_(la : 'P_n) (coord 'hp (enum_rank la) p) *: '1z_[la]).
 
 Lemma FcharE (f : 'CF('SG_n)) :
-  Fchar f = \sum_(la : intpartn n) (f (permCT la) / 'z_la) *: 'hp[la].
+  Fchar f = \sum_(la : 'P_n) (f (permCT la) / 'z_la) *: 'hp[la].
 Proof. by rewrite /Fchar; unlock. Qed.
 
 Lemma Fchar_invE (p : HS) :
-  Fchar_inv p = \sum_(la : intpartn n) (coord 'hp (enum_rank la) p) *: '1z_[la].
+  Fchar_inv p = \sum_(la : 'P_n) (coord 'hp (enum_rank la) p) *: '1z_[la].
 Proof. by rewrite /Fchar_inv; unlock. Qed.
 
 Lemma Fchar_is_linear : linear Fchar.
@@ -100,7 +100,7 @@ Qed.
 Canonical Fchar_additive := Additive Fchar_is_linear.
 Canonical Fchar_linear := Linear Fchar_is_linear.
 
-Lemma Fchar_ncfuniCT (l : intpartn n) : Fchar '1z_[l] = 'hp[l].
+Lemma Fchar_ncfuniCT (l : 'P_n) : Fchar '1z_[l] = 'hp[l].
 Proof using.
 rewrite !FcharE (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hm /=.
@@ -129,11 +129,11 @@ Proof using Hn.
 move=> f.
 rewrite !Fchar_invE {2}(ncfuniCT_gen f); apply eq_bigr => la _.
 rewrite FcharE; congr (_ *: _).
-rewrite !(reindex (enum_val (A := {:intpartn n}))) /=; first last.
+rewrite !(reindex (enum_val (A := {:'P_n}))) /=; first last.
   by apply (enum_val_bij_in (x0 := (rowpartn n))).
 transitivity
   (coord 'hp (enum_rank la)
-         (\sum_(j < #|{:intpartn n}|)
+         (\sum_(j < #|{:'P_n}|)
            (f (permCT (enum_val j)) / 'z_(enum_val j)) *: ('hp`_j : HS))).
   congr coord; apply eq_bigr => /= i _; congr (_ *: _).
   rewrite (nth_map (rowpartn n)); last by rewrite -cardE ltn_ord.
@@ -228,7 +228,7 @@ Variable n : nat.
 Hypothesis Hn : (n <= nvar)%N.
 Local Notation HS := {homsym algC[nvar, n]}.
 
-Lemma homsymh_character (la : intpartn n) : Fchar_inv 'hh[la] \is a character.
+Lemma homsymh_character (la : 'P_n) : Fchar_inv 'hh[la] \is a character.
 Proof.
 move: (n) la Hn => d.
 case=> [la /= Hla]; have:= Hla => /andP [/eqP Hd _]; subst d.
@@ -258,7 +258,7 @@ Qed.
 
 Notation "''irrSG[' l ']'" := (Fchar_inv 'hs[l]).
 
-Lemma homsyms_irr (la : intpartn n) : 'irrSG[la] \in irr 'SG_n.
+Lemma homsyms_irr (la : 'P_n) : 'irrSG[la] \in irr 'SG_n.
 Proof.
 pose P := IntPartNDom.intpartndom_finPOrdType n.
 elim/(finord_wf_down (T := P)): la => la IHla.
@@ -271,7 +271,7 @@ have -> : 'hs[la] =
   rewrite symh_syms_partdom /=; congr (_ + _).
   rewrite linear_sum /=; apply eq_bigr => mu Hmu; congr (_ *: _).
   rewrite Fchar_inv_isometry //.
-  have -> : 'hh[la] = \sum_(nu : intpartn n) 'K(nu, la) *: 'hs[nu] :> HS.
+  have -> : 'hh[la] = \sum_(nu : 'P_n) 'K(nu, la) *: 'hs[nu] :> HS.
     apply val_inj; rewrite -[val 'hh[la]]/('h[la]).
     by rewrite symh_syms /= linear_sum.
   rewrite homsymdot_suml (bigD1 mu) //= homsymdotZl homsymdotss // eq_refl mulr1.
@@ -298,7 +298,7 @@ by rewrite -H Hmu in Hl0l.
 Qed.
 
 Theorem irrSG_nvarP :
-  perm_eq [seq 'irrSG[la] | la <- enum {: intpartn n}] (irr 'SG_n).
+  perm_eq [seq 'irrSG[la] | la <- enum {:'P_n}] (irr 'SG_n).
 Proof.
 pose irrChs := [seq Fchar_inv f | f <- 'hs : seq HS].
 rewrite [map _ _](_ : _ = irrChs); last by rewrite map_comp.
@@ -333,7 +333,7 @@ rewrite !FcharE => Hn; rewrite linear_sum /=; apply eq_bigr => la _.
 by rewrite linearZ /= cnvarhomsymp.
 Qed.
 
-Definition irrSG (n : nat) (la : intpartn n) : 'CF('SG_n) :=
+Definition irrSG (n : nat) (la : 'P_n) : 'CF('SG_n) :=
   Fchar_inv (n.-1) 'hs[la].
 
 Notation "''irrSG[' l ']'" := (irrSG l).
@@ -342,25 +342,25 @@ Require Import therule cycletype.
 Open Scope ring_scope.
 
 Theorem irrSGP n :
-  perm_eq [seq 'irrSG[la] | la <- enum {: intpartn n}] (irr 'SG_n).
+  perm_eq [seq 'irrSG[la] | la <- enum {:'P_n}] (irr 'SG_n).
 Proof. by apply: irrSG_nvarP; apply leqSpred. Qed.
 
-Lemma Fchar_irrSGE nvar0 n (la : intpartn n) :
+Lemma Fchar_irrSGE nvar0 n (la : 'P_n) :
   Fchar nvar0 'irrSG[la] = 'hs[la].
 Proof.
 rewrite /irrSG -(FcharNvar (nvar0 := n.-1) _) ?leqSpred //=.
 by rewrite Fchar_invK ?leqSpred //= cnvarhomsyms ?leqSpred.
 Qed.
 
-Theorem Frobenius_char_homsymdot n (la : intpartn n) (sigma : 'S_n) :
+Theorem Frobenius_char_homsymdot n (la : 'P_n) (sigma : 'S_n) :
   'irrSG[la] sigma = '[ 'hs[la] | 'hp[cycle_typeSn sigma] ] _(n.-1, n).
 Proof.
 rewrite cfdotr_ncfuniCT -(Fchar_isometry (leqSpred n)).
 by rewrite Fchar_irrSGE Fchar_ncfuniCT.
 Qed.
 
-Theorem Frobenius_char_ptos n (mu : intpartn n) :
-  'hp[mu] = \sum_(la : intpartn n) 'irrSG[la] (permCT mu) *: 'hs[la]
+Theorem Frobenius_char_ptos n (mu : 'P_n) :
+  'hp[mu] = \sum_(la : 'P_n) 'irrSG[la] (permCT mu) *: 'hs[la]
             :> {homsym algCF[n.-1.+1, n]} .
 Proof.
 (* TODO simplify me  and factor with proof of homsymdotss *)
@@ -388,7 +388,7 @@ rewrite -(map_homsymp (ratr_rmorphism algCF)).
     by rewrite (span_basis (symbs_basis _ (leqSpred n))) // memvf.
   rewrite raddf_sum.
   rewrite (eq_bigr
-             (fun i : 'I_#|{: intpartn n}| =>
+             (fun i : 'I_#|{:'P_n}| =>
                ratr (coord 'hs i ('hp[mu] : HSR)) *: ('hs)`_i )).
     by rewrite !coord_sum_free // (basis_free (symbs_basis _ _)) // leqSpred.
   move=> i _; rewrite /= scale_map_homsym.
@@ -398,9 +398,9 @@ rewrite -(map_homsymp (ratr_rmorphism algCF)).
   by rewrite size_map -cardE ltn_ord.
 Qed.
 
-Theorem LR_rule_irrSG c d (la : intpartn c) (mu : intpartn d) :
+Theorem LR_rule_irrSG c d (la : 'P_c) (mu : 'P_d) :
   'Ind['SG_(c + d)] ('irrSG[la] \o^ 'irrSG[mu]) =
-  \sum_(nu : intpartn (c + d) | included la nu) 'irrSG[nu] *+ LRyam_coeff la mu nu.
+  \sum_(nu : 'P_(c + d) | included la nu) 'irrSG[nu] *+ LRyam_coeff la mu nu.
 Proof.
 apply (can_inj (FcharK (leqSpred (c + d)))).
 rewrite Fchar_ind_morph linear_sum //=.

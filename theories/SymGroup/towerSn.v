@@ -390,11 +390,11 @@ Section Restriction.
 Variables m n : nat.
 Local Notation ct := cycle_typeSn.
 
-Lemma cfuni_tinj s (l : intpartn (m + n)) :
+Lemma cfuni_tinj s (l : 'P_(m + n)) :
   '1_[l] (tinj s) = (l == ct s.1 +|+ ct s.2)%:R.
 Proof using. by rewrite cfuniCTnE cycle_type_tinj eq_sym. Qed.
 
-Theorem cfuni_Res (l : intpartn (m + n)):
+Theorem cfuni_Res (l : 'P_(m + n)) :
   'Res[tinj @* ('dom tinj)] '1_[l] =
   \sum_(pp | l == pp.1 +|+ pp.2) '1_[pp.1] \o^ '1_[pp.2].
 Proof using.
@@ -430,7 +430,7 @@ Section Induction.
 
 Variables m n : nat.
 
-Implicit Types (p : intpartn m) (q : intpartn n).
+Implicit Types (p : 'P_m) (q : 'P_n).
 
 Local Notation ct := cycle_typeSn.
 Local Notation SnXm := (setX 'SG_m 'SG_n).
@@ -485,7 +485,7 @@ case: (altP (p1 =P p2)) => [<-{p2} | /negbTE Hneq]; rewrite /= ?mulr1 ?mulr0.
   by rewrite partnCTE /= !CTpartnK Hneq /= conjC0.
 Qed.
 
-Lemma decomp_cf_triv : \sum_(p : intpartn n) '1_[p] = 1.
+Lemma decomp_cf_triv : \sum_(p : 'P_n) '1_[p] = 1.
 Proof using.
 apply/cfunP => /= x.
 rewrite cfun1Egen genGid inE /=.
@@ -507,12 +507,12 @@ Qed.
 
 
 (** The normalized cycle type indicator basis *)
-Definition zcoeff (k : nat) (p : intpartn k) : algC :=
+Definition zcoeff (k : nat) (p : 'P_k) : algC :=
   #|'SG_k|%:R / #|classCT p|%:R.
 
 Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 
-Lemma zcoeffE k (l : intpartn k) : zcoeff l = (zcard l)%:R.
+Lemma zcoeffE k (l : 'P_k) : zcoeff l = (zcard l)%:R.
 Proof.
 rewrite /zcoeff card_class_of_part cardsT card_Sn.
 rewrite char0_natf_div; [| exact: Cchar | exact: dvdn_zcard_fact].
@@ -520,17 +520,17 @@ rewrite invf_div mulrC mulfVK //.
 by rewrite pnatr_eq0 -lt0n; apply: fact_gt0.
 Qed.
 
-Lemma neq0zcoeff (k : nat) (p : intpartn k) : 'z_p != 0.
+Lemma neq0zcoeff (k : nat) (p : 'P_k) : 'z_p != 0.
 Proof using. by rewrite zcoeffE pnatr_eq0 neq0zcard. Qed.
 
 Hint Resolve neq0zcoeff.
 
-Definition ncfuniCT (k : nat) (p : intpartn k) := 'z_p *: '1_[p].
+Definition ncfuniCT (k : nat) (p : 'P_k) := 'z_p *: '1_[p].
 
 Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
 
 Lemma ncfuniCT_gen k (f : 'CF('SG_k)) :
-  f = \sum_(p : intpartn k) f (permCT p) / 'z_p *: '1z_[p].
+  f = \sum_(p : 'P_k) f (permCT p) / 'z_p *: '1z_[p].
 Proof using.
 apply/cfunP => /= x.
 rewrite (bigD1 (ct x)) //= cfunE sum_cfunE big1.
@@ -565,7 +565,7 @@ rewrite setIid big1 ?addr0.
 Qed.
 
 (** Application of Frobenius duality : cfdot_Res_r *)
-Lemma cfdot_Ind_cfuniCT p q (l : intpartn (m + n)):
+Lemma cfdot_Ind_cfuniCT p q (l : 'P_(m + n)) :
   '[ 'Ind['SG_(m + n)] ('1_[p] \o^ '1_[q]), '1_[l] ] =
   (p +|+ q == l)%:R / 'z_p / 'z_q.
 Proof using.
@@ -590,7 +590,7 @@ case: (boolP (_ == _)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
   by rewrite classXI ?cards0 ?mul0r.
 Qed.
 
-Lemma cfdot_Ind_ncfuniCT p q (l : intpartn (m + n)):
+Lemma cfdot_Ind_ncfuniCT p q (l : 'P_(m + n)) :
   '[ 'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]), '1z_[l] ] =
   (p +|+ q == l)%:R * 'z_l.
 Proof using.

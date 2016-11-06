@@ -289,7 +289,7 @@ Proof. by rewrite ltnNge /symm => /negbTE ->. Qed.
 Lemma mcoeff_symm sh m :
   size sh <= n -> (symm sh)@_m = (perm_eq (mpart (n := n) sh) m)%:R.
 Proof. by move=> H; rewrite /symm H mcoeff_symm_pol. Qed.
-Lemma symm_homog d (sh : intpartn d) :
+Lemma symm_homog d (sh : 'P_d) :
   sympol (symm sh) \is d.-homog.
 Proof using.
 case: (leqP (size sh) n) => [Hsz | /symm_oversize ->]; last exact: dhomog0.
@@ -304,9 +304,9 @@ rewrite [LHS](bigID (fun i => i == 0%N)) /= big1 ?add1n //.
 by move=> i /eqP.
 Qed.
 
-Definition syms d (la : intpartn d) : {sympoly R[n]} :=
+Definition syms d (la : 'P_d) : {sympoly R[n]} :=
   SymPoly (Schur_sym n0 R la).
-Lemma syms_homog d (la : intpartn d) : sympol (syms la) \is d.-homog.
+Lemma syms_homog d (la : 'P_d) : sympol (syms la) \is d.-homog.
 Proof. exact: Schur_homog. Qed.
 
 
@@ -352,7 +352,7 @@ Lemma symm_genE (f : {sympoly R[n]}) :
 Proof. by apply val_inj => /=; apply issym_symmE. Qed.
 
 
-Lemma size_mpart_in_supp (f : {mpoly R[n]}) d (p : intpartn d) :
+Lemma size_mpart_in_supp (f : {mpoly R[n]}) d (p : 'P_d) :
   f \is d.-homog -> mpart p \in msupp f -> size p <= n.
 Proof.
 rewrite /mpart; case: leqP => //= H1 /dhomogP H/H /=.
@@ -362,21 +362,21 @@ Qed.
 
 Lemma homog_symmE d (f : {sympoly R[n]}) :
   sympol f \is d.-homog ->
-  f = \sum_(l : intpartn d) f@_(mpart l) *: symm l.
+  f = \sum_(l : 'P_d) f@_(mpart l) *: symm l.
 Proof.
 move=> Hhomog; rewrite {1}(symm_genE f).
 apply val_inj => /=.
-rewrite !linear_sum /=  (bigID (fun i : intpartn d => mpart i \in msupp f)) /=.
+rewrite !linear_sum /=  (bigID (fun i : 'P_d => mpart i \in msupp f)) /=.
 rewrite [X in _ + X]big1 ?addr0;
   last by move=> i /memN_msupp_eq0 ->; rewrite scale0r.
-rewrite (eq_bigr (fun i : intpartn d =>
+rewrite (eq_bigr (fun i : 'P_d =>
            f@_(mpart i) *:
             sympol (symm (partm (n := n) (mpart i)))));
     first last.
   move=> i Hi; congr (_ *: _); congr sympol; congr symm.
   by rewrite mpartK //; apply (size_mpart_in_supp Hhomog Hi).
 rewrite /index_enum -enumT.
-transitivity (\sum_(m <- [seq mpart (i : intpartn d) |
+transitivity (\sum_(m <- [seq mpart (i : 'P_d) |
                           i <- enum (intpartn_finType d)] |
                     m \in msupp f)
       f@_m *: sympol (symm (partm m))); last by rewrite big_map /=.
@@ -398,8 +398,8 @@ rewrite -big_filter -[RHS]big_filter; apply eq_big_perm; apply uniq_perm_eq.
 Qed.
 
 Lemma symm_unique d (f : {sympoly R[n]}) c :
-  f = \sum_(l : intpartn d) (c l) *: symm l ->
-  forall l : intpartn d, (size l <= n)%N -> c l = f@_(mpart l).
+  f = \sum_(l : 'P_d) (c l) *: symm l ->
+  forall l : 'P_d, (size l <= n)%N -> c l = f@_(mpart l).
 Proof.
 move=> -> l Hl.
 rewrite !linear_sum /=.
@@ -416,8 +416,8 @@ by apply/eqP/val_inj.
 Qed.
 
 Lemma symm_unique0 d c :
-  \sum_(l : intpartn d) (c l) *: symm l = 0 ->
-  forall l : intpartn d, (size l <= n)%N -> c l = 0.
+  \sum_(l : 'P_d) (c l) *: symm l = 0 ->
+  forall l : 'P_d, (size l <= n)%N -> c l = 0.
 Proof.
 move=> /esym/symm_unique => H l /H ->.
 by rewrite mcoeff0.
@@ -478,10 +478,10 @@ case: (boolP (mdeg m == 1%N)) => [/mdeg1P [] i /eqP -> | Hm].
   by rewrite mdeg1 in Hm.
 Qed.
 
-Lemma syms0 (la : intpartn 0) : syms la = 1.
+Lemma syms0 (la : 'P_0) : syms la = 1.
 Proof. by apply val_inj; rewrite /= Schur0. Qed.
 
-Lemma syms1 (la : intpartn 1) : syms la = \sum_(i < n) 'X_i :> {mpoly R[n]}.
+Lemma syms1 (la : 'P_1) : syms la = \sum_(i < n) 'X_i :> {mpoly R[n]}.
 Proof. by rewrite /= Schur1. Qed.
 
 Lemma syms_rowpartn d : syms (rowpartn d) = symh d.
@@ -517,8 +517,8 @@ Section Defs.
 Variable gen : nat -> SF.
 Hypothesis gen_homog : forall d, sympol (gen d) \is d.-homog.
 
-Definition prod_gen d (sh : intpartn d) := \prod_(i <- sh) gen i.
-Lemma prod_gen_homog d (sh : intpartn d) :
+Definition prod_gen d (sh : 'P_d) := \prod_(i <- sh) gen i.
+Lemma prod_gen_homog d (sh : 'P_d) :
   sympol (prod_gen sh) \is d.-homog.
 Proof using gen_homog.
 rewrite /prod_gen; case: sh => sh /= /andP [/eqP <- _] {d}.
@@ -526,10 +526,10 @@ elim: sh => [| d sh IHsh] /=; first by rewrite big_nil /= dhomog1.
 by rewrite big_cons; apply dhomogM; first exact: gen_homog.
 Qed.
 
-Lemma prod_gen0 (l : intpartn 0) : prod_gen l = 1.
+Lemma prod_gen0 (l : 'P_0) : prod_gen l = 1.
 Proof. by rewrite /prod_gen intpartn0 big_nil. Qed.
 
-Lemma prod_genM c d (l : intpartn c) (k : intpartn d) :
+Lemma prod_genM c d (l : 'P_c) (k : 'P_d) :
   (prod_gen l) * (prod_gen k) = prod_gen (l +|+ k).
 Proof using.
 by rewrite /prod_gen (eq_big_perm _ (perm_union_intpartn l k)) big_cat.
@@ -545,14 +545,14 @@ Definition prod_symp := prod_gen (@symp n0 R).
 Definition prod_symp_homog := prod_gen_homog (@symp_homog n0 R).
 
 Variable gA gB : nat -> SF.
-Variable co : forall (d : nat), intpartn d -> R.
+Variable co : forall (d : nat), 'P_d -> R.
 
-Fixpoint coeff_prodgen_seq l : intpartn (sumn l) -> R :=
+Fixpoint coeff_prodgen_seq l : 'P_(sumn l) -> R :=
   if l is l0 :: l' then
-    fun la : intpartn (sumn (l0 :: l')) =>
+    fun la : 'P_(sumn (l0 :: l')) =>
              \sum_(p | la == p.1 +|+ p.2) co p.1 * coeff_prodgen_seq p.2
   else fun _ => 1.
-Definition coeff_prodgen_intpartn d (la mu : intpartn d) : R :=
+Definition coeff_prodgen_intpartn d (la mu : 'P_d) : R :=
   coeff_prodgen_seq (l := la) (cast_intpartn (esym (intpartn_sumn la)) mu).
 
 Lemma coeff_prodgen_cast l k nu
@@ -563,9 +563,9 @@ by subst k; congr coeff_prodgen_seq; apply val_inj; rewrite cast_intpartnE.
 Qed.
 
 Lemma prod_prodgen :
-  (forall d, gA d = \sum_(la : intpartn d) co la *: prod_gen gB la :> SF) ->
-  forall d (la : intpartn d),
-    prod_gen gA la = \sum_(mu : intpartn d)
+  (forall d, gA d = \sum_(la : 'P_d) co la *: prod_gen gB la :> SF) ->
+  forall d (la : 'P_d),
+    prod_gen gA la = \sum_(mu : 'P_d)
                       coeff_prodgen_intpartn la mu *: prod_gen gB mu :> SF.
 Proof.
 rewrite /coeff_prodgen_intpartn /= {2}/prod_gen => H d la.
@@ -613,23 +613,23 @@ Local Notation n := n0.+1.
 Variables R : comRingType.
 Local Notation SF := {sympoly R[n]}.
 
-Lemma syms_symsM d1 (la : intpartn d1) d2 (mu : intpartn d2) :
+Lemma syms_symsM d1 (la : 'P_d1) d2 (mu : 'P_d2) :
   's[la] * 's[mu] =
-  \sum_(nu : intpartn (d1 + d2) | included la nu)
+  \sum_(nu : 'P_(d1 + d2) | included la nu)
      's[nu] *+ LRyam_coeff la mu nu :> SF.
 Proof.
 apply val_inj; rewrite /= LRyam_coeffP linear_sum /=; apply eq_bigr => nu Hnu.
 by rewrite raddfMn /=.
 Qed.
 
-Lemma syms_symhM d1 (la : intpartn d1) d2 :
-  's[la] * 'h_d2 = \sum_(nu : intpartn (d1 + d2) | hb_strip la nu) 's[nu] :> SF.
+Lemma syms_symhM d1 (la : 'P_d1) d2 :
+  's[la] * 'h_d2 = \sum_(nu : 'P_(d1 + d2) | hb_strip la nu) 's[nu] :> SF.
 Proof.
 by apply val_inj; rewrite -syms_rowpartn /= Pieri_rowpartn raddf_sum.
 Qed.
 
-Lemma syms_symeM d1 (la : intpartn d1) d2 :
-  's[la] * 'e_d2 = \sum_(nu : intpartn (d1 + d2) | vb_strip la nu) 's[nu] :> SF.
+Lemma syms_symeM d1 (la : 'P_d1) d2 :
+  's[la] * 'e_d2 = \sum_(nu : 'P_(d1 + d2) | vb_strip la nu) 's[nu] :> SF.
 Proof.
 by apply val_inj; rewrite -syms_colpartn /= Pieri_colpartn raddf_sum.
 Qed.
@@ -688,7 +688,7 @@ apply val_inj; rewrite /= /mesym rmorph_sum /=.
 apply eq_bigr => X _; rewrite rmorph_prod /=.
 by apply eq_bigr => i _; rewrite map_mpolyX.
 Qed.
-Lemma map_syme_prod d (l : intpartn d) : map_sympoly 'e[l] = 'e[l].
+Lemma map_syme_prod d (l : 'P_d) : map_sympoly 'e[l] = 'e[l].
 Proof.
 by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_syme.
 Qed.
@@ -698,7 +698,7 @@ Proof.
 apply val_inj; rewrite /= /symh_pol rmorph_sum /=.
 by apply eq_bigr => X _; rewrite map_mpolyX.
 Qed.
-Lemma map_symh_prod d (l : intpartn d) : map_sympoly 'h[l] = 'h[l].
+Lemma map_symh_prod d (l : 'P_d) : map_sympoly 'h[l] = 'h[l].
 Proof.
 by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_symh.
 Qed.
@@ -708,12 +708,12 @@ Proof.
 apply val_inj; rewrite /= /symp_pol rmorph_sum /=.
 by apply eq_bigr => X _; rewrite rmorphX /= map_mpolyX.
 Qed.
-Lemma map_symp_prod d (l : intpartn d) : map_sympoly 'p[l] = 'p[l].
+Lemma map_symp_prod d (l : 'P_d) : map_sympoly 'p[l] = 'p[l].
 Proof.
 by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_symp.
 Qed.
 
-Lemma map_syms d (la : intpartn d) :
+Lemma map_syms d (la : 'P_d) :
   map_sympoly 's[la] = 's[la].
 Proof.
 apply val_inj; rewrite /= rmorph_sum /=.
@@ -951,15 +951,15 @@ rewrite /prod_symh /prod_gen; apply eq_big_perm.
 by rewrite perm_eq_sym; apply: perm_partn_of_compn.
 Qed.
 
-Definition signed_sum_compn d (la : intpartn d) :=
+Definition signed_sum_compn d (la : 'P_d) :=
   \sum_(c | la == partn_of_compn c) (-1)^+(d - size c) : R.
 
 Lemma symHE_intpartn d :
-  E d = \sum_(la : intpartn d) signed_sum_compn la *: prod_gen H la.
+  E d = \sum_(la : 'P_d) signed_sum_compn la *: prod_gen H la.
 Proof.
 rewrite /signed_sum_compn symHE_intcompn; symmetry.
 transitivity
-  (\sum_(la : intpartn d)
+  (\sum_(la : 'P_d)
       (\sum_(c | la == partn_of_compn c) (-1) ^+ (d - size c) *:
         prod_gen H la)).
   by apply eq_bigr => la _; rewrite scaler_suml.
@@ -986,13 +986,13 @@ apply: (symHE_rec (syme0 _ _)); exact: sum_syme_symh.
 Qed.
 
 Lemma syme_to_symh n :
-  'e_n = \sum_(la : intpartn n) signed_sum_compn la *: 'h[la] :> SF.
+  'e_n = \sum_(la : 'P_n) signed_sum_compn la *: 'h[la] :> SF.
 Proof.
 apply: (symHE_intpartn (syme0 _ _) (symh0 _ _)); exact: sum_symh_syme.
 Qed.
 
 Lemma symh_to_syme n :
-  'h_n = \sum_(la : intpartn n) signed_sum_compn la *: 'e[la] :> SF.
+  'h_n = \sum_(la : 'P_n) signed_sum_compn la *: 'e[la] :> SF.
 Proof.
 apply: (symHE_intpartn (symh0 _ _) (syme0 _ _)); exact: sum_syme_symh.
 Qed.
@@ -1091,11 +1091,11 @@ Section SymsSymmInt.
 
 Variable (n : nat) (d : nat).
 Local Notation SF := {sympoly int[n.+1]}.
-Implicit Type (la mu : intpartn d).
+Implicit Type (la mu : 'P_d).
 Local Notation P := (intpartndom d).
 
 Lemma syms_symm_int la :
-  's[la] = \sum_(mu : intpartn d) 'K(la, mu)%:R *: 'm[mu] :> SF.
+  's[la] = \sum_(mu : 'P_d) 'K(la, mu)%:R *: 'm[mu] :> SF.
 Proof.
 rewrite /Kostka; apply val_inj; rewrite /= linear_sum /=.
 apply mpolyP => m; rewrite Kostka_Coeff linear_sum /=.
@@ -1156,11 +1156,11 @@ Section SymsSymm.
 
 Variable (n : nat) (R : comRingType) (d : nat).
 Local Notation SF := {sympoly R[n.+1]}.
-Implicit Type (la mu : intpartn d).
+Implicit Type (la mu : 'P_d).
 Local Notation P := (intpartndom d).
 
 Lemma syms_symm la :
-  's[la] = \sum_(mu : intpartn d) 'K(la, mu)%:R *: 'm[mu] :> SF.
+  's[la] = \sum_(mu : 'P_d) 'K(la, mu)%:R *: 'm[mu] :> SF.
 Proof.
 rewrite -(map_syms [rmorphism of intr]) syms_symm_int.
 rewrite rmorph_sum /=; apply eq_bigr => i _.
@@ -1202,7 +1202,7 @@ Section SymhSymsInt.
 Variables (n : nat) (d : nat).
 Local Notation SF := {sympoly int[n.+1]}.
 Local Notation P := (intpartndom d).
-Implicit Type la mu : intpartn d.
+Implicit Type la mu : 'P_d.
 
 Lemma symh_syms_int mu : 'h[mu] = \sum_(la : P) 'K(la, mu) *: 's[la] :> SF.
 Proof.
@@ -1215,8 +1215,8 @@ elim: mu d Hmu => [|m mu IHmu] deg.
 move=> /andP [/eqP Hdeg /andP [_ Hpart]].
 rewrite big_cons /= {}(IHmu (sumn mu)) /= ?eq_refl ?Hpart //.
 rewrite [RHS](eq_bigr
-    (fun la : intpartn deg =>
-       \sum_(nu : intpartn (sumn mu) | hb_strip nu la) 'K(nu, mu) *: 's[la]));
+    (fun la : 'P_deg =>
+       \sum_(nu : 'P_(sumn mu) | hb_strip nu la) 'K(nu, mu) *: 's[la]));
     first last.
   by move=> la _; rewrite -scaler_suml -natr_sum Kostka_ind.
 rewrite mulr_sumr [RHS](exchange_big_dep predT) //=.
@@ -1261,7 +1261,7 @@ Section SymhSyms.
 Variables (R : comRingType) (n : nat) (d : nat).
 Local Notation SF := {sympoly R[n.+1]}.
 Local Notation P := (intpartndom d).
-Implicit Type la mu : intpartn d.
+Implicit Type la mu : 'P_d.
 
 Lemma symh_syms mu : 'h[mu] = \sum_(la : P) 'K(la, mu) *: 's[la] :> SF.
 Proof.
@@ -1302,10 +1302,10 @@ Section ChangeBasisSymhPowerSum.
 
 Import ssrnum Num.Theory.
 
-Variable n0 : nat.
+Variable nvar0 : nat.
 Variable R : fieldType.
-Local Notation n := n0.+1.
-Local Notation SF := {sympoly R[n]}.
+Local Notation nvar := nvar0.+1.
+Local Notation SF := {sympoly R[nvar]}.
 
 Fixpoint prod_partsum (s : seq nat) :=
   if s is _ :: s' then (sumn s * prod_partsum s')%N else 1%N.
@@ -1345,7 +1345,7 @@ Import LeqGeqOrder.
 
 Lemma symh_to_symp_intpartn n :
   [char R] =i pred0 ->
-  'h_n = \sum_(l : intpartn n)
+  'h_n = \sum_(l : 'P_n)
            (\sum_(c : intcompn n | perm_eq l c) \Pi c) *: 'p[l] :> SF.
 Proof.
 move/symh_to_symp_prod_partsum => ->.
@@ -1437,7 +1437,7 @@ Lemma part_sumn_count l :
   = sumn l.
 Proof. by move/part_sumn_count_bound; apply. Qed.
 
-Lemma coeff_symh_to_symp n (l : intpartn n) :
+Lemma coeff_symh_to_symp n (l : 'P_n) :
   [char R] =i pred0 ->
   (\sum_(c : intcompn n | perm_eq l c) \Pi c) = (zcard l)%:R^-1 :> R.
 Proof.
@@ -1519,7 +1519,7 @@ Qed.
 
 Lemma symh_to_symp n :
   [char R] =i pred0 ->
-  'h_n = \sum_(l : intpartn n) (zcard l)%:R^-1 *: 'p[l] :> SF.
+  'h_n = \sum_(l : 'P_n) (zcard l)%:R^-1 *: 'p[l] :> SF.
 Proof.
 move=> Hchar.
 rewrite symh_to_symp_intpartn //; apply eq_bigr => l _.
@@ -1739,7 +1739,7 @@ Variable Gen : forall nvar d : nat, {sympoly R[nvar.+1]}.
 Hypothesis Hcnvargen :
   forall d : nat, (d < m)%N || (n <= m)%N -> cnvarsym (Gen _ d.+1) = (Gen _ d.+1).
 
-Lemma cnvar_prodgen d (la : intpartn d) :
+Lemma cnvar_prodgen d (la : 'P_d) :
   (d <= m)%N || (n <= m)%N ->
   cnvarsym (prod_gen (Gen _) la) = prod_gen (Gen _) la.
 Proof.
@@ -1752,35 +1752,35 @@ Qed.
 
 End ProdGen.
 
-Lemma cnvar_prodsyme d (la : intpartn d) :
+Lemma cnvar_prodsyme d (la : 'P_d) :
   (d <= m)%N || (n <= m)%N -> cnvarsym 'e[la] = 'e[la].
 Proof.
 rewrite /prod_syme => Hd; apply (@cnvar_prodgen (syme^~ R)); last by [].
 by move=> i Hi; apply: cnvarsyme.
 Qed.
 
-Lemma cnvar_prodsymh d (la : intpartn d) :
+Lemma cnvar_prodsymh d (la : 'P_d) :
   (d <= m)%N || (n <= m)%N -> cnvarsym 'h[la] = 'h[la].
 Proof.
 rewrite /prod_symh => Hd; apply (@cnvar_prodgen (symh^~ R)); last by [].
 by move=> i Hi; apply: cnvarsymh.
 Qed.
 
-Lemma cnvar_prodsymp d (la : intpartn d) :
+Lemma cnvar_prodsymp d (la : 'P_d) :
   (d <= m)%N || (n <= m)%N -> cnvarsym 'p[la] = 'p[la].
 Proof.
 rewrite /prod_symp => Hd; apply (@cnvar_prodgen (symp^~ R)); last by [].
 by move=> i Hi; apply: cnvarsymp.
 Qed.
 
-Lemma cnvar_syms d (la : intpartn d) :
+Lemma cnvar_syms d (la : 'P_d) :
   (d <= m)%N || (n <= m)%N -> cnvarsym 's[la] = 's[la].
 Proof.
 move=> Hd; rewrite !syms_symh linear_sum; apply eq_bigr => mu _.
 by rewrite linearZ /= cnvar_prodsymh.
 Qed.
 
-Lemma cnvar_symm d (la : intpartn d) :
+Lemma cnvar_symm d (la : 'P_d) :
   (d <= m)%N || (n <= m)%N -> cnvarsym 'm[la] = 'm[la].
 Proof.
 move=> Hd; rewrite !symm_syms linear_sum; apply eq_bigr => mu _.

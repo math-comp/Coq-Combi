@@ -818,8 +818,8 @@ End PackedSpec.
 Section Spec.
 
 Variables d1 d2 : nat.
-Variables (P1 : intpartn d1) (P2 : intpartn d2).
-Variable P : intpartn (d1 + d2).
+Variables (P1 : 'P_d1) (P2 : 'P_d2).
+Variable P : 'P_(d1 + d2).
 Hypothesis Hincl : included P1 P.
 
 Lemma LRyamtabP tab :
@@ -890,7 +890,7 @@ End Spec.
 Section LR.
 
 Variables d1 d2 : nat.
-Variables (P1 : intpartn d1) (P2 : intpartn d2).
+Variables (P1 : 'P_d1) (P2 : 'P_d2).
 
 From mathcomp Require Import ssralg.
 
@@ -903,7 +903,7 @@ Notation Schur p := (Schur n0 R p).
 
 Theorem LRtab_coeffP :
   Schur P1 * Schur P2 =
-  \sum_(P : intpartn (d1 + d2) | included P1 P) Schur P *+ LRcoeff P1 P2 P.
+  \sum_(P : 'P_(d1 + d2) | included P1 P) Schur P *+ LRcoeff P1 P2 P.
 Proof using .
   rewrite (LRyam_coeffP P1 P2).
   by apply eq_bigr => outer /LRcoeffE ->.
