@@ -355,17 +355,6 @@ Definition symbh : Basis := [tuple of [seq 'hh[la] | la <- enum {:'P_d}]].
 Definition symbm : Basis := [tuple of [seq 'hm[la] | la <- enum {:'P_d}]].
 Definition symbs : Basis := [tuple of [seq 'hs[la] | la <- enum {:'P_d}]].
 Definition symbp : Basis := [tuple of [seq 'hp[la] | la <- enum {:'P_d}]].
-Lemma vect_to_homsym co (v : 'P_d -> {homsym R[n, d]}) :
-  \sum_(i < #|{:'P_d}|) co i *: (map_tuple v (enum_tuple {:'P_d}))`_i =
-  \sum_(la : 'P_d) (co (enum_rank la)) *: v la.
-Proof.
-rewrite [RHS]big_enum /= -[enum _]/(val (enum_tuple {:'P_d})).
-rewrite big_tuple; apply eq_bigr => i _.
-rewrite {1}(tnth_nth (enum_default i)) -/(enum_val i).
-rewrite enum_valK; congr (_ *: _).
-rewrite [in RHS](tnth_nth (tnth (enum_tuple {:'P_d}) i)).
-by rewrite (nth_map (tnth (enum_tuple {:'P_d}) i)) -?cardE.
-Qed.
 
 Hypothesis Hd : (d <= n)%N.
 
@@ -384,7 +373,12 @@ Qed.
 
 Lemma free_symbm : free symbm.
 Proof using Hd.
-apply/freeP => co; rewrite vect_to_homsym => /(congr1 val).
+apply/freeP => co.
+rewrite (reindex enum_rank) /=; last by apply onW_bij; apply enum_rank_bij.
+rewrite (eq_bigr (fun la : 'P_d => (co (enum_rank la)) *: 'hm[la])); first last.
+  move=> la _; rewrite (nth_map (rowpartn _)) /= -?cardE ?ltn_ord //.
+  by rewrite -?enum_val_nth enum_rankK.
+move => /(congr1 val).
 rewrite /= linear_sum /= => /symm_unique0 H i.
 rewrite -(enum_valK i); apply H.
 apply: (leq_trans _ Hd).

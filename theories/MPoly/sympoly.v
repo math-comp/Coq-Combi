@@ -665,13 +665,11 @@ Canonical map_sympoly_rmorphism := RMorphism map_sympoly_is_rmorphism.
 Lemma scale_map_sympoly (r : R) (p : {sympoly R[n]}) :
   map_sympoly (r *: p) = (mor r) *: (map_sympoly p).
 Proof.
-apply val_inj => /=.
-rewrite (mpolyE p) raddf_sum /=.
+apply val_inj; rewrite /= (mpolyE p) raddf_sum /=.
 apply/mpolyP => m.
 rewrite mcoeffZ !mcoeff_map_mpoly /= -!rmorphM /=; congr (mor _).
 rewrite !linear_sum /= mulr_sumr.
-apply eq_bigr => i _ /=.
-by rewrite !linearZ /=.
+by apply eq_bigr => i _; rewrite /= !linearZ /=.
 Qed.
 
 Lemma map_symm d : map_sympoly 'm[d] = 'm[d].
@@ -689,9 +687,7 @@ apply eq_bigr => X _; rewrite rmorph_prod /=.
 by apply eq_bigr => i _; rewrite map_mpolyX.
 Qed.
 Lemma map_syme_prod d (l : 'P_d) : map_sympoly 'e[l] = 'e[l].
-Proof.
-by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_syme.
-Qed.
+Proof. by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_syme. Qed.
 
 Lemma map_symh d : map_sympoly 'h_d = 'h_d.
 Proof.
@@ -699,9 +695,7 @@ apply val_inj; rewrite /= /symh_pol rmorph_sum /=.
 by apply eq_bigr => X _; rewrite map_mpolyX.
 Qed.
 Lemma map_symh_prod d (l : 'P_d) : map_sympoly 'h[l] = 'h[l].
-Proof.
-by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_symh.
-Qed.
+Proof. by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_symh. Qed.
 
 Lemma map_symp d : map_sympoly 'p_d = 'p_d.
 Proof.
@@ -709,9 +703,7 @@ apply val_inj; rewrite /= /symp_pol rmorph_sum /=.
 by apply eq_bigr => X _; rewrite rmorphX /= map_mpolyX.
 Qed.
 Lemma map_symp_prod d (l : 'P_d) : map_sympoly 'p[l] = 'p[l].
-Proof.
-by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_symp.
-Qed.
+Proof. by rewrite rmorph_prod; apply eq_bigr => i _; exact: map_symp. Qed.
 
 Lemma map_syms d (la : 'P_d) :
   map_sympoly 's[la] = 's[la].
@@ -1752,38 +1744,37 @@ Qed.
 
 End ProdGen.
 
-Lemma cnvar_prodsyme d (la : 'P_d) :
-  (d <= m)%N || (n <= m)%N -> cnvarsym 'e[la] = 'e[la].
+Variable d : nat.
+
+Hypothesis Hd : (d <= m)%N || (n <= m)%N.
+
+Lemma cnvar_prodsyme (la : 'P_d) : cnvarsym 'e[la] = 'e[la].
 Proof.
-rewrite /prod_syme => Hd; apply (@cnvar_prodgen (syme^~ R)); last by [].
+rewrite /prod_syme; apply (@cnvar_prodgen (syme^~ R)); last by [].
 by move=> i Hi; apply: cnvarsyme.
 Qed.
 
-Lemma cnvar_prodsymh d (la : 'P_d) :
-  (d <= m)%N || (n <= m)%N -> cnvarsym 'h[la] = 'h[la].
+Lemma cnvar_prodsymh (la : 'P_d) : cnvarsym 'h[la] = 'h[la].
 Proof.
-rewrite /prod_symh => Hd; apply (@cnvar_prodgen (symh^~ R)); last by [].
+rewrite /prod_symh; apply (@cnvar_prodgen (symh^~ R)); last by [].
 by move=> i Hi; apply: cnvarsymh.
 Qed.
 
-Lemma cnvar_prodsymp d (la : 'P_d) :
-  (d <= m)%N || (n <= m)%N -> cnvarsym 'p[la] = 'p[la].
+Lemma cnvar_prodsymp (la : 'P_d) : cnvarsym 'p[la] = 'p[la].
 Proof.
-rewrite /prod_symp => Hd; apply (@cnvar_prodgen (symp^~ R)); last by [].
+rewrite /prod_symp; apply (@cnvar_prodgen (symp^~ R)); last by [].
 by move=> i Hi; apply: cnvarsymp.
 Qed.
 
-Lemma cnvar_syms d (la : 'P_d) :
-  (d <= m)%N || (n <= m)%N -> cnvarsym 's[la] = 's[la].
+Lemma cnvar_syms (la : 'P_d) : cnvarsym 's[la] = 's[la].
 Proof.
-move=> Hd; rewrite !syms_symh linear_sum; apply eq_bigr => mu _.
+rewrite !syms_symh linear_sum; apply eq_bigr => mu _.
 by rewrite linearZ /= cnvar_prodsymh.
 Qed.
 
-Lemma cnvar_symm d (la : 'P_d) :
-  (d <= m)%N || (n <= m)%N -> cnvarsym 'm[la] = 'm[la].
+Lemma cnvar_symm (la : 'P_d) : cnvarsym 'm[la] = 'm[la].
 Proof.
-move=> Hd; rewrite !symm_syms linear_sum; apply eq_bigr => mu _.
+rewrite !symm_syms linear_sum; apply eq_bigr => mu _.
 by rewrite linearZ /= cnvar_syms.
 Qed.
 
