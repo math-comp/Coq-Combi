@@ -29,14 +29,24 @@ Open Scope N.
 
 Module LeqGeqOrder.
 
+Definition geq_refl : reflexive geq :=
+  fun x => leqnn x.
 Definition geq_total : total geq :=
   fun x y => leq_total y x.
 Definition geq_trans : transitive geq :=
   fun x y z H1 H2 => leq_trans H2 H1.
 Definition anti_geq : antisymmetric geq :=
   fun x y H => esym (anti_leq H).
+Definition ltn_irr : irreflexive ltn :=
+  fun x => ltnn x.
+Definition gtn_trans : transitive gtn :=
+  fun x y z H1 H2 => ltn_trans H2 H1.
+Definition gtn_irr : irreflexive gtn :=
+  fun x => ltnn x.
 
-Hint Resolve leq_total leq_trans anti_leq geq_total geq_trans anti_geq.
+Hint Resolve leq_total leq_trans anti_leq.
+Hint Resolve geq_refl geq_total geq_trans anti_geq.
+Hint Resolve ltn_trans ltn_irr gtn_trans gtn_irr.
 
 End LeqGeqOrder.
 

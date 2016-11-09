@@ -698,24 +698,6 @@ Reserved Notation "#{ x }" (at level 0, x at level 10, format "#{ x }").
 Notation "#{ x }" :=  #|(x : {set _})|
                       (at level 0, x at level 10, format "#{ x }").
 
-
-Module LeqGeqOrder.
-
-Definition geq_refl : reflexive geq :=
-  fun x => leqnn x.
-Definition geq_total : total geq :=
-  fun x y => leq_total y x.
-Definition geq_trans : transitive geq :=
-  fun x y z H1 H2 => leq_trans H2 H1.
-Definition anti_geq : antisymmetric geq :=
-  fun x y H => esym (anti_leq H).
-
-Hint Resolve leq_total leq_trans anti_leq geq_refl geq_total geq_trans anti_geq.
-
-End LeqGeqOrder.
-
-Import LeqGeqOrder.
-
 Lemma mem_takeP (T : eqType) x0 x k (s : seq T) :
   reflect (exists i, i < minn k (size s) /\ x = nth x0 s i) (x \in take k s).
 Proof.
