@@ -404,6 +404,25 @@ rewrite -[X in X \in _]addr0.
 by apply memv_add; [exact: memv_line | exact: mem0v].
 Qed.
 
+Theorem mcoeff_symbs (la : 'P_d) f :
+  coord symbs (enum_rank la) f =
+  (alternpol 'X_[rho n] * sympol (homsym f))@_(mpart la + rho n).
+Proof.
+have /coord_span -> : f \in span symbs.
+  by rewrite (span_basis symbs_basis) memvf.
+rewrite !coord_sum_free ?(basis_free symbs_basis) //.
+rewrite (reindex enum_rank) /=; last by apply onW_bij; apply enum_rank_bij.
+rewrite !linear_sum /= mulr_sumr linear_sum /= (bigD1 la) //=.
+rewrite (nth_map (rowpartn d)) -?cardE ?ltn_ord // nth_enum_rank.
+rewrite -scalerAr linearZ /=.
+have Hszp (nu : 'P_d) : size nu <= n.
+  by apply: (leq_trans _ Hd); rewrite -{2}(intpartn_sumn nu) size_part.
+rewrite mcoeff_alt_SchurE // eq_refl mulr1 big1 ?addr0 // => mu /negbTE Hmula.
+rewrite (nth_map (rowpartn d)) -?cardE ?ltn_ord // nth_enum_rank.
+rewrite -scalerAr linearZ /=.
+by rewrite mcoeff_alt_SchurE // Hmula mulr0.
+Qed.
+
 Local Notation E := [tuple mesym n R i.+1 | i < n].
 
 Definition monE m : seq nat :=

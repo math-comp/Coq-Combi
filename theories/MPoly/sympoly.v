@@ -21,7 +21,7 @@ From mathcomp Require Import bigop ssralg ssrint path perm fingroup.
 From mathcomp Require ssrnum.
 From SsrMultinomials Require Import ssrcomplements freeg bigenough mpoly.
 
-Require Import tools ordtype permuted partition Yamanouchi std tableau stdtab.
+Require Import sorted tools ordtype permuted partition Yamanouchi std tableau stdtab.
 Require Import skewtab antisym Schur_mpoly therule Schur_altdef unitriginv.
 
 Set Implicit Arguments.

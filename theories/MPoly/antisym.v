@@ -464,7 +464,7 @@ Qed.
 
 
 (** * Alternating polynomials *)
-Definition alternpol n (R : ringType) (f : {mpoly R[n]}) :=
+Definition alternpol n (R : ringType) (f : {mpoly R[n]}) : {mpoly R[n]} :=
   \sum_(s : 'S_n) (-1) ^+ s *: msym s f.
 
 Section AlternIDomain.

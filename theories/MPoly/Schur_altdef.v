@@ -109,12 +109,9 @@ suff : perm_eq rho (iota 0 n) by move/perm_eq_uniq ->; exact: iota_uniq.
 rewrite rho_iota perm_eq_sym; exact: perm_eq_rev.
 Qed.
 
-Lemma alt_uniq_non0 (m : 'X_{1..n}) : uniq m -> 'a_m != 0.
-Proof using .
+Lemma mcoeff_alt (m : 'X_{1..n}) : uniq m -> ('a_m)@_m = 1.
+Proof.
 move=> Huniq.
-suff : mcoeff m 'a_m == 1.
-  apply contraL => /eqP ->; rewrite mcoeff0 eq_sym.
-  exact: oner_neq0.
 rewrite /alternpol (reindex_inj invg_inj) /=.
 rewrite raddf_sum /= (bigID (pred1 1%g)) /=.
 rewrite big_pred1_eq odd_permV odd_perm1 expr0 scale1r invg1 msym1m.
@@ -129,6 +126,15 @@ rewrite nth_uniq; last exact: Huniq.
 - by move=> /eqP ->.
 - rewrite size_tuple; exact: ltn_ord.
 - rewrite size_tuple; exact: ltn_ord.
+Qed.
+
+Lemma alt_uniq_non0 (m : 'X_{1..n}) : uniq m -> 'a_m != 0.
+Proof using .
+move=> Huniq.
+suff : mcoeff m 'a_m == 1.
+  apply contraL => /eqP ->; rewrite mcoeff0 eq_sym.
+  exact: oner_neq0.
+by rewrite mcoeff_alt.
 Qed.
 
 Lemma alt_rho_non0 : 'a_rho != 0.
@@ -543,9 +549,48 @@ rewrite Schur_cast => ->.
 by rewrite cast_intpartnE.
 Qed.
 
+Import LeqGeqOrder.
+
+Lemma mcoeff_alt_SchurE d (la mu : 'P_d) :
+  size la <= n -> size mu <= n ->
+  ('a_rho * Schur n0 R la)@_(mpart mu + rho) = (la == mu)%:R.
+Proof.
+move=> Hszla Hszmu; rewrite (alt_SchurE Hszla).
+have sorted_mpart_rho (nu : 'P_d) : sorted gtn ((mpart nu) + rho)%MM.
+  apply/(sorted_strictP 0%N) => // i j.
+  rewrite size_tuple => /andP [Hij Hj]; have Hi := ltn_trans Hij Hj.
+  rewrite -[i]/(nat_of_ord (Ordinal Hi)) -mnm_nth.
+  rewrite -[j]/(nat_of_ord (Ordinal Hj)) -mnm_nth /=.
+  rewrite !mnmE /= /mpart.
+  have :  n - 1 - j < n - 1 - i.
+    apply ltn_sub2l => //; apply (leq_trans Hij).
+    by move: Hj; case n => // m; rewrite ltnS subn1 /=.
+  case: (leqP (size nu) n) => _; rewrite !mnmE ?add0n //=.
+  rewrite -addnS; apply leq_add.
+  have [_] := is_part_ijP _ (intpartnP nu); apply.
+  exact: ltnW.
+have : perm_eq (mpart la + rho)%MM (mpart mu + rho)%MM = (la == mu).
+  apply/idP/eqP => [Hperm | -> //].
+  suff : (mpart la + rho)%MM = (mpart mu + rho)%MM.
+    move/eqP; rewrite eqm_add2r => /eqP/(congr1 (@partm n))/(congr1 pval).
+    by rewrite !mpartK //; apply: val_inj.
+  apply val_inj; apply val_inj => /=.
+  exact: (eq_sorted_irr _ _ (sorted_mpart_rho la) (sorted_mpart_rho mu)
+                        (perm_eq_mem Hperm)).
+case: eqP => [-> |] _.
+- apply mcoeff_alt.
+  exact: (sorted_uniq _ _ (sorted_mpart_rho mu)).
+- rewrite /alternpol linear_sum => Hperm /=.
+  rewrite big1 // => s _.
+  rewrite linearZ /= msymX mcoeffX.
+  case: eqP => [Habs |]; last by rewrite mulr0.
+  exfalso.
+  move: Hperm => /tuple_perm_eqP; apply.
+  rewrite -{1}Habs; exists s; congr tval; apply eq_from_tnth => i.
+  by rewrite -mnm_tnth !tnth_mktuple permK.
+Qed.
+
 End SchurAlternantDef.
-
-
 
 
 (** ** Schur polynomials are symmetric *)

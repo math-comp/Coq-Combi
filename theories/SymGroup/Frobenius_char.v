@@ -26,7 +26,7 @@ From mathcomp Require Import rat ssralg ssrnum algC vector.
 From mathcomp Require Import classfun character.
 
 From SsrMultinomials Require Import mpoly.
-Require Import ordtype tools partition sympoly homogsym Cauchy Schur_altdef.
+Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy Schur_altdef.
 Require Import permcomp cycletype towerSn permcent.
 
 Set Implicit Arguments.
@@ -359,20 +359,18 @@ rewrite cfdotr_ncfuniCT -(Fchar_isometry (leqSpred n)).
 by rewrite Fchar_irrSGE Fchar_ncfuniCT.
 Qed.
 
-Theorem Frobenius_char_ptos n (mu : 'P_n) :
-  'hp[mu] = \sum_(la : 'P_n) 'irrSG[la] (permCT mu) *: 'hs[la]
-            :> {homsym algCF[n.-1.+1, n]} .
+Theorem Frobenius_char_coord n (la mu : 'P_n) :
+  'irrSG[la] (permCT mu) =
+  coord 'hs (enum_rank la) ('hp[mu] : {homsym algC[n.-1.+1, n]}).
 Proof.
 (* TODO simplify me  and factor with proof of homsymdotss *)
 pose HSC := {homsym algC[n.-1.+1, n]}.
 pose HSR := {homsym rat[n.-1.+1, n]}.
-have /coord_span Hps : ('hp[mu] : HSC) \in span 'hs.
-  by rewrite (span_basis (symbs_basis _ (leqSpred n))) // memvf.
-rewrite Hps (reindex enum_rank) /=; last by apply onW_bij; apply enum_rank_bij.
-apply eq_bigr => la _.
-rewrite (nth_map (rowpartn n)) -?cardE ?ltn_ord // nth_enum_rank; congr (_ *: _).
+symmetry.
 rewrite Frobenius_char_homsymdot /cycle_typeSn (permCTP mu) CTpartnK.
-rewrite {2}Hps (reindex enum_rank) /=; last by apply onW_bij; apply enum_rank_bij.
+have /coord_span {2}-> : ('hp[mu] : HSC) \in span 'hs.
+  by rewrite (span_basis (symbs_basis _ (leqSpred n))) // memvf.
+rewrite (reindex enum_rank) /=; last by apply onW_bij; apply enum_rank_bij.
 rewrite homsymdot_sumr (bigD1 la) //=.
 rewrite (nth_map (rowpartn n)) -?cardE ?ltn_ord // nth_enum_rank.
 rewrite homsymdotZr homsymdotss ?leqSpred // eq_refl mulr1.
@@ -397,6 +395,33 @@ rewrite -(map_homsymp (ratr_rmorphism algCF)).
   congr (_ *: _); apply esym; apply nth_map.
   by rewrite size_map -cardE ltn_ord.
 Qed.
+
+Theorem Frobenius_char n (la mu : 'P_n) :
+  'irrSG[la] (permCT mu) =
+  (\prod_(p : 'I_n * 'I_n | (p.1 < p.2)%N) ('X_p.1 - 'X_p.2) *
+   \prod_(d <- mu) \sum_(i < n) 'X_i ^+ d)@_(mpart la + rho n).
+Proof.
+rewrite -/Vanprod Vanprod_alt.
+case: n la mu => [//|n] //= la mu.
+  (* This case is trivial and the proof is awful !!! *)
+  rewrite !intpartn0 big_nil mulr1 /mpart /rho //=.
+  have Hmon f : [multinom f i | i < 0] = 0%MM by apply mnmP => [[i Hi]].
+  rewrite !{}Hmon addm0.
+  rewrite /alternpol (big_pred1 1%g); first last.
+    by move=> s /=; apply/esym/eqP/permP => [[i Hi]].
+  rewrite odd_perm1 /= msym1m expr0 scale1r mcoeffX eq_refl /=.
+  suff -> : 'irrSG[la] = 1 by rewrite (permS0 (permCT mu)) cfun11.
+  have := homsyms_irr (leqSpred 0) la; rewrite -/(irrSG _).
+  have /= := cfun1_irr [group of 'SG_0].
+  have : size (irr 'SG_0) = 1%N.
+    rewrite size_tuple -(vector.size_basis (irr_basis _)) dim_cfun.
+    by rewrite card_classes_perm /= card_ord card_intpartn.
+  rewrite !memtE.
+  case: (irr 'SG_0) => [t /= _]; case: t => [// | t0 [| //]] _.
+  by rewrite !mem_seq1 => /eqP <- /eqP.
+by rewrite Frobenius_char_coord mcoeff_symbs ?leqSpred //= rmorph_prod.
+Qed.
+
 
 Theorem LR_rule_irrSG c d (la : 'P_c) (mu : 'P_d) :
   'Ind['SG_(c + d)] ('irrSG[la] \o^ 'irrSG[mu]) =
