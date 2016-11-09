@@ -184,8 +184,7 @@ End SymPolyIdomainType.
 
 Section Bases.
 
-Variable n0 : nat.
-Local Notation n := n0.+1.
+Variable n : nat.
 
 Variable R : comRingType.
 Implicit Type m : 'X_{1.. n}.
@@ -303,12 +302,6 @@ apply/eqP; rewrite -!sumnE big_filter.
 rewrite [LHS](bigID (fun i => i == 0%N)) /= big1 ?add1n //.
 by move=> i /eqP.
 Qed.
-
-Definition syms d (la : 'P_d) : {sympoly R[n]} :=
-  SymPoly (Schur_sym n0 R la).
-Lemma syms_homog d (la : 'P_d) : sympol (syms la) \is d.-homog.
-Proof. exact: Schur_homog. Qed.
-
 
 Lemma issym_symmE (p : {mpoly R[n]}) :
   p \is symmetric ->
@@ -478,23 +471,37 @@ case: (boolP (mdeg m == 1%N)) => [/mdeg1P [] i /eqP -> | Hm].
   by rewrite mdeg1 in Hm.
 Qed.
 
+End Bases.
+
+Section Schur.
+
+Variable n0 : nat.
+Variable R : comRingType.
+
+Local Notation n := n0.+1.
+
+Definition syms d (la : 'P_d) : {sympoly R[n]} :=
+  SymPoly (Schur_sym n0 R la).
+Lemma syms_homog d (la : 'P_d) : sympol (syms la) \is d.-homog.
+Proof. exact: Schur_homog. Qed.
+
 Lemma syms0 (la : 'P_0) : syms la = 1.
 Proof. by apply val_inj; rewrite /= Schur0. Qed.
 
 Lemma syms1 (la : 'P_1) : syms la = \sum_(i < n) 'X_i :> {mpoly R[n]}.
 Proof. by rewrite /= Schur1. Qed.
 
-Lemma syms_rowpartn d : syms (rowpartn d) = symh d.
+Lemma syms_rowpartn d : syms (rowpartn d) = symh n R d.
 Proof.
 by apply val_inj; rewrite /= /symh_pol /symh_pol_bound Schur_rowpartn.
 Qed.
 
-Lemma syms_colpartn d : syms (colpartn d) = syme d.
+Lemma syms_colpartn d : syms (colpartn d) = syme n R d.
 Proof.
 by apply val_inj; rewrite /= mesym_SchurE.
 Qed.
 
-End Bases.
+End Schur.
 
 Notation "''e_' k" := (syme _ _ k)
                               (at level 8, k at level 2, format "''e_' k").
@@ -507,8 +514,7 @@ Notation "''p_' k" := (symp _ _ k)
 
 Section ProdGen.
 
-Variable n0 : nat.
-Local Notation n := n0.+1.
+Variable n : nat.
 Variable R : comRingType.
 Local Notation SF := {sympoly R[n]}.
 
@@ -537,12 +543,12 @@ Qed.
 
 End Defs.
 
-Definition prod_syme := prod_gen (@syme n0 R).
-Definition prod_syme_homog := prod_gen_homog (@syme_homog n0 R).
-Definition prod_symh := prod_gen (@symh n0 R).
-Definition prod_symh_homog := prod_gen_homog (@symh_homog n0 R).
-Definition prod_symp := prod_gen (@symp n0 R).
-Definition prod_symp_homog := prod_gen_homog (@symp_homog n0 R).
+Definition prod_syme := prod_gen (@syme n R).
+Definition prod_syme_homog := prod_gen_homog (@syme_homog n R).
+Definition prod_symh := prod_gen (@symh n R).
+Definition prod_symh_homog := prod_gen_homog (@symh_homog n R).
+Definition prod_symp := prod_gen (@symp n R).
+Definition prod_symp_homog := prod_gen_homog (@symp_homog n R).
 
 Variable gA gB : nat -> SF.
 Variable co : forall (d : nat), 'P_d -> R.
@@ -1727,7 +1733,7 @@ Qed.
 
 Section ProdGen.
 
-Variable Gen : forall nvar d : nat, {sympoly R[nvar.+1]}.
+Variable Gen : forall nvar d : nat, {sympoly R[nvar]}.
 Hypothesis Hcnvargen :
   forall d : nat, (d < m)%N || (n <= m)%N -> cnvarsym (Gen _ d.+1) = (Gen _ d.+1).
 

@@ -230,10 +230,10 @@ Variable d : nat.
 Local Notation SF := {sympoly R[n]}.
 Implicit Type (la : 'P_d).
 
-Definition homsymm la : {homsym R[n, d]} := HomogSym (symm_homog n0 R la).
-Definition homsyme la : {homsym R[n, d]} := HomogSym (prod_syme_homog n0 R la).
-Definition homsymh la : {homsym R[n, d]} := HomogSym (prod_symh_homog n0 R la).
-Definition homsymp la : {homsym R[n, d]} := HomogSym (prod_symp_homog n0 R la).
+Definition homsymm la : {homsym R[n, d]} := HomogSym (symm_homog n R la).
+Definition homsyme la : {homsym R[n, d]} := HomogSym (prod_syme_homog n R la).
+Definition homsymh la : {homsym R[n, d]} := HomogSym (prod_symh_homog n R la).
+Definition homsymp la : {homsym R[n, d]} := HomogSym (prod_symp_homog n R la).
 Definition homsyms la : {homsym R[n, d]} := HomogSym (syms_homog n0 R la).
 
 Lemma homsymmE (f : {homsym R[n, d]}) :

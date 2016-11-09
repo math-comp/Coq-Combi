@@ -396,10 +396,11 @@ rewrite -(map_homsymp (ratr_rmorphism algCF)).
   by rewrite size_map -cardE ltn_ord.
 Qed.
 
+Local Notation Delta := Vanprod.
+Local Notation P d := (symp_pol _ _ d).
+
 Theorem Frobenius_char n (la mu : 'P_n) :
-  'irrSG[la] (permCT mu) =
-  (\prod_(p : 'I_n * 'I_n | (p.1 < p.2)%N) ('X_p.1 - 'X_p.2) *
-   \prod_(d <- mu) \sum_(i < n) 'X_i ^+ d)@_(mpart la + rho n).
+  'irrSG[la] (permCT mu) = (Delta * \prod_(d <- mu) P d)@_(mpart la + rho n).
 Proof.
 rewrite -/Vanprod Vanprod_alt.
 case: n la mu => [//|n] //= la mu.
@@ -413,11 +414,11 @@ case: n la mu => [//|n] //= la mu.
   suff -> : 'irrSG[la] = 1 by rewrite (permS0 (permCT mu)) cfun11.
   have := homsyms_irr (leqSpred 0) la; rewrite -/(irrSG _).
   have /= := cfun1_irr [group of 'SG_0].
+  rewrite !memtE.
   have : size (irr 'SG_0) = 1%N.
     rewrite size_tuple -(vector.size_basis (irr_basis _)) dim_cfun.
     by rewrite card_classes_perm /= card_ord card_intpartn.
-  rewrite !memtE.
-  case: (irr 'SG_0) => [t /= _]; case: t => [// | t0 [| //]] _.
+  case: (irr 'SG_0) => [[// | t0 [| //]] /= _] _.
   by rewrite !mem_seq1 => /eqP <- /eqP.
 by rewrite Frobenius_char_coord mcoeff_symbs ?leqSpred //= rmorph_prod.
 Qed.

@@ -331,7 +331,7 @@ rewrite rmorph_sum raddf_sum /= partmE; apply esym.
 transitivity (\prod_(i <- mon) sympol 'h_i : polY ).
   rewrite [RHS](bigID (fun i => i == 0%N)) /=.
   rewrite [in RHS]big1 ?mul1r; first last => [i /eqP ->|].
-    exact: (congr1 val (symh0 n0 R)).
+    exact: (congr1 val (symh0 n R)).
   rewrite /= -[RHS]big_filter; apply eq_big_perm.
   by rewrite perm_sort.
 rewrite {Hpm pm} /= big_tuple; symmetry.
@@ -347,7 +347,7 @@ rewrite (eq_bigr (fun mZ : 'X_{1.. _ < _} =>
                     \prod_(i < m) 'X_[tnth (monsY mZ) i])); first last.
   move=> mz Hmz; rewrite evalXY_XE -rmorph_prod /= polyXY_scale.
   by rewrite linearZ /= /polX_XY map_mpolyX mcoeffX Hmz mulr1.
-rewrite (eq_bigr (fun i : 'I_m => symh_pol_bound n0 R d.+1 (tnth mon i)));
+rewrite (eq_bigr (fun i : 'I_m => symh_pol_bound n R d.+1 (tnth mon i)));
     first last.
   move=> i _; apply: symh_pol_any.
   rewrite ltnS -Hdeg /mdeg big_tuple (bigD1 i) //=.
