@@ -202,7 +202,36 @@ numerous combinatorial ingredient, and as it was written, some
 combinatorialists though that this proof was ``somewhat gappy''. The present
 work follows more or less this original proof, the algebraic step being closer
 to the argument of \cite{NCSF7} showing that there where actually no crucial
-gaps. After Schützenberger's first proof, one can find dozens of thesis and
+gaps.
+\medskip
+
+In his book on the representation theory of the symmetric groups, Gordon
+James~\cite{James} reports that he was once told that
+\begin{quotation}
+  the Littlewood-Richardson rule helped to get men on the moon, but it was not
+  proved until after they had got there. The first part of this story might be
+  an exaggeration.
+\end{quotation}
+He wrote further
+\begin{quotation}
+  It seems that for a long time the entire body of experts in the field was
+  convinced by these proofs; at any rate it was not until 1976 that McConnell
+  pointed out a subtle ambiguity in part of the construction underlying the
+  argument.
+
+  [\dots]
+
+  How was it possible for an incorrect proof of such a central result in the
+  theory of $\SG_n$ to have been accepted for close to forty years? The level
+  of rigor customary among mathematicians when a combinatorial argument is
+  required, is (probably quite rightly) of the nonpedantic hand-waving kind;
+  perhaps one lesson to be drawn is that a higher degree of care will be
+  needed in dealing with such combinatorial complexities as occur in the
+  present level of development of Young's approach.
+\end{quotation}
+
+
+After Schützenberger's first proof, one can find dozens of thesis and
 paper about simplifying the argument~\cite{Zelevinsky81,Macdonald95,Gasharov98,DHT01,VanLeeuwen01,Stembridge02}
 and the combinatorial study of these coefficients it is still a very active
 research topic~(see for example~\cite{qAnalogs,KingToumazetTollu,KnutsonTao}
@@ -398,20 +427,16 @@ We decided to represent partitions naturally by terms of type
 Following \SSR paradigm, the definition \verb|is_part| is given as
 a computational boolean predicate (a recursive function). Since a
 \verb{fixpoint} is not always the easiest statement to use is a proof, we
-provide two equivalent statements (in \verb|Prop|) using two reflection
-lemmas. These equivalent statement are also perhaps easier to read:
+provide several equivalent statements (in \verb|Prop|) using reflection
+lemmas. These equivalent statement are also perhaps easier to read, we show
+here one of them:
 \begin{lstlisting}
   Fixpoint |*is_part*| sh := (* Boolean Predicate *)
     if sh is sh0 :: sh'
     then (sh0 >= head 1 sh') && (is_part sh')
     else true.
 
-  (* Boolean reflection lemmas *)
-  Lemma |*is_partP*| sh : reflect
-    (last 1 sh != 0 /\ forall i, (nth 0 sh i) >= (nth 0 sh i.+1))
-    (is_part sh).
-
-  Lemma |*is_part_ijP*| sh : reflect
+  Lemma |*is_part_ijP*| sh : reflect   (* Boolean reflection lemmas *)
     (last 1 sh != 0 /\ forall i j, i <= j -> (nth 0 sh i) >= nth 0 sh j)
     (is_part sh).
 \end{lstlisting}
@@ -432,7 +457,6 @@ structure.
 Structure |*intpartn*| n : predArgType :=
   IntPartN {pnval :> seq nat ; _ : is_part_of_n n pnval}.
 [...]
-Let |*type*| := sub_finType intpartn_subCountType (enum_partn_allP n) (@enum_partn_countE n).
 Canonical |*intpartn_finType*| := Eval hnf in [finType of intpartn for type].
 
 \end{lstlisting}
@@ -515,7 +539,6 @@ reflection lemmas, and refer the reader to the file for the formal definition
 of standard tableau and skew tableau.
 \begin{lstlisting}
 Variable T : ordType.
-Notation Z := (inhabitant T).
 Notation |*is_row*| r := (sorted (@leqX_op T) r).
 
 Lemma |*dominateP*| u v : reflect
@@ -578,37 +601,13 @@ $w$. This is computed in \SSR by \verb{count_mem x w}.
   all $k, i \in \N$,
   \[ \abs{w_i,\dots,w_{l-1}}_k \geq \abs{w_i,\dots,w_{l-1}}_{k+1} \]
 \end{DEFN}
-As we code Yamanouchi words by term of type \verb{seq nat}, it is easier
-to have a recursive definition. Here it is:
-\begin{DEFN}
-  Equivalently, $w$ is \emph{Yamanouchi} either if its empty or if
-  $(\abs{w}_i)_{i\leq\max(w)}$ (called the row-shape of $w$) is a partition
-  and $w_1,\dots,w_{l-1}$ is also Yamanouchi.
-\end{DEFN}
 Here is a complete list of Yamanouchi word of length smaller than $4$.
 \begin{gather*}
   (), 0, 00, 10, 000, 100, 010, 210, \\
   0000, 1010, 1100, 0010, 0100, 1000, 0210, 2010, 2100, 3210
 \end{gather*}
-The partition $(\abs{w}_i)_{i\leq\max(w)}$ is denoted \verb|evalseq w|.
- We recall that in \SSR, the call \verb{incr_nth s i} design the nat
-sequence \verb|s| with item $i$ incremented (first padded with 0's to
-size $i+1$, if needed).
-
+Here is the \SSR statement:
   \begin{lstlisting}
-Fixpoint |*evalseq*| s :=
-  if s is s0 :: s'
-  then incr_nth (evalseq s') s0
-  else [::].
-Definition |*evalseq_count*| := (* iterative version *)
-  [fun s => [seq (count_mem i) s | i <- iota 0 (foldr maxn 0 (map S s))]].
-Lemma |*evalseq_countE*| : evalseq_count =1 evalseq.
-
-Fixpoint |*is_yam*| s :=
-  if s is s0 :: s'
-  then is_part (evalseq s) && is_yam s'
-  else true.
-
 Lemma |*is_yamP*| s : reflect
   (forall i n, count_mem n (drop i s) >= count_mem n.+1 (drop i s))
   (is_yam s).
@@ -706,14 +705,15 @@ reverse lexicographic order on the exponents. As a consequence, the Schur
 polynomials are linearly independant and form a \emph{basis of the algebra of
   symmetric polynomials}.
 
-Interestingly enough, \emph{we did not need to formalize} this part of the
-theory. Indeed, we decide to chose a definition which has a more combinatorial
-feeling. This may looks like a kind of cheating. However, the equivalence of
-this definition with the combinatorial one is generally proved showing that
-both verify a recursive rule (due to Pieri) which give the product of a Schur
-polynomial by an elementary one. This rule is a very particular case of the
-\LR rule, so that it didn't really simplifies the proof. Also most of the
-paper dealing with the \LR rule start from the combinatorial definition.
+Interestingly enough, to prove the rulw, \emph{we did not need to formalize}
+this part of the theory. Indeed, we decide to chose a definition which has a
+more combinatorial feeling. This may looks like a kind of cheating. However,
+the equivalence of this definition with the combinatorial one is generally
+proved showing that both verify a recursive rule (due to Pieri) which give the
+product of a Schur polynomial by an elementary one. This rule is a very
+particular case of the \LR rule, so that it didn't really simplifies the
+proof. Also most of the paper dealing with the \LR rule start from the
+combinatorial definition.
 \begin{DEFN}[Combinatorial definition of Schur function]
 
   let $\lambda:=(\lambda_0\dots\lambda_{\ell-1})$ be a partition of length
