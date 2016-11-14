@@ -668,6 +668,10 @@ move: Hin; rewrite /is_in_shape (nth_map [::]) // /get_tab => Hc.
 by rewrite (nth_map [::] _ _ Hr) (nth_map (inhabitant T1)).
 Qed.
 
+Lemma to_word_incr_tab (t : seq (seq T1)) :
+  to_word [seq map F r | r <- t] = map F (to_word t).
+Proof. by rewrite /to_word map_flatten map_rev. Qed.
+
 Lemma incr_tab (t : seq (seq T1)) :
   {in (to_word t) &, forall x y, x <A y -> F x <A F y} ->
   (is_tableau t) = (is_tableau [seq map F r | r <- t]).
