@@ -1031,6 +1031,138 @@ Qed.
 End Kostka.
 
 
+
+Section StdKostka.
+
+Require Import std stdtab.
+
+Variables (d : nat) (la : 'P_d).
+
+Section Nvar.
+
+Variable n : nat.
+Hypothesis Hd : d <= n.+1.
+
+Let td := [tuple nat_of_bool (i < d) | i < n.+1].
+
+Lemma stdtabsh_eval_to_word (t : stdtabsh la) :
+  eval [seq inord i | i <- to_word t] = td.
+Proof.
+apply/eq_from_tnth => i.
+case: t => /= t /andP [/andP [Ht Hstd] /eqP Hsh].
+rewrite /eval !tnth_mktuple.
+move: Hstd; rewrite /is_std.
+rewrite size_to_word /size_tab Hsh intpartn_sumn => Hstd.
+rewrite count_map (eq_in_count (a2 := pred1 (nat_of_ord i))); first last.
+  move=> /= j; rewrite (perm_eq_mem Hstd) mem_iota /= add0n.
+  move => /leq_trans /(_ Hd) Hj.
+  by rewrite {1}/eq_op /= inordK.
+by rewrite (perm_eqP Hstd) count_uniq_mem ?iota_uniq // mem_iota /= add0n.
+Qed.
+
+Lemma tabsh_is_std (t : tabsh n la) :
+  eval (to_word t) = td -> is_std [seq (nat_of_ord i) | i <- to_word t].
+Proof.
+rewrite /is_std => Hev; apply/perm_eqP => p.
+rewrite count_map -sum_count_mem.
+rewrite (eq_bigr (fun i : 'I__ => nat_of_bool (i < d)%N)) /=; first last.
+  move=> i _.
+  by move: Hev => /(congr1 (fun t => tnth t i)); rewrite !tnth_mktuple.
+rewrite size_map size_to_word /size_tab shape_tabsh intpartn_sumn.
+rewrite -sum1_count.
+transitivity (\sum_(0 <= i < n.+1 | p i) nat_of_bool (i < d)).
+  by rewrite big_mkord.
+rewrite -{2}(subn0 d) -/(index_iota 0 d) (big_nat_widen _ _ _ _ _ Hd).
+rewrite (bigID (fun i => i < d)) /= addnC big1 ?add0n; first last.
+  by move=> i /andP [_ /negbTE ->].
+by apply eq_bigr => i /andP [_ ->].
+Qed.
+
+Definition tabnat_of_ord_fun (t : tabsh n la) :=
+  if (eval (to_word t) == td)
+  then [seq [seq (nat_of_ord i) | i <- r] | r <- t]
+  else hyper_stdtabsh la.
+
+Definition tabord_of_nat_fun (t : stdtabsh la) : seq (seq 'I_n.+1) :=
+  [seq map inord r | r <- t].
+
+Lemma tabnat_of_ord_subproof (t : tabsh n la) :
+  is_stdtab_of_shape la (tabnat_of_ord_fun t).
+Proof.
+rewrite /tabnat_of_ord_fun.
+case: eqP => [Hev | _]; last by case: (hyper_stdtabsh la).
+rewrite /= /is_stdtab -incr_tab // tabshP /= /eval.
+rewrite shape_incr_tab shape_tabsh eq_refl andbT.
+by rewrite to_word_incr_tab tabsh_is_std.
+Qed.
+Definition tabnat_of_ord (t : tabsh n la) :=
+  StdtabSh (sh := la) (tabnat_of_ord_subproof t).
+
+Lemma tabord_of_nat_subproof (t : stdtabsh la) :
+  is_tab_of_shape n la (tabord_of_nat_fun t).
+Proof.
+have /andP [Ht Hstd] := stdtabshP t.
+rewrite /tabord_of_nat_fun /=.
+rewrite shape_incr_tab shape_stdtabsh eq_refl andbT.
+move: Hstd; rewrite /is_std size_to_word.
+rewrite /size_tab shape_stdtabsh intpartn_sumn => /perm_eq_mem Hperm.
+rewrite -incr_tab // => /= i j.
+rewrite !Hperm !mem_iota /= !add0n => /leq_trans/(_ Hd) Hi /leq_trans/(_ Hd) Hj.
+by rewrite sub_pord_ltnXE !ltnXnatE /= !inordK.
+Qed.
+Definition tabord_of_nat (t : stdtabsh la) :=
+  TabSh (n := n) (sh := la) (tabord_of_nat_subproof t).
+
+Lemma tabord_of_natK : cancel tabord_of_nat tabnat_of_ord.
+Proof.
+move=> t.
+apply val_inj; rewrite /= /tabnat_of_ord_fun /= /tabord_of_nat_fun /=.
+rewrite to_word_incr_tab stdtabsh_eval_to_word eq_refl.
+rewrite -map_comp map_id_in // => /= r Hr.
+rewrite -map_comp map_id_in // => /= i Hi.
+rewrite inordK //; apply: (leq_trans _ Hd).
+have : i \in to_word t.
+  by rewrite /to_word; apply/flattenP; exists r; first rewrite mem_rev.
+have /andP [_] := stdtabshP t.
+rewrite /is_std => /perm_eq_mem ->.
+rewrite mem_iota /= add0n.
+by rewrite size_to_word /size_tab shape_stdtabsh intpartn_sumn.
+Qed.
+
+Lemma tabnat_of_ordK :
+  {in [pred t : tabsh n la | eval (to_word t) == td],
+   cancel tabnat_of_ord tabord_of_nat }.
+Proof.
+move=> /= t; rewrite inE => /eqP Ht.
+apply val_inj; rewrite /= /tabord_of_nat_fun /= /tabnat_of_ord_fun /=.
+rewrite -Ht eq_refl.
+rewrite -map_comp map_id_in // => /= r Hr.
+rewrite -map_comp map_id_in // => /= i Hi.
+by apply val_inj; rewrite /= inordK.
+Qed.
+
+End Nvar.
+
+Lemma KostkaStd : Kostka la (colpartn d) = #|{: stdtabsh la}|.
+Proof.
+rewrite /Kostka.
+have -> : (mpart (colpartn d)) =
+          [multinom (i < d)%N : nat | i < (size (colpartn d)).-1.+1].
+  apply/mnmP => /= i; rewrite /mpart /colpartn /colpart /= leqSpred !mnmE.
+  by rewrite nth_nseq; case: (ltnP i d).
+rewrite /KostkaMon /KostkaTab /colpartn /= /colpart size_nseq.
+rewrite -(card_imset _ (can_inj (tabord_of_natK (leqSpred _)))).
+apply eq_card => /= t; rewrite !inE.
+apply/eqP/imsetP => [Ht | [/= st _ ->{t}]].
+- exists (tabnat_of_ord (leqSpred _) t); first by rewrite inE.
+  by rewrite tabnat_of_ordK //= inE -Ht.
+- rewrite /= /tabord_of_nat_fun /= /tabnat_of_ord_fun /= to_word_incr_tab.
+  by rewrite stdtabsh_eval_to_word // leqSpred.
+Qed.
+
+End StdKostka.
+
+
 Lemma sumn_rcons s sm : (sumn s + sm)%N = sumn (rcons s sm).
 Proof. by rewrite -[RHS]sumn_rev rev_rcons /= sumn_rev addnC. Qed.
 
