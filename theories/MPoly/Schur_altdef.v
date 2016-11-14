@@ -268,7 +268,7 @@ Proof using la h.
 rewrite /add_mpart_mesym.
 case: (boolP [&& _, _ & _]) => [/and3P [] Hsz /eqP <- Hincr | _].
 - exact: not_hasincr_part.
-- exact: rowpartnP.
+- exact: rowpartn_subproof.
 Qed.
 Definition add_mesym : 'P_(d + k) := IntPartN add_mpart_mesymP.
 
