@@ -528,9 +528,8 @@ Lemma tabsh_to_wordK t : rev (reshape (rev sh) (to_word (val t))) = t.
 Proof using. by rewrite /= -(shape_tabsh t); apply: to_wordK. Qed.
 
 Let tabsh_enum :
-  seq tabsh :=
-  pmap insub [seq rev (reshape (rev sh) (val w)) |
-              w in [finType of d.-tuple 'I_n.+1]].
+  seq tabsh := pmap insub
+              [seq rev (reshape (rev sh) (val w)) | w in {:d.-tuple 'I_n.+1}].
 
 Lemma finite_tabsh : Finite.axiom tabsh_enum.
 Proof using.
@@ -559,7 +558,7 @@ Canonical tabsh_subFinType := Eval hnf in [subFinType of tabsh_countType].
 Lemma to_word_enum_tabsh :
   perm_eq
     [seq to_word (tabshval t) | t <- enum tabsh]
-    [seq x <- [seq val i | i <- enum [finType of d.-tuple 'I_n.+1]]
+    [seq x <- [seq val i | i <- enum {:d.-tuple 'I_n.+1}]
     | tabsh_reading sh x].
 Proof using.
 apply uniq_perm_eq.
