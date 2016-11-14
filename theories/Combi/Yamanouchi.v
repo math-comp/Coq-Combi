@@ -25,9 +25,9 @@ Yamanouchi words are stored as [seq nat].
 - [is_yam s] == s is a Yamanouchi word
 - [is_yam_of_eval ev s] == s is a Yamanouchi word of evaluation ev.
 - [decr_yam s] == the Yamanouchi word obtained by removing the zero and
-                   decrassing all the other entries by 1
+                 decrassing all the other entries by 1
 - [hyper_yam ev] == the hyperstandard (decreassing) Yamanouchi word of
-                    evaluation ev such as 33 2222 11111 0000000
+                 evaluation ev such as 33 2222 11111 0000000
 
 Enumeration of Yamanouchi words:
 
@@ -39,9 +39,12 @@ Enumeration of Yamanouchi words:
 Sigma types of Yamanouchi words:
 
 - [yameval ev] == a type for [seq nat] which are Yamanouchi words of
-                  evaluation ev; it is canonically a [finType]
+                 evaluation ev; it is canonically a [finType]
 - [yamn n] == a type for [seq nat] which are Yamanouchi words of
-              size n; it is canonically a [finType]
+                 size n; it is canonically a [finType]
+- [hyper_yameval ev] == the the hyperstandard (decreassing) Yamanouchi word of
+                 evaluation ev such as 33 2222 11111 0000000 as a [yameval]
+
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
@@ -416,8 +419,10 @@ Proof using. by rewrite -evalseq_eq_size eval_yameval. Qed.
 Lemma enum_yamevalE : map val (enum {:yameval}) = enum_yameval ev.
 Proof using. by rewrite /=; exact: enum_subE. Qed.
 
-End YamOfEval.
+Definition hyper_yameval := YamEval (hyper_yam_of_eval (intpartP ev)).
 
+End YamOfEval.
+Hint Resolve yamevalP.
 
 Section YamOfSize.
 

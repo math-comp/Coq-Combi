@@ -49,7 +49,7 @@ Lemma stpshP (p : stpsh) : is_stdtab_pair_of_shape sh (seq_of_stpsh p).
 Proof using.
 rewrite /is_stdtab_pair_of_shape.
 case: p => [p1 p2] /=.
-by rewrite !stdtabshP !stdtabsh_shape !eq_refl.
+by rewrite !stdtabshP !shape_stdtabsh !eq_refl.
 Qed.
 
 Lemma seq_of_stpshK p : (stpsh_of_seq (stpshP p)) = p.

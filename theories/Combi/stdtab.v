@@ -741,7 +741,7 @@ Canonical stdtabsh_subFinType := Eval hnf in [subFinType of stdtabsh_countType].
 Lemma stdtabshP (t : stdtabsh) : is_stdtab t.
 Proof using. by case: t => /= t /andP []. Qed.
 
-Lemma stdtabsh_shape (t : stdtabsh) : shape t = sh.
+Lemma shape_stdtabsh (t : stdtabsh) : shape t = sh.
 Proof using. by case: t => /= t /andP [] _ /eqP. Qed.
 
 Lemma enum_stdtabshE : map val (enum {:stdtabsh}) = enum_stdtabsh sh.
@@ -752,7 +752,15 @@ move=> /andP [/andP [Hyam Heval] /IHly{IHly}Hrec].
 by rewrite insubT /= stdtab_of_yamP //= ?shape_stdtab_of_yam // Hrec.
 Qed.
 
+Lemma hyper_stdtabsh_subproof :
+  is_stdtab_of_shape sh (stdtab_of_yam (locked (hyper_yameval sh))).
+Proof.
+by rewrite /= stdtab_of_yamP //= shape_stdtab_of_yam // eval_yameval.
+Qed.
+Definition hyper_stdtabsh := StdtabSh hyper_stdtabsh_subproof.
+
 End StdtabOfShape.
+Hint Resolve stdtabshP.
 
 Section StdtabCombClass.
 
