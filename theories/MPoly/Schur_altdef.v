@@ -47,6 +47,15 @@ We define the following notions:
            of the row reading of the tableau [t] is equal to the monomial
            associated to [la]
 
+***** Kostka numbers and standard tableaux:
+
+In this section, we fix two nat [n] and [d] with hypothesis [Hd : d <= n.+1].
+
+- [tabnat_of_ord Hd t] == the standard tableau of shape [la] corresponding to
+                          the tableau [t : tabsh n la]
+- [tabord_of_nat Hd t] == the tableau over ['I_n.+1] of shape [la]
+                          corresponding to [t : stdtabsh la]
+
 ***** Extension of tableaux:
 
 In this section, we fix
