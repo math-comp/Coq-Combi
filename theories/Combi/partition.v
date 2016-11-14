@@ -1444,18 +1444,29 @@ Proof using. exact: can_inj (cast_intpartnK eq_m_n). Qed.
 
 
 Definition rowpart d := if d is _.+1 then [:: d] else [::].
-Fact rowpartnP d : is_part_of_n d (rowpart d).
+Fact rowpartn_subproof d : is_part_of_n d (rowpart d).
 Proof. case: d => [//= | d]; by rewrite /is_part_of_n /= addn0 eq_refl. Qed.
-Definition rowpartn d : 'P_d := IntPartN (rowpartnP d).
+Definition rowpartn d : 'P_d := IntPartN (rowpartn_subproof d).
 
 Definition colpart d := nseq d 1%N.
-Fact colpartnP d : is_part_of_n d (colpart d).
+Fact colpartn_subproof d : is_part_of_n d (colpart d).
 Proof.
 elim: d => [| d ] //= /andP [] /eqP -> ->.
 rewrite add1n eq_refl andbT /=.
 by case: d.
 Qed.
-Definition colpartn d : 'P_d := IntPartN (colpartnP d).
+Definition colpartn d : 'P_d := IntPartN (colpartn_subproof d).
+
+Lemma colpartnE d (la : 'P_d) : all (pred1 1) la -> la = colpartn d.
+Proof.
+move=> Hall; apply val_inj => /=.
+case: la Hall => la /= /andP [/eqP].
+elim: d la => [|d IHd] /= la Hsum Hla; first by rewrite (part0 Hla).
+case: la Hsum Hla => //= l0 la Hsum.
+move=> /andP [_ /IHd{IHd}Hrec] /andP [/eqP Hl0 /Hrec{Hrec}Hrec].
+subst l0; congr (_ :: _); apply Hrec.
+by move: Hsum; rewrite add1n => [[]].
+Qed.
 
 Lemma conj_rowpartn d : conj_intpartn (rowpartn d) = colpartn d.
 Proof. apply val_inj => /=; rewrite /rowpart /colpart; by case: d. Qed.
