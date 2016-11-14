@@ -657,6 +657,13 @@ Qed.
 
 End Classes.
 
+Lemma permCT_colpartn_card : permCT (colpartn #|T|) = 1%g.
+Proof.
+have /conj_permP [s ->] : cycle_type 1 == cycle_type (permCT (colpartn #|T|)).
+  by rewrite permCTP cycle_type1.
+by rewrite conj1g.
+Qed.
+
 Lemma classCT_inj : injective classCT.
 Proof using.
 rewrite /classCT => t1 t2 /class_eqP.
@@ -749,11 +756,14 @@ Proof using.
 by apply/eqP/eqP => [<- | ->]; [rewrite -partnCTK | rewrite CTpartnK].
 Qed.
 
+Lemma CTpartn_colpartn : CTpartn (colpartn n) = colpartn #|'I_n|.
+Proof. by apply val_inj; rewrite cast_intpartnE /= card_ord. Qed.
+
 Lemma cycle_typeSn1 : cycle_typeSn 1%g = colpartn n.
-Proof.
-rewrite /cycle_typeSn cycle_type1.
-by apply val_inj; rewrite cast_intpartnE /= card_ord.
-Qed.
+Proof. by rewrite /cycle_typeSn cycle_type1 -CTpartn_colpartn CTpartnK. Qed.
+
+Lemma permCT_colpartn : permCT (colpartn n) = 1%g.
+Proof. by rewrite CTpartn_colpartn permCT_colpartn_card. Qed.
 
 Lemma cfuniCTnE (ct : 'P_n) (s : 'S_n) :
   '1_[ct] s = (cycle_typeSn s == ct)%:R.
