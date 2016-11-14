@@ -1250,7 +1250,7 @@ Qed.
 End FindCorner.
 
 Theorem HookLengthFormula_rat (p : intpart) :
-  #|stdtabsh_finType p| = HLF p :> rat.
+  #|{:stdtabsh p}| = HLF p :> rat.
 Proof.
 apply esym; move: p; apply card_stdtabsh_rat_rec.
 - by rewrite /HLF /= /F_deno /= big_box_in /enum_box_in /= big_nil factE.
@@ -1266,7 +1266,7 @@ by apply/prodf_neq0 => [] [] [r c].
 Qed.
 
 Lemma HLprod_nat (p : intpart) :
-  #|stdtabsh_finType p| * (F_deno p) = (sumn p)`!.
+  #|{:stdtabsh p}| * (F_deno p) = (sumn p)`!.
 Proof.
 apply /eqP; rewrite -eqz_nat PoszM.
 rewrite -(@eqr_int rat_numDomainType) intrM /=.
@@ -1278,9 +1278,9 @@ by rewrite eqz_nat; apply: F_deno_non0.
 Qed.
 
 Lemma divF_deno (p : intpart) : (F_deno p) %| (sumn p)`!.
-Proof. apply/dvdnP; exists #|stdtabsh_finType p|; by rewrite HLprod_nat. Qed.
+Proof. apply/dvdnP; exists #|{:stdtabsh p}|; by rewrite HLprod_nat. Qed.
 
 Theorem HookLengthFormula (p : intpart) :
-  #|stdtabsh_finType p| = (sumn p)`! %/ (F_deno p).
+  #|{:stdtabsh p}| = (sumn p)`! %/ (F_deno p).
 Proof. rewrite -HLprod_nat mulnK // lt0n; exact: F_deno_non0. Qed.
 

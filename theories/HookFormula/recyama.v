@@ -45,8 +45,8 @@ Qed.
 
 Lemma card_yama_rec (p : intpart) :
   (p != [::] :> seq nat) ->
-  #|yameval_finType p| = \sum_(i <- rem_corners p)
-                          #|yameval_finType (decr_nth_part p i)|.
+  #|{:yameval p}| = \sum_(i <- rem_corners p)
+                          #|{:yameval (decr_nth_part p i)}|.
 Proof.
 move=> H.
 rewrite cardE -(size_map val) enum_yamevalE /enum_yameval.
@@ -65,13 +65,13 @@ Qed.
 
 Definition empty_part := IntPart (pval := [::]) is_true_true.
 
-Lemma card_yama0 : #|yameval_finType empty_part| = 1.
+Lemma card_yama0 : #|{:yameval empty_part}| = 1.
 Proof.
 by rewrite cardE -(size_map val) enum_yamevalE.
 Qed.
 
 Lemma card_yam_stdtabE (p : intpart) :
-  #|yameval_finType p| = #|stdtabsh_finType p|.
+  #|{:yameval p}| = #|{:stdtabsh p}|.
 Proof.
 by rewrite !cardE -!(size_map val) enum_yamevalE enum_stdtabshE size_map.
 Qed.
@@ -116,7 +116,7 @@ Lemma card_stdtabsh_rec (f : intpart -> nat) :
   ( forall p : intpart,
       (p != [::] :> seq nat) ->
       f p = \sum_(i <- rem_corners p) f (decr_nth_part p i) ) ->
-  ( forall p : intpart, f p = #|stdtabsh_finType p| ).
+  ( forall p : intpart, f p = #|{:stdtabsh p}| ).
 Proof.
 move=> H0 Hrec.
 elim/intpart_rem_corner_ind => [//= | p Hnnil IHp] /=.
@@ -137,7 +137,7 @@ Lemma card_stdtabsh_rat_rec (f : intpart -> rat) :
   ( forall p : intpart,
       (p != [::] :> seq nat) ->
       f p = \sum_(i <- rem_corners p) f (decr_nth_part p i) ) ->
-  ( forall p : intpart, f p = #|stdtabsh_finType p| ).
+  ( forall p : intpart, f p = #|{:stdtabsh p}| ).
 Proof.
 move=> H0 Hrec.
 elim/intpart_rem_corner_ind => [//= | p Hnnil IHp] /=.

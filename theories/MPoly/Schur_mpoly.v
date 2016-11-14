@@ -171,8 +171,7 @@ rewrite (eq_bigl (fun i => sorted gtnX (rev_tuple i))); first last.
   + by rewrite -ltnXnatE.
   + by apply/hasPn => x /=.
 rewrite [RHS](eq_big_perm
-                (map (@rev_tuple _ _)
-                     (enum (tuple_finType d (ordinal_finType n))))) /=.
+                (map (@rev_tuple _ _) (enum {:d.-tuple 'I_n}))) /=.
   by rewrite big_map /=; first by rewrite /index_enum /= enumT.
 apply uniq_perm_eq.
 - rewrite /index_enum -enumT; exact: enum_uniq.

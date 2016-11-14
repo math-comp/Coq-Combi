@@ -869,7 +869,7 @@ Qed.
 
 (* TODO: Ask why the canonical conj_intpart work for conj_stdtabsh and not here *)
 Lemma card_stdtabsh_conj_part (sh : intpart) :
-  #|stdtabsh_finType (conj_intpart sh)| = #|stdtabsh_finType sh|.
+  #|{:stdtabsh (conj_intpart sh)}| = #|{:stdtabsh sh}|.
 Proof. apply esym; apply: (bij_card (conj_stdtabsh_bij sh)). Qed.
 
 Hint Resolve stdtabnP stdtabshP.

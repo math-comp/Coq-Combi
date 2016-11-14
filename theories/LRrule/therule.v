@@ -189,7 +189,7 @@ Variables (P1 : 'P_d1) (P2 : 'P_d2).
 
 Lemma sfilterleq_LRsupportP Q :
   Q \in LRsupport (hyper_stdtabn P1) (hyper_stdtabn P2) ->
-  exists y : yameval_finType P2, std y = (sfilterleq d1 (to_word Q)).
+  exists y : yameval P2, std y = (sfilterleq d1 (to_word Q)).
 Proof using .
   rewrite /LRsupport inE -LRtriple_fastE //.
   move/(LRtripleP _ (stdtabnP (hyper_stdtabn P1)) (stdtabnP (hyper_stdtabn P2))).
@@ -244,7 +244,7 @@ Proof using Hincl. by rewrite (sumn_diff_shape Hincl) !intpartn_sumn addKn. Qed.
 Definition is_skew_reshape_tableau (P P1 : seq nat) (w : seq nat) :=
   is_skew_tableau P1 (skew_reshape P1 P w).
 Definition LRyam_set :=
-  [set y : yameval_finType P2 | is_skew_reshape_tableau P P1 y].
+  [set y : yameval P2 | is_skew_reshape_tableau P P1 y].
 Definition LRyam_coeff := #|LRyam_set|.
 
 Lemma is_skew_reshape_tableauP (w : seq nat) :
@@ -482,7 +482,7 @@ Proof using .
   pose f := [fun s : seq nat =>
                to_word (join_tab (hyper_stdtabn P1) (map (shiftn d1) (skew_reshape P1 P s)))].
   have {H} H : f (std x) = f (std y) by rewrite /= H.
-  have invf (s : yameval_finType P2) : std s = sfilterleq d1 (f (std s)).
+  have invf (s : yameval P2) : std s = sfilterleq d1 (f (std s)).
     have /= := join_stdtab_in_shuffle
                  (stdtabnP (hyper_stdtabn P1)) (size_leq_skew_reshape (std s)).
     rewrite /size_tab.

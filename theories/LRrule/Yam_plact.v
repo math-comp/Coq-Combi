@@ -319,7 +319,7 @@ Proof.
   by rewrite (shape_RS_yam (yamevalP y)) eval_yameval.
 Qed.
 
-Definition auxbij (p : intpart) (y : yameval p) : yameval_finType p :=
+Definition auxbij (p : intpart) (y : yameval p) : yameval p :=
   YamEval (auxbijP y).
 
 Lemma auxbij_inj (p : intpart) : injective (@auxbij p).

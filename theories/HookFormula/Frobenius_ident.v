@@ -93,7 +93,7 @@ Definition stpsh_finMixin := Eval hnf in FinMixin enum_stpshP.
 Definition stpsh_finType := Eval hnf in FinType stpsh_subCountType stpsh_finMixin.
 Definition stpsh_subFinType := Eval hnf in [subFinType of stpsh_finType].
 
-Lemma card_stpsh : #|stpsh_finType| = #|stdtabsh_finType sh|^2.
+Lemma card_stpsh : #|{:stpsh_subFinType}| = #|{:stdtabsh sh}|^2.
 Proof using.
 by rewrite -mulnn -card_prod !cardE enumT unlock /=.
 Qed.
@@ -101,7 +101,7 @@ Qed.
 End Shape.
 
 
-Lemma stpn_PredEq (ev : intpartn_subFinType n) :
+Lemma stpn_PredEq (ev : intpartn n) :
   predI (is_stdtab_pair_of_n n) (pred1 (val ev) \o shape \o (fun x => x.1)) =1
   is_stdtab_pair_of_shape ev.
 Proof using.
@@ -141,10 +141,10 @@ Definition stpn_unionType :=
 Canonical stpn_finType := Eval hnf in [finType of stpn for stpn_unionType].
 Canonical stpn_subFinType := Eval hnf in [subFinType of stpn].
 
-Lemma card_stpn : #|stpn_finType| = \sum_(p : 'P_n) (n`! %/ (F_deno p))^2.
+Lemma card_stpn : #|{:stpn}| = \sum_(p : 'P_n) (n`! %/ (F_deno p))^2.
 Proof using.
 rewrite card_unionE.
-rewrite (eq_bigr (fun sh : 'P_n => #|stdtabsh_finType sh|^2)); first last.
+rewrite (eq_bigr (fun sh : 'P_n => #|{:stdtabsh sh}|^2)); first last.
   by move=> i _; rewrite card_stpsh.
 apply eq_bigr => sh _.
 by rewrite HookLengthFormula intpartn_sumn.

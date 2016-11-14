@@ -61,7 +61,7 @@ Lemma cast_ord_permE m n eq_m_n (s : 'S_m) i :
   @cast_ord m n eq_m_n (s i) = (cast_perm eq_m_n s) (cast_ord eq_m_n i).
 Proof using. by subst m; rewrite cast_perm_id !cast_ord_id. Qed.
 
-Lemma cast_permE m n (eq_m_n : m = n) (s : 'S_m) (i : ordinal_finType n) :
+Lemma cast_permE m n (eq_m_n : m = n) (s : 'S_m) (i : 'I_n) :
   cast_ord eq_m_n (s (cast_ord (esym eq_m_n) i)) = cast_perm eq_m_n s i.
 Proof. by rewrite cast_ord_permE cast_ordKV. Qed.
 
