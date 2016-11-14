@@ -230,6 +230,16 @@ exact: partition_pcycles.
 Qed.
 Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_subproof s).
 
+Lemma cycle_type1 : cycle_type 1%g = colpartn #|T|.
+Proof.
+apply colpartnE; rewrite /= /setpart_shape.
+apply/allP => /= C; rewrite mem_sort => /mapP [/= S].
+rewrite mem_enum => /imsetP [x _ ->{S} ->{C}].
+have /eqP : (1%g : {perm T}) x = x by rewrite perm1.
+rewrite pcycle_fix => /eqP ->.
+by rewrite cards1.
+Qed.
+
 Lemma conjg_cycle s a : (<[s]> :^ a = <[s ^ a]>)%g.
 Proof using.
 apply /setP => x.
@@ -737,6 +747,12 @@ Qed.
 Lemma partnCT_congr p1 (p2 : 'P_n) : (partnCT p1 == p2) = (p1 == p2).
 Proof using.
 by apply/eqP/eqP => [<- | ->]; [rewrite -partnCTK | rewrite CTpartnK].
+Qed.
+
+Lemma cycle_typeSn1 : cycle_typeSn 1%g = colpartn n.
+Proof.
+rewrite /cycle_typeSn cycle_type1.
+by apply val_inj; rewrite cast_intpartnE /= card_ord.
 Qed.
 
 Lemma cfuniCTnE (ct : 'P_n) (s : 'S_n) :
