@@ -23,10 +23,11 @@ From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import finfun fintype tuple finset bigop.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
 From mathcomp Require Import rat ssralg ssrnum algC vector.
-From mathcomp Require Import classfun character.
+From mathcomp Require Import mxrepresentation classfun character.
 
 From SsrMultinomials Require Import mpoly.
-Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy Schur_altdef.
+Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy
+        Schur_altdef stdtab.
 Require Import permcomp cycletype towerSn permcent.
 
 Set Implicit Arguments.
@@ -394,6 +395,34 @@ rewrite -(map_homsymp (ratr_rmorphism algCF)).
   move=> /(congr1 (fun p : _.-tuple _ => p`_i)) /= => <-.
   congr (_ *: _); apply esym; apply nth_map.
   by rewrite size_map -cardE ltn_ord.
+Qed.
+
+Theorem dim_irrSG n (la : 'P_n) : 'irrSG[la] 1%g = #|{: stdtabsh la}|%:R.
+Proof.
+pose HSC := {homsym algC[n.-1.+1, n]}.
+rewrite -permCT_colpartn Frobenius_char_coord.
+have -> : 'hp[colpartn n] = 'hh[colpartn n] :> HSC.
+  apply val_inj; rewrite /= !prod_gen_colpartn.
+  by rewrite sympe1E -symhe1E.
+have -> : 'hh[colpartn n] = \sum_la 'K(la, colpartn n) *: 'hs[la] :> HSC.
+  apply val_inj.
+  by rewrite /= linear_sum /= -![prod_gen _ _]/('h[_]) symh_syms.
+rewrite (reindex (enum_val (A := {:'P_n}))) /=; first last.
+  by apply (enum_val_bij_in (x0 := (rowpartn n))).
+rewrite (eq_bigr
+           (fun i : 'I__ => 'K(enum_val i, colpart n) *: 'hs`_i)); first last.
+  move=> /= i _.
+  rewrite (nth_map (rowpartn n)); last by rewrite -cardE ltn_ord.
+  by congr (_ *: 'hs[_]); apply enum_val_nth.
+rewrite coord_sum_free ?enum_rankK // ?KostkaStd //.
+exact: (basis_free (symbs_basis _ (leqSpred _))).
+Qed.
+
+Theorem dim_cfReprSG n (la : 'P_n) d (rG : mx_representation algCF 'SG_n d) :
+  cfRepr rG = 'irrSG[la] -> d = #|{: stdtabsh la}|.
+Proof.
+move=> H; have := cfRepr1 rG; rewrite H dim_irrSG => /eqP.
+by rewrite eqC_nat => /eqP ->.
 Qed.
 
 Local Notation Delta := Vanprod.

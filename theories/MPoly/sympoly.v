@@ -541,6 +541,12 @@ Proof using.
 by rewrite /prod_gen (eq_big_perm _ (perm_union_intpartn l k)) big_cat.
 Qed.
 
+Lemma prod_gen_colpartn d : prod_gen (colpartn d) = (gen 1) ^+ d.
+Proof.
+rewrite /prod_gen /= /colpart big_nseq.
+by elim: d => //= d ->; rewrite exprS.
+Qed.
+
 End Defs.
 
 Definition prod_syme := prod_gen (@syme n R).
