@@ -50,8 +50,8 @@ Contents
    - the scalar product and the *Cauchy formula*.
 
 *  the **character theory of the symmetric Groups**. We do not use
-   representation but rather goes as fast as possible to Frobenius
-   isomorphisms and then uses computation with symmetric polynomials. it includes
+   representations but rather goes as fast as possible to Frobenius
+   isomorphism and then uses computations with symmetric polynomials. it includes
 
   - *cycle types* for permutations (together with Thibaut Benjamin)
 
