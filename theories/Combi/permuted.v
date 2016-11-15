@@ -55,7 +55,7 @@ Section SizeN.
 Variable n : nat.
 
 Definition permuted_tuple (t : n.-tuple T) :=
-  [seq [tuple tnth t (aperm i p) | i < n] | p <- enum 'S_n ].
+  [seq [tuple tnth t (aperm i p) | i < n] | p : 'S_n ].
 
 Lemma size_permuted_tuple (t : n.-tuple T) : size (permuted_tuple t) = n`!.
 Proof using. rewrite /permuted_tuple size_map -cardE; exact: card_Sn. Qed.

@@ -100,7 +100,7 @@ rewrite /is_std; apply (iffP idP).
   by move => i; rewrite Hs.
 Qed.
 
-Definition wordperm n (p : 'S_n) := [seq val (p i) | i <- enum 'I_n].
+Definition wordperm n (p : 'S_n) := [seq val (p i) | i : 'I_n].
 
 Open Scope group_scope.
 
@@ -198,7 +198,7 @@ Proof using. by case: s => s /= /andP []. Qed.
 Lemma size_sdtn (s : stdwordn) : size (val s) = n.
 Proof using. by case: s => s /= /andP [] _ /eqP. Qed.
 
-Definition enum_stdwordn := [seq wordperm p | p <- enum 'S_n].
+Definition enum_stdwordn := [seq wordperm p | p : 'S_n].
 
 Lemma enum_stdwordnE : enum_stdwordn =i is_std_of_n.
 (* (is_std_of_n s) = (s \in enum_stdwordn). *)

@@ -350,11 +350,11 @@ Local Notation SF := {homsym R[n, d]}.
 
 
 Local Notation Basis := (#|{:'P_d}|.-tuple SF).
-Definition symbe : Basis := [tuple of [seq 'he[la] | la <- enum {:'P_d}]].
-Definition symbh : Basis := [tuple of [seq 'hh[la] | la <- enum {:'P_d}]].
-Definition symbm : Basis := [tuple of [seq 'hm[la] | la <- enum {:'P_d}]].
-Definition symbs : Basis := [tuple of [seq 'hs[la] | la <- enum {:'P_d}]].
-Definition symbp : Basis := [tuple of [seq 'hp[la] | la <- enum {:'P_d}]].
+Definition symbe : Basis := [tuple of [seq 'he[la] | la : 'P_d]].
+Definition symbh : Basis := [tuple of [seq 'hh[la] | la : 'P_d]].
+Definition symbm : Basis := [tuple of [seq 'hm[la] | la : 'P_d]].
+Definition symbs : Basis := [tuple of [seq 'hs[la] | la : 'P_d]].
+Definition symbp : Basis := [tuple of [seq 'hp[la] | la : 'P_d]].
 
 Hypothesis Hd : (d <= n)%N.
 
@@ -440,7 +440,7 @@ rewrite /= is_part_sortedE; apply/and3P; split.
   apply/(sorted.sortedP 0%N) => //=; first exact: leq_trans.
   move=> i j; rewrite !nth_flatten.
   rewrite size_flatten.
-  have -> : shape [seq nseq (m i0) i0.+1 | i0 <- enum 'I_n] = m.
+  have -> : shape [seq nseq (m i0) i0.+1 | i0 : 'I_n] = m.
     rewrite /shape -map_comp (tuple_map_ord m) /=.
     apply eq_map => k /=.
     by rewrite size_nseq.
@@ -675,8 +675,7 @@ Notation "''[' u | v ]" := (homsymdot u v) : ring_scope.
 Lemma homsymdotE p q :
   '[ p | q ] =
   \sum_(la : 'P_d) (zcard la)%:R *
-    (coord 'hp (enum_rank la) p) *
-    (coord 'hp (enum_rank la) q)^*.
+    (coord 'hp (enum_rank la) p) * (coord 'hp (enum_rank la) q)^*.
 Proof.
 rewrite /homsymdot [RHS](reindex (enum_val (A := {:'P_d}))) /=; first last.
   by apply (enum_val_bij_in (x0 := (rowpartn d))).

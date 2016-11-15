@@ -557,9 +557,8 @@ Canonical tabsh_subFinType := Eval hnf in [subFinType of tabsh_countType].
 
 Lemma to_word_enum_tabsh :
   perm_eq
-    [seq to_word (tabshval t) | t <- enum tabsh]
-    [seq x <- [seq val i | i <- enum {:d.-tuple 'I_n.+1}]
-    | tabsh_reading sh x].
+    [seq to_word (tabshval t) | t : tabsh]
+    [seq x <- [seq val i | i : d.-tuple 'I_n.+1]  | tabsh_reading sh x].
 Proof using.
 apply uniq_perm_eq.
 - rewrite map_inj_in_uniq; first exact: enum_uniq.

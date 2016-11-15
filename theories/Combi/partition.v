@@ -206,9 +206,7 @@ Qed.
 Lemma big_box_in (R : Type) (idx : R) (op : Monoid.law idx) (f : nat -> nat -> R):
   \big[op/idx]_(b : box_in) f b.1 b.2 = \big[op/idx]_(b <- enum_box_in) f b.1 b.2.
 Proof using.
-rewrite -enum_box_inE /index_enum /= -enumT /=.
-elim: (enum _) => [| b0 b] /=; first by rewrite !big_nil.
-by rewrite !big_cons => ->.
+by rewrite -enum_box_inE big_map /index_enum /= -!enumT /=.
 Qed.
 
 End BoxIn.
@@ -1844,15 +1842,15 @@ by rewrite !inE Hy -Hcov andbT => /bigcupP; apply; exists Y.
 Qed.
 
 Lemma count_set_of_card (p : pred nat) (P : {set {set T}}) :
-  count p [seq #{x} | x <- enum P] = #|P :&: [set x | p #{x}]|.
+  count p [seq #{x} | x in P] = #|P :&: [set x | p #{x}]|.
 Proof using.
 rewrite cardE -size_filter /enum_mem -enumT /=.
 rewrite filter_map size_map; congr size.
-rewrite -filter_predI; apply eq_filter.
+rewrite -filter_predI -enumT /=; apply eq_filter.
 by move=> S; rewrite !inE andbC.
 Qed.
 
-Definition setpart_shape P := sort geq [seq #{X} | X <- enum P].
+Definition setpart_shape P := sort geq [seq #{X} | X in P].
 
 Lemma setpart_shapeP P D :
   partition P D -> is_part_of_n #|D| (setpart_shape P).

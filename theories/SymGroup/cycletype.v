@@ -276,8 +276,8 @@ Qed.
 Lemma cycle_type_conjg s a : cycle_type (s ^ a)%g = cycle_type s.
 Proof using.
 apply esym; apply val_inj => /=.
-rewrite pcycles_conjg; apply/perm_sortP => //.
-rewrite (eq_map (f2 := fun X : {set T} => #|a @: X|)); first last.
+rewrite pcycles_conjg; apply/perm_sortP => //=.
+rewrite [X in perm_eq X _](eq_map (f2 := fun X : {set T} => #|a @: X|)); first last.
   by move => x;  apply esym; apply card_imset; exact: perm_inj.
 rewrite (map_comp (fun x => #{x})); apply perm_map.
 apply uniq_perm_eq.
@@ -294,7 +294,7 @@ Lemma card_pred_card_pcycles s (P : pred nat) :
   #|[set x in pcycles s | P #|x| ]| = count P (cycle_type s).
 Proof using.
 rewrite /cycle_type /= /psupport /setpart_shape.
-have /perm_eqlP/perm_eqP -> := perm_sort geq [seq #{x} | x <- enum (pcycles s)].
+have /perm_eqlP/perm_eqP -> := perm_sort geq [seq #{x} | x in pcycles s].
 rewrite cardE /enum_mem size_filter /= count_map count_filter.
 by apply eq_count => X; rewrite !inE andbC.
 Qed.

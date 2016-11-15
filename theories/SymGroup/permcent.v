@@ -219,7 +219,7 @@ Proof using.
 rewrite -(bigdprod_card (esym (pcyclegrpE s))).
 rewrite /cycle_type /= /setpart_shape /cycle_dec.
 rewrite big_imset /=; last exact: restr_perm_inj.
-rewrite [RHS](eq_big_perm [seq #{x} | x <- enum (pcycles s)]);
+rewrite [RHS](eq_big_perm [seq #{x} | x in pcycles s]);
   last by apply/perm_eqlP; apply perm_sort.
 rewrite /= [RHS]big_map -big_enum.
 rewrite [RHS](bigID (fun X => #{X} == 1%N)) /=.
@@ -411,7 +411,7 @@ Proof using.
 rewrite -(bigdprod_card (esym (stab_ipcyclesE s))).
 apply eq_bigr => i _.
 rewrite card_perm_ong /setpart_shape; congr (_)`!.
-have:= perm_sort geq [seq #{x} | x <- enum (pcycles s)].
+have:= perm_sort geq [seq #{x} | x in pcycles s].
 move/perm_eqlP/perm_eqP ->.
 rewrite !cardE -size_filter /= /enum_mem.
 rewrite filter_map size_map -filter_predI; congr size.

@@ -471,7 +471,7 @@ Lemma enum_yamnE :
   map val (enum {:yamn}) = flatten [seq enum_yameval p | p <- enum_partn n].
 Proof using.
 rewrite enum_unionE /=; congr flatten.
-rewrite (eq_map (f2 := enum_yameval \o val)).
+rewrite [LHS](eq_map (f2 := enum_yameval \o val)).
 - by rewrite map_comp enum_intpartnE.
 - by move=> i /=; rewrite enum_yamevalE.
 Qed.

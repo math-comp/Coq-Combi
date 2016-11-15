@@ -299,10 +299,12 @@ by rewrite -H Hmu in Hl0l.
 Qed.
 
 Theorem irrSG_nvarP :
-  perm_eq [seq 'irrSG[la] | la <- enum {:'P_n}] (irr 'SG_n).
+  perm_eq [seq 'irrSG[la] | la : 'P_n] (irr 'SG_n).
 Proof.
 pose irrChs := [seq Fchar_inv f | f <- 'hs : seq HS].
-rewrite [map _ _](_ : _ = irrChs); last by rewrite map_comp.
+rewrite [X in perm_eq X](_ : _ = irrChs); first last.
+  rewrite /irrChs /symbs /= -[LHS]map_comp -!map_comp.
+  by apply eq_map => la /=.
 have HirrChs : uniq irrChs.
   rewrite map_inj_uniq.
   + exact: free_uniq (basis_free (symbs_basis algCF Hn)).
@@ -343,7 +345,7 @@ Require Import therule cycletype.
 Open Scope ring_scope.
 
 Theorem irrSGP n :
-  perm_eq [seq 'irrSG[la] | la <- enum {:'P_n}] (irr 'SG_n).
+  perm_eq [seq 'irrSG[la] | la : 'P_n] (irr 'SG_n).
 Proof. by apply: irrSG_nvarP; apply leqSpred. Qed.
 
 Lemma Fchar_irrSGE nvar0 n (la : 'P_n) :

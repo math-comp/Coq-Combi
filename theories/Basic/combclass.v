@@ -246,7 +246,7 @@ Variable FI : T -> TI.
 Hypothesis HPTi : forall i : TPI, (predI P (pred1 (val i) \o FI)) =1 (Pi (val i)).
 Hypothesis Hpart : forall x : T, P x -> PI (FI x).
 
-Definition enum_union := flatten [seq map val (enum (TPi i)) | i <- enum TPI].
+Definition enum_union := flatten [seq map val (enum (TPi i)) | i : TPI].
 
 Lemma all_unionP : all P enum_union.
 Proof using HPTi.

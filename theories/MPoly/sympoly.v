@@ -369,7 +369,7 @@ rewrite (eq_bigr (fun i : 'P_d =>
   move=> i Hi; congr (_ *: _); congr sympol; congr symm.
   by rewrite mpartK //; apply (size_mpart_in_supp Hhomog Hi).
 rewrite /index_enum -enumT.
-transitivity (\sum_(m <- [seq mpart (i : 'P_d) | i <- enum {: 'P_d} ] | m \in msupp f)
+transitivity (\sum_(m <- [seq mpart i | i : 'P_d ] | m \in msupp f)
       f@_m *: sympol (symm (partm m))); last by rewrite big_map /=.
 rewrite -big_filter -[RHS]big_filter; apply eq_big_perm; apply uniq_perm_eq.
 - by apply filter_uniq; apply msupp_uniq.

@@ -325,7 +325,7 @@ Qed.
 Lemma nth_add_setdiff d k (la : 'P_d) (mu : 'P_(d + k)) :
   size mu <= n -> size la <= n -> vb_strip la mu ->
   forall i,
-  nth 0 [seq (mpart la) i0 + (mesym1 (setdiff la mu)) i0 | i0 <- enum 'I_n] i =
+  nth 0 [seq (mpart la) i0 + (mesym1 (setdiff la mu)) i0 | i0 : 'I_n] i =
   nth 0 mu i.
 Proof using .
 move=> Hszmu Hszla /(vb_stripP (intpartnP _) (intpartnP _)) Hstrip i.
@@ -991,7 +991,7 @@ case Hla : (size la) => [|szla].
     by rewrite /mpart intpartn0 /= !tnth_mktuple /=.
 rewrite (Kostka_any la (n := szla)) /KostkaMon ?Hla //.
 have Hntht j :
-  nth [::] [seq nseq (nth 0 la (nat_of_ord i)) i | i <- enum 'I_szla.+1] j =
+  nth [::] [seq nseq (nth 0 la (nat_of_ord i)) i | i : 'I_szla.+1] j =
     nseq (nth 0 la j) (inord j).
   case: (ssrnat.ltnP j szla.+1) => Hj.
   - rewrite (nth_map ord0) ?size_enum_ord // nth_enum_ord //.

@@ -77,8 +77,8 @@ Qed.
 
 
 Lemma perm_eq_enum_basis d :
-  perm_eq [seq s2m (val s) | s <- enum (basis n d)]
-          [seq val m | m <- enum [set m : 'X_{1..n < d.+1} | mdeg m == d]].
+  perm_eq [seq s2m (val s) | s in (basis n d)]
+          [seq val m | m in [set m : 'X_{1..n < d.+1} | mdeg m == d]].
 Proof using.
 apply uniq_perm_eq.
 - rewrite map_inj_in_uniq; first exact: enum_uniq.
@@ -127,7 +127,7 @@ rewrite /= -symh_basisE.
 rewrite -(big_map (@bmnm n d.+1) (fun m => mdeg m == d) (fun m => 'X_[m])).
 rewrite /index_enum -enumT -big_filter.
 rewrite [filter _ _](_ : _ =
-    [seq val m | m <- enum [set m : 'X_{1..n < d.+1} | mdeg m == d]]);
+    [seq val m | m in [set m : 'X_{1..n < d.+1} | mdeg m == d]]);
     first last.
   rewrite /enum_mem filter_map -filter_predI; congr map.
   by apply eq_filter => s /=; rewrite !inE andbT.

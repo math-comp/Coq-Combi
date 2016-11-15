@@ -137,7 +137,7 @@ Lemma irev_w i : i < size w -> size w - i.+1 < size w.
 Proof using . move/subnSK ->; exact: leq_subr. Qed.
 
 Lemma rev_enum :
-  enum 'I_(size (revdual w)) = rev [seq rev_ord_cast i | i <- enum 'I_(size w)].
+  enum 'I_(size (revdual w)) = rev [seq rev_ord_cast i | i : 'I_(size w)].
 Proof using .
   apply: (inj_map val_inj); rewrite /=.
   rewrite val_enum_ord map_rev -map_comp.
@@ -347,12 +347,12 @@ Lemma swap_size_cover (P : {set {set 'I_(size x)}}) :
 Proof using . by rewrite swap_cover card_imset; last exact swap_inj. Qed.
 
 Lemma enum_cut : enum 'I_(size x) =
-                 [seq i | i <- enum 'I_(size x) & val i < size u]
+                 [seq i <- enum 'I_(size x) | val i < size u]
                    ++ [:: pos0; pos1]
-                   ++ [seq i | i <- enum 'I_(size x) & val i >= (size u) + 2].
+                   ++ [seq i <- enum 'I_(size x) | val i >= (size u) + 2].
 Proof using .
   rewrite [RHS]catA -{1}[enum 'I_(size x)](cat_take_drop ((size u) + 2)).
-  rewrite -drop_enumI !map_id; congr (_ ++ _).
+  rewrite -drop_enumI; congr (_ ++ _).
   rewrite take_enumI -{1}[enum 'I_(size x)](cat_take_drop (size u)).
   rewrite filter_cat //=; congr (_ ++ _).
   + rewrite take_enumI -filter_predI.
@@ -370,13 +370,12 @@ Proof using .
 Qed.
 
 Lemma size_cut_sizeu :
-  size [seq i | i <- enum 'I_(size x) & val i < size u] = size u.
+  size [seq i <- enum 'I_(size x) | val i < size u] = size u.
 Proof using l0 l1 v.
-  suff -> : [seq i | i <- enum 'I_(size x) & val i < size u]
+  suff -> : [seq i <- enum 'I_(size x) | val i < size u]
             = take (size u) (enum 'I_(size x)).
     by rewrite size_take size_enum_ord size_cat addnS ltnS -{1}[size u]addn0 leq_add2l leq0n.
-  apply: (inj_map val_inj); rewrite -!map_comp map_take val_enum_ord take_iota.
-  rewrite (eq_map (f2 := val)) //.
+  apply: (inj_map val_inj); rewrite map_take val_enum_ord take_iota.
   rewrite (eq_filter (a2 := gtn ((size u))\o val)) //.
   by rewrite map_filter_comp /= val_enum_ord iotagtnk minnC map_id.
 Qed.
@@ -437,14 +436,14 @@ Proof using HnoBoth.
     + rewrite size_map; exact: Swap.size_cut_sizeu.
   rewrite !mem_cast.
   congr (mask _ u ++ _ ++ mask _ v).
-  + rewrite -!map_comp; apply eq_in_map => i /=.
+  + apply eq_in_map => i /=.
     rewrite mem_filter => /andP [Hi _].
     by rewrite mem_cast -{1}[i](Swap.swapL Hi) /Swap.swapSet /= mem_imset_inj;
       last exact: Swap.swap_inj.
   + rewrite -{1}Swap.swap1 mem_imset_inj //=; last exact: Swap.swap_inj.
     rewrite -{2 3}Swap.swap0 mem_imset_inj //=; last exact: Swap.swap_inj.
     move/(_ _ HS): HnoBoth; by case: (posa \in S); case: (posb \in S).
-  + rewrite -!map_comp; apply eq_in_map => i /=.
+  + apply eq_in_map => i /=.
     rewrite mem_filter => /andP []; rewrite addnS addn1 => Hi _.
     by rewrite mem_cast -{1}[i](Swap.swapR Hi) /Swap.swapSet /= mem_imset_inj;
       last exact: Swap.swap_inj.
