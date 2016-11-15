@@ -1,4 +1,4 @@
-(** * Combi.MPoly.sympoly : Symmetric Polynomials *)
+(** * Combi.MPoly.Cauchy : Cauchy formula for symmetric polynomials *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -13,7 +13,39 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * The Ring of Symmetric Polynomials *)
+(** * Cauchy formula for symmetric polynomials
+
+In this file we fix two non zero natural [m] and [n] and consider the two sets
+of variables $X := (x_i)_{i<m}$ and $Y := (y_j)_{j<n}$. We also consider the
+variable $z_{i,j} := x_i * y_j$.
+
+We encode polynomial in $X \cup Y$ as polynomials in $X$ whose coefficient are
+polynomials in $Y$. We denote by [mz] a monomial in the $Z$.
+
+- [monX mz]     == the monomial in $X$, obtained by setting all the $x_i$ to $1$.
+- [monsY mz]    == the [m.-tuple] of whose $i$-th element is the monomial in $Y$
+                   obtained by putting $x_i$ to $1$ and all the others to $0$.
+- [Ymon ms]     == given [ms : m.-tuple 'X_{1.. n}] assemble them to get a
+                   monomial  in the $Z$.
+- [polXY m n R] == polynomial in [m] variable whose coeffcients are polynomials
+                   in [n] over the commutative ring [R]. This is canonicaly a
+                  [AlgType] over [R].
+- [polXY_scale c p] == ring multiplication for elements of [polXY m n R]
+- [p(X)]        == the inclusion [polX -> polXY], canonicaly a algebra morphism
+- [p(Y)]        == the inclusion [polY -> polXY], canonicaly a algebra morphism
+- [p(XY)]       == compute the polynomial in $XY$ [polXY] from a polynomials in
+                   the $Z_{i,j}$.
+- [Cauchy_kernel d] == the Cauchy kernel in degree [d] that is the sum of all
+                   monomial in $x_i*y_i$ of degree [d] that is ['h_d(XY)]
+- [co_hp la p] == if [p] is symmetric in $X$, returns the coefficient of [p] on
+                   ['hp[la]]
+- [co_hpXY la mu p] == if [p] is symmetric both in $X$ and $Y$, returns the
+                   coefficient of [p] on ['hp[la](X) 'hp[mu](Y)].
+
+The main result is Theorem [homsymdotss] which asserts that Schur function are
+orthonormal for the scalar product.
+*)
+
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple bigop path finfun.
@@ -39,6 +71,7 @@ elim: r => [|x r ih]; first by rewrite !big_nil mpolyX0.
 by rewrite !big_cons; case: (P x); rewrite ?(mpolyXD, mpolyXn) ih.
 Qed.
 
+(** ** Polynomials in two sets of variables *)
 Section CauchyKernel.
 
 Variables (m0 n0 : nat).
@@ -263,6 +296,7 @@ by rewrite [LHS]sympXY.
 Qed.
 
 
+(** ** The Cauchy reproducing kernel *)
 Definition Cauchy_kernel d := 'h_d(XY).
 
 Lemma Cauchy_kernel_dhomog d : Cauchy_kernel d \is d.-homog.
@@ -297,6 +331,7 @@ End BijectionFam.
 
 Variable d : nat.
 
+(** ** Cauchy formula for complete and monomial symmetric polynomials *)
 Lemma Cauchy_symm_symh :
   Cauchy_kernel d = \sum_(la : 'P_d) ('h[la] : polY) *: ('m[la] : polXY).
 Proof.
@@ -386,6 +421,7 @@ rewrite Cauchy_symm_symh.
 by apply eq_bigr => i _; rewrite polyXY_scale symmX.
 Qed.
 
+(** ** Cauchy formula for Schur symmetric polynomials *)
 Lemma Cauchy_homsyms_homsyms :
   Cauchy_kernel d = \sum_(la : 'P_d) 'hs[la](X) * 'hs[la](Y).
 Proof.
@@ -442,6 +478,7 @@ Notation "p '(XY)'" := (@evalXY _ _ _ p) (at level 20, format "p '(XY)'").
 
 Variable R : fieldType.
 
+(** ** Cauchy formula for power sum symmetric polynomials *)
 Lemma Cauchy_homsymp_zhomsymp m n d :
   [char R] =i pred0 ->
   Cauchy_kernel m n R d =
@@ -455,6 +492,7 @@ Qed.
 End CauchyKernelNumField.
 
 
+(** * Cauchy kernel and scalar product of symmetric functions *)
 Section Scalar.
 
 Variable n0 d : nat.
@@ -592,7 +630,8 @@ apply eq_bigr => /= nu _.
 by rewrite !mxE !enum_rankK mulrC.
 Qed.
 
-Lemma homsymdotss la mu : '[ 'hsF[la] | 'hsF[mu] ] = (la == mu)%:R.
+(** Schur function are orthonormal *)
+Theorem homsymdotss la mu : '[ 'hsF[la] | 'hsF[mu] ] = (la == mu)%:R.
 Proof using Hd.
 have to_p (nu : 'P_d) : 'hsF[nu] \in span 'hp.
   by rewrite (span_basis (symbp_basis Hd _)) // memvf.

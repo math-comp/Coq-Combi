@@ -1,4 +1,4 @@
-(** * Combi.MPoly.sympoly : Symmetric Polynomials *)
+(** * Combi.MPoly.Schur_mpoly : Schur symmetric polynomials *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -13,7 +13,14 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * The Ring of Symmetric Polynomials *)
+(** * Combinatorial definition of Schur symmetric polynomials
+
+- [Schur n0 R la] == The Schur polynomial associated to the partition [la] in
+                     [{mpoly R[n0.+1]}] as the sum of all tableau of shape
+                     [la] over the alphabet ['I_n0.+1]. 
+
+We give some values for particular partition such as row and column.
+ *)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop ssralg path perm fingroup.

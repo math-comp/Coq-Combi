@@ -15,15 +15,21 @@
 (******************************************************************************)
 (** * Frobenius characteristic associated to a class function of ['SG_n].
 
-- [Fchar f] == the Frobenius characteristic of the class function [f].
-               the number of variable is inferred from the context.
+- [Fchar f]     == the Frobenius characteristic of the class function [f].
+                   the number of variable is inferred from the context.
+- [Fchar_inv f] == the inverse Frobenius characteristic of
+                   homogeneous symmetric function [f].
+- ['irrSG[la]]   == the irreducible character for ['SG_n] associated to the
+                   partition [la] of n.
+
  *)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
-From mathcomp Require Import finfun fintype tuple finset bigop.
-From mathcomp Require Import ssralg fingroup morphism perm gproduct.
-From mathcomp Require Import rat ssralg ssrnum algC vector.
-From mathcomp Require Import mxrepresentation classfun character.
+
+Require Import mathcomp.ssreflect.ssreflect.  From
+mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.  From
+mathcomp Require Import finfun fintype tuple finset bigop.  From mathcomp
+Require Import ssralg fingroup morphism perm gproduct.  From mathcomp Require
+Import rat ssralg ssrnum algC vector.  From mathcomp Require Import
+mxrepresentation classfun character.
 
 From SsrMultinomials Require Import mpoly.
 Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy
@@ -42,30 +48,9 @@ Reserved Notation "''irrSG[' l ']'"
          (at level 8, l at level 2, format "''irrSG[' l ]").
 
 
-Lemma rem_irr1 n (xi phi : 'CF('SG_n)) :
-  xi \in irr 'SG_n -> phi \is a character -> '[phi, xi] != 0 ->
-       phi - xi \is a character.
-Proof.
-move=> /irrP [i ->{xi}] Hphi.
-rewrite -irr_consttE => /(constt_charP i Hphi) [psi Hpsi ->{phi Hphi}].
-by rewrite [_ + psi]addrC addrK.
-Qed.
-
-Lemma rem_irr n (xi phi : 'CF('SG_n)) :
-  xi \in irr 'SG_n -> phi \is a character -> phi - '[phi, xi] *: xi \is a character.
-Proof.
-move=> Hxi Hphi.
-have /CnatP [m Hm] := Cnat_cfdot_char Hphi (irrWchar Hxi).
-rewrite Hm.
-elim: m phi Hphi Hm => [|m IHm] phi Hphi Hm; first by rewrite scale0r subr0.
-rewrite mulrS scalerDl scale1r opprD addrA.
-apply IHm; first last.
-  by rewrite cfdotBl Hm irrWnorm // mulrS [1 + _]addrC addrK.
-by apply rem_irr1; rewrite //= Hm Num.Theory.pnatr_eq0.
-Qed.
-
 Local Notation algCF := [numFieldType of algC].
 
+(** * Definition and basis properties *)
 Section NVar.
 
 Variable nvar0 : nat.
@@ -177,7 +162,8 @@ rewrite /prod_gen big_seq1 raddf_sum symh_to_symp //=.
 by apply eq_bigr => l _; rewrite zcoeffE.
 Qed.
 
-Lemma Fchar_isometry f g : '[Fchar f | Fchar g] = '[f, g].
+(** ** The Frobenius Characteristic is an isometry *)
+Theorem Fchar_isometry f g : '[Fchar f | Fchar g] = '[f, g].
 Proof using Hn.
 rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) !linear_sum /=.
 rewrite homsymdot_suml cfdot_suml; apply eq_bigr => la _.
@@ -194,7 +180,7 @@ rewrite !conjC_nat -mulrA [X in _ * X]mulrC - mulrA divff; first last.
 by rewrite mulr1 divff // Num.Theory.pnatr_eq0 -lt0n cardsT card_Sn fact_gt0.
 Qed.
 
-Lemma Fchar_inv_isometry p q : '[Fchar_inv p, Fchar_inv q] = '[p | q].
+Theorem Fchar_inv_isometry p q : '[Fchar_inv p, Fchar_inv q] = '[p | q].
 Proof using Hn. by rewrite -Fchar_isometry !Fchar_invK. Qed.
 
 End Defs.
@@ -210,6 +196,8 @@ dependent equality but I'm not sure this is really needed.
 *)
 
 
+(** ** The Frobenius Characteristic is a graded ring morphism *)
+
 Theorem Fchar_ind_morph m n (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
   Fchar ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f *h Fchar g.
 Proof using.
@@ -221,6 +209,34 @@ rewrite 2!linearZ /= Ind_ncfuniCT linearZ /= Fchar_ncfuniCT /=; congr (_ *: _).
 by apply val_inj => /=; rewrite prod_genM.
 Qed.
 
+
+(** * Combinatorics of characters of the symmetric groups *)
+
+(** *** Substractic characters *)
+Lemma rem_irr1 n (xi phi : 'CF('SG_n)) :
+  xi \in irr 'SG_n -> phi \is a character -> '[phi, xi] != 0 ->
+       phi - xi \is a character.
+Proof.
+move=> /irrP [i ->{xi}] Hphi.
+rewrite -irr_consttE => /(constt_charP i Hphi) [psi Hpsi ->{phi Hphi}].
+by rewrite [_ + psi]addrC addrK.
+Qed.
+
+Lemma rem_irr n (xi phi : 'CF('SG_n)) :
+  xi \in irr 'SG_n -> phi \is a character -> phi - '[phi, xi] *: xi \is a character.
+Proof.
+move=> Hxi Hphi.
+have /CnatP [m Hm] := Cnat_cfdot_char Hphi (irrWchar Hxi).
+rewrite Hm.
+elim: m phi Hphi Hm => [|m IHm] phi Hphi Hm; first by rewrite scale0r subr0.
+rewrite mulrS scalerDl scale1r opprD addrA.
+apply IHm; first last.
+  by rewrite cfdotBl Hm irrWnorm // mulrS [1 + _]addrC addrK.
+by apply rem_irr1; rewrite //= Hm Num.Theory.pnatr_eq0.
+Qed.
+
+
+(** * Young characters *)
 Section Character.
 
 Import LeqGeqOrder.
@@ -341,12 +357,6 @@ Definition irrSG (n : nat) (la : 'P_n) : 'CF('SG_n) :=
 
 Notation "''irrSG[' l ']'" := (irrSG l).
 
-Require Import therule cycletype.
-Open Scope ring_scope.
-
-Theorem irrSGP n :
-  perm_eq [seq 'irrSG[la] | la : 'P_n] (irr 'SG_n).
-Proof. by apply: irrSG_nvarP; apply leqSpred. Qed.
 
 Lemma Fchar_irrSGE nvar0 n (la : 'P_n) :
   Fchar nvar0 'irrSG[la] = 'hs[la].
@@ -355,6 +365,13 @@ rewrite /irrSG -(FcharNvar (nvar0 := n.-1) _) ?leqSpred //=.
 by rewrite Fchar_invK ?leqSpred //= cnvarhomsyms ?leqSpred.
 Qed.
 
+(** The ['irrSG[la]] forms a complete set of irreducible character *)
+Theorem irrSGP n :
+  perm_eq [seq 'irrSG[la] | la : 'P_n] (irr 'SG_n).
+Proof. by apply: irrSG_nvarP; apply leqSpred. Qed.
+
+(** The value of the irreducible character ['irrSG[la]] using scalar product of
+    symmetric function *)
 Theorem Frobenius_char_homsymdot n (la : 'P_n) (sigma : 'S_n) :
   'irrSG[la] sigma = '[ 'hs[la] | 'hp[cycle_typeSn sigma] ] _(n.-1, n).
 Proof.
@@ -399,6 +416,8 @@ rewrite -(map_homsymp (ratr_rmorphism algCF)).
   by rewrite size_map -cardE ltn_ord.
 Qed.
 
+(** The dimension of the irreducible character ['irrSG[la]] is the number of
+    standard tableau of shape [la] *)
 Theorem dim_irrSG n (la : 'P_n) : 'irrSG[la] 1%g = #|{: stdtabsh la}|%:R.
 Proof.
 pose HSC := {homsym algC[n.-1.+1, n]}.
@@ -427,9 +446,10 @@ move=> H; have := cfRepr1 rG; rewrite H dim_irrSG => /eqP.
 by rewrite eqC_nat => /eqP ->.
 Qed.
 
-Local Notation Delta := Vanprod.
+Notation Delta := Vanprod.
 Local Notation P d := (symp_pol _ _ d).
 
+(** Frobenius character formula for ['SG_n] *)
 Theorem Frobenius_char n (la mu : 'P_n) :
   'irrSG[la] (permCT mu) = (Delta * \prod_(d <- mu) P d)@_(mpart la + rho n).
 Proof.
@@ -443,26 +463,24 @@ case: n la mu => [//|n] //= la mu.
     by move=> s /=; apply/esym/eqP/permP => [[i Hi]].
   rewrite odd_perm1 /= msym1m expr0 scale1r mcoeffX eq_refl /=.
   suff -> : 'irrSG[la] = 1 by rewrite (permS0 (permCT mu)) cfun11.
-  have := homsyms_irr (leqSpred 0) la; rewrite -/(irrSG _).
-  have /= := cfun1_irr [group of 'SG_0].
-  rewrite !memtE.
-  have : size (irr 'SG_0) = 1%N.
-    rewrite size_tuple -(vector.size_basis (irr_basis _)) dim_cfun.
-    by rewrite card_classes_perm /= card_ord card_intpartn.
-  case: (irr 'SG_0) => [[// | t0 [| //]] /= _] _.
-  by rewrite !mem_seq1 => /eqP <- /eqP.
+  apply (can_inj (FcharK (leqSpred 0))).
+  rewrite Fchar_invK //= Fchar_triv.
+  apply val_inj; rewrite /= syms0.
+  by rewrite /prod_gen intpartn0 big_nil.
 by rewrite Frobenius_char_coord mcoeff_symbs ?leqSpred //= rmorph_prod.
 Qed.
 
+Require Import therule cycletype.
+Open Scope ring_scope.
 
+(** Littlewood-Richardson rule for irreducible characters *)
 Theorem LR_rule_irrSG c d (la : 'P_c) (mu : 'P_d) :
   'Ind['SG_(c + d)] ('irrSG[la] \o^ 'irrSG[mu]) =
   \sum_(nu : 'P_(c + d) | included la nu) 'irrSG[nu] *+ LRyam_coeff la mu nu.
 Proof.
 apply (can_inj (FcharK (leqSpred (c + d)))).
-rewrite Fchar_ind_morph linear_sum //=.
-rewrite !Fchar_irrSGE.
-apply val_inj => /=; rewrite linear_sum /=.
+rewrite Fchar_ind_morph linear_sum //= !Fchar_irrSGE.
+apply val_inj; rewrite /= linear_sum /=.
 rewrite syms_symsM; apply eq_bigr => nu _.
 by rewrite !linearMn /= Fchar_invK // leqSpred.
 Qed.

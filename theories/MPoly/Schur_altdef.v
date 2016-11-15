@@ -1,4 +1,4 @@
-(** * Combi.MPoly.Schur_basis : Alternants definition of Schur polynomials *)
+(** * Combi.MPoly.Schur_altdef : Alternants definition of Schur polynomials *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)

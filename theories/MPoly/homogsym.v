@@ -13,7 +13,50 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * The Space of Homogeneous Symmetric Polynomials *)
+(** * The Space of Homogeneous Symmetric Polynomials
+
+- [f \is d.-homsym] == f is a homogenerous of degree d symmetric polynomial.
+- [f \is [in R[n], d.-homsym]] == idem specifying the ring and number of
+                     variables.
+- [{homsym R[n, d]}] == the space of homogenerous of degree [d] symmetric
+                     polynomials in [n] variables over [R].
+- [p *h q]        == the product of two homogeneous symmetric polynomial as a
+                     homogeneous symmetric polynomials.
+- ['he[la]]       == the elementary hom. sym. poly. associated to [la]
+- ['hh[la]]       == the complete   hom. sym. poly. associated to [la]
+- ['hp[la]]       == the power sum  hom. sym. poly. associated to [la]
+- ['hm[la]]       == the monomial   hom. sym. poly. associated to [la]
+- ['hs[la]]       == the Schur      hom. sym. poly. associated to [la]
+- [in_homsym d p] == if [p] is a polynomial [{mpoly R[n]}] which is both
+                     symmetric and homogeneous of degree [d], return it as a
+                     [{sympol R[n, d]}]. It is canonically linear.
+- ['he]           == the elementary hom. sym. basis
+- ['hh]           == the complete   hom. sym. basis
+- ['hp]           == the power sum  hom. sym. basis
+- ['hm]           == the monomial   hom. sym. basis
+- ['hs]           == the Schur      hom. sym. basis
+- [monE m]        == if [m] is the monomial [x_1^{i_1}x_2^{i_2}...x_n^{i_n}]
+                     returns the integer partition [n^{i_n}...2^{i_2}1^{i_1}]
+- [intpartn_of_mon H] == the same as an [intpartn d] where [H] is a proof of
+                     [mnmwgt m = d]
+
+- [map_homsym mor f] == change the base ring of the hom. sym. poly [f] using
+                     the ring morphism [mor]. This is canonicaly additive.
+- [cnvarhomsym n f] == change the number of variables of the hom. sym. poly
+                     [f] by sending elementary to elementary. This is
+                     canonicaly linear.
+
+- ['[ u | v ]]    == the scalar product of hom. sym. poly., only defined over
+                     the field [algC].
+- ['[ u | v ]] _(n, d) == the scalar product of hom. sym. poly. specifying
+                     the number of variable and degree.
+
+The main results are [symbm_basis], [symbe_basis], [symbs_basis],
+[symbh_basis], [symbp_basis] which asserts that they are all bases (if the
+characteristic of the base ring is zero for [symbp_basis]. And the definition
+of the scalr product.
+ *)
+
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop ssrint ssralg path.
@@ -56,6 +99,7 @@ Notation "[ 'in' R [ n ] , d .-homsym ]" := (@ishomogsym1 n R d)
   (at level 0, R, n at level 2, d at level 0,
      format "[ 'in'  R [ n ] ,  d .-homsym ]") : form_scope.
 
+(** ** Homogeneous symmetric polynomials *)
 Section DefType.
 
 Variable n : nat.
@@ -149,6 +193,8 @@ End HomogSymLModType.
 Import GRing.Theory.
 Local Open Scope ring_scope.
 
+
+(** ** Products of homogeneous symmetric polynomials *)
 Section HomogSymProd.
 
 Variable n : nat.
@@ -220,6 +266,7 @@ Notation "p *h q" := (homsymprod p q)
                        (at level 20, format "p  *h  q").
 
 
+(** ** Homogeneous symmetric polynomials as a vector space *)
 Section Vector.
 
 Variable n0 : nat.
@@ -339,6 +386,7 @@ Proof. by rewrite {2}(homsymmE p). Qed.
 End InHomSym.
 
 
+(** * The classical bases of homogeneous symmetric polynomials *)
 Section HomSymField.
 
 Variable n0 d : nat.
@@ -548,6 +596,7 @@ Notation "''hm'" := (symbm _ _ _) (at level 8, format "''hm'").
 Notation "''hs'" := (symbs _ _ _) (at level 8, format "''hs'").
 
 
+(** ** Changing the base field *)
 Section ChangeField.
 
 Variable R S : fieldType.
@@ -605,6 +654,7 @@ Proof. by apply eq_from_tnth => i; rewrite !tnth_map map_homsyms. Qed.
 End ChangeField.
 
 
+(** ** Changing the number of variables *)
 Section ChangeNVar.
 
 Variable R : comRingType.
@@ -657,6 +707,8 @@ Qed.
 
 End ChangeNVar.
 
+
+(** * The scalar product *)
 Section ScalarProduct.
 
 Variable n0 d : nat.
