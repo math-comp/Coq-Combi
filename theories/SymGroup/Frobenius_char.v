@@ -17,19 +17,28 @@
 
 - [Fchar f]     == the Frobenius characteristic of the class function [f].
                    the number of variable is inferred from the context.
-- [Fchar_inv f] == the inverse Frobenius characteristic of
-                   homogeneous symmetric function [f].
+- [Fchar_inv f] == the inverse Frobenius characteristic of the
+                   homogeneous symmetric polynomial [f].
 - ['irrSG[la]]   == the irreducible character for ['SG_n] associated to the
                    partition [la] of n.
 
+
+Main results includes:
+
+- [Fchar_isometry] : The Frobenius characteristic is an isometry.
+- [Young_rule] : The Young rule for character of ['SG_n].
+- [irrSGP] : The ['irrSG[la]] forms a complete set of irreducible character.
+- [Frobenius_char] : Frobenius character formula for ['SG_n].
+- [dim_cfReprSG] : the dimension of irreducible representation of ['SG_n].
+- [LR_rule_irrSG] : Littlewood-Richardson rule for characters of ['SG_n].
  *)
 
-Require Import mathcomp.ssreflect.ssreflect.  From
-mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.  From
-mathcomp Require Import finfun fintype tuple finset bigop.  From mathcomp
-Require Import ssralg fingroup morphism perm gproduct.  From mathcomp Require
-Import rat ssralg ssrnum algC vector.  From mathcomp Require Import
-mxrepresentation classfun character.
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
+From mathcomp Require Import finfun fintype tuple finset bigop.
+From mathcomp Require Import ssralg fingroup morphism perm gproduct.
+From mathcomp Require Import rat ssralg ssrnum algC vector.
+From mathcomp Require Import mxrepresentation classfun character.
 
 From SsrMultinomials Require Import mpoly.
 Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy
@@ -46,6 +55,8 @@ Open Scope ring_scope.
 
 Reserved Notation "''irrSG[' l ']'"
          (at level 8, l at level 2, format "''irrSG[' l ]").
+Reserved Notation "''M[' l ']'"
+         (at level 8, l at level 2, format "''M[' l ]").
 
 
 Local Notation algCF := [numFieldType of algC].
@@ -212,31 +223,7 @@ Qed.
 
 (** * Combinatorics of characters of the symmetric groups *)
 
-(** *** Substractic characters *)
-Lemma rem_irr1 n (xi phi : 'CF('SG_n)) :
-  xi \in irr 'SG_n -> phi \is a character -> '[phi, xi] != 0 ->
-       phi - xi \is a character.
-Proof.
-move=> /irrP [i ->{xi}] Hphi.
-rewrite -irr_consttE => /(constt_charP i Hphi) [psi Hpsi ->{phi Hphi}].
-by rewrite [_ + psi]addrC addrK.
-Qed.
-
-Lemma rem_irr n (xi phi : 'CF('SG_n)) :
-  xi \in irr 'SG_n -> phi \is a character -> phi - '[phi, xi] *: xi \is a character.
-Proof.
-move=> Hxi Hphi.
-have /CnatP [m Hm] := Cnat_cfdot_char Hphi (irrWchar Hxi).
-rewrite Hm.
-elim: m phi Hphi Hm => [|m IHm] phi Hphi Hm; first by rewrite scale0r subr0.
-rewrite mulrS scalerDl scale1r opprD addrA.
-apply IHm; first last.
-  by rewrite cfdotBl Hm irrWnorm // mulrS [1 + _]addrC addrK.
-by apply rem_irr1; rewrite //= Hm Num.Theory.pnatr_eq0.
-Qed.
-
-
-(** * Young characters *)
+(** ** Young characters and Young Rule *)
 Section Character.
 
 Import LeqGeqOrder.
@@ -273,73 +260,10 @@ apply cfInd_char; rewrite cfIsom_char.
 exact: (cfextprod_char (cfun1_char _) Hrec).
 Qed.
 
-Notation "''irrSG[' l ']'" := (Fchar_inv 'hs[l]).
-
-Lemma homsyms_irr (la : 'P_n) : 'irrSG[la] \in irr 'SG_n.
-Proof.
-pose P := IntPartNDom.intpartndom_finPOrdType n.
-elim/(finord_wf_down (T := P)): la => la IHla.
-rewrite irrEchar Fchar_inv_isometry // homsymdotss // !eq_refl andbT.
-have -> : 'hs[la] =
-         'hh[la] - \sum_(mu : P | (la < mu)%Ord)
-                   '[ Fchar_inv 'hh[la], Fchar_inv 'hs[mu] ] *: 'hs[mu] :> HS.
-  apply/eqP; rewrite eq_sym subr_eq.
-  apply/eqP/val_inj; rewrite -[val 'hh[la]]/('h[la]).
-  rewrite symh_syms_partdom /=; congr (_ + _).
-  rewrite linear_sum /=; apply eq_bigr => mu Hmu; congr (_ *: _).
-  rewrite Fchar_inv_isometry //.
-  have -> : 'hh[la] = \sum_(nu : 'P_n) 'K(nu, la) *: 'hs[nu] :> HS.
-    apply val_inj; rewrite -[val 'hh[la]]/('h[la]).
-    by rewrite symh_syms /= linear_sum.
-  rewrite homsymdot_suml (bigD1 mu) //= homsymdotZl homsymdotss // eq_refl mulr1.
-  rewrite big1 ?addr0 // => nu /negbTE Hnu.
-  by rewrite homsymdotZl homsymdotss // Hnu mulr0.
-rewrite -big_filter /index_enum -enumT.
-set L := filter _ _.
-have : all (fun y => (la < y)%Ord) L by apply filter_all.
-have : uniq L by apply filter_uniq; apply enum_uniq.
-elim: L => [| l0 l IHl].
-  by rewrite big_nil subr0 homsymh_character.
-rewrite big_cons /= => /andP [Hl0l Huniq] /andP [Hl0 Hall].
-rewrite [X in 'hh[la] - X]addrC opprD addrA.
-have {IHl Huniq Hall} := IHl Huniq Hall.
-set Frec := 'hh[la] - _ => HFrec.
-suff -> : '[Fchar_inv 'hh[la], Fchar_inv 'hs[l0]] =
-          '[Fchar_inv Frec, Fchar_inv 'hs[l0]].
-  by rewrite linearB linearZ /=; apply rem_irr => //; apply: IHla.
-rewrite {HFrec}/Frec linearB /= cfdotBl linear_sum /= [X in _ - X]cfdot_suml.
-rewrite big_seq big1 ?subr0 // => mu Hmu.
-rewrite linearZ cfdotZl /= !Fchar_inv_isometry // homsymdotss //.
-case: eqP => H; last by rewrite mulr0.
-by rewrite -H Hmu in Hl0l.
-Qed.
-
-Theorem irrSG_nvarP :
-  perm_eq [seq 'irrSG[la] | la : 'P_n] (irr 'SG_n).
-Proof.
-pose irrChs := [seq Fchar_inv f | f <- 'hs : seq HS].
-rewrite [X in perm_eq X](_ : _ = irrChs); first last.
-  rewrite /irrChs /symbs /= -[LHS]map_comp -!map_comp.
-  by apply eq_map => la /=.
-have HirrChs : uniq irrChs.
-  rewrite map_inj_uniq.
-  + exact: free_uniq (basis_free (symbs_basis algCF Hn)).
-  + exact: can_inj (Fchar_invK Hn).
-apply uniq_perm_eq.
-- exact: HirrChs.
-- exact: (free_uniq (basis_free (irr_basis _))).
-have /(leq_size_perm HirrChs) Htmp : {subset irrChs <= irr 'SG_n}.
-  move=> /= f /mapP [/= p /mapP [/= la _ ->{p}] -> {f}].
-  exact: homsyms_irr.
-suff /Htmp [] : (size (irr 'SG_n) <= size irrChs)%N by [].
-rewrite size_tuple -(vector.size_basis (irr_basis _)) dim_cfun.
-rewrite card_classes_perm /=.
-by rewrite size_tuple card_ord.
-Qed.
-
 End Character.
 
 End NVar.
+Hint Resolve leqSpred.
 
 Arguments Fchar nvar0 [n] f.
 Arguments Fchar_inv nvar0 [n] p.
@@ -352,11 +276,16 @@ rewrite !FcharE => Hn; rewrite linear_sum /=; apply eq_bigr => la _.
 by rewrite linearZ /= cnvarhomsymp.
 Qed.
 
+Definition YoungSG (n : nat) (la : 'P_n) : 'CF('SG_n) :=
+  Fchar_inv (n.-1) 'hh[la].
+
 Definition irrSG (n : nat) (la : 'P_n) : 'CF('SG_n) :=
   Fchar_inv (n.-1) 'hs[la].
 
+Notation "''M[' l ']'" := (YoungSG l).
 Notation "''irrSG[' l ']'" := (irrSG l).
 
+Local Notation PO := IntPartNDom.intpartndom_finPOrdType.
 
 Lemma Fchar_irrSGE nvar0 n (la : 'P_n) :
   Fchar nvar0 'irrSG[la] = 'hs[la].
@@ -365,10 +294,117 @@ rewrite /irrSG -(FcharNvar (nvar0 := n.-1) _) ?leqSpred //=.
 by rewrite Fchar_invK ?leqSpred //= cnvarhomsyms ?leqSpred.
 Qed.
 
+Lemma Young_char (n : nat) (la : 'P_n) : 'M[la] \is a character.
+Proof. exact: homsymh_character. Qed.
+
+Lemma Young_rule (n : nat) (la : 'P_n) :
+  'M[la] = \sum_(mu : 'P_n) 'K(mu, la)  *: 'irrSG[mu].
+Proof.
+pose HS := {homsym algC[n.-1.+1, n]}.
+rewrite /YoungSG /irrSG.
+apply: (can_inj (FcharK _)); rewrite // Fchar_invK //.
+have -> : 'hh[la] = \sum_(mu : 'P_n) 'K(mu, la) *: 'hs[mu] :> HS.
+  apply/val_inj; rewrite -[val 'hh[la]]/('h[la]).
+  by rewrite /= symh_syms /= linear_sum /=.
+rewrite linear_sum /=; apply eq_bigr => mu hmu.
+by rewrite linearZ /= Fchar_invK.
+Qed.
+
+Require Import unitriginv.
+
+Lemma Young_rule_partdom (n : nat) (la : 'P_n) :
+  'M[la] = 'irrSG[la] +
+           \sum_(mu | ((la : PO n) < mu)%Ord) 'K(mu, la)  *: 'irrSG[mu].
+Proof.
+rewrite Young_rule.
+exact: (unitrig_sum1lV (fun mu : PO n => 'irrSG[mu]) la (Kostka_unitrig _ n)).
+Qed.
+
+(** ** Irreducible character *)
+
+(** Substracting characters *)
+Lemma rem_irr1 n (xi phi : 'CF('SG_n)) :
+  xi \in irr 'SG_n -> phi \is a character -> '[phi, xi] != 0 ->
+       phi - xi \is a character.
+Proof.
+move=> /irrP [i ->{xi}] Hphi.
+rewrite -irr_consttE => /(constt_charP i Hphi) [psi Hpsi ->{phi Hphi}].
+by rewrite [_ + psi]addrC addrK.
+Qed.
+
+Lemma rem_irr n (xi phi : 'CF('SG_n)) :
+  xi \in irr 'SG_n -> phi \is a character -> phi - '[phi, xi] *: xi \is a character.
+Proof.
+move=> Hxi Hphi.
+have /CnatP [m Hm] := Cnat_cfdot_char Hphi (irrWchar Hxi).
+rewrite Hm.
+elim: m phi Hphi Hm => [|m IHm] phi Hphi Hm; first by rewrite scale0r subr0.
+rewrite mulrS scalerDl scale1r opprD addrA.
+apply IHm; first last.
+  by rewrite cfdotBl Hm irrWnorm // mulrS [1 + _]addrC addrK.
+by apply rem_irr1; rewrite //= Hm Num.Theory.pnatr_eq0.
+Qed.
+
+Lemma irrSG_orthonormal n (la mu : 'P_n) :
+  '['irrSG[la], 'irrSG[mu]] = (la == mu)%:R.
+Proof. by rewrite /irrSG Fchar_inv_isometry // homsymdotss. Qed.
+
+Lemma irrSG_irr n (la : 'P_n) : 'irrSG[la] \in irr 'SG_n.
+Proof.
+pose P := IntPartNDom.intpartndom_finPOrdType n.
+elim/(finord_wf_down (T := P)): la => la IHla.
+rewrite irrEchar irrSG_orthonormal !eq_refl andbT.
+have -> : 'irrSG[la] =
+         'M[la] - \sum_(mu : P | (la < mu)%Ord)
+                   '[ 'M[la], 'irrSG[mu] ] *: 'irrSG[mu].
+  apply/eqP; rewrite eq_sym subr_eq {1}Young_rule_partdom.
+  apply/eqP; congr (_ + _); apply eq_bigr => mu _.
+  rewrite Young_rule.
+  rewrite cfdot_suml (bigD1 mu) //= cfdotZl.
+  rewrite irrSG_orthonormal eq_refl mulr1 scalerDl.
+  rewrite big1 ?scale0r ?addr0 // => nu /negbTE Hnu.
+  by rewrite cfdotZl irrSG_orthonormal Hnu mulr0.
+rewrite -big_filter /index_enum -enumT.
+set L := filter _ _.
+have : all (fun y => (la < y)%Ord) L by apply filter_all.
+have : uniq L by apply filter_uniq; apply enum_uniq.
+elim: L => [| l0 l IHl].
+  by rewrite big_nil subr0 homsymh_character.
+rewrite big_cons /= => /andP [Hl0l Huniq] /andP [Hl0 Hall].
+rewrite [X in 'M[la] - X]addrC opprD addrA.
+have {IHl Huniq Hall} := IHl Huniq Hall.
+set Frec := 'M[la] - _ => HFrec.
+suff -> : '['M[la], 'irrSG[l0]] = '[Frec, 'irrSG[l0]].
+  by apply rem_irr => //; apply: IHla.
+rewrite {HFrec}/Frec /= cfdotBl /=.
+rewrite cfdot_suml big_seq big1 ?cfdot0l ?subr0 // => mu Hmu.
+rewrite cfdotZl irrSG_orthonormal.
+case: eqP => H; last by rewrite mulr0.
+by rewrite -H Hmu in Hl0l.
+Qed.
+
 (** The ['irrSG[la]] forms a complete set of irreducible character *)
-Theorem irrSGP n :
-  perm_eq [seq 'irrSG[la] | la : 'P_n] (irr 'SG_n).
-Proof. by apply: irrSG_nvarP; apply leqSpred. Qed.
+Theorem irrSGP n : perm_eq [seq 'irrSG[la] | la : 'P_n] (irr 'SG_n).
+Proof.
+set IRR := [seq 'irrSG[la] | la : 'P_n].
+have Huniq : uniq IRR.
+  rewrite map_inj_uniq ?enum_uniq // => la mu Hlamu.
+  apply/eqP; have:= irrSG_orthonormal la mu.
+  rewrite Hlamu irrSG_orthonormal eq_refl /=.
+  by case: eqP => //= _ /eqP; rewrite oner_eq0.
+apply (uniq_perm_eq Huniq).
+- exact: (free_uniq (basis_free (irr_basis _))).
+  have /(leq_size_perm Huniq) Htmp : {subset IRR <= irr 'SG_n}.
+  move=> /= f /mapP [/= p /mapP [/= la _ ->{p}] -> {f}].
+  exact: irrSG_irr.
+suff /Htmp [] : (size (irr 'SG_n) <= size IRR)%N by [].
+rewrite size_tuple -(vector.size_basis (irr_basis _)) dim_cfun.
+rewrite card_classes_perm /=.
+by rewrite size_tuple card_ord.
+Qed.
+
+
+(** ** Frobenius character formula for ['SG_n] *)
 
 (** The value of the irreducible character ['irrSG[la]] using scalar product of
     symmetric function *)
@@ -415,6 +451,31 @@ rewrite -(map_homsymp (ratr_rmorphism algCF)).
   congr (_ *: _); apply esym; apply nth_map.
   by rewrite size_map -cardE ltn_ord.
 Qed.
+Notation Delta := Vanprod.
+Local Notation P d := (symp_pol _ _ d).
+
+
+(** Frobenius character formula for ['SG_n] *)
+Theorem Frobenius_char n (la mu : 'P_n) :
+  'irrSG[la] (permCT mu) = (Delta * \prod_(d <- mu) P d)@_(mpart la + rho n).
+Proof.
+rewrite -/Vanprod Vanprod_alt.
+case: n la mu => [//|n] //= la mu.
+  (* This case is trivial and the proof is awful !!! *)
+  rewrite !intpartn0 big_nil mulr1 /mpart /rho //=.
+  have Hmon f : [multinom f i | i < 0] = 0%MM by apply mnmP => [[i Hi]].
+  rewrite !{}Hmon addm0.
+  rewrite /alternpol (big_pred1 1%g); first last.
+    by move=> s /=; apply/esym/eqP/permP => [[i Hi]].
+  rewrite odd_perm1 /= msym1m expr0 scale1r mcoeffX eq_refl /=.
+  suff -> : 'irrSG[la] = 1 by rewrite (permS0 (permCT mu)) cfun11.
+  apply (can_inj (FcharK (leqSpred 0))).
+  rewrite Fchar_invK //= Fchar_triv.
+  apply val_inj; rewrite /= syms0.
+  by rewrite /prod_gen intpartn0 big_nil.
+by rewrite Frobenius_char_coord mcoeff_symbs ?leqSpred //= rmorph_prod.
+Qed.
+
 
 (** The dimension of the irreducible character ['irrSG[la]] is the number of
     standard tableau of shape [la] *)
@@ -446,34 +507,11 @@ move=> H; have := cfRepr1 rG; rewrite H dim_irrSG => /eqP.
 by rewrite eqC_nat => /eqP ->.
 Qed.
 
-Notation Delta := Vanprod.
-Local Notation P d := (symp_pol _ _ d).
-
-(** Frobenius character formula for ['SG_n] *)
-Theorem Frobenius_char n (la mu : 'P_n) :
-  'irrSG[la] (permCT mu) = (Delta * \prod_(d <- mu) P d)@_(mpart la + rho n).
-Proof.
-rewrite -/Vanprod Vanprod_alt.
-case: n la mu => [//|n] //= la mu.
-  (* This case is trivial and the proof is awful !!! *)
-  rewrite !intpartn0 big_nil mulr1 /mpart /rho //=.
-  have Hmon f : [multinom f i | i < 0] = 0%MM by apply mnmP => [[i Hi]].
-  rewrite !{}Hmon addm0.
-  rewrite /alternpol (big_pred1 1%g); first last.
-    by move=> s /=; apply/esym/eqP/permP => [[i Hi]].
-  rewrite odd_perm1 /= msym1m expr0 scale1r mcoeffX eq_refl /=.
-  suff -> : 'irrSG[la] = 1 by rewrite (permS0 (permCT mu)) cfun11.
-  apply (can_inj (FcharK (leqSpred 0))).
-  rewrite Fchar_invK //= Fchar_triv.
-  apply val_inj; rewrite /= syms0.
-  by rewrite /prod_gen intpartn0 big_nil.
-by rewrite Frobenius_char_coord mcoeff_symbs ?leqSpred //= rmorph_prod.
-Qed.
 
 Require Import therule cycletype.
 Open Scope ring_scope.
 
-(** Littlewood-Richardson rule for irreducible characters *)
+(** * Littlewood-Richardson rule for irreducible characters *)
 Theorem LR_rule_irrSG c d (la : 'P_c) (mu : 'P_d) :
   'Ind['SG_(c + d)] ('irrSG[la] \o^ 'irrSG[mu]) =
   \sum_(nu : 'P_(c + d) | included la nu) 'irrSG[nu] *+ LRyam_coeff la mu nu.
