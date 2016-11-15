@@ -31,16 +31,40 @@ Contents
 
   - the construction of the *plactic monoïd*
 
-  - the equivalence of the combinatorial and algebraic (Jacobi) definition of
-    *Schur functions*
-
-  - the *Littlewood-Richardson* and *Pieri* rules
+  - the *Littlewood-Richardson* and *Pieri* rules using the combinatorial
+    (tableau definition of Schur polynomials).
 
   After A. Lascoux, B. Leclerc and J.-Y. Thibon, "The Plactic Monoid" in
   Lothaire, M. (2011), Algebraic combinatorics on words, Cambridge University
   Press With variant described in G. Duchamp, F. Hivert, and J.-Y. Thibon,
   Noncommutative symmetric functions VI. Free quasi-symmetric functions and
   related algebras. Internat. J. Algebra Comput. 12 (2002), 671–717.
+
+*  basic **theory of symmetric functions** including
+
+   - *Schur function* and *Kostka numbers* and the equivalence of the
+    combinatorial and algebraic (Jacobi) definition of Schur functions
+
+   - the classical bases, *Newton formulas* and various basis changes
+
+   - the scalar product and the *Cauchy formula*.
+
+*  the **character theory of the symmetric Groups**. We do not use
+   representation but rather goes as fast as possible to Frobenius
+   isomorphisms and then uses computation with symmetric polynomials. it includes
+
+  - *cycle types* for permutations (together with Thibaut Benjamin)
+
+  - The tower structure and the *restriction and induction formulas* for class
+    indicator (together with Thibaut Benjamin)
+
+  - structure of the *centralizer* of a permutation
+
+  - Young character and *Young Rule*
+
+  - the theory of Frobenius characteristic and *Frobenius character formula*
+
+  - the *Littlewood-Richardson* rule for irreducible character
 
 * the **Hook-Length Formula** for standard Young tableaux
   (together with Christine Paulin and Olivier Stietel)
@@ -62,24 +86,15 @@ Contents
 
 *  the **factorization** of the Vandermonde determinant as the product of differences.
 
+More unstable stuff:
+
 *  bijection m-trees <-> m-dyck words.
    See the [trees branch on Github](https://github.com/hivert/Coq-Combi/tree/trees).
-
-In progress:
-
-*  basic **theory of symmetric functions** including various basis change and the 
-   Cauchy formula. 
-
-*  the **representation theory of the symmetric Groups** (together with Thibaut
-   Benjamin).
-   See the [ReprSn branch on Github](https://github.com/hivert/Coq-Combi/tree/ReprSn).
 
 
 *  a **Why3 certified implementation** of the LR-Rule
    (together with Jean Christophe Filliâtre).
    See the [Why3 branch on Github](https://github.com/hivert/Coq-Combi/tree/Why3).
-
-More unstable stuff:
 
 *  Poset.
    See the [posets branch on Github](https://github.com/hivert/Coq-Combi/tree/posets).
