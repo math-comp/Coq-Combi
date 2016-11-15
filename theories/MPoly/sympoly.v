@@ -1132,14 +1132,14 @@ Qed.
 Lemma syms_symm_partdom_int la :
   's[la] = 'm[la] + \sum_(mu : P | mu <A la) 'K(la, mu) *: 'm[mu] :> SF.
 Proof.
-rewrite -(unitrig_sum1l (fun mu : P => 'm[mu]) la (@Kostka_unitrig d)).
+rewrite -(unitrig_sum1l (fun mu : P => 'm[mu]) la (Kostka_unitrig _ d)).
 by rewrite -syms_symm_int.
 Qed.
 
 Lemma symm_syms_int la : 'm[la] = \sum_(mu : P) KostkaInv la mu *: 's[mu] :> SF.
 Proof.
 rewrite /KostkaInv.
-apply (Minv_lincombl (@Kostka_unitrig d)
+apply: (Minv_lincombl (Kostka_unitrig _ d)
          (F := fun mu : P => 's[mu]) (G := fun mu : P => 'm[mu])).
 exact: syms_symm_int.
 Qed.
@@ -1147,7 +1147,7 @@ Qed.
 Lemma symm_syms_partdom_int la :
   'm[la] = 's[la] + \sum_(mu : P | mu <A la) KostkaInv la mu *:'s[mu] :> SF.
 Proof.
-rewrite -(unitrig_sum1l (fun mu : P => 's[mu]) la (@KostkaInv_unitrig d)).
+rewrite -(unitrig_sum1l (fun mu : P => 's[mu]) la (KostkaInv_unitrig d)).
 by rewrite -symm_syms_int.
 Qed.
 
@@ -1235,14 +1235,14 @@ Qed.
 Lemma symh_syms_partdom_int mu :
   'h[mu] = 's[mu] + \sum_(la : P | (mu:P) <A la ) 'K(la, mu) *: 's[la] :> SF.
 Proof.
-rewrite -(unitrig_sum1r (fun la : P => 's[la]) mu (@Kostka_unitrig d)).
+rewrite -(unitrig_sum1r (fun la : P => 's[la]) mu (Kostka_unitrig _ d)).
 by rewrite -symh_syms_int.
 Qed.
 
 Lemma syms_symh_int mu : 's[mu] = \sum_(la : P) KostkaInv la mu *: 'h[la] :> SF.
 Proof.
 rewrite /KostkaInv.
-apply (Minv_lincombr (@Kostka_unitrig d)
+apply: (Minv_lincombr (Kostka_unitrig _ d)
          (G := fun mu : P => 's[mu]) (F := fun mu : P => 'h[mu])).
 exact: symh_syms_int.
 Qed.
@@ -1250,7 +1250,7 @@ Qed.
 Lemma syms_symh_partdom_int mu :
   's[mu] = 'h[mu] + \sum_(la : P | (mu:P) <A la) KostkaInv la mu *: 'h[la] :> SF.
 Proof.
-rewrite -(unitrig_sum1r (fun la : P => 'h[la]) mu (@KostkaInv_unitrig d)).
+rewrite -(unitrig_sum1r (fun la : P => 'h[la]) mu (KostkaInv_unitrig d)).
 by rewrite -syms_symh_int.
 Qed.
 

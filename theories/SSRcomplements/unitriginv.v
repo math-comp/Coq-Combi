@@ -98,6 +98,49 @@ rewrite ltnX_neqAleqX andbC; congr (negb _ && _).
 by apply/eqP/eqP.
 Qed.
 
+
+Lemma unitrig_sumlV M (Mod : lmodType R) (F : T -> Mod) u :
+  unitrig M ->
+  \sum_(t : T) M t u *: F t = \sum_(t | (u <= t)%Ord) M t u *: F t.
+Proof.
+move=> /unitrigP [Muni Mtrig].
+rewrite (bigID (fun t => (u <= t)%Ord)) /= addrC big1 ?add0r // => i.
+by move=> /(contraR (@Mtrig _ _))/eqP ->; rewrite scale0r.
+Qed.
+
+Lemma unitrig_sum1lV M (Mod : lmodType R) (F : T -> Mod) u :
+  unitrig M ->
+  \sum_(t : T) M t u *: F t = F u + \sum_(t | (u < t)%Ord) M t u *: F t.
+Proof.
+move=> Hut; rewrite unitrig_sumlV // (bigD1 u) //=.
+move: Hut => /unitrigP [-> _]; rewrite scale1r; congr (_ + _).
+apply eq_bigl => t.
+(* Work around finOrdType double inheritance bug *)
+rewrite ltnX_neqAleqX andbC; congr (negb _ && _).
+by apply/eqP/eqP.
+Qed.
+
+Lemma unitrig_sumrV M (Mod : lmodType R) (F : T -> Mod) t :
+  unitrig M ->
+  \sum_(u : T) M t u *: F u = \sum_(u | (u <= t)%Ord) M t u *: F u.
+Proof.
+move=> /unitrigP [Muni Mtrig].
+rewrite (bigID (fun u => (u <= t)%Ord)) /= addrC big1 ?add0r // => i.
+by move=> /(contraR (@Mtrig _ _))/eqP ->; rewrite scale0r.
+Qed.
+
+Lemma unitrig_sum1rV M (Mod : lmodType R) (F : T -> Mod) t :
+  unitrig M ->
+  \sum_(u : T) M t u *: F u = F t + \sum_(u | (u < t)%Ord) M t u *: F u.
+Proof.
+move=> Hut; rewrite unitrig_sumrV // (bigD1 t) //=.
+move: Hut => /unitrigP [-> _]; rewrite scale1r; congr (_ + _).
+apply eq_bigl => u.
+(* Work around finOrdType double inheritance bug *)
+rewrite ltnX_neqAleqX andbC; congr (negb _ && _).
+by apply/eqP/eqP.
+Qed.
+
 End UniTriangular.
 
 Section TriangularInv.
