@@ -126,8 +126,7 @@ Proof using Hn.
 move=> f.
 rewrite !Fchar_invE {2}(ncfuniCT_gen f); apply eq_bigr => la _.
 rewrite FcharE; congr (_ *: _).
-rewrite !(reindex (enum_val (A := {:'P_n}))) /=; first last.
-  by apply (enum_val_bij_in (x0 := (rowpartn n))).
+rewrite (reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 transitivity
   (coord 'hp (enum_rank la)
          (\sum_(j < #|{:'P_n}|)
@@ -145,7 +144,7 @@ move=> p; rewrite !Fchar_invE linear_sum.
 have: p \in span 'hp.
   by rewrite (span_basis (symbp_basis Hn _ )) // memvf.
 move=> /coord_span {2}->.
-rewrite (reindex enum_rank) /=; last by apply onW_bij; apply enum_rank_bij.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
 apply eq_bigr => i _.
 rewrite linearZ /= Fchar_ncfuniCT; congr (_ *: _).
 rewrite (nth_map (rowpartn n)); last by rewrite -cardE ltn_ord.
@@ -426,7 +425,7 @@ symmetry.
 rewrite Frobenius_char_homsymdot /cycle_typeSn (permCTP mu) CTpartnK.
 have /coord_span {2}-> : ('hp[mu] : HSC) \in span 'hs.
   by rewrite (span_basis (symbs_basis _ (leqSpred n))) // memvf.
-rewrite (reindex enum_rank) /=; last by apply onW_bij; apply enum_rank_bij.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
 rewrite homsymdot_sumr (bigD1 la) //=.
 rewrite (nth_map (rowpartn n)) -?cardE ?ltn_ord // nth_enum_rank.
 rewrite homsymdotZr homsymdotss ?leqSpred // eq_refl mulr1.
@@ -489,8 +488,7 @@ have -> : 'hp[colpartn n] = 'hh[colpartn n] :> HSC.
 have -> : 'hh[colpartn n] = \sum_la 'K(la, colpartn n) *: 'hs[la] :> HSC.
   apply val_inj.
   by rewrite /= linear_sum /= -![prod_gen _ _]/('h[_]) symh_syms.
-rewrite (reindex (enum_val (A := {:'P_n}))) /=; first last.
-  by apply (enum_val_bij_in (x0 := (rowpartn n))).
+rewrite (reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 rewrite (eq_bigr
            (fun i : 'I__ => 'K(enum_val i, colpart n) *: 'hs`_i)); first last.
   move=> /= i _.

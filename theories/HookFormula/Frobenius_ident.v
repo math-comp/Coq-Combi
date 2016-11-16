@@ -194,7 +194,7 @@ move=> s /=; apply val_inj; rewrite /= -(RStabK s).
 by congr (RStabinv _); apply: val_inj.
 Qed.
 Lemma bijRSstd : bijective RSstd.
-Proof using. split with (g := RSstdinv). exact: RSstdK. exact: RSstdinvK. Qed.
+Proof using. by exists RSstdinv; [exact: RSstdK | exact: RSstdinvK]. Qed.
 
 Theorem Frobenius_ident : n`! = \sum_(p : 'P_n) (n`! %/ (F_deno p))^2.
 Proof using.

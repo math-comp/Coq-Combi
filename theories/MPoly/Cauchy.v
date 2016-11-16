@@ -560,10 +560,9 @@ have : \sum_(nu : 'P_d) 'hsF[nu](X) * 'hsF[nu](Y) =
 have sum_coord (p : HSC) :
   \sum_i homsym (coord 'hp i p *: ('hp)`_i : HSC) =
   \sum_px coord 'hp (enum_rank px) p *: 'hp[px] :> pol.
-  rewrite !(reindex (enum_val (A := {:'P_d}))) /=; first last.
-    by apply (enum_val_bij_in (x0 := (rowpartn d))).
+  rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
   rewrite !linear_sum /=; apply eq_bigr => i _.
-  rewrite enum_valK /= (nth_map (rowpartn d)) /= -?enum_val_nth //.
+  rewrite (nth_map (rowpartn d)) /= -?enum_val_nth // ?enum_rankK //.
   by rewrite -cardE ltn_ord.
 rewrite (eq_bigr (fun nu : 'P_d =>
                     (\sum_px (coord 'hp (enum_rank px) 'hsF[nu]) *: 'hp[px])(X) *
@@ -618,14 +617,14 @@ pose matzsp : 'M[algCF]_#|{:'P_d}| :=
 have: matsp *m matzsp = 1%:M.
   apply/matrixP => i j /=.
   rewrite /matsp /matzsp /= !mxE.
-  rewrite (reindex enum_rank) /=; last by apply onW_bij; apply enum_rank_bij.
+  rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
   rewrite -(inj_eq (@enum_val_inj _ _)) /= -coord_zsympsps //.
   apply eq_bigr => /= nu _.
   by rewrite !mxE !enum_valK !enum_rankK.
 move=> /mulmx1C/matrixP/(_ (enum_rank mu) (enum_rank la)).
 rewrite /matsp /matzsp /= !mxE.
 rewrite (inj_eq (@enum_rank_inj _)) eq_sym => <-.
-rewrite (reindex enum_rank) /=; last by apply onW_bij; apply enum_rank_bij.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
 apply eq_bigr => /= nu _.
 by rewrite !mxE !enum_rankK mulrC.
 Qed.
@@ -665,7 +664,7 @@ transitivity
   move=> /(congr1 (fun p : _.-tuple _ => p`_i)) /= => <-.
   congr (_ *: _); apply esym; apply nth_map.
   by rewrite size_map -cardE ltn_ord.
-rewrite (reindex enum_rank) /=; last by apply onW_bij; apply enum_rank_bij.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
 rewrite -coord_zsymspsp //; apply eq_bigr => /= nu _.
 by rewrite enum_rankK mulrA.
 Qed.

@@ -872,7 +872,7 @@ Proof using .
 apply inj_card_bij; last by rewrite card_codesz card_Sn.
 move=> c1 c2 Heq.
 suff /image_injP Hinj :
-  (#|image prods_codesz ({:codesz n.+1})| == #|({:codesz n.+1})|) by exact: (Hinj c1 c2).
+  #|image prods_codesz {:codesz n.+1}| == #|{:codesz n.+1}| by exact: (Hinj c1 c2).
 rewrite {c1 c2 Heq} card_codesz (eq_card (B := 'S_n.+1)) ?card_Sn //.
 move=> s; rewrite !inE; apply/mapP.
 have Hcode : is_code_of_size n.+1 (cocode s).
@@ -916,7 +916,7 @@ Corollary genfun_length n :
   \sum_(s in 'S_n.+1) 'X^(length s) =
   \prod_(0 <= i < n.+1) \sum_(0 <= j < i.+1) 'X^j : {poly int}.
 Proof.
-rewrite (reindex _ (onW_bij predT (prods_codesz_bij n))) /=.
+rewrite (reindex _ (onW_bij _ (prods_codesz_bij n))) /=.
 rewrite (eq_bigr (fun c : codesz _ => 'X^(sumn c))); first last.
   move=> i _; rewrite (length_permcd (codeszP _)) //.
   by rewrite size_codesz.

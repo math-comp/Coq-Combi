@@ -243,7 +243,7 @@ Definition symp_pol d  : {mpoly R[n]} := \sum_(i < n) 'X_i ^+ d.
 Fact symp_sym d : symp_pol d \is symmetric.
 Proof using.
 apply/issymP => s.
-rewrite linear_sum /= (reindex_inj (h := s^-1))%g /=; last by apply/perm_inj.
+rewrite linear_sum /= (reindex_inj (perm_inj (s := s^-1)))%g /=.
 apply eq_bigr => i _; rewrite rmorphX /=; congr (_ ^+ _).
 rewrite msymX /=; congr mpolyX.
 rewrite mnmP => j; rewrite !mnmE /=; congr nat_of_bool.
@@ -1225,8 +1225,7 @@ rewrite mulr_sumr [RHS](exchange_big_dep predT) //=.
 apply eq_bigr => la _.
 rewrite -scalerAr -scaler_sumr mulrC syms_symhM; congr (_ *: _).
 have H : (sumn mu + m)%N = deg by rewrite addnC -Hdeg.
-rewrite (reindex (cast_intpartn H)) /=; first last.
-  by apply onW_bij; apply (Bijective (cast_intpartnK _) (cast_intpartnKV _)).
+rewrite (reindex _ (onW_bij _ (cast_intpartn_bij H))) /=.
 apply eq_big => [nu | nu _].
 - by case: nu => nu /= Hnu; rewrite cast_intpartnE /=.
 - by apply val_inj; rewrite /= Schur_cast.

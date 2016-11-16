@@ -1440,6 +1440,9 @@ Proof using. by subst m. Qed.
 Lemma cast_intpartn_inj m n eq_m_n : injective (@cast_intpartn m n eq_m_n).
 Proof using. exact: can_inj (cast_intpartnK eq_m_n). Qed.
 
+Lemma cast_intpartn_bij m n eq_m_n : bijective (@cast_intpartn m n eq_m_n).
+Proof using. exact: (Bijective (cast_intpartnK eq_m_n) (cast_intpartnKV _)). Qed.
+
 
 Definition rowpart d := if d is _.+1 then [:: d] else [::].
 Fact rowpartn_subproof d : is_part_of_n d (rowpart d).

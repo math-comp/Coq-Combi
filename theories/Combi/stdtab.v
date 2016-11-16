@@ -847,7 +847,7 @@ case: t => t /= /andP [] Ht /eqP Hsh.
 rewrite (is_stdtab_conj Ht) /=.
 by rewrite shape_conj_tab Hsh.
 Qed.
-Canonical conj_stdtabsh (sh : intpart) (t : stdtabsh sh) :=
+Canonical conj_stdtabsh {sh : intpart} (t : stdtabsh sh) :=
   StdtabSh (conj_stdtabshP t).
 
 Definition stdtabshcast m n (eq_mn : m = n) t :=
@@ -856,13 +856,9 @@ Definition stdtabshcast m n (eq_mn : m = n) t :=
 Lemma val_stdtabshcast  m n (eq_mn : m = n) t : val (stdtabshcast eq_mn t) = val t.
 Proof. by subst m; case: t. Qed.
 
-(* TODO: Ask why the canonical conj_intpart work for conj_stdtabsh and not here *)
 Lemma conj_stdtabsh_bij sh : bijective (@conj_stdtabsh sh).
 Proof.
-pose g := (@conj_stdtabsh (conj_intpart sh)).
-pose h := stdtabshcast (conj_intpartK sh).
-by split with (g := h \o g);
-   rewrite /g /h; move=> t;
+by exists (stdtabshcast (conj_intpartK sh) \o conj_stdtabsh) => t;
    apply val_inj; rewrite /= val_stdtabshcast /= conj_tabK //;
      have:= stdtabshP t => /andP [].
 Qed.
@@ -870,6 +866,6 @@ Qed.
 (* TODO: Ask why the canonical conj_intpart work for conj_stdtabsh and not here *)
 Lemma card_stdtabsh_conj_part (sh : intpart) :
   #|{:stdtabsh (conj_intpart sh)}| = #|{:stdtabsh sh}|.
-Proof. apply esym; apply: (bij_card (conj_stdtabsh_bij sh)). Qed.
+Proof. by symmetry; apply: (bij_card (conj_stdtabsh_bij sh)). Qed.
 
 Hint Resolve stdtabnP stdtabshP.

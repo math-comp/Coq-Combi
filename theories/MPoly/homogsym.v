@@ -422,7 +422,7 @@ Qed.
 Lemma free_symbm : free symbm.
 Proof using Hd.
 apply/freeP => co.
-rewrite (reindex enum_rank) /=; last by apply onW_bij; apply enum_rank_bij.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
 rewrite (eq_bigr (fun la : 'P_d => (co (enum_rank la)) *: 'hm[la])); first last.
   move=> la _; rewrite (nth_map (rowpartn _)) /= -?cardE ?ltn_ord //.
   by rewrite -?enum_val_nth enum_rankK.
@@ -459,7 +459,7 @@ Proof.
 have /coord_span -> : f \in span symbs.
   by rewrite (span_basis symbs_basis) memvf.
 rewrite !coord_sum_free ?(basis_free symbs_basis) //.
-rewrite (reindex enum_rank) /=; last by apply onW_bij; apply enum_rank_bij.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
 rewrite !linear_sum /= mulr_sumr linear_sum /= (bigD1 la) //=.
 rewrite (nth_map (rowpartn d)) -?cardE ?ltn_ord // nth_enum_rank.
 rewrite -scalerAr linearZ /=.
@@ -729,8 +729,7 @@ Lemma homsymdotE p q :
   \sum_(la : 'P_d) (zcard la)%:R *
     (coord 'hp (enum_rank la) p) * (coord 'hp (enum_rank la) q)^*.
 Proof.
-rewrite /homsymdot [RHS](reindex (enum_val (A := {:'P_d}))) /=; first last.
-  by apply (enum_val_bij_in (x0 := (rowpartn d))).
+rewrite /homsymdot [RHS](reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 by apply/eq_bigr => i _; rewrite enum_valK.
 Qed.
 Lemma homsymdotrE p q : homsymdotr p q = '[q | p]. Proof. by []. Qed.
