@@ -681,10 +681,10 @@ apply/andP; split.
   have:= Hn; rewrite -index_mem; have := nth_index 0 Hn.
   move: (index _ _) => pos <- {Hn} Hpos.
   move: Hpos; rewrite size_to_word /size_tab -sumn_rev /shape -map_rev -/(shape _).
-  move=> /reshape_coordP.
+  move=> /reshape_indexP.
   rewrite (nth_flatten 0 (rev t) pos).
-  have:= reshape_coordK (shape (rev t)) pos.
-  case: (reshape_coord (shape (rev t)) pos) => r c Hpos [] Hr.
+  have:= reshape_indexK (shape (rev t)) pos.
+  case: reshape_index => r c /= Hpos [] Hr.
   rewrite /shape map_rev -/(shape _).
   rewrite nth_rev; last by move: Hr; rewrite /shape map_rev size_rev.
   rewrite nth_rev; last by move: Hr; rewrite /shape map_rev size_rev size_map.

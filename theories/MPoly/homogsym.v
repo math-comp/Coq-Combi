@@ -492,10 +492,10 @@ rewrite /= is_part_sortedE; apply/and3P; split.
     rewrite /shape -map_comp (tuple_map_ord m) /=.
     apply eq_map => k /=.
     by rewrite size_nseq.
-  move=> Hijm; have:= Hijm => /andP [Hij Hjm]; have Him := leq_ltn_trans Hij Hjm.
-  move/reshape_coord_leq: Hijm.
-  have:= reshape_coordP Hjm; have:= reshape_coordP Him.
-  case: (reshape_coord m i) (reshape_coord m j) => [r1 c1] [r2 c2].
+  move=> /andP [Hij Hjm]; have Him := leq_ltn_trans Hij Hjm.
+  have:= reshape_index_leq Hij Hjm.
+  have:= reshape_indexP Hjm; have:= reshape_indexP Him.
+  case: (reshape_index m i) (reshape_index m j) => [r1 c1] [r2 c2] /=.
   rewrite size_tuple => [] [Hr1 Hc1] [Hrc Hc2].
   do 2 (rewrite (nth_map ord0); last by rewrite size_enum_ord).
   rewrite !(mnm_nth 0) !nth_nseq !nth_enum_ord //=.

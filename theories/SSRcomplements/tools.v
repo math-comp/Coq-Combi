@@ -418,6 +418,14 @@ Fixpoint reshape_index sh i :=
   if i < s0 then (0, i) else
   let (r, c) := reshape_index s (i - s0) in (r.+1, c).
 
+Lemma flatten_indexP sh r c :
+  c < nth 0 sh r -> flatten_index sh r c < sumn sh.
+Proof.
+move=> lt_c_sh; rewrite -[sh in sumn sh](cat_take_drop r) sumn_cat ltn_add2l.
+suffices lt_r_sh: r < size sh by rewrite (drop_nth 0 lt_r_sh) ltn_addr.
+by case: ltnP => // le_sh_r; rewrite nth_default in lt_c_sh.
+Qed.
+
 Lemma reshape_indexP sh i (rc := reshape_index sh i) :
   i < sumn sh -> rc.1 < size sh /\ rc.2 < nth 0 sh rc.1.
 Proof.
@@ -445,6 +453,21 @@ Lemma nth_flatten x0 ss i (rc := reshape_index (shape ss) i) :
 Proof.
 elim: ss i @rc => //= s ss IHss i; rewrite nth_cat.
 by have [// | le_s_i] := ltnP; rewrite /= IHss; case: reshape_index.
+Qed.
+
+Lemma reshape_index_leq sh i1 i2
+      (rc1 := reshape_index sh i1) (rc2 := reshape_index sh i2):
+  i1 <= i2 -> i2 < sumn sh -> rc1.1 < rc2.1 \/ (rc1.1 = rc2.1 /\ rc1.2 <= rc2.2).
+Proof.
+  elim: sh i1 i2 @rc1 @rc2 => [i1 i2 /= |] //= s0 s IHs i1 i2.
+  case: (ltnP i2 s0) => Hi2s0 //=.
+  - by move=> Hi12 _; rewrite (leq_ltn_trans Hi12 Hi2s0) /=; right.
+  - case: (ltnP i1 s0) => Hi1s0 //=.
+    + by move=> _ /=; case: reshape_index => r c; left.
+    + rewrite -{1 2}(subnKC Hi2s0) -leq_subLR ltn_add2l => /IHs{IHs}Hrec/Hrec{Hrec}.
+      case: (reshape_index s (i1 - s0)) => [r1 c1].
+      case: (reshape_index s (i2 - s0)) => [r2 c2] /=.
+      by rewrite !ltnS => [[|[H1 H2]]]; [left | right; rewrite H1].
 Qed.
 
 End FlattenIndex.

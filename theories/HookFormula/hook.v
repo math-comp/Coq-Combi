@@ -941,7 +941,7 @@ Qed.
 
 Definition choose_corner : distr ((seq nat) * (seq nat)) :=
   Mlet (Random (sumn p).-1)
-       (fun n => let (r, c) := reshape_coord p n in
+       (fun n => let (r, c) := reshape_index p n in
                  walk_to_corner (al_length p r c) r c).
 
 Section EndsAt.
@@ -970,16 +970,15 @@ Definition F_deno (sh : seq nat) := (\prod_(b : box_in sh) hook_length sh b.1 b.
 Definition HLF sh :=  (((sumn sh)`!)%:Q / (F_deno sh)%:Q)%R.
 
 
-Lemma reshape_coord_walk_to :
-  forall i, (i < sumn p)%N ->
-  (mu (let (r, c) := reshape_coord p i in
+Lemma reshape_index_walk_to i :
+  (i < sumn p)%N ->
+  (mu (let (r, c) := reshape_index p i in
        walk_to_corner (al_length p r c) r c)) (ends_at Alpha Beta) =
   \sum_(X <- enum_trace Alpha Beta |
-        let (r, c) := reshape_coord p i in starts_at r c X)
+        let (r, c) := reshape_index p i in starts_at r c X)
    PI_trace X.
 Proof using Hcorn.
-move=> i /reshape_coordP.
-case: (reshape_coord p i) => [r c] [] _.
+move=> /reshape_indexP; case: reshape_index => /= [r c] [] _.
 rewrite -/(is_in_shape p _ _) => Hin.
 rewrite big_seq_cond.
 pose F := (fun X => mu (walk_to_corner (al_length p r c) r c) (charfun X.1 X.2)).
@@ -1019,22 +1018,22 @@ Lemma prob_choose_corner_ends_at :
 Proof using Hcorn.
 rewrite /choose_corner MLet_simpl mu_random_sum sumnpSPE.
 rewrite mulrC mul1r; congr (_ / _).
-rewrite big_nat_0cond (eq_bigr _ reshape_coord_walk_to) -big_nat_0cond.
+rewrite big_nat_0cond (eq_bigr _ reshape_index_walk_to) -big_nat_0cond.
 rewrite (exchange_big_dep (@predT _)) //=.
 apply eq_big_seq => [[A B]]; rewrite (enum_traceP Hcorn) => /and3P [] Htrace HA HB.
 have Hin : (head O B < nth O p (head O A))%N.
   have:= Htrace => /and3P [] HA0 HB0 _.
   case: A B HA0 HB0 Htrace {HA HB} => [//= | a A] [//= | b B] /= _ _ Htrace.
   exact: (is_trace_in_shape Htrace).
-rewrite -big_filter (bigD1_seq (flatten_coord p (head O A) (head O B))) /=;
+rewrite -big_filter (bigD1_seq (flatten_index p (head O A) (head O B))) /=;
     first last.
 - by apply filter_uniq; apply: iota_uniq.
-- rewrite mem_filter (flatten_coordK Hin) /starts_at !eq_refl /=.
+- rewrite mem_filter (flatten_indexK Hin) /starts_at !eq_refl /=.
   rewrite mem_iota add0n subn0 /=.
-  exact: flatten_coordP.
+  exact: flatten_indexP.
 rewrite -[RHS]addr0; congr (_ + _).
 rewrite big_filter_cond; apply big_pred0 => i.
-have:= reshape_coordK p i; case: (reshape_coord p i) => [r c] <-.
+have:= reshape_indexK p i; case: reshape_index => [r c] /= <-.
 rewrite /starts_at.
 case: (boolP ((head 0 A) == r)%N) => //= /eqP <-.
 case: (boolP ((head 0 B) == c)%N) => //= /eqP <-.
@@ -1229,8 +1228,7 @@ rewrite big_nat_0cond.
 rewrite (eq_bigr (fun => 1)).
   rewrite -big_nat_0cond big_const_seq count_predT size_iota subn0 iter_plus1.
   by rat_to_ring; rewrite divff // intr_eq0.
-move=> i /reshape_coordP.
-case: (reshape_coord p i) => [r c] [].
+move=> i /reshape_indexP; case: reshape_index => [r c] /= [].
 rewrite -/(is_in_shape p _ _) => Hr Hc.
 rewrite (Mstable_eq _ ends_at_rem_cornerE).
 apply: (mu_bool_impl1 _ (fun X => is_trace X.1 X.2)).
