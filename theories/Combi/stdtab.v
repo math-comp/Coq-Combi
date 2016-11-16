@@ -681,15 +681,11 @@ apply/andP; split.
   have:= Hn; rewrite -index_mem; have := nth_index 0 Hn.
   move: (index _ _) => pos <- {Hn} Hpos.
   move: Hpos; rewrite size_to_word /size_tab -sumn_rev /shape -map_rev -/(shape _).
-  move=> /reshape_indexP.
-  rewrite (nth_flatten 0 (rev t) pos).
-  have:= reshape_indexK (shape (rev t)) pos.
-  case: reshape_index => r c /= Hpos [] Hr.
-  rewrite /shape map_rev -/(shape _).
-  rewrite nth_rev; last by move: Hr; rewrite /shape map_rev size_rev.
-  rewrite nth_rev; last by move: Hr; rewrite /shape map_rev size_rev size_map.
-  rewrite -/(get_tab _ _ _)  -/(is_in_shape _ _ _) -(get_conj_tab Hp).
-  rewrite size_map (is_in_conj_part Hp) -shape_conj_tab {Hpos Hr}.
+  move=> Htmp; have:= reshape_offsetP Htmp; move/reshape_indexP : Htmp.
+  rewrite (nth_flatten 0 (rev t) pos) shape_rev size_rev size_map => Hpos.
+  do !rewrite nth_rev ?size_map //.
+  rewrite -/(get_tab _ _ _) -/(is_in_shape _ _ _) -(get_conj_tab Hp).
+  rewrite (is_in_conj_part Hp) -shape_conj_tab {Hpos}.
   exact: mem_to_word.
 Qed.
 
