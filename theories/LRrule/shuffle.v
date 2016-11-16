@@ -170,7 +170,7 @@ Lemma all_in_shuffler u v :
   all (fun s => filter (mem v) s == v) (shuffle u v).
 Proof using .
   move=> HI.
-  rewrite (all_perm_eq (shuffleC v u)) //.
+  rewrite (perm_eq_all (shuffleC v u)) //.
   apply: all_in_shufflel.
   move=> i; by rewrite -(HI i) !inE andbC.
 Qed.

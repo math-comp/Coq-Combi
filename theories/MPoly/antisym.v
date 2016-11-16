@@ -514,8 +514,8 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
 Lemma isantisym_msupp_uniq (m : 'X_{1..n}) : m \in msupp p -> uniq m.
 Proof using Hchar Hpanti.
 rewrite mcoeff_msupp => Hsupp.
-case: (boolP (uniq m)) => // /(notuniq_witnessP 0%N).
-move=> [i] [j] []; rewrite size_tuple => /andP [Hi Hj] Hnth.
+case: (boolP (uniq m)) => // /uniqPn => /(_ 0%N).
+move=> [i] [j] []; rewrite size_tuple => Hi Hj Hnth.
 move/isantisymP/(_ (tperm (Ordinal (ltn_trans Hi Hj)) (Ordinal Hj))) : Hpanti.
 rewrite odd_tperm /eq_op /=.
 rewrite (ltn_eqF Hi) expr1 scaleN1r.
