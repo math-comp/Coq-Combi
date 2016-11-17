@@ -1943,7 +1943,7 @@ End SetPartitionShape.
 
 Lemma setpart_shape_inj
       (T1 T2 : finType) (f : T1 -> T2) (A : {set {set T1}}) :
-  injective f -> setpart_shape [set f @: (x : {set T1}) | x in A] = setpart_shape A.
+  injective f -> setpart_shape [set f @: x | x : {set T1} in A] = setpart_shape A.
 Proof using.
 rewrite /setpart_shape /= => Hinj.
 apply/perm_sortP/perm_eqP => // P.

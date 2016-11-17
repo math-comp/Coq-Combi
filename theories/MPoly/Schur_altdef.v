@@ -568,8 +568,8 @@ move=> Hszla Hszmu; rewrite (alt_SchurE Hszla).
 have sorted_mpart_rho (nu : 'P_d) : sorted gtn ((mpart nu) + rho)%MM.
   apply/(sorted_strictP 0%N) => // i j.
   rewrite size_tuple => /andP [Hij Hj]; have Hi := ltn_trans Hij Hj.
-  rewrite -[i]/(nat_of_ord (Ordinal Hi)) -mnm_nth.
-  rewrite -[j]/(nat_of_ord (Ordinal Hj)) -mnm_nth /=.
+  rewrite -[i]/((Ordinal Hi) : nat) -mnm_nth.
+  rewrite -[j]/((Ordinal Hj) : nat) -mnm_nth /=.
   rewrite !mnmE /= /mpart.
   have :  n - 1 - j < n - 1 - i.
     apply ltn_sub2l => //; apply (leq_trans Hij).
@@ -950,11 +950,11 @@ apply/partdomP => i; move/(_ i): Hdom; congr (_ <= _).
 rewrite !sumn_take; apply eq_bigr => {i} i _.
 case: (ssrnat.ltnP i (size mu)) => Hi.
 - have -> : (size mu).-1.+1 = (size mu) by case: (size mu) Hi.
-  by rewrite -{1}[i]/(nat_of_ord (Ordinal Hi)) -mnm_nth mnmE.
+  by rewrite -{1}[i]/((Ordinal Hi) : nat) -mnm_nth mnmE.
 - rewrite [RHS]nth_default //.
   case: mu Hi => [[|m mu] Hmu] Hi.
   + case: i Hi => [|i].
-    * by rewrite -[X in nth _ _ X]/(nat_of_ord (n := 1) ord0) -mnm_nth mnmE.
+    * by rewrite -[X in nth _ _ X]/((@ord0 0) : nat) -mnm_nth mnmE.
     * by rewrite nth_default //= size_tuple card_ord.
   + move: Hmu Hi; rewrite /= => _ => Hi.
     by rewrite nth_default // size_tuple card_ord.
@@ -991,7 +991,7 @@ case Hla : (size la) => [|szla].
     by rewrite /mpart intpartn0 /= !tnth_mktuple /=.
 rewrite (Kostka_any la (n := szla)) /KostkaMon ?Hla //.
 have Hntht j :
-  nth [::] [seq nseq (nth 0 la (nat_of_ord i)) i | i : 'I_szla.+1] j =
+  nth [::] [seq nseq (nth 0 la (i : nat)) i | i : 'I_szla.+1] j =
     nseq (nth 0 la j) (inord j).
   case: (ssrnat.ltnP j szla.+1) => Hj.
   - rewrite (nth_map ord0) ?size_enum_ord // nth_enum_ord //.
@@ -1052,7 +1052,7 @@ Section Nvar.
 Variable n : nat.
 Hypothesis Hd : d <= n.+1.
 
-Let td := [tuple nat_of_bool (i < d) | i < n.+1].
+Let td := [tuple ((i < d) : nat) | i < n.+1].
 
 Lemma stdtabsh_eval_to_word (t : stdtabsh la) :
   eval [seq inord i | i <- to_word t] = td.
@@ -1062,7 +1062,7 @@ case: t => /= t /andP [/andP [Ht Hstd] /eqP Hsh].
 rewrite /eval !tnth_mktuple.
 move: Hstd; rewrite /is_std.
 rewrite size_to_word /size_tab Hsh intpartn_sumn => Hstd.
-rewrite count_map (eq_in_count (a2 := pred1 (nat_of_ord i))); first last.
+rewrite count_map (eq_in_count (a2 := pred1 (i : nat))); first last.
   move=> /= j; rewrite (perm_eq_mem Hstd) mem_iota /= add0n.
   move => /leq_trans /(_ Hd) Hj.
   by rewrite {1}/eq_op /= inordK.
@@ -1070,16 +1070,16 @@ by rewrite (perm_eqP Hstd) count_uniq_mem ?iota_uniq // mem_iota /= add0n.
 Qed.
 
 Lemma tabsh_is_std (t : tabsh n la) :
-  eval (to_word t) = td -> is_std [seq (nat_of_ord i) | i <- to_word t].
+  eval (to_word t) = td -> is_std [seq (i : nat) | i : 'I_n.+1 <- to_word t].
 Proof.
 rewrite /is_std => Hev; apply/perm_eqP => p.
 rewrite count_map -sum_count_mem.
-rewrite (eq_bigr (fun i : 'I__ => nat_of_bool (i < d)%N)) /=; first last.
+rewrite (eq_bigr (fun i : 'I__ => (i < d)%N : nat)) /=; first last.
   move=> i _.
   by move: Hev => /(congr1 (fun t => tnth t i)); rewrite !tnth_mktuple.
 rewrite size_map size_to_word /size_tab shape_tabsh intpartn_sumn.
 rewrite -sum1_count.
-transitivity (\sum_(0 <= i < n.+1 | p i) nat_of_bool (i < d)).
+transitivity (\sum_(0 <= i < n.+1 | p i) (i < d)).
   by rewrite big_mkord.
 rewrite -{2}(subn0 d) -/(index_iota 0 d) (big_nat_widen _ _ _ _ _ Hd).
 rewrite (bigID (fun i => i < d)) /= addnC big1 ?add0n; first last.
@@ -1089,7 +1089,7 @@ Qed.
 
 Definition tabnat_of_ord_fun (t : tabsh n la) :=
   if (eval (to_word t) == td)
-  then [seq [seq (nat_of_ord i) | i <- r] | r <- t]
+  then [seq [seq (i : nat) | i : 'I_n.+1 <- r] | r <- t]
   else hyper_stdtabsh la.
 
 Definition tabord_of_nat_fun (t : stdtabsh la) : seq (seq 'I_n.+1) :=

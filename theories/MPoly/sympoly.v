@@ -1061,7 +1061,7 @@ move=> i _ /=; rewrite -natr_sum; congr (_%:R).
 have : m i <= k.
   by move: Hdegm; rewrite mdegE => <-; rewrite (bigD1 i) //=; apply leq_addr.
 rewrite big_mkord (reindex_inj rev_ord_inj) /=.
-rewrite (eq_bigr (fun j : 'I_k => nat_of_bool (j < m i))); first last.
+rewrite (eq_bigr (fun j : 'I_k => (j < m i) : nat)); first last.
   by move=> j _; rewrite subKn //.
 move: (m i) => n {m Hdegm i} Hn.
 rewrite (bigID (fun i : 'I_k => i < n)) /=.

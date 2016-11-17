@@ -153,7 +153,7 @@ Qed.
 
 Lemma insub_wordcdK n c :
   c \is a code -> size c <= n.+1 ->
-  [seq @nat_of_ord n i | i <- pmap insub (wordcd c)] = wordcd c.
+  [seq (i : nat) | i : 'I_n <- pmap insub (wordcd c)] = wordcd c.
 Proof.
 move=> /wordcd_ltn/allP Hall Hsz.
 rewrite pmap_filter; last by move=> j /=; rewrite insubK.
@@ -805,7 +805,7 @@ of [s] is indeed a word whose [length] is the size of [s], that is a reduced
 word (defined later).
  *)
 
-Lemma canwordE s : [seq nat_of_ord i | i <- canword s] = wordcd (cocode s).
+Lemma canwordE s : [seq (i : nat) | i : 'I_n <- canword s] = wordcd (cocode s).
 Proof using . apply (insub_wordcdK (cocodeP _)); by rewrite size_cocode. Qed.
 
 Theorem canwordP s : s = 's_[canword s].
@@ -1372,11 +1372,11 @@ Qed.
 
 Lemma iota_cut_i (l b : nat) (i : 'I_n) :
   l <= b -> b - l < i -> i < b -> iota (b - l) l =
-  (iota (b - l) (i.-1 - (b - l))) ++ [:: i.-1; nat_of_ord i] ++ (iota i.+1 (b - i.+1)).
+  (iota (b - l) (i.-1 - (b - l))) ++ [:: i.-1; i : nat] ++ (iota i.+1 (b - i.+1)).
 Proof using .
 move=> Hbl Hi1 Hi2.
 have Hbli : b - l <= i.-1 by rewrite -ltnS (ltn_predK Hi1).
-have -> : [:: i.-1; nat_of_ord i] = iota i.-1 2 by rewrite /= (ltn_predK Hi1).
+have -> : [:: i.-1; i : nat] = iota i.-1 2 by rewrite /= (ltn_predK Hi1).
 rewrite -{2}(subnKC Hbli) catA -iota_add.
 rewrite -addSnnS addn1 -subSn // (ltn_predK Hi1) -subSn; last by apply ltnW.
 have Hbli1 := leq_trans (ltnW Hi1) (leqnSn _).

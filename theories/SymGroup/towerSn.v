@@ -278,9 +278,9 @@ Qed.
 
 Lemma pcycles_tinj s :
   pcycles (tinj s) =
-  [set (@lshift m n) @: (x : {set 'I_m}) | x in pcycles s.1]
+  [set (@lshift m n) @: x | x : {set 'I_m} in pcycles s.1]
     :|:
-    [set (@rshift m n) @: (x : {set 'I_n}) | x in pcycles s.2 ].
+    [set (@rshift m n) @: x | x : {set 'I_n} in pcycles s.2].
 Proof using.
 apply/setP => S; rewrite /pcycles inE.
 apply/imsetP/orP => [[x _ ->{S}] | [] /imsetP [T /imsetP [x _] ->{T}] ->{S}].

@@ -100,7 +100,7 @@ rewrite /is_std; apply (iffP idP).
   by move => i; rewrite Hs.
 Qed.
 
-Definition wordperm n (p : 'S_n) := [seq val (p i) | i : 'I_n].
+Definition wordperm n (p : 'S_n) := [seq (p i : nat) | i : 'I_n].
 
 Open Scope group_scope.
 
