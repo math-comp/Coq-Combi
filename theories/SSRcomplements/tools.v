@@ -434,14 +434,15 @@ Proof.
   rewrite -(subnKC Hab) iota_add add0n filter_cat.
   rewrite -[RHS]cats0; congr (_ ++ _).
   - rewrite (eq_in_filter (a2 := predT)) ?filter_predT //.
-    move=> i /=; by rewrite mem_iota add0n => /andP [] _ ->.
+    by move=> i /=; rewrite mem_iota add0n /= => ->.
   - rewrite (eq_in_filter (a2 := pred0)) ?filter_pred0 //.
-    move=> i /=. rewrite mem_iota (subnKC Hab) => /andP [].
+    move=> i /=; rewrite mem_iota (subnKC Hab) => /andP [].
     by rewrite leqNgt => /negbTE.
 Qed.
 
 Lemma iota_geq a b : [seq i <- iota 0 a | b <= i] = iota b (a - b).
 Proof.
+(* Note: The equational proof is longer *)
   elim: a => [//=| n IHn].
   rewrite -addn1 iota_add add0n /= filter_cat IHn {IHn} /=.
   case: leqP => Hb.
@@ -453,6 +454,7 @@ Qed.
 
 
 (** ** [incr_nth] related lemmas *)
+(* in pull request *)
 Lemma incr_nth_inj sh : injective (incr_nth sh).
 Proof.
   move=> i j Hsh.
@@ -461,6 +463,7 @@ Proof.
   by rewrite !nth_incr_nth eq_refl Hdiff eqn_add2r.
 Qed.
 
+(* in pull request *)
 Lemma incr_nthC (s : seq nat) i j :
   incr_nth (incr_nth s i) j = incr_nth (incr_nth s j) i.
 Proof.
@@ -676,7 +679,6 @@ by rewrite -(prev_next Huniq x) Heq prev_next.
 Qed.
 
 
-Reserved Notation "#{ x }" (at level 0, x at level 10, format "#{ x }").
 Notation "#{ x }" :=  #|(x : {set _})|
                       (at level 0, x at level 10, format "#{ x }").
 
