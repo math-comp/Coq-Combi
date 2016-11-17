@@ -325,88 +325,8 @@ rewrite /= take_rev drop_rev -Dmn addnK revK -rev_reshape //.
 by rewrite size_takel // -Dmn leq_addr.
 Qed.
 
-(*
 (** ** converting coordinate in a [seq [seq T]] and its flatten version *)
-Fixpoint reshape_coord sh i :=
-  if sh is s0 :: s then
-    if i < s0 then (0, i)
-    else let (r, c) := reshape_coord s (i - s0) in (r.+1, c)
-  else (0, i).
-
-Definition flatten_coord sh r c := (\sum_(0 <= j < r) nth 0 sh j) + c.
-
-Lemma flatten_coordP sh r c :
-  c < nth 0 sh r -> flatten_coord sh r c < sumn sh.
-Proof.
-  case: (ltnP r (size sh)) => Hr; last by rewrite (nth_default _ Hr).
-  rewrite -(sum_iota_sumnE (n := size sh)) // => Hc.
-  rewrite (big_cat_nat _ _ _ _ (ltnW Hr)) //= ltn_add2l.
-  rewrite (big_ltn Hr); exact: ltn_addr.
-Qed.
-
-Lemma reshape_coordP sh i :
-  i < sumn sh -> let (r, c) := (reshape_coord sh i) in r < size sh /\ c < nth 0 sh r.
-Proof.
-  elim: sh i => [| s0 s IHs] i //= Hi.
-  case: (ltnP i s0) => His0 //=.
-  move/(_ (i - s0)) : IHs; case: (reshape_coord s (i - s0)) => r c /=.
-  rewrite ltnS; apply.
-  by rewrite -(subSn His0) leq_subLR.
-Qed.
-
-Lemma reshape_coord_leq sh i1 i2 :
-  i1 <= i2 < sumn sh ->
-  let (r1, c1) := (reshape_coord sh i1) in
-  let (r2, c2) := (reshape_coord sh i2) in r1 < r2 \/ (r1 = r2 /\ c1 <= c2).
-Proof.
-  elim: sh i1 i2 => [i1 i2 /andP [] |] //= s0 s IHs i1 i2.
-  case: (ltnP i2 s0) => Hi2s0 //=.
-  - by move=> /andP [Hi12 _]; rewrite (leq_ltn_trans Hi12 Hi2s0); right.
-  - case: (ltnP i1 s0) => Hi1s0 //=.
-    + by move=> _ /=; case: (reshape_coord _ _) => r c; left.
-    + move=> /andP [Hi12 Hi2].
-      have /IHs : i1 - s0 <= i2 - s0 < sumn s.
-        rewrite leq_subLR subnKC // Hi12 /=.
-        by rewrite -(ltn_add2l s0) subnKC.
-      case: (reshape_coord s (i1 - s0)) => [r1 c1].
-      case: (reshape_coord s (i2 - s0)) => [r2 c2].
-      by rewrite !ltnS => [[|[H1 H2]]]; [left | right; rewrite H1].
-Qed.
-
-Lemma reshape_coordK sh i :
-  let (r, c) := reshape_coord sh i in flatten_coord sh r c = i.
-Proof.
-  rewrite /flatten_coord.
-  elim: sh i => [| s0 s IHs] i //=; first by rewrite /index_iota /= big_nil.
-  case: (ltnP i s0) => His0 //=; first by rewrite /index_iota /= big_nil.
-  move/(_ (i - s0)) : IHs; case: (reshape_coord s (i - s0)) => r c.
-  rewrite big_nat_recl //= -addnA => ->.
-  exact: subnKC.
-Qed.
-
-Lemma flatten_coordK sh r c :
-  c < nth 0 sh r -> reshape_coord sh (flatten_coord sh r c) = (r, c).
-Proof.
-  rewrite /flatten_coord.
-  elim: r c sh => [| r IHr] /= c [//= | s0 s] /=.
-    by rewrite /index_iota subn0 /= big_nil add0n => ->.
-  rewrite (_ : \sum_(0 <= j < r.+1) nth 0 (s0 :: s) j
-               = s0 + \sum_(0 <= j < r) nth 0 s j); last by rewrite big_nat_recl.
-  rewrite [X in if X then _ else _]ltnNge -addnA leq_addr /=.
-  by rewrite addKn => /IHr ->.
-Qed.
-
-Lemma nth_flatten T (x : T) tab i :
-  nth x (flatten tab) i = let (r, c) := (reshape_coord (shape tab) i) in
-                          nth x (nth [::] tab r) c.
-Proof.
-  elim: tab i => [| t0 t IHt] //= i.
-  rewrite nth_cat; case: ltnP => //= Hi.
-  rewrite IHt {IHt}; by case: (reshape_coord (shape t) (i - size t0)) => r c.
-Qed.
-*)
-
-(* Gonthier's second variant *)
+(* in pull request *)
 Section FlattenIndex.
 
 Variable T : Type.
