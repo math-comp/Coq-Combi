@@ -61,7 +61,7 @@ Reserved Notation "''M[' l ']'"
 
 Local Notation algCF := [numFieldType of algC].
 
-(** * Definition and basis properties *)
+(** * Definition and basic properties *)
 Section NVar.
 
 Variable nvar0 : nat.
@@ -392,8 +392,8 @@ have Huniq : uniq IRR.
   rewrite Hlamu irrSG_orthonormal eq_refl /=.
   by case: eqP => //= _ /eqP; rewrite oner_eq0.
 apply (uniq_perm_eq Huniq).
-- exact: (free_uniq (basis_free (irr_basis _))).
-  have /(leq_size_perm Huniq) Htmp : {subset IRR <= irr 'SG_n}.
+  exact: (free_uniq (basis_free (irr_basis _))).
+have /(leq_size_perm Huniq) Htmp : {subset IRR <= irr 'SG_n}.
   move=> /= f /mapP [/= p /mapP [/= la _ ->{p}] -> {f}].
   exact: irrSG_irr.
 suff /Htmp [] : (size (irr 'SG_n) <= size IRR)%N by [].
@@ -520,5 +520,4 @@ apply val_inj; rewrite /= linear_sum /=.
 rewrite syms_symsM; apply eq_bigr => nu _.
 by rewrite !linearMn /= Fchar_invK // leqSpred.
 Qed.
-
 

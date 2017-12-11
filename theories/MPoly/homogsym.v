@@ -53,8 +53,8 @@
 
 The main results are [symbm_basis], [symbe_basis], [symbs_basis],
 [symbh_basis], [symbp_basis] which asserts that they are all bases (if the
-characteristic of the base ring is zero for [symbp_basis]. And the definition
-of the scalr product.
+characteristic of the base ring is zero for [symbp_basis]), and the definition
+of the scalar product.
  *)
 
 Require Import mathcomp.ssreflect.ssreflect.

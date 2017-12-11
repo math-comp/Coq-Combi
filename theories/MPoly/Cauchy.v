@@ -79,7 +79,8 @@ Notation m := m0.+1.
 Notation n := n0.+1.
 Notation mxvec_index := (@mxvec_index m n).
 
-Let vecmx_index := (enum_val \o cast_ord (esym (mxvec_cast m n))).
+Let vecmx_index : 'I_(m * n) -> 'I_m * 'I_n :=
+  (enum_val \o cast_ord (esym (mxvec_cast m n))).
 
 Lemma vecmx_indexK i : mxvec_index (vecmx_index i).1 (vecmx_index i).2 = i.
 Proof.
@@ -96,13 +97,10 @@ Qed.
 Section Big.
 
 Variables (R : Type) (idx : R).
-Notation Local "1" := idx.
-Variable op : Monoid.com_law 1.
-Local Notation "'*%M'" := op (at level 0).
-Local Notation "x * y" := (op x y).
+Variable op : Monoid.com_law idx.
 
 Lemma big_mxvec_index P F :
-  \big[op/idx]_(i : 'I_(m*n) | P i) F i =
+  \big[op/idx]_(i : 'I_(m * n) | P i) F i =
    \big[op/idx]_(i < m)
     \big[op/idx]_(j < n | P (mxvec_index i j)) F (mxvec_index i j).
 Proof.
@@ -214,7 +212,7 @@ rewrite /polY_XY; repeat split.
 - exact: rmorphB.
 - exact: rmorphM.
 - move=> p c.
-  by rewrite scale_polXYE /polXY_scale /= -!mul_mpolyC rmorphM /=.
+  by rewrite scale_polXYE /polXY_scale /= -!mul_mpolyC rmorphM.
 Qed.
 Canonical polY_XY_additive   := Additive   polY_XY_is_lrmorphism.
 Canonical polY_XY_rmorphism  := RMorphism  polY_XY_is_lrmorphism.
