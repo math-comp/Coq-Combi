@@ -48,8 +48,7 @@ Lemma quot_eq1 (R : fieldType) (x y : R) : x / y = 1 -> x = y.
 Proof.
   move=> H.
   have := GRing.Field.intro_unit H; rewrite invr_eq0 => Hy.
-  rewrite -[y]mul1r -H -mulrA [_ * y]mulrC.
-  by rewrite (divff Hy) mulr1.
+  by rewrite -[y]mul1r -H -mulrA [_ * y]mulrC (divff Hy) mulr1.
 Qed.
 
 End FieldLemmas.

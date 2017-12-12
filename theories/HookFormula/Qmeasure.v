@@ -100,7 +100,7 @@ Hypothesis Mstable_sub : stable_sub m.
 Lemma Mstable_eq : stable m.
 Proof using .
 apply monotonic_stable; trivial.
-Save.
+Qed.
 Hint Resolve Mstable_eq.
 
 Lemma Mstable0 : m \0 = 0.
@@ -110,7 +110,7 @@ transitivity (m (\0 \- \0)).
 apply Mstable_eq; auto.
 apply Mstable_sub.
 rewrite (GRing.addrN (m \0)); trivial.
-Save.
+Qed.
 Hint Resolve Mstable0.
 
 Lemma Mstable_opp : stable_opp m.
@@ -120,7 +120,7 @@ rewrite -Mstable_sub.
 apply Mstable_eq; intro x.
 rewrite /null_fun_head /= sub0r; auto.
 rewrite Mstable0 /null_fun_head /= sub0r; auto.
-Save.
+Qed.
 Hint Resolve Mstable_opp.
 
 Lemma Mstable_add : stable_add m.
@@ -131,7 +131,7 @@ apply Mstable_eq; intro x.
 rewrite /= opprK; auto.
 apply Mstable_sub.
 rewrite Mstable_opp opprK; trivial.
-Save.
+Qed.
 Hint Resolve Mstable_add.
 
 Lemma Mstable_addn (f : MF A) (n : nat) : m (fun x => f x *+ n) = (m f) *+ n.
@@ -144,13 +144,13 @@ transitivity (m (fun x : A => f x *+ n) + m f).
 rewrite -Mstable_add.
 apply Mstable_eq; move => x /=; rewrite mulrSr //=.
 by congr +%R.
-Save.
+Qed.
 
 Lemma Mstable_subn (f : MF A) (n : nat) : m (fun x => f x *- n) = (m f) *- n.
 Proof using Mstable_sub.
 rewrite Mstable_opp.
 by rewrite Mstable_addn.
-Save.
+Qed.
 
 Lemma Mstable_divn (f : MF A) (n : nat) : m (fun x => f x / n%:Q) = (m f) / (n%:Q).
 Proof using Mstable_sub.
@@ -169,7 +169,7 @@ rewrite mulrC mulrVK; trivial.
 apply Mstable_eq; move=> x /=.
 rewrite -mulr_natr.
 rewrite mulrVK; trivial.
-Save.
+Qed.
 
 Lemma Mstable_addi (f : MF A) (n : int) : m (fun x => f x *~ n) = (m f) *~ n.
 Proof using Mstable_sub.
@@ -178,14 +178,14 @@ rewrite -pmulrn.
 apply Mstable_addn.
 rewrite NegzE -nmulrn.
 apply Mstable_subn.
-Save.
+Qed.
 
 Lemma Mstable_muli (f : MF A) (n : int) : m (fun x => n%:Q * f x) = (n%:Q) * (m f).
 Proof using Mstable_sub.
 rewrite mulrzl -Mstable_addi.
 apply Mstable_eq; move=> x /=.
 apply mulrzl.
-Save.
+Qed.
 
 Lemma Mstable_divi (f : MF A) (n : int) : m (fun x => f x / n%:Q) = (m f) / (n%:Q).
 Proof using Mstable_sub.
@@ -198,7 +198,7 @@ rewrite -Mstable_divn.
 rewrite -Mstable_opp.
 apply Mstable_eq; move=> x /=.
 by rewrite mulrN.
-Save.
+Qed.
 
 Lemma Mstable_mull : stable_mull m.
 Proof using Mstable_sub.
@@ -210,13 +210,13 @@ rewrite -Mstable_divi.
 rewrite -Mstable_muli.
 apply Mstable_eq; move=> x /=.
 by rewrite (mulrC (f x)) mulrA (divq_num_den n).
-Save.
+Qed.
 
 Lemma Mstable_linear : forall (p q : rat) (f g : MF A), 
     m ((p \*o f) \+ (q \*o g)) = p * (m f) + q * (m g).
 Proof using Mstable_sub.
 by intros; rewrite Mstable_add !Mstable_mull.
-Save.
+Qed.
 
 End StabilityProperties.
 
@@ -245,7 +245,7 @@ intros; intro f; repeat rewrite star_simpl.
 transitivity (m1 (fun x : A => (F2 x) f)); auto.
 apply (fmonotonic m1); intro x.
 apply (H0 x f).
-Save.
+Qed.
 Hint Resolve star_le_compat.
 
 (** *** Stability for substraction of unit and star *)
@@ -262,7 +262,7 @@ unfold mstar in |- *; simpl.
 transitivity (m (fun x:A => F x f - F x g)).
 apply (Mstable_eq m); intro x; auto.
 apply (H (fun x : A => (F x) f) (fun x : A => (F x) g)).
-Save.
+Qed.
 
 
 (** ** Definition of distribution
@@ -282,62 +282,62 @@ Hint Resolve mu_stable_sub mu_prob.
 
 Lemma mu_monotonic {A} (m: distr A) : monotonic (mu m).
 apply fmonotonic; auto.
-Save.
+Qed.
 Hint Resolve mu_monotonic.
 
 Lemma mu_stable_eq {A} (m: distr A) : stable (mu m).
 apply fstable; auto.
-Save.
+Qed.
 Hint Resolve mu_stable_eq.
 
 Lemma mu_zero A (m: distr A) : mu m \0 = 0.
 apply Mstable0; auto.
-Save.
+Qed.
 Hint Resolve mu_zero.
 
 Lemma mu_zero_eq A (m: distr A) f : (forall x, f x = 0) -> mu m f = 0.
 transitivity (mu m \0); auto.
 apply Mstable_eq; intro x; auto.
-Save.
+Qed.
 Hint Immediate mu_zero_eq.
 
 Lemma mu_one_eq A (m: distr A) f : (forall x, f x = 1) -> mu m f = 1.
 transitivity (mu m (fun x => 1)); auto.
 apply Mstable_eq; intro x; auto.
-Save.
+Qed.
 Hint Immediate mu_one_eq.
 
 Lemma mu_stable_inv A (m: distr A) f : mu m (fun x => 1 - f x) = 1 - (mu m f).
 transitivity (mu m (fun x => 1) - mu m f).
 rewrite mu_stable_sub; trivial.
 rewrite mu_prob; trivial.
-Save.
+Qed.
 Hint Resolve mu_stable_inv.
 
 Lemma mu_stable_add A (m: distr A) f g: mu m (f \+ g) = mu m f + mu m g.
 rewrite Mstable_add; auto.
-Save.
+Qed.
 Hint Resolve mu_stable_add.
 
 Lemma mu_stable_mull A (m: distr A) q f : mu m (q \*o f) = q * mu m f.
 rewrite Mstable_mull; auto.
-Save.
+Qed.
 Hint Resolve mu_stable_mull.
 
 Lemma mu_add_zero A (m: distr A) f g : mu m f = 0 -> mu m g = 0 -> mu m (f \+ g) = 0.
 intros Hf Hg; rewrite mu_stable_add Hf Hg; auto.
-Save.
+Qed.
 Hint Resolve mu_add_zero.
 
 Lemma mu_stable_pos A (m: distr A) f : (\0 <= f)%O -> 0 <= mu m f.
 move => Hf; rewrite -(mu_zero m).
 apply (fmonotonic (mu m)); auto.
-Save.
+Qed.
 
 Lemma mu_stable_le1 A (m:distr A) f : (forall x, f x <= 1) -> mu m f <= 1.
 move => Hf; rewrite -(mu_prob m).
 by apply mu_monotonic => x /=.
-Save.
+Qed.
 
 Lemma mu_cte A (m: distr A) (c:rat) : mu m (fun x => c) = c.
 intros.
@@ -345,20 +345,20 @@ transitivity (mu m (fun x => c * 1)).
 apply (mu_stable_eq m); intro x; auto.
 rewrite (mulr1 c); auto.
 by rewrite mu_stable_mull mu_prob mulr1.
-Save.
+Qed.
 Hint Resolve mu_cte.
 
 Lemma mu_stable_mulr A (m: distr A) (c:rat) f : mu m (c \o* f) = (mu m f) * c.
 intros; rewrite mulrC -mu_stable_mull.
 apply mu_stable_eq; intro x.
 by rewrite /= mulrC /=.
-Save.
+Qed.
 
 Lemma mu_stable_inv_inv A (m: distr A) f : mu m f = 1 - mu m (fun x => 1 - f x).
 rewrite -mu_stable_inv.
 apply mu_stable_eq; intro x; rewrite opprB /=.
 by rewrite addrCA subrr addr0.
-Save.
+Qed.
 Hint Resolve  mu_stable_inv_inv.
 
 Instance Odistr (A:Type) : ord (distr A) := 
@@ -386,21 +386,21 @@ Defined.
 
 Lemma Munit_simpl : forall (A:Type) (q:A -> rat) x, mu (Munit x) q = q x.
 trivial.
-Save.
+Qed.
 
 Lemma Munit_simpl_eq : forall (A:Type) (q:A -> rat) x, mu (Munit x) q == q x.
 trivial.
-Save.
+Qed.
 
 Lemma Mlet_simpl : forall (A B:Type) (m:distr A) (M:A -> distr B) (f:B -> rat),
      mu (Mlet m M) f = mu m (fun x => (mu (M x) f)).
 trivial.
-Save.
+Qed.
 
 Lemma Mlet_simpl_eq : forall (A B:Type) (m:distr A) (M:A -> distr B) (f:B -> rat),
      mu (Mlet m M) f == mu m (fun x => (mu (M x) f)).
 trivial.
-Save.
+Qed.
 
 
 (** ** Operations on distributions *)
@@ -408,7 +408,7 @@ Save.
 
 Lemma Munit_eq_compat : forall A (x y : A), x = y -> Munit x == Munit y.
 intros; subst; auto.
-Save.
+Qed.
 
 Lemma Mlet_le_compat : forall (A B : Type) (m1 m2:distr A) (M1 M2 : A -> distr B), 
   (m1 <= m2 -> M1 <= M2 -> Mlet m1 M1 <= Mlet m2 M2)%O.
@@ -417,25 +417,25 @@ repeat rewrite Mlet_simpl.
 transitivity (mu m2 (fun x : A => mu (M1 x) f)); auto.
 apply (fmonotonic (mu m2)); intro; auto.
 apply (HM x f).
-Save.
+Qed.
 Hint Resolve Mlet_le_compat.
 
 Add Parametric Morphism (A B : Type) : (Mlet (A:=A) (B:=B))
   with signature Ole ==> Ole ==> Ole 
   as Mlet_le_morphism.
 auto.
-Save.
+Qed.
 
 Add Parametric Morphism (A B : Type) : (Mlet (A:=A) (B:=B))
   with signature  Ole ==> (@pointwise_relation A (distr B) (@Ole _ _)) ==> Ole 
   as Mlet_le_pointwise_morphism.
 auto.
-Save.
+Qed.
 
 
 Instance Mlet_mon2 : forall (A B : Type), monotonic2 (@Mlet A B).
 red; auto.
-Save.
+Qed.
 
 Definition MLet (A B : Type) : distr A -m> (A -> distr B) -m> distr B
                := mon2 (@Mlet A B).
@@ -443,123 +443,123 @@ Definition MLet (A B : Type) : distr A -m> (A -> distr B) -m> distr B
 Lemma MLet_simpl0 : forall (A B:Type) (m:distr A) (M:A -> distr B),
      MLet A B m M = Mlet m M.
 trivial.
-Save.
+Qed.
 
 Lemma MLet_simpl : forall (A B:Type) (m:distr A) (M:A -> distr B)(f:B -> rat),
      mu (MLet A B m M) f = mu m (fun x => mu (M x) f).
 trivial.
-Save.
+Qed.
 
 Lemma Mlet_eq_compat : forall (A B : Type) (m1 m2:distr A) (M1 M2 : A -> distr B), 
   (m1 == m2 -> M1 == M2 -> Mlet m1 M1 == Mlet m2 M2)%type.
 intros; apply (monotonic2_stable2 (@Mlet A B)); trivial.
-Save.
+Qed.
 Hint Resolve Mlet_eq_compat.
 
 Add Parametric Morphism (A B : Type) : (Mlet (A:=A) (B:=B))
   with signature Oeq ==> Oeq ==> Oeq 
   as Mlet_eq_morphism.
 auto.
-Save.
+Qed.
 
 
 Add Parametric Morphism (A B : Type) : (Mlet (A:=A) (B:=B))
   with signature  Oeq ==> (@pointwise_relation A (distr B) (@Oeq _ _)) ==> Oeq 
   as Mlet_Oeq_pointwise_morphism.
 auto.
-Save.
+Qed.
 
 
 Lemma mu_le_compat : forall (A:Type) (m1 m2:distr A),
   (m1 <= m2 -> forall f g : A -> rat,  f <= g -> mu m1 f <= mu m2 g)%O.
 intros; transitivity (mu m2 f); auto.
-Save.
+Qed.
 
 Lemma mu_eq_compat : forall (A:Type) (m1 m2:distr A),
   (m1 == m2 -> forall f g : A -> rat,  f == g -> mu m1 f = mu m2 g)%type.
 intros; change (mu m1 f == mu m2 g)%type; transitivity (mu m2 f); auto.
-Save.
+Qed.
 Hint Immediate mu_le_compat mu_eq_compat.
 
 Add Parametric Morphism (A : Type) : (mu (A:=A))
   with signature Ole ==> Ole
   as mu_le_morphism.
 auto.
-Save.
+Qed.
 
 Add Parametric Morphism (A : Type) : (mu (A:=A))
   with signature Oeq ==> Oeq
   as mu_eq_morphism.
 auto.
-Save.
+Qed.
 
 (* eq version for Mlet_simpl/Munit_simpl *)
 Add Parametric Morphism (A:Type) (a:distr A) : (@mu A a)
   with signature (@pointwise_relation A rat (@eq _) ==> Oeq) as mu_distr_eq_morphism.
 intros f g H1.
 apply mu_eq_compat; auto.
-Save.
+Qed.
 
 (* Utile *)
 Add Parametric Morphism (A:Type) (a:distr A) : (@mu A a)
   with signature (@pointwise_relation A rat (@Oeq _ _) ==> Oeq) as mu_distr_Oeq_morphism.
 intros f g H1.
 apply mu_eq_compat; auto.
-Save.
+Qed.
 
 (* Utile? *)
 Add Parametric Morphism (A:Type) (a:distr A) : (@mu A a)
   with signature (@pointwise_relation _ _ (@Ole _ _) ==> Ole) as mu_distr_le_morphism.
 intros x y H.
 apply mu_le_compat; auto.
-Save.
+Qed.
 
 Add Parametric Morphism (A B:Type) : (@Mlet A B)
   with signature (Ole ==> @pointwise_relation _ _ (@Ole _ _) ==> Ole) as mlet_distr_le_morphism.
 intros x y H F G H2.
 apply Mlet_le_compat; auto.
-Save.
+Qed.
 
 Add Parametric Morphism (A B:Type) : (@Mlet A B)
   with signature (Oeq ==> @pointwise_relation _ _ (@Oeq _ _) ==> Oeq) as mlet_distr_eq_morphism.
 intros x y H F G H2.
 apply Mlet_eq_compat; auto.
-Save.
+Qed.
 
 (** ** Properties of monadic operators *)
 Lemma Mlet_unit : forall A B (x:A) (m:A -> distr B), Mlet (Munit x) m == m x.
 intros; intro f; auto.
-Save.
+Qed.
 
 Lemma Mlet_ext : forall A (m:distr A), Mlet m (fun x => Munit x) == m.
 intros;  intro f.
 rewrite Mlet_simpl.
 apply (mu_stable_eq m).
 intro x; auto.
-Save.
+Qed.
 
 Lemma Mlet_assoc : forall A B C (m1: distr A) (m2:A -> distr B) (m3:B -> distr C),
      Mlet (Mlet m1 m2) m3 == Mlet m1 (fun x:A => Mlet (m2 x) m3).
 intros;  intro f; simpl; trivial.
-Save.
+Qed.
 
 Lemma let_indep : forall (A B:Type) (m1:distr A) (m2: distr B) (f:MF B), 
        mu m1 (fun => mu m2 f) = mu m2 f.
 intros; rewrite (mu_cte m1 (mu m2 f)); auto.
-Save.
+Qed.
 
 
 Lemma let_indep_distr : forall (A B:Type) (m1:distr A) (m2: distr B), 
        Mlet m1 (fun => m2) == m2.
 exact let_indep.
-Save.
+Qed.
 
 Lemma mu_bool_le1 A (m:distr A) (f:A->bool) : mu m (fun x => (f x)%:Q) <= 1.
 apply Num.Theory.ler_trans with (mu m (fun x => 1%:Q)).
 apply mu_monotonic => x.
 case (f x) => //=.
 rewrite mu_prob => //=.
-Save.
+Qed.
 Hint Resolve mu_bool_le1.
 
 Lemma mu_bool_impl A (m:distr A) (f g:A->bool) : 
@@ -568,7 +568,7 @@ move => Hfg; apply mu_monotonic => x.
 move: (Hfg x); case (f x) => //=.
 by case (g x) => //=.
 by case (g x) => //=.
-Save.
+Qed.
 
 
 Lemma mu_bool_impl1 A (m:distr A) (f g:A->bool) : (forall x, (f x) ==> (g x)%B) ->
@@ -579,7 +579,7 @@ apply /andP.
 split; trivial.
 rewrite -[X in X <= _]Hf.
 apply  mu_bool_impl; trivial.
-Save.
+Qed.
 
 
 Lemma mu_bool_negb0 A (m:distr A) (f g:A->bool) : (forall x, (f x) ==> ~~ (g x)%B) ->
@@ -595,12 +595,12 @@ by case (g x) => //=.
 by rewrite mu_stable_inv Hf subrr.
 apply mu_stable_pos.
 by move => x /=; case (g x).
-Save.
+Qed.
 
 Lemma mu_bool_negb A (m:distr A) (f:A->bool) : mu m (fun x => (~~ f x)%:Q) = 1 - mu m (fun x => (f x)%:Q).
 rewrite -mu_stable_inv.
 apply mu_stable_eq => x; by case (f x).
-Save.
+Qed.
 
 Lemma mu_bool_negb1 A (m:distr A) (f g:A->bool) : (forall x, (~~ (f x) ==> g x)%B) ->
     mu m (fun x => (f x)%:Q) = 0 ->  mu m (fun x => (g x)%:Q) = 1.
@@ -615,7 +615,7 @@ apply mu_monotonic => x.
 move: (Hi x); case (f x) => //=.
 by case (g x) => //=.
 by case (g x) => //=.
-Save.
+Qed.
 
 (*
 (** ** Conditional probabilities *)
@@ -630,7 +630,7 @@ Defined.
 Lemma mcond_simpl : forall A (m:M A) (f g: MF A),
       mcond m f g = m (fconj f g) / m f.
 trivial.
-Save.
+Qed.
 
 Lemma mcond_stable_plus : forall A (m:distr A) (f: MF A), stable_plus (mcond (mu m) f).
 red; intros.
@@ -643,7 +643,7 @@ rewrite <- (mu_stable_plus m H0).
 apply (mu_stable_eq m); intro x; unfold fconj,fplus; auto.
 apply Udistr_plus_left; auto.
 apply (H x).
-Save.
+Qed.
 
 Lemma mcond_stable_inv : forall A (m:distr A) (f: MF A), stable_inv (mcond (mu m) f).
 red; intros.
@@ -656,7 +656,7 @@ apply Udiv_le_compat_left.
 apply (mu_monotonic m); intro x; unfold fconj,finv,fminus; auto.
 rewrite stable_minus_distr; trivial.
 rewrite Udiv_minus; trivial.
-Save.
+Qed.
 
 Lemma mcond_stable_mult : forall A (m:distr A) (f: MF A), stable_mult (mcond (mu m) f).
 red; intros.
@@ -668,7 +668,7 @@ apply (mu_stable_eq m).
 intro x; unfold fconj, fmult; auto.
 apply (mu_stable_mult m).
 auto.
-Save.
+Qed.
 
 Lemma mcond_continuous : forall A (m:distr A) (f: MF A), continuous (mcond (mu m) f).
 red; intros.
@@ -685,7 +685,7 @@ transitivity (mshift UMult (mu m f) (lub (mcond (mu m) f @ h))); auto.
 rewrite <- (lub_comp_le (mshift UMult (mu m f)) (mcond (mu m) f @ h) ).
 apply lub_le_compat; intro x; simpl.
 rewrite Udiv_mult; auto.
-Save.
+Qed.
 
 Definition Mcond A (m:distr A) (f:MF A) : distr A :=
    Build_distr (mcond_stable_inv m f) (mcond_stable_plus m f)
@@ -696,24 +696,24 @@ Lemma Mcond_total : forall A (m:distr A) (f:MF A),
 intros; simpl.
 transitivity (mu m f /mu m f); auto.
 apply Udiv_eq_compat; apply (mu_stable_eq m); intro x; unfold fconj, fone; auto.
-Save.
+Qed.
 
 Lemma Mcond_simpl : forall A (m:distr A) (f g:MF A), 
       mu (Mcond m f) g = mu m (fconj f g) / mu m f.
 trivial.
-Save.
+Qed.
 Hint Resolve Mcond_simpl.
 
 Lemma Mcond_zero_stable : forall A (m:distr A) (f g:MF A), 
       mu m g == 0 -> mu (Mcond m f) g == 0.
 intros; rewrite  Mcond_simpl. 
 apply Ule_zero_eq; transitivity (mu m g / mu m f); auto.
-Save.
+Qed.
 
 Lemma Mcond_null : forall A (m:distr A) (f g:MF A), 
       mu m f == 0 -> mu (Mcond m f) g == 0.
 intros; rewrite  Mcond_simpl; auto. 
-Save.
+Qed.
 
 Lemma Mcond_conj : forall A (m:distr A) (f g:MF A), 
           mu m (fconj f g) == mu (Mcond m f) g * mu m f.
@@ -723,7 +723,7 @@ rewrite <- H; repeat Usimpl.
 apply Ule_zero_eq.
 transitivity (mu m f); auto.
 symmetry; apply Udiv_mult; auto.
-Save.
+Qed.
 
 Lemma Mcond_decomp : 
     forall A (m:distr A) (f g:MF A), 
@@ -733,7 +733,7 @@ apply mu_stable_eq; intro x; unfold fplus,finv,fconj; simpl; auto.
 rewrite mu_stable_plus.
 repeat rewrite Mcond_conj; auto.
 apply fplusok_le_compat with f (finv f); auto.
-Save.
+Qed.
 
 Lemma Mcond_bayes : forall A (m:distr A) (f g:MF A), 
           mu (Mcond m f) g == (mu (Mcond m g) f * mu m g) / (mu m f).
@@ -744,7 +744,7 @@ rewrite H; Usimpl.
 apply Ule_zero_eq.
 transitivity (mu m g); auto.
 rewrite Udiv_mult; auto.
-Save.
+Qed.
 
 Lemma Mcond_mult : forall A (m:distr A) (f g h:MF A), 
             mu (Mcond m h) (fconj f g) == mu (Mcond m (fconj g h)) f * mu (Mcond m h) g.
@@ -762,7 +762,7 @@ apply mu_eq_compat; auto; intro x; repeat rewrite fconj_simpl.
 rewrite (Umult_sym (g x) (h x)).
 rewrite <- Umult_assoc.
 Usimpl; auto.
-Save.
+Qed.
 
 Lemma Mcond_conj_simpl : forall A (m:distr A) (f g h:MF A), 
             (fconj f f == f) -> mu (Mcond m f) (fconj f g) == mu (Mcond m f) g.
@@ -772,7 +772,7 @@ apply mu_eq_compat; auto; intro x; auto.
 repeat rewrite fconj_simpl.
 rewrite Umult_assoc.
 rewrite (H x); auto.
-Save.
+Qed.
 
 Hint Resolve Mcond_mult Mcond_conj_simpl.
 *)
@@ -791,7 +791,7 @@ rewrite (Num.Theory.ler_pmul2l (x:=2%:~R^-1) _ (f true) (g true)); auto.
 apply Hfg.
 rewrite (Num.Theory.ler_pmul2l (x:=2%:~R^-1) _ (f false) (g false)); auto.
 apply Hfg.
-Save.
+Qed.
 
 Definition flip : M bool := mon (fun (f : bool -> rat) => [1/2] * (f true) + [1/2] * (f false)).
 
@@ -803,7 +803,7 @@ move: (2%:~R^-1 * g true) => gt.
 move: (2%:~R^-1 * f false) => ff.
 move: (2%:~R^-1 * g false) => gf.
 ring_to_rat; ring.
-Save.
+Qed.
 
 Lemma flip_prob : flip (fun x => 1) = 1.
 rewrite /flip /= !mulr1 -div1r addf_div /=; auto.
@@ -812,17 +812,17 @@ rewrite -intrD -intrM.
 change ((4)%:Q / (4)%:Q = 1).
 apply divrr.
 auto.
-Save.
+Qed.
 
 Lemma flip_true : flip (fun b => (b%:Q)) = [1/2].
 rewrite /flip /= mulr1 mulr0.
 auto.
-Save.
+Qed.
 
 Lemma flip_false : flip (fun b => (~~b)%:Q) = [1/2].
 rewrite /flip /= mulr1 mulr0.
 auto.
-Save.
+Qed.
 
 Hint Resolve flip_true flip_false.
 
@@ -834,7 +834,7 @@ Defined.
 
 Lemma Flip_simpl : forall f, mu Flip f = [1/2] * (f true) + [1/2] * (f false).
 trivial.
-Save.
+Qed.
 
 
 (** ** Finite distributions given by points and rational coefficients *)
@@ -857,7 +857,7 @@ Lemma weight_nonneg c : 0 <= weight c.
 Proof using .
 apply Num.Theory.sumr_ge0.
 auto.
-Save.
+Qed.
 Hint Resolve weight_nonneg.
 
 Lemma weight_case c : (weight c = 0) \/ 0 < (weight c)^-1.
@@ -866,7 +866,7 @@ have :((weight c == 0) || (0 < weight c)).
 rewrite -(Num.Theory.le0r (weight c)); auto.
 move=> /orP [/eqP ->|]; first auto.
 by rewrite Num.Theory.invr_gt0; auto.
-Save.
+Qed.
 
 
 Instance finite_mon (c : A -> rat) : 
@@ -884,7 +884,7 @@ apply Num.Theory.ler_sum.
 move => i Hi.
 rewrite (Num.Theory.ler_pmul2l Hi).
 apply Hfg.
-Save.
+Qed.
 
 Definition mfinite (c : A -> rat) : M A := 
        mon (fun f => (\sum_(i <- p | 0 < c i) (c i * f i))/weight c).
@@ -893,7 +893,7 @@ Lemma finite_simpl (c : A -> rat) f :
      mfinite c f = (\sum_(i <- p | 0 < c i) (c i * f i))/weight c.
 Proof using .
 trivial.
-Save.
+Qed.
 
 Lemma finite_stable_sub (c : A -> rat) : stable_sub (mfinite c).
 Proof using .
@@ -911,7 +911,7 @@ apply eq_bigr => i Hi.
 rewrite mulrDr.
 congr (+%R).
 by rewrite mulrN.
-Save.
+Qed.
 
 End FiniteDistributions.
 
@@ -923,13 +923,13 @@ Hint Resolve weight_pos.
 
 Lemma inv_weight_pos A (d:fin A) : 0 < (weight (points d) (coeff d))^-1.
 by rewrite Num.Theory.invr_gt0; auto.
-Save.
+Qed.
 Hint Resolve inv_weight_pos.
 
 Lemma weight_is_unit A (d:fin A) : (weight (points d) (coeff d)) \is a unit.
 apply Num.Theory.unitf_gt0.
 auto.
-Save.
+Qed.
 Hint Resolve weight_is_unit.
 
 
@@ -948,7 +948,7 @@ Defined.
 Lemma Finite_simpl : forall A (d:fin A), 
      mu (Finite d) = mfinite (points d) (coeff d).
 trivial.
-Save.
+Qed.
 
 
 Lemma Finite_eq_in (A:eqType) (d:fin A) (a:A) : 
@@ -971,7 +971,7 @@ by rewrite addr0.
 rewrite mem_filter.
 by rewrite Hain Hap.
 by rewrite filter_uniq.
-Save.
+Qed.
 
 
 Lemma Finite_eq_out (A:eqType) (d:fin A) (a:A) : 
@@ -992,7 +992,7 @@ move: H0 H1; rewrite Num.Theory.ltrNge /=.
 change ((coeff d a <= 0)%B -> ~~(coeff d a <= 0)%B -> (coeff d a * 1%:~R)%R = 0%R).
 by case (coeff d a <= 0)%B.
 by move => _; rewrite /= mulr0.
-Save.
+Qed.
 
 Lemma Finite_in_seq (A:eqType) (d:fin A) : 
      mu (Finite d) (fun x => (x \in points d)%:Q) = 1%R.
@@ -1004,7 +1004,7 @@ rewrite [in X in _ = X]big_seq_cond [in X in X = _]big_seq_cond.
 apply eq_bigr.
 move => i; case (i \in points d); rewrite //=.
 by rewrite mulr1.
-Save.
+Qed.
 
 (** ** Uniform distribution on a non empty sequence of points *)
 
@@ -1016,7 +1016,7 @@ Definition usize A (p:unif A) : nat := size (upoints p).
 Lemma usize_pos A (p:unif A) : usize p != O.
 rewrite /usize; case p => up Hup.
 by move:up Hup; case; rewrite /=.
-Save.
+Qed.
 
 Definition unif2fin A (p:unif A) : fin A.
    exists (upoints p) (fun A => 1%Q).
@@ -1036,11 +1036,11 @@ Definition Uniform A (d:unif A) : distr A := Finite (unif2fin d).
      
 Lemma Uniform_simpl A (d:unif A) : mu (Uniform d) = mfinite (upoints d) (fun A => 1%Q).
 trivial.
-Save.
+Qed.
 
 Lemma weight1_size A (d:seq A) : weight d (fun x => 1) = (size d)%:Q.
 by rewrite /weight -sum1_size sumMz.
-Save.
+Qed.
 
 Lemma mu_uniform_sum A (d:unif A) (f:A->rat) : 
       mu (Uniform d) f = (\sum_(i <- d) f i) / (size d)%:Q.
@@ -1048,7 +1048,7 @@ rewrite Uniform_simpl /mfinite /= weight1_size.
 congr (_ / _).
 apply eq_bigr.
 move => i _; apply mul1r.
-Save.
+Qed.
 
 Lemma Uniform_eq_in (A:eqType) (d:unif A) (a:A) : uniq d -> (a \in upoints d)%SEQ -> 
      mu (Uniform d) (fun x => (x==a)%:Q) = 1%:Q / (usize d)%:Q.
@@ -1056,31 +1056,31 @@ move => Hu Ha; rewrite /Uniform Finite_eq_in //.
 rewrite /fprob /=.
 rat_to_ring.
 by rewrite weight1_size.
-Save.
+Qed.
 
 Lemma Uniform_eq_out (A:eqType) (d:unif A) (a:A) : 
      (a \notin upoints d)%SEQ -> 
      mu (Uniform d) (fun x => (x==a)%:Q) = 0%Q.
 move => Ha; rewrite /Uniform Finite_eq_out //.
 left; exact Ha.
-Save.
+Qed.
 
 Lemma Uniform_in_seq (A:eqType) (d:unif A) : 
      mu (Uniform d) (fun x => (x \in upoints d)%:Q) = 1%R.
 rewrite /Uniform; apply Finite_in_seq.
-Save.
+Qed.
 
 Fact succ_neq0 : forall n m : nat, (n==m.+1)%N -> (n!=0)%N.
 move => n m; rewrite -lt0n.
 by move => H; rewrite (eqP H).
-Save.
+Qed.
 
 Lemma Uniform_unif_seq_eq (A:eqType) (d1 d2 : unif A) : 
       (d1 == d2 :> seq A) -> Uniform d1 == Uniform d2.
 move => Heq f.
 rewrite 2!mu_uniform_sum.
 by rewrite (eqP Heq).
-Save.
+Qed.
 
 (** Uniform distribution on a sequence with a default value *)
 
@@ -1092,7 +1092,7 @@ Defined.
 Lemma Uniform_def_ne A (d:A) (s:seq A) : 
       forall (Hs:(size s != 0)%N), Uniform (unif_def d s) = Uniform (mkunif s Hs).
 case s; rewrite //=.
-Save.
+Qed.
 
 
 (* Uniform distribution between 0 and n included *)
@@ -1103,7 +1103,7 @@ Definition Random n : distr nat := Uniform (unifnat n).
 
 Lemma Random_simpl (n:nat) : mu (Random n) = mfinite (iota 0 (n.+1)) (fun x => 1%:Q).
 trivial.
-Save.
+Qed.
 
 Lemma Random_eq_in (n:nat) (a:nat) : (a <= n)%N -> 
      mu (Random n) (fun x => (x==a)%:Q) = 1%:Q / (n.+1)%:Q.
@@ -1112,7 +1112,7 @@ congr (_ / _).
 by rewrite /usize size_iota.
 apply iota_uniq.
 rewrite mem_iota //.
-Save.
+Qed.
 
 Lemma Random_eq_out (n:nat) (a:nat) : (n < a)%N -> 
      mu (Random n) (fun x => (x==a)%:Q) = 0%Q.
@@ -1120,13 +1120,13 @@ move => Han; rewrite /Random; rewrite Uniform_eq_out //.
 rewrite mem_iota /=.
 rewrite add0n.
 by rewrite -leqNgt.
-Save.
+Qed.
 
 Lemma mu_random_sum (n:nat) (f:nat -> rat) : 
       mu (Random n) f = (\sum_(0 <= i < n.+1) f i) / (n.+1)%:Q.
 rewrite /Random mu_uniform_sum.
 by rewrite size_iota.
-Save.
+Qed.
 
 Lemma Random_in_range (n:nat) : 
      mu (Random n) (fun x => (x <= n)%N%:Q) = 1%R.
@@ -1135,7 +1135,7 @@ apply Mstable_eq; move => x /=.
 congr natmul.
 rewrite -[(0%N :: iota 1 n)]/(iota 0%N (n.+1)).
 rewrite mem_iota add0n //=.
-Save.
+Qed.
 
 
 Lemma mu_bool_0le A (m:distr A) (f:A->bool) : 0 <= mu m (fun x => (f x)%:Q).
