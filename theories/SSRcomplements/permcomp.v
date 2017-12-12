@@ -96,7 +96,6 @@ End CastSn.
 Section PermComp.
 
 Variable T : finType.
-Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
 Implicit Type (s : {perm T}) (X : {set T}) (P : {set {set T}}).
 
 Lemma permX_fix s x n : s x = x -> (s ^+ n) x = x.
