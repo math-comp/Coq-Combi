@@ -493,14 +493,13 @@ rewrite /= is_part_sortedE; apply/and3P; split.
     apply eq_map => k /=.
     by rewrite size_nseq.
   move=> /andP [Hij Hjm]; have Him := leq_ltn_trans Hij Hjm.
-  have:= reshape_index_leq Hij Hjm.
   have:= reshape_indexP Hjm; have:= reshape_offsetP Hjm.
   have:= reshape_indexP Him; have:= reshape_offsetP Him.
   rewrite size_tuple => [] Hc1 Hr1 Hc2 Hr2.
   do 2 (rewrite (nth_map ord0); last by rewrite size_enum_ord).
-  rewrite !(mnm_nth 0) !nth_nseq !nth_enum_ord //=.
-  rewrite Hc1 Hc2 ltnS.
-  by move=> [Hr|[-> _]] //; apply ltnW.
+  rewrite !(mnm_nth 0) !nth_nseq !nth_enum_ord //= {Hr1 Hr2}.
+  rewrite {}Hc1 {}Hc2 ltnS; move: Hij.
+  by rewrite (reshape_index_leq _ Hjm) => /orP [/ltnW | /andP [/eqP ->]].
 - rewrite /monE; rewrite mem_rev; apply/flatten_mapP => /= [[s _]].
   by move=> /nseqP [].
 Qed.
