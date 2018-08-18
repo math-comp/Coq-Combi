@@ -619,10 +619,7 @@ Lemma shape_append_nth T b i : shape (append_nth T b i) = incr_nth (shape T) i.
 Proof using .
   rewrite /shape /=; apply: (@eq_from_nth _ 0).
   + rewrite size_map size_set_nth size_incr_nth size_map /maxn.
-    case: (ltngtP i.+1 (size T)).
-    - by move/ltnW ->.
-    - by rewrite ltnNge => /negbTE ->.
-    - by move => ->; rewrite leqnn.
+    by case: (ltngtP i.+1 (size T)).
   + move=> j Hi.
     rewrite nth_incr_nth (nth_map [::]) /=; last by move: Hi; rewrite size_map.
     rewrite nth_set_nth /= eq_sym.

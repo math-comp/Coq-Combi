@@ -760,7 +760,7 @@ Proof using .
       by rewrite !size_map !size_rev size_map.
     rewrite size_map size_enum_ord => i Hi.
     rewrite -![X in (_ = nth _ X _)]map_comp.
-    rewrite map_rev val_enum_ord (nth_iota _ Hi) add0n.
+    rewrite map_rev val_enum_ord (nth_iota _ _ Hi) add0n.
     rewrite nth_rev size_map size_enum_ord; last by rewrite size_rev.
     rewrite {12}(size_rev).
     rewrite (eq_map (f2 := (fun i => (size u - i.+1))\o val)); first last.
@@ -768,7 +768,7 @@ Proof using .
     rewrite map_comp val_enum_ord size_rev.
     have Hu : size u - i.+1 < size u by rewrite -subn_gt0 subKn.
     rewrite (nth_map 0); last by rewrite size_iota.
-    rewrite (nth_iota _ Hu) add0n -(subSn Hi) subSS.
+    rewrite (nth_iota _ _ Hu) add0n -(subSn Hi) subSS.
     by rewrite subKn; last exact: ltnW.
 Qed.
 

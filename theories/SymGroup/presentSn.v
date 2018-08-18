@@ -107,7 +107,7 @@ rewrite /wordcd size_flatten; congr sumn.
 rewrite /shape -map_comp.
 apply (eq_from_nth (x0 := 0)); rewrite size_map size_iota //.
 move=> i Hi; rewrite (nth_map 0); last by rewrite size_iota.
-by rewrite /= size_rev size_iota (nth_iota _ Hi) add0n.
+by rewrite /= size_rev size_iota (nth_iota _ _ Hi) add0n.
 Qed.
 
 Lemma is_codeP c :

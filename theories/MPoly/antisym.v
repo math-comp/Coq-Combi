@@ -48,8 +48,8 @@ The main results are the Vandermonde determinant expansion:
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq path choice.
 From mathcomp Require Import finset fintype finfun tuple bigop ssralg ssrint.
-From mathcomp Require Import fingroup perm zmodp binomial.
-From SsrMultinomials Require Import ssrcomplements freeg order mpoly.
+From mathcomp Require Import fingroup perm zmodp binomial order.
+From SsrMultinomials Require Import ssrcomplements freeg mpoly.
 
 Require Import tools permcomp presentSn sorted partition.
 

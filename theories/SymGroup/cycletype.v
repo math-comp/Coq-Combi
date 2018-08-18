@@ -636,9 +636,9 @@ Lemma permCT_exists : {s | cycle_type s == ct}.
 Proof using.
 apply sigW => /=.
 have:= ex_set_setpart_shape (cast_intpartn (esym (cardsT T)) ct).
-move=> [P /perm_of_setpartE /= Hct shape].
+move=> [P /perm_of_setpartE /= Hct Hshape].
 exists (perm_of_setpart P); apply/eqP/val_inj => /=; rewrite Hct.
-by rewrite shape cast_intpartnE.
+by rewrite Hshape cast_intpartnE.
 Qed.
 Definition permCT := val permCT_exists.
 Lemma permCTP : cycle_type permCT = ct.
@@ -726,8 +726,7 @@ Section Sn.
 
 Variable n : nat.
 
-Definition partnCT : 'P_#|'I_n| -> 'P_n :=
-  cast_intpartn (card_ord n).
+Definition partnCT : 'P_#|'I_n| -> 'P_n := cast_intpartn (card_ord n).
 Definition cycle_typeSn (s : 'S_n) : 'P_n := partnCT (cycle_type s).
 
 Lemma CTpartnK (p : 'P_n) : partnCT p = p.

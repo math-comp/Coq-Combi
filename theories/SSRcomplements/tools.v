@@ -474,9 +474,7 @@ Proof.
       by rewrite ltnS (ltnW (leq_trans Hi Hj)).
     + case (ltnP j (size s)) => Hj.
       * by rewrite ltnS (ltnW (leq_trans Hj Hi)) ltnNge Hi.
-      * rewrite !ltnS; case: (ltngtP i j) => Hij; last by rewrite Hij.
-        - by rewrite (ltnW Hij) leqNgt Hij.
-        - by rewrite (ltnW Hij) leqNgt Hij.
+      * by rewrite !ltnS; case: (ltngtP i j) => Hij; last by rewrite Hij.
   - move=> k Hk; by rewrite !nth_incr_nth !addnA [(_ == _) + _]addnC.
 Qed.
 

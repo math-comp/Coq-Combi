@@ -144,7 +144,7 @@ elim/intpart_rem_corner_ind => [//= | p Hnnil IHp] /=.
   by rewrite H0 -card_yam_stdtabE card_yama0.
 rewrite (Hrec _ Hnnil) -card_yam_stdtabE (card_yama_rec Hnnil).
 rewrite (big_morph Posz PoszD (id1 := Posz O%N)) //.
-rewrite (big_morph int_to_rat int_to_ratD (id1 := 0)) //.
+rewrite (big_morph int_to_rat (@intrD _) (id1 := 0)) //.
 rewrite /rem_corners !big_filter; apply eq_bigr => i Hi.
 by rewrite card_yam_stdtabE IHp //=.
 Qed.

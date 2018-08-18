@@ -72,16 +72,13 @@ Lemma evalseq_countE : evalseq_count =1 evalseq.
 Proof.
 elim=>[//= | l0 s /= <-]; apply: (@eq_from_nth _ 0).
 - rewrite size_incr_nth !size_map !size_iota /= {1}maxnC {1}/maxn.
-  set m := foldr _ _ _; case (ltngtP l0.+1 m) => [H||->].
-  + by rewrite (leq_ltn_trans (leqnSn l0) H).
-  + by rewrite ltnNge => /negbTE ->.
-  + by rewrite leqnn.
+  by case (ltngtP l0.+1 (foldr _ _ _)).
 - move=> i; rewrite nth_incr_nth size_map => Hsz.
-  rewrite (nth_map 0 _ _ Hsz); rewrite size_iota in Hsz; rewrite (nth_iota _ Hsz).
+  rewrite (nth_map 0 _ _ Hsz); rewrite size_iota in Hsz; rewrite (nth_iota _ _ Hsz).
   rewrite add0n.
   case (ltnP i (foldr maxn 0 [seq i.+1 | i <- s])) => Hi.
   + rewrite (nth_map 0 _ _); last by rewrite size_iota.
-    by rewrite (nth_iota _ Hi) /= add0n.
+    by rewrite (nth_iota _ _ Hi) /= add0n.
   + rewrite (nth_default 0) /=; last by rewrite size_map size_iota.
     congr ((l0 == i) + _).
     elim: s Hi {Hsz} => [//=| s0 s /=].
@@ -132,7 +129,7 @@ apply/idP/idP => [Hperm | /eqP].
   move/(congr1 (fun s => nth 0 s i)) : H.
   rewrite (nth_map 0); last by rewrite size_iota.
   rewrite (nth_map 0); last by rewrite -Hmax size_iota.
-  rewrite (nth_iota _ Hi) nth_iota; last by rewrite -Hmax.
+  rewrite (nth_iota _ _ Hi) nth_iota; last by rewrite -Hmax.
   by rewrite !add0n => ->.
 Qed.
 

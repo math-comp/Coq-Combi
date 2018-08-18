@@ -185,7 +185,7 @@ case: (altP (la =P mu)) => [<-{mu} | _]; rewrite ?mulr0 ?mulr1 //.
 rewrite -zcoeffE -[LHS]mulr1; congr (_ * _).
 rewrite /zcoeff rmorphM rmorphV; first last.
   by rewrite unitfE Num.Theory.pnatr_eq0 card_classCT_neq0.
-rewrite !conjC_nat -mulrA [X in _ * X]mulrC - mulrA divff; first last.
+rewrite !rmorph_nat -mulrA [X in _ * X]mulrC - mulrA divff; first last.
   by rewrite Num.Theory.pnatr_eq0 card_classCT_neq0.
 by rewrite mulr1 divff // Num.Theory.pnatr_eq0 -lt0n cardsT card_Sn fact_gt0.
 Qed.
@@ -435,7 +435,7 @@ rewrite big1 ?addr0; first last.
   by rewrite homsymdotZr homsymdotss ?leqSpred // eq_sym Hnu mulr0.
 suff -> : coord 'hs (enum_rank la) ('hp[mu] : HSC) =
          ratr (coord 'hs (enum_rank la) ('hp[mu] : HSR)).
-  by apply/esym/CrealP; apply Creal_Crat; apply Crat_rat.
+  by apply/esym/Num.Theory.CrealP; apply Creal_Crat; apply Crat_rat.
 rewrite -(map_homsymp (ratr_rmorphism algCF)).
   have /coord_span -> : ('hp[mu] : HSR) \in span 'hs.
     by rewrite (span_basis (symbs_basis _ (leqSpred n))) // memvf.

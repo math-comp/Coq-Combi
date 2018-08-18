@@ -145,9 +145,9 @@ Proof using .
   rewrite map_comp val_enum_ord size_rev.
   apply: (eq_from_nth (x0 := 0)); first by rewrite size_rev size_map.
   move=> i; rewrite size_iota => Hi; rewrite nth_rev; last by rewrite size_map size_iota.
-  rewrite (nth_iota _ Hi) add0n size_map (nth_map 0);
+  rewrite (nth_iota _ _ Hi) add0n size_map (nth_map 0);
     last by rewrite size_iota; apply: irev_w.
-  rewrite size_iota (nth_iota _ (irev_w Hi)).
+  rewrite size_iota (nth_iota _ _ (irev_w Hi)).
   rewrite add0n (subnSK Hi); by rewrite subKn; last exact: ltnW.
 Qed.
 

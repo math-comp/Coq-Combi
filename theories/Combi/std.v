@@ -34,6 +34,7 @@ Inversions and standardisation of a word over a totally ordered alphabet
 - [eq_inv w1 w2] == w1 and w2 have the same versions which is equivalent
                     to the same set of inversions; in particular w1 and w2
                     have the same size.
+
 The main result here is [std_eq_invP] which says that having the same inversions
 is the same as having the same standardized.
 

@@ -25,20 +25,14 @@ Import GRing.Theory.
 Import Num.Theory.
 
 
-Definition int_to_rat : int -> rat := intmul (GRing.one rat_Ring).
+Definition int_to_rat : int -> rat := intr.
 Coercion int_to_rat : int >-> rat.
-
-Lemma int_to_ratD : {morph int_to_rat : n m / (n + m)%R >-> (n + m)%R}.
-Proof. move => m n /=; exact: mulrzDl. Qed.
-
-Lemma int_to_ratM : {morph int_to_rat : n m / (n * m)%R >-> (n * m)%R}.
-Proof. move => m n /=; by rewrite -intrM. Qed.
 
 Section FieldLemmas.
 
 Local Open Scope ring_scope.
 
-Lemma iter_plus1 n : (iter n (+%R (1 : rat)) 0 = int_to_rat n)%R.
+Lemma iter_plus1 n : (iter n (+%R (1 : rat)) 0 = n%:~R)%R.
 Proof.
   elim: n => [//= | n IHn] /=.
   by rewrite -add1n PoszD IHn /int_to_rat mulrzDl.
