@@ -435,7 +435,7 @@ Qed.
 
 End MPolySym.
 
-Implicit Arguments antisym [n R].
+Arguments antisym [n R].
 
 
 

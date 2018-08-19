@@ -748,7 +748,7 @@ Qed.
 
 End LRTriple.
 
-Implicit Arguments langQ [Alph].
+Arguments langQ [Alph].
 
 (*
 (* First non trivial example of LR rule *)
