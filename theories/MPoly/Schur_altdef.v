@@ -753,7 +753,7 @@ case: (ssrnat.leqP i n.+1) => [Hi| /ltnW Hi]; first last.
 rewrite sumn_take big_mkord (big_ord_widen _ _ Hi).
 rewrite (eq_bigr (fun j => count_mem j (to_word t))); first last.
   by move=> /= j _; rewrite (nth_map ord0) ?size_enum_ord // nth_ord_enum.
-rewrite sum_count_mem /= /to_word count_flatten map_rev sumn_rev.
+rewrite sum_count_mem /= /to_word seq.count_flatten map_rev sumn_rev.
 rewrite -{1}(cat_take_drop i t) map_cat sumn_cat addnC.
 rewrite -sumnE big_map big_seq big1 ?add0n; first last.
   move=> /= s Hs; rewrite -(nth_index [::] Hs).
@@ -1014,7 +1014,7 @@ apply/setP => /= t; rewrite !inE; apply/eqP/eqP => [|->]/=.
   rewrite -Hsht nth_shape; apply/all_pred1P; rewrite all_count -nth_shape Hsht.
   have:= congr1 (fun t => tnth t (inord i)) H.
   rewrite /eval !tnth_mktuple inordK // => <-.
-  rewrite /to_word count_flatten map_rev sumn_rev -sumnE big_map.
+  rewrite /to_word seq.count_flatten map_rev sumn_rev -sumnE big_map.
   rewrite (big_nth [::]) Hszt big_mkord.
   rewrite (bigD1 (inord i)) //= inordK // big1 ?addn0 //.
   move=> j Hj.
@@ -1030,7 +1030,7 @@ apply/setP => /= t; rewrite !inE; apply/eqP/eqP => [|->]/=.
 - apply eq_from_tnth => i.
   rewrite take_oversize; last by rewrite size_map size_enum_ord -Hla.
   rewrite /eval /mpart Hla ltnSn !tnth_mktuple.
-  rewrite /to_word count_flatten map_rev sumn_rev -map_comp.
+  rewrite /to_word seq.count_flatten map_rev sumn_rev -map_comp.
   rewrite -sumnE big_map enumT -/(index_enum _) (bigD1 i) //=.
   rewrite big1 ?addn0 ?count_nseq /= ?eq_refl ?mul1n //.
   move=> j Hj; apply/count_memPn/nseqP => [] [Heq _].
@@ -1456,7 +1456,7 @@ rewrite [map _ (join_tab _ _)](_ : _ = pad [::] (size mu) t).
   suff : nth 0 s x != 0.
     by case: ssrnat.ltnP => // H; rewrite nth_default.
   rewrite -(eqevalP t (ltnW Hsz) Hev x).
-  rewrite /to_word count_flatten map_rev sumn_rev -sumnE.
+  rewrite /to_word seq.count_flatten map_rev sumn_rev -sumnE.
   rewrite (big_nth 0) size_map big_mkord /= (bigD1 (Ordinal Hi)) //=.
   rewrite (nth_map [::]) //.
   by move: Hcount; apply contra; rewrite addn_eq0 => /andP [].
