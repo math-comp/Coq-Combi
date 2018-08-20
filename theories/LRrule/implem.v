@@ -153,10 +153,11 @@ Lemma size_LRyamtab_listE innev inner outer sh0 row0 :
   LRyamtab_count_rec innev inner outer sh0 row0.
 Proof using .
   elim: outer innev inner sh0 row0 => [//= | out0 out IHout] /= innev inner sh0 row0.
-  rewrite size_flatten /shape !map_flatten sumn_flatten -map_comp.
+  rewrite size_flatten /shape !map_flatten sumn_flatten.
   rewrite tsumnE; congr (sumn _).
+  rewrite -[X in [seq sumn i | i <- X]]map_comp.
   rewrite (eq_map (f2 := map (fun row =>
-                     LRyamtab_count_rec row.2 (behead inner) out (head 0 inner) row.1))).
+                 LRyamtab_count_rec row.2 (behead inner) out (head 0 inner) row.1))).
   - rewrite [RHS]map_comp (eq_map tsumnE) -!map_comp; exact: eq_map.
   - move=> s /=; rewrite -map_comp; apply eq_map => {s} [] [row sh] /=.
     by rewrite size_map IHout.

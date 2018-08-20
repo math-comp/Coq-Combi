@@ -23,7 +23,6 @@ theories/LRrule/shuffle.v
 theories/LRrule/stdplact.v
 theories/LRrule/therule.v
 theories/LRrule/Yam_plact.v
-theories/SSRcomplements/bigallpairs.v
 theories/SSRcomplements/ordcast.v
 theories/SSRcomplements/rat_coerce.v
 theories/SSRcomplements/sorted.v

@@ -499,7 +499,7 @@ rewrite /= is_part_sortedE; apply/and3P; split.
   do 2 (rewrite (nth_map ord0); last by rewrite size_enum_ord).
   rewrite !(mnm_nth 0) !nth_nseq !nth_enum_ord //= {Hr1 Hr2}.
   rewrite {}Hc1 {}Hc2 ltnS; move: Hij.
-  by rewrite (reshape_index_leq _ Hjm) => /orP [/ltnW | /andP [/eqP ->]].
+  by rewrite (reshape_leq m) => /orP [/ltnW | /andP [/eqP ->]].
 - rewrite /monE; rewrite mem_rev; apply/flatten_mapP => /= [[s _]].
   by move=> /nseqP [].
 Qed.
