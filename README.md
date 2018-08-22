@@ -53,18 +53,18 @@ Contents
    representations but rather goes as fast as possible to Frobenius
    isomorphism and then uses computations with symmetric polynomials. it includes
 
-  - *cycle types* for permutations (together with Thibaut Benjamin)
+   - *cycle types* for permutations (together with Thibaut Benjamin)
 
-  - The tower structure and the *restriction and induction formulas* for class
-    indicator (together with Thibaut Benjamin)
+   - The tower structure and the *restriction and induction formulas* for class
+     indicator (together with Thibaut Benjamin)
 
-  - structure of the *centralizer* of a permutation
+   - structure of the *centralizer* of a permutation
 
-  - Young character and *Young Rule*
+   - Young character and *Young Rule*
 
-  - the theory of Frobenius characteristic and *Frobenius character formula*
+   - the theory of Frobenius characteristic and *Frobenius character formula*
 
-  - the *Littlewood-Richardson* rule for irreducible character
+   - the *Littlewood-Richardson* rule for irreducible character
 
 * the **Hook-Length Formula** for standard Young tableaux
   (together with Christine Paulin and Olivier Stietel)
