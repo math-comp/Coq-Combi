@@ -152,7 +152,7 @@ Qed.
 
 Variable (R : comRingType).
 
-Local Notation polZ := {mpoly R[m*n]}.
+Local Notation polZ := {mpoly R[m * n]}.
 Local Notation polX := {mpoly R[m]}.
 Local Notation polY := {mpoly R[n]}.
 Definition polXY := {mpoly polY[m]}.
