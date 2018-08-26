@@ -29,6 +29,6 @@ install:
 
 script:
 - echo 'Building Coq-Combi...' && echo -en 'travis_fold:start:Coq-Combi.build\\r'
-- cd Coq-Combi
+- ls -la
 - make -j ${NJOBS} all dochtml
 - echo -en 'travis_fold:end:Coq-Combi.build\\r'
