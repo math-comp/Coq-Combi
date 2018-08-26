@@ -1824,27 +1824,7 @@ Section SetPartitionShape.
 Variable T : finType.
 Implicit Types (A B X : {set T}) (P Q : {set {set T}}).
 
-Lemma partition0P P : reflect (P = set0) (partition P set0).
-Proof using.
-apply (iffP and3P) => [[/eqP Hcov _ H0] | ->].
-- case: (set_0Vmem P) => [// | [X HXP]].
-  exfalso; suff HX : X = set0 by subst X; rewrite HXP in H0.
-  by apply/eqP; rewrite -subset0; rewrite -Hcov (bigcup_max X).
-- by split; rewrite ?inE // /trivIset /cover !big_set0 ?cards0.
-Qed.
-
-Lemma triv_part P X : X \in P -> partition P X -> P = [set X].
-Proof using.
-move=> HXP /and3P [/eqP Hcov /trivIsetP /(_ X _ HXP) H H0].
-apply/setP => Y; rewrite inE; apply/idP/idP => [HYP | /eqP -> //].
-rewrite eq_sym; move/(_ Y HYP): H => /contraR; apply.
-have /set0Pn [y Hy] : Y != set0
-  by apply/negP => /eqP HY; move: H0; rewrite -HY HYP.
-apply/negP => /disjoint_setI0/setP/(_ y).
-by rewrite !inE Hy -Hcov andbT => /bigcupP; apply; exists Y.
-Qed.
-
-Lemma count_set_of_card (p : pred nat) (P : {set {set T}}) :
+Lemma count_set_of_card (p : pred nat) P :
   count p [seq #{x} | x in P] = #|P :&: [set x | p #{x}]|.
 Proof using.
 rewrite cardE -size_filter /enum_mem -enumT /=.
