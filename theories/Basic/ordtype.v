@@ -15,6 +15,7 @@
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype choice fintype seq.
+From mathcomp Require Import finset div.
 Require Import tools.
 
 Set Implicit Arguments.
@@ -1528,9 +1529,6 @@ Definition dual_inhOrdFinType (T : inhOrdFinType) :=
   [inhOrdFinType of dual_ordType T].
 
 
-
-From mathcomp Require Import finset.
-
 Lemma finord_wf (T : finPOrdType) (P : T -> Type) :
   (forall x, (forall y, y < x -> P y) -> P x) -> forall x, P x.
 Proof.
@@ -1700,8 +1698,6 @@ End ListLexOrder.
 
 
 Section Tests.
-
-From mathcomp Require Import div.
 
 Definition nat_div := nat.
 

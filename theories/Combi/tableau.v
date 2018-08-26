@@ -522,8 +522,6 @@ Proof using. by case: t => t /= /andP []. Qed.
 Lemma shape_tabsh t : shape t = sh.
 Proof using. by case: t => t /= /andP [] _ /eqP. Qed.
 
-From mathcomp Require Import tuple.
-
 Lemma tabsh_to_wordK t : rev (reshape (rev sh) (to_word (val t))) = t.
 Proof using. by rewrite /= -(shape_tabsh t); apply: to_wordK. Qed.
 

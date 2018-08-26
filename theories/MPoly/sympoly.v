@@ -16,13 +16,14 @@
 (** * The Ring of Symmetric Polynomials *)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun finset.
+From mathcomp Require Import tuple finfun finset binomial.
 From mathcomp Require Import bigop ssralg ssrint path perm fingroup.
 From mathcomp Require ssrnum.
 From SsrMultinomials Require Import ssrcomplements freeg mpoly.
 
-Require Import sorted tools ordtype permuted partition Yamanouchi std tableau stdtab.
-Require Import skewtab antisym Schur_mpoly therule Schur_altdef unitriginv.
+Require Import sorted tools ordtype permuted partition composition.
+Require Import Yamanouchi std tableau stdtab skewtab permcent.
+Require Import antisym Schur_mpoly therule Schur_altdef unitriginv.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -726,8 +727,6 @@ Qed.
 End ScalarChange.
 
 
-Require Import composition.
-
 Section ChangeBasis.
 
 Variable n0 : nat.
@@ -739,8 +738,6 @@ Local Notation "''XX_' m " := 'X_{1.. n < (mdeg m).+1, (mdeg m).+1} (at level 0)
 Implicit Type m : 'XX.
 Local Notation SF := {sympoly R[n]}.
 
-
-From mathcomp Require Import binomial.
 
 Lemma sum_symh_syme (d : nat) :
   d != 0%N ->
@@ -1360,8 +1357,6 @@ apply eq_bigr => l _; rewrite scaler_suml; apply eq_big.
   rewrite /prod_symp /prod_gen; apply eq_big_perm.
   by rewrite perm_eq_sym; apply: perm_partn_of_compn.
 Qed.
-
-Require Import permcent.
 
 Lemma intcompn_cons_sub_proof i n (c : intcompn (n - i)) :
   i != 0%N -> (i <= n)%N -> is_comp_of_n n (i :: c).

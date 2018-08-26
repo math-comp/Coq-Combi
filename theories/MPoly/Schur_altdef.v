@@ -90,6 +90,7 @@ From SsrMultinomials Require Import ssrcomplements freeg mpoly.
 
 Require Import tools combclass ordtype sorted partition tableau skewtab.
 Require Import presentSn antisym Schur_mpoly freeSchur therule.
+Require Import std stdtab unitriginv.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -1043,8 +1044,6 @@ End Kostka.
 
 Section StdKostka.
 
-Require Import std stdtab.
-
 Variables (d : nat) (la : 'P_d).
 
 Section Nvar.
@@ -1566,8 +1565,6 @@ Notation "''K' ( la , mu )" := (Kostka la mu)
   (at level 8, format "''K' ( la ,  mu )") : nat_scope.
 Notation "''K' ( la , mu )" := (Kostka la mu)%:R
   (at level 8, format "''K' ( la ,  mu )") : ring_scope.
-
-Require Import unitriginv.
 
 Lemma Kostka_unitrig (R : comUnitRingType) d :
   unitrig (fun la mu : intpartndom d => 'K(la, mu)%:R : R).

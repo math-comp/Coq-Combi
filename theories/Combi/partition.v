@@ -98,13 +98,14 @@ Relation with set partitions:
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import bigop path.
-Require Import tools combclass sorted.
+From mathcomp Require Import bigop path binomial finset.
+Require Import tools combclass sorted ordtype.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Open Scope nat_scope.
 Delimit Scope Combi_scope with Combi.
 Open Scope Combi_scope.
 
@@ -1477,8 +1478,6 @@ Proof. rewrite -[RHS]conj_intpartnK; by rewrite conj_rowpartn. Qed.
 
 Module IntPartNLex.
 
-Require Import ordtype.
-
 Definition intpartnlex := intpartn.
 
 Definition intpartnlex_pordMixin n := [pordMixin of intpartnlex n by <:].
@@ -1768,8 +1767,6 @@ Qed.
 
 Module IntPartNDom.
 
-Require Import ordtype.
-
 Definition intpartndom d := 'P_d.
 
 Fact partdom_porder d : PartOrder.axiom (fun x y : intpartndom d => partdom x y).
@@ -1815,8 +1812,6 @@ case: (ssrnat.ltnP i (size sh)) => Hi.
 Qed.
 
 End IntPartNDom.
-
-From mathcomp Require Import binomial finset.
 
 (** * Shape of set partitions and integer partitions *)
 Section SetPartitionShape.
