@@ -1,0 +1,33 @@
+dist: trusty
+sudo: required
+language: c
+cache:
+  apt: true
+  directories:
+  - $HOME/.opam
+addons:
+  apt:
+    sources:
+    - avsm
+    packages:
+    - opam
+    - aspcud
+env:
+  global:
+  - NJOBS=2
+  # system is == 4.02.3
+  - COMPILER="system"
+
+install:
+- opam init -j ${NJOBS} --compiler=${COMPILER} -n -y
+- eval $(opam config env)
+- opam config var root
+- opam install -j ${NJOBS} -y ocamlfind camlp5 coq-mathcomp-algebra coq-mathcomp-fingroup coq-mathcomp-character coq-mathcomp-finmap coq-mathcomp-multinomials
+- opam list
+- cd -
+
+script:
+- echo 'Building Coq-Combi...' && echo -en 'travis_fold:start:Coq-Combi.build\\r'
+- cd Coq-Combi
+- make -j ${NJOBS} all dochtml
+- echo -en 'travis_fold:end:Coq-Combi.build\\r'
