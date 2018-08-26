@@ -19,6 +19,7 @@ env:
   - COMPILER="system"
 
 install:
+- sudo apt-get install graphviz
 - opam init -j ${NJOBS} --compiler=${COMPILER} -n -y
 - eval $(opam config env)
 - opam config var root
