@@ -22,7 +22,7 @@ install:
 - opam init -j ${NJOBS} --compiler=${COMPILER} -n -y
 - eval $(opam config env)
 - opam config var root
-- opam repo add coq-released https://coq.inria.fr/opam/released
+# - opam repo add coq-released https://coq.inria.fr/opam/released
 - opam install -j ${NJOBS} -y ocamlfind camlp5 coq-mathcomp-algebra coq-mathcomp-fingroup coq-mathcomp-character coq-mathcomp-finmap coq-mathcomp-multinomials
 - opam list
 - cd -
