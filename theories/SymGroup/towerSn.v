@@ -38,6 +38,9 @@ From mathcomp Require Import classfun character mxrepresentation.
 Require Import tools ordcast partition sorted.
 Require Import permcomp cycles cycletype permcent.
 
+Notation "''SG_' n" := [set: 'S_n]
+  (at level 8, n at level 2, format "''SG_' n").
+
 Import LeqGeqOrder.
 
 Set Implicit Arguments.

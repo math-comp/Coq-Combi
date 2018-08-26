@@ -169,7 +169,7 @@ Definition permutedact t s := Permuted (permutedact_subproof t s).
 Local Notation "t # s" := (permutedact t s)
   (at level 40, left associativity, format "t # s").
 
-Lemma permutedact_is_action : is_action 'SG_n permutedact.
+Lemma permutedact_is_action : is_action [set: 'S_n] permutedact.
 Proof using.
 split => /= [s t1 t2 Heq | t s1 s2 _ _].
 - apply val_inj; apply eq_from_tnth => i.
@@ -182,7 +182,7 @@ Canonical permuted_action := Action permutedact_is_action.
 Local Notation pact := permuted_action.
 
 Lemma permuted_action_trans :
-  [transitive 'SG_n, on [set: permuted w] | pact].
+  [transitive [set: 'S_n], on [set: permuted w] | pact].
 Proof using.
 apply/imsetP; exists (Permuted (perm_eq_refl w)); first by [].
 apply/setP => /= t; rewrite !inE; apply/esym/orbitP => /=.

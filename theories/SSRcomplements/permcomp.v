@@ -23,9 +23,6 @@ Unset Strict Implicit.
 
 Import GroupScope.
 
-Notation "''SG_' n" := [set: 'S_n]
-  (at level 8, n at level 2, format "''SG_' n").
-
 Lemma imset1 (T : finType) (S : {set T}) : [set fun_of_perm 1 x | x in S] = S.
 Proof using.
 by rewrite -[RHS]imset_id; apply eq_imset => x; rewrite perm1.

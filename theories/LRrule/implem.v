@@ -888,12 +888,12 @@ Qed.
 
 End Spec.
 
+From mathcomp Require Import ssralg.
+
 Section LR.
 
 Variables d1 d2 : nat.
 Variables (P1 : 'P_d1) (P2 : 'P_d2).
-
-From mathcomp Require Import ssralg.
 
 Local Open Scope ring_scope.
 Import GRing.Theory.

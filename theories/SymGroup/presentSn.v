@@ -66,11 +66,14 @@ Here are the notion defined is this file:
 
 ***************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import choice fintype tuple finfun bigop finset.
 From mathcomp Require Import fingroup perm morphism presentation.
 
 Require Import permcomp tools permuted combclass congr.
+
+Notation "''SG_' n" := [set: 'S_n]
+  (at level 8, n at level 2, format "''SG_' n").
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -900,14 +903,15 @@ Hint Resolve codeszP.
 
 The generating polynomial for permutation counted by their length.
  *)
+
+From mathcomp Require Import ssralg poly ssrint.
+
 Section Combi.
 
 Local Notation "''s_' i" :=
   (eltr i) (at level 8, i at level 2, format "''s_' i").
 Local Notation "''s_' [ w ]" :=
   (\prod_(i <- w) 's_i) (at level 8, w at level 100, format "''s_' [ w ]").
-
-From mathcomp Require Import ssralg poly ssrint.
 
 Import GRing.Theory.
 Open Scope ring_scope.
@@ -1432,8 +1436,6 @@ rewrite inordK; last by apply (leq_trans Hx).
 exact: (leq_trans Hi).
 Qed.
 
-
-From mathcomp Require Import path.
 
 Implicit Type (u v w : seq 'I_n).
 
