@@ -12,6 +12,7 @@ addons:
     packages:
     - opam
     - aspcud
+    - graphviz
 env:
   global:
   - NJOBS=2
@@ -19,18 +20,15 @@ env:
   - COMPILER="system"
 
 install:
-- sudo apt-get install graphviz
 - opam init -j ${NJOBS} --compiler=${COMPILER} -n -y
 - eval $(opam config env)
 - opam config var root
 # - opam repo add coq-released https://coq.inria.fr/opam/released
 - opam install -j ${NJOBS} -y ocamlfind camlp5 coq-mathcomp-algebra coq-mathcomp-fingroup coq-mathcomp-character coq-mathcomp-finmap coq-mathcomp-multinomials
 - opam list
-- cd -
+- ls -la
 
 script:
 - echo 'Building Coq-Combi...' && echo -en 'travis_fold:start:Coq-Combi.build\\r'
-- cd hivert/Coq-Combi
-- ls -la
 - make -j ${NJOBS} all dochtml
 - echo -en 'travis_fold:end:Coq-Combi.build\\r'
