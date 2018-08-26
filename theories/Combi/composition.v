@@ -1,4 +1,4 @@
-(** * Combi.Combi.partition : Integer Partitions *)
+(** * Combi.Combi.composition : Integer Composition *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)

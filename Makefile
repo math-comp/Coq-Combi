@@ -19,9 +19,9 @@ dochtml: all $(VFILES) html/depend.png html/depend.svg
 	cat scripts/header.html html/depend.map scripts/footer.html > html/index.html
 
 
-depend.d: $(VFILES:.v=.v.d)
+depend.d: .coqdeps.d
 	rm -f depend
-	cat $(VFILES:.v=.v.d) | sed -e 's/[^ ]*glob//g' | sed -e 's/[^ ]*beautified//g' > depend.d
+	cat .coqdeps.d | sed -e 's/[^ ]*glob//g' | sed -e 's/[^ ]*beautified//g' > depend.d
 
 scripts/ocamldot: scripts/ocamldot.mll
 	ocamllex scripts/ocamldot.mll
