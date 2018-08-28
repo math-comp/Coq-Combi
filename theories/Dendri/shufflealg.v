@@ -11,7 +11,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Reserved Notation "f ::| g" (at level 20).
-Reserved Notation "f *w* g" (at level 40, left associativity).
+Reserved Notation "f ⧢ g" (at level 40, left associativity).
 Reserved Notation "{ 'shalg' G [ K ] }"
   (at level 0, K, G at level 2, format "{ 'shalg'  G [ K ] }").
 
@@ -89,10 +89,10 @@ Definition bilinmalgr_head k f p q := let: tt := k in bilinmalg f q p.
 
 Notation bilinmalgr := (bilinmalgr_head tt).
 
-Local Notation "a *w* b" := (bilinmalg f a b).
+Local Notation "a ⧢ b" := (bilinmalg f a b).
 
 Lemma bilinmalgP x y :
-  x *w* y = \sum_(u : msupp x) \sum_(v : msupp y)
+  x ⧢ y = \sum_(u : msupp x) \sum_(v : msupp y)
              x@_(val u) * y@_(val v) *: f (val u) (val v).
 Proof.
 rewrite /bilinmalg/linmalg; apply eq_bigr => a _.
@@ -100,7 +100,7 @@ rewrite scaler_sumr; apply eq_bigr => b _.
 by rewrite scalerA.
 Qed.
 
-Lemma bilinmalgrP x y : bilinmalgr f y x = x *w* y.
+Lemma bilinmalgrP x y : bilinmalgr f y x = x ⧢ y.
 Proof. by []. Qed.
 
 Lemma bilinmalgE : f =2 g -> bilinmalg f =2 bilinmalg g.
@@ -116,10 +116,10 @@ Proof. by move=> r x1 x2; rewrite !bilinmalgrP /bilinmalg linearP. Qed.
 Canonical bilinmalgr_additive p := Additive (bilinmalgr_is_linear p).
 Canonical bilinmalgr_linear p := Linear (bilinmalgr_is_linear p).
 
-Lemma bilinmalgBB a b : << a >> *w* << b >> = f a b.
+Lemma bilinmalgBB a b : << a >> ⧢ << b >> = f a b.
 Proof. by rewrite /bilinmalg !linmalgB. Qed.
 
-Lemma bilinmalgBA a y : << a >> *w* y = linmalg (f a) y.
+Lemma bilinmalgBA a y : << a >> ⧢ y = linmalg (f a) y.
 Proof. by rewrite /bilinmalg linmalgB. Qed.
 
 End MakeBilinearDef.
@@ -146,10 +146,8 @@ Implicit Type (x : {malg R[A]}) (y : {malg R[B]}).
 
 Variable f : A -> B -> {malg R[C]}.
 
-Local Notation "a *w* b" := (bilinmalg f a b).
-
 Lemma bilinmalg_is_linear x : linear (bilinmalg f x).
-Proof. by move=> r x1 x2; rewrite -![_ *w* _]bilinmalgC linearP. Qed.
+Proof. by move=> r x1 x2; rewrite -!bilinmalgC linearP. Qed.
 
 Canonical bilinmalg_additive p := Additive (bilinmalg_is_linear p).
 Canonical bilinmalg_linear p := Linear (bilinmalg_is_linear p).
@@ -185,7 +183,7 @@ Notation "<< k >>" := << 1 *g k >> : ring_scope.
 
 Definition consl (a : A) := linmalg (fun u => (<< a :: u >> : {shalg R[A]})).
 
-Local Notation "a ::| f" := (consl a f).
+Notation "a ::| f" := (consl a f).
 
 Lemma conslE a v : a ::| << v >> = << a :: v >>.
 Proof. exact: linmalgB. Qed.
@@ -237,7 +235,8 @@ Qed.
 Definition shuffle : {shalg R[A]} -> {shalg R[A]} -> {shalg R[A]} :=
   locked (bilinmalg shufflew).
 
-Local Notation "f *w* g" := (shuffle f g).
+Notation "a ::| f" := (consl a f).
+Notation "f ⧢ g" := (shuffle f g).
 
 Lemma shuffleC : commutative shuffle.
 Proof.
@@ -247,7 +246,7 @@ rewrite (bilinmalgE (g := shufflew)) // => u v.
 exact: shufflewC.
 Qed.
 
-Lemma shuffleE u v : << u >> *w* << v >> = shufflew u v.
+Lemma shuffleE u v : << u >> ⧢ << v >> = shufflew u v.
 Proof. by rewrite /shuffle; unlock; rewrite bilinmalgBB. Qed.
 
 Lemma shufflenill : left_id << [::] >> shuffle.
@@ -262,46 +261,46 @@ Proof. rewrite /shuffle; unlock; exact: linearP. Qed.
 Canonical shuffle_additive p := Additive (shuffle_is_linear p).
 Canonical shuffle_linear p := Linear (shuffle_is_linear p).
 
-Lemma shuffle0r p : p *w* 0 = 0. Proof. exact: raddf0. Qed.
-Lemma shuffleNr p q : p *w* (- q) = - (p *w* q).
+Lemma shuffle0r p : p ⧢ 0 = 0. Proof. exact: raddf0. Qed.
+Lemma shuffleNr p q : p ⧢ (- q) = - (p ⧢ q).
 Proof. exact: raddfN. Qed.
-Lemma shuffleDr p q1 q2 : p *w* (q1 + q2) = p *w* (q1) + p *w* (q2).
+Lemma shuffleDr p q1 q2 : p ⧢ (q1 + q2) = p ⧢ (q1) + p ⧢ (q2).
 Proof. exact: raddfD. Qed.
-Lemma shuffleMnr p q n : p *w* (q *+ n) = p *w* q *+ n.
+Lemma shuffleMnr p q n : p ⧢ (q *+ n) = p ⧢ q *+ n.
 Proof. exact: raddfMn. Qed.
 Lemma shuffle_sumr p I r (P : pred I) (q : I -> {shalg R[A]}) :
-  p *w* (\sum_(i <- r | P i) q i) = \sum_(i <- r | P i) p *w* (q i).
+  p ⧢ (\sum_(i <- r | P i) q i) = \sum_(i <- r | P i) p ⧢ (q i).
 Proof. exact: raddf_sum. Qed.
-Lemma shuffleZr r p q : p *w* (r *: q) = r *: (p *w* q).
+Lemma shuffleZr r p q : p ⧢ (r *: q) = r *: (p ⧢ q).
 Proof. by rewrite linearZ. Qed.
 
-Lemma shuffle0l p : 0 *w* p = 0.
+Lemma shuffle0l p : 0 ⧢ p = 0.
 Proof. by rewrite shuffleC linear0. Qed.
-Lemma shuffleNl p q : (- q) *w* p = - (q *w* p).
-Proof. by rewrite ![_ *w* p]shuffleC linearN. Qed.
-Lemma shuffleDl p q1 q2 : (q1 + q2) *w* p = q1 *w* p + q2 *w* p.
-Proof. by rewrite ![_ *w* p]shuffleC linearD. Qed.
-Lemma shuffleBl p q1 q2 : (q1 - q2) *w* p = q1 *w* p - q2 *w* p.
-Proof. by rewrite ![_ *w* p]shuffleC linearB. Qed.
-Lemma shuffleMnl p q n : (q *+ n) *w* p = q *w* p *+ n.
-Proof. by rewrite ![_ *w* p]shuffleC linearMn. Qed.
+Lemma shuffleNl p q : (- q) ⧢ p = - (q ⧢ p).
+Proof. by rewrite ![_ ⧢ p]shuffleC linearN. Qed.
+Lemma shuffleDl p q1 q2 : (q1 + q2) ⧢ p = q1 ⧢ p + q2 ⧢ p.
+Proof. by rewrite ![_ ⧢ p]shuffleC linearD. Qed.
+Lemma shuffleBl p q1 q2 : (q1 - q2) ⧢ p = q1 ⧢ p - q2 ⧢ p.
+Proof. by rewrite ![_ ⧢ p]shuffleC linearB. Qed.
+Lemma shuffleMnl p q n : (q *+ n) ⧢ p = q ⧢ p *+ n.
+Proof. by rewrite ![_ ⧢ p]shuffleC linearMn. Qed.
 Lemma shuffle_suml p I r (P : pred I) (q : I -> {shalg R[A]}) :
-  (\sum_(i <- r | P i) q i) *w* p = \sum_(i <- r | P i) (q i) *w* p.
+  (\sum_(i <- r | P i) q i) ⧢ p = \sum_(i <- r | P i) (q i) ⧢ p.
 Proof.
-rewrite ![_ *w* p]shuffleC linear_sum /=.
+rewrite ![_ ⧢ p]shuffleC linear_sum /=.
 apply eq_bigr => i _; exact: shuffleC.
 Qed.
-Lemma shuffleZl p r q : (r *: q) *w* p = r *: (q *w* p).
-Proof. by rewrite ![_ *w* p]shuffleC linearZ. Qed.
+Lemma shuffleZl p r q : (r *: q) ⧢ p = r *: (q ⧢ p).
+Proof. by rewrite ![_ ⧢ p]shuffleC linearZ. Qed.
 
 
 Lemma shuffleCons a u b v :
-  << a :: u >> *w* << b :: v >> =
-    (a ::| (<< u >> *w* << b :: v >>)) + (b ::| (<< a :: u >> *w* << v >>)).
+  << a :: u >> ⧢ << b :: v >> =
+    (a ::| (<< u >> ⧢ << b :: v >>)) + (b ::| (<< a :: u >> ⧢ << v >>)).
 Proof. rewrite !shuffleE; exact: shufflewCons. Qed.
 
 Lemma shuffleconsl a b f g :
-  a ::| f *w* b ::| g = a ::| (f *w* b ::| g) + b ::| (a ::| f *w* g).
+  a ::| f ⧢ b ::| g = a ::| (f ⧢ b ::| g) + b ::| (a ::| f ⧢ g).
 Proof.
 (* raddf_sum expands g along (monalgE g) in \sum_(i : msupp g) _ *)
 rewrite (monalgE g); rewrite !shuffle_sumr !consl_sum -(monalgE g) -big_split /=.
@@ -317,7 +316,7 @@ by rewrite shuffleCons addrC.
 Qed.
 
 Lemma shuffle_auxA u v w :
-  << u >> *w* (<< v >> *w* << w >>) = (<< u >> *w* << v >>) *w* << w >>.
+  << u >> ⧢ (<< v >> ⧢ << w >>) = (<< u >> ⧢ << v >>) ⧢ << w >>.
 Proof.
 elim: u v w => /= [| a u IHu] v w; first by rewrite ?(shufflenill, shufflenilr).
 elim: v w => /= [| b v IHv] w; first by rewrite ?(shufflenill, shufflenilr).
@@ -357,9 +356,9 @@ Proof. move=> a b c; exact: shuffleDl. Qed.
 Lemma malgnil_eq0 : << [::] >> != 0 :> {shalg R[A]}.
 Proof. by apply/malgP => /(_ [::]) /eqP; rewrite !mcoeffsE oner_eq0. Qed.
 
-Lemma shuffle_scalAl r f g : r *: (f *w* g) = (r *: f) *w* g.
+Lemma shuffle_scalAl r f g : r *: (f ⧢ g) = (r *: f) ⧢ g.
 Proof. by rewrite shuffleZl. Qed.
-Lemma shuffle_scalAr r f g : r *: (f *w* g) = f *w* (r *: g).
+Lemma shuffle_scalAr r f g : r *: (f ⧢ g) = f ⧢ (r *: g).
 Proof. by rewrite shuffleZr. Qed.
 
 Canonical shalg_eqType := [eqType of {shalg R[A]}].
@@ -376,7 +375,7 @@ Canonical shalg_comRingType := ComRingType {shalg R[A]} shuffleC.
 Canonical shalg_LalgType := LalgType R {shalg R[A]} shuffle_scalAl.
 Canonical shalg_algType := CommAlgType R {shalg R[A]}.
 
-Lemma shalg_mulE f g : f * g = f *w* g.
+Lemma shalg_mulE f g : f * g = f ⧢ g.
 Proof. by []. Qed.
 
 End ShuffleAlgebra.
