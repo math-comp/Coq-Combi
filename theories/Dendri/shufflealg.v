@@ -383,10 +383,59 @@ End ShuffleAlgebra.
 
 Section Tests.
 
-Lemma bla2 : (<<[:: 2]>> : {shalg int[nat]}) * <<[:: 2]>> = 2%:R *: <<[:: 2; 2]>>.
+Lemma bla1 : (<<[:: 2]>> : {shalg int[nat]}) * <<[:: 2]>> = 2%:R *: <<[:: 2; 2]>>.
 Proof.
 rewrite shalg_mulE shuffleCons shufflenill shufflenilr conslE.
 by rewrite -[in 2%:R]addn1 natrD scalerDl scale1r.
+Qed.
+
+Lemma bla2 : (<<[:: 2; 2]>> : {shalg int[nat]}) * <<[:: 2; 2]>>
+             = 6%:R *: <<[:: 2; 2; 2; 2]>>.
+Proof.
+rewrite !(shalg_mulE, shuffleCons, shufflenill, shufflenilr, conslE, conslD).
+by rewrite -[<<_>> in LHS]scale1r -!scalerDl !addrA.
+Qed.
+
+Lemma bla3 : (<<[:: 2; 2]>> : {shalg int[nat]}) * <<[:: 2; 2; 2]>>
+             = 10%:R *: <<[:: 2; 2; 2; 2; 2]>>.
+Proof.
+rewrite !shalg_mulE !(shuffleCons, shufflenill, shufflenilr, conslE, conslD).
+by rewrite -[<<_>> in LHS]scale1r -!scalerDl !addrA.
+Qed.
+
+Lemma bla4 : (<<[:: 2; 3%N]>> : {shalg int[nat]}) * <<[:: 2; 2; 2]>>
+             =         <<[:: 2; 3; 2; 2; 2%N]>>
+             + 2%:R *: <<[:: 2; 2; 3; 2; 2%N]>>
+             + 3%:R *: <<[:: 2; 2; 2; 3; 2%N]>>
+             + 4%:R *: <<[:: 2; 2; 2; 2; 3%N]>>.
+Proof.
+rewrite !shalg_mulE !(shuffleCons, shufflenill, shufflenilr, conslE, conslD).
+(* ring tactic could be helpful here *)
+rewrite -!addrA; congr (_ + _).
+do 2 rewrite ![_ + (<<[:: 2; 2; 3; 2; 2]>> + _)]addrC -!addrA.
+rewrite addrA -[<<[:: 2; 2; 3; 2; 2]>> in LHS]scale1r -!scalerDl; congr (_ + _).
+rewrite [_ + <<[:: 2; 2; 2; 3; 2]>>]addrC.
+rewrite ![_ + (<<[:: 2; 2; 2; 3; 2]>> + _)]addrC -!addrA.
+rewrite ![_ + (<<[:: 2; 2; 2; 3; 2]>> + _) in X in _ + (_ + X)]addrC !addrA.
+rewrite -[<<[:: 2; 2; 2; 3; 2]>> in LHS]scale1r -!scalerDl.
+rewrite -!addrA; congr (_ + _).
+by rewrite !addrA -[<<2 :: 2 :: _>> in LHS]scale1r -!scalerDl .
+Qed.
+
+Lemma bla5 : (<<[:: 2; 3%N]>> : {shalg int[nat]}) * <<[:: 2; 3; 2]>>
+             = 2%:R *: <<[:: 2; 3; 2; 3; 2]>> +
+               2%:R *: <<[:: 2; 3; 2; 2; 3]>> +
+               2%:R *: <<[:: 2; 2; 3; 2; 3]>> +
+               4%:R *: <<[:: 2; 2; 3; 3; 2]>>.
+Proof.
+rewrite !shalg_mulE !(shuffleCons, shufflenill, shufflenilr, conslE, conslD).
+rewrite -!addrA.
+do 6 rewrite ![_ + (<<[:: 2; 3; 2; 3; 2]>> + _)]addrC -!addrA.
+rewrite addrA -[<<[:: 2; 3; 2; 3; 2]>> in LHS]scale1r -!scalerDl; congr (_ + _).
+rewrite addrA -[<<[:: 2; 3; 2; 2; 3]>> in LHS]scale1r -!scalerDl; congr (_ + _).
+do 2 rewrite ![_ + (<<[:: 2; 2; 3; 2; 3]>> + _)]addrC -!addrA.
+rewrite addrA -[<<[:: 2; 2; 3; 2; 3]>> in LHS]scale1r -!scalerDl; congr (_ + _).
+by rewrite !addrA -[<<2 :: 2 :: _>> in LHS]scale1r -!scalerDl .
 Qed.
 
 End Tests.
