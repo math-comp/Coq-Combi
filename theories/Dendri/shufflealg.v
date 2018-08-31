@@ -2,9 +2,12 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq path choice.
 From mathcomp Require Import finset fintype finfun tuple bigop ssralg ssrint.
 From mathcomp Require Import fingroup perm zmodp binomial order.
-From mathcomp Require Export finmap.
-From SsrMultinomials Require Import ssrcomplements monalg.
+From Devel Require Export finmap xfinmap.
+From Devel Require Import ssrcomplements monalg.
 
+Import BigEnoughFSet.
+Local Open Scope fset.
+Local Open Scope fmap.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -21,8 +24,7 @@ Local Open Scope ring_scope.
 (* Missing lemma in malg *)
 Lemma scale_malgC (R : ringType) (A : choiceType) r a :
   r *: << a >> = << r *g a >> :> {malg R[A]}.
-Proof.
-Admitted.
+Proof. by apply/eqP/malgP => k; rewrite !mcoeffsE mulr_natr. Qed.
 
 Section MakeLinear.
 
@@ -33,23 +35,40 @@ Implicit Type (a : A).
 Implicit Type (x : {malg R[A]}) (y : M).
 
 Definition linmalg f x : M :=
-  \sum_(u : msupp x)  x@_(val u) *: f (val u).
+  \sum_(u <- msupp x)  x@_u *: f u.
 
 (* The following proof require to go through enum      *)
 (* This is not practical in complicated cases as below *)
 Lemma linmalgB f a : linmalg f << a >> = f a.
 Proof.
-rewrite /linmalg /index_enum -enumT msuppU oner_eq0 enum_fset1 big_seq1 /=.
+rewrite /linmalg msuppU oner_eq0 big_seq_fset1.
 by rewrite mcoeffU eq_refl scale1r.
 Qed.
 
-(* Hard to prove due to the use of the old fset library *)
+Lemma linmalgEw f x (S : {fset A}) :
+  msupp x `<=` S -> linmalg f x = \sum_(u <- S)  x@_u *: f u.
+Proof.
+rewrite /linmalg => /fsubsetP Hsubset.
+rewrite [RHS](bigID (fun a => a \in msupp x)) /=.
+rewrite [X in _ = X + _]big_fset_condE /=.
+have -> : [fset i | i in S & i \in msupp x] = msupp x.
+  apply/fsetP=> i; rewrite !inE /= andbC.
+  by case: (boolP (i \in msupp x)) => //= /Hsubset ->.
+rewrite [X in _ = _ + X]big1 ?addr0 // => a.
+rewrite -mcoeff_eq0 => /eqP ->.
+by rewrite scale0r.
+Qed.
+
 Lemma linmalg_is_linear f : linear (linmalg f).
 Proof.
-rewrite /linmalg => r /= a1 a2.
-rewrite scaler_sumr.
-apply/eqP.
-Admitted.
+move => r /= a1 a2.
+pose_big_fset A E.
+  rewrite 3?(@linmalgEw _ _ E) // scaler_sumr -big_split /=.
+  apply eq_bigr => i _.
+  by rewrite linearD /= scalerDl linearZ /= scalerA.
+by close.
+Qed.
+
 
 Lemma linmalgE f g : f =1 g -> linmalg f =1 linmalg g.
 Proof.
@@ -73,15 +92,14 @@ Qed.
 
 Section MakeBilinearDef.
 
-Context {R : ringType}.
-Context {A B C : choiceType}.
+Context {R : ringType} {A B : choiceType} {M : lmodType R}.
 Implicit Type (r : R).
 Implicit Type (a : A) (b : B).
 Implicit Type (x : {malg R[A]}) (y : {malg R[B]}).
 
-Variable f g : A -> B -> {malg R[C]}.
+Variable f g : A -> B -> M.
 
-Definition bilinmalg f x y : {malg R[C]} :=
+Definition bilinmalg f x y : M :=
   linmalg (fun v => (linmalg (f v)) y) x.
 Definition bilinmalgr_head k f p q := let: tt := k in bilinmalg f q p.
 
@@ -90,8 +108,7 @@ Notation bilinmalgr := (bilinmalgr_head tt).
 Local Notation "a ⧢ b" := (bilinmalg f a b).
 
 Lemma bilinmalgP x y :
-  x ⧢ y = \sum_(u : msupp x) \sum_(v : msupp y)
-             x@_(val u) * y@_(val v) *: f (val u) (val v).
+  x ⧢ y = \sum_(u <- msupp x) \sum_(v <- msupp y) x@_u * y@_v *: f u v.
 Proof.
 rewrite /bilinmalg/linmalg; apply eq_bigr => a _.
 rewrite scaler_sumr; apply eq_bigr => b _.
@@ -125,8 +142,8 @@ End MakeBilinearDef.
 Notation bilinmalgr := (bilinmalgr_head tt).
 
 (* possibility: not require a commutative ring but use the opposite ring *)
-Lemma bilinmalgC (A B C : choiceType) (R : comRingType)
-      (f : A -> B -> {malg R[C]}) x y :
+Lemma bilinmalgC (A B : choiceType) (R : comRingType) (M : lmodType R)
+      (f : A -> B -> M) x y :
   bilinmalgr (fun a b => f b a) x y = (bilinmalg f) x y.
 Proof.
 rewrite bilinmalgrP !bilinmalgP exchange_big /=.
@@ -136,13 +153,12 @@ Qed.
 
 Section MakeBilinear.
 
-Context {R : comRingType}.
-Context {A B C : choiceType}.
+Context {R : comRingType} {A B : choiceType} (M : lmodType R).
 Implicit Type (r : R).
 Implicit Type (a : A) (b : B).
 Implicit Type (x : {malg R[A]}) (y : {malg R[B]}).
 
-Variable f : A -> B -> {malg R[C]}.
+Variable f : A -> B -> M.
 
 Lemma bilinmalg_is_linear x : linear (bilinmalg f x).
 Proof. by move=> r x1 x2; rewrite -!bilinmalgC linearP. Qed.
@@ -179,15 +195,15 @@ Implicit Type f g : {shalg R[A]}.
 Notation "<< z *g k >>" := (mkmalgU k z).
 Notation "<< k >>" := << 1 *g k >> : ring_scope.
 
-Definition consl (a : A) := linmalg (fun u => (<< a :: u >> : {shalg R[A]})).
+Definition consl (a : A) := locked linmalg (fun u => (<< a :: u >> : {shalg R[A]})).
 
 Notation "a ::| f" := (consl a f).
 
 Lemma conslE a v : a ::| << v >> = << a :: v >>.
-Proof. exact: linmalgB. Qed.
+Proof. rewrite /consl; unlock; exact: linmalgB. Qed.
 
 Lemma consl_is_linear a : linear (consl a).
-Proof. exact: linmalg_is_linear. Qed.
+Proof. rewrite /consl; unlock; exact: linmalg_is_linear. Qed.
 
 Canonical consl_additive a := Additive  (consl_is_linear a).
 Canonical consl_linear a   := AddLinear (consl_is_linear a).
@@ -224,9 +240,8 @@ Proof. by []. Qed.
 Lemma shufflewC u v : shufflew u v = shufflew v u.
 Proof.
 elim: u v => [| a u IHu] v /=; first by rewrite shufflewNil.
-elim: v => [| b v IHv] //=; first exact: conslE.
-rewrite addrC; congr (consl _ _ + consl _ _) => //.
-by rewrite IHu.
+elim: v => [| b v IHv] /=; first exact: conslE.
+by rewrite addrC IHv IHu.
 Qed.
 
 
@@ -301,16 +316,14 @@ Lemma shuffleconsl a b f g :
   a ::| f ⧢ b ::| g = a ::| (f ⧢ b ::| g) + b ::| (a ::| f ⧢ g).
 Proof.
 (* raddf_sum expands g along (monalgE g) in \sum_(i : msupp g) _ *)
-rewrite (monalgE g); rewrite !shuffle_sumr !consl_sum -(monalgE g) -big_split /=.
-apply eq_bigr => vs _; move: (fsval vs) => v {vs}.
-rewrite -[<< g@_v *g _ >>]scale_malgC.
-rewrite !shuffleZr !conslZ /= -scalerDr; congr ( _ *: _) => {g}.
+rewrite (monalgE g) !(shuffle_sumr, consl_sum) -big_split /=.
+apply eq_bigr => v _; rewrite -[<< g@_v *g _ >>]scale_malgC.
+rewrite !(shuffleZr, conslZ) -scalerDr; congr ( _ *: _) => {g}.
 
-rewrite (monalgE f); rewrite !shuffle_suml !consl_sum -(monalgE f) -big_split /=.
-apply eq_bigr => us _; move: (fsval us) => u {us}.
-rewrite -[<< f@_u *g _ >>]scale_malgC.
-rewrite !shuffleZl !conslZ -scalerDr; congr ( _ *: _) => {f}.
-by rewrite shuffleCons addrC.
+rewrite (monalgE f) !(shuffle_suml, consl_sum) -big_split /=.
+apply eq_bigr => u _; rewrite -[<< f@_u *g _ >>]scale_malgC.
+rewrite !(shuffleZl, conslZ) -scalerDr; congr ( _ *: _) => {f}.
+by rewrite !conslE shuffleCons.
 Qed.
 
 Lemma shuffle_auxA u v w :
@@ -320,8 +333,7 @@ elim: u v w => /= [| a u IHu] v w; first by rewrite ?(shufflenill, shufflenilr).
 elim: v w => /= [| b v IHv] w; first by rewrite ?(shufflenill, shufflenilr).
 elim: w => /= [| c w IHw]; first by rewrite ?(shufflenill, shufflenilr).
 rewrite -!conslE.
-rewrite !shuffleconsl ?shuffleDr ?shuffleDl.
-rewrite !shuffleconsl ?shuffleDr ?shuffleDl.
+do 2 rewrite !shuffleconsl ?shuffleDr ?shuffleDl.
 rewrite [X in X + _ = _]addrC [RHS]addrC -!addrA.
 congr (_ + _); rewrite !conslE.
 - by rewrite IHv.
@@ -334,16 +346,13 @@ Qed.
 Lemma shuffleA : associative shuffle.
 Proof.
 move=> a b c.
-rewrite (monalgE c) ?(shuffle_sumr, shuffle_suml).
-apply eq_bigr => ws _; move: (val ws) => w {ws}.
+rewrite (monalgE c) ?(shuffle_sumr, shuffle_suml); apply eq_bigr => w _.
 rewrite -[<< c@_w *g _ >>]scale_malgC ?(shuffleZr, shuffleZl).
 congr ( _ *: _) => {c}.
-rewrite (monalgE b) ?(shuffle_sumr, shuffle_suml).
-apply eq_bigr => vs _; move: (val vs) => v {vs}.
+rewrite (monalgE b) ?(shuffle_sumr, shuffle_suml); apply eq_bigr => v _.
 rewrite -[<< b@_v *g _ >>]scale_malgC ?(shuffleZr, shuffleZl).
 congr ( _ *: _) => {b}.
-rewrite (monalgE a) ?(shuffle_sumr, shuffle_suml).
-apply eq_bigr => us _; move: (val us) => u {us}.
+rewrite (monalgE a) ?(shuffle_sumr, shuffle_suml); apply eq_bigr => u _.
 rewrite -[<< a@_u *g _ >>]scale_malgC ?(shuffleZr, shuffleZl).
 by rewrite shuffle_auxA.
 Qed.
@@ -411,7 +420,8 @@ rewrite !shalg_mulE !(shuffleCons, shufflenill, shufflenilr, conslE, conslD).
 (* ring tactic could be helpful here *)
 rewrite -!addrA; congr (_ + _).
 do 2 rewrite ![_ + (<<[:: 2; 2; 3; 2; 2]>> + _)]addrC -!addrA.
-rewrite addrA -[<<[:: 2; 2; 3; 2; 2]>> in LHS]scale1r -!scalerDl; congr (_ + _).
+rewrite -[<<[:: 2; 2; 3; 2; 2]>> in LHS]scale1r.
+rewrite !addrA -!scalerDl; congr (_ + _).
 rewrite [_ + <<[:: 2; 2; 2; 3; 2]>>]addrC.
 rewrite ![_ + (<<[:: 2; 2; 2; 3; 2]>> + _)]addrC -!addrA.
 rewrite ![_ + (<<[:: 2; 2; 2; 3; 2]>> + _) in X in _ + (_ + X)]addrC !addrA.
