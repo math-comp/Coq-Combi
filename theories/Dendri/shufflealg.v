@@ -26,15 +26,13 @@ Admitted.
 
 Section MakeLinear.
 
-Context {R : ringType}.
-Context {A B : choiceType}.
-Implicit Type f g : A -> {malg R[B]}.
-Implicit Type m : A -> B.
+Context {R : ringType} {A : choiceType} {M : lmodType R}.
+Implicit Type f g : A -> M.
 Implicit Type (r : R).
-Implicit Type (a : A) (b : B).
-Implicit Type (x : {malg R[A]}) (y : {malg R[B]}).
+Implicit Type (a : A).
+Implicit Type (x : {malg R[A]}) (y : M).
 
-Definition linmalg f x : {malg R[B]} :=
+Definition linmalg f x : M :=
   \sum_(u : msupp x)  x@_(val u) *: f (val u).
 
 (* The following proof require to go through enum      *)
@@ -50,7 +48,7 @@ Lemma linmalg_is_linear f : linear (linmalg f).
 Proof.
 rewrite /linmalg => r /= a1 a2.
 rewrite scaler_sumr.
-apply/eqP/malgP => b.
+apply/eqP.
 Admitted.
 
 Lemma linmalgE f g : f =1 g -> linmalg f =1 linmalg g.
