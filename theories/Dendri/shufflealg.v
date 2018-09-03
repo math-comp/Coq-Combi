@@ -392,29 +392,29 @@ Section Tests.
 
 Lemma bla1 : (<<[:: 2]>> : {shalg int[nat]}) * <<[:: 2]>> = 2%:R *: <<[:: 2; 2]>>.
 Proof.
-rewrite shalg_mulE shuffle_cons shufflenill shufflenilr conslE.
-by rewrite -[in 2%:R]addn1 natrD scalerDl scale1r.
+rewrite !shalg_mulE !(shuffle_cons, shufflenill, shufflenilr, conslE, conslD).
+by rewrite -[<<_>> in LHS]scale1r -!scalerDl ?addrA.
 Qed.
 
 Lemma bla2 : (<<[:: 2; 2]>> : {shalg int[nat]}) * <<[:: 2; 2]>>
              = 6%:R *: <<[:: 2; 2; 2; 2]>>.
 Proof.
-rewrite !(shalg_mulE, shuffle_cons, shufflenill, shufflenilr, conslE, conslD).
-by rewrite -[<<_>> in LHS]scale1r -!scalerDl !addrA.
+rewrite !shalg_mulE !(shuffle_cons, shufflenill, shufflenilr, conslE, conslD).
+by rewrite -[<<_>> in LHS]scale1r -!scalerDl ?addrA.
 Qed.
 
 Lemma bla3 : (<<[:: 2; 2]>> : {shalg int[nat]}) * <<[:: 2; 2; 2]>>
              = 10%:R *: <<[:: 2; 2; 2; 2; 2]>>.
 Proof.
 rewrite !shalg_mulE !(shuffle_cons, shufflenill, shufflenilr, conslE, conslD).
-by rewrite -[<<_>> in LHS]scale1r -!scalerDl !addrA.
+by rewrite -[<<_>> in LHS]scale1r -!scalerDl ?addrA.
 Qed.
 
-Lemma bla4 : (<<[:: 2; 3%N]>> : {shalg int[nat]}) * <<[:: 2; 2; 2]>>
-             =         <<[:: 2; 3; 2; 2; 2%N]>>
-             + 2%:R *: <<[:: 2; 2; 3; 2; 2%N]>>
-             + 3%:R *: <<[:: 2; 2; 2; 3; 2%N]>>
-             + 4%:R *: <<[:: 2; 2; 2; 2; 3%N]>>.
+Lemma bla4 : (<<[:: 2; 3]>> : {shalg int[nat]}) * <<[:: 2; 2; 2]>>
+             =         <<[:: 2; 3; 2; 2; 2]>>
+             + 2%:R *: <<[:: 2; 2; 3; 2; 2]>>
+             + 3%:R *: <<[:: 2; 2; 2; 3; 2]>>
+             + 4%:R *: <<[:: 2; 2; 2; 2; 3]>>.
 Proof.
 rewrite !shalg_mulE !(shuffle_cons, shufflenill, shufflenilr, conslE, conslD).
 
@@ -430,7 +430,7 @@ set C := <<[:: 2; 2; 2; 3; 2]>>.
 set D := <<[:: 2; 2; 2; 2; 3]>>.
 *)
 rewrite -!addrA /=; congr (_ + _) => {A}.
-rewrite 2![_ + (B + _)]addrCA.
+repeat rewrite ?[C + (B + _)]addrCA ?[D + (B + _)]addrCA.
 rewrite !addrA -[B in LHS]scale1r -!scalerDl -!addrA; congr (_ + _) => {B}.
 rewrite ![D + (C + _)]addrCA.
 rewrite !addrA -[C in LHS]scale1r -!scalerDl -!addrA; congr (_ + _) => {C}.
@@ -444,13 +444,20 @@ Lemma bla5 : (<<[:: 2; 3%N]>> : {shalg int[nat]}) * <<[:: 2; 3; 2]>>
                4%:R *: <<[:: 2; 2; 3; 3; 2]>>.
 Proof.
 rewrite !shalg_mulE !(shuffle_cons, shufflenill, shufflenilr, conslE, conslD).
+move: <<[:: 2; 3; 2; 3; 2]>> => A.
+move: <<[:: 2; 3; 2; 2; 3]>> => B.
+move: <<[:: 2; 2; 3; 2; 3]>> => C.
+move: <<[:: 2; 2; 3; 3; 2]>> => D.
 rewrite -!addrA.
-do 6 rewrite ![_ + (<<[:: 2; 3; 2; 3; 2]>> + _)]addrC -!addrA.
-rewrite addrA -[<<[:: 2; 3; 2; 3; 2]>> in LHS]scale1r -!scalerDl; congr (_ + _).
-rewrite addrA -[<<[:: 2; 3; 2; 2; 3]>> in LHS]scale1r -!scalerDl; congr (_ + _).
-do 2 rewrite ![_ + (<<[:: 2; 2; 3; 2; 3]>> + _)]addrC -!addrA.
-rewrite addrA -[<<[:: 2; 2; 3; 2; 3]>> in LHS]scale1r -!scalerDl; congr (_ + _).
-by rewrite !addrA -[<<2 :: 2 :: _>> in LHS]scale1r -!scalerDl .
+repeat rewrite ?[C + (A + _)]addrCA ?[D + (A + _)]addrCA.
+rewrite !addrA -[A in LHS]scale1r -!scalerDl -!addrA; congr (_ + _) => {A}.
+rewrite [C + (B + B)]addrC -addrA.
+repeat rewrite ?[C + (B + _)]addrCA ?[D + (B + _)]addrCA.
+rewrite !addrA -[B in LHS]scale1r -!scalerDl -!addrA; congr (_ + _) => {B}.
+rewrite [D + C]addrC.
+repeat rewrite ?[D + (C + _)]addrCA.
+rewrite !addrA -[C in LHS]scale1r -!scalerDl -!addrA; congr (_ + _) => {C}.
+by rewrite !addrA -[D in LHS]scale1r -!scalerDl.
 Qed.
 
 End Tests.
