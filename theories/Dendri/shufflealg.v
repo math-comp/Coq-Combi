@@ -28,28 +28,21 @@ Proof. by apply/eqP/malgP => k; rewrite !mcoeffsE mulr_natr. Qed.
 
 Section MakeLinear.
 
-Context {R : ringType} {A : choiceType} {M : lmodType R}.
-Implicit Type f g : A -> M.
-Implicit Type (r : R).
-Implicit Type (a : A).
-Implicit Type (x : {malg R[A]}) (y : M).
+Context (R : ringType) (A : choiceType) (M : lmodType R).
+Implicit Types (f g : A -> M) (r : R) (a : A) (x : {malg R[A]}) (y : M).
 
-Definition linmalg f x : M :=
-  \sum_(u <- msupp x)  x@_u *: f u.
+Definition linmalg f x : M := \sum_(u <- msupp x)  x@_u *: f u.
 
-(* The following proof require to go through enum      *)
-(* This is not practical in complicated cases as below *)
 Lemma linmalgB f a : linmalg f << a >> = f a.
 Proof.
-rewrite /linmalg msuppU oner_eq0 big_seq_fset1.
-by rewrite mcoeffU eq_refl scale1r.
+by rewrite /linmalg msuppU oner_eq0 big_seq_fset1 mcoeffU eq_refl scale1r.
 Qed.
 
 Lemma linmalgEw f x (S : {fset A}) :
-  msupp x `<=` S -> linmalg f x = \sum_(u <- S)  x@_u *: f u.
+  msupp x `<=` S -> linmalg f x = \sum_(u <- S) x@_u *: f u.
 Proof.
 rewrite /linmalg => /fsubsetP Hsubset.
-rewrite [RHS](bigID (fun a => a \in msupp x)) /=.
+rewrite [RHS](bigID (mem (msupp x))) /=.
 rewrite [X in _ = X + _]big_fset_condE /=.
 have -> : [fset i | i in S & i \in msupp x] = msupp x.
   apply/fsetP=> i; rewrite !inE /= andbC.
@@ -68,7 +61,6 @@ pose_big_fset A E.
   by rewrite linearD /= scalerDl linearZ /= scalerA.
 by close.
 Qed.
-
 
 Lemma linmalgE f g : f =1 g -> linmalg f =1 linmalg g.
 Proof.
@@ -99,8 +91,7 @@ Implicit Type (x : {malg R[A]}) (y : {malg R[B]}).
 
 Variable f g : A -> B -> M.
 
-Definition bilinmalg f x y : M :=
-  linmalg (fun v => (linmalg (f v)) y) x.
+Definition bilinmalg f x y : M := linmalg (fun v => (linmalg (f v)) y) x.
 Definition bilinmalgr_head k f p q := let: tt := k in bilinmalg f q p.
 
 Notation bilinmalgr := (bilinmalgr_head tt).
@@ -142,6 +133,9 @@ End MakeBilinearDef.
 Notation bilinmalgr := (bilinmalgr_head tt).
 
 (* possibility: not require a commutative ring but use the opposite ring *)
+(* However this require M to be a bimodule that is                       *)
+(* both a lmodType R and a lmodType R^c                                  *)
+
 Lemma bilinmalgC (A B : choiceType) (R : comRingType) (M : lmodType R)
       (f : A -> B -> M) x y :
   bilinmalgr (fun a b => f b a) x y = (bilinmalg f) x y.
@@ -154,9 +148,7 @@ Qed.
 Section MakeBilinear.
 
 Context {R : comRingType} {A B : choiceType} (M : lmodType R).
-Implicit Type (r : R).
-Implicit Type (a : A) (b : B).
-Implicit Type (x : {malg R[A]}) (y : {malg R[B]}).
+Implicit Type (x : {malg R[A]}) .
 
 Variable f : A -> B -> M.
 
@@ -195,7 +187,8 @@ Implicit Type f g : {shalg R[A]}.
 Notation "<< z *g k >>" := (mkmalgU k z).
 Notation "<< k >>" := << 1 *g k >> : ring_scope.
 
-Definition consl (a : A) := locked linmalg (fun u => (<< a :: u >> : {shalg R[A]})).
+Definition consl (a : A) := locked (@linmalg _ _ _)
+                                   (fun u => (<< a :: u >> : {shalg R[A]})).
 
 Notation "a ::| f" := (consl a f).
 
