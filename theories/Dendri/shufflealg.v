@@ -13,8 +13,10 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Reserved Notation "f ::| g" (at level 20).
+Reserved Notation "a ::| f" (at level 20).
+Reserved Notation "f |:: a" (at level 20).
 Reserved Notation "f ⧢ g" (at level 40, left associativity).
+Reserved Notation "f ⧺ g" (at level 40, left associativity).
 Reserved Notation "{ 'shalg' G [ K ] }"
   (at level 0, K, G at level 2, format "{ 'shalg'  G [ K ] }").
 
@@ -196,30 +198,51 @@ Notation "<< k >>" := << 1 *g k >> : ring_scope.
 
 Definition consl (a : A) := locked alg_lift
                                    (fun u => (<< a :: u >> : {shalg R[A]})).
+Definition rconsl (a : A) := locked alg_lift
+                                   (fun u => (<< rcons u a >> : {shalg R[A]})).
 
 Notation "a ::| f" := (consl a f).
+Notation "f |:: a" := (rconsl a f).
 
 Lemma conslE a v : a ::| << v >> = << a :: v >>.
 Proof. rewrite /consl; unlock; exact: alg_liftB. Qed.
+Lemma rconslE v a : << v >> |:: a = << rcons v a >>.
+Proof. rewrite /rconsl; unlock; exact: alg_liftB. Qed.
 
 Lemma consl_is_linear a : linear (consl a).
 Proof. rewrite /consl; unlock; exact: alg_lift_is_linear. Qed.
+Lemma rconsl_is_linear a : linear (rconsl a).
+Proof. rewrite /rconsl; unlock; exact: alg_lift_is_linear. Qed.
 
 Canonical consl_additive a := Additive  (consl_is_linear a).
 Canonical consl_linear a   := AddLinear (consl_is_linear a).
+Canonical rconsl_additive a := Additive  (rconsl_is_linear a).
+Canonical rconsl_linear a   := AddLinear (rconsl_is_linear a).
 
 Lemma consl0 a : a ::| 0 = 0. Proof. exact: raddf0. Qed.
+Lemma rconsl0 a : 0 |:: a = 0. Proof. exact: raddf0. Qed.
 Lemma conslD a q1 q2 : a ::| (q1 + q2) = a ::| q1 + a ::| q2.
 Proof. exact: raddfD. Qed.
+Lemma rconslD a q1 q2 : (q1 + q2) |:: a = q1 |:: a + q2 |:: a.
+Proof. exact: raddfD. Qed.
 Lemma consl_sum a I r (P : pred I) (q : I -> {shalg R[A]}) :
-  a ::| (\sum_(i <- r | P i) q i) = \sum_(i <- r | P i) a ::| (q i).
+  a ::| (\sum_(i <- r | P i) q i) = \sum_(i <- r | P i) a ::| q i.
+Proof. exact: raddf_sum. Qed.
+Lemma rconsl_sum a I r (P : pred I) (q : I -> {shalg R[A]}) :
+  (\sum_(i <- r | P i) q i) |:: a = \sum_(i <- r | P i) q i |:: a.
 Proof. exact: raddf_sum. Qed.
 Lemma conslZ a r q : a ::| (r *: q) = r *: (a ::| q).
 Proof. by rewrite linearZ. Qed.
-
+Lemma rconslZ a r q : (r *: q) |:: a = r *: (q |:: a).
+Proof. by rewrite linearZ. Qed.
+Lemma rconsl_consl a q b : (a ::| q) |:: b = a ::| (q |:: b).
+Proof.
+rewrite (monalgE q) !linear_sum /=; apply eq_bigr => u _.
+by rewrite -scale_malgC !linearZ /= !(conslE, rconslE) rcons_cons.
+Qed.
 
 Fixpoint shufflew_aux a u shu v :=
-  if v is b :: v' then (a ::| (shu v )) + (b ::| (shufflew_aux a u shu v'))
+  if v is b :: v' then a ::| shu v + b ::| shufflew_aux a u shu v'
   else a ::| << u >>.
 
 Fixpoint shufflew u v :=
@@ -229,13 +252,28 @@ Fixpoint shufflew u v :=
 Lemma shuffleNilw v : shufflew [::] v = << v >>.
 Proof. by []. Qed.
 
-Lemma  shufflewNil v : shufflew v [::] = << v >>.
+Lemma shufflewNil v : shufflew v [::] = << v >>.
 Proof. by case: v => [| i v] //=; rewrite conslE. Qed.
 
 Lemma shufflew_cons a u b v :
   shufflew (a :: u) (b :: v) =
-  (a ::| (shufflew u (b :: v))) + (b ::| (shufflew (a :: u) v)).
+  a ::| shufflew u (b :: v) + b ::| shufflew (a :: u) v.
 Proof. by []. Qed.
+
+Lemma shufflew_rcons a u b v :
+  shufflew (rcons u a) (rcons v b) =
+  shufflew u (rcons v b) |:: a + shufflew (rcons u a) v |:: b.
+Proof.
+elim: u a v b => [|c u IHu] a v b /=; elim: v a b => [| d v IHv] a b //=.
+- by rewrite !conslE !rconslE /= addrC.
+- rewrite {}IHv !linearD /= -!(conslE, rconslE) !addrA.
+  by rewrite !rconsl_consl [_ + a ::| _]addrC.
+- rewrite -{1}[[:: b]]/(rcons [::] b) {}IHu.
+  rewrite shufflewNil !linearD /= !rconsl_consl.
+  by rewrite -!addrA [X in _ + X = _]addrC !rconslE.
+- rewrite -rcons_cons {}IHu {}IHv !linearD /= !rconsl_consl -!addrA.
+  by rewrite [X in _ = _ + X]addrCA.
+Qed.
 
 Lemma shufflewC u v : shufflew u v = shufflew v u.
 Proof.
@@ -248,7 +286,6 @@ Qed.
 Definition shuffle : {shalg R[A]} -> {shalg R[A]} -> {shalg R[A]} :=
   locked (alg_lift2 shufflew).
 
-Notation "a ::| f" := (consl a f).
 Notation "f ⧢ g" := (shuffle f g).
 
 Lemma shuffleC : commutative shuffle.
@@ -275,9 +312,9 @@ Canonical shuffle_additive p := Additive (shuffle_is_linear p).
 Canonical shuffle_linear p := Linear (shuffle_is_linear p).
 
 Lemma shuffle0r p : p ⧢ 0 = 0. Proof. exact: raddf0. Qed.
-Lemma shuffleNr p q : p ⧢ (- q) = - (p ⧢ q).
+Lemma shuffleNr p q : p ⧢ - q = - (p ⧢ q).
 Proof. exact: raddfN. Qed.
-Lemma shuffleDr p q1 q2 : p ⧢ (q1 + q2) = p ⧢ (q1) + p ⧢ (q2).
+Lemma shuffleDr p q1 q2 : p ⧢ (q1 + q2) = p ⧢ q1 + p ⧢ q2.
 Proof. exact: raddfD. Qed.
 Lemma shuffleMnr p q n : p ⧢ (q *+ n) = p ⧢ q *+ n.
 Proof. exact: raddfMn. Qed.
@@ -289,7 +326,7 @@ Proof. by rewrite linearZ. Qed.
 
 Lemma shuffle0l p : 0 ⧢ p = 0.
 Proof. by rewrite shuffleC linear0. Qed.
-Lemma shuffleNl p q : (- q) ⧢ p = - (q ⧢ p).
+Lemma shuffleNl p q : - q ⧢ p = - (q ⧢ p).
 Proof. by rewrite ![_ ⧢ p]shuffleC linearN. Qed.
 Lemma shuffleDl p q1 q2 : (q1 + q2) ⧢ p = q1 ⧢ p + q2 ⧢ p.
 Proof. by rewrite ![_ ⧢ p]shuffleC linearD. Qed.
@@ -298,7 +335,7 @@ Proof. by rewrite ![_ ⧢ p]shuffleC linearB. Qed.
 Lemma shuffleMnl p q n : (q *+ n) ⧢ p = q ⧢ p *+ n.
 Proof. by rewrite ![_ ⧢ p]shuffleC linearMn. Qed.
 Lemma shuffle_suml p I r (P : pred I) (q : I -> {shalg R[A]}) :
-  (\sum_(i <- r | P i) q i) ⧢ p = \sum_(i <- r | P i) (q i) ⧢ p.
+  (\sum_(i <- r | P i) q i) ⧢ p = \sum_(i <- r | P i) q i ⧢ p.
 Proof.
 rewrite ![_ ⧢ p]shuffleC linear_sum /=.
 apply eq_bigr => i _; exact: shuffleC.
@@ -309,10 +346,14 @@ Proof. by rewrite ![_ ⧢ p]shuffleC linearZ. Qed.
 
 Lemma shuffle_cons a u b v :
   << a :: u >> ⧢ << b :: v >> =
-    (a ::| (<< u >> ⧢ << b :: v >>)) + (b ::| (<< a :: u >> ⧢ << v >>)).
+    a ::| (<< u >> ⧢ << b :: v >>) + b ::| (<< a :: u >> ⧢ << v >>).
 Proof. rewrite !shuffleE; exact: shufflew_cons. Qed.
+Lemma shuffle_rcons a u b v :
+  << rcons u a >> ⧢ << rcons v b >> =
+    (<< u >> ⧢ << rcons v b >>) |:: a + (<< rcons u a >> ⧢ << v >>) |:: b.
+Proof. rewrite !shuffleE; exact: shufflew_rcons. Qed.
 
-Lemma shuffleconsl a b f g :
+Lemma shuffle_consl a b f g :
   a ::| f ⧢ b ::| g = a ::| (f ⧢ b ::| g) + b ::| (a ::| f ⧢ g).
 Proof.
 (* raddf_sum expands g along (monalgE g) in \sum_(i : msupp g) _ *)
@@ -326,6 +367,19 @@ rewrite !(shuffleZl, conslZ) -scalerDr; congr ( _ *: _) => {f}.
 by rewrite !conslE shuffle_cons.
 Qed.
 
+Lemma shuffle_rconsl a b f g :
+  f |:: a ⧢ g |:: b = (f ⧢ g |:: b) |:: a + (f |:: a ⧢ g) |:: b.
+Proof.
+rewrite (monalgE g) !(shuffle_sumr, rconsl_sum) -big_split /=.
+apply eq_bigr => v _; rewrite -[<< g@_v *g _ >>]scale_malgC.
+rewrite !(shuffleZr, rconslZ) -scalerDr; congr ( _ *: _) => {g}.
+
+rewrite (monalgE f) !(shuffle_suml, rconsl_sum) -big_split /=.
+apply eq_bigr => u _; rewrite -[<< f@_u *g _ >>]scale_malgC.
+rewrite !(shuffleZl, rconslZ) -scalerDr; congr ( _ *: _) => {f}.
+by rewrite !rconslE shuffle_rcons.
+Qed.
+
 Lemma shuffle_auxA u v w :
   << u >> ⧢ (<< v >> ⧢ << w >>) = (<< u >> ⧢ << v >>) ⧢ << w >>.
 Proof.
@@ -333,7 +387,7 @@ elim: u v w => /= [| a u IHu] v w; first by rewrite ?(shufflenill, shufflenilr).
 elim: v w => /= [| b v IHv] w; first by rewrite ?(shufflenill, shufflenilr).
 elim: w => /= [| c w IHw]; first by rewrite ?(shufflenill, shufflenilr).
 rewrite -!conslE.
-do 2 rewrite !shuffleconsl ?shuffleDr ?shuffleDl.
+do 2 rewrite !shuffle_consl ?shuffleDr ?shuffleDl.
 rewrite [X in X + _ = _]addrC [RHS]addrC -!addrA.
 congr (_ + _); rewrite !conslE.
 - by rewrite IHv.
@@ -387,7 +441,7 @@ Proof. by []. Qed.
 
 End ShuffleAlgebra.
 
-
+(*
 Section Tests.
 
 Lemma bla1 : (<<[:: 2]>> : {shalg int[nat]}) * <<[:: 2]>> = 2%:R *: <<[:: 2; 2]>>.
@@ -461,3 +515,159 @@ by rewrite !addrA -[D in LHS]scale1r -!scalerDl.
 Qed.
 
 End Tests.
+ *)
+
+Section QSymDef.
+
+Variable (R : comRingType).
+
+Implicit Type a b c : nat.
+Implicit Type u v w : seq nat.
+Implicit Type f g : {shalg R[nat]}.
+
+Notation "<< z *g k >>" := (mkmalgU k z).
+Notation "<< k >>" := << 1 *g k >> : ring_scope.
+
+Notation "a ::| f" := (consl a f).
+
+Fixpoint stufflew_aux a u shu v : {shalg R[nat]} :=
+  if v is b :: v' then
+    (a ::| (shu v)) +
+    (b ::| (stufflew_aux a u shu v')) +
+    (a + b)%N ::| (shu v')
+  else a ::| << u >>.
+
+Fixpoint stufflew u v :=
+  if u is a :: u' then stufflew_aux a u' (stufflew u') v
+  else << v >>.
+
+Lemma stuffleNilw v : stufflew [::] v = << v >>.
+Proof. by []. Qed.
+
+Lemma  stufflewNil v : stufflew v [::] = << v >>.
+Proof. by case: v => [| i v] //=; rewrite conslE. Qed.
+
+Lemma stufflew_cons a u b v :
+  stufflew (a :: u) (b :: v) =
+  (a ::| (stufflew u (b :: v))) +
+  (b ::| (stufflew (a :: u) v)) +
+  ((a + b) %N ::| (stufflew u v)).
+Proof. by []. Qed.
+
+Lemma stufflewC u v : stufflew u v = stufflew v u.
+Proof.
+elim: u v => [| a u IHu] v /=; first by rewrite stufflewNil.
+elim: v => [| b v IHv] /=; first exact: conslE.
+by rewrite [_ + consl a _]addrC IHv !IHu -[(b + a)%N]addnC.
+Qed.
+
+Definition stuffle : {shalg R[nat]} -> {shalg R[nat]} -> {shalg R[nat]} :=
+  locked (alg_lift2 stufflew).
+
+Notation "f ⧺ g" := (stuffle f g).
+
+Lemma stuffleC : commutative stuffle.
+Proof.
+rewrite /stuffle; unlock => f g.
+rewrite -alg_lift2C /= -/stufflew.
+rewrite (alg_lift2E (g := stufflew)) // => u v.
+exact: stufflewC.
+Qed.
+
+Lemma stuffleE u v : << u >> ⧺ << v >> = stufflew u v.
+Proof. by rewrite /stuffle; unlock; rewrite alg_lift2BB. Qed.
+
+Lemma stufflenill : left_id << [::] >> stuffle.
+Proof.
+by rewrite /stuffle=> f; unlock; rewrite /alg_lift2 alg_liftB alg_lift_id.
+Qed.
+Lemma stufflenilr : right_id << [::] >> stuffle.
+Proof. by move=> f; rewrite stuffleC stufflenill. Qed.
+
+Lemma stuffle_is_linear f : linear (stuffle f).
+Proof. rewrite /stuffle; unlock; exact: linearP. Qed.
+Canonical stuffle_additive p := Additive (stuffle_is_linear p).
+Canonical stuffle_linear p := Linear (stuffle_is_linear p).
+
+Lemma stuffle0r p : p ⧺ 0 = 0. Proof. exact: raddf0. Qed.
+Lemma stuffleNr p q : p ⧺ - q = - (p ⧺ q).
+Proof. exact: raddfN. Qed.
+Lemma stuffleDr p q1 q2 : p ⧺ (q1 + q2) = p ⧺ q1 + p ⧺ q2.
+Proof. exact: raddfD. Qed.
+Lemma stuffleMnr p q n : p ⧺ (q *+ n) = p ⧺ q *+ n.
+Proof. exact: raddfMn. Qed.
+Lemma stuffle_sumr p I r (P : pred I) (q : I -> {shalg R[nat]}) :
+  p ⧺ (\sum_(i <- r | P i) q i) = \sum_(i <- r | P i) p ⧺ (q i).
+Proof. exact: raddf_sum. Qed.
+Lemma stuffleZr r p q : p ⧺ (r *: q) = r *: (p ⧺ q).
+Proof. by rewrite linearZ. Qed.
+
+Lemma stuffle0l p : 0 ⧺ p = 0.
+Proof. by rewrite stuffleC linear0. Qed.
+Lemma stuffleNl p q : - q ⧺ p = - (q ⧺ p).
+Proof. by rewrite ![_ ⧺ p]stuffleC linearN. Qed.
+Lemma stuffleDl p q1 q2 : (q1 + q2) ⧺ p = q1 ⧺ p + q2 ⧺ p.
+Proof. by rewrite ![_ ⧺ p]stuffleC linearD. Qed.
+Lemma stuffleBl p q1 q2 : (q1 - q2) ⧺ p = q1 ⧺ p - q2 ⧺ p.
+Proof. by rewrite ![_ ⧺ p]stuffleC linearB. Qed.
+Lemma stuffleMnl p q n : (q *+ n) ⧺ p = q ⧺ p *+ n.
+Proof. by rewrite ![_ ⧺ p]stuffleC linearMn. Qed.
+Lemma stuffle_suml p I r (P : pred I) (q : I -> {shalg R[nat]}) :
+  (\sum_(i <- r | P i) q i) ⧺ p = \sum_(i <- r | P i) q i ⧺ p.
+Proof.
+rewrite ![_ ⧺ p]stuffleC linear_sum /=.
+apply eq_bigr => i _; exact: stuffleC.
+Qed.
+Lemma stuffleZl p r q : (r *: q) ⧺ p = r *: (q ⧺ p).
+Proof. by rewrite ![_ ⧺ p]stuffleC linearZ. Qed.
+
+Lemma stuffle_cons a u b v :
+  << a :: u >> ⧺ << b :: v >> =
+  a ::| (<< u >> ⧺ << b :: v >>) +
+  b ::| (<< a :: u >> ⧺ << v >>) +
+  (a + b)%N ::| (<< u >> ⧺ << v >>).
+Proof. rewrite !stuffleE; exact: stufflew_cons. Qed.
+
+Lemma stuffle_consl a b f g :
+  a ::| f ⧺ b ::| g =
+  a ::| (f ⧺ b ::| g) + b ::| (a ::| f ⧺ g) + (a + b)%N ::| (f ⧺ g).
+Proof.
+(* raddf_sum expands g along (monalgE g) in \sum_(i : msupp g) _ *)
+rewrite (monalgE g) !(stuffle_sumr, consl_sum) -!big_split /=.
+apply eq_bigr => v _; rewrite -[<< g@_v *g _ >>]scale_malgC.
+rewrite !(stuffleZr, conslZ) -!scalerDr; congr ( _ *: _) => {g}.
+
+rewrite (monalgE f) !(stuffle_suml, consl_sum) -!big_split /=.
+apply eq_bigr => u _; rewrite -[<< f@_u *g _ >>]scale_malgC.
+rewrite !(stuffleZl, conslZ) -!scalerDr; congr ( _ *: _) => {f}.
+by rewrite !conslE stuffle_cons.
+Qed.
+
+
+(*
+
+Definition addfl (a : nat) :=
+  locked alg_lift
+         (fun u => <<((a + head 0 u) :: behead u)%N>> : {shalg R[nat]}).
+
+Notation "a ::+ f" := (addfl a f) (at level 40).
+
+Lemma addflE a b v : a ::+ << b :: v >> = << (a + b)%N :: v >>.
+Proof. rewrite /addfl; unlock; exact: alg_liftB. Qed.
+
+Lemma addfl_is_linear a : linear (addfl a).
+Proof. rewrite /addfl; unlock; exact: alg_lift_is_linear. Qed.
+
+Canonical addfl_additive a := Additive  (addfl_is_linear a).
+Canonical addfl_linear a   := AddLinear (addfl_is_linear a).
+
+Lemma addfl0 a : a ::+ 0 = 0. Proof. exact: raddf0. Qed.
+Lemma addflD a q1 q2 : a ::+ (q1 + q2) = a ::+ q1 + a ::+ q2.
+Proof. exact: raddfD. Qed.
+Lemma addfl_sum a I r (P : pred I) (q : I -> {shalg R[nat]}) :
+  a ::+ (\sum_(i <- r | P i) q i) = \sum_(i <- r | P i) a ::+ (q i).
+Proof. exact: raddf_sum. Qed.
+Lemma addflZ a r q : a ::+ (r *: q) = r *: (a ::+ q).
+Proof. by rewrite linearZ. Qed.
+
+ *)
