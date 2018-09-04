@@ -643,6 +643,77 @@ rewrite !(stuffleZl, conslZ) -!scalerDr; congr ( _ *: _) => {f}.
 by rewrite !conslE stuffle_cons.
 Qed.
 
+Lemma stuffle_auxA u v w :
+  << u >> ⧺ (<< v >> ⧺ << w >>) = (<< u >> ⧺ << v >>) ⧺ << w >>.
+Proof.
+elim: u v w => /= [| a u IHu] v w; first by rewrite ?(stufflenill, stufflenilr).
+elim: v w => /= [| b v IHv] w; first by rewrite ?(stufflenill, stufflenilr).
+elim: w => /= [| c w IHw]; first by rewrite ?(stufflenill, stufflenilr).
+rewrite -!conslE.
+do 2 rewrite !stuffle_consl ?stuffleDr ?stuffleDl.
+(* STUCK Here *)
+rewrite [_ + (a + c)%N ::| _ + _]addrAC.
+
+
+
+rewrite !conslE !addrA !IHu !IHv !IHw addnA; congr (_ + _).
+move: ((a + b)%N ::| _) => /= Eab.
+move: ((a + c)%N ::| _) => /= Eac.
+move: ((b + c)%N ::| (<<a :: u>> ⧺ _ ⧺ _)) => /= Ebc.
+rewrite ![_ + Ebc + _]addrAC; congr (_ + _) => {Ebc}.
+rewrite ![_ + Eab + _]addrAC; congr (_ + _) => {Eab}.
+rewrite ![_ + Eac + _]addrAC; congr (_ + _) => {Eac}.
+
+congr (_ + _); rewrite !conslE.
+- by rewrite IHv.
+- rewrite [LHS]addrA [RHS]addrC -[RHS]addrA.
+  congr (_ + _).
+- by rewrite -conslD -stuffleDr -stuffle_cons IHu.
+- by rewrite -conslD IHw -stuffleDl stuffle_cons.
+Qed.
+
+Lemma stuffleA : associative stuffle.
+Proof.
+move=> a b c.
+rewrite (monalgE c) ?(stuffle_sumr, stuffle_suml); apply eq_bigr => w _.
+rewrite -[<< c@_w *g _ >>]scale_malgC ?(stuffleZr, stuffleZl).
+congr ( _ *: _) => {c}.
+rewrite (monalgE b) ?(stuffle_sumr, stuffle_suml); apply eq_bigr => v _.
+rewrite -[<< b@_v *g _ >>]scale_malgC ?(stuffleZr, stuffleZl).
+congr ( _ *: _) => {b}.
+rewrite (monalgE a) ?(stuffle_sumr, stuffle_suml); apply eq_bigr => u _.
+rewrite -[<< a@_u *g _ >>]scale_malgC ?(stuffleZr, stuffleZl).
+by rewrite stuffle_auxA.
+Qed.
+
+Lemma stuffle_distr : left_distributive stuffle +%R.
+Proof. move=> a b c; exact: stuffleDl. Qed.
+
+Lemma malgnil_eq0 : << [::] >> != 0 :> {shalg R[A]}.
+Proof. by apply/malgP => /(_ [::]) /eqP; rewrite !mcoeffsE oner_eq0. Qed.
+
+Lemma stuffle_scalAl r f g : r *: (f ⧺ g) = (r *: f) ⧺ g.
+Proof. by rewrite stuffleZl. Qed.
+Lemma stuffle_scalAr r f g : r *: (f ⧺ g) = f ⧺ (r *: g).
+Proof. by rewrite stuffleZr. Qed.
+
+Canonical shalg_eqType := [eqType of {shalg R[A]}].
+Canonical shalg_choiceType := [choiceType of {shalg R[A]}].
+Canonical shalg_zmodType := [zmodType of {shalg R[A]}].
+Canonical shalg_lmodType := [lmodType R of {shalg R[A]}].
+
+Definition shalg_ringRingMixin :=
+  ComRingMixin (R := [zmodType of {shalg R[A]}])
+               stuffleA stuffleC stufflenill stuffle_distr malgnil_eq0.
+Canonical shalg_ringType :=
+  Eval hnf in RingType {shalg R[A]} shalg_ringRingMixin.
+Canonical shalg_comRingType := ComRingType {shalg R[A]} stuffleC.
+Canonical shalg_LalgType := LalgType R {shalg R[A]} stuffle_scalAl.
+Canonical shalg_algType := CommAlgType R {shalg R[A]}.
+
+Lemma shalg_mulE f g : f * g = f ⧺ g.
+Proof. by []. Qed.
+
 
 (*
 
