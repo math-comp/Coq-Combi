@@ -2,8 +2,8 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq path choice.
 From mathcomp Require Import finset fintype finfun tuple bigop ssralg ssrint.
 From mathcomp Require Import fingroup perm zmodp binomial order.
-From Devel Require Export finmap xfinmap.
-From Devel Require Import ssrcomplements monalg.
+From Devel Require Export finmap.
+From Devel Require Import xfinmap ssrcomplements monalg.
 
 Import BigEnoughFSet.
 Local Open Scope fset.
