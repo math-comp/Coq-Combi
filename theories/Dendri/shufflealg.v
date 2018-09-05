@@ -19,6 +19,8 @@ Reserved Notation "f ⧢ g" (at level 40, left associativity).
 Reserved Notation "f ⧺ g" (at level 40, left associativity).
 Reserved Notation "{ 'shalg' G [ K ] }"
   (at level 0, K, G at level 2, format "{ 'shalg'  G [ K ] }").
+Reserved Notation "{ 'stalg' G }"
+  (at level 0, G at level 2, format "{ 'stalg'  G }").
 
 Import GRing.Theory.
 Local Open Scope ring_scope.
@@ -27,6 +29,13 @@ Local Open Scope ring_scope.
 Lemma scale_malgC (R : ringType) (A : choiceType) r a :
   r *: << a >> = << r *g a >> :> {malg R[A]}.
 Proof. by apply/eqP/malgP => k; rewrite !mcoeffsE mulr_natr. Qed.
+
+Lemma mem_msuppD (R : ringType) (A : choiceType) a (f g : {malg R[A]}) :
+  a \in msupp (f + g) -> a \in msupp f \/ a \in msupp g.
+Proof.
+  move=> H.
+  by have /fsubsetP/(_ _ H) := msuppD_le f g; rewrite inE => /orP.
+Qed.
 
 Section MakeLinear.
 
@@ -241,6 +250,29 @@ rewrite (monalgE q) !linear_sum /=; apply eq_bigr => u _.
 by rewrite -scale_malgC !linearZ /= !(conslE, rconslE) rcons_cons.
 Qed.
 
+(* There should be a shorted proof of that *)
+Lemma msupp_consl a f : msupp (a ::| f) = [fset a :: s | s in msupp f].
+Proof.
+apply/eqP/fset_eqP; case => /= [|b v].
+  rewrite -!mcoeff_neq0 (monalgE f) !linear_sum /=.
+  rewrite big1 => [|s _]; first last.
+    by rewrite -scale_malgC conslZ conslE mcoeffZ mcoeffU /= mulr0.
+  by rewrite eq_refl /=; apply/esym; apply/imfsetP=> [[]].
+case: (altP (b =P a)) => [-> | /negbTE Hba].
+- rewrite mem_imfset /=; last by move=> x y [].
+  rewrite -!mcoeff_neq0.
+  suff -> : (a ::| f)@_(a :: v) = f@_v by [].
+  rewrite (monalgE f) !linear_sum /=; apply eq_bigr => s _.
+  rewrite -scale_malgC conslZ conslE !mcoeffZ !mcoeffU /=.
+  by rewrite eqseq_cons eq_refl.
+- have -> S : b :: v \in [fset a :: s | s in S] = false.
+    by apply/imfsetP => []/= [x _] [] /eqP; rewrite Hba.
+  rewrite -!mcoeff_neq0 (monalgE f) !linear_sum /=.
+  apply/eqP/big1 => /= s _.
+  rewrite -scale_malgC conslZ conslE !mcoeffZ !mcoeffU /=.
+  by rewrite eqseq_cons eq_sym Hba /= mulr0.
+Qed.
+
 Fixpoint shufflew_aux a u shu v :=
   if v is b :: v' then a ::| shu v + b ::| shufflew_aux a u shu v'
   else a ::| << u >>.
@@ -414,7 +446,7 @@ Qed.
 Lemma shuffle_distr : left_distributive shuffle +%R.
 Proof. move=> a b c; exact: shuffleDl. Qed.
 
-Lemma malgnil_eq0 : << [::] >> != 0 :> {shalg R[A]}.
+Lemma shalgnil_eq0 : << [::] >> != 0 :> {shalg R[A]}.
 Proof. by apply/malgP => /(_ [::]) /eqP; rewrite !mcoeffsE oner_eq0. Qed.
 
 Lemma shuffle_scalAl r f g : r *: (f ⧢ g) = (r *: f) ⧢ g.
@@ -429,7 +461,7 @@ Canonical shalg_lmodType := [lmodType R of {shalg R[A]}].
 
 Definition shalg_ringRingMixin :=
   ComRingMixin (R := [zmodType of {shalg R[A]}])
-               shuffleA shuffleC shufflenill shuffle_distr malgnil_eq0.
+               shuffleA shuffleC shufflenill shuffle_distr shalgnil_eq0.
 Canonical shalg_ringType :=
   Eval hnf in RingType {shalg R[A]} shalg_ringRingMixin.
 Canonical shalg_comRingType := ComRingType {shalg R[A]} shuffleC.
@@ -517,27 +549,43 @@ Qed.
 End Tests.
  *)
 
-Section QSymDef.
+
+Section StuffleAlgebraDef.
+
+Variable (R : comRingType).
+
+Definition stalg := {malg R[[choiceType of seq nat]]}.
+Definition stalg_of (_ : phant R) := stalg.
+
+End StuffleAlgebraDef.
+
+Bind Scope ring_scope with stalg.
+Bind Scope ring_scope with stalg_of.
+
+Notation "{ 'stalg' R }" :=
+  (@stalg_of _ (Phant R)) : type_scope.
+
+Section StuffleDef.
 
 Variable (R : comRingType).
 
 Implicit Type a b c : nat.
 Implicit Type u v w : seq nat.
-Implicit Type f g : {shalg R[nat]}.
+Implicit Type f g : {stalg R}.
 
 Notation "<< z *g k >>" := (mkmalgU k z).
 Notation "<< k >>" := << 1 *g k >> : ring_scope.
 
 Notation "a ::| f" := (consl a f).
 
-Fixpoint stufflew_aux a u shu v : {shalg R[nat]} :=
+Fixpoint stufflew_aux a u shu v : {stalg R} :=
   if v is b :: v' then
     (a ::| (shu v)) +
     (b ::| (stufflew_aux a u shu v')) +
     (a + b)%N ::| (shu v')
   else a ::| << u >>.
 
-Fixpoint stufflew u v :=
+Fixpoint stufflew u v : {stalg R} :=
   if u is a :: u' then stufflew_aux a u' (stufflew u') v
   else << v >>.
 
@@ -561,7 +609,7 @@ elim: v => [| b v IHv] /=; first exact: conslE.
 by rewrite [_ + consl a _]addrC IHv !IHu -[(b + a)%N]addnC.
 Qed.
 
-Definition stuffle : {shalg R[nat]} -> {shalg R[nat]} -> {shalg R[nat]} :=
+Definition stuffle : {stalg R} -> {stalg R} -> {stalg R} :=
   locked (alg_lift2 stufflew).
 
 Notation "f ⧺ g" := (stuffle f g).
@@ -596,7 +644,7 @@ Lemma stuffleDr p q1 q2 : p ⧺ (q1 + q2) = p ⧺ q1 + p ⧺ q2.
 Proof. exact: raddfD. Qed.
 Lemma stuffleMnr p q n : p ⧺ (q *+ n) = p ⧺ q *+ n.
 Proof. exact: raddfMn. Qed.
-Lemma stuffle_sumr p I r (P : pred I) (q : I -> {shalg R[nat]}) :
+Lemma stuffle_sumr p I r (P : pred I) (q : I -> {stalg R}) :
   p ⧺ (\sum_(i <- r | P i) q i) = \sum_(i <- r | P i) p ⧺ (q i).
 Proof. exact: raddf_sum. Qed.
 Lemma stuffleZr r p q : p ⧺ (r *: q) = r *: (p ⧺ q).
@@ -612,7 +660,7 @@ Lemma stuffleBl p q1 q2 : (q1 - q2) ⧺ p = q1 ⧺ p - q2 ⧺ p.
 Proof. by rewrite ![_ ⧺ p]stuffleC linearB. Qed.
 Lemma stuffleMnl p q n : (q *+ n) ⧺ p = q ⧺ p *+ n.
 Proof. by rewrite ![_ ⧺ p]stuffleC linearMn. Qed.
-Lemma stuffle_suml p I r (P : pred I) (q : I -> {shalg R[nat]}) :
+Lemma stuffle_suml p I r (P : pred I) (q : I -> {stalg R}) :
   (\sum_(i <- r | P i) q i) ⧺ p = \sum_(i <- r | P i) q i ⧺ p.
 Proof.
 rewrite ![_ ⧺ p]stuffleC linear_sum /=.
@@ -651,25 +699,27 @@ elim: v w => /= [| b v IHv] w; first by rewrite ?(stufflenill, stufflenilr).
 elim: w => /= [| c w IHw]; first by rewrite ?(stufflenill, stufflenilr).
 rewrite -!conslE.
 do 2 rewrite !stuffle_consl ?stuffleDr ?stuffleDl.
-(* STUCK Here *)
+(* STUCK Here
 rewrite [_ + (a + c)%N ::| _ + _]addrAC.
+ *)
 
-
-
-rewrite !conslE !addrA !IHu !IHv !IHw addnA; congr (_ + _).
+rewrite !conslE !addrA !IHu !IHv !IHw addnA {IHv IHw}; congr (_ + _).
 move: ((a + b)%N ::| _) => /= Eab.
 move: ((a + c)%N ::| _) => /= Eac.
 move: ((b + c)%N ::| (<<a :: u>> ⧺ _ ⧺ _)) => /= Ebc.
 rewrite ![_ + Ebc + _]addrAC; congr (_ + _) => {Ebc}.
 rewrite ![_ + Eab + _]addrAC; congr (_ + _) => {Eab}.
 rewrite ![_ + Eac + _]addrAC; congr (_ + _) => {Eac}.
-
-congr (_ + _); rewrite !conslE.
-- by rewrite IHv.
-- rewrite [LHS]addrA [RHS]addrC -[RHS]addrA.
-  congr (_ + _).
-- by rewrite -conslD -stuffleDr -stuffle_cons IHu.
-- by rewrite -conslD IHw -stuffleDl stuffle_cons.
+rewrite [X in _ = X + _ + _]addrAC.
+rewrite [X in X + _ + _ = _]addrAC.
+rewrite [_ + a ::| _]addrC !addrA.
+rewrite -!conslD -!addrA; congr (a ::| _ + _).
+  rewrite addrA -!stuffleDr -{}IHu; congr (<< u >> ⧺ _).
+  rewrite -![in RHS]conslE stuffle_consl -!conslE.
+  by rewrite [RHS]addrC addrA.
+rewrite -!conslD !addrA; congr (_ + c ::| _).
+rewrite -!stuffleDl; congr (_ ⧺ << w >>).
+by rewrite -![in LHS]conslE [in LHS]stuffle_consl -!conslE.
 Qed.
 
 Lemma stuffleA : associative stuffle.
@@ -689,7 +739,7 @@ Qed.
 Lemma stuffle_distr : left_distributive stuffle +%R.
 Proof. move=> a b c; exact: stuffleDl. Qed.
 
-Lemma malgnil_eq0 : << [::] >> != 0 :> {shalg R[A]}.
+Lemma stalgnil_eq0 : << [::] >> != 0 :> {stalg R}.
 Proof. by apply/malgP => /(_ [::]) /eqP; rewrite !mcoeffsE oner_eq0. Qed.
 
 Lemma stuffle_scalAl r f g : r *: (f ⧺ g) = (r *: f) ⧺ g.
@@ -697,29 +747,120 @@ Proof. by rewrite stuffleZl. Qed.
 Lemma stuffle_scalAr r f g : r *: (f ⧺ g) = f ⧺ (r *: g).
 Proof. by rewrite stuffleZr. Qed.
 
-Canonical shalg_eqType := [eqType of {shalg R[A]}].
-Canonical shalg_choiceType := [choiceType of {shalg R[A]}].
-Canonical shalg_zmodType := [zmodType of {shalg R[A]}].
-Canonical shalg_lmodType := [lmodType R of {shalg R[A]}].
+Canonical stalg_eqType := [eqType of {stalg R}].
+Canonical stalg_choiceType := [choiceType of {stalg R}].
+Canonical stalg_zmodType := [zmodType of {stalg R}].
+Canonical stalg_lmodType := [lmodType R of {stalg R}].
 
-Definition shalg_ringRingMixin :=
-  ComRingMixin (R := [zmodType of {shalg R[A]}])
-               stuffleA stuffleC stufflenill stuffle_distr malgnil_eq0.
-Canonical shalg_ringType :=
-  Eval hnf in RingType {shalg R[A]} shalg_ringRingMixin.
-Canonical shalg_comRingType := ComRingType {shalg R[A]} stuffleC.
-Canonical shalg_LalgType := LalgType R {shalg R[A]} stuffle_scalAl.
-Canonical shalg_algType := CommAlgType R {shalg R[A]}.
+Definition stalg_ringRingMixin :=
+  ComRingMixin (R := [zmodType of {stalg R}])
+               stuffleA stuffleC stufflenill stuffle_distr stalgnil_eq0.
+Canonical stalg_ringType :=
+  Eval hnf in RingType {stalg R} stalg_ringRingMixin.
+Canonical stalg_comRingType := ComRingType {stalg R} stuffleC.
+Canonical stalg_LalgType := LalgType R {stalg R} stuffle_scalAl.
+Canonical stalg_algType := CommAlgType R {stalg R}.
 
-Lemma shalg_mulE f g : f * g = f ⧺ g.
+Lemma stalg_mulE f g : f * g = f ⧺ g.
 Proof. by []. Qed.
 
+Lemma stalg_oneE : 1 = <<[::]>> :> {stalg R}.
+Proof. by []. Qed.
 
-(*
+End StuffleDef.
+
+
+(* Commented out for efficiency.
+Section TestStuffle.
+
+Lemma bla1 : (<<[:: 2]>> : {stalg int}) * <<[:: 2]>> =
+             2%:R *: <<[:: 2; 2]>> + << [:: 4] >>.
+Proof.
+rewrite !stalg_mulE !(stuffle_cons, stufflenill, stufflenilr, conslE, conslD).
+by rewrite -[<<_>> in LHS]scale1r -!scalerDl ?addrA.
+Qed.
+
+Lemma bla2 : (<<[:: 2; 2]>> : {stalg int}) * <<[:: 2; 2]>>
+             = 6%:R *: <<[:: 2; 2; 2; 2]>> +
+               2%:R *: <<[:: 4; 2; 2]>> +
+               2%:R *: <<[:: 2; 4; 2]>> +
+               2%:R *: <<[:: 2; 2; 4]>> + <<[:: 4; 4]>>.
+Proof.
+rewrite !stalg_mulE !(stuffle_cons, stufflenill, stufflenilr, conslE, conslD).
+rewrite !addnS /= addn0.
+move: <<[:: 2; 2; 2; 2]>> => M2222.
+move: <<[:: 2; 2; 4]>> => M224.
+move: <<[:: 2; 4; 2]>> => M242.
+move: <<[:: 4; 2; 2]>> => M422.
+rewrite !addrA; congr (_ + _).
+repeat rewrite ?[_ + M224 + M2222]addrAC ?[_ + M242 + M2222]addrAC.
+rewrite -[M2222 in LHS]scale1r -!scalerDl -!addrA; congr (_ + _) => {M2222}.
+rewrite -[M422 in LHS]scale1r -!scalerDl [RHS]addrC !addrA; congr (_ + _) => {M422}.
+rewrite [_ + M242 + M224]addrAC.
+rewrite -[M224 in LHS]scale1r -[M242 in LHS]scale1r.
+by rewrite -!scalerDl [RHS]addrC -!addrA -!scalerDl.
+Qed.
+
+End TestStuffle.
+*)
+
+Section QSymDef.
+
+Variable (R : comRingType).
+
+Definition has_zero (f : {stalg R}) := has (fun s => 0%N \in s) (msupp f).
+
+Lemma has_zeroF : has_zero 1 = false.
+Proof.
+rewrite stalg_oneE /has_zero /= msuppU oner_eq0 /=.
+by apply/hasP => /= [[s]]; rewrite inE => /eqP ->.
+Qed.
+
+Lemma stalg_not_has_zero_closed: subring_closed (predC has_zero).
+Proof.
+rewrite /has_zero; split => [|f g|f g]; rewrite !inE /= -!all_predC.
+- by apply/allP => /= s; rewrite stalg_oneE msuppU oner_eq0 inE => /eqP ->.
+- have /fsubsetP Hsub := msuppB_le f g.
+  move=> /allP /= Hf /allP /= Hg; apply/allP => /= s /Hsub.
+  by rewrite inE => /orP [/Hf|/Hg].
+- rewrite stalg_mulE; set pred := predC _.
+  rewrite /stuffle; unlock; rewrite alg_lift2P.
+  elim: (msupp f : seq _) => /= [|u sup IHsup]; first by rewrite big_nil msupp0.
+  move=> /andP [] Hu /IHsup{IHsup} Hrec HG.
+  move/(_ HG): Hrec; rewrite big_cons /=.
+  move: (\sum_(v <- sup) _) => srec {sup}.
+  set mst := \sum_(v <- _) _ => /allP /= Hrec.
+  suff {Hrec srec} /allP /= Hmst : all pred ((msupp mst) : seq _).
+    by apply/allP => /= s /mem_msuppD [/Hmst|/Hrec].
+  rewrite /mst{mst}.
+  elim: (msupp g : seq _) HG => /= [|v sup IHsup]; first by rewrite big_nil msupp0.
+  rewrite big_cons /= => /andP [] Hv /IHsup{IHsup}.
+  move: (\sum_(v <- sup) _) => srec {sup} /allP /= Hrec.
+  suff {Hrec srec} /allP /= H : all pred (msupp (stufflew R u v) : seq _).
+    apply/allP => /= s /mem_msuppD [H1 |/Hrec] //.
+    by apply H; move: H1; exact: (fsubsetP (msuppZ_le _ _)).
+  rewrite /pred{pred}; apply/allP => /= w.
+  elim: u Hu v Hv w => [| a u IHu] Hu v Hv w.
+    by rewrite stuffleNilw msuppU oner_eq0 inE => /eqP ->.
+  move: Hu; rewrite inE negb_or => /andP [] Ha Hu.
+  move/(_ Hu): IHu => Hrec.
+  elim: v Hv w => [_|b v IHv Hv] w.
+    rewrite stufflewNil msuppU oner_eq0 inE => /eqP ->.
+    by rewrite inE negb_or Ha Hu.
+  move=> /= /mem_msuppD [/mem_msuppD []|];
+           rewrite !msupp_consl => /imfsetP [] /= s Hs ->; rewrite inE negb_or.
+  - by rewrite Ha (Hrec _ Hv _ Hs).
+  - by move: Hv; rewrite inE negb_or => /andP [-> /= /IHv]; apply.
+  - have -> /= : 0%N != (a + b)%N.
+      move: Ha; case a => [|n _]; first by rewrite eq_refl.
+      by rewrite addSn.
+    by move: Hv; rewrite inE negb_or => /andP [Hb /Hrec]; apply.
+Qed.
+
 
 Definition addfl (a : nat) :=
   locked alg_lift
-         (fun u => <<((a + head 0 u) :: behead u)%N>> : {shalg R[nat]}).
+         (fun u => <<((a + head 0 u) :: behead u)%N>> : {stalg R}).
 
 Notation "a ::+ f" := (addfl a f) (at level 40).
 
@@ -735,7 +876,7 @@ Canonical addfl_linear a   := AddLinear (addfl_is_linear a).
 Lemma addfl0 a : a ::+ 0 = 0. Proof. exact: raddf0. Qed.
 Lemma addflD a q1 q2 : a ::+ (q1 + q2) = a ::+ q1 + a ::+ q2.
 Proof. exact: raddfD. Qed.
-Lemma addfl_sum a I r (P : pred I) (q : I -> {shalg R[nat]}) :
+Lemma addfl_sum a I r (P : pred I) (q : I -> {stalg R}) :
   a ::+ (\sum_(i <- r | P i) q i) = \sum_(i <- r | P i) a ::+ (q i).
 Proof. exact: raddf_sum. Qed.
 Lemma addflZ a r q : a ::+ (r *: q) = r *: (a ::+ q).
