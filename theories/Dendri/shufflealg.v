@@ -32,10 +32,22 @@ Proof. by apply/eqP/malgP => k; rewrite !mcoeffsE mulr_natr. Qed.
 
 Lemma mem_msuppD (R : ringType) (A : choiceType) a (f g : {malg R[A]}) :
   a \in msupp (f + g) -> a \in msupp f \/ a \in msupp g.
+Proof. by move/(fsubsetP (msuppD_le f g)); rewrite inE => /orP. Qed.
+
+Section Extensionality.
+
+Variables (R : eqType) (idx : R) (op : Monoid.law idx).
+
+Lemma big_neq0 (I : eqType) F (s : seq I) :
+  \big[op/idx]_(i <- s) F i != idx -> exists2 i, i \in s & F i != idx.
 Proof.
-  move=> H.
-  by have /fsubsetP/(_ _ H) := msuppD_le f g; rewrite inE => /orP.
+move=> H.
+suff: ~~ all (fun i => F i == idx) s by move/allPn => [] i Hi Hk; exists i.
+apply/contra: H => /allP H.
+by rewrite big_seq; apply/eqP/big1 => i /H/eqP.
 Qed.
+
+End Extensionality.
 
 Section MakeLinear.
 
@@ -65,7 +77,7 @@ Qed.
 
 Lemma alg_lift_is_linear f : linear (alg_lift f).
 Proof.
-move => r /= a1 a2.
+move=> r /= a1 a2.
 pose_big_fset A E.
   rewrite 3?(@alg_liftEw E) // scaler_sumr -big_split /=.
   apply eq_bigr => i _.
@@ -74,10 +86,7 @@ by close.
 Qed.
 
 Lemma alg_liftE f g : f =1 g -> alg_lift f =1 alg_lift g.
-Proof.
-rewrite /alg_lift => H x.
-by apply: eq_bigr => /= a _; rewrite H.
-Qed.
+Proof. by rewrite /alg_lift => H x; apply: eq_bigr => /= a _; rewrite H. Qed.
 
 Canonical alg_lift_additive f := Additive  (alg_lift_is_linear f).
 Canonical alg_lift_linear f   := AddLinear (alg_lift_is_linear f).
@@ -130,8 +139,7 @@ Proof. by []. Qed.
 Lemma alg_lift2E : f =2 g -> alg_lift2 f =2 alg_lift2 g.
 Proof.
 rewrite /alg_lift2 => H x y /=.
-apply: alg_liftE => a.
-exact: alg_liftE => b.
+by apply: alg_liftE => a; exact: alg_liftE => b.
 Qed.
 
 Lemma alg_lift2r_is_linear y : linear (alg_lift2r f y).
@@ -250,27 +258,22 @@ rewrite (monalgE q) !linear_sum /=; apply eq_bigr => u _.
 by rewrite -scale_malgC !linearZ /= !(conslE, rconslE) rcons_cons.
 Qed.
 
-(* There should be a shorted proof of that *)
+Lemma mcoeff_conslE a f t : (a ::| f)@_(a :: t) = f@_t.
+Proof.
+rewrite (monalgE f) !linear_sum /=; apply eq_bigr => s _.
+rewrite -scale_malgC conslZ conslE !mcoeffZ !mcoeffU /=.
+by rewrite eqseq_cons eq_refl.
+Qed.
+
 Lemma msupp_consl a f : msupp (a ::| f) = [fset a :: s | s in msupp f].
 Proof.
-apply/eqP/fset_eqP; case => /= [|b v].
-  rewrite -!mcoeff_neq0 (monalgE f) !linear_sum /=.
-  rewrite big1 => [|s _]; first last.
-    by rewrite -scale_malgC conslZ conslE mcoeffZ mcoeffU /= mulr0.
-  by rewrite eq_refl /=; apply/esym; apply/imfsetP=> [[]].
-case: (altP (b =P a)) => [-> | /negbTE Hba].
-- rewrite mem_imfset /=; last by move=> x y [].
-  rewrite -!mcoeff_neq0.
-  suff -> : (a ::| f)@_(a :: v) = f@_v by [].
-  rewrite (monalgE f) !linear_sum /=; apply eq_bigr => s _.
-  rewrite -scale_malgC conslZ conslE !mcoeffZ !mcoeffU /=.
-  by rewrite eqseq_cons eq_refl.
-- have -> S : b :: v \in [fset a :: s | s in S] = false.
-    by apply/imfsetP => []/= [x _] [] /eqP; rewrite Hba.
-  rewrite -!mcoeff_neq0 (monalgE f) !linear_sum /=.
-  apply/eqP/big1 => /= s _.
-  rewrite -scale_malgC conslZ conslE !mcoeffZ !mcoeffU /=.
-  by rewrite eqseq_cons eq_sym Hba /= mulr0.
+apply/eqP/fset_eqP => /= s; apply/idP/imfsetP => /= [|[t Ht -> {s}]].
+- rewrite -!mcoeff_neq0 {1}(monalgE f) !linear_sum /=.
+  move/big_neq0 => /= [v Hv] Hneq0; exists v => // {Hv}.
+  move: Hneq0; rewrite -scale_malgC conslZ conslE mcoeffZ mcoeffU /=.
+  case: (altP (a :: v =P s)) => [->|] //.
+  by rewrite mulr0 eq_refl.
+- by rewrite -mcoeff_neq0 mcoeff_conslE mcoeff_neq0.
 Qed.
 
 Fixpoint shufflew_aux a u shu v :=
@@ -804,59 +807,124 @@ Qed.
 End TestStuffle.
 *)
 
+
 Section QSymDef.
 
-Variable (R : comRingType).
+Context {R : comRingType}.
 
-Definition has_zero (f : {stalg R}) := has (fun s => 0%N \in s) (msupp f).
+Definition QSymP : predPredType {stalg R} :=
+  [pred f : {stalg R} | all (fun s : seq nat => 0%N \notin s) (msupp f)].
+Fact QSymP_key : pred_key QSymP. Proof. by []. Qed.
+Canonical QSymP_keyed := KeyedPred QSymP_key.
 
-Lemma has_zeroF : has_zero 1 = false.
+Lemma stufflew_zero (u v w : seq nat) :
+  0%N \notin u -> 0%N \notin v -> w \in msupp (stufflew R u v) -> 0%N \notin w.
 Proof.
-rewrite stalg_oneE /has_zero /= msuppU oner_eq0 /=.
-by apply/hasP => /= [[s]]; rewrite inE => /eqP ->.
+elim: u v w => [| a u IHu] v w Hu Hv.
+  by rewrite stuffleNilw msuppU oner_eq0 inE => /eqP ->.
+move: Hu; rewrite inE negb_or => /andP [] Ha Hu.
+move/(_ _ _ Hu): IHu => Hrec.
+elim: v Hv w => [_|b v IHv Hv] w.
+  rewrite stufflewNil msuppU oner_eq0 inE => /eqP ->.
+  by rewrite inE negb_or Ha Hu.
+move=> /= /mem_msuppD [/mem_msuppD []|];
+         rewrite !msupp_consl => /imfsetP [] /= s Hs ->; rewrite inE negb_or.
+- by rewrite Ha (Hrec _ _ Hv Hs).
+- by move: Hv; rewrite inE negb_or => /andP [-> /= /IHv]; apply.
+- rewrite eq_sym addn_eq0 eq_sym (negbTE Ha) /=.
+  by move: Hv; rewrite inE negb_or => /andP [Hb /Hrec]; apply.
 Qed.
 
-Lemma stalg_not_has_zero_closed: subring_closed (predC has_zero).
+Lemma QSymP_closed : subalg_closed QSymP.
 Proof.
-rewrite /has_zero; split => [|f g|f g]; rewrite !inE /= -!all_predC.
+split => [|r f g|f g]; rewrite !inE /=.
 - by apply/allP => /= s; rewrite stalg_oneE msuppU oner_eq0 inE => /eqP ->.
-- have /fsubsetP Hsub := msuppB_le f g.
-  move=> /allP /= Hf /allP /= Hg; apply/allP => /= s /Hsub.
-  by rewrite inE => /orP [/Hf|/Hg].
-- rewrite stalg_mulE; set pred := predC _.
-  rewrite /stuffle; unlock; rewrite alg_lift2P.
+- move=> /allP /= Hf /allP /= Hg.
+  by apply/allP => /= s /mem_msuppD [/(fsubsetP (msuppZ_le _ _))/Hf|/Hg].
+- have all_P_msuppD P (u v : {stalg R}) :
+        all P (msupp v) -> all P (msupp u) -> all P (msupp (u + v)).
+    move=> /allP/= Hv /allP/= Hu.
+    by apply/allP => /= s /mem_msuppD [/Hu |/Hv].
+  rewrite stalg_mulE /stuffle; unlock; rewrite alg_lift2P.
   elim: (msupp f : seq _) => /= [|u sup IHsup]; first by rewrite big_nil msupp0.
-  move=> /andP [] Hu /IHsup{IHsup} Hrec HG.
-  move/(_ HG): Hrec; rewrite big_cons /=.
-  move: (\sum_(v <- sup) _) => srec {sup}.
-  set mst := \sum_(v <- _) _ => /allP /= Hrec.
-  suff {Hrec srec} /allP /= Hmst : all pred ((msupp mst) : seq _).
-    by apply/allP => /= s /mem_msuppD [/Hmst|/Hrec].
-  rewrite /mst{mst}.
+  rewrite big_cons /= => /andP [] Hu /IHsup{IHsup} Hrec HG.
+  move/(_ HG)/(all_P_msuppD _ _): Hrec; apply => {sup}.
   elim: (msupp g : seq _) HG => /= [|v sup IHsup]; first by rewrite big_nil msupp0.
   rewrite big_cons /= => /andP [] Hv /IHsup{IHsup}.
-  move: (\sum_(v <- sup) _) => srec {sup} /allP /= Hrec.
-  suff {Hrec srec} /allP /= H : all pred (msupp (stufflew R u v) : seq _).
-    apply/allP => /= s /mem_msuppD [H1 |/Hrec] //.
-    by apply H; move: H1; exact: (fsubsetP (msuppZ_le _ _)).
-  rewrite /pred{pred}; apply/allP => /= w.
-  elim: u Hu v Hv w => [| a u IHu] Hu v Hv w.
-    by rewrite stuffleNilw msuppU oner_eq0 inE => /eqP ->.
-  move: Hu; rewrite inE negb_or => /andP [] Ha Hu.
-  move/(_ Hu): IHu => Hrec.
-  elim: v Hv w => [_|b v IHv Hv] w.
-    rewrite stufflewNil msuppU oner_eq0 inE => /eqP ->.
-    by rewrite inE negb_or Ha Hu.
-  move=> /= /mem_msuppD [/mem_msuppD []|];
-           rewrite !msupp_consl => /imfsetP [] /= s Hs ->; rewrite inE negb_or.
-  - by rewrite Ha (Hrec _ Hv _ Hs).
-  - by move: Hv; rewrite inE negb_or => /andP [-> /= /IHv]; apply.
-  - have -> /= : 0%N != (a + b)%N.
-      move: Ha; case a => [|n _]; first by rewrite eq_refl.
-      by rewrite addSn.
-    by move: Hv; rewrite inE negb_or => /andP [Hb /Hrec]; apply.
+  move/(all_P_msuppD _ _); apply => {sup all_P_msuppD}.
+  suff {f g} : all (fun s : seq nat => 0%N \notin s) (msupp (stufflew R u v)).
+    move/allP => /= H; apply/allP => /= x Hx; apply: H.
+    by move: x Hx; exact: (fsubsetP (msuppZ_le _ _)).
+  by apply/allP => /= w; exact: stufflew_zero.
 Qed.
 
+Canonical QSymP_opprPred := OpprPred QSymP_closed.
+Canonical QSymP_addrPred := AddrPred QSymP_closed.
+Canonical QSymP_mulrPred := MulrPred QSymP_closed.
+Canonical QSymP_zmodPred := ZmodPred QSymP_closed.
+Canonical QSymP_semiringPred := SemiringPred QSymP_closed.
+Canonical QSymP_smulrPred := SmulrPred QSymP_closed.
+Canonical QSymP_subringPred := SubringPred QSymP_closed.
+Canonical QSymP_submodPred := SubmodPred QSymP_closed.
+Canonical QSymP_algPred := SubalgPred QSymP_closed.
+
+Lemma one_QSymP : 1 \in QSymP.
+Proof. exact: rpred1. Qed.
+
+Lemma in_QSymP (c : seq nat) : 0%N \notin c -> << c >> \in QSymP.
+Proof.
+move=> H; rewrite inE msuppU oner_eq0 /=.
+by apply/allP => s; rewrite inE => /eqP ->.
+Qed.
+
+End QSymDef.
+
+Require Import composition.
+
+Section Compo.
+
+Context {R : comRingType}.
+
+Structure QSym : Type := QSymF {qsym_val : {stalg R} ; _ : qsym_val \in QSymP}.
+
+Canonical QSym_subType := [subType for qsym_val].
+Definition QSym_eqMixin := [eqMixin of QSym by <:].
+Canonical QSym_eqType := EqType QSym QSym_eqMixin.
+Definition QSym_choiceMixin := [choiceMixin of QSym by <:].
+Canonical QSym_choiceType := ChoiceType QSym QSym_choiceMixin.
+Definition QSym_zmodMixin := [zmodMixin of QSym by <:].
+Canonical QSym_zmodType := ZmodType QSym QSym_zmodMixin.
+Definition QSym_ringMixin := [ringMixin of QSym by <:].
+Canonical QSym_ringType := RingType QSym QSym_ringMixin.
+Definition QSym_lmodMixin := [lmodMixin of QSym by <:].
+Canonical QSym_lmodType := LmodType R QSym QSym_lmodMixin.
+Definition QSym_lalgMixin := [lalgMixin of QSym by <:].
+Canonical QSym_lalgType := LalgType R QSym QSym_lalgMixin.
+Definition QSym_algMixin := [algMixin of QSym by <:].
+Canonical QSym_algType := AlgType R QSym QSym_algMixin.
+
+
+Lemma compo_QSymP (c : intcomp) : << val c >> \in (QSymP (R := R)).
+Proof. by case: c => c Hc /=; exact: in_QSymP. Qed.
+Canonical compo_QSym c := QSymF (compo_QSymP c).
+Arguments compo_QSym c%N.
+
+Notation "''M_' k" := (compo_QSym (IntComp (cval := k) is_true_true))
+                              (at level 8, k at level 2, format "''M_' k").
+
+Lemma MulMex : 'M_[:: 1]%N * 'M_[:: 1]%N = 'M_[:: 2]%N + 2%:R *: 'M_[:: 1; 1]%N.
+Proof.
+apply val_inj; rewrite /= stalg_mulE.
+rewrite !(stuffle_cons, stufflenill, stufflenilr, conslE, conslD).
+by rewrite -[<<_>> in LHS]scale1r -!scalerDl addrC.
+Qed.
+
+End Compo.
+
+
+
+
+(*
 
 Definition addfl (a : nat) :=
   locked alg_lift
