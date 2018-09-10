@@ -96,7 +96,7 @@ have : fs CM (pcycle s x) != set0.
 by move/set0Pn/sigW => H; apply H.
 Qed.
 
-Definition cymapcan x := odflt (aux x) [pick y in CM (pcycle s x)].
+Local Definition cymapcan x := odflt (aux x) [pick y in CM (pcycle s x)].
 Definition cymap x := ((t ^+ (indpcycle s x)) (cymapcan x))%g.
 
 Lemma fs_pcycleP x : CM (pcycle s x) \in pcycles t.
@@ -300,10 +300,10 @@ by apply eq_count => X; rewrite !inE andbC.
 Qed.
 
 Lemma cycle_type_cyclic s :
-  (cyclic s) = (count (fun x => x != 1) (cycle_type s) == 1).
+  (s \is cyclic) = (count (fun x => x != 1) (cycle_type s) == 1).
 Proof using. by rewrite -card_pred_card_pcycles /psupport. Qed.
 
-Lemma cyclic_conjg s a : cyclic s -> cyclic (s ^ a)%g.
+Lemma cyclic_conjg s a : s \is cyclic -> (s ^ a)%g \is cyclic.
 Proof using. by rewrite !cycle_type_cyclic cycle_type_conjg. Qed.
 
 Lemma support_conjg s a : support (s ^ a) = [set a x | x in support s].
@@ -402,7 +402,7 @@ Proof using eqct. by have := fbbijP cycle_type_eq => [] [] _ ->. Qed.
 Fact conjg_pcycles_homog :
   {in pcycles s, forall C, #|fbbij (U := slpcycles s) (slpcycles t) C| = #|C| }.
 Proof using eqct. by have := fbbijP cycle_type_eq => [] []. Qed.
-Definition CMbij := PCycleMap conjg_pcycles_stab conjg_pcycles_homog.
+Local Definition CMbij := PCycleMap conjg_pcycles_stab conjg_pcycles_homog.
 Definition conjbij := cymap CMbij.
 
 End DefsFiber.
@@ -527,10 +527,9 @@ apply/andP/eqP => [[/imsetP [x _ ->]]|->].
   by rewrite -(support_perm_of_pcycle Hsize) card_support_noteq1.
 Qed.
 
-Lemma isperm_of_pcycle C : #|C| > 1 -> cyclic (perm_of_pcycle C).
+Lemma isperm_of_pcycle C : #|C| > 1 -> perm_of_pcycle C \is cyclic.
 Proof using.
-move => Hsize.
-apply /cards1P; exists C.
+move => Hsize; apply /cards1P; exists C.
 exact: psupport_of_set.
 Qed.
 

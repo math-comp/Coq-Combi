@@ -18,14 +18,14 @@
 The main goal is to show that elementary transpositions generate the symmetric
 groups as a Coxeter group. We follow the proof from Alain Lascoux "The
 Symmetric Group", unfinished notes. It is not the shortest nor the simplest,
-but it is fully explicit and algprithmic. In particular, it goes through two
+but it is fully explicit and algorithmic. In particular, it goes through two
 algorithms to
 - compute the size-lexicographically minimal reduced word of a permutation
 - straighten a word to the previous reduced word.
 
 Here are the notion defined is this file:
 - [c \is a code] == c is a list such that [c_i <= i].
-- [wordcd c] == for a code [c] the liset [0, 1-c1..1, 2-c2,..,2,..]
+- [wordcd c] == for a code [c] the list [0, 1-c1..1, 2-c2..2, ..]
 
 - [is_code_of_size c n] == the predicate [c] is a code of size [n]
 - [enum_codesz n] == a list enumerating all the code of size [n]
@@ -62,8 +62,18 @@ Here are the notion defined is this file:
 
 - [relat_Sn n g] == if [g : nat -> gT] for a [finGroupType] [gt]. A
                proposition which asserts that the relation of the symmetric
-               group hodls for the [g i]
+               group holds for the [g i] denoted ['g_i]. Namely
 
+  - [forall i, i < n -> 'g_i^+2 = 1]
+  - [forall i, i.+1 < n -> 'g_i * 'g_i.+1 * 'g_i = 'g_i.+1 * 'g_i * 'g_i.+1]
+  - [forall i j, i.+1 < j < n -> 'g_i * 'g_j = 'g_j * 'g_i]
+
+The main result is thus [Theorem presentation_Sn_eltr]:
+
+  [
+    relat_Sn ->
+    exists f : {morphism 'SG_n.+1 >-> gT}, forall i, i < n -> f 's_i = 'g_i.
+  ]
 ***************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.

@@ -13,6 +13,28 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(**
+
+This files deals with decomposition of permutation into cycles. We define the
+following notions, where [s] is a permutation over a finite type [T]:
+
+- [support s] == the set of non fixed points for [s]
+- [psupport s] == the set of the supports of the cycles of [s]
+- [s \is cyclic] == [s] is a cyclic permutation
+- [perm_dec E s] == for [E : {set {set T}}] the set of the restriction of [s]
+                    to the elements of [E].
+- [cycle_dec s] == the decomposition of [s] in cyclic permutations.
+- [disjoint_supports A] == For [A : {set {perm T}}], the element of [A]
+                    have pairwise dijoint supports.
+- [cycle_dec_spec s A] == [A] is a decomposition of [s] into disjoint cycles.
+
+The main result is Theorem [cycle_decP] which asserts that [cycle_dec s] is
+the unique decomposition of [s] into disjoint cycles:
+
+  [ unique (cycle_dec_spec s) (cycle_dec s). ]
+
+**)
+
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple path bigop finset div.
@@ -117,7 +139,7 @@ Qed.
 
 
 (* PSupport of a permutation *)
-Definition psupport s := [set x in pcycles s | #|x| != 1%N].
+Definition psupport s : {set {set T}} := [set x in pcycles s | #|x| != 1%N].
 
 Lemma in_psupportP s X x:
   reflect (exists2 X, X \in psupport s & x \in X) (s x != x).
@@ -171,11 +193,11 @@ by rewrite -{2}(expg1 s) pcycle_perm.
 Qed.
 
 (* Cyclic permutations *)
-Definition cyclic s := #|psupport s| == 1%N.
+Definition cyclic := [qualify s | #|psupport s| == 1%N].
 
 Lemma cyclicP c :
   reflect (exists2 x, x \in support c & support c = pcycle c x)
-          (cyclic c).
+          (c \is cyclic).
 Proof using.
 apply (iffP cards1P) => [[sc Hsc] | [x Hx Hsc]].
 - have:= partition_support c; rewrite Hsc => /cover_partition.
@@ -194,7 +216,7 @@ apply (iffP cards1P) => [[sc Hsc] | [x Hx Hsc]].
 Qed.
 
 Lemma cycle_cyclic t :
-  cyclic t -> cycle t = [set t ^+ i | i : 'I_#|support t|].
+  t \is cyclic -> cycle t = [set t ^+ i | i : 'I_#|support t|].
 Proof using.
 move/cyclicP => [x Hx Hsupp]; rewrite Hsupp.
 apply/setP => C; apply/cycleP/imsetP => [[i -> {C}] | [i Hi -> {C}]].
@@ -208,7 +230,7 @@ apply/setP => C; apply/cycleP/imsetP => [[i -> {C}] | [i Hi -> {C}]].
 - by exists i.
 Qed.
 
-Lemma order_cyclic t : cyclic t -> #[t] = #|support t|.
+Lemma order_cyclic t : t \is cyclic -> #[t] = #|support t|.
 Proof using.
 rewrite /order => Hcy.
 rewrite (cycle_cyclic Hcy) card_imset ?card_ord //.
@@ -323,10 +345,10 @@ Definition perm_dec (S : {set {set T}}) s : {set {perm T}} :=
   [set restr_perm X s | X in S].
 Definition cycle_dec s : {set {perm T}} := perm_dec (psupport s) s.
 
-Lemma cyclic_dec s : {in (cycle_dec s), forall C, cyclic C}.
+Lemma cyclic_dec s : {in (cycle_dec s), forall C, C \is cyclic}.
 Proof using.
 move => C /imsetP [X HX ->].
-by rewrite /cyclic psupport_restr ?cards1.
+by rewrite unfold_in psupport_restr ?cards1.
 Qed.
 
 Lemma support_cycle_dec s :
@@ -577,7 +599,7 @@ Qed.
 
 
 Lemma disjoint_supports_cycles A :
-  {in A, forall C, cyclic C} ->
+  {in A, forall C, C \is cyclic} ->
   disjoint_supports A ->
   {in A, forall C, support C \in pcycles (\prod_(C in A) C)}.
 Proof using.
@@ -597,7 +619,7 @@ Qed.
 
 
 Lemma disjoint_supports_pcycles A :
-  {in A, forall C, cyclic C} ->
+  {in A, forall C, C \is cyclic} ->
   disjoint_supports A ->
   {in psupport (\prod_(C in A) C),
     forall X, exists2 C, C \in A & support C = X}.
@@ -623,7 +645,7 @@ Qed.
 
 CoInductive cycle_dec_spec s A : Prop :=
   CycleDecSpec of
-    {in A, forall C, cyclic C} &
+    {in A, forall C, C \is cyclic} &
     disjoint_supports A &
     \prod_(C in A) C = s : cycle_dec_spec s A.
 
@@ -653,3 +675,5 @@ apply/setP => C; apply/imsetP/idP=> [| HC].
 Qed.
 
 End PermCycles.
+
+Arguments cyclic {T}.
