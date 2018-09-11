@@ -576,6 +576,144 @@ Proof.
 by apply/idP/idP; apply eq_inv_is_row; first apply eq_inv_sym; apply: eq_inv_std.
 Qed.
 
+(** * Sigma type for standard tableaux *)
+Section StdtabOfShape.
+
+Definition is_stdtab_of_shape sh := [pred t | (is_stdtab t) && (shape t == sh) ].
+Definition enum_stdtabsh sh : seq (seq (seq nat)) :=
+  map stdtab_of_yam (enum_yameval sh).
+
+Variable sh : intpart.
+
+Structure stdtabsh : Set :=
+  StdtabSh {stdtabshval :> seq (seq nat); _ : is_stdtab_of_shape sh stdtabshval}.
+
+Canonical stdtabsh_subType := Eval hnf in [subType for stdtabshval].
+Definition stdtabsh_eqMixin := Eval hnf in [eqMixin of stdtabsh by <:].
+Canonical stdtabsh_eqType := Eval hnf in EqType stdtabsh stdtabsh_eqMixin.
+Definition stdtabsh_choiceMixin := Eval hnf in [choiceMixin of stdtabsh by <:].
+Canonical stdtabsh_choiceType := Eval hnf in ChoiceType stdtabsh stdtabsh_choiceMixin.
+Definition stdtabsh_countMixin := Eval hnf in [countMixin of stdtabsh by <:].
+Canonical stdtabsh_countType := Eval hnf in CountType stdtabsh stdtabsh_countMixin.
+Canonical stdtabsh_subCountType := Eval hnf in [subCountType of stdtabsh].
+
+Let stdtabsh_enum : seq stdtabsh := pmap insub (enum_stdtabsh sh).
+
+Lemma finite_stdtabsh : Finite.axiom stdtabsh_enum.
+Proof using.
+case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
+rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
+  by rewrite isSome_insub; case: eqP=> // ->.
+move: Ht => /andP [] Htab /eqP.
+rewrite -(shape_yam_of_stdtab Htab) => Hsht.
+rewrite /enum_stdtabsh count_map.
+rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
+  move=> y /(allP (enum_yamevalP (intpartP sh))).
+  rewrite /is_yam_of_eval => /andP [] Hyam /eqP Hevy /=.
+  apply/idP/idP => /eqP H; apply/eqP.
+  + by rewrite -H stdtab_of_yamK.
+  + by rewrite H yam_of_stdtabK.
+apply: (enum_yameval_countE (intpartP sh)).
+by rewrite /is_yam_of_eval yam_of_stdtabP //= Hsht.
+Qed.
+
+Canonical stdtabsh_finMixin := Eval hnf in FinMixin finite_stdtabsh.
+Canonical stdtabsh_finType := Eval hnf in FinType stdtabsh stdtabsh_finMixin.
+Canonical stdtabsh_subFinType := Eval hnf in [subFinType of stdtabsh_countType].
+
+Lemma stdtabshP (t : stdtabsh) : is_stdtab t.
+Proof using. by case: t => /= t /andP []. Qed.
+
+Lemma shape_stdtabsh (t : stdtabsh) : shape t = sh.
+Proof using. by case: t => /= t /andP [] _ /eqP. Qed.
+
+Lemma enum_stdtabshE : map val (enum {:stdtabsh}) = enum_stdtabsh sh.
+Proof.
+rewrite enumT unlock /= /stdtabsh_enum /enum_stdtabsh.
+elim: (enum_yameval sh) (enum_yamevalP (intpartP sh)) => //= y ly IHly.
+move=> /andP [/andP [Hyam Heval] /IHly{IHly}Hrec].
+by rewrite insubT /= stdtab_of_yamP //= ?shape_stdtab_of_yam // Hrec.
+Qed.
+
+Lemma hyper_stdtabsh_subproof :
+  is_stdtab_of_shape sh (stdtab_of_yam (locked (hyper_yameval sh))).
+Proof.
+by rewrite /= stdtab_of_yamP //= shape_stdtab_of_yam // eval_yameval.
+Qed.
+Definition hyper_stdtabsh := StdtabSh hyper_stdtabsh_subproof.
+
+End StdtabOfShape.
+Hint Resolve stdtabshP.
+
+Section StdtabCombClass.
+
+Variable n : nat.
+
+Definition is_stdtab_of_n := [pred t | (is_stdtab t) && (size_tab t == n) ].
+
+Structure stdtabn : Set :=
+  StdtabN {stdtabnval :> seq (seq nat); _ : is_stdtab_of_n stdtabnval}.
+Canonical stdtabn_subType := Eval hnf in [subType for stdtabnval].
+Definition stdtabn_eqMixin := Eval hnf in [eqMixin of stdtabn by <:].
+Canonical stdtabn_eqType := Eval hnf in EqType stdtabn stdtabn_eqMixin.
+Definition stdtabn_choiceMixin := Eval hnf in [choiceMixin of stdtabn by <:].
+Canonical stdtabn_choiceType := Eval hnf in ChoiceType stdtabn stdtabn_choiceMixin.
+
+Definition stdtabn_countMixin := Eval hnf in [countMixin of stdtabn by <:].
+Canonical stdtabn_countType := Eval hnf in CountType stdtabn stdtabn_countMixin.
+Canonical stdtabnn_subCountType := Eval hnf in [subCountType of stdtabn].
+
+
+Definition enum_stdtabn : seq (seq (seq nat)) :=
+  map (stdtab_of_yam \o val) (enum ({:yamn n})).
+Let stdtabn_enum : seq stdtabn := pmap insub enum_stdtabn.
+
+Lemma finite_stdtabn : Finite.axiom stdtabn_enum.
+Proof using.
+case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
+rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
+  by rewrite isSome_insub; case: eqP=> // ->.
+move: Ht => /andP [] Htab /eqP.
+rewrite -(size_yam_of_stdtab Htab) => Hszt.
+rewrite /enum_stdtabn map_comp.
+rewrite !enumT unlock subType_seqP.
+rewrite count_map.
+rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
+  move=> y /(allP (all_unionP _ yamn_PredEq)) /=.
+  rewrite /is_yam_of_size => /andP [] Hyam /eqP Hszy /=.
+  apply/idP/idP => /eqP H; apply/eqP.
+  + by rewrite -H stdtab_of_yamK.
+  + by rewrite H yam_of_stdtabK.
+apply: (count_unionP _ yamn_PredEq).
+- exact: yamn_partition_evalseq.
+- by rewrite /is_yam_of_size yam_of_stdtabP //= Hszt.
+Qed.
+
+Canonical stdtabn_finMixin := Eval hnf in FinMixin finite_stdtabn.
+Canonical stdtabn_finType := Eval hnf in FinType stdtabn stdtabn_finMixin.
+Canonical stdtabn_subFinType := Eval hnf in [subFinType of stdtabn_countType].
+
+Lemma stdtabnP (s : stdtabn) : is_stdtab s.
+Proof using. by case: s => s /= /andP []. Qed.
+
+Lemma size_tab_stdtabn (s : stdtabn) : size_tab s = n.
+Proof using. by case: s => s /= /andP [] _ /eqP. Qed.
+
+Lemma sumn_shape_stdtabnE (Q : stdtabn) : (sumn (shape Q)) = n.
+Proof using.
+by case: Q => q; rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP.
+Qed.
+
+Lemma is_part_shape_deg (Q : stdtabn) : is_part_of_n n (shape Q).
+Proof using.
+rewrite /=; apply/andP; split.
+- by rewrite -/(size_tab _) size_tab_stdtabn.
+- apply: is_part_sht; apply stdtabP; apply: stdtabnP.
+Qed.
+Definition shape_deg (Q : stdtabn) := IntPartN (is_part_shape_deg Q).
+
+End StdtabCombClass.
+
 
 (** * Conjugate of a standard tableau *)
 Section ConjTab.
@@ -727,144 +865,6 @@ Qed.
 
 (* Eval compute in conj_tab [:: [:: 0; 1; 3; 4]; [:: 2; 5]; [:: 6]]. *)
 
-(** * Sigma type for standard tableaux *)
-Section StdtabOfShape.
-
-Definition is_stdtab_of_shape sh := [pred t | (is_stdtab t) && (shape t == sh) ].
-Definition enum_stdtabsh sh : seq (seq (seq nat)) :=
-  map stdtab_of_yam (enum_yameval sh).
-
-Variable sh : intpart.
-
-Structure stdtabsh : Set :=
-  StdtabSh {stdtabshval :> seq (seq nat); _ : is_stdtab_of_shape sh stdtabshval}.
-
-Canonical stdtabsh_subType := Eval hnf in [subType for stdtabshval].
-Definition stdtabsh_eqMixin := Eval hnf in [eqMixin of stdtabsh by <:].
-Canonical stdtabsh_eqType := Eval hnf in EqType stdtabsh stdtabsh_eqMixin.
-Definition stdtabsh_choiceMixin := Eval hnf in [choiceMixin of stdtabsh by <:].
-Canonical stdtabsh_choiceType := Eval hnf in ChoiceType stdtabsh stdtabsh_choiceMixin.
-Definition stdtabsh_countMixin := Eval hnf in [countMixin of stdtabsh by <:].
-Canonical stdtabsh_countType := Eval hnf in CountType stdtabsh stdtabsh_countMixin.
-Canonical stdtabsh_subCountType := Eval hnf in [subCountType of stdtabsh].
-
-Let stdtabsh_enum : seq stdtabsh := pmap insub (enum_stdtabsh sh).
-
-Lemma finite_stdtabsh : Finite.axiom stdtabsh_enum.
-Proof using.
-case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
-rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
-  by rewrite isSome_insub; case: eqP=> // ->.
-move: Ht => /andP [] Htab /eqP.
-rewrite -(shape_yam_of_stdtab Htab) => Hsht.
-rewrite /enum_stdtabsh count_map.
-rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
-  move=> y /(allP (enum_yamevalP (intpartP sh))).
-  rewrite /is_yam_of_eval => /andP [] Hyam /eqP Hevy /=.
-  apply/idP/idP => /eqP H; apply/eqP.
-  + by rewrite -H stdtab_of_yamK.
-  + by rewrite H yam_of_stdtabK.
-apply: (enum_yameval_countE (intpartP sh)).
-by rewrite /is_yam_of_eval yam_of_stdtabP //= Hsht.
-Qed.
-
-Canonical stdtabsh_finMixin := Eval hnf in FinMixin finite_stdtabsh.
-Canonical stdtabsh_finType := Eval hnf in FinType stdtabsh stdtabsh_finMixin.
-Canonical stdtabsh_subFinType := Eval hnf in [subFinType of stdtabsh_countType].
-
-Lemma stdtabshP (t : stdtabsh) : is_stdtab t.
-Proof using. by case: t => /= t /andP []. Qed.
-
-Lemma shape_stdtabsh (t : stdtabsh) : shape t = sh.
-Proof using. by case: t => /= t /andP [] _ /eqP. Qed.
-
-Lemma enum_stdtabshE : map val (enum {:stdtabsh}) = enum_stdtabsh sh.
-Proof.
-rewrite enumT unlock /= /stdtabsh_enum /enum_stdtabsh.
-elim: (enum_yameval sh) (enum_yamevalP (intpartP sh)) => //= y ly IHly.
-move=> /andP [/andP [Hyam Heval] /IHly{IHly}Hrec].
-by rewrite insubT /= stdtab_of_yamP //= ?shape_stdtab_of_yam // Hrec.
-Qed.
-
-Lemma hyper_stdtabsh_subproof :
-  is_stdtab_of_shape sh (stdtab_of_yam (locked (hyper_yameval sh))).
-Proof.
-by rewrite /= stdtab_of_yamP //= shape_stdtab_of_yam // eval_yameval.
-Qed.
-Definition hyper_stdtabsh := StdtabSh hyper_stdtabsh_subproof.
-
-End StdtabOfShape.
-Hint Resolve stdtabshP.
-
-Section StdtabCombClass.
-
-Variable n : nat.
-
-Definition is_stdtab_of_n := [pred t | (is_stdtab t) && (size_tab t == n) ].
-
-Structure stdtabn : Set :=
-  StdtabN {stdtabnval :> seq (seq nat); _ : is_stdtab_of_n stdtabnval}.
-Canonical stdtabn_subType := Eval hnf in [subType for stdtabnval].
-Definition stdtabn_eqMixin := Eval hnf in [eqMixin of stdtabn by <:].
-Canonical stdtabn_eqType := Eval hnf in EqType stdtabn stdtabn_eqMixin.
-Definition stdtabn_choiceMixin := Eval hnf in [choiceMixin of stdtabn by <:].
-Canonical stdtabn_choiceType := Eval hnf in ChoiceType stdtabn stdtabn_choiceMixin.
-
-Definition stdtabn_countMixin := Eval hnf in [countMixin of stdtabn by <:].
-Canonical stdtabn_countType := Eval hnf in CountType stdtabn stdtabn_countMixin.
-Canonical stdtabnn_subCountType := Eval hnf in [subCountType of stdtabn].
-
-
-Definition enum_stdtabn : seq (seq (seq nat)) :=
-  map (stdtab_of_yam \o val) (enum ({:yamn n})).
-Let stdtabn_enum : seq stdtabn := pmap insub enum_stdtabn.
-
-Lemma finite_stdtabn : Finite.axiom stdtabn_enum.
-Proof using.
-case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
-rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
-  by rewrite isSome_insub; case: eqP=> // ->.
-move: Ht => /andP [] Htab /eqP.
-rewrite -(size_yam_of_stdtab Htab) => Hszt.
-rewrite /enum_stdtabn map_comp.
-rewrite !enumT unlock subType_seqP.
-rewrite count_map.
-rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
-  move=> y /(allP (all_unionP _ yamn_PredEq)) /=.
-  rewrite /is_yam_of_size => /andP [] Hyam /eqP Hszy /=.
-  apply/idP/idP => /eqP H; apply/eqP.
-  + by rewrite -H stdtab_of_yamK.
-  + by rewrite H yam_of_stdtabK.
-apply: (count_unionP _ yamn_PredEq).
-- exact: yamn_partition_evalseq.
-- by rewrite /is_yam_of_size yam_of_stdtabP //= Hszt.
-Qed.
-
-Canonical stdtabn_finMixin := Eval hnf in FinMixin finite_stdtabn.
-Canonical stdtabn_finType := Eval hnf in FinType stdtabn stdtabn_finMixin.
-Canonical stdtabn_subFinType := Eval hnf in [subFinType of stdtabn_countType].
-
-Lemma stdtabnP (s : stdtabn) : is_stdtab s.
-Proof using. by case: s => s /= /andP []. Qed.
-
-Lemma size_tab_stdtabn (s : stdtabn) : size_tab s = n.
-Proof using. by case: s => s /= /andP [] _ /eqP. Qed.
-
-Lemma sumn_shape_stdtabnE (Q : stdtabn) : (sumn (shape Q)) = n.
-Proof using.
-by case: Q => q; rewrite /is_stdtab_of_n /= => /andP [] H /= /eqP.
-Qed.
-
-Lemma is_part_shape_deg (Q : stdtabn) : is_part_of_n n (shape Q).
-Proof using.
-rewrite /=; apply/andP; split.
-- by rewrite -/(size_tab _) size_tab_stdtabn.
-- apply: is_part_sht; apply stdtabP; apply: stdtabnP.
-Qed.
-Definition shape_deg (Q : stdtabn) := IntPartN (is_part_shape_deg Q).
-
-End StdtabCombClass.
-
 Lemma conj_stdtabnP n (t : stdtabn n):
   is_stdtab_of_n n (conj_tab t).
 Proof.
@@ -897,10 +897,11 @@ by exists (stdtabshcast (conj_intpartK sh) \o conj_stdtabsh) => t;
      have:= stdtabshP t => /andP [].
 Qed.
 
-(* TODO: Ask why the canonical conj_intpart work for conj_stdtabsh and not here
-This is probably where phantom are needed to trigger a unification. *)
+(** The canonical conj_intpart work for conj_stdtabsh and not here...  TODO:
+rewrite the interface of stdtabsh to triger a unification (see eg what is done
+for tuple). *)
 Lemma card_stdtabsh_conj_part (sh : intpart) :
-  #|{:stdtabsh (conj_intpart sh)}| = #|{:stdtabsh sh}|.
+  #|{:stdtabsh [the intpart of conj_part sh]}| = #|{:stdtabsh sh}|.
 Proof. by symmetry; apply: (bij_card (conj_stdtabsh_bij sh)). Qed.
 
 Hint Resolve stdtabnP stdtabshP.
