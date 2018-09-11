@@ -24,6 +24,9 @@ algorithms to
 - straighten a word to the previous reduced word.
 
 Here are the notion defined is this file:
+
+*** Notion of code
+
 - [c \is a code] == c is a list such that [c_i <= i].
 - [wordcd c] == for a code [c] the list [0, 1-c1..1, 2-c2..2, ..]
 
@@ -31,17 +34,26 @@ Here are the notion defined is this file:
 - [enum_codesz n] == a list enumerating all the code of size [n]
 - [codesz n] == sigma type for codes of size [n], canonically a [finType]
 
+*** Elementary tranpositions
+
 - [eltr n i] == the i-th elementary transposition in ['S_n.+1]
 - [invset s] == the set of inversion of [s]
 - [length s] == the number of inversion of [s] we show latter that this is the
                 Coxeter length of [s]
+
+*** Inverse Lehmer code
 
 - [cocode s] == the recursively defined Lehmer code of [s^-1]
 - [canword s] == the canonical reduced word for [s] as a [seq 'I_n]
 - [prods_codesz c] == the product [eltr n i] associated to the code [c] that
                 is for [i <- wordcd c]. Lemma [prods_codesz_bij] shows that it
                 is a bijection from [codesz n.+1] to ['S_n.+1].
+
+*** Reduced words
+
 - [w \is reduced] == [w] is a word of size [lenght 's_[w]].
+
+*** Braid relations
 
 - [braid_aba]    == the braid rewriting rule [a a.+1 a == a.+1 a a.+1]
 - [braidC]       == the braid rewriting rule [a b == b a] if |b - a| > 1
@@ -53,12 +65,16 @@ Here are the notion defined is this file:
 - [reduce u v]   == [u] reduces to [v] using the rule [[:: i i] -> [::]]
 - [braidred u v] == either [u =Br v] or [reduce u v]
 
+*** The algorithms
+
 - [inscode c i] == the insertion the letter [i] in the code [c]. If [c] is the
                code for the permutation [s] then it is the code for the
                permutation [s * 's_i]
 - [path_catl p w] == append [w] to all the sequences of [p] that is
                      [[seq v ++ w | v <- p]]
 - [straighten w] == the straigtened reduced word equivalent to [w]
+
+*** The presentation
 
 - [relat_Sn n g] == if [g : nat -> gT] for a [finGroupType] [gt]. A
                proposition which asserts that the relation of the symmetric
