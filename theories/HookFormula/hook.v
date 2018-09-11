@@ -1235,7 +1235,7 @@ Corollary Corollary4_eq :
   p != [::] :> seq nat ->
   \sum_(i <- rem_corners p) (HLF (decr_nth_part p i)) = HLF p.
 Proof using.
-move=> /Corollary4; rewrite -mulr_suml => /quot_eq1 <-.
+move=> /Corollary4; rewrite -mulr_suml => /divr1_eq <-.
 apply eq_big_seq => i; rewrite mem_filter => /andP [] Hi _.
 by rewrite /= /decr_nth_part_def Hi.
 Qed.
