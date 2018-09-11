@@ -13,8 +13,22 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * Integer Compositions
+(** * Integer Compositions.
 
+- [is_comp s] == [s] is a composition, ie. [s] doesn't contains any 0
+- [intcomp] == a sigma type for [is_comp]
+
+- [is_comp_of_n sm s] == [s] is a composition of sum [sm]
+- [intcompn sm] == a sigma type for the predicate [is_comp_of_n sm].
+               this is canonically a [subFinType]
+
+- [rowcomp d] == the trivial composition
+- [rowcompn d] == the trivial composition as a [intcompn d]
+
+- [colcomp d] == the composition [[:: 1; 1; ...]]
+- [colcompn d] == the composition [[:: 1; 1; ...]] as a [intcompn d]
+
+- [partn_of_compn n c] == the partition in 'P_n associated with [c : intcompn n]
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
@@ -25,7 +39,6 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 
 
-(** * Integer Composition *)
 (** ** Definitions and basic properties *)
 Section Defs.
 
@@ -33,7 +46,7 @@ Implicit Type s : seq nat.
 
 Definition is_comp s := 0 \notin s.
 
-  (** Compositions and sumn *)
+(** Compositions and sumn *)
 Lemma comp0 s : is_comp s -> sumn s = 0 -> s = [::].
 Proof. by rewrite /is_comp; case: s => //= [[|a] l]. Qed.
 
@@ -48,7 +61,6 @@ End Defs.
 
 
 (** * Sigma Types for Compositions *)
-
 Structure intcomp : Type := IntComp {cval :> seq nat; _ : is_comp cval}.
 Canonical intcomp_subType := Eval hnf in [subType for cval].
 Definition intcomp_eqMixin := Eval hnf in [eqMixin of intcomp by <:].
@@ -229,12 +241,12 @@ Proof. subst m; by case: p. Qed.
 Definition rowcomp d := if d is _.+1 then [:: d] else [::].
 Fact rowcompnP d : is_comp_of_n d (rowcomp d).
 Proof. case: d => [//= | d]; by rewrite /is_comp_of_n /= addn0 eq_refl. Qed.
-Definition rowcompn d : intcompn d := IntCompN (rowcompnP d).
+Canonical rowcompn d : intcompn d := IntCompN (rowcompnP d).
 
 Definition colcomp d := nseq d 1%N.
 Fact colcompnP d : is_comp_of_n d (colcomp d).
 Proof. by elim: d => [| d ]. Qed.
-Definition colcompn d : intcompn d := IntCompN (colcompnP d).
+Canonical colcompn d : intcompn d := IntCompN (colcompnP d).
 
 (* TODO : bijection with set and cardinality 
 Lemma card_intcompn n : #|{:intcompn n}| = 2 ^ (n.-1).

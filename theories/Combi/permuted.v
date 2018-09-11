@@ -193,6 +193,7 @@ apply val_inj => /=; apply eq_from_tnth => /= i.
 by rewrite {1}Hs !tnth_mktuple permKV.
 Qed.
 
+(** ** The stabilizer of a tuple under permutation *)
 Lemma stab_tuple_prod :
   'C[wp | pact] =
   (\prod_(x : seq_sub w) perm_ong_group [set i | tnth w i == val x])%G.
