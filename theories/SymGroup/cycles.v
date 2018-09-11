@@ -13,7 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(**
+(** * The Cycle Decomposition of a Permutation
 
 This files deals with decomposition of permutation into cycles. We define the
 following notions, where [s] is a permutation over a finite type [T]:
@@ -57,7 +57,7 @@ Implicit Type (s : {perm T}).
 Implicit Type (X : {set T}).
 Implicit Type (A : {set {perm T}}).
 
-(* Support of a permutation *)
+(** ** Support of a permutation *)
 Definition support s := ~: 'Fix_('P)([set s]).
 
 Lemma in_support s x : (x \in support s) = (s x != x).
@@ -138,7 +138,7 @@ apply/idP/idP.
 Qed.
 
 
-(* PSupport of a permutation *)
+(** ** psupport of a permutation *)
 Definition psupport s : {set {set T}} := [set x in pcycles s | #|x| != 1%N].
 
 Lemma in_psupportP s X x:
@@ -192,7 +192,7 @@ rewrite -!eq_pcycle_mem => /eqP <-.
 by rewrite -{2}(expg1 s) pcycle_perm.
 Qed.
 
-(* Cyclic permutations *)
+(** ** Cyclic permutations *)
 Definition cyclic := [qualify s | #|psupport s| == 1%N].
 
 Lemma cyclicP c :
@@ -243,7 +243,7 @@ Qed.
 
 
 
-(* Complement about restr_perm *)
+(** Complement about restr_perm *)
 Lemma support_restr_perm_incl X s :
   support (restr_perm X s) \subset X.
 Proof using.
@@ -340,7 +340,7 @@ apply/idP/idP => [HY | /eqP -> {Y}].
 Qed.
 
 
-(* Decomposition of a permutation by restriction to disjoint stable subsets *)
+(** * Decomposition of a permutation by restriction to disjoint stable subsets *)
 Definition perm_dec (S : {set {set T}}) s : {set {perm T}} :=
   [set restr_perm X s | X in S].
 Definition cycle_dec s : {set {perm T}} := perm_dec (psupport s) s.
@@ -363,6 +363,7 @@ apply/setP => X; apply/imsetP/idP.
   by apply/imsetP; exists X.
 Qed.
 
+(** ** Disjoint support and commutation *)
 Definition disjoint_supports A :=
   trivIset [set support C| C in A] /\ {in A &, injective support}.
 
@@ -485,9 +486,11 @@ have {Hx} Hnotin : {in A :\ C, forall C0 : {perm T}, x \notin support C0}.
 have Hin : forall i : {perm T}, (i \in A) && (i != C) -> i \in <<A>>.
   by move => c /andP [Hi _]; apply: mem_gen.
 have abel := abelian_disjoint_supports Hdisj.
+(* We tranfert the computation in the Z-module associated [abel] *)
+(* Product in the group become commutative sum in the Z-module   *)
 rewrite [X in fun_of_perm X](_ :
            _ = val (\sum_(C0 in A) fmod abel C0)%R); first last.
-  rewrite -morph_prod; last by move=> i; apply: mem_gen.
+  rewrite -morph_prod /=; last by move=> i; apply: mem_gen.
   rewrite -[LHS](fmodK abel) //.
   by apply group_prod => i; apply: mem_gen.
 rewrite (bigD1 C) //= GRing.addrC -morph_prod //=.
@@ -495,6 +498,7 @@ rewrite -fmodM /=; [ | exact: group_prod | exact: mem_gen].
 rewrite fmodK; first last.
   apply groupM; last exact: mem_gen.
   exact: group_prod.
+(* Back in symmetric group computation *)
 rewrite {abel Hin Hdisj HC} permM; congr fun_of_perm.
 apply big_rec; first by rewrite perm1.
 move=> i S Hi {2}<-; rewrite permM; congr fun_of_perm.
@@ -643,6 +647,7 @@ case: (boolP (x \in support (\prod_(C in A) C))) => [Hin|].
   by rewrite Hcontra cards1.
 Qed.
 
+(** ** Cycle decomposition of a permutation *)
 CoInductive cycle_dec_spec s A : Prop :=
   CycleDecSpec of
     {in A, forall C, C \is cyclic} &
@@ -654,7 +659,7 @@ Proof using.
 split; first by constructor;
     [ exact: cyclic_dec |  exact: disjoint_cycle_dec | exact: cycle_decE].
 move=> A [Hcy Hdisj Hprod].
-apply/setP => C; apply/imsetP/idP=> [| HC].
+apply/setP => /= C; apply/imsetP/idP=> /= [| HC].
 - rewrite -{1}Hprod => [] [X HX1] ->.
   have:= disjoint_supports_pcycles Hcy Hdisj HX1 => [] [x Hx].
   rewrite -{1}(support_restr_perm HX1).

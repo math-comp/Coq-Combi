@@ -13,7 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(**
+(** * The Centralizer of a Permutation
 
 The main goal is to understand the structure of the centralizer group of a
 given permutation [s], compute its cardinality and deduce the cardinality
@@ -87,6 +87,7 @@ Hint Resolve pcycle_id.
 Local Notation "''SC_' i " := (finset (fun x => #{x} == i))
     (at level 0).
 
+(** ** Support and cycle in the centralizer *)
 Section PermCycles.
 
 Variable T : finType.
@@ -169,6 +170,7 @@ case: (boolP (z \in (pcycle c x))) => [/pcycleP [j -> {z}]|].
   by move: Hz; rewrite -Hsupp in_support negbK => /eqP /permX_fix ->.
 Qed.
 
+(** ** The cyclic centralizer *)
 Notation "''CC' ( s )" :=
   'C_('C[s])(pcycles s | ('P)^* ) (format "''CC' ( s )") : group_scope.
 
@@ -271,6 +273,9 @@ rewrite order_cyclic; last by rewrite unfold_in (psupport_restr HX) cards1.
 by rewrite support_restr_perm.
 Qed.
 
+
+
+(** ** Permuting the cycles among themselves *)
 Definition stab_ipcycles s : {set {perm {set T}}} :=
   perm_ong (pcycles s) :&:
     \bigcap_(i : 'I_#|T|.+1) 'N(pcycles s :&: 'SC_i | 'P).
@@ -279,6 +284,7 @@ Definition stab_ipcycles s : {set {perm {set T}}} :=
 Definition inpcycles s : {perm T} -> {perm {set T}} :=
   restr_perm (pcycles s) \o actperm 'P^*.
 (* inpcycles is canonicaly a group morphism *)
+
 
 Section CM.
 
@@ -505,6 +511,7 @@ rewrite -(mulKg str t); apply mem_mulg.
   by rewrite actpermE /= -actM mulVg act1.
 Qed.
 
+(** * Main theorem *)
 Theorem cent1_permE s :
   'C[s] = 'CC(s) ><| (permcycles s) @* (stab_ipcycles s).
 Proof using.
@@ -532,6 +539,7 @@ Qed.
 
 Local Open Scope nat_scope.
 
+(** ** Conjucacy class cardinality *)
 Definition zcard l :=
   \prod_(i <- l) i * \prod_(i < (sumn l).+1) (count_mem (i : nat) l)`!.
 

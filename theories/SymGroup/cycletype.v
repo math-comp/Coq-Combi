@@ -13,6 +13,53 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * Cycle type and conjugacy classes in the symmetric groups
+
+This files deals with cycle type of permutations. We define the following
+notions, where [s] is a permutation over a finite type [T]:
+
+- [canpcycle s x] == a chosen canonical element in the cycle of [x]
+- [indpcycle s x] == the position of [x] in its cycle wrt [canpcycle s x]
+
+*** Cycle maps:
+
+- [pcycles_map s t] == if [s] and [t] are respectively two permutations of
+              two fintype [U] and [V], then [pcycles_map s t] is a record for
+              maps [{set U} -> {set V}], sending cycles of [s] of a given size
+              to cycles of [t] of the same size.
+- [cymap P] == if [P : pcycles_map s t] then [cymap P] is a map [U -> V]
+              which commute with [s] and [t]:
+
+              [ Lemma cymapP x : cymap (s x) = t (cymap x). ]
+
+              moreover, [cymap P] sends canonical to canonical [canpcycle_cymap].
+
+*** Cycle Type:
+
+- [cycle_type s] == the cycle typle of [s] as a ['P_#|T|].
+- [conjbij s t pf] == if [pf : cycle_type s = cycle_type t], a bijection [U -> V]
+              which commute with [s] and [t]
+
+The main results here is Theorem [conj_permP] which says that
+two permutations are conjugate if and only if they have the same cycle type:
+
+ [ reflect (exists c, t = (s ^ c)%g) (cycle_type s == cycle_type t). ]
+
+We moreover show that there exists permutations in each partitions:
+
+- [perm_of_pcycle C] == a cyclic permutation with support [C]
+- [perm_of_setpart P] == a permutation whose cycle supports are the part of
+              the set partition [P]
+- [permCT p] == a permutation of cycle type [p : P_#|T|].
+- [classCT p] == the set of permutations of cycle type [p : P_#|T|].
+
+*** Central functions:
+
+- ['1_[p]] == the class function associated to [p : P_#|T|].
+- [partnCT p] == cast a [p : 'P_#|'I_n|] to a ['P_n].
+- [cycle_typeSn s] == the cycle type in ['P_n] of a permutations in ['S_n].
+
+*)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset path bigop.
@@ -75,6 +122,7 @@ Proof using. rewrite /indpcycle; by case: ex_minnP => i /eqP. Qed.
 
 End CanPCycle.
 
+(** * Cycle maps *)
 Section PCycleBijection.
 
 Variables (U V : finType).
@@ -164,13 +212,6 @@ Qed.
 
 End PCycleBijection.
 
-
-Fact pcycles_stab_id (U : finType) (s : {perm U}) :
-  id @: pcycles s \subset pcycles s.
-Proof using. by rewrite imset_id. Qed.
-Definition CMid (U : finType) (s : {perm U}) :=
-  @PCycleMap U U s s id (pcycles_stab_id s) (fun x _ => erefl #|x|).
-
 Lemma cymapE (U V : finType) (s : {perm U}) (t : {perm V})
       (CM1 CM2 : pcycles_map s t) :
    {in pcycles s, CM1 =1 CM2} -> cymap CM1 =1 cymap CM2.
@@ -212,11 +253,14 @@ Lemma cymapK (U V : finType)
   {in pcycles u, cancel CM CMi} -> cancel (cymap CM) (cymap CMi).
 Proof using.
 move=> H x /=.
+have pcycles_stab_id (s : {perm U}) : id @: pcycles s \subset pcycles s.
+  by rewrite imset_id.
+pose CMid s := PCycleMap (pcycles_stab_id s) (fun x _ => erefl #|x|).
 rewrite [LHS](cymap_comp (CMuw := (CMid u))); first exact: cymap_id.
-move=> y Hy /=; exact: H.
+by move=> y Hy /=; exact: H.
 Qed.
 
-
+(** * Cycle type and conjugacy classes *)
 Section CycleTypeConj.
 
 Variable T : finType.
@@ -353,13 +397,15 @@ Import finmodule.FiniteModule morphism.
 Lemma cycle_dec_conjg s a:
   [set (c ^ a)%g | c in cycle_dec s] = cycle_dec (s ^ a)%g.
 Proof using.
-have abel : abelian <<[set (c ^ a)%g | c in cycle_dec s]>>.
-  apply abelian_disjoint_supports; apply: disjoint_supports_conjg.
-  exact: disjoint_cycle_dec.
 apply esym; apply cycle_decP; constructor => [x /imsetP [x0 Hx0 ->]||].
 - by apply: cyclic_conjg; apply: cyclic_dec; apply: Hx0.
 - by apply: disjoint_supports_conjg; apply disjoint_cycle_dec.
-- rewrite [LHS](_ : _ =
+- have abel : abelian <<[set (c ^ a)%g | c in cycle_dec s]>>.
+  apply abelian_disjoint_supports; apply: disjoint_supports_conjg.
+  exact: disjoint_cycle_dec.
+ (* We tranfert the computation in the Z-module associated [abel] *)
+ (* Product in the group become commutative sum in the Z-module   *)
+  rewrite [LHS](_ : _ =
     val (\sum_(i in [set (c ^ a)%g | c in cycle_dec s]) fmod abel i)%R);
       first last.
     rewrite -(morph_prod [morphism of fmod abel]);
@@ -376,11 +422,8 @@ Qed.
 
 End CycleTypeConj.
 
-
-Definition fibered_part (T : finType) (P : {set {set T}}) :=
-  FiberedSet set0 P (fun x => #{x}).
-
-Definition slpcycles (T : finType) (s : {perm T}) := fibered_part (pcycles s).
+Local Definition slpcycles (T : finType) (s : {perm T}) :=
+  FiberedSet set0 (pcycles s) (fun x => #{x}).
 
 Lemma fiber_slpcycleE (T : finType) (s : {perm T}) i :
   #|fiber (slpcycles s) i| = count_mem i (cycle_type s).
@@ -405,6 +448,9 @@ Proof using eqct. by have := fbbijP cycle_type_eq => [] []. Qed.
 Local Definition CMbij := PCycleMap conjg_pcycles_stab conjg_pcycles_homog.
 Definition conjbij := cymap CMbij.
 
+Lemma conjbijP x : conjbij (s x) = t (conjbij x).
+Proof. exact: cymapP. Qed.
+
 End DefsFiber.
 
 Lemma conjbijK
@@ -427,7 +473,7 @@ Proof using.
 apply (iffP eqP) => [/(congr1 val)/= eqct | [x ->]].
 - have conjbij_inj := can_inj (conjbijK eqct).
   exists (perm conjbij_inj); rewrite -permP => x.
-  rewrite !permM permE /= /conjbij cymapP.
+  rewrite !permM permE /= conjbijP.
   by rewrite -/(conjbij eqct) -(permE conjbij_inj) permKV.
 - by rewrite cycle_type_conjg.
 Qed.
@@ -689,6 +735,7 @@ Qed.
 Import GroupScope GRing.Theory.
 Local Open Scope ring_scope.
 
+(** * Cycle indicator *)
 Section CFunIndicator.
 
 Variable ct : 'P_#|T|.
@@ -721,6 +768,7 @@ Import GroupScope GRing.Theory.
 Local Open Scope ring_scope.
 
 
+(** ** Central function for ['S_n] *)
 Section Sn.
 
 Variable n : nat.
