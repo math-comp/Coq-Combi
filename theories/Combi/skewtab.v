@@ -13,7 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * Skew tableau and yamanouchi words:
+(** * Skew tableau and skew yamanouchi words:
 
 - [is_skew_yam inn out y] == [y ++ y0] is Yamanouchi of evaluation [out] for
          any [y0] of evaluation [inn].
@@ -27,8 +27,6 @@
 - [hb_strip inn out] == [inn/out] is an horizontal border strip.
 - [vb_strip inn out] == [inn/out] is a vertical border strip.
 ******)
-
-
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop path.
@@ -39,6 +37,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+(** ** Skew Yamanouchi words *)
 Open Scope N.
 Open Scope Combi.
 
@@ -133,6 +132,7 @@ rewrite (decr_nthK (is_part_skew_yam Hpart Hskew) Hcorn).
 exact: included_trans.
 Qed.
 
+(** ** Skew tableaux *)
 Section Dominate.
 
 Variable T : inhOrdType.
@@ -307,6 +307,7 @@ rewrite -(size_map size) => H.
 by rewrite /skew_reshape (outer_shapeK H) -shape_rev flattenK revK.
 Qed.
 
+(** ** Horizontal and vertical border strips *)
 Fixpoint hb_strip inner outer :=
   if inner is inn0 :: inn then
     if outer is out0 :: out then
@@ -551,6 +552,7 @@ Qed.
 
 End Dominate.
 
+(** ** Skewing and joining tableaux *)
 Section FilterLeqGeq.
 
 Variable T : inhOrdType.
@@ -835,6 +837,7 @@ Qed.
 
 End FilterLeqGeq.
 
+(** ** Standardisation of a tableau *)
 Section EqInvSkewTab.
 
 Implicit Type T : inhOrdType.

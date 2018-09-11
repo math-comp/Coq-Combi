@@ -18,20 +18,30 @@
 We define the notion of (semistandard) Young tableau over an [ordType]
 denoted [T].
 
-- [is_row r] == r is sorted
-- [dominate u v] == u dominate v, that is v is longer than u and
-            the i-th letter of u is strictly larger than the i-th letter of v.
-            this is a order.
-- [is_tableau t] == t of type [(seq (seq T))] is a tableau that is a sequence
-                    of non empty rows which is sorted for the dominate order.
-- [get_tab t r c] == the element of t of coordinate (r c), or [inhabitant T]
-                    if (r, c) is not is the tableau
-- [to_word t] == the row reading of the tableau t
-- [size_tab t] == the size (number of boxes) of t
-- [filter_gtnX_tab n t] == the sub-tableau of t formed by the element smaller
-                   than [n].
+- [is_row r] == [r] is sorted
+- [dominate u v] == [u] dominate [v], that is [v] is longer than [u] and
+            the i-th letter of [u] is strictly larger than the i-th letter of [v].
+            this is an order relation on [seq T].
+- [is_tableau t] == [t] of type [(seq (seq T))] is a tableau that is a sequence
+            of non empty rows which is sorted for the dominate order.
+- [get_tab t r c] == the element of [t] of coordinate [(r, c)], or [inhabitant T]
+            if [(r, c)] is not is the tableau
+- [to_word t] == the row reading of the tableau [t]
+- [size_tab t] == the size (number of boxes) of [t]
+- [filter_gtnX_tab n t] == the sub-tableau of [t] formed by the element smaller
+            than [n].
 
-- [tabsh_reading sh w] == w is the row reading of a tableau of shape sh
+- [tabsh_reading sh w] == [w] is the row reading of a tableau of shape [sh]
+
+In the following tableaux are considered on ['I_n.+1] for a given [n].
+
+- [is_tab_of_shape sh t] == [t] is a tableau of shape [sh].
+- [tabsh sh] == a sigma-type for the predicate [is_tab_of_shape sh] where
+            [sh] is a partition of [d] (type ['P_d]). This is canonically
+            a [subFinType].
+- [tabrowconst pf] == if [pf] is a proof that [size sh <= n.+1] then
+            construct the tableau (of type [tabsh sh]) whose i-th row
+            contains only [i]'s as elements of ['I_n.+1].
 *****)
 
 Require Import mathcomp.ssreflect.ssreflect.
@@ -466,6 +476,7 @@ End Tableau.
 
 Prenex Implicits is_tableau to_word size_tab.
 
+(** ** Row reading of tableaux *)
 Section TableauReading.
 
 Variable A : inhOrdType.
@@ -493,6 +504,7 @@ Qed.
 End TableauReading.
 
 
+(** ** Sigma type for tableaux *)
 Section FinType.
 
 Variable n : nat.
@@ -500,7 +512,7 @@ Variable n : nat.
 Variable d : nat.
 Variable sh : 'P_d.
 
-Definition is_tab_of_shape sh :=
+Definition is_tab_of_shape (sh : seq nat) :=
   [pred t | (is_tableau (T := [inhOrdType of 'I_n.+1]) t) && (shape t == sh) ].
 
 Structure tabsh : predArgType :=
@@ -643,7 +655,7 @@ End FinType.
 
 Hint Resolve tabshP.
 
-
+(** ** Tableaux and increasing maps *)
 Section IncrMap.
 
 Variable T1 T2 : inhOrdType.

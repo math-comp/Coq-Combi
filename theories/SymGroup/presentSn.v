@@ -13,7 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** 
+(** * The Coxeter Presentation of the Symmetric Group
 
 The main goal is to show that elementary transpositions generate the symmetric
 groups as a Coxeter group. We follow the proof from Alain Lascoux "The

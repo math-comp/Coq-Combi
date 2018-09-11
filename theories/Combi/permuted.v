@@ -14,14 +14,6 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import tuple bigop path div finset binomial.
-From mathcomp Require Import perm fingroup action gproduct.
-
-Require Import tools combclass sorted partition composition multinomial.
-Require Import permcomp cycles.
-
 (** * The list of the permuted tuple of a given tuple
 
 The main goal is to show that, given a sequence [s] over an [eqType] there
@@ -41,11 +33,20 @@ are only finitely many sequences [s'] which are a permutation of [s] (that is
 
 The main result is the cardinality of the set of permuted of a tuple expressed
 as a multinomial [card_permuted_multinomial].
- *)
+**************)
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
+From mathcomp Require Import tuple bigop path div finset binomial.
+From mathcomp Require Import perm fingroup action gproduct.
+
+Require Import tools combclass sorted partition composition multinomial.
+Require Import permcomp cycles.
+
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 
+(** ** Enumeration of the permutation of a tuple *)
 Section Permuted.
 
 Variable T : eqType.
@@ -101,6 +102,7 @@ Proof using. exact: perm_eq_permuted_tuple. Qed.
 End Permuted.
 
 
+(** ** Permutation of a tuple as a fintype *)
 Section FinType.
 
 Variable T : countType.
@@ -143,12 +145,11 @@ Import GroupScope.
 
 There is no use defining an action on general tuple because most of the lemmas
 on actions assume that the type acted upon is a [finType]. We could require
-that the underlying type is a [fintype] so that the set of tuple is a
+moreover that the underlying type is a [fintype] so that the set of tuple is a
 [fintype] too, but the use we have in mind is [T = nat] allowing to deal with
 the action on monomials. Instead of that, we decide to act only on the sigma
 type [permuted].
-
-*)
+*******)
 
 
 Section ActOnTuple.

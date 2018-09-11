@@ -13,35 +13,39 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** Standard words : words wich are permutations of [0, 1, ..., n-1]:
+(** * Standard words
 
-- [is_std s] == s is a standard word
-- [is_std_of_n n s] == s is a standard word of size n
+That is words wich are permutations of [0, 1, ..., n-1]:
+
+- [is_std s] == [s] is a standard word
+- [is_std_of_n n s] == [s] is a standard word of size [n]
 - [wordperm p] == the standard word associated with a permutation [p] of ['S_n]
 
 Sigma types for standard word
 
-- [stdwordn n] == a type for [seq nat] which standard words size n;
+- [stdwordn n] == a type for [seq nat] which standard words size [n];
                   it is canonically a [finType]
 
 Inversions and standardisation of a word over a totally ordered alphabet
 
 - [std s] == given a word w over an [ordType] returns the standard word with
              the same set of inversion (lemmas [stdP] and [std_eq_invP])
-- [versions w i j] == i j is an non-inversion of w that is
+- [versions w i j] == [i j] is an non-inversion of [w] that is
                         <<i <= j < size w and w_i <= w_j>>
 
-- [eq_inv w1 w2] == w1 and w2 have the same versions which is equivalent
-                    to the same set of inversions; in particular w1 and w2
+- [eq_inv w1 w2] == [w1] and [w2] have the same versions which is equivalent
+                    to the same set of inversions; in particular [w1] and [w2]
                     have the same size.
+
+- [std_spec s p] == [p] is a standard word with the same versions as [s]
 
 The main result here is [std_eq_invP] which says that having the same inversions
 is the same as having the same standardized.
 
-- [linvseq s t] == t is the left inverse of s
-- [invseq s t] == s and t are inverse on of each other
-- [invstd w] == the inverse of the standardized of w that is the permutation
-                which sorts w in a stable way.
+- [linvseq s t] == [t] is the left inverse of [s]
+- [invseq s t] == [s] and [t] are inverse on of each other
+- [invstd w] == the inverse of the standardized of [w] that is the permutation
+                which sorts [w] in a stable way.
 
 *****)
 Require Import mathcomp.ssreflect.ssreflect.

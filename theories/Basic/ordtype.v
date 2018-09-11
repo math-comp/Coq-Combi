@@ -13,6 +13,10 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * Ordered type
+
+Most of this should be merge with Cyril Cohen's [order].
+ *)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype choice fintype seq.
 From mathcomp Require Import finset div.

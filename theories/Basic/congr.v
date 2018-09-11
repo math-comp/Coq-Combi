@@ -13,12 +13,6 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype seq.
-From mathcomp Require Import path tuple.
-Require Import Recdef.
-Require Import permcomp permuted multinomial vectNK.
-(******************************************************************************)
 (** * Equivalence and congruence closure of a rewriting rule on words
 
 If what follows a relation on T is a term of type [rel T] and a rewriting rule
@@ -35,7 +29,7 @@ congruence closure as well as its congruence classes. We therefore suppose
 that equivalence classes are _finite_. This also ensure that the generated
 equivalence relation is decidable by bounding the length of the rewriting
 paths. Concretely, this is done by requiring that [rule] is included in a
-refexive relation [invar] which is invariant by rewriting rule, that is:
+reflexive relation [invar] which is invariant by rewriting rule, that is:
 
   [Hypothesis Hinvar : forall x0 x, invar x0 x -> all (invar x0) (rule x).]
 
@@ -73,6 +67,14 @@ the congruence transitive closure of rule. The main results here are
 - [gencongr_ind] : induction principle on classes for gencongr, any property
                    preserved along the rewriting rule holds for classes.      *)
 (******************************************************************************)
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype seq.
+From mathcomp Require Import path tuple.
+Require Import Recdef.
+Require Import permcomp permuted multinomial vectNK.
+
+From mathcomp Require Import fingraph.
+
 
 
 Set Implicit Arguments.
@@ -603,7 +605,7 @@ End InvarContMultHom.
 Section InvarContHom.
 
 Variable Alph : finType.
-Notation word := (seq_eqType Alph).
+Notation word := (seq Alph).
 
 Variable rule : word -> seq word.
 Let szinvar (u : word) := [pred v : word | size v == size u].

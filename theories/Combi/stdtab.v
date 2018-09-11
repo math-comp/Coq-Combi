@@ -14,6 +14,73 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * Standard Tableaux
+
+We define the following notions:
+
+- [append_nth t b i] == [t] with [b] appended to its [i]-th row
+
+- [is_stdtab t] == [t] is a *standard tableau* that is a tableau whose
+            row reading is a standard word
+- [last_big t b] == the index of the first row of [t] which ends with [b]
+- [remn t] == remove the largest entry ie [n] from a standard tableau os size [n]
+- [conj_tab t] == the conjugate standard tableau of [t] (this is indeed a tableau
+            when [t] is itself a standard tableau.
+
+Bijection between Yamanouchi words and standard tableau
+
+- [stdtab_of_yam y] == the standard tableau associated to [y]
+- [yam_of_stdtab t] == the Yamanouchi words associated to [t]
+
+Sigma type for standard tableaux:
+
+- [is_stdtab_of_shape sh] == a predicate for standard tableau of shape [sh].
+- [stdtabsh sh] == a sigma type for [is_stdtab_of_shape sh] where [sh] is an
+             integer partition (of type [intpart]). This is canonically a
+             [subFinType].
+
+- [is_stdtab_of_n n] == a predicate for standard tableau of size [n]
+- [stdtabn n] == a sigma type for [is_stdtab_of_n n].  This is canonically a
+             [subFinType].
+
+- [shape_deg t] == if t is of type [stdtabn n], the shape of [t] in the
+             sigma type ['P_n]
+
+- [hyper_stdtabsh sh] == the hyperstandard tableau of shape [sh : intpart],
+             that is the tableau obtained by filling the rows with consecutive
+             numbers, from bottom to top (in French conventions)
+
+- [conj_stdtabn t] == the conjugate of [t : stdtabn n] in type [stdtabn n]
+- [conj_stdtabsh t] == the conjugate of [t : stdtabsh sh]
+             in type [stdtabsh (conj_intpart sh)]
+
+
+Among the main results are the fact that [stdtab_of_yam] and [yam_of_stdtab]
+are two converse bijections. That is:
+
+- [Lemma stdtab_of_yamP y : is_yam y -> is_stdtab (stdtab_of_yam y).]
+
+- [Theorem stdtab_of_yamK y : is_yam y -> yam_of_stdtab (stdtab_of_yam y) = y.]
+
+- [Lemma yam_of_stdtabP t : is_stdtab t -> is_yam (yam_of_stdtab t).]
+
+- [Theorem yam_of_stdtabK t : is_stdtab t -> stdtab_of_yam (yam_of_stdtab t) =
+t.]
+
+Moreover, these bijections preserve the shape and therefore the size:
+
+- [Lemma shape_stdtab_of_yam y : shape (stdtab_of_yam y) = evalseq y.]
+
+- [Lemma shape_yam_of_stdtab t : is_stdtab t -> evalseq (yam_of_stdtab t) =
+shape t.]
+
+- [Lemma size_stdtab_of_yam y : size_tab (stdtab_of_yam y) = size y.]
+
+- [Lemma size_yam_of_stdtab t : is_stdtab t -> size (yam_of_stdtab t) = size_tab
+t.]
+
+                                                                              *)
+(******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 From mathcomp Require Import finset perm fingroup.
@@ -25,36 +92,6 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-(******************************************************************************)
-(** Bijection between Yamanouchi words and standard tableau                   *)
-(*                                                                            *)
-(** is_stdtab t == t is a *standard tableau* that is a tableau whose
-                                               row reading is a standard word *)
-(*                                                                            *)
-(** Main results:                                                             *)
-(*                                                                            *)
-(** Bijections : [stdtab_of_yam] and [yam_of_stdtab]
-
-[Lemma   stdtab_of_yamP y : is_yam y    -> is_stdtab (stdtab_of_yam y).]
-
-[Theorem stdtab_of_yamK y : is_yam y    -> yam_of_stdtab (stdtab_of_yam y) = y.]
-
-[Lemma   yam_of_stdtabP t : is_stdtab t -> is_yam (yam_of_stdtab t).]
-
-[Theorem yam_of_stdtabK t : is_stdtab t -> stdtab_of_yam (yam_of_stdtab t) = t.]
-
-The bijections preserve the shape and therefore the size:
-
-[Lemma shape_stdtab_of_yam y : shape (stdtab_of_yam y) = evalseq y.]
-
-[Lemma shape_yam_of_stdtab t : is_stdtab t -> evalseq (yam_of_stdtab t) = shape t.]
-
-[Lemma size_stdtab_of_yam y  : size_tab (stdtab_of_yam y) = size y.]
-
-[Lemma size_yam_of_stdtab t  : is_stdtab t -> size (yam_of_stdtab t) = size_tab t.]
-
-                                                                              *)
-(******************************************************************************)
 
 Section AppendNth.
 
@@ -162,6 +199,7 @@ Qed.
 
 End AppendNth.
 
+(** * Bijection standard tableau <-> Yamanouchi words *)
 Section Bijection.
 
 Implicit Type y : seq nat.
@@ -539,6 +577,7 @@ by apply/idP/idP; apply eq_inv_is_row; first apply eq_inv_sym; apply: eq_inv_std
 Qed.
 
 
+(** * Conjugate of a standard tableau *)
 Section ConjTab.
 
 Variable T : inhOrdType.
@@ -688,6 +727,7 @@ Qed.
 
 (* Eval compute in conj_tab [:: [:: 0; 1; 3; 4]; [:: 2; 5]; [:: 6]]. *)
 
+(** * Sigma type for standard tableaux *)
 Section StdtabOfShape.
 
 Definition is_stdtab_of_shape sh := [pred t | (is_stdtab t) && (shape t == sh) ].
@@ -698,6 +738,7 @@ Variable sh : intpart.
 
 Structure stdtabsh : Set :=
   StdtabSh {stdtabshval :> seq (seq nat); _ : is_stdtab_of_shape sh stdtabshval}.
+
 Canonical stdtabsh_subType := Eval hnf in [subType for stdtabshval].
 Definition stdtabsh_eqMixin := Eval hnf in [eqMixin of stdtabsh by <:].
 Canonical stdtabsh_eqType := Eval hnf in EqType stdtabsh stdtabsh_eqMixin.
@@ -856,7 +897,8 @@ by exists (stdtabshcast (conj_intpartK sh) \o conj_stdtabsh) => t;
      have:= stdtabshP t => /andP [].
 Qed.
 
-(* TODO: Ask why the canonical conj_intpart work for conj_stdtabsh and not here *)
+(* TODO: Ask why the canonical conj_intpart work for conj_stdtabsh and not here
+This is probably where phantom are needed to trigger a unification. *)
 Lemma card_stdtabsh_conj_part (sh : intpart) :
   #|{:stdtabsh (conj_intpart sh)}| = #|{:stdtabsh sh}|.
 Proof. by symmetry; apply: (bij_card (conj_stdtabsh_bij sh)). Qed.

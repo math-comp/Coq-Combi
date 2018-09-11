@@ -1,5 +1,4 @@
 (** * Combi.Combi.subseq : Subsequence of a sequence as a fintype *)
-
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -14,6 +13,16 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** ** Subsequence of a sequence as a [fintype]
+We define a sigma-type [subseqs w] for subsequence of a given sequence [w]
+We show that [subseqs w] is canonically a [finType]. We define the three
+following constructor
+
+- [Subseqs Pf] == construct a [subseqs w] from a proof [subseq x w].
+- [sub_nil w] == the empty sequence [[::]] as a [subseqs w].
+- [sub_full w] == [w] as as a [subseqs w].
+
+ *)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat.
 From mathcomp Require Import eqtype choice fintype seq path.
@@ -33,9 +42,9 @@ Variable (T : eqType).
 Implicit Type s w : seq T.
 Implicit Type a b l : T.
 
-Lemma subseq_rcons_eq s w l : subseq s w <-> subseq (rcons s l) (rcons w l).
+Lemma subseq_rcons_eq s w l : subseq s w = subseq (rcons s l) (rcons w l).
 Proof using.
-split.
+apply/idP/idP.
 - by rewrite -!cats1 => H; apply: cat_subseq => //=; rewrite (eq_refl _).
 - elim: w s => [|w0 w IHw s] /=.
   by case=> //= s0 s; case (altP (s0 =P l)) => _ //=; rewrite rcons_nilF.

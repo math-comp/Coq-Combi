@@ -1,4 +1,4 @@
-(** * Combi.Combi.multinomials : Multinomial Coefficients *)
+(** * Combi.Combi.multinomial : Multinomial Coefficients *)
 (******************************************************************************)
 (*       Copyright (C) 2016 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -14,6 +14,13 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 (** * Multinomial Coefficients
+
+We define:
+- 'C[s] == the multinomial coefficient associated to the sequence [s].
+
+The main expression is Lemma [multinomial_factd]:
+
+  [ 'C[s] = (sumn s)`! %/ \prod_(i <- s) i`!. ]
 
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
