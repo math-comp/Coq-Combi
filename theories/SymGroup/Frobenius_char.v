@@ -65,8 +65,6 @@ Local Notation algCF := [numFieldType of algC].
 Section NVar.
 
 Variable nvar0 : nat.
-Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
-Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
 Local Notation nvar := nvar0.+1.
 
 Section Defs.
@@ -215,7 +213,7 @@ rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) !linear_sum; apply eq_bigr => /= l _.
 rewrite cfextprod_suml homsymprod_suml !linear_sum; apply eq_bigr => /= k _.
 do 2 rewrite [in RHS]linearZ /= Fchar_ncfuniCT.
 rewrite cfextprodZr cfextprodZl homsymprodZr homsymprodZl !scalerA.
-rewrite 2!linearZ /= Ind_ncfuniCT linearZ /= Fchar_ncfuniCT /=; congr (_ *: _).
+rewrite 2!linearZ /= ncfuniCT_Ind linearZ /= Fchar_ncfuniCT /=; congr (_ *: _).
 by apply val_inj => /=; rewrite prod_genM.
 Qed.
 
@@ -324,7 +322,7 @@ Qed.
 (** Substracting characters *)
 Lemma rem_irr1 n (xi phi : 'CF('SG_n)) :
   xi \in irr 'SG_n -> phi \is a character -> '[phi, xi] != 0 ->
-       phi - xi \is a character.
+     phi - xi \is a character.
 Proof.
 move=> /irrP [i ->{xi}] Hphi.
 rewrite -irr_consttE => /(constt_charP i Hphi) [psi Hpsi ->{phi Hphi}].
@@ -332,16 +330,16 @@ by rewrite [_ + psi]addrC addrK.
 Qed.
 
 Lemma rem_irr n (xi phi : 'CF('SG_n)) :
-  xi \in irr 'SG_n -> phi \is a character -> phi - '[phi, xi] *: xi \is a character.
+  xi \in irr 'SG_n -> phi \is a character ->
+     phi - '[phi, xi] *: xi \is a character.
 Proof.
 move=> Hxi Hphi.
 have /CnatP [m Hm] := Cnat_cfdot_char Hphi (irrWchar Hxi).
 rewrite Hm.
 elim: m phi Hphi Hm => [|m IHm] phi Hphi Hm; first by rewrite scale0r subr0.
-rewrite mulrS scalerDl scale1r opprD addrA.
-apply IHm; first last.
-  by rewrite cfdotBl Hm irrWnorm // mulrS [1 + _]addrC addrK.
-by apply rem_irr1; rewrite //= Hm Num.Theory.pnatr_eq0.
+rewrite mulrS scalerDl scale1r opprD addrA; apply: IHm.
+- by apply rem_irr1; rewrite //= Hm Num.Theory.pnatr_eq0.
+- by rewrite cfdotBl Hm irrWnorm // mulrS [1 + _]addrC addrK.
 Qed.
 
 Lemma irrSG_orthonormal n (la mu : 'P_n) :
@@ -373,7 +371,7 @@ rewrite big_cons /= => /andP [Hl0l Huniq] /andP [Hl0 Hall].
 rewrite [X in 'M[la] - X]addrC opprD addrA.
 have {IHl Huniq Hall} := IHl Huniq Hall.
 set Frec := 'M[la] - _ => HFrec.
-suff -> : '['M[la], 'irrSG[l0]] = '[Frec, 'irrSG[l0]].
+suff {IHla} -> : '['M[la], 'irrSG[l0]] = '[Frec, 'irrSG[l0]].
   by apply rem_irr => //; apply: IHla.
 rewrite {HFrec}/Frec /= cfdotBl /=.
 rewrite cfdot_suml big_seq big1 ?cfdot0l ?subr0 // => mu Hmu.
@@ -418,7 +416,7 @@ Theorem Frobenius_char_coord n (la mu : 'P_n) :
   'irrSG[la] (permCT mu) =
   coord 'hs (enum_rank la) ('hp[mu] : {homsym algC[n.-1.+1, n]}).
 Proof.
-(* TODO simplify me  and factor with proof of homsymdotss *)
+(* TODO simplify me and factor with proof of homsymdotss *)
 pose HSC := {homsym algC[n.-1.+1, n]}.
 pose HSR := {homsym rat[n.-1.+1, n]}.
 symmetry.
@@ -461,13 +459,12 @@ Proof.
 rewrite -/Vanprod Vanprod_alt.
 case: n la mu => [//|n] //= la mu.
   (* This case is trivial and the proof is awful !!! *)
-  rewrite !intpartn0 big_nil mulr1 /mpart /rho //=.
   have Hmon f : [multinom f i | i < 0] = 0%MM by apply mnmP => [[i Hi]].
-  rewrite !{}Hmon addm0.
+  rewrite !intpartn0 big_nil mulr1 /mpart /rho //= !{}Hmon addm0.
   rewrite /alternpol (big_pred1 1%g); first last.
     by move=> s /=; apply/esym/eqP/permP => [[i Hi]].
   rewrite odd_perm1 /= msym1m expr0 scale1r mcoeffX eq_refl /=.
-  suff -> : 'irrSG[la] = 1 by rewrite (permS0 (permCT mu)) cfun11.
+  suff {mu} -> : 'irrSG[la] = 1 by rewrite (permS0 (permCT mu)) cfun11.
   apply (can_inj (FcharK (leqSpred 0))).
   rewrite Fchar_invK //= Fchar_triv.
   apply val_inj; rewrite /= syms0.
@@ -495,7 +492,7 @@ rewrite (eq_bigr
   rewrite (nth_map (rowpartn n)); last by rewrite -cardE ltn_ord.
   by congr (_ *: 'hs[_]); apply enum_val_nth.
 rewrite coord_sum_free ?enum_rankK // ?KostkaStd //.
-exact: (basis_free (symbs_basis _ (leqSpred _))).
+exact: basis_free (symbs_basis _ (leqSpred _)).
 Qed.
 
 Theorem dim_cfReprSG n (la : 'P_n) d (rG : mx_representation algCF 'SG_n d) :

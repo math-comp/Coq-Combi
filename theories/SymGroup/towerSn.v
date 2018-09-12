@@ -15,17 +15,51 @@
 (******************************************************************************)
 (** * The Tower of the Symmetric Groups
 
+*** External product of class functions:
+
+We fix two groups [G] and [H]. Then we define:
+
 - [f \ox g] = [cfextprod g h]  == the external product of class function,
-                that is a term of type ['CF(setX G H)] when [g : 'CF(G)] and
+                defined by [f \ox g (u, v) := f u * f v] for [(u, v) in G * H].
+                It is of of type ['CF(setX G H)] when [g : 'CF(G)] and
                 [h : 'CF(H)].
 - [cfextprodr g h] == [cfextprod h g]
-- [extprod_repr P Q] == the external product of matrix representation.
+- [extprod_repr rG rH] == the external product (tensor product) of matrix
+                representation. Its character is the external product of the
+                character of [rG] and [rH].
+
+
+*** The tower of the symmetric groups
 
 - [tinj]     == the tower injection morphism : 'S_m * 'S_n -> 'S_(m + n)
+- [f \o^ g]  == the image along tinj of external product of f g.
 
-- [zcoeff p] == The cardinality of the centralizator of any permutation of
-                cycle type [p] in [algC], that is [#|'S_k| / #|class p|].
-- [ncfuniCT p] == the normalized indicator class function for cycle type [p].
+*** Induction and restriction of class functions
+
+- ['z_p] == [zcoeff p] == The cardinality of the centralizer of any
+                permutation of cycle type [p] in [algC], that is
+                [#|'S_k| / #|class p|].
+- ['1z_p] = [ncfuniCT p] == the normalized cycle indicator class function
+                for cycle type [p].
+
+The two main results are:
+
+- Theorem [cfuni_Res] which expands the restriction to ['S_m * 'S_n]
+  of the cycle indicator class function ['1_[l]]:
+
+  [
+    'Res[tinj @* ('dom tinj)] '1_[l] =
+    \sum_(pp | l == pp.1 +|+ pp.2) '1_[pp.1] \o^ '1_[pp.2].
+  ]
+
+  by Frobenius duality it implies:
+
+- Theorem [ncfuniCT_Ind] which expands the induction of two normalized
+  cycle indicator class functions
+
+  [
+    'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]) = '1z_[p +|+ q].
+  ]
  *)
 
 Require Import mathcomp.ssreflect.ssreflect.
@@ -317,11 +351,8 @@ End TowerMorphism.
 
 Arguments tinj {m n} s.
 
-Notation "f \o^ g" := (cfIsom (isom_tinj _ _) (cfextprod f g)) (at level 40).
 
-
-
-(** The tower is associative (upto isomorphism) with unit *)
+(** ** The tower is associative (upto isomorphism) with unit *)
 Section Assoc.
 
 Variables m n p : nat.
@@ -372,10 +403,9 @@ case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= -cast_permE.
   by apply val_inj; rewrite /= addnA.
 Qed.
 
-Local Notation ct := cycle_typeSn.
-
 Lemma cycle_type_tinjC (s : 'S_m) (t : 'S_n) :
-  ct (tinj (s, t)) = ct (cast_perm (esym (addnC m n)) (tinj (t, s))).
+  cycle_typeSn (tinj (s, t)) =
+  cycle_typeSn (cast_perm (esym (addnC m n)) (tinj (t, s))).
 Proof.
 rewrite !cast_cycle_typeSN !cycle_type_tinj /=.
 apply val_inj; rewrite [RHS]cast_intpartnE !union_intpartnE /=.
@@ -384,6 +414,9 @@ by rewrite perm_catC.
 Qed.
 
 End Assoc.
+
+
+Notation "f \o^ g" := (cfIsom (isom_tinj _ _) (f \ox g)) (at level 40).
 
 Local Open Scope ring_scope.
 
@@ -513,7 +546,7 @@ Qed.
 Definition zcoeff (k : nat) (p : 'P_k) : algC :=
   #|'SG_k|%:R / #|classCT p|%:R.
 
-Local Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
+Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 
 Lemma zcoeffE k (l : 'P_k) : zcoeff l = (zcard l)%:R.
 Proof.
@@ -530,7 +563,7 @@ Hint Resolve neq0zcoeff.
 
 Definition ncfuniCT (k : nat) (p : 'P_k) := 'z_p *: '1_[p].
 
-Local Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
+Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
 
 Lemma ncfuniCT_gen k (f : 'CF('SG_k)) :
   f = \sum_(p : 'P_k) f (permCT p) / 'z_p *: '1z_[p].
@@ -567,7 +600,7 @@ rewrite setIid big1 ?addr0.
   by rewrite partnCTE !CTpartnK pct.
 Qed.
 
-(** Application of Frobenius duality : cfdot_Res_r *)
+(** Application of Frobenius duality : [cfdot_Res_r] *)
 Lemma cfdot_Ind_cfuniCT p q (l : 'P_(m + n)) :
   '[ 'Ind['SG_(m + n)] ('1_[p] \o^ '1_[q]), '1_[l] ] =
   (p +|+ q == l)%:R / 'z_p / 'z_q.
@@ -578,7 +611,7 @@ transitivity
     #|(classX p q) :&: (classX i.1 i.2)|%:R / #|SnXm|%:R : algC).
   apply eq_bigr => i _; rewrite !cfextprod_cfuni.
   by rewrite cfdot_cfuni //=; apply: class_normal; rewrite !inE.
-case: (boolP (_ == _)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
+case: (boolP (p +|+ q == l)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
 - rewrite (bigD1 (p, q)) /=; last by rewrite eq_sym.
   rewrite setIid big1.
     rewrite addr0 classXE !cardsX natrM /zcoeff.
@@ -605,7 +638,7 @@ rewrite 2!mulrA mulrC mulrA [X in (X * _)]mulrC -invfM divff ?mul1r.
 by apply mulf_neq0.
 Qed.
 
-Theorem Ind_ncfuniCT p q :
+Theorem ncfuniCT_Ind p q :
   'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]) = '1z_[p +|+ q].
 Proof using.
 apply/cfunP => /= x; rewrite cfunE.
@@ -615,5 +648,8 @@ by case: (boolP (_ == _)) => [/eqP ->|] //=; rewrite !mulr0.
 Qed.
 
 End Induction.
+
+Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
+Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
 
 Hint Resolve neq0zcoeff.
