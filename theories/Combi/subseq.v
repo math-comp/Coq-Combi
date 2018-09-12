@@ -13,7 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** ** Subsequence of a sequence as a [fintype]
+(** * Subsequence of a sequence as a [fintype]
 We define a sigma-type [subseqs w] for subsequence of a given sequence [w]
 We show that [subseqs w] is canonically a [finType]. We define the three
 following constructor
@@ -78,7 +78,7 @@ Qed.
 End RCons.
 
 
-(** ** Subsequence of a sequence as a [fintype]                                *)
+(** * Subsequence of a sequence as a [fintype]                                *)
 (**
 We define a dependent type [SubSeq w] and provide it with a Canonical
 [finType] structure
@@ -180,7 +180,7 @@ End Fintype.
 
 Require Import sorted.
 
-(** ** Relating sub sequences of [iota] and being sorted *)
+(** * Relating sub sequences of [iota] and being sorted *)
 Lemma sorted_subseq_iota_rcons s n : subseq s (iota 0 n) = sorted ltn (rcons s n).
 Proof.
 apply/idP/idP.

@@ -21,7 +21,7 @@ notions, where [s] is a permutation over a finite type [T]:
 - [canpcycle s x] == a chosen canonical element in the cycle of [x]
 - [indpcycle s x] == the position of [x] in its cycle wrt [canpcycle s x]
 
-*** Cycle maps:
+Cycle maps:
 
 - [pcycles_map s t] == if [s] and [t] are respectively two permutations of
               two fintype [U] and [V], then [pcycles_map s t] is a record for
@@ -34,7 +34,7 @@ notions, where [s] is a permutation over a finite type [T]:
 
               moreover, [cymap P] sends canonical to canonical [canpcycle_cymap].
 
-*** Cycle Type:
+Cycle Type:
 
 - [cycle_type s] == the cycle typle of [s] as a ['P_#|T|].
 - [conjbij s t pf] == if [pf : cycle_type s = cycle_type t], a bijection [U -> V]
@@ -53,13 +53,13 @@ We moreover show that there exists permutations in each partitions:
 - [permCT p] == a permutation of cycle type [p : P_#|T|].
 - [classCT p] == the set of permutations of cycle type [p : P_#|T|].
 
-*** Central functions:
+Central functions:
 
 - ['1_[p]] == the class function associated to [p : P_#|T|].
 - [partnCT p] == cast a [p : 'P_#|'I_n|] to a ['P_n].
 - [cycle_typeSn s] == the cycle type in ['P_n] of a permutations in ['S_n].
 
-*)
+**********)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset path bigop.

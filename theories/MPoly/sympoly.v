@@ -18,7 +18,7 @@
 - {sympoly R[n]} == the ring of symmetric polynomial in [n] variable over [R].
 - [sympol f] == the coercion from [{sympoly R[n]}] to [{mpoly R[n]}]
 
-*** Classical bases
+Classical bases
 
 - ['e_k] == the [k]-th elementary symmetric polynomial
 - ['h_k] == the [k]-th complete homogeneous symmetric polynomial
@@ -37,12 +37,12 @@
              on ['g_[mu]] assuming that [co : forall d : nat, 'P_d -> R] gives
              the coefficients of ['f_i] on ['g_[mu]] then 
 
-*** Change of scalars
+Change of scalars
 
 - [map_sympoly M] == the ring morphism [{sympoly R[n]} -> {sympoly S[n]}]
              obtained by the change of scalar [M : {rmorphism R -> S}]
 
-*** Formula for basis changes
+Formula for basis changes
 
 - [perm_partn la] == the number of composition which are permuted of [la]
 - [prod_partsum la] == the product of the sum of all the prefix of [la]
@@ -58,7 +58,7 @@ of a basis element of [syma] in [symb]
 - h and p : [symh_to_symp] and Newton's formula [Newton_symh]
 
 
-*** Change of the number of variable
+Change of the number of variable
 
 - [sympolyf R m] == the algebra morphism expanding any symetric polynomial
              (in [{sympoly R[m]}]) as a polynomial in the ['e_i]
@@ -238,7 +238,7 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
   (at level 40, left associativity, format "m # s").
 
 
-(** *** Elementary symmetric polynomials *)
+(** ** Elementary symmetric polynomials *)
 (* From  mpoly.v : \sum_(h : {set 'I_n} | #|h| == k) \prod_(i in h) 'X_i. *)
 Fact syme_sym d : mesym n R d \is symmetric.
 Proof using. exact: mesym_sym. Qed.
@@ -257,7 +257,7 @@ Lemma syme_homog d : sympol 'e_d \is d.-homog.
 Proof using. by rewrite mesym_homog. Qed.
 
 
-(** *** Complete homogeneous symmetric polynomials *)
+(** ** Complete homogeneous symmetric polynomials *)
 Definition symh_pol_bound b d : {mpoly R[n]} :=
   \sum_(m : 'X_{1..n < b} | mdeg m == d) 'X_[m].
 Definition symh_pol d : {mpoly R[n]} := symh_pol_bound d.+1 d.
@@ -292,7 +292,7 @@ Lemma symh_homog d : sympol 'h_d \is d.-homog.
 Proof using. by apply rpred_sum => m /eqP H; rewrite dhomogX /= H. Qed.
 
 
-(** *** Power sum symmetric polynomials *)
+(** ** Power sum symmetric polynomials *)
 Definition symp_pol d  : {mpoly R[n]} := \sum_(i < n) 'X_i ^+ d.
 Fact symp_sym d : symp_pol d \is symmetric.
 Proof using.
@@ -315,7 +315,7 @@ by rewrite mul1n.
 Qed.
 
 
-(** *** Monomial symmetric polynomials *)
+(** ** Monomial symmetric polynomials *)
 Definition symm_pol (sh : n.-tuple nat) : {mpoly R[n]} :=
   (\sum_(p : permuted sh) 'X_[Multinom p] ).
 Lemma mcoeff_symm_pol sh m : (symm_pol sh)@_m = (perm_eq sh m)%:R.
@@ -469,7 +469,7 @@ Lemma symm_unique0 d c :
   forall l : 'P_d, (size l <= n)%N -> c l = 0.
 Proof. by move=> /esym/symm_unique => H l /H ->; rewrite mcoeff0. Qed.
 
-(** *** Basis at degree 0 *)
+(** ** Basis at degree 0 *)
 Lemma syme0 : 'e_0 = 1.
 Proof using. by apply val_inj; rewrite /= mesym0E. Qed.
 
@@ -491,7 +491,7 @@ by rewrite mpolyX0.
 Qed.
 
 
-(** *** All basis agrees at degree 1 *)
+(** ** All basis agrees at degree 1 *)
 Lemma syme1 : val ('e_1) = \sum_(i < n) 'X_i.
 Proof using. by rewrite /= mesym1E. Qed.
 
@@ -531,7 +531,7 @@ Notation "''h_' k" := (symh _ _ k).
 Notation "''p_' k" := (symp _ _ k).
 Notation "''m[' k ]" := (symm _ _ k).
 
-(** *** Schur symmetric polynomials *)
+(** ** Schur symmetric polynomials *)
 Section Schur.
 
 Variable n0 : nat.

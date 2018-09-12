@@ -15,7 +15,7 @@
 (******************************************************************************)
 (** * The Tower of the Symmetric Groups
 
-*** External product of class functions:
+External product of class functions:
 
 We fix two groups [G] and [H]. Then we define:
 
@@ -29,12 +29,12 @@ We fix two groups [G] and [H]. Then we define:
                 character of [rG] and [rH].
 
 
-*** The tower of the symmetric groups
+The tower of the symmetric groups
 
 - [tinj]     == the tower injection morphism : 'S_m * 'S_n -> 'S_(m + n)
 - [f \o^ g]  == the image along tinj of external product of f g.
 
-*** Induction and restriction of class functions
+Induction and restriction of class functions
 
 - ['z_p] == [zcoeff p] == The cardinality of the centralizer of any
                 permutation of cycle type [p] in [algC], that is
@@ -60,7 +60,7 @@ The two main results are:
   [
     'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]) = '1z_[p +|+ q].
   ]
- *)
+***************)
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.

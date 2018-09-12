@@ -63,7 +63,7 @@ Import OrdNotations.
 Open Scope nat_scope.
 
 
-(** * Standard words *)
+(** * Standard words and permutations *)
 Section StandardWords.
 
 Implicit Type n : nat.
