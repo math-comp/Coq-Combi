@@ -14,8 +14,14 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 (** A proof of the Erdös Szekeres theorem about longest increassing and
-decreassing subsequences. We prove it as a corollary of Greene's theorem on
-the Robinson-Schensted correspondance.  *****)
+decreassing subsequences. The theorem is [Erdos_Szekeres] and
+says that any sequence [s] of length at least [n*m+1] over a totally ordered
+type admit
+- either a nondecreasing subsequence of length [n+1];
+- or a strictly decreasing subsequence of length [m+1].
+We prove it as a corollary of Greene's theorem on the Robinson-Schensted
+correspondance. Note that there are other proof which require less theory.
+ *****)
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
@@ -65,7 +71,7 @@ exists sol; repeat split.
 Qed.
 
 Theorem Erdos_Szekeres (m n : nat) (s : seq T) :
-  (size s) > (m * n) ->
+  size s > m * n ->
   (exists t, subseq t s /\ sorted leqX t /\ size t > m) \/
   (exists t, subseq t s /\ sorted gtnX t /\ size t > n).
 Proof using .
