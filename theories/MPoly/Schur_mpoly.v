@@ -17,10 +17,10 @@
 
 - [Schur n0 R la] == The Schur polynomial associated to the partition [la] in
                      [{mpoly R[n0.+1]}] as the sum of all tableau of shape
-                     [la] over the alphabet ['I_n0.+1]. 
+                     [la] over the alphabet ['I_n0.+1].
 
-We give some values for particular partition such as row and column.
- *)
+We give some values for particular partition such as small one, rows and columns.
+***********)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop ssralg path perm fingroup.
@@ -56,6 +56,20 @@ rewrite -[RHS]big_filter.
 by rewrite (eq_big_perm _ (to_word_enum_tabsh _ sh)).
 Qed.
 
+Lemma tabwordshape_row d (w : d.-tuple 'I_n) :
+  tabsh_reading (rowpartn d) w = sorted leq [seq val i | i <- w].
+Proof using.
+rewrite /tabsh_reading /= /rowpart ; case: w => w /=/eqP Hw.
+case: d Hw => [//= | d] Hw; rewrite Hw /=; first by case: w Hw.
+rewrite addn0 eq_refl andbT //=.
+case: w Hw => [//= | w0 w] /= /eqP; rewrite eqSS => /eqP <-.
+rewrite take_size; apply esym; apply (map_path (b := pred0)) => /=.
+- move=> i j /= _ ; exact: leqXnatE.
+- by apply/hasPn => x /=.
+Qed.
+
+(** ** Some particular Schur functions *)
+
 Lemma Schur0 (sh : 'P_0) : Schur sh = 1.
 Proof using.
 rewrite Schur_tabsh_readingE (eq_bigl (xpred1 [tuple])); first last.
@@ -69,19 +83,6 @@ move=> Hn; apply big1 => t _; exfalso.
 have:= size_tabsh t; rewrite -(size_map size) -/(shape t) shape_tabsh.
 by move=> /(leq_trans Hn); rewrite ltnn.
 Qed.
-
-Lemma tabwordshape_row d (w : d.-tuple 'I_n) :
-  tabsh_reading (rowpartn d) w = sorted leq [seq val i | i <- w].
-Proof using.
-rewrite /tabsh_reading /= /rowpart ; case: w => w /=/eqP Hw.
-case: d Hw => [//= | d] Hw; rewrite Hw /=; first by case: w Hw.
-rewrite addn0 eq_refl andbT //=.
-case: w Hw => [//= | w0 w] /= /eqP; rewrite eqSS => /eqP <-.
-rewrite take_size; apply esym; apply (map_path (b := pred0)) => /=.
-- move=> i j /= _ ; exact: leqXnatE.
-- by apply/hasPn => x /=.
-Qed.
-
 
 Lemma perm_eq_enum_basis d :
   perm_eq [seq s2m (val s) | s in (basis n d)]
