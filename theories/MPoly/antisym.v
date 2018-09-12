@@ -17,27 +17,27 @@
 
 Monomials and partitions:
 
-- mpart s == the multi-monomial whose exponent are [s] if [size s] is smaller
+- [mpart s] == the multi-monomial whose exponent are [s] if [size s] is smaller
            than the number of variables.
-- partm m == the partition obtained by sorting the exponent of [m].
-- m \is dominant == the exponent of [m] are sorted in reverse order.
+- [partm m] == the partition obtained by sorting the exponent of [m].
+- [m \is dominant] == the exponent of [m] are sorted in reverse order.
 
 Antisymmetric polynomials:
 
-- p \is antisym == p is an antisymmetric polynomial. This is a keyed predicate
+- [p \is antisym] == [p] is an antisymmetric polynomial. This is a keyed predicate
            closed by submodule operations [submodPred].
 
 Vandermonde products and determinants:
 
-- alternpol f == the alternating sunm of the permuted of f.
-- rho            == the multi-monomial [[n-1, n-2, ..., 1, 0]]
-- Vanprod n R == the Vandermonde product in [{mpoly R[n]}], that is the product
+- [alternpol f] == the alternating sunm of the permuted of f.
+- [rho]            == the multi-monomial [[n-1, n-2, ..., 1, 0]]
+- [Vanprod n R] == the Vandermonde product in [{mpoly R[n]}], that is the product
                  << \prod_(i < j) ('X_i - 'X_j) >>.
 
-- antim s     == the n x n - matrix whose (i, j) coefficient is
+- [antim s]     == the n x n - matrix whose (i, j) coefficient is
                  << 'X_i^(s j - rho j) >>
-- Vanmx       == the Vandermonde matrix << 'X_i^(n - 1 - j) = 'X_i^(rho j) >>.
-- Vandet      == the Vandermonde determinant
+- [Vanmx]       == the Vandermonde matrix << 'X_i^(n - 1 - j) = 'X_i^(rho j) >>.
+- [Vandet]      == the Vandermonde determinant
 
 The main results are the Vandermonde determinant expansion:
 
@@ -223,9 +223,9 @@ symmetry; rewrite big_filter /mdeg.
 by rewrite (bigID (fun i => i == 0)) /= big1 ?add0n // => i /eqP.
 Qed.
 
+
 Local Notation "m # s" := [multinom m (s i) | i < n]
   (at level 40, left associativity, format "m # s").
-
 
 Lemma mnm_perm_eq m1 m2 : perm_eq m1 m2 -> {s : 'S_n | m1 == m2 # s}.
 Proof.
@@ -250,6 +250,7 @@ End MonomPart.
 
 Arguments mpart [n] s.
 Arguments dominant [n].
+
 
 Import GRing.Theory.
 Local Open Scope ring_scope.
@@ -282,7 +283,6 @@ End ScalarChange.
 
 
 (** ** Characteristic of multivariate polynomials *)
-
 Lemma char_mpoly n (R : ringType) : [char R] =i [char {mpoly R[n]}].
 Proof using.
 move=> p; rewrite !unfold_in /= -mpolyC_nat.
@@ -473,6 +473,8 @@ Variable n : nat.
 Variable R : idomainType.
 Hypothesis Hchar : ~~ (2 \in [char R]).
 
+Local Notation "''a_' k" := (@alternpol n R 'X_[k])
+                              (at level 8, k at level 2, format "''a_' k").
 
 Lemma sym_antisym_char_not2 :
   n >= 2 -> forall p : {mpoly R[n]}, p \is symmetric -> p \is antisym -> p = 0.
@@ -487,7 +489,49 @@ by exfalso; move: Hchp; rewrite negb_and H2 eq_refl.
 Qed.
 
 
-Section Lead.
+Definition rho := [multinom (n - 1 - i)%N | i < n].
+
+Local Notation "m # s" := [multinom m (s i) | i < n]
+  (at level 40, left associativity, format "m # s").
+
+Lemma rho_iota : rho = rev (iota 0 n) :> seq nat.
+Proof using.
+apply (eq_from_nth (x0 := 0%N)).
+  by rewrite size_rev size_iota size_map size_enum_ord.
+move=> i; rewrite size_map size_enum_ord => Hi.
+rewrite nth_rev size_iota // (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
+rewrite nth_enum_ord // nth_iota; first last.
+  by case: n Hi => [// | m] _; rewrite ltnS subSS; apply: leq_subr.
+by rewrite add0n; case: n Hi => [// | m] _; rewrite !subSS subn0.
+Qed.
+
+Lemma mdeg_rho : mdeg rho = 'C(n, 2).
+Proof.
+rewrite /mdeg binomial_sumn_iota -sumnE.
+by apply eq_big_perm; rewrite rho_iota perm_eq_sym; apply: perm_eq_rev.
+Qed.
+
+Lemma alt_homog : 'a_(rho) \is 'C(n, 2).-homog.
+Proof using.
+apply rpred_sum => s _; rewrite rpredZsign msymX dhomogX /=.
+have -> : mdeg (rho#(s^-1)%g) = mdeg rho.
+  by rewrite /mdeg; apply/eq_big_perm/tuple_perm_eqP; exists (s^-1)%g.
+by rewrite mdeg_rho.
+Qed.
+
+Lemma alt_anti m : 'a_m \is antisym.
+Proof using.
+apply/isantisymP => S.
+rewrite /alternpol (big_morph (msym S) (@msymD _ _ _) (@msym0 _ _ _)).
+rewrite scaler_sumr.
+rewrite [RHS](reindex_inj (mulIg S)); apply: eq_big => //= s _.
+rewrite msymZ -msymMm scalerA; congr (_ *: _).
+by rewrite odd_permM signr_addb [X in (_  = _ * X)]mulrC signrMK.
+Qed.
+
+
+(** ** The leading monomial of an antisymmetric polynomial *)
+Section LeadingMonomial.
 
 Variable p : {mpoly R[n]}.
 
@@ -506,10 +550,6 @@ have:= Hpq s; rewrite msymM Hsym => H; apply (mulfI Hpn0).
 move: H; case: (odd_perm s); rewrite !simplexp //.
 by move/oppr_inj.
 Qed.
-
-
-Local Notation "m # s" := [multinom m (s i) | i < n]
-  (at level 40, left associativity, format "m # s").
 
 Lemma isantisym_msupp_uniq (m : 'X_{1..n}) : m \in msupp p -> uniq m.
 Proof using Hchar Hpanti.
@@ -547,55 +587,12 @@ have /= := H (Ordinal (leq_ltn_trans Hij Hj)) (Ordinal Hj) Hij.
 by rewrite !(mnm_nth 0) /=; apply.
 Qed.
 
-Definition rho := [multinom (n - 1 - i)%N | i < n].
-
-Local Notation "''a_' k" := (@alternpol n R 'X_[k])
-                              (at level 8, k at level 2, format "''a_' k").
-
-Lemma rho_iota : rho = rev (iota 0 n) :> seq nat.
-Proof using.
-apply (eq_from_nth (x0 := 0%N)).
-  by rewrite size_rev size_iota size_map size_enum_ord.
-move=> i; rewrite size_map size_enum_ord => Hi.
-rewrite nth_rev size_iota // (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
-rewrite nth_enum_ord // nth_iota; first last.
-  by case: n Hi => [// | m] _; rewrite ltnS subSS; apply: leq_subr.
-by rewrite add0n; case: n Hi => [// | m] _; rewrite !subSS subn0.
-Qed.
-
-Lemma mdeg_rho : mdeg rho = 'C(n, 2).
-Proof.
-rewrite /mdeg binomial_sumn_iota -sumnE.
-by apply eq_big_perm; rewrite rho_iota perm_eq_sym; apply: perm_eq_rev.
-Qed.
-
-Lemma alt_homog : 'a_(rho) \is 'C(n, 2).-homog.
-Proof using.
-apply rpred_sum => s _; rewrite rpredZsign msymX dhomogX /=.
-have -> : mdeg (rho#(s^-1)%g) = mdeg rho.
-  by rewrite /mdeg; apply/eq_big_perm/tuple_perm_eqP; exists (s^-1)%g.
-by rewrite mdeg_rho.
-Qed.
-
-Lemma alt_anti m : 'a_m \is antisym.
-Proof using.
-apply/isantisymP => S.
-rewrite /alternpol (big_morph (msym S) (@msymD _ _ _) (@msym0 _ _ _)).
-rewrite scaler_sumr.
-rewrite [RHS](reindex_inj (mulIg S)); apply: eq_big => //= s _.
-rewrite msymZ -msymMm scalerA; congr (_ *: _).
-by rewrite odd_permM signr_addb [X in (_  = _ * X)]mulrC signrMK.
-Qed.
-
 Lemma isantisym_mlead_rho : mlead p = rho.
 Proof using Hchar Hpanti Hphomog Hpn0.
 by apply/val_inj/val_inj; rewrite /= isantisym_mlead_iota rho_iota.
 Qed.
 
-End Lead.
-
-Local Notation "''a_' k" := (alternpol 'X_[k])
-                              (at level 8, k at level 2, format "''a_' k").
+End LeadingMonomial.
 
 
 Lemma isantisym_alt (p : {mpoly R[n]}) :
@@ -878,7 +875,7 @@ case: leqP => /= Hi.
 - by rewrite subn0; move: Hi (ltnW Hi); rewrite /leq => /eqP -> /eqP ->.
 Qed.
 
-Lemma Vanprod_coeff_rho : Delta @_ rho = 1.
+Lemma Vanprod_coeff_rho : Delta@_rho = 1.
 Proof using.
 rewrite /Vanprod.
 case: (altP (n =P 0%N)) => [Hn |].
