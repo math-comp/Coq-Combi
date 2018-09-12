@@ -13,7 +13,66 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * The Ring of Symmetric Polynomials *)
+(** * The Ring of Symmetric Polynomials
+
+- {sympoly R[n]} == the ring of symmetric polynomial in [n] variable over [R].
+- [sympol f] == the coercion from [{sympoly R[n]}] to [{mpoly R[n]}]
+
+*** Classical bases
+
+- ['e_k] == the [k]-th elementary symmetric polynomial
+- ['h_k] == the [k]-th complete homogeneous symmetric polynomial
+- ['p_k] == the [k]-th power sum symmetric polynomial
+
+- [prod_gen G la] == given a familly of generators [G : nat -> {sympoly R[n]}]
+             the product [\prod_(i <- la) G i].
+
+- ['e[k]] == the product of elementary symmetric polynomial
+- ['h[k]] == the product of complete homogeneous symmetric polynomial
+- ['p[k]] == the product of power sum symmetric polynomial
+- ['m[k]] == the monomial symmetric polynomial
+- ['s[k]] == the Schur symmetric polynomial
+
+- [coeff_prodgen Co la mu] == the coefficient of the product ['g[la]]
+             on ['g_[mu]] assuming that [co : forall d : nat, 'P_d -> R] gives
+             the coefficients of ['f_i] on ['g_[mu]] then 
+
+*** Change of scalars
+
+- [map_sympoly M] == the ring morphism [{sympoly R[n]} -> {sympoly S[n]}]
+             obtained by the change of scalar [M : {rmorphism R -> S}]
+
+*** Formula for basis changes
+
+- [perm_partn la] == the number of composition which are permuted of [la]
+- [prod_partsum la] == the product of the sum of all the prefix of [la]
+
+We list here a few theorems expressing a basis in another one. See the file
+for a more comprehensive list. The rule is that we call [syma_to_symb] when
+we expand a genrator of [syma] in [symb]. We call [syma_symb] the expansion
+of a basis element of [syma] in [symb]
+
+- e and h : [syme_to_symh] [symh_to_syme]
+- s and m : [syms_symm] [symm_syms]
+- s and h : [syms_symh] [symh_syms]
+- h and p : [symh_to_symp] and Newton's formula [Newton_symh]
+
+
+*** Change of the number of variable
+
+- [sympolyf R m] == the algebra morphism expanding any symetric polynomial
+             (in [{sympoly R[m]}]) as a polynomial in the ['e_i]
+             (in [{mpoly R[m]}]) by the fundamental theorem of symmetric function.
+- [cnvarsym R m n] == the canonical algebra morphism
+             [{sympoly R[m.+1]} -> {sympoly R[n.+1]}] given by the fundamental
+             theorem.
+
+We show that if d ≤ m or n ≤ m, for any partition in ['P_d] the change of variable
+sends a basis element ['b[la]] to the same element. These are lemmas
+
+[cnvar_prodsyme], [cnvar_prodsymh], [cnvar_prodsymp], [cnvar_syms] and [cnvar_symm].
+
+ ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset binomial.
@@ -42,6 +101,14 @@ Qed.
 
 Reserved Notation "{ 'sympoly' T [ n ] }"
   (at level 0, T, n at level 2, format "{ 'sympoly'  T [ n ] }").
+Reserved Notation "''e_' k" (at level 8, k at level 2, format "''e_' k").
+Reserved Notation "''h_' k" (at level 8, k at level 2, format "''h_' k").
+Reserved Notation "''p_' k" (at level 8, k at level 2, format "''p_' k").
+Reserved Notation "''e[' k ]" (at level 8, format "''e[' k ]").
+Reserved Notation "''h[' k ]" (at level 8, format "''h[' k ]").
+Reserved Notation "''p[' k ]" (at level 8, format "''p[' k ]").
+Reserved Notation "''m[' k ]" (at level 8, format "''m[' k ]").
+Reserved Notation "''s[' k ]" (at level 8, format "''s[' k ]").
 
 
 Section DefType.
@@ -63,8 +130,6 @@ Definition sympoly_of of phant R := sympoly.
 
 Identity Coercion type_sympoly_of : sympoly_of >-> sympoly.
 
-Lemma sympol_inj : injective sympol. Proof. exact: val_inj. Qed.
-
 End DefType.
 
 (* We need to break off the section here to let the argument scope *)
@@ -72,7 +137,6 @@ End DefType.
 Bind Scope ring_scope with sympoly_of.
 Bind Scope ring_scope with sympoly.
 Arguments Scope sympol [_ ring_scope].
-Arguments Scope sympol_inj [_ ring_scope ring_scope _].
 
 Notation "{ 'sympoly' T [ n ] }" := (sympoly_of n (Phant T)).
 
@@ -86,29 +150,21 @@ Definition sympoly_zmodMixin :=
   Eval hnf in [zmodMixin of {sympoly R[n]} by <:].
 Canonical sympoly_zmodType :=
   Eval hnf in ZmodType {sympoly R[n]} sympoly_zmodMixin.
-Canonical sympolynom_zmodType :=
-  Eval hnf in ZmodType (sympoly n R) sympoly_zmodMixin.
 
 Definition sympoly_ringMixin :=
   Eval hnf in [ringMixin of {sympoly R[n]} by <:].
 Canonical sympoly_ringType :=
   Eval hnf in RingType {sympoly R[n]} sympoly_ringMixin.
-Canonical sympolynom_ringType :=
-  Eval hnf in RingType (sympoly n R) sympoly_ringMixin.
 
 Definition sympoly_lmodMixin :=
   Eval hnf in [lmodMixin of {sympoly R[n]} by <:].
 Canonical sympoly_lmodType :=
   Eval hnf in LmodType R {sympoly R[n]} sympoly_lmodMixin.
-Canonical sympolynom_lmodType :=
-  Eval hnf in LmodType R (sympoly n R) sympoly_lmodMixin.
 
 Definition sympoly_lalgMixin :=
   Eval hnf in [lalgMixin of {sympoly R[n]} by <:].
 Canonical sympoly_lalgType :=
   Eval hnf in LalgType R {sympoly R[n]} sympoly_lalgMixin.
-Canonical sympolynom_lalgType :=
-  Eval hnf in LalgType R (sympoly n R) sympoly_lalgMixin.
 
 Lemma sympol_is_lrmorphism :
   lrmorphism (@sympol n R : {sympoly R[n]} -> {mpoly R[n]}).
@@ -135,15 +191,11 @@ Definition sympoly_comRingMixin :=
   Eval hnf in [comRingMixin of {sympoly R[n]} by <:].
 Canonical sympoly_comRingType :=
   Eval hnf in ComRingType {sympoly R[n]} sympoly_comRingMixin.
-Canonical sympolynom_comRingType :=
-  Eval hnf in ComRingType (sympoly n R) sympoly_comRingMixin.
 
 Definition sympoly_algMixin :=
   Eval hnf in [algMixin of {sympoly R[n]} by <:].
 Canonical sympoly_algType :=
   Eval hnf in AlgType R {sympoly R[n]} sympoly_algMixin.
-Canonical sympolynom_algType :=
-  Eval hnf in AlgType R (sympoly n R) sympoly_algMixin.
 
 End SymPolyComRingType.
 
@@ -156,25 +208,17 @@ Definition sympoly_unitRingMixin :=
   Eval hnf in [unitRingMixin of {sympoly R[n]} by <:].
 Canonical sympoly_unitRingType :=
   Eval hnf in UnitRingType {sympoly R[n]} sympoly_unitRingMixin.
-Canonical sympolynom_unitRingType :=
-  Eval hnf in UnitRingType (sympoly n R) sympoly_unitRingMixin.
 
 Canonical sympoly_comUnitRingType :=
   Eval hnf in [comUnitRingType of {sympoly R[n]}].
-Canonical sympolynom_comUnitRingType :=
-  Eval hnf in [comUnitRingType of sympoly n R].
 
 Definition sympoly_idomainMixin :=
   Eval hnf in [idomainMixin of {sympoly R[n]} by <:].
 Canonical sympoly_idomainType :=
   Eval hnf in IdomainType {sympoly R[n]} sympoly_idomainMixin.
-Canonical sympolynom_idomainType :=
-  Eval hnf in IdomainType (sympoly n R) sympoly_idomainMixin.
 
 Canonical sympoly_unitAlgType :=
   Eval hnf in [unitAlgType R of {sympoly R[n]}].
-Canonical sympolynom_unitAlgType :=
-  Eval hnf in [unitAlgType R of (sympoly n R)].
 
 End SymPolyIdomainType.
 
@@ -194,11 +238,14 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
   (at level 40, left associativity, format "m # s").
 
 
+(** *** Elementary symmetric polynomials *)
 (* From  mpoly.v : \sum_(h : {set 'I_n} | #|h| == k) \prod_(i in h) 'X_i. *)
 Fact syme_sym d : mesym n R d \is symmetric.
 Proof using. exact: mesym_sym. Qed.
-Definition syme d : {sympoly R[n]} := SymPoly (syme_sym d).
-Lemma syme_geqnE d : d > n -> syme d = 0.
+Canonical syme d : {sympoly R[n]} := SymPoly (syme_sym d).
+Local Notation "''e_' k" := (syme k).
+
+Lemma syme_geqnE d : d > n -> 'e_d = 0.
 Proof. by move=> Hd; apply val_inj; rewrite /= mesym_geqnE. Qed.
 Lemma mesym_homog d : mesym n R d \is d.-homog.
 Proof using.
@@ -206,9 +253,11 @@ apply/dhomogP => m.
 rewrite msupp_mesymP => /existsP [] s /andP [] /eqP <- {d} /eqP -> {m}.
 exact: mdeg_mesym1.
 Qed.
-Lemma syme_homog d : sympol (syme d) \is d.-homog.
+Lemma syme_homog d : sympol 'e_d \is d.-homog.
 Proof using. by rewrite mesym_homog. Qed.
 
+
+(** *** Complete homogeneous symmetric polynomials *)
 Definition symh_pol_bound b d : {mpoly R[n]} :=
   \sum_(m : 'X_{1..n < b} | mdeg m == d) 'X_[m].
 Definition symh_pol d : {mpoly R[n]} := symh_pol_bound d.+1 d.
@@ -234,12 +283,16 @@ Proof using.
 apply/issymP => s; rewrite -mpolyP => m.
 by rewrite mcoeff_sym !mcoeff_symh_pol mdeg_mperm.
 Qed.
-Definition symh d : {sympoly R[n]} := SymPoly (symh_sym d).
-Lemma mcoeff_symh d m : (symh d)@_m = (mdeg m == d)%:R.
+Canonical symh d : {sympoly R[n]} := SymPoly (symh_sym d).
+Local Notation "''h_' k" := (symh k).
+
+Lemma mcoeff_symh d m : 'h_d@_m = (mdeg m == d)%:R.
 Proof. exact: mcoeff_symh_pol. Qed.
-Lemma symh_homog d : sympol (symh d) \is d.-homog.
+Lemma symh_homog d : sympol 'h_d \is d.-homog.
 Proof using. by apply rpred_sum => m /eqP H; rewrite dhomogX /= H. Qed.
 
+
+(** *** Power sum symmetric polynomials *)
 Definition symp_pol d  : {mpoly R[n]} := \sum_(i < n) 'X_i ^+ d.
 Fact symp_sym d : symp_pol d \is symmetric.
 Proof using.
@@ -250,8 +303,10 @@ rewrite msymX /=; congr mpolyX.
 rewrite mnmP => j; rewrite !mnmE /=; congr nat_of_bool.
 by apply/eqP/eqP => [|->//]; apply: perm_inj.
 Qed.
-Definition symp d : {sympoly R[n]} := SymPoly (symp_sym d).
-Lemma symp_homog d : sympol (symp d) \is d.-homog.
+Canonical symp d : {sympoly R[n]} := SymPoly (symp_sym d).
+Local Notation "''p_' k" := (symp k).
+
+Lemma symp_homog d : sympol 'p_d \is d.-homog.
 Proof using.
 apply rpred_sum => m _.
 have /(dhomogMn d) : ('X_m : {mpoly R[n]}) \is 1.-homog.
@@ -260,6 +315,7 @@ by rewrite mul1n.
 Qed.
 
 
+(** *** Monomial symmetric polynomials *)
 Definition symm_pol (sh : n.-tuple nat) : {mpoly R[n]} :=
   (\sum_(p : permuted sh) 'X_[Multinom p] ).
 Lemma mcoeff_symm_pol sh m : (symm_pol sh)@_m = (perm_eq sh m)%:R.
@@ -284,13 +340,14 @@ by move=> /perm_eqrP ->.
 Qed.
 Definition symm sh : {sympoly R[n]} :=
   if size sh <= n then SymPoly (symm_sym (mpart sh)) else 0 : {sympoly R[n]}.
-Lemma symm_oversize sh : n < size sh -> symm sh = 0.
+Notation "''m[' k ]" := (symm k).
+
+Lemma symm_oversize sh : n < size sh -> 'm[sh] = 0.
 Proof. by rewrite ltnNge /symm => /negbTE ->. Qed.
 Lemma mcoeff_symm sh m :
-  size sh <= n -> (symm sh)@_m = (perm_eq (mpart (n := n) sh) m)%:R.
+  size sh <= n -> 'm[sh]@_m = (perm_eq (mpart (n := n) sh) m)%:R.
 Proof. by move=> H; rewrite /symm H mcoeff_symm_pol. Qed.
-Lemma symm_homog d (sh : 'P_d) :
-  sympol (symm sh) \is d.-homog.
+Lemma symm_homog d (sh : 'P_d) : sympol 'm[sh] \is d.-homog.
 Proof using.
 case: (leqP (size sh) n) => [Hsz | /symm_oversize ->]; last exact: dhomog0.
 rewrite /= unfold_in; apply/allP => /= m.
@@ -304,9 +361,10 @@ rewrite [LHS](bigID (fun i => i == 0%N)) /= big1 ?add1n //.
 by move=> i /eqP.
 Qed.
 
+(** *** Expansion of symmetric polynomials om monomials *)
 Lemma issym_symmE (p : {mpoly R[n]}) :
   p \is symmetric ->
-  p = \sum_(m <- msupp p | m \is dominant) p@_m *: symm (partm m).
+  p = \sum_(m <- msupp p | m \is dominant) p@_m *: 'm[partm m].
 Proof.
 move=> Hsym; apply/mpolyP => m.
 case: (boolP (m \in msupp p)) => Hm.
@@ -320,7 +378,7 @@ case: (boolP (m \in msupp p)) => Hm.
   have -> : p@_(mpart (partm m)) = p@_m.
     have [/= s /eqP ->]:= mpart_partm_perm m.
     by rewrite -mcoeff_sym (issymP p Hsym).
-  have -> : (symm (partm m))@_m = 1.
+  have -> : 'm[partm m]@_m = 1.
     by rewrite (mcoeff_symm _ (size_partm _)) perm_eq_sym partm_perm_eqK.
   rewrite mulr1 -[LHS]addr0; congr (_ + _); symmetry.
   rewrite !raddf_sum /=.
@@ -342,7 +400,7 @@ case: (boolP (m \in msupp p)) => Hm.
 Qed.
 
 Lemma symm_genE (f : {sympoly R[n]}) :
-  f = \sum_(m <- msupp f | m \is dominant) f@_m *: symm (partm m).
+  f = \sum_(m <- msupp f | m \is dominant) f@_m *: 'm[partm m].
 Proof. by apply val_inj => /=; apply issym_symmE. Qed.
 
 
@@ -356,7 +414,7 @@ Qed.
 
 Lemma homog_symmE d (f : {sympoly R[n]}) :
   sympol f \is d.-homog ->
-  f = \sum_(l : 'P_d) f@_(mpart l) *: symm l.
+  f = \sum_(l : 'P_d) f@_(mpart l) *: 'm[l].
 Proof.
 move=> Hhomog; rewrite {1}(symm_genE f).
 apply val_inj => /=.
@@ -364,14 +422,13 @@ rewrite !linear_sum /=  (bigID (fun i : 'P_d => mpart i \in msupp f)) /=.
 rewrite [X in _ + X]big1 ?addr0;
   last by move=> i /memN_msupp_eq0 ->; rewrite scale0r.
 rewrite (eq_bigr (fun i : 'P_d =>
-           f@_(mpart i) *:
-            sympol (symm (partm (n := n) (mpart i)))));
+           f@_(mpart i) *: sympol ('m[partm (n := n) (mpart i)])));
     first last.
-  move=> i Hi; congr (_ *: _); congr sympol; congr symm.
+  move=> i Hi; congr (_ *: sympol 'm[_]).
   by rewrite mpartK //; apply (size_mpart_in_supp Hhomog Hi).
 rewrite /index_enum -enumT.
 transitivity (\sum_(m <- [seq mpart i | i : 'P_d ] | m \in msupp f)
-      f@_m *: sympol (symm (partm m))); last by rewrite big_map /=.
+               f@_m *: sympol ('m[partm m])); last by rewrite big_map.
 rewrite -big_filter -[RHS]big_filter; apply eq_big_perm; apply uniq_perm_eq.
 - by apply filter_uniq; apply msupp_uniq.
 - rewrite filter_map map_inj_in_uniq; first by apply filter_uniq; apply enum_uniq.
@@ -390,7 +447,7 @@ rewrite -big_filter -[RHS]big_filter; apply eq_big_perm; apply uniq_perm_eq.
 Qed.
 
 Lemma symm_unique d (f : {sympoly R[n]}) c :
-  f = \sum_(l : 'P_d) (c l) *: symm l ->
+  f = \sum_(l : 'P_d) (c l) *: 'm[l] ->
   forall l : 'P_d, (size l <= n)%N -> c l = f@_(mpart l).
 Proof.
 move=> -> l Hl.
@@ -408,18 +465,15 @@ by apply/eqP/val_inj.
 Qed.
 
 Lemma symm_unique0 d c :
-  \sum_(l : 'P_d) (c l) *: symm l = 0 ->
+  \sum_(l : 'P_d) (c l) *: 'm[l] = 0 ->
   forall l : 'P_d, (size l <= n)%N -> c l = 0.
-Proof.
-move=> /esym/symm_unique => H l /H ->.
-by rewrite mcoeff0.
-Qed.
+Proof. by move=> /esym/symm_unique => H l /H ->; rewrite mcoeff0. Qed.
 
-(** Basis at degree 0 *)
-Lemma syme0 : syme 0 = 1.
+(** *** Basis at degree 0 *)
+Lemma syme0 : 'e_0 = 1.
 Proof using. by apply val_inj; rewrite /= mesym0E. Qed.
 
-Lemma powersum0 : symp 0 = n%:R.
+Lemma powersum0 : 'p_0 = n%:R.
 Proof using.
 apply /val_inj.
 rewrite /= /symp_pol (eq_bigr (fun => 1));
@@ -427,7 +481,7 @@ rewrite /= /symp_pol (eq_bigr (fun => 1));
 by rewrite sumr_const card_ord /= raddfMn.
 Qed.
 
-Lemma symh0 : symh 0 = 1.
+Lemma symh0 : 'h_0 = 1.
 Proof using.
 have Hd0 : (mdeg (0%MM : 'X_{1..n})) < 1 by rewrite mdeg0.
 apply val_inj => /=.
@@ -437,17 +491,17 @@ by rewrite mpolyX0.
 Qed.
 
 
-(** All basis agrees at degree 1 *)
-Lemma syme1 : val (syme 1) = \sum_(i < n) 'X_i.
+(** *** All basis agrees at degree 1 *)
+Lemma syme1 : val ('e_1) = \sum_(i < n) 'X_i.
 Proof using. by rewrite /= mesym1E. Qed.
 
-Lemma sympe1E : symp 1 = syme 1.
+Lemma sympe1E : 'p_1 = 'e_1.
 Proof using.
 apply val_inj; rewrite syme1 /=.
 by apply eq_bigr => i _; rewrite expr1.
 Qed.
 
-Lemma symhe1E : symh 1 = syme 1.
+Lemma symhe1E : 'h_1 = 'e_1.
 Proof using.
 apply val_inj; rewrite syme1 /= -mpolyP => m.
 rewrite !raddf_sum /=.
@@ -472,6 +526,12 @@ Qed.
 
 End Bases.
 
+Notation "''e_' k" := (syme _ _ k).
+Notation "''h_' k" := (symh _ _ k).
+Notation "''p_' k" := (symp _ _ k).
+Notation "''m[' k ]" := (symm _ _ k).
+
+(** *** Schur symmetric polynomials *)
 Section Schur.
 
 Variable n0 : nat.
@@ -481,36 +541,36 @@ Local Notation n := n0.+1.
 
 Definition syms d (la : 'P_d) : {sympoly R[n]} :=
   SymPoly (Schur_sym n0 R la).
-Lemma syms_homog d (la : 'P_d) : sympol (syms la) \is d.-homog.
+
+Local Notation "''s[' k ]" := (syms k).
+
+Lemma syms_homog d (la : 'P_d) : sympol 's[la] \is d.-homog.
 Proof. exact: Schur_homog. Qed.
 
-Lemma syms0 (la : 'P_0) : syms la = 1.
+Lemma syms0 (la : 'P_0) : 's[la] = 1.
 Proof. by apply val_inj; rewrite /= Schur0. Qed.
 
-Lemma syms1 (la : 'P_1) : syms la = \sum_(i < n) 'X_i :> {mpoly R[n]}.
+Lemma syms1 (la : 'P_1) : 's[la] = \sum_(i < n) 'X_i :> {mpoly R[n]}.
 Proof. by rewrite /= Schur1. Qed.
 
-Lemma syms_rowpartn d : syms (rowpartn d) = symh n R d.
+Lemma syms_rowpartn d : 's[rowpartn d] = 'h_d.
 Proof.
 by apply val_inj; rewrite /= /symh_pol /symh_pol_bound Schur_rowpartn.
 Qed.
 
-Lemma syms_colpartn d : syms (colpartn d) = syme n R d.
-Proof.
-by apply val_inj; rewrite /= mesym_SchurE.
-Qed.
+Lemma syms_colpartn d : 's[colpartn d] = 'e_d.
+Proof. by apply val_inj; rewrite /= mesym_SchurE. Qed.
 
 End Schur.
 
-Notation "''e_' k" := (syme _ _ k)
-                              (at level 8, k at level 2, format "''e_' k").
-Notation "''h_' k" := (symh _ _ k)
-                              (at level 8, k at level 2, format "''h_' k").
-Notation "''p_' k" := (symp _ _ k)
-                              (at level 8, k at level 2, format "''p_' k").
+Notation "''s[' k ]" := (syms _ _ k).
 
-(** Prod of generator *)
 
+(** * Multiplicative bases.
+
+Given a family of generators ['g_k], we define ['g[la]] as the product of the
+generators \prod_(i <- la) 'g_i.
+ *****)
 Section ProdGen.
 
 Variable n : nat.
@@ -523,24 +583,26 @@ Variable gen : nat -> SF.
 Hypothesis gen_homog : forall d, sympol (gen d) \is d.-homog.
 
 Definition prod_gen d (sh : 'P_d) := \prod_(i <- sh) gen i.
-Lemma prod_gen_homog d (sh : 'P_d) :
-  sympol (prod_gen sh) \is d.-homog.
+
+Local Notation "''g_' k" := (gen k) (at level 8, format "''g_' k").
+Local Notation "''g[' k ]" := (prod_gen k) (at level 8, format "''g[' k ]").
+
+Lemma prod_gen_homog d (sh : 'P_d) : sympol 'g[sh] \is d.-homog.
 Proof using gen_homog.
 rewrite /prod_gen; case: sh => sh /= /andP [/eqP <- _] {d}.
 elim: sh => [| d sh IHsh] /=; first by rewrite big_nil /= dhomog1.
 by rewrite big_cons; apply dhomogM; first exact: gen_homog.
 Qed.
 
-Lemma prod_gen0 (l : 'P_0) : prod_gen l = 1.
+Lemma prod_gen0 (l : 'P_0) : 'g[l] = 1.
 Proof. by rewrite /prod_gen intpartn0 big_nil. Qed.
 
-Lemma prod_genM c d (l : 'P_c) (k : 'P_d) :
-  (prod_gen l) * (prod_gen k) = prod_gen (l +|+ k).
+Lemma prod_genM c d (l : 'P_c) (k : 'P_d) : 'g[l] * 'g[k] = 'g[l +|+ k].
 Proof using.
 by rewrite /prod_gen (eq_big_perm _ (perm_union_intpartn l k)) big_cat.
 Qed.
 
-Lemma prod_gen_colpartn d : prod_gen (colpartn d) = (gen 1) ^+ d.
+Lemma prod_gen_colpartn d : 'g[colpartn d] = 'g_1 ^+ d.
 Proof.
 rewrite /prod_gen /= /colpart big_nseq.
 by elim: d => //= d ->; rewrite exprS.
@@ -548,41 +610,44 @@ Qed.
 
 End Defs.
 
-Definition prod_syme := prod_gen (@syme n R).
-Definition prod_syme_homog := prod_gen_homog (@syme_homog n R).
-Definition prod_symh := prod_gen (@symh n R).
-Definition prod_symh_homog := prod_gen_homog (@symh_homog n R).
-Definition prod_symp := prod_gen (@symp n R).
-Definition prod_symp_homog := prod_gen_homog (@symp_homog n R).
-
 Variable gA gB : nat -> SF.
 Variable co : forall (d : nat), 'P_d -> R.
+
+Local Notation "''gA_' k" := (gA k) (at level 8, format "''gA_' k").
+Local Notation "''gA[' k ]" := (prod_gen gA k) (at level 8, format "''gA[' k ]").
+Local Notation "''gB_' k" := (gB k) (at level 8, format "''gB_' k").
+Local Notation "''gB[' k ]" := (prod_gen gB k) (at level 8, format "''gB[' k ]").
 
 Fixpoint coeff_prodgen_seq l : 'P_(sumn l) -> R :=
   if l is l0 :: l' then
     fun la : 'P_(sumn (l0 :: l')) =>
              \sum_(p | la == p.1 +|+ p.2) co p.1 * coeff_prodgen_seq p.2
   else fun _ => 1.
-Definition coeff_prodgen_intpartn d (la mu : 'P_d) : R :=
-  coeff_prodgen_seq (l := la) (cast_intpartn (esym (intpartn_sumn la)) mu).
 
-Lemma coeff_prodgen_cast l k nu
-      (eqlamu : l = k) (eqsum : sumn l = sumn k) :
-  coeff_prodgen_seq (cast_intpartn eqsum nu) = coeff_prodgen_seq nu.
+Local Notation "''co[' k ]" := (coeff_prodgen_seq k)
+                                 (at level 8, format "''co[' k ]").
+Local Notation "''co[' k ]_ l" := (coeff_prodgen_seq (l := l) k)
+                                 (at level 8, only parsing).
+
+Definition coeff_prodgen d (la mu : 'P_d) : R :=
+  'co[cast_intpartn (esym (intpartn_sumn la)) mu].
+
+Lemma coeff_prodgen_cast l k nu (eqlamu : l = k) (eqsum : sumn l = sumn k) :
+  'co[cast_intpartn eqsum nu] = 'co[nu].
 Proof.
 by subst k; congr coeff_prodgen_seq; apply val_inj; rewrite cast_intpartnE.
 Qed.
 
 Lemma prod_prodgen :
-  (forall d, gA d = \sum_(la : 'P_d) co la *: prod_gen gB la :> SF) ->
+  (forall d, 'gA_d = \sum_(la : 'P_d) co la *: 'gB[la] :> SF) ->
   forall d (la : 'P_d),
-    prod_gen gA la = \sum_(mu : 'P_d)
-                      coeff_prodgen_intpartn la mu *: prod_gen gB mu :> SF.
+    'gA[la] = \sum_(mu : 'P_d)
+               coeff_prodgen la mu *: 'gB[mu] :> SF.
 Proof.
-rewrite /coeff_prodgen_intpartn /= {2}/prod_gen => H d la.
+rewrite /coeff_prodgen /= {2}/prod_gen => H d la.
 have := intpartn_sumn la.
 case: la => [la /= Hla] Hd; subst d.
-rewrite (eq_bigr (fun mu => coeff_prodgen_seq mu *: prod_gen gB mu)); first last.
+rewrite (eq_bigr (fun mu => 'co[mu] *: 'gB[mu])); first last.
   by move=> mu _; congr (_ *: _); rewrite coeff_prodgen_cast /=.
 elim: la {Hla} => [| l la IHla] /=.
   rewrite big_nil (big_pred1 (rowpartn 0)) ?prod_gen0 ?scale1r // => la.
@@ -590,11 +655,10 @@ elim: la {Hla} => [| l la IHla] /=.
 rewrite big_cons H; symmetry.
 transitivity
   (\sum_(mu : _) \sum_(p | mu == p.1 +|+ p.2)
-    (co (d := l) p.1 * coeff_prodgen_seq (l := la) p.2) *: prod_gen gB mu).
+    (co (d := l) p.1 * 'co[p.2]_la) *: 'gB[mu]).
   by apply eq_bigr => mu _; rewrite scaler_suml.
 rewrite (exchange_big_dep xpredT) //=.
-pose f mu nu := (co (d := l) mu *: prod_gen gB mu) *
-                (coeff_prodgen_seq (l := la) nu *: prod_gen gB nu).
+pose f mu nu := (co (d := l) mu *: 'gB[mu]) * ('co[nu]_la *: 'gB[nu]).
 transitivity (\sum_(p : _) f p.1 p.2).
   apply eq_bigr => [[mu nu] _] /=; rewrite big_pred1_eq.
   by rewrite /f -scalerAl -scalerAr scalerA prod_genM.
@@ -603,20 +667,21 @@ rewrite mulr_suml; apply eq_bigr => nu _.
 by rewrite /f -mulr_sumr -IHla.
 Qed.
 
+Definition prod_syme := prod_gen (@syme n R).
+Definition prod_syme_homog := prod_gen_homog (@syme_homog n R).
+Definition prod_symh := prod_gen (@symh n R).
+Definition prod_symh_homog := prod_gen_homog (@symh_homog n R).
+Definition prod_symp := prod_gen (@symp n R).
+Definition prod_symp_homog := prod_gen_homog (@symp_homog n R).
+
 End ProdGen.
 
-Notation "''e[' k ]" := (prod_syme _ _ k)
-                              (at level 8, k at level 2, format "''e[' k ]").
-Notation "''h[' k ]" := (prod_symh _ _ k)
-                              (at level 8, k at level 2, format "''h[' k ]").
-Notation "''p[' k ]" := (prod_symp _ _ k)
-                              (at level 8, k at level 2, format "''p[' k ]").
-Notation "''m[' k ]" := (symm _ _ k)
-                              (at level 8, k at level 2, format "''m[' k ]").
-Notation "''s[' k ]" := (syms _ _ k)
-                              (at level 8, k at level 2, format "''s[' k ]").
+Notation "''e[' k ]" := (prod_syme _ _ k).
+Notation "''h[' k ]" := (prod_symh _ _ k).
+Notation "''p[' k ]" := (prod_symp _ _ k).
 
 
+(** * Littlewood-Richardson and Pieri rules *)
 Section LRrule_Pieri.
 
 Variable n0 : nat.
@@ -648,6 +713,7 @@ Qed.
 End LRrule_Pieri.
 
 
+(** * Change of scalars *)
 Section ScalarChange.
 
 Variables R S : comRingType.
@@ -727,6 +793,8 @@ Qed.
 End ScalarChange.
 
 
+
+(** * Bases change formulas *)
 Section ChangeBasis.
 
 Variable n0 : nat.
@@ -738,7 +806,7 @@ Local Notation "''XX_' m " := 'X_{1.. n < (mdeg m).+1, (mdeg m).+1} (at level 0)
 Implicit Type m : 'XX.
 Local Notation SF := {sympoly R[n]}.
 
-
+(** ** Bases change between homogeneous and elementary *)
 Lemma sum_symh_syme (d : nat) :
   d != 0%N ->
   \sum_(0 <= i < d.+1) (-1)^+i *: ('h_i * 'e_(d - i)) = 0 :> SF.
@@ -943,28 +1011,35 @@ by rewrite addnC.
 Qed.
 
 Lemma symHE_intcompn d :
-  E d = \sum_(c : intcompn d) (-1)^+(d - size c) *: prod_gen H (partn_of_compn c).
+  E d = \sum_(c : intcompn d)
+         (-1)^+(d - size c) *: prod_gen H (partn_of_compn c).
 Proof.
 rewrite symHE_prod_intcomp; apply eq_bigr => c _; congr (_ *: _).
 rewrite /prod_symh /prod_gen; apply eq_big_perm.
-by rewrite perm_eq_sym; apply: perm_partn_of_compn.
+by rewrite perm_eq_sym perm_sort.
 Qed.
 
-Definition signed_sum_compn d (la : 'P_d) :=
-  \sum_(c | la == partn_of_compn c) (-1)^+(d - size c) : R.
+Definition perm_partn d (la : 'P_d) :=
+  #|[set c : intcompn d | sort geq c == la]|.
 
 Lemma symHE_intpartn d :
-  E d = \sum_(la : 'P_d) signed_sum_compn la *: prod_gen H la.
+  E d = \sum_(la : 'P_d)
+         (-1)^+(d - size la) * (perm_partn la)%:R *: prod_gen H la.
 Proof.
-rewrite /signed_sum_compn symHE_intcompn; symmetry.
+rewrite symHE_intcompn; symmetry.
 transitivity
   (\sum_(la : 'P_d)
-      (\sum_(c | la == partn_of_compn c) (-1) ^+ (d - size c) *:
-        prod_gen H la)).
-  by apply eq_bigr => la _; rewrite scaler_suml.
+    (\sum_(c : intcompn d | sort geq c == la)
+      (-1) ^+ (d - size c) *: prod_gen H la)).
+  apply eq_bigr => la _; rewrite /perm_partn -sum1_card.
+  rewrite natr_sum mulr_sumr -scaler_suml; congr (_ *: _).
+  apply eq_big => /= co; rewrite inE //= => /eqP <-.
+  rewrite mulr1; congr (_ ^+ (d - _)).
+  by apply: perm_eq_size; rewrite perm_sort.
 rewrite (exchange_big_dep xpredT) //=.
 apply eq_bigr => la _.
-by rewrite big_pred1_eq.
+rewrite (eq_bigl (fun i : 'P_d => i == partn_of_compn la)) ?big_pred1_eq //.
+by move=> mu; rewrite eq_sym -val_eqE.
 Qed.
 
 End HandE.
@@ -973,31 +1048,29 @@ End HandE.
 Lemma syme_symhE (d : nat) :
   d != 0%N ->
   'e_d = \sum_(1 <= i < d.+1) 'h_i * ((-1)^+i.-1 *: 'e_(d - i)) :> SF.
-Proof.
-apply: (symHE_rec (symh0 _ _)); exact: sum_symh_syme.
-Qed.
+Proof. by apply: (symHE_rec (symh0 _ _)); exact: sum_symh_syme. Qed.
 
 Lemma symh_symeE (d : nat) :
   d != 0%N ->
   'h_d = \sum_(1 <= i < d.+1) 'e_i * ((-1)^+i.-1 *: 'h_(d - i)) :> SF.
-Proof.
-apply: (symHE_rec (syme0 _ _)); exact: sum_syme_symh.
-Qed.
+Proof. by apply: (symHE_rec (syme0 _ _)); exact: sum_syme_symh. Qed.
 
 Lemma syme_to_symh n :
-  'e_n = \sum_(la : 'P_n) signed_sum_compn la *: 'h[la] :> SF.
+  'e_n = \sum_(la : 'P_n)
+          (-1)^+(n - size la) * (perm_partn la)%:R *: 'h[la] :> SF.
 Proof.
 apply: (symHE_intpartn (syme0 _ _) (symh0 _ _)); exact: sum_symh_syme.
 Qed.
 
 Lemma symh_to_syme n :
-  'h_n = \sum_(la : 'P_n) signed_sum_compn la *: 'e[la] :> SF.
+  'h_n = \sum_(la : 'P_n)
+          (-1)^+(n - size la) * (perm_partn la)%:R *: 'e[la] :> SF.
 Proof.
 apply: (symHE_intpartn (symh0 _ _) (syme0 _ _)); exact: sum_syme_symh.
 Qed.
 
 
-(** * Newton formula. *)
+(** ** Newton formula *)
 Lemma mult_symh_U k d i m :
   (('h_k : {mpoly R[n]}) * 'X_i ^+ d)@_m =
   ((mdeg m == (k + d)%N) && (m i >= d))%:R.
@@ -1085,7 +1158,7 @@ Import IntPartNDom.
 Import OrdNotations.
 Close Scope ord_scope.
 
-(** * Basis change from Schur to monomial *)
+(** ** Basis change from Schur to monomial *)
 Section SymsSymmInt.
 
 Variable (n : nat) (d : nat).
@@ -1195,7 +1268,10 @@ Qed.
 End SymsSymm.
 
 
-(** * Basis change from complete to Schur *)
+(** ** Basis change from complete to Schur *)
+
+(** We start by doing the computation on [int] using [Kostka] and [KostkaInv]
+and then tranfer to any commutative ring *)
 Section SymhSymsInt.
 
 Variables (n : nat) (d : nat).
@@ -1252,8 +1328,6 @@ Qed.
 
 End SymhSymsInt.
 
-
-
 Section SymhSyms.
 
 Variables (R : comRingType) (n : nat) (d : nat).
@@ -1296,6 +1370,7 @@ Qed.
 End SymhSyms.
 
 
+(** ** Basis change from complete to power sums *)
 Section ChangeBasisSymhPowerSum.
 
 Import ssrnum Num.Theory.
@@ -1349,13 +1424,13 @@ Proof.
 move/symh_to_symp_prod_partsum => ->.
 rewrite (partition_big (@partn_of_compn n) xpredT) //=.
 apply eq_bigr => l _; rewrite scaler_suml; apply eq_big.
-- move=> c; apply/eqP/idP => [<- | Hperm]; first exact: perm_partn_of_compn.
+- move=> c; apply/eqP/idP => [<- | Hperm];
+      first by rewrite /partn_of_compn /= perm_sort.
   apply val_inj => /=; apply (eq_sorted geq_trans) => //.
-  + exact: sort_sorted.
-  + by rewrite (perm_eqrP Hperm) perm_sort.
+  by rewrite (perm_eqrP Hperm) perm_sort.
 - move=> c /eqP <-; congr (_ *: _).
   rewrite /prod_symp /prod_gen; apply eq_big_perm.
-  by rewrite perm_eq_sym; apply: perm_partn_of_compn.
+  by rewrite /partn_of_compn perm_eq_sym /= perm_sort.
 Qed.
 
 Lemma intcompn_cons_sub_proof i n (c : intcompn (n - i)) :
@@ -1366,7 +1441,7 @@ rewrite /is_comp_of_n /= intcompn_sumn subnKC // eq_refl /=.
 rewrite /is_comp inE negb_or eq_sym Hi /=.
 exact: intcompnP.
 Qed.
-Definition intcompn_cons i (Hi : i != 0%N) n (Hin : (i <= n)%N) c :=
+Local Definition intcompn_cons i (Hi : i != 0%N) n (Hin : (i <= n)%N) c :=
   IntCompN (intcompn_cons_sub_proof c Hi Hin).
 
 Lemma intcompn_behead_sub_proof i n (c : intcompn n) :
@@ -1380,7 +1455,7 @@ subst c0; rewrite addKn eq_refl /=.
 move: Hcomp; rewrite /is_comp inE; apply contra => ->.
 by rewrite orbT.
 Qed.
-Definition intcompn_behead i (Hi : i != 0%N) n (Hin : (i <= n)%N) c :=
+Local Definition intcompn_behead i (Hi : i != 0%N) n (Hin : (i <= n)%N) c :=
   IntCompN (intcompn_behead_sub_proof c Hi Hin).
 
 
@@ -1513,7 +1588,7 @@ rewrite -natr_sum -Hsum part_sumn_count // mulrC divff //.
 by rewrite Hchar Hsum Hm.
 Qed.
 
-Lemma symh_to_symp n :
+Theorem symh_to_symp n :
   [char R] =i pred0 ->
   'h_n = \sum_(l : 'P_n) (zcard l)%:R^-1 *: 'p[l] :> SF.
 Proof.
@@ -1525,6 +1600,7 @@ Qed.
 End ChangeBasisSymhPowerSum.
 
 
+(** ** Symmetric polynomials expressed as polynomial in the elementary *)
 Section MPoESymHomog.
 
 Variable (n0 : nat) (R : comRingType).
@@ -1615,7 +1691,6 @@ Variable R : comRingType.
 Variable m : nat.
 Implicit Type p : {sympoly R[m]}.
 
-Local Notation E := [tuple syme m R i.+1 | i < m.+1].
 Local Notation SF p := (sym_fundamental (sympol_is_symmetric p)).
 
 Definition sympolyf p := let: exist t _  := SF p in t.
@@ -1641,10 +1716,17 @@ Canonical sympolyf_rmorphism  := RMorphism  sympolyf_is_lrmorphism.
 Canonical sympolyf_linear     := AddLinear  sympolyf_is_lrmorphism.
 Canonical sympolyf_lrmorphism := LRMorphism sympolyf_is_lrmorphism.
 
+
+(** ** Fundamental theorem of symmetric polynomials *)
+Lemma sympolyfP p : (sympolyf p) \mPo [tuple sympol 'e_i.+1 | i < m] = p.
+Proof. by rewrite /sympolyf; case: (SF p) => f [] <- _. Qed.
+
 End SymPolF.
 
 Local Close Scope Combi_scope.
 
+
+(** * Change of the number of variables *)
 Section ChangeNVar.
 
 Variable R : comRingType.

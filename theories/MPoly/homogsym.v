@@ -551,7 +551,9 @@ rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
 rewrite -(span_basis symbe_basis).
 apply/span_subvP => s /mapP [/= la]; rewrite !mem_enum => _ ->{s}.
 have -> : 'he[la] = \sum_(mu : 'P_d)
-          coeff_prodgen_intpartn (signed_sum_compn R) la mu *: 'hh[mu] :> SF.
+           coeff_prodgen
+             (fun d (la : 'P_d) => (-1)^+(d - size la) * (perm_partn la)%:R)
+             la mu *: 'hh[mu] :> SF.
   by apply val_inj; rewrite /= linear_sum /= (prod_prodgen (syme_to_symh n0 R)).
 rewrite span_def; apply memv_suml => mu _; apply memvZ.
 rewrite big_map (bigD1_seq mu) /= ?mem_enum ?inE ?enum_uniq //.
@@ -567,7 +569,7 @@ rewrite -(span_basis symbh_basis).
 apply/span_subvP => s /mapP [/= la]; rewrite !mem_enum => _ ->{s}.
 pose co := fun (n : nat) (l : 'P_n) => (permcent.zcard l)%:R^-1 : R.
 have -> : 'hh[la] = \sum_(mu : 'P_d)
-                     coeff_prodgen_intpartn co la mu *: 'hp[mu] :> SF.
+                     coeff_prodgen co la mu *: 'hp[mu] :> SF.
   apply val_inj; rewrite /= linear_sum /=.
   by rewrite (prod_prodgen (fun n => symh_to_symp n0 n Hchar)).
 rewrite span_def; apply memv_suml => mu _; apply memvZ.

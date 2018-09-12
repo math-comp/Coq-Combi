@@ -28,7 +28,8 @@
 - [colcomp d] == the composition [[:: 1; 1; ...]]
 - [colcompn d] == the composition [[:: 1; 1; ...]] as a [intcompn d]
 
-- [partn_of_compn n c] == the partition in 'P_n associated with [c : intcompn n]
+- [partn_of_compn n c] == the partition in ['P_n] obtained by sorting
+               [c : intcompn n]
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
@@ -262,11 +263,8 @@ rewrite is_part_sortedE; apply/andP; split.
 - apply sort_sorted => x y; exact: leq_total.
 - by rewrite mem_sort -/(is_comp c).
 Qed.
-Definition partn_of_compn n (c : intcompn n) :=
+Canonical partn_of_compn n (c : intcompn n) :=
   IntPartN (part_of_comp_subproof c).
-
-Lemma perm_partn_of_compn n (c : intcompn n) : perm_eq (partn_of_compn c) c.
-Proof. by rewrite /= perm_sort. Qed.
 
 (*
 From mathcomp Require Import finset div.
