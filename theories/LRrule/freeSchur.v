@@ -1,4 +1,4 @@
-(** * Combi.LRrule.freeSchur : free Schur functions *)
+(** * Combi.LRrule.freeSchur : Free Schur functions *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -13,10 +13,12 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * free Schur functions
+(** * Free Schur functions
 
-The main goal of this file is to lift the multiplication of Schur
-multivariate polynomials to the non commutative setting.
+This is the core of the proof of the Littewood-Richardson rule. The main goal
+of this file is to lift the multiplication of Schur multivariate polynomials
+to the non commutative setting. This allows to prove a non-commutative
+version of the LR rule by double set inclusion.
 
 - [commword n R w] == the commutative image of the word [w] as a multivariate
                       polynomial (of type [{mpoly R[n]}]).
@@ -39,6 +41,8 @@ multivariate polynomials to the non commutative setting.
       [set tabword_of_tuple x | x in freeSchur n0 Q] = tabwordshape n0 (shape_deg Q)
   ]
 
+The free Littlewood-Richardson rule:
+
 - [LRsupport Q1 Q2] == the set of standard Littlewood-Richardson Q-tableau in
                       the product of the free Schur function indexed by [Q1]
                       and [Q2]. The main result here is the free LR rule
@@ -57,7 +61,17 @@ multivariate polynomials to the non commutative setting.
 - [LRtab_coeff Q1 Q2] == the Littlewood-Richardson coefficient defined
                       as the cardinality of [LRtab_set Q1 Q2 Q].
 
+Invariance with the choice of Q1 and Q2:
 
+- [bij_LRsupport Q1 Q2] == a bijection from [LRsupport T1 T2] to [LRsupport Q1 Q2]
+                      as long as [T1] and [Q1] have the same shape as well as
+                      [T2] and [Q2]. It is used to show Theorem
+                      [LRtab_coeff_shapeE]:
+
+  [
+      shape T1 = P1 -> shape T2 = P2 ->
+       LRtab_coeff P = #|[set Q in (LRsupport T1 T2) | (shape Q == P)]|.
+  ]
 
 ****************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
@@ -648,7 +662,7 @@ Proof using .
 by move=> H1 H2; apply anti_leq; rewrite !card_LRtab_set_leq // H1 H2.
 Qed.
 
-Lemma LRtab_coeff_shapeE (T1 : stdtabn d1) (T2 : stdtabn d2) P :
+Theorem LRtab_coeff_shapeE (T1 : stdtabn d1) (T2 : stdtabn d2) P :
   shape T1 = P1 -> shape T2 = P2 ->
   LRtab_coeff P = #|[set Q in (LRsupport T1 T2) | (shape Q == P)]|.
 Proof using .
