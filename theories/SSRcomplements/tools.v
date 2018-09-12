@@ -143,7 +143,6 @@ End SeqLemmas.
 
 
 (** ** [sumn] related lemmas *)
-
 Lemma sumn_map_condE (T : Type) (s : seq T) (f : T -> nat) (P : pred T) :
   \sum_(i <- s | P i) f i = sumn [seq f i | i <- s & P i].
 Proof.
@@ -311,6 +310,15 @@ End Enum.
 (* New lemmas *)
 Lemma sumn_sort l S : sumn (sort S l) = sumn l.
 Proof using. by have:= perm_sort S l => /perm_eqlP/perm_sumn. Qed.
+
+
+Lemma count_nseq (T : eqType) (P : pred T) n x :
+  count P (nseq n x) = (P x) * n.
+Proof.
+rewrite (eq_in_count (a2 := fun => P x)); last by move=> i /nseqP [->].
+case: (boolP (P x)) => HPx; rewrite /= ?mul0n ?count_pred0 //.
+by rewrite ?mul1n ?0count_predT size_nseq.
+Qed.
 
 Section ImsetInj.
 

@@ -505,6 +505,12 @@ rewrite nth_enum_ord // nth_iota; first last.
 by rewrite add0n; case: n Hi => [// | m] _; rewrite !subSS subn0.
 Qed.
 
+Lemma rho_uniq : uniq rho.
+Proof using .
+suff : perm_eq rho (iota 0 n) by move/perm_eq_uniq ->; exact: iota_uniq.
+rewrite rho_iota perm_eq_sym; exact: perm_eq_rev.
+Qed.
+
 Lemma mdeg_rho : mdeg rho = 'C(n, 2).
 Proof.
 rewrite /mdeg binomial_sumn_iota -sumnE.
@@ -940,7 +946,7 @@ Section VandermondeDet.
 Variable n : nat.
 Variable R : comRingType.
 
-Local Notation "''a_' k" := (alternpol 'X_[k])
+Local Notation "''a_' k" := (@alternpol n R 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
 Local Notation rho := (rho n).
 
@@ -974,6 +980,77 @@ rewrite /Vandet Vanmx_antimE.
 suff -> : antim [::] = antim (0%MM : 'X_{1..n}).
   by rewrite -alt_detE add0m Vanprod_alt.
 by apply/matrixP => i j; rewrite !mxE nth_nil -mnm_nth mnm0E.
+Qed.
+
+
+Lemma mcoeff_alt (m : 'X_{1..n}) : uniq m -> ('a_m)@_m = 1.
+Proof.
+move=> Huniq.
+rewrite /alternpol (reindex_inj invg_inj) /=.
+rewrite raddf_sum /= (bigID (pred1 1%g)) /=.
+rewrite big_pred1_eq odd_permV odd_perm1 expr0 scale1r invg1 msym1m.
+rewrite mcoeffX eq_refl /=.
+rewrite (eq_bigr (fun => 0)); first by rewrite big1_eq addr0.
+move=> s Hs; rewrite mcoeffZ msymX mcoeffX invgK.
+suff : [multinom m (s i) | i < n] != m by move=> /negbTE ->; rewrite mulr0.
+move: Hs; apply contra => /eqP; rewrite mnmP => Heq.
+apply/eqP; rewrite -permP => i; rewrite perm1; apply val_inj => /=.
+have /eqP := Heq i; rewrite !mnmE !(mnm_nth 0).
+rewrite nth_uniq; last exact: Huniq.
+- by move=> /eqP ->.
+- rewrite size_tuple; exact: ltn_ord.
+- rewrite size_tuple; exact: ltn_ord.
+Qed.
+
+Lemma alt_uniq_non0 (m : 'X_{1..n}) : uniq m -> 'a_m != 0.
+Proof using .
+move=> Huniq.
+suff : mcoeff m 'a_m == 1.
+  apply contraL => /eqP ->; rewrite mcoeff0 eq_sym.
+  exact: oner_neq0.
+by rewrite mcoeff_alt.
+Qed.
+
+Lemma alt_rho_non0 : 'a_rho != 0.
+Proof using . exact: alt_uniq_non0 (rho_uniq _). Qed.
+
+Lemma alt_alternate (m : 'X_{1..n}) (i j : 'I_n) :
+  i != j -> m i = m j -> 'a_m = 0.
+Proof using .
+move=> H Heq.
+pose t := tperm i j.
+have oddMt s: (t * s)%g = ~~ s :> bool by rewrite odd_permM odd_tperm H.
+rewrite [alternpol _](bigID (@odd_perm _)) /=.
+apply: canLR (subrK _) _; rewrite add0r -sumrN.
+rewrite (reindex_inj (mulgI t)); apply: eq_big => //= s.
+rewrite oddMt => /negPf ->; rewrite scaleN1r scale1r; congr (- _).
+rewrite msymMm.
+suff -> : msym t 'X_[m] = ('X_[m] : {mpoly R[n]}) by [].
+rewrite msymX; congr mpolyX.
+rewrite mnmP => k /=.
+rewrite !mnmE /= tpermV.
+by case: (tpermP i j k) => Hk //; rewrite Hk Heq.
+Qed.
+
+Lemma alt_add1_0 (m : 'X_{1..n}) i :
+  (nth 0%N m i).+1 = nth 0%N m i.+1 -> 'a_(m + rho) = 0.
+Proof using .
+move=> Heq.
+have Hi1n : i.+1 < n.
+  rewrite ltnNge; apply (introN idP) => Hi.
+  by move: Heq; rewrite [RHS]nth_default // size_tuple.
+have Hi : i < n by rewrite ltnW.
+pose i0 := Ordinal Hi; pose i1 := Ordinal Hi1n.
+have /alt_alternate : i0 != i1.
+  apply (introN idP) => /eqP/(congr1 val)/=/eqP.
+  by rewrite ieqi1F.
+apply.
+rewrite !mnmDE !mnmE !(mnm_nth 0%N) -Heq -(mnm_nth 0%N m i0).
+rewrite addSn -addnS subn1 /= subnS prednK //.
+have -> : (n.-1 - i = n - i.+1)%N.
+  case: n Hi1n Hi {i0 i1} => [//= | n' _] /=.
+  by rewrite subSS.
+by rewrite subn_gt0.
 Qed.
 
 End VandermondeDet.

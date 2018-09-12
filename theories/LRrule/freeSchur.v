@@ -259,7 +259,7 @@ Qed.
 
 End Degree.
 
-(** ** Noncommutative lifting of Schur *)
+(** ** Noncommutative lifting of Schur polynomials *)
 Lemma SchurE d (Q : stdtabn d) :
   Schur (shape_deg Q) = polylang R (tabwordshape (shape_deg Q)).
 Proof using .
@@ -267,7 +267,7 @@ rewrite Schur_tabsh_readingE /polylang /commword; apply eq_bigl => i /=.
 by rewrite inE.
 Qed.
 
-(** ** Commutative immage of freeSchur *)
+(** ** Commutative immage of freeSchur language *)
 Lemma Schur_freeSchurE d (Q : stdtabn d) :
   Schur (shape_deg Q) = polylang R (freeSchur Q).
 Proof using .

@@ -13,7 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** Definition of Schur polynomials as quotient of alternant and Kostka numbers
+(** * Definition of Schur polynomials as quotient of alternant and Kostka numbers
 
 In the combinatorial definitions below, we use the following notations:
 - [n] : an integer denoting the number of variable.
@@ -30,7 +30,7 @@ We define the following notions:
 - [setdiff la mu] == the set of elements [i] of ['I_n] for which the
            [i]-th part of [la] is smaller than the one of [mu].
 
-***** Kostka numbers:
+Kostka numbers:
 
 - [eval w]        == the evaluation of [w] as a [n.-tuple nat].
 - [KostkaTab la m] == the set of tableaux of shape [la] and evaluation [m].
@@ -47,7 +47,7 @@ We define the following notions:
            of the row reading of the tableau [t] is equal to the monomial
            associated to [la]
 
-***** Kostka numbers and standard tableaux:
+Kostka numbers and standard tableaux:
 
 In this section, we fix two nat [n] and [d] with hypothesis [Hd : d <= n.+1].
 
@@ -56,7 +56,7 @@ In this section, we fix two nat [n] and [d] with hypothesis [Hd : d <= n.+1].
 - [tabord_of_nat Hd t] == the tableau over ['I_n.+1] of shape [la]
                           corresponding to [t : stdtabsh la]
 
-***** Extension of tableaux:
+Extension of tableaux:
 
 In this section, we fix
 - a non empty sequence of integer [rcons s m] whose size is less than [n].
@@ -104,91 +104,14 @@ Local Open Scope Combi_scope.
 (** Alternating and symmetric polynomial *)
 Section Alternant.
 
-Variable n : nat.
-Variable R : comRingType.
+Variables (n : nat) (R : comRingType).
 
+Local Notation RR := (GRing.ComRing.ringType R).
 Local Notation rho := (rho n).
-Local Notation "''e_' k" := (@mesym n R k)
+Local Notation "''e_' k" := (mesym n RR k)
                               (at level 8, k at level 2, format "''e_' k").
-Local Notation "''a_' k" := (@alternpol n R 'X_[k])
+Local Notation "''a_' k" := (@alternpol n RR 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
-
-Lemma rho_uniq : uniq rho.
-Proof using .
-suff : perm_eq rho (iota 0 n) by move/perm_eq_uniq ->; exact: iota_uniq.
-rewrite rho_iota perm_eq_sym; exact: perm_eq_rev.
-Qed.
-
-Lemma mcoeff_alt (m : 'X_{1..n}) : uniq m -> ('a_m)@_m = 1.
-Proof.
-move=> Huniq.
-rewrite /alternpol (reindex_inj invg_inj) /=.
-rewrite raddf_sum /= (bigID (pred1 1%g)) /=.
-rewrite big_pred1_eq odd_permV odd_perm1 expr0 scale1r invg1 msym1m.
-rewrite mcoeffX eq_refl /=.
-rewrite (eq_bigr (fun => 0)); first by rewrite big1_eq addr0.
-move=> s Hs; rewrite mcoeffZ msymX mcoeffX invgK.
-suff : [multinom m (s i) | i < n] != m by move=> /negbTE ->; rewrite mulr0.
-move: Hs; apply contra => /eqP; rewrite mnmP => Heq.
-apply/eqP; rewrite -permP => i; rewrite perm1; apply val_inj => /=.
-have /eqP := Heq i; rewrite !mnmE !(mnm_nth 0).
-rewrite nth_uniq; last exact: Huniq.
-- by move=> /eqP ->.
-- rewrite size_tuple; exact: ltn_ord.
-- rewrite size_tuple; exact: ltn_ord.
-Qed.
-
-Lemma alt_uniq_non0 (m : 'X_{1..n}) : uniq m -> 'a_m != 0.
-Proof using .
-move=> Huniq.
-suff : mcoeff m 'a_m == 1.
-  apply contraL => /eqP ->; rewrite mcoeff0 eq_sym.
-  exact: oner_neq0.
-by rewrite mcoeff_alt.
-Qed.
-
-Lemma alt_rho_non0 : 'a_rho != 0.
-Proof using . exact: alt_uniq_non0 (rho_uniq). Qed.
-
-Lemma alt_alternate (m : 'X_{1..n}) (i j : 'I_n) :
-  i != j -> m i = m j -> 'a_m = 0.
-Proof using .
-move=> H Heq.
-pose t := tperm i j.
-have oddMt s: (t * s)%g = ~~ s :> bool by rewrite odd_permM odd_tperm H.
-rewrite [alternpol _](bigID (@odd_perm _)) /=.
-apply: canLR (subrK _) _; rewrite add0r -sumrN.
-rewrite (reindex_inj (mulgI t)); apply: eq_big => //= s.
-rewrite oddMt => /negPf ->; rewrite scaleN1r scale1r; congr (- _).
-rewrite msymMm.
-suff -> : msym t 'X_[m] = ('X_[m] : {mpoly R[n]}) by [].
-rewrite msymX; congr mpolyX.
-rewrite mnmP => k /=.
-rewrite !mnmE /= tpermV.
-by case: (tpermP i j k) => Hk //; rewrite Hk Heq.
-Qed.
-
-Lemma alt_add1_0 (m : 'X_{1..n}) i :
-  (nth 0%N m i).+1 = nth 0%N m i.+1 -> 'a_(m + rho) = 0.
-Proof using .
-move=> Heq.
-have Hi1n : i.+1 < n.
-  rewrite ltnNge; apply (introN idP) => Hi.
-  by move: Heq; rewrite [RHS]nth_default // size_tuple.
-have Hi : i < n by rewrite ltnW.
-pose i0 := Ordinal Hi; pose i1 := Ordinal Hi1n.
-have /alt_alternate : i0 != i1.
-  apply (introN idP) => /eqP/(congr1 val)/=/eqP.
-  by rewrite ieqi1F.
-apply.
-rewrite !mnmDE !mnmE !(mnm_nth 0%N) -Heq -(mnm_nth 0%N m i0).
-rewrite addSn -addnS subn1 /= subnS prednK //.
-have -> : (n.-1 - i = n - i.+1)%N.
-  case: n Hi1n Hi {i0 i1} => [//= | n' _] /=.
-  by rewrite subSS.
-by rewrite subn_gt0.
-Qed.
-
 
 Lemma alt_syme (m : 'X_{1..n}) k :
   'a_(m + rho) * 'e_k =
@@ -213,7 +136,7 @@ Local Definition hasincr :=
   has (fun i => (nth 0 (mpart la + mesym1 h)%MM i).+1 ==
                  nth 0 (mpart la + mesym1 h)%MM i.+1) (iota 0 n.-1).
 
-Lemma hasincr0 : hasincr -> 'a_(mpart la + mesym1 h + rho) = 0%R.
+Lemma hasincr0 : hasincr -> 'a_(mpart la + mesym1 h + rho) = 0%R :> {mpoly R[n]}.
 Proof using . move=> /hasP [] i _ /eqP; exact: alt_add1_0. Qed.
 
 Lemma not_hasincr_part :
@@ -603,15 +526,16 @@ Qed.
 End SchurAlternantDef.
 
 
-(** ** Schur polynomials are symmetric *)
+(** ** Schur polynomials are symmetric at last *)
 Section IdomainSchurSym.
 
 Variable (n0 : nat) (R : idomainType).
+Local Notation RR := (GRing.IntegralDomain.ringType R).
 Local Notation n := (n0.+1).
-Local Notation "''s_' k" := (Schur n0 R k)
-                             (at level 8, k at level 2, format "''s_' k").
 Local Notation rho := (rho n).
-Local Notation "''a_' k" := (@alternpol n R 'X_[k])
+Local Notation "''s_' k" := (Schur n0 RR k)
+                             (at level 8, k at level 2, format "''s_' k").
+Local Notation "''a_' k" := (@alternpol n RR 'X_[k])
                               (at level 8, k at level 2, format "''a_' k").
 
 Theorem alt_uniq d (la : 'P_d) (s : {mpoly R[n]}) :
@@ -635,7 +559,7 @@ Section RingSchurSym.
 Variable (n0 : nat) (R : ringType).
 Local Notation n := (n0.+1).
 Local Notation "''s_' k" := (Schur n0 R k)
-                              (at level 8, k at level 2, format "''s_' k").
+                             (at level 8, k at level 2, format "''s_' k").
 
 Theorem Schur_sym d (la : 'P_d) : 's_la \is symmetric.
 Proof using .
@@ -647,17 +571,7 @@ have:= Schur_sym_idomain n0 int_iDomain la => /issymP/(_ s) {2}<-.
 by rewrite msym_map_mpoly.
 Qed.
 
-End RingSchurSym.
-
-Section MPoESymHomog.
-
-Variable (n0 : nat) (R : ringType).
-Local Notation n := (n0.+1).
-
-Implicit Types p q r : {mpoly R[n]}.
-Implicit Type m : 'X_{1..n}.
-
-Lemma Schur_homog (d : nat) (la : 'P_d) : Schur n0 R la \is d.-homog.
+Lemma Schur_homog (d : nat) (la : 'P_d) : 's_la \is d.-homog.
 Proof using .
 rewrite Schur_tabsh_readingE /polylang /commword.
 apply rpred_sum => [[t Ht]] _ /=.
@@ -667,7 +581,7 @@ rewrite big_cons -(add1n (size s)); apply dhomogM; last exact: IHs.
 by rewrite dhomogX /= mdeg1.
 Qed.
 
-End MPoESymHomog.
+End RingSchurSym.
 
 
 (** * Kostka numbers *)
@@ -928,7 +842,7 @@ by rewrite eq_sym intpartn_sumn /mdeg /= sumnE sumn_mpart ?leqSpred.
 Qed.
 
 Lemma Kostka_size0 la mu :
-  size la > size mu -> Kostka la mu = 0.
+  size la > size mu -> 'K(la, mu) = 0.
 Proof.
 move=> H; apply/eqP; move: H.
 case Hsz : (size mu) => [|sz] /=.
@@ -964,14 +878,6 @@ Qed.
 Lemma Kostka0 (la mu : P) : ~~ (mu <=A la) -> 'K(la, mu) = 0.
 Proof.
 by move=> H; apply/eqP; move: H; apply contraR; apply Kostka_partdom.
-Qed.
-
-Lemma count_nseq (T : eqType) (P : pred T) n x :
-  count P (nseq n x) = (P x) * n.
-Proof.
-rewrite (eq_in_count (a2 := fun => P x)); last by move=> i /nseqP [->].
-case: (boolP (P x)) => HPx; rewrite /= ?mul0n ?count_pred0 //.
-by rewrite ?mul1n ?0count_predT size_nseq.
 Qed.
 
 Lemma Kostka_diag la : 'K(la, la) = 1.
@@ -1041,7 +947,11 @@ Qed.
 End Kostka.
 
 
+(** ** Comverting between standard tableau and tableau over 'I_n.
 
+The type [stdtabsh sh] is a subtype of [seq nat] whereas [tabsh sh] is a subtype
+of [seq 'I_n.+1]. We provide two conversion functions [tabnat_of_ord] and
+[tabord_of_nat] *)
 Section StdKostka.
 
 Variables (d : nat) (la : 'P_d).
@@ -1171,9 +1081,6 @@ Qed.
 End StdKostka.
 
 
-Lemma sumn_rcons s sm : (sumn s + sm)%N = sumn (rcons s sm).
-Proof. by rewrite -[RHS]sumn_rev rev_rcons /= sumn_rev addnC. Qed.
-
 Definition eqeval n (t : (seq (seq 'I_n.+1))) (la : seq nat) :=
   eval (to_word t) == mpart la.
 
@@ -1188,6 +1095,9 @@ apply (iffP eqP) => [Heq i| Hcount].
 - by apply eq_from_tnth => i; rewrite !tnth_mktuple.
 Qed.
 
+
+
+(** * Restricting and extending tableaux *)
 Section BijectionExtTab.
 
 Variable n : nat.
@@ -1489,6 +1399,7 @@ Qed.
 End BijectionExtTab.
 
 
+(** * Recursive computation of Kostka numbers *)
 Section KostkaRec.
 
 Local Open Scope nat_scope.
@@ -1499,7 +1410,7 @@ Lemma Kostka_ind d (la : 'P_d) m mu :
   Kostka la (m :: mu) =
   \sum_(nu : 'P_(sumn mu) | hb_strip nu la) Kostka nu mu.
 Proof.
-case: (ssrnat.leqP (size la) (size mu).+1) => Hszla; first last.
+case: (leqP (size la) (size mu).+1) => Hszla; first last.
   move=> _; rewrite Kostka_size0 //.
   apply esym; apply big1 => nu Hnu; apply Kostka_size0.
   by have := hb_strip_size Hnu => /andP [_ /(leq_trans Hszla)].
@@ -1512,31 +1423,29 @@ rewrite -sum1dep_card.
 have Hszmu := ltnSn (size mu).
 pose sht := @shape_res_tab (size mu) mu m Hszmu la.
 rewrite (partition_big sht
-                       (fun nu : 'P_(sumn mu) => hb_strip nu la)); first last.
+           (fun nu : 'P_(sumn mu) => hb_strip nu la)) /=; first last.
   by move=> t Ht; apply hb_strip_shape_res_tab.
 apply eq_bigr => /= nu Hstrip; rewrite sum1dep_card.
-pose res := res_tab Hszmu Hszla Hstrip.
-pose ext := ext_tab Hszmu Hszla Hstrip.
-rewrite -(card_in_imset (f := res)); last exact: res_tab_inj.
 rewrite (Kostka_any _ (ltnW Hszmu)) /KostkaMon /KostkaTab.
+rewrite -(card_eq_eval _ Hszla Hstrip).
 apply eq_card => /= t; rewrite !inE.
-apply/imsetP/idP => [[/= T] | Hev].
-- rewrite inE => /andP [Hev].
-  rewrite /sht /shape_res_tab => /eqP/(congr1 val)/=/eqP.
-  by rewrite Hev => Hsh ->{t}; apply : eval_res_tab.
-- exists (ext t); last by rewrite /res/ext ext_tabK.
-  rewrite inE eval_ext_tab //=.
-  apply/eqP/val_inj; rewrite /= -(shape_tabsh t).
-  rewrite (eval_ext_tab _ _ Hstrip Hev).
-  by have /= -> := (filter_ext_tab Hszmu Hszla Hstrip Hev).
+by rewrite -val_eqE /=; case : (eqeval t (rcons mu m)).
 Qed.
 
-Fixpoint Kostka_rec la mu : nat :=
+Fixpoint Kostka_rec (la mu : seq nat) : nat :=
   if mu is m :: mu then
     sumn [seq Kostka_rec nu mu | nu <- enum_partn (sumn mu) & hb_strip nu la]
   else la == [::].
 
-(* Eval compute in Kostka_rec [:: 4; 4; 3; 1] [:: 3; 3; 2; 2; 1; 1]. *)
+Example Kostka_expl1 :
+  Kostka_rec [:: 4; 3] [:: 3; 2; 2] == 2.
+Proof. by []. Qed.
+Example Kostka_expl2 :
+  Kostka_rec [:: 4; 3; 1] [:: 3; 2; 2; 1] == 5.
+Proof. by []. Qed.
+Example Kostka_expl3 :
+  Kostka_rec [:: 4; 4; 3; 1] [:: 3; 3; 2; 2; 1; 1] == 25.
+Proof. by []. Qed.
 
 Lemma Kostka_rec_size0 la mu :
   size la > size mu -> Kostka_rec la mu = 0.
@@ -1555,8 +1464,6 @@ elim: mu d la => [| m0 mu IHmu] d la /= Hd.
 rewrite -sumn_map_condE -enum_intpartnE big_map enumT.
 by rewrite Kostka_ind //; apply eq_big => //= nu Hstrip; apply IHmu.
 Qed.
-
-(* Eval compute in Kostka_rec [:: 4; 4; 3; 1] [:: 3; 3; 2; 2; 1; 1]. *)
 
 End KostkaRec.
 
