@@ -41,8 +41,7 @@ theories/SymGroup/cycletype.v
 theories/SymGroup/Frobenius_char.v
 theories/SymGroup/permcent.v
 theories/SymGroup/presentSn.v
-theories/SymGroup/reprdim1.v
-theories/SymGroup/reprS2.v
+theories/SymGroup/reprSn.v
 theories/SymGroup/towerSn.v
 theories/MPoly/antisym.v
 theories/MPoly/Cauchy.v
