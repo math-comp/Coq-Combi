@@ -1012,15 +1012,15 @@ Proof. by move=> Hs Ht /(congr1 invstd); rewrite !invstdK. Qed.
 End InvSeq.
 
 
-Section Test.
+Section Examples.
 
-Let u := [:: 4;1;2;2;5;3].
-Let v := [:: 0;4;3;3].
+Let u := [:: 4; 1; 2; 2; 5; 3].
+Let v := [:: 0; 4; 3; 3].
 
-Goal std u = [:: 4; 0; 1; 2; 5; 3].
-Proof using. compute; exact: erefl. Qed.
+Example std_expl1 : std u = [:: 4; 0; 1; 2; 5; 3].
+Proof. by compute. Qed.
+Example std_expl2 :
+  invstd (std u) = filter (gtn (size u)) (invstd (std (u ++ v))).
+Proof. by compute. Qed.
 
-Goal invstd (std u) = filter (gtn (size u)) (invstd (std (u ++ v))).
-Proof using. compute; exact: erefl. Qed.
-
-End Test.
+End Examples.

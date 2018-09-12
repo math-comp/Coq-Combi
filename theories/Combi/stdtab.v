@@ -795,6 +795,17 @@ Qed.
 
 End ConjTab.
 
+
+Example conj_tab_expl1 :
+  conj_tab [:: [:: 0; 1; 4]; [:: 2; 3]] ==
+           [:: [:: 0; 2]; [:: 1; 3]; [:: 4]].
+Proof. by compute. Qed.
+Example conj_tab_expl2 :
+  conj_tab [:: [:: 0; 1; 3; 4]; [:: 2; 5]; [:: 6]] ==
+           [:: [:: 0; 2; 6]; [:: 1; 5]; [:: 3]; [:: 4]].
+Proof. by compute. Qed.
+
+
 Lemma stdtab_get_tabNE t :
   is_stdtab t ->
   forall r1 c1 r2 c2,
@@ -862,8 +873,6 @@ apply/andP; split.
   rewrite (is_in_conj_part Hp) -shape_conj_tab {Hpos}.
   exact: mem_to_word.
 Qed.
-
-(* Eval compute in conj_tab [:: [:: 0; 1; 3; 4]; [:: 2; 5]; [:: 6]]. *)
 
 Lemma conj_stdtabnP n (t : stdtabn n):
   is_stdtab_of_n n (conj_tab t).

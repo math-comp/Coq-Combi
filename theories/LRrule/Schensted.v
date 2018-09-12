@@ -1314,51 +1314,51 @@ End QTableau.
 Section Tests.
 
   Goal (insrow [:: 1; 1; 2; 3; 5] 2) = [:: 1; 1; 2; 2; 5].
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal (insrow [:: 1; 1; 2; 3; 5] 2) = [:: 1; 1; 2; 2; 5].
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal (ins [:: 1; 1; 2; 3; 5] 2) = [:: 1; 1; 2; 2; 5].
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal (Sch [:: 2; 5; 1; 6; 4; 3]) = [:: 1; 3; 6].
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal (RS [:: 2; 5; 1; 6; 4; 3]) = [:: [:: 1; 3; 6]; [:: 2; 4]; [:: 5]].
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal (to_word (RS [:: 2; 5; 1; 6; 4; 3])) = [:: 5; 2; 4; 1; 3; 6].
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal is_tableau (RS [:: 2; 5; 1; 6; 4; 3]).
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal (invbumprow 3 [:: 1; 1; 2; 2; 5]) = ([:: 1; 1; 2; 3; 5], 2).
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal (invbumprow 3 [:: 1; 1; 2; 2; 3]) = ([:: 1; 1; 2; 3; 3], 2).
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal instabnrow [:: [:: 1; 3; 6]; [:: 2; 4];    [:: 5]] 3 =
-              ([:: [:: 1; 3; 3]; [:: 2; 4; 6]; [:: 5]], 1).
-  Proof. compute; exact: erefl. Qed.
+                 ([:: [:: 1; 3; 3]; [:: 2; 4; 6]; [:: 5]], 1).
+  Proof. by compute. Qed.
 
   Goal invinstabnrow [:: [:: 1; 3; 3]; [:: 2; 4; 6]; [:: 5]] 1  =
                     ([:: [:: 1; 3; 6]; [:: 2; 4];    [:: 5]], 3).
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal is_part [:: 0] = false.
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal evalseq [::] = [::].
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal evalseq [:: 0; 1; 2; 0; 1; 3] = [:: 2; 2; 1; 1].
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
   Goal (RSmapinv2 (RSmap [:: 4; 1; 2; 1; 3; 2])) = [:: 4; 1; 2; 1; 3; 2].
-  Proof. compute; exact: erefl. Qed.
+  Proof. by compute. Qed.
 
 End Tests.
 
