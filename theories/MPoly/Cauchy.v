@@ -513,7 +513,7 @@ Local Notation "''hsR[' la ]" := ('hs[la] : HSR).
 
 
 Definition co_hp (la : 'P_d) : pol -> algC :=
-  homsymdotr 'hp[la] \o @in_homsym n0 d _.
+  homsymdotr 'hp[la] \o in_homsym d (R := algCF).
 Definition co_hpXY (la mu : 'P_d) : polXY -> algC :=
   locked (co_hp la \o map_mpoly (co_hp mu)).
 
