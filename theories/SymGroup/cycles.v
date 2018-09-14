@@ -648,7 +648,7 @@ case: (boolP (x \in support (\prod_(C in A) C))) => [Hin|].
 Qed.
 
 (** ** Cycle decomposition of a permutation *)
-CoInductive cycle_dec_spec s A : Prop :=
+Variant cycle_dec_spec s A : Prop :=
   CycleDecSpec of
     {in A, forall C, C \is cyclic} &
     disjoint_supports A &

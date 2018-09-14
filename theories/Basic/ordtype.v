@@ -694,7 +694,7 @@ Lemma ltnXNgeqX m n : (m < n) = ~~ (n <= m).
 Proof using. by rewrite [n <= m]leqXNgtnX negbK. Qed.
 
 (* Comparison predicates. *)
-CoInductive leqX_xor_gtnX m n : bool -> bool -> Set :=
+Variant leqX_xor_gtnX m n : bool -> bool -> Set :=
   | LeqXNotGtnX of m <= n : leqX_xor_gtnX m n true false
   | GtnXNotLeqX of n < m  : leqX_xor_gtnX m n false true.
 
@@ -704,14 +704,14 @@ rewrite ltnXNgeqX.
 by case le_mn: (m <= n); constructor; rewrite // ltnXNgeqX le_mn.
 Qed.
 
-CoInductive ltnX_xor_geqX m n : bool -> bool -> Set :=
+Variant ltnX_xor_geqX m n : bool -> bool -> Set :=
   | LtnXNotGeqX of m < n  : ltnX_xor_geqX m n false true
   | GeqXNotLtnX of n <= m : ltnX_xor_geqX m n true false.
 
 Lemma ltnXP m n : ltnX_xor_geqX m n (n <= m) (m < n).
 Proof using. by case: leqXP; constructor. Qed.
 
-CoInductive compareX m n : bool -> bool -> bool -> Set :=
+Variant compareX m n : bool -> bool -> bool -> Set :=
   | CompareXLt of m < n : compareX m n true false false
   | CompareXGt of m > n : compareX m n false true false
   | CompareXEq of m = n : compareX m n false false true.

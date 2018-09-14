@@ -173,7 +173,7 @@ apply trans_ind => //= {s}.
 - by move=> s _ tmp _ {tmp} x; rewrite mem_undup.
 Qed.
 
-CoInductive rewrite_path x y : Prop :=
+Variant rewrite_path x y : Prop :=
   Rew : forall l, path [rel of rule] x l -> y = last x l -> rewrite_path x y.
 
 Lemma invar_rewrite_path x y : invar x -> rewrite_path x y -> invar y.
@@ -512,7 +512,7 @@ move: v; apply rtrans_ind; first exact: Hinvar_refl.
 by move=> v w /congrrule_invar /allP; apply.
 Qed.
 
-CoInductive Generated_EquivCongruence (grel : rel word) :=
+Variant Generated_EquivCongruence (grel : rel word) :=
   GenCongr : equivalence_rel grel ->
              congruence_rel grel ->
              ( forall u v, v \in rule u -> grel u v ) ->

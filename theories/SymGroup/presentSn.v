@@ -1689,7 +1689,7 @@ Variable eltrG : nat -> gT.
 Local Notation "''g_' i" :=
   (eltrG i) (at level 8, i at level 2, format "''g_' i").
 
-CoInductive relat_Sn : Prop :=
+Variant relat_Sn : Prop :=
   RelatSn of
     (forall i, i < n -> 'g_i^+2 = 1) &
     (forall i, i.+1 < n -> 'g_i * 'g_i.+1 * 'g_i = 'g_i.+1 * 'g_i * 'g_i.+1) &

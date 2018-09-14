@@ -579,7 +579,7 @@ case (altP (i =P posbig u)) => Hipos.
     by rewrite Hn Hszrem ltnS.
 Qed.
 
-CoInductive std_spec T (s : seq T) (p : seq nat) : Prop :=
+Variant std_spec T (s : seq T) (p : seq nat) : Prop :=
   | StdSpec : is_std p -> eq_inv s p -> std_spec s p.
 
 Lemma std_spec_uniq T (u : seq T) p q :
