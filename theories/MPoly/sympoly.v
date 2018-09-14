@@ -136,7 +136,7 @@ End DefType.
 (* directives take effect.                                         *)
 Bind Scope ring_scope with sympoly_of.
 Bind Scope ring_scope with sympoly.
-Arguments Scope sympol [_ ring_scope].
+Arguments sympol n%N R%R.
 
 Notation "{ 'sympoly' T [ n ] }" := (sympoly_of n (Phant T)).
 

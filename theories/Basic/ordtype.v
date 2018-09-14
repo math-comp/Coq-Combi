@@ -569,7 +569,7 @@ Canonical ordType.
 Coercion inhType : type >-> Inhabited.type.
 Canonical inhType.
 
-Canonical ord_inhType.
+(* Canonical ord_inhType. Redundant ?? *)
 
 Notation inhOrdFinType := type.
 Notation "[ 'inhOrdFinType' 'of' T ]" := (@pack T _ _ id _ _ id _ _ id)

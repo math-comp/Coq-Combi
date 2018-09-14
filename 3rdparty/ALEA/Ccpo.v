@@ -305,13 +305,13 @@ intros O o; exists (Oeq (A:=O)) (fun x y => y <=x).
 abstract (split; intuition; red; intros; transitivity y; auto).
 Defined.
 
-Implicit Arguments Iord [[o]].
+Arguments Iord O [o].
 
 (** *** Order on functions *)
 
 Definition fun_ext A B (R:relation B) : relation (A -> B) := 
                 fun f g => forall x, R (f x) (g x).
-Implicit Arguments fun_ext [B].
+Arguments fun_ext A [B] R.
 
 (** - [ ford f g ] := [ forall x, f x <= g x ] *)
 Instance ford A O {o:ord O} : ord (A -> O) := 
@@ -400,8 +400,8 @@ Record fmon `{o1:ord Oa} `{o2:ord Ob}:= mon
 
 Existing Instance fmonotonic.
 
-Implicit Arguments mon [[Oa] [o1] [Ob] [o2] [fmonotonic]].
-Implicit Arguments fmon [[o1] [o2]].
+Arguments mon [Oa o1 Ob o2] fmont [fmonotonic].
+Arguments fmon Oa [o1] Ob [o2].
 
 Hint Resolve @fmonotonic.
 
@@ -1117,7 +1117,7 @@ Hint Resolve @comp_monotonic2.
 Definition fcomp `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} :
    (Ob -m> Oc) -m> (Oa -m> Ob) -m> (Oa -m> Oc) := mon2 (@comp Oa _ Ob _ Oc _).
 
-Implicit Arguments fcomp [[o1] [o2] [o3]].
+Arguments fcomp Oa [o1] Ob [o2] Oc [o3].
 
 Lemma fcomp_simpl : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} 
       (f:Ob -m> Oc) (g:Oa -m> Ob), fcomp _ _ _ f g = f@g.
@@ -1130,7 +1130,7 @@ Definition fcomp2  `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od} :
         (fcomp Oa (Ob -m> Oc) (Ob -m> Od))@(fcomp Ob Oc Od).
 
 
-Implicit Arguments fcomp2 [[o1] [o2] [o3] [o4]].
+Arguments fcomp2 Oa [o1] Ob [o2] Oc [o3] Od [o4].
 
 Lemma fcomp2_simpl : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}
       (f:Oc -m> Od) (g:Oa -m> Ob -m> Oc) (x:Oa)(y:Ob), fcomp2 _ _ _ _ f g x y = f (g x y).
@@ -1154,13 +1154,13 @@ Qed.
 Record islub O (o:ord O) I (f:I -> O) (x:O) : Prop := mk_islub
      { le_islub : forall i,  f i <= x;
        islub_le : forall y, (forall  i,  f i <= y) -> x <= y}.
-Implicit Arguments islub [O o I].
-Implicit Arguments le_islub [O o I f x].
-Implicit Arguments islub_le [O o I f x].
+Arguments islub [O o I] f x.
+Arguments le_islub [O o I f x].
+Arguments islub_le [O o I f x].
 
 Definition isglb O (o:ord O) I (f:I -> O) (x:O) : Prop
      := islub (o:=Iord O) f x.
-Implicit Arguments isglb [O o I].
+Arguments isglb [O o I].
 
 Lemma le_isglb O (o:ord O) I (f:I -> O) (x:O) :
          isglb f x -> forall i,  x <= f i.
@@ -1171,8 +1171,8 @@ Lemma isglb_le O (o:ord O) I (f:I -> O) (x:O) :
          isglb f x -> forall y, (forall i,  y <= f i) -> y <= x.
 intros; exact (islub_le H y H0).
 Qed.
-Implicit Arguments le_isglb [O o I f x].
-Implicit Arguments isglb_le [O o I f x].
+Arguments le_isglb [O o I f x].
+Arguments isglb_le [O o I f x].
 
 Lemma mk_isglb O (o:ord O) I (f:I -> O) (x:O) : 
       (forall i,  x <= f i) -> (forall y, (forall i,  y <= f i) -> y <= x)
@@ -1325,7 +1325,7 @@ Class cpo  `{o:ord D} : Type := mk_cpo
    le_lub : forall (f : nat -m> D) (n:nat), f n <= lub f;
    lub_le : forall (f : nat -m> D) (x:D), (forall n, f n <= x) -> lub f <= x}.
 
-Implicit Arguments cpo [[o]].
+Arguments cpo D [o].
 
 Notation "0" := D0 : O_scope.
 
@@ -1702,7 +1702,6 @@ Hint Resolve @lub_comp_eq.
 Instance cont0  `{c1:cpo D1} `{c2:cpo D2} : continuous (mon (cte D1 (0:D2))).
 red; simpl; intros; unfold cte; auto.
 Qed.
-Implicit Arguments cont0 [].
 
 (** - double_app f g n m = f m (g n) *)
 Definition double_app `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4: ord Od} 
@@ -1912,8 +1911,8 @@ Record fcont `{c1:cpo D1} `{c2:cpo D2}: Type
 Existing Instance fcontinuous.
 
 Hint Resolve @fcontinuous.
-Implicit Arguments fcont [[o][c1] [o0][c2]].
-Implicit Arguments cont [[D1][o][c1] [D2][o0][c2] [fcontinuous]].
+Arguments fcont D1 [o][c1] D2 [o0][c2].
+Arguments cont [D1][o][c1] [D2][o0][c2] fcontm [fcontinuous].
 
 (** printing -c> %\ensuremath{\stackrel{c}{\leftarrow}}% #->#*)
 

@@ -37,11 +37,11 @@ Sigma type for standard tableaux:
 - [is_stdtab_of_shape sh] == a predicate for standard tableau of shape [sh].
 - [stdtabsh sh] == a sigma type for [is_stdtab_of_shape sh] where [sh] is an
              integer partition (of type [intpart]). This is canonically a
-             [subFinType].
+             [finType].
 
 - [is_stdtab_of_n n] == a predicate for standard tableau of size [n]
 - [stdtabn n] == a sigma type for [is_stdtab_of_n n].  This is canonically a
-             [subFinType].
+             [finType].
 
 - [shape_deg t] == if t is of type [stdtabn n], the shape of [t] in the
              sigma type ['P_n]
@@ -617,9 +617,10 @@ apply: (enum_yameval_countE (intpartP sh)).
 by rewrite /is_yam_of_eval yam_of_stdtabP //= Hsht.
 Qed.
 
-Canonical stdtabsh_finMixin := Eval hnf in FinMixin finite_stdtabsh.
+Definition stdtabsh_finMixin := Eval hnf in FinMixin finite_stdtabsh.
 Canonical stdtabsh_finType := Eval hnf in FinType stdtabsh stdtabsh_finMixin.
-Canonical stdtabsh_subFinType := Eval hnf in [subFinType of stdtabsh_countType].
+(* Redundant with tabsh_subFinType
+Canonical stdtabsh_subFinType := Eval hnf in [subFinType of stdtabsh_countType]. *)
 
 Lemma stdtabshP (t : stdtabsh) : is_stdtab t.
 Proof using. by case: t => /= t /andP []. Qed.
@@ -689,9 +690,10 @@ apply: (count_unionP _ yamn_PredEq).
 - by rewrite /is_yam_of_size yam_of_stdtabP //= Hszt.
 Qed.
 
-Canonical stdtabn_finMixin := Eval hnf in FinMixin finite_stdtabn.
+Definition stdtabn_finMixin := Eval hnf in FinMixin finite_stdtabn.
 Canonical stdtabn_finType := Eval hnf in FinType stdtabn stdtabn_finMixin.
-Canonical stdtabn_subFinType := Eval hnf in [subFinType of stdtabn_countType].
+(* Redundant with tabsh_subFinType
+Canonical stdtabn_subFinType := Eval hnf in [subFinType of stdtabn_countType]. *)
 
 Lemma stdtabnP (s : stdtabn) : is_stdtab s.
 Proof using. by case: s => s /= /andP []. Qed.

@@ -560,7 +560,7 @@ move=> w _ /=; apply/idP/idP.
   by rewrite /to_word -Hsh -shape_rev flattenK revK.
 Qed.
 
-Canonical tabsh_finMixin := Eval hnf in FinMixin finite_tabsh.
+Definition tabsh_finMixin := Eval hnf in FinMixin finite_tabsh.
 Canonical tabsh_finType := Eval hnf in FinType tabsh tabsh_finMixin.
 Canonical tabsh_subFinType := Eval hnf in [subFinType of tabsh_countType].
 

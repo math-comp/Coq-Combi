@@ -252,9 +252,9 @@ injection Heq; trivial.
 Defined.
 
 Lemma nat_compare_specT 
-   : forall x y : nat, CompareSpecT (x = y) (x < y)%nat (y < x)%nat (nat_compare x y).
+   : forall x y : nat, CompareSpecT (x = y) (x < y)%nat (y < x)%nat (Nat.compare x y).
 intros; apply CompareSpec2Type.
-apply nat_compare_spec.
+apply Nat.compare_spec.
 Qed.
 
 

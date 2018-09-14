@@ -230,7 +230,7 @@ Proof using.
 by rewrite/enum_stdwordn (map_inj_uniq wordperm_inj); exact: enum_uniq.
 Qed.
 
-Canonical stdwordn_finMixin :=
+Definition stdwordn_finMixin :=
   Eval hnf in sub_uniq_finMixin
                 stdwordnn_subCountType enum_stdwordn_uniq enum_stdwordnE.
 Canonical stdwordn_finType := Eval hnf in FinType stdwordn stdwordn_finMixin.
