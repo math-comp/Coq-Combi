@@ -16,9 +16,9 @@
 (** * Free Schur functions
 
 This file is the second step to the proof of the Littewood-Richardson rule.
-The main goal of this file is to lift the multiplication of Schur multivariate
-polynomials to the non commutative setting. This allows to prove a
-non-commutative version of the LR rule by double set inclusion.
+We translate theorem [LRtriple_cat_equiv] in a algebraic setting. Specifically,
+the main goal of this file is to lift the multiplication of Schur multivariate
+polynomials to the non commutative setting.
 
 - [commword n R w] == the commutative image of the word [w] as a multivariate
                       polynomial (of type [{mpoly R[n]}]).
@@ -45,12 +45,16 @@ The free Littlewood-Richardson rule:
 
 - [LRsupport Q1 Q2] == the set of standard Littlewood-Richardson Q-tableau in
                       the product of the free Schur function indexed by [Q1]
-                      and [Q2]. The main result here is the free LR rule
-                      [free_LR_rule]:
+                      and [Q2], that is the set of [Q] which forms a [LRtriple]
+                      with [Q1] and [Q2].
+
+The main result here is the free LR rule [free_LR_rule]:
 
   [
       catlang (freeSchur Q1) (freeSchur Q2) = \bigcup_(Q in LRsupport) freeSchur Q.
   ]
+
+We then go back to commutative Schur polynomials:
 
 - [hyper_stdtab sh] == the hyper standard tableau of shape sh as a [seq (seq nat)].
 - [hyper_stdtabn sh] == the hyper standard tableau of shape sh as a

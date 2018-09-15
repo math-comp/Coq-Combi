@@ -13,13 +13,19 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * Shuffle and shifted shuffle
+(** * Shuffle, shifted shuffle and plactic classes
 
 This file contains the core of Schützenberger proof of the Littlewood-Richardson
 rule. Namely, the theorem saying that the shifted shuffle of two plactic classes
-is a union of plactic classes. This set is described by the
-[pred_LRtriple] predicate. However, instead of taking the road of plactic Schur
-function we follow Duchamp-Hivert-Thibon using free Schur functions.
+is a union of plactic classes. The set of those class is described by the
+[pred_LRtriple] predicate.
+
+However, to prove the rule, instead of taking the road of plactic Schur
+function, we follow Duchamp-Hivert-Thibon using free Schur functions. We
+nevertheless prove Schützenberger theorem [Schutzenberger_shuffle_plact] but
+we don't use it.
+
+Here are the new notions:
 
 - [shuffle u v] == the sequence of shuffling of [u] and [v]
 - [shiftn n u] == add n to all the entries of the sequence [u]
@@ -31,7 +37,7 @@ function we follow Duchamp-Hivert-Thibon using free Schur functions.
 
 - [langQ t] == the set of words whose Q-symbol is [t]
 
-Littlewood-Richardson triple:
+The Littlewood-Richardson triple:
 
 - [LRtriple t1 t2 t] == there exists three words [p1] [p2] [p] of respective
            P-symbol [t1] [t2] [t] such that [p] appears in the shifted shuffle
@@ -43,19 +49,15 @@ Littlewood-Richardson triple:
            only computing the shifted shuffle of (the row reading of) [t1] with
            the plactic class of [t2]
 
-The main statement is [LRtriple_cat_equiv] which stats the equivalence
-for two standard tableau [t1] and [t2] and two words [u1] [u2] between:
+The main statement is [LRtriple_cat_equiv] which stats the equivalence,
+for two standard tableau [t1] and [t2] and two words [u1] [u2] of the right length,
+between the two following statements:
+- [ u1 \in langQ t1 /\ u2 \in langQ t2]
+- [ exists t, LRtriple t1 t2 t /\ u1 ++ u2 \in langQ t ]
 
-  [ u1 \in langQ t1 /\ u2 \in langQ t2]
-
-and
-
-  [
-      [/\ size u1 = size_tab t1, size u2 = size_tab t2 &
-       exists t, LRtriple t1 t2 t /\ u1 ++ u2 \in langQ t].
-  ]
-
-Hence 
+Then to get a first version of the LR rule, we will need to do the necessary
+abgebraic translation of the rule and recode the triple by some standard
+skew tableaux.
 *************************)
 
 Require Import mathcomp.ssreflect.ssreflect.
@@ -380,10 +382,40 @@ apply/idP/idP.
   by rewrite !ltnXnatE ltn_add2l !addKn.
 Qed.
 
+
+(** ** Schützenberger theorem *)
+Theorem Schutzenberger_shuffle_plact u1 v1 w1 w2 :
+  is_std u1 -> is_std v1 -> w1 \in shsh u1 v1 ->
+  (w1 =Pl w2) ->
+  exists u2 v2, [/\ u1 =Pl u2, v1 =Pl v2 & w2 \in shsh u2 v2].
+Proof.
+move=> Hstdu1 Hstdv1 Hsh Hpl.
+have Hstdw1 : is_std w1 by exact: (allP (std_shsh Hstdu1 Hstdv1)).
+have:= Hsh; rewrite (mem_shsh _ _ Hstdu1) => /andP [/eqP Hu1 /eqP Hv1].
+have HgtnE : (fun x => x <A size u1) =1 gtn (size u1).
+  by move=> x /=; rewrite ltnXnatE.
+have HleqE : (fun x => x >=A size u1) =1 leq (size u1).
+  by move=> x /=; rewrite leqXnatE.
+pose u2 := (sfiltergtn (size u1) w2); pose v2 := (sfilterleq (size u1) w2).
+have {Hu1} Hplu : u1 =Pl u2.
+  rewrite -Hu1 /u2 /sfiltergtn /= -!(eq_filter HgtnE).
+  exact: plactic_filter_gtnX.
+have {Hv1} Hplv : v1 =Pl v2.
+  rewrite -Hv1 /v2 /sfilterleq /= -!(eq_filter HleqE).
+  apply: plact_map_in_incr; last exact: plactic_filter_leqX.
+  move=> /= x y.
+  rewrite !mem_filter !leqXnatE !ltnXnatE => /andP [Hx _]  /andP [Hy _] Hxy.
+  by rewrite -(ltn_add2r (size u1)) ?subnK.
+exists u2, v2; split => //.
+rewrite mem_shsh; first last.
+  by apply (perm_eq_std Hstdu1); rewrite perm_eq_sym; exact: plact_homog.
+by rewrite -(perm_eq_size (plact_homog Hplu)) !eq_refl.
+Qed.
+
 End ShiftedShuffle.
 
 
-
+(** * Shifted shuffle and inverse standardized *)
 Section LRTriple.
 
 Variable Alph : inhOrdType.
@@ -554,6 +586,7 @@ rewrite {2}(invstd_catgtn u v) size_invstd size_std (invstd_catleq u v).
 by rewrite !eq_refl.
 Qed.
 
+(** Free Schur functions as predicates *)
 Definition langQ t := [pred w : word | (RStabmap w).2 == t].
 
 Lemma size_langQ t u : u \in langQ t -> size u = size_tab t.
@@ -565,6 +598,7 @@ case: (RSmap u) => p q /=.
 by rewrite shape_stdtab_of_yam.
 Qed.
 
+(** * Littlewood-Richardson-Schützenberger triple *)
 Inductive LRtriple t1 t2 t : Prop :=
   LRTriple :
     forall p1 p2 p, RS p1 = t1 -> RS p2 = t2 -> RS p = t ->
@@ -692,6 +726,11 @@ apply: (LRTriple (p1 := invstd (std u1))
 - exact: invstd_cat_in_shsh.
 Qed.
 
+(** This is essentially the free LR rule:
+
+The concatenation of [langQ t1] and [langQ t2] is the union of [langQ t] for
+[t] such that [LRtriple t1 t2 t].
+******************************)
 Theorem LRtriple_cat_equiv t1 t2 :
   is_stdtab t1 -> is_stdtab t2 ->
   forall u1 u2 : word,
@@ -719,6 +758,7 @@ split.
 Qed.
 
 
+(** ** Conjugating [LRtriple] *)
 Theorem LRtriple_conj t1 t2 t :
   is_stdtab t1 -> is_stdtab t2 -> is_stdtab t ->
   LRtriple t1 t2 t -> LRtriple (conj_tab t1) (conj_tab t2) (conj_tab t).

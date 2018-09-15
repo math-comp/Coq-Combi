@@ -16,7 +16,8 @@
 (** * The Littlewood-Richardson rule
 
 The goal of this file is to formalize the final step ot the proof: a bijection
-beetween LR-standard tableau as defined in Schur and LR-Yamanouchi tableaux.
+beetween LR-standard tableau as defined in [LRsupport Q1 Q2] and LR-Yamanouchi
+tableaux.
 
 Below we use the following notation:
 - [d1] and [d2] are [nat],
@@ -28,7 +29,7 @@ Below we use the following notation:
 We define the following:
 - [is_skew_reshape_tableau P P1 w] == w is the row reading of a skew tableau of
              shape P/P1. Equivalently, the P/P1-reshape of w is a skew tableau.
-- [bijLRyam P P1] == a map from [seq nat] to [seq (seq nat)] which defined a
+- [bijLRyam P P1] == a map from [seq nat] to [seq (seq nat)] which defines a
              bijection between LR yamanouchi tableaux and LR-standard tableaux
 - [bijLR P P1] == the sigma-type version of bijLRyam:
                   [(yam : yameval P2) -> stdtabn (d1 + d2)]
