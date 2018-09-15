@@ -244,7 +244,7 @@ End StdCombClass.
 (** * Standardisation of a word over a totally ordered alphabet *)
 Section Standardisation.
 
-Variable Alph : ordType.
+Context {Alph : ordType}.
 Implicit Type s u v w : seq Alph.
 
 Fixpoint std_rec n s :=

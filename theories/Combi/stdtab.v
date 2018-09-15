@@ -280,9 +280,7 @@ apply/is_tableau_getP; split => [| rn c Hini | rn c Hini].
       by apply anti_leq; rewrite H1 H2.
     have {Hpart Hparti} Hshape : nth 0 (shape T) r < nth 0 (shape T) rn.
       move: Hparti => /is_partP => [] [_] /(_ rn).
-      rewrite !nth_incr_nth {}Hrn eq_refl add1n.
-      have /negbTE -> : rn.+1 != rn by elim rn.
-      by rewrite add0n.
+      by rewrite !nth_incr_nth {}Hrn eq_refl add1n eq_sym ltn_eqF.
     rewrite H get_append_nth_eq get_append_nth_in ?/is_in_shape ?H //.
     rewrite ltnXnatE; apply Hw.
     by apply mem_to_word; rewrite /is_in_shape.
