@@ -1055,8 +1055,8 @@ Section Inverse.
       rewrite -Ht /= => Hdom -> Hshape.
       have:= is_row_rconsK Hrow => /= -> /=; rewrite andbT.
       rewrite -rcons_cons in Hdom.
-      apply: (dominate_rconsK _ Hdom).
-      move: Hshape; by rewrite Ht /= size_rcons ltnS.
+      move: Hdom; rewrite -cats1; apply: dominate_cut.
+      by move: Hshape; rewrite Ht /= size_rcons ltnS.
     - case Hs : s => [//= | s1 s']; first by rewrite nth_nil.
       rewrite -Hs => /= /and4P [] Hnnil0 Hrows0 Hdom Htabs Hcorn.
       have:= Htabs; rewrite {1}Hs; move/head_tableau_non_nil => Hnnil1.

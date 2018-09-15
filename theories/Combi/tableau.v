@@ -99,6 +99,16 @@ Notation Z := (inhabitant T).
 Implicit Type l : T.
 Implicit Type r u v : seq T.
 
+Lemma is_in_shape_tab_size (t : seq (seq T)) i j :
+  is_in_shape (shape t) i j -> i < size t.
+Proof. by rewrite -(size_map size) -/shape; exact: is_in_shape_size. Qed.
+Lemma is_in_shape_tab i j (t : seq (seq T)) :
+  is_in_shape (shape t) i j -> j < size (nth [::] t i).
+Proof.
+move=> Hin; have:= Hin; rewrite /is_in_shape /shape (nth_map [::]) //.
+exact: (is_in_shape_tab_size Hin).
+Qed.
+
 Lemma is_row_set_nth l r pos :
   is_row r -> l <A nth l r pos ->
   (forall n : nat, l <A nth l r n -> pos <= n) -> is_row (set_nth l r pos l).
@@ -117,9 +127,22 @@ case eqP => Hipos; case eqP => Hi1pos.
 - exact: Hrow.
 Qed.
 
+Fixpoint dominate_rec u v :=
+  if u is u0 :: u' then
+    if v is v0 :: v' then (u0 >A v0) && (dominate_rec u' v')
+    else false
+  else true.
+
 Definition dominate u v :=
   ((size u) <= (size v)) &&
    (all (fun i => nth Z u i >A nth Z v i) (iota 0 (size u))).
+
+Lemma dominate_recE : dominate =2 dominate_rec.
+Proof using.
+rewrite /dominate; elim=> [//| u0 u IHu] [//| v0 v] /=.
+rewrite -IHu ltnS [RHS]andbA [LHS]andbA [_&& (v0 <A u0)]andbC; congr (_ && _).
+by rewrite -add1n iota_addl all_map; apply eq_all => i.
+Qed.
 
 Lemma dominateP u v :
   reflect ((size u) <= (size v) /\ forall i, i < size u -> nth Z u i >A nth Z v i)
@@ -131,52 +154,50 @@ rewrite /dominate /mkseq ; apply/(iffP idP).
 - by move=> [] -> /= H; apply/allP => i; rewrite mem_iota add0n; apply: H.
 Qed.
 
-Lemma dominate_nil u : dominate [::] u.
-Proof using. by apply/dominateP. Qed.
-
-Lemma dominate_trans r0 r1 r2 :
-  dominate r0 r1 -> dominate r1 r2 -> dominate r0 r2.
+Lemma dominate_trans : transitive dominate.
 Proof using.
-move=> /dominateP [] Hsz0 Hdom0 /dominateP [] Hsz1 Hdom1.
-apply/dominateP; split; first exact: (leq_trans Hsz0 Hsz1).
-move => i Hi.
-apply (ltnX_trans (Hdom1 i (leq_trans Hi Hsz0))).
-exact: Hdom0.
+move=> r2 r1 r3; rewrite !dominate_recE.
+elim: r1 r2 r3 => [//| a1 l1] IHl [|a2 l2] [|a3 l3] //=.
+by move=> /andP [/(ltnX_trans _) Ha21 /IHl{IHl}Hrec] /andP [/Ha21 -> /Hrec ->].
 Qed.
+
+Definition dominate_rev_trans := rev_trans dominate_trans.
 
 Lemma dominate_rcons v u l : dominate u v -> dominate u (rcons v l).
 Proof using.
-move/dominateP => [] Hsz Hlt.
-apply/dominateP; split => [|i Hi]; first by rewrite size_rcons; apply: leqW.
-move/(_ _ Hi) : Hlt; rewrite nth_rcons.
-case: (ltnP i (size v)) => //= /(leq_trans Hsz)/leq_ltn_trans/(_ Hi).
-by rewrite ltnn.
+rewrite !dominate_recE.
+by elim: u v => [//| u0 u IHu] [|v0 v] //= /andP [-> /IHu ->].
 Qed.
 
-Lemma dominate_rconsK u v l :
-  size u <= size v -> dominate u (rcons v l) -> dominate u v.
+Lemma dominate_take v u n : dominate u (take n v) -> dominate u v.
+Proof.
+rewrite !dominate_recE -{2}(cat_take_drop n v).
+elim/last_ind: {v} (drop n v) (take n v) => [| v vn IHv]/= w.
+  by rewrite cats0.
+move=> /IHv {IHv}.
+by rewrite -cats1 catA cats1 -!dominate_recE; exact: dominate_rcons.
+Qed.
+
+Lemma dominate_cut u v w:
+  size u <= size v -> dominate u (v ++ w) -> dominate u v.
 Proof using.
-move=> Hsz /dominateP [] _ Hlt.
-apply/dominateP; split => [|i Hi]; first exact Hsz.
-by move/(_ _ Hi) : Hlt; rewrite nth_rcons (leq_trans Hi Hsz).
+rewrite !dominate_recE.
+elim: u v => [//| u0 u IHu] [|v0 v] //=.
+by rewrite ltnS => /IHu{IHu}Hrec /andP [-> /Hrec ->].
 Qed.
 
 Lemma dominate_head u v : u != [::] -> dominate u v -> head Z v <A head Z u.
 Proof using.
-move=> Hu /dominateP []; case: u Hu => [//=|u0 u _]; case: v => [|v0 v _] /=.
-- by rewrite ltn0.
-- by move=> Hdom; apply: (Hdom 0 (ltn0Sn _)).
+by rewrite !dominate_recE; case: u v => [//| u0 u] [|v0 v] //= _ /andP [].
 Qed.
 
 Lemma dominate_tl a u b v :
   dominate (a :: u) (b :: v) -> dominate u v.
-Proof using.
-move=> /dominateP [] /=; rewrite ltnS => Hsize Hdom.
-apply/dominateP; split; first exact Hsize.
-  by move=> i Hi; apply: (Hdom i.+1 Hi).
-Qed.
+Proof using. by rewrite !dominate_recE => /= /andP []. Qed.
 
 End Dominate.
+Arguments dominate_trans {T}.
+Arguments dominate_rev_trans {T}.
 
 
 (** * Tableaux : definition and basic properties *)
@@ -217,7 +238,7 @@ apply (iffP idP).
   split; try by case.
   case=> [| i] [| j] //=.
   + case: j => [|j] _; first by rewrite nth0.
-    apply: (dominate_trans _ Hdom0).
+    apply: (dominate_trans _ _ _ _ Hdom0).
     by rewrite -nth0; apply: Hdom.
   + by rewrite ltnS; apply: Hdom.
 - elim: t => [| t0 t IHt] //= [] Hnnil Hrow Hdom.
@@ -307,7 +328,7 @@ Lemma is_tableau_sorted_dominate (t : seq (seq T)) :
   is_tableau t =
   [&& is_part (shape t),
    all (sorted leqX_op) t &
-   sorted (fun x y => dominate y x) t].
+   sorted (fun (r s : seq T) => dominate s r) t].
 Proof using.
 apply/idP/idP; elim: t => [//= | t0 t IHt].
 - move=> /=/and4P [] Hnnil Hrow0 Hdom /IHt /and3P [] Hpart Hall Hsort.
@@ -334,35 +355,44 @@ Lemma is_tableau_getP (t : seq (seq T)) :
                           get_tab t r c <A get_tab t r.+1 c)]
     (is_tableau t).
 Proof using.
-apply/(iffP idP).
-- move=> Htab; split.
-  + exact: is_part_sht.
-  + rewrite /is_in_shape /get_tab => r c Hrc.
-    move: Htab => /is_tableauP [] _ Hrow _.
-    by apply: (is_row1P _ _ (Hrow r)); rewrite -nth_shape.
-  + rewrite /is_in_shape /get_tab => r c Hrc.
-    move: Htab => /is_tableauP [] _ _ Hdom.
-    have := dominateP _ _ (Hdom _ _ (ltnSn r)) => [] [] _; apply.
-    by rewrite -nth_shape.
-- move=> [] Hpart Hrow Hcol.
-  apply/is_tableauP; split.
-  + move=> i Hi.
-    have:= nth_part_non0 Hpart; rewrite size_map => H.
-    have {H} := H _ Hi.
-    apply contra => /eqP.
-    by rewrite nth_shape => ->.
-  + move=> r; apply/(is_row1P (inhabitant T)) => c.
-    by rewrite -nth_shape => /Hrow; apply.
-  + move=> i j Hij; case: (ltnP j (size t)) => Hjr.
-    * have H : i < j < size t by rewrite Hij Hjr.
-      have Htrans : transitive (fun x : seq T => (@dominate T)^~ x).
-        by move=> a b c /= Hab Hca; apply: dominate_trans Hca Hab.
-      move: i j H {Hij Hjr}; rewrite (incr_equiv [::] Htrans t) => i Hi.
-      apply/dominateP; rewrite -!nth_shape.
-      split; first by have:= is_partP _ Hpart => [] [] _; apply.
-      by move=> j; rewrite -/(is_in_shape _ _ _) -!/(get_tab _ _ _) => /Hcol ->.
-    * by rewrite (nth_default _ Hjr); apply: dominate_nil.
+rewrite is_tableau_sorted_dominate.
+apply/(iffP idP) => [|[Hpart]].
+- move=> /and3P [Hpart /allP Hrow /(sorted_strictP _ dominate_rev_trans)] Hdom.
+  split; rewrite /get_tab => // r c Hin.
+  + have/Hrow/is_row1P : (nth [::] t r) \in t.
+      by apply/mem_nth/is_in_shape_tab_size/Hin.
+    by apply; exact: is_in_shape_tab.
+  + have/(Hdom [::])/dominateP [_] : r < r.+1 < size t.
+      by rewrite ltnSn (is_in_shape_tab_size Hin).
+    by apply; exact: is_in_shape_tab.
+- rewrite /get_tab Hpart => Hrow Hcol /=; apply/andP; split.
+  + apply/allP => /= c Hrin.
+    have Hr := nth_index [::] Hrin.
+    move: Hrin Hr; rewrite -index_mem; move: (index c t) => r Hr Hc; subst c.
+    apply/is_row1P => i Hi; apply Hrow.
+    by rewrite /is_in_shape (nth_map [::]).
+  + apply/(sorted_strictP [::] dominate_rev_trans).
+    rewrite (incr_equiv _ dominate_rev_trans) => r Hr.
+    apply/dominateP; split.
+    * rewrite -!(nth_map _ 0) -/shape //; last by move: Hr; apply ltnW.
+      by move/is_partP: Hpart => [_].
+    * move=> i Hi; apply Hcol.
+      by rewrite /is_in_shape (nth_map [::]).
 Qed.
+
+(** ** Cuting rows and tableaux *)
+Lemma row_dominate (u v : seq T) :
+  is_row (u ++ v) -> dominate u v -> u = [::].
+Proof using.
+case: u => [//= | u0 u] /=.
+case: v => [//= | v0 v] /= /order_path_min Hpath.
+have {Hpath} /Hpath /allP Hall : transitive (@leqX_op T)
+  by move=> i j k; apply leqX_trans.
+rewrite dominate_recE /= => /andP [Habs]; exfalso.
+have /Hall : v0 \in u ++ v0 :: v by rewrite mem_cat in_cons eq_refl /= orbT.
+by rewrite leqXNgtnX Habs.
+Qed.
+
 
 Lemma filter_gtnX_row r n :
   is_row r -> filter (gtnX n) r = take (count (gtnX n) r) r.
@@ -376,6 +406,19 @@ case: (ltnXP r0 n) => Hr0.
     by rewrite ltnXNgeqX Hr1 (IHr r1 Hr1 Hpath).
   rewrite Hcount.
   by apply/nilP; rewrite /nilp size_filter Hcount.
+Qed.
+
+Lemma filter_leqX_row n r :
+  is_row r -> filter (leqX n) r = drop (count (gtnX n) r) r.
+Proof using.
+elim: r => //= r0 r IHr Hrow /=.
+case: (leqXP n r0) => Hr0.
+- rewrite add0n; have Hcount : count (gtnX n) r = 0.
+  elim: r r0 Hr0 Hrow {IHr} => //= r1 r IHr r0 Hr0 /andP [] Hr0r1 Hpath.
+  have Hr1 := leqX_trans Hr0 Hr0r1.
+    by rewrite ltnXNgeqX Hr1 (IHr r1 Hr1 Hpath).
+  by rewrite Hcount (IHr (is_row_consK Hrow)) Hcount drop0.
+- by rewrite add1n (IHr (is_row_consK Hrow)).
 Qed.
 
 Lemma count_gtnX_dominate r1 r0 n :
@@ -458,6 +501,7 @@ rewrite Ht0 /=; apply/and3P; split; last exact: IHt.
   by move: Htab; case t => [//= | t1 t'] /= /and3P [].
 Qed.
 
+(** ** The size of a tableau *)
 Definition size_tab t := sumn (shape t).
 
 Lemma tab0 t : is_tableau t -> size_tab t = 0 -> t = [::].
@@ -476,7 +520,8 @@ End Tableau.
 
 Prenex Implicits is_tableau to_word size_tab.
 
-(** ** Row reading of tableaux *)
+
+(** ** Tableaux from their row reading *)
 Section TableauReading.
 
 Variable A : inhOrdType.
@@ -688,24 +733,15 @@ move=> Hincr.
 have Hndecr := in_incrX_nondecrXE Hincr.
 have {Hincr} Hincr := in_incrXE Hincr.
 apply/is_tableau_getP/is_tableau_getP;
-  rewrite ?shape_incr_tab=> [] [H1 H2 H3]; split => // r c Hrc1.
-- have Hrc : is_in_shape (shape t) r c.
-    by move: Hrc1; rewrite /is_in_shape => /ltnW.
-  rewrite !get_incr_tab //.
+  rewrite ?shape_incr_tab=> [] [H1 H2 H3]; split => // r c Hrc1;
+  have Hrc : is_in_shape (shape t) r c by apply: (is_in_part_le H1 Hrc1).
+- rewrite !get_incr_tab //.
   rewrite -Hndecr; [exact: H2 | exact: mem_to_word | exact: mem_to_word].
-- have Hrc : is_in_shape (shape t) r c.
-    move: Hrc1; rewrite /is_in_shape => /leq_trans; apply.
-    by move: H1 => /is_partP [] _; apply.
-  rewrite !get_incr_tab //.
+- rewrite !get_incr_tab //.
   rewrite -Hincr; [exact: H3 | exact: mem_to_word | exact: mem_to_word].
-- have Hrc : is_in_shape (shape t) r c.
-    by move: Hrc1; rewrite /is_in_shape => /ltnW.
-  rewrite Hndecr; [|exact: mem_to_word | exact: mem_to_word].
+- rewrite Hndecr; [|exact: mem_to_word | exact: mem_to_word].
   by rewrite -!get_incr_tab //; apply: H2.
-- have Hrc : is_in_shape (shape t) r c.
-    move: Hrc1; rewrite /is_in_shape => /leq_trans; apply.
-    by move: H1 => /is_partP [] _; apply.
-  rewrite Hincr; [|exact: mem_to_word | exact: mem_to_word].
+- rewrite Hincr; [|exact: mem_to_word | exact: mem_to_word].
   by rewrite -!get_incr_tab //; apply: H3.
 Qed.
 

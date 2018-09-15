@@ -23,7 +23,7 @@ We define the following notions:
 - [is_stdtab t] == [t] is a *standard tableau* that is a tableau whose
             row reading is a standard word
 - [last_big t b] == the index of the first row of [t] which ends with [b]
-- [remn t] == remove the largest entry ie [n] from a standard tableau os size [n]
+- [remn t] == remove the largest entry ie [n] from a standard tableau of size [n]
 - [conj_tab t] == the conjugate standard tableau of [t] (this is indeed a tableau
             when [t] is itself a standard tableau.
 
@@ -93,6 +93,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
+(** ** Appending on the n-th row *)
 Section AppendNth.
 
 Variable T : inhOrdType.
@@ -148,6 +149,7 @@ case: (altP (c =P (size (nth [::] t i)))) => [// | Hc'].
 by rewrite nth_default.
 Qed.
 
+(** ** Finding the largest entry *)
 Fixpoint last_big t b :=
   if t is t0 :: t' then
     if last b t0 == b then 0
@@ -155,7 +157,7 @@ Fixpoint last_big t b :=
   else 0.
 
 Lemma allLeq_to_word_hd r t b : allLeq (to_word (r :: t)) b -> allLeq r b.
-Proof using. by rewrite to_word_cons allLeq_catE => /andP [] _. Qed.
+Proof using. by rewrite to_word_cons allLeq_catE => /andP []. Qed.
 Lemma allLeq_to_word_tl r t b : allLeq (to_word (r :: t)) b -> allLeq (to_word t) b.
 Proof using. by rewrite to_word_cons allLeq_catE => /andP []. Qed.
 
@@ -165,22 +167,21 @@ Lemma last_bigP t b i :
            forall j, j < i -> last b (nth [::] t j) <A b)
           (i == last_big t b).
 Proof using.
-move=> Htab Hmax; apply: (iffP idP).
-- move/eqP ->; split.
-  + elim: t Htab {Hmax} => [//= | t0 t IHt] /= /and4P [] _ _ _ Htab.
-    by case eqP => [//= | _]; apply: IHt.
-  + elim: t Htab Hmax => [//= | t0 t IHt] /= /and4P [] Hnnil _ _ Htab Hmax.
-    case eqP => [//= | /eqP H].
-    case=> [/= _ | j].
-    * rewrite ltnX_neqAleqX {}H /=; move/allLeq_to_word_hd : Hmax.
-      by case/lastP: t0 Hnnil => [//= | t0 tn] _; rewrite last_rcons => /allLeq_last.
-    * by rewrite /=; apply IHt; last exact: (allLeq_to_word_tl Hmax).
-- move=> []; elim: t i Htab Hmax => [/= i _ _| t0 t IHt].
+move=> Htab Hmax; apply: (iffP eqP) => [ -> | []]; first split.
+- elim: t Htab {Hmax} => [//= | t0 t IHt] /= /and4P [] _ _ _ Htab.
+  by case eqP => [//= | _]; apply: IHt.
+- elim: t Htab Hmax => [//= | t0 t IHt] /= /and4P [] Hnnil _ _ Htab Hmax.
+  case eqP => [//= | /eqP H].
+  case=> [/= _ | j].
+  + rewrite ltnX_neqAleqX {}H /=; move/allLeq_to_word_hd : Hmax.
+    by case/lastP: t0 Hnnil => [//= | t0 tn] _; rewrite last_rcons => /allLeq_last.
+  + by rewrite /=; apply IHt; last exact: (allLeq_to_word_tl Hmax).
+- elim: t i Htab Hmax => [/= i _ _| t0 t IHt].
   + by case: i => [//= | i] /= _ /(_ 0 (ltn0Sn _)) /=; rewrite ltnXnn.
   + case=> [/= _ _ -> _| i]; first by rewrite eq_refl.
     move=> /= /and4P [] _ _ _ Htab Hmax Hlast Hj.
     have:= Hj 0 (ltn0Sn _) => /= /ltnX_eqF ->.
-    apply: (IHt _ Htab (allLeq_to_word_tl Hmax) Hlast).
+    rewrite (IHt _ Htab (allLeq_to_word_tl Hmax) Hlast) //.
     by move=> j; apply: (Hj j.+1).
 Qed.
 
@@ -210,142 +211,6 @@ Definition is_stdtab t := is_tableau t && is_std (to_word t).
 Lemma stdtabP t : is_stdtab t -> is_tableau t.
 Proof. by move=> /andP []. Qed.
 
-Section StdTabInd.
-
-Fixpoint remn_rec t n :=
-  if t is t0 :: t' then
-    match t0 with
-      | [::] => [::] (* unused case *)
-      | l0 :: t0' => if last l0 t0' == n then
-                       if t0' == [::] then [::]
-                       else (belast l0 t0') :: t'
-                     else t0 :: remn_rec t' n
-    end
-  else [::] (* unused case *).
-Definition remn t := remn_rec t (size_tab t).-1.
-
-Lemma remnP t :
-  is_stdtab t -> t != [::] ->
-  is_tableau (remn t) /\
-  append_nth (remn t) (size_tab t).-1 (last_big t (size_tab t).-1) = t.
-Proof.
-rewrite /remn; move Hn : (size_tab t) => n.
-case: n Hn => [| n]; first by move=> /tab0 H /andP [] /H ->.
-move=> Hsize Hstdtab _.
-have Htab : is_tableau t by move: Hstdtab => /andP [].
-have Hstd : is_std (to_word t) by move: Hstdtab => /andP [].
-have Hperm : perm_eq (to_word t) (iota 0 n.+1) by rewrite -Hsize -size_to_word.
-have:= std_uniq Hstd.
-have: allLeq (to_word t) n.
-  have := Hstd => /perm_eq_allLeqE ->.
-  apply/allP => x.
-  by rewrite mem_iota add0n size_to_word Hsize /= leqXnatE.
-have: n \in to_word t.
-  move: Hperm => /perm_eq_mem ->.
-  by rewrite mem_iota /= add0n.
-elim: t Htab {Hsize Hstdtab Hstd Hperm} => [//= | t0 t' /= IHt] /and4P [].
-case: t0 => [| l0 t0] _ //.
-case: (altP ((last l0 t0) =P n)) => [{IHt} |].
-- case/lastP: t0 => [ /= Hl0 _ | t0 tn].
-    subst l0.
-    case: t' => [//=| t1 t'] /= Hdom /and4P [] Hnnil _ _ _ _.
-    rewrite !to_word_cons !allLeq_catE => /andP [] /andP [] _ Ht1 _ _.
-    exfalso.
-    case: t1 Hnnil Ht1 Hdom => [//=| l1 t1] _ /= /andP [] Hl1 _.
-    move=> /dominateP [] _ /= /(_ _ (ltn0Sn (size t1))).
-    by rewrite ltnXNgeqX Hl1.
-  have /negbTE -> : rcons t0 tn != [::].
-    by case t0 => [//= | l s]; rewrite rcons_cons.
-  rewrite belast_rcons last_rcons => Hl0; subst tn => Hrow Hdom Htab' _ /=.
-  rewrite to_word_cons cat_uniq allLeq_catE => /andP [] Ht' _ /and3P [] _.
-  rewrite -all_predC => /allP /= Hall _.
-  have {Hall} /Hall Hn : n \in l0 :: rcons t0 n.
-    by rewrite inE mem_rcons inE eq_refl orbT.
-  move: Hrow; rewrite -rcons_cons Htab' andbT => /is_row_rconsK /= -> /=.
-  split; last by rewrite /append_nth /=.
-  case: t' Ht' Hn Hdom Htab' => [//= | t1 t'].
-  rewrite to_word_cons allLeq_catE => /andP [] _ Ht1.
-  rewrite mem_cat negb_or => /andP [] _ Hn /=.
-  have {Ht1 Hn} Ht1 : allLtn t1 n.
-    elim: t1 Ht1 Hn => [//= | l1 t1 IHt1] /= /andP [] Hl1 /IHt1{IHt1} Hrec.
-    rewrite inE negb_or => /andP [] Hl1n /Hrec ->.
-    by rewrite andbT /ltnX_op Hl1 eq_sym Hl1n.
-  rewrite -rcons_cons; move: (l0 :: t0) => {l0 t0} t0.
-  move=> Hdom _.
-  elim: t0 t1 Ht1 Hdom => [| l0 t0 IHt0] t1 /=.
-    case: t1 => [| l1 [| t1]] //=.
-    rewrite /dominate /= !andbT => /ltnX_trans H/H.
-    by rewrite ltnXnn.
-  case: t1 => [//= | l1 t1] /= /andP [] _ /IHt0 {IHt0} Hrec Hdom.
-  move/(_ (dominate_tl Hdom)): Hrec => Hrec.
-  have /dominate_head : l1 :: t1 != [::] by [].
-  move=> /(_ _ Hdom) {Hdom} /= Hl.
-  move: Hrec => /dominateP [] Hsz Hdom.
-  apply/dominateP; split; first exact: Hsz.
-  by case=> [_|i] //=;  rewrite ltnS => /Hdom.
-- move => Hlast /= Hrow Hdom Htab'.
-  rewrite to_word_cons mem_cat cat_uniq allLeq_catE.
-  case: (boolP (n \in to_word t')) => [Hn _ | _ Hn] /andP [] Hall Hall0.
-  + move => /andP [] Huniq _ {Hall0 Hlast}.
-    rewrite {}Hrow /=.
-    have {IHt Htab' Hn Hall Huniq} := IHt Htab' Hn Hall Huniq => [] [] -> Happ.
-    split; last by move: Happ; rewrite /append_nth /= => ->.
-    rewrite andbT {Happ}.
-    move: Hdom.
-    case: t' => [//= | t1 t'] /=.
-    case: t1 => [//= | l1 t1] /=.
-    case: eqP => //= _.
-    case/lastP: t1 => [//= | t1 tl1].
-    have /negbTE -> : rcons t1 tl1 != [::].
-      by case t1 => [//= | l s]; rewrite rcons_cons.
-    rewrite belast_rcons -rcons_cons.
-    move: (l1 :: t1) => {l1 t1} t1 /=.
-    move: (l0 :: _) => {l0 t0} t0 /dominateP [].
-    rewrite size_rcons => /ltnW Hsz Hdom.
-    apply/dominateP; split; first exact Hsz.
-    move=> i Hi; move/(_ _ (ltnW Hi)) : Hdom.
-    by rewrite nth_rcons Hi.
-  + exfalso => {IHt Hdom t' Htab' Hall}.
-    case/lastP: t0 Hn Hlast Hrow Hall0 => [/= | t0 tn].
-      by rewrite inE => /eqP ->; rewrite eq_refl.
-    rewrite orFb -/(is_row (l0 :: _)).
-    rewrite -rcons_cons last_rcons.
-    move: (l0 :: t0) => {l0 t0} t0 /= Hn Htnn /is_rowP Hrow.
-    have Hind := nth_index 0 Hn.
-    move: Hn; rewrite -index_mem size_rcons ltnS => Hsz.
-    have {Hrow} /(Hrow 0) : index n (rcons t0 tn) <= size t0 < size (rcons t0 tn).
-      by rewrite Hsz size_rcons ltnS /=.
-    rewrite Hind nth_rcons ltnn eq_refl {Hind Hsz} => Hn /allLeq_last.
-    by rewrite leqXNgtnX /ltnX_op eq_sym Htnn Hn.
-Qed.
-
-Lemma is_stdtab_remn t : is_stdtab t -> t != [::] -> is_stdtab (remn t).
-Proof.
-move Hn : (size_tab t) => n.
-case: n Hn => [| n]; first by move=> /tab0 H /andP [] /H ->.
-move=> Hsize Hstdtab /(remnP Hstdtab) /=.
-rewrite Hsize /= => [] [] Htab Happ.
-move: Hstdtab; rewrite /is_stdtab Htab /= /is_std.
-rewrite !size_to_word {1}Hsize => /andP [] _ Hperm.
-have/(congr1 size_tab) := Happ.
-rewrite size_append_nth Hsize => /eqP; rewrite eqSS => /eqP Hsz.
-have:= perm_eq_append_nth (remn t) n (last_big t n).
-rewrite {}Happ Hsz (perm_eqlP Hperm) perm_eq_sym.
-rewrite -(addn1 n) iota_add /= add0n cats1.
-by rewrite perm_eq_sym perm_rcons perm_eq_sym perm_cons.
-Qed.
-
-Lemma append_nth_remn t :
-  is_stdtab t -> t != [::] ->
-  append_nth (remn t) (size_tab t).-1 (last_big t (size_tab t).-1) = t.
-Proof. by move=> H1 H2; have [] := remnP H1 H2. Qed.
-
-Lemma size_tab_remn t :
-  is_stdtab t -> t != [::] -> size_tab (remn t) = (size_tab t).-1.
-Proof. by move=> /append_nth_remn H/H{H} {2}<-; rewrite size_append_nth. Qed.
-
-End StdTabInd.
-
 Fixpoint stdtab_of_yam y :=
   if y is y0 :: y' then
     append_nth (stdtab_of_yam y') (size y') y0
@@ -372,6 +237,57 @@ move: IHy; rewrite -(perm_cons (size y)) => /perm_eq_trans; apply.
 by rewrite perm_eq_sym; apply/perm_eqlP; apply: perm_rcons.
 Qed.
 
+(** The following proof is an experiment to see if proof using get_tab are
+    easier than proof by induction on the structure of tableaux *)
+Lemma is_tab_append_nth_size_alternative_proof r T n :
+   all (gtn n) (to_word T) ->
+   is_part (incr_nth (shape T) r) ->
+   is_tableau T -> is_tableau (append_nth T n r).
+Proof.
+have get_append_nth_in rn c :
+    is_in_shape (shape T) rn c ->
+    get_tab (append_nth T n r) rn c = get_tab T rn c.
+  rewrite /get_tab /append_nth nth_set_nth /=.
+  case (altP (rn =P r)) => // -> {rn} /is_in_shape_tab.
+  by rewrite nth_rcons => ->.
+have get_append_nth_eq :
+  get_tab (append_nth T n r) r (nth 0 (shape T) r) = n.
+  rewrite nth_shape /get_tab /append_nth nth_set_nth /= eq_refl /=.
+  by rewrite nth_rcons eq_refl ltnn.
+move=> /allP Hw Hparti /is_tableau_getP [Hpart Hrow Hcol].
+apply/is_tableau_getP; split => [| rn c Hini | rn c Hini].
+- by rewrite shape_append_nth.
+- case: (boolP (is_in_shape (shape T) rn c.+1)) => Hin.
+  + rewrite !get_append_nth_in //; first exact: Hrow.
+    by apply (is_in_part_le Hpart Hin).
+  + move: Hini Hin {Hcol Hpart Hparti}; rewrite /is_in_shape.
+    rewrite shape_append_nth nth_incr_nth.
+    case eqP => [<- {rn} /= | _]; last by rewrite add0n => ->.
+    rewrite add1n ltnS -leqNgt => H1 H2.
+    have {H1 H2} H : c.+1 = nth 0 (shape T) r.
+      by apply anti_leq; rewrite H1 H2.
+    rewrite H get_append_nth_eq get_append_nth_in ?/is_in_shape ?H //.
+    rewrite leqXnatE; apply/ltnW/Hw.
+    by apply mem_to_word; rewrite /is_in_shape H.
+- case: (boolP (is_in_shape (shape T) rn.+1 c)) => Hin.
+  + rewrite !get_append_nth_in //; first exact: Hcol.
+    by apply (is_in_part_le Hpart Hin).
+  + move: Hini Hin {Hcol Hrow}; rewrite /is_in_shape.
+    rewrite shape_append_nth nth_incr_nth.
+    case eqP => [Hrn | _]; last by rewrite add0n => ->.
+    rewrite -Hrn add1n ltnS -leqNgt => H1 H2.
+    have {H1 H2} H : c = nth 0 (shape T) r.
+      by apply anti_leq; rewrite H1 H2.
+    have {Hpart Hparti} Hshape : nth 0 (shape T) r < nth 0 (shape T) rn.
+      move: Hparti => /is_partP => [] [_] /(_ rn).
+      rewrite !nth_incr_nth {}Hrn eq_refl add1n.
+      have /negbTE -> : rn.+1 != rn by elim rn.
+      by rewrite add0n.
+    rewrite H get_append_nth_eq get_append_nth_in ?/is_in_shape ?H //.
+    rewrite ltnXnatE; apply Hw.
+    by apply mem_to_word; rewrite /is_in_shape.
+Qed.
+
 Lemma is_tab_append_nth_size r T n :
    all (gtn n) (to_word T) ->
    is_part (incr_nth (shape T) r) ->
@@ -385,7 +301,7 @@ case: r => [/= _ | r] /=.
   rewrite (dominate_rcons _ Hdom) {Hdom} !andbT.
   apply/andP; split; first by case T0.
   apply: (is_row_rcons Hrow); rewrite {Hrow} leqXnatE.
-  case/lastP: T0 Hnnil Hall0 => [//= | T0 T0n] _.
+  case/lastP: T0 Hall0 {Hnnil} => [//= | T0 T0n].
   rewrite all_rcons last_rcons /= andbC => /andP [] _.
   exact: ltnW.
 - move => /andP [] Hhead Hpart /and4P [] -> -> Hdom Htab /=.
@@ -417,6 +333,127 @@ apply/allP => x Hx /=.
 by move/(_ x) : Hperm; rewrite mem_iota /= add0n Hx => /esym ->.
 Qed.
 
+
+Section StdTabInd.
+
+Fixpoint remn_rec t n :=
+  if t is t0 :: t' then
+    match t0 with
+      | [::] => [::] (* unused case *)
+      | l0 :: t0' => if last l0 t0' == n then
+                       if t0' == [::] then [::]
+                       else (belast l0 t0') :: t'
+                     else t0 :: remn_rec t' n
+    end
+  else [::] (* unused case *).
+Definition remn t := remn_rec t (size_tab t).-1.
+
+Lemma remnP t :
+  is_stdtab t -> t != [::] ->
+  is_tableau (remn t) /\
+  append_nth (remn t) (size_tab t).-1 (last_big t (size_tab t).-1) = t.
+Proof.
+rewrite /remn; move Hn : (size_tab t) => n.
+case: n Hn => [| n Hsize Hstdtab _]; first by move=> /tab0 H /andP [] /H ->.
+have:= Hstdtab => /andP [Htab Hstd].
+have Hperm : perm_eq (to_word t) (iota 0 n.+1) by rewrite -Hsize -size_to_word.
+have:= std_uniq Hstd.
+have {Hsize Hstdtab Hstd} : allLeq (to_word t) n.
+  have:= Hstd => /perm_eq_allLeqE ->.
+  apply/allP => x.
+  by rewrite mem_iota add0n size_to_word Hsize /= leqXnatE.
+have {Hperm} : n \in to_word t.
+  move: Hperm => /perm_eq_mem ->.
+  by rewrite mem_iota /= add0n.
+elim: t Htab => [//= | t0 t' /= IHt] /and4P [].
+case: t0 => [| l0 t0] _ //.
+case: (altP ((last l0 t0) =P n)).
+- case/lastP: t0 {IHt} => [ /= Hl0 _ | t0 tn].
+    rewrite !dominate_recE; subst l0.
+    case: t' => [//=| t1 t'] /= Hdom /and4P [] Hnnil _ _ _ _.
+    rewrite !to_word_cons !allLeq_catE => /andP [] /andP [] _ Ht1 _ _.
+    exfalso.
+    case: t1 Hnnil Ht1 Hdom => [//=| l1 t1] _ /= /andP [] Hl1 _.
+    case: t1 => /=; rewrite ?andbF ?andbT //.
+    by rewrite ltnXNgeqX Hl1.
+  rewrite rcons_nilF belast_rcons last_rcons => Hl0.
+  subst tn => Hrow Hdom Htab' _ /=.
+  rewrite to_word_cons cat_uniq allLeq_catE => /andP [] Ht' _ /and3P [] _.
+  rewrite -all_predC => /allP /= Hall _.
+  have {Hall} /Hall Hn : n \in l0 :: rcons t0 n.
+    by rewrite inE mem_rcons inE eq_refl orbT.
+  move: Hrow; rewrite -rcons_cons Htab' andbT => /is_row_rconsK /= -> /=.
+  split; last by rewrite /append_nth /=.
+  case: t' Ht' Hn Hdom Htab' => [//= | t1 t'].
+  rewrite to_word_cons allLeq_catE => /andP [] _ Ht1.
+  rewrite mem_cat negb_or => /andP [] _ Hn /=.
+  have {Ht1 Hn} Ht1 : allLtn t1 n.
+    elim: t1 Ht1 Hn => [//= | l1 t1 IHt1] /= /andP [] Hl1 /IHt1{IHt1} Hrec.
+    rewrite inE negb_or => /andP [] Hl1n /Hrec ->.
+    by rewrite andbT /ltnX_op Hl1 eq_sym Hl1n.
+  rewrite -rcons_cons; move: (l0 :: t0) => {l0 t0} t0.
+  rewrite !dominate_recE => Hdom _.
+  elim: t1 t0 Ht1 Hdom => [| l1 t1 IHt1] [|l0 t0] //=.
+    by move=> /andP [/ltnXW]; rewrite leqXNgtnX => /negbTE ->.
+  by move=> /andP [_ /IHt1{IHt1} Hrec] /andP [-> /Hrec].
+- move=> Hlast /= Hrow Hdom Htab'.
+  rewrite to_word_cons mem_cat cat_uniq allLeq_catE.
+  case: (boolP (n \in to_word t')) => [Hn _ | _ Hn] /andP [] Hall Hall0.
+  + move => /andP [] Huniq _ {Hall0 Hlast}.
+    rewrite {}Hrow /=.
+    have {IHt Htab' Hn Hall Huniq} := IHt Htab' Hn Hall Huniq => [] [] -> Happ.
+    split; last by move: Happ; rewrite /append_nth /= => ->.
+    move: Hdom; rewrite andbT {Happ} !dominate_recE.
+    case: t' => [//= | t1 t'] /=.
+    case: t1 => [//= | l1 t1] /=.
+    case: eqP => //= _.
+    case/lastP: t1 => [//= | t1 tl1].
+    rewrite rcons_nilF belast_rcons /= => /andP [->]/= {l1 l0 t'}.
+    elim: t1 t0 => [//=| l1 t1 IHl1] [|l0 t0] //= /andP [->].
+    exact: IHl1.
+  + exfalso => {IHt Hdom t' Htab' Hall}.
+    case/lastP: t0 Hn Hlast Hrow Hall0 => [/= | t0 tn].
+      by rewrite inE => /eqP ->; rewrite eq_refl.
+    rewrite orFb -/(is_row (l0 :: _)).
+    rewrite -rcons_cons last_rcons.
+    move: (l0 :: t0) => {l0 t0} t0 /= Hn Htnn /is_rowP Hrow.
+    have Hind := nth_index 0 Hn.
+    move: Hn; rewrite -index_mem size_rcons ltnS => Hsz.
+    have {Hrow} /(Hrow 0) : index n (rcons t0 tn) <= size t0 < size (rcons t0 tn).
+      by rewrite Hsz size_rcons ltnS /=.
+    rewrite Hind nth_rcons ltnn eq_refl {Hind Hsz} => Hn /allLeq_last.
+    by rewrite leqXNgtnX /ltnX_op eq_sym Htnn Hn.
+Qed.
+
+Lemma is_stdtab_remn t : is_stdtab t -> is_stdtab (remn t).
+Proof.
+move Hn : (size_tab t) => n.
+case: n Hn => [| n]; first by move=> /tab0 H /andP [] /H ->.
+move=> Hsize Hstdtab.
+case: (altP (t =P [::])) => [-> |] //= /(remnP Hstdtab).
+rewrite Hsize /= => [] [] Htab Happ.
+move: Hstdtab; rewrite /is_stdtab Htab /= /is_std.
+rewrite !size_to_word {1}Hsize => /andP [] _ Hperm.
+have/(congr1 size_tab) := Happ.
+rewrite size_append_nth Hsize => /eqP; rewrite eqSS => /eqP Hsz.
+have:= perm_eq_append_nth (remn t) n (last_big t n).
+rewrite {}Happ Hsz (perm_eqlP Hperm) perm_eq_sym.
+rewrite -(addn1 n) iota_add /= add0n cats1.
+by rewrite perm_eq_sym perm_rcons perm_eq_sym perm_cons.
+Qed.
+
+Lemma append_nth_remn t :
+  is_stdtab t -> t != [::] ->
+  append_nth (remn t) (size_tab t).-1 (last_big t (size_tab t).-1) = t.
+Proof. by move=> H1 H2; have [] := remnP H1 H2. Qed.
+
+Lemma size_tab_remn t :
+  is_stdtab t -> t != [::] -> size_tab (remn t) = (size_tab t).-1.
+Proof. by move=> /append_nth_remn H/H{H} {2}<-; rewrite size_append_nth. Qed.
+
+End StdTabInd.
+
+
 Fixpoint yam_of_stdtab_rec n t :=
   if n is n'.+1 then
     (last_big t n') :: yam_of_stdtab_rec n' (remn t)
@@ -435,17 +472,18 @@ elim: n t H => [| n IHn] t.
 move=> Hsize Hstdtab /=.
 have Hnnil : t != [::] by move: Hsize => /eqP; apply contraL => /eqP ->.
 have:= size_tab_remn Hstdtab Hnnil; rewrite Hsize /= => /(IHn (remn t)) {IHn} Hrec.
-rewrite (Hrec (is_stdtab_remn Hstdtab Hnnil)) size_yam_of_stdtab_rec.
+rewrite (Hrec (is_stdtab_remn Hstdtab)) size_yam_of_stdtab_rec.
 by have:= append_nth_remn Hstdtab Hnnil; rewrite Hsize /=.
 Qed.
 
-Lemma find_append_nth l t r :
-  l \notin (to_word t) -> find (fun x => l \in x) (append_nth t l r) = r.
+Lemma find_append_nth (l : nat) t r :
+  l \notin (to_word t) ->
+  find (fun x : seq nat => l \in x) (append_nth t l r) = r.
 Proof.
 rewrite /append_nth.
 elim: r t => [/= | r IHr] t /=; case: t => [_ | t0 t] /=.
 - by rewrite inE eq_refl.
-- by rewrite mem_rcons inE eq_refl /=.
+- by rewrite mem_rcons inE eq_refl.
 - apply/eqP; rewrite eqSS.
   elim: r {IHr} => [//= | r]; first by rewrite inE eq_refl.
   by rewrite /ncons /= => /eqP ->.
@@ -547,7 +585,7 @@ have Hnnil : t != [::] by move: Hsize => /eqP; apply contraL => /eqP ->.
 have:= size_tab_remn Hstdtab Hnnil; rewrite Hsize /= => Hsz.
 apply (IHn _ Hsz); first exact: is_stdtab_remn.
 rewrite -Hsz.
-exact: part_yam_of_stdtab (is_stdtab_remn Hstdtab Hnnil).
+exact: part_yam_of_stdtab (is_stdtab_remn Hstdtab).
 Qed.
 
 Theorem stdtab_of_yamK y : is_yam y -> yam_of_stdtab (stdtab_of_yam y) = y.
@@ -785,8 +823,8 @@ move=> Hsh Hcorn; apply eq_from_shape_get_tab.
 - move=> r c; rewrite get_conj_tab; first last.
     by rewrite shape_append_nth; apply: is_part_incr_nth.
   rewrite !get_tab_append_nth.
-  case: (altP (r =P nth 0 (shape t) i)); rewrite /= ?andbF ?andbT get_conj_tab //.
-  rewrite shape_conj_tab.
+  case: (altP (r =P nth 0 (shape t) i));
+    rewrite /= ?andbF ?andbT get_conj_tab // shape_conj_tab.
   move: Hcorn; rewrite /is_add_corner /= => /orP [/eqP Hi| H] Hr.
   + by rewrite Hi nth0 nth_default // size_conj_part.
   + have : nth 0 (shape t) i <= nth 0 (shape t) i < nth 0 (shape t) i.-1.
@@ -894,6 +932,7 @@ by rewrite shape_conj_tab Hsh.
 Qed.
 Canonical conj_stdtabsh {sh : intpart} (t : stdtabsh sh) :=
   StdtabSh (conj_stdtabshP t).
+
 
 Definition stdtabshcast m n (eq_mn : m = n) t :=
   let: erefl in _ = n := eq_mn return stdtabsh n in t.

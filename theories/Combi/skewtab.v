@@ -147,40 +147,27 @@ Proof using. by move=> u v /=; rewrite /skew_dominate drop0. Qed.
 
 Lemma skew_dominate_take n sh u v :
   skew_dominate sh u (take n v) -> skew_dominate sh u v.
-Proof using.
-move/dominateP => [].
-rewrite size_take -/(minn _ _) => Hsize Hdom.
-apply/dominateP; split.
-- by apply (leq_trans Hsize); exact: geq_minr.
-- move=> i Hi; move/(_ i Hi) : Hdom.
-  rewrite nth_take //.
-  by have:= leq_trans Hi Hsize; rewrite leq_min => /andP [].
-Qed.
+Proof using. exact: dominate_take. Qed.
 
 Lemma skew_dominate_no_overlap sh u v :
   size u <= sh -> skew_dominate sh u v.
-Proof using.
-by rewrite /skew_dominate => /drop_oversize ->; exact: dominate_nil.
-Qed.
+Proof using. by rewrite /skew_dominate => /drop_oversize ->. Qed.
 
 Lemma skew_dominate_consl sh l u v :
   skew_dominate sh u v -> skew_dominate sh.+1 (l :: u) v.
-Proof using.
-move/dominateP => [] Hsize Hdom.
-apply/dominateP; split; first by move: Hsize; rewrite !size_drop.
-by move=> i /= /Hdom.
-Qed.
+Proof using. by []. Qed.
 
 Lemma skew_dominate_cut sh u v :
   skew_dominate sh u v = skew_dominate sh u (take (size u - sh) v).
 Proof using.
-rewrite /skew_dominate /dominate; congr (_ &&_ ).
-- rewrite size_drop size_take -/(minn _ _).
-  case: leqP => [/minn_idPl -> | H]; first by rewrite leqnn.
-  have /minn_idPr -> := ltnW H.
-  by rewrite leqNgt H.
-- apply eq_in_all => i; rewrite mem_iota add0n /= size_drop => Hi.
-  by rewrite nth_take.
+rewrite /skew_dominate /=.
+apply/idP/idP.
+- move=> Hdom; have/dominateP [Hsz _] := Hdom.
+  move: Hdom; rewrite -{1}(cat_take_drop (size u - sh) v).
+  apply dominate_cut.
+  move: Hsz; rewrite size_drop size_take -/(minn _ _).
+  by rewrite minnC /minn ltnNge => ->.
+- exact: dominate_take.
 Qed.
 
 Fixpoint is_skew_tableau inner t :=
@@ -456,19 +443,6 @@ rewrite -{2}(conj_partK Hinn) -{2}(conj_partK Hout).
 exact: vb_strip_conj (is_part_conj Hinn) (is_part_conj Hout).
 Qed.
 
-Lemma row_dominate u v :
-  is_row (u ++ v) -> dominate u v -> u = [::].
-Proof using.
-case: u => [//= | u0 u] /=.
-case: v => [//= | v0 v] /= /order_path_min Hpath.
-have {Hpath} /Hpath /allP Hall : transitive (@leqX_op T)
-  by move=> i j k; apply leqX_trans.
-move=> /dominateP [] /=.
-rewrite ltnS => Hsize /(_ _ (ltn0Sn (size u))) /= H0; exfalso.
-have /Hall : v0 \in u ++ v0 :: v by rewrite mem_cat in_cons eq_refl /= orbT.
-by rewrite leqXNgtnX H0.
-Qed.
-
 Lemma row_hb_strip inner t :
   is_part inner ->
   is_skew_tableau inner t -> is_row (to_word t) ->
@@ -561,19 +535,6 @@ Notation Z := (inhabitant T).
 Implicit Type l : T.
 Implicit Type r w : seq T.
 Implicit Type t : seq (seq T).
-
-Lemma filter_leqX_row n r :
-  is_row r -> filter (leqX n) r = drop (count (gtnX n) r) r.
-Proof using.
-elim: r => //= r0 r IHr Hrow /=.
-case: (leqXP n r0) => Hr0.
-- rewrite add0n; have Hcount : count (gtnX n) r = 0.
-  elim: r r0 Hr0 Hrow {IHr} => //= r1 r IHr r0 Hr0 /andP [] Hr0r1 Hpath.
-  have Hr1 := leqX_trans Hr0 Hr0r1.
-    by rewrite ltnXNgeqX Hr1 (IHr r1 Hr1 Hpath).
-  by rewrite Hcount (IHr (is_row_consK Hrow)) Hcount drop0.
-- by rewrite add1n (IHr (is_row_consK Hrow)).
-Qed.
 
 Lemma filter_leqX_dominate n r1 r0 :
   is_row r0 -> is_row r1 -> dominate r1 r0 ->
