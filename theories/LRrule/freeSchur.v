@@ -76,7 +76,7 @@ Invariance with the choice of Q1 and Q2:
 ****************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
-From mathcomp Require Import tuple finfun finset bigop ssralg.
+From mathcomp Require Import tuple finfun bigop finset ssralg.
 From SsrMultinomials Require Import ssrcomplements freeg mpoly.
 
 Require Import tools ordtype partition Yamanouchi std tableau stdtab.
@@ -89,6 +89,7 @@ Unset Printing Implicit Defensive.
 
 Local Open Scope ring_scope.
 Import GRing.Theory.
+
 
 (** * Commutative image of an homogeneous langage *)
 Section CommutativeImage.
@@ -332,14 +333,14 @@ rewrite !Schur_freeSchurE catlangM free_LR_rule.
 rewrite -cover_imset /polylang.
 rewrite big_trivIset /=; first last.
   apply/trivIsetP => S1 S2.
-  move => /imsetP [] T1; rewrite inE => HT1 -> {S1}.
-  move => /imsetP [] T2; rewrite inE => HT2 -> {S2}.
+  move => /imsetP [/= T1]; rewrite inE => HT1 -> {S1}.
+  move => /imsetP [/= T2]; rewrite inE => HT2 -> {S2}.
   rewrite /freeSchur => Hdiff.
   rewrite /disjoint; apply/pred0P => w /=.
   rewrite !inE; apply: negbTE; move: Hdiff; apply: contra.
   by move=> /andP [] /eqP -> /eqP ->.
 
-transitivity (\sum_(i in LRsupport) polylang R (freeSchur i));
+transitivity (\sum_(Q in LRsupport) polylang R (freeSchur Q));
   last by apply eq_bigr=> w _; rewrite Schur_freeSchurE.
 
 rewrite (big_setID [set set0]) /=.
@@ -370,6 +371,7 @@ Qed.
 
 End FreeLRrule.
 
+
 Definition hyper_stdtab sh := RS (std (hyper_yam sh)).
 Lemma hyper_stdtabP sh : is_stdtab (hyper_stdtab sh).
 Proof using . by rewrite /hyper_stdtab /= RSstdE std_is_std. Qed.
@@ -389,6 +391,7 @@ Proof using .
 Qed.
 Lemma shaped_hyper_stdtabnP d (P : 'P_d) : shape_deg (hyper_stdtabn P) = P.
 Proof using . apply: val_inj => /=; exact: shape_hyper_stdtabnP. Qed.
+
 
 Section Coeffs.
 
