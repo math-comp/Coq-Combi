@@ -15,10 +15,10 @@
 (******************************************************************************)
 (** * Free Schur functions
 
-This is the core of the proof of the Littewood-Richardson rule. The main goal
-of this file is to lift the multiplication of Schur multivariate polynomials
-to the non commutative setting. This allows to prove a non-commutative
-version of the LR rule by double set inclusion.
+This file is the second step to the proof of the Littewood-Richardson rule.
+The main goal of this file is to lift the multiplication of Schur multivariate
+polynomials to the non commutative setting. This allows to prove a
+non-commutative version of the LR rule by double set inclusion.
 
 - [commword n R w] == the commutative image of the word [w] as a multivariate
                       polynomial (of type [{mpoly R[n]}]).

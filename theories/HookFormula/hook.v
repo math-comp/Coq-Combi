@@ -13,12 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-
 Require Import Misc Ccpo.
-
-Set Implicit Arguments.
-Unset Strict Implicit.
-
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype choice ssrnat seq
         ssrint div rat fintype bigop path ssralg ssrnum.
@@ -27,8 +22,13 @@ From mathcomp Require Import ssrfun ssrbool eqtype choice ssrnat seq
 Require Import tools subseq partition stdtab.
 Require Import rat_coerce Qmeasure recyama.
 
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+
 Import GRing.Theory.
 Import Num.Theory.
+
 
 Lemma big_nat_0cond (R : Type) (idx : R) op n f :
   \big[op/idx]_(0 <= i < n) f i = \big[op/idx]_(0 <= i < n | (i < n)%N) f i.

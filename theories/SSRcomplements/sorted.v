@@ -24,8 +24,10 @@ From mathcomp Require Import path.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 Open Scope N.
+
 
 Module LeqGeqOrder.
 

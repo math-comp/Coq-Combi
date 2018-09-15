@@ -45,6 +45,7 @@ Require Import permcomp cycles.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 (** ** Enumeration of the permutation of a tuple *)
 Section Permuted.

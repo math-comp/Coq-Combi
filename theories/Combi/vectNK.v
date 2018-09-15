@@ -29,6 +29,9 @@ Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+
+
 
 Section VectNK.
 

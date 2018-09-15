@@ -38,6 +38,9 @@ From mathcomp Require Import tuple finfun path bigop finset binomial.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+
+
 
 Section BijFiberedSet.
 

@@ -73,12 +73,9 @@ From mathcomp Require Import path tuple.
 Require Import Recdef.
 Require Import permcomp permuted multinomial vectNK.
 
-From mathcomp Require Import fingraph.
-
-
-
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 
 (** ** Transitive closure of a rule with finite classes                       *)

@@ -38,6 +38,7 @@ Require Import tools combclass sorted partition.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 
 (** ** Definitions and basic properties *)

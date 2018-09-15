@@ -29,6 +29,7 @@ Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 (** A missing lemma: fintypes in bijection have the same cardinality          *)
 

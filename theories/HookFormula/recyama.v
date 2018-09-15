@@ -19,6 +19,9 @@ Require Import tools combclass partition Yamanouchi stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+
+
 
 Definition decr_nth_part_def (p : seq nat) i : (seq nat) :=
   if is_rem_corner p i then decr_nth p i

@@ -23,6 +23,8 @@ From mathcomp Require Import finset bigop path.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+
 
 Prenex Implicits nat_of_ord.
 

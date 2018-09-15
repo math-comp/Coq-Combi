@@ -28,12 +28,14 @@ From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat.
 From mathcomp Require Import eqtype choice fintype seq path.
 Require Import tools combclass.
 
+Set Implicit Arguments.
+Unset Strict Implicit.
+Unset Printing Implicit Defensive.
+
+
 (******************************************************************************)
 (** TODO: these probably should be contributed to path.v                      *)
 (******************************************************************************)
-
-Set Implicit Arguments.
-Unset Strict Implicit.
 
 (** ** A few lemmas about [subseq] and [rcons] *)
 Section RCons.

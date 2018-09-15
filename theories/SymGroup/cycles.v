@@ -45,6 +45,7 @@ Require Import tools permcomp.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
+Unset Printing Implicit Defensive.
 
 
 Import GroupScope.
