@@ -1,3 +1,4 @@
+(** * Combi.LRrule.plactic : The plactic monoid *)
 (******************************************************************************)
 (*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
 (*                                                                            *)
@@ -12,6 +13,48 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * The plactic monoid
+
+- [plact1] == rewriting rule acb -> cab if a <= b < c
+- [plact1i] == rewriting rule cab -> acb if a <= b < c
+- [plact2] == rewriting rule bac -> bca if a < b <= c
+- [plact2i] == rewriting rule bca -> bac if a < b <= c
+- [plactrule] == the union of the four preceding rewriting rules
+- [plactcongr] == the plactic congruence
+- [a =Pl b] == [a] and [b] are plactic equivalent
+
+Reverse and dual alphabet:
+
+- [revdual s] == [rev s : seq Dual] considered on the dual alphabet
+- [from_revdual ds] == [rev ds] where [ds : seq Dual]
+
+The two main result in this section are [plact_dualE] and [plact_from_dualE]
+which assert that plactic equivalence is conserved by [revdual] and [from_revdual].
+
+
+Plactic equivalence and Robinson-Schensted:
+
+Main results:
+- [Theorem congr_RS w : w =Pl (to_word (RS w)).]
+- [Corollary Sch_plact u v : RS u == RS v -> u =Pl v.]
+
+
+Restriction to interval:
+
+Thanks to bisimulation we show (Theorem [rembig_RS]) that the last big letter
+goes on the border of the tableau by Robinson-Schensted. As a consequence
+filtering large or small letters preserve plactic congruence. These are Lemmas
+[plactic_filter_geqX], [plactic_filter_gtnX], [plactic_filter_leqX] and
+[plactic_filter_ltnX]
+
+
+Plactic congruence and increassing maps:
+
+We finally shows that plactic congruence is preserved by increasing maps:
+Lemma [plact_map_in_incr].
+
+*****************)
+
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 From mathcomp Require Import finset perm path.
@@ -26,6 +69,7 @@ Open Scope bool.
 
 Import OrdNotations.
 
+(** * Definition of the Plactic monoid *)
 Section Defs.
 
 Variable Alph : inhOrdType.
@@ -276,7 +320,7 @@ Qed.
 
 End RowsAndCols.
 
-
+(** ** Plactic equivalence and reversal *)
 Section Rev.
 
 Variable Alph : inhOrdType.
@@ -332,6 +376,8 @@ Qed.
 
 End Rev.
 
+
+(** ** Plactic equivalence and order duality *)
 Section DualRule.
 
 Variable Alph : inhOrdType.
@@ -438,6 +484,8 @@ Qed.
 
 End PlactDual.
 
+
+(** * Plactic monoid and Robinson-Schensted map *)
 Section RSToPlactic.
 
 Variable Alph : inhOrdType.
@@ -565,6 +613,8 @@ Qed.
 
 End RSToPlactic.
 
+
+(** ** Removing the last big letter and plactic congruence *)
 Section RemoveBig.
 
 Variable Alph : inhOrdType.
@@ -615,23 +665,6 @@ Proof using .
     * apply: plact_catl; exact: rule_gencongr.
 Qed.
 
-Lemma shape_append_nth T b i : shape (append_nth T b i) = incr_nth (shape T) i.
-Proof using .
-  rewrite /shape /=; apply: (@eq_from_nth _ 0).
-  + rewrite size_map size_set_nth size_incr_nth size_map /maxn.
-    by case: (ltngtP i.+1 (size T)).
-  + move=> j Hi.
-    rewrite nth_incr_nth (nth_map [::]) /=; last by move: Hi; rewrite size_map.
-    rewrite nth_set_nth /= eq_sym.
-    rewrite (_ : nth 0 _ _ = size (nth [::] T j)); first last.
-      case: (ltnP j (size T)) => Hcase.
-      * by rewrite (nth_map [::] _ _ Hcase).
-      * by rewrite (nth_default _ Hcase) nth_default; last by rewrite size_map.
-    case eqP => [->|].
-    - by rewrite size_rcons add1n.
-    - by rewrite add0n.
-Qed.
-
 Lemma inspos_rcons l r b : l <A b -> inspos r l = inspos (rcons r b) l.
 Proof using . elim: r => [/= -> //= | r0 r IHr]; by rewrite rcons_cons /= => /IHr ->. Qed.
 
@@ -659,54 +692,6 @@ Proof using .
   rewrite /bumped /ins -(inspos_rcons r Hl).
   have:= nbump_inspos_eq_size Hrow Hnbump => Hsize.
   by rewrite nth_rcons set_nth_rcons Hsize eq_refl ltnn rcons_set_nth.
-Qed.
-
-Fixpoint last_big t b :=
-  if t is t0 :: t' then
-    if last b t0 == b then 0
-    else (last_big t' b).+1
-  else 0.
-
-Lemma allLeq_to_word_hd t0 t b : allLeq (to_word (t0 :: t)) b -> allLeq t0 b.
-Proof using . by rewrite to_word_cons allLeq_catE => /andP [] _. Qed.
-Lemma allLeq_to_word_tl t0 t b : allLeq (to_word (t0 :: t)) b -> allLeq (to_word t) b.
-Proof using . by rewrite to_word_cons allLeq_catE => /andP []. Qed.
-
-Lemma last_bigP t b i :
-  is_tableau t -> allLeq (to_word t) b ->
-  reflect (last b (nth [::] t i) = b /\ forall j, j < i -> last b (nth [::] t j) <A b)
-          (i == last_big t b).
-Proof using .
-  move=> Htab Hmax; apply: (iffP idP).
-  + move/eqP ->; split.
-    * elim: t Htab {Hmax} => [//= | t0 t IHt] /= /and4P [] _ _ _ Htab.
-      case eqP => [//= | _]; exact: IHt.
-    * elim: t Htab Hmax => [//= | t0 t IHt] /= /and4P [] Hnnil _ _ Htab Hmax.
-      case eqP => [//= | /eqP H].
-      case=> [/= _ | j].
-      + have:= allLeq_to_word_hd Hmax; move: Hnnil H.
-        case/lastP: t0 {Hmax} => [//= | t0 tn] _; rewrite last_rcons => H1 /allLeq_last.
-        by rewrite ltnX_neqAleqX H1.
-      + rewrite /=; by apply: IHt; last exact: (allLeq_to_word_tl Hmax).
-  + move=> []; elim: t i Htab Hmax => [/= i _ _| t0 t IHt].
-    * case: i => [//= | i] /= _ H.
-      exfalso; have:= H 0 (ltn0Sn _); by rewrite ltnXnn.
-    * case=> [/= _ _ -> _| i]; first by rewrite eq_refl.
-      move=> /= /and4P [] _ _ _ Htab Hmax Hlast Hj.
-      have:= Hj 0 (ltn0Sn _) => /= /ltnX_eqF ->.
-      apply: (IHt _ Htab (allLeq_to_word_tl Hmax) Hlast).
-      move=> j; exact: (Hj j.+1).
-Qed.
-
-Lemma maxL_LbR a v L b R : a :: v = L ++ b :: R -> allLeq L b -> allLeq R b -> maxL a v = b.
-Proof using .
-  move=> Hav /allP HL /allP HR; apply/eqP; rewrite eqn_leqX; apply/andP; split.
-  - have:= in_maxL a v; rewrite Hav mem_cat inE => /orP []; last move/orP => [].
-    * by move/HL.
-    * by move/eqP ->.
-    * by move/HR.
-  - have:= maxLP a v => /allP; apply.
-    by rewrite Hav mem_cat inE eq_refl orbT.
 Qed.
 
 Lemma allLeq_is_row_rcons w b :
@@ -748,19 +733,6 @@ Proof using .
     apply: Hrow; move: H; case: (size r) => [//=| s].
     by rewrite ltnS /= => -> /=.
   + by rewrite (nth_default _ H).
-Qed.
-
-Lemma last_big_append_nth t b lb :
-  (forall j : nat, j < lb -> last b (nth [::] t j) <A b) ->
-  last_big (append_nth t b lb) b = lb.
-Proof using .
-  elim: t lb =>[/= | t0 t IHt /=].
-  + case => [/= _| lb Hj /=]; first by rewrite eq_refl.
-    exfalso; move/(_ 0 (ltn0Sn _)): Hj; by rewrite ltnXnn.
-  + case => [/= _| lb Hj /=]; first by rewrite last_rcons eq_refl.
-    rewrite (ltnX_eqF (Hj 0 (ltn0Sn _))).
-    have {Hj} Hj j : j < lb -> last b (nth [::] t j) <A b by apply/(Hj j.+1).
-    by rewrite (IHt _ Hj).
 Qed.
 
 Lemma bisimul_instab t l b lb :
@@ -967,7 +939,7 @@ Qed.
 
 End RestrIntervBig.
 
-
+(** ** Plactic congruence and increassing maps *)
 Section IncrMap.
 
 Variable T1 T2 : inhOrdType.
