@@ -47,10 +47,14 @@ Extract Constant eqn => "( = )".
 Extract Constant leq => "( <= )".
 *)
 
-Let RSbijnat := (@RSbij nat_inhOrdType).
-Let RSbijinvnat := (@RSbijinv nat_inhOrdType).
-Let RStabnat := (@RStab nat_inhOrdType).
-Let RStabinvnat := (@RStabinv nat_inhOrdType).
+
+Definition RSbijnat := (@RSbij nat_inhOrdType).
+Definition RSbijinvnat := (@RSbijinv nat_inhOrdType).
+Definition RStabnat := (@RStab nat_inhOrdType).
+Definition RStabinvnat := (@RStabinv nat_inhOrdType).
+
+
+Set Warnings "-extraction-reserved-identifier,-extraction-opaque-accessed".
 
 Extraction "src/LRrule/schensted.ml"
            RS RSbijnat RSbijinvnat
