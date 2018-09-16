@@ -328,6 +328,37 @@ apply/setP/subset_eqP/andP; split; apply/subsetP=> t.
   + apply: val_inj; by rewrite /= cat_take_drop.
 Qed.
 
+(** Alternative proof from [LRrule_langQ] *)
+Lemma free_LR_rule_alternate :
+  catlang (freeSchur Q1) (freeSchur Q2) = \bigcup_(Q in LRsupport) freeSchur Q.
+Proof using .
+rewrite /catlang.
+apply/setP/subset_eqP/andP; split; apply/subsetP=> /= t.
+- move/imset2P => [/= w1 w2].
+  rewrite !freeSchurP /= => Hw1 Hw2 ->.
+  have : exists u v, [/\ w1 ++ w2  = u ++ v, u \in langQ Q1 & v \in langQ Q2].
+    by exists w1, w2.
+  rewrite LRrule_langQ // => [] [w] [Htriple /= Hcat].
+  have:= is_stdtab_of_n_LRtriple (stdtabnP Q1) (stdtabnP Q2) Htriple.
+  rewrite !size_tab_stdtabn => HQ.
+  apply/bigcupP; exists (StdtabN HQ).
+    rewrite /LRsupport inE -LRtriple_fastE //.
+    apply/LRtripleP => //; exact: Htriple.
+  by rewrite freeSchurP.
+- move/bigcupP => [/= Q]; rewrite /LRsupport freeSchurP inE -LRtriple_fastE //.
+  move=> /(LRtripleP _ (stdtabnP Q1) (stdtabnP Q2)) Htriple /= Ht.
+  have : exists Q, LRtriple Q1 Q2 Q /\ val t \in langQ Q by exists Q.
+  rewrite -LRrule_langQ_alternate // => [] [/= u1] [/= u2] [Hcat Hu1 Hu2].
+  have:= Hu1 => /size_langQ; rewrite size_tab_stdtabn => /eqP Hsz1.
+  pose t1 := Tuple Hsz1.
+  have:= Hu2 => /size_langQ; rewrite size_tab_stdtabn => /eqP Hsz2.
+  pose t2 := Tuple Hsz2.
+  apply/imset2P; apply: (Imset2spec (x1 := t1) (x2 := t2)).
+  + by rewrite freeSchurP.
+  + by rewrite freeSchurP.
+  + exact: val_inj.
+Qed.
+
 (** Passing to commutative image in the free LR rule *)
 Theorem LR_rule_tab :
   Schur (shape_deg Q1) * Schur (shape_deg Q2) =

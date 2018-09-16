@@ -521,14 +521,13 @@ Qed.
 Lemma invstd_catgtn u v :
   invstd (std u) = sfiltergtn (size u) (invstd (std (u ++ v))).
 Proof using .
+have Hsftstd : is_std (sfiltergtn (size u) (invstd (std (u ++ v)))).
+  apply: (@sfiltergtn_is_std (invstd (std (u ++ v))) (size u)).
+  by apply: invstd_is_std; exact: std_is_std.
 suff Heqinv : std u = invstd (sfiltergtn (size u) (invstd (std (u ++ v)))).
-  rewrite Heqinv invstdK //=.
-  apply: (@sfiltergtn_is_std (invstd (std (u ++ v))) (size u)).
-  by apply: invstd_is_std; exact: std_is_std.
-apply/eqP/stdP; apply: StdSpec.
-  apply: invstd_is_std.
-  apply: (@sfiltergtn_is_std (invstd (std (u ++ v))) (size u)).
-  by apply: invstd_is_std; exact: std_is_std.
+  by rewrite Heqinv invstdK.
+apply/eqP/stdP; apply: StdSpec; first exact: invstd_is_std.
+move=> {Hsftstd}.
 apply/eq_invP; split; first by rewrite size_invstd size_sfiltergtn_cat.
 move=> i j /andP [] Hij Hj.
 have Hi := leq_ltn_trans Hij Hj.
@@ -549,14 +548,13 @@ Qed.
 Lemma invstd_catleq u v :
   invstd (std v) = sfilterleq (size u) (invstd (std (u ++ v))).
 Proof using .
+have Hsftstd : is_std (sfilterleq (size u) (invstd (std (u ++ v)))).
+  apply: (@sfilterleq_is_std (invstd (std (u ++ v))) (size u)).
+  by apply: invstd_is_std; exact: std_is_std.
 suff Heqinv : std v = invstd (sfilterleq (size u) (invstd (std (u ++ v)))).
-  rewrite Heqinv invstdK //=.
-  apply: (@sfilterleq_is_std (invstd (std (u ++ v))) (size u)).
-  by apply: invstd_is_std; exact: std_is_std.
-apply/eqP/stdP; apply: StdSpec.
-  apply: invstd_is_std.
-  apply: (@sfilterleq_is_std (invstd (std (u ++ v))) (size u)).
-  by apply: invstd_is_std; exact: std_is_std.
+  by rewrite Heqinv invstdK.
+apply/eqP/stdP; apply: StdSpec; first exact: invstd_is_std.
+move=> {Hsftstd}.
 apply/eq_invP; split; first by rewrite size_invstd size_sfilterleq_cat.
 move=> i j /andP [] Hij Hj.
 have Hi := leq_ltn_trans Hij Hj.
@@ -589,13 +587,13 @@ Qed.
 (** Free Schur functions as predicates *)
 Definition langQ t := [pred w : word | (RStabmap w).2 == t].
 
+Lemma langQE u t : (u \in langQ t) = (RS (invstd (std u)) == t).
+Proof. by rewrite /langQ inE RSinvstdE. Qed.
+
 Lemma size_langQ t u : u \in langQ t -> size u = size_tab t.
 Proof using .
-rewrite /langQ inE /RStabmap => /eqP <-.
-rewrite -size_RS -RSmapE.
-rewrite /size_tab shape_RSmap_eq.
-case: (RSmap u) => p q /=.
-by rewrite shape_stdtab_of_yam.
+rewrite langQE => /eqP <-.
+by rewrite -size_RS -RStabmapE RSinvstdE /size_tab shape_RStabmapE.
 Qed.
 
 (** * Littlewood-Richardson-Schützenberger triple *)
@@ -757,6 +755,134 @@ split.
     exact: plactic_filter_leqX.
 Qed.
 
+
+(** ** A longer alternative road *)
+(** In the following we goes along the proof of Schützenberger theorem
+    but we end up duplicating the whole proof: compare the statement and proofs
+    of
+    - [sfiltergtn_invstd] below with [invstd_catgtn]
+    - [sfilterleq_invstd] below with [invstd_catleq]
+ *)
+
+Lemma sfiltergtn_invstd w n :
+  n <= size w -> sfiltergtn n (invstd (std w)) = invstd (std (take n w)).
+Proof.
+move=> Hn.
+have Hsftstd : is_std (sfiltergtn n (invstd (std w))).
+  apply: (@sfiltergtn_is_std (invstd (std w)) n).
+  by apply: invstd_is_std; exact: std_is_std.
+suff Heqinv : invstd (sfiltergtn n (invstd (std w))) = std (take n w).
+  by rewrite -Heqinv invstdK.
+apply/esym/eqP/stdP; apply: StdSpec; first exact: invstd_is_std.
+have Hstdiw : is_std (invstd (std w)).
+  by apply: invstd_is_std; exact: std_is_std.
+apply/eq_invP; split.
+  rewrite size_take_leq Hn size_invstd size_sfiltergtn //.
+  by rewrite size_invstd size_std (minn_idPl Hn).
+move=> i j /andP [] Hij; rewrite size_take_leq Hn => Hj.
+have Hi := leq_ltn_trans Hij Hj.
+rewrite leqXnatE /=.
+do 2 (rewrite nth_mkseq; last rewrite size_sfiltergtn //;
+        last by rewrite size_invstd size_std (minn_idPl Hn)).
+rewrite index_leq_filter // !nth_take //.
+rewrite (index_invstd (std_is_std w)); first last.
+  by apply (leq_trans Hi); rewrite size_std.
+rewrite (index_invstd (std_is_std w)); first last.
+  by apply (leq_trans Hj); rewrite size_std.
+have /eq_invP := (eq_inv_std w) => [] [] _; apply.
+by rewrite Hij (leq_trans Hj Hn).
+Qed.
+
+Lemma sfilterleq_invstd w n :
+  n <= size w -> sfilterleq n (invstd (std w)) = invstd (std (drop n w)).
+Proof.
+move=> Hn.
+have Hsftstd : is_std (sfilterleq n (invstd (std w))).
+  apply: (@sfilterleq_is_std (invstd (std w)) n).
+  by apply: invstd_is_std; exact: std_is_std.
+suff Heqinv : invstd (sfilterleq n (invstd (std w))) = std (drop n w).
+  by rewrite -Heqinv invstdK.
+apply/esym/eqP/stdP; apply: StdSpec; first exact: invstd_is_std.
+have Hstdiw : is_std (invstd (std w)).
+  by apply: invstd_is_std; exact: std_is_std.
+apply/eq_invP; split.
+  rewrite size_drop size_invstd size_sfilterleq //.
+  by rewrite size_invstd size_std.
+move=> i j /andP [] Hij; rewrite size_drop => Hj.
+rewrite leqXnatE /=.
+have Hi := leq_ltn_trans Hij Hj.
+do 2 (rewrite nth_mkseq; last by rewrite size_sfilterleq // size_invstd size_std).
+rewrite !index_sfilterleq !nth_drop.
+rewrite index_leq_filter ?leq_addl //.
+do 2 (rewrite (index_invstd (std_is_std w));
+      last by rewrite size_std addnC -ltn_subRL).
+have /eq_invP := (eq_inv_std w) => [] [] _.
+rewrite ![_ + n]addnC; apply.
+by rewrite leq_add2l Hij /= -ltn_subRL.
+Qed.
+
+(** Yet another form of Schützenberger theorem *)
+Theorem LRrule_langQ t1 t2 w :
+  is_stdtab t1 ->
+  (exists u v, [/\ w = u ++ v, u \in langQ t1 & v \in langQ t2]) <->
+  (exists t, LRtriple t1 t2 t /\ w \in langQ t).
+Proof.
+move=> Hstd1.
+split => [[u] [v] [Hcat]| [t] []]; rewrite !langQE.
+- move=> /eqP Ht1 /eqP Ht2.
+  exists (RS (invstd (std (u ++ v)))); split.
+  + apply: (LRTriple Ht1 Ht2 erefl).
+    exact: invstd_cat_in_shsh.
+  + by rewrite Hcat langQE.
+- move=> [/= p1 p2 p Ht1 <-{t2} <-{t} Hsh].
+  move: Hstd1; rewrite -Ht1 RSstdE => Hstd1 {Ht1 t1}.
+  rewrite -plactic_RS => Hpl.
+  have := Hsh; rewrite mem_shsh // => /andP [/eqP Hp1 /eqP Hp2].
+  have Hszp1: size p1 <= size w.
+    move/size_plact: Hpl; rewrite size_invstd size_std => ->.
+    by rewrite -Hp1 size_filter count_size.
+  have HgtnE : (fun x => x <A size p1) =1 gtn (size p1).
+    by move=> x /=; rewrite ltnXnatE.
+  have HleqE : (fun x => x >=A size p1) =1 leq (size p1).
+    by move=> x /=; rewrite leqXnatE.
+  exists (take (size p1) w), (drop (size p1) w); split.
+  + by rewrite cat_take_drop.
+  + rewrite langQE -plactic_RS -sfiltergtn_invstd // -{2}Hp1.
+    rewrite /sfiltergtn /= -!(eq_filter HgtnE).
+    exact: plactic_filter_gtnX.
+  + rewrite langQE -plactic_RS -sfilterleq_invstd // -{1}Hp2.
+    rewrite /sfilterleq /= -!(eq_filter HleqE).
+    apply: plact_map_in_incr; last exact: plactic_filter_leqX.
+    move=> /= x y.
+    rewrite !mem_filter !leqXnatE !ltnXnatE => /andP [Hx _]  /andP [Hy _] Hxy.
+    by rewrite -(ltn_add2r (size p1)) ?subnK.
+Qed.
+
+(** Alternative proof from [LRtriple_cat_equiv] *)
+Theorem LRrule_langQ_alternate t1 t2 w :
+  is_stdtab t1 -> is_stdtab t2 ->
+  (exists u v, [/\ w = u ++ v, u \in langQ t1 & v \in langQ t2]) <->
+  (exists t, LRtriple t1 t2 t /\ w \in langQ t).
+Proof.
+move=> H1 H2; have H := LRtriple_cat_equiv H1 H2.
+split=> [[u] [v] [Hcat Hu Hv]| [t] [Htriple Hw]].
+- have {H} /H [_ _] : u \in langQ t1 /\ v \in langQ t2 by split.
+  by rewrite Hcat.
+- have:= cat_take_drop (size_tab t1) w.
+  set u1 := take (size_tab t1) w; set u2 := drop (size_tab t1) w => Hcat.
+  have /= /andP [_ /eqP Hsz] := is_stdtab_of_n_LRtriple H1 H2 Htriple.
+  have Hszw : size w = size_tab t.
+    move: Hw; rewrite langQE => /eqP <-.
+    by rewrite size_RS size_invstd size_std.
+  have : [/\ size u1 = size_tab t1, size u2 = size_tab t2
+        & exists t : seq (seq nat), LRtriple t1 t2 t /\ u1 ++ u2 \in langQ t].
+    split.
+    - by rewrite size_take_leq Hszw Hsz leq_addr.
+    - by rewrite size_drop Hszw Hsz addnC addnK.
+    - by exists t; rewrite Hcat.
+  rewrite -H => [] [Hu1 Hu2].
+  by exists u1, u2; rewrite Hcat.
+Qed.
 
 (** ** Conjugating [LRtriple] *)
 Theorem LRtriple_conj t1 t2 t :
