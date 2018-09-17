@@ -287,21 +287,28 @@ Qed.
 
 Section Enum.
 
-Variable T: finType.
+Variable T : finType.
 
-Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
+Lemma setU1E (x : T) (S : {set T}) : x \in S -> x |: S = S.
+Proof.
+move=> Hx; apply/setP/subset_eqP/andP; split; apply/subsetP=> i.
+- by move/setU1P => [] ->.
+- by move=> H; apply/setU1P; right.
+Qed.
 
-Lemma enum_eq0P (s : {set T}):
-  reflect (enum s = [::]) (s == set0).
+Lemma enum_eq0P (S : {set T}):
+  reflect (enum S = [::]) (S == set0).
 Proof.
   apply (iffP eqP) => [-> |]; first exact: enum_set0.
-  case: (set_0Vmem s) => [-> //| [x]].
+  case: (set_0Vmem S) => [-> //| [x]].
   rewrite -mem_enum => Hx Hnil.
   by rewrite Hnil in_nil in Hx.
 Qed.
 
-Lemma big_enum (S : pred T) :
-  \big[op/idx]_(s in S) F s = \big[op/idx]_(s <- enum S) F s.
+Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
+
+Lemma big_enum (P : pred T) :
+  \big[op/idx]_(x in P) F x = \big[op/idx]_(x <- enum P) F x.
 Proof. by rewrite /index_enum big_filter; apply congr_big. Qed.
 
 End Enum.

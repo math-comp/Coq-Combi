@@ -523,6 +523,17 @@ End GreeneDef.
 Notation "k '.-supp' [ R , wt ]" := (@ksupp _ R _ wt k)
   (at level 2, format "k '.-supp' [ R ,  wt ]") : form_scope.
 
+Lemma ksupp_cast (T : inhOrdType) R (w1 w2 : seq T) (H : w1 = w2) k Q :
+  Q \is a k.-supp[R, in_tuple w1] ->
+  (cast_set (congr1 size H)) @: Q \is a k.-supp[R, in_tuple w2].
+Proof.
+subst w1; rewrite /=.
+suff /eq_imset -> : cast_set (congr1 size (erefl w2)) =1 id by rewrite imset_id.
+move=> U; rewrite /cast_set /=.
+suff /eq_imset -> : cast_ord (congr1 size (erefl w2)) =1 id by rewrite imset_id.
+by move=> i; rewrite cast_ord_id.
+Qed.
+
 Lemma eq_Greene_rel_t (T : inhOrdType) (R1 R2 : rel T) N (u : N.-tuple T) :
   R1 =2 R2 -> Greene_rel_t R1 u  =1  Greene_rel_t R2 u.
 Proof.
