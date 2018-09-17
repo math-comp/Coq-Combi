@@ -13,8 +13,10 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** A proof of the Erdös Szekeres theorem about longest increassing and
-decreassing subsequences. The theorem is [Erdos_Szekeres] and
+(** * The Erdös-Szekeres theorem on monotinic subsequences.
+
+A proof of the Erdös Szekeres theorem about longest increasing and
+decreasing subsequences. The theorem is [Erdos_Szekeres] and
 says that any sequence [s] of length at least [n*m+1] over a totally ordered
 type admit
 - either a nondecreasing subsequence of length [n+1];
@@ -22,7 +24,6 @@ type admit
 We prove it as a corollary of Greene's theorem on the Robinson-Schensted
 correspondance. Note that there are other proof which require less theory.
  *****)
-
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop path.
@@ -46,7 +47,7 @@ rewrite /Greene_rel /= /Greene_rel_t.
 set P := (X in \max_(_ | X _) _).
 have : #|P| > 0.
   apply/card_gt0P; exists set0.
-  rewrite /P /ksupp unfold_in cards0 /=.
+  rewrite /P /ksupp !unfold_in /= cards0 /=.
   apply/andP; split.
   + by apply/trivIsetP => s1 s2; rewrite inE.
   + by apply/forallP => x; rewrite inE.

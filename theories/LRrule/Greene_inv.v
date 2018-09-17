@@ -37,8 +37,8 @@ Local Lemma eq_size (T : Type) (w1 w2 : seq T) : w1 = w2 -> size w1 = size w2.
 Proof. by move->. Qed.
 
 Lemma ksupp_cast (T : inhOrdType) R (w1 w2 : seq T) (H : w1 = w2) k Q :
-  ksupp R (in_tuple w1) k Q ->
-  ksupp R (in_tuple w2) k ((cast_set (eq_size H)) @: Q).
+  Q \is a k.-supp[R, in_tuple w1] ->
+  (cast_set (eq_size H)) @: Q \is a k.-supp[R, in_tuple w2].
 Proof.
 subst w1; rewrite /=.
 suff /eq_imset -> : cast_set (eq_size (erefl w2)) =1 id by rewrite imset_id.
@@ -207,11 +207,11 @@ apply/idP/idP.
 Qed.
 
 Lemma rev_is_ksupp_row P :
-  ksupp (@leqX Alph) (in_tuple w) k P =
-  ksupp (@leqX (dual_ordType Alph)) (in_tuple (revdual w)) k (rev_ksupp P).
+  (P \is a k.-supp[@leqX Alph, in_tuple w]) =
+  (rev_ksupp P \is a k.-supp[@leqX (dual_ordType Alph), in_tuple (revdual w)]).
 Proof using .
-rewrite /ksupp size_rev_ksupp trivIset_setrev; congr [&& _, _ & _].
-apply/idP/idP => /forallP Hall; apply/forallP => S; apply/implyP.
+rewrite !unfold_in size_rev_ksupp trivIset_setrev; congr [&& _, _ & _].
+apply/forallP/forallP => Hall S; apply/implyP.
 - move=> /imsetP [T HT -> {S}].
   rewrite -is_row_dual.
   by move/(_ T) : Hall; rewrite HT.
@@ -221,11 +221,11 @@ apply/idP/idP => /forallP Hall; apply/forallP => S; apply/implyP.
 Qed.
 
 Lemma rev_is_ksupp_col P :
-  ksupp (@gtnX Alph) (in_tuple w) k P =
-  ksupp (@gtnX (dual_ordType Alph)) (in_tuple (revdual w)) k (rev_ksupp P).
+  (P \is a k.-supp[@gtnX Alph, in_tuple w]) =
+  (rev_ksupp P \is a k.-supp[@gtnX (dual_ordType Alph), in_tuple (revdual w)]).
 Proof using .
-rewrite /ksupp size_rev_ksupp trivIset_setrev; congr [&& _, _ & _].
-apply/idP/idP => /forallP Hall; apply/forallP => S; apply/implyP.
+rewrite !unfold_in size_rev_ksupp trivIset_setrev; congr [&& _, _ & _].
+apply/forallP/forallP => Hall S; apply/implyP.
 - move=> /imsetP [T HT -> {S}].
   rewrite -is_col_dual.
   by move/(_ T): Hall; rewrite HT.
@@ -417,7 +417,7 @@ Let x := u ++ [:: a; b] ++ v.
 Let y := u ++ [:: b; a] ++ v.
 
 Variable P : {set {set 'I_(size x)}}.
-Hypothesis Px : ksupp R (in_tuple x) k P.
+Hypothesis Px : P \is a k.-supp[R, in_tuple x].
 
 Local Notation posa := (Swap.pos0 u v a b).
 Local Notation posb := (Swap.pos1 u v a b).
@@ -464,7 +464,7 @@ congr (mask _ u ++ _ ++ mask _ v).
     last exact: Swap.swap_inj.
 Qed.
 
-Lemma ksupp_noBoth : ksupp R (in_tuple y) k Q.
+Lemma ksupp_noBoth : Q \is a k.-supp[R, in_tuple y].
 Proof using HnoBoth Px.
 move: Px => /and3P [HszP HtrivP /forallP HallP].
 apply/and3P; split.
@@ -580,15 +580,17 @@ Let x := u ++ [:: b; a; c] ++ v.
 
 Variable k : nat.
 Variable P : {set {set 'I_(size x)}}.
-Hypothesis Px : ksupp R (in_tuple x) k P.
+Hypothesis Px : P \is a k.-supp[R, in_tuple x].
 
 Local Notation posb := (Swap.pos0 u (c :: v) b a).
 Local Notation posa := (Swap.pos1 u (c :: v) b a).
 Local Notation swap := (@Swap.swap _ u (c :: v) b a).
 Local Notation swapSet := (Swap.swapSet u (c :: v) b a).
 
-Lemma u2lt : (size u).+2 < size x.
-Proof using a b c v. by rewrite /= size_cat /= 2!addnS 2!ltnS -{1}[size u]addn0 ltn_add2l. Qed.
+Local Lemma u2lt : (size u).+2 < size x.
+Proof using a b c v.
+by rewrite /= size_cat /= 2!addnS 2!ltnS -{1}[size u]addn0 ltn_add2l.
+Qed.
 Let posc := Ordinal u2lt.
 
 Lemma tnth_posc : tnth (in_tuple x) posc = c.
@@ -637,7 +639,7 @@ have -> : (i == posb) = false.
   by move: HbNin; rewrite Hcov.
 suff -> : (i == posa) = false by [].
 apply/(introF eqP) => //= Hib; subst i.
-move: Px; rewrite /ksupp => /and3P [_ /trivIsetP Htriv _].
+move: Px => /and3P [_ /trivIsetP Htriv _].
 move/(_  _ _ HTP HS Hneq) : Htriv => /disjoint_setI0.
 apply/setP => /(_ posa); rewrite in_set0 in_setI Hi.
 by rewrite Hposa.
@@ -719,7 +721,7 @@ Lemma extract_swapSet_S : sorted R (extract (in_tuple x) (swapSet S)).
 Proof using HRabc HS HbNin Hposa Hposc Px.
 rewrite extract_swapSetSE.
 have : sorted R (extract (in_tuple x) S).
-  move: Px; rewrite /ksupp => /and3P [_ _ /forallP Hall].
+  move: Px => /and3P [_ _ /forallP Hall].
   by have := Hall S; rewrite HS.
 rewrite extract_SE.
 set LL := extract _ _; set LR := extract _ _; rewrite /= => Hsort.
@@ -731,7 +733,7 @@ rewrite !cat_path => /andP [-> /= /and3P [/(Hxba HRabc) -> _ ->]].
 by rewrite Hbc.
 Qed.
 
-Lemma ksupp_bnotin : ksupp R (in_tuple x) k Qbnotin.
+Lemma ksupp_bnotin : Qbnotin \is a k.-supp[R, in_tuple x].
 Proof using HRabc HS HbNin Hposa Hposc Px.
 move: Px => /and3P [HszP HtrivP /forallP HallP].
 apply/and3P; split.
@@ -772,7 +774,7 @@ Lemma TSneq : T != S.
 Proof using HRabc HS HT Hposa Hposb Px.
 apply/eqP=> Heq; subst T.
 have:= Hba HRabc; suff -> : R b a by [].
-move: Px; rewrite /ksupp => /and3P [_ _ /forallP Hall].
+move: Px => /and3P [_ _ /forallP Hall].
 move/(_ S): Hall; rewrite HS.
 move/(sorted_extract_cond (Rtrans HRabc) [set posb; posa]).
 have -> : S :&: [set posb; posa] = [set posb; posa].
@@ -861,7 +863,7 @@ Lemma ST_cover_disjoint : [disjoint S :|: T & cover (P :\: [set S; T])].
 Proof using HS HT Px.
 rewrite -setI_eq0; apply/eqP/setP => i; rewrite in_set0.
 apply/(introF idP).
-move: Px; rewrite /ksupp => /and3P [_ /trivIsetP Htriv _].
+move: Px => /and3P [_ /trivIsetP Htriv _].
 rewrite !inE => /andP [] /orP [] Hi /bigcupP [U];
   rewrite !inE negb_or => /andP [/andP [HUS HUT] HU] HiU.
 - move/(_ _ _ HU HS HUS): Htriv; rewrite -setI_eq0 => /eqP.
@@ -881,7 +883,7 @@ apply: trivIset_coverU.
   + by move=> _; rewrite disjoint_sym; exact: disjointS1T1.
   + by rewrite eq_refl.
 - apply: (@trivIsetS _ _ P); first exact: subsetDl.
-  by move: Px; rewrite /ksupp => /and3P [_].
+  by move: Px => /and3P [_].
 - by rewrite coverS1T1; apply: ST_cover_disjoint.
 Qed.
 
@@ -1066,7 +1068,7 @@ have -> : last l0 lL' = b.
 exact: (Hbc HRabc).
 Qed.
 
-Lemma ksupp_bin : ksupp R (in_tuple x) k Qbin.
+Lemma ksupp_bin : Qbin \is a k.-supp[R, in_tuple x].
 Proof using HRabc HS HT Hposa Hposb Hposc Px.
 move: Px => /and3P [HszP HtrivP /forallP HallP].
 rewrite /Qbin; apply/and3P; split.
@@ -1106,7 +1108,7 @@ End BIn.
 
 Theorem exists_Q_noboth :
   exists Q : {set {set 'I_(size x)}},
-    [/\ ksupp R (in_tuple x) k Q, #|cover Q| = #|cover P| &
+    [/\ Q \is a k.-supp[R, in_tuple x], #|cover Q| = #|cover P| &
       forall S, S \in Q -> ~ ((posa \in S) && ((posc \in S)))].
 Proof using HRabc HS Hposa Hposc Px.
 case (boolP (posb \in (cover P))) => [/bigcupP [T HT HbT] | Hcov].
@@ -1127,7 +1129,7 @@ Local Lemma eq_xx' : x = x'. Proof using a b c u v. by rewrite /x /x' -catA. Qed
 
 Theorem exists_Qy :
   exists Q : {set {set 'I_(size y)}},
-    #|cover Q| = #|cover P| /\ ksupp R (in_tuple y) k Q .
+    #|cover Q| = #|cover P| /\ Q \is a k.-supp[R, in_tuple y].
 Proof using HRabc HS Hposa Hposc Px x'.
 have:= exists_Q_noboth => [] [Q [Hsupp Hcover Hnoboth]].
 move HcastP : ((cast_set (eq_size eq_xx')) @: Q) => Q'.
@@ -1193,7 +1195,7 @@ pose posa := (Swap.pos0 u (b :: w) c a).
 pose posc := (Swap.pos1 u (b :: w) c a).
 case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
 - move/existsP => [S /and3P [HSin HSa HSb]].
-  exfalso; move: Hsupp; rewrite /ksupp => /and3P [_ _ /forallP Hall].
+  exfalso; move: Hsupp => /and3P [_ _ /forallP Hall].
   move/(_ S): Hall; rewrite HSin /=.
   move/(sorted_extract_cond (@leqX_trans _) [set posa; posc]).
   have -> : S :&: [set posa; posc] = [set posa; posc].
@@ -1232,15 +1234,17 @@ pose posc := (Swap.pos1 (u ++ [:: b]) w a c).
 case (boolP [exists S, [&& S \in P, posa \in S & posc \in S] ]).
 - move/existsP => [S /and3P [HSin HSa HSc]].
   move HcastP : ((cast_set (eq_size Hbac)) @: P) => P'.
-  have Hsupp' : ksupp leqX (in_tuple (u ++ [:: b; a; c] ++ w)) k P'.
+  have Hsupp' :  P' \is a k.-supp[leqX, in_tuple (u ++ [:: b; a; c] ++ w)].
     rewrite -HcastP; exact: ksupp_cast.
   move HcastS : (cast_set (eq_size Hbac) S) => S'.
   have HS'in : S' \in P' by rewrite -HcastP -HcastS; apply: mem_imset.
-  set pos1 := Swap.pos1 u (c :: w) b a; have Hpos1 : pos1 \in S'.
+  set pos1 := Swap.pos1 u (c :: w) b a.
+  have Hpos1 : pos1 \in S'.
      rewrite -(cast_ordKV (eq_size Hbac) pos1) -HcastS /cast_set /=; apply: mem_imset.
      suff -> //= : cast_ord (esym (eq_size Hbac)) pos1 = posa by [].
      by apply: val_inj; rewrite /= size_cat /= addn1.
-  set pos2 := Ordinal (SetContainingBothLeft.u2lt u w a b c); have Hpos2 : pos2 \in S'.
+   set pos2 := Ordinal (SetContainingBothLeft.u2lt u w a b c).
+   have Hpos2 : pos2 \in S'.
      rewrite -(cast_ordKV (eq_size Hbac) pos2) -HcastS /cast_set /=; apply: mem_imset.
      suff -> //= : cast_ord (esym (eq_size Hbac)) pos2 = posc by [].
      by apply: val_inj; rewrite /= size_cat /= addn1.
@@ -1270,7 +1274,7 @@ pose posa := (Swap.pos0 u (b :: w) a c).
 pose posc := (Swap.pos1 u (b :: w) a c).
 case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
 - move/existsP => [S /and3P [HSin HSa HSb]].
-  exfalso; move: Hsupp; rewrite /ksupp => /and3P [_ _ /forallP Hall].
+  exfalso; move: Hsupp => /and3P [_ _ /forallP Hall].
   move/(_ S): Hall; rewrite HSin /= => Hsort.
   have:= sorted_extract_cond (@gtnX_trans _) [set posa; posc] Hsort.
   have -> : S :&: [set posa; posc] = [set posa; posc].
@@ -1301,15 +1305,17 @@ Lemma ksuppCol_inj_plact2i :
 Proof using .
 move/plact2iP => [a] [b] [c] [Hord -> ->].
 have Hyp := RabcGtnX Hord.
-have Hbca : ((u ++ [:: b]) ++ [:: c; a] ++ w) = (u ++ [:: b; c; a] ++ w) by rewrite -catA.
-have Hbac : ((u ++ [:: b]) ++ [:: a; c] ++ w) = (u ++ [:: b; a; c] ++ w) by rewrite -catA.
+have Hbca : ((u ++ [:: b]) ++ [:: c; a] ++ w) =
+            (u ++ [:: b; c; a] ++ w) by rewrite -catA.
+have Hbac : ((u ++ [:: b]) ++ [:: a; c] ++ w) =
+            (u ++ [:: b; a; c] ++ w) by rewrite -catA.
 rewrite -Hbca -Hbac /ksupp_inj  => P Hsupp.
 pose posa := (Swap.pos0 (u ++ [:: b]) w c a).
 pose posc := (Swap.pos1 (u ++ [:: b]) w c a).
 case (boolP [exists S, [&& S \in P, posa \in S & posc \in S] ]).
 - move/existsP => [S /and3P [HSin HSa HSc]].
   move HcastP : ((cast_set (eq_size Hbca)) @: P) => P'.
-  have Hsupp' : ksupp gtnX (in_tuple (u ++ [:: b; c; a] ++ w)) k P'.
+  have Hsupp' : P' \is a k.-supp[gtnX, in_tuple (u ++ [:: b; c; a] ++ w)]
     by rewrite -HcastP; exact: ksupp_cast.
   move HcastS : (cast_set (eq_size Hbca) S) => S'.
   have HS'in : S' \in P' by rewrite -HcastP -HcastS; apply: mem_imset.

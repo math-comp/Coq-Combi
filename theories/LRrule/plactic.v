@@ -48,7 +48,7 @@ filtering large or small letters preserve plactic congruence. These are Lemmas
 [plactic_filter_ltnX]
 
 
-Plactic congruence and increassing maps:
+Plactic congruence and increasing maps:
 
 We finally shows that plactic congruence is preserved by increasing maps:
 Lemma [plact_map_in_incr].
@@ -952,7 +952,7 @@ Qed.
 
 End RestrIntervBig.
 
-(** ** Plactic congruence and increassing maps *)
+(** ** Plactic congruence and increasing maps *)
 Section IncrMap.
 
 Variable T1 T2 : inhOrdType.

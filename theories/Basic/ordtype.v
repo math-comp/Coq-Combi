@@ -790,7 +790,7 @@ Notation "x >A y"  := (x > y)%Ord (at level 70, y at next level, only parsing).
 End OrdNotations.
 
 (******************************************************************************)
-(* Increassing and nondecreassing maps                                         *)
+(* Increasing and nondecreasing maps                                          *)
 (******************************************************************************)
 Section IncrMap.
 
