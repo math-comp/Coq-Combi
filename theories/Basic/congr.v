@@ -249,7 +249,7 @@ Qed.
 End Transitive.
 
 
-(** ** Deals with the dependance of invar on x *)
+(** ** Dealing with the dependance of [invar] on [x] *)
 Section Depend.
 
 Variable T : eqType.

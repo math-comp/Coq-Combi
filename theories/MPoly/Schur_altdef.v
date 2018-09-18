@@ -947,7 +947,7 @@ Qed.
 End Kostka.
 
 
-(** ** Comverting between standard tableau and tableau over 'I_n.
+(** ** Converting between standard tableau and tableau over ['I_n].
 
 The type [stdtabsh sh] is a subtype of [seq nat] whereas [tabsh sh] is a subtype
 of [seq 'I_n.+1]. We provide two conversion functions [tabnat_of_ord] and

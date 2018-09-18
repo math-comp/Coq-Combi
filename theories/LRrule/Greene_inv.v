@@ -28,8 +28,9 @@ for the final theorems. To keep notation short while avoiding to pollute the
 global namespace we enclosed the different cases into Coq modules.
 
 
-Here is the content of the file:
+-------------------------------------------------------------------------------
 
+Here is the content of the file:
 
 Greene numbers and duality:
 
@@ -42,6 +43,7 @@ The following function allows to transfer k-support through duality:
 The Greene numbers of a word and its reversed dual agrees: Lemmas
 [Greene_col_dual] and [Greene_row_dual].
 
+-------------------------------------------------------------------------------
 
 Swapping two letters:
 
@@ -51,33 +53,49 @@ We denote [x] the word [x := u l0 l1 v]. Then we define:
 - [pos1 u v l0 l1] == the position of [l1] in [x] as a ['I_(size x)]
 - [swap i] == exchange [l0] and [l1] and fixes all the other positions.
 - [swap_set S] == then image of [S] by [swap]
+We prove then various lemmas such as [swap_size_cover] asserting that swaping
+keep the size of the cover.
+
+-------------------------------------------------------------------------------
 
 In Module [NoSetContainingBoth], we consider [x := u a b v].
 We assume that (the position of) [a] and [b] are not in the same set of a
-given k-support [P]. We construct a k-support [Q] for [y := u b a v]:
-- [swap_set S] == exchange the position of [a] and [b] in [S : {set 'I_(size x)}]
-        and return the result as a [{set 'I_(size y)}]
+given k-support [P]. We construct a k-support [Q] for [y := u b a v] of the
+same cover size:
+- [swap_set S] == exchange the position of [a] and [b] in
+        [S : {set 'I_(size x)}] and return the result as a [{set 'I_(size y)}]
 - [Q P] == for a k-support [P] for [x], then [Q P] is a k-support for [y]
         of the same cardinality, assuming that [a] and [b] are not in the
-        same set of [P]. Those are lemmas [ksupp_Q] and [size_cover_Q].
+        same set of [P].
+The main results are lemmas [ksupp_Q] and [size_cover_Q].
+
+-------------------------------------------------------------------------------
 
 In Module [SetContainingBothLeft], we denote [x := u b a c v] and consider
-a given k-support [P] containing both [a] and [c]. We suppose moreover that
-[R b c] holds but not [R b a]. This is for example the case if [a < b <= c]
-when [R] is [<=]. We are looking for a k-support for [y := u b c a v] of the
-same size. To be able to apply the preceding module, we need to construct
-another k-support for [x] with the same cover than [P], but such that
-[a] and [c] are not in the same set. There are two cases:
+a given k-support [P] containing both [a] and [c]. We want to deal at once with
+the case where [a < b <= c] and [R := <=] and [c < b <= a] and [R := >].
+So we encaspulate the hypothesis in a record [hypRabc] which contains among
+other that [R b c] holds but not [R b a]. Specifically:
+- [hypRabc R a b c] == a record encapsulating that [a R b R c] for a total
+        strict or non strict order [R].
+We construct in lemmas [RabcLeqX] and [RabcGtnX] the two records dealing with
+the two preceding cases.
 
-- if [b] is not in [cover P]: We define:
+We are looking for a k-support for [y := u b c a v] of the same size. To be
+able to apply the preceding module, we need to construct another k-support [Q]
+for [x] with the same cover than [P], but such that [a] and [c] are not in the
+same set. There are two cases:
 
-  [Qbnotin P] ==  exchange the position of [a] and [b] in all the sets in [P]
-        It is a still a k-support for [x] of the same cardinality.
-        Those are lemmas [ksupp_bnotin] and [size_cover_bnotin].
+1- if [b] is not in [cover P]: We define:
 
-- if [b] is in [cover P]: Due to monotonic condition, [b] must be in a different
-  set [T] in [P] than the set [S] which contains [a] and [b]. The idea is that
-  [S] and [T] should exchange their part in [c :: v]. We therefore define:
+  [Qbnotin P] == [P] with [a] replaced by [b]. This is a still a k-support
+        for [x] of the same cardinality by lemmas [ksupp_bnotin] and
+        [size_cover_bnotin].
+
+2- if [b] is in [cover P]: Due to monotonic condition, [b] must be in a
+  different set [T] in [P] than the set [S] which contains [a] and [b]. The
+  idea is that [S] and [T] should exchange their part in [c :: v]. We
+  therefore define:
 
   [S1 S T] == the elements of [S] which are on the left of [a] +
               the elements of [T] which are in [v]
@@ -96,6 +114,7 @@ Then we prove consecutively two theorems:
 This allow to show that each plactic rewriting rule leave the Greene numbers
 invariant.
 
+-------------------------------------------------------------------------------
 
 We conclude by the main results:
 - [Greene_row_invar_plactic] and [Greene_col_invar_plactic] asserting than
@@ -617,21 +636,52 @@ Qed.
 End CoverSurgery.
 
 
-(** ** Case where no sets contains both
+(** ** Case where a set in [P] contains both [a] and [c]
 
-The goal of this module is the following: given a k-support [P] for the word
-[u ++ [:: b; a; c] ++ v] which contains a set [S] whose associated subsequence
-contains both [a] and [c] to construct a k-support [Q] for with the same
-cover.
-
-We suppose moreover that [R b c] but [~~ R b a]. This is for example the case
-if [a < b <= c] when [R] is [<=].
-
-They are moreover two cases depending if [b] belongs to the cover of [P] or
-not.
-
-These statements are Lemmas [ksupp_Q] and [size_cover_Q]. *)
+In Module [SetContainingBothLeft], we denote [x := u b a c v] and consider
+a given k-support [P] containing both [a] and [c]. We construct another
+k-support [Q] for [x] with the same cover than [P], but such that [a] and [c]
+are not in the same set. *)
 Module SetContainingBothLeft.
+
+(** *** Generic order hypothesis *)
+Section RelHypothesis.
+
+Variable Alph : inhOrdType.
+Implicit Type a b c : Alph.
+
+Record hypRabc  R a b c := HypRabc {
+                      Rtrans : transitive R;
+                      Hbc : R b c;
+                      Hba : ~~ R b a;
+                      Hxba : forall l, R l a -> R l b;
+                      Hbax : forall l, R b l -> R a l
+                  }.
+
+Lemma RabcLeqX a b c :
+  (a < b <= c)%Ord -> hypRabc leqX a b c.
+Proof.
+move=> H; constructor.
+- move=> x y z; exact: leqX_trans.
+- by move: H => /andP /= [].
+- by move: H => /andP /= []; rewrite ltnXNgeqX.
+- by move: H => /andP /= [H1 _] /= x H2; exact: (leqX_trans H2 (ltnXW H1)).
+- by move: H => /andP /= [H1 _] /= x H2; exact: (leqX_trans (ltnXW H1) H2).
+Qed.
+
+Lemma RabcGtnX a b c :
+  (a < b <= c)%Ord -> hypRabc gtnX c b a.
+Proof.
+move=> H; constructor.
+- exact: gtnX_trans.
+- by move: H => /andP /= [].
+- by move: H => /andP /= [] _; rewrite -!leqXNgtnX.
+- by move: H => /andP /= [_ H1] /= x H2; exact: (leqX_ltnX_trans H1 H2).
+- by move: H => /andP /= [_ H1] /= x H2; exact: (ltnX_leqX_trans H2 H1).
+Qed.
+
+End RelHypothesis.
+
 
 Section Case.
 
@@ -644,15 +694,7 @@ Variable R : rel Alph.
 Variable u v : word.
 Variable a b c : Alph.
 
-Record hypRabc := HypRabc {
-                      Rtrans : transitive R;
-                      Hbc : R b c;
-                      Hba : ~~ R b a;
-                      Hxba : forall l, R l a -> R l b;
-                      Hbax : forall l, R b l -> R a l
-                  }.
-
-Hypothesis HRabc : hypRabc.
+Hypothesis HRabc : hypRabc R a b c.
 
 Let x := u ++ [:: b; a; c] ++ v.
 
@@ -685,7 +727,10 @@ Hypothesis HS : S \in P.
 Hypothesis Hposa : (posa \in S).
 Hypothesis Hposc : (posc \in S).
 
-(** *** Case where [b] is not in [cover P] *)
+(** *** Case where [b] is not in [cover P]
+
+Replacing [a] by [b] gives another k-support.
+ *)
 Section BNotIn.
 
 Hypothesis HbNin : posb \notin (cover P).
@@ -807,7 +852,7 @@ have HbcR : sorted R [:: b, c & LR].
   by move: HacR; rewrite /= (Hbc HRabc)=> /andP [_ ->].
 case: LL Hsort => [//= | LL0 LL] /=.
 rewrite !cat_path => /andP [-> /= /and3P [/(Hxba HRabc) -> _ ->]].
-by rewrite Hbc.
+by rewrite (Hbc HRabc).
 Qed.
 
 Lemma ksupp_bnotin : Qbnotin \is a k.-supp[R, in_tuple x].
@@ -841,7 +886,10 @@ Qed.
 
 End BNotIn.
 
-(** *** Case where [b] is in [cover P] *)
+(** *** Case where [b] is in [cover P]
+
+We assume that is is in a set [T] and switch the right part of [S] and [T]
+ *)
 Section BIn.
 
 Variable T : {set 'I_(size x)}.
@@ -952,7 +1000,8 @@ rewrite !inE => /andP [] /orP [] Hi /bigcupP [U];
   by apply/setP => /(_ i); rewrite in_set0 !inE Hi HiU.
 Qed.
 
-Definition Qbin : {set {set 'I_(size x)}} := [set S1; T1] :|: (P :\: [set S; T]).
+Definition Qbin : {set {set 'I_(size x)}} :=
+  [set S1; T1] :|: (P :\: [set S; T]).
 
 Lemma trivIset_Qbin : trivIset Qbin.
 Proof using HRabc HS HT Hposa Hposb Hposc Px.
@@ -1186,6 +1235,7 @@ Qed.
 
 End BIn.
 
+(** *** Existence theorem for k-supports *)
 Theorem exists_Q_noboth :
   exists Q : {set {set 'I_(size x)}},
     [/\ Q \is a k.-supp[R, in_tuple x], #|cover Q| = #|cover P| &
@@ -1234,30 +1284,8 @@ Qed.
 End Case.
 End SetContainingBothLeft.
 
-Lemma RabcLeqX (Alph : inhOrdType) (a b c : Alph) :
-  (a < b <= c)%Ord -> SetContainingBothLeft.hypRabc leqX a b c.
-Proof.
-move=> H; constructor.
-- move=> x y z; exact: leqX_trans.
-- by move: H => /andP /= [].
-- by move: H => /andP /= []; rewrite ltnXNgeqX.
-- by move: H => /andP /= [H1 _] /= x H2; exact: (leqX_trans H2 (ltnXW H1)).
-- by move: H => /andP /= [H1 _] /= x H2; exact: (leqX_trans (ltnXW H1) H2).
-Qed.
 
-Lemma RabcGtnX (Alph : inhOrdType) (a b c : Alph) :
-  (a < b <= c)%Ord -> SetContainingBothLeft.hypRabc gtnX c b a.
-Proof.
-move=> H; constructor.
-- exact: gtnX_trans.
-- by move: H => /andP /= [].
-- by move: H => /andP /= [] _; rewrite -!leqXNgtnX.
-- by move: H => /andP /= [_ H1] /= x H2; exact: (leqX_ltnX_trans H1 H2).
-- by move: H => /andP /= [_ H1] /= x H2; exact: (ltnX_leqX_trans H2 H1).
-Qed.
-
-
-(** * Greene number are invariant by each rules *)
+(** * Greene numbers are invariant by each plactic rules *)
 Section GreeneInvariantsRule.
 
 Variable Alph : inhOrdType.
@@ -1307,9 +1335,11 @@ Lemma ksuppRow_inj_plact2 :
   v2 \in plact2 v1 -> ksupp_inj leqX leqX k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof using.
 move/plact2P => [a] [b] [c] [Hord -> ->].
-have Hyp := RabcLeqX Hord.
-have Hbac : ((u ++ [:: b]) ++ [:: a; c] ++ w) = (u ++ [:: b; a; c] ++ w) by rewrite -catA.
-have Hbca : ((u ++ [:: b]) ++ [:: c; a] ++ w) = (u ++ [:: b; c; a] ++ w) by rewrite -catA.
+have Hyp := SetContainingBothLeft.RabcLeqX Hord.
+have Hbac : ((u ++ [:: b]) ++ [:: a; c] ++ w) = (u ++ [:: b; a; c] ++ w).
+  by rewrite -catA.
+have Hbca : ((u ++ [:: b]) ++ [:: c; a] ++ w) = (u ++ [:: b; c; a] ++ w).
+  by rewrite -catA.
 rewrite -Hbca -Hbac /ksupp_inj  => P Hsupp.
 pose posa := (Swap.pos0 (u ++ [:: b]) w a c).
 pose posc := (Swap.pos1 (u ++ [:: b]) w a c).
@@ -1326,7 +1356,7 @@ case (boolP [exists S, [&& S \in P, posa \in S & posc \in S] ]).
     apply: mem_imset.
     suff -> //= : cast_ord (esym (congr1 size Hbac)) pos1 = posa by [].
     by apply: val_inj; rewrite /= size_cat /= addn1.
-  set pos2 := Ordinal (SetContainingBothLeft.u2lt u w a b c).
+  set pos2 := SetContainingBothLeft.posc u w a b c.
   have Hpos2 : pos2 \in S'.
     rewrite -(cast_ordKV (congr1 size Hbac) pos2) -HcastS /cast_set /=.
     apply: mem_imset.
@@ -1388,7 +1418,7 @@ Lemma ksuppCol_inj_plact2i :
   v2 \in plact2i v1 -> ksupp_inj gtnX gtnX k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof using.
 move/plact2iP => [a] [b] [c] [Hord -> ->].
-have Hyp := RabcGtnX Hord.
+have Hyp := SetContainingBothLeft.RabcGtnX Hord.
 have Hbca : ((u ++ [:: b]) ++ [:: c; a] ++ w) =
             (u ++ [:: b; c; a] ++ w) by rewrite -catA.
 have Hbac : ((u ++ [:: b]) ++ [:: a; c] ++ w) =
@@ -1665,7 +1695,7 @@ exact: HGreene.
 Qed.
 
 
-(** * Reverting uniq words *)
+(** ** Reverting uniq words *)
 Section RevConj.
 
 Variable T : inhOrdType.
