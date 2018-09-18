@@ -19,27 +19,28 @@ In this file we fix two non zero natural [m] and [n] and consider the two sets
 of variables [X := (x_i)_{i<m}] and [Y := (y_j)_{j<n}]. We also consider the
 variable [z_{i,j} := x_i * y_j].
 
-We encode polynomial in $X \cup Y$ as polynomials in $X$ whose coefficient are
-polynomials in $Y$. We denote by [mz] a monomial in the $Z$.
+We encode polynomial in [X \cup Y] as polynomials in [X] whose coefficient are
+polynomials in [Y]. We denote by [mz] a monomial in the [Z].
 
-- [monX mz]     == the monomial in $X$, obtained by setting all the $x_i$ to $1$.
-- [monsY mz]    == the [m.-tuple] of whose $i$-th element is the monomial in $Y$
-                   obtained by putting $x_i$ to $1$ and all the others to $0$.
+- [monX mz]     == the monomial in [X], obtained by setting all the [x_i] to [1].
+- [monsY mz]    == the [m.-tuple] of whose [i]-th element is the monomial in [Y]
+                   obtained by putting [x_i] to [1] and all the others to [0].
 - [Ymon ms]     == given [ms : m.-tuple 'X_{1.. n}] assemble them to get a
-                   monomial  in the $Z$.
-- [polXY m n R] == polynomial in [m] variable whose coeffcients are polynomials
+                   monomial  in the [Z].
+- [polXY m n R] == polynomial in [m] variable whose coefficients are polynomials
                    in [n] over the commutative ring [R]. This is canonicaly a
-                  [AlgType] over [R].
+                   [AlgType] over [R].
 - [polXY_scale c p] == ring multiplication for elements of [polXY m n R]
-- [p(X)]        == the inclusion [polX -> polXY], canonicaly a algebra morphism
-- [p(Y)]        == the inclusion [polY -> polXY], canonicaly a algebra morphism
-- [p(XY)]       == compute the polynomial in $XY$ [polXY] from a polynomials in
-                   the $Z_{i,j}$.
+- [p(X)]        == the image of [p] by the canonical inclusion algebra morphism
+                   [polX -> polXY]
+- [p(Y)]        == the image of [p] by the canonical inclusion algebra morphism
+                   [polY -> polXY]
+- [p(XY)]       == the polynomial of [polXY] from a polynomials in the [Z_{i,j}].
 - [Cauchy_kernel d] == the Cauchy kernel in degree [d] that is the sum of all
-                   monomial in $x_i*y_i$ of degree [d] that is ['h_d(XY)]
-- [co_hp la p] == if [p] is symmetric in $X$, returns the coefficient of [p] on
+                   monomial in [x_i*y_i] of degree [d] that is ['h_d(XY)]
+- [co_hp la p] == if [p] is symmetric in [X], returns the coefficient of [p] on
                    ['hp[la]]
-- [co_hpXY la mu p] == if [p] is symmetric both in $X$ and $Y$, returns the
+- [co_hpXY la mu p] == if [p] is symmetric both in [X] and [Y], returns the
                    coefficient of [p] on ['hp[la](X) 'hp[mu](Y)].
 
 The main result is Theorem [homsymdotss] which asserts that Schur function are
@@ -329,7 +330,7 @@ End BijectionFam.
 
 Variable d : nat.
 
-(** ** Cauchy formula for complete and monomial symmetric polynomials *)
+(** *** Cauchy formula for complete and monomial symmetric polynomials *)
 Lemma Cauchy_symm_symh :
   Cauchy_kernel d = \sum_(la : 'P_d) ('h[la] : polY) *: ('m[la] : polXY).
 Proof.
@@ -419,7 +420,7 @@ rewrite Cauchy_symm_symh.
 by apply eq_bigr => i _; rewrite polyXY_scale symmX.
 Qed.
 
-(** ** Cauchy formula for Schur symmetric polynomials *)
+(** *** Cauchy formula for Schur symmetric polynomials *)
 Lemma Cauchy_homsyms_homsyms :
   Cauchy_kernel d = \sum_(la : 'P_d) 'hs[la](X) * 'hs[la](Y).
 Proof.
@@ -436,14 +437,14 @@ by rewrite !linearZ /= -scalerAr -scalerAl.
 Qed.
 
 
-(* Unused lemma *)
+(** Unused lemma *)
 Lemma Cauchy_kernel_symmetric : Cauchy_kernel d \is symmetric.
 Proof.
 rewrite Cauchy_symm_symh; apply rpred_sum => la _.
 by apply rpredZ; apply sympol_is_symmetric.
 Qed.
 
-(* Unused lemma *)
+(** Unused lemma *)
 Lemma Cauchy_kernel_coeff_symmetric mon :
   (Cauchy_kernel d)@_mon \is symmetric.
 Proof.
@@ -454,7 +455,7 @@ case: (ssrnat.leqP (size la) m) => [/mcoeff_symm -> | /symm_oversize ->].
 - by rewrite mcoeff0 rpred0.
 Qed.
 
-(* Unused lemma *)
+(** Unused lemma *)
 Lemma Cauchy_kernel_coeff_homog mon :
   (Cauchy_kernel d)@_mon \is d.-homog.
 Proof.
@@ -468,15 +469,14 @@ Qed.
 
 End CauchyKernel.
 
-
-Section CauchyKernelNumField.
 Notation "p '(Y)'" := (@polY_XY _ _ _ p) (at level 20, format "p '(Y)'").
 Notation "p '(X)'" := (@polX_XY _ _ _ p) (at level 20, format "p '(X)'").
 Notation "p '(XY)'" := (@evalXY _ _ _ p) (at level 20, format "p '(XY)'").
 
+Section CauchyKernelField.
 Variable R : fieldType.
 
-(** ** Cauchy formula for power sum symmetric polynomials *)
+(** *** Cauchy formula for power sum symmetric polynomials *)
 Lemma Cauchy_homsymp_zhomsymp m n d :
   [char R] =i pred0 ->
   Cauchy_kernel m n R d =
@@ -487,7 +487,7 @@ rewrite /Cauchy_kernel symh_to_symp // !rmorph_sum /=; apply eq_bigr => la _.
 by rewrite linearZ /= -scalerAr prod_sympXY; congr (_ *: _).
 Qed.
 
-End CauchyKernelNumField.
+End CauchyKernelField.
 
 
 (** * Cauchy kernel and scalar product of symmetric functions *)
@@ -627,7 +627,7 @@ apply eq_bigr => /= nu _.
 by rewrite !mxE !enum_rankK mulrC.
 Qed.
 
-(** Schur function are orthonormal *)
+(** ** Schur function are orthonormal *)
 Theorem homsymdotss la mu : '[ 'hsF[la] | 'hsF[mu] ] = (la == mu)%:R.
 Proof using Hd.
 have to_p (nu : 'P_d) : 'hsF[nu] \in span 'hp.
