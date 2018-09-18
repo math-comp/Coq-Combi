@@ -16,8 +16,7 @@
 (** * A Coq implementation of the Littlewood-Richarson rule
 
 This file contains a Coq implementation of the Littlewood-Richardson rule. We
-define the following functions:
-
+define the following main functions:
 - [LRcoeff inner eval outer] == the LR coefficient
 - [LRyamtab_list inner eval outer] == the list of LR tableaux of shape
          [outer/inner] and evaluation [eval]
@@ -60,12 +59,10 @@ case: p => [_ | p0 p]; case: n => [| n /=] //=.
   rewrite cats0 -/(sorted geq (p0 :: p)) -/(is_part (p0 :: p)).
   exact: sorted_is_part.
 rewrite subSS.
-elim: p p0 n => [| p1 p IHp] /= p0 n.
-  move=> _; exact: Hpath.
-move=> /andP [] -> /IHp{IHp} Hrec /=.
-case: n => [| n /=].
-  move/(_ 0): Hrec; by rewrite !sub0n.
-rewrite subSS; exact: Hrec.
+elim: p p0 n => [| p1 p IHp] /= p0 n; first by move=> _; exact: Hpath.
+move=> /andP [-> /IHp{IHp} Hrec /=].
+case: n => [| n /=]; first by move/(_ 0): Hrec; rewrite !sub0n.
+by rewrite subSS; exact: Hrec.
 Qed.
 
 Lemma head_row_skew_yam innev shape l r :
@@ -83,11 +80,11 @@ by rewrite leqXnatE.
 Qed.
 
 
-(* COQ implementation of the LR rule *)
+(** * Recursive enumeration and counting function *)
 Section OutEval.
 
 (* For some reason, using ssrnat's add prevents OCaml extraction *)
-Fixpoint add m n := if m is m'.+1 then add m' n.+1 else n.
+Local Fixpoint add m n := if m is m'.+1 then add m' n.+1 else n.
 Lemma addE : add =2 addn.
 Proof. by elim=> //= n IHn m; rewrite IHn addSnnS. Qed.
 
@@ -101,11 +98,24 @@ Qed.
 
 Variable outev : seq nat.
 
+(** Possible choice of a new letter:
+
+The new letter l must satisty the following conditions:
+- [mini < l < maxi]
+- [l] is an addable corner of [innev]
+- adding [l] to [innev] still is inside [outev]
+ ********)
 Definition one_letter_choices innev mini maxi :=
   filter
     (fun i => is_add_corner innev i && (nth 0 innev i < nth 0 outev i))
     (iota mini ((minn (size innev) maxi).+1 - mini) ).
 
+(** The possible new rows which dominates the given [row]
+
+Returns a seqence of pairs [(r, ev)] where
+- [r] is the new row
+- [ev] is the new evaluation
+ ********)
 Fixpoint yamtab_rows innev row :=
   if row is r0 :: tlr then
     flatten [seq
@@ -115,6 +125,15 @@ Fixpoint yamtab_rows innev row :=
              res <- yamtab_rows innev tlr ]
   else [:: ([::], innev) ].
 
+(** The possible new rows which are at the bottom of the shape
+
+- [maxi] is the maximum letter (typically the head of [sol] below)
+- [sh] is the shape of the expected rows
+- [sol] is the already known end of the row
+Returns a seqence of pairs [(r, ev)] where
+- [r] is the new row
+- [ev] is the new evaluation
+ *******)
 Fixpoint yamtab_shift innev maxi sh sol :=
   if sh is s.+1 then
     flatten [seq
@@ -124,6 +143,14 @@ Fixpoint yamtab_shift innev maxi sh sol :=
              res <- yamtab_shift innev maxi s sol ]
   else [:: (sol, innev) ].
 
+(** Recursive step of the enumeration functions
+
+Compute the list of skew tableaux
+- of evaluation [outev-innev]
+- whose row reading is a [innev]-skew Yamanouchi word
+- of shape [outer/inner]
+- which are legitimate skew tableaux if lied over [row0] shifted by [sh0]
+*)
 Fixpoint LRyamtab_list_rec innev inner outer sh0 row0 :=
   if outer is out0 :: out then
     let inn0 := head 0 inner in let inn := behead inner in
@@ -137,6 +164,14 @@ Fixpoint LRyamtab_list_rec innev inner outer sh0 row0 :=
              row <- rows]
   else [:: [::]].
 
+(** Recursive step of the counting functions
+
+Compute the number of skew tableaux
+- of evaluation [outev-innev]
+- whose row reading is a [innev]-skew Yamanouchi word
+- of shape [outer/inner]
+- which are legitimate skew tableaux if lied over [row0] shifted by [sh0]
+*)
 Fixpoint LRyamtab_count_rec innev inner outer sh0 row0 :=
   if outer is out0 :: out then
     let inn0 := head 0 inner in let inn := behead inner in
@@ -158,31 +193,31 @@ rewrite tsumnE; congr (sumn _).
 rewrite -[X in [seq sumn i | i <- X]]map_comp.
 rewrite (eq_map (f2 := map (fun row =>
                LRyamtab_count_rec row.2 (behead inner) out (head 0 inner) row.1))).
-- rewrite [RHS]map_comp (eq_map tsumnE) -!map_comp; exact: eq_map.
+- by rewrite [RHS]map_comp (eq_map tsumnE) -!map_comp; exact: eq_map.
 - move=> s /=; rewrite -map_comp; apply eq_map => {s} [] [row sh] /=.
   by rewrite size_map IHout.
 Qed.
 
 
-(* Basic lemma *)
+(** Basic lemmas *)
 Lemma yamtab_shift_drop innev maxi sh y :
   forall res shape, (res, shape) \in yamtab_shift innev maxi sh y ->
   drop sh res = y.
 Proof using .
-elim: sh => [//= | sh IHsh] /= res shape.
-  rewrite mem_seq1 => /eqP [] -> _; by rewrite drop0.
-by move=> /flatten_mapP [[rec shrec]] /IHsh Hdrop /mapP [] i _ [] -> _ /=.
+elim: sh => //= [| sh IHsh] res shape.
+  by rewrite mem_seq1 => /eqP [-> _]; rewrite drop0.
+by move=> /flatten_mapP [[rec shrec]] /IHsh Hdrop /mapP [i _ [-> _]].
 Qed.
 
 
-(* LRyamtab_list_rec returns Yamanouchi words *)
+(** ** LRyamtab_list_rec returns only Yamanouchi words *)
 Lemma one_letter_choicesP innev mini maxi :
   forall i, i \in one_letter_choices innev mini maxi ->
   is_skew_yam innev (incr_nth innev i) [:: i].
 Proof using .
 rewrite /is_skew_yam /is_yam_of_eval => i.
-rewrite mem_filter mem_iota => /andP [] /andP [] Hcorn _ _.
-move => y /andP [] Hyam /eqP Hinnev; subst innev.
+rewrite mem_filter mem_iota => /andP [/andP [Hcorn _] _].
+move => y /andP [Hyam /eqP Hinnev]; subst innev.
 apply/andP; split => //=.
 rewrite Hyam andbT.
 apply is_part_incr_nth; last exact Hcorn.
@@ -194,10 +229,10 @@ Lemma yamtab_rowsP innev row :
   is_skew_yam innev shape res.
 Proof using .
 elim: row innev => [| r0 tlr IHrow] /= innev res shres.
-  rewrite mem_seq1 => /eqP [] -> ->; exact: skew_yam_nil.
+  by rewrite mem_seq1 => /eqP [-> ->]; exact: skew_yam_nil.
 move/flatten_mapP => [[rec shrec]] /(IHrow innev) {IHrow} Hrec.
-move/mapP => [i] /one_letter_choicesP /= Hi [] -> -> {res shres}.
-rewrite -cat1s; exact: skew_yam_cat Hrec Hi.
+move/mapP => [i] /one_letter_choicesP /= Hi [-> ->] {res shres}.
+by rewrite -cat1s; exact: skew_yam_cat Hrec Hi.
 Qed.
 
 Lemma yamtab_shiftP innev maxi sh row shrow :
@@ -206,10 +241,10 @@ Lemma yamtab_shiftP innev maxi sh row shrow :
   is_skew_yam innev shape res.
 Proof using .
 elim: sh row innev => [| sh IHsh] /= row innev Hrow res shres.
-  by rewrite mem_seq1 => /eqP [] -> ->.
+  by rewrite mem_seq1 => /eqP [-> ->].
 move/flatten_mapP => [[rec shrec]] /(IHsh row innev Hrow) {IHsh} Hrec.
-move/mapP => [i] /one_letter_choicesP /= Hi [] -> -> {res shres}.
-rewrite -cat1s; exact (skew_yam_cat Hrec Hi).
+move/mapP => [i] /one_letter_choicesP /= Hi [-> ->] {res shres}.
+by rewrite -cat1s; exact (skew_yam_cat Hrec Hi).
 Qed.
 
 Lemma LRyamtab_list_recP innev inner outer sh0 row0 y :
@@ -221,21 +256,22 @@ elim: outer innev inner sh0 row0 y => [//= | out0 out IHout] /=
             innev inner sh0 row0 y Hy res.
   rewrite mem_seq1 => /eqP -> /=.
   by move: Hy; rewrite /is_yam_of_eval => /andP [].
-move=> /flatten_mapP [[rshift shrshift]] /flatten_mapP [[rrow shrrow]] /= Hrow Hshift.
-move=> /mapP [] rec Hrec -> {res}; rewrite to_word_cons.
+move=> /flatten_mapP [[rshift shrshift]].
+move=> /flatten_mapP [[rrow shrrow]] /= Hrow Hshift.
+move=> /mapP [rec Hrec -> {res}]; rewrite to_word_cons.
 move: Hrow => /yamtab_rowsP/yamtab_shiftP/(_ _ _ Hshift _ Hy) => {Hshift}Hshift.
-rewrite -catA; exact: (IHout _ _ _ _ _ Hshift _ Hrec).
+by rewrite -catA; exact: (IHout _ _ _ _ _ Hshift _ Hrec).
 Qed.
 
 
-(* LRyamtab_list_rec returns words whose rowshape in included in outshape *)
+(** ** LRyamtab_list_rec returns words whose evaluation in included in [outev] *)
 Lemma one_letter_included innev mini maxi :
   included innev outev ->
   forall i, i \in one_letter_choices innev mini maxi ->
                   included (incr_nth innev i) outev.
 Proof using .
 move=> Hincl => i.
-rewrite /one_letter_choices mem_filter mem_iota => /andP [] /andP [] _ Hnth _.
+rewrite /one_letter_choices mem_filter mem_iota => /andP [/andP [_ Hnth] _].
 exact: included_incr_nth_inner.
 Qed.
 
@@ -245,10 +281,10 @@ Lemma yamtab_rows_included innev row :
   included shape outev.
 Proof using .
 elim: row innev => [| r0 tlr IHrow] /= innev Hincl res shres.
-  by rewrite mem_seq1 => /eqP [] _ ->.
+  by rewrite mem_seq1 => /eqP [_ ->].
 move/flatten_mapP => [[rec shrec]] /(IHrow innev Hincl) {IHrow} Hrec.
-move/mapP => [] i Hi [] _ ->.
-apply: (one_letter_included Hrec  Hi).
+move/mapP => [i Hi [_ ->]].
+exact: (one_letter_included Hrec Hi).
 Qed.
 
 Lemma yamtab_shift_included innev maxi sh y :
@@ -257,10 +293,10 @@ Lemma yamtab_shift_included innev maxi sh y :
   included shape outev.
 Proof using .
 elim: sh innev y => [| sh IHsh] /= innev y Hincl res shres.
-  by rewrite mem_seq1 => /eqP [] _ ->.
+  by rewrite mem_seq1 => /eqP [_ ->].
 move/flatten_mapP => [[rec shrec]] /(IHsh innev y Hincl) {IHsh} Hrec.
-move/mapP => [] i Hi [] _ ->.
-apply: (one_letter_included Hrec  Hi).
+move/mapP => [i Hi [_ ->]].
+exact: (one_letter_included Hrec  Hi).
 Qed.
 
 Lemma LRyamtab_list_included innev inner outer sh0 row0 y :
@@ -272,9 +308,10 @@ Proof using .
 elim: outer innev inner sh0 row0 y => [//= | out0 out IHout] /=
             innev inner sh0 row0 y Hincl Hy res.
   rewrite mem_seq1 => /eqP -> /=.
-  move: Hy; by rewrite /is_yam_of_eval => /andP [] Hyam /eqP ->.
-move=> /flatten_mapP [[rshift shrshift]] /flatten_mapP [[rrow shrrow]] /= Hrow Hshift.
-move=> /mapP [] rec Hrec -> {res}; rewrite to_word_cons -catA.
+  by move: Hy; rewrite /is_yam_of_eval => /andP [Hyam /eqP ->].
+move=> /flatten_mapP [[rshift shrshift]].
+move=> /flatten_mapP [[rrow shrrow]] /= Hrow Hshift.
+move=> /mapP [rec Hrec ->] {res}; rewrite to_word_cons -catA.
 have Hshshift := yamtab_shiftP (yamtab_rowsP Hrow) Hshift Hy.
 move: Hrow => /(yamtab_rows_included Hincl)/yamtab_shift_included/(_ _ _ Hshift).
 move/IHout => H.
@@ -282,15 +319,15 @@ exact: (H _ _ _ _ Hshshift _ Hrec).
 Qed.
 
 
-(* LRyamtab_list_rec returns fillings of skew shape (inner, outer) *)
+(** ** LRyamtab_list_rec returns fillings of skew shape [inner/outer] *)
 Lemma yamtab_rows_size innev row :
   forall res shape, (res, shape) \in yamtab_rows innev row ->
   size res = size row.
 Proof using .
 elim: row innev => [| r0 tlr IHrow] /= innev res shape.
-  by rewrite mem_seq1 => /eqP [] ->.
+  by rewrite mem_seq1 => /eqP [->].
 move/flatten_mapP => [[rec shrec]] /(IHrow innev) {IHrow} <-.
-by move/mapP => [] i Hi [] -> _.
+by move/mapP => [i Hi [-> _]].
 Qed.
 
 Lemma yamtab_shift_size innev maxi sh y :
@@ -298,9 +335,9 @@ Lemma yamtab_shift_size innev maxi sh y :
   size res = sh + size y.
 Proof using .
 elim: sh innev y => [| sh IHsh] /= innev y res shres.
-  rewrite mem_seq1 => /eqP [] ->; by rewrite add0n.
+  by rewrite mem_seq1 => /eqP [->]; rewrite add0n.
 move/flatten_mapP => [[rec shrec]] /(IHsh innev y) {IHsh} Hrec.
-move/mapP => [] i Hi [] -> _.
+move/mapP => [i Hi [-> _]].
 by rewrite /= Hrec addSn.
 Qed.
 
@@ -314,7 +351,7 @@ congr flatten.
 rewrite (_ : head 0 (inner ++ nseq _ 0) = head 0 inner); last by case inner.
 apply eq_map => i; congr map.
 rewrite IHout /=; congr LRyamtab_list_rec.
-case: inner => //=; by rewrite subn0.
+by case: inner; rewrite //= subn0.
 Qed.
 
 Lemma LRyamtab_list_size innev inner outer sh0 row0 :
@@ -324,12 +361,13 @@ Proof using .
 elim: outer innev inner sh0 row0 => [//= | out0 out IHout] /=
             innev inner sh0 row0 res.
   by rewrite mem_seq1 => /eqP -> /=.
-move=> /flatten_mapP [[rshift shrshift]] /flatten_mapP [[rrow shrrow]] /= Hrow Hshift.
-move=> /mapP [] rec Hrec -> {res} /=.
+move=> /flatten_mapP [[rshift shrshift]].
+move=> /flatten_mapP [[rrow shrrow]] /= Hrow Hshift.
+move=> /mapP [rec Hrec ->] {res} /=.
 by rewrite (IHout _ _ _ _  _ Hrec).
 Qed.
 
-(* inner is padded with 0 *)
+(** inner is padded with 0 *)
 Lemma LRyamtab_list_shape0 innev inner outer sh0 row0 :
   sorted geq (sh0 :: inner) -> is_part (sh0 + size row0 :: outer) ->
   included inner outer -> size inner = size outer ->
@@ -339,14 +377,15 @@ Proof using .
 elim: outer innev inner sh0 row0 => [//= | out0 out IHout]
             innev inner sh0 row0 Hinn Hout /= Hincl Hsize res.
   by rewrite mem_seq1 => /eqP -> /=; move: Hsize => /eqP/nilP ->.
-case: inner Hinn Hincl Hsize => [//= | inn0 inn] Hinn /= /andP [] H0 Hincl.
+case: inner Hinn Hincl Hsize => [//= | inn0 inn] Hinn /= /andP [H0 Hincl].
 move/eqP; rewrite eqSS => /eqP Hsize.
-move=> /flatten_mapP [[rshift shrshift]] /flatten_mapP [[rrow shrrow]] /= Hrow Hshift.
-move=> /mapP [] rec Hrec -> /= {res}.
+move=> /flatten_mapP [[rshift shrshift]].
+move=> /flatten_mapP [[rrow shrrow]] /= Hrow Hshift.
+move=> /mapP [rec Hrec ->] /= {res}.
 have {Hshift} Hshift : size rshift = out0 - inn0.
   rewrite (yamtab_shift_size Hshift) {Hshift}.
-  move: Hout => /= /andP [] Hout0 _.
-  move: Hinn => /= /andP [] Hinn0 _.
+  move: Hout => /= /andP [Hout0 _].
+  move: Hinn => /= /andP [Hinn0 _].
   move: Hrow => /yamtab_rows_size ->.
   rewrite !size_take_leq leq_subLR Hout0.
   rewrite /minn; case: ltnP; last rewrite /leq => /eqP ->.
@@ -360,18 +399,18 @@ exact (is_part_consK Hout).
 Qed.
 
 
-(* LRyamtab_list_rec returns skew_tableau with inner shape inner *)
+(** ** LRyamtab_list_rec returns legitimate skew_tableaux *)
 Lemma yamtab_rows_dominate innev row :
   forall res shape, (res, shape) \in yamtab_rows innev row ->
   dominate res row.
 Proof using .
 elim: row innev => [| r0 tlr IHrow] /= innev res shape.
-  by rewrite mem_seq1 => /eqP [] ->.
-move/flatten_mapP => [[rec shrec]] /(IHrow innev) {IHrow} /dominateP [] Hsize Hdom.
-move/mapP => [] i Hi [] -> _ /=.
+  by rewrite mem_seq1 => /eqP [->].
+move/flatten_mapP => [[rec shrec]] /(IHrow innev) {IHrow} /dominateP [Hsize Hdom].
+move/mapP => [i Hi [-> _]] /=.
 apply/dominateP; split; first by rewrite ltnS.
 case=> [_ /=| j]; last by rewrite /= ltnS; apply Hdom.
-move: Hi; rewrite /one_letter_choices mem_filter mem_iota /= => /and3P [] _.
+move: Hi; rewrite /one_letter_choices mem_filter mem_iota /= => /and3P [_].
 by rewrite ltnXnatE.
 Qed.
 
@@ -380,10 +419,11 @@ Lemma yamtab_shift_dominate innev maxi sh row y :
   forall res shape, (res, shape) \in yamtab_shift innev maxi sh y ->
   skew_dominate sh res row.
 Proof using .
-rewrite -skew_dominate0; elim: sh innev y => [//= | sh IHsh] /= innev y Hdom res shape.
-  by rewrite mem_seq1 => /eqP [] ->.
+rewrite -skew_dominate0.
+elim: sh innev y => [//= | sh IHsh] /= innev y Hdom res shape.
+  by rewrite mem_seq1 => /eqP [->].
 move/flatten_mapP => [[rec shrec]] /(IHsh _ _ Hdom){IHsh Hdom}Hrec.
-move/mapP => [] i _ [] -> _.
+move/mapP => [i Hi [-> _]].
 exact: skew_dominate_consl.
 Qed.
 
@@ -392,17 +432,17 @@ Lemma yamtab_rows_is_row innev row :
   is_row res.
 Proof using .
 elim: row innev => [| r0 tlr IHrow] /= innev res shape.
-  by rewrite mem_seq1 => /eqP [] ->.
+  by rewrite mem_seq1 => /eqP [->].
 move/flatten_mapP => [[rec shrec]] /(IHrow innev) {IHrow} Hrow.
-move/mapP => [] i Hi [] -> _ /=.
+move/mapP => [i Hi [-> _]] /=.
 move: Hi; rewrite /one_letter_choices mem_filter mem_iota /=.
-move => /and3P [] /andP [] _ Hnth Hr0.
+move => /and3P [/andP [_ Hnth] Hr0].
 rewrite subSS addSn ltnS.
 case: (ltnP (minn (size shrec) (head (size innev) rec)) r0) => H.
 - move/ltnW: H; rewrite {1}/leq => /eqP ->.
   rewrite addn0 => /(leq_trans Hr0).
   by rewrite ltnn.
-- rewrite (subnKC H) leq_min => /andP [] _.
+- rewrite (subnKC H) leq_min => /andP [_].
   case: rec Hrow {H} => [//= | rec0 rec /= ->].
   by rewrite leqXnatE => ->.
 Qed.
@@ -413,16 +453,16 @@ Lemma yamtab_shift_is_row innev maxi sh y :
   is_row res.
 Proof using .
 elim: sh innev y => [//= | sh IHsh] /= innev y Hdom res shape.
-  by rewrite mem_seq1 => /eqP [] ->.
+  by rewrite mem_seq1 => /eqP [->].
 move/flatten_mapP => [[rec shrec]] /(IHsh _ _ Hdom){IHsh Hdom}Hrec.
-move/mapP => [] i Hi [] -> _.
+move/mapP => [i Hi [-> _]].
 move: Hi; rewrite /one_letter_choices mem_filter mem_iota /= add0n subn0 ltnS.
-move=> /andP [] _; rewrite  leq_min => /andP [] _.
+move=> /andP [_]; rewrite  leq_min => /andP [_].
 case: rec Hrec => [//= | rec0 rec /= ->].
 by rewrite leqXnatE => ->.
 Qed.
 
-(* inner is padded with 0 *)
+(** inner is padded with 0 *)
 Lemma LRyamtab_list_skew_tableau0 innev inner outer sh0 row0 :
   sorted geq (sh0 :: inner) -> is_part (sh0 + size row0 :: outer) ->
   included inner outer -> size inner = size outer ->
@@ -437,29 +477,31 @@ elim: outer innev inner sh0 row0 => [//= | out0 out IHout]
             innev inner sh0 row0 Hinn Hout /= Hincl Hsize Hrow0 res.
   rewrite mem_seq1 => /eqP -> /=; move: Hsize => /eqP/nilP ->.
   move: Hout; by rewrite eq_refl Hrow0 !andbT addnC lt0n.
-case: inner Hinn Hincl Hsize => [//= | inn0 inn] Hinn /= /andP [] H0 Hincl.
+case: inner Hinn Hincl Hsize => [//= | inn0 inn] Hinn /= /andP [H0 Hincl].
 move/eqP; rewrite eqSS => /eqP Hsize.
-move=> /flatten_mapP [[rshift shrshift]] /flatten_mapP [[rrow shrrow]] /= Hrow Hshift.
-move=> /mapP [] rec Hrec Hres; subst res.
+move=> /flatten_mapP [[rshift shrshift]].
+move=> /flatten_mapP [[rrow shrrow]] /= Hrow Hshift.
+move=> /mapP [rec Hrec Hres]; subst res.
 have Hrshiftrow := yamtab_shift_is_row (yamtab_rows_is_row Hrow) Hshift.
 have Hrshiftdom := yamtab_shift_dominate (yamtab_rows_dominate Hrow) Hshift.
-move {Hshift Hrow rrow shrrow}=> /= [] Hshift Hshape.
+move {Hshift Hrow rrow shrrow}=> /= [Hshift Hshape].
 rewrite (part_head_non0 Hout) Hrow0 Hrshiftrow.
 rewrite Hshift (subnKC H0) (part_head_non0 (is_part_consK Hout)) /=.
 have Hpart0 : is_part (inn0 + size rshift :: out).
-  have:= is_part_consK Hout => /=/andP [] Hhout ->.
+  have:= is_part_consK Hout => /= /andP [Hhout ->].
   by rewrite andbT Hshift (subnKC H0).
-move/(_ _ _ _ _ (path_sorted Hinn) Hpart0 Hincl Hsize Hrshiftrow _ Hrec Hshape): IHout.
-move=> {Hrec Hpart0} /= /and3P [] _ _ ->; rewrite andbT.
+move/(_ _ _ _ _ (path_sorted Hinn)
+        Hpart0 Hincl Hsize Hrshiftrow _ Hrec Hshape): IHout.
+move=> {Hrec Hpart0} /= /and3P [_ _ ->]; rewrite andbT.
 case: (leqP sh0 out0) Hrshiftdom => [/minn_idPl -> //= | /ltnW Hover _].
 - exact: skew_dominate_take.
 - apply skew_dominate_no_overlap.
   rewrite Hshift leq_subLR.
-  move: Hinn => /= /andP [] Hsh0 _.
+  move: Hinn => /= /andP [Hsh0 _].
   by rewrite (subnKC Hsh0).
 Qed.
 
-(* Mutiplicities are all one *)
+(** ** Mutiplicities are all one *)
 Lemma choose_one_countE shr innev shape mini maxi row l :
   is_part innev ->
   is_skew_yam innev shr row ->
@@ -470,13 +512,13 @@ Lemma choose_one_countE shr innev shape mini maxi row l :
   (count_mem l) (one_letter_choices shr mini maxi) = 1.
 Proof using .
 rewrite /one_letter_choices count_filter
-  => Hpart Hrow Hlrw Hincl /andP [] Hmin Hmax Hisrow.
-move/(_ _ (hyper_yam_of_eval Hpart)): Hrow => /= /andP [] Hyamrow /eqP Hshr.
-move/(_ _ (hyper_yam_of_eval Hpart)): Hlrw => /= /andP [] Hyamlrow /eqP Hshape.
+  => Hpart Hrow Hlrw Hincl /andP [Hmin Hmax] Hisrow.
+move/(_ _ (hyper_yam_of_eval Hpart)): Hrow => /= /andP [Hyamrow /eqP Hshr].
+move/(_ _ (hyper_yam_of_eval Hpart)): Hlrw => /= /andP [Hyamlrow /eqP Hshape].
 rewrite (eq_count (a2 := pred1 l)); first last.
   move=> i /=; case (altP (i =P l)) => [Hi | //=]; subst i.
   have -> /= : is_add_corner shr l by rewrite -Hshr; exact: is_add_corner_yam.
-  move: Hincl => /includedP [] _ Hincl.
+  move: Hincl => /includedP [_ Hincl].
   apply: (leq_trans _ (Hincl l)).
   rewrite -Hshape /= Hshr.
   by rewrite nth_incr_nth eq_refl add1n ltnS.
@@ -488,9 +530,9 @@ suff : l <= m.
   - have:= H; rewrite {1}/leq => /eqP ->.
     by rewrite addn0 (leq_ltn_trans Hl H).
 rewrite {}/m leq_min Hmax andbT.
-apply is_part_incr_nth_size.
-- rewrite -Hshr; exact (is_part_eval_yam Hyamrow).
-- rewrite -Hshr; exact (is_part_eval_yam Hyamlrow).
+apply is_part_incr_nth_size; rewrite -Hshr.
+- exact: (is_part_eval_yam Hyamrow).
+- exact: (is_part_eval_yam Hyamlrow).
 Qed.
 
 Lemma yamtab_rows_countE innev shape row base :
@@ -515,13 +557,13 @@ have : {in rec, f1 =1 f2}.
   case: (altP (r =P row)) => [Hrow | /negbTE Hneq] /=.
   - subst r.
     rewrite (eq_count (a2 := pred1 l0)); first last.
-      move=> i /=; by rewrite eqseq_cons eq_refl andbT.
+      by move=> i /=; rewrite eqseq_cons eq_refl andbT.
     apply: (choose_one_countE Hinn (yamtab_rowsP Hr) Hskew Hincl _ Hisrow).
     have /dominate_head/(_ Hdom) : l0 :: row != [::] by [].
     rewrite ltnXnatE => -> /=.
     exact: head_row_skew_yam Hinn Hisrow Hskew.
   - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
-    move=> y /=; by rewrite eqseq_cons Hneq andbF.
+    by move=> y /=; rewrite eqseq_cons Hneq andbF.
 rewrite eq_in_map /rec /f2 => -> {f1 f2 rec}.
 rewrite sumn_count /=.
 apply: (IHrow _ _ Hsize (dominate_tl Hdom) (is_row_consK Hisrow)
@@ -542,7 +584,7 @@ Lemma yamtab_shift_countE inn0 innev shape sh row sol :
 Proof using .
 move=> Hinn0.
 elim : sh row sol shape => [| sh IHsh ] row sol shape /= Hisrow.
-  move=> /eqP/nilP -> _ /=; by rewrite eq_refl.
+  by move=> /eqP/nilP -> _ /=; rewrite eq_refl.
 case: row Hisrow => [//= |r0 row] Hisrow /=.
 move/eqP; rewrite eqSS => /eqP Hsize Hskew0 Hskew Hincl.
 have Hinn := is_part_skew_yam Hinn0 Hskew0.
@@ -555,7 +597,7 @@ have : {in rec, f1 =1 f2}.
   case: (altP (r =P (row ++ sol))) => [Heq | /negbTE Hneq] /=.
   - subst r.
     rewrite (eq_count (a2 := pred1 r0)); first last.
-      move=> i /=; by rewrite eqseq_cons eq_refl andbT.
+      by move=> i /=; rewrite eqseq_cons eq_refl andbT.
     rewrite (_ : head _ _ = head (size inn0) (row ++ sol)); first last.
       by case row => //=; case sol.
     apply: (choose_one_countE Hinn0 (yamtab_shiftP Hskew0 Hr)
@@ -563,7 +605,7 @@ have : {in rec, f1 =1 f2}.
     rewrite /=.
     exact: head_row_skew_yam Hinn0 Hisrow (skew_yam_cat Hskew0 Hskew).
   - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
-    move=> y /=; by rewrite eqseq_cons Hneq andbF.
+    by move=> y /=; rewrite eqseq_cons Hneq andbF.
 rewrite eq_in_map /rec /f2 => -> {f1 f2 rec}.
 rewrite sumn_count /=.
 apply: (IHsh _ _ _ (is_row_consK Hisrow) Hsize Hskew0 (skew_yam_consK Hinn Hskew)).
@@ -601,30 +643,31 @@ have : {in rec, f1 =1 f2}.
   - rewrite Hrow1 (eq_count (a2 := pred1 yamtab)); first last.
       by move => y /=; rewrite eqseq_cons eq_refl /=.
     move: Hyam; rewrite to_word_cons.
-    move: Hrshift => /flatten_mapP [] [row shrow] /yamtab_rowsP/yamtab_shiftP H/H{H}.
+    move: Hrshift => /flatten_mapP [[row shrow] /yamtab_rowsP/yamtab_shiftP H/H{H}].
     rewrite Hrow1 => Hsk1 Hsk2.
     apply (Hrec shrshift (is_part_skew_yam Hinnev Hsk1)).
     exact: (skew_yam_catrK Hinnev Hsk1 Hsk2).
   - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
-    move=> y /=; by rewrite eqseq_cons Hneq.
+    by move=> y /=; rewrite eqseq_cons Hneq.
 rewrite eq_in_map /rec /f2 => -> {f1 f2 rec Hrec}.
 rewrite !map_comp map_flatten -!map_comp sumn_count.
 rewrite count_flatten -map_comp.
 set f1 := (X in map X); set rowl := (X in map _ X).
-pose f2 := nat_of_bool \o (pred1 (drop (sh0 - inn0) row1)) \o (@fst (seq nat) (seq nat)).
+pose f2 := nat_of_bool \o (pred1 (drop (sh0 - inn0) row1)) \o
+                       (@fst (seq nat) (seq nat)).
 have : {in rowl, f1 =1 f2}.
   rewrite /rowl /f1 /f2 {rowl f1 f2} => [[row shrow]] /= Hrow.
   rewrite count_map /=.
   case: (altP (row =P (drop (sh0 - inn0) row1))) => [Hrow1 | /negbTE Hneq] /=.
   - have Hshrow := yamtab_rowsP Hrow.
     rewrite -(cat_take_drop (sh0 - inn0) row1) -Hrow1.
-    move: Hyam; rewrite to_word_cons => /(skew_yam_catK Hinnev) [] shrow1 Hshrow1.
+    move: Hyam; rewrite to_word_cons => /(skew_yam_catK Hinnev) [shrow1 Hshrow1].
     move=> /(skew_yam_included (is_part_skew_yam Hinnev Hshrow1)) Hincl.
     apply: (yamtab_shift_countE Hinnev _ _ Hshrow _ Hincl).
     + rewrite Hrow1 cat_take_drop.
-      by move: Hskew => /= /and5P [] _ _ _ _ /andP [].
+      by move: Hskew => /= /and5P [_ _ _ _ /andP []].
     + rewrite size_cat Hrow1 -size_cat cat_take_drop size_take -/(minn _ _).
-      move: Hinn => /= /andP [] H0 _.
+      move: Hinn => /= /andP [H0 _].
       by rewrite -{2}[sh0](subnKC H0) -addn_minr addKn.
     + move: Hshrow; rewrite Hrow1 => /(skew_yam_catrK Hinnev) H.
       move: Hshrow1; rewrite -{1}(cat_take_drop (sh0 - inn0) row1).
@@ -640,23 +683,25 @@ have : {in rowl, f1 =1 f2}.
 rewrite eq_in_map /rowl /f2 => -> {f1 f2 rowl}.
 rewrite map_comp sumn_count count_map /=.
 move: Hyam; rewrite to_word_cons -{1}(cat_take_drop (sh0 - inn0) row1) catA => Hyam.
-have:= skew_yam_catK Hinnev Hyam => [] [] shape Hdrop.
+have:= skew_yam_catK Hinnev Hyam => [] [shape Hdrop].
 move=> /(skew_yam_included (is_part_skew_yam Hinnev Hdrop)) Hshape.
-have Heq : size (drop (sh0 - inn0) row1) = size (take (inn0 + size row1 - sh0) row0).
+have Heq : size (drop (sh0 - inn0) row1) =
+           size (take (inn0 + size row1 - sh0) row0).
   rewrite size_drop size_take_leq.
-  move: Hinn => /=/andP [] /subnBA -> _.
-  move: Hout => //= /andP [] /(leq_sub2r sh0).
+  move: Hinn => /= /andP [/subnBA -> _].
+  move: Hout => //= /andP [/(leq_sub2r sh0)].
   by rewrite addKn addnC => -> _.
 apply: (yamtab_rows_countE Hinnev Heq _ (is_row_drop _ _) Hdrop Hshape).
-- move: Hskew => /= /and4P [] _ _; rewrite skew_dominate_cut /skew_dominate => Hdom _.
+- move: Hskew => /= /and4P [_ _]; rewrite skew_dominate_cut /skew_dominate => Hdom _.
   suff <- : size row1 - (sh0 - inn0) = inn0 + size row1 - sh0 by exact Hdom.
-  move: Hinn => /= /andP [] /subnBA -> _.
+  move: Hinn => /= /andP [/subnBA -> _].
   by rewrite addnC.
-- by move: Hskew => /= /and5P [] _ _ _ _ /andP [].
+- by move: Hskew => /= /and5P [_ _ _ _ /andP []].
 Qed.
 
 End OutEval.
 
+(** * The main functions *)
 Definition LRyamtab_list inner eval outer :=
   LRyamtab_list_rec eval [::] inner outer (head 1 outer) [::].
 Definition LRcoeff inner eval outer :=
@@ -690,7 +735,7 @@ move => /LRyamtab_list_shape0; apply => //=.
 - have /= := is_part_pad0 (size outer) Hinn.
   case: inner Hincl {Hinn Hout} => [//= | inn0 inn] /=.
   + rewrite subn0; by case outer.
-  + by case: outer => [//= | out0 out] /= /andP [] -> _ ->.
+  + by case: outer => [//= | out0 out] /= /andP [-> _] ->.
 - by rewrite addn0 leqnn Hout.
 - by rewrite -included_pad0.
 - rewrite size_cat size_nseq; apply subnKC.
@@ -707,8 +752,8 @@ rewrite (LRyamtab_list_size Htab); move: Htab.
 have {Hinn} Hinn : sorted geq (head 1 outer :: (pad 0 (size outer)) inner).
   have /= := is_part_pad0 (size outer) Hinn.
   case: inner Hincl {Hinn Hout} => [//= | inn0 inn] /=.
-  + rewrite subn0; by case outer.
-  + by case: outer => [//= | out0 out] /= /andP [] -> _ ->.
+  + by rewrite subn0; case outer.
+  + by case: outer => [//= | out0 out] /= /andP [-> _] ->.
 have {Hout} Hout : is_part (head 1 outer + (@size nat) [::] :: outer).
   by rewrite /= addn0 leqnn Hout.
 have Hincl0 : included ((pad 0 (size outer)) inner) outer.
@@ -743,8 +788,8 @@ have Hnil : is_part [::] by [].
 have {Hinn} Hinn : sorted geq (head 1 outer :: (pad 0 (size outer)) inner).
   have /= := is_part_pad0 (size outer) Hinn.
   case: inner Hincl {Hinn Hout Htab Hshape} => [//= | inn0 inn] /=.
-  + rewrite subn0; by case outer.
-  + by case: outer => [//= | out0 out] /= /andP [] -> _ ->.
+  + by rewrite subn0; case outer.
+  + by case: outer => [//= | out0 out] /= /andP [-> _] ->.
 have Hsztab : size yamtab = size outer.
   by rewrite -(size_diff_shape inner outer) -Hshape size_map.
 have {Hout} Hout : is_part
@@ -763,10 +808,10 @@ have Hskew : is_skew_tableau (head 1 outer :: (pad 0 (size outer)) inner)
   case: outer Hincl Hshape Hsztab {Hinn Hout Hsize} => [|out0 out] /=.
     case: inner => [ _ _ /eqP/nilP ->| in0 inn] //=.
   case: inner => [_ | in0 inn] //=.
-    case: yamtab {Hyam} => [ | yam0 yam] //= [] Hyam _ _.
+    case: yamtab {Hyam} => [ | yam0 yam] //= [Hyam _] _.
     rewrite subn0; by rewrite /skew_dominate -Hyam drop_size.
-  move=> /andP [] Hincl _.
-  case: yamtab {Hyam}=> [ | yam0 yam] //= [] Hyam _ _.
+  move=> /andP [Hincl _].
+  case: yamtab {Hyam}=> [ | yam0 yam] //= [Hyam _] _.
   by rewrite /skew_dominate -Hyam drop_size.
 have {2}-> : outer = outer_shape ((pad 0 (size outer)) inner) (shape yamtab).
   by rewrite Hshape -(size_diff_shape inner outer)
@@ -775,6 +820,7 @@ exact: LRyamtab_list_countE Hnil Hinn Hout Hsize Hskew (skew_nil_yamE Hyam).
 Qed.
 
 
+(** * The specification of the enumeration function *)
 Section PackedSpec.
 
 Variable  inner eval outer : seq nat.
@@ -799,7 +845,7 @@ Record outputSpec (tab : seq (seq nat)) :=
 Lemma outputSpecP tab :
   inputSpec -> tab \in (LRyamtab_list inner eval outer) -> outputSpec tab.
 Proof using .
-move=> [] Hinn Hout Hincl Hev Hsumn Htab; constructor.
+move=> [Hinn Hout Hincl Hev Hsumn] Htab; constructor.
 - exact: (@LRyamtab_skew_tableau inner eval outer tab).
 - exact: (@LRyamtab_shape inner eval outer tab).
 - exact: (@LRyamtab_yam inner eval outer tab).
@@ -809,13 +855,15 @@ Qed.
 Lemma outputSpec_count_mem tab :
   inputSpec -> outputSpec tab -> count_mem tab (LRyamtab_list inner eval outer) = 1.
 Proof using .
-move=> [] Hinn Hout Hincl Hev Hsumnc [] Htab Hshape Hyam Heval.
+move=> [Hinn Hout Hincl Hev Hsumnc] [Htab Hshape Hyam Heval].
 apply: count_mem_LRyamtab_list => //=.
 by rewrite /is_yam_of_eval Hyam Heval eq_refl.
 Qed.
 
 End PackedSpec.
 
+
+(** ** The specification on sigma types *)
 Section Spec.
 
 Variables d1 d2 : nat.
@@ -828,15 +876,15 @@ Lemma LRyamtabP tab :
 Proof using Hincl.
 rewrite /is_yam_of_eval => Htab; apply /andP; split.
 - exact: LRyamtab_yam Htab.
-- rewrite (LRyamtab_eval (intpartnP P1) (intpartnP P) Hincl (intpartnP P2) _ Htab) //=.
+- rewrite (LRyamtab_eval (intpartnP P1) (intpartnP P)
+                         Hincl (intpartnP P2) _ Htab) //=.
   by rewrite (sumn_diff_shape Hincl) !intpartn_sumn addKn.
 Qed.
 
 Lemma LRyamtab_all :
   all (is_yam_of_eval P2) (map to_word (LRyamtab_list P1 P2 P)).
-Proof using Hincl. by apply/allP => w /mapP [] tab /LRyamtabP Htab ->. Qed.
-Let bla := Eval hnf in [subCountType of yameval P2].
-Definition LRyam_list := subType_seq bla LRyamtab_all.
+Proof using Hincl. by apply/allP => w /mapP [tab /LRyamtabP Htab ->]. Qed.
+Definition LRyam_list := subType_seq [subCountType of yameval P2] LRyamtab_all.
 
 Lemma LRyamtab_spec_recip yam :
   yam \in LRyam_set P1 P2 P ->
@@ -848,11 +896,12 @@ have Hszyam : size yam = sumn (P / P1).
 rewrite -[val yam](to_word_skew_reshape Hincl Hszyam).
 rewrite count_map.
 rewrite (eq_in_count (a2 := pred1 (skew_reshape P1 P (val yam)))); first last.
-  move=> tab /= Htab; apply/idP/idP => [/eqP| /eqP -> //].
+  move=> tab /= Htab; apply/eqP/eqP => [| -> //].
   rewrite (to_word_skew_reshape Hincl Hszyam) => <-.
   have Hshape := (LRyamtab_shape (intpartnP P1) (intpartnP P) Hincl Htab).
   have <- : (outer_shape P1 (shape tab)) = P by rewrite Hshape diff_shapeK.
-  rewrite skew_reshapeK //= -(size_map size tab) -/(shape tab) Hshape size_diff_shape.
+  rewrite skew_reshapeK //= -(size_map size tab) -/(shape tab)
+                                                 Hshape size_diff_shape.
   exact: size_included.
 apply (count_mem_LRyamtab_list (intpartnP P1) (intpartnP P) Hincl Hyam).
 - by rewrite (shape_skew_reshape Hincl Hszyam).
@@ -874,10 +923,10 @@ rewrite /LRyam_coeff -LRcoeffP -(size_map to_word).
 rewrite -sum1dep_card (eq_bigr (fun y => count_mem y LRyam_list)); first last.
   by move=> yam Hyam; rewrite LRyam_spec_recip //= inE.
 rewrite sum_count_mem.
-rewrite (eq_in_count (a2 := predT));
-  first by rewrite count_predT -(size_map val) subType_seqP.
+rewrite (eq_in_count (a2 := predT)).
+  by rewrite count_predT -(size_map val) subType_seqP.
 move=> yam /=.
-rewrite -(mem_map val_inj) subType_seqP /= => /mapP [] tab Htab -> {yam}.
+rewrite -(mem_map val_inj) subType_seqP /= => /mapP [tab Htab ->] {yam}.
 have Hskew := LRyamtab_skew_tableau (intpartnP P1) (intpartnP P) Hincl Htab.
 have Hshape := LRyamtab_shape (intpartnP P1) (intpartnP P) Hincl Htab.
 rewrite /is_skew_reshape_tableau /=.
@@ -890,6 +939,7 @@ End Spec.
 
 From mathcomp Require Import ssralg.
 
+(** * Back to the rule *)
 Section LR.
 
 Variables d1 d2 : nat.
