@@ -1,5 +1,5 @@
 (******************************************************************************)
-(*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
+(*      Copyright (C) 2014-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
 (*  Distributed under the terms of the GNU General Public License (GPL)       *)
 (*                                                                            *)
@@ -12,14 +12,6 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun finset bigop path.
-From SsrMultinomials Require Import mpoly.
-
-Require Import tools combclass partition Yamanouchi ordtype tableau.
-Require Import skewtab Schur_mpoly freeSchur therule.
-
 (******************************************************************************)
 (** This file contains a Coq implementation of the Littlewood-Richardson rule *)
 (**                                                                           *)
@@ -34,7 +26,13 @@ Require Import skewtab Schur_mpoly freeSchur therule.
 (**     size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.]    *)
 (**                                                                           *)
 (******************************************************************************)
+Require Import mathcomp.ssreflect.ssreflect.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
+From mathcomp Require Import tuple finfun finset bigop path.
+From SsrMultinomials Require Import mpoly.
 
+Require Import tools combclass partition Yamanouchi ordtype tableau.
+Require Import skewtab Schur_mpoly freeSchur therule.
 
 
 Set Implicit Arguments.

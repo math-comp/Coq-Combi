@@ -1,6 +1,6 @@
 (** * Combi.SymGroup.towerSn : The Tower of the Symmetric Groups *)
 (******************************************************************************)
-(*       Copyright (C) 2016 Florent Hivert <florent.hivert@lri.fr>            *)
+(*      Copyright (C) 2016-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
 (*  Distributed under the terms of the GNU General Public License (GPL)       *)
 (*                                                                            *)

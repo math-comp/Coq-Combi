@@ -1,6 +1,6 @@
 (** * Combi.MPoly.Cauchy : Cauchy formula for symmetric polynomials *)
 (******************************************************************************)
-(*       Copyright (C) 2014 Florent Hivert <florent.hivert@lri.fr>            *)
+(*      Copyright (C) 2016-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
 (*  Distributed under the terms of the GNU General Public License (GPL)       *)
 (*                                                                            *)
@@ -16,8 +16,8 @@
 (** * Cauchy formula for symmetric polynomials
 
 In this file we fix two non zero natural [m] and [n] and consider the two sets
-of variables $X := (x_i)_{i<m}$ and $Y := (y_j)_{j<n}$. We also consider the
-variable $z_{i,j} := x_i * y_j$.
+of variables [X := (x_i)_{i<m}] and [Y := (y_j)_{j<n}]. We also consider the
+variable [z_{i,j} := x_i * y_j].
 
 We encode polynomial in $X \cup Y$ as polynomials in $X$ whose coefficient are
 polynomials in $Y$. We denote by [mz] a monomial in the $Z$.
