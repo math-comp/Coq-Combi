@@ -1,3 +1,4 @@
+(** * Combi.LRrule.extract : Extracting the implementation to OCaml *)
 (******************************************************************************)
 (*      Copyright (C) 2014-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
@@ -12,6 +13,11 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * A certified OCaml implementation
+
+We extract to OCaml the implementation of the Robinson-Schensted correspondance
+and The Littlewood-Richardson Rule.
+ **********)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 From mathcomp Require Import finset perm.
@@ -56,6 +62,7 @@ Definition RStabinvnat := (@RStabinv nat_inhOrdType).
 
 Set Warnings "-extraction-reserved-identifier,-extraction-opaque-accessed".
 
+(** ** The Robinson-Schensted correspondance *)
 Extraction "src/LRrule/schensted.ml"
            RS RSbijnat RSbijinvnat
            plactcongr
@@ -66,6 +73,7 @@ Extraction "src/LRrule/schensted.ml"
            LRyam_coeff LRcoeff LRyamtab_list
 .
 
+(** ** The Littlewood-Richardson Rule *)
 Extraction "src/LRrule/lrcoeff.ml"
            LRcoeff LRyamtab_list
 .

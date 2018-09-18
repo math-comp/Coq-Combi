@@ -13,7 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * The Erdös-Szekeres theorem on monotinic subsequences.
+(** * The Erdös-Szekeres theorem on monotonic subsequences.
 
 A proof of the Erdös Szekeres theorem about longest increasing and
 decreasing subsequences. The theorem is [Erdos_Szekeres] and
