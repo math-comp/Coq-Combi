@@ -15,6 +15,9 @@
 (******************************************************************************)
 (** * The Space of Homogeneous Symmetric Polynomials
 
+In this file we study the vector space of homogeneous symmetric polynomials.
+The main goal is to construct its classical basis and Cauchy's scalar product.
+
 - [f \is d.-homsym] == f is a homogenerous of degree d symmetric polynomial.
 - [f \is [in R[n], d.-homsym]] == idem specifying the ring and number of
                      variables.
@@ -22,6 +25,8 @@
                      polynomials in [n] variables over [R].
 - [p *h q]        == the product of two homogeneous symmetric polynomial as a
                      homogeneous symmetric polynomials.
+
+The classical bases:
 
 - ['he[la]]       == the elementary hom. sym. poly. associated to [la]
 - ['hh[la]]       == the complete   hom. sym. poly. associated to [la]
@@ -39,9 +44,12 @@
 - ['hm]           == the monomial   hom. sym. basis
 - ['hs]           == the Schur      hom. sym. basis
 
-- [monE m]        == if [m] is the monomial [x_1^{i_1}x_2^{i_2}...x_n^{i_n}]
+
+Changing the base ring and the number of variables:
+
+- [intpart_of_mon m] == if [m] is the monomial [x_1^{i_1}x_2^{i_2}...x_n^{i_n}]
                      returns the integer partition [n^{i_n}...2^{i_2}1^{i_1}]
-- [intpartn_of_mon H] == the same as an [intpartn d] where [H] is a proof of
+- [intpartn_of_mon H] == the same as an [intpart_of_mon d] where [H] is a proof of
                      [mnmwgt m = d]
 
 - [map_homsym mor f] == change the base ring of the hom. sym. poly [f] using
@@ -50,9 +58,11 @@
                      [f] by sending elementary to elementary. This is
                      canonicaly linear.
 
+The scalar product:
+
 - ['[ u | v ]]    == the scalar product of hom. sym. poly., only defined over
                      the field [algC].
-- ['[ u | v ]] _(n, d) == the scalar product of hom. sym. poly. specifying
+- ['[ u | v ] _(n, d)] == the scalar product of hom. sym. poly. specifying
                      the number of variable and degree.
 
 The main results are [symbm_basis], [symbe_basis], [symbs_basis],
@@ -355,7 +365,7 @@ Local Notation HSF := {homsym R[n, d]}.
 Local Notation "''pi_' d" :=
   (pihomog [measure of mdeg] d) (at level 5, format "''pi_' d").
 
-(* TODO: Contribute to Pierre-Yves's multinomials *)
+(** TODO: Contribute to Pierre-Yves's multinomials *)
 Lemma msym_pihomog nv s (p : {mpoly R[nv]}) :
   msym s ('pi_d p) = 'pi_d (msym s p).
 Proof.
@@ -478,18 +488,18 @@ Qed.
 
 Local Notation E := [tuple mesym n R i.+1 | i < n].
 
-Definition monE m : seq nat :=
+Definition intpart_of_mon m : seq nat :=
   rev (flatten [tuple nseq (m i) i.+1 | i < n]).
 
-Lemma monEP m : mnmwgt m = d -> is_part_of_n d (monE m).
+Lemma intpart_of_monP m : mnmwgt m = d -> is_part_of_n d (intpart_of_mon m).
 Proof using.
 rewrite /mnmwgt => H.
 rewrite /= is_part_sortedE; apply/and3P; split.
-- rewrite /monE sumn_rev sumn_flatten -[X in _ == X]H.
+- rewrite /intpart_of_mon sumn_rev sumn_flatten -[X in _ == X]H.
   rewrite -sumnE big_map big_tuple.
   apply/eqP/eq_bigr => /= i _.
   by rewrite -sumnE tnth_mktuple big_nseq iter_addn_0 mulnC.
-- rewrite /monE /= rev_sorted.
+- rewrite /intpart_of_mon /= rev_sorted.
   apply/(sorted.sortedP 0%N) => //=; first exact: leq_trans.
   move=> i j; rewrite !nth_flatten.
   rewrite size_flatten.
@@ -505,10 +515,10 @@ rewrite /= is_part_sortedE; apply/and3P; split.
   rewrite !(mnm_nth 0) !nth_nseq !nth_enum_ord //= {Hr1 Hr2}.
   rewrite {}Hc1 {}Hc2 ltnS; move: Hij.
   by rewrite (reshape_leq m) => /orP [/ltnW | /andP [/eqP ->]].
-- rewrite /monE; rewrite mem_rev; apply/flatten_mapP => /= [[s _]].
+- rewrite /intpart_of_mon; rewrite mem_rev; apply/flatten_mapP => /= [[s _]].
   by move=> /nseqP [].
 Qed.
-Definition intpartn_of_mon m (H : mnmwgt m = d) := IntPartN (monEP H).
+Canonical intpartn_of_mon m (H : mnmwgt m = d) := IntPartN (intpart_of_monP H).
 
 Local Lemma Esym : (forall i : 'I_n, E`_i \is symmetric).
 Proof using.
@@ -516,10 +526,10 @@ move=> i; rewrite (nth_map i) ?size_tuple //.
 by rewrite -tnth_nth tnth_ord_tuple mesym_sym.
 Qed.
 
-Lemma intpartn_of_monE m (H : mnmwgt m = d) :
+Lemma comp_symbe m (H : mnmwgt m = d) :
   'X_[m] \mPo E = 'he[intpartn_of_mon H].
 Proof using.
-rewrite comp_mpolyX /= /prod_gen /intpartn_of_mon /monE /=.
+rewrite comp_mpolyX /= /prod_gen /intpartn_of_mon /intpart_of_mon /=.
 rewrite rmorph_prod /= -[RHS](eq_big_perm _ (perm_eq_rev _)) /=.
 rewrite big_flatten /= big_map /=.
 rewrite /index_enum -!enumT /=; apply eq_bigr => i _.
@@ -527,9 +537,9 @@ rewrite big_nseq tnth_mktuple.
 by rewrite -big_const_ord prodr_const cardT -cardE card_ord.
 Qed.
 
-Lemma pisymhomog_monE m (H : mnmwgt m = d) :
+Lemma in_homsym_comp_symbe m (H : mnmwgt m = d) :
   in_homsym d ('X_[m] \mPo E) = 'he[intpartn_of_mon H].
-Proof using. by rewrite intpartn_of_monE in_homsymE. Qed.
+Proof using. by rewrite comp_symbe in_homsymE. Qed.
 
 Lemma symbe_basis : basis_of fullv symbe.
 Proof using Hd.
@@ -541,9 +551,10 @@ have {Hp} -> : p = \sum_(m <- msupp t) t@_m *: in_homsym d ('X_[m] \mPo E).
   apply val_inj; apply val_inj; rewrite /= -{1}Hp {1}(mpolyE t) {Hp}.
   rewrite !linear_sum /=; apply eq_big_seq => m /Hhomt /= Hm.
   rewrite !linearZ /=; congr (_ *: _).
-  by rewrite pisymhomog_monE /= intpartn_of_monE /=.
+  by rewrite in_homsym_comp_symbe /= comp_symbe /=.
 rewrite big_seq; apply memv_suml => m Hm; apply memvZ.
-rewrite (pisymhomog_monE (Hhomt m Hm)); move: (intpartn_of_mon _) => {m Hm} la.
+rewrite (in_homsym_comp_symbe (Hhomt m Hm)).
+move: (intpartn_of_mon _) => {m Hm} la.
 rewrite (bigD1_seq la) /= ?mem_enum ?inE ?enum_uniq //.
 rewrite -[X in X \in _]addr0.
 apply memv_add; first exact: memv_line.
@@ -687,29 +698,15 @@ Canonical cnvarhomsym_additive   := Additive  cnvarhomsym_is_linear.
 Canonical cnvarhomsym_linear     := AddLinear cnvarhomsym_is_linear.
 
 Lemma cnvarhomsyme la : cnvarhomsym 'he[la] = 'he[la].
-Proof using Hd.
-by apply val_inj; rewrite /= -![prod_gen _ _]/'e[_] cnvar_prodsyme.
-Qed.
-
+Proof using Hd. by apply val_inj; rewrite /= -/'e[_] cnvar_prodsyme. Qed.
 Lemma cnvarhomsymh la : cnvarhomsym 'hh[la] = 'hh[la].
-Proof using Hd.
-by apply val_inj; rewrite /= -![prod_gen _ _]/'h[_] cnvar_prodsymh.
-Qed.
-
+Proof using Hd. by apply val_inj; rewrite /= -/'h[_] cnvar_prodsymh. Qed.
 Lemma cnvarhomsymp la : cnvarhomsym 'hp[la] = 'hp[la].
-Proof using Hd.
-by apply val_inj; rewrite /= -![prod_gen _ _]/'p[_] cnvar_prodsymp.
-Qed.
-
+Proof using Hd. by apply val_inj; rewrite /= -/'p[_] cnvar_prodsymp. Qed.
 Lemma cnvarhomsymm la : cnvarhomsym 'hm[la] = 'hm[la].
-Proof using Hd.
-by apply val_inj; rewrite /= cnvar_symm.
-Qed.
-
+Proof using Hd. by apply val_inj; rewrite /= cnvar_symm. Qed.
 Lemma cnvarhomsyms la : cnvarhomsym 'hs[la] = 'hs[la].
-Proof using Hd.
-by apply val_inj; rewrite /= cnvar_syms.
-Qed.
+Proof using Hd. by apply val_inj; rewrite /= cnvar_syms. Qed.
 
 End ChangeNVar.
 
