@@ -239,14 +239,26 @@ Variable idx : R.
 Variable op : Monoid.law idx.
 
 Lemma big_nat_widen0 a b c F :
-  b <= c -> \big[op/idx]_(a <= i < b) F i = \big[op/idx]_(0 <= i < c | a <= i < b) F i.
+  b <= c ->
+  \big[op/idx]_(a <= i < b) F i =
+  \big[op/idx]_(0 <= i < c | a <= i < b) F i.
 Proof using .
   move=> Hbc.
   rewrite {1}/index_iota -iota_geq -{1}(subn0 b) big_filter -/(index_iota 0 b).
   by rewrite (big_nat_widen _ _ _ _ _ Hbc).
 Qed.
 
+Lemma big_nat_0cond n f :
+  \big[op/idx]_(0 <= i < n) f i =
+  \big[op/idx]_(0 <= i < n | (i < n)%N) f i.
+Proof.
+rewrite big_seq_cond /=.
+rewrite (eq_bigl (fun i => (i < n)%N)); first by [].
+by move=> i; rewrite /= mem_index_iota leq0n /= andbT.
+Qed.
+
 End BigInterv.
+
 
 Lemma sum_nth_rev s a b :
    \sum_(a <= i < b) nth 0 (rev s) i = \sum_(size s - b <= i < size s - a) nth 0 s i.

@@ -30,13 +30,6 @@ Import GRing.Theory.
 Import Num.Theory.
 
 
-Lemma big_nat_0cond (R : Type) (idx : R) op n f :
-  \big[op/idx]_(0 <= i < n) f i = \big[op/idx]_(0 <= i < n | (i < n)%N) f i.
-Proof.
-rewrite big_seq_cond /=.
-rewrite (eq_bigl (fun i => (i < n)%N)); first by [].
-by move=> i; rewrite /= mem_index_iota leq0n /= andbT.
-Qed.
 
 Local Open Scope nat_scope.
 
