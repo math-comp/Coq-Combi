@@ -1,6 +1,7 @@
 (** * Combi.HookFormula.hook : A proof of the Hook-Lenght formula *)
 (******************************************************************************)
 (*      Copyright (C) 2015-2018 Florent Hivert <florent.hivert@lri.fr>        *)
+(*      Copyright (C) 2015      Chritine Paulin <christine.paulin@lri.fr>     *)
 (*                                                                            *)
 (*  Distributed under the terms of the GNU General Public License (GPL)       *)
 (*                                                                            *)
@@ -13,6 +14,19 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * A proof of the Hook-Lenght formula
+
+This file contains a proof of the Frame-Robinson-Thrall Hook-Lenght formula
+for the number of standard Young tableau. It follows closely:
+
+   Greene, C., Nijenhuis, A. and Wilf, H. S. (1979) A probabilistic proof of a
+   formula for the number of Young tableaux of a given shape. Adv. in
+   Math. 31, 104–109.
+
+
+ **********)
+
+
 Require Import Misc Ccpo.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype choice ssrnat seq

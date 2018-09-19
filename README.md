@@ -67,9 +67,12 @@ Contents
   - the *Littlewood-Richardson* rule for irreducible character
 
 * the **Hook-Length Formula** for standard Young tableaux
-  (together with Christine Paulin and Olivier Stietel)
+  (together with Christine Paulin and Olivier Stietel). We follow closely
 
-  After Greene–Nijenhuis–Wilf proof, Discrete Math. 51 (1984), 101–108.
+   Greene, C., Nijenhuis, A. and Wilf, H. S. (1979) A probabilistic proof of a
+   formula for the number of Young tableaux of a given shape. Adv. in
+   Math. 31, 104–109.
+
 
 * the **Erdös Szekeres theorem** about increassing and decreassing subsequences
 
