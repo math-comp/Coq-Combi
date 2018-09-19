@@ -142,7 +142,7 @@ Definition stpn_unionType :=
 Canonical stpn_finType := Eval hnf in [finType of stpn for stpn_unionType].
 Canonical stpn_subFinType := Eval hnf in [subFinType of stpn].
 
-Lemma card_stpn : #|{:stpn}| = \sum_(p : 'P_n) (n`! %/ (HLF_den p))^2.
+Lemma card_stpn : #|{:stpn}| = \sum_(p : 'P_n) (n`! %/ (hook_length_prod p))^2.
 Proof using.
 rewrite card_unionE.
 rewrite (eq_bigr (fun sh : 'P_n => #|{:stdtabsh sh}|^2)); first last.
@@ -197,7 +197,7 @@ Qed.
 Lemma bijRSstd : bijective RSstd.
 Proof using. by exists RSstdinv; [exact: RSstdK | exact: RSstdinvK]. Qed.
 
-Theorem Frobenius_ident : n`! = \sum_(p : 'P_n) (n`! %/ (HLF_den p))^2.
+Theorem Frobenius_ident : n`! = \sum_(p : 'P_n) (n`! %/ (hook_length_prod p))^2.
 Proof using.
 by rewrite -{1}card_stdwordn -card_stpn; apply: bij_card bijRSstd.
 Qed.
@@ -208,19 +208,19 @@ Import GRing.Theory.
 Import Num.Theory.
 
 Theorem Frobenius_ident_rat :
-  1 / (n`!)%:Q = \sum_(p : 'P_n) 1 / (HLF_den p)%:Q ^+ 2.
+  1 / (n`!)%:Q = \sum_(p : 'P_n) 1 / (hook_length_prod p)%:Q ^+ 2.
 Proof using.
 rewrite -[RHS]mulr1.
 have Hfn0 : n`!%:Q != 0 by rewrite intr_eq0 eqz_nat -lt0n fact_gt0.
 rewrite -{5}(@divff _ ((n`!%:Q) ^+ 2)); last by rewrite sqrf_eq0.
 rewrite mulrA mulr_suml.
-rewrite (eq_bigr (fun p : 'P_n => ((n`! %/ (HLF_den p)) ^ 2)%N%:Q)); first last.
+rewrite (eq_bigr (fun p : 'P_n => ((n`! %/ (hook_length_prod p)) ^ 2)%N%:Q)); first last.
   move=> p _; rewrite PoszM intrM.
-  have -> : (n`! %/ HLF_den p)%:Q = (n`!)%:Q / (HLF_den p)%:Q.
-    rewrite -[LHS]mulr1 -{2}(@divff _ (HLF_den p)%:Q); first last.
-      by rewrite intr_eq0 eqz_nat /=; apply: (HLF_den_non0 p).
+  have -> : (n`! %/ hook_length_prod p)%:Q = (n`!)%:Q / (hook_length_prod p)%:Q.
+    rewrite -[LHS]mulr1 -{2}(@divff _ (hook_length_prod p)%:Q); first last.
+      by rewrite intr_eq0 eqz_nat /=; apply: (hook_length_prod_non0 p).
     rewrite !mulrA -intrM -PoszM.
-    have:= divHLF_den p.
+    have:= hook_length_prod_div p.
     by rewrite intpartn_sumn dvdn_eq => /eqP ->.
   by rewrite -expr2 expr_div_n mulrC mul1r.
 rewrite -!(big_morph intr (@intrD _) (id2 := 0)) //=.
