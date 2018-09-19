@@ -20,7 +20,7 @@ From mathcomp Require Import ssrfun ssrbool eqtype choice ssrnat seq
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
 Require Import tools subseq partition stdtab.
-Require Import rat_coerce Qmeasure recyama.
+Require Import Qmeasure recyama.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -667,7 +667,7 @@ Open Scope ring_scope.
 Lemma walk_to_corner_inv m r c :
   mu (walk_to_corner m r c)
      (fun HS => [&& (size   HS.1 != 0), (size   HS.2 != 0),
-                    (head 0 HS.1 == r)& (head 0 HS.2 == c)]%N)
+                    (head 0 HS.1 == r)& (head 0 HS.2 == c)]%N%:~R)
       = 1.
 Proof using.
 elim: m r c => [| n Hn] r c.
@@ -798,7 +798,7 @@ Qed.
 Lemma mu_walk_to_corner_is_trace r c m :
   is_in_shape p r c ->
   ((al_length p r c) <= m)%N ->
-  mu (walk_to_corner m r c) (fun X => is_trace X.1 X.2) = 1.
+  mu (walk_to_corner m r c) (fun X => (is_trace X.1 X.2)%:~R) = 1.
 Proof using.
 elim: m r c => [| m IHm] r c Hrc /=.
   by rewrite leqn0 /is_trace /= => /eqP /(al_length0_corner (intpartP p) Hrc) ->.
@@ -825,9 +825,9 @@ rewrite mem_cat => /orP [] /mapP [] j; rewrite mem_iota => /andP [] H1 H2 -> {i}
   have Hlen : (al_length p j c <= m)%N.
     rewrite -ltnS; apply: (leq_trans _ Hal).
     exact: al_length_ltr.
-  rewrite -(IHm _ _ Hj Hlen).
+  rewrite -[RHS](IHm _ _ Hj Hlen).
   rewrite (mu_pos_cond _ (walk_to_corner_inv m j c)); first last.
-    by move=> [A B]; apply /andP; split; first apply mu_bool_0le.
+    by move=> [A B]; apply/andP; split; [exact: mu_bool_0le | exact: mu_bool_le1].
   rewrite [RHS](mu_pos_cond _ (walk_to_corner_inv m j c)); first last.
     by move=> [A B]; case: (is_trace _ _).
   apply Mstable_eq => [] [A B] /=.
@@ -840,9 +840,9 @@ rewrite mem_cat => /orP [] /mapP [] j; rewrite mem_iota => /andP [] H1 H2 -> {i}
   have Hlen : (al_length p r j <= m)%N.
     rewrite -ltnS; apply: (leq_trans _ Hal).
     exact: al_length_ltl.
-  rewrite -(IHm _ _ Hj Hlen).
+  rewrite -[RHS](IHm _ _ Hj Hlen).
   rewrite (mu_pos_cond _ (walk_to_corner_inv m r j)); first last.
-      by move=> [A B]; apply /andP; split; first apply mu_bool_0le.
+    by move=> [A B]; apply/andP; split; [exact: mu_bool_0le | exact: mu_bool_le1].
   rewrite [RHS](mu_pos_cond _ (walk_to_corner_inv m r j)); first last.
     by move=> [A B]; case: (is_trace _ _).
   apply Mstable_eq => [] [A B].
@@ -972,7 +972,8 @@ Definition HLF sh :=  (((sumn sh)`!)%:Q / (F_deno sh)%:Q)%R.
 
 Lemma reshape_index_walk_to i (r := reshape_index p i) (c := reshape_offset p i) :
   (i < sumn p)%N ->
-  (mu (walk_to_corner (al_length p r c) r c)) (ends_at Alpha Beta) =
+  (mu (walk_to_corner (al_length p r c) r c))
+    (fun pair => (ends_at Alpha Beta pair)%:~R) =
   \sum_(X <- enum_trace Alpha Beta | starts_at r c X)
    PI_trace X.
 Proof using Hcorn.
@@ -1010,11 +1011,11 @@ transitivity (\sum_(i0 <- enum_trace Alpha Beta) F i0).
 Qed.
 
 Lemma prob_choose_corner_ends_at :
-  mu choose_corner (ends_at Alpha Beta) =
+  mu choose_corner (fun pair => (ends_at Alpha Beta pair)%:~R) =
   1 / (sumn p)%:Q * \sum_(X <- enum_trace Alpha Beta) PI_trace X.
 Proof using Hcorn.
 rewrite /choose_corner MLet_simpl mu_random_sum sumnpSPE.
-rewrite mulrC mul1r; congr (_ / _).
+rewrite mulrC mul1r; congr (_ * _).
 rewrite big_nat_0cond (eq_bigr _ reshape_index_walk_to) -big_nat_0cond.
 rewrite (exchange_big_dep (@predT _)) //=.
 apply eq_big_seq => [[A B]]; rewrite (enum_traceP Hcorn) => /and3P [] Htrace HA HB.
@@ -1161,7 +1162,8 @@ Qed.
 
 
 Theorem Theorem2 :
-  mu choose_corner (ends_at Alpha Beta) = (HLF p') / (HLF p).
+  mu choose_corner (fun pair => (ends_at Alpha Beta pair)%:~R) =
+  (HLF p') / (HLF p).
 Proof using Hpartc'.
 rewrite prob_choose_corner_ends_at /HLF -{1 2}Hp sumn_incr_nth.
 rewrite factS PoszM -!ratzE ratzM !ratzE.
@@ -1185,7 +1187,7 @@ Open Scope ring_scope.
 Lemma ends_at_rem_cornerE :
   (fun X : seq nat * seq nat =>
      \sum_(i0 <- rem_corners p) (ends_at i0 (nth O p i0).-1 X)%:Q)
-    == (fun X => is_corner_box p (last O X.1) (last O X.2)).
+    == (fun X => (is_corner_box p (last O X.1) (last O X.2))%:~R).
 Proof using.
 rewrite /ends_at => [] [A B] /=.
 case (boolP (is_corner_box p (last O A) (last O B))) => Hcorn.
@@ -1208,7 +1210,8 @@ Corollary Corollary4 :
   \sum_(i <- rem_corners p) (HLF (decr_nth p i)) / (HLF p) = 1.
 Proof using.
 rewrite big_seq_cond => Hp.
-rewrite (eq_bigr (fun i => (mu choose_corner (ends_at i (nth O p i).-1))));
+rewrite (eq_bigr (fun i => (mu choose_corner
+                               (fun pair => (ends_at i (nth O p i).-1 pair)%:~R))));
     first last.
   move => i /andP [].
   rewrite /rem_corners mem_filter => /andP [] Hcorn _ _.
@@ -1243,7 +1246,7 @@ Qed.
 End FindCorner.
 
 Theorem HookLengthFormula_rat (p : intpart) :
-  #|{:stdtabsh p}| = HLF p :> rat.
+  ((#|{:stdtabsh p}|)%:~R)%R = HLF p :> rat.
 Proof.
 apply esym; move: p; apply card_stdtabsh_rat_rec.
 - by rewrite /HLF /= /F_deno /= big_box_in /enum_box_in /= big_nil factE.
@@ -1263,8 +1266,7 @@ Lemma HLprod_nat (p : intpart) :
 Proof.
 apply /eqP; rewrite -eqz_nat PoszM.
 rewrite -(@eqr_int rat_numDomainType) intrM /=.
-have /= := HookLengthFormula_rat p.
-rewrite /int_to_rat /= => ->.
+have /= -> := HookLengthFormula_rat p.
 apply/eqP; rewrite /HLF -mulrA -[RHS]mulr1; congr (_ * _)%R.
 rewrite mulrC divff // intr_eq0.
 by rewrite eqz_nat; apply: F_deno_non0.

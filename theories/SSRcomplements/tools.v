@@ -575,3 +575,16 @@ by rewrite !inE Hy -Hcov andbT => /bigcupP; apply; exists Y.
 Qed.
 
 End SetPartition.
+
+From mathcomp Require Import ssralg ssrint rat ssrnum.
+
+Import GRing.Theory.
+Import Num.Theory.
+
+Local Open Scope ring_scope.
+
+Lemma iter_plus1 n : (iter n (+%R (1 : rat)) 0 = n%:~R)%R.
+Proof.
+  elim: n => [//= | n IHn] /=.
+  by rewrite -add1n PoszD IHn mulrzDl.
+Qed.

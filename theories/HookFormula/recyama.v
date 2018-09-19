@@ -129,7 +129,6 @@ rewrite /rem_corners !big_filter; apply eq_bigr => i Hi.
 by rewrite card_yam_stdtabE IHp //=.
 Qed.
 
-Require Import rat_coerce.
 Import GRing.Theory.
 Import Num.Theory.
 
@@ -140,14 +139,14 @@ Lemma card_stdtabsh_rat_rec (f : intpart -> rat) :
   ( forall p : intpart,
       (p != [::] :> seq nat) ->
       f p = \sum_(i <- rem_corners p) f (decr_nth_part p i) ) ->
-  ( forall p : intpart, f p = #|{:stdtabsh p}| ).
+  ( forall p : intpart, f p = #|{:stdtabsh p}|%:~R ).
 Proof.
 move=> H0 Hrec.
 elim/intpart_rem_corner_ind => [//= | p Hnnil IHp] /=.
   by rewrite H0 -card_yam_stdtabE card_yama0.
 rewrite (Hrec _ Hnnil) -card_yam_stdtabE (card_yama_rec Hnnil).
 rewrite (big_morph Posz PoszD (id1 := Posz O%N)) //.
-rewrite (big_morph int_to_rat (@intrD _) (id1 := 0)) //.
+rewrite (big_morph intr (@intrD _) (id1 := 0)) //.
 rewrite /rem_corners !big_filter; apply eq_bigr => i Hi.
 by rewrite card_yam_stdtabE IHp //=.
 Qed.
