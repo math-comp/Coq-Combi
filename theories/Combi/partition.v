@@ -75,6 +75,8 @@ Sigma types for integer partitions:
                it is canonically a [finType]
 - [conj_intpartn] == the conjugate of a ['P_n] as a ['P_n]
 
+- [decr_nth_intpart p i] == the shape obtained by removing a box at the end
+               of the [i]-th row if the result is a partition else [p]
 
 Operations on partitions:
 
@@ -1209,7 +1211,6 @@ move=> H; apply: val_inj => /=.
 by apply: sumn_take_inj; last exact H.
 Qed.
 
-
 Fixpoint enum_partnsk sm sz mx : (seq (seq nat)) :=
   if sz is sz.+1 then
     flatten [seq [seq i :: p | p <- enum_partnsk (sm - i) sz i] |
@@ -1474,6 +1475,27 @@ Lemma conj_rowpartn d : conj_intpartn (rowpartn d) = colpartn d.
 Proof. apply val_inj => /=; rewrite /rowpart /colpart; by case: d. Qed.
 Lemma conj_colpartn d : conj_intpartn (colpartn d) = rowpartn d.
 Proof. rewrite -[RHS]conj_intpartnK; by rewrite conj_rowpartn. Qed.
+
+
+(** ** Removing a corner from a partition *)
+
+Lemma is_part_decr_nth_part (p : intpart) i :
+  is_part (if is_rem_corner p i then decr_nth p i  else p).
+Proof.
+case: (boolP (is_rem_corner p i)).
+- by apply is_part_decr_nth; apply: intpartP.
+- by move=> _; apply: intpartP.
+Qed.
+
+Definition decr_nth_intpart (p : intpart) i : intpart :=
+  IntPart (is_part_decr_nth_part p i).
+
+Lemma decr_nth_intpartE (p : intpart) i :
+  is_rem_corner p i -> decr_nth_intpart p i = decr_nth p i :> seq nat.
+Proof.
+rewrite /decr_nth_intpart /=.
+by case: (is_rem_corner p i).
+Qed.
 
 
 Module IntPartNLex.
@@ -1812,6 +1834,7 @@ case: (ssrnat.ltnP i (size sh)) => Hi.
 Qed.
 
 End IntPartNDom.
+
 
 (** * Shape of set partitions and integer partitions *)
 Section SetPartitionShape.
