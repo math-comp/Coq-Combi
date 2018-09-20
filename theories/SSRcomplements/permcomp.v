@@ -1,4 +1,4 @@
-(** * Combi.SScomplement.perrcomp : complement on permutations *)
+(** * Combi.SSRcomplements.permcomp : Complement on permutations *)
 (******************************************************************************)
 (*      Copyright (C) 2016-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
@@ -13,6 +13,16 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * A few lemmas on permutation
+
+TODO : contribute to mathcomp (see
+https://github.com/math-comp/math-comp/pull/221)
+
+Aside a few lemmas we define the following notions:
+
+- [cast_perm m n (m = n) s] == the cast of a permutation in ['S_m] to ['S_n]
+- [perm_ong S] == the subgroup of permutation moving only the element of [S]
+***********)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype div.
 From mathcomp Require Import finset fingroup perm morphism action.
@@ -47,7 +57,7 @@ move=> p; rewrite inE unfold_in /perm_on /=.
 by apply/esym/subsetP => i _; rewrite in_set.
 Qed.
 
-
+(** ** Permutations cast *)
 Section CastSn.
 
 Definition cast_perm m n (eq_mn : m = n) (s : 'S_m) :=
@@ -92,6 +102,8 @@ Qed.
 
 End CastSn.
 
+
+(** ** Orbit and cycles *)
 Section PermComp.
 
 Variable T : finType.
@@ -133,6 +145,7 @@ Qed.
 End PermComp.
 
 
+(** ** [perm_on S] as a subgroup *)
 Section PermOnG.
 
 Variable T : finType.

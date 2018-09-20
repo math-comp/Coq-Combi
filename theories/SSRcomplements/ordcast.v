@@ -1,3 +1,4 @@
+(** * Combi.SSRcomplements.ordcast : Cast between ordinals *)
 (******************************************************************************)
 (*      Copyright (C) 2014-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
@@ -12,6 +13,11 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * Some complement on casts between ordinals
+
+Aside a few basic lemmas, the only new definition is:
+- [cast_set (H : n = m) S] == cast [S : {set 'I_n}] to [S : {set 'I_m}].
+*********)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 From mathcomp Require Import finset tuple bigop.

@@ -1,4 +1,4 @@
-(** * Combi.SSRcomplements.tools : Missing SSReflect sequence related lemmas *)
+(** * Combi.SSRcomplements.tools : Missing SSReflect sequence and set lemmas *)
 (******************************************************************************)
 (*      Copyright (C) 2015-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
@@ -13,10 +13,12 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * A bunch of lemmas about seqs which are missing in SSReflect             *)
-(*                                                                            *)
-(** TODO: these probably should be contributed to SSReflect itself            *)
-(******************************************************************************)
+(** * A bunch of lemmas about seqs and sets which are missing in SSReflect
+
+No new notions are defined here.
+
+TODO: these probably should be contributed to SSReflect itself
+****************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import finset bigop path.

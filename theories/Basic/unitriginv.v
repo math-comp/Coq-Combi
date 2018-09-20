@@ -1,3 +1,4 @@
+(** * Combi.Basic.unitriginv : Uni-triangular Matrices *)
 (******************************************************************************)
 (*      Copyright (C) 2016-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
@@ -12,7 +13,22 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** Triangular matrix with 1 on the diagonal *)
+(** * Triangular matrix with 1 on the diagonal
+
+We deal with "matrices" which are triangular for a _possibly partial_ order
+with 1 on the diagonal. The goal is to show that such a matrix is invertible
+on any ring and to give formulas for the inverse. The matrices are given as a
+function [M : T -> T -> R] for a finite partially ordered type [T] and a
+commutative unit ring [R].
+
+- [unitrig M] == [M] is unitriangular where [M].
+- [Mat M] == transform [M] to a usual mathcomp square matrix of order [#|T|]
+- [Minv M] == the inverse of the matrix [M].
+
+We show that such a matrix has determinant 1 (Lemma [det_unitrig]) and is
+therefore invertible. Moreover Lemma [Minv_unitrig] says that the inverse
+is unitriangular too.
+ *******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat.
 From mathcomp Require Import fintype bigop ssralg.
@@ -54,7 +70,7 @@ apply/unitrigP; split => [u | u v] /=; first by rewrite eq_refl.
 by case: (altP (v =P u)) => [-> |] //=; rewrite eq_refl.
 Qed.
 
-(* TODO : construct the group of unitriangular matrix *)
+(** TODO : construct the group of unitriangular matrix *)
 
 Lemma unitrig_suml M (Mod : lmodType R) (F : T -> Mod) u :
   unitrig M ->
