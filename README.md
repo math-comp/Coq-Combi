@@ -91,7 +91,8 @@ Contents
 
 * the **factorization** of the Vandermonde determinant as the product of differences.
 
-More unstable stuff:
+Various unstable/unfinished experiments:
+========================================
 
 * bijection m-trees <-> m-dyck words.
   See the [trees branch on Github](https://github.com/hivert/Coq-Combi/tree/trees).
@@ -112,22 +113,21 @@ More unstable stuff:
 Documentation
 ========================================================================
 
-The [documentation](http://hivert.github.io/Coq-Combi/) is currently in progress.
+The [documentation](http://hivert.github.io/Coq-Combi/) is now complete !
+
 
 Installation
 ========================================================================
 
 This library is based on
 
-* Coq 8.7 (it should work to with Coq-8.4 if you ignore the warning at the
-  beginning of Make).
+* Coq 8.7 or more recent
 
 * [SSReflect/MathComp]([https://github.com/math-comp/math-comp])
   Library version 1.7.
 
 * Pierre-Yves Strub library for
-  [Multinomials](https://github.com/math-comp/multinomials)
-
+  [Multinomials] version 1.1 (https://github.com/math-comp/multinomials)
 
 
 Note: A standalone version of the proof of the Littlewood-Richardson rule not
