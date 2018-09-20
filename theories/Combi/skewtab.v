@@ -20,7 +20,7 @@
 - [skew_dominate s u v] == the row [u] dominate the row [v] when shifted by [s].
 - [is_skew_tableau inn t] == [t] is a skew tableau with inner shape [t].
 - [skew_reshape inn out s] == reshape the sequence [s] by the skew shape [out/inn].
-- filter_leqX_tab n t] == keeps only the entries greater than [n] in [t].
+- [filter_leqX_tab n t] == keeps only the entries greater than [n] in [t].
 - [join_tab t st] == join the tableau [t] with the skew tableau [st].
        this gives a tableau if the inner shape of [st] is the shape of [t] and
        the entries of [t] are smaller than the entries of [st].
@@ -928,16 +928,15 @@ Qed.
 
 Theorem is_tableau_reshape_std sh T (u : seq T) :
   size u = sumn sh ->
-  is_tableau (rev (reshape (rev sh) u)) =
-  is_tableau (rev (reshape (rev sh) (std u))).
+  is_tableau (skew_reshape [::] sh u) =
+  is_tableau (skew_reshape [::] sh (std u)).
 Proof.
 move=> Hsz.
-rewrite -!is_skew_tableau0 -[sh]/(sh / [::]) -!/(skew_reshape _ _ _).
-by apply is_skew_tableau_reshape_std.
+by rewrite -!is_skew_tableau0; rewrite is_skew_tableau_reshape_std.
 Qed.
 
 Theorem is_tableau_std T (t : seq (seq T)) :
-  is_tableau t = is_tableau (rev (reshape (rev (shape t)) (std (to_word t)))).
+  is_tableau t = is_tableau (skew_reshape [::] (shape t) (std (to_word t))).
 Proof.
 rewrite -{1}(to_wordK t); apply is_tableau_reshape_std.
 by rewrite size_to_word.

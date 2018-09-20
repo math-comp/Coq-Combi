@@ -794,7 +794,7 @@ by move: Hcrn => /=; case: i.
 Qed.
 
 Lemma is_in_conj_part_impl sh:
-  is_part sh -> forall r c , is_in_shape sh r c -> is_in_shape (conj_part sh) c r.
+  is_part sh -> forall r c, is_in_shape sh r c -> is_in_shape (conj_part sh) c r.
 Proof.
 rewrite /is_in_shape.
 elim: sh => [| s0 s IHs] Hpart r c.
