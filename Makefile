@@ -30,7 +30,7 @@ scripts/ocamldot: scripts/ocamldot.mll
 depend.dot: depend.d scripts/ocamldot
 	rm -f depend.dot
 	scripts/ocamldot depend.d > depend.dot
-	sed -i -e "s/Theories/Combi/g" -e "s/\//./g" depend.dot
+	sed -i -e "s/Theories/Combi/g" -e "s/3rdparty.ALEA/ALEA/g" -e "s/\//./g" depend.dot
 
 html/depend.png: depend.dot
 	- mkdir -p html
