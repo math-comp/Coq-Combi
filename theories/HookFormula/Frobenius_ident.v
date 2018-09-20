@@ -1,3 +1,4 @@
+(** * Combi.hook.Frobenius_ident : Frobenius identity *)
 (******************************************************************************)
 (*      Copyright (C) 2015-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
@@ -12,6 +13,23 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
+(** * A proof of Frobenius identity:
+
+The goal of this file is to prove the following identities:
+[[
+Frobenius_ident n :
+    n`! = \sum_(p : 'P_n) (n`! %/ (hook_length_prod p))^2.
+]]
+and
+[[
+Theorem Frobenius_ident_rat n :
+    1 / (n`!)%:Q = \sum_(p : 'P_n) 1 / (hook_length_prod p)%:Q ^+ 2.
+]]
+
+TODO: The following proof is unnecessarily complicated, involving the
+construction of several [finType]. This should be simplified.
+ ******)
+
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype choice ssrnat seq
         ssrint div rat fintype bigop path ssralg ssrnum.
