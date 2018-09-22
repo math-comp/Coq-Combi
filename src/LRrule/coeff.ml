@@ -3,7 +3,6 @@
 (*
 Note : the result is computed with Unary integer !!!!
 
-  
 time ./lrcoef 11 10 9 8 7 6 5 4 3 2 1 - 7 6 5 5 4 3 2 1 - 7 6 5 5 4 3 2 1
 268484
 ./lrcoef 11 10 9 8 7 6 5 4 3 2 1 - 7 6 5 5 4 3 2 1 - 7 6 5 5 4 3 2 1  0.14s user 0.00s system 99% cpu 0.143 total

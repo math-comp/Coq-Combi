@@ -692,7 +692,7 @@ Qed.
 Lemma is_part_incr_first_n sh n :
   is_part sh -> is_part (incr_first_n sh n).
 Proof.
-elim: sh n => [//= n _| s0 sh IHsh] /=; first exact: is_part_n1.
+elim: sh n => [// n _| s0 sh IHsh] /=; first exact: is_part_n1.
 case=> [//= | n] /andP [] Hhead /IHsh {IHsh} /= ->; rewrite andbT.
 case: sh Hhead => [_ | s1 sh] /=; first by case n.
 case: n => [| n] /=; last by apply.
