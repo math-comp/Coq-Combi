@@ -1,0 +1,341 @@
+\documentclass[compress,11pt]{beamer}
+
+\usetheme{TALK}
+\usepackage[vcentermath]{genyoungtabtikz}
+\usepackage{minted}
+\usemintedstyle{emacs}
+%\usemintedstyle{colorful}
+%\usemintedstyle{borland}
+%\usemintedstyle{autumn}
+
+\usepackage{genyoungtabtikz}
+
+\newminted{coq}{
+frame=lines,
+framesep=2mm,
+fontsize=\scriptsize,
+mathescape=true
+}
+\usepackage{commath}
+
+% INFO DOCUMENT - TITRE, AUTEUR, INSTITUTION
+\title{\bf\LARGE A formal proof of the \\
+Littlewood-Richardson rule\\[5mm]}
+\author{Florent Hivert}
+\institute[LRI]{
+  LRI / Université Paris Sud 11 / CNRS}
+\date[September 2018]{September 2018}
+
+\newcommand{\XX}{{\mathbb X}}
+
+\newcommand{\free}[1]{\left\langle#1\right\rangle}
+\newcommand{\N}{{\mathbb N}}
+\newcommand{\C}{{\mathbb C}}
+\newcommand{\Q}{{\mathbb Q}}
+\newcommand{\SG}{{\mathfrak S}}
+\newcommand{\std}{\operatorname{Std}}
+
+\newcommand{\sym}{\mathrm{sym}}
+\newcommand{\NCSF}{\mathbf{NCSF}}
+\newcommand{\QSym}{\mathrm{QSym}}
+\newcommand{\FSym}{\mathbf{FSym}}
+
+\newcommand{\partof}{\vdash}                    % Partition de
+\newcommand{\compof}{\vDash}                    % Composisition de
+
+\newcommand{\qandq}{\text{\quad et\quad}}
+
+\newcommand{\alphX}{{\mathbb X}}
+%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\red}[1]{{\color{red} #1}}
+\newcommand{\green}[1]{{\color{red} #1}}
+%------------------------------------------------------------------------------
+\begin{document}
+
+% PAGE D'ACCUEIL
+\frame{\titlepage}
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+\section{Motivation : certified proof in combinatorics}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Why formalize things on computers}
+
+  \begin{center}
+    \textbf{\LARGE Writing correct programs is hard:}
+  \end{center}
+\medskip
+
+\begin{itemize}
+\item The human mind is focused on the big picture;
+\item Hard to take track of all the trivial / particular cases.
+\end{itemize}
+\bigskip\pause
+
+Some excerpts of my contribution to \texttt{Sagemath}:
+\begin{itemize}
+\item determinant / rank / invertibility of $0\times0$ and $1\times1$ matrices
+\item empty set and its permutation
+\item empty partition / composition / parking function / tableau \dots
+\item the $0$ and $1$ species
+\item \dots
+\end{itemize}
+\bigskip\pause
+
+\centering{\textbf{\huge What about proofs ?}}
+\end{frame}
+
+\begin{frame}{Are our proofs always correct ?}
+
+Donald Knuth:
+\begin{quote}
+  Beware of bugs in the above code; I have only proved it correct, not tried it.
+\end{quote}
+\bigskip\pause
+
+Often in combinatorics, and particularly in \textbf{bijective} combinatorics,
+proofs are algorithms, together with justifications that they meet their
+specifications.
+\end{frame}
+
+\begin{frame}{Are our proofs always correct ?}
+
+  The Littlewood-Richardson rule:
+
+  \begin{itemize}
+  \item stated (1934) by D. E. Littlewood and A. R. Richardson, \red{wrong
+      proof, wrong example}.
+  \item Robinson (1938), wrong completed proof.
+  \item more wrong published proofs...
+  \item first correct proof: Schützenberger (1977).
+  \item nowadays: dozens of different proofs\dots
+  \end{itemize}
+
+  \begin{quotation}\small
+    \textbf{Wikipedia}: The Littlewood–Richardson rule is \textbf{notorious
+      for the number of errors} that appeared prior to its complete, published
+    proof. Several published attempts to prove it are incomplete, and it is
+    particularly difficult to avoid errors when doing hand calculations with
+    it: even the original example in D. E. Littlewood and A. R. Richardson
+    (1934) contains an error.
+ \end{quotation}
+\end{frame}
+
+
+\begin{frame}{The case of the Littlewood-Richardson rule ?}
+
+  A footnote in Macdonald's book:
+  \medskip
+
+  \begin{quotation}
+    \noindent
+    Gordon James reports that he was once told that:
+
+    ``The Littlewood-Richardson rule helped to {\color{green} get men on the
+      moon}, but it was {\color{red} not proved until after they had got
+      there}. The first part of this story might be an exaggeration.''
+  \end{quotation}
+  \bigskip
+
+  This sentence appears in James, G. D. (1987) \emph{The representation theory
+    of the symmetric groups}.
+\end{frame}
+
+\begin{frame}{The case of the Littlewood-Richardson rule ?}
+More quotation of James:
+
+\begin{quotation}\small
+  It seems that for a long time \textbf{the entire body of experts in the
+    field was convinced} by these proofs; at any rate it was not until 1976
+  that McConnell pointed out \textbf{a subtle ambiguity} in part of the
+  construction underlying the argument.
+
+  [...]
+
+  How was it possible for an \red{incorrect proof} of such a central result in
+  the theory of $S_n$ to have been \red{accepted for close to forty years}?
+  The level of rigor customary among mathematicians when a combinatorial
+  argument is required, is (\green{probably quite rightly}) of the
+  \green{nonpedantic hand-waving} kind; perhaps one lesson to be drawn is that
+  a \textbf{higher degree of care} will be needed in dealing with such
+  combinatorial complexities as occur in the present level of development of
+  Young's approach.
+\end{quotation}
+\end{frame}
+
+\begin{frame}[fragile]
+  \begin{problem}
+    Suppose that, back in 1977, they had had our current proof assistant
+    technology. Would it have been \textbf{feasible} to check Schützenberger
+    proof ? If so, \textbf{how long} would it have taken ?
+  \end{problem}
+  \bigskip\pause
+
+  \begin{Theorem}[Constructive answer !]
+    Yes ! Less than 5 month and two weeks !
+  \end{Theorem}
+
+\small
+\begin{verbatim}
+commit f990146b8c6e062fe025740a08f888deb9481c2d
+Date:   Thu Jul 24 17:46:58 2014 +0200
+    Schensted's algorithm.
+
+commit 2418282695455261e5459b33d3e8f979d57c3bdb
+Date:   Sun Jan 4 15:31:16 2015 +0100
+    DONE the proof of the Littlewood_Richardson rule !!!!
+\end{verbatim}
+\end{frame}
+
+\section{A short introduction to formal proof in Coq/Mathcomp}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{History of Coq and Mathcomp}
+
+  \begin{itemize}
+  \item 1985 -- T.~Coquand :  \emph{Calculus of constructions}
+  \item 1989 -- T.~Coquand, G.~Huet: creation of \texttt{Coq}
+  \item 2004 -- G.~Gonthier, B.~Werner : \emph{4 color theorem} in Coq
+
+    Along their way \texttt{Ssreflect} ``small scale reflection''.
+
+  \item 2006 -- 2018 Mathematical component: a library of formalized mathematics.
+    \begin{itemize}
+    \item basic data structures, algebra, group an representation theory;
+    \item the infrastructure for the machine checked proofs of:
+    \end{itemize}
+  \item 2012 -- Coq checked proof of Feit-Thomson's theorem:
+
+    Every finite group of odd order is solvable.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Formal (mechanized) proofs}
+
+  \begin{block}{Aim}
+    Write a proof that is checked by computer all the way down to the
+    logical foundation.
+  \end{block}
+  \bigskip\pause
+
+  \textbf{Proof assistant} (interactive theorem prover) : \\ A kind of Integrated
+  Development Environment (IDE) which helps writing such proofs by constantly
+  checking the coherence and keeping track of missing parts.  \bigskip
+
+  Note: Proof assistant $\neq$ automated theorem prover
+\end{frame}
+
+
+\begin{frame}{What is needed to build a proof assistant ?}
+
+Three ingredients:
+\begin{enumerate}
+\item A way to \textbf{\red{store algorithm}} that allows for\\
+  \textbf{manipulating} them \textbf{and reasoning} about them;
+\bigskip\pause
+
+\item A way to \textbf{\red{store proofs}} that allows for\\
+  \textbf{manipulating} them \textbf{and reasoning} about them;
+\bigskip\pause
+
+\item A way to \textbf{mechanically check} everything.
+\end{enumerate}
+\end{frame}
+
+\begin{frame}{Proofs as programs (Curry-Howard)}
+
+Suppose that
+\begin{itemize}
+\item we have \textbf{data} encoding a proof $a$ and two statements $A$ and
+  $B$
+\item the system is able to make so-called \textbf{judgments}: \\
+  to verify that $a$ is a correct proof of $A$ (written as $a : B$)
+\end{itemize}
+\pause\medskip
+
+Then, a statement $A \to B$ means that each time we have a proof of $A$, we
+can construct a proof of $B$.
+\pause\bigskip
+
+\begin{block}{Curry-Howard correspondence in a nutshell}
+  The idea is ``simply'' to encode a proof of $A \to B$ by a function\\
+  (= a program) which takes a proof of $A$ and returns a proof of $B$.
+  \bigskip
+
+  Similarly, a proof of $\forall x, P(x)$, is encoded as a function which
+  takes $x$ and returns a proof of $P(x)$.
+\end{block}
+
+
+\end{frame}
+
+\begin{frame}{Type theory based proof assistants}
+
+  Proof assistant = a system that:
+    \pause\medskip
+
+  \begin{itemize}
+  \item \textbf{manipulates} (stores, executes, \dots) functions
+    \hfill ($\Lambda$-calculus)
+    \medskip
+
+  \item \textbf{checks judgments} such as $a : A$\hfill(typed $\Lambda$-calculus)
+  \end{itemize}
+  \pause\medskip
+
+  To make it more usable, we need also
+  \begin{itemize}
+  \item \textbf{building blocks} for custom data structures: \textbf{records,
+      unions} \\
+    \hfill (Calculus of Inductive Construction $\approx$ Galina)
+
+  \item \textbf{helpers} for writing proof/programs incrementally \\
+    \hfill (tactic language).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+
+  You only need to remember:
+  \begin{block}{Summary}
+    \begin{itemize}
+    \item proof, statement, data, programs, etc are all the same first class
+      manipulated objects called \textbf{terms}
+    \item some particular terms are allowed (from the logic or by their
+      definition) to appear on the right of the judgment symbol ``$:$''. They
+      are called \textbf{types}
+    \item every term has a type
+    \end{itemize}
+
+  \end{block}
+  \pause
+
+  \Huge\bf
+
+  Enough for the theory\dots
+  \bigskip
+
+  \hspace{2cm}Time for a demo\dots
+\end{frame}
+
+\section{The Little-Richardson rule}
+
+\section{A few excerpts}
+
+\begin{frame}{Getting definition right}
+
+There is not a single ``good'' definition.
+\end{frame}
+
+\section{Should you try ?}
+
+\begin{frame}{Should you try ? My two cents}
+  
+\end{frame}
+\end{document}
+% "latex -synctex=1 -shell-escape"
+%%% Local Variables: LaTeX-command
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
