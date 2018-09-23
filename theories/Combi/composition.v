@@ -94,7 +94,7 @@ Lemma enum_compn_rec_any aux1 aux2 n :
   n <= aux1 -> n <= aux2 -> enum_compn_rec aux1 n = enum_compn_rec aux2 n.
 Proof.
 elim: aux1 aux2 n => [| aux1 IHaux1] aux2 n /=.
-  rewrite leqn0 => /eqP -> //=; by case aux2.
+  by rewrite leqn0 => /eqP -> //=; case aux2.
 case: (altP (n =P 0)) => [-> | Hn Haux1] //=; first by case aux2.
 case: aux2 => [| aux2 /= Haux2].
   by rewrite leqn0 => /eqP H; rewrite H eq_refl in Hn.
@@ -172,7 +172,7 @@ Qed.
 Lemma enum_compnP n s : (is_comp_of_n n s) = (s \in enum_compn n).
 Proof.
 apply/idP/idP; last by move/(allP (enum_compn_allP n)).
-rewrite -has_pred1 has_count; by move/enum_compn_countE ->.
+by rewrite -has_pred1 has_count; move/enum_compn_countE ->.
 Qed.
 
 
@@ -208,7 +208,7 @@ Definition intcomp_of_intcompn (p : intcompn) := IntComp (intcompnP p).
 Coercion intcomp_of_intcompn : intcompn >-> intcomp.
 
 Lemma intcompn_sumn (p : intcompn) : sumn p = n.
-Proof using . by case: p => /= p /andP [] /eqP. Qed.
+Proof using . by case: p => /= p /andP [/eqP]. Qed.
 
 Lemma enum_intcompnE : map val (enum {:intcompn}) = enum_compn n.
 Proof using . rewrite /=; exact: enum_subE. Qed.
@@ -231,18 +231,18 @@ Lemma intcompn2 (sh : intcompn 2) :
   sh = [:: 2]  :> seq nat \/ sh = [:: 1; 1] :> seq nat.
 Proof.
 case: sh => sh Hsh /=; move: Hsh; rewrite enum_compnP.
-rewrite /enum_compn /= !inE => /orP [] /eqP ->; by [left | right].
+by rewrite /enum_compn /= !inE => /orP [] /eqP ->; [right | left].
 Qed.
 
 Definition intcompn_cast m n (eq_mn : m = n) p :=
   let: erefl in _ = n := eq_mn return intcompn n in p.
 
 Lemma intcompn_castE m n (eq_mn : m = n) p : val (intcompn_cast eq_mn p) = val p.
-Proof. subst m; by case: p. Qed.
+Proof. by subst m; case: p. Qed.
 
 Definition rowcomp d := if d is _.+1 then [:: d] else [::].
 Fact rowcompnP d : is_comp_of_n d (rowcomp d).
-Proof. case: d => [//= | d]; by rewrite /is_comp_of_n /= addn0 eq_refl. Qed.
+Proof. by case: d => [//= | d]; rewrite /is_comp_of_n /= addn0 eq_refl. Qed.
 Canonical rowcompn d : intcompn d := IntCompN (rowcompnP d).
 
 Definition colcomp d := nseq d 1%N.

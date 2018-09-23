@@ -112,13 +112,13 @@ Lemma pcyclePb x y :
   y \in pcycle s x -> exists i, y == (s ^+ i)%g x.
 Proof using.
 move=> /pcycleP H.
-move: H => [i Hi]; exists i; by rewrite Hi.
+by move: H => [i Hi]; exists i; rewrite Hi.
 Qed.
 
 Definition indpcycle (x : T) : nat := ex_minn (pcyclePb (canpcycleP x)).
 
 Lemma indpcycleP x : ((s ^+ (indpcycle x)) (canpcycle x))%g = x.
-Proof using. rewrite /indpcycle; by case: ex_minnP => i /eqP. Qed.
+Proof using. by rewrite /indpcycle; case: ex_minnP => i /eqP. Qed.
 
 End CanPCycle.
 

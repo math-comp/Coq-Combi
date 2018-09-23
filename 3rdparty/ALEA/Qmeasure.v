@@ -1098,9 +1098,9 @@ Lemma mu_stable_sum (A : Type) (m : distr A)
   mu m (fun a => \sum_(i <- s) f i a) = \sum_(i <- s) (mu m (f i)).
 Proof.
 elim: s => [| s0 s IHs] /=.
-  rewrite big_nil; apply mu_zero_eq => x; by rewrite big_nil.
+  by rewrite big_nil; apply mu_zero_eq => x; rewrite big_nil.
 rewrite big_cons -IHs -mu_stable_add.
-apply Mstable_eq => x /=; by rewrite big_cons.
+by apply Mstable_eq => x /=; rewrite big_cons.
 Qed.
 
 
@@ -1113,7 +1113,7 @@ Lemma in_seq_sum s x :
   uniq s -> (x \in s)%:~R = \sum_(i <- s) (x == i)%:~R :> rat.
 Proof.
 elim: s => [| s0 s IHs] /=; first by rewrite big_nil.
-rewrite inE big_cons => /andP [] /negbTE Hs0 /IHs <- {IHs}.
+rewrite inE big_cons => /andP [/negbTE Hs0 /IHs <- {IHs}].
 case: (boolP (x == s0)) => [/= /eqP -> | _ ]; last by rewrite /= add0r.
 by rewrite Hs0 addr0.
 Qed.

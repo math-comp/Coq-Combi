@@ -243,7 +243,7 @@ Qed.
 
 Lemma plact_ltrans : left_transitive plactcongr.
 Proof using.
-have:= plact_equiv; by rewrite equivalence_relP => [] [Hrefl Hltr].
+by have:= plact_equiv; rewrite equivalence_relP => [] [Hrefl Hltr].
 Qed.
 
 Lemma plact_trans : transitive plactcongr.
@@ -395,10 +395,10 @@ Definition revdual := [fun s : seq Alph => rev s : seq Dual].
 Definition from_revdual := [fun s : seq Dual => (rev s) : seq Alph].
 
 Lemma revdualK : cancel revdual from_revdual.
-Proof using. move=> u; by rewrite /= revK. Qed.
+Proof using. by move=> u; rewrite /= revK. Qed.
 
 Lemma from_revdualK : cancel from_revdual revdual.
-Proof using. move=> u; by rewrite /= revK. Qed.
+Proof using. by move=> u; rewrite /= revK. Qed.
 
 Lemma size_revdual u : size u = size (revdual u).
 Proof using. by rewrite /= size_rev. Qed.
@@ -482,7 +482,7 @@ Theorem plact_from_dualE (u v : seq Dual) :
   u =Pl v <-> from_revdual u =Pl from_revdual v.
 Proof using.
 split; first exact: plact_from_revdual.
-move /plact_revdual; by rewrite !from_revdualK.
+by move /plact_revdual; rewrite !from_revdualK.
 Qed.
 
 End PlactDual.
@@ -752,7 +752,7 @@ Lemma bisimul_instab t l b lb :
 Proof using.
 elim: t l lb => [/= l lb _| t0 t IHt l lb Htab] Hl Hallrow.
 - case: lb => [_ /=| lb Hj]; first by rewrite Hl /= (ltnX_eqF Hl) eq_refl.
-  exfalso; move/(_ 0 (ltn0Sn _)): Hj; by rewrite /= ltnXnn.
+  by exfalso; move/(_ 0 (ltn0Sn _)): Hj; rewrite /= ltnXnn.
 - move: Htab => /= /and4P [] Hnnil Hrow0 _ Htab.
   case: lb => [/= _ {IHt Htab} | lb Hj /=].
   + have Hrow: is_row (rcons t0 b) by apply: Hallrow; rewrite inE eq_refl.
@@ -796,7 +796,7 @@ elim/last_ind: R HR => [/= _| R Rn IHR].
   + exfalso; move: HRS; case: (RS L) => [//= | t0 t /=].
     by case: (bumprow t0 b) => [[] u v].
   + move: HRS; case HRSL : (RS L) => [//= | t0 t /=].
-    * move=> [<- <-] /=; by rewrite eq_refl.
+    * by move=> [<- <-] /=; rewrite eq_refl.
     * have Hrow: is_row (rcons t0 b).
         have := allLeq_is_row_rcons HL; rewrite HRSL.
         by apply; rewrite inE eq_refl orTb.

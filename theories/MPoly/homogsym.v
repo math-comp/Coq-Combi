@@ -375,7 +375,7 @@ apply eq_bigr => m _; rewrite !linearZ /=; congr (_ *: _).
 rewrite msymX !pihomogX /=.
 have -> : mdeg [multinom m ((s^-1)%g i) | i < nv] = mdeg m.
   rewrite /mdeg; apply eq_big_perm.
-  apply/tuple_perm_eqP; by exists (s^-1)%g.
+  by apply/tuple_perm_eqP; exists (s^-1)%g.
 by case: (mdeg m == d); rewrite ?msym0 ?msymX.
 Qed.
 
@@ -510,7 +510,7 @@ rewrite /= is_part_sortedE; apply/and3P; split.
   move=> /andP [Hij Hjm]; have Him := leq_ltn_trans Hij Hjm.
   have:= reshape_indexP Hjm; have:= reshape_offsetP Hjm.
   have:= reshape_indexP Him; have:= reshape_offsetP Him.
-  rewrite size_tuple => [] Hc1 Hr1 Hc2 Hr2.
+  rewrite size_tuple => Hc1 Hr1 Hc2 Hr2.
   do 2 (rewrite (nth_map ord0); last by rewrite size_enum_ord).
   rewrite !(mnm_nth 0) !nth_nseq !nth_enum_ord //= {Hr1 Hr2}.
   rewrite {}Hc1 {}Hc2 ltnS; move: Hij.
@@ -638,7 +638,7 @@ Definition map_homsym (f : HSFR) : HSFS := HomogSym (map_sympoly_d_homog f).
 
 Lemma map_homsym_is_additive : additive map_homsym.
 Proof.
-move=> /= p q; apply val_inj; by rewrite /= rmorphB.
+by move=> /= p q; apply val_inj; rewrite /= rmorphB.
 Qed.
 Canonical map_homsym_additive := Additive map_homsym_is_additive.
 

@@ -124,9 +124,9 @@ Definition catlang d1 d2 (s1 : homlang d1) (s2 : homlang d2) :
 Lemma cat_tuple_inj d1 d2 (u x : d1.-tuple 'I_n) (v y : d2.-tuple 'I_n) :
   cat_tuple u v = cat_tuple x y -> (u, v) = (x, y).
 Proof using .
-rewrite /cat_tuple => [] [] /eqP.
+rewrite /cat_tuple => [] [/eqP].
 rewrite eqseq_cat; last by rewrite !size_tuple.
-by move=> /andP [] /eqP/val_inj -> /eqP/val_inj ->.
+by move=> /andP [/eqP/val_inj -> /eqP/val_inj ->].
 Qed.
 
 Lemma catlangM d1 d2 (s1 : homlang d1) (s2 : homlang d2) :
@@ -141,9 +141,9 @@ rewrite -(big_imset (h := fun p => cat_tuple p.1 p.2) commword) /=;
   last by move=> [u v] [x y] /= _ _; apply: cat_tuple_inj.
 apply: eq_bigl => w.
 apply/idP/idP.
-- move/imsetP => [] [u v] /=; rewrite unfold_in /= => /andP [] Hu Hv ->.
+- move/imsetP => [] [u v] /=; rewrite unfold_in /= => /andP [Hu Hv] ->.
   exact: mem_imset2.
-- move/imset2P => [] u v Hu Hv -> {w}.
+- move/imset2P => [u v Hu Hv -> {w}].
   by apply/imsetP; exists (u, v) => //=; rewrite unfold_in /= Hu Hv.
 Qed.
 
@@ -164,9 +164,9 @@ Lemma tabsh_reading_RSP (sh : seq nat) (w : seq A) :
     (tabsh_reading_RS sh w).
 Proof using .
 apply (iffP idP).
-- move=> /andP [] /eqP HRS /eqP Hsh.
+- move=> /andP [/eqP HRS /eqP Hsh].
   exists (RS w); split => //; exact: is_tableau_RS.
-- move=> [] tab [] Htab Hsh Hw; apply/andP.
+- move=> [tab] [Htab Hsh Hw]; apply/andP.
   have:= RS_tabE Htab; rewrite Hw => ->.
   by rewrite Hw Hsh.
 Qed.
@@ -239,15 +239,15 @@ Proof using .
 rewrite /freeSchur /tabwordshape /tabword_of_tuple.
 apply/setP/subset_eqP/andP; split; apply/subsetP => w;
     rewrite !inE tabsh_reading_RSE /tabsh_reading_RS.
-- move/imsetP => [] t; rewrite inE => /eqP HQ /(congr1 val) /= ->.
+- move/imsetP => [t]; rewrite inE => /eqP HQ /(congr1 val) /= ->.
   rewrite (RS_tabE (is_tableau_RS t)) eq_refl /= {w}.
   by rewrite -HQ -!RStabmapE shape_RStabmapE.
-- move/andP => [] /eqP Hw /eqP Hsh; apply/imsetP.
+- move/andP => [/eqP Hw /eqP Hsh]; apply/imsetP.
   have Hpair : is_RStabpair (RS w, val Q).
     by rewrite /is_RStabpair is_tableau_RS stdtabnP Hsh eq_refl.
   have Hpr : is_RSpair (RS w, yam_of_stdtab Q).
-    have:= Hpair; rewrite /is_RStabpair /= => /andP [] -> /=.
-    move=> /andP [] /yam_of_stdtabP -> /= /eqP ->.
+    have:= Hpair; rewrite /is_RStabpair /= => /andP [-> /=].
+    move=> /andP [/yam_of_stdtabP -> /= /eqP ->].
     by rewrite shape_yam_of_stdtab.
   pose imw := (RStabinv (RSTabPair Hpair)).
   have Hsz : size (imw) == d.
@@ -297,17 +297,17 @@ Lemma free_LR_rule :
 Proof using .
 rewrite /catlang.
 apply/setP/subset_eqP/andP; split; apply/subsetP=> t.
-- move/imset2P => [] w1 w2.
+- move/imset2P => [w1 w2].
   rewrite !freeSchurP /= => Hw1 Hw2 ->.
   have:= conj Hw1 Hw2.
-  rewrite LRtriple_cat_equiv // => [] [] H1 H2 [] Q [] Htriple /= Hcat.
+  rewrite LRtriple_cat_equiv // => [[H1 H2] [Q [Htriple /= Hcat]]].
   have:= is_stdtab_of_n_LRtriple (stdtabnP Q1) (stdtabnP Q2) Htriple.
   rewrite !size_tab_stdtabn => HQ.
   apply/bigcupP; exists (StdtabN HQ).
     rewrite /LRsupport inE -LRtriple_fastE //.
     apply/LRtripleP => //; exact: Htriple.
   by rewrite freeSchurP.
-- move/bigcupP => [] Q; rewrite /LRsupport freeSchurP inE => Htriple /= Ht.
+- move/bigcupP => [Q]; rewrite /LRsupport freeSchurP inE => Htriple /= Ht.
   have Hsz1 : size (take d1 t) == d1.
     by rewrite size_take_leq size_tuple leq_addr.
   pose t1 := Tuple Hsz1.
@@ -315,17 +315,18 @@ apply/setP/subset_eqP/andP; split; apply/subsetP=> t.
     by rewrite size_drop size_tuple addKn.
   pose t2 := Tuple Hsz2.
   have Hcat : t = cat_tuple t1 t2.
-    apply: val_inj => /=; by rewrite cat_take_drop.
+    by apply: val_inj => /=; rewrite cat_take_drop.
   have : val t1 \in langQ Q1 /\ val t2 \in langQ Q2.
-    rewrite LRtriple_cat_equiv // !size_tuple !size_tab_stdtabn //; split; try by [].
+    rewrite LRtriple_cat_equiv // !size_tuple !size_tab_stdtabn //.
+    split; try by [].
     exists Q; split.
-    + apply/LRtripleP => //; by rewrite LRtriple_fastE.
+    + by apply/LRtripleP => //; rewrite LRtriple_fastE.
     + by rewrite /= cat_take_drop.
-  move=> [] /= Ht1 Ht2.
+  move=> [/= Ht1 Ht2].
   apply/imset2P; apply: (Imset2spec (x1 := t1) (x2 := t2)).
   + by rewrite freeSchurP.
   + by rewrite freeSchurP.
-  + apply: val_inj; by rewrite /= cat_take_drop.
+  + by apply: val_inj; rewrite /= cat_take_drop.
 Qed.
 
 (** Alternative proof from [LRrule_langQ] *)
@@ -373,7 +374,7 @@ rewrite big_trivIset /=; first last.
   rewrite /freeSchur => Hdiff.
   rewrite /disjoint; apply/pred0P => w /=.
   rewrite !inE; apply: negbTE; move: Hdiff; apply: contra.
-  by move=> /andP [] /eqP -> /eqP ->.
+  by move=> /andP [/eqP -> /eqP ->].
 
 transitivity (\sum_(Q in LRsupport) polylang R (freeSchur Q));
   last by apply eq_bigr=> w _; rewrite Schur_freeSchurE.
@@ -381,26 +382,26 @@ transitivity (\sum_(Q in LRsupport) polylang R (freeSchur Q));
 rewrite (big_setID [set set0]) /=.
 rewrite [X in X + _](_ : _ = 0) ?add0r; first last.
   rewrite (eq_bigr (fun=> 0)); first by rewrite sumr_const mul0rn.
-  move=> i; rewrite inE => /andP [] _; rewrite inE => /eqP ->.
+  move=> i; rewrite inE => /andP [_]; rewrite inE => /eqP ->.
   by rewrite /polylang big_set0.
 
 rewrite (big_setID [set x | freeSchur x == set0]) /=.
 rewrite [X in X + _](_ : _ = 0) ?add0r; first last.
   rewrite (eq_bigr (fun=> 0)); first by rewrite sumr_const mul0rn.
-  move=> i; rewrite inE => /andP [] _; rewrite inE => /eqP ->.
+  move=> i; rewrite inE => /andP [_]; rewrite inE => /eqP ->.
   by rewrite /polylang big_set0.
 
 rewrite -big_imset /=; first last.
   move=> T1 T2 /=.
-  rewrite inE => /andP []; rewrite inE => /set0Pn [] x1 Hx1 _ _.
+  rewrite inE => /andP []; rewrite inE => /set0Pn [x1 Hx1] _ _.
   move: Hx1; rewrite inE => /eqP Hx1 /setP/(_ x1); rewrite !inE Hx1.
   rewrite eq_refl => /esym/eqP; exact: val_inj.
 
 apply: eq_bigl => s; rewrite !inE.
 apply/idP/idP.
-+ move=> /andP [] Hn0 /imsetP [] Q HQ Hs; subst s.
++ move=> /andP [Hn0 /imsetP [Q HQ Hs]]; subst s.
   by rewrite mem_imset //= inE HQ inE Hn0.
-+ move/imsetP => [] Q; rewrite 2!inE => /andP [] H1 H2 ->.
++ move/imsetP => [Q]; rewrite 2!inE => /andP [H1 H2] ->.
   by rewrite H1 /= mem_imset.
 Qed.
 
@@ -447,9 +448,9 @@ rewrite !shaped_hyper_stdtabnP => ->.
 move : (LRsupport _ _) => LR.
 rewrite (partition_big (@shape_deg (d1 + d2)) predT) //=.
 apply: eq_bigr => P _.
-rewrite (eq_bigr (fun i => (Schur P))); last by move=> T /andP [] _ /eqP ->.
+rewrite (eq_bigr (fun i => (Schur P))); last by move=> T /andP [_ /eqP ->].
 rewrite sumr_const; congr (_ *+ _).
-apply: eq_card => i /=; by rewrite unfold_in inE.
+by apply: eq_card => i /=; rewrite unfold_in inE.
 Qed.
 
 Lemma size_RSmapinv2_yam d (Typ : inhOrdType) (tab : seq (seq Typ)) (T : stdtabn d) :
@@ -602,7 +603,7 @@ Qed.
 Lemma shape_bij_LRsupport : shape bij_LRsupport = shape Q.
 Proof using HTriple Hsh1 Hsh2.
 have:= take_drop_langQ; rewrite /= -shape_RStabmapE RStabmapE.
-rewrite !inE => [] [] /eqP HU1 /eqP HU2.
+rewrite !inE => [] [/eqP HU1 /eqP HU2].
 have -> : RS (changeUT T1 T2 w) = RS w.
   apply/eqP; rewrite -plactic_RS;
   by apply: plact_changeUT; rewrite -RStabmapE shape_RStabmapE ?HU1 ?HU2.
@@ -612,14 +613,14 @@ Qed.
 
 Lemma shape_takeRS : shape (RS (take d1 w)) = shape U1.
 Proof using HTriple.
-have:= take_drop_langQ; rewrite -/w => /= [] [] Htake _.
+have:= take_drop_langQ; rewrite -/w => /= [] [Htake _].
 move: Htake; rewrite inE => /eqP <-.
 by rewrite -RStabmapE shape_RStabmapE.
 Qed.
 
 Lemma shape_dropRS : shape (RS (drop d1 w)) = shape U2.
 Proof using HTriple.
-have:= take_drop_langQ; rewrite -/w => /= [] [] _ Hdrop.
+have:= take_drop_langQ; rewrite -/w => /= [] [_ Hdrop].
 move: Hdrop; rewrite inE => /eqP <-.
 by rewrite -RStabmapE shape_RStabmapE.
 Qed.
@@ -627,7 +628,7 @@ Qed.
 Lemma predLR_bij_LRsupport : pred_LRtriple T1 T2 bij_LRsupport.
 Proof using HTriple Hsh1 Hsh2.
 apply/LRtripleP => //=.
-have:= take_drop_langQ; rewrite -/w => /= [] [] Htake Hdrop.
+have:= take_drop_langQ; rewrite -/w => /= [] [Htake Hdrop].
 apply LRtriple_cat_langQ => //.
 - have Hpair := changeTtakeP shape_takeRS.
   rewrite (toDepRSPair Hpair) inE.
@@ -648,16 +649,16 @@ have Hsimpl A B C :
     [set Q in (LRsupport A B) | (shape Q == C)] =
     [set Q : stdtabn (d1 + d2) | pred_LRtriple A B Q & (shape Q == C)].
   apply/setP => Q; rewrite /LRsupport 2!inE [RHS]inE.
-  congr (_ && _); by rewrite LRtriple_fastE.
+  by congr (_ && _); rewrite LRtriple_fastE.
 rewrite !{}Hsimpl.
 rewrite -(card_in_imset (f := bij_LRsupport)).
-- apply subset_leqif_cards; apply/subsetP => Qres /imsetP [] Q.
-  rewrite inE => /andP [] Hpred /eqP <- -> {Qres}.
+- apply subset_leqif_cards; apply/subsetP => Qres /imsetP [Q].
+  rewrite inE => /andP [Hpred /eqP <-] -> {Qres}.
   rewrite inE; apply/andP; split.
   + exact: predLR_bij_LRsupport.
   + by rewrite shape_bij_LRsupport.
-- move=> Q1 Q2; rewrite inE => /andP [] HQ1 /eqP HshQ1.
-  rewrite inE => /andP [] HQ2 /eqP; rewrite -HshQ1 {HshQ1} => Heqsh.
+- move=> Q1 Q2; rewrite inE => /andP [HQ1 /eqP HshQ1].
+  rewrite inE => /andP [HQ2 /eqP]; rewrite -HshQ1 {HshQ1} => Heqsh.
   move=>/(congr1 (@val _ _ _)); rewrite /=.
   set w1 := (X in changeUT _ _ X).
   set w2 := (X in _ = (RStab (changeUT _ _ X)).2) => Heq1.
@@ -670,10 +671,10 @@ rewrite -(card_in_imset (f := bij_LRsupport)).
     + by rewrite /= Heqsh.
   have:= take_drop_langQ HQ1.
   have:= plact_changeUT (shape_takeRS HQ1) (shape_dropRS HQ1); rewrite -/w1.
-  rewrite plactic_RS => /eqP <- [] HQ1take HQ1drop.
+  rewrite plactic_RS => /eqP <- [HQ1take HQ1drop].
   have:= take_drop_langQ HQ2.
   have:= plact_changeUT (shape_takeRS HQ2) (shape_dropRS HQ2); rewrite -/w2.
-  rewrite plactic_RS => /eqP <- [] HQ2take HQ2drop.
+  rewrite plactic_RS => /eqP <- [HQ2take HQ2drop].
   rewrite -!RStabE => Heq2.
   have {Heq1 Heq2 HQ1take HQ1drop HQ2take HQ2drop} Heq : w1 = w2.
     rewrite -(changeUTK HQ1take HQ1drop) -(changeUTK HQ2take HQ2drop).
@@ -687,7 +688,7 @@ rewrite -(card_in_imset (f := bij_LRsupport)).
   rewrite /= -(yam_of_stdtabK (stdtabnP Q1)) -(yam_of_stdtabK (stdtabnP Q2)).
   congr stdtab_of_yam.
   have:= RSmapinv2K (RSpairyamQ Q1); rewrite -/w1 Heq /w2.
-  by rewrite (RSmapinv2K (RSpairyamQ Q2)) => [] [] _ ->.
+  by rewrite (RSmapinv2K (RSpairyamQ Q2)) => [] [_ ->].
 Qed.
 
 End ChangeUT.
@@ -705,7 +706,7 @@ Theorem LRtab_coeff_shapeE (T1 : stdtabn d1) (T2 : stdtabn d2) P :
   LRtab_coeff P = #|[set Q in (LRsupport T1 T2) | (shape Q == P)]|.
 Proof using .
 rewrite /LRtab_coeff /LRtab_set => H1 H2.
-apply card_LRtab_set_shapeE; by rewrite shape_hyper_stdtabnP ?H1 ?H2.
+by apply card_LRtab_set_shapeE; rewrite shape_hyper_stdtabnP ?H1 ?H2.
 Qed.
 
 End Bij_LRsupport.
@@ -732,7 +733,7 @@ apply/idP/idP.
     rewrite pred_LRtriple_conj // conj_tabK; first exact H.
     * exact: stdtabP.
     * apply val_inj; rewrite /= conj_tabK //; exact: stdtabP.
-- move=> /imsetP [] U; rewrite inE -LRtriple_fastE //.
+- move=> /imsetP [U]; rewrite inE -LRtriple_fastE //.
   rewrite pred_LRtriple_conj // => H -> {T}.
   rewrite -LRtriple_fastE; try exact: is_stdtab_conj.
   exact: H.
@@ -755,7 +756,7 @@ rewrite !setIdE imsetI; last by move=> a b /= _ _; exact: Hinj.
 congr (card (mem (_ :&: _))).
 apply/setP => T; rewrite !inE.
 apply/idP/idP.
-- move/imsetP => [] U; rewrite inE => /eqP HU -> /=.
+- move/imsetP => [U]; rewrite inE => /eqP HU -> /=.
   by rewrite shape_conj_tab HU.
 - move/eqP => H; apply/imsetP; exists (conj_stdtabn T).
   + by rewrite inE /= shape_conj_tab H /= conj_partK.

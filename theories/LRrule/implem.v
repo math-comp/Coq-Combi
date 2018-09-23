@@ -54,7 +54,7 @@ Lemma is_part_pad0 n p :
   is_part p -> sorted geq (pad 0 n p).
 Proof.
 have Hpath x i : path geq x (nseq i 0).
-  case: i => [//= | i] /=; by elim: i.
+  by case: i => [//= | i] /=; elim: i.
 case: p => [_ | p0 p]; case: n => [| n /=] //=.
   rewrite cats0 -/(sorted geq (p0 :: p)) -/(is_part (p0 :: p)).
   exact: sorted_is_part.
@@ -476,7 +476,7 @@ move: Hinn Hout Hincl Hsize Hrow0 res Hres.
 elim: outer innev inner sh0 row0 => [//= | out0 out IHout]
             innev inner sh0 row0 Hinn Hout /= Hincl Hsize Hrow0 res.
   rewrite mem_seq1 => /eqP -> /=; move: Hsize => /eqP/nilP ->.
-  move: Hout; by rewrite eq_refl Hrow0 !andbT addnC lt0n.
+  by move: Hout; rewrite eq_refl Hrow0 !andbT addnC lt0n.
 case: inner Hinn Hincl Hsize => [//= | inn0 inn] Hinn /= /andP [H0 Hincl].
 move/eqP; rewrite eqSS => /eqP Hsize.
 move=> /flatten_mapP [[rshift shrshift]].
@@ -734,7 +734,7 @@ rewrite /LRyamtab_list LRyamtab_list_pad0 -diff_shape_pad0.
 move => /LRyamtab_list_shape0; apply => //=.
 - have /= := is_part_pad0 (size outer) Hinn.
   case: inner Hincl {Hinn Hout} => [//= | inn0 inn] /=.
-  + rewrite subn0; by case outer.
+  + by rewrite subn0; case outer.
   + by case: outer => [//= | out0 out] /= /andP [-> _] ->.
 - by rewrite addn0 leqnn Hout.
 - by rewrite -included_pad0.
@@ -806,10 +806,10 @@ have Hskew : is_skew_tableau (head 1 outer :: (pad 0 (size outer)) inner)
                              ([::] :: yamtab).
   move: Htab; rewrite Hsztab /= => ->; rewrite andbT (part_head_non0 Hout) /=.
   case: outer Hincl Hshape Hsztab {Hinn Hout Hsize} => [|out0 out] /=.
-    case: inner => [ _ _ /eqP/nilP ->| in0 inn] //=.
+    by case: inner => [ _ _ /eqP/nilP ->| in0 inn] //=.
   case: inner => [_ | in0 inn] //=.
     case: yamtab {Hyam} => [ | yam0 yam] //= [Hyam _] _.
-    rewrite subn0; by rewrite /skew_dominate -Hyam drop_size.
+    by rewrite subn0; rewrite /skew_dominate -Hyam drop_size.
   move=> /andP [Hincl _].
   case: yamtab {Hyam}=> [ | yam0 yam] //= [Hyam _] _.
   by rewrite /skew_dominate -Hyam drop_size.

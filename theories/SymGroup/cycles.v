@@ -102,7 +102,7 @@ Qed.
 Lemma support_card_pcycle s x : (#|pcycle s x| != 1%N) = (x \in support s).
 Proof using.
 rewrite inE; congr negb; apply/eqP/idP => [H|].
-- apply/afix1P => /=; by rewrite -{2}(iter_pcycle s x) H.
+- by apply/afix1P => /=; rewrite -{2}(iter_pcycle s x) H.
 - rewrite /pcycle -afix_cycle_in; last by rewrite inE.
   by move/orbit1P; rewrite /orbit /= => ->; rewrite cards1.
 Qed.
@@ -147,7 +147,7 @@ Lemma in_psupportP s X x:
 Proof using.
 rewrite -in_support; apply (iffP idP) => [Hy | [Y]].
 - by exists (pcycle s x); first by rewrite inE mem_imset ?support_card_pcycle.
-- rewrite inE => /andP [] /imsetP [y _ -> {Y}] Hcard.
+- rewrite inE => /andP [/imsetP [y _ -> {Y}] Hcard].
   by rewrite -support_card_pcycle -eq_pcycle_mem => /eqP ->.
 Qed.
 
@@ -477,7 +477,7 @@ Proof using.
 move=> Hdisj HC Hx.
 have {Hx} Hnotin : {in A :\ C, forall C0 : {perm T}, x \notin support C0}.
   move: Hdisj => [/trivIsetP Hdisj Hinj] C0.
-  rewrite 2!inE => /andP [] HC0 HC0A.
+  rewrite 2!inE => /andP [HC0 HC0A].
   move/(_ _ _ (mem_imset _ HC) (mem_imset _ HC0A)): Hdisj.
   have Hdiff: support C != support C0.
     by move: HC0; apply contra => /eqP/Hinj ->.

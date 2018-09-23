@@ -260,9 +260,9 @@ Variable s t : seq nat.
 Hypothesis Hinv : invseq s t.
 
 Let Hinvst : linvseq s t.
-Proof using Hinv. have:= Hinv; by rewrite /invseq => /andP []. Qed.
+Proof using Hinv. by have:= Hinv; rewrite /invseq => /andP []. Qed.
 Let Hinvts : linvseq t s.
-Proof using Hinv. have:= Hinv; by rewrite /invseq => /andP []. Qed.
+Proof using Hinv. by have:= Hinv; rewrite /invseq => /andP []. Qed.
 
 Local Definition val2pos :=
   fun (i : 'I_(size s)) => Ordinal (linvseq_ltn_szt Hinvst (ltn_ord i)).
@@ -372,7 +372,7 @@ move=> H; apply/eqP/stdP; constructor.
       move=> Hiota; apply: map_f; have:= Hperm i.+1; move: Hiota.
       rewrite !mem_iota /= !add0n size_rcons ltnS => ->.
       rewrite mem_rcons inE.
-      move: Hi; rewrite -ltnS => /ltn_eqF; by rewrite eq_sym => -> /= ->.
+      by move: Hi; rewrite -ltnS => /ltn_eqF; rewrite eq_sym => -> /= ->.
   + by rewrite size_map size_iota.
 - apply/eq_invP; split; first by rewrite size_map.
   move=> i j /andP [Hij Hj].
@@ -383,7 +383,7 @@ move=> H; apply/eqP/stdP; constructor.
   apply: contraLR.
   rewrite -!ltnNge !ltn_neqAle => /andP [Hneq /shiftinv_pos_incr ->].
   rewrite andbT.
-  have:= std_uniq H; rewrite rcons_uniq => /andP [] Htn Huniqt.
+  have:= std_uniq H; rewrite rcons_uniq => /andP [Htn Huniqt].
   move: Hneq; set xi := nth _ _ i; set xj := nth _ _ j.
   rewrite /shiftinv_pos.
   case (ltnP xi tn) => Hxi; case (ltnP xj tn) => Hxj.

@@ -660,7 +660,7 @@ case: (altP (inord i =P u)) => Hu.
 case: (altP (inord i.+1 =P u)) => Hu1.
   subst u; rewrite tpermR /=.
   rewrite tpermD; first last.
-  - move: Hlt; by rewrite ltn_neqAle => /andP [].
+  - by move: Hlt; rewrite ltn_neqAle => /andP [].
   - move: Hlt; rewrite Hii1 => /ltnW.
     by rewrite ltn_neqAle => /andP [].
   apply/andP; split.
@@ -668,13 +668,13 @@ case: (altP (inord i.+1 =P u)) => Hu1.
   - rewrite /eq_op /= eq_refl /= eq_sym.
     by move: Hlt; rewrite ltn_neqAle => /andP [].
 rewrite (tpermD Hu Hu1); apply/andP; split; first last.
-  apply/nandP => /=; left; by rewrite eq_sym.
+  by apply/nandP => /=; left; rewrite eq_sym.
 case: (altP (inord i =P v)) => Hv.
   subst v; rewrite tpermL Hii1.
   by apply (leq_trans Hlt).
 case: (altP (inord i.+1 =P v)) => Hv1.
   subst v; rewrite tpermR.
-  move: Hlt; by rewrite Hii1 ltnS ltn_neqAle eq_sym Hu /=.
+  by move: Hlt; rewrite Hii1 ltnS ltn_neqAle eq_sym Hu /=.
 by rewrite tpermD.
 Qed.
 
@@ -698,8 +698,8 @@ rewrite /Vanprod.
 rewrite (bigD1 (inord i, inord i.+1)) /=; first last.
   by rewrite !inordK //=; apply (leq_trans Hi).
 rewrite msymM -mulNr; congr (_ * _).
-  rewrite msymB opprB; congr (_ - _);
-  by rewrite /msym mmapX mmap1U /eltr ?tpermL ?tpermR.
+  rewrite msymB opprB.
+  by congr (_ - _); rewrite /msym mmapX mmap1U /eltr ?tpermL ?tpermR.
 rewrite (big_morph _ (msymM (eltr n i)) (msym1 _ (eltr n i))) /=.
 rewrite (eq_bigl (fun p : 'II_n.+1 => predi i (eltrp i p))); first last.
   by move=> [u v]; rewrite -/(predi i (u,v)) (predi_eltrpE (u, v) Hi) /=.
@@ -805,15 +805,15 @@ case: (boolP (U_(ordc) <= k)%MM) => Hck.
   rewrite big1 ?addr0; first last.
     move=> m /andP [Hmk Hmc1].
     rewrite coeffXdiff; last exact: lepm_trans Hmk Hk.
-    move: Hmc1; rewrite {1}/eq_op /= => /= /negbTE /= ->; by rewrite mul0r.
-    rewrite -{2}(submK Hck).
-    have -> : mesymlm n c.+1 = (mesymlm n c + U_(ordc))%MM.
-      rewrite mnmP => i; rewrite !mnmE !inE ltnS leq_eqVlt.
-      rewrite orbC eq_sym {2}/eq_op/=.
-      case: eqP => [->|_]; first by rewrite ltnn.
-      by rewrite orbF addn0.
-    congr (nat_of_bool _)%:R; apply/eqP/eqP => [ <- // | Heq].
-    by rewrite -[RHS](addmK (U_(ordc))%MM) -[LHS](addmK (U_(ordc))%MM) Heq.
+    by move: Hmc1; rewrite {1}/eq_op /= => /= /negbTE /= ->; rewrite mul0r.
+  rewrite -{2}(submK Hck).
+  have -> : mesymlm n c.+1 = (mesymlm n c + U_(ordc))%MM.
+    rewrite mnmP => i; rewrite !mnmE !inE ltnS leq_eqVlt.
+    rewrite orbC eq_sym {2}/eq_op/=.
+    case: eqP => [->|_]; first by rewrite ltnn.
+    by rewrite orbF addn0.
+  congr (nat_of_bool _)%:R; apply/eqP/eqP => [ <- // | Heq].
+  by rewrite -[RHS](addmK (U_(ordc))%MM) -[LHS](addmK (U_(ordc))%MM) Heq.
 - rewrite big1; first last.
     move=> m /= Hm; rewrite coeffXdiff; last exact: lepm_trans Hm Hk.
     suff -> : m == U_(ordc)%MM :> 'X_{1..n} = false by rewrite mul0r.

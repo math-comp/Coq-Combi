@@ -263,7 +263,7 @@ Lemma repr_S2 (rho : representation [fieldType of algC] [group of 'SG_2]) :
 Proof using.
 move=> Hirr.
 have : cfRepr rho \in irr 'SG_2.
-  apply/irr_reprP; by exists rho.
+  by apply/irr_reprP; exists rho.
 by rewrite -(perm_eq_mem perm_eq_char_S2) !inE =>
   /orP [] /cfRepr_rsimP; [left | right].
 Qed.
