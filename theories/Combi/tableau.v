@@ -134,7 +134,7 @@ Fixpoint dominate_rec u v :=
   else true.
 
 Definition dominate u v :=
-  ((size u) <= (size v)) &&
+  (size u <= size v) &&
    (all (fun i => nth Z u i >A nth Z v i) (iota 0 (size u))).
 
 Lemma dominate_recE : dominate =2 dominate_rec.
@@ -145,7 +145,7 @@ by rewrite -add1n iota_addl all_map; apply eq_all => i.
 Qed.
 
 Lemma dominateP u v :
-  reflect ((size u) <= (size v) /\ forall i, i < size u -> nth Z u i >A nth Z v i)
+  reflect (size u <= size v /\ forall i, i < size u -> nth Z u i >A nth Z v i)
           (dominate u v).
 Proof using.
 rewrite /dominate /mkseq ; apply/(iffP idP).

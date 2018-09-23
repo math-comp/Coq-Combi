@@ -513,7 +513,7 @@ Notation swap_setX := (Swap.swap_set u v a b).
 Hypothesis HnoBoth :
   forall S : {set 'I_(size x)}, S \in P -> ~ ((posa \in S) && (posb \in S)).
 
-Local Lemma Hcast : size x = size y. Proof using a b u v. by rewrite !size_cat. Qed.
+Lemma Hcast : size x = size y. Proof using a b u v. by rewrite !size_cat. Qed.
 
 (** This is essentially : [set cast_ord Hcast x | x in swap_setX S]. *)
 Definition swap_set : {set 'I_(size x)} -> {set 'I_(size y)} :=
