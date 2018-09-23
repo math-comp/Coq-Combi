@@ -135,3 +135,16 @@ Print impl_trans.
 Print impl_trans_sec.
 Print impl_trans_fun.
 Print impl_trans_ssr.
+
+(** Boolean reflection *)
+
+Print and.
+Print andb.
+Check andP.
+
+Print has.
+
+Eval compute in has (fun x => x == 5) [:: 2; 5; 3; 4].
+Eval compute in has (fun x => x == 0) [:: 2; 5; 3; 4].
+Check hasP.
+
