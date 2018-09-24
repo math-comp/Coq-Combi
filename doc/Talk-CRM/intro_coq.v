@@ -118,13 +118,14 @@ Definition impl_trans_sec := fun (a : A) => BC (AB a).
 
 End Composition.
 
-(** SSreflect / Mathematical component : a different tactic language *)
+(** Direct definition *)
 Definition impl_trans_fun
            (A B C : Prop)
            (AB : A -> B)
            (BC : B -> C) :=
   fun (a : A) => BC (AB a).
 
+(** SSreflect / Mathematical component : a different tactic language *)
 Lemma impl_trans_ssr (A B C : Prop) :
   (A -> B) -> (B -> C) -> (A -> C).
 Proof.
