@@ -675,6 +675,30 @@ There is not a single ``good'' definition:
 \end{itemize}
 \end{frame}
 
+\begin{frame}[fragile]{Choices in constructive mathematics}
+
+Sometime you have a choice to make where \textbf{any choice will do}:
+\bigskip\pause
+
+Example: contructing a \textbf{conjugating permutation} between two
+permutations with same cycle type: {\tiny\hfill
+  \href{file:html/Combi.SymGroup.cycletype.html#conj_permP}%
+  {\texttt{Conjugacy classes of $S_n$}} \vspace{-2mm}}
+\begin{coqcode}
+(* (s ^ c)%g == s conjugated by c *)
+Theorem conj_permP s t :
+  reflect (exists c, t = (s ^ c)%g) (cycle_type s == cycle_type t).
+\end{coqcode}
+\begin{itemize}
+\item currently, you have to write a \textbf{precise program} to make the
+  choice and prove that it works
+\item the proof is usually easy because any choice will do
+\item but writing the program making the choice can be harder than expected.
+\end{itemize}
+
+
+\end{frame}
+
 \begin{frame}[fragile]{Equality / set theory}
 
   \textbf{\Large Coq is based on CIC $\neq$ set theory.}\bigskip
