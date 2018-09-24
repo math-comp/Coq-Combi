@@ -663,7 +663,7 @@ Fixpoint conj_part sh :=
   if sh is s0 :: sh then incr_first_n (conj_part sh) s0
   else [::].
 
-Lemma is_part_n1 n : is_part (nseq n 1).
+Lemma is_part_nseq1 n : is_part (nseq n 1).
 Proof. by elim: n => [//= | n /= ->]; rewrite andbT; case n. Qed.
 
 Lemma nth_incr_first_n sh n i :
@@ -688,7 +688,7 @@ Qed.
 Lemma is_part_incr_first_n sh n :
   is_part sh -> is_part (incr_first_n sh n).
 Proof.
-elim: sh n => [// n _| s0 sh IHsh] /=; first exact: is_part_n1.
+elim: sh n => [// n _| s0 sh IHsh] /=; first exact: is_part_nseq1.
 case=> [//= | n] /andP [Hhead /IHsh{IHsh} /= ->]; rewrite andbT.
 case: sh Hhead => [_ | s1 sh] /=; first by case n.
 case: n => [| n] /=; last by apply.
