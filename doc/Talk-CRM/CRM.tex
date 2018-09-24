@@ -453,8 +453,6 @@ Two ways to deal with statements:
   Consequence: $c_{\lambda,\mu}^\nu$ are independant of the number of variables.
 \end{frame}
 
-\section{Combinatorial ingredients: partitions and tableaux}
-
 \Yboxdim{10pt}
 \begin{frame}{Young Tableau}
 
@@ -570,8 +568,6 @@ Definition Schur d (sh : 'P_d) : {mpoly R[n]} :=
   \[ 0000, 1010, 1100, 0010, 0100, 1000, 0210, 2010, 2100, 3210 \]
 \end{frame}
 
-\section{The rule}
-
 \begin{frame}{The LR Rule at last !}
 
   \begin{THEO}[Littlewood-Richardson rule]
@@ -646,7 +642,7 @@ Theorem LRyam_coeffP :
 
 \end{frame}
 
-\section{A few excerpts}
+\section{A few excerpts of the formal proof}
 
 \begin{frame}[fragile]{Getting definition right}
 
@@ -771,21 +767,25 @@ Definition swap_set : {set 'I_(size x)} -> {set 'I_(size y)} :=
 
 \section{Should you try ?}
 
-\begin{frame}{Should you try {\tiny(is this a big waste of time)} ? My two cents}
+\begin{frame}{Should you try {\tiny(or is this a big waste of time)} ? My two cents}
 
   \begin{itemize}
+  \item I'm pretty convinced (and I'm not the only one) that formal math (not
+    Coq/CIC) is the future. However, experts are not completely satisfied with
+    the current foundation (equality\dots). \bigskip\pause
+
   \item This was easier that I first expected !
-    \bigskip
+    \bigskip\pause
 
   \item Lots of time spent on reusable basic stuff (tableau / partition /
-    rewriting systems). Some other figures
+    rewriting systems). Some other figures:
     \begin{itemize}
     \item The hook-length formulas: 3 weeks
     \item Cycle decomposition of permutation: two month by an undergrad
     \item Basic theory of symmetric functions: 3 month
-    \item Character theory of the symmetric groups 1 month
+    \item Character theory of the symmetric groups: 1 month
     \end{itemize}
-    \bigskip
+    \bigskip\pause
 
   \item This is transforming math to a video-game
 
