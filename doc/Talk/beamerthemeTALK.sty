@@ -74,7 +74,6 @@
 }
 
 % PIED DE PAGE
-% logo utc + naviguation interslides
 \defbeamertemplate*{footline}{COURS/UPS theme}
 {%
   \leavevmode%
@@ -95,10 +94,14 @@
 \useinnertheme{rectangles}
 % __________________________________________________________________
 
+\AtBeginSection[]{
+  \begin{frame}{Sommaire}
+  \small \tableofcontents[currentsection, hideothersubsections]
+  \end{frame} 
+}
 
 % __________________________________________________________________
 %
-% THEOREMES EN FRANCAIS
 \mode
 <all>
 {
