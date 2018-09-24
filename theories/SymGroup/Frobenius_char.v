@@ -346,7 +346,7 @@ Lemma irrSG_orthonormal n (la mu : 'P_n) :
   '['irrSG[la], 'irrSG[mu]] = (la == mu)%:R.
 Proof. by rewrite /irrSG Fchar_inv_isometry // homsymdotss. Qed.
 
-Lemma irrSG_irr n (la : 'P_n) : 'irrSG[la] \in irr 'SG_n.
+Theorem irrSG_irr n (la : 'P_n) : 'irrSG[la] \in irr 'SG_n.
 Proof.
 pose P := IntPartNDom.intpartndom_finPOrdType n.
 elim/(finord_wf_down (T := P)): la => la IHla.
