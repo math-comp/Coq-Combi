@@ -117,7 +117,7 @@ Documentation
 
 * A
   [presentation](https://github.com/hivert/Coq-Combi/raw/master/doc/Talk-CRM/CRM.pdf)
-  given at "[Algebra and combinatorics atLaCIM](http://www.crm.umontreal.ca/2018/Algebre18/index_e.php), a conference
+  given at "[Algebra and combinatorics at LaCIM](http://www.crm.umontreal.ca/2018/Algebre18/index_e.php), a conference
   for the 50th anniversary of the CRM", September 24-28, 2018, Montreal,
   Quebec, Canada. This presentation is targeted at combinatorialist.
 
