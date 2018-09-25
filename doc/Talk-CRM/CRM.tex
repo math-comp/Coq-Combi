@@ -360,7 +360,7 @@ Two ways to deal with statements:
   Ferrers diagram of a partitions : $(5,3,2,2) \leftrightarrow \yngs(0.5, 2,2,3,5)$
 
   {\tiny\hfill
-    \href{file:html/Combi.Combi.partition.html#is_part}{\texttt{is\_part}}
+    \href{http://hivert.github.io/Coq-Combi/Combi.Combi.partition.html#is_part}{\texttt{is\_part}}
   \vspace{-2mm}}
 \begin{coqcode}
   Fixpoint is_part sh := (* Predicate *)
@@ -477,7 +477,7 @@ Two ways to deal with statements:
 \begin{frame}[fragile]{Young Tableau: formal definition}
 
   {\tiny\hfill
-    \href{file:html/Combi.Combi.tableau.html#dominate}{\texttt{dominate}}
+    \href{http://hivert.github.io/Coq-Combi/Combi.Combi.tableau.html#dominate}{\texttt{dominate}}
   \vspace{-2mm}}
 \begin{coqcode}
   Variable (T : ordType) (Z : T). (* Ordered type Order <A *)
@@ -492,7 +492,7 @@ Two ways to deal with statements:
             (dominate u v).
 \end{coqcode}
   {\tiny\hfill
-    \href{file:html/Combi.Combi.tableau.html#is_tableau}{\texttt{is\_tableau}}
+    \href{http://hivert.github.io/Coq-Combi/Combi.Combi.tableau.html#is_tableau}{\texttt{is\_tableau}}
   \vspace{-2mm}}
 \begin{coqcode}
   Fixpoint is_tableau (t : seq (seq T)) :=
@@ -527,7 +527,7 @@ Two ways to deal with statements:
 \begin{frame}[fragile]
 
   {\tiny\hfill
-    \href{file:html/Combi.Combi.tableau.html#tabsh}{\texttt{tabsh}}
+    \href{http://hivert.github.io/Coq-Combi/Combi.Combi.tableau.html#tabsh}{\texttt{tabsh}}
   \vspace{-2mm}}
 \begin{coqcode}
 Variable n : nat.
@@ -546,7 +546,7 @@ Structure tabsh sh := TabSh {tabshval; _ : is_tab_of_shape sh tabshval}.
 Canonical tabsh_finType sh := [...] (* Finite type *)
 \end{coqcode}
   {\tiny\hfill
-    \href{file:html/Combi.MPoly.Schur_mpoly.html#Schur}{\texttt{Schur}}
+    \href{http://hivert.github.io/Coq-Combi/Combi.MPoly.Schur_mpoly.html#Schur}{\texttt{Schur}}
   \vspace{-2mm}}
 \begin{coqcode}
 Definition Schur d (sh : 'P_d) : {mpoly R[n]} :=
@@ -614,7 +614,7 @@ Definition Schur d (sh : 'P_d) : {mpoly R[n]} :=
 \begin{frame}[fragile]{The formal statement}
 
   {\tiny\hfill
-    \href{file:html/Combi.LRrule.therule.html#is_skew_reshape_tableau}%
+    \href{http://hivert.github.io/Coq-Combi/Combi.LRrule.therule.html#is_skew_reshape_tableau}%
     {\texttt{definition of LR-yam tableaux}}
   \vspace{-2mm}}
 \begin{coqcode}
@@ -632,7 +632,7 @@ Definition LRyam_coeff := #|LRyam_set|.
 \end{coqcode}
 Then
   {\tiny\hfill
-    \href{file:html/Combi.LRrule.therule.html#LRyam_coeffP}%
+    \href{http://hivert.github.io/Coq-Combi/Combi.LRrule.therule.html#LRyam_coeffP}%
     {the Littlewood-Richardson rule}
   \vspace{-2mm}}
 \begin{coqcode}
@@ -652,13 +652,13 @@ There is not a single ``good'' definition:
 
 \begin{itemize}
 \item Lots of different equivalent ways. (eg:
-\href{file:html/Combi.Combi.partition.html#is_part}{partitions},
-\href{file:html/Combi.Combi.tableau.html#is_tableau}{tableaux})
+\href{http://hivert.github.io/Coq-Combi/Combi.Combi.partition.html#is_part}{partitions},
+\href{http://hivert.github.io/Coq-Combi/Combi.Combi.tableau.html#is_tableau}{tableaux})
 \bigskip\pause
 
 \item Even more difficult for algorithms (
-\href{file:html/Combi.Combi.std.html#std_rec}{standardization},
-\href{file:html/Combi.LRrule.shuffle.html#shuffle_from_rec}{shuffle}):
+\href{http://hivert.github.io/Coq-Combi/Combi.Combi.std.html#std_rec}{standardization},
+\href{http://hivert.github.io/Coq-Combi/Combi.LRrule.shuffle.html#shuffle_from_rec}{shuffle}):
   \medskip
 
   Constraints:
@@ -682,7 +682,7 @@ Sometime you have a choice to make where \textbf{any choice will do}:
 
 Example: contructing a \textbf{conjugating permutation} between two
 permutations with same cycle type: {\tiny\hfill
-  \href{file:html/Combi.SymGroup.cycletype.html#conj_permP}%
+  \href{http://hivert.github.io/Coq-Combi/Combi.SymGroup.cycletype.html#conj_permP}%
   {\texttt{Conjugacy classes of $S_n$}} \vspace{-2mm}}
 \begin{coqcode}
 (* (s ^ c)%g == s conjugated by c *)
@@ -767,7 +767,7 @@ Here is a solution:
 \item Then \verb|cast_ord Hcast : 'I_(size w) -> 'I_(size y)|
 \item Then define:
   {\tiny\hfill
-    \href{file:html/Combi.SSRcomplements.ordcast.html#cast_set}{\texttt{cast\_set}}
+    \href{http://hivert.github.io/Coq-Combi/Combi.SSRcomplements.ordcast.html#cast_set}{\texttt{cast\_set}}
   \vspace{-2mm}}
 \begin{coqcode}
 (*  f @: S == image of S by the function f *)
@@ -775,7 +775,7 @@ Definition cast_set n m (H : n = m) : {set 'I_n} -> {set 'I_m} :=
   [fun s : {set 'I_n} => (cast_ord H) @: s].
 \end{coqcode}
   {\tiny\hfill
-    \href{file:html/Combi.LRrule.Greene_inv.html#NoSetContainingBoth.swap_set}{\texttt{swap\_set}}
+    \href{http://hivert.github.io/Coq-Combi/Combi.LRrule.Greene_inv.html#NoSetContainingBoth.swap_set}{\texttt{swap\_set}}
   \vspace{-2mm}}
 \begin{coqcode}
 Definition swap (i : 'I_(size x)) : 'I_(size x) :=
@@ -817,7 +817,7 @@ Definition swap_set : {set 'I_(size x)} -> {set 'I_(size y)} :=
     \bigskip
 
   \item Some
-    other~\href{file:html/index.html}{results}:\medskip
+    other~\href{http://hivert.github.io/Coq-Combi/index.html}{results}:\medskip
     \begin{itemize}
     \item The hook-length formulas: 3 weeks (joint work w. C. Paulin)
       \medskip
