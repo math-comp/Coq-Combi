@@ -113,8 +113,18 @@ Various unstable/unfinished experiments:
 Documentation
 ========================================================================
 
-The [documentation](http://hivert.github.io/Coq-Combi/) is now complete !
+* The [documentation](http://hivert.github.io/Coq-Combi/) is now complete !
 
+* A
+  [presentation](https://github.com/hivert/Coq-Combi/raw/master/doc/Talk-CRM/CRM.pdf)
+  given at "[Algebra and combinatorics atLaCIM](http://www.crm.umontreal.ca/2018/Algebre18/index_e.php), a conference
+  for the 50th anniversary of the CRM", September 24-28, 2018, Montreal,
+  Quebec, Canada. This presentation is targeted at combinatorialist.
+
+* Another
+  [presentation](https://github.com/hivert/Coq-Combi/raw/master/doc/Talk/INRIA.pdf)
+  given at [Specfun](https://specfun.inria.fr/seminar/) Inria seminar, march
+  2015. This presentation is targeted at proof-assistant specialist.
 
 Installation
 ========================================================================
