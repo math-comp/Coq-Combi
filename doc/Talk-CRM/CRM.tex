@@ -229,7 +229,7 @@ Date:   Sun Jan 4 15:31:16 2015 +0100
 
 Three ingredients:
 \begin{enumerate}
-\item A way to \textbf{\red{store algorithm}} that allows for\\
+\item A way to \textbf{\red{store algorithms}} that allows for\\
   \textbf{manipulating} them \textbf{and reasoning} about them;
 \bigskip\pause
 
@@ -349,7 +349,7 @@ Two ways to deal with statements:
 \end{frame}
 
 
-\section{The Little-Richardson rule}
+\section{The Littlewood-Richardson rule}
 
 \begin{frame}[fragile]{Integer Partitions}
 
@@ -357,7 +357,7 @@ Two ways to deal with statements:
   $|\lambda| := \lambda_0+\lambda_1+\dots+\lambda_l \qandq
   \ell(\lambda) := l\,. $
 
-  Ferrer's diagram of a partitions : $(5,3,2,2) \leftrightarrow \yngs(0.5, 2,2,3,5)$
+  Ferrers diagram of a partitions : $(5,3,2,2) \leftrightarrow \yngs(0.5, 2,2,3,5)$
 
   {\tiny\hfill
     \href{file:html/Combi.Combi.partition.html#is_part}{\texttt{is\_part}}
@@ -720,7 +720,7 @@ Theorem conj_permP s t :
   \item The equality in type theory is ``stronger'' that in set theory
 
     No proof of functional extensionality:\\
-    \[\texttt{(forall x, f x = f y) -> x = y}\]
+    \[\texttt{(forall x, f x = f y) -> f = g}\]
   \end{itemize}
 \end{frame}
 
@@ -737,7 +737,7 @@ Theorem conj_permP s t :
   \begin{THEO}
     For any word $w$, and integer $k$
     \begin{itemize}
-    \item The sum of the length of the $k$-first row of $RS(w)$ is the maximum
+    \item The sum of the length of the $k$-th first row of $RS(w)$ is the maximum
       sum of the length of $k$ disjoint support increasing subsequences of $w$;
     \end{itemize}
   \end{THEO}
@@ -754,7 +754,7 @@ of $w$: \verb|{set 'I_(size w)}|. But, when
 \texttt{x} and \texttt{y} are two different words ! \\
 \verb|{set 'I_(size x)}| and \verb|{set 'I_(size y)}|: different types \\
 \begin{block}{Equality on dependent type}
-  On can only write \texttt{u = v} if \texttt{u} and \texttt{v} are of the
+  One can only write \texttt{u = v} if \texttt{u} and \texttt{v} are of the
   \textbf{same type}.
 \end{block}
 \end{frame}
@@ -764,7 +764,7 @@ of $w$: \verb|{set 'I_(size w)}|. But, when
 Here is a solution:
 \begin{itemize}
 \item Prove that \verb|Hcast : size x = size y|
-\item Then \verb|ordcast Hcast : 'I_(size w) -> 'I_(size y)|
+\item Then \verb|cast_ord Hcast : 'I_(size w) -> 'I_(size y)|
 \item Then define:
   {\tiny\hfill
     \href{file:html/Combi.SSRcomplements.ordcast.html#cast_set}{\texttt{cast\_set}}
