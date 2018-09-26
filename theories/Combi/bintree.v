@@ -21,9 +21,10 @@ We define the following notions
 - [BinLeaf] == the leaf for binary trees
 - [BinNode left right] == the binary tree with subtrees [left] [right]
 - [size_tree t] == the number of node of the tree [t]
-- [bintreesz n] == the sigma type for tree of size [n]. This is canonically
+- [enum_bintreesz n] == the list of a trees of size [n]
+- [bintreesz n] == the sigma type for trees of size [n]. This is canonically
         a [finType]
-- [catalan n] == the number of binary tree of size [n]
+- [catalan n] == the number of binary trees of size [n]
 
  *)
 Require Import mathcomp.ssreflect.ssreflect.
@@ -104,9 +105,25 @@ Canonical bintreesz_countType :=
 
 End Size.
 
-(** A seq if size n.+1 whose i-th element contains the list of binary trees
-of size i *)
+(** The intent of the following recursive definition is the recursion of lemma
+    [enum_bintreeszE]:
+[[
+Fixpoint enum_bintreesz n :=
+  if n is n'.+1 then
+    flatten [seq [seq BinNode tl tr |
+                  tl <- enum_bintreesz i,
+                  tr <- enum_bintreesz (n - i)] | i <- iota 0 n.+1].
+  else [:: [:: BinLeaf]].
+]]
+however [i] and [n - i] are not structurally smaller than [n.+1] so the
+definition is refused by coq as not well founded. So we write the following
+function which returns a cache containing the list of the results of
+[enum_bintreesz i] for [i = 0 ... n]. Otherwise said, to define the
+[enum_bintreesz] function we need a strong [nat] induction where Coq only
+allows simple [nat] induction. *)
 
+(** A seq of size n.+1 whose i-th element contains the list of all binary trees of
+    size i *)
 Fixpoint enum_bintreesz_leq n :=
   if n is n'.+1 then
     let rec := enum_bintreesz_leq n' in
@@ -192,7 +209,7 @@ rewrite map_cat flatten_cat /= cats0 cat_uniq.
 rewrite {}IHi /=; last exact: (leq_trans Hi).
 apply/andP; split.
 - apply/hasP => [] /= [[| l r]] /allpairsP/= [[l1 r1] /= []].
-  + move=> _ _; discriminate.
+  + by move=> _ _ /eqP; rewrite eqE /=.
   + move/size_mem_enum_bintreeszP => Hszl1 _ -> {l r}.
     move/flattenP => [/= ltj /mapP /= [j]].
     rewrite mem_iota /= add0n => Hj ->.
@@ -262,7 +279,7 @@ by rewrite /catalan /= !cardT -!(size_map val) !enumT !unlock !subType_seqP.
 Qed.
 
 Lemma catalan_rec n :
-  catalan n.+1 = \sum_(0 <= i < n.+1) (catalan i) * (catalan (n - i)).
+  catalan n.+1 = \sum_(0 <= i < n.+1) catalan i * catalan (n - i).
 Proof.
 rewrite /catalan /= !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
 rewrite enum_bintreeszE size_flatten.
@@ -270,5 +287,3 @@ rewrite /shape -map_comp -sumn_mapE; apply eq_bigr => i _.
 rewrite size_allpairs.
 by rewrite !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
 Qed.
-
-
