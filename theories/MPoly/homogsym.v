@@ -53,10 +53,10 @@ Changing the base ring and the number of variables:
                      [mnmwgt m = d]
 
 - [map_homsym mor f] == change the base ring of the hom. sym. poly [f] using
-                     the ring morphism [mor]. This is canonicaly additive.
+                     the ring morphism [mor]. This is canonically additive.
 - [cnvarhomsym n f] == change the number of variables of the hom. sym. poly
                      [f] by sending elementary to elementary. This is
-                     canonicaly linear.
+                     canonically linear.
 
 The scalar product:
 

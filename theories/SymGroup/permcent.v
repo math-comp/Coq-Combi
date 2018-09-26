@@ -279,11 +279,11 @@ Qed.
 Definition stab_ipcycles s : {set {perm {set T}}} :=
   perm_ong (pcycles s) :&:
     \bigcap_(i : 'I_#|T|.+1) 'N(pcycles s :&: 'SC_i | 'P).
-(* stab_ipcycles is canonicaly a group *)
+(* stab_ipcycles is canonically a group *)
 
 Definition inpcycles s : {perm T} -> {perm {set T}} :=
   restr_perm (pcycles s) \o actperm 'P^*.
-(* inpcycles is canonicaly a group morphism *)
+(* inpcycles is canonically a group morphism *)
 
 
 Section CM.

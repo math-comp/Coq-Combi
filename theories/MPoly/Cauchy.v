@@ -28,7 +28,7 @@ polynomials in [Y]. We denote by [mz] a monomial in the [Z].
 - [Ymon ms]     == given [ms : m.-tuple 'X_{1.. n}] assemble them to get a
                    monomial  in the [Z].
 - [polXY m n R] == polynomial in [m] variable whose coefficients are polynomials
-                   in [n] over the commutative ring [R]. This is canonicaly a
+                   in [n] over the commutative ring [R]. This is canonically a
                    [AlgType] over [R].
 - [polXY_scale c p] == ring multiplication for elements of [polXY m n R]
 - [p(X)]        == the image of [p] by the canonical inclusion algebra morphism
