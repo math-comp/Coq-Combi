@@ -27,7 +27,7 @@ We define the following notions
 - [rightcomb n] == the right comb binary tree of size [n] as a [bintree]
 - [leftcomb n] == the left comb binary tree of size [n] as a [bintree]
 - [flip t] == the left/right mirror of [t]
-- [sumsizeleft t] == the sum over all node of [t] of the size of the left
+- [rightsizesum t] == the sum over all node of [t] of the size of the left
         subtree.
 
 Binary trees of size n:
@@ -429,36 +429,35 @@ apply/idP/idP; first exact: rotation_flip_impl.
 by move=> /rotation_flip_impl; rewrite !flipK.
 Qed.
 
-Fixpoint sumsizeleft t :=
+Fixpoint rightsizesum t :=
   if t is BinNode l r then
-    size_tree l + sumsizeleft l + sumsizeleft r
+    rightsizesum l + size_tree r + rightsizesum r
   else 0.
 
-Lemma sumsizeleft_gt t t' :
-  t' \in rotations t -> sumsizeleft t > sumsizeleft t'.
+Lemma rightsizesum_gt t t' :
+  t' \in rotations t -> rightsizesum t < rightsizesum t'.
 Proof.
 elim: t t' => [//| l IHl r IHr] t'.
 case Hl : l IHl => [| ll lr] // IHl.
-  rewrite /= !add0n => /mapP [/= rot /IHr Hleq -> {t'}].
-  by rewrite /= !add0n.
+  rewrite /= add0n => /mapP [/= rot Hrot -> {t'}] /=.
+  rewrite add0n (size_rotations Hrot) ltn_add2l.
+  exact: IHr.
 rewrite -Hl /= {1}Hl /= inE => /orP [/eqP -> /=|].
-  rewrite Hl /= add1n !addSn ltnS -!addnA leq_add2l.
-  rewrite !addnA !leq_add2r addnC leq_add2r.
-  exact: leq_addr.
+  rewrite Hl /= add1n !(addSn, addnS) ltnS -!addnA !leq_add2l.
+  exact: leq_addl.
 rewrite -Hl in IHl.
 rewrite mem_cat => /orP [/mapP /= [lrot Hlrot] | /mapP /= [rrot Hrrot]] -> /=.
-- rewrite (size_rotations Hlrot) ltn_add2r ltn_add2l.
+- rewrite !ltn_add2r.
   exact: IHl.
-- rewrite !ltn_add2l.
+- rewrite (size_rotations Hrrot) ltn_add2l.
   exact: IHr.
 Qed.
 
 Lemma rotations_neq t t' : t' \in rotations t -> t != t'.
 Proof.
-move/sumsizeleft_gt; apply contraL => /eqP ->.
+move/rightsizesum_gt; apply contraL => /eqP ->.
 by rewrite ltnn.
 Qed.
-
 
 
 Section Tamari.
@@ -469,7 +468,7 @@ Implicit Type t : bintreesz n.
 Definition Tamari := connect (fun t1 t2 : bintreesz n => grel rotations t1 t2).
 Local Notation "x '<=T' y" := (Tamari x y) (at level 70, y at next level).
 
-Lemma Tamari_rotations t t' :
+Lemma rotations_Tamari t t' :
   val t' \in rotations t -> t <=T t'.
 Proof. by move=> H; apply connect1; rewrite /grel /=. Qed.
 
@@ -479,14 +478,14 @@ Proof. exact: connect0. Qed.
 Lemma Tamari_trans : transitive Tamari.
 Proof. exact: connect_trans. Qed.
 
-Lemma Tamari_sumsizeleft t1 t2 :
-  t1 <=T t2 -> sumsizeleft t2 <= sumsizeleft t1 ?= iff (t1 == t2).
+Lemma Tamari_rightsizesum t1 t2 :
+  t1 <=T t2 -> rightsizesum t1 <= rightsizesum t2 ?= iff (t1 == t2).
 Proof.
 move/connectP => [] /= p.
 elim: p t1 t2 => [| t0 p IHp] t1 t2 /=.
   by move=> _ /= ->; split; rewrite // !eq_refl.
-move=> /andP [/sumsizeleft_gt Hgt /IHp H/H{IHp H}].
-move=> [] /leq_ltn_trans/(_ Hgt) Hlt _ {Hgt}.
+move=> /andP [/rightsizesum_gt Hgt /IHp H/H{IHp H}].
+move=> [] /(leq_trans Hgt) Hlt _ {Hgt}.
 split; first exact: (ltnW Hlt).
 have:= Hlt; rewrite ltn_neqAle => /andP [/negbTE -> _].
 by case: eqP Hlt => [->|] //; rewrite ltnn.
@@ -494,8 +493,8 @@ Qed.
 
 Lemma Tamari_anti : antisymmetric Tamari.
 Proof.
-move=> t1 t2 /andP [ /Tamari_sumsizeleft [leq21 eq]].
-move=> /Tamari_sumsizeleft [leq12 _].
+move=> t1 t2 /andP [ /Tamari_rightsizesum [leq21 eq]].
+move=> /Tamari_rightsizesum [leq12 _].
 by apply/eqP; rewrite -eq eqn_leq leq21 leq12.
 Qed.
 
@@ -556,7 +555,7 @@ elim: bound t => [| b IHb] t.
     move/eqP : (size_rotations Hrot); rewrite bintreeszP => Ht0.
     pose t' := BinTreeSZ Ht0.
     have : t' \in [set t' | t <=T t' & t != t'].
-      rewrite inE; rewrite Tamari_rotations //=.
+      rewrite inE; rewrite rotations_Tamari //=.
       apply (introN idP) => /eqP /(congr1 val) /= Ht.
       by move/rotations_neq: Hrot; rewrite Ht eq_refl.
     by rewrite Hlt inE.
@@ -577,19 +576,19 @@ case Hrot : (rotations t) => [| t0 s].
 have {Hrot} Hrot : t0 \in rotations t by rewrite Hrot; exact: mem_head.
 move/eqP : (size_rotations Hrot); rewrite bintreeszP => Ht0.
 pose t' := BinTreeSZ Ht0.
-have:= Hrot; rewrite -[t0]/(val t') => /Tamari_rotations/Tamari_trans.
+have:= Hrot; rewrite -[t0]/(val t') => /rotations_Tamari/Tamari_trans.
 apply; apply: IHb.
 rewrite -ltnS -{}Hcard; apply proper_card.
 rewrite /proper; apply/andP; split; apply/subsetP.
 - move=> /= z; rewrite !inE => /andP [Ht'z Hneq].
-  have Htz : t <=T z by apply: (Tamari_trans _ Ht'z); exact: Tamari_rotations.
+  have Htz : t <=T z by apply: (Tamari_trans _ Ht'z); exact: rotations_Tamari.
   rewrite Htz /=.
   move: Hneq; apply contra => /eqP Heq; subst z.
   apply/eqP; apply Tamari_anti; rewrite Ht'z /=.
-  exact: Tamari_rotations.
+  exact: rotations_Tamari.
 - move/(_ t'); rewrite !inE.
   rewrite eq_refl /= andbF => H; apply not_false_is_true; apply: H.
-  apply/andP; split; first exact: Tamari_rotations.
+  apply/andP; split; first exact: rotations_Tamari.
   exact: rotations_neq.
 Qed.
 
@@ -598,5 +597,104 @@ Proof.
 rewrite -Tamari_flip.
 suff -> : flipsz leftcombsz = rightcombsz by exact: rightcomb_bottom.
 by apply val_inj => /=; exact: flip_leftcomb.
+Qed.
+
+End Tamari.
+
+Notation "x '<=T' y" := (Tamari x y) (at level 70, y at next level).
+
+Fixpoint Tamarivct t :=
+  if t is BinNode l r then
+        Tamarivct l ++ size_tree r :: Tamarivct r
+  else [::].
+Definition pleq l1 l2 :=
+  (size l1 == size l2) && (all (fun p => p.1 <= p.2) (zip l1 l2)).
+
+
+Section Tests.
+
+Goal [seq Tamarivct t | t <- enum_bintreesz 4] =
+[:: [:: 3; 2; 1; 0]; [:: 3; 2; 0; 0]; [:: 3; 0; 1; 0]; [:: 3; 1; 0; 0];
+    [:: 3; 0; 0; 0]; [:: 0; 2; 1; 0]; [:: 0; 2; 0; 0]; [:: 1; 0; 1; 0];
+    [:: 0; 0; 1; 0]; [:: 2; 1; 0; 0]; [:: 2; 0; 0; 0]; [:: 0; 1; 0; 0];
+    [:: 1; 0; 0; 0]; [:: 0; 0; 0; 0] ].
+Proof. by []. Qed.
+
+Let bla := Eval hnf in nth BinLeaf (enum_bintreesz 5) 21.
+Goal Tamarivct bla = [:: 0; 0; 2; 1; 0].
+Proof. by []. Qed.
+
+Goal [seq Tamarivct rot | rot <- rotations bla] =
+[:: [:: 0; 3; 2; 1; 0]; [:: 1; 0; 2; 1; 0]].
+Proof. by []. Qed.
+
+Goal all (fun t =>
+            all (pleq (Tamarivct t)) [seq Tamarivct rot | rot <- rotations t])
+     (enum_bintreesz 6).
+Proof. by []. Qed.
+
+End Tests.
+
+Lemma size_Tamarivct t : size (Tamarivct t) = size_tree t.
+Proof.
+elim: t => //= l <- r <-.
+by rewrite size_cat /= addnS add1n addSn.
+Qed.
+
+Lemma all_zip_refl l : all (fun p => p.1 <= p.2) (zip l l).
+Proof. by elim: l => //= a l ->; rewrite leqnn. Qed.
+Lemma pleq_refl : reflexive pleq.
+Proof. by rewrite /pleq => l; rewrite eq_refl all_zip_refl. Qed.
+Lemma pleq_trans : transitive pleq.
+Proof.
+rewrite /pleq => b a; elim: a b => /= [|a0 a IH] [|b0 b] [|c0 c] //=.
+rewrite !eqSS !andbA [_ && (_ <= b0)]andbC ![_ && (_ <= c0)]andbC.
+rewrite -!andbA => /andP [/leq_trans Hab /IH{IH}IH].
+by move=> /andP [/Hab -> /IH ->].
+Qed.
+Lemma pleq_anti : antisymmetric pleq.
+Proof.
+rewrite /pleq => a b /andP [].
+elim: a b => /= [|a0 a IH] [|b0 b] //=.
+rewrite !eqSS !andbA ![_ && (_ <= _)]andbC -!andbA.
+move=> /andP[Hab/IH{IH}IH] /andP[Hba/IH{IH} ->].
+suff -> : a0 = b0 by [].
+by apply anti_leq; rewrite Hab Hba.
+Qed.
+
+Lemma rotation_pleq_impl t1 t2 :
+  t1 \in rotations t2 -> pleq (Tamarivct t2) (Tamarivct t1).
+Proof.
+rewrite /pleq !size_Tamarivct => Hrot.
+rewrite (size_rotations Hrot) eq_refl /=.
+elim: t2 t1 Hrot => [//|l IHl r IHr] t2.
+move/rotationP => [a] [b] [c] [] [H1 H2].
+- rewrite /= {IHl IHr}; subst t2 => /=.
+  move: H1 => [Hl Hr]; subst l r => /=.
+  rewrite -!catA !cat_cons.
+  do 2 rewrite zip_cat // all_cat all_zip_refl /=.
+  rewrite all_zip_refl leqnn /= andbT add1n addSnnS.
+  exact: leq_addr.
+- move: H1 => [Ha Hc]; subst a; subst c => Hrot.
+  have:= IHl _ Hrot => {IHl IHr} Hrec.
+  rewrite H2 /= zip_cat; first last.
+    by rewrite !size_Tamarivct; apply: esym; apply: size_rotations.
+  rewrite /= all_cat /=.
+  rewrite Hrec leqnn /=.
+  by have:= pleq_refl (Tamarivct r); rewrite /pleq => /andP [_ ->].
+- move: H1 => [Ha Hb]; subst a; subst b => Hrot.
+  have:= IHr _ Hrot => {IHl IHr} Hrec.
+  rewrite H2 /= zip_cat; last by [].
+  rewrite /= all_cat /= Hrec (size_rotations Hrot) leqnn /=.
+  by have:= pleq_refl (Tamarivct l); rewrite /pleq => /andP [_ ->].
+Qed.
+
+Lemma Tamari_pleq_impl n (t1 t2 : bintreesz n) :
+  t1 <=T t2 -> pleq (Tamarivct t1) (Tamarivct t2).
+Proof.
+rewrite /Tamari => /connectP /= [p].
+elim: p t1 t2 => /= [| p0 p IHp] t1 t2; first by move => _ ->; exact: pleq_refl.
+move/andP => [/rotation_pleq_impl/pleq_trans Hpleq /IHp{IHp}H/H{H}].
+exact: Hpleq.
 Qed.
 
