@@ -762,60 +762,6 @@ apply/allP => t1 /IHlb /leq_trans; apply.
 exact: leq_addl.
 Qed.
 
-(*
-Lemma left_branch_ind P :
-  P BinLeaf ->
-  (forall tl t, P t -> P (catleft (BinNode BinLeaf tl) t)) -> forall t, P t.
-Proof.
-move=> HLeaf IHleft t; rewrite -(catleftt0 t).
-elim: t BinLeaf HLeaf => [//= |l IHl r _] tl Htl; first by rewrite catleft0t.
-rewrite -(catleft_Node l r) catleftA.
-by apply IHl; apply IHleft.
-Qed.
-
-Variant catleft_spec : bintree -> Type :=
-  | CatLeftLeaf     : catleft_spec BinLeaf
-  | CatLeftNode t u : catleft_spec (catleft (BinNode BinLeaf t) u).
-
-Lemma catleftP t : catleft_spec t.
-Proof.
-elim/catleft_ind: t => [|tl t _]; first exact: CatLeftLeaf.
-exact: CatLeftNode tl t.
-Qed.
-
-Fixpoint revleft t :=
-  if t is BinNode l r then catleft (BinNode BinLeaf r) (revleft l)
-  else BinLeaf.
-
-Lemma revleft_catleft r l :
-  revleft (catleft (BinNode BinLeaf r) l) = BinNode (revleft l) r.
-Proof.
-elim/catleft_ind: l r => [| ll l IHl] //= r.
-rewrite -catleftA /= !IHl.
-
-
-Lemma revleftK : involutive revleft.
-Proof.
-elim => [//| l IHl r IHr] /=.
-
-  
-rewrite !catleftA. IHt1.
-
-
-Lemma catleft_ind2 P :
-  P BinLeaf ->
-  (forall tl t, P tl -> P t -> P (catleft (BinNode BinLeaf tl) t)) ->
-  forall t, P t.
-Proof.
-move=> HLeaf IHleft t.
-case/catleftP: t => // [tl t].
-elim: t tl HLeaf => [//= |l IHl r IHr] Htl.
-  admit.
-rewrite -(catleft_Node l r) catleftA.
-by apply IHl; apply IHleft.
-Qed.
-*)
-
 Fixpoint from_vct_rec fuel lft vct :=
   if fuel is fuel.+1 then
     if vct is v0 :: vct' then
@@ -850,22 +796,52 @@ move=> H; apply esym; apply: from_vct_fuel_any.
 by rewrite ltnS H leqnn.
 Qed.
 
-Lemma from_vct_acc_recE lft vct :
-  from_vct_acc lft vct =
-    if vct is v0 :: vct then
-      from_vct_acc (BinNode lft (from_vct_acc BinLeaf (take v0 vct)))
-               (drop v0 vct)
-    else lft.
+Lemma from_vct_acc_nil lft : from_vct_acc lft nil = lft.
+Proof. by []. Qed.
+
+Lemma from_vct_accE lft v0 vct :
+  from_vct_acc lft (v0 :: vct) =
+  from_vct_acc (BinNode lft (from_vct_acc BinLeaf (take v0 vct)))
+               (drop v0 vct).
 Proof.
 rewrite /from_vct_acc.
-case: vct => [// | v0 v].
-rewrite -[in RHS](from_vct_fuelE (fuel := size (v0 :: v))); first last.
+rewrite -[in RHS](from_vct_fuelE (fuel := size (v0 :: vct))); first last.
   by rewrite /= ltnS size_drop leq_subr.
-rewrite -[from_vct_rec (size (take v0 v)).+1 _ _]
-           (from_vct_fuelE (fuel := size (v0 :: v))); first last.
+rewrite -[from_vct_rec (size (take v0 vct)).+1 _ _]
+           (from_vct_fuelE (fuel := size (v0 :: vct))); first last.
   by rewrite /= size_take -/(minn _ _) ltnS geq_minr.
 by [].
 Qed.
+
+Lemma from_vct_cat_leftE lft vct :
+  from_vct_acc lft vct = cat_left (from_vct_acc BinLeaf vct) lft.
+Proof.
+move: {2}(size vct) (leqnn (size vct)) => n.
+elim: n vct lft => [| n IHn] vct lft.
+  by rewrite leqn0 /from_vct_acc => /nilP ->; rewrite /= cat_left0t.
+case: vct => [_ | v0 v] /=.
+  by rewrite /from_vct_acc /= cat_left0t.
+rewrite ltnS -{1}(cat_take_drop v0 v) size_cat !from_vct_accE /=.
+move: (take v0 v) (drop v0 v) => {v0 v} u v Huv.
+rewrite IHn; last exact: (leq_trans (leq_addl _ _) Huv).
+rewrite [in RHS]IHn; last exact: (leq_trans (leq_addl _ _) Huv).
+by rewrite cat_leftA cat_left_Node.
+Qed.
+
+Lemma size_from_vct_acc s :
+  size_tree (from_vct_acc BinLeaf s) = size s.
+Proof.
+move: {2}(size s) (leqnn (size s)) => n.
+elim: n s => [| n IHn] s; first by rewrite leqn0 => /nilP ->.
+case: s => [| s0 s] //=.
+rewrite ltnS -{1}(cat_take_drop s0 s) size_cat => Hsz.
+rewrite from_vct_accE from_vct_cat_leftE.
+rewrite size_cat_left /= addn0 add1n addnS.
+rewrite IHn; last exact: (leq_trans (leq_addl _ _) Hsz).
+rewrite IHn; last exact: (leq_trans (leq_addr _ _) Hsz).
+by rewrite addnC -size_cat cat_take_drop.
+Qed.
+
 
 Lemma Tamarivct_from_left s :
   Tamarivct (from_left s) =
@@ -888,24 +864,15 @@ rewrite /from_vct => t.
 move: {2}(size_tree t) (leqnn (size_tree t)) => n.
 elim: n t => [| n IHn] t; first by rewrite leqn0 => /LeafP ->.
 rewrite -(left_branchK t).
-case/lastP: {t} (left_branch t) => //= [br0 r0].
-rewrite -cats1 -(from_leftK br0) -(from_leftK [:: r0]) -/(cat_left _ _) /=.
+case/lastP: {t} (left_branch t) => //= [br r].
+rewrite -cats1 -(from_leftK br) -(from_leftK [:: r]) -/(cat_left _ _) /=.
 rewrite Tamarivct_cat_left /=.
-rewrite from_vct_acc_recE -!size_Tamarivct drop_size_cat // take_size_cat //.
+rewrite from_vct_accE -!size_Tamarivct drop_size_cat // take_size_cat //.
 rewrite size_Tamarivct size_cat_left /= addn0 add1n addnS ltnS => H.
 rewrite IHn /=; last exact: (leq_trans (leq_addl _ _) H).
-elim/last_ind: br0 H (BinNode _ _) => /= [_ | br brn IHbr H] tl.
-  by rewrite cat_left0t /from_vct_acc /=.
-move: H; rewrite -cats1 from_left_cat size_cat_left /= addn0 add1n => H.
-rewrite Tamarivct_cat_left !from_vct_acc_recE /=.
-rewrite -size_Tamarivct drop_size_cat // take_size_cat //.
-rewrite IHn; first last.
-  by apply: (leq_trans _ H); rewrite -addSnnS addnC addnA; apply leq_addl.
-rewrite IHbr; first last.
-  by apply: (leq_trans _ H); rewrite -addnA leq_add2l; apply leq_addl.
-by rewrite cat_leftA /cat_left !from_leftK /=.
+rewrite from_vct_cat_leftE.
+by rewrite IHn; last exact: (leq_trans (leq_addr _ _) H).
 Qed.
-
 
 Section Tests2.
 
@@ -920,9 +887,8 @@ Fixpoint is_Tamari v :=
   if v is v0 :: v' then
     [&& v0 <= size v',
      is_Tamari v' &
-     all (fun i => (v0 - i == 0) || (nth 0 v' i < v0 - i)) (iota 0 (size v'))]
+     all (fun i => nth 0 v' i < v0 - i) (iota 0 v0)]
   else true.
-
 Definition TamariVector := [qualify a v : seq nat | is_Tamari v].
 
 Section Tests3.
@@ -931,56 +897,132 @@ Goal all
      (fun i => all (fun t => Tamarivct t \is a TamariVector) (enum_bintreesz i))
      (iota 0 8).
 Proof. by []. Qed.
+
+Eval compute in [seq Tamarivct t | t <- enum_bintreesz 3].
+Eval compute in is_Tamari [:: 1; 1; 0].
+
 End Tests3.
 
-Lemma is_Tamari_cat v1 v2 :
+Lemma Tamari_consP v0 v :
+  reflect
+    [/\ v0 <= size v,
+     v \is a TamariVector &
+     forall i, i < v0 -> nth 0 v i < v0 - i]
+    (v0 :: v \is a TamariVector).
+Proof.
+rewrite !unfold_in /=.
+apply (iffP and3P) => [] [Hsz Htam Hall]; split => //.
+- by move/allP: Hall => H i Hi; apply H; rewrite mem_iota.
+- by apply/allP => i; rewrite mem_iota /= add0n; exact: Hall.
+Qed.
+
+Lemma TamariP v :
+  reflect
+    ((forall i, i < size v -> nth 0 v i < size v - i) /\
+     (forall i j, i < j <= nth 0 v i + i -> nth 0 v j + j <= nth 0 v i + i))
+    (v \is a TamariVector).
+Proof.
+apply (iffP idP); elim: v => [_ | v0 v IHv ] //=.
+  by split => // i j; rewrite !nth_nil => /andP [_]; rewrite !add0n.
+- move/Tamari_consP => [Hv0 /IHv{IHv} [Hrec1 Hrec2] H]; split.
+  + by case=> [//=|i]; rewrite ltnS /= subSS; exact: Hrec1.
+  + case=> [//=| i] [//=| j].
+      by rewrite /= !addn0 addnS addnC -ltn_subRL; exact: H.
+    by rewrite /= !addnS !ltnS; exact: Hrec2.
+- move=> [H1 H2].
+  apply/Tamari_consP; split.
+  + by have:= H1 0 (ltn0Sn _); rewrite subn0 ltnS.
+  + apply: IHv; split => [i Hi | i j Hij].
+    * by have:= H1 i.+1 Hi; rewrite subSS.
+    * by have:= H2 i.+1 j.+1; rewrite /= !addnS !ltnS; apply.
+  + move=> i Hi; rewrite ltn_subRL.
+    have:= H2 0 i.+1.
+    by rewrite /= !addn0 addnS addnC; apply.
+Qed.
+
+Lemma Tamari_drop n v :
+  v \is a TamariVector -> drop n v \is a TamariVector.
+Proof.
+rewrite !unfold_in; elim: n v => [//= | n IHn] v; first by rewrite drop0.
+by case: v => [| v0 v] //= /and3P [_ /IHn ->].
+Qed.
+
+Lemma Tamari_take v0 v :
+  v0 :: v \is a TamariVector -> take v0 v \is a TamariVector.
+Proof.
+elim: v0 v => [| v0 IHv0] v; first by rewrite take0.
+case: v => [//= | v1 v].
+move/Tamari_consP; rewrite /= ltnS => [] [Hsz Htam H].
+apply/Tamari_consP; rewrite size_take -/(minn _ _).
+have:= H 0 (ltn0Sn _); rewrite ltnS => Hv1.
+have:= Hsz => /minn_idPl ->; split.
+- exact: Hv1.
+- apply: IHv0; move: Htam => /Tamari_consP [_ Hv H1].
+  apply/Tamari_consP; split => // i.
+  by rewrite -ltnS => /H /=; rewrite subSS.
+- move/Tamari_consP: Htam {H} => [_ _ H] i Hi.
+  by rewrite nth_take ?H // (leq_trans Hi Hv1).
+Qed.
+
+Lemma Tamari_cat v1 v2 :
   v1 \is a TamariVector ->
   v2 \is a TamariVector ->
   v1 ++ v2 \is a TamariVector.
 Proof.
-elim: v1 => [| v0 v1 IHv1] //=.
-move=> /and3P [Hv0 Hv1 /allP /= Hall Hv2].
-apply/and3P; split.
+elim: v1 => [| v0 v1 IHv1] //= /Tamari_consP [Hv0 Hv1 Hall] Hv2.
+apply/Tamari_consP; split.
 - rewrite size_cat; apply: (leq_trans Hv0); apply leq_addr.
 - exact: IHv1.
-- apply/allP => i; rewrite mem_iota /= add0n size_cat => Hi.
-  case: (ltnP i v0) => Hiv0.
-  + rewrite nth_cat (leq_trans Hiv0 Hv0).
-    move/(_ i): Hall; rewrite mem_iota /= add0n; apply.
-    exact: leq_trans Hiv0 Hv0.
-  + by rewrite subn_eq0 Hiv0.
+- by move=> i Hi; rewrite nth_cat (leq_trans Hi Hv0) Hall.
 Qed.
 
 Lemma Tamari_bound v :
   v \is a TamariVector -> forall i, i < size v -> nth 0 v i < size v - i.
 Proof.
-rewrite unfold_in /=; elim: v => //= v0 v IHv /and3P [Hv0 /IHv{IHv} H _] i.
-case: i => [_| i]; rewrite /= ?subn0 ltnS // subSS; exact: H.
+elim: v => [|v0 v IHv] //= /Tamari_consP [Hv0 /IHv{IHv} H _] i.
+by case: i => [_| i]; rewrite /= ?subn0 ltnS // subSS; exact: H.
 Qed.
 
 Lemma cons_TamariP v : v \is a TamariVector -> size v :: v \is a TamariVector.
 Proof.
-move=> H; have:= H; rewrite !unfold_in /= leqnn => -> /=.
-move: H => /Tamari_bound H.
-apply/allP => i; rewrite mem_iota add0n /= => /H ->.
-by rewrite orbT.
+move=> H; apply/Tamari_consP; split => // i Hi.
+exact: Tamari_bound.
 Qed.
 
-Lemma TamariP t : Tamarivct t \is a TamariVector.
+Lemma TamarivctP t : Tamarivct t \is a TamariVector.
 Proof.
 move: {2}(size_tree t) (leqnn (size_tree t)) => n.
 elim: n t => [| n IHn] t; first by rewrite leqn0 => /LeafP ->.
 move=> Ht.
-rewrite -(left_branchK t) Tamarivct_from_left.
-rewrite -map_rev.
-have: all (fun t=> size_tree t <= n) (rev (left_branch t)).
+rewrite -(left_branchK t) Tamarivct_from_left -map_rev.
+have : all (fun t=> size_tree t <= n) (rev (left_branch t)).
   rewrite all_rev; have:= size_left_branch t.
   apply sub_all => l Hl; rewrite -ltnS.
   exact: leq_trans Hl Ht.
 elim: (rev (left_branch t)) => [| b0 br IHbr] //=.
 move=> /andP [/IHn{IHn} Hb0 /IHbr{IHbr} Hbr].
-rewrite -/((_ :: _) ++ _); apply is_Tamari_cat; last exact: Hbr.
+rewrite -/((_ :: _) ++ _); apply Tamari_cat; last exact: Hbr.
 by rewrite -size_Tamarivct; exact: cons_TamariP.
+Qed.
+
+Lemma from_vctK s :
+  s \is a TamariVector -> Tamarivct (from_vct s) = s.
+Proof.
+rewrite /from_vct.
+move: {2}(size s) (leqnn (size s)) => n.
+elim: n s => [| n IHn] s; first by rewrite leqn0 => /nilP ->.
+case: s => [| s0 s] //=.
+rewrite ltnS -{1}(cat_take_drop s0 s) size_cat => Hsz Hcons.
+have:= Hcons => /Tamari_consP [Hs0 Hs Hall].
+rewrite from_vct_accE from_vct_cat_leftE Tamarivct_cat_left.
+rewrite IHn /=; first last.
+  - exact: Tamari_drop.
+  - exact: (leq_trans (leq_addl _ _) Hsz).
+rewrite {}IHn /=; first last.
+  - exact: Tamari_take.
+  - exact: (leq_trans (leq_addr _ _) Hsz).
+rewrite cat_take_drop size_from_vct_acc size_take -/(minn _ _).
+by move: Hs0 => /minn_idPl ->.
 Qed.
 
 Lemma nseq_rcons (T : eqType) (e : T) n : nseq n.+1 e = rcons (nseq n e) e.
@@ -992,6 +1034,7 @@ Proof. by elim: n => //= n ->; rewrite cats1 -nseq_rcons. Qed.
 Lemma from_vct0 n : from_vct (nseq n 0) = leftcomb n.
 Proof. by rewrite -Tamari_vct_leftcomb TamarivctK. Qed.
 
+(*
 Lemma plt_rotation u v :
   pleq (Tamarivct u) (Tamarivct v) ->
   u != v ->
@@ -1004,3 +1047,4 @@ rewrite -{1}(cat_take_drop (size (Tamarivct ul)) (Tamarivct v)).
 case: (altP (Tamarivct ur =P drop (size (Tamarivct ul)) (Tamarivct v))) =>
     [Heqr | Hneqr].
 case: (altP (size_tree ur =P nth 0 (Tamarivct v) (size (Tamarivct ul)))).
+*)
