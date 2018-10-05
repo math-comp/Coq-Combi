@@ -675,8 +675,6 @@ Fixpoint right_sizes t :=
   if t is BinNode l r then
         right_sizes l ++ size_tree r :: right_sizes r
   else [::].
-Definition vctleq l1 l2 :=
-  (size l1 == size l2) && (all (fun p => p.1 <= p.2) (zip l1 l2)).
 
 Fixpoint from_vct_rec fuel lft vct :=
   if fuel is fuel.+1 then
@@ -718,11 +716,6 @@ Goal [seq right_sizes rot | rot <- rotations bla] =
 [:: [:: 0; 3; 2; 1; 0]; [:: 1; 0; 2; 1; 0]].
 Proof. by []. Qed.
 
-Goal all (fun t =>
-            all (vctleq (right_sizes t)) [seq right_sizes rot | rot <- rotations t])
-     (enum_bintreesz 6).
-Proof. by []. Qed.
-
 Goal all
      (fun i => all (fun t => t == from_vct (right_sizes t)) (enum_bintreesz i))
      (iota 0 8).
@@ -748,63 +741,6 @@ Lemma size_right_sizes t : size (right_sizes t) = size_tree t.
 Proof.
 elim: t => //= l <- r <-.
 by rewrite size_cat /= addnS add1n addSn.
-Qed.
-
-Lemma all_leqzip_refl l : all (fun p => p.1 <= p.2) (zip l l).
-Proof. by elim: l => //= a l ->; rewrite leqnn. Qed.
-Lemma vctleq_refl : reflexive vctleq.
-Proof. by rewrite /vctleq => l; rewrite eq_refl all_leqzip_refl. Qed.
-Lemma vctleq_trans : transitive vctleq.
-Proof.
-rewrite /vctleq => b a; elim: a b => /= [|a0 a IH] [|b0 b] [|c0 c] //=.
-rewrite !eqSS !andbA [_ && (_ <= b0)]andbC ![_ && (_ <= c0)]andbC.
-rewrite -!andbA => /andP [/leq_trans Hab /IH{IH}IH].
-by move=> /andP [/Hab -> /IH ->].
-Qed.
-Lemma vctleq_anti : antisymmetric vctleq.
-Proof.
-rewrite /vctleq => a b /andP [].
-elim: a b => /= [|a0 a IH] [|b0 b] //=.
-rewrite !eqSS !andbA ![_ && (_ <= _)]andbC -!andbA.
-move=> /andP[Hab/IH{IH}IH] /andP[Hba/IH{IH} ->].
-suff -> : a0 = b0 by [].
-by apply anti_leq; rewrite Hab Hba.
-Qed.
-
-Lemma rotation_vctleq_impl t1 t2 :
-  t1 \in rotations t2 -> vctleq (right_sizes t2) (right_sizes t1).
-Proof.
-rewrite /vctleq !size_right_sizes => Hrot.
-rewrite (size_rotations Hrot) eq_refl /=.
-elim: t2 t1 Hrot => [//|l IHl r IHr] t2.
-move/rotationP => [a] [b] [c] [] [H1 H2].
-- rewrite /= {IHl IHr}; subst t2 => /=.
-  move: H1 => [Hl Hr]; subst l r => /=.
-  rewrite -!catA !cat_cons.
-  do 2 rewrite zip_cat // all_cat all_leqzip_refl /=.
-  rewrite all_leqzip_refl leqnn /= andbT add1n addSnnS.
-  exact: leq_addr.
-- move: H1 => [Ha Hc]; subst a; subst c => Hrot.
-  have:= IHl _ Hrot => {IHl IHr} Hrec.
-  rewrite H2 /= zip_cat; first last.
-    by rewrite !size_right_sizes; apply: esym; apply: size_rotations.
-  rewrite /= all_cat /=.
-  rewrite Hrec leqnn /=.
-  by have:= vctleq_refl (right_sizes r); rewrite /vctleq => /andP [_ ->].
-- move: H1 => [Ha Hb]; subst a; subst b => Hrot.
-  have:= IHr _ Hrot => {IHl IHr} Hrec.
-  rewrite H2 /= zip_cat; last by [].
-  rewrite /= all_cat /= Hrec (size_rotations Hrot) leqnn /=.
-  by have:= vctleq_refl (right_sizes l); rewrite /vctleq => /andP [_ ->].
-Qed.
-
-Lemma Tamari_vctleq_impl n (t1 t2 : bintreesz n) :
-  t1 <=T t2 -> vctleq (right_sizes t1) (right_sizes t2).
-Proof.
-rewrite /Tamari => /connectP /= [p].
-elim: p t1 t2 => /= [| p0 p IHp] t1 t2; first by move => _ ->; exact: vctleq_refl.
-move/andP => [/rotation_vctleq_impl/vctleq_trans Hvctleq /IHp{IHp}H/H{H}].
-exact: Hvctleq.
 Qed.
 
 Lemma from_vct_fuel_any fuel1 fuel2 lft vct :
@@ -982,17 +918,10 @@ apply/Tamari_consP; split.
 - by move=> i Hi; rewrite nth_cat (leq_trans Hi Hv0) Hall.
 Qed.
 
-Lemma Tamari_bound v :
-  v \is a TamariVector -> forall i, i < size v -> nth 0 v i < size v - i.
-Proof.
-elim: v => [|v0 v IHv] //= /Tamari_consP [Hv0 /IHv{IHv} H _] i.
-by case: i => [_| i]; rewrite /= ?subn0 ltnS // subSS; exact: H.
-Qed.
-
 Lemma cons_TamariP v : v \is a TamariVector -> size v :: v \is a TamariVector.
 Proof.
 move=> H; apply/Tamari_consP; split => // i Hi.
-exact: Tamari_bound.
+by move: H => /TamariP [H _]; apply H.
 Qed.
 
 Theorem right_sizesP t : right_sizes t \is a TamariVector.
@@ -1041,6 +970,150 @@ Proof. by elim: n => //= n ->; rewrite cats1 -nseq_rcons. Qed.
 
 Lemma from_vct0 n : from_vct (nseq n 0) = leftcomb n.
 Proof. by rewrite -Tamari_vct_leftcomb right_sizesK. Qed.
+
+(** ** Comparison of Tamari vectors *)
+
+Definition vctleq l1 l2 :=
+  (size l1 == size l2) && (all (fun p => p.1 <= p.2) (zip l1 l2)).
+Definition vctmin l1 l2 := [seq minn p.1 p.2 | p <- zip l1 l2].
+
+
+Section TestsComp.
+
+Goal all (fun t => all
+                     (vctleq (right_sizes t))
+                     [seq right_sizes rot | rot <- rotations t])
+     (enum_bintreesz 6).
+Proof. by []. Qed.
+
+End TestsComp.
+
+Lemma vctleqP l1 l2 :
+  reflect (size l1 = size l2 /\ forall i, nth 0 l1 i <= nth 0 l2 i)
+          (vctleq l1 l2).
+Proof.
+rewrite /vctleq; apply (iffP andP).
+- move=> [/eqP Hsz /allP/= Hleq]; split; first by [].
+  move=> i; case: (ltnP i (size (zip l1 l2))).
+  + by move=> /(mem_nth (0, 0))/Hleq; rewrite !nth_zip.
+  + rewrite size_zip Hsz minnn => Hi.
+    by rewrite !nth_default ?Hsz.
+- move=> [Hsz Hall]; rewrite Hsz; split; first by [].
+  apply/allP => /= [[a b]] Hin.
+  have:= nth_index (0, 0) Hin; move: Hin; rewrite -index_mem.
+  move: (index _ _) => i /=.
+  rewrite size_zip Hsz minnn => Hi.
+  rewrite nth_zip //= => [] [<- <-].
+  exact: Hall.
+Qed.
+
+Lemma vctleq_refl : reflexive vctleq.
+Proof. by move=> v; apply/vctleqP. Qed.
+Lemma vctleq_trans : transitive vctleq.
+Proof.
+move=> v2 v1 v3 /vctleqP [Hsz12 H12] /vctleqP [Hsz23 H23].
+apply/vctleqP; rewrite Hsz12; split; first by [].
+by move=> i; exact: leq_trans (H12 i) (H23 i).
+Qed.
+Lemma vctleq_anti : antisymmetric vctleq.
+Proof.
+move=> v1 v2 /andP [/vctleqP [Hsz12 H12] /vctleqP [_ H21]].
+apply (eq_from_nth Hsz12 (x0 := 0)) => i _.
+by apply anti_leq; rewrite H12 H21.
+Qed.
+
+Lemma all_leqzip_refl l : all (fun p => p.1 <= p.2) (zip l l).
+Proof. by elim: l => //= a l ->; rewrite leqnn. Qed.
+
+Lemma rotation_vctleq_impl t1 t2 :
+  t1 \in rotations t2 -> vctleq (right_sizes t2) (right_sizes t1).
+Proof.
+move=> Hrot; apply/vctleqP.
+split; first  by rewrite !size_right_sizes (size_rotations Hrot).
+elim: t2 t1 Hrot => [//|l IHl r IHr] t2.
+move/rotationP => [a] [b] [c] [] [H1 H2].
+- rewrite /= {IHl IHr}; subst t2 => /=.
+  move: H1 => [Hl Hr]; subst l r => /=.
+  rewrite -!catA !cat_cons => i.
+  rewrite !nth_cat; case: ltnP => // _.
+  by case: (i - _) => //=; rewrite add1n addSnnS leq_addr.
+- move: H1 => [Ha Hc]; subst a; subst c; subst t2 => Hrot.
+  have:= IHl _ Hrot => {IHl IHr} Hrec i /=.
+  rewrite !nth_cat !size_right_sizes (size_rotations Hrot).
+  by case: ltnP.
+- move: H1 => [Ha Hc]; subst a; subst b; subst t2 => Hrot.
+  have:= IHr _ Hrot => {IHl IHr} Hrec i /=.
+  rewrite !nth_cat !size_right_sizes (size_rotations Hrot).
+  case: ltnP => // _.
+  by case: (i - _) => //=; rewrite add1n addSnnS leq_addr.
+Qed.
+
+Lemma Tamari_vctleq_impl n (t1 t2 : bintreesz n) :
+  t1 <=T t2 -> vctleq (right_sizes t1) (right_sizes t2).
+Proof.
+rewrite /Tamari => /connectP /= [p].
+elim: p t1 t2 => /= [| p0 p IHp] t1 t2; first by move => _ ->; exact: vctleq_refl.
+move/andP => [/rotation_vctleq_impl/vctleq_trans Hvctleq /IHp{IHp}H/H{H}].
+exact: Hvctleq.
+Qed.
+
+
+Lemma size_vctmin v1 v2 : size (vctmin v1 v2) = minn (size v1) (size v2).
+Proof. by rewrite size_map size_zip. Qed.
+Lemma nth_vctmin v1 v2 i :
+  nth 0 (vctmin v1 v2) i = minn (nth 0 v1 i) (nth 0 v2 i).
+Proof.
+rewrite /vctmin.
+case: (ltnP i (minn (size v1) (size v2))) => Hi.
+- rewrite (nth_map (0,0)) ?size_zip //=.
+  by rewrite !nth_zip_cond ?size_zip Hi /=.
+- rewrite nth_default; last by rewrite size_map size_zip.
+  move: Hi.
+  by rewrite geq_min => /orP [] /(nth_default 0) ->; rewrite ?min0n ?minn0.
+Qed.
+
+Lemma vctminC: commutative vctmin.
+Proof.
+move=> v1 v2.
+apply (eq_from_nth (x0 := 0)); first by rewrite !size_vctmin minnC.
+by move=> i Hi; rewrite !nth_vctmin minnC.
+Qed.
+
+Lemma vctminPr v1 v2 :
+  size v1 = size v2 -> vctleq (vctmin v1 v2) v2.
+Proof.
+move=> Hsz; apply/vctleqP.
+rewrite size_vctmin Hsz minnn; split; first by [].
+move=> i; rewrite nth_vctmin.
+exact: geq_minr.
+Qed.
+
+Lemma vctminPl v1 v2 :
+  size v1 = size v2 -> vctleq (vctmin v1 v2) v1.
+Proof. by move=> H; rewrite vctminC; apply vctminPr; rewrite H. Qed.
+
+Lemma vctminP v1 v2 v :
+  vctleq v v1 -> vctleq v v2 -> vctleq v (vctmin v1 v2).
+Proof.
+move=> /vctleqP [Hsz1 Hv1] /vctleqP [Hsz2 Hv2].
+apply/vctleqP; rewrite size_vctmin -Hsz1 -Hsz2 minnn; split; first by [].
+by move=> i; rewrite nth_vctmin leq_min Hv1 Hv2.
+Qed.
+
+Lemma vctmin_Tamari v1 v2 :
+  size v1 = size v2 ->
+  v1 \is a TamariVector ->
+  v2 \is a TamariVector ->
+  vctmin v1 v2 \is a TamariVector.
+Proof.
+move=> Hsz /TamariP [Hleq1 H1] /TamariP [Hleq2 H2].
+apply/TamariP; rewrite size_vctmin Hsz minnn; split.
+- move=> i Hi; rewrite nth_vctmin.
+  exact: leq_ltn_trans (geq_minr _ _) (Hleq2 _ Hi).
+- move=> i j {Hleq1 Hleq2}; rewrite !nth_vctmin.
+  rewrite !addn_minl leq_min=> /andP [Hij /andP [Hj1 Hj2]].
+  by rewrite leq_min !geq_min H1 /= ?H2 ?orbT // Hij.
+Qed.
 
 (*
 Lemma plt_rotation u v :
