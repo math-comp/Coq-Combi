@@ -311,7 +311,56 @@ by rewrite !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
 Qed.
 
 
-(** ** Various particula binary trees *)
+(** ** Left branch surgery in binary trees *)
+Fixpoint left_branch t :=
+  if t is BinNode l r then r :: left_branch l else [::].
+Fixpoint from_left l :=
+  if l is l0 :: l then BinNode (from_left l) l0 else BinLeaf.
+Definition cat_left t2 t1 := from_left (left_branch t2 ++ left_branch t1).
+
+
+Lemma left_branchK : cancel left_branch from_left.
+Proof. by elim=> //= l ->. Qed.
+Lemma from_leftK : cancel from_left left_branch.
+Proof. by elim=> //= l0 l ->. Qed.
+
+Lemma cat_left0t t : cat_left BinLeaf t = t.
+Proof. by rewrite /cat_left /= left_branchK. Qed.
+Lemma cat_leftt0 t : cat_left t BinLeaf = t.
+Proof. by rewrite /cat_left /= cats0 left_branchK. Qed.
+Lemma cat_left_Node l r :
+  cat_left (BinNode BinLeaf r) l = BinNode l r.
+Proof. by rewrite /cat_left /= left_branchK. Qed.
+Lemma cat_leftA t u v :
+  cat_left (cat_left t u) v = cat_left t (cat_left u v).
+Proof. by rewrite /cat_left !from_leftK catA. Qed.
+Lemma size_from_left s :
+  size_tree (from_left s) = sumn [seq (size_tree t).+1 | t <- s].
+Proof. by elim: s => //= s0 s <-; rewrite add1n !addSn addnC. Qed.
+
+Lemma size_cat_left t u :
+  size_tree (cat_left t u) = size_tree t + size_tree u.
+Proof.
+rewrite /cat_left size_from_left map_cat sumn_cat.
+by rewrite -!size_from_left !left_branchK.
+Qed.
+
+Lemma from_left_cat s1 s2 :
+  from_left (s1 ++ s2) = cat_left (from_left s1) (from_left s2).
+Proof. by rewrite /cat_left !from_leftK. Qed.
+
+Lemma size_left_branch t :
+  all (fun l => size_tree l < size_tree t) (left_branch t).
+Proof.
+rewrite -{1}(left_branchK t) size_from_left.
+elim: (left_branch t) => //= l lb /allP IHlb.
+rewrite {1}addSn ltnS leq_addr /=.
+apply/allP => t1 /IHlb /leq_trans; apply.
+exact: leq_addl.
+Qed.
+
+
+(** ** Various particular binary trees *)
 Fixpoint rightcomb n :=
   if n is n'.+1 then
     BinNode BinLeaf (rightcomb n')
@@ -342,7 +391,8 @@ Lemma flip_leftcomb n : flip (leftcomb n) = rightcomb n.
 Proof. by elim: n => //= n ->. Qed.
 
 
-(** * Rotations and Tamari's lattice *)
+(** * Tamari's lattice *)
+(** ** Rotations in binary trees *)
 Fixpoint rotations t :=
   if t is BinNode l r then
     let rec := [seq BinNode lrot r | lrot <- rotations l] ++
@@ -474,6 +524,7 @@ by rewrite ltnn.
 Qed.
 
 
+(** ** Definition of Tamari order *)
 Section Tamari.
 
 Variable n : nat.
@@ -617,17 +668,42 @@ End Tamari.
 
 Notation "x '<=T' y" := (Tamari x y) (at level 70, y at next level).
 
-Fixpoint Tamarivct t :=
+
+
+(** ** Tamari vectors *)
+Fixpoint right_sizes t :=
   if t is BinNode l r then
-        Tamarivct l ++ size_tree r :: Tamarivct r
+        right_sizes l ++ size_tree r :: right_sizes r
   else [::].
-Definition pleq l1 l2 :=
+Definition vctleq l1 l2 :=
   (size l1 == size l2) && (all (fun p => p.1 <= p.2) (zip l1 l2)).
 
+Fixpoint from_vct_rec fuel lft vct :=
+  if fuel is fuel.+1 then
+    if vct is v0 :: vct' then
+      from_vct_rec fuel
+                   (BinNode lft (from_vct_rec fuel BinLeaf (take v0 vct')))
+                   (drop v0 vct')
+    else lft
+  else BinLeaf.
+Definition from_vct_acc lft vct := from_vct_rec (size vct).+1 lft vct.
+Definition from_vct := from_vct_acc BinLeaf.
+
+Fixpoint is_Tamari v :=
+  if v is v0 :: v' then
+    [&& v0 <= size v',
+     is_Tamari v' &
+     all (fun i => nth 0 v' i < v0 - i) (iota 0 v0)]
+  else true.
+Definition TamariVector := [qualify a v : seq nat | is_Tamari v].
 
 Section Tests.
 
-Goal [seq Tamarivct t | t <- enum_bintreesz 4] =
+Goal [seq right_sizes t | t <- enum_bintreesz 3] =
+[:: [:: 2; 1; 0]; [:: 2; 0; 0]; [:: 0; 1; 0]; [:: 1; 0; 0]; [:: 0; 0; 0]].
+Proof. by []. Qed.
+
+Goal [seq right_sizes t | t <- enum_bintreesz 4] =
 [:: [:: 3; 2; 1; 0]; [:: 3; 2; 0; 0]; [:: 3; 0; 1; 0]; [:: 3; 1; 0; 0];
     [:: 3; 0; 0; 0]; [:: 0; 2; 1; 0]; [:: 0; 2; 0; 0]; [:: 1; 0; 1; 0];
     [:: 0; 0; 1; 0]; [:: 2; 1; 0; 0]; [:: 2; 0; 0; 0]; [:: 0; 1; 0; 0];
@@ -635,22 +711,40 @@ Goal [seq Tamarivct t | t <- enum_bintreesz 4] =
 Proof. by []. Qed.
 
 Let bla := Eval hnf in nth BinLeaf (enum_bintreesz 5) 21.
-Goal Tamarivct bla = [:: 0; 0; 2; 1; 0].
+Goal right_sizes bla = [:: 0; 0; 2; 1; 0].
 Proof. by []. Qed.
 
-Goal [seq Tamarivct rot | rot <- rotations bla] =
+Goal [seq right_sizes rot | rot <- rotations bla] =
 [:: [:: 0; 3; 2; 1; 0]; [:: 1; 0; 2; 1; 0]].
 Proof. by []. Qed.
 
 Goal all (fun t =>
-            all (pleq (Tamarivct t)) [seq Tamarivct rot | rot <- rotations t])
+            all (vctleq (right_sizes t)) [seq right_sizes rot | rot <- rotations t])
      (enum_bintreesz 6).
+Proof. by []. Qed.
+
+Goal all
+     (fun i => all (fun t => t == from_vct (right_sizes t)) (enum_bintreesz i))
+     (iota 0 8).
+Proof. by []. Qed.
+
+Goal all
+     (fun i => all (fun t => right_sizes t \is a TamariVector) (enum_bintreesz i))
+     (iota 0 8).
+Proof. by []. Qed.
+
+Goal [:: 1; 1; 0] \isn't a TamariVector.
+Proof. by []. Qed.
+Goal [:: 2; 0; 1; 0] \isn't a TamariVector.
+Proof. by []. Qed.
+
+Goal [:: 2; 0; 0; 1; 0] \is a TamariVector.
 Proof. by []. Qed.
 
 End Tests.
 
 
-Lemma size_Tamarivct t : size (Tamarivct t) = size_tree t.
+Lemma size_right_sizes t : size (right_sizes t) = size_tree t.
 Proof.
 elim: t => //= l <- r <-.
 by rewrite size_cat /= addnS add1n addSn.
@@ -658,18 +752,18 @@ Qed.
 
 Lemma all_leqzip_refl l : all (fun p => p.1 <= p.2) (zip l l).
 Proof. by elim: l => //= a l ->; rewrite leqnn. Qed.
-Lemma pleq_refl : reflexive pleq.
-Proof. by rewrite /pleq => l; rewrite eq_refl all_leqzip_refl. Qed.
-Lemma pleq_trans : transitive pleq.
+Lemma vctleq_refl : reflexive vctleq.
+Proof. by rewrite /vctleq => l; rewrite eq_refl all_leqzip_refl. Qed.
+Lemma vctleq_trans : transitive vctleq.
 Proof.
-rewrite /pleq => b a; elim: a b => /= [|a0 a IH] [|b0 b] [|c0 c] //=.
+rewrite /vctleq => b a; elim: a b => /= [|a0 a IH] [|b0 b] [|c0 c] //=.
 rewrite !eqSS !andbA [_ && (_ <= b0)]andbC ![_ && (_ <= c0)]andbC.
 rewrite -!andbA => /andP [/leq_trans Hab /IH{IH}IH].
 by move=> /andP [/Hab -> /IH ->].
 Qed.
-Lemma pleq_anti : antisymmetric pleq.
+Lemma vctleq_anti : antisymmetric vctleq.
 Proof.
-rewrite /pleq => a b /andP [].
+rewrite /vctleq => a b /andP [].
 elim: a b => /= [|a0 a IH] [|b0 b] //=.
 rewrite !eqSS !andbA ![_ && (_ <= _)]andbC -!andbA.
 move=> /andP[Hab/IH{IH}IH] /andP[Hba/IH{IH} ->].
@@ -677,10 +771,10 @@ suff -> : a0 = b0 by [].
 by apply anti_leq; rewrite Hab Hba.
 Qed.
 
-Lemma rotation_pleq_impl t1 t2 :
-  t1 \in rotations t2 -> pleq (Tamarivct t2) (Tamarivct t1).
+Lemma rotation_vctleq_impl t1 t2 :
+  t1 \in rotations t2 -> vctleq (right_sizes t2) (right_sizes t1).
 Proof.
-rewrite /pleq !size_Tamarivct => Hrot.
+rewrite /vctleq !size_right_sizes => Hrot.
 rewrite (size_rotations Hrot) eq_refl /=.
 elim: t2 t1 Hrot => [//|l IHl r IHr] t2.
 move/rotationP => [a] [b] [c] [] [H1 H2].
@@ -693,85 +787,25 @@ move/rotationP => [a] [b] [c] [] [H1 H2].
 - move: H1 => [Ha Hc]; subst a; subst c => Hrot.
   have:= IHl _ Hrot => {IHl IHr} Hrec.
   rewrite H2 /= zip_cat; first last.
-    by rewrite !size_Tamarivct; apply: esym; apply: size_rotations.
+    by rewrite !size_right_sizes; apply: esym; apply: size_rotations.
   rewrite /= all_cat /=.
   rewrite Hrec leqnn /=.
-  by have:= pleq_refl (Tamarivct r); rewrite /pleq => /andP [_ ->].
+  by have:= vctleq_refl (right_sizes r); rewrite /vctleq => /andP [_ ->].
 - move: H1 => [Ha Hb]; subst a; subst b => Hrot.
   have:= IHr _ Hrot => {IHl IHr} Hrec.
   rewrite H2 /= zip_cat; last by [].
   rewrite /= all_cat /= Hrec (size_rotations Hrot) leqnn /=.
-  by have:= pleq_refl (Tamarivct l); rewrite /pleq => /andP [_ ->].
+  by have:= vctleq_refl (right_sizes l); rewrite /vctleq => /andP [_ ->].
 Qed.
 
-Lemma Tamari_pleq_impl n (t1 t2 : bintreesz n) :
-  t1 <=T t2 -> pleq (Tamarivct t1) (Tamarivct t2).
+Lemma Tamari_vctleq_impl n (t1 t2 : bintreesz n) :
+  t1 <=T t2 -> vctleq (right_sizes t1) (right_sizes t2).
 Proof.
 rewrite /Tamari => /connectP /= [p].
-elim: p t1 t2 => /= [| p0 p IHp] t1 t2; first by move => _ ->; exact: pleq_refl.
-move/andP => [/rotation_pleq_impl/pleq_trans Hpleq /IHp{IHp}H/H{H}].
-exact: Hpleq.
+elim: p t1 t2 => /= [| p0 p IHp] t1 t2; first by move => _ ->; exact: vctleq_refl.
+move/andP => [/rotation_vctleq_impl/vctleq_trans Hvctleq /IHp{IHp}H/H{H}].
+exact: Hvctleq.
 Qed.
-
-
-
-Fixpoint left_branch t :=
-  if t is BinNode l r then r :: left_branch l else [::].
-Fixpoint from_left l :=
-  if l is l0 :: l then BinNode (from_left l) l0 else BinLeaf.
-Definition cat_left t2 t1 := from_left (left_branch t2 ++ left_branch t1).
-
-
-Lemma left_branchK : cancel left_branch from_left.
-Proof. by elim=> //= l ->. Qed.
-Lemma from_leftK : cancel from_left left_branch.
-Proof. by elim=> //= l0 l ->. Qed.
-
-Lemma cat_left0t t : cat_left BinLeaf t = t.
-Proof. by rewrite /cat_left /= left_branchK. Qed.
-Lemma cat_leftt0 t : cat_left t BinLeaf = t.
-Proof. by rewrite /cat_left /= cats0 left_branchK. Qed.
-Lemma cat_left_Node l r :
-  cat_left (BinNode BinLeaf r) l = BinNode l r.
-Proof. by rewrite /cat_left /= left_branchK. Qed.
-Lemma cat_leftA t u v :
-  cat_left (cat_left t u) v = cat_left t (cat_left u v).
-Proof. by rewrite /cat_left !from_leftK catA. Qed.
-Lemma size_from_left s :
-  size_tree (from_left s) = sumn [seq (size_tree t).+1 | t <- s].
-Proof. by elim: s => //= s0 s <-; rewrite add1n !addSn addnC. Qed.
-
-Lemma size_cat_left t u :
-  size_tree (cat_left t u) = size_tree t + size_tree u.
-Proof.
-rewrite /cat_left size_from_left map_cat sumn_cat.
-by rewrite -!size_from_left !left_branchK.
-Qed.
-
-Lemma from_left_cat s1 s2 :
-  from_left (s1 ++ s2) = cat_left (from_left s1) (from_left s2).
-Proof. by rewrite /cat_left !from_leftK. Qed.
-
-Lemma size_left_branch t :
-  all (fun l => size_tree l < size_tree t) (left_branch t).
-Proof.
-rewrite -{1}(left_branchK t) size_from_left.
-elim: (left_branch t) => //= l lb /allP IHlb.
-rewrite {1}addSn ltnS leq_addr /=.
-apply/allP => t1 /IHlb /leq_trans; apply.
-exact: leq_addl.
-Qed.
-
-Fixpoint from_vct_rec fuel lft vct :=
-  if fuel is fuel.+1 then
-    if vct is v0 :: vct' then
-      from_vct_rec fuel
-                   (BinNode lft (from_vct_rec fuel BinLeaf (take v0 vct')))
-                   (drop v0 vct')
-    else lft
-  else BinLeaf.
-Definition from_vct_acc lft vct := from_vct_rec (size vct).+1 lft vct.
-Definition from_vct := from_vct_acc BinLeaf.
 
 Lemma from_vct_fuel_any fuel1 fuel2 lft vct :
   (size vct) < fuel1 <= fuel2 ->
@@ -843,22 +877,22 @@ by rewrite addnC -size_cat cat_take_drop.
 Qed.
 
 
-Lemma Tamarivct_from_left s :
-  Tamarivct (from_left s) =
-  flatten (rev [seq size_tree t :: Tamarivct t | t <- s]).
+Lemma right_sizes_from_left s :
+  right_sizes (from_left s) =
+  flatten [seq size_tree t :: right_sizes t | t <- rev s].
 Proof.
 elim: s => //= s0 s ->.
-by rewrite rev_cons -cats1 flatten_cat /= cats0.
+by rewrite rev_cons -cats1 map_cat !flatten_cat /= cats0.
 Qed.
 
-Lemma Tamarivct_cat_left t1 t2 :
-  Tamarivct (cat_left t1 t2) = Tamarivct t2 ++ Tamarivct t1.
+Lemma right_sizes_cat_left t1 t2 :
+  right_sizes (cat_left t1 t2) = right_sizes t2 ++ right_sizes t1.
 Proof.
-rewrite /cat_left Tamarivct_from_left map_cat rev_cat flatten_cat.
-by rewrite -!Tamarivct_from_left !left_branchK.
+rewrite /cat_left right_sizes_from_left rev_cat map_cat flatten_cat.
+by rewrite -!right_sizes_from_left !left_branchK.
 Qed.
 
-Theorem TamarivctK : cancel Tamarivct from_vct.
+Theorem right_sizesK : cancel right_sizes from_vct.
 Proof.
 rewrite /from_vct => t.
 move: {2}(size_tree t) (leqnn (size_tree t)) => n.
@@ -866,42 +900,14 @@ elim: n t => [| n IHn] t; first by rewrite leqn0 => /LeafP ->.
 rewrite -(left_branchK t).
 case/lastP: {t} (left_branch t) => //= [br r].
 rewrite -cats1 -(from_leftK br) -(from_leftK [:: r]) -/(cat_left _ _) /=.
-rewrite Tamarivct_cat_left /=.
-rewrite from_vct_accE -!size_Tamarivct drop_size_cat // take_size_cat //.
-rewrite size_Tamarivct size_cat_left /= addn0 add1n addnS ltnS => H.
+rewrite right_sizes_cat_left /=.
+rewrite from_vct_accE -!size_right_sizes drop_size_cat // take_size_cat //.
+rewrite size_right_sizes size_cat_left /= addn0 add1n addnS ltnS => H.
 rewrite IHn /=; last exact: (leq_trans (leq_addl _ _) H).
 rewrite from_vct_cat_leftE.
 by rewrite IHn; last exact: (leq_trans (leq_addr _ _) H).
 Qed.
 
-Section Tests2.
-
-Goal all
-     (fun i => all (fun t => t == from_vct (Tamarivct t)) (enum_bintreesz i))
-     (iota 0 8).
-Proof. by []. Qed.
-
-End Tests2.
-
-Fixpoint is_Tamari v :=
-  if v is v0 :: v' then
-    [&& v0 <= size v',
-     is_Tamari v' &
-     all (fun i => nth 0 v' i < v0 - i) (iota 0 v0)]
-  else true.
-Definition TamariVector := [qualify a v : seq nat | is_Tamari v].
-
-Section Tests3.
-
-Goal all
-     (fun i => all (fun t => Tamarivct t \is a TamariVector) (enum_bintreesz i))
-     (iota 0 8).
-Proof. by []. Qed.
-
-Eval compute in [seq Tamarivct t | t <- enum_bintreesz 3].
-Eval compute in is_Tamari [:: 1; 1; 0].
-
-End Tests3.
 
 Lemma Tamari_consP v0 v :
   reflect
@@ -989,12 +995,12 @@ move=> H; apply/Tamari_consP; split => // i Hi.
 exact: Tamari_bound.
 Qed.
 
-Lemma TamarivctP t : Tamarivct t \is a TamariVector.
+Theorem right_sizesP t : right_sizes t \is a TamariVector.
 Proof.
 move: {2}(size_tree t) (leqnn (size_tree t)) => n.
 elim: n t => [| n IHn] t; first by rewrite leqn0 => /LeafP ->.
 move=> Ht.
-rewrite -(left_branchK t) Tamarivct_from_left -map_rev.
+rewrite -(left_branchK t) right_sizes_from_left.
 have : all (fun t=> size_tree t <= n) (rev (left_branch t)).
   rewrite all_rev; have:= size_left_branch t.
   apply sub_all => l Hl; rewrite -ltnS.
@@ -1002,11 +1008,11 @@ have : all (fun t=> size_tree t <= n) (rev (left_branch t)).
 elim: (rev (left_branch t)) => [| b0 br IHbr] //=.
 move=> /andP [/IHn{IHn} Hb0 /IHbr{IHbr} Hbr].
 rewrite -/((_ :: _) ++ _); apply Tamari_cat; last exact: Hbr.
-by rewrite -size_Tamarivct; exact: cons_TamariP.
+by rewrite -size_right_sizes; exact: cons_TamariP.
 Qed.
 
-Lemma from_vctK s :
-  s \is a TamariVector -> Tamarivct (from_vct s) = s.
+Theorem from_vctK s :
+  s \is a TamariVector -> right_sizes (from_vct s) = s.
 Proof.
 rewrite /from_vct.
 move: {2}(size s) (leqnn (size s)) => n.
@@ -1014,7 +1020,7 @@ elim: n s => [| n IHn] s; first by rewrite leqn0 => /nilP ->.
 case: s => [| s0 s] //=.
 rewrite ltnS -{1}(cat_take_drop s0 s) size_cat => Hsz Hcons.
 have:= Hcons => /Tamari_consP [Hs0 Hs Hall].
-rewrite from_vct_accE from_vct_cat_leftE Tamarivct_cat_left.
+rewrite from_vct_accE from_vct_cat_leftE right_sizes_cat_left.
 rewrite IHn /=; first last.
   - exact: Tamari_drop.
   - exact: (leq_trans (leq_addl _ _) Hsz).
@@ -1025,23 +1031,25 @@ rewrite cat_take_drop size_from_vct_acc size_take -/(minn _ _).
 by move: Hs0 => /minn_idPl ->.
 Qed.
 
+
+
 Lemma nseq_rcons (T : eqType) (e : T) n : nseq n.+1 e = rcons (nseq n e) e.
 Proof. by elim: n => //= n ->. Qed.
 
-Lemma Tamari_vct_leftcomb n : Tamarivct (leftcomb n) = nseq n 0.
+Lemma Tamari_vct_leftcomb n : right_sizes (leftcomb n) = nseq n 0.
 Proof. by elim: n => //= n ->; rewrite cats1 -nseq_rcons. Qed.
 
 Lemma from_vct0 n : from_vct (nseq n 0) = leftcomb n.
-Proof. by rewrite -Tamari_vct_leftcomb TamarivctK. Qed.
+Proof. by rewrite -Tamari_vct_leftcomb right_sizesK. Qed.
 
 (*
 Lemma plt_rotation u v :
-  pleq (Tamarivct u) (Tamarivct v) ->
+  vctleq (Tamarivct u) (Tamarivct v) ->
   u != v ->
-  exists t, v \in rotations t /\ pleq (Tamarivct u) (Tamarivct t).
+  exists t, v \in rotations t /\ vctleq (Tamarivct u) (Tamarivct t).
 Proof.
 elim: u v => [| ul IHul ur IHur] v /=.
-  rewrite /pleq => /andP []; rewrite /= eq_sym size_Tamarivct => /LeafP -> _.
+  rewrite /vctleq => /andP []; rewrite /= eq_sym size_Tamarivct => /LeafP -> _.
   by rewrite eq_refl.
 rewrite -{1}(cat_take_drop (size (Tamarivct ul)) (Tamarivct v)).
 case: (altP (Tamarivct ur =P drop (size (Tamarivct ul)) (Tamarivct v))) =>
