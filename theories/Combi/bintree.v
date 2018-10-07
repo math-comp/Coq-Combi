@@ -581,18 +581,23 @@ Section Tamari.
 Variable n : nat.
 Implicit Type t : bintreesz n.
 
-Local Fact size_rightcombE : size_tree (rightcomb n) == n.
+Local Fact rightcombsz_proof : size_tree (rightcomb n) == n.
 Proof. apply/eqP; exact: size_rightcomb. Qed.
-Canonical rightcombsz := BinTreeSZ size_rightcombE.
-Local Fact size_leftcombE : size_tree (leftcomb n) == n.
+Canonical rightcombsz := BinTreeSZ rightcombsz_proof.
+Local Fact leftcombsz_proof : size_tree (leftcomb n) == n.
 Proof. apply/eqP; exact: size_leftcomb. Qed.
-Canonical leftcombsz := BinTreeSZ size_leftcombE.
-Local Lemma size_flipE t : size_tree (flip t) == n.
+Canonical leftcombsz := BinTreeSZ leftcombsz_proof.
+Local Lemma flipsz_proof t : size_tree (flip t) == n.
 Proof. by rewrite size_flip bintreeszP. Qed.
-Canonical flipsz t := BinTreeSZ (size_flipE t).
+Canonical flipsz t := BinTreeSZ (flipsz_proof t).
 
 Lemma flipszK : involutive flipsz.
 Proof. move=> t; apply val_inj => /=; exact: flipK. Qed.
+
+Lemma flipsz_rightcomb : flipsz rightcombsz = leftcombsz.
+Proof. by apply val_inj => /=; exact: flip_rightcomb. Qed.
+Lemma flipsz_leftcomb : flipsz leftcombsz = rightcombsz.
+Proof. by apply val_inj => /=; exact: flip_leftcomb. Qed.
 
 
 Definition Tamari := connect (fun t1 t2 : bintreesz n => grel rotations t1 t2).
@@ -659,61 +664,6 @@ Proof.
 apply/idP/idP; first exact: Tamari_flip_impl.
 rewrite -{1}(flipszK t1) -{1}(flipszK t2).
 exact: Tamari_flip_impl.
-Qed.
-
-Lemma rightcomb_bottom t : t <=T rightcombsz.
-Proof.
-move: {2}#|_| (leqnn #|[set t' | t <=T t' & t != t']|) => bound.
-elim: bound t => [| b IHb] t.
-  rewrite leqn0 cards_eq0 => /eqP Hlt.
-  have {Hlt} : rotations t == [::].
-    case Hrot : (rotations t) => [//| t0 r]; exfalso.
-    have {Hrot} Hrot : t0 \in rotations t by rewrite Hrot; exact: mem_head.
-    move/eqP : (size_rotations Hrot); rewrite bintreeszP => Ht0.
-    pose t' := BinTreeSZ Ht0.
-    have : t' \in [set t' | t <=T t' & t != t'].
-      rewrite inE; rewrite rotations_Tamari //=.
-      apply (introN idP) => /eqP /(congr1 val) /= Ht.
-      by move/rotations_neq: Hrot; rewrite Ht eq_refl.
-    by rewrite Hlt inE.
-  rewrite rightcomb_rotationsE => /eqP Ht.
-  suff -> : t = rightcombsz by exact: Tamari_refl.
-  by apply val_inj; rewrite /= Ht bintreeszP.
-move=> Hleq.
-case: (leqP #|[set t' | t <=T t' & t != t']| b) => [| Hlt]; first exact: IHb.
-have {Hleq Hlt} Hcard : #|[set t' | t <=T t' & t != t']| = b.+1.
-  by apply anti_leq; rewrite Hleq Hlt.
-case Hrot : (rotations t) => [| t0 s].
-  exfalso => {IHb}.
-  have {Hcard} : #|[set t' | t <=T t' & t != t']| > 0 by rewrite Hcard.
-  rewrite card_gt0 => /set0Pn [/= t0].
-  rewrite inE => /andP [].
-  rewrite /Tamari => /connectP [] [_ /= ->|t1 s] /=; first by rewrite eq_refl.
-  by rewrite Hrot in_nil.
-have {Hrot} Hrot : t0 \in rotations t by rewrite Hrot; exact: mem_head.
-move/eqP : (size_rotations Hrot); rewrite bintreeszP => Ht0.
-pose t' := BinTreeSZ Ht0.
-have:= Hrot; rewrite -[t0]/(val t') => /rotations_Tamari/Tamari_trans.
-apply; apply: IHb.
-rewrite -ltnS -{}Hcard; apply proper_card.
-rewrite /proper; apply/andP; split; apply/subsetP.
-- move=> /= z; rewrite !inE => /andP [Ht'z Hneq].
-  have Htz : t <=T z by apply: (Tamari_trans _ Ht'z); exact: rotations_Tamari.
-  rewrite Htz /=.
-  move: Hneq; apply contra => /eqP Heq; subst z.
-  apply/eqP; apply Tamari_anti; rewrite Ht'z /=.
-  exact: rotations_Tamari.
-- move/(_ t'); rewrite !inE.
-  rewrite eq_refl /= andbF => H; apply not_false_is_true; apply: H.
-  apply/andP; split; first exact: rotations_Tamari.
-  exact: rotations_neq.
-Qed.
-
-Lemma leftcomb_top t : leftcombsz <=T t.
-Proof.
-rewrite -Tamari_flip.
-suff -> : flipsz leftcombsz = rightcombsz by exact: rightcomb_bottom.
-by apply val_inj => /=; exact: flip_leftcomb.
 Qed.
 
 End Tamari.
@@ -797,6 +747,13 @@ Qed.
 
 Lemma rightsizesumE t : rightsizesum t = sumn (right_sizes t).
 Proof. by elim: t => //= l -> r ->; rewrite sumn_cat /= addnA. Qed.
+
+Lemma right_sizes_left_comb n :
+  right_sizes (leftcomb n) = nseq n 0.
+Proof.
+elim: n => //= n ->.
+by rewrite -[RHS]cat1s -[[:: 0]]/(nseq 1 0) -!nseqD addnC.
+Qed.
 
 Lemma from_vct_fuel_any fuel1 fuel2 lft vct :
   (size vct) < fuel1 <= fuel2 ->
@@ -1488,5 +1445,16 @@ Proof. rewrite /Tmax -Tamari_flip flipszK; exact: TminPl. Qed.
 Lemma TmaxP t1 t2 t :
   t1 <=T t -> t2 <=T t -> Tmax t1 t2 <=T t.
 Proof. rewrite /Tmax -![_ <=T t]Tamari_flip flipszK; exact: TminP. Qed.
+
+
+Lemma leftcomb_top t : leftcombsz n <=T t.
+Proof.
+rewrite -Tamari_vctleq right_sizes_left_comb.
+apply/vctleqP; split; first by rewrite size_nseq size_right_sizes bintreeszP.
+by move=> i; rewrite nth_nseq if_same.
+Qed.
+
+Lemma rightcomb_bottom t : t <=T rightcombsz n.
+Proof. by rewrite -Tamari_flip flipsz_rightcomb; exact: leftcomb_top. Qed.
 
 End TamariLattice.
