@@ -52,9 +52,9 @@ Left branch surgery:
 Rotations and Tamari order:
 
 - [rotations t] == the list of right rotations of the tree [t]
-- [rightsizesum t] == the sum over all node of [t] of the size of the left
-        subtree.
-- [t1 <=T t2] == [t1] is smaller than [t2] in the tamari order.
+- [rightsizesum t] == the sum over all nodes [n] of [t] of the size of the
+        right subtree of [n]
+- [t1 <=T t2] == [t1] is smaller than [t2] in the Tamari order
 
 Tamari bracketing vectors:
 
@@ -69,10 +69,15 @@ The function [right_sizes] and [from_vct] are two inverse bijection from
 binary trees to Tamari vectors as stated in theorems [right_sizesK],
 [right_sizesP] and [from_vctK].
 
-- [vctleq v1 v2] == [v1] and [v2] are of the same lenght and [v1] is smaller
-        than [v2] componentwise (ie for all [i] then [v1_i <= v2_i]
+- [vctleq v1 v2] = [v1 <=V v2] == [v1] and [v2] are of the same lenght
+        and [v1] is smaller than [v2] componentwise (ie. for all [i] then
+        [v1_i <= v2_i]
 - [vctmin v1 v2] == the componentwise min of [v1] and [v2]
 
+Tamari Lattice:
+
+- [Tinf t1 t2] == the inf of [t1] and [t2] in the Tamari lattice.
+- [Tsup t1 t2] == the sup of [t1] and [t2] in the Tamari lattice.
  *********************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun bigop ssrnat eqtype fintype choice seq.
@@ -979,7 +984,7 @@ rewrite {}IHn /=; first last.
 by rewrite cat_take_drop size_from_vct_acc size_takel.
 Qed.
 
-Theorem from_vct_cat u v t :
+Lemma from_vct_cat u v t :
   u \is a TamariVector ->
   from_vct_acc t (u ++ v) = from_vct_acc (from_vct_acc t u) v.
 Proof.
@@ -992,21 +997,14 @@ rewrite !take_size_cat ?size_right_sizes //.
 by rewrite !drop_size_cat ?size_right_sizes //.
 Qed.
 
-Lemma nseq_rcons (T : eqType) (e : T) n : nseq n.+1 e = rcons (nseq n e) e.
-Proof. by elim: n => //= n ->. Qed.
-
-Lemma Tamari_vct_leftcomb n : right_sizes (leftcomb n) = nseq n 0.
-Proof. by elim: n => //= n ->; rewrite cats1 -nseq_rcons. Qed.
-
 Lemma from_vct0 n : from_vct (nseq n 0) = leftcomb n.
-Proof. by rewrite -Tamari_vct_leftcomb right_sizesK. Qed.
+Proof. by rewrite -right_sizes_left_comb right_sizesK. Qed.
 
 (** ** Comparison of Tamari vectors *)
 
 Definition vctleq v1 v2 :=
   (size v1 == size v2) && (all (fun p => p.1 <= p.2) (zip v1 v2)).
 Definition vctmin v1 v2 := [seq minn p.1 p.2 | p <- zip v1 v2].
-
 
 Local Notation "x '<=V' y" := (vctleq x y) (at level 70, y at next level).
 
@@ -1017,10 +1015,6 @@ Goal all (fun t => all
                      [seq right_sizes rot | rot <- rotations t])
      (enum_bintreesz 6).
 Proof. by []. Qed.
-
-Let t := Eval compute in nth BinLeaf (enum_bintreesz 6) 35.
-Eval compute in (right_sizes t, [seq right_sizes rot | rot <- rotations t]).
-Eval compute in (right_sizes t, right_sizes (head BinLeaf (rotations t))).
 
 End TestsComp.
 
@@ -1373,13 +1367,18 @@ case: (ltngtP j i) => Hj.
     exact: Tamari_add_min Htamw Hvctleq H0.
 Qed.
 
+
+
 Section TamariLattice.
 
 Variable n : nat.
 Implicit Types t : bintreesz n.
-Theorem vctleq_Tamari_impl t1 t2 :
-  right_sizes t1 <=V right_sizes t2 -> t1 <=T t2.
+
+
+Theorem Tamari_vctleq t1 t2 :
+  (right_sizes t1 <=V right_sizes t2) = (t1 <=T t2).
 Proof.
+apply/idP/idP; last exact: Tamari_vctleq_impl.
 move: {2}(_ - _) (leqnn (rightsizesum t2 - rightsizesum t1)) => i.
 rewrite leq_subLR.
 elim: i t1 t2 => [| i IHi] t1 t2 Hsum Hleq.
@@ -1400,51 +1399,44 @@ move=> /IHi{IHi}/(_ Htleq) /(Tamari_trans _); apply.
 exact: rotations_Tamari.
 Qed.
 
-
-Theorem Tamari_vctleq t1 t2 :
-  (right_sizes t1 <=V right_sizes t2) = (t1 <=T t2).
-Proof.
-apply/idP/idP; [exact: vctleq_Tamari_impl | exact: Tamari_vctleq_impl].
-Qed.
-
-Lemma Tmin_proof t1 t2 :
+Lemma Tinf_proof t1 t2 :
   size_tree (from_vct (vctmin (right_sizes t1) (right_sizes t2))) == n.
 Proof.
 by rewrite size_from_vct size_vctmin !size_right_sizes !bintreeszP minnn.
 Qed.
-Definition Tmin t1 t2 := BinTreeSZ (Tmin_proof t1 t2).
-Definition Tmax t1 t2 := flipsz (Tmin (flipsz t1) (flipsz t2)).
+Definition Tinf t1 t2 := BinTreeSZ (Tinf_proof t1 t2).
+Definition Tsup t1 t2 := flipsz (Tinf (flipsz t1) (flipsz t2)).
 
-Lemma TminC  t1 t2 : Tmin t1 t2 = Tmin t2 t1.
-Proof. by rewrite /Tmin /=; apply val_inj; rewrite /= vctminC. Qed.
+Lemma TinfC  t1 t2 : Tinf t1 t2 = Tinf t2 t1.
+Proof. by rewrite /Tinf /=; apply val_inj; rewrite /= vctminC. Qed.
 
-Lemma TminPr t1 t2 : Tmin t1 t2 <=T t2.
+Lemma TinfPr t1 t2 : Tinf t1 t2 <=T t2.
 Proof.
 have Hszeq : size (right_sizes t1) = size (right_sizes t2).
   by rewrite !size_right_sizes !bintreeszP.
-rewrite /Tmin -Tamari_vctleq /= from_vctK ?vctmin_Tamari //.
+rewrite /Tinf -Tamari_vctleq /= from_vctK ?vctmin_Tamari //.
 exact: vctminPr.
 Qed.
 
-Lemma TminPl t1 t2 : Tmin t1 t2 <=T t1.
-Proof. by rewrite TminC; exact: TminPr. Qed.
+Lemma TinfPl t1 t2 : Tinf t1 t2 <=T t1.
+Proof. by rewrite TinfC; exact: TinfPr. Qed.
 
-Lemma TminP t1 t2 t :
-  t <=T t1 -> t <=T t2 -> t <=T Tmin t1 t2.
+Lemma TinfP t1 t2 t :
+  t <=T t1 -> t <=T t2 -> t <=T Tinf t1 t2.
 Proof.
 have Hszeq : size (right_sizes t1) = size (right_sizes t2).
   by rewrite !size_right_sizes !bintreeszP.
-rewrite /Tmin -!Tamari_vctleq /= from_vctK ?vctmin_Tamari //.
+rewrite /Tinf -!Tamari_vctleq /= from_vctK ?vctmin_Tamari //.
 exact: vctminP.
 Qed.
 
-Lemma TmaxPr t1 t2 : t2 <=T Tmax t1 t2.
-Proof. rewrite /Tmax -Tamari_flip flipszK; exact: TminPr. Qed.
-Lemma TmaxPl t1 t2 : t1 <=T Tmax t1 t2.
-Proof. rewrite /Tmax -Tamari_flip flipszK; exact: TminPl. Qed.
-Lemma TmaxP t1 t2 t :
-  t1 <=T t -> t2 <=T t -> Tmax t1 t2 <=T t.
-Proof. rewrite /Tmax -![_ <=T t]Tamari_flip flipszK; exact: TminP. Qed.
+Lemma TsupPr t1 t2 : t2 <=T Tsup t1 t2.
+Proof. rewrite /Tsup -Tamari_flip flipszK; exact: TinfPr. Qed.
+Lemma TsupPl t1 t2 : t1 <=T Tsup t1 t2.
+Proof. rewrite /Tsup -Tamari_flip flipszK; exact: TinfPl. Qed.
+Lemma TsupP t1 t2 t :
+  t1 <=T t -> t2 <=T t -> Tsup t1 t2 <=T t.
+Proof. rewrite /Tsup -![_ <=T t]Tamari_flip flipszK; exact: TinfP. Qed.
 
 
 Lemma leftcomb_top t : leftcombsz n <=T t.
