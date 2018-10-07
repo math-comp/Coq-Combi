@@ -1148,15 +1148,6 @@ move/rotationP => [a] [b] [c] [] [H1 H2].
   by case: (i - _) => //=; rewrite add1n addSnnS leq_addr.
 Qed.
 
-Theorem Tamari_vctleq_impl n (t1 t2 : bintreesz n) :
-  t1 <=T t2 -> right_sizes t1 <=V right_sizes t2.
-Proof.
-rewrite /Tamari => /connectP /= [p].
-elim: p t1 t2 => /= [| p0 p IHp] t1 t2; first by move => _ ->; exact: vctleq_refl.
-move/andP => [/rotation_vctleq_impl/vctleq_trans Hvctleq /IHp{IHp}H/H{H}].
-exact: Hvctleq.
-Qed.
-
 Lemma Tamari_add_head v0 v :
   v0 :: v \is a TamariVector ->
   v0 < size v ->
@@ -1378,26 +1369,33 @@ Implicit Types t : bintreesz n.
 Theorem Tamari_vctleq t1 t2 :
   (right_sizes t1 <=V right_sizes t2) = (t1 <=T t2).
 Proof.
-apply/idP/idP; last exact: Tamari_vctleq_impl.
-move: {2}(_ - _) (leqnn (rightsizesum t2 - rightsizesum t1)) => i.
-rewrite leq_subLR.
-elim: i t1 t2 => [| i IHi] t1 t2 Hsum Hleq.
-  rewrite addn0 in Hsum.
-  suff -> : t1 = t2 by apply: Tamari_refl.
-  apply/val_inj/eqP => /=.
-  have [Hsum2 Heq] := vctleq_rightsizesum Hleq.
-  rewrite -Heq; apply/eqP/anti_leq.
-  by rewrite Hsum Hsum2.
-case: (altP (t1 =P t2)) => [-> | Hneq]; first by apply: Tamari_refl.
-have [/= tt [Hrot Htleq]] := vctleq_rotation Hleq Hneq.
-have Hszt : size_tree tt == n by rewrite (size_rotations Hrot) bintreeszP.
-pose t := BinTreeSZ Hszt.
-rewrite -[tt]/(tval t) in Hrot Htleq.
-have:= rightsizesum_gt Hrot.
-rewrite -(leq_add2r i) addSnnS => /(leq_trans Hsum).
-move=> /IHi{IHi}/(_ Htleq) /(Tamari_trans _); apply.
-exact: rotations_Tamari.
+apply/idP/idP.
+- move: {2}(_ - _) (leqnn (rightsizesum t2 - rightsizesum t1)) => i.
+  rewrite leq_subLR.
+  elim: i t1 t2 => [| i IHi] t1 t2 Hsum Hleq.
+    rewrite addn0 in Hsum.
+    suff -> : t1 = t2 by apply: Tamari_refl.
+    apply/val_inj/eqP => /=.
+    have [Hsum2 Heq] := vctleq_rightsizesum Hleq.
+    rewrite -Heq; apply/eqP/anti_leq.
+    by rewrite Hsum Hsum2.
+  case: (altP (t1 =P t2)) => [-> | Hneq]; first by apply: Tamari_refl.
+  have [/= tt [Hrot Htleq]] := vctleq_rotation Hleq Hneq.
+  have Hszt : size_tree tt == n by rewrite (size_rotations Hrot) bintreeszP.
+  pose t := BinTreeSZ Hszt.
+  rewrite -[tt]/(tval t) in Hrot Htleq.
+  have:= rightsizesum_gt Hrot.
+  rewrite -(leq_add2r i) addSnnS => /(leq_trans Hsum).
+  move=> /IHi{IHi}/(_ Htleq) /(Tamari_trans _); apply.
+  exact: rotations_Tamari.
+- rewrite /Tamari => /connectP /= [p].
+  elim: p t1 t2 => /= [| p0 p IHp] t1 t2.
+    by move => _ ->; exact: vctleq_refl.
+  move/andP => [Hrot Hpath Ht2].
+  suff /vctleq_trans : right_sizes t1 <=V right_sizes p0 by apply; apply IHp.
+  exact: rotation_vctleq_impl.
 Qed.
+
 
 Lemma Tinf_proof t1 t2 :
   size_tree (from_vct (vctmin (right_sizes t1) (right_sizes t2))) == n.
