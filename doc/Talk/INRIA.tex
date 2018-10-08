@@ -481,10 +481,10 @@ Definition Schur_pol (sh : seq nat) := polyset R (tabwordshape sh).
   \begin{enumerate}
   \item increasing subsequences and Schensted's algorithms;
   \item Robinson-Schensted correspondance : a bijection;
-  \item Green's invariants: computing the maximum sum of the length of $k$ disjoint
+  \item Greene invariants: computing the maximum sum of the length of $k$ disjoint
     non-decreassing subsequences;
   \item Knuth relations, the plactic monoïd;
-  \item Green's invariants are plactic invariants: Equivalence between RS and plactic;
+  \item Greene invariants are plactic invariants: Equivalence between RS and plactic;
   \item standardization; symmetry of RS;
   \item Lifting to non commutative polynomials : Free quasi-symmetric function
     and shuffle product;
@@ -815,8 +815,8 @@ Lemma catset_LR_rule :
   \Huge\bf What does the Robinson-Schensted algorithm compute ?
 \end{frame}
 
-\section{Green's Theorem and the plactic monoid}
-\begin{frame}{Green's Theorem}
+\section{Greene Theorem and the plactic monoid}
+\begin{frame}{Greene Theorem}
 
   disjoint support increasing subsequences:
   \[
@@ -862,7 +862,7 @@ Definition greenCol := green_rel (gtnX Alph).
   \end{coqcode}
 \end{frame}
 
-\begin{frame}[fragile]{Green's Theorem}
+\begin{frame}[fragile]{Greene Theorem}
   \begin{coqcode}
 (* take n s == the sequence containing only the first n items of s *)
 (*             (or all of s if size s <= n).                       *)
@@ -883,15 +883,15 @@ Proof:
   row reading of a tableau;
 \item Knuth's relations: given a tableau $t$, describe all the word $w$ such
   that $RS(w) = t$;
-\item Show that Green's invariant are indeed invariants.
+\item Show that Greene invariant are indeed invariants.
 \end{itemize}
 \end{frame}
 
-\begin{frame}[fragile]{Step 1: Green's invariant of a tableau}
+\begin{frame}[fragile]{Step 1: Greene invariant of a tableau}
 
   \begin{itemize}
-  \item Green Columns : Upper bound using concatenation;
-  \item Green Rows : Upper bound intersection with columns;
+  \item Greene Columns : Upper bound using concatenation;
+  \item Greene Rows : Upper bound intersection with columns;
   \item Construction of an explicit $k$-sub sequence.
   \end{itemize}
 \bigskip
@@ -1030,11 +1030,11 @@ Corollary Sch_plact u v : RS u == RS v -> u =Pl v .
 \end{frame}
 
 
-\begin{frame}[fragile]{Step 3: Green's numbers are plactic invariants}
+\begin{frame}[fragile]{Step 3: Greene numbers are plactic invariants}
 
 \[
 u \equiv_{Pl} v\quad \Longrightarrow\quad
- \forall k\in\N,\ \operatorname{Green}_k(u) = \operatorname{Green}_k(v)
+ \forall k\in\N,\ \operatorname{Greene}_k(u) = \operatorname{Greene}_k(v)
 \]
   \begin{coqcode}
 Lemma ksupp_cast (T : ordType) R (w1 w2 : seq T) (H : w1 = w2) k Q :
@@ -1076,7 +1076,7 @@ SetContainingBothLeft.exists_Qy
   \end{coqcode}
 \end{frame}
 
-\begin{frame}[fragile]{Green's Plactic invariants}
+\begin{frame}[fragile]{Greene Plactic invariants}
 
   \begin{coqcode}
 Theorem greenRow_invar_plactic u v :

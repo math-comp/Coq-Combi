@@ -1,0 +1,857 @@
+\documentclass[compress,11pt]{beamer}
+
+\usetheme{TALK}
+\usepackage[vcentermath]{genyoungtabtikz}
+\usepackage{minted}
+\usemintedstyle{emacs}
+
+\usepackage{genyoungtabtikz}
+
+\newminted{coq}{
+frame=lines,
+framesep=2mm,
+fontsize=\scriptsize,
+mathescape=true
+}
+\usepackage{commath}
+
+% INFO DOCUMENT - TITRE, AUTEUR, INSTITUTION
+\title{\bf\LARGE A formal proof of the \\
+Littlewood-Richardson rule\\[5mm]}
+\author{Florent Hivert}
+\institute[LRI]{
+  LRI / Université Paris Sud 11 / CNRS}
+\date[September 2018]{September 2018}
+
+\newcommand{\XX}{{\mathbb X}}
+
+\newcommand{\free}[1]{\left\langle#1\right\rangle}
+\newcommand{\N}{{\mathbb N}}
+\newcommand{\C}{{\mathbb C}}
+\newcommand{\Q}{{\mathbb Q}}
+\newcommand{\SG}{{\mathfrak S}}
+\newcommand{\std}{\operatorname{Std}}
+
+\newcommand{\sym}{\mathrm{sym}}
+\newcommand{\NCSF}{\mathbf{NCSF}}
+\newcommand{\QSym}{\mathrm{QSym}}
+\newcommand{\FSym}{\mathbf{FSym}}
+
+\newcommand{\partof}{\vdash}                    % Partition de
+\newcommand{\compof}{\vDash}                    % Composisition de
+
+\newcommand{\qandq}{\text{\quad et\quad}}
+
+\newcommand{\alphX}{{\mathbb X}}
+%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\red}[1]{{\color{red} #1}}
+\newcommand{\grn}[1]{{\color{green} #1}}
+\newcommand{\blu}[1]{{\color{blue} #1}}
+%------------------------------------------------------------------------------
+\begin{document}
+
+% PAGE D'ACCUEIL
+\frame{\titlepage}
+
+\begin{frame}{Outline}
+  \tableofcontents
+\end{frame}
+
+\section{Motivation : certified proof in combinatorics}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{Why formalize things on computers}
+
+  \begin{center}
+    \textbf{\LARGE Writing correct programs is hard:}
+  \end{center}
+\medskip
+
+\begin{itemize}
+\item The human mind is focused on the big picture;
+\item Hard to take track of all the trivial / particular cases.
+\end{itemize}
+\bigskip\pause
+
+Some excerpts of my contribution to \texttt{Sagemath}:
+\begin{itemize}
+\item determinant / rank / invertibility of $0\times0$ and $1\times1$ matrices
+\item empty set and its permutation
+\item empty partition / composition / parking function / tableau \dots
+\item the $0$ and $1$ species
+\item \dots
+\end{itemize}
+\bigskip\pause
+
+\centering{\textbf{\huge What about proofs ?}}
+\end{frame}
+
+\begin{frame}{Are our proofs always correct ?}
+
+Donald Knuth:
+\begin{quote}\large
+  Beware of bugs in the above code; I have only proved it correct, not tried it.
+\end{quote}
+\bigskip\pause
+
+Often in combinatorics, and particularly in \textbf{bijective} combinatorics,
+proofs are algorithms, together with justifications that they meet their
+specifications...
+\end{frame}
+
+\begin{frame}{Are our proofs always correct ?}
+
+  The Littlewood-Richardson rule:
+
+  \begin{itemize}
+  \item stated (1934) by D. E. Littlewood and A. R. Richardson, \red{wrong
+      proof, wrong example}.
+  \item Robinson (1938), wrong completed proof.
+  \item more wrong published proofs...
+  \item first correct proof: Schützenberger (1977).
+  \item nowadays: dozens of different proofs\dots
+  \end{itemize}
+
+  \begin{quotation}\small
+    \textbf{Wikipedia}: The Littlewood–Richardson rule is \textbf{notorious
+      for the number of errors} that appeared prior to its complete, published
+    proof. Several published attempts to prove it are incomplete, and it is
+    particularly difficult to avoid errors when doing hand calculations with
+    it: even the original example in D. E. Littlewood and A. R. Richardson
+    (1934) contains an error.
+ \end{quotation}
+\end{frame}
+
+
+\begin{frame}{The case of the Littlewood-Richardson rule ?}
+
+  A footnote in Macdonald's book:
+  \medskip
+
+  \begin{quotation}
+    \noindent
+    Gordon James reports that he was once told that:
+
+    ``The Littlewood-Richardson rule helped to \grn{get men on the
+      moon}, but it was \red{not proved until after they had got
+      there}. The first part of this story might be an exaggeration.''
+  \end{quotation}
+  \bigskip
+
+  This sentence appears in James, G. D. (1987) \emph{The representation theory
+    of the symmetric groups}.
+\end{frame}
+
+\begin{frame}{The case of the Littlewood-Richardson rule ?}
+More quotation of James:
+
+\begin{quotation}\small
+  It seems that for a long time \textbf{the entire body of experts in the
+    field was convinced} by these proofs; at any rate it was not until 1976
+  that McConnell pointed out \textbf{a subtle ambiguity} in part of the
+  construction underlying the argument.
+
+  [...]
+
+  How was it possible for an \red{incorrect proof} of such a central result in
+  the theory of $S_n$ to have been \red{accepted for close to forty years}?
+  The level of rigor customary among mathematicians when a combinatorial
+  argument is required, is (\grn{probably quite rightly}) of the
+  \grn{nonpedantic hand-waving} kind; perhaps one lesson to be drawn is that
+  a \textbf{higher degree of care} will be needed in dealing with such
+  combinatorial complexities as occur in the present level of development of
+  Young's approach.
+\end{quotation}
+\end{frame}
+
+\begin{frame}[fragile]
+  \begin{problem}
+    Suppose that, back in 1977, they had had our current proof assistant
+    technology. Would it have been \textbf{feasible} to check Schützenberger
+    proof ? If so, \textbf{how long} would it have taken ?
+  \end{problem}
+  \bigskip\pause
+
+  \begin{Theorem}[Constructive answer !]
+    Yes ! Less than 5 month and two weeks !
+  \end{Theorem}
+
+\small
+\begin{verbatim}
+commit f990146b8c6e062fe025740a08f888deb9481c2d
+Date:   Thu Jul 24 17:46:58 2014 +0200
+    Schensted's algorithm.
+
+commit 2418282695455261e5459b33d3e8f979d57c3bdb
+Date:   Sun Jan 4 15:31:16 2015 +0100
+    DONE the proof of the Littlewood_Richardson rule !!!!
+\end{verbatim}
+\end{frame}
+
+\section{A short introduction to formal proof in Coq/Mathcomp}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{frame}{History of Coq and Mathcomp}
+
+  \begin{itemize}
+  \item 1985 -- T.~Coquand :  \emph{Calculus of constructions}
+  \item 1989 -- T.~Coquand, G.~Huet: creation of \texttt{Coq}
+  \item 2004 -- G.~Gonthier, B.~Werner : \emph{4 color theorem} in Coq
+
+    Along their way \texttt{Ssreflect} ``small scale reflection''.
+
+  \item 2006 -- 2018 Mathematical component: a library of formalized mathematics.
+    \begin{itemize}
+    \item basic data structures, algebra, group an representation theory;
+    \item the infrastructure for the machine checked proofs of:
+    \end{itemize}
+  \item 2012 -- Coq checked proof of Feit-Thomson's theorem:
+
+    Every finite group of odd order is solvable.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Formal (mechanized) proofs}
+
+  \begin{block}{Aim}
+    Write a proof that is checked by computer all the way down to the
+    logical foundation.
+  \end{block}
+  \bigskip\pause
+
+  \textbf{Proof assistant / interactive theorem prover} : \\ A kind of Integrated
+  Development Environment (IDE) which helps writing such proofs by constantly
+  checking the coherence and keeping track of missing parts.  \bigskip
+
+  Note: Proof \grn{assistant} $\neq$ \red{automated} theorem prover
+\end{frame}
+
+
+\begin{frame}{What is needed to build a proof assistant ?}
+
+Three ingredients:
+\begin{enumerate}
+\item A way to \textbf{\red{store algorithms}} that allows for\\
+  \textbf{manipulating} them \textbf{and reasoning} about them;
+\bigskip\pause
+
+\item A way to \textbf{\red{store proofs}} that allows for\\
+  \textbf{manipulating} them \textbf{and reasoning} about them;
+\bigskip\pause
+
+\item A way to \textbf{mechanically check} everything.
+\end{enumerate}
+\end{frame}
+
+\begin{frame}{Proofs as programs (Curry-Howard)}
+
+Suppose that
+\begin{itemize}
+\item we have \textbf{data} encoding a proof $a$ and two statements $A$ and
+  $B$
+\item the system is able to make so-called \textbf{judgments}: \\
+  to verify that $a$ is a correct proof of $A$ (written as $a : A$)
+\end{itemize}
+\pause\medskip
+
+Then, the statement $A \to B$ means that each time we have a proof of $A$, we
+can construct a proof of $B$.
+\pause\bigskip
+
+\begin{block}{Curry-Howard correspondence in a nutshell}
+  The idea is ``simply'' to \textbf{encode a proof of $A \to B$ by a function}\\
+  (= a program) which takes a proof of $A$ and returns a proof of $B$.
+  \bigskip\pause
+
+  Similarly, a proof of $\forall x, P(x)$, is encoded as a function which
+  takes $x$ and returns a proof of $P(x)$.
+\end{block}
+
+
+\end{frame}
+
+\begin{frame}{Type theory based proof assistants}
+
+  Proof assistant = a system that:
+    \pause\medskip
+
+  \begin{itemize}
+  \item \textbf{manipulates} (stores, executes, \dots) functions
+    \hfill ($\Lambda$-calculus)
+    \medskip
+
+  \item \textbf{checks judgments} such as $a : A$\hfill(typed $\Lambda$-calculus)
+  \end{itemize}
+  \pause\medskip
+
+  To make it more usable, we need also
+  \begin{itemize}
+  \item \textbf{building blocks} for custom data structures: \textbf{records,
+      unions} \\
+    \hfill (Calculus of Inductive Construction $\approx$ Galina)
+
+  \item \textbf{helpers} for writing proof/programs incrementally \\
+    \hfill (tactic language).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+
+  You only need to remember:
+  \begin{block}{Summary}
+    \begin{itemize}
+    \item proof, statement, data, programs, etc are all the same first class
+      manipulated objects called \textbf{terms}
+    \item some terms are allowed (from the logic or by their definition) to
+      appear on the right of the judgment symbol ``$:$''. They are called
+      \textbf{types}. They encode usual \textbf{data types} as well as
+      \textbf{statement}
+    \item every term has a type
+    \end{itemize}
+
+  \end{block}
+  \pause
+
+  \Huge\bf
+
+  Enough for the theory\dots
+  \bigskip
+
+  \hspace{2cm}Time for a demo\dots
+\end{frame}
+
+\begin{frame}[fragile]{Boolean reflection}
+
+Two ways to deal with statements:
+\begin{itemize}
+\item \textbf{inductive formulas} (\textit{i.e.} data structure storing a
+  proof): \texttt{and, or, exist\dots}:
+
+  $\Rightarrow$ good for reasoning, deducing, implication chaining\dots
+
+  \bigskip
+
+\item \textbf{decision procedure} (\textit{i.e.} function returning a
+  boolean):
+
+  $\Rightarrow$ good for combinatorial analysis, automatically taking care of
+  trivial cases\dots
+\end{itemize}
+
+\begin{block}{Boolean reflection}
+  Going back and forth between the two ways:
+\end{block}
+  \begin{coqcode}
+    reflect (maxn m n = m) (m >= n).
+    reflect (exists2 x : T, x \in s & a x) (has a s)
+    reflect (filter s = s) (all s)
+    reflect (forall x, x \in s -> a x) (all a s).
+    reflect (exists2 i, i < size s & nth x0 s i = x) (x \in s).
+  \end{coqcode}
+\end{frame}
+
+
+\section{The Littlewood-Richardson rule}
+
+\begin{frame}[fragile]{Integer Partitions}
+
+  Partition: $\lambda := (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_l > 0)$.\\
+  $|\lambda| := \lambda_0+\lambda_1+\dots+\lambda_l \qandq
+  \ell(\lambda) := l\,. $
+
+  Ferrers diagram of a partitions : $(5,3,2,2) \leftrightarrow \yngs(0.5, 2,2,3,5)$
+
+  {\tiny\hfill
+    \href{http://hivert.github.io/Coq-Combi/Combi.Combi.partition.html#is_part}{\texttt{is\_part}}
+  \vspace{-2mm}}
+\begin{coqcode}
+  Fixpoint is_part sh := (* Predicate *)
+    if sh is sh0 :: sh'
+    then (sh0 >= head 1 sh') && (is_part sh')
+    else true.
+
+  Lemma is_partP sh : reflect (* Boolean reflection lemma *)
+    (last 1 sh != 0 /\ forall i, (nth 0 sh i) >= (nth 0 sh i.+1))
+    (is_part sh).
+
+  Lemma is_part_ijP sh : reflect (* Boolean reflection lemma *)
+    (last 1 sh != 0 /\ forall i j, i <= j -> (nth 0 sh i) >= nth 0 sh j)
+    (is_part sh).
+
+  Lemma is_part_sortedE sh : (is_part sh) = (sorted geq sh) && (0 \notin sh).
+\end{coqcode}
+
+\end{frame}
+
+\begin{frame}{Symmetric Polynomials}
+
+  $n$-variables : $\XX_n := \{x_0, x_1, \dots x_{n-1}\}$.
+
+  Polynomials in $\XX$ : $\C[\XX] = \C[x_0, x_1, \dots, x_{n-1}]$; ex: $3x_0^3x_2
+  + 5 x_1x_2^4$.
+
+  \begin{DEFN}[Symmetric polynomial]
+    A polynomial is \emph{symmetric} if it is invariant under any permutation of the
+    variables: for all $\sigma\in\SG_n$,
+    \[P(x_0, x_1, \dots, x_{n-1}) = 
+    P(x_{\sigma(0)}, x_{\sigma(1)}, \dots, x_{\sigma({n-1})})\]
+  \end{DEFN}
+
+  \[P(a,b,c) = a^2b + a^2c + b^2c + ab^2 + ac^2 + bc^2\]
+  \[Q(a,b,c) = 5abc + 3a^2bc + 3ab^2c + 3abc^2\]
+
+\end{frame}
+
+\begin{frame}{Schur symmetric polynomials (Jacobi)}
+
+  \begin{DEFN}[Schur symmetric polynomial]
+    \small Partition $\lambda :=
+    (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_{l-1})$ with $l\leq
+    n$; set $\lambda_i:=0$ for $i\geq l$.
+    \[
+    s_{\lambda} = 
+    \frac{\sum_{\sigma\in\SG_n} \operatorname{sign}(\sigma)
+      \XX_n^{\sigma(\lambda+\rho)}}%
+    {\prod_{0\leq i<j<n} (x_j - x_i)}
+    = \frac{\left|
+       \begin{smallmatrix}
+         x_1^{\lambda_{n-1}+0}  & x_2^{\lambda_{n-1}+0}   & \dots  & x_n^{\lambda_{n-1}+0}  \\
+         x_1^{\lambda_{n-2}+1}  & x_2^{\lambda_{n-2}+1}   & \dots  & x_n^{\lambda_{n-2}+1}  \\
+         \vdots & \vdots & \ddots & \vdots \\
+         x_1^{\lambda_1+n-2}  & x_2^{\lambda_1+n-2}   & \dots  & x_n^{\lambda_1+n-2}  \\
+         x_1^{\lambda_0+n-1}  & x_2^{\lambda_0+n-1}   & \dots  & x_n^{\lambda_0+n-1}  \\
+      \end{smallmatrix}
+      \right|
+    }{\left|
+       \begin{smallmatrix}
+         1      & 1      & \dots  & 1     \\
+         x_1    & x_2    & \dots  & x_n    \\
+         x_1^2  & x_2^2   & \dots  & x_n^2  \\
+         \vdots & \vdots & \ddots & \vdots \\
+         x_1^{n-1}  & x_2^{n-1}   & \dots  & x_n^{n-1}  \\
+      \end{smallmatrix}
+      \right|
+    }
+    \]
+  \end{DEFN}
+  \[s_{(2,1)}(a,b,c) = a^2b + ab^2 + a^2c + 2abc + b^2c + ac^2 + bc^2\]
+\end{frame}
+
+
+\begin{frame}{Littlewood-Richardson coefficients}
+
+  \begin{PROP}
+    The family $(s_\lambda(\XX_n))_{\ell(\lambda) \leq n}$ is a (linear) basis of the
+    ring of symmetric polynomials on $\XX_n$.
+  \end{PROP}
+
+  \begin{DEFN}[Littlewood-Richardson coefficients]
+    Coefficients $c_{\lambda,\mu}^\nu$ of the expansion of the product:
+    \[
+    s_\lambda s_\mu = \sum_{\nu} c_{\lambda,\mu}^\nu s_\nu\,.
+    \]
+  \end{DEFN}
+  Fact: $s_\lambda(\XX_{n-1}, x_n := 0) =
+  s_\lambda(\XX_{n-1}) \text{ if } \ell(\lambda) < n\text{ else } 0$.
+
+  Consequence: $c_{\lambda,\mu}^\nu$ are independant of the number of variables.
+\end{frame}
+
+\Yboxdim{10pt}
+\begin{frame}{Young Tableau}
+
+  \begin{DEFN}
+    \begin{itemize}
+    \item Filling of a partition shape;
+    \item non decreasing along the rows;
+    \item strictly increasing along the columns.
+      \medskip
+    \item row reading
+    \end{itemize}
+  \end{DEFN}
+  \[\scriptsize
+  \young(dde,bcccd,aaabbde) = ddebcccdaaabbde
+  \qquad\qquad
+  \young(5,269,13478)=526913478\]
+
+\end{frame}
+
+\begin{frame}[fragile]{Young Tableau: formal definition}
+
+  {\tiny\hfill
+    \href{http://hivert.github.io/Coq-Combi/Combi.Combi.tableau.html#dominate}{\texttt{dominate}}
+  \vspace{-2mm}}
+\begin{coqcode}
+  Variable (T : ordType) (Z : T). (* Ordered type Order <A *)
+
+  Definition dominate (u v : seq T) :=
+    (size u <= size v &&
+     (all (fun i => nth Z u i >A nth Z v i) (iota 0 (size u))).
+
+  Lemma dominateP u v :
+    reflect (size u <= size v /\
+             forall i, i < size u -> nth Z u i >A nth Z v i)
+            (dominate u v).
+\end{coqcode}
+  {\tiny\hfill
+    \href{http://hivert.github.io/Coq-Combi/Combi.Combi.tableau.html#is_tableau}{\texttt{is\_tableau}}
+  \vspace{-2mm}}
+\begin{coqcode}
+  Fixpoint is_tableau (t : seq (seq T)) :=
+    if t is t0 :: t' then
+      [&& (t0 != [::]), sorted t0,
+        dominate (head [::] t') t0 & is_tableau t']
+    else true.
+
+  Definition to_word t := flatten (rev t).
+\end{coqcode}
+\end{frame}
+
+\begin{frame}{Combinatorial definition of Schur functions}
+
+  \begin{DEFN}
+    \[s_\lambda(\XX) = \sum_\text{$T$ tableaux of shape $\lambda$} \XX^T\]
+    where $\XX^T$ is the product of the elements of $T$.
+  \end{DEFN}
+  \[s_{(2,1)}(a,b,c) = a^2b\,+\,ab^2\,+\,a^2c\ +\quad 2abc\quad +\
+  b^2c\,+\,ac^2\,+\,bc^2\]
+  \[s_{(2,1)}(a,b,c) = {  \Yboxdim{8pt}\scriptsize
+    \young(b,aa) + \young(b,ab) + \young(c,aa)
+  + \young(b,ac) + \young(c,ab) + \young(c,bb) + \young(c,ac) +
+  \young(c,bc)}\]
+  \pause\medskip
+
+  Note: I'll prove the equivalence of the two definitions as a
+  \emph{consequence of a particular case of the LR-rule (Pieri rule)} by
+  relating it with recursively unfolding determinants.
+\end{frame}
+
+\begin{frame}[fragile]
+
+  {\tiny\hfill
+    \href{http://hivert.github.io/Coq-Combi/Combi.Combi.tableau.html#tabsh}{\texttt{tabsh}}
+  \vspace{-2mm}}
+\begin{coqcode}
+Variable n : nat.
+Variable R : comRingType.  (* Commutative ring *)
+
+(* 'I_n         : integer in 0,1,...,n-1                             *)
+(* 'P_d         : partition of the integer d                         *)
+(* {mpoly R[n]} : the ring of polynomial over the commutative ring R *)
+(*                in n variables (P.-Y. Strub)                       *)
+
+Definition is_tab_of_shape sh :=
+  [ pred t :> seq (seq 'I_n.+1) | (is_tableau t) && (shape t == sh) ].
+
+Structure tabsh sh := TabSh {tabshval; _ : is_tab_of_shape sh tabshval}.
+[...]
+Canonical tabsh_finType sh := [...] (* Finite type *)
+\end{coqcode}
+  {\tiny\hfill
+    \href{http://hivert.github.io/Coq-Combi/Combi.MPoly.Schur_mpoly.html#Schur}{\texttt{Schur}}
+  \vspace{-2mm}}
+\begin{coqcode}
+Definition Schur d (sh : 'P_d) : {mpoly R[n]} :=
+  \sum_(t : tabsh n sh) \prod_(i <- to_word t) 'X_i.
+\end{coqcode}
+\end{frame}
+
+\begin{frame}{Yamanouchi Words}
+
+  $\abs{w}_x$ : number of occurrence of $x$ in $w$.
+
+  \begin{DEFN}
+    Sequence $w_0,\dots,w_{l-1}$ of integers such that for all $k, i$,
+    \[ \abs{w_i,\dots,w_{l-1}}_k \geq \abs{w_i,\dots,w_{l-1}}_{k+1} \]
+
+    Equivalently $(\abs{w}_i)_{i\leq\max(w)}$ is a partition and $w_1,\dots,w_{l-1}$ is
+    also Yamanouchi.
+  \end{DEFN}
+
+  \[ (), 0, 00, 10, 000, 100, 010, 210, \]
+  \[ 0000, 1010, 1100, 0010, 0100, 1000, 0210, 2010, 2100, 3210 \]
+\end{frame}
+
+\begin{frame}{The LR Rule at last !}
+
+  \begin{THEO}[Littlewood-Richardson rule]
+    $c_{\lambda, \mu}^{\nu}$ is the number of (skew) tableaux of shape the
+    difference $\nu/\lambda$, whose row reading is a Yamanouchi word of
+    evaluation $\mu$.
+  \end{THEO}
+% ...00 ...00 ...00
+% ...1  ...1  ...1 
+% .00   .01   .02  
+% 12    02    01   
+  \[
+  C_{331,421}^{5432} = 3
+  \qquad \Yboxdim{7pt}\tiny
+  \gyoung(12,:;00,:::;1,:::;00)\qquad
+  \gyoung(02,:;01,:::;1,:::;00)\qquad
+  \gyoung(01,:;02,:::;1,:::;00)
+  \]
+% ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00
+% ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1
+% .00   .00   .00   .01   .00   .01   .02   .02   .12   .02   .02   .01   .01   .12   .12
+% 01    02    11    01    12    02    01    13    03    03    11    12    22    02    23
+  \[
+  C_{431,4321}^{7542} = 4
+  \qquad \Yboxdim{7pt}\tiny
+  \gyoung(23,:;112,:::;01,::::;000)\quad
+  \gyoung(23,:;012,:::;11,::::;000)\quad
+  \gyoung(13,:;022,:::;11,::::;000)\quad
+  \gyoung(03,:;122,:::;11,::::;000)\quad
+  \]
+  \[
+  C_{4321,431}^{7542} = 4
+  \qquad \Yboxdim{7pt}\tiny
+  \gyoung(:;2,::;11,:::;01,::::;000)\quad
+  \gyoung(:;1,::;12,:::;01,::::;000)\quad
+  \gyoung(:;1,::;02,:::;11,::::;000)\quad
+  \gyoung(:;0,::;12,:::;11,::::;000)\quad
+  \]
+
+\end{frame}
+
+\begin{frame}[fragile]{The formal statement}
+
+  {\tiny\hfill
+    \href{http://hivert.github.io/Coq-Combi/Combi.LRrule.therule.html#is_skew_reshape_tableau}%
+    {\texttt{definition of LR-yam tableaux}}
+  \vspace{-2mm}}
+\begin{coqcode}
+(** yameval P = type of Yamanouchi word of evaluation P *)
+Lemma is_skew_reshape_tableauP (w : seq nat) :
+  size w = sumn (P / P1) ->
+  reflect
+    (exists tab, [/\ is_skew_tableau P1 tab,
+                     shape tab = P / P1 & to_word tab = w])
+    (is_skew_reshape_tableau P P1 w).
+
+Definition LRyam_set :=
+  [set y : yameval P2 | is_skew_reshape_tableau P P1 y].
+Definition LRyam_coeff := #|LRyam_set|.
+\end{coqcode}
+Then
+  {\tiny\hfill
+    \href{http://hivert.github.io/Coq-Combi/Combi.LRrule.therule.html#LRyam_coeffP}%
+    {the Littlewood-Richardson rule}
+  \vspace{-2mm}}
+\begin{coqcode}
+Theorem LRyam_coeffP :
+  Schur P1 * Schur P2 =
+  \sum_(P : 'P_(d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
+\end{coqcode} 
+
+\end{frame}
+
+\section{Some hard points of the formal proof}
+
+\begin{frame}[fragile]{Getting definition right}
+
+There is not a single ``good'' definition:
+\bigskip
+
+\begin{itemize}
+\item Lots of different equivalent ways. (eg:
+\href{http://hivert.github.io/Coq-Combi/Combi.Combi.partition.html#is_part}{partitions},
+\href{http://hivert.github.io/Coq-Combi/Combi.Combi.tableau.html#is_tableau}{tableaux})
+\bigskip\pause
+
+\item Even more difficult for algorithms (
+\href{http://hivert.github.io/Coq-Combi/Combi.Combi.std.html#std_rec}{standardization},
+\href{http://hivert.github.io/Coq-Combi/Combi.LRrule.shuffle.html#shuffle_from_rec}{shuffle}):
+  \medskip
+
+  Constraints:
+  \begin{itemize}
+  \item \textbf{Pure functional} programming: \\
+    no variable, no mutable data structure
+    \bigskip
+  \item All function must be \textbf{total} (e.g. \texttt{nth} but \texttt{option}) \\
+    \bigskip
+  \item Only trivially \textbf{terminating programs} are allowed:\\
+    Only recursive call on subterms are allowed.
+
+  \end{itemize}
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Choices in constructive mathematics}
+
+Sometime you have a choice to make where \textbf{any choice will do}:
+\bigskip\pause
+
+Example: contructing a \textbf{conjugating permutation} between two
+permutations with same cycle type: {\tiny\hfill
+  \href{http://hivert.github.io/Coq-Combi/Combi.SymGroup.cycletype.html#conj_permP}%
+  {\texttt{Conjugacy classes of $S_n$}} \vspace{-2mm}}
+\begin{coqcode}
+(* (s ^ c)%g == s conjugated by c *)
+Theorem conj_permP s t :
+  reflect (exists c, t = (s ^ c)%g) (cycle_type s == cycle_type t).
+\end{coqcode}
+\begin{itemize}
+\item currently, you have to write a \textbf{precise program} to make the
+  choice and prove that it works
+\item the proof is usually easy because any choice will do
+\item but writing the program making the choice can be harder than expected.
+\end{itemize}
+
+
+\end{frame}
+
+\begin{frame}[fragile]{Equality / set theory}
+
+  \textbf{\Large Coq is based on CIC $\neq$ set theory.}\bigskip
+
+  \begin{itemize}
+  \item Constructive logic (not that much a problem in combinatorics)\\
+    Excluded middle \verb|P \/ ~ P| is not provable (but can be added as an
+    axiom). \bigskip
+
+  \item SSReflect deals smoothly with objects with decidable equality 
+    \medskip
+
+    This forbids generating series ! \\
+
+    but see C. Cohen, B. Djalal
+    \emph{Formalization of a Newton Series Representation of Polynomials}
+    \bigskip
+
+  \item The equality in type theory is ``stronger'' that in set theory
+
+    No proof of functional extensionality:\\
+    \[\texttt{(forall x, f x = f y) -> f = g}\]
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Greene Theorem}
+
+  Disjoint support increasing subsequences:
+  \[
+  \begin{array}{c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c}
+    \grn{a}&\grn{b}&\red{a}&\grn{b}&\grn{c}&\red a&\red b&\red b&\blu{a}&\red d&\blu{b}&a&\blu{b}
+  \end{array}
+  \]
+  $RS(w)$: Robinson-Schensted tableau of $w$:
+  \pause
+  \begin{THEO}
+    For any word $w$, and integer $k$
+    \begin{itemize}
+    \item The sum of the length of the $k$-th first row of $RS(w)$ is the maximum
+      sum of the length of $k$ disjoint support increasing subsequences of $w$;
+    \end{itemize}
+  \end{THEO}
+\end{frame}
+
+\begin{frame}[fragile]{Equality on dependent type nightmare}
+
+Subsequences of a word $w$ encoded by subsets of the indices of the letter
+of $w$: \verb|{set 'I_(size w)}|. But, when
+\begin{itemize}
+\item \verb|x := u ++ [:: a; b] ++ v|
+\item \verb|y := u ++ [:: b; a] ++ v|
+\end{itemize}
+\texttt{x} and \texttt{y} are two different words ! \\
+\verb|{set 'I_(size x)}| and \verb|{set 'I_(size y)}|: different types \\
+\begin{block}{Equality on dependent type}
+  One can only write \texttt{u = v} if \texttt{u} and \texttt{v} are of the
+  \textbf{same type}.
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Cast between dependent type nightmare}
+
+Here is a solution:
+\begin{itemize}
+\item Prove that \verb|Hcast : size x = size y|
+\item Then \verb|cast_ord Hcast : 'I_(size w) -> 'I_(size y)|
+\item Then define:
+  {\tiny\hfill
+    \href{http://hivert.github.io/Coq-Combi/Combi.SSRcomplements.ordcast.html#cast_set}{\texttt{cast\_set}}
+  \vspace{-2mm}}
+\begin{coqcode}
+(*  f @: S == image of S by the function f *)
+Definition cast_set n m (H : n = m) : {set 'I_n} -> {set 'I_m} :=
+  [fun s : {set 'I_n} => (cast_ord H) @: s].
+\end{coqcode}
+  {\tiny\hfill
+    \href{http://hivert.github.io/Coq-Combi/Combi.LRrule.Greene_inv.html#NoSetContainingBoth.swap_set}{\texttt{swap\_set}}
+  \vspace{-2mm}}
+\begin{coqcode}
+Definition swap (i : 'I_(size x)) : 'I_(size x) :=
+  if i == pos0 then pos1 else if i == pos1 then pos0 else i.
+Definition swap_setX :=
+  [fun S : {set 'I_(size x)} => swap @: S : {set 'I_(size x)}].
+Definition swap_set : {set 'I_(size x)} -> {set 'I_(size y)} :=
+  (fun S : {set 'I_(size x)} => 
+       [set cast_ord Hcast x | x in S]) \o swap_setX.
+\end{coqcode}
+
+\end{itemize}
+\end{frame}
+
+\section{Should you try ?}
+
+\begin{frame}{Should you try {\tiny(or is this a big waste of time)} ? My two cents}
+
+  \begin{itemize}
+  \item I'm pretty convinced (I'm not the only one: Voevodsky, Hales) that
+    in the future (how far ?), formal math (not Coq/CIC) will becomes very
+    important (as is computation today).  \bigskip\pause
+
+  \item However, currently, experts are \textbf{not satisfied
+      with the foundation} (equality\dots). \bigskip\pause
+
+  \item This was \textbf{much easier} that I first expected !
+    \bigskip\pause
+
+  \item Boolean reflection : very good job \textbf{dealing with trivial cases}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Should you try {\tiny(or is this a big waste of time)} ? My two cents}
+
+  \begin{itemize}
+  \item Lots of time spent on \textbf{reusable basic stuff}\\
+    (tableau / partition / rewriting systems / symmetric fncts)\dots
+    \bigskip
+
+  \item Some
+    other~\href{http://hivert.github.io/Coq-Combi/index.html}{results}:\medskip
+    \begin{itemize}
+    \item The hook-length formulas: 3 weeks (joint work w. C. Paulin)
+      \medskip
+    \item Cycle decomposition: 2 months (T. Benjamin, undergrad)
+      \medskip
+    \item Basic theory of symmetric functions: 3 months
+      \medskip
+    \item Character theory of the symmetric groups: 1 month
+    \end{itemize}
+    \bigskip\pause
+
+  \item This is transforming math into a video-game \medskip
+
+    \hfill\grn{\bf Fun if you like it, but very addictive !}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Want to have a closer look ?}
+  \Large
+
+  The code:\\
+  \begin{itemize}
+  \item \url{https://github.com/hivert/Coq-Combi}
+  \end{itemize}
+  \bigskip  \bigskip
+
+  The documentation:\\
+  \begin{itemize}
+  \item \url{http://hivert.github.io/Coq-Combi}
+  \end{itemize}
+\end{frame}
+\end{document}
+% "latex -synctex=1 -shell-escape"
+%%% Local Variables: LaTeX-command
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

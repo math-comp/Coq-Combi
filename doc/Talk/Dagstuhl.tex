@@ -1,0 +1,751 @@
+\documentclass[compress,11pt]{beamer}
+
+\usetheme{TALK}
+\usepackage[vcentermath]{genyoungtabtikz}
+\usepackage{minted}
+\usemintedstyle{emacs}
+%\usemintedstyle{colorful}
+%\usemintedstyle{borland}
+%\usemintedstyle{autumn}
+
+\usepackage{genyoungtabtikz}
+
+\newminted{coq}{
+frame=lines,
+framesep=2mm,
+fontsize=\scriptsize,
+mathescape=true
+}
+\usepackage{commath}
+
+% INFO DOCUMENT - TITRE, AUTEUR, INSTITUTION
+\title{\bf\LARGE Algebraic Combinatorics using Coq/Mathcomp\\[5mm]}
+\subtitle{Dedicated to the memory of Alain Lascoux}
+\author{Florent Hivert}
+\institute[LRI]{
+  LRI / Université Paris Sud 11 / CNRS}
+\date{Dagstuhl 18341, August 2018}
+
+\newcommand{\XX}{{\mathbb X}}
+
+\newcommand{\free}[1]{\left\langle#1\right\rangle}
+\newcommand{\N}{{\mathbb N}}
+\newcommand{\C}{{\mathbb C}}
+\newcommand{\Q}{{\mathbb Q}}
+\newcommand{\SG}{{\mathfrak S}}
+\newcommand{\std}{\operatorname{Std}}
+
+\newcommand{\sym}{\mathrm{sym}}
+\newcommand{\NCSF}{\mathbf{NCSF}}
+\newcommand{\QSym}{\mathrm{QSym}}
+\newcommand{\FSym}{\mathbf{FSym}}
+
+\newcommand{\partof}{\vdash}                    % Partition de
+\newcommand{\compof}{\vDash}                    % Composisition de
+
+\newcommand{\qandq}{\text{\quad et\quad}}
+
+\newcommand{\alphX}{{\mathbb X}}
+%%%%%%%%%%%%%%%%%%%%%
+\renewcommand{\emph}[1]{{\color{red} #1}}
+%------------------------------------------------------------------------------
+\begin{document}
+
+% PAGE D'ACCUEIL
+\frame{\titlepage}
+
+\begin{frame}{Outline}
+
+  \tableofcontents
+\end{frame}
+
+\begin{frame}{Algebraic Combinatorics}
+
+\Large
+Going back and forth between
+\begin{itemize}
+\item {\color{red}algebraic identities}
+\item {\color{blue}algorithms}
+\end{itemize}
+\pause\bigskip
+
+Today: Proving a {\color{red}multiplication rule} of symmetric polynomials by
+{\color{blue}executing} the Robinson-Schensted algorithm on the
+{\color{blue}concatenation of two words}.  \pause\bigskip
+
+\end{frame}
+
+\section{Motivation: Symmetric Polynomials and applications}
+\begin{frame}{Symmetric Polynomials}
+  
+  $n$-variables : $\XX_n := \{x_0, x_1, \dots x_{n-1}\}$.
+
+  Polynomials in $\XX$ : $\C[\XX] = \C[x_0, x_1, \dots, x_{n-1}]$; ex: $3x_0^3x_2
+  + 5 x_1x_2^4$.
+
+  \begin{DEFN}[Symmetric polynomial]
+    A polynomial is \emph{symmetric} if it is invariant under any permutation of the
+    variables: for all $\sigma\in\SG_n$,
+    \[P(x_0, x_1, \dots, x_{n-1}) = 
+    P(x_{\sigma(0)}, x_{\sigma(1)}, \dots, x_{\sigma({n-1})})\]
+  \end{DEFN}
+
+  \[P(a,b,c) = a^2b + a^2c + b^2c + ab^2 + ac^2 + bc^2\]
+  \[Q(a,b,c) = 5abc + 3a^2bc + 3ab^2c + 3abc^2\]
+
+\end{frame}
+
+\begin{frame}[fragile]{Integer Partitions}
+
+  different ways of decomposing an integer $n\in\N$ as a sum:
+  \[ 5=5=4+1=3+2=3+1+1=2+2+1=2+1+1+1=1+1+1+1+1 \]
+
+  Partition $\lambda := (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_l > 0)$.\\
+  $|\lambda| := \lambda_0+\lambda_1+\dots+\lambda_l \qandq
+  \ell(\lambda) := l\,. $
+
+  Ferrer's diagram of a partitions : $(5,3,2,2) \leftrightarrow \yngs(0.5, 2,2,3,5)$
+
+% \end{frame}
+
+% \begin{frame}[fragile]{Integer Partitions}
+
+% Formal definition:
+\begin{coqcode}
+  Fixpoint is_part sh := (* Predicate *)
+    if sh is sh0 :: sh'
+    then (sh0 >= head 1 sh') && (is_part sh')
+    else true.
+
+  (* Boolean reflection lemma *)
+  Lemma is_partP sh : reflect
+    (last 1 sh != 0 /\ forall i, (nth 0 sh i) >= (nth 0 sh i.+1))
+    (is_part sh).
+
+  Lemma is_part_sortedE sh : (is_part sh) = (sorted geq sh) && (0 \notin sh).
+\end{coqcode}
+
+\end{frame}
+
+% \begin{frame}{Monomial symmetric polynomials}
+
+%   Partition $\lambda := (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_l > 0)$.\\
+%   \[ |\lambda| := \lambda_0+\lambda_1+\dots+\lambda_l \qandq
+%   \ell(\lambda) := l\,. \]
+
+%   \begin{DEFN}[Monomial symmetric polynomial]
+%     sum of all the distinct permutation of a monomial
+%   \end{DEFN}
+%   \[m_{(2,1)}(a,b,c) = a^2b + a^2c + b^2c + ab^2 + ac^2 + bc^2\]
+%   \[m_{(2,1,1)}(a,b,c) = 3a^2bc + 3ab^2c + 3abc^2\]
+%   \begin{PROP}
+%     $(m_{\lambda}(\XX_n))_\lambda$ where $\lambda$ is a \emph{partition} of length
+%     less than $n$ is a \emph{basis} of the algebra of symmetric polynomials.
+%   \end{PROP}
+% \end{frame}
+
+% \begin{frame}{Antisymmetric polynomials}
+
+%   \begin{DEFN}[Antiymmetric polynomial]
+%     A polynomial is \emph{antisymmetric} if for all $\sigma\in\SG_n$,
+%     \[P(x_0, x_1, \dots, x_{n-1}) = \operatorname{sign}(\sigma)
+%     P(x_{\sigma(0)}, x_{\sigma(1)}, \dots, x_{\sigma({n-1})})\]
+%     Equivalently for any $0\leq i < j < n$
+%     \[
+%     P(x_{0},\dots,x_i,\dots,x_j,\dots,x_{n-1})
+%     = -
+%     P(x_{0},\dots,x_j,\dots,x_i,\dots,x_{n-1})
+%     \]
+%   \end{DEFN}
+%   \begin{REMARK}
+%     $P(a,b) = - P(b,a)$ implies that $P(a,a)=0$ and therefore $P$ is divisible by $(b-a)$.
+%   \end{REMARK}
+% \end{frame}
+
+\begin{frame}{Schur symmetric polynomials (Jacobi)}
+
+  \begin{DEFN}[Schur symmetric polynomial]
+    \small Partition $\lambda :=
+    (\lambda_0\geq\lambda_1\geq\dots\geq\lambda_{l-1})$ with $l\leq
+    n$; set $\lambda_i:=0$ for $i\geq l$.
+    \[
+    s_{\lambda} = 
+    \frac{\sum_{\sigma\in\SG_n} \operatorname{sign}(\sigma)
+      \XX_n^{\sigma(\lambda+\rho)}}%
+    {\prod_{0\leq i<j<n} (x_j - x_i)}
+    = \frac{\left|
+       \begin{smallmatrix}
+         x_1^{\lambda_{n-1}+0}  & x_2^{\lambda_{n-1}+0}   & \dots  & x_n^{\lambda_{n-1}+0}  \\
+         x_1^{\lambda_{n-2}+1}  & x_2^{\lambda_{n-2}+1}   & \dots  & x_n^{\lambda_{n-2}+1}  \\
+         \vdots & \vdots & \ddots & \vdots \\
+         x_1^{\lambda_1+n-2}  & x_2^{\lambda_1+n-2}   & \dots  & x_n^{\lambda_1+n-2}  \\
+         x_1^{\lambda_0+n-1}  & x_2^{\lambda_0+n-1}   & \dots  & x_n^{\lambda_0+n-1}  \\
+      \end{smallmatrix}
+      \right|
+    }{\left|
+       \begin{smallmatrix}
+         1      & 1      & \dots  & 1     \\
+         x_1    & x_2    & \dots  & x_n    \\
+         x_1^2  & x_2^2   & \dots  & x_n^2  \\
+         \vdots & \vdots & \ddots & \vdots \\
+         x_1^{n-1}  & x_2^{n-1}   & \dots  & x_n^{n-1}  \\
+      \end{smallmatrix}
+      \right|
+    }
+    \]
+  \end{DEFN}
+  \[s_{(2,1)}(a,b,c) = a^2b + ab^2 + a^2c + 2abc + b^2c + ac^2 + bc^2\]
+\end{frame}
+
+
+\begin{frame}{Littlewood-Richardson coefficients}
+
+  \begin{PROP}
+    The family $(s_\lambda(\XX_n))_{\ell(\lambda) \leq n}$ is a (linear) basis of the
+    ring of symmetric polynomials on $\XX_n$.
+  \end{PROP}
+
+  \begin{DEFN}[Littlewood-Richardson coefficients]
+    Coefficients $c_{\lambda,\mu}^\nu$ of the expansion of the product:
+    \[
+    s_\lambda s_\mu = \sum_{\nu} c_{\lambda,\mu}^\nu s_\nu\,.
+    \]
+  \end{DEFN}
+  Fact: $s_\lambda(\XX_{n-1}, x_n := 0) =
+  s_\lambda(\XX_{n-1}) \text{ if } \ell(\lambda) < n\text{ else } 0$.
+
+  Consequence: $c_{\lambda,\mu}^\nu$ are independant of the number of variables.
+\end{frame}
+
+\begin{frame}{Quotes}
+
+  The Littlewood–Richardson rule is notorious for the number of errors that
+  appeared prior to its complete, published proof. Several published attempts
+  to prove it are incomplete, and it is particularly difficult to avoid errors
+  when doing hand calculations with it: even the original example in
+  D.~E.~Littlewood and A.~R.~Richardson (1934) contains an error --
+  Wikipedia  \bigskip
+
+  Unfortunately the Littlewood-Richardson rule is much harder to prove than
+  was at first suspected. I was once told that the Littlewood-Richardson rule
+  helped to get men on the moon but was not proved until after they got
+  there. The first part of this story might be an exaggeration. -– Gordon
+  James
+
+\end{frame}
+
+\begin{frame}{Sample of applications}
+  \begin{itemize}
+  \item $\#P$-complete problem.
+  \item Mulmuley's geometric complexity theory: possibly $P \neq NP$
+  \item multiplicity of induction or restriction of irreducible representations
+    of the symmetric groups;
+  \item multiplicity of the tensor product of the irreducible representations
+    of linear groups;
+  \item Geometry: mumber of intersection in a grassmanian variety, cup product
+    of the cohomology;
+  \item Horn problem: eigenvalues of the sum of two hermitian matrix;
+  \item Extension of abelian groups (Hall algebra);
+  \item Application in quantum physics (spectrum rays of the Hydrogen atoms);
+  \end{itemize}
+\end{frame}
+
+\section{Combinatorial ingredients: partitions and tableaux}
+
+\Yboxdim{10pt}
+\begin{frame}{Young Tableau}
+
+  \begin{DEFN}
+    \begin{itemize}
+    \item Filling of a partition shape;
+    \item non decreasing along the rows;
+    \item strictly increasing along the columns.
+      \medskip
+    \item row reading
+    \end{itemize}
+  \end{DEFN}
+  \[\scriptsize
+  \young(dde,bcccd,aaabbde) = ddebcccdaaabbde
+  \qquad\qquad
+  \young(5,269,13478)=526913478\]
+
+\end{frame}
+
+\begin{frame}[fragile]{Young Tableau: formal definition}
+
+  Using \texttt{SSReflect} class/mixin/canonical paradigm (Work in
+  progress: merge with C.~Cohen order.
+\begin{coqcode}
+  Variable (T : ordType) (Z : T).
+
+  Definition dominate (u v : seq T) :=
+    ((size u) <= (size v)) &&
+     (all (fun i => (nth Z u i > nth Z v i)%Ord) (iota 0 (size u))).
+
+  Lemma dominateP u v :
+    reflect ((size u) <= (size v) /\
+             forall i, i < size u -> (nth Z u i > nth Z v i)%Ord)
+            (dominate u v).
+
+  Fixpoint is_tableau (t : seq (seq T)) :=
+    if t is t0 :: t' then
+      [&& (t0 != [::]), sorted t0,
+        dominate (head [::] t') t0 & is_tableau t']
+    else true.
+
+  Definition to_word t := flatten (rev t).
+\end{coqcode}
+\end{frame}
+
+\begin{frame}{Combinatorial definition of Schur functions}
+
+  \begin{DEFN}
+    \[s_\lambda(\XX) = \sum_\text{$T$ tableaux of shape $\lambda$} \XX^T\]
+    where $\XX^T$ is the product of the elements of $T$.
+  \end{DEFN}
+  \[s_{(2,1)}(a,b,c) = a^2b\,+\,ab^2\,+\,a^2c\ +\quad 2abc\quad +\
+  b^2c\,+\,ac^2\,+\,bc^2\]
+  \[s_{(2,1)}(a,b,c) = {  \Yboxdim{8pt}\scriptsize
+    \young(b,aa) + \young(b,ab) + \young(c,aa)
+  + \young(b,ac) + \young(c,ab) + \young(c,bb) + \young(c,ac) +
+  \young(c,bc)}\]
+  \pause\medskip
+
+  Note: I'll prove the equivalence of the two definitions as a
+  \emph{consequence of a particular case of the LR-rule} by relating it with
+  recursively unfolding determinants.
+\end{frame}
+
+\begin{frame}[fragile]
+\begin{coqcode}
+Variable n : nat.
+Variable R : comRingType.
+
+(* {mpoly R[n]} : the ring of polynomial over the commutative ring R *)
+(*                in n variables (P.-Y. Strub)                     *)
+
+Definition is_tab_of_shape (sh : seq (seq 'I_n)) :=
+  [ pred t | (is_tableau t) && (shape t == sh) ].
+
+Structure tabsh := TabSh {tabshval; _ : is_tab_of_shape sh tabshval}.
+[...]
+Canonical tabsh_finType := [...]
+
+Definition Schur d (sh : 'P_d) : {mpoly R[n]} :=
+  \sum_(t : tabsh n sh) \prod_(v <- to_word t) 'X_v.
+\end{coqcode}
+\end{frame}
+
+\begin{frame}{Yamanouchi Words}
+
+  $\abs{w}_x$ : number of occurrence of $x$ in $w$.
+
+  \begin{DEFN}
+    Sequence $w_0,\dots,w_{l-1}$ of integers such that for all $k, i$,
+    \[ \abs{w_i,\dots,w_{l-1}}_k \geq \abs{w_i,\dots,w_{l-1}}_{k+1} \]
+
+    Equivalently $(\abs{w}_i)_{i\leq\max(w)}$ is a partition and $w_1,\dots,w_{l-1}$ is
+    also Yamanouchi.
+  \end{DEFN}
+
+  \[ (), 0, 00, 10, 000, 100, 010, 210, \]
+  \[ 0000, 1010, 1100, 0010, 0100, 1000, 0210, 2010, 2100, 3210 \]
+\end{frame}
+
+\section{The rule}
+
+\begin{frame}{The LR Rule at last !}
+
+  \begin{THEO}[Littlewood-Richardson rule]
+    $c_{\lambda, \mu}^{\nu}$ is the number of (skew) tableaux of shape the
+    difference $\nu/\lambda$, whose row reading is a Yamanouchi word of
+    evaluation $\mu$.
+  \end{THEO}
+% ...00 ...00 ...00
+% ...1  ...1  ...1 
+% .00   .01   .02  
+% 12    02    01   
+  \[
+  C_{331,421}^{5432} = 3
+  \qquad \Yboxdim{7pt}\tiny
+  \gyoung(12,:;00,:::;1,:::;00)\qquad
+  \gyoung(02,:;01,:::;1,:::;00)\qquad
+  \gyoung(01,:;02,:::;1,:::;00)
+  \]
+% ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00 ...00
+% ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1  ...1
+% .00   .00   .00   .01   .00   .01   .02   .02   .12   .02   .02   .01   .01   .12   .12
+% 01    02    11    01    12    02    01    13    03    03    11    12    22    02    23
+  \[
+  C_{431,4321}^{7542} = 4
+  \qquad \Yboxdim{7pt}\tiny
+  \gyoung(23,:;112,:::;01,::::;000)\quad
+  \gyoung(23,:;012,:::;11,::::;000)\quad
+  \gyoung(13,:;022,:::;11,::::;000)\quad
+  \gyoung(03,:;122,:::;11,::::;000)\quad
+  \]
+  \[
+  C_{4321,431}^{7542} = 4
+  \qquad \Yboxdim{7pt}\tiny
+  \gyoung(:;2,::;11,:::;01,::::;000)\quad
+  \gyoung(:;1,::;12,:::;01,::::;000)\quad
+  \gyoung(:;1,::;02,:::;11,::::;000)\quad
+  \gyoung(:;0,::;12,:::;11,::::;000)\quad
+  \]
+
+\end{frame}
+
+\begin{frame}[fragile]{The formal statement}
+
+\begin{coqcode}
+Definition is_skew_reshape_tableau (P P1 : seq nat) (w : seq nat) :=
+  is_skew_tableau P1 (skew_reshape P1 P w).
+Lemma is_skew_reshape_tableauP (w : seq nat) :
+  size w = sumn (P / P1) ->
+  reflect
+    (exists tab, [/\ is_skew_tableau P1 tab,
+                     shape tab = P / P1 & to_word tab = w])
+    (is_skew_reshape_tableau P P1 w).
+
+Definition LRyam_set :=
+  [set y : yameval P2 | is_skew_reshape_tableau P P1 y].
+Definition LRyam_coeff := #|LRyam_set|.
+\end{coqcode}
+Then
+\begin{coqcode}
+Theorem LRyam_coeffP :
+  Schur P1 * Schur P2 =
+  \sum_(P : 'P_(d1 + d2) | included P1 P) Schur P *+ LRyam_coeff P.
+\end{coqcode} 
+
+\end{frame}
+
+\begin{frame}{Idea of the proof}
+
+  \begin{itemize}
+  \item The longest increasing subsequence problem
+  \item Robinson-Schensted (RS) bijection:
+    \[
+    ababcabbad\quad \longleftrightarrow\quad \young(c,bbb,aaaabd),
+    \young(8,256,013479)
+    \]
+  \item Reimplement RS using some \emph{local rewriting rules}
+  \item Realize that RS is actually computing a
+    \emph{normal form in a quotient of the free monoid}
+  \item lift the LR rule at a \emph{non-commutative} level
+  \item The proof is done by \emph{symbolically executing the
+      RS algorithms on the concatenation of two words}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Outline of a proof}
+
+  \textsc{\sc Lascoux, Leclerc and Thibon} \textit{The Plactic monoid},
+    {\it in} M.~Lothaire, Algebraic combinatorics on words,
+    Cambridge Univ. Press.
+
+  \begin{enumerate}
+  \item increasing subsequences and Schensted's algorithms;
+  \item Robinson-Schensted correspondance : a bijection;
+  \item Green's invariants: computing the maximum sum of the length of $k$ disjoint
+    non-decreassing subsequences;
+  \item Knuth relations, the plactic monoïd;
+  \item Green's invariants are plactic invariants: Equivalence between RS and plactic;
+  \item standardization; symmetry of RS;
+  \item Lifting to non commutative polynomials : Free quasi-symmetric function
+    and shuffle product;
+  \item non-commutative lifting the LR-rule : The free/tableau LR-rule;
+  \item Back to Yamanouchi words: a final bijection.
+  \end{enumerate}
+\end{frame}
+
+
+\section{The longest increasing subsequence problem}
+
+\newcommand{\red}[1]{{\color{red} #1}}
+\newcommand{\grn}[1]{{\color{green} #1}}
+\newcommand{\blu}[1]{{\color{blue} #1}}
+\begin{frame}{The longest increasing subsequence problem}
+
+  Some increasing subsequences: 
+  \[
+  \begin{array}{c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c}
+    a&b&a&b&c&a&b&b&a&d&b&a&b\\
+    a&b&\red{a}&b&c&\red a&\red b&\red b&a&\red d&b&a&b \\
+    \red a&\red b&a&\red{b}&c&a&\red b&\red b&a&d&\red b&a&\red b
+  \end{array}
+  \]
+  \begin{PROBLEM}[Schensted]
+    Given a finite sequence $w$, compute the maximum length of a increasing subsequence.
+  \end{PROBLEM}
+\end{frame}
+
+\newcommand{\ar}[1]{\xrightarrow{#1}}
+
+\begin{frame}[fragile]{Schensted's algorithm}
+
+  \begin{ALGO}
+    Start with an empty row $r$, insert the letters $l$ of the word one by one
+    from left to right by the following rule:
+    \begin{itemize}
+    \item replace the first letter strictly larger that $l$ by $l$;
+    \item append $l$ to $r$ if there is no such letter.
+    \end{itemize}
+  \end{ALGO}
+  \bigskip
+
+  Insertion of $\begin{array}{c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c}
+    a&b&a&b&c&a&b&b&a&d&b&a&b\\
+  \end{array}w$
+  \begin{multline*}
+  \emptyset\ar{a}\young(a)\ar{b}\young(ab)\ar{a}\young(aa)\ar{b}\young(aab)
+  \ar{c}\young(aabc)\ar{a}\\
+  \young(aaac)\ar{b}\young(aaab)\ar{b}\young(aaabb)\ar{a}\\\young(aaaab)\ar{d}
+  \young(aaaabd)\ar{b}\young(aaaabb)\ar{a}\\
+  \young(aaaaab)\ar{b}\young(aaaaabb)
+  \end{multline*}
+\end{frame}
+
+\begin{frame}[fragile]{Schensted's specification}
+
+  \emph{Warning}: list index start from $0$.
+  \bigskip
+
+  \begin{THEO}[Schensted 1961]
+    The $i$-th entry $r[i+1]$ of the row $r$ is the smallest letter which ends
+    a increasing subsequence of length $i$.
+  \end{THEO}
+\[
+\operatorname{Schensted}(
+\begin{array}{c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c@{}c}
+  a&b&a&b&c&a&b&b&a&d&b&a&b\\
+\end{array})
+= \young(aaaaabb)
+\]
+\end{frame}
+
+
+\begin{frame}[fragile]
+
+  \begin{coqcode}
+Fixpoint insrow r l : seq T :=
+  if r is l0 :: r then
+    if (l < l0)%Ord then l :: r
+    else l0 :: (insrow r l)
+  else [:: l].
+
+Fixpoint inspos r (l : T) : nat :=
+  if r is l0 :: r' then
+    if (l < l0)%Ord then 0
+    else (inspos r' l).+1
+  else 0.
+
+Definition ins r l := set_nth l r (inspos r l) l.
+
+Lemma insE r l : insmin r l = ins r l.
+Lemma insrowE r l : insmin r l = insrow r l.
+  \end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]
+  \begin{coqcode}
+  (* rev == list reversal,   rcons s x == the sequence s, followed by x *)
+  (* subseq s1 s2 == s1 is a subsequence of s2                          *)
+  Fixpoint Sch_rev w := if w is l0 :: w' then ins (Sch_rev w') l0 else [::].
+  Definition Sch w := Sch_rev (rev w).
+
+  Lemma is_row_Sch w : is_row (Sch w).
+
+  Definition subseqrow s w := subseq s w && is_row s.
+  Definition subseqrow_n s w n := [&& subseq s w , (size s == n) & is_row s].
+
+  Theorem Sch_exists w i :
+    i < size (Sch w) ->
+    exists s : seq T, (last Z s == nth Z (Sch w) i) && subseqrow_n s w i.+1.
+  (* Induction elimining the last letter : elim/last_ind: w *)
+  Theorem Sch_leq_last w s si :
+    subseqrow (rcons s si) w ->
+    size s < size (Sch w) /\ (nth Z (Sch w) (size s) <= si)%Ord.
+  (* Induction elimining the last letter : elim/last_ind: w *)
+
+  Theorem Sch_max_size w :
+    size (Sch w) = \max_(s : subseqs w | is_row s) size s.
+  \end{coqcode}
+\end{frame}
+
+\begin{frame}[fragile]{The Robinson-Schensted's correspondence}
+
+  {\color{blue}Bumping the letters}: when a letter is replaced in Schensted
+  algorithm, \textbf{insert it in a next row} (placed on top in the drawing).
+  \newcommand{\ra}{{\red a}}%
+  \newcommand{\rb}{{\red b}}%
+  \newcommand{\rc}{{\red c}}%
+  \newcommand{\rd}{{\red d}}%
+  \begin{multline*}
+  \emptyset\ar{a}\young(\ra )\ar{b}\young(a\rb)\ar{a}\young(\rb,a\ra)\ar{b}\young(b,aa\rb)
+  \ar{c}\young(b,aab\rc)\ar{a}\\[3mm]
+  \young(b\rb,aa\ra c)\ar{b}\young(bb\rc,aaa\rb)\ar{b}\young(bbc,aaab\rb)\ar{a}\\[3mm]
+  \young(\rc,bb\rb,aaa\ra b)\ar{d}
+  \young(c,bbb,aaaab\rd)\ar{b}\young(c,bbb\rd,aaaab\rb)\ar{a}\\[3mm]
+  \young(c\rd,bbb\rb,aaaa\ra b)\ar{b}\young(cd,bbbb,aaaaab\rb)
+  \end{multline*}
+\end{frame}
+
+
+\begin{frame}[fragile]{Going back}
+
+  If we remember which cell was added we can recover the letter and the
+  previous tableau:
+  \newcommand{\ra}{{\red a}}%
+  \newcommand{\rb}{{\red b}}%
+  \newcommand{\rc}{{\red c}}%
+  \newcommand{\rd}{{\red d}}%
+  \[
+  \only<1>{\yng(1,4,6)\ar{?} \young(cd,bbbb,aaaaab)}
+  \only<2>{\young(c,bbbd,aaaabb)\ar{a} \young(c\rd,bbb\rb,aaaa\ra b)}
+  \]
+\pause
+
+  \begin{coqcode}
+RSmap : forall T : ordType, seq T -> seq (seq T) * seq nat
+RSmapinv2 : forall T : ordType, seq (seq T) * seq nat -> seq T
+
+Definition is_RSpair pair := let: (P, Q) := pair
+  in [&& is_tableau P, is_yam Q & (shape P == shape_rowseq Q)].
+Theorem RSmap_spec w : is_RSpair (RSmap w).
+
+Theorem RS_bij_1 w : RSmapinv2 (RSmap w) = w.
+Theorem RS_bij_2 pair : is_RSpair pair -> RSmap (RSmapinv2 pair) = pair.
+  \end{coqcode}
+\end{frame}
+
+
+% \begin{frame}[fragile]{Robinson-Schensted's bijection (Yamanouchi version)}
+
+%   \newcommand{\ra}{{\red a}}%
+%   \newcommand{\rb}{{\red b}}%
+%   \newcommand{\rc}{{\red c}}%
+%   \newcommand{\rd}{{\red d}}%
+%   \begin{multline*}
+%   \emptyset,\emptyset \ar{a}
+%   \young(\ra ),         {\tiny 0}\ar{b}
+%   \young(a\rb),         00\ar{a}
+%   \young(\rb,a\ra),     100\ar{b}\\[3mm]
+%   \young(b,aa\rb),      0100\ar{c}
+%   \young(b,aab\rc),     00100\ar{a}
+%   \young(b\rb,aa\ra c), 100100\ar{b}\\[3mm]
+%   \young(bb\rc,aaa\rb), 1100100\ar{b}
+%   \young(bbc,aaab\rb),  01100100\ar{a}\\[3mm]
+%   \young(\rc,bb\rb,aaa\ra b), 201100100\ar{d}
+%   \young(c,bbb,aaaab\rd), 0201100100
+%   \end{multline*}
+% \end{frame}
+
+\begin{frame}[fragile]{Robinson-Schensted's bijection (Tableau version)}
+
+  \newcommand{\ra}{{\red a}}%
+  \newcommand{\rb}{{\red b}}%
+  \newcommand{\rc}{{\red c}}%
+  \newcommand{\rd}{{\red d}}%
+  \begin{multline*}
+  \emptyset,\emptyset \ar{a}
+  \young(\ra ),         \young(0)\ar{b}
+  \young(a\rb),         \young(01)\ar{a}
+  \young(\rb,a\ra),     \young(2,01)\ar{b}\\[3mm]
+  \young(b,aa\rb),      \young(2,013)\ar{c}
+  \young(b,aab\rc),     \young(2,0134)\ar{a}
+  \young(b\rb,aa\ra c), \young(25,0134)\ar{b}\\[3mm]
+  \young(bb\rc,aaa\rb), \young(256,0134)\ar{b}
+  \young(bbc,aaab\rb),  \young(256,01347)\ar{a}\\[3mm]
+  \young(\rc,bb\rb,aaa\ra b), \young(8,256,01347)\ar{d}
+  \young(c,bbb,aaaab\rd), \young(8,256,013479)
+  \end{multline*}
+\end{frame}
+
+\begin{frame}[fragile]{Idea of the proof: the non commutative lifting}
+
+  Fix the second tableau $Q$ in the bijection
+  \[L_Q := \{ w\ \mid\ RS(w)_2 = Q \}\]
+  Then clearly:
+    \[S_{\operatorname{shape}(Q)} = \sum_{w\in L_Q} \operatorname{comm}(w)\]
+    \pause\bigskip
+  The crucial fact is:
+  \begin{THEO}
+    There exists an explicit set $\Omega(Q, R)$ such that
+    \[L_Q L_R = \sum_{T\in\Omega(Q, R)} L_T.\]
+  \end{THEO}
+\end{frame}
+
+\section{Further developments and conclusion}
+\begin{frame}[fragile]{Statement in group theory}
+
+  Frobenius defined an isometry from symmetric function to the character ring
+  of the symmetric groups. 
+
+  We can emph{translate the statement into a group theoretic statement}:
+  \begin{coqcode}
+'SG_n      : the symmetric groups on the set [0, .., n-1]
+permCT mu  : an element of the conjugacy class indexed by mu
+'irrSG[la] : the irreducible character for ['SG_n] associated to the
+             partition [la] of n.
+
+Theorem Frobenius_char n (la mu : 'P_n) :
+  'irrSG[la] (permCT mu) = (Delta * \prod_(d <- mu) P d)@_(mpart la + rho n).
+
+Theorem LR_rule_irrSG c d (la : 'P_c) (mu : 'P_d) :
+  'Ind['SG_(c + d)] ('irrSG[la] \o^ 'irrSG[mu]) =
+  \sum_(nu : 'P_(c + d) | included la nu) 'irrSG[nu] *+ LRyam_coeff la mu nu.
+  \end{coqcode}
+
+\end{frame}
+
+
+\begin{frame}{Conclusion}
+
+  \begin{center}
+    \emph{\huge\bf It's feasible !!!!}
+  \end{center}
+  \bigskip
+
+  even by someone without any prior knowledge of type theory or lambda
+  calculus.
+  \bigskip  \bigskip\pause
+
+  Schützenberger's proof was correct !
+  \bigskip\pause
+
+  A certified implementation ($\#P$-complete)
+
+\end{frame}
+
+\begin{frame}{Easy / Hard points}
+
+  \begin{itemize}
+  \item Thanks to boolean reflexion SSReflect/Mathcomp is very good at
+    automatically dealing with trivial cases (size $*=\frac{1}{3}$); \medskip
+
+  \item A small number of missing basic lemmas;
+    \pause
+
+  \item Hard to expand the class/mixin/canonical paradigm;
+    \medskip
+
+  \item Easy to interface algebra with combinatorics;
+
+  \item Tuple and dependant types (the position of a letter in the word w);
+    \medskip
+
+  \item More generally, I feel that Mathcomp is too much oriented toward
+    finite;
+    \medskip
+
+  \item Dealing with a lot of hypothesis.
+  \end{itemize}
+  
+\end{frame}
+\end{document}
+% "latex -synctex=1 -shell-escape"
+%%% Local Variables: LaTeX-command
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 

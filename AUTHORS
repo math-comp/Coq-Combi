@@ -2,13 +2,15 @@ Florent Hivert <Florent.Hivert@lri.fr>
 
 Contributors:
 
-- Jean Christophe Filliâtre
-- Christine Paulin
-- Olivier Stietel
+- Thibaut Benjamin (representation theory of the symmetric groups)
+- Jean Christophe Filliâtre (Why3 implementation)
+- Christine Paulin (SSReflect binding for ALEA + hook length formula)
+- Olivier Stietel (hook length formula)
 
 This library was supported by additional discussions with:
 
 - Assia Mahoubi
+- Cyril Cohen
 - Pierre Yves Strub
 - the SSReflect mailing list
 
