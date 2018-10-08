@@ -351,10 +351,7 @@ rewrite size_allpairs.
 by rewrite !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
 Qed.
 
-(** TODO: prove the formula for catalan numbers *)
 
-From mathcomp
-Require Import binomial div.
 
 Lemma catalan10 :
   [seq catalan n | n <- iota 0 10] =
@@ -363,15 +360,20 @@ Proof.
 by rewrite /catalan /= !cardT -!(size_map val) !enumT !unlock !subType_seqP.
 Qed.
 
+(** TODO: prove the formula for catalan numbers:
+[[
+From mathcomp
+Require Import binomial div.
+
 Goal [seq catalan n | n <- iota 0 10] =
      [seq 'C(2 * n, n) %/ n.+1 | n <- iota 0 10].
 Proof.
 by rewrite /catalan /= !cardT -!(size_map val) !enumT !unlock !subType_seqP.
 Qed.
 
-(**
 Theorem catalanE n : catalan n = 'C(2 * n, n) %/ n.+1.
 Proof. Admitted.
+]]
  *)
 
 (** ** Left branch surgery in binary trees *)
