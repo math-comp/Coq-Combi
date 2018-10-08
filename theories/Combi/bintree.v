@@ -772,11 +772,14 @@ elim: n => //= n ->.
 by rewrite -[RHS]cat1s -[[:: 0]]/(nseq 1 0) -!nseqD addnC.
 Qed.
 
+Lemma from_vct_acc_nil lft : from_vct_acc lft [::] = lft.
+Proof. by []. Qed.
+
 Lemma from_vct_fuelE fuel lft vct :
   size vct < fuel ->
-  from_vct_rec fuel lft vct = from_vct_rec (size vct).+1 lft vct.
+  from_vct_rec fuel lft vct = from_vct_acc lft vct.
 Proof.
-move=> H.
+rewrite /from_vct_acc => H.
 have {H} : size vct < (size vct).+1 <= fuel by rewrite ltnS leqnn.
 elim: fuel vct {2 3 4}(size vct).+1 lft => [| fuel IHfuel] vct fuel1 lft.
   by move/andP=> [] /leq_trans H/H{H} /=.
@@ -787,21 +790,16 @@ rewrite !(IHfuel _ fuel1) {IHfuel} // Hfuel1 andbT.
 - by rewrite size_drop; exact: (leq_ltn_trans (leq_subr _ _) Hsz).
 Qed.
 
-Lemma from_vct_acc_nil lft : from_vct_acc lft nil = lft.
-Proof. by []. Qed.
-
 Lemma from_vct_accE lft v0 vct :
   from_vct_acc lft (v0 :: vct) =
   from_vct_acc (BinNode lft (from_vct_acc BinLeaf (take v0 vct)))
                (drop v0 vct).
 Proof.
-rewrite /from_vct_acc.
 rewrite -[in RHS](from_vct_fuelE (fuel := size (v0 :: vct))); first last.
   by rewrite /= ltnS size_drop leq_subr.
-rewrite -[from_vct_rec (size (take v0 vct)).+1 _ _]
-           (from_vct_fuelE (fuel := size (v0 :: vct))); first last.
-  by rewrite /= size_take -/(minn _ _) ltnS geq_minr.
-by [].
+rewrite {2}/from_vct_acc.
+rewrite -[_ _.+1 _ _](from_vct_fuelE (fuel := size (v0 :: vct))); first by [].
+by rewrite /= size_take -/(minn _ _) ltnS geq_minr.
 Qed.
 
 Lemma from_vct_cat_leftE lft vct :
