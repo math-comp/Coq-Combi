@@ -16,12 +16,12 @@
 (** * 0-Hecke Monoid
 ***************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun bigop finset binomial fingroup perm tuple.
-From mathcomp Require Import morphism presentation.
-From SsrMultinomials Require Import ssrcomplements poset freeg bigenough mpoly.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
+From mathcomp Require Import choice fintype tuple finfun bigop finset.
+From mathcomp Require Import fingroup perm morphism presentation.
+From SsrMultinomials Require Import ssrcomplements freeg mpoly.
 
-From Combi Require Import tools permuted combclass congr symgroup.
+From Combi Require Import tools permuted combclass congr presentSn.
 
 
 Set Implicit Arguments.
@@ -232,8 +232,8 @@ Proof. by move/braid_to_canword/bubble_braid_congr. Qed.
 Corollary reduced_bubbleM (s t : 'S_(n.+1)) :
   length (s * t) = length s + length t -> 'pi_{ s } \o 'pi_{ t } =1 'pi_{ s * t }.
 Proof.
-  rewrite -big_cat /= => /reducedM/bubble_red => H i.
-  by rewrite H big_cat /= !canwordP.
+rewrite -big_cat /= => /reducedM/bubble_red => H i.
+by rewrite H big_cat /= !canwordP.
 Qed.
 
 Corollary bubble_perm (u : seq 'I_n) : exists s : 'S_(n.+1), 'pi_[u] =1 'pi_{ s }.

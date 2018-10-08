@@ -454,11 +454,11 @@ Lemma isantisym_eltrP n (R : ringType) (p : {mpoly R[n.+1]}) :
 Proof.
 apply/(iffP forallP) => [Hanti i Hi | Heltr].
 - have /eqP -> := Hanti (eltr n i).
-  by rewrite /eltr odd_tperm (inordi1 Hi) !simplexp.
+  by rewrite /eltr odd_tperm (inordi_neq_i1 Hi) !simplexp.
 - elim/eltr_ind => [| S i Hi /eqP IH].
   + by rewrite odd_perm1 /= msym1m !simplexp.
   + rewrite msymMm (Heltr i Hi).
-    rewrite msymN IH odd_mul_tperm (inordi1 Hi) addTb.
+    rewrite msymN IH odd_mul_tperm (inordi_neq_i1 Hi) addTb.
     by case: (odd_perm _); rewrite !simplexp.
 Qed.
 

@@ -834,12 +834,13 @@ of [s] is indeed a word whose [length] is the size of [s], that is a reduced
 word (defined later).
  *)
 
-Lemma canwordE s : [seq (i : nat) | i : 'I_n <- canword s] = wordcd (cocode s).
+Lemma canwordE s :
+  [seq (i : nat) | i : 'I_n <- canword s] = wordcd (cocode s).
 Proof using. by apply (insub_wordcdK (cocodeP _)); rewrite size_cocode. Qed.
 
-Theorem canwordP s : s = 's_[canword s].
+Theorem canwordP s : 's_[canword s] = s.
 Proof using.
-rewrite /= {1}(cocodeE s).
+rewrite /= {2}(cocodeE s).
 rewrite -(big_map nat_of_ord xpredT) /=; apply congr_big => //.
 by rewrite canwordE.
 Qed.
@@ -851,7 +852,7 @@ apply/setP => s; apply/idP/gen_prodgP => /=.
 - move=> Hs; exists (size (canword s)).
   exists (fun i => 's_(tnth (in_tuple (canword s)) i)).
   + by move=> i; apply: mem_imset.
-  + rewrite {1}(canwordP s).
+  + rewrite -{1}(canwordP s).
     by rewrite -{1}[canword s]/(tval (in_tuple (canword s))) big_tuple.
 - move=> [l [fi Hfi] ->{s}]; apply group_prod => i _.
   by rewrite inE.
@@ -861,7 +862,7 @@ Corollary morph_eltr (gT : finGroupType)
           (f g : {morphism 'SG_n.+1 >-> gT}) :
   (forall i : 'I_n, f 's_i = g 's_i) -> f =1 g.
 Proof.
-move=> Heq /= s; rewrite (canwordP s) !morph_prod; first last.
+move=> Heq /= s; rewrite -(canwordP s) !morph_prod; first last.
 - by move=> i _; rewrite inE.
 - by move=> i _; rewrite inE.
 by apply eq_bigr => i _; apply Heq.
@@ -872,7 +873,7 @@ Theorem eltr_ind (P : 'S_n.+1 -> Type) :
   P 1 -> (forall s i, i < n -> P s -> P ('s_i * s)) ->
   forall s, P s.
 Proof using.
-move=> H1 IH s; rewrite (canwordP s).
+move=> H1 IH s; rewrite -(canwordP s).
 elim: (canword s)  => [| t0 t IHt] /=; first by rewrite big_nil.
 by rewrite big_cons; apply IH; first exact: ltn_ord.
 Qed.
@@ -1020,8 +1021,8 @@ Qed.
 Corollary lengthM u v : length (u * v) <= length u + length v.
 Proof using.
 have:= canword_reduced u; have:= canword_reduced v.
-rewrite !unfold_in -!canwordP => /eqP -> /eqP ->.
-rewrite {1}(canwordP u) {1}(canwordP v) -big_cat /=.
+rewrite !unfold_in !canwordP => /eqP -> /eqP ->.
+rewrite -{1}(canwordP u) -{1}(canwordP v) -big_cat /=.
 by apply: (leq_trans (length_prods _)); rewrite size_cat.
 Qed.
 
@@ -1046,10 +1047,17 @@ Proof using. by rewrite -cat1s; exact: reduced_catr. Qed.
 Lemma reduced_rconsK u i : rcons u i \is reduced -> u \is reduced.
 Proof using. by rewrite -cats1; exact: reduced_catl. Qed.
 
+Lemma reducedM (s t : 'S_(n.+1)) :
+  length (s * t) = length s + length t -> canword s ++ canword t \is reduced.
+Proof.
+rewrite unfold_in big_cat /= size_cat !size_canword => <-.
+by rewrite !canwordP.
+Qed.
+
 Lemma canword1 : canword (1 : 'S_n.+1) = [::].
 Proof using.
 have:= canword_reduced 1.
-by rewrite unfold_in -canwordP length1 eq_sym => /nilP.
+by rewrite unfold_in canwordP length1 eq_sym => /nilP.
 Qed.
 
 
@@ -1589,7 +1597,7 @@ Qed.
 Corollary cocode_straightenE w :
   rev (straighten w) = cocode 's_[w].
 Proof using.
-have:= (prods_straighten w); rewrite {1}(canwordP 's_[w]).
+have:= (prods_straighten w); rewrite -{1}(canwordP 's_[w]).
 rewrite -!(big_map nat_of_ord xpredT) /= canwordE /wcord -map_comp.
 rewrite [map _ _](_ : _ = wordcd (rev (straighten w))); first last.
   rewrite -[RHS](map_id) -eq_in_map => i.
@@ -1718,7 +1726,7 @@ pose morph_eltr_fun (s : 'S_n.+1) := \prod_(i <- canword s) 'g_i.
 have morph_eltrP : {morph morph_eltr_fun : x y / x * y}.
   move=> i j.
   have:= braidred_to_canword (canword i ++ canword j) => [[redpath [Hpath]]].
-  rewrite big_cat /= -!canwordP /morph_eltr_fun -big_cat /= => Hlast.
+  rewrite big_cat /= !canwordP /morph_eltr_fun -big_cat /= => Hlast.
   elim: redpath (_ ++ _) Hpath Hlast =>
       [c _ <- //|] w0 wp IHwp /= c /andP [Hbr] /IHwp H/H{IHwp H} ->.
   move: Hbr => /orP [].
@@ -1752,8 +1760,8 @@ Proof.
 apply intro_isoGrp.
 - apply/existsP; exists (eltr 1 0).
   rewrite /= !xpair_eqE /=; apply/andP; split; try by rewrite expgS expg1 tperm2.
-  rewrite eqEsubset subsetT /=; apply/subsetP => s _.
-  have /= -> := canwordP s.
+  rewrite eqEsubset subsetT /=; apply/subsetP => /= s _.
+  rewrite -(canwordP s).
   elim: (canword s) => [| t0 t IHt] /=; first by rewrite big_nil group1.
   rewrite big_cons; apply groupM => /=; last exact: IHt.
   apply (subsetP (subset_gen _)); rewrite !inE.
@@ -1782,8 +1790,8 @@ have Gen2 (gt : finGroupType) (a b : gt) :
 apply intro_isoGrp.
 - apply/existsP; exists (eltr 2 0, eltr 2 1).
   rewrite /= !xpair_eqE /=; apply/and4P; split; try by rewrite expgS expg1 tperm2.
-  + rewrite Gen2 eqEsubset subsetT /=; apply/subsetP => s _.
-    have /= -> := canwordP s.
+  + rewrite Gen2 eqEsubset subsetT /=; apply/subsetP => /= s _.
+    rewrite -(canwordP s).
     elim: (canword s) => [| t0 t IHt] /=; first by rewrite big_nil group1.
     rewrite big_cons; apply groupM; last exact: IHt.
     apply (subsetP (subset_gen _)); rewrite !inE.
@@ -1821,8 +1829,8 @@ have Gen3 (gt : finGroupType) (a b c : gt) :
 apply intro_isoGrp.
 - apply/existsP; exists (eltr 3 0, eltr 3 1, eltr 3 2).
   rewrite /= !xpair_eqE /=; apply/and5P; split; try by rewrite expgS expg1 tperm2.
-  + rewrite Gen3 eqEsubset subsetT /=; apply/subsetP => s _.
-    have /= -> := canwordP s.
+  + rewrite Gen3 eqEsubset subsetT /=; apply/subsetP => /= s _.
+    rewrite -(canwordP s).
     elim: (canword s) => [| t0 t IHt] /=; first by rewrite big_nil group1.
     rewrite big_cons; apply groupM; last exact: IHt.
     apply (subsetP (subset_gen _)); rewrite !inE.

@@ -200,7 +200,6 @@ ifneq (,$(TIMING))
 TIMING_ARG=-time
 ifeq (after,$(TIMING))
 TIMING_EXT=after-timing
-  theories/SymGroup/bubble.v\
 else
 ifeq (before,$(TIMING))
 TIMING_EXT=before-timing
