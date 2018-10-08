@@ -341,12 +341,6 @@ Definition catalan n := #|bintreesz n|.
 Lemma catalan0 : catalan 0 = 1.
 Proof. by rewrite /catalan cardT -(size_map val) enumT unlock subType_seqP. Qed.
 
-Lemma catalan10 :
-  [seq catalan i | i <- iota 0 10] = [:: 1; 1; 2; 5; 14; 42; 132; 429; 1430; 4862].
-Proof.
-by rewrite /catalan /= !cardT -!(size_map val) !enumT !unlock !subType_seqP.
-Qed.
-
 Lemma catalan_rec n :
   catalan n.+1 = \sum_(0 <= i < n.+1) catalan i * catalan (n - i).
 Proof.
@@ -357,6 +351,28 @@ rewrite size_allpairs.
 by rewrite !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
 Qed.
 
+(** TODO: prove the formula for catalan numbers *)
+
+From mathcomp
+Require Import binomial div.
+
+Lemma catalan10 :
+  [seq catalan n | n <- iota 0 10] =
+  [:: 1; 1; 2; 5; 14; 42; 132; 429; 1430; 4862].
+Proof.
+by rewrite /catalan /= !cardT -!(size_map val) !enumT !unlock !subType_seqP.
+Qed.
+
+Goal [seq catalan n | n <- iota 0 10] =
+     [seq 'C(2 * n, n) %/ n.+1 | n <- iota 0 10].
+Proof.
+by rewrite /catalan /= !cardT -!(size_map val) !enumT !unlock !subType_seqP.
+Qed.
+
+(**
+Theorem catalanE n : catalan n = 'C(2 * n, n) %/ n.+1.
+Proof. Admitted.
+ *)
 
 (** ** Left branch surgery in binary trees *)
 Fixpoint left_branch t :=
@@ -609,7 +625,7 @@ Definition Tamari := connect (fun t1 t2 : bintreesz n => grel rotations t1 t2).
 Local Notation "x '<=T' y" := (Tamari x y) (at level 70, y at next level).
 
 Lemma rotations_Tamari t t' :
-  val t' \in rotations t -> t <=T t'.
+  tval t' \in rotations t -> t <=T t'.
 Proof. by move=> H; apply connect1; rewrite /grel /=. Qed.
 
 Lemma Tamari_refl : reflexive Tamari.
@@ -638,37 +654,31 @@ move=> /Tamari_rightsizesum [leq12 _].
 by apply/eqP; rewrite -eq eqn_leq leq21 leq12.
 Qed.
 
-Lemma Tamari_flip_impl t1 t2 : (flipsz t2 <=T flipsz t1) -> t1 <=T t2.
+Lemma Tamari_flip t1 t2 : (flipsz t2 <=T flipsz t1) = (t1 <=T t2).
 Proof.
+suff {t1 t2} Timpl t1 t2 : (flipsz t2 <=T flipsz t1) -> t1 <=T t2.
+  apply/idP/idP; first exact: Timpl.
+  by rewrite -{1}(flipszK t1) -{1}(flipszK t2); exact: Timpl.
 rewrite /Tamari => /connectP /= [].
 case/lastP => [//= _ | p l Hp].
   move=> /(congr1 flipsz); rewrite !flipszK => ->.
   exact: connect0.
 rewrite last_rcons => Hl; subst l; move: Hp.
-have /eq_path -> :
-    (fun t t' => val t' \in rotations t)
-    =2 (fun t t' => (fun t' t => val (flipsz t) \in rotations (flipsz t')) t' t).
+have /eq_path -> : (fun t t' => tval t' \in rotations t)
+                   =2 (fun t t' => tval (flipsz t) \in rotations (flipsz t')).
   by move=> t t' /=; exact: rotation_flip.
 rewrite -rev_path /= last_rcons belast_rcons.
-have -> : (rev (flipsz t2 :: p)) =
+have -> : rev (flipsz t2 :: p) =
           [seq flipsz t | t <- rcons [seq flipsz t' | t' <- rev p] t2].
-  rewrite -[RHS]revK; congr rev.
-  rewrite -map_rev rev_rcons /= -map_rev revK.
+  rewrite map_rev -rev_cons map_rev /=.
   rewrite -map_comp (eq_map (f2 := id)); last by move=> x /=; rewrite flipszK.
   by rewrite map_id.
 rewrite (map_path (b := pred0)
-                  (e' := (fun t t' => val t' \in rotations t))); first last.
+                  (e' := (fun t t' => tval t' \in rotations t))); first last.
   - by apply/hasP => [] [t /=].
   - by rewrite /rel_base => u v _; rewrite /= !flipK.
 set pp := rcons _ _ => Hp; apply/connectP; exists pp; first by [].
 by rewrite /pp last_rcons.
-Qed.
-
-Lemma Tamari_flip t1 t2 : (flipsz t2 <=T flipsz t1) = (t1 <=T t2).
-Proof.
-apply/idP/idP; first exact: Tamari_flip_impl.
-rewrite -{1}(flipszK t1) -{1}(flipszK t2).
-exact: Tamari_flip_impl.
 Qed.
 
 End Tamari.
@@ -750,8 +760,8 @@ elim: t => //= l <- r <-.
 by rewrite size_cat /= addnS add1n addSn.
 Qed.
 
-Lemma rightsizesumE t : rightsizesum t = sumn (right_sizes t).
-Proof. by elim: t => //= l -> r ->; rewrite sumn_cat /= addnA. Qed.
+Lemma rightsizesumE t : sumn (right_sizes t) = rightsizesum t.
+Proof. by elim: t => //= l <- r <-; rewrite sumn_cat /= addnA. Qed.
 
 Lemma right_sizes_left_comb n :
   right_sizes (leftcomb n) = nseq n 0.
@@ -760,25 +770,19 @@ elim: n => //= n ->.
 by rewrite -[RHS]cat1s -[[:: 0]]/(nseq 1 0) -!nseqD addnC.
 Qed.
 
-Lemma from_vct_fuel_any fuel1 fuel2 lft vct :
-  (size vct) < fuel1 <= fuel2 ->
-  from_vct_rec fuel1 lft vct = from_vct_rec fuel2 lft vct.
-Proof.
-elim: fuel2 fuel1 vct lft => [| fuel IHfuel] fuel1 vct lft.
-  by move/andP=> [] /leq_trans H/H /=.
-case: fuel1 => // fuel1; rewrite !ltnS.
-case: vct => // v0 vct /= /andP [Hsz Hfuel1].
-rewrite !(IHfuel fuel1 _) {IHfuel} // Hfuel1 andbT.
-- by rewrite size_take; exact: (leq_ltn_trans (geq_minr _ _) Hsz).
-- by rewrite size_drop; exact: (leq_ltn_trans (leq_subr _ _) Hsz).
-Qed.
-
 Lemma from_vct_fuelE fuel lft vct :
-  (size vct) < fuel ->
+  size vct < fuel ->
   from_vct_rec fuel lft vct = from_vct_rec (size vct).+1 lft vct.
 Proof.
-move=> H; apply esym; apply: from_vct_fuel_any.
-by rewrite ltnS H leqnn.
+move=> H.
+have {H} : size vct < (size vct).+1 <= fuel by rewrite ltnS leqnn.
+elim: fuel vct {2 3 4}(size vct).+1 lft => [| fuel IHfuel] vct fuel1 lft.
+  by move/andP=> [] /leq_trans H/H{H} /=.
+case: fuel1 => // fuel1; rewrite !ltnS.
+case: vct => // v0 vct /= /andP [Hsz Hfuel1].
+rewrite !(IHfuel _ fuel1) {IHfuel} // Hfuel1 andbT.
+- by rewrite size_take; exact: (leq_ltn_trans (geq_minr _ _) Hsz).
+- by rewrite size_drop; exact: (leq_ltn_trans (leq_subr _ _) Hsz).
 Qed.
 
 Lemma from_vct_acc_nil lft : from_vct_acc lft nil = lft.
@@ -1056,7 +1060,7 @@ Lemma vctleq_rightsizesum t1 t2 :
   right_sizes t1 <=V right_sizes t2 ->
   rightsizesum t1 <= rightsizesum t2 ?= iff (t1 == t2).
 Proof.
-rewrite /vctleq !rightsizesumE -(inj_eq (can_inj right_sizesK)) => /andP [].
+rewrite /vctleq -!rightsizesumE -(inj_eq (can_inj right_sizesK)) => /andP [].
 elim: (right_sizes t1) (right_sizes t2) => [| u0 u IHu] [| v0 v] //=.
 rewrite eqSS => /IHu{IHu}Hrec /andP [H0 /Hrec{Hrec}] [Hleq Heq].
 exact: leqif_add.
