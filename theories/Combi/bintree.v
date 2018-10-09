@@ -1459,10 +1459,8 @@ End TamariLattice.
 
 
 (** Alternative inverse bijection *)
-Lemma root_proof l : exists n, nth 0 l n == (size l).-1 - n.
-Proof.
-by exists (size l); rewrite nth_default // eq_sym subn_eq0; apply: leq_pred.
-Qed.
+Lemma root_proof l : exists n, (nth 0 l n + n).+1 >= size l.
+Proof. by exists (size l); rewrite nth_default. Qed.
 
 Fixpoint from_rsz_rec fuel l :=
   if fuel is fuel.+1 then
@@ -1499,9 +1497,8 @@ elim: fuel l {2 3 4}(size l).+1 => [| fuel IHfuel] l fuel1.
 case: fuel1 => // fuel1; rewrite !ltnS.
 case: l => // v0 vct /andP [Hfuel1 Hfuel]; rewrite /= in Hfuel1.
 rewrite !from_rsz_recE.
-case: ex_minnP => [] [|m H1 H2].
-- rewrite /= subn0 => /eqP -> _; rewrite drop0 /= from_rsz_rec_nil.
-  rewrite from_rsz_rec_nil; congr BinNode.
+case: ex_minnP => [] [_ _ |m H1 H2].
+- rewrite /= drop0 !from_rsz_rec_nil /=; congr BinNode.
   by apply/IHfuel/andP.
 - rewrite [m.+1 < size _]/= ltnS.
   case: ltnP => // Hm; congr BinNode; apply IHfuel; rewrite Hfuel andbT /=.
@@ -1533,13 +1530,12 @@ rewrite /=.
 case: ex_minnP => m HP Hmin.
 apply/anti_leq/andP; split.
 - apply: Hmin => {HP}; rewrite nth_cat size_cat size_right_sizes ltnn subnn /=.
-  by rewrite size_right_sizes addnS /= addKn.
+  by rewrite size_right_sizes addnS addnC.
 - rewrite leqNgt; apply (introN idP) => Hm {Hmin}; move: HP.
-  rewrite nth_cat !size_cat /= size_right_sizes Hm addnS => /=/eqP Habs.
+  rewrite nth_cat !size_cat /= size_right_sizes Hm addnS ltnS => Habs.
   have /TamariP [H _] := right_sizesP l.
-  move: H; rewrite size_right_sizes => /(_ m Hm).
-  rewrite {}Habs addnC -ltn_subRL addnC -addnBA; last exact: ltnW.
-  by rewrite ltnNge leq_addl.
+  move: H; rewrite size_right_sizes => /(_ m Hm)/(leq_ltn_trans Habs).
+  by rewrite leqNgt ltnS leq_addr.
 Qed.
 
 Theorem right_sizesK_alt : cancel right_sizes from_rsz.
@@ -1567,7 +1563,7 @@ move=> /TamariP /=; rewrite {1}size_rcons => [] [/(_ _ (ltnSn (size l))) H _].
 move: H; rewrite nth_rcons ltnn eq_refl {1 3}size_rcons !ltnS.
 rewrite -[X in _ <= X]add0n leq_add2r leqn0 => Hln.
 case: ex_minnP => [] m _; apply.
-by rewrite nth_rcons ltnn eq_refl size_rcons /= subnn.
+by rewrite nth_rcons ltnn eq_refl size_rcons /= ltnS leq_addl.
 Qed.
 
 Lemma Tamari_left l :
@@ -1577,37 +1573,24 @@ Lemma Tamari_left l :
 Proof.
 move=> Hnnil Htam.
 have:= Tamari_root Hnnil Htam.
-case Hl : l Hnnil Htam => [//| l0 l'] _; rewrite -Hl => Htam.
-have Hl' : (size l).-1 = size l' by rewrite Hl.
-case: ex_minnP => m /eqP; rewrite Hl' => Hnth Hmin Hm.
+case: ex_minnP => m Hnth Hmin Hm.
 move: Htam => /TamariP [Hl1 Hl2].
-have Ht1 i : i < m -> nth 0 l i < m - i.
+have Ht1 i : i < m -> nth 0 l i + i < m.
   move=> Hi.
-  rewrite ltn_subRL addnC ltnNge; apply (introN idP) => H.
-  suff /Hmin : nth 0 l i == size l' - i by move/(leq_trans Hi); rewrite ltnn.
-  apply/eqP/anti_leq; apply/andP; split; first last.
-  + rewrite leq_subLR addnC.
-    have /Hl2 : i < m <= nth 0 l i + i by apply /andP.
-    rewrite Hnth subnK; last by move: Hm; rewrite Hl /= ltnS.
-    by move=> ->.
-  + rewrite -(leq_add2r i) subnK; first last.
-      rewrite -Hl' -ltnS.
-      exact: leq_trans (ltn_trans Hi Hm) (leqSpred _).
-    rewrite -ltnS -Hl' prednK; last by rewrite Hl.
-    by have /leq_trans := Hl1 i (ltn_trans Hi Hm); apply.
+  rewrite ltnNge; apply (introN idP) => H.
+  suff /Hmin : size l <= (nth 0 l i + i).+1 by move/(leq_trans Hi); rewrite ltnn.
+  apply (leq_trans Hnth); rewrite ltnS; apply Hl2.
+  by rewrite Hi H.
 apply/TamariP; split.
 - rewrite size_take Hm => i Hi; rewrite (nth_take _ Hi).
-  by rewrite addnC -ltn_subRL; exact: Ht1.
+  exact: Ht1.
 - move=> i j /andP [Hij Hj].
   have Him: i < m.
     rewrite ltnNge; apply (introN idP) => H.
     move: Hj; rewrite nth_default ?size_take ?Hm // add0n.
     by move/(leq_trans Hij); rewrite ltnn.
   rewrite nth_take // in Hj.
-  have Hjm: j < m.
-    apply (leq_ltn_trans Hj).
-    by rewrite addnC -ltn_subRL; exact: Ht1.
-  rewrite !nth_take //.
+  rewrite !nth_take //; last exact: leq_ltn_trans Hj (Ht1 _ Him).
   by apply Hl2; rewrite Hij Hj.
 Qed.
 
@@ -1640,16 +1623,19 @@ have Hnnil : s != [::] by case: s Hsz.
 rewrite (from_rszE Hnnil) => Htam.
 have:= Tamari_root Hnnil Htam.
 have:= Tamari_left Hnnil Htam.
-case: ex_minnP => m /eqP Hnth Hmin Htaml Hm; rewrite Hm /=.
+case: ex_minnP => m Hnth Hmin Htaml Hm; rewrite Hm /=.
 rewrite IHn //; last by rewrite size_take Hm -ltnS -Hsz.
 have Htamr := Tamari_drop m.+1 Htam.
 rewrite size_from_rsz //.
 rewrite IHn // size_drop; first last.
   by rewrite -ltnS -Hsz subnS prednK ?ltn_subRL ?addn0 // leq_subr.
-rewrite subnS -(ltn_predK Hm) subSKn -Hnth.
+have -> : size s - m.+1 = head 0 (drop m s).
+  rewrite -nth0 nth_drop addn0; apply/eqP.
+  rewrite -(eqn_add2r m.+1) subnK // addnS.
+  apply/eqP/anti_leq; rewrite Hnth /=.
+  by move/TamariP: Htam => [H _]; exact: H.
 rewrite -{4}(cat_take_drop m s); congr (_ ++ _).
 rewrite -add1n -drop_drop drop1.
-have -> : nth 0 s m = head 0 (drop m s) by rewrite -nth0 nth_drop addn0.
 rewrite cons_head_behead //.
 by apply/eqP/nilP; rewrite /nilp size_drop subn_eq0 -ltnNge.
 Qed.
