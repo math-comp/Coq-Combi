@@ -698,7 +698,7 @@ Fixpoint is_Tamari v :=
   if v is v0 :: v' then
     [&& v0 <= size v',
      is_Tamari v' &
-     all (fun i => nth 0 v' i < v0 - i) (iota 0 v0)]
+     all (fun i => nth 0 v' i + i < v0) (iota 0 v0)]
   else true.
 Definition TamariVector := [qualify a v : seq nat | is_Tamari v].
 
@@ -738,7 +738,7 @@ Lemma Tamari_consP v0 v :
   reflect
     [/\ v0 <= size v,
      v \is a TamariVector &
-     forall i, i < v0 -> nth 0 v i < v0 - i]
+     forall i, i < v0 -> nth 0 v i + i < v0]
     (v0 :: v \is a TamariVector).
 Proof.
 rewrite !unfold_in /=.
@@ -749,26 +749,25 @@ Qed.
 
 Lemma TamariP v :
   reflect
-    ((forall i, i < size v -> nth 0 v i < size v - i) /\
+    ((forall i, i < size v -> nth 0 v i + i < size v) /\
      (forall i j, i < j <= nth 0 v i + i -> nth 0 v j + j <= nth 0 v i + i))
     (v \is a TamariVector).
 Proof.
 apply (iffP idP); elim: v => [_ | v0 v IHv ] //=.
   by split => // i j; rewrite !nth_nil => /andP [_]; rewrite !add0n.
 - move/Tamari_consP => [Hv0 /IHv{IHv} [Hrec1 Hrec2] H]; split.
-  + by case=> [//=|i]; rewrite ltnS /= subSS; exact: Hrec1.
-  + case=> [//=| i] [//=| j].
-      by rewrite /= !addn0 addnS addnC -ltn_subRL; exact: H.
-    by rewrite /= !addnS !ltnS; exact: Hrec2.
+  + case=> [_ |i]; rewrite !ltnS /= ?addn0 // addnS; exact: Hrec1.
+  + case=> [//=| i] [//=| j] /=.
+      by rewrite !addnS !addn0 ; exact: H.
+    by rewrite !addnS !ltnS; exact: Hrec2.
 - move=> [H1 H2].
   apply/Tamari_consP; split.
-  + by have:= H1 0 (ltn0Sn _); rewrite subn0 ltnS.
+  + by have:= H1 0 (ltn0Sn _); rewrite addn0 ltnS.
   + apply: IHv; split => [i Hi | i j Hij].
-    * by have:= H1 i.+1 Hi; rewrite subSS.
+    * by have:= H1 i.+1 Hi; rewrite /= addnS ltnS.
     * by have:= H2 i.+1 j.+1; rewrite /= !addnS !ltnS; apply.
-  + move=> i Hi; rewrite ltn_subRL.
-    have:= H2 0 i.+1.
-    by rewrite /= !addn0 addnS addnC; apply.
+  + move=> i Hi.
+    by have:= H2 0 i.+1; rewrite /= !addn0 addnS; apply.
 Qed.
 
 Lemma Tamari_drop n v :
@@ -791,12 +790,12 @@ elim: v0 v => [| v0 IHv0] v; first by rewrite take0.
 case: v => [//= | v1 v].
 move/Tamari_consP; rewrite /= ltnS => [] [Hsz Htam H].
 apply/Tamari_consP; rewrite (size_takel Hsz).
-have:= H 0 (ltn0Sn _); rewrite ltnS => /= Hv1.
+have:= H 0 (ltn0Sn _); rewrite ltnS addn0 => /= Hv1.
 split.
 - exact: Hv1.
 - apply: IHv0; move: Htam => /Tamari_consP [_ Hv H1].
   apply/Tamari_consP; split => // i.
-  by rewrite -ltnS => /H /=; rewrite subSS.
+  by rewrite -ltnS => /H; rewrite /= ltnS addnS.
 - move/Tamari_consP: Htam {H} => [_ _ H] i Hi.
   by rewrite nth_take ?H // (leq_trans Hi Hv1).
 Qed.
@@ -1121,10 +1120,10 @@ Lemma vctmin_Tamari v1 v2 :
 Proof.
 move=> Hsz /TamariP [Hleq1 H1] /TamariP [Hleq2 H2].
 apply/TamariP; rewrite size_vctmin Hsz minnn; split.
-- move=> i Hi; rewrite nth_vctmin.
+- move=> i Hi {Hleq1 H1 H2}; rewrite nth_vctmin addn_minl.
   exact: leq_ltn_trans (geq_minr _ _) (Hleq2 _ Hi).
-- move=> i j {Hleq1 Hleq2}; rewrite !nth_vctmin.
-  rewrite !addn_minl leq_min=> /andP [Hij /andP [Hj1 Hj2]].
+- move=> i j {Hleq1 Hleq2}; rewrite !nth_vctmin !addn_minl.
+  rewrite leq_min=> /andP [Hij /andP [Hj1 Hj2]].
   by rewrite leq_min !geq_min H1 /= ?H2 ?orbT // Hij.
 Qed.
 
@@ -1157,32 +1156,30 @@ Qed.
 Lemma Tamari_add_head v0 v :
   v0 :: v \is a TamariVector ->
   v0 < size v ->
-  v0.+1 + nth 0 v v0 :: v \is a TamariVector.
+  (nth 0 v v0 + v0).+1 :: v \is a TamariVector.
 Proof.
-rewrite addSn => /Tamari_consP [_ Hv Htam0] Hv0.
+move => /Tamari_consP [_ Hv Htam0] Hv0.
 have /TamariP [Hc Htamv] := Hv.
-apply/Tamari_consP; split => //.
-- rewrite -ltn_subRL; exact: Hc.
-- move => i; rewrite ltnS ltn_subRL ltnS ![_ + nth _ _ _]addnC => H.
+apply/Tamari_consP; split => //; first exact: Hc.
+move=> i; rewrite !ltnS => H.
   case: (ltngtP i v0) => [ltnv0i | ltniv0 | -> //].
-  + have:= Htam0 i ltnv0i; rewrite ltn_subRL addnC => /ltnW/leq_trans; apply.
-    exact: leq_addl.
+  + exact: leq_trans (ltnW (Htam0 i ltnv0i)) (leq_addl _ _).
   + by apply: Htamv; rewrite ltniv0 H.
 Qed.
 
 Lemma rotations_add_head v0 v t :
   v0 :: v \is a TamariVector ->
-  v0.+1 + nth 0 v v0 :: v \is a TamariVector ->
-  from_vct_acc t (v0.+1 + nth 0 v v0 :: v) \in
+  (nth 0 v v0 + v0).+1 :: v \is a TamariVector ->
+  from_vct_acc t ((nth 0 v v0 + v0).+1 :: v) \in
     rotations (from_vct_acc t (v0 :: v)).
 Proof.
 set v1 := nth 0 v v0 => Htam0 Htam1.
-have {Htam1} Hv1 : v0.+1 + nth 0 v v0 <= size v.
+have {Htam1} Hv1 : (nth 0 v v0 + v0).+1 <= size v.
   by move/Tamari_consP: Htam1 => [].
-have Hv0 : v0 < size v by apply: leq_ltn_trans (leq_addr _ _) Hv1.
+have Hv0 : v0 < size v by exact: leq_ltn_trans (leq_addl _ _) Hv1.
 have -> : v = (take v0 v) ++
-           v1 :: (take v1 (drop v0.+1 v)) ++ (drop (v0.+1 + v1) v).
-  rewrite addnC -drop_drop cat_take_drop.
+           v1 :: (take v1 (drop v0.+1 v)) ++ (drop (v1 + v0.+1) v).
+  rewrite -drop_drop cat_take_drop.
   rewrite -{1}(cat_take_drop v0 v); congr (_ ++ _).
   rewrite -add1n -drop_drop drop1.
   have -> : v1 = head 0 (drop v0 v) by rewrite -nth0 nth_drop addn0.
@@ -1190,10 +1187,11 @@ have -> : v = (take v0 v) ++
   by apply/eqP/nilP; rewrite /nilp size_drop subn_eq0 -ltnNge.
 have szvl : size (take v0 v) = v0 by rewrite size_take Hv0.
 have szvm : size (take v1 (drop v0.+1 v)) = v1.
-  by rewrite size_takel // size_drop -(leq_add2l v0.+1) subnKC // Hv1.
+  rewrite size_takel // size_drop.
+  by move: Hv1 => /(leq_sub2r v0.+1); rewrite subSS addnK.
 rewrite /from_vct !from_vct_accE.
 rewrite !drop_cat !take_cat szvl ltnn subnn drop0 cats0.
-rewrite addSnnS ltnNge leq_addr addKn /= -addSnnS.
+rewrite -addSn ltnNge leq_addl /= addnK.
 rewrite from_vct_accE !take_cat szvm ltnn subnn take0 cats0.
 rewrite drop_cat szvm ltnn subnn drop0.
 have {Htam0} Htam := Tamari_take Htam0.
@@ -1210,11 +1208,10 @@ Lemma Tamari_add_min u v0 v w0 w :
   u ++ w0 :: w \is a TamariVector ->
   u ++ v0 :: v <=V u ++ w0 :: w ->
   v0 < w0 ->
-  v0.+1 + nth 0 v v0 <= w0.
+  nth 0 v v0 + v0 < w0.
 Proof.
-move/Tamari_catr/Tamari_consP => [_ _ Hv] Hleq /Hv.
-rewrite ltn_subRL addSn => /(leq_ltn_trans _); apply.
-rewrite leq_add2l.
+move/Tamari_catr/Tamari_consP => [_ _ Hv] Hleq /Hv/(leq_ltn_trans _); apply.
+rewrite leq_add2r.
 move/vctleqP : Hleq => [_ /(_ ((size u) + v0.+1))].
 rewrite !nth_cat /=.
 by rewrite [_ + _ < _]ltnNge leq_addr /= addKn.
@@ -1225,7 +1222,7 @@ Lemma Tamari_add u v0 v w0 w :
   u ++ w0 :: w \is a TamariVector ->
   u ++ v0 :: v <=V u ++ w0 :: w ->
   v0 < w0 ->
-  u ++ (v0.+1 + nth 0 v v0) :: v \is a TamariVector.
+  u ++ (nth 0 v v0 + v0).+1 :: v \is a TamariVector.
 Proof.
 elim: u => [| u0 u IHu] Hv Hw /= Hleq H0.
   apply Tamari_add_head; first by [].
@@ -1249,13 +1246,14 @@ apply/Tamari_consP; split.
   + subst i; rewrite subnn /=.
     have/Tamari_consP := Hw => [] [_ _ /(_ _ Hi)].
     rewrite nth_cat ltnn subnn /= => /(leq_ltn_trans _); apply.
+    rewrite leq_add2r.
     exact: Tamari_add_min Hw Hleq H0.
 Qed.
 
 Lemma rotations_add u v0 v :
   u ++ v0 :: v \is a TamariVector ->
-  u ++ (v0.+1 + nth 0 v v0) :: v \is a TamariVector ->
-  from_vct (u ++ (v0.+1 + nth 0 v v0) :: v)
+  u ++ (nth 0 v v0 + v0).+1 :: v \is a TamariVector ->
+  from_vct (u ++ (nth 0 v v0 + v0).+1 :: v)
            \in rotations (from_vct (u ++ v0 :: v)).
 Proof.
 rewrite /from_vct.
@@ -1273,8 +1271,11 @@ case: (leqP u0 (size u)) => Hu0; rewrite !(from_vct_accE t).
   exact: leq_trans Hsz (leq_addl _ _).
 - have H0 : v0 < (u0 - size u).-1.
     rewrite -ltnS; apply: (leq_trans _ (leqSpred _)).
+    rewrite -(ltn_add2r (size u)) subnK; last exact: ltnW.
     move/Tamari_consP: Htam1 => [_ _ /(_ _ Hu0)].
-    by rewrite nth_cat ltnn subnn /= => /(leq_ltn_trans (leq_addr _ _)).
+    rewrite nth_cat ltnn subnn /=.
+    rewrite -[(_ + v0).+1]addnS -addnA /=.
+    exact: (leq_ltn_trans (leq_addl _ _)).
   move/Tamari_take: Htam0.
   move/Tamari_take: Htam1.
   rewrite !take_cat !drop_cat ltnNge (ltnW Hu0) /=.
@@ -1291,7 +1292,7 @@ Lemma rotation_add u v0 v w0 w :
   u ++ w0 :: w \is a TamariVector ->
   u ++ v0 :: v <=V u ++ w0 :: w ->
   v0 < w0 ->
-  from_vct (u ++ (v0.+1 + nth 0 v v0) :: v)
+  from_vct (u ++ (nth 0 v v0 + v0).+1 :: v)
            \in rotations (from_vct (u ++ v0 :: v)).
 Proof.
 move=> Hv Hw Hleq H0.
@@ -1348,7 +1349,7 @@ have {Hmin} Hw : right_sizes t2 = u ++ w0 :: w.
     by apply/eqP/nilP; rewrite /nilp size_drop subn_eq0 -ltnNge -Hsz.
 move: Hvctleq (right_sizesP t1) (right_sizesP t2).
 rewrite -{3}(right_sizesK t1); rewrite Hv Hw => Hvctleq Htamv Htamw.
-exists (from_vct (u ++ (v0.+1 + nth 0 v v0) :: v)).
+exists (from_vct (u ++ (nth 0 v v0 + v0).+1 :: v)).
 split; first exact: rotation_add Htamv Htamw Hvctleq H0.
 have Htam0 := Tamari_add Htamv Htamw Hvctleq H0.
 rewrite (from_vctK Htam0); apply/vctleqP.
@@ -1537,7 +1538,7 @@ apply/anti_leq/andP; split.
   rewrite nth_cat !size_cat /= size_right_sizes Hm addnS => /=/eqP Habs.
   have /TamariP [H _] := right_sizesP l.
   move: H; rewrite size_right_sizes => /(_ m Hm).
-  rewrite {}Habs addnC -addnBA; last by apply ltnW.
+  rewrite {}Habs addnC -ltn_subRL addnC -addnBA; last exact: ltnW.
   by rewrite ltnNge leq_addl.
 Qed.
 
@@ -1563,7 +1564,8 @@ Lemma Tamari_root l :
 Proof.
 case/lastP: l => // l ln _.
 move=> /TamariP /=; rewrite {1}size_rcons => [] [/(_ _ (ltnSn (size l))) H _].
-move: H; rewrite nth_rcons ltnn eq_refl {1 3}size_rcons subSnn !ltnS leqn0 => Hln.
+move: H; rewrite nth_rcons ltnn eq_refl {1 3}size_rcons !ltnS.
+rewrite -[X in _ <= X]add0n leq_add2r leqn0 => Hln.
 case: ex_minnP => [] m _; apply.
 by rewrite nth_rcons ltnn eq_refl size_rcons /= subnn.
 Qed.
@@ -1588,14 +1590,14 @@ have Ht1 i : i < m -> nth 0 l i < m - i.
     have /Hl2 : i < m <= nth 0 l i + i by apply /andP.
     rewrite Hnth subnK; last by move: Hm; rewrite Hl /= ltnS.
     by move=> ->.
-  + rewrite -ltnS.
-    have /leq_trans := Hl1 i (ltn_trans Hi Hm); apply.
-    rewrite Hl /=.
-    rewrite leq_subLR addnS subnKC ?leqSpred //.
-    by have:= ltn_trans Hi Hm; rewrite Hl /= ltnS.
+  + rewrite -(leq_add2r i) subnK; first last.
+      rewrite -Hl' -ltnS.
+      exact: leq_trans (ltn_trans Hi Hm) (leqSpred _).
+    rewrite -ltnS -Hl' prednK; last by rewrite Hl.
+    by have /leq_trans := Hl1 i (ltn_trans Hi Hm); apply.
 apply/TamariP; split.
 - rewrite size_take Hm => i Hi; rewrite (nth_take _ Hi).
-  exact: Ht1.
+  by rewrite addnC -ltn_subRL; exact: Ht1.
 - move=> i j /andP [Hij Hj].
   have Him: i < m.
     rewrite ltnNge; apply (introN idP) => H.
