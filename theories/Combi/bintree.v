@@ -467,7 +467,7 @@ Fixpoint rotations t :=
        else rec
   else [::].
 
-Lemma rotation_left_sub l1 l2 r :
+Lemma rotations_left_sub l1 l2 r :
   l1 \in rotations l2 -> BinNode l1 r \in rotations (BinNode l2 r).
 Proof.
 case H2 : l2 => [/= |ll2 lr2]; first by rewrite in_nil.
@@ -477,7 +477,7 @@ rewrite mem_cat; apply/orP; left.
 by apply/mapP; exists l1.
 Qed.
 
-Lemma rotation_right_sub l r1 r2 :
+Lemma rotations_right_sub l r1 r2 :
   r1 \in rotations r2 -> BinNode l r1 \in rotations (BinNode l r2).
 Proof.
 case Hl : l => [/= |ll lr] H; first by apply/mapP; exists r1.
@@ -506,8 +506,8 @@ apply (iffP idP) => [|].
   + by exists (BinNode a b), c, rrot; apply Or33.
 - move=> [a] [b] [c] [] [-> ->].
   + by rewrite inE eq_refl.
-  + exact: rotation_left_sub.
-  + exact: rotation_right_sub.
+  + exact: rotations_left_sub.
+  + exact: rotations_right_sub.
 Qed.
 
 Lemma size_rotations t t' :
@@ -519,7 +519,7 @@ rewrite inE => /orP [/eqP ->|]; first by rewrite /= !(add1n, addSn, addnS) addnA
 by rewrite -H mem_cat => /orP [/mapP /= [lrot/IHl]|/mapP /= [rrot/IHr]] <- ->.
 Qed.
 
-Lemma rotation_flip_impl t1 t2:
+Lemma rotations_flip_impl t1 t2:
   (t1 \in rotations t2) -> (flip t2 \in rotations (flip t1)).
 Proof.
 elim: t2 t1 => [//|l IHl r IHr] t2.
@@ -535,11 +535,11 @@ move/rotationP => [a] [b] [c] [] [H1 H2]; rewrite H1 H2.
   exact: IHr.
 Qed.
 
-Lemma rotation_flip t1 t2:
+Lemma rotations_flip t1 t2:
   (t1 \in rotations t2) = (flip t2 \in rotations (flip t1)).
 Proof.
-apply/idP/idP; first exact: rotation_flip_impl.
-by move=> /rotation_flip_impl; rewrite !flipK.
+apply/idP/idP; first exact: rotations_flip_impl.
+by move=> /rotations_flip_impl; rewrite !flipK.
 Qed.
 
 Lemma catleft_rotations t t1 t2 :
@@ -564,7 +564,7 @@ apply/eqP/eqP => [|->].
 - exact: rightcomb_rotations.
 Qed.
 Lemma leftcomb_rotations t : leftcomb (size_tree t) \notin rotations t.
-Proof. by rewrite rotation_flip flip_leftcomb rightcomb_rotations in_nil. Qed.
+Proof. by rewrite rotations_flip flip_leftcomb rightcomb_rotations in_nil. Qed.
 
 
 Fixpoint rightsizesum t :=
@@ -668,7 +668,7 @@ case/lastP => [//= _ | p l Hp].
 rewrite last_rcons => Hl; subst l; move: Hp.
 have /eq_path -> : (fun t t' => tval t' \in rotations t)
                    =2 (fun t t' => tval (flipsz t) \in rotations (flipsz t')).
-  by move=> t t' /=; exact: rotation_flip.
+  by move=> t t' /=; exact: rotations_flip.
 rewrite -rev_path /= last_rcons belast_rcons.
 have -> : rev (flipsz t2 :: p) =
           [seq flipsz t | t <- rcons [seq flipsz t' | t' <- rev p] t2].
@@ -1130,7 +1130,7 @@ Qed.
 
 (** * Isomorphism between Tamari order on binary trees and Tamari vectors *)
 
-Lemma rotation_vctleq_impl t1 t2 :
+Lemma rotations_vctleq_impl t1 t2 :
   t1 \in rotations t2 -> right_sizes t2 <=V right_sizes t1.
 Proof.
 move=> Hrot; apply/vctleqP.
@@ -1217,7 +1217,7 @@ rewrite !nth_cat /=.
 by rewrite [_ + _ < _]ltnNge leq_addr /= addKn.
 Qed.
 
-Lemma Tamari_add u v0 v w0 w :
+Lemma Tamari_add_bounded u v0 v w0 w :
   u ++ v0 :: v \is a TamariVector ->
   u ++ w0 :: w \is a TamariVector ->
   u ++ v0 :: v <=V u ++ w0 :: w ->
@@ -1281,13 +1281,13 @@ case: (leqP u0 (size u)) => Hu0; rewrite !(from_vct_accE t).
   rewrite !take_cat !drop_cat ltnNge (ltnW Hu0) /=.
   have:= Hu0; rewrite -subn_gt0 => /prednK <- /= => Htam0 Htam1.
   rewrite from_vct_cat_leftE [X in rotations X]from_vct_cat_leftE.
-  apply catleft_rotations; apply rotation_right_sub.
+  apply catleft_rotations; apply rotations_right_sub.
   move: Htam0.
   have -> : nth 0 v v0 = nth 0 (take (u0 - size u).-1 v) v0 by rewrite nth_take.
   exact: IHn.
 Qed.
 
-Lemma rotation_add u v0 v w0 w :
+Lemma rotations_add_bounded u v0 v w0 w :
   u ++ v0 :: v \is a TamariVector ->
   u ++ w0 :: w \is a TamariVector ->
   u ++ v0 :: v <=V u ++ w0 :: w ->
@@ -1297,7 +1297,7 @@ Lemma rotation_add u v0 v w0 w :
 Proof.
 move=> Hv Hw Hleq H0.
 apply: rotations_add => //.
-exact: (Tamari_add Hv Hw Hleq H0).
+exact: (Tamari_add_bounded Hv Hw Hleq H0).
 Qed.
 
 Lemma vctleq_rotation t1 t2 :
@@ -1350,8 +1350,8 @@ have {Hmin} Hw : right_sizes t2 = u ++ w0 :: w.
 move: Hvctleq (right_sizesP t1) (right_sizesP t2).
 rewrite -{3}(right_sizesK t1); rewrite Hv Hw => Hvctleq Htamv Htamw.
 exists (from_vct (u ++ (nth 0 v v0 + v0).+1 :: v)).
-split; first exact: rotation_add Htamv Htamw Hvctleq H0.
-have Htam0 := Tamari_add Htamv Htamw Hvctleq H0.
+split; first exact: rotations_add_bounded Htamv Htamw Hvctleq H0.
+have Htam0 := Tamari_add_bounded Htamv Htamw Hvctleq H0.
 rewrite (from_vctK Htam0); apply/vctleqP.
 split => [|j]; first by rewrite -Hw -Hsz Hv !size_cat.
 have Hieq : i = size u by rewrite /u size_take Hi.
@@ -1363,6 +1363,84 @@ case: (ltngtP j i) => Hj.
     by case: (j - i).
   + subst j. rewrite Hieq !nth_cat ltnn subnn /=.
     exact: Tamari_add_min Htamw Hvctleq H0.
+Qed.
+
+Theorem rotations_right_sizesP t1 t2 :
+  reflect
+    (exists u v0 v,
+        right_sizes t1 = u ++ v0 :: v /\
+        right_sizes t2 = u ++ (nth 0 v v0 + v0).+1 :: v)
+    (t2 \in rotations t1).
+Proof.
+apply (iffP idP); first last.
+  move=> [u] [v0] [v] [Ht1 Ht2].
+  rewrite -(right_sizesK t1) -(right_sizesK t2) Ht1 Ht2.
+  by apply: rotations_add; rewrite -?Ht1 -?Ht2; apply: right_sizesP.
+move: {2}(size_tree t1) (leqnn (size_tree t1)) => n.
+elim: n t1 t2 => [| n IHn] t1 t2; first by rewrite leqn0 => /LeafP ->.
+rewrite leq_eqVlt => /orP [/eqP Hsz Hrot|]; last by rewrite ltnS; exact: IHn.
+move/rotationP: Hrot Hsz => [a] [b] [c] [] [->{t1} ->{t2}] /=.
+- exists (right_sizes a), (size_tree b),
+     (right_sizes b ++ size_tree c :: right_sizes c); split.
+  + by rewrite -!catA.
+  + by rewrite nth_cat size_right_sizes ltnn subnn nth0 /= add1n addSn addnC.
+- move/IHn => {IHn} Hrec.
+  rewrite /= add1n addSn => /succn_inj Hsz.
+  have: size_tree a <= n by rewrite -Hsz leq_addr.
+  move/Hrec => {Hrec} [u] [v0] [v] [Ha Hb].
+  exists u, v0, (v ++ size_tree c :: right_sizes c); split.
+  + by rewrite Ha -!catA.
+  + rewrite Hb nth_cat.
+    suff -> : v0 < size v by rewrite -!catA.
+    have := right_sizesP b; rewrite Hb => /Tamari_catr/Tamari_consP [H _ _].
+    exact: (leq_ltn_trans (leq_addl _ _) H).
+- move/IHn => {IHn} Hrec.
+  rewrite /= add1n addSn => /succn_inj Hsz.
+  have: size_tree b <= n by rewrite -Hsz leq_addl.
+  move/Hrec => {Hrec} [u] [v0] [v] [Hb Hc].
+  exists (right_sizes a ++ size_tree b :: u), v0, v; split.
+  + by rewrite Hb -!catA.
+  + rewrite Hc /= -!catA /=.
+    suff -> : size_tree b = size_tree c by [].
+    by rewrite -!size_right_sizes Hb Hc !size_cat /=.
+Qed.
+
+Lemma vct_succ u v0 v w :
+  u ++ v0 :: v \is a TamariVector ->
+  u ++ (nth 0 v v0 + v0).+1 :: v \is a TamariVector ->
+  w \is a TamariVector ->
+  u ++ v0 :: v <=V w ->
+  w <=V u ++ (nth 0 v v0 + v0).+1 :: v ->
+  w = u ++ v0 :: v \/ w = u ++ (nth 0 v v0 + v0).+1 :: v.
+Proof.
+move=> Htam Htam0 Htamw Hvw Hwv0.
+case: (altP (w =P u ++ v0 :: v)) => [Heq|Hneq]; first by left.
+right.
+pose w0 := nth 0 w (size u).
+have Hw : w = u ++ w0 :: v.
+  have Hsz : size w = (size u + size v).+1.
+    by move: Hvw => /vctleqP [<- _]; rewrite !size_cat /= addnS.
+  apply (eq_from_nth (x0 := 0)); first by rewrite Hsz size_cat /= addnS.
+  move=> i; rewrite Hsz ltnS => Hi.
+  case: (ltngtP i (size u)) => [Hiu | Hui | ->].
+  - rewrite nth_cat Hiu; apply/anti_leq/andP; split.
+    + by move/vctleqP: Hwv0 => [_ /(_ i)]; rewrite nth_cat Hiu.
+    + by move/vctleqP: Hvw  => [_ /(_ i)]; rewrite nth_cat Hiu.
+  - have Hf : i < size u = false by rewrite ltnNge (ltnW Hui).
+    rewrite nth_cat Hf.
+    have:= Hui; rewrite -subn_gt0; case Hd : (i - size u) => [| d] //= _.
+    apply/anti_leq/andP; split.
+    + by move/vctleqP: Hwv0 => [_ /(_ i)]; rewrite nth_cat Hf Hd.
+    + by move/vctleqP: Hvw  => [_ /(_ i)]; rewrite nth_cat Hf Hd.
+    + by rewrite nth_cat ltnn subnn.
+rewrite Hw; suff -> : w0 = (nth 0 v v0 + v0).+1 by [].
+apply/anti_leq/andP; split.
+- by move/vctleqP: Hwv0 => [_ /(_ (size u))]; rewrite Hw !nth_cat ltnn subnn.
+- have Hv0w0 : v0 < w0.
+    rewrite ltn_neqAle; apply/andP; split.
+    + by move: Hneq; apply contra; rewrite Hw => /eqP ->.
+    + by move/vctleqP: Hvw => [_ /(_ (size u))]; rewrite Hw !nth_cat ltnn subnn.
+- by rewrite Hw in Htamw Hvw; exact: (Tamari_add_min Htamw).
 Qed.
 
 
@@ -1400,9 +1478,23 @@ apply/idP/idP.
     by move => _ ->; exact: vctleq_refl.
   move/andP => [Hrot Hpath Ht2].
   suff /vctleq_trans : right_sizes t1 <=V right_sizes p0 by apply; apply IHp.
-  exact: rotation_vctleq_impl.
+  exact: rotations_vctleq_impl.
 Qed.
 
+Lemma Tamari_succ t1 t2 t :
+  tval t2 \in rotations t1 -> t1 <=T t -> t <=T t2 -> t = t1 \/ t = t2.
+Proof.
+move/rotations_right_sizesP => [u] [v0] [v] [Ht1 Ht2].
+have:= right_sizesP t.
+have:= right_sizesP t1.
+have:= right_sizesP t2.
+rewrite -!Tamari_vctleq Ht1 Ht2 => Htam2 Htam1 Htam H1 H2.
+have [] := vct_succ Htam1 Htam2 Htam H1 H2.
+- rewrite -Ht1 => /(congr1 from_vct); rewrite !right_sizesK => Heq.
+  by left; apply val_inj.
+- rewrite -Ht2 => /(congr1 from_vct); rewrite !right_sizesK => Heq.
+  by right; apply val_inj.
+Qed.
 
 Lemma Tinf_proof t1 t2 :
   size_tree (from_vct (vctmin (right_sizes t1) (right_sizes t2))) == n.
