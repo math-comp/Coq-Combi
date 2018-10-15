@@ -1406,17 +1406,14 @@ move/rotationP: Hrot Hsz => [a] [b] [c] [] [->{t1} ->{t2}] /=.
 Qed.
 
 Lemma vct_succ u v0 v w :
-  u ++ v0 :: v \is a TamariVector ->
-  u ++ (nth 0 v v0 + v0).+1 :: v \is a TamariVector ->
   w \is a TamariVector ->
-  u ++ v0 :: v <=V w ->
-  w <=V u ++ (nth 0 v v0 + v0).+1 :: v ->
-  w = u ++ v0 :: v \/ w = u ++ (nth 0 v v0 + v0).+1 :: v.
+  u ++ v0 :: v  <=V  w ->
+  w  <=V  u ++ (nth 0 v v0 + v0).+1 :: v ->
+  w = u ++ v0 :: v  \/  w = u ++ (nth 0 v v0 + v0).+1 :: v.
 Proof.
-move=> Htam Htam0 Htamw Hvw Hwv0.
+move=> Htamw Hvw Hwv0.
 case: (altP (w =P u ++ v0 :: v)) => [Heq|Hneq]; first by left.
-right.
-pose w0 := nth 0 w (size u).
+right; pose w0 := nth 0 w (size u).
 have Hw : w = u ++ w0 :: v.
   have Hsz : size w = (size u + size v).+1.
     by move: Hvw => /vctleqP [<- _]; rewrite !size_cat /= addnS.
@@ -1485,11 +1482,8 @@ Lemma Tamari_succ t1 t2 t :
   tval t2 \in rotations t1 -> t1 <=T t -> t <=T t2 -> t = t1 \/ t = t2.
 Proof.
 move/rotations_right_sizesP => [u] [v0] [v] [Ht1 Ht2].
-have:= right_sizesP t.
-have:= right_sizesP t1.
-have:= right_sizesP t2.
-rewrite -!Tamari_vctleq Ht1 Ht2 => Htam2 Htam1 Htam H1 H2.
-have [] := vct_succ Htam1 Htam2 Htam H1 H2.
+move: (right_sizesP t); rewrite -!Tamari_vctleq Ht1 Ht2 => Htam H1 H2.
+have [] := vct_succ Htam H1 H2.
 - rewrite -Ht1 => /(congr1 from_vct); rewrite !right_sizesK => Heq.
   by left; apply val_inj.
 - rewrite -Ht2 => /(congr1 from_vct); rewrite !right_sizesK => Heq.
