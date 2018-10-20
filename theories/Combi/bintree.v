@@ -62,9 +62,9 @@ Tamari bracketing vectors:
         of the the sizes of the right subtrees
 - [from_vct vct] == recovers the tree [t] from its right sizes vector.
 - [v \is a TamariVector] == [v] is the right sizes vector from some tree [t].
-        The characterization of a Tamari vector of size [n] is that for all
-        [i < n] then [v_i < n - i] and for all [j] such that
-        [i < j < v_i + i] then [v_j + j <= v_i + i].
+        The characterization of a Tamari vector of size [n] is that
+        for all [i < n] then [v_i + 1 < n] and
+        for all [j] such that [i < j <= v_i + i] then [v_j + j <= v_i + i].
 The function [right_sizes] and [from_vct] are two inverse bijection from
 binary trees to Tamari vectors as stated in theorems [right_sizesK],
 [right_sizesP] and [from_vctK].
