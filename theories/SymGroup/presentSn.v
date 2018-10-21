@@ -51,7 +51,7 @@ Inverse Lehmer code
 
 Reduced words
 
-- [w \is reduced] == [w] is a word of size [lenght 's_[w]].
+- [w \is reduced] == [w] is a word of size [length 's_[w]].
 
 Braid relations
 
@@ -100,6 +100,15 @@ Require Import permcomp tools permuted combclass congr.
 
 Notation "''SG_' n" := [set: 'S_n]
   (at level 8, n at level 2, format "''SG_' n").
+
+Local Reserved Notation "''s_' i"
+      (at level 8, i at level 2, format "''s_' i").
+Local Reserved Notation "''s_' [ w ] "
+      (at level 8, w at level 100, format "''s_' [ w ]").
+Local Reserved Notation "''II_' n" (at level 8, n at level 2).
+Local Reserved Notation "a =Br b" (at level 70).
+Local Reserved Notation "''I[' a '..' b ']'" (at level 0, a, b at level 2).
+
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -344,10 +353,8 @@ Variable n : nat.
 
 Definition eltr i : 'S_n.+1 := tperm (inord i) (inord i.+1).
 
-Local Notation "''s_' i" :=
-  (eltr i) (at level 8, i at level 2, format "''s_' i").
-Local Notation "''s_' [ w ]" :=
-  (\prod_(i <- w) 's_i) (at level 8, w at level 100, format "''s_' [ w ]").
+Local Notation "''s_' i" := (eltr i).
+Local Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
 
 Implicit Type s t : 'S_n.+1.
 
@@ -429,7 +436,7 @@ Qed.
 
 (** * Length of a permutation *)
 
-Local Notation "''II_' n" := ('I_n * 'I_n)%type (at level 8, n at level 2).
+Local Notation "''II_' n" := ('I_n * 'I_n)%type.
 
 Definition invset (s : 'S_n.+1) :=
   [set p : 'I_n.+1 * 'I_n.+1 | (p.1 < p.2) && (s p.1 > s p.2) ].
@@ -895,6 +902,14 @@ have /= := cocode2P s => [] [Hcode {1}->].
 by rewrite -length_permcd // size_cocode.
 Qed.
 
+Corollary lengthM s t : length (s * t) <= length s + length t.
+Proof.
+rewrite (size_canword s) (size_canword t) -size_cat.
+have -> : s * t = 's_[canword s ++ canword t] by rewrite big_cat /= !canwordP.
+exact: length_prods.
+Qed.
+
+
 Definition prods_codesz (c : codesz n.+1) : 'S_n.+1 := 's_[wordcd c].
 
 Lemma prods_codesz_bij : bijective prods_codesz.
@@ -935,10 +950,8 @@ From mathcomp Require Import ssralg poly ssrint.
 
 Section Combi.
 
-Local Notation "''s_' i" :=
-  (eltr i) (at level 8, i at level 2, format "''s_' i").
-Local Notation "''s_' [ w ]" :=
-  (\prod_(i <- w) 's_i) (at level 8, w at level 100, format "''s_' [ w ]").
+Local Notation "''s_' i" := (eltr i).
+Local Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
 
 Import GRing.Theory.
 Open Scope ring_scope.
@@ -973,10 +986,8 @@ Section Reduced.
 
 Variable n : nat.
 
-Local Notation "''s_' i" :=
-  (eltr n i) (at level 8, i at level 2, format "''s_' i").
-Local Notation "''s_' [ w ]" :=
-  (\prod_(i <- w) 's_i) (at level 8, w at level 100, format "''s_' [ w ]").
+Local Notation "''s_' i" := (eltr n i).
+Local Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
 Local Notation length := (length (n := n)).
 
 Definition reduced_word := [qualify w : seq 'I_n | length 's_[w] == size w ].
@@ -1016,14 +1027,6 @@ Qed.
 Theorem canword_reduced s : canword s \is reduced.
 Proof using.
 by apply: (reduced_sprod_code (cocodeP _)); rewrite size_cocode.
-Qed.
-
-Corollary lengthM u v : length (u * v) <= length u + length v.
-Proof using.
-have:= canword_reduced u; have:= canword_reduced v.
-rewrite !unfold_in !canwordP => /eqP -> /eqP ->.
-rewrite -{1}(canwordP u) -{1}(canwordP v) -big_cat /=.
-by apply: (leq_trans (length_prods _)); rewrite size_cat.
 Qed.
 
 Lemma reduced_catr u v : u ++ v \is reduced -> v \is reduced.
@@ -1130,7 +1133,7 @@ Qed.
 Definition braidcongr := gencongr_hom braidrule_homog.
 Definition braidclass := genclass_hom braidrule_homog.
 
-Local Notation "a =Br b" := (braidcongr a b) (at level 70).
+Local Notation "a =Br b" := (braidcongr a b).
 
 Lemma braid_equiv : equivalence_rel braidcongr.
 Proof using. by apply: gencongr_equiv; exact: braidrule_sym. Qed.
@@ -1292,11 +1295,9 @@ Section Nnon0.
 Variable (n0 : nat).
 Local Notation n := n0.+1.
 
-Local Notation "''s_' i" :=
-  (eltr n i) (at level 8, i at level 2, format "''s_' i").
-Local Notation "''s_' [ w ]" :=
-  (\prod_(i <- w) 's_i) (at level 8, w at level 100, format "''s_' [ w ]").
-Local Notation "a =Br b" := (braidcongr a b) (at level 70).
+Local Notation "''s_' i" := (eltr n i).
+Local Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
+Local Notation "a =Br b" := (braidcongr a b).
 
 Fixpoint inscode (c : seq nat) (i : 'I_n) :=
   if c is c0 :: c' then
@@ -1434,8 +1435,8 @@ rewrite -{2}(subnKC Hbli1) -iota_add addnC (addnBA _ Hbli1).
 by rewrite (subnK Hi2) (subKn Hbl).
 Qed.
 
-Reserved Notation "''I[' a '..' b ']'" (at level 0, a, b at level 2).
-Local Notation "''I[' a '..' b ']'" :=  [seq inord i | i <- rev (iota (b - a) a)].
+Local Notation "''I[' a '..' b ']'" :=
+  [seq inord i | i <- rev (iota (b - a) a)].
 
 Lemma braid_pred_lineC (i : 'I_n) (sz c : nat) :
   sz <= n -> i < sz -> c <= sz -> sz - c < i ->
@@ -1485,10 +1486,8 @@ Qed.
 
 Implicit Type (u v w : seq 'I_n).
 
-Definition path_catl p w := [seq v ++ w | v <- p].
-
-Lemma path_catlP p u w :
-  path braidred u p -> path braidred (u ++ w) (path_catl p w).
+Lemma path_braidred_catl p u w :
+  path braidred u p -> path braidred (u ++ w) [seq v ++ w | v <- p].
 Proof using.
 elim: p u => [//= | p0 p IHp] u /= /andP [Hbr /IHp ->].
 by rewrite braidred_catl.
@@ -1508,13 +1507,13 @@ case: ltnP => Hi.
   rewrite !wcord_cons -cat1s size_inscode cats0.
   move=> [pth] [Hpath <-].
   exists ((wcord c ++ [:: inord i.-1] ++ 'I[c0 .. (size c)]) ::
-          path_catl pth 'I[c0 .. (size c)]); split => [| {Hpath}].
-  - have /= := path_catlP 'I[c0 .. (size c)] Hpath.
+          [seq v ++ 'I[c0 .. (size c)] | v <- pth]); split => [| {Hpath}].
+  - have /= := path_braidred_catl 'I[c0 .. (size c)] Hpath.
     rewrite -catA /= => ->; rewrite andbT.
     rewrite /braidred braid_catr // braid_sym.
     exact: braid_pred_lineC.
-  - rewrite /path_catl !catA; case: pth => [//= | p0 p] /=.
-    by rewrite (last_map (fun v => v ++ 'I[c0 .. (size c)])).
+  - rewrite !catA; case: pth => [| p0 p] //=.
+    exact: last_map.
 case: eqP => [{Hi Hrec} Hi | /eqP Hi1].
   case: c0 Hc0 Hi Hisz => [Hc0 | c0 Hc0 Hi Hisz /=].
     by rewrite subn0 => ->; rewrite ltnn.
@@ -1535,13 +1534,13 @@ have {Hi Hi1} Hi : i.+1 < size c - c0 by rewrite ltn_neqAle Hi Hi1.
   rewrite wcord_cons size_inscode.
   move=> [pth] [Hpath <-].
   exists ((wcord c ++ [:: i] ++ 'I[c0 .. (size c)]) ::
-          path_catl pth 'I[c0 .. (size c)]); split => [| {Hpath}].
-  - have /= := path_catlP 'I[c0 .. (size c)] Hpath.
+          [seq v ++ 'I[c0 .. (size c)] | v <- pth]); split => [| {Hpath}].
+  - have /= := path_braidred_catl 'I[c0 .. (size c)] Hpath.
     rewrite -catA /= => ->; rewrite andbT.
     rewrite /braidred braid_catr // braid_sym.
     exact: braid_ltn_lineC.
-  - rewrite /path_catl !catA; case: pth => [//= | p0 p] /=.
-    by rewrite (last_map (fun v => v ++ 'I[c0 .. (size c)])).
+  - rewrite !catA; case: pth => [| p0 p] //=.
+    exact: last_map.
 Qed.
 
 (** ** Straigthening a word *)
@@ -1581,9 +1580,9 @@ have : size (straighten w) <= n0.+2 by rewrite size_straighten.
 move=> /(braidred_inscode_path (is_code_straighten w)) => Hins.
 have : wn.+1 < size (straighten w) by rewrite size_straighten ltnS.
 move=> /Hins{Hins} [pins] [Hpathins Hlastins].
-exists (path_catl prec [:: wn] ++ pins); split => [| {Hpath Hpathins}].
+exists ([seq v ++ [:: wn] | v <- prec] ++ pins); split => [| {Hpath Hpathins}].
 - rewrite cat_path (last_map (fun v => v ++ [:: wn])) Hlast Hpathins andbT.
-  exact: path_catlP.
+  exact: path_braidred_catl.
 - by rewrite last_cat (last_map (fun v => v ++ [:: wn])) Hlast.
 Qed.
 
@@ -1624,10 +1623,10 @@ Proof using. by rewrite -canword_straightenE; exact: straighten_path_npos. Qed.
 
 End Nnon0.
 
-Local Notation "''s_' i" := (eltr _ i) (at level 8, i at level 2).
-Local Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i) (at level 8, w at level 2).
-Local Notation "''II_' n" := ('I_n * 'I_n)%type (at level 8, n at level 2).
-Local Notation "a =Br b" := (braidcongr a b) (at level 70) : bool_scope.
+Local Notation "''s_' i" := (eltr _ i).
+Local Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i).
+Local Notation "''II_' n" := ('I_n * 'I_n)%type.
+Local Notation "a =Br b" := (braidcongr a b) : bool_scope.
 
 Theorem braidred_to_canword n (w : seq 'I_n) :
   { p | path braidred w p /\ last w p = canword 's_[w] }.
@@ -1701,7 +1700,7 @@ by rewrite size_cat /= !addnS.
 Qed.
 
 (** * The presentation of the symmetric groups *)
-Section PresentatioSn.
+Section PresentationSn.
 
 Variable n : nat.
 Variable gT : finGroupType.
@@ -1752,7 +1751,7 @@ rewrite /morph_eltr_fun; have /= -> := (canword_eltr (Ordinal Hi)).
 by rewrite big_seq1.
 Qed.
 
-End PresentatioSn.
+End PresentationSn.
 
 Lemma presentation_S2 :
   'SG_2 \isog Grp ( s0 : s0^+2 ).
@@ -1855,3 +1854,5 @@ apply intro_isoGrp.
   + exists 's_2; rewrite ?setTI ?Hf //.
     by apply/imsetP => /=; exists (inord 2); rewrite //= inordK.
 Qed.
+
+
