@@ -337,11 +337,37 @@ Canonical bintreesz_subFinType n := Eval hnf in [subFinType of bintreesz n].
 
 (** ** Catalan numbers *)
 Definition catalan n := #|bintreesz n|.
+Fixpoint catalan_seq n :=
+  if n is n.+1 then
+    let cr := catalan_seq n in
+    let new := sumn [seq nth 0 cr i * nth 0 cr (n - i) | i <- iota 0 n.+1]
+    in rcons cr new
+  else [:: 1].
+Definition catalan_impl n := last 0 (catalan_seq n).
+
+
+Lemma size_catalan_seq n : size (catalan_seq n) = n.+1.
+Proof.
+by elim: n => [|n] //=; rewrite size_rcons => ->.
+Qed.
+
+Lemma catalan_seqE n : catalan_impl n = catalan n.
+Proof.
+rewrite /catalan /= !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
+rewrite /catalan_impl /enum_bintreesz -[RHS]last_map; congr last.
+elim: n => [//= |n IHn].
+rewrite [RHS]/= map_rcons -IHn /=; congr rcons.
+rewrite -[LHS]/(sumn (map _ (iota 0 n.+1))) -[RHS]/(size (flatten (map _ (iota 0 n.+1)))).
+rewrite size_flatten /shape -map_comp; congr sumn.
+apply eq_in_map => i; rewrite mem_iota /= add0n ltnS => Hi.
+rewrite size_allpairs !IHn !(nth_map [::]) // size_enum_bintreesz ltnS //.
+exact: leq_subr.
+Qed.
 
 Lemma catalan0 : catalan 0 = 1.
 Proof. by rewrite /catalan cardT -(size_map val) enumT unlock subType_seqP. Qed.
 
-Lemma catalan_rec n :
+Lemma catalanS n :
   catalan n.+1 = \sum_(0 <= i < n.+1) catalan i * catalan (n - i).
 Proof.
 rewrite /catalan /= !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
@@ -351,25 +377,25 @@ rewrite size_allpairs.
 by rewrite !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
 Qed.
 
-
-
 Lemma catalan10 :
   [seq catalan n | n <- iota 0 10] =
   [:: 1; 1; 2; 5; 14; 42; 132; 429; 1430; 4862].
-Proof.
-by rewrite /catalan /= !cardT -!(size_map val) !enumT !unlock !subType_seqP.
-Qed.
+Proof. by rewrite -(eq_map catalan_seqE). Qed.
+
+From mathcomp
+Require Import binomial div.
+
 
 (** TODO: prove the formula for catalan numbers:
 [[
 From mathcomp
 Require Import binomial div.
 
+     [seq 'C(2 * n, n) %/ n.+1 | n <- iota 0 10].
+
 Goal [seq catalan n | n <- iota 0 10] =
      [seq 'C(2 * n, n) %/ n.+1 | n <- iota 0 10].
-Proof.
-by rewrite /catalan /= !cardT -!(size_map val) !enumT !unlock !subType_seqP.
-Qed.
+Proof. by rewrite -(eq_map catalan_seqE). Qed.
 
 Theorem catalanE n : catalan n = 'C(2 * n, n) %/ n.+1.
 Proof. Admitted.
