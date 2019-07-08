@@ -301,8 +301,7 @@ elim: n {1 3 4}n (leqnn n) t => [| n IHn] i.
   rewrite leqn0 => /eqP -> t.
   by rewrite enum_bintreesz0 inE => /eqP ->.
 case: (leqP i n) => [Hi _| Hi Hi1] t; first by move/(IHn i Hi).
-have {Hi Hi1 i} -> : i = n.+1.
-  by apply anti_leq; rewrite Hi1.
+have {Hi Hi1 i} -> : i = n.+1 by apply anti_leq; rewrite Hi1.
 rewrite enum_bintreeszE => /flatten_mapP [j].
 rewrite mem_iota /= add0n ltnS => Hj.
 have Hnj := leq_subr j n.
@@ -319,8 +318,7 @@ Proof.
 elim: n {1 3}n (leqnn n) => [| n IHn] i.
   by rewrite leqn0 => /eqP ->.
 case: (leqP i n) => [Hi _| Hi Hi1]; first exact: IHn.
-have {Hi Hi1 i} -> : i = n.+1.
-  by apply anti_leq; rewrite Hi1.
+have {Hi Hi1 i} -> : i = n.+1 by apply anti_leq; rewrite Hi1.
 rewrite enum_bintreeszE.
 elim: {1 3}(n.+1) (leqnn n.+1) => [| i IHi] //.
 rewrite ltnS => Hi.
@@ -329,7 +327,7 @@ rewrite map_cat flatten_cat /= cats0 cat_uniq.
 rewrite {}IHi /=; last exact: (leq_trans Hi).
 apply/andP; split.
 - apply/hasP => [] /= [[| l r]] /allpairsP/= [[l1 r1] /= []].
-  + by move=> _ _ /eqP; rewrite eqE /=.
+  + by move=> _ _ /eqP; rewrite eqE.
   + move/size_mem_enum_bintreeszP => Hszl1 _ -> {l r}.
     move/flattenP => [/= ltj /mapP /= [j]].
     rewrite mem_iota /= add0n => Hj ->.
@@ -355,8 +353,7 @@ Proof.
 elim: n {1 3 4}n (leqnn n) t => [| n IHn] i.
   by rewrite leqn0 => /eqP -> [].
 case: (leqP i n) => [Hi _| Hi Hi1] t; first by move/(IHn i Hi).
-have {Hi Hi1 i} -> : i = n.+1.
-  by apply anti_leq; rewrite Hi1.
+have {Hi Hi1 i} -> : i = n.+1 by apply anti_leq; rewrite Hi1.
 rewrite enum_bintreeszE.
 case: t => // l r.
 rewrite [X in X -> _]/= add1n addSn eqSS => /eqP Hn.
@@ -405,6 +402,8 @@ Theorem catalanE n : catalan n = 'C(2 * n, n) %/ n.+1.
 Proof. Admitted.
 ]]
  *)
+
+
 
 (** ** Left branch surgery in binary trees *)
 Fixpoint left_branch t :=
