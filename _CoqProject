@@ -1,6 +1,7 @@
 -R theories Combi
 theories/Combi/bintree.v
 theories/Combi/composition.v
+theories/Combi/Dyckword.v
 theories/Combi/fibered_set.v
 theories/Combi/partition.v
 theories/Combi/permuted.v
