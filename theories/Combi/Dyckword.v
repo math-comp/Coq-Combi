@@ -37,7 +37,7 @@ Qed.
 
 
 
-Inductive Brace : Set := | Open : Brace | Close : Brace.
+Inductive brace : Set := | Open : brace | Close : brace.
 
 Definition bool_of_brace b :=
   match b with
@@ -55,17 +55,15 @@ Lemma bool_of_braceK : cancel bool_of_brace brace_of_bool.
 Proof. by case=> []. Qed.
 Lemma brace_of_boolK : cancel brace_of_bool bool_of_brace.
 Proof. by case=> []. Qed.
-Lemma bool_of_brace_inj : injective bool_of_brace.
-Proof. by case=> [] []. Qed.
 
-Definition brace_eqMixin := InjEqMixin bool_of_brace_inj.
-Canonical brace_eqType := Eval hnf in EqType Brace brace_eqMixin.
+Definition brace_eqMixin := InjEqMixin (can_inj bool_of_braceK).
+Canonical brace_eqType := Eval hnf in EqType brace brace_eqMixin.
 Definition brace_choiceMixin := CanChoiceMixin bool_of_braceK.
-Canonical brace_choiceType := Eval hnf in ChoiceType Brace brace_choiceMixin.
+Canonical brace_choiceType := Eval hnf in ChoiceType brace brace_choiceMixin.
 Definition brace_countMixin := CanCountMixin bool_of_braceK.
-Canonical brace_countType := Eval hnf in CountType Brace brace_countMixin.
+Canonical brace_countType := Eval hnf in CountType brace brace_countMixin.
 Definition brace_finMixin := CanFinMixin bool_of_braceK.
-Canonical brace_finType := Eval hnf in FinType Brace brace_finMixin.
+Canonical brace_finType := Eval hnf in FinType brace brace_finMixin.
 
 Local Notation "#Open" := (count_mem Open).
 Local Notation "#Close" := (count_mem Close).
@@ -74,8 +72,8 @@ Local Notation "#Close" := (count_mem Close).
 Section Defs.
 
 Implicit Type h n : nat.
-Implicit Type w : seq Brace.
-Implicit Type l : seq (seq Brace).
+Implicit Type w : seq brace.
+Implicit Type l : seq (seq brace).
 
 
 Definition prefixes w := [seq take n w | n <- iota 0 ((size w).+1)].
@@ -96,15 +94,15 @@ rewrite /prefixes; apply (iffP idP) => [/mapP [i _ ->] | [i ->]].
 Qed.
 
 
-Definition DyckPrefix :=
+Definition Dyck_prefix :=
   [qualify a w | all (fun p => #Open p >= #Close p) (prefixes w)].
-Definition DyckWord :=
-  [qualify a w | (w \is a DyckPrefix) && (#Open w == #Close w)].
+Definition Dyck_word :=
+  [qualify a w | (w \is a Dyck_prefix) && (#Open w == #Close w)].
 
-Lemma DyckPrefixP w :
+Lemma Dyck_prefixP w :
   reflect
     (forall n, #Open (take n w) >= #Close (take n w))
-    (w \is a DyckPrefix).
+    (w \is a Dyck_prefix).
 Proof.
 rewrite unfold_in.
 apply (iffP allP) => /= H.
@@ -112,19 +110,19 @@ apply (iffP allP) => /= H.
 - by move=> p /mem_prefixesP [i -> {p}].
 Qed.
 
-Lemma DyckWordP w :
+Lemma Dyck_wordP w :
   reflect
     ((forall n, #Open (take n w) >= #Close (take n w)) /\ (#Open w == #Close w))
-    (w \is a DyckWord).
+    (w \is a Dyck_word).
 Proof.
 rewrite unfold_in.
-by apply (iffP andP) => /= [] [H1 H2]; split => //; apply/DyckPrefixP.
+by apply (iffP andP) => /= [] [H1 H2]; split => //; apply/Dyck_prefixP.
 Qed.
 
-Lemma DyckWord_OwC w :
-  w \is a DyckWord -> Open :: w ++ [:: Close ] \is a DyckWord.
+Lemma Dyck_word_OwC w :
+  w \is a Dyck_word -> Open :: w ++ [:: Close ] \is a Dyck_word.
 Proof.
-move/DyckWordP => [Hpos /eqP Hbal]; apply/DyckWordP; split => [n|].
+move/Dyck_wordP => [Hpos /eqP Hbal]; apply/Dyck_wordP; split => [n|].
 - case: n => [|n /=]; first by rewrite take0.
   rewrite add0n add1n take_cat.
   case: ltnP => Hn; first exact: leqW.
@@ -132,23 +130,23 @@ move/DyckWordP => [Hpos /eqP Hbal]; apply/DyckWordP; split => [n|].
   by rewrite !count_cat /= !addn0 addn1 ltnS Hbal.
 - by rewrite /= !count_cat /= !addn0 !add0n !addn1 !add1n Hbal.
 Qed.
-Lemma DyckWord_cat w1 w2 :
-  w1 \is a DyckWord -> w2 \is a DyckWord -> w1 ++ w2 \is a DyckWord.
+Lemma Dyck_word_cat w1 w2 :
+  w1 \is a Dyck_word -> w2 \is a Dyck_word -> w1 ++ w2 \is a Dyck_word.
 Proof.
-move/DyckWordP => [Hpos1 /eqP Hbal1].
-move/DyckWordP => [Hpos2 /eqP Hbal2].
-apply/DyckWordP; split => [n|].
+move/Dyck_wordP => [Hpos1 /eqP Hbal1].
+move/Dyck_wordP => [Hpos2 /eqP Hbal2].
+apply/Dyck_wordP; split => [n|].
 - rewrite take_cat; case ltnP => _; first exact: Hpos1.
   by rewrite !count_cat Hbal1 leq_add2l.
 - by rewrite !count_cat Hbal1 Hbal2.
 Qed.
-Lemma DyckWord_OwCw w1 w2 :
-  w1 \is a DyckWord -> w2 \is a DyckWord ->
-  Open :: w1 ++ Close :: w2 \is a DyckWord.
+Lemma Dyck_word_OwCw w1 w2 :
+  w1 \is a Dyck_word -> w2 \is a Dyck_word ->
+  Open :: w1 ++ Close :: w2 \is a Dyck_word.
 Proof.
 move=> Hw1 Hw2.
-rewrite -cat1s -[Close :: _]cat1s !catA; apply DyckWord_cat => //=.
-exact: DyckWord_OwC.
+rewrite -cat1s -[Close :: _]cat1s !catA; apply Dyck_word_cat => //=.
+exact: Dyck_word_OwC.
 Qed.
 
 End Defs.
@@ -156,15 +154,14 @@ End Defs.
 
 Section FactorDef.
 
-Variable w : seq Brace.
+Variable w : seq brace.
 
-Definition is_Dyck_fact (dfact : seq Brace * seq Brace) :=
-  [&& dfact.1 \is a DyckWord,
-      dfact.2 \is a DyckWord &
-      (w == (Open :: dfact.1) ++ (Close :: dfact.2))].
+Definition is_Dyck_fact (dfact : seq brace * seq brace) :=
+  [&& dfact.1 \is a Dyck_word, dfact.2 \is a Dyck_word &
+    (w == (Open :: dfact.1) ++ (Close :: dfact.2))].
 
-CoInductive Dyck_fact : Set :=
-  Dyck_Factor { dfact : seq Brace * seq Brace; _ : is_Dyck_fact dfact }.
+Inductive Dyck_fact : Set :=
+  DyckFact { dfact : seq brace * seq brace; _ : is_Dyck_fact dfact }.
 
 Canonical dyckFact_subType := Eval hnf in [subType for dfact].
 Definition dyckFact_eqMixin := Eval hnf in [eqMixin of Dyck_fact by <:].
@@ -188,32 +185,32 @@ Section Factor.
 Lemma Dyck_fact_nnil w (f : Dyck_fact w) : w != [::].
 Proof. by case: f => [[a b] /= /and3P [_ _ /eqP ->]]. Qed.
 
-Lemma Dyck_factP w (f : Dyck_fact w) : w \is a DyckWord.
+Lemma Dyck_factP w (f : Dyck_fact w) : w \is a Dyck_word.
 Proof.
 case: f => [[a b] /= /and3P [Ha Hb /eqP ->]].
-exact: DyckWord_OwCw.
+exact: Dyck_word_OwCw.
 Qed.
 
 
 Lemma Dyck_cut_ex w :
-  w != [::] -> w \is a DyckWord ->
+  w != [::] -> w \is a Dyck_word ->
   exists i, (i != 0) && (#Open (take i w) == #Close (take i w)).
 Proof.
-move=> Hnnil /DyckWordP [_ Heq].
+move=> Hnnil /Dyck_wordP [_ Heq].
 exists (size w); apply/andP; split; first by case: w Hnnil {Heq}.
 by rewrite take_size.
 Qed.
 
 Theorem factorizeP w :
-  w != [::] -> w \is a DyckWord -> Dyck_fact w.
+  w != [::] -> w \is a Dyck_word -> Dyck_fact w.
 Proof.
 move=> Hnnil HD.
 case: (ex_minnP (Dyck_cut_ex Hnnil HD)) => cut /andP [Hcut /eqP Heq Hmin].
 case: w Hnnil HD Heq Hmin => // w0 tl _.
 case: w0; first last.
-  rewrite unfold_in => /andP [/DyckPrefixP/(_ 1)/=].
+  rewrite unfold_in => /andP [/Dyck_prefixP/(_ 1)/=].
   by rewrite take0 /= !addn0.
-move=> /DyckWordP [Hpos /eqP Hbal].
+move=> /Dyck_wordP [Hpos /eqP Hbal].
 case: cut Hcut => // [][|cut] _; rewrite [X in X -> _]/= add1n add0n.
   by rewrite take0.
 move=> Heq Hmin.
@@ -238,13 +235,13 @@ have {Hmin} Hmin n : n <= cut -> #Open (take n tl) >= #Close (take n tl).
   by have:= Hpos (n.+1); rewrite /= add1n add0n.
 exists (take cut tl, drop cut.+1 tl).
 apply/and3P; split => /=.
-- apply/DyckWordP; split => [n|].
+- apply/Dyck_wordP; split => [n|].
   + case: (leqP n cut) => Hncut.
     * by rewrite take_take // Hmin.
     * rewrite take_oversize; last by rewrite size_take Hcut; apply ltnW.
       by rewrite Hbalcut.
   + by rewrite Hbalcut.
-- apply/DyckWordP; split => [n|].
+- apply/Dyck_wordP; split => [n|].
   + have := Hpos (cut.+1 + n.+1).
     rewrite -{1 2}(cat_take_drop cut.+1 tl).
     have Hsz : size (take cut.+1 tl) = cut.+1 by rewrite size_take_leq Hcut.
@@ -272,15 +269,15 @@ apply/anti_leq/andP; split.
   rewrite Hw /= take_cat.
   move: Hcut; rewrite leq_eqVlt => /orP [/eqP ->|->].
   + rewrite ltnn subnn take0 add0n cats0.
-    move: Hf1 => /DyckWordP [_ /eqP ->]; rewrite add1n.
+    move: Hf1 => /Dyck_wordP [_ /eqP ->]; rewrite add1n.
     by rewrite neq_ltn ltnSn orbT.
   + rewrite add1n add0n neq_ltn ltnS.
-    move: Hf1 => /DyckWordP [-> _].
+    move: Hf1 => /Dyck_wordP [-> _].
     by rewrite orbT.
 - apply: Hmin; rewrite /= {}Hw.
   rewrite -cat1s -[Close :: f2]cat1s !catA take_size_cat ?size_cat /= ?addn1 //.
   rewrite !count_cat /= !addn0 add0n add1n addn1.
-  by move: Hf1 => /DyckWordP [_ /eqP ->].
+  by move: Hf1 => /Dyck_wordP [_ /eqP ->].
 Qed.
 
 Theorem Dyck_fact_uniq w (f1 f2 : Dyck_fact w) : f1 = f2.
@@ -301,109 +298,10 @@ Qed.
 End Factor.
 
 
-Section Bij.
-
-Fixpoint Dyck_of_bintree t :=
-  if t is BinNode l r then (Open :: Dyck_of_bintree l) ++ (Close :: Dyck_of_bintree r)
-  else [::].
-
-Fixpoint bintree_of_Dyck_rec (n : nat) (w : seq Brace) :=
-  if n is n.+1 then
-    if w is w0 :: tl then
-      match boolP (w0 :: tl \is a DyckWord) with
-      | @AltTrue _ _ Pf =>
-        let fact := factorizeP (is_true_true : w0 :: tl != [::]) Pf in
-        BinNode (bintree_of_Dyck_rec n (dfact fact).1)
-                (bintree_of_Dyck_rec n (dfact fact).2)
-      | @AltFalse _ _ _ => BinLeaf
-      end
-    else BinLeaf
-  else BinLeaf.
-Definition bintree_of_Dyck w := bintree_of_Dyck_rec (size w) w.
-
-
-Lemma bintree_of_Dyck_recE w n :
-  w \is a DyckWord -> n >= size w -> bintree_of_Dyck_rec n w = bintree_of_Dyck w.
-Proof.
-rewrite /bintree_of_Dyck.
-elim: n {1 3 4}n w (leqnn n) => [|n IHn] n' w.
-  by rewrite leqn0 => /eqP -> _; rewrite leqn0 => /nilP ->.
-case: w n' => [|w0 tl] [|n'] //=.
-rewrite !ltnS => Hn' HD Hsz.
-case (boolP (w0 :: tl \is a DyckWord)) => // HD' /=.
-case: factorizeP => {HD HD'} [[w1 w2] /= /and3P [Hw1 Hw2 /eqP Heq]].
-have := leqnn (size (w0 :: tl)); rewrite {1}Heq /= size_cat /= ltnS addnS => /ltnW Hsz12.
-have Hsz1 : size w1 <= size tl.
-  exact: (leq_trans (leq_addr (size w2) (size w1))).
-have Hsz2 : size w2 <= size tl.
-  exact: (leq_trans (leq_addl (size w1) (size w2))).
-have Hszn := leq_trans Hsz Hn'.
-rewrite !IHn //; [exact: (leq_trans Hsz2) | exact: (leq_trans Hsz1)].
-Qed.
-
-Lemma bintree_of_DyckE w1 w2 :
-  w1 \is a DyckWord -> w2 \is a DyckWord ->
-  bintree_of_Dyck (Open :: w1 ++ Close :: w2) =
-    BinNode (bintree_of_Dyck w1) (bintree_of_Dyck w2).
-Proof.
-rewrite {1}/bintree_of_Dyck /= => HD1 HD2.
-set w := (Open :: w1 ++ Close :: w2).
-case (boolP (w \is a DyckWord)) => // [HD | ]; last by rewrite DyckWord_OwCw.
-have fact_spec : is_Dyck_fact w (w1, w2).
-  by apply/and3P => /=; split.
-rewrite (Dyck_fact_uniq (factorizeP _ _) (Dyck_Factor fact_spec)) /= {fact_spec HD}.
-rewrite !bintree_of_Dyck_recE // size_cat /=.
-- by rewrite -addSnnS; apply leq_addl.
-- exact: leq_addr.
-Qed.
-
-
-Lemma Dyck_of_bintreeP t : (Dyck_of_bintree t) \is a DyckWord.
-Proof.
-elim: t => //= [l IHl r IHr].
-rewrite -cat1s -[Close :: _]cat1s !catA; apply DyckWord_cat => //=.
-exact: DyckWord_OwC.
-Qed.
-
-Theorem Dyck_of_bintreeK t : bintree_of_Dyck (Dyck_of_bintree t) = t.
-Proof.
-elim: t => //= [l IHl r IHr].
-by rewrite bintree_of_DyckE ?Dyck_of_bintreeP // IHl IHr.
-Qed.
-
-Theorem bintree_of_DyckK w :
-  w \is a DyckWord -> Dyck_of_bintree (bintree_of_Dyck w) = w.
-Proof.
-move: {2}(size w) (leqnn (size w)) => n.
-elim: n w => [|n IHn] w; first by rewrite leqn0 => /nilP ->.
-case: (altP (w =P [::])) => [->|] //= Hnnil Hsz HD.
-case: (factorizeP Hnnil HD) => {Hnnil HD} [[w1 w2] /and3P /= [Hw1 Hw2 /eqP Hw]].
-rewrite Hw bintree_of_DyckE //=.
-have := leqnn (size w); rewrite {1}Hw /= size_cat /= addnS => /ltnW Hsz12.
-have {Hsz12} := leq_trans Hsz12 Hsz; rewrite ltnS => Hsz12.
-rewrite !IHn => //.
-- exact: (leq_trans (leq_addl (size w1) (size w2))).
-- exact: (leq_trans (leq_addr (size w2) (size w1))).
-Qed.
-
-
-Lemma size_Dyck_of_bintree t :
-  size (Dyck_of_bintree t) = 2 * (size_tree t).
-Proof.
-elim: t => //= l Hl r Hr.
-rewrite size_cat /= {}Hl Hr.
-by rewrite !mulnDr muln1 -addn1 -addnA addSnnS addnA addnC addnA.
-Qed.
-
-Lemma size_bintree_of_Dyck w :
-  w \is a DyckWord -> 2 * size_tree (bintree_of_Dyck w) = size w.
-Proof. by move=> /bintree_of_DyckK {2}<-; rewrite size_Dyck_of_bintree. Qed.
-
-
 
 Section DyckSet.
 
-Record Dyck := DyckWd {dyckword :> seq Brace; is_dyckword :> dyckword \is a DyckWord}.
+Record Dyck := DyckWord {dyckword :> seq brace; is_dyckword :> dyckword \is a Dyck_word}.
 
 Canonical Dyck_subType := Eval hnf in [subType for dyckword].
 Definition Dyck_eqMixin := Eval hnf in [eqMixin of Dyck by <:].
@@ -416,21 +314,21 @@ Lemma dyck_inj : injective dyckword. Proof. exact: val_inj. Qed.
 
 Implicit Type d : Dyck.
 
-Canonical emptyDyck := (@DyckWd [::] is_true_true).
+Canonical emptyDyck := (@DyckWord [::] is_true_true).
 
-Lemma DyckP d : (dyckword d) \is a DyckWord.
-Proof. by case d => [w H] /=. Qed.
+Lemma DyckP d : (dyckword d) \is a Dyck_word.
+Proof. exact: d. Qed.
 Hint Resolve DyckP.
 
-Definition cat_Dyck d1 d2 := DyckWd (DyckWord_cat d1 d2).
-Definition join_Dyck d1 d2 := DyckWd (DyckWord_OwCw d1 d2).
+Definition cat_Dyck d1 d2 := DyckWord (Dyck_word_cat d1 d2).
+Definition join_Dyck d1 d2 := DyckWord (Dyck_word_OwCw d1 d2).
 
 Theorem factor_Dyck D :
   D != emptyDyck -> { DyckPair : Dyck * Dyck | D == join_Dyck DyckPair.1 DyckPair.2 }.
 Proof.
 case: D => [w Hw] H /=.
 case: (factorizeP H Hw) => [[w1 w2] /= /and3P [Hw1 Hw2 /eqP Heq]].
-exists (DyckWd Hw1, DyckWd Hw2) => /=.
+exists (DyckWord Hw1, DyckWord Hw2) => /=.
 exact/eqP/val_inj.
 Qed.
 
@@ -443,7 +341,7 @@ have factD : is_Dyck_fact w (val D1, val D2).
   by apply/and3P => /=; split.
 have factE : is_Dyck_fact w (val E1, val E2).
   by apply/and3P => /=; split; last by rewrite H.
-have := (Dyck_fact_uniq (Dyck_Factor factD) (Dyck_Factor factE)).
+have := (Dyck_fact_uniq (DyckFact factD) (DyckFact factE)).
 by move/(congr1 val) => /= [/val_inj -> /val_inj ->].
 Qed.
 
@@ -474,4 +372,113 @@ apply: Pcons; apply IHn.
 Qed.
 
 End DyckSetInd.
+
+(** Example of application of the induction principle *)
+Lemma Dyck_size_even (D : Dyck) : ~~ odd (size D).
+Proof.
+elim/Dyck_ind: D => //= D1 D2 /negbTE HD1 /negbTE HD2.
+by rewrite size_cat /= addnS /= negbK odd_add negb_add HD1 HD2.
+Qed.
+
+
+
+
+Section Bij.
+
+Fixpoint Dyck_of_bintree t :=
+  if t is BinNode l r then
+    (Open :: Dyck_of_bintree l) ++ (Close :: Dyck_of_bintree r)
+  else [::].
+
+Fixpoint bintree_of_Dyck_rec (n : nat) (w : seq brace) :=
+  if n is n.+1 then
+    if w is w0 :: tl then
+      match boolP (w0 :: tl \is a Dyck_word) with
+      | @AltTrue _ _ Pf =>
+        let fact := factorizeP (is_true_true : w0 :: tl != [::]) Pf in
+        BinNode (bintree_of_Dyck_rec n (dfact fact).1)
+                (bintree_of_Dyck_rec n (dfact fact).2)
+      | @AltFalse _ _ _ => BinLeaf
+      end
+    else BinLeaf
+  else BinLeaf.
+Definition bintree_of_Dyck w := bintree_of_Dyck_rec (size w) w.
+
+
+Lemma bintree_of_Dyck_recE w n :
+  w \is a Dyck_word -> n >= size w -> bintree_of_Dyck_rec n w = bintree_of_Dyck w.
+Proof.
+rewrite /bintree_of_Dyck.
+elim: n {1 3 4}n w (leqnn n) => [|n IHn] n' w.
+  by rewrite leqn0 => /eqP -> _; rewrite leqn0 => /nilP ->.
+case: w n' => [|w0 tl] [|n'] //=.
+rewrite !ltnS => Hn' HD Hsz.
+case (boolP (w0 :: tl \is a Dyck_word)) => // HD' /=.
+case: factorizeP => {HD HD'} [[w1 w2] /= /and3P [Hw1 Hw2 /eqP Heq]].
+have := leqnn (size (w0 :: tl)); rewrite {1}Heq /= size_cat /= ltnS addnS => /ltnW Hsz12.
+have Hsz1 : size w1 <= size tl.
+  exact: (leq_trans (leq_addr (size w2) (size w1))).
+have Hsz2 : size w2 <= size tl.
+  exact: (leq_trans (leq_addl (size w1) (size w2))).
+have Hszn := leq_trans Hsz Hn'.
+rewrite !IHn //; [exact: (leq_trans Hsz2) | exact: (leq_trans Hsz1)].
+Qed.
+
+Lemma bintree_of_DyckE w1 w2 :
+  w1 \is a Dyck_word -> w2 \is a Dyck_word ->
+  bintree_of_Dyck (Open :: w1 ++ Close :: w2) =
+    BinNode (bintree_of_Dyck w1) (bintree_of_Dyck w2).
+Proof.
+rewrite {1}/bintree_of_Dyck /= => HD1 HD2.
+set w := (Open :: w1 ++ Close :: w2).
+case (boolP (w \is a Dyck_word)) => // [HD | ]; last by rewrite Dyck_word_OwCw.
+have fact_spec : is_Dyck_fact w (w1, w2).
+  by apply/and3P => /=; split.
+rewrite (Dyck_fact_uniq (factorizeP _ _) (DyckFact fact_spec)) /= {fact_spec HD}.
+rewrite !bintree_of_Dyck_recE // size_cat /=.
+- by rewrite -addSnnS; apply leq_addl.
+- exact: leq_addr.
+Qed.
+
+
+Lemma Dyck_of_bintreeP t : (Dyck_of_bintree t) \is a Dyck_word.
+Proof.
+elim: t => //= [l IHl r IHr].
+rewrite -cat1s -[Close :: _]cat1s !catA; apply Dyck_word_cat => //=.
+exact: Dyck_word_OwC.
+Qed.
+
+Theorem Dyck_of_bintreeK t : bintree_of_Dyck (Dyck_of_bintree t) = t.
+Proof.
+elim: t => //= [l IHl r IHr].
+by rewrite bintree_of_DyckE ?Dyck_of_bintreeP // IHl IHr.
+Qed.
+
+Theorem bintree_of_DyckK w :
+  w \is a Dyck_word -> Dyck_of_bintree (bintree_of_Dyck w) = w.
+Proof.
+move: {2}(size w) (leqnn (size w)) => n.
+elim: n w => [|n IHn] w; first by rewrite leqn0 => /nilP ->.
+case: (altP (w =P [::])) => [->|] //= Hnnil Hsz HD.
+case: (factorizeP Hnnil HD) => {Hnnil HD} [[w1 w2] /and3P /= [Hw1 Hw2 /eqP Hw]].
+rewrite Hw bintree_of_DyckE //=.
+have := leqnn (size w); rewrite {1}Hw /= size_cat /= addnS => /ltnW Hsz12.
+have {Hsz12} := leq_trans Hsz12 Hsz; rewrite ltnS => Hsz12.
+rewrite !IHn => //.
+- exact: (leq_trans (leq_addl (size w1) (size w2))).
+- exact: (leq_trans (leq_addr (size w2) (size w1))).
+Qed.
+
+
+Lemma size_Dyck_of_bintree t :
+  size (Dyck_of_bintree t) = 2 * (size_tree t).
+Proof.
+elim: t => //= l Hl r Hr.
+rewrite size_cat /= {}Hl Hr.
+by rewrite !mulnDr muln1 -addn1 -addnA addSnnS addnA addnC addnA.
+Qed.
+
+Lemma size_bintree_of_Dyck w :
+  w \is a Dyck_word -> 2 * size_tree (bintree_of_Dyck w) = size w.
+Proof. by move=> /bintree_of_DyckK {2}<-; rewrite size_Dyck_of_bintree. Qed.
 
