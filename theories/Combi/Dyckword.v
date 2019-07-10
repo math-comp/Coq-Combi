@@ -387,88 +387,46 @@ Section Bij.
 
 Fixpoint Dyck_of_bintree t :=
   if t is BinNode l r then
-    (Open :: Dyck_of_bintree l) ++ (Close :: Dyck_of_bintree r)
-  else [::].
+    join_Dyck (Dyck_of_bintree l) (Dyck_of_bintree r)
+  else emptyDyck.
 
-Fixpoint bintree_of_Dyck_rec (n : nat) (w : seq brace) :=
-  if n is n.+1 then
-    if w is w0 :: tl then
-      match boolP (w0 :: tl \is a Dyck_word) with
-      | @AltTrue _ _ Pf =>
-        let fact := factorizeP (is_true_true : w0 :: tl != [::]) Pf in
-        BinNode (bintree_of_Dyck_rec n (dfact fact).1)
-                (bintree_of_Dyck_rec n (dfact fact).2)
-      | @AltFalse _ _ _ => BinLeaf
-      end
-    else BinLeaf
-  else BinLeaf.
-Definition bintree_of_Dyck w := bintree_of_Dyck_rec (size w) w.
+Lemma bintree_of_Dyck_spec D :
+  { t : bintree | Dyck_of_bintree t = D /\
+                  forall t', Dyck_of_bintree t' = D -> t = t' }.
+Proof.
+elim/Dyck_ind: D => [|D1 D2 [t1 [PF1 Uniq1]] [t2 [PF2 Uniq2]]].
+  by exists BinLeaf; split; last by case.
+exists (BinNode t1 t2); split => /=; first by rewrite PF1 PF2.
+by case => //= t'1 t'2 /factor_Dyck_unique => [[/Uniq1 -> /Uniq2 ->]].
+Qed.
+Definition bintree_of_Dyck D := proj1_sig (bintree_of_Dyck_spec D).
 
+Lemma bintree_of_DyckK D : Dyck_of_bintree (bintree_of_Dyck D) = D.
+Proof.
+by rewrite /bintree_of_Dyck; case: (bintree_of_Dyck_spec _) => /= [t []].
+Qed.
 
-Lemma bintree_of_Dyck_recE w n :
-  w \is a Dyck_word -> n >= size w -> bintree_of_Dyck_rec n w = bintree_of_Dyck w.
+Lemma bintree_of_emptyDyck : bintree_of_Dyck emptyDyck = BinLeaf.
 Proof.
 rewrite /bintree_of_Dyck.
-elim: n {1 3 4}n w (leqnn n) => [|n IHn] n' w.
-  by rewrite leqn0 => /eqP -> _; rewrite leqn0 => /nilP ->.
-case: w n' => [|w0 tl] [|n'] //=.
-rewrite !ltnS => Hn' HD Hsz.
-case (boolP (w0 :: tl \is a Dyck_word)) => // HD' /=.
-case: factorizeP => {HD HD'} [[w1 w2] /= /and3P [Hw1 Hw2 /eqP Heq]].
-have := leqnn (size (w0 :: tl)); rewrite {1}Heq /= size_cat /= ltnS addnS => /ltnW Hsz12.
-have Hsz1 : size w1 <= size tl.
-  exact: (leq_trans (leq_addr (size w2) (size w1))).
-have Hsz2 : size w2 <= size tl.
-  exact: (leq_trans (leq_addl (size w1) (size w2))).
-have Hszn := leq_trans Hsz Hn'.
-rewrite !IHn //; [exact: (leq_trans Hsz2) | exact: (leq_trans Hsz1)].
+by case: (bintree_of_Dyck_spec _) => [[|t1 t2] [Pf Uniq]].
 Qed.
 
-Lemma bintree_of_DyckE w1 w2 :
-  w1 \is a Dyck_word -> w2 \is a Dyck_word ->
-  bintree_of_Dyck (Open :: w1 ++ Close :: w2) =
-    BinNode (bintree_of_Dyck w1) (bintree_of_Dyck w2).
+Lemma bintree_of_join_Dyck D1 D2 :
+  bintree_of_Dyck (join_Dyck D1 D2) =
+  BinNode (bintree_of_Dyck D1) (bintree_of_Dyck D2).
 Proof.
-rewrite {1}/bintree_of_Dyck /= => HD1 HD2.
-set w := (Open :: w1 ++ Close :: w2).
-case (boolP (w \is a Dyck_word)) => // [HD | ]; last by rewrite Dyck_word_OwCw.
-have fact_spec : is_Dyck_fact w (w1, w2).
-  by apply/and3P => /=; split.
-rewrite (Dyck_fact_uniq (factorizeP _ _) (DyckFact fact_spec)) /= {fact_spec HD}.
-rewrite !bintree_of_Dyck_recE // size_cat /=.
-- by rewrite -addSnnS; apply leq_addl.
-- exact: leq_addr.
-Qed.
-
-
-Lemma Dyck_of_bintreeP t : (Dyck_of_bintree t) \is a Dyck_word.
-Proof.
-elim: t => //= [l IHl r IHr].
-rewrite -cat1s -[Close :: _]cat1s !catA; apply Dyck_word_cat => //=.
-exact: Dyck_word_OwC.
+rewrite {1}/bintree_of_Dyck.
+case: (bintree_of_Dyck_spec _) => /= [[|t1 t2 /=] []]; first by move/eqP.
+move/factor_Dyck_unique => [H1 H2]; apply.
+by rewrite /= !bintree_of_DyckK.
 Qed.
 
 Theorem Dyck_of_bintreeK t : bintree_of_Dyck (Dyck_of_bintree t) = t.
 Proof.
-elim: t => //= [l IHl r IHr].
-by rewrite bintree_of_DyckE ?Dyck_of_bintreeP // IHl IHr.
+elim: t => [|l IHl r IHr] /=; first exact: bintree_of_emptyDyck.
+by rewrite bintree_of_join_Dyck IHl IHr.
 Qed.
-
-Theorem bintree_of_DyckK w :
-  w \is a Dyck_word -> Dyck_of_bintree (bintree_of_Dyck w) = w.
-Proof.
-move: {2}(size w) (leqnn (size w)) => n.
-elim: n w => [|n IHn] w; first by rewrite leqn0 => /nilP ->.
-case: (altP (w =P [::])) => [->|] //= Hnnil Hsz HD.
-case: (factorizeP Hnnil HD) => {Hnnil HD} [[w1 w2] /and3P /= [Hw1 Hw2 /eqP Hw]].
-rewrite Hw bintree_of_DyckE //=.
-have := leqnn (size w); rewrite {1}Hw /= size_cat /= addnS => /ltnW Hsz12.
-have {Hsz12} := leq_trans Hsz12 Hsz; rewrite ltnS => Hsz12.
-rewrite !IHn => //.
-- exact: (leq_trans (leq_addl (size w1) (size w2))).
-- exact: (leq_trans (leq_addr (size w2) (size w1))).
-Qed.
-
 
 Lemma size_Dyck_of_bintree t :
   size (Dyck_of_bintree t) = 2 * (size_tree t).
@@ -478,7 +436,8 @@ rewrite size_cat /= {}Hl Hr.
 by rewrite !mulnDr muln1 -addn1 -addnA addSnnS addnA addnC addnA.
 Qed.
 
-Lemma size_bintree_of_Dyck w :
-  w \is a Dyck_word -> 2 * size_tree (bintree_of_Dyck w) = size w.
-Proof. by move=> /bintree_of_DyckK {2}<-; rewrite size_Dyck_of_bintree. Qed.
+Lemma size_bintree_of_Dyck D :
+  2 * size_tree (bintree_of_Dyck D) = size D.
+Proof. by rewrite -{2}(bintree_of_DyckK D) size_Dyck_of_bintree. Qed.
 
+End Bij.
