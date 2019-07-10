@@ -152,152 +152,6 @@ Qed.
 End Defs.
 
 
-Section FactorDef.
-
-Variable w : seq brace.
-
-Definition is_Dyck_fact (dfact : seq brace * seq brace) :=
-  [&& dfact.1 \is a Dyck_word, dfact.2 \is a Dyck_word &
-    (w == (Open :: dfact.1) ++ (Close :: dfact.2))].
-
-Inductive Dyck_fact : Set :=
-  DyckFact { dfact : seq brace * seq brace; _ : is_Dyck_fact dfact }.
-
-Canonical dyckFact_subType := Eval hnf in [subType for dfact].
-Definition dyckFact_eqMixin := Eval hnf in [eqMixin of Dyck_fact by <:].
-Canonical dyckFact_eqType := Eval hnf in EqType Dyck_fact dyckFact_eqMixin.
-Definition dyckFact_choiceMixin :=
-  Eval hnf in [choiceMixin of Dyck_fact by <:].
-Canonical dyckFact_choiceType :=
-  Eval hnf in ChoiceType Dyck_fact dyckFact_choiceMixin.
-Definition dyckFact_countMixin :=
-  Eval hnf in [countMixin of Dyck_fact by <:].
-Canonical dyckFact_countType :=
-  Eval hnf in CountType Dyck_fact dyckFact_countMixin.
-Canonical dyckFact_subCountType := Eval hnf in [subCountType of Dyck_fact].
-
-End FactorDef.
-
-
-
-Section Factor.
-
-Lemma Dyck_fact_nnil w (f : Dyck_fact w) : w != [::].
-Proof. by case: f => [[a b] /= /and3P [_ _ /eqP ->]]. Qed.
-
-Lemma Dyck_factP w (f : Dyck_fact w) : w \is a Dyck_word.
-Proof.
-case: f => [[a b] /= /and3P [Ha Hb /eqP ->]].
-exact: Dyck_word_OwCw.
-Qed.
-
-
-Lemma Dyck_cut_ex w :
-  w != [::] -> w \is a Dyck_word ->
-  exists i, (i != 0) && (#Open (take i w) == #Close (take i w)).
-Proof.
-move=> Hnnil /Dyck_wordP [_ Heq].
-exists (size w); apply/andP; split; first by case: w Hnnil {Heq}.
-by rewrite take_size.
-Qed.
-
-Theorem factorizeP w :
-  w != [::] -> w \is a Dyck_word -> Dyck_fact w.
-Proof.
-move=> Hnnil HD.
-case: (ex_minnP (Dyck_cut_ex Hnnil HD)) => cut /andP [Hcut /eqP Heq Hmin].
-case: w Hnnil HD Heq Hmin => // w0 tl _.
-case: w0; first last.
-  rewrite unfold_in => /andP [/Dyck_prefixP/(_ 1)/=].
-  by rewrite take0 /= !addn0.
-move=> /Dyck_wordP [Hpos /eqP Hbal].
-case: cut Hcut => // [][|cut] _; rewrite [X in X -> _]/= add1n add0n.
-  by rewrite take0.
-move=> Heq Hmin.
-have Hcut : cut < size tl.
-  rewrite -ltnS; apply Hmin.
-  by rewrite -[(size tl).+1]/(size (Open :: tl)) take_size Hbal /=.
-have Hf1 : take cut.+1 tl = rcons (take cut tl) Close.
-  move: Heq (Hpos cut.+1).
-  rewrite /= (take_nth Open Hcut) add0n add1n.
-  rewrite !count_mem_rcons.
-  case: (nth Open tl cut) => []; rewrite eq_refl /= !addn1 !addn0 //.
-  by move=> <-; rewrite ltnn.
-move: Heq; rewrite Hf1 !count_mem_rcons /= addn0 addn1.
-move=> /eqP; rewrite eqSS => /eqP Hbalcut.
-have {Hmin} Hmin n : n <= cut -> #Open (take n tl) >= #Close (take n tl).
-  apply contraLR; rewrite -!ltnNge.
-  case: cut Hbalcut Hmin {Hcut Hf1} => [ _ _ | cut Hbalcut Hmin Hlt].
-    by case: n; first by rewrite take0.
-  apply: (Hmin (n.+1)); rewrite /= add1n add0n.
-  apply/eqP/anti_leq.
-  rewrite Hlt /=.
-  by have:= Hpos (n.+1); rewrite /= add1n add0n.
-exists (take cut tl, drop cut.+1 tl).
-apply/and3P; split => /=.
-- apply/Dyck_wordP; split => [n|].
-  + case: (leqP n cut) => Hncut.
-    * by rewrite take_take // Hmin.
-    * rewrite take_oversize; last by rewrite size_take Hcut; apply ltnW.
-      by rewrite Hbalcut.
-  + by rewrite Hbalcut.
-- apply/Dyck_wordP; split => [n|].
-  + have := Hpos (cut.+1 + n.+1).
-    rewrite -{1 2}(cat_take_drop cut.+1 tl).
-    have Hsz : size (take cut.+1 tl) = cut.+1 by rewrite size_take_leq Hcut.
-    rewrite addSn /= take_cat Hsz ltnS.
-    rewrite addnS ltnNge leq_addr /=.
-    rewrite -addSn addKn !count_cat Hf1 !count_mem_rcons /=.
-    by rewrite !addn0 !add0n addn1 addnA add1n Hbalcut leq_add2l.
-  + move: Hbal; rewrite  -{1 2}(cat_take_drop cut.+1 tl).
-    have Hsz : size (take cut.+1 tl) = cut.+1 by rewrite size_take_leq Hcut.
-    rewrite /= !count_cat Hf1 !count_mem_rcons /=.
-    rewrite !addn0 !add0n addn1 addnA add1n Hbalcut.
-    by move=> /eqP; rewrite eqn_add2l.
-- by rewrite -{1}(cat_take_drop cut.+1 tl) Hf1 cat_rcons.
-Qed.
-
-Lemma Dyck_fact_size w (f : Dyck_fact w) :
-  (size (dfact f).1).+2 =
-  ex_minn (Dyck_cut_ex (Dyck_fact_nnil f) (Dyck_factP f)).
-Proof.
-case: ex_minnP => cut /andP [Hcut /eqP Heq Hmin].
-case: f => [[f1 f2] /= /and3P [Hf1 Hf2 /eqP Hw]].
-apply/anti_leq/andP; split.
-- move: Heq => /eqP {Hmin}; rewrite leqNgt; apply contraL; rewrite ltnS.
-  case: cut Hcut => [// | cut _]; rewrite ltnS => Hcut.
-  rewrite Hw /= take_cat.
-  move: Hcut; rewrite leq_eqVlt => /orP [/eqP ->|->].
-  + rewrite ltnn subnn take0 add0n cats0.
-    move: Hf1 => /Dyck_wordP [_ /eqP ->]; rewrite add1n.
-    by rewrite neq_ltn ltnSn orbT.
-  + rewrite add1n add0n neq_ltn ltnS.
-    move: Hf1 => /Dyck_wordP [-> _].
-    by rewrite orbT.
-- apply: Hmin; rewrite /= {}Hw.
-  rewrite -cat1s -[Close :: f2]cat1s !catA take_size_cat ?size_cat /= ?addn1 //.
-  rewrite !count_cat /= !addn0 add0n add1n addn1.
-  by move: Hf1 => /Dyck_wordP [_ /eqP ->].
-Qed.
-
-Theorem Dyck_fact_uniq w (f1 f2 : Dyck_fact w) : f1 = f2.
-Proof.
-have Hnnil := Dyck_fact_nnil f1.
-have Hw := Dyck_factP f1.
-apply val_inj => /=.
-move: (Dyck_fact_size f1).
-rewrite (eq_ex_minn _ (Dyck_cut_ex (Dyck_fact_nnil f2) (Dyck_factP f2))) //.
-rewrite -(Dyck_fact_size f2) => /eqP; rewrite !eqSS.
-case: f1 f2 => [[f1 f2] /= /and3P [] Hf1 Hf2 /eqP ->] [[g1 g2] /= /and3P [] Hg1 Hg2].
-move=> Heq /eqP Hsz; move: Heq => /=.
-rewrite -[Open :: _ ++ _]cat1s -[Close :: f2]cat1s !catA.
-rewrite -[Open :: _ ++ _]cat1s -[Close :: g2]cat1s !catA.
-by rewrite !eqseq_cat /= ?size_cat ?Hsz //= => /andP [/andP [/eqP -> _] /eqP ->].
-Qed.
-
-End Factor.
-
-
 
 Section DyckSet.
 
@@ -323,29 +177,121 @@ Hint Resolve DyckP.
 Definition cat_Dyck d1 d2 := DyckWord (Dyck_word_cat d1 d2).
 Definition join_Dyck d1 d2 := DyckWord (Dyck_word_OwCw d1 d2).
 
+
+Lemma join_Dyck_nnil d1 d2 : dyckword (join_Dyck d1 d2) != [::].
+Proof. by []. Qed.
+
+Lemma Dyck_cut_ex w :
+  w != [::] -> w \is a Dyck_word ->
+  exists i, (i != 0) && (#Open (take i w) == #Close (take i w)).
+Proof.
+move=> Hnnil /Dyck_wordP [_ Heq].
+exists (size w); apply/andP; split; first by case: w Hnnil {Heq}.
+by rewrite take_size.
+Qed.
+
+
 Theorem factor_Dyck D :
   D != emptyDyck -> { DyckPair : Dyck * Dyck | D == join_Dyck DyckPair.1 DyckPair.2 }.
 Proof.
-case: D => [w Hw] H /=.
-case: (factorizeP H Hw) => [[w1 w2] /= /and3P [Hw1 Hw2 /eqP Heq]].
-exists (DyckWord Hw1, DyckWord Hw2) => /=.
-exact/eqP/val_inj.
+case: D => [w HD] H /=.
+have {H} Hnnil : w != [::].
+  by move: H; apply contra => /eqP H; apply/eqP/val_inj => /=.
+case: (ex_minnP (Dyck_cut_ex Hnnil HD)) => cut /andP [Hcut /eqP Heq Hmin].
+case: w Hnnil HD Heq Hmin => // w0 tl _.
+case: w0 => HD; first last.
+  have:= HD; rewrite unfold_in => /andP [/Dyck_prefixP/(_ 1)/=].
+  by rewrite take0 /= !addn0.
+have:= (Dyck_wordP _ HD) => [[Hpos /eqP Hbal]].
+case: cut Hcut => // [][|cut] _; rewrite [X in X -> _]/= add1n add0n.
+  by rewrite take0.
+move=> Heq Hmin.
+have Hcut : cut < size tl.
+  rewrite -ltnS; apply Hmin.
+  by rewrite -[(size tl).+1]/(size (Open :: tl)) take_size Hbal /=.
+have Hf1 : take cut.+1 tl = rcons (take cut tl) Close.
+  move: Heq (Hpos cut.+1).
+  rewrite /= (take_nth Open Hcut) add0n add1n.
+  rewrite !count_mem_rcons.
+  case: (nth Open tl cut) => []; rewrite eq_refl /= !addn1 !addn0 //.
+  by move=> <-; rewrite ltnn.
+move: Heq; rewrite Hf1 !count_mem_rcons /= addn0 addn1.
+move=> /eqP; rewrite eqSS => /eqP Hbalcut.
+have {Hmin} Hmin n : n <= cut -> #Open (take n tl) >= #Close (take n tl).
+  apply contraLR; rewrite -!ltnNge.
+  case: cut Hbalcut Hmin {Hcut Hf1} => [ _ _ | cut Hbalcut Hmin Hlt].
+    by case: n; first by rewrite take0.
+  apply: (Hmin (n.+1)); rewrite /= add1n add0n.
+  apply/eqP/anti_leq.
+  rewrite Hlt /=.
+  by have:= Hpos (n.+1); rewrite /= add1n add0n.
+have HDL : (take cut tl) \is a Dyck_word.
+  apply/Dyck_wordP; split => [n|].
+  - case: (leqP n cut) => Hncut.
+    + by rewrite take_take // Hmin.
+    + rewrite take_oversize; last by rewrite size_take Hcut; apply ltnW.
+      by rewrite Hbalcut.
+  - by rewrite Hbalcut.
+have HDR : (drop cut.+1 tl) \is a Dyck_word.
+  apply/Dyck_wordP; split => [n|].
+  - have := Hpos (cut.+1 + n.+1).
+    rewrite -{1 2}(cat_take_drop cut.+1 tl).
+    have Hsz : size (take cut.+1 tl) = cut.+1 by rewrite size_take_leq Hcut.
+    rewrite addSn /= take_cat Hsz ltnS.
+    rewrite addnS ltnNge leq_addr /=.
+    rewrite -addSn addKn !count_cat Hf1 !count_mem_rcons /=.
+    by rewrite !addn0 !add0n addn1 addnA add1n Hbalcut leq_add2l.
+  - move: Hbal; rewrite  -{1 2}(cat_take_drop cut.+1 tl).
+    have Hsz : size (take cut.+1 tl) = cut.+1 by rewrite size_take_leq Hcut.
+    rewrite /= !count_cat Hf1 !count_mem_rcons /=.
+    rewrite !addn0 !add0n addn1 addnA add1n Hbalcut.
+    by move=> /eqP; rewrite eqn_add2l.
+
+exists (DyckWord HDL, DyckWord HDR).
+
+apply/eqP/val_inj => /=.
+by rewrite -{1}(cat_take_drop cut.+1 tl) Hf1 cat_rcons.
+Qed.
+
+Lemma Dyck_fact_size d1 d2 :
+  (size d1).+2 = ex_minn (Dyck_cut_ex (join_Dyck_nnil d1 d2) (join_Dyck d1 d2)).
+Proof.
+case: ex_minnP => cut /andP [Hcut /eqP Heq Hmin].
+apply/anti_leq/andP; split.
+- move: Heq => /eqP {Hmin}; rewrite leqNgt; apply contraL; rewrite ltnS.
+  case: cut Hcut => [// | cut _]; rewrite ltnS => Hcut.
+  rewrite /= take_cat.
+  move: Hcut; rewrite leq_eqVlt => /orP [/eqP ->|->].
+  + rewrite ltnn subnn take0 add0n cats0.
+    case: d1 => /= [d1 /Dyck_wordP [_ /eqP ->]]; rewrite add1n.
+    by rewrite neq_ltn ltnSn orbT.
+  + rewrite add1n add0n neq_ltn ltnS.
+    case: d1 => /= [d1 /Dyck_wordP [-> _]].
+    by rewrite orbT.
+- apply: Hmin; rewrite /= {Heq}.
+  rewrite -cat1s -[Close :: _]cat1s !catA take_size_cat ?size_cat /= ?addn1 //.
+  rewrite !count_cat /= !addn0 add0n add1n addn1.
+  by case: d1 => /= [d1 /Dyck_wordP [_ /eqP ->]].
 Qed.
 
 Theorem factor_Dyck_unique D1 D2 E1 E2:
   join_Dyck D1 D2 = join_Dyck E1 E2 -> (D1, D2) = (E1, E2).
 Proof.
-move=> /(congr1 val)/=.
-set w := Open :: D1 ++ Close :: D2 => H.
-have factD : is_Dyck_fact w (val D1, val D2).
-  by apply/and3P => /=; split.
-have factE : is_Dyck_fact w (val E1, val E2).
-  by apply/and3P => /=; split; last by rewrite H.
-have := (Dyck_fact_uniq (DyckFact factD) (DyckFact factE)).
-by move/(congr1 val) => /= [/val_inj -> /val_inj ->].
+move=> Heq.
+have Hnnil := join_Dyck_nnil D1 D2.
+move: (Dyck_fact_size D1 D2).
+rewrite (eq_ex_minn _ (Dyck_cut_ex (join_Dyck_nnil E1 E2) (join_Dyck E1 E2)));
+  last by move=> i; rewrite Heq.
+rewrite -(Dyck_fact_size E1 E2) => /eqP; rewrite !eqSS => /eqP Hsz.
+move: Heq => /(congr1 val)/= /eqP.
+rewrite -[Open :: _ ++ _]cat1s -[Close :: D2]cat1s !catA.
+rewrite -[Open :: _ ++ _]cat1s -[Close :: E2]cat1s !catA.
+rewrite !eqseq_cat /= ?size_cat ?Hsz //=.
+by move=> /andP [/andP [/eqP /val_inj -> _] /eqP /val_inj ->].
 Qed.
 
 End DyckSet.
+
 
 
 Section DyckSetInd.
