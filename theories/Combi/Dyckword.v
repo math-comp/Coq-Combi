@@ -28,7 +28,6 @@ Unset Printing Implicit Defensive.
 
 
 
-
 Lemma take_take (T : eqType) i j (s : seq T) :
   i <= j -> take i (take j s) = take i s.
 Proof.
@@ -37,20 +36,10 @@ by rewrite ltnS => /IHs ->.
 Qed.
 
 
-
 Inductive brace : Set := | Open : brace | Close : brace.
 
-Definition bool_of_brace b :=
-  match b with
-  | Open => true
-  | Close => false
-  end.
-
-Definition brace_of_bool b :=
-  match b with
-  | true => Open
-  | false => Close
-  end.
+Definition bool_of_brace b := if b is Open then true else false.
+Definition brace_of_bool b := if b then Open else Close.
 
 Lemma bool_of_braceK : cancel bool_of_brace brace_of_bool.
 Proof. by case=> []. Qed.
@@ -72,9 +61,8 @@ Local Notation "#Close" := (count_mem Close).
 
 Section Defs.
 
-Implicit Type h n : nat.
+Implicit Type n : nat.
 Implicit Type w : seq brace.
-Implicit Type l : seq (seq brace).
 
 
 Definition prefixes w := [seq take n w | n <- iota 0 ((size w).+1)].
@@ -156,8 +144,7 @@ Qed.
 End Defs.
 
 
-
-Section DyckSet.
+Section DyckType.
 
 Record Dyck := DyckWord {dyckword :> seq brace;
                          is_dyckword :> dyckword \is a Dyck_word}.
@@ -172,41 +159,55 @@ Definition Dyck_countMixin := [countMixin of Dyck by <:].
 Canonical Dyck_countType :=
   Eval hnf in CountType Dyck Dyck_countMixin.
 
-
 Implicit Type D : Dyck.
-
-Canonical nil_Dyck := (@DyckWord [::] is_true_true).
 
 Lemma DyckP D : (dyckword D) \is a Dyck_word.
 Proof. exact: D. Qed.
 Hint Resolve DyckP.
 
-Definition cat_Dyck D1 D2 := DyckWord (Dyck_word_cat D1 D2).
-Definition join_Dyck D1 D2 := DyckWord (Dyck_word_OwCw D1 D2).
+Definition dyck D mkD : Dyck :=
+  mkD (let: DyckWord _ DP := D return dyckword D \is a Dyck_word in DP).
+
+Lemma dyckE D : dyck (fun sP => @DyckWord D sP) = D.
+Proof. by case: D. Qed.
+
+Canonical nil_Dyck := (@DyckWord [::] is_true_true).
+Canonical cat_Dyck D1 D2 := DyckWord (Dyck_word_cat D1 D2).
+Canonical join_Dyck D1 D2 := DyckWord (Dyck_word_OwCw D1 D2).
+
+End DyckType.
+
+Notation "[ 'Dyck' 'of' s ]" := (dyck (fun sP => @DyckWord s sP))
+  (at level 0, format "[ 'Dyck'  'of'  s ]") : form_scope.
+
+Notation "[ 'Dyck' [ D1 ] D2 ]" := (join_Dyck D1 D2)
+  (at level 0, format "[ 'Dyck'  [ D1 ] D2 ]") : form_scope.
 
 
-Lemma join_Dyck_nnil D1 D2 : dyckword (join_Dyck D1 D2) != [::].
+Section DyckFactor.
+
+Implicit Type D : Dyck.
+
+
+Lemma join_Dyck_nnil D1 D2 : [Dyck [D1]D2] != [Dyck of [::]].
 Proof. by []. Qed.
 
-
-Lemma Dyck_cut_ex w :
-  w != [::] -> w \is a Dyck_word ->
-  exists i, (i != 0) && (#Open (take i w) == #Close (take i w)).
+Lemma Dyck_cut_ex D :
+  D != [Dyck of [::]] ->
+  exists i, (i != 0) && (#Open (take i D) == #Close (take i D)).
 Proof.
-move=> Hnnil /Dyck_wordP [_ Heq].
-exists (size w); apply/andP; split; first by case: w Hnnil {Heq}.
-by rewrite take_size Heq.
+move=> Hnnil; have:= DyckP D => /Dyck_wordP [_ Heq].
+exists (size D); apply/andP; split; first by case: D Hnnil {Heq} => [[]].
+- by rewrite take_size Heq.
 Qed.
 
 Theorem factor_Dyck D :
-  D != nil_Dyck -> { DD : Dyck * Dyck | D = join_Dyck DD.1 DD.2 }.
+  D != [Dyck of [::]] -> { DD : Dyck * Dyck | D = [Dyck [DD.1]DD.2] }.
 Proof.
-case: D => [w HD] H /=.
-have {H} Hnnil : w != [::].
-  by move: H; apply contra => /eqP H; apply/eqP/val_inj.
-case: (ex_minnP (Dyck_cut_ex Hnnil HD)) => cut /andP [Hcut /eqP Heq Hmin].
-case: w Hnnil HD Heq Hmin => // w0 tl _.
-case: w0 => HD; first last.
+move=> Hnnil.
+case: (ex_minnP (Dyck_cut_ex Hnnil)) => cut /andP [Hcut /eqP Heq Hmin].
+case: D Hnnil Heq Hmin => [[|w0 tl]] // HD _; rewrite [dyckword _]/=.
+case: w0 HD => HD; first last.
   have:= HD; rewrite unfold_in => /andP [/Dyck_prefixP/(_ 1)/=].
   by rewrite take0 /= !addn0.
 have:= (Dyck_wordP _ HD) => [[Hpos /eqP Hbal]].
@@ -254,14 +255,13 @@ have HDR : (drop cut.+1 tl) \is a Dyck_word.
     rewrite !addn0 !add0n addn1 addnA add1n Hbalcut.
     by rewrite eqn_add2l => /eqP.
 
-exists (DyckWord HDL, DyckWord HDR).
+    exists (DyckWord HDL, DyckWord HDR).
 
-apply/val_inj => /=.
-by rewrite -{1}(cat_take_drop cut.+1 tl) Hf1 cat_rcons.
+by apply/val_inj; rewrite /= -{1}(cat_take_drop cut.+1 tl) Hf1 cat_rcons.
 Qed.
 
 Lemma Dyck_fact_size D1 D2 :
-  (size D1).+2 = ex_minn (Dyck_cut_ex (join_Dyck_nnil D1 D2) (join_Dyck D1 D2)).
+  (size D1).+2 = ex_minn (Dyck_cut_ex (join_Dyck_nnil D1 D2)).
 Proof.
 case: ex_minnP => cut /andP [Hcut /eqP Heq Hmin].
 apply/anti_leq/andP; split.
@@ -281,13 +281,13 @@ apply/anti_leq/andP; split.
   by case: D1 => /= [d1 /Dyck_wordP [_ ->]].
 Qed.
 
-Theorem join_Dyck_inj D1 D2 E1 E2:
-  join_Dyck D1 D2 = join_Dyck E1 E2 -> (D1, D2) = (E1, E2).
+Theorem join_Dyck_inj D1 D2 E1 E2 :
+  [Dyck [D1]D2] = [Dyck [E1]E2] -> (D1, D2) = (E1, E2).
 Proof.
 move=> Heq.
 have Hnnil := join_Dyck_nnil D1 D2.
 move: (Dyck_fact_size D1 D2).
-rewrite (eq_ex_minn _ (Dyck_cut_ex (join_Dyck_nnil E1 E2) (join_Dyck E1 E2)));
+rewrite (eq_ex_minn _ (Dyck_cut_ex (join_Dyck_nnil E1 E2)));
   last by move=> i; rewrite Heq.
 rewrite -(Dyck_fact_size E1 E2) => /eqP; rewrite !eqSS => /eqP Hsz.
 move: Heq => /(congr1 val)/= /eqP.
@@ -297,8 +297,7 @@ rewrite !eqseq_cat /= ?size_cat ?Hsz //=.
 by move=> /andP [/andP [/eqP /val_inj -> _] /eqP /val_inj ->].
 Qed.
 
-End DyckSet.
-
+End DyckFactor.
 
 
 Section DyckSetInd.
@@ -308,7 +307,7 @@ Implicit Type D : Dyck.
 
 Variable P : Dyck -> Type.
 Hypothesis (Pnil : P nil_Dyck)
-           (Pcons : forall D1 D2, P D1 -> P D2 -> P (join_Dyck D1 D2)).
+           (Pcons : forall D1 D2, P D1 -> P D2 -> P [Dyck [D1]D2]).
 
 Theorem Dyck_ind D : P D.
 Proof.
@@ -334,7 +333,6 @@ by rewrite size_cat /= addnS /= negbK odd_add negb_add HD1 HD2.
 Qed.
 
 
-
 Lemma factor_Dyck_seq D :
   { DS : seq Dyck | D = foldr join_Dyck nil_Dyck DS }.
 Proof.
@@ -355,11 +353,12 @@ elim: DS => [|D DS IHDS] //=; rewrite size_cat /= IHDS.
 by rewrite -!addnS addnA mulnS [2+_]addnC mul2n -addnn !addnA.
 Qed.
 
+
 Section Bij.
 
 Fixpoint Dyck_of_bintree t :=
   if t is BinNode l r then
-    join_Dyck (Dyck_of_bintree l) (Dyck_of_bintree r)
+    [Dyck [Dyck_of_bintree l]Dyck_of_bintree r]
   else nil_Dyck.
 
 Lemma bintree_of_Dyck_spec D :
@@ -385,7 +384,7 @@ by case: (bintree_of_Dyck_spec _) => [[|t1 t2] [Pf Uniq]].
 Qed.
 
 Lemma bintree_of_join_Dyck D1 D2 :
-  bintree_of_Dyck (join_Dyck D1 D2) =
+  bintree_of_Dyck [Dyck [D1]D2] =
   BinNode (bintree_of_Dyck D1) (bintree_of_Dyck D2).
 Proof.
 rewrite {1}/bintree_of_Dyck.
