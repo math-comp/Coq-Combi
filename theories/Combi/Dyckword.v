@@ -105,8 +105,7 @@ Lemma Dyck_prefixP w :
     (forall n, #Open (take n w) >= #Close (take n w))
     (w \is a Dyck_prefix).
 Proof.
-rewrite unfold_in.
-apply (iffP allP) => /= H.
+rewrite unfold_in; apply (iffP allP) => /= H.
 - by move=> i; apply H; apply take_prefixes.
 - by move=> p /mem_prefixesP [i -> {p}].
 Qed.
@@ -135,10 +134,9 @@ Qed.
 Lemma Dyck_word_cat w1 w2 :
   w1 \is a Dyck_word -> w2 \is a Dyck_word -> w1 ++ w2 \is a Dyck_word.
 Proof.
-move/Dyck_wordP => [Hpos1 Hbal1].
-move/Dyck_wordP => [Hpos2 Hbal2].
+move=> /Dyck_wordP [Hpos1 Hbal1] /Dyck_wordP [Hpos2 Hbal2].
 apply/Dyck_wordP; split => [n|].
-- rewrite take_cat; case ltnP => _; first exact: Hpos1.
+- rewrite take_cat; case ltnP => _ //.
   by rewrite !count_cat Hbal1 leq_add2l.
 - by rewrite !count_cat Hbal1 Hbal2.
 Qed.
@@ -205,7 +203,7 @@ Theorem factor_Dyck D :
 Proof.
 case: D => [w HD] H /=.
 have {H} Hnnil : w != [::].
-  by move: H; apply contra => /eqP H; apply/eqP/val_inj => /=.
+  by move: H; apply contra => /eqP H; apply/eqP/val_inj.
 case: (ex_minnP (Dyck_cut_ex Hnnil HD)) => cut /andP [Hcut /eqP Heq Hmin].
 case: w Hnnil HD Heq Hmin => // w0 tl _.
 case: w0 => HD; first last.
