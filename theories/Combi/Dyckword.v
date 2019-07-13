@@ -28,12 +28,29 @@ Unset Printing Implicit Defensive.
 
 
 
-Lemma take_take (T : eqType) i j (s : seq T) :
+Lemma take_take (T : Type) i j (s : seq T) :
   i <= j -> take i (take j s) = take i s.
 Proof.
-elim: s i j => [// | s0 s IHs] [|i] [|j] //=.
-by rewrite ltnS => /IHs ->.
+elim: s i j => [// | a s IH] [|i] [|j] //=.
+by rewrite ltnS => /IH ->.
 Qed.
+
+Lemma take_drop (T : Type) i j (s : seq T) :
+  take i (drop j s) = drop j (take (i + j) s).
+Proof.
+elim: j s => [|j IH] s /=; first by rewrite !drop0 addn0.
+by case: s => [// | a s]; rewrite addnS /=.
+Qed.
+
+Lemma take_addn (T : Type) (s : seq T) n m :
+  take (n + m) s = take n s ++ take m (drop n s).
+Proof.
+elim: n m s => [|n IH] [|m] [|a s] //; first by rewrite take0 addn0 cats0.
+by rewrite drop_cons addSn !take_cons /= IH.
+Qed.
+
+Lemma addnBAC m n p : n <= m -> m - n + p = m + p - n.
+Proof. by move=> le_nm; rewrite addnC addnBA // addnC. Qed.
 
 
 Inductive brace : Set := | Open : brace | Close : brace.
@@ -106,6 +123,16 @@ Lemma Dyck_wordP w :
 Proof.
 rewrite unfold_in.
 by apply (iffP andP) => /= [] [H1 /eqP H2]; split => //; apply/Dyck_prefixP.
+Qed.
+
+Lemma Dyck_word_leqP w :
+  reflect
+    ((forall n, n <= size w -> #{{|take n w| >= #}}|take n w|) /\ (#{{|w| = #}}|w|))
+    (w \is a Dyck_word).
+Proof.
+apply (iffP (Dyck_wordP w)) => [] [H1 H2]; split => // n.
+case: (leqP n (size w)) => [|H]; first exact: H1.
+by rewrite take_oversize ?H2 //; exact: ltnW.
 Qed.
 
 Lemma Dyck_word_OwC w :
@@ -238,12 +265,8 @@ have {Hmin} Hmin n : n <= cut -> #{{|take n tl| >= #}}|take n tl|.
   rewrite Hlt /=.
   by have:= Hpos (n.+1); rewrite /= add1n add0n.
 have HDL : (take cut tl) \is a Dyck_word.
-  apply/Dyck_wordP; split => [n|].
-  - case: (leqP n cut) => Hncut.
-    + by rewrite take_take // Hmin.
-    + rewrite take_oversize; last by rewrite size_take Hcut; apply ltnW.
-      by rewrite Hbalcut.
-  - by rewrite Hbalcut.
+  apply/Dyck_word_leqP; split => [n |]; last by rewrite Hbalcut.
+  by rewrite size_take Hcut => Hncut; rewrite take_take // Hmin.
 have HDR : (drop cut.+1 tl) \is a Dyck_word.
   apply/Dyck_wordP; split => [n|].
   - have := Hpos (cut.+1 + n.+1).
@@ -416,3 +439,162 @@ Lemma size_bintree_of_Dyck D :
 Proof. by rewrite -{2}(bintree_of_DyckK D) size_Dyck_of_bintree. Qed.
 
 End Bij.
+
+
+
+Section Balanced.
+
+Variable w : seq brace.
+
+
+Definition maxd := \max_(s <- prefixes w) (#}}|s| - #{{|s|).
+
+Lemma maxdE : maxd = \max_(i < (size w).+1) (#}}|take i w| - #{{|take i w|).
+Proof.
+rewrite /maxd /prefixes.
+by rewrite big_map -{1}[(size w).+1]subn0 -/(index_iota _ _) big_mkord.
+Qed.
+
+Lemma maxdP : forall i : nat, #}}|take i w| - #{{|take i w| <= maxd.
+Proof.
+rewrite maxdE => i.
+wlog ilt : i / i < (size w).+1.
+  move=> Hlog; case: (ltnP i (size w).+1) => [| szi]; first exact: Hlog.
+  rewrite (take_oversize (ltnW szi)) -{1 2}(take_size w).
+  exact: Hlog.
+rewrite -[i]/(nat_of_ord (Ordinal ilt)).
+exact: leq_bigmax.
+Qed.
+
+Lemma exists_maxd : exists i : nat, #}}|take i w| - #{{|take i w| == maxd.
+Proof.
+rewrite maxdE.
+have : #|'I_(size w).+1| > 0 by rewrite card_ord.
+set F := BIG_F; case/(eq_bigmax F) => [[i Hi]]; rewrite {}/F /= => H.
+by exists i; rewrite H.
+Qed.
+
+Definition pfmaxd := ex_minn exists_maxd.
+
+Lemma pfmaxdP : #}}|take pfmaxd w| - #{{|take pfmaxd w| = maxd.
+Proof. by rewrite /pfmaxd; case: ex_minnP => pfmd /eqP ->. Qed.
+
+Lemma pfmaxd_size : pfmaxd <= size w.
+Proof.
+rewrite /pfmaxd; case: ex_minnP => pfmd /eqP Hpfmd pfmd_min.
+rewrite leqNgt; apply/(introN idP) => Habs.
+move: Hpfmd; rewrite (take_oversize (ltnW Habs)) -{1 2}(take_size w).
+move=> /eqP/pfmd_min/leq_ltn_trans/(_ Habs).
+by rewrite ltnn.
+Qed.
+
+Lemma pfmaxd_min :
+  forall i : nat, i < pfmaxd -> #}}|take i w| - #{{|take i w| < maxd.
+Proof.
+rewrite /pfmaxd.
+case: ex_minnP => pfmd /eqP Hpfmd pfmd_min i Hi.
+rewrite ltn_neqAle maxdP andbT.
+apply/(introN idP) => /(pfmd_min i)/(leq_trans Hi).
+by rewrite ltnn.
+Qed.
+
+Section BalToDyck.
+
+Hypothesis bal1 : #}}|w| = #{{|w|.+1.
+
+Lemma maxd_pos : maxd > 0.
+Proof.
+move: bal1 => /eqP; rewrite leqNgt; apply contraL; rewrite ltnS leqn0 => /eqP.
+rewrite maxdE /= => Hmax.
+rewrite eq_sym neq_ltn ltnS; apply/orP; right.
+pose sz := (Ordinal (ltnSn (size w))).
+rewrite -(take_size w) -[size w]/(nat_of_ord sz) -subn_eq0 -leqn0 -Hmax.
+exact: leq_bigmax.
+Qed.
+
+Lemma take_pfmaxd_leq : #{{|take pfmaxd w| <= #}}|take pfmaxd w|.
+Proof. by apply ltnW; rewrite ltnNge -subn_eq0 pfmaxdP -lt0n maxd_pos. Qed.
+
+Lemma pfmaxd_pos : pfmaxd > 0.
+Proof. by case: pfmaxd maxd_pos pfmaxdP; first by rewrite take0; case maxd. Qed.
+
+Lemma nth_pfmaxd : nth {{ w pfmaxd.-1 = }}.
+Proof.
+move: pfmaxdP pfmaxd_min pfmaxd_size.
+case: pfmaxd pfmaxd_pos => //= pfmd _ Hpfmd pfmd_min pfmd_sz.
+move/(_ _ (ltnSn pfmd)): pfmd_min => /=.
+move: Hpfmd; rewrite (take_nth {{ pfmd_sz) !count_mem_rcons /= {pfmd_sz}.
+case: nth => //=; rewrite addn0 addn1 => <-.
+by rewrite subnS leqNgt ltnS leq_pred.
+Qed.
+
+Lemma last_rot_pfmaxd : last {{ (rot pfmaxd w) = }}.
+Proof.
+rewrite /rot last_cat -nth_pfmaxd -nth_last size_take_leq pfmaxd_size.
+rewrite nth_take; last by case: pfmaxd pfmaxd_pos.
+apply: set_nth_default.
+by case: pfmaxd pfmaxd_pos pfmaxd_size.
+Qed.
+
+Lemma rot_pfmaxdE :
+  rot pfmaxd w = rcons (take (size w).-1 (rot pfmaxd w)) }}.
+Proof.
+rewrite -{1}(cat_take_drop (size w).-1 (rot pfmaxd w)).
+suff -> : drop (size w).-1 (rot pfmaxd w) = [:: }}] by rewrite cats1.
+have hsz : size (drop (size w).-1 (rot pfmaxd w)) = 1.
+  rewrite size_drop size_rot /=.
+  by case: w bal1 => //= w0 tlw _; rewrite subSn // subnn.
+apply (eq_from_nth (x0 := {{)) => [// | n].
+rewrite hsz ltnS leqn0 => /eqP ->.
+rewrite nth_drop addn0 /= -(size_rot pfmaxd) nth_last.
+exact: last_rot_pfmaxd.
+Qed.
+
+Theorem rot_is_Dyck : take (size w).-1 (rot pfmaxd w) \is a Dyck_word.
+Proof.
+apply/Dyck_word_leqP; split => [n|].
+- have -> : size (take (size w).-1 (rot pfmaxd w)) = (size w).-1.
+    rewrite size_take size_rot /=.
+    by case: w bal1 => //= w0 tlw _; rewrite ltnSn.
+  move => Hn; rewrite take_take // /rot take_cat size_drop.
+  case: ltnP => [{Hn} Hn| Hnpf].
+  + have ctd p : count_mem p (take n (drop pfmaxd w)) =
+                 count_mem p (take (pfmaxd + n) w) - count_mem p (take pfmaxd w).
+      by rewrite take_addn count_cat addnC addnK.
+    rewrite !ctd leq_subLR addnBA; first last.
+      by rewrite take_addn count_cat leq_addr.
+    rewrite [count _ _ + count _ _ ]addnC -addnBA ?take_pfmaxd_leq //.
+    rewrite -leq_subLR pfmaxdP.
+    exact: maxdP.
+  + have {Hnpf} : n - (size w - pfmaxd) < pfmaxd.
+      rewrite subnBA ?pfmaxd_size // addnC -subnBA ?leq_subr; first last.
+        exact: (leq_trans Hn (leq_pred _)).
+      case: w bal1 Hn Hnpf => // w0 wtl _ /= Hn.
+      case: pfmaxd pfmaxd_pos => // pfm _; rewrite subSS => Hsz.
+      rewrite [(_ - n)]subSn // subSS ltnS.
+      exact: leq_subr.
+    move: (n - (size w - pfmaxd)) => {n Hn} n Hn.
+    rewrite !count_cat take_take; last exact: ltnW.
+    rewrite -ltnS.
+    have : #}}|take n w| < #{{|take n w| + maxd.
+      move/pfmaxd_min: Hn; rewrite -leq_subLR.
+      case: (leqP #{{|take n w| #}}|take n w|) => H; first by rewrite subSn.
+      move=> _; move: H; rewrite /leq => /eqP ->.
+      by rewrite sub0n.
+    rewrite -(ltn_add2l #}}|drop pfmaxd w|) => /leq_trans; apply.
+    rewrite addnC [X in X.+1]addnC -addnS -addnA leq_add2l.
+    rewrite -pfmaxdP addnBAC ?take_pfmaxd_leq //.
+    rewrite -count_cat cat_take_drop bal1.
+    rewrite -{1}(cat_take_drop pfmaxd w) count_cat.
+    by rewrite subSn  ?leq_addr // addnC addnK.
+- move: bal1; have /perm_eqlP/perm_eqP Hperm := (perm_rot pfmaxd w).
+  by rewrite -!{}Hperm {1 2}rot_pfmaxdE !count_mem_rcons /= addn0 addn1 => [[]].
+Qed.
+
+End BalToDyck.
+
+Section DyckToBal.
+
+End DyckToBal.
+
+End Balanced.
