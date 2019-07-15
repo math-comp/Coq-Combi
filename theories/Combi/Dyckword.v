@@ -1,6 +1,6 @@
 (** * Combi.Combi.DyckWord : Dyck Words *)
 (******************************************************************************)
-(*      Copyright (C) 2014-2018 Florent Hivert <florent.hivert@lri.fr>        *)
+(*      Copyright (C) 2018-2019 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
 (*  Distributed under the terms of the GNU General Public License (GPL)       *)
 (*                                                                            *)
@@ -442,7 +442,7 @@ End Bij.
 
 
 
-Section Balanced.
+Section BalToDyck.
 
 Variable w : seq brace.
 
@@ -498,7 +498,6 @@ apply/(introN idP) => /(pfmd_min i)/(leq_trans Hi).
 by rewrite ltnn.
 Qed.
 
-Section BalToDyck.
 
 Hypothesis bal1 : #}}|w| = #{{|w|.+1.
 
@@ -593,8 +592,89 @@ Qed.
 
 End BalToDyck.
 
+
 Section DyckToBal.
 
+Variables (w : seq brace) (rt : nat).
+Hypothesis HDyck : w \is a Dyck_word.
+Hypothesis Hrt: rt <= size w.
+
+Definition rrw := rot rt (rcons w }}).
+
+Lemma rrw_bal1 : #}}|rrw| = #{{|rrw|.+1.
+Proof.
+have /perm_eqlP/perm_eqP Hperm := (perm_rot rt (rcons w }})).
+rewrite !Hperm !count_mem_rcons /= addn1 addn0.
+by move: HDyck => /Dyck_wordP [_ ->].
+Qed.
+
+Let d := [:: {{; }}; {{; {{; }}; }}; {{; }}].
+Eval compute in size d.
+                                   (* 012345678 *)
+Eval compute in rot 0 (rcons d }}).  (* ()(())()) maxd = 1, pfmaxd = 9 *)
+Eval compute in rot 1 (rcons d }}).  (* )(())())( maxd = 2, pfmaxd = 8 *)
+Eval compute in rot 2 (rcons d }}).  (* (())())() maxd = 1, pfmaxd = 7 *)
+Eval compute in rot 3 (rcons d }}).  (* ())())()( maxd = 2, pfmaxd = 6 *)
+Eval compute in rot 4 (rcons d }}).  (* ))())()(( maxd = 3, pfmaxd = 5 *)
+Eval compute in rot 5 (rcons d }}).  (* )())()(() maxd = 2, pfmaxd = 4 *)
+Eval compute in rot 6 (rcons d }}).  (* ())()(()) maxd = 1, pfmaxd = 3 *)
+Eval compute in rot 7 (rcons d }}).  (* ))()(())( maxd = 2, pfmaxd = 2 *)
+Eval compute in rot 8 (rcons d }}).  (* )()(())() maxd = 1, pfmaxd = 1 *)
+
+
+Lemma maxd_rrw : maxd rrw = (#{{|take rt w| - #}}|take rt w|).+1.
+Proof.
+rewrite maxdE /rrw size_rot size_rcons.
+apply/anti_leq/andP; split.
+- apply/bigmax_leqP => /= [[i Hi]] /= _.
+  rewrite /rot take_cat size_drop size_rcons subSn // ltnS.
+  case: (leqP i _) => Hirt.
+  + rewrite {Hi} take_drop.
+    set dr := drop _ _.
+    case: (leqP #}}|dr| #{{|dr|); first by rewrite -subn_eq0 => /eqP ->.
+    rewrite {}/dr => /ltnW Hit.
+    rewrite -(leq_add2l #}}|take rt (take (i + rt) (rcons w }}))|) addnBA //.
+    rewrite -count_cat cat_take_drop take_take ?leq_addl //.
+    rewrite -cats1 !take_cat.
+    move: Hrt; rewrite leq_eqVlt => [/orP [/eqP|] Hrt1].
+    * subst rt; move: Hirt; rewrite ltnn subnn take0 leqn0 => /eqP ->.
+      rewrite add0n ltnn subnn take0 take_size cats0 drop_size /=.
+      by rewrite subn0 leq_addr.
+    move: Hirt; rewrite leq_eqVlt => [/orP [/eqP|] Hirt].
+    * subst i; rewrite Hrt1 subnK; last exact: ltnW.
+      rewrite ltnn subnn take0 cats0.
+      rewrite addnS subnKC; last by move: HDyck => /Dyck_wordP [] ->.
+      move: HDyck => /Dyck_wordP [] _ <-.
+      by rewrite -{1}(cat_take_drop rt w) count_cat addnK.
+    * rewrite ltn_subRL addnC in Hirt.
+      rewrite Hirt Hrt1.
+      rewrite addnS subnKC; last by move: HDyck => /Dyck_wordP [] ->.
+      rewrite -take_drop.
+      admit.
+  + 
+Admitted.
+
+  
+    
+Lemma rrw_pfmaxd : pfmaxd rrw = (size w).+1 - rt.
+Proof.
+rewrite /pfmaxd; case: ex_minnP => m /eqP; rewrite maxdE => Hmaxd Hmin.
+have hsrt : (size w).+1 - rt < (size rrw).+1.
+  by rewrite /rrw size_rot size_rcons ltnS subSn // ltnS leq_subr.
+apply/anti_leq/andP; split.
+apply/Hmin/eqP/anti_leq/andP; split.
+- by rewrite -/(nat_of_ord (Ordinal hsrt)) leq_bigmax.
+- apply/bigmax_leqP => /= [[i Hi] _] /=.
+  rewrite /rrw /rot !take_cat !size_drop size_rcons ltnn subnn take0 cats0.
+  case: ltnP => Hi1.
+  + set dr := drop _ _.
+    case: (leqP #}}|take i dr| #{{|take i dr|).
+      by rewrite -subn_eq0 => /eqP ->.
+    rewrite {}/dr  => Hit]; rewrite take_drop.
+    rewrite -(leq_add2l #}}|take rt (rcons w }})|).
+    rewrite addnBA.
+  admit.
+- 
 End DyckToBal.
 
 End Balanced.
