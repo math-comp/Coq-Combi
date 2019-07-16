@@ -121,8 +121,9 @@ rewrite -{2}(cat_take_drop n u) height_cat.
 by rewrite addrC addrA [-_ + _]addrC subrr add0r.
 Qed.
 
-Lemma height_perm u v : perm_eq u v -> height u = height v.
-Proof. by rewrite /height => /perm_eqP H; rewrite !H. Qed.
+Lemma height_rev u : height (rev u) = height u.
+Proof. by rewrite /height !count_rev. Qed.
+
 
 Local Notation "#{{| a |" := (count_mem {{ a) (format "#{{| a |").
 Local Notation "#}}| a |" := (count_mem }} a) (format "#}}| a |").
@@ -646,7 +647,8 @@ apply/Dyck_wordP; rewrite height_take_leq; split => [n|].
     rewrite -subr_eq0 opprK [height _ + _]addrC -addrA addr_eq0 => /eqP ->.
     rewrite addrC subr_ge0 lez_addr1.
     by rewrite pfminhP pfminh_min.
-- move: Hbal1; have /perm_eqlP/height_perm <- := (perm_rot pfminh w).
+- have : height (rot pfminh w) = -1.
+    by rewrite /rot height_cat addrC -height_cat cat_take_drop.
   rewrite {1}rot_pfminhE height_simpl /= => /eqP.
   by rewrite subr_eq => /eqP ->.
 Qed.
@@ -660,34 +662,19 @@ Variables (w : seq brace) (rt : nat).
 Hypothesis HDyck : w \is a Dyck_word.
 Hypothesis Hrt: (rt <= size w)%N.
 
-Definition rrw := rot rt (rcons w }}).
-
-Lemma rrw_bal1 : height rrw = -1.
-have /perm_eqlP/height_perm -> := (perm_rot rt (rcons w }})).
+Lemma rrw_bal1 : height (rot rt (rcons w }})) = -1.
+Proof.
+rewrite /rot height_cat addrC -height_cat cat_take_drop.
 apply/eqP; rewrite height_simpl /= subr_eq.
 by move: HDyck => /Dyck_wordP [_ ->].
 Qed.
 
-(*
-Let d := [:: {{; }}; {{; {{; }}; }}; {{; }}].
-Eval compute in size d.
-                                   (* 012345678 *)
-Eval compute in rot 0 (rcons d }}).  (* ()(())()) minh = -1, pfminh = 9 *)
-Eval compute in rot 1 (rcons d }}).  (* )(())())( minh = -2, pfminh = 8 *)
-Eval compute in rot 2 (rcons d }}).  (* (())())() minh = -1, pfminh = 7 *)
-Eval compute in rot 3 (rcons d }}).  (* ())())()( minh = -2, pfminh = 6 *)
-Eval compute in rot 4 (rcons d }}).  (* ))())()(( minh = -3, pfminh = 5 *)
-Eval compute in rot 5 (rcons d }}).  (* )())()(() minh = -2, pfminh = 4 *)
-Eval compute in rot 6 (rcons d }}).  (* ())()(()) minh = -1, pfminh = 3 *)
-Eval compute in rot 7 (rcons d }}).  (* ))()(())( minh = -2, pfminh = 2 *)
-Eval compute in rot 8 (rcons d }}).  (* )()(())() minh = -1, pfminh = 1 *)
-*)
-
-Lemma pfminh_rrw : pfminh rrw = ((size w).+1 - rt)%N.
+Lemma pfminh_rrw :
+  pfminh (rot rt (rcons w }})) = ((size w).+1 - rt)%N.
 Proof.
 apply/esym/pfminhE => [|i|i].
-- by rewrite /rrw size_rot size_rcons subSn // ltnS leq_subr.
-- rewrite /rrw/rot !take_cat !size_drop !size_rcons.
+- by rewrite size_rot size_rcons subSn // ltnS leq_subr.
+- rewrite /rot !take_cat !size_drop !size_rcons.
   rewrite subSn // ltnS ltnn subnn take0 cats0 ltnS.
   rewrite -(leq_add2r rt) subnK //.
   case: leqP => Hi.
@@ -705,7 +692,7 @@ apply/esym/pfminhE => [|i|i].
       rewrite -cats1 takel_cat //.
       by move: HDyck => /Dyck_wordP [->].
 - rewrite subSn // ltnS => Hi.
-  rewrite /rrw/rot !take_cat !size_drop !size_rcons.
+  rewrite /rot !take_cat !size_drop !size_rcons.
   rewrite subSn // ltnS ltnn subnn take0 cats0 ltnS Hi.
   rewrite take_drop !height_drop take_take ?leq_addl //.
   rewrite ltr_subl_addl addrC subrK.
@@ -716,11 +703,10 @@ apply/esym/pfminhE => [|i|i].
   by move: HDyck => /Dyck_wordP [H1 _].
 Qed.
 
-
-Lemma minh_rrw : minh rrw = - height (take rt w) - 1.
+Lemma minh_rrw : minh (rot rt (rcons w }})) = - height (take rt w) - 1.
 Proof.
 rewrite -pfminhP pfminh_rrw.
-rewrite /rrw/rot !take_cat !size_drop !size_rcons.
+rewrite /rot !take_cat !size_drop !size_rcons.
 rewrite subSn // ltnS ltnn subnn take0 cats0.
 rewrite height_drop height_simpl /=.
 move: HDyck => /Dyck_wordP [_ ->]; rewrite add0r addrC.
