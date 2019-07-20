@@ -19,7 +19,7 @@
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun bigop ssrnat eqtype fintype choice.
 From mathcomp Require Import seq tuple path fingraph finset.
-From mathcomp Require Import ssralg ssrint ssrnum binomial.
+From mathcomp Require Import div ssralg ssrint ssrnum binomial.
 
 Require Import tools combclass bintree.
 
@@ -1017,7 +1017,7 @@ move: (Dyck_of_bal w) Heq (Dyck_of_balP Hw) => D Heq HD {w Hw}.
 by subst B; rewrite (card_preim_Dyck HD).
 Qed.
 
-Lemma card_baln : (#|baln| = 'C(n.*2, n))%N.
+Lemma card_baln : #|baln| = 'C(n.*2, n).
 Proof.
 have := card_draws [finType of 'I_(n.*2)] n; rewrite card_ord => <-.
 pose f (w : wordn) := [set r : 'I_(n.*2) | preim (tnth w) (pred1 }}) r].
@@ -1052,6 +1052,17 @@ apply/setP => /= S; rewrite inE; apply/imsetP/idP => /= [[w Hw -> {S}] | /eqP HS
     by rewrite HS -addnn addnK subrr.
   + apply/setP => /= i; rewrite inE tnth_mktuple /=.
     by case: (i \in S).
+Qed.
+
+Lemma div_central_binomial : n.+1 %| 'C(n.*2, n).
+Proof.
+by apply/dvdnP; exists #|dyckn|; rewrite -card_baln_dyckn card_baln.
+Qed.
+
+Theorem card_dyckn :
+  #|dyckn| = 'C(n.*2, n) %/ n.+1.
+Proof.
+by rewrite -card_baln card_baln_dyckn mulnK.
 Qed.
 
 End Catalan.
