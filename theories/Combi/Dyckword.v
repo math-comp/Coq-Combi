@@ -18,7 +18,8 @@
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun bigop ssrnat eqtype fintype choice.
-From mathcomp Require Import seq path fingraph finset ssralg ssrint ssrnum.
+From mathcomp Require Import seq tuple path fingraph finset.
+From mathcomp Require Import ssralg ssrint ssrnum binomial.
 
 Require Import tools combclass bintree.
 
@@ -59,9 +60,6 @@ Qed.
 
 Lemma addnBAC m n p : n <= m -> m - n + p = m + p - n.
 Proof. by move=> le_nm; rewrite addnC addnBA // addnC. Qed.
-
-
-From mathcomp Require Import tuple finset.
 
 
 Section PreimPartition.
@@ -799,7 +797,7 @@ Proof. by rewrite size_cat !size_nseq addnn. Qed.
 Definition up_down := Tuple size_up_down.
 
 
-Lemma up_down_Dyck : tval up_down \is a Dyck_word.
+Lemma up_down_Dyck : tuple.tval up_down \is a Dyck_word.
 Proof.
 rewrite /=; apply/Dyck_wordP; rewrite height_take_leq; split => [i|].
 - rewrite (eqP size_up_down) take_cat !size_nseq; case: leqP => Hi Hi2.
@@ -816,14 +814,14 @@ Lemma size_Dyck_of_bal w :
 Proof. by rewrite size_take size_rot size_rcons ltnS leqnn size_tuple. Qed.
 Definition Dyck_of_bal w : wordn := Tuple (size_Dyck_of_bal w).
 
-Lemma Dyck_of_balP w : height w = 0 -> tval (Dyck_of_bal w) \is a Dyck_word.
+Lemma Dyck_of_balP w : height w = 0 -> tuple.tval (Dyck_of_bal w) \is a Dyck_word.
 Proof.
 rewrite /Dyck_of_bal /= => Hw.
 rewrite -[size w]/(size w).+1.-1 -(size_rcons w }}).
 by apply rot_is_Dyck; rewrite height_simpl /= Hw add0r.
 Qed.
 
-Lemma Dyck_of_dyckn D : tval D \is a Dyck_word -> Dyck_of_bal D = D.
+Lemma Dyck_of_dyckn D : tuple.tval D \is a Dyck_word -> Dyck_of_bal D = D.
 Proof.
 move => HD; apply val_inj => /=.
 suff -> : pfminh (rcons D }}) = size (rcons D }}).
@@ -866,7 +864,7 @@ Qed.
 Lemma bal_of_DyckK D rt :
   (rt <= size D)%N ->
   nth {{ (rcons D }}) (size D - rt) = }} ->
-  tval D \is a Dyck_word ->
+  tuple.tval D \is a Dyck_word ->
   Dyck_of_bal (bal_of_Dyck rt D) = D.
 Proof.
 move => Hsz Hnth Hw; apply val_inj; apply (rconsK (a := }})) => /=.
@@ -900,14 +898,27 @@ rewrite rotK size_take size_rot size_rcons /= ltnSn.
 by rewrite -cats1 take_size_cat.
 Qed.
 
-Let dyckn : {set wordn} := [set w : wordn | tval w \is a Dyck_word].
+Lemma count_mem_height0 w (b : brace) :
+  height w = 0 -> count_mem b w = n.
+Proof.
+move=> /eqP; rewrite /height subr_eq0 eqz_nat => /eqP Heq.
+have : (size w = (count_mem {{) w + (count_mem }}) w)%N.
+  case: w {Heq} => w _ /=; elim: w => //= w0 w IHw.
+  rewrite [(_ + count_mem }} w)%N]addnC !addnA.
+  rewrite -[((w0 == {{) + count_mem _ _ + _)%N]addnA -IHw.
+  by case: w0 => /=; rewrite ?addn0 ?add0n ?addn1 ?add1n.
+rewrite size_tuple Heq addnn => /double_inj {-1}->.
+by case b.
+Qed.
+
+Let dyckn : {set wordn} := [set w : wordn | tuple.tval w \is a Dyck_word].
 Let baln : {set wordn} := [set w : wordn | height w == 0].
 
 Definition bal_part : {set {set wordn } } := preim_partition Dyck_of_bal baln.
 
 
 Lemma card_preim_Dyck D :
-  tval D \is a Dyck_word -> #|baln :&: (Dyck_of_bal @^-1: [set D])| = n.+1.
+  tuple.tval D \is a Dyck_word -> #|baln :&: (Dyck_of_bal @^-1: [set D])| = n.+1.
 Proof.
 have rtk k : (k <= size D)%N ->
              nth {{ (rcons D }}) (size D - k) = }} ->
@@ -955,15 +966,8 @@ rewrite [baln :&: _](_ : _ = [set bal_of_Dyck (nat_of_ord rt) D |
   have:= mkseq_nth {{ (rcons D }}); rewrite /mkseq.
   move=> /(congr1 (filter (pred1 }})))/(congr1 size).
   rewrite [X in _ = X]size_filter filter_map size_map size_rcons => ->.
-  rewrite count_mem_rcons /= addn1.
-  move: HD => /Dyck_wordP [_ /eqP]; rewrite /height subr_eq0 eqz_nat => /eqP Heq.
-  have : (size D = (count_mem {{) D + (count_mem }}) D)%N.
-    case: D {Heq} => w _ /=.
-    elim: w => //= w0 w IHw.
-    rewrite [(_ + count_mem }} w)%N]addnC !addnA.
-    rewrite -[((w0 == {{) + count_mem _ _ + _)%N]addnA -IHw.
-    by case: w0 => /=; rewrite ?addn0 ?add0n ?addn1 ?add1n.
-  by rewrite size_tuple Heq addnn => /double_inj <-.
+  rewrite count_mem_rcons /= addn1 count_mem_height0 //.
+  by move: HD => /Dyck_wordP [].
 apply/setP => /= u {rtk}; rewrite !inE.
 apply/andP/imsetP => /= [[/eqP ubal /eqP Huw] | [v /=]].
 - have := Dyck_of_balK ubal; rewrite Huw => ->.
@@ -1013,4 +1017,43 @@ move: (Dyck_of_bal w) Heq (Dyck_of_balP Hw) => D Heq HD {w Hw}.
 by subst B; rewrite (card_preim_Dyck HD).
 Qed.
 
+Lemma card_baln : (#|baln| = 'C(n.*2, n))%N.
+Proof.
+have := card_draws [finType of 'I_(n.*2)] n; rewrite card_ord => <-.
+pose f (w : wordn) := [set r : 'I_(n.*2) | preim (tnth w) (pred1 }}) r].
+have /card_imset <- : injective f.
+  rewrite /f => u v Huv; apply: eq_from_tnth => i.
+  move: Huv => /(congr1 (fun s => i \in pred_of_set s)); rewrite !inE.
+  by case: (tnth u i) (tnth v i) => [] [].
+congr #|pred_of_set _|; rewrite {}/f.
+apply/setP => /= S; rewrite inE; apply/imsetP/idP => /= [[w Hw -> {S}] | /eqP HS].
+- move: Hw; rewrite inE => /eqP Hw.
+  rewrite cardE /enum_mem -enumT /=.
+  rewrite (eq_filter
+             (a2 := preim val (preim (nth {{ w) (pred1 }})))); first last.
+    by move=> /= i; rewrite inE (tnth_nth {{).
+  rewrite -(size_map nat_of_ord) -filter_map val_enum_ord.
+  have:= mkseq_nth {{ w; rewrite /mkseq.
+  move=> /(congr1 (filter (pred1 }})))/(congr1 size).
+  rewrite [X in _ = X]size_filter filter_map size_map size_tuple => ->.
+  by rewrite count_mem_height0.
+- exists (mktuple (fun i => if i \in S then }} else {{)).
+  + rewrite inE /height /=.
+    rewrite -!size_filter filter_map size_map filter_map size_map.
+    rewrite enumT -/enum_mem -!cardE.
+    rewrite (eq_card (B := pred_of_set (~: S))); first last.
+      move=> i; rewrite inE /= unfold_in /=.
+      by case: (boolP (i \in S)) => /=.
+    rewrite [X in _ - Posz X](eq_card (B := pred_of_set S)); first last.
+      move=> i; rewrite unfold_in /=.
+      by case: (boolP (i \in S)) => /=.
+    rewrite HS cardsCs card_ord.
+    have -> :  ~: ~: S = S by apply/setP => i; rewrite !inE negbK.
+    by rewrite HS -addnn addnK subrr.
+  + apply/setP => /= i; rewrite inE tnth_mktuple /=.
+    by case: (i \in S).
+Qed.
+
 End Catalan.
+
+
