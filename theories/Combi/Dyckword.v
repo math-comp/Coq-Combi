@@ -861,6 +861,21 @@ rewrite -addrA [1 + _]addrC addrA -height_cat cat_take_drop.
 by rewrite height_simpl! /= subrK.
 Qed.
 
+Lemma rcons_bal_of_Dyck w k :
+  (k <= size w)%N ->
+  nth {{ (rcons w }}) (size w - k) = }} ->
+  rcons (bal_of_Dyck k w) }} = rotr k (rcons w }}).
+Proof.
+  move=> Hsz Hk; rewrite -cats1 -[RHS](cat_take_drop (size w)); congr (_ ++ _).
+  apply (eq_from_nth (x0 := {{)) => [|i].
+    by rewrite size_drop /= size_rotr size_rcons subSn // subnn.
+  rewrite /= ltnS leqn0 => /eqP -> {i}.
+  rewrite [LHS]/= nth_drop addn0 /rotr/rot nth_cat.
+  rewrite !size_drop subKn; last by apply: (leq_trans Hsz); rewrite size_rcons.
+  rewrite ltnNge Hsz /= nth_take; last by rewrite size_rcons subSn.
+  by rewrite Hk.
+Qed.
+
 Lemma bal_of_DyckK D rt :
   (rt <= size D)%N ->
   nth {{ (rcons D }}) (size D - rt) = }} ->
@@ -920,17 +935,6 @@ Definition bal_part : {set {set wordn } } := preim_partition Dyck_of_bal baln.
 Lemma card_preim_Dyck D :
   tval D \is a Dyck_word -> #|baln :&: (Dyck_of_bal @^-1: [set D])| = n.+1.
 Proof.
-have rtk k : (k <= size D)%N ->
-             nth {{ (rcons D }}) (size D - k) = }} ->
-             rcons (take (size D) (rotr k (rcons D }}))) }} = rotr k (rcons D }}).
-  move=> Hsz Hk; rewrite -cats1 -[RHS](cat_take_drop (size D)); congr (_ ++ _).
-  apply (eq_from_nth (x0 := {{)) => [|i].
-    by rewrite size_drop /= size_rotr size_rcons subSn // subnn.
-  rewrite /= ltnS leqn0 => /eqP -> {i}.
-  rewrite [LHS]/= nth_drop addn0 /rotr/rot nth_cat.
-  rewrite !size_drop subKn; last by apply: (leq_trans Hsz); rewrite size_rcons.
-  rewrite ltnNge Hsz /= nth_take; last by rewrite size_rcons subSn.
-  by rewrite Hk.
 move=> HD.
 rewrite [baln :&: _](_ : _ = [set bal_of_Dyck (nat_of_ord rt) D |
                             rt : 'I_((size D).+1) &
@@ -941,8 +945,8 @@ rewrite [baln :&: _](_ : _ = [set bal_of_Dyck (nat_of_ord rt) D |
       move=> ileqj; case: (leqP i j); first exact: ileqj.
       by move=> /ltnW/ileqj ->.
     apply val_inj => /=; move: Hi Hj; rewrite !ltnS => Hi Hj.
-    move: Heq => /(congr1 val) /= /(congr1 (fun x => rcons x }})).
-    rewrite !{}rtk // /rotr => /(congr1 pfminh).
+    move: Heq => /(congr1 (fun x => rcons (val x) }})).
+    rewrite !rcons_bal_of_Dyck // /rotr => /(congr1 pfminh).
     case: i Hi Hnthi ilt => [|i] //=; rewrite ?subn0.
     - move=> _ Hnth _; case: j Hj Hnthj => // j Hj Hnthj.
       rewrite rot_size -{1}(rot0 (rcons D }})).
@@ -954,7 +958,7 @@ rewrite [baln :&: _](_ : _ = [set bal_of_Dyck (nat_of_ord rt) D |
       rewrite !pfminh_rrw //= size_rcons ?subSS ?leq_subr //.
       rewrite !subSn ?leq_subr //.
       by rewrite !subKn ?ltnS; try exact: ltnW.
-  rewrite {rtk} -(card_imset _ rev_ord_inj) cardE /enum_mem -enumT /=.
+  rewrite -(card_imset _ rev_ord_inj) cardE /enum_mem -enumT /=.
   rewrite (eq_filter
              (a2 := preim val (preim (nth {{ (rcons D }})) (pred1 }})))); first last.
     move=> /= i; apply/imsetP/idP => /= [[j] | Hnth].
@@ -968,7 +972,7 @@ rewrite [baln :&: _](_ : _ = [set bal_of_Dyck (nat_of_ord rt) D |
   rewrite [X in _ = X]size_filter filter_map size_map size_rcons => ->.
   rewrite count_mem_rcons /= addn1 count_mem_height0 //.
   by move: HD => /Dyck_wordP [].
-apply/setP => /= u {rtk}; rewrite !inE.
+apply/setP => /= u; rewrite !inE.
 apply/andP/imsetP => /= [[/eqP ubal /eqP Huw] | [v /=]].
 - have := Dyck_of_balK ubal; rewrite Huw => ->.
   have := pfminh_size (rcons u }}).
@@ -1037,21 +1041,20 @@ apply/setP => /= S; rewrite inE; apply/imsetP/idP => /= [[w Hw -> {S}] | /eqP HS
   move=> /(congr1 (filter (pred1 }})))/(congr1 size).
   rewrite [X in _ = X]size_filter filter_map size_map size_tuple => ->.
   by rewrite count_mem_height0.
-- exists (mktuple (fun i => if i \in S then }} else {{)).
-  + rewrite inE /height /=.
-    rewrite -!size_filter filter_map size_map filter_map size_map.
-    rewrite enumT -/enum_mem -!cardE.
-    rewrite (eq_card (B := pred_of_set (~: S))); first last.
-      move=> i; rewrite inE /= unfold_in /=.
-      by case: (boolP (i \in S)) => /=.
-    rewrite [X in _ - Posz X](eq_card (B := pred_of_set S)); first last.
-      move=> i; rewrite unfold_in /=.
-      by case: (boolP (i \in S)) => /=.
-    rewrite HS cardsCs card_ord.
-    have -> :  ~: ~: S = S by apply/setP => i; rewrite !inE negbK.
-    by rewrite HS -addnn addnK subrr.
-  + apply/setP => /= i; rewrite inE tnth_mktuple /=.
-    by case: (i \in S).
+- exists (mktuple (fun i => if i \in S then }} else {{)); first last.
+    by apply/setP => /= i; rewrite inE tnth_mktuple /=; case: (i \in S).
+  rewrite inE /height /=.
+  rewrite -!size_filter filter_map size_map filter_map size_map.
+  rewrite enumT -/enum_mem -!cardE.
+  rewrite (eq_card (B := pred_of_set (~: S))); first last.
+    move=> i; rewrite inE /= unfold_in /=.
+    by case: (boolP (i \in S)) => /=.
+  rewrite [X in _ - Posz X](eq_card (B := pred_of_set S)); first last.
+    move=> i; rewrite unfold_in /=.
+    by case: (boolP (i \in S)) => /=.
+  rewrite HS cardsCs card_ord.
+  have -> :  ~: ~: S = S by apply/setP => i; rewrite !inE negbK.
+  by rewrite HS -addnn addnK subrr.
 Qed.
 
 Lemma div_central_binomial : n.+1 %| 'C(n.*2, n).
