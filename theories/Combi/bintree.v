@@ -151,8 +151,8 @@ Section Size.
 Variable (n : nat).
 
 Structure bintreesz : predArgType :=
-  BinTreeSZ {tval :> bintree; _ : size_tree tval == n}.
-Canonical bintreesz_subType := Eval hnf in [subType for tval].
+  BinTreeSZ {trval :> bintree; _ : size_tree trval == n}.
+Canonical bintreesz_subType := Eval hnf in [subType for trval].
 Definition bintreesz_eqMixin := [eqMixin of bintreesz by <:].
 Canonical bintreesz_eqType := Eval hnf in EqType bintreesz bintreesz_eqMixin.
 Definition bintreesz_choiceMixin := [choiceMixin of bintreesz by <:].
@@ -656,7 +656,7 @@ Definition Tamari := connect (fun t1 t2 : bintreesz n => grel rotations t1 t2).
 Local Notation "x '<=T' y" := (Tamari x y) (at level 70, y at next level).
 
 Lemma rotations_Tamari t t' :
-  tval t' \in rotations t -> t <=T t'.
+  trval t' \in rotations t -> t <=T t'.
 Proof. by move=> H; apply connect1; rewrite /grel /=. Qed.
 
 Lemma Tamari_refl : reflexive Tamari.
@@ -695,8 +695,8 @@ case/lastP => [//= _ | p l Hp].
   move=> /(congr1 flipsz); rewrite !flipszK => ->.
   exact: connect0.
 rewrite last_rcons => Hl; subst l; move: Hp.
-have /eq_path -> : (fun t t' => tval t' \in rotations t)
-                   =2 (fun t t' => tval (flipsz t) \in rotations (flipsz t')).
+have /eq_path -> : (fun t t' => trval t' \in rotations t)
+                   =2 (fun t t' => trval (flipsz t) \in rotations (flipsz t')).
   by move=> t t' /=; exact: rotations_flip.
 rewrite -rev_path /= last_rcons belast_rcons.
 have -> : rev (flipsz t2 :: p) =
@@ -705,7 +705,7 @@ have -> : rev (flipsz t2 :: p) =
   rewrite -map_comp (eq_map (f2 := id)); last by move=> x /=; rewrite flipszK.
   by rewrite map_id.
 rewrite (map_path (b := pred0)
-                  (e' := (fun t t' => tval t' \in rotations t))); first last.
+                  (e' := (fun t t' => trval t' \in rotations t))); first last.
   - by apply/hasP => [] [t /=].
   - by rewrite /rel_base => u v _; rewrite /= !flipK.
 set pp := rcons _ _ => Hp; apply/connectP; exists pp; first by [].
@@ -1498,7 +1498,7 @@ apply/idP/idP.
   have [/= tt [Hrot Htleq]] := vctleq_rotation Hleq Hneq.
   have Hszt : size_tree tt == n by rewrite (size_rotations Hrot) bintreeszP.
   pose t := BinTreeSZ Hszt.
-  rewrite -[tt]/(tval t) in Hrot Htleq.
+  rewrite -[tt]/(trval t) in Hrot Htleq.
   have:= rightsizesum_gt Hrot.
   rewrite -(leq_add2r i) addSnnS => /(leq_trans Hsum).
   move=> /IHi{IHi}/(_ Htleq) /(Tamari_trans _); apply.
@@ -1512,7 +1512,7 @@ apply/idP/idP.
 Qed.
 
 Lemma Tamari_succ t1 t2 t :
-  tval t2 \in rotations t1 -> t1 <=T t -> t <=T t2 -> t = t1 \/ t = t2.
+  trval t2 \in rotations t1 -> t1 <=T t -> t <=T t2 -> t = t1 \/ t = t2.
 Proof.
 move/rotations_right_sizesP => [u] [v0] [v] [Ht1 Ht2].
 move: (right_sizesP t); rewrite -!Tamari_vctleq Ht1 Ht2 => Htam H1 H2.

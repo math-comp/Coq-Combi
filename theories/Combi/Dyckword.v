@@ -797,7 +797,7 @@ Proof. by rewrite size_cat !size_nseq addnn. Qed.
 Definition up_down := Tuple size_up_down.
 
 
-Lemma up_down_Dyck : tuple.tval up_down \is a Dyck_word.
+Lemma up_down_Dyck : tval up_down \is a Dyck_word.
 Proof.
 rewrite /=; apply/Dyck_wordP; rewrite height_take_leq; split => [i|].
 - rewrite (eqP size_up_down) take_cat !size_nseq; case: leqP => Hi Hi2.
@@ -814,14 +814,14 @@ Lemma size_Dyck_of_bal w :
 Proof. by rewrite size_take size_rot size_rcons ltnS leqnn size_tuple. Qed.
 Definition Dyck_of_bal w : wordn := Tuple (size_Dyck_of_bal w).
 
-Lemma Dyck_of_balP w : height w = 0 -> tuple.tval (Dyck_of_bal w) \is a Dyck_word.
+Lemma Dyck_of_balP w : height w = 0 -> tval (Dyck_of_bal w) \is a Dyck_word.
 Proof.
 rewrite /Dyck_of_bal /= => Hw.
 rewrite -[size w]/(size w).+1.-1 -(size_rcons w }}).
 by apply rot_is_Dyck; rewrite height_simpl /= Hw add0r.
 Qed.
 
-Lemma Dyck_of_dyckn D : tuple.tval D \is a Dyck_word -> Dyck_of_bal D = D.
+Lemma Dyck_of_dyckn D : tval D \is a Dyck_word -> Dyck_of_bal D = D.
 Proof.
 move => HD; apply val_inj => /=.
 suff -> : pfminh (rcons D }}) = size (rcons D }}).
@@ -864,7 +864,7 @@ Qed.
 Lemma bal_of_DyckK D rt :
   (rt <= size D)%N ->
   nth {{ (rcons D }}) (size D - rt) = }} ->
-  tuple.tval D \is a Dyck_word ->
+  tval D \is a Dyck_word ->
   Dyck_of_bal (bal_of_Dyck rt D) = D.
 Proof.
 move => Hsz Hnth Hw; apply val_inj; apply (rconsK (a := }})) => /=.
@@ -911,14 +911,14 @@ rewrite size_tuple Heq addnn => /double_inj {-1}->.
 by case b.
 Qed.
 
-Let dyckn : {set wordn} := [set w : wordn | tuple.tval w \is a Dyck_word].
+Let dyckn : {set wordn} := [set w : wordn | tval w \is a Dyck_word].
 Let baln : {set wordn} := [set w : wordn | height w == 0].
 
 Definition bal_part : {set {set wordn } } := preim_partition Dyck_of_bal baln.
 
 
 Lemma card_preim_Dyck D :
-  tuple.tval D \is a Dyck_word -> #|baln :&: (Dyck_of_bal @^-1: [set D])| = n.+1.
+  tval D \is a Dyck_word -> #|baln :&: (Dyck_of_bal @^-1: [set D])| = n.+1.
 Proof.
 have rtk k : (k <= size D)%N ->
              nth {{ (rcons D }}) (size D - k) = }} ->
