@@ -58,8 +58,20 @@ apply (eq_from_nth (x0 := l)) => [|k];
 by rewrite nth_take // !nth_nseq Hk (leq_trans Hk Hi).
 Qed.
 
-Lemma addnBAC m n p : n <= m -> m - n + p = m + p - n.
-Proof. by move=> le_nm; rewrite addnC addnBA // addnC. Qed.
+
+
+Lemma card_preim_nth (m : nat) (T : eqType) (s : seq T) (P : pred T) (u : T):
+  size s = m -> #|[set i : 'I_m | preim (nth u s) P i]| = count P s.
+Proof.
+move=> Hsz.
+rewrite cardsE cardE /enum_mem -enumT /=.
+rewrite (eq_filter (a2 := (fun i : 'I_m => preim (nth u s) P i))); first last.
+  by move=> i; rewrite inE unfold_in /=.
+rewrite -(size_map nat_of_ord) -filter_map val_enum_ord.
+have:= mkseq_nth u s; rewrite /mkseq.
+move=> /(congr1 (filter P))/(congr1 size).
+by rewrite [X in _ = X]size_filter filter_map size_map Hsz.
+Qed.
 
 
 Section PreimPartition.
@@ -241,7 +253,7 @@ rewrite unfold_in.
 by apply (iffP andP) => /= [] [H1 /eqP H2]; split => //; apply/Dyck_prefixP.
 Qed.
 
-Lemma height_take_leq h w :
+Lemma height_take_leq (h : int) w :
   (forall n : nat, h <= height (take n w)) <->
   (forall n : nat, (n <= size w)%N -> h <= height (take n w)).
 Proof.
@@ -792,15 +804,14 @@ Local Notation wordn := (n.*2.-tuple brace).
 Implicit Types u v w D : wordn.
 
 
-Lemma size_up_down : size (nseq n {{ ++ nseq n }}) == n.*2.
+Lemma size_UnDn : size (nseq n {{ ++ nseq n }}) == n.*2.
 Proof. by rewrite size_cat !size_nseq addnn. Qed.
-Definition up_down := Tuple size_up_down.
+Definition UnDn := Tuple size_UnDn.
 
-
-Lemma up_down_Dyck : tval up_down \is a Dyck_word.
+Lemma UnDn_Dyck : tval UnDn \is a Dyck_word.
 Proof.
 rewrite /=; apply/Dyck_wordP; rewrite height_take_leq; split => [i|].
-- rewrite (eqP size_up_down) take_cat !size_nseq; case: leqP => Hi Hi2.
+- rewrite (eqP size_UnDn) take_cat !size_nseq; case: leqP => Hi Hi2.
   + rewrite height_simpl take_nseq ?height_nseq /=; first last.
       by rewrite leq_subLR addnn.
     by rewrite mulrN1 mulr1 subr_ge0 lez_nat leq_subLR addnn.
@@ -808,6 +819,21 @@ rewrite /=; apply/Dyck_wordP; rewrite height_take_leq; split => [i|].
     by rewrite height_nseq /= mulr1 lez_nat.
 - by rewrite height_cat !height_nseq /= mulrN1 mulr1 subrr.
 Qed.
+
+Lemma size_UDn : size (flatten (nseq n [:: {{; }}])) == n.*2.
+Proof. by elim: n. Qed.
+Definition UDn := Tuple size_UDn.
+
+Lemma UDn_Dyck : tval UDn \is a Dyck_word.
+Proof.
+rewrite /=; apply/Dyck_wordP; rewrite height_take_leq; split => [i|].
+- rewrite (eqP size_UDn).
+  elim: n i => //= m IHm [|[|i]] //.
+  rewrite doubleS ltnS ltnS !height_simpl /= addrA subrr add0r.
+  exact: IHm.
+- by elim: n => //= m; rewrite !height_simpl /= addrA subrr add0r.
+Qed.
+
 
 Lemma size_Dyck_of_bal w :
   size (take (size w) (rot (pfminh (rcons w }})) (rcons w }}))) == n.*2.
@@ -931,19 +957,6 @@ Let baln : {set wordn} := [set w : wordn | height w == 0].
 
 Definition bal_part : {set {set wordn } } := preim_partition Dyck_of_bal baln.
 
-
-Lemma card_preim_nth (m : nat) (T : eqType) (s : seq T) (P : pred T) (u : T):
-  size s = m -> #|[set i : 'I_m | preim (nth u s) P i]| = count P s.
-Proof.
-move=> Hsz.
-rewrite cardsE cardE /enum_mem -enumT /=.
-rewrite (eq_filter (a2 := (fun i : 'I_m => preim (nth u s) P i))); first last.
-  by move=> i; rewrite inE unfold_in /=.
-rewrite -(size_map nat_of_ord) -filter_map val_enum_ord.
-have:= mkseq_nth u s; rewrite /mkseq.
-move=> /(congr1 (filter P))/(congr1 size).
-by rewrite [X in _ = X]size_filter filter_map size_map Hsz.
-Qed.
 
 Lemma card_preim_Dyck D :
   tval D \is a Dyck_word -> #|baln :&: (Dyck_of_bal @^-1: [set D])| = n.+1.
