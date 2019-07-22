@@ -1049,17 +1049,15 @@ apply/setP => /= S; rewrite inE; apply/imsetP/idP => /= [[w Hw -> {S}] | /eqP HS
 - exists (mktuple (fun i => if i \in S then }} else {{)); first last.
     by apply/setP => /= i; rewrite inE tnth_mktuple /=; case: (i \in S).
   rewrite inE /height /=.
-  rewrite -!size_filter filter_map size_map filter_map size_map.
-  rewrite enumT -/enum_mem -!cardE.
-  rewrite (eq_card (B := pred_of_set (~: S))); first last.
-    move=> i; rewrite inE /= unfold_in /=.
-    by case: (boolP (i \in S)) => /=.
-  rewrite [X in _ - Posz X](eq_card (B := pred_of_set S)); first last.
-    move=> i; rewrite unfold_in /=.
-    by case: (boolP (i \in S)) => /=.
-  rewrite HS cardsCs card_ord.
+  do 2 rewrite -size_filter filter_map size_map.
+  rewrite (eq_filter (a2 := mem (~: S))); first last.
+    by move=> i; rewrite /= in_setC; case: (i \in S).
+  rewrite [X in _ - Posz (size X)](eq_filter (a2 := mem S)); first last.
+    by move=> i /=; case: (i \in S).
+  rewrite !enumT -/enum_mem -!cardE.
+  rewrite cardsCs.
   have -> :  ~: ~: S = S by apply/setP => i; rewrite !inE negbK.
-  by rewrite HS -addnn addnK subrr.
+  by rewrite HS card_ord -addnn addnK subrr.
 Qed.
 
 Lemma div_central_binomial : n.+1 %| 'C(n.*2, n).
