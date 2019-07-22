@@ -30,7 +30,7 @@ Binary trees of size n:
 
 - [size_tree t] == the number of node of the tree [t]
 - [enum_bintreesz n] == the list of a trees of size [n]
-- [bintreesz n] == the sigma type for trees of size [n]. This is
+- [bintreesz n] == the Sigma type for trees of size [n]. This is
         canonically a [finType] with enumeration [enum_bintreesz n]
 - [catalan n] == the number of binary trees of size [n]
 

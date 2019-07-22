@@ -1084,6 +1084,26 @@ Proof.
 by rewrite -card_baln card_baln_dyckn mulnK.
 Qed.
 
+Theorem card_bintreesz :
+  #|bintreesz n| = 'C(n.*2, n) %/ n.+1.
+Proof.
+rewrite -card_dyckn.
+have trdP (tr : bintreesz n) : size (Dyck_of_bintree tr) == n.*2.
+  by rewrite size_Dyck_of_bintree mul2n bintreeszP.
+pose trd (tr : bintreesz n) := Tuple (trdP tr).
+rewrite -(card_imset (f := trd)); first last.
+  move=> tr1 tr2 /(congr1 val) /= /val_inj /(congr1 (bintree_of_Dyck)).
+  by rewrite !Dyck_of_bintreeK => /val_inj.
+congr (#|pred_of_set _|).
+apply/setP => /= S; rewrite inE; apply/imsetP/idP => /= [[tr Htr -> {S}] | HS].
+- by rewrite /=; case: (Dyck_of_bintree _).
+- pose tr := bintree_of_Dyck (DyckWord HS).
+  have := size_bintree_of_Dyck (DyckWord HS).
+  rewrite /= size_tuple mul2n => /double_inj/eqP => sztr.
+  exists (BinTreeSZ sztr); first by rewrite inE.
+  by apply val_inj; rewrite /= bintree_of_DyckK.
+Qed.
+
 End Catalan.
 
 
