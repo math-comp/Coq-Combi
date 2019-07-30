@@ -85,7 +85,7 @@ Contents
   - subsequences, integer vectors,
   - standard words and permutations,
   - Yamanouchi words,
-  - binary trees
+  - binary trees, Dyck words
 
 * the **Coxeter presentation of the symmetric group**.
 
@@ -94,6 +94,8 @@ Contents
 * the **factorization** of the Vandermonde determinant as the product of differences.
 
 * the **Tamari lattice** on binary trees.
+
+* the formula for **Catalan numbers** counting binary trees and Dyck words.
 
 Various unstable/unfinished experiments:
 ========================================
