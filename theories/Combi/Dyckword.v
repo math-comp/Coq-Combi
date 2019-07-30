@@ -1,4 +1,4 @@
-(** * Combi.Combi.DyckWord : Dyck Words *)
+(** * Combi.Combi.Dyckword : Dyck Words *)
 (******************************************************************************)
 (*      Copyright (C) 2019-2020 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
@@ -78,25 +78,27 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
+
+(** SSreflect complement. TODO: move elsewhere *)
 Lemma take_take (T : Type) i j (s : seq T) :
   i <= j -> take i (take j s) = take i s.
 Proof.
-elim: s i j => [// | a s IH] [|i] [|j] //=.
-by rewrite ltnS => /IH ->.
+elim: s i j => [// | a s IHs] [|i] [|j] //=.
+by rewrite ltnS => /IHs ->.
 Qed.
 
 Lemma take_drop (T : Type) i j (s : seq T) :
   take i (drop j s) = drop j (take (i + j) s).
 Proof.
-elim: j s => [|j IH] s /=; first by rewrite !drop0 addn0.
+elim: j s => [|j IHs] s /=; first by rewrite !drop0 addn0.
 by case: s => [// | a s]; rewrite addnS /=.
 Qed.
 
 Lemma take_addn (T : Type) (s : seq T) n m :
   take (n + m) s = take n s ++ take m (drop n s).
 Proof.
-elim: n m s => [|n IH] [|m] [|a s] //; first by rewrite take0 addn0 cats0.
-by rewrite drop_cons addSn !take_cons /= IH.
+elim: n m s => [|n IHs] [|m] [|a s] //; first by rewrite take0 addn0 cats0.
+by rewrite drop_cons addSn !take_cons /= IHs.
 Qed.
 
 Lemma take_nseq (T : Type) i j (l : T) :
@@ -116,7 +118,7 @@ Proof.
 move=> Hsz.
 rewrite cardsE cardE /enum_mem -enumT /=.
 rewrite (eq_filter (a2 := (fun i : 'I_m => preim (nth u s) P i))); first last.
-  by move=> i; rewrite inE unfold_in /=.
+  by move=> i; rewrite inE unfold_in.
 rewrite -(size_map nat_of_ord) -filter_map val_enum_ord.
 have:= mkseq_nth u s; rewrite /mkseq.
 move=> /(congr1 (filter P))/(congr1 size).
@@ -184,7 +186,7 @@ Qed.
 End PreimPartition.
 
 
-
+(** * Braces and Dyck words *)
 Inductive brace : Set := | Open : brace | Close : brace.
 
 Local Notation "{{" := Open.
@@ -223,6 +225,7 @@ Open Scope int_scope.
 Open Scope ring_scope.
 
 
+(** ** Height of a word *)
 Section Defs.
 
 Implicit Type n : nat.
@@ -291,6 +294,7 @@ rewrite /prefixes; apply (iffP idP) => [/mapP [i _ ->] | [i ->]].
 Qed.
 
 
+(** ** Definitions *)
 Definition Dyck_prefix :=
   [qualify a w : seq brace |
    all (fun p : seq brace => height p >= 0) (prefixes w)].
@@ -361,6 +365,7 @@ Qed.
 End Defs.
 
 
+(** ** Sigma type for Dyck words *)
 Section DyckType.
 
 Record Dyck := DyckWord {dyckword :> seq brace;
@@ -405,13 +410,11 @@ Notation "[ 'Dyck' {{ D1 }} D2 ]" := (join_Dyck D1 D2)
    D1 at next level) : form_scope.
 
 
+(** * Standard factorization of Dyck words *)
 Section DyckFactor.
 
 Implicit Type D : Dyck.
 
-
-Lemma join_Dyck_nnil D1 D2 : [Dyck {{ D1 }} D2] != [Dyck of [::]].
-Proof. by []. Qed.
 
 Lemma Dyck_cut_ex D :
   D != [Dyck of [::]] -> exists i, (i != 0)%N && (height (take i D) == 0).
@@ -467,29 +470,27 @@ exists (DyckWord HDL, DyckWord HDR).
 by apply/val_inj; rewrite /= -{1}(cat_take_drop cut.+1 tl) Hf1 cat_rcons.
 Qed.
 
-Lemma Dyck_fact_size D1 D2 :
-  (size D1).+2 = ex_minn (Dyck_cut_ex (join_Dyck_nnil D1 D2)).
-Proof.
-case: ex_minnP => cut /andP [Hcut /eqP Heq Hmin].
-apply/anti_leq/andP; split.
-- move: Heq => /eqP {Hmin}; rewrite leqNgt; apply contraL; rewrite ltnS.
-  case: cut Hcut => [// | cut _]; rewrite ltnS => Hcut.
-  rewrite /= take_cat.
-  move: Hcut; rewrite leq_eqVlt => /orP [/eqP -> | ->].
-  + rewrite ltnn subnn  /= !height_simpl /= addr0.
-    by case: D1 => /= [d1 /Dyck_wordP [_ ->]]; rewrite addr0.
-  + rewrite !height_simpl /=.
-    case: D1 => /= [d1 /Dyck_wordP [/(_ cut) H _]].
-    by apply lt0r_neq0; rewrite ltz_add1r.
-- apply: Hmin; rewrite /= {Heq}.
-  rewrite -cat1s -[}} :: _]cat1s !catA take_size_cat ?size_cat /= ?addn1 //.
-  rewrite !height_simpl /= addr0 addrC subrK.
-  by case: D1 => /= [d1 /Dyck_wordP [_ ->]].
-Qed.
-
 Theorem join_Dyck_inj D1 D2 E1 E2 :
   [Dyck {{D1}}D2] = [Dyck {{E1}}E2] -> (D1, D2) = (E1, E2).
 Proof.
+have join_Dyck_nnil d1 d2 : [Dyck {{ d1 }} d2] != [Dyck of [::]] by [].
+have Dyck_fact_size (d1 d2 : Dyck) :
+  (size d1).+2 = ex_minn (Dyck_cut_ex (join_Dyck_nnil d1 d2)).
+  case: ex_minnP => cut /andP [Hcut /eqP Heq Hmin].
+  apply/anti_leq/andP; split.
+  - move: Heq => /eqP {Hmin}; rewrite leqNgt; apply contraL; rewrite ltnS.
+    case: cut Hcut => [// | cut _]; rewrite ltnS => Hcut.
+    rewrite /= take_cat.
+    move: Hcut; rewrite leq_eqVlt => /orP [/eqP -> | ->].
+    + rewrite ltnn subnn  /= !height_simpl /= addr0.
+      by case: d1 => /= [d1 /Dyck_wordP [_ ->]]; rewrite addr0.
+    + rewrite !height_simpl /=.
+      case: d1 => /= [d1 /Dyck_wordP [/(_ cut) H _]].
+      by apply lt0r_neq0; rewrite ltz_add1r.
+  - apply: Hmin; rewrite /= {Heq}.
+    rewrite -cat1s -[}} :: _]cat1s !catA take_size_cat ?size_cat /= ?addn1 //.
+    rewrite !height_simpl /= addr0 addrC subrK.
+    by case: d1 => /= [d1 /Dyck_wordP [_ ->]].
 move=> Heq.
 have Hnnil := join_Dyck_nnil D1 D2.
 move: (Dyck_fact_size D1 D2).
@@ -506,6 +507,7 @@ Qed.
 End DyckFactor.
 
 
+(** ** Induction on Dyck words following the standard factorization *)
 Section DyckSetInd.
 
 Implicit Type D : Dyck.
@@ -530,7 +532,8 @@ Qed.
 
 End DyckSetInd.
 
-(** Example of application of the induction principle *)
+
+(** ** Examples of application of the induction principle *)
 Lemma Dyck_size_even (D : Dyck) : ~~ odd (size D).
 Proof.
 elim/Dyck_ind: D => //= D1 D2 /negbTE HD1 /negbTE HD2.
@@ -559,6 +562,7 @@ by rewrite -!addnS addnA mulnS [(2 + _)%N]addnC mul2n -addnn !addnA.
 Qed.
 
 
+(** ** Bijection with binary trees *)
 Section BijBinTrees.
 
 Fixpoint Dyck_of_bintree t :=
@@ -619,6 +623,8 @@ Proof. by rewrite -{2}(bintree_of_DyckK D) size_Dyck_of_bintree. Qed.
 End BijBinTrees.
 
 
+(** * Dyck and balanced words *)
+(** ** Rotation map from balanced words to a Dyck words *)
 Section BalToDyck.
 
 Variable w : seq brace.
@@ -633,18 +639,6 @@ Proof.
 rewrite /minh /prefixes.
 by rewrite big_map -{1}[(size w).+1]subn0 -/(index_iota _ _) big_mkord.
 Qed.
-
-
-(*
-Lemma exists_maxd : exists i : nat,
-    (count_mem }} (take i w) - count_mem {{ (take i w) == maxd)%N.
-Proof.
-rewrite maxdE.
-have : (#|'I_(size w).+1| > 0)%N by rewrite card_ord.
-set F := BIG_F; case/(eq_bigmax F) => [[i Hi]]; rewrite {}/F /= => H.
-by exists i; rewrite H.
-Qed.
-*)
 
 Lemma minhP : forall i : nat, height (take i w) >= minh.
 Proof.
@@ -853,6 +847,7 @@ Qed.
 End DyckToBal.
 
 
+(** * Catalan numbers *)
 Definition Catalan n := 'C(n.*2, n) %/ n.+1.
 
 Definition Dyck_hsz n : {set n.*2.-tuple brace} :=
@@ -880,8 +875,44 @@ apply/setP => /= S; rewrite inE; apply/imsetP/idP => /= [[tr Htr -> {S}] | HS].
   by apply val_inj; rewrite /= bintree_of_DyckK.
 Qed.
 
+Lemma count_mem_height0 n (w : n.*2.-tuple brace) b :
+  height w = 0 -> count_mem b w = n.
+Proof.
+move=> /eqP; rewrite /height subr_eq0 eqz_nat => /eqP Heq.
+have:= size_count_braceE w.
+rewrite size_tuple Heq addnn => /double_inj {-1}->.
+by case b.
+Qed.
+
+Lemma card_bal_hsz n : #|bal_hsz n| = 'C(n.*2, n).
+Proof.
+have := card_draws [finType of 'I_(n.*2)] n; rewrite card_ord => <-.
+have /card_imset <- : injective
+    (fun w => [set r : 'I_(n.*2) | preim (tnth w) (pred1 }}) r]).
+  move => u v Huv; apply: eq_from_tnth => i.
+  move: Huv => /(congr1 (fun s => i \in pred_of_set s)); rewrite !inE.
+  by case: (tnth u i) (tnth v i) => [] [].
+congr #|pred_of_set _|; apply/setP => /= S.
+rewrite inE; apply/imsetP/idP => /= [[w Hw -> {S}] | /eqP HS].
+- move: Hw; rewrite inE => /eqP Hw; apply/eqP.
+  rewrite -[RHS](count_mem_height0 }} Hw).
+  rewrite -(@card_preim_nth n.*2 _ _ _ {{) ?size_tuple //.
+  by congr (#|pred_of_set _|); apply/setP => /= i; rewrite /= !inE -tnth_nth.
+- exists (mktuple (fun i => if i \in S then }} else {{)); first last.
+    by apply/setP => /= i; rewrite inE tnth_mktuple /=; case: (i \in S).
+  rewrite inE /height /=.
+  do 2 rewrite -size_filter filter_map size_map.
+  rewrite [X in Posz (size X) - _](eq_filter (a2 := mem (~: S))); first last.
+    by move=> i; rewrite /= in_setC; case: (i \in S).
+  rewrite [X in _ - Posz (size X)](eq_filter (a2 := mem S)); first last.
+    by move=> i /=; case: (i \in S).
+  rewrite !enumT -/enum_mem -!cardE cardsCs.
+  have -> :  ~: ~: S = S by apply/setP => i; rewrite !inE negbK.
+  by rewrite HS card_ord -addnn addnK subrr.
+Qed.
 
 
+(** ** The rotation bijection *)
 Section DyckWordRotationBijection.
 
 Variable n : nat.
@@ -893,13 +924,12 @@ Definition UnDn := Tuple size_UnDn.
 
 Lemma UnDn_Dyck : tval UnDn \is a Dyck_word.
 Proof.
-rewrite /=; apply/Dyck_wordP; rewrite height_take_leq; split => [i|].
-- rewrite (eqP size_UnDn) take_cat !size_nseq; case: leqP => Hi Hi2.
-  + rewrite height_simpl take_nseq ?height_nseq /=; first last.
-      by rewrite leq_subLR addnn.
-    by rewrite mulrN1 mulr1 subr_ge0 lez_nat leq_subLR addnn.
-  + rewrite take_nseq; last exact: ltnW.
-    by rewrite height_nseq /= mulr1 lez_nat.
+apply/Dyck_wordP; rewrite height_take_leq; split => [i|].
+- rewrite (eqP size_UnDn) take_cat !size_nseq => Hi2.
+  case: leqP => [Hi | /ltnW Hi {Hi2}].
+  + rewrite height_simpl take_nseq /=; last by rewrite leq_subLR addnn.
+    by rewrite !height_nseq mulrN1 mulr1 subr_ge0 lez_nat leq_subLR addnn.
+  + by rewrite take_nseq // height_nseq /= mulr1 lez_nat.
 - by rewrite height_cat !height_nseq /= mulrN1 mulr1 subrr.
 Qed.
 
@@ -960,7 +990,7 @@ Lemma bal_of_DyckP rt w :
   nth {{ (rcons w }}) (size w - rt) = }} ->
   height w = 0 -> height (bal_of_Dyck rt w) = 0.
 Proof.
-case: w => [w Hw] /= Hsz H H0 {Hw}.
+case: w => [w _] /= Hsz H H0.
 rewrite /rot take_cat size_drop size_rcons subKn; last exact: (leq_trans Hsz).
 rewrite ltnNge Hsz !height_simpl /= take_take subSn // addrC.
 have : (size w - rt < size (rcons w }}))%N by rewrite size_rcons ltnS leq_subr.
@@ -975,14 +1005,14 @@ Lemma rcons_bal_of_Dyck w k :
   nth {{ (rcons w }}) (size w - k) = }} ->
   rcons (bal_of_Dyck k w) }} = rotr k (rcons w }}).
 Proof.
-  move=> Hsz Hk; rewrite -cats1 -[RHS](cat_take_drop (size w)); congr (_ ++ _).
-  apply (eq_from_nth (x0 := {{)) => [|i].
-    by rewrite size_drop /= size_rotr size_rcons subSn // subnn.
-  rewrite /= ltnS leqn0 => /eqP -> {i}.
-  rewrite [LHS]/= nth_drop addn0 /rotr/rot nth_cat.
-  rewrite !size_drop subKn; last by apply: (leq_trans Hsz); rewrite size_rcons.
-  rewrite ltnNge Hsz /= nth_take; last by rewrite size_rcons subSn.
-  by rewrite Hk.
+move=> Hsz Hk; rewrite -cats1 -[RHS](cat_take_drop (size w)); congr (_ ++ _).
+apply (eq_from_nth (x0 := {{)) => [|i].
+  by rewrite size_drop /= size_rotr size_rcons subSn // subnn.
+rewrite /= ltnS leqn0 => /eqP -> {i}.
+rewrite [LHS]/= nth_drop addn0 /rotr/rot nth_cat.
+rewrite !size_drop subKn; last by apply: (leq_trans Hsz); rewrite size_rcons.
+rewrite ltnNge Hsz /= nth_take; last by rewrite size_rcons subSn.
+by rewrite Hk.
 Qed.
 
 Lemma bal_of_DyckK D rt :
@@ -1022,60 +1052,13 @@ rewrite rotK size_take size_rot size_rcons /= ltnSn.
 by rewrite -cats1 take_size_cat.
 Qed.
 
-Lemma count_mem_height0 w (b : brace) :
-  height w = 0 -> count_mem b w = n.
-Proof.
-move=> /eqP; rewrite /height subr_eq0 eqz_nat => /eqP Heq.
-have:= size_count_braceE w.
-rewrite size_tuple Heq addnn => /double_inj {-1}->.
-by case b.
-Qed.
-
-
-Definition bal_part : {set {set n.*2.-tuple brace} } :=
-  preim_partition Dyck_of_bal (bal_hsz n).
-
-
-Lemma card_preim_Dyck D :
+Lemma preim_Dyck_of_balE D :
   tval D \is a Dyck_word ->
-  #|(bal_hsz n) :&: (Dyck_of_bal @^-1: [set D])| = n.+1.
+  (bal_hsz n) :&: (Dyck_of_bal @^-1: [set D]) =
+  [ set bal_of_Dyck (nat_of_ord rt) D |
+    rt : 'I_((size D).+1) & nth {{ (rcons D }}) (size D - rt) == }} ].
 Proof.
-move=> HD.
-have <- : #|[set bal_of_Dyck (nat_of_ord rt) D |
-            rt : 'I_((size D).+1) &
-                 nth {{ (rcons D }}) (size D - rt) == }} ]| = n.+1.
-  rewrite card_in_imset; first last.
-    move=> [i Hi] [j Hj]; rewrite !inE /= => /eqP Hnthi /eqP Hnthj Heq.
-    wlog ilt : i j Hi Hj Hnthi Hnthj Heq / (i <= j)%N.
-      move=> ileqj; case: (leqP i j); first exact: ileqj.
-      by move=> /ltnW/ileqj ->.
-    apply val_inj => /=; move: Hi Hj; rewrite !ltnS => Hi Hj.
-    move: Heq => /(congr1 (fun x => rcons (val x) }})).
-    rewrite !rcons_bal_of_Dyck // /rotr => /(congr1 pfminh).
-    case: i Hi Hnthi ilt => [|i] //=; rewrite ?subn0.
-    - move=> _ Hnth _; case: j Hj Hnthj => // j Hj Hnthj.
-      rewrite rot_size -{1}(rot0 (rcons D }})).
-      rewrite !pfminh_rrw //= size_rcons; last by rewrite subSS leq_subr.
-      rewrite subn0 subKn ?ltnS; last exact: ltnW.
-      by move=> [] Heq; move: Hj; rewrite Heq ltnn.
-    - case: j Hj Hnthj => // j Hj Hnthj Hi Hnthi.
-      rewrite ltnS => Hij.
-      rewrite !pfminh_rrw //= size_rcons ?subSS ?leq_subr //.
-      rewrite !subSn ?leq_subr //.
-      by rewrite !subKn ?ltnS; try exact: ltnW.
-  rewrite -(card_imset _ rev_ord_inj).
-  have -> : n.+1 = count_mem }} (rcons D }}).
-    rewrite count_mem_rcons /= addn1 count_mem_height0 //.
-    by move: HD => /Dyck_wordP [].
-  rewrite -(@card_preim_nth (size D).+1 _ _ _ {{); last by rewrite size_rcons.
-  congr (#|pred_of_set _|).
-  apply/setP => /= i; apply/imsetP/idP => /= [[j] |].
-  - rewrite inE => /eqP Hnthj -> {i} /=.
-    by rewrite inE /= subSS Hnthj.
-  - rewrite inE => Hnth.
-    exists (rev_ord i); last by rewrite rev_ordK.
-    by rewrite inE /= subSS subKn // -ltnS.
-congr (#|pred_of_set _|); apply/setP => /= u; rewrite !inE.
+move=> HD; apply/setP => /= u; rewrite !inE.
 apply/andP/imsetP => /= [[/eqP ubal /eqP Huw] | [v /=]].
 - have := Dyck_of_balK ubal; rewrite Huw => ->.
   have := pfminh_size (rcons u }}).
@@ -1103,17 +1086,61 @@ apply/andP/imsetP => /= [[/eqP ubal /eqP Huw] | [v /=]].
   + by apply/eqP/bal_of_DyckK => //; case: v {Hnth}.
 Qed.
 
-Lemma card_bal_Dyck_hsz : #|bal_hsz n| = (#|Dyck_hsz n| * n.+1)%N.
+Lemma card_preim_Dyck_of_bal D :
+  tval D \is a Dyck_word ->
+  #|(bal_hsz n) :&: (Dyck_of_bal @^-1: [set D])| = n.+1.
 Proof.
-rewrite (card_uniform_partition (n := n.+1) _
-           (preim_partitionP Dyck_of_bal (bal_hsz n))).
-- congr (_ * _)%N.
+move=> HD.
+rewrite (preim_Dyck_of_balE HD).
+rewrite card_in_imset; first last.
+  move=> [i Hi] [j Hj]; rewrite !inE /= => /eqP Hnthi /eqP Hnthj Heq.
+  wlog ilt : i j Hi Hj Hnthi Hnthj Heq / (i <= j)%N.
+    move=> ileqj; case: (leqP i j); first exact: ileqj.
+    by move=> /ltnW/ileqj ->.
+  apply val_inj => /=; move: Hi Hj; rewrite !ltnS => Hi Hj.
+  move: Heq => /(congr1 (fun x => rcons (val x) }})).
+  rewrite !rcons_bal_of_Dyck // /rotr => /(congr1 pfminh).
+  case: i Hi Hnthi ilt => [|i] //=; rewrite ?subn0.
+  - move=> _ Hnth _; case: j Hj Hnthj => // j Hj Hnthj.
+    rewrite rot_size -{1}(rot0 (rcons D }})).
+    rewrite !pfminh_rrw //= size_rcons; last by rewrite subSS leq_subr.
+    rewrite subn0 subKn ?ltnS; last exact: ltnW.
+    by move=> [] Heq; move: Hj; rewrite Heq ltnn.
+  - case: j Hj Hnthj => // j Hj Hnthj Hi Hnthi.
+    rewrite ltnS => Hij.
+    rewrite !pfminh_rrw //= size_rcons ?subSS ?leq_subr //.
+    rewrite !subSn ?leq_subr //.
+    by rewrite !subKn ?ltnS; try exact: ltnW.
+rewrite -(card_imset _ rev_ord_inj).
+have -> : n.+1 = count_mem }} (rcons D }}).
+  rewrite count_mem_rcons /= addn1 count_mem_height0 //.
+  by move: HD => /Dyck_wordP [].
+rewrite -(@card_preim_nth (size D).+1 _ _ _ {{); last by rewrite size_rcons.
+congr (#|pred_of_set _|).
+apply/setP => /= i; apply/imsetP/idP => /= [[j] |].
+- rewrite inE => /eqP Hnthj -> {i} /=.
+  by rewrite inE /= subSS Hnthj.
+- rewrite inE => Hnth.
+  exists (rev_ord i); last by rewrite rev_ordK.
+  by rewrite inE /= subSS subKn // -ltnS.
+Qed.
+
+End DyckWordRotationBijection.
+
+Arguments Dyck_of_bal {n}.
+Arguments bal_of_Dyck {n}.
+
+(** ** Main theorem for catalan numbers *)
+Lemma card_bal_Dyck_hsz n : #|bal_hsz n| = (#|Dyck_hsz n| * n.+1)%N.
+Proof.
+have -> : #|Dyck_hsz n| = #|preim_partition Dyck_of_bal (bal_hsz n)|.
   rewrite card_preim_partition; congr #|pred_of_set _|.
-  apply/setP => w; apply/imsetP/idP => /= [[u Hu ->{w}]|].
-  + by move: Hu; rewrite !inE /= => /eqP/Dyck_of_balP.
-  + rewrite inE => HD.
+  apply/setP => /= w; apply/idP/imsetP => /= [|[u Hu ->{w}]].
+  - rewrite inE => HD.
     exists w; first by move: HD; rewrite !inE => /Dyck_wordP [_ ->].
     by rewrite Dyck_of_Dyck_hsz.
+  - by move: Hu; rewrite !inE /= => /eqP/Dyck_of_balP.
+apply: (card_uniform_partition _ (preim_partitionP Dyck_of_bal (bal_hsz n))).
 move=> /= B HB.
 have:= HB => /mem_preim_partition [/= w [Hw Heq]].
 have {HB Hw} : w \in (bal_hsz n).
@@ -1121,48 +1148,16 @@ have {HB Hw} : w \in (bal_hsz n).
   by rewrite -Hcov; apply/bigcupP; exists B.
 rewrite inE => /eqP Hw.
 move: (Dyck_of_bal w) Heq (Dyck_of_balP Hw) => D Heq HD {w Hw}.
-by subst B; rewrite (card_preim_Dyck HD).
+by subst B; rewrite (card_preim_Dyck_of_bal HD).
 Qed.
 
-Lemma card_bal_hsz : #|bal_hsz n| = 'C(n.*2, n).
-Proof.
-have := card_draws [finType of 'I_(n.*2)] n; rewrite card_ord => <-.
-have /card_imset <- : injective
-    (fun w => [set r : 'I_(n.*2) | preim (tnth w) (pred1 }}) r]).
-  move => u v Huv; apply: eq_from_tnth => i.
-  move: Huv => /(congr1 (fun s => i \in pred_of_set s)); rewrite !inE.
-  by case: (tnth u i) (tnth v i) => [] [].
-congr #|pred_of_set _|; apply/setP => /= S.
-rewrite inE; apply/imsetP/idP => /= [[w Hw -> {S}] | /eqP HS].
-- move: Hw; rewrite inE => /eqP Hw; apply/eqP.
-  rewrite -[RHS](count_mem_height0 }} Hw).
-  rewrite -(@card_preim_nth n.*2 _ _ _ {{) ?size_tuple //.
-  by congr (#|pred_of_set _|); apply/setP => /= i; rewrite /= !inE -tnth_nth.
-- exists (mktuple (fun i => if i \in S then }} else {{)); first last.
-    by apply/setP => /= i; rewrite inE tnth_mktuple /=; case: (i \in S).
-  rewrite inE /height /=.
-  do 2 rewrite -size_filter filter_map size_map.
-  rewrite (eq_filter (a2 := mem (~: S))); first last.
-    by move=> i; rewrite /= in_setC; case: (i \in S).
-  rewrite [X in _ - Posz (size X)](eq_filter (a2 := mem S)); first last.
-    by move=> i /=; case: (i \in S).
-  rewrite !enumT -/enum_mem -!cardE.
-  rewrite cardsCs.
-  have -> :  ~: ~: S = S by apply/setP => i; rewrite !inE negbK.
-  by rewrite HS card_ord -addnn addnK subrr.
-Qed.
-
-Lemma div_central_binomial : n.+1 %| 'C(n.*2, n).
+Lemma div_central_binomial n : n.+1 %| 'C(n.*2, n).
 Proof.
 by apply/dvdnP; exists #|Dyck_hsz n|; rewrite -card_bal_Dyck_hsz card_bal_hsz.
 Qed.
 
-Theorem card_Dyck_hsz : #|Dyck_hsz n| = Catalan n.
+Theorem card_Dyck_hsz n : #|Dyck_hsz n| = Catalan n.
 Proof. by rewrite /Catalan -card_bal_hsz card_bal_Dyck_hsz mulnK. Qed.
 
-Theorem CatalanE : Catalan_bin n = Catalan n.
+Theorem Catalan_binE n : Catalan_bin n = Catalan n.
 Proof. by rewrite -card_bintreesz card_bintreesz_dyck card_Dyck_hsz. Qed.
-
-End DyckWordRotationBijection.
-
-
