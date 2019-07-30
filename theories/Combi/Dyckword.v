@@ -1,6 +1,6 @@
 (** * Combi.Combi.DyckWord : Dyck Words *)
 (******************************************************************************)
-(*      Copyright (C) 2018-2019 Florent Hivert <florent.hivert@lri.fr>        *)
+(*      Copyright (C) 2019-2020 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
 (*  Distributed under the terms of the GNU General Public License (GPL)       *)
 (*                                                                            *)
@@ -14,6 +14,56 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 (** * Dyck Words
+
+A _Dyck word_ is a word on the two letter alphabet "(" and ")" which is well
+parentesized. More formally
+
+- for all prefix, the number of "(" is larger that the number of ")";
+- the total number of "(" is equal to those of ")".
+
+We encode those words using:
+
+- [brace]      == a type with two values [Open] and [Close] and locally use
+       the notations "[{{]" and "[}}]"
+- [height w]   == the difference between the number of "[{{]" and "[}}]"
+- [prefixes w] == the list of all the prefix of [w]
+
+- [w is a Dyck_prefix] == for all prefix, the number of "[{{]" is larger than
+       the number of "[}}]"
+- [w is a Dyck_word] == [w] is a Dyck word
+
+- [Dyck]       == a Sigma-type for Dyck words. It is canonically a [countType].
+- [[Dyck of s]] == a Dyck word for the sequence [s]; the proof is canonically
+       infered.
+- [[Dyck of s by pf]] == a Dyck word for the sequence [s] using the proof [pf]
+- [[Dyck {{ D1 }} D2]] == if [D1] and [D2] are of type [Dyck] then the element
+       term of type [Dyck] corresponding to the word "(D1)D2"
+
+Dyck words are in bijection with binary trees:
+
+- [Dyck_of_bintree t] == the image of the binary tree [t] by the standard
+       bijection from trees to Dyck words.
+- [bintree_of_Dyck D] == the converse bijection
+
+The number of Dyck word is the so-called Catalan numbers:
+
+- [Catalan n]  == the [n]-th Catalan number ['C(n.*2, n) %/ n.+1]
+- [Dyck_hsz n] == the set of tuple of half size n which are Dyck words.
+- [bal_hsz n]  == the set of tuple of half size n which are balanced words.
+
+We prove bijectively the equality with catalan binomial formula, using the
+rotation trick: there is a (n+1) to 1 map from balanced words to Dyck words.
+
+- [minh w]     == the minimal height of prefixes of [w]
+- [pfminh w]   == the first position where the minimal height is reached.
+- [Dyck_of_bal w] == given a balanced word [w] returns the unique Dyck word
+       [D] such that [D)] is a rotation of [w)]
+- [bal_of_Dyck rt w] == the word obtained by rotating [w)] by [rt] and
+       removing the last letter.
+
+- [bal_part n] == the partition of balanced words given by the fiber of the
+       [Dyck_of_bal] map. The main argument is to show that all the fibers
+       have the same cardinality.
  *********************)
 
 Require Import mathcomp.ssreflect.ssreflect.
@@ -80,7 +130,7 @@ Variables (T rT : finType) (f : T -> rT) (D : {set T}).
 
 Lemma mem_preim_partition (B : {set T}) :
   B \in preim_partition f D ->
-  exists x0 : T, x0 \in B /\ B = D :&: f @^-1: [set f x0].
+  exists x0 : T, (x0 \in B) /\ (B = D :&: f @^-1: [set f x0]).
 Proof.
 move=> HB.
 have /and3P [/eqP Hcov Htriv notP0] := preim_partitionP f D.
@@ -156,6 +206,17 @@ Definition brace_countMixin := CanCountMixin bool_of_braceK.
 Canonical brace_countType := Eval hnf in CountType brace brace_countMixin.
 Definition brace_finMixin := CanFinMixin bool_of_braceK.
 Canonical brace_finType := Eval hnf in FinType brace brace_finMixin.
+
+
+Lemma size_count_braceE (w : seq brace) :
+  size w = count_mem {{ w + count_mem }} w.
+Proof.
+elim: w => //= w0 w IHw.
+rewrite [(_ + count_mem }} w)%N]addnC !addnA.
+rewrite -[((w0 == {{) + count_mem _ _ + _)%N]addnA -IHw.
+by case: w0 => /=; rewrite ?addn0 ?add0n ?addn1 ?add1n.
+Qed.
+
 
 Import GRing.Theory Num.Theory.
 Open Scope int_scope.
@@ -562,31 +623,19 @@ Section BalToDyck.
 
 Variable w : seq brace.
 
-Definition maxd :=
-  \max_(s <- prefixes w) (count_mem }} s - count_mem {{ s).
-Definition minh := - Posz maxd.
+Definition minh :=
+  - Posz (\max_(s <- prefixes w) (count_mem }} s - count_mem {{ s)).
 
-Lemma maxdE :
-  maxd = \max_(i < (size w).+1)
-          (count_mem }} (take i w) - count_mem {{ (take i w)).
+Lemma minhE :
+  minh = - Posz (\max_(i < (size w).+1)
+                  (count_mem }} (take i w) - count_mem {{ (take i w))).
 Proof.
-rewrite /maxd /prefixes.
+rewrite /minh /prefixes.
 by rewrite big_map -{1}[(size w).+1]subn0 -/(index_iota _ _) big_mkord.
 Qed.
 
 
-Lemma maxdP : forall i : nat,
-    (count_mem }} (take i w) - count_mem {{ (take i w) <= maxd)%N.
-Proof.
-rewrite maxdE => i.
-wlog ilt : i / (i < (size w).+1)%N.
-  move=> Hlog; case: (ltnP i (size w).+1) => [| szi]; first exact: Hlog.
-  rewrite (take_oversize (ltnW szi)) -{1 2}(take_size w).
-  exact: Hlog.
-rewrite -[i]/(nat_of_ord (Ordinal ilt)).
-exact: leq_bigmax.
-Qed.
-
+(*
 Lemma exists_maxd : exists i : nat,
     (count_mem }} (take i w) - count_mem {{ (take i w) == maxd)%N.
 Proof.
@@ -595,25 +644,32 @@ have : (#|'I_(size w).+1| > 0)%N by rewrite card_ord.
 set F := BIG_F; case/(eq_bigmax F) => [[i Hi]]; rewrite {}/F /= => H.
 by exists i; rewrite H.
 Qed.
-
+*)
 
 Lemma minhP : forall i : nat, height (take i w) >= minh.
 Proof.
-move=> i; rewrite /height /minh.
+rewrite /height minhE => i.
+wlog ilt : i / (i < (size w).+1)%N.
+  move=> Hlog; case: (ltnP i (size w).+1) => [| szi]; first exact: Hlog.
+  rewrite (take_oversize (ltnW szi)) -{9 10}(take_size w).
+  exact: Hlog.
 case: (leqP (count_mem {{ (take i w)) (count_mem }} (take i w))) => [H|].
-- have:= maxdP i; rewrite -lez_nat -subzn //.
-  by rewrite -ler_opp2 opprD opprK addrC.
+- rewrite -[i]/(nat_of_ord (Ordinal ilt)).
+  rewrite ler_oppl opprB subzn // lez_nat.
+  exact: leq_bigmax.
 - move=> /ltnW; rewrite -lez_nat -subr_ge0 => /(ler_trans _); apply.
   by rewrite -oppr_ge0 opprK.
 Qed.
 
 Lemma exists_minh : exists i : nat, height (take i w) == minh.
 Proof.
-rewrite /minh; case: exists_maxd => [i /eqP].
-case: (leqP (count_mem {{ (take i w)) (count_mem }} (take i w))) => [H <- |/ltnW].
-- by exists i; rewrite /height -subzn // opprD opprK addrC.
-- rewrite -subn_eq0 => /eqP -> <-.
-  by exists 0%N; rewrite take0 height_simpl.
+rewrite /height minhE.
+have : (#|'I_(size w).+1| > 0)%N by rewrite card_ord.
+set F := BIG_F; case/(eq_bigmax F) => [[i Hi]]; rewrite {}/F /= => Hmax.
+case: (leqP (count_mem {{ (take i w)) (count_mem }} (take i w))) => [Hle |/ltnW].
+- by exists i; rewrite -eqr_opp opprK opprB (subzn Hle) Hmax.
+- rewrite -subn_eq0 => /eqP Heq; move: Hmax; rewrite Heq => ->.
+  by exists 0%N; rewrite take0.
 Qed.
 
 Definition pfminh := ex_minn exists_minh.
@@ -664,7 +720,8 @@ Hypothesis Hbal1 : height w = -1.
 Lemma minh_neg : minh < 0.
 Proof.
 rewrite oppr_lt0 gtz0_ge1 -ler_opp2 -Hbal1.
-by rewrite -(take_size w); exact: minhP.
+rewrite -{2}(take_size w).
+exact: minhP.
 Qed.
 
 Lemma pfminh_pos : (pfminh > 0)%N.
@@ -796,13 +853,39 @@ Qed.
 End DyckToBal.
 
 
-Section Catalan.
+Definition Catalan n := 'C(n.*2, n) %/ n.+1.
+
+Definition Dyck_hsz n : {set n.*2.-tuple brace} :=
+  [set w : n.*2.-tuple brace | tval w \is a Dyck_word].
+Definition bal_hsz n : {set n.*2.-tuple brace} :=
+  [set w : n.*2.-tuple brace | height w == 0].
+
+
+
+Theorem card_bintreesz_dyck n : #|bintreesz n| = #|Dyck_hsz n|.
+Proof.
+have trdP (tr : bintreesz n) : size (Dyck_of_bintree tr) == n.*2.
+  by rewrite size_Dyck_of_bintree mul2n bintreeszP.
+pose trd (tr : bintreesz n) := Tuple (trdP tr).
+rewrite -(card_imset (f := trd)); first last.
+  move=> tr1 tr2 /(congr1 val) /= /val_inj /(congr1 (bintree_of_Dyck)).
+  by rewrite !Dyck_of_bintreeK => /val_inj.
+congr (#|pred_of_set _|).
+apply/setP => /= S; rewrite inE; apply/imsetP/idP => /= [[tr Htr -> {S}] | HS].
+- by rewrite /=; case: (Dyck_of_bintree _).
+- pose tr := bintree_of_Dyck (DyckWord HS).
+  have := size_bintree_of_Dyck (DyckWord HS).
+  rewrite /= size_tuple mul2n => /double_inj/eqP => sztr.
+  exists (BinTreeSZ sztr); first by rewrite inE.
+  by apply val_inj; rewrite /= bintree_of_DyckK.
+Qed.
+
+
+
+Section DyckWordRotationBijection.
 
 Variable n : nat.
-
-Local Notation wordn := (n.*2.-tuple brace).
-Implicit Types u v w D : wordn.
-
+Implicit Types u v w D : n.*2.-tuple brace.
 
 Lemma size_UnDn : size (nseq n {{ ++ nseq n }}) == n.*2.
 Proof. by rewrite size_cat !size_nseq addnn. Qed.
@@ -838,7 +921,7 @@ Qed.
 Lemma size_Dyck_of_bal w :
   size (take (size w) (rot (pfminh (rcons w }})) (rcons w }}))) == n.*2.
 Proof. by rewrite size_take size_rot size_rcons ltnS leqnn size_tuple. Qed.
-Definition Dyck_of_bal w : wordn := Tuple (size_Dyck_of_bal w).
+Definition Dyck_of_bal w := Tuple (size_Dyck_of_bal w).
 
 Lemma Dyck_of_balP w : height w = 0 -> tval (Dyck_of_bal w) \is a Dyck_word.
 Proof.
@@ -847,7 +930,7 @@ rewrite -[size w]/(size w).+1.-1 -(size_rcons w }}).
 by apply rot_is_Dyck; rewrite height_simpl /= Hw add0r.
 Qed.
 
-Lemma Dyck_of_dyckn D : tval D \is a Dyck_word -> Dyck_of_bal D = D.
+Lemma Dyck_of_Dyck_hsz D : tval D \is a Dyck_word -> Dyck_of_bal D = D.
 Proof.
 move => HD; apply val_inj => /=.
 suff -> : pfminh (rcons D }}) = size (rcons D }}).
@@ -870,7 +953,7 @@ Qed.
 Lemma size_bal_of_Dyck rt w :
   size (take (size w) (rotr rt (rcons w }}))) == n.*2.
 Proof. by rewrite size_take size_rot size_rcons ltnS leqnn size_tuple. Qed.
-Definition bal_of_Dyck rt w : wordn := Tuple (size_bal_of_Dyck rt w).
+Definition bal_of_Dyck rt w := Tuple (size_bal_of_Dyck rt w).
 
 Lemma bal_of_DyckP rt w :
   (rt <= size w)%N ->
@@ -943,23 +1026,19 @@ Lemma count_mem_height0 w (b : brace) :
   height w = 0 -> count_mem b w = n.
 Proof.
 move=> /eqP; rewrite /height subr_eq0 eqz_nat => /eqP Heq.
-have : (size w = (count_mem {{) w + (count_mem }}) w)%N.
-  case: w {Heq} => w _ /=; elim: w => //= w0 w IHw.
-  rewrite [(_ + count_mem }} w)%N]addnC !addnA.
-  rewrite -[((w0 == {{) + count_mem _ _ + _)%N]addnA -IHw.
-  by case: w0 => /=; rewrite ?addn0 ?add0n ?addn1 ?add1n.
+have:= size_count_braceE w.
 rewrite size_tuple Heq addnn => /double_inj {-1}->.
 by case b.
 Qed.
 
-Let dyckn : {set wordn} := [set w : wordn | tval w \is a Dyck_word].
-Let baln : {set wordn} := [set w : wordn | height w == 0].
 
-Definition bal_part : {set {set wordn } } := preim_partition Dyck_of_bal baln.
+Definition bal_part : {set {set n.*2.-tuple brace} } :=
+  preim_partition Dyck_of_bal (bal_hsz n).
 
 
 Lemma card_preim_Dyck D :
-  tval D \is a Dyck_word -> #|baln :&: (Dyck_of_bal @^-1: [set D])| = n.+1.
+  tval D \is a Dyck_word ->
+  #|(bal_hsz n) :&: (Dyck_of_bal @^-1: [set D])| = n.+1.
 Proof.
 move=> HD.
 have <- : #|[set bal_of_Dyck (nat_of_ord rt) D |
@@ -1024,37 +1103,37 @@ apply/andP/imsetP => /= [[/eqP ubal /eqP Huw] | [v /=]].
   + by apply/eqP/bal_of_DyckK => //; case: v {Hnth}.
 Qed.
 
-Lemma card_baln_dyckn : (#|baln| = #|dyckn| * n.+1)%N.
+Lemma card_bal_Dyck_hsz : #|bal_hsz n| = (#|Dyck_hsz n| * n.+1)%N.
 Proof.
 rewrite (card_uniform_partition (n := n.+1) _
-           (preim_partitionP Dyck_of_bal baln)).
+           (preim_partitionP Dyck_of_bal (bal_hsz n))).
 - congr (_ * _)%N.
   rewrite card_preim_partition; congr #|pred_of_set _|.
   apply/setP => w; apply/imsetP/idP => /= [[u Hu ->{w}]|].
   + by move: Hu; rewrite !inE /= => /eqP/Dyck_of_balP.
   + rewrite inE => HD.
     exists w; first by move: HD; rewrite !inE => /Dyck_wordP [_ ->].
-    by rewrite Dyck_of_dyckn.
+    by rewrite Dyck_of_Dyck_hsz.
 move=> /= B HB.
 have:= HB => /mem_preim_partition [/= w [Hw Heq]].
-have {HB Hw} : w \in baln.
-  have /and3P [/eqP Hcov _ _] := preim_partitionP Dyck_of_bal baln.
+have {HB Hw} : w \in (bal_hsz n).
+  have /and3P [/eqP Hcov _ _] := preim_partitionP Dyck_of_bal (bal_hsz n).
   by rewrite -Hcov; apply/bigcupP; exists B.
 rewrite inE => /eqP Hw.
 move: (Dyck_of_bal w) Heq (Dyck_of_balP Hw) => D Heq HD {w Hw}.
 by subst B; rewrite (card_preim_Dyck HD).
 Qed.
 
-Lemma card_baln : #|baln| = 'C(n.*2, n).
+Lemma card_bal_hsz : #|bal_hsz n| = 'C(n.*2, n).
 Proof.
 have := card_draws [finType of 'I_(n.*2)] n; rewrite card_ord => <-.
-pose f (w : wordn) := [set r : 'I_(n.*2) | preim (tnth w) (pred1 }}) r].
-have /card_imset <- : injective f.
-  rewrite /f => u v Huv; apply: eq_from_tnth => i.
+have /card_imset <- : injective
+    (fun w => [set r : 'I_(n.*2) | preim (tnth w) (pred1 }}) r]).
+  move => u v Huv; apply: eq_from_tnth => i.
   move: Huv => /(congr1 (fun s => i \in pred_of_set s)); rewrite !inE.
   by case: (tnth u i) (tnth v i) => [] [].
-congr #|pred_of_set _|; rewrite {}/f.
-apply/setP => /= S; rewrite inE; apply/imsetP/idP => /= [[w Hw -> {S}] | /eqP HS].
+congr #|pred_of_set _|; apply/setP => /= S.
+rewrite inE; apply/imsetP/idP => /= [[w Hw -> {S}] | /eqP HS].
 - move: Hw; rewrite inE => /eqP Hw; apply/eqP.
   rewrite -[RHS](count_mem_height0 }} Hw).
   rewrite -(@card_preim_nth n.*2 _ _ _ {{) ?size_tuple //.
@@ -1075,35 +1154,15 @@ Qed.
 
 Lemma div_central_binomial : n.+1 %| 'C(n.*2, n).
 Proof.
-by apply/dvdnP; exists #|dyckn|; rewrite -card_baln_dyckn card_baln.
+by apply/dvdnP; exists #|Dyck_hsz n|; rewrite -card_bal_Dyck_hsz card_bal_hsz.
 Qed.
 
-Theorem card_dyckn :
-  #|dyckn| = 'C(n.*2, n) %/ n.+1.
-Proof.
-by rewrite -card_baln card_baln_dyckn mulnK.
-Qed.
+Theorem card_Dyck_hsz : #|Dyck_hsz n| = Catalan n.
+Proof. by rewrite /Catalan -card_bal_hsz card_bal_Dyck_hsz mulnK. Qed.
 
-Theorem card_bintreesz :
-  #|bintreesz n| = 'C(n.*2, n) %/ n.+1.
-Proof.
-rewrite -card_dyckn.
-have trdP (tr : bintreesz n) : size (Dyck_of_bintree tr) == n.*2.
-  by rewrite size_Dyck_of_bintree mul2n bintreeszP.
-pose trd (tr : bintreesz n) := Tuple (trdP tr).
-rewrite -(card_imset (f := trd)); first last.
-  move=> tr1 tr2 /(congr1 val) /= /val_inj /(congr1 (bintree_of_Dyck)).
-  by rewrite !Dyck_of_bintreeK => /val_inj.
-congr (#|pred_of_set _|).
-apply/setP => /= S; rewrite inE; apply/imsetP/idP => /= [[tr Htr -> {S}] | HS].
-- by rewrite /=; case: (Dyck_of_bintree _).
-- pose tr := bintree_of_Dyck (DyckWord HS).
-  have := size_bintree_of_Dyck (DyckWord HS).
-  rewrite /= size_tuple mul2n => /double_inj/eqP => sztr.
-  exists (BinTreeSZ sztr); first by rewrite inE.
-  by apply val_inj; rewrite /= bintree_of_DyckK.
-Qed.
+Theorem CatalanE : Catalan_bin n = Catalan n.
+Proof. by rewrite -card_bintreesz card_bintreesz_dyck card_Dyck_hsz. Qed.
 
-End Catalan.
+End DyckWordRotationBijection.
 
 

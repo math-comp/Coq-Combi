@@ -32,7 +32,10 @@ Binary trees of size n:
 - [enum_bintreesz n] == the list of a trees of size [n]
 - [bintreesz n] == the Sigma type for trees of size [n]. This is
         canonically a [finType] with enumeration [enum_bintreesz n]
-- [catalan n] == the number of binary trees of size [n]
+- [Catalan_bin n] == Catalan number defined using the binary tree recursion:
+        [C_0 = 1] and [C_{n+1} = sum__(i+j = n) C_i C_j]. We show that they
+        count the number of binary trees of size [n]. The binomial formula
+        will be proved using Dyck word.
 
 Left branch surgery:
 
@@ -170,29 +173,29 @@ End Size.
 (** ** Catalan numbers *)
 
 (** The intent of the two following recursive definition is the recursion of lemmas
-    [catalanS] and [enum_bintreeszS]:
+    [CatalanS] and [enum_bintreeszS]:
 [[
-Fixpoint catalan n :=
+Fixpoint Catalan n :=
   if n is n'.+1 then
-    sumn [catalan i * catalan (n - i) | i <- iota 0 n.+1]
+    sumn [Catalan i * Catalan (n - i) | i <- iota 0 n.+1]
   else 1.
 ]]
 however [i] and [n - i] are not structurally smaller than [n.+1] so the
 definition is refused by coq as not well founded. So we write the following
 functions which returns a cache containing the list of the results of
-[catalan i] and [enum_bintreesz i] for [i = 0 ... n]. Otherwise said, to define
+[Catalan i] and [enum_bintreesz i] for [i = 0 ... n]. Otherwise said, to define
 the [enum_bintreesz] function we need a strong [nat] induction where Coq only
 allows simple [nat] induction. *)
 
 
-(** A seq of size n.+1 whose i-th element is catalan i *)
-Fixpoint catalan_leq n :=
+(** A seq of size n.+1 whose i-th element is Catalan i *)
+Fixpoint Catalan_bin_leq n :=
   if n is n.+1 then
-    let cr := catalan_leq n in
+    let cr := Catalan_bin_leq n in
     let new := sumn [seq nth 0 cr i * nth 0 cr (n - i) | i <- iota 0 n.+1]
     in rcons cr new
   else [:: 1].
-Definition catalan n := last 0 (catalan_leq n).
+Definition Catalan_bin n := last 0 (Catalan_bin_leq n).
 
 (** A seq of size n.+1 whose i-th element contains the list of all binary trees of
     size i *)
@@ -207,25 +210,26 @@ Fixpoint enum_bintreesz_leq n :=
   else [:: [:: BinLeaf]].
 Definition enum_bintreesz n := last [::] (enum_bintreesz_leq n).
 
-Lemma catalan10 :
-  [seq catalan n | n <- iota 0 10] =
+Lemma Catalan_bin10 :
+  [seq Catalan_bin n | n <- iota 0 10] =
   [:: 1; 1; 2; 5; 14; 42; 132; 429; 1430; 4862].
 Proof. by []. Qed.
 
 
 
-Lemma size_catalan_leq n : size (catalan_leq n) = n.+1.
+Lemma size_Catalan_bin_leq n : size (Catalan_bin_leq n) = n.+1.
 Proof. by elim: n => [|n] //=; rewrite size_rcons => ->. Qed.
 
 Lemma size_enum_bintreesz n : size (enum_bintreesz_leq n) = n.+1.
 Proof. by elim: n => //= n; rewrite size_rcons => ->. Qed.
 
-Lemma size_enum_bintreeszE n : size (enum_bintreesz n) = catalan n.
+Lemma size_enum_bintreeszE n : size (enum_bintreesz n) = Catalan_bin n.
 Proof.
-rewrite /catalan /enum_bintreesz -[LHS]last_map ; congr last.
+rewrite /Catalan_bin /enum_bintreesz -[LHS]last_map ; congr last.
 elim: n => [//= |n IHn].
 rewrite [LHS]/= map_rcons IHn /=; congr rcons.
-rewrite -[RHS]/(sumn (map _ (iota 0 n.+1))) -[LHS]/(size (flatten (map _ (iota 0 n.+1)))).
+rewrite -[RHS]/(sumn (map _ (iota 0 n.+1))).
+rewrite -[LHS]/(size (flatten (map _ (iota 0 n.+1)))).
 rewrite size_flatten /shape -map_comp; congr sumn.
 apply eq_in_map => i; rewrite mem_iota /= add0n ltnS => Hi.
 rewrite size_allpairs -!IHn !(nth_map [::]) // size_enum_bintreesz ltnS //.
@@ -233,12 +237,13 @@ exact: leq_subr.
 Qed.
 
 
-Lemma catalan_leqE i m : i <= m -> nth 0 (catalan_leq m) i = catalan i.
+Lemma Catalan_bin_leqE i m :
+  i <= m -> nth 0 (Catalan_bin_leq m) i = Catalan_bin i.
 Proof.
-rewrite /catalan => Hi.
-rewrite -nth_last size_catalan_leq /= -(subnK Hi).
+rewrite /Catalan_bin => Hi.
+rewrite -nth_last size_Catalan_bin_leq /= -(subnK Hi).
 elim: (m-i) => // d <-.
-by rewrite addSn nth_rcons -/catalan_leq size_catalan_leq ltnS leq_addl.
+by rewrite addSn nth_rcons size_Catalan_bin_leq ltnS leq_addl.
 Qed.
 
 Lemma enum_bintreesz_leq_leqE i n m :
@@ -261,21 +266,21 @@ by rewrite leqnn H.
 Qed.
 
 
-Lemma catalan0 : catalan 0 = 1.
+Lemma Catalan0 : Catalan_bin 0 = 1.
 Proof. by []. Qed.
 
 Lemma enum_bintreesz0 : enum_bintreesz 0 = [:: BinLeaf].
 Proof. by []. Qed.
 
 
-Lemma catalanS n :
-  catalan n.+1 = \sum_(0 <= i < n.+1) catalan i * catalan (n - i).
+Lemma Catalan_binS n :
+  Catalan_bin n.+1 = \sum_(0 <= i < n.+1) Catalan_bin i * Catalan_bin (n - i).
 Proof.
-rewrite /catalan sumn_mapE last_rcons.
-rewrite -/catalan_leq; congr sumn.
+rewrite /Catalan_bin sumn_mapE last_rcons.
+rewrite -/Catalan_bin_leq; congr sumn.
 rewrite /index_iota subn0; apply eq_in_map => i.
 rewrite mem_iota /= add0n ltnS => Hi.
-rewrite -!nth_last !size_catalan_leq /= !catalan_leqE //.
+rewrite -!nth_last !size_Catalan_bin_leq /= !Catalan_bin_leqE //.
 exact: leq_subr.
 Qed.
 
@@ -384,25 +389,11 @@ Canonical bintreesz_finType n := Eval hnf in [finType of bintreesz n for type n]
 Canonical bintreesz_subFinType n := Eval hnf in [subFinType of bintreesz n].
 
 
-Theorem card_bintreesz n : #|bintreesz n| = catalan n.
+Theorem card_bintreesz n : #|bintreesz n| = Catalan_bin n.
 Proof.
-by rewrite /= !cardT -!(size_map val) !enumT unlock !subType_seqP /= size_enum_bintreeszE.
+rewrite /= !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
+by rewrite size_enum_bintreeszE.
 Qed.
-
-(** TODO: prove the formula for catalan numbers:
-[[
-From mathcomp
-Require Import binomial div.
-
-Goal [seq catalan n | n <- iota 0 10] =
-     [seq 'C(2 * n, n) %/ n.+1 | n <- iota 0 10].
-Proof. by rewrite -(eq_map catalan_seqE). Qed.
-
-Theorem catalanE n : catalan n = 'C(2 * n, n) %/ n.+1.
-Proof. Admitted.
-]]
- *)
-
 
 
 (** ** Left branch surgery in binary trees *)
