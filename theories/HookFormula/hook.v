@@ -1265,7 +1265,7 @@ Lemma Formula1 :
   ( \prod_(0 <= j < Beta)  (1 + ((hook_length p Alpha j)%:Q - 1)^-1) ).
 Proof using Hpartc'.
 rewrite /hook_length_prod !big_box_in /= (* /hook_length *).
-rewrite -{1}Hp -(eq_big_perm _ (box_in_incr_nth _ _)) /= big_cons.
+rewrite -{1}Hp -(perm_big _ (box_in_incr_nth _ _)) /= big_cons.
 rewrite !PoszM /= !intrM /=.
 rewrite !(big_morph Posz PoszM (id1 := Posz 1%N)) //=.
 rewrite !(big_morph intr (@intrM _) (id1 := 1)) //=.
@@ -1303,8 +1303,8 @@ rewrite [RHS]mulrC -[RHS]mulr1; congr (_ * _ * _).
                        (i.1 != Alpha) && (i.2 == Beta))  F (swap i)).
     apply eq_bigr => [[r c]] _.
     by rewrite /swap /F {F} /= !hook_length_conj_part.
-  rewrite -big_filter; apply eq_big_perm => {F}.
-  apply uniq_perm_eq.
+  rewrite -big_filter; apply perm_big => {F}.
+  apply uniq_perm.
   + by apply filter_uniq; apply: enum_box_in_uniq.
   + rewrite (map_inj_uniq swap_inj).
     by apply filter_uniq; apply: enum_box_in_uniq.

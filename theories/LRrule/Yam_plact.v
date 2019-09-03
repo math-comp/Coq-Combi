@@ -155,9 +155,9 @@ elim => [/= | a0 aw /= IHaw].
   rewrite -!evalseq_countE /evalseq_count /=.
   have Hperm : perm_eq (aw ++ b1 ++ cw) (aw ++ b2 ++ cw).
     apply: plact_homog; apply: plact_is_congr; apply: rule_gencongr; exact Hrew.
-  rewrite !foldr_maxn (eq_big_perm _ Hperm) /=.
+  rewrite !foldr_maxn (perm_big _ Hperm) /=.
   apply eq_map => i /=.
-  by move: Hperm => /perm_eqP ->.
+  by move: Hperm => /permP ->.
 Qed.
 
 (** * The Yamanouchi tableau *)
@@ -278,7 +278,7 @@ Lemma shape_RS_yam y : is_yam y -> shape (RS y) = evalseq y.
 Proof.
 move => Hyam.
 have:= congr_RS y => /plact_homog.
-rewrite perm_eq_evalseq => /eqP ->.
+rewrite perm_evalseq => /eqP ->.
 rewrite {2}(RS_yam_RS Hyam) to_word_yamtab evalseq_hyper_yam //=.
 by apply is_part_sht; exact: is_tableau_RS.
 Qed.
@@ -310,8 +310,8 @@ Qed.
 Lemma yam_std_inj : {in is_yam &, injective std}.
 Proof.
 move=> y w /=; rewrite !unfold_in -/is_yam => Hy Hw Hstd.
-apply perm_eq_stdE; last exact Hstd.
-rewrite perm_eq_evalseq.
+apply perm_stdE; last exact Hstd.
+rewrite perm_evalseq.
 rewrite -(shape_RS_yam Hy) -(shape_RS_yam Hw).
 rewrite -(shape_RS_std y) -(shape_RS_std w).
 by rewrite Hstd.
@@ -335,8 +335,8 @@ have HRS1 : RS (std y) = RS (std z).
   apply std_plact; rewrite (yam_plactic_shape _ (yamevalP y)).
   split; first exact: yamevalP.
   by rewrite !eval_yameval.
-apply val_inj; apply perm_eq_stdE => /=.
-- by rewrite perm_eq_evalseq !eval_yameval.
+apply val_inj; apply perm_stdE => /=.
+- by rewrite perm_evalseq !eval_yameval.
 - rewrite -[std y]RSmapK -[std z]RSmapK /=.
   have RSE (x : seq nat) : RSmap x = (RS x, (RSmap x).2).
     by rewrite -RSmapE; case RSmap.

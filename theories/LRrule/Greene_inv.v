@@ -448,9 +448,7 @@ rewrite -drop_enumI; congr (_ ++ _).
 rewrite take_enumI -{1}[enum 'I_(size x)](cat_take_drop (size u)).
 rewrite filter_cat //=; congr (_ ++ _).
 - rewrite take_enumI -filter_predI.
-  set pr := (X in filter X _).
-  suff /eq_filter -> : pr =1 (gtn (size u)) by [].
-  rewrite /pr; move=> i /=; apply: andb_idl => /ltn_trans; apply.
+  apply eq_filter=> i /=; apply: andb_idl => /ltn_trans; apply.
   by rewrite -{1}[size u](addn0); rewrite ltn_add2l.
 - apply: (inj_map val_inj) => /=.
   rewrite map_filter_comp map_drop val_enum_ord drop_iota add0n /x !size_cat.
@@ -1643,7 +1641,7 @@ Theorem plactic_RS u v : u =Pl v <-> RS u == RS v.
 Proof using.
 split; last exact: Sch_plact.
 move Hu : (size u) => n Hpl.
-have:= perm_eq_size (plact_homog Hpl) => /esym; rewrite Hu.
+have:= perm_size (plact_homog Hpl) => /esym; rewrite Hu.
 elim: n u v Hpl Hu => [| n IHn] u v.
   by move=> _ /eqP/nilP -> /eqP/nilP ->; rewrite /RS.
 move=> Hpl Hu Hv.
@@ -1654,7 +1652,7 @@ case: u Hu Hpl => [//= | u0 u'] _.
 case: v Hv     => [//= | v0 v'] _ => Hpl Hplrem.
 have:= rembig_RS u0 u' => [] [iu Hiu].
 have:= rembig_RS v0 v' => [] [iv]; rewrite -Hplrem {Hplrem} => Hiv.
-rewrite -(maxL_perm_eq (plact_homog Hpl)) in Hiv.
+rewrite -(maxL_perm (plact_homog Hpl)) in Hiv.
 have:= plactic_shapeRS Hpl.
 rewrite Hiu Hiv {Hiu Hiv} !shape_append_nth => H.
 by rewrite -(incr_nth_inj H).
@@ -1739,8 +1737,8 @@ apply eq_from_shape_get_tab; first by rewrite shape_conj_tab.
 move => r c.
 rewrite (append_nth_conj_tab _ Hpart Hcorn).
 congr (get_tab (append_nth _ _ _) _ _).
-- apply maxL_perm_eq; rewrite -Hs -rev_rcons.
-  by rewrite perm_eq_sym; exact: perm_eq_rev.
+- apply maxL_perm; rewrite -Hs -rev_rcons.
+  by rewrite perm_sym -perm_rev.
 - move: Hsh.
   rewrite !shape_append_nth shape_conj_tab.
   rewrite conj_part_incr_nth //.

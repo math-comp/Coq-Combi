@@ -296,7 +296,7 @@ move=> H; apply: (eq_sorted (leT := leq)).
   + by rewrite val_enum_ord; exact: iota_sorted.
 - move: H; rewrite /sorted; case: l => [//= | l0 l].
   by rewrite (eq_path (e' := leq)); last by move=> i j /=; rewrite leqXnatE.
-- apply: uniq_perm_eq.
+- apply: uniq_perm.
   + rewrite map_inj_in_uniq.
     * by apply: filter_uniq; exact: enum_uniq.
     * by move=> i j Hi _ /=; exact: val_inj.
@@ -358,10 +358,10 @@ Lemma std_rcons_shiftinv t tn :
   is_std (rcons t tn) -> std t = map (shiftinv_pos tn) t.
 Proof.
 move=> H; apply/eqP/stdP; constructor.
-- rewrite /is_std size_map perm_eq_sym.
-  apply: perm_eq_size_uniq.
+- rewrite /is_std size_map perm_sym.
+  apply: perm_size_uniq.
   + exact: iota_uniq.
-  + move=> i; move: H; rewrite /is_std => /perm_eq_mem Hperm.
+  + move=> i; move: H; rewrite /is_std => /perm_mem Hperm.
     case (ltnP i tn) => Hi.
     * have {2}-> : i = shiftinv_pos tn i by rewrite /shiftinv_pos Hi.
       move=> Hiota; apply: map_f; have:= Hperm i; move: Hiota.

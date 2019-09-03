@@ -509,7 +509,7 @@ have : perm_eq (mpart la + rho)%MM (mpart mu + rho)%MM = (la == mu).
     by rewrite !mpartK //; apply: val_inj.
   apply val_inj; apply val_inj => /=.
   exact: (eq_sorted_irr _ _ (sorted_mpart_rho la) (sorted_mpart_rho mu)
-                        (perm_eq_mem Hperm)).
+                        (perm_mem Hperm)).
 case: eqP => [-> |] _.
 - apply mcoeff_alt.
   exact: (sorted_uniq _ _ (sorted_mpart_rho mu)).
@@ -518,7 +518,7 @@ case: eqP => [-> |] _.
   rewrite linearZ /= msymX mcoeffX.
   case: eqP => [Habs |]; last by rewrite mulr0.
   exfalso.
-  move: Hperm => /tuple_perm_eqP; apply.
+  move: Hperm => /tuple_permP; apply.
   rewrite -{1}Habs; exists s; congr tval; apply eq_from_tnth => i.
   by rewrite -mnm_tnth !tnth_mktuple permK.
 Qed.
@@ -647,7 +647,7 @@ Qed.
 Lemma perm_KostkaMon m1 m2 :
   perm_eq m1 m2 -> KostkaMon m1 = KostkaMon m2.
 Proof.
-move=> /tuple_perm_eqP [s /val_inj Hs].
+move=> /tuple_permP [s /val_inj Hs].
 suff: Posz (KostkaMon m1) = Posz (KostkaMon m2) by move => [].
 rewrite -!natz -!(Kostka_Coeff _ (Multinom _)).
 set mu1 := Multinom m1.
@@ -972,16 +972,16 @@ rewrite /eval !tnth_mktuple.
 move: Hstd; rewrite /is_std.
 rewrite size_to_word /size_tab Hsh intpartn_sumn => Hstd.
 rewrite count_map (eq_in_count (a2 := pred1 (i : nat))); first last.
-  move=> /= j; rewrite (perm_eq_mem Hstd) mem_iota /= add0n.
+  move=> /= j; rewrite (perm_mem Hstd) mem_iota /= add0n.
   move => /leq_trans /(_ Hd) Hj.
   by rewrite {1}/eq_op /= inordK.
-by rewrite (perm_eqP Hstd) count_uniq_mem ?iota_uniq // mem_iota /= add0n.
+by rewrite (seq.permP Hstd) count_uniq_mem ?iota_uniq // mem_iota /= add0n.
 Qed.
 
 Lemma tabsh_is_std (t : tabsh n la) :
   eval (to_word t) = td -> is_std [seq (i : nat) | i : 'I_n.+1 <- to_word t].
 Proof.
-rewrite /is_std => Hev; apply/perm_eqP => p.
+rewrite /is_std => Hev; apply/seq.permP => p.
 rewrite count_map -sum_count_mem.
 rewrite (eq_bigr (fun i : 'I__ => (i < d)%N : nat)) /=; first last.
   move=> i _.
@@ -1023,7 +1023,7 @@ have /andP [Ht Hstd] := stdtabshP t.
 rewrite /tabord_of_nat_fun /=.
 rewrite shape_incr_tab shape_stdtabsh eq_refl andbT.
 move: Hstd; rewrite /is_std size_to_word.
-rewrite /size_tab shape_stdtabsh intpartn_sumn => /perm_eq_mem Hperm.
+rewrite /size_tab shape_stdtabsh intpartn_sumn => /perm_mem Hperm.
 rewrite -incr_tab // => /= i j.
 rewrite !Hperm !mem_iota /= !add0n => /leq_trans/(_ Hd) Hi /leq_trans/(_ Hd) Hj.
 by rewrite sub_pord_ltnXE !ltnXnatE /= !inordK.
@@ -1042,7 +1042,7 @@ rewrite inordK //; apply: (leq_trans _ Hd).
 have : i \in to_word t.
   by rewrite /to_word; apply/flattenP; exists r; first rewrite mem_rev.
 have /andP [_] := stdtabshP t.
-rewrite /is_std => /perm_eq_mem ->.
+rewrite /is_std => /perm_mem ->.
 rewrite mem_iota /= add0n.
 by rewrite size_to_word /size_tab shape_stdtabsh intpartn_sumn.
 Qed.
@@ -1261,7 +1261,7 @@ move=> i; rewrite /= /ext_tab_fun Hev /=.
 have Hszle : size t <= size (skew_reshape la mu (nseq m sz)).
   rewrite size_skew_reshape.
   by apply: (leq_trans _ Hlamu); rewrite -(shape_tabsh t) size_map.
-move: Hszle => /perm_eq_join_tab/perm_eqP ->.
+move: Hszle => /perm_join_tab/seq.permP ->.
 rewrite count_cat (eqevalP _ (ltnW Hsz) Hev).
 rewrite to_word_skew_reshape ?size_nseq ?sumndiff ?hb_strip_included //.
 rewrite count_nseq /= nth_rcons /= {1}/eq_op /=.
@@ -1415,7 +1415,7 @@ case: (leqP (size la) (size mu).+1) => Hszla; first last.
   apply esym; apply big1 => nu Hnu; apply Kostka_size0.
   by have := hb_strip_size Hnu => /andP [_ /(leq_trans Hszla)].
 rewrite {1}/Kostka addnC => Hd; subst d.
-have /perm_eqlP/(perm_eq_mpart _)/perm_KostkaMon <- := perm_rcons m mu.
+have /permPl/(perm_mpart _)/perm_KostkaMon <- := perm_rcons m mu.
 rewrite /KostkaMon /KostkaTab.
 transitivity #|[set t : tabsh (size mu) la | eqeval t (rcons mu m)]|.
   by apply eq_card.

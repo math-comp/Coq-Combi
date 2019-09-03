@@ -675,7 +675,7 @@ elim: t s => [| t0 t IHt] [| s0 s] //=.
 by rewrite IHt /= subSS.
 Qed.
 
-Lemma perm_eq_join_tab s t :
+Lemma perm_join_tab s t :
   size s <= size t ->
   perm_eq (to_word (join_tab s t)) (to_word s ++ to_word t).
 Proof using.
@@ -683,14 +683,14 @@ rewrite /join_tab /=.
 elim: t s => [//= | t0 t IHt] /= s; first by rewrite leqn0 => /nilP -> /=.
 case: s => [_ | s0 s] /=.
   rewrite !to_word_cons {IHt}.
-  rewrite [map _ _](_ : _ = t); first by exact: perm_eq_refl.
+  rewrite [map _ _](_ : _ = t); first by exact: perm_refl.
   by elim: t {t0} => //= t0 t /= ->.
 rewrite ltnS subSS => /IHt{IHt}.
 rewrite !to_word_cons -!/(to_word _) !catA perm_cat2r.
 move: (map _ _) => m.
-rewrite -(perm_cat2r s0) => /perm_eq_trans; apply.
+rewrite -(perm_cat2r s0) => /perm_trans; apply.
 rewrite -!catA perm_cat2l.
-apply/perm_eqlP; exact: perm_catC.
+apply/permPl; exact: perm_catC.
 Qed.
 
 Lemma join_tab_filter n t :

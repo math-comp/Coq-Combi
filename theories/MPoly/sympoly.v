@@ -335,8 +335,8 @@ Fact symm_sym sh : symm_pol sh \is symmetric.
 Proof.
 apply/issymP => s; apply/mpolyP => m.
 rewrite mcoeff_sym !mcoeff_symm_pol.
-have: perm_eq (m#s) m by apply/tuple_perm_eqP; exists s.
-by move=> /perm_eqrP ->.
+have: perm_eq (m#s) m by apply/tuple_permP; exists s.
+by move=> /permPr ->.
 Qed.
 Definition symm sh : {sympoly R[n]} :=
   if size sh <= n then SymPoly (symm_sym (mpart sh)) else 0 : {sympoly R[n]}.
@@ -379,13 +379,13 @@ case: (boolP (m \in msupp p)) => Hm.
     have [/= s /eqP ->]:= mpart_partm_perm m.
     by rewrite -mcoeff_sym (issymP p Hsym).
   have -> : 'm[partm m]@_m = 1.
-    by rewrite (mcoeff_symm _ (size_partm _)) perm_eq_sym partm_perm_eqK.
+    by rewrite (mcoeff_symm _ (size_partm _)) perm_sym partm_permK.
   rewrite mulr1 -[LHS]addr0; congr (_ + _); symmetry.
   rewrite !raddf_sum /=.
   rewrite big_seq_cond; apply big1 => /= m' /and3P [_ Hdom Hm'].
   rewrite mcoeffZ (mcoeff_symm _ (size_partm _)).
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
-  apply (introF idP) => /perm_eq_partm
+  apply (introF idP) => /perm_partm
                          /(congr1 (fun x : intpart => mpart (n := n) x)) H.
   by move: Hm'; rewrite -{}H !(partmK Hdom) eq_refl.
 - rewrite (memN_msupp_eq0 Hm); symmetry.
@@ -393,7 +393,7 @@ case: (boolP (m \in msupp p)) => Hm.
   rewrite big_seq_cond; apply big1 => /= m' /andP [Hsupp Hdom].
   rewrite mcoeffZ (mcoeff_symm _ (size_partm _)) partmK //.
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
-  apply (introF idP) => /mnm_perm_eq [/= s /eqP Hs].
+  apply (introF idP) => /mnm_perm [/= s /eqP Hs].
   move: Hm Hsupp; rewrite -mcoeff_eq0 mcoeff_msupp Hs.
   rewrite -mcoeff_sym (issymP p Hsym) => /eqP ->.
   by rewrite eq_refl.
@@ -429,7 +429,7 @@ rewrite (eq_bigr (fun i : 'P_d =>
 rewrite /index_enum -enumT.
 transitivity (\sum_(m <- [seq mpart i | i : 'P_d ] | m \in msupp f)
                f@_m *: sympol ('m[partm m])); last by rewrite big_map.
-rewrite -big_filter -[RHS]big_filter; apply eq_big_perm; apply uniq_perm_eq.
+rewrite -big_filter -[RHS]big_filter; apply perm_big; apply uniq_perm.
 - by apply filter_uniq; apply msupp_uniq.
 - rewrite filter_map map_inj_in_uniq; first by apply filter_uniq; apply enum_uniq.
   move=> /= c1 c2; rewrite !mem_filter /= => /andP [Hc1 _] /andP [Hc2 _].
@@ -452,14 +452,14 @@ Lemma symm_unique d (f : {sympoly R[n]}) c :
 Proof.
 move=> -> l Hl.
 rewrite !linear_sum /=.
-rewrite (bigD1 l) //= !linearZ /= (mcoeff_symm _ Hl) perm_eq_refl /= mulr1.
+rewrite (bigD1 l) //= !linearZ /= (mcoeff_symm _ Hl) perm_refl /= mulr1.
 rewrite big1 ?addr0 // => i Hil /=.
 case: (leqP (size i) n) => [Hi | /symm_oversize ->];
                           last by rewrite scaler0 mcoeff0.
 rewrite linearZ /= mcoeff_symm //.
 rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
 apply negbTE; move: Hil; apply contra.
-move=> /perm_eq_partm/(congr1 pval).
+move=> /perm_partm/(congr1 pval).
 rewrite !mpartK // => Hil.
 by apply/eqP/val_inj.
 Qed.
@@ -599,7 +599,7 @@ Proof. by rewrite /prod_gen intpartn0 big_nil. Qed.
 
 Lemma prod_genM c d (l : 'P_c) (k : 'P_d) : 'g[l] * 'g[k] = 'g[l +|+ k].
 Proof using.
-by rewrite /prod_gen (eq_big_perm _ (perm_union_intpartn l k)) big_cat.
+by rewrite /prod_gen (perm_big _ (perm_union_intpartn l k)) big_cat.
 Qed.
 
 Lemma prod_gen_colpartn d : 'g[colpartn d] = 'g_1 ^+ d.
@@ -1015,8 +1015,8 @@ Lemma symHE_intcompn d :
          (-1)^+(d - size c) *: prod_gen H (partn_of_compn c).
 Proof.
 rewrite symHE_prod_intcomp; apply eq_bigr => c _; congr (_ *: _).
-rewrite /prod_symh /prod_gen; apply eq_big_perm.
-by rewrite perm_eq_sym perm_sort.
+rewrite /prod_symh /prod_gen; apply perm_big.
+by rewrite perm_sym perm_sort.
 Qed.
 
 Definition perm_partn d (la : 'P_d) :=
@@ -1035,7 +1035,7 @@ transitivity
   rewrite natr_sum mulr_sumr -scaler_suml; congr (_ *: _).
   apply eq_big => /= co; rewrite inE //= => /eqP <-.
   rewrite mulr1; congr (_ ^+ (d - _)).
-  by apply: perm_eq_size; rewrite perm_sort.
+  by apply: perm_size; rewrite perm_sort.
 rewrite (exchange_big_dep xpredT) //=.
 apply eq_bigr => la _.
 rewrite (eq_bigl (fun i : 'P_d => i == partn_of_compn la)) ?big_pred1_eq //.
@@ -1185,16 +1185,16 @@ case: (altP (mdeg m =P sumn la)) => Heq; first last.
    by rewrite /= sumn_partm Heq intpartn_sumn eq_refl /=.
   rewrite (bigD1 (IntPartN Hpm)) //= big1 ?addr0.
   + rewrite mcoeffZ (mcoeff_symm _ _ (size_partm _)).
-    rewrite perm_eq_sym partm_perm_eqK /= mulr1.
+    rewrite perm_sym partm_permK /= mulr1.
     congr _%:R.
     rewrite -Kostka_any ?leqSpred // [RHS](Kostka_any _ (size_partm m)).
-    by apply perm_KostkaMon; apply: partm_perm_eqK.
+    by apply perm_KostkaMon; apply: partm_permK.
   + move=> mu Hmu; rewrite mcoeffZ.
     case: (leqP (size mu) n.+1) => [Hszl | /symm_oversize ->]; first last.
       by rewrite mcoeff0 mulr0.
     rewrite mcoeff_symm //=.
     suff /negbTE -> : ~~ (perm_eq (mpart (n := n.+1) mu) m) by rewrite mulr0.
-    move: Hmu; apply contra => /perm_eq_partm H.
+    move: Hmu; apply contra => /perm_partm H.
     apply/eqP/val_inj => /=; rewrite -H.
     by rewrite mpartK.
 Qed.
@@ -1427,10 +1427,10 @@ apply eq_bigr => l _; rewrite scaler_suml; apply eq_big.
 - move=> c; apply/eqP/idP => [<- | Hperm];
       first by rewrite /partn_of_compn /= perm_sort.
   apply val_inj => /=; apply (eq_sorted geq_trans) => //.
-  by rewrite (perm_eqrP Hperm) perm_sort.
+  by rewrite (permPr Hperm) perm_sort.
 - move=> c /eqP <-; congr (_ *: _).
-  rewrite /prod_symp /prod_gen; apply eq_big_perm.
-  by rewrite /partn_of_compn perm_eq_sym /= perm_sort.
+  rewrite /prod_symp /prod_gen; apply perm_big.
+  by rewrite /partn_of_compn perm_sym /= perm_sort.
 Qed.
 
 Lemma intcompn_cons_sub_proof i n (c : intcompn (n - i)) :
@@ -1519,7 +1519,7 @@ elim: n {-2}n (leqnn n) l => [| m IHm] n.
   rewrite zcard_nil /=.
   rewrite (eq_bigl (xpred1 (IntCompN (cnval := [::]) (n := 0%N) isT))); first last.
     move=> i; apply/idP/eqP => [Hperm | /(congr1 val)/= -> //].
-    by apply val_inj => /=; apply/nilP; rewrite /nilp -(perm_eq_size Hperm).
+    by apply val_inj => /=; apply/nilP; rewrite /nilp -(perm_size Hperm).
   by rewrite big_pred1_eq.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
 move => l Hsum Hpart.
@@ -1536,7 +1536,7 @@ rewrite (bigID (fun j : 'I_(n.+1) => (j : nat) \in l)) /=
         [X in _ + X]big1 ?addr0; first last.
   move=> i Hi; apply big1 => [] [[|c0 c] /= _ /andP [Hperm /eqP Hhead]]; exfalso.
   - by move/perm_sumn: Hperm; rewrite /= Hsum Hm.
-  - subst c0; move/perm_eq_mem: Hperm Hi => /(_ i).
+  - subst c0; move/perm_mem: Hperm Hi => /(_ i).
     by rewrite inE eq_refl /= => ->.
 transitivity (\sum_(i < n.+1 | (i : nat) \in l)
                n%:R^-1 * (zcard (rem (i : nat) l))%:R^-1 : R).
@@ -1555,7 +1555,7 @@ transitivity (\sum_(i < n.+1 | (i : nat) \in l)
   rewrite (eq_bigl (fun c : intcompn (n - i)%N =>
                       perm_eq (rem (i : nat) l) c)); first last.
     move=> c; rewrite eq_refl andbT.
-    have /perm_eqlP -> := perm_to_rem Hi.
+    have /permPl -> := perm_to_rem Hi.
     by rewrite perm_cons.
   transitivity (\sum_(c : intcompn (n - i)%N | perm_eq (rem (i : nat ) l) c)
                  n%:R^-1 * \Pi c : R).

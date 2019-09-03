@@ -53,7 +53,7 @@ pose prodw := fun w => \prod_(i <- w) 'X_i : {mpoly R[n]}.
 rewrite -[LHS](big_map (fun t => to_word (val t)) xpredT prodw).
 rewrite -[RHS](big_map val (tabsh_reading sh) prodw).
 rewrite -[RHS]big_filter.
-by rewrite (eq_big_perm _ (to_word_enum_tabsh _ sh)).
+by rewrite (perm_big _ (to_word_enum_tabsh _ sh)).
 Qed.
 
 (** ** Some particular Schur functions *)
@@ -108,11 +108,11 @@ Local Notation n := (n0.+1).
 Variable R : comRingType.
 
 
-Lemma perm_eq_enum_basis d :
+Lemma perm_enum_basis d :
   perm_eq [seq s2m (val s) | s in (basis n d)]
           [seq val m | m in [set m : 'X_{1..n < d.+1} | mdeg m == d]].
 Proof using.
-apply uniq_perm_eq.
+apply uniq_perm.
 - rewrite map_inj_in_uniq; first exact: enum_uniq.
   move=> i j; rewrite !mem_enum => Hi Hj; exact: inj_s2m.
 - rewrite map_inj_uniq; [exact: enum_uniq | exact: val_inj].
@@ -141,7 +141,7 @@ rewrite [filter _ _](_ : _ =
     first last.
   rewrite /enum_mem filter_map -filter_predI; congr map.
   by apply eq_filter => s /=; rewrite !inE andbT.
-rewrite -(eq_big_perm _ (perm_eq_enum_basis d)) /=.
+rewrite -(perm_big _ (perm_enum_basis d)) /=.
 by rewrite big_map -[RHS]big_filter.
 Qed.
 
@@ -174,17 +174,17 @@ rewrite /= mesym_tupleE /tmono Schur_tabsh_readingE.
 rewrite (eq_bigl _ _ (@tabwordshape_col d)).
 set f := BIG_F.
 rewrite (eq_bigr (fun x => f (rev_tuple x))) /f {f}; first last.
-  by move => i _ /=; apply: eq_big_perm; exact: perm_eq_rev.
+  by move => i _ /=; apply: perm_big; rewrite -perm_rev.
 rewrite (eq_bigl (fun i => sorted gtnX (rev_tuple i))); first last.
   move=> [t /= _]; rewrite rev_sorted.
   case: t => [//= | t0 t] /=.
   apply: (map_path (b := pred0)) => [x y /= _|].
   + by rewrite -ltnXnatE.
   + by apply/hasPn => x /=.
-rewrite [RHS](eq_big_perm
+rewrite [RHS](perm_big
                 (map (@rev_tuple _ _) (enum {:d.-tuple 'I_n}))) /=.
   by rewrite big_map /=; first by rewrite /index_enum /= enumT.
-apply uniq_perm_eq.
+apply uniq_perm.
 - rewrite /index_enum -enumT; exact: enum_uniq.
 - rewrite map_inj_uniq; first exact: enum_uniq.
   apply (can_inj (g := (@rev_tuple _ _))).

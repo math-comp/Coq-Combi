@@ -101,7 +101,7 @@ Implicit Type t : seq (seq T).
 
 Definition append_nth t b i := set_nth [::] t i (rcons (nth [::] t i) b).
 
-Lemma perm_eq_append_nth t x pos :
+Lemma perm_append_nth t x pos :
   perm_eq (to_word (append_nth t x pos)) (x :: to_word t).
 Proof using.
 rewrite /append_nth; elim: t pos => [//= | t0 t IHt] /=.
@@ -111,7 +111,7 @@ rewrite /append_nth; elim: t pos => [//= | t0 t IHt] /=.
 - case => [//= | pos].
   + rewrite !to_word_cons -cats1 -[x :: (_ ++ _)]cat1s.
     rewrite [flatten _ ++ _ ++ _]catA.
-    by apply: perm_eqlE; apply: perm_catC.
+    by apply: permEl; apply: perm_catC.
   + move/(_ pos) : IHt; rewrite /= !to_word_cons.
     by rewrite -/((x :: to_word t) ++ t0) perm_cat2r.
 Qed.
@@ -231,9 +231,9 @@ elim: y => [//= | y0 y IHy].
 have -> : iota 0 (size (y0 :: y)) = rcons (iota 0 (size y)) (size y).
   rewrite [size (y0 :: y)]/= -addn1 iota_add add0n /=.
   exact: cats1.
-apply: (perm_eq_trans (perm_eq_append_nth _ _ _)).
-move: IHy; rewrite -(perm_cons (size y)) => /perm_eq_trans; apply.
-by rewrite perm_eq_sym; apply/perm_eqlP; apply: perm_rcons.
+apply: (perm_trans (perm_append_nth _ _ _)).
+move: IHy; rewrite -(perm_cons (size y)) => /perm_trans; apply.
+by rewrite perm_sym; apply/permPl; apply: perm_rcons.
 Qed.
 
 (** The following proof is an experiment to see if proof using get_tab are
@@ -325,7 +325,7 @@ move: Hpart; rewrite -shape_stdtab_of_yam.
 suff : all (gtn (size y)) (to_word (stdtab_of_yam y))
   by apply: is_tab_append_nth_size.
 have:= std_of_yam y; rewrite /is_std size_to_word size_stdtab_of_yam.
-move=> /perm_eq_mem Hperm.
+move=> /perm_mem Hperm.
 apply/allP => x Hx /=.
 by move/(_ x) : Hperm; rewrite mem_iota /= add0n Hx => /esym ->.
 Qed.
@@ -356,11 +356,11 @@ have:= Hstdtab => /andP [Htab Hstd].
 have Hperm : perm_eq (to_word t) (iota 0 n.+1) by rewrite -Hsize -size_to_word.
 have:= std_uniq Hstd.
 have {Hsize Hstdtab Hstd} : allLeq (to_word t) n.
-  have:= Hstd => /perm_eq_allLeqE ->.
+  have:= Hstd => /perm_allLeqE ->.
   apply/allP => x.
   by rewrite mem_iota add0n size_to_word Hsize /= leqXnatE.
 have {Hperm} : n \in to_word t.
-  move: Hperm => /perm_eq_mem ->.
+  move: Hperm => /perm_mem ->.
   by rewrite mem_iota /= add0n.
 elim: t Htab => [//= | t0 t' /= IHt] /and4P [].
 case: t0 => [| l0 t0] _ //.
@@ -433,10 +433,10 @@ move: Hstdtab; rewrite /is_stdtab Htab /= /is_std.
 rewrite !size_to_word {1}Hsize => /andP [] _ Hperm.
 have/(congr1 size_tab) := Happ.
 rewrite size_append_nth Hsize => /eqP; rewrite eqSS => /eqP Hsz.
-have:= perm_eq_append_nth (remn t) n (last_big t n).
-rewrite {}Happ Hsz (perm_eqlP Hperm) perm_eq_sym.
+have:= perm_append_nth (remn t) n (last_big t n).
+rewrite {}Happ Hsz (permPl Hperm) perm_sym.
 rewrite -(addn1 n) iota_add /= add0n cats1.
-by rewrite perm_eq_sym perm_rcons perm_eq_sym perm_cons.
+by rewrite perm_sym perm_rcons perm_sym perm_cons.
 Qed.
 
 Lemma append_nth_remn t :
@@ -490,7 +490,7 @@ Qed.
 Lemma size_notin_stdtab_of_yam y : (size y) \notin (to_word (stdtab_of_yam y)).
 Proof.
 have:= std_of_yam y.
-rewrite /is_std size_to_word size_stdtab_of_yam => /perm_eq_mem ->.
+rewrite /is_std size_to_word size_stdtab_of_yam => /perm_mem ->.
 by rewrite mem_iota add0n /= ltnn.
 Qed.
 

@@ -250,7 +250,7 @@ have -> : 'hh[(IntPartN Hlla)] = 'hh[rowpartn l0] *h 'hh[(IntPartN Hla)]
   move: Hpart; rewrite is_part_sortedE => /andP [Hsort _].
   case: l0 Hsort {Hd} => // l0 Hsort _.
   apply (eq_sorted (leT := geq)) => //; first exact: sort_sorted.
-  by rewrite perm_eq_sym perm_sort /=.
+  by rewrite perm_sym perm_sort /=.
 rewrite -Fchar_triv -(Fchar_invK Hdla 'hh[(IntPartN Hla)]).
 rewrite -Fchar_ind_morph (FcharK Hd).
 apply cfInd_char; rewrite cfIsom_char.
@@ -389,9 +389,9 @@ have Huniq : uniq IRR.
   apply/eqP; have:= irrSG_orthonormal la mu.
   rewrite Hlamu irrSG_orthonormal eq_refl /=.
   by case: eqP => //= _ /eqP; rewrite oner_eq0.
-apply (uniq_perm_eq Huniq).
+apply (uniq_perm Huniq).
   exact: (free_uniq (basis_free (irr_basis _))).
-have /(leq_size_perm Huniq) Htmp : {subset IRR <= irr 'SG_n}.
+have /(uniq_min_size Huniq) Htmp : {subset IRR <= irr 'SG_n}.
   move=> /= f /mapP [/= p /mapP [/= la _ ->{p}] -> {f}].
   exact: irrSG_irr.
 suff /Htmp [] : (size (irr 'SG_n) <= size IRR)%N by [].

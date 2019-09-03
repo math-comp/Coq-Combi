@@ -103,9 +103,9 @@ Variable R : comRingType.
 
 Definition commword (w : seq 'I_n) : {mpoly R[n]} := \prod_(i <- w) 'X_i.
 
-Lemma perm_eq_commword (u v : seq 'I_n) :
+Lemma perm_commword (u v : seq 'I_n) :
   perm_eq u v -> commword u = commword v.
-Proof using . exact: eq_big_perm. Qed.
+Proof using . exact: perm_big. Qed.
 
 Lemma commword_morph (u v : seq 'I_n) :
   commword (u ++ v) = (commword u) * (commword v).
@@ -215,9 +215,9 @@ Proof using . by rewrite size_to_word -{2}(size_tuple t) size_RS. Qed.
 Definition tabword_of_tuple (t : d.-tuple 'I_n) : d.-tuple 'I_n :=
   Tuple (size_RS_tuple t).
 
-Lemma perm_eq_tabword_of_tuple (t : d.-tuple 'I_n) :
+Lemma perm_tabword_of_tuple (t : d.-tuple 'I_n) :
   perm_eq t (tabword_of_tuple t).
-Proof using . rewrite /tabword_of_tuple /=; exact: perm_eq_RS. Qed.
+Proof using . rewrite /tabword_of_tuple /=; exact: perm_RS. Qed.
 
 Lemma tabword_of_tuple_freeSchur_inj (Q : stdtabn d) :
   {in (freeSchur Q) &, injective tabword_of_tuple}.
@@ -278,8 +278,8 @@ Lemma Schur_freeSchurE d (Q : stdtabn d) :
 Proof using .
 rewrite SchurE -tabword_of_tuple_freeSchur.
 rewrite /polylang (big_imset _ (@tabword_of_tuple_freeSchur_inj _ Q)) /=.
-apply: eq_bigr => t _; apply: perm_eq_commword.
-rewrite perm_eq_sym; exact: perm_eq_RS.
+apply: eq_bigr => t _; apply: perm_commword.
+rewrite perm_sym; exact: perm_RS.
 Qed.
 
 

@@ -203,7 +203,7 @@ move=> Hl; apply: (iffP idP).
     move: Hrew => [] path Hpath Hlast.
     by apply: (Rew (l := x :: path)); first by rewrite /= Hxy Hpath.
   + move=> s _ x <-; case (ltnP (size (undup s)) (size (step s))) => // Hsz _.
-    have:= leq_size_perm (undup_uniq s) (subset_undup_step (s:= s)) Hsz.
+    have:= uniq_min_size (undup_uniq s) (subset_undup_step (s:= s)) Hsz.
     move=> [] Heq _ _; rewrite mem_undup => Hy.
     by exists y; split => //=; exact: (Rew (l := [::])).
   + by move=> s x <-; rewrite invar_undupE; case (all invar s).
@@ -216,8 +216,8 @@ move=> Hl; apply: (iffP idP).
       exists z; split; first exact: (step_mem Hz).
       exact: (Rew Hpath).
   + move=> s _ x <-; case (ltnP (size (undup s)) (size (step s))) => // Hsz _.
-    have:= leq_size_perm (undup_uniq s) (subset_undup_step (s:= s)) Hsz.
-    move=> [] Heq _ _ y {x} [] x [] Hx Hrew.
+    have:= uniq_min_size (undup_uniq s) (subset_undup_step (s:= s)) Hsz.
+    move=> [] _ Heq _ y {x} [] x [] Hx Hrew.
     by rewrite mem_undup; exact: (step_closed Heq Hx).
   + by move=> s x <-; rewrite invar_undupE; case (all invar s).
 Qed.
@@ -566,7 +566,7 @@ Notation word := (seq_eqType Alph).
 Variable rule : word -> seq word.
 Hypothesis Hmulthom : forall u : word, all (perm_eq u) (rule u).
 
-Lemma perm_eq_bound (x : word) (s : seq word) :
+Lemma perm_bound (x : word) (s : seq word) :
   all (perm_eq x) s -> uniq s -> size s <= (size x)`!.
 Proof using.
 by rewrite -(size_permuted_seq x); apply: full_bound; exact: eq_seqE.
@@ -574,13 +574,13 @@ Qed.
 
 Lemma perm_invar (x0 x : word) : perm_eq x0 x -> all (perm_eq x0) (rule x).
 Proof using Hmulthom.
-move: perm_eq_trans; rewrite /transitive => Ptrans.
+move: perm_trans; rewrite /transitive => Ptrans.
 move=> H; apply/allP => x1 Hx1; apply: (@Ptrans _ x _ _ H).
 by move/(_ x)/allP : Hmulthom; apply.
 Qed.
 
 Definition invcont_perm :=
-  InvariantContext (@perm_eq_refl _) perm_invar perm_eq_bound.
+  InvariantContext (@perm_refl _) perm_invar perm_bound.
 
 Hypothesis Hsym : forall u v : word, v \in rule u -> u \in rule v.
 Hypothesis Hcongr : congruence_rule rule.
@@ -589,7 +589,7 @@ Lemma perm_invar_congr u (a b1 b2 c : word) :
   invar invcont_perm b1 b2 ->
   invar invcont_perm u (a ++ b1 ++ c) -> invar invcont_perm u (a ++ b2 ++ c).
 Proof using.
-by rewrite /= => Hb1b2 /perm_eqlP ->; rewrite perm_cat2l perm_cat2r.
+by rewrite /= => Hb1b2 /permPl ->; rewrite perm_cat2l perm_cat2r.
 Qed.
 
 Definition gencongr_multhom := gencongr perm_invar_congr.

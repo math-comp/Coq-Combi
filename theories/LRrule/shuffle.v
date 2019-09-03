@@ -111,39 +111,39 @@ Qed.
 
 Lemma shuffleC u v : perm_eq (shuffle u v) (shuffle v u).
 Proof using .
-elim: u v => [| a u IHu] /= v; first by rewrite shuffle_nil perm_eq_refl.
-elim: v => [| b v IHv] /=; first by rewrite perm_eq_refl.
+elim: u v => [| a u IHu] /= v; first by rewrite shuffle_nil perm_refl.
+elim: v => [| b v IHv] /=; first by rewrite perm_refl.
 set sa := (X in X ++ _); set sb := (X in _ ++ X).
-apply: (@perm_eq_trans _ (sb ++ sa)); first by apply/perm_eqlP; apply: perm_catC.
+apply: (@perm_trans _ (sb ++ sa)); first by apply/permPl; apply: perm_catC.
 set sc := (X in perm_eq _ (X ++ _)).
-apply: (@perm_eq_trans _ (sc ++ sa)).
+apply: (@perm_trans _ (sc ++ sa)).
 - rewrite perm_cat2r /sb /sc /= {sa sb sc}.
   by apply: perm_map; exact: IHv.
 - rewrite perm_cat2l /sa /= {sa sb sc}.
   by apply: perm_map; exact: IHu.
 Qed.
 
-Lemma perm_eq_shuffle u v : all (perm_eq (u ++ v)) (shuffle u v).
+Lemma perm_shuffle u v : all (perm_eq (u ++ v)) (shuffle u v).
 Proof using .
-elim: u v => [| a u IHu] /= v; first by rewrite perm_eq_refl.
-elim: v => [| b v /allP IHv] /=; first by rewrite cats0 perm_eq_refl.
+elim: u v => [| a u IHu] /= v; first by rewrite perm_refl.
+elim: v => [| b v /allP IHv] /=; first by rewrite cats0 perm_refl.
 rewrite all_cat; apply/andP; split; apply/allP => s /mapP [t Ht -> {s}] /=.
 - rewrite perm_cons.
   by move/(_ (b :: v)): IHu => /allP; apply.
-- apply: (@perm_eq_trans _ (b :: v ++ a :: u)).
-  + by apply/perm_eqlP; have /= := perm_catC (a :: u) (b :: v).
-  + rewrite perm_cons perm_eq_sym.
-    move/(_ t Ht) : IHv; rewrite perm_eq_sym => /perm_eq_trans; apply.
-    by apply/perm_eqlP; have /= := perm_catC (a :: u) v.
+- apply: (@perm_trans _ (b :: v ++ a :: u)).
+  + by apply/permPl; have /= := perm_catC (a :: u) (b :: v).
+  + rewrite perm_cons perm_sym.
+    move/(_ t Ht) : IHv; rewrite perm_sym => /perm_trans; apply.
+    by apply/permPl; have /= := perm_catC (a :: u) v.
 Qed.
 
 Lemma all_size_shuffle u v :
   all (fun s => size s == size u + size v) (shuffle u v).
 Proof using .
 apply/allP => x Hx; rewrite -size_cat.
-apply/eqP; apply: perm_eq_size.
-have:= perm_eq_shuffle u v => /allP Hall.
-by rewrite perm_eq_sym; exact: Hall.
+apply/eqP; apply: perm_size.
+have:= perm_shuffle u v => /allP Hall.
+by rewrite perm_sym; exact: Hall.
 Qed.
 
 (** *** Shuffling two disjoint sequences *)
@@ -172,7 +172,7 @@ elim: v HI => [_ | b v IHv] /=.
     * rewrite (eq_in_filter (a2 := mem u)); first by apply/eqP; apply: (Hu _ Hs).
       move => i /=; rewrite inE => Hi.
       apply/idP/idP; last by move ->; rewrite orbT.
-      have /allP := perm_eq_shuffle u (b :: v) => /(_ _ Hs)/perm_eq_mem/(_ i).
+      have /allP := perm_shuffle u (b :: v) => /(_ _ Hs)/perm_mem/(_ i).
       rewrite {}Hi /= mem_cat inE => /or3P []; first by move ->.
       - move/eqP -> => /orP [] // /eqP Habs; exfalso.
         by move/(_ a): HI; rewrite !inE Habs !eq_refl.
@@ -191,7 +191,7 @@ Lemma all_in_shuffler u v :
   all (fun s => filter (mem v) s == v) (shuffle u v).
 Proof using .
 move=> HI.
-rewrite (perm_eq_all _ (shuffleC _ _)) //.
+rewrite (perm_all _ (shuffleC _ _)) //.
 apply: all_in_shufflel.
 by move=> i; rewrite -(HI i) !inE andbC.
 Qed.
@@ -294,7 +294,7 @@ case: leqP => H /=; rewrite !inE IHv.
   by apply: gtn_eqF; exact: ltn_addl.
 Qed.
 
-Lemma perm_eq_shiftn_std n s :
+Lemma perm_shiftn_std n s :
   is_std s -> perm_eq (shiftn n s) (iota n (size s)).
 Proof.
 rewrite /is_std /shiftn -{2}(addn0 n) iota_addl.
@@ -307,19 +307,19 @@ Lemma std_shsh u v : is_std u -> is_std v -> all is_std (shsh u v).
 Proof.
 rewrite /is_std /shsh /shiftn => Hu Hv.
 apply/allP => s Hs.
-have /allP/(_ s Hs) := perm_eq_shuffle u (shiftn (size u) v).
-rewrite perm_eq_sym => /perm_eq_trans; apply.
+have /allP/(_ s Hs) := perm_shuffle u (shiftn (size u) v).
+rewrite perm_sym => /perm_trans; apply.
 have /allP/(_ s Hs)/eqP := all_size_shuffle u (shiftn (size u) v).
 rewrite size_map => -> {s Hs}.
 rewrite iota_add.
-apply: (@perm_eq_trans _ (u ++ iota (size u) (size v))); last by rewrite perm_cat2r.
+apply: (@perm_trans _ (u ++ iota (size u) (size v))); last by rewrite perm_cat2r.
 rewrite perm_cat2l -{2}[size u]addn0 iota_addl.
 exact: perm_map.
 Qed.
 
 Lemma pred0_std u v : is_std u -> [predI u & shiftn (size u) v] =i pred0.
 Proof.
-rewrite /is_std /shsh /shiftn => /perm_eq_mem Hu i /=.
+rewrite /is_std /shsh /shiftn => /perm_mem Hu i /=.
 rewrite !inE Hu mem_iota add0n /=.
 apply: (introF idP) => /andP [Hlt /mapP [j _ Hi]].
 by move: Hlt; rewrite Hi -{2}[size u]addn0 ltn_add2l.
@@ -331,7 +331,7 @@ Proof.
 move=> Hstdu; rewrite /shsh.
 rewrite -(mem_shuffle _ (pred0_std v Hstdu)) => /and3P [/eqP Hu _ _].
 rewrite -{1}Hu; apply: eq_filter => i /=.
-by rewrite (perm_eq_mem Hstdu) mem_iota /= add0n.
+by rewrite (perm_mem Hstdu) mem_iota /= add0n.
 Qed.
 
 Lemma shsh_sfilterleq p u v :
@@ -341,9 +341,9 @@ move=> Hstdu; rewrite /shsh => Hsh.
 rewrite sfilterleqE; have:= Hsh.
 rewrite -(mem_shuffle _ (pred0_std v Hstdu)) /= => /and3P [_ /eqP <- _].
 apply: eq_in_filter => i /= Hi.
-have /allP/(_ p Hsh) Hp := perm_eq_shuffle u (shiftn (size u) v).
-move: Hi; rewrite -(perm_eq_mem Hp) mem_cat => /orP [].
-- rewrite (perm_eq_mem Hstdu) mem_iota /= add0n /shiftn => Hi.
+have /allP/(_ p Hsh) Hp := perm_shuffle u (shiftn (size u) v).
+move: Hi; rewrite -(perm_mem Hp) mem_cat => /orP [].
+- rewrite (perm_mem Hstdu) mem_iota /= add0n /shiftn => Hi.
   rewrite leqNgt Hi /=; apply/(introF idP) => /mapP [j Hj Heq].
   by move: Hi; rewrite Heq -{2}[size u]addn0 ltn_add2l.
 - move=> Hi; rewrite Hi; apply: esym.
@@ -363,7 +363,7 @@ move=> Hstdu; apply/idP/idP.
   move=> /andP [/eqP /= Hu /eqP /= Hv].
   apply/and3P; split.
   + apply/eqP; rewrite -{2}Hu /=; apply: eq_filter => i.
-    by rewrite /= (perm_eq_mem Hstdu) mem_iota /= add0n.
+    by rewrite /= (perm_mem Hstdu) mem_iota /= add0n.
   + apply/eqP; rewrite -{2}Hv sfilterleqK /=; apply: eq_in_filter => i /= Hi.
     by rewrite -Hv sfilterleqK mem_filter Hi andbT.
   + rewrite -(count_predC (gtn (size u)) p) -!size_filter.
@@ -408,8 +408,8 @@ have {Hv1} Hplv : v1 =Pl v2.
   by rewrite -(ltn_add2r (size u1)) ?subnK.
 exists u2, v2; split => //.
 rewrite mem_shsh; first last.
-  by apply (perm_eq_std Hstdu1); rewrite perm_eq_sym; exact: plact_homog.
-by rewrite -(perm_eq_size (plact_homog Hplu)) !eq_refl.
+  by apply (perm_std Hstdu1); rewrite perm_sym; exact: plact_homog.
+by rewrite -(perm_size (plact_homog Hplu)) !eq_refl.
 Qed.
 
 End ShiftedShuffle.
@@ -425,29 +425,29 @@ Implicit Type a b c : Alph.
 Implicit Type u v w : word.
 Implicit Type t : seq (seq nat).
 
-Lemma perm_eq_sfiltergtn p n :
+Lemma perm_sfiltergtn p n :
   is_std p -> perm_eq (sfiltergtn n p) (iota 0 (minn n (size p))).
 Proof using .
-move=> Hstd; apply: uniq_perm_eq.
+move=> Hstd; apply: uniq_perm.
 - by apply: filter_uniq; exact: std_uniq.
 - exact: iota_uniq.
 - move=> i; rewrite mem_filter mem_iota /= add0n leq_min.
   congr (_ && _).
-  rewrite (perm_eq_mem Hstd).
+  rewrite (perm_mem Hstd).
   by rewrite mem_iota /= add0n.
 Qed.
 
-Lemma perm_eq_sfilterleq p n :
+Lemma perm_sfilterleq p n :
   is_std p -> perm_eq (sfilterleq n p) (iota 0 ((size p) - n)).
 Proof using .
-move=> Hstd; apply: uniq_perm_eq.
+move=> Hstd; apply: uniq_perm.
 - rewrite map_inj_in_uniq.
   + by apply: filter_uniq; exact: std_uniq.
   + move=> i j; rewrite !mem_filter => /andP [Hi _] /andP [Hj _] H.
     by rewrite -(subnK Hi) H (subnK Hj).
 - exact: iota_uniq.
 - move=> i; rewrite mem_sfilterleqK.
-  rewrite (perm_eq_mem Hstd).
+  rewrite (perm_mem Hstd).
   rewrite !mem_iota /= !add0n.
   by rewrite ltn_subRL addnC.
 Qed.
@@ -455,23 +455,23 @@ Qed.
 Lemma size_sfiltergtn p n :
   is_std p -> size (sfiltergtn n p) = minn n (size p).
 Proof using.
-by move/(perm_eq_sfiltergtn n)/perm_eq_size ->; rewrite size_iota.
+by move/(perm_sfiltergtn n)/perm_size ->; rewrite size_iota.
 Qed.
 Lemma size_sfilterleq p n :
   is_std p -> size (sfilterleq n p) = (size p) - n.
 Proof using.
-by move/(perm_eq_sfilterleq n)/perm_eq_size ->; rewrite size_iota.
+by move/(perm_sfilterleq n)/perm_size ->; rewrite size_iota.
 Qed.
 
 Lemma sfiltergtn_is_std p n : is_std p -> is_std (sfiltergtn n p).
 Proof using .
 move=> Hstd; rewrite /is_std (size_sfiltergtn _ Hstd).
-exact: perm_eq_sfiltergtn.
+exact: perm_sfiltergtn.
 Qed.
 Lemma sfilterleq_is_std p n : is_std p -> is_std (sfilterleq n p).
 Proof using .
 move=> Hstd; rewrite /is_std (size_sfilterleq _ Hstd).
-exact: perm_eq_sfilterleq.
+exact: perm_sfilterleq.
 Qed.
 
 Lemma size_sfiltergtn_cat u v :
@@ -901,8 +901,7 @@ apply: (@LRTriple _ _ _ (rev p1) (rev p2) (rev p)).
 - rewrite RS_rev_uniq; last by apply std_uniq; rewrite -RSstdE Hp.
   by rewrite Hp.
 - rewrite mem_shsh; first last.
-    rewrite /is_std size_rev.
-    have:= perm_eq_rev p1 => /perm_eqlP <-.
+    rewrite /is_std size_rev perm_rev.
     by rewrite -/(is_std _)  -RSstdE Hp1.
   by rewrite /= size_rev !filter_rev map_rev Hsh1 Hsh2 !eq_refl.
 Qed.

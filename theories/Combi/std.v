@@ -69,39 +69,39 @@ Section StandardWords.
 Implicit Type n : nat.
 Definition is_std (s : seq nat) := perm_eq s (iota 0 (size s)).
 
-Lemma perm_eq_std u v : is_std u -> perm_eq v u -> is_std v.
+Lemma perm_std u v : is_std u -> perm_eq v u -> is_std v.
 Proof.
 rewrite /is_std => Hperm Heq.
-rewrite (perm_eq_size Heq); exact: (perm_eq_trans Heq Hperm).
+rewrite (perm_size Heq); exact: (perm_trans Heq Hperm).
 Qed.
 
-Lemma std_perm_eq u v : is_std u -> is_std v -> size u = size v -> perm_eq v u.
+Lemma std_perm u v : is_std u -> is_std v -> size u = size v -> perm_eq v u.
 Proof.
 rewrite /is_std => Hperm Heq Hsize.
-rewrite Hsize perm_eq_sym in Hperm.
-exact: (perm_eq_trans Heq Hperm).
+rewrite Hsize perm_sym in Hperm.
+exact: (perm_trans Heq Hperm).
 Qed.
 
 Lemma mem_std p i : is_std p -> (i \in p) = (i < size p).
-Proof. by rewrite /is_std => /perm_eq_mem ->; rewrite mem_iota /= add0n. Qed.
+Proof. by rewrite /is_std => /perm_mem ->; rewrite mem_iota /= add0n. Qed.
 
 Lemma std_uniq u : is_std u -> uniq u.
-Proof. by rewrite /is_std => /perm_eq_uniq ->; apply: iota_uniq. Qed.
+Proof. by rewrite /is_std => /perm_uniq ->; apply: iota_uniq. Qed.
 
 Lemma std_max s0 s : is_std (s0 :: s) -> maxL s0 s = size s.
-Proof. by rewrite /is_std => /= /maxL_perm_eq /= ->; rewrite maxL_iota_n. Qed.
+Proof. by rewrite /is_std => /= /maxL_perm /= ->; rewrite maxL_iota_n. Qed.
 
 Lemma is_stdP s : reflect (forall n, n < size s -> n \in s) (is_std s).
 Proof.
 rewrite /is_std; apply (iffP idP).
-- by move=> Hperm n Hn; rewrite (perm_eq_mem Hperm) mem_iota add0n Hn.
+- by move=> Hperm n Hn; rewrite (perm_mem Hperm) mem_iota add0n Hn.
 - move=> H.
   have Hsubs : {subset iota 0 (size s) <= s}.
     by move=> n; rewrite mem_iota /= add0n; apply: H.
   have Hsz : size s <= size (iota 0 (size s)) by rewrite size_iota.
-  have:= leq_size_perm (iota_uniq _ _) Hsubs Hsz => [] [] Hs _.
+  have:= uniq_min_size (iota_uniq _ _) Hsubs Hsz => [] [] _ Hs.
   have Huniq:= leq_size_uniq (iota_uniq _ _) Hsubs Hsz.
-  apply (uniq_perm_eq Huniq (iota_uniq _ _)).
+  apply (uniq_perm Huniq (iota_uniq _ _)).
   by move => i; rewrite Hs.
 Qed.
 
@@ -121,14 +121,14 @@ Qed.
 
 Lemma uniq_wordperm n (p : 'S_n) : uniq (wordperm p).
 Proof.
-rewrite (perm_uniq (wordperm_iota _)); first exact: (iota_uniq 0 n).
+rewrite (eq_uniq _ (wordperm_iota p)); first exact: (iota_uniq 0 n).
 by rewrite size_map size_enum_ord size_iota.
 Qed.
 
 Lemma wordperm_std n (p : 'S_n) : is_std (wordperm p).
 Proof.
 rewrite /is_std size_map size_enum_ord.
-apply: uniq_perm_eq.
+apply: uniq_perm.
 - exact: uniq_wordperm.
 - exact: iota_uniq.
 - exact: wordperm_iota.
@@ -140,7 +140,7 @@ rewrite /is_std => H.
 pose fpn := fun i : 'I_(size s) => nth 0 s i.
 have Hfpi i : fpn i < size s.
   have:= mem_nth 0 (ltn_ord i).
-  by rewrite (perm_eq_mem H) mem_iota /= add0n.
+  by rewrite (perm_mem H) mem_iota /= add0n.
 pose fp := finfun (fun i : 'I_(size s) => Ordinal (Hfpi i)).
 have Hfp : injective fp.
   move=> i j; rewrite /fp /= !ffunE => Heq; apply/eqP.
@@ -266,16 +266,16 @@ Proof using. exact: size_std_rec. Qed.
 
 Lemma std_is_std s : is_std (std s).
 Proof using.
-rewrite /is_std /std size_std_rec perm_eq_sym.
+rewrite /is_std /std size_std_rec perm_sym.
 move Hn : (size s) => n; elim: n s Hn => [//= | n IHn] s Hn.
-apply: (@perm_eq_trans _ (n :: (iota 0 n))).
-  by rewrite -addn1 iota_add /= add0n -cat1s; apply/perm_eqlP; exact: perm_catC.
-apply: (@perm_eq_trans _ (n :: std_rec n (rembig s))).
+apply: (@perm_trans _ (n :: (iota 0 n))).
+  by rewrite -addn1 iota_add /= add0n -cat1s; apply/permPl; exact: perm_catC.
+apply: (@perm_trans _ (n :: std_rec n (rembig s))).
   by rewrite perm_cons; apply: IHn; rewrite size_rembig Hn.
 rewrite {IHn Hn} /= -[n :: drop _ _]cat1s catA.
 move: (std_rec n (rembig s)) => l.
 rewrite -{1}[l](cat_take_drop (posbig s)) -cat1s -catA.
-by apply/perm_eqlP; apply: perm_catCA.
+by apply/permPl; apply: perm_catCA.
 Qed.
 
 Lemma in_std_ltn_size s i : i \in std s = (i < size s).
@@ -344,9 +344,9 @@ move Hn : (size s) => n; elim: n s Hn => [/= | n IHn] s Hsz.
   rewrite -{-1}Hs => Hsz Hperm /=.
   have Hszrem : size (rembig s) = n by rewrite size_rembig Hs Hsz.
   have Hprem : perm_eq (rembig s) (iota 0 n).
-    by rewrite -rembig_iota; exact: perm_eq_rembig.
+    by rewrite -rembig_iota; exact: perm_rembig.
   rewrite (IHn _ Hszrem Hprem) Hs {IHn}.
-  have:= Hperm; rewrite {1}Hs => /maxL_perm_eq.
+  have:= Hperm; rewrite {1}Hs => /maxL_perm.
   rewrite maxL_iota_n => <-.
   exact: posbig_take_dropE.
 Qed.
@@ -670,24 +670,24 @@ Section PermEq.
 Variable Alph : ordType.
 Implicit Type u v : seq Alph.
 
-Theorem perm_eq_stdE u v : perm_eq u v -> std u = std v -> u = v.
+Theorem perm_stdE u v : perm_eq u v -> std u = std v -> u = v.
 Proof using.
 move=> Hperm.
 move Hn : (size v) => n; elim: n u v Hn Hperm => [| n IHn] u v Hn Hperm /=.
-  move: Hperm => /perm_eq_size; rewrite Hn => /eqP/nilP -> _.
+  move: Hperm => /perm_size; rewrite Hn => /eqP/nilP -> _.
   by move: Hn => /eqP/nilP ->.
 move=> Hstd.
 have:= size_rembig v; rewrite Hn /= => Hszrem.
-have Hpermrem := perm_eq_rembig Hperm.
+have Hpermrem := perm_rembig Hperm.
 have:= congr1 rembig Hstd; rewrite -!std_rembig => Hstdrem.
 move/(_ _ _ Hszrem Hpermrem Hstdrem) : IHn => Hrem {Hszrem Hpermrem Hstdrem}.
 have:= congr1 posbig Hstd; rewrite !std_posbig => Hstdpos.
 have:= Hn; case Hv : v => [//= | v0 v'] /= _.
-have:= Hperm => /perm_eq_size; rewrite Hn.
+have:= Hperm => /perm_size; rewrite Hn.
 case Hu : u => [//= | u0 u'] /= _.
 rewrite -[u0 :: u'](posbig_take_dropE) -[v0 :: v'](posbig_take_dropE).
 rewrite -Hu -Hv Hrem Hstdpos; congr (_ ++ _ :: _).
-by apply maxL_perm_eq; rewrite -Hu -Hv.
+by apply maxL_perm; rewrite -Hu -Hv.
 Qed.
 
 End PermEq.
@@ -807,9 +807,9 @@ Lemma std_transp (T : inhOrdType) (u v : seq T) a b
 Proof.
 move=> Hab Hsz /eqP/stdP [] Hstd Hinv.
 apply/eqP/stdP; constructor.
-+ apply: (perm_eq_std Hstd).
++ apply: (perm_std Hstd).
   rewrite perm_cat2l perm_cat2r -[[:: B; A]]cat1s -[[:: A; B]]cat1s.
-  by apply/perm_eqlP; exact: perm_catC.
+  by apply/permPl; exact: perm_catC.
 + apply: eq_inv_transp => //=.
   move: Hinv => /eq_invP [] _ Hinv.
   move/(_ (size u) (size u).+1) : Hinv.
@@ -849,12 +849,12 @@ Qed.
 
 
 (** * Inverse of a standard word *)
-Lemma perm_eq_size_uniq (T : eqType) (s1 s2 : seq T) :
+Lemma perm_size_uniq (T : eqType) (s1 s2 : seq T) :
   uniq s1 -> {subset s1 <= s2} -> size s2 <= size s1 -> perm_eq s1 s2.
 Proof.
-move=> Hus1 Hsubs /(leq_size_perm Hus1 Hsubs) => [] [] Heq Hsz.
-apply: (uniq_perm_eq Hus1); last exact Heq.
-by rewrite -(perm_uniq Heq Hsz).
+move=> Hus1 Hsubs /(uniq_min_size Hus1 Hsubs) => [] [] Hsz Heq.
+apply: (uniq_perm Hus1); last exact Heq.
+by rewrite -(eq_uniq Hsz Heq).
 Qed.
 
 Section InvSeq.
@@ -883,12 +883,12 @@ Proof.
 move=> H.
 pose s := undup (filter (gtn n) t).
 have Hperm : perm_eq s (iota 0 n).
-  apply: (uniq_perm_eq (undup_uniq _) (iota_uniq _ _)).
+  apply: (uniq_perm (undup_uniq _) (iota_uniq _ _)).
   move=> i; rewrite /s mem_undup mem_iota /= add0n mem_filter /=.
   apply/idP/idP => [/andP [] -> //| Hi].
   by rewrite Hi (H i Hi).
 have <- := size_iota 0 n.
-rewrite -(perm_eq_size Hperm) /s.
+rewrite -(perm_size Hperm) /s.
 apply: (leq_trans (size_undup _)).
 by rewrite size_filter; apply: count_size.
 Qed.
@@ -927,8 +927,8 @@ Qed.
 
 Lemma invseq_is_std s t : invseq s t -> is_std s.
 Proof.
-move=> /invseq_sym Hinv; rewrite /is_std perm_eq_sym.
-apply: perm_eq_size_uniq.
+move=> /invseq_sym Hinv; rewrite /is_std perm_sym.
+apply: perm_size_uniq.
 - exact: iota_uniq.
 - rewrite -(size_invseq Hinv); apply: linvseq_subset_iota.
   by move: Hinv; rewrite /invseq => /andP [].
@@ -942,9 +942,9 @@ move=> Hinv Hsize; rewrite /invseq; apply/andP; split; first exact Hinv.
 have Hiota := linvseq_subset_iota Hinv.
 have Htmp : size t <= size (iota 0 (size s)) by rewrite size_iota Hsize.
 have Huniq := leq_size_uniq (iota_uniq 0 (size s)) Hiota Htmp.
-move/(perm_eq_size_uniq (iota_uniq 0 (size s)) Hiota) : Htmp => Hperm {Hiota}.
+move/(perm_size_uniq (iota_uniq 0 (size s)) Hiota) : Htmp => Hperm {Hiota}.
 apply/linvseqP => i Hi; move: Hinv => /linvseqP Hinv.
-have:= mem_nth (size s) Hi; rewrite -(perm_eq_mem Hperm) mem_iota /= add0n => Hnth.
+have:= mem_nth (size s) Hi; rewrite -(perm_mem Hperm) mem_iota /= add0n => Hnth.
 move/(_ _ Hnth) : Hinv => Heq.
 have/eqP := Heq; rewrite nth_uniq //=; first by move/eqP.
 case: (ltnP (nth (size t) s (nth (size s) t i)) (size t)) => //= H.

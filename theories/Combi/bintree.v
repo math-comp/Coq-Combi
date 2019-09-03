@@ -1289,7 +1289,7 @@ case: (leqP u0 (size u)) => Hu0; rewrite !(from_vct_accE t).
       d <= size s1 -> forall s2, drop d (s1 ++ s2) = drop d s1 ++ s2.
     rewrite leq_eqVlt => /orP [/eqP |] H s; rewrite drop_cat H //.
     by rewrite ltnn subnn drop0 drop_size.
-  rewrite /= !(takel_cat Hu0) !(dropl_cat _ _ Hu0) => Htam0 Htam1.
+  rewrite /= !(takel_cat _ Hu0) !(dropl_cat _ _ Hu0) => Htam0 Htam1.
   apply: IHn => //.
   rewrite size_drop leq_subLR.
   exact: leq_trans Hsz (leq_addl _ _).

@@ -356,17 +356,17 @@ rewrite (bigD1 pm) ?size_partm //= ?big1 ?addr0; first last.
   move=> la /andP [Hszla Hla].
   rewrite mcoeffZ mcoeff_symm //.
   suff /negbTE -> : ~~ perm_eq (mpart (n := m) la) mon by rewrite mulr0.
-  apply/negP => /perm_eq_partm/(congr1 val)/=.
+  apply/negP => /perm_partm/(congr1 val)/=.
   rewrite mpartK // => Heq.
   by move: Hla; rewrite /eq_op /= Heq eq_refl.
-rewrite mcoeffZ mcoeff_symm ?size_partm // perm_eq_sym partm_perm_eqK mulr1.
+rewrite mcoeffZ mcoeff_symm ?size_partm // perm_sym partm_permK mulr1.
 rewrite /Cauchy_kernel /prod_symh /prod_gen {1}/symh /= rmorph_prod /=.
 rewrite rmorph_sum raddf_sum /= partmE; apply esym.
 transitivity (\prod_(i <- mon) sympol 'h_i : polY ).
   rewrite [RHS](bigID (fun i => i == 0%N)) /=.
   rewrite [in RHS]big1 ?mul1r; first last => [i /eqP ->|].
     exact: (congr1 val (symh0 n R)).
-  rewrite /= -[RHS]big_filter; apply eq_big_perm.
+  rewrite /= -[RHS]big_filter; apply perm_big.
   by rewrite perm_sort.
 rewrite {Hpm pm} /= big_tuple; symmetry.
 rewrite (bigID (fun mZ : 'X_{1.. _ < _} => monX mZ == mon)) /=.

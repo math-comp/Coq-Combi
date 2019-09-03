@@ -108,13 +108,13 @@ elim: s => [| s0 s IHs] /=; first by rewrite big_nil.
 by rewrite big_cons IHs.
 Qed.
 
-Lemma perm_eq_evalseq s t : perm_eq s t = (evalseq s == evalseq t).
+Lemma perm_evalseq s t : perm_eq s t = (evalseq s == evalseq t).
 Proof.
 apply/idP/idP => [Hperm | /eqP].
 - rewrite -!evalseq_countE /evalseq_count /=.
-  rewrite !foldr_maxn (eq_big_perm _ Hperm) /=.
+  rewrite !foldr_maxn (perm_big _ Hperm) /=.
   apply/eqP; apply eq_map => i.
-  by move: Hperm => /perm_eqP ->.
+  by move: Hperm => /permP ->.
 - rewrite -!evalseq_countE /evalseq_count /=.
   set mx := foldr _ _ _ => H.
   have:= congr1 size H; rewrite !size_map !size_iota => Hmax.
@@ -324,8 +324,8 @@ Proof.
 elim: z => [//= | z0 z IHz] /= Hy0 Hy1 H /andP [] Hpart Hyam.
 apply/andP; split; last exact: IHz.
 suff <- : evalseq (z ++ y0) = evalseq (z ++ y1) by [].
-apply /eqP; rewrite -perm_eq_evalseq.
-by rewrite perm_cat2l perm_eq_evalseq H.
+apply /eqP; rewrite -perm_evalseq.
+by rewrite perm_cat2l perm_evalseq H.
 Qed.
 
 

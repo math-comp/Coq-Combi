@@ -261,8 +261,8 @@ Proof using.
 rewrite -(bigdprod_card (esym (pcyclegrpE s))).
 rewrite /cycle_type /= /setpart_shape /cycle_dec.
 rewrite big_imset /=; last exact: restr_perm_inj.
-rewrite [RHS](eq_big_perm [seq #{x} | x in pcycles s]);
-  last by apply/perm_eqlP; apply perm_sort.
+rewrite [RHS](perm_big [seq #{x} | x in pcycles s]);
+  last by apply/permPl; apply perm_sort.
 rewrite /= [RHS]big_map -big_enum.
 rewrite [RHS](bigID (fun X => #{X} == 1%N)) /=.
 rewrite [X in _ = (X * _)%N]big1 ?mul1n; last by move=> i /andP [_ /eqP].
@@ -458,8 +458,7 @@ Proof using.
 rewrite -(bigdprod_card (esym (stab_ipcyclesE s))).
 apply eq_bigr => i _.
 rewrite card_perm_ong /setpart_shape; congr (_)`!.
-have:= perm_sort geq [seq #{x} | x in pcycles s].
-move/perm_eqlP/perm_eqP ->.
+have /permPl/seq.permP -> := perm_sort geq [seq #{x} | x in pcycles s].
 rewrite !cardE -size_filter /= /enum_mem.
 rewrite filter_map size_map -filter_predI; congr size.
 by apply eq_filter => C; rewrite !inE andbC.
@@ -573,13 +572,13 @@ have /zcard_any <- : sumn (rem i l) < (sumn l).+1.
   by rewrite ltnS (perm_sumn Hrem) /=; apply leq_addl.
 have Hil : i < (sumn l).+1.
   by rewrite ltnS (perm_sumn Hrem) /=; apply leq_addr.
-rewrite /zcard (eq_big_perm _ Hrem) /= big_cons -!mulnA; congr (_ * _).
+rewrite /zcard (perm_big _ Hrem) /= big_cons -!mulnA; congr (_ * _).
 rewrite mulnC -mulnA; congr (_ * _).
 rewrite  [in RHS](bigD1 (Ordinal Hil)) //=.
-rewrite mulnC (perm_eqP Hrem) /= eq_refl /= add1n.
+rewrite mulnC (seq.permP Hrem) /= eq_refl /= add1n.
 rewrite factS -!mulnA; congr (_ * _).
 rewrite  [in LHS](bigD1 (Ordinal Hil)) //=; congr (_ * _).
-apply eq_bigr => j Hj; move/perm_eqP: Hrem => -> /=.
+apply eq_bigr => j Hj; move/seq.permP: Hrem => -> /=.
 (* TODO : Factorize *)
 have : j != i :> nat by [].
 rewrite eq_sym => /negbTE ->.

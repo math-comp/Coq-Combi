@@ -144,7 +144,7 @@ rewrite {2}/to_word -map_rev -map_flatten.
 move: (flatten (rev t)) => w.
 apply/allP => x /mapP [i _ -> {x}].
 rewrite /allLtn; apply/allP => j.
-rewrite (perm_eq_mem Hperm) mem_iota /= add0n ltnXnatE => /leq_trans; apply.
+rewrite (perm_mem Hperm) mem_iota /= add0n ltnXnatE => /leq_trans; apply.
 exact: leq_addr.
 Qed.
 
@@ -158,7 +158,7 @@ rewrite /join_tab /is_stdtab => /andP [_ Hstd] Hsize.
 rewrite (mem_shsh _ _ Hstd).
 move: Hstd; rewrite /is_std size_to_word /= => Hperm.
 have {Hperm} : all (gtn (size_tab s)) (to_word s).
-  apply/allP => i; rewrite (perm_eq_mem Hperm).
+  apply/allP => i; rewrite (perm_mem Hperm).
   by rewrite mem_iota /= add0n.
 move: (size_tab s) => sh.
 rewrite /shiftn => Hall; apply /andP; split; apply/eqP.
@@ -337,7 +337,7 @@ apply/andP; split.
 - have /= /hasP [] := pred_LRtriple_fast_bijLRyam Hskew => z.
   move: (to_word _) => image.
   rewrite (RSclassE _ (is_tableau_RS _)) -plactic_RS => /plact_homog Hz.
-  have {Hz} Hz : is_std z by apply: (perm_eq_std _ Hz); apply std_is_std.
+  have {Hz} Hz : is_std z by apply: (perm_std _ Hz); apply std_is_std.
   have : is_stdtab (RS (std (hyper_yam P1))) by rewrite RSstdE; apply std_is_std.
   rewrite /is_stdtab => /andP [_ Hstd1].
   exact: (allP (std_shsh Hstd1 Hz)).
@@ -452,7 +452,7 @@ apply (eq_inv_is_skew_tableau_reshape (u1 := [seq x <- to_word Q | d1 <= x])).
   rewrite (nth_map Z); last exact: Hj.
   rewrite !leqXnatE leq_subLR subnKC //=.
   by have:= mem_nth Z Hj; rewrite mem_filter => /andP [].
-- move: Hpl => /plact_homog/perm_eq_size.
+- move: Hpl => /plact_homog/perm_size.
   rewrite size_map => ->.
   by rewrite size_std sumn_diff_shape_intpartE -evalseq_eq_size evalseq_hyper_yam.
 - rewrite (filterleq_LRsupport HLRtab).
@@ -512,8 +512,8 @@ have invf (s : yameval P2) : std s = sfilterleq d1 (f (std s)).
   rewrite size_to_word (size_tab_stdtabn (hyper_stdtabn P1)) /sfilterleq /=.
   rewrite to_word_skew_reshape //.
   by rewrite size_std size_yameval sumn_diff_shape_intpartE.
-apply perm_eq_stdE.
-- by rewrite perm_eq_evalseq !eval_yameval.
+apply perm_stdE.
+- by rewrite perm_evalseq !eval_yameval.
 - by rewrite (invf x) (invf y) H.
 Qed.
 

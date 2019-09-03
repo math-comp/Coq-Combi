@@ -88,7 +88,7 @@ The bijectivity of [RSmap] and [RSmapinv2] are stated in
 - Theorem [RSmapK] stated as [RSmapinv2 (RSmap w) = w.]
 - and Theorem [RSmapinv2K] as [RSmap (RSmapinv2 pair) = pair.]
 Moreover [RS] preserve the content:
-- [Theorem perm_eq_RS w : perm_eq w (to_word (RS w)).]
+- [Theorem perm_RS w : perm_eq w (to_word (RS w)).]
 
 
 A sigma type for Robinson-Schensted pairs:
@@ -1278,8 +1278,8 @@ rewrite (count_instab _ _ (is_tableau_RS _)) => <-.
 by rewrite -[rcons _ _](revK) rev_rcons count_rev /= count_rev.
 Qed.
 
-Theorem perm_eq_RS w : perm_eq w (to_word (RS w)).
-Proof using. by apply/perm_eqP => l; exact: count_RS. Qed.
+Theorem perm_RS w : perm_eq w (to_word (RS w)).
+Proof using. by apply/seq.permP => l; exact: count_RS. Qed.
 
 End Statistics.
 
@@ -1369,15 +1369,15 @@ End NonEmpty.
 Lemma RSperm n (p : 'S_n) : is_stdtab (RS (wordperm p)).
 Proof.
 rewrite /is_stdtab; apply/andP; split; first exact: is_tableau_RS.
-apply: (perm_eq_std (wordperm_std p)).
-by rewrite perm_eq_sym; apply: (perm_eq_RS (wordperm p)).
+apply: (perm_std (wordperm_std p)).
+by rewrite perm_sym; apply: (perm_RS (wordperm p)).
 Qed.
 
 Lemma RSstdE (p : seq nat) : is_stdtab (RS p) = is_std p.
 Proof.
 rewrite /is_stdtab is_tableau_RS /=.
-by apply/idP/idP => Hstd; apply: (perm_eq_std Hstd);
-  last rewrite perm_eq_sym; apply: perm_eq_RS.
+by apply/idP/idP => Hstd; apply: (perm_std Hstd);
+  last rewrite perm_sym; apply: perm_RS.
 Qed.
 
 Section QTableau.

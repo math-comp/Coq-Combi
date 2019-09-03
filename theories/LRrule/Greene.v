@@ -235,7 +235,7 @@ rewrite (bigID (fun S => S :&: B == set0)) /=.
 rewrite (eq_bigr (fun B => 0)); first last.
   move=> i /andP [/imsetP [j _ ->]].
   by rewrite -setIA setIid => /eqP ->; rewrite cards0.
-rewrite sum_nat_dep_const muln0 add0n.
+rewrite sum_nat_const muln0 add0n.
 rewrite (eq_bigl (mem ([set i :&: B | i in S & i :&: B != set0]))); first last.
   move=> i /=; apply/andP/imsetP => [[/imsetP [j Hj ->] {i}]|[/= j]].
   - rewrite -setIA setIid => Hint; exists j => //=.
@@ -255,7 +255,7 @@ apply: esym; rewrite (bigID (fun S => S :&: B == set0)) /=.
 rewrite (eq_bigr (fun=> 0)); first last.
   move=> i /andP [_ /eqP ->].
   by rewrite cards0.
-rewrite sum_nat_dep_const muln0 add0n.
+rewrite sum_nat_const muln0 add0n.
 by apply: eq_bigl => i /=; rewrite inE.
 Qed.
 
@@ -1311,17 +1311,17 @@ Proof using.
 move => Hsize; rewrite cover_imset /tabcolsk /= tabcols_cons /cover /preimset.
 apply/setP/subset_eqP/andP; split; apply/subsetP => i.
 - move/bigcupP => [S0]; rewrite !inE.
-  move/(mem_takeP set0) => [pos []].
+  move/(mem_takeP set0) => [pos].
   rewrite size_map size_enum_ord leq_min => /andP [Hpos Hpos0] ->.
   rewrite (nth_map (Ordinal Hpos0)); last by rewrite size_enum_ord.
   rewrite !inE lrshift_recF /= (mem_imset_inj _ _ lshift_recP) nth_ord_ltn => Hi.
   apply/bigcupP; exists (nth set0 (tabcols t) (Ordinal Hpos0)); last exact Hi.
   rewrite inE; apply/(mem_takeP set0).
-  exists pos; split; last by [].
+  exists pos; last by [].
   rewrite leq_min Hpos /=.
   case: (ltnP pos (size (tabcols t))) => //= H.
   by move: Hi; rewrite (nth_default _ H) in_set0.
-- move/bigcupP => [S0]; rewrite !inE => /(mem_takeP set0) [pos []].
+- move/bigcupP => [S0]; rewrite !inE => /(mem_takeP set0) [pos].
   rewrite leq_min => [] /andP [Hpos Hpossz] -> Hi.
   have Hpos0 : pos < size t0.
     apply: (leq_trans Hpossz). rewrite size_tabcols.
@@ -1330,8 +1330,7 @@ apply/setP/subset_eqP/andP; split; apply/subsetP => i.
   exists (rsh_rec (Ordinal Hpos0)
                 |: [set lsh_rec x | x in nth set0 (tabcols t) (Ordinal Hpos0)]).
   + rewrite inE; apply/(mem_takeP set0).
-    exists pos; rewrite size_map size_enum_ord leq_min.
-    split; first by rewrite Hpos.
+    exists pos; first by rewrite size_map size_enum_ord leq_min Hpos.
     rewrite (nth_map (Ordinal Hpos0)); last by rewrite size_enum_ord.
     by rewrite nth_ord_ltn.
   + by rewrite !inE lrshift_recF /=; apply/imsetP; exists i.
@@ -1346,7 +1345,7 @@ apply/setP/subset_eqP/andP; split; apply/subsetP => i.
 - rewrite in_set /= /preimset.
   rewrite /cover => /bigcupP [sj /imsetP [stk]].
   rewrite inE => /(mem_takeP set0) [j].
-  rewrite size_map size_enum_ord leq_min => [] [/andP [Hjk Hjt0]].
+  rewrite size_map size_enum_ord leq_min => [/andP [Hjk Hjt0]].
   rewrite (nth_map (Ordinal Hjt0)); last by rewrite size_enum_ord.
   rewrite (nth_enum_ord _ Hjt0).
   rewrite (_ : nth _ _ _ = (Ordinal Hjt0)); first last.
@@ -1357,7 +1356,7 @@ apply/setP/subset_eqP/andP; split; apply/subsetP => i.
   apply/bigcupP; exists [set i]; last by rewrite in_set1.
   apply/imsetP; exists ((rsh_rec i) |: [set lsh_rec x | x in nth set0 (tabcols t) i]).
   + rewrite inE; apply/(mem_takeP set0).
-    exists i; rewrite size_map size_enum_ord leq_min Hi; split; first exact: ltn_ord.
+    exists i; first by rewrite size_map size_enum_ord leq_min Hi ltn_ord.
     rewrite (nth_map i); last by rewrite size_enum_ord; apply: ltn_ord.
     rewrite nth_enum_ord; last exact: ltn_ord.
     by rewrite nth_ord_enum.

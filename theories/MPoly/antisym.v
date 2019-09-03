@@ -166,11 +166,11 @@ case: (ssrnat.ltnP i n) => Hi.
   exact: size_partm.
 Qed.
 
-Lemma perm_eq_mpart s1 s2 : perm_eq s1 s2 -> perm_eq (mpart s1) (mpart s2).
+Lemma perm_mpart s1 s2 : perm_eq s1 s2 -> perm_eq (mpart s1) (mpart s2).
 Proof.
-move=> Hperm; have Hsz := perm_eq_size Hperm; rewrite /mpart -Hsz.
-case: leqP => Hszle; last exact: perm_eq_refl.
-apply/perm_eqP => P.
+move=> Hperm; have Hsz := perm_size Hperm; rewrite /mpart -Hsz.
+case: leqP => Hszle; last exact: perm_refl.
+apply/seq.permP => P.
 have H s : size s <= n ->
            count P [multinom nth 0 s i | i < n] =
            count P s + \sum_(i < n | (P 0) && ~~(i < size s)) 1.
@@ -181,23 +181,23 @@ have H s : size s <= n ->
     by rewrite (big_ord_widen_cond n (fun i => P (nth 0 s i)) (fun => 1)).
   - apply eq_bigl => i; rewrite [LHS]andbC [RHS]andbC.
     by case: (ssrnat.ltnP i (size s)) => //= H; rewrite nth_default.
-by rewrite !{}H -?Hsz // -(perm_eqP Hperm).
+by rewrite !{}H -?Hsz // -(seq.permP Hperm).
 Qed.
 
-Lemma perm_eq_partm m1 m2 : perm_eq m1 m2 -> partm m1 = partm m2.
+Lemma perm_partm m1 m2 : perm_eq m1 m2 -> partm m1 = partm m2.
 Proof.
 move=> Hperm; apply val_inj; rewrite /= !partmE; apply/perm_sortP => //.
-exact: perm_eq_filter.
+exact: perm_filter.
 Qed.
 
-Lemma partm_perm_eqK m : perm_eq m (mpart (partm m)).
+Lemma partm_permK m : perm_eq m (mpart (partm m)).
 Proof.
 have Hsm : size (sort geq m) == n by rewrite size_sort size_tuple.
 pose sm := [multinom Tuple Hsm].
 have Hperm : perm_eq sm m by rewrite /= perm_sort.
-rewrite -(perm_eq_partm Hperm) partmK; first last.
+rewrite -(perm_partm Hperm) partmK; first last.
   by rewrite unfold_in; apply: sort_sorted.
-by rewrite perm_eq_sym.
+by rewrite perm_sym.
 Qed.
 
 Lemma sumn_mpart sh : size sh <= n -> sumn (mpart sh) = sumn sh.
@@ -214,8 +214,8 @@ Lemma sumn_partm m : sumn (partm m) = mdeg m.
 Proof.
 rewrite -sumnE.
 wlog: m / m \is dominant.
-  move=> Hdom; have Hperm := partm_perm_eqK m.
-  rewrite /mdeg (eq_big_perm _ Hperm) /= -/(mdeg _).
+  move=> Hdom; have Hperm := partm_permK m.
+  rewrite /mdeg (perm_big _ Hperm) /= -/(mdeg _).
   have /Hdom <- := mpart_is_dominant (intpartP (partm m)).
   by rewrite mpartK // size_partm.
 move/is_dominant_partm ->.
@@ -227,15 +227,15 @@ Qed.
 Local Notation "m # s" := [multinom m (s i) | i < n]
   (at level 40, left associativity, format "m # s").
 
-Lemma mnm_perm_eq m1 m2 : perm_eq m1 m2 -> {s : 'S_n | m1 == m2 # s}.
+Lemma mnm_perm m1 m2 : perm_eq m1 m2 -> {s : 'S_n | m1 == m2 # s}.
 Proof.
-move=> Hperm; apply sigW; move: Hperm => /tuple_perm_eqP [s /val_inj Hs] /=.
+move=> Hperm; apply sigW; move: Hperm => /tuple_permP [s /val_inj Hs] /=.
 by exists s; apply/eqP; apply val_inj => /=.
 Qed.
 
 Lemma perm_mpart_partm m : {s : 'S_n | (mpart (partm m)) # s == m}.
 Proof.
-apply sigW; have [/= s /eqP {2}->] := mnm_perm_eq (partm_perm_eqK m).
+apply sigW; have [/= s /eqP {2}->] := mnm_perm (partm_permK m).
 by exists s.
 Qed.
 
@@ -255,7 +255,7 @@ Arguments dominant [n].
 Import GRing.Theory.
 Local Open Scope ring_scope.
 Local Definition simplexp := (expr0, expr1, scale1r, scaleN1r,
-                              mulrN, mulNr, mulrNN, opprK).
+                              mulrN, mulNr, mulrNN).
 
 (** ** Change of scalar in multivariate polynomials *)
 Section ScalarChange.
@@ -336,7 +336,7 @@ apply/(iffP forallP) => /= [Hanti i j | Htperm s].
   move=> /andP [H0 /IHts{IHts}/eqP Hrec].
   rewrite !big_cons msymMm Htperm H0 msymN Hrec.
   rewrite odd_mul_tperm H0 /=.
-  by case: (odd_perm _); rewrite !simplexp.
+  by case: (odd_perm _); rewrite !simplexp // opprK.
 Qed.
 
 Lemma antisym_char2 : (2 \in [char R]) -> symmetric =i antisym.
@@ -400,7 +400,7 @@ Lemma anti_anti p q :
 Proof using.
 move=> /isantisymP Hp /isantisymP Hq.
 apply/issymP => s; rewrite msymM Hp Hq.
-by case: (odd_perm _); rewrite !simplexp.
+by case: (odd_perm _); rewrite !simplexp // opprK.
 Qed.
 
 Local Notation "m # s" := [multinom m (s i) | i < n]
@@ -412,7 +412,7 @@ Proof using.
 rewrite !mcoeff_msupp -mcoeff_sym => /isantisymP ->.
 case: (odd_perm s); last by rewrite expr0 scale1r.
 rewrite expr1 scaleN1r !mcoeff_eq0.
-by rewrite (perm_eq_mem (msuppN _)).
+by rewrite (perm_mem (msuppN _)).
 Qed.
 
 
@@ -459,7 +459,7 @@ apply/(iffP forallP) => [Hanti i Hi | Heltr].
   + by rewrite odd_perm1 /= msym1m !simplexp.
   + rewrite msymMm (Heltr i Hi).
     rewrite msymN IH odd_mul_tperm (inordi_neq_i1 Hi) addTb.
-    by case: (odd_perm _); rewrite !simplexp.
+    by case: (odd_perm _); rewrite !simplexp // opprK.
 Qed.
 
 
@@ -507,21 +507,21 @@ Qed.
 
 Lemma rho_uniq : uniq rho.
 Proof using .
-suff : perm_eq rho (iota 0 n) by move/perm_eq_uniq ->; exact: iota_uniq.
-rewrite rho_iota perm_eq_sym; exact: perm_eq_rev.
+suff : perm_eq rho (iota 0 n) by move/perm_uniq ->; exact: iota_uniq.
+by rewrite rho_iota perm_sym -perm_rev.
 Qed.
 
 Lemma mdeg_rho : mdeg rho = 'C(n, 2).
 Proof.
 rewrite /mdeg binomial_sumn_iota -sumnE.
-by apply eq_big_perm; rewrite rho_iota perm_eq_sym; apply: perm_eq_rev.
+by apply perm_big; rewrite rho_iota perm_sym -perm_rev.
 Qed.
 
 Lemma alt_homog : 'a_(rho) \is 'C(n, 2).-homog.
 Proof using.
 apply rpred_sum => s _; rewrite rpredZsign msymX dhomogX /=.
 have -> : mdeg (rho#(s^-1)%g) = mdeg rho.
-  by rewrite /mdeg; apply/eq_big_perm/tuple_perm_eqP; exists (s^-1)%g.
+  by rewrite /mdeg; apply/perm_big/tuple_permP; exists (s^-1)%g.
 by rewrite mdeg_rho.
 Qed.
 
@@ -707,14 +707,14 @@ rewrite (eq_bigr (fun p => 'X_(eltrp i p).1 - 'X_(eltrp i p).2)); first last.
   by move => [u v] _; rewrite msymB /msym !mmapX !mmap1U.
 rewrite -(big_map _ _ (fun p => ('X_p.1 - 'X_p.2))) /=.
 rewrite /index_enum -enumT /=.
-apply eq_big_perm.
+apply perm_big.
 have Hin : map (eltrp i) (enum {: 'II_ n.+1}) =i enum {: 'II_ n.+1}.
   move=> [u v].
   rewrite mem_enum inE.
   have -> : (u, v) = eltrp i (eltrp i (u, v)) by rewrite /eltrp /= !tpermK.
   by apply map_f; rewrite mem_enum inE.
-apply: (uniq_perm_eq _ _ Hin).
-- by rewrite (perm_uniq Hin) ?size_map // enum_uniq.
+apply: (uniq_perm _ _ Hin).
+- by rewrite (eq_uniq _ Hin) ?size_map // enum_uniq.
 - exact: enum_uniq.
 Qed.
 

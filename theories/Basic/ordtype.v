@@ -94,7 +94,7 @@ Definition pack m :=
   fun b bT & phant_id (Equality.class bT) b => Pack (@Class T b m) T.
 
 (* Inheritance *)
-Definition eqType := @Equality.Pack cT xclass xT.
+Definition eqType := @Equality.Pack cT xclass.
 
 End ClassDef.
 
@@ -220,7 +220,7 @@ Definition pack (b : PartOrder.class_of T) (m : mixin_of (PartOrder.Pack b T))
            (_ : phant_id m m0) := Pack (@Class T b m) T.
 
 (* Inheritance *)
-Definition eqType := @Equality.Pack cT xclass xT.
+Definition eqType := @Equality.Pack cT xclass.
 Definition pordType := @PartOrder.Pack cT xclass xT.
 
 End ClassDef.
@@ -309,10 +309,10 @@ Definition pack :=
   fun finT fin & phant_id (Finite.class finT) fin =>
   Pack (@Class T por fin) T.
 
-Definition eqType := @Equality.Pack cT xclass xT.
-Definition choiceType := @Choice.Pack cT xclass xT.
-Definition countType := @Countable.Pack cT xclass xT.
-Definition finType := @Finite.Pack cT xclass xT.
+Definition eqType := @Equality.Pack cT xclass.
+Definition choiceType := @Choice.Pack cT xclass.
+Definition countType := @Countable.Pack cT xclass.
+Definition finType := @Finite.Pack cT xclass.
 
 Definition pordType := @PartOrder.Pack cT xclass xT.
 Definition fin_pordType := @PartOrder.Pack finType xclass xT.
@@ -435,7 +435,7 @@ Definition pack :=
 Definition clone := fun c & cT -> T & phant_id (pack c) cT => pack c.
 *)
 
-Definition eqType := @Equality.Pack cT xclass xT.
+Definition eqType := @Equality.Pack cT xclass.
 Definition pordType := @PartOrder.Pack cT xclass xT.
 Definition inhType := @Inhabited.Pack cT xclass xT.
 Definition pord_inhType := @PartOrder.Pack inhType xclass xT.
@@ -499,7 +499,7 @@ Definition pack :=
   fun mT m & phant_id (Inhabited.class mT) (m : Inhabited.mixin_of T) =>
   Pack (@Class T b m) T.
 
-Definition eqType := @Equality.Pack cT xclass xT.
+Definition eqType := @Equality.Pack cT xclass.
 Definition pordType := @PartOrder.Pack cT xclass xT.
 Definition ordType := @Order.Pack cT xclass xT.
 Definition inhType := @Inhabited.Pack cT xclass xT.
@@ -574,10 +574,10 @@ Definition pack
   finT fin (_ : phant_id (Finite.class finT) fin) :=
   Pack (@Class T por inh fin) T.
 
-Definition eqType := @Equality.Pack cT xclass xT.
-Definition choiceType := @Choice.Pack cT xclass xT.
-Definition countType := @Countable.Pack cT xclass xT.
-Definition finType := @Finite.Pack cT xclass xT.
+Definition eqType := @Equality.Pack cT xclass.
+Definition choiceType := @Choice.Pack cT xclass.
+Definition countType := @Countable.Pack cT xclass.
+Definition finType := @Finite.Pack cT xclass.
 
 Definition pordType := @PartOrder.Pack cT xclass xT.
 Definition ordType := @Order.Pack cT xclass xT.
@@ -1006,9 +1006,9 @@ Proof using. by rewrite /allLeq all_cat. Qed.
 Lemma allLtn_catE u v a : allLtn (u ++ v) a = allLtn u a && allLtn v a.
 Proof using. by rewrite /allLtn all_cat. Qed.
 
-Lemma maxL_perm_eq a u b v : perm_eq (a :: u) (b :: v) -> maxL a u = maxL b v.
+Lemma maxL_perm a u b v : perm_eq (a :: u) (b :: v) -> maxL a u = maxL b v.
 Proof using.
-move/perm_eqP => Hperm.
+move/permP => Hperm.
 have {Hperm} Hperm : forall x, (x \in (a :: u)) = (x \in (b :: v)).
   move=> x; move/(_ (xpred1 x)) : Hperm => Hperm.
   by apply/idP/idP => /count_memPn H; apply/count_memPn;
@@ -1020,32 +1020,32 @@ apply/eqP; rewrite eqn_leqX; apply/andP; split.
   exact: (allP (maxLP a u)).
 Qed.
 
-Lemma perm_eq_allLeq u v a : perm_eq u v -> allLeq u a -> allLeq v a.
+Lemma perm_allLeq u v a : perm_eq u v -> allLeq u a -> allLeq v a.
 Proof using.
-move=> Hperm /allLeqP; rewrite (maxL_perm_eq (b := a) (v := v)).
+move=> Hperm /allLeqP; rewrite (maxL_perm (b := a) (v := v)).
 - by move=> Hall; apply/allLeqP.
 - by rewrite perm_cons.
 Qed.
-Lemma perm_eq_allLeqE u v a : perm_eq u v -> allLeq u a = allLeq v a.
+Lemma perm_allLeqE u v a : perm_eq u v -> allLeq u a = allLeq v a.
 Proof using.
-move=> H; apply/idP/idP; apply: perm_eq_allLeq; first by [].
-by rewrite perm_eq_sym.
+move=> H; apply/idP/idP; apply: perm_allLeq; first by [].
+by rewrite perm_sym.
 Qed.
-Lemma perm_eq_allLtn u v a : perm_eq u v -> allLtn u a -> allLtn v a.
+Lemma perm_allLtn u v a : perm_eq u v -> allLtn u a -> allLtn v a.
 Proof using.
 move=> Hperm /allP Hall; apply/allP => X Hx.
-by apply: Hall; rewrite (perm_eq_mem Hperm).
+by apply: Hall; rewrite (perm_mem Hperm).
 Qed.
-Lemma perm_eq_allLtnE u v a : perm_eq u v -> allLtn u a = allLtn v a.
+Lemma perm_allLtnE u v a : perm_eq u v -> allLtn u a = allLtn v a.
 Proof using.
-move=> H; apply/idP/idP; apply: perm_eq_allLtn; first by [].
-by rewrite perm_eq_sym.
+move=> H; apply/idP/idP; apply: perm_allLtn; first by [].
+by rewrite perm_sym.
 Qed.
 
 Lemma allLeq_rev u a : allLeq (rev u) a = allLeq u a.
-Proof using. by rewrite (perm_eq_allLeqE _ (perm_eq_rev u)). Qed.
+Proof using. by apply: perm_allLeqE; rewrite perm_rev. Qed.
 Lemma allLtn_rev u a : allLtn (rev u) a = allLtn u a.
-Proof using. by rewrite (perm_eq_allLtnE _ (perm_eq_rev u)). Qed.
+Proof using. by apply: perm_allLtnE; rewrite perm_rev. Qed.
 
 Lemma allLeq_rconsK b u a : allLeq (rcons u b) a -> allLeq u a.
 Proof using.
@@ -1143,10 +1143,10 @@ Lemma rembig_eq_permL u1 u2 v :
   (rembig (u1 ++ v) = u1 ++ (rembig v) /\
    rembig (u2 ++ v) = u2 ++ (rembig v)).
 Proof using.
-case: u2 => [| a2 u2]; first by move/perm_eq_size => /eqP /= /nilP ->; right.
-case: u1 => [| a1 u1]; first by move/perm_eq_size.
+case: u2 => [| a2 u2]; first by move/perm_size => /eqP /= /nilP ->; right.
+case: u1 => [| a1 u1]; first by move/perm_size.
 case: v => [/= | b v]; first by rewrite /= !cats0; left.
-move/maxL_perm_eq => Heq.
+move/maxL_perm => Heq.
 case (leqXP (maxL a1 u1) (maxL b v)) => H1; have := H1; rewrite Heq => H2.
 - by right; rewrite (rembig_catR H1) (rembig_catR H2).
 - by left;  rewrite (rembig_catL H1) (rembig_catL H2).
@@ -1161,10 +1161,10 @@ Lemma rembig_eq_permR u v1 v2 :
    rembig (u ++ v2) = u ++ (rembig v2)).
 Proof using.
 case: v2 => [| b2 v2].
-  by move/perm_eq_size => /eqP /= /nilP ->; left; rewrite !cats0.
-case: v1 => [//= | b1 v1]; first by move/perm_eq_size.
+  by move/perm_size => /eqP /= /nilP ->; left; rewrite !cats0.
+case: v1 => [//= | b1 v1]; first by move/perm_size.
 case: u => [//= | a u]; first by right.
-move/maxL_perm_eq => Heq.
+move/maxL_perm => Heq.
 case (leqXP (maxL a u) (maxL b1 v1)) => H1; have := H1; rewrite Heq => H2.
 - by right; rewrite (rembig_catR H1) (rembig_catR H2).
 - by left;  rewrite (rembig_catL H1) (rembig_catL H2).
@@ -1207,7 +1207,7 @@ move=> Hwb; apply: (iffP idP).
   by have:= ltnX_leqX_trans H1 H2; rewrite ltnXnn.
 Qed.
 
-Lemma perm_eq_nilF (TE : eqType) (x : TE) (u : seq TE) :
+Lemma perm_nilF (TE : eqType) (x : TE) (u : seq TE) :
   perm_eq [::] (x :: u) = false.
 Proof using.
 apply/(introF idP); rewrite /perm_eq => /allP Hperm.
@@ -1215,13 +1215,13 @@ apply/(introF idP); rewrite /perm_eq => /allP Hperm.
 by rewrite eq_refl /= add1n.
 Qed.
 
-Lemma perm_eq_rembig u v :
+Lemma perm_rembig u v :
   perm_eq u v -> perm_eq (rembig u) (rembig v).
 Proof using.
 case Hu: u => [/= | u0 u']; case Hv: v => [//= | v0 v'].
-- by rewrite perm_eq_nilF.
-- by rewrite perm_eq_sym perm_eq_nilF.
-move=> Hperm; have Hmax:= maxL_perm_eq Hperm; move: Hmax Hperm.
+- by rewrite perm_nilF.
+- by rewrite perm_sym perm_nilF.
+move=> Hperm; have Hmax:= maxL_perm Hperm; move: Hmax Hperm.
 
 have/(congr1 rembig):= Hu => /eqP/rembigP Htmp.
 have /Htmp {Htmp} : u0 :: u != [::] by [].
@@ -1240,10 +1240,10 @@ rewrite -[mx :: u2]cat1s -[mx :: v2]cat1s.
 rewrite -[perm_eq (u1 ++ u2) _](perm_cons mx).
 have Hlemma u v : perm_eq (u ++ [:: mx] ++ v) (mx :: u ++ v).
   rewrite catA -[mx :: u ++ v]/((mx :: u) ++ v) perm_cat2r -[mx :: u]cat1s.
-  apply: perm_eqlE; exact: perm_catC.
-move=> H; have:= Hlemma u1 u2; rewrite perm_eq_sym.
-move/perm_eq_trans; apply.
-by apply: (perm_eq_trans H); apply: Hlemma.
+  apply: permEl; exact: perm_catC.
+move=> H; have:= Hlemma u1 u2; rewrite perm_sym.
+move/perm_trans; apply.
+by apply: (perm_trans H); apply: Hlemma.
 Qed.
 
 Lemma rembig_rev_uniq s : uniq s -> rev (rembig s) = rembig (rev s).
@@ -1499,7 +1499,8 @@ Proof. by rewrite /ltnX_op leqXE ltn_neqAle. Qed.
 
 Lemma maxL_iota n i : maxL i (iota i.+1 n) = i + n.
 Proof.
-by elim: n i => //= n IHn i; rewrite /maxX ltnXnatE ltnSn IHn addSnnS.
+elim: n i => [|n IHn] i /=; first by rewrite addn0.
+by rewrite /maxX ltnXnatE ltnSn IHn addSnnS.
 Qed.
 
 Lemma maxL_iota_n n : maxL 0 (iota 1 n) = n.

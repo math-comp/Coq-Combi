@@ -218,7 +218,7 @@ End BoxIn.
 Lemma box_in_incr_nth sh i :
   perm_eq ((i, nth 0 sh i) :: enum_box_in sh) (enum_box_in (incr_nth sh i)).
 Proof.
-apply uniq_perm_eq.
+apply uniq_perm.
 - rewrite /= enum_box_in_uniq andbT.
   apply (introN idP) => /(allP (enum_box_inP sh)) /=.
   by rewrite /is_in_shape ltnn.
@@ -724,7 +724,8 @@ Qed.
 
 Lemma sumn_incr_first_n sh n : sumn (incr_first_n sh n) = sumn sh + n.
 Proof.
-elim: n sh => [//= | n IHn]; first by case.
+elim: n sh => [/= | n IHn].
+case => //=.
 case => [/= | s0 s /=].
 - have -> : sumn (nseq n 1) = n.
     by elim: n {IHn} => //= n ->; rewrite add1n.
@@ -1573,12 +1574,12 @@ rewrite !is_part_sortedE => /andP [sortl _] /andP [sortk _].
 apply (eq_sorted (leT := geq)) => //.
 - apply: merge_sorted => //.
 - exact: sort_sorted.
-- by rewrite perm_merge perm_eq_sym perm_sort.
+- by rewrite perm_merge perm_sym perm_sort.
 Qed.
 
 Lemma sumn_union_part l k : sumn (merge geq l k) = sumn l + sumn k.
 Proof.
-have:= perm_merge geq l k => /perm_eqlP/perm_sumn ->.
+have:= perm_merge geq l k => /permPl/perm_sumn ->.
 by rewrite sumn_cat.
 Qed.
 
@@ -1604,11 +1605,11 @@ Lemma union_intpartA l k j :
   union_intpart l (union_intpart k j) = union_intpart (union_intpart k l) j.
 Proof.
 apply val_inj; rewrite !union_intpartE; apply/perm_sortP => //.
-apply (perm_eq_trans (y := l ++ (k ++ j))).
+apply (perm_trans (y := l ++ (k ++ j))).
 - by rewrite perm_cat2l perm_sort.
-- apply (perm_eq_trans (y := (k ++ l) ++ j)).
+- apply (perm_trans (y := (k ++ l) ++ j)).
   + by rewrite catA perm_cat2r perm_catC.
-  + by rewrite perm_cat2r perm_eq_sym perm_sort.
+  + by rewrite perm_cat2r perm_sym perm_sort.
 Qed.
 
 Section UnionPart.
@@ -1740,7 +1741,7 @@ have Hs := is_part_consK Hxs.
 have Hx : is_part [:: x] by rewrite /= lt0n (part_head_non0 Hxs).
 rewrite (merge_sortedE Hxs Ht) (merge_sortedE Hx) ?merge_is_part //=.
 apply (eq_sorted (leT := geq)) => //; try exact: sort_sorted.
-by rewrite perm_sort perm_eq_sym perm_sort perm_cons perm_merge.
+by rewrite perm_sort perm_sym perm_sort perm_cons perm_merge.
 Qed.
 
 Lemma partdomsh_merge1 n1 n2 x t1 t2 :
@@ -1916,7 +1917,7 @@ exists [set X in P]; first exact: Ppart.
 apply (eq_sorted (leT := geq)) => //.
 - exact: sort_sorted.
 - rewrite /setpart_shape -Psh perm_sort; apply: perm_map.
-  apply: (uniq_perm_eq (enum_uniq _) Puniq) => x.
+  apply: (uniq_perm (enum_uniq _) Puniq) => x.
   by rewrite mem_enum inE.
 Qed.
 
@@ -1925,9 +1926,9 @@ Lemma setpart_shape_union P Q :
   setpart_shape (P :|: Q) = sort geq (setpart_shape P ++ setpart_shape Q).
 Proof using.
 rewrite /setpart_shape -setI_eq0 => /eqP disj.
-apply/perm_sortP/perm_eqP => // Prd.
+apply/perm_sortP/permP => // Prd.
 have count_sort l : count ^~ (sort geq l) =1 count ^~ l.
-  by apply/perm_eqP; rewrite perm_sort perm_eq_refl.
+  by apply/permP; rewrite perm_sort perm_refl.
 rewrite count_cat !count_sort !count_set_of_card.
 rewrite setIUl cardsU -[RHS]subn0; congr(_ - _).
 apply/eqP; rewrite cards_eq0 -subset0 -disj.
@@ -1941,7 +1942,7 @@ Lemma setpart_shape_inj
   injective f -> setpart_shape [set f @: x | x : {set T1} in A] = setpart_shape A.
 Proof using.
 rewrite /setpart_shape /= => Hinj.
-apply/perm_sortP/perm_eqP => // P.
+apply/perm_sortP/permP => // P.
 rewrite !count_set_of_card -(card_imset _ (imset_inj Hinj)).
 rewrite imsetI; last by move=> B C _ _; exact: imset_inj.
 congr #{_}; apply/setP => S; rewrite !inE.

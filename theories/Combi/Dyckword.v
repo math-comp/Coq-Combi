@@ -79,39 +79,6 @@ Unset Printing Implicit Defensive.
 
 
 
-(** SSreflect complement. TODO: move elsewhere *)
-Lemma take_take (T : Type) i j (s : seq T) :
-  i <= j -> take i (take j s) = take i s.
-Proof.
-elim: s i j => [// | a s IHs] [|i] [|j] //=.
-by rewrite ltnS => /IHs ->.
-Qed.
-
-Lemma take_drop (T : Type) i j (s : seq T) :
-  take i (drop j s) = drop j (take (i + j) s).
-Proof.
-elim: j s => [|j IHs] s /=; first by rewrite !drop0 addn0.
-by case: s => [// | a s]; rewrite addnS /=.
-Qed.
-
-Lemma take_addn (T : Type) (s : seq T) n m :
-  take (n + m) s = take n s ++ take m (drop n s).
-Proof.
-elim: n m s => [|n IHs] [|m] [|a s] //; first by rewrite take0 addn0 cats0.
-by rewrite drop_cons addSn !take_cons /= IHs.
-Qed.
-
-Lemma take_nseq (T : Type) i j (l : T) :
-  i <= j -> take i (nseq j l) = nseq i l.
-Proof.
-move=> Hi.
-apply (eq_from_nth (x0 := l)) => [|k];
-  rewrite size_take_leq !size_nseq Hi // => Hk.
-by rewrite nth_take // !nth_nseq Hk (leq_trans Hk Hi).
-Qed.
-
-
-
 Lemma card_preim_nth (m : nat) (T : eqType) (s : seq T) (P : pred T) (u : T):
   size s = m -> #|[set i : 'I_m | preim (nth u s) P i]| = count P s.
 Proof.
@@ -969,13 +936,13 @@ apply/esym/pfminhE => //; rewrite take_size.
 - rewrite height_take_leq => i.
   rewrite leq_eqVlt => /orP [/eqP -> {i} |]; first by rewrite take_size.
   rewrite size_rcons ltnS => Hi.
-  rewrite -cats1 (takel_cat Hi) !height_simpl /=.
+  rewrite -cats1 (takel_cat _ Hi) !height_simpl /=.
   move: HD => /Dyck_wordP [Hpos ->].
   rewrite addr0 add0r.
   apply: (ler_trans _ (Hpos _)).
   by rewrite -oppr_ge0 opprK.
 - move=> i; rewrite size_rcons ltnS => Hi.
-  rewrite -cats1 (takel_cat Hi) !height_simpl /=.
+  rewrite -cats1 (takel_cat _ Hi) !height_simpl /=.
   move: HD => /Dyck_wordP [Hpos ->].
   by rewrite addr0 add0r -subr_gt0 opprK ltz_addr1.
 Qed.

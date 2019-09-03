@@ -326,12 +326,12 @@ exists (fun r : 'rV[R]_(#|b|) => \sum_(i < #|b|) (r 0 i) *: (homsymm (tnth t i))
 - move=> r /=; apply/matrixP=> i j.
   rewrite mxE !raddf_sum ord1 /= (bigD1 j) //=.
   rewrite !linearZ /= mcoeff_symm ?sztntht //.
-  rewrite perm_eq_refl mulr1 big1 ?addr0 //.
+  rewrite perm_refl mulr1 big1 ?addr0 //.
   move=> k Hkj.
   rewrite !linearZ /= mcoeff_symm ?sztntht //.
   suff : ~~(perm_eq (mpart (n := n) (tnth t k)) (mpart (n := n) (tnth t j))).
     by move /negbTE ->; rewrite mulr0.
-  move: Hkj; apply contra => /perm_eq_partm/(congr1 val)/eqP.
+  move: Hkj; apply contra => /perm_partm/(congr1 val)/eqP.
   rewrite /= !mpartK // !(tnth_nth (rowpartn d)) /t /= => H.
   apply/eqP/val_inj/eqP => /=.
   by rewrite -(nth_uniq (rowpartn d) _ _ (enum_uniq (pred_of_set b))) // -cardE.
@@ -374,8 +374,8 @@ rewrite [msym s _]linear_sum linear_sum /=.
 apply eq_bigr => m _; rewrite !linearZ /=; congr (_ *: _).
 rewrite msymX !pihomogX /=.
 have -> : mdeg [multinom m ((s^-1)%g i) | i < nv] = mdeg m.
-  rewrite /mdeg; apply eq_big_perm.
-  by apply/tuple_perm_eqP; exists (s^-1)%g.
+  rewrite /mdeg; apply perm_big.
+  by apply/tuple_permP; exists (s^-1)%g.
 by case: (mdeg m == d); rewrite ?msym0 ?msymX.
 Qed.
 
@@ -530,7 +530,7 @@ Lemma comp_symbe m (H : mnmwgt m = d) :
   'X_[m] \mPo E = 'he[intpartn_of_mon H].
 Proof using.
 rewrite comp_mpolyX /= /prod_gen /intpartn_of_mon /intpart_of_mon /=.
-rewrite rmorph_prod /= -[RHS](eq_big_perm _ (perm_eq_rev _)) /=.
+rewrite rmorph_prod /= [RHS](perm_big _ (permEl (perm_rev _))) /=.
 rewrite big_flatten /= big_map /=.
 rewrite /index_enum -!enumT /=; apply eq_bigr => i _.
 rewrite big_nseq tnth_mktuple.

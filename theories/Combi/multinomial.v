@@ -62,7 +62,7 @@ Qed.
 Lemma perm_multinomial s t : perm_eq s t -> 'C[s] = 'C[t].
 Proof.
 rewrite !multinomial_factd => Hperm.
-by rewrite (perm_sumn Hperm) (eq_big_perm _ Hperm).
+by rewrite (perm_sumn Hperm) (perm_big _ Hperm).
 Qed.
 
 Lemma multinomial_filter_neq0 s : 'C[[seq i <- s | i != 0]] = 'C[s].

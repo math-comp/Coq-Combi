@@ -265,7 +265,7 @@ Lemma plact_homog u v : plactcongr u v -> perm_eq u v.
 Proof using. exact: gencongr_invar. Qed.
 
 Lemma size_plact u v : plactcongr u v -> size u = size v.
-Proof using. by move/plact_homog/perm_eq_size. Qed.
+Proof using. by move/plact_homog/perm_size. Qed.
 
 End Defs.
 
@@ -337,7 +337,7 @@ Proof using.
 move=> Huniq.
 have {Huniq} Huniq x y z : rev u =Pl rev (x ++ y ++ z) -> uniq y.
   move=> Hpl; have : uniq (x ++ y ++ z).
-    rewrite -rev_uniq -(perm_eq_uniq (s1 := rev u)) ?rev_uniq //.
+    rewrite -rev_uniq -(perm_uniq (s1 := rev u)) ?rev_uniq //.
     exact: plact_homog.
   by rewrite !cat_uniq => /and4P [] _ _.
 move: v; apply: gencongr_ind => [| x y1 z y2 Hv /plactruleP []] /=;
@@ -711,7 +711,7 @@ move=> H row Hin; apply: is_row_rcons.
   rewrite inE => /orP [].
   + by move/eqP => ->.
   + exact: IHt.
-- have: allLeq (to_word (RS w)) b by rewrite (perm_eq_allLeq (perm_eq_RS w)).
+- have: allLeq (to_word (RS w)) b by rewrite (perm_allLeq (perm_RS w)).
   elim: (RS w) Hin => [//= | t0 t IHt] /=.
   rewrite inE to_word_cons => /orP [/eqP ->|].
   + rewrite allLeq_catE => /andP [] _; case/lastP: t0 => [//=| t0 tn].
@@ -809,7 +809,7 @@ elim/last_ind: R HR => [/= _| R Rn IHR].
   move Hlb : (last_big (RS (L ++ b :: R)) b) => lb IHR.
   move: Hlb => /eqP; rewrite eq_sym => /last_bigP Htmp.
   have Htmp2 : allLeq (to_word (RS (L ++ b :: R))) b.
-    apply: (perm_eq_allLeq (perm_eq_RS (L ++ b :: R))).
+    apply: (perm_allLeq (perm_RS (L ++ b :: R))).
     by rewrite allLeq_catE //= (allLtnW HmaxR) andbT HL /=.
   have {Htmp Htmp2} := Htmp (is_tableau_RS (L ++ b :: R)) Htmp2 => [] [] _.
   rewrite {}IHR => Hj.
@@ -888,7 +888,7 @@ move=> H; case Hfu : [seq x <- u | L >A x] => [| fu0 fu'].
   apply/eqP; move: Hfu => /eqP; apply contraLR.
   rewrite -!has_filter => /hasP [x Hx HgtnX].
   apply/hasP; exists x; last exact HgtnX.
-  by move: H => /plact_homog/perm_eq_mem ->.
+  by move: H => /plact_homog/perm_mem ->.
 have := maxLP fu0 fu' => /allP; rewrite -Hfu => HML.
 set ML := maxL fu0 fu'.
 have Heq: {in u, gtnX L =1 geqX ML}.
@@ -899,7 +899,7 @@ have Heq: {in u, gtnX L =1 geqX ML}.
     exact: leqX_ltnX_trans Hxl HMLL.
 rewrite (eq_in_filter Heq).
 have {Heq} Heq: {in v, gtnX L =1 geqX ML}.
-  by move=> x /=; move: H => /plact_homog/perm_eq_mem <-; exact: Heq.
+  by move=> x /=; move: H => /plact_homog/perm_mem <-; exact: Heq.
 rewrite (eq_in_filter Heq).
 exact: plactic_filter_geqX.
 Qed.
@@ -976,7 +976,7 @@ split.
 - move=> i; move/(_ i): Hperm.
   rewrite !mem_cat => Hperm /or3P [] H; apply: Hperm.
   + by rewrite H ?orbT.
-  + have /allP := plactrule_homog v1 => /(_ _ Hrule)/perm_eq_mem ->.
+  + have /allP := plactrule_homog v1 => /(_ _ Hrule)/perm_mem ->.
     by rewrite H ?orbT.
   + by rewrite H ?orbT.
 rewrite (plact_ltrans Hu) {Hu} !map_cat.

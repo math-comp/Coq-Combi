@@ -248,8 +248,8 @@ Proof using.
 have Huniq : uniq [:: cfRepr (triv_repr (n := 2)); cfRepr sign_repr].
   rewrite /= andbT inE; apply/cfRepr_rsimP.
   exact: triv_sign_not_sim.
-apply uniq_perm_eq => //; first by apply free_uniq; exact: irr_free.
-apply leq_size_perm => //.
+apply uniq_perm => //; first by apply free_uniq; exact: irr_free.
+apply uniq_min_size => //.
 move=> i; rewrite !inE => /orP [] /eqP ->; apply/irr_reprP.
 - by exists (Representation triv_repr); first exact: triv_irr.
 - by exists (Representation sign_repr); first exact: sign_irr.
@@ -264,6 +264,6 @@ Proof using.
 move=> Hirr.
 have : cfRepr rho \in irr 'SG_2.
   by apply/irr_reprP; exists rho.
-by rewrite -(perm_eq_mem perm_eq_char_S2) !inE =>
+by rewrite -(perm_mem perm_eq_char_S2) !inE =>
   /orP [] /cfRepr_rsimP; [left | right].
 Qed.

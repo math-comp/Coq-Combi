@@ -66,8 +66,8 @@ Lemma perm_eq_permuted_tuple (s : seq T) (H : size s == n) :
              s1 \in [seq tval t | t <- permuted_tuple (Tuple H)].
 Proof using.
 set t := Tuple H; have Ht : perm_eq s t by [].
-move=> s1 Hss1; rewrite perm_eq_sym in Hss1.
-have:= perm_eq_trans Hss1 Ht => /tuple_perm_eqP [p Hs1].
+move=> s1 Hss1; rewrite perm_sym in Hss1.
+have:= perm_trans Hss1 Ht => /tuple_permP [p Hs1].
 apply/mapP; set t1 := (X in _ = tval X) in Hs1; exists t1; last exact Hs1.
 rewrite /permuted_tuple; apply/mapP.
 by exists p; first by rewrite mem_enum.
@@ -76,7 +76,7 @@ Qed.
 Lemma mem_enum_permuted (s t : n.-tuple T) :
   perm_eq s t -> t \in permuted_tuple s.
 Proof using.
-rewrite perm_eq_sym => /tuple_perm_eqP [perm Hperm].
+rewrite perm_sym => /tuple_permP [perm Hperm].
 apply/mapP; exists perm; first by rewrite mem_enum.
 by apply val_inj; rewrite /= Hperm.
 Qed.
@@ -85,7 +85,7 @@ Lemma all_permuted (s : n.-tuple T) :
   all (fun x : n.-tuple T => perm_eq s x) (permuted_tuple s).
 Proof using.
 apply/allP => t /mapP [/= perm _] ->{t}.
-by rewrite perm_eq_sym; apply/tuple_perm_eqP; exists perm.
+by rewrite perm_sym; apply/tuple_permP; exists perm.
 Qed.
 
 End SizeN.
@@ -157,13 +157,13 @@ Section ActOnTuple.
 Variables (T : countType) (n : nat) (w : n.-tuple T).
 Implicit Type (t : permuted w).
 
-Local Notation wp := (Permuted (perm_eq_refl w)).
+Local Notation wp := (Permuted (perm_refl w)).
 
 Lemma permutedact_subproof t (s : 'S_n) :
   perm_eq w [tuple tnth t (s^-1 i) | i < n].
 Proof using.
-apply: (perm_eq_trans (permutedP t)).
-by rewrite /= perm_eq_sym; apply/tuple_perm_eqP; exists s^-1.
+apply: (perm_trans (permutedP t)).
+by rewrite /= perm_sym; apply/tuple_permP; exists s^-1.
 Qed.
 Definition permutedact t s := Permuted (permutedact_subproof t s).
 
@@ -185,9 +185,9 @@ Local Notation pact := permuted_action.
 Lemma permuted_action_trans :
   [transitive [set: 'S_n], on [set: permuted w] | pact].
 Proof using.
-apply/imsetP; exists (Permuted (perm_eq_refl w)); first by [].
+apply/imsetP; exists (Permuted (perm_refl w)); first by [].
 apply/setP => /= t; rewrite !inE; apply/esym/orbitP => /=.
-have:= permutedP t => /tuple_perm_eqP [s /val_inj Hs].
+have:= permutedP t => /tuple_permP [s /val_inj Hs].
 exists s; first by rewrite inE.
 apply val_inj => /=; apply eq_from_tnth => /= i.
 by rewrite {1}Hs !tnth_mktuple permKV.
