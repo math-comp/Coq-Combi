@@ -238,63 +238,11 @@ Variable R : Type.
 Variable idx : R.
 Variable op : Monoid.law idx.
 
-Lemma big_nat_widen0 a b c F :
-  b <= c ->
-  \big[op/idx]_(a <= i < b) F i =
-  \big[op/idx]_(0 <= i < c | a <= i < b) F i.
-Proof using.
-move=> Hbc.
-rewrite {1}/index_iota -iota_geq -{1}(subn0 b) big_filter -/(index_iota 0 b).
-by rewrite (big_nat_widen _ _ _ _ _ Hbc).
-Qed.
-
 Lemma big_nat_0cond n f :
-  \big[op/idx]_(0 <= i < n) f i =
-  \big[op/idx]_(0 <= i < n | (i < n)%N) f i.
-Proof.
-rewrite big_seq_cond /=.
-rewrite (eq_bigl (fun i => (i < n)%N)); first by [].
-by move=> i; rewrite /= mem_index_iota leq0n /= andbT.
-Qed.
+  \big[op/idx]_(0 <= i < n) f i = \big[op/idx]_(0 <= i < n | (i < n)%N) f i.
+Proof. by rewrite !big_mkord; apply eq_bigl => i; rewrite ltn_ord. Qed.
 
 End BigInterv.
-
-
-Lemma sum_nth_rev s a b :
-   \sum_(a <= i < b) nth 0 (rev s) i = \sum_(size s - b <= i < size s - a) nth 0 s i.
-Proof.
-have sum0 u v : size s <= u -> \sum_(u <= i < v) nth 0 (rev s) i = 0.
-  move=> Hu; rewrite big_seq_cond [LHS](eq_bigr (fun i => 0)); first last.
-    move=> i; rewrite mem_iota => /andP [/andP [Hai _] _].
-    rewrite nth_default // size_rev; exact: leq_trans Hu Hai.
-  by rewrite -big_seq_cond -/(index_iota _ _) /= sum_nat_const_nat muln0.
-wlog Hbs: b / b <= (size s).
-  move=> Hwlog; case: (leqP b (size s)) => [| /ltnW Hbs]; first exact: Hwlog.
-  move/(_ (size s) (leqnn (size s))) : Hwlog.
-  have:= Hbs; rewrite subnn {1}/leq => /eqP -> <-.
-  case: (ltnP a (size s)) => Has.
-  - by rewrite (big_cat_nat _ _ _ (ltnW Has) Hbs) /= (sum0 _ _ (leqnn (size s))) addn0.
-  - rewrite {2}/index_iota; have:= Has; rewrite /leq => /eqP -> /=.
-    by rewrite (sum0 _ _ Has) big_nil.
-case: (ltnP a b) => Hab; first last.
-- rewrite /index_iota; have:= Hab; rewrite /leq => /eqP -> /=.
-  have := leq_sub2l (size s) Hab; rewrite /leq => /eqP -> /=.
-  by rewrite !big_nil.
-- rewrite (big_nat_widen0 _ _ _ Hbs) big_nat_rev /= add0n.
-  rewrite big_seq_cond [LHS](eq_bigr (fun i => nth 0 s i)); first last.
-    move=> i /and3P []; rewrite mem_iota add0n subn0 => /andP [_ Hi] Hi1 Hi2.
-    rewrite nth_rev; last exact (leq_trans Hi2 Hbs).
-    by congr nth; rewrite subnS subKn.
-  rewrite (eq_bigl (fun i => size s - b <= i < size s - a)); first last.
-    move=> i /=; rewrite mem_iota add0n subn0 leq0n /=.
-    rewrite leq_subLR addnC -leq_subLR ltn_subRL addnC -ltn_subRL [RHS]andbC.
-    case: (size s) => [//= | n]; rewrite subSS ltnS.
-    case: (leqP i n) => [Hn | /=]; first by rewrite (subSn Hn) ltnS.
-    rewrite {1}/leq => /eqP ->.
-    by rewrite ltn0.
-  by rewrite -big_nat_widen0 //; exact: leq_subr.
-Qed.
-
 
 
 Section Enum.

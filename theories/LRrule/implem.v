@@ -83,6 +83,7 @@ Qed.
 (** * Recursive enumeration and counting function *)
 Section OutEval.
 
+
 (* For some reason, using ssrnat's add prevents OCaml extraction *)
 Local Fixpoint add m n := if m is m'.+1 then add m' n.+1 else n.
 Lemma addE : add =2 addn.
@@ -95,6 +96,7 @@ rewrite /tsumn => s; rewrite -(add0n (sumn s)); move: 0 => i.
 elim: s i => [//= | s0 s IHs] i /=.
 by rewrite IHs addE addnA.
 Qed.
+
 
 Variable outev : seq nat.
 
@@ -154,14 +156,14 @@ Compute the list of skew tableaux
 Fixpoint LRyamtab_list_rec innev inner outer sh0 row0 :=
   if outer is out0 :: out then
     let inn0 := head 0 inner in let inn := behead inner in
+    (* Working around a bug leading to a stack overflow *)
+    let call_rec row := LRyamtab_list_rec row.2 inn out inn0 row.1 in
     let rowres := yamtab_rows innev (take (out0 - sh0) row0) in
     let rows :=
         flatten [seq yamtab_shift res.2 (head (size innev) res.1)
                      ((minn sh0 out0) - inn0) res.1
                 | res <- rowres ] in
-    flatten [seq [seq row.1 :: tab |
-                  tab <- LRyamtab_list_rec row.2 inn out inn0 row.1] |
-             row <- rows]
+    flatten [seq [seq row.1 :: tab | tab <- call_rec row ] | row <- rows ]
   else [:: [::]].
 
 (** Recursive step of the counting functions
@@ -175,11 +177,13 @@ Compute the number of skew tableaux
 Fixpoint LRyamtab_count_rec innev inner outer sh0 row0 :=
   if outer is out0 :: out then
     let inn0 := head 0 inner in let inn := behead inner in
+    (* Working around a bug leading to a stack overflow *)
+    let call_rec row := LRyamtab_count_rec row.2 inn out inn0 row.1 in
     let rowres := yamtab_rows innev (take (out0 - sh0) row0) in
-    tsumn [seq tsumn [seq LRyamtab_count_rec row.2 inn out inn0 row.1 |
-                    row <- yamtab_shift res.2 (head (size innev) res.1)
-                        ((minn sh0 out0) - inn0) res.1 ]
-         | res <- rowres ]
+    tsumn [seq tsumn [seq call_rec row |
+                      row <- yamtab_shift res.2 (head (size innev) res.1)
+                          ((minn sh0 out0) - inn0) res.1 ]
+          | res <- rowres ]
   else 1.
 
 
