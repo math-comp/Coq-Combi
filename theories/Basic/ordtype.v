@@ -1424,7 +1424,7 @@ Lemma nth_inspos s pos i n :
 Proof using.
 move=> Hpos.
 case: (altP (i =P pos)) => [-> {i} | Hipos].
-  by rewrite nth_cat size_take_leq Hpos ltnn subnn.
+  by rewrite nth_cat size_takel // ltnn subnn.
 rewrite /shiftinv_pos nth_cat size_take.
 case (ltnP pos (size s)) => [{Hpos} Hpos | Hpos2].
 - case: (ltnP i pos) => Hi; first by rewrite (nth_take _ Hi).

@@ -702,7 +702,7 @@ Qed.
 
 Lemma last_rot_pfminh : last {{ (rot pfminh w) = }}.
 Proof.
-rewrite /rot last_cat -nth_pfminh -nth_last size_take_leq pfminh_size.
+rewrite /rot last_cat -nth_pfminh -nth_last size_takel ?pfminh_size //.
 rewrite nth_take; last by case: pfminh pfminh_pos.
 apply: set_nth_default.
 by case: pfminh pfminh_pos pfminh_size.

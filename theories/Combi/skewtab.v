@@ -259,12 +259,12 @@ elim: inner outer s => [| inn0 inn IHinn] /= outer s.
   rewrite rev_cons reshape_rcons; last by rewrite sumn_rev addnC -Hsz.
   rewrite rev_rcons /= IHout.
   - by rewrite size_drop sumn_rev Hsz addnK.
-  - by rewrite sumn_rev size_take_leq Hsz leq_addl.
+  - by rewrite sumn_rev size_takel // Hsz leq_addl.
 case: outer s => [//= | out0 out] /= s /andP [] H0 Hincl Hsz.
 rewrite rev_cons reshape_rcons; last by rewrite sumn_rev addnC -Hsz.
 rewrite rev_rcons /= size_drop sumn_rev.
 rewrite (IHinn _ _ Hincl); first by rewrite Hsz addnK.
-by rewrite size_take_leq Hsz leq_addl.
+by rewrite size_takel // Hsz leq_addl.
 Qed.
 
 Lemma to_word_skew_reshape inner outer s :
@@ -277,13 +277,13 @@ elim: inner outer s => [| inn0 inn IHinn] /= outer s.
   move=> _; elim: outer s => [s /eqP/nilP -> // | out0 out IHout] /= s Hsz.
   rewrite rev_cons reshape_rcons; last by rewrite sumn_rev addnC -Hsz.
   rewrite flatten_rcons IHout; first by rewrite cat_take_drop.
-  by rewrite sumn_rev size_take_leq Hsz leq_addl.
+  by rewrite sumn_rev size_takel // Hsz leq_addl.
 case: outer s => //= out0 out s /andP [] H0 Hincl Hsz.
 rewrite rev_cons reshape_rcons; last by rewrite sumn_rev addnC -Hsz.
 rewrite flatten_rcons IHinn.
 - by rewrite cat_take_drop.
 - exact: Hincl.
-- by rewrite sumn_rev size_take_leq Hsz leq_addl.
+- by rewrite sumn_rev size_takel // Hsz leq_addl.
 Qed.
 
 Lemma skew_reshapeK inner t :
@@ -508,7 +508,7 @@ apply/andP/idP => [[] Hincl /(row_hb_strip Hpartin) | Hstrip].
   - apply skew_dominate_no_overlap.
     rewrite -/(skew_reshape _ _ _) sumn_rev.
     have : size (take (sumn dsh) u) = sumn dsh.
-      by rewrite size_take_leq Hsize leq_addl.
+      by rewrite size_takel // Hsize leq_addl.
     move/(shape_skew_reshape (hb_strip_included Hstrip)).
     set sh := skew_reshape _ _ _ => Hshape.
     have -> : size (head [::] sh) = head 0 (shape sh).
@@ -519,7 +519,7 @@ apply/andP/idP => [[] Hincl /(row_hb_strip Hpartin) | Hstrip].
     exact: leq_sub2r.
   - rewrite -/(skew_reshape _ _ _); apply IHinn.
     + by move: Hpartout => /= /andP [].
-    + by rewrite sumn_rev size_take_leq Hsize leq_addl.
+    + by rewrite sumn_rev size_takel // Hsize leq_addl.
     + exact: is_row_take.
     + exact: Hstrip.
 Qed.
@@ -850,7 +850,7 @@ have Hinvr : eq_inv r1 r2.
   move: Hinv; rewrite -{1}(cat_take_drop (sumn shres) u1)
                       -{1}(cat_take_drop (sumn shres) u2).
   by move/eq_inv_catl; apply; rewrite !size_take -Hszu.
-have Hszr1 : size r1 = sumn shres by rewrite size_take_leq Hszres.
+have Hszr1 : size r1 = sumn shres by rewrite size_takel // Hszres.
 have {IHinn Hsz Hinvr Hszr1} IH := IHinn _ r1 r2 Hsz Hinvr Hszr1.
 rewrite !rev_cons !reshape_rcons; first last.
 - by rewrite sumn_rev addnC Hszeq.
@@ -868,15 +868,15 @@ move: Hdom; case/lastP Hd : (rev (out / inn)) => [//= | d dl] /=.
 have Hsumn : sumn d + dl = sumn shres.
   rewrite -(sumn_rev (_ / _)) Hd.
   by rewrite -(sumn_rev (rcons _ _)) rev_rcons /= sumn_rev addnC.
-rewrite !reshape_rcons ?size_take_leq -?Hszu ?Hszres // !rev_rcons /=.
+rewrite !reshape_rcons ?size_takel // -?Hszu ?Hszres // !rev_rcons /=.
 apply: eq_inv_skew_dominate; last by rewrite !size_drop !size_take Hszu.
 have {Hsumn} Hsum : sumn d <= sumn shres by rewrite -Hsumn; apply leq_addr.
 have HH n m u : n <= m -> m <= size u ->
                 drop n (take m u) ++ (drop m u) = drop n u.
   move=> Hnm Hu; have := erefl (drop n u).
-  rewrite -{1}(cat_take_drop m u) drop_cat size_take_leq Hu.
+  rewrite -{1}(cat_take_drop m u) drop_cat size_takel //.
   move: Hnm; rewrite leq_eqVlt => /orP [/eqP -> _| -> //=].
-  by rewrite drop_oversize ?cat0s // size_take_leq Hu.
+  by rewrite drop_oversize ?cat0s // size_takel //.
 rewrite HH // HH -?Hszu //.
 apply (eq_inv_catr (u1 := take (sumn d) u1) (u2 := take (sumn d) u2) ).
 - by rewrite !cat_take_drop.

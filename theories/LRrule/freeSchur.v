@@ -309,7 +309,7 @@ apply/setP/subset_eqP/andP; split; apply/subsetP=> t.
   by rewrite freeSchurP.
 - move/bigcupP => [Q]; rewrite /LRsupport freeSchurP inE => Htriple /= Ht.
   have Hsz1 : size (take d1 t) == d1.
-    by rewrite size_take_leq size_tuple leq_addr.
+    by rewrite size_takel // size_tuple leq_addr.
   pose t1 := Tuple Hsz1.
   have Hsz2 : size (drop d1 t) == d2.
     by rewrite size_drop size_tuple addKn.

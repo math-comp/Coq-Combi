@@ -778,9 +778,9 @@ apply/esym/eqP/stdP; apply: StdSpec; first exact: invstd_is_std.
 have Hstdiw : is_std (invstd (std w)).
   by apply: invstd_is_std; exact: std_is_std.
 apply/eq_invP; split.
-  rewrite size_take_leq Hn size_invstd size_sfiltergtn //.
+  rewrite size_takel // size_invstd size_sfiltergtn //.
   by rewrite size_invstd size_std (minn_idPl Hn).
-move=> i j /andP [Hij]; rewrite size_take_leq Hn => Hj.
+move=> i j /andP [Hij]; rewrite size_takel // => Hj.
 have Hi := leq_ltn_trans Hij Hj.
 rewrite leqXnatE /=.
 do 2 (rewrite nth_mkseq; last rewrite size_sfiltergtn //;
@@ -878,7 +878,7 @@ split=> [[u] [v] [Hcat Hu Hv]| [t] [Htriple Hw]].
   have : [/\ size u1 = size_tab t1, size u2 = size_tab t2
         & exists t : seq (seq nat), LRtriple t1 t2 t /\ u1 ++ u2 \in langQ t].
     split.
-    - by rewrite size_take_leq Hszw Hsz leq_addr.
+    - by rewrite size_takel // Hszw Hsz leq_addr.
     - by rewrite size_drop Hszw Hsz addnC addnK.
     - by exists t; rewrite Hcat.
   rewrite -H => [] [Hu1 Hu2].

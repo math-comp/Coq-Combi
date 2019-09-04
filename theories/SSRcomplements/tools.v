@@ -180,11 +180,6 @@ Lemma sum_iota_sumnE l n :
   size l <= n -> \sum_(0 <= i < n) nth 0 l i = sumn l.
 Proof. by rewrite -sumn_take => /take_oversize ->. Qed.
 
-Lemma size_take_leq (T : Type) n0 (s : seq T) :
-  size (take n0 s) = (if n0 <= size s then n0 else size s).
-Proof. by rewrite size_take -/(minn _ _) minnC /minn ltnNge if_neg. Qed.
-
-
 (** ** [iota] related lemmas *)
 Lemma sumn_iota a b x :
   a <= x < a + b -> sumn [seq ((i == x) : nat) | i <- iota a b] = 1.
