@@ -451,43 +451,25 @@ Notation n := n0.+1.
 Implicit Type (p : 'II_n) (IS S : {set 'II_n}).
 Implicit Type s t : 'S_n.
 
-Definition perm2 t  := fun p => (t p.1, t p.2) : 'II_n.
-Definition flip2    := fun p => (p.2, p.1) : 'II_n.
-Definition pflip2 t := flip2 \o perm2 t.
-
-Lemma perm2K t : cancel (perm2 t) (perm2 t^-1).
-Proof. by rewrite /perm2 => [[i j]]; rewrite !permK. Qed.
-Lemma perm2VK t : cancel (perm2 t^-1) (perm2 t).
-Proof. by rewrite /perm2 => [[i j]]; rewrite !permKV. Qed.
-Lemma flip2K : involutive flip2.
-Proof. by rewrite /flip2 => [[i j]]. Qed.
-Lemma permflip2 t : perm2 t \o flip2 =1 flip2 \o perm2 t.
-Proof. by rewrite /flip2 /perm2 => [[i j]]. Qed.
-Lemma pflip2K t : cancel (pflip2 t) (pflip2 t^-1).
-Proof. by rewrite /pflip2 => [[i j]]; rewrite -permflip2 /= flip2K perm2K. Qed.
-Lemma pflip2VK t : cancel (pflip2 t^-1) (pflip2 t).
-Proof. by rewrite -{2}(invgK t); apply pflip2K. Qed.
-Lemma mem_flip2 (S : {set 'II_n}) (i j : 'I_n) :
-  ((i, j) \in flip2 @: S) = ((j, i) \in S).
-Proof.
-rewrite /flip2; apply/imsetP/idP => /= [[[a b]/= abS [-> ->]] // | jiS].
-by exists (j, i).
-Qed.
-
 Definition Delta : {set 'II_n} := [set p : 'II_n | (p.1 < p.2)].
-Definition diag  : {set 'II_n} := [set (i, i) | i : 'I_n].
 Definition invset (s : 'S_n) : {set 'II_n} :=
   [set p : 'II_n | (p.1 < p.2) && (s p.1 > s p.2) ].
-Definition rsymset IS := diag :|: (flip2 @: IS) :|: (Delta :\: IS).
+Definition rsymrel IS :=
+  [rel i j : 'I_n |
+   [|| (i == j), (j, i) \in IS | (i < j) && ((i, j) \notin IS)]].
+
+Variant is_invset IS : Prop :=
+  IsInvset of (IS \subset Delta) &
+  (transitive (prod_uncurry (mem IS))) &
+  (transitive (prod_uncurry (mem (Delta :\: IS)))) : is_invset IS.
+
 
 Lemma mem_Delta i j : (i, j) \in Delta = (i < j).
 Proof. by rewrite inE. Qed.
 Lemma DeltaP i j : (i, j) \in Delta -> (i < j).
 Proof. by rewrite inE. Qed.
-
-Lemma mem_diag  i j : (i, j) \in diag = (i == j).
-Proof. by apply/imsetP/eqP => [[/= k _] [-> ->] | -> ]//; exists j. Qed.
-
+Lemma is_invset_Delta IS : is_invset IS -> IS \subset Delta.
+Proof. by move=> []. Qed.
 
 Lemma invset_Delta s : invset s \subset Delta.
 Proof.
@@ -495,9 +477,9 @@ rewrite /invset/Delta; apply/subsetP => [[/= i j]].
 by rewrite !inE /= => /andP [].
 Qed.
 
-Lemma invset_permV s : invset s^-1 = (pflip2 s) @: invset s.
+Lemma invset_permV s :
+  invset s^-1 = [set (s (p.2), s (p.1)) | p in invset s].
 Proof.
-rewrite /pflip2 /flip2 /perm2.
 apply setP => [[i j]]; rewrite !inE /=.
 apply/idP/idP.
 - move=> /andP [Hij Hsij].
@@ -507,64 +489,45 @@ apply/idP/idP.
   by rewrite Hsuv !permK Huv.
 Qed.
 
-
-Local Notation relset S := (prod_uncurry (mem S)).
-
-Lemma invset_trans s : transitive (relset (invset s)).
+Lemma invsetP s : is_invset (invset s).
 Proof.
-rewrite /prod_uncurry/invset => j i k /=; rewrite !inE /=.
-by move=> /andP[/ltn_trans iltj /(ltn_trans _) siltsj] /andP[/iltj-> /siltsj->].
-Qed.
-Lemma Delta_invset_trans s : transitive (relset (Delta :\: invset s)).
-Proof.
-rewrite /prod_uncurry/invset => j i k /=; rewrite !inE /=.
-have bla A B : ((~~ (A && B)) && A) = (A && ~~ B) by case: A B => [] [].
-rewrite !bla -!leqNgt.
-by move=> /andP[/ltn_trans iltj /leq_trans siltsj] /andP[/iltj-> /siltsj->].
+split; first exact: invset_Delta.
+- rewrite /prod_uncurry/invset => j i k /=; rewrite !inE /=.
+  by move=> /andP[/ltn_trans iltj /(ltn_trans _) siltsj]
+            /andP[/iltj-> /siltsj->].
+- rewrite /prod_uncurry/invset => j i k /=; rewrite !inE /=.
+  have bla A B : ((~~ (A && B)) && A) = (A && ~~ B) by case: A B => [] [].
+  rewrite !bla -!leqNgt.
+  by move=> /andP[/ltn_trans iltj /leq_trans siltsj] /andP[/iltj-> /siltsj->].
 Qed.
 
 
-Lemma rsymset_refl IS : reflexive (relset (rsymset IS)).
+Lemma rsymrel_refl IS : reflexive (rsymrel IS).
+Proof. by rewrite /rsymrel=> k /=; rewrite eqxx. Qed.
+Lemma rsymrel_anti IS :
+  IS \subset Delta -> antisymmetric (rsymrel IS).
 Proof.
-by rewrite /rsymset/prod_uncurry/rsymset=> k /=; rewrite !inE mem_diag eqxx.
-Qed.
-Lemma rsymset_anti IS :
-  IS \subset Delta -> antisymmetric (relset (rsymset IS)).
-Proof.
-rewrite /rsymset/prod_uncurry /= => /subsetP HD i j /=.
-rewrite !inE !mem_flip2 !mem_diag /= -!orbA.
-move=> /andP [/or3P [/eqP -> //|jiIS|/andP [ijNIS iltj]]].
-- move=> /or3P [/eqP -> //|ijIS|/andP [jiNIS jlti]].
+rewrite /rsymrel => /subsetP HD i j /=.
+move=> /andP [/or3P [/eqP -> //|jiIS|/andP [iltj ijNIS]]].
+- move=> /or3P [/eqP -> //|ijIS|/andP [jlti jiNIS]].
   + exfalso.
     by have:= ltn_trans (DeltaP (HD _ jiIS)) (DeltaP (HD _ ijIS)); rewrite ltnn.
   + by rewrite jiIS in jiNIS.
-- move=> /or3P [/eqP -> //|ijIS|/andP [jiNIS jlti]].
+- move=> /or3P [/eqP -> //|ijIS|/andP [jlti jiNIS]].
   + by rewrite ijIS in ijNIS.
   + exfalso.
     by have:= ltn_trans iltj jlti; rewrite ltnn.
 Qed.
-Lemma diagU_trans IS :
-  transitive (relset IS) -> transitive (relset (diag :|: IS)).
+Lemma rsymrel_trans IS : is_invset IS -> transitive (rsymrel IS).
 Proof.
-rewrite /prod_uncurry => Htr /= j i k.
-rewrite !inE !mem_diag => /orP[/eqP ->|ijS] /orP[/eqP <-|jkS].
-- by rewrite eqxx.
-- by rewrite jkS orbT.
-- by rewrite ijS orbT.
-- by have /= -> := (Htr _ _ _ ijS jkS); rewrite orbT.
-Qed.
-Lemma rsymset_trans IS :
-  IS \subset Delta ->
-  transitive (relset IS) -> transitive (relset (Delta :\: IS)) ->
-  transitive (relset (rsymset IS)).
-Proof.
-rewrite /rsymset/prod_uncurry /= => /subsetP HD HIS HDIS.
-rewrite -setUA; apply diagU_trans => /= j i k.
-rewrite /prod_uncurry !inE /= !mem_flip2.
-move=> /orP [jiIS|/andP [ijNIS iltj]] /orP [kjIS|/andP [jkNIS jltk]]; apply/orP.
+case; rewrite /rsymrel/prod_uncurry => /subsetP HD HIS HDIS j i k /=.
+move/orP=> [/eqP->{i}| Hij]; first by [].
+move/orP=> [/eqP<-{k}| Hjk]; first by rewrite Hij orbT.
+apply/orP; right; move: Hij Hjk.
+move=> /orP [jiIS|/andP [iltj ijNIS]] /orP [kjIS|/andP [jltk jkNIS]]; apply/orP.
 - by left; apply: (HIS j).
 - case: (ltngtP i k) => [iltk | klti | /val_inj ik].
-  + right; rewrite andbT.
+  + right => /=.
     by move: jkNIS; apply contra => /(HIS _ _ _ jiIS); apply.
   + left; move: jiIS; apply contraLR => kiNIS.
     have jlti := ltn_trans jltk klti.
@@ -572,7 +535,7 @@ move=> /orP [jiIS|/andP [ijNIS iltj]] /orP [kjIS|/andP [jkNIS jltk]]; apply/orP.
     exact.
   + by exfalso; subst k; rewrite jiIS in jkNIS.
 - case: (ltngtP i k) => [iltk | klti | /val_inj ik].
-  + right; rewrite andbT.
+  + right => /=.
     by move: ijNIS; apply contra => /HIS; apply.
   + left; move: kjIS; apply contraLR => kiNIS.
     have kltj := ltn_trans klti iltj.
@@ -584,41 +547,38 @@ move=> /orP [jiIS|/andP [ijNIS iltj]] /orP [kjIS|/andP [jkNIS jltk]]; apply/orP.
   have:= HDIS j i k; rewrite !inE /= jltk iltk iltj !andbT.
   exact.
 Qed.
-Lemma rsymset_total (IS : {set 'II_n}) :
-  IS \subset Delta -> total (relset (rsymset IS)).
+Lemma rsymrel_total (IS : {set 'II_n}) :
+  IS \subset Delta -> total (rsymrel IS).
 Proof.
-rewrite /rsymset/prod_uncurry => /subsetP HD /= i j.
-rewrite !inE !mem_flip2 /= !mem_diag; case: eqP => //= /eqP Hneq.
+rewrite /rsymrel => /subsetP HD /= i j /=.
+case: eqP => //= /eqP Hneq.
 rewrite eq_sym (negbTE Hneq) /=; apply/orP.
 case: (boolP ((j, i) \in IS)) => /=[_|ijNIS]; first by left.
 case: (boolP ((i, j) \in IS)) => /=[_|jiNIS]; first by right.
-by apply/orP; rewrite -neq_ltn.
+by rewrite !andbT; apply/orP; rewrite -neq_ltn.
 Qed.
 
-Lemma rsym_invset_refl s : reflexive (relset (rsymset (invset s))).
-Proof. exact: rsymset_refl. Qed.
-Lemma rsym_invset_anti s : antisymmetric (relset (rsymset (invset s))).
-Proof. exact: (rsymset_anti (invset_Delta s)). Qed.
-Lemma rsym_invset_trans s : transitive (relset (rsymset (invset s))).
-Proof.
-exact: (rsymset_trans (invset_Delta s)
-                      (@invset_trans s) (@Delta_invset_trans s)).
-Qed.
-Lemma rsym_invset_total s : total (relset (rsymset (invset s))).
-Proof. exact: (rsymset_total (invset_Delta s)). Qed.
+Lemma rsym_invset_refl s : reflexive (rsymrel (invset s)).
+Proof. exact: rsymrel_refl. Qed.
+Lemma rsym_invset_anti s : antisymmetric (rsymrel (invset s)).
+Proof. exact: rsymrel_anti (invset_Delta s). Qed.
+Lemma rsym_invset_trans s : transitive (rsymrel (invset s)).
+Proof. exact: rsymrel_trans (invsetP s). Qed.
+Lemma rsym_invset_total s : total (rsymrel (invset s)).
+Proof. exact: rsymrel_total (invset_Delta s). Qed.
 
-Lemma rsyminvsetP s :
-  sorted (relset (rsymset (invset s))) [seq s^-1 i | i : 'I_n].
+Lemma rsym_invsetP s :
+  sorted (rsymrel (invset s)) [seq s^-1 i | i : 'I_n].
 Proof.
 apply/(sorted.sorted1P ord0) => i; rewrite size_map size_enum_ord => i1ltn1.
 have iltn1 := ltnW i1ltn1.
-rewrite /prod_uncurry !(nth_map ord0) -?enumT ?size_enum_ord //.
+rewrite !(nth_map ord0) -?enumT ?size_enum_ord //.
 rewrite -[i]/(val (Ordinal iltn1)) nth_ord_enum.
 rewrite -[succn i]/(val (Ordinal i1ltn1)) nth_ord_enum.
 set io := (Ordinal iltn1); set io1 := (Ordinal i1ltn1).
-rewrite /rsymset /= !inE /= mem_flip2 inE /= negb_and -!leqNgt.
-rewrite !permKV /= ltnSn leqnSn andbT orbT /= mem_diag.
-by rewrite -orbA -neq_ltn eq_sym orbN.
+rewrite /= !inE /= negb_and -!leqNgt.
+rewrite !permKV /= ltnSn leqnSn /= orbT !andbT.
+by rewrite -neq_ltn eq_sym orbN.
 Qed.
 
 Lemma perm_of_relP (r : rel 'I_n) :
@@ -634,7 +594,7 @@ Definition perm_of_rel r := perm (@perm_of_relP r).
 
 Theorem invset_inj : injective invset.
 Proof.
-suff perm_of_relE s : perm_of_rel (relset (rsymset (invset s))) = s^-1.
+suff perm_of_relE s : perm_of_rel (rsymrel (invset s)) = s^-1.
   move=> s t Hinvset; apply invg_inj.
   by rewrite -perm_of_relE Hinvset perm_of_relE.
 apply/permP => i /=; rewrite permE.
@@ -643,7 +603,7 @@ have -> : s^-1 i = nth ord0 [seq s^-1 i | i : 'I_n] i.
 congr nth => {i}.
 apply: (eq_sorted (@rsym_invset_trans s) (@rsym_invset_anti s)).
 - exact: (sort_sorted (@rsym_invset_total s)).
-- exact: rsyminvsetP.
+- exact: rsym_invsetP.
 - rewrite perm_sort; apply uniq_perm.
   + exact: enum_uniq.
   + rewrite map_inj_uniq; first exact: enum_uniq.
@@ -653,33 +613,29 @@ apply: (eq_sorted (@rsym_invset_trans s) (@rsym_invset_anti s)).
     by rewrite permK.
 Qed.
 
-Theorem invsetP IS :
-  IS \subset Delta ->
-  transitive (relset IS) -> transitive (relset (Delta :\: IS)) ->
-  exists s, invset s = IS.
+Theorem is_invsetP IS :
+  is_invset IS -> {s | invset s = IS}.
 Proof.
-move=> ID Htr HtrD.
-pose R := relset (rsymset IS); pose s := perm_of_rel R; exists s^-1.
+move=> ISinv; have ID := is_invset_Delta ISinv.
+pose s := perm_of_rel (rsymrel IS); exists s^-1.
+have compat (i j : 'I_n) : i < j -> rsymrel IS (s i) (s j).
+  rewrite {}/s !permE => /ltnW ilej.
+  apply: (sorted.sortedP _ (rsymrel_trans ISinv) (rsymrel_refl IS) _
+                         (sort_sorted (rsymrel_total ID) (enum 'I_n))).
+  by rewrite ilej size_sort size_enum_ord /=.
 rewrite invset_permV /invset -setP => /=[[i j]].
-rewrite /pflip2 imset_comp mem_flip2.
-have compat (u v : 'I_n) : u < v -> R (s u) (s v).
-  rewrite {}/s !permE => ultv.
-  apply: (@sorted.sortedP _ ord0 _ (rsymset_trans ID Htr HtrD) (rsymset_refl IS)
-                          _ (sort_sorted (rsymset_total ID) (enum 'I_n))).
-  by rewrite (ltnW ultv) size_sort size_enum_ord /=.
 apply/imsetP/idP => /= [[[a b]] | ijIS].
 - rewrite inE /= => /andP [altb sbltsa [->{i} ->{j}]].
-  have:= compat _ _ altb.
-  rewrite {1}/R/prod_uncurry/rsymset !inE /= mem_diag mem_flip2.
-  rewrite {1}/eq_op/= eqn_leq (leqNgt (s a) (s b)) sbltsa /=.
-  by rewrite (ltnNge (s a) (s b)) (ltnW sbltsa) /= andbF orbF.
-- exists (s^-1 j, s^-1 i); last by rewrite /perm2 /= !permKV.
+  move: altb => {}/compat.
+  rewrite !inE /= /eq_op/= eqn_leq (leqNgt (s a) (s b)) sbltsa /=.
+  by rewrite (ltnNge (s a) (s b)) (ltnW sbltsa) /= orbF.
+- exists (s^-1 j, s^-1 i); last by rewrite !permKV.
   have iltj := DeltaP ((subsetP ID) _ ijIS).
   rewrite inE /= !permKV iltj andbT.
   case: ltngtP => //[{}/compat |]; first last.
     by move=> /val_inj/perm_inj Hij; rewrite Hij ltnn in iltj.
-  rewrite !permKV {1}/R/prod_uncurry/rsymset !inE mem_diag mem_flip2 /=.
-  rewrite ijIS orbF {1}/eq_op/= eqn_leq (leqNgt j i) iltj /= !andbF /=.
+  rewrite !permKV !inE /=.
+  rewrite ijIS /eq_op/= eqn_leq (leqNgt j i) iltj /= !andbF /= orbF.
   move=> /(subsetP ID)/DeltaP/ltn_trans/(_ iltj).
   by rewrite ltnn.
 Qed.
@@ -708,9 +664,10 @@ Qed.
 
 Lemma invset_eltrL s (i : 'I_n) :
   i < n0 -> s i < s (inord (i.+1)) ->
-  invset ('s_i * s) = (i, inord i.+1) |: perm2 's_i @: (invset s).
+  invset ('s_i * s) =
+  (i, inord i.+1) |: [set ('s_i p.1, 's_i p.2) | p in invset s].
 Proof.
-rewrite /perm2 => Hi Hfwd.
+move => Hi Hfwd.
 have Hio : (inord i) = i by apply val_inj => /=; rewrite inordK.
 rewrite -setP => [/= [u v]] /=; rewrite !inE /= !permM.
 apply/idP/idP.
@@ -770,9 +727,9 @@ move=> Hi Hfwd.
 have Hio : (inord i) = i by apply val_inj => /=; rewrite inordK.
 rewrite -eltrV -{1}(invgK s) -invMg invset_permV.
 rewrite invset_eltrL // imsetU1; congr (_ |: _).
-- by rewrite /pflip2 /flip2 /perm2 /= !permM /eltr Hio tpermL tpermR.
-- rewrite invset_permV -!imset_comp -[RHS](imset_id); apply eq_imset.
-  by move=> [u v]; rewrite /pflip2 /flip2 /perm2 /= !permM !tpermK !permK.
+- by rewrite !permM /eltr Hio tpermL tpermR.
+- rewrite invset_permV -!imset_comp -[RHS](imset_id) /=; apply eq_imset.
+  by move=> [u v]; rewrite /= !permM !tpermK !permK.
 Qed.
 
 End InvSet.
@@ -801,7 +758,8 @@ Qed.
 
 Lemma length_permV s : length s^-1 = length s.
 Proof using.
-by rewrite /length -(card_imset _ (can_inj (pflip2K s^-1))) -invset_permV invgK.
+rewrite /length invset_permV card_imset //.
+by move=> /= [i j] [k l] /= [/perm_inj-> /perm_inj->].
 Qed.
 
 Lemma length_add1L s (i : 'I_n) :
@@ -811,7 +769,7 @@ rewrite /length => Hi Hfwd.
 have Hio : (inord i) = i by apply val_inj => /=; rewrite inordK.
 rewrite (invset_eltrL Hi Hfwd).
 rewrite cardsU1 (card_imset _ (@inv_inj _ _ _)); first last.
-  by move=> [u v] /=; rewrite /perm2 !tpermK.
+  by move=> [u v] /=; rewrite !tpermK.
 rewrite (_ : (_, _) \in _ = false) //.
 apply (introF idP) => /imsetP/= [[u v]].
 rewrite inE /= => /andP [Huv Hsvu] [].
@@ -1987,7 +1945,7 @@ rewrite {1}/braidred => /andP [/orP [] HBr].
 Qed.
 
 Corollary reduced_braid n (v w : seq 'I_n) :
-  v \is reduced -> w \is reduced -> 's_[v] == 's_[w] :> 'S_n.+1 = (v =Br w).
+  v \is reduced -> w \is reduced -> ('s_[v] == 's_[w] :> 'S_n.+1) = (v =Br w).
 Proof.
 move=> Hv Hw; apply/idP/idP => [/eqP H|].
 - apply (braid_trans (y := canword 's_[v])).
@@ -2161,5 +2119,4 @@ apply intro_isoGrp.
   + exists 's_2; rewrite ?setTI ?Hf //.
     by apply/imsetP => /=; exists (inord 2); rewrite //= inordK.
 Qed.
-
 
