@@ -1330,6 +1330,7 @@ by move/((bij_inj prods_codesz_bij) (CodeSZ HC1) (CodeSZ HC2))/(congr1 val).
 Qed.
 
 End Length.
+Arguments maxperm {n0}.
 
 Hint Resolve cocodeP.
 Hint Resolve codeszP.
