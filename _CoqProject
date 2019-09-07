@@ -42,6 +42,7 @@ theories/SymGroup/permcent.v
 theories/SymGroup/presentSn.v
 theories/SymGroup/reprSn.v
 theories/SymGroup/towerSn.v
+theories/SymGroup/weak_order.v
 theories/MPoly/antisym.v
 theories/MPoly/Cauchy.v
 theories/MPoly/homogsym.v
