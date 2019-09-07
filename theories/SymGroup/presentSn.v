@@ -93,7 +93,7 @@ The main result is thus [Theorem presentation_Sn_eltr]:
 ***************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
-From mathcomp Require Import choice fintype tuple finfun bigop finset.
+From mathcomp Require Import choice fintype tuple finfun bigop finset binomial.
 From mathcomp Require Import fingroup perm morphism presentation.
 
 Require Import permcomp tools permuted combclass congr.
@@ -101,6 +101,44 @@ Require Import permcomp tools permuted combclass congr.
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
+
+
+Section SSRComplPerm.
+
+Import GroupScope.
+
+Variable T : finType.
+Implicit Types (s : {perm T}).
+
+Lemma permKP s : reflect (involutive s) (s^-1 == s).
+Proof.
+apply (iffP eqP) => [ssV i | invs].
+- by rewrite -{1}ssV permK.
+- rewrite -permP => i; apply (@perm_inj _ s).
+  by rewrite invs permKV.
+Qed.
+
+End SSRComplPerm.
+
+Section SSRComplFinset.
+
+Variables aT rT : finType.
+Variables (f : aT -> rT).
+
+Lemma imsetD (A B : {set aT}) :
+  {in A :|: B &, injective f} -> f @: (B :\: A) =  (f @: B) :\: (f @: A).
+Proof.
+move=> injf; rewrite -setP => y; rewrite inE.
+apply/imsetP/andP => [[x]|[yNfA]].
+- rewrite inE => /andP [xNA xB ->{y}]; split; last exact: mem_imset.
+  move: xNA; apply contra.
+  by move=> /imsetP[x1 x1A] /injf->; rewrite ?inE ?xB ?x1A ?orbT.
+- move=> /imsetP [x xB Hy]; subst y; exists x => //.
+  rewrite inE xB andbT.
+  by move: yNfA; apply contra; apply mem_imset.
+Qed.
+
+End SSRComplFinset.
 
 
 
@@ -733,7 +771,7 @@ rewrite invset_eltrL // imsetU1; congr (_ |: _).
 Qed.
 
 End InvSet.
-
+Arguments Delta {n0}.
 
 Section Length.
 
@@ -756,7 +794,7 @@ apply (introF idP) => /andP [/ltn_trans H/H{H}].
 by rewrite ltnn.
 Qed.
 
-Lemma length_permV s : length s^-1 = length s.
+Lemma lengthV s : length s^-1 = length s.
 Proof using.
 rewrite /length invset_permV card_imset //.
 by move=> /= [i j] [k l] /= [/perm_inj-> /perm_inj->].
@@ -806,7 +844,7 @@ Lemma length_add1R s (i : 'I_n) :
   i < n0 -> s^-1 i < s^-1 (inord (i.+1)) -> length (s * 's_i) = (length s).+1.
 Proof using.
 move=> Hi Hdesc.
-rewrite -length_permV -[length s]length_permV invMg tpermV -/(eltr i).
+rewrite -lengthV -[length s]lengthV invMg tpermV -/(eltr i).
 exact: length_add1L.
 Qed.
 
@@ -814,7 +852,7 @@ Lemma length_sub1R s (i : 'I_n) :
   i < n0 -> s^-1 i > s^-1 (inord (i.+1)) -> length s = (length (s * 's_i)).+1.
 Proof using.
 move=> Hi Hdesc.
-rewrite -length_permV -[length (s * _)]length_permV invMg tpermV -/(eltr i).
+rewrite -lengthV -[length (s * _)]lengthV invMg tpermV -/(eltr i).
 exact: length_sub1L.
 Qed.
 
@@ -822,7 +860,7 @@ Lemma length_descR s (i : 'I_n) :
   i < n0 -> (s^-1 i < s^-1 (inord (i.+1))) = (length (s * 's_i) > length s).
 Proof using.
 move/length_descL ->.
-by rewrite /eltr -{1}tpermV -/(eltr n i) -invMg !length_permV.
+by rewrite /eltr -{1}tpermV -/(eltr n i) -invMg !lengthV.
 Qed.
 
 Lemma length_eltr (i : 'I_n0) : length 's_i = 1%N.
@@ -1130,22 +1168,26 @@ by rewrite big_cons odd_mul_tperm (inordi_neq_i1 Ht0) addTb.
 Qed.
 
 
-Theorem size_canword s : length s = size (canword s).
-Proof using.
-rewrite -(size_map val) canwordE size_wordcd.
-have /= := cocode2P s => [] [Hcode {1}->].
+(** ** Various properties of the length *)
+Lemma sumn_cocode s : sumn (cocode s) = length s.
+Proof.
+have /= := cocode2P s => [] [Hcode {2}->].
 by rewrite -length_permcd // size_cocode.
 Qed.
+Theorem size_canword s : size (canword s) = length s.
+Proof using.
+by rewrite -(size_map val) canwordE size_wordcd sumn_cocode.
+Qed.
 
-Corollary length0 s : length s = 0 -> s = 1.
+Corollary length_eq0 s : length s = 0 -> s = 1.
 Proof.
-rewrite size_canword -{2}(canwordP s) => /eqP/nilP ->.
+rewrite -size_canword -{2}(canwordP s) => /eqP/nilP ->.
 exact: big_nil.
 Qed.
 
 Corollary lengthM s t : length (s * t) <= length s + length t.
 Proof.
-rewrite (size_canword s) (size_canword t) -size_cat.
+rewrite -(size_canword s) -(size_canword t) -size_cat.
 have -> : s * t = 's_[canword s ++ canword t] by rewrite big_cat /= !canwordP.
 exact: length_prods.
 Qed.
@@ -1175,6 +1217,90 @@ have:= lengthM (s * t) u.
 rewrite Hstu leq_add2r => /(leq_trans Habs).
 by rewrite ltnn.
 Qed.
+
+
+Lemma card_Delta : #|@Delta n0| = 'C(n, 2).
+Proof.
+rewrite /Delta -card_ltn_sorted_tuples.
+have /card_imset <- : injective (fun p : 'II_n => [tuple p.1; p.2]).
+  by move=> [i1 i2] [j1 j2] [-> ->].
+congr #|pred_of_set _|; rewrite -setP => /= [[t Ht]].
+rewrite inE /=; apply/imsetP/idP => /= [[[i j]] | Hsort].
+- by rewrite inE /= => Hij [] ->; rewrite /= Hij.
+- case: t Ht Hsort => [|i[|j[|]]] //= Ht /andP [Hij _].
+  exists (i, j) => /=; first by rewrite inE.
+  by apply/eqP; rewrite /eq_op /=.
+Qed.
+
+Lemma length_max s : length s <= 'C(n, 2).
+Proof.
+by rewrite /length -card_Delta; apply: subset_leq_card (invset_Delta s).
+Qed.
+
+Definition maxperm : 'S_n := perm (@rev_ord_inj n).
+
+Lemma maxpermK : involutive maxperm.
+Proof. by move=> i; rewrite !permE rev_ordK. Qed.
+Lemma maxpermV : maxperm^-1 = maxperm.
+Proof. exact/eqP/permKP/maxpermK. Qed.
+
+Lemma invset_maxperm : invset maxperm = Delta.
+Proof.
+rewrite -setP => /= [[i j]]; rewrite /Delta !inE /= !permE.
+case: ltnP => //= Hij; apply ltn_sub2l.
+- by apply (leq_trans Hij); rewrite -ltnS.
+- by rewrite ltnS.
+Qed.
+Lemma length_maxperm : length maxperm = 'C(n, 2).
+Proof. by rewrite /length invset_maxperm card_Delta. Qed.
+Lemma length_maxpermE s : length s = 'C(n, 2) -> s = maxperm.
+Proof.
+move=> Hlen; apply/invset_inj/eqP.
+rewrite eqEcard -!/(length _) Hlen length_maxperm leqnn andbT.
+by rewrite invset_maxperm invset_Delta.
+Qed.
+
+Lemma invset_maxpermMr s : invset (s * maxperm) = Delta :\: invset s.
+Proof.
+rewrite /invset -setP => /= [[i j]].
+rewrite /Delta !inE /= !permM ![maxperm _]permE.
+case: (ltnP i j) => //= iltj; rewrite andbT -leqNgt.
+rewrite [RHS]leq_eqVlt (inj_eq val_inj) (inj_eq perm_inj).
+rewrite -[i == j](inj_eq val_inj) (ltn_eqF iltj) /=.
+apply/idP/idP => [| siltsj].
+- apply contraLR; rewrite -!leqNgt => H.
+  by apply leq_sub2l; rewrite ltnS.
+- apply ltn_sub2l => //; rewrite ltnS.
+  by apply (leq_trans siltsj); rewrite -ltnS.
+Qed.
+Lemma invset_maxpermMl s :
+  invset (maxperm * s) =
+  Delta :\: [set (maxperm p.2, maxperm p.1) | p in invset s].
+Proof.
+rewrite /invset -setP => /=[[i j]]; rewrite !inE /= [RHS]andbC.
+case: ltnP => //= iltj; rewrite !permM.
+apply/idP/idP => [Hsm|].
+- apply/imsetP => /=[] [[k l]].
+  rewrite inE /= => /andP [kltl slltsk] [Hi Hj]; subst i; subst j.
+  move: Hsm; rewrite !maxpermK => /(ltn_trans slltsk).
+  by rewrite ltnn.
+- move/imsetP => /= H; rewrite ltnNge; apply (introN idP).
+  rewrite leq_eqVlt (inj_eq val_inj) !(inj_eq perm_inj).
+  rewrite -[i == j](inj_eq val_inj) (ltn_eqF iltj) /= => Hsm.
+  apply: H; exists (maxperm j, maxperm i); rewrite ?inE /= ?maxpermK //.
+  rewrite {}Hsm andbT !permE /=.
+  apply ltn_sub2l => //; rewrite ltnS.
+  by apply (leq_trans iltj); rewrite -ltnS.
+Qed.
+
+Lemma length_maxpermMr s : length (s * maxperm) = 'C(n, 2) - length s.
+Proof.
+rewrite /length invset_maxpermMr cardsD card_Delta.
+by have /setIidPr -> := invset_Delta s.
+Qed.
+Lemma length_maxpermMl s : length (maxperm * s) = 'C(n, 2) - length s.
+Proof. by rewrite -lengthV invMg maxpermV length_maxpermMr lengthV. Qed.
+
 
 
 Definition prods_codesz (c : codesz n) : 'S_n := 's_[wordcd c].
@@ -1270,7 +1396,7 @@ Proof using. by rewrite unfold_in /= big_cons big_seq1 tperm2 length1. Qed.
 Lemma reduced_rev w : w \is reduced -> rev w \is reduced.
 Proof using.
 rewrite !unfold_in size_rev => /eqP <-.
-rewrite -length_permV.
+rewrite -lengthV.
 by rewrite -!(big_map nat_of_ord xpredT) -prodsV map_rev revK.
 Qed.
 
@@ -1319,7 +1445,7 @@ Proof using. by rewrite -cats1; exact: reduced_catl. Qed.
 Lemma reducedM (s t : 'S_(n.+1)) :
   length (s * t) = length s + length t -> canword s ++ canword t \is reduced.
 Proof.
-rewrite unfold_in big_cat /= size_cat !size_canword => <-.
+rewrite unfold_in big_cat /= size_cat -!size_canword => <-.
 by rewrite !canwordP.
 Qed.
 
@@ -1915,7 +2041,7 @@ Qed.
 Theorem braid_to_canword n (w : seq 'I_n) :
   w \is reduced -> w =Br canword 's_[w].
 Proof.
-rewrite unfold_in size_canword braid_sym.
+rewrite unfold_in -size_canword braid_sym.
 case: (braidred_to_canword w) => p [Hpath <- /eqP].
 elim: p w Hpath => [| p0 p IHp] //= w /andP [].
 rewrite {1}/braidred => /orP [] HBr.
@@ -1934,7 +2060,7 @@ Proof.
 rewrite unfold_in => Hnred.
 have {Hnred} : length ((\prod_(i <- u) 's_ i) : 'S_n.+1) < size u.
   by rewrite ltn_neqAle Hnred length_prods.
-rewrite size_canword.
+rewrite -size_canword.
 case: (braidred_to_canword u) => p [Hpath <-].
 elim: p u Hpath => [| p0 p IHp] u //=; first by rewrite ltnn.
 rewrite {1}/braidred => /andP [/orP [] HBr].
