@@ -14,7 +14,18 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 (** * The weak order on the Symmetric Group
- *)
+
+We define the right (with the mathcomp convention of product of permutation)
+weak order on the symmetric group. We show that it is equivalent to inclusion
+of sets of inversions and that it is a lattice.
+
+Here are the notion defined is this file:
+
+- [s <=R t]     == [s] is smaller for the right weak order than [t].
+- [supperm s t] == the supremum of [s] and [t] for the right weak order.
+- [inferm s t]  == the infimum of [s] and [t] for the right weak order.
+
+***************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import fingroup perm morphism presentation.
@@ -83,7 +94,7 @@ Lemma leperm_maxpermMl s t : (maxperm * t <=R maxperm * s) = (s <=R t).
 Proof.
 suff {s t} impl u v : u <=R v -> maxperm * v <=R maxperm * u.
   apply/idP/idP; last exact: impl.
-  rewrite -{2}(mul1g s) -{2}(mul1g t) -(mulgV maxperm) maxpermV -!mulgA.
+  rewrite -{2}(mulKg maxperm s) -{2}(mulKg maxperm t) maxpermV.
   exact: impl.
 move/lepermP => /= [s ->{v} Hlen].
 apply/lepermP; exists s^-1; first by rewrite -!mulgA mulgV mulg1.
@@ -356,17 +367,14 @@ Lemma infpermC s t : infperm s t = infperm t s.
 Proof. by rewrite /infperm suppermC. Qed.
 
 Lemma infpermPr s t : (infperm s t) <=R s.
-Proof.
-by rewrite -leperm_maxpermMl /infperm -{2}maxpermV mulgA mulVg mul1g suppermPr.
-Qed.
+Proof. by rewrite -leperm_maxpermMl /infperm -{2}maxpermV mulKg suppermPr. Qed.
 
 Lemma infpermPl s t : (infperm s t) <=R t.
 Proof. by rewrite infpermC; exact: infpermPr. Qed.
 
 Lemma infpermP s t w : w <=R s -> w <=R t -> w <=R (infperm s t).
 Proof.
-rewrite -![w <=R _]leperm_maxpermMl.
-rewrite /infperm -{5}maxpermV mulgA mulVg mul1g.
+rewrite -![w <=R _]leperm_maxpermMl /infperm -{5}maxpermV mulKg.
 exact: suppermP.
 Qed.
 

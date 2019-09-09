@@ -852,7 +852,7 @@ Lemma length_sub1L s (i : 'I_n) :
   i < n0 -> s i > s (inord (i.+1)) -> length s = (length ('s_i * s)).+1.
 Proof using.
 move=> Hi Hs.
-rewrite -{1}(mul1g s) -(mulVg 's_i) -mulgA tpermV -/(eltr i).
+rewrite -{1}[s](mulKg 's_i) tpermV -/(eltr i).
 apply (length_add1L Hi).
 rewrite !permM /eltr.
 have -> : inord i = i by apply val_inj; rewrite /= inordK.
