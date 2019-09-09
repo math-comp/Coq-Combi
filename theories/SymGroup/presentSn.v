@@ -16,7 +16,7 @@
 (** * The Coxeter Presentation of the Symmetric Group
 
 The main goal is to show that elementary transpositions generate the symmetric
-groups as a Coxeter group. We follow the proof from Alain Lascoux "The
+groups as a Coxeter group. We follow the proofs from Alain Lascoux "The
 Symmetric Group", unfinished notes. It is not the shortest nor the simplest,
 but it is fully explicit and algorithmic. In particular, it goes through two
 algorithms to
@@ -508,11 +508,10 @@ Definition rsymrel IS :=
   [rel i j : 'I_n |
    [|| (i == j), (j, i) \in IS | (i < j) && ((i, j) \notin IS)]].
 
-
 Variant is_invset IS : Prop :=
-  IsInvset of (IS \subset Delta) &
-  (transitive (srel IS)) &
-  (transitive (srel (Delta :\: IS))) : is_invset IS.
+  IsInvset of IS \subset Delta
+  & transitive (srel IS)
+  & transitive (srel (Delta :\: IS)).
 
 
 Lemma mem_Delta i j : (i, j) \in Delta = (i < j).
@@ -937,7 +936,7 @@ Definition Lehmer (s : 'S_n.+1) (i : 'I_n.+1) :=
 (** ** Properties of the dual code *)
 Lemma cocode_rec_cat m c s : cocode_rec m c s = (cocode_rec m [::] s ++ c).
 Proof using.
-elim: m c s => [//= | m IHm] c s /=.
+elim: m => [//= | m IHm] in c s * => /=.
 by rewrite IHm [X in _ = X ++ _]IHm -cat1s catA.
 Qed.
 
@@ -947,7 +946,7 @@ Lemma wordcdE c :
 Proof using. by rewrite big_flatten /= big_map. Qed.
 
 Lemma size_cocode_rec m s c : size (cocode_rec m c s) = m + size c.
-Proof using. by elim: m s c => [| m IHm] //= s c; rewrite IHm /= addSnnS. Qed.
+Proof using. by elim: m => [| m IHm] //= in s c *; rewrite IHm /= addSnnS. Qed.
 
 Lemma size_cocode s : size (cocode s) = n.
 Proof using. by rewrite size_cocode_rec addn0. Qed.
@@ -970,7 +969,7 @@ Lemma perm_on_cocode_recP m c s0 s :
   let cf := cocode_rec m c s in cf \is a code /\ s0 = 's_[wordcd cf].
 Proof using.
 move=> Hm Hcode -> {s0}.
-elim: m c s Hm Hcode => [| m IHm] c s Hm Hcode Hon /=.
+elim: m => [| m IHm] in c s Hm Hcode * => Hon /=.
   split; first by apply/is_codeP => i; rewrite -{3}(addn0 i); apply Hcode.
   suff -> : s = 1 by rewrite mul1g.
   apply permP => i; rewrite perm1.
@@ -1822,7 +1821,7 @@ Lemma ltn_braidC (s : seq 'I_n) (i : 'I_n) :
   (forall u, u \in s -> u.+1 < i) -> [:: i] ++ s =Br s ++ [:: i].
 Proof using.
 rewrite cat1s cats1.
-move=> Hs; elim: s Hs => [| s0 s IHs] //= Hs.
+move=> Hs; elim: s => [| s0 s IHs] //= in Hs *.
 apply (braid_trans (y := [:: s0, i & s])).
 - rewrite -[[:: i, s0 & s]]/([:: i; s0] ++ s) -[[:: s0, i & s]]/([:: s0; i] ++ s).
   apply braid_catl; apply rule_gencongr => /=.
@@ -1836,7 +1835,7 @@ Lemma gtn_braidC (s : seq 'I_n) (i : 'I_n) :
   (forall u, u \in s -> i.+1 < u) -> [:: i] ++ s =Br s ++ [:: i].
 Proof using.
 rewrite cat1s cats1.
-move=> Hs; elim: s Hs => [| s0 s IHs] //= Hs.
+move=> Hs; elim: s => [| s0 s IHs] //= in Hs *.
 apply (braid_trans (y := [:: s0, i & s])).
 - rewrite -[[:: i, s0 & s]]/([:: i; s0] ++ s) -[[:: s0, i & s]]/([:: s0; i] ++ s).
   apply braid_catl; apply rule_gencongr => /=.

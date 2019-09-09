@@ -138,22 +138,20 @@ Proof.
 move=> H.
 have /subnKC: length s <= length t by rewrite /length subset_leq_card.
 move: (length t - length s) => d Hd.
-elim: d s t Hd H => [|d IHd] s t Hd H.
-  move: Hd; rewrite addn0 /length => /eqP.
+move: H; elim: d => [|d IHd] in s t Hd *.
+  move=> H; move: Hd; rewrite addn0 /length => /eqP.
   rewrite (subset_leqif_cards H) => /eqP/invset_inj ->.
   exact: leperm_refl.
-move: H; rewrite subEproper => /orP [/eqP/invset_inj->|]; first exact: leperm_refl.
+rewrite subEproper=> /orP[/eqP/invset_inj->|]; first exact: leperm_refl.
 move/properP => /= [incl ex].
-have {ex} /ex_minnP [m] : exists n : nat,
+have {ex} /ex_minnP [m /existsP /=[[i j]] /=] : exists n : nat,
     [exists p, [&& p \in invset t, p \notin invset s & t p.1 - t p.2 == n]].
   move: ex => [[i j]] ijt ijNs; exists (t i - t j).
   by apply/existsP => /=; exists (i, j) => /=; apply/and3P.
-move=> /existsP /=[[i j]] /=.
 rewrite [in X in (X-> _ -> _)]/invset !inE /= => /and3P [/andP [iltj tjltti]].
 rewrite iltj /= -leqNgt leq_eqVlt (inj_eq val_inj) (inj_eq perm_inj).
 rewrite -[i == j](inj_eq val_inj) (ltn_eqF iltj) /= => siltsj /eqP eqm Hm.
-have m0 : 0 < m.
-  by case: m eqm {Hm} => // /eqP; rewrite subn_eq0 leqNgt tjltti.
+have m0 : 0 < m by case: m eqm {Hm} => // /eqP; rewrite subn_eq0 leqNgt tjltti.
 have Hti : t i = t j + m :> nat.
   rewrite -eqm {Hm} in m0; rewrite -eqm subnKC //.
   by apply ltnW; rewrite -subn_gt0.
@@ -250,28 +248,26 @@ Lemma tclosure_sub A B :
 Proof.
 move=> /subsetP AB trB.
 apply/subsetP => /= [[i j]]; rewrite /tclosure inE /= => /andP [Hneq].
-move/connectP => /= [p]; elim: p i Hneq => [| p0 p IHp] i Hneq /=.
+move/connectP => /= [p]; elim: p => [| p0 p IHp] /= in i Hneq *.
   by move => _ Heq; rewrite Heq eqxx in Hneq.
 case: (altP (p0 =P j)) => [<- /= /andP[/AB ->] // | {}/IHp IHp].
 by move=> /andP [/AB {}/trB trB {}/IHp H{}/H]; apply: trB.
 Qed.
 
-Lemma tclosure_Delta A :
-  A \subset Delta -> tclosure A \subset Delta.
+Lemma tclosure_Delta A : A \subset Delta -> tclosure A \subset Delta.
 Proof.
 move/tclosure_sub; apply => j k i; rewrite /= !mem_Delta.
 exact: ltn_trans.
 Qed.
 
-Lemma tclosureP A :
-  A \subset Delta -> transitive (srel (tclosure A)).
+Lemma tclosureP A : A \subset Delta -> transitive (srel (tclosure A)).
 Proof.
 move/tclosure_Delta => /subsetP subs.
-rewrite /prod_uncurry => j i k /= Hij Hjk.
-move: (subs _ Hij) (subs _ Hjk); rewrite 2!inE /= => iltj jltk.
+rewrite /= => j i k /= ijA jkA.
+move: (subs _ ijA) (subs _ jkA); rewrite 2!inE /= => iltj jltk.
 move: iltj jltk (ltn_trans iltj jltk); rewrite !ltn_neqAle.
 move=> /andP [inj _] /andP [jnk _] /andP [ink _].
-move: Hij Hjk; rewrite !inE /= inj ink jnk /=.
+move: ijA jkA; rewrite !inE /= inj ink jnk /=.
 exact: connect_trans.
 Qed.
 
@@ -288,8 +284,9 @@ Lemma is_invset_tclosureU A B :
   is_invset A -> is_invset B -> is_invset (tclosure (A :|: B)).
 Proof.
 move=> isA isB.
-have ABD : A :|: B \subset Delta.
+have : A :|: B \subset Delta.
   by rewrite subUset; apply/andP; split; apply is_invset_Delta.
+move: {-1}(A :|: B) (erefl (A :|: B)) => /= AUB HAUB AUBD.
 constructor; rewrite /=.
 - exact: tclosure_Delta.
 - exact: tclosureP.
@@ -299,31 +296,26 @@ constructor; rewrite /=.
   have iltk := ltn_trans iltj jltk; rewrite iltk /=.
   have:= iltk; rewrite ltn_neqAle => /andP [-> _] /=.
   have {cij cjk} /andP := conj cij cjk; apply contraL; rewrite negb_and !negbK.
-
   (* Idea: in the path from i to k, there is a step u v which goes over j.
      This step is connected either by A or B. Then j is connected to u or v. *)
-
-  move=> /connectP /=[p Hp Hk].
-  elim: p i Hp Hk iltj {iltk} => [|p0 p IHp] /= i Hp Hk iltj.
+  move=> /connectP /=[p Hp Hk] {iltk}.
+  elim: p => [|p0 p IHp] /= in i Hp Hk iltj *.
     by exfalso; have:= ltn_trans iltj jltk; rewrite Hk ltnn.
   move: Hp => /andP [ip0AB Hp]; apply /orP.
   case: (ltngtP p0 j) => [p0ltj | jltp0 | /val_inj Heq]; last 1 first.
-  - by left; apply/connectP; exists [:: p0]; rewrite /= ?ip0AB ?Heq.
+  - by left; apply: connect1; rewrite -Heq.
   - move/(_ _ Hp Hk p0ltj): IHp => {p Hk Hp} /orP [|->]; last by right.
-    move/connectP => /=[p Hp ->].
-    by left; apply/connectP; exists (p0::p); rewrite //= ip0AB Hp.
-  - wlog ip0 : A B ip0AB isA isB ABD IHp Hp / (i, p0) \in A.
-      move=> Hlog; move: ip0AB; rewrite inE => /orP [] Hip0.
-      + have /Hlog : (i, p0) \in A :|: B by rewrite inE Hip0 /=.
-        exact.
-      + have /Hlog : (i, p0) \in B :|: A by rewrite inE Hip0 /=.
-        by rewrite setUC; apply.
-    suff : ((i, j) \in A :|: B) || ((j, p0) \in A :|: B).
-      move/orP=> [ijAB|jp0AB]; [left|right]; apply/connectP.
-      + by exists [:: j]; rewrite //= ijAB.
-      + by exists (p0 :: p); rewrite //= jp0AB Hp.
-    rewrite !inE -!orbA [((i, j) \in B) || _]orbC -!orbA orbA.
-    apply/or3P; apply Or31; apply/orP => {p IHp Hp k jltk Hk}.
+    by move/(connect_trans (connect1 (e := srel AUB) ip0AB)); left.
+  - wlog ip0 : A B HAUB isA isB ip0AB / (i, p0) \in A.
+      subst AUB; move=> Hlog; move: ip0AB; rewrite inE => /orP [] Hip0.
+      + by have:= Hip0 => {}/(Hlog A B); apply; rewrite //= inE Hip0.
+      + by have:= Hip0 => {}/(Hlog B A); apply; rewrite // setUC // inE Hip0.
+    suff : ((i, j) \in AUB) || ((j, p0) \in AUB).
+      move/orP=> [ijAB|jp0AB]; [left|right].
+      + exact: connect1.
+      + by apply/connectP; exists (p0 :: p); rewrite //= jp0AB Hp.
+    rewrite -HAUB !inE -!orbA [((i, j) \in B) || _]orbC -!orbA orbA.
+    apply/or3P; apply Or31; apply/orP.
     move: isA => [_ _]; rewrite transitive_DeltaI1 => H.
     have /H/(_ ip0) : i < j < p0 by rewrite iltj jltp0.
     by move=> [|] -> /=; [left | right].
