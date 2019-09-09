@@ -139,7 +139,7 @@ Lemma triv_sign_not_sim n :
 Proof.
   case: n => // n; rewrite ltnS => Hn [B _].
   rewrite row_free_unit => /mulrI HB Hsim.
-  have {Hsim} /Hsim : (eltr n 0) \in 'SG_n.+1 by [].
+  have {Hsim} /Hsim : ('s_0) \in 'SG_n.+1 by [].
   rewrite /triv_repr /sign_repr /triv_mx /sign_mx /= mul1mx (odd_eltr Hn).
   rewrite -[LHS]mulmx1 => /HB/eqP; rewrite -addr_eq0 -mulr2n => /eqP.
   apply/matrixP => /(_ ord0 ord0).
@@ -151,20 +151,20 @@ Lemma repr1 n (rho : reprS n 1) :
   mx_rsim rho triv_repr \/ mx_rsim rho sign_repr.
 Proof.
   case: n rho => [| n] rho; first by left; exact: repr1_S0.
-  have Hs0 : eltr n 0 \in 'SG_n.+1 by [].
+  have Hs0 : 's_0 \in 'SG_n.+1 by [].
   have /esym := repr_mxMr rho Hs0 Hs0.
-  set M := rho (eltr n 0).
+  set M := rho 's_0.
   rewrite tperm2 repr_mx1 (mx11_scalar M).
   rewrite -mulmxE -scalar_mxM -matrixP => /(_ ord0 ord0) /eqP.
   rewrite !mxE eq_refl mulr1n /= -expr2 sqrf_eq1 => /orP [] /eqP HM.
   - left; apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
     rewrite /triv_mx_repr /= => g _; rewrite mul1mx mulmx1.
-    have Heltr i : (i < n)%N -> rho (eltr _ i) = 1.
+    have Heltr i : (i < n)%N -> rho 's_i = 1.
       elim: i => [| i IHi] Hi; first by rewrite -/M (mx11_scalar M) HM.
       have /(congr1 rho) := eltr_braid Hi.
       rewrite !repr_mxMr ?inE //= IHi; last exact: ltnW.
       rewrite !mulr1.
-      have: eltr n i.+1 \in 'SG_n.+1 by [].
+      have: 's_i.+1 \in 'SG_n.+1 by [].
       by move=> /(repr_mx_unit rho)/mulIr H/H <-.
     rewrite -(canwordP g); elim: (canword g) => [| w0 w IHw] /=.
       by rewrite big_nil repr_mx1.
@@ -172,18 +172,18 @@ Proof.
     exact: Heltr.
   - right; apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
     rewrite /sign_mx_repr /= => g _; rewrite mul1mx mulmx1 /sign_mx.
-    have Heltr i : (i < n)%N -> rho (eltr _ i) = -1.
+    have Heltr i : (i < n)%N -> rho 's_i = -1.
       elim: i => [| i IHi] Hi.
         by rewrite -/M (mx11_scalar M) HM -[RHS]scaleN1r -scalemx1.
       have /(congr1 rho) := eltr_braid Hi.
       rewrite !repr_mxMr ?inE //= IHi; last exact: ltnW.
       rewrite !mulrN1 mulNr => /eqP; rewrite eqr_opp => /eqP.
-      have: eltr n i.+1 \in 'SG_n.+1 by [].
+      have: 's_i.+1 \in 'SG_n.+1 by [].
       by move=> /(repr_mx_unit rho)/mulIr H/H <-.
     rewrite -(canwordP g); elim: (canword g) => [| w0 w IHw] /=.
       by rewrite big_nil repr_mx1 odd_perm1.
     rewrite big_cons repr_mxM ?inE // {}IHw odd_permM odd_eltr //= Heltr //.
-    case: (odd_perm (\prod_(i <- w) eltr n i)) => /=;
+    case: (odd_perm (\prod_(i <- w) 's_i)) => /=;
       rewrite mulmxE mulN1r //.
     exact: opprK.
 Qed.

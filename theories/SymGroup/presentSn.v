@@ -36,16 +36,29 @@ Notion of code
 
 Elementary tranpositions
 
-- [eltr n i] == the i-th elementary transposition in ['S_n.+1]
+- ['s_i]     == the i-th elementary transposition. It is Inversion sets
+of type ['S_n.+1]
+                where n is inferred from the context. [i] is an integer
+                smaller than [n] (otherwise [eltr i] is the identity)
+
+                Inversion sets
+
 - [invset s] == the set of inversion of [s]
+- [Delta]    == the set of pair [(i, j)] such that [0 <= i < j < n.+1];
+                 [n] is infered from the context
+- [is_invset IS]     == [IS] is the inversion set of a permutation, that is
+                 subdiagonal transitive and co-transitive
 - [length s] == the number of inversion of [s] we show latter that this is the
                 Coxeter length of [s]
+- [rsymrel IS] == the reflexive and antisymmetric closure of the binary
+                relation associated to the inversion set [IS]
+- [perm_of_invset IS] == the permutation whose inversion set is [IS]
 
 Inverse Lehmer code
 
 - [cocode s] == the recursively defined Lehmer code of [s^-1]
 - [canword s] == the canonical reduced word for [s] as a [seq 'I_n]
-- [prods_codesz c] == the product [eltr n i] associated to the code [c] that
+- [prods_codesz c] == the product [eltr i] associated to the code [c] that
                 is for [i <- wordcd c]. Lemma [prods_codesz_bij] shows that it
                 is a bijection from [codesz n.+1] to ['S_n.+1].
 
@@ -1396,6 +1409,7 @@ Arguments maxperm {n0}.
 Hint Resolve cocodeP.
 Hint Resolve codeszP.
 
+
 (** * Let's do some real combinatorics !!!
 
 The generating polynomial for permutation counted by their length.
@@ -1404,9 +1418,6 @@ The generating polynomial for permutation counted by their length.
 From mathcomp Require Import ssralg poly ssrint.
 
 Section Combi.
-
-Local Notation "''s_' i" := (eltr i).
-Local Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
 
 Import GRing.Theory.
 Open Scope ring_scope.
@@ -1441,7 +1452,7 @@ Section Reduced.
 
 Variable n : nat.
 
-Local Notation "''s_' i" := (eltr n i).
+Local Notation "''s_' i" := (eltr n i) : group_scope.
 Local Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
 
 Definition reduced_word := [qualify w : seq 'I_n | length 's_[w] == size w ].
@@ -1743,13 +1754,13 @@ Notation braidred := (@braid_reduces _).
 Hint Resolve braidww.
 
 
+
 (** ** The cocode insertion algorithm *)
 Section CanWord.
 
 Variable (n0 : nat).
 Local Notation n := n0.+1.
-
-Local Notation "''s_' i" := (eltr n i).
+Local Notation "''s_' i" := (eltr n i) : group_scope.
 Local Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
 Local Notation "a =Br b" := (braidcongr a b).
 
@@ -2077,7 +2088,7 @@ Proof using. by rewrite -canword_straightenE; exact: straighten_path_npos. Qed.
 
 End CanWord.
 
-Local Notation "''s_' i" := (eltr _ i).
+Notation "''s_' i" := (eltr _ i) : group_scope.
 Local Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i).
 Local Notation "a =Br b" := (braidcongr a b) : bool_scope.
 
@@ -2206,11 +2217,17 @@ Qed.
 
 End PresentationSn.
 
+Notation "''s_' i" := (eltr _ i) : group_scope.
+
+Lemma joingU1 (gt : finGroupType) (a : gt) (S : {set gt}) :
+  <[a]> <*> <<S>>  = << a |: S >>.
+Proof. by rewrite joing_idr joing_idl joingE. Qed.
+
 Lemma presentation_S2 :
   'SG_2 \isog Grp ( s0 : s0^+2 ).
 Proof.
 apply intro_isoGrp.
-- apply/existsP; exists (eltr 1 0).
+- apply/existsP; exists ('s_0).
   rewrite /= !xpair_eqE /=; apply/andP; split; try by rewrite expgS expg1 tperm2.
   rewrite eqEsubset subsetT /=; apply/subsetP => /= s _.
   rewrite -(canwordP s).
@@ -2236,13 +2253,10 @@ Qed.
 Lemma presentation_S3 :
   'SG_3 \isog Grp ( s0 : s1 : (s0^+2 = s1^+2 = 1, s0*s1*s0 = s1*s0*s1) ).
 Proof.
-have Gen2 (gt : finGroupType) (a b : gt) :
-    <[a]> <*> <[b]> = <<[set a; b]>>.
-  by rewrite joing_idl joing_idr joingE.
 apply intro_isoGrp.
-- apply/existsP; exists (eltr 2 0, eltr 2 1).
+- apply/existsP; exists ('s_0, 's_1).
   rewrite /= !xpair_eqE /=; apply/and4P; split; try by rewrite expgS expg1 tperm2.
-  + rewrite Gen2 eqEsubset subsetT /=; apply/subsetP => /= s _.
+  + rewrite joingU1 eqEsubset subsetT /=; apply/subsetP => /= s _.
     rewrite -(canwordP s).
     elim: (canword s) => [| t0 t IHt] /=; first by rewrite big_nil group1.
     rewrite big_cons; apply groupM; last exact: IHt.
@@ -2250,7 +2264,7 @@ apply intro_isoGrp.
     by case: t0 => [] [| [| //=]] /= _; rewrite eq_refl /= ?orbT.
   + by apply/eqP/eltr_braid.
 - move=> Gt H; case/existsP => /= [] [s0 s1] /eqP [<-{H} Hx0 Hx1 H3].
-  rewrite Gen2; apply/homgP.
+  rewrite joingU1; apply/homgP.
   pose fs := fun i => match i with 0 => s0 | 1 => s1 | _ => 1 end.
   have /presentation_Sn_eltr [f Hf] : relat_Sn 2 fs.
     constructor; try by case=> [|[|i]].
@@ -2276,18 +2290,19 @@ Lemma presentation_S4 :
 Proof.
 have Gen3 (gt : finGroupType) (a b c : gt) :
     <[a]> <*> <[b]> <*> <[c]> = <<[set a; b; c]>>.
-  rewrite [X in (X <*> _)]joing_idl -joingA [X in (_ <*> X)]joing_idr joing_idl.
-  by rewrite joingA joing_idl joingE.
+  by rewrite -!setUA -!joingU1 !joingA.
 apply intro_isoGrp.
-- apply/existsP; exists (eltr 3 0, eltr 3 1, eltr 3 2).
-  rewrite /= !xpair_eqE /=; apply/and5P; split; try by rewrite expgS expg1 tperm2.
+- apply/existsP; exists ('s_0, 's_1, 's_2).
+  rewrite /= !xpair_eqE /=; apply/andP; split.
   + rewrite Gen3 eqEsubset subsetT /=; apply/subsetP => /= s _.
     rewrite -(canwordP s).
     elim: (canword s) => [| t0 t IHt] /=; first by rewrite big_nil group1.
     rewrite big_cons; apply groupM; last exact: IHt.
     apply (subsetP (subset_gen _)); rewrite !inE.
     by case: t0 => [] [| [| [| //=]]] /= _; rewrite eq_refl /= ?orbT.
-  + apply/and3P; split; apply/eqP; try exact: eltr_braid; try exact: eltr_comm.
+  do 3 do [apply/andP; split; first by rewrite expgS expg1 tperm2].
+  do 2 do [apply/andP; split; first by apply/eqP/eltr_braid].
+  by apply/eqP/eltr_comm.
 - move=> Gt H; case/existsP => /= [] [[s0 s1] s2]
                                   /eqP [<-{H} Hx0 Hx1 Hx2 H010 H121 H02].
   rewrite Gen3; apply/homgP.
@@ -2308,3 +2323,49 @@ apply intro_isoGrp.
     by apply/imsetP => /=; exists (inord 2); rewrite //= inordK.
 Qed.
 
+Lemma presentation_S5 :
+  'SG_5 \isog Grp (
+          s0 : s1 : s2 : s3 :
+            (s0^+2, s1^+2, s2^+2, s3^+2,
+             s0*s1*s0 = s1*s0*s1, s1*s2*s1 = s2*s1*s2, s2*s3*s2 = s3*s2*s3,
+             s0*s2 = s2*s0, s0*s3 = s3*s0, s1*s3 = s3*s1
+        ) ).
+Proof.
+have Gen4 (gt : finGroupType) (a b c d : gt) :
+    <[a]> <*> <[b]> <*> <[c]> <*> <[d]> = <<[set a; b; c; d]>>.
+  by rewrite -!setUA -!joingU1 !joingA.
+apply intro_isoGrp.
+- apply/existsP; exists ('s_0, 's_1, 's_2, 's_3).
+  rewrite /= !xpair_eqE /=; apply/andP; split.
+  + rewrite Gen4 eqEsubset subsetT /=; apply/subsetP => /= s _.
+    rewrite -(canwordP s).
+    elim: (canword s) => [| t0 t IHt] /=; first by rewrite big_nil group1.
+    rewrite big_cons; apply groupM; last exact: IHt.
+    apply (subsetP (subset_gen _)); rewrite !inE.
+    by case: t0 => [] [| [| [| [|//=]]]] /= _; rewrite eq_refl /= ?orbT.
+  do 4 do [apply/andP; split; first by rewrite expgS expg1 tperm2].
+  do 3 do [apply/andP; split; first by apply/eqP/eltr_braid].
+  do 2 do [apply/andP; split; first by apply/eqP/eltr_comm].
+  by apply/eqP/eltr_comm.
+- move=> Gt H; case/existsP => /= [] [[[s0 s1] s2] s3]
+     /eqP [<-{H} Hx0 Hx1 Hx2 Hx3 H010 H121 H232 H02 H03 H13].
+  rewrite Gen4; apply/homgP.
+  pose fs := fun i =>
+               match i with 0 => s0 | 1 => s1 | 2 => s2 | 3 => s3 | _ => 1 end.
+  have /presentation_Sn_eltr [f Hf] : relat_Sn 4 fs.
+    constructor; try by case=> [|[|[|[|i]]]].
+    by case=> [|[|[|i]]] [|[|[|[|j]]]] // /andP [/leq_ltn_trans H'/H'].
+  exists f; rewrite {3}eltr_genSn morphim_gen; last exact: subsetT.
+  congr <<_>>; apply/setP => x; rewrite !inE -!orbA.
+  apply/imsetP/idP => [[/= x0] | /or4P [] /eqP ->{x}] /=; rewrite setTI.
+  + move=> /imsetP [/= i _ -> ->].
+    by case: i => [[|[|[|[|i]]]] //= ] _; rewrite Hf //= eq_refl ?orbT.
+  + exists 's_0; rewrite ?setTI ?Hf //.
+    by apply/imsetP => /=; exists (inord 0); rewrite //= inordK.
+  + exists 's_1; rewrite ?setTI ?Hf //.
+    by apply/imsetP => /=; exists (inord 1); rewrite //= inordK.
+  + exists 's_2; rewrite ?setTI ?Hf //.
+    by apply/imsetP => /=; exists (inord 2); rewrite //= inordK.
+  + exists 's_3; rewrite ?setTI ?Hf //.
+    by apply/imsetP => /=; exists (inord 3); rewrite //= inordK.
+Qed.
