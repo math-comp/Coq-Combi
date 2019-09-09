@@ -140,6 +140,18 @@ Qed.
 
 End SSRComplFinset.
 
+Section SRel.
+
+Variable T : finType.
+Implicit Type (S : {set T * T}).
+Definition srel S := [rel x y : T | (x, y) \in S].
+
+Lemma srelE S1 S2 : srel S1 =2 srel S2 -> S1 = S2.
+Proof. by move=> eqS; rewrite -setP => [[x y]]; apply: eqS x y. Qed.
+
+End SRel.
+
+Prenex Implicits srel.
 
 
 Notation "''SG_' n" := [set: 'S_n]
@@ -496,10 +508,11 @@ Definition rsymrel IS :=
   [rel i j : 'I_n |
    [|| (i == j), (j, i) \in IS | (i < j) && ((i, j) \notin IS)]].
 
+
 Variant is_invset IS : Prop :=
   IsInvset of (IS \subset Delta) &
-  (transitive (prod_uncurry (mem IS))) &
-  (transitive (prod_uncurry (mem (Delta :\: IS)))) : is_invset IS.
+  (transitive (srel IS)) &
+  (transitive (srel (Delta :\: IS))) : is_invset IS.
 
 
 Lemma mem_Delta i j : (i, j) \in Delta = (i < j).
@@ -510,18 +523,18 @@ Lemma is_invset_Delta IS : is_invset IS -> IS \subset Delta.
 Proof. by move=> []. Qed.
 
 Lemma transitive_DeltaI1 IS :
-  (transitive (prod_uncurry (mem (Delta :\: IS)))) <->
+  (transitive (srel (Delta :\: IS))) <->
   (forall i j k : 'I_n,
       i < j < k -> (i, k) \in IS -> ((i, j) \in IS \/ (j, k) \in IS)).
 Proof.
 split.
-- rewrite /prod_uncurry /= => tr i j k /andP [iltj jltk] ik.
+- rewrite /= => tr i j k /andP [iltj jltk] ik.
   case: (boolP ((i, j) \in IS)) => [_|ijN]/=; first by left.
   right; move: ik; apply/contraLR => jkN.
   have {}/tr tr : (i, j) \in Delta :\: IS by rewrite !inE ijN /= iltj.
   have {}/tr    : (j, k) \in Delta :\: IS by rewrite !inE jkN /= jltk.
-  by rewrite inE => /andP [].
-- move=> H j i k; rewrite /prod_uncurry !inE /= ![_ && (_ < _)]andbC.
+  by rewrite /= inE => /andP [].
+- move=> H j i k; rewrite /= !inE /= ![_ && (_ < _)]andbC.
   move=> /andP [iltj ijN] /andP [jltk jkN].
   rewrite (ltn_trans iltj jltk) /=.
   have ijk : i < j < k by rewrite iltj jltk.
@@ -550,10 +563,10 @@ Qed.
 Lemma invsetP s : is_invset (invset s).
 Proof.
 split; first exact: invset_Delta.
-- rewrite /prod_uncurry/invset => j i k /=; rewrite !inE /=.
+- rewrite /=/invset => j i k /=; rewrite !inE /=.
   by move=> /andP[/ltn_trans iltj /(ltn_trans _) siltsj]
             /andP[/iltj-> /siltsj->].
-- rewrite /prod_uncurry/invset => j i k /=; rewrite !inE /=.
+- rewrite /=/invset => j i k /=; rewrite !inE /=.
   have bla A B : ((~~ (A && B)) && A) = (A && ~~ B) by case: A B => [] [].
   rewrite !bla -!leqNgt.
   by move=> /andP[/ltn_trans iltj /leq_trans siltsj] /andP[/iltj-> /siltsj->].
@@ -578,7 +591,7 @@ move=> /andP [/or3P [/eqP -> //|jiIS|/andP [iltj ijNIS]]].
 Qed.
 Lemma rsymrel_trans IS : is_invset IS -> transitive (rsymrel IS).
 Proof.
-case; rewrite /rsymrel/prod_uncurry => /subsetP HD HIS HDIS j i k /=.
+case; rewrite /rsymrel/= => /subsetP HD HIS HDIS j i k /=.
 move/orP=> [/eqP->{i}| Hij]; first by [].
 move/orP=> [/eqP<-{k}| Hjk]; first by rewrite Hij orbT.
 apply/orP; right; move: Hij Hjk.
@@ -589,7 +602,7 @@ move=> /orP [jiIS|/andP [iltj ijNIS]] /orP [kjIS|/andP [jltk jkNIS]]; apply/orP.
     by move: jkNIS; apply contra => /(HIS _ _ _ jiIS); apply.
   + left; move: jiIS; apply contraLR => kiNIS.
     have jlti := ltn_trans jltk klti.
-    have:= HDIS k j i; rewrite !inE /= klti jltk jlti !andbT.
+    have:= HDIS k j i; rewrite /= !inE /= klti jltk jlti !andbT.
     exact.
   + by exfalso; subst k; rewrite jiIS in jkNIS.
 - case: (ltngtP i k) => [iltk | klti | /val_inj ik].
@@ -597,12 +610,12 @@ move=> /orP [jiIS|/andP [iltj ijNIS]] /orP [kjIS|/andP [jltk jkNIS]]; apply/orP.
     by move: ijNIS; apply contra => /HIS; apply.
   + left; move: kjIS; apply contraLR => kiNIS.
     have kltj := ltn_trans klti iltj.
-    have:= HDIS i k j; rewrite !inE /= iltj klti kltj !andbT.
+    have:= HDIS i k j; rewrite /= !inE /= iltj klti kltj !andbT.
     exact.
   + by exfalso; subst k; rewrite kjIS in ijNIS.
 - right.
   have iltk := ltn_trans iltj jltk.
-  have:= HDIS j i k; rewrite !inE /= jltk iltk iltj !andbT.
+  have:= HDIS j i k; rewrite /= !inE /= jltk iltk iltj !andbT.
   exact.
 Qed.
 Lemma rsymrel_total (IS : {set 'II_n}) :

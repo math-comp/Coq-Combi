@@ -28,6 +28,7 @@ Unset Printing Implicit Defensive.
 Local Notation "''s_' i" := (eltr _ i)
       (at level 8, i at level 2, format "''s_' i").
 
+Reserved Notation "x '<=R' y" (at level 70, y at next level).
 
 Import GroupScope.
 
@@ -40,17 +41,18 @@ Implicit Type (s t u v : 'S_n).
 
 Definition leperm s t :=
   [exists u, (t == s * u) && (length t == length s + length u)].
+Notation "s '<=R' t" := (leperm s t).
 
 Lemma lepermP s t :
   reflect (exists2 u, t = s * u & length t = length s + length u)
-          (leperm s t).
+          (s <=R t).
 Proof.
 apply (iffP existsP) => [] /= [u].
 - by move/andP => [/eqP Heq /eqP Hlen]; exists u.
 - by move=> /eqP Heq /eqP Hlen; exists u; apply/andP.
 Qed.
 
-Lemma leperm_refl s : leperm s s.
+Lemma leperm_refl s : s <=R s.
 Proof. by apply/lepermP; exists 1; rewrite ?mulg1 // length1 addn0. Qed.
 
 Lemma leperm_trans : transitive leperm.
@@ -71,16 +73,15 @@ rewrite addKn subnn Hts => /length_eq0 ->.
 exact: mulg1.
 Qed.
 
-Lemma leperm1p s : leperm 1 s.
+Lemma leperm1p s : 1 <=R s.
 Proof.
 apply/lepermP; exists s; first by rewrite mul1g.
 by rewrite length1 add0n.
 Qed.
 
-Lemma leperm_maxpermMl s t :
-  leperm (maxperm * t) (maxperm * s) = leperm s t.
+Lemma leperm_maxpermMl s t : (maxperm * t <=R maxperm * s) = (s <=R t).
 Proof.
-suff {s t} impl u v : leperm u v -> leperm (maxperm * v) (maxperm * u).
+suff {s t} impl u v : u <=R v -> maxperm * v <=R maxperm * u.
   apply/idP/idP; last exact: impl.
   rewrite -{2}(mul1g s) -{2}(mul1g t) -(mulgV maxperm) maxpermV -!mulgA.
   exact: impl.
@@ -90,11 +91,11 @@ rewrite !length_maxpermMl Hlen lengthV subnDA subnK //.
 by rewrite -(leq_add2l (length u)) -Hlen subnKC length_max.
 Qed.
 
-Lemma leperm_maxperm s : leperm s maxperm.
+Lemma leperm_maxperm s : s <=R maxperm.
 Proof. by rewrite -leperm_maxpermMl -{1}maxpermV mulVg leperm1p. Qed.
 
 
-Lemma leperm_invset s t : leperm s t -> invset s \subset invset t.
+Lemma leperm_invset s t : s <=R t -> invset s \subset invset t.
 Proof.
 move/lepermP => /= [u]->{t}.
 rewrite -{-2}(canwordP u) -(size_canword u).
@@ -115,13 +116,13 @@ Qed.
 
 
 Lemma leperm_eltrR s (i : 'I_n) :
-  i < n0 -> s^-1 i < s^-1 (inord (i.+1)) -> leperm s (s * 's_i).
+  i < n0 -> s^-1 i < s^-1 (inord (i.+1)) -> s <=R (s * 's_i).
 Proof.
 move=> Hi Hnrec; apply/lepermP; exists 's_i => //.
 by rewrite length_add1R // -[val i]/(val (Ordinal Hi)) length_eltr addn1.
 Qed.
 
-Lemma invset_leperm s t : invset s \subset invset t -> leperm s t.
+Lemma invset_leperm s t : invset s \subset invset t -> s <=R t.
 Proof.
 move=> H.
 have /subnKC: length s <= length t by rewrite /length subset_leq_card.
@@ -219,26 +220,40 @@ rewrite -{3}(mulgK 's_(t j) t) eltrV.
 exact: leperm_eltrR.
 Qed.
 
+End Def.
+
+Notation "s '<=R' t" := (leperm s t).
+
+
 Section Closure.
 
+Variable (n0 : nat).
+Local Notation n := n0.+1.
 Implicit Type (A B C : {set 'I_n * 'I_n}).
 
 Definition tclosure A : {set 'I_n * 'I_n} :=
-  [set p | (p.1 != p.2) && (connect [rel i j | (i, j) \in A] p.1 p.2)].
+  [set p | (p.1 != p.2) && (connect (srel A) p.1 p.2)].
+
+Lemma tclosure_sub A B :
+  A \subset B -> transitive (srel B) -> tclosure A \subset B.
+Proof.
+move=> /subsetP AB trB.
+apply/subsetP => /= [[i j]]; rewrite /tclosure inE /= => /andP [Hneq].
+move/connectP => /= [p]; elim: p i Hneq => [| p0 p IHp] i Hneq /=.
+  by move => _ Heq; rewrite Heq eqxx in Hneq.
+case: (altP (p0 =P j)) => [<- /= /andP[/AB ->] // | {}/IHp IHp].
+by move=> /andP [/AB {}/trB trB {}/IHp H{}/H]; apply: trB.
+Qed.
 
 Lemma tclosure_Delta A :
   A \subset Delta -> tclosure A \subset Delta.
 Proof.
-rewrite /tclosure => /subsetP subs; apply/subsetP => /=[[i j]]; rewrite !inE /=.
-move=> /andP [inej /connectP [/= p Hp Hlastp]].
-rewrite ltn_neqAle {}inej /= {}Hlastp {j}.
-elim: p i Hp => [|p0 p IHp] //= i.
-move=> /andP [/subs]; rewrite inE /= => /ltnW/leq_trans H {}/IHp.
-exact: H.
+move/tclosure_sub; apply => j k i; rewrite /= !mem_Delta.
+exact: ltn_trans.
 Qed.
 
 Lemma tclosureP A :
-  A \subset Delta -> transitive (prod_uncurry (mem (tclosure A))).
+  A \subset Delta -> transitive (srel (tclosure A)).
 Proof.
 move/tclosure_Delta => /subsetP subs.
 rewrite /prod_uncurry => j i k /= Hij Hjk.
@@ -249,30 +264,25 @@ move: Hij Hjk; rewrite !inE /= inj ink jnk /=.
 exact: connect_trans.
 Qed.
 
-Lemma tclosure_sub A B :
-  A \subset B -> transitive (prod_uncurry (mem B)) -> tclosure A \subset B.
-Proof.
-move=> /subsetP AB trB.
-apply/subsetP => /= [[i j]]; rewrite /tclosure inE /= => /andP [Hneq].
-move/connectP => /= [p]; elim: p i Hneq => [| p0 p IHp] i Hneq /=.
-  by move => _ Heq; rewrite Heq eqxx in Hneq.
-case: (altP (p0 =P j)) => [<- /= | {}/IHp IHp]; first by move=> /andP [/AB] ->.
-by move=> /andP [/AB {}/trB trB {}/IHp H{}/H]; apply: trB.
-Qed.
-
 End Closure.
 
-Lemma is_invset_tclosureU (A B : {set 'I_n * 'I_n}) :
+
+Section PermutoSupInf.
+
+Variable (n0 : nat).
+Local Notation n := n0.+1.
+Implicit Type (s t u v : 'S_n) (A B : {set 'I_n * 'I_n}).
+
+Lemma is_invset_tclosureU A B :
   is_invset A -> is_invset B -> is_invset (tclosure (A :|: B)).
 Proof.
 move=> isA isB.
 have ABD : A :|: B \subset Delta.
   by rewrite subUset; apply/andP; split; apply is_invset_Delta.
-constructor; rewrite /prod_uncurry /=.
+constructor; rewrite /=.
 - exact: tclosure_Delta.
 - exact: tclosureP.
-- move=> j i k; rewrite !inE /= ![~~ _ && _]andbC ![connect _ _ _ && _]andbC.
-  set R := [rel _ _ | _ ].
+- move=> j i k; rewrite /= !inE /= ![~~ _ && _]andbC ![connect _ _ _ && _]andbC.
   move=> /andP [iltj]; have:= iltj; rewrite ltn_neqAle => /andP [-> _] /= cij.
   move=> /andP [jltk]; have:= jltk; rewrite ltn_neqAle => /andP [-> _] /= cjk.
   have iltk := ltn_trans iltj jltk; rewrite iltk /=.
@@ -291,8 +301,7 @@ constructor; rewrite /prod_uncurry /=.
   - move/(_ _ Hp Hk p0ltj): IHp => {p Hk Hp} /orP [|->]; last by right.
     move/connectP => /=[p Hp ->].
     by left; apply/connectP; exists (p0::p); rewrite //= ip0AB Hp.
-  - subst R.
-    wlog ip0 : A B ip0AB isA isB ABD IHp Hp / (i, p0) \in A.
+  - wlog ip0 : A B ip0AB isA isB ABD IHp Hp / (i, p0) \in A.
       move=> Hlog; move: ip0AB; rewrite inE => /orP [] Hip0.
       + have /Hlog : (i, p0) \in A :|: B by rewrite inE Hip0 /=.
         exact.
@@ -308,6 +317,7 @@ constructor; rewrite /prod_uncurry /=.
     have /H/(_ ip0) : i < j < p0 by rewrite iltj jltp0.
     by move=> [|] -> /=; [left | right].
 Qed.
+
 Definition supperm s t :=
   let: exist sup _ := is_invsetP (is_invset_tclosureU (invsetP s) (invsetP t))
   in sup.
@@ -319,7 +329,7 @@ Lemma suppermC s t : supperm s t = supperm t s.
 Proof. by apply invset_inj; rewrite !invset_supperm setUC. Qed.
 
 
-Lemma suppermPr s t : leperm s (supperm s t).
+Lemma suppermPr s t : s <=R (supperm s t).
 Proof.
 apply invset_leperm; rewrite invset_supperm /tclosure.
 apply/subsetP => /= [[i j] Hinv]; rewrite !inE /=.
@@ -327,11 +337,10 @@ rewrite neq_ltn (DeltaP ((subsetP (invset_Delta s)) _ Hinv)) /=.
 by apply/connectP; exists [:: j]; rewrite //= inE Hinv /=.
 Qed.
 
-Lemma suppermPl s t : leperm t (supperm s t).
+Lemma suppermPl s t : t <=R (supperm s t).
 Proof. by rewrite suppermC; exact: suppermPr. Qed.
 
-Lemma suppermP s t w :
-  leperm s w -> leperm t w -> leperm (supperm s t) w.
+Lemma suppermP s t w : s <=R w -> t <=R w -> (supperm s t) <=R w.
 Proof.
 move=>/leperm_invset Hsw /leperm_invset Htw.
 apply/invset_leperm; rewrite invset_supperm; apply tclosure_sub.
@@ -340,4 +349,26 @@ apply/invset_leperm; rewrite invset_supperm; apply tclosure_sub.
 Qed.
 
 
-End Def.
+Definition infperm s t : 'S_n :=
+  maxperm * (supperm (maxperm * s) (maxperm * t)).
+
+Lemma infpermC s t : infperm s t = infperm t s.
+Proof. by rewrite /infperm suppermC. Qed.
+
+Lemma infpermPr s t : (infperm s t) <=R s.
+Proof.
+by rewrite -leperm_maxpermMl /infperm -{2}maxpermV mulgA mulVg mul1g suppermPr.
+Qed.
+
+Lemma infpermPl s t : (infperm s t) <=R t.
+Proof. by rewrite infpermC; exact: infpermPr. Qed.
+
+Lemma infpermP s t w : w <=R s -> w <=R t -> w <=R (infperm s t).
+Proof.
+rewrite -![w <=R _]leperm_maxpermMl.
+rewrite /infperm -{5}maxpermV mulgA mulVg mul1g.
+exact: suppermP.
+Qed.
+
+End PermutoSupInf.
+
