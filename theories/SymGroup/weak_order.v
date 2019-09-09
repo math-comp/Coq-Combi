@@ -321,16 +321,21 @@ constructor; rewrite /=.
     by move=> [|] -> /=; [left | right].
 Qed.
 
-Definition supperm s t :=
-  let: exist sup _ := is_invsetP (is_invset_tclosureU (invsetP s) (invsetP t))
-  in sup.
+Definition supperm s t : 'S_n :=
+  perm_of_invset (tclosure (invset s :|: invset t)).
+Definition infperm s t : 'S_n :=
+  maxperm * (supperm (maxperm * s) (maxperm * t)).
+
 
 Lemma invset_supperm s t :
   invset (supperm s t) = tclosure (invset s :|: invset t).
-Proof. by rewrite /supperm; case: is_invsetP => sup pf. Qed.
+Proof.
+rewrite /supperm perm_of_invsetK //.
+exact: is_invset_tclosureU (invsetP _) (invsetP _).
+Qed.
+
 Lemma suppermC s t : supperm s t = supperm t s.
 Proof. by apply invset_inj; rewrite !invset_supperm setUC. Qed.
-
 
 Lemma suppermPr s t : s <=R (supperm s t).
 Proof.
@@ -351,9 +356,6 @@ apply/invset_leperm; rewrite invset_supperm; apply tclosure_sub.
 - by move: (invsetP w) => [].
 Qed.
 
-
-Definition infperm s t : 'S_n :=
-  maxperm * (supperm (maxperm * s) (maxperm * t)).
 
 Lemma infpermC s t : infperm s t = infperm t s.
 Proof. by rewrite /infperm suppermC. Qed.

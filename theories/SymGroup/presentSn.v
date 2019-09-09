@@ -660,13 +660,11 @@ rewrite nth_uniq => [/eqP/val_inj -> //|||].
 - by rewrite size_sort size_enum_ord.
 - by rewrite sort_uniq enum_uniq.
 Qed.
-Definition perm_of_rel r := perm (@perm_of_relP r).
+Definition perm_of_invset IS := (perm (@perm_of_relP (rsymrel IS)))^-1.
 
-Theorem invset_inj : injective invset.
+Lemma invsetK : cancel invset perm_of_invset.
 Proof.
-suff perm_of_relE s : perm_of_rel (rsymrel (invset s)) = s^-1.
-  move=> s t Hinvset; apply invg_inj.
-  by rewrite -perm_of_relE Hinvset perm_of_relE.
+rewrite /perm_of_invset=> s; apply invg_inj; rewrite invgK.
 apply/permP => i /=; rewrite permE.
 have -> : s^-1 i = nth ord0 [seq s^-1 i | i : 'I_n] i.
   by rewrite (nth_map ord0) ?size_enum_ord // nth_ord_enum.
@@ -683,16 +681,21 @@ apply: (eq_sorted (@rsym_invset_trans s) (@rsym_invset_anti s)).
     by rewrite permK.
 Qed.
 
-Theorem is_invsetP IS : is_invset IS -> {s | invset s = IS}.
+Theorem invset_inj : injective invset.
+Proof. by move=> s t Hinvset; rewrite -(invsetK s) Hinvset invsetK. Qed.
+
+
+Theorem perm_of_invsetK IS :
+  is_invset IS -> invset (perm_of_invset IS) = IS.
 Proof.
 move=> ISinv; have ID := is_invset_Delta ISinv.
-pose s := perm_of_rel (rsymrel IS); exists s^-1.
+rewrite /perm_of_invset; set s := perm _.
 have compat (i j : 'I_n) : i < j -> rsymrel IS (s i) (s j).
   rewrite {}/s !permE => /ltnW ilej.
   apply: (sorted.sortedP _ (rsymrel_trans ISinv) (rsymrel_refl IS) _
                          (sort_sorted (rsymrel_total ID) (enum 'I_n))).
   by rewrite ilej size_sort size_enum_ord /=.
-rewrite invset_permV /invset -setP => /=[[i j]].
+rewrite invset_permV /invset -setP => /=[[i j]] /=.
 apply/imsetP/idP => /= [[[a b]] | ijIS].
 - rewrite inE /= => /andP [altb sbltsa [->{i} ->{j}]].
   move: altb => {}/compat.
@@ -708,6 +711,33 @@ apply/imsetP/idP => /= [[[a b]] | ijIS].
   move=> /(subsetP ID)/DeltaP/ltn_trans/(_ iltj).
   by rewrite ltnn.
 Qed.
+
+Theorem perm_of_invsetP IS : is_invset IS -> invset (perm_of_invset IS) = IS.
+Proof.
+move=> ISinv; have ID := is_invset_Delta ISinv.
+rewrite /perm_of_invset; set s := perm _.
+have compat (i j : 'I_n) : i < j -> rsymrel IS (s i) (s j).
+  rewrite {}/s !permE => /ltnW ilej.
+  apply: (sorted.sortedP _ (rsymrel_trans ISinv) (rsymrel_refl IS) _
+                         (sort_sorted (rsymrel_total ID) (enum 'I_n))).
+  by rewrite ilej size_sort size_enum_ord /=.
+rewrite invset_permV /invset -setP => /=[[i j]] /=.
+apply/imsetP/idP => /= [[[a b]] | ijIS].
+- rewrite inE /= => /andP [altb sbltsa [->{i} ->{j}]].
+  move: altb => {}/compat.
+  rewrite !inE /= /eq_op/= eqn_leq (leqNgt (s a) (s b)) sbltsa /=.
+  by rewrite (ltnNge (s a) (s b)) (ltnW sbltsa) /= orbF.
+- exists (s^-1 j, s^-1 i); last by rewrite !permKV.
+  have iltj := DeltaP ((subsetP ID) _ ijIS).
+  rewrite inE /= !permKV iltj andbT.
+  case: ltngtP => //[{}/compat |]; first last.
+    by move=> /val_inj/perm_inj Hij; rewrite Hij ltnn in iltj.
+  rewrite !permKV !inE /=.
+  rewrite ijIS /eq_op/= eqn_leq (leqNgt j i) iltj /= !andbF /= orbF.
+  move=> /(subsetP ID)/DeltaP/ltn_trans/(_ iltj).
+  by rewrite ltnn.
+Qed.
+
 
 
 Local Notation "''s_' i" := (eltr _ i).
