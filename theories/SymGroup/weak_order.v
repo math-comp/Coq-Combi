@@ -16,8 +16,7 @@
 (** * The weak order on the Symmetric Group
  *)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
-From mathcomp Require Import choice fintype tuple finfun bigop finset binomial.
+From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import fingroup perm morphism presentation.
 
 Require Import permcomp tools permuted combclass congr presentSn.
@@ -220,7 +219,125 @@ rewrite -{3}(mulgK 's_(t j) t) eltrV.
 exact: leperm_eltrR.
 Qed.
 
-Lemma leperm_invsetE s t : (leperm s t) = (invset s \subset invset t).
-Proof. by apply/idP/idP; [exact: leperm_invset | exact: invset_leperm]. Qed.
+Section Closure.
+
+Implicit Type (A B C : {set 'I_n * 'I_n}).
+
+Definition tclosure A : {set 'I_n * 'I_n} :=
+  [set p | (p.1 != p.2) && (connect [rel i j | (i, j) \in A] p.1 p.2)].
+
+Lemma tclosure_Delta A :
+  A \subset Delta -> tclosure A \subset Delta.
+Proof.
+rewrite /tclosure => /subsetP subs; apply/subsetP => /=[[i j]]; rewrite !inE /=.
+move=> /andP [inej /connectP [/= p Hp Hlastp]].
+rewrite ltn_neqAle {}inej /= {}Hlastp {j}.
+elim: p i Hp => [|p0 p IHp] //= i.
+move=> /andP [/subs]; rewrite inE /= => /ltnW/leq_trans H {}/IHp.
+exact: H.
+Qed.
+
+Lemma tclosureP A :
+  A \subset Delta -> transitive (prod_uncurry (mem (tclosure A))).
+Proof.
+move/tclosure_Delta => /subsetP subs.
+rewrite /prod_uncurry => j i k /= Hij Hjk.
+move: (subs _ Hij) (subs _ Hjk); rewrite 2!inE /= => iltj jltk.
+move: iltj jltk (ltn_trans iltj jltk); rewrite !ltn_neqAle.
+move=> /andP [inj _] /andP [jnk _] /andP [ink _].
+move: Hij Hjk; rewrite !inE /= inj ink jnk /=.
+exact: connect_trans.
+Qed.
+
+Lemma tclosure_sub A B :
+  A \subset B -> transitive (prod_uncurry (mem B)) -> tclosure A \subset B.
+Proof.
+move=> /subsetP AB trB.
+apply/subsetP => /= [[i j]]; rewrite /tclosure inE /= => /andP [Hneq].
+move/connectP => /= [p]; elim: p i Hneq => [| p0 p IHp] i Hneq /=.
+  by move => _ Heq; rewrite Heq eqxx in Hneq.
+case: (altP (p0 =P j)) => [<- /= | {}/IHp IHp]; first by move=> /andP [/AB] ->.
+by move=> /andP [/AB {}/trB trB {}/IHp H{}/H]; apply: trB.
+Qed.
+
+End Closure.
+
+Lemma is_invset_tclosureU (A B : {set 'I_n * 'I_n}) :
+  is_invset A -> is_invset B -> is_invset (tclosure (A :|: B)).
+Proof.
+move=> isA isB.
+have ABD : A :|: B \subset Delta.
+  by rewrite subUset; apply/andP; split; apply is_invset_Delta.
+constructor; rewrite /prod_uncurry /=.
+- exact: tclosure_Delta.
+- exact: tclosureP.
+- move=> j i k; rewrite !inE /= ![~~ _ && _]andbC ![connect _ _ _ && _]andbC.
+  set R := [rel _ _ | _ ].
+  move=> /andP [iltj]; have:= iltj; rewrite ltn_neqAle => /andP [-> _] /= cij.
+  move=> /andP [jltk]; have:= jltk; rewrite ltn_neqAle => /andP [-> _] /= cjk.
+  have iltk := ltn_trans iltj jltk; rewrite iltk /=.
+  have:= iltk; rewrite ltn_neqAle => /andP [-> _] /=.
+  have {cij cjk} /andP := conj cij cjk; apply contraL; rewrite negb_and !negbK.
+
+  (* Idea: in the path from i to k, there is a step u v which goes over j.
+     This step is connected either by A or B. Then j is connected to u or v. *)
+
+  move=> /connectP /=[p Hp Hk].
+  elim: p i Hp Hk iltj {iltk} => [|p0 p IHp] /= i Hp Hk iltj.
+    by exfalso; have:= ltn_trans iltj jltk; rewrite Hk ltnn.
+  move: Hp => /andP [ip0AB Hp]; apply /orP.
+  case: (ltngtP p0 j) => [p0ltj | jltp0 | /val_inj Heq]; last 1 first.
+  - by left; apply/connectP; exists [:: p0]; rewrite /= ?ip0AB ?Heq.
+  - move/(_ _ Hp Hk p0ltj): IHp => {p Hk Hp} /orP [|->]; last by right.
+    move/connectP => /=[p Hp ->].
+    by left; apply/connectP; exists (p0::p); rewrite //= ip0AB Hp.
+  - subst R.
+    wlog ip0 : A B ip0AB isA isB ABD IHp Hp / (i, p0) \in A.
+      move=> Hlog; move: ip0AB; rewrite inE => /orP [] Hip0.
+      + have /Hlog : (i, p0) \in A :|: B by rewrite inE Hip0 /=.
+        exact.
+      + have /Hlog : (i, p0) \in B :|: A by rewrite inE Hip0 /=.
+        by rewrite setUC; apply.
+    suff : ((i, j) \in A :|: B) || ((j, p0) \in A :|: B).
+      move/orP=> [ijAB|jp0AB]; [left|right]; apply/connectP.
+      + by exists [:: j]; rewrite //= ijAB.
+      + by exists (p0 :: p); rewrite //= jp0AB Hp.
+    rewrite !inE -!orbA [((i, j) \in B) || _]orbC -!orbA orbA.
+    apply/or3P; apply Or31; apply/orP => {p IHp Hp k jltk Hk}.
+    move: isA => [_ _]; rewrite transitive_DeltaI1 => H.
+    have /H/(_ ip0) : i < j < p0 by rewrite iltj jltp0.
+    by move=> [|] -> /=; [left | right].
+Qed.
+Definition supperm s t :=
+  let: exist sup _ := is_invsetP (is_invset_tclosureU (invsetP s) (invsetP t))
+  in sup.
+
+Lemma invset_supperm s t :
+  invset (supperm s t) = tclosure (invset s :|: invset t).
+Proof. by rewrite /supperm; case: is_invsetP => sup pf. Qed.
+Lemma suppermC s t : supperm s t = supperm t s.
+Proof. by apply invset_inj; rewrite !invset_supperm setUC. Qed.
+
+
+Lemma suppermPr s t : leperm s (supperm s t).
+Proof.
+apply invset_leperm; rewrite invset_supperm /tclosure.
+apply/subsetP => /= [[i j] Hinv]; rewrite !inE /=.
+rewrite neq_ltn (DeltaP ((subsetP (invset_Delta s)) _ Hinv)) /=.
+by apply/connectP; exists [:: j]; rewrite //= inE Hinv /=.
+Qed.
+
+Lemma suppermPl s t : leperm t (supperm s t).
+Proof. by rewrite suppermC; exact: suppermPr. Qed.
+
+Lemma suppermP s t w :
+  leperm s w -> leperm t w -> leperm (supperm s t) w.
+Proof.
+move=>/leperm_invset Hsw /leperm_invset Htw.
+apply/invset_leperm; rewrite invset_supperm; apply tclosure_sub.
+- by rewrite subUset Hsw Htw.
+- by move: (invsetP w) => [].
+Qed.
+
 
 End Def.

@@ -509,6 +509,26 @@ Proof. by rewrite inE. Qed.
 Lemma is_invset_Delta IS : is_invset IS -> IS \subset Delta.
 Proof. by move=> []. Qed.
 
+Lemma transitive_DeltaI1 IS :
+  (transitive (prod_uncurry (mem (Delta :\: IS)))) <->
+  (forall i j k : 'I_n,
+      i < j < k -> (i, k) \in IS -> ((i, j) \in IS \/ (j, k) \in IS)).
+Proof.
+split.
+- rewrite /prod_uncurry /= => tr i j k /andP [iltj jltk] ik.
+  case: (boolP ((i, j) \in IS)) => [_|ijN]/=; first by left.
+  right; move: ik; apply/contraLR => jkN.
+  have {}/tr tr : (i, j) \in Delta :\: IS by rewrite !inE ijN /= iltj.
+  have {}/tr    : (j, k) \in Delta :\: IS by rewrite !inE jkN /= jltk.
+  by rewrite inE => /andP [].
+- move=> H j i k; rewrite /prod_uncurry !inE /= ![_ && (_ < _)]andbC.
+  move=> /andP [iltj ijN] /andP [jltk jkN].
+  rewrite (ltn_trans iltj jltk) /=.
+  have ijk : i < j < k by rewrite iltj jltk.
+  move: ijN; apply contra => /(H i j k ijk) [] //.
+  by rewrite (negbTE jkN).
+Qed.
+
 Lemma invset_Delta s : invset s \subset Delta.
 Proof.
 rewrite /invset/Delta; apply/subsetP => [[/= i j]].
@@ -651,8 +671,7 @@ apply: (eq_sorted (@rsym_invset_trans s) (@rsym_invset_anti s)).
     by rewrite permK.
 Qed.
 
-Theorem is_invsetP IS :
-  is_invset IS -> {s | invset s = IS}.
+Theorem is_invsetP IS : is_invset IS -> {s | invset s = IS}.
 Proof.
 move=> ISinv; have ID := is_invset_Delta ISinv.
 pose s := perm_of_rel (rsymrel IS); exists s^-1.
