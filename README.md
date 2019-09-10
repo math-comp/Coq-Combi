@@ -140,7 +140,7 @@ This library is based on
 * Coq 8.7 or more recent
 
 * [SSReflect/MathComp]([https://github.com/math-comp/math-comp])
-  Library version 1.7.
+  Library version 1.7 or more recent.
 
 * Pierre-Yves Strub library for
   [Multinomials] version 1.1 (https://github.com/math-comp/multinomials)
