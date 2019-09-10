@@ -36,8 +36,6 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Local Notation "''s_' i" := (eltr _ i)
-      (at level 8, i at level 2, format "''s_' i").
 
 Reserved Notation "x '<=R' y" (at level 70, y at next level).
 
@@ -105,27 +103,6 @@ Qed.
 Lemma leperm_maxperm s : s <=R maxperm.
 Proof. by rewrite -leperm_maxpermMl -{1}maxpermV mulVg leperm1p. Qed.
 
-
-Lemma leperm_invset s t : s <=R t -> invset s \subset invset t.
-Proof.
-move/lepermP => /= [u]->{t}.
-rewrite -{-2}(canwordP u) -(size_canword u).
-elim/last_ind: (canword u) (canword_reduced u) => [| w i IHw].
-  by rewrite big_nil /= mulg1 => _.
-rewrite size_rcons -cats1 big_cat /= big_cons big_nil mulg1.
-move/reduced_catl => Hred; have:= Hred; rewrite unfold_in => /eqP <-.
-move/(_ Hred): IHw; move: Hred; rewrite unfold_in => /eqP <-.
-move: (\prod_(i <- w) _) => /= P IHP.
-rewrite mulgA -(addn1 (length P)) addnA -(length_eltr i) => Hlen.
-move/(_ (lengthKL Hlen)): IHP => /subset_trans; apply.
-pose il := lift ord_max i.
-have Hi : il < n0 by rewrite /il lift_max ltn_ord.
-have Hsi : 's_i = 's_il :> 'S_n by rewrite lift_max.
-rewrite Hsi invset_eltrR //; first exact: subsetU1.
-by rewrite length_descR // -{}Hsi Hlen (lengthKL Hlen) length_eltr addn1 ltnS.
-Qed.
-
-
 Lemma leperm_eltrR s (i : 'I_n) :
   i < n0 -> s^-1 i < s^-1 (inord (i.+1)) -> s <=R (s * 's_i).
 Proof.
@@ -133,9 +110,24 @@ move=> Hi Hnrec; apply/lepermP; exists 's_i => //.
 by rewrite length_add1R // -[val i]/(val (Ordinal Hi)) length_eltr addn1.
 Qed.
 
-Lemma invset_leperm s t : invset s \subset invset t -> s <=R t.
+Theorem leperm_invset s t : (s <=R t)= (invset s \subset invset t).
 Proof.
-move=> H.
+apply/idP/idP => [/lepermP/= [u]->{t} | H].
+  rewrite -{-2}(canwordP u) -(size_canword u).
+  elim/last_ind: (canword u) (canword_reduced u) => [| w i IHw].
+    by rewrite big_nil /= mulg1 => _.
+  rewrite size_rcons -cats1 big_cat /= big_cons big_nil mulg1.
+  move/reduced_catl => Hred; have:= Hred; rewrite unfold_in => /eqP <-.
+  move/(_ Hred): IHw; move: Hred; rewrite unfold_in => /eqP <-.
+  move: (\prod_(i <- w) _) => /= P IHP.
+  rewrite mulgA -(addn1 (length P)) addnA -(length_eltr i) => Hlen.
+  move/(_ (lengthKL Hlen)): IHP => /subset_trans; apply.
+  pose il := lift ord_max i.
+  have Hi : il < n0 by rewrite /il lift_max ltn_ord.
+  have Hsi : 's_i = 's_il :> 'S_n by rewrite lift_max.
+  rewrite Hsi invset_eltrR //; first exact: subsetU1.
+  by rewrite length_descR // -{}Hsi Hlen (lengthKL Hlen) length_eltr addn1 ltnS.
+
 have /subnKC: length s <= length t by rewrite /length subset_leq_card.
 move: (length t - length s) => d Hd.
 move: H; elim: d => [|d IHd] in s t Hd *.
@@ -339,7 +331,7 @@ Proof. by apply invset_inj; rewrite !invset_supperm setUC. Qed.
 
 Lemma suppermPr s t : s <=R (supperm s t).
 Proof.
-apply invset_leperm; rewrite invset_supperm /tclosure.
+rewrite !leperm_invset; rewrite invset_supperm /tclosure.
 apply/subsetP => /= [[i j] Hinv]; rewrite !inE /=.
 rewrite neq_ltn (DeltaP ((subsetP (invset_Delta s)) _ Hinv)) /=.
 by apply/connectP; exists [:: j]; rewrite //= inE Hinv /=.
@@ -350,8 +342,7 @@ Proof. by rewrite suppermC; exact: suppermPr. Qed.
 
 Lemma suppermP s t w : s <=R w -> t <=R w -> (supperm s t) <=R w.
 Proof.
-move=>/leperm_invset Hsw /leperm_invset Htw.
-apply/invset_leperm; rewrite invset_supperm; apply tclosure_sub.
+rewrite !leperm_invset invset_supperm => Hsw Htw; apply tclosure_sub.
 - by rewrite subUset Hsw Htw.
 - by move: (invsetP w) => [].
 Qed.
