@@ -78,6 +78,7 @@ rewrite !inE; apply/idP/idP => [/imsetP [[i j]] | /= /andP [Hsort _]].
   exact: val_inj.
 Qed.
 
+Open Scope group_scope.
 Open Scope nat_scope.
 
 (** ** monomials and partitions *)
@@ -242,7 +243,7 @@ Qed.
 Lemma mpart_partm_perm m : {s : 'S_n | (mpart (partm m)) == m # s}.
 Proof.
 have [/= s /eqP {2}<-]:= perm_mpart_partm m.
-exists (s^-1)%g; apply/eqP/mnmP => i.
+exists (s^-1); apply/eqP/mnmP => i.
 by rewrite 2!mnmE permKV.
 Qed.
 
@@ -438,22 +439,21 @@ End MPolySym.
 Arguments antisym [n R].
 
 
-
 Lemma issym_eltrP n (R : ringType) (p : {mpoly R[n.+1]}) :
-  reflect (forall i, i < n -> msym (eltr n i) p = p) (p \is symmetric).
+  reflect (forall i, i < n -> msym 's_i p = p) (p \is symmetric).
 Proof.
-apply/(iffP forallP) => [Hanti i Hi | Heltr].
-- by have /eqP -> := Hanti (eltr n i).
+apply/(iffP forallP) => /= [Hanti i Hi | Heltr].
+- by have /eqP -> := Hanti 's_i.
 - elim/eltr_ind => [| S i Hi /eqP IH].
   + by rewrite msym1m.
   + by rewrite msymMm (Heltr i Hi) IH.
 Qed.
 
 Lemma isantisym_eltrP n (R : ringType) (p : {mpoly R[n.+1]}) :
-  reflect (forall i, i < n -> msym (eltr n i) p = - p) (p \is antisym).
+  reflect (forall i, i < n -> msym 's_i p = - p) (p \is antisym).
 Proof.
 apply/(iffP forallP) => [Hanti i Hi | Heltr].
-- have /eqP -> := Hanti (eltr n i).
+- have /eqP -> := Hanti 's_i.
   by rewrite /eltr odd_tperm (inordi_neq_i1 Hi) !simplexp.
 - elim/eltr_ind => [| S i Hi /eqP IH].
   + by rewrite odd_perm1 /= msym1m !simplexp.
@@ -639,7 +639,7 @@ Section EltrP.
 Variable n i : nat.
 Implicit Type (p : 'II_n.+1).
 
-Local Definition eltrp p := (eltr n i p.1, eltr n i p.2).
+Local Definition eltrp p := ('s_i p.1, 's_i p.2).
 Local Definition predi p := (p.1 < p.2) && (p != (inord i, inord i.+1)).
 
 Lemma predi_eltrp p : i < n -> predi p -> predi (eltrp p).
@@ -678,11 +678,11 @@ case: (altP (inord i.+1 =P v)) => Hv1.
 by rewrite tpermD.
 Qed.
 
-Lemma predi_eltrpE p : i < n -> predi p = predi (eltr n i p.1, eltr n i p.2).
+Lemma predi_eltrpE p : i < n -> predi p = predi ('s_i p.1, 's_i p.2).
 Proof using.
 move=> Hi; apply/idP/idP; first exact: predi_eltrp.
 set p1 := ( _, _).
-suff -> : p = ((eltr n i) p1.1, (eltr n i) p1.2) by apply predi_eltrp.
+suff -> : p = ('s_i p1.1, 's_i p1.2) by apply predi_eltrp.
 rewrite /p1 /= !tpermK {p1}.
 by case: p.
 Qed.
@@ -700,7 +700,7 @@ rewrite (bigD1 (inord i, inord i.+1)) /=; first last.
 rewrite msymM -mulNr; congr (_ * _).
   rewrite msymB opprB.
   by congr (_ - _); rewrite /msym mmapX mmap1U /eltr ?tpermL ?tpermR.
-rewrite (big_morph _ (msymM (eltr n i)) (msym1 _ (eltr n i))) /=.
+rewrite (big_morph _ (msymM 's_i) (msym1 _ 's_i)) /=.
 rewrite (eq_bigl (fun p : 'II_n.+1 => predi i (eltrp i p))); first last.
   by move=> [u v]; rewrite -/(predi i (u,v)) (predi_eltrpE (u, v) Hi) /=.
 rewrite (eq_bigr (fun p => 'X_(eltrp i p).1 - 'X_(eltrp i p).2)); first last.
