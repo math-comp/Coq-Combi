@@ -240,6 +240,12 @@ Variable R : Type.
 Variable idx : R.
 Variable op : Monoid.law idx.
 
+
+(* Backported from mathcomp 1.8 *)
+Lemma foldrE r : foldr op idx r = \big[op/idx]_(x <- r) x.
+Proof. by rewrite unlock. Qed.
+
+
 Lemma big_nat_widen0 a b c F :
   b <= c ->
   \big[op/idx]_(a <= i < b) F i =
