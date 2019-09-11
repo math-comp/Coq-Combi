@@ -1264,6 +1264,13 @@ rewrite -size_canword -{2}(canwordP s) => /eqP/nilP ->.
 exact: big_nil.
 Qed.
 
+Corollary length_eq1 s : length s = 1%N -> exists i : 'I_n0, s = 's_i.
+Proof.
+rewrite -size_canword -{2}(canwordP s).
+case: (canword s) => [|i[|j]] // _.
+by exists i; rewrite big_seq1.
+Qed.
+
 Corollary lengthM s t : length (s * t) <= length s + length t.
 Proof.
 rewrite -(size_canword s) -(size_canword t) -size_cat.
@@ -1409,6 +1416,7 @@ by move/((bij_inj prods_codesz_bij) (CodeSZ HC1) (CodeSZ HC2))/(congr1 val).
 Qed.
 
 End Length.
+Arguments length  {n0}.
 Arguments maxperm {n0}.
 
 Hint Resolve cocodeP.
@@ -1454,12 +1462,16 @@ End Combi.
 Section Reduced.
 
 Variable n : nat.
+Implicit Type w : seq 'I_n.
 
 Notation "''s_' i" := (eltr n i).
 Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
 
 Definition reduced_word := [qualify w : seq 'I_n | length 's_[w] == size w ].
 Notation reduced := reduced_word.
+
+Lemma reducedP w : reflect (length 's_[w] = size w) (w \is reduced).
+Proof. by rewrite unfold_in; apply/eqP. Qed.
 
 Lemma reduced_nil : [::] \is reduced.
 Proof using. by rewrite unfold_in big_nil length1. Qed.
@@ -1472,8 +1484,7 @@ Proof using. by rewrite unfold_in /= big_cons big_seq1 eltr2 length1. Qed.
 Lemma reduced_rev w : w \is reduced -> rev w \is reduced.
 Proof using.
 rewrite !unfold_in size_rev => /eqP <-.
-rewrite -lengthV.
-by rewrite -!(big_map nat_of_ord xpredT) -prodsV map_rev revK.
+by rewrite -lengthV -!(big_map nat_of_ord xpredT) -prodsV map_rev revK.
 Qed.
 
 Lemma reduced_revE w : (w \is reduced) = (rev w \is reduced).
@@ -1485,9 +1496,9 @@ Qed.
 Lemma reduced_sprod_code c :
   c \is a code -> size c <= n.+1 -> pmap insub (wordcd c) \is reduced.
 Proof using.
-move=> Hcode Hsz.
+move=> Hcode Hsz; apply/reducedP.
 have:= Hsz => /(length_permcd Hcode) Hlength.
-rewrite unfold_in -(big_map nat_of_ord xpredT) /=.
+rewrite -(big_map nat_of_ord xpredT) /=.
 by rewrite -(size_map val) /= insub_wordcdK // Hlength size_wordcd.
 Qed.
 
@@ -1556,14 +1567,13 @@ Lemma braid_abaP (u v : seq 'I_n) :
           (v \in braid_aba u).
 Proof using.
 rewrite /braid_aba /=; apply: (iffP idP).
-+ case: u => [//=|u0[//=|u1[//=|u2[]//=]]].
+- case: u => [//=|u0[//=|u1[//=|u2[]//=]]].
   case H : ((u0 == u2) && ((u0.+1 == u1) || (u1.+1 == u0))).
-  - move: H => /andP [/eqP <- Heq].
+  + move: H => /andP [/eqP <- Heq].
     rewrite mem_seq1 => /eqP ->.
     by exists u0, u1.
-  - by rewrite in_nil.
-+ move=> [a] [b] [H -> ->].
-  by rewrite unfold_in H eq_refl /= eq_refl.
+  + by rewrite in_nil.
+- by move=> [a] [b] [H -> ->]; rewrite H eq_refl /= inE.
 Qed.
 
 Lemma braidCP (u v : seq 'I_n) :
@@ -1572,13 +1582,12 @@ Lemma braidCP (u v : seq 'I_n) :
           (v \in braidC u).
 Proof using.
 rewrite /braidC /=; apply: (iffP idP).
-+ case: u => [//=|u0[//=|u1[]//=]].
+- case: u => [//=|u0[//=|u1[]//=]].
   case H : ((u0.+1 < u1) || (u1.+1 < u0)).
-  - rewrite mem_seq1 => /eqP ->.
+  + rewrite mem_seq1 => /eqP ->.
     by exists u0, u1.
-  - by rewrite in_nil.
-+ move=> [a] [b] [H -> ->].
-  by rewrite H mem_seq1 eq_refl.
+  + by rewrite in_nil.
+- by move=> [a] [b] [H -> ->]; rewrite H inE.
 Qed.
 
 Lemma braidrule_sym (u v : seq 'I_n) :
@@ -1586,9 +1595,9 @@ Lemma braidrule_sym (u v : seq 'I_n) :
 Proof using.
 rewrite !mem_cat => /orP [] /= Hbr; apply/orP.
 - left; move: Hbr => /braid_abaP [a] [b] [Hab -> ->].
-  by rewrite /braid_aba /= eq_refl orbC Hab /= mem_seq1 eq_refl.
+  by rewrite /braid_aba eq_refl orbC Hab inE.
 - right; move: Hbr => /braidCP [a] [b] [Hab -> ->].
-  by rewrite /braidC /= orbC Hab /= mem_seq1 eq_refl.
+  by rewrite /braidC orbC Hab inE.
 Qed.
 
 Lemma braidrule_homog (u : seq 'I_n) :
@@ -1750,6 +1759,7 @@ Lemma braidredE u v : braid_reduces u v -> 's_[u] = 's_[v].
 Proof using. by move=> /orP []; [apply braid_prods|apply prods_reducesE]. Qed.
 
 End Reduced.
+Arguments reducedP {n w}.
 
 Notation reduced := (reduced_word _).
 Notation braidred := (@braid_reduces _).
@@ -2119,8 +2129,8 @@ Qed.
 Theorem braid_to_canword n (w : seq 'I_n) :
   w \is reduced -> w =Br canword 's_[w].
 Proof.
-rewrite unfold_in -size_canword braid_sym.
-case: (braidred_to_canword w) => p [Hpath <- /eqP].
+move/reducedP; rewrite -size_canword braid_sym.
+case: (braidred_to_canword w) => p [Hpath <-].
 elim: p w Hpath => [| p0 p IHp] //= w /andP [].
 rewrite {1}/braidred => /orP [] HBr.
 - move/IHp; rewrite (size_braid HBr) => H{}/H /braid_ltrans ->.

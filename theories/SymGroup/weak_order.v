@@ -38,6 +38,7 @@ Unset Printing Implicit Defensive.
 
 
 Reserved Notation "x '<=R' y" (at level 70, y at next level).
+Reserved Notation "x '<R' y" (at level 70, y at next level).
 
 Import GroupScope.
 
@@ -50,7 +51,10 @@ Implicit Type (s t u v : 'S_n).
 
 Definition leperm s t :=
   [exists u, (t == s * u) && (length t == length s + length u)].
+Definition ltperm s t := (s != t) && (leperm s t).
+
 Notation "s '<=R' t" := (leperm s t).
+Notation "s '<R' t" := (ltperm s t).
 
 Lemma lepermP s t :
   reflect (exists2 u, t = s * u & length t = length s + length u)
@@ -59,6 +63,16 @@ Proof.
 apply (iffP existsP) => [] /= [u].
 - by move/andP => [/eqP Heq /eqP Hlen]; exists u.
 - by move=> /eqP Heq /eqP Hlen; exists u; apply/andP.
+Qed.
+
+Lemma leperm_length s t : s <=R t -> length s <= length t.
+Proof. by move/lepermP => [u _ ->]; apply leq_addr. Qed.
+
+Lemma leperm_lengthE s t : s <=R t -> length s = length t -> s = t.
+Proof.
+move/lepermP => /= [u -> ->] /eqP.
+rewrite -{1}(addn0 (length s)) eqn_add2l eq_sym => /eqP/length_eq0 ->.
+by rewrite mulg1.
 Qed.
 
 Lemma leperm_refl s : s <=R s.
@@ -74,12 +88,8 @@ Qed.
 
 Lemma leperm_anti : antisymmetric leperm.
 Proof.
-move=> s t /andP [/lepermP [/= st Hst Hlst] /lepermP [/= ts Hts Hlts]].
-have eql: length s = length t.
-  by apply/eqP; rewrite eqn_leq {1}Hlst {3}Hlts !leq_addr.
-move: Hlts; rewrite eql => /(congr1 (fun x => x - (length t)))/esym.
-rewrite addKn subnn Hts => /length_eq0 ->.
-exact: mulg1.
+move=> s t /andP [Hst Hts]; apply: (leperm_lengthE Hst).
+by apply anti_leq; apply/andP; split; apply leperm_length.
 Qed.
 
 Lemma leperm1p s : 1 <=R s.
@@ -90,7 +100,7 @@ Qed.
 
 Lemma leperm_maxpermMl s t : (maxperm * t <=R maxperm * s) = (s <=R t).
 Proof.
-suff {s t} impl u v : u <=R v -> maxperm * v <=R maxperm * u.
+suffices {s t} impl u v : u <=R v -> maxperm * v <=R maxperm * u.
   apply/idP/idP; last exact: impl.
   rewrite -{2}(mulKg maxperm s) -{2}(mulKg maxperm t) maxpermV.
   exact: impl.
@@ -118,30 +128,57 @@ Lemma leperm_factorP s t :
 Proof.
 apply (iffP (lepermP s t)) => /= [[u] ->{t} Hlen | [w] Hred [l] Ht Hs].
 - exists (canword s ++ canword u).
-    rewrite unfold_in /= size_cat !size_canword -Hlen.
+    apply/reducedP; rewrite size_cat !size_canword -Hlen.
     by rewrite big_cat /= !canwordP.
   exists (length s).
   + by rewrite big_cat /= !canwordP.
   + by rewrite take_size_cat ?size_canword // canwordP.
 - exists (\prod_(i <- drop l w) 's_i).
   + by rewrite Ht Hs -big_cat /= cat_take_drop.
-  + have:= Hred; rewrite unfold_in -Ht => /eqP ->.
+  + rewrite {}Hs {}Ht (reducedP Hred).
     rewrite -{1}(cat_take_drop l w) in Hred.
-    have:= reduced_catl Hred; rewrite unfold_in -Hs => /eqP ->.
-    have:= reduced_catr Hred; rewrite unfold_in => /eqP ->.
+    rewrite (reducedP (reduced_catl Hred)) (reducedP (reduced_catr Hred)).
     by rewrite -size_cat cat_take_drop.
 Qed.
 
+Lemma leperm_succ s t :
+  s <R t -> exists2 i : 'I_n0, (s <R s * 's_i) & (s * 's_i <=R t).
+Proof.
+move=> /andP[sNt /leperm_factorP[w wred [l Ht Hs]]].
+have : l < size w.
+  by move: sNt; apply contraR; rewrite Ht Hs -leqNgt => /take_oversize ->.
+case Hw : w => // [w0 wtl]; rewrite -{}Hw {wtl} => Hl.
+have lens : length s = l.
+  have := size_take l w; rewrite Hl => <-.
+  rewrite Hs; apply/reducedP.
+  by move: wred; rewrite -{1}(cat_take_drop l w) => /reduced_catl.
+have eqs1 : s * 's_(nth w0 w l) = \prod_(i <- take l.+1 w) 's_i.
+  by rewrite (take_nth w0 Hl) -cats1 big_cat /= big_seq1 -Hs.
+have lens1 : length  (s * 's_(nth w0 w l)) = l.+1.
+  have := size_takel Hl => <-; rewrite eqs1; apply/reducedP.
+  by move: wred; rewrite -{1}(cat_take_drop l.+1 w) => /reduced_catl.
+exists (nth w0 w l).
+- rewrite /ltperm; apply/andP; split.
+  + by apply/negP=> /eqP/(congr1 length)/eqP; rewrite lens lens1; elim l.
+  + apply/lepermP; exists ('s_(nth w0 w l)) => //.
+    by rewrite lens lens1 length_eltr addn1.
+- apply/lepermP; exists (\prod_(i <- drop l.+1 w) 's_i).
+  + by rewrite eqs1 -big_cat cat_take_drop /= -Ht.
+  + have:= wred; rewrite -{1}(cat_take_drop l.+1 w)=>/reduced_catr/reducedP->.
+    rewrite lens1 size_drop subnKC // Ht.
+    exact/reducedP.
+Qed.
 
-Theorem leperm_invset s t : (s <=R t)= (invset s \subset invset t).
+
+Theorem leperm_invset s t : (s <=R t) = (invset s \subset invset t).
 Proof.
 apply/idP/idP => [/lepermP/= [u]->{t} | H].
   rewrite -{-2}(canwordP u) -(size_canword u).
   elim/last_ind: (canword u) (canword_reduced u) => [| w i IHw].
     by rewrite big_nil /= mulg1 => _.
   rewrite size_rcons -cats1 big_cat /= big_cons big_nil mulg1.
-  move/reduced_catl => Hred; have:= Hred; rewrite unfold_in => /eqP <-.
-  move/(_ Hred): IHw; move: Hred; rewrite unfold_in => /eqP <-.
+  move/reduced_catl => Hred; rewrite -(reducedP Hred).
+  move/(_ Hred): IHw; move: Hred => /reducedP <-.
   move: (\prod_(i <- w) _) => /= P IHP.
   rewrite mulgA -(addn1 (length P)) addnA -(length_eltr i) => Hlen.
   move/(_ (lengthKL Hlen)): IHP => /subset_trans; apply.
@@ -153,7 +190,7 @@ apply/idP/idP => [/lepermP/= [u]->{t} | H].
 
 have /subnKC: length s <= length t by rewrite /length subset_leq_card.
 move: (length t - length s) => d Hd.
-move: H; elim: d => [|d IHd] in s t Hd *.
+move: H; elim: d => [|d IHd] in t Hd *.
   move=> H; move: Hd; rewrite addn0 /length => /eqP.
   rewrite (subset_leqif_cards H) => /eqP/invset_inj ->.
   exact: leperm_refl.
@@ -182,44 +219,37 @@ have {Hm m0 eqm tjltti} Heq : m = 1%N.
   pose k := (t^-1 (inord (t j).+1)).
   have tk : t k = (t j).+1 :> nat.
     by rewrite /k permKV inordK // ltnS (leq_trans tjltti _) // -ltnS.
+  suffices []: (m <= t k - t j) \/ (m <= t i - t k).
+    - by rewrite tk subSn // subnn => /(leq_trans Habs); rewrite ltnn.
+    - rewrite tk; rewrite -eqm.
+      case: (val (t i)) tjltti => //= u; rewrite ltnS => Hu.
+      by rewrite subSS subSn // ltnn.
   case: (ltngtP k i) => [klti|iltk|/val_inj Hk]; last 1 first.
   - by move: Habs; rewrite -eqm -Hk tk subSn // ?subnn ltnn.
-  - have kltj := ltn_trans klti iltj.
-    suff : m <= t k - t j.
-      by rewrite tk subSn // subnn => /(leq_trans Habs); rewrite ltnn.
+  - left; have kltj := ltn_trans klti iltj.
     apply: Hm; rewrite inE /= kltj /= ?tk //.
     rewrite -leqNgt; apply ltnW; apply: (leq_trans _ siltsj).
     rewrite leqNgt ltnS; apply/negP => siltsk.
     have:= incl k i klti siltsk.
     by rewrite tk ltnS leqNgt tjltti.
-  case: (ltngtP k j) => [kltj|jltk|/val_inj]; last first.
-  - by move/(congr1 t)/(congr1 val); rewrite /= tk => /eqP; elim: (val (t j)).
-  - suff : m <= t i - t k.
-      rewrite tk; rewrite -eqm.
-      case: (val (t i)) tjltti => //= u; rewrite ltnS => Hu.
-      by rewrite subSS subSn // ltnn.
-    apply: Hm; rewrite inE /= iltk /= ?tk.
-    + rewrite {}Hti {eqm}; case: m Habs => [|[|m]]// _.
-      by rewrite !addnS !ltnS leq_addr.
-    + move: incl => /(_ j k jltk)/contra; rewrite -!leqNgt => incl.
-      have {}/incl : t j <= t k by rewrite tk.
-      exact: leq_trans (ltnW siltsj).
+  have {tjltti} tkltti : t k < t i.
+    rewrite tk {}Hti {eqm Hm}; case: m Habs => [|[|m]]// _.
+    by rewrite !addnS !ltnS leq_addr.
+  case: (ltngtP k j) => [kltj|jltk|/val_inj Hkj]; last first.
+  - exfalso; move: Hkj => /(congr1 t)/(congr1 val)/=/eqP.
+    by rewrite tk eqn_leq ltnn.
+  - right; apply: Hm; rewrite inE /= iltk //=.
+    move: incl => /(_ j k jltk)/contra; rewrite -!leqNgt => incl.
+    have {}/incl : t j <= t k by rewrite tk.
+    exact: leq_trans (ltnW siltsj).
   case: (ltnP (s i) (s k)) => [siltsk|sklesi].
-  - suff : m <= t i - t k. (* duplicate code *)
-      rewrite tk; rewrite -eqm.
-      case: (val (t i)) tjltti => //= u; rewrite ltnS => Hu.
-      by rewrite subSS subSn // ltnn.
-    apply: Hm; rewrite inE /= iltk /= ?tk.
-    + rewrite {}Hti {eqm}; case: m Habs => [|[|m]]// _.
-      by rewrite !addnS !ltnS leq_addr.
-    + rewrite -leqNgt; exact: ltnW.
+  - right; apply: Hm; rewrite inE /= iltk //=.
+    by rewrite -leqNgt; exact: ltnW.
   case: (ltnP (s k) (s j)) => [skltsj|sjlesk].
-  - suff : m <= t k - t j.
-      by rewrite tk subSn // subnn => /(leq_trans Habs); rewrite ltnn.
-    apply: Hm; rewrite inE /= kltj /= ?tk //.
+  - left; apply: Hm; rewrite inE /= kltj /= ?tk //.
     by rewrite -leqNgt; apply ltnW.
   - by have:= leq_trans siltsj (leq_trans sjlesk sklesi); rewrite ltnn.
-subst m; rewrite addn1 in Hti.
+rewrite {}Heq addn1 in Hti.
 have tjn0 : t j < n0 by rewrite -ltnS -Hti.
 have {Hti} Himj : (t * 's_(t j))^-1 (t j) = i.
   by rewrite invMg !permM eltrV eltrL -Hti inord_val !permK.
@@ -231,10 +261,10 @@ have Hln : (length (t * 's_(t j))).+1 = length t.
   by rewrite -[in RHS](mulgK 's_(t j) t) eltrV [RHS]length_add1R.
 have {Hd Hln} {}/IHd IHd : length s + d = length (t * 's_(t j)).
   by move: Hd; rewrite -Hln addnS => [] [].
-have {Himi Himj} {}/IHd : invset s \subset invset (t * 's_(t j)).
-  have:= invset_eltrR tjn0 Hdesc.
-  rewrite -{2}eltrV mulgK {}Himi {}Himj => invsett.
-  move: incl; rewrite invsett => /subsetP Hsubs.
+have {Himi Himj} invsett : invset t = (i, j) |: invset (t * 's_(t j)).
+  by rewrite -{1}Himi -Himj -(invset_eltrR tjn0 Hdesc) -{2}eltrV mulgK.
+have {invsett} {}/IHd : invset s \subset invset (t * 's_(t j)).
+  move: incl; rewrite {}invsett => /subsetP Hsubs.
   apply/subsetP => /= [[k l] H].
   move/(_ _ H): Hsubs; rewrite !inE /= => /orP [] // /eqP Heq.
   exfalso; move: H; rewrite {}Heq /invset !inE /= iltj /=.
@@ -244,9 +274,16 @@ rewrite -{3}(mulgK 's_(t j) t) eltrV.
 exact: leperm_eltrR.
 Qed.
 
+Corollary ltperm_invset s t : (s <R t) = (invset s \proper invset t).
+Proof.
+rewrite /ltperm leperm_invset properEneq; congr ((negb _) && _).
+by apply/eqP/eqP => [-> | /invset_inj].
+Qed.
+
 End Def.
 
 Notation "s '<=R' t" := (leperm s t).
+Notation "s '<R' t" := (ltperm s t).
 
 
 Section Closure.
@@ -325,7 +362,7 @@ constructor; rewrite /=.
       subst AUB; move=> Hlog; move: ip0AB; rewrite inE => /orP [] Hip0.
       + by have:= Hip0 => {}/(Hlog A B); apply; rewrite //= inE Hip0.
       + by have:= Hip0 => {}/(Hlog B A); apply; rewrite // setUC // inE Hip0.
-    suff : ((i, j) \in AUB) || ((j, p0) \in AUB).
+    suffices: ((i, j) \in AUB) || ((j, p0) \in AUB).
       move/orP=> [ijAB|jp0AB]; [left|right].
       + exact: connect1.
       + by apply/connectP; exists (p0 :: p); rewrite //= jp0AB Hp.
@@ -385,6 +422,8 @@ Proof.
 rewrite -![w <=R _]leperm_maxpermMl /infperm -{5}maxpermV mulKg.
 exact: suppermP.
 Qed.
+
+
 
 End PermutoSupInf.
 
