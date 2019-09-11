@@ -203,7 +203,7 @@ have Htriv : trivIset [set [set i | tnth w i == val x] | x : seq_sub w].
   move=> /imsetP [/= [x Hx _ /= ->{X}]].
   move=> /imsetP [/= [y Hy _ /= ->{Y}]] Hneq.
   rewrite -setI_eq0; apply/eqP/setP => /= i.
-  rewrite !inE; apply (introF idP) => /andP [/eqP ->] /eqP Hxy.
+  rewrite !inE; apply/negP => /andP [/eqP ->] /eqP Hxy.
   by move: Hneq; rewrite Hxy eq_refl.
 apply/eqP; rewrite bigprodGE eqEsubset; apply/andP; split.
 - apply/subsetP => /= s.

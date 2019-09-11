@@ -165,7 +165,7 @@ Proof.
       rewrite !repr_mxMr ?inE //= IHi; last exact: ltnW.
       rewrite !mulr1.
       have: 's_i.+1 \in 'SG_n.+1 by [].
-      by move=> /(repr_mx_unit rho)/mulIr H/H <-.
+      by move=> /(repr_mx_unit rho)/mulIr H{}/H <-.
     rewrite -(canwordP g); elim: (canword g) => [| w0 w IHw] /=.
       by rewrite big_nil repr_mx1.
     rewrite big_cons repr_mxM ?inE // IHw mulmx1.
@@ -179,7 +179,7 @@ Proof.
       rewrite !repr_mxMr ?inE //= IHi; last exact: ltnW.
       rewrite !mulrN1 mulNr => /eqP; rewrite eqr_opp => /eqP.
       have: 's_i.+1 \in 'SG_n.+1 by [].
-      by move=> /(repr_mx_unit rho)/mulIr H/H <-.
+      by move=> /(repr_mx_unit rho)/mulIr H{}/H <-.
     rewrite -(canwordP g); elim: (canword g) => [| w0 w IHw] /=.
       by rewrite big_nil repr_mx1 odd_perm1.
     rewrite big_cons repr_mxM ?inE // {}IHw odd_permM odd_eltr //= Heltr //.

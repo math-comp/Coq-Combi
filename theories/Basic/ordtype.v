@@ -1207,20 +1207,12 @@ move=> Hwb; apply: (iffP idP).
   by have:= ltnX_leqX_trans H1 H2; rewrite ltnXnn.
 Qed.
 
-Lemma perm_nilF (TE : eqType) (x : TE) (u : seq TE) :
-  perm_eq [::] (x :: u) = false.
-Proof using.
-apply/(introF idP); rewrite /perm_eq => /allP Hperm.
-  have /Hperm /= : x \in [::] ++ x :: u by rewrite /= inE eq_refl.
-by rewrite eq_refl /= add1n.
-Qed.
-
 Lemma perm_rembig u v :
   perm_eq u v -> perm_eq (rembig u) (rembig v).
 Proof using.
 case Hu: u => [/= | u0 u']; case Hv: v => [//= | v0 v'].
-- by rewrite perm_nilF.
-- by rewrite perm_sym perm_nilF.
+- by move=> /perm_size /=.
+- by move=> /perm_size /=.
 move=> Hperm; have Hmax:= maxL_perm Hperm; move: Hmax Hperm.
 
 have/(congr1 rembig):= Hu => /eqP/rembigP Htmp.

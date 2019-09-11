@@ -65,7 +65,7 @@ rewrite (eq_count (a1 := mem (p1 :: p))
   by move => i; rewrite /= in_cons.
 rewrite -[RHS]addn0.
 have /eq_count/(_ l) : predI (pred1 p1) (mem p) =1 pred0.
-  move=> i /=; apply (introF idP) => /andP [] /eqP -> Hp1'.
+  move=> i /=; apply/negP => /andP [/eqP -> Hp1'].
   by rewrite Hp1' in Hp1.
 rewrite count_pred0 => <-.
 by rewrite count_predUI size_filter.

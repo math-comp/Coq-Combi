@@ -506,7 +506,7 @@ Definition size_tab t := sumn (shape t).
 
 Lemma tab0 t : is_tableau t -> size_tab t = 0 -> t = [::].
 Proof using.
-move/is_part_sht; rewrite /size_tab => /part0 H/H{H}.
+move/is_part_sht; rewrite /size_tab => /part0 H{}/H.
 by rewrite /shape; case t.
 Qed.
 

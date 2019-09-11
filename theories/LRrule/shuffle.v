@@ -216,15 +216,15 @@ move=> HI Hu Hv Hsz; have /all_filterP Hall := mem_shuffle_predU HI Hu Hv Hsz.
 elim: u v s Hu Hv {Hsz} Hall => [| a u' IHu] /= v s Hu Hv Hall.
   move: Hall => /all_filterP; rewrite (eq_in_filter (a2 := Pv)).
     by move <-; rewrite Hv mem_seq1.
-  move=> i Hi /=; suff -> : Pu i = false by [].
-  apply/(introF idP) => HPu.
+  move=> i Hi /=.
+  rewrite (_ : Pu i = false) //; apply/negP => HPu.
   have : i \in [seq x <- s | Pu x] by rewrite mem_filter HPu Hi.
   by rewrite Hu /= in_nil.
 elim: v s Hv Hu Hall => [//= | b v IHv] /= s Hv Hu Hall.
   move: Hall => /all_filterP; rewrite (eq_in_filter (a2 := Pu)).
     by move <-; rewrite Hu mem_seq1.
-  move=> i Hi /=; suff -> : Pv i = false by rewrite orbF.
-  apply/(introF idP) => HPv.
+  move=> i Hi /=.
+  rewrite (_ : Pv i = false) ?orbF //; apply/negP => HPv.
   have : i \in [seq x <- s | Pv x] by rewrite mem_filter HPv Hi.
   by rewrite Hv /= in_nil.
 case: s Hu Hv Hall => [//= | s0 s] /=.
@@ -321,7 +321,7 @@ Lemma pred0_std u v : is_std u -> [predI u & shiftn (size u) v] =i pred0.
 Proof.
 rewrite /is_std /shsh /shiftn => /perm_mem Hu i /=.
 rewrite !inE Hu mem_iota add0n /=.
-apply: (introF idP) => /andP [Hlt /mapP [j _ Hi]].
+apply/negP => /andP [Hlt /mapP [j _ Hi]].
 by move: Hlt; rewrite Hi -{2}[size u]addn0 ltn_add2l.
 Qed.
 
@@ -344,7 +344,7 @@ apply: eq_in_filter => i /= Hi.
 have /allP/(_ p Hsh) Hp := perm_shuffle u (shiftn (size u) v).
 move: Hi; rewrite -(perm_mem Hp) mem_cat => /orP [].
 - rewrite (perm_mem Hstdu) mem_iota /= add0n /shiftn => Hi.
-  rewrite leqNgt Hi /=; apply/(introF idP) => /mapP [j Hj Heq].
+  rewrite leqNgt Hi /=; apply/negP => /mapP [j Hj Heq].
   by move: Hi; rewrite Heq -{2}[size u]addn0 ltn_add2l.
 - move=> Hi; rewrite Hi; apply: esym.
   move: Hi; rewrite /shiftn => /mapP [j _ ->].

@@ -662,7 +662,7 @@ Proof.
 move/connectP => [] /= p.
 elim: p t1 t2 => [| t0 p IHp] t1 t2 /=.
   by move=> _ /= ->; split; rewrite // !eq_refl.
-move=> /andP [/rightsizesum_gt Hgt /IHp H/H{IHp H}].
+move=> /andP [/rightsizesum_gt Hgt {}/IHp H{}/H].
 move=> [] /(leq_trans Hgt) Hlt _ {Hgt p t0}.
 split; first exact: (ltnW Hlt).
 have:= Hlt; rewrite ltn_neqAle => /andP [/negbTE -> _].
@@ -921,7 +921,7 @@ Proof.
 rewrite /from_vct_acc => H.
 have {H} : size vct < (size vct).+1 <= fuel by rewrite ltnS leqnn.
 elim: fuel vct {2 3 4}(size vct).+1 lft => [| fuel IHfuel] vct fuel1 lft.
-  by move/andP=> [] /leq_trans H/H{H} /=.
+  by move/andP=> [] /leq_trans H{}/H /=.
 case: fuel1 => // fuel1; rewrite !ltnS.
 case: vct => // v0 vct /= /andP [Hsz Hfuel1].
 rewrite !(IHfuel _ fuel1) {IHfuel} // Hfuel1 andbT.

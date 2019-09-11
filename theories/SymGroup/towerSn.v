@@ -342,7 +342,7 @@ rewrite pcycles_tinj setpart_shape_union; first last.
   move/setP => /(_ (lshift n x)).
   rewrite mem_imset; last exact: pcycle_id.
   move=> /esym/imsetP => [] [z _] /eqP.
-  by rewrite lrshiftF.
+  by rewrite (negbTE (lrshift_neq _ _)).
 by congr sort; rewrite /ct !cast_intpartnE /=; congr (_ ++ _);
   apply setpart_shape_inj; [exact: lshift_inj | exact: rshift_inj].
 Qed.

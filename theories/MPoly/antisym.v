@@ -750,7 +750,7 @@ Lemma coeffXdiff (b : 'I_n) (k : 'X_{1..n}) (i : 'I_n) :
 Proof using.
 rewrite mcoeffB !mcoeffX => Hk.
 suff -> : (U_(b)%MM == k) = false by rewrite subr0 eq_sym.
-apply/(introF idP) => /eqP; rewrite mnmP => /(_ b).
+apply/negP => /eqP; rewrite mnmP => /(_ b).
 rewrite mnm1E eq_refl => /esym /= => Hkb.
 have {Hkb} : k b != 0%N by rewrite Hkb.
 by rewrite -lep1mP => /lepm_trans/(_ Hk); rewrite lep1mP mnmE /= subnn eq_refl.
@@ -802,12 +802,12 @@ case: (boolP (U_(ordc) <= k)%MM) => Hck.
 - rewrite big1; first last.
     move=> m /= Hm; rewrite coeffXdiff; last exact: lepm_trans Hm Hk.
     suff -> : m == U_(ordc)%MM :> 'X_{1..n} = false by rewrite mul0r.
-    apply/(introF idP) => /eqP; rewrite mnmP => /(_ ordc).
+    apply/negP => /eqP; rewrite mnmP => /(_ ordc).
     rewrite mnm1E eq_refl /= => Habs; move: Hck.
     have : (U_(ordc) <= m)%MM by rewrite lep1mP {}Habs.
     by move/lepm_trans/(_ Hm) => ->.
   suff -> : (k == mesymlm n c.+1) = false by [].
-  apply/(introF idP) => /eqP; rewrite mnmP => /(_ ordc).
+  apply/negP => /eqP; rewrite mnmP => /(_ ordc).
   move: Hck; rewrite lep1mP negbK => /eqP ->.
   by rewrite /mesymlm /mesymlmnm /mesym1 /= mnmE inE /= ltnSn.
 Qed.
@@ -816,7 +816,7 @@ Lemma mcoeff_arbound b : b < n -> (abound b)@_(rbound b) = 1.
 Proof using.
 elim: b => [Hb | b IHb Hb1].
   rewrite /abound {Hb} big1; first last.
-    by move=> [i j] /= /andP [/leq_trans H/H{H}].
+    by move=> [i j] /= /andP [/leq_trans H{}/H].
   rewrite mcoeff1 /=.
   suff -> : rbound 0 = 0%MM by rewrite eq_refl.
   by rewrite mnmP => i; rewrite mnmE.
@@ -1022,12 +1022,12 @@ Lemma alt_add1_0 (m : 'X_{1..n}) i :
 Proof using .
 move=> Heq.
 have Hi1n : i.+1 < n.
-  rewrite ltnNge; apply (introN idP) => Hi.
+  rewrite ltnNge; apply/negP => Hi.
   by move: Heq; rewrite [RHS]nth_default // size_tuple.
 have Hi : i < n by rewrite ltnW.
 pose i0 := Ordinal Hi; pose i1 := Ordinal Hi1n.
 have /alt_alternate : i0 != i1.
-  apply (introN idP) => /eqP/(congr1 val)/=/eqP.
+  apply/negP => /eqP/(congr1 val)/=/eqP.
   by rewrite ieqi1F.
 apply.
 rewrite !mnmDE !mnmE !(mnm_nth 0%N) -Heq -(mnm_nth 0%N m i0).

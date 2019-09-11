@@ -193,7 +193,7 @@ move=> /sortedP Hsort Hp Hq /andP [Hneq Hpq].
 have H : q <= p -> (nth Z r q <=R nth Z r p).
   by move=> Hqp; apply Hsort; rewrite Hqp Hp.
 have:= contra H; rewrite ltnNge; apply.
-apply (introN idP) => Hqp.
+apply/negP => Hqp.
 move: Hneq; suff -> : nth Z r p = nth Z r q by rewrite eq_refl.
 by apply Hanti; rewrite Hqp Hpq.
 Qed.

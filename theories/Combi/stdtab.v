@@ -446,7 +446,7 @@ Proof. by move=> H1 H2; have [] := remnP H1 H2. Qed.
 
 Lemma size_tab_remn t :
   is_stdtab t -> t != [::] -> size_tab (remn t) = (size_tab t).-1.
-Proof. by move=> /append_nth_remn H/H{H} {2}<-; rewrite size_append_nth. Qed.
+Proof. by move=> /append_nth_remn H{}/H {2}<-; rewrite size_append_nth. Qed.
 
 End StdTabInd.
 

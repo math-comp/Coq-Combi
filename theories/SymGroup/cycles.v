@@ -419,7 +419,7 @@ case: (boolP (x \in support s)) => [Hs |].
   case: (boolP (x \in support t)) => [Ht |].
   + move: Ht; rewrite support_stable.
     move: Hdisj; rewrite -setI_eq0 setIC setI_eq0 disjoints_subset => /subsetP.
-    by move=> H/H{H}; rewrite inE in_support negbK => /eqP ->.
+    by move=> H{}/H; rewrite inE in_support negbK => /eqP ->.
   + by rewrite in_support negbK => /eqP ->; rewrite Hs.
 Qed.
 

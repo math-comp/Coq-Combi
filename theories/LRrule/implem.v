@@ -647,7 +647,7 @@ have : {in rec, f1 =1 f2}.
   - rewrite Hrow1 (eq_count (a2 := pred1 yamtab)); first last.
       by move => y /=; rewrite eqseq_cons eq_refl /=.
     move: Hyam; rewrite to_word_cons.
-    move: Hrshift => /flatten_mapP [[row shrow] /yamtab_rowsP/yamtab_shiftP H/H{H}].
+    move: Hrshift=>/flatten_mapP[[row shrow] /yamtab_rowsP/yamtab_shiftP H{}/H].
     rewrite Hrow1 => Hsk1 Hsk2.
     apply (Hrec shrshift (is_part_skew_yam Hinnev Hsk1)).
     exact: (skew_yam_catrK Hinnev Hsk1 Hsk2).
@@ -665,7 +665,7 @@ have : {in rowl, f1 =1 f2}.
   case: (altP (row =P (drop (sh0 - inn0) row1))) => [Hrow1 | /negbTE Hneq] /=.
   - have Hshrow := yamtab_rowsP Hrow.
     rewrite -(cat_take_drop (sh0 - inn0) row1) -Hrow1.
-    move: Hyam; rewrite to_word_cons => /(skew_yam_catK Hinnev) [shrow1 Hshrow1].
+    move: Hyam; rewrite to_word_cons =>/(skew_yam_catK Hinnev) [shrow1 Hshrow1].
     move=> /(skew_yam_included (is_part_skew_yam Hinnev Hshrow1)) Hincl.
     apply: (yamtab_shift_countE Hinnev _ _ Hshrow _ Hincl).
     + rewrite Hrow1 cat_take_drop.

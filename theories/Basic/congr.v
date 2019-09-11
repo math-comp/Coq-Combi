@@ -319,14 +319,14 @@ Lemma rewrite_path_min (r : rel T) :
 Proof using.
 rewrite equivalence_relP => [] [] Hrefl Htr Hin x y [] l.
 elim: l x => [/= x _ -> | l0 l IHl] /=; first exact: Hrefl.
-move=> x /andP [] /Hin Hl0 /IHl H/H {IHl H} Hl0y.
+move=> x /andP [] /Hin Hl0 {}/IHl H{}/H Hl0y.
 by rewrite (Htr _ _ Hl0 y).
 Qed.
 
 Lemma rtrans_min (r : rel T) :
   equivalence_rel r -> (forall x y, y \in rule x -> r x y) ->
   forall x y, rtrans x y -> r x y.
-Proof using. move/rewrite_path_min=> H/H{H} H x y /rtransP Hrew; exact: H. Qed.
+Proof using. move/rewrite_path_min=> H{}/H H x y /rtransP Hrew; exact: H. Qed.
 
 End Depend.
 
@@ -488,7 +488,7 @@ move=> /equivalence_relP [] Hrefl Htrans Hcongr Hrule x y /rtransP [] l.
 elim: l x => [/= x _ ->| l0 l IHl] /=; first exact: Hrefl.
 move=> x /andP [] /flatten_mapP [] [[i j1] k].
 rewrite -cat3_equiv_cut3 /= => /eqP -> {x} /mapP [] j2 Hj2 ->.
-move=> /IHl H/H{H}; rewrite (@Htrans _ (i ++ j2 ++ k)) //=.
+move=> {}/IHl H{}/H; rewrite (@Htrans _ (i ++ j2 ++ k)) //=.
 by apply: Hcongr; exact: Hrule.
 Qed.
 

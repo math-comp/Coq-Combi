@@ -641,7 +641,7 @@ Proof. by rewrite /pfminh; case: ex_minnP => pfmd /eqP ->. Qed.
 Lemma pfminh_size : (pfminh <= size w)%N.
 Proof.
 rewrite /pfminh; case: ex_minnP => pfmd /eqP Hpfmd pfmd_min.
-rewrite leqNgt; apply/(introN idP) => Habs.
+rewrite leqNgt; apply/negP => Habs.
 move: Hpfmd; rewrite (take_oversize (ltnW Habs)) -(take_size w).
 move=> /eqP/pfmd_min/leq_ltn_trans/(_ Habs).
 by rewrite ltnn.
@@ -687,7 +687,7 @@ Qed.
 
 Lemma pfminh_pos : (pfminh > 0)%N.
 Proof.
-rewrite lt0n; apply (introN idP) => /eqP H.
+rewrite lt0n; apply/negP => /eqP H.
 by have:= minh_neg; rewrite -pfminhP H take0 height_simpl.
 Qed.
 

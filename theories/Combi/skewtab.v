@@ -827,7 +827,7 @@ have -> : nth Z2 v2 i = nth Z2 (u2 ++ v2) (size u2 + i)
 rewrite Hinv Hszu // {Hinv Z1 Z2}.
 rewrite leq_add2r ltn_add2l; apply/andP; split.
 - by apply ltnW; apply: (leq_ltn_trans _ Hi2); exact: leq_addr.
-- by move: Hi1 Hsz1; rewrite size_drop -ltn_subRL => /leq_trans H/H{H}.
+- by move: Hi1 Hsz1; rewrite size_drop -ltn_subRL => /leq_trans H{}/H.
 Qed.
 
 Lemma eq_inv_is_skew_tableau_reshape_size

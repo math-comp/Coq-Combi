@@ -385,15 +385,14 @@ case: (boolP (m \in msupp p)) => Hm.
   rewrite big_seq_cond; apply big1 => /= m' /and3P [_ Hdom Hm'].
   rewrite mcoeffZ (mcoeff_symm _ (size_partm _)).
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
-  apply (introF idP) => /perm_partm
-                         /(congr1 (fun x : intpart => mpart (n := n) x)) H.
+  apply/negP => /perm_partm/(congr1 (fun x : intpart => @mpart n x)) H.
   by move: Hm'; rewrite -{}H !(partmK Hdom) eq_refl.
 - rewrite (memN_msupp_eq0 Hm); symmetry.
   rewrite !raddf_sum /=.
   rewrite big_seq_cond; apply big1 => /= m' /andP [Hsupp Hdom].
   rewrite mcoeffZ (mcoeff_symm _ (size_partm _)) partmK //.
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
-  apply (introF idP) => /mnm_perm [/= s /eqP Hs].
+  apply/negP => /mnm_perm [/= s /eqP Hs].
   move: Hm Hsupp; rewrite -mcoeff_eq0 mcoeff_msupp Hs.
   rewrite -mcoeff_sym (issymP p Hsym) => /eqP ->.
   by rewrite eq_refl.
@@ -407,7 +406,7 @@ Proof. by apply val_inj => /=; apply issym_symmE. Qed.
 Lemma size_mpart_in_supp (f : {mpoly R[n]}) d (p : 'P_d) :
   f \is d.-homog -> mpart p \in msupp f -> size p <= n.
 Proof.
-rewrite /mpart; case: leqP => //= H1 /dhomogP H/H /=.
+rewrite /mpart; case: leqP => //= H1 /dhomogP H{}/H /=.
 rewrite /= mdeg0 => Hd; subst d.
 by move: H1; rewrite intpartn0.
 Qed.
@@ -1177,8 +1176,7 @@ case: (altP (mdeg m =P sumn la)) => Heq; first last.
   case: (leqP (size i) n.+1) => [Hszl | /symm_oversize ->]; first last.
     by rewrite mcoeff0 mulr0.
   rewrite mcoeff_symm //=.
-  rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
-  apply (introF idP) => /perm_sumn.
+  rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //; apply/negP => /perm_sumn.
   rewrite -!sumnE -!/(mdeg _) -sumn_partm mpartK // intpartn_sumn => Habs.
   by move: Heq; rewrite intpartn_sumn Habs eq_refl.
 - have Hpm : is_part_of_n d (partm m).
@@ -1515,7 +1513,7 @@ Proof.
 rewrite charf0P => Hchar.
 case: l => l /= /andP [/eqP].
 elim: n {-2}n (leqnn n) l => [| m IHm] n.
-  rewrite leqn0 => /eqP -> l /part0 H/H{H} ->{l}.
+  rewrite leqn0 => /eqP -> l /part0 H{}/H ->{l}.
   rewrite zcard_nil /=.
   rewrite (eq_bigl (xpred1 (IntCompN (cnval := [::]) (n := 0%N) isT))); first last.
     move=> i; apply/idP/eqP => [Hperm | /(congr1 val)/= -> //].

@@ -787,7 +787,7 @@ Theorem rembig_RS_last_big a v :
 Proof using.
 have: a :: v != [::] by [].
 move Hrem : (rembig (a :: v)) => rem; move: Hrem => /eqP; rewrite eq_sym.
-move/rembigP => H/H{H} [] L [] b [] R [] -> Hav HL HR.
+move/rembigP => H{}/H [] L [] b [] R [] -> Hav HL HR.
 rewrite (maxL_LbR Hav HL (allLtnW HR)) Hav {a v Hav}.
 elim/last_ind: R HR => [/= _| R Rn IHR].
 - rewrite cats0 cats1.

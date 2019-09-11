@@ -178,7 +178,7 @@ have {Hm m0 eqm tjltti} Heq : m = 1%N.
   have {incl} incl (k l : 'I_n) : k < l -> s k > s l -> t k > t l.
     by move=> kltl; move: incl => /subsetP/(_ (k, l)); rewrite !inE kltl.
   apply anti_leq; rewrite {}m0 andbT {Hd IHd}.
-  rewrite leqNgt; apply (introN idP) => Habs.
+  rewrite leqNgt; apply/negP => Habs.
   pose k := (t^-1 (inord (t j).+1)).
   have tk : t k = (t j).+1 :> nat.
     by rewrite /k permKV inordK // ltnS (leq_trans tjltti _) // -ltnS.
@@ -189,7 +189,7 @@ have {Hm m0 eqm tjltti} Heq : m = 1%N.
       by rewrite tk subSn // subnn => /(leq_trans Habs); rewrite ltnn.
     apply: Hm; rewrite inE /= kltj /= ?tk //.
     rewrite -leqNgt; apply ltnW; apply: (leq_trans _ siltsj).
-    rewrite leqNgt ltnS; apply (introN idP) => siltsk.
+    rewrite leqNgt ltnS; apply/negP => siltsk.
     have:= incl k i klti siltsk.
     by rewrite tk ltnS leqNgt tjltti.
   case: (ltngtP k j) => [kltj|jltk|/val_inj]; last first.

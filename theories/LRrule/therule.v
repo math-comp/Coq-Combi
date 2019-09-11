@@ -500,7 +500,7 @@ apply val_inj => /=.
 pose f := [fun s : seq nat =>
              to_word (join_tab (hyper_stdtabn P1)
                                (map (shiftn d1) (skew_reshape P1 P s)))].
-have {H} H : f (std x) = f (std y) by rewrite /= H.
+have {H} Heq : f (std x) = f (std y) by rewrite /= H.
 have invf (s : yameval P2) : std s = sfilterleq d1 (f (std s)).
   have /= := join_stdtab_in_shuffle
                (stdtabnP (hyper_stdtabn P1)) (size_leq_skew_reshape (std s)).
@@ -508,13 +508,13 @@ have invf (s : yameval P2) : std s = sfilterleq d1 (f (std s)).
   have /= -> := congr1 (@val _ _ _) (shaped_hyper_stdtabnP P1).
   rewrite intpartn_sumn.
   have:= stdtabnP (hyper_stdtabn P1); rewrite /is_stdtab => /andP [_ /=].
-  move /shsh_sfilterleq => HH/HH{HH}.
+  move /shsh_sfilterleq => H{}/H.
   rewrite size_to_word (size_tab_stdtabn (hyper_stdtabn P1)) /sfilterleq /=.
   rewrite to_word_skew_reshape //.
   by rewrite size_std size_yameval sumn_diff_shape_intpartE.
 apply perm_stdE.
 - by rewrite perm_evalseq !eval_yameval.
-- by rewrite (invf x) (invf y) H.
+- by rewrite (invf x) (invf y) Heq.
 Qed.
 
 Lemma bijLR_image : LRtab_set P1 P2 P = [set bijLR x | x in LRyam_set].

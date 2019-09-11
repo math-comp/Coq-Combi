@@ -220,7 +220,7 @@ Lemma box_in_incr_nth sh i :
 Proof.
 apply uniq_perm.
 - rewrite /= enum_box_in_uniq andbT.
-  apply (introN idP) => /(allP (enum_box_inP sh)) /=.
+  apply/negP => /(allP (enum_box_inP sh)) /=.
   by rewrite /is_in_shape ltnn.
 - exact: enum_box_in_uniq.
 - move=> [r c]; rewrite inE !mem_enum_box_in.
@@ -351,13 +351,13 @@ Qed.
 Lemma part_nth_len_eq p q :
   (forall i, nth 0 p i = nth 0 q i) -> is_part p -> is_part q -> size p = size q.
 Proof.
-wlog Hwlog: p q / (size p) <= (size q).
+wlog Hpq : p q / (size p) <= (size q).
   move=> Hwlog Hnth.
-  by case: (leqP (size p) (size q)) => [|/ltnW] /Hwlog H/H{H}H/H{H} ->.
+  by case: (leqP (size p) (size q)) => [|/ltnW] /Hwlog H{}/H H{}/H ->.
 move=> Hnth /is_part_ijP [Hlastp Hp] /is_part_ijP [Hlastq Hq].
-apply anti_leq; rewrite Hwlog {Hwlog} /=.
+apply anti_leq; rewrite {}Hpq /=.
 case: q Hnth Hlastq Hq => [//=|q0 q] Hnth Hlastq Hq.
-rewrite leqNgt; apply (introN idP) => Habs.
+rewrite leqNgt; apply/negP => Habs.
 move: Hlastq.
 have:= Habs; rewrite -(ltn_predK Habs) ltnS => /(Hq _ _).
 by rewrite nth_last /= -Hnth nth_default // leqn0 => /eqP ->.
@@ -1014,7 +1014,7 @@ Proof.
 move=> Hnth /includedP [Hsize Hincl].
 apply/includedP; split.
 - rewrite size_incr_nth; case ltnP => _; first exact Hsize.
-  rewrite ltnNge; apply (introN idP) => Hout.
+  rewrite ltnNge; apply/negP => Hout.
   by move: Hnth; rewrite (nth_default _ Hout).
 - move=> j; rewrite nth_incr_nth.
   by case eqP => [<- | _]; rewrite ?add1n ?add0n.

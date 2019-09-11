@@ -735,7 +735,7 @@ Hypothesis HbNin : posb \notin (cover P).
 
 Lemma posbinSF : posb \in S = false.
 Proof using HS HbNin.
-apply/(introF idP) => Hb.
+apply/negP => Hb.
 by move: HbNin; rewrite /cover => /bigcupP []; exists S.
 Qed.
 
@@ -753,11 +753,11 @@ rewrite /swap_set /= -setP /swap => i.
 rewrite (eq_in_imset (g := id)); first by rewrite imset_id.
 move=> {i} i /= Hi.
 have -> : (i == posb) = false.
-  apply/(introF eqP) => //= Hib; subst i.
+  apply/negP => /eqP //= Hib; subst i.
   have Hcov : posb \in cover P by rewrite /cover; apply/bigcupP; exists TP.
   by move: HbNin; rewrite Hcov.
 suff -> : (i == posa) = false by [].
-apply/(introF eqP) => //= Hib; subst i.
+apply/negP => /eqP //= Hib; subst i.
 move: Px => /and3P [_ /trivIsetP Htriv _].
 move/(_  _ _ HTP HS Hneq) : Htriv => /disjoint_setI0.
 apply/setP => /(_ posa); rewrite in_set0 in_setI Hi.
@@ -767,7 +767,7 @@ Qed.
 Lemma extract_swap_set T :
   T != swap_set S -> T \in Qbnotin -> sorted R (extract (in_tuple x) T).
 Proof using HS HbNin Hposa Px.
-move/inPQE => H/H{H} HT; move: Px => /and3P [_ _ /forallP/(_ T)].
+move/inPQE => H{}/H HT; move: Px => /and3P [_ _ /forallP/(_ T)].
 by rewrite HT.
 Qed.
 
@@ -791,7 +791,7 @@ set LS := (setI _ _); have HposcLS : posc \in LS.
 have /= -> := (extract_cut (in_tuple x) HposcLS).
 have -> : LS :&: [set j : 'I_(size x) | j < (size u).+2] = set0.
   rewrite /LS -setP => i; rewrite !inE /=.
-  apply/(introF andP) => //= [] [/andP [Hi H1] H2].
+  apply/negP=> /andP //= [/andP [Hi H1] H2].
   by have:= leq_ltn_trans H1 H2; rewrite ltnn.
 have /= -> := (extract0 (in_tuple x)); rewrite cat0s.
 rewrite tnth_posc; congr (_ :: extractpred (in_tuple x) (mem (pred_of_set _))).
@@ -974,8 +974,7 @@ Qed.
 Lemma disjointS1T1 : [disjoint S1 & T1].
 Proof using HRabc HS HT Hposa Hposb Px.
 rewrite -setI_eq0; apply/eqP/setP => i; rewrite in_set0.
-apply/(introF idP).
-rewrite /S1 /T1 !inE => /andP [].
+apply/negP; rewrite /S1 /T1 !inE => /andP [].
 have:= TS_disjoint => /disjoint_setI0/setP => Hdisj.
 move=> /orP [] /andP [Hi1 /= H1] /orP [] /andP [Hi2 /= H2].
 - by move/(_ i): Hdisj; rewrite inE Hi1 Hi2 in_set0.
@@ -988,8 +987,7 @@ Qed.
 Lemma ST_cover_disjoint : [disjoint S :|: T & cover (P :\: [set S; T])].
 Proof using HS HT Px.
 rewrite -setI_eq0; apply/eqP/setP => i; rewrite in_set0.
-apply/(introF idP).
-move: Px => /and3P [_ /trivIsetP Htriv _].
+apply/negP; move: Px => /and3P [_ /trivIsetP Htriv _].
 rewrite !inE => /andP [] /orP [] Hi /bigcupP [U];
   rewrite !inE negb_or => /andP [/andP [HUS HUT] HU] HiU.
 - move/(_ _ _ HU HS HUS): Htriv; rewrite -setI_eq0 => /eqP.
@@ -1085,7 +1083,7 @@ congr ((extract (in_tuple x) _) ++ _ ++ _).
 - by rewrite (tnth_nth a) /x /=; elim: u.
 - set s := (X in extract _ X); suff -> : s = set0 by rewrite extract0.
   rewrite /s {s} -setP => i; rewrite !inE -andbA.
-  apply/(introF and3P) => [] [_ H1 H2].
+  apply/negP=> /and3P [_ H1 H2].
   by have:= leq_trans H2 H1; rewrite ltnn.
 Qed.
 
@@ -1099,7 +1097,7 @@ move /extract_cut ->; rewrite -cat1s -[RHS]cat1s -[RHS]cat0s.
 congr (_ ++ _ ++ (extract (in_tuple x) _)).
 - set s := (X in extract _ X); suff -> : s = set0 by rewrite extract0.
   rewrite /s {s} -setP => i; rewrite !inE -andbA.
-  apply/(introF and3P) => [] [_ H1 H2].
+  apply/negP => /and3P [_ H1 H2].
   by have:= leq_trans H2 H1; rewrite ltnn.
 - by rewrite (tnth_nth a) /x /=; elim: u.
 - apply/setP => i; rewrite !inE.
@@ -1123,7 +1121,7 @@ congr ((extract (in_tuple x) _) ++ _ ++ _).
 - by rewrite (tnth_nth a) /x /=; elim: u.
 - set s := (X in extract _ X); suff -> : s = set0 by rewrite extract0.
   rewrite /s {s} -setP => i; rewrite !inE -andbA.
-  apply/(introF and3P) => [] [_ H1 H2].
+  apply/negP => /and3P [_ H1 H2].
   by have:= leq_trans H2 H1; rewrite ltnn.
 Qed.
 
@@ -1137,14 +1135,14 @@ move /extract_cut ->. rewrite -[tnth _ _ :: _ ]cat1s -[RHS]cat1s -[RHS]cat0s.
 congr (_ ++ _ ++ (extract (in_tuple x) _)).
 - set s := (X in extract _ X); suff -> : s = set0 by rewrite extract0.
   rewrite /s {s} -setP => i; rewrite !inE -andbA.
-  apply/(introF and3P) => [] [_ H1 H2].
+  apply/negP => /and3P [_ H1 H2].
   by have:= leq_trans H2 H1; rewrite ltnn.
 - by rewrite (tnth_nth a) /x /=; elim: u.
 - apply/setP => i; rewrite !inE.
   case (boolP (i \in T)) => //= Hi.
   case: (ltnP (size u).+2 i).
   + by move/ltnW/ltnW => H; rewrite H (ltnW H).
-  + move=> Hi1; apply/(introF andP) => [] [_ H2].
+  + move=> Hi1; apply/negP => /andP [_ H2].
     have:= TS_disjoint => /disjoint_setI0; apply/setP => Hdisj.
     case: (ltnP (size u).+1 i) => Hi2.
     * have Htmp : i = posc.
@@ -1314,7 +1312,7 @@ case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
   have /extract2 -> : posa < posc by [].
   rewrite !(tnth_nth b) /= andbT.
   elim u => [| u0 u'] /=.
-  + move: Hord => /andP [/leqX_ltnX_trans H/H{H}].
+  + move: Hord => /andP [/leqX_ltnX_trans H{}/H].
     by rewrite leqXNgtnX => ->.
   + by apply.
 - rewrite negb_exists => /forallP Hall.
@@ -1397,7 +1395,7 @@ case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
   have /extract2 -> : posa < posc by [].
   rewrite !(tnth_nth b) /= andbT.
   elim u => [| u0 u'] /=.
-  + move: Hord => /andP [/leqX_ltnX_trans H/H{H} /ltnXW].
+  + move: Hord => /andP [/leqX_ltnX_trans H{}/H /ltnXW].
     by rewrite leqXNgtnX => /negbTE ->.
   + by apply.
 - rewrite negb_exists => /forallP Hall.

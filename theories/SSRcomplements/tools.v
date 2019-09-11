@@ -188,7 +188,7 @@ Lemma sumn_iota a b x :
   a <= x < a + b -> sumn [seq ((i == x) : nat) | i <- iota a b] = 1.
 Proof.
 elim: b a => [/=| b IHb] a.
-  rewrite addn0 => /andP [/leq_ltn_trans H/H{H}].
+  rewrite addn0 => /andP [/leq_ltn_trans H{}/H].
   by rewrite ltnn.
 move/(_ a.+1) : IHb => /= IHb.
 case (ltnP a x) => H1 /andP [H2 H3].
@@ -500,9 +500,9 @@ Proof using.
 by move=> [i Hi] [j Hj] /eqP H; apply/eqP; move: H; rewrite !/eq_op /= eqn_add2l.
 Qed.
 
-Lemma lrshiftF i j : ((@lshift m n i) == (@rshift m n j)) = false.
+Lemma lrshift_neq i j : @lshift m n i != @rshift m n j.
 Proof using.
-apply: (introF idP); move: i j => [i Hi] [j Hj].
+apply/negP; move: i j => [i Hi] [j Hj].
 rewrite /eq_op /= => /eqP H.
 by move: Hi; rewrite H ltnNge leq_addr.
 Qed.

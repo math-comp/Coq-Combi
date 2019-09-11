@@ -571,7 +571,7 @@ rewrite /bumped -(insE HRow) (insrowE HRow).
 elim: Row HRow => [//= | t0 r IHr] Hrow /= Hlast;
   first by rewrite bump_nil in Hlast.
 case: (ltnXP l t0) => //=.
-move: Hlast => /bump_tail H/H {H} Hlast.
+move: Hlast => /bump_tail H{}/H Hlast.
 by rewrite (IHr (is_row_consK Hrow) Hlast).
 Qed.
 
@@ -1204,7 +1204,7 @@ case: nrow => [/= | nrow].
   move: Hdom; rewrite {s}Hs /= => Hdom.
   have:= dominate_head Hnnil1 Hdom.
   rewrite (set_head_default l0 Z Hnnil0) (set_head_default l0 Z Hnnil1).
-  move=> /ltnX_leqX_trans H/H{H} /(bumprowinvK Hnnil0 Hrows0).
+  move=> /ltnX_leqX_trans H{}/H /(bumprowinvK Hnnil0 Hrows0).
   have:= is_row_invins l0 Hrows0; have:= size_invins l0 s0;
   rewrite /invins /invbumped.
   case Hinv0: (invbumprow l0 s0) => [t0 l] /= Hsize Hrowt0 Hins0.
@@ -1349,7 +1349,7 @@ Lemma RSclassE tab w :
 is_tableau tab -> w \in RSclass tab = (RS w == tab).
 Proof using.
 move=> Htab /=; apply/idP/idP.
-- by move: Htab=> /RSclassP/allP H/H.
+- by move: Htab=> /RSclassP/allP H{}/H.
 - move/eqP => Hw.
   apply/mapP; exists (RSmap w).2.
   + apply/count_memPn.
