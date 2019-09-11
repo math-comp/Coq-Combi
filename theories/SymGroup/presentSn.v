@@ -108,6 +108,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import choice fintype tuple finfun bigop finset binomial.
 From mathcomp Require Import fingroup perm morphism presentation.
+From mathcomp Require Import ssralg poly ssrint.
 
 Require Import permcomp tools permuted combclass congr.
 
@@ -170,10 +171,11 @@ Prenex Implicits srel.
 Notation "''SG_' n" := [set: 'S_n]
   (at level 8, n at level 2, format "''SG_' n").
 
-Local Reserved Notation "''s_' i"
+Reserved Notation "''s_' i"
       (at level 8, i at level 2, format "''s_' i").
-Local Reserved Notation "''s_' [ w ] "
+Reserved Notation "''s_' [ w ] "
       (at level 8, w at level 100, format "''s_' [ w ]").
+
 Local Reserved Notation "''II_' n" (at level 8, n at level 2).
 Local Reserved Notation "a =Br b" (at level 70).
 Local Reserved Notation "''I[' a '..' b ']'" (at level 0, a, b at level 2).
@@ -383,8 +385,7 @@ rewrite -{1}(tpermV y z) -mulgA -/(conjg _ _) tpermJ tpermL.
 case: (altP (x =P z)) => [-> | Hxz].
 - by rewrite tpermR tpermL tpermC.
 - rewrite (tpermD Hxz Hyz).
-  rewrite eq_sym in Hxy.
-  rewrite eq_sym in Hxz.
+  rewrite ![x == _]eq_sym in Hxy Hxz.
   by rewrite (tpermD Hxy Hxz).
 Qed.
 
@@ -398,11 +399,9 @@ case: (tpermP a b i) => [-> | -> |].
 - by rewrite (tpermD Hxa Hya) tpermL (tpermD Hxb Hyb).
 - by rewrite (tpermD Hxa Hya) (tpermD Hxb Hyb) tpermR.
 case: (tpermP x y i) => [ _ _ _ | _ _ _ | _ _ ].
-- rewrite eq_sym in Hya.
-  rewrite eq_sym in Hyb.
+- rewrite ![y == _]eq_sym in Hya Hyb.
   by rewrite tpermD.
-- rewrite eq_sym in Hxa.
-  rewrite eq_sym in Hxb.
+- rewrite ![x == _]eq_sym in Hxa Hxb.
   by rewrite tpermD.
 - move=> /eqP; rewrite eq_sym => Hai.
 - move=> /eqP; rewrite eq_sym => Hbi.
@@ -418,8 +417,8 @@ Variable n : nat.
 
 Definition eltr i : 'S_n.+1 := tperm (inord i) (inord i.+1).
 
-Local Notation "''s_' i" := (eltr i).
-Local Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
+Notation "''s_' i" := (eltr i).
+Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
 
 Implicit Type s t : 'S_n.+1.
 
@@ -752,9 +751,8 @@ apply/imsetP/idP => /= [[[a b]] | ijIS].
 Qed.
 
 
-
-Local Notation "''s_' i" := (eltr _ i).
-Local Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
+Notation "''s_' i" := (eltr _ i).
+Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
 
 Lemma eltr_exchange i (a b : 'I_n) :
   i < n0 -> a < b -> 's_i a < 's_i b = (i != a) || (i.+1 != b).
@@ -847,13 +845,15 @@ Qed.
 End InvSet.
 Arguments Delta {n0}.
 
+
+
 Section Length.
 
 Variable n0 : nat.
 Notation n := n0.+1.
 
-Local Notation "''s_' i" := (eltr n0 i).
-Local Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
+Notation "''s_' i" := (eltr n0 i).
+Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
 
 Implicit Type s t : 'S_n.
 
@@ -1415,8 +1415,6 @@ Hint Resolve codeszP.
 The generating polynomial for permutation counted by their length.
  *)
 
-From mathcomp Require Import ssralg poly ssrint.
-
 Section Combi.
 
 Import GRing.Theory.
@@ -1452,8 +1450,8 @@ Section Reduced.
 
 Variable n : nat.
 
-Local Notation "''s_' i" := (eltr n i) : group_scope.
-Local Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
+Notation "''s_' i" := (eltr n i).
+Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
 
 Definition reduced_word := [qualify w : seq 'I_n | length 's_[w] == size w ].
 Notation reduced := reduced_word.
@@ -1473,7 +1471,7 @@ rewrite -lengthV.
 by rewrite -!(big_map nat_of_ord xpredT) -prodsV map_rev revK.
 Qed.
 
-Lemma reduced_revE w : w \is reduced = (rev w \is reduced).
+Lemma reduced_revE w : (w \is reduced) = (rev w \is reduced).
 Proof using.
 apply/idP/idP; first exact: reduced_rev.
 by move/reduced_rev; rewrite revK.
@@ -2089,7 +2087,9 @@ Proof using. by rewrite -canword_straightenE; exact: straighten_path_npos. Qed.
 End CanWord.
 
 Notation "''s_' i" := (eltr _ i) : group_scope.
-Local Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i).
+Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i) : group_scope.
+
+
 Local Notation "a =Br b" := (braidcongr a b) : bool_scope.
 
 Theorem braidred_to_canword n (w : seq 'I_n) :
@@ -2217,7 +2217,6 @@ Qed.
 
 End PresentationSn.
 
-Notation "''s_' i" := (eltr _ i) : group_scope.
 
 Lemma joingU1 (gt : finGroupType) (a : gt) (S : {set gt}) :
   <[a]> <*> <<S>>  = << a |: S >>.

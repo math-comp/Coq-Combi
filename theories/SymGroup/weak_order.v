@@ -110,6 +110,29 @@ move=> Hi Hnrec; apply/lepermP; exists 's_i => //.
 by rewrite length_add1R // -[val i]/(val (Ordinal Hi)) length_eltr addn1.
 Qed.
 
+
+Lemma leperm_factorP s t :
+  reflect (exists2 w : seq 'I_n0, w \is reduced &
+              exists2 l : nat, t = 's_[w] & s = 's_[take l w])
+          (s <=R t).
+Proof.
+apply (iffP (lepermP s t)) => /= [[u] ->{t} Hlen | [w] Hred [l] Ht Hs].
+- exists (canword s ++ canword u).
+    rewrite unfold_in /= size_cat !size_canword -Hlen.
+    by rewrite big_cat /= !canwordP.
+  exists (length s).
+  + by rewrite big_cat /= !canwordP.
+  + by rewrite take_size_cat ?size_canword // canwordP.
+- exists (\prod_(i <- drop l w) 's_i).
+  + by rewrite Ht Hs -big_cat /= cat_take_drop.
+  + have:= Hred; rewrite unfold_in -Ht => /eqP ->.
+    rewrite -{1}(cat_take_drop l w) in Hred.
+    have:= reduced_catl Hred; rewrite unfold_in -Hs => /eqP ->.
+    have:= reduced_catr Hred; rewrite unfold_in => /eqP ->.
+    by rewrite -size_cat cat_take_drop.
+Qed.
+
+
 Theorem leperm_invset s t : (s <=R t)= (invset s \subset invset t).
 Proof.
 apply/idP/idP => [/lepermP/= [u]->{t} | H].
