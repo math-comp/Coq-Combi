@@ -59,24 +59,9 @@ Unset Printing Implicit Defensive.
 
 Import LeqGeqOrder.
 
-
-Lemma binomial_sumn_iota n : 'C(n, 2) = sumn (iota 0 n).
-Proof. by rewrite -triangular_sum sumnE /index_iota subn0. Qed.
-
+Local Reserved Notation "''a_' k" (at level 8, k at level 2, format "''a_' k").
 Local Notation "''II_' n" := ('I_n * 'I_n)%type (at level 8, n at level 2).
 
-Lemma card_triangle n : #|[set i : 'II_n | i.1 < i.2]| = 'C(n, 2).
-Proof.
-rewrite -card_ltn_sorted_tuples.
-have /card_imset <- : injective (fun i : 'II_n => [tuple i.1; i.2]).
-  by move => [i1 i2] [j1 j2] /= [-> ->].
-congr (card (mem (pred_of_set _))).
-apply/setP => [[[| s0 [| s1 [|s]]]]] // Hs.
-rewrite !inE; apply/idP/idP => [/imsetP [[i j]] | /= /andP [Hsort _]].
-- by rewrite inE /= andbT => Hij /(congr1 val) /= [-> ->].
-- apply/imsetP; exists (s0, s1); first by rewrite inE.
-  exact: val_inj.
-Qed.
 
 Open Scope group_scope.
 Open Scope nat_scope.
@@ -454,7 +439,7 @@ Lemma isantisym_eltrP n (R : ringType) (p : {mpoly R[n.+1]}) :
 Proof.
 apply/(iffP forallP) => [Hanti i Hi | Heltr].
 - have /eqP -> := Hanti 's_i.
-  by rewrite /eltr odd_tperm (inordi_neq_i1 Hi) !simplexp.
+  by rewrite odd_tperm (inordi_neq_i1 Hi) !simplexp.
 - elim/eltr_ind => [| S i Hi /eqP IH].
   + by rewrite odd_perm1 /= msym1m !simplexp.
   + rewrite msymMm (Heltr i Hi).
@@ -647,19 +632,19 @@ Proof using.
 move=> Hi.
 have Hii1 : val (@inord n i.+1) = (@inord n i).+1.
   by do 2 (rewrite /= inordK; last by apply (leq_trans Hi)).
-move: p => [u v] /=; rewrite /predi /= /eltrp /eltr => /andP [Hlt Hneq] /=.
+move: p => [u v] /=; rewrite /predi /= /eltrp => /andP [Hlt Hneq] /=.
 case: (altP (inord i =P u)) => Hu.
-  subst u; rewrite tpermL.
+  subst u; rewrite eltrL.
   case: (altP (v =P inord i.+1)) Hneq Hlt => [Hu | Hu _ Hlt].
     by subst v; rewrite /= eq_refl.
-  rewrite tpermD; [| by rewrite neq_ltn Hlt | by rewrite eq_sym].
+  rewrite eltrD; [| by rewrite neq_ltn Hlt | by rewrite eq_sym].
   apply/andP; split.
   - by rewrite ltn_neqAle eq_sym Hu /= Hii1.
   - rewrite /eq_op /= eq_sym; apply/nandP; left.
     by rewrite /eq_op /= Hii1 ieqi1F.
 case: (altP (inord i.+1 =P u)) => Hu1.
-  subst u; rewrite tpermR /=.
-  rewrite tpermD; first last.
+  subst u; rewrite eltrR /=.
+  rewrite eltrD; first last.
   - by move: Hlt; rewrite ltn_neqAle => /andP [].
   - move: Hlt; rewrite Hii1 => /ltnW.
     by rewrite ltn_neqAle => /andP [].
@@ -670,12 +655,12 @@ case: (altP (inord i.+1 =P u)) => Hu1.
 rewrite (tpermD Hu Hu1); apply/andP; split; first last.
   by apply/nandP => /=; left; rewrite eq_sym.
 case: (altP (inord i =P v)) => Hv.
-  subst v; rewrite tpermL Hii1.
+  subst v; rewrite eltrL Hii1.
   by apply (leq_trans Hlt).
 case: (altP (inord i.+1 =P v)) => Hv1.
-  subst v; rewrite tpermR.
+  subst v; rewrite eltrR.
   by move: Hlt; rewrite Hii1 ltnS ltn_neqAle eq_sym Hu /=.
-by rewrite tpermD.
+by rewrite eltrD.
 Qed.
 
 Lemma predi_eltrpE p : i < n -> predi p = predi ('s_i p.1, 's_i p.2).
@@ -683,7 +668,7 @@ Proof using.
 move=> Hi; apply/idP/idP; first exact: predi_eltrp.
 set p1 := ( _, _).
 suff -> : p = ('s_i p1.1, 's_i p1.2) by apply predi_eltrp.
-rewrite /p1 /= !tpermK {p1}.
+rewrite /p1 /= !eltrK {p1}.
 by case: p.
 Qed.
 
@@ -699,7 +684,7 @@ rewrite (bigD1 (inord i, inord i.+1)) /=; first last.
   by rewrite !inordK //=; apply (leq_trans Hi).
 rewrite msymM -mulNr; congr (_ * _).
   rewrite msymB opprB.
-  by congr (_ - _); rewrite /msym mmapX mmap1U /eltr ?tpermL ?tpermR.
+  by congr (_ - _); rewrite /msym mmapX mmap1U ?eltrL ?eltrR.
 rewrite (big_morph _ (msymM 's_i) (msym1 _ 's_i)) /=.
 rewrite (eq_bigl (fun p : 'II_n.+1 => predi i (eltrp i p))); first last.
   by move=> [u v]; rewrite -/(predi i (u,v)) (predi_eltrpE (u, v) Hi) /=.
@@ -711,7 +696,7 @@ apply perm_big.
 have Hin : map (eltrp i) (enum {: 'II_ n.+1}) =i enum {: 'II_ n.+1}.
   move=> [u v].
   rewrite mem_enum inE.
-  have -> : (u, v) = eltrp i (eltrp i (u, v)) by rewrite /eltrp /= !tpermK.
+  have -> : (u, v) = eltrp i (eltrp i (u, v)) by rewrite /eltrp /= !eltrK.
   by apply map_f; rewrite mem_enum inE.
 apply: (uniq_perm _ _ Hin).
 - by rewrite (eq_uniq _ Hin) ?size_map // enum_uniq.
@@ -1019,13 +1004,13 @@ Lemma alt_alternate (m : 'X_{1..n}) (i j : 'I_n) :
 Proof using .
 move=> H Heq.
 pose t := tperm i j.
-have oddMt s: (t * s)%g = ~~ s :> bool by rewrite odd_permM odd_tperm H.
+have /= oddMt s : (t * s)%g = ~~ s :> bool by rewrite odd_permM odd_tperm H.
 rewrite [alternpol _](bigID (@odd_perm _)) /=.
 apply: canLR (subrK _) _; rewrite add0r -sumrN.
 rewrite (reindex_inj (mulgI t)); apply: eq_big => //= s.
 rewrite oddMt => /negPf ->; rewrite scaleN1r scale1r; congr (- _).
 rewrite msymMm.
-suff -> : msym t 'X_[m] = ('X_[m] : {mpoly R[n]}) by [].
+suff -> : msym t 'X_[m] = 'X_[m] :> {mpoly R[n]} by [].
 rewrite msymX; congr mpolyX.
 rewrite mnmP => k /=.
 rewrite !mnmE /= tpermV.

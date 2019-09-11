@@ -154,7 +154,7 @@ Proof.
   have Hs0 : 's_0 \in 'SG_n.+1 by [].
   have /esym := repr_mxMr rho Hs0 Hs0.
   set M := rho 's_0.
-  rewrite tperm2 repr_mx1 (mx11_scalar M).
+  rewrite eltr2 repr_mx1 (mx11_scalar M).
   rewrite -mulmxE -scalar_mxM -matrixP => /(_ ord0 ord0) /eqP.
   rewrite !mxE eq_refl mulr1n /= -expr2 sqrf_eq1 => /orP [] /eqP HM.
   - left; apply: (MxReprSim (B := 1)) => //; first exact: row_free1.

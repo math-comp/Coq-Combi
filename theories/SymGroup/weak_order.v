@@ -222,9 +222,9 @@ have {Hm m0 eqm tjltti} Heq : m = 1%N.
 subst m; rewrite addn1 in Hti.
 have tjn0 : t j < n0 by rewrite -ltnS -Hti.
 have {Hti} Himj : (t * 's_(t j))^-1 (t j) = i.
-  by rewrite invMg !permM eltrV /eltr inord_val tpermL -Hti inord_val !permK.
+  by rewrite invMg !permM eltrV eltrL -Hti inord_val !permK.
 have Himi : (t * 's_(t j))^-1 (inord (succn (t j))) = j.
-  by rewrite invMg !permM eltrV /eltr tpermR inord_val !permK.
+  by rewrite invMg !permM eltrV eltrR !permK.
 have Hdesc : (t * 's_(t j))^-1 (t j) < (t * 's_(t j))^-1 (inord (succn (t j))).
   by rewrite Himi Himj.
 have Hln : (length (t * 's_(t j))).+1 = length t.
