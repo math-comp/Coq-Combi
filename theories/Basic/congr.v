@@ -171,7 +171,8 @@ apply trans_ind => //= {s}.
 Qed.
 
 Variant rewrite_path x y : Prop :=
-  Rew : forall l, path [rel of rule] x l -> y = last x l -> rewrite_path x y.
+  Rew : forall l, path (fun t => [mem (rule t)]) x l ->
+                  y = last x l -> rewrite_path x y.
 
 Lemma invar_rewrite_path x y : invar x -> rewrite_path x y -> invar y.
 Proof using Hinvar.

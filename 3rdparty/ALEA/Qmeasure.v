@@ -30,10 +30,10 @@ Import Num.Theory.
 
 Local Open Scope ring_scope.
 
-Instance ratO : ord rat :=
+Program Instance ratO : ord rat :=
      { Oeq := fun n m : rat => n = m;
        Ole := fun n m : rat => (n <= m)%R}.
-Proof.
+Next Obligation.
 apply Build_Order => /=.
 - exact: lerr.
 - split => [/andP  H | ->]; first by apply ler_asym.
@@ -55,7 +55,7 @@ Instance MO (A:Type) : ord (M A) := fmono (MF A) rat.
 
 Instance app_mon (A:Type) (x:A) : monotonic (fun (f:MF A) => f x).
 Proof. by []. Qed.
-Hint Resolve app_mon.
+Hint Resolve app_mon : core.
 
 (** Monadic operators on M A *)
 
@@ -111,7 +111,7 @@ Implicit Types (f g : MF A).
 
 Lemma Mstable_eq : stable m.
 Proof using . exact: monotonic_stable. Qed.
-Hint Resolve Mstable_eq.
+Hint Resolve Mstable_eq : core.
 
 Lemma Mstable0 : m \0 = 0.
 Proof using Mstable_sub.
@@ -119,7 +119,7 @@ transitivity (m \0 - m \0); last by rewrite (GRing.addrN (m \0)).
 transitivity (m (\0 \- \0)); first exact: Mstable_eq.
 by apply Mstable_sub; rewrite (GRing.addrN (m \0)).
 Qed.
-Hint Resolve Mstable0.
+Hint Resolve Mstable0 : core.
 
 Lemma Mstable_opp : stable_opp m.
 Proof using Mstable_sub.
@@ -210,10 +210,10 @@ by rewrite Mstable_add !Mstable_mull.
 Qed.
 
 End StabilityProperties.
-Hint Resolve Mstable_eq.
-Hint Resolve Mstable0.
-Hint Resolve Mstable_opp.
-Hint Resolve Mstable_add.
+Hint Resolve Mstable_eq : core.
+Hint Resolve Mstable0 : core.
+Hint Resolve Mstable_opp : core.
+Hint Resolve Mstable_add : core.
 
 
 Lemma unit_stable_eq (A:Type) (x:A) : stable (munit x).
@@ -242,7 +242,7 @@ transitivity (m1 (fun x : A => (F2 x) f)); last by [].
 apply (fmonotonic m1) => x.
 exact: (HF x f).
 Qed.
-Hint Resolve star_le_compat.
+Hint Resolve star_le_compat : core.
 
 (** *** Stability for substraction of unit and star *)
 Lemma unit_stable_sub (A:Type) (x:A) : stable_sub (munit x).
@@ -269,7 +269,7 @@ Record distr (A:Type) : Type := {
        mu_prob : mu (fun x => 1) = 1
    }.
 
-Hint Resolve mu_stable_sub mu_prob.
+Hint Resolve mu_stable_sub mu_prob : core.
 
 (** ** Properties of measures *)
 Section MeasureProp.
@@ -279,15 +279,15 @@ Implicit Types (f g : MF A).
 
 Lemma mu_monotonic : monotonic (mu m).
 Proof. exact: fmonotonic. Qed.
-Hint Resolve mu_monotonic.
+Hint Resolve mu_monotonic : core.
 
 Lemma mu_stable_eq : stable (mu m).
 Proof. exact: fstable. Qed.
-Hint Resolve mu_stable_eq.
+Hint Resolve mu_stable_eq : core.
 
 Lemma mu_zero : mu m \0 = 0.
 Proof. exact: Mstable0. Qed.
-Hint Resolve mu_zero.
+Hint Resolve mu_zero : core.
 
 Lemma mu_zero_eq f : (forall x, f x = 0) -> mu m f = 0.
 Proof.
@@ -351,24 +351,27 @@ by rewrite addrCA subrr addr0.
 Qed.
 
 End MeasureProp.
-Hint Resolve mu_monotonic.
-Hint Resolve mu_stable_eq.
-Hint Resolve mu_zero.
-Hint Immediate mu_zero_eq.
-Hint Immediate mu_one_eq.
-Hint Resolve mu_stable_inv.
-Hint Resolve mu_stable_add.
-Hint Resolve mu_stable_mull.
-Hint Resolve mu_add_zero.
-Hint Resolve mu_cte.
-Hint Resolve mu_stable_inv_inv.
+Hint Resolve mu_monotonic : core.
+Hint Resolve mu_stable_eq : core.
+Hint Resolve mu_zero : core.
+Hint Immediate mu_zero_eq : core.
+Hint Immediate mu_one_eq : core.
+Hint Resolve mu_stable_inv : core.
+Hint Resolve mu_stable_add : core.
+Hint Resolve mu_stable_mull : core.
+Hint Resolve mu_add_zero : core.
+Hint Resolve mu_cte : core.
+Hint Resolve mu_stable_inv_inv : core.
 
-Instance Odistr (A:Type) : ord (distr A) := 
+Program Instance Odistr (A:Type) : ord (distr A) := 
     {Ole := fun (f g : distr A) => (mu f <= mu g)%O;
      Oeq := fun (f g : distr A) => Oeq (mu f) (mu g)}.
-Proof.
+Next Obligation.
 split; intuition.
-by move=> f g h; transitivity (mu g).
+- by apply Num.Theory.ler_anti; rewrite H0 H1.
+- by rewrite H.
+- by rewrite H.
+- by move=> f g h H1 H2 x; apply: (Num.Theory.ler_trans (H1 x) (H2 x)).
 Defined.
 
 
@@ -425,7 +428,7 @@ transitivity (mu m2 (fun x : A => mu (M1 x) f)); first by [].
 apply (fmonotonic (mu m2)) => x.
 exact: (HM x f).
 Qed.
-Hint Resolve Mlet_le_compat.
+Hint Resolve Mlet_le_compat : core.
 
 Add Parametric Morphism : (Mlet (A:=A) (B:=B))
     with signature Ole ==> Ole ==> Ole
@@ -450,7 +453,7 @@ Proof. by []. Qed.
 Lemma Mlet_eq_compat (m1 m2 : distr A) (M1 M2 : A -> distr B) :
   (m1 == m2 -> M1 == M2 -> Mlet m1 M1 == Mlet m2 M2)%type.
 Proof. by move=> H1 H2; exact: monotonic2_stable2. Qed.
-Hint Resolve Mlet_eq_compat.
+Hint Resolve Mlet_eq_compat : core.
 
 Add Parametric Morphism : (Mlet (A:=A) (B:=B))
     with signature Oeq ==> Oeq ==> Oeq
@@ -472,7 +475,7 @@ Proof.
 move=> Hm f g Hfg.
 by change (mu m1 f == mu m2 g)%type; transitivity (mu m2 f); auto.
 Qed.
-Hint Immediate mu_le_compat mu_eq_compat.
+Hint Immediate mu_le_compat mu_eq_compat : core.
 
 Add Parametric Morphism : (mu (A:=A))
     with signature Ole ==> Ole
@@ -539,12 +542,12 @@ apply Num.Theory.ler_trans with (mu m (fun x => 1)).
   by case (f x) => //=.
 - by rewrite mu_prob => //=.
 Qed.
-Hint Resolve mu_bool_le1.
+Hint Resolve mu_bool_le1 : core.
 
 Lemma mu_bool_0le (m : distr A) (f : A -> bool) :
   0%:~R <= mu m (fun x => (f x)%:~R).
 Proof. by apply mu_stable_pos => x /=; case (f x). Qed.
-Hint Resolve mu_bool_0le.
+Hint Resolve mu_bool_0le : core.
 
 Lemma mu_bool_impl m f g :
   (forall x, (f x) ==> (g x)%B) ->
@@ -603,8 +606,8 @@ Qed.
 
 End OperDistr.
 
-Hint Resolve mu_bool_le1.
-Hint Resolve mu_bool_0le.
+Hint Resolve mu_bool_le1 : core.
+Hint Resolve mu_bool_0le : core.
 
 (*
 (** ** Conditional probabilities *)
@@ -691,7 +694,7 @@ Lemma Mcond_simpl : forall A (m:distr A) (f g:MF A),
       mu (Mcond m f) g = mu m (fconj f g) / mu m f.
 trivial.
 Qed.
-Hint Resolve Mcond_simpl.
+Hint Resolve Mcond_simpl : core.
 
 Lemma Mcond_zero_stable : forall A (m:distr A) (f g:MF A), 
       mu m g == 0 -> mu (Mcond m f) g == 0.
@@ -763,7 +766,7 @@ rewrite Umult_assoc.
 rewrite (H x); auto.
 Qed.
 
-Hint Resolve Mcond_mult Mcond_conj_simpl.
+Hint Resolve Mcond_mult Mcond_conj_simpl : core.
 *)
 
 (** * Examples of distributions *)
@@ -813,7 +816,7 @@ Proof. by rewrite /flip /= mulr1 mulr0. Qed.
 Lemma flip_false : flip (fun b => (~~b)%:~R) = [1/2].
 Proof. by rewrite /flip /= mulr1 mulr0. Qed.
 
-Hint Resolve flip_true flip_false.
+Hint Resolve flip_true flip_false : core.
 
 Definition Flip : distr bool.
 Proof.
@@ -842,7 +845,7 @@ Definition weight (c : A -> rat) : rat := \sum_(i <- p | 0 < c i) (c i).
 
 Lemma weight_nonneg c : 0 <= weight c.
 Proof using. by apply: Num.Theory.sumr_ge0; auto. Qed.
-Hint Resolve weight_nonneg.
+Hint Resolve weight_nonneg : core.
 
 Lemma weight_case c : (weight c = 0) \/ 0 < (weight c)^-1.
 Proof using.
@@ -895,15 +898,15 @@ Record fin (A : Type) : Type :=
           coeff : A -> rat;
           weight_pos : 0 < weight points coeff
         }.
-Hint Resolve weight_pos.
+Hint Resolve weight_pos : core.
 
 Lemma inv_weight_pos A (d : fin A) : 0 < (weight (points d) (coeff d))^-1.
 Proof. by rewrite Num.Theory.invr_gt0. Qed.
-Hint Resolve inv_weight_pos.
+Hint Resolve inv_weight_pos : core.
 
 Lemma weight_is_unit A (d : fin A) : (weight (points d) (coeff d)) \is a unit.
 Proof. by apply Num.Theory.unitf_gt0. Qed.
-Hint Resolve weight_is_unit.
+Hint Resolve weight_is_unit : core.
 
 Definition fprob A (d : fin A) (a : A) : rat :=
   coeff d a / weight (points d) (coeff d).
