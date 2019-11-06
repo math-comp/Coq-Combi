@@ -446,7 +446,7 @@ Qed.
 Lemma Cauchy_kernel_symmetric : Cauchy_kernel d \is symmetric.
 Proof.
 rewrite Cauchy_symm_symh; apply rpred_sum => la _.
-by apply rpredZ; apply sympol_is_symmetric.
+by apply rpredZ; apply sympolP.
 Qed.
 
 (** Unused lemma *)
@@ -454,7 +454,7 @@ Lemma Cauchy_kernel_coeff_symmetric mon :
   (Cauchy_kernel d)@_mon \is symmetric.
 Proof.
 rewrite Cauchy_symm_symh linear_sum /=; apply rpred_sum => la _.
-rewrite linearZ /= rpredM ?sympol_is_symmetric //.
+rewrite linearZ /= rpredM ?sympolP //.
 case: (ssrnat.leqP (size la) m) => [/mcoeff_symm -> | /symm_oversize ->].
 - by case: (perm_eq _ _) => /=; [exact: rpred1 | exact: rpred0].
 - by rewrite mcoeff0 rpred0.

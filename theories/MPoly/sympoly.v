@@ -27,11 +27,11 @@ Classical bases
 - [prod_gen G la] == given a familly of generators [G : nat -> {sympoly R[n]}]
              the product [\prod_(i <- la) G i].
 
-- ['e[k]] == the product of elementary symmetric polynomial
-- ['h[k]] == the product of complete homogeneous symmetric polynomial
-- ['p[k]] == the product of power sum symmetric polynomial
-- ['m[k]] == the monomial symmetric polynomial
-- ['s[k]] == the Schur symmetric polynomial
+- ['e[mu]] == the product of elementary symmetric polynomial
+- ['h[mu]] == the product of complete homogeneous symmetric polynomial
+- ['p[mu]] == the product of power sum symmetric polynomial
+- ['m[mu]] == the monomial symmetric polynomial
+- ['s[mu]] == the Schur symmetric polynomial
 
 - [coeff_prodgen Co la mu] == the coefficient of the product ['g[la]]
              on ['g_[mu]] assuming that [co : forall d : nat, 'P_d -> R] gives
@@ -130,6 +130,8 @@ Definition sympoly_of of phant R := sympoly.
 
 Identity Coercion type_sympoly_of : sympoly_of >-> sympoly.
 
+Lemma sympol_inj : injective sympol. Proof. exact: val_inj. Qed.
+
 End DefType.
 
 (* We need to break off the section here to let the argument scope *)
@@ -174,12 +176,12 @@ Canonical sympol_rmorphism  := RMorphism  sympol_is_lrmorphism.
 Canonical sympol_linear     := AddLinear  sympol_is_lrmorphism.
 Canonical sympol_lrmorphism := LRMorphism sympol_is_lrmorphism.
 
-Lemma sympol_is_symmetric (x : {sympoly R[n]}) : sympol x \is symmetric.
+Lemma sympolP (x : {sympoly R[n]}) : sympol x \is symmetric.
 Proof. by case: x. Qed.
 
 End SymPolyRingType.
 
-#[export] Hint Resolve sympol_is_symmetric : core.
+#[export] Hint Resolve sympolP : core.
 
 
 Section SymPolyComRingType.
@@ -247,14 +249,8 @@ Local Notation "''e_' k" := (syme k).
 
 Lemma syme_geqnE d : d > n -> 'e_d = 0.
 Proof. by move=> Hd; apply val_inj; rewrite /= mesym_geqnE. Qed.
-Lemma mesym_homog d : mesym n R d \is d.-homog.
-Proof using.
-apply/dhomogP => m.
-rewrite msupp_mesymP => /existsP [] s /andP [] /eqP <- {d} /eqP -> {m}.
-exact: mdeg_mesym1.
-Qed.
 Lemma syme_homog d : sympol 'e_d \is d.-homog.
-Proof using. by rewrite mesym_homog. Qed.
+Proof using. by rewrite dhomog_mesym. Qed.
 
 
 (** ** Complete homogeneous symmetric polynomials *)
@@ -317,7 +313,7 @@ Qed.
 
 (** ** Monomial symmetric polynomials *)
 Definition symm_pol (sh : n.-tuple nat) : {mpoly R[n]} :=
-  (\sum_(p : permuted sh) 'X_[Multinom p] ).
+  \sum_(p : permuted sh) 'X_[Multinom p].
 Lemma mcoeff_symm_pol sh m : (symm_pol sh)@_m = (perm_eq sh m)%:R.
 Proof.
 rewrite linear_sum /=.
@@ -723,7 +719,7 @@ Local Notation n := n0.+1.
 Lemma map_mpoly_issym (f : {sympoly R[n]}) : map_mpoly mor f \is symmetric.
 Proof.
 apply/issymP => s.
-by rewrite msym_map_mpoly (issymP _ (sympol_is_symmetric f)).
+by rewrite msym_map_mpoly (issymP _ (sympolP f)).
 Qed.
 Definition map_sympoly (f : {sympoly R[n]}) : {sympoly S[n]} :=
            SymPoly (map_mpoly_issym f).
@@ -1270,7 +1266,7 @@ End SymsSymm.
 
 (** We start by doing the computation on [int] using [Kostka] and [KostkaInv]
 and then tranfer to any commutative ring *)
-Section SymhSymsInt.
+Section SymheSymsInt.
 
 Variables (n : nat) (d : nat).
 Local Notation SF := {sympoly int[n.+1]}.
@@ -1324,9 +1320,61 @@ rewrite -(unitrig_sum1r (fun la : P => 'h[la]) mu (KostkaInv_unitrig d)).
 by rewrite -syms_symh_int.
 Qed.
 
-End SymhSymsInt.
+Local Notation "la '^~'" := (conj_intpartn la) (at level 10).
 
-Section SymhSyms.
+Lemma syme_syms_int mu :
+  'e[mu] = \sum_(la : P) 'K(la, mu) *: 's[la^~] :> SF.
+Proof.
+case: mu => [mu Hmu] /=; rewrite /prod_syme /prod_gen /=.
+elim: mu d Hmu => [|m mu IHmu] deg.
+  rewrite big_nil => /andP [/eqP /= /esym Hd _].
+  symmetry; subst deg; rewrite (big_pred1 (rowpartn 0)); first last.
+    by move=> i; symmetry; apply/eqP/val_inj; rewrite /= intpartn0.
+  by rewrite syms0 -[[::]]/(pnval (rowpartn 0)) Kostka_diag scale1r.
+move=> /andP [/eqP Hdeg /andP [_ Hpart]].
+rewrite big_cons /= {}(IHmu (sumn mu)) /= ?eq_refl ?Hpart //.
+rewrite [RHS](eq_bigr
+    (fun la : 'P_deg =>
+       \sum_(nu : 'P_(sumn mu) | hb_strip nu la) 'K(nu, mu) *: 's[la^~]));
+    first last.
+  by move=> la _; rewrite -scaler_suml -natr_sum Kostka_ind.
+rewrite mulr_sumr [RHS](exchange_big_dep predT) //=.
+apply eq_bigr => la _.
+rewrite -scalerAr -scaler_sumr mulrC syms_symeM; congr (_ *: _).
+have H : (sumn mu + m)%N = deg by rewrite addnC -Hdeg.
+rewrite (reindex _ (onW_bij _ (inv_bij (@conj_intpartnK _)))) /=.
+rewrite (reindex _ (onW_bij _ (cast_intpartn_bij H))) /=.
+apply eq_big => [nu | nu _].
+- case: nu => nu /= Hnu; rewrite cast_intpartnE /= vb_strip_conjE //.
+  by move: Hnu => /andP [].
+- by apply val_inj; rewrite /= -cast_conj_inpart Schur_cast.
+Qed.
+
+Lemma syme_syms_partdom_int mu :
+  'e[mu] = 's[mu^~] + \sum_(la : P | (mu:P) <A la ) 'K(la, mu) *: 's[la^~] :> SF.
+Proof.
+rewrite -(unitrig_sum1r (fun la : P => 's[la^~]) mu (Kostka_unitrig _ d)).
+by rewrite -syme_syms_int.
+Qed.
+
+Lemma syms_syme_int mu : 's[mu^~] = \sum_(la : P) KostkaInv la mu *: 'e[la] :> SF.
+Proof.
+rewrite /KostkaInv.
+apply: (Minv_lincombr (Kostka_unitrig _ d)
+         (G := fun mu : P => 's[mu^~]) (F := fun mu : P => 'e[mu])).
+exact: syme_syms_int.
+Qed.
+
+Lemma syms_syme_partdom_int mu :
+  's[mu^~] = 'e[mu] + \sum_(la : P | (mu:P) <A la) KostkaInv la mu *: 'e[la] :> SF.
+Proof.
+rewrite -(unitrig_sum1r (fun la : P => 'e[la]) mu (KostkaInv_unitrig d)).
+by rewrite -syms_syme_int.
+Qed.
+
+End SymheSymsInt.
+
+Section SymheSyms.
 
 Variables (R : comRingType) (n : nat) (d : nat).
 Local Notation SF := {sympoly R[n.+1]}.
@@ -1365,7 +1413,42 @@ rewrite rmorphD rmorph_sum /= map_symh_prod; congr (_ + _); apply eq_bigr => i _
 by rewrite scale_map_sympoly map_symh_prod.
 Qed.
 
-End SymhSyms.
+Local Notation "la '^~'" := (conj_intpartn la) (at level 10).
+
+Lemma syme_syms mu : 'e[mu] = \sum_(la : P) 'K(la, mu) *: 's[la ^~] :> SF.
+Proof.
+rewrite -(map_syme_prod [rmorphism of intr]) syme_syms_int.
+rewrite rmorph_sum /=; apply eq_bigr => i _.
+rewrite scale_map_sympoly map_syms /=; congr (_ *: _).
+by rewrite mulrz_nat.
+Qed.
+
+Lemma syme_syms_partdom mu :
+  'e[mu] = 's[mu^~] +
+           \sum_(la : P | (mu:P) <A la ) 'K(la, mu) *: 's[la^~] :> SF.
+Proof.
+rewrite -(map_syme_prod [rmorphism of intr]) syme_syms_partdom_int.
+rewrite rmorphD rmorph_sum /= map_syms; congr (_ + _); apply eq_bigr => i _.
+rewrite scale_map_sympoly map_syms /=; congr (_ *: _).
+by rewrite mulrz_nat.
+Qed.
+
+Lemma syms_syme mu : 's[mu^~] = \sum_(la : P) 'K^-1(la, mu) *: 'e[la] :> SF.
+Proof.
+rewrite -(map_syms [rmorphism of intr]) syms_syme_int.
+rewrite rmorph_sum /=; apply eq_bigr => i _.
+by rewrite scale_map_sympoly map_syme_prod.
+Qed.
+
+Lemma syms_syme_partdom mu :
+  's[mu^~] = 'e[mu] + \sum_(la : P | (mu:P) <A la) 'K^-1(la, mu) *: 'e[la] :> SF.
+Proof.
+rewrite -(map_syms [rmorphism of intr]) syms_syme_partdom_int.
+rewrite rmorphD rmorph_sum /= map_syme_prod; congr (_ + _); apply eq_bigr => i _.
+by rewrite scale_map_sympoly map_syme_prod.
+Qed.
+
+End SymheSyms.
 
 
 (** ** Basis change from complete to power sums *)
@@ -1598,14 +1681,9 @@ Qed.
 End ChangeBasisSymhPowerSum.
 
 
-(** ** Symmetric polynomials expressed as polynomial in the elementary *)
-Section MPoESymHomog.
+Section Generators.
 
-Variable (n0 : nat) (R : comRingType).
-Local Notation n := (n0.+1).
-
-Implicit Types p q r : {mpoly R[n]}.
-Implicit Type m : 'X_{1..n}.
+Variables (n : nat) (R : comRingType).
 
 Lemma prod_homog nv l (dt : l.-tuple nat) (mt : l.-tuple {mpoly R[nv]}) :
   (forall i : 'I_l, tnth mt i \is (tnth dt i).-homog) ->
@@ -1623,14 +1701,16 @@ rewrite !(tnth_nth 0) !(tnth_nth 0%N) /=.
 by rewrite !inordK; last exact: (ltn_ord i).
 Qed.
 
-Local Notation E nv := [tuple mesym nv R i.+1  | i < n].
+Variable   gen : forall nv : nat, nat -> {mpoly R[nv]}.
+Hypothesis gen_homog : forall nv i : nat, gen nv i \is i.-homog.
+Local Notation G nv := [tuple gen nv i.+1 | i < n].
 
-Lemma homog_X_mPo_elem (nv0 : nat) m :
-  'X_[m] \mPo (E nv0.+1) \is (mnmwgt m).-homog.
-Proof using .
+Lemma homog_X_mPo_gen nv m :
+  'X_[m] \mPo G nv \is (mnmwgt m).-homog.
+Proof using gen gen_homog.
 rewrite comp_mpolyX.
 pose dt := [tuple (i.+1 * (m i))%N | i < n].
-pose mt := [tuple (mesym nv0.+1 R i.+1) ^+ m i | i < n] : n.-tuple {mpoly R[_]}.
+pose mt := [tuple (gen nv i.+1) ^+ m i | i < n] : n.-tuple {mpoly R[nv]}.
 rewrite (eq_bigr (fun i : 'I_n => tnth mt i)); first last.
   by move=> k _ /=; rewrite !tnth_mktuple.
 rewrite -(big_tuple _ _ mt xpredT id).
@@ -1639,35 +1719,45 @@ rewrite /mnmwgt (eq_bigr (fun i : 'I_n => tnth dt i)); first last.
 rewrite -(big_tuple _ _ dt xpredT id).
 apply prod_homog => k.
 rewrite !tnth_mktuple {mt dt}; apply: dhomogMn.
-exact: mesym_homog.
+exact: gen_homog.
 Qed.
 
-Lemma pihomog_mPo nv0 p d :
-  pihomog [measure of mdeg] d (p \mPo (E nv0.+1)) =
-  (pihomog [measure of mnmwgt] d p) \mPo (E nv0.+1).
-Proof using .
+Lemma pihomog_mPo nv p d :
+  pihomog [measure of mdeg] d (p \mPo G nv) =
+  (pihomog [measure of mnmwgt] d p) \mPo G nv.
+Proof using gen gen_homog.
 elim/mpolyind: p => [| c m p Hm Hc IHp] /=; first by rewrite !linear0.
 rewrite !linearP /= {}IHp; congr (c *: _ + _).
 case: (altP (mnmwgt m =P d)) => Hd.
 - have/eqP := Hd; rewrite -(dhomogX R) => /pihomog_dE ->.
-  by have:= homog_X_mPo_elem nv0 m; rewrite Hd => /pihomog_dE ->.
-- rewrite (pihomog_ne0 Hd (homog_X_mPo_elem nv0 m)).
+  by have:= homog_X_mPo_gen nv m; rewrite Hd => /pihomog_dE ->.
+- rewrite (pihomog_ne0 Hd (homog_X_mPo_gen nv m)).
   rewrite (pihomog_ne0 Hd); first by rewrite linear0.
   by rewrite dhomogX.
 Qed.
 
+End Generators.
+
+
+(** ** Symmetric polynomials expressed as polynomial in the elementary *)
+Section MPoESymHomog.
+
+Variables (n : nat) (R : comRingType).
+Local Notation E nv := [tuple mesym nv R i.+1 | i < n].
+
 Lemma mwmwgt_homogP (p : {mpoly R[n]}) d :
   reflect
-    (forall nv, p \mPo (E nv.+1) \is d.-homog)
+    (forall nv, p \mPo E nv \is d.-homog)
     (p \is d.-homog for [measure of mnmwgt]).
 Proof using.
 rewrite !homog_piE.
 apply (iffP eqP) => [Homog nv | H].
-- by rewrite -Homog -pihomog_mPo pihomogP.
+- by rewrite -Homog -(pihomog_mPo (fun nv i => dhomog_mesym nv R i)) pihomogP.
 - apply pihomog_dE.
   suff -> : p = pihomog [measure of mnmwgt] d p by apply: pihomogP.
   apply msym_fundamental_un; apply esym.
-  by rewrite -pihomog_mPo; apply pihomog_dE.
+  rewrite -(pihomog_mPo (fun nv i => dhomog_mesym nv R i)).
+  exact: pihomog_dE.
 Qed.
 
 Lemma sym_fundamental_homog (p : {mpoly R[n]}) (d : nat) :
@@ -1676,7 +1766,7 @@ Lemma sym_fundamental_homog (p : {mpoly R[n]}) (d : nat) :
 Proof.
 move=> /sym_fundamental [t [Ht _]] Hhom.
 exists (pihomog [measure of mnmwgt] d t); split.
-- by rewrite -pihomog_mPo Ht pihomog_dE.
+- by rewrite -(pihomog_mPo (fun nv i => dhomog_mesym nv R i)) Ht pihomog_dE.
 - exact: pihomogP.
 Qed.
 
@@ -1689,7 +1779,7 @@ Variable R : comRingType.
 Variable m : nat.
 Implicit Type p : {sympoly R[m]}.
 
-Local Notation SF p := (sym_fundamental (sympol_is_symmetric p)).
+Local Notation SF p := (sym_fundamental (sympolP p)).
 
 Definition sympolyf p := let: exist t _  := SF p in t.
 
@@ -1719,7 +1809,214 @@ Canonical sympolyf_lrmorphism := LRMorphism sympolyf_is_lrmorphism.
 Lemma sympolyfP p : (sympolyf p) \mPo [tuple sympol 'e_i.+1 | i < m] = p.
 Proof. by rewrite /sympolyf; case: (SF p) => f [] <- _. Qed.
 
+Definition sympolyf_eval : {mpoly R[m]} -> {sympoly R[m]} :=
+  mmap (GRing.in_alg {sympoly R[m]}) (fun i : 'I_m => 'e_i.+1).
+Lemma sympolyf_evalE (q : {mpoly R[m]}) :
+  q \mPo [tuple sympol 'e_i.+1 | i < m] = sympolyf_eval q.
+Proof.
+rewrite /sympolyf_eval /mmap /mmap1 comp_mpolyE.
+rewrite raddf_sum /=; apply eq_bigr => mon _.
+rewrite mulr_algl; congr (_ *: _).
+rewrite rmorph_prod /=; apply eq_bigr => i _.
+by rewrite tnth_mktuple rmorphX /=.
+Qed.
+
+Lemma sympolyfK p : sympolyf_eval (sympolyf p) = p.
+Proof. by apply val_inj; rewrite /= -[RHS]sympolyfP sympolyf_evalE. Qed.
+
+Lemma sympolyf_evalK q : sympolyf (sympolyf_eval q) = q.
+Proof.
+rewrite /sympolyf; case: (SF _) => [x [xeq _]].
+move: xeq; rewrite -sympolyf_evalE.
+exact: msym_fundamental_un.
+Qed.
+
+Lemma sympolyf_eval_is_lrmorphism : lrmorphism sympolyf_eval.
+Proof.
+rewrite /sympolyf_eval; repeat split.
+- by move=> u v; apply val_inj; rewrite /= raddfB.
+- by move=> u v; apply val_inj; rewrite /= !rmorphM.
+- by apply val_inj; rewrite /= !rmorph1.
+- by move=> a u; apply val_inj; rewrite mmapZ /= mulr_algl.
+Qed.
+Canonical sympolyf_eval_additive   := Additive   sympolyf_eval_is_lrmorphism.
+Canonical sympolyf_eval_rmorphism  := RMorphism  sympolyf_eval_is_lrmorphism.
+Canonical sympolyf_eval_linear     := AddLinear  sympolyf_eval_is_lrmorphism.
+Canonical sympolyf_eval_lrmorphism := LRMorphism sympolyf_eval_is_lrmorphism.
+
+Lemma sympolyf_evalX (i : 'I_m) : sympolyf_eval 'X_i = 'e_i.+1.
+Proof.
+by apply val_inj; rewrite /= -sympolyf_evalE comp_mpolyXU nth_mktuple.
+Qed.
+
 End SymPolF.
+
+
+Section Omega.
+
+Variable R : comRingType.
+Variable n0 : nat.
+Local Notation n := n0.+1.
+Implicit Type p : {sympoly R[n]}.
+Local Notation SF p := (sym_fundamental (sympolP p)).
+
+Fact omegasf_is_symmetric p :
+  (sympolyf p) \mPo [tuple sympol 'h_i.+1 | i < n] \is @symmetric n R.
+Proof.
+rewrite comp_mpolyE; apply: rpred_sum => mon _; apply: rpredZ.
+apply: rpred_prod => i _; rewrite tnth_mktuple.
+by apply: rpredX; apply: sympolP.
+Qed.
+Definition omegasf p : {sympoly R[n]} := SymPoly (omegasf_is_symmetric p).
+
+Lemma val_omegasf p :
+  sympol (omegasf p) = (sympolyf p) \mPo [tuple sympol 'h_i.+1 | i < n].
+Proof. by []. Qed.
+
+Lemma omegasf_is_lrmorphism : lrmorphism omegasf.
+Proof.
+rewrite /omegasf; repeat split.
+- by move=> u v; apply val_inj; rewrite /= !raddfB.
+- by move=> u v; apply val_inj; rewrite /= !rmorphM.
+- by apply val_inj; by rewrite /= !rmorph1.
+- by move=> a u; apply val_inj; rewrite /= !linearZ.
+Qed.
+Canonical omegasf_additive   := Additive   omegasf_is_lrmorphism.
+Canonical omegasf_rmorphism  := RMorphism  omegasf_is_lrmorphism.
+Canonical omegasf_linear     := AddLinear  omegasf_is_lrmorphism.
+Canonical omegasf_lrmorphism := LRMorphism omegasf_is_lrmorphism.
+
+Lemma omegasf_syme i : (i <= n)%N -> omegasf 'e_i = 'h_i.
+Proof.
+move=> Hi; apply val_inj; rewrite /= /sympolyf.
+case: (SF 'e_i) => /= p [Hp _].
+case: i Hi Hp => [_ |i Hi Hp] /=.
+  rewrite !mesym0E /= => Hp.
+  have {Hp} -> : p = 1 by apply msym_fundamental_un; rewrite Hp comp_mpoly1.
+  rewrite comp_mpoly1.
+  by have /= -> := congr1 val (symh0 n R).
+have {Hp} -> : p = 'X_(Ordinal Hi).
+  apply msym_fundamental_un; rewrite Hp comp_mpolyXU.
+  by rewrite -tnth_nth tnth_mktuple.
+by rewrite comp_mpolyXU -tnth_nth tnth_mktuple.
+Qed.
+
+Lemma omegasf_symh i : (i <= n)%N -> omegasf 'h_i = 'e_i.
+Proof.
+elim: i {1 3 4 5}i (leqnn i) => [|k IHk] i.
+  by rewrite leqn0 => /eqP ->; rewrite symh0 syme0 rmorph1.
+rewrite leq_eqVlt => /orP [/eqP -> {i} lt_kn|]; last by rewrite ltnS => /IHk.
+rewrite symh_symeE // rmorph_sum //= syme_symhE //.
+rewrite !big_nat; apply eq_bigr => [][|j]//; rewrite !ltnS leq0n /= => le_jk.
+rewrite subSS rmorphM linearZ /= IHk ?leq_subr //; first last.
+  by apply ltnW; apply: (leq_ltn_trans (leq_subr _ _) lt_kn).
+by rewrite omegasf_syme // (leq_ltn_trans le_jk lt_kn).
+Qed.
+
+Lemma omegasfK : involutive omegasf.
+Proof.
+move=> p; rewrite -(sympolyfK p).
+rewrite (mpolyE (sympolyf p)); move: (sympolyf p) => q.
+rewrite [sympolyf_eval _]raddf_sum !raddf_sum /=; apply eq_bigr => mon _.
+rewrite !linearZ /=; congr (_ *: _).
+rewrite mpolyXE_id !rmorph_prod /=; apply eq_bigr => i _.
+rewrite !rmorphX /=; congr ( _ ^+ _).
+by rewrite sympolyf_evalX omegasf_syme // omegasf_symh.
+Qed.
+
+Lemma omegasf_homog_impl d p :
+  sympol p \is d.-homog -> sympol (omegasf p) \is d.-homog.
+Proof.
+move=> H; rewrite /omegasf /= homog_piE.
+have Hhom nv i : symh_pol nv R i \is i.-homog by apply symh_homog.
+have {Hhom} -> := pihomog_mPo Hhom.
+rewrite /sympolyf; case: (SF p) => [f [eqf _]].
+by move: H; rewrite -{}eqf -mwmwgt_homogE homog_piE => /eqP ->.
+Qed.
+
+Lemma omegasf_homogE d :
+  {mono omegasf: p / sympol p \in [in R[n], d.-homog]}.
+Proof.
+move=> p; apply/idP/idP; last exact: omegasf_homog_impl.
+by rewrite -{2}(omegasfK p); apply: omegasf_homog_impl.
+Qed.
+
+Notation S := ([tuple sympol 'h_i.+1 | i < n] : n.-tuple {mpoly R[n]}).
+Notation E := ([tuple sympol 'e_i.+1 | i < n] : n.-tuple {mpoly R[n]}).
+
+Lemma msym_fundamental_symh_un (t1 t2 : {mpoly R[n]}) :
+  t1 \mPo S = t2 \mPo S -> t1 = t2.
+Proof.
+move=> Heq.
+have {Heq} : omegasf (sympolyf_eval t1) = omegasf (sympolyf_eval t2).
+  by apply val_inj; rewrite /= !sympolyf_evalK.
+move=> /(congr1 omegasf); rewrite !omegasfK /=.
+move=> /(congr1 val); rewrite /= -!sympolyf_evalE.
+exact: msym_fundamental_un.
+Qed.
+
+Lemma omegasf_sympolyf_eval q :
+  sympol (omegasf (sympolyf_eval q)) = q \mPo [tuple sympol 'h_i.+1 | i < n].
+Proof. by rewrite val_omegasf sympolyf_evalK. Qed.
+
+Lemma omegasf_compsymh p q :
+  (sympol p == q \mPo [tuple sympol 'h_i.+1 | i < n]) =
+  (sympol (omegasf p) == q \mPo [tuple sympol 'e_i.+1 | i < n]).
+Proof.
+rewrite -(omegasf_sympolyf_eval q); apply/eqP/eqP => [/val_inj ->| Heq].
+- by rewrite omegasfK sympolyf_evalE.
+- have {Heq} /(congr1 omegasf) : omegasf p = sympolyf_eval q.
+    by apply: sympol_inj; rewrite Heq sympolyf_evalE.
+  by rewrite omegasfK => ->.
+Qed.
+
+Lemma sym_fundamental_symh_homog (p : {mpoly R[n]}) (d : nat) :
+  p \is symmetric -> p \is d.-homog ->
+  { t | t \mPo S = p /\ t \is d.-homog for [measure of mnmwgt] }.
+Proof.
+move=> psym Hhom.
+set f := omegasf (SymPoly psym).
+have sympol_homog : sympol f \is d.-homog by rewrite omegasf_homogE.
+have [g [geq ghom]] :=
+  sym_fundamental_homog (sympolP f) sympol_homog.
+exists g; split; last by [].
+apply esym; apply/eqP.
+by rewrite (omegasf_compsymh (SymPoly psym) g) geq.
+Qed.
+
+Lemma sym_fundamental_symh (p : {mpoly R[n]}) :
+  p \is symmetric -> { t | t \mPo S = p }.
+Proof.
+move=> psym.
+set f := omegasf (SymPoly psym).
+have [g [geq gwght]] := sym_fundamental (sympolP f).
+exists g; apply esym; apply/eqP.
+by rewrite (omegasf_compsymh (SymPoly psym) g) geq.
+Qed.
+
+Variable (d : nat).
+Implicit Type (la : 'P_d).
+
+Lemma omega_syme la : d <= n -> omegasf 'e[la] = 'h[la].
+Proof.
+move=> le_dn.
+rewrite /prod_syme /prod_symh /prod_gen rmorph_prod /=.
+apply eq_big_seq => /= i /mem_intpartn /andP [_ le_id].
+by rewrite omegasf_syme //; apply: (leq_trans le_id le_dn).
+Qed.
+
+Lemma omega_symh la : d <= n -> omegasf 'h[la] = 'e[la].
+Proof. by move/omega_syme; rewrite -['e[la]]omegasfK => ->. Qed.
+
+Lemma omega_syms la : d <= n -> omegasf 's[la] = 's[conj_intpartn la].
+Proof.
+move=> ledn.
+rewrite syms_symh raddf_sum /= syms_syme.
+apply eq_bigr => /= s _.
+by rewrite linearZ /= omega_symh.
+Qed.
+
+End Omega.
 
 Local Close Scope Combi_scope.
 
@@ -1731,8 +2028,8 @@ Variable R : comRingType.
 Variable m0 n0 : nat.
 Local Notation m := m0.+1.
 Local Notation n := n0.+1.
-Local Notation SF p := (sym_fundamental (sympol_is_symmetric p)).
-Local Notation E := [tuple mesym n R i.+1 | i < m].
+Local Notation SF p := (sym_fundamental (sympolP p)).
+Local Notation E := ([tuple sympol 'e_(i.+1) | i < m] : m.-tuple {mpoly R[n]}).
 
 Lemma cnvarsym_subproof (p : {sympoly R[m]}) : sympolyf p \mPo E \is symmetric.
 Proof. by apply mcomp_sym => i; rewrite -tnth_nth tnth_mktuple mesym_sym. Qed.
@@ -1776,12 +2073,11 @@ Lemma cnvarsymh i : (i <= m)%N || (n <= m)%N -> cnvarsym 'h_i = 'h_i.
 Proof.
 move=> Hi; rewrite !symh_to_syme.
 rewrite linear_sum /=; apply eq_bigr => la _.
-rewrite linearZ rmorph_prod /=; congr(_ *: _); apply eq_big_seq => j Hj.
+rewrite linearZ rmorph_prod /=; congr(_ *: _).
+apply eq_big_seq => j /mem_intpartn /andP [_ le_id].
 apply cnvarsyme.
 move: Hi => /orP [Hi | ->]; last by rewrite orbT.
-apply/orP; left; apply: (leq_trans _ Hi).
-have:= (intpartn_sumn la); rewrite sumnE (big_rem j Hj) /= => <-.
-exact: leq_addr.
+by apply/orP; left; apply: (leq_trans le_id Hi).
 Qed.
 
 Lemma cnvarsymp i : (i < m)%N || (n <= m)%N -> cnvarsym 'p_i.+1 = 'p_i.+1.

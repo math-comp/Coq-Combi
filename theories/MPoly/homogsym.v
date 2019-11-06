@@ -401,6 +401,43 @@ Proof. by rewrite {2}(homsymmE p). Qed.
 End InHomSym.
 
 
+Section OmegaDef.
+
+Variable n0 d : nat.
+Local Notation n := (n0.+1).
+Variable R : comRingType.
+Local Notation HSF := {homsym R[n, d]}.
+Let S := [tuple sympol 'h_i.+1 | i < n] : n.-tuple {mpoly R[n]}.
+
+Implicit Type (p q : HSF).
+
+Lemma omegahomsym_subproof p : omegasf p \is d.-homsym.
+Proof using.
+apply: omegasf_homog_impl; rewrite -homsymE.
+by case: p.
+Qed.
+Definition omegahomsym p : {homsym R[n, d]} :=
+  HomogSym (omegahomsym_subproof p).
+Lemma omegahomsym_is_linear : linear omegahomsym.
+Proof. by move=> a f g; apply val_inj; rewrite /= !linearD !linearZ /=. Qed.
+Canonical omegahomsym_additive   := Additive  omegahomsym_is_linear.
+Canonical omegahomsym_linear     := AddLinear omegahomsym_is_linear.
+
+End OmegaDef.
+
+Section Omega.
+
+Variable n0 : nat.
+Local Notation n := (n0.+1).
+Variable R : comRingType.
+
+Lemma omegahomsym_rmorph c d (p : {homsym R[n, c]}) (q : {homsym R[n, d]}) :
+  omegahomsym (p *h q) = (omegahomsym p) *h (omegahomsym q).
+Proof. by apply val_inj; rewrite /= rmorphM. Qed.
+
+End Omega.
+
+
 (** * The classical bases of homogeneous symmetric polynomials *)
 Section HomSymField.
 
@@ -545,7 +582,7 @@ Lemma symbe_basis : basis_of fullv symbe.
 Proof using Hd.
 rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
 apply/subvP => /= p _; rewrite span_def big_map.
-have:= sym_fundamental_homog (sympol_is_symmetric p) (homsym_is_dhomog p).
+have:= sym_fundamental_homog (sympolP p) (homsym_is_dhomog p).
 move=> [t [Hp /dhomogP Hhomt]].
 have {Hp} -> : p = \sum_(m <- msupp t) t@_m *: in_homsym d ('X_[m] \mPo E).
   apply val_inj; apply val_inj; rewrite /= -{1}Hp {1}(mpolyE t) {Hp}.
@@ -686,7 +723,7 @@ Lemma cnvarhomsym_subproof (p : {homsym R[m, d]}) :
 Proof using.
 case: p => [p] /=; rewrite unfold_in /= => Hp; rewrite unfold_in.
 rewrite /cnvarsym /=; apply/mwmwgt_homogP.
-have [f [Hf Hfhom]] := sym_fundamental_homog (sympol_is_symmetric p) Hp.
+have [f [Hf Hfhom]] := sym_fundamental_homog (sympolP p) Hp.
 rewrite /sympolyf; case: (sym_fundamental _) => [g []] /=.
 by rewrite -Hf => H _; rewrite (msym_fundamental_un H).
 Qed.

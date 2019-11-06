@@ -1455,6 +1455,10 @@ Proof using. exact: can_inj (cast_intpartnK eq_m_n). Qed.
 Lemma cast_intpartn_bij m n eq_m_n : bijective (@cast_intpartn m n eq_m_n).
 Proof using. exact: (Bijective (cast_intpartnK eq_m_n) (cast_intpartnKV _)). Qed.
 
+Lemma cast_conj_inpart m n eq_m_n (s : 'P_m) :
+  (@cast_intpartn m n eq_m_n) (conj_intpartn s) =
+  conj_intpartn (@cast_intpartn m n eq_m_n s).
+Proof. by apply val_inj; rewrite /= !cast_intpartnE. Qed.
 
 Definition rowpart d := if d is _.+1 then [:: d] else [::].
 Fact rowpartn_subproof d : is_part_of_n d (rowpart d).
