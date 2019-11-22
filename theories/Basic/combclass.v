@@ -212,10 +212,10 @@ type. More precisely, we want to define a type for
 
     <<U := Union_(i : TI | Pi i) TPi i>>
 
-For the constructed type[U], we need the following data:
+For the constructed type [U], we need the following data:
 - a type [T] which is a [countType].
 - a type [TP] which is [subCountType] of [T] for a predicate [P].
-The index type must be also finite, it should be given by
+The index type must be also countable, it should be given by
 - a type [TI] which is a [countType].
 - a type [TPI] which is [subCountType] of [TI] for a predicate [PI].
 For all index [i : TPI], there must be a finite type, given by
