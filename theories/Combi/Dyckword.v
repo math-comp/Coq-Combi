@@ -574,15 +574,14 @@ by rewrite bintree_of_join_Dyck IHl IHr.
 Qed.
 
 Lemma size_Dyck_of_bintree t :
-  (size (Dyck_of_bintree t) = 2 * (size_tree t))%N.
+  size (Dyck_of_bintree t) = (size_tree t).*2.
 Proof.
 elim: t => //= l Hl r Hr.
-rewrite size_cat /= {}Hl Hr.
-by rewrite !mulnDr muln1 -addn1 -addnA addSnnS addnA addnC addnA.
+by rewrite size_cat /= {}Hl Hr addnS -doubleD -doubleS -addnA add1n.
 Qed.
 
 Lemma size_bintree_of_Dyck D :
-  (2 * size_tree (bintree_of_Dyck D) = size D)%N.
+  (size_tree (bintree_of_Dyck D)).*2 = size D.
 Proof. by rewrite -{2}(bintree_of_DyckK D) size_Dyck_of_bintree. Qed.
 
 End BijBinTrees.
@@ -827,7 +826,7 @@ Definition bal_hsz n : {set n.*2.-tuple brace} :=
 Theorem card_bintreesz_dyck n : #|bintreesz n| = #|Dyck_hsz n|.
 Proof.
 have trdP (tr : bintreesz n) : size (Dyck_of_bintree tr) == n.*2.
-  by rewrite size_Dyck_of_bintree mul2n bintreeszP.
+  by rewrite size_Dyck_of_bintree bintreeszP.
 pose trd (tr : bintreesz n) := Tuple (trdP tr).
 rewrite -(card_imset (f := trd)); first last.
   move=> tr1 tr2 /(congr1 val) /= /val_inj /(congr1 (bintree_of_Dyck)).
@@ -837,7 +836,7 @@ apply/setP => /= S; rewrite inE; apply/imsetP/idP => /= [[tr Htr -> {S}] | HS].
 - by rewrite /=; case: (Dyck_of_bintree _).
 - pose tr := bintree_of_Dyck (DyckWord HS).
   have := size_bintree_of_Dyck (DyckWord HS).
-  rewrite /= size_tuple mul2n => /double_inj/eqP => sztr.
+  rewrite /= size_tuple => /double_inj/eqP sztr.
   exists (BinTreeSZ sztr); first by rewrite inE.
   by apply val_inj; rewrite /= bintree_of_DyckK.
 Qed.
