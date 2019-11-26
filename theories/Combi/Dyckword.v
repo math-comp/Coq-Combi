@@ -78,21 +78,6 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
-
-Lemma card_preim_nth (m : nat) (T : eqType) (s : seq T) (P : pred T) (u : T):
-  size s = m -> #|[set i : 'I_m | preim (nth u s) P i]| = count P s.
-Proof.
-move=> Hsz.
-rewrite cardsE cardE /enum_mem -enumT /=.
-rewrite (eq_filter (a2 := (fun i : 'I_m => preim (nth u s) P i))); first last.
-  by move=> i; rewrite inE unfold_in.
-rewrite -(size_map nat_of_ord) -filter_map val_enum_ord.
-have:= mkseq_nth u s; rewrite /mkseq.
-move=> /(congr1 (filter P))/(congr1 size).
-by rewrite [X in _ = X]size_filter filter_map size_map Hsz.
-Qed.
-
-
 Section PreimPartition.
 
 Variables (T rT : finType) (f : T -> rT) (D : {set T}).
@@ -153,6 +138,21 @@ Qed.
 End PreimPartition.
 
 
+Lemma card_preim_nth (m : nat) (T : eqType) (s : seq T) (P : pred T) (u : T):
+  size s = m -> #|[set i : 'I_m | preim (nth u s) P i]| = count P s.
+Proof.
+move=> Hsz.
+rewrite cardsE cardE /enum_mem -enumT /=.
+rewrite (eq_filter (a2 := (fun i : 'I_m => preim (nth u s) P i))); first last.
+  by move=> i; rewrite inE unfold_in.
+rewrite -(size_map nat_of_ord) -filter_map val_enum_ord.
+have:= mkseq_nth u s; rewrite /mkseq.
+move=> /(congr1 (filter P))/(congr1 size).
+by rewrite [X in _ = X]size_filter filter_map size_map Hsz.
+Qed.
+
+
+
 (** * Braces and Dyck words *)
 Inductive brace : Set := | Open : brace | Close : brace.
 
@@ -162,10 +162,8 @@ Local Notation "}}" := Close.
 Definition bool_of_brace b := if b is {{ then true else false.
 Definition brace_of_bool b := if b then {{ else }}.
 
-Lemma bool_of_braceK : cancel bool_of_brace brace_of_bool.
-Proof. by case=> []. Qed.
-Lemma brace_of_boolK : cancel brace_of_bool bool_of_brace.
-Proof. by case=> []. Qed.
+Lemma bool_of_braceK : cancel bool_of_brace brace_of_bool. Proof. by case. Qed.
+Lemma brace_of_boolK : cancel brace_of_bool bool_of_brace. Proof. by case. Qed.
 
 Definition brace_eqMixin := InjEqMixin (can_inj bool_of_braceK).
 Canonical brace_eqType := Eval hnf in EqType brace brace_eqMixin.
@@ -814,6 +812,8 @@ Qed.
 End DyckToBal.
 
 
+Close Scope ring_scope.
+
 (** * Catalan numbers *)
 Definition Catalan n := 'C(n.*2, n) %/ n.+1.
 
@@ -869,9 +869,9 @@ rewrite inE; apply/imsetP/idP => /= [[w Hw -> {S}] | /eqP HS].
     by apply/setP => /= i; rewrite inE tnth_mktuple /=; case: (i \in S).
   rewrite inE /height /=.
   do 2 rewrite -size_filter filter_map size_map.
-  rewrite [X in Posz (size X) - _](eq_filter (a2 := mem (~: S))); first last.
+  rewrite [X in (Posz (size X) - _)%R](eq_filter (a2 := mem (~: S))); first last.
     by move=> i; rewrite /= in_setC; case: (i \in S).
-  rewrite [X in _ - Posz (size X)](eq_filter (a2 := mem S)); first last.
+  rewrite [X in (_ - Posz (size X))%R](eq_filter (a2 := mem S)); first last.
     by move=> i /=; case: (i \in S).
   rewrite !enumT -/enum_mem -!cardE cardsCs.
   have -> :  ~: ~: S = S by apply/setP => i; rewrite !inE negbK.
@@ -963,7 +963,7 @@ rewrite ltnNge Hsz !height_simpl /= take_take subSn // addrC.
 have : (size w - rt < size (rcons w }}))%N by rewrite size_rcons ltnS leq_subr.
 move=>/(take_nth {{)/(congr1 height); rewrite !height_simpl => /eqP.
 rewrite H /= -subr_eq opprK => /eqP <-.
-rewrite -addrA [1 + _]addrC addrA -height_cat cat_take_drop.
+rewrite -addrA [(1 + _)%R]addrC addrA -height_cat cat_take_drop.
 by rewrite height_simpl! /= subrK.
 Qed.
 
@@ -1043,7 +1043,7 @@ apply/andP/imsetP => /= [[/eqP ubal /eqP Huw] | [v /=]].
     rewrite ltnNge -ltnS Hpfminh /= take_take ?subSn //.
     move/(congr1 height)/esym; rewrite ubal height_simpl height_drop.
     rewrite (take_nth {{) ?size_rcons ?ltnS ?leq_subr //.
-    rewrite !height_simpl /= opprD [- _ + _]addrC.
+    rewrite !height_simpl /= opprD [(- _ + _)%R]addrC.
     move: (height (take _ _)) => H; rewrite !addrA subrK {H}.
     move: HD => /Dyck_wordP [_ ->]; rewrite add0r.
     by case: (nth _ _ _).
@@ -1098,7 +1098,7 @@ Arguments Dyck_of_bal {n}.
 Arguments bal_of_Dyck {n}.
 
 (** ** Main theorem for catalan numbers *)
-Lemma card_bal_Dyck_hsz n : #|bal_hsz n| = (#|Dyck_hsz n| * n.+1)%N.
+Lemma card_bal_Dyck_hsz n : #|bal_hsz n| = #|Dyck_hsz n| * n.+1.
 Proof.
 have -> : #|Dyck_hsz n| = #|preim_partition Dyck_of_bal (bal_hsz n)|.
   rewrite card_preim_partition; congr #|pred_of_set _|.
