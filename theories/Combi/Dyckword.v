@@ -28,16 +28,16 @@ We encode those words using:
 - [height w]   == the difference between the number of "[{{]" and "[}}]"
 - [prefixes w] == the list of all the prefix of [w]
 
-- [w is a Dyck_prefix] == for all prefix, the number of "[{{]" is larger than
+- [w is a Dyck_prefix] <=> for all prefix, the number of "[{{]" is larger than
        the number of "[}}]"
-- [w is a Dyck_word] == [w] is a Dyck word
+- [w is a Dyck_word] <=> [w] is a Dyck word, that is a Dyck_prefix of height 0
 
-- [Dyck]       == a Sigma-type for Dyck words. It is canonically a [countType].
+- [Dyck]       == a Sigma-type for Dyck words. It is canonically a [countType]
 - [[Dyck of s]] == a Dyck word for the sequence [s]; the proof is canonically
        infered.
 - [[Dyck of s by pf]] == a Dyck word for the sequence [s] using the proof [pf]
-- [[Dyck {{ D1 }} D2]] == if [D1] and [D2] are of type [Dyck] then the element
-       term of type [Dyck] corresponding to the word "(D1)D2"
+- [[Dyck {{ D1 }} D2]] == the term of type [Dyck] corresponding to the word
+       "(D1)D2", assuming that [D1] and [D2] are of type [Dyck]
 
 Dyck words are in bijection with binary trees:
 
@@ -45,17 +45,18 @@ Dyck words are in bijection with binary trees:
        bijection from trees to Dyck words.
 - [bintree_of_Dyck D] == the converse bijection
 
-The number of Dyck word is the so-called Catalan numbers:
+The main result of this file is to show that the number of Dyck word is the
+so-called Catalan numbers defined below:
 
 - [Catalan n]  == the [n]-th Catalan number ['C(n.*2, n) %/ n.+1]
-- [Dyck_hsz n] == the set of tuple of half size n which are Dyck words.
-- [bal_hsz n]  == the set of tuple of half size n which are balanced words.
+- [Dyck_hsz n] == the set of tuple of half size n which are Dyck words
+- [bal_hsz n]  == the set of tuple of half size n which are balanced words
 
 We prove bijectively the equality with catalan binomial formula, using the
 rotation trick: there is a (n+1) to 1 map from balanced words to Dyck words.
 
 - [minh w]     == the minimal height of prefixes of [w]
-- [pfminh w]   == the first position where the minimal height is reached.
+- [pfminh w]   == the first position where the minimal height is reached
 - [Dyck_of_bal w] == given a balanced word [w] returns the unique Dyck word
        [D] such that [D)] is a rotation of [w)]
 - [bal_of_Dyck rt w] == the word obtained by rotating [w)] by [rt] and
@@ -63,7 +64,7 @@ rotation trick: there is a (n+1) to 1 map from balanced words to Dyck words.
 
 - [bal_part n] == the partition of balanced words given by the fiber of the
        [Dyck_of_bal] map. The main argument is to show that all the fibers
-       have the same cardinality.
+       have the same cardinality n+1.
  *********************)
 
 Require Import mathcomp.ssreflect.ssreflect.
@@ -1097,7 +1098,7 @@ Arguments Dyck_of_bal {n}.
 Arguments bal_of_Dyck {n}.
 
 (** ** Main theorem for catalan numbers *)
-Lemma card_bal_Dyck_hsz n : #|bal_hsz n| = #|Dyck_hsz n| * n.+1.
+Theorem card_bal_Dyck_hsz n : #|bal_hsz n| = #|Dyck_hsz n| * n.+1.
 Proof.
 have -> : #|Dyck_hsz n| = #|preim_partition Dyck_of_bal (bal_hsz n)|.
   rewrite card_preim_partition; congr #|pred_of_set _|.
