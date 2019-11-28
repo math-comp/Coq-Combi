@@ -65,7 +65,7 @@ Variable T : inhOrdType.
 Implicit Type l : T.
 Implicit Type r : seq T.
 
-Notation is_row r := (sorted leqX_op r).
+Notation is_row := (sorted leqX_op).
 
 Definition is_row1P Z r := sorted1P Z leqX_op r.
 Definition is_rowP Z r := sortedP Z (@leqX_trans T) (@leqXnn T) r.
@@ -88,7 +88,7 @@ Qed.
 
 End Rows.
 
-Notation is_row r := (sorted leqX_op r).
+Notation is_row := (sorted leqX_op).
 
 (** ** Dominance order for rows *)
 Section Dominate.
@@ -98,11 +98,12 @@ Notation Z := (inhabitant T).
 
 Implicit Type l : T.
 Implicit Type r u v : seq T.
+Implicit Type t : seq (seq T).
 
-Lemma is_in_shape_tab_size (t : seq (seq T)) i j :
+Lemma is_in_shape_tab_size t i j :
   is_in_shape (shape t) i j -> i < size t.
 Proof. by rewrite -(size_map size) -/shape; exact: is_in_shape_size. Qed.
-Lemma is_in_shape_tab i j (t : seq (seq T)) :
+Lemma is_in_shape_tab i j t :
   is_in_shape (shape t) i j -> j < size (nth [::] t i).
 Proof.
 move=> Hin; have:= Hin; rewrite /is_in_shape /shape (nth_map [::]) //.
@@ -215,8 +216,7 @@ Fixpoint is_tableau t :=
   then [&& (t0 != [::]), is_row t0, dominate (head [::] t') t0 & is_tableau t']
   else true.
 
-Definition get_tab (t : seq (seq T)) (r c : nat) :=
-  nth (inhabitant T) (nth [::] t r) c.
+Definition get_tab t (r c : nat) := nth Z (nth [::] t r) c.
 
 Definition to_word t := flatten (rev t).
 
@@ -324,7 +324,7 @@ have Hsz : size p = size q.
 by apply/eqP; apply (eq_from_nth (x0 := [::]) Hsz) => i _.
 Qed.
 
-Lemma is_tableau_sorted_dominate (t : seq (seq T)) :
+Lemma is_tableau_sorted_dominate t :
   is_tableau t =
   [&& is_part (shape t),
    all (sorted leqX_op) t &
@@ -346,7 +346,7 @@ apply/idP/idP; elim: t => [//= | t0 t IHt].
     exact: (sorted_consK Hsort).
 Qed.
 
-Lemma is_tableau_getP (t : seq (seq T)) :
+Lemma is_tableau_getP t :
   reflect
     [/\ is_part (shape t),
      (forall (r c : nat), is_in_shape (shape t) r c.+1 ->
