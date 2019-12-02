@@ -1048,6 +1048,15 @@ case=> [//= | outer0 out] /= /andP [_ /IHinn{IHinn}Hrec] /andP [H0 Hincl] Heq.
 by have:= leq_addE H0 (sumn_included Hincl) Heq => [] [-> /(Hrec Hincl) ->].
 Qed.
 
+Lemma included_anti sh1 sh2 :
+  is_part sh1 -> is_part sh2 ->
+  included sh1 sh2 -> included sh2 sh1 ->
+  sh1 = sh2.
+Proof.
+move=> psh1 psh2 in12 in21; apply included_sumnE => //.
+by apply anti_leq; rewrite !sumn_included.
+Qed.
+
 Lemma included_conj_part inner outer :
   is_part inner -> is_part outer ->
   included inner outer -> included (conj_part inner) (conj_part outer).
