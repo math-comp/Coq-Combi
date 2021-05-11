@@ -17,10 +17,10 @@
 
 Yamanouchi words are stored as [seq nat].
 
-- [evalseq s] == the evaluation of the sequence s stored as a sequenc, that is
-                 the sequence counting whose i-th entry is the number of
-                 occurences of i in s; the final zeroes are not stored so that
-                 the sequence ends with a non zero entry.
+- [evalseq s] == the evaluation of the sequence [s] stored as a sequence,
+                 that is the sequence counting whose pi[-th entry is the number
+                 of occurences of [i] in [s]; the final zeroes are not stored
+                 so that the sequence ends with a non zero entry.
 - [evalseq_count] == an alternate definition of the previous sequence
 - [is_yam s] == s is a Yamanouchi word
 - [is_yam_of_eval ev s] == s is a Yamanouchi word of evaluation ev.
