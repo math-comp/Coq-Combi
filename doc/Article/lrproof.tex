@@ -1,12 +1,21 @@
-\documentclass[12pt,a4paper]{article}
+\documentclass[12pt]{article}
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[top=30pt,bottom=30pt,left=48pt,right=46pt]{geometry}
+\usepackage{a4wide}
+%\usepackage[top=30pt,bottom=30pt,left=48pt,right=46pt]{geometry}
 
 \usepackage{amsmath,amssymb,amsfonts,amsthm}
 \usepackage{todonotes}
 \usepackage{xspace}
+\usepackage{caption}
+\usepackage{hyperref, hypcap}
+\hypersetup{colorlinks=true, citecolor=blue, linkcolor=blue}
+\usepackage[noabbrev,capitalise]{cleveref}
+
+\usepackage{tikz}
+\usepackage{tkz-graph,tkz-berge}
+\usetikzlibrary{arrows,shapes,automata,fit,calc}
 
 \usepackage[vcentermath]{genyoungtabtikz}
 % \YFrench % use french convention for tableaux.
@@ -58,7 +67,9 @@
 \newcommand{\Q}{{\mathbb Q}}
 \newcommand{\K}{{\mathbb K}}
 \newcommand{\SG}{{\mathfrak S}}
+\newcommand{\GL}{\operatorname{GL}}
 \newcommand{\std}{\operatorname{Std}}
+\newcommand{\evseq}{\operatorname{ev}}
 \newcommand{\sgn}{\operatorname{sgn}}
 \newcommand{\comm}{\operatorname{comm}}
 \newcommand{\sym}{\mathrm{sym}}
@@ -71,6 +82,7 @@
 \newcommand{\compof}{\vDash}                    % Composisition de
 \newcommand{\shape}{\operatorname{shape}} 
 
+\newcommand{\eqdef}{\mbox{\,\raisebox{0.2ex}{\scriptsize\ensuremath{\mathrm:}}\ensuremath{=}\,}} % :=
 \newcommand{\qandq}{\text{\quad et\quad}}
 
 \newcommand{\red}[1]{{\color{red} #1}}
@@ -81,7 +93,8 @@
 \newcommand{\alphY}{{\mathbb Y}}
 \newcommand{\alphA}{{\mathbb A}}
 
-
+\newcommand{\ie}{\textit{i.e.}\xspace}
+\newcommand{\eg}{\textit{e.g.}\xspace}
 
 \newtheorem{THEO}{Theorem}
 \newtheorem{PROP}{Proposition}
@@ -104,19 +117,19 @@
 \maketitle
 
 \abstract{We present a formalized proof of the \LR rule using \Coq{} and
-  \SSR{}. The \LR coefficients are defined as the coefficients of the
-  expansion of the product of two Schur functions (the so-called structure
+  \MC{}. The \LR coefficients are defined as the coefficients of the
+  expansion of the product of two Schur functions (\ie the structure
   constants). Recall that Schur functions form a particular basis of the ring
   of symmetric functions. The \LR coefficient are nonnegative integers and
   they have many algebraic interpretations, for example in geometry and group
   theory. The \LR rule allows to compute these coefficients as the number of
-  filling of a specific shape with integer satisfying some comparison
+  filling of a specific shape with integers satisfying some comparison
   conditions. It is known that this way of computing those numbers is in some
   sense optimal.
 
-  The proof follows more or less the Schützenberger argument as presented
-  in~\cite{Lothaire}. It is based on an in depth study of a classical
-  algorithm due to Schensted which compute the length of a longest increasing
+  The proof follows more or less Schützenberger's argument (one of the first
+  correct proof). It is based on an in depth study of a classical algorithm
+  due to Schensted which compute the length of a longest increasing
   subsequence of a word. In particular, the central argument is a description
   of the output of the algorithm on the concatenation of two words knowing the
   output on those. Therefore, a typical feature of algebraic combinatorics,
@@ -129,7 +142,7 @@
 
 \paragraph{Algebraic combinatorics}
 
-\todo[inline]{rant about formalization of combinatorics}
+\todo[inline]{Some words about formalization of combinatorics}
 
 Proof of algebraic identities by prooving properties of algorithms. Interplay
 between algebra and algorithms.
@@ -138,22 +151,26 @@ between algebra and algorithms.
 
 
 We move on now to a general presentation of the problem. The goal is to give
-the reader clearer idea of the field of algebraic combinatorics and the \LR
-problem. In this first part we stay rather sketchy: to avoid to much
+the reader an idea of the field of algebraic combinatorics and the \LR
+problem. In this first part we stay rather sketchy: to avoid too much
 repetition, precise definitions will be given later together with their \Coq
 formalization.
 
 \subsection{Symmetric function and \LR coefficients}
-The ring \emph{symmetric functions} is defined as a limit as $n$ goes to the
-infinity of the ring of symmetric polynomial in $n$ indeterminates. This ring
-serves as universal structure in which relations between symmetric polynomials
-can be expressed in a way independent of the number $n$ of indeterminates (but
-its elements are neither polynomials nor functions). Among other things, this
-ring plays an important role in the representation theory of the symmetric
-group or the general linear group~\cite{MacDo}. It also plays a role in
-various geometric problems~\cite{Horn,Grassman}.
+The ring \emph{symmetric functions} is defined as a kind of limit as $n$ goes
+to the infinity of the ring of symmetric polynomial in $n$
+indeterminates. This ring serves as universal structure in which relations
+between symmetric polynomials can be expressed in a way independent of the
+number $n$ of indeterminates (but its elements are neither polynomials nor
+functions). Among other things, this ring is a central character (pun
+intended) of the representation theory of the symmetric group and the general
+linear group~\cite{Macdonald95}. It also plays an important role in various
+geometric problems such has the Horn problem, the cohomology of the flag and
+Grassman varieties. Through the Redfield-Pólya theory, it is the computing
+tools when enumerating object upto isomorphism (\eg graphs, molecule in
+chemistry).
 
-In these various context, the most important ingredient is a particular linear
+In many of these contexts, the most important ingredient is a particular linear
 basis $(s_\lambda)_\lambda$ whose elements are called the \emph{Schur
   functions}. Recall that linear basis of symmetric functions are indexed by
 \emph{integer partition}, that is non increasing sequences of positive
@@ -171,9 +188,9 @@ For example,
   + s_{(6,2,2,1)} + s_{(6,3,2)}
 \end{multline}
 The coefficients $C_{\lambda, \mu}^{\nu}$ of the decomposition are called the
-\LR coefficients and are nonnegative integers. The \LR rule describe them as
-the number of certain combinatorial configurations called \LR tableaux. For
-example, from the previous expansion one can read that
+\LR coefficients and are nonnegative integers. Indeed, the \LR rule describe
+them as the number of certain combinatorial configurations called \LR
+tableaux. For example, from the previous expansion one can read that
 $C_{(2,1),(4,2,2)}^{(5,3,2,1)}=2$ which correspond to the two following
 configurations:
 \begin{equation}
@@ -193,26 +210,28 @@ according to Wikipedia~\cite{WikiLR}:
 \end{quotation}
 
 This rule was first stated in 1934 by D.~E.~Littlewood and
-A.~R.~Richardson~\cite{LR}. However, their proof was wrong: they only proved
-it in a very particular case. As already said, they also made a mistake in
-their example. In 1938, Robinson~\cite{Robinson} attempted to complete the
-proof, but he didn't quite fill the gap. One has to wait until 1977 to get the
-first correct proof due to Schützenberger~\cite{SchutzLR}. This proof has
-numerous combinatorial ingredient, and as it was written, some
-combinatorialists though that this proof was ``somewhat gappy''. The present
-work follows more or less this original proof, the algebraic step being closer
-to the argument of \cite{NCSF7} showing that there where actually no crucial
-gaps.
-\medskip
+A.~R.~Richardson~\cite[theorem III p. 119]{LR34}. However, their proof was
+wrong: they only proved it in a very particular case. As already said, they
+also made a mistake in their example. In 1938, Robinson~\cite{Robinson38}
+attempted to complete the proof, but he didn't quite fill the gap. One has to
+wait until 1977 to get the first correct proof due to
+Schützenberger~\cite{SchutzLR}. This proof has numerous combinatorial
+ingredient, and as it was written, some combinatorialists though that this
+proof was ``somewhat gappy''. The present work follows more or less this
+original proof, the algebraic step being closer to the argument of
+\cite{NCSF6} showing that there where actually no crucial gaps.  \medskip
 
-In his book on the representation theory of the symmetric groups, Gordon
-James~\cite{James} reports that he was once told that
+Let us discuss a little more about \LR rule history: In his book on the
+representation theory of the symmetric groups, Gordon James~\cite{James84}
+says
 \begin{quotation}
-  the Littlewood-Richardson rule helped to get men on the moon, but it was not
+  Unfortunately the Littlewood–Richardson rule is much harder to prove than
+  was at first suspected. The authors was once told that the
+  Littlewood-Richardson rule helped to get men on the moon, but it was not
   proved until after they had got there. The first part of this story might be
   an exaggeration.
 \end{quotation}
-He wrote further
+In his review of James and Kerber book~\cite{Towber83}, Towber further wrote
 \begin{quotation}
   It seems that for a long time the entire body of experts in the field was
   convinced by these proofs; at any rate it was not until 1976 that McConnell
@@ -232,46 +251,16 @@ He wrote further
 
 
 After Schützenberger's first proof, one can find dozens of thesis and
-paper about simplifying the argument~\cite{Zelevinsky81,Macdonald95,Gasharov98,DHT01,VanLeeuwen01,Stembridge02}
+paper about simplifying the argument~\cite{Zelevinsky81,Macdonald95,Gasharov98,NCFS6,VanLeeuwen01,Stembridge02}
 and the combinatorial study of these coefficients it is still a very active
-research topic~(see for example~\cite{qAnalogs,KingToumazetTollu,KnutsonTao}
-to only name a few).
+research topic~(see \eg~\cite{qAnalogs,LLT,KingToumazetTollu,KnutsonTao99}).
 
-\subsection{A computational point of view on the \LR rule}
 
-From a computational point of view, such a rule give a good way to compute
-those numbers. Indeed it was proved in 2006 by H.~Narayanan that the
-computation of the \LR coefficients is
-$\#P$-complete~\cite{Narayanan06}. Recall the $\#P$ is the complexity class
-counting problem (i.e. with an answer in $\N$) analog of the complexity class
-$NP$ for decision problem (i.e. with a boolean answer). More formally, $\#P$
-is the class of function problems of the form "compute $f(x)$", where $f$ is
-the number of accepting paths of a nondeterministic Turing machine running in
-polynomial time. This roughly means that we shouldn't expect to have a better
-algorithm to compute those number in general than enumerating the solution of
-a combinatorial problem such as \LR tableaux.
-
-Note that there are other combinatorial model for them such as Knutson and Tao
-Honeycomb~\cite{KnutsonTao}. It is worth noting that the \LR coefficient
-appear in Mulmuley's Geometric complexity theory, a strategy to prove that
-$P\neq NP$ using invariant theory~\cite{Mulmuley} and algebraic geometry. In
-particular he use Knutson and Tao's model to prove the surprising fact that
-the problem of deciding the positivity of Littlewood-Richardson coefficients
-belongs to $P$.
-
-% \begin{quotation}
-%   We point out that the remarkable Knutson and Tao Saturation Theorem and
-%   polynomial time algorithms for LP have together an important and immediate
-%   consequence in Geometric Complexity Theory. The problem of deciding
-%   positivity of Littlewood-Richardson coefficients for GLn(C) belongs to
-%   P. Furthermore, the algorithm is strongly polynomial.
-% \end{quotation}
-
-\subsection{Algebraic importance of \LR coefficients}
+\subsection{Various appearance of \LR coefficients}
 
 From the algebraic point of view, these coefficients are very important due to
 their numerous interpretations. We present here briefly a few results, the
-interested reader should refer to Fulton's overview~\cite{Fulton}.
+interested reader should refer to Fulton's overview~\cite{Fulton97}.
 \begin{itemize}
 \item We defined them as the structure constants for the product in the ring
   of symmetric functions with respect to the basis of Schur functions;
@@ -309,7 +298,7 @@ interested reader should refer to Fulton's overview~\cite{Fulton}.
   \item They are related to extension of abelian $p$-groups (i.e. whose order
     is a power of a prime number $p$) through the Hall algebra: Upto
     isomorphism any abelian $p$-group is of the form
-    $G_\lambda:=\Z/p^{\lambda_1}\Z\times\dots\times\Z/p^{\lambda_{l}}\Z$ for a
+    $G_\lambda\eqdef\Z/p^{\lambda_1}\Z\times\dots\times\Z/p^{\lambda_{l}}\Z$ for a
     unique partition $\lambda=\lambda_1,\dots,\lambda_{l}$ called its
     \emph{type}. The Hall coefficient $H_{\lambda,\mu}^{\nu}(p)$ is defined as
     the number of subgroup $F$ of $G_\nu$ of type $\lambda$ such that the
@@ -321,14 +310,83 @@ interested reader should refer to Fulton's overview~\cite{Fulton}.
   quantum physics, when one compute the spectrum rays of the Hydrogen atoms.
 \end{itemize}
 
+\subsection{A computational point of view on the \LR rule}
+
+From a computational point of view, such a rule give a good way to compute
+those numbers. Indeed it was proved in 2006 by H.~Narayanan that the
+computation of the \LR coefficients is
+$\#P$-complete~\cite{Narayanan06}. Recall the $\#P$ is the complexity class
+counting problem (\ie with an answer in $\N$) analog of the complexity class
+$NP$ for decision problem (\ie with a boolean answer). More formally, $\#P$
+is the class of function problems of the form "compute $f(x)$", where $f$ is
+the number of accepting paths of a nondeterministic Turing machine running in
+polynomial time. This roughly means that we shouldn't expect to have a better
+algorithm to compute those number in general than enumerating the solution of
+a combinatorial problem such as \LR tableaux.
+
+Note that there are other combinatorial model for them such as Knutson and Tao
+Honeycomb~\cite{KnutsonTao99}. It is worth noting that the \LR coefficient
+appear in Mulmuley's Geometric complexity theory~\cite{Mulmuley12}, a strategy
+to prove that $P\neq NP$ using invariant theory and algebraic geometry:
+%In
+%particular he use Knutson and Tao's model to prove the surprising fact that
+%the problem of deciding the positivity of Littlewood-Richardson coefficients
+%belongs to $P$. 
+\begin{quotation}
+  We point out that the remarkable Knutson and Tao Saturation Theorem and
+  polynomial time algorithms for LP have together an important and immediate
+  consequence in Geometric Complexity Theory. The problem of deciding
+  positivity of Littlewood-Richardson coefficients for $\GL_n(\C)$ belongs to
+  P. Furthermore, the algorithm is strongly polynomial.
+\end{quotation}
+
 \subsection{Outline of the paper}
 
 \todo[inline]{present the plan}
 
-\section{Formal proof background : \Coq and \SSR}
+\section{Formal proof with \Coq, \SSR and \MC}
 
-\todo[inline]{A small intro to \SSR}
 
+The present formal proof is checked by the proof system \Coq, using the \SSR
+tactic language and based on the \MC library. We present here some key point
+about thes softwares.
+\todo[inline]{Do I need to write something about Coq ?}
+
+\SSR is a tactic language developed by Gontier et al~\cite{SSR} used to
+support small scale reflection. The main idea is to gain the best of the
+computational power of \Coq and its inductive reasoning engine. In practice,
+this means that a lot of definition are given in two forms, one which is easy
+for inductive reasoning such as chaining implication and specializing
+universal quantified variables, the other one is a boolean predicate that is a
+function deciding the defined properties. One says that the boolean predicate
+\emph{reflect} the inductive definition.
+
+The first example is the way \SSR treats equality. Coq's Leibnitz equality
+between two terms \verb|x| and \verb|y| is written \verb|x = y|. It express
+that in any statement \verb|P(x)| the term \verb|x| can be freely replaced by
+\verb|y|. One the other hand for most of type the system allows to write
+(using an canonical \verb+eqType+ structure, see below) \verb|x == y| which is
+a notation calling a specific comparison function that returns \verb|true| or
+\verb|false|. The fact that the comparison function \verb|(x == y)| decide the
+equality \verb|x = y| is stated as a so called reflection lemma such as
+\begin{lstlisting}
+Lemma eqP (T : eqType) (x y : T) : reflect (x = y) (x == y)
+\end{lstlisting}
+
+Here is a more advanced example. \SSR provide a theory of recursive (linked)
+list called \verb+seq+ together with a function \verb+nth x0 s i+ which
+returns the \verb+i+-th element of \verb+s+ if \verb+i+is smaller than the
+length of \verb+s+ and \verb+x0+ otherwise. It also provide a boolean
+predicate deciding if \verb+x+ appears in \verb+s+. Then
+\begin{lstlisting}
+Lemma nthP (T : eqType) (s : seq T) x x0 :
+  reflect (exists2 i, i < size s & nth x0 s i = x) (x \in s).
+\end{lstlisting}
+
+
+
+
+recall 
 Combinatorics is about case study and recursion.
 Boolean reflexion allows to quickly solve the trivial cases
 
@@ -336,109 +394,85 @@ Boolean reflexion allows to quickly solve the trivial cases
 
 In this first section we present the combinatorial ingredients together with
 their formalization in \Coq. As far as we know, the present work is the first
-formalization of those combinatorial objects.
+formalization of most of those combinatorial objects.
 
 
 \subsection{Ordered set}
 
 The central ingredient of the proof is an algorithm due to
-Schensted~\cite{schensted} which compute the length of a longest increasing
+Schensted~\cite{Schensted61} which compute the length of a longest increasing
 subsequence of a sequence on a totally ordered set called usually the
 \emph{alphabet} and whose elements are called \emph{letters}. Though in the
 proof, we only consider sequences of integers (or bounded integers), we decided
 to formalize this algorithm in its full generality that is on any totally
-ordered set. We therefore start by formalizing using \SSR mixin and canonical
-paradigm the notion of totally ordered set.
+ordered set.
 
-There is however a small technical problem due to the fact that \Coq's doesn't
-allows partial functions. Indeed, in many places we uses the \verb|nth|
-function which compute the $n$-th element of a list. If $n$ is larger than the
-size of the lists, the \verb|nth| function returns a default value which
-must therefore be provided. Indeed \verb|nth| type is
-\verb|forall T : Type, T -> seq T -> nat -> T|,
-the default value is the first argument. We therefore decided to formalize
-\emph{non empty totally ordered type} under the name \verb|ordtype|. Here
-is the relevant part of the code (in the file \verb|ordtype.v|):
-\begin{lstlisting}
-Definition |*axiom*| T (r : rel T) :=
-    [/\ reflexive r, antisymmetric r, transitive r &
-        (forall m n : T, (r m n) || (r n m))].
+At the time when we wrote the proof, there wasn't a formalized notion of
+ordered set in \MC, so we wrote our own. Moreover, it is simpler to assume
+that the type is inhabited to have a default value for partial
+function, notably \verb|nth| which compute the $n$-th element of a list. So in
+the file~\href{http://hivert.github.io/Coq-Combi/Combi.Basic.ordtype.html}{ordtype}
+we define various notions of order, the most useful one are
+\verb|inhPordType| for partially ordered inhabited types,
+\verb|inhOrdType| for totally ordered inhabited types and for they finite
+variant.
 
-Record |*mixin_of*| T := Mixin { r : rel T; x : T; _ : axiom r }.
-Record |*class_of*| T := Class {base : Countable.class_of T; mixin : mixin_of T}.
-Structure |*type*| := Pack {sort; _ : class_of sort; _ : Type}.
-Notation |*ordType*| := type.
-\end{lstlisting}
 To ease readability we provide short notations in a specific scope with tag
 \verb|Ord| for the comparison functions:
 \begin{lstlisting}
-Definition |*leqX_op*| T := Order.r (Order.mixin (Order.class T)).
-Delimit Scope |*ord_scope*| with |*Ord*|.
 Notation "m <= n" := (leqX_op m n) : ord_scope.
 \end{lstlisting}
-A witness of non-emptyness can be obtained using the \verb+inhabitant+ lemma:
-\begin{lstlisting}
-Lemma |*inhabitant*| (T : ordType) : T.
-\end{lstlisting}
+A witness of non-emptyness can be obtained using \verb+inhabitant+.
 As an application, we provide \verb|nat| with a canonical \verb|ordtype|
 structure which wraps the usual ordering. We provide \verb|0| as the witness
-of non emptyness:
-\begin{lstlisting}
-Fact |*leq_order*| : Order.axiom leq.
-[...]
-Definition |*nat_ordMixin*| := Order.Mixin 0 leq_order.
-Canonical |*nat_ordType*| := Eval hnf in OrdType nat nat_ordMixin.
-
-Lemma |*leqXnatE*| m n : (m <= n)%Ord = (m <= n)%N.
-\end{lstlisting}
-The code further clone most of the \SSR \verb|nat |comparison lemmas. To
-ease switching between \verb|nat| and arbitrary \verb|ordtype|, we
+of non emptyness. The code further clone most of the \SSR \verb|nat| comparison
+lemmas. To ease switching between \verb|nat| and arbitrary \verb|ordtype|, we
 decided to add a letter \verb|X| to the comparison function names. For
-example, the statement \verb|(m <= n) = ~~ (n < m)| is called
-\verb|leqNgtn| for \verb|nat| and \verb|leqXNgtnX| for
-arbitrary \verb|ordtype|. We give further constructions such as dual
-order. The file also prove a bunch of useful lemmas about sequences of elements
-belonging to an ordered type dealing for example with maximum element an
-particularly its last occurrence.
+example, the statement \verb|(m <= n) = ~~ (n < m)| is called \verb|leqNgtn|
+for \verb|nat| and \verb|leqXNgtnX| for arbitrary \verb|ordtype|. We give
+further constructions such as dual order. The file also prove a bunch of
+useful lemmas about sequences of elements belonging to an ordered type dealing
+for example with maximum element an particularly its last occurrence.
 
-\subsection{Partitions}
+\subsection{Integer partitions}
 
-The theory of symmetric function is closely related to partition theory. They
-are defined as the different ways of decomposing an integer $n\in\N$ as a sum:
+The theory of symmetric function is closely related to integer partition
+theory because they naturally index the bases of symmetric functions. Recall
+that \emph{integer partition} are defined as the different ways of decomposing
+an integer $n\in\N$ as a sum:
 \[ 5=5=4+1=3+2=3+1+1=2+2+1=2+1+1+1=1+1+1+1+1\,. \] Two decompositions that
 differ only by their order are considered equal. To ensure unicity of the
 machine representation, we follow the usual convention to sort the summand
-(called \emph{part}) in decreasing order. In \SSR this also ensure that
+(called \emph{part}) in \emph{decreasing order}. This also ensure that
 equality of partition is the same as Leibnitz equality of the corresponding
 lists.
 \begin{DEFN}
-  A \emph{partition} $\lambda$ of an integer $n$ is a finite decreasing
-  sequence of positive integers
+  A \emph{partition} $\lambda$ of an integer $n$ is a finite
+  decreasing sequence of positive integers
   $(\lambda_0\geq\lambda_1\geq\dots\geq\lambda_{l-1} > 0)$ whose sum is
-  $n$. We denote $|\lambda| := n = \lambda_0+\lambda_1+\dots+\lambda_{l-1}$
-  the sum and $\ell(\lambda) := l$ the length. We also denote $\lambda\partof
-  n$ the fact that $\lambda$ is a partition of $n$.
+  $n$. We denote $|\lambda| \eqdef n = \lambda_0+\lambda_1+\dots+\lambda_{l-1}$
+  the sum and $\ell(\lambda) \eqdef l$ the length. We also denote
+  $\lambda\partof n$ the fact that $\lambda$ is a partition of $n$.
 
-  Conventionally, that there is only one partition of the integer $0$ namely
+  Conventionally, there is only one partition of the integer $0$ namely
   the empty sequence so that $\lambda\partof0$ means that $\lambda = ()$.
 \end{DEFN}
-We decided to represent partitions naturally by terms of type 
-\verb+seq nat+.
-Following \SSR paradigm, the definition \verb|is_part| is given as
-a computational boolean predicate (a recursive function). Since a
+In this paper we will drop the integer calling them simply partitions. We
+decided to represent partitions naturally by terms of type \verb+seq nat+.
+Following \SSR paradigm, the definition \verb|is_part| is given as a
+computational boolean predicate (a recursive function). Since a
 \verb{fixpoint} is not always the easiest statement to use is a proof, we
 provide several equivalent statements (in \verb|Prop|) using reflection
 lemmas. These equivalent statement are also perhaps easier to read, we show
-here one of them:
+here some of them:
 \begin{lstlisting}
-  Fixpoint |*is_part*| sh := (* Boolean Predicate *)
-    if sh is sh0 :: sh'
-    then (sh0 >= head 1 sh') && (is_part sh')
-    else true.
-
+  Fixpoint |*is_part*| sh :=           (* Boolean Predicate *)
+    if sh is sh0 :: sh' then (sh0 >= head 1 sh') && (is_part sh') else true.
   Lemma |*is_part_ijP*| sh : reflect   (* Boolean reflection lemmas *)
-    (last 1 sh != 0 /\ forall i j, i <= j -> (nth 0 sh i) >= nth 0 sh j)
+    (last 1 sh != 0 /\ forall i j, i <= j -> (nth 0 sh i) >= (nth 0 sh j))
     (is_part sh).
+  Lemma is_part_sortedE sh :           (* Boolean equality *)
+    (is_part sh) = (sorted geq sh) && (0 \notin sh).
 \end{lstlisting}
 The set $P_n$ of partition of a given $n$ is finite, so we provide a function
 \verb|enum_partn| for enumerating them. The following lemmas assert that
@@ -467,49 +501,116 @@ dependant type. Dependant type are only used when statements need to confine a
 set in a \verb+fintype+ e.g. statement about cardinalities.
 
 It is customary to depict a partition by a diagram of boxes called its Ferrers
-diagram. Namely the Ferres diagram of a partition $\lambda := (\lambda_0,
+diagram. Namely the Ferres diagram of a partition $\lambda=(\lambda_0,
 \lambda_1,\dots,\lambda_{l-1})$ is obtained by piling left justified rows of
 boxes of respective length $\lambda_0, \lambda_1,\dots,\lambda_{l-1}$. We use
 the French convention which put the longest row at the bottom of the
 picture (English literature usually draw them upside down). For example,
 \[(7,5,3,2,2)\quad\text{ is depicted as }\quad \yngs(0.5, 2,2,3,5,7).\]
-\bigskip
 
-Partition are ordered by the inclusion of their diagram. Here is the
-corresponding boolean predicate and the reflection lemma:
+\subsection{Young lattice}
+
+Partition are ordered by the inclusion of their diagram. The corresponding
+boolean predicate is called \verb|included| and a readable definition is found
+in the following reflection lemma:
 \begin{lstlisting}
-Fixpoint |*included*| inner outer :=
-  if inner is inn0 :: inn then
-    if outer is out0 :: out then
-      (inn0 <= out0) && (included inn out)
-    else false
-  else true.
-
 Lemma |*includedP*| inner outer : reflect
   (size inner <= size outer /\ forall i, nth 0 inner i <= nth 0 outer i)
   (included inner outer).
 \end{lstlisting}
+This is a partial order on partitions and even a ranked
+lattice. \cref{fig.YoungLattice} show (part of) its Hasse diagram
+(\ie transitively reduced graph). Note that we didn't formalize the
+lattice theory of Young diagrams.
+
 A skew partition is the difference of two included partitions:
 \[(7,5,3,2,2) / (4,2,1)\quad\leftrightarrow\quad \gyoungs(0.5,\ \ ,\ \ ,:;\ \
-,::;\ \ \ ,::::;\ \ \ ).\] We didn't define a specific (dependant) type for
-skew partition in \Coq: when a skew partition is required we just pass proof
-of \verb+is_part inner+, \verb+is_part outer+ together with
-\verb+included inner outer+.
+  ,::;\ \ \ ,::::;\ \ \ ).\]
+We didn't define a specific (dependant) type for
+skew partition in \Coq: when a skew partition is required we just pass the
+proofs~\verb+included inner outer+.
+\begin{figure}[ht]
+  \centering
+\tikzstyle{ud} = [
+  x={(1cm, 0cm)},
+  y={(0cm, -2cm)},
+]
+\begin{tikzpicture}[ud,>=latex,line join=bevel,
+  every node/.style={ellipse,inner sep=1pt}]
+  \node (0)     at ( 6,1) {\scalebox{0.8}{$\emptyset$}};
+  \node (1)     at ( 6,1.8) {\scalebox{0.8}{$\gyoung(0)$}};
+  \node (2)     at ( 4,2.5) {\scalebox{0.5}{$\gyoung(;;)$}};
+  \node (11)    at ( 8,2.5) {\scalebox{0.8}{$\gyoung(1,0)$}};
+  \node (3)     at ( 2,3.2) {\scalebox{0.5}{$\gyoung(;;;)$}};
+  \node (21)    at ( 6,3.2) {\scalebox{0.8}{$\gyoung(2,01)$}};
+  \node (111)   at (10,3.2) {\scalebox{0.5}{$\gyoung(;,;,;)$}};
+  \node (4)     at ( 1,4) {\scalebox{0.5}{$\gyoung(;;;;)$}};
+  \node (31)    at ( 3,4) {\scalebox{0.5}{$\gyoung(;,;;;)$}};
+  \node (22)    at ( 6,4) {\scalebox{0.5}{$\gyoung(;;,;;)$}};
+  \node (211)   at ( 9,4) {\scalebox{0.8}{$\gyoung(3,2,01)$}};
+  \node (1111)  at (11,4) {\scalebox{0.5}{$\gyoung(;,;,;,;)$}};
+  \node (5)     at ( 0,5) {\scalebox{0.5}{$\gyoung(;;;;;)$}};
+  \node (41)    at ( 2,5) {\scalebox{0.5}{$\gyoung(;,;;;;)$}};
+  \node (32)    at ( 4,5) {\scalebox{0.5}{$\gyoung(;;,;;;)$}};
+  \node (311)   at ( 6,5) {\scalebox{0.5}{$\gyoung(;,;,;;;)$}};
+  \node (221)   at ( 8,5) {\scalebox{0.8}{$\gyoung(3,24,01)$}};
+  \node (2111)  at (10,5) {\scalebox{0.5}{$\gyoung(;,;,;,;;)$}};
+  \node (11111) at (12,5) {\scalebox{0.5}{$\gyoung(;,;,;,;,;)$}};
+  \node (6)     at ( -0.5,6) {\scalebox{0.5}{$\gyoung(;;;;;;)$}};
+  \node (51)    at ( 1,6) {\scalebox{0.5}{$\gyoung(;,;;;;;)$}};
+  \node (42)    at ( 2.1,6) {\scalebox{0.5}{$\gyoung(;;,;;;;)$}};
+  \node (411)   at ( 3.3,6) {\scalebox{0.5}{$\gyoung(;,;,;;;;)$}};
+  \node (33)    at ( 4.5,6) {\scalebox{0.5}{$\gyoung(;;;,;;;)$}};
+  \node (321)   at ( 6,6) {\scalebox{0.8}{$\gyoung(3,24,015)$}};
+  \node (222)   at ( 7.5,6) {\scalebox{0.5}{$\gyoung(;;,;;,;;)$}};
+  \node (3111)  at ( 8.7,6) {\scalebox{0.5}{$\gyoung(;,;,;,;;;)$}};
+  \node (2211)  at (9.9,6) {\scalebox{0.5}{$\gyoung(;,;,;;,;;)$}};
+  \node (21111) at (11,6) {\scalebox{0.5}{$\gyoung(;,;,;,;,;;)$}};
+  \node (111111)at (12.5,6) {\scalebox{0.5}{$\gyoung(;,;,;,;,;,;)$}};
+  \draw [very thick,->] (0) -- (1);
+  \draw [->] (1) -- (2);\draw [very thick,->] (1) -- (11);
+  \draw [->] (2) -- (3);\draw [->] (2) -- (21);
+  \draw [very thick,->] (11) -- (21);\draw [->] (11) -- (111);
+  \draw [->] (3) -- (4);\draw [->] (3) -- (31);
+  \draw [->] (21) -- (31);\draw [->] (21) -- (22);\draw [very thick,->] (21) -- (211);
+  \draw [->] (111) -- (211);\draw [->] (111) -- (1111);
+  \draw [->] (4) -- (5);\draw [->] (4) -- (41);
+  \draw [->] (31) -- (41);\draw [->] (31) -- (32);\draw [->] (31) -- (311);
+  \draw [->] (22) -- (32);\draw [->] (22) -- (221);
+  \draw [->] (211) -- (311);\draw [very thick,->] (211) -- (221);\draw [->] (211) -- (2111);
+  \draw [->] (1111) -- (2111);\draw [->] (1111) -- (11111);
+  \draw [->] (5) -- (6);\draw [->] (5) -- (51);
+  \draw [->] (41) -- (51);\draw [->] (41) -- (42);\draw [->] (41) -- (411);
+  \draw [->] (32) -- (42);\draw [->] (32) -- (33);\draw [->] (32) -- (321);
+  \draw [->] (311) -- (411);\draw [->] (311) -- (321);\draw [->] (311) -- (3111);
+  \draw [very thick,->] (221) -- (321);\draw [->] (221) -- (222);\draw [->] (221) -- (2211);
+  \draw [->] (2111) -- (3111);\draw [->] (2111) -- (2211);\draw [->] (2111) -- (21111);
+  \draw [->] (11111) -- (21111);\draw [->] (11111) -- (111111);
+\end{tikzpicture}
+
+  \caption{The Young lattice and the path associated to the Yamanouchi word $012010$.}
+  \label{fig.YoungLattice}
+\end{figure}
+
+As shown on picture \cref{fig.YoungLattice}, we are particularly interested in
+path (also called maximal chains) in Young's lattice. In the proof, we will
+use two data structure to encode those path : standard Young tableaux and
+Yamanouchi words.
 
 \subsection{Tableaux}
 
 Tableaux were invented by Alfred Young to understand the representation of the
 symmetric groups. They are the central character of the story told here.
 \begin{DEFN}
-  Let $\alphA$ be an alphabet (that is a totally ordered set). A \emph{Young
+  Let $\alphA$ be an alphabet. A \emph{Young
     tableau} or \emph{tableau} for short is a filling $T$ with letters from
-  $\alphA$ of the diagram of a partition $\lambda$ which is emph{non
+  $\alphA$ of the diagram of a partition $\lambda$ which is \emph{non
     decreasing along rows} and \emph{strictly increasing along columns}. The
-  partition $\lambda$ is called the \emph{shape} of $T$.
+  partition $\lambda$ is called the \emph{shape} of $T$ denoted by $\shape(T)$.
 
   A \emph{standard tableau} is a tableau over the integer such that each
-  integer between $0$ and $n-1$ where $n$ is the sum of the shape appear only
-  once.
+  integer between $0$ and $n-1$ appear only once, where $n$ is the sum of the
+  shape (\ie number of boxes).
 
   A \emph{skew tableau} is a tableau whose shape is a skew shape.
 \end{DEFN}
@@ -520,7 +621,7 @@ $n$. Here is an example of a tableau, a standard tableau and a skew tableau.
   \young(7,4,258,01369)\qquad
   \gyoung(12,:;00,:::;1,:::;00)\qquad
 \]
-Following~\cite{Lothaire}, we formalize tableau by defining a \emph{dominance}
+Following~\cite{Lothaire-plact}, we formalize tableau by defining a \emph{dominance}
 relation between two consecutive nondecreasing sequence called \emph{rows}:
 \begin{DEFN}
 Let $\alphA$ be an alphabet (that is a totally ordered set). 
@@ -532,13 +633,16 @@ Let $\alphA$ be an alphabet (that is a totally ordered set).
   A \emph{tableau} is a sequence of non empty row which is reverse sorted for
   the dominance order.
 \end{DEFN}
-As for partitions, we don't use a specific type for rows and tableaux and use
-simply \verb{seq seq nat} as a data-structure. Tableau are just defined
+Note: In the literature, nearly all the author have standard tableau numbered
+from $1$ to $n$.
+
+We don't use a specific type for rows and tableaux and use
+simply \verb{seq seq T} as a data-structure. Tableau are defined
 using a predicate \verb{is_tableau}. We show here only the boolean
 reflection lemmas, and refer the reader to the file for the formal definition
 of standard tableau and skew tableau.
 \begin{lstlisting}
-Variable T : ordType.
+Variable T : inhOrdType.
 Notation |*is_row*| r := (sorted (@leqX_op T) r).
 
 Lemma |*dominateP*| u v : reflect
@@ -580,8 +684,7 @@ of a tableau \verb{s} are smaller than all the entries of a skew tableau
 \begin{lstlisting}
 Lemma |*join_tab_skew*| s t :
   all (allLtn (to_word s)) (to_word t) ->
-  is_tableau s -> is_skew_tableau (shape s) t ->
-  is_tableau (join_tab s t).
+  is_tableau s -> is_skew_tableau (shape s) t -> is_tableau (join_tab s t).
 \end{lstlisting}
 Interestingly, though any combinatorialist would consider that such a lemma is
 so trivial that is doesn't require any proof, the formal proof is 58~lines
@@ -597,56 +700,107 @@ dimensional, they are sometimes easier to manipulate. They also appears in the
 For a word $w$ we write $\abs{w}_x$ the number of occurrence of $x$ in
 $w$. This is computed in \SSR by \verb{count_mem x w}.
 \begin{DEFN}
-  A word $w := w_0,\dots,w_{l-1}$ over the integers is \emph{Yamanouchi} if for
+  A word $w\eqdef w_0,\dots,w_{l-1}$ over the integers is \emph{Yamanouchi} if for
   all $k, i \in \N$,
-  \[ \abs{w_i,\dots,w_{l-1}}_k \geq \abs{w_i,\dots,w_{l-1}}_{k+1} \]
+  \[ \abs{w_i,\dots,w_{l-1}}_k \geq \abs{w_i,\dots,w_{l-1}}_{k+1}\,. \]
 \end{DEFN}
 Here is a complete list of Yamanouchi word of length smaller than $4$.
 \begin{gather*}
   (), 0, 00, 10, 000, 100, 010, 210, \\
   0000, 1010, 1100, 0010, 0100, 1000, 0210, 2010, 2100, 3210
 \end{gather*}
-Here is the \SSR statement:
-  \begin{lstlisting}
-Lemma |*is_yamP*| s : reflect
-  (forall i n, count_mem n (drop i s) >= count_mem n.+1 (drop i s))
-  (is_yam s).
+This definition is naturally formalized (in the boolean reflection lemma
+\verb|is_yamP|) by:
+\begin{lstlisting}
+  forall i n, count_mem n (drop i s) >= count_mem n.+1 (drop i s)
 \end{lstlisting}
-
+Each Yamanouchi words encode a sequence of shape thank to evaluation sequences:
+\begin{DEFN}
+  For a word $w$ over the integer, we call \emph{evaluation sequence} of $w$
+  the list $\evseq(w)\eqdef\abs{w}_0,\abs{w}_1,\dots\abs{w}_m$ where $m$ is
+  the maximum letter of $w$.
+\end{DEFN}
+We denote this list in \Coq by \verb{evalseq w}. Is allows the following
+rephrasing:
+\begin{LEMMA}
+  A word $w$ is Yamanouchi if an only if forall $i$, $\evseq(w_i,\dots,w_{l-1})$ is a partition.
+\end{LEMMA}
+According to this lemma, the actual definition of Yamanouchi is
+\begin{lstlisting}
+Fixpoint is_yam s :=
+  if s is s0 :: s' then is_part (evalseq s) && is_yam s' else true.
+\end{lstlisting}
 For standard tableau as well as Yamanouchi word, we finally provide, as we
 already explained for partition, enumeration functions. This allows use is to
 endow the various dependant type (e.g. for size or shape), with a canonical
-\verb{fintype} structure (see for example \verb{is_yam_of_shape},
+\verb{fintype} structure (see for example \verb{is_yam_of_eval},
 \verb{enum_yameval}, \verb{yameval}, \verb{yameval_finType} for
-Yamanouchi words of a given row-shape.
-\todo{Do I want to present the bijection with standard tableau here ?}
+Yamanouchi words.
+
+Yamanouchi words are in bijection with standard tableau: they both encode a
+path in the Young lattice: The path associated to $w\eqdef w_0,\dots,w_{\ell-1}$
+is the sequence of partition:
+\begin{equation}
+  \emptyset, \evseq(w_{\ell-1}), \evseq(w_{\ell-2}w_{\ell-1}),\dots,
+  \evseq(w_1,\dots,w_{\ell-1}), \evseq(w_0,w_1,\dots,w_{\ell-1})
+\end{equation}
+Otherwise said, $w$ reads from right to left the sequence of rows where boxes
+are added. Numbering the boxes from $0$ to $\ell-1$ in that order gives the
+corresponding standard tableau. Clearly the shape of the standard tableau is
+equal to the evaluation sequence of its association Yamanouchi word. See
+\cref{fig.YoungLattice} for an example.
+
+These bijection are formalized in the
+file~~\href{http://hivert.github.io/Coq-Combi/Combi.Combi.stdtab.html}{stdtab}. Under
+the names \verb|stdtab_of_yam| and \verb|yam_of_stdtab|. For example the
+equality of shape and evaluation sequence is stated as
+\begin{lstlisting}
+  Lemma shape_stdtab_of_yam y : shape (stdtab_of_yam y) = evalseq y.
+\end{lstlisting}
+
+Finally, let us mention that there is a very nice formula called the
+hook-lenght formula due to Frame-Robinson-Thrall~\cite{FRT54} which give the
+number of standard tableau of a given shape, or equivalently the number of
+Yamanouchi words of a given evaluation: we call the hook length of a box $b$
+of a diagram and write $\operatorname{hl}(b)$ the number of box which are
+either above or on the right of $b$ including $b$ itself. Then the number of
+standard tableau of shape $\lambda$ is
+$n!/\prod_{b\in\lambda}\operatorname{hl}(b)$ where $n$ is the number of boxes
+of $\lambda$. In collaboration with Cristine Paulin we formalized the proof
+of~\cite{GNW1979}:
+\begin{lstlisting}
+Theorem HookLengthFormula (p : intpart) :
+  #|{:stdtabsh p}| = (sumn p)`! %/ (\prod_(b : box_in sh) hook_length sh b.1 b.2).
+\end{lstlisting}
+We now have all the necessary combinatorial ingredient write the statement of
+the \LR rule.
+
 \section{Schur polynomial and the \LR rule}
 
 The \LR rule allows to expand product of symmetric polynomials in a particular
 basis called Schur polynomials. The theory of symmetric polynomial is usually
 carried trough their limit as the number of variable tends to the infinity
 which are called symmetric function (though they are neither polynomial nor
-function but rather bounded degree formal power series). We provide here an
-extremely short introduction. The interested reader should refer to Macdonald
-books~\cite{Macddo}.
+function but rather bounded degree formal power series). We provide here a
+very short introduction. The interested reader should refer to Macdonald
+books~\cite{Macdonald95}.
 
-\subsection{Symmetric functions and Schur function}
+\subsection{Symmetric polynomials and Schur polynomials}
 
 We fix a positive integer $n$ and consider polynomials in the set of variables
-$\alphX_n:=\{x_0,\dots,x_{n-1}\}$. The symmetric group $\SG_n$ on
-$\{0,\dots,n-1\}$ acts on variable by permutation.
+$\alphX_n\eqdef\{x_0,\dots,x_{n-1}\}$. The symmetric group $\SG_n$ on
+$\{0,\dots,n-1\}$ acts on the variables by permutation.
 \begin{DEFN}
  A polynomial $f(x_0,\dots,x_{n-1})$ is symmetric if it is invariant by any
  permutation of the variables, that is for all permutation $\sigma\in\SG_n$,
  \begin{equation}
-   f^\sigma(\alphX) := f(x_{\sigma(0)}, x_{\sigma(1)}, \dots, x_{\sigma(n-1)}) = 
+   f^\sigma(\alphX)\eqdef f(x_{\sigma(0)}, x_{\sigma(1)}, \dots, x_{\sigma(n-1)}) = 
    f(x_{0}, x_{1}, \dots, x_{n-1})\,.
  \end{equation}
 \end{DEFN}
-The sum of two symmetric polynomial is symmetric as well as the product of a
-symmetric polynomial by a scalar or the product of two symmetric
-polynomial. Therefore they form a sub-algebra denoted $\sym(\alphX_n)$ of the
-algebra of polynomials.
+The the product of a symmetric polynomial by a scalar as well as the sum or
+the product of two symmetric polynomial is symmetric. Therefore they form a
+sub-algebra denoted $\sym(\alphX_n)$ of the algebra of polynomials.
 
 A natural basis of this algebra is given by the so-called monomial symmetric
 polynomials. They are defined as the sum of the orbit of a monomial under the
@@ -669,22 +823,22 @@ examples of monomial symmetric polynomials:
 \end{multline*}
 However, it appear in the theory that this simple basis has not that much
 interesting properties. On the contrary, one of the most important basis is
-the so-called \emph{Schur polynomials} They were first defined by Jacobi but
+the so-called \emph{Schur polynomials}. They were first defined by Jacobi but
 they are named in the honor of Schur who discovered their importance in the
 representation theory. The original definition of Jacobi is the following:
 \begin{DEFN}[Jacobi's definition of Schur function]
-  let $\lambda:=(\lambda_0\dots\lambda_{\ell-1})$ be a partition of length
-  $\ell$ at most $n$. We complete $\lambda$ by setting $\lambda_i:=0$ whenever
+  let $\lambda\eqdef(\lambda_0\dots\lambda_{\ell-1})$ be a partition of length
+  $\ell$ at most $n$. We complete $\lambda$ by setting $\lambda_i\eqdef0$ whenever
   $i\geq\ell$. Then
   \begin{equation}
-    s_{\lambda} (\alphX) :=
+    s_{\lambda} (\alphX) \eqdef
     \frac{1}{\Delta}\sum_{\sigma\in\SG_n}
     \sgn(\sigma)\ 
     (x_0^{\lambda_0 + n-1}x_1^{\lambda_1 + n-2}\cdots x_{n-1}^{\lambda_{n-1}})^\sigma
   \end{equation}
   where
   \begin{itemize}
-  \item $\Delta:=\prod_{0\leq i<j<n} (x_i - x_j)$ is the Vandermonde
+  \item $\Delta\eqdef\prod_{0\leq i<j<n} (x_i - x_j)$ is the Vandermonde
     determinant;
   \item $\sgn(\sigma)$ is $+1$ or $-1$ whether $\sigma$ is an
     even or odd permutations (the parity of the number of transpositions in a
@@ -693,7 +847,7 @@ representation theory. The original definition of Jacobi is the following:
 \end{DEFN}
 Note that the numerator sum is antisymmetric, meaning that it is multiplied by
 $\sgn(\mu)$ under the action of a permutation $\mu$.  This implies that the
-sum is divisible by $\Delta$ so that $s_\lambda$ is a proper polynomial. As
+sum is divisible by $\Delta$ so that $s_\lambda$ is a proper polynomial, as
 the quotient of two antisymmetric polynomials it is moreover
 symmetric. Furthermore it is simple to see that
 \begin{equation}
@@ -705,7 +859,7 @@ reverse lexicographic order on the exponents. As a consequence, the Schur
 polynomials are linearly independant and form a \emph{basis of the algebra of
   symmetric polynomials}.
 
-Interestingly enough, to prove the rulw, \emph{we did not need to formalize}
+Interestingly enough, to prove the rule, \emph{we did not need to formalize}
 this part of the theory. Indeed, we decide to chose a definition which has a
 more combinatorial feeling. This may looks like a kind of cheating. However,
 the equivalence of this definition with the combinatorial one is generally
@@ -716,15 +870,14 @@ proof. Also most of the paper dealing with the \LR rule start from the
 combinatorial definition.
 \begin{DEFN}[Combinatorial definition of Schur function]
 
-  let $\lambda:=(\lambda_0\dots\lambda_{\ell-1})$ be a partition of length
+  let $\lambda\eqdef(\lambda_0\dots\lambda_{\ell-1})$ be a partition of length
   $\ell$ at most $n$. For a tableau $t$ over the alphabet $\{0,\dots,n-1\}$ we
   denote $\alphX^t$ the product $\prod_{i\in t}x_i$ (equivalently it is the
   image of the row reading of $t$ under the morphism $i\mapsto x_i$ which
   sends non-commutative words to commutative monomials). Then
   \begin{equation}
-    s_\lambda(\alphX) := \sum_{t\ \mid\ \shape(t) = \lambda}  \alphX^\lambda\,.
+    s_\lambda(\alphX)\eqdef\sum_{t\ \mid\ \shape(t) = \lambda}  \alphX^t\,.
   \end{equation}
-  the sum being taken over all the tableau of shape $\lambda$.
 \end{DEFN}
 For example,
 \begin{gather*}
@@ -766,14 +919,14 @@ Again this is non trivial that these two set of tableaux are equinumerous.
 
 Another very important point is that all those computation are independant of
 the number of variables. More precisely, in the preceding example
-(Equation~\ref{eq:example_schur}), this equation is true for any number of
+Equation~\ref{eq:example_schur}) is true for any number of
 variables, the difference is that $s_\lambda(\alphX_n)$ and
-$m_\lambda(\alphX_n)$ vanishes if $\ell(\lambda) > n$.
+$m_\lambda(\alphX_n)$ both vanishes if $\ell(\lambda) > n$.
 \bigskip
 
 \MC defines univariate polynomials over an arbitrary commutative ring
 \verb{R}. So to define multivariate polynomials, we use recursive polynomials:
-$\var{R}[x_0,\dots,x_{n+1}]:=\var{R}[x_0,\dots,x_n][x_{n+1}]$. Recall
+$\var{R}[x_0,\dots,x_{n+1}]\eqdef\var{R}[x_0,\dots,x_n][x_{n+1}]$. Recall
 that \verb{'I_n} denote in \SSR the finite subType of integers
 $i < \var{n}$.
 \begin{lstlisting}
@@ -811,7 +964,7 @@ At last we come to the statement of the rule. They express the coefficient of
 the product (the so called structure constants) of the symmetric polynomials
 in the basis of Schur polynomials.
 \begin{DEFN}
-  Let $A$ be a algebra over a field $\K$ with a basis $B := (b_i)_{i\in I}$
+  Let $A$ be a algebra over a field $\K$ with a basis $B\eqdef(b_i)_{i\in I}$
   indexed by a set $I$. The \emph{structure constants of $A$ in the basis $B$}
   are the coefficients $C_{i,j}^k$ with $i,j,k\in I$ of the expansion of the
   product $b_i b_j= \sum_{k\in I} C_{i,j}^k b_k$.
@@ -903,7 +1056,7 @@ Lemma |*is_skew_reshape_tableauP*| P P1 (w : seq nat) :
                      shape tab = diff_shape P1 P & to_word tab = w])
     (is_skew_reshape_tableau P P1 w).
 \end{lstlisting}
-Now the \LR coefficient $X_{\var{P1},\var{P2}}^{\var{P}}$ is the cardinality of
+Now the \LR coefficient $C_{\var{P1},\var{P2}}^{\var{P}}$ is the cardinality of
 the set of Yamanouchi word of evaluation which are row reading of tableau of
 shape $\var{P}/\var{P1}$:
 \begin{lstlisting}
@@ -944,10 +1097,11 @@ efficient way of computing them will be presented in Section~\ref{implem}.
 
 \subsection{The idea of the proof: the noncommutative lifting}
 
-The main idea of the proof is to go to non-commutative polynomials that is to
-the free algebra. The \LR rule we be obtained as a commutative image of the
-so-called free \LR rule. We already defined Schur polynomials as some kind of
-commutative image. Indeed, the definition rewrites as
+Before going into detail, we present the central idea of the proof. It is to
+go to non-commutative polynomials that is to the free algebra. The \LR rule we
+be obtained as a commutative image of the so-called free \LR rule. We already
+defined Schur polynomials as some kind of commutative image. Indeed, the
+definition rewrites as
 \begin{equation}
   s_\lambda = \sum_{w \in \operatorname{RRT}(\lambda)}
   \comm(w) = \comm\left(\sum_{w \in \operatorname{RRT}(\lambda)} w\right)
@@ -960,17 +1114,17 @@ from word to standard tableau such that for all standard tableau $t$
 \begin{equation}
   \comm\left(\sum_{w\, \mid\, Q(w)=t} w\right) = s_{\shape(t)}\,.
 \end{equation}
-We call the sets $\freeS_t := \{w \mid Q(w)=t\}$ the \emph{free Schur
+We call the sets $\freeS_t\eqdef\{w \mid Q(w)=t\}$ the \emph{free Schur
   functions} (One usually rather give this name to the formal sum of its
 element as a lifting of the Schur function in the free algebra, whence the
 name).  Now the key fact is that the concatenation of two free Schur functions
 (that is the product in the free algebra) is a union of free Schur functions:
 \begin{THEO}[Free \LR rule]\label{theo:free-LR_rule}
-  For any two standard tableau $c$, $d$ there exists a set $\operatorname{LR}(c,
-  d)$ such that
+  For any two standard tableau $c$, $d$ there exists an explicit set
+  $\operatorname{LR}(c, d)$ such that
   \begin{equation}
     \label{eq:free-lr-rule}
-    \freeS_c\cdot\freeS_d := \{ u\cdot v \mid u\in \freeS_c, u\in \freeS_d \} =
+    \freeS_c\cdot\freeS_d\eqdef\{ u\cdot v \mid u\in \freeS_c, u\in \freeS_d \} =
     \bigsqcup_{t\in\operatorname{LR}(c, d)} \freeS_t\,.
   \end{equation}
 \end{THEO}
@@ -1065,20 +1219,13 @@ algorithm.
 \section{Schensted algorithm and the Robinson-Schensted bijection}
 
 \begin{DEFN}
-  Let $w = w_0\dots w_{l-1}$ a finite sequence over a totally ordered set. A
-  \emph{subsequence} of $w$ is a sequence $v=v_0\dots v_{r-1}$ such that there exists
-  a strictly increasing $r$-tuple of integer $I:=0<=i_0<i_1<\dots<i_{r-1}<l$
-  verifying for all $k<r$, $v_k = w_{i_k}$.
+  Let $w = w_0\dots w_{\ell-1}$ a finite sequence over a totally ordered set. A
+  \emph{subsequence} of $w$ is a sequence $v=v_0\dots v_{r-1}$ such that there
+  exists a strictly increasing $r$-tuple of integer
+  $I\eqdef0\leq i_0<i_1<\dots<i_{r-1}<\ell$ verifying for all $k<r$,
+  $v_k = w_{i_k}$.
 \end{DEFN}
-It is already defined in \SSR by the following boolean predicate:
-
-\begin{lstlisting}
-Fixpoint subseq s1 s2 :=
-  if s2 is y :: s2' then
-    if s1 is x :: s1' then subseq (if x == y then s1' else s1) s2' else true
-  else s1 == [::].
-\end{lstlisting}
-
+$v$ is a subsequence of $w$ is written \verb+subseq v w+ in \SSR.
 
 The main algorithmic ingredient of the proof is Schensted algorithms which
 solve efficiently the following problem
@@ -1125,6 +1272,12 @@ solve efficiently the following problem
 \label{implem}
 
 \section{Concluding remarks}
+
+\newpage
+\scriptsize
+\bibliographystyle{alphaurl}
+\bibliography{lrproof}
+\label{sec:biblio}
 
 \end{document}
 
