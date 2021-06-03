@@ -1215,8 +1215,8 @@ rewrite -addSn ltnNge leq_addl /= addnK.
 rewrite from_vct_accE !take_cat szvm ltnn subnn take0 cats0.
 rewrite drop_cat szvm ltnn subnn drop0.
 have {Htam0} Htam := Tamari_take Htam0.
-rewrite (from_vct_cat _ _ Htam) from_vct_accE.
-rewrite -{1 3}szvm take_size drop_size from_vct_acc_nil.
+rewrite (from_vct_cat _ _ Htam). from_vct_accE.
+rewrite -{1 3}szvm. take_size drop_size from_vct_acc_nil.
 rewrite from_vct_cat_leftE [X in rotations X]from_vct_cat_leftE.
 apply catleft_rotations.
 move: (from_vct_acc _ (take v0 _)) => tb.

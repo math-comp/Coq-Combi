@@ -126,19 +126,19 @@ apply/eqP; rewrite eqEcard; apply/andP; split.
   by rewrite cardsCs setCK card_setact.
 Qed.
 
-Lemma card_pcycle_neq0 s x : #|pcycle s x| != 0.
+Lemma card_porbit_neq0 s x : #|porbit s x| != 0.
 Proof using.
-by rewrite -lt0n card_gt0; apply/set0Pn; exists x; exact: pcycle_id.
+by rewrite -lt0n card_gt0; apply/set0Pn; exists x; exact: porbit_id.
 Qed.
 
-Lemma pcyclePmin s x y :
-  y \in pcycle s x -> exists2 i, i < #[s] & y = (s ^+ i) x.
+Lemma porbitPmin s x y :
+  y \in porbit s x -> exists2 i, i < #[s] & y = (s ^+ i) x.
 Proof using. by move=> /imsetP [z /cyclePmin[ i Hi ->{z}] ->{y}]; exists i. Qed.
 
-Lemma pcycleP s x y :
-  reflect (exists i, y = (s ^+ i) x) (y \in pcycle s x).
+Lemma porbitP s x y :
+  reflect (exists i, y = (s ^+ i) x) (y \in porbit s x).
 Proof using.
-apply (iffP idP) => [/pcyclePmin [i _ ->]| [i ->]]; last exact: mem_pcycle.
+apply (iffP idP) => [/porbitPmin [i _ ->]| [i ->]]; last exact: mem_porbit.
 by exists i.
 Qed.
 

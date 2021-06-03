@@ -122,7 +122,7 @@ Proof. by []. Qed.
 
 Lemma leqXpordP T : PartOrder.axiom (@leqX_op T).
 Proof. by case: T => ? [] /= base []. Qed.
-Arguments leqXpordP [T].
+Arguments leqXpordP {T}.
 
 Definition ltnX_op T m n := ((m != n) && (@leqX_op T m n)).
 
@@ -247,7 +247,7 @@ Export Order.Exports.
 
 Lemma leqX_total (T : ordType) : total (@leqX_op T).
 Proof. by case: T => ? [] /= base [] /= H T0; apply H. Qed.
-Arguments leqXpordP [T].
+Arguments leqXpordP {T}.
 
 
 (******************************************************************************)

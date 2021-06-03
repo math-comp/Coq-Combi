@@ -27,6 +27,7 @@ From mathcomp Require Import ssrfun eqtype ssrbool ssrnat seq.
 From mathcomp Require Import choice fintype finfun bigop ssrint rat ssralg ssrnum.
 Import GRing.
 Import Num.Theory.
+Import mc_1_10.Num.Theory.
 
 Local Open Scope ring_scope.
 
@@ -368,10 +369,10 @@ Program Instance Odistr (A:Type) : ord (distr A) :=
      Oeq := fun (f g : distr A) => Oeq (mu f) (mu g)}.
 Next Obligation.
 split; intuition.
-- by apply Num.Theory.ler_anti; rewrite H0 H1.
+- by apply ler_anti; rewrite H0 H1.
 - by rewrite H.
 - by rewrite H.
-- by move=> f g h H1 H2 x; apply: (Num.Theory.ler_trans (H1 x) (H2 x)).
+- by move=> f g h H1 H2 x; apply: (ler_trans (H1 x) (H2 x)).
 Defined.
 
 
@@ -537,7 +538,7 @@ Proof. exact: let_indep. Qed.
 Implicit Types (m : distr A) (f g : A -> bool).
 Lemma mu_bool_le1 m f : mu m (fun x => (f x)%:~R) <= 1%:~R.
 Proof.
-apply Num.Theory.ler_trans with (mu m (fun x => 1)).
+apply ler_trans with (mu m (fun x => 1)).
 - apply mu_monotonic => x.
   by case (f x) => //=.
 - by rewrite mu_prob => //=.
@@ -562,7 +563,7 @@ Lemma mu_bool_impl1 m f g :
   mu m (fun x => (f x)%:~R) = 1 ->  mu m (fun x => (g x)%:~R) = 1.
 Proof.
 move=> Hi Hf.
-apply Num.Theory.ler_anti.
+apply ler_anti.
 apply /andP; split; first by [].
 rewrite -[X in X <= _]Hf.
 exact: mu_bool_impl.
@@ -574,8 +575,8 @@ Lemma mu_bool_negb0 m f g :
   mu m (fun x => (g x)%:~R) = 0.
 Proof.
 move => Hi Hf.
-apply Num.Theory.ler_anti; apply /andP; split.
-- apply Num.Theory.ler_trans with (mu m (fun x : A => 1 - (f x)%:~R)).
+apply ler_anti; apply /andP; split.
+- apply ler_trans with (mu m (fun x : A => 1 - (f x)%:~R)).
   + apply mu_monotonic => x.
     by case: (f x) (Hi x); case (g x).
   + by rewrite mu_stable_inv Hf subrr.
@@ -596,9 +597,9 @@ Lemma mu_bool_negb1 m f g :
   mu m (fun x => (g x)%:~R) = 1.
 Proof.
 move => Hi Hf.
-apply Num.Theory.ler_anti; apply /andP; split.
+apply ler_anti; apply /andP; split.
 - by apply mu_stable_le1 => x /=; case (g x).
-  apply Num.Theory.ler_trans with (mu m (fun x : A => 1 - (f x)%:~R)).
+  apply ler_trans with (mu m (fun x : A => 1 - (f x)%:~R)).
   + by rewrite mu_stable_inv Hf subr0.
   + apply mu_monotonic => x.
     by move: (Hi x); case (f x); case (g x).
@@ -951,7 +952,7 @@ move => Ha.
 rewrite Finite_simpl finite_simpl big1_seq ?mul0r // => i.
 case (altP (i =P a)) => [-> /andP [H1 H2] | -].
 - move: Ha => [| Hco]; first by case: (a \in points d) H2.
-  by move: H1; rewrite Num.Theory.ltrNge /= Hco.
+  by move: H1; rewrite ltrNge /= Hco.
 - by rewrite mulr0.
 Qed.
 
@@ -983,7 +984,7 @@ Proof.
 exists (upoints p) (fun A => 1%:~R).
 case: p; case => [|a s _] //=.
 rewrite /weight big_cons /=.
-apply Num.Theory.ltr_le_trans with 1; first by [].
+apply ltr_le_trans with 1; first by [].
 rewrite Num.Theory.ler_addl.
 exact: weight_nonneg.
 Defined.

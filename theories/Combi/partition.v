@@ -528,7 +528,7 @@ Qed.
 Lemma rem_corner_incr_nth sh i :
   is_part sh -> is_add_corner sh i -> is_rem_corner (incr_nth sh i) i.
 Proof.
-rewrite /is_add_corner /is_rem_corner /= nth_incr_nth eq_refl add1n.
+rewrite /is_add_corner /is_rem_corner /= nth_incr_nth. 
 case: i => [/= | i].
   case: sh => [// | s0 [// | s1 s]] /= /andP [].
   by rewrite ltnS.
@@ -932,13 +932,13 @@ Lemma sumn_take_inj s t :
 Proof.
 elim: s t => [//= t _ | s0 s IHs t].
 - move/part_head_non0; case: t => [//= | t0 t] /= Ht0 IHs.
-  exfalso; move/(_ 1) : IHs; rewrite take0 /= addn0 => H.
+  exfalso; move/(_ 1) : IHs; rewrite /= take0 /= addn0 => H.
   by rewrite H eq_refl in Ht0.
 - case: t s IHs => [s _ Hs _ /(_ 1) | t0 t] /=.
   + rewrite take0 /= addn0 => Hs0.
     by exfalso; move/part_head_non0 : Hs; rewrite Hs0.
   + move=> s IHs /is_part_consK Hps /is_part_consK Hpt /= Heq.
-    have:= Heq 1; rewrite !take0 /= !addn0 => Ht0; subst t0.
+    have:= Heq 1; rewrite /= !take0 /= !addn0 => Ht0; subst t0.
     congr (s0 :: _); apply: (IHs _ Hps Hpt).
     move=> k; move/(_ k.+1) : Heq.
     by move=> /= /eqP; rewrite eqn_add2l => /eqP.
@@ -1580,7 +1580,7 @@ Lemma merge_sortedE l k :
   is_part l -> is_part k -> merge geq l k = sort geq (l ++ k).
 Proof.
 rewrite !is_part_sortedE => /andP [sortl _] /andP [sortk _].
-apply (eq_sorted (leT := geq)) => //.
+apply (sorted_eq (leT := geq)) => //.
 - apply: merge_sorted => //.
 - exact: sort_sorted.
 - by rewrite perm_merge perm_sym perm_sort.
@@ -1728,9 +1728,8 @@ elim: t i => [i _| t0 t IHt i /andP [Hhead Hpart]] /=.
   by rewrite addn0 max0n.
 move/(_ _ Hpart): IHt => /=.
 set mrgx := fix mrgx (s : seq nat) := _; move mrgx before x => Hrec.
-case: (leqP x t0) => [/maxn_idPl Hxt0 | /ltnW /maxn_idPr Hxt0];
+case: (leqP t0 x) => [/maxn_idPr Hxt0 | /ltnW /maxn_idPl Hxt0];
   case: i => [|i]; rewrite /= ?take0 /= ?addn0 ?Hxt0 //.
-- by rewrite Hrec [x + (t0 + _)]addnC -addnA -addn_maxr [_ + x]addnC.
 - rewrite [x + (t0 + _)]addnC -addnA -addn_maxr [_ + x]addnC.
   congr (t0 + _); apply esym; apply/maxn_idPr.
   move: Hxt0 => /maxn_idPr/(leq_trans Hhead).
@@ -1739,6 +1738,7 @@ case: (leqP x t0) => [/maxn_idPl Hxt0 | /ltnW /maxn_idPr Hxt0];
   + by rewrite take0 !addn0.
   + rewrite [x + (t0 + _)]addnC -addnA leq_add2l addnC.
     exact: (IHt i Hpart (leq_trans Hhead Ht0)).
+- by rewrite Hrec [x + (t0 + _)]addnC -addnA -addn_maxr [_ + x]addnC.
 Qed.
 
 Lemma merge_cons x s t :
@@ -1749,7 +1749,7 @@ move=> Hxs Ht.
 have Hs := is_part_consK Hxs.
 have Hx : is_part [:: x] by rewrite /= lt0n (part_head_non0 Hxs).
 rewrite (merge_sortedE Hxs Ht) (merge_sortedE Hx) ?merge_is_part //=.
-apply (eq_sorted (leT := geq)) => //; try exact: sort_sorted.
+apply (sorted_eq (leT := geq)) => //; try exact: sort_sorted.
 by rewrite perm_sort perm_sym perm_sort perm_cons perm_merge.
 Qed.
 
@@ -1923,7 +1923,7 @@ case: sh => sh.
 rewrite /is_part_of_n /= is_part_sortedE => /andP [/eqP shsum /andP [shsort]].
 move=> /(ex_setpart_shape shsum) [P [Puniq Ppart Psh]].
 exists [set X in P]; first exact: Ppart.
-apply (eq_sorted (leT := geq)) => //.
+apply (sorted_eq (leT := geq)) => //.
 - exact: sort_sorted.
 - rewrite /setpart_shape -Psh perm_sort; apply: perm_map.
   apply: (uniq_perm (enum_uniq _) Puniq) => x.
