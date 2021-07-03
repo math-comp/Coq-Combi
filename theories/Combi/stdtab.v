@@ -193,7 +193,7 @@ elim: t lb =>[/= | t0 t IHt /=].
   by exfalso; have:= Hj 0 (ltn0Sn _); rewrite ltnXnn.
 - case => [/= _| lb Hj /=]; first by rewrite last_rcons eq_refl.
   rewrite (ltnX_eqF (Hj 0 (ltn0Sn _))).
-  have {Hj} Hj j : j < lb -> last b (nth [::] t j) <A b by apply (Hj j.+1).
+  have {}Hj j : j < lb -> last b (nth [::] t j) <A b by apply (Hj j.+1).
   by rewrite (IHt _ Hj).
 Qed.
 
@@ -377,18 +377,18 @@ case: (altP ((last l0 t0) =P n)).
   subst tn => Hrow Hdom Htab' _ /=.
   rewrite to_word_cons cat_uniq allLeq_catE => /andP [] Ht' _ /and3P [] _.
   rewrite -all_predC => /allP /= Hall _.
-  have {Hall} /Hall Hn : n \in l0 :: rcons t0 n.
+  have {}/Hall Hn : n \in l0 :: rcons t0 n.
     by rewrite inE mem_rcons inE eq_refl orbT.
   move: Hrow; rewrite -rcons_cons Htab' andbT => /is_row_rconsK /= -> /=.
   split; last by rewrite /append_nth /=.
   case: t' Ht' Hn Hdom Htab' => [//= | t1 t'].
   rewrite to_word_cons allLeq_catE => /andP [] _ Ht1.
   rewrite mem_cat negb_or => /andP [] _ Hn /=.
-  have {Ht1 Hn} Ht1 : allLtn t1 n.
+  have {Hn}Ht1 : allLtn t1 n.
     elim: t1 Ht1 Hn => [//= | l1 t1 IHt1] /= /andP [] Hl1 /IHt1{IHt1} Hrec.
     rewrite inE negb_or => /andP [] Hl1n /Hrec ->.
     by rewrite andbT /ltnX_op Hl1 eq_sym Hl1n.
-  rewrite -rcons_cons; move: (l0 :: t0) => {l0 t0} t0.
+  rewrite -rcons_cons; move: (l0 :: t0) => {l0}t0.
   rewrite !dominate_recE => Hdom _.
   elim: t1 t0 Ht1 Hdom => [| l1 t1 IHt1] [|l0 t0] //=.
     by move=> /andP [/ltnXW]; rewrite leqXNgtnX => /negbTE ->.
@@ -413,7 +413,7 @@ case: (altP ((last l0 t0) =P n)).
       by rewrite inE => /eqP ->; rewrite eq_refl.
     rewrite orFb -/(is_row (l0 :: _)).
     rewrite -rcons_cons last_rcons.
-    move: (l0 :: t0) => {l0 t0} t0 /= Hn Htnn /is_rowP Hrow.
+    move: (l0 :: t0) => {l0}t0 /= Hn Htnn /is_rowP Hrow.
     have Hind := nth_index 0 Hn.
     move: Hn; rewrite -index_mem size_rcons ltnS => Hsz.
     have {Hrow} /(Hrow 0) : index n (rcons t0 tn) <= size t0 < size (rcons t0 tn).
@@ -679,7 +679,7 @@ Qed.
 Definition hyper_stdtabsh := StdtabSh hyper_stdtabsh_subproof.
 
 End StdtabOfShape.
-Hint Resolve stdtabshP.
+#[export] Hint Resolve stdtabshP : core.
 
 Section StdtabCombClass.
 
@@ -881,7 +881,7 @@ apply/andP; split.
   rewrite -nth_shape shape_conj_tab -(conj_ltnE Hp) nth_shape => Hjsz.
   rewrite -!/(get_tab _ _ _) !(get_conj_tab Hp).
   have:= Htab => /is_tableauP [] _ _ Hdom.
-  move: Hj; rewrite leq_eqVlt => /orP [/eqP -> //|] /Hdom/dominateP [] _ {Hdom} Hdom.
+  move: Hj; rewrite leq_eqVlt => /orP [/eqP -> //|] /Hdom/dominateP [] _ {}Hdom.
   by have /= := ltnXW (Hdom _ Hjsz); apply.
 - move=> j1 j2 Hj.
   apply/dominateP; split.
@@ -951,4 +951,4 @@ Lemma card_stdtabsh_conj_part (sh : intpart) :
   #|{:stdtabsh [the intpart of conj_part sh]}| = #|{:stdtabsh sh}|.
 Proof. by symmetry; apply: (bij_card (conj_stdtabsh_bij sh)). Qed.
 
-Hint Resolve stdtabnP stdtabshP.
+#[export] Hint Resolve stdtabnP stdtabshP : core.

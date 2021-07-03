@@ -110,10 +110,10 @@ Canonical nat_repr : reprS n n := MxRepresentation nat_mx_repr.
 
 End DefTrivSign.
 
-Arguments triv_mx_repr [n].
-Arguments triv_repr [n].
-Arguments sign_mx_repr [n].
-Arguments sign_repr [n].
+Arguments triv_mx_repr {n}.
+Arguments triv_repr {n}.
+Arguments sign_mx_repr {n}.
+Arguments sign_repr {n}.
 
 
 Lemma row_free1 : row_free (1 : 'M[algC]_1).
@@ -139,7 +139,7 @@ Lemma triv_sign_not_sim n :
 Proof.
   case: n => // n; rewrite ltnS => Hn [B _].
   rewrite row_free_unit => /mulrI HB Hsim.
-  have {Hsim} /Hsim : ('s_0) \in 'SG_n.+1 by [].
+  have {}/Hsim : ('s_0) \in 'SG_n.+1 by [].
   rewrite /triv_repr /sign_repr /triv_mx /sign_mx /= mul1mx (odd_eltr Hn).
   rewrite -[LHS]mulmx1 => /HB/eqP; rewrite -addr_eq0 -mulr2n => /eqP.
   apply/matrixP => /(_ ord0 ord0).

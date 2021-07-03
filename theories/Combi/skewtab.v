@@ -344,7 +344,7 @@ move=> Hinn Hout; apply (iffP idP).
   by move=> /andP [H0 /IHinn{IHinn}Hrec] [//= | i]; exact: Hrec.
 - elim: inner Hinn outer Hout => [| inn0 inn IHinn] Hinn /=
                                  [| out0 out] Hout //= H.
-  + have:= H 0 => /andP []; rewrite nth_nil leqn0 => /eqP {H} H _.
+  + have:= H 0 => /andP []; rewrite nth_nil leqn0 => /eqP {}H _.
     have:= part_head_non0 (is_part_consK Hout).
     by rewrite -nth0; case: out H {Hout} => //= out1 out' ->.
   + move/part_head_non0 : Hinn; move/(_ 0) : H.
@@ -368,9 +368,9 @@ move=> Hinn Hout; apply (iffP idP) => [Hstrip|].
     elim: out H i => [_ i| out1 out IHout] /=.
       by rewrite nth_default.
     by move=> /andP [] /eqP -> /IHout{IHout} Hrec; case.
-  + by move=> /andP [H0 /IHout{IHout}Hrec]
-               /andP [Hout /Hrec{Hrec}Hrec]
-               /andP [Hinn /Hrec{Hrec}Hrec] [|i] //=.
+  + by move=> /andP [H0 {}/IHout Hrec]
+              /andP [Hout {}/Hrec Hrec]
+              /andP [Hinn {}/Hrec Hrec] [|i] //=.
 - elim: outer inner Hout Hinn => [| out0 out IHout].
   + case => //= inn0 inn _ /= /andP [Habs Hinn] H; exfalso.
     move/(_ 0) : H => /= /andP []; rewrite leqn0 => /eqP Hinn0 _.
@@ -388,8 +388,8 @@ move=> Hinn Hout; apply (iffP idP) => [Hstrip|].
       have:= H 0 => /= -> /=.
       apply: IHout; last exact: (is_part_consK Hpart).
       by move=> i; exact: H i.+1.
-    * move: Hpart => /andP [] H0 /IHout{IHout}Hrec
-                      /andP [] _  /Hrec{Hrec}Hrec H.
+    * move: Hpart => /andP [] H0 {}/IHout Hrec
+                      /andP [] _ {}/Hrec Hrec H.
       have := H 0 => /= -> /=.
       apply Hrec => i.
       exact: H i.+1.
@@ -755,7 +755,7 @@ apply/and4P; rewrite subSS; split.
   rewrite cat_path Hpath {Hpath} /=.
   case: t0 Hrowt0 => //= m0 t0 /= Hpath Hall.
   apply/andP; split; last exact Hpath.
-  have {Hall} /Hall /andP [] : m0 \in m0 :: t0 by rewrite in_cons eq_refl.
+  have {}/Hall /andP [] : m0 \in m0 :: t0 by rewrite in_cons eq_refl.
   case/lastP: s0 => [/ltnXW //= | s0 sn] /= _.
   by rewrite last_rcons /allLtn all_rcons /= => /andP [] /ltnXW.
 - move=> {IHs Hrows0 Hrowt0 Hnnils0 Hszt0 Halls}.
@@ -776,7 +776,7 @@ apply/and4P; rewrite subSS; split.
     move: Halls0; rewrite !to_word_cons.
     rewrite !all_cat => /andP [/andP [_ Hallt1] Hallt0].
     move/dominateP => [Hszt Hdomt] _ {s t}.
-    have {Hszt} Hszt : size s1 + size t1 <= size s0 + size t0.
+    have {}Hszt : size s1 + size t1 <= size s0 + size t0.
       by move: Hszt; rewrite size_drop (subnBA _ Hszs) leq_subLR addnC.
     apply/dominateP; split; first by rewrite !size_cat.
     rewrite size_cat => i Hi.

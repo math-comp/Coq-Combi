@@ -46,9 +46,9 @@ Definition gtn_trans : transitive gtn :=
 Definition gtn_irr : irreflexive gtn :=
   fun x => ltnn x.
 
-Hint Resolve leq_total leq_trans anti_leq.
-Hint Resolve geq_refl geq_total geq_trans anti_geq.
-Hint Resolve ltn_trans ltn_irr gtn_trans gtn_irr.
+#[export] Hint Resolve leq_total leq_trans anti_leq : core.
+#[export] Hint Resolve geq_refl geq_total geq_trans anti_geq : core.
+#[export] Hint Resolve ltn_trans ltn_irr gtn_trans gtn_irr : core.
 
 End LeqGeqOrder.
 

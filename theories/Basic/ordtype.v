@@ -130,6 +130,7 @@ Prenex Implicits leqX_op leqXpordP ltnX_op.
 
 (** Declare legacy Arith operators in new scope. *)
 
+Declare Scope ssr_nat_scope.
 Delimit Scope ssr_nat_scope with ssr_nat.
 
 Notation "m <= n" := (le m n) : ssr_nat_scope.
@@ -140,6 +141,7 @@ Notation "m > n" := (gt m n) : ssr_nat_scope.
 (** Rebind scope delimiters, reserving a scope for the "recursive",     *)
 (** i.e., unprotected version of operators.                             *)
 
+Declare Scope ord_scope.
 Delimit Scope ord_scope with Ord.
 Open Scope ord_scope.
 
@@ -643,7 +645,7 @@ Proof using.
 have:= @leqXpordP T.
 by rewrite /PartOrder.axiom /reflexive => [] [] refl _ _.
 Qed.
-Hint Resolve leqXnn.
+Hint Resolve leqXnn : core.
 
 Lemma ltnXnn n : n < n = false.
 Proof using. by rewrite /ltnX_op eq_refl. Qed.
@@ -818,7 +820,7 @@ Qed.
 
 End OrdTheory.
 
-Hint Resolve leqXnn ltnXnn ltnXW.
+#[export] Hint Resolve leqXnn ltnXnn ltnXW : core.
 Prenex Implicits maxX minX.
 
 
@@ -1009,7 +1011,7 @@ Proof using. by rewrite /allLtn all_cat. Qed.
 Lemma maxL_perm a u b v : perm_eq (a :: u) (b :: v) -> maxL a u = maxL b v.
 Proof using.
 move/permP => Hperm.
-have {Hperm} Hperm : forall x, (x \in (a :: u)) = (x \in (b :: v)).
+have {}Hperm : forall x, (x \in (a :: u)) = (x \in (b :: v)).
   move=> x; move/(_ (xpred1 x)) : Hperm => Hperm.
   by apply/idP/idP => /count_memPn H; apply/count_memPn;
     rewrite ?Hperm // -?Hperm.
@@ -1418,12 +1420,12 @@ move=> Hpos.
 case: (altP (i =P pos)) => [-> {i} | Hipos].
   by rewrite nth_cat size_takel // ltnn subnn.
 rewrite /shiftinv_pos nth_cat size_take.
-case (ltnP pos (size s)) => [{Hpos} Hpos | Hpos2].
+case (ltnP pos (size s)) => [{}Hpos | Hpos2].
 - case: (ltnP i pos) => Hi; first by rewrite (nth_take _ Hi).
-  have {Hi Hipos} Hi : pos < i by rewrite ltn_neqAle eq_sym Hipos Hi.
+  have {Hipos}Hi : pos < i by rewrite ltn_neqAle eq_sym Hipos Hi.
   case: i Hi => //= i; rewrite ltnS => Hi.
   by rewrite (subSn Hi) /= nth_drop (subnKC Hi).
-- have {Hpos Hpos2} Hpos : pos = size s by apply anti_leq; rewrite Hpos Hpos2.
+- have {Hpos2}Hpos : pos = size s by apply anti_leq; rewrite Hpos Hpos2.
   subst pos.
   case: (ltnP i (size s)) => Hisz; first by rewrite (nth_take _ Hisz).
   have {Hipos Hisz} : size s < i by rewrite ltn_neqAle eq_sym Hisz Hipos.

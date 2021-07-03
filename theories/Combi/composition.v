@@ -77,7 +77,7 @@ Canonical intcomp_countType :=
 Lemma intcompP (p : intcomp) : is_comp p.
 Proof. by case: p. Qed.
 
-Hint Resolve intcompP.
+#[export] Hint Resolve intcompP : core.
 
 Fixpoint enum_compn_rec aux n : (seq (seq nat)) :=
   if aux is aux'.+1 then
@@ -130,7 +130,7 @@ move=> Hn.
 case: (altP (n =P 0)) => [-> //| neq0].
 apply/allP => /= lst /flatten_mapP [/= i].
 rewrite mem_iota add1n ltnS => /andP [lt0i lein] /mapP [/= s Hs] ->{lst}.
-have {IHaux} /IHaux/allP/(_ s Hs)/= : n - i <= aux.
+have {}/IHaux/allP/(_ s Hs)/= : n - i <= aux.
   rewrite leq_subLR; apply (leq_trans Hn).
   case: i lt0i {lein Hs} => // i _.
   by rewrite addSnnS; apply leq_addl.
@@ -202,7 +202,7 @@ Canonical intcompn_subFinType := Eval hnf in [subFinType of intcompn].
 Lemma intcompnP (p : intcompn) : is_comp p.
 Proof using . by case: p => /= p /andP []. Qed.
 
-Hint Resolve intcompnP.
+Hint Resolve intcompnP : core.
 
 Definition intcomp_of_intcompn (p : intcompn) := IntComp (intcompnP p).
 Coercion intcomp_of_intcompn : intcompn >-> intcomp.
@@ -250,11 +250,11 @@ Fact colcompnP d : is_comp_of_n d (colcomp d).
 Proof. by elim: d => [| d ]. Qed.
 Canonical colcompn d : intcompn d := IntCompN (colcompnP d).
 
-(* TODO : bijection with set and cardinality 
+(* TODO : bijection with set and cardinality
 Lemma card_intcompn n : #|{:intcompn n}| = 2 ^ (n.-1).
 *)
 
-Hint Resolve intcompP intcompnP.
+#[export] Hint Resolve intcompP intcompnP : core.
 
 Lemma part_of_comp_subproof n (c : intcompn n) :
   is_part_of_n n (sort geq c).

@@ -291,56 +291,56 @@ pose y := inr ((s.2 ^+ i) a).
 by rewrite (_: rshift _ _ = unsplit (y _)) // unsplitK.
 Qed.
 
-Lemma pcycle_tinj_lshift s a :
-  pcycle (tinj s) (lshift n a) = imset (lshift n) (mem (pcycle s.1 a)).
+Lemma porbit_tinj_lshift s a :
+  porbit (tinj s) (lshift n a) = imset (lshift n) (mem (porbit s.1 a)).
 Proof using.
 apply/setP => /= Y.
-apply/pcycleP/imsetP => /= [[i ->]|[y]].
-- exists ((s.1 ^+ i) a); first by apply /pcycleP; exists i.
+apply/porbitP/imsetP => /= [[i ->]|[y]].
+- exists ((s.1 ^+ i) a); first by apply /porbitP; exists i.
   exact: expg_tinj_lshift.
-- move /pcycleP => [i ->] ->.
+- move /porbitP => [i ->] ->.
   by exists i; rewrite expg_tinj_lshift.
 Qed.
 
-Lemma pcycle_tinj_rshift s a :
-  pcycle (tinj s) (rshift m a) = imset (@rshift m n) (mem (pcycle s.2 a)).
+Lemma porbit_tinj_rshift s a :
+  porbit (tinj s) (rshift m a) = imset (@rshift m n) (mem (porbit s.2 a)).
 Proof using.
 apply/setP => /= Y.
-apply/pcycleP/imsetP => /= [[i ->]|[y]].
-- exists ((s.2 ^+ i) a); first by apply /pcycleP; exists i.
+apply/porbitP/imsetP => /= [[i ->]|[y]].
+- exists ((s.2 ^+ i) a); first by apply /porbitP; exists i.
   exact: expg_tinj_rshift.
-- move /pcycleP => [i ->] ->.
+- move /porbitP => [i ->] ->.
   by exists i; rewrite expg_tinj_rshift.
 Qed.
 
-Lemma pcycles_tinj s :
-  pcycles (tinj s) =
-  [set (@lshift m n) @: x | x : {set 'I_m} in pcycles s.1]
+Lemma porbits_tinj s :
+  porbits (tinj s) =
+  [set (@lshift m n) @: x | x : {set 'I_m} in porbits s.1]
     :|:
-    [set (@rshift m n) @: x | x : {set 'I_n} in pcycles s.2].
+    [set (@rshift m n) @: x | x : {set 'I_n} in porbits s.2].
 Proof using.
-apply/setP => S; rewrite /pcycles inE.
+apply/setP => S; rewrite /porbits inE.
 apply/imsetP/orP => [[x _ ->{S}] | [] /imsetP [T /imsetP [x _] ->{T}] ->{S}].
 - rewrite -(splitK x); case: splitP => j _ {x}.
-  + left; apply/imsetP; exists (pcycle s.1 j) => /=; first exact: mem_imset.
-    exact: pcycle_tinj_lshift.
-  + right; apply/imsetP; exists (pcycle s.2 j) => /=; first exact: mem_imset.
-    exact: pcycle_tinj_rshift.
-  - by exists (lshift n x); rewrite // pcycle_tinj_lshift.
-  - by exists (rshift m x); rewrite // pcycle_tinj_rshift.
+  + left; apply/imsetP; exists (porbit s.1 j) => /=; first exact: imset_f.
+    exact: porbit_tinj_lshift.
+  + right; apply/imsetP; exists (porbit s.2 j) => /=; first exact: imset_f.
+    exact: porbit_tinj_rshift.
+  - by exists (lshift n x); rewrite // porbit_tinj_lshift.
+  - by exists (rshift m x); rewrite // porbit_tinj_rshift.
 Qed.
 
 
 Lemma cycle_type_tinj s : ct (tinj s) = ct s.1 +|+ ct s.2.
 Proof using.
 apply val_inj; rewrite union_intpartnE cast_intpartnE /=.
-rewrite pcycles_tinj setpart_shape_union; first last.
+rewrite porbits_tinj setpart_shape_union; first last.
   rewrite -setI_eq0; apply/eqP/setP => S.
   rewrite !inE; apply/negP => /andP [].
   move=> /imsetP [X /imsetP [x _ ->]] -> {X}.
   move=> /imsetP [X /imsetP [y _ ->]].
   move/setP => /(_ (lshift n x)).
-  rewrite mem_imset; last exact: pcycle_id.
+  rewrite imset_f; last exact: porbit_id.
   move=> /esym/imsetP => [] [z _] /eqP.
   by rewrite (negbTE (lrshift_neq _ _)).
 by congr sort; rewrite /ct !cast_intpartnE /=; congr (_ ++ _);
@@ -384,7 +384,7 @@ Lemma tinjA (s : 'S_m) (t : 'S_n) (u : 'S_p) :
 Proof using.
 apply/permP => /= itmp.
 rewrite -(splitK itmp) !permE.
-case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= -cast_permE.
+case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= cast_permE.
 - rewrite -(splitK i) !permE.
   case: splitP => j _ {i}; rewrite /tinjval !unsplitK /=.
   + rewrite [cast_ord (esym _) _](_ : _ = unsplit (inl j));
@@ -559,7 +559,7 @@ Qed.
 Lemma neq0zcoeff (k : nat) (p : 'P_k) : 'z_p != 0.
 Proof using. by rewrite zcoeffE pnatr_eq0 neq0zcard. Qed.
 
-Hint Resolve neq0zcoeff.
+Hint Resolve neq0zcoeff : core.
 
 Definition ncfuniCT (k : nat) (p : 'P_k) := 'z_p *: '1_[p].
 
@@ -652,4 +652,4 @@ End Induction.
 Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 Notation "''1z_[' p ]" := (ncfuniCT p)  (format "''1z_[' p ]").
 
-Hint Resolve neq0zcoeff.
+#[export] Hint Resolve neq0zcoeff : core.

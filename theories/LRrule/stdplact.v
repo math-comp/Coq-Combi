@@ -68,13 +68,13 @@ have:= eq_inv_std (u ++ [:: a; c; b] ++ w).
 rewrite Hstd {Hstd} => /eq_invP [Hsize Hinv].
 have:= Hinv (size u) (size u).+2.
 set Hyp := (X in (X -> _ ) -> _) => Hinvab.
-have {Hyp Hinvab} /Hinvab : Hyp.
+have {Hyp} /Hinvab : Hyp.
   rewrite /Hyp (leq_trans (leqnSn _) (leqnSn _)) /= size_cat /=.
   by rewrite -2!addSnnS -{1}[(size u).+2]addn0 ltn_add2l.
 rewrite {3 4}Hsz !nth_sizeu !nth_sizeu2 => <-.
 move/(_ (size u).+1 (size u).+2): Hinv.
 set Hyp := (X in (X -> _ ) -> _) => Hinvbc.
-have {Hyp Hinvbc} /Hinvbc : Hyp.
+have {Hyp}/Hinvbc : Hyp.
   rewrite /Hyp (ltn_trans (ltnSn _) (ltnSn _)) /= size_cat /=.
   by rewrite -2!addSnnS -{1}[(size u).+2]addn0 ltn_add2l.
 rewrite {3 4}Hsz !nth_sizeu1 !nth_sizeu2 ltnXNgeqX => <-.
@@ -102,13 +102,13 @@ have:= eq_inv_std (u ++ [:: b; a; c] ++ w).
 rewrite Hstd {Hstd} => /eq_invP [Hsize Hinv].
 have:= Hinv (size u) (size u).+2.
 set Hyp := (X in (X -> _ ) -> _) => Hinvab.
-have {Hyp Hinvab} /Hinvab : Hyp.
+have {Hyp}/Hinvab : Hyp.
   rewrite /Hyp (leq_trans (leqnSn _) (leqnSn _)) /= size_cat /=.
   by rewrite -2!addSnnS -{1}[(size u).+2]addn0 ltn_add2l.
 rewrite {3 4}Hsz !nth_sizeu !nth_sizeu2 => <-.
 move/(_ (size u) (size u).+1): Hinv.
 set Hyp := (X in (X -> _ ) -> _) => Hinvbc.
-have {Hyp Hinvbc} /Hinvbc : Hyp.
+have {Hyp}/Hinvbc : Hyp.
   rewrite /Hyp (leqnSn _) /= size_cat /=.
   by rewrite -addSnnS -{1}[(size u).+1]addn0 ltn_add2l.
 rewrite {3 4}Hsz !nth_sizeu !nth_sizeu1 ltnXNgeqX => <-.
@@ -288,7 +288,7 @@ rewrite (eq_filter (a2 := mem [set val2pos x | x in p])) //.
 move: H; rewrite (eq_map (f2 := fun i : 'I_(_) => nth (size t) s i)); first last.
   by move=> i /=; exact: tnth_nth.
 set l := (X in sorted _ X); rewrite -[RHS]/l.
-move=> H; apply: (eq_sorted (leT := leq)).
+move=> H; apply: (sorted_eq (leT := leq)).
 - exact: leq_trans.
 - by move=> i j H1; apply/eqP; rewrite eqn_leq.
 - apply: (subseq_sorted leq_trans (s2 := map val (enum 'I_(size t)))).
@@ -312,7 +312,7 @@ move=> H; apply: (eq_sorted (leT := leq)).
     * rewrite mem_filter => /andP [/= Hj _ -> {i}].
       apply/mapP; exists (Ordinal (linvseq_ltn_szt Hinvst (ltn_ord j))); last by [].
       rewrite mem_filter; apply/andP; split => /=; last by rewrite mem_enum.
-      by rewrite /val2pos; rewrite mem_imset.
+      by rewrite /val2pos; rewrite imset_f.
 Qed.
 
 Lemma ksupp_inj_invseq k : ksupp_inj leqX leqX k s t.

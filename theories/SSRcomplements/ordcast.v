@@ -41,11 +41,12 @@ Proof. by apply: val_inj => //=; rewrite nth_enum_ord. Qed.
 
 Section Casts.
 
+(* TODO: remove me *)
 Lemma cast_erefl n : cast_ord (erefl n) =1 id.
-Proof. by move=> i; apply/eqP; rewrite /eq_op /=. Qed.
+Proof. exact: cast_ord_id. Qed.
 
 Lemma cast_eq m n i j (H : m = n) :
-  ((cast_ord H i) == (cast_ord H j)) = (i == j).
+  (cast_ord H i == cast_ord H j) = (i == j).
 Proof. by subst m; rewrite !cast_erefl. Qed.
 
 Lemma sym_cast_eq m n i j :

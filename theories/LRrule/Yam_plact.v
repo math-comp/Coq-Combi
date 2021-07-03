@@ -97,11 +97,11 @@ elim => [/= | a0 aw /= IHaw].
     move=> /and4P [H1 H2 Hpart ->]; rewrite Hpart.
     rewrite incr_nthC H1 !andbT /=.
     case (ltnP a.+1 c) => Hac; first by rewrite (is_part_incr_nthE Hac).
-    have {Hab} Hab : a = b.
+    have {}Hab : a = b.
       apply/eqP; rewrite eqn_leq Hab /= -ltnS.
       exact: (leq_trans Hbc).
     subst a.
-    have {Hbc Hac} Hbc : c = b.+1.
+    have {Hac}Hbc : c = b.+1.
       by apply/eqP; rewrite eqn_leq Hbc Hac.
     subst c.
     by rewrite -is_part_incr_nth1E.
@@ -111,11 +111,11 @@ elim => [/= | a0 aw /= IHaw].
     move=> /and4P []; rewrite incr_nthC => H1 H2 Hpart Hyam.
     rewrite Hpart Hyam H1 !andbT /=.
     case (ltnP a.+1 c) => Hac; first by rewrite -(is_part_incr_nthE Hac Hpart).
-    have {Hab} Hab : a = b.
+    have {}Hab : a = b.
       apply/eqP; rewrite eqn_leq Hab /= -ltnS.
       exact: (leq_trans Hbc).
     subst a.
-    have {Hbc Hac} Hbc : c = b.+1.
+    have {Hac}Hbc : c = b.+1.
       by apply/eqP; rewrite eqn_leq Hbc Hac.
     subst c; subst yc.
     rewrite incr_nthC is_part_incr_nth1E; first exact Hpart.
@@ -127,10 +127,10 @@ elim => [/= | a0 aw /= IHaw].
     rewrite Hyam H1 H2 !andbT /= {H1}.
     case (ltnP a.+1 c) => Hac.
       by rewrite (is_part_incr_nthE Hac (is_part_eval_yam Hyam)).
-    have {Hbc} Hbc : b = c.
+    have {}Hbc : b = c.
       by apply/eqP; rewrite eqn_leq Hbc /=; exact: (leq_trans Hac).
     subst b.
-    have {Hac Hab} Hac : c = a.+1.
+    have {Hab}Hac : c = a.+1.
       by apply/eqP; rewrite eqn_leq Hac Hab.
     subst c.
     by rewrite -(is_part_incr_nth1E _ (is_part_eval_yam Hyam)).
@@ -140,10 +140,10 @@ elim => [/= | a0 aw /= IHaw].
     rewrite Hyam H1 H2 !andbT /=.
     case (ltnP a.+1 c) => Hac.
       by rewrite -(is_part_incr_nthE Hac (is_part_eval_yam Hyam)).
-    have {Hbc} Hbc : b = c.
+    have {}Hbc : b = c.
       by apply/eqP; rewrite eqn_leq Hbc /=; exact: (leq_trans Hac).
     subst b.
-    have {Hac Hab} Hac : c = a.+1.
+    have {Hab}Hac : c = a.+1.
       by apply/eqP; rewrite eqn_leq Hac Hab.
     subst c.
     apply (is_part_incr_nth (is_part_eval_yam Hyam)) => /=.
@@ -255,7 +255,7 @@ have {Hdom} /= := Hdom 0 (ltn0Sn _).
 rewrite ltnXnatE => Hl0.
 elim: tn l0 Hl0 Hrow => [/= | l1 tn /= IHtn] l0 Hl0; rewrite leqXnatE => /andP [].
   move=> Hl0ln _.
-  have {Hl0} Hl0: l0 = (size sh).+1.
+  have {}Hl0 : l0 = (size sh).+1.
     apply/eqP; rewrite eqn_leq Hl0 andbT.
     exact: (leq_trans Hl0ln).
   rewrite Hl0; congr [:: _; _].

@@ -107,7 +107,10 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Import LeqGeqOrder.
+
 Open Scope nat_scope.
+Declare Scope Combi_scope.
 Delimit Scope Combi_scope with Combi.
 Open Scope Combi_scope.
 
@@ -155,7 +158,7 @@ rewrite cat_uniq; apply/and3P; split.
 - set l0 := (X in uniq X) in IHs.
   rewrite [X in uniq X](_ : _ = [seq (x.1.+1, x.2) | x <- l0]); first last.
     rewrite /l0 {l0 IHs} map_flatten; congr flatten.
-    rewrite -(addn0 1) iota_addl -!map_comp; apply eq_map => r /=.
+    rewrite -(addn0 1) iotaDl -!map_comp; apply eq_map => r /=.
     rewrite -!map_comp; apply eq_map => c /=.
     by rewrite add1n.
   rewrite map_inj_uniq; first exact IHs.
@@ -1204,7 +1207,7 @@ Proof. by case: p. Qed.
 Lemma intpart_sorted (p : intpart) : sorted geq p.
 Proof. by have:= intpartP p; rewrite is_part_sortedE => /andP []. Qed.
 
-Hint Resolve intpartP intpart_sorted.
+#[export] Hint Resolve intpartP intpart_sorted : core.
 
 Canonical conj_intpart p := IntPart (is_part_conj (intpartP p)).
 
@@ -1380,7 +1383,7 @@ Proof using. by case: p => /= p /andP []. Qed.
 Lemma intpartn_sorted (p : 'P) : sorted geq p.
 Proof. by have:= intpartnP p; rewrite is_part_sortedE => /andP []. Qed.
 
-Hint Resolve intpartnP intpartn_sorted.
+Hint Resolve intpartnP intpartn_sorted : core.
 
 Definition intpart_of_intpartn (p : 'P) := IntPart (intpartnP p).
 Coercion intpart_of_intpartn : intpartn >-> intpart.
@@ -1473,7 +1476,7 @@ move=> Hall; apply val_inj => /=.
 case: la Hall => la /= /andP [/eqP].
 elim: d la => [|d IHd] /= la Hsum Hla; first by rewrite (part0 Hla).
 case: la Hsum Hla => //= l0 la Hsum.
-move=> /andP [_ /IHd{IHd}Hrec] /andP [/eqP Hl0 /Hrec{Hrec}Hrec].
+move=> /andP [_ {}/IHd Hrec] /andP [/eqP Hl0 {}/Hrec Hrec].
 subst l0; congr (_ :: _); apply Hrec.
 by move: Hsum; rewrite add1n => [[]].
 Qed.
@@ -1540,11 +1543,11 @@ Lemma size_enum_partnsk sm sz mx :
   size (enum_partnsk sm sz mx) = (intpartnsk_nb sm sz mx).
 Proof.
 elim: sz sm mx => [ [] | sz IHsz] //= sm mx.
-rewrite size_flatten /shape -[1]addn0 iota_addl -!map_comp.
+rewrite size_flatten /shape -[1]addn0 iotaDl -!map_comp.
 rewrite (eq_map (f2 := fun i => intpartnsk_nb (sm - i.+1) sz i.+1)); first last.
   by move=> i /=; rewrite size_map IHsz.
 elim: (minn sm mx) => [//= | n IHn].
-by rewrite -{1}[n.+1]addn1 iota_add add0n map_cat sumn_cat IHn /= addn0.
+by rewrite -{1}[n.+1]addn1 iotaD add0n map_cat sumn_cat IHn /= addn0.
 Qed.
 
 Lemma size_enum_partns sm sz : size (enum_partns sm sz) = (intpartns_nb sm sz).
@@ -1554,7 +1557,7 @@ Lemma size_enum_partn sm : size (enum_partn sm) = intpartn_nb sm.
 Proof.
 rewrite /intpartn_nb /enum_partn size_flatten /shape.
 elim: (sm.+1) => [//= | n IHn].
-rewrite -{1}[n.+1]addn1 iota_add add0n !map_cat sumn_cat IHn /= addn0.
+rewrite -{1}[n.+1]addn1 iotaD add0n !map_cat sumn_cat IHn /= addn0.
 by rewrite size_enum_partns.
 Qed.
 
@@ -1563,7 +1566,7 @@ Proof.
 by rewrite [#|_|]cardT -(size_map val) /= enum_intpartnE -size_enum_partn.
 Qed.
 
-Hint Resolve intpartP intpart_sorted intpartnP intpartn_sorted.
+#[export] Hint Resolve intpartP intpart_sorted intpartnP intpartn_sorted : core.
 
 
 (** * The union of two integer partitions *)
@@ -1684,7 +1687,7 @@ Proof. by apply/partdomP. Qed.
 Lemma partdom_refl : reflexive partdom.
 Proof. by move=> s1; apply/partdomP. Qed.
 
-Hint Resolve partdom_nil partdom_refl.
+#[export] Hint Resolve partdom_nil partdom_refl : core.
 
 Lemma partdom_trans : transitive partdom.
 Proof.
@@ -1866,8 +1869,8 @@ Proof using.
 rewrite /setpart_shape => /and3P [/eqP Hcov Htriv Hnon0].
 rewrite /is_part_of_n /= is_part_sortedE.
 apply/and3P; split.
-- by rewrite sumn_sort -sumnE big_map -big_enum -Hcov.
-- by apply sort_sorted => m n.
+- by rewrite sumn_sort sumnE big_map big_enum -Hcov.
+- exact: sort_sorted.
 - move: Hnon0; apply contra.
   rewrite mem_sort => /mapP [x].
   by rewrite mem_enum => Hx /esym/cards0_eq <-.

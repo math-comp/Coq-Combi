@@ -30,7 +30,7 @@ Unset Printing Implicit Defensive.
 
 Prenex Implicits nat_of_ord.
 
-Hint Resolve nth_nil addn0.
+#[export] Hint Resolve nth_nil addn0 : core.
 
 Lemma leq_addE m1 m2 n1 n2 :
   m1 <= m2 -> n1 <= n2 -> m1 + n1 = m2 + n2 -> m1 = m2 /\ n1 = n2.
@@ -40,16 +40,6 @@ suff Hmeq : m1 = m2 by split => //; move: H; rewrite Hmeq => /addnI.
 apply anti_leq; rewrite Hm /=.
 by have:= leq_sub2l (m1 + n1) Hn; rewrite {1}H !addnK.
 Qed.
-
-Lemma nseqD T n1 n2 (x : T):
-  nseq (n1 + n2) x = nseq n1 x ++ nseq n2 x.
-Proof. by rewrite cat_nseq /nseq /ncons iter_add. Qed.
-
-Lemma rev_nseq T n (x : T) : rev (nseq n x) = nseq n x.
-Proof.
-by elim: n => [// | n IHn]; rewrite -{1}(addn1 n) nseqD rev_cat IHn.
-Qed.
-
 
 
 (** ** [rcons] and [cons] related lemmas *)
@@ -105,9 +95,13 @@ by move=> /eqP [->].
 Qed.
 
 Lemma rcons_nilF s l : ((rcons s l) == [::]) = false.
-Proof using. case eqP=>//= H; have:= eq_refl (size (rcons s l)). by rewrite {2}H size_rcons. Qed.
+Proof using.
+case eqP=>//= H; exfalso.
+by have:= eq_refl (size (rcons s l)); rewrite {2}H size_rcons.
+Qed.
 
-Lemma count_mem_rcons w l i : count_mem i (rcons w l) = count_mem i w + (l == i).
+Lemma count_mem_rcons w l i :
+  count_mem i (rcons w l) = count_mem i w + (l == i).
 Proof using. by rewrite -count_rev rev_rcons /= count_rev addnC. Qed.
 
 (** ** [set_nth] related lemmas *)
@@ -157,12 +151,6 @@ Lemma sumn_mapE (T : Type) (s : seq T) (f : T -> nat) :
   \sum_(i <- s) f i = sumn [seq f i | i <- s].
 Proof. by rewrite sumn_map_condE filter_predT. Qed.
 
-Lemma sumnE s : \sum_(i <- s) i = sumn s.
-Proof. by rewrite sumn_mapE map_id. Qed.
-
-Lemma perm_sumn l1 l2 : perm_eq l1 l2 -> sumn l1 = sumn l2.
-Proof. rewrite -!sumnE; exact: perm_big. Qed.
-
 Lemma sumn_take r s : sumn (take r s) = \sum_(0 <= i < r) nth 0 s i.
 Proof.
 elim: r s => [|r IHr] s /=.
@@ -172,7 +160,7 @@ case: s => [| s0 s] /=.
   rewrite big_const_nat subn0.
   by elim: r.
 rewrite IHr /index_iota !subn0 /= big_cons /=.
-congr (_ + _); rewrite -add1n iota_addl big_map.
+congr (_ + _); rewrite -add1n iotaDl big_map.
 exact: eq_bigr.
 Qed.
 
@@ -240,7 +228,18 @@ Lemma big_nat_0cond n f :
   \big[op/idx]_(0 <= i < n) f i = \big[op/idx]_(0 <= i < n | (i < n)%N) f i.
 Proof. by rewrite !big_mkord; apply eq_bigl => i; rewrite ltn_ord. Qed.
 
+Lemma big_enum_cond (I : finType) (A : {pred I}) (P : pred I) F :
+  \big[op/idx]_(i <- enum A | P i) F i = \big[op/idx]_(i in A | P i) F i.
+Proof.
+by rewrite -big_filter_cond.
+Qed.
+
+Lemma big_enum (I : finType) (A : {pred I}) F :
+  \big[op/idx]_(i <- enum A) F i = \big[op/idx]_(i in A) F i.
+Proof. by rewrite big_enum_cond big_andbC. Qed.
+
 End BigInterv.
+
 
 
 Section Enum.
@@ -263,45 +262,22 @@ rewrite -mem_enum => Hx Hnil.
 by rewrite Hnil in_nil in Hx.
 Qed.
 
-Variables (R : Type) (idx : R) (op : R -> R -> R) (F : T -> R).
-
-Lemma big_enum (P : pred T) :
-  \big[op/idx]_(x in P) F x = \big[op/idx]_(x <- enum P) F x.
-Proof. by rewrite /index_enum big_filter; apply congr_big. Qed.
-
 End Enum.
-
-
 
 
 (* New lemmas *)
 Lemma sumn_sort l S : sumn (sort S l) = sumn l.
 Proof using. by have:= perm_sort S l => /permPl/perm_sumn. Qed.
 
-
-Lemma count_nseq (T : eqType) (P : pred T) n x :
-  count P (nseq n x) = (P x) * n.
-Proof.
-rewrite (eq_in_count (a2 := fun => P x)); last by move=> i /nseqP [->].
-case: (boolP (P x)) => HPx; rewrite /= ?mul0n ?count_pred0 //.
-by rewrite ?mul1n ?0count_predT size_nseq.
-Qed.
-
 Section ImsetInj.
 
 Implicit Type T : finType.
 
-Lemma set1_disjoint T (i j : T) : [set i] != [set j] -> [disjoint [set i] & [set j]].
+Lemma set1_disjoint T (i j : T) :
+  [set i] != [set j] -> [disjoint [set i] & [set j]].
 Proof.
 move=> Hneq; rewrite /disjoint; apply/pred0P => l /=; apply: negbTE.
 by rewrite !in_set1; move: Hneq; apply: contra => /andP [/eqP -> /eqP ->].
-Qed.
-
-Lemma mem_imset_inj T1 T2 (f : T1 -> T2) (i : T1) (s : {set T1}) :
-  injective f -> (f i) \in f @: s = (i \in s).
-Proof.
-move=> H; apply/idP/idP; last exact: mem_imset.
-by move/imsetP => [j Hj /H ->].
 Qed.
 
 Lemma map_filter_comp (T1 T2: Type) (l : seq T1) (PP : pred T2) (F : T1 -> T2) :
@@ -316,7 +292,7 @@ Lemma subset_imsetK T1 T2 (f : T1 -> T2) (s t : {set T1}):
   injective f -> f @: s \subset f @: t -> s \subset t.
 Proof.
 move=> Hinj /subsetP H.
-by apply/subsetP => x /(mem_imset f) /(H _) /imsetP [y Hy /Hinj ->].
+by apply/subsetP => x /(imset_f f) /(H _) /imsetP [y Hy /Hinj ->].
 Qed.
 
 Lemma imset_inj T1 T2 (f : T1 -> T2) :
@@ -333,8 +309,8 @@ Lemma imset_trivIset T1 T2 (F : T1 -> T2) (P : {set {set T1}}) :
 Proof.
 move=> Hinj /trivIsetP Htriv.
 apply/trivIsetP => A B /imsetP [FA FAP -> {A}] /imsetP [FB FBP -> {B}] Hneq.
-have {Hneq} Hneq : FA != FB by move: Hneq; apply: contra => /eqP ->.
-have:= Htriv _ _ FAP FBP Hneq; rewrite -!setI_eq0 -imsetI.
+have {Hneq} neqFAFB : FA != FB by move: Hneq; apply: contra => /eqP ->.
+have:= Htriv _ _ FAP FBP neqFAFB; rewrite -!setI_eq0 -imsetI.
 - by move=> /eqP ->; rewrite imset0.
 - by move=> i j _ _ /=; exact: Hinj.
 Qed.
@@ -344,8 +320,8 @@ Lemma preimset_trivIset T1 T2 (F : T1 -> T2) (P : {set {set T2}}) :
 Proof.
 move=> Hinj /trivIsetP Htriv.
 apply/trivIsetP => A B /imsetP [FA FAP -> {A}] /imsetP [FB FBP -> {B}] Hneq.
-have {Hneq} Hneq : FA != FB by move: Hneq; apply: contra => /eqP ->.
-have:= Htriv _ _ FAP FBP Hneq; rewrite -!setI_eq0 -preimsetI => /eqP ->.
+have {Hneq} neqFAFB : FA != FB by move: Hneq; apply: contra => /eqP ->.
+have:= Htriv _ _ FAP FBP neqFAFB; rewrite -!setI_eq0 -preimsetI => /eqP ->.
 by rewrite preimset0.
 Qed.
 
@@ -364,58 +340,6 @@ Lemma uniq_next (T : eqType) (p : seq T) : uniq p -> injective (next p).
 Proof using.
 move=> Huniq x y Heq.
 by rewrite -(prev_next Huniq x) Heq prev_next.
-Qed.
-
-
-
-Lemma take_take (T : Type) i j (s : seq T) :
-  i <= j -> take i (take j s) = take i s.
-Proof.
-elim: s i j => [// | a s IHs] [|i] [|j] //=.
-by rewrite ltnS => /IHs ->.
-Qed.
-
-Lemma takeC (T : Type) i j (s : seq T) :
-  take i (take j s) = take j (take i s).
-Proof.
-wlog i_le_j : i j / i <= j.
-  by move=> Hwlog; case: (leqP i j) => [|/ltnW] /Hwlog ->.
-rewrite take_take // [RHS]take_oversize // size_take.
-by case: ltnP => // /leq_trans; apply.
-Qed.
-
-Lemma take_drop (T : Type) i j (s : seq T) :
-  take i (drop j s) = drop j (take (i + j) s).
-Proof.
-elim: j s => [|j IHs] s /=; first by rewrite !drop0 addn0.
-by case: s => [// | a s]; rewrite addnS /=.
-Qed.
-
-Lemma take_addn (T : Type) (s : seq T) n m :
-  take (n + m) s = take n s ++ take m (drop n s).
-Proof.
-elim: n m s => [|n IHs] [|m] [|a s] //; first by rewrite take0 addn0 cats0.
-by rewrite drop_cons addSn !take_cons /= IHs.
-Qed.
-
-Lemma take_nseq (T : Type) i j (x : T) :
-  i <= j -> take i (nseq j x) = nseq i x.
-Proof.
-move=>/subnK <-; move: (j-i) => d.
-by rewrite addnC nseqD take_size_cat // size_nseq.
-Qed.
-
-Lemma take_iota k m n : take k (iota m n) = iota m (minn k n).
-Proof.
-rewrite /minn; case: ltnP=> H; last by apply: take_oversize; rewrite size_iota.
-elim: k n H m => [//= | k IHk]; first by case.
-by case=> //= n H m; rewrite IHk.
-Qed.
-
-Lemma drop_iota k m n : drop k (iota m n) = iota (m + k) (n - k).
-Proof.
-elim: k m n => [/= | k IHk] m n /=; first by rewrite addn0; case: n.
-by case: n => [//= | n] /=; rewrite IHk addSn addnS subSS.
 Qed.
 
 Lemma mem_takeP (T : eqType) x0 x k (s : seq T) :
@@ -443,7 +367,7 @@ case: (ltnP k n) => Hk.
 - elim: k n Hk => [//= | k IHk] n Hk /=.
   + by rewrite (eq_filter (a2 := pred0)) // filter_pred0.
   + case: n Hk => [//= | n] Hk /=.
-    rewrite -[1]addn0 !iota_addl (IHk _ Hk).
+    rewrite -[1]addn0 !iotaDl (IHk _ Hk).
     by rewrite filter_map /= -!map_comp.
 - rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT map_id.
   move=> i /=; rewrite mem_iota add0n => /andP [_ H2].
@@ -491,21 +415,9 @@ Section LRShift.
 
 Variables (m n : nat).
 
-Lemma lshift_inj : injective (@lshift m n).
-Proof using.
-by move=> [i Hi] [j Hj] /eqP H; apply/eqP; move: H; rewrite !/eq_op /=.
-Qed.
-Lemma rshift_inj : injective (@rshift m n).
-Proof using.
-by move=> [i Hi] [j Hj] /eqP H; apply/eqP; move: H; rewrite !/eq_op /= eqn_add2l.
-Qed.
-
+(* TODO: remove me *)
 Lemma lrshift_neq i j : @lshift m n i != @rshift m n j.
-Proof using.
-apply/negP; move: i j => [i Hi] [j Hj].
-rewrite /eq_op /= => /eqP H.
-by move: Hi; rewrite H ltnNge leq_addr.
-Qed.
+Proof using. by rewrite eq_lrshift. Qed.
 
 End LRShift.
 
@@ -561,19 +473,3 @@ End SetPartition.
 
 Notation "#{ x }" :=  #|(x : {set _})|
                       (at level 0, x at level 10, format "#{ x }").
-
-
-From mathcomp Require Import ssralg ssrint rat ssrnum.
-
-Import GRing.Theory.
-Import Num.Theory.
-
-Local Open Scope ring_scope.
-
-Lemma iter_plus1 n : (iter n (+%R (1 : rat)) 0 = n%:~R)%R.
-Proof.
-elim: n => [//= | n IHn] /=.
-by rewrite -add1n PoszD IHn mulrzDl.
-Qed.
-
-

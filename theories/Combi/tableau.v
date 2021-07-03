@@ -142,7 +142,7 @@ Lemma dominate_recE : dominate =2 dominate_rec.
 Proof using.
 rewrite /dominate; elim=> [//| u0 u IHu] [//| v0 v] /=.
 rewrite -IHu ltnS [RHS]andbA [LHS]andbA [_&& (v0 <A u0)]andbC; congr (_ && _).
-by rewrite -add1n iota_addl all_map; apply eq_all => i.
+by rewrite -add1n iotaDl all_map; apply eq_all => i.
 Qed.
 
 Lemma dominateP u v :
@@ -386,7 +386,7 @@ Lemma row_dominate (u v : seq T) :
 Proof using.
 case: u => [//= | u0 u] /=.
 case: v => [//= | v0 v] /= /order_path_min Hpath.
-have {Hpath} /Hpath /allP Hall : transitive (@leqX_op T)
+have {}/Hpath /allP Hall : transitive (@leqX_op T)
   by move=> i j k; apply leqX_trans.
 rewrite dominate_recE /= => /andP [Habs]; exfalso.
 have /Hall : v0 \in u ++ v0 :: v by rewrite mem_cat in_cons eq_refl /= orbT.
@@ -698,7 +698,7 @@ Definition tabrowconst := TabSh (tabrowconst_subproof).
 
 End FinType.
 
-Hint Resolve tabshP.
+#[export] Hint Resolve tabshP : core.
 
 (** ** Tableaux and increasing maps *)
 Section IncrMap.
@@ -731,7 +731,7 @@ Lemma incr_tab (t : seq (seq T1)) :
 Proof.
 move=> Hincr.
 have Hndecr := in_incrX_nondecrXE Hincr.
-have {Hincr} Hincr := in_incrXE Hincr.
+move/in_incrXE in Hincr.
 apply/is_tableau_getP/is_tableau_getP;
   rewrite ?shape_incr_tab=> [] [H1 H2 H3]; split => // r c Hrc1;
   have Hrc : is_in_shape (shape t) r c by apply: (is_in_part_le H1 Hrc1).

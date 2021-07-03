@@ -13,6 +13,8 @@
 Set Implicit Arguments.
 (* Require Export Setoid. *)
 Require Export Arith.
+From Coq Require Import Lia.
+
 Require Import Coq.Classes.SetoidTactics.
 Require Import Coq.Classes.SetoidClass.
 Require Import Coq.Classes.Morphisms.
@@ -41,26 +43,26 @@ Add Parametric Morphism (A:Type) : (@ifte A)
   with signature (eq ==>eq ==> eq ==> eq) as ifte_morphism1.
 Proof.
   trivial.
-Qed.  
+Qed.
 
 Add Parametric Morphism (A:Type) x : (@ifte A x)
   with signature (eq ==> eq ==> eq) as ifte_morphism2.
 Proof.
   trivial.
-Qed.  
+Qed.
 
 Add Parametric Morphism (A:Type) x y : (@ifte A x y)
   with signature (eq ==> eq) as ifte_morphism3.
 Proof.
   trivial.
-Qed.  
+Qed.
 
 (** ** Definition of iterator [compn]
    [compn f u n x] is defined as (f (u (n-1)).. (f (u 0) x)) *)
 
-Fixpoint compn (A:Type)(f:A -> A -> A) (x:A) (u:nat -> A) (n:nat) {struct n}: A := 
+Fixpoint compn (A:Type)(f:A -> A -> A) (x:A) (u:nat -> A) (n:nat) {struct n}: A :=
    match n with O => x | (S p) => f (u p) (compn f x u p) end.
-      
+
 Lemma comp0 : forall (A:Type) (f:A -> A -> A) (x:A) (u:nat -> A), compn f x u 0 = x.
 trivial.
 Qed.
@@ -72,22 +74,22 @@ Qed.
 
 (** ** Reducing if constructs *)
 
-Lemma if_then : forall (P:Prop) (b:{ P }+{ ~ P })(A:Type)(p q:A), 
+Lemma if_then : forall (P:Prop) (b:{ P }+{ ~ P })(A:Type)(p q:A),
       P -> (if b then p else q) = p.
 destruct b; simpl; intuition.
 Qed.
 
-Lemma if_else : forall (P :Prop) (b:{ P }+{ ~ P })(A:Type)(p q:A), 
+Lemma if_else : forall (P :Prop) (b:{ P }+{ ~ P })(A:Type)(p q:A),
       ~P -> (if b then p else q) = q.
 destruct b; simpl; intuition.
 Qed.
 
-Lemma if_then_not : forall (P Q:Prop) (b:{ P }+{ Q })(A:Type)(p q:A), 
+Lemma if_then_not : forall (P Q:Prop) (b:{ P }+{ Q })(A:Type)(p q:A),
       ~ Q -> (if b then p else q) = p.
 destruct b; simpl; intuition.
 Qed.
 
-Lemma if_else_not : forall (P Q:Prop) (b:{ P }+{ Q })(A:Type)(p q:A), 
+Lemma if_else_not : forall (P Q:Prop) (b:{ P }+{ Q })(A:Type)(p q:A),
       ~P -> (if b then p else q) = q.
 destruct b; simpl; intuition.
 Qed.
@@ -104,7 +106,7 @@ Qed.
 Lemma class_false : class False.
 unfold class; intuition.
 Qed.
-Hint Resolve class_neg class_false.
+#[export] Hint Resolve class_neg class_false : core.
 
 Definition orc (A B:Prop) := forall C:Prop, class C -> (A -> C) -> (B -> C) -> C.
 
@@ -116,12 +118,12 @@ Lemma orc_right : forall A B:Prop, B -> orc A B.
 red;intuition.
 Qed.
 
-Hint Resolve orc_left orc_right.
+#[export] Hint Resolve orc_left orc_right : core.
 
 Lemma class_orc : forall A B, class (orc A B).
 repeat red; intros.
 apply H0; red; intro.
-apply H; red; intro. 
+apply H; red; intro.
 apply H3; apply H4; auto.
 Qed.
 
@@ -142,7 +144,7 @@ apply H; red; intro.
 intuition.
 Qed.
 
-Definition exc (A :Type)(P:A -> Prop) := 
+Definition exc (A :Type)(P:A -> Prop) :=
    forall C:Prop, class C -> (forall x:A, P x -> C) -> C.
 
 Lemma exc_intro : forall (A :Type)(P:A -> Prop) (x:A), P x -> exc P.
@@ -152,7 +154,7 @@ Qed.
 Lemma class_exc : forall (A :Type)(P:A -> Prop), class (exc P).
 repeat red; intros.
 apply H0; clear H0; red; intro.
-apply H; clear H; red; intro H2. 
+apply H; clear H; red; intro H2.
 apply H2; intros; auto.
 apply H0; apply (H1 x); auto.
 Qed.
@@ -171,7 +173,7 @@ Lemma not_and_elim_right : forall A B, ~ (A /\ B) -> B -> ~A.
 intuition.
 Qed.
 
-Hint Resolve class_orc class_and class_exc excluded_middle.
+#[export] Hint Resolve class_orc class_and class_exc excluded_middle : core.
 
 Lemma class_double_neg : forall P Q: Prop, class Q -> (P -> Q) -> ~ ~ P -> Q.
 intros.
@@ -195,11 +197,11 @@ unfold feq; intros.
 transitivity (g x); auto.
 Qed.
 
-Hint Resolve feq_refl.
-Hint Immediate feq_sym.
-Hint Unfold feq.
+#[export] Hint Resolve feq_refl : core.
+#[export] Hint Immediate feq_sym : core.
+#[export] Hint Unfold feq : core.
 
-Add Parametric Relation (A B : Type) : (A -> B) (feq (A:=A) (B:=B)) 
+Add Parametric Relation (A B : Type) : (A -> B) (feq (A:=A) (B:=B))
   reflexivity proved by (feq_refl (A:=A) (B:=B))
   symmetry proved by (feq_sym (A:=A) (B:=B))
   transitivity proved by (feq_trans (A:=A) (B:=B))
@@ -211,7 +213,7 @@ Lemma CompSpec_rect : forall (A : Type) (eq lt : A -> A -> Prop) (x y : A)
        (P : comparison -> Type),
        (eq x y -> P Eq) ->
        (lt x y -> P Lt) ->
-       (lt y x -> P Gt) 
+       (lt y x -> P Gt)
     -> forall c : comparison, CompSpec eq lt x y c -> P c.
 intros A eq lt x y P Peq Plt1 Plt2; destruct c; intro.
 apply Peq; inversion H; auto.
@@ -226,12 +228,12 @@ Lemma dec_sig_lt : forall P : nat -> Prop, (forall x, {P x}+{ ~ P x})
   -> forall n, {i | i < n /\ P i}+{forall i, i < n -> ~ P i}.
 intros P Pdec.
 induction n.
-right; intros; exfalso; omega.
+right; intros; exfalso; lia.
 destruct IHn as [(i,(He1,He2))|Hn]; auto.
 left; exists i; auto.
 destruct (Pdec n) as [HP|HnP].
 left; exists n; auto.
-right; intros; assert (i < n \/ i = n) as [H1|H2]; subst; auto; try omega.
+right; intros; assert (i < n \/ i = n) as [H1|H2]; subst; auto; try lia.
 Defined.
 
 Lemma dec_exists_lt : forall P : nat -> Prop, (forall x, {P x}+{ ~ P x})
@@ -251,7 +253,7 @@ right; intro Heq; apply H1.
 injection Heq; trivial.
 Defined.
 
-Lemma nat_compare_specT 
+Lemma nat_compare_specT
    : forall x y : nat, CompareSpecT (x = y) (x < y)%nat (y < x)%nat (Nat.compare x y).
 intros; apply CompareSpec2Type.
 apply Nat.compare_spec.
@@ -284,37 +286,33 @@ Lemma N2Nat_inj_pos : forall n, (0 < n)%N -> (0 < N.to_nat n)%nat.
 unfold N.lt; intros n; rewrite N2Nat.inj_compare.
 rewrite <- nat_compare_lt; trivial.
 Qed.
-Hint Resolve N2Nat_inj_lt N2Nat_inj_pos N2Nat_inj_le.
+#[export] Hint Resolve N2Nat_inj_lt N2Nat_inj_pos N2Nat_inj_le : core.
 
 Lemma Nsucc_pred_pos: forall n : N, (0 < n)%N -> N.succ (N.pred n) = n.
 intros; apply N.lt_succ_pred with (0%N); trivial.
 Qed.
-Hint Resolve Nsucc_pred_pos.
+#[export] Hint Resolve Nsucc_pred_pos : core.
 
 Lemma Npos : forall n, (0 <= n)%N.
 destruct n; discriminate.
 Qed.
-Hint Resolve Npos.
+#[export] Hint Resolve Npos : core.
 
 Lemma Neq_lt_0 : forall n, (n=0)%N \/ (0<n)%N.
 intros; destruct (N.lt_eq_cases 0 n) as (Heq,_); intros.
 destruct Heq; auto.
 Qed.
-Hint Resolve Neq_lt_0.
+#[export] Hint Resolve Neq_lt_0 : core.
 
 Lemma Nlt0_le1 : forall n, (0<n)%N -> (1<=n)%N.
 intros; change (N.succ 0 <= n)%N; rewrite N.le_succ_l; auto.
 Qed.
-Hint Immediate Nlt0_le1.
+#[export] Hint Immediate Nlt0_le1 : core.
 
 (* Tactic to deal with closed inequalities on N *)
 Ltac Nineq :=
-     match goal with 
+     match goal with
       |- (N.le ?n ?m) => compute; discriminate
     | |- (N.lt ?n ?m) => compute; reflexivity
     | |- ~ (eq (A:=N) ?n ?m) => rewrite <- N.compare_eq_iff; compute; discriminate
     end.
-
-
-
-

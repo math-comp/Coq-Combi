@@ -60,6 +60,12 @@ Reserved Notation "''M[' l ']'"
 
 
 Local Notation algCF := [numFieldType of algC].
+Local Lemma char0_rat : [char rat] =i pred0.
+Proof. exact: Num.Theory.char_num. Qed.
+Local Lemma char0_algC : [char algC] =i pred0.
+Proof. exact: Num.Theory.char_num. Qed.
+#[local] Hint Resolve char0_algC char0_rat : core.
+
 
 (** * Definition and basic properties *)
 Section NVar.
@@ -249,7 +255,7 @@ have -> : 'hh[(IntPartN Hlla)] = 'hh[rowpartn l0] *h 'hh[(IntPartN Hla)]
   have:= part_head_non0 Hpart => /=.
   move: Hpart; rewrite is_part_sortedE => /andP [Hsort _].
   case: l0 Hsort {Hd} => // l0 Hsort _.
-  apply (eq_sorted (leT := geq)) => //; first exact: sort_sorted.
+  apply (sorted_eq (leT := geq)) => //; first exact: sort_sorted.
   by rewrite perm_sym perm_sort /=.
 rewrite -Fchar_triv -(Fchar_invK Hdla 'hh[(IntPartN Hla)]).
 rewrite -Fchar_ind_morph (FcharK Hd).
@@ -260,7 +266,7 @@ Qed.
 End Character.
 
 End NVar.
-Hint Resolve leqSpred.
+#[local] Hint Resolve leqSpred : core.
 
 Arguments Fchar nvar0 [n] f.
 Arguments Fchar_inv nvar0 [n] p.

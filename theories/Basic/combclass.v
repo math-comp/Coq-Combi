@@ -53,9 +53,9 @@ End BijCard.
 Lemma sum_count_mem (T : finType) (P : pred T) l :
   \sum_(i | P i) (count_mem i) l = count P l.
 Proof.
-rewrite -size_filter -(eq_filter (mem_enum P)).
-rewrite -big_filter filter_index_enum.
-elim: (enum P) (enum_uniq P) => [_ | p1 p IHp].
+have [s H1 [H2 H3] /= [H4 H5]]:= big_enumP P.
+rewrite -size_filter -H1 -(eq_filter H3).
+elim: s H2 {H1 H3 H4 H5} => [_ | p1 p IHp].
   rewrite big_nil (eq_filter (a2 := pred0)); first by rewrite filter_pred0.
   by move=> i /=; apply: in_nil.
 rewrite big_cons => /= /andP [] Hp1 /IHp{IHp} ->.

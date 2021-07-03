@@ -110,7 +110,7 @@ Lemma is_dominant_partm m :
   m \is dominant -> partm m = [seq d <- m | d != 0] :> seq nat.
 Proof.
 rewrite unfold_in partmE => Hsort.
-apply: (eq_sorted (leT := geq)) => //.
+apply: (sorted_eq (leT := geq)) => //.
 - exact: sort_sorted.
 - exact: sorted_filter.
 - by rewrite perm_sort.
@@ -160,7 +160,7 @@ apply/seq.permP => P.
 have H s : size s <= n ->
            count P [multinom nth 0 s i | i < n] =
            count P s + \sum_(i < n | (P 0) && ~~(i < size s)) 1.
-  move=> {Hsz} Hsz.
+  move=> {}Hsz.
   rewrite -!sum1_count /= big_map enumT -/(index_enum _).
   rewrite (bigID (fun i : 'I_n => i < size s)) /=; congr (_ + _).
   - rewrite (big_nth 0) big_mkord.
@@ -188,7 +188,7 @@ Qed.
 
 Lemma sumn_mpart sh : size sh <= n -> sumn (mpart sh) = sumn sh.
 Proof.
-move=> Hsz; rewrite /mpart Hsz -!sumnE big_tuple.
+move=> Hsz; rewrite /mpart Hsz !sumnE big_tuple.
 rewrite (eq_bigr (fun i : 'I_n => nth 0 sh i)); first last.
   by move=> i _; rewrite tnth_mktuple.
 rewrite (big_nth 0) big_mkord (big_ord_widen _ _ Hsz).
@@ -198,7 +198,7 @@ Qed.
 
 Lemma sumn_partm m : sumn (partm m) = mdeg m.
 Proof.
-rewrite -sumnE.
+rewrite sumnE.
 wlog: m / m \is dominant.
   move=> Hdom; have Hperm := partm_permK m.
   rewrite /mdeg (perm_big _ Hperm) /= -/(mdeg _).
@@ -235,7 +235,7 @@ Qed.
 End MonomPart.
 
 Arguments mpart [n] s.
-Arguments dominant [n].
+Arguments dominant {n}.
 
 
 Import GRing.Theory.
@@ -421,7 +421,7 @@ Qed.
 
 End MPolySym.
 
-Arguments antisym [n R].
+Arguments antisym {n R}.
 
 
 Lemma issym_eltrP n (R : ringType) (p : {mpoly R[n.+1]}) :
@@ -498,8 +498,8 @@ Qed.
 
 Lemma mdeg_rho : mdeg rho = 'C(n, 2).
 Proof.
-rewrite /mdeg binomial_sumn_iota -sumnE.
-by apply perm_big; rewrite rho_iota perm_sym -perm_rev.
+rewrite /mdeg binomial_sumn_iota sumnE.
+by apply: perm_big; rewrite rho_iota perm_sym -perm_rev.
 Qed.
 
 Lemma alt_homog : 'a_(rho) \is 'C(n, 2).-homog.
@@ -568,7 +568,7 @@ move: Hphomog; rewrite binomial_sumn_iota => /dhomogP Hhomog.
 have Huniq := isantisym_msupp_uniq (mlead_supp Hpn0).
 rewrite -(revK (mlead p)) -{4}(size_tuple (mlead p)) -size_rev; congr rev.
 apply sorted_sumn_iotaE; first last.
-  rewrite size_rev size_tuple sumn_rev -sumnE -/(mdeg _).
+  rewrite size_rev size_tuple sumn_rev sumnE -/(mdeg _).
   by rewrite (Hhomog _ (mlead_supp Hpn0)).
 rewrite ltn_sorted_uniq_leq rev_uniq Huniq /=.
 rewrite {Huniq Hhomog} rev_sorted.
@@ -692,7 +692,7 @@ rewrite (eq_bigr (fun p => 'X_(eltrp i p).1 - 'X_(eltrp i p).2)); first last.
   by move => [u v] _; rewrite msymB /msym !mmapX !mmap1U.
 rewrite -(big_map _ _ (fun p => ('X_p.1 - 'X_p.2))) /=.
 rewrite /index_enum -enumT /=.
-apply perm_big.
+apply: perm_big.
 have Hin : map (eltrp i) (enum {: 'II_ n.+1}) =i enum {: 'II_ n.+1}.
   move=> [u v].
   rewrite mem_enum inE.

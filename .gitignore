@@ -1,6 +1,8 @@
 *.glob
 *.v.d
 *.vo
+*.vos
+*.vok
 *.vio
 *.aux
 *.log

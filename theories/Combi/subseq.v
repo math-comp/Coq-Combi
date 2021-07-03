@@ -73,7 +73,7 @@ elim: w s => [/= s /eqP -> //= | w0 w IHw] s //=.
 case: s => [_ | s0 s /=]; first by rewrite {1}/rev /=; case (rev _).
 rewrite !rev_cons; case eqP => [-> | _].
 - by move/IHw; rewrite -subseq_rcons_eq.
-- move/IHw; rewrite rev_cons => {IHw} IHw; apply: (@subseq_trans _ (rev w) _ _ IHw).
+- move/IHw; rewrite rev_cons => {}IHw; apply: (@subseq_trans _ (rev w) _ _ IHw).
   exact: subseq_rcons.
 Qed.
 

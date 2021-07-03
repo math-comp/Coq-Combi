@@ -1,13 +1,16 @@
 (** * Ccpo.v: Specification and properties of a cpo *)
 
 Require Export Arith.
-Require Export Omega.
+(* Require Export Omega. *)
+From Coq Require Import Lia.
 
 Require Export Coq.Classes.SetoidTactics.
 Require Export Coq.Classes.SetoidClass.
 Require Export Coq.Classes.Morphisms.
 
+Declare Scope signature_scope.
 Local Open Scope signature_scope.
+Declare Scope O_scope.
 Delimit Scope O_scope with O.
 Local Open Scope O_scope.
 
@@ -15,7 +18,7 @@ Local Open Scope O_scope.
 
 Definition eq_rel {A} (E1 E2:relation A) := forall x y, E1 x y <-> E2 x y.
 
-Class Order {A} (E:relation A)  (R:relation A) := 
+Class Order {A} (E:relation A)  (R:relation A) :=
   {reflexive :> Reflexive R;
    order_eq : forall x y, R x y /\ R y x <-> E x y;
    transitive :> Transitive R }.
@@ -46,14 +49,14 @@ apply OrderEqTrans.
 Qed.
 Opaque OrderEquiv.
 
-Class ord A := 
+Class ord A :=
    {  Oeq : relation A;
       Ole : relation A;
       order_rel :> Order Oeq Ole }.
 
 
 Lemma OrdSetoid `(o:ord A) : Setoid A.
-intros. split with Oeq. apply OrderEquiv. 
+intros. split with Oeq. apply OrderEquiv.
 (* compatibility with Jan's version *)
 (*try (split; [apply OrderEqRefl| apply OrderEqSym| apply OrderEqTrans]).*)
 Defined.
@@ -66,11 +69,11 @@ intros A (E,R,O); apply OrderEquiv.
 Qed.
 *)
 
-Add Parametric Relation {A} {o:ord A} : A (@Oeq _ o) 
+Add Parametric Relation {A} {o:ord A} : A (@Oeq _ o)
 reflexivity proved  by OrderEqRefl
 symmetry proved  by OrderEqSym
 transitivity proved by OrderEqTrans
-as Oeq_setoid. 
+as Oeq_setoid.
 
 (** printing <= $\le$ # &le; # *)
 (** printing == $\equiv$ # &asymp; # *)
@@ -86,13 +89,13 @@ Lemma Ole_refl_eq : forall {O} {o:ord O} (x y:O), x == y -> x <= y.
 intros O (oeq,ole,(rO,aO,tO)) x y; simpl; pose (aO x y); intuition.
 Qed.
 
-Hint Immediate @Ole_refl_eq : core.
+#[export] Hint Immediate Ole_refl_eq : core.
 
 Lemma Ole_refl_eq_inv : forall {O} {o:ord O} (x y:O), x == y -> y <= x.
 intros O (oeq,ole,(rO,aO,tO)) x y; simpl; pose (aO x y); intuition.
 Qed.
 
-Hint Immediate @Ole_refl_eq_inv : core.
+#[export] Hint Immediate Ole_refl_eq_inv : core.
 
 Lemma Ole_trans : forall {O} {o:ord O} (x y z:O), x <= y -> y <= z -> x <= z.
 intros O (oeq,ole,(rO,aO,tO)) x y z H1 H2; simpl; apply tO with y; auto.
@@ -102,27 +105,27 @@ Lemma Ole_refl : forall {O} {o:ord O} (x:O), x <= x.
 intros O (oeq,ole,(rO,aO,tO)) x; simpl; auto.
 Qed.
 
-Hint Resolve @Ole_refl : core.
+#[export] Hint Resolve Ole_refl : core.
 
-Add Parametric Relation {A} {o:ord A} : A (@Ole _ o) 
+Add Parametric Relation {A} {o:ord A} : A (@Ole _ o)
 reflexivity proved  by Ole_refl
 transitivity proved by Ole_trans
-as Ole_setoid. 
+as Ole_setoid.
 
 Lemma Ole_antisym : forall {O} {o:ord O} (x y:O), x <= y -> y <= x -> x == y.
 intros O (oeq,ole,(rO,aO,tO)) x y; simpl; pose (aO x y); intuition.
 Qed.
-Hint Immediate @Ole_antisym : core.
+#[export] Hint Immediate Ole_antisym : core.
 
 Lemma Oeq_refl : forall {O} {o:ord O} (x:O), x == x.
 intros; apply OrderEqRefl.
 Qed.
-Hint Resolve @Oeq_refl : core.
+#[export] Hint Resolve Oeq_refl : core.
 
 Lemma Oeq_refl_eq : forall {O} {o:ord O} (x y:O), x = y -> x == y.
 intros O o x y H; rewrite H; auto.
 Qed.
-Hint Resolve @Oeq_refl_eq : core.
+#[export] Hint Resolve Oeq_refl_eq : core.
 
 Lemma Oeq_sym : forall {O} {o:ord O} (x y:O), x == y -> y == x.
 intros; apply OrderEqSym; trivial.
@@ -136,18 +139,18 @@ Lemma Oeq_le_sym : forall {O} {o:ord O} (x y:O), x == y -> y <= x.
 intros O (oeq,ole,(rO,aO,tO)) x y; simpl; pose (aO x y); intuition.
 Qed.
 
-Hint Resolve @Oeq_le : core.
-Hint Immediate @Oeq_sym @Oeq_le_sym : core.
+#[export] Hint Resolve Oeq_le : core.
+#[export] Hint Immediate Oeq_sym Oeq_le_sym : core.
 
-Lemma Oeq_trans 
+Lemma Oeq_trans
    : forall {O} {o:ord O} (x y z:O), x == y -> y == z -> x == z.
 intros; apply OrderEqTrans with y; trivial.
 Qed.
-Hint Resolve @Oeq_trans.
+#[export] Hint Resolve Oeq_trans : core.
 
 
 
-Add Parametric Morphism `(o:ord A): (Ole (ord:=o)) 
+Add Parametric Morphism `(o:ord A): (Ole (ord:=o))
 with signature (Oeq (A:=A) ==> Oeq (A:=A) ==> iff) as Ole_eq_compat_iff.
 intros x1 y1 e1 x2 y2 e2.
 split; intros.
@@ -171,7 +174,7 @@ Qed.
 
 (** printing ==> %\ensuremath\Longrightarrow% #&#8702;# *)
 
-Lemma Ole_eq_compat : 
+Lemma Ole_eq_compat :
      forall {O} {o:ord O} (x1 x2 : O),
        x1 == x2 -> forall x3 x4 : O, x3 == x4 -> x1 <= x3 -> x2 <= x4.
 intros o x1 x2 H1 x3 x4 H2 H3; case (Ole_eq_compat_iff o x1 x2 H1 x3 x4 H2); auto.
@@ -187,7 +190,7 @@ Lemma Ole_eq_left : forall {O} {o:ord O} (x y z: O),
 intros; apply Ole_eq_compat with y z; auto.
 Qed.
 
-Add Parametric Morphism `{o:ord A} : (Oeq (A:=A)) 
+Add Parametric Morphism `{o:ord A} : (Oeq (A:=A))
        with signature Oeq ==> Oeq ==>  iff as Oeq_iff_morphism.
 intros.
 rewrite H.
@@ -195,7 +198,7 @@ rewrite H0.
 intuition.
 Qed.
 
-Add Parametric Morphism `{o:ord A} : (Ole (A:=A)) 
+Add Parametric Morphism `{o:ord A} : (Ole (A:=A))
        with signature Oeq ==> Oeq ==>  iff as Ole_iff_morphism.
 intros.
 rewrite H.
@@ -203,7 +206,7 @@ rewrite H0.
 intuition.
 Qed.
 
-Add Parametric Morphism `{o:ord A} : (Ole (A:=A)) 
+Add Parametric Morphism `{o:ord A} : (Ole (A:=A))
        with signature Ole --> Ole ==>  Basics.impl as Ole_impl_morphism.
 red; intros.
 transitivity x; trivial.
@@ -260,8 +263,8 @@ Lemma Ole_notle_lt `{o:ord A} : forall x y : A,  x <= y -> ~ y <= x -> x < y.
 red; intuition.
 Qed.
 
-Hint Immediate @Olt_neq @Olt_neq_rev @Olt_le @Olt_notle : core.
-Hint Resolve @Ole_diff_lt : core.
+#[export] Hint Immediate Olt_neq Olt_neq_rev Olt_le Olt_notle : core.
+#[export] Hint Resolve Ole_diff_lt : core.
 
 Lemma Olt_antirefl `{o:ord A} : forall x:A, ~ x < x.
 unfold Olt; intuition.
@@ -282,15 +285,15 @@ intro Heq; apply Hne; apply Ole_antisym; auto.
 rewrite Heq; trivial.
 Qed.
 
-Hint Resolve @Olt_antirefl : core.
+#[export] Hint Resolve Olt_antirefl : core.
 
 Lemma Ole_not_lt `{o:ord A} : forall x y:A, x <= y -> ~ y < x.
 intros x y H (Hle,Hne).
 apply Hne; auto.
 Qed.
-Hint Resolve @Ole_not_lt : core.
+#[export] Hint Resolve Ole_not_lt : core.
 
-Add Parametric Morphism `{o:ord A} : (Olt (A:=A)) 
+Add Parametric Morphism `{o:ord A} : (Olt (A:=A))
        with signature Ole --> Ole ==>  Basics.impl as Olt_le_compat.
 red; intros.
 apply Ole_lt_trans with x; trivial.
@@ -309,7 +312,7 @@ Arguments Iord O {o}.
 
 (** *** Order on functions *)
 
-Definition fun_ext A B (R:relation B) : relation (A -> B) := 
+Definition fun_ext A B (R:relation B) : relation (A -> B) :=
                 fun f g => forall x, R (f x) (g x).
 Arguments fun_ext A [B] R.
 
@@ -324,23 +327,23 @@ Defined.
 Lemma ford_le_elim : forall A O (o:ord O) (f g:A -> O), f <= g -> forall n, f n <= g n.
 auto.
 Qed.
-Hint Immediate ford_le_elim : core.
+#[export] Hint Immediate ford_le_elim : core.
 
 
 Lemma ford_le_intro : forall A O (o:ord O) (f g:A -> O), ( forall n, f n <= g n ) -> f <= g.
 auto.
 Qed.
-Hint Resolve ford_le_intro : core.
+#[export] Hint Resolve ford_le_intro : core.
 
 Lemma ford_eq_elim : forall A O (o:ord O) (f g:A -> O), f == g -> forall n, f n == g n.
 auto.
 Qed.
-Hint Immediate ford_eq_elim : core.
+#[export] Hint Immediate ford_eq_elim : core.
 
 Lemma ford_eq_intro : forall A O (o:ord O) (f g:A -> O), ( forall n, f n == g n ) -> f == g.
 auto.
 Qed.
-Hint Resolve ford_eq_intro : core.
+#[export] Hint Resolve ford_eq_intro : core.
 
 (** ** Monotonicity *)
 
@@ -355,10 +358,10 @@ Lemma monotonic_intro : forall  `{o1:ord Oa} `{o2:ord Ob} (f : Oa -> Ob),
   (forall x y, x <= y -> f x <= f y) -> monotonic f.
 red; auto.
 Qed.
-Hint Resolve @monotonic_intro : core.
+#[export] Hint Resolve monotonic_intro : core.
 
 
-(* 
+(*
 Instance monotonic_morphism `{o1:ord Oa} `{o2:ord Ob} (f : Oa -> Ob) {m:monotonic f} :
   Morphism (Ole (A:=Oa) ==> Ole (A:=Ob)) f.
  *)
@@ -371,13 +374,13 @@ Qed.
 
 Class stable `{o1:ord Oa} `{o2:ord Ob} (f : Oa -> Ob) :=
       stable_def : forall x y, x == y -> f x == f y.
-Hint Unfold stable : core.
+#[export] Hint Unfold stable : core.
 
 Lemma stable_intro : forall  `{o1:ord Oa} `{o2:ord Ob} (f : Oa -> Ob),
   (forall x y, x == y -> f x == f y) -> stable f.
 red; auto.
 Qed.
-Hint Resolve @stable_intro : core.
+#[export] Hint Resolve stable_intro : core.
 
 Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} (f : Oa -> Ob) {s:stable f} : f
 with signature (Oeq (A:=Oa) ==> Oeq (A:=Ob))
@@ -396,7 +399,7 @@ Qed.
 (** *** Type of monotonic functions *)
 
 Record fmon `{o1:ord Oa} `{o2:ord Ob}:= mon
-          {fmont :> Oa -> Ob; 
+          {fmont :> Oa -> Ob;
            fmonotonic: monotonic fmont}.
 
 Existing Instance fmonotonic.
@@ -404,20 +407,20 @@ Existing Instance fmonotonic.
 Arguments mon [Oa o1 Ob o2] fmont {fmonotonic}.
 Arguments fmon Oa [o1] Ob {o2}.
 
-Hint Resolve @fmonotonic : core.
+#[export] Hint Resolve fmonotonic : core.
 
 (** printing -m> %\ensuremath{\stackrel{m}{\rightarrow}}% #-m>#*)
 (** printing -m-> %\ensuremath{\stackrel{m}{\rightarrow}\!\!-}% #-m->#*)
 (** printing --m-> %\ensuremath{-\!\!\stackrel{m}{\rightarrow}\!\!-}% #--m->#*)
 (** printing --m> %\ensuremath{-\!\!\stackrel{m}{\rightarrow}}% #--m>#*)
 
-Notation "Oa -m> Ob" := (fmon Oa Ob) 
+Notation "Oa -m> Ob" := (fmon Oa Ob)
    (right associativity, at level 30) : O_scope.
-Notation "Oa --m> Ob" := (fmon Oa (o1:=Iord Oa) Ob ) 
+Notation "Oa --m> Ob" := (fmon Oa (o1:=Iord Oa) Ob )
    (right associativity, at level 30) : O_scope.
-Notation "Oa --m-> Ob" := (fmon Oa (o1:=Iord Oa) Ob (o2:=Iord Ob)) 
+Notation "Oa --m-> Ob" := (fmon Oa (o1:=Iord Oa) Ob (o2:=Iord Ob))
    (right associativity, at level 30) : O_scope.
-Notation "Oa -m-> Ob" := (fmon Oa Ob  (o2:=Iord Ob)) 
+Notation "Oa -m-> Ob" := (fmon Oa Ob  (o2:=Iord Ob))
    (right associativity, at level 30) : O_scope.
 
 Open Scope O_scope.
@@ -427,26 +430,26 @@ Lemma mon_simpl : forall `{o1:ord Oa} `{o2:ord Ob} (f:Oa -> Ob){mf: monotonic f}
       mon f x = f x.
 trivial.
 Qed.
-Hint Resolve @mon_simpl : core.
+#[export] Hint Resolve mon_simpl : core.
 
 
 Instance fstable `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> Ob) : stable f.
 intros; apply monotonic_stable; auto.
 Qed.
 
-Hint Resolve @fstable : core.
+#[export] Hint Resolve fstable : core.
 
-Lemma fmon_le : forall `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> Ob) x y, 
+Lemma fmon_le : forall `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> Ob) x y,
                 x <= y -> f x <= f y.
 intros; apply (fmonotonic f); auto.
 Qed.
-Hint Resolve @fmon_le : core.
+#[export] Hint Resolve fmon_le : core.
 
-Lemma fmon_eq : forall `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> Ob) x y, 
+Lemma fmon_eq : forall `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> Ob) x y,
                 x == y -> f x == f y.
 intros; apply (fstable f); auto.
 Qed.
-Hint Resolve @fmon_eq : core.
+#[export] Hint Resolve fmon_eq : core.
 
 Program Instance fmono Oa Ob {o1:ord Oa} {o2:ord Ob} : ord (Oa -m> Ob)
    := {Oeq := fun (f g : Oa-m> Ob)=> forall x, f x == g x;
@@ -460,16 +463,16 @@ Lemma mon_le_compat : forall `{o1:ord Oa} `{o2:ord Ob} (f g:Oa -> Ob)
       {mf:monotonic f} {mg:monotonic g}, f <= g -> mon f <= mon g.
 red; intros; auto.
 Qed.
-Hint Resolve @ mon_le_compat : core.
+#[export] Hint Resolve mon_le_compat : core.
 
 Lemma mon_eq_compat : forall `{o1:ord Oa} `{o2:ord Ob} (f g:Oa-> Ob)
       {mf:monotonic f} {mg:monotonic g}, f == g -> mon f == mon g.
 red; intros; auto.
 Qed.
-Hint Resolve @ mon_eq_compat : core.
+#[export] Hint Resolve mon_eq_compat : core.
 
-Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} 
-       : (fmont (Oa:=Oa) (Ob:=Ob)) 
+Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob}
+       : (fmont (Oa:=Oa) (Ob:=Ob))
        with signature Oeq ==> Oeq ==> Oeq as fmont_eq_morphism.
 intros [f] [g] H x y h.
 simpl.
@@ -481,16 +484,16 @@ Qed.
 
 (** *** Monotonicity and dual order *)
 
-Lemma Imonotonic `{o1:ord Oa} `{o2:ord Ob} (f:Oa -> Ob) {m:monotonic f} 
+Lemma Imonotonic `{o1:ord Oa} `{o2:ord Ob} (f:Oa -> Ob) {m:monotonic f}
          : monotonic (o1:=Iord Oa) (o2:=Iord Ob) f.
 red; simpl; intros.
 apply m; auto.
 Qed.
 
-Hint Extern 2 (@monotonic _ (Iord _) _ (Iord _) _) => apply @Imonotonic
+#[export] Hint Extern 2 (@monotonic _ (Iord _) _ (Iord _) _) => apply @Imonotonic
   : typeclass_instances.
 
-Definition imon `{o1:ord Oa} `{o2:ord Ob} (f:Oa -> Ob) {m:monotonic f} 
+Definition imon `{o1:ord Oa} `{o2:ord Ob} (f:Oa -> Ob) {m:monotonic f}
    : Oa --m-> Ob := mon (o1:=Iord Oa) (o2:=Iord Ob) f.
 
 Lemma imon_simpl : forall `{o1:ord Oa} `{o2:ord Ob} (f:Oa -> Ob) {m:monotonic f} (x:Oa),
@@ -519,7 +522,7 @@ Qed.
 
 (** *** Monotonicity and equality *)
 
-Lemma mon_fun_eq_monotonic 
+Lemma mon_fun_eq_monotonic
   : forall `{o1:ord Oa} `{o2:ord Ob} (f:Oa -> Ob) (g:Oa -m> Ob),
             f == g -> monotonic f.
 red; intros.
@@ -538,11 +541,11 @@ Qed.
 
 (** *** Monotonic functions with 2 arguments *)
 
-Class monotonic2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc) := 
+Class monotonic2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc) :=
     monotonic2_intro : forall (x y:Oa) (z t:Ob), x <= y -> z <= t -> f x z <= f y t.
 
 
-Instance mon2_intro `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc) 
+Instance mon2_intro `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc)
     {m1:monotonic f} {m2: forall x, monotonic (f x)} : monotonic2 f | 10.
 red; intros.
 transitivity (f y z).
@@ -550,33 +553,33 @@ apply (m1 x); trivial.
 apply (m2 y); trivial.
 Qed.
 
-Lemma mon2_elim1 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc) 
+Lemma mon2_elim1 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc)
     {m:monotonic2 f} : monotonic f.
 red; intros; intro z.
 apply m; auto.
 Qed.
 
-Lemma mon2_elim2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc) 
+Lemma mon2_elim2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc)
     {m:monotonic2 f} : forall x, monotonic (f x).
 red; intros.
 apply m; auto.
 Qed.
-Hint Immediate @mon2_elim1 @mon2_elim2: typeclass_instances.
+#[export] Hint Immediate mon2_elim1 mon2_elim2: typeclass_instances.
 
-Definition mon_comp {A} `{o1: ord Oa} `{o2: ord Ob} 
-         (f:A -> Oa -> Ob) {mf:forall x, monotonic (f x)} : A -> Oa -m> Ob 
+Definition mon_comp {A} `{o1: ord Oa} `{o2: ord Ob}
+         (f:A -> Oa -> Ob) {mf:forall x, monotonic (f x)} : A -> Oa -m> Ob
          := fun x => mon (f x).
 
-Instance mon_fun_mon `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc) 
+Instance mon_fun_mon `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc)
     {m:monotonic2 f} : monotonic (fun x => mon (f x)).
 red; intros; unfold mon_comp.
 intro z; apply m; auto.
 Qed.
 
-Class stable2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc) := 
+Class stable2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc) :=
     stable2_intro : forall (x y:Oa) (z t:Ob), x==y -> z == t -> f x z == f y t.
 
-Instance monotonic2_stable2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} 
+Instance monotonic2_stable2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
     (f:Oa -> Ob -> Oc) {m:monotonic2 f} : stable2 f.
 red; intros; apply Ole_antisym; auto.
 Qed.
@@ -590,16 +593,16 @@ Lemma mon2_simpl : forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -
      {mf:monotonic2 f} x y, mon2 f x y = f x y.
 trivial.
 Qed.
-Hint Resolve @mon2_simpl : core.
+#[export] Hint Resolve mon2_simpl : core.
 
-Lemma mon2_le_compat :  forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} 
-     (f g:Oa -> Ob -> Oc) {mf: monotonic2 f} {mg:monotonic2 g}, 
+Lemma mon2_le_compat :  forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
+     (f g:Oa -> Ob -> Oc) {mf: monotonic2 f} {mg:monotonic2 g},
      f <= g -> mon2 f <= mon2 g.
 red; simpl; intros.
 apply H; trivial.
 Qed.
 
-Definition fun2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -m> Oc) 
+Definition fun2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -m> Oc)
      : Oa -> Ob -> Oc := fun x => f x.
 
 Instance fmon2_mon `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -m> Oc) :
@@ -607,21 +610,21 @@ Instance fmon2_mon `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -m> Oc) 
 intros; unfold fun2; auto.
 Qed.
 
-Instance fun2_monotonic `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} 
+Instance fun2_monotonic `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
          (f:Oa -> Ob -m> Oc) {mf:monotonic f} : monotonic (fun2 f).
 intros;unfold fun2; auto.
 Qed.
-Hint Resolve @fun2_monotonic : core.
+#[export] Hint Resolve fun2_monotonic : core.
 
-Instance fmonotonic2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc) 
+Instance fmonotonic2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc)
          : monotonic2 (fun2 f).
 intros;unfold fun2;  apply mon2_intro; auto.
 red; intros.
 apply (fmonotonic f x y); trivial .
 Qed.
-Hint Resolve @fmonotonic2 : core.
+#[export] Hint Resolve fmonotonic2 : core.
 
-Definition mfun2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc) 
+Definition mfun2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc)
    : Oa-m> (Ob -> Oc) := mon (fun2 f).
 
 Lemma mfun2_simpl : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc) x y,
@@ -629,55 +632,55 @@ Lemma mfun2_simpl : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -
 trivial.
 Qed.
 
-Instance mfun2_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} 
+Instance mfun2_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
          (f:Oa -m> Ob -m> Oc) x : monotonic (mfun2 f x).
 red; simpl; unfold fun2; intros; auto.
 Qed.
 
-Lemma mon2_fun2 : forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} 
+Lemma mon2_fun2 : forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
      (f:Oa -m> Ob -m> Oc), mon2 (fun2 f) == f.
 intros; unfold fun2,mon2; intros x y; auto.
 Qed.
 
-Lemma fun2_mon2 : forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} 
+Lemma fun2_mon2 : forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
       (f:Oa -> Ob -> Oc) {mf:monotonic2 f} , fun2 (mon2 f) == f.
 intros; unfold fun2,mon2; intros x y; auto.
 Qed.
-Hint Resolve @mon2_fun2 @fun2_mon2 : core.
+#[export] Hint Resolve mon2_fun2 fun2_mon2 : core.
 
-Instance fstable2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc) 
+Instance fstable2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc)
                 : stable2 (fun2 f).
 intros; apply monotonic2_stable2; auto.
 Qed.
-Hint Resolve @fstable2 : core.
+#[export] Hint Resolve fstable2 : core.
 
-Definition Imon2 : forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}, 
+Definition Imon2 : forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc},
      (Oa -m> Ob -m> Oc) -> (Oa --m> Ob --m-> Oc).
 intros  Oa o1 Ob o2 Oc o3 f.
-exists (fun (x:Oa) => Imon (f x)); 
+exists (fun (x:Oa) => Imon (f x));
 abstract (red; simpl; intros; apply (fmonotonic f); auto).
 Defined.
 
-Lemma Imon2_simpl : forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} 
+Lemma Imon2_simpl : forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
       (f:Oa -m> Ob -m> Oc) (x:Oa) (y: Ob),
       Imon2 f x y = f x y.
 trivial.
 Qed.
 
-Lemma Imonotonic2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} 
-      (f:Oa -> Ob -> Oc){mf : monotonic2 f} 
+Lemma Imonotonic2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
+      (f:Oa -> Ob -> Oc){mf : monotonic2 f}
       : monotonic2 (o1:=Iord Oa) (o2:=Iord Ob) (o3:=Iord Oc) f.
 red; simpl; intros; auto.
 Qed.
 
-Hint Extern 2 (@monotonic2 _ (Iord _) _ (Iord _) _ (Iord _)  _) => apply @Imonotonic2
+#[export] Hint Extern 2 (@monotonic2 _ (Iord _) _ (Iord _) _ (Iord _)  _) => apply @Imonotonic2
   : typeclass_instances.
 
-Definition imon2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} 
-      (f:Oa -> Ob -> Oc){mf : monotonic2 f} : Oa --m> Ob --m-> Oc := 
+Definition imon2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
+      (f:Oa -> Ob -> Oc){mf : monotonic2 f} : Oa --m> Ob --m-> Oc :=
       mon2 (o1:=Iord Oa) (o2:=Iord Ob) (o3:=Iord Oc) f.
 
-Lemma imon2_simpl : forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} 
+Lemma imon2_simpl : forall `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
       (f:Oa -> Ob -> Oc){mf : monotonic2 f} (x:Oa) (y:Ob),
       imon2 f x y = f x y.
 trivial.
@@ -698,30 +701,30 @@ Program Instance natO : ord nat :=
     { Oeq := fun n m : nat => n = m;
        Ole := fun n m : nat => (n <= m)%nat}.
 Next Obligation.
-abstract (apply Build_Order; intros; try omega; auto with arith;
+abstract (apply Build_Order; intros; try lia; auto with arith;
           red; intros; apply le_trans with y; auto).
 Defined.
 
 Lemma le_Ole : forall n m, ((n <= m)%nat)-> n <= m.
 simpl; auto.
 Qed.
-Hint Resolve le_Ole : core.
+#[export] Hint Resolve le_Ole : core.
 
-Lemma nat_monotonic : forall {O} {o:ord O} 
+Lemma nat_monotonic : forall {O} {o:ord O}
                (f:nat -> O), (forall n, f n <= f (S n)) -> monotonic f.
 red; simpl; intros.
 elim H0; intros; auto.
 transitivity (f m); trivial.
 Qed.
-Hint Resolve @nat_monotonic : core.
+#[export] Hint Resolve nat_monotonic : core.
 
-Lemma nat_monotonic_inv : forall {O} {o:ord O} 
+Lemma nat_monotonic_inv : forall {O} {o:ord O}
                (f:nat -> O), (forall n, f (S n) <= f n) -> monotonic (o2:=Iord O) f.
 red; simpl; intros.
 elim H0; intros; auto.
 transitivity (f m); trivial.
 Qed.
-Hint Resolve @nat_monotonic_inv : core.
+#[export] Hint Resolve nat_monotonic_inv : core.
 
 Definition fnatO_intro : forall {O} {o:ord O} (f:nat -> O), (forall n, f n <= f (S n)) -> nat -m> O.
 intros; exists f; abstract auto.
@@ -731,7 +734,7 @@ Defined.
 Lemma fnatO_elim : forall {O} {o:ord O} (f:nat -m> O) (n:nat), f n <= f (S n).
 intros; apply (fmonotonic f); simpl; auto with arith.
 Qed.
-Hint Resolve @fnatO_elim : core.
+#[export] Hint Resolve fnatO_elim : core.
 
 
 (** - (mseq_lift_left f n) k = f (n+k) *)
@@ -739,7 +742,7 @@ Hint Resolve @fnatO_elim : core.
 Definition seq_lift_left {O} (f:nat -> O) n := fun k => f (n+k)%nat.
 
 (* d'où venait le n avant que je le mette en forall?? *)
-Instance mon_seq_lift_left 
+Instance mon_seq_lift_left
   : forall n {O} {o:ord O} (f:nat -> O) {m:monotonic f}, monotonic (seq_lift_left f n).
 red; intros; apply m ; simpl; auto with arith.
 Qed.
@@ -749,38 +752,38 @@ intros; exists (fun k => f (n+k)%nat).
 abstract (red; intros; apply (fmonotonic f); simpl; auto with arith).
 Defined.
 
-Lemma mseq_lift_left_simpl : forall {O} {o:ord O} (f:nat -m> O) (n k:nat), 
+Lemma mseq_lift_left_simpl : forall {O} {o:ord O} (f:nat -m> O) (n k:nat),
     mseq_lift_left f n  k = f (n+k)%nat.
 trivial.
 Qed.
 
-Lemma mseq_lift_left_le_compat : forall {O} {o:ord O} (f g:nat -m> O) (n:nat), 
+Lemma mseq_lift_left_le_compat : forall {O} {o:ord O} (f g:nat -m> O) (n:nat),
              f <= g -> mseq_lift_left f n <= mseq_lift_left g n.
 intros; intro; simpl; auto.
 Qed.
-Hint Resolve @mseq_lift_left_le_compat : core.
+#[export] Hint Resolve mseq_lift_left_le_compat : core.
 
-Add Parametric Morphism {O} {o:ord O} : (@mseq_lift_left _ o) 
+Add Parametric Morphism {O} {o:ord O} : (@mseq_lift_left _ o)
   with signature Oeq  ==> eq ==> Oeq
   as mseq_lift_left_eq_compat.
 intros; apply Ole_antisym; auto.
 Qed.
-Hint Resolve @mseq_lift_left_eq_compat : core.
+#[export] Hint Resolve mseq_lift_left_eq_compat : core.
 
-Add Parametric Morphism {O} {o:ord O}: (@seq_lift_left O) 
+Add Parametric Morphism {O} {o:ord O}: (@seq_lift_left O)
   with signature Oeq  ==> eq ==> Oeq
   as seq_lift_left_eq_compat.
 simpl; intros; intro.
 simpl; apply H; auto.
 Qed.
-Hint Resolve @seq_lift_left_eq_compat : core.
+#[export] Hint Resolve seq_lift_left_eq_compat : core.
 
 
 (** - (mseq_lift_right f n) k = f (k+n) *)
 
 Definition seq_lift_right {O} (f:nat -> O) n := fun k => f (k+n)%nat.
 
-Instance mon_seq_lift_right 
+Instance mon_seq_lift_right
    : forall n {O} {o:ord O} (f:nat -> O) {m:monotonic f}, monotonic (seq_lift_right f n).
 red; intros; apply m ; simpl; auto with arith.
 Qed.
@@ -790,32 +793,32 @@ intros; exists (fun k => f (k+n)%nat).
 abstract (red; intros; apply (fmonotonic f); simpl; auto with arith).
 Defined.
 
-Lemma mseq_lift_right_simpl : forall {O} {o:ord O} (f:nat -m> O) (n k:nat), 
+Lemma mseq_lift_right_simpl : forall {O} {o:ord O} (f:nat -m> O) (n k:nat),
     mseq_lift_right f n  k = f (k+n)%nat.
 trivial.
 Qed.
 
-Lemma mseq_lift_right_le_compat : forall {O} {o:ord O} (f g:nat -m> O) (n:nat), 
+Lemma mseq_lift_right_le_compat : forall {O} {o:ord O} (f g:nat -m> O) (n:nat),
              f <= g -> mseq_lift_right f n <= mseq_lift_right g n.
 intros; intro; simpl; auto.
 Qed.
-Hint Resolve @mseq_lift_right_le_compat : core.
+#[export] Hint Resolve mseq_lift_right_le_compat : core.
 
-Add Parametric Morphism {O} {o:ord O} : (mseq_lift_right (o:=o)) 
-   with signature Oeq ==> eq ==> Oeq 
+Add Parametric Morphism {O} {o:ord O} : (mseq_lift_right (o:=o))
+   with signature Oeq ==> eq ==> Oeq
    as mseq_lift_right_eq_compat.
 intros; apply Ole_antisym; auto.
 Qed.
 
-Add Parametric Morphism {O} {o:ord O}: (@seq_lift_right O) 
+Add Parametric Morphism {O} {o:ord O}: (@seq_lift_right O)
   with signature Oeq  ==> eq ==> Oeq
   as seq_lift_right_eq_compat.
 simpl; intros; intro.
 simpl; apply H; auto.
 Qed.
-Hint Resolve @seq_lift_right_eq_compat : core.
+#[export] Hint Resolve seq_lift_right_eq_compat : core.
 
-Lemma mseq_lift_right_left : forall {O} {o:ord O} (f:nat -m> O) n, 
+Lemma mseq_lift_right_left : forall {O} {o:ord O} (f:nat -m> O) n,
        mseq_lift_left f n  == mseq_lift_right f n.
 unfold mseq_lift_left,mseq_lift_right; intros.
 intro x.
@@ -823,14 +826,14 @@ unfold fmont; replace (n+x)%nat with (x+n)%nat; auto with arith.
 Qed.
 
 (** *** Monotonicity and functions *)
-(** -  (shift f x) n = f n x *) 
+(** -  (shift f x) n = f n x *)
 
-Instance shift_mon_fun {A} `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> (A -> Ob)) : 
+Instance shift_mon_fun {A} `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> (A -> Ob)) :
        forall x:A, monotonic (fun (y:Oa) => f y x).
 red; intros; apply (fmonotonic f); auto.
 Qed.
 
-Definition shift {A} `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> (A -> Ob)) : A -> Oa -m> Ob 
+Definition shift {A} `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> (A -> Ob)) : A -> Oa -m> Ob
    := fun x => (mon (fun y => f y x)).
 
 (** printing <o> %\ensuremath{\diamond}% # &loz;# *)
@@ -839,15 +842,15 @@ Infix "<o>" := shift (at level 30, no associativity) : O_scope.
 Lemma shift_simpl : forall {A} `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> (A -> Ob)) x y,
       (f <o> x) y = f y x.
 trivial.
-Qed. 
+Qed.
 
-Lemma shift_le_compat : forall {A} `{o1:ord Oa} `{o2:ord Ob} (f g:Oa -m> (A -> Ob)), 
+Lemma shift_le_compat : forall {A} `{o1:ord Oa} `{o2:ord Ob} (f g:Oa -m> (A -> Ob)),
              f <= g -> shift f <= shift g.
 intros; intros x y.
 repeat rewrite shift_simpl.
 apply (H y x); trivial.
 Qed.
-Hint Resolve @shift_le_compat : core.
+#[export] Hint Resolve shift_le_compat : core.
 
 Add Parametric Morphism {A} `{o1:ord Oa} `{o2:ord Ob}
     : (shift (A:=A) (Oa:=Oa) (Ob:=Ob)) with signature Oeq ==> eq ==> Oeq
@@ -856,7 +859,7 @@ intros f g H x y.
 repeat rewrite shift_simpl; auto.
 Qed.
 
-Instance ishift_mon {A} `{o1:ord Oa} `{o2:ord Ob} (f:A -> (Oa -m> Ob)) : 
+Instance ishift_mon {A} `{o1:ord Oa} `{o2:ord Ob} (f:A -> (Oa -m> Ob)) :
        monotonic (fun (y:Oa) (x:A) => f x y).
 red; intros; intro z.
 apply (fmonotonic (f z)); auto.
@@ -868,15 +871,15 @@ Definition ishift {A} `{o1:ord Oa} `{o2:ord Ob} (f:A -> (Oa -m> Ob)) : Oa -m> (A
 Lemma ishift_simpl : forall {A} `{o1:ord Oa} `{o2:ord Ob} (f:A -> (Oa -m> Ob)) x y,
       ishift f x y = f y x.
 trivial.
-Qed. 
+Qed.
 
-Lemma ishift_le_compat : forall {A} `{o1:ord Oa} `{o2:ord Ob} (f g:A -> (Oa -m> Ob)), 
+Lemma ishift_le_compat : forall {A} `{o1:ord Oa} `{o2:ord Ob} (f g:A -> (Oa -m> Ob)),
              f <= g -> ishift f <= ishift g.
 intros; intros x y.
 repeat rewrite ishift_simpl.
 apply (H y x); trivial.
 Qed.
-Hint Resolve @ishift_le_compat : core.
+#[export] Hint Resolve ishift_le_compat : core.
 
 Add Parametric Morphism {A} `{o1:ord Oa} `{o2:ord Ob}
     : (ishift (A:=A) (Oa:=Oa) (Ob:=Ob)) with signature Oeq ==> eq ==> Oeq
@@ -905,9 +908,9 @@ apply mon2_intro.
 intros x y H z; auto.
 intros x z t H; apply (fmonotonic f); trivial.
 Qed.
-Hint Resolve @shift_mon_fun @shift_fun_mon @shift_mon2 : core.
+#[export] Hint Resolve shift_mon_fun shift_fun_mon shift_mon2 : core.
 
-Definition mshift `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc) 
+Definition mshift `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc)
     : Ob -m> Oa -m> Oc := mon2 (fun x y => f y x).
 
 (** - id c = c *)
@@ -919,7 +922,7 @@ auto.
 Qed.
 
 
-(**  - (cte c) n = c *) 
+(**  - (cte c) n = c *)
 
 Definition cte A  `{o1:ord Oa} (c:Oa) : A -> Oa := fun x => c.
 
@@ -929,39 +932,39 @@ Qed.
 
 Definition mseq_cte {O} {o:ord O} (c:O) : nat -m> O := mon (cte nat c).
 
-Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} : (@cte Oa  Ob _) 
+Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} : (@cte Oa  Ob _)
   with signature Ole  ==>  Ole as cte_le_compat.
 intros c1 c2 H x; simpl; auto.
 Qed.
 
-Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} : (@cte Oa  Ob _) 
+Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} : (@cte Oa  Ob _)
   with signature Oeq  ==>  Oeq as cte_eq_compat.
 intros c1 c2 H x; simpl; auto.
 Qed.
 
-Instance mon_diag `{o1:ord Oa} `{o2:ord Ob}(f:Oa -m> (Oa -m> Ob)) 
+Instance mon_diag `{o1:ord Oa} `{o2:ord Ob}(f:Oa -m> (Oa -m> Ob))
      : monotonic (fun x => f x x).
 intros x y H; apply (fmonotonic2 f); auto.
 Qed.
-Hint Resolve @mon_diag : core.
+#[export] Hint Resolve mon_diag : core.
 
 Definition diag `{o1:ord Oa} `{o2:ord Ob}(f:Oa -m> (Oa -m> Ob)) : Oa-m> Ob
      := mon (fun x => f x x).
 
-Lemma fmon_diag_simpl : forall `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> (Oa -m> Ob)) (x:Oa), 
+Lemma fmon_diag_simpl : forall `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> (Oa -m> Ob)) (x:Oa),
              diag f x = f x x.
 trivial.
 Qed.
 
-Lemma diag_le_compat :  forall `{o1:ord Oa} `{o2:ord Ob} (f g:Oa -m> (Oa -m> Ob)), 
+Lemma diag_le_compat :  forall `{o1:ord Oa} `{o2:ord Ob} (f g:Oa -m> (Oa -m> Ob)),
              f <= g -> diag f <= diag g.
 intros; intro; simpl; auto.
 apply H.
 Qed.
-Hint Resolve @diag_le_compat : core.
+#[export] Hint Resolve diag_le_compat : core.
 
 
-Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} : (diag (Oa:=Oa) (Ob:=Ob)) 
+Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} : (diag (Oa:=Oa) (Ob:=Ob))
    with signature Oeq ==> Oeq as diag_eq_compat.
 intros; intro; simpl; auto.
 apply H.
@@ -972,19 +975,19 @@ Lemma diag_shift : forall `{o1:ord Oa} `{o2:ord Ob} (f: Oa -m> Oa -m> Ob),
 intros; intro x; unfold mshift,diag; auto.
 Qed.
 
-Hint Resolve @diag_shift : core.
+#[export] Hint Resolve diag_shift : core.
 
 Lemma mshift_simpl : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
       (h:Oa -m> Ob -m>  Oc) (x : Ob) (y:Oa), mshift h x y = h y x.
 trivial.
 Qed.
 
-Lemma mshift_le_compat :  forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} 
+Lemma mshift_le_compat :  forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
       (f g:Oa -m>  Ob -m>  Oc), f <= g -> mshift f <= mshift g.
 intros; intros x y; simpl; unfold mshift; intros.
 apply H; auto.
 Qed.
-Hint Resolve @mshift_le_compat : core.
+#[export] Hint Resolve mshift_le_compat : core.
 
 Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} : (@mshift Oa _ Ob _ Oc _)
      with signature Oeq  ==> Oeq as mshift_eq_compat.
@@ -999,36 +1002,36 @@ Qed.
 
 (** - (f@g) x = f (g x) *)
 
-Instance monotonic_comp `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} 
+Instance monotonic_comp `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
    (f:Ob -> Oc){mf : monotonic f} (g:Oa -> Ob){mg:monotonic g} : monotonic (fun x => f (g x)).
 intros x y H; auto.
 Qed.
-Hint Resolve @monotonic_comp : core.
+#[export] Hint Resolve monotonic_comp : core.
 
-Instance monotonic_comp_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} 
+Instance monotonic_comp_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
    (f:Ob -m> Oc)(g:Oa -m> Ob) : monotonic (fun x => f (g x)).
 intros x y H; auto.
 Qed.
-Hint Resolve @monotonic_comp_mon : core.
+#[export] Hint Resolve monotonic_comp_mon : core.
 
-Definition comp `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Ob -m> Oc) (g:Oa -m> Ob) 
+Definition comp `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Ob -m> Oc) (g:Oa -m> Ob)
        : Oa -m> Oc := mon (fun x => f (g x)).
 
 Infix "@" := comp (at level 35) : O_scope.
 
-Lemma comp_simpl : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} 
+Lemma comp_simpl : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
       (f:Ob -m> Oc) (g:Oa -m> Ob) (x:Oa), (f@g) x = f (g x).
 trivial.
 Qed.
 
 Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}: (@comp Oa _ Ob _ Oc _)
-    with signature Ole ++> Ole  ++> Ole 
+    with signature Ole ++> Ole  ++> Ole
     as comp_le_compat.
 intros f1 f2 H g1 g2 H1 x; unfold comp; simpl; auto.
 transitivity (f2 (g1 x)); auto.
 Qed.
 
-Hint Immediate @comp_le_compat : core.
+#[export] Hint Immediate comp_le_compat : core.
 
 Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} : (@comp Oa _ Ob _ Oc _)
     with signature Oeq ==> Oeq ==> Oeq
@@ -1037,35 +1040,35 @@ intros f1 f2 H g1 g2 H1 x.
 repeat (rewrite comp_simpl); transitivity (f2 (g1 x)); auto.
 Qed.
 
-Hint Immediate @comp_eq_compat : core.
+#[export] Hint Immediate comp_eq_compat : core.
 
 
 (** - (f@2 g) h x = f (g x) (h x) *)
 
-Instance mon_app2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od} 
-      (f:Ob -> Oc -> Od) (g:Oa -> Ob) (h:Oa -> Oc) 
-      {mf:monotonic2 f}{mg:monotonic g} {mh:monotonic h} 
+Instance mon_app2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}
+      (f:Ob -> Oc -> Od) (g:Oa -> Ob) (h:Oa -> Oc)
+      {mf:monotonic2 f}{mg:monotonic g} {mh:monotonic h}
       : monotonic (fun x => f (g x) (h x)).
 intros x y H; auto.
 Qed.
 
-Instance mon_app2_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od} 
-      (f:Ob -m> Oc -m> Od) (g:Oa -m> Ob) (h:Oa -m> Oc) 
+Instance mon_app2_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}
+      (f:Ob -m> Oc -m> Od) (g:Oa -m> Ob) (h:Oa -m> Oc)
       : monotonic (fun x => f (g x) (h x)).
 intros x y H.
 apply (fmonotonic2 f); auto.
 Qed.
 
-Definition app2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od} 
-        (f:Ob -m> Oc -m> Od) (g:Oa -m> Ob) (h:Oa -m> Oc) : Oa -m> Od 
+Definition app2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}
+        (f:Ob -m> Oc -m> Od) (g:Oa -m> Ob) (h:Oa -m> Oc) : Oa -m> Od
         := mon (fun x => f (g x) (h x)).
 
 (** printing @2 %\ensuremath{@^2}% #@&sup2;#*)
 Infix "@2" := app2 (at level 70) : O_scope.
 
-Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}: 
+Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}:
         (@app2 Oa _ Ob _ Oc _ Od _)
-    with signature Ole ++> Ole  ++> Ole ++> Ole 
+    with signature Ole ++> Ole  ++> Ole ++> Ole
     as app2_le_compat.
 intros f1 f2 H g1 g2 H1 h1 h2 H2 x; unfold app2; simpl; auto.
 transitivity (f2 (g1 x) (h1 x)).
@@ -1073,11 +1076,11 @@ apply H.
 apply (fmonotonic2 f2); auto.
 Qed.
 
-Hint Immediate @app2_le_compat : core.
+#[export] Hint Immediate app2_le_compat : core.
 
-Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}: 
+Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}:
         (@app2 Oa _ Ob _ Oc _ Od _)
-    with signature Oeq ==> Oeq  ==> Oeq ==> Oeq 
+    with signature Oeq ==> Oeq  ==> Oeq ==> Oeq
     as app2_eq_compat.
 intros f1 f2 H g1 g2 H1 h1 h2 H2 x; unfold app2; simpl; auto.
 transitivity (f2 (g1 x) (h1 x)).
@@ -1085,44 +1088,44 @@ apply H.
 apply (fstable2 f2); auto.
 Qed.
 
-Hint Immediate @app2_eq_compat : core.
+#[export] Hint Immediate app2_eq_compat : core.
 
 
-Lemma app2_simpl : 
-    forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od} 
-            (f:Ob -m> Oc -m> Od) (g:Oa -m> Ob) (h:Oa -m> Oc) (x:Oa), 
+Lemma app2_simpl :
+    forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}
+            (f:Ob -m> Oc -m> Od) (g:Oa -m> Ob) (h:Oa -m> Oc) (x:Oa),
     (f@2 g) h x = f (g x) (h x).
 trivial.
 Qed.
 
 
-Lemma comp_monotonic_right : 
+Lemma comp_monotonic_right :
       forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f: Ob -m> Oc) (g1 g2:Oa -m> Ob),
                g1<= g2 -> f @ g1 <= f @ g2.
 auto.
 Qed.
-Hint Resolve @comp_monotonic_right : core.
+#[export] Hint Resolve comp_monotonic_right : core.
 
-Lemma comp_monotonic_left : 
+Lemma comp_monotonic_left :
       forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f1 f2: Ob -m> Oc) (g:Oa -m> Ob),
                f1<= f2 -> f1 @ g <= f2 @ g.
 auto.
 Qed.
-Hint Resolve @comp_monotonic_left : core.
+#[export] Hint Resolve comp_monotonic_left : core.
 
-Instance comp_monotonic2 : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}, 
+Instance comp_monotonic2 : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc},
              monotonic2 (@comp Oa _ Ob _ Oc _).
 red; intros.
 apply comp_le_compat; auto.
 Qed.
-Hint Resolve @comp_monotonic2 : core.
+#[export] Hint Resolve comp_monotonic2 : core.
 
 Definition fcomp `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} :
    (Ob -m> Oc) -m> (Oa -m> Ob) -m> (Oa -m> Oc) := mon2 (@comp Oa _ Ob _ Oc _).
 
 Arguments fcomp Oa [o1] Ob [o2] Oc {o3}.
 
-Lemma fcomp_simpl : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} 
+Lemma fcomp_simpl : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
       (f:Ob -m> Oc) (g:Oa -m> Ob), fcomp _ _ _ f g = f@g.
 trivial.
 Qed.
@@ -1140,13 +1143,13 @@ Lemma fcomp2_simpl : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}
 trivial.
 Qed.
 
-Lemma fmon_le_compat2 : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} 
+Lemma fmon_le_compat2 : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
       (f: Oa -m> Ob -m> Oc) (x y:Oa) (z t:Ob), x<=y -> z <=t -> f x z <= f y t.
 intros; transitivity (f x t).
 apply (fmonotonic (f x)); auto.
 apply (fmonotonic f); auto.
 Qed.
-Hint Resolve fmon_le_compat2 : core.
+#[export] Hint Resolve fmon_le_compat2 : core.
 
 Lemma fmon_cte_comp : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
       (c:Oc)(f:Oa -m> Ob), (mon (cte Ob c)) @ f == mon (cte Oa c).
@@ -1177,7 +1180,7 @@ Qed.
 Arguments le_isglb [O o I f x].
 Arguments isglb_le [O o I f x].
 
-Lemma mk_isglb O (o:ord O) I (f:I -> O) (x:O) : 
+Lemma mk_isglb O (o:ord O) I (f:I -> O) (x:O) :
       (forall i,  x <= f i) -> (forall y, (forall i,  y <= f i) -> y <= x)
       -> isglb f x.
 red; intros; apply mk_islub; auto.
@@ -1217,29 +1220,29 @@ Lemma isglb_eq_compat_right O (o:ord O) I (f:I -> O) (x y:O):
 intros; apply isglb_eq_compat with f x; auto.
 Qed.
 
-Add Parametric Morphism {O} {o:ord O} I : (@islub _ o I) 
+Add Parametric Morphism {O} {o:ord O} I : (@islub _ o I)
 with signature Oeq ==> Oeq ==> iff
 as islub_morphism.
 split; eapply islub_eq_compat; auto.
-Qed. 
+Qed.
 
-Add Parametric Morphism {O} {o:ord O} I : (@isglb _ o I) 
+Add Parametric Morphism {O} {o:ord O} I : (@isglb _ o I)
 with signature Oeq ==> Oeq ==> iff
 as isglb_morphism.
 split; eapply isglb_eq_compat; auto.
-Qed. 
+Qed.
 
-Add Parametric Morphism {O} {o:ord O} I : (@islub _ o I) 
+Add Parametric Morphism {O} {o:ord O} I : (@islub _ o I)
 with signature (@pointwise_relation I O (@Oeq _ _)) ==> Oeq ==> iff
 as islub_morphism_ext.
 split; eapply islub_eq_compat; auto.
-Qed. 
+Qed.
 
-Add Parametric Morphism {O} {o:ord O} I : (@isglb _ o I) 
+Add Parametric Morphism {O} {o:ord O} I : (@isglb _ o I)
 with signature (@pointwise_relation I O (@Oeq _ _)) ==> Oeq ==> iff
 as isglb_morphism_ext.
 split; eapply isglb_eq_compat; auto.
-Qed. 
+Qed.
 
 Lemma islub_incr_ext {O} {o:ord O} (f :nat -> O) (x:O) (n:nat):
       (forall k, f k <= f (S k)) -> islub f x -> islub (fun k => f (n + k)) x.
@@ -1273,10 +1276,10 @@ elim n; simpl; auto; intros.
 transitivity (f (n0 + i)); auto.
 Qed.
 
-Hint Resolve islub_incr_ext isglb_decr_ext : core.
+#[export] Hint Resolve islub_incr_ext isglb_decr_ext : core.
 
-Lemma islub_exch {O} {o:ord O} (F :nat -> nat -> O) (f g : nat -> O)(x:O) : 
-      (forall m, islub (fun n => F n m) (f m)) 
+Lemma islub_exch {O} {o:ord O} (F :nat -> nat -> O) (f g : nat -> O)(x:O) :
+      (forall m, islub (fun n => F n m) (f m))
        -> (forall n, islub (F n) (g n)) -> islub f x -> islub g x.
 intros Lf Lg (Lx1,Lx2); split; intros.
 apply (islub_le (Lg i)); intros.
@@ -1315,16 +1318,16 @@ apply (H x); auto.
 Qed.
 
 (** ** Basic operators of omega-cpos *)
-(** - Constant : [0] 
+(** - Constant : [0]
      - lub : limit of monotonic sequences
 *)
 
 Generalizable Variables D.
 
 (** *** Definition of cpos *)
-Class cpo  `{o:ord D} : Type := mk_cpo 
+Class cpo  `{o:ord D} : Type := mk_cpo
   {D0 : D; lub: forall (f:nat -m> D), D;
-   Dbot : forall x:D, D0 <= x; 
+   Dbot : forall x:D, D0 <= x;
    le_lub : forall (f : nat -m> D) (n:nat), f n <= lub f;
    lub_le : forall (f : nat -m> D) (x:D), (forall n, f n <= x) -> lub f <= x}.
 
@@ -1332,7 +1335,7 @@ Arguments cpo D {o}.
 
 Notation "0" := D0 : O_scope.
 
-Hint Resolve @Dbot @le_lub @lub_le : core.
+#[export] Hint Resolve Dbot le_lub lub_le : core.
 
 Definition mon_ord_equiv : forall `{o:ord D1} `{o1:ord D2} {o2:ord D2},
       eq_ord o1 o2 -> fmon D1 D2 (o2:=o2) -> fmon D1 D2 (o2:=o1).
@@ -1341,12 +1344,12 @@ abstract (red; intros; rewrite H; apply (fmonotonic f); auto).
 Defined.
 
 Lemma mon_ord_equiv_simpl : forall `{o:ord D1} `{o1:ord D2} {o2:ord D2}
-      (H:eq_ord o1 o2) (f:fmon D1 D2 (o2:=o2)) (x:D1), 
+      (H:eq_ord o1 o2) (f:fmon D1 D2 (o2:=o2)) (x:D1),
       mon_ord_equiv H f x = f x.
 trivial.
 Qed.
 
-Definition cpo_ord_equiv `{o1:ord D} (o2:ord D) 
+Definition cpo_ord_equiv `{o1:ord D} (o2:ord D)
        : eq_ord o1 o2 -> cpo (o:=o1) D -> cpo (o:=o2) D.
 unfold eq_ord, eq_rel; intros H c.
 exists (D0 (cpo:=c)) (fun f : nat -m> D => lub (cpo:=c) (mon_ord_equiv H f)).
@@ -1357,33 +1360,33 @@ Defined.
 
 (** *** Least upper bounds *)
 
-Add Parametric Morphism `{c:cpo D} : (lub (cpo:=c)) 
+Add Parametric Morphism `{c:cpo D} : (lub (cpo:=c))
              with signature Ole ++> Ole as lub_le_compat.
 intros f g H; apply lub_le; intros.
 transitivity (g n); auto.
 Qed.
-Hint Resolve @lub_le_compat : core.
+#[export] Hint Resolve lub_le_compat : core.
 
-Add Parametric Morphism `{c:cpo D}: (lub (cpo:=c)) 
+Add Parametric Morphism `{c:cpo D}: (lub (cpo:=c))
       with signature Oeq ==> Oeq as lub_eq_compat.
 intros; apply Ole_antisym; auto.
 Qed.
-Hint Resolve @lub_eq_compat : core.
+#[export] Hint Resolve lub_eq_compat : core.
 
 
 Notation "'mlub' f" := (lub (mon f)) (at level 60) : O_scope .
 
-Lemma mlub_le_compat : forall `{c:cpo D} (f g:nat -> D) {mf:monotonic f} {mg:monotonic g}, 
+Lemma mlub_le_compat : forall `{c:cpo D} (f g:nat -> D) {mf:monotonic f} {mg:monotonic g},
                 f <= g -> mlub f <= mlub g.
 auto.
 Qed.
-Hint Resolve @mlub_le_compat : core.
+#[export] Hint Resolve mlub_le_compat : core.
 
-Lemma mlub_eq_compat : forall `{c:cpo D} (f g:nat -> D) {mf:monotonic f} {mg:monotonic g}, 
+Lemma mlub_eq_compat : forall `{c:cpo D} (f g:nat -> D) {mf:monotonic f} {mg:monotonic g},
                 f == g -> mlub f == mlub g.
 auto.
 Qed.
-Hint Resolve @mlub_eq_compat : core.
+#[export] Hint Resolve mlub_eq_compat : core.
 
 Lemma   le_mlub : forall `{c:cpo D} (f:nat -> D) {m:monotonic f} (n:nat), f n <= mlub f.
 intros; apply (le_lub (mon f)); auto.
@@ -1392,7 +1395,7 @@ Qed.
 Lemma   mlub_le : forall `{c:cpo D}(f:nat -> D) {m:monotonic f}(x:D), (forall n, f n <= x) -> mlub f <= x.
 intros; auto.
 Qed.
-Hint Resolve @le_mlub @mlub_le : core.
+#[export] Hint Resolve le_mlub mlub_le : core.
 
 Lemma islub_mlub : forall `{c:cpo D}(f:nat -> D) {m:monotonic f},
             islub f (mlub f).
@@ -1404,10 +1407,10 @@ Lemma islub_lub : forall `{c:cpo D}(f:nat -m> D),
 split; auto.
 Qed.
 
-Hint Resolve @islub_mlub @islub_lub : core.
+#[export] Hint Resolve islub_mlub islub_lub : core.
 
 Instance lub_mon `{c:cpo D} : monotonic lub.
-intros; exact (lub_le_compat D o c). 
+intros; exact (lub_le_compat D o c).
 Qed.
 
 Definition Lub `{c:cpo D} : (nat -m> D) -m> D := mon lub.
@@ -1422,39 +1425,39 @@ intros; apply Ole_antisym; auto.
 apply le_lub with (f:=mon (fun _ => d)) (n:=O); auto.
 Qed.
 
-Hint Resolve @lub_cte : core.
+#[export] Hint Resolve lub_cte : core.
 
-Lemma mlub_lift_right : forall `{c:cpo D} (f:nat -m> D) n, 
+Lemma mlub_lift_right : forall `{c:cpo D} (f:nat -m> D) n,
       lub f == mlub (seq_lift_right f n).
 intros; apply Ole_antisym.
 apply lub_le_compat; intro.
 unfold seq_lift_right; simpl; auto with arith.
 unfold seq_lift_right; simpl; auto.
 Qed.
-Hint Resolve @mlub_lift_right : core.
+#[export] Hint Resolve mlub_lift_right : core.
 
-Lemma mlub_lift_left : forall `{c:cpo D} (f:nat -m> D) n, 
+Lemma mlub_lift_left : forall `{c:cpo D} (f:nat -m> D) n,
       lub f == mlub (seq_lift_left f n).
 intros; apply Ole_antisym.
 apply lub_le_compat; intro.
 unfold seq_lift_left; simpl; auto with arith.
 unfold seq_lift_left; auto.
 Qed.
-Hint Resolve @mlub_lift_left : core.
+#[export] Hint Resolve mlub_lift_left : core.
 
-Lemma lub_lift_right : forall `{c:cpo D} (f:nat -m> D) n, 
+Lemma lub_lift_right : forall `{c:cpo D} (f:nat -m> D) n,
       lub f == lub (mseq_lift_right f n).
 intros; transitivity (mlub (seq_lift_right f n)); auto.
 apply lub_eq_compat; intro m; auto.
 Qed.
-Hint Resolve @lub_lift_right : core.
+#[export] Hint Resolve lub_lift_right : core.
 
-Lemma lub_lift_left : forall `{c:cpo D} (f:nat -m> D) n, 
+Lemma lub_lift_left : forall `{c:cpo D} (f:nat -m> D) n,
       lub f == lub (mseq_lift_left f n).
 intros; transitivity (mlub (seq_lift_left f n)); auto.
 apply lub_eq_compat; intro m; auto.
 Qed.
-Hint Resolve @lub_lift_left : core.
+#[export] Hint Resolve lub_lift_left : core.
 
 Lemma lub_le_lift : forall `{c:cpo D} (f g:nat -m> D)
       (n:nat), (forall k, n <= k -> f k <= g k) -> lub f <= lub g.
@@ -1463,7 +1466,7 @@ transitivity (f (n+n0)); auto with arith.
 transitivity (g (n+n0)); auto with arith.
 Qed.
 
-Lemma lub_eq_lift : forall `{c:cpo D} (f g:nat -m> D) {m:monotonic f} {m':monotonic g} 
+Lemma lub_eq_lift : forall `{c:cpo D} (f g:nat -m> D) {m:monotonic f} {m':monotonic g}
       (n:nat), (forall k, n <= k -> f k == g k) -> lub f == lub g.
 intros; apply Ole_antisym; apply lub_le_lift with n; intros; auto.
 apply Oeq_le_sym; auto.
@@ -1476,7 +1479,7 @@ apply lub_eq_compat.
 apply (mon_fun_eq f g H).
 Qed.
 
-Lemma lub_Olt : forall `{c:cpo D} (f:nat -m> D) (k:D), 
+Lemma lub_Olt : forall `{c:cpo D} (f:nat -m> D) (k:D),
       k < lub f -> ~ (forall n, f n <= k).
 red; intros.
 apply (Ole_not_lt (lub f) k); auto.
@@ -1487,20 +1490,20 @@ Definition lub_fun {A} `{c:cpo D} (h : nat -m> (A -> D)) : A -> D
                := fun x => mlub (h <o> x).
 
 (*
-Instance lub_fun_mon  {O} {o:ord O} `{c:cpo D} (h : nat -m> (O -> D)) 
+Instance lub_fun_mon  {O} {o:ord O} `{c:cpo D} (h : nat -m> (O -> D))
        {m:forall x, monotonic (h x)} : monotonic (lub_fun h).
 red; unfold lub_fun; intros.
 apply mlub_le_compat.
 apply (shift_fun_mon h x y); trivial.
 Qed.
-Hint Resolve @lub_fun_mon : core.
+#[export] Hint Resolve lub_fun_mon : core.
 *)
 
-Instance lub_shift_mon  {O} {o:ord O} `{c:cpo D} (h : nat -m> (O -m> D)) 
+Instance lub_shift_mon  {O} {o:ord O} `{c:cpo D} (h : nat -m> (O -m> D))
           : monotonic (fun (x:O) => lub (mshift h x)).
 red; auto.
 Qed.
-Hint Resolve @lub_shift_mon : core.
+#[export] Hint Resolve lub_shift_mon : core.
 
 
 (** *** Functional cpos *)
@@ -1537,13 +1540,13 @@ Program Instance fmon_cpo {O} {o:ord O} `{c:cpo D} : cpo (O -m> D) :=
 Next Obligation. unfold cte; simpl; auto. Defined.
 Next Obligation. simpl; apply (le_mlub (fun y => f y x) n); auto. Defined.
 
-Lemma fmon_lub_simpl : forall {O} {o:ord O} `{c:cpo D} 
+Lemma fmon_lub_simpl : forall {O} {o:ord O} `{c:cpo D}
       (h:nat -m> (O -m> D))(x:O), (lub h) x = lub (mshift h x).
 trivial.
 Qed.
-Hint Resolve @fmon_lub_simpl : core.
+#[export] Hint Resolve fmon_lub_simpl : core.
 
-Instance mon_fun_lub : forall {O} {o:ord O} `{c:cpo D} 
+Instance mon_fun_lub : forall {O} {o:ord O} `{c:cpo D}
          (h:nat -m> (O -> D)) {mh:forall n, monotonic (h n)}, monotonic (lub h).
 red; intros; simpl; auto.
 unfold lub_fun; apply mlub_le_compat.
@@ -1551,7 +1554,7 @@ apply (shift_fun_mon h x y); trivial.
 Qed.
 
 (*
-Instance mon_lub : forall {O} {o:ord O} `{c:cpo D} 
+Instance mon_lub : forall {O} {o:ord O} `{c:cpo D}
          (h:nat -m> (O -m> D)), monotonic (mlub h).
 intros; simpl; auto.
 Qed.
@@ -1559,14 +1562,14 @@ Qed.
 
 (** Link between lubs on ordinary functions and monotonic functions **)
 
-Lemma lub_mon_fcpo : forall {O} {o:ord O} `{c:cpo D} (h:nat -m> (O -m> D)), 
+Lemma lub_mon_fcpo : forall {O} {o:ord O} `{c:cpo D} (h:nat -m> (O -m> D)),
       lub h == mon (lub (mfun2 h)).
 intros; intros x.
 rewrite fmon_lub_simpl; rewrite mon_simpl; rewrite fcpo_lub_simpl.
 apply lub_eq_compat; intro y; auto.
 Qed.
 
-Lemma lub_fcpo_mon : forall {O} {o:ord O} `{c:cpo D} (h:nat -m> (O -> D)) 
+Lemma lub_fcpo_mon : forall {O} {o:ord O} `{c:cpo D} (h:nat -m> (O -> D))
      {mh:forall x, monotonic (h x)}, lub h == lub (mon2 h).
 intros; intro x.
 rewrite fmon_lub_simpl; rewrite fcpo_lub_simpl.
@@ -1574,7 +1577,7 @@ apply lub_eq_compat; intro y; auto.
 Qed.
 
 Lemma double_lub_diag : forall `{c:cpo D} (h : nat -m> nat -m>  D),
-        lub (lub h) == lub (diag h). 
+        lub (lub h) == lub (diag h).
 intros; apply Ole_antisym.
 apply lub_le; intros; simpl; apply lub_le; simpl; intros.
 transitivity (h n0 (n+n0)); auto with arith.
@@ -1585,7 +1588,7 @@ apply lub_le_compat.
 intro n; simpl; unfold diag.
 apply (le_mlub (fun y => h y n) n); auto.
 Qed.
-Hint Resolve @double_lub_diag : core.
+#[export] Hint Resolve double_lub_diag : core.
 
 
 Lemma double_lub_shift : forall `{c:cpo D} (h : nat -m> nat -m>  D),
@@ -1593,7 +1596,7 @@ Lemma double_lub_shift : forall `{c:cpo D} (h : nat -m> nat -m>  D),
 intros; transitivity (lub (diag h)); auto.
 transitivity (lub (diag (mshift h))); auto.
 Qed.
-Hint Resolve @double_lub_shift : core.
+#[export] Hint Resolve double_lub_shift : core.
 
 (*
 Instance mlub_monotonic `{c:cpo D} (h : nat -> nat ->  D) {m:monotonic2 h}:
@@ -1618,20 +1621,20 @@ unfold shift; auto.
 Qed.
 
 Lemma doubl_lub_simpl : forall `{c:cpo D} (h : nat -> nat ->  D) {m:monotonic2 h},
-        mlub (mlub h) == 
+        mlub (mlub h) ==
         lub (mon (fun m => mlub (h <o> m)) (fmonotonic:=mlub_shift_monotonic h)).
 intros; apply mlub_eq_compat; auto.
 Qed.
 
 Lemma doubl_lub_simpl : forall `{c:cpo D} (h : nat -> nat ->  D) {m:monotonic2 h},
-        mlub (mlub h) == 
+        mlub (mlub h) ==
         lub (mon (fun m => mlub (h <o> m)) (fmonotonic:=mlub_shift_monotonic h)).
 intros; apply mlub_eq_compat; auto.
 Qed.
 
 
 Lemma double_lub_simpl : forall `{c:cpo D} (h : nat -> nat ->  D) {m:monotonic2 h},
-        mlub (Lub @ (mon_comp h)) == mlub (diag h). 
+        mlub (Lub @ (mon_comp h)) == mlub (diag h).
 intros; apply Ole_antisym.
 apply mlub_le; simpl; intros.
 apply mlub_le; unfold shift; intros.
@@ -1643,7 +1646,7 @@ apply (le_mlub (diag h) (n + n0)%nat).
 apply mlub_le_compat; simpl.
 intro x; unfold diag, lub_fun, mon_comp, comp; simpl; auto.
 Qed.
-Hint Resolve @double_lub_simpl : core.
+#[export] Hint Resolve double_lub_simpl : core.
 
 
 
@@ -1652,54 +1655,54 @@ Lemma lub_exch_eq : forall `{c:cpo D} (h : nat -> (nat ->  D)) {m:monotonic2 h},
 intros; transitivity (mlub (diag h)); auto.
 Qed.
 
-Hint Resolve @lub_exch_eq : core.
+#[export] Hint Resolve lub_exch_eq : core.
 *)
 
 (** ** Continuity *)
 
-Lemma lub_comp_le : 
-    forall `{c1:cpo D1} `{c2:cpo D2} (f:D1 -m> D2) (h : nat -m> D1), 
+Lemma lub_comp_le :
+    forall `{c1:cpo D1} `{c2:cpo D2} (f:D1 -m> D2) (h : nat -m> D1),
                 lub (f @ h) <= f (lub h).
 intros; apply lub_le; unfold comp; intros.
 apply (fmonotonic f); auto.
 Qed.
-Hint Resolve @lub_comp_le : core.
+#[export] Hint Resolve lub_comp_le : core.
 
-Lemma lub_app2_le : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} 
+Lemma lub_app2_le : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
         (F:D1 -m> D2 -m> D3) (f : nat -m> D1) (g: nat -m> D2),
         lub ((F @2 f) g) <= F (lub f) (lub g).
 intros; apply mlub_le; unfold app2; intros.
 apply fmonotonic2; auto.
 Qed.
-Hint Resolve @lub_app2_le : core.
+#[export] Hint Resolve lub_app2_le : core.
 
-Class continuous `{c1:cpo D1} `{c2:cpo D2} (f:D1 -m> D2) :=  
+Class continuous `{c1:cpo D1} `{c2:cpo D2} (f:D1 -m> D2) :=
     cont_intro : forall (h : nat -m> D1), f (lub h) <= lub (f @ h).
 
 Typeclasses Opaque continuous.
 
-Lemma continuous_eq_compat : forall `{c1:cpo D1} `{c2:cpo D2}(f g:D1 -m> D2), 
+Lemma continuous_eq_compat : forall `{c1:cpo D1} `{c2:cpo D2}(f g:D1 -m> D2),
                   f == g -> continuous f -> continuous g.
 red; intros.
 transitivity (f (lub h)).
 assert (g <= f); auto.
 transitivity (lub (f @ h)); auto.
-Qed. 
+Qed.
 
 Add Parametric Morphism `{c1:cpo D1} `{c2:cpo D2} : (@continuous D1 _ _ D2 _ _)
-     with signature Oeq ==> iff 
+     with signature Oeq ==> iff
 as continuous_eq_compat_iff.
 split; intros.
 apply continuous_eq_compat with x; trivial.
 apply continuous_eq_compat with y; auto.
 Qed.
 
-Lemma lub_comp_eq : 
-    forall `{c1:cpo D1} `{c2:cpo D2} (f:D1 -m> D2) (h : nat -m> D1),  
+Lemma lub_comp_eq :
+    forall `{c1:cpo D1} `{c2:cpo D2} (f:D1 -m> D2) (h : nat -m> D1),
              continuous f -> f (lub h) == lub (f @ h).
 intros; apply Ole_antisym; auto.
 Qed.
-Hint Resolve @lub_comp_eq : core.
+#[export] Hint Resolve lub_comp_eq : core.
 
 
 (** - mon0 x == 0 *)
@@ -1708,10 +1711,10 @@ red; simpl; intros; unfold cte; auto.
 Qed.
 
 (** - double_app f g n m = f m (g n) *)
-Definition double_app `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4: ord Od} 
-      (f:Oa -m> Oc -m> Od) (g:Ob -m> Oc) 
+Definition double_app `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4: ord Od}
+      (f:Oa -m> Oc -m> Od) (g:Ob -m> Oc)
         : Ob -m> (Oa -m> Od) := mon ((mshift f) @ g).
- 
+
 (*
 Lemma double_lub_diag : forall `{c:cpo D} (h:nat -> nat -> D) {mh:monotonic2 h},
              mlub (mlub (fun x => mon (h x))) == mlub (diag h).
@@ -1727,7 +1730,7 @@ Qed.
 
 (** *** Continuity *)
 
-Class continuous2 `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}  (F:D1 -m> D2 -m> D3)  := 
+Class continuous2 `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}  (F:D1 -m> D2 -m> D3)  :=
 continuous2_intro : forall (f : nat -m> D1) (g :nat -m> D2),
                  F (lub f) (lub g) <= lub ((F @2 f) g).
 
@@ -1742,7 +1745,7 @@ Qed.
 
 Typeclasses Opaque continuous2.
 
-Lemma continuous2_eq_compat : 
+Lemma continuous2_eq_compat :
    forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f g : D1 -m> D2 -m> D3),
    f == g -> continuous2 f -> continuous2 g.
 red; intros.
@@ -1759,7 +1762,7 @@ transitivity (lub ((F @2 h) (mon (cte nat k)))); auto.
 rewrite fmon_lub_simpl.
 apply lub_le_compat; simpl; auto.
 Qed.
-Hint Immediate @continuous2_continuous : core.
+#[export] Hint Immediate continuous2_continuous : core.
 
 Lemma continuous2_left : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
              (F : D1 -m> D2 -m> D3) (h:nat -m> D1) (x:D2),
@@ -1790,10 +1793,10 @@ unfold seq_lift_right; simpl.
 intro; apply (fmonotonic2 F); auto with arith.
 Qed.
 
-Hint Resolve @continuous2_app @continuous2_continuous @continuous_continuous2 : core.
+#[export] Hint Resolve continuous2_app continuous2_continuous continuous_continuous2 : core.
 
 Lemma lub_app2_eq : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
-      (F : D1 -m> D2 -m> D3) {cFr:forall k:D1, continuous (F k)} {cF : continuous F}, 
+      (F : D1 -m> D2 -m> D3) {cFr:forall k:D1, continuous (F k)} {cF : continuous F},
       forall (f:nat -m> D1) (g:nat -m> D2),
       F (lub f) (lub g) == lub ((F@2 f) g).
 intros; apply Ole_antisym; auto.
@@ -1802,7 +1805,7 @@ Qed.
 
 Lemma lub_cont2_app2_eq : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
       (F : D1 -m> D2 -m> D3){cF : continuous2 F},
-      forall (f:nat -m> D1) (g:nat -m> D2), 
+      forall (f:nat -m> D1) (g:nat -m> D2),
       F (lub f) (lub g) == lub ((F@2 f) g).
 intros; apply lub_app2_eq; auto.
 intro; apply (continuous2_app F).
@@ -1815,7 +1818,7 @@ red; intros; repeat rewrite mshift_simpl; auto.
 rewrite (H g f); auto.
 apply lub_le_compat; intro n; auto.
 Qed.
-Hint Resolve @mshift_continuous2 : core.
+#[export] Hint Resolve mshift_continuous2 : core.
 
 Lemma monotonic_sym : forall `{o1:ord D1} `{o2:ord D2} (F : D1 -> D1 -> D2),
       (forall x y, F x y == F y x) -> (forall k:D1, monotonic (F k)) -> monotonic F.
@@ -1824,13 +1827,13 @@ transitivity (F k x); auto.
 transitivity (F k y); auto.
 apply H0; trivial.
 Qed.
-Hint Immediate @monotonic_sym : core.
+#[export] Hint Immediate monotonic_sym : core.
 
 Lemma monotonic2_sym : forall `{o1:ord D1} `{o2:ord D2} (F : D1 -> D1 -> D2),
       (forall x y, F x y == F y x) -> (forall k:D1, monotonic (F k)) -> monotonic2 F.
 intros; apply mon2_intro; auto.
 Qed.
-Hint Immediate @monotonic2_sym : core.
+#[export] Hint Immediate monotonic2_sym : core.
 
 Lemma continuous_sym : forall `{c1:cpo D1} `{c2:cpo D2} (F : D1 -m> D1 -m> D2),
       (forall x y, F x y == F y x) -> (forall k:D1, continuous (F k)) -> continuous F.
@@ -1846,11 +1849,11 @@ Lemma continuous2_sym : forall `{c1:cpo D1} `{c2:cpo D2} (F : D1 -m>D1 -m>D2),
 intros; apply continuous_continuous2; auto.
 apply continuous_sym; auto.
 Qed.
-Hint Resolve @continuous2_sym : core.
+#[export] Hint Resolve continuous2_sym : core.
 
 (** - continuity is preserved by composition *)
 
-Lemma continuous_comp : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} 
+Lemma continuous_comp : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
    (f:D2 -m> D3)(g:D1 -m> D2), continuous f -> continuous g -> continuous (mon (f@g)).
 red; intros.
 simpl; unfold comp at 1; simpl.
@@ -1858,7 +1861,7 @@ transitivity (f (lub (g@h))).
 apply (fmonotonic f); auto.
 transitivity (lub (f@(g@h))); auto.
 Qed.
-Hint Resolve @continuous_comp : core.
+#[export] Hint Resolve continuous_comp : core.
 
 Lemma continuous2_comp : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} `{c4:cpo D4}
   (f:D1 -m> D2)(g:D2 -m> D3 -m> D4),
@@ -1870,7 +1873,7 @@ apply (continuous2_right g (f k) h); trivial.
 apply (continuous_comp g f); auto.
 apply continuous2_continuous; trivial.
 Qed.
-Hint Resolve @continuous2_comp : core.
+#[export] Hint Resolve continuous2_comp : core.
 
 Lemma continuous2_comp2 : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} `{c4:cpo D4}
     (f:D3 -m> D4)(g:D1 -m> D2 -m> D3),
@@ -1882,7 +1885,7 @@ transitivity (lub (f@((g@2 f0) g0))); auto.
 apply lub_le_compat.
 intros x; trivial.
 Qed.
-Hint Resolve @continuous2_comp2 : core.
+#[export] Hint Resolve continuous2_comp2 : core.
 
 Lemma continuous2_app2 : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} `{c4:cpo D4}
     (F : D1 -m> D2 -m> D3) (f:D4 -m> D1)(g:D4 -m> D2), continuous2 F ->
@@ -1895,7 +1898,7 @@ rewrite H.
 apply lub_le_compat.
 intros x; trivial.
 Qed.
-Hint Resolve @continuous2_app2 : core.
+#[export] Hint Resolve continuous2_app2 : core.
 
 
 (** ** Cpo of continuous functions *)
@@ -1910,11 +1913,11 @@ rewrite mshift_simpl.
 transitivity (lub ((f n) @ h)); auto.
 Qed.
 
-Record fcont `{c1:cpo D1} `{c2:cpo D2}: Type 
+Record fcont `{c1:cpo D1} `{c2:cpo D2}: Type
      := cont {fcontm :> D1 -m> D2; fcontinuous : continuous fcontm}.
 Existing Instance fcontinuous.
 
-Hint Resolve @fcontinuous : core.
+#[export] Hint Resolve fcontinuous : core.
 Arguments fcont D1 [o][c1] D2 {o0}{c2}.
 Arguments cont [D1][o][c1] [D2][o0][c2] fcontm {fcontinuous}.
 
@@ -1930,22 +1933,22 @@ Next Obligation.
 abstract (split; intuition; red; intros; transitivity (y x0); auto).
 Defined.
 
-Lemma fcont_le_intro : forall `{c1:cpo D1} `{c2:cpo D2} (f g : D1 -c> D2), 
+Lemma fcont_le_intro : forall `{c1:cpo D1} `{c2:cpo D2} (f g : D1 -c> D2),
     (forall x, f x <= g x) -> f <= g.
 trivial.
 Qed.
 
-Lemma fcont_le_elim : forall `{c1:cpo D1} `{c2:cpo D2} (f g : D1 -c> D2), 
+Lemma fcont_le_elim : forall `{c1:cpo D1} `{c2:cpo D2} (f g : D1 -c> D2),
      f <= g -> forall x, f x <= g x.
 trivial.
 Qed.
 
-Lemma fcont_eq_intro : forall `{c1:cpo D1} `{c2:cpo D2} (f g : D1 -c> D2), 
+Lemma fcont_eq_intro : forall `{c1:cpo D1} `{c2:cpo D2} (f g : D1 -c> D2),
       (forall x, f x == g x) -> f == g.
 intros; apply Ole_antisym; apply fcont_le_intro; auto.
 Qed.
 
-Lemma fcont_eq_elim : forall `{c1:cpo D1} `{c2:cpo D2} (f g : D1 -c> D2), 
+Lemma fcont_eq_elim : forall `{c1:cpo D1} `{c2:cpo D2} (f g : D1 -c> D2),
        f == g -> forall x, f x == g x.
 intros; apply Ole_antisym; apply fcont_le_elim; auto.
 Qed.
@@ -1954,32 +1957,32 @@ Lemma fcont_le : forall `{c1:cpo D1} `{c2:cpo D2} (f : D1 -c> D2) (x y : D1),
             x <= y -> f x <= f y.
 intros; apply (fmonotonic (fcontm f) x y H).
 Qed.
-Hint Resolve @fcont_le : core.
+#[export] Hint Resolve fcont_le : core.
 
 Lemma fcont_eq : forall `{c1:cpo D1} `{c2:cpo D2} (f : D1 -c> D2) (x y : D1),
             x == y -> f x == f y.
 intros; apply (fmon_eq (fcontm f) x y H).
 Qed.
-Hint Resolve @fcont_eq : core.
+#[export] Hint Resolve fcont_eq : core.
 
 Definition fcont0 D1 `{c1:cpo D1} D2 `{c2:cpo D2} : D1 -c> D2 := cont (mon (cte D1 (0:D2))).
 
-Instance fcontm_monotonic : forall `{c1:cpo D1} `{c2:cpo D2}, 
+Instance fcontm_monotonic : forall `{c1:cpo D1} `{c2:cpo D2},
          monotonic (fcontm (D1:=D1) (D2:=D2)).
 intros; auto.
 Qed.
 
-Definition Fcontm D1 `{c1:cpo D1} D2 `{c2:cpo D2} : (D1 -c> D2) -m> (D1 -m> D2) := 
+Definition Fcontm D1 `{c1:cpo D1} D2 `{c2:cpo D2} : (D1 -c> D2) -m> (D1 -m> D2) :=
      mon (fcontm (D1:=D1) (D2:=D2)).
 
-Instance fcont_lub_continuous : 
+Instance fcont_lub_continuous :
     forall `{c1:cpo D1} `{c2:cpo D2} (f:nat -m> (D1 -c> D2)),
     continuous (lub (D:=D1 -m> D2) (Fcontm D1 D2 @ f)).
 intros; apply lub_continuous.
 intro; simpl; auto.
 Qed.
 
-Definition fcont_lub `{c1:cpo D1} `{c2:cpo D2} : (nat -m> (D1 -c> D2)) -> D1 -c> D2 := 
+Definition fcont_lub `{c1:cpo D1} `{c2:cpo D2} : (nat -m> (D1 -c> D2)) -> D1 -c> D2 :=
      fun f => cont (lub (D:=D1 -m> D2) (Fcontm D1 D2 @ f)).
 
 Program Instance fcont_cpo `{c1:cpo D1} `{c2:cpo D2} : cpo (D1-c> D2) :=
@@ -2002,8 +2005,8 @@ Lemma fcont_app_simpl : forall {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m>
 trivial.
 Qed.
 
-Instance ishift_continuous : 
-   forall {A:Type} `{c1:cpo D1} `{c2:cpo D2} (f: A -> (D1 -c> D2)), 
+Instance ishift_continuous :
+   forall {A:Type} `{c1:cpo D1} `{c2:cpo D2} (f: A -> (D1 -c> D2)),
           continuous (ishift f).
 red; intros; intro x.
 simpl.
@@ -2011,7 +2014,7 @@ transitivity (lub ((f x) @ h)); auto.
 apply lub_le_compat; simpl; trivial.
 Qed.
 
-Definition fcont_ishift {A:Type} `{c1:cpo D1} `{c2:cpo D2} (f: A -> (D1 -c> D2)) 
+Definition fcont_ishift {A:Type} `{c1:cpo D1} `{c2:cpo D2} (f: A -> (D1 -c> D2))
         : D1 -c> (A -> D2) := cont _ (fcontinuous:=ishift_continuous f).
 
 Instance mshift_continuous : forall {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m> (D1 -c> D2)),
@@ -2021,11 +2024,11 @@ simpl.
 rewrite (fcontinuous (f x) h); auto.
 Qed.
 
-Definition fcont_mshift {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m> (D1 -c> D2)) 
+Definition fcont_mshift {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m> (D1 -c> D2))
    : D1 -c> O -m> D2 := cont (mshift (Fcontm D1 D2 @ f)).
 
 
-Lemma fcont_app_continuous : 
+Lemma fcont_app_continuous :
        forall {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m> D1 -c> D2) (h:nat -m> D1),
             f <_> (lub h) <= lub (D:=O -m> D2) ((fcont_mshift f) @ h).
 intros; intro x.
@@ -2039,7 +2042,7 @@ trivial.
 Qed.
 
 Instance cont_app_monotonic : forall `{o1:ord D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
-            (p:forall k, continuous (f k)), 
+            (p:forall k, continuous (f k)),
             monotonic (Ob:=D2 -c> D3) (fun (k:D1) => cont _ (fcontinuous:=p k)).
 red; simpl; intros.
 apply (fmonotonic f); trivial.
@@ -2048,8 +2051,8 @@ Qed.
 Definition cont_app `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
             (p:forall k, continuous (f k)) : D1 -m> (D2 -c> D3)
     := mon (fun k => cont (f k) (fcontinuous:=p k)).
-            
-Lemma cont_app_simpl : 
+
+Lemma cont_app_simpl :
 forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}(f:D1 -m> D2 -m> D3)(p:forall k, continuous (f k))
         (k:D1),  cont_app f p k = cont (f k).
 trivial.
@@ -2073,14 +2076,14 @@ Definition cont2 `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
 Instance Fcontm_continuous `{c1:cpo D1} `{c2:cpo D2} : continuous (Fcontm D1 D2).
 red; intros; auto.
 Qed.
-Hint Resolve @Fcontm_continuous : core.
+#[export] Hint Resolve Fcontm_continuous : core.
 
-Instance fcont_comp_continuous : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} 
+Instance fcont_comp_continuous : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
     (f:D2 -c> D3) (g:D1 -c> D2), continuous (f @ g).
 intros; apply (continuous_comp (fcontm f) (fcontm g)); auto.
 Qed.
 
-Definition fcont_comp `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D2 -c> D3) (g:D1 -c> D2) 
+Definition fcont_comp `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D2 -c> D3) (g:D1 -c> D2)
    : D1 -c> D3 := cont (f @ g).
 
 Infix "@_" := fcont_comp (at level 35) : O_scope.
@@ -2102,25 +2105,25 @@ intros; apply fcont_le_intro; intro x.
 repeat (rewrite fcont_comp_simpl).
 transitivity (g (k x)); auto.
 Qed.
-Hint Resolve @fcont_comp_le_compat : core.
+#[export] Hint Resolve fcont_comp_le_compat : core.
 
 Add Parametric Morphism `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
-    : (@fcont_comp _ _ c1 _ _ c2 _ _ c3) 
+    : (@fcont_comp _ _ c1 _ _ c2 _ _ c3)
       with signature Ole ++> Ole ++> Ole as fcont_comp_le_morph.
 intros.
 apply fcont_comp_le_compat; trivial.
 Qed.
 
 Add Parametric Morphism `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
-    : (@fcont_comp _ _ c1 _ _ c2 _ _ c3) 
+    : (@fcont_comp _ _ c1 _ _ c2 _ _ c3)
       with signature Oeq ==> Oeq ==> Oeq as fcont_comp_eq_compat.
 intros.
 apply Ole_antisym; auto.
 Qed.
 
 
-Definition fcont_Comp D1 `{c1:cpo D1} D2 `{c2:cpo D2} D3 `{c3:cpo D3} 
-      : (D2 -c> D3) -m> (D1 -c> D2) -m> D1 -c> D3 
+Definition fcont_Comp D1 `{c1:cpo D1} D2 `{c2:cpo D2} D3 `{c3:cpo D3}
+      : (D2 -c> D3) -m> (D1 -c> D2) -m> D1 -c> D3
       := mon2 _ (mf:=fcont_comp_le_compat (D1:=D1) (D2:=D2) (D3:=D3)).
 
 Lemma fcont_Comp_simpl : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
@@ -2128,7 +2131,7 @@ Lemma fcont_Comp_simpl : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
 trivial.
 Qed.
 
-Instance fcont_Comp_continuous2 
+Instance fcont_Comp_continuous2
    : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}, continuous2 (fcont_Comp D1 D2 D3).
 red; intros.
 change ((lub  f) @_ (lub g) <= lub (D:=D1 -c> D3) ((fcont_Comp D1 D2 D3 @2 f) g)).
@@ -2140,7 +2143,7 @@ apply lub_le_compat; simpl; auto.
 Qed.
 
 Definition fcont_COMP  D1 `{c1:cpo D1} D2 `{c2:cpo D2} D3 `{c3:cpo D3}
-      : (D2 -c> D3) -c> (D1 -c> D2) -c> D1 -c> D3 
+      : (D2 -c> D3) -c> (D1 -c> D2) -c> D1 -c> D3
       := cont2 (fcont_Comp D1 D2 D3).
 
 Lemma fcont_COMP_simpl : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
@@ -2150,7 +2153,7 @@ trivial.
 Qed.
 
 Definition fcont2_COMP D1 `{c1:cpo D1} D2 `{c2:cpo D2} D3 `{c3:cpo D3} D4 `{c4:cpo D4}
-   : (D3 -c> D4) -c> (D1 -c> D2 -c> D3) -c> D1 -c> D2 -c> D4 := 
+   : (D3 -c> D4) -c> (D1 -c> D2 -c> D3) -c> D1 -c> D2 -c> D4 :=
      (fcont_COMP D1 (D2 -c> D3) (D2 -c> D4)) @_ (fcont_COMP D2 D3 D4).
 
 Definition fcont2_comp `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} `{c4:cpo D4}
@@ -2162,25 +2165,25 @@ Lemma fcont2_comp_simpl : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} `{c4:cpo
        (f:D3 -c> D4)(F:D1 -c> D2 -c> D3)(x:D1)(y:D2), (f @@_ F) x y = f (F x y).
 trivial.
 Qed.
-            
+
 Lemma fcont_le_compat2 : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f : D1 -c> D2 -c> D3)
     (x y : D1) (z t : D2), x <= y -> z <= t -> f x z <= f y t.
 intros; transitivity (f y z); auto.
 assert (f x <= f y); auto.
 Qed.
-Hint Resolve @fcont_le_compat2 : core.
+#[export] Hint Resolve fcont_le_compat2 : core.
 
 Lemma fcont_eq_compat2 : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f : D1 -c> D2 -c> D3)
     (x y : D1) (z t : D2), x == y -> z == t -> f x z == f y t.
 intros; apply Ole_antisym; auto.
 Qed.
-Hint Resolve @fcont_eq_compat2 : core.
+#[export] Hint Resolve fcont_eq_compat2 : core.
 
 Lemma fcont_continuous : forall `{c1:cpo D1} `{c2:cpo D2} (f:D1 -c> D2)(h:nat -m> D1),
             f (lub h) <= lub (f @ h).
 intros; apply (fcontinuous f h).
 Qed.
-Hint Resolve @fcont_continuous : core.
+#[export] Hint Resolve fcont_continuous : core.
 
 Instance fcont_continuous2 : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
          (f:D1 -c> D2 -c> D3), continuous2 (Fcontm D2 D3 @ f).
@@ -2188,15 +2191,15 @@ intros; apply continuous_continuous2; intros.
 change (continuous (f k)); auto.
 apply (continuous_comp (Fcontm D2 D3) (fcontm f)); auto.
 Qed.
-Hint Resolve @fcont_continuous2 : core.
+#[export] Hint Resolve fcont_continuous2 : core.
 
 Instance cshift_continuous2 : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
          (f:D1 -c> D2 -c> D3), continuous2 (mshift (Fcontm D2 D3 @ f)).
 intros; auto.
 Qed.
-Hint Resolve @cshift_continuous2 : core.
+#[export] Hint Resolve cshift_continuous2 : core.
 
-Definition cshift `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -c> D2 -c> D3) 
+Definition cshift `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -c> D2 -c> D3)
    : D2 -c> D1 -c> D3 := cont2 (mshift (Fcontm D2 D3 @ f)).
 
 Lemma cshift_simpl : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
@@ -2214,7 +2217,7 @@ Qed.
 
 (*
 Instance fcont_comp2_continuous `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} `{c4:cpo D4}
-                (f: D2 -c> D3 -c> D4) (g:D1 -c> D2) (h:D1 -c> D3) 
+                (f: D2 -c> D3 -c> D4) (g:D1 -c> D2) (h:D1 -c> D3)
      : continuous (((Fcontm D3 D4 @ f) @2 g) h).
 red; intros; simpl.
 change (f (g (lub h0)) (h (lub h0)) <= lub ((Fcontm D3 D4 @ f @2 g) h @ h0)).
@@ -2241,7 +2244,7 @@ Lemma fcont_comp2_simpl : forall (D1 D2 D3 D4:cpo)
 trivial.
 Qed.
 
-Add Morphism fcont_comp2 with signature Ole++>Ole ++> Ole ++> Ole 
+Add Morphism fcont_comp2 with signature Ole++>Ole ++> Ole ++> Ole
 as fcont_comp2_le_morph.
 intros D1 D2 D3 D4 F G HF f1 f2 Hf g1 g2 Hg x.
 transitivity (fcontit (fcontit G (fcontit f1 x)) (fcontit g1 x)); auto.
@@ -2294,7 +2297,7 @@ Definition fcont_comp3 (D1 D2 D3 D4 D5:cpo)
 Infix "@3_" := fcont_comp3 (at level 35, right associativity) : O_scope.
 
 Lemma fcont_comp3_simpl : forall (D1 D2 D3 D4 D5:cpo)
-                (F:D2 -c> D3 -c>D4-c>D5) (f:D1 -c> D2) (g:D1 -c> D3) (h:D1 -c>D4) (x:D1), 
+                (F:D2 -c> D3 -c>D4-c>D5) (f:D1 -c> D2) (g:D1 -c> D3) (h:D1 -c>D4) (x:D1),
                 (F@3_ f) g h x = F (f x) (g x) (h x).
 trivial.
 Qed.
@@ -2353,27 +2356,27 @@ Defined.
 
 Lemma Dprod_eq_intro : forall (D1 D2:cpo) (p1 p2: Dprod D1 D2),
              fst p1 == fst p2 -> snd p1 == snd p2 -> p1 == p2.
-split; simpl; auto.  
+split; simpl; auto.
 Qed.
-Hint Resolve Dprod_eq_intro : core.
+#[export] Hint Resolve Dprod_eq_intro : core.
 
 Lemma Dprod_eq_pair : forall (D1 D2:cpo) (x1 y1:D1) (x2 y2:D2),
              x1==y1 -> x2==y2 -> ((x1,x2):Dprod D1 D2) == (y1,y2).
-auto.  
+auto.
 Qed.
-Hint Resolve Dprod_eq_pair : core.
+#[export] Hint Resolve Dprod_eq_pair : core.
 
 Lemma Dprod_eq_elim_fst : forall (D1 D2:cpo) (p1 p2: Dprod D1 D2),
              p1==p2 -> fst p1 == fst p2.
-split; case H; simpl; intuition.  
+split; case H; simpl; intuition.
 Qed.
-Hint Immediate Dprod_eq_elim_fst : core.
+#[export] Hint Immediate Dprod_eq_elim_fst : core.
 
 Lemma Dprod_eq_elim_snd : forall (D1 D2:cpo) (p1 p2: Dprod D1 D2),
              p1==p2 -> snd p1 == snd p2.
-split; case H; simpl; intuition.  
+split; case H; simpl; intuition.
 Qed.
-Hint Immediate Dprod_eq_elim_snd : core.
+#[export] Hint Immediate Dprod_eq_elim_snd : core.
 
 Definition FST (D1 D2:cpo) : Dprod D1 D2 -c> D1.
 intros; exists (Fst D1 D2); red; intros; auto.
@@ -2387,7 +2390,7 @@ Lemma Pair_continuous2 : forall (D1 D2:cpo), continuous2 (D3:=Dprod D1 D2) (Pair
 red; intros; auto.
 Qed.
 
-Definition PAIR (D1 D2:cpo) : D1 -c> D2 -c> Dprod D1 D2 
+Definition PAIR (D1 D2:cpo) : D1 -c> D2 -c> Dprod D1 D2
                 := continuous2_cont (Pair_continuous2 (D1:=D1) (D2:=D2)).
 
 Lemma FST_simpl : forall (D1 D2 :cpo) (p:Dprod D1 D2), FST D1 D2 p = Fst D1 D2 p.
@@ -2402,17 +2405,17 @@ Lemma PAIR_simpl : forall (D1 D2 :cpo) (p1:D1) (p2:D2), PAIR D1 D2 p1 p2 = Pair 
 trivial.
 Qed.
 
-Lemma FST_PAIR_simpl : forall (D1 D2 :cpo) (p1:D1) (p2:D2), 
+Lemma FST_PAIR_simpl : forall (D1 D2 :cpo) (p1:D1) (p2:D2),
             FST D1 D2 (PAIR D1 D2 p1 p2) = p1.
 trivial.
 Qed.
 
-Lemma SND_PAIR_simpl : forall (D1 D2 :cpo) (p1:D1) (p2:D2), 
+Lemma SND_PAIR_simpl : forall (D1 D2 :cpo) (p1:D1) (p2:D2),
             SND D1 D2 (PAIR D1 D2 p1 p2) = p2.
 trivial.
 Qed.
 
-Definition Prod_map :  forall (D1 D2 D3 D4:cpo)(f:D1 -m>D3)(g:D2 -m>D4) , 
+Definition Prod_map :  forall (D1 D2 D3 D4:cpo)(f:D1 -m>D3)(g:D2 -m>D4) ,
       Dprod D1 D2 -m> Dprod D3 D4.
 intros; exists (fun p => pair (f (fst p)) (g (snd p))); red; intros.
 split; simpl fst; simpl snd; apply fmonotonic.
@@ -2426,7 +2429,7 @@ Lemma Prod_map_simpl : forall (D1 D2 D3 D4:cpo)(f:D1 -m>D3)(g:D2 -m>D4) (p:Dprod
 trivial.
 Qed.
 
-Definition PROD_map :  forall (D1 D2 D3 D4:cpo)(f:D1 -c>D3)(g:D2 -c>D4) , 
+Definition PROD_map :  forall (D1 D2 D3 D4:cpo)(f:D1 -c>D3)(g:D2 -c>D4) ,
       Dprod D1 D2 -c> Dprod D3 D4.
 intros; exists (Prod_map (fcontit f) (fcontit g)); red; intros; rewrite Prod_map_simpl.
 split; simpl.
@@ -2438,20 +2441,20 @@ rewrite (fcont_continuous g).
 apply lub_le_compat; intros; intro; simpl; auto.
 Defined.
 
-Lemma PROD_map_simpl :  forall (D1 D2 D3 D4:cpo)(f:D1 -c>D3)(g:D2 -c>D4)(p:Dprod D1 D2), 
+Lemma PROD_map_simpl :  forall (D1 D2 D3 D4:cpo)(f:D1 -c>D3)(g:D2 -c>D4)(p:Dprod D1 D2),
       PROD_map f g p = pair (f (fst p)) (g (snd p)).
 trivial.
 Qed.
 
 Definition curry (D1 D2 D3 : cpo) (f:Dprod D1 D2 -c> D3) : D1 -c> (D2 -c>D3) :=
-fcont_COMP D1 (D2 -c>Dprod D1 D2) (D2 -c>D3) 
+fcont_COMP D1 (D2 -c>Dprod D1 D2) (D2 -c>D3)
                           (fcont_COMP D2 (Dprod D1 D2) D3 f) (PAIR D1 D2).
 
 Definition Curry : forall (D1 D2 D3 : cpo), (Dprod D1 D2 -c> D3) -m> D1 -c> (D2 -c>D3).
        intros; exists (curry (D1:=D1)(D2:=D2)(D3:=D3)); red; intros; auto.
 Defined.
 
-Lemma Curry_simpl : forall (D1 D2 D3 : cpo) (f:Dprod D1 D2 -c> D3) (x:D1) (y:D2), 
+Lemma Curry_simpl : forall (D1 D2 D3 : cpo) (f:Dprod D1 D2 -c> D3) (x:D1) (y:D2),
        Curry D1 D2 D3 f x y = f (x,y).
 trivial.
 Qed.
@@ -2460,7 +2463,7 @@ Definition CURRY : forall (D1 D2 D3 : cpo), (Dprod D1 D2 -c> D3) -c> D1 -c> (D2 
        intros; exists (Curry D1 D2 D3); red; intros; auto.
 Defined.
 
-Lemma CURRY_simpl : forall (D1 D2 D3 : cpo) (f:Dprod D1 D2 -c> D3), 
+Lemma CURRY_simpl : forall (D1 D2 D3 : cpo) (f:Dprod D1 D2 -c> D3),
        CURRY D1 D2 D3 f = Curry D1 D2 D3 f.
 trivial.
 Qed.
@@ -2476,7 +2479,7 @@ repeat (rewrite fcont_comp2_simpl); auto.
 apply (H (FST D1 D2 z) (SND D1 D2 z)).
 Defined.
 
-Lemma Uncurry_simpl : forall (D1 D2 D3 : cpo) (f:D1 -c> (D2 -c>D3)) (p:Dprod D1 D2), 
+Lemma Uncurry_simpl : forall (D1 D2 D3 : cpo) (f:D1 -c> (D2 -c>D3)) (p:Dprod D1 D2),
        Uncurry D1 D2 D3 f p = f (fst p) (snd p).
 trivial.
 Qed.
@@ -2528,7 +2531,7 @@ trivial.
 Qed.
 
 Lemma Dprodi_continuous : forall `{c:cpo D}(I:Type)(Di:I->cpo)
-    (f:D -m> Dprodi Di), (forall i, continuous (Proj Di i @ f)) -> 
+    (f:D -m> Dprodi Di), (forall i, continuous (Proj Di i @ f)) ->
     continuous f.
 red; intros; intro i.
 transitivity (lub (c:=Di i) ((Proj Di i @ f) @ h)); auto.
@@ -2550,10 +2553,10 @@ Lemma Dprodi_lift_cont : forall (I J:Type)(Di:I->cpo)(f:J->I),
 intros; apply Dprodi_continuous; red; simpl; intros; auto.
 Qed.
 
-Definition DLIFTi (I J:Type)(Di:I->cpo)(f:J->I) : Dprodi Di -c> Dprodi (fun j => Di (f j)) 
+Definition DLIFTi (I J:Type)(Di:I->cpo)(f:J->I) : Dprodi Di -c> Dprodi (fun j => Di (f j))
              := mk_fconti (Dprodi_lift_cont (Di:=Di) f).
 
-Definition Dmapi : forall (I:Type)(Di Dj:I->cpo)(f:forall i, Di i -m> Dj i), 
+Definition Dmapi : forall (I:Type)(Di Dj:I->cpo)(f:forall i, Di i -m> Dj i),
             Dprodi Di -m> Dprodi Dj.
 intros; exists (fun p i => f i (p i)); red; auto.
 Defined.
@@ -2563,7 +2566,7 @@ Dmapi f p i = f i (p i).
 trivial.
 Qed.
 
-Lemma DMAPi : forall (I:Type)(Di Dj:I->cpo)(f:forall i, Di i -c> Dj i), 
+Lemma DMAPi : forall (I:Type)(Di Dj:I->cpo)(f:forall i, Di i -c> Dj i),
             Dprodi Di -c> Dprodi Dj.
 intros; exists (Dmapi (fun i => fcontit (f i))).
 red; intros; intro i; rewrite Dmapi_simpl.
@@ -2576,12 +2579,12 @@ DMAPi f p i = f i (p i).
 trivial.
 Qed.
 
-Lemma Proj_cont : forall (I:Type)(Di:I->cpo) (i:I), 
+Lemma Proj_cont : forall (I:Type)(Di:I->cpo) (i:I),
                     continuous (D1:=Dprodi Di) (D2:=Di i) (Proj Di i).
 red; intros; simpl; trivial.
 Qed.
 
-Definition PROJ (I:Type)(Di:I->cpo) (i:I) : Dprodi Di -c> Di i := 
+Definition PROJ (I:Type)(Di:I->cpo) (i:I) : Dprodi Di -c> Di i :=
       mk_fconti (Proj_cont (Di:=Di) i).
 
 Lemma PROJ_simpl : forall (I:Type)(Di:I->cpo) (i:I)(d:Dprodi Di),
@@ -2607,7 +2610,7 @@ Definition pi2 (d:Dprodi DI2) := PI2 d.
 
 Definition pair2 (d1:DP1) (d2:DP2) : Dprodi DI2 := bool_rect DI2 d1 d2.
 
-Lemma pair2_le_compat : forall (d1 d'1:DP1) (d2 d'2:DP2), d1 <= d'1 -> d2 <= d'2 
+Lemma pair2_le_compat : forall (d1 d'1:DP1) (d2 d'2:DP2), d1 <= d'1 -> d2 <= d'2
             -> pair2 d1 d2 <= pair2 d'1 d'2.
 intros; intro b; case b; simpl; auto.
 Qed.
@@ -2636,7 +2639,7 @@ Lemma pi2_simpl : forall  (d1: DP1) (d2:DP2), pi2 (pair2 d1 d2) = d2.
 trivial.
 Qed.
 
-Definition DI2_map (f1 : DP1 -c> DP1) (f2:DP2 -c> DP2) 
+Definition DI2_map (f1 : DP1 -c> DP1) (f2:DP2 -c> DP2)
                : Dprodi DI2 -c> Dprodi DI2 :=
                  DMAPi (bool_rect (fun b:bool => DI2 b -c>DI2 b) f1 f2).
 
@@ -2645,7 +2648,7 @@ Lemma Dl2_map_eq : forall (f1 : DP1 -c> DP1) (f2:DP2 -c> DP2) (d:Dprodi DI2),
 intros; simpl; apply Oprodi_eq_intro; intro b; case b; trivial.
 Qed.
 End Product2.
-Hint Resolve Dl2_map_eq : core.
+#[export] Hint Resolve Dl2_map_eq : core.
 
 Section Product1.
 Definition I1 := unit.
@@ -2683,7 +2686,7 @@ Lemma pi_simpl : forall  (d:D), pi (pair1 d) = d.
 trivial.
 Qed.
 
-Definition DI1_map (f : D -c> D) 
+Definition DI1_map (f : D -c> D)
                : Dprodi DI1 -c> Dprodi DI1 :=
                  DMAPi (fun t:unit => f).
 
@@ -2693,18 +2696,18 @@ intros; simpl; apply Oprodi_eq_intro; intro b; case b; trivial.
 Qed.
 End Product1.
 
-Hint Resolve DI1_map_eq : core.
+#[export] Hint Resolve DI1_map_eq : core.
 *)
 
 (** ** Fixpoints *)
 
-Fixpoint iter_ {D} {o} `{c: @cpo D o} (f : D -m> D) n {struct n} : D 
+Fixpoint iter_ {D} {o} `{c: @cpo D o} (f : D -m> D) n {struct n} : D
     := match n with O => 0 | S m => f (iter_ f m) end.
 
 Lemma iter_incr : forall `{c: cpo D} (f : D -m> D) n, iter_ f n <= f (iter_ f n).
 induction n; simpl; auto.
 Qed.
-Hint Resolve @iter_incr : core.
+#[export] Hint Resolve iter_incr : core.
 
 Instance iter_mon : forall `{c: cpo D} (f : D -m> D), monotonic (iter_ f).
 red; intros.
@@ -2722,9 +2725,9 @@ transitivity (lub (f @ (iter f))); auto.
 apply lub_le_compat; intro n; simpl.
 apply iter_incr.
 Qed.
-Hint Resolve @fixp_le : core.
+#[export] Hint Resolve fixp_le : core.
 
-Lemma fixp_eq : forall `{c: cpo D} (f : D -m> D) {mf:continuous f}, 
+Lemma fixp_eq : forall `{c: cpo D} (f : D -m> D) {mf:continuous f},
       fixp f == f (fixp f).
 intros; apply Ole_antisym; auto.
 unfold fixp.
@@ -2746,17 +2749,17 @@ intros.
 apply fixp_eq with (f:=mon (cte D d)); red; intros; simpl; auto.
 apply (le_mlub (mon (cte D d) @ h) O).
 Qed.
-Hint Resolve @fixp_cte : core.
+#[export] Hint Resolve fixp_cte : core.
 
 
-Lemma fixp_le_compat : forall `{c:cpo D} (f g : D -m> D), 
+Lemma fixp_le_compat : forall `{c:cpo D} (f g : D -m> D),
       f <= g -> fixp f <= fixp g.
 intros; unfold fixp.
 apply mlub_le_compat.
 intro n; induction n; simpl; auto.
 transitivity (g (iter_ (D:=D) f n)); auto.
 Qed.
-Hint Resolve @fixp_le_compat : core.
+#[export] Hint Resolve fixp_le_compat : core.
 
 Instance fixp_monotonic `{c:cpo D} : monotonic fixp.
 red; auto.
@@ -2766,7 +2769,7 @@ Add Parametric Morphism `{c:cpo D} : (fixp (c:=c))
     with signature Oeq ==> Oeq as fixp_eq_compat.
 intros; apply Ole_antisym; auto.
 Qed.
-Hint Resolve @fixp_eq_compat : core.
+#[export] Hint Resolve fixp_eq_compat : core.
 
 Definition Fixp D `{c:cpo D} : (D -m> D) -m> D := mon fixp.
 
@@ -2807,7 +2810,7 @@ apply lub_continuous; trivial.
 pose (hh:=fun n m: nat => h n (iter (h m) k)).
 assert (monotonic2 hh).
 unfold hh; red; intros n1 n2 m1 m2 H1 H2.
-apply (fmonotonic2 h); trivial. 
+apply (fmonotonic2 h); trivial.
 apply iter_monotonic; auto.
 transitivity (lub (lub (mon2 hh))).
 apply lub_le_compat; intro n; unfold hh; simpl; auto.
@@ -2816,7 +2819,7 @@ transitivity (lub (mshift (mon iter @ h) (S k))); auto.
 apply lub_le_compat; intro n; simpl; auto.
 Qed.
 
-Hint Resolve @iter_continuous : core.
+#[export] Hint Resolve iter_continuous : core.
 
 Lemma iter_continuous_eq : forall `{c:cpo D} (h : nat -m> (D -m> D)),
     (forall n, continuous (h n)) -> iter (lub h) == lub (mon iter @ h).
@@ -2825,7 +2828,7 @@ exact (lub_comp_le (mon iter) h).
 Qed.
 
 
-Lemma fixp_continuous : forall `{c:cpo D} (h : nat -m> (D -m> D)), 
+Lemma fixp_continuous : forall `{c:cpo D} (h : nat -m> (D -m> D)),
        (forall n, continuous (h n)) -> fixp (lub h) <= lub (mon fixp @ h).
 intros; unfold fixp.
 transitivity (lub (lub (mon iter @ h))); auto.
@@ -2834,9 +2837,9 @@ exact (iter_continuous h H).
 transitivity (lub (lub (mshift (mon iter @ h)))); auto.
 apply lub_le_compat; intro n; simpl; auto.
 Qed.
-Hint Resolve @fixp_continuous : core.
+#[export] Hint Resolve fixp_continuous : core.
 
-Lemma fixp_continuous_eq : forall `{c:cpo D} (h : nat -m> (D -m> D)), 
+Lemma fixp_continuous_eq : forall `{c:cpo D} (h : nat -m> (D -m> D)),
        (forall n, continuous (h n)) -> fixp (lub h) == lub (mon fixp @ h).
 intros; apply Ole_antisym; auto.
 exact (lub_comp_le (mon fixp) h).
@@ -2870,19 +2873,19 @@ Lemma FIXP_le_compat : forall `{c:cpo D} (f g : D -c> D),
 intros; repeat (rewrite FIXP_simpl); repeat (rewrite Fixp_simpl).
 apply fixp_le_compat; auto.
 Qed.
-Hint Resolve @FIXP_le_compat : core.
+#[export] Hint Resolve FIXP_le_compat : core.
 
 Lemma FIXP_eq_compat : forall `{c:cpo D} (f g : D -c> D),
             f == g -> FIXP D f == FIXP D g.
 intros; apply Ole_antisym; auto.
 Qed.
-Hint Resolve @FIXP_eq_compat : core.
+#[export] Hint Resolve FIXP_eq_compat : core.
 
 Lemma FIXP_eq : forall `{c:cpo D} (f:D -c> D), FIXP D f == f (FIXP D f).
 intros; rewrite FIXP_simpl; rewrite Fixp_simpl.
 apply (fixp_eq (fcontm f)).
 Qed.
-Hint Resolve @FIXP_eq : core.
+#[export] Hint Resolve FIXP_eq : core.
 
 Lemma FIXP_inv : forall `{c:cpo D} (f:D -c> D) (g : D), f g <= g -> FIXP D f <= g.
 intros; rewrite FIXP_simpl; rewrite Fixp_simpl; apply fixp_inv; auto.
@@ -2919,15 +2922,15 @@ rewrite H1; auto.
 rewrite (FIXP_eq (f@_g)) at 2; auto.
 Qed.
 
-Fixpoint fcont_compn {D} {o} `{c:@cpo D o}(f:D -c> D) (n:nat) {struct n} : D -c> D := 
+Fixpoint fcont_compn {D} {o} `{c:@cpo D o}(f:D -c> D) (n:nat) {struct n} : D -c> D :=
              match n with O => f | S p => fcont_compn f p @_ f end.
 
-Lemma fcont_compn_Sn_simpl : 
+Lemma fcont_compn_Sn_simpl :
      forall `{c:cpo D}(f:D -c> D) (n:nat), fcont_compn f (S n) = fcont_compn f n @_ f.
 trivial.
 Qed.
 
-Lemma fcont_compn_com : forall `{c:cpo D}(f:D-c>D) (n:nat), 
+Lemma fcont_compn_com : forall `{c:cpo D}(f:D-c>D) (n:nat),
             f @_ (fcont_compn f n) <= fcont_compn f n @_ f.
 induction n; auto.
 rewrite fcont_compn_Sn_simpl.
@@ -2935,7 +2938,7 @@ transitivity ((f @_ fcont_compn (D:=D) f n) @_ f); auto.
 intro k; simpl; auto.
 Qed.
 
-Lemma FIXP_compn : 
+Lemma FIXP_compn :
      forall `{c:cpo D} (f:D-c>D) (n:nat), FIXP D (fcont_compn f n) == FIXP D f.
 induction n; auto.
 simpl fcont_compn.
@@ -2950,7 +2953,7 @@ intros; exact (FIXP_compn f (S O)).
 Qed.
 
 (*
-Lemma FIXP_proj : forall (I:Type)(DI: I -> cpo) (F:Dprodi DI -c> Dprodi DI) (i:I) (fi : DI i -c> DI i), 
+Lemma FIXP_proj : forall (I:Type)(DI: I -> cpo) (F:Dprodi DI -c> Dprodi DI) (i:I) (fi : DI i -c> DI i),
                               (forall X : Dprodi DI, F X i == fi (X i)) -> FIXP (Dprodi DI) F i == FIXP (DI i) fi.
 intros; apply Ole_antisym.
 (* fix F i <= fix fi *)
@@ -2975,7 +2978,7 @@ Qed.
 *)
 
 (** *** Induction principle *)
-Definition admissible `{c:cpo D}(P:D->Type) := 
+Definition admissible `{c:cpo D}(P:D->Type) :=
           forall f : nat -m> D, (forall n, P (f n)) -> P (lub f).
 
 Lemma fixp_ind : forall  `{c:cpo D}(F:D -m> D)(P:D->Type),
@@ -2985,7 +2988,7 @@ apply X; intros.
 induction n; simpl; auto.
 Defined.
 
-Definition admissible2 `{c1:cpo D1}`{c2:cpo D2}(R:D1 -> D2 -> Type) := 
+Definition admissible2 `{c1:cpo D1}`{c2:cpo D2}(R:D1 -> D2 -> Type) :=
     forall (f : nat -m> D1) (g:nat -m> D2), (forall n, R (f n) (g n)) -> R (lub f) (lub g).
 
 Lemma fixp_ind_rel : forall  `{c1:cpo D1}`{c2:cpo D2}(F:D1 -m> D1) (G:D2-m> D2)
@@ -3014,27 +3017,27 @@ intros; unfold fixp; rewrite fc.
 apply lub_le_compat; intro n.
 induction n; simpl; auto.
 Qed.
-  
+
 (*
 (** ** Directed complete partial orders without minimal element *)
 
-Record dcpo : Type := mk_dcpo 
+Record dcpo : Type := mk_dcpo
   {tdcpo:> ord; dlub: (nat -m> tdcpo) -> tdcpo;
    le_dlub : forall (f : nat -m> tdcpo) (n:nat), f n <= dlub f;
    dlub_le : forall (f : nat -m> tdcpo) (x:tdcpo), (forall n, f n <= x) -> dlub f <= x}.
 
-Hint Resolve le_dlub dlub_le : core.
+#[export] Hint Resolve le_dlub dlub_le : core.
 
 Lemma dlub_le_compat : forall (D:dcpo)(f1 f2 : nat -m> D), f1 <= f2 -> dlub f1 <= dlub f2.
 intros; apply dlub_le; intros.
 transitivity (f2 n); auto.
 Qed.
-Hint Resolve dlub_le_compat : core.
+#[export] Hint Resolve dlub_le_compat : core.
 
 Lemma dlub_eq_compat : forall (D:dcpo)(f1 f2 : nat -m> D), f1 == f2 -> dlub f1 == dlub f2.
 intros; apply Ole_antisym; auto.
 Qed.
-Hint Resolve dlub_eq_compat : core.
+#[export] Hint Resolve dlub_eq_compat : core.
 
 Lemma dlub_lift_right : forall (D:dcpo) (f:nat-m>D) n, dlub f == dlub (mseq_lift_right f n).
 intros; apply Ole_antisym; auto.
@@ -3042,7 +3045,7 @@ apply dlub_le_compat; intro.
 unfold mseq_lift_right; simpl.
 apply (fmonotonic f); auto with arith.
 Qed.
-Hint Resolve dlub_lift_right : core.
+#[export] Hint Resolve dlub_lift_right : core.
 
 Lemma dlub_cte : forall (D:dcpo) (c:D), dlub (mseq_cte c) == c.
 intros; apply Ole_antisym; auto.
@@ -3059,12 +3062,12 @@ Defined.
 (** ** Setoid type *)
 
 Record setoid : Type := mk_setoid
-  {tset:>Type; Seq:tset->tset->Prop; Seq_refl : forall x :tset, Seq x x; 
+  {tset:>Type; Seq:tset->tset->Prop; Seq_refl : forall x :tset, Seq x x;
    Seq_sym : forall x y:tset, Seq x y -> Seq y x;
    Seq_trans : forall x y z:tset, Seq x y -> Seq y z -> Seq x z}.
 
-Hint Resolve Seq_refl : core.
-Hint Immediate Seq_sym : core.
+#[export] Hint Resolve Seq_refl : core.
+#[export] Hint Immediate Seq_sym : core.
 
 (** *** A setoid is an ordered set *)
 
@@ -3099,13 +3102,13 @@ intros; unfold lub_eq; simpl.
 apply Seq_sym; apply (fmonotonic f); simpl; auto with arith.
 Qed.
 
-Lemma lub_eq_le  : forall (S:setoid) (f:nat-m>setoid_ord S)(x:setoid_ord S), 
+Lemma lub_eq_le  : forall (S:setoid) (f:nat-m>setoid_ord S)(x:setoid_ord S),
                 (forall (n:nat), f n <= x) -> lub_eq f <= x.
 intros; unfold lub_eq; simpl; intros.
 exact (H O).
 Qed.
 
-Hint Resolve le_lub_eq lub_eq_le : core.
+#[export] Hint Resolve le_lub_eq lub_eq_le : core.
 
 Definition setoid_dcpo : setoid -> dcpo.
 intro S; exists (setoid_ord S) (lub_eq (S:=S)); intros; auto.
@@ -3114,12 +3117,12 @@ Defined.
 (** Cpo of arrays seen as functions from nat to D with a bound n *)
 
 Definition lek {O} {o:ord O} (k:nat) (f g : nat -> O) := forall n, n < k -> f n <= g n.
-Hint Unfold lek : core.
+#[export] Hint Unfold lek : core.
 
 Lemma lek_refl : forall {O} {o:ord O} k (f:nat -> O), lek k f f.
 auto.
 Qed.
-Hint Resolve lek_refl : core.
+#[export] Hint Resolve lek_refl : core.
 
 Lemma lek_trans : forall {O} {o:ord O} (k:nat) (f g h: nat -> O), lek k f g -> lek k g h -> lek k f h.
 red; intros.
@@ -3131,7 +3134,7 @@ intros O k; exists (nat->O) (lek (O:=O) k); auto.
 exact (lek_trans (O:=O) (k:=k)).
 Defined.
 
-Definition norm {O} {o:ord O} (x:O) (k:nat) (f: natk_ord O k) : natk_ord O k := 
+Definition norm {O} {o:ord O} (x:O) (k:nat) (f: natk_ord O k) : natk_ord O k :=
         fun n => if le_lt_dec k n then x else f n.
 
 Lemma norm_simpl_lt : forall {O} {o:ord O} (x:O) (k:nat) (f: natk_ord O k) (n:nat),
@@ -3144,7 +3147,7 @@ Lemma norm_simpl_le : forall {O} {o:ord O} (x:O) (k:nat) (f: natk_ord O k) (n:na
        (k <= n)%nat -> norm x f n = x.
 unfold norm; intros; case (le_lt_dec k n); auto.
 intros; casetype False; omega.
-Qed. 
+Qed.
 
 Definition natk_mon_shift : forall (Oa Ob : ord)(x:Ob) (k:nat),
          (Oa -m> natk_ord Ob k) -> natk_ord (Oa -m> Ob) k.
@@ -3156,7 +3159,7 @@ repeat rewrite norm_simpl_lt; auto.
 apply (fmonotonic f H n); trivial.
 Defined.
 
-Lemma natk_mon_shift_simpl 
+Lemma natk_mon_shift_simpl
      : forall (Oa Ob : ord)(x:Ob) (k:nat)(f:Oa -m> natk_ord Ob k) (n:nat) (y:Oa),
      natk_mon_shift x f n y = norm x (f y) n.
 trivial.
@@ -3164,12 +3167,12 @@ Qed.
 
 Definition natk_shift_mon : forall (Oa Ob : ord)(k:nat),
          (natk_ord (Oa -m> Ob) k) -> Oa -m> natk_ord Ob k.
-intros Oa Ob k f; exists (fun (y:Oa) n => f n y). 
+intros Oa Ob k f; exists (fun (y:Oa) n => f n y).
 red; intros; intros n H1.
 apply (fmonotonic (f n)); auto.
 Defined.
 
-Lemma natk_shift_mon_simpl 
+Lemma natk_shift_mon_simpl
      : forall (Oa Ob : ord)(k:nat)(f:natk_ord (Oa -m> Ob) k) (x:Oa)(n:nat),
      natk_shift_mon f x n = f n x.
 trivial.
@@ -3177,7 +3180,7 @@ Qed.
 
 Definition natk0 `{c:cpo D} (k:nat) : natk_ord D k := fun n : nat => (0:D).
 
-Definition natklub `{c:cpo D} (k:nat) (h:nat-m>natk_ord D k) : natk_ord D k := 
+Definition natklub `{c:cpo D} (k:nat) (h:nat-m>natk_ord D k) : natk_ord D k :=
                             fun n => lub (natk_mon_shift (0:D) h n).
 
 Lemma natklub_less : forall `{c:cpo D} (k:nat) (h:nat-m>natk_ord D k) (n:nat),
@@ -3219,32 +3222,32 @@ rewrite natk_mon_shift_simpl.
 rewrite norm_simpl_lt; trivial.
 Defined.
 
-Lemma natk_shift_cont_simpl 
+Lemma natk_shift_cont_simpl
      : forall (D1 D2:cpo)(k:nat)(f:k --> (D1 -c>D2)) (n:nat) (x:D1),
      natk_shift_cont f x n = f n x.
 trivial.
 Qed.
 
-Lemma natklub_simpl : forall `{c:cpo D} (k:nat) (h:nat -m> k --> D) (n:nat), 
+Lemma natklub_simpl : forall `{c:cpo D} (k:nat) (h:nat -m> k --> D) (n:nat),
                     lub h n = lub (natk_mon_shift (0:D) h n).
 trivial.
 Qed.
 *)
 
-Ltac continuity cont Cont Hcont:= 
-  match goal with 
- | |- (Ole ?x1 (lub (mon (fun (n:nat) => cont (@?g n))))) => 
+Ltac continuity cont Cont Hcont:=
+  match goal with
+ | |- (Ole ?x1 (lub (mon (fun (n:nat) => cont (@?g n))))) =>
       let f := fresh "f" in (
            pose (f:=g); assert (monotonic f) ;
                                [auto |  (transitivity (lub (Cont@(mon f))); [rewrite <- Hcont | auto])]
            )
 end.
 
-Ltac gen_monotonic := 
+Ltac gen_monotonic :=
 match goal with |- context [(@mon _ _ _ _ ?f ?mf)] => generalize (mf:monotonic f)
 end.
 
-Ltac gen_monotonic1 f := 
+Ltac gen_monotonic1 f :=
 match goal with |- context [(@mon _ _ _ _ f ?mf)] => generalize (mf:monotonic f)
 end.
 
@@ -3266,7 +3269,7 @@ Lemma Fif_continuous_right `{c:cpo A} (b:bool) (e:A) : continuous (Fif b e).
 red; intros; simpl.
 case b; simpl @fif.
 rewrite <- (lub_cte e) at 1; auto.
-apply mlub_le_compat; auto. 
+apply mlub_le_compat; auto.
 apply lub_le_compat; intro n; auto.
 Qed.
 
@@ -3278,7 +3281,7 @@ rewrite (Fif_continuous_right (negb b) e h).
 rewrite fmon_lub_simpl.
 apply lub_le_compat; intro n; case b; auto.
 Qed.
-Hint Resolve @Fif_continuous_right @Fif_continuous_left : core.
+#[export] Hint Resolve Fif_continuous_right Fif_continuous_left : core.
 
 Lemma fif_continuous_left `{c:cpo A} (b:bool) (f:nat-m> A):
     fif b (lub f) == lub (Fif b@f).
@@ -3297,7 +3300,7 @@ Lemma fif_continuous_right `{c:cpo A} (b:bool) e (f:nat-m> A):
 intros; rewrite <- lub_comp_eq; auto.
 Qed.
 
-Hint Resolve @fif_continuous_right @fif_continuous_left @fif_continuous_left2 : core.
+#[export] Hint Resolve fif_continuous_right fif_continuous_left fif_continuous_left2 : core.
 
 Instance Fif_continuous2 `{c:cpo A} (b:bool) : continuous2 (Fif (A:=A) b).
 apply continuous_continuous2; auto.
@@ -3309,18 +3312,14 @@ rewrite <- lub_cont2_app2_eq; auto.
 Qed.
 
 
-Add Parametric Morphism `{o:ord A} (b:bool) : (@fif A b) 
+Add Parametric Morphism `{o:ord A} (b:bool) : (@fif A b)
 with signature Ole ==> Ole ==> Ole
 as fif_le_compat.
 intros; apply fif_mon2; auto.
 Qed.
 
-Add Parametric Morphism `{o:ord A} (b:bool) : (@fif A b) 
+Add Parametric Morphism `{o:ord A} (b:bool) : (@fif A b)
 with signature Oeq ==> Oeq ==> Oeq
 as fif_eq_compat.
 intros; apply (monotonic2_stable2 (@fif A b)); auto.
 Qed.
-
-
-
-

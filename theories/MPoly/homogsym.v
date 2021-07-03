@@ -320,7 +320,7 @@ exists (fun r : 'rV[R]_(#|b|) => \sum_(i < #|b|) (r 0 i) *: (homsymm (tnth t i))
     by apply val_inj; apply val_inj; rewrite /= /symm H scaler0.
   rewrite [RHS](eq_bigl (fun la => la \in b)); first last.
     by move=> i /=; rewrite inE.
-  rewrite [RHS]big_enum /= -[enum _]/(tval t).
+  rewrite -[RHS]big_enum /= -[enum _]/(tval t).
   rewrite big_tuple; apply eq_bigr => i _; congr (_ *: _).
   by rewrite mxE.
 - move=> r /=; apply/matrixP=> i j.
@@ -496,9 +496,9 @@ Proof using.
 rewrite /mnmwgt => H.
 rewrite /= is_part_sortedE; apply/and3P; split.
 - rewrite /intpart_of_mon sumn_rev sumn_flatten -[X in _ == X]H.
-  rewrite -sumnE big_map big_tuple.
+  rewrite sumnE big_map big_tuple.
   apply/eqP/eq_bigr => /= i _.
-  by rewrite -sumnE tnth_mktuple big_nseq iter_addn_0 mulnC.
+  by rewrite sumnE tnth_mktuple big_nseq iter_addn_0 mulnC.
 - rewrite /intpart_of_mon /= rev_sorted.
   apply/(sorted.sortedP 0%N) => //=; first exact: leq_trans.
   move=> i j; rewrite !nth_flatten.
@@ -604,7 +604,7 @@ Local Lemma char0_rat : [char rat] =i pred0.
 Proof. exact: Num.Theory.char_num. Qed.
 Local Lemma char0_algC : [char algC] =i pred0.
 Proof. exact: Num.Theory.char_num. Qed.
-Hint Resolve char0_algC char0_rat.
+#[local] Hint Resolve char0_algC char0_rat : core.
 
 Notation "''he'" := (symbe _ _ _) (at level 8, format "''he'").
 Notation "''hh'" := (symbh _ _ _) (at level 8, format "''hh'").

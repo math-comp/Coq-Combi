@@ -64,6 +64,12 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
+Local Lemma char0_rat : [char rat] =i pred0.
+Proof. exact: Num.Theory.char_num. Qed.
+Local Lemma char0_algC : [char algC] =i pred0.
+Proof. exact: Num.Theory.char_num. Qed.
+#[local] Hint Resolve char0_algC char0_rat : core.
+
 
 Lemma mprodXnE R nv (I : Type) (F : I -> 'X_{1..nv}) P m (r : seq _) :
   \prod_(i <- r | P i) 'X_[R, F i] ^+ m i = 'X_[\sum_(i <- r | P i) (F i *+ m i)].
@@ -343,7 +349,7 @@ case: (altP (mdeg mon =P d)) => Hdeg; first last.
   - rewrite mcoeff_symm //.
     suff /negbTE -> : ~~ perm_eq (mpart (n := m) la) mon by rewrite mulr0.
     apply/negP => /perm_sumn.
-    rewrite sumn_mpart // intpartn_sumn -sumnE -/(mdeg _) => Hd.
+    rewrite sumn_mpart // intpartn_sumn sumnE -/(mdeg _) => Hd.
     by rewrite -Hd eq_refl in Hdeg.
   - by rewrite mcoeff0 mulr0.
 have Hpm : is_part_of_n d (partm mon) by rewrite /= intpartP andbT sumn_partm Hdeg.
@@ -366,7 +372,7 @@ transitivity (\prod_(i <- mon) sympol 'h_i : polY ).
   rewrite [RHS](bigID (fun i => i == 0%N)) /=.
   rewrite [in RHS]big1 ?mul1r; first last => [i /eqP ->|].
     exact: (congr1 val (symh0 n R)).
-  rewrite /= -[RHS]big_filter; apply perm_big.
+  rewrite /= -[RHS]big_filter; apply: perm_big.
   by rewrite perm_sort.
 rewrite {Hpm pm} /= big_tuple; symmetry.
 rewrite (bigID (fun mZ : 'X_{1.. _ < _} => monX mZ == mon)) /=.
@@ -551,7 +557,7 @@ Lemma coord_zsympsps (la mu : 'P_d) :
   = (la == mu)%:R.
 Proof using Hd.
 have to_p (nu : 'P_d) : ('hsF[nu] : HSC) \in span 'hp.
-  by rewrite (span_basis (symbp_basis Hd _)) // memvf.
+  by rewrite (span_basis (symbp_basis Hd _)) //= memvf.
 have : \sum_(nu : 'P_d) 'hsF[nu](X) * 'hsF[nu](Y) =
        \sum_(nu : 'P_d) 'hp[nu](X) * ((zcard nu)%:R^-1 *: 'hp[nu](Y)).
   by rewrite -Cauchy_homsyms_homsyms Cauchy_homsymp_zhomsymp.

@@ -853,7 +853,7 @@ move=> /andP [/IHn{IHn} Hb0 /IHbr{IHbr} Hbr].
 rewrite -/((_ :: _) ++ _); apply Tamari_cat; last exact: Hbr.
 by rewrite -size_right_sizes; exact: cons_TamariP.
 Qed.
-Hint Resolve right_sizesP.
+#[local] Hint Resolve right_sizesP : core.
 
 
 
@@ -1211,12 +1211,12 @@ have szvm : size (take v1 (drop v0.+1 v)) = v1.
   by move: Hv1 => /(leq_sub2r v0.+1); rewrite subSS addnK.
 rewrite /from_vct !from_vct_accE.
 rewrite !drop_cat !take_cat szvl ltnn subnn drop0 cats0.
-rewrite -addSn ltnNge leq_addl /= addnK.
+rewrite -addSn ltnNge leq_addl /= addnK /=.
 rewrite from_vct_accE !take_cat szvm ltnn subnn take0 cats0.
 rewrite drop_cat szvm ltnn subnn drop0.
 have {Htam0} Htam := Tamari_take Htam0.
-rewrite (from_vct_cat _ _ Htam). from_vct_accE.
-rewrite -{1 3}szvm. take_size drop_size from_vct_acc_nil.
+rewrite (from_vct_cat _ _ Htam) from_vct_accE.
+rewrite -{1 3}szvm take_size drop_size from_vct_acc_nil.
 rewrite from_vct_cat_leftE [X in rotations X]from_vct_cat_leftE.
 apply catleft_rotations.
 move: (from_vct_acc _ (take v0 _)) => tb.
@@ -1340,7 +1340,7 @@ have Hneq : exists i, nth 0 (right_sizes t1) i < nth 0 (right_sizes t2) i.
   move/eq_add_S => Hsz; rewrite eqseq_cons negb_and => /orP [] Hneq Hleq.
   - exists 0; rewrite /= ltn_neqAle Hneq /=.
     exact: (Hleq 0).
-  - have {Hleq} Hleq i : nth 0 u i <= nth 0 v i by apply: Hleq i.+1.
+  - have {}Hleq i : nth 0 u i <= nth 0 v i by apply: Hleq i.+1.
     have [i Hi] := IHu _ Hsz Hneq Hleq.
     by exists i.+1.
 case: (ex_minnP Hneq) => {Hneq} i.

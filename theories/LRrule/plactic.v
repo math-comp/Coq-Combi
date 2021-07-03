@@ -270,7 +270,7 @@ Proof using. by move/plact_homog/perm_size. Qed.
 End Defs.
 
 Notation "a =Pl b" := (plactcongr a b) (at level 70).
-Hint Resolve plact_refl.
+#[export] Hint Resolve plact_refl : core.
 
 Section RowsAndCols.
 
@@ -335,7 +335,7 @@ Implicit Type u v w : word.
 Lemma plact_uniq_rev u v : uniq u -> u =Pl v -> rev u =Pl rev v.
 Proof using.
 move=> Huniq.
-have {Huniq} Huniq x y z : rev u =Pl rev (x ++ y ++ z) -> uniq y.
+have {}Huniq x y z : rev u =Pl rev (x ++ y ++ z) -> uniq y.
   move=> Hpl; have : uniq (x ++ y ++ z).
     rewrite -rev_uniq -(perm_uniq (s1 := rev u)) ?rev_uniq //.
     exact: plact_homog.
@@ -433,8 +433,8 @@ Proof using. by apply/idP/idP; rewrite -plact1I -plact2I plact2dual. Qed.
 
 End DualRule.
 
-Arguments revdual [Alph].
-Arguments from_revdual [Alph].
+Arguments revdual {Alph}.
+Arguments from_revdual {Alph}.
 
 Section PlactDual.
 
@@ -768,12 +768,12 @@ elim: t l lb => [/= l lb _| t0 t IHt l lb Htab] Hl Hallrow.
       move/Hallrow/bumprow_rcons => -> /=.
       by rewrite last_rcons eq_refl.
   + have Hlast0:= Hj 0 (ltn0Sn _); rewrite /= in Hlast0.
-    have {Hj} Hj j : j < lb -> last b (nth [::] t j) <A b by apply/(Hj j.+1).
+    have {}Hj j : j < lb -> last b (nth [::] t j) <A b by apply/(Hj j.+1).
     case: (boolP (bump t0 l)) => [Hbump | Hnbump].
     * rewrite (bump_bumprowE Hrow0 Hbump) /=.
       have Hbumped := bumped_lt Hrow0 Hl Hlast0.
       rewrite (ltnX_eqF (last_ins_lt Hl Hlast0)).
-      have {Hallrow} Hallrow row : row \in t -> is_row (rcons row b).
+      have {}Hallrow row : row \in t -> is_row (rcons row b).
         by move=> Hrow; apply: Hallrow; rewrite inE Hrow orbT.
       by rewrite /= {1}(IHt _ _ Htab Hbumped Hallrow Hj).
     * rewrite (nbump_bumprowE Hrow0 Hnbump) /=.
@@ -898,7 +898,7 @@ have Heq: {in u, gtnX L =1 geqX ML}.
   - have:= in_maxL fu0 fu'; rewrite -Hfu; rewrite mem_filter /= => /andP [HMLL _].
     exact: leqX_ltnX_trans Hxl HMLL.
 rewrite (eq_in_filter Heq).
-have {Heq} Heq: {in v, gtnX L =1 geqX ML}.
+have {}Heq: {in v, gtnX L =1 geqX ML}.
   by move=> x /=; move: H => /plact_homog/perm_mem <-; exact: Heq.
 rewrite (eq_in_filter Heq).
 exact: plactic_filter_geqX.

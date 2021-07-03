@@ -180,7 +180,7 @@ rewrite !big1 ?mulr1 ?odd_perm1 ?expr0 ?addr0 //.
   have [i /eqP Hi] : exists i, M (enum_val i) (enum_val (s i)) == 0.
     apply/existsP; move: Hs; apply contraR.
     rewrite negb_exists => /forallP /= H.
-    have {H} H : forall i : 'I_n, (enum_val (s i) <= enum_val i)%Ord.
+    have {}H : forall i : 'I_n, (enum_val (s i) <= enum_val i)%Ord.
       by move=> i; exact: Mtrig (H i).
     suff Hfix : forall t, s (enum_rank t) = enum_rank t.
       by apply/eqP/permP => /= i; rewrite perm1 -(enum_valK i); apply: Hfix.

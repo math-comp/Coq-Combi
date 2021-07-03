@@ -119,7 +119,7 @@ apply/idP/idP => [Hperm | /eqP].
   set mx := foldr _ _ _ => H.
   have:= congr1 size H; rewrite !size_map !size_iota => Hmax.
   rewrite /perm_eq; apply /allP => i /= Hi.
-  have {Hi} Hi : i < mx.
+  have {}Hi : i < mx.
   move: Hi; rewrite mem_cat => /orP [].
   + rewrite /mx; elim s => [//= | s0 s' IHs] /=.
     rewrite inE => /orP [/eqP -> | Hi]; first exact: leq_maxl.
@@ -171,7 +171,7 @@ apply (iffP idP).
   + by move/(_ 0 n) : Hrec; rewrite !add0n drop0.
 - elim: s => [//= | s0 s IHs] H.
   apply/andP; split.
-  + move: (s0 :: s) {IHs} H => {s0 s} s /(_ 0); rewrite drop0 => Hs.
+  + move: (s0 :: s) {IHs} H => {s0}s /(_ 0); rewrite drop0 => Hs.
     apply /is_partP; split; last by move=> i; rewrite !nth_evalseq.
     elim: s {Hs} => [//= | s0 s IHs] /=.
     exact: last_incr_nth_non0.
@@ -422,7 +422,7 @@ Proof using. by rewrite /=; exact: enum_subE. Qed.
 Definition hyper_yameval := YamEval (hyper_yam_of_eval (intpartP ev)).
 
 End YamOfEval.
-Hint Resolve yamevalP.
+#[export] Hint Resolve yamevalP : core.
 
 Section YamOfSize.
 
@@ -478,5 +478,5 @@ Qed.
 
 End YamOfSize.
 
-Hint Resolve yamnP yamevalP.
+#[export] Hint Resolve yamnP yamevalP : core.
 Prenex Implicits yamnP yamevalP yamn_PredEq.

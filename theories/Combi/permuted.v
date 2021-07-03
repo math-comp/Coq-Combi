@@ -136,7 +136,7 @@ Proof using. by case: p. Qed.
 
 End FinType.
 
-Hint Resolve permutedP.
+#[export] Hint Resolve permutedP : core.
 
 
 Import GroupScope.
@@ -196,7 +196,7 @@ Qed.
 (** ** The stabilizer of a tuple under permutation *)
 Lemma stab_tuple_prod :
   'C[wp | pact] =
-  (\prod_(x : seq_sub w) perm_ong_group [set i | tnth w i == val x])%G.
+  (\prod_(x : seq_sub w) Sym_group [set i | tnth w i == val x])%G.
 Proof using.
 have Htriv : trivIset [set [set i | tnth w i == val x] | x : seq_sub w].
   apply/trivIsetP => /= X Y.
@@ -236,11 +236,11 @@ Qed.
 
 Lemma stab_tuple_dprod :
   'C[wp | pact] =
-  \big[dprod/1]_(x : seq_sub w) perm_ong [set i | tnth w i == val x].
+  \big[dprod/1]_(x : seq_sub w) Sym [set i | tnth w i == val x].
 Proof using.
 rewrite stab_tuple_prod; apply/esym/eqP/bigdprodYP => x /= _.
 apply/subsetP => /= s; rewrite !inE negb_and negbK => Ht.
-have {Ht} : s \in perm_ong [set i | tnth w i != val x].
+have {Ht} : s \in Sym [set i | tnth w i != val x].
   move: Ht; rewrite bigprodGE => /gen_prodgP [u [/= f Hf ->{s}]].
   apply group_prod => j _; move/(_ j): Hf => /bigcupP [k Hk].
   rewrite !inE /perm_on => /subset_trans; apply.
@@ -252,8 +252,8 @@ rewrite inE => on_neqi; apply/andP; split.
   + by rewrite (out_perm on_neqi) // !inE HC.
   + by rewrite (out_perm on_eqi) // !inE HC.
 - apply/centP => /= u; move: on_neqi.
-  rewrite inE !support_perm_on -[support u \subset _]setCS => on_neqi on_eqi.
-  apply support_disjointC; rewrite disjoints_subset.
+  rewrite inE !psupport_perm_on -[psupport u \subset _]setCS => on_neqi on_eqi.
+  apply psupport_disjointC; rewrite disjoints_subset.
   apply: (subset_trans on_neqi); apply: (subset_trans _ on_eqi).
   by apply/subsetP => X; rewrite !inE.
 Qed.
@@ -265,7 +265,7 @@ Lemma card_stab_tuple :
 Proof using.
 rewrite -(bigdprod_card (esym stab_tuple_dprod)).
 apply eq_bigr => [[i _]] _ /=.
-rewrite card_perm_ong; congr (_)`!.
+rewrite card_Sym; congr (_)`!.
 rewrite -map_tnth_enum.
 rewrite cardE /enum_mem size_filter /= count_map count_filter.
 by apply eq_count => X; rewrite !inE andbC.
@@ -310,7 +310,7 @@ Theorem card_permuted_multinomial :
   #|[set: permuted w]| = 'C[[seq count_mem x w | x <- undup w]].
 Proof using.
 rewrite card_permuted multinomial_factd big_map; congr (_`! %/ _).
-by rewrite -sumnE  -{1}(size_tuple w) big_map size_count_mem_undup.
+by rewrite sumnE -{1}(size_tuple w) big_map size_count_mem_undup.
 Qed.
 
 End ActOnTuple.

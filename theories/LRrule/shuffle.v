@@ -160,7 +160,7 @@ elim: v HI => [_ | b v IHv] /=.
 - move=> HI; rewrite all_cat.
   apply/andP; split; apply/allP=> x /mapP [s Hs -> {x}] /=.
   + rewrite !inE eq_refl /=; apply/eqP; congr (a :: _).
-    have {IHu} /IHu/allP Hu : [predI u & b :: v] =i pred0.
+    have {}/IHu/allP Hu : [predI u & b :: v] =i pred0.
       move=> i; rewrite !inE; apply: negbTE.
       move/(_ i): HI; rewrite !inE => /negbT.
       by apply: contra => /andP [->]; rewrite orbT.
@@ -297,7 +297,7 @@ Qed.
 Lemma perm_shiftn_std n s :
   is_std s -> perm_eq (shiftn n s) (iota n (size s)).
 Proof.
-rewrite /is_std /shiftn -{2}(addn0 n) iota_addl.
+rewrite /is_std /shiftn -{2}(addn0 n) iotaDl.
 exact: perm_map.
 Qed.
 
@@ -313,7 +313,7 @@ have /allP/(_ s Hs)/eqP := all_size_shuffle u (shiftn (size u) v).
 rewrite size_map => -> {s Hs}.
 rewrite iota_add.
 apply: (@perm_trans _ (u ++ iota (size u) (size v))); last by rewrite perm_cat2r.
-rewrite perm_cat2l -{2}[size u]addn0 iota_addl.
+rewrite perm_cat2l -{2}[size u]addn0 iotaDl.
 exact: perm_map.
 Qed.
 
@@ -867,7 +867,7 @@ Theorem LRrule_langQ_alternate t1 t2 w :
 Proof.
 move=> H1 H2; have H := LRtriple_cat_equiv H1 H2.
 split=> [[u] [v] [Hcat Hu Hv]| [t] [Htriple Hw]].
-- have {H} /H [_ _] : u \in langQ t1 /\ v \in langQ t2 by split.
+- have {}/H [_ _] : u \in langQ t1 /\ v \in langQ t2 by split.
   by rewrite Hcat.
 - have:= cat_take_drop (size_tab t1) w.
   set u1 := take (size_tab t1) w; set u2 := drop (size_tab t1) w => Hcat.

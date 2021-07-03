@@ -207,12 +207,12 @@ have m0 : 0 < m by case: m eqm {Hm} => // /eqP; rewrite subn_eq0 leqNgt tjltti.
 have Hti : t i = t j + m :> nat.
   rewrite -eqm {Hm} in m0; rewrite -eqm subnKC //.
   by apply ltnW; rewrite -subn_gt0.
-have {Hm} Hm (k l : 'I_n) :
+have {}Hm (k l : 'I_n) :
     (k, l) \in invset t -> (k, l) \notin invset s -> m <= t k - t l.
   move=> pIt pNIs; apply Hm; apply/existsP; exists (k, l).
   by rewrite pIt pNIs eq_refl.
 have {Hm m0 eqm tjltti} Heq : m = 1%N.
-  have {incl} incl (k l : 'I_n) : k < l -> s k > s l -> t k > t l.
+  have {}incl (k l : 'I_n) : k < l -> s k > s l -> t k > t l.
     by move=> kltl; move: incl => /subsetP/(_ (k, l)); rewrite !inE kltl.
   apply anti_leq; rewrite {}m0 andbT {Hd IHd}.
   rewrite leqNgt; apply/negP => Habs.

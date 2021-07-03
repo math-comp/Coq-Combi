@@ -440,7 +440,7 @@ Proof.
 rewrite -!eq_invP !size_rcons => [] [] Hsz H.
 move: Hsz => /eqP; rewrite eqSS => /eqP Hsz; rewrite Hsz; rewrite Hsz in H.
 split => // i j /andP [] Hi Hj.
-have {H}/H : i <= j < (size v).+1.
+have {}/H : i <= j < (size v).+1.
 rewrite Hi /=; exact: (ltn_trans Hj).
 by rewrite !nth_rcons Hsz Hj (leq_ltn_trans Hi Hj).
 Qed.
@@ -538,7 +538,7 @@ case (altP (i =P posbig u)) => Hipos.
 - subst i.
   case (altP (j =P posbig u)) => Hjpos; first by rewrite !leqXnn.
   rewrite -nth_rembig (shiftinv_posK Hjpos).
-  have {Hij Hjpos} Hjpos : posbig u < j by rewrite ltn_neqAle eq_sym Hij Hjpos.
+  have {Hij}Hjpos : posbig u < j by rewrite ltn_neqAle eq_sym Hij Hjpos.
   have /allP Hall := allLtn_std_rec (rembig u).
   set uj := (X in n <=A X).
   have /Hall /= : uj \in std (rembig u).
@@ -556,11 +556,11 @@ case (altP (i =P posbig u)) => Hipos.
   by rewrite leqXNgtnX => ->.
 - case (altP (j =P posbig u)) => Hjpos.
   + subst j.
-    have {Hipos Hij} Hipos : i < posbig u by rewrite ltn_neqAle Hipos Hij.
+    have {Hij}Hipos : i < posbig u by rewrite ltn_neqAle Hipos Hij.
     rewrite /shiftinv_pos Hipos -nth_rembig.
     have /allP Hall := maxLP u0 u'.
     set ui := (nth _ _ _).
-    have {ui Hall} /Hall /= -> : ui \in (u0 :: u').
+    have {ui} {}/Hall /= -> : ui \in (u0 :: u').
       rewrite /ui Hu; apply: mem_nth.
       rewrite /shift_pos -Hu Hipos.
       exact: (ltn_trans Hipos).
@@ -616,7 +616,7 @@ Proof.
 move/eqP/std_eq_invP/eq_invP => [] /eqP; rewrite !size_rcons eqSS => /eqP Hsz Hinv.
 apply/eqP/std_eq_invP/eq_invP; split; first exact Hsz.
 move=> i j /andP [] Hij Hj.
-have {Hinv} /Hinv : i <= j < (size u).+1 by rewrite Hij /=; exact: (leq_trans Hj).
+have {}/Hinv : i <= j < (size u).+1 by rewrite Hij /=; exact: (leq_trans Hj).
 by rewrite !nth_rcons -Hsz (leq_ltn_trans Hij Hj) Hj.
 Qed.
 
@@ -706,8 +706,8 @@ Lemma nth_transp u v a b i :
 Proof using.
 move=> Hi Hi1; rewrite !nth_cat.
 case: (ltnP i (size u)) => //= Hui.
-have {Hui Hi} Hi: (size u) < i by rewrite ltn_neqAle eq_sym Hui Hi.
-have {Hi1 Hi}   : (size u).+1 < i by rewrite ltn_neqAle eq_sym Hi1 Hi.
+have {Hui} Hi : (size u) < i by rewrite ltn_neqAle eq_sym Hui Hi.
+have {Hi1 Hi} : (size u).+1 < i by rewrite ltn_neqAle eq_sym Hi1 Hi.
 rewrite -addn1 addSnnS => /(leq_sub2r (size u)); rewrite addnC addnK.
 by case: (i - (size u)) => [//= | [//= | j]] _.
 Qed.
@@ -749,7 +749,7 @@ case: (altP (i =P (size u))) => Hiu.
     by rewrite !leqXNgtnX Hab HAB.
   + move/(_ (size u).+1 j) : Hinv.
     set Hyp := (X in (X -> _ ) -> _) => Hinv.
-    have {Hyp Hinv} /Hinv : Hyp.
+    have {Hyp} {}/Hinv : Hyp.
       by rewrite /Hyp ltn_neqAle eq_sym Hju Hij; move: Hj; rewrite !size_cat.
     rewrite (nth_transp _ _ _ Hju Hju1).
     rewrite HuU in Hju; rewrite HuU in Hju1.
@@ -762,7 +762,7 @@ case: (altP (i =P (size u).+1)) => Hiu1.
     by rewrite !leqXnn.
   + move/(_ (size u) j) : Hinv.
     set Hyp := (X in (X -> _ ) -> _) => Hinv.
-    have {Hyp Hinv} /Hinv : Hyp.
+    have {Hyp}/Hinv : Hyp.
       by rewrite /Hyp (ltnW Hij) /=; move: Hj; rewrite !size_cat.
     have Hju : j != size u by rewrite eq_sym (ltn_eqF Hij).
     rewrite (nth_transp _ _ _ Hju Hju1).
@@ -777,7 +777,7 @@ case: (altP (i =P (size u).+1)) => Hiu1.
   + subst j; rewrite {2}HuU !nth_sizeu.
     move/(_ i (size u).+1) : Hinv.
     set Hyp := (X in (X -> _ ) -> _) => Hinv.
-    have {Hyp Hinv} /Hinv : Hyp.
+    have {Hyp}/Hinv : Hyp.
       rewrite /Hyp (leq_trans Hij (leqnSn _)) /=; rewrite !size_cat /=.
       by rewrite !addnS !ltnS; exact: leq_addr.
     by rewrite {2}HuU !nth_sizeu1.
@@ -785,7 +785,7 @@ case: (altP (i =P (size u).+1)) => Hiu1.
   + subst j; rewrite {2}HuU !nth_sizeu1.
     move/(_ i (size u)) : Hinv.
     set Hyp := (X in (X -> _ ) -> _) => Hinv.
-    have {Hyp Hinv} /Hinv : Hyp.
+    have {Hyp}/Hinv : Hyp.
       rewrite /Hyp -ltnS ltn_neqAle Hiu1 Hij /=.
       by rewrite -[size u]addn0 size_cat ltn_add2l.
     by rewrite {2}HuU !nth_sizeu.
@@ -794,7 +794,7 @@ case: (altP (i =P (size u).+1)) => Hiu1.
     rewrite (nth_transp _ _ _ Hju Hju1).
     move/(_ i j) : Hinv.
     set Hyp := (X in (X -> _ ) -> _) => Hinv.
-    have {Hyp Hinv} /Hinv : Hyp.
+    have {Hyp}/Hinv : Hyp.
       by rewrite /Hyp Hij /=; move: Hj; rewrite !size_cat.
     by apply.
 Qed.
@@ -814,7 +814,7 @@ apply/eqP/stdP; constructor.
   move: Hinv => /eq_invP [] _ Hinv.
   move/(_ (size u) (size u).+1) : Hinv.
   set Hyp := (X in (X -> _ ) -> _) => Hinv.
-  have {Hyp Hinv} /Hinv : Hyp.
+  have {Hyp}/Hinv : Hyp.
     by rewrite /Hyp leqnSn /= size_cat /= -addn1 addSnnS leq_add2l.
   rewrite {3}Hsz !nth_sizeu !{2}Hsz !nth_sizeu1.
   rewrite (ltnXW Hab) /ltnX_op => <-; rewrite andbT.

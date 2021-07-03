@@ -144,11 +144,11 @@ Lemma imsetD (A B : {set aT}) :
 Proof.
 move=> injf; apply/setP=> y; rewrite inE.
 apply/imsetP/andP => [[x] | [yNfA] /imsetP[x xB Hy]].
-- rewrite inE => /andP [xNA xB ->{y}]; split; last exact: mem_imset.
+- rewrite inE => /andP [xNA xB ->{y}]; split; last exact: imset_f.
   move: xNA; apply contra.
   by move=> /imsetP[x1 x1A] /injf->; rewrite ?inE ?xB ?x1A ?orbT.
 - subst y; exists x; rewrite // inE xB andbT.
-  by move: yNfA; apply contra; apply mem_imset.
+  by move: yNfA; apply contra; apply imset_f.
 Qed.
 
 End SSRComplFinset.
@@ -272,7 +272,7 @@ move=> /wordcd_ltn/allP Hall Hsz.
 rewrite pmap_filter; last by move=> j /=; rewrite insubK.
 rewrite (eq_in_filter (a2 := xpredT)); first by rewrite filter_predT.
 move=> j /= /Hall /= Hj.
-have {Hj} Hj : j < n by case: (size c) Hj Hsz => [| sz]//=; apply: leq_trans.
+have {}Hj : j < n by case: (size c) Hj Hsz => [| sz]//=; apply: leq_trans.
 by rewrite insubT.
 Qed.
 
@@ -358,12 +358,12 @@ elim: n => [//=| n IHn].
 rewrite size_flatten -/enum_codesz /shape -map_comp.
 rewrite (eq_map (f2 := fun => fact_rec n)); first last.
   by move=> i /=; rewrite size_map.
-by rewrite -sumnE big_map big_const_seq count_predT size_iota iter_addn_0 mulnC /=.
+by rewrite sumnE big_map big_const_seq count_predT size_iota iter_addn_0 mulnC.
 Qed.
 
 End Codes.
 
-Hint Resolve codeszP.
+#[export] Hint Resolve codeszP : core.
 
 
 Import GroupScope.
@@ -691,7 +691,7 @@ apply/permP => i /=; rewrite permE.
 have -> : s^-1 i = nth ord0 [seq s^-1 i | i : 'I_n] i.
   by rewrite (nth_map ord0) ?size_enum_ord // nth_ord_enum.
 congr nth => {i}.
-apply: (eq_sorted (@rsym_invset_trans s) (@rsym_invset_anti s)).
+apply: (sorted_eq (@rsym_invset_trans s) (@rsym_invset_anti s)).
 - exact: (sort_sorted (@rsym_invset_total s)).
 - exact: rsym_invsetP.
 - rewrite perm_sort; apply uniq_perm.
@@ -1027,7 +1027,7 @@ have -> : inord m = mo by apply val_inj; rewrite /= inordK.
 have : mo \in [set k : 'I_n | k < m.+1] by rewrite inE.
 rewrite -(perm_closed _ Hon) inE ltnS => Hsm.
 move/(_ _ _ (ltnW Hm)): IHm => Hrec.
-have /Hrec{Hrec Hcode}Hrec: is_partcode m (mo - s mo :: c).
+have {Hcode}/Hrec Hrec: is_partcode m (mo - s mo :: c).
   rewrite /is_partcode {Hrec} => [[_ | i]] /=.
     by rewrite add0n; exact: leq_subr.
   by rewrite ltnS addSnnS => /Hcode.
@@ -1045,7 +1045,7 @@ move=> [Hcode <-]; split; first exact: Hcode.
 rewrite {Hcode}/srec -mulgA; congr (s * _).
 rewrite /word_of_partcocode /= addn0 (subKn Hsm) big_cat /=.
 rewrite mulgA prodsK mul1g; apply congr_big => //; congr flatten.
-rewrite -(addn0 1%N) iota_addl -map_comp.
+rewrite -(addn0 1%N) iotaDl -map_comp.
 apply eq_map => i /=.
 by rewrite addnA addn1.
 Qed.
@@ -1210,7 +1210,7 @@ Proof.
 apply/setP => s; apply/idP/gen_prodgP => /=.
 - move=> Hs; exists (size (canword s)).
   exists (fun i => 's_(tnth (in_tuple (canword s)) i)).
-  + by move=> i; apply: mem_imset.
+  + by move=> i; apply: imset_f.
   + rewrite -{1}(canwordP s).
     by rewrite -{1}[canword s]/(tval (in_tuple (canword s))) big_tuple.
 - move=> [l [fi Hfi] ->{s}]; apply group_prod => i _.
@@ -1419,8 +1419,8 @@ End Length.
 Arguments length  {n0}.
 Arguments maxperm {n0}.
 
-Hint Resolve cocodeP.
-Hint Resolve codeszP.
+#[export] Hint Resolve cocodeP : core.
+#[export] Hint Resolve codeszP : core.
 
 
 (** * Let's do some real combinatorics !!!
@@ -1445,7 +1445,7 @@ rewrite /prods_codesz {1}/index_enum -enumT /=.
 rewrite -(big_map (@cdval _) xpredT (fun i : seq nat => 'X^(sumn i))).
 elim: n => [/= | n].
   by rewrite enum_codeszE /index_iota !big_seq1 /= addn0.
-move: (n.+1) => {n} n. (* Workaround of shifting of n *)
+move: (n.+1) => {}n. (* Workaround of shifting of n *)
 rewrite /index_iota !enum_codeszE big_flatten big_map -/enum_codesz.
 rewrite !subn0 -{2}addn1 iota_add add0n [iota 0 n.+1]lock /=.
 rewrite big_cat /= big_seq1 {2}[(0 :: iota 1 n)%N]lock /= => <-.
@@ -1476,7 +1476,7 @@ Proof. by rewrite unfold_in; apply/eqP. Qed.
 Lemma reduced_nil : [::] \is reduced.
 Proof using. by rewrite unfold_in big_nil length1. Qed.
 
-Hint Resolve reduced_nil.
+Hint Resolve reduced_nil : core.
 
 Lemma reduced_iiF i : [:: i; i] \is reduced = false.
 Proof using. by rewrite unfold_in /= big_cons big_seq1 eltr2 length1. Qed.
@@ -1764,7 +1764,7 @@ Arguments reducedP {n w}.
 Notation reduced := (reduced_word _).
 Notation braidred := (@braid_reduces _).
 
-Hint Resolve braidww.
+#[export] Hint Resolve braidww : core.
 
 
 
@@ -1826,11 +1826,11 @@ case: eqP => [Hi1 | /eqP Hi1].
   rewrite size_rev; apply (leq_trans (leq_pred _)).
   have := Hcode (size c) (ltnSn (size c)).
   by rewrite rev_cons nth_rcons size_rev ltnn eq_refl.
-have {Hi Hi1} Hi : i < size c - c0 by rewrite ltn_neqAle Hi Hi1.
+have {Hi1}Hi : i < size c - c0 by rewrite ltn_neqAle Hi Hi1.
 case: eqP => [Hi1 | /eqP Hi1].
   rewrite rev_cons; apply: (is_code_rcons _ Hcd).
   by rewrite size_rev -subn_gt0 -Hi1.
-have {Hi Hi1} Hi : i.+1 < size c - c0 by rewrite ltn_neqAle Hi Hi1.
+have {Hi1}Hi : i.+1 < size c - c0 by rewrite ltn_neqAle Hi Hi1.
   rewrite rev_cons.
   have /Hrec : i.+1 < size c by apply (leq_trans Hi); exact: leq_subr.
   move/is_code_rcons; apply.
@@ -1992,7 +1992,7 @@ case: ltnP => Hi.
     exact: braid_pred_lineC.
   - rewrite !catA; case: pth => [| p0 p] //=.
     exact: last_map.
-case: eqP => [{Hi Hrec} Hi | /eqP Hi1].
+case: eqP => [{Hrec}Hi | /eqP Hi1].
   case: c0 Hc0 Hi Hisz => [Hc0 | c0 Hc0 Hi Hisz /=].
     by rewrite subn0 => ->; rewrite ltnn.
   rewrite -{1 3}Hi /= subnS prednK ?subn_gt0 //.
@@ -2002,11 +2002,11 @@ case: eqP => [{Hi Hrec} Hi | /eqP Hi1].
   apply/reducesP; exists (wcord c ++ 'I[c0 .. (size c)]), i, [::].
   rewrite !cats0 -catA; split; first by [].
   exact: wcord_cons.
-have {Hi Hi1} Hi : i < size c - c0 by rewrite ltn_neqAle Hi Hi1.
+have {Hi1}Hi : i < size c - c0 by rewrite ltn_neqAle Hi Hi1.
 case: eqP => [Hi1 | /eqP Hi1].
   exists [::]; split; first by [].
   by rewrite /= wcord_cons rev_cons map_rcons subnS -Hi1 /= inord_val cats1.
-have {Hi Hi1} Hi : i.+1 < size c - c0 by rewrite ltn_neqAle Hi Hi1.
+have {Hi1}Hi : i.+1 < size c - c0 by rewrite ltn_neqAle Hi Hi1.
   have:= Hsz.
   rewrite -ltnS => /ltnW/(Hrec _)/(_ (leq_trans Hi (leq_subr _ _))) {Hrec} /=.
   rewrite wcord_cons size_inscode.
@@ -2153,7 +2153,7 @@ case: (braidred_to_canword u) => p [Hpath <-].
 elim: p u Hpath => [| p0 p IHp] u //=; first by rewrite ltnn.
 rewrite {1}/braidred => /andP [/orP [] HBr].
 - move/IHp; rewrite (size_braid HBr) => H{}/H.
-  move=> [v] [w] [/(braid_trans HBr) {HBr} HBr Hred].
+  move=> [v] [w] [/(braid_trans HBr) {HBr} Hred].
   by exists v, w.
 - by exists u, p0.
 Qed.

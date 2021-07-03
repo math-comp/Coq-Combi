@@ -69,7 +69,7 @@ rotation trick: there is a (n+1) to 1 map from balanced words to Dyck words.
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun bigop ssrnat eqtype fintype choice.
-From mathcomp Require Import seq tuple path fingraph finset.
+From mathcomp Require Import seq tuple path fingraph finset order.
 From mathcomp Require Import div ssralg ssrint ssrnum binomial.
 
 Require Import tools combclass bintree.
@@ -78,6 +78,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Import Order.TTheory GRing.Theory Num.Theory.
 
 Section PreimPartition.
 
@@ -300,7 +301,7 @@ move/Dyck_wordP => [Hpos Hbal]; apply/Dyck_wordP; split => [n|].
 - case: n => [|n /=]; first by rewrite take0.
   rewrite height_cons /=.
   case: (leqP n (size w)) => [/takel_cat -> | Hsz].
-  + by apply: (ler_trans (Hpos n)); rewrite -subr_ge0 addrK.
+  + by apply: (le_trans (Hpos n)); rewrite -subr_ge0 addrK.
   + rewrite take_oversize ?size_cat /= ?addn1 //.
     by rewrite !height_simpl /= addr0 addrC subrK -(take_size w).
 - by rewrite !height_simpl /= Hbal addr0 add0r subrr.
@@ -351,7 +352,7 @@ Implicit Type D : Dyck.
 
 Lemma DyckP D : (dyckword D) \is a Dyck_word.
 Proof. exact: D. Qed.
-Hint Resolve DyckP.
+Hint Resolve DyckP : core.
 
 Definition dyck D mkD : Dyck :=
   mkD (let: DyckWord _ DP := D return dyckword D \is a Dyck_word in DP).
@@ -412,11 +413,11 @@ have Hf1 : take cut.+1 tl = rcons (take cut tl) }}.
   case: (nth {{ tl cut) => //=.
   by rewrite addrC -addrA => /eqP; rewrite addr_eq0 => /eqP ->.
 move: Heq; rewrite Hf1 !height_simpl! /= addrC subrK => Hbalcut.
-have {Hmin} Hmin n : (n <= cut)%N -> height (take n tl) >= 0.
-  apply contraLR; rewrite -ltnNge -ltrNge.
+have {}Hmin n : (n <= cut)%N -> height (take n tl) >= 0.
+  apply contraLR; rewrite -ltnNge -ltNge.
   case: cut Hbalcut Hmin {Hcut Hf1} => [ _ _ | cut Hbalcut Hmin Hlt].
     by case: n; first by rewrite take0.
-  apply: (Hmin (n.+1)); rewrite /= height_simpl /= eqr_le.
+  apply: (Hmin (n.+1)); rewrite /= height_simpl /= eq_le.
   apply/andP; split; first by rewrite lez_add1r.
   by have:= Hpos (n.+1); rewrite /= !height_simpl /=.
 have HDL : (take cut tl) \is a Dyck_word.
@@ -503,7 +504,7 @@ End DyckSetInd.
 Lemma Dyck_size_even (D : Dyck) : ~~ odd (size D).
 Proof.
 elim/Dyck_ind: D => //= D1 D2 /negbTE HD1 /negbTE HD2.
-by rewrite size_cat /= addnS /= negbK odd_add negb_add HD1 HD2.
+by rewrite size_cat /= addnS /= negbK oddD negb_add HD1 HD2.
 Qed.
 
 
@@ -616,7 +617,8 @@ case: (leqP (count_mem {{ (take i w)) (count_mem }} (take i w))) => [H|].
 - rewrite -[i]/(nat_of_ord (Ordinal ilt)).
   rewrite ler_oppl opprB subzn // lez_nat.
   exact: leq_bigmax.
-- move=> /ltnW; rewrite -lez_nat -subr_ge0 => /(ler_trans _); apply.
+- move=> /ltnW.
+  rewrite -lez_nat -[in X in X -> _]subr_ge0 => /(le_trans _); apply.
   by rewrite -oppr_ge0 opprK.
 Qed.
 
@@ -650,8 +652,8 @@ Lemma pfminh_min :
 Proof.
 rewrite /pfminh.
 case: ex_minnP => pfmd /eqP Hpfmd pfmd_min i.
-rewrite ltnNge ltrNge; apply contra => H.
-by apply pfmd_min; rewrite eqr_le H minhP.
+rewrite ltnNge ltNge; apply contra => H.
+by apply pfmd_min; rewrite eq_le H minhP.
 Qed.
 
 Lemma pfminhE n :
@@ -663,12 +665,12 @@ Proof.
 move=> Hnsz Hleq Hltn.
 have Hnsz1 : (n < (size w).+1)%N by rewrite ltnS.
 have Hminh : height (take n w) = minh.
-  by apply/eqP; rewrite eqr_le minhP -pfminhP Hleq.
+  by apply/eqP; rewrite eq_le minhP -pfminhP Hleq.
 rewrite Hminh in Hleq, Hltn.
 rewrite /pfminh; case: ex_minnP => pfmd /eqP Hpfmd pfmd_min.
 apply/anti_leq/andP; split.
-- move: Hpfmd => /eqP; rewrite eqr_le => /andP [H _].
-  move: H; rewrite lerNgt leqNgt; apply contra.
+- move: Hpfmd => /eqP; rewrite eq_le => /andP [H _].
+  move: H; rewrite leNgt leqNgt; apply contra.
   exact: Hltn.
 - by apply pfmd_min; rewrite Hminh.
 Qed.
@@ -695,7 +697,7 @@ move: pfminhP pfminh_min pfminh_size.
 case: pfminh pfminh_pos => //= pfmh _ Hpfmh pfmh_min pfmh_sz.
 move/(_ _ (ltnSn pfmh)): pfmh_min => /=.
 move: Hpfmh; rewrite (take_nth {{ pfmh_sz) height_simpl /=.
-by case: nth => //= <- /ltrW; rewrite lez_addr1 ltrr.
+by case: nth => //= <- /ltW; rewrite lez_addr1 ltxx.
 Qed.
 
 Lemma last_rot_pfminh : last {{ (rot pfminh w) = }}.
@@ -727,7 +729,7 @@ apply/Dyck_wordP; rewrite height_take_leq; split => [n|].
     rewrite size_take size_rot /=.
     by case: w Hbal1 => //= w0 tlw _; rewrite ltnSn.
   move => Hn; rewrite take_take // /rot take_cat size_drop.
-  case: ltnP => [{Hn} Hn| Hnpf].
+  case: ltnP => [{}Hn| Hnpf].
   + rewrite take_drop height_drop take_take ?leq_addl // subr_ge0.
     by rewrite pfminhP minhP.
   + have {Hnpf} : (n - (size w - pfminh) < pfminh)%N.
@@ -737,7 +739,7 @@ apply/Dyck_wordP; rewrite height_take_leq; split => [n|].
       case: pfminh pfminh_pos => // pfm _; rewrite subSS => Hsz.
       rewrite [(_ - n)%N]subSn // subSS ltnS.
       exact: leq_subr.
-    move: (n - (size w - pfminh))%N => {n Hn} n Hn.
+    move: (n - (size w - pfminh))%N => {}n {}Hn.
     rewrite height_simpl take_take; last exact: ltnW.
     move: Hbal1; rewrite -{1}(cat_take_drop pfminh w) height_simpl => /eqP.
     rewrite -subr_eq0 opprK [height _ + _]addrC -addrA addr_eq0 => /eqP ->.
@@ -778,7 +780,7 @@ apply/esym/pfminhE => [|i|i].
     rewrite ler_sub_addr subrK -cats1 takel_cat //.
     rewrite !height_simpl /= addr0.
     move: HDyck => /Dyck_wordP [H1 ->].
-    rewrite add0r; apply: (ler_trans _ (H1 _)).
+    rewrite add0r; apply: (le_trans _ (H1 _)).
     by rewrite -oppr_ge0 opprK.
   + rewrite height_simpl addrC -ler_subl_addr subrr.
     case: (leqP (i - (size w - rt).+1) rt) => [H | /ltnW H].
@@ -939,7 +941,7 @@ apply/esym/pfminhE => //; rewrite take_size.
   rewrite -cats1 (takel_cat _ Hi) !height_simpl /=.
   move: HD => /Dyck_wordP [Hpos ->].
   rewrite addr0 add0r.
-  apply: (ler_trans _ (Hpos _)).
+  apply: (le_trans _ (Hpos _)).
   by rewrite -oppr_ge0 opprK.
 - move=> i; rewrite size_rcons ltnS => Hi.
   rewrite -cats1 (takel_cat _ Hi) !height_simpl /=.

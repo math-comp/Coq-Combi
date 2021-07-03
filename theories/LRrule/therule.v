@@ -169,7 +169,7 @@ rewrite /shiftn => Hall; apply /andP; split; apply/eqP.
     rewrite to_word_cons filter_cat IHt cat0s {t IHt}.
     by rewrite filter_gtn_shiftn.
   + case: t => [//= | t0 t] /=.
-    rewrite ltnS to_word_cons all_cat => /IHs{IHs}Hrec /andP [/Hrec{Hrec} Hrec].
+    rewrite ltnS to_word_cons all_cat => {}/IHs Hrec /andP [{}/Hrec Hrec].
     rewrite to_word_cons !filter_cat subSS Hrec {Hrec} => /all_filterP ->.
     suff -> : [seq x <- [seq sh + i | i <- t0] | gtn sh x] = [::].
       by rewrite cats0.
@@ -180,7 +180,7 @@ rewrite /shiftn => Hall; apply /andP; split; apply/eqP.
     rewrite !to_word_cons !filter_cat map_cat IHt {IHt}.
     by rewrite filter_leq_shiftn.
   + case: t => [//= | t0 t] /=.
-    rewrite ltnS to_word_cons all_cat => /IHs{IHs}Hrec /andP [/Hrec{Hrec} Hrec].
+    rewrite ltnS to_word_cons all_cat => {}/IHs Hrec /andP [{}/Hrec Hrec].
     rewrite !to_word_cons !filter_cat !map_cat subSS Hrec {Hrec}.
     rewrite filter_leq_shiftn => Hall.
     suff -> : [seq x - sh | x <- s0 & sh <= x] = [::] by rewrite cat0s.
@@ -337,7 +337,7 @@ apply/andP; split.
 - have /= /hasP [] := pred_LRtriple_fast_bijLRyam Hskew => z.
   move: (to_word _) => image.
   rewrite (RSclassE _ (is_tableau_RS _)) -plactic_RS => /plact_homog Hz.
-  have {Hz} Hz : is_std z by apply: (perm_std _ Hz); apply std_is_std.
+  have {}Hz : is_std z by apply: (perm_std _ Hz); apply std_is_std.
   have : is_stdtab (RS (std (hyper_yam P1))) by rewrite RSstdE; apply std_is_std.
   rewrite /is_stdtab => /andP [_ Hstd1].
   exact: (allP (std_shsh Hstd1 Hz)).
@@ -521,7 +521,7 @@ Lemma bijLR_image : LRtab_set P1 P2 P = [set bijLR x | x in LRyam_set].
 Proof using .
 apply setP => Q; apply/idP/idP.
 - move/bijLR_surj => [y Hy <-].
-  exact: mem_imset.
+  exact: imset_f.
 - move/imsetP => [y Hy ->].
   rewrite /LRtab_set inE (bijLR_LRsupport Hy) /=.
   by rewrite shape_bijLR.

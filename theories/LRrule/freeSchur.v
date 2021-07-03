@@ -142,7 +142,7 @@ rewrite -(big_imset (h := fun p => cat_tuple p.1 p.2) commword) /=;
 apply: eq_bigl => w.
 apply/idP/idP.
 - move/imsetP => [] [u v] /=; rewrite unfold_in /= => /andP [Hu Hv] ->.
-  exact: mem_imset2.
+  exact: imset2_f.
 - move/imset2P => [u v Hu Hv -> {w}].
   by apply/imsetP; exists (u, v) => //=; rewrite unfold_in /= Hu Hv.
 Qed.
@@ -400,9 +400,9 @@ rewrite -big_imset /=; first last.
 apply: eq_bigl => s; rewrite !inE.
 apply/idP/idP.
 + move=> /andP [Hn0 /imsetP [Q HQ Hs]]; subst s.
-  by rewrite mem_imset //= inE HQ inE Hn0.
+  by rewrite imset_f //= inE HQ inE Hn0.
 + move/imsetP => [Q]; rewrite 2!inE => /andP [H1 H2] ->.
-  by rewrite H1 /= mem_imset.
+  by rewrite H1 /= imset_f.
 Qed.
 
 End FreeLRrule.

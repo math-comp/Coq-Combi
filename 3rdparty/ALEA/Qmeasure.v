@@ -56,7 +56,7 @@ Instance MO (A:Type) : ord (M A) := fmono (MF A) rat.
 
 Instance app_mon (A:Type) (x:A) : monotonic (fun (f:MF A) => f x).
 Proof. by []. Qed.
-Hint Resolve app_mon : core.
+#[export] Hint Resolve app_mon : core.
 
 (** Monadic operators on M A *)
 
@@ -211,10 +211,10 @@ by rewrite Mstable_add !Mstable_mull.
 Qed.
 
 End StabilityProperties.
-Hint Resolve Mstable_eq : core.
-Hint Resolve Mstable0 : core.
-Hint Resolve Mstable_opp : core.
-Hint Resolve Mstable_add : core.
+#[export] Hint Resolve Mstable_eq : core.
+#[export] Hint Resolve Mstable0 : core.
+#[export] Hint Resolve Mstable_opp : core.
+#[export] Hint Resolve Mstable_add : core.
 
 
 Lemma unit_stable_eq (A:Type) (x:A) : stable (munit x).
@@ -243,7 +243,7 @@ transitivity (m1 (fun x : A => (F2 x) f)); last by [].
 apply (fmonotonic m1) => x.
 exact: (HF x f).
 Qed.
-Hint Resolve star_le_compat : core.
+#[export] Hint Resolve star_le_compat : core.
 
 (** *** Stability for substraction of unit and star *)
 Lemma unit_stable_sub (A:Type) (x:A) : stable_sub (munit x).
@@ -270,7 +270,7 @@ Record distr (A:Type) : Type := {
        mu_prob : mu (fun x => 1) = 1
    }.
 
-Hint Resolve mu_stable_sub mu_prob : core.
+#[export] Hint Resolve mu_stable_sub mu_prob : core.
 
 (** ** Properties of measures *)
 Section MeasureProp.
@@ -352,17 +352,17 @@ by rewrite addrCA subrr addr0.
 Qed.
 
 End MeasureProp.
-Hint Resolve mu_monotonic : core.
-Hint Resolve mu_stable_eq : core.
-Hint Resolve mu_zero : core.
-Hint Immediate mu_zero_eq : core.
-Hint Immediate mu_one_eq : core.
-Hint Resolve mu_stable_inv : core.
-Hint Resolve mu_stable_add : core.
-Hint Resolve mu_stable_mull : core.
-Hint Resolve mu_add_zero : core.
-Hint Resolve mu_cte : core.
-Hint Resolve mu_stable_inv_inv : core.
+#[export] Hint Resolve mu_monotonic : core.
+#[export] Hint Resolve mu_stable_eq : core.
+#[export] Hint Resolve mu_zero : core.
+#[export] Hint Immediate mu_zero_eq : core.
+#[export] Hint Immediate mu_one_eq : core.
+#[export] Hint Resolve mu_stable_inv : core.
+#[export] Hint Resolve mu_stable_add : core.
+#[export] Hint Resolve mu_stable_mull : core.
+#[export] Hint Resolve mu_add_zero : core.
+#[export] Hint Resolve mu_cte : core.
+#[export] Hint Resolve mu_stable_inv_inv : core.
 
 Program Instance Odistr (A:Type) : ord (distr A) := 
     {Ole := fun (f g : distr A) => (mu f <= mu g)%O;
@@ -607,8 +607,8 @@ Qed.
 
 End OperDistr.
 
-Hint Resolve mu_bool_le1 : core.
-Hint Resolve mu_bool_0le : core.
+#[export] Hint Resolve mu_bool_le1 : core.
+#[export] Hint Resolve mu_bool_0le : core.
 
 (*
 (** ** Conditional probabilities *)
@@ -817,7 +817,7 @@ Proof. by rewrite /flip /= mulr1 mulr0. Qed.
 Lemma flip_false : flip (fun b => (~~b)%:~R) = [1/2].
 Proof. by rewrite /flip /= mulr1 mulr0. Qed.
 
-Hint Resolve flip_true flip_false : core.
+#[export] Hint Resolve flip_true flip_false : core.
 
 Definition Flip : distr bool.
 Proof.
@@ -899,15 +899,15 @@ Record fin (A : Type) : Type :=
           coeff : A -> rat;
           weight_pos : 0 < weight points coeff
         }.
-Hint Resolve weight_pos : core.
+#[export] Hint Resolve weight_pos : core.
 
 Lemma inv_weight_pos A (d : fin A) : 0 < (weight (points d) (coeff d))^-1.
 Proof. by rewrite Num.Theory.invr_gt0. Qed.
-Hint Resolve inv_weight_pos : core.
+#[export] Hint Resolve inv_weight_pos : core.
 
 Lemma weight_is_unit A (d : fin A) : (weight (points d) (coeff d)) \is a unit.
 Proof. by apply Num.Theory.unitf_gt0. Qed.
-Hint Resolve weight_is_unit : core.
+#[export] Hint Resolve weight_is_unit : core.
 
 Definition fprob A (d : fin A) (a : A) : rat :=
   coeff d a / weight (points d) (coeff d).

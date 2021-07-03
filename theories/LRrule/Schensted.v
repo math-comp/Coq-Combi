@@ -416,7 +416,7 @@ elim/last_ind: w i => [//=| w wn IHw] i.
 rewrite Sch_rcons {2}/ins.
 case (altP (i =P (inspos (Sch w) wn))) =>[|Hineq Hileq].
 - case: i => [<-|i Hieq ] _.
-  + by exists [:: wn] => /=; case (Sch w) => [|_ _];
+  + by exists [:: wn] => /=; case (Sch w) => /= [|_ _];
         rewrite -cats1 suffix_subseq; apply/and3P; repeat split.
   + have:= inspos_leq_size (Sch w) wn; rewrite -Hieq.
     case/IHw => {IHw} s => /and4P [/eqP Hlast Hsubs /eqP Hsz Hrow].
@@ -583,7 +583,7 @@ case: (ltnXP l t0) => //= Ht0.
 - exfalso.
   have:= leqX_ltnX_trans (leqX_trans (head_leq_last_row Hrow) Hlast) Ht0.
   by rewrite ltnXnn.
-- have {Hlast} Hlast : (last l r <= l)%Ord by case: r Hlast {IHr Hrow}.
+- have {}Hlast : (last l r <= l)%Ord by case: r Hlast {IHr Hrow}.
   by rewrite (IHr (is_row_consK Hrow) Hlast).
 Qed.
 
@@ -686,7 +686,7 @@ case eqP => [Hipos0 | /eqP Hipos0]; case eqP => [Hipos1 | /eqP Hipos1].
       by have:= leq_ltn_trans Hsz Hi; rewrite ltnn.
     - have:= Hnbump; move/nbump_ins_rconsE => Heq.
       rewrite (Heq Hrow1) size_rcons ltnS in Hi.
-      have {Hi Hsz} Hi: (i == size r1) by rewrite eqn_leq Hi Hsz.
+      have {Hsz}Hi : (i == size r1) by rewrite eqn_leq Hi Hsz.
       rewrite /pos1 (nbump_inspos_eq_size Hrow1 Hnbump) in Hipos1.
       by rewrite Hi in Hipos1.
 Qed.
@@ -874,7 +874,7 @@ elim: r Hrow Hbump => [_ /= |l0 r IHr /= /is_row_cons [] Hl0 Hrow Hbump];
   first by rewrite ltnXnn.
 case: (ltnXP a l0) => Hal0.
 - by move=> [] <- <- /=; rewrite Hl0.
-- have {Hbump} Hbump: (a < last a r)%Ord.
+- have {}Hbump: (a < last a r)%Ord.
     case: r {IHr Hl0 Hrow} Hbump Hal0 => [/=|//=]; first exact: ltnX_leqX_trans.
   have H := bump_bumprowE Hrow Hbump.
   rewrite H => [] [] <- <- /=.
@@ -1200,7 +1200,7 @@ case: nrow => [/= | nrow].
   move/(instabnrowinvK Htabs Hnnils): Hcorn.
   case Hinv1 : (invinstabnrow s nrow) => [t l0] /= Hins1 Htabt.
   move: {Hnnils Htabs Hinv1} (invbump_geq_head Hnnils Htabs Hinv1).
-  have:= instabnrowE t l0; rewrite Hins1 /= Hs => {Hins1} Hins1.
+  have:= instabnrowE t l0; rewrite Hins1 /= Hs => {}Hins1.
   move: Hdom; rewrite {s}Hs /= => Hdom.
   have:= dominate_head Hnnil1 Hdom.
   rewrite (set_head_default l0 Z Hnnil0) (set_head_default l0 Z Hnnil1).
