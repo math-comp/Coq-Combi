@@ -150,4 +150,14 @@ This library is based on
   Library version 1.12 or more recent.
 
 * Pierre-Yves Strub library for
-  [Multinomials] version 1.5.1 (https://github.com/math-comp/multinomials)
+  [Multinomials] version 1.5.4 (https://github.com/math-comp/multinomials)
+
+Here are the Opam packages I'm using
+```
+coq-mathcomp-ssreflect    1.12.0
+coq-mathcomp-algebra      1.12.0
+coq-mathcomp-field        1.12.0
+coq-mathcomp-fingroup     1.12.0
+coq-mathcomp-character    1.12.0
+coq-mathcomp-multinomials 1.5.4
+```
