@@ -526,19 +526,19 @@ rewrite !leperm_invset invset_supperm => Hsw Htw; apply tclosure_sub.
 - by move: (invsetP w) => [].
 Qed.
 
-Lemma supperm_is_sup x y z : (supperm x y <=R z) = (x <=R z) && (y <=R z).
+Lemma supperm_is_join x y z : (supperm x y <=R z) = (x <=R z) && (y <=R z).
 Proof.
 apply/idP/idP => [leinf | /andP [xley xlez]]; last exact: suppermP.
 by apply/andP; split; apply: (le_trans _ leinf);
   [apply: suppermPr | apply: suppermPl].
 Qed.
-Lemma infperm_is_inf x y z : (x <=R infperm y z) = (x <=R y) && (x <=R z).
+Lemma infperm_is_meet x y z : (x <=R infperm y z) = (x <=R y) && (x <=R z).
 Proof.
 rewrite /infperm -![x <=R _]leperm_maxpermMl.
-by rewrite mulgA -{1}maxpermV mulVg mul1g supperm_is_sup.
+by rewrite mulgA -{1}maxpermV mulVg mul1g supperm_is_join.
 Qed.
 
-Definition perm_latticeMixin := InfSupMixin infperm_is_inf supperm_is_sup.
+Definition perm_latticeMixin := InfSupMixin infperm_is_meet supperm_is_join.
 Canonical perm_latticeType := LatticeType 'S_n perm_latticeMixin.
 
 Definition perm_bottomMixin := BottomMixin (@leperm1p n0).
