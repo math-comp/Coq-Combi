@@ -36,25 +36,115 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-
-Reserved Notation "x '<=R' y" (at level 70, y at next level).
-Reserved Notation "x '<R' y" (at level 70, y at next level).
-
 Import GroupScope.
+Import Order.Theory.
 
+
+Module InfSupMixin.
+Section InfSupMixin.
+Variable (disp : unit) (T : porderType disp).
+Open Scope order_scope.
+
+Record of_ := Build {
+  meet : T -> T -> T;
+  join : T -> T -> T;
+  meetP : forall x y z, (x <= meet y z) = (x <= y) && (x <= z);
+  joinP : forall x y z, (join x y <= z) = (x <= z) && (y <= z);
+}.
+
+Fact meet_lel (m : of_) x y : meet m x y <= meet m y x.
+Proof.
+have:= le_refl (meet m x y); rewrite meetP => /andP [mlex mley].
+by rewrite (meetP m) mlex mley.
+Qed.
+Fact meetC (m : of_) : commutative (meet m).
+Proof. by move=> x y; apply le_anti; rewrite !meet_lel. Qed.
+Fact meet_leL (m : of_) x y : (meet m x y) <= x.
+Proof. by have:= le_refl (meet m x y); rewrite (meetP m) => /andP []. Qed.
+Fact meet_leR (m : of_) x y : (meet m x y) <= y.
+Proof. by have:= le_refl (meet m x y); rewrite (meetP m) => /andP []. Qed.
+
+Fact join_lel (m : of_) x y : join m x y <= join m y x.
+Proof.
+have:= le_refl (join m y x); rewrite joinP => /andP [ylej xlej].
+by rewrite (joinP m) ylej xlej.
+Qed.
+Fact joinC (m : of_) : commutative (join m).
+Proof. by move=> x y; apply le_anti; rewrite !join_lel. Qed.
+Fact join_leL (m : of_) x y : x <= (join m x y).
+Proof. by have:= le_refl (join m x y); rewrite (joinP m) => /andP []. Qed.
+Fact join_leR (m : of_) x y : y <= (join m x y).
+Proof. by have:= le_refl (join m x y); rewrite (joinP m) => /andP []. Qed.
+
+Program Definition latticeMixin (m : of_) :=
+  @LatticeMixin disp _ (meet m) (join m) (meetC m) (joinC m) _ _ _ _ _.
+Next Obligation.
+move=> x y z; apply le_anti.
+apply/andP; split; rewrite !meetP -?andbA; apply/and3P; split.
+- exact: meet_leL.
+- exact: (le_trans (meet_leR m _ _) (meet_leL m _ _)).
+- exact: (le_trans (meet_leR m _ _) (meet_leR m _ _)).
+- exact: (le_trans (meet_leL m _ _) (meet_leL m _ _)).
+- exact: (le_trans (meet_leL m _ _) (meet_leR m _ _)).
+- exact: meet_leR.
+Qed.
+Next Obligation.
+move=> x y z; apply le_anti.
+apply/andP; split; rewrite !joinP -?andbA; apply/and3P; split.
+- exact: (le_trans (join_leL m _ _) (join_leL m _ _)).
+- exact: (le_trans (join_leR m _ _) (join_leL m _ _)).
+- exact: join_leR.
+- exact: join_leL.
+- exact: (le_trans (join_leL m _ _) (join_leR m _ _)).
+- exact: (le_trans (join_leR m _ _) (join_leR m _ _)).
+Qed.
+Next Obligation.
+apply le_anti.
+apply/andP; split; first exact: meet_leL.
+by rewrite meetP le_refl join_leL.
+Qed.
+Next Obligation.
+apply le_anti.
+apply/andP; split; last exact: join_leL.
+by rewrite joinP le_refl meet_leL.
+Qed.
+Next Obligation. by rewrite eq_le meetP meet_leL le_refl. Qed.
+
+End InfSupMixin.
+
+Module Exports.
+Coercion latticeMixin : of_ >-> Order.LatticeMixin.of_.
+Notation infsupMixin := of_.
+Notation InfSupMixin := Build.
+End Exports.
+
+End InfSupMixin.
+Import InfSupMixin.Exports.
+
+
+Reserved Notation "s '<=R' t" (at level 70, t at next level).
+Reserved Notation "s '<R' t"  (at level 70, t at next level).
+
+
+Fact perm_display : unit. Proof. exact: tt. Qed.
+
+
+Module WeakOrder.
 Section Def.
 
 Variable (n0 : nat).
 Local Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n).
 
-
 Definition leperm s t :=
   [exists u, (t == s * u) && (length t == length s + length u)].
-Definition ltperm s t := (s != t) && (leperm s t).
+Definition ltperm s t := (t != s) && (leperm s t).
 
-Notation "s '<=R' t" := (leperm s t).
-Notation "s '<R' t" := (ltperm s t).
+Local Notation "s '<=R' t" := (leperm s t).
+Local Notation "s '<R' t" := (ltperm s t).
+
+Lemma ltperm_def s t : (s <R t) = ((t != s) && (s <=R t)).
+Proof. by []. Qed.
 
 Lemma lepermP s t :
   reflect (exists2 u, t = s * u & length t = length s + length u)
@@ -92,15 +182,45 @@ move=> s t /andP [Hst Hts]; apply: (leperm_lengthE Hst).
 by apply anti_leq; apply/andP; split; apply leperm_length.
 Qed.
 
-Lemma leperm1p s : 1 <=R s.
+Definition perm_porderMixin :=
+  LePOrderMixin ltperm_def leperm_refl leperm_anti leperm_trans.
+
+End Def.
+End WeakOrder.
+
+Notation "x <=R y" := (@Order.le perm_display _ x y).
+Notation "x <R y" := (@Order.lt perm_display _ x y).
+
+
+Section Def.
+
+Variable (n0 : nat).
+Local Notation n := n0.+1.
+Implicit Type (s t u v : 'S_n).
+
+Canonical perm_porderType :=
+  POrderType perm_display ('S_n) (WeakOrder.perm_porderMixin n0).
+
+Lemma lepermP s t :
+  reflect (exists2 u : 'S_n, t = s * u & length t = length s + length u)
+          (s <=R t).
+Proof. exact: WeakOrder.lepermP. Qed.
+
+Lemma leperm_length s t : s <=R t -> length s <= length t.
+Proof. exact: WeakOrder.leperm_length. Qed.
+
+Lemma leperm_lengthE s t : s <=R t -> length s = length t -> s = t.
+Proof. exact: WeakOrder.leperm_lengthE. Qed.
+
+Lemma leperm1p s : (1%g : 'S__) <=R s.
 Proof.
 apply/lepermP; exists s; first by rewrite mul1g.
 by rewrite length1 add0n.
 Qed.
 
-Lemma leperm_maxpermMl s t : (maxperm * t <=R maxperm * s) = (s <=R t).
+Lemma leperm_maxpermMl s t : (maxperm * t <= maxperm * s)%O = (s <= t)%O.
 Proof.
-suffices {s t} impl u v : u <=R v -> maxperm * v <=R maxperm * u.
+suffices {s t} impl u v : (u <= v)%O -> (maxperm * v <= maxperm * u)%O.
   apply/idP/idP; last exact: impl.
   rewrite -{2}(mulKg maxperm s) -{2}(mulKg maxperm t) maxpermV.
   exact: impl.
@@ -158,7 +278,7 @@ have lens1 : length  (s * 's_(nth w0 w l)) = l.+1.
   have := size_takel Hl => <-; rewrite eqs1; apply/reducedP.
   by move: wred; rewrite -{1}(cat_take_drop l.+1 w) => /reduced_catl.
 exists (nth w0 w l).
-- rewrite /ltperm; apply/andP; split.
+- rewrite lt_neqAle; apply/andP; split.
   + by apply/negP=> /eqP/(congr1 length)/eqP; rewrite lens lens1; elim l.
   + apply/lepermP; exists ('s_(nth w0 w l)) => //.
     by rewrite lens lens1 length_eltr addn1.
@@ -193,8 +313,8 @@ move: (length t - length s) => d Hd.
 move: H; elim: d => [|d IHd] in t Hd *.
   move=> H; move: Hd; rewrite addn0 /length => /eqP.
   rewrite (subset_leqif_cards H) => /eqP/invset_inj ->.
-  exact: leperm_refl.
-rewrite subEproper=> /orP[/eqP/invset_inj->|]; first exact: leperm_refl.
+  exact: le_refl.
+rewrite subEproper=> /orP[/eqP/invset_inj->|]; first exact: le_refl.
 move/properP => /= [incl ex].
 have {ex} /ex_minnP [m /existsP /=[[i j]] /=] : exists n : nat,
     [exists p, [&& p \in invset t, p \notin invset s & t p.1 - t p.2 == n]].
@@ -269,21 +389,18 @@ have {invsett} {}/IHd : invset s \subset invset (t * 's_(t j)).
   move/(_ _ H): Hsubs; rewrite !inE /= => /orP [] // /eqP Heq.
   exfalso; move: H; rewrite {}Heq /invset !inE /= iltj /=.
   by rewrite ltnNge (ltnW siltsj).
-move/leperm_trans; apply.
+move/le_trans; apply.
 rewrite -{3}(mulgK 's_(t j) t) eltrV.
 exact: leperm_eltrR.
 Qed.
 
 Corollary ltperm_invset s t : (s <R t) = (invset s \proper invset t).
 Proof.
-rewrite /ltperm leperm_invset properEneq; congr ((negb _) && _).
+rewrite lt_neqAle leperm_invset properEneq; congr ((negb _) && _).
 by apply/eqP/eqP => [-> | /invset_inj].
 Qed.
 
 End Def.
-
-Notation "s '<=R' t" := (leperm s t).
-Notation "s '<R' t" := (ltperm s t).
 
 
 Section Closure.
@@ -324,6 +441,7 @@ exact: connect_trans.
 Qed.
 
 End Closure.
+
 
 
 Section PermutoSupInf.
@@ -378,7 +496,6 @@ Definition supperm s t : 'S_n :=
 Definition infperm s t : 'S_n :=
   maxperm * (supperm (maxperm * s) (maxperm * t)).
 
-
 Lemma invset_supperm s t :
   invset (supperm s t) = tclosure (invset s :|: invset t).
 Proof.
@@ -407,23 +524,34 @@ rewrite !leperm_invset invset_supperm => Hsw Htw; apply tclosure_sub.
 - by move: (invsetP w) => [].
 Qed.
 
-
-Lemma infpermC s t : infperm s t = infperm t s.
-Proof. by rewrite /infperm suppermC. Qed.
-
-Lemma infpermPr s t : (infperm s t) <=R s.
-Proof. by rewrite -leperm_maxpermMl /infperm -{2}maxpermV mulKg suppermPr. Qed.
-
-Lemma infpermPl s t : (infperm s t) <=R t.
-Proof. by rewrite infpermC; exact: infpermPr. Qed.
-
-Lemma infpermP s t w : w <=R s -> w <=R t -> w <=R (infperm s t).
+Lemma supperm_is_sup x y z : (supperm x y <=R z) = (x <=R z) && (y <=R z).
 Proof.
-rewrite -![w <=R _]leperm_maxpermMl /infperm -{5}maxpermV mulKg.
-exact: suppermP.
+apply/idP/idP => [leinf | /andP [xley xlez]]; last exact: suppermP.
+by apply/andP; split; apply: (le_trans _ leinf);
+  [apply: suppermPr | apply: suppermPl].
+Qed.
+Lemma infperm_is_inf x y z : (x <=R infperm y z) = (x <=R y) && (x <=R z).
+Proof.
+rewrite /infperm -![x <=R _]leperm_maxpermMl.
+by rewrite mulgA -{1}maxpermV mulVg mul1g supperm_is_sup.
 Qed.
 
+Definition perm_latticeMixin := InfSupMixin infperm_is_inf supperm_is_sup.
+Canonical perm_latticeType := LatticeType 'S_n perm_latticeMixin.
 
+Definition perm_bottomMixin := BottomMixin (@leperm1p n0).
+Canonical perm_blatticeType := BLatticeType 'S_n perm_bottomMixin.
+
+Definition perm_topMixin := TopMixin (@leperm_maxperm n0).
+Canonical perm_tblatticeType := TBLatticeType 'S_n perm_topMixin.
+Canonical perm_finLatticeType := Eval hnf in [finLatticeType of 'S_n].
+
+Lemma bottom_perm : Order.bottom = (1 : 'S__).
+Proof. by []. Qed.
+Lemma top_perm : Order.top = maxperm.
+Proof. by []. Qed.
+
+Lemma invset_join s t : invset (s `|` t)%O = tclosure (invset s :|: invset t).
+Proof. by rewrite /Order.join invset_supperm. Qed.
 
 End PermutoSupInf.
-
