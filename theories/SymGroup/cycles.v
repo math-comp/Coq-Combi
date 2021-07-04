@@ -20,7 +20,7 @@ following notions, where [s] is a permutation over a finite type [T]:
 
 - [psupport s] == the set of non fixed points for [s]
 - [porbit_set s] == the set of the supports of the cycles of [s]
-- [s \is circular] == [s] is a circular permutation
+- [s \is cyclic] == [s] is a cyclic permutation
 - [perm_dec E s] == for [E : {set {set T}}] the set of the restriction of [s]
                     to the elements of [E].
 - [cycle_dec s] == the decomposition of [s] in cyclic permutations.
@@ -451,21 +451,18 @@ Proof using.
 by move=> C D /psupport_restr_perm {2}<- /psupport_restr_perm {2}<- ->.
 Qed.
 
-Lemma out_perm_prod_seq (S : seq {perm T}) x :
-  {in S, forall C, x \notin psupport C} -> (\prod_(C <- S) C) x = x.
-Proof using.
-elim: S => [_ | a S HS HaS]; first by rewrite big_nil perm1.
-rewrite big_cons permM.
-have:= HaS _ (mem_head a S); rewrite in_psupport negbK => /eqP ->.
-rewrite HS // => C HC.
-by apply HaS; rewrite in_cons HC orbT.
-Qed.
-
 Lemma out_perm_prod A x :
   {in A, forall C, x \notin psupport C} -> (\prod_(C in A) C) x = x.
 Proof using.
-move=> H; rewrite -big_enum; apply out_perm_prod_seq.
-move=> C; rewrite mem_enum; exact: H.
+move=> H.
+rewrite -big_filter; have [/= S _ [_ mem_S] _] := big_enumP (mem A).
+have {mem_S}H : {in S, forall C, x \notin psupport C}.
+  by move=> C; rewrite mem_S; apply: H.
+elim: S H => [| a S IHS HaS]; first by rewrite big_nil perm1.
+rewrite big_cons permM.
+have:= HaS _ (mem_head a S); rewrite in_psupport negbK => /eqP ->.
+rewrite {}IHS // => C HC.
+by apply: HaS; rewrite in_cons HC orbT.
 Qed.
 
 Import finmodule.FiniteModule morphism.
@@ -496,9 +493,7 @@ rewrite [X in fun_of_perm X](_ :
   by apply group_prod => i; apply: mem_gen.
 rewrite (bigD1 C) //= GRing.addrC -morph_prod //=.
 rewrite -fmodM /=; [ | exact: group_prod | exact: mem_gen].
-rewrite fmodK; first last.
-  apply groupM; last exact: mem_gen.
-  exact: group_prod.
+rewrite fmodK; last by apply groupM; [exact: group_prod |  exact: mem_gen].
 (* Back in symmetric group computation *)
 rewrite {abel Hin Hdisj HC} permM; congr fun_of_perm.
 apply big_rec; first by rewrite perm1.

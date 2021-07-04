@@ -228,16 +228,6 @@ Lemma big_nat_0cond n f :
   \big[op/idx]_(0 <= i < n) f i = \big[op/idx]_(0 <= i < n | (i < n)%N) f i.
 Proof. by rewrite !big_mkord; apply eq_bigl => i; rewrite ltn_ord. Qed.
 
-Lemma big_enum_cond (I : finType) (A : {pred I}) (P : pred I) F :
-  \big[op/idx]_(i <- enum A | P i) F i = \big[op/idx]_(i in A | P i) F i.
-Proof.
-by rewrite -big_filter_cond.
-Qed.
-
-Lemma big_enum (I : finType) (A : {pred I}) F :
-  \big[op/idx]_(i <- enum A) F i = \big[op/idx]_(i in A) F i.
-Proof. by rewrite big_enum_cond big_andbC. Qed.
-
 End BigInterv.
 
 
