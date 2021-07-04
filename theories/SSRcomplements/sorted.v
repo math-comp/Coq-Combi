@@ -83,7 +83,7 @@ Qed.
 Lemma sorted_drop r n : sorted r -> sorted (drop n r).
 Proof using.
 elim: n r => [//= | n IHn ]; first by case.
-case => [//= | r0 r /=] H; apply IHn => {IHn}.
+case => [//= | r0 r /=] H; apply: IHn.
 by case: r H => [//=|r1 r] /andP [].
 Qed.
 
@@ -179,7 +179,7 @@ Qed.
 
 Lemma head_leq_last_sorted l r : sorted (l :: r) -> (l <=R last l r).
 Proof using Rrefl Rtrans.
-elim: r l => [//=| t0 r IHr] l /= /andP [Hl /IHr {IHr}].
+elim: r l => [//=| t0 r IHr] l /= /andP [Hl {}/IHr].
 exact: Rtrans Hl.
 Qed.
 
@@ -206,13 +206,12 @@ Lemma sorted_enum_ord N :
   sorted (fun i j : 'I_N => i <= j) (enum 'I_N).
 Proof.
 rewrite /sorted; case Henum : (enum 'I_N) => [//= | a l].
-rewrite -(map_path (h := val) (e := leq) (b := pred0)).
+rewrite -(map_path (h := val) (e := leq) (b := pred0)) //.
 - rewrite (_ : l = behead (enum 'I_N)); last by rewrite Henum.
   rewrite (_ : val a = head 0 (map val (enum 'I_N))); last by rewrite Henum.
   rewrite -behead_map val_enum_ord.
   case: N {a l Henum} => [//= | N] /=.
   exact: (iota_sorted 0 N.+1).
-- by [].
 - by rewrite (eq_has (a2 := pred0)); first by rewrite has_pred0.
 Qed.
 

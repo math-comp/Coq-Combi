@@ -275,7 +275,7 @@ have lens : length s = l.
 have eqs1 : s * 's_(nth w0 w l) = \prod_(i <- take l.+1 w) 's_i.
   by rewrite (take_nth w0 Hl) -cats1 big_cat /= big_seq1 -Hs.
 have lens1 : length  (s * 's_(nth w0 w l)) = l.+1.
-  have := size_takel Hl => <-; rewrite eqs1; apply/reducedP.
+  rewrite -(size_takel Hl) eqs1; apply/reducedP.
   by move: wred; rewrite -{1}(cat_take_drop l.+1 w) => /reduced_catl.
 exists (nth w0 w l).
 - rewrite lt_neqAle; apply/andP; split.
@@ -473,17 +473,17 @@ constructor; rewrite /=.
     by exfalso; have:= ltn_trans iltj jltk; rewrite Hk ltnn.
   move: Hp => /andP [ip0AB Hp]; apply /orP.
   case: (ltngtP p0 j) => [p0ltj | jltp0 | /val_inj Heq]; last 1 first.
-  - by left; apply: connect1; rewrite -Heq.
-  - move/(_ _ Hp Hk p0ltj): IHp => {p Hk Hp} /orP [|->]; last by right.
+  + by left; apply: connect1; rewrite -Heq.
+  + move/(_ _ Hp Hk p0ltj): IHp => {p Hk Hp} /orP [|->]; last by right.
     by move/(connect_trans (connect1 (e := srel AUB) ip0AB)); left.
-  - wlog ip0 : A B HAUB isA isB ip0AB / (i, p0) \in A.
+  + wlog ip0 : A B HAUB isA isB ip0AB / (i, p0) \in A.
       subst AUB; move=> Hlog; move: ip0AB; rewrite inE => /orP [] Hip0.
-      + by have:= Hip0 => {}/(Hlog A B); apply; rewrite //= inE Hip0.
-      + by have:= Hip0 => {}/(Hlog B A); apply; rewrite // setUC // inE Hip0.
+      * by have:= Hip0 => {}/(Hlog A B); apply; rewrite //= inE Hip0.
+      * by have:= Hip0 => {}/(Hlog B A); apply; rewrite // setUC // inE Hip0.
     suffices: ((i, j) \in AUB) || ((j, p0) \in AUB).
       move/orP=> [ijAB|jp0AB]; [left|right].
-      + exact: connect1.
-      + by apply/connectP; exists (p0 :: p); rewrite //= jp0AB Hp.
+      * exact: connect1.
+      * by apply/connectP; exists (p0 :: p); rewrite //= jp0AB Hp.
     rewrite -HAUB !inE -!orbA [((i, j) \in B) || _]orbC -!orbA orbA.
     apply/or3P; apply Or31; apply/orP.
     move: isA => [_ _]; rewrite transitive_DeltaI1 => H.
