@@ -19,11 +19,9 @@ We define the right (with the mathcomp convention of product of permutation)
 weak order on the symmetric group. We show that it is equivalent to inclusion
 of sets of inversions and that it is a lattice.
 
-Here are the notion defined is this file:
+We define the following notations:
 
 - [s <=R t]     == [s] is smaller for the right weak order than [t].
-- [supperm s t] == the supremum of [s] and [t] for the right weak order.
-- [inferm s t]  == the infimum of [s] and [t] for the right weak order.
 
 ***************************)
 Require Import mathcomp.ssreflect.ssreflect.
@@ -124,6 +122,8 @@ Import InfSupMixin.Exports.
 
 Reserved Notation "s '<=R' t" (at level 70, t at next level).
 Reserved Notation "s '<R' t"  (at level 70, t at next level).
+Reserved Notation "s '/\R' t" (at level 70, t at next level).
+Reserved Notation "s '\/R' t" (at level 70, t at next level).
 
 
 Fact perm_display : unit. Proof. exact: tt. Qed.
@@ -190,6 +190,8 @@ End WeakOrder.
 
 Notation "x <=R y" := (@Order.le perm_display _ x y).
 Notation "x <R y" := (@Order.lt perm_display _ x y).
+Notation "x /\R y" := (@Order.meet perm_display _ x y).
+Notation "x \/R y" := (@Order.join perm_display _ x y).
 
 
 Section Def.
@@ -218,9 +220,9 @@ apply/lepermP; exists s; first by rewrite mul1g.
 by rewrite length1 add0n.
 Qed.
 
-Lemma leperm_maxpermMl s t : (maxperm * t <= maxperm * s)%O = (s <= t)%O.
+Lemma leperm_maxpermMl s t : (maxperm * t <=R maxperm * s) = (s <=R t).
 Proof.
-suffices {s t} impl u v : (u <= v)%O -> (maxperm * v <= maxperm * u)%O.
+suffices {s t} impl u v : u <=R v -> maxperm * v <=R maxperm * u.
   apply/idP/idP; last exact: impl.
   rewrite -{2}(mulKg maxperm s) -{2}(mulKg maxperm t) maxpermV.
   exact: impl.
@@ -546,12 +548,16 @@ Definition perm_topMixin := TopMixin (@leperm_maxperm n0).
 Canonical perm_tblatticeType := TBLatticeType 'S_n perm_topMixin.
 Canonical perm_finLatticeType := Eval hnf in [finLatticeType of 'S_n].
 
-Lemma bottom_perm : Order.bottom = (1 : 'S__).
+Lemma bottom_perm : Order.bottom = (1 : 'S_n).
 Proof. by []. Qed.
 Lemma top_perm : Order.top = maxperm.
 Proof. by []. Qed.
 
-Lemma invset_join s t : invset (s `|` t)%O = tclosure (invset s :|: invset t).
+Lemma invset_join s t : invset (s \/R t) = tclosure (invset s :|: invset t).
 Proof. by rewrite /Order.join invset_supperm. Qed.
+
+Lemma perm_join_meetE s t :
+  s /\R t = maxperm * (maxperm * s \/R maxperm * t).
+Proof. by []. Qed.
 
 End PermutoSupInf.
