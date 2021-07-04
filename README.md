@@ -77,6 +77,8 @@ Contents
 
 * the **Erdös Szekeres theorem** about increassing and decreassing subsequences
 
+   from Greene's invariants theorem.
+
 * various **Combinatorial objects** including
 
   - totally and partially ordered types,
@@ -98,6 +100,10 @@ Contents
 
 * the formula for **Catalan numbers** counting binary trees and Dyck words.
 
+  bijective proof using rotations. Generating function proof are available in
+  https://github.com/hivert/FormalPowerSeries which I plan to merge here at 
+  some points.
+
 Various unstable/unfinished experiments:
 ========================================
 
@@ -114,7 +120,7 @@ Various unstable/unfinished experiments:
 * Formal Power series. See the series branch on Github.
   See the [series branch on Github](https://github.com/hivert/Coq-Combi/tree/series).
 
-* Set-partitions 
+* Set-partitions
   See the [SetPartition branch on Github](https://github.com/hivert/Coq-Combi/tree/SetPartition).
 
 Documentation
@@ -138,21 +144,10 @@ Installation
 
 This library is based on
 
-* Coq 8.8 or more recent
+* Coq 8.13 or more recent
 
 * [SSReflect/MathComp]([https://github.com/math-comp/math-comp])
-  Library version 1.8 or more recent.
+  Library version 1.12 or more recent.
 
 * Pierre-Yves Strub library for
-  [Multinomials] version 1.1 (https://github.com/math-comp/multinomials)
-
-
-Note: The branch Compat-1.7 is compatible with Coq 8.7 and mathcomp 1.7.
-It is not developed anymore.
-
-Note: A standalone version of the proof of the Littlewood-Richardson rule not
-using [Multinomials] is available in the [Legacy
-branch](https://github.com/hivert/Coq-Combi/tree/Legacy). It only includes a
-bare proof of the LR-rule without formalizing anything on multivariate
-polynomials. The proofs given here would be valid for any elements in any
-commutative rings.
+  [Multinomials] version 1.5.1 (https://github.com/math-comp/multinomials)
