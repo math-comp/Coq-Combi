@@ -22,7 +22,7 @@ rule processSource = parse
         let i = String.rindex s '.' in
         let s = String.sub s 0 i in
 (*        let s = Filename.basename s in *)
-        let s = String.capitalize s in
+        let s = String.capitalize_ascii s in
         currentSource := s;
 	nodes := StringSet.add s (!nodes);
         processTargets lexbuf }
@@ -42,7 +42,7 @@ and processTargets = parse
         let i = String.rindex t '.' in
         let t = String.sub t 0 i in
 (*        let t = Filename.basename t in *)
-        let t = String.capitalize t in
+        let t = String.capitalize_ascii t in
         addDepend t;
         processTargets lexbuf }
   | eof
@@ -335,7 +335,7 @@ begin
       roots;
     print_string "  };\n";
     (* Find the graph reachable from the roots *)
-    let tcGraph = tc graph in          
+    let tcGraph = tc graph in
     let reachable node =
       (List.exists (fun r -> r=node) roots)
       ||
