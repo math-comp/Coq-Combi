@@ -21,7 +21,10 @@ of sets of inversions and that it is a lattice.
 
 We define the following notations:
 
-- [s <=R t]     == [s] is smaller for the right weak order than [t].
+- [s <=R t]     == [s] is smaller than [t] for the right weak order.
+- [s <R t]      == [s] is strictly smaller  than [t] for the right weak order.
+- [s \/R t]   == the meet of [s] and [t] for the right weak order.
+- [s /\R t]   == the join of [s] and [t] for the right weak order.
 
 ***************************)
 Require Import mathcomp.ssreflect.ssreflect.
@@ -101,14 +104,24 @@ Qed.
 
 Definition perm_porderMixin :=
   LePOrderMixin ltperm_def leperm_refl leperm_anti leperm_trans.
+Definition perm_porderType :=
+  POrderType perm_display ('S_n) perm_porderMixin.
 
 End Def.
-End WeakOrder.
+
+Module Exports.
+
+Notation perm_porderMixin := perm_porderMixin.
+Canonical perm_porderType.
 
 Notation "x <=R y" := (@Order.le perm_display _ x y).
 Notation "x <R y" := (@Order.lt perm_display _ x y).
 Notation "x /\R y" := (@Order.meet perm_display _ x y).
 Notation "x \/R y" := (@Order.join perm_display _ x y).
+
+End Exports.
+End WeakOrder.
+Export WeakOrder.Exports.
 
 
 Section Def.
@@ -116,9 +129,6 @@ Section Def.
 Variable (n0 : nat).
 Local Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n).
-
-Canonical perm_porderType :=
-  POrderType perm_display ('S_n) (WeakOrder.perm_porderMixin n0).
 
 Lemma lepermP s t :
   reflect (exists2 u : 'S_n, t = s * u & length t = length s + length u)
@@ -363,7 +373,7 @@ End Closure.
 
 
 
-Section PermutoSupInf.
+Section TClosure.
 
 Variable (n0 : nat).
 Local Notation n := n0.+1.
@@ -409,6 +419,16 @@ constructor; rewrite /=.
     have /H/(_ ip0) : i < j < p0 by rewrite iltj jltp0.
     by move=> [|] -> /=; [left | right].
 Qed.
+
+End TClosure.
+
+
+Module PermLattice.
+Section Def.
+
+Variable (n0 : nat).
+Local Notation n := n0.+1.
+Implicit Type (s t u v : 'S_n) (A B : {set 'I_n * 'I_n}).
 
 Definition supperm s t : 'S_n :=
   perm_of_invset (tclosure (invset s :|: invset t)).
@@ -456,7 +476,39 @@ by rewrite mulgA -{1}maxpermV mulVg mul1g supperm_is_join.
 Qed.
 
 Definition perm_latticeMixin := MeetJoinLeMixin infperm_is_meet supperm_is_join.
-Canonical perm_latticeType := LatticeType 'S_n perm_latticeMixin.
+Definition perm_latticeType := LatticeType 'S_n perm_latticeMixin.
+
+End Def.
+
+Module Exports.
+
+Notation perm_latticeMixin := perm_latticeMixin.
+Canonical perm_latticeType.
+
+Section Theory.
+
+Variable (n0 : nat).
+Local Notation n := n0.+1.
+Implicit Type (s t u v : 'S_n).
+
+Lemma invset_join s t : invset (s \/R t) = tclosure (invset s :|: invset t).
+Proof. by rewrite /Order.join invset_supperm. Qed.
+
+Lemma perm_join_meetE s t :
+  s /\R t = maxperm * (maxperm * s \/R maxperm * t).
+Proof. by []. Qed.
+
+End Theory.
+End Exports.
+End PermLattice.
+Export PermLattice.Exports.
+
+
+Section PermTBLattice.
+
+Variable (n0 : nat).
+Local Notation n := n0.+1.
+Implicit Type (s t u v : 'S_n).
 
 Definition perm_bottomMixin := BottomMixin (@leperm1p n0).
 Canonical perm_blatticeType := BLatticeType 'S_n perm_bottomMixin.
@@ -470,11 +522,4 @@ Proof. by []. Qed.
 Lemma top_perm : Order.top = maxperm.
 Proof. by []. Qed.
 
-Lemma invset_join s t : invset (s \/R t) = tclosure (invset s :|: invset t).
-Proof. by rewrite /Order.join invset_supperm. Qed.
-
-Lemma perm_join_meetE s t :
-  s /\R t = maxperm * (maxperm * s \/R maxperm * t).
-Proof. by []. Qed.
-
-End PermutoSupInf.
+End PermTBLattice.

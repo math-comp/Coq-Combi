@@ -61,10 +61,10 @@ Rotations and Tamari order:
 
 Tamari bracketing vectors:
 
-- [right_sizes t] == the sequence if infix order reading of the node of [t]
+- [right_sizes t] == the sequence in infix order reading of the node of [t]
         of the the sizes of the right subtrees
 - [from_vct vct] == recovers the tree [t] from its right sizes vector.
-- [v \is a TamariVector] == [v] is the right sizes vector from some tree [t].
+- [v \is a TamariVector] == [v] is the right sizes vector of some tree [t].
         The characterization of a Tamari vector of size [n] is that
         for all [i < n] then [v_i + 1 < n] and
         for all [j] such that [i < j <= v_i + i] then [v_j + j <= v_i + i].
@@ -79,19 +79,26 @@ binary trees to Tamari vectors as stated in theorems [right_sizesK],
 
 Tamari Lattice:
 
-- [Tinf t1 t2] == the inf of [t1] and [t2] in the Tamari lattice.
-- [Tsup t1 t2] == the sup of [t1] and [t2] in the Tamari lattice.
+- [t1 \/T t2] == the meet of [t1] and [t2] in the Tamari lattice.
+- [t1 /\T t2] == the join of [t1] and [t2] in the Tamari lattice.
  *********************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun bigop ssrnat eqtype fintype choice seq.
-From mathcomp Require Import fingraph path finset.
+From mathcomp Require Import fingraph path finset order.
 
-Require Import tools combclass.
+Require Import tools combclass lattice.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Import Order.Theory.
+
+
+Reserved Notation "x '<=T' y" (at level 70, y at next level).
+Reserved Notation "x '<T' y"  (at level 70, y at next level).
+Reserved Notation "x '/\T' y" (at level 70, y at next level).
+Reserved Notation "x '\/T' y" (at level 70, y at next level).
 
 
 (** * Inductive type for binary trees *)
@@ -618,33 +625,23 @@ by rewrite ltnn.
 Qed.
 
 
+Fact Tamari_display : unit. Proof. exact: tt. Qed.
+
 (** ** Definition of Tamari order *)
+Module Tamari.
 Section Tamari.
 
 Variable n : nat.
 Implicit Type t : bintreesz n.
 
-Local Fact rightcombsz_proof : size_tree (rightcomb n) == n.
-Proof. apply/eqP; exact: size_rightcomb. Qed.
-Canonical rightcombsz := BinTreeSZ rightcombsz_proof.
-Local Fact leftcombsz_proof : size_tree (leftcomb n) == n.
-Proof. apply/eqP; exact: size_leftcomb. Qed.
-Canonical leftcombsz := BinTreeSZ leftcombsz_proof.
-Local Lemma flipsz_proof t : size_tree (flip t) == n.
-Proof. by rewrite size_flip bintreeszP. Qed.
-Canonical flipsz t := BinTreeSZ (flipsz_proof t).
-
-Lemma flipszK : involutive flipsz.
-Proof. move=> t; apply val_inj => /=; exact: flipK. Qed.
-
-Lemma flipsz_rightcomb : flipsz rightcombsz = leftcombsz.
-Proof. by apply val_inj => /=; exact: flip_rightcomb. Qed.
-Lemma flipsz_leftcomb : flipsz leftcombsz = rightcombsz.
-Proof. by apply val_inj => /=; exact: flip_leftcomb. Qed.
-
-
 Definition Tamari := connect (fun t1 t2 : bintreesz n => grel rotations t1 t2).
+Definition Tamari_lt t1 t2 := (t2 != t1) && (Tamari t1 t2).
+
 Local Notation "x '<=T' y" := (Tamari x y) (at level 70, y at next level).
+Local Notation "x '<T' y" := (Tamari_lt x y) (at level 70, y at next level).
+
+Lemma Tamari_def s t : (s <T t) = ((t != s) && (s <=T t)).
+Proof. by []. Qed.
 
 Lemma rotations_Tamari t t' :
   trval t' \in rotations t -> t <=T t'.
@@ -676,14 +673,65 @@ move=> /Tamari_rightsizesum [leq12 _].
 by apply/eqP; rewrite -eq eqn_leq leq21 leq12.
 Qed.
 
+Definition tamari_porderMixin :=
+  LePOrderMixin Tamari_def Tamari_refl Tamari_anti Tamari_trans.
+Definition tamari_porderType :=
+  POrderType Tamari_display (bintreesz n) tamari_porderMixin.
+
+End Tamari.
+
+Module Exports.
+
+Notation tamari_porderMixin := tamari_porderMixin.
+Canonical tamari_porderType.
+
+Notation "x <=T y" := (@Order.le Tamari_display _ x y).
+Notation "x <T y" := (@Order.lt Tamari_display _ x y).
+Notation "x /\T y" := (@Order.meet Tamari_display _ x y).
+Notation "x \/T y" := (@Order.join Tamari_display _ x y).
+
+End Exports.
+End Tamari.
+Export Tamari.Exports.
+
+
+Section Flip.
+
+Variable n : nat.
+Implicit Type t : bintreesz n.
+
+Definition TamariE t1 t2 :
+  (t1 <=T t2) = connect (fun x y : bintreesz n => grel rotations x y) t1 t2.
+Proof. by []. Qed.
+Lemma rotations_Tamari t t' :
+  trval t' \in rotations t -> t <=T t'.
+Proof. exact: Tamari.rotations_Tamari. Qed.
+
+Local Fact rightcombsz_proof : size_tree (rightcomb n) == n.
+Proof. apply/eqP; exact: size_rightcomb. Qed.
+Canonical rightcombsz := BinTreeSZ rightcombsz_proof.
+Local Fact leftcombsz_proof : size_tree (leftcomb n) == n.
+Proof. apply/eqP; exact: size_leftcomb. Qed.
+Canonical leftcombsz := BinTreeSZ leftcombsz_proof.
+Local Lemma flipsz_proof t : size_tree (flip t) == n.
+Proof. by rewrite size_flip bintreeszP. Qed.
+Canonical flipsz t := BinTreeSZ (flipsz_proof t).
+
+Lemma flipszK : involutive flipsz.
+Proof. move=> t; apply val_inj => /=; exact: flipK. Qed.
+Lemma flipsz_rightcomb : flipsz rightcombsz = leftcombsz.
+Proof. by apply val_inj => /=; exact: flip_rightcomb. Qed.
+Lemma flipsz_leftcomb : flipsz leftcombsz = rightcombsz.
+Proof. by apply val_inj => /=; exact: flip_leftcomb. Qed.
+
 Lemma Tamari_flip t1 t2 : (flipsz t2 <=T flipsz t1) = (t1 <=T t2).
 Proof.
 suff {t1 t2} Timpl t1 t2 : (flipsz t2 <=T flipsz t1) -> t1 <=T t2.
   apply/idP/idP; first exact: Timpl.
   by rewrite -{1}(flipszK t1) -{1}(flipszK t2); exact: Timpl.
-rewrite /Tamari => /connectP /= [].
-case/lastP => [//= _ | p l Hp].
-  move=> /(congr1 flipsz); rewrite !flipszK => ->.
+rewrite TamariE => /connectP /= [].
+case/lastP => [//= _ | p l Hp] /=.
+  move=> /(congr1 flipsz). rewrite !flipszK => ->.
   exact: connect0.
 rewrite last_rcons => Hl; subst l; move: Hp.
 have /eq_path -> : (fun t t' => trval t' \in rotations t)
@@ -703,10 +751,7 @@ set pp := rcons _ _ => Hp; apply/connectP; exists pp; first by [].
 by rewrite /pp last_rcons.
 Qed.
 
-End Tamari.
-
-Notation "x '<=T' y" := (Tamari x y) (at level 70, y at next level).
-
+End Flip.
 
 
 (** ** Tamari vectors *)
@@ -892,12 +937,12 @@ Proof. by []. Qed.
 
 Goal all
      (fun i => all (fun t => t == from_vct (right_sizes t)) (enum_bintreesz i))
-     (iota 0 8).
+     (iota 0 7).
 Proof. by []. Qed.
 
 Goal all
      (fun i => all (fun t => right_sizes t \is a TamariVector) (enum_bintreesz i))
-     (iota 0 8).
+     (iota 0 7).
 Proof. by []. Qed.
 
 Goal [:: 1; 1; 0] \isn't a TamariVector.
@@ -1024,6 +1069,7 @@ Qed.
 
 Lemma from_vct0 n : from_vct (nseq n 0) = leftcomb n.
 Proof. by rewrite -right_sizes_left_comb right_sizesK. Qed.
+
 
 (** ** Comparison of Tamari vectors *)
 
@@ -1465,12 +1511,10 @@ apply/anti_leq/andP; split.
 Qed.
 
 
-
-Section TamariLattice.
+Section TamariSuccessor.
 
 Variable n : nat.
 Implicit Types t : bintreesz n.
-
 
 Theorem Tamari_vctleq t1 t2 :
   (right_sizes t1 <=V right_sizes t2) = (t1 <=T t2).
@@ -1480,21 +1524,21 @@ apply/idP/idP.
   rewrite leq_subLR.
   elim: i t1 t2 => [| i IHi] t1 t2 Hsum Hleq.
     rewrite addn0 in Hsum.
-    suff -> : t1 = t2 by apply: Tamari_refl.
+    suff -> : t1 = t2 by apply: le_refl.
     apply/val_inj/eqP => /=.
     have [Hsum2 Heq] := vctleq_rightsizesum Hleq.
     rewrite -Heq; apply/eqP/anti_leq.
     by rewrite Hsum Hsum2.
-  case: (altP (t1 =P t2)) => [-> | Hneq]; first by apply: Tamari_refl.
+  case: (altP (t1 =P t2)) => [-> | Hneq]; first by apply: le_refl.
   have [/= tt [Hrot Htleq]] := vctleq_rotation Hleq Hneq.
   have Hszt : size_tree tt == n by rewrite (size_rotations Hrot) bintreeszP.
   pose t := BinTreeSZ Hszt.
   rewrite -[tt]/(trval t) in Hrot Htleq.
   have:= rightsizesum_gt Hrot.
   rewrite -(leq_add2r i) addSnnS => /(leq_trans Hsum).
-  move=> /IHi{IHi}/(_ Htleq) /(Tamari_trans _); apply.
+  move=> /IHi{IHi}/(_ Htleq) /(le_trans _); apply.
   exact: rotations_Tamari.
-- rewrite /Tamari => /connectP /= [p].
+- rewrite TamariE => /connectP /= [p].
   elim: p t1 t2 => /= [| p0 p IHp] t1 t2.
     by move => _ ->; exact: vctleq_refl.
   move/andP => [Hrot Hpath Ht2].
@@ -1514,55 +1558,105 @@ have [] := vct_succ Htam H1 H2.
   by right; apply val_inj.
 Qed.
 
-Lemma Tinf_proof t1 t2 :
+End TamariSuccessor.
+
+
+Module TamariLattice.
+Section Def.
+
+Variable n : nat.
+Implicit Types t : bintreesz n.
+
+Lemma Tmeet_proof t1 t2 :
   size_tree (from_vct (vctmin (right_sizes t1) (right_sizes t2))) == n.
 Proof.
 by rewrite size_from_vct size_vctmin !size_right_sizes !bintreeszP minnn.
 Qed.
-Definition Tinf t1 t2 := BinTreeSZ (Tinf_proof t1 t2).
-Definition Tsup t1 t2 := flipsz (Tinf (flipsz t1) (flipsz t2)).
+Definition Tmeet t1 t2 := BinTreeSZ (Tmeet_proof t1 t2).
+Definition Tjoin t1 t2 := flipsz (Tmeet (flipsz t1) (flipsz t2)).
 
-Lemma TinfC  t1 t2 : Tinf t1 t2 = Tinf t2 t1.
-Proof. by rewrite /Tinf /=; apply val_inj; rewrite /= vctminC. Qed.
+Lemma TmeetC  t1 t2 : Tmeet t1 t2 = Tmeet t2 t1.
+Proof. by rewrite /Tmeet /=; apply val_inj; rewrite /= vctminC. Qed.
 
-Lemma TinfPr t1 t2 : Tinf t1 t2 <=T t2.
+Lemma TmeetPr t1 t2 : Tmeet t1 t2 <=T t2.
 Proof.
 have Hszeq : size (right_sizes t1) = size (right_sizes t2).
   by rewrite !size_right_sizes !bintreeszP.
-rewrite /Tinf -Tamari_vctleq /= from_vctK ?vctmin_Tamari //.
+rewrite /Tmeet -Tamari_vctleq /= from_vctK ?vctmin_Tamari //.
 exact: vctminPr.
 Qed.
 
-Lemma TinfPl t1 t2 : Tinf t1 t2 <=T t1.
-Proof. by rewrite TinfC; exact: TinfPr. Qed.
-
-Lemma TinfP t1 t2 t :
-  t <=T t1 -> t <=T t2 -> t <=T Tinf t1 t2.
+Lemma TmeetE t t1 t2 : (t <=T Tmeet t1 t2) = (t <=T t1) && (t <=T t2).
 Proof.
+apply/idP/andP => [/le_trans Htr| []].
+  by split; apply: Htr; first rewrite TmeetC; rewrite TmeetPr.
 have Hszeq : size (right_sizes t1) = size (right_sizes t2).
   by rewrite !size_right_sizes !bintreeszP.
-rewrite /Tinf -!Tamari_vctleq /= from_vctK ?vctmin_Tamari //.
+rewrite /Tmeet -!Tamari_vctleq /= from_vctK ?vctmin_Tamari //.
 exact: vctminP.
 Qed.
+Lemma TjoinE t1 t2 t : (Tjoin t1 t2 <=T t) = (t1 <=T t) && (t2 <=T t).
+Proof. by rewrite /Tjoin -![_ <=T t]Tamari_flip flipszK TmeetE. Qed.
 
-Lemma TsupPr t1 t2 : t2 <=T Tsup t1 t2.
-Proof. rewrite /Tsup -Tamari_flip flipszK; exact: TinfPr. Qed.
-Lemma TsupPl t1 t2 : t1 <=T Tsup t1 t2.
-Proof. rewrite /Tsup -Tamari_flip flipszK; exact: TinfPl. Qed.
-Lemma TsupP t1 t2 t :
-  t1 <=T t -> t2 <=T t -> Tsup t1 t2 <=T t.
-Proof. rewrite /Tsup -![_ <=T t]Tamari_flip flipszK; exact: TinfP. Qed.
+Definition Tamari_latticeMixin := MeetJoinLeMixin TmeetE TjoinE.
+Definition Tamari_latticeType := LatticeType (bintreesz n) Tamari_latticeMixin.
+
+End Def.
+
+Module Exports.
+
+Notation Tamari_latticeMixin := Tamari_latticeMixin.
+Canonical Tamari_latticeType.
+
+Section Theory.
+
+Variable n : nat.
+Implicit Types t : bintreesz n.
+
+Lemma right_sizes_meet t1 t2 :
+  right_sizes (t1 /\T t2) = vctmin (right_sizes t1) (right_sizes t2).
+Proof.
+rewrite /Order.meet /= from_vctK // vctmin_Tamari //.
+by rewrite !size_right_sizes !bintreeszP.
+Qed.
+
+Lemma flipsz_meet t1 t2 : flipsz (t1 \/T t2) = (flipsz t1 /\T flipsz t2).
+Proof. by apply val_inj => /=; rewrite flipK. Qed.
+Lemma flipsz_join t1 t2 : flipsz (t1 /\T t2) = (flipsz t1 \/T flipsz t2).
+Proof. by rewrite -[RHS]flipszK flipsz_meet !flipszK. Qed.
+
+End Theory.
+End Exports.
+End TamariLattice.
+Export TamariLattice.Exports.
 
 
-Lemma leftcomb_top t : leftcombsz n <=T t.
+Section TamariTBLattice.
+
+Variable n : nat.
+Implicit Types t : bintreesz n.
+
+Lemma leftcomb_bottom t : leftcombsz n <=T t.
 Proof.
 rewrite -Tamari_vctleq right_sizes_left_comb.
 apply/vctleqP; split; first by rewrite size_nseq size_right_sizes bintreeszP.
 by move=> i; rewrite nth_nseq if_same.
 Qed.
 
-Lemma rightcomb_bottom t : t <=T rightcombsz n.
-Proof. by rewrite -Tamari_flip flipsz_rightcomb; exact: leftcomb_top. Qed.
+Lemma rightcomb_top t : t <=T rightcombsz n.
+Proof. by rewrite -Tamari_flip flipsz_rightcomb; exact: leftcomb_bottom. Qed.
 
-End TamariLattice.
+Definition Tamari_bottomMixin := BottomMixin leftcomb_bottom.
+Canonical Tamari_blatticeType := BLatticeType (bintreesz n) Tamari_bottomMixin.
+Definition Tamari_topMixin := TopMixin rightcomb_top.
+Canonical Tamari_tblatticeType := TBLatticeType (bintreesz n) Tamari_topMixin.
+Canonical Tamari_finLatticeType :=
+  Eval hnf in [finLatticeType of (bintreesz n)].
+
+Lemma bottom_Tamari : Order.bottom = (leftcombsz n).
+Proof. by []. Qed.
+Lemma top_Tamari : Order.top = (rightcombsz n).
+Proof. by []. Qed.
+
+End TamariTBLattice.
 
