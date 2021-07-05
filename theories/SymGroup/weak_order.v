@@ -1,6 +1,6 @@
 (** * Combi.SymGroup.weak_order : The weak order on the Symmetric Group *)
 (******************************************************************************)
-(*      Copyright (C) 2016-2018 Florent Hivert <florent.hivert@lri.fr>        *)
+(*      Copyright (C) 2016-2021 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
 (*  Distributed under the terms of the GNU General Public License (GPL)       *)
 (*                                                                            *)
@@ -28,7 +28,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import fingroup perm morphism presentation.
 
-Require Import permcomp tools permuted combclass congr presentSn.
+Require Import permcomp tools permuted combclass congr presentSn lattice.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -36,89 +36,6 @@ Unset Printing Implicit Defensive.
 
 Import GroupScope.
 Import Order.Theory.
-
-
-Module InfSupMixin.
-Section InfSupMixin.
-Variable (disp : unit) (T : porderType disp).
-Open Scope order_scope.
-
-Record of_ := Build {
-  meet : T -> T -> T;
-  join : T -> T -> T;
-  meetP : forall x y z, (x <= meet y z) = (x <= y) && (x <= z);
-  joinP : forall x y z, (join x y <= z) = (x <= z) && (y <= z);
-}.
-
-Fact meet_lel (m : of_) x y : meet m x y <= meet m y x.
-Proof.
-have:= le_refl (meet m x y); rewrite meetP => /andP [mlex mley].
-by rewrite (meetP m) mlex mley.
-Qed.
-Fact meetC (m : of_) : commutative (meet m).
-Proof. by move=> x y; apply le_anti; rewrite !meet_lel. Qed.
-Fact meet_leL (m : of_) x y : (meet m x y) <= x.
-Proof. by have:= le_refl (meet m x y); rewrite (meetP m) => /andP []. Qed.
-Fact meet_leR (m : of_) x y : (meet m x y) <= y.
-Proof. by have:= le_refl (meet m x y); rewrite (meetP m) => /andP []. Qed.
-
-Fact join_lel (m : of_) x y : join m x y <= join m y x.
-Proof.
-have:= le_refl (join m y x); rewrite joinP => /andP [ylej xlej].
-by rewrite (joinP m) ylej xlej.
-Qed.
-Fact joinC (m : of_) : commutative (join m).
-Proof. by move=> x y; apply le_anti; rewrite !join_lel. Qed.
-Fact join_leL (m : of_) x y : x <= (join m x y).
-Proof. by have:= le_refl (join m x y); rewrite (joinP m) => /andP []. Qed.
-Fact join_leR (m : of_) x y : y <= (join m x y).
-Proof. by have:= le_refl (join m x y); rewrite (joinP m) => /andP []. Qed.
-
-Program Definition latticeMixin (m : of_) :=
-  @LatticeMixin disp _ (meet m) (join m) (meetC m) (joinC m) _ _ _ _ _.
-Next Obligation.
-move=> x y z; apply le_anti.
-apply/andP; split; rewrite !meetP -?andbA; apply/and3P; split.
-- exact: meet_leL.
-- exact: (le_trans (meet_leR m _ _) (meet_leL m _ _)).
-- exact: (le_trans (meet_leR m _ _) (meet_leR m _ _)).
-- exact: (le_trans (meet_leL m _ _) (meet_leL m _ _)).
-- exact: (le_trans (meet_leL m _ _) (meet_leR m _ _)).
-- exact: meet_leR.
-Qed.
-Next Obligation.
-move=> x y z; apply le_anti.
-apply/andP; split; rewrite !joinP -?andbA; apply/and3P; split.
-- exact: (le_trans (join_leL m _ _) (join_leL m _ _)).
-- exact: (le_trans (join_leR m _ _) (join_leL m _ _)).
-- exact: join_leR.
-- exact: join_leL.
-- exact: (le_trans (join_leL m _ _) (join_leR m _ _)).
-- exact: (le_trans (join_leR m _ _) (join_leR m _ _)).
-Qed.
-Next Obligation.
-apply le_anti.
-apply/andP; split; first exact: meet_leL.
-by rewrite meetP le_refl join_leL.
-Qed.
-Next Obligation.
-apply le_anti.
-apply/andP; split; last exact: join_leL.
-by rewrite joinP le_refl meet_leL.
-Qed.
-Next Obligation. by rewrite eq_le meetP meet_leL le_refl. Qed.
-
-End InfSupMixin.
-
-Module Exports.
-Coercion latticeMixin : of_ >-> Order.LatticeMixin.of_.
-Notation infsupMixin := of_.
-Notation InfSupMixin := Build.
-End Exports.
-
-End InfSupMixin.
-Import InfSupMixin.Exports.
-
 
 Reserved Notation "s '<=R' t" (at level 70, t at next level).
 Reserved Notation "s '<R' t"  (at level 70, t at next level).
@@ -538,7 +455,7 @@ rewrite /infperm -![x <=R _]leperm_maxpermMl.
 by rewrite mulgA -{1}maxpermV mulVg mul1g supperm_is_join.
 Qed.
 
-Definition perm_latticeMixin := InfSupMixin infperm_is_meet supperm_is_join.
+Definition perm_latticeMixin := MeetJoinLeMixin infperm_is_meet supperm_is_join.
 Canonical perm_latticeType := LatticeType 'S_n perm_latticeMixin.
 
 Definition perm_bottomMixin := BottomMixin (@leperm1p n0).
