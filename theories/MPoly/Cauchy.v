@@ -399,8 +399,7 @@ rewrite (reindex (famY (d := d))) /=; first last.
     apply val_inj => /=.
     rewrite [[multinom _ | i < m * n]](_ : _ = val mz) /= ?bmdeg //.
     apply mnmP => c; rewrite mnmE /famY ffunE /=.
-    rewrite tnth_mktuple mnmE //= -[in RHS](vecmx_indexK c).
-    by case (vecmx_index c).
+    by rewrite tnth_mktuple mnmE //= -[in RHS](vecmx_indexK c).
   + move=> ff; rewrite inE => /familyP H /=.
     apply/ffunP => /= i; rewrite ffunE; apply val_inj => /=.
     rewrite [mdeg _](_ : _ = d) ?ltnSn; first last.
