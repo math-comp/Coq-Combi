@@ -106,8 +106,8 @@ The main result is thus [Theorem presentation_Sn_eltr]:
 ***************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
-From mathcomp Require Import choice fintype tuple finfun bigop finset binomial.
-From mathcomp Require Import fingroup perm morphism presentation.
+From mathcomp Require Import choice fintype tuple finfun fingraph finset binomial.
+From mathcomp Require Import bigop fingroup perm morphism presentation.
 From mathcomp Require Import ssralg poly ssrint.
 
 Require Import permcomp tools permuted combclass congr.
@@ -156,11 +156,25 @@ End SSRComplFinset.
 Section SRel.
 
 Variable T : finType.
-Implicit Type (S : {set T * T}).
+Implicit Type (S A B : {set T * T}).
 Definition srel S := [rel x y : T | (x, y) \in S].
 
 Lemma srelE S1 S2 : srel S1 =2 srel S2 -> S1 = S2.
 Proof. by move=> eqS; apply/setP => [[x y]]; apply: eqS x y. Qed.
+
+Definition tclosure A : {set T * T} :=
+  [set p | (p.1 != p.2) && (connect (srel A) p.1 p.2)].
+
+Lemma tclosure_sub A B :
+  A \subset B -> transitive (srel B) -> tclosure A \subset B.
+Proof.
+move=> /subsetP AB trB.
+apply/subsetP => /= [[i j]]; rewrite /tclosure inE /= => /andP [Hneq].
+move/connectP => /= [p]; elim: p => [| p0 p IHp] /= in i Hneq *.
+  by move => _ Heq; rewrite Heq eqxx in Hneq.
+case: (altP (p0 =P j)) => [<- /= /andP[/AB ->] // | {}/IHp IHp].
+by move=> /andP [/AB {}/trB trB {}/IHp H{}/H]; apply: trB.
+Qed.
 
 End SRel.
 

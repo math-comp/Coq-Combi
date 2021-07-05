@@ -28,7 +28,8 @@ We define the following notations:
 
 ***************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
+From mathcomp Require Import choice fintype tuple fingraph finset order bigop.
 From mathcomp Require Import fingroup perm morphism presentation.
 
 Require Import permcomp tools permuted combclass congr presentSn lattice.
@@ -119,12 +120,7 @@ Notation "x <R y" := (@Order.lt perm_display _ x y).
 Notation "x /\R y" := (@Order.meet perm_display _ x y).
 Notation "x \/R y" := (@Order.join perm_display _ x y).
 
-End Exports.
-End WeakOrder.
-Export WeakOrder.Exports.
-
-
-Section Def.
+Section InternalTheory.
 
 Variable (n0 : nat).
 Local Notation n := n0.+1.
@@ -133,15 +129,27 @@ Implicit Type (s t u v : 'S_n).
 Lemma lepermP s t :
   reflect (exists2 u : 'S_n, t = s * u & length t = length s + length u)
           (s <=R t).
-Proof. exact: WeakOrder.lepermP. Qed.
+Proof. exact: lepermP. Qed.
 
 Lemma leperm_length s t : s <=R t -> length s <= length t.
-Proof. exact: WeakOrder.leperm_length. Qed.
+Proof. exact: leperm_length. Qed.
 
 Lemma leperm_lengthE s t : s <=R t -> length s = length t -> s = t.
-Proof. exact: WeakOrder.leperm_lengthE. Qed.
+Proof. exact: leperm_lengthE. Qed.
 
-Lemma leperm1p s : (1%g : 'S__) <=R s.
+End InternalTheory.
+End Exports.
+End WeakOrder.
+Export WeakOrder.Exports.
+
+
+Section LEPermTheory.
+
+Variable (n0 : nat).
+Local Notation n := n0.+1.
+Implicit Type (s t u v : 'S_n).
+
+Lemma leperm1p s : (1%g : 'S_n) <=R s.
 Proof.
 apply/lepermP; exists s; first by rewrite mul1g.
 by rewrite length1 add0n.
@@ -168,7 +176,6 @@ Proof.
 move=> Hi Hnrec; apply/lepermP; exists 's_i => //.
 by rewrite length_add1R // -[val i]/(val (Ordinal Hi)) length_eltr addn1.
 Qed.
-
 
 Lemma leperm_factorP s t :
   reflect (exists2 w : seq 'I_n0, w \is reduced &
@@ -329,28 +336,14 @@ rewrite lt_neqAle leperm_invset properEneq; congr ((negb _) && _).
 by apply/eqP/eqP => [-> | /invset_inj].
 Qed.
 
-End Def.
+End LEPermTheory.
 
 
-Section Closure.
+Section TClosureInvset.
 
 Variable (n0 : nat).
 Local Notation n := n0.+1.
-Implicit Type (A B C : {set 'I_n * 'I_n}).
-
-Definition tclosure A : {set 'I_n * 'I_n} :=
-  [set p | (p.1 != p.2) && (connect (srel A) p.1 p.2)].
-
-Lemma tclosure_sub A B :
-  A \subset B -> transitive (srel B) -> tclosure A \subset B.
-Proof.
-move=> /subsetP AB trB.
-apply/subsetP => /= [[i j]]; rewrite /tclosure inE /= => /andP [Hneq].
-move/connectP => /= [p]; elim: p => [| p0 p IHp] /= in i Hneq *.
-  by move => _ Heq; rewrite Heq eqxx in Hneq.
-case: (altP (p0 =P j)) => [<- /= /andP[/AB ->] // | {}/IHp IHp].
-by move=> /andP [/AB {}/trB trB {}/IHp H{}/H]; apply: trB.
-Qed.
+Implicit Type (s t u v : 'S_n) (A B : {set 'I_n * 'I_n}).
 
 Lemma tclosure_Delta A : A \subset Delta -> tclosure A \subset Delta.
 Proof.
@@ -368,16 +361,6 @@ move=> /andP [inj _] /andP [jnk _] /andP [ink _].
 move: ijA jkA; rewrite !inE /= inj ink jnk /=.
 exact: connect_trans.
 Qed.
-
-End Closure.
-
-
-
-Section TClosure.
-
-Variable (n0 : nat).
-Local Notation n := n0.+1.
-Implicit Type (s t u v : 'S_n) (A B : {set 'I_n * 'I_n}).
 
 Lemma is_invset_tclosureU A B :
   is_invset A -> is_invset B -> is_invset (tclosure (A :|: B)).
@@ -420,7 +403,7 @@ constructor; rewrite /=.
     by move=> [|] -> /=; [left | right].
 Qed.
 
-End TClosure.
+End TClosureInvset.
 
 
 Module PermLattice.
