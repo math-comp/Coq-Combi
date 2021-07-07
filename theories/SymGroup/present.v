@@ -57,7 +57,7 @@ Qed.
 
 End Satisfy.
 
-Lemma satisfy_morph (gT : finGroupType) (G : {group gT})
+Lemma morph_satisfy (gT : finGroupType) (G : {group gT})
                     (hT : finGroupType) (H : {group hT})
       (f : {morphism G >-> hT}) m (gens : 'I_m -> gT) rels :
   (forall i, gens i \in G) -> satisfy rels gens -> satisfy rels (f \o gens).
@@ -194,8 +194,7 @@ Variables (G : {group gT}) (H : {group hT}).
 Variables (n : nat) (gens  : 'I_n -> gT) (rels  : seq (seq 'I_n)).
 Hypothesis (prG : (gens, rels) \present G).
 
-Lemma presm_id (sat : satisfy rels gens) :
-  {in G, presm prG sat =1 id}.
+Lemma presm_id (sat : satisfy rels gens) : {in G, presm prG sat =1 id}.
 Proof.
 have : forall i, idm G (gens i) = (gens i) by [].
 by move/(presmE prG sat) => Heq x /Heq.
