@@ -1,7 +1,7 @@
-(** * The presentation of Groups *)
+(** * Group Presentations *)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
-From mathcomp Require Import choice fintype finset.
+From mathcomp Require Import choice fintype finset finfun.
 From mathcomp Require Import bigop fingroup perm morphism.
 
 Set Implicit Arguments.
@@ -57,7 +57,7 @@ Qed.
 End Satisfy.
 
 Lemma satisfy_morph (gT : finGroupType) (G : {group gT})
-                   (hT : finGroupType) (H : {group hT})
+                    (hT : finGroupType) (H : {group hT})
       (f : {morphism G >-> hT}) m (gens : 'I_m -> gT) rels :
   (forall i, gens i \in G) -> satisfy rels gens -> satisfy rels (f \o gens).
 Proof.
@@ -66,67 +66,79 @@ by rewrite morph1 => mor; rewrite -{}[RHS]mor morph_prod.
 Qed.
 
 
-Section Presentation.
 
-Variables (gT : finGroupType) .
-
-Record presentation (n : nat) (G : {group gT}) := Presentation {
-  gens  : 'I_n -> gT;
-  rels  : seq (seq 'I_n);
-  _     : <<[set gens i | i : 'I_n]>> = G;
-  _     : satisfy rels gens;
-  presm : forall (hT : finGroupType) (gensh : 'I_n -> hT),
-      satisfy rels gensh -> {morphism G >-> hT};
-  _     : forall (hT : finGroupType) (gensh : 'I_n -> hT)
-                (sat : satisfy rels gensh) i, presm sat (gens i) = gensh i;
+Record presentation
+       (gT : finGroupType)
+       (n : nat) (gr : ('I_n -> gT) * (seq (seq 'I_n)))
+       (G : {group gT}) : Prop := Presentation {
+  gen_eq : <<[set gr.1 i | i : 'I_n]>> = G;
+  satisfy_gens : satisfy gr.2 gr.1;
+  presm_ex : forall (hT : finGroupType) (gensh : 'I_n -> hT),
+      satisfy gr.2 gensh ->
+      exists presm : {morphism G >-> hT}, forall i, presm (gr.1 i) = gensh i
 }.
 
-Variables (G : {group gT}) (n : nat) (pres : presentation n G).
+Notation "gr \present G" := (presentation gr G) (at level 10).
 
-Lemma pres_mem  i : gens pres i \in G.
+Section Presentation.
+
+Variables (gT : finGroupType) (G : {group gT})
+          (n : nat) (gens  : 'I_n -> gT) (rels  : seq (seq 'I_n)).
+Hypothesis pres : (gens, rels) \present G.
+
+Lemma pres_mem  i : gens i \in G.
 Proof.
-case: pres => [g r eqG /= _ _ _]; rewrite -{}eqG.
+case: pres => [eqG /= _ _]; rewrite -{}eqG.
 exact/mem_gen/imset_f.
 Qed.
 Hint Resolve pres_mem : core.
 
-Lemma gen_eq : <<[set gens pres i | i : 'I_n]>> = G.
-Proof. by case: pres. Qed.
-Lemma satisfy_gens : satisfy (rels pres) (gens pres).
-Proof. by case: pres. Qed.
-
 Lemma presP x :
-  reflect (exists l, exists c : 'I_l -> 'I_n, x = \prod_i gens pres (c i))
+  reflect (exists l, exists c : 'I_l -> 'I_n, x = \prod_i gens (c i))
           (x \in G).
 Proof.
 apply (iffP idP); first last.
   by move=> [l [dec ->{x}]]; apply group_prod.
-rewrite -{1}gen_eq => /gen_prodgP [l [dec Hdec ->{x}]].
-have {}Hdec i : {j : 'I_n | dec i == gens pres j}.
+rewrite -{1}(gen_eq pres) => /gen_prodgP [l [dec Hdec ->{x}]].
+have {}Hdec i : {j : 'I_n | dec i == gens j}.
   by apply sigW => /=; move: Hdec => /(_ i) /imsetP [/= j _ ->]; exists j.
 have dec_in i : dec i \in G by case: (Hdec i) => j /eqP ->.
 pose get_gen (i : 'I_l) := let: exist j _ := Hdec i in j.
-have decE i : dec i = gens pres (get_gen i).
+have decE i : dec i = gens (get_gen i).
   by rewrite /get_gen; case: (Hdec i) => j /eqP.
 by exists l, get_gen; apply eq_bigr.
 Qed.
 
-Variables (hT : finGroupType)
-          (gensH : 'I_n -> hT)
-          (sat : satisfy (rels pres) gensH).
 
-Lemma presmP : forall i, presm sat (gens pres i) = gensH i.
-Proof. by case: pres sat. Qed.
+Section PresMorphism.
+
+Variable (hT : finGroupType) (gensH : 'I_n -> hT).
+Hypothesis (sat : satisfy rels gensH).
+
+Lemma presm_spec :
+  {presm : {morphism G >-> hT} | forall i, presm (gens i) = gensH i}.
+Proof.
+suff : {m : {ffun gT -> hT} | morphic G m && [forall i, m (gens i) == gensH i]}.
+  move=> [m /andP [morm /forallP /= Heq]].
+  by exists (morphm_morphism morm) => /= i; rewrite morphmE; apply/eqP.
+apply sigW; case: (presm_ex pres sat) => [m Heq] /=.
+exists (finfun m); apply/andP; split.
+  by apply/morphicP => x y xG yG /=; rewrite !ffunE morphM.
+by apply/forallP => /= i; rewrite ffunE Heq.
+Qed.
+Definition presm := let: exist m _ := presm_spec in m.
+Lemma presmP : forall i, presm (gens i) = gensH i.
+Proof. by rewrite /presm; case: presm_spec. Qed.
 
 Lemma presmE (phi : {morphism G >-> hT}) :
-  (forall i, phi (gens pres i) = gensH i) -> {in G, phi =1 presm sat}.
+  (forall i, phi (gens i) = gensH i) -> {in G, phi =1 presm}.
 Proof.
 move=> Heq x /presP [l [decc ->{x}]].
 rewrite !morph_prod //.
 by apply: eq_bigr => /= i _; rewrite Heq presmP.
 Qed.
 
-Lemma morphim_presm : presm sat @* G = << [set gensH i | i : 'I_n] >>.
+Lemma morphim_presm : presm @* G = <<[set gensH i | i : 'I_n]>>.
 Proof.
 apply/setP => /= h; apply/imsetP/gen_prodgP; rewrite setIid.
 - move=> [g /(presP) [l [dec ->{g} ->{h}]]]; exists l.
@@ -136,88 +148,74 @@ apply/setP => /= h; apply/imsetP/gen_prodgP; rewrite setIid.
 - move=> [l [dec Hdec ->{h}]].
   have {}Hdec i : {j : 'I_n | dec i == gensH j}.
     by apply sigW => /=; move: Hdec => /(_ i) /imsetP [/= j _ ->]; exists j.
-  pose get_gen (i : 'I_l) := let: exist j _ := Hdec i in gens pres j.
+  pose get_gen (i : 'I_l) := let: exist j _ := Hdec i in gens j.
   have get_in i : get_gen i \in G by rewrite /get_gen; case: (Hdec i).
-  have getE i : dec i = presm sat (get_gen i).
+  have getE i : dec i = presm (get_gen i).
     by rewrite /get_gen; case: (Hdec i) => j /eqP ->; rewrite presmP.
   exists (\prod_(i < l) get_gen i); first by apply: group_prod => /= i _.
   by rewrite morph_prod //; apply eq_bigr => /= i _.
 Qed.
 
+End PresMorphism.
+
 End Presentation.
 
 
-Section Morph.
+Section Isomorphism.
 
 Variable gT hT : finGroupType.
 Variables (G : {group gT}) (H : {group hT}).
-Variables (n : nat) (prG : presentation n G).
+Variables (n : nat) (gens  : 'I_n -> gT) (rels  : seq (seq 'I_n)).
+Hypothesis (prG : (gens, rels) \present G).
 
-Lemma presm_id (sat : satisfy (rels prG) (gens prG)) :
-  {in G, presm sat =1 id}.
+Lemma presm_id (sat : satisfy rels gens) :
+  {in G, presm prG sat =1 id}.
 Proof.
-have : forall i, idm G (gens prG i) = (gens prG i) by [].
-by move/(presmE sat) => Heq x /Heq.
+have : forall i, idm G (gens i) = (gens i) by [].
+by move/(presmE prG sat) => Heq x /Heq.
 Qed.
 
-Lemma pres_isog (prH : presentation n H) : rels prG = rels prH -> G \isog H.
+Lemma pres_isog (gh : 'I_n -> hT) : (gh, rels) \present H -> G \isog H.
 Proof.
-move=> Hrel; apply/isogP.
-have:= satisfy_gens prH; rewrite -Hrel => satH.
-have:= satisfy_gens prG; rewrite  Hrel => satG.
-have:= morphim_presm satH; rewrite gen_eq => impH.
-have phi_morph : morphic G (presm satG \o presm satH).
+move=> prH; apply/isogP.
+have satH := satisfy_gens prH.
+have satG := satisfy_gens prG.
+have:= morphim_presm prG satH; rewrite (gen_eq prH) => impH.
+have phi_morph : morphic G (presm prH satG \o presm prG satH).
   apply/morphicP => x y xinG yinG.
   by rewrite /= !morphM // -impH mem_morphim.
-have : forall i, morphm phi_morph (gens prG i) = gens prG i.
+have : forall i, morphm phi_morph (gens i) = gens i.
   by move=> i; rewrite morphmE /= !presmP.
-move=> /(presmE (satisfy_gens prG)) presmP.
-have {presmP} presmK : {in G, cancel (presm satH) (presm satG)}.
+move=> /(presmE prG (satisfy_gens prG)) presmP.
+have {presmP} presmK : {in G, cancel (presm prG satH) (presm prH satG)}.
   by move => x Hx; move: presmP => /(_ x Hx) /=; rewrite presm_id.
-exists (presm satH) => //.
+exists (presm prG satH) => //.
 exact/injmP/(can_in_inj presmK).
 Qed.
 
-Section BuildPresM.
-
-Variable (f : {morphism G >-> hT}).
-Hypotheses (injf : 'injm f) (imf : f @* G = H).
-Variables (aT : finGroupType)
-          (gensh : 'I_n -> aT)
-          (sat : satisfy (rels prG) gensh).
-
-Local Definition phi := presm sat \o invm injf.
-Local Fact phi_morph : {in H & , {morph phi : x y / x * y}}.
-Proof.
-have inmG x : x \in H -> invm injf x \in G.
-  move=> Hx; rewrite -(im_invm injf) {2}imf.
-  by apply: mem_morphim; rewrite //= imf.
-move=> x y xinG yinG.
-by rewrite /phi /= !morphM ?imf //= inmG.
-Qed.
-Local Canonical phi_morph_morphism := Morphism phi_morph.
-
-Local Lemma phi_morphP i : phi_morph_morphism ((f \o (gens prG)) i) = gensh i.
-Proof. by rewrite /= /phi /= invmE ?(pres_mem prG) // presmP. Qed.
-
-End BuildPresM.
-
 Lemma isog_pres :
-  G \isog H -> exists (prH : presentation n H), rels prG = rels prH.
+  G \isog H -> {gensh: 'I_n -> hT | (gensh, rels) \present H}.
 Proof.
-move=> /isogP [f injf imf].
+move=> /isog_isom [f /isomP [injf imf]].
 have prmemG := pres_mem prG.
-have subgen : [set gens prG i | i : 'I_n] \subset G.
+have subgen : [set gens i | i : 'I_n] \subset G.
   by apply/subsetP => x /imsetP [/= j _ ->].
-pose gh := f \o (gens prG).
-have Hgen : <<[set gh i | i : 'I_n]>> = H.
-  rewrite -{}imf -{3}(gen_eq prG) morphim_gen //.
+exists (f \o gens); constructor.
+- rewrite -{}imf -{4}(gen_eq prG) morphim_gen //.
   by congr << _ >>; rewrite morphimEsub // -imset_comp.
-have Hsat : satisfy (rels prG) gh.
-  apply/satisfyP => s Hs.
+- apply/satisfyP => s Hs.
   have:= satisfy_gens prG => /satisfyP/(_ _ Hs)/(congr1 f).
   by rewrite morph1 morph_prod.
-by exists (Presentation Hgen Hsat (phi_morphP injf imf)).
+move=> aT gensA sat.
+pose phi := presm prG sat \o invm injf.
+have phi_morph : {in H & , {morph phi : x y / x * y}}.
+  have inmG x : x \in H -> invm injf x \in G.
+    move=> Hx; rewrite -(im_invm injf) {2}imf.
+    by apply: mem_morphim; rewrite //= imf.
+  move=> x y xinG yinG.
+  by rewrite /phi /= !morphM ?imf //= inmG.
+exists (Morphism phi_morph) => i /=.
+by rewrite /= /phi /= invmE ?(pres_mem prG) // presmP.
 Qed.
 
-End Morph.
+End Isomorphism.
