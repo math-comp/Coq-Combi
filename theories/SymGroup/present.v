@@ -55,6 +55,10 @@ rewrite -map_comp -[RHS]map_id; apply eq_map => i /=.
 by rewrite permK.
 Qed.
 
+Lemma satisfy_cat rels1 rels2 gens :
+  satisfy (rels1 ++ rels2) gens = satisfy rels1 gens && satisfy rels2 gens.
+Proof. exact: all_cat. Qed.
+
 End Satisfy.
 
 Lemma morph_satisfy (gT : finGroupType) (G : {group gT})
@@ -79,6 +83,7 @@ Record presentation
       exists presm : {morphism G >-> hT}, forall i, presm (gr.1 i) = gensH i
 }.
 
+(* TODO : add some phantom on G to infer the group structure *)
 Notation "gr \present G" := (presentation gr G) (at level 10).
 
 Section Presentation.
@@ -244,3 +249,21 @@ by rewrite /= /phi /= invmE ?(pres_mem prG) // presmP.
 Qed.
 
 End Isomorphism.
+
+
+Section PresTriv.
+
+Variable (gT : finGroupType).
+
+Lemma pres_trivG : (fun _ : 'I_0 => 1, [::]) \present [1 gT].
+Proof.
+constructor => //=.
+- rewrite -gen0; congr << _ >>; apply/setP => x; rewrite inE.
+  apply/negP => /imsetP /=[[i Hi]] /= _ _.
+  by move: Hi; rewrite ltn0.
+- move=> hT gensH _.
+  exists [morphism of trivm 1%G].
+  by move=> [i Hi] /=; have := Hi; rewrite ltn0.
+Qed.
+
+End PresTriv.

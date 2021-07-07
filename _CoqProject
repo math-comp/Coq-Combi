@@ -46,6 +46,7 @@ theories/SymGroup/cycles.v
 theories/SymGroup/cycletype.v
 theories/SymGroup/Frobenius_char.v
 theories/SymGroup/permcent.v
+theories/SymGroup/present.v
 theories/SymGroup/presentSn.v
 theories/SymGroup/reprSn.v
 theories/SymGroup/towerSn.v

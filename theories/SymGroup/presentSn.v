@@ -736,7 +736,7 @@ apply: tperm_braid; rewrite /eq_op /=.
 - by rewrite inordi // inordi1 // !trivSimpl.
 Qed.
 
-Lemma eltr_comm i j :
+Lemma eltrC i j :
   i.+1 < j < n0 -> 's_i * 's_j = 's_j * 's_i.
 Proof using.
 move=> /andP[Hij Hj].
@@ -1642,8 +1642,8 @@ move: Hrule; rewrite {a c} /braidrule /= mem_cat => /orP[].
 - move/braidCP => [x] [y] [Hxy -> ->].
   do 2 (rewrite big_cons big_seq1).
   move: Hxy => /orP[] Hxy.
-  + by rewrite [RHS]eltr_comm // Hxy /=.
-  + by rewrite [LHS]eltr_comm // Hxy /=.
+  + by rewrite [RHS]eltrC // Hxy /=.
+  + by rewrite [LHS]eltrC // Hxy /=.
 Qed.
 
 Corollary braid_reduced (v w : seq 'I_n) :
@@ -2191,6 +2191,12 @@ Qed.
 End PresentationSn.
 
 
+Lemma relat_Sn_hold n : relat_Sn n (fun i => 's_i : 'S_n.+1).
+Proof.
+split => [i _ ||]; [exact: eltr2 | exact: eltr_braid | exact: eltrC].
+Qed.
+
+
 Lemma joingU1 (gt : finGroupType) (a : gt) (S : {set gt}) :
   <[a]> <*> <<S>>  = << a |: S >>.
 Proof. by rewrite joing_idr joing_idl joingE. Qed.
@@ -2274,7 +2280,7 @@ apply intro_isoGrp.
     by case: t0 => [] [| [| [| //=]]] /= _; rewrite eq_refl /= ?orbT.
   do 3 do [apply/andP; split; first by rewrite expgS expg1 eltr2].
   do 2 do [apply/andP; split; first by apply/eqP/eltr_braid].
-  by apply/eqP/eltr_comm.
+  by apply/eqP/eltrC.
 - move=> Gt H; case/existsP => /= [] [[s0 s1] s2]
                                   /eqP[<-{H} Hx0 Hx1 Hx2 H010 H121 H02].
   rewrite Gen3; apply/homgP.
@@ -2317,8 +2323,8 @@ apply intro_isoGrp.
     by case: t0 => [] [| [| [| [|//=]]]] /= _; rewrite eq_refl /= ?orbT.
   do 4 do [apply/andP; split; first by rewrite expgS expg1 eltr2].
   do 3 do [apply/andP; split; first by apply/eqP/eltr_braid].
-  do 2 do [apply/andP; split; first by apply/eqP/eltr_comm].
-  by apply/eqP/eltr_comm.
+  do 2 do [apply/andP; split; first by apply/eqP/eltrC].
+  by apply/eqP/eltrC.
 - move=> Gt H; case/existsP => /= [] [[[s0 s1] s2] s3]
      /eqP[<-{H} Hx0 Hx1 Hx2 Hx3 H010 H121 H232 H02 H03 H13].
   rewrite Gen4; apply/homgP.
@@ -2341,3 +2347,149 @@ apply intro_isoGrp.
   + exists 's_3; rewrite ?setTI ?Hf //.
     by apply/imsetP => /=; exists (inord 3); rewrite //= inordK.
 Qed.
+
+
+Require Import present.
+
+Section PresS2.
+
+Definition s0 : 'S_2 := tperm (inord 0) (inord 1).
+
+Lemma ord1E (x : 'I_1) : x = ord0.
+Proof.
+by apply val_inj; case: x => [x] /=; rewrite ltnS leqn0 => /eqP ->.
+Qed.
+
+Lemma pres_S2 :
+  ((fun i : 'I_1 => 's_i), [:: [:: ord0; ord0 ] ]) \present [set: 'S_2].
+Proof.
+constructor => //=.
+- by rewrite (eltr_genSn 1).
+- by rewrite andbT !big_cons big_nil mulg1 eltr2.
+move=> hT gensH; rewrite andbT !big_cons big_nil mulg1 => /eqP g2E.
+pose morph_eltr_fun (s : 'S_2) := \prod_(i <- canword s) gensH i.
+have morph_eltrP : {morph morph_eltr_fun : x y / x * y}.
+  move=> i j.
+  have:= braidred_to_canword (canword i ++ canword j) => [[redpath [Hpath]]].
+  rewrite big_cat /= !canwordP /morph_eltr_fun -big_cat /= => Hlast.
+  elim: redpath (_ ++ _) Hpath Hlast =>
+    [c _ <- //|] w0 wp IHwp /= c /andP [Hbr] {}/IHwp H{}/H ->.
+  move: Hbr => /orP [].
+  - rewrite braid_sym; move: c; apply: gencongr_ind => //.
+    move=> a b1 c b2 ->{w0} Hbr; rewrite !big_cat /=; congr (_ * (_ * _)) => {a c}.
+    move: Hbr; rewrite /= mem_cat => /orP [].
+    + move=> /braid_abaP [a [b [_ ->{b1} ->{b2}]]] /=.
+      by rewrite !(ord1E a) !(ord1E b).
+    + move=> /braidCP [a [b [_ ->{b1} ->{b2}]]].
+      by rewrite !(ord1E a) !(ord1E b).
+  - move=> /reducesP [a [l [b [->{c} ->{w0}]]]].
+    rewrite !big_cat /= !big_cons !big_nil !mulg1.
+    by rewrite (ord1E l) g2E mul1g.
+exists (Morphism (in2W morph_eltrP)) => [] [i Hi] /=.
+rewrite /morph_eltr_fun.
+have /= -> := (canword_eltr (Ordinal Hi)).
+by rewrite big_seq1.
+Qed.
+
+End PresS2.
+
+
+
+(** * The presentation of the symmetric groups *)
+Section PresentationSn.
+
+Variable n0 : nat.
+Notation n := n0.+1.
+
+Variable gT : finGroupType.
+Variable eltrG : nat -> gT.
+
+Local Notation "''g_' i" :=
+  (eltrG i) (at level 8, i at level 2, format "''g_' i").
+
+Notation "[ 'rels' F '|' x ':' T '&' A ]" :=
+  [seq let x := p in F | p : T in [pred p : T | let x := p in A]]
+  (at level 0, F at level 99, x strict pattern, A at level 99,
+  format "'[hv' [ 'rels'  F '/ '  '|'  x ':'  T  '&'  A ] ']'") : seq_scope.
+
+Lemma relsP (R : 'II_n -> seq 'I_n) (P : pred ('II_n)) :
+  reflect (forall i j, P (i, j) -> \prod_(j <- R (i, j)) 'g_j = 1)
+          (satisfy [rels R (i, j) | (i, j) : 'II_n & P (i, j)] eltrG).
+Proof.
+apply (iffP (satisfyP _ _)) => [Hrels i j Pij | Hrels s].
+- by apply/Hrels/mapP; exists (i, j) => //; rewrite mem_enum inE.
+- move/mapP => [/= [i j]]; rewrite mem_enum inE => Pij ->{s}.
+  exact: Hrels.
+Qed.
+
+Definition relSn : (seq (seq 'I_n)) :=
+  [seq [:: i; i ] | i : 'I_n]
+    ++
+  [rels [:: i; j; i; j; i; j] | (i, j) : 'I_n * 'I_n & i.+1 == j ]
+    ++
+  [rels [:: i; j; i; j] | (i, j) : 'I_n * 'I_n & i.+1 < j ].
+
+Lemma relat_SnP : reflect (relat_Sn n eltrG) (satisfy relSn eltrG).
+Proof.
+rewrite /relSn !satisfy_cat; apply (iffP (and3P))=> [] [Hsq Hbraid Hcom].
+- have {}Hsq : forall i : nat, i < n -> 'g_i * 'g_i = 1.
+    move: Hsq {Hbraid Hcom} => /satisfyP Hrels i lt_in.
+    rewrite -(inordK lt_in).
+    have:= (Hrels [:: inord i; inord i]).
+    rewrite !big_cons !big_nil mulg1; apply.
+    by apply/mapP; exists (inord i) => //; rewrite mem_enum.
+  split; first exact: Hsq.
+  + move => i lt_i1_n; move: Hbraid {Hcom}.
+    move/(relsP (fun p => let '(i, j) := p in _)
+                (fun p => let '(i, j) := p in i.+1 == j)) => H.
+    have lt_i_n := ltnW lt_i1_n : i < n.
+    pose io := Ordinal lt_i_n; pose i1o := Ordinal lt_i1_n.
+    move: H => /(_ io i1o (eqxx _)).
+    rewrite !big_cons !big_nil mulg1 /= {io i1o}.
+    move=> /(congr1 (fun x=> x * 'g_i.+1 * 'g_i * 'g_i.+1)).
+    rewrite !mulgA -3!mulgA ['g_i.+1 * ('g_i.+1 * _)]mulgA Hsq // mul1g.
+    by rewrite -!mulgA ['g_i * ('g_i * _)]mulgA !Hsq // !mul1g Hsq // mulg1.
+  + move=> i j /andP [lt_i1_j lt_j_n]; move: Hcom {Hbraid}.
+    move/(relsP (fun p => let '(i, j) := p in _)
+                (fun p => let '(i, j) := p in i.+1 < j)) => /= H.
+    have lt_i_n : i < n by apply: ltnW (ltn_trans lt_i1_j lt_j_n).
+    pose io := Ordinal lt_i_n; pose jo := Ordinal lt_j_n.
+    move: H => /(_ io jo lt_i1_j).
+    rewrite !big_cons !big_nil mulg1 /= {io jo}.
+    move=> /(congr1 (fun x=> x * 'g_j * 'g_i)).
+    rewrite !mulgA -2!mulgA ['g_j * ('g_j * _)]mulgA Hsq // mul1g.
+    by rewrite -!mulgA Hsq // mulg1 mul1g.
+- have {}Hsq : forall i : nat, i < n -> 'g_i * 'g_i = 1 by apply: Hsq.
+  split.
+  + apply/satisfyP => s /mapP [/= i _ ->{s}].
+    by rewrite !big_cons !big_nil mulg1 /=; apply: Hsq.
+  + apply/(relsP (fun p => let '(i, j) := p in _)
+                 (fun p => let '(i, j) := p in i.+1 == j))
+    => [] [i lt_i_n] [j lt_j_n] /= /eqP Heq.
+    rewrite !big_cons !big_nil mulg1 /=; subst j.
+    rewrite !mulgA Hbraid //.
+    rewrite -3!mulgA ['g_i.+1 * ('g_i.+1 * _)]mulgA Hsq // mul1g.
+    by rewrite -!mulgA ['g_i * ('g_i * _)]mulgA !Hsq // !mul1g Hsq // mulg1.
+  + apply/(relsP (fun p => let '(i, j) := p in _)
+                 (fun p => let '(i, j) := p in i.+1 < j))
+    => [] [i lt_i_n] [j lt_j_n] /= lt_i1_j.
+    rewrite !big_cons !big_nil mulg1 /=.
+    rewrite Hcom ?lt_i1_j //.
+    by rewrite ['g_j * ('g_j * _)]mulgA Hsq // mul1g Hsq.
+Qed.
+
+End PresentationSn.
+
+Theorem present_Sn n0 :
+  (fun i : 'I_n0.+1 => 's_i, relSn n0) \present [group of 'SG_n0.+2].
+Proof.
+constructor.
+- by rewrite /= eltr_genSn.
+- by move=> /=; apply/relat_SnP; apply: relat_Sn_hold.
+- move=> Ht gensH /=.
+  rewrite (satisfy_eq (gens2 := (fun i : 'I_n0.+1 => (gensH \o @inord _) i)));
+    last by move=> i /=; rewrite inord_val.
+  move/relat_SnP/presentation_Sn_eltr => [phi phiE].
+  by exists phi => i; rewrite phiE //= inord_val.
+Qed.
+
