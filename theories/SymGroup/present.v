@@ -43,7 +43,8 @@ by rewrite big_map; apply: eq_bigr => i _; rewrite permKV.
 Qed.
 
 Lemma satisfy_perm (p : 'S_n) rels gens :
-  satisfy rels gens = satisfy [seq [seq p^-1 i | i <- r] | r <- rels] (gens \o p).
+  satisfy [seq [seq p^-1 i | i <- r] | r <- rels] (gens \o p) =
+  satisfy rels gens.
 Proof.
 apply/idP/idP => /satisfy_perm_impl // /(_ p^-1).
 have /satisfy_eq -> : ((gens \o p) \o p^-1) =1 gens.
@@ -73,9 +74,9 @@ Record presentation
        (G : {group gT}) : Prop := Presentation {
   gen_eq : <<[set gr.1 i | i : 'I_n]>> = G;
   satisfy_gens : satisfy gr.2 gr.1;
-  presm_ex : forall (hT : finGroupType) (gensh : 'I_n -> hT),
-      satisfy gr.2 gensh ->
-      exists presm : {morphism G >-> hT}, forall i, presm (gr.1 i) = gensh i
+  presm_ex : forall (hT : finGroupType) (gensH : 'I_n -> hT),
+      satisfy gr.2 gensH ->
+      exists presm : {morphism G >-> hT}, forall i, presm (gr.1 i) = gensH i
 }.
 
 Notation "gr \present G" := (presentation gr G) (at level 10).
@@ -84,11 +85,11 @@ Section Presentation.
 
 Variables (gT : finGroupType) (G : {group gT})
           (n : nat) (gens  : 'I_n -> gT) (rels  : seq (seq 'I_n)).
-Hypothesis pres : (gens, rels) \present G.
+Hypothesis prG : (gens, rels) \present G.
 
 Lemma pres_mem  i : gens i \in G.
 Proof.
-case: pres => [eqG /= _ _]; rewrite -{}eqG.
+case: prG => [eqG /= _ _]; rewrite -{}eqG.
 exact/mem_gen/imset_f.
 Qed.
 Hint Resolve pres_mem : core.
@@ -99,7 +100,7 @@ Lemma presP x :
 Proof.
 apply (iffP idP); first last.
   by move=> [l [dec ->{x}]]; apply group_prod.
-rewrite -{1}(gen_eq pres) => /gen_prodgP [l [dec Hdec ->{x}]].
+rewrite -{1}(gen_eq prG) => /gen_prodgP [l [dec Hdec ->{x}]].
 have {}Hdec i : {j : 'I_n | dec i == gens j}.
   by apply sigW => /=; move: Hdec => /(_ i) /imsetP [/= j _ ->]; exists j.
 have dec_in i : dec i \in G by case: (Hdec i) => j /eqP ->.
@@ -121,7 +122,7 @@ Proof.
 suff : {m : {ffun gT -> hT} | morphic G m && [forall i, m (gens i) == gensH i]}.
   move=> [m /andP [morm /forallP /= Heq]].
   by exists (morphm_morphism morm) => /= i; rewrite morphmE; apply/eqP.
-apply sigW; case: (presm_ex pres sat) => [m Heq] /=.
+apply sigW; case: (presm_ex prG sat) => [m Heq] /=.
 exists (finfun m); apply/andP; split.
   by apply/morphicP => x y xG yG /=; rewrite !ffunE morphM.
 by apply/forallP => /= i; rewrite ffunE Heq.
@@ -159,6 +160,31 @@ Qed.
 End PresMorphism.
 
 End Presentation.
+
+
+Section Permute.
+
+Variables (gT : finGroupType) (G : {group gT})
+          (n : nat) (gens  : 'I_n -> gT) (rels  : seq (seq 'I_n)).
+
+Lemma pres_perm (p : 'S_n) :
+  (gens, rels) \present G ->
+  (gens \o p, [seq [seq p^-1 i | i <- r] | r <- rels]) \present G.
+Proof.
+move=> prG; constructor.
+- rewrite -(gen_eq prG) /=; congr << _ >>.
+  apply/setP => x; apply/imsetP/imsetP => [] [/= y _ ->{x}].
+  + by exists (p y).
+  + by exists (p^-1 y) => //; rewrite permKV.
+- by apply satisfy_perm_impl; apply: satisfy_gens prG.
+- move=> ht gensH.
+  have /satisfy_eq -> : gensH =1 ((gensH \o p^-1) \o p).
+    by  move=> x; rewrite /= permK.
+  rewrite satisfy_perm => satH; exists (presm prG satH) => i.
+  by rewrite presmP /= permK.
+Qed.
+
+End Permute.
 
 
 Section Isomorphism.
