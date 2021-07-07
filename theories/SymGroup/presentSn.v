@@ -1204,16 +1204,6 @@ apply/setP => s; apply/idP/gen_prodgP => /=.
   by rewrite inE.
 Qed.
 
-Corollary morph_eltr (gT : finGroupType)
-          (f g : {morphism 'SG_n >-> gT}) :
-  (forall i : 'I_n0, f 's_i = g 's_i) -> f =1 g.
-Proof.
-move=> Heq /= s; rewrite -(canwordP s) !morph_prod; first last.
-- by move=> i _; rewrite inE.
-- by move=> i _; rewrite inE.
-by apply eq_bigr => i _; apply Heq.
-Qed.
-
 (** The corresponding induction theorem *)
 Theorem eltr_ind (P : 'S_n -> Type) :
   P 1 -> (forall s i, i < n0 -> P s -> P ('s_i * s)) ->
@@ -1222,6 +1212,14 @@ Proof using.
 move=> H1 IH s; rewrite -(canwordP s).
 elim: (canword s)  => [| t0 t IHt] /=; first by rewrite big_nil.
 by rewrite big_cons; apply IH; first exact: ltn_ord.
+Qed.
+
+Corollary morph_eltr (gT : finGroupType)
+          (f g : {morphism 'SG_n >-> gT}) :
+  (forall i : 'I_n0, f 's_i = g 's_i) -> f =1 g.
+Proof.
+move=> Heq; elim/eltr_ind => [| s i lt_i_n0]; first by rewrite !morph1.
+by rewrite !morphM ?inE // (Heq (Ordinal lt_i_n0)) => ->.
 Qed.
 
 (** A simple application *)

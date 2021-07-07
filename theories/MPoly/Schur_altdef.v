@@ -89,7 +89,7 @@ From mathcomp Require Import finset fingroup perm.
 From SsrMultinomials Require Import ssrcomplements freeg mpoly.
 
 Require Import tools combclass ordtype sorted partition tableau skewtab.
-Require Import presentSn antisym Schur_mpoly freeSchur therule.
+Require Import antisym Schur_mpoly freeSchur therule.
 Require Import std stdtab unitriginv.
 
 Set Implicit Arguments.
