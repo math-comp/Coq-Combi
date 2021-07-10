@@ -2398,8 +2398,11 @@ End PresS2.
 (** * The presentation of the symmetric groups *)
 Section PresentationSn.
 
-Variable n0 : nat.
+(* Variable n0 : nat.
 Notation n := n0.+1.
+ *)
+
+Variable n : nat.
 
 Variable gT : finGroupType.
 Variable eltrG : nat -> gT.
@@ -2433,7 +2436,8 @@ Lemma relat_SnP : reflect (relat_Sn n eltrG) (satisfy relSn eltrG).
 Proof.
 rewrite /relSn !satisfy_cat; apply (iffP (and3P))=> [] [Hsq Hbraid Hcom].
 - have {}Hsq : forall i : nat, i < n -> 'g_i * 'g_i = 1.
-    move: Hsq {Hbraid Hcom} => /satisfyP Hrels i lt_in.
+    case: n Hsq {Hbraid Hcom} => [_ i | n0]; first by rewrite ltn0.
+    move=> /satisfyP Hrels i lt_in.
     rewrite -(inordK lt_in).
     have:= (Hrels [:: inord i; inord i]).
     rewrite !big_cons !big_nil mulg1; apply.
@@ -2480,14 +2484,16 @@ Qed.
 
 End PresentationSn.
 
-Theorem present_Sn n0 :
-  (fun i : 'I_n0.+1 => 's_i, relSn n0) \present [group of 'SG_n0.+2].
+Theorem present_Sn n :
+  (fun i : 'I_n => 's_i, relSn n) \present [group of 'SG_n.+1].
 Proof.
 constructor.
 - by rewrite /= eltr_genSn.
 - by move=> /=; apply/relat_SnP; apply: relat_Sn_hold.
-- move=> Ht gensH /=.
-  rewrite (satisfy_eq (gens2 := (fun i : 'I_n0.+1 => (gensH \o @inord _) i)));
+- case: n => [| n] /= Ht gensH.
+    move => _; exists [morphism of trivm _] => [] [i] /= Hi.
+    by have:= Hi; rewrite ltn0.
+  rewrite (satisfy_eq (gens2 := (fun i : 'I_n.+1 => (gensH \o @inord _) i)));
     last by move=> i /=; rewrite inord_val.
   move/relat_SnP/presentation_Sn_eltr => [phi phiE].
   by exists phi => i; rewrite phiE //= inord_val.
