@@ -2156,8 +2156,10 @@ Notation "[ 'rels' F '|' x ':' T '&' A ]" :=
   (at level 0, F at level 99, x strict pattern, A at level 99,
   format "'[hv' [ 'rels'  F '/ '  '|'  x ':'  T  '&'  A ] ']'") : seq_scope.
 
-Lemma relsP (R : 'II_n -> seq 'I_n) (P : pred ('II_n)) :
-  reflect (forall i j, P (i, j) -> \prod_(j <- R (i, j)) 'g_j = 1)
+Lemma relsP (R : 'II_n -> seq 'I_n * seq 'I_n) (P : pred ('II_n)) :
+  reflect (forall i j,
+              P (i, j) ->
+              \prod_(j <- (R (i, j)).1) 'g_j = \prod_(j <- (R (i, j)).2) 'g_j)
           (satisfy [rels R (i, j) | (i, j) : 'II_n & P (i, j)] eltrG).
 Proof.
 apply (iffP (satisfyP _ _)) => [Hrels i j Pij | Hrels s].
@@ -2166,21 +2168,21 @@ apply (iffP (satisfyP _ _)) => [Hrels i j Pij | Hrels s].
   exact: Hrels.
 Qed.
 
-Definition relSn : (seq (seq 'I_n)) :=
-  [seq [:: i; i ] | i : 'I_n]
+Definition relSn : (seq (seq 'I_n * seq 'I_n)) :=
+  [seq ([:: i; i ], [::]) | i : 'I_n]
     ++
-  [rels [:: i; j; i; j; i; j] | (i, j) : 'I_n * 'I_n & i.+1 == j ]
+  [rels ([:: i; j; i], [:: j; i; j]) | (i, j) : 'I_n * 'I_n & i.+1 == j ]
     ++
-  [rels [:: i; j; i; j] | (i, j) : 'I_n * 'I_n & i.+1 < j ].
+  [rels ([:: i; j], [:: j; i]) | (i, j) : 'I_n * 'I_n & i.+1 < j ].
 
 Lemma relat_SnP : reflect relat_Sn (satisfy relSn eltrG).
 Proof.
 rewrite /relSn !satisfy_cat; apply (iffP (and3P))=> [] [Hsq Hbraid Hcom].
 - have {}Hsq : forall i : nat, i < n -> 'g_i * 'g_i = 1.
     case: n Hsq {Hbraid Hcom} => [_ i | n0]; first by rewrite ltn0.
-    move=> /satisfyP Hrels i lt_in.
+    move=> /satisfyP /= Hrels i lt_in.
     rewrite -(inordK lt_in).
-    have:= (Hrels [:: inord i; inord i]).
+    have:= Hrels ([:: inord i; inord i], [::]).
     rewrite !big_cons !big_nil mulg1; apply.
     by apply/mapP; exists (inord i) => //; rewrite mem_enum.
   split; first exact: Hsq.
@@ -2190,37 +2192,26 @@ rewrite /relSn !satisfy_cat; apply (iffP (and3P))=> [] [Hsq Hbraid Hcom].
     have lt_i_n := ltnW lt_i1_n : i < n.
     pose io := Ordinal lt_i_n; pose i1o := Ordinal lt_i1_n.
     move: H => /(_ io i1o (eqxx _)).
-    rewrite !big_cons !big_nil mulg1 /= {io i1o}.
-    move=> /(congr1 (fun x=> x * 'g_i.+1 * 'g_i * 'g_i.+1)).
-    rewrite !mulgA -3!mulgA ['g_i.+1 * ('g_i.+1 * _)]mulgA Hsq // mul1g.
-    by rewrite -!mulgA ['g_i * ('g_i * _)]mulgA !Hsq // !mul1g Hsq // mulg1.
+    by rewrite !big_cons !big_nil !mulg1 !mulgA.
   + move=> i j /andP [lt_i1_j lt_j_n]; move: Hcom {Hbraid}.
     move/(relsP (fun p => let '(i, j) := p in _)
                 (fun p => let '(i, j) := p in i.+1 < j)) => /= H.
     have lt_i_n : i < n by apply: ltnW (ltn_trans lt_i1_j lt_j_n).
     pose io := Ordinal lt_i_n; pose jo := Ordinal lt_j_n.
     move: H => /(_ io jo lt_i1_j).
-    rewrite !big_cons !big_nil mulg1 /= {io jo}.
-    move=> /(congr1 (fun x=> x * 'g_j * 'g_i)).
-    rewrite !mulgA -2!mulgA ['g_j * ('g_j * _)]mulgA Hsq // mul1g.
-    by rewrite -!mulgA Hsq // mulg1 mul1g.
+    by rewrite !big_cons !big_nil !mulg1.
 - have {}Hsq : forall i : nat, i < n -> 'g_i * 'g_i = 1 by apply: Hsq.
   split.
   + apply/satisfyP => s /mapP [/= i _ ->{s}].
     by rewrite !big_cons !big_nil mulg1 /=; apply: Hsq.
   + apply/(relsP (fun p => let '(i, j) := p in _)
                  (fun p => let '(i, j) := p in i.+1 == j))
-    => [] [i lt_i_n] [j lt_j_n] /= /eqP Heq.
-    rewrite !big_cons !big_nil mulg1 /=; subst j.
-    rewrite !mulgA Hbraid //.
-    rewrite -3!mulgA ['g_i.+1 * ('g_i.+1 * _)]mulgA Hsq // mul1g.
-    by rewrite -!mulgA ['g_i * ('g_i * _)]mulgA !Hsq // !mul1g Hsq // mulg1.
+    => [] [i lt_i_n] [j lt_j_n] /= /eqP Heq; subst j.
+    by rewrite !big_cons !big_nil !mulg1 /= !mulgA Hbraid.
   + apply/(relsP (fun p => let '(i, j) := p in _)
                  (fun p => let '(i, j) := p in i.+1 < j))
     => [] [i lt_i_n] [j lt_j_n] /= lt_i1_j.
-    rewrite !big_cons !big_nil mulg1 /=.
-    rewrite Hcom ?lt_i1_j //.
-    by rewrite ['g_j * ('g_j * _)]mulgA Hsq // mul1g Hsq.
+    by rewrite !big_cons !big_nil !mulg1 /= Hcom ?lt_i1_j.
 Qed.
 
 Theorem presentation_Sn_eltr :
@@ -2445,7 +2436,7 @@ by apply val_inj; case: x => [x] /=; rewrite ltnS leqn0 => /eqP ->.
 Qed.
 
 Lemma pres_S2 :
-  ((fun i : 'I_1 => 's_i), [:: [:: ord0; ord0 ] ]) \present [set: 'S_2].
+  ((fun i : 'I_1 => 's_i), [:: ([:: ord0; ord0 ], [::]) ]) \present [set: 'S_2].
 Proof.
 constructor => //=.
 - by rewrite (eltr_genSn 1).

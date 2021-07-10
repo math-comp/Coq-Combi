@@ -11,24 +11,33 @@ Unset Printing Implicit Defensive.
 
 Import GroupScope.
 
+Reserved Notation "gr \present G" (at level 10).
+
 Section Satisfy.
 
 Variable (gT : finGroupType) (I : finType).
-Implicit Type (gens : I -> gT) (rels : seq (seq I)).
+Implicit Type (gens : I -> gT) (rels : seq (seq I * seq I)).
 
 Definition satisfy rels gens :=
-  all (fun s : seq I => \prod_(i <- s) gens i == 1) rels.
+  all (fun r => \prod_(i <- r.1) gens i == \prod_(i <- r.2) gens i) rels.
 
 Lemma satisfyP rels gens :
-  reflect (forall s : seq I, s \in rels -> \prod_(i <- s) gens i = 1)
+  reflect (forall r, r \in rels ->
+                           \prod_(i <- r.1) gens i = \prod_(i <- r.2) gens i)
           (satisfy rels gens).
-Proof. by apply: (iffP allP) => /= [H s /H /eqP| H s /H ->]. Qed.
+Proof. by apply: (iffP allP) => /= [H r /H /eqP| H r /H ->]. Qed.
 
+Lemma satisfy_eq_impl gens1 gens2 rels :
+  gens1 =1 gens2 -> satisfy rels gens1 -> satisfy rels gens2.
+Proof.
+move=> Heq /satisfyP Hsat; apply/satisfyP => /= r rin.
+transitivity (\prod_(i <- r.1) gens1 i).
+  by apply eq_bigr => i _; rewrite Heq.
+by rewrite Hsat //; apply eq_bigr => i.
+Qed.
 Lemma satisfy_eq gens1 gens2 rels :
   gens1 =1 gens2 -> satisfy rels gens1 = satisfy rels gens2.
-Proof.
-by move=> Heq; apply/satisfyP/satisfyP => /= H s /H {2}<-; apply eq_bigr => i _.
-Qed.
+Proof. by move=> Hgen; apply/idP/idP; apply: satisfy_eq_impl. Qed.
 
 Lemma perm_satisfy rels1 rels2 gens :
   perm_eq rels1 rels2 -> satisfy rels1 gens = satisfy rels2 gens.
@@ -36,23 +45,28 @@ Proof. by rewrite/satisfy => /perm_all ->. Qed.
 
 Lemma satisfy_perm_impl (p : {perm I}) rels gens :
   satisfy rels gens ->
-  satisfy [seq [seq p^-1 i | i <- r] | r <- rels] (gens \o p).
+  satisfy [seq ([seq p^-1 i | i <- r.1], [seq p^-1 i | i <- r.2]) |
+           r <- rels] (gens \o p).
 Proof.
-move/satisfyP => H; apply/satisfyP => s' /mapP [/= s {}/H {2}<- ->{s'}].
-by rewrite big_map; apply: eq_bigr => i _; rewrite permKV.
+move/satisfyP => H; apply/satisfyP => s' /mapP [/= r rin ->{s'} /=].
+rewrite !big_map; transitivity (\prod_(j <- r.1) gens j).
+  by apply eq_bigr => i _; rewrite permKV.
+by rewrite H //; apply eq_bigr => i _; rewrite permKV.
 Qed.
 
 Lemma satisfy_perm (p : {perm I}) rels gens :
-  satisfy [seq [seq p^-1 i | i <- r] | r <- rels] (gens \o p) =
+  satisfy
+    [seq ([seq p^-1 i | i <- r.1], [seq p^-1 i | i <- r.2]) | r <- rels]
+    (gens \o p) =
   satisfy rels gens.
 Proof.
 apply/idP/idP => /satisfy_perm_impl // /(_ p^-1).
 have /satisfy_eq -> : ((gens \o p) \o p^-1) =1 gens.
   by move=> i /=; rewrite permKV.
 congr satisfy.
-rewrite -map_comp -[RHS]map_id; apply eq_map => s /=.
-rewrite -map_comp -[RHS]map_id; apply eq_map => i /=.
-by rewrite permK.
+rewrite -map_comp -[RHS]map_id; apply eq_map => [[r1 r2]] /=.
+rewrite -!map_comp -[in RHS](map_id r1) -[in RHS](map_id r2).
+by congr (_, _); apply eq_map => i /=; rewrite permK.
 Qed.
 
 Lemma satisfy_cat rels1 rels2 gens :
@@ -68,13 +82,13 @@ Lemma morph_satisfy (I : finType)
   (forall i, gens i \in G) -> satisfy rels gens -> satisfy rels (f \o gens).
 Proof.
 move=> memgens /satisfyP /= sat; apply/satisfyP => s {}/sat /(congr1 f).
-by rewrite morph1 => mor; rewrite -{}[RHS]mor morph_prod.
+by rewrite !morph_prod.
 Qed.
 
 
 
-Record presentation (gT : finGroupType)
-       (I : finType) (gr : (I -> gT) * (seq (seq I)))
+Record presentation_of (gT : finGroupType)
+       (I : finType) (gr : (I -> gT) * (seq (seq I * seq I)))
        (G : {group gT}) (ph : phantom {set gT} G) : Prop := Presentation {
   gen_eq : <<[set gr.1 i | i : I]>> = G;
   satisfy_gens : satisfy gr.2 gr.1;
@@ -83,13 +97,13 @@ Record presentation (gT : finGroupType)
       exists presm : {morphism G >-> hT}, forall i, presm (gr.1 i) = gensH i
 }.
 
-(* TODO : add some phantom on G to infer the group structure *)
-Notation "gr \present G" := (presentation gr (Phantom {set _} G)) (at level 10).
+Notation "gr \present G" := (presentation_of gr (Phantom {set _} G)).
+
 
 Section Presentation.
 
 Variables (gT : finGroupType) (G : {group gT})
-          (I : finType) (gens  : I -> gT) (rels  : seq (seq I)).
+          (I : finType) (gens  : I -> gT) (rels  : seq (seq I * seq I)).
 Hypothesis prG : (gens, rels) \present G.
 
 Lemma pres_mem  i : gens i \in G.
@@ -170,11 +184,13 @@ End Presentation.
 Section Permute.
 
 Variables (gT : finGroupType) (G : {group gT})
-          (I : finType) (gens  : I -> gT) (rels  : seq (seq I)).
+          (I : finType) (gens  : I -> gT) (rels  : seq (seq I * seq I)).
 
 Lemma pres_perm (p : {perm I}) :
   (gens, rels) \present G ->
-  (gens \o p, [seq [seq p^-1 i | i <- r] | r <- rels]) \present G.
+  (gens \o p,
+   [seq ([seq p^-1 i | i <- r.1], [seq p^-1 i | i <- r.2]) | r <- rels])
+    \present G.
 Proof.
 move=> prG; constructor.
 - rewrite -(gen_eq prG) /=; congr << _ >>.
@@ -196,7 +212,7 @@ Section Isomorphism.
 
 Variable gT hT : finGroupType.
 Variables (G : {group gT}) (H : {group hT}).
-Variables (I : finType) (gens  : I -> gT) (rels  : seq (seq I)).
+Variables (I : finType) (gens  : I -> gT) (rels  : seq (seq I * seq I)).
 Hypothesis (prG : (gens, rels) \present G).
 
 Lemma presm_id (sat : satisfy rels gens) : {in G, presm prG sat =1 id}.
@@ -235,7 +251,7 @@ exists (f \o gens); constructor.
   by congr << _ >>; rewrite morphimEsub // -imset_comp.
 - apply/satisfyP => s Hs.
   have:= satisfy_gens prG => /satisfyP/(_ _ Hs)/(congr1 f).
-  by rewrite morph1 morph_prod.
+  by rewrite !morph_prod.
 move=> aT gensA sat.
 pose phi := presm prG sat \o invm injf.
 have phi_morph : {in H & , {morph phi : x y / x * y}}.
