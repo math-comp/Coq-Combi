@@ -13,14 +13,14 @@ Import GroupScope.
 
 Section Satisfy.
 
-Variable (gT : finGroupType) (n : nat).
-Implicit Type (gens : 'I_n -> gT) (rels : seq (seq 'I_n)).
+Variable (gT : finGroupType) (I : finType).
+Implicit Type (gens : I -> gT) (rels : seq (seq I)).
 
 Definition satisfy rels gens :=
-  all (fun s : seq 'I_n => \prod_(i <- s) gens i == 1) rels.
+  all (fun s : seq I => \prod_(i <- s) gens i == 1) rels.
 
 Lemma satisfyP rels gens :
-  reflect (forall s : seq 'I_n, s \in rels -> \prod_(i <- s) gens i = 1)
+  reflect (forall s : seq I, s \in rels -> \prod_(i <- s) gens i = 1)
           (satisfy rels gens).
 Proof. by apply: (iffP allP) => /= [H s /H /eqP| H s /H ->]. Qed.
 
@@ -34,7 +34,7 @@ Lemma perm_satisfy rels1 rels2 gens :
   perm_eq rels1 rels2 -> satisfy rels1 gens = satisfy rels2 gens.
 Proof. by rewrite/satisfy => /perm_all ->. Qed.
 
-Lemma satisfy_perm_impl (p : 'S_n) rels gens :
+Lemma satisfy_perm_impl (p : {perm I}) rels gens :
   satisfy rels gens ->
   satisfy [seq [seq p^-1 i | i <- r] | r <- rels] (gens \o p).
 Proof.
@@ -42,7 +42,7 @@ move/satisfyP => H; apply/satisfyP => s' /mapP [/= s {}/H {2}<- ->{s'}].
 by rewrite big_map; apply: eq_bigr => i _; rewrite permKV.
 Qed.
 
-Lemma satisfy_perm (p : 'S_n) rels gens :
+Lemma satisfy_perm (p : {perm I}) rels gens :
   satisfy [seq [seq p^-1 i | i <- r] | r <- rels] (gens \o p) =
   satisfy rels gens.
 Proof.
@@ -61,9 +61,10 @@ Proof. exact: all_cat. Qed.
 
 End Satisfy.
 
-Lemma morph_satisfy (gT : finGroupType) (G : {group gT})
-                    (hT : finGroupType) (H : {group hT})
-      (f : {morphism G >-> hT}) m (gens : 'I_m -> gT) rels :
+Lemma morph_satisfy (I : finType)
+      (gT : finGroupType) (G : {group gT})
+      (hT : finGroupType) (H : {group hT})
+      (f : {morphism G >-> hT}) (gens : I -> gT) rels :
   (forall i, gens i \in G) -> satisfy rels gens -> satisfy rels (f \o gens).
 Proof.
 move=> memgens /satisfyP /= sat; apply/satisfyP => s {}/sat /(congr1 f).
@@ -72,13 +73,12 @@ Qed.
 
 
 
-Record presentation
-       (gT : finGroupType)
-       (n : nat) (gr : ('I_n -> gT) * (seq (seq 'I_n)))
+Record presentation (gT : finGroupType)
+       (I : finType) (gr : (I -> gT) * (seq (seq I)))
        (G : {group gT}) : Prop := Presentation {
-  gen_eq : <<[set gr.1 i | i : 'I_n]>> = G;
+  gen_eq : <<[set gr.1 i | i : I]>> = G;
   satisfy_gens : satisfy gr.2 gr.1;
-  presm_ex : forall (hT : finGroupType) (gensH : 'I_n -> hT),
+  presm_ex : forall (hT : finGroupType) (gensH : I -> hT),
       satisfy gr.2 gensH ->
       exists presm : {morphism G >-> hT}, forall i, presm (gr.1 i) = gensH i
 }.
@@ -89,7 +89,7 @@ Notation "gr \present G" := (presentation gr G) (at level 10).
 Section Presentation.
 
 Variables (gT : finGroupType) (G : {group gT})
-          (n : nat) (gens  : 'I_n -> gT) (rels  : seq (seq 'I_n)).
+          (I : finType) (gens  : I -> gT) (rels  : seq (seq I)).
 Hypothesis prG : (gens, rels) \present G.
 
 Lemma pres_mem  i : gens i \in G.
@@ -100,13 +100,13 @@ Qed.
 Hint Resolve pres_mem : core.
 
 Lemma presP x :
-  reflect (exists l, exists c : 'I_l -> 'I_n, x = \prod_i gens (c i))
+  reflect (exists l, exists c : 'I_l -> I, x = \prod_i gens (c i))
           (x \in G).
 Proof.
 apply (iffP idP); first last.
   by move=> [l [dec ->{x}]]; apply group_prod.
 rewrite -{1}(gen_eq prG) => /gen_prodgP [l [dec Hdec ->{x}]].
-have {}Hdec i : {j : 'I_n | dec i == gens j}.
+have {}Hdec i : {j : I | dec i == gens j}.
   by apply sigW => /=; move: Hdec => /(_ i) /imsetP [/= j _ ->]; exists j.
 have dec_in i : dec i \in G by case: (Hdec i) => j /eqP ->.
 pose get_gen (i : 'I_l) := let: exist j _ := Hdec i in j.
@@ -118,7 +118,7 @@ Qed.
 
 Section PresMorphism.
 
-Variable (hT : finGroupType) (gensH : 'I_n -> hT).
+Variable (hT : finGroupType) (gensH : I -> hT).
 Hypothesis (sat : satisfy rels gensH).
 
 Lemma presm_spec :
@@ -144,7 +144,7 @@ rewrite !morph_prod //.
 by apply: eq_bigr => /= i _; rewrite Heq presmP.
 Qed.
 
-Lemma morphim_presm : presm @* G = <<[set gensH i | i : 'I_n]>>.
+Lemma morphim_presm : presm @* G = <<[set gensH i | i : I]>>.
 Proof.
 apply/setP => /= h; apply/imsetP/gen_prodgP; rewrite setIid.
 - move=> [g /(presP) [l [dec ->{g} ->{h}]]]; exists l.
@@ -152,7 +152,7 @@ apply/setP => /= h; apply/imsetP/gen_prodgP; rewrite setIid.
   rewrite morph_prod //.
   by apply: eq_bigr => /= i _; rewrite presmP.
 - move=> [l [dec Hdec ->{h}]].
-  have {}Hdec i : {j : 'I_n | dec i == gensH j}.
+  have {}Hdec i : {j : I | dec i == gensH j}.
     by apply sigW => /=; move: Hdec => /(_ i) /imsetP [/= j _ ->]; exists j.
   pose get_gen (i : 'I_l) := let: exist j _ := Hdec i in gens j.
   have get_in i : get_gen i \in G by rewrite /get_gen; case: (Hdec i).
@@ -170,9 +170,9 @@ End Presentation.
 Section Permute.
 
 Variables (gT : finGroupType) (G : {group gT})
-          (n : nat) (gens  : 'I_n -> gT) (rels  : seq (seq 'I_n)).
+          (I : finType) (gens  : I -> gT) (rels  : seq (seq I)).
 
-Lemma pres_perm (p : 'S_n) :
+Lemma pres_perm (p : {perm I}) :
   (gens, rels) \present G ->
   (gens \o p, [seq [seq p^-1 i | i <- r] | r <- rels]) \present G.
 Proof.
@@ -196,7 +196,7 @@ Section Isomorphism.
 
 Variable gT hT : finGroupType.
 Variables (G : {group gT}) (H : {group hT}).
-Variables (n : nat) (gens  : 'I_n -> gT) (rels  : seq (seq 'I_n)).
+Variables (I : finType) (gens  : I -> gT) (rels  : seq (seq I)).
 Hypothesis (prG : (gens, rels) \present G).
 
 Lemma presm_id (sat : satisfy rels gens) : {in G, presm prG sat =1 id}.
@@ -205,7 +205,7 @@ have : forall i, idm G (gens i) = (gens i) by [].
 by move/(presmE prG sat) => Heq x /Heq.
 Qed.
 
-Lemma pres_isog (gh : 'I_n -> hT) : (gh, rels) \present H -> G \isog H.
+Lemma pres_isog (gh : I -> hT) : (gh, rels) \present H -> G \isog H.
 Proof.
 move=> prH; apply/isogP.
 have satH := satisfy_gens prH.
@@ -224,11 +224,11 @@ exact/injmP/(can_in_inj presmK).
 Qed.
 
 Lemma isog_pres :
-  G \isog H -> {gensh: 'I_n -> hT | (gensh, rels) \present H}.
+  G \isog H -> {gensh: I -> hT | (gensh, rels) \present H}.
 Proof.
 move=> /isog_isom [f /isomP [injf imf]].
 have prmemG := pres_mem prG.
-have subgen : [set gens i | i : 'I_n] \subset G.
+have subgen : [set gens i | i : I] \subset G.
   by apply/subsetP => x /imsetP [/= j _ ->].
 exists (f \o gens); constructor.
 - rewrite -{}imf -{4}(gen_eq prG) morphim_gen //.
