@@ -75,7 +75,7 @@ Qed.
 
 Record presentation (gT : finGroupType)
        (I : finType) (gr : (I -> gT) * (seq (seq I)))
-       (G : {group gT}) : Prop := Presentation {
+       (G : {group gT}) (ph : phantom {set gT} G) : Prop := Presentation {
   gen_eq : <<[set gr.1 i | i : I]>> = G;
   satisfy_gens : satisfy gr.2 gr.1;
   presm_ex : forall (hT : finGroupType) (gensH : I -> hT),
@@ -84,7 +84,7 @@ Record presentation (gT : finGroupType)
 }.
 
 (* TODO : add some phantom on G to infer the group structure *)
-Notation "gr \present G" := (presentation gr G) (at level 10).
+Notation "gr \present G" := (presentation gr (Phantom {set _} G)) (at level 10).
 
 Section Presentation.
 
