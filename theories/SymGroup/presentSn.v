@@ -36,12 +36,11 @@ Notion of code
 
 Elementary tranpositions
 
-- ['s_i]     == the i-th elementary transposition. It is Inversion sets
-of type ['S_n.+1]
+- ['s_i]     == the i-th elementary transposition. It is of type ['S_n.+1]
                 where n is inferred from the context. [i] is an integer
                 smaller than [n] (otherwise [eltr i] is the identity)
 
-                Inversion sets
+Inversion sets
 
 - [invset s] == the set of inversion of [s]
 - [Delta]    == the set of pair [(i, j)] such that [0 <= i < j < n.+1];
