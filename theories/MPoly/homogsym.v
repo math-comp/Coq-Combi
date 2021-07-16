@@ -845,7 +845,7 @@ rewrite !symbpE !(coord_free _ _ (basis_free (symbp_basis _ _))) //.
 by rewrite !(inj_eq enum_rank_inj).
 Qed.
 
-Lemma homsymdotp (Hd : (d <= n)%N) la mu :
+Lemma homsymdotpp (Hd : (d <= n)%N) la mu :
   '[ 'hp[la] | 'hp[mu] ] = (zcard la)%:R * (la == mu)%:R.
 Proof.
 rewrite homsymdotE (bigD1 mu) //= big1 ?addr0 => [| nu /negbTE Hneq].

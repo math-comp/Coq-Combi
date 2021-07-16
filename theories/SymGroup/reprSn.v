@@ -1,6 +1,6 @@
 (** * Combi.SymGroup.reprSn : Basic representations of the Symmetric Groups *)
 (******************************************************************************)
-(*      Copyright (C) 2016-2018 Florent Hivert <florent.hivert@lri.fr>        *)
+(*      Copyright (C) 2016-2021 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
 (*  Distributed under the terms of the GNU General Public License (GPL)       *)
 (*                                                                            *)
@@ -32,7 +32,7 @@ These four matrices are actually representation matrices:
 - [nat_repr n] == the natural representation of degree [n]
 
 We show in Lemmas [repr1] and [repr_S2] that [triv_repr] and [sign_repr]
-exhausts all representations of ['S_n] of degree 1 all irreducible
+exhausts all representations of ['S_n] of degree 1 and all irreducible
 representations of of ['S_2].
 *************)
 Require Import mathcomp.ssreflect.ssreflect.
@@ -58,55 +58,57 @@ Local Notation reprS n d :=
 (** * Representation of dimension 1 and natural representation *)
 Section DefTrivSign.
 
-Variable n d : nat.
-Variable rho : reprS n d.
+Variables n d : nat.
 
 Definition triv_mx (g : 'S_n) : 'M[algC]_1 := 1.
-Definition sign_mx (g : 'S_n) : 'M[algC]_1 :=
-  if odd_perm g then -1 else 1.
-Definition signed_mx (g : 'S_n) : 'M[algC]_d :=
+Definition sign_mx (g : 'S_n) : 'M[algC]_1 := if odd_perm g then -1 else 1.
+Definition signed_mx (rho : reprS n d) (g : 'S_n) : 'M[algC]_d :=
   if odd_perm g then -(rho g) else rho g.
-Definition nat_mx (g : 'S_n) : 'M[algC]_n :=
-  perm_mx g.
+Definition nat_mx (g : 'S_n) : 'M[algC]_n := perm_mx g.
 
 
 Lemma triv_mx_repr : mx_repr 'SG_n triv_mx.
-Proof.
-  split; first by [].
-  by move=> g1 g2 _ _; rewrite mul1mx.
-Qed.
+Proof. by split => [//|g1 g2 _ _]; rewrite mul1mx. Qed.
 Canonical triv_repr : reprS n 1 := MxRepresentation triv_mx_repr.
 
 Lemma triv_irr : mx_irreducible triv_repr.
-Proof. apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
+Proof. by apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
 
 Lemma sign_mx_repr : mx_repr 'SG_n sign_mx.
 Proof.
-  rewrite /sign_mx; split; first by rewrite /= odd_perm1.
-  move=> g1 g2 _ _; rewrite /= odd_permM /=.
-  by case: (odd_perm g1); case: (odd_perm g2);
-    rewrite /= ?mulNmx ?mulmxN ?opprK mul1mx //.
+rewrite /sign_mx; split; first by rewrite /= odd_perm1.
+move=> g1 g2 _ _; rewrite odd_permM.
+by case: (odd_perm g1); case: (odd_perm g2);
+  rewrite /= ?mulNmx ?mulmxN ?opprK mul1mx.
 Qed.
 Canonical sign_repr : reprS n 1 := MxRepresentation sign_mx_repr.
 
 Lemma sign_irr : mx_irreducible sign_repr.
 Proof. apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
 
-Lemma signed_mx_repr : mx_repr 'SG_n signed_mx.
+Lemma signed_mx_repr rho : mx_repr 'SG_n (signed_mx rho).
 Proof.
-  rewrite /signed_mx; split; first by rewrite /= odd_perm1 repr_mx1.
-  move=> g1 g2 _ _; rewrite /= odd_permM /=.
-  by case: (odd_perm g1); case: (odd_perm g2);
-    rewrite /=  ?mulNmx ?mulmxN ?opprK repr_mxM // inE.
+rewrite /signed_mx; split; first by rewrite /= odd_perm1 repr_mx1.
+move=> g1 g2 _ _; rewrite odd_permM.
+by case: (odd_perm g1); case: (odd_perm g2);
+  rewrite /=  ?mulNmx ?mulmxN ?opprK repr_mxM // inE.
 Qed.
-Canonical signed_repr : reprS n d := MxRepresentation signed_mx_repr.
+Canonical signed_repr rho : reprS n d := MxRepresentation (signed_mx_repr rho).
 
 Lemma nat_mx_repr : mx_repr 'SG_n nat_mx.
-Proof.
-  rewrite /nat_mx; split; first exact: perm_mx1.
-  move=> g1 g2 _ _; exact: perm_mxM.
-Qed.
+Proof. by split=> [|g1 g2 _ _]; [exact: perm_mx1 | exact: perm_mxM]. Qed.
 Canonical nat_repr : reprS n n := MxRepresentation nat_mx_repr.
+
+Lemma cfRepr_trivE : cfRepr triv_repr = 1.
+Proof using.
+rewrite -cfunP => s.
+by rewrite cfunE cfun1E !inE mulr1n mxtrace1.
+Qed.
+
+Lemma cfRepr_triv : cfRepr triv_repr = 'chi_0.
+Proof using. by rewrite irr0 cfRepr_trivE. Qed.
+Lemma triv_Chi : mx_rsim triv_repr 'Chi_0.
+Proof using. by apply/cfRepr_rsimP; rewrite cfRepr_triv irrRepr. Qed.
 
 End DefTrivSign.
 
@@ -115,6 +117,8 @@ Arguments triv_repr {n}.
 Arguments sign_mx_repr {n}.
 Arguments sign_repr {n}.
 
+
+(** * Representations of the symmetric Group for n = 0 and 1  *)
 
 Lemma row_free1 : row_free (1 : 'M[algC]_1).
 Proof. by apply/row_freeP; exists 1; rewrite mul1mx. Qed.
@@ -134,60 +138,60 @@ by rewrite mul1mx mulmx1 (permS1 g) repr_mx1.
 Qed.
 
 
+(** * Representations of dimension 1 the symmetric Group for n > 1*)
+
 Lemma triv_sign_not_sim n :
-  (n >= 2)%N -> ~ mx_rsim (G := [group of 'SG_n]) triv_repr sign_repr.
+  (n > 1)%N -> ~ mx_rsim (G := [group of 'SG_n]) triv_repr sign_repr.
 Proof.
-  case: n => // n; rewrite ltnS => Hn [B _].
-  rewrite row_free_unit => /mulrI HB Hsim.
-  have {}/Hsim : ('s_0) \in 'SG_n.+1 by [].
-  rewrite /triv_repr /sign_repr /triv_mx /sign_mx /= mul1mx (odd_eltr Hn).
-  rewrite -[LHS]mulmx1 => /HB/eqP; rewrite -addr_eq0 -mulr2n => /eqP.
-  apply/matrixP => /(_ ord0 ord0).
-  rewrite !mxE eq_refl /= => /eqP.
-  by have := Cchar; rewrite charf0P => /(_ 2) ->.
+case: n => // n; rewrite ltnS => Hn [B _].
+rewrite row_free_unit => /mulrI HB Hsim.
+have {}/Hsim : 's_0 \in 'SG_n.+1 by [].
+rewrite /triv_repr /sign_repr /triv_mx /sign_mx /= mul1mx (odd_eltr Hn).
+rewrite -[LHS]mulmx1 => /HB/eqP; rewrite -addr_eq0 -mulr2n => /eqP.
+apply/matrixP => /(_ ord0 ord0).
+rewrite !mxE eq_refl /= => /eqP.
+by have := Cchar; rewrite charf0P => /(_ 2) ->.
 Qed.
 
 Lemma repr1 n (rho : reprS n 1) :
   mx_rsim rho triv_repr \/ mx_rsim rho sign_repr.
 Proof.
-  case: n rho => [| n] rho; first by left; exact: repr1_S0.
-  have Hs0 : 's_0 \in 'SG_n.+1 by [].
-  have /esym := repr_mxMr rho Hs0 Hs0.
-  set M := rho 's_0.
-  rewrite eltr2 repr_mx1 (mx11_scalar M).
-  rewrite -mulmxE -scalar_mxM -matrixP => /(_ ord0 ord0) /eqP.
-  rewrite !mxE eq_refl mulr1n /= -expr2 sqrf_eq1 => /orP [] /eqP HM.
-  - left; apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
-    rewrite /triv_mx_repr /= => g _; rewrite mul1mx mulmx1.
-    have Heltr i : (i < n)%N -> rho 's_i = 1.
-      elim: i => [| i IHi] Hi; first by rewrite -/M (mx11_scalar M) HM.
-      have /(congr1 rho) := eltr_braid Hi.
-      rewrite !repr_mxMr ?inE //= IHi; last exact: ltnW.
-      rewrite !mulr1.
-      have: 's_i.+1 \in 'SG_n.+1 by [].
-      by move=> /(repr_mx_unit rho)/mulIr H{}/H <-.
-    rewrite -(canwordP g); elim: (canword g) => [| w0 w IHw] /=.
-      by rewrite big_nil repr_mx1.
-    rewrite big_cons repr_mxM ?inE // IHw mulmx1.
-    exact: Heltr.
-  - right; apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
-    rewrite /sign_mx_repr /= => g _; rewrite mul1mx mulmx1 /sign_mx.
-    have Heltr i : (i < n)%N -> rho 's_i = -1.
-      elim: i => [| i IHi] Hi.
-        by rewrite -/M (mx11_scalar M) HM -[RHS]scaleN1r -scalemx1.
-      have /(congr1 rho) := eltr_braid Hi.
-      rewrite !repr_mxMr ?inE //= IHi; last exact: ltnW.
-      rewrite !mulrN1 mulNr => /eqP; rewrite eqr_opp => /eqP.
-      have: 's_i.+1 \in 'SG_n.+1 by [].
-      by move=> /(repr_mx_unit rho)/mulIr H{}/H <-.
-    rewrite -(canwordP g); elim: (canword g) => [| w0 w IHw] /=.
-      by rewrite big_nil repr_mx1 odd_perm1.
-    rewrite big_cons repr_mxM ?inE // {}IHw odd_permM odd_eltr //= Heltr //.
-    case: (odd_perm (\prod_(i <- w) 's_i)) => /=;
-      rewrite mulmxE mulN1r //.
-    exact: opprK.
+case: n rho => [| n] rho; first by left; exact: repr1_S0.
+have Hs0 : 's_0 \in 'SG_n.+1 by [].
+have /esym := repr_mxMr rho Hs0 Hs0.
+set M := rho 's_0.
+rewrite eltr2 repr_mx1 (mx11_scalar M).
+rewrite -mulmxE -scalar_mxM -matrixP => /(_ ord0 ord0) /eqP.
+rewrite !mxE eq_refl mulr1n /= -expr2 sqrf_eq1 => /orP [] /eqP HM.
+- left; apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
+  rewrite /triv_mx_repr /= => g _; rewrite mul1mx mulmx1.
+  have Heltr i : (i < n)%N -> rho 's_i = 1.
+    elim: i => [| i IHi] Hi; first by rewrite -/M (mx11_scalar M) HM.
+    have /(congr1 rho) := eltr_braid Hi.
+    rewrite !repr_mxMr ?inE //= IHi; last exact: ltnW.
+    rewrite !mulr1.
+    have: 's_i.+1 \in 'SG_n.+1 by [].
+    by move=> /(repr_mx_unit rho)/mulIr H{}/H <-.
+  rewrite -(canwordP g); elim: (canword g) => [| w0 w IHw] /=.
+    by rewrite big_nil repr_mx1.
+  rewrite big_cons repr_mxM ?inE // IHw mulmx1.
+  exact: Heltr.
+- right; apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
+  rewrite /sign_mx_repr /= => g _; rewrite mul1mx mulmx1 /sign_mx.
+  have Heltr i : (i < n)%N -> rho 's_i = -1.
+    elim: i => [| i IHi] Hi.
+      by rewrite -/M (mx11_scalar M) HM -[RHS]scaleN1r -scalemx1.
+    have /(congr1 rho) := eltr_braid Hi.
+    rewrite !repr_mxMr ?inE //= IHi; last exact: ltnW.
+    rewrite !mulrN1 mulNr => /eqP; rewrite eqr_opp => /eqP.
+    have: 's_i.+1 \in 'SG_n.+1 by [].
+    by move=> /(repr_mx_unit rho)/mulIr H{}/H <-.
+  rewrite -(canwordP g); elim: (canword g) => [| w0 w IHw] /=.
+    by rewrite big_nil repr_mx1 odd_perm1.
+  rewrite big_cons repr_mxM ?inE // {}IHw odd_permM odd_eltr //= Heltr //.
+  case: (odd_perm (\prod_(i <- w) 's_i)); rewrite /= mulmxE mulN1r //.
+  exact: opprK.
 Qed.
-
 
 
 (** * Representations of the symmetric Group for n=2  *)
@@ -198,16 +202,6 @@ Proof using. by rewrite NirrE card_classes_perm card_ord. Qed.
 Lemma NirrS2 : Nirr 'SG_2 = 2.
 Proof using. by rewrite NirrSn card_intpartn. Qed.
 
-Lemma cfRepr_triv n : cfRepr (triv_repr (n := n)) = 'chi_0.
-Proof using.
-rewrite -cfunP irr0 => s.
-rewrite cfunE cfun1E !inE mulr1n.
-rewrite /triv_repr /triv_mx /=.
-by rewrite mxtrace1.
-Qed.
-Lemma triv_Chi n : mx_rsim (triv_repr (n := n)) 'Chi_0.
-Proof using. by apply/cfRepr_rsimP; rewrite cfRepr_triv irrRepr. Qed.
-
 Lemma cast_IirrS2 (i : Iirr 'SG_2) :
   i != 0 -> i = cast_ord (esym NirrS2) 1.
 Proof using.
@@ -215,8 +209,7 @@ move=> Hi; apply val_inj => /=.
 by case: i Hi => [[|[|i]]] //=; rewrite NirrS2.
 Qed.
 
-Lemma cfRepr_sign2 :
-  cfRepr (sign_repr (n := 2)) = 'chi_(cast_ord (esym NirrS2) 1).
+Lemma cfRepr_sign2 : cfRepr sign_repr = 'chi_(cast_ord (esym NirrS2) 1).
 Proof using.
 have : cfRepr sign_repr \in irr 'SG_2.
   apply/irr_reprP.
@@ -230,7 +223,7 @@ apply: (triv_sign_not_sim (n := 2)) => //.
 exact: mx_rsim_trans (triv_Chi 2) Hj.
 Qed.
 
-Lemma sign_Chi2 : mx_rsim (sign_repr (n := 2)) 'Chi_(cast_ord (esym NirrS2) 1).
+Lemma sign_Chi2 : mx_rsim sign_repr 'Chi_(cast_ord (esym NirrS2) 1).
 Proof using. by apply/cfRepr_rsimP; rewrite cfRepr_sign2 irrRepr. Qed.
 
 Lemma char_S2 :

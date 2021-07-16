@@ -19,7 +19,7 @@
                    the number of variable is inferred from the context.
 - [Fchar_inv f] == the inverse Frobenius characteristic of the
                    homogeneous symmetric polynomial [f].
-- ['irrSG[la]]   == the irreducible character for ['SG_n] associated to the
+- ['irrSG[la]]  == the irreducible character for ['SG_n] associated to the
                    partition [la] of n.
 
 
@@ -184,7 +184,7 @@ rewrite homsymdot_suml cfdot_suml; apply eq_bigr => la _.
 rewrite homsymdot_sumr cfdot_sumr; apply eq_bigr => mu _.
 rewrite ![Fchar (_ *: '1z_[_])]linearZ /= !Fchar_ncfuniCT.
 rewrite homsymdotZl homsymdotZr cfdotZl cfdotZr; congr (_ * (_ * _)).
-rewrite homsymdotp // cfdotZl cfdotZr cfdot_classfun_part.
+rewrite homsymdotpp // cfdotZl cfdotZr cfdot_classfun_part.
 case: (altP (la =P mu)) => [<-{mu} | _]; rewrite ?mulr0 ?mulr1 //.
 rewrite -zcoeffE -[LHS]mulr1; congr (_ * _).
 rewrite /zcoeff rmorphM rmorphV; first last.

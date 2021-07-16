@@ -529,7 +529,7 @@ Lemma scale_co_hp la p a : co_hp la (a *: p) = a * co_hp la p.
 Proof. by rewrite /co_hp /= linearZ homsymdotZl. Qed.
 Lemma co_hp_hp la mu : co_hp la 'hp[mu] = (zcard mu)%:R * (mu == la)%:R.
 Proof using Hd.
-by rewrite /co_hp /= -![prod_gen _ _]/(homsym 'hp[_]) in_homsymE homsymdotp.
+by rewrite /co_hp /= -![prod_gen _ _]/(homsym 'hp[_]) in_homsymE homsymdotpp.
 Qed.
 
 Lemma co_hpXY_is_additive la mu : additive (co_hpXY la mu).
@@ -645,12 +645,12 @@ transitivity
     move=> m /negbTE Hlm; rewrite homsymdotZr.
     rewrite [X in '[X | _]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
     rewrite [X in '[_ | X]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
-    rewrite homsymdotp // nth_uniq ?enum_uniq -?cardE ?ltn_ord // eq_sym.
+    rewrite homsymdotpp // nth_uniq ?enum_uniq -?cardE ?ltn_ord // eq_sym.
     by rewrite (inj_eq (@ord_inj _)) Hlm !mulr0.
   rewrite homsymdotZr mulrA.
   rewrite [X in '[X | _]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
   rewrite [X in '[_ | X]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
-  rewrite homsymdotp // eq_refl mulr1.
+  rewrite homsymdotpp // eq_refl mulr1.
   rewrite -enum_val_nth ![_ * (zcard _)%:R]mulrC mulrA; congr (_ * _ * _).
   suff -> : coord 'hp l 'hsF[mu] = ratr (coord 'hp l ('hs[mu] : HSR)).
     by apply/CrealP; apply Creal_Crat; apply Crat_rat.
