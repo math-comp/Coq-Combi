@@ -395,20 +395,18 @@ Qed.
 Canonical in_homsym_additive := Additive  in_homsym_is_linear.
 Canonical in_homsym_linear   := AddLinear in_homsym_is_linear.
 
-Lemma in_homsymE (p : {homsym R[n, d]}) : in_homsym p = p.
+Lemma in_homsymE (p : HSF) : in_homsym p = p.
 Proof. by rewrite {2}(homsymmE p). Qed.
 
 End InHomSym.
 
 
-Section OmegaDef.
+Section OmegaHomSym.
 
 Variable n0 d : nat.
 Local Notation n := (n0.+1).
 Variable R : comRingType.
 Local Notation HSF := {homsym R[n, d]}.
-Let S := [tuple sympol 'h_i.+1 | i < n] : n.-tuple {mpoly R[n]}.
-
 Implicit Type (p q : HSF).
 
 Lemma omegahomsym_subproof p : omegasf p \is d.-homsym.
@@ -416,16 +414,26 @@ Proof using.
 apply: omegasf_homog_impl; rewrite -homsymE.
 by case: p.
 Qed.
-Definition omegahomsym p : {homsym R[n, d]} :=
-  HomogSym (omegahomsym_subproof p).
+Definition omegahomsym p : HSF := HomogSym (omegahomsym_subproof p).
 Lemma omegahomsym_is_linear : linear omegahomsym.
-Proof. by move=> a f g; apply val_inj; rewrite /= !linearD !linearZ /=. Qed.
+Proof using.
+by move=> a f g; apply val_inj; rewrite /= !linearD !linearZ /=.
+Qed.
 Canonical omegahomsym_additive   := Additive  omegahomsym_is_linear.
 Canonical omegahomsym_linear     := AddLinear omegahomsym_is_linear.
 
-End OmegaDef.
+Hypothesis (Hd : d <= n).
 
-Section Omega.
+Lemma omega_homsymh la : omegahomsym 'hh[la] = 'he[la].
+Proof using Hd. by apply val_inj; rewrite /= omega_symh. Qed.
+Lemma omega_homsyme la : omegahomsym 'he[la] = 'hh[la].
+Proof using Hd. by apply val_inj; rewrite /= omega_syme. Qed.
+Lemma omega_homsyms la : omegahomsym 'hs[la] = 'hs[conj_intpartn la].
+Proof using Hd. by apply val_inj; rewrite /= omega_syms. Qed.
+
+End OmegaHomSym.
+
+Section OmegaProd.
 
 Variable n0 : nat.
 Local Notation n := (n0.+1).
@@ -435,7 +443,7 @@ Lemma omegahomsym_rmorph c d (p : {homsym R[n, c]}) (q : {homsym R[n, d]}) :
   omegahomsym (p *h q) = (omegahomsym p) *h (omegahomsym q).
 Proof. by apply val_inj; rewrite /= rmorphM. Qed.
 
-End Omega.
+End OmegaProd.
 
 
 (** * The classical bases of homogeneous symmetric polynomials *)

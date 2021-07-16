@@ -1147,6 +1147,13 @@ rewrite /index_enum /= enumT; apply eq_bigr => i _.
 by rewrite mulrC add1n subKn.
 Qed.
 
+(* TODO:
+Lemma Newton_syme (k : nat) :
+  k%:R *: 'e_k =
+  \sum_(0 <= i < k) (-1)^+(k - i + 1) *: 'e_i * 'p_(k - i) :> SF.
+Proof using.
+*)
+
 End ChangeBasis.
 
 Import IntPartNDom.
