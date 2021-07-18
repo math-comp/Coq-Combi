@@ -1474,6 +1474,11 @@ by case: d.
 Qed.
 Definition colpartn d : 'P_d := IntPartN (colpartn_subproof d).
 
+Lemma rowpartn0E : rowpartn 0 = [::] :> seq nat.
+Proof. by []. Qed.
+Lemma rowpartnSE d : rowpartn d.+1 = [:: d.+1] :> seq nat.
+Proof. by []. Qed.
+
 Lemma colpartnE d (la : 'P_d) : all (pred1 1) la -> la = colpartn d.
 Proof.
 move=> Hall; apply val_inj => /=.

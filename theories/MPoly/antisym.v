@@ -41,7 +41,7 @@ Vandermonde products and determinants:
 
 The main results are the Vandermonde determinant expansion:
 
-- [ Vanprod_alt     : Vanprod = alternpol 'X_[(rho n)] ]
+ [ Vanprod_alt     : Vanprod = alternpol 'X_[(rho n)] ]
 - [ Vandet_VanprodE : Vandet = Vanprod ]
 
 *******************************************************************************)
@@ -72,10 +72,17 @@ Section MonomPart.
 Variable n : nat.
 Implicit Type m : 'X_{1.. n}.
 
-Definition mpart (s : seq nat) :=
-  if size s <= n then [multinom (nth 0 s i)%N | i < n] else mnm0.
 Definition dominant : qualifier 0 'X_{1.. n} :=
   [qualify m : 'X_{1.. n} | sorted geq m].
+Definition mpart (s : seq nat) :=
+  if size s <= n then [multinom (nth 0 s i)%N | i < n] else mnm0.
+
+Lemma dominant_eq m1 m2 :
+  m1 \is dominant -> m2 \is dominant -> perm_eq m1 m2 -> m1 = m2.
+Proof.
+rewrite !unfold_in => /sorted_eq H{}/H H{}/H Heq.
+by apply/val_inj/val_inj; apply Heq.
+Qed.
 
 Fact partmP m : is_part (sort geq [seq d <- m | d != 0]).
 Proof.
@@ -151,6 +158,9 @@ case: (ssrnat.ltnP i n) => Hi.
 - rewrite !nth_default //; apply: leq_trans _ Hi => //.
   exact: size_partm.
 Qed.
+
+Lemma mpart0 : @mpart [::] = 0%MM.
+Proof. by apply mnmP => i; rewrite /mpart /= mnmE mnm0E nth_default. Qed.
 
 Lemma perm_mpart s1 s2 : perm_eq s1 s2 -> perm_eq (mpart s1) (mpart s2).
 Proof.

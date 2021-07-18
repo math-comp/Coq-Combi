@@ -58,7 +58,7 @@ of a basis element of [syma] in [symb]
 - h and p : [symh_to_symp] and Newton's formula [Newton_symh]
 
 
-Change of the number of variable
+Change of the number of variables
 
 - [sympolyf R m] == the algebra morphism expanding any symetric polynomial
              (in [{sympoly R[m]}]) as a polynomial in the ['e_i]
@@ -79,6 +79,7 @@ From mathcomp Require Import tuple finfun finset binomial.
 From mathcomp Require Import bigop ssralg ssrint path perm fingroup.
 From mathcomp Require ssrnum.
 From SsrMultinomials Require Import ssrcomplements freeg mpoly.
+From SsrMultinomials Require monalg.
 
 Require Import sorted tools ordtype permuted partition composition.
 Require Import Yamanouchi std tableau stdtab skewtab permcent.
@@ -98,6 +99,23 @@ apply (iffP idP) => [/negbTE -> // | H].
 apply/negP => Hb; move: H; rewrite Hb /= => /eqP.
 by rewrite oner_eq0.
 Qed.
+
+Section MultinomCompl.
+
+Variables (n : nat) (R : comRingType).
+
+Lemma eq_mnm1 (i j : 'I_n) : (U_( i)%MM == U_( j)%MM) = (i == j).
+Proof.
+case: (altP (i =P j)) => [->|/negbTE neq]; first by rewrite eqxx.
+apply/negbTE/negP => /eqP; rewrite mnmP => /(_ j).
+by rewrite !mnm1E eqxx neq.
+Qed.
+
+Lemma mcoeffXU (i j : 'I_n) : ('X_i : {mpoly R[n]})@_U_(j) = (i == j)%:R.
+Proof. by rewrite mcoeffX eq_mnm1. Qed.
+
+End MultinomCompl.
+
 
 Reserved Notation "{ 'sympoly' T [ n ] }"
   (at level 0, T, n at level 2, format "{ 'sympoly'  T [ n ] }").
@@ -357,47 +375,41 @@ rewrite [LHS](bigID (fun i => i == 0%N)) /= big1 ?add1n //.
 by move=> i /eqP.
 Qed.
 
-(** *** Expansion of symmetric polynomials om monomials *)
-Lemma issym_symmE (p : {mpoly R[n]}) :
-  p \is symmetric ->
-  p = \sum_(m <- msupp p | m \is dominant) p@_m *: 'm[partm m].
+Lemma symE (p q : {sympoly R[n]}) :
+  reflect (forall m, m \is dominant -> p@_m = q@_m) (p == q).
 Proof.
-move=> Hsym; apply/mpolyP => m.
-case: (boolP (m \in msupp p)) => Hm.
-- rewrite -big_filter (bigD1_seq (mpart (partm m))) /=; first last.
-  + by apply filter_uniq; apply msupp_uniq.
-  + rewrite mem_filter mpart_is_dominant //= mcoeff_msupp.
-    have [s /eqP ->] := mpart_partm_perm m.
-    by rewrite -mcoeff_sym (issymP p Hsym) -mcoeff_msupp.
-  rewrite linearD linearZ /= mpartK ?size_partm //.
-  rewrite big_filter_cond /=.
-  have -> : p@_(mpart (partm m)) = p@_m.
-    have [/= s /eqP ->]:= mpart_partm_perm m.
-    by rewrite -mcoeff_sym (issymP p Hsym).
-  have -> : 'm[partm m]@_m = 1.
-    by rewrite (mcoeff_symm _ (size_partm _)) perm_sym partm_permK.
-  rewrite mulr1 -[LHS]addr0; congr (_ + _); symmetry.
-  rewrite !raddf_sum /=.
-  rewrite big_seq_cond; apply big1 => /= m' /and3P [_ Hdom Hm'].
-  rewrite mcoeffZ (mcoeff_symm _ (size_partm _)).
-  rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
-  apply/negP => /perm_partm/(congr1 (fun x : intpart => @mpart n x)) H.
-  by move: Hm'; rewrite -{}H !(partmK Hdom) eq_refl.
-- rewrite (memN_msupp_eq0 Hm); symmetry.
-  rewrite !raddf_sum /=.
-  rewrite big_seq_cond; apply big1 => /= m' /andP [Hsupp Hdom].
-  rewrite mcoeffZ (mcoeff_symm _ (size_partm _)) partmK //.
-  rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //.
-  apply/negP => /mnm_perm [/= s /eqP Hs].
-  move: Hm Hsupp; rewrite -mcoeff_eq0 mcoeff_msupp Hs.
-  rewrite -mcoeff_sym (issymP p Hsym) => /eqP ->.
-  by rewrite eq_refl.
+apply (iffP eqP) => [-> //| Hdom]; apply/val_inj/mpolyP => m /=.
+have [s /eqP <- ] := perm_mpart_partm m.
+rewrite -(issymP p (sympolP p) (s^-1)%g) -(issymP q (sympolP q) (s^-1)%g).
+rewrite !mcoeff_sym mpermKV.
+by apply: Hdom; apply/mpart_is_dominant.
 Qed.
 
-Lemma symm_genE (f : {sympoly R[n]}) :
-  f = \sum_(m <- msupp f | m \is dominant) f@_m *: 'm[partm m].
-Proof. by apply val_inj => /=; apply issym_symmE. Qed.
-
+(** *** Expansion of symmetric polynomials on monomials *)
+Lemma sym_symmE (p : {sympoly R[n]}) :
+  p = \sum_(m <- msupp p | m \is dominant) p@_m *: 'm[partm m].
+Proof.
+apply/eqP/symE => // m mdom; rewrite !raddf_sum /=.
+case: (boolP (m \in msupp p)) => [minsupp|mninsupp].
+- rewrite -big_filter (bigD1_seq m) /=; first last.
+  + by apply filter_uniq; apply msupp_uniq.
+  + by rewrite mem_filter mdom.
+  rewrite linearZ /= mcoeff_symm ?size_partm //.
+  rewrite perm_sym partm_permK mulr1 big_seq_cond /=.
+  rewrite big1 ?addr0 // => mon /andP [].
+  rewrite linearZ /= mcoeff_symm ?size_partm //.
+  rewrite mem_filter => /andP [mondom monsupp] neq.
+  case: (boolP (perm_eq _ _)) => [/permPr Hperm|]; last by rewrite mulr0.
+  exfalso; move: neq => /negP; apply; apply/eqP.
+  apply: dominant_eq => //.
+  by rewrite -{}Hperm partm_permK.
+- rewrite (memN_msupp_eq0 mninsupp); symmetry.
+  rewrite big_seq_cond; apply big1 => /= m' /andP [Hsupp Hdom].
+  rewrite mcoeffZ (mcoeff_symm _ (size_partm _)) partmK //.
+  suff -> : perm_eq m' m = false by rewrite mulr0.
+  apply/negP => Hperm; move: mninsupp.
+  by rewrite -(dominant_eq Hdom mdom Hperm) Hsupp.
+Qed.
 
 Lemma size_mpart_in_supp (f : {mpoly R[n]}) d (p : 'P_d) :
   f \is d.-homog -> mpart p \in msupp f -> size p <= n.
@@ -407,11 +419,19 @@ rewrite /= mdeg0 => Hd; subst d.
 by move: H1; rewrite intpartn0.
 Qed.
 
-Lemma homog_symmE d (f : {sympoly R[n]}) :
-  sympol f \is d.-homog ->
-  f = \sum_(l : 'P_d) f@_(mpart l) *: 'm[l].
+Lemma dominant_mpart d m :
+  m \is dominant -> mdeg m = d -> { p : 'P_d | m = mpart p }.
 Proof.
-move=> Hhomog; rewrite {1}(symm_genE f).
+move=> mdom degm.
+have hpm : is_part_of_n d (partm m).
+  by rewrite /= -degm sumn_partm eqxx /=.
+by exists (IntPartN hpm); rewrite partmK.
+Qed.
+
+Lemma homog_symmE d (f : {sympoly R[n]}) :
+  sympol f \is d.-homog -> f = \sum_(l : 'P_d) f@_(mpart l) *: 'm[l].
+Proof.
+move=> Hhomog; rewrite {1}(sym_symmE f).
 apply val_inj => /=.
 rewrite !linear_sum /=  (bigID (fun i : 'P_d => mpart i \in msupp f)) /=.
 rewrite [X in _ + X]big1 ?addr0;
@@ -434,11 +454,10 @@ rewrite -big_filter -[RHS]big_filter; apply perm_big; apply uniq_perm.
 - move=> /= m; rewrite !mem_filter andbC.
   case: (boolP (m \in msupp f)) => //= Hsupp.
   apply/idP/mapP => /= [Hdom | [l _ ->]]; last exact: mpart_is_dominant.
-  have Hp : is_part_of_n d (partm m).
-    rewrite /is_part_of_n /= intpartP andbT sumn_partm //.
-    by move: Hhomog => /dhomogP/(_ _ Hsupp) /= ->.
-  exists (IntPartN Hp); first by rewrite mem_enum.
-  by rewrite /= partmK.
+  have {Hsupp} degm : mdeg m = d.
+    by move: Hhomog => /dhomogP/(_ _ Hsupp).
+  have {Hdom degm} [p ->] := dominant_mpart Hdom degm.
+  by exists p => //; rewrite mem_enum.
 Qed.
 
 Lemma symm_unique d (f : {sympoly R[n]}) c :
@@ -464,6 +483,11 @@ Lemma symm_unique0 d c :
   forall l : 'P_d, (size l <= n)%N -> c l = 0.
 Proof. by move=> /esym/symm_unique => H l /H ->; rewrite mcoeff0. Qed.
 
+Lemma sum_symmE d (f : {sympoly R[n]}) :
+  \sum_(l : 'P_d) f@_(mpart l) *: 'm[l] =
+  \sum_(l <- [seq val p | p <- enum {: 'P_d}]) f@_(mpart l) *: 'm[l].
+Proof. by rewrite big_map big_enum. Qed.
+
 (** ** Basis at degree 0 *)
 Lemma syme0 : 'e_0 = 1.
 Proof using. by apply val_inj; rewrite /= mesym0E. Qed.
@@ -483,6 +507,14 @@ apply val_inj => /=.
 rewrite /symh_pol /symh_pol_bound (big_pred1 (BMultinom Hd0)); first last.
   by move=> m; rewrite /= mdeg_eq0 {2}/eq_op.
 by rewrite mpolyX0.
+Qed.
+
+Lemma symm0 : 'm[[::]] = 1.
+Proof using.
+have /homog_symmE -> : (sympol (1 : {sympoly R[n]})) \is 0.-homog.
+  by rewrite rmorph1 dhomog1.
+rewrite sum_symmE enum_intpartnE /enum_partn /= big_cons big_nil addr0.
+by rewrite mcoeff1 mpart0 eqxx scale1r.
 Qed.
 
 
@@ -525,6 +557,67 @@ Notation "''e_' k" := (syme _ _ k).
 Notation "''h_' k" := (symh _ _ k).
 Notation "''p_' k" := (symp _ _ k).
 Notation "''m[' k ]" := (symm _ _ k).
+
+Section ChangeBaseMonomial.
+
+Variables (n : nat) (R : comRingType).
+Local Notation SP := {sympoly R[n]}.
+
+Lemma expUmpartE nv k :
+  (U_( ord0) *+ k)%MM = mpart (rowpartn k) :> 'X_{1..nv.+1}.
+Proof.
+apply/mnmP => [[i Hi]]; rewrite /mpart mulmnE !mnmE -val_eqE /=.
+case: k => [|k] /=; first by rewrite mul0n mnmE nth_default.
+rewrite mnmE /=;
+by case: i {Hi} => [|i] /=; rewrite ?muln1 // muln0 nth_default.
+Qed.
+
+Lemma expUmpartNE nv k i (P : intpartn k.+1) :
+  ((U_(i) *+ k.+1)%MM == mpart P :> 'X_{1..nv.+1})
+  = (i == ord0) && (P == rowpartn k.+1).
+Proof.
+apply/eqP/andP => [| [/eqP ->{i} /eqP ->{P}]]; last exact: expUmpartE.
+rewrite /mpart; case: leqP => _; first last.
+  move/(congr1 (fun mon : 'X_{1..nv.+1} => mon i)).
+  by rewrite mulmnE !mnmE -val_eqE /= eqxx muln1.
+case: (altP (i =P ord0)) => [->{i} | neq H]; first split => //.
+  apply/eqP/val_inj => /=.
+  case: P H => [[|p0 [|p1 p]]]//=.
+    by rewrite addn0 => /andP [/eqP ->].
+  rewrite -/(is_part (p1 :: p)) => /and3P [Hsum _ Hpart].
+  move/(congr1 (fun mon : 'X_{1..nv.+1} => mon ord0)).
+  rewrite mulmnE !mnmE -val_eqE /= muln1 => Hp0; exfalso.
+  move: Hsum Hpart; rewrite -{}Hp0 -{2}(addn0 k.+1) eqn_add2l.
+  by rewrite addn_eq0 => /andP [/eqP -> _] /part_head_non0.
+exfalso; move/(congr1 (fun mon : 'X_{1..nv.+1} => mon ord0)): H.
+rewrite mulmnE !mnmE (negbTE neq) {neq} muln0 /= => Hp0.
+case: P Hp0 => [[//|p0 p]] Hp /= Hp0.
+by move: Hp; rewrite -{}Hp0 => /andP [_ /part_head_non0].
+Qed.
+
+Lemma symmpE k : 'm[[:: k.+1]] = 'p_k.+1 :> SP.
+Proof.
+case: n => [|n0].
+  apply/val_inj; rewrite [RHS]nvar0_mpolyC [LHS]nvar0_mpolyC.
+  rewrite -[[:: k.+1]]/(pnval (rowpartn k.+1)).
+  rewrite (dhomog_nemf_coeff (symm_homog 0 R (colpartn k.+1)));
+    last by rewrite /= mdeg0.
+  by rewrite (dhomog_nemf_coeff (symp_homog 0 R k.+1)) //= mdeg0.
+move HK : k.+1 => K.
+rewrite (homog_symmE (symp_homog n0.+1 R K)) (bigD1 (rowpartn K)) //=.
+rewrite -[in 'm[_]]HK -rowpartnSE HK.
+have -> : (symp_pol n0.+1 R K)@_(mpart (rowpartn K)) = 1.
+  rewrite /symp_pol (bigD1 ord0) // raddfD raddf_sum //.
+  rewrite mpolyXn [rowpartn _]lock /= mcoeffX -HK.
+  rewrite -{1}lock expUmpartNE /= eqxx big1 ?addr0 // => i /negbTE Hi.
+  by rewrite mpolyXn /= mcoeffX expUmpartNE Hi.
+rewrite scale1r big1 ?addr0 -{}HK // => P /negbTE HP.
+suff -> : (symp_pol n0.+1 R k.+1)@_(mpart P) = 0 by rewrite scale0r.
+rewrite /symp_pol raddf_sum big1 ?mcoeff0 //= => i _.
+by rewrite mpolyXn /= mcoeffX expUmpartNE HP andbF.
+Qed.
+
+End ChangeBaseMonomial.
 
 (** ** Schur symmetric polynomials *)
 Section Schur.
