@@ -838,7 +838,7 @@ Qed.
 Lemma Kostka_sumnE la mu : d != sumn mu -> Kostka la mu = 0.
 Proof.
 rewrite /Kostka => Hd; apply KostkaMon_sumeval.
-by rewrite eq_sym intpartn_sumn /mdeg /= -sumnE sumn_mpart ?leqSpred.
+by rewrite eq_sym intpartn_sumn mdeg_mpart ?leqSpred.
 Qed.
 
 Lemma Kostka_size0 la mu :

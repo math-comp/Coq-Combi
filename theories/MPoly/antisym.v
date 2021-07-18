@@ -206,6 +206,9 @@ rewrite (bigID (fun i : 'I_n => i < size sh)) /= addnC big1 ?add0n //.
 by move=> i; rewrite -leqNgt; apply: nth_default.
 Qed.
 
+Lemma mdeg_mpart sh : size sh <= n -> mdeg (mpart sh) = sumn sh.
+Proof. by move/sumn_mpart => <-; rewrite sumnE -/(mdeg _). Qed.
+
 Lemma sumn_partm m : sumn (partm m) = mdeg m.
 Proof.
 rewrite sumnE.
@@ -218,7 +221,6 @@ move/is_dominant_partm ->.
 symmetry; rewrite big_filter /mdeg.
 by rewrite (bigID (fun i => i == 0)) /= big1 ?add0n // => i /eqP.
 Qed.
-
 
 Local Notation "m # s" := [multinom m (s i) | i < n]
   (at level 40, left associativity, format "m # s").

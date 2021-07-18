@@ -617,6 +617,13 @@ rewrite /symp_pol raddf_sum big1 ?mcoeff0 //= => i _.
 by rewrite mpolyXn /= mcoeffX expUmpartNE HP andbF.
 Qed.
 
+Lemma symh_to_symm k : 'h_k = \sum_(l : 'P_k) 'm[l] :> SP.
+Proof.
+rewrite (homog_symmE (symh_homog n R k)); apply eq_bigr => l _.
+case: (leqP (size l) n) => [Hsz | /symm_oversize ->]; last by rewrite scaler0.
+by rewrite mcoeff_symh mdeg_mpart // intpartn_sumn eqxx scale1r.
+Qed.
+
 End ChangeBaseMonomial.
 
 (** ** Schur symmetric polynomials *)
