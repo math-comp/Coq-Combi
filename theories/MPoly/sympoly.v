@@ -35,7 +35,7 @@ Classical bases
 
 - [coeff_prodgen Co la mu] == the coefficient of the product ['g[la]]
              on ['g_[mu]] assuming that [co : forall d : nat, 'P_d -> R] gives
-             the coefficients of ['f_i] on ['g_[mu]] then 
+             the coefficients of ['f_i] on ['g_[mu]]
 
 Change of scalars
 
@@ -56,21 +56,31 @@ of a basis element of [syma] in [symb]
 - s and m : [syms_symm] [symm_syms]
 - s and h : [syms_symh] [symh_syms]
 - h and p : [symh_to_symp] and Newton's formula [Newton_symh]
+- h and m : [symh_to_symm]
+- p and m : [symp_to_symm]
 
+The omega involution
+
+- [omegasf] == the omega involution, that is the unique ring morphism
+             exchanging ['e_k] and ['h_k] wheneven [k] is smaller than the
+             number of variables.
 
 Change of the number of variables
 
 - [sympolyf R m] == the algebra morphism expanding any symetric polynomial
              (in [{sympoly R[m]}]) as a polynomial in the ['e_i]
-             (in [{mpoly R[m]}]) by the fundamental theorem of symmetric function.
+             (in [{mpoly R[m]}]) by the fundamental theorem of symmetric
+             polynomials.
 - [cnvarsym R m n] == the canonical algebra morphism
              [{sympoly R[m.+1]} -> {sympoly R[n.+1]}] given by the fundamental
              theorem.
 
-We show that if d ≤ m or n ≤ m, for any partition in ['P_d] the change of variable
-sends a basis element ['b[la]] to the same element. These are lemmas
+We show that if d ≤ m or n ≤ m, for any partition in ['P_d] the change of
+number of variables sends a basis element ['b[la]] to the same element. These
+are lemmas
 
-[cnvar_prodsyme], [cnvar_prodsymh], [cnvar_prodsymp], [cnvar_syms] and [cnvar_symm].
+[cnvar_prodsyme], [cnvar_prodsymh], [cnvar_prodsymp], [cnvar_syms]
+and [cnvar_symm].
 
  ******)
 Require Import mathcomp.ssreflect.ssreflect.
@@ -595,7 +605,7 @@ case: P Hp0 => [[//|p0 p]] Hp /= Hp0.
 by move: Hp; rewrite -{}Hp0 => /andP [_ /part_head_non0].
 Qed.
 
-Lemma symmpE k : 'm[[:: k.+1]] = 'p_k.+1 :> SP.
+Lemma symp_to_symm k : 'p_k.+1 = 'm[[:: k.+1]] :> SP.
 Proof.
 case: n => [|n0].
   apply/val_inj; rewrite [RHS]nvar0_mpolyC [LHS]nvar0_mpolyC.
@@ -605,7 +615,7 @@ case: n => [|n0].
   by rewrite (dhomog_nemf_coeff (symp_homog 0 R k.+1)) //= mdeg0.
 move HK : k.+1 => K.
 rewrite (homog_symmE (symp_homog n0.+1 R K)) (bigD1 (rowpartn K)) //=.
-rewrite -[in 'm[_]]HK -rowpartnSE HK.
+rewrite -[in RHS]HK -rowpartnSE HK.
 have -> : (symp_pol n0.+1 R K)@_(mpart (rowpartn K)) = 1.
   rewrite /symp_pol (bigD1 ord0) // raddfD raddf_sum //.
   rewrite mpolyXn [rowpartn _]lock /= mcoeffX -HK.
