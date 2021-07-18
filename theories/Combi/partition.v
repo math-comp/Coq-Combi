@@ -1412,19 +1412,19 @@ End PartOfn.
 Notation "''P_' n" := (intpartn n)
   (at level 8, n at level 2, format "''P_' n").
 
-Lemma intpartn0 (sh : 'P_0) : sh = [::] :> seq nat.
+Lemma val_intpartn0 (sh : 'P_0) : sh = [::] :> seq nat.
 Proof.
 case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
 by rewrite /enum_partn /= inE => /eqP.
 Qed.
 
-Lemma intpartn1 (sh : 'P_1) : sh = [:: 1] :> seq nat.
+Lemma val_intpartn1 (sh : 'P_1) : sh = [:: 1] :> seq nat.
 Proof.
 case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
 by rewrite /enum_partn /= inE => /eqP.
 Qed.
 
-Lemma intpartn2 (sh : 'P_2) :
+Lemma val_intpartn2 (sh : 'P_2) :
   sh = [:: 2]  :> seq nat \/ sh = [:: 1; 1] :> seq nat.
 Proof.
 case: sh => sh Hsh /=; move: Hsh; rewrite enum_partnP.
@@ -1463,7 +1463,7 @@ Proof. by apply val_inj; rewrite /= !cast_intpartnE. Qed.
 Definition rowpart d := if d is _.+1 then [:: d] else [::].
 Fact rowpartn_subproof d : is_part_of_n d (rowpart d).
 Proof. by case: d => [//= | d]; rewrite /is_part_of_n /= addn0 eq_refl. Qed.
-Definition rowpartn d : 'P_d := IntPartN (rowpartn_subproof d).
+Definition rowpartn d : 'P_d := locked (IntPartN (rowpartn_subproof d)).
 
 Definition colpart d := nseq d 1%N.
 Fact colpartn_subproof d : is_part_of_n d (colpart d).
@@ -1472,16 +1472,26 @@ elim: d => [| d ] //= /andP [/eqP -> ->].
 rewrite add1n eq_refl andbT /=.
 by case: d.
 Qed.
-Definition colpartn d : 'P_d := IntPartN (colpartn_subproof d).
+Definition colpartn d : 'P_d := locked (IntPartN (colpartn_subproof d)).
+
+Lemma rowpartnE d : rowpartn d = (if d is _.+1 then [:: d] else [::]) :> seq nat.
+Proof. by rewrite /rowpartn -lock. Qed.
+Lemma colpartnE d : colpartn d = nseq d 1%N :> seq nat.
+Proof. by rewrite /colpartn -lock. Qed.
 
 Lemma rowpartn0E : rowpartn 0 = [::] :> seq nat.
-Proof. by []. Qed.
+Proof. by rewrite rowpartnE. Qed.
 Lemma rowpartnSE d : rowpartn d.+1 = [:: d.+1] :> seq nat.
-Proof. by []. Qed.
+Proof. by rewrite rowpartnE. Qed.
 
-Lemma colpartnE d (la : 'P_d) : all (pred1 1) la -> la = colpartn d.
+Lemma size_colpartn d : size (colpartn d) = d.
+Proof. by rewrite colpartnE size_nseq. Qed.
+Lemma size_rowpartn d : size (rowpartn d) = (d != 0).
+Proof. by rewrite rowpartnE; case: d. Qed.
+
+Lemma colpartnP d (la : 'P_d) : all (pred1 1) la -> la = colpartn d.
 Proof.
-move=> Hall; apply val_inj => /=.
+move => Hall; apply val_inj; rewrite /= colpartnE.
 case: la Hall => la /= /andP [/eqP].
 elim: d la => [|d IHd] /= la Hsum Hla; first by rewrite (part0 Hla).
 case: la Hsum Hla => //= l0 la Hsum.
@@ -1491,9 +1501,22 @@ by move: Hsum; rewrite add1n => [[]].
 Qed.
 
 Lemma conj_rowpartn d : conj_intpartn (rowpartn d) = colpartn d.
-Proof. by apply val_inj => /=; rewrite /rowpart /colpart; case: d. Qed.
+Proof. by apply val_inj => /=; rewrite rowpartnE colpartnE; case: d. Qed.
 Lemma conj_colpartn d : conj_intpartn (colpartn d) = rowpartn d.
 Proof. by rewrite -[RHS]conj_intpartnK conj_rowpartn. Qed.
+
+Lemma intpartn0 : all_equal_to (rowpartn 0).
+Proof. by move=> sh /=; apply val_inj; rewrite /= val_intpartn0 rowpartnE. Qed.
+
+Lemma intpartn1 : all_equal_to (rowpartn 1).
+Proof. by move=> sh /=; apply val_inj; rewrite /= val_intpartn1 rowpartnE. Qed.
+
+Lemma intpartn2 (sh : 'P_2) : sh = rowpartn 2 \/ sh = colpartn 2.
+Proof.
+case: (val_intpartn2 sh) => sheq; [left | right]; apply val_inj => /=.
+- by rewrite sheq rowpartnE.
+- by rewrite sheq colpartnE.
+Qed.
 
 
 (** ** Removing a corner from a partition *)
@@ -1655,6 +1678,29 @@ End UnionPart.
 
 Notation "a +|+ b" := (union_intpartn a b) (at level 50) : Combi_scope.
 Bind Scope Combi_scope with intpartn.
+
+
+Section IntpartnCons.
+
+Import LeqGeqOrder.
+
+Variables (d l0 : nat) (la : seq nat).
+Hypotheses (Hla : is_part_of_n d la)
+           (Hlla : is_part_of_n (l0 + d)%N (l0 :: la)).
+
+Lemma intpartn_cons : IntPartN Hlla = rowpartn l0 +|+ IntPartN Hla.
+Proof.
+apply val_inj; rewrite union_intpartnE /= rowpartnE.
+move: Hlla => /andP [_] Hpart.
+have:= part_head_non0 Hpart => /=.
+move: Hpart; rewrite is_part_sortedE => /andP [Hsort _].
+case: l0 Hsort => // l Hsort _.
+apply (sorted_eq (leT := geq)) => //; first exact: sort_sorted.
+by rewrite perm_sym perm_sort.
+Qed.
+
+End IntpartnCons.
+
 
 (** * Dominance order on partition *)
 Definition partdomsh n1 n2 (s1 s2 : seq nat) :=
@@ -1831,10 +1877,11 @@ Proof. by rewrite /leqX_op. Qed.
 
 Lemma partdom_rowpartn d (sh : 'P_d) : partdom sh (rowpartn d).
 Proof.
-case: d sh => [|d] sh; first by rewrite /= !intpartn0.
+case: d sh => [|d] sh; first by rewrite /= !val_intpartn0.
 rewrite /=; apply/partdomP => i.
 case: i => [|i] /=; rewrite ?take0 ?addn0 //.
-by rewrite -{2}(sumn_intpartn sh) -{2}(cat_take_drop i.+1 sh) sumn_cat leq_addr.
+rewrite rowpartnSE /= addn0 -{2}(sumn_intpartn sh).
+by rewrite -{2}(cat_take_drop i.+1 sh) sumn_cat leq_addr.
 Qed.
 
 Lemma colpartn_partdom d (sh : 'P_d) : partdom (colpartn d) sh.
@@ -1842,14 +1889,14 @@ Proof.
 apply/partdomP => i; rewrite /=.
 case: (ssrnat.ltnP i (size sh)) => Hi.
 - rewrite !sumn_take !big_nat; apply leq_sum => j /= Hj.
-  rewrite nth_nseq.
+  rewrite colpartnE nth_nseq.
   have:= (leq_trans (ltn_trans Hj Hi) (size_part (intpartnP sh))).
   rewrite sumn_intpartn => ->.
   rewrite lt0n; apply nth_part_non0 => //.
   exact: ltn_trans Hj Hi.
 - rewrite (take_oversize Hi) sumn_intpartn.
-  rewrite -{2}(sumn_intpartn (colpartn d)) /=.
-  by rewrite -{2}(cat_take_drop i (colpart d)) sumn_cat leq_addr.
+  rewrite -{3}(sumn_intpartn (colpartn d)) /=.
+  by rewrite -{2}(cat_take_drop i (colpartn d)) sumn_cat leq_addr.
 Qed.
 
 End IntPartNDom.

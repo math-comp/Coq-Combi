@@ -622,17 +622,17 @@ Notation Schur p := (Schur n0 R p).
 Lemma yamrowP :
   is_yam_of_eval (intpart_of_intpartn (rowpartn d2)) (ncons d2 0%N [::]).
 Proof using .
-rewrite /is_yam_of_eval; elim: d2 => [//= | d] /andP [/= -> /eqP ->].
-by case: d => /=.
+rewrite /is_yam_of_eval; elim: d2 => [|d]; rewrite /= !rowpartnE //.
+by move=> /andP [/= -> /eqP ->]; case: d => /=.
 Qed.
 Definition yamrow : yameval (rowpartn d2) := YamEval yamrowP.
 
 Lemma is_row_yamrow : is_row (ncons d2 0%N [::]).
 Proof using . by elim: d2 => [| [|d]]. Qed.
 
-Lemma yam_of_rowpart d y : is_yam_of_eval (rowpart d) y -> y = ncons d 0%N [::].
+Lemma yam_of_rowpart d y : is_yam_of_eval (rowpartn d) y -> y = ncons d 0%N [::].
 Proof using .
-move=> /andP [Hyam /eqP].
+rewrite rowpartnE => /andP [Hyam /eqP].
 elim: d y Hyam => [//= | d IHd] //=.
   move=> y _; exact: evalseq0.
 case=> [| y0 y] //= /andP [_ /IHd{IHd} Hrec].
@@ -666,7 +666,7 @@ case: (boolP (hb_strip P1 P)) => Hstrip /=.
   rewrite -(hb_strip_rowE (intpartnP _) (intpartnP _)
                           (u := (ncons d2 0%N [::]))); first last.
   + rewrite size_ncons /= addn0 (sumn_diff_shape_intpartE (rowpartn d2)) //=.
-    by rewrite /rowpart; case: d2 => [//= | d] /=; rewrite addn0.
+    by rewrite rowpartnE; case: d2 => [//= | d] /=; rewrite addn0.
   + exact: is_row_yamrow.
   by move=> /andP [].
 - suff -> : LRset = set0 by rewrite cards0.

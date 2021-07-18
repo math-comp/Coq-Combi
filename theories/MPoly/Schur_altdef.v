@@ -416,7 +416,7 @@ suff {d la} H : forall b d, d <= b -> forall (la : 'P_d),
 elim=> [|b IHb] d Hd la.
   move: Hd; rewrite leqn0 => /eqP Hd; subst d.
   rewrite Schur0 mulr1 -{1}(add0m rho)=> _; congr 'a_(_ + rho).
-  by rewrite intpartn0 /mpart /= mnmP => i; rewrite !mnmE /=.
+  by rewrite val_intpartn0 /mpart /= mnmP => i; rewrite !mnmE /=.
 case: (leqP d b) => Hdb; first exact: (IHb _ Hdb).
 have {Hdb}Hd : d = b.+1 by apply anti_leq; rewrite Hd Hdb.
 pose P := IntPartNLex.intpartnlex_finPOrdType d.
@@ -887,15 +887,15 @@ case Hla : (size la) => [|szla].
   move: Hla => /eqP/nilP Hla.
   have {Hla} Hd : d = 0 by rewrite -(sumn_intpartn la) Hla.
   subst d.
-  have Ht : is_tab_of_shape 0 la [::] by rewrite intpartn0.
+  have Ht : is_tab_of_shape 0 la [::] by rewrite val_intpartn0.
   rewrite [KostkaTab _ _](_ : _ = [set TabSh Ht]) ?cards1 //.
   apply/setP => t; rewrite !inE; apply/eqP/eqP => [|->]/=.
-  - rewrite /mpart intpartn0 /= => /(congr1 (fun t : 1.-tuple nat => sumn t)).
+  - rewrite /mpart val_intpartn0 /= => /(congr1 (fun t : 1.-tuple nat => sumn t)).
     rewrite sumn_eval size_to_word /=.
     rewrite (map_comp _ nat_of_ord) val_enum_ord /= addn0.
     by move=> /(tab0 (tabshP _)) => Ht0; apply val_inj.
   - rewrite /to_word /=; apply eq_from_tnth => i.
-    by rewrite /mpart intpartn0 /= !tnth_mktuple /=.
+    by rewrite /mpart val_intpartn0 /= !tnth_mktuple /=.
 rewrite (Kostka_any la (n := szla)) /KostkaMon ?Hla //.
 have Hntht j :
   nth [::] [seq nseq (nth 0 la (i : nat)) i | i : 'I_szla.+1] j =
@@ -1066,9 +1066,10 @@ Proof.
 rewrite /Kostka.
 have -> : (mpart (colpartn d)) =
           [multinom (i < d)%N : nat | i < (size (colpartn d)).-1.+1].
-  apply/mnmP => /= i; rewrite /mpart /colpartn /colpart /= leqSpred !mnmE.
-  by rewrite nth_nseq; case: (ltnP i d).
-rewrite /KostkaMon /KostkaTab /colpartn /= /colpart size_nseq.
+  apply/mnmP => /= i; rewrite /mpart.
+  rewrite {2 3}size_colpartn leqSpred !mnmE.
+  by rewrite {1}colpartnE nth_nseq; case: (ltnP i d).
+rewrite /KostkaMon /KostkaTab colpartnE /= /colpart size_nseq.
 rewrite -(card_imset _ (can_inj (tabord_of_natK (leqSpred _)))).
 apply eq_card => /= t; rewrite !inE.
 apply/eqP/imsetP => [Ht | [/= st _ ->{t}]].
@@ -1459,8 +1460,8 @@ Lemma Kostka_recE d (la : 'P_d) mu :
   sumn mu = d -> Kostka_rec la mu = Kostka la mu.
 Proof.
 elim: mu d la => [| m0 mu IHmu] d la /= Hd.
-  subst d; have -> : la = rowpartn 0 by apply val_inj; rewrite /= !intpartn0.
-  by rewrite -[[::]]/(pnval (rowpartn 0)) Kostka_diag.
+  subst d; have -> : la = rowpartn 0 by rewrite !intpartn0.
+  by rewrite -rowpartn0E Kostka_diag eqxx.
 rewrite -sumn_map_condE -enum_intpartnE big_map enumT.
 by rewrite Kostka_ind //; apply eq_big => //= nu Hstrip; apply IHmu.
 Qed.

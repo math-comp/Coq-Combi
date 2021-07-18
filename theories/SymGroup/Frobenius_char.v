@@ -43,7 +43,7 @@ From mathcomp Require Import mxrepresentation classfun character.
 From SsrMultinomials Require Import mpoly.
 Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy
         Schur_altdef stdtab.
-Require Import permcomp cycletype towerSn permcent.
+Require Import permcomp cycletype towerSn permcent reprSn.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -163,16 +163,12 @@ rewrite (eq_bigr (fun la => 'z_la^-1 *: 'hp[la])); first last.
   rewrite -Fchar_ncfuniCT /ncfuniCT /= linearZ /=.
   by rewrite scalerA /= mulrC divff // scale1r.
 apply val_inj; case: n => [|n0]/=.
-  rewrite /= prod_gen0.
-  rewrite (big_pred1 (rowpartn 0)); first last.
-    by move=> la /=; symmetry; apply/eqP/val_inj; rewrite /= intpartn0.
+  rewrite prod_gen0 (big_pred1 (rowpartn 0)); first last.
+    by move=> la /=; rewrite !intpartn0 eqxx.
   rewrite linearZ /= prod_gen0.
-  rewrite zcoeffE /zcard big_nil mul1n /=.
-  rewrite (big_pred1 ord0); first last.
-    move=> i /=; symmetry; apply/eqP/val_inj/eqP.
-    by rewrite /= -leqn0 -ltnS ltn_ord.
-  by rewrite fact0 invr1 scale1r.
-rewrite /prod_gen big_seq1 raddf_sum symh_to_symp //=.
+  rewrite zcoeffE /zcard rowpartn0E big_nil mul1n /=.
+  by rewrite big1 // invr1 scale1r.
+rewrite /prod_gen rowpartnE big_seq1 raddf_sum symh_to_symp //=.
 by apply eq_bigr => l _; rewrite zcoeffE.
 Qed.
 
@@ -237,27 +233,15 @@ Local Notation HS := {homsym algC[nvar, n]}.
 
 Lemma homsymh_character (la : 'P_n) : Fchar_inv 'hh[la] \is a character.
 Proof.
-move: (n) la Hn => d.
-case=> [la /= Hla]; have:= Hla => /andP [/eqP Hd _]; subst d.
+move: (n) la Hn => d [la /= Hla].
+have:= Hla => /andP [/eqP Hd _]; subst d.
 elim: la Hla => [| l0 la IHla] Hlla Hd.
-  have -> : 'hh[(IntPartN Hlla)] = Fchar 1.
-    by rewrite Fchar_triv; congr 'hh[_]; apply val_inj.
-  by rewrite FcharK // cfun1_char.
+  by rewrite intpartn0 -Fchar_triv FcharK // cfun1_char.
 have Hla : (sumn la == sumn la) && is_part la.
   by rewrite eq_refl /=; have:= Hlla => /andP [_ /is_part_consK ->].
 have Hdla : (sumn la <= nvar)%N by apply: (leq_trans _ Hd); rewrite /= leq_addl.
 have {IHla} Hrec := IHla Hla Hdla.
-have -> : 'hh[(IntPartN Hlla)] = 'hh[rowpartn l0] *h 'hh[(IntPartN Hla)]
-           :> {homsym algC[nvar, _]}.
-  apply val_inj; rewrite /= prod_genM; congr prod_gen.
-  apply val_inj; rewrite union_intpartnE /= /rowpart.
-  move: Hlla => /andP [_] Hpart.
-  have:= part_head_non0 Hpart => /=.
-  move: Hpart; rewrite is_part_sortedE => /andP [Hsort _].
-  case: l0 Hsort {Hd} => // l0 Hsort _.
-  apply (sorted_eq (leT := geq)) => //; first exact: sort_sorted.
-  by rewrite perm_sym perm_sort /=.
-rewrite -Fchar_triv -(Fchar_invK Hdla 'hh[(IntPartN Hla)]).
+rewrite homsymprod_hh -Fchar_triv -(Fchar_invK Hdla 'hh[(IntPartN Hla)]).
 rewrite -Fchar_ind_morph (FcharK Hd).
 apply cfInd_char; rewrite cfIsom_char.
 exact: (cfextprod_char (cfun1_char _) Hrec).
@@ -290,8 +274,7 @@ Notation "''irrSG[' l ']'" := (irrSG l).
 
 Local Notation PO := IntPartNDom.intpartndom_finPOrdType.
 
-Lemma Fchar_irrSGE nvar0 n (la : 'P_n) :
-  Fchar nvar0 'irrSG[la] = 'hs[la].
+Lemma Fchar_irrSGE nvar0 n (la : 'P_n) : Fchar nvar0 'irrSG[la] = 'hs[la].
 Proof.
 rewrite /irrSG -(FcharNvar (nvar0 := n.-1) _) ?leqSpred //=.
 by rewrite Fchar_invK ?leqSpred //= cnvarhomsyms ?leqSpred.
@@ -354,11 +337,10 @@ Proof. by rewrite /irrSG Fchar_inv_isometry // homsymdotss. Qed.
 
 Theorem irrSG_irr n (la : 'P_n) : 'irrSG[la] \in irr 'SG_n.
 Proof.
-pose P := IntPartNDom.intpartndom_finPOrdType n.
-elim/(finord_wf_down (T := P)): la => la IHla.
+elim/(finord_wf_down (T := PO n)): la => la IHla.
 rewrite irrEchar irrSG_orthonormal !eq_refl andbT.
 have -> : 'irrSG[la] =
-         'M[la] - \sum_(mu : P | (la < mu)%Ord)
+         'M[la] - \sum_(mu : PO n | (la < mu)%Ord)
                    '[ 'M[la], 'irrSG[mu] ] *: 'irrSG[mu].
   apply/eqP; rewrite eq_sym subr_eq {1}Young_rule_partdom.
   apply/eqP; congr (_ + _); apply eq_bigr => mu _.
@@ -440,41 +422,31 @@ rewrite big1 ?addr0; first last.
 suff -> : coord 'hs (enum_rank la) ('hp[mu] : HSC) =
          ratr (coord 'hs (enum_rank la) ('hp[mu] : HSR)).
   by apply/esym/Num.Theory.CrealP; apply Creal_Crat; apply Crat_rat.
-rewrite -(map_homsymp (ratr_rmorphism algCF)).
-  have /coord_span -> : ('hp[mu] : HSR) \in span 'hs.
-    by rewrite (span_basis (symbs_basis _ (leqSpred n))) // memvf.
-  rewrite raddf_sum.
-  rewrite (eq_bigr
-             (fun i : 'I_#|{:'P_n}| =>
-               ratr (coord 'hs i ('hp[mu] : HSR)) *: ('hs)`_i )).
-    by rewrite !coord_sum_free // (basis_free (symbs_basis _ _)) // leqSpred.
-  move=> i _; rewrite /= scale_map_homsym.
-  have /= := map_homsymbs (@ratr_rmorphism algCF) n.-1 n.
-  move=> /(congr1 (fun p : _.-tuple _ => p`_i)) /= => <-.
-  congr (_ *: _); apply esym; apply nth_map.
-  by rewrite size_map -cardE ltn_ord.
+rewrite -(map_homsymp [rmorphism of ratr]).
+have /coord_span -> : ('hp[mu] : HSR) \in span 'hs.
+  by rewrite (span_basis (symbs_basis _ (leqSpred n))) // memvf.
+rewrite raddf_sum.
+rewrite (eq_bigr
+           (fun i : 'I_#|{:'P_n}| =>
+              ratr (coord 'hs i ('hp[mu] : HSR)) *: ('hs)`_i )).
+  by rewrite !coord_sum_free // (basis_free (symbs_basis _ _)) // leqSpred.
+move=> i _; rewrite /= scale_map_homsym.
+have /= := map_homsymbs [rmorphism of @ratr algCF] n.-1 n.
+move=> /(congr1 (fun p : _.-tuple _ => p`_i)) /= => <-.
+congr (_ *: _); apply esym; apply nth_map.
+by rewrite size_map -cardE ltn_ord.
 Qed.
-Notation Delta := Vanprod.
-Local Notation P d := (symp_pol _ _ d).
-
 
 (** Frobenius character formula for ['SG_n] *)
 Theorem Frobenius_char n (la mu : 'P_n) :
-  'irrSG[la] (permCT mu) = (Delta * \prod_(d <- mu) P d)@_(mpart la + rho n).
+  'irrSG[la] (permCT mu) =
+  (Vanprod * \prod_(d <- mu) (symp_pol n algCF d))@_(mpart la + rho n).
 Proof.
 rewrite -/Vanprod Vanprod_alt.
 case: n la mu => [//|n] //= la mu.
-  (* This case is trivial and the proof is awful !!! *)
-  have Hmon f : [multinom f i | i < 0] = 0%MM by apply mnmP => [[i Hi]].
-  rewrite !intpartn0 big_nil mulr1 /mpart /rho //= !{}Hmon addm0.
-  rewrite /alternpol (big_pred1 1%g); first last.
-    by move=> s /=; apply/esym/eqP/permP => [[i Hi]].
-  rewrite odd_perm1 /= msym1m expr0 scale1r mcoeffX eq_refl /=.
-  suff {mu} -> : 'irrSG[la] = 1 by rewrite (permS0 (permCT mu)) cfun11.
-  apply (can_inj (FcharK (leqSpred 0))).
-  rewrite Fchar_invK //= Fchar_triv.
-  apply val_inj; rewrite /= syms0.
-  by rewrite /prod_gen intpartn0 big_nil.
+  rewrite (charSG0 (irrSG_irr _)) cfun1E inE /=.
+  rewrite !mnm_n0E !intpartn0 {la mu} rowpartn0E big_nil mulr1.
+  by rewrite mcoeff_alt //= map_inj_in_uniq ?enum_uniq // => /= [[]].
 by rewrite Frobenius_char_coord mcoeff_symbs ?leqSpred //= rmorph_prod.
 Qed.
 
@@ -493,7 +465,7 @@ have -> : 'hh[colpartn n] = \sum_la 'K(la, colpartn n) *: 'hs[la] :> HSC.
   by rewrite /= linear_sum /= -![prod_gen _ _]/('h[_]) symh_syms.
 rewrite (reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 rewrite (eq_bigr
-           (fun i : 'I__ => 'K(enum_val i, colpart n) *: 'hs`_i)); first last.
+           (fun i : 'I__ => 'K(enum_val i, colpartn n) *: 'hs`_i)); first last.
   move=> /= i _.
   rewrite (nth_map (rowpartn n)); last by rewrite -cardE ltn_ord.
   by congr (_ *: 'hs[_]); apply enum_val_nth.

@@ -61,7 +61,7 @@ Qed.
 Lemma Schur0 (sh : 'P_0) : Schur sh = 1.
 Proof using.
 rewrite Schur_tabsh_readingE (eq_bigl (xpred1 [tuple])); first last.
-  by move=> i /=; rewrite tuple0 [RHS]eq_refl intpartn0.
+  by move=> i /=; rewrite tuple0 [RHS]eq_refl val_intpartn0.
 by rewrite big_pred1_eq big_nil.
 Qed.
 
@@ -77,7 +77,7 @@ Qed.
 Lemma tabwordshape_row d (w : d.-tuple 'I_n) :
   tabsh_reading (rowpartn d) w = sorted leq [seq val i | i <- w].
 Proof using.
-rewrite /tabsh_reading /= /rowpart ; case: w => w /=/eqP Hw.
+rewrite /tabsh_reading /= rowpartnE ; case: w => w /=/eqP Hw.
 case: d Hw => [//= | d] Hw; rewrite Hw /=; first by case: w Hw.
 rewrite addn0 eq_refl andbT //=.
 case: w Hw => [//= | w0 w] /= /eqP; rewrite eqSS => /eqP <-.
@@ -152,7 +152,7 @@ Qed.
 Lemma tabwordshape_col d (w : d.-tuple 'I_n) :
   tabsh_reading (colpartn d) w = sorted gtnX w.
 Proof using.
-rewrite /tabsh_reading /= /colpart ; case: w => w /=/eqP Hw.
+rewrite /tabsh_reading /= colpartnE ; case: w => w /=/eqP Hw.
 have -> : sumn (nseq d 1%N) = d.
   by elim: d {Hw} => //= d /= ->; rewrite add1n.
 rewrite Hw eq_refl /= rev_nseq.
@@ -199,7 +199,7 @@ Qed.
 Lemma Schur1 (sh : 'P_1) : Schur n0 R sh = \sum_(i < n) 'X_i.
 Proof using.
 suff -> : sh = colpartn 1 by rewrite -mesym_SchurE mesym1E.
-by apply val_inj => /=; exact: intpartn1.
+by rewrite !intpartn1.
 Qed.
 
 End SchurComRingType.

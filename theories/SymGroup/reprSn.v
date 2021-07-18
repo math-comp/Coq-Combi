@@ -137,6 +137,24 @@ rewrite /triv_mx_repr /= => g _ /=.
 by rewrite mul1mx mulmx1 (permS1 g) repr_mx1.
 Qed.
 
+Lemma charSG0 X : X \in irr 'SG_0 -> X = 1.
+Proof.
+move/irrP => [[i Hi] ->{X}].
+apply/eqP; rewrite irr_eq1 -val_eqE /=.
+move: Hi; rewrite NirrE card_classes_perm card_ord card_intpartn.
+have -> : intpartn_nb 0%N = 1%N by [].
+by rewrite ltnS leqn0.
+Qed.
+
+Lemma charSG1 X : X \in irr 'SG_1 -> X = 1.
+Proof.
+move/irrP => [[i Hi] ->{X}].
+apply/eqP; rewrite irr_eq1 -val_eqE /=.
+move: Hi; rewrite NirrE card_classes_perm card_ord card_intpartn.
+have -> : intpartn_nb 1%N = 1%N by [].
+by rewrite ltnS leqn0.
+Qed.
+
 
 (** * Representations of dimension 1 the symmetric Group for n > 1*)
 
