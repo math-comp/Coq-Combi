@@ -434,7 +434,7 @@ Proof using.
 move=> y; rewrite /is_yam_of_size /is_yam_of_eval /= -andbA; congr (_ && _).
 case: (altP (evalseq y =P ev)) => /=; last by rewrite andbF.
 rewrite -evalseq_eq_size => ->.
-by rewrite (intpartn_sumn ev) eq_refl.
+by rewrite (sumn_intpartn ev) eq_refl.
 Qed.
 
 Lemma yamn_partition_evalseq yam :

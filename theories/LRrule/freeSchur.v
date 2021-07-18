@@ -416,7 +416,7 @@ Lemma hyper_stdtabnP d (P : 'P_d) : is_stdtab_of_n d (hyper_stdtab P).
 Proof using .
 rewrite /is_stdtab_of_n /= hyper_stdtabP /= size_RS.
 rewrite size_std -evalseq_eq_size (evalseq_hyper_yam (intpartnP P)).
-by rewrite intpartn_sumn.
+by rewrite sumn_intpartn.
 Qed.
 Canonical hyper_stdtabn d (P : 'P_d) := StdtabN (hyper_stdtabnP P).
 

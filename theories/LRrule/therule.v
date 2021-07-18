@@ -248,7 +248,7 @@ Hypothesis Hincl : included P1 P.
 
 Lemma sumn_diff_shape_intpartE : sumn (P / P1) = sumn P2.
 Proof using Hincl.
-by rewrite (sumn_diff_shape Hincl) !intpartn_sumn addKn.
+by rewrite (sumn_diff_shape Hincl) !sumn_intpartn addKn.
 Qed.
 
 Definition is_skew_reshape_tableau (P P1 : seq nat) (w : seq nat) :=
@@ -317,11 +317,11 @@ Proof using Hincl.
 rewrite /is_skew_reshape_tableau /= /is_stdtab => Hskew.
 rewrite (_ : size_tab _ = d1 + d2); first last.
   rewrite size_join_tab.
-  + rewrite size_RS size_std size_hyper_yam intpartn_sumn; congr (_ + _).
+  + rewrite size_RS size_std size_hyper_yam sumn_intpartn; congr (_ + _).
     rewrite /size_tab /shape -map_comp.
     rewrite (eq_map (f2 := size)); last by move=> s /=; rewrite size_map.
     rewrite -/(shape _) (shape_skew_reshape Hincl).
-    * by rewrite (sumn_diff_shape Hincl) !intpartn_sumn addKn.
+    * by rewrite (sumn_diff_shape Hincl) !sumn_intpartn addKn.
     * by rewrite size_std size_yameval sumn_diff_shape_intpartE.
   + rewrite size_map; exact: size_leq_skew_reshape.
 rewrite eq_refl andbT.
@@ -506,7 +506,7 @@ have invf (s : yameval P2) : std s = sfilterleq d1 (f (std s)).
                (stdtabnP (hyper_stdtabn P1)) (size_leq_skew_reshape (std s)).
   rewrite /size_tab.
   have /= -> := congr1 (@val _ _ _) (shaped_hyper_stdtabnP P1).
-  rewrite intpartn_sumn.
+  rewrite sumn_intpartn.
   have:= stdtabnP (hyper_stdtabn P1); rewrite /is_stdtab => /andP [_ /=].
   move /shsh_sfilterleq => H{}/H.
   rewrite size_to_word (size_tab_stdtabn (hyper_stdtabn P1)) /sfilterleq /=.

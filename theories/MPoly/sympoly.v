@@ -367,7 +367,7 @@ case: (leqP (size sh) n) => [Hsz | /symm_oversize ->]; last exact: dhomog0.
 rewrite /= unfold_in; apply/allP => /= m.
 rewrite mcoeff_msupp mcoeff_symm //.
 case: (boolP (perm_eq _ _)) => [Hperm _ | _]; last by rewrite /= eq_refl.
-rewrite /mdeg -sumnE -(intpartn_sumn sh).
+rewrite /mdeg -sumnE -(sumn_intpartn sh).
 move: Hperm => /perm_sumn <-{m}.
 rewrite -{2}(mpartK _ Hsz) // is_dominant_partm; last exact: mpart_is_dominant.
 apply/eqP; rewrite /= !sumnE big_filter.
@@ -621,7 +621,7 @@ Lemma symh_to_symm k : 'h_k = \sum_(l : 'P_k) 'm[l] :> SP.
 Proof.
 rewrite (homog_symmE (symh_homog n R k)); apply eq_bigr => l _.
 case: (leqP (size l) n) => [Hsz | /symm_oversize ->]; last by rewrite scaler0.
-by rewrite mcoeff_symh mdeg_mpart // intpartn_sumn eqxx scale1r.
+by rewrite mcoeff_symh mdeg_mpart // sumn_intpartn eqxx scale1r.
 Qed.
 
 End ChangeBaseMonomial.
@@ -725,7 +725,7 @@ Local Notation "''co[' k ]_ l" := (coeff_prodgen_seq (l := l) k)
                                  (at level 8, only parsing).
 
 Definition coeff_prodgen d (la mu : 'P_d) : R :=
-  'co[cast_intpartn (esym (intpartn_sumn la)) mu].
+  'co[cast_intpartn (esym (sumn_intpartn la)) mu].
 
 Lemma coeff_prodgen_cast l k nu (eqlamu : l = k) (eqsum : sumn l = sumn k) :
   'co[cast_intpartn eqsum nu] = 'co[nu].
@@ -740,7 +740,7 @@ Lemma prod_prodgen :
                coeff_prodgen la mu *: 'gB[mu] :> SF.
 Proof.
 rewrite /coeff_prodgen /= {2}/prod_gen => H d la.
-have := intpartn_sumn la.
+have := sumn_intpartn la.
 case: la => [la /= Hla] Hd; subst d.
 rewrite (eq_bigr (fun mu => 'co[mu] *: 'gB[mu])); first last.
   by move=> mu _; congr (_ *: _); rewrite coeff_prodgen_cast /=.
@@ -1280,10 +1280,10 @@ case: (altP (mdeg m =P sumn la)) => Heq; first last.
     by rewrite mcoeff0 mulr0.
   rewrite mcoeff_symm //=.
   rewrite [perm_eq _ _](_ : _ = false) /= ?mulr0 //; apply/negP => /perm_sumn.
-  rewrite !sumnE -!/(mdeg _) -sumn_partm mpartK // intpartn_sumn => Habs.
-  by move: Heq; rewrite intpartn_sumn Habs eq_refl.
+  rewrite !sumnE -!/(mdeg _) -sumn_partm mpartK // sumn_intpartn => Habs.
+  by move: Heq; rewrite sumn_intpartn Habs eq_refl.
 - have Hpm : is_part_of_n d (partm m).
-   by rewrite /= sumn_partm Heq intpartn_sumn eq_refl /=.
+   by rewrite /= sumn_partm Heq sumn_intpartn eq_refl /=.
   rewrite (bigD1 (IntPartN Hpm)) //= big1 ?addr0.
   + rewrite mcoeffZ (mcoeff_symm _ _ (size_partm _)).
     rewrite perm_sym partm_permK /= mulr1.

@@ -881,7 +881,7 @@ rewrite /is_yam_of_eval => Htab; apply /andP; split.
 - exact: LRyamtab_yam Htab.
 - rewrite (LRyamtab_eval (intpartnP P1) (intpartnP P)
                          Hincl (intpartnP P2) _ Htab) //=.
-  by rewrite (sumn_diff_shape Hincl) !intpartn_sumn addKn.
+  by rewrite (sumn_diff_shape Hincl) !sumn_intpartn addKn.
 Qed.
 
 Lemma LRyamtab_all :

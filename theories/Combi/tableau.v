@@ -594,13 +594,13 @@ rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
 move: Ht => /andP [] Htab /eqP Hsh.
 rewrite count_map.
 have Htw : size (to_word t) == d.
-  by rewrite size_to_word /size_tab Hsh intpartn_sumn.
+  by rewrite size_to_word /size_tab Hsh sumn_intpartn.
 rewrite (eq_in_count (a2 := pred1 (Tuple Htw))).
   by rewrite enumT; apply: enumP (Tuple Htw).
 move=> w _ /=; apply/idP/idP.
 - move=> /eqP Ht; subst t.
   apply/eqP/val_inj => /=; rewrite /to_word revK.
-  by apply esym; apply: reshapeKr; rewrite sumn_rev size_tuple intpartn_sumn.
+  by apply esym; apply: reshapeKr; rewrite sumn_rev size_tuple sumn_intpartn.
 - move=> /eqP Hw; subst w; rewrite /=.
   by rewrite /to_word -Hsh -shape_rev flattenK revK.
 Qed.
@@ -626,7 +626,7 @@ move=> w /=; rewrite /tabsh_reading mem_filter; apply/idP/idP.
   rewrite size_to_word /size_tab shape_tabsh eq_refl /=.
   rewrite tabsh_to_wordK tabshP /=.
   have Ht : size (to_word (val t)) == d.
-    by rewrite size_to_word /size_tab shape_tabsh intpartn_sumn.
+    by rewrite size_to_word /size_tab shape_tabsh sumn_intpartn.
   have -> : to_word (val t) = val (Tuple Ht) by [].
   rewrite mem_map; last exact: val_inj.
   exact: mem_enum.

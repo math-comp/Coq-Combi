@@ -1388,11 +1388,11 @@ Hint Resolve intpartnP intpartn_sorted : core.
 Definition intpart_of_intpartn (p : 'P) := IntPart (intpartnP p).
 Coercion intpart_of_intpartn : intpartn >-> intpart.
 
-Lemma intpartn_sumn (p : 'P) : sumn p = n.
+Lemma sumn_intpartn (p : 'P) : sumn p = n.
 Proof using. by case: p => /= p /andP [/eqP]. Qed.
 
 Lemma mem_intpartn (p : 'P) i : i \in pnval p -> 0 < i <= n.
-Proof. by rewrite -(intpartn_sumn p); apply mem_part. Qed.
+Proof. by rewrite -(sumn_intpartn p); apply mem_part. Qed.
 
 Lemma enum_intpartnE : map val (enum {:'P}) = enum_partn n.
 Proof using. by rewrite /=; exact: enum_subE. Qed.
@@ -1640,7 +1640,7 @@ Variables (m n : nat) (l : 'P_m) (k : 'P_n).
 Lemma union_intpartn_subproof : is_part_of_n (m + n) (merge geq l k).
 Proof.
 apply /andP; split.
-- by rewrite sumn_union_part !intpartn_sumn.
+- by rewrite sumn_union_part !sumn_intpartn.
 - exact: merge_is_part.
 Qed.
 Definition union_intpartn := IntPartN union_intpartn_subproof.
@@ -1834,7 +1834,7 @@ Proof.
 case: d sh => [|d] sh; first by rewrite /= !intpartn0.
 rewrite /=; apply/partdomP => i.
 case: i => [|i] /=; rewrite ?take0 ?addn0 //.
-by rewrite -{2}(intpartn_sumn sh) -{2}(cat_take_drop i.+1 sh) sumn_cat leq_addr.
+by rewrite -{2}(sumn_intpartn sh) -{2}(cat_take_drop i.+1 sh) sumn_cat leq_addr.
 Qed.
 
 Lemma colpartn_partdom d (sh : 'P_d) : partdom (colpartn d) sh.
@@ -1844,11 +1844,11 @@ case: (ssrnat.ltnP i (size sh)) => Hi.
 - rewrite !sumn_take !big_nat; apply leq_sum => j /= Hj.
   rewrite nth_nseq.
   have:= (leq_trans (ltn_trans Hj Hi) (size_part (intpartnP sh))).
-  rewrite intpartn_sumn => ->.
+  rewrite sumn_intpartn => ->.
   rewrite lt0n; apply nth_part_non0 => //.
   exact: ltn_trans Hj Hi.
-- rewrite (take_oversize Hi) intpartn_sumn.
-  rewrite -{2}(intpartn_sumn (colpartn d)) /=.
+- rewrite (take_oversize Hi) sumn_intpartn.
+  rewrite -{2}(sumn_intpartn (colpartn d)) /=.
   by rewrite -{2}(cat_take_drop i (colpart d)) sumn_cat leq_addr.
 Qed.
 

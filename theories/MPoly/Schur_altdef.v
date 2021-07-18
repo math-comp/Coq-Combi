@@ -157,7 +157,7 @@ apply/andP; split.
     rewrite (nth_map (Ordinal H0)); last by rewrite size_enum_ord.
     by rewrite nth_ord_enum.
   rewrite big_split /=; apply/eqP; congr (_ + _)%N.
-  + rewrite -{2}(intpartn_sumn la).
+  + rewrite -{2}(sumn_intpartn la).
     by rewrite -(sum_iota_sumnE Hsz) big_mkord.
   + rewrite -mdeg_mesym1 /mdeg.
     rewrite -map_tnth_enum big_map /index_enum enumT.
@@ -222,7 +222,7 @@ Proof using .
 move=> Hszmu Hszla /(vb_stripP (intpartnP _) (intpartnP _)) Hstrip.
 rewrite /setdiff -sum1dep_card.
 rewrite -{2}(addKn d k).
-rewrite -{4}(intpartn_sumn la) -{2}(intpartn_sumn mu).
+rewrite -{4}(sumn_intpartn la) -{2}(sumn_intpartn mu).
 rewrite -(sum_iota_sumnE Hszmu) -(sum_iota_sumnE Hszla).
 set rhs := RHS.
 have {rhs} -> : rhs = (\sum_(0 <= i < n) (nth 0 mu i - nth 0 la i)).
@@ -424,7 +424,7 @@ elim/(finord_wf (T := P)) : la => la IHla Hszla.
 pose k := head 1%N (conj_intpartn la).
 pose p1 := behead (conj_intpartn la); pose d1 := sumn p1.
 have Hk : (d = d1 + k)%N.
-  have:= intpartn_sumn (conj_intpartn la).
+  have:= sumn_intpartn (conj_intpartn la).
   rewrite /d1 /k /p1 /=.
   by case: (conj_part la) => [| [//= | c0] c] /=; rewrite Hd // addnC.
 have Hd1 : d1 <= b.
@@ -469,12 +469,12 @@ have Hlex : (val nu' < la)%Ord.
   rewrite {Hnu Hsznu la'}.
   have /= -> : val la = incr_first_n (conj_part p1) k.
     move: Hk; rewrite /d1 /p1 /= -{2}(conj_intpartnK la) /=.
-    rewrite -{1}(intpartn_sumn (conj_intpartn la)) /=.
+    rewrite -{1}(sumn_intpartn (conj_intpartn la)) /=.
     case: (conj_part la) => [//= | p0 p] /=; first by rewrite add0n => <-.
     rewrite addnC -{2}(addKn (sumn p) k) => <-.
     by rewrite addKn.
   have:= intpartnP (conj_intpartn mu).
-  have /= {Hk p1P mu} := intpartn_sumn (conj_intpartn mu).
+  have /= {Hk p1P mu} := sumn_intpartn (conj_intpartn mu).
   exact: vb_strip_lex.
 have Hsznu' : size nu' <= n by rewrite cast_intpartnE.
 have := IHla nu' Hlex Hsznu'.
@@ -838,7 +838,7 @@ Qed.
 Lemma Kostka_sumnE la mu : d != sumn mu -> Kostka la mu = 0.
 Proof.
 rewrite /Kostka => Hd; apply KostkaMon_sumeval.
-by rewrite eq_sym intpartn_sumn mdeg_mpart ?leqSpred.
+by rewrite eq_sym sumn_intpartn mdeg_mpart ?leqSpred.
 Qed.
 
 Lemma Kostka_size0 la mu :
@@ -885,7 +885,7 @@ Proof.
 case Hla : (size la) => [|szla].
   rewrite /Kostka /KostkaMon Hla.
   move: Hla => /eqP/nilP Hla.
-  have {Hla} Hd : d = 0 by rewrite -(intpartn_sumn la) Hla.
+  have {Hla} Hd : d = 0 by rewrite -(sumn_intpartn la) Hla.
   subst d.
   have Ht : is_tab_of_shape 0 la [::] by rewrite intpartn0.
   rewrite [KostkaTab _ _](_ : _ = [set TabSh Ht]) ?cards1 //.
@@ -970,7 +970,7 @@ apply/eq_from_tnth => i.
 case: t => /= t /andP [/andP [Ht Hstd] /eqP Hsh].
 rewrite /eval !tnth_mktuple.
 move: Hstd; rewrite /is_std.
-rewrite size_to_word /size_tab Hsh intpartn_sumn => Hstd.
+rewrite size_to_word /size_tab Hsh sumn_intpartn => Hstd.
 rewrite count_map (eq_in_count (a2 := pred1 (i : nat))); first last.
   move=> /= j; rewrite (perm_mem Hstd) mem_iota /= add0n.
   move => /leq_trans /(_ Hd) Hj.
@@ -986,7 +986,7 @@ rewrite count_map -sum_count_mem.
 rewrite (eq_bigr (fun i : 'I__ => (i < d)%N : nat)) /=; first last.
   move=> i _.
   by move: Hev => /(congr1 (fun t => tnth t i)); rewrite !tnth_mktuple.
-rewrite size_map size_to_word /size_tab shape_tabsh intpartn_sumn.
+rewrite size_map size_to_word /size_tab shape_tabsh sumn_intpartn.
 rewrite -sum1_count.
 transitivity (\sum_(0 <= i < n.+1 | p i) (i < d)).
   by rewrite big_mkord.
@@ -1023,7 +1023,7 @@ have /andP [Ht Hstd] := stdtabshP t.
 rewrite /tabord_of_nat_fun /=.
 rewrite shape_incr_tab shape_stdtabsh eq_refl andbT.
 move: Hstd; rewrite /is_std size_to_word.
-rewrite /size_tab shape_stdtabsh intpartn_sumn => /perm_mem Hperm.
+rewrite /size_tab shape_stdtabsh sumn_intpartn => /perm_mem Hperm.
 rewrite -incr_tab // => /= i j.
 rewrite !Hperm !mem_iota /= !add0n => /leq_trans/(_ Hd) Hi /leq_trans/(_ Hd) Hj.
 by rewrite sub_pord_ltnXE !ltnXnatE /= !inordK.
@@ -1044,7 +1044,7 @@ have : i \in to_word t.
 have /andP [_] := stdtabshP t.
 rewrite /is_std => /perm_mem ->.
 rewrite mem_iota /= add0n.
-by rewrite size_to_word /size_tab shape_stdtabsh intpartn_sumn.
+by rewrite size_to_word /size_tab shape_stdtabsh sumn_intpartn.
 Qed.
 
 Lemma tabnat_of_ordK :
@@ -1200,7 +1200,7 @@ Local Definition ext_tab_fun (t : T) :=
 
 Local Lemma sumndiff : sumn (mu / la) = m.
 Proof.
-by rewrite sumn_diff_shape ?hb_strip_included // !intpartn_sumn addKn.
+by rewrite sumn_diff_shape ?hb_strip_included // !sumn_intpartn addKn.
 Qed.
 
 Lemma ext_tab_subproof t : is_tab_of_shape n mu (ext_tab_fun t).

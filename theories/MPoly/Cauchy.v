@@ -349,7 +349,7 @@ case: (altP (mdeg mon =P d)) => Hdeg; first last.
   - rewrite mcoeff_symm //.
     suff /negbTE -> : ~~ perm_eq (mpart (n := m) la) mon by rewrite mulr0.
     apply/negP => /perm_sumn.
-    rewrite sumn_mpart // intpartn_sumn sumnE -/(mdeg _) => Hd.
+    rewrite sumn_mpart // sumn_intpartn sumnE -/(mdeg _) => Hd.
     by rewrite -Hd eq_refl in Hdeg.
   - by rewrite mcoeff0 mulr0.
 have Hpm : is_part_of_n d (partm mon) by rewrite /= intpartP andbT sumn_partm Hdeg.

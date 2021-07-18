@@ -590,7 +590,7 @@ Proof using.
 have /esym/sdprod_card <- := cent1_permE s.
 rewrite card_porbitgrpE card_in_imset // ?setIid; first last.
   by apply: can_in_inj; exact: permcyclesK.
-by rewrite /zcard card_stab_iporbits // intpartn_sumn.
+by rewrite /zcard card_stab_iporbits // sumn_intpartn.
 Qed.
 
 Theorem card_class_perm s :

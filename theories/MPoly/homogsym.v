@@ -470,7 +470,7 @@ Lemma basis_homsym : [set p : 'P_d | (size p <= n)%N] =i {:'P_d}.
 Proof using Hd.
 move=> la.
 rewrite !inE; apply: (leq_trans _ Hd).
-by rewrite -[X in (_ <= X)%N](intpartn_sumn la); apply: size_part.
+by rewrite -[X in (_ <= X)%N](sumn_intpartn la); apply: size_part.
 Qed.
 
 Lemma dim_homsym :
@@ -490,7 +490,7 @@ move => /(congr1 val).
 rewrite /= linear_sum /= => /symm_unique0 H i.
 rewrite -(enum_valK i); apply H.
 apply: (leq_trans _ Hd).
-rewrite -[X in (_ <= X)%N](intpartn_sumn (enum_val i)).
+rewrite -[X in (_ <= X)%N](sumn_intpartn (enum_val i)).
 exact: size_part.
 Qed.
 
@@ -524,7 +524,7 @@ rewrite !linear_sum /= mulr_sumr linear_sum /= (bigD1 la) //=.
 rewrite (nth_map (rowpartn d)) -?cardE ?ltn_ord // nth_enum_rank.
 rewrite -scalerAr linearZ /=.
 have Hszp (nu : 'P_d) : size nu <= n.
-  by apply: (leq_trans _ Hd); rewrite -{2}(intpartn_sumn nu) size_part.
+  by apply: (leq_trans _ Hd); rewrite -{2}(sumn_intpartn nu) size_part.
 rewrite mcoeff_alt_SchurE // eq_refl mulr1 big1 ?addr0 // => mu /negbTE Hmula.
 rewrite (nth_map (rowpartn d)) -?cardE ?ltn_ord // nth_enum_rank.
 rewrite -scalerAr linearZ /=.

@@ -128,7 +128,7 @@ move=> [p1 p2] /=; rewrite /is_stdtab_pair_of_n /is_stdtab_pair_of_shape /=.
 case: (altP (shape p1 =P ev)) => [Hsh1|]; last by rewrite !andbF /=.
 rewrite [shape p1 == _]eq_sym Hsh1 !andbT.
 case: (altP (shape p2 =P ev)) => [Hsh2|]; last by rewrite ?andbF /=.
-by rewrite !andbT /size_tab Hsh1 Hsh2 intpartn_sumn eq_refl !andbT.
+by rewrite !andbT /size_tab Hsh1 Hsh2 sumn_intpartn eq_refl !andbT.
 Qed.
 
 Lemma stpn_partition_shape tabp :
@@ -166,7 +166,7 @@ rewrite card_unionE.
 rewrite (eq_bigr (fun sh : 'P_n => #|{:stdtabsh sh}|^2)); first last.
   by move=> i _; rewrite card_stpsh.
 apply eq_bigr => sh _.
-by rewrite HookLengthFormula intpartn_sumn.
+by rewrite HookLengthFormula sumn_intpartn.
 Qed.
 
 Lemma RSstdmapP (s : stdwordn n) : is_stdtab_pair_of_n n (RStabmap s).
@@ -239,7 +239,7 @@ rewrite (eq_bigr (fun p : 'P_n => ((n`! %/ (hook_length_prod p)) ^ 2)%N%:Q)); fi
       by rewrite intr_eq0 eqz_nat /=; apply: (hook_length_prod_non0 p).
     rewrite !mulrA -intrM -PoszM.
     have:= hook_length_prod_div p.
-    by rewrite intpartn_sumn dvdn_eq => /eqP ->.
+    by rewrite sumn_intpartn dvdn_eq => /eqP ->.
   by rewrite -expr2 expr_div_n mulrC mul1r.
 rewrite -!(big_morph intr (@intrD _) (id2 := 0)) //=.
 rewrite -!(big_morph Posz PoszD (id2 := 0%N)) //=.
