@@ -186,13 +186,13 @@ Qed.
 Let add_mpart_mesym :=
   if [&& size la <= n, #|h| == k & ~~ hasincr]
   then (rem_trail0 (mpart la + mesym1 h)%MM)
-  else rowpart (d + k) (* unused *).
+  else rowpartn (d + k) (* unused *).
 Lemma add_mpart_mesymP : is_part_of_n (d + k) add_mpart_mesym.
 Proof using la h.
 rewrite /add_mpart_mesym.
 case: (boolP [&& _, _ & _]) => [/and3P [] Hsz /eqP <- Hincr | _].
 - exact: not_hasincr_part.
-- exact: rowpartn_subproof.
+- by rewrite rowpartnE; apply: rowpartn_subproof.
 Qed.
 Definition add_mesym : 'P_(d + k) := IntPartN add_mpart_mesymP.
 
@@ -1069,7 +1069,7 @@ have -> : (mpart (colpartn d)) =
   apply/mnmP => /= i; rewrite /mpart.
   rewrite {2 3}size_colpartn leqSpred !mnmE.
   by rewrite {1}colpartnE nth_nseq; case: (ltnP i d).
-rewrite /KostkaMon /KostkaTab colpartnE /= /colpart size_nseq.
+rewrite /KostkaMon /KostkaTab colpartnE size_nseq.
 rewrite -(card_imset _ (can_inj (tabord_of_natK (leqSpred _)))).
 apply eq_card => /= t; rewrite !inE.
 apply/eqP/imsetP => [Ht | [/= st _ ->{t}]].

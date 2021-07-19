@@ -653,12 +653,11 @@ rewrite mcoeff_mesym /mechar.
 rewrite [[forall i, _]](_ : _ = false) ?andbF ?scale0r //.
 move: leszn; rewrite (size_colpartn k) => lekn.
 apply/negbTE; move: HP; apply contra => /forallP /= HP.
-apply/eqP/colpartnP/allP => /= i /(nthP 0%N) [pos Hpos <-{i}].
-rewrite eqn_leq lt0n nth_part_non0 // andbT.
-have:= size_part (intpartP P).
-rewrite sumn_intpartn => /leq_trans/(_ lekn) leszn.
-have:= (leq_trans Hpos leszn) => {}Hpos; move: HP => /(_ (Ordinal Hpos)).
-by rewrite /mpart leszn mnmE.
+rewrite /mpart in HP; apply/eqP/colpartnP.
+case: n lekn HP => [|n0 Hk /(_ ord0)].
+  by rewrite leqn0 => /eqP Hk _; subst k; rewrite intpartn0 rowpartn0E.
+have -> := leq_trans (size_part (intpartP P)); last by rewrite sumn_intpartn.
+by rewrite mnmE /=; case: P => [[|]].
 Qed.
 
 End ChangeBaseMonomial.
