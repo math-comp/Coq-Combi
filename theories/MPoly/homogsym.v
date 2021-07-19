@@ -73,12 +73,12 @@ of the scalar product.
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun finset bigop ssrint ssralg path.
-From mathcomp Require Import perm fingroup matrix vector zmodp.
-From mathcomp Require ssrnum.
+From mathcomp Require Import finset path tuple bigop ssralg.
+From mathcomp Require Import perm fingroup matrix vector.
+From mathcomp Require ssrnum rat algC.
 From SsrMultinomials Require Import ssrcomplements freeg mpoly.
 
-Require Import tools sorted ordtype permuted partition.
+Require Import tools sorted ordtype permuted partition permcent.
 Require Import antisym Schur_mpoly Schur_altdef sympoly.
 
 Set Implicit Arguments.
@@ -242,7 +242,8 @@ have sztntht k : size (tnth t k) <= n.
   by have := mem_tnth k t; rewrite /t mem_enum inE.
 exists (fun p : {homsym R[n, d]} => \row_(i < #|b|) p@_(mpart (tnth t i))).
   by move=> c p q; apply/matrixP=> i j; rewrite !mxE /= mcoeffD mcoeffZ.
-exists (fun r : 'rV[R]_(#|b|) => \sum_(i < #|b|) (r 0 i) *: (homsymm (tnth t i))).
+exists (fun r : 'rV[R]_(#|b|) =>
+          \sum_(i < #|b|) (r ord0 i) *: (homsymm (tnth t i))).
 - move=> p; rewrite [RHS]homsymmE.
   rewrite (bigID (mem b)) /= [X in _ + X]big1 ?addr0 => [|la]; first last.
     rewrite inE => /negbTE H .
@@ -366,17 +367,14 @@ Import LeqGeqOrder.
 Variables (d l0 : nat) (la : seq nat).
 Hypotheses (Hla : is_part_of_n d la)
            (Hlla : is_part_of_n (l0 + d)%N (l0 :: la)).
+Notation Plla := (IntPartN Hlla).
+Notation Pla := (IntPartN Hla).
 
-Lemma homsymprod_hh :
-  'hh[(IntPartN Hlla)] = 'hh[rowpartn l0] *h 'hh[(IntPartN Hla)] :> HSF.
+Lemma homsymprod_hh : 'hh[Plla] = 'hh[rowpartn l0] *h 'hh[Pla] :> HSF.
 Proof. by apply val_inj; rewrite /= prod_genM intpartn_cons. Qed.
-
-Lemma homsymprod_he :
-  'he[(IntPartN Hlla)] = 'he[rowpartn l0] *h 'he[(IntPartN Hla)] :> HSF.
+Lemma homsymprod_he : 'he[Plla] = 'he[rowpartn l0] *h 'he[Pla] :> HSF.
 Proof. by apply val_inj; rewrite /= prod_genM intpartn_cons. Qed.
-
-Lemma homsymprod_hp :
-  'hp[(IntPartN Hlla)] = 'hp[rowpartn l0] *h 'hp[(IntPartN Hla)] :> HSF.
+Lemma homsymprod_hp : 'hp[Plla] = 'hp[rowpartn l0] *h 'hp[Pla] :> HSF.
 Proof. by apply val_inj; rewrite /= prod_genM intpartn_cons. Qed.
 
 End HomSymProdGen.
@@ -480,8 +478,6 @@ Section HomSymField.
 Variable n0 d : nat.
 Local Notation n := (n0.+1).
 Variable R : fieldType.
-Local Notation "''pi_' d" :=
-  (pihomog [measure of mdeg] d) (at level 5, format "''pi_' d").
 Local Notation HSF := {homsym R[n, d]}.
 
 
@@ -639,10 +635,8 @@ Proof using Hd.
 rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
 rewrite -(span_basis symbe_basis).
 apply/span_subvP => s /mapP [/= la]; rewrite !mem_enum => _ ->{s}.
-have -> : 'he[la] = \sum_(mu : 'P_d)
-           coeff_prodgen
-             (fun d (la : 'P_d) => (-1)^+(d - size la) * (perm_partn la)%:R)
-             la mu *: 'hh[mu] :> HSF.
+have -> : 'he[la] = \sum_(mu : 'P_d) coeff_prodgen (fun d (la : 'P_d) =>
+            (-1)^+(d - size la) * (perm_partn la)%:R) la mu *: 'hh[mu] :> HSF.
   by apply val_inj; rewrite /= linear_sum /= (prod_prodgen (syme_to_symh n0 R)).
 rewrite span_def; apply memv_suml => mu _; apply memvZ.
 rewrite big_map (bigD1_seq mu) /= ?mem_enum ?inE ?enum_uniq //.
@@ -669,9 +663,8 @@ Qed.
 
 End HomSymField.
 
-From mathcomp Require Import ssrnum rat algC.
-Import GRing.Theory Num.Theory.
-Require Import permcent.
+
+Import ssrnum rat algC GRing.Theory Num.Theory.
 
 Local Lemma char0_rat : [char rat] =i pred0.
 Proof. exact: Num.Theory.char_num. Qed.
@@ -697,22 +690,20 @@ Local Notation n := (n0.+1).
 Local Notation HSFR := {homsym R[n, d]}.
 Local Notation HSFS := {homsym S[n, d]}.
 
-Lemma map_sympoly_d_homog (f : HSFR) : map_sympoly mor f \is d.-homsym.
+Lemma map_sympoly_d_homog (p : HSFR) : map_sympoly mor p \is d.-homsym.
 Proof.
 rewrite homsymE /=; apply/dhomogP => /= m.
 rewrite mcoeff_msupp mcoeff_map_mpoly => Hm.
-have {Hm} : f@_m != 0.
+have {Hm} : p@_m != 0.
   move: Hm; apply contra => /eqP ->.
   by apply/eqP; apply: (rmorph0 mor).
 rewrite -mcoeff_msupp => Hm.
-by have /dhomogP/(_ _ Hm) := homsym_is_dhomog f.
+by have /dhomogP/(_ _ Hm) := homsym_is_dhomog p.
 Qed.
-Definition map_homsym (f : HSFR) : HSFS := HomogSym (map_sympoly_d_homog f).
+Definition map_homsym (p : HSFR) : HSFS := HomogSym (map_sympoly_d_homog p).
 
 Lemma map_homsym_is_additive : additive map_homsym.
-Proof.
-by move=> /= p q; apply val_inj; rewrite /= rmorphB.
-Qed.
+Proof. by move=> /= p q; apply val_inj; rewrite /= rmorphB. Qed.
 Canonical map_homsym_additive := Additive map_homsym_is_additive.
 
 Lemma scale_map_homsym (r : R) (p : HSFR) :
@@ -793,8 +784,8 @@ Local Notation algCF := [numFieldType of algC].
 Local Notation HSF := {homsym algC[n, d]}.
 
 Definition homsymdot (p q : HSF) : algC :=
-  \sum_(i < #|{:'P_d}|) (zcard (enum_val i))%:R *
-  (coord 'hp i p) * (coord 'hp i q)^*.
+  \sum_(i < #|{:'P_d}|)
+   (zcard (enum_val i))%:R * (coord 'hp i p) * (coord 'hp i q)^*.
 Definition homsymdotr_head k p q := let: tt := k in homsymdot q p.
 
 Notation homsymdotr := (homsymdotr_head tt).

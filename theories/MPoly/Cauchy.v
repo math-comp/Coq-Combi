@@ -16,28 +16,29 @@
 (** * Cauchy formula for symmetric polynomials
 
 In this file we fix two non zero natural [m] and [n] and consider the two sets
-of variables [X := (x_i)_{i<m}] and [Y := (y_j)_{j<n}]. We also consider the
-variable [z_{i,j} := x_i * y_j].
+of variables [X := (x_i)_{i < m}] and [Y := (y_j)_{j < n}]. We also consider
+the variables [z_{i,j} := x_i * y_j].
 
 We encode polynomial in [X \cup Y] as polynomials in [X] whose coefficient are
 polynomials in [Y]. We denote by [mz] a monomial in the [Z].
 
-- [monX mz]     == the monomial in [X], obtained by setting all the [x_i] to [1].
+- [monX mz]     == the monomial in [X] obtained by setting all the [y_i] to [1].
 - [monsY mz]    == the [m.-tuple] of whose [i]-th element is the monomial in [Y]
                    obtained by putting [x_i] to [1] and all the others to [0].
 - [Ymon ms]     == given [ms : m.-tuple 'X_{1.. n}] assemble them to get a
-                   monomial  in the [Z].
+                   monomial in the [Z].
 - [polXY m n R] == polynomial in [m] variable whose coefficients are polynomials
                    in [n] over the commutative ring [R]. This is canonically a
-                   [AlgType] over [R].
-- [polXY_scale c p] == ring multiplication for elements of [polXY m n R]
+                   [algType] over [R].
+- [polXY_scale c p] == base ring multiplication for elements of [polXY m n R]
 - [p(X)]        == the image of [p] by the canonical inclusion algebra morphism
                    [polX -> polXY]
 - [p(Y)]        == the image of [p] by the canonical inclusion algebra morphism
                    [polY -> polXY]
-- [p(XY)]       == the polynomial of [polXY] from a polynomials in the [Z_{i,j}].
-- [Cauchy_kernel d] == the Cauchy kernel in degree [d] that is the sum of all
-                   monomial in [x_i*y_i] of degree [d] that is ['h_d(XY)]
+- [p(XY)]       == the polynomial in [polXY] from a polynomials in the [Z_{i,j}].
+- [Cauchy_kernel d] == the Cauchy reproducing kernel in degree [d], that is
+                   the sum of all monomial in [x_i*y_i] of degree [d]
+                   which is defined as ['h_d(XY)]
 - [co_hp la p] == if [p] is symmetric in [X], returns the coefficient of [p] on
                    ['hp[la]]
 - [co_hpXY la mu p] == if [p] is symmetric both in [X] and [Y], returns the
@@ -77,6 +78,12 @@ Proof.
 elim: r => [|x r ih]; first by rewrite !big_nil mpolyX0.
 by rewrite !big_cons; case: (P x); rewrite ?(mpolyXD, mpolyXn) ih.
 Qed.
+
+
+Reserved Notation "p '(Y)'"  (at level 20, format "p '(Y)'").
+Reserved Notation "p '(X)'"  (at level 20, format "p '(X)'").
+Reserved Notation "p '(XY)'" (at level 20, format "p '(XY)'").
+
 
 (** ** Polynomials in two sets of variables *)
 Section CauchyKernel.
@@ -119,7 +126,7 @@ Qed.
 
 End Big.
 
-Definition monX (mon : 'X_{1.. m*n}) :=
+Definition monX (mon : 'X_{1.. m*n}) : 'X_{1.. m} :=
   [multinom (\sum_(j < n) mon (mxvec_index i j))%N | i < m].
 
 Lemma mdeg_monX mon : mdeg (monX mon) = mdeg mon.
@@ -227,8 +234,8 @@ Canonical polY_XY_linear     := AddLinear  polY_XY_is_lrmorphism.
 Canonical polY_XY_lrmorphism := LRMorphism polY_XY_is_lrmorphism.
 
 
-Notation "p '(Y)'" := (polY_XY p) (at level 20, format "p '(Y)'").
-Notation "p '(X)'" := (polX_XY p) (at level 20, format "p '(X)'").
+Notation "p '(Y)'" := (polY_XY p).
+Notation "p '(X)'" := (polX_XY p).
 
 Lemma polyXY_scale p q : p(X) * q(Y) = q *: p(X).
 Proof. by rewrite mulrC mul_mpolyC. Qed.
@@ -242,7 +249,7 @@ Qed.
 Definition evalXY : polZ -> polXY :=
   mmap ((@mpolyC m _) \o (@mpolyC n R))
        (fun i => 'X_((vecmx_index i).1) (X) * 'X_((vecmx_index i).2) (Y)).
-Notation "p '(XY)'" := (evalXY p) (at level 20, format "p '(XY)'").
+Notation "p '(XY)'" := (evalXY p).
 
 Lemma evalXY_is_lrmorphism : lrmorphism evalXY.
 Proof.
@@ -320,7 +327,7 @@ rewrite (eq_bigr (fun j => tnth mz (mxvec_index i j))); first last.
   by move=> j _; rewrite tnth_mktuple -mnm_tnth.
 by rewrite (bigD1 i) //= leq_addr.
 Qed.
-Definition famY mz := [ffun i => BMultinom (famY_subproof mz i)].
+Definition famY mz := [ffun i : 'I_m => BMultinom (famY_subproof mz i)].
 Let famYinv_fun (ff : {ffun 'I_m -> 'X_{1.. n < d.+1}}) :=
   let mz := [multinom (ff (vecmx_index i).1 (vecmx_index i).2) | i < m * n]
   in if (mdeg mz < d.+1)%N then mz else 0%MM.
@@ -474,9 +481,10 @@ Qed.
 
 End CauchyKernel.
 
-Notation "p '(Y)'" := (@polY_XY _ _ _ p) (at level 20, format "p '(Y)'").
-Notation "p '(X)'" := (@polX_XY _ _ _ p) (at level 20, format "p '(X)'").
-Notation "p '(XY)'" := (@evalXY _ _ _ p) (at level 20, format "p '(XY)'").
+Notation "p '(Y)'" := (@polY_XY _ _ _ p).
+Notation "p '(X)'" := (@polX_XY _ _ _ p).
+Notation "p '(XY)'" := (@evalXY _ _ _ p).
+
 
 Section CauchyKernelField.
 Variable R : fieldType.
