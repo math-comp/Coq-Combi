@@ -276,7 +276,7 @@ Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_subproof s).
 
 Lemma cycle_type1 : cycle_type 1%g = colpartn #|T|.
 Proof.
-apply colpartnP; rewrite /= /setpart_shape.
+apply (colpartnP (x0 := 1)); rewrite /= /setpart_shape.
 set l := sort _ _; case: (ltnP 0 (size l)) => [|];
   last by rewrite leqn0 => /nilP ->.
 rewrite -nth0 {}/l => /(mem_nth 1).

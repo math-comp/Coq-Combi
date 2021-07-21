@@ -1501,16 +1501,16 @@ Proof. by rewrite colpartnE size_nseq. Qed.
 Lemma size_rowpartn d : size (rowpartn d) = (d != 0).
 Proof. by rewrite rowpartnE; case: d. Qed.
 
-Lemma part_nseq1P sh : is_part sh -> head 1 sh <= 1 -> sh = nseq (sumn sh) 1.
+Lemma part_nseq1P x0 sh : is_part sh -> head x0 sh <= 1 -> sh = nseq (sumn sh) 1.
 Proof.
 move=> Hpart.
-elim: sh Hpart (part_head_non0 Hpart) => [//|s0 s IHs]/=/andP[H Hpart].
-rewrite -lt0n => lt0s0 les01; move: H.
+elim: sh Hpart (part_head_non0 Hpart) x0 => [//|s0 s IHs]/=/andP[H Hpart].
+rewrite -lt0n => lt0s0 x0 les01; move: H.
 have {lt0s0 les01} -> : s0 = 1 by apply anti_leq; rewrite lt0s0 les01.
-move=> Hhead; rewrite /= -IHs //.
+move=> Hhead; rewrite /= -(IHs _ _ 1) //.
 exact: part_head_non0.
 Qed.
-Lemma colpartnP d (la : 'P_d) : head 1 la <= 1 -> la = colpartn d.
+Lemma colpartnP x0 d (la : 'P_d) : head x0 la <= 1 -> la = colpartn d.
 Proof.
 move=> /(part_nseq1P (intpartnP _)) Heq.
 apply val_inj; rewrite /= colpartnE.
@@ -1544,15 +1544,15 @@ Proof. by rewrite /hookpartn -lock /hookpart /= size_nseq addn1. Qed.
 Lemma behead_hookpartn d k : behead (hookpartn d k) = nseq (d - k) 1%N.
 Proof. by rewrite /hookpartn -lock /=. Qed.
 
-Lemma hookpartn_row d : hookpartn d 0 = colpartn d.+1.
+Lemma hookpartn_col d : hookpartn d 0 = colpartn d.+1.
 Proof. by apply val_inj; rewrite /= hookpartnE // subn0 colpartnE. Qed.
-Lemma hookpartn_col d : hookpartn d d = rowpartn d.+1.
+Lemma hookpartn_row d : hookpartn d d = rowpartn d.+1.
 Proof. by apply val_inj; rewrite /= hookpartnE // subnn /= rowpartnE. Qed.
 Lemma conj_hookpartn d k :
   k <= d -> conj_intpartn (hookpartn d k) = hookpartn d (d - k).
 Proof.
 case: k => [_|k ltkd].
-  by rewrite hookpartn_row subn0 hookpartn_col conj_colpartn.
+  by rewrite hookpartn_col subn0 hookpartn_row conj_colpartn.
 apply val_inj; rewrite /= !hookpartnE ?leq_subr //.
 have -> : k.+2 :: nseq (d - k.+1) 1 = incr_first_n [:: k.+1] (d - k).
   move: ltkd; rewrite -subn_gt0 /= subnS.
@@ -1560,22 +1560,26 @@ have -> : k.+2 :: nseq (d - k.+1) 1 = incr_first_n [:: k.+1] (d - k).
 by rewrite conj_part_ind ?subn_gt0 // subKn //= -subSn.
 Qed.
 
-Lemma hookpartnP d (la : 'P_d.+1) :
-  reflect (exists k, k <= d /\ la = hookpartn d k) (nth 1 la 1 <= 1).
+Lemma hookpartnPE x0 x1 d (la : 'P_d.+1) :
+  nth x0 la 1 <= 1 -> la = hookpartn d (nth x1 la 0).-1.
 Proof.
-apply (iffP idP).
-- exists (head 0 la).-1; split.
-  + case: la H => /= [[//=|l0 la] /andP[/eqP Heq /part_head_non0]] /= Hl0 _.
-    rewrite -ltnS -{}Heq /=; case: l0 Hl0 => // l0 _ /=.
-    by rewrite addSn ltnS leq_addr.
-  + apply val_inj => /=.
-    case: la H => /= [[//=|l0 la] /andP[/eqP Heq Hpart]] /= H.
-    case: l0 Heq Hpart (part_head_non0 Hpart) => // l0 /=.
-    rewrite addSn => [[Hd]] /andP [_ Hpart] _.
-    rewrite hookpartnE -?Hd ?leq_addr // addKn.
-    by rewrite {1}(part_nseq1P Hpart).
-- move=> [k [lekd /(congr1 val) /= ->]].
-  rewrite hookpartnE // /=.
+move=> H; apply val_inj => /=.
+case: la H => /= [[//=|l0 la] /andP[/eqP Heq Hpart]] /= H.
+case: l0 Heq Hpart (part_head_non0 Hpart) => // l0 /=.
+rewrite addSn => [[Hd]] /andP [_ Hpart] _.
+rewrite hookpartnE -?Hd ?leq_addr // addKn.
+by rewrite {1}(part_nseq1P Hpart H).
+Qed.
+
+Lemma hookpartnP d (la : 'P_d.+1) :
+  reflect (exists k, k <= d /\ la = hookpartn d k) (nth 0 la 1 <= 1).
+Proof.
+apply (iffP idP) => [H | ].
+- exists (nth 0 la 0).-1; split; last exact: (hookpartnPE _ H).
+  case: la H => /= [[//=|l0 la] /andP[/eqP Heq /part_head_non0]] /= Hl0 _.
+  rewrite -ltnS -{}Heq /=; case: l0 Hl0 => // l0 _ /=.
+  by rewrite addSn ltnS leq_addr.
+- move=> [k [lekd /(congr1 val) /= ->]]; rewrite hookpartnE // /=.
   by case: (d - k).
 Qed.
 
