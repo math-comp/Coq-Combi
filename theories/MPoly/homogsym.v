@@ -451,11 +451,13 @@ Canonical omegahomsym_linear     := AddLinear omegahomsym_is_linear.
 Hypothesis (Hd : d <= n).
 
 Lemma omega_homsymh la : omegahomsym 'hh[la] = 'he[la].
-Proof using Hd. by apply val_inj; rewrite /= omega_symh. Qed.
+Proof using Hd. by apply val_inj; rewrite /= omegasf_prodsymh. Qed.
 Lemma omega_homsyme la : omegahomsym 'he[la] = 'hh[la].
-Proof using Hd. by apply val_inj; rewrite /= omega_syme. Qed.
+Proof using Hd. by apply val_inj; rewrite /= omegasf_prodsyme. Qed.
 Lemma omega_homsyms la : omegahomsym 'hs[la] = 'hs[conj_intpartn la].
-Proof using Hd. by apply val_inj; rewrite /= omega_syms. Qed.
+Proof using Hd. by apply val_inj; rewrite /= omegasf_syms. Qed.
+Lemma omega_homsymp la : omegahomsym 'hp[la] = (-1) ^+ (d - size la) *: 'hp[la].
+Proof using Hd. by apply val_inj; rewrite /= omegasf_prodsymp. Qed.
 
 End OmegaHomSym.
 
@@ -871,6 +873,24 @@ rewrite homsymdotE (bigD1 mu) //= big1 ?addr0 => [| nu /negbTE Hneq].
 - rewrite !(coord_symbp Hd) eq_refl /= conjC1 mulr1.
   by case: eqP => [-> //| _]; rewrite !mulr0.
 - by rewrite !(coord_symbp Hd) [mu == nu]eq_sym Hneq conjC0 mulr0.
+Qed.
+
+Lemma homsymdot_omegasf f g :
+  (d <= n)%N -> '[ omegahomsym f | omegahomsym g ] = '[ f | g ].
+Proof.
+move=> Hd; have /andP [/eqP Hfull Hfree]:= symbp_basis Hd char0_algC.
+have:= (memvf g); rewrite -Hfull => /coord_span ->.
+rewrite raddf_sum /= !homsymdot_sumr; apply eq_bigr => i _.
+have:= (memvf f); rewrite -Hfull => /coord_span ->.
+rewrite raddf_sum /= !homsymdot_suml; apply eq_bigr => j _.
+rewrite !linearZ /= !homsymdotZl !homsymdotZr; congr (_ * (_ * _)).
+rewrite ![_`_i](nth_map (rowpartn d)) -?cardE //.
+rewrite ![_`_j](nth_map (rowpartn d)) -?cardE //.
+rewrite !omega_homsymp // homsymdotZl homsymdotZr !homsymdotpp //.
+case: eqP => /= [->|_]; rewrite ?mulr0 // !mulr1 !mulrA.
+move: (nth _ _ _) => la {i j}.
+have /conj_Cint -> : (-1) ^+ (d - size la) \in Cint by apply rpred_sign.
+by rewrite -exprD addnn -muln2 exprM sqrr_sign mul1r.
 Qed.
 
 End ScalarProduct.

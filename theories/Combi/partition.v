@@ -274,6 +274,16 @@ move=> /= /andP [_].
 exact: IHi.
 Qed.
 
+Lemma in_part_non0 sh i : is_part sh -> i \in sh -> 0 < i <= sumn sh.
+Proof.
+elim: sh => [| sh0 sh IHsh] // Hpart.
+have /= := part_head_non0 Hpart; rewrite -lt0n => lt0sh0.
+move: Hpart => /andP [Head {}/IHsh Hrec].
+rewrite inE => /orP [/eqP -> |]; first by rewrite lt0sh0 leq_addr.
+move=> {}/Hrec /andP [-> /= /leq_trans]; apply.
+exact: leq_addl.
+Qed.
+
 (** Three equivalent definitions *)
 Lemma is_partP sh :
   reflect
