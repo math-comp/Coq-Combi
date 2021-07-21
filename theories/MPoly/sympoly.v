@@ -1201,7 +1201,7 @@ apply: (symHE_intpartn (symh0 _ _) (syme0 _ _)); exact: sum_syme_symh.
 Qed.
 
 
-(** ** Newton formula *)
+(** ** Newton formulas *)
 Lemma mult_symh_U k d i m :
   (('h_k : {mpoly R[n]}) * 'X_i ^+ d)@_m =
   ((mdeg m == (k + d)%N) && (m i >= d))%:R.
@@ -1274,13 +1274,12 @@ rewrite -(size_map nat_of_ord).
 by rewrite -filter_map val_enum_ord iota_ltn // size_iota.
 Qed.
 
-Lemma Newton_symh_iota (k : nat) :
-  k%:R *: 'h_k = \sum_(i <- iota 1 k) 'p_i * 'h_(k - i) :> SF.
+Lemma Newton_symh1 (k : nat) :
+  k%:R *: 'h_k = \sum_(1 <= i < k.+1) 'p_i * 'h_(k - i) :> SF.
 Proof using.
 rewrite Newton_symh big_mkord (reindex_inj rev_ord_inj) /=.
-rewrite -(addn0 1%N) iotaDl big_map -val_enum_ord big_map.
-rewrite /index_enum /= enumT; apply eq_bigr => i _.
-by rewrite mulrC add1n subKn.
+rewrite big_add1 /= big_mkord; apply eq_bigr => i _.
+by rewrite mulrC subKn.
 Qed.
 
 
@@ -1513,7 +1512,6 @@ rewrite [_ - _]addrC !addrA subrr add0r.
 rewrite exprS mulN1r scaleNr -scalerBr.
 by rewrite hookpartn_row -symp_to_symm subrr scaler0.
 Qed.
-
 
 End ChangeBasis.
 
@@ -1848,13 +1846,12 @@ elim: n {-2}n (leqnn n) => [| m IHm] n.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
 rewrite enum_compnE Hm // -Hm big_flatten /=.
 have Hn : (n%:R : R) != 0 by rewrite Hchar Hm.
-apply (scalerI Hn); rewrite Newton_symh_iota.
+apply (scalerI Hn); rewrite Newton_symh1 /index_iota subn1 /=.
 rewrite scaler_sumr big_map; apply eq_big_seq => i.
 rewrite mem_iota add1n ltnS => /andP [Hi Hin].
 rewrite big_map big_seq.
 rewrite (eq_bigr
-    (fun c : seq nat => (n%:R^-1 *: 'p_i) *
-         (\Pi c *: \prod_(j <- c) 'p_j))); first last.
+    (fun c => (n%:R^-1 *: 'p_i) * (\Pi c *: \prod_(j <- c) 'p_j))); first last.
   move=> s; rewrite -enum_compnP /is_comp_of_n /= => /andP [/eqP -> _].
   rewrite subnKC // big_cons scalerAr.
   by rewrite natrM invfM -!scalerAr -scalerAl scalerA mulrC.
@@ -2038,8 +2035,7 @@ by rewrite Hchar Hsum Hm.
 Qed.
 
 Theorem symh_to_symp n :
-  [char R] =i pred0 ->
-  'h_n = \sum_(l : 'P_n) (zcard l)%:R^-1 *: 'p[l] :> SF.
+  [char R] =i pred0 -> 'h_n = \sum_(l : 'P_n) (zcard l)%:R^-1 *: 'p[l] :> SF.
 Proof.
 move=> Hchar.
 rewrite symh_to_symp_intpartn //; apply eq_bigr => l _.
