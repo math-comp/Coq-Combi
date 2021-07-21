@@ -55,7 +55,8 @@ of a basis element of [syma] in [symb]
 - e and h : [syme_to_symh] [symh_to_syme]
 - s and m : [syms_symm] [symm_syms]
 - s and h : [syms_symh] [symh_syms]
-- h and p : [symh_to_symp] and Newton's formula [Newton_symh]
+- h and p : [symh_to_symp] and Newton's formulas [Newton_symh] [Newton_symh1]
+- e and p : Newton's formulas [Newton_syme1]
 - h and m : [symh_to_symm]
 - p and m : [symp_to_symm]
 
@@ -940,7 +941,7 @@ Local Notation SF := {sympoly R[n]}.
 (** ** Bases change between homogeneous and elementary *)
 Lemma sum_symh_syme (d : nat) :
   d != 0%N ->
-  \sum_(0 <= i < d.+1) (-1)^+i *: ('h_i * 'e_(d - i)) = 0 :> SF.
+  \sum_(0 <= i < d.+1) (-1) ^+ i *: ('h_i * 'e_(d - i)) = 0 :> SF.
 Proof.
 move=> Hd; apply val_inj; rewrite /= rmorph_sum /=.
 apply mpolyP => m; rewrite linear_sum /= mcoeff0.
@@ -955,8 +956,8 @@ case: (altP (mdeg m =P d)) => Hm; first last.
   by rewrite mdegD Hm1 Hm2 subnKC // eq_refl.
 rewrite big_nat_rev /= add0n.
 apply/eqP; rewrite -(mulrI_eq0 _ (lreg_sign (n := d))) mulr_sumr; apply/eqP.
-transitivity
-  (\sum_(0 <= i < d.+1) (-1)^+i * (binomial #|[set j | m j != 0%N]| i)%:R : R).
+transitivity (\sum_(0 <= i < d.+1)
+               (-1) ^+ i * (binomial #|[set j | m j != 0%N]| i)%:R : R).
   apply eq_big_nat => /= i; rewrite ltnS => Hi.
   rewrite subSS subKn // linearZ /= mulrA; congr (_ * _).
     rewrite -signr_odd -[X in _ * X]signr_odd -signr_addb.
@@ -1038,7 +1039,7 @@ have : #|[set j | m j != 0%N]| != 0%N.
   by have:= H i; rewrite mnmE !inE => /negbFE => /eqP ->.
 move: (#|[set j | m j != 0%N]|) => C HC HCd.
 transitivity
-  (\sum_(i < C.+1) (-1)^+i * 1^+(C - i) * 1^+i *+ 'C(C, i) : R); first last.
+  (\sum_(i < C.+1) (-1) ^+ i * 1 ^+ (C - i) * 1 ^+ i *+ 'C(C, i) : R); first last.
   by rewrite -exprBn subrr expr0n (negbTE HC).
 rewrite big_mkord.
 rewrite [LHS](bigID (fun i : 'I__ => i < C.+1)) /= addrC big1 ?add0r; first last.
@@ -1053,7 +1054,7 @@ Qed.
 
 Lemma sum_syme_symh (d : nat) :
   d != 0%N ->
-  \sum_(0 <= i < d.+1) (-1)^+i *: ('e_i * 'h_(d - i)) = 0 :> SF.
+  \sum_(0 <= i < d.+1) (-1) ^+ i *: ('e_i * 'h_(d - i)) = 0 :> SF.
 Proof.
 move=> Hd; rewrite big_nat_rev /=.
 rewrite -[RHS](scaler0 _ ((-1)^+d)) -[in RHS](sum_symh_syme Hd) scaler_sumr /=.
@@ -1071,11 +1072,11 @@ Hypothesis E0 : E 0 = 1.
 Hypothesis H0 : H 0 = 1.
 Hypothesis Hanti : forall d : nat,
     d != 0%N ->
-    \sum_(0 <= i < d.+1) (-1)^+i *: (H i * E (d - i)) = 0.
+    \sum_(0 <= i < d.+1) (-1) ^+ i *: (H i * E (d - i)) = 0.
 
 Lemma symHE_rec (d : nat) :
   d != 0%N ->
-  E d = \sum_(1 <= i < d.+1) H i * ((-1)^+i.-1 *: E (d - i)).
+  E d = \sum_(1 <= i < d.+1) H i * ((-1) ^+ i.-1 *: E (d - i)).
 Proof.
 move=> Hd; have:= Hanti Hd.
 rewrite big_nat_recl // expr0 scale1r H0 mul1r subn0 => /eqP.
@@ -1087,7 +1088,7 @@ by rewrite exprS mulN1r opprK.
 Qed.
 
 Lemma symHE_prod_intcomp d :
-  E d = \sum_(c : intcompn d) (-1)^+(d - size c) *: (\prod_(i <- c) H i).
+  E d = \sum_(c : intcompn d) (-1) ^+ (d - size c) *: (\prod_(i <- c) H i).
 Proof.
 rewrite /index_enum -enumT /=.
 rewrite -[RHS](big_map (@cnval d) xpredT
@@ -1178,24 +1179,24 @@ End HandE.
 
 Lemma syme_symhE (d : nat) :
   d != 0%N ->
-  'e_d = \sum_(1 <= i < d.+1) 'h_i * ((-1)^+i.-1 *: 'e_(d - i)) :> SF.
+  'e_d = \sum_(1 <= i < d.+1) 'h_i * ((-1) ^+ i.-1 *: 'e_(d - i)) :> SF.
 Proof. by apply: (symHE_rec (symh0 _ _)); exact: sum_symh_syme. Qed.
 
 Lemma symh_symeE (d : nat) :
   d != 0%N ->
-  'h_d = \sum_(1 <= i < d.+1) 'e_i * ((-1)^+i.-1 *: 'h_(d - i)) :> SF.
+  'h_d = \sum_(1 <= i < d.+1) 'e_i * ((-1) ^+ i.-1 *: 'h_(d - i)) :> SF.
 Proof. by apply: (symHE_rec (syme0 _ _)); exact: sum_syme_symh. Qed.
 
-Lemma syme_to_symh n :
-  'e_n = \sum_(la : 'P_n)
-          (-1)^+(n - size la) * (perm_partn la)%:R *: 'h[la] :> SF.
+Lemma syme_to_symh d :
+  'e_d = \sum_(la : 'P_d)
+          (-1) ^+ (d - size la) * (perm_partn la)%:R *: 'h[la] :> SF.
 Proof.
 apply: (symHE_intpartn (syme0 _ _) (symh0 _ _)); exact: sum_symh_syme.
 Qed.
 
-Lemma symh_to_syme n :
-  'h_n = \sum_(la : 'P_n)
-          (-1)^+(n - size la) * (perm_partn la)%:R *: 'e[la] :> SF.
+Lemma symh_to_syme d :
+  'h_d = \sum_(la : 'P_d)
+          (-1) ^+ (d - size la) * (perm_partn la)%:R *: 'e[la] :> SF.
 Proof.
 apply: (symHE_intpartn (symh0 _ _) (syme0 _ _)); exact: sum_syme_symh.
 Qed.
@@ -1281,7 +1282,6 @@ rewrite Newton_symh big_mkord (reindex_inj rev_ord_inj) /=.
 rewrite big_add1 /= big_mkord; apply eq_bigr => i _.
 by rewrite mulrC subKn.
 Qed.
-
 
 Lemma mult_syme_U k d i m :
   (('e_k : {mpoly R[n]}) * 'X_i ^+ d)@_m =
@@ -1511,6 +1511,15 @@ rewrite -big_nat telescope_sumr // expr0 scale1r.
 rewrite [_ - _]addrC !addrA subrr add0r.
 rewrite exprS mulN1r scaleNr -scalerBr.
 by rewrite hookpartn_row -symp_to_symm subrr scaler0.
+Qed.
+
+Lemma Newton_syme (k : nat) :
+  k%:R *: 'e_k =
+  \sum_(0 <= i < k) (-1) ^+ (k - i).+1 *: 'e_i * 'p_(k - i) :> SF.
+Proof.
+rewrite Newton_syme1 big_mkord (reindex_inj rev_ord_inj) /=.
+rewrite big_add1 /= big_mkord; apply eq_bigr => i _.
+by rewrite mulrC subKn // scalerCA.
 Qed.
 
 End ChangeBasis.

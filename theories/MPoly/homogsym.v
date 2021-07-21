@@ -36,7 +36,7 @@ The classical bases:
 
 - [in_homsym d p] == if [p] is a polynomial [{mpoly R[n]}] which is both
                      symmetric and homogeneous of degree [d], return it as a
-                     [{sympol R[n, d]}]. It is canonically linear.
+                     [{homsym R[n, d]}]. It is canonically linear.
 
 - ['he]           == the elementary hom. sym. basis
 - ['hh]           == the complete   hom. sym. basis
@@ -44,6 +44,9 @@ The classical bases:
 - ['hm]           == the monomial   hom. sym. basis
 - ['hs]           == the Schur      hom. sym. basis
 
+The omega involution
+
+- [omegahomsym f] == the image of f under the omega involution.
 
 Changing the base ring and the number of variables:
 
@@ -427,6 +430,7 @@ Proof. by rewrite {2}(homsymmE p). Qed.
 End InHomSym.
 
 
+(** ** The omega involution *)
 Section OmegaHomSym.
 
 Variable n0 d : nat.
