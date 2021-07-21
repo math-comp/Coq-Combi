@@ -31,8 +31,8 @@ We fix two groups [G] and [H]. Then we define:
 
 The tower of the symmetric groups
 
-- [tinj]     == the tower injection morphism : 'S_m * 'S_n -> 'S_(m + n)
-- [f \o^ g]  == the image along tinj of external product of f g.
+- [tinj]     == the tower injection morphism : ['S_m * 'S_n -> 'S_(m + n)]
+- [f \o^ g]  == the image along [tinj] of the external product of [f] and [g].
 
 Induction and restriction of class functions
 
@@ -40,7 +40,7 @@ Induction and restriction of class functions
                 permutation of cycle type [p] in [algC], that is
                 [#|'S_k| / #|class p|].
 - ['1z_p] = [ncfuniCT p] == the normalized cycle indicator class function
-                for cycle type [p].
+                for cycle type [p] == ['z_p *: '1_[p]].
 
 The two main results are:
 
@@ -55,7 +55,7 @@ The two main results are:
   by Frobenius duality it implies:
 
 - Theorem [ncfuniCT_Ind] which expands the induction of two normalized
-  cycle indicator class functions
+  cycle indicator class functions:
 
   [
     'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]) = '1z_[p +|+ q].
