@@ -55,15 +55,17 @@ Local Open Scope ring_scope.
 Local Notation reprS n d :=
   (mx_representation [fieldType of algC] 'SG_n d).
 
+
 (** * Representation of dimension 1 and natural representation *)
 Section DefTrivSign.
 
 Variables n d : nat.
 
 Definition triv_mx (g : 'S_n) : 'M[algC]_1 := 1.
-Definition sign_mx (g : 'S_n) : 'M[algC]_1 := if odd_perm g then -1 else 1.
+Definition sign_mx (g : 'S_n) : 'M[algC]_1 := (-1) ^+ (odd_perm g).
 Definition signed_mx (rho : reprS n d) (g : 'S_n) : 'M[algC]_d :=
-  if odd_perm g then -(rho g) else rho g.
+  (-1) ^+ (odd_perm g) *: rho g.
+
 Definition nat_mx (g : 'S_n) : 'M[algC]_n := perm_mx g.
 
 
@@ -77,9 +79,7 @@ Proof. by apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
 Lemma sign_mx_repr : mx_repr 'SG_n sign_mx.
 Proof.
 rewrite /sign_mx; split; first by rewrite /= odd_perm1.
-move=> g1 g2 _ _; rewrite odd_permM.
-by case: (odd_perm g1); case: (odd_perm g2);
-  rewrite /= ?mulNmx ?mulmxN ?opprK mul1mx.
+by move=> g1 g2 _ _; rewrite odd_permM signr_addb.
 Qed.
 Canonical sign_repr : reprS n 1 := MxRepresentation sign_mx_repr.
 
@@ -88,10 +88,9 @@ Proof. apply: mx_abs_irrW; exact: linear_mx_abs_irr. Qed.
 
 Lemma signed_mx_repr rho : mx_repr 'SG_n (signed_mx rho).
 Proof.
-rewrite /signed_mx; split; first by rewrite /= odd_perm1 repr_mx1.
+rewrite /signed_mx; split; first by rewrite /= odd_perm1 repr_mx1 expr0 scale1r.
 move=> g1 g2 _ _; rewrite odd_permM.
-by case: (odd_perm g1); case: (odd_perm g2);
-  rewrite /=  ?mulNmx ?mulmxN ?opprK repr_mxM // inE.
+by rewrite -scalemxAl -scalemxAr scalerA signr_addb repr_mxM ?inE.
 Qed.
 Canonical signed_repr rho : reprS n d := MxRepresentation (signed_mx_repr rho).
 
@@ -110,12 +109,37 @@ Proof using. by rewrite irr0 cfRepr_trivE. Qed.
 Lemma triv_Chi : mx_rsim triv_repr 'Chi_0.
 Proof using. by apply/cfRepr_rsimP; rewrite cfRepr_triv irrRepr. Qed.
 
+Lemma sign_char_subproof :
+  is_class_fun <<'SG_n>> [ffun g => (-1) ^+ (odd_perm g)].
+Proof.
+rewrite genGid.
+by apply: intro_class_fun => /= [s t | s]; rewrite ?odd_permJ ?inE.
+Qed.
+Definition sign_char := Cfun 0 sign_char_subproof.
+
+Lemma cfRepr_sign : cfRepr sign_repr = sign_char.
+Proof.
+apply cfunP => /= s; rewrite /= !cfunE inE /= !mulr1n.
+rewrite /trmx trace_mx11 /sign_mx.
+by case: (odd_perm s) => /=; rewrite ?expr1 ?expr0 !mxE eqxx.
+Qed.
+Lemma sign_charP : sign_char \is a linear_char.
+Proof. by rewrite qualifE -{1}cfRepr_sign cfRepr_char /= cfunE odd_perm1. Qed.
+
+Lemma cfRepr_signed (rho : reprS n d) :
+  cfRepr (signed_repr rho) = sign_char * cfRepr rho.
+Proof.
+apply cfunP => /= s; rewrite /= !cfunE inE /= !mulr1n.
+by rewrite /signed_mx mxtraceZ.
+Qed.
+
 End DefTrivSign.
 
 Arguments triv_mx_repr {n}.
 Arguments triv_repr {n}.
 Arguments sign_mx_repr {n}.
 Arguments sign_repr {n}.
+Arguments sign_char {n}.
 
 
 (** * Representations of the symmetric Group for n = 0 and 1  *)

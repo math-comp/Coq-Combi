@@ -15,7 +15,7 @@
 (******************************************************************************)
 (** * The Ring of Symmetric Polynomials
 
-- {sympoly R[n]} == the ring of symmetric polynomial in [n] variable over [R].
+- [{sympoly R[n]}] == the ring of symmetric polynomial in [n] variable over [R].
 - [sympol f] == the coercion from [{sympoly R[n]}] to [{mpoly R[n]}]
 
 Classical bases

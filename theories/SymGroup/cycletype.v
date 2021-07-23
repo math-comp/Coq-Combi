@@ -266,13 +266,23 @@ Section CycleTypeConj.
 Variable T : finType.
 Implicit Types (s t : {perm T}) (n : nat).
 
-Fact cycle_type_subproof (s : {perm T}) :
-  is_part_of_n #|T| (setpart_shape (porbits s)).
+Fact cycle_type_subproof s : is_part_of_n #|T| (setpart_shape (porbits s)).
 Proof using.
 rewrite -cardsT; apply setpart_shapeP.
 exact: partition_porbits.
 Qed.
-Definition cycle_type (s : {perm T}) := IntPartN (cycle_type_subproof s).
+Definition cycle_type s := IntPartN (cycle_type_subproof s).
+
+Lemma size_cycle_type s : size (cycle_type s) = #|porbits s|.
+Proof. by rewrite /cycle_type /setpart_shape size_sort size_map -cardE. Qed.
+
+Lemma odd_cycle_type s :
+  odd_perm s = odd (sumn (cycle_type s) - size (cycle_type s)).
+Proof.
+have:= size_part (intpartnP (cycle_type s)).
+rewrite sumn_intpartn size_cycle_type => lept.
+by rewrite oddB.
+Qed.
 
 Lemma cycle_type1 : cycle_type 1%g = colpartn #|T|.
 Proof.
@@ -286,6 +296,9 @@ have /eqP : (1%g : {perm T}) x = x by rewrite perm1.
 rewrite porbit_fix => /eqP ->.
 by rewrite cards1.
 Qed.
+
+Lemma cycle_typeV s : cycle_type s^-1 = cycle_type s.
+Proof. by apply val_inj; rewrite /= porbitsV. Qed.
 
 Lemma conjg_cycle s a : (<[s]> :^ a = <[s ^ a]>)%g.
 Proof using.

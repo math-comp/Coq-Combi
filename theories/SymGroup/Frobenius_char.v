@@ -1,6 +1,6 @@
 (** * Combi.SymGroup.Frobenius_char : Frobenius characteristic *)
 (******************************************************************************)
-(*      Copyright (C) 2016-2018 Florent Hivert <florent.hivert@lri.fr>        *)
+(*      Copyright (C) 2016-2021 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
 (*  Distributed under the terms of the GNU General Public License (GPL)       *)
 (*                                                                            *)
@@ -13,24 +13,39 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * Frobenius characteristic associated to a class function of ['SG_n].
+(** * Frobenius / Schur character theory for the symmetric groups.
+
+We develop the theory of Frobenius characteristic associated to a class
+function of ['SG_n], it is an isometry from class function to symmetric
+functions, mapping
+- [1%g] to ['HH[rowpartn n] ] (this is Fchar_triv);
+- 1z_[l] to 'hp[l] (this is [Fchar_ncfuniCT]);
+- induction product to product [Fchar_ind_morph];
+- omega involution to multiplication by the sign character [omega_Fchar].
+
+We define the following notions and notations:
 
 - [Fchar f]     == the Frobenius characteristic of the class function [f].
                    the number of variable is inferred from the context.
 - [Fchar_inv f] == the inverse Frobenius characteristic of the
                    homogeneous symmetric polynomial [f].
+
+- ['M[la]]      == the Young character for ['SG_n] associated to the
+                   partition [la] of n. If [la = (l1, ..., lk)] it is the
+                   character induced from the trivial representations of the
+                   group ['SG_l1 * ... * SG_lk].
 - ['irrSG[la]]  == the irreducible character for ['SG_n] associated to the
                    partition [la] of n.
 
-
-Main results includes:
+Here is a list of fundamental results:
 
 - [Fchar_isometry] : The Frobenius characteristic is an isometry.
-- [Young_rule] : The Young rule for character of ['SG_n].
-- [irrSGP] : The ['irrSG[la]] forms a complete set of irreducible character.
+- [Young_rule]     : The Young rule for character of ['SG_n].
+- [irrSGP]         : The ['irrSG[la] | la : 'P_n] forms a complete set of
+                     irreducible characters for ['SG_n].
 - [Frobenius_char] : Frobenius character formula for ['SG_n].
-- [dim_cfReprSG] : the dimension of irreducible representation of ['SG_n].
-- [LR_rule_irrSG] : Littlewood-Richardson rule for characters of ['SG_n].
+- [dim_cfReprSG]   : the dimension of irreducible representation of ['SG_n].
+- [LR_rule_irrSG]  : Littlewood-Richardson rule for characters of ['SG_n].
  *)
 
 Require Import mathcomp.ssreflect.ssreflect.
@@ -42,8 +57,9 @@ From mathcomp Require Import mxrepresentation classfun character.
 
 From SsrMultinomials Require Import mpoly.
 Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy
-        Schur_altdef stdtab.
-Require Import permcomp cycletype towerSn permcent reprSn.
+        Schur_altdef stdtab therule.
+Require Import permcomp cycletype towerSn permcent reprSn unitriginv.
+
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -172,6 +188,36 @@ rewrite /prod_gen rowpartnE big_seq1 raddf_sum symh_to_symp //=.
 by apply eq_bigr => l _; rewrite zcoeffE.
 Qed.
 
+Lemma Fchar_inv_homsymp (l : 'P_n) : Fchar_inv 'hp[l] = '1z_[l].
+Proof. by rewrite -Fchar_ncfuniCT FcharK. Qed.
+
+(** ** The Frobenius Characteristic is an isometry *)
+Lemma omega_Fchar_inv (p : HS) :
+  Fchar_inv (omegahomsym p) = sign_char * (Fchar_inv p).
+Proof.
+have /coord_span -> : p \in span 'hp.
+  by rewrite (span_basis (symbp_basis Hn _ )) // memvf.
+rewrite !linear_sum /= mulr_sumr; apply eq_bigr => i _.
+rewrite !linearZ /= -scalerAr; congr (_ *: _).
+rewrite {p} (nth_map (rowpartn n)); last by rewrite -cardE ltn_ord.
+move: (nth _ _ _) => la {i}.
+rewrite omega_homsymp // linearZ /= Fchar_inv_homsymp.
+rewrite /ncfuniCT scalerA mulrC -scalerA -scalerAr; congr (_ *: _).
+rewrite -cfunP => /= s; rewrite !cfunE.
+rewrite odd_cycle_type signr_odd sumn_intpartn.
+rewrite cfuniCTE; case: eqP => [->|]; rewrite /= ?mulr0 // {s}.
+by rewrite {1}card_ord cast_intpartnE.
+Qed.
+
+Lemma omega_Fchar f : omegahomsym (Fchar f) = Fchar (sign_char * f).
+Proof. by rewrite -(FcharK f) -omega_Fchar_inv !Fchar_invK. Qed.
+
+Lemma Fchar_sign : Fchar sign_char = 'he[rowpartn n].
+Proof.
+by rewrite -(mulr1 sign_char) -omega_Fchar Fchar_triv omega_homsymh.
+Qed.
+
+
 (** ** The Frobenius Characteristic is an isometry *)
 Theorem Fchar_isometry f g : '[Fchar f | Fchar g] = '[f, g].
 Proof using Hn.
@@ -263,28 +309,30 @@ rewrite !FcharE => Hn; rewrite linear_sum /=; apply eq_bigr => la _.
 by rewrite linearZ /= cnvarhomsymp.
 Qed.
 
-Definition YoungSG (n : nat) (la : 'P_n) : 'CF('SG_n) :=
-  Fchar_inv (n.-1) 'hh[la].
 
-Definition irrSG (n : nat) (la : 'P_n) : 'CF('SG_n) :=
-  Fchar_inv (n.-1) 'hs[la].
+Section YoungIrrDef.
+
+Variable (n : nat).
+Implicit Type (la mu : 'P_n).
+
+Definition YoungSG la : 'CF('SG_n) := Fchar_inv (n.-1) 'hh[la].
+Definition irrSG   la : 'CF('SG_n) := Fchar_inv (n.-1) 'hs[la].
 
 Notation "''M[' l ']'" := (YoungSG l).
 Notation "''irrSG[' l ']'" := (irrSG l).
 
 Local Notation PO := IntPartNDom.intpartndom_finPOrdType.
 
-Lemma Fchar_irrSGE nvar0 n (la : 'P_n) : Fchar nvar0 'irrSG[la] = 'hs[la].
+Lemma Fchar_irrSGE nvar0 la : Fchar nvar0 'irrSG[la] = 'hs[la].
 Proof.
 rewrite /irrSG -(FcharNvar (nvar0 := n.-1) _) ?leqSpred //=.
 by rewrite Fchar_invK ?leqSpred //= cnvarhomsyms ?leqSpred.
 Qed.
 
-Lemma Young_char (n : nat) (la : 'P_n) : 'M[la] \is a character.
+Lemma Young_char la : 'M[la] \is a character.
 Proof. exact: homsymh_character. Qed.
 
-Lemma Young_rule (n : nat) (la : 'P_n) :
-  'M[la] = \sum_(mu : 'P_n) 'K(mu, la)  *: 'irrSG[mu].
+Lemma Young_rule la : 'M[la] = \sum_(mu : 'P_n) 'K(mu, la)  *: 'irrSG[mu].
 Proof.
 pose HS := {homsym algC[n.-1.+1, n]}.
 rewrite /YoungSG /irrSG.
@@ -296,9 +344,7 @@ rewrite linear_sum /=; apply eq_bigr => mu hmu.
 by rewrite linearZ /= Fchar_invK.
 Qed.
 
-Require Import unitriginv.
-
-Lemma Young_rule_partdom (n : nat) (la : 'P_n) :
+Lemma Young_rule_partdom la :
   'M[la] = 'irrSG[la] +
            \sum_(mu | ((la : PO n) < mu)%Ord) 'K(mu, la)  *: 'irrSG[mu].
 Proof.
@@ -306,10 +352,11 @@ rewrite Young_rule.
 exact: (unitrig_sum1lV (fun mu : PO n => 'irrSG[mu]) la (Kostka_unitrig _ n)).
 Qed.
 
+
 (** ** Irreducible character *)
 
 (** Substracting characters *)
-Lemma rem_irr1 n (xi phi : 'CF('SG_n)) :
+Lemma rem_irr1 (xi phi : 'CF('SG_n)) :
   xi \in irr 'SG_n -> phi \is a character -> '[phi, xi] != 0 ->
      phi - xi \is a character.
 Proof.
@@ -318,7 +365,7 @@ rewrite -irr_consttE => /(constt_charP i Hphi) [psi Hpsi ->{phi Hphi}].
 by rewrite [_ + psi]addrC addrK.
 Qed.
 
-Lemma rem_irr n (xi phi : 'CF('SG_n)) :
+Lemma rem_irr (xi phi : 'CF('SG_n)) :
   xi \in irr 'SG_n -> phi \is a character ->
      phi - '[phi, xi] *: xi \is a character.
 Proof.
@@ -331,11 +378,11 @@ rewrite mulrS scalerDl scale1r opprD addrA; apply: IHm.
 - by rewrite cfdotBl Hm irrWnorm // mulrS [1 + _]addrC addrK.
 Qed.
 
-Lemma irrSG_orthonormal n (la mu : 'P_n) :
+Lemma irrSG_orthonormal la mu :
   '['irrSG[la], 'irrSG[mu]] = (la == mu)%:R.
 Proof. by rewrite /irrSG Fchar_inv_isometry // homsymdotss. Qed.
 
-Theorem irrSG_irr n (la : 'P_n) : 'irrSG[la] \in irr 'SG_n.
+Theorem irrSG_irr la : 'irrSG[la] \in irr 'SG_n.
 Proof.
 elim/(finord_wf_down (T := PO n)): la => la IHla.
 rewrite irrEchar irrSG_orthonormal !eq_refl andbT.
@@ -369,7 +416,7 @@ by rewrite -H Hmu in Hl0l.
 Qed.
 
 (** The ['irrSG[la]] forms a complete set of irreducible character *)
-Theorem irrSGP n : perm_eq [seq 'irrSG[la] | la : 'P_n] (irr 'SG_n).
+Theorem irrSGP : perm_eq [seq 'irrSG[la] | la : 'P_n] (irr 'SG_n).
 Proof.
 set IRR := [seq 'irrSG[la] | la : 'P_n].
 have Huniq : uniq IRR.
@@ -389,18 +436,19 @@ by rewrite size_tuple card_ord.
 Qed.
 
 
+
 (** ** Frobenius character formula for ['SG_n] *)
 
 (** The value of the irreducible character ['irrSG[la]] using scalar product of
     symmetric function *)
-Theorem Frobenius_char_homsymdot n (la : 'P_n) (sigma : 'S_n) :
+Theorem Frobenius_char_homsymdot la (sigma : 'S_n) :
   'irrSG[la] sigma = '[ 'hs[la] | 'hp[cycle_typeSn sigma] ] _(n.-1, n).
 Proof.
 rewrite cfdotr_ncfuniCT -(Fchar_isometry (leqSpred n)).
 by rewrite Fchar_irrSGE Fchar_ncfuniCT.
 Qed.
 
-Theorem Frobenius_char_coord n (la mu : 'P_n) :
+Theorem Frobenius_char_coord la mu :
   'irrSG[la] (permCT mu) =
   coord 'hs (enum_rank la) ('hp[mu] : {homsym algC[n.-1.+1, n]}).
 Proof.
@@ -436,6 +484,11 @@ move=> /(congr1 (fun p : _.-tuple _ => p`_i)) /= => <-.
 congr (_ *: _); apply esym; apply nth_map.
 by rewrite size_map -cardE ltn_ord.
 Qed.
+
+End YoungIrrDef.
+Notation "''M[' l ']'" := (YoungSG l).
+Notation "''irrSG[' l ']'" := (irrSG l).
+
 
 (** Frobenius character formula for ['SG_n] *)
 Theorem Frobenius_char n (la mu : 'P_n) :
@@ -481,9 +534,6 @@ by rewrite eqC_nat => /eqP ->.
 Qed.
 
 
-Require Import therule cycletype.
-Open Scope ring_scope.
-
 (** * Littlewood-Richardson rule for irreducible characters *)
 Theorem LR_rule_irrSG c d (la : 'P_c) (mu : 'P_d) :
   'Ind['SG_(c + d)] ('irrSG[la] \o^ 'irrSG[mu]) =
@@ -495,4 +545,3 @@ apply val_inj; rewrite /= linear_sum /=.
 rewrite syms_symsM; apply eq_bigr => nu _.
 by rewrite !linearMn /= Fchar_invK // leqSpred.
 Qed.
-

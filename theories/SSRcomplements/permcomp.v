@@ -33,6 +33,19 @@ Section PermComp.
 Variable T : finType.
 Implicit Type (s : {perm T}) (X : {set T}) (P : {set {set T}}).
 
+Lemma porbitV s : porbit s^-1 =1 porbit s.
+Proof.
+move=> x; apply/setP => y; rewrite porbit_sym.
+by apply/porbitP/porbitP => [][i ->]; exists i; rewrite expgVn ?permK ?permKV.
+Qed.
+
+Lemma imset_setT (V : finType) (f : T -> V) :
+  [set f x | x : T] = [set f x | x in [set: T]].
+Proof. by apply/setP=> x; apply/imsetP/imsetP=> [][y _ ->{x}]; exists y. Qed.
+
+Lemma porbitsV s : porbits s^-1 = porbits s.
+Proof. by rewrite /porbits !imset_setT -(eq_imset setT (porbitV s)). Qed.
+
 Lemma setactC (aT : finGroupType) (D : {set aT})
       (rT : finType) (to : action D rT) S a :
   to^* (~: S) a = ~: to^* S a.

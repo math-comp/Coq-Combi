@@ -18,7 +18,7 @@
 In the combinatorial definitions below, we use the following notations:
 - [n] : an integer denoting the number of variable.
 - [la] [mu] : partitions of an integer [d]
-- [m] : a monomial for the ring of polynomials {mpoly R[n]}
+- [m] : a monomial for the ring of polynomials [{mpoly R[n]}]
 - [w] : a sequence of ['I_n]
 - [t] : a tableau
 
