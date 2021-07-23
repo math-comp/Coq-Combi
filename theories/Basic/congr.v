@@ -22,7 +22,7 @@ Recall that a word congruence is an equivalence relation compatible with the
 concatenation product. This is the following definitions
 
 - [congruence_rel r] == the relation r on [seq T] is a congruence
-- [congruence_rule] rule] == the rule rule on [seq T] is a congruence rule
+- [congruence_rule]  == the rule rule on [seq T] is a congruence rule
 
 Given a rewriting rule, the goal of this file is to compute its word
 congruence closure as well as its congruence classes. We therefore suppose

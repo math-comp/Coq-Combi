@@ -41,7 +41,7 @@ Vandermonde products and determinants:
 
 The main results are the Vandermonde determinant expansion:
 
- [ Vanprod_alt     : Vanprod = alternpol 'X_[(rho n)] ]
+- [ Vanprod_alt     : Vanprod = alternpol 'X_[(rho n)] ]
 - [ Vandet_VanprodE : Vandet = Vanprod ]
 
 *******************************************************************************)

@@ -76,7 +76,7 @@ Change of the number of variables
              [{sympoly R[m.+1]} -> {sympoly R[n.+1]}] given by the fundamental
              theorem.
 
-We show that if d ≤ m or n ≤ m, for any partition in ['P_d] the change of
+We show that if [d ≤ m] or [n ≤ m], for any partition in ['P_d] the change of
 number of variables sends a basis element ['b[la]] to the same element. These
 are lemmas
 

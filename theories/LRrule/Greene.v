@@ -15,6 +15,7 @@
 (******************************************************************************)
 (** * Greene monotone subsequences numbers
 
+We define the following notions and notations:
 
 - [trivIseq U] == [u : seq {set T}] contains pairwise disjoint sets.
 
@@ -59,8 +60,8 @@ link column green number with the length of the column of the shape (with is
 the same as the length of the row of the conjugate.
 
 As a consequence two tableaux whose row readings have the same row (or column)
-Greene numbers have the same shape Theorem [Greene_row_tab_eq_shape] and
-[Greene_col_tab_eq_shape].
+Greene numbers have the same shape (this is Theorem [Greene_row_tab_eq_shape] and
+[Greene_col_tab_eq_shape]).
  ********************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice.
@@ -794,6 +795,7 @@ Qed.
 End GreeneInj.
 
 
+(** ** Reverting a word on the dual alphabet *)
 Section Rev.
 
 Variable Alph : inhOrdType.
@@ -1076,6 +1078,7 @@ exact: prefix_subseq.
 Qed.
 
 
+(** ** Induction step: adding a row to a tableau *)
 Section Induction.
 
 Variable (t0 : seq Alph) (t : seq (seq Alph)).
@@ -1517,6 +1520,7 @@ Qed.
 End GreeneRec.
 
 
+(** ** Greene numbers of a tableau *)
 Section GreeneTab.
 
 Variable Alph : inhOrdType.
@@ -1634,6 +1638,7 @@ End GreeneTab.
 
 
 
+(** ** Recovering a shape from Greene numbers on tableaux *)
 Theorem Greene_row_tab_eq_shape
         (T1 T2 : inhOrdType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
   is_tableau t1 -> is_tableau t2 ->

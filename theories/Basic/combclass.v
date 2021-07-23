@@ -19,7 +19,7 @@ The goal of this file is to define various way to easily build finite
 subtype of a countable type knowing a lists of its elements. We provide four
 ways, three from a list (see [sub_subFinType], [sub_uniq_subFinType] and
 [sub_undup_subFinType] below) and one by taking the disjoint union of already
-constructed subfintypes (see [union_subFinType] below].  *)
+constructed subfintypes (see [union_subFinType] below).  *)
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.

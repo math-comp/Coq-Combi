@@ -15,7 +15,7 @@
 (******************************************************************************)
 (** * Free Schur functions
 
-This file is the second step to the proof of the Littewood-Richardson rule.
+This file is the second step of the proof of the Littewood-Richardson rule.
 We translate theorem [LRtriple_cat_equiv] in a algebraic setting. Specifically,
 the main goal of this file is to lift the multiplication of Schur multivariate
 polynomials to the non commutative setting.
@@ -272,7 +272,7 @@ rewrite Schur_tabsh_readingE /polylang /commword; apply eq_bigl => i /=.
 by rewrite inE.
 Qed.
 
-(** ** Commutative immage of freeSchur language *)
+(** ** Commutative image of freeSchur language *)
 Lemma Schur_freeSchurE d (Q : stdtabn d) :
   Schur (shape_deg Q) = polylang R (freeSchur Q).
 Proof using .
