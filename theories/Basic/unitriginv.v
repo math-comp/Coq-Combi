@@ -88,7 +88,7 @@ Lemma unitrig_sum1l M (Mod : lmodType R) (F : T -> Mod) u :
 Proof.
 move=> Hut; rewrite unitrig_suml // (bigD1 u) //=.
 move: Hut => /unitrigP [-> _]; rewrite scale1r; congr (_ + _).
-by apply eq_bigl => t; rewrite lt_def andbC eq_sym.
+by apply eq_bigl => t; rewrite lt_neqAle andbC.
 Qed.
 
 Lemma unitrig_sumr M (Mod : lmodType R) (F : T -> Mod) t :
@@ -143,7 +143,7 @@ Lemma unitrig_sum1rV M (Mod : lmodType R) (F : T -> Mod) t :
 Proof.
 move=> Hut; rewrite unitrig_sumrV // (bigD1 t) //=.
 move: Hut => /unitrigP [-> _]; rewrite scale1r; congr (_ + _).
-by apply eq_bigl => u; rewrite lt_def andbC eq_sym.
+by apply eq_bigl => u; rewrite lt_neqAle andbC.
 Qed.
 
 End UniTriangular.
@@ -217,7 +217,7 @@ rewrite (bigID (fun v => v <= u)%O) /= [X in _ + X]big1 ?addr0; first last.
   by move=> v /(contraR (@Mtrig _ _)) /eqP ->; rewrite mul0r.
 rewrite (bigD1 u) //= Muni mul1r big1 ?addr0 // => i /andP [Hneq Hlt].
 rewrite IHu ?mulr0 //.
-- by rewrite lt_def eq_sym Hlt Hneq.
+- by rewrite lt_neqAle Hlt Hneq.
 - by move: Hu; apply contra => /le_trans; apply.
 Qed.
 
