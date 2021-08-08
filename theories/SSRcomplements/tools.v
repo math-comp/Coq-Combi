@@ -151,18 +151,30 @@ Lemma sumn_mapE (T : Type) (s : seq T) (f : T -> nat) :
   \sum_(i <- s) f i = sumn [seq f i | i <- s].
 Proof. by rewrite sumn_map_condE filter_predT. Qed.
 
-Lemma sumn_take r s : sumn (take r s) = \sum_(0 <= i < r) nth 0 s i.
+Lemma sum_minn s b :
+  \sum_(l <- s) minn l b = sumn s - \sum_(l <- s) (l - b).
 Proof.
-elim: r s => [|r IHr] s /=.
-  by rewrite take0 /index_iota /= big_nil.
-case: s => [| s0 s] /=.
-  rewrite {IHr} (eq_bigr (fun => 0)) //.
-  rewrite big_const_nat subn0.
-  by elim: r.
-rewrite IHr /index_iota !subn0 /= big_cons /=.
-congr (_ + _); rewrite -add1n iotaDl big_map.
-exact: eq_bigr.
+elim: s => [|s0 s IHs] /=; first by rewrite !big_nil !sub0n.
+rewrite !big_cons {}IHs minnE.
+case: (leqP s0 b) => [le_s0_b | /ltnW le_b_s0].
+- have:= le_s0_b; rewrite -subn_eq0 => /eqP ->; rewrite add0n subn0.
+  by rewrite addnBA // sumnE; apply: leq_sum => n _; apply: leq_subr.
+- rewrite subKn // subnDA subnBA // -addnA [s0 + _]addnC addnK [_ + b]addnC.
+  by rewrite addnBA // sumnE; apply: leq_sum => n _; apply: leq_subr.
 Qed.
+
+Lemma sum_take r s F :
+  F 0 = 0 -> \sum_(l <- take r s) F l = \sum_(0 <= i < r) F (nth 0 s i).
+Proof.
+move => F0; elim: r s => [|r IHr] s /=.
+  by rewrite take0 /index_iota /= !big_nil.
+case: s => [{IHr}| s0 s] /=.
+  by rewrite big_nil; apply/esym/big1 => i _; rewrite nth_default.
+by rewrite big_nat_recl //= big_cons -IHr.
+Qed.
+
+Lemma sumn_take r s : sumn (take r s) = \sum_(0 <= i < r) nth 0 s i.
+Proof. by rewrite sumnE sum_take. Qed.
 
 Lemma sum_iota_sumnE l n :
   size l <= n -> \sum_(0 <= i < n) nth 0 l i = sumn l.

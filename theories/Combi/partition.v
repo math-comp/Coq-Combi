@@ -89,13 +89,16 @@ Operations on partitions:
                gathering the parts of [l] and [k]
 - [l +|+ k] = [union_intpartn l k] == the partition of type ['P_n]
                obtained by gathering the parts of [l] and [k]
+
 Comparison of partitions:
+
+TODO : Fix this doc
 
 - [partdom s t] == [s] is dominated by [t], that is the partial sum of [s] are
                smaller that the partial sum of [t].
 - [intpartndom d] == a type convertible to ['P_n] which is canonically
                finite and partially ordered by [partdom].
-- [(s <= t)%Ord] == [s] is smaller than [t] for the lexicographic order
+- [(s <= t)%O] == [s] is smaller than [t] for the lexicographic order
 
 Relation with set partitions:
 
@@ -104,8 +107,8 @@ Relation with set partitions:
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import bigop path binomial finset.
-Require Import tools combclass sorted ordtype.
+From mathcomp Require Import bigop path binomial finset order tuple.
+Require Import tools combclass sorted ordtype lattice.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -1634,12 +1637,12 @@ rewrite /decr_nth_intpart /=.
 by case: (is_rem_corner p i).
 Qed.
 
-
+(*
 Module IntPartNLex.
 
 Definition intpartnlex := intpartn.
 
-Definition intpartnlex_pordMixin n := [pordMixin of intpartnlex n by <:].
+Definition intpartnlex_pordMixin n := [porderMixin of intpartnlex n by <:].
 Canonical intpartnlex_pordType n :=
   Eval hnf in POrdType (intpartnlex n) (intpartnlex_pordMixin n).
 Definition intpartnlex_ordMixin n := [ordMixin of intpartnlex_pordType n by <:].
@@ -1654,7 +1657,7 @@ Canonical intpartnlex_inhOrdType n := [inhOrdType of intpartnlex n].
 Canonical intpartnlex_inhOrdFinType n := [inhOrdFinType of intpartnlex n].
 
 End IntPartNLex.
-
+*)
 
 (**  * Counting functions *)
 
@@ -1802,7 +1805,6 @@ Definition partdomsh n1 n2 (s1 s2 : seq nat) :=
   all
     (fun i => n1 + sumn (take i s1) <= n2 + sumn (take i s2))
     (iota 0 (size s1).+1).
-
 Definition partdom := partdomsh 0 0.
 
 Lemma partdomshP {n1 n2 s1 s2} :
@@ -2080,7 +2082,7 @@ exists [set X in P]; first exact: Ppart.
 apply (sorted_eq (leT := geq)) => //.
 - exact: sort_sorted.
 - rewrite /setpart_shape -Psh perm_sort; apply: perm_map.
-  apply: (uniq_perm (enum_uniq _) Puniq) => x.
+  apply: (uniq_perm (enum_uniq [set X in P]) Puniq) => x.
   by rewrite mem_enum inE.
 Qed.
 
