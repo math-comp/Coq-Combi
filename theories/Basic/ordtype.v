@@ -1156,18 +1156,47 @@ Lemma finord_wf_down (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
   (forall x, (forall y, y > x -> P y) -> P x) -> forall x, P x.
 Proof. exact: (@finord_wf _ [finPOrderType of T^d]). Qed.
 
-(*
+
 (** ** The order on ordinals ***)
-Definition ord_pordMixin n := [porderMixin of 'I_n by <:].
-Canonical ord_pordType n := Eval hnf in POrderType 'I_n (ord_pordMixin n).
-Definition ord_ordMixin n := [ordMixin of ord_pordType n by <:].
-Canonical ord_ordType n := Eval hnf in OrdType 'I_n (ord_ordMixin n).
-Definition ord_inhMixin n := Inhabited.Mixin (ord0 (n' := n)).
-Canonical ord_inhType n := Eval hnf in InhType 'I_n.+1 (ord_inhMixin n).
-Canonical ord_inhOrdType n := [inhOrdType of 'I_n.+1].
-Canonical ord_inhOrdFinType n := [inhOrdFinType of 'I_n.+1].
+Section OrdinalOrder.
+Variable n : nat.
+Definition ord_porderMixin := [porderMixin of 'I_n by <:].
+Canonical ord_porderType :=
+  POrderType Order.NatOrder.nat_display 'I_n ord_porderMixin.
+Definition ord_totalOrderMixin := [totalOrderMixin of 'I_n by <:].
+Canonical ord_latticeType := LatticeType 'I_n ord_totalOrderMixin.
+Canonical ord_distrLatticeType := DistrLatticeType 'I_n ord_totalOrderMixin.
+Canonical sub_orderType := OrderType 'I_n ord_totalOrderMixin.
+End OrdinalOrder.
+
+Section OrdinalInhabited.
+Variable n0 : nat.
+Local Notation n := n0.+1.
+Implicit Type x : 'I_n.
+
+Lemma ord_bottom x : (ord0 <= x)%O.
+Proof. by []. Qed.
+Lemma ord_top x : (x <= ord_max)%O.
+Proof. by case: x => x ltx /=. Qed.
+
+Definition ord_bottomMixin := BottomMixin ord_bottom.
+Canonical ord_blatticeType := BLatticeType 'I_n ord_bottomMixin.
+Definition ord_topMixin := TopMixin ord_top.
+Canonical ord_tblatticeType := TBLatticeType 'I_n ord_topMixin.
+Canonical ord_finLatticeType := Eval hnf in [finLatticeType of 'I_n].
+Canonical ord_bDistrLatticeType := Eval hnf in [bDistrLatticeType of 'I_n].
+Canonical ord_tbDistrLatticeType := Eval hnf in [tbDistrLatticeType of 'I_n].
+Canonical ord_finDistrLatticeType :=
+  Eval hnf in [finDistrLatticeType of 'I_n].
+Canonical ord_finOrderType := [finOrderType of 'I_n].
+
+Canonical ord_inhPOrderType := [inhPOrderType of 'I_n].
+Canonical ord_inhOrderType := [inhOrderType of 'I_n].
+Canonical ord_inhfinOrderType := [inhFinOrderType of 'I_n].
+End OrdinalInhabited.
 
 
+(*
 (** ** The lexicographic order on pairs *)
 Section ProdLexPOrder.
 
@@ -1191,7 +1220,7 @@ rewrite /prodlex; split.
 - case=> [a b] [c d] [e f] /=.
   move=> /orP [] /andP [H1 H2] /orP [] /andP [H3 H4]; apply /orP.
   + left.
-    rewrite ltnX_neqAleqX (leqX_trans H2 H4) andbT.
+    rewrite ltnX_neqAleqX (le_trans H2 H4) andbT.
     move: H3; apply contra => /eqP H; subst c.
     by rewrite eqn_leqX H4 H2.
   + left; move: H3 => /eqP H; subst a.
@@ -1199,7 +1228,7 @@ rewrite /prodlex; split.
   + left; move: H1 => /eqP H; subst c.
     by rewrite ltnX_neqAleqX H3 H4.
   + right; move: H1 => /eqP ->.
-    by rewrite H3 /= (leqX_trans H2 H4).
+    by rewrite H3 /= (le_trans H2 H4).
 Qed.
 
 Definition prodlex_pordMixin := PartOrder.Mixin prodlex_porder.
@@ -1257,13 +1286,13 @@ split.
 - by elim => [|x s ih] //=; rewrite eqxx ih orbT.
 - elim=> [|x sx ih] [|y sy] //= /andP []; case/orP=> [h|].
     rewrite [y<x]ltnX_neqAleqX andbC {2}eq_sym (ltnX_eqF h).
-    by move: h; rewrite ltnXNgeqX => /negbTE ->.
+    by move: h; rewrite ltNge => /negbTE ->.
   case/andP => /eqP->; rewrite eqxx ltnXnn /= => h1 h2.
   by rewrite (ih sy) // h1 h2.
 - elim=> [|y sy ih] [|x sx] [|z sz] // h1 h2.
-  have le := leqX_trans (listlex_le_head h1) (listlex_le_head h2).
+  have le := le_trans (listlex_le_head h1) (listlex_le_head h2).
   have := h2 => /= /orP []; have := h1 => /= /orP [].
-  + by move=> lt1 lt2; rewrite (ltnX_trans lt1 lt2).
+  + by move=> lt1 lt2; rewrite (lt_trans lt1 lt2).
   + by case/andP=> /eqP-> _ ->.
   + by move=> lt /andP [/eqP<- _]; rewrite lt.
   + move=> /andP [_ l1] /andP [_ l2]; rewrite ih // andbT.
@@ -1279,7 +1308,7 @@ Proof. by rewrite /leqX_op. Qed.
 Lemma listlex_total : total listlex.
 Proof using.
 elim=> [|x sx ih] [|y sy] //=; case: (boolP (x < y))=> //=.
-rewrite -leqXNgtnX // leqX_eqVltnX; case/orP=> [/eqP->|].
+rewrite -leNgt // leqX_eqVltnX; case/orP=> [/eqP->|].
   by rewrite !eqxx ltnXnn /= ih.
 by move=> lt; rewrite [x==y]eq_sym (ltnX_eqF lt) /= orbF.
 Qed.
