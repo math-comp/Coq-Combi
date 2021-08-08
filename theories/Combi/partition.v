@@ -1949,54 +1949,312 @@ move=> /partdom_union_intpartr-/(_ t1)/partdom_trans Hs Ht; apply: Hs.
 by move: Ht => /partdom_union_intpartl; apply.
 Qed.
 
-Module IntPartNDom.
 
-Definition intpartndom d := 'P_d.
+Section IntPartNDom.
 
-Fact partdom_porder d : PartOrder.axiom (fun x y : intpartndom d => partdom x y).
-Proof using.
-split.
-- exact: partdom_refl.
-- by move=> x y /andP [Hxy Hyx]; apply val_inj => /=; apply: partdom_anti.
-- exact: partdom_trans.
+Variable d : nat.
+Definition intpartndom := 'P_d.
+Implicit Type (sh : intpartndom).
+
+
+Fact partdom_antisym : antisymmetric (fun x y : 'P_d => partdom x y).
+Proof.
+by move=> x y /andP [Hxy Hyx]; apply val_inj => /=; apply: partdom_anti.
 Qed.
 
-Definition partdom_pordMixin d := PartOrder.Mixin (partdom_porder d).
-Canonical partdom_pordType d :=
-  Eval hnf in POrdType (intpartndom d) (partdom_pordMixin d).
-Canonical intpartndom_finPOrdType d := [finPOrdType of intpartndom d].
-Definition intpartndom_inhMixin d := Inhabited.Mixin (rowpartn d).
-Canonical intpartndom_inhType d :=
-  Eval hnf in InhType (intpartndom d) (intpartndom_inhMixin d).
+Definition partdom_porderMixin :=
+  LePOrderMixin (le := fun x y : intpartndom => partdom x y)
+                (fun _ _ => erefl _) partdom_refl partdom_antisym partdom_trans.
 
-Lemma partdomE d : @leqX_op (partdom_pordType d) = partdom.
-Proof. by rewrite /leqX_op. Qed.
+Lemma partdom_display : unit. Proof. exact: tt. Qed.
+Canonical partdom_porderType :=
+  POrderType partdom_display intpartndom partdom_porderMixin.
+Canonical intpartndom_finPOrderType := [finPOrderType of intpartndom].
+Canonical intpartndom_inhType :=
+  InhType intpartndom (InhMixin (rowpartn d)).
+Canonical intpartndom_inhPOrderType := [inhPOrderType of intpartndom].
+Canonical intpartndom_inhFinPOrderType := [inhFinPOrderType of intpartndom].
 
-Lemma partdom_rowpartn d (sh : 'P_d) : partdom sh (rowpartn d).
+Lemma partdomE : @Order.le partdom_display partdom_porderType = partdom.
+Proof. by []. Qed.
+
+Local Notation "sh '^#'" := (conj_intpartn sh : intpartndom)
+                              (at level 10, format "sh '^#'").
+
+Lemma sum_diff sh i :
+  \sum_(l <- sh) (l - i) = \sum_(l <- take (nth 0 (conj_part sh) i) sh) (l - i).
 Proof.
-case: d sh => [|d] sh; first by rewrite /= !val_intpartn0.
-rewrite /=; apply/partdomP => i.
-case: i => [|i] /=; rewrite ?take0 ?addn0 //.
+set c := nth 0 (conj_part sh) i.
+rewrite -{1}(cat_take_drop c sh) !big_cat /=.
+rewrite [X in _ + X]big_seq [X in _ + X]big1 ?addn0 // => /= j jin.
+rewrite -(nth_index 0 jin) nth_drop.
+apply/eqP; rewrite subn_eq0.
+by rewrite conj_leqE // /c leq_addr.
+Qed.
+
+Lemma partdom_conj_intpartn sh1 sh2 : (sh2^# <= sh1^#)%O = (sh1 <= sh2)%O.
+Proof.
+suff {sh1 sh2} decr sh1 sh2 : (sh1 <= sh2)%O -> (sh2^# <= sh1^#)%O.
+  by apply/idP/idP => /decr //; rewrite !conj_intpartnK.
+move => /partdomP Hdom; apply/partdomP => i.
+rewrite -!sum_conj.
+rewrite !sum_minn !sumn_intpartn; apply: leq_sub => //.
+pose c1 := nth 0 (conj_part sh1) i.
+have Hc1 : c1 <= size sh1 by rewrite /c1 -conj_leqE // nth_default.
+have -> : \sum_(l <- sh1) (l - i) = \sum_(l <- take c1 sh1) (l - i).
+  rewrite -{1}(cat_take_drop c1 sh1) !big_cat /=.
+  rewrite [X in _ + X]big_seq [X in _ + X]big1 ?addn0 // => /= j jin.
+  rewrite -(nth_index 0 jin) nth_drop.
+  apply/eqP; rewrite subn_eq0.
+  by rewrite conj_leqE // leq_addr.
+rewrite -(leq_add2r (c1 * i)) -{2}(size_takel Hc1) -sum1_size.
+rewrite big_distrl -big_split /=.
+rewrite big_seq [X in X <= _](eq_bigr id) -?big_seq; first last.
+  move=> j /(mem_takeP 0) [pos Hpos ->{j}].
+  rewrite mul1n; apply: subnK.
+  apply ltnW; rewrite conj_ltnE // -/c1.
+  exact: (leq_trans Hpos (geq_minl _ _)).
+move/(_  c1): Hdom; rewrite !sumnE => /leq_trans; apply.
+rewrite -{2}(cat_take_drop c1 sh2) !big_cat /= addnC addnA.
+apply: (leq_trans _ (leq_addr _ _)); rewrite -sumnE sumn_take.
+rewrite [X in _ <= X](_ : _ = \sum_(0 <= i0 < c1) maxn i (nth 0 sh2 i0)).
+  by apply leq_sum => j _; apply leq_maxr.
+rewrite sum_take ?sub0n //.
+rewrite -{1}(subn0 c1) -sum_nat_const_nat.
+rewrite -big_split; apply eq_bigr => /= j _.
+by rewrite maxnE.
+Qed.
+
+Lemma take_intpartn_over sh i :
+  d <= i -> take i sh = sh.
+Proof.
+move=> Hd; rewrite take_oversize // (leq_trans _ Hd) //.
+by rewrite -{2}(sumn_intpartn sh) size_part.
+Qed.
+
+Implicit Type t : d.+1.-tuple nat.
+
+Definition parttuple sh := [tuple sumn (take i sh) | i < d.+1].
+Definition from_parttuple t :=
+  rem_trail0 [seq nth 0 t i.+1 - nth 0 t i | i <- iota 0 d].
+Definition is_parttuple t :=
+  [&& tnth t ord0 == 0, tnth t ord_max == d, sorted leq t &
+      all (fun i => (nth 0 t i).*2 >= nth 0 t i.-1 + nth 0 t i.+1)
+          (iota 1 d.-1)].
+
+Lemma is_parttupleP t :
+  reflect
+    [/\ tnth t ord0 = 0, tnth t ord_max = d, sorted leq t &
+      forall i, 0 < i < d -> (nth 0 t i).*2 >= nth 0 t i.-1 + nth 0 t i.+1]
+    (is_parttuple t).
+Proof.
+apply (iffP and4P) => [[/eqP->/eqP->->/allP Hall] | [->->-> Hall]].
+  split=> // i Hi; apply: Hall; rewrite mem_iota add1n.
+  by case: d {t} i Hi => [] [|].
+split => //; apply/allP => i; rewrite mem_iota add1n => Hi; apply: Hall.
+  by case: d {t} i Hi => [] [|].
+Qed.
+
+Lemma nth_parttuple i sh :
+  i < d.+1 -> nth 0 (parttuple sh) i = sumn (take i sh).
+Proof.
+by move=> ltid1; rewrite (nth_map ord0) ?size_enum_ord ?nth_enum_ord.
+Qed.
+
+Lemma parttupleP sh : is_parttuple (parttuple sh).
+Proof.
+apply/is_parttupleP; split.
+- by rewrite tnth_mktuple /= take0.
+- by rewrite tnth_mktuple take_intpartn_over // sumn_intpartn.
+- apply/(sorted1P 0) => i; rewrite size_tuple => ltid.
+  rewrite !nth_parttuple //; last exact: ltnW.
+  case: (ltnP i (size sh)) => Hi.
+    by rewrite (take_nth 0) // sumn_rcons leq_addr.
+  by rewrite !take_oversize // (leq_trans Hi).
+- move=> [|i]// /andP [_ ltid].
+  rewrite !nth_parttuple /= ?ltnS //=; try exact: ltnW; first last.
+    by apply ltnW; apply ltnW.
+  rewrite -addnn !sumn_take !big_nat_recr //= -!addnA leq_add2l.
+  rewrite [X in _ <= X]addnC addnA leq_add2l.
+  by have /is_partP [_] : is_part sh by [].
+Qed.
+
+Lemma sum_diff_tuple t :
+  sorted leq t ->
+  forall i, i < d.+1 ->
+    \sum_(0 <= j < i) (nth 0 t j.+1 - nth 0 t j) = nth 0 t i - nth 0 t 0.
+Proof.
+move=> /(sortedP 0 leq_trans leqnn) srt.
+elim=> [|i IHi] ltid; first by rewrite big_nil subnn.
+rewrite big_nat_recr //= IHi; last exact: ltnW.
+rewrite addnC addnBA ?srt ?size_tuple //=; last exact: ltnW.
+by rewrite subnK // srt // size_tuple leqnSn.
+Qed.
+
+Lemma from_parttupleP t : is_parttuple t -> is_part_of_n d (from_parttuple t).
+Proof.
+move=> /is_parttupleP [t0 td srt conv].
+have {}t0 : nth 0 t 0 = 0 by move: t0; rewrite (tnth_nth 0).
+have {}td : nth 0 t d = d by move: td; rewrite (tnth_nth 0).
+apply/andP; split.
+  rewrite sumn_rem_trail0 sumnE big_map.
+  by rewrite -{1}(subn0 d) -/(index_iota _ _) sum_diff_tuple // t0 td subn0.
+move: srt => /sorted1P srt.
+apply: is_part_rem_trail0; apply/(sorted1P 0) => i /=.
+rewrite size_map size_iota => H1.
+have Hi1 : i.+1 < d.+1 by apply ltnW.
+rewrite !(nth_map 0) ?size_iota ?nth_iota // add0n.
+rewrite leq_subLR addnBA ?srt ?size_tuple // add0n addnn.
+rewrite leq_subRL ?conv // -addnn.
+apply: (leq_trans (srt _ _ _) (leq_addr _ _)).
+by rewrite size_tuple.
+Qed.
+Definition part_fromtuple t (H : is_parttuple t) :=
+  IntPartN (from_parttupleP H).
+
+Lemma sumn_take_part_fromtuple t (H : is_parttuple t) i :
+  i < d.+1 -> sumn (take i (part_fromtuple H)) = nth 0 t i.
+Proof.
+rewrite /part_fromtuple /from_parttuple /= => Hi.
+move/is_parttupleP : H => [t0 _ srt _].
+have {}t0 : nth 0 t 0 = 0 by move: t0; rewrite (tnth_nth 0).
+rewrite sumn_take big_nat.
+rewrite (eq_bigr (fun j => nth 0 t j.+1 - nth 0 t j)); first last.
+  move=> j /= Hj.
+  have lejd : j < d by rewrite (leq_trans Hj) // -ltnS.
+  by rewrite nth_rem_trail0 (nth_map 0) ?size_iota // nth_iota.
+by rewrite -big_nat sum_diff_tuple // t0 subn0.
+Qed.
+Lemma from_parttupleK t (H : is_parttuple t) :
+  parttuple (part_fromtuple H) = t.
+Proof.
+apply eq_from_tnth => i.
+by rewrite tnth_mktuple sumn_take_part_fromtuple // (tnth_nth 0).
+Qed.
+
+Lemma parttupleK sh : from_parttuple (parttuple sh) = sh.
+Proof.
+have /andP [/eqP Hsum Hpart] := from_parttupleP (parttupleP sh).
+apply: sumn_take_inj => // k.
+case: (ltnP k d.+1) => [ltkd1 | /ltnW ltdk].
+  have /= -> := sumn_take_part_fromtuple (parttupleP sh) ltkd1.
+  by rewrite (nth_map ord0) ?size_enum_ord // nth_enum_ord.
+rewrite take_intpartn_over //.
+rewrite !take_oversize ?Hsum /= -?{1}(sumn_intpartn sh) //.
+by apply: (leq_trans _ ltdk); rewrite -Hsum size_part.
+Qed.
+Lemma parttuplePK sh : part_fromtuple (parttupleP sh) = sh.
+Proof. by apply val_inj; rewrite /= parttupleK. Qed.
+
+Definition parttuple_minn sh1 sh2 :=
+  [tuple minn (tnth (parttuple sh1) i) (tnth (parttuple sh2) i) | i < d.+1].
+
+Lemma parttuple_minnC sh1 sh2 :
+  parttuple_minn sh1 sh2 = parttuple_minn sh2 sh1.
+Proof. by apply eq_from_tnth => i; rewrite !tnth_mktuple minnC. Qed.
+
+Lemma nth_parttuple_minn i sh1 sh2 :
+  i < d.+1 -> nth 0 (parttuple_minn sh1 sh2) i =
+              minn (sumn (take i sh1)) (sumn (take i sh2)).
+Proof.
+move=> ltid1.
+by rewrite -/(nat_of_ord (Ordinal ltid1)) nth_mktuple !tnth_mktuple /=.
+Qed.
+
+Lemma double_minn m n : (minn m n).*2 = minn m.*2 n.*2.
+Proof. by rewrite /minn ltn_double; case: ltnP. Qed.
+
+Lemma parttuple_minnP sh1 sh2 : is_parttuple (parttuple_minn sh1 sh2).
+Proof.
+have /is_parttupleP [t10 t1d /(sorted1P 0) sort1 conv1] := parttupleP sh1.
+have /is_parttupleP [t20 t2d /(sorted1P 0) sort2 conv2] := parttupleP sh2.
+rewrite size_tuple in sort1; rewrite size_tuple in sort2.
+apply/is_parttupleP; split.
+- by rewrite !tnth_mktuple /= !take0.
+- by rewrite tnth_mktuple t1d t2d minnn.
+- apply/(sorted1P 0) => i {conv1 conv2}; rewrite size_tuple => lti1d1.
+  have ltid1 : i < d.+1 by apply: ltnW.
+  move: sort2 => /(_ _ lti1d1); move: sort1 => /(_ _ lti1d1).
+  rewrite !nth_parttuple_minn // !nth_parttuple // !leq_min !geq_min => -> ->.
+  by rewrite orbT.
+- move=> i Hi; move: conv2 => /(_ _ Hi); move: conv1 => /(_ _ Hi).
+  case: i Hi => [|i]// /andP [_]; rewrite -ltnS => lti2d1.
+  have lti1d1 : i.+1 < d.+1 by apply: ltnW.
+  have ltid1  : i    < d.+1 by apply: ltnW.
+  rewrite !nth_parttuple_minn // !nth_parttuple //= => conv1 conv2.
+  rewrite double_minn !leq_min; apply/andP; split.
+  - by apply: (leq_trans (leq_add _ _) conv1); apply: geq_minl.
+  - by apply: (leq_trans (leq_add _ _) conv2); apply: geq_minr.
+Qed.
+Definition inf_intpartn sh1 sh2 : intpartndom :=
+  IntPartN (from_parttupleP (parttuple_minnP sh1 sh2)).
+Definition sup_intpartn sh1 sh2 := (inf_intpartn (sh1^#) (sh2^#))^#.
+
+Lemma inf_intpartnC sh1 sh2 : inf_intpartn sh1 sh2 = inf_intpartn sh2 sh1.
+Proof. by apply val_inj; rewrite /= parttuple_minnC. Qed.
+
+Lemma le_inf_intpartn sh1 sh2 : (inf_intpartn sh1 sh2 <= sh1)%O.
+Proof.
+apply/partdomP => i; case: (ltnP i d.+1) => [Hi| /ltnW Hi].
+  by rewrite sumn_take_part_fromtuple // nth_parttuple_minn // geq_minl.
+by rewrite !take_intpartn_over // !sumn_intpartn.
+Qed.
+
+Import Order.POrderTheory.
+
+Lemma inf_intpartnP sh sh1 sh2 :
+  (sh <= inf_intpartn sh1 sh2)%O = (sh <= sh1)%O && (sh <= sh2)%O.
+Proof.
+apply/idP/andP => [Hinf | [/partdomP H1 /partdomP H2]].
+  split; apply: (le_trans Hinf); first exact: le_inf_intpartn.
+  by rewrite inf_intpartnC le_inf_intpartn.
+apply/partdomP => i.
+case: (ltnP i d.+1) => [Hi | /ltnW Hi]; first last.
+  by rewrite !take_intpartn_over // !sumn_intpartn.
+rewrite sumn_take_part_fromtuple // nth_parttuple_minn //.
+by rewrite leq_min H1 H2.
+Qed.
+Lemma sup_intpartnP sh1 sh2 sh :
+  (sup_intpartn sh1 sh2 <= sh)%O = (sh1 <= sh)%O && (sh2 <= sh)%O.
+Proof.
+rewrite /sup_intpartn /= -{1}(conj_intpartnK sh).
+by rewrite partdom_conj_intpartn inf_intpartnP !partdom_conj_intpartn.
+Qed.
+
+Definition partdom_latticeMixin :=
+  MeetJoinLeMixin inf_intpartnP sup_intpartnP.
+Canonical partdom_latticeType := LatticeType intpartndom partdom_latticeMixin.
+
+End IntPartNDom.
+
+
+Section IntPartNTopBottom.
+
+Variable d : nat.
+Implicit Type (sh : intpartndom d).
+
+Lemma partdom_rowpartn sh : (sh <= rowpartn d)%O.
+Proof.
+apply/partdomP.
+case: d sh => [|d1] sh; first by rewrite /= !val_intpartn0.
+case=> [|i] /=; rewrite ?take0 ?addn0 //.
 rewrite rowpartnSE /= addn0 -{2}(sumn_intpartn sh).
 by rewrite -{2}(cat_take_drop i.+1 sh) sumn_cat leq_addr.
 Qed.
 
-Lemma colpartn_partdom d (sh : 'P_d) : partdom (colpartn d) sh.
-Proof.
-apply/partdomP => i; rewrite /=.
-case: (ssrnat.ltnP i (size sh)) => Hi.
-- rewrite !sumn_take !big_nat; apply leq_sum => j /= Hj.
-  rewrite colpartnE nth_nseq.
-  have:= (leq_trans (ltn_trans Hj Hi) (size_part (intpartnP sh))).
-  rewrite sumn_intpartn => ->.
-  rewrite lt0n; apply nth_part_non0 => //.
-  exact: ltn_trans Hj Hi.
-- rewrite (take_oversize Hi) sumn_intpartn.
-  rewrite -{3}(sumn_intpartn (colpartn d)) /=.
-  by rewrite -{2}(cat_take_drop i (colpartn d)) sumn_cat leq_addr.
-Qed.
+Lemma partdom_colpartn sh : (colpartn d <= sh :> intpartndom d)%O.
+Proof. by rewrite -partdom_conj_intpartn conj_colpartn partdom_rowpartn. Qed.
 
-End IntPartNDom.
+Definition partdom_bottomMixin := BottomMixin partdom_colpartn.
+Canonical partdom_blatticeType :=
+  BLatticeType (intpartndom d) partdom_bottomMixin.
+Definition partdom_topMixin := TopMixin partdom_rowpartn.
+Canonical partdom_tblatticeType :=
+  TBLatticeType (intpartndom d) partdom_topMixin.
+Canonical partdom_finLatticeType :=
+  Eval hnf in [finLatticeType of intpartndom d].
+
+End IntPartNTopBottom.
 
 
 (** * Shape of set partitions and integer partitions *)
