@@ -50,7 +50,7 @@ Here is a list of fundamental results:
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
-From mathcomp Require Import finfun fintype tuple finset bigop.
+From mathcomp Require Import finfun fintype tuple finset bigop order.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
 From mathcomp Require Import rat ssralg ssrnum algC vector.
 From mathcomp Require Import mxrepresentation classfun character.
@@ -164,7 +164,7 @@ move=> p; rewrite !Fchar_invE linear_sum.
 have: p \in span 'hp.
   by rewrite (span_basis (symbp_basis Hn _ )) // memvf.
 move=> /coord_span {2}->.
-rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P__]))) /=.
 apply eq_bigr => i _.
 rewrite linearZ /= Fchar_ncfuniCT; congr (_ *: _).
 rewrite (nth_map (rowpartn n)); last by rewrite -cardE ltn_ord.
@@ -321,7 +321,7 @@ Definition irrSG   la : 'CF('SG_n) := Fchar_inv (n.-1) 'hs[la].
 Notation "''M[' l ']'" := (YoungSG l).
 Notation "''irrSG[' l ']'" := (irrSG l).
 
-Local Notation PO := IntPartNDom.intpartndom_finPOrdType.
+Local Notation PO := IntPartNDom.finPOrderType.
 
 Lemma Fchar_irrSGE nvar0 la : Fchar nvar0 'irrSG[la] = 'hs[la].
 Proof.
@@ -346,7 +346,7 @@ Qed.
 
 Lemma Young_rule_partdom la :
   'M[la] = 'irrSG[la] +
-           \sum_(mu | ((la : PO n) < mu)%Ord) 'K(mu, la)  *: 'irrSG[mu].
+           \sum_(mu | (la < mu :> PO n)%O) 'K(mu, la)  *: 'irrSG[mu].
 Proof.
 rewrite Young_rule.
 exact: (unitrig_sum1lV (fun mu : PO n => 'irrSG[mu]) la (Kostka_unitrig _ n)).
@@ -387,7 +387,7 @@ Proof.
 elim/(finord_wf_down (T := PO n)): la => la IHla.
 rewrite irrEchar irrSG_orthonormal !eq_refl andbT.
 have -> : 'irrSG[la] =
-         'M[la] - \sum_(mu : PO n | (la < mu)%Ord)
+         'M[la] - \sum_(mu : PO n | (la < mu)%O)
                    '[ 'M[la], 'irrSG[mu] ] *: 'irrSG[mu].
   apply/eqP; rewrite eq_sym subr_eq {1}Young_rule_partdom.
   apply/eqP; congr (_ + _); apply eq_bigr => mu _.
@@ -398,8 +398,8 @@ have -> : 'irrSG[la] =
   by rewrite cfdotZl irrSG_orthonormal Hnu mulr0.
 rewrite -big_filter /index_enum -enumT.
 set L := filter _ _.
-have : all (fun y => (la < y)%Ord) L by apply filter_all.
-have : uniq L by apply filter_uniq; apply enum_uniq.
+have : all (<%O la) L by apply filter_all.
+have : uniq L by apply: filter_uniq; apply: enum_uniq.
 elim: L => [| l0 l IHl].
   by rewrite big_nil subr0 homsymh_character.
 rewrite big_cons /= => /andP [Hl0l Huniq] /andP [Hl0 Hall].
@@ -459,7 +459,7 @@ symmetry.
 rewrite Frobenius_char_homsymdot /cycle_typeSn (permCTP mu) CTpartnK.
 have /coord_span {2}-> : ('hp[mu] : HSC) \in span 'hs.
   by rewrite (span_basis (symbs_basis _ (leqSpred n))) // memvf.
-rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P__]))) /=.
 rewrite homsymdot_sumr (bigD1 la) //=.
 rewrite (nth_map (rowpartn n)) -?cardE ?ltn_ord // nth_enum_rank.
 rewrite homsymdotZr homsymdotss ?leqSpred // eq_refl mulr1.

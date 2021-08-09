@@ -76,7 +76,7 @@ of the scalar product.
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import finset path tuple bigop ssralg.
+From mathcomp Require Import finset path tuple bigop ssralg order.
 From mathcomp Require Import perm fingroup matrix vector.
 From mathcomp Require ssrnum rat algC.
 From SsrMultinomials Require Import ssrcomplements freeg mpoly.
@@ -94,7 +94,7 @@ Local Open Scope ring_scope.
 
 Reserved Notation "{ 'homsym' T [ n , d ] }"
   (at level 0, T, n, d at level 2, format "{ 'homsym'  T [ n ,  d ] }").
-Reserved Notation "'[ p | q ]" 
+Reserved Notation "'[ p | q ]"
   (at level 2, format "'[hv' ''[' p  | '/ '  q ] ']'").
 Reserved Notation "'[ p | q ] _( R , n )"
   (at level 2, format "'[hv' ''[' p  | '/ '  q ] ']' '_(' R ,  n )").
@@ -512,7 +512,7 @@ Qed.
 Lemma free_symbm : free symbm.
 Proof using Hd.
 apply/freeP => co.
-rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P_d]))) /=.
 rewrite (eq_bigr (fun la : 'P_d => (co (enum_rank la)) *: 'hm[la])); first last.
   move=> la _; rewrite (nth_map (rowpartn _)) /= -?cardE ?ltn_ord //.
   by rewrite -?enum_val_nth enum_rankK.
@@ -549,7 +549,7 @@ Proof.
 have /coord_span -> : f \in span symbs.
   by rewrite (span_basis symbs_basis) memvf.
 rewrite !coord_sum_free ?(basis_free symbs_basis) //.
-rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P_d]))) /=.
 rewrite !linear_sum /= mulr_sumr linear_sum /= (bigD1 la) //=.
 rewrite (nth_map (rowpartn d)) -?cardE ?ltn_ord // nth_enum_rank.
 rewrite -scalerAr linearZ /=.
@@ -867,7 +867,7 @@ Lemma coord_symbp (Hd : (d <= n)%N) la mu :
   coord (vT := [vectType algC of HSF]) 'hp (enum_rank mu) 'hp[la] = (la == mu)%:R.
 Proof.
 rewrite !symbpE !(coord_free _ _ (basis_free (symbp_basis _ _))) //.
-by rewrite !(inj_eq enum_rank_inj).
+by rewrite !(inj_eq (enum_rank_inj (T := [finType of 'P_d]))).
 Qed.
 
 Lemma homsymdotpp (Hd : (d <= n)%N) la mu :

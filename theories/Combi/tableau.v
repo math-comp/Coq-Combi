@@ -608,7 +608,6 @@ Definition tabsh_finMixin := Eval hnf in FinMixin finite_tabsh.
 Canonical tabsh_finType := Eval hnf in FinType tabsh tabsh_finMixin.
 Canonical tabsh_subFinType := Eval hnf in [subFinType of tabsh_countType].
 
-
 Lemma to_word_enum_tabsh :
   perm_eq
     [seq to_word (tabshval t) | t : tabsh]
@@ -641,13 +640,18 @@ Qed.
 
 End FinType.
 
+Notation "'tabsh[' T ']' mu" :=
+  (tabsh (T := [inhFinOrderType of T]) mu) (at level 10).
+
+#[export] Hint Resolve tabshP : core.
+
 
 Section OrdTableau.
 
 Variable n : nat.
 Variables (d : nat) (sh : 'P_d).
 
-Implicit Type (t : tabsh (T := [inhFinOrderType of 'I_n.+1]) sh).
+Implicit Type (t : tabsh['I_n.+1] sh).
 
 Lemma all_ltn_nth_tabsh t (i : nat) :
   all (fun x : 'I_n.+1 => (i <= x)%O) (nth [::] t i).
@@ -705,8 +709,6 @@ Qed.
 Definition tabrowconst := TabSh (tabrowconst_subproof).
 
 End OrdTableau.
-
-#[export] Hint Resolve tabshP : core.
 
 (** ** Tableaux and increasing maps *)
 Section IncrMap.

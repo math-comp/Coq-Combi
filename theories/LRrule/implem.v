@@ -29,7 +29,7 @@ The following lemma assert that LRcoeff agrees with LRyamtab_list
 ******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun finset bigop path.
+From mathcomp Require Import tuple finfun finset bigop path order.
 From SsrMultinomials Require Import mpoly.
 
 Require Import tools combclass partition Yamanouchi ordtype tableau.
@@ -66,7 +66,7 @@ by rewrite subSS; exact: Hrec.
 Qed.
 
 Lemma head_row_skew_yam innev shape l r :
-  is_part innev -> sorted leqX_op (l :: r) ->
+  is_part innev -> sorted <=%O (l :: r) ->
   is_skew_yam innev shape (l :: r) ->
   l <= head (size innev) r.
 Proof.
@@ -564,7 +564,7 @@ have : {in rec, f1 =1 f2}.
       by move=> i /=; rewrite eqseq_cons eq_refl andbT.
     apply: (choose_one_countE Hinn (yamtab_rowsP Hr) Hskew Hincl _ Hisrow).
     have /dominate_head/(_ Hdom) : l0 :: row != [::] by [].
-    rewrite ltEnat => -> /=.
+    rewrite ltEnat /= => -> /=.
     exact: head_row_skew_yam Hinn Hisrow Hskew.
   - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
     by move=> y /=; rewrite eqseq_cons Hneq andbF.

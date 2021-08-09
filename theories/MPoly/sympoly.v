@@ -86,7 +86,7 @@ and [cnvar_symm].
  ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun finset binomial.
+From mathcomp Require Import tuple finfun finset binomial order.
 From mathcomp Require Import bigop ssralg ssrint path perm fingroup.
 From mathcomp Require ssrnum.
 From SsrMultinomials Require Import ssrcomplements freeg mpoly.
@@ -786,7 +786,7 @@ elim: la {Hla} => [| l la IHla] /=.
   by symmetry; apply/eqP/val_inj; rewrite /= intpartn0.
 rewrite big_cons H; symmetry.
 transitivity
-  (\sum_(mu : _) \sum_(p | mu == p.1 +|+ p.2)
+  (\sum_(mu : 'P__) \sum_(p | mu == p.1 +|+ p.2)
     (co (d := l) p.1 * 'co[p.2]_la) *: 'gB[mu]).
   by apply eq_bigr => mu _; rewrite scaler_suml.
 rewrite (exchange_big_dep xpredT) //=.
@@ -1525,8 +1525,6 @@ Qed.
 End ChangeBasis.
 
 Import IntPartNDom.
-Import OrdNotations.
-Close Scope ord_scope.
 
 (** ** Basis change from Schur to monomial *)
 Section SymsSymmInt.
@@ -1569,7 +1567,7 @@ case: (altP (mdeg m =P sumn la)) => Heq; first last.
 Qed.
 
 Lemma syms_symm_partdom_int la :
-  's[la] = 'm[la] + \sum_(mu : P | mu <A la) 'K(la, mu) *: 'm[mu] :> SF.
+  's[la] = 'm[la] + \sum_(mu : P | (mu < la)%O) 'K(la, mu) *: 'm[mu] :> SF.
 Proof.
 rewrite -(unitrig_sum1l (fun mu : P => 'm[mu]) la (Kostka_unitrig _ d)).
 by rewrite -syms_symm_int.
@@ -1584,7 +1582,7 @@ exact: syms_symm_int.
 Qed.
 
 Lemma symm_syms_partdom_int la :
-  'm[la] = 's[la] + \sum_(mu : P | mu <A la) KostkaInv la mu *:'s[mu] :> SF.
+  'm[la] = 's[la] + \sum_(mu : P | (mu < la)%O) KostkaInv la mu *:'s[mu] :> SF.
 Proof.
 rewrite -(unitrig_sum1l (fun mu : P => 's[mu]) la (KostkaInv_unitrig d)).
 by rewrite -symm_syms_int.
@@ -1610,7 +1608,7 @@ by rewrite mulrz_nat.
 Qed.
 
 Lemma syms_symm_partdom la :
-  's[la] = 'm[la] + \sum_(mu : P | mu <A la) 'K(la, mu) *: 'm[mu] :> SF.
+  's[la] = 'm[la] + \sum_(mu : P | (mu < la)%O) 'K(la, mu) *: 'm[mu] :> SF.
 Proof.
 rewrite -(map_syms [rmorphism of intr]) syms_symm_partdom_int.
 rewrite rmorphD rmorph_sum /= map_symm; congr (_ + _); apply eq_bigr => i _.
@@ -1627,7 +1625,7 @@ by rewrite scale_map_sympoly map_syms.
 Qed.
 
 Lemma symm_syms_partdom la :
-  'm[la] = 's[la] + \sum_(mu : P | mu <A la) 'K^-1(la, mu) *: 's[mu] :> SF.
+  'm[la] = 's[la] + \sum_(mu : P | (mu < la)%O) 'K^-1(la, mu) *: 's[mu] :> SF.
 Proof.
 rewrite -(map_symm [rmorphism of intr]) symm_syms_partdom_int.
 rewrite rmorphD rmorph_sum /= map_syms; congr (_ + _); apply eq_bigr => i _.
@@ -1674,13 +1672,15 @@ apply eq_big => [nu | nu _].
 Qed.
 
 Lemma symh_syms_partdom_int mu :
-  'h[mu] = 's[mu] + \sum_(la : P | (mu:P) <A la ) 'K(la, mu) *: 's[la] :> SF.
+  'h[mu] =
+  's[mu] + \sum_(la : P | (mu < la :> P)%O) 'K(la, mu) *: 's[la] :> SF.
 Proof.
 rewrite -(unitrig_sum1r (fun la : P => 's[la]) mu (Kostka_unitrig _ d)).
 by rewrite -symh_syms_int.
 Qed.
 
-Lemma syms_symh_int mu : 's[mu] = \sum_(la : P) KostkaInv la mu *: 'h[la] :> SF.
+Lemma syms_symh_int mu :
+  's[mu] = \sum_(la : P) KostkaInv la mu *: 'h[la] :> SF.
 Proof.
 rewrite /KostkaInv.
 apply: (Minv_lincombr (Kostka_unitrig _ d)
@@ -1689,7 +1689,8 @@ exact: symh_syms_int.
 Qed.
 
 Lemma syms_symh_partdom_int mu :
-  's[mu] = 'h[mu] + \sum_(la : P | (mu:P) <A la) KostkaInv la mu *: 'h[la] :> SF.
+  's[mu] =
+  'h[mu] + \sum_(la : P | (mu < la :>P)%O) KostkaInv la mu *: 'h[la] :> SF.
 Proof.
 rewrite -(unitrig_sum1r (fun la : P => 'h[la]) mu (KostkaInv_unitrig d)).
 by rewrite -syms_symh_int.
@@ -1726,7 +1727,8 @@ apply eq_big => [nu | nu _].
 Qed.
 
 Lemma syme_syms_partdom_int mu :
-  'e[mu] = 's[mu^~] + \sum_(la : P | (mu:P) <A la ) 'K(la, mu) *: 's[la^~] :> SF.
+  'e[mu] =
+  's[mu^~] + \sum_(la : P | (mu < la :>P)%O) 'K(la, mu) *: 's[la^~] :> SF.
 Proof.
 rewrite -(unitrig_sum1r (fun la : P => 's[la^~]) mu (Kostka_unitrig _ d)).
 by rewrite -syme_syms_int.
@@ -1741,7 +1743,8 @@ exact: syme_syms_int.
 Qed.
 
 Lemma syms_syme_partdom_int mu :
-  's[mu^~] = 'e[mu] + \sum_(la : P | (mu:P) <A la) KostkaInv la mu *: 'e[la] :> SF.
+  's[mu^~] =
+  'e[mu] + \sum_(la : P | (mu < la :>P)%O) KostkaInv la mu *: 'e[la] :> SF.
 Proof.
 rewrite -(unitrig_sum1r (fun la : P => 'e[la]) mu (KostkaInv_unitrig d)).
 by rewrite -syms_syme_int.
@@ -1765,7 +1768,8 @@ by rewrite mulrz_nat.
 Qed.
 
 Lemma symh_syms_partdom mu :
-  'h[mu] = 's[mu] + \sum_(la : P | (mu:P) <A la ) 'K(la, mu) *: 's[la] :> SF.
+  'h[mu] =
+  's[mu] + \sum_(la : P | (mu < la :>P)%O) 'K(la, mu) *: 's[la] :> SF.
 Proof.
 rewrite -(map_symh_prod [rmorphism of intr]) symh_syms_partdom_int.
 rewrite rmorphD rmorph_sum /= map_syms; congr (_ + _); apply eq_bigr => i _.
@@ -1781,7 +1785,8 @@ by rewrite scale_map_sympoly map_symh_prod.
 Qed.
 
 Lemma syms_symh_partdom mu :
-  's[mu] = 'h[mu] + \sum_(la : P | (mu:P) <A la) 'K^-1(la, mu) *: 'h[la] :> SF.
+  's[mu] =
+  'h[mu] + \sum_(la : P | (mu < la :>P)%O) 'K^-1(la, mu) *: 'h[la] :> SF.
 Proof.
 rewrite -(map_syms [rmorphism of intr]) syms_symh_partdom_int.
 rewrite rmorphD rmorph_sum /= map_symh_prod; congr (_ + _); apply eq_bigr => i _.
@@ -1799,8 +1804,8 @@ by rewrite mulrz_nat.
 Qed.
 
 Lemma syme_syms_partdom mu :
-  'e[mu] = 's[mu^~] +
-           \sum_(la : P | (mu:P) <A la ) 'K(la, mu) *: 's[la^~] :> SF.
+  'e[mu] =
+  's[mu^~] + \sum_(la : P | (mu < la :>P)%O) 'K(la, mu) *: 's[la^~] :> SF.
 Proof.
 rewrite -(map_syme_prod [rmorphism of intr]) syme_syms_partdom_int.
 rewrite rmorphD rmorph_sum /= map_syms; congr (_ + _); apply eq_bigr => i _.
@@ -1816,7 +1821,8 @@ by rewrite scale_map_sympoly map_syme_prod.
 Qed.
 
 Lemma syms_syme_partdom mu :
-  's[mu^~] = 'e[mu] + \sum_(la : P | (mu:P) <A la) 'K^-1(la, mu) *: 'e[la] :> SF.
+  's[mu^~] =
+  'e[mu] + \sum_(la : P | (mu < la :>P)%O) 'K^-1(la, mu) *: 'e[la] :> SF.
 Proof.
 rewrite -(map_syms [rmorphism of intr]) syms_syme_partdom_int.
 rewrite rmorphD rmorph_sum /= map_syme_prod; congr (_ + _); apply eq_bigr => i _.

@@ -20,7 +20,7 @@ and The Littlewood-Richardson Rule.
  **********)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-From mathcomp Require Import finset perm.
+From mathcomp Require Import finset perm order.
 Require Import subseq partition ordtype Schensted congr plactic Greene Greene_inv
         std stdtab skewtab therule implem.
 
@@ -53,25 +53,26 @@ Extract Constant eqn => "( = )".
 Extract Constant leq => "( <= )".
 *)
 
-
-Definition RSbijnat := (@RSbij nat_inhOrdType).
-Definition RSbijinvnat := (@RSbijinv nat_inhOrdType).
-Definition RStabnat := (@RStab nat_inhOrdType).
-Definition RStabinvnat := (@RStabinv nat_inhOrdType).
-
+Definition disp := Order.NatOrder.nat_display.
+Definition RS := (@RS disp nat_inhOrderType).
+Definition RSbijnat := (@RSbij disp nat_inhOrderType).
+Definition RSbijinvnat := (@RSbijinv disp nat_inhOrderType).
+Definition RStabnat := (@RStab disp nat_inhOrderType).
+Definition RStabinvnat := (@RStabinv _ nat_inhOrderType).
 
 Set Warnings "-extraction-reserved-identifier,-extraction-opaque-accessed".
-
+(*
 (** ** The Robinson-Schensted correspondance *)
 Extraction "src/LRrule/schensted.ml"
-           RS RSbijnat RSbijinvnat
+           RS (*RSbijnat RSbijinvnat
            plactcongr
            Greene_row Greene_col
            is_std std.std
            RStabnat RStabinvnat
            is_stdtab
-           LRyam_coeff LRcoeff LRyamtab_list
+           LRyam_coeff LRcoeff LRyamtab_list *)
 .
+*)
 
 (** ** The Littlewood-Richardson Rule *)
 Extraction "src/LRrule/lrcoeff.ml"
