@@ -1110,12 +1110,6 @@ End RemoveBig.
 
 Prenex Implicits rembig posbig.
 
-
-(******************************************************************************)
-(** * Classical ordered types                                                 *)
-(******************************************************************************)
-
-(** ** The order on [nat] *)
 Lemma maxL_iota n i : maxL i (iota i.+1 n) = i + n.
 Proof.
 elim: n i => [|n IHn] i /=; first by rewrite addn0.
@@ -1131,6 +1125,11 @@ elim: n i => //= n IHn i.
 move/(_  i.+1) : IHn => /= ->.
 by rewrite ltEnat /= ltnNge leqnSn.
 Qed.
+
+
+(******************************************************************************)
+(** * Induction on partially ordered types                                    *)
+(******************************************************************************)
 
 Lemma finord_wf (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
   (forall x, (forall y, y < x -> P y) -> P x) -> forall x, P x.
@@ -1158,6 +1157,10 @@ Proof. exact: (@finord_wf _ [finPOrderType of T^d]). Qed.
 
 
 (** ** The order on ordinals ***)
+
+(** TODO : replace the following by
+    Export Order.OrdinalOrder.Exports when integrated in mathcomp*)
+
 Section OrdinalOrder.
 Variable n : nat.
 Definition ord_porderMixin := [porderMixin of 'I_n by <:].
@@ -1194,186 +1197,3 @@ Canonical ord_inhPOrderType := [inhPOrderType of 'I_n].
 Canonical ord_inhOrderType := [inhOrderType of 'I_n].
 Canonical ord_inhfinOrderType := [inhFinOrderType of 'I_n].
 End OrdinalInhabited.
-
-
-(*
-(** ** The lexicographic order on pairs *)
-Section ProdLexPOrder.
-
-Variable T R : pordType.
-
-Definition prodlex : rel (T * R) :=
-  fun p1 p2 =>
-      let: (i, j) := p1 in
-          let: (k, l) := p2 in
-              (i < k) || ((i == k) && (j <= l)).
-
-Fact prodlex_porder : PartOrder.axiom prodlex.
-Proof using.
-rewrite /prodlex; split.
-- by case=> [i j] /=; rewrite lexx eq_refl /= orbT.
-- case=> [a b] [c d] /= /andP [] /orP [] /andP [H1 H2] /orP [] /andP [H3 H4].
-  + by exfalso; move: H1; rewrite eqn_leqX H2 H4.
-  + by exfalso; move: H1; rewrite (eqP H3) eq_refl.
-  + by exfalso; move: H3; rewrite (eqP H1) eq_refl.
-  + by rewrite (eqP H1); congr (_, _); apply anti_leqX; rewrite H2 H4.
-- case=> [a b] [c d] [e f] /=.
-  move=> /orP [] /andP [H1 H2] /orP [] /andP [H3 H4]; apply /orP.
-  + left.
-    rewrite lt_neqAle (le_trans H2 H4) andbT.
-    move: H3; apply contra => /eqP H; subst c.
-    by rewrite eqn_leqX H4 H2.
-  + left; move: H3 => /eqP H; subst a.
-    by rewrite lt_neqAle H1 H2.
-  + left; move: H1 => /eqP H; subst c.
-    by rewrite lt_neqAle H3 H4.
-  + right; move: H1 => /eqP ->.
-    by rewrite H3 /= (le_trans H2 H4).
-Qed.
-
-Definition prodlex_pordMixin := PartOrder.Mixin prodlex_porder.
-Definition prodlex_pordType := Eval hnf in POrdType (T * R) prodlex_pordMixin.
-
-End ProdLexPOrder.
-
-Section ProdLexOrder.
-
-Variable T R : ordType.
-
-Lemma prodlex_total : total (@prodlex T R).
-Proof using.
-case=> [i j] [k l] /=.
-case (compareXP i k) => [|| ->] //=; first by rewrite orbT.
-rewrite eq_refl /=.
-exact: leqX_total.
-Qed.
-
-Definition prodlex_ordMixin :=
-  Order.Mixin (T := prodlex_pordType T R) prodlex_total.
-Definition prodlex_ordType :=
-  Eval hnf in OrdType (prodlex_pordType T R) prodlex_ordMixin.
-
-End ProdLexOrder.
-
-
-(** The lexicographic order on [seq] ***)
-Definition seq_inhMixin (T : eqType) := Inhabited.Mixin ([::] : seq T).
-Canonical seq_inhType (T : eqType) :=
-  Eval hnf in InhType (seq T) (seq_inhMixin T).
-
-Section ListLexOrder.
-
-Variable T : ordType.
-
-Implicit Type s : seq T.
-
-Fixpoint listlex s1 s2 :=
-  if s1 is x1 :: s1' then
-    if s2 is x2 :: s2' then
-      (x1 < x2) || ((x1 == x2) && listlex s1' s2')
-    else
-      false
-  else
-    true.
-
-Lemma listlex_le_head x sx y sy :
-  listlex (x :: sx) (y :: sy) -> x <= y.
-Proof using. by case/orP => [/ltW|/andP [/eqP-> _]]. Qed.
-
-Fact listlex_porder : PartOrder.axiom listlex.
-Proof using.
-split.
-- by elim => [|x s ih] //=; rewrite eqxx ih orbT.
-- elim=> [|x sx ih] [|y sy] //= /andP []; case/orP=> [h|].
-    rewrite [y<x]lt_neqAle andbC {2}eq_sym (lt_eqF h).
-    by move: h; rewrite ltNge => /negbTE ->.
-  case/andP => /eqP->; rewrite eqxx ltxx /= => h1 h2.
-  by rewrite (ih sy) // h1 h2.
-- elim=> [|y sy ih] [|x sx] [|z sz] // h1 h2.
-  have le := le_trans (listlex_le_head h1) (listlex_le_head h2).
-  have := h2 => /= /orP []; have := h1 => /= /orP [].
-  + by move=> lt1 lt2; rewrite (lt_trans lt1 lt2).
-  + by case/andP=> /eqP-> _ ->.
-  + by move=> lt /andP [/eqP<- _]; rewrite lt.
-  + move=> /andP [_ l1] /andP [_ l2]; rewrite ih // andbT.
-    by rewrite orbC -leqX_eqVltnX.
-Qed.
-
-Definition listlex_pordMixin := PartOrder.Mixin listlex_porder.
-Canonical listlex_pordType := Eval hnf in POrdType (seq T) listlex_pordMixin.
-
-Lemma listlexE : @leqX_op listlex_pordType = listlex.
-Proof. by rewrite /leqX_op. Qed.
-
-Lemma listlex_total : total listlex.
-Proof using.
-elim=> [|x sx ih] [|y sy] //=; case: (boolP (x < y))=> //=.
-rewrite -leNgt // leqX_eqVltnX; case/orP=> [/eqP->|].
-  by rewrite !eqxx ltxx /= ih.
-by move=> lt; rewrite [x==y]eq_sym (lt_eqF lt) /= orbF.
-Qed.
-
-Fact listlex_order : Order.axiom listlex_pordType.
-Proof using. exact listlex_total. Qed.
-
-Definition listlex_ordMixin := Order.Mixin listlex_order.
-Canonical listlex_ordType := Eval hnf in OrdType (seq T) listlex_ordMixin.
-
-End ListLexOrder.
-
-(** * Tests *)
-Section Tests.
-
-Definition nat_div := nat.
-
-Fact div_porder : PartOrder.axiom (fun m n : nat_div => m %| n).
-Proof.
-  split.
-  - move=> x; exact: dvdnn.
-  - by move=> x y; rewrite -eqn_dvd => /eqP.
-  - move=> x y z; exact: dvdn_trans.
-Qed.
-Definition nat_divMixin := PartOrder.Mixin div_porder.
-Canonical nat_divType := Eval hnf in POrdType nat_div nat_divMixin.
-
-(* Tests *)
-Goal (3 <= 5) = true.
-  exact: erefl. Qed.
-Goal ((3 : nat_div) <= (5 : nat_div)) = false.
-  exact: erefl. Qed.
-
-Goal (@leqX_op (dual_pordType nat_pordType) 3 5) = false.
-  exact: erefl. Qed.
-Goal (@leqX_op (dual_pordType nat_pordType) 5 3).
-  exact: erefl. Qed.
-
-Definition dnat := nat.
-
-Definition nat_dualMixin := dual_pordMixin nat_pordType.
-Canonical nat_dualType := Eval hnf in POrdType dnat nat_dualMixin.
-
-Goal (5 <= 3) = false.
-  exact: erefl. Qed.
-Goal ((3 : dual_pordType _) <= (5 : dual_pordType _)) = false.
-  exact: erefl. Qed.
-
-
-Goal ((5 : dnat) <= (3 : dnat)) = true.
-  exact: erefl. Qed.
-Goal ((5 : nat_dualType) <= (3 : nat_dualType)) = true.
-  exact: erefl. Qed.
-Goal ((5 : dual_pordType _) <= (3 : dual_pordType _)) = true.
-  exact: erefl. Qed.
-
-
-(* Commented out because prodlex order is not canonical
-***************************************************
-Goal (ord0 (n' := 2), ord0 (n' := 3)) <= (ord0 (n' := 2), ord0 (n' := 3)) = true.
-  exact: erefl. Qed.
-
-Goal (ord0 (n' := 2), ord0 (n' := 3)) <= (inhabitant _) = true.
-  exact: erefl. Qed.
-*)
-
-End Tests.
-*)

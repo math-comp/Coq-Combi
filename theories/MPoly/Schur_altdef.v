@@ -348,8 +348,7 @@ case: s H0 => [//=| s1 s] /= -> ->.
 by rewrite leqnn.
 Qed.
 
-
-Lemma vb_strip_lex (d1 k : nat) (la : 'P_(d1 + k)) (mu : seq nat) :
+Lemma vb_strip_lexi (d1 k : nat) (la : 'P_(d1 + k)) (mu : seq nat) :
   vb_strip mu la ->
   sumn mu = d1 ->
   is_part mu -> (val la <= incr_first_n mu k :> seqlexi nat)%O.
@@ -418,8 +417,7 @@ elim=> [|b IHb] d Hd la.
   by rewrite val_intpartn0 /mpart /= mnmP => i; rewrite !mnmE /=.
 case: (leqP d b) => Hdb; first exact: (IHb _ Hdb).
 have {Hdb}Hd : d = b.+1 by apply anti_leq; rewrite Hd Hdb.
-pose P := IntPartNLex.finPOrderType d.
-elim/(finord_wf (T := P)) : la => la IHla Hszla.
+elim/(finord_wf (T := [finPOrderType of intpartnlexi d])) : la => la IHla Hszla.
 pose k := head 1%N (conj_intpartn la).
 pose p1 := behead (conj_intpartn la); pose d1 := sumn p1.
 have Hk : (d = d1 + k)%N.
@@ -460,7 +458,7 @@ set A := (X in _ + X); set B := (X in _ = _ + X).
 suff -> : A = B by move=> /addIr <- {A B}; rewrite Schur_cast.
 apply eq_bigr => {A B} nu /andP [] /andP [] Hstrip Hsznu Hnu.
 pose nu' := cast_intpartn (esym Hk) nu.
-have Hlex : (val nu' < la :> seqlexi _)%O.
+have Hlexi : (val nu' < la :> seqlexi _)%O.
   rewrite cast_intpartnE /= {nu'}.
   rewrite lt_neqAle; apply/andP; split.
     move: Hnu; apply contra => /eqP H.
@@ -474,9 +472,9 @@ have Hlex : (val nu' < la :> seqlexi _)%O.
     by rewrite addKn.
   have:= intpartnP (conj_intpartn mu).
   have /= {Hk p1P mu} := sumn_intpartn (conj_intpartn mu).
-  exact: vb_strip_lex.
+  exact: vb_strip_lexi.
 have Hsznu' : size nu' <= n by rewrite cast_intpartnE.
-have := IHla nu' Hlex Hsznu'.
+have := IHla nu' Hlexi Hsznu'.
 rewrite Schur_cast => ->.
 by rewrite cast_intpartnE.
 Qed.
@@ -585,8 +583,6 @@ End RingSchurSym.
 
 (** * Kostka numbers *)
 Local Open Scope nat_scope.
-
-Import IntPartNDom.
 
 Section DefsKostkaMon.
 
@@ -780,7 +776,6 @@ Section Kostka.
 
 Variable d : nat.
 Implicit Type la : 'P_d.
-Local Notation P := (intpartndom d).
 
 (* We prepend a 0 to take care of the empty partition *)
 Definition Kostka la mu :=
@@ -853,7 +848,8 @@ have := size_tabsh t.
 by rewrite -(shape_tabsh t) size_map [X in _ <= X.-1.+1]Hsz /=.
 Qed.
 
-Lemma Kostka_partdom (la mu : P) : 'K(la, mu) != 0 -> (mu <= la)%O.
+Lemma Kostka_partdom (la mu : intpartndom d) :
+  'K(la, mu) != 0 -> (mu <= la)%O.
 Proof.
 rewrite /Kostka => /KostkaMon_partdom.
 rewrite /mpart leqSpred => /partdomP Hdom.
@@ -871,7 +867,8 @@ case: (ssrnat.ltnP i (size mu)) => Hi.
     by rewrite nth_default // size_tuple card_ord.
 Qed.
 
-Lemma Kostka0 (la mu : P) : ~~ (mu <= la)%O -> 'K(la, mu) = 0.
+Lemma Kostka0 (la mu : intpartndom d) :
+  ~~ (mu <= la)%O -> 'K(la, mu) = 0.
 Proof.
 by move=> H; apply/eqP; move: H; apply contraR; apply Kostka_partdom.
 Qed.
