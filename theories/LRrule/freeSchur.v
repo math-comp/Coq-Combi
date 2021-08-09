@@ -80,7 +80,7 @@ Invariance with the choice of Q1 and Q2:
 ****************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
-From mathcomp Require Import tuple finfun bigop finset ssralg.
+From mathcomp Require Import order tuple finfun bigop finset ssralg.
 From SsrMultinomials Require Import ssrcomplements freeg mpoly.
 
 Require Import tools ordtype partition Yamanouchi std tableau stdtab.
@@ -91,6 +91,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Import Order.TTheory.
 Local Open Scope ring_scope.
 Import GRing.Theory.
 
@@ -153,7 +154,7 @@ End CommutativeImage.
 (** ** Row reading of tableau *)
 Section TableauReading.
 
-Variable A : inhOrdType.
+Context {disp : unit} {A : inhOrderType disp}.
 
 Definition tabsh_reading_RS (sh : seq nat) (w : seq A) :=
   (to_word (RS w) == w) && (shape (RS (w)) == sh).
@@ -224,7 +225,7 @@ Lemma tabword_of_tuple_freeSchur_inj (Q : stdtabn d) :
 Proof using .
 move=> /= u v.
 rewrite /freeSchur !inE => /eqP Hu /eqP Hv /(congr1 (@tval _ _)) /= H.
-case: (bijRStab [inhOrdType of 'I_n]) => RSinv HK _.
+case: (bijRStab [inhOrderType of 'I_n]) => RSinv HK _.
 apply: val_inj; rewrite -[val u]HK -[val v]HK; congr (RSinv _).
 rewrite {RSinv HK} /RStab /=. apply: pqpair_inj => /=.
 have:= (is_tableau_RS u). have:= is_tableau_RS v.
@@ -453,7 +454,9 @@ rewrite sumr_const; congr (_ *+ _).
 by apply: eq_card => i /=; rewrite unfold_in inE.
 Qed.
 
-Lemma size_RSmapinv2_yam d (Typ : inhOrdType) (tab : seq (seq Typ)) (T : stdtabn d) :
+Lemma size_RSmapinv2_yam d
+      (disp : unit) (Typ : inhOrderType disp)
+      (tab : seq (seq Typ)) (T : stdtabn d) :
   size (RSmapinv2 (tab, yam_of_stdtab T)) = d.
 Proof using .
 rewrite -{2}(size_tab_stdtabn T) -size_yam_of_stdtab // /RSmapinv2 /=.
@@ -474,7 +477,7 @@ Hypothesis Hsh2 : shape U2 = shape T2.
 
 Section TakeDrop.
 
-Variable T : inhOrdType.
+Context {disp : unit} {T : inhOrderType disp}.
 
 Lemma RStabE (w : seq T) : (RStab w).1 = (RS w).
 Proof using . by rewrite RStabmapE. Qed.
@@ -536,7 +539,7 @@ Qed.
 
 End TakeDrop.
 
-Lemma changeUTK (T : inhOrdType) (w : seq T) :
+Lemma changeUTK (disp : unit) (T : inhOrderType disp) (w : seq T) :
   (take d1 w) \in langQ U1 ->
   (drop d1 w) \in langQ U2 ->
   changeUT U1 U2 (changeUT T1 T2 w) = w.

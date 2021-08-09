@@ -61,7 +61,7 @@ As a corollary we provide the two Pieri rules [Pieri_rowpartn] and
 *******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
-From mathcomp Require Import tuple finfun finset bigop path ssralg.
+From mathcomp Require Import tuple finfun finset bigop path ssralg order.
 From SsrMultinomials Require Import mpoly.
 
 Require Import tools ordcast combclass partition Yamanouchi ordtype.
@@ -72,13 +72,12 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Import Order.TTheory.
 Open Scope N.
 Local Open Scope Combi.
 
 (** * Gluing a standard tableaux with a skew tableau *)
 Section LR.
-
-Notation Z := (inhabitant nat_inhOrdType).
 
 Lemma to_word_map_shiftn sh t :
   to_word (map (shiftn sh) t) = shiftn sh (to_word t).
@@ -88,11 +87,11 @@ elim: t => [//= | t0 t IHt] /=.
 by rewrite !to_word_cons IHt map_cat.
 Qed.
 
-Lemma filter_leq_shiftn sh t :
+Lemma filter_le_shiftn sh t :
   [seq x - sh | x <- [seq sh + i | i <- t] & sh <= x] = t.
 Proof. by elim: t => [//= | l0 r IHt] /=; rewrite leq_addr /= addKn IHt. Qed.
 
-Lemma filter_gtn_shiftn sh t :
+Lemma filter_gt_shiftn sh t :
   [seq x <- [seq sh + i | i <- t] | gtn sh x] = [::].
 Proof. by elim: t => [//= | l0 r /= ->] /=; rewrite ltnNge leq_addr. Qed.
 
@@ -107,7 +106,7 @@ rewrite (eq_in_all (a2 := p1)) //=.
 move => i /=; rewrite mem_iota add0n => /= Hi1.
 case (leqP sh (size u)) => Hu.
 + rewrite /p1 /p2 {p1 p2 H} /shiftn.
-  rewrite !ltnXnatE (nth_map Z _ _ (leq_trans Hi1 Hsz)) (nth_map Z _ _ Hi1).
+  rewrite !ltEnat /= (nth_map inh _ _ (leq_trans Hi1 Hsz)) (nth_map inh _ _ Hi1).
   by rewrite ltn_add2l.
 + exfalso; move: Hi1; rewrite size_drop.
   move: Hu => /ltnW; rewrite {1}/leq => /eqP ->.
@@ -123,9 +122,9 @@ apply/and4P; split.
 - by rewrite size_map.
 - rewrite /shiftn.
   case: r0 Hrow0 {Hdom Hskew IHt Hszr0} => [//= | l0 r] /= H.
-  rewrite (map_path (e' := leqX_op) (b := pred0)).
+  rewrite (map_path (e' := <=%O) (b := pred0)).
   + exact: H.
-  + by move=> i j /= _; rewrite !leqXnatE leq_add2l.
+  + by move=> i j /= _; rewrite !leEnat leq_add2l.
   + by apply/hasPn => i.
 - have -> : head [::] (map (shiftn sh) t) = shiftn sh (head [::] t) by case t.
   exact: shiftn_skew_dominate.
@@ -144,7 +143,7 @@ rewrite {2}/to_word -map_rev -map_flatten.
 move: (flatten (rev t)) => w.
 apply/allP => x /mapP [i _ -> {x}].
 rewrite /allLtn; apply/allP => j.
-rewrite (perm_mem Hperm) mem_iota /= add0n ltnXnatE => /leq_trans; apply.
+rewrite (perm_mem Hperm) mem_iota /= add0n ltEnat => /leq_trans; apply.
 exact: leq_addr.
 Qed.
 
@@ -167,22 +166,22 @@ rewrite /shiftn => Hall; apply /andP; split; apply/eqP.
     rewrite (_ : map _ _ = map (shiftn sh) t); last by elim: t => //= r t ->.
     elim: t => [//= | t0 t IHt] /=.
     rewrite to_word_cons filter_cat IHt cat0s {t IHt}.
-    by rewrite filter_gtn_shiftn.
+    by rewrite filter_gt_shiftn.
   + case: t => [//= | t0 t] /=.
     rewrite ltnS to_word_cons all_cat => {}/IHs Hrec /andP [{}/Hrec Hrec].
     rewrite to_word_cons !filter_cat subSS Hrec {Hrec} => /all_filterP ->.
     suff -> : [seq x <- [seq sh + i | i <- t0] | gtn sh x] = [::].
       by rewrite cats0.
-    by rewrite filter_gtn_shiftn.
+    by rewrite filter_gt_shiftn.
 - elim: s t Hsize Hall => [| s0 s IHs] /= t.
   + rewrite subn0 size_map => _ _.
     elim: t => [//= | t0 t IHt] /=.
     rewrite !to_word_cons !filter_cat map_cat IHt {IHt}.
-    by rewrite filter_leq_shiftn.
+    by rewrite filter_le_shiftn.
   + case: t => [//= | t0 t] /=.
     rewrite ltnS to_word_cons all_cat => {}/IHs Hrec /andP [{}/Hrec Hrec].
     rewrite !to_word_cons !filter_cat !map_cat subSS Hrec {Hrec}.
-    rewrite filter_leq_shiftn => Hall.
+    rewrite filter_le_shiftn => Hall.
     suff -> : [seq x - sh | x <- s0 & sh <= x] = [::] by rewrite cat0s.
     elim: s0 Hall {t s t0} => [//= | l0 s IHs] /= /andP [H /IHs].
     by rewrite leqNgt H.
@@ -214,28 +213,28 @@ rewrite -Hp plactic_RS -Hp2 -Hsfp2 eq_sym -plactic_RS.
 rewrite /sfilterleq /=.
 apply: plact_map_in_incr.
   move=> i j; rewrite !mem_filter => /andP [Hi _] /andP [Hj _].
-  rewrite !ltnXnatE => Hij.
+  rewrite !ltEnat /= => Hij.
   by rewrite ltn_subRL subnKC.
-apply: (plactic_filter_leqX d1).
+apply: (plactic_filter_le d1).
 exact: congr_RS.
 Qed.
 
-Lemma filter_gtnX_to_word (T : inhOrdType) n (t : seq (seq T)) :
-  filter (gtnX n) (to_word t) = to_word (filter_gtnX_tab n t).
+Lemma filter_gt_to_word (d : unit) (T : inhOrderType d) n (t : seq (seq T)) :
+  filter (>%O n) (to_word t) = to_word (filter_gt_tab n t).
 Proof using .
 elim: t => [//= | t0 t IHt] /=.
 rewrite to_word_cons filter_cat /=.
-case: (altP (filter (gtnX n) t0 =P [::])) => H /=.
+case: (altP (filter (>%O n) t0 =P [::])) => H /=.
 - by rewrite H cats0 IHt.
 - by rewrite to_word_cons IHt.
 Qed.
 
-Lemma filter_leqX_to_word (T : inhOrdType) n (t : seq (seq T)) :
-  filter (leqX n) (to_word t) = to_word (filter_leqX_tab n t).
+Lemma filter_le_to_word (d : unit) (T : inhOrderType d) n (t : seq (seq T)) :
+  filter (<=%O n) (to_word t) = to_word (filter_le_tab n t).
 Proof using .
 elim: t => [//= | t0 t IHt] /=.
 rewrite to_word_cons filter_cat /=.
-case: (altP (filter (leqX n) t0 =P [::])) => H /=.
+case: (altP (filter (<=%O n) t0 =P [::])) => H /=.
 - by rewrite H cats0 IHt to_word_cons cats0.
 - by rewrite to_word_cons IHt.
 Qed.
@@ -297,7 +296,7 @@ rewrite/is_skew_reshape_tableau => Hskew.
 apply/hasP; exists (std yam).
   rewrite RSclassE; last exact: is_tableau_RS.
   rewrite -plactic_RS.
-  apply std_plact.
+  apply: std_plact.
   have /= <- := eval_yameval yam.
   apply yam_plactic_hyper; exact: yamevalP.
 have Hstd1 : is_std (to_word (hyper_stdtabn P1)).
@@ -360,10 +359,10 @@ Qed.
 
 Lemma filtergtn_LRsupport Q :
   Q \in LRsupport (hyper_stdtabn P1) (hyper_stdtabn P2) ->
-  filter_gtnX_tab d1 Q = hyper_stdtabn P1.
+  filter_gt_tab d1 Q = hyper_stdtabn P1.
 Proof using .
 rewrite inE.
-move/(pred_LRtriple_fast_filter_gtnX
+move/(pred_LRtriple_fast_filter_gt
         (stdtabnP (hyper_stdtabn P1)) (stdtabnP Q)) => ->.
 by rewrite size_tab_stdtabn.
 Qed.
@@ -404,15 +403,14 @@ Qed.
 
 Lemma filterleq_LRsupport Q :
   Q \in LRtab_set P1 P2 P ->
-  (skew_reshape P1 P [seq x <- to_word Q | d1 <= x]) = filter_leqX_tab d1 Q.
+  (skew_reshape P1 P [seq x <- to_word Q | d1 <= x]) = filter_le_tab d1 Q.
 Proof using .
 rewrite /LRtab_set inE => /andP [HLR /eqP Hshape].
-rewrite /filter_leqX_tab -(eq_filter (leqXnatE _)).
-rewrite -Hshape filter_leqX_to_word /=.
-have -> : val P1 = shape (filter_gtnX_tab d1 Q).
+rewrite /filter_le_tab -Hshape filter_le_to_word /=.
+have -> : val P1 = shape (filter_gt_tab d1 Q).
   by rewrite (filtergtn_LRsupport HLR) -{1}(shaped_hyper_stdtabnP P1) /=.
 set t := map _ _.
-have -> : shape Q = outer_shape (shape (filter_gtnX_tab d1 Q)) (shape t).
+have -> : shape Q = outer_shape (shape (filter_gt_tab d1 Q)) (shape t).
   rewrite /outer_shape /= /t {t}.
   have:= stdtabP (stdtabnP Q) => /(join_tab_filter d1) {1}<-.
   rewrite /= /shape /join_tab /pad /=.
@@ -448,17 +446,17 @@ apply (eq_inv_is_skew_tableau_reshape (u1 := [seq x <- to_word Q | d1 <= x])).
 - exact: size_included.
 - apply/eq_invP; split; first by rewrite size_map.
   move=> i j /andP [Hij Hj].
-  rewrite (nth_map Z); last exact: (leq_ltn_trans Hij Hj).
-  rewrite (nth_map Z); last exact: Hj.
-  rewrite !leqXnatE leq_subLR subnKC //=.
-  by have:= mem_nth Z Hj; rewrite mem_filter => /andP [].
+  rewrite (nth_map inh); last exact: (leq_ltn_trans Hij Hj).
+  rewrite (nth_map inh); last exact: Hj.
+  rewrite !leEnat leq_subLR subnKC //=.
+  by have:= mem_nth inh Hj; rewrite mem_filter => /andP [].
 - move: Hpl => /plact_homog/perm_size.
   rewrite size_map => ->.
   by rewrite size_std sumn_diff_shape_intpartE -evalseq_eq_size evalseq_hyper_yam.
 - rewrite (filterleq_LRsupport HLRtab).
-  have -> : val P1 = shape (filter_gtnX_tab d1 Q).
+  have -> : val P1 = shape (filter_gt_tab d1 Q).
     by rewrite Hfilter -{1}(shaped_hyper_stdtabnP P1) /=.
-  apply is_skew_tableau_filter_leqX; exact: stdtabP.
+  apply is_skew_tableau_filter_le; exact: stdtabP.
 Qed.
 
 Lemma bijLR_surj Q :
@@ -476,17 +474,15 @@ exists y.
 - rewrite /bijLR.
   case (boolP (is_skew_reshape_tableau P P1 y)) => /=; last by rewrite Hskew.
   move=> pf; apply val_inj => /= {pf}.
-  have -> : hyper_stdtab P1 = filter_gtnX_tab d1 Q.
+  have -> : hyper_stdtab P1 = filter_gt_tab d1 Q.
     have:= hyper_stdtabnP P1 => /andP [Htab1 /eqP Hsz1].
     rewrite inE in HLR.
-    rewrite (pred_LRtriple_fast_filter_gtnX Htab1 (stdtabnP Q) HLR).
+    rewrite (pred_LRtriple_fast_filter_gt Htab1 (stdtabnP Q) HLR).
     by rewrite Hsz1.
   have -> : [seq shiftn d1 i | i <- skew_reshape P1 P (std y)] =
-              filter_leqX_tab d1 Q.
+              filter_le_tab d1 Q.
     rewrite Hmap /= /skew_reshape map_rev map_reshape -/(shiftn d1) sfilterleqK.
-    rewrite -/(skew_reshape _ _ _).
-    rewrite -(eq_filter (leqXnatE _)).
-    by rewrite filterleq_LRsupport.
+    by rewrite -/(skew_reshape _ _ _) filterleq_LRsupport.
   rewrite join_tab_filter //=; exact: stdtabP.
 Qed.
 
@@ -557,12 +553,13 @@ Qed.
 
 End OneCoeff.
 
-Lemma included_shape_filter_gtnX_tab (T : inhOrdType) (n : T) t :
-  is_tableau t -> included (shape (filter_gtnX_tab n t)) (shape t).
+Lemma included_shape_filter_gt_tab
+      (d : unit) (T : inhOrderType d) (n : T) t :
+  is_tableau t -> included (shape (filter_gt_tab n t)) (shape t).
 Proof using .
 elim: t => [//= | r0 t /= IHt] /= /and4P [Hnnil Hrow Hdom Htab].
-case: (altP ([seq x <- r0 | (x < n)%Ord] =P [::])) => Hr0 /=.
-  rewrite (filter_leqX_first_row0 Htab Hdom Hr0).
+case: (altP ([seq x <- r0 | (x < n)%O] =P [::])) => Hr0 /=.
+  rewrite (filter_le_first_row0 Htab Hdom Hr0).
   by rewrite (_ : filter _ _ = [::]); last by elim: (size t).
 by rewrite size_filter count_size (IHt Htab).
 Qed.
@@ -573,11 +570,11 @@ Proof using .
 rewrite !inE => /andP [Hhas /eqP <-].
 rewrite -(shaped_hyper_stdtabnP P1) /=.
 have : pred_LRtriple_fast (hyper_stdtabn P1) (hyper_stdtabn P2) Q by [].
-move/(pred_LRtriple_fast_filter_gtnX
+move/(pred_LRtriple_fast_filter_gt
         (stdtabnP (hyper_stdtabn P1)) (stdtabnP Q))=> /= ->.
 case: Q {Hhas} => Q /= /andP [].
 rewrite /is_stdtab => /andP [HQ _] _.
-exact: included_shape_filter_gtnX_tab.
+exact: included_shape_filter_gt_tab.
 Qed.
 
 (** * The statement of the Littlewood-Richardson rule *)

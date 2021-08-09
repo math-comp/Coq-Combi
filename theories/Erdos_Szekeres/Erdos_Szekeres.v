@@ -26,7 +26,7 @@ correspondance. Note that there are other proof which require less theory.
  *****)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
-From mathcomp Require Import tuple finfun finset bigop path.
+From mathcomp Require Import tuple finfun finset bigop path order.
 
 Require Import partition tableau Schensted ordtype Greene Greene_inv.
 
@@ -34,11 +34,12 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Import Order.TTheory.
 Open Scope N.
 
 Section OrderedType.
 
-Variable T : inhOrdType.
+Variables (disp : unit) (T : inhOrderType disp).
 
 Lemma Greene_rel_one (s : seq T) (R : rel T) :
   exists t : seq T, subseq t s /\ sorted R t /\ size t = (Greene_rel R s) 1.
@@ -73,8 +74,8 @@ Qed.
 
 Theorem Erdos_Szekeres (m n : nat) (s : seq T) :
   size s > m * n ->
-  (exists t, subseq t s /\ sorted leqX t /\ size t > m) \/
-  (exists t, subseq t s /\ sorted gtnX t /\ size t > n).
+  (exists t, subseq t s /\ sorted <=%O t /\ size t > m) \/
+  (exists t, subseq t s /\ sorted >%O t /\ size t > n).
 Proof using .
 move=> Hsize; pose tab := RS s.
 have {Hsize} : (n < size (shape tab)) \/ (m < head 0 (shape tab)).
@@ -96,14 +97,14 @@ move=> [] Hltn.
     rewrite (_ : minn s0 1 = 1) ?add1n //.
     by rewrite /minn; move: Hs0; case s0.
   move=> Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
-  case: (Greene_rel_one s gtnX) => x [] Hsubs [] Hsort <- Hn.
+  case: (Greene_rel_one s >%O) => x [] Hsubs [] Hsort <- Hn.
   by exists x.
 - left => {n}.
   have := Greene_row_RS 1 s.
   rewrite (_ : sumn (take 1 (shape (RS s))) = head 0 (shape (RS s))); first last.
     by case: (shape (RS s)) => [| s0 l] //=; rewrite take0 addn0.
   rewrite /Greene_row => Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
-  case: (Greene_rel_one s leqX) => x [] Hsubs [] Hsort <- Hn.
+  case: (Greene_rel_one s <=%O) => x [] Hsubs [] Hsort <- Hn.
   by exists x.
 Qed.
 

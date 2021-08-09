@@ -38,7 +38,7 @@ is surjective. This is Theorem [plact_from_yam]:
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
-From mathcomp Require Import tuple finfun finset path bigop.
+From mathcomp Require Import tuple finfun finset path bigop order.
 
 Require Import tools partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted congr plactic Greene_inv stdplact.
@@ -47,6 +47,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Import Order.TTheory.
 Open Scope N.
 
 
@@ -92,7 +93,7 @@ move=> Hy; apply: gencongr_ind; first exact Hy.
 elim => [/= | a0 aw /= IHaw].
 - move=> b1 cw b2 H /plactruleP [] Hrew.
   + move: Hrew H => /plact1P [a] [b] [c] [].
-    rewrite leqXnatE ltnXnatE => /andP [Hab Hbc] -> -> /=.
+    rewrite leEnat ltEnat /= => /andP [Hab Hbc] -> -> /=.
     set yc := (incr_nth (evalseq cw) b).
     move=> /and4P [H1 H2 Hpart ->]; rewrite Hpart.
     rewrite incr_nthC H1 !andbT /=.
@@ -101,12 +102,11 @@ elim => [/= | a0 aw /= IHaw].
       apply/eqP; rewrite eqn_leq Hab /= -ltnS.
       exact: (leq_trans Hbc).
     subst a.
-    have {Hac}Hbc : c = b.+1.
-      by apply/eqP; rewrite eqn_leq Hbc Hac.
+    have {Hac}Hbc : c = b.+1 by apply/eqP; rewrite eqn_leq Hbc Hac.
     subst c.
     by rewrite -is_part_incr_nth1E.
   + move: Hrew H => /plact1iP [a] [b] [c] [].
-    rewrite leqXnatE ltnXnatE => /andP [Hab Hbc] -> -> /=.
+    rewrite leEnat ltEnat /= => /andP [Hab Hbc] -> -> /=.
     set yc := (incr_nth (evalseq cw) b).
     move=> /and4P []; rewrite incr_nthC => H1 H2 Hpart Hyam.
     rewrite Hpart Hyam H1 !andbT /=.
@@ -115,13 +115,12 @@ elim => [/= | a0 aw /= IHaw].
       apply/eqP; rewrite eqn_leq Hab /= -ltnS.
       exact: (leq_trans Hbc).
     subst a.
-    have {Hac}Hbc : c = b.+1.
-      by apply/eqP; rewrite eqn_leq Hbc Hac.
+    have {Hac}Hbc : c = b.+1 by apply/eqP; rewrite eqn_leq Hbc Hac.
     subst c; subst yc.
     rewrite incr_nthC is_part_incr_nth1E; first exact Hpart.
     exact: is_part_eval_yam.
   + move: Hrew H => /plact2P [a] [b] [c] [].
-    rewrite leqXnatE ltnXnatE => /andP [Hab Hbc] -> -> /=.
+    rewrite leEnat ltEnat /= => /andP [Hab Hbc] -> -> /=.
     move=> /and4P []; rewrite [(incr_nth (incr_nth _ a) c)]incr_nthC.
     move => H1 H2 Hpart Hyam.
     rewrite Hyam H1 H2 !andbT /= {H1}.
@@ -130,12 +129,11 @@ elim => [/= | a0 aw /= IHaw].
     have {}Hbc : b = c.
       by apply/eqP; rewrite eqn_leq Hbc /=; exact: (leq_trans Hac).
     subst b.
-    have {Hab}Hac : c = a.+1.
-      by apply/eqP; rewrite eqn_leq Hac Hab.
+    have {Hab}Hac : c = a.+1 by apply/eqP; rewrite eqn_leq Hac Hab.
     subst c.
     by rewrite -(is_part_incr_nth1E _ (is_part_eval_yam Hyam)).
   + move: Hrew H => /plact2iP [a] [b] [c] [].
-    rewrite leqXnatE ltnXnatE => /andP [Hab Hbc] -> -> /=.
+    rewrite leEnat ltEnat /= => /andP [Hab Hbc] -> -> /=.
     move=> /and4P []; rewrite (incr_nthC _ a c) => H1 H2 Hpart Hyam.
     rewrite Hyam H1 H2 !andbT /=.
     case (ltnP a.+1 c) => Hac.
@@ -143,8 +141,7 @@ elim => [/= | a0 aw /= IHaw].
     have {}Hbc : b = c.
       by apply/eqP; rewrite eqn_leq Hbc /=; exact: (leq_trans Hac).
     subst b.
-    have {Hab}Hac : c = a.+1.
-      by apply/eqP; rewrite eqn_leq Hac Hab.
+    have {Hab}Hac : c = a.+1 by apply/eqP; rewrite eqn_leq Hac Hab.
     subst c.
     apply (is_part_incr_nth (is_part_eval_yam Hyam)) => /=.
     move: H1 => /is_partP [_ /(_ a)].
@@ -200,7 +197,7 @@ apply /and4P; repeat split.
   move: Hhead; case: sh {IHsh} => [//= | s1 /= _] Hs.
   apply /dominateP; split; first by rewrite !size_nseq.
   move=> j; rewrite size_nseq !nth_nseq => Hj.
-  by rewrite Hj (leq_trans Hj Hs) ltnXnatE.
+  by rewrite Hj (leq_trans Hj Hs) ltEnat /=.
 - by move: Hpart => /= /andP [_]; exact: IHsh.
 Qed.
 
@@ -229,7 +226,7 @@ case/lastP: sh Htab Hyam => [| sh sn] /=.
   case: tn Hrow Hlast => [//= | l0 tn] /=.
   elim: tn l0 => [l0 _ /= -> //= | l1 t' IHt] /= l0 /andP [Hl0l1 Hpath] Hlast.
   have {IHt Hpath Hlast} [] := IHt l1 Hpath Hlast => Hl1 <-.
-  by move: Hl0l1; rewrite Hl1 leqXnatE leqn0 => /eqP ->.
+  by move: Hl0l1; rewrite Hl1 leEnat leqn0 => /eqP ->.
 rewrite {1}yamtab_rcons -2!cats1 -catA /=.
 move => /is_tableau_catr /= /and4P [].
 case: sn => [//= | sn] /= _ _ Hdom /and3P [Hrow Hn2 _].
@@ -249,11 +246,11 @@ case: tn Hrow Hdom {Hp0 Hp1} => [_ /= | l0 tn].
   move=> /dominateP [_ Hdom]; congr [:: _].
   apply/eqP; rewrite eqn_leq Hln /=.
   have {Hdom} /= := Hdom 0 (ltn0Sn _).
-  by rewrite ltnXnatE.
+  by rewrite ltEnat.
 rewrite rcons_cons => Hrow /dominateP [_ Hdom].
 have {Hdom} /= := Hdom 0 (ltn0Sn _).
-rewrite ltnXnatE => Hl0.
-elim: tn l0 Hl0 Hrow => [/= | l1 tn /= IHtn] l0 Hl0; rewrite leqXnatE => /andP [].
+rewrite ltEnat => Hl0.
+elim: tn l0 Hl0 Hrow => [/= | l1 tn /= IHtn] l0 Hl0; rewrite leEnat => /andP [].
   move=> Hl0ln _.
   have {}Hl0 : l0 = (size sh).+1.
     apply/eqP; rewrite eqn_leq Hl0 andbT.
@@ -332,7 +329,7 @@ Proof.
 move=> y z /(congr1 val) /= => HRS2.
 have HRS1 : RS (std y) = RS (std z).
   apply/eqP; rewrite -plactic_RS.
-  apply std_plact; rewrite (yam_plactic_shape _ (yamevalP y)).
+  apply: std_plact; rewrite (yam_plactic_shape _ (yamevalP y)).
   split; first exact: yamevalP.
   by rewrite !eval_yameval.
 apply val_inj; apply perm_stdE => /=.
@@ -373,7 +370,7 @@ exists y.
   congr (RSmapinv2 (_, _)).
   + have := stdtab_of_yamP (hyper_yamP Hsh); rewrite /is_stdtab => /andP [Htab _].
     apply/eqP; rewrite -plactic_RS.
-    apply std_plact.
+    apply: std_plact.
     rewrite (yam_plactic_shape _ (yamevalP _)); split; first exact: hyper_yamP.
     by rewrite eval_yameval evalseq_hyper_yam.
   + by rewrite RSmap_std (_ : (RSmap y).2 = @auxbij Sh y) // f_invF.

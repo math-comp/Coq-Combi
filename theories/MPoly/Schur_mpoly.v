@@ -23,7 +23,7 @@ We give some values for particular partition such as small one, rows and columns
 ***********)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun finset bigop ssralg path perm fingroup.
+From mathcomp Require Import tuple finfun finset bigop ssralg path perm fingroup order.
 From SsrMultinomials Require Import ssrcomplements freeg mpoly.
 
 Require Import tools ordtype permuted partition Yamanouchi std tableau stdtab antisym.
@@ -32,6 +32,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
+Import Order.TTheory.
 Local Open Scope ring_scope.
 Import GRing.Theory.
 
@@ -42,7 +43,7 @@ Local Notation n := n0.+1.
 Variable R : ringType.
 
 Definition Schur d (sh : 'P_d) : {mpoly R[n]} :=
-  \sum_(t : tabsh n0 sh) \prod_(i <- to_word t) 'X_i.
+  \sum_(t : tabsh sh) \prod_(i <- to_word t) 'X_i.
 
 Lemma Schur_tabsh_readingE  d (sh : 'P_d) :
   Schur sh =
@@ -53,7 +54,7 @@ pose prodw := fun w => \prod_(i <- w) 'X_i : {mpoly R[n]}.
 rewrite -[LHS](big_map (fun t => to_word (val t)) xpredT prodw).
 rewrite -[RHS](big_map val (tabsh_reading sh) prodw).
 rewrite -[RHS]big_filter.
-by rewrite (perm_big _ (to_word_enum_tabsh _ sh)).
+by rewrite (perm_big _ (to_word_enum_tabsh sh)).
 Qed.
 
 (** ** Some particular Schur functions *)
@@ -81,9 +82,8 @@ rewrite /tabsh_reading /= rowpartnE ; case: w => w /=/eqP Hw.
 case: d Hw => [//= | d] Hw; rewrite Hw /=; first by case: w Hw.
 rewrite addn0 eq_refl andbT //=.
 case: w Hw => [//= | w0 w] /= /eqP; rewrite eqSS => /eqP <-.
-rewrite take_size; apply esym; apply (map_path (b := pred0)) => /=.
-- move=> i j /= _ ; exact: leqXnatE.
-- by apply/hasPn => x /=.
+rewrite take_size; apply esym; apply (map_path (b := pred0)) => //.
+by apply/hasPn => x /=.
 Qed.
 
 Lemma symh_basisE d :
@@ -150,7 +150,7 @@ Qed.
     from mpoly *)
 
 Lemma tabwordshape_col d (w : d.-tuple 'I_n) :
-  tabsh_reading (colpartn d) w = sorted gtnX w.
+  tabsh_reading (colpartn d) w = sorted >%O w.
 Proof using.
 rewrite /tabsh_reading /= colpartnE ; case: w => w /=/eqP Hw.
 have -> : sumn (nseq d 1%N) = d.
@@ -175,12 +175,11 @@ rewrite (eq_bigl _ _ (@tabwordshape_col d)).
 set f := BIG_F.
 rewrite (eq_bigr (fun x => f (rev_tuple x))) /f {f}; first last.
   by move => i _ /=; apply: perm_big; rewrite -perm_rev.
-rewrite (eq_bigl (fun i => sorted gtnX (rev_tuple i))); first last.
+rewrite (eq_bigl (fun i => sorted >%O (rev_tuple i))); first last.
   move=> [t /= _]; rewrite rev_sorted.
   case: t => [//= | t0 t] /=.
-  apply: (map_path (b := pred0)) => [x y /= _|].
-  + by rewrite -ltnXnatE.
-  + by apply/hasPn => x /=.
+  apply: (map_path (b := pred0)) => [x y /= _|]//.
+  by apply/hasPn => x /=.
 rewrite [RHS](perm_big
                 (map (@rev_tuple _ _) (enum {:d.-tuple 'I_n}))) /=.
   by rewrite big_map /=; first by rewrite /index_enum /= enumT.

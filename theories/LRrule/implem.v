@@ -76,7 +76,7 @@ case: r => [| l1 r /=] Hinn Hrow Hskew.
   rewrite /= /is_yam_of_eval /=.
   by rewrite (evalseq_hyper_yam Hinn) => /andP [] /andP [].
 move: Hrow => /andP [].
-by rewrite leqXnatE.
+by rewrite leEnat.
 Qed.
 
 
@@ -415,7 +415,7 @@ move/mapP => [i Hi [-> _]] /=.
 apply/dominateP; split; first by rewrite ltnS.
 case=> [_ /=| j]; last by rewrite /= ltnS; apply Hdom.
 move: Hi; rewrite /one_letter_choices mem_filter mem_iota /= => /and3P [_].
-by rewrite ltnXnatE.
+by rewrite ltEnat.
 Qed.
 
 Lemma yamtab_shift_dominate innev maxi sh row y :
@@ -448,7 +448,7 @@ case: (ltnP (minn (size shrec) (head (size innev) rec)) r0) => H.
   by rewrite ltnn.
 - rewrite (subnKC H) leq_min => /andP [_].
   case: rec Hrow {H} => [//= | rec0 rec /= ->].
-  by rewrite leqXnatE => ->.
+  by rewrite leEnat => ->.
 Qed.
 
 Lemma yamtab_shift_is_row innev maxi sh y :
@@ -463,7 +463,7 @@ move/mapP => [i Hi [-> _]].
 move: Hi; rewrite /one_letter_choices mem_filter mem_iota /= add0n subn0 ltnS.
 move=> /andP [_]; rewrite  leq_min => /andP [_].
 case: rec Hrec => [//= | rec0 rec /= ->].
-by rewrite leqXnatE => ->.
+by rewrite leEnat => ->.
 Qed.
 
 (** inner is padded with 0 *)
@@ -564,7 +564,7 @@ have : {in rec, f1 =1 f2}.
       by move=> i /=; rewrite eqseq_cons eq_refl andbT.
     apply: (choose_one_countE Hinn (yamtab_rowsP Hr) Hskew Hincl _ Hisrow).
     have /dominate_head/(_ Hdom) : l0 :: row != [::] by [].
-    rewrite ltnXnatE => -> /=.
+    rewrite ltEnat => -> /=.
     exact: head_row_skew_yam Hinn Hisrow Hskew.
   - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
     by move=> y /=; rewrite eqseq_cons Hneq andbF.

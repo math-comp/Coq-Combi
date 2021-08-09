@@ -29,13 +29,15 @@
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
-From mathcomp Require Import tuple finfun finset bigop path.
+From mathcomp Require Import tuple finfun finset bigop path order.
 
 Require Import tools partition Yamanouchi ordtype tableau std stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
+
+Import Order.Theory.
 
 (** ** Skew Yamanouchi words *)
 Open Scope N.
@@ -135,14 +137,12 @@ Qed.
 (** ** Skew tableaux *)
 Section Dominate.
 
-Variable T : inhOrdType.
-Notation Z := (inhabitant T).
-
+Variables (disp : unit) (T : inhOrderType disp).
 Implicit Type u v : seq T.
 
 Definition skew_dominate sh u v := dominate (drop sh u) v.
 
-Lemma skew_dominate0 : skew_dominate 0 =2 (@dominate T).
+Lemma skew_dominate0 : skew_dominate 0 =2 (@dominate _ T).
 Proof using. by move=> u v /=; rewrite /skew_dominate drop0. Qed.
 
 Lemma skew_dominate_take n sh u v :
@@ -529,120 +529,118 @@ End Dominate.
 (** ** Skewing and joining tableaux *)
 Section FilterLeqGeq.
 
-Variable T : inhOrdType.
-Notation Z := (inhabitant T).
-
+Variables (disp : unit) (T : inhOrderType disp).
 Implicit Type l : T.
 Implicit Type r w : seq T.
 Implicit Type t : seq (seq T).
 
-Lemma filter_leqX_dominate n r1 r0 :
+Lemma filter_le_dominate n r1 r0 :
   is_row r0 -> is_row r1 -> dominate r1 r0 ->
-  skew_dominate ((count (gtnX n) r0) - (count (gtnX n) r1))
-                (filter (leqX n) r1) (filter (leqX n) r0).
+  skew_dominate ((count (>%O n) r0) - (count (>%O n) r1))
+                (filter (<=%O n) r1) (filter (<=%O n) r0).
 Proof using.
 move=> Hrow0 Hrow1 Hdom.
-have Hsize := count_gtnX_dominate n Hdom.
+have Hsize := count_gt_dominate n Hdom.
 move: Hdom => /dominateP [Hsz Hdom].
-have /eq_count Hcount : (gtnX n) =1 predC (leqX n).
-  by move=> i /=; exact: ltnXNgeqX.
+have /eq_count Hcount : (>%O n) =1 predC (<=%O n).
+  by move=> i /=; rewrite ltNge.
 apply/dominateP; split.
 - rewrite size_drop !size_filter.
   rewrite (subnBA _ Hsize) leq_subLR [count _ r0 + _]addnC.
   by rewrite !Hcount !count_predC.
 - rewrite size_drop !size_filter => i.
   rewrite (subnBA _ Hsize) Hcount !count_predC ltn_subRL => /Hdom.
-  rewrite (filter_leqX_row _ Hrow0) (filter_leqX_row _ Hrow1) !nth_drop.
+  rewrite (filter_le_row _ Hrow0) (filter_le_row _ Hrow1) !nth_drop.
   by rewrite -Hcount addnA (subnKC Hsize).
 Qed.
 
-Definition filter_leqX_tab n :=
-  [fun t : (seq (seq T)) => [seq [seq x <- i | leqX n x] | i <- t]].
+Definition filter_le_tab n :=
+  [fun t : (seq (seq T)) => [seq [seq x <- i | (n <= x)%O] | i <- t]].
 
-Lemma is_skew_tableau_filter_leqX_tmp n t :
+Lemma is_skew_tableau_filter_le_tmp n t :
   is_tableau t -> is_skew_tableau
-                    (shape ([seq [seq x <- i | (x < n)%Ord] | i <- t]))
-                    (filter_leqX_tab n t).
+                    (shape ([seq [seq x <- i | (x < n)%O] | i <- t]))
+                    (filter_le_tab n t).
 Proof using.
 elim: t => //= t0 t IHt /and4P [Hnnil Hrow Hdom Htab].
 apply/and4P; split.
 - rewrite !size_filter /=.
   set p1 := (X in count X); set p2 := (X in _ + count X _).
-  have /eq_count -> : p2 =1 predC p1 by move=> i /=; rewrite -leqXNgtnX.
+  have /eq_count -> : p2 =1 predC p1 by move=> i /=; rewrite -leNgt.
   rewrite count_predC.
   by move: Hnnil; apply contra => /nilP ->.
 - apply sorted_filter; last exact Hrow.
-  by move=> a b c; exact: leqX_trans.
+  by move=> a b c; exact: le_trans.
 - case: t Hdom Htab {IHt} => //= t1 t /= Hdom /and4P [_ Hrow1 _ _] {t}.
   rewrite !size_filter.
-  exact: filter_leqX_dominate.
+  exact: filter_le_dominate.
 - exact: IHt.
 Qed.
 
-Lemma filter_gtnX_first_row0 n r t :
+Lemma filter_gt_first_row0 n r t :
   is_tableau t ->
   dominate (head [::] t) r ->
-  [seq x <- r | (x < n)%Ord] = [::] ->
-  [seq [seq x <- i | (n <= x)%Ord] | i <- t] = t.
+  [seq x <- r | (x < n)%O] = [::] ->
+  [seq [seq x <- i | (n <= x)%O] | i <- t] = t.
 Proof using.
 elim: t r => //= t0 t IHt r.
 move=> /and4P [_ Hrow Hdom Htab] Hdomr Hr.
-move/(count_gtnX_dominate n) : Hdomr.
+move/(count_gt_dominate n) : Hdomr.
 rewrite -!size_filter Hr /= leqn0 => /nilP Ht0.
 rewrite (IHt t0 Htab Hdom Ht0).
-rewrite (filter_leqX_row n Hrow).
+rewrite (filter_le_row n Hrow).
 by rewrite -!size_filter Ht0 /= drop0.
 Qed.
 
-Lemma filter_leqX_first_row0 n r t :
+Lemma filter_le_first_row0 n r t :
   is_tableau t ->
   dominate (head [::] t) r ->
-  [seq x <- r | (x < n)%Ord] = [::] ->
-  [seq [seq x <- i | (x < n)%Ord] | i <- t] = nseq (size t) [::].
+  [seq x <- r | (x < n)%O] = [::] ->
+  [seq [seq x <- i | (x < n)%O] | i <- t] = nseq (size t) [::].
 Proof using.
 elim: t r => //= t0 t IHt r.
 move=> /and4P [_ Hrow Hdom Htab] Hdomr Hr.
-move/(count_gtnX_dominate n) : Hdomr.
+move/(count_gt_dominate n) : Hdomr.
 rewrite -!size_filter Hr /= leqn0 => /nilP Ht0.
 by rewrite Ht0 (IHt t0 Htab Hdom).
 Qed.
 
-Lemma included_shape_filter_gtnX c (t : seq (seq T)) :
-  is_tableau t -> included (shape (filter_gtnX_tab c t)) (shape t).
+Lemma included_shape_filter_gt c (t : seq (seq T)) :
+  is_tableau t -> included (shape (filter_gt_tab c t)) (shape t).
 Proof.
-move=> Ht; rewrite /filter_gtnX_tab.
+move=> Ht; rewrite /filter_gt_tab.
 elim: t Ht => [//= | t0 t IHt] /and4P [Hnnil Hrow Hdom Htab] /=.
-case: (altP ([seq x <- t0 | (x < c)%Ord] =P [::])) => Hhead /=.
-- rewrite (filter_leqX_first_row0 Htab Hdom Hhead).
+case: (altP ([seq x <- t0 | (x < c)%O] =P [::])) => Hhead /=.
+- rewrite (filter_le_first_row0 Htab Hdom Hhead).
   suff -> : [seq r <- nseq (size t) [::] | r != [::]] = [::] by [].
   by move=> T0; elim: (size t).
 - rewrite (IHt Htab) andbT.
   by rewrite size_filter; apply: (leq_trans (count_size _ _)).
 Qed.
 
-Lemma shape_inner_filter_leqX n t :
+Lemma shape_inner_filter_le n t :
   is_tableau t ->
-  shape ([seq [seq x <- i | (x < n)%Ord] | i <- t]) =
-  pad 0 (size t) (shape (filter_gtnX_tab n t)).
+  shape ([seq [seq x <- i | (x < n)%O] | i <- t]) =
+  pad 0 (size t) (shape (filter_gt_tab n t)).
 Proof using.
 rewrite /pad /=.
 elim: t => //= t0 t IHt /and4P [Hnnil0 Hrow0 Hdom Htab].
-case/altP: ([seq x <- t0 | (x < n)%Ord] =P [::]) => Ht0 /=; first last.
+case/altP: ([seq x <- t0 | (x < n)%O] =P [::]) => Ht0 /=; first last.
   by rewrite subSS -(IHt Htab).
 rewrite Ht0 /= {IHt}.
-rewrite (filter_leqX_first_row0 Htab Hdom Ht0).
+rewrite (filter_le_first_row0 Htab Hdom Ht0).
 rewrite [filter _ _ ](_ : _ = [::]); last by elim: (size t).
 by rewrite /= /shape map_nseq.
 Qed.
 
-Lemma is_skew_tableau_filter_leqX n t:
+Lemma is_skew_tableau_filter_le n t:
   is_tableau t ->
-  is_skew_tableau (shape (filter_gtnX_tab n t)) (filter_leqX_tab n t).
+  is_skew_tableau (shape (filter_gt_tab n t)) (filter_le_tab n t).
 Proof using.
 move=> Htab.
-rewrite is_skew_tableau_pad0 /filter_leqX_tab size_map.
-rewrite -(shape_inner_filter_leqX n Htab).
-exact: is_skew_tableau_filter_leqX_tmp.
+rewrite is_skew_tableau_pad0 /filter_le_tab size_map.
+rewrite -(shape_inner_filter_le n Htab).
+exact: is_skew_tableau_filter_le_tmp.
 Qed.
 
 Definition join_tab s t :=
@@ -694,20 +692,20 @@ apply/permPl; exact: perm_catC.
 Qed.
 
 Lemma join_tab_filter n t :
-  is_tableau t -> join_tab (filter_gtnX_tab n t) (filter_leqX_tab n t) = t.
+  is_tableau t -> join_tab (filter_gt_tab n t) (filter_le_tab n t) = t.
 Proof using.
 rewrite /join_tab.
 elim: t => //= t0 t IHt /and4P [Hnnil Hrow0 Hdom Htab].
-case H: [seq x <- t0 | (x < n)%Ord] => [| f0 f] /=.
-- rewrite {IHt} (filter_leqX_first_row0 Htab Hdom H).
+case H: [seq x <- t0 | (x < n)%O] => [| f0 f] /=.
+- rewrite {IHt} (filter_le_first_row0 Htab Hdom H).
   rewrite [filter _ _](_ : _ = [::]); last by elim: (size t).
-  rewrite cat0s /= (filter_leqX_row n Hrow0) -!size_filter /= H /= drop0.
+  rewrite cat0s /= (filter_le_row n Hrow0) -!size_filter /= H /= drop0.
   congr (_ :: _).
-  rewrite (filter_gtnX_first_row0 Htab Hdom H).
+  rewrite (filter_gt_first_row0 Htab Hdom H).
   by elim: t {Hdom Htab H Hrow0 Hnnil} => //= t1 t ->.
-- rewrite (IHt Htab) (filter_leqX_row _ Hrow0).
+- rewrite (IHt Htab) (filter_le_row _ Hrow0).
   rewrite -[f0 :: _ ++ _]cat1s catA cat1s -H.
-  by rewrite (filter_gtnX_row _ Hrow0) cat_take_drop.
+  by rewrite (filter_gt_row _ Hrow0) cat_take_drop.
 Qed.
 
 Lemma all_allLtn_cat (s0 s1 s : seq T) :
@@ -756,8 +754,8 @@ apply/and4P; rewrite subSS; split.
   case: t0 Hrowt0 => //= m0 t0 /= Hpath Hall.
   apply/andP; split; last exact Hpath.
   have {}/Hall /andP [] : m0 \in m0 :: t0 by rewrite in_cons eq_refl.
-  case/lastP: s0 => [/ltnXW //= | s0 sn] /= _.
-  by rewrite last_rcons /allLtn all_rcons /= => /andP [] /ltnXW.
+  case/lastP: s0 => [/ltW //= | s0 sn] /= _.
+  by rewrite last_rcons /allLtn all_rcons /= => /andP [] /ltW.
 - move=> {IHs Hrows0 Hrowt0 Hnnils0 Hszt0 Halls}.
   case: s Hdoms Htabs Hdomt Htabt => [_ _| s1 s] /=.
   + rewrite subn0.
@@ -767,8 +765,8 @@ apply/and4P; rewrite subSS; split.
     * move: Halls0; rewrite !to_word_cons.
       rewrite !all_cat => /andP [/andP [_ Hallt1] Hallt0] i Hi.
       rewrite nth_cat; case ltnP => His0.
-      * move: Hallt1 => /allP /(_ _ (mem_nth Z Hi)).
-        by rewrite /allLtn => /allP/(_ _ (mem_nth Z His0)) /=.
+      * move: Hallt1 => /allP /(_ _ (mem_nth inh Hi)).
+        by rewrite /allLtn => /allP/(_ _ (mem_nth inh His0)) /=.
       * have /Hdomt : (i - size s0) < size (drop (size s0) t1).
           by rewrite size_drop ltn_subRL (subnKC His0).
         by rewrite nth_drop (subnKC His0).
@@ -785,8 +783,8 @@ apply/and4P; rewrite subSS; split.
       by rewrite (leq_trans Hi1 Hszs); apply Hdoms.
     case: (ltnP i (size s0)) => Hi0.
     * move: Hallt1 => /allP Hallt1; move: Hi.
-      rewrite -{1}(subnKC Hi1) ltn_add2l => /(mem_nth Z) /Hallt1 {Hallt1}.
-      by rewrite /allLtn => /allP/(_ _ (mem_nth Z Hi0)).
+      rewrite -{1}(subnKC Hi1) ltn_add2l => /(mem_nth inh) /Hallt1 {Hallt1}.
+      by rewrite /allLtn => /allP/(_ _ (mem_nth inh Hi0)).
     * have /Hdomt : i - size s0 < size (drop (size s0 - size s1) t1).
         rewrite size_drop -(ltn_add2l (size s0)) (subnKC Hi0).
         rewrite (subnBA _ Hszs) subnKC addnC //=.
@@ -801,9 +799,9 @@ End FilterLeqGeq.
 (** ** Standardisation of a tableau *)
 Section EqInvSkewTab.
 
-Implicit Type T : inhOrdType.
-
-Lemma eq_inv_skew_dominate T1 T2 (u1 v1 : seq T1) (u2 v2 : seq T2) s :
+Lemma eq_inv_skew_dominate
+      (d1 d2 : unit) (T1 : inhOrderType d1) (T2 : inhOrderType d2)
+      (u1 v1 : seq T1) (u2 v2 : seq T2) s :
   eq_inv (u1 ++ v1) (u2 ++ v2) ->
   size u1 = size u2 ->
   skew_dominate s u1 v1 -> skew_dominate s u2 v2.
@@ -814,24 +812,24 @@ apply/dominateP; split => [| i Hi1].
   by rewrite eqn_add2l => /eqP ->.
 have Hi2 : i < size (drop s u1) by move: Hi1; rewrite !size_drop Hszu.
 move/(_ _ Hi2) : Hdom.
-set Z1 := inhabitant T1; set Z2 := inhabitant T2.
-rewrite -/Z1 -/Z2 in Hinv.
-rewrite !nth_drop !ltnXNgeqX; apply contra.
+rewrite !nth_drop !ltNge; apply contra.
 move : Hi1 Hi2; rewrite !size_drop !ltn_subRL => Hi2 Hi1.
-have -> : nth Z1 u1 (s + i) = nth Z1 (u1 ++ v1) (s + i) by rewrite nth_cat Hi1.
-have -> : nth Z2 u2 (s + i) = nth Z2 (u2 ++ v2) (s + i) by rewrite nth_cat Hi2.
-have -> : nth Z1 v1 i = nth Z1 (u1 ++ v1) (size u1 + i)
+have -> : nth inh u1 (s + i) = nth inh (u1 ++ v1) (s + i) by rewrite nth_cat Hi1.
+have -> : nth inh u2 (s + i) = nth inh (u2 ++ v2) (s + i) by rewrite nth_cat Hi2.
+have -> : nth inh v1 i = nth inh (u1 ++ v1) (size u1 + i)
   by rewrite nth_cat ltnNge leq_addr /= addKn.
-have -> : nth Z2 v2 i = nth Z2 (u2 ++ v2) (size u2 + i)
+have -> : nth inh v2 i = nth inh (u2 ++ v2) (size u2 + i)
   by rewrite nth_cat ltnNge leq_addr /= addKn.
-rewrite Hinv Hszu // {Hinv Z1 Z2}.
+rewrite {}Hinv Hszu //.
 rewrite leq_add2r ltn_add2l; apply/andP; split.
 - by apply ltnW; apply: (leq_ltn_trans _ Hi2); exact: leq_addr.
 - by move: Hi1 Hsz1; rewrite size_drop -ltn_subRL => /leq_trans H{}/H.
 Qed.
 
 Lemma eq_inv_is_skew_tableau_reshape_size
-      inner outer T1 T2 (u1 : seq T1) (u2 : seq T2) :
+      inner outer
+      (d1 d2 : unit) (T1 : inhOrderType d1) (T2 : inhOrderType d2)
+      (u1 : seq T1) (u2 : seq T2) :
   size inner = size outer -> (* complete with 0 if needed *)
   eq_inv u1 u2 -> size u1 = sumn (outer / inner) ->
   is_skew_tableau inner (skew_reshape inner outer u1) ->
@@ -883,7 +881,8 @@ apply (eq_inv_catr (u1 := take (sumn d) u1) (u2 := take (sumn d) u2) ).
 - by rewrite !size_take -Hszu.
 Qed.
 
-Lemma is_skew_tableau_skew_reshape_pad0 inner outer T (u : seq T) :
+Lemma is_skew_tableau_skew_reshape_pad0 inner outer
+      (d : unit) (T : inhOrderType d) (u : seq T) :
   is_skew_tableau inner (skew_reshape inner outer u) =
   is_skew_tableau ((pad 0 (size outer)) inner)
                   (skew_reshape ((pad 0 (size outer)) inner) outer u).
@@ -895,7 +894,9 @@ by rewrite /skew_reshape diff_shape_pad0.
 Qed.
 
 Theorem eq_inv_is_skew_tableau_reshape
-        inner outer T1 T2 (u1 : seq T1) (u2 : seq T2) :
+        inner outer
+        (d1 d2 : unit) (T1 : inhOrderType d1) (T2 : inhOrderType d2)
+        (u1 : seq T1) (u2 : seq T2) :
   size inner <= size outer ->
   eq_inv u1 u2 ->
   size u1 = sumn (outer / inner) ->
@@ -913,7 +914,8 @@ apply eq_inv_is_skew_tableau_reshape_size.
 - by rewrite diff_shape_pad0.
 Qed.
 
-Theorem is_skew_tableau_reshape_std inner outer T (u : seq T) :
+Theorem is_skew_tableau_reshape_std inner outer
+        (d : unit) (T : inhOrderType d) (u : seq T) :
   size inner <= size outer ->
   size u = sumn (outer / inner) ->
   is_skew_tableau inner (skew_reshape inner outer u) =
@@ -926,7 +928,8 @@ apply/idP/idP; apply eq_inv_is_skew_tableau_reshape => //=.
 - by rewrite size_std.
 Qed.
 
-Theorem is_tableau_reshape_std sh T (u : seq T) :
+Theorem is_tableau_reshape_std sh
+        (d : unit) (T : inhOrderType d) (u : seq T) :
   size u = sumn sh ->
   is_tableau (skew_reshape [::] sh u) =
   is_tableau (skew_reshape [::] sh (std u)).
@@ -935,7 +938,7 @@ move=> Hsz.
 by rewrite -!is_skew_tableau0; rewrite is_skew_tableau_reshape_std.
 Qed.
 
-Theorem is_tableau_std T (t : seq (seq T)) :
+Theorem is_tableau_std (d : unit) (T : inhOrderType d) (t : seq (seq T)) :
   is_tableau t = is_tableau (skew_reshape [::] (shape t) (std (to_word t))).
 Proof.
 rewrite -{1}(to_wordK t); apply is_tableau_reshape_std.

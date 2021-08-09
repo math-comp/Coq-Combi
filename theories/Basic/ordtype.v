@@ -487,7 +487,7 @@ Canonical bool_FinOrderType := [inhFinOrderType of bool].
 End Tests.
 
 
-Open Scope order_scope.
+Local Open Scope order_scope.
 Import Order.TTheory.
 
 
@@ -1211,7 +1211,7 @@ Definition prodlex : rel (T * R) :=
 Fact prodlex_porder : PartOrder.axiom prodlex.
 Proof using.
 rewrite /prodlex; split.
-- by case=> [i j] /=; rewrite leqXnn eq_refl /= orbT.
+- by case=> [i j] /=; rewrite lexx eq_refl /= orbT.
 - case=> [a b] [c d] /= /andP [] /orP [] /andP [H1 H2] /orP [] /andP [H3 H4].
   + by exfalso; move: H1; rewrite eqn_leqX H2 H4.
   + by exfalso; move: H1; rewrite (eqP H3) eq_refl.
@@ -1220,13 +1220,13 @@ rewrite /prodlex; split.
 - case=> [a b] [c d] [e f] /=.
   move=> /orP [] /andP [H1 H2] /orP [] /andP [H3 H4]; apply /orP.
   + left.
-    rewrite ltnX_neqAleqX (le_trans H2 H4) andbT.
+    rewrite lt_neqAle (le_trans H2 H4) andbT.
     move: H3; apply contra => /eqP H; subst c.
     by rewrite eqn_leqX H4 H2.
   + left; move: H3 => /eqP H; subst a.
-    by rewrite ltnX_neqAleqX H1 H2.
+    by rewrite lt_neqAle H1 H2.
   + left; move: H1 => /eqP H; subst c.
-    by rewrite ltnX_neqAleqX H3 H4.
+    by rewrite lt_neqAle H3 H4.
   + right; move: H1 => /eqP ->.
     by rewrite H3 /= (le_trans H2 H4).
 Qed.
@@ -1278,16 +1278,16 @@ Fixpoint listlex s1 s2 :=
 
 Lemma listlex_le_head x sx y sy :
   listlex (x :: sx) (y :: sy) -> x <= y.
-Proof using. by case/orP => [/ltnXW|/andP [/eqP-> _]]. Qed.
+Proof using. by case/orP => [/ltW|/andP [/eqP-> _]]. Qed.
 
 Fact listlex_porder : PartOrder.axiom listlex.
 Proof using.
 split.
 - by elim => [|x s ih] //=; rewrite eqxx ih orbT.
 - elim=> [|x sx ih] [|y sy] //= /andP []; case/orP=> [h|].
-    rewrite [y<x]ltnX_neqAleqX andbC {2}eq_sym (ltnX_eqF h).
+    rewrite [y<x]lt_neqAle andbC {2}eq_sym (lt_eqF h).
     by move: h; rewrite ltNge => /negbTE ->.
-  case/andP => /eqP->; rewrite eqxx ltnXnn /= => h1 h2.
+  case/andP => /eqP->; rewrite eqxx ltxx /= => h1 h2.
   by rewrite (ih sy) // h1 h2.
 - elim=> [|y sy ih] [|x sx] [|z sz] // h1 h2.
   have le := le_trans (listlex_le_head h1) (listlex_le_head h2).
@@ -1309,8 +1309,8 @@ Lemma listlex_total : total listlex.
 Proof using.
 elim=> [|x sx ih] [|y sy] //=; case: (boolP (x < y))=> //=.
 rewrite -leNgt // leqX_eqVltnX; case/orP=> [/eqP->|].
-  by rewrite !eqxx ltnXnn /= ih.
-by move=> lt; rewrite [x==y]eq_sym (ltnX_eqF lt) /= orbF.
+  by rewrite !eqxx ltxx /= ih.
+by move=> lt; rewrite [x==y]eq_sym (lt_eqF lt) /= orbF.
 Qed.
 
 Fact listlex_order : Order.axiom listlex_pordType.

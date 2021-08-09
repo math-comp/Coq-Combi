@@ -62,7 +62,7 @@ skew tableaux.
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice.
-From mathcomp Require Import seq tuple finset perm binomial bigop.
+From mathcomp Require Import order seq tuple finset perm binomial bigop.
 Require Import tools vectNK subseq partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted plactic Greene_inv stdplact.
 
@@ -72,8 +72,7 @@ Unset Printing Implicit Defensive.
 
 Open Scope bool.
 
-Import OrdNotations.
-
+Import Order.TTheory.
 
 
 (** ** The shuffle of two sequences *)
@@ -376,10 +375,10 @@ Lemma shift_plactcongr n u v : (u =Pl v) = (shiftn n u =Pl shiftn n v).
 Proof.
 apply/idP/idP.
 - apply: plact_map_in_incr => x y _ _.
-  by rewrite !ltnXnatE ltn_add2l.
+  by rewrite !ltEnat /= ltn_add2l.
 - rewrite -{2}[u](shiftuK n) -{2}[v](shiftuK n) /shiftn.
   apply: plact_map_in_incr => x y /mapP [x0 Hx0 -> {x}] /mapP [y0 Hy0 -> {y}].
-  by rewrite !ltnXnatE ltn_add2l !addKn.
+  by rewrite !ltEnat /= ltn_add2l !addKn.
 Qed.
 
 
@@ -392,19 +391,19 @@ Proof.
 move=> Hstdu1 Hstdv1 Hsh Hpl.
 have Hstdw1 : is_std w1 by exact: (allP (std_shsh Hstdu1 Hstdv1)).
 have:= Hsh; rewrite (mem_shsh _ _ Hstdu1) => /andP [/eqP Hu1 /eqP Hv1].
-have HgtnE : (fun x => x <A size u1) =1 gtn (size u1).
-  by move=> x /=; rewrite ltnXnatE.
-have HleqE : (fun x => x >=A size u1) =1 leq (size u1).
-  by move=> x /=; rewrite leqXnatE.
+have HgtnE : (fun x => (x < size u1)%O) =1 gtn (size u1).
+  by move=> x /=; rewrite ltEnat.
+have HleqE : (fun x => (x >= size u1)%O) =1 leq (size u1).
+  by move=> x /=; rewrite leEnat.
 pose u2 := (sfiltergtn (size u1) w2); pose v2 := (sfilterleq (size u1) w2).
 have {Hu1} Hplu : u1 =Pl u2.
   rewrite -Hu1 /u2 /sfiltergtn /= -!(eq_filter HgtnE).
-  exact: plactic_filter_gtnX.
+  exact: plactic_filter_gt.
 have {Hv1} Hplv : v1 =Pl v2.
   rewrite -Hv1 /v2 /sfilterleq /= -!(eq_filter HleqE).
-  apply: plact_map_in_incr; last exact: plactic_filter_leqX.
+  apply: plact_map_in_incr; last exact: plactic_filter_le.
   move=> /= x y.
-  rewrite !mem_filter !leqXnatE !ltnXnatE => /andP [Hx _]  /andP [Hy _] Hxy.
+  rewrite !mem_filter !leEnat !ltEnat /= => /andP [Hx _]  /andP [Hy _] Hxy.
   by rewrite -(ltn_add2r (size u1)) ?subnK.
 exists u2, v2; split => //.
 rewrite mem_shsh; first last.
@@ -418,7 +417,7 @@ End ShiftedShuffle.
 (** * Shifted shuffle and inverse standardized *)
 Section LRTriple.
 
-Variable Alph : inhOrdType.
+Context {disp : unit} {Alph : inhOrderType disp}.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -511,8 +510,7 @@ case: (leqP n s0) => Hv0 /=.
 Qed.
 
 Lemma index_invstd l i :
-  is_std l -> i < size l ->
-  (index i (invstd l)) = nth (inhabitant nat_inhOrdType) l i.
+  is_std l -> i < size l -> index i (invstd l) = nth inh l i.
 Proof using .
 move=> Hstd Hi.
 by rewrite -{2}(invstdK Hstd) /invstd nth_mkseq //= size_mkseq.
@@ -531,7 +529,7 @@ move=> {Hsftstd}.
 apply/eq_invP; split; first by rewrite size_invstd size_sfiltergtn_cat.
 move=> i j /andP [Hij Hj].
 have Hi := leq_ltn_trans Hij Hj.
-rewrite leqXnatE /=.
+rewrite leEnat /=.
 do 2 (rewrite nth_mkseq; last by rewrite size_sfiltergtn_cat).
 rewrite index_leq_filter //= -/(invstd (std (u++v))).
 have Hucat : size u <= size (std (u ++ v)).
@@ -541,7 +539,7 @@ do 2 (rewrite (index_invstd (std_is_std (u ++ v)));
 have /eq_invP := eq_inv_std (u ++ v) => [] [_ Hinv].
 have Hijsz : i <= j < size (u ++ v).
   rewrite Hij /=; apply: (leq_trans Hj); rewrite size_cat; exact: leq_addr.
-rewrite -leqXnatE -(Hinv i j Hijsz).
+rewrite -leEnat -(Hinv i j Hijsz).
 by rewrite !nth_cat Hi Hj.
 Qed.
 
@@ -558,7 +556,7 @@ move=> {Hsftstd}.
 apply/eq_invP; split; first by rewrite size_invstd size_sfilterleq_cat.
 move=> i j /andP [Hij Hj].
 have Hi := leq_ltn_trans Hij Hj.
-rewrite leqXnatE /=.
+rewrite leEnat /=.
 do 2 (rewrite nth_mkseq; last by rewrite size_sfilterleq_cat).
 rewrite !index_sfilterleq index_leq_filter; try apply: leq_addl.
 do 2 (rewrite (index_invstd (std_is_std (u ++ v)));
@@ -568,7 +566,7 @@ have Hijsz : i + size u <= j + size u < size (u ++ v).
   rewrite size_cat [size u + _]addnC.
   rewrite leq_add2r ltn_add2r.
   by rewrite Hij Hj.
-rewrite -leqXnatE -(Hinv _ _ Hijsz) {Hijsz}.
+rewrite -leEnat -(Hinv _ _ Hijsz) {Hijsz}.
 rewrite !nth_cat.
 have H x : (x + size u < size u) = false.
   by apply: negbTE; rewrite -leqNgt; apply: leq_addl.
@@ -632,25 +630,25 @@ apply: (iffP idP) => /=.
   + rewrite /= -Hp2 RSmapE; exact: mem_RSclass.
 Qed.
 
-Lemma filter_gtnX_RS (T : inhOrdType) (w : seq T) n :
-  RS (filter (gtnX n) w) = filter_gtnX_tab n (RS w).
+Lemma filter_gt_RS (d : unit) (T : inhOrderType d) (w : seq T) n :
+  RS (filter (>%O n) w) = filter_gt_tab n (RS w).
 Proof using .
 apply/eqP.
-rewrite -(RS_tabE (is_tableau_filter_gtnX _ (is_tableau_RS w))) -plactic_RS /=.
+rewrite -(RS_tabE (is_tableau_filter_gt _ (is_tableau_RS w))) -plactic_RS /=.
 rewrite to_word_filter_nnil -filter_to_word.
-apply: plactic_filter_gtnX; exact: congr_RS.
+apply: plactic_filter_gt; exact: congr_RS.
 Qed.
 
-Lemma pred_LRtriple_fast_filter_gtnX t1 t2 t :
+Lemma pred_LRtriple_fast_filter_gt t1 t2 t :
   is_stdtab t1 -> is_stdtab t ->
-  pred_LRtriple_fast t1 t2 t -> t1 = filter_gtnX_tab (size_tab t1) t.
+  pred_LRtriple_fast t1 t2 t -> t1 = filter_gt_tab (size_tab t1) t.
 Proof using .
 move=> Ht1 Ht /= /hasP [p2 Hp2 Hshsh].
 move: Ht1; rewrite /is_stdtab => /andP [Htab1 Hstd1].
 rewrite -{1}(RS_tabE Htab1) (shsh_sfiltergtn Hstd1 Hshsh) /=.
-rewrite -(eq_filter (gtnXnatE _)) -size_to_word.
+rewrite -size_to_word.
 move: Ht; rewrite /is_stdtab => /andP [Htab _].
-by rewrite filter_gtnX_RS /= (RS_tabE Htab).
+by rewrite filter_gt_RS /= (RS_tabE Htab).
 Qed.
 
 Lemma LRtriple_fastE t1 t2 t :
@@ -666,7 +664,7 @@ apply/idP/idP.
     apply/eqP; rewrite -plactic_RS.
     move: Hshsh; have:= Ht1; rewrite -Hp1 RSstdE => /mem_shsh -> /andP [_ /eqP <-].
     rewrite (shift_plactcongr (size p1)) /p' !sfilterleqK.
-    apply: plactic_filter_leqX; apply congr_RS.
+    apply: plactic_filter_le; apply congr_RS.
   apply/hasP; exists p'.
   + apply /mapP; exists (RSmap p').2.
     * apply/count_memPn; rewrite Hp'.
@@ -681,7 +679,7 @@ apply/idP/idP.
     rewrite size_to_word size_RS; split; last by [].
     move: Hshsh; have:= Ht1.
     rewrite -Hp1 RSstdE => /mem_shsh -> /andP [/eqP {3}<- _].
-    rewrite /= -!(eq_filter (gtnXnatE _)) filter_gtnX_RS.
+    rewrite /= filter_gt_RS.
     by rewrite filter_to_word to_word_filter_nnil.
 - move=> Hfast; apply/(LRtripleP t Ht1 Ht2).
   move: Hfast => /= /hasP [p2 /mapP [y2 Hy2]].
@@ -749,11 +747,10 @@ split.
   have Hszp : size p1 = size u1 by rewrite Hsz1 -size_RS Hp1.
   split.
   + rewrite (invstd_catgtn u1 u2) (shsh_sfiltergtn Hstdp1 Hsh) Hszp.
-    rewrite /= -!(eq_filter (gtnXnatE (size u1))).
-    exact: plactic_filter_gtnX.
+    exact: plactic_filter_gt.
   + rewrite (invstd_catleq u1 u2) (shsh_sfilterleq Hstdp1 Hsh) Hszp.
     rewrite (shift_plactcongr (size u1)) !sfilterleqK.
-    exact: plactic_filter_leqX.
+    exact: plactic_filter_le.
 Qed.
 
 
@@ -782,7 +779,7 @@ apply/eq_invP; split.
   by rewrite size_invstd size_std (minn_idPl Hn).
 move=> i j /andP [Hij]; rewrite size_takel // => Hj.
 have Hi := leq_ltn_trans Hij Hj.
-rewrite leqXnatE /=.
+rewrite leEnat /=.
 do 2 (rewrite nth_mkseq; last rewrite size_sfiltergtn //;
         last by rewrite size_invstd size_std (minn_idPl Hn)).
 rewrite index_leq_filter // !nth_take //.
@@ -810,7 +807,7 @@ apply/eq_invP; split.
   rewrite size_drop size_invstd size_sfilterleq //.
   by rewrite size_invstd size_std.
 move=> i j /andP [Hij]; rewrite size_drop => Hj.
-rewrite leqXnatE /=.
+rewrite leEnat /=.
 have Hi := leq_ltn_trans Hij Hj.
 do 2 (rewrite nth_mkseq; last by rewrite size_sfilterleq // size_invstd size_std).
 rewrite !index_sfilterleq !nth_drop.
@@ -842,20 +839,20 @@ split => [[u] [v] [Hcat]| [t] []]; rewrite !langQE.
   have Hszp1: size p1 <= size w.
     move/size_plact: Hpl; rewrite size_invstd size_std => ->.
     by rewrite -Hp1 size_filter count_size.
-  have HgtnE : (fun x => x <A size p1) =1 gtn (size p1).
-    by move=> x /=; rewrite ltnXnatE.
-  have HleqE : (fun x => x >=A size p1) =1 leq (size p1).
-    by move=> x /=; rewrite leqXnatE.
+  have HgtnE : (fun x => (x < size p1)%O) =1 gtn (size p1).
+    by move=> x /=; rewrite ltEnat.
+  have HleqE : (fun x => (x >= size p1)%O) =1 leq (size p1).
+    by move=> x /=; rewrite leEnat.
   exists (take (size p1) w), (drop (size p1) w); split.
   + by rewrite cat_take_drop.
   + rewrite langQE -plactic_RS -sfiltergtn_invstd // -{2}Hp1.
     rewrite /sfiltergtn /= -!(eq_filter HgtnE).
-    exact: plactic_filter_gtnX.
+    exact: plactic_filter_gt.
   + rewrite langQE -plactic_RS -sfilterleq_invstd // -{1}Hp2.
     rewrite /sfilterleq /= -!(eq_filter HleqE).
-    apply: plact_map_in_incr; last exact: plactic_filter_leqX.
+    apply: plact_map_in_incr; last exact: plactic_filter_le.
     move=> /= x y.
-    rewrite !mem_filter !leqXnatE !ltnXnatE => /andP [Hx _]  /andP [Hy _] Hxy.
+    rewrite !mem_filter !leEnat !ltEnat /= => /andP [Hx _]  /andP [Hy _] Hxy.
     by rewrite -(ltn_add2r (size p1)) ?subnK.
 Qed.
 
@@ -924,7 +921,7 @@ Qed.
 
 End LRTriple.
 
-Arguments langQ [Alph].
+Arguments langQ {disp} [Alph].
 
 (*
 (* First non trivial example of LR rule *)

@@ -65,14 +65,16 @@ Greene numbers have the same shape (this is Theorem [Greene_row_tab_eq_shape] an
  ********************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice.
-From mathcomp Require Import seq tuple bigop finset perm tuple path.
-Require Import sorted tools subseq partition ordtype tableau.
-Require Import Schensted congr plactic ordcast.
+From mathcomp Require Import seq tuple bigop finset perm tuple path order.
 
+Require Import sorted tools subseq partition tableau.
+Require Import Schensted congr plactic ordcast.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
+
+Import Order.Theory.
 
 Open Scope bool.
 
@@ -320,12 +322,13 @@ Qed.
 
 End BigTrivISeq.
 
+Require Import ordtype.
 
 (** * Greene subsequence numbers *)
 (** ** Definition and basic properties *)
 Section GreeneDef.
 
-Variable Alph : inhOrdType.
+Context {disp : unit} {Alph : inhOrderType disp}.
 
 Definition extractpred n (wt : n.-tuple Alph) (P : pred 'I_n) :=
   [seq tnth wt i | i <- enum P].
@@ -347,7 +350,7 @@ elim: n wt P => [//= | n IHn].
     by case: (P ord0) => /= ->.
   rewrite /lft {lft} filter_map -map_comp -map_comp /= -(IHn w _) /=.
   by rewrite (eq_map (f2 := tnth w));
-    last by move=> i /=; rewrite !(tnth_nth (inhabitant Alph)).
+    last by move=> i /=; rewrite !(tnth_nth inh).
 Qed.
 
 Lemma extsubsIm n wt (P1 P2 : pred 'I_n) :
@@ -403,9 +406,9 @@ apply: subseq_sorted; first by move=> a b c /= H1 H2; apply: (HR H1 H2).
 by apply: extsubsI; rewrite -{2}[s]setIT; apply: setIS; exact: subsetT.
 Qed.
 
-Definition ksupp k :=
+Definition ksupp (k : nat) :=
   [qualify a P : {set {set 'I_N}} |
-   [&& #|P| <= k, trivIset P & [forall (s | s \in P), sorted R (extract s)]]].
+   [&& (#|P| <= k)%N, trivIset P & [forall (s | s \in P), sorted R (extract s)]]].
 
 Local Notation "k .-supp" := (ksupp k)
   (at level 2, format "k .-supp") : form_scope.
@@ -427,7 +430,7 @@ rewrite /minn; case ltnP => Hn.
 - rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT.
   move=> i; rewrite mem_iota add0n /= => Hi.
   by rewrite (ltn_trans Hi Hn).
-- rewrite -{1}[k]addn0; move: (0) => i.
+- rewrite -{1}[k]addn0; move: (0%N) => i.
   elim: k i N Hn => [//= | k IHk] i n Hn.
   + rewrite (eq_in_filter (a2 := pred0)); first by rewrite filter_pred0.
     by move=> j; rewrite mem_iota leqNgt add0n => /andP [/negbTE ->].
@@ -521,10 +524,14 @@ Qed.
 
 End GreeneDef.
 
-Notation "k '.-supp' [ R , wt ]" := (@ksupp _ R _ wt k)
+Notation "k '.-supp' [ R , wt ]" := (@ksupp _ _ R _ wt k)
   (at level 2, format "k '.-supp' [ R ,  wt ]") : form_scope.
 
-Lemma ksupp_cast (T : inhOrdType) R (w1 w2 : seq T) (H : w1 = w2) k Q :
+Section Cast.
+
+Variable (d : unit) (T : inhOrderType d).
+
+Lemma ksupp_cast  R (w1 w2 : seq T) (H : w1 = w2) k Q :
   Q \is a k.-supp[R, in_tuple w1] ->
   (cast_set (congr1 size H)) @: Q \is a k.-supp[R, in_tuple w2].
 Proof.
@@ -535,7 +542,7 @@ suff /eq_imset -> : cast_ord (congr1 size (erefl w2)) =1 id by rewrite imset_id.
 by move=> i; rewrite cast_ord_id.
 Qed.
 
-Lemma eq_Greene_rel_t (T : inhOrdType) (R1 R2 : rel T) N (u : N.-tuple T) :
+Lemma eq_Greene_rel_t (R1 R2 : rel T) N (u : N.-tuple T) :
   R1 =2 R2 -> Greene_rel_t R1 u  =1  Greene_rel_t R2 u.
 Proof.
 rewrite /Greene_rel_t /= => H k.
@@ -545,12 +552,11 @@ case: (extractpred _ _) => [| e t] //=.
 by rewrite (eq_path H).
 Qed.
 
-Lemma Greene_rel_t_cast (Alph : inhOrdType) R M N
-      (Heq : M = N) k (V : M.-tuple Alph) :
+Lemma Greene_rel_t_cast R M N (Heq : M = N) k (V : M.-tuple T) :
   Greene_rel_t R (tcast Heq V) k = Greene_rel_t R V k.
 Proof. by subst M. Qed.
 
-Lemma Greene_rel_t_uniq (T : inhOrdType) (leT : rel T) N (u : N.-tuple T) :
+Lemma Greene_rel_t_uniq (leT : rel T) N (u : N.-tuple T) :
   uniq u ->
   Greene_rel_t leT u =1 Greene_rel_t (fun x y => (x != y) && (leT x y)) u.
 Proof.
@@ -563,11 +569,13 @@ elim: s n => //= m s IHs n.
 by rewrite inE negb_or => /andP [/andP [-> _] /IHs ->].
 Qed.
 
+End Cast.
+
+
 (** ** Greene numbers of a concatenation *)
 Section GreeneCat.
 
-Variable Alph : inhOrdType.
-
+Context {disp : unit} {Alph : inhOrderType disp}.
 Variable R : rel Alph.
 Hypothesis HR : transitive R.
 
@@ -700,9 +708,7 @@ End GreeneCat.
 
 Section GreeneSeq.
 
-Variable Alph : inhOrdType.
-Implicit Type u v w : seq Alph.
-
+Context {disp : unit} {Alph : inhOrderType disp}.
 Variable R : rel Alph.
 Hypothesis HR : transitive R.
 
@@ -717,7 +723,7 @@ rewrite (_ :  Greene_rel_t _ _ _ =
   first by apply: Greene_rel_t_cat.
 have Hsz : size (v ++ w) = (size v + size w) by rewrite size_cat.
 rewrite -(Greene_rel_t_cast _ Hsz); congr (Greene_rel_t R _ k).
-by apply: eq_from_tnth => i; rewrite tcastE !(tnth_nth (inhabitant Alph)).
+by apply: eq_from_tnth => i; rewrite tcastE !(tnth_nth inh).
 Qed.
 
 Let negR := (fun a b => ~~(R a b)).
@@ -744,11 +750,11 @@ Qed.
 End GreeneSeq.
 
 
-Lemma eq_Greene_rel (T : inhOrdType) (R1 R2 : rel T) u :
+Lemma eq_Greene_rel (d : unit) (T : inhOrderType d) (R1 R2 : rel T) u :
   R1 =2 R2 -> Greene_rel R1 u  =1  Greene_rel R2 u.
 Proof. exact: eq_Greene_rel_t. Qed.
 
-Lemma Greene_rel_uniq (T : inhOrdType) (leT : rel T) u :
+Lemma Greene_rel_uniq (d : unit) (T : inhOrderType d) (leT : rel T) u :
   uniq u ->
   Greene_rel leT u  =1  Greene_rel (fun x y => (x != y) && (leT x y)) u.
 Proof. move=> Hu; rewrite /Greene_rel => k /=; exact: Greene_rel_t_uniq. Qed.
@@ -768,7 +774,9 @@ Qed.
 (** ** Injection of k-supports *)
 Section GreeneInj.
 
-Variable T1 T2 : inhOrdType.
+Context {disp1 disp2 : unit}
+        {T1 : inhOrderType disp1}
+        {T2 : inhOrderType disp2}.
 Variable R1 : rel T1.
 Variable R2 : rel T2.
 
@@ -798,8 +806,7 @@ End GreeneInj.
 (** ** Reverting a word on the dual alphabet *)
 Section Rev.
 
-Variable Alph : inhOrdType.
-Let Z := (inhabitant Alph).
+Context {disp : unit} {Alph : inhOrderType disp}.
 Implicit Type u v w : seq Alph.
 Implicit Type p : seq nat.
 Implicit Type t : seq (seq Alph).
@@ -839,7 +846,7 @@ apply/and4P; split.
              (f2 := fun i => tnth (in_tuple u) (cast_ord (size_rev u) (rev_ord i))));
     first last.
     move=> i /=.
-    by rewrite !(tnth_nth Z) /= nth_rev ?{2}(size_rev u) // -(size_rev u).
+    by rewrite !(tnth_nth inh) /= nth_rev ?{2}(size_rev u) // -(size_rev u).
   set S1 := (X in sorted _ X -> _); set S2 := (X in _ -> sorted _ X).
   suff -> : S1 = S2 by [].
   rewrite /S1 /S2 {S1 S2 k ks Hsz Htriv HS}.
@@ -888,7 +895,7 @@ End Rev.
 (** * Greene number for tableaux *)
 Section GreeneRec.
 
-Variable Alph : inhOrdType.
+Context {disp : unit} {Alph : inhOrderType disp}.
 Implicit Type u v w : seq Alph.
 Implicit Type t : seq (seq Alph).
 
@@ -1211,12 +1218,12 @@ rewrite enumIsize_to_word filter_cat map_cat -[RHS]cat0s; congr (_ ++ _).
 - rewrite (eq_in_filter (a2 := predT)); first last.
     by move=> i /= /mapP [j _ -> {i}]; rewrite imset_f.
   rewrite filter_predT -map_comp.
-  rewrite (eq_map (f2 := nth (inhabitant Alph) t0 \o val)); first last.
-  + move=> i /=; rewrite (tnth_nth (inhabitant Alph)).
+  rewrite (eq_map (f2 := nth inh t0 \o val)); first last.
+  + move=> i /=; rewrite (tnth_nth inh).
     rewrite {1 2}(to_word_cons t0 t) /= nth_cat.
     rewrite -{2}[size (to_word t)]addn0 ltn_add2l /=.
     by rewrite addnC addnK.
-  + apply: (eq_from_nth (x0 := inhabitant Alph)).
+  + apply: (eq_from_nth (x0 := inh)).
       by rewrite size_map size_enum_ord.
     move=> i; rewrite size_map size_enum_ord => Hi.
     rewrite (nth_map (Ordinal Hi)) /=; last by rewrite size_enum_ord.
@@ -1239,7 +1246,7 @@ rewrite {f} /= enumIsize_to_word filter_cat map_cat -[RHS]cats0; congr (_ ++ _).
 - rewrite (nth_map set0) /=; last by rewrite size_shrows size_map.
   rewrite filter_map /= -map_comp.
   set f2 := (X in _ = map X _); rewrite (eq_map (f2 := f2)); first last.
-    rewrite /f2 {f2} => j /=; rewrite !(tnth_nth (inhabitant Alph)) /=.
+    rewrite /f2 {f2} => j /=; rewrite !(tnth_nth inh) /=.
     by rewrite to_word_cons nth_cat ltn_ord.
   congr (map f2 _) => {f2}.
   apply: eq_filter => j /=; rewrite mem_imset_eq; last exact lshift_recP.
@@ -1280,7 +1287,7 @@ Lemma extract_tabcols_rec i :
   i < size t0 ->
   extract (in_tuple (to_word (t0 :: t))) (nth set0 (tabcols (t0 :: t)) i) =
   rcons (extract (in_tuple (to_word t)) (nth set0 (tabcols t) i))
-        (nth (inhabitant Alph) t0 i).
+        (nth inh t0 i).
 Proof using.
 move => Hi; rewrite /= !extractmaskE tabcols_cons enumIsize_to_word /=.
 rewrite (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
@@ -1301,7 +1308,7 @@ have {f2} /eq_map -> : f2 =1 mem ([set (Ordinal Hi)]).
   by apply/idP/idP => [/eqP/rshift_recP ->|/eqP ->].
 have := extract1 (in_tuple t0) (Ordinal Hi).
 rewrite /extract /= extractmaskE /= => ->.
-by rewrite cats1 (tnth_nth (inhabitant Alph)) /=.
+by rewrite cats1 (tnth_nth inh) /=.
 Qed.
 
 Lemma lsplit_rec_tab k :
@@ -1409,7 +1416,7 @@ Qed.
 
 Lemma sorted_leqX_tabrows t i :
   is_tableau t -> i < size (tabrows t) ->
-  sorted leqX (extract (in_tuple (to_word t)) (nth set0 (tabrows t) i)).
+  sorted <=%O (extract (in_tuple (to_word t)) (nth set0 (tabrows t) i)).
 Proof using.
 rewrite size_tabrows.
 elim: t i => [//= | t0 t IHt] i.
@@ -1422,7 +1429,7 @@ Qed.
 
 Lemma ksupp_leqX_tabrowsk k t :
   is_tableau t ->
-  [set s | s \in (tabrowsk t k)] \is a k.-supp[leqX, in_tuple (to_word t)].
+  [set s | s \in (tabrowsk t k)] \is a k.-supp[<=%O, in_tuple (to_word t)].
 Proof using.
 move=> Htab; rewrite /ksupp /tabrowsk; apply/and3P; split.
 - apply: (leq_trans (card_seq (tabrowsk t k))).
@@ -1482,9 +1489,9 @@ rewrite big_cons; apply: leq_add.
 - by apply: (IHp Hpart); have:= leq_trans Hhead Hp0; case p.
 Qed.
 
-Lemma sorted_gtnX_tabcols t i :
+Lemma sorted_gt_tabcols t i :
   is_tableau t -> i < size (tabcols t) ->
-  sorted gtnX (extract (in_tuple (to_word t)) (nth set0 (tabcols t) i)).
+  sorted >%O (extract (in_tuple (to_word t)) (nth set0 (tabcols t) i)).
 Proof using.
 elim: t => [//= | t0 t IHt].
 rewrite [X in X -> _]/=; move=> /and4P [_ _ /dominateP [Hsz Hdom] Htab].
@@ -1494,17 +1501,17 @@ case (ltnP i (size (head [::] t))) => Hit.
   move Hrec : (extract _ _) => ext.
   case: ext Hrec => [//= | a0 ext] Hext.
   rewrite rcons_cons /= rcons_path => -> /=.
-  suff -> : last a0 ext = nth (inhabitant Alph) (head [::] t) i by exact: Hdom.
-  rewrite -[last a0 ext]/(last (inhabitant Alph) (a0 :: ext)) -Hext {a0 ext Hext}.
+  suff -> : last a0 ext = nth inh (head [::] t) i by exact: Hdom.
+  rewrite -[last a0 ext]/(last inh (a0 :: ext)) -Hext {a0 ext Hext}.
   case: t Hsz Htab Hit {Hdom} => [//= | t1 t] Hsz Htab Hit.
   by rewrite (extract_tabcols_rec _ Hit) last_rcons.
 - rewrite nth_default; last by rewrite size_tabcols.
   by rewrite extract0.
 Qed.
 
-Lemma ksupp_gtnX_tabcolsk k t :
+Lemma ksupp_gt_tabcolsk k t :
   is_tableau t ->
-  [set s | s \in (tabcolsk t k)] \is a k.-supp[gtnX, in_tuple (to_word t)].
+  [set s | s \in (tabcolsk t k)] \is a k.-supp[>%O, in_tuple (to_word t)].
 Proof using.
 move=> Htab; rewrite /ksupp /tabcolsk; apply/and3P; split.
 - apply: (leq_trans (card_seq (tabcolsk t k))).
@@ -1514,7 +1521,7 @@ move=> Htab; rewrite /ksupp /tabcolsk; apply/and3P; split.
   rewrite /= inE => /mem_take Hin.
   rewrite -(nth_index set0 Hin).
   move: Hin; rewrite -index_mem; set i := index _ _ => Hi.
-  exact: (sorted_gtnX_tabcols Htab).
+  exact: (sorted_gt_tabcols Htab).
 Qed.
 
 End GreeneRec.
@@ -1523,31 +1530,34 @@ End GreeneRec.
 (** ** Greene numbers of a tableau *)
 Section GreeneTab.
 
-Variable Alph : inhOrdType.
+Context {disp : unit} {Alph : inhOrderType disp}.
 
 Implicit Type t : seq (seq Alph).
 
-Definition Greene_row := Greene_rel (@leqX Alph).
-Definition Greene_col := Greene_rel (@gtnX Alph).
+Definition Greene_row := Greene_rel (@Order.le _ Alph).
+Definition Greene_col := Greene_rel (@Order.gt _ Alph).
+
+Lemma gt_trans : transitive (@Order.gt _ Alph).
+Proof. by move=> x y z /= H1 H2; apply: (lt_trans H2 H1). Qed.
 
 Lemma size_row_extract t S T :
   is_tableau t -> T \in (tabcols t) ->
-  sorted leqX (extract (in_tuple (to_word t)) S) ->
+  sorted <=%O (extract (in_tuple (to_word t)) S) ->
   #|S :&: T| <= 1.
 Proof using.
 move=> Htab HT Hleq.
 have: S :&: T \subset S by apply/subsetP => j; rewrite !inE=> /andP [].
-move/(extsubsI (in_tuple (to_word t)))/(subseq_sorted (@leqX_trans _)).
+move/(extsubsI (in_tuple (to_word t)))/(subseq_sorted le_trans).
 move/(_ Hleq) => {}Hleq.
-have Htmp := sorted_gtnX_tabcols Htab.
-have := HT; rewrite -index_mem => /Htmp {Htmp}.
+have Htmp := sorted_gt_tabcols Htab.
+have := HT; rewrite -index_mem => {}/Htmp.
 rewrite (nth_index _ HT) => Hgtn.
 have: S :&: T \subset T by apply/subsetP => j; rewrite !inE=> /andP [].
-move/(extsubsI (in_tuple (to_word t)))/(subseq_sorted (@gtnX_trans _)).
+move/(extsubsI (in_tuple (to_word t)))/(subseq_sorted gt_trans).
 move/(_ Hgtn) => {}Hgtn.
 rewrite -(size_extract (in_tuple (to_word t))).
 case: (extract _ _) Hleq Hgtn => [//= | l0 [//=| l1 s]] /=.
-by move=> /andP []; rewrite ltnXNgeqX => -> /=.
+by move=> /andP []; rewrite ltNge => -> /=.
 Qed.
 
 Lemma tabcol_cut t :
@@ -1556,7 +1566,7 @@ Proof using.
 move=> Hpart B.
 rewrite (_ : \sum_(S <- _) _ =
          \sum_(S <- [seq B :&: S | S <- tabcols t]) #|S|); last by rewrite big_map.
-have Htriv := @trivIseq_tabcols _ t.
+have Htriv := @trivIseq_tabcols _ _ t.
 have : trivIseq [seq B :&: S | S <- tabcols t].
   rewrite /trivIseq => i j; rewrite size_map => Hijs.
   have:= Hijs => /andP [Hij Hj].
@@ -1621,17 +1631,17 @@ apply/eqP; rewrite eqn_leq /=; apply/andP; split.
   move=> /and4P [_ Hrow _ /IHt{IHt} Ht]; rewrite to_word_cons.
   apply: (@leq_trans (Greene_col (in_tuple (to_word t)) k +
                       Greene_col (in_tuple t0) k)).
-  + by apply: Greene_rel_cat => a b c /= H1 H2; apply: (ltnX_trans H2 H1).
+  + by apply: Greene_rel_cat => a b c /= H1 H2; apply: (lt_trans H2 H1).
   + rewrite big_cons addnC; apply: leq_add; last exact Ht.
-    have:= (@Greene_rel_seq _ gtnX _ t0 k).
+    have:= (@Greene_rel_seq _ _ >%O _ t0 k).
     rewrite /Greene_rel /= => -> //=.
-    * by move=> a b c /=; rewrite -!leqXNgtnX; exact: leqX_trans.
+    * by move=> a b c /=; rewrite -!leNgt; exact: le_trans.
     * move: Hrow; rewrite /sorted; case: t0 => [//=| l t0].
-      rewrite (eq_path (e' := fun a b => ~~ (b < a)%Ord)) // => i j /=.
-      exact: leqXNgtnX.
+      rewrite (eq_path (e' := fun a b => ~~ (b < a)%O)) // => i j /=.
+      exact: leNgt.
 - rewrite /Greene_rel_t /= -(size_cover_tabcolsk _ (is_part_sht Htab)).
   apply: (leq_bigmax_cond (F := (fun x => #|cover x|))).
-  exact: ksupp_gtnX_tabcolsk.
+  exact: ksupp_gt_tabcolsk.
 Qed.
 
 End GreeneTab.
@@ -1640,7 +1650,8 @@ End GreeneTab.
 
 (** ** Recovering a shape from Greene numbers on tableaux *)
 Theorem Greene_row_tab_eq_shape
-        (T1 T2 : inhOrdType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
+        (d1 d2 : unit) (T1 : inhOrderType d1) (T2 : inhOrderType d2)
+        (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
   is_tableau t1 -> is_tableau t2 ->
   (forall k, Greene_row (to_word t1) k = Greene_row (to_word t2) k) ->
   (shape t1 = shape t2).
@@ -1653,7 +1664,8 @@ exact: Heq.
 Qed.
 
 Theorem Greene_col_tab_eq_shape
-        (T1 T2 : inhOrdType) (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
+        (d1 d2 : unit) (T1 : inhOrderType d1) (T2 : inhOrderType d2)
+        (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
   is_tableau t1 -> is_tableau t2 ->
   (forall k, Greene_col (to_word t1) k = Greene_col (to_word t2) k) ->
   (shape t1 = shape t2).

@@ -32,7 +32,7 @@ construction of several [finType]. This should be simplified.
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype choice ssrnat seq
-        ssrint div rat fintype bigop path ssralg ssrnum.
+        ssrint div rat fintype bigop path ssralg ssrnum order.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
 Set Implicit Arguments.
@@ -186,7 +186,7 @@ rewrite /is_RStabpair; case: p => [[p q]] /=.
 by rewrite /is_stdtab_pair_of_n /= =>
   /and3P [] /andP [] /andP [] -> _ _ /andP [] -> _ ->.
 Qed.
-Definition rspair_stpn (p : stpn) : (rstabpair [inhOrdType of nat]) :=
+Definition rspair_stpn (p : stpn) : (rstabpair [inhOrderType of nat]) :=
   RSTabPair (rspair_stpnP p).
 Lemma RSstdmap_invP (p : stpn) : is_std_of_n n (RStabinv (rspair_stpn p)).
 Proof using.
@@ -232,7 +232,8 @@ rewrite -[RHS]mulr1.
 have Hfn0 : n`!%:Q != 0 by rewrite intr_eq0 eqz_nat -lt0n fact_gt0.
 rewrite -{5}(@divff _ ((n`!%:Q) ^+ 2)); last by rewrite sqrf_eq0.
 rewrite mulrA mulr_suml.
-rewrite (eq_bigr (fun p : 'P_n => ((n`! %/ (hook_length_prod p)) ^ 2)%N%:Q)); first last.
+rewrite (eq_bigr (fun p : 'P_n => ((n`! %/ (hook_length_prod p)) ^ 2)%N%:Q));
+  first last.
   move=> p _; rewrite PoszM intrM.
   have -> : (n`! %/ hook_length_prod p)%:Q = (n`!)%:Q / (hook_length_prod p)%:Q.
     rewrite -[LHS]mulr1 -{2}(@divff _ (hook_length_prod p)%:Q); first last.

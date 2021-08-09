@@ -1499,6 +1499,9 @@ by case: d.
 Qed.
 Definition colpartn d : 'P_d := locked (IntPartN (colpartn_subproof d)).
 
+Definition intpartn_inhMixin d := InhMixin (rowpartn d).
+Canonical intpartn_inhType d := InhType (intpartn d) (intpartn_inhMixin d).
+
 Lemma rowpartnE d : rowpartn d = (if d is 0 then [::] else [:: d]) :> seq nat.
 Proof. by rewrite /rowpartn -lock. Qed.
 Lemma colpartnE d : colpartn d = nseq d 1%N :> seq nat.
@@ -1637,27 +1640,108 @@ rewrite /decr_nth_intpart /=.
 by case: (is_rem_corner p i).
 Qed.
 
-(*
+
 Module IntPartNLex.
+Section IntPartNLex.
+Import DefaultSeqLexiOrder.
 
-Definition intpartnlex := intpartn.
+Variable d : nat.
+Definition intpartnlex := 'P_d.
+Implicit Type (sh : intpartnlex).
 
-Definition intpartnlex_pordMixin n := [porderMixin of intpartnlex n by <:].
-Canonical intpartnlex_pordType n :=
-  Eval hnf in POrdType (intpartnlex n) (intpartnlex_pordMixin n).
-Definition intpartnlex_ordMixin n := [ordMixin of intpartnlex_pordType n by <:].
-Canonical intpartnlex_ordType n :=
-  Eval hnf in OrdType (intpartnlex n) (intpartnlex_ordMixin n).
-Canonical intpartnlex_finPOrdType n := [finPOrdType of intpartnlex n].
+Definition pordMixin := Eval hnf in [porderMixin of intpartnlex by <:].
+Canonical porderType := POrderType Order.lexi_display intpartnlex pordMixin.
+Definition orderMixin := Eval hnf in [totalOrderMixin of intpartnlex by <:].
+Canonical latticeType := LatticeType intpartnlex orderMixin.
+Canonical distrLatticeType := DistrLatticeType intpartnlex orderMixin.
+Canonical orderType := OrderType intpartnlex orderMixin.
+Canonical finPOrderType := [finPOrderType of intpartnlex].
 
-Definition intpartnlex_inhMixin n := Inhabited.Mixin (rowpartn n).
-Canonical intpartnlex_inhType n :=
-  Eval hnf in InhType (intpartnlex n) (intpartnlex_inhMixin n).
-Canonical intpartnlex_inhOrdType n := [inhOrdType of intpartnlex n].
-Canonical intpartnlex_inhOrdFinType n := [inhOrdFinType of intpartnlex n].
+Lemma leEintpartnlex sh1 sh2 : (sh1 <= sh2)%O =
+                               (sh1 <= sh2 :> seqlexi nat)%O.
+Proof. by []. Qed.
+Lemma ltEintpartnlex sh1 sh2 : (sh1 < sh2)%O =
+                               (sh1 < sh2 :> seqlexi nat)%O.
+Proof. by []. Qed.
+
+Lemma rowpartn_top sh : (sh <= rowpartn d :> intpartnlex)%O.
+Proof.
+rewrite leEsub leEseqlexi.
+case: sh; case: d => [|n] sh Hsh; first by rewrite intpartn0 /= rowpartn0E.
+rewrite /= rowpartnSE; case: sh Hsh => [|s0 sh]//= /andP[/eqP<- /andP[_ Hpart]].
+rewrite !leEnat leq_addr /=; case: leqP => //=.
+rewrite -{2}(addn0 s0) leq_add2l leqn0 => /eqP/(part0 Hpart) ->.
+by rewrite leEseqlexi.
+Qed.
+Lemma colpartn_bot sh : (colpartn d <= sh :> intpartnlex)%O.
+Proof.
+rewrite leEsub leEseqlexi.
+case: sh; case: d => [|n] sh Hsh; first by rewrite intpartn0 /= rowpartn0E.
+rewrite /= colpartnE.
+move: Hsh => /andP [Hsum Hpart]; have := part_head_non0 Hpart.
+case: sh Hsum Hpart => [|s0 sh]//= Hsum /andP [Hhead Hpart].
+rewrite !leEnat -lt0n => Hs0; rewrite Hs0 /=; case: leqP => //= les01.
+have {les01}Hs0 : s0 = 1 by apply anti_leq; rewrite Hs0 les01.
+subst s0; suff -> : sh = nseq n 1 by apply: Order.SeqLexiOrder.refl.
+move: Hsum; rewrite add1n eqSS => /eqP <-.
+exact: (part_nseq1P Hpart Hhead).
+Qed.
+
+Definition bottomMixin := BottomMixin colpartn_bot.
+Canonical bLatticeType := BLatticeType intpartnlex bottomMixin.
+Definition topMixin := TopMixin rowpartn_top.
+Canonical tbLatticeType := TBLatticeType intpartnlex topMixin.
+Canonical finLatticeType := Eval hnf in [finLatticeType of intpartnlex].
+Canonical bDistrLatticeType :=
+  Eval hnf in [bDistrLatticeType of intpartnlex].
+Canonical tbDistrLatticeType :=
+  Eval hnf in [tbDistrLatticeType of intpartnlex].
+Canonical finDistrLatticeType :=
+  Eval hnf in [finDistrLatticeType of intpartnlex].
+Canonical finOrderType := Eval hnf in [finOrderType of intpartnlex].
+
+Canonical inhType := InhType intpartnlex (InhMixin (rowpartn d)).
+Canonical inhPOrderType := [inhPOrderType of intpartnlex].
+Canonical inhFinPOrderType := [inhFinPOrderType of intpartnlex].
+Canonical inhOrderType := [inhOrderType of intpartnlex].
+Canonical inhFinOrderType := [inhFinOrderType of intpartnlex].
+
+Lemma botEintpartnlex : 0%O = colpartn d :> intpartnlex.
+Proof. by []. Qed.
+Lemma topEintpartnlex : 1%O = rowpartn d :> intpartnlex.
+Proof. by []. Qed.
 
 End IntPartNLex.
-*)
+
+Module Exports.
+
+Canonical porderType.
+Canonical latticeType.
+Canonical bLatticeType.
+Canonical tbLatticeType.
+Canonical distrLatticeType.
+Canonical bDistrLatticeType.
+Canonical tbDistrLatticeType.
+Canonical orderType.
+Canonical finPOrderType.
+Canonical finLatticeType.
+Canonical finDistrLatticeType.
+Canonical finOrderType.
+Canonical inhType.
+Canonical inhPOrderType.
+Canonical inhFinPOrderType.
+Canonical inhOrderType.
+Canonical inhFinOrderType.
+
+Definition botEintpartnlex := botEintpartnlex.
+Definition topEintpartnlex := topEintpartnlex.
+Definition leEintpartnlex := leEintpartnlex.
+Definition ltEintpartnlex := ltEintpartnlex.
+
+End Exports.
+End IntPartNLex.
+Import IntPartNLex.Exports.
+
 
 (**  * Counting functions *)
 
@@ -1950,32 +2034,31 @@ by move: Ht => /partdom_union_intpartl; apply.
 Qed.
 
 
+Module IntPartNDom.
 Section IntPartNDom.
 
 Variable d : nat.
 Definition intpartndom := 'P_d.
 Implicit Type (sh : intpartndom).
 
-
 Fact partdom_antisym : antisymmetric (fun x y : 'P_d => partdom x y).
 Proof.
 by move=> x y /andP [Hxy Hyx]; apply val_inj => /=; apply: partdom_anti.
 Qed.
 
-Definition partdom_porderMixin :=
+Definition porderMixin :=
   LePOrderMixin (le := fun x y : intpartndom => partdom x y)
                 (fun _ _ => erefl _) partdom_refl partdom_antisym partdom_trans.
 
 Lemma partdom_display : unit. Proof. exact: tt. Qed.
-Canonical partdom_porderType :=
-  POrderType partdom_display intpartndom partdom_porderMixin.
-Canonical intpartndom_finPOrderType := [finPOrderType of intpartndom].
-Canonical intpartndom_inhType :=
-  InhType intpartndom (InhMixin (rowpartn d)).
-Canonical intpartndom_inhPOrderType := [inhPOrderType of intpartndom].
-Canonical intpartndom_inhFinPOrderType := [inhFinPOrderType of intpartndom].
+Canonical porderType :=
+  POrderType partdom_display intpartndom porderMixin.
+Canonical finPOrderType := Eval hnf in [finPOrderType of intpartndom].
+Canonical inhType := InhType intpartndom (InhMixin (rowpartn d)).
+Canonical inhPOrderType := Eval hnf in [inhPOrderType of intpartndom].
+Canonical inhFinPOrderType := Eval hnf in [inhFinPOrderType of intpartndom].
 
-Lemma partdomE : @Order.le partdom_display partdom_porderType = partdom.
+Lemma partdomE : @Order.le partdom_display porderType = partdom.
 Proof. by []. Qed.
 
 Local Notation "sh '^#'" := (conj_intpartn sh : intpartndom)
@@ -2025,8 +2108,7 @@ rewrite -big_split; apply eq_bigr => /= j _.
 by rewrite maxnE.
 Qed.
 
-Lemma take_intpartn_over sh i :
-  d <= i -> take i sh = sh.
+Lemma take_intpartn_over sh i : d <= i -> take i sh = sh.
 Proof.
 move=> Hd; rewrite take_oversize // (leq_trans _ Hd) //.
 by rewrite -{2}(sumn_intpartn sh) size_part.
@@ -2221,12 +2303,11 @@ rewrite /sup_intpartn /= -{1}(conj_intpartnK sh).
 by rewrite partdom_conj_intpartn inf_intpartnP !partdom_conj_intpartn.
 Qed.
 
-Definition partdom_latticeMixin :=
+Definition latticeMixin :=
   MeetJoinLeMixin inf_intpartnP sup_intpartnP.
-Canonical partdom_latticeType := LatticeType intpartndom partdom_latticeMixin.
+Canonical latticeType := LatticeType intpartndom latticeMixin.
 
 End IntPartNDom.
-
 
 Section IntPartNTopBottom.
 
@@ -2245,17 +2326,40 @@ Qed.
 Lemma partdom_colpartn sh : (colpartn d <= sh :> intpartndom d)%O.
 Proof. by rewrite -partdom_conj_intpartn conj_colpartn partdom_rowpartn. Qed.
 
-Definition partdom_bottomMixin := BottomMixin partdom_colpartn.
-Canonical partdom_blatticeType :=
-  BLatticeType (intpartndom d) partdom_bottomMixin.
-Definition partdom_topMixin := TopMixin partdom_rowpartn.
-Canonical partdom_tblatticeType :=
-  TBLatticeType (intpartndom d) partdom_topMixin.
-Canonical partdom_finLatticeType :=
-  Eval hnf in [finLatticeType of intpartndom d].
+Definition bottomMixin := BottomMixin partdom_colpartn.
+Canonical bLatticeType := BLatticeType (intpartndom d) bottomMixin.
+Definition topMixin := TopMixin partdom_rowpartn.
+Canonical tbLatticeType := TBLatticeType (intpartndom d) topMixin.
+Canonical finLatticeType := Eval hnf in [finLatticeType of intpartndom d].
+
+Lemma botEintpartndom : 0%O = colpartn d :> intpartndom d.
+Proof. by []. Qed.
+Lemma topEintpartndom : 1%O = rowpartn d :> intpartndom d.
+Proof. by []. Qed.
+
 
 End IntPartNTopBottom.
 
+Module Exports.
+
+Canonical porderType.
+Canonical latticeType.
+Canonical bLatticeType.
+Canonical tbLatticeType.
+Canonical finPOrderType.
+Canonical finLatticeType.
+Canonical inhType.
+Canonical inhPOrderType.
+Canonical inhFinPOrderType.
+
+Definition partdomE := partdomE.
+Definition partdom_conj_intpartn := partdom_conj_intpartn.
+Definition botEintpartndom := botEintpartndom.
+Definition topEintpartndom := topEintpartndom.
+
+End Exports.
+End IntPartNDom.
+Import IntPartNDom.Exports.
 
 (** * Shape of set partitions and integer partitions *)
 Section SetPartitionShape.

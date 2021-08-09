@@ -88,7 +88,7 @@ We define a dependent type [SubSeq w] and provide it with a Canonical
 
 Section Fintype.
 
-Variable (T : countType).
+Variable (T : choiceType).
 Implicit Type s w : seq T.
 
 Fixpoint enum_subseqs w :=
@@ -151,26 +151,53 @@ Structure subseqs : predArgType :=
   Subseqs {subseqsval :> seq T; _ : subseq subseqsval w}.
 Canonical subseqs_subType := Eval hnf in [subType for subseqsval].
 Definition subseqs_eqMixin := Eval hnf in [eqMixin of subseqs by <:].
-Canonical subseqs_eqType := Eval hnf in EqType subseqs subseqs_eqMixin.
+Canonical subseqs_eqType := EqType subseqs subseqs_eqMixin.
 Definition subseqs_choiceMixin := Eval hnf in [choiceMixin of subseqs by <:].
-Canonical subseqs_choiceType := Eval hnf in ChoiceType subseqs subseqs_choiceMixin.
-Definition subseqs_countMixin := Eval hnf in [countMixin of subseqs by <:].
-Canonical subseqs_countType := Eval hnf in CountType subseqs subseqs_countMixin.
-Canonical subseqs_subCountType := Eval hnf in [subCountType of subseqs].
-Let type := sub_undup_finType subseqs_subCountType enum_subseqsP mem_enum_subseqs.
-Canonical subseqs_finType := [finType of subseqs for type].
-Canonical subseqs_subFinType := Eval hnf in [subFinType of subseqs].
+Canonical subseqs_choiceType := ChoiceType subseqs subseqs_choiceMixin.
 
 Lemma subseqsP (s : subseqs) : subseq s w.
 Proof using. by case: s => /= s. Qed.
 
-Lemma enum_subseqsE :
-  map val (enum subseqs) = undup (enum_subseqs w).
-Proof using. by rewrite /=; apply: enum_sub_undupE. Qed.
+Definition subseq_pickle (s : subseqs) :=
+  index (subseqsval s) (enum_subseqs w).
+Lemma subseq_unpickleP i :
+  i < size (enum_subseqs w) -> subseq (nth [::] (enum_subseqs w) i) w.
+Proof. by move=> Hi; apply: (allP enum_subseqsP); apply: mem_nth. Qed.
+Definition subseq_unpickle i : option subseqs :=
+  insub (nth [::] (enum_subseqs w) i).
+Lemma subseq_pickleK : pcancel subseq_pickle subseq_unpickle.
+Proof.
+rewrite /subseq_pickle/subseq_unpickle => s.
+case: insubP => [s1 /= Hsub Heq|].
+- congr Some; apply val_inj; rewrite /= {}Heq.
+  by rewrite nth_index // mem_enum_subseqs // subseqsP.
+- by rewrite subseq_unpickleP // index_mem mem_enum_subseqs // subseqsP.
+Qed.
+Definition subseqs_countMixin := CountMixin subseq_pickleK.
+Canonical subseqs_countType := CountType subseqs subseqs_countMixin.
+Canonical subseqs_subCountType := Eval hnf in [subCountType of subseqs].
+Lemma subseqs_enum :
+  Finite.axiom (pmap insub (undup (enum_subseqs w)) : seq subseqs).
+Proof.
+rewrite /Finite.axiom => s; rewrite count_uniq_mem; first last.
+  exact: (pmap_uniq (insubK _) (undup_uniq _)).
+rewrite mem_pmap_sub /= mem_undup mem_enum_subseqs //.
+by case: s.
+Qed.
+Definition susbeqs_finMixin := FinMixin subseqs_enum.
+Canonical subseqs_finType := FinType subseqs susbeqs_finMixin.
+Canonical subseqs_subFinType := Eval hnf in [subFinType of subseqs].
+
+Lemma enum_subseqsE : map val (enum subseqs) = undup (enum_subseqs w).
+Proof using.
+rewrite enumT unlock /= pmap_filter; last exact: insubK.
+apply/all_filterP; apply/allP => i.
+by rewrite mem_undup isSome_insub => /(allP enum_subseqsP).
+Qed.
 
 Lemma uniq_enum_subseqsE :
   uniq w -> map val (enum subseqs) = enum_subseqs w.
-Proof using. move/enum_subseqs_uniq/undup_id <-. exact: enum_subseqsE. Qed.
+Proof using. by move/enum_subseqs_uniq/undup_id <-; apply: enum_subseqsE. Qed.
 
 Definition sub_nil  : subseqs := Subseqs (sub0seq w).
 Definition sub_full : subseqs := Subseqs (subseq_refl w).
