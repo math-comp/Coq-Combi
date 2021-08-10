@@ -78,7 +78,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import finset path tuple bigop ssralg order.
 From mathcomp Require Import perm fingroup matrix vector.
-From mathcomp Require ssrnum rat algC.
+From mathcomp Require ssrnum algC.
 From SsrMultinomials Require Import ssrcomplements freeg mpoly.
 
 Require Import tools sorted ordtype permuted partition permcent.
@@ -670,14 +670,6 @@ Qed.
 End HomSymField.
 
 
-Import ssrnum rat algC GRing.Theory Num.Theory.
-
-Local Lemma char0_rat : [char rat] =i pred0.
-Proof. exact: Num.Theory.char_num. Qed.
-Local Lemma char0_algC : [char algC] =i pred0.
-Proof. exact: Num.Theory.char_num. Qed.
-#[local] Hint Resolve char0_algC char0_rat : core.
-
 Notation "''he'" := (symbe _ _ _) (at level 8, format "''he'").
 Notation "''hh'" := (symbh _ _ _) (at level 8, format "''hh'").
 Notation "''hp'" := (symbp _ _ _) (at level 8, format "''hp'").
@@ -715,6 +707,23 @@ Canonical map_homsym_additive := Additive map_homsym_is_additive.
 Lemma scale_map_homsym (r : R) (p : HSFR) :
   map_homsym (r *: p) = (mor r) *: (map_homsym p).
 Proof. by apply val_inj; rewrite /= scale_map_sympoly. Qed.
+
+Lemma coord_map_homsym (b : #|{:'P_d}|.-tuple HSFR) j (f : HSFR) :
+  basis_of fullv b ->
+  basis_of fullv (map_tuple map_homsym b) ->
+  coord (map_tuple map_homsym b) j (map_homsym f) = mor (coord b j f).
+Proof.
+move=> Hbasis Hmap_basis.
+have toSf : f \in span b by rewrite (span_basis Hbasis) // memvf.
+rewrite {1}(coord_span toSf) raddf_sum /=.
+rewrite (eq_bigr
+           (fun i : 'I_#|{:'P_d}| =>
+              (mor (coord b i f)) *: (map_tuple map_homsym b)`_i )).
+  by rewrite coord_sum_free //; apply: (basis_free Hmap_basis).
+move=> i _; rewrite /= scale_map_homsym.
+congr (_ *: _); apply esym; apply nth_map.
+by rewrite size_tuple ltn_ord.
+Qed.
 
 Lemma map_homsymm la : map_homsym 'hm[la] = 'hm[la].
 Proof. by apply val_inj; rewrite /= map_symm. Qed.
@@ -780,6 +789,12 @@ Proof using Hd. by apply val_inj; rewrite /= cnvar_syms. Qed.
 
 End ChangeNVar.
 
+
+Import ssrnum algC GRing.Theory Num.Theory.
+
+Local Lemma char0_algC : [char algC] =i pred0.
+Proof. exact: char_num. Qed.
+#[local] Hint Resolve char0_algC : core.
 
 (** * The scalar product *)
 Section ScalarProduct.

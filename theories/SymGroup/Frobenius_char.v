@@ -60,6 +60,8 @@ Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy
         Schur_altdef stdtab therule.
 Require Import permcomp cycletype towerSn permcent reprSn unitriginv.
 
+Require ordtype.
+Local Notation inh := ordtype.Inhabited.Exports.inh.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -152,7 +154,7 @@ transitivity
          (\sum_(j < #|{:'P_n}|)
            (f (permCT (enum_val j)) / 'z_(enum_val j)) *: ('hp`_j : HS))).
   congr coord; apply eq_bigr => /= i _; congr (_ *: _).
-  rewrite (nth_map (rowpartn n)); last by rewrite -cardE ltn_ord.
+  rewrite (nth_map inh); last by rewrite -cardE ltn_ord.
   by congr ('hp[_]); apply enum_val_nth.
 rewrite coord_sum_free ?enum_rankK //.
 exact: (basis_free (symbp_basis Hn _)).
@@ -167,7 +169,7 @@ move=> /coord_span {2}->.
 rewrite (reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P__]))) /=.
 apply eq_bigr => i _.
 rewrite linearZ /= Fchar_ncfuniCT; congr (_ *: _).
-rewrite (nth_map (rowpartn n)); last by rewrite -cardE ltn_ord.
+rewrite (nth_map inh); last by rewrite -cardE ltn_ord.
 by congr ('hp[_]); rewrite -enum_val_nth enum_rankK.
 Qed.
 
@@ -450,9 +452,7 @@ Theorem Frobenius_char_coord la mu :
   'irrSG[la] (permCT mu) =
   coord 'hs (enum_rank la) ('hp[mu] : {homsym algC[n.-1.+1, n]}).
 Proof.
-(* TODO simplify me and factor with proof of homsymdotss *)
 pose HSC := {homsym algC[n.-1.+1, n]}.
-pose HSR := {homsym rat[n.-1.+1, n]}.
 symmetry.
 rewrite Frobenius_char_homsymdot /cycle_typeSn (permCTP mu) CTpartnK.
 have /coord_span {2}-> : ('hp[mu] : HSC) \in span 'hs.
@@ -465,22 +465,7 @@ rewrite big1 ?addr0; first last.
   move=> nu /negbTE Hnu.
   rewrite (nth_map (rowpartn n)) -?cardE ?ltn_ord // nth_enum_rank.
   by rewrite homsymdotZr homsymdotss ?leqSpred // eq_sym Hnu mulr0.
-suff -> : coord 'hs (enum_rank la) ('hp[mu] : HSC) =
-         ratr (coord 'hs (enum_rank la) ('hp[mu] : HSR)).
-  by apply/esym/Num.Theory.CrealP; apply Creal_Crat; apply Crat_rat.
-rewrite -(map_homsymp [rmorphism of ratr]).
-have /coord_span -> : ('hp[mu] : HSR) \in span 'hs.
-  by rewrite (span_basis (symbs_basis _ (leqSpred n))) // memvf.
-rewrite raddf_sum.
-rewrite (eq_bigr
-           (fun i : 'I_#|{:'P_n}| =>
-              ratr (coord 'hs i ('hp[mu] : HSR)) *: ('hs)`_i )).
-  by rewrite !coord_sum_free // (basis_free (symbs_basis _ _)) // leqSpred.
-move=> i _; rewrite /= scale_map_homsym.
-have /= := map_homsymbs [rmorphism of @ratr algCF] n.-1 n.
-move=> /(congr1 (fun p : _.-tuple _ => p`_i)) /= => <-.
-congr (_ *: _); apply esym; apply nth_map.
-by rewrite size_map -cardE ltn_ord.
+by rewrite -coord_map_homsym ?map_homsymbs ?symbs_basis // map_homsymp.
 Qed.
 
 End YoungIrrDef.
@@ -518,7 +503,7 @@ rewrite (reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 rewrite (eq_bigr
            (fun i : 'I__ => 'K(enum_val i, colpartn n) *: 'hs`_i)); first last.
   move=> /= i _.
-  rewrite (nth_map (rowpartn n)); last by rewrite -cardE ltn_ord.
+  rewrite (nth_map inh); last by rewrite -cardE ltn_ord.
   by congr (_ *: 'hs[_]); apply enum_val_nth.
 rewrite coord_sum_free ?enum_rankK // ?KostkaStd //.
 exact: basis_free (symbs_basis _ (leqSpred _)).

@@ -58,6 +58,9 @@ From SsrMultinomials Require Import ssrcomplements mpoly.
 Require Import tools partition.
 Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym permcent.
 
+Require ordtype.
+Local Notation inh := ordtype.Inhabited.Exports.inh.
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -70,14 +73,6 @@ Proof. exact: Num.Theory.char_num. Qed.
 Local Lemma char0_algC : [char algC] =i pred0.
 Proof. exact: Num.Theory.char_num. Qed.
 #[local] Hint Resolve char0_algC char0_rat : core.
-
-
-Lemma mprodXnE R nv (I : Type) (F : I -> 'X_{1..nv}) P m (r : seq _) :
-  \prod_(i <- r | P i) 'X_[R, F i] ^+ m i = 'X_[\sum_(i <- r | P i) (F i *+ m i)].
-Proof.
-elim: r => [|x r ih]; first by rewrite !big_nil mpolyX0.
-by rewrite !big_cons; case: (P x); rewrite ?(mpolyXD, mpolyXn) ih.
-Qed.
 
 
 Reserved Notation "p '(Y)'"  (at level 20, format "p '(Y)'").
@@ -513,7 +508,7 @@ Hypothesis Hd : (d <= n)%N.
 Local Notation ratF := [numFieldType of rat].
 Local Notation algCF := [numFieldType of algC].
 Local Notation HSC := {homsym algC[n, d]}.
-Local Notation HSR := {homsym rat[n, d]}.
+Local Notation HSQ := {homsym rat[n, d]}.
 Local Notation polXY := (polXY n0 n0 algCF).
 Local Notation pol := {mpoly algC[n]}.
 Local Notation "p '(Y)'" := (@polY_XY n0 n0 _ p)
@@ -522,7 +517,9 @@ Local Notation "p '(X)'" := (@polX_XY n0 n0 _ p)
                              (at level 20, format "p '(X)'").
 
 Local Notation "''hsC[' la ]" := ('hs[la] : HSC).
-Local Notation "''hsQ[' la ]" := ('hs[la] : HSR).
+Local Notation "''hsQ[' la ]" := ('hs[la] : HSQ).
+Local Notation "''hpC[' la ]" := ('hp[la] : HSC).
+Local Notation "''hpQ[' la ]" := ('hp[la] : HSQ).
 
 
 Definition co_hp (la : 'P_d) : pol -> algC :=
@@ -573,7 +570,7 @@ have sum_coord (p : HSC) :
   \sum_px coord 'hp (enum_rank px) p *: 'hp[px] :> pol.
   rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
   rewrite !linear_sum /=; apply eq_bigr => i _.
-  rewrite (nth_map (rowpartn d)) /= -?enum_val_nth // ?enum_rankK //.
+  rewrite (nth_map inh) /= -?enum_val_nth // ?enum_rankK //.
   by rewrite -cardE ltn_ord.
 rewrite (eq_bigr (fun nu : 'P_d =>
                     (\sum_px (coord 'hp (enum_rank px) 'hsC[nu]) *: 'hp[px])(X) *
@@ -655,30 +652,16 @@ transitivity
 rewrite homsymdot_suml; apply eq_bigr => /= l _.
 rewrite homsymdotZl homsymdot_sumr (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hlm; rewrite homsymdotZr.
-  rewrite [X in '[X | _]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
-  rewrite [X in '[_ | X]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
+  rewrite [X in '[X | _]](nth_map inh) -?cardE ?ltn_ord //.
+  rewrite [X in '[_ | X]](nth_map inh) -?cardE ?ltn_ord //.
   rewrite homsymdotpp // nth_uniq ?enum_uniq -?cardE ?ltn_ord // eq_sym.
   by rewrite (inj_eq (@ord_inj _)) Hlm !mulr0.
 rewrite homsymdotZr mulrA.
-rewrite [X in '[X | _]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
-rewrite [X in '[_ | X]](nth_map (rowpartn d)) -?cardE ?ltn_ord //.
+rewrite [X in '[X | _]](nth_map inh) -?cardE ?ltn_ord //.
+rewrite [X in '[_ | X]](nth_map inh) -?cardE ?ltn_ord //.
 rewrite homsymdotpp // eq_refl mulr1.
 rewrite -enum_val_nth ![_ * (zcard _)%:R]mulrC mulrA; congr (_ * _ * _).
-suff -> : coord 'hp l 'hsC[mu] = ratr (coord 'hp l ('hs[mu] : HSR)).
-  by apply/CrealP; apply Creal_Crat; apply Crat_rat.
-rewrite -(map_homsyms (ratr_rmorphism algCF)).
-have to_pR (nu : 'P_d) : 'hsQ[nu] \in span 'hp.
-  by rewrite (span_basis (symbp_basis Hd _)) // memvf.
-rewrite {1}(coord_span (to_pR mu)) raddf_sum.
-rewrite (eq_bigr
-           (fun i : 'I_#|{:'P_d}| => ratr (coord 'hp i 'hsQ[mu]) *: ('hp)`_i )).
-  rewrite coord_sum_free //.
-  exact: (basis_free (symbp_basis Hd _)).
-move=> i _; rewrite /= scale_map_homsym.
-have /= := map_homsymbp (@ratr_rmorphism algCF) n0 d.
-move=> /(congr1 (fun p : _.-tuple _ => p`_i)) /= => <-.
-congr (_ *: _); apply esym; apply nth_map.
-by rewrite size_map -cardE ltn_ord.
+by rewrite -coord_map_homsym ?map_homsymbp ?symbp_basis // map_homsyms.
 Qed.
 
 End Scalar.
