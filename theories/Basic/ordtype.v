@@ -57,7 +57,7 @@ Warning: the printing of the dual order is currently very confusing.
  ********)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype choice fintype seq.
-From mathcomp Require Import finset order path.
+From mathcomp Require Import finset order path fingraph.
 Require Import tools.
 
 Set Implicit Arguments.
@@ -152,17 +152,20 @@ apply/negP => /subsetP/(_ u); rewrite !unfold_in ltxx /= => Habs.
 by have /Habs : zmin < u < y by rewrite ltzu ltuy.
 Qed.
 
-Lemma path_covers x y :
-  reflect (exists2 s, path covers x s & last x s = y) (x <= y).
+Lemma covers_connect x y : (connect covers x y) = (x <= y).
 Proof.
-apply (iffP idP) => [|[s]]; first last.
+apply/connectP/idP => [[s]|].
   elim: s x => [x /= _ -> // |s0 s IHs] x /= /andP[/andP[/ltW ltxs0 _]].
-by move => {}/IHs H{}/H /(le_trans ltxs0).
+  by move => {}/IHs H{}/H /(le_trans ltxs0).
 move: y; apply covers_ind; last by exists [::].
 move=> z y Hcovers [pth Hpath Hlast].
 exists (rcons pth y); last by rewrite last_rcons.
-by rewrite rcons_path Hpath Hlast andTb.
+by rewrite rcons_path Hpath -Hlast andTb.
 Qed.
+
+Lemma covers_path x y :
+  reflect (exists2 s, path covers x s & y = last x s) (x <= y).
+Proof. by rewrite -covers_connect; apply: (iffP connectP). Qed.
 
 End CoversFinPOrder.
 
@@ -185,13 +188,15 @@ Section ClassDef.
 
 Structure mixin_of T := Mixin { _ : exists x : T, true }.
 
+Set Primitive Projections.
 Record class_of T := Class { base : Choice.class_of T; mixin : mixin_of T }.
+Unset Primitive Projections.
 Local Coercion base : class_of >->  Choice.class_of.
 
 Structure type := Pack { sort; _ : class_of sort }.
 Local Coercion sort : type >-> Sortclass.
-Variables (T : Type) (cT : type).
 
+Variables (T : Type) (cT : type).
 Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
 Definition clone c of phant_id class c := @Pack T c.
 
@@ -267,10 +272,10 @@ Section Tests.
 Let bla : nat * seq bool := inh.
 Let blo := [inhType of nat].
 
-Definition natt := nat.
-Canonical natt_eqtype := [eqType of natt for [eqType of nat]].
-Canonical natt_choicetype := [choiceType of natt for [choiceType of nat]].
-Canonical natt_inhtype := [inhType of natt for [inhType of nat]].
+Let natt := nat.
+Let natt_eqtype := [eqType of natt for [eqType of nat]].
+Let natt_choicetype := [choiceType of natt for [choiceType of nat]].
+Let natt_inhtype := [inhType of natt for [inhType of nat]].
 
 End Tests.
 
@@ -282,18 +287,19 @@ Module InhPOrder.
 
 Section ClassDef.
 
+Set Primitive Projections.
 Record class_of (T : Type) : Type := Class {
   base : Order.POrder.class_of T;
   mixin : Inhabited.mixin_of T
 }.
-
-Structure type (disp : unit) := Pack { sort; _ : class_of sort; }.
-
-Local Coercion sort : type >-> Sortclass.
-Local Coercion base : class_of >-> Order.POrder.class_of.
+Unset Primitive Projections.
 Definition base2 T m : Inhabited.class_of T :=
   Inhabited.Class (base m) (mixin m).
+Local Coercion base : class_of >-> Order.POrder.class_of.
 Local Coercion base2 : class_of >-> Inhabited.class_of.
+
+Structure type (disp : unit) := Pack { sort; _ : class_of sort; }.
+Local Coercion sort : type >-> Sortclass.
 
 Variables (T : Type) (disp : unit) (cT : type disp).
 Definition class := let: Pack _ c := cT return class_of cT in c.
@@ -334,9 +340,8 @@ End Exports.
 End InhPOrder.
 Export InhPOrder.Exports.
 
-Section Tests.
+Canonical bool_inhPOrderType := [inhPOrderType of bool].
 Canonical nat_inhPOrderType := [inhPOrderType of nat].
-End Tests.
 
 
 (******************************************************************************)
@@ -346,18 +351,19 @@ Module InhTotal.
 
 Section ClassDef.
 
+Set Primitive Projections.
 Record class_of (T : Type) : Type := Class {
   base : Order.Total.class_of T;
   mixin : Inhabited.mixin_of T
 }.
-
-Structure type (disp : unit) := Pack { sort; _ : class_of sort; }.
-
-Local Coercion sort : type >-> Sortclass.
-Local Coercion base : class_of >-> Order.Total.class_of.
+Unset Primitive Projections.
 Definition base2 T m : Inhabited.class_of T :=
   Inhabited.Class (base m) (mixin m).
+Local Coercion base : class_of >-> Order.Total.class_of.
 Local Coercion base2 : class_of >-> Inhabited.class_of.
+
+Structure type (disp : unit) := Pack { sort; _ : class_of sort; }.
+Local Coercion sort : type >-> Sortclass.
 
 Variables (T : Type) (disp : unit) (cT : type disp).
 Definition class := let: Pack _ c := cT return class_of cT in c.
@@ -408,14 +414,13 @@ End InhTotal.
 
 Export InhTotal.Exports.
 
+Canonical bool_inhOrderType := [inhOrderType of bool].
+Canonical nat_inhOrderType := [inhOrderType of nat].
 
 Section Tests.
-Variable (disp : unit).
-Variable T1 : orderType disp.
-Fact bla (x : T1) : x == x.
-Proof. by []. Qed.
 
-Canonical nat_inhOrderType := [inhOrderType of nat].
+Variables (disp : unit) (T1 : orderType disp) (x : T1).
+Goal x == x. Proof. by []. Qed.
 
 End Tests.
 
@@ -427,18 +432,20 @@ Module InhFinPOrder.
 
 Section ClassDef.
 
+Set Primitive Projections.
 Record class_of (T : Type) : Type := Class {
   base : Order.FinPOrder.class_of T;
   mixin : Inhabited.mixin_of T;
 }.
+Unset Primitive Projections.
 
-Structure type (disp : unit) := Pack { sort; _ : class_of sort; }.
-
-Local Coercion sort : type >-> Sortclass.
-Local Coercion base : class_of >-> Order.FinPOrder.class_of.
 Definition base2 T m : Inhabited.class_of T :=
   Inhabited.Class (base m) (mixin m).
+Local Coercion base : class_of >-> Order.FinPOrder.class_of.
 Local Coercion base2 : class_of >-> Inhabited.class_of.
+
+Structure type (disp : unit) := Pack { sort; _ : class_of sort; }.
+Local Coercion sort : type >-> Sortclass.
 
 Variables (T : Type) (disp : unit) (cT : type disp).
 Definition class := let: Pack _ c := cT return class_of cT in c.
@@ -493,9 +500,7 @@ End Exports.
 End InhFinPOrder.
 Export InhFinPOrder.Exports.
 
-Section Tests.
 Canonical bool_FinPOrderType := [inhFinPOrderType of bool].
-End Tests.
 
 
 (******************************************************************************)
@@ -505,18 +510,19 @@ Module InhFinTotal.
 
 Section ClassDef.
 
+Set Primitive Projections.
 Record class_of (T : Type) : Type := Class {
   base : Order.FinTotal.class_of T;
   mixin : Inhabited.mixin_of T;
 }.
-
-Structure type (disp : unit) := Pack { sort; _ : class_of sort; }.
-
-Local Coercion sort : type >-> Sortclass.
-Local Coercion base : class_of >-> Order.FinTotal.class_of.
+Unset Primitive Projections.
 Definition base2 T m : Inhabited.class_of T :=
   Inhabited.Class (base m) (mixin m).
+Local Coercion base : class_of >-> Order.FinTotal.class_of.
 Local Coercion base2 : class_of >-> Inhabited.class_of.
+
+Structure type (disp : unit) := Pack { sort; _ : class_of sort; }.
+Local Coercion sort : type >-> Sortclass.
 
 Variables (T : Type) (disp : unit) (cT : type disp).
 Definition class := let: Pack _ c := cT return class_of cT in c.
@@ -593,9 +599,13 @@ End Exports.
 End InhFinTotal.
 Export InhFinTotal.Exports.
 
+Canonical bool_FinOrderType := [inhFinOrderType of bool].
 
 Section Tests.
-Canonical bool_FinOrderType := [inhFinOrderType of bool].
+
+Variables (d : unit) (T : inhFinOrderType d) (x : T).
+Goal x == x. Proof. by []. Qed.
+
 End Tests.
 
 
