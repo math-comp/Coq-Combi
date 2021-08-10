@@ -68,7 +68,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Import LeqGeqOrder.
-Import GroupScope GRing.Theory.
+Import GroupScope GRing.Theory Num.Theory.
 Open Scope ring_scope.
 
 Reserved Notation "''irrSG[' l ']'"
@@ -79,9 +79,9 @@ Reserved Notation "''M[' l ']'"
 
 Local Notation algCF := [numFieldType of algC].
 Local Lemma char0_rat : [char rat] =i pred0.
-Proof. exact: Num.Theory.char_num. Qed.
+Proof. exact: char_num. Qed.
 Local Lemma char0_algC : [char algC] =i pred0.
-Proof. exact: Num.Theory.char_num. Qed.
+Proof. exact: char_num. Qed.
 #[local] Hint Resolve char0_algC char0_rat : core.
 
 
@@ -193,7 +193,7 @@ Qed.
 Lemma Fchar_inv_homsymp (l : 'P_n) : Fchar_inv 'hp[l] = '1z_[l].
 Proof. by rewrite -Fchar_ncfuniCT FcharK. Qed.
 
-(** ** The Frobenius Characteristic is an isometry *)
+(** ** Frobenius Characteristic and omega involution *)
 Lemma omega_Fchar_inv (p : HS) :
   Fchar_inv (omegahomsym p) = sign_char * (Fchar_inv p).
 Proof.
@@ -232,10 +232,10 @@ rewrite homsymdotpp // cfdotZl cfdotZr cfdot_classfun_part.
 case: (altP (la =P mu)) => [<-{mu} | _]; rewrite ?mulr0 ?mulr1 //.
 rewrite -zcoeffE -[LHS]mulr1; congr (_ * _).
 rewrite /zcoeff rmorphM rmorphV; first last.
-  by rewrite unitfE Num.Theory.pnatr_eq0 card_classCT_neq0.
+  by rewrite unitfE pnatr_eq0 card_classCT_neq0.
 rewrite !rmorph_nat -mulrA [X in _ * X]mulrC - mulrA divff; first last.
-  by rewrite Num.Theory.pnatr_eq0 card_classCT_neq0.
-by rewrite mulr1 divff // Num.Theory.pnatr_eq0 -lt0n cardsT card_Sn fact_gt0.
+  by rewrite pnatr_eq0 card_classCT_neq0.
+by rewrite mulr1 divff // pnatr_eq0 -lt0n cardsT card_Sn fact_gt0.
 Qed.
 
 Theorem Fchar_inv_isometry p q : '[Fchar_inv p, Fchar_inv q] = '[p | q].
@@ -374,7 +374,7 @@ have /CnatP [m Hm] := Cnat_cfdot_char Hphi (irrWchar Hxi).
 rewrite Hm.
 elim: m phi Hphi Hm => [|m IHm] phi Hphi Hm; first by rewrite scale0r subr0.
 rewrite mulrS scalerDl scale1r opprD addrA; apply: IHm.
-- by apply rem_irr1; rewrite //= Hm Num.Theory.pnatr_eq0.
+- by apply rem_irr1; rewrite //= Hm pnatr_eq0.
 - by rewrite cfdotBl Hm irrWnorm // mulrS [1 + _]addrC addrK.
 Qed.
 
@@ -386,9 +386,8 @@ Theorem irrSG_irr la : 'irrSG[la] \in irr 'SG_n.
 Proof.
 elim/(finord_wf_down (T := [finPOrderType of 'PDom_n])): la => la IHla.
 rewrite irrEchar irrSG_orthonormal !eq_refl andbT.
-have -> : 'irrSG[la] =
-         'M[la] - \sum_(mu : 'PDom_n | (la < mu)%O)
-                   '[ 'M[la], 'irrSG[mu] ] *: 'irrSG[mu].
+have -> : 'irrSG[la] = 'M[la] - \sum_(mu : 'PDom_n | (la < mu)%O)
+                                   '[ 'M[la], 'irrSG[mu] ] *: 'irrSG[mu].
   apply/eqP; rewrite eq_sym subr_eq {1}Young_rule_partdom.
   apply/eqP; congr (_ + _); apply eq_bigr => mu _.
   rewrite Young_rule.
@@ -396,10 +395,9 @@ have -> : 'irrSG[la] =
   rewrite irrSG_orthonormal eq_refl mulr1 scalerDl.
   rewrite big1 ?scale0r ?addr0 // => nu /negbTE Hnu.
   by rewrite cfdotZl irrSG_orthonormal Hnu mulr0.
-rewrite -big_filter /index_enum -enumT.
-set L := filter _ _.
+rewrite -big_filter; set L := filter _ _.
 have : all (<%O la) L by apply filter_all.
-have : uniq L by apply: filter_uniq; apply: enum_uniq.
+have : uniq L by apply: filter_uniq; apply: index_enum_uniq.
 elim: L => [| l0 l IHl].
   by rewrite big_nil subr0 homsymh_character.
 rewrite big_cons /= => /andP [Hl0l Huniq] /andP [Hl0 Hall].

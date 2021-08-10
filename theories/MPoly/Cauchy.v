@@ -650,17 +650,15 @@ transitivity
   rewrite -coord_zsymspsp //; apply eq_bigr => /= nu _.
   by rewrite enum_rankK mulrA.
 rewrite homsymdot_suml; apply eq_bigr => /= l _.
-rewrite homsymdotZl homsymdot_sumr (bigD1 l) //= big1 ?addr0; first last.
-  move=> m /negbTE Hlm; rewrite homsymdotZr.
-  rewrite [X in '[X | _]](nth_map inh) -?cardE ?ltn_ord //.
-  rewrite [X in '[_ | X]](nth_map inh) -?cardE ?ltn_ord //.
-  rewrite homsymdotpp // nth_uniq ?enum_uniq -?cardE ?ltn_ord // eq_sym.
-  by rewrite (inj_eq (@ord_inj _)) Hlm !mulr0.
-rewrite homsymdotZr mulrA.
-rewrite [X in '[X | _]](nth_map inh) -?cardE ?ltn_ord //.
-rewrite [X in '[_ | X]](nth_map inh) -?cardE ?ltn_ord //.
-rewrite homsymdotpp // eq_refl mulr1.
-rewrite -enum_val_nth ![_ * (zcard _)%:R]mulrC mulrA; congr (_ * _ * _).
+rewrite homsymdotZl homsymdot_sumr -mulrA; congr (_ * _).
+transitivity
+  (\sum_(i < #|{:'P_d}|)
+    (coord 'hp i 'hsC[mu])^* * (zcard (enum_val l))%:R * (i == l)%:R).
+  apply: eq_bigr => i _; rewrite homsymdotZr -mulrA; congr (_ * _).
+  rewrite !(nth_map inh _ (fun l => 'hp[l])) -?cardE ?ltn_ord //.
+  by rewrite -!enum_val_nth homsymdotpp // (inj_eq enum_val_inj) eq_sym.
+rewrite (bigD1 l) //= big1 ?addr0; last by move=> m /negbTE ->; rewrite mulr0.
+rewrite eq_refl mulr1 mulrC; congr (_ * _).
 by rewrite -coord_map_homsym ?map_homsymbp ?symbp_basis // map_homsyms.
 Qed.
 
