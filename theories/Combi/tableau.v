@@ -718,13 +718,13 @@ Context (disp1 disp2 : unit)
         (T2 : inhOrderType disp2).
 Variable F : T1 -> T2.
 
-Lemma shape_incr_tab (t : seq (seq T1)) :
+Lemma shape_map_tab (t : seq (seq T1)) :
   shape [seq map F r | r <- t] = shape t.
 Proof.
 by rewrite /shape -map_comp; apply eq_map => s /=; rewrite size_map.
 Qed.
 
-Lemma get_incr_tab (t : seq (seq T1)) r c :
+Lemma get_map_tab (t : seq (seq T1)) r c :
   is_in_shape (shape t) r c ->
   get_tab [seq [seq F i | i <- r0] | r0 <- t] r c = F (get_tab t r c).
 Proof.
@@ -733,28 +733,28 @@ move: Hin; rewrite /is_in_shape (nth_map [::]) // /get_tab => Hc.
 by rewrite (nth_map [::] _ _ Hr) (nth_map inh).
 Qed.
 
-Lemma to_word_incr_tab (t : seq (seq T1)) :
+Lemma to_word_map_tab (t : seq (seq T1)) :
   to_word [seq map F r | r <- t] = map F (to_word t).
 Proof. by rewrite /to_word map_flatten map_rev. Qed.
 
 Lemma incr_tab (t : seq (seq T1)) :
-  {in (to_word t) &, forall x y, (x < y -> F x < F y)%O} ->
+  {in (to_word t) &, {homo F : x y / (x < y)%O}} ->
   (is_tableau t) = (is_tableau [seq map F r | r <- t]).
 Proof.
 move=> Hincr.
 have Hndecr := in_incr_nondecrE Hincr.
 move/in_incrE in Hincr.
 apply/is_tableau_getP/is_tableau_getP;
-  rewrite ?shape_incr_tab=> [] [H1 H2 H3]; split => // r c Hrc1;
+  rewrite ?shape_map_tab=> [] [H1 H2 H3]; split => // r c Hrc1;
   have Hrc : is_in_shape (shape t) r c by apply: (is_in_part_le H1 Hrc1).
-- rewrite !get_incr_tab //.
-  rewrite -Hndecr; [exact: H2 | exact: mem_to_word | exact: mem_to_word].
-- rewrite !get_incr_tab //.
-  rewrite -Hincr; [exact: H3 | exact: mem_to_word | exact: mem_to_word].
-- rewrite Hndecr; [|exact: mem_to_word | exact: mem_to_word].
-  by rewrite -!get_incr_tab //; apply: H2.
-- rewrite Hincr; [|exact: mem_to_word | exact: mem_to_word].
-  by rewrite -!get_incr_tab //; apply: H3.
+- rewrite !get_map_tab //.
+  rewrite Hndecr; [exact: H2 | exact: mem_to_word | exact: mem_to_word].
+- rewrite !get_map_tab //.
+  rewrite Hincr; [exact: H3 | exact: mem_to_word | exact: mem_to_word].
+- rewrite -Hndecr; [|exact: mem_to_word | exact: mem_to_word].
+  by rewrite -!get_map_tab //; apply: H2.
+- rewrite -Hincr; [|exact: mem_to_word | exact: mem_to_word].
+  by rewrite -!get_map_tab //; apply: H3.
 Qed.
 
 End IncrMap.

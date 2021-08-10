@@ -417,7 +417,7 @@ elim=> [|b IHb] d Hd la.
   by rewrite val_intpartn0 /mpart /= mnmP => i; rewrite !mnmE /=.
 case: (leqP d b) => Hdb; first exact: (IHb _ Hdb).
 have {Hdb}Hd : d = b.+1 by apply anti_leq; rewrite Hd Hdb.
-elim/(finord_wf (T := [finPOrderType of intpartnlexi d])) : la => la IHla Hszla.
+elim/(finord_wf (T := [finPOrderType of 'PLexi_d])) : la => la IHla Hszla.
 pose k := head 1%N (conj_intpartn la).
 pose p1 := behead (conj_intpartn la); pose d1 := sumn p1.
 have Hk : (d = d1 + k)%N.
@@ -848,8 +848,7 @@ have := size_tabsh t.
 by rewrite -(shape_tabsh t) size_map [X in _ <= X.-1.+1]Hsz /=.
 Qed.
 
-Lemma Kostka_partdom (la mu : intpartndom d) :
-  'K(la, mu) != 0 -> (mu <= la)%O.
+Lemma Kostka_partdom (la mu : 'PDom_d) : 'K(la, mu) != 0 -> (mu <= la)%O.
 Proof.
 rewrite /Kostka => /KostkaMon_partdom.
 rewrite /mpart leqSpred => /partdomP Hdom.
@@ -867,8 +866,7 @@ case: (ssrnat.ltnP i (size mu)) => Hi.
     by rewrite nth_default // size_tuple card_ord.
 Qed.
 
-Lemma Kostka0 (la mu : intpartndom d) :
-  ~~ (mu <= la)%O -> 'K(la, mu) = 0.
+Lemma Kostka0 (la mu : 'PDom_d) : ~~ (mu <= la)%O -> 'K(la, mu) = 0.
 Proof.
 by move=> H; apply/eqP; move: H; apply contraR; apply Kostka_partdom.
 Qed.
@@ -1003,8 +1001,8 @@ Proof.
 rewrite /tabnat_of_ord_fun.
 case: eqP => [Hev | _]; last by case: (hyper_stdtabsh la).
 rewrite /= /is_stdtab -incr_tab // tabshP /= /eval.
-rewrite shape_incr_tab shape_tabsh eq_refl andbT.
-by rewrite to_word_incr_tab tabsh_is_std.
+rewrite shape_map_tab shape_tabsh eq_refl andbT.
+by rewrite to_word_map_tab tabsh_is_std.
 Qed.
 Definition tabnat_of_ord (t : tabsh la) :=
   StdtabSh (sh := la) (tabnat_of_ord_subproof t).
@@ -1014,7 +1012,7 @@ Lemma tabord_of_nat_subproof (t : stdtabsh la) :
 Proof.
 have /andP [Ht Hstd] := stdtabshP t.
 rewrite /tabord_of_nat_fun /=.
-rewrite shape_incr_tab shape_stdtabsh eq_refl andbT.
+rewrite shape_map_tab shape_stdtabsh eq_refl andbT.
 move: Hstd; rewrite /is_std size_to_word.
 rewrite /size_tab shape_stdtabsh sumn_intpartn => /perm_mem Hperm.
 rewrite -incr_tab // => /= i j.
@@ -1028,7 +1026,7 @@ Lemma tabord_of_natK : cancel tabord_of_nat tabnat_of_ord.
 Proof.
 move=> t.
 apply val_inj; rewrite /= /tabnat_of_ord_fun /= /tabord_of_nat_fun /=.
-rewrite to_word_incr_tab stdtabsh_eval_to_word eq_refl.
+rewrite to_word_map_tab stdtabsh_eval_to_word eq_refl.
 rewrite -map_comp map_id_in // => /= r Hr.
 rewrite -map_comp map_id_in // => /= i Hi.
 rewrite inordK //; apply: (leq_trans _ Hd).
@@ -1068,7 +1066,7 @@ apply eq_card => /= t; rewrite !inE.
 apply/eqP/imsetP => [Ht | [/= st _ ->{t}]].
 - exists (tabnat_of_ord (leqSpred _) t); first by rewrite inE.
   by rewrite tabnat_of_ordK //= inE -Ht.
-- rewrite /= /tabord_of_nat_fun /= /tabnat_of_ord_fun /= to_word_incr_tab.
+- rewrite /= /tabord_of_nat_fun /= /tabnat_of_ord_fun /= to_word_map_tab.
   by rewrite stdtabsh_eval_to_word // leqSpred.
 Qed.
 
@@ -1468,7 +1466,7 @@ Notation "''K' ( la , mu )" := (Kostka la mu)%:R
   (at level 8, format "''K' ( la ,  mu )") : ring_scope.
 
 Lemma Kostka_unitrig (R : comUnitRingType) d :
-  unitrig (fun la mu : intpartndom d => 'K(la, mu)%:R : R).
+  unitrig (fun la mu : 'PDom_d => 'K(la, mu)%:R : R).
 Proof.
 apply/unitrigP; split => [la | la mu].
 - by rewrite Kostka_diag.
@@ -1477,10 +1475,10 @@ Qed.
 
 (** ** Inverse Kostka numbers *)
 Definition KostkaInv d : 'P_d -> 'P_d -> int :=
-  Minv (fun la mu : intpartndom d => 'K(la, mu)%:R : int).
+  Minv (fun la mu : 'PDom_d => 'K(la, mu)%:R : int).
 
 Lemma KostkaInv_unitrig d :
-  unitrig (fun la mu : intpartndom d => KostkaInv la mu).
+  unitrig (fun la mu : 'PDom_d => KostkaInv la mu).
 Proof. exact: (Minv_unitrig (Kostka_unitrig _ d)). Qed.
 
 Notation "''K^-1' ( la , mu )" := ((KostkaInv la mu)%:~R)

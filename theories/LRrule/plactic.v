@@ -963,7 +963,7 @@ Variables (disp1 disp2 : unit)
 Variable F : T1 -> T2.
 Variable u v : seq T1.
 
-Hypothesis Hincr : {in u &, forall x y, (x < y -> F x < F y)%O}.
+Hypothesis Hincr : {in u &, {homo F : x y / (x < y)%O}}.
 
 Lemma subset_abc l a b c r :
   {subset l ++ [:: a; b; c] ++ r <= u} -> [/\ a \in u, b \in u & c \in u].

@@ -1,6 +1,6 @@
 (** * Combi.Basic.ordtype : Ordered Types *)
 (******************************************************************************)
-(*      Copyright (C) 2014-2018 Florent Hivert <florent.hivert@lri.fr>        *)
+(*      Copyright (C) 2014-2021 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
 (*  Distributed under the terms of the GNU General Public License (GPL)       *)
 (*                                                                            *)
@@ -15,23 +15,14 @@
 (******************************************************************************)
 (** * Ordered type
 
-TODO: Most of this should be merged with Cyril Cohen's [order] and therefore
-should be considered as unstable.
-
-The notion defined here include:
-
-- [pordType] == interface for partially ordered types
-- [ordType] == interface for totally ordered types
-
-Inhabited variants:
+Inhabited Types:
 
 - [inhType] == interface for inhabited types
 - [inhPordType] == interface for partially ordered inhabited types
 - [inhOrdType] == interface for totally ordered inhabited types
 - [inhOrdFinType] == interface for totally ordered finite types
 
-- [minX m n] == the minimum of two element of [ordType]
-- [maxX m n] == the maximum of two element of [ordType]
+Sequence on a totally ordered type:
 
 - [maxL a L] == the maximum of [a] and the element of the sequence [L]
 - [allLeq v a] == a is smaller or equal than all the element of [v]
@@ -43,17 +34,10 @@ Inhabited variants:
 - [shift_pos pos i] == if [i < pos] then [i] else [i.+1]
 - [shiftinv_pos pos i] == if [i < pos] then [i] else [i.-1]
 
-We define canonical [inhPOrdType] structure on [nat] which is inherited
-by the subtype ['I_n] and [seq T] (with the lexicographic order).
+Cover relation:
 
-- [Dual T] == the dual ordered type of [T]
-
-Warning: the printing of the dual order is currently very confusing.
-
-- [prodlex_pordType T1 T2] == the cartesian product [T1 * T2] ordered by
-        the lexicographic order. This is _not_ a canonical order
-
-
+- [covers x y] == [y] covers [x] where [x] and [y] belongs to a common
+                  [finPOrderType].
  ********)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype choice fintype seq.
@@ -99,6 +83,8 @@ Proof. exact: (@finord_wf _ [finPOrderType of T^d]). Qed.
 (** * Covering relation                                                       *)
 (******************************************************************************)
 
+(** We only define covering relation for finite type, since it cannot be      *)
+(** decided and it is not very useful for infinite orders.                    *)
 Definition covers {disp : unit} {T : finPOrderType disp} :=
   [rel x y : T | (x < y) && [forall z, ~~(x < z < y)]].
 
@@ -622,9 +608,9 @@ Variable F : T1 -> T2.
 Section Local.
 
 Variable P : pred T1.
-Hypothesis Hincr : {in P &, forall x y, x < y -> F x < F y}.
+Hypothesis Hincr : {in P &, {homo F : x y / x < y}}.
 
-Lemma in_incrE : {in P &, forall x y, (x < y) = (F x < F y)}.
+Lemma in_incrE : {in P &, {mono F : x y / x < y}}.
 Proof.
 move=> x y Hx Hy.
 case: (ltgtP x y) => [/Hincr -> //| /Hincr HFyx | ->].
@@ -632,13 +618,13 @@ case: (ltgtP x y) => [/Hincr -> //| /Hincr HFyx | ->].
 - by rewrite ltxx.
 Qed.
 
-Lemma in_incr_nondecr : {in P &, forall x y, x <= y -> F x <= F y}.
+Lemma in_incr_nondecr : {in P &, {homo F : x y / x <= y}}.
 Proof using Hincr.
-  move=> x y Hx Hy /=; rewrite le_eqVlt => /orP [/eqP -> //=| H].
-  by rewrite le_eqVlt (Hincr Hx Hy H) orbT.
+move=> x y Hx Hy /=; rewrite le_eqVlt => /orP [/eqP -> //=| H].
+by rewrite le_eqVlt (Hincr Hx Hy H) orbT.
 Qed.
 
-Lemma in_incr_nondecrE : {in P &, forall x y, (x <= y) = (F x <= F y)}.
+Lemma in_incr_nondecrE : {in P &, {mono F : x y / x <= y}}.
 Proof using Hincr.
 move=> x y Hx Hy /=; rewrite !le_eqVlt.
 case: (ltgtP x y) => /= [/Hincr -> //| /Hincr HFyx | ->].
@@ -650,7 +636,7 @@ Qed.
 Lemma in_incr_inj : {in P &, injective F}.
 Proof using Hincr.
 move=> x y Hx Hy /eqP.
-by rewrite !eq_le -!in_incr_nondecrE // -!eq_le => /eqP.
+by rewrite !eq_le !in_incr_nondecrE // -!eq_le => /eqP.
 Qed.
 
 End Local.
@@ -1207,18 +1193,18 @@ case (ltnP pos (size s)) => [{}Hpos | Hpos2].
   by rewrite (subSn Hi) /= nth_drop (subnKC Hi).
 Qed.
 
-Lemma shift_pos_incr pos i j : i <= j -> shift_pos pos i <= shift_pos pos j.
+Lemma shift_pos_incr pos : {homo shift_pos pos : i j / i <= j}.
 Proof using.
-move=> Hij; rewrite /shift_pos; case (ltnP j pos) => Hj.
+move=> i j Hij; rewrite /shift_pos; case (ltnP j pos) => Hj.
 - by rewrite (leq_ltn_trans Hij Hj).
 - case (ltnP i pos) => Hi.
   + exact: (leq_trans Hij).
   + exact: (leq_ltn_trans Hij).
 Qed.
 
-Lemma shiftinv_pos_incr pos i j : i <= j -> shiftinv_pos pos i <= shiftinv_pos pos j.
+Lemma shiftinv_pos_incr pos : {homo shiftinv_pos pos : i j / i <= j}.
 Proof using.
-move=> Hij; rewrite /shiftinv_pos; case (ltnP j pos) => Hj.
+move=> i j Hij; rewrite /shiftinv_pos; case (ltnP j pos) => Hj.
 - by rewrite (leq_ltn_trans Hij Hj).
 - case (ltnP i pos) => Hi.
   + by have:= leq_trans Hi Hj; case j.

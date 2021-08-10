@@ -321,8 +321,6 @@ Definition irrSG   la : 'CF('SG_n) := Fchar_inv (n.-1) 'hs[la].
 Notation "''M[' l ']'" := (YoungSG l).
 Notation "''irrSG[' l ']'" := (irrSG l).
 
-Local Notation PDom n := [finPOrderType of intpartndom n].
-
 Lemma Fchar_irrSGE nvar0 la : Fchar nvar0 'irrSG[la] = 'hs[la].
 Proof.
 rewrite /irrSG -(FcharNvar (nvar0 := n.-1) _) ?leqSpred //=.
@@ -345,11 +343,11 @@ by rewrite linearZ /= Fchar_invK.
 Qed.
 
 Lemma Young_rule_partdom la :
-  'M[la] = 'irrSG[la] +
-           \sum_(mu | (la < mu :> PDom n)%O) 'K(mu, la)  *: 'irrSG[mu].
+  'M[la] =
+  'irrSG[la] + \sum_(mu | (la < mu :> 'PDom_n)%O) 'K(mu, la)  *: 'irrSG[mu].
 Proof.
 rewrite Young_rule.
-exact: (unitrig_sum1lV (fun mu : PDom n => 'irrSG[mu]) la (Kostka_unitrig _ n)).
+exact: (unitrig_sum1lV (fun mu : 'PDom_n => 'irrSG[mu]) la (Kostka_unitrig _ n)).
 Qed.
 
 
@@ -384,10 +382,10 @@ Proof. by rewrite /irrSG Fchar_inv_isometry // homsymdotss. Qed.
 
 Theorem irrSG_irr la : 'irrSG[la] \in irr 'SG_n.
 Proof.
-elim/(finord_wf_down (T := PDom n)): la => la IHla.
+elim/(finord_wf_down (T := [finPOrderType of 'PDom_n])): la => la IHla.
 rewrite irrEchar irrSG_orthonormal !eq_refl andbT.
 have -> : 'irrSG[la] =
-         'M[la] - \sum_(mu : PDom n | (la < mu)%O)
+         'M[la] - \sum_(mu : 'PDom_n | (la < mu)%O)
                    '[ 'M[la], 'irrSG[mu] ] *: 'irrSG[mu].
   apply/eqP; rewrite eq_sym subr_eq {1}Young_rule_partdom.
   apply/eqP; congr (_ + _); apply eq_bigr => mu _.
