@@ -86,7 +86,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun bigop ssrnat eqtype fintype choice seq.
 From mathcomp Require Import fingraph path finset order.
 
-Require Import tools combclass lattice.
+Require Import tools combclass lattice ordtype.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -644,8 +644,11 @@ Lemma Tamari_def s t : (s <T t) = ((t != s) && (s <=T t)).
 Proof. by []. Qed.
 
 Lemma rotations_Tamari t t' :
-  trval t' \in rotations t -> t <=T t'.
-Proof. by move=> H; apply connect1; rewrite /grel /=. Qed.
+  trval t' \in rotations t -> t <T t'.
+Proof.
+move=> H; rewrite /Tamari_lt eq_sym rotations_neq //.
+exact: connect1.
+Qed.
 
 Lemma Tamari_refl : reflexive Tamari.
 Proof. exact: connect0. Qed.
@@ -673,17 +676,18 @@ move=> /Tamari_rightsizesum [leq12 _].
 by apply/eqP; rewrite -eq eqn_leq leq21 leq12.
 Qed.
 
-Definition tamari_porderMixin :=
+Definition porderMixin :=
   LePOrderMixin Tamari_def Tamari_refl Tamari_anti Tamari_trans.
-Definition tamari_porderType :=
-  POrderType Tamari_display (bintreesz n) tamari_porderMixin.
+Canonical porderType :=
+  POrderType Tamari_display (bintreesz n) porderMixin.
+Canonical finPOrderType := Eval hnf in [finPOrderType of bintreesz n].
 
 End Tamari.
 
 Module Exports.
 
-Notation tamari_porderMixin := tamari_porderMixin.
-Canonical tamari_porderType.
+Canonical porderType.
+Canonical finPOrderType.
 
 Notation "x <=T y" := (@Order.le Tamari_display _ x y).
 Notation "x <T y" := (@Order.lt Tamari_display _ x y).
@@ -704,7 +708,7 @@ Definition TamariE t1 t2 :
   (t1 <=T t2) = connect (fun x y : bintreesz n => grel rotations x y) t1 t2.
 Proof. by []. Qed.
 Lemma rotations_Tamari t t' :
-  trval t' \in rotations t -> t <=T t'.
+  trval t' \in rotations t -> t <T t'.
 Proof. exact: Tamari.rotations_Tamari. Qed.
 
 Local Fact rightcombsz_proof : size_tree (rightcomb n) == n.
@@ -1511,12 +1515,7 @@ apply/anti_leq/andP; split.
 Qed.
 
 
-Section TamariSuccessor.
-
-Variable n : nat.
-Implicit Types t : bintreesz n.
-
-Theorem Tamari_vctleq t1 t2 :
+Theorem Tamari_vctleq n (t1 t2 : bintreesz n) :
   (right_sizes t1 <=V right_sizes t2) = (t1 <=T t2).
 Proof.
 apply/idP/idP.
@@ -1537,7 +1536,7 @@ apply/idP/idP.
   have:= rightsizesum_gt Hrot.
   rewrite -(leq_add2r i) addSnnS => /(leq_trans Hsum).
   move=> /IHi{IHi}/(_ Htleq) /(le_trans _); apply.
-  exact: rotations_Tamari.
+  by apply: ltW; apply: rotations_Tamari.
 - rewrite TamariE => /connectP /= [p].
   elim: p t1 t2 => /= [| p0 p IHp] t1 t2.
     by move => _ ->; exact: vctleq_refl.
@@ -1545,20 +1544,6 @@ apply/idP/idP.
   suff /vctleq_trans : right_sizes t1 <=V right_sizes p0 by apply; apply IHp.
   exact: rotations_vctleq_impl.
 Qed.
-
-Lemma Tamari_succ t1 t2 t :
-  trval t2 \in rotations t1 -> t1 <=T t -> t <=T t2 -> t = t1 \/ t = t2.
-Proof.
-move/rotations_right_sizesP => [u] [v0] [v] [Ht1 Ht2].
-move: (right_sizesP t); rewrite -!Tamari_vctleq Ht1 Ht2 => Htam H1 H2.
-have [] := vct_succ Htam H1 H2.
-- rewrite -Ht1 => /(congr1 from_vct); rewrite !right_sizesK => Heq.
-  by left; apply val_inj.
-- rewrite -Ht2 => /(congr1 from_vct); rewrite !right_sizesK => Heq.
-  by right; apply val_inj.
-Qed.
-
-End TamariSuccessor.
 
 
 Module TamariLattice.
@@ -1605,7 +1590,6 @@ End Def.
 
 Module Exports.
 
-Notation Tamari_latticeMixin := Tamari_latticeMixin.
 Canonical Tamari_latticeType.
 
 Section Theory.
@@ -1653,10 +1637,48 @@ Canonical Tamari_tblatticeType := TBLatticeType (bintreesz n) Tamari_topMixin.
 Canonical Tamari_finLatticeType :=
   Eval hnf in [finLatticeType of (bintreesz n)].
 
-Lemma bottom_Tamari : Order.bottom = (leftcombsz n).
+Lemma botETamari : 0%O = leftcombsz n.
 Proof. by []. Qed.
-Lemma top_Tamari : Order.top = (rightcombsz n).
+Lemma topETamari : 1%O = rightcombsz n.
 Proof. by []. Qed.
 
 End TamariTBLattice.
+
+
+Section TamariCover.
+
+Variable n : nat.
+Implicit Types t : bintreesz n.
+
+Lemma Tamari_succ t1 t2 t :
+  trval t2 \in rotations t1 -> t1 <=T t -> t <=T t2 -> t = t1 \/ t = t2.
+Proof.
+move/rotations_right_sizesP => [u] [v0] [v] [Ht1 Ht2].
+move: (right_sizesP t); rewrite -!Tamari_vctleq Ht1 Ht2 => Htam H1 H2.
+have [] := vct_succ Htam H1 H2.
+- rewrite -Ht1 => /(congr1 from_vct); rewrite !right_sizesK => Heq.
+  by left; apply val_inj.
+- rewrite -Ht2 => /(congr1 from_vct); rewrite !right_sizesK => Heq.
+  by right; apply val_inj.
+Qed.
+
+Lemma Tamari_cover t1 t2 : (trval t2 \in rotations t1) = (covers t1 t2).
+Proof.
+apply/idP/coversP => [Hrot|].
+- split => /= [|z /andP[H1 H2]]; first exact: rotations_Tamari.
+  have [HA1|HA2] := Tamari_succ Hrot (ltW H1) (ltW H2).
+  + by move: H1; rewrite HA1 ltxx.
+  + by move: H2; rewrite HA2 ltxx.
+- rewrite lt_def => [[/andP[neq le12 Hcov]]].
+  move: le12; rewrite TamariE => /connectP [/= [|s0 [|s1 s]] /= Hpath Ht2].
+  + by rewrite Ht2 eqxx in neq.
+  + by move: Hpath; rewrite andbT Ht2.
+  + move: Hpath => /and3P [Hs0 Hs1 Hpath]; exfalso; apply: (Hcov s0).
+    rewrite (rotations_Tamari Hs0) /=.
+    apply: (lt_le_trans (rotations_Tamari Hs1)).
+    by rewrite TamariE; apply/connectP; exists s.
+Qed.
+
+End TamariCover.
+
 

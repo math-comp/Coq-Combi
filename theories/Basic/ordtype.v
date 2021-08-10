@@ -57,12 +57,124 @@ Warning: the printing of the dual order is currently very confusing.
  ********)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype choice fintype seq.
-From mathcomp Require Import finset order.
+From mathcomp Require Import finset order path.
 Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
+
+Local Open Scope order_scope.
+Import Order.TTheory.
+
+(******************************************************************************)
+(** * Induction on partially ordered types                                    *)
+(******************************************************************************)
+
+Lemma finord_wf (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
+  (forall x, (forall y, y < x -> P y) -> P x) -> forall x, P x.
+Proof.
+move=> IH x.
+move: {2}#|_| (leqnn #|[set y : T | y < x]|) => c.
+elim: c x => [| c IHc] x.
+  rewrite leqn0 cards_eq0 => /eqP Hx.
+  apply IH => y Hy; exfalso.
+  suff : y \in set0 by rewrite in_set0.
+  by rewrite -Hx inE.
+move=> H; apply: IH => y Hy.
+apply: IHc; rewrite -ltnS.
+apply: (leq_trans _ H) => {H}; apply proper_card.
+rewrite /proper; apply/andP; split; apply/subsetP.
+- by move=> z; rewrite !inE => /lt_trans; apply.
+- move/(_ y); rewrite !inE => /(_ Hy).
+  by rewrite ltxx.
+Qed.
+
+Lemma finord_wf_down (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
+  (forall x, (forall y, y > x -> P y) -> P x) -> forall x, P x.
+Proof. exact: (@finord_wf _ [finPOrderType of T^d]). Qed.
+
+
+(******************************************************************************)
+(** * Covering relation                                                       *)
+(******************************************************************************)
+
+Definition covers {disp : unit} {T : finPOrderType disp} :=
+  [rel x y : T | (x < y) && [forall z, ~~(x < z < y)]].
+
+Section CoversFinPOrder.
+
+Variable (disp : unit) (T : finPOrderType disp).
+Implicit Type (x y : T).
+
+Lemma coversP x y : reflect (x < y /\ (forall z, ~(x < z < y))) (covers x y).
+Proof.
+apply (iffP andP) => /= [[ltxy /forallP Hcovers] | [ltxy Hcovers]].
+- by split => // z; apply/negP.
+- by split => //; apply/forallP => z; apply/negP.
+Qed.
+
+Lemma ltcovers x y : covers x y -> x < y.
+Proof. by move/coversP => []. Qed.
+
+Lemma coversEV x y : covers x y -> forall z, x <= z <= y -> z = x \/ z = y.
+Proof.
+move=> /coversP[ltxy Hcovers] z /andP [].
+rewrite le_eqVlt => /orP[/eqP -> | ltxz]; first by left.
+rewrite le_eqVlt => /orP[/eqP -> | ltzy]; first by right.
+by exfalso; apply: (Hcovers z); rewrite ltxz ltzy.
+Qed.
+
+Lemma covers_dual x y :
+  covers (T := [finPOrderType of T^d]) y x = covers x y.
+Proof.
+rewrite /= ltEdual; congr (_ && _); apply: eq_forallb => z.
+by rewrite !ltEdual andbC.
+Qed.
+
+Lemma covers_ind (P : T -> Type) :
+  (forall x y, covers x y -> P x -> P y) ->
+  forall x, P x -> forall y, x <= y -> P y.
+Proof.
+move=> IH x Px; elim/finord_wf => y IHy.
+rewrite le_eqVlt; case: eqP => [<-|] //= _ ltxy.
+case: (boolP (covers x y)) => [/IH|]; first exact.
+rewrite /covers /= ltxy /= -negb_exists negbK => /existsP/sigW [z0].
+move/(arg_minP (P := [pred z | x < z < y]) (fun z => #|[pred t | z < t < y]|))
+    => {z0} [zmin /andP[ltxz ltzy] Hzmin].
+suff /IH : covers zmin y by apply; apply: (IHy _ ltzy (ltW ltxz)).
+rewrite /= ltzy /=; apply/forallP => u; apply/negP => /andP [ltzu ltuy].
+have /Hzmin : x < u < y by rewrite ltuy (lt_trans ltxz ltzu).
+rewrite leNgt => /negP; apply.
+apply proper_card; rewrite /= properE; apply/andP; split.
+  by apply/subsetP => v; rewrite !unfold_in => /andP[/(lt_trans ltzu)->->].
+apply/negP => /subsetP/(_ u); rewrite !unfold_in ltxx /= => Habs.
+by have /Habs : zmin < u < y by rewrite ltzu ltuy.
+Qed.
+
+Lemma path_covers x y :
+  reflect (exists2 s, path covers x s & last x s = y) (x <= y).
+Proof.
+apply (iffP idP) => [|[s]]; first last.
+  elim: s x => [x /= _ -> // |s0 s IHs] x /= /andP[/andP[/ltW ltxs0 _]].
+by move => {}/IHs H{}/H /(le_trans ltxs0).
+move: y; apply covers_ind; last by exists [::].
+move=> z y Hcovers [pth Hpath Hlast].
+exists (rcons pth y); last by rewrite last_rcons.
+by rewrite rcons_path Hpath Hlast andTb.
+Qed.
+
+End CoversFinPOrder.
+
+Lemma covers_rind (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
+  (forall x y, covers y x -> P x -> P y) ->
+  forall x, P x -> forall y, x >= y -> P y.
+Proof.
+move=> IH x Px y.
+rewrite -leEdual; apply: covers_ind => // {Px y}x y.
+by rewrite covers_dual => /IH.
+Qed.
+
 
 (******************************************************************************)
 (** ** Inhabited types                                                        *)
@@ -486,9 +598,6 @@ Section Tests.
 Canonical bool_FinOrderType := [inhFinOrderType of bool].
 End Tests.
 
-
-Local Open Scope order_scope.
-Import Order.TTheory.
 
 
 (******************************************************************************)
@@ -1125,36 +1234,6 @@ elim: n i => //= n IHn i.
 move/(_  i.+1) : IHn => /= ->.
 by rewrite ltEnat /= ltnNge leqnSn.
 Qed.
-
-
-(******************************************************************************)
-(** * Induction on partially ordered types                                    *)
-(******************************************************************************)
-
-Lemma finord_wf (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
-  (forall x, (forall y, y < x -> P y) -> P x) -> forall x, P x.
-Proof.
-move=> IH x.
-have := leqnn #|[set y : T | y < x]|.
-move: {2}#|_| => c.
-elim: c x => [| c IHc] x.
-  rewrite leqn0 cards_eq0 => /eqP Hx.
-  apply IH => y Hy; exfalso.
-  suff : y \in set0 by rewrite in_set0.
-  by rewrite -Hx inE.
-move => H; apply IH => y Hy.
-apply IHc; rewrite -ltnS.
-apply: (leq_trans _ H) => {H}; apply proper_card.
-rewrite /proper; apply/andP; split; apply/subsetP.
-- by move=> z; rewrite !inE => /lt_trans; apply.
-- move/(_ y); rewrite !inE => /(_ Hy).
-  by rewrite ltxx.
-Defined.
-
-Lemma finord_wf_down (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
-  (forall x, (forall y, y > x -> P y) -> P x) -> forall x, P x.
-Proof. exact: (@finord_wf _ [finPOrderType of T^d]). Qed.
-
 
 (** ** The order on ordinals ***)
 
