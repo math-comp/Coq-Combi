@@ -229,6 +229,7 @@ case: leqP => Hb.
   by have := ltnW Hb; rewrite /leq => /eqP ->.
 Qed.
 
+
 (** ** Bigop lemmas *)
 Section BigInterv.
 
@@ -433,15 +434,14 @@ Variable op : Monoid.com_law idx.
 Lemma big_seq_sub (s : seq T) F :
   \big[op/idx]_(x : seq_sub s) F (ssval x) = \big[op/idx]_(x <- undup s) F x.
 Proof.
-rewrite /index_enum.
 rewrite -[LHS](big_map (ssval (s := s)) xpredT (fun x : T => F x)).
 apply perm_big; apply uniq_perm.
 - rewrite map_inj_uniq; last exact: val_inj.
-  by rewrite -enumT; exact: enum_uniq.
+  exact: index_enum_uniq.
 - exact: undup_uniq.
 - move=> x; rewrite mem_undup; apply/mapP/idP => [/= [y _ ->] | Hx].
   + by case: y => y /= Hy.
-  + by exists (SeqSub Hx); rewrite // -enumT mem_enum.
+  + by exists (SeqSub Hx); rewrite // mem_index_enum.
 Qed.
 
 End SeqSub.

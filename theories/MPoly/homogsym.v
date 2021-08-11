@@ -606,8 +606,7 @@ Lemma comp_symbe m (H : mnmwgt m = d) :
 Proof using.
 rewrite comp_mpolyX /= /prod_gen /intpartn_of_mon /intpart_of_mon /=.
 rewrite rmorph_prod /= [RHS](perm_big _ (permEl (perm_rev _))) /=.
-rewrite big_flatten /= big_map /=.
-rewrite /index_enum -!enumT /=; apply eq_bigr => i _.
+rewrite big_flatten /= big_map /= -big_enum /=; apply eq_bigr => i _.
 rewrite big_nseq tnth_mktuple.
 by rewrite -big_const_ord prodr_const cardT -cardE card_ord.
 Qed.

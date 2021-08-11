@@ -42,6 +42,15 @@ Variable n0 : nat.
 Local Notation n := n0.+1.
 Variable R : ringType.
 
+Lemma mons2mE s : 'X_[s2m s] = \prod_(i <- s) 'X_i :> {mpoly R[n]}.
+Proof.
+rewrite /s2m; elim: s => [| s0 s IHs]/=.
+  by rewrite big_nil -/mnm0 mpolyX0.
+rewrite big_cons -{}IHs -mpolyXD; congr ('X_[_]).
+by rewrite mnmP => i; rewrite mnmDE !mnmE.
+Qed.
+
+
 Definition Schur d (sh : 'P_d) : {mpoly R[n]} :=
   \sum_(t : tabsh sh) \prod_(i <- to_word t) 'X_i.
 
@@ -49,12 +58,13 @@ Lemma Schur_tabsh_readingE  d (sh : 'P_d) :
   Schur sh =
   \sum_(t : d.-tuple 'I_n | tabsh_reading sh t) \prod_(i <- t) 'X_i.
 Proof using.
-rewrite /Schur /index_enum -!enumT.
+rewrite /Schur -big_enum /=.
 pose prodw := fun w => \prod_(i <- w) 'X_i : {mpoly R[n]}.
 rewrite -[LHS](big_map (fun t => to_word (val t)) xpredT prodw).
 rewrite -[RHS](big_map val (tabsh_reading sh) prodw).
 rewrite -[RHS]big_filter.
-by rewrite (perm_big _ (to_word_enum_tabsh sh)).
+rewrite (perm_big _ (to_word_enum_tabsh sh)) /=.
+by rewrite !big_filter !big_map.
 Qed.
 
 (** ** Some particular Schur functions *)
@@ -87,14 +97,11 @@ by apply/hasPn => x /=.
 Qed.
 
 Lemma symh_basisE d :
-  \sum_(s in (basis n d)) 'X_[s2m s] = Schur (rowpartn d).
+  \sum_(s in basis n d) 'X_[s2m s] = Schur (rowpartn d).
 Proof using.
 rewrite Schur_tabsh_readingE (eq_bigl _ _ (@tabwordshape_row d)).
 rewrite [RHS](eq_bigr (fun s : d.-tuple 'I_n => 'X_[s2m s])); first last.
-  move=> [s _] /= _; rewrite /s2m; elim: s => [| s0 s IHs]/=.
-    by rewrite big_nil -/mnm0 mpolyX0.
-  rewrite big_cons {}IHs -mpolyXD; congr ('X_[_]).
-  by rewrite mnmP => i; rewrite mnmDE !mnmE.
+  by move=> [s _] /= _; rewrite mons2mE.
 by apply eq_bigl => m; rewrite inE /=.
 Qed.
 
@@ -109,7 +116,7 @@ Variable R : comRingType.
 
 
 Lemma perm_enum_basis d :
-  perm_eq [seq s2m (val s) | s in (basis n d)]
+  perm_eq [seq s2m (tval s) | s in basis n d]
           [seq val m | m in [set m : 'X_{1..n < d.+1} | mdeg m == d]].
 Proof using.
 apply uniq_perm.
@@ -133,16 +140,12 @@ Qed.
 Lemma Schur_rowpartn d :
   \sum_(m : 'X_{1..n < d.+1} | mdeg m == d) 'X_[m] = Schur n0 R (rowpartn d).
 Proof using.
-rewrite /= -symh_basisE.
-rewrite -(big_map (@bmnm n d.+1) (fun m => mdeg m == d) (fun m => 'X_[m])).
-rewrite /index_enum -enumT -big_filter.
-rewrite [filter _ _](_ : _ =
-    [seq val m | m in [set m : 'X_{1..n < d.+1} | mdeg m == d]]);
-    first last.
-  rewrite /enum_mem filter_map -filter_predI; congr map.
-  by apply eq_filter => s /=; rewrite !inE andbT.
-rewrite -(perm_big _ (perm_enum_basis d)) /=.
-by rewrite big_map -[RHS]big_filter.
+rewrite -symh_basisE.
+transitivity
+  (\sum_(m <- [seq s2m (tval s) | s in basis n d]) 'X_[m] : {mpoly R[n]});
+    last by rewrite big_map big_enum.
+rewrite (perm_big _ (perm_enum_basis d)) big_map big_enum /=.
+by apply eq_bigl => m; rewrite inE.
 Qed.
 
 
@@ -172,27 +175,14 @@ Lemma mesym_SchurE d :
 Proof using.
 rewrite /= mesym_tupleE /tmono Schur_tabsh_readingE.
 rewrite (eq_bigl _ _ (@tabwordshape_col d)).
-set f := BIG_F.
-rewrite (eq_bigr (fun x => f (rev_tuple x))) /f {f}; first last.
+set f := BIG_F; rewrite (eq_bigr (fun x => f (rev_tuple x))) {}/f; first last.
   by move => i _ /=; apply: perm_big; rewrite -perm_rev.
 rewrite (eq_bigl (fun i => sorted >%O (rev_tuple i))); first last.
   move=> [t /= _]; rewrite rev_sorted.
   case: t => [//= | t0 t] /=.
   apply: (map_path (b := pred0)) => [x y /= _|]//.
   by apply/hasPn => x /=.
-rewrite [RHS](perm_big
-                (map (@rev_tuple _ _) (enum {:d.-tuple 'I_n}))) /=.
-  by rewrite big_map /=; first by rewrite /index_enum /= enumT.
-apply uniq_perm.
-- rewrite /index_enum -enumT; exact: enum_uniq.
-- rewrite map_inj_uniq; first exact: enum_uniq.
-  apply (can_inj (g := (@rev_tuple _ _))).
-  by move=> t; apply val_inj => /=; rewrite revK.
-- rewrite /index_enum -enumT /= => t.
-  rewrite mem_enum /= inE; apply esym; apply/mapP.
-  exists (rev_tuple t) => /=.
-  + by rewrite mem_enum.
-  + by apply val_inj; rewrite /= revK.
+by apply/esym/reindex/onW_bij/inv_bij => x; apply val_inj; rewrite /= revK.
 Qed.
 
 Lemma Schur1 (sh : 'P_1) : Schur n0 R sh = \sum_(i < n) 'X_i.

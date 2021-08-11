@@ -456,9 +456,9 @@ rewrite (eq_bigr (fun i : 'P_d =>
     first last.
   move=> i Hi; congr (_ *: sympol 'm[_]).
   by rewrite mpartK //; apply (size_mpart_in_supp Hhomog Hi).
-rewrite /index_enum -enumT.
 transitivity (\sum_(m <- [seq mpart i | i : 'P_d ] | m \in msupp f)
-               f@_m *: sympol ('m[partm m])); last by rewrite big_map.
+               f@_m *: sympol ('m[partm m])); first last.
+  by rewrite big_map big_enum_cond.
 rewrite -big_filter -[RHS]big_filter; apply perm_big; apply uniq_perm.
 - by apply filter_uniq; apply msupp_uniq.
 - rewrite filter_map map_inj_in_uniq; first by apply filter_uniq; apply enum_uniq.
@@ -1090,7 +1090,7 @@ Qed.
 Lemma symHE_prod_intcomp d :
   E d = \sum_(c : intcompn d) (-1) ^+ (d - size c) *: (\prod_(i <- c) H i).
 Proof.
-rewrite /index_enum -enumT /=.
+rewrite -big_enum /=.
 rewrite -[RHS](big_map (@cnval d) xpredT
    (fun c : seq nat => (-1)^+(d - size c) *: \prod_(i <- c) H i)).
 rewrite enum_intcompnE.
@@ -1853,7 +1853,7 @@ Lemma symh_to_symp_prod_partsum n :
   [char R] =i pred0 ->
   'h_n = \sum_(c : intcompn n) \Pi c *: \prod_(i <- c) 'p_i :> SF.
 Proof using.
-rewrite /index_enum -enumT /= charf0P => Hchar.
+rewrite -big_enum /= charf0P => Hchar.
 rewrite -[RHS](big_map (@cnval n) xpredT
    (fun c : seq nat => \Pi c *: \prod_(i <- c) 'p_i)).
 rewrite enum_intcompnE.

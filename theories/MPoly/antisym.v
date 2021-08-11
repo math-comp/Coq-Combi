@@ -639,6 +639,9 @@ Implicit Type (p : 'II_n.+1).
 Local Definition eltrp p := ('s_i p.1, 's_i p.2).
 Local Definition predi p := (p.1 < p.2) && (p != (inord i, inord i.+1)).
 
+Lemma eltrpK : involutive eltrp.
+Proof. by move=> [u v]; rewrite /eltrp !eltrK. Qed.
+
 Lemma predi_eltrp p : i < n -> predi p -> predi (eltrp p).
 Proof using.
 move=> Hi.
@@ -677,11 +680,8 @@ Qed.
 
 Lemma predi_eltrpE p : i < n -> predi p = predi ('s_i p.1, 's_i p.2).
 Proof using.
-move=> Hi; apply/idP/idP; first exact: predi_eltrp.
-set p1 := ( _, _).
-suff -> : p = ('s_i p1.1, 's_i p1.2) by apply predi_eltrp.
-rewrite /p1 /= !eltrK {p1}.
-by case: p.
+move=> Hi; apply/idP/idP => [|H]; first exact: predi_eltrp.
+by rewrite -(eltrpK p) predi_eltrp.
 Qed.
 
 End EltrP.
@@ -703,16 +703,15 @@ rewrite (eq_bigl (fun p : 'II_n.+1 => predi i (eltrp i p))); first last.
 rewrite (eq_bigr (fun p => 'X_(eltrp i p).1 - 'X_(eltrp i p).2)); first last.
   by move => [u v] _; rewrite msymB /msym !mmapX !mmap1U.
 rewrite -(big_map _ _ (fun p => ('X_p.1 - 'X_p.2))) /=.
-rewrite /index_enum -enumT /=.
-apply: perm_big.
-have Hin : map (eltrp i) (enum {: 'II_ n.+1}) =i enum {: 'II_ n.+1}.
-  move=> [u v].
-  rewrite mem_enum inE.
-  have -> : (u, v) = eltrp i (eltrp i (u, v)) by rewrite /eltrp /= !eltrK.
-  by apply map_f; rewrite mem_enum inE.
-apply: (uniq_perm _ _ Hin).
-- by rewrite (eq_uniq _ Hin) ?size_map // enum_uniq.
+set L := map _ _; suff Hin : perm_eq L (enum {: 'II_ n.+1}).
+  by rewrite (perm_big _ Hin) big_enum_cond.
+apply: uniq_perm.
+- rewrite {}/L map_inj_uniq; first exact: index_enum_uniq.
+  exact: (can_inj (eltrpK _)).
 - exact: enum_uniq.
+- rewrite /L => [[u v]]; rewrite mem_enum inE.
+  rewrite -(eltrpK i (u,v)).
+  by apply map_f; rewrite mem_index_enum.
 Qed.
 
 Lemma sym_VanprodM n (R : comRingType) (p : {mpoly R[n]}) :

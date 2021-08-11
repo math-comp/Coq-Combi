@@ -1425,7 +1425,7 @@ rewrite (reindex _ (onW_bij _ (prods_codesz_bij n))) /=.
 rewrite (eq_bigr (fun c : codesz _ => 'X^(sumn c))); first last.
   move=> i _; rewrite (length_permcd (codeszP _)) //.
   by rewrite size_codesz.
-rewrite /prods_codesz {1}/index_enum -enumT /=.
+rewrite /prods_codesz -big_enum /=.
 rewrite -(big_map (@cdval _) xpredT (fun i : seq nat => 'X^(sumn i))).
 elim: n => [/= | n].
   by rewrite enum_codeszE /index_iota !big_seq1 /= addn0.

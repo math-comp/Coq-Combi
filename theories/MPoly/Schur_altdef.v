@@ -161,8 +161,7 @@ apply/andP; split.
   + rewrite -{2}(sumn_intpartn la).
     by rewrite -(sum_iota_sumnE Hsz) big_mkord.
   + rewrite -mdeg_mesym1 /mdeg.
-    rewrite -map_tnth_enum big_map /index_enum enumT.
-    apply eq_bigr => i _.
+    rewrite -map_tnth_enum big_map big_enum; apply eq_bigr => i _.
     by rewrite mnm_tnth.
 - apply is_part_rem_trail0.
   apply/(sorted1P 0) => i.

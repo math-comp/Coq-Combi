@@ -223,11 +223,9 @@ rewrite big_flatten /index_iota big_map !subn0; apply eq_bigr => r _.
 by rewrite big_map !subn0; apply eq_bigr.
 Qed.
 
-Lemma big_box_in (R : Type) (idx : R) (op : Monoid.law idx) (f : nat -> nat -> R):
+Lemma big_box_in R (idx : R) (op : Monoid.com_law idx) (f : nat -> nat -> R):
   \big[op/idx]_(b : box_in) f b.1 b.2 = \big[op/idx]_(b <- enum_box_in) f b.1 b.2.
-Proof using.
-by rewrite -enum_box_inE big_map /index_enum /= -!enumT /=.
-Qed.
+Proof using. by rewrite -enum_box_inE big_map /= big_enum. Qed.
 
 End BoxIn.
 

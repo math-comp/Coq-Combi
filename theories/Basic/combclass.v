@@ -302,9 +302,7 @@ rewrite cardE -(size_map val) /= enum_unionE.
 rewrite /enum_union size_flatten /shape -map_comp.
 rewrite (eq_map (f2 := fun i => #|TPi i|)); first last.
   by move=> i; rewrite /= size_map cardE.
-rewrite /index_enum -enumT.
-elim: (enum TPI) => [| i0 I IHI] /=; first by rewrite big_nil.
-by rewrite big_cons IHI.
+by rewrite -sumn_mapE big_enum.
 Qed.
 
 End SubtypesDisjointUnion.
