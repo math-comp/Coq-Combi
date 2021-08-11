@@ -1572,11 +1572,11 @@ by rewrite -syms_symm_int.
 Qed.
 
 Lemma symm_syms_int la :
-  'm[la] = \sum_(mu : 'PDom_d) KostkaInv la mu *: 's[mu] :> SF.
+  'm[la] = \sum_(mu : 'P_d) KostkaInv la mu *: 's[mu] :> SF.
 Proof.
 rewrite /KostkaInv.
 apply: (Minv_lincombl (Kostka_unitrig _ d)
-         (F := fun mu : 'PDom_d => 's[mu]) (G := fun mu : 'PDom_d => 'm[mu])).
+                      (F := fun mu => 's[mu]) (G := fun mu => 'm[mu])).
 exact: syms_symm_int.
 Qed.
 
@@ -1922,7 +1922,7 @@ Local Definition intcompn_behead i (Hi : i != 0%N) n (Hin : i <= n) c :=
 Lemma part_sumn_count_bound b l :
   sumn l < b ->
   is_part l ->
-  (\sum_(i < b | (i : nat) \in l) i * (count_mem (i : nat) l))%N = sumn l.
+  (\sum_(i < b | val i \in l) i * (count_mem (val i) l))%N = sumn l.
 Proof.
 move=> Hb; have {}Hb : all (gtn b) l.
   elim: l Hb => //= l0 l IHl H; apply/andP; split.
@@ -1934,37 +1934,37 @@ move: Hb => /= Hl0b.
 have /= Hl0 := part_head_non0 Hpart.
 move: Hpart => /andP [_] {}/Hrec Hrec.
 case: (boolP (l0 \in l)) => Hl0l.
-- rewrite (eq_bigl (fun i : 'I_b => (i : nat) \in l)); first last.
-    by move=> i; rewrite inE; case: (altP (i =P l0 :> nat)) => [-> |].
+- rewrite (eq_bigl (fun i : 'I_b => val i \in l)); first last.
+    by move=> i /=; rewrite inE; case: (altP (i =P l0 :> nat)) => [-> |].
   rewrite (bigD1 (Ordinal Hl0b)) //=.
   rewrite eq_refl /= mulnDr muln1 -addnA; congr (_ + _)%N.
   (* TODO : Factorize *)
-  rewrite (eq_bigr (fun i : 'I_b => i * (count_mem (i : nat) l)))%N;
+  rewrite (eq_bigr (fun i : 'I_b => i * (count_mem (val i) l)))%N;
       first last.
     move=> i /andP [_ Hi].
-    have : (i : nat) != l0 by [].
+    have : val i != l0 by [].
     rewrite eq_sym => /negbTE ->.
     by rewrite add0n.
   by rewrite -Hrec [RHS](bigD1 (Ordinal Hl0b)).
 - rewrite (bigD1 (Ordinal Hl0b)) //= ?inE eq_refl //=.
   rewrite (count_memPn Hl0l) addn0 muln1; congr (_ + _)%N.
-  rewrite (eq_bigr (fun i : 'I_b => i * (count_mem (i : nat) l)))%N;
+  rewrite (eq_bigr (fun i : 'I_b => i * (count_mem (val i) l)))%N;
       first last.
     move=> i /andP [_ Hi].
-    have : (i : nat) != l0 by [].
+    have : val i != l0 by [].
     rewrite eq_sym => /negbTE ->.
     by rewrite add0n.
-  rewrite (eq_bigl (fun i : 'I_b => (i : nat) \in l)); first last.
+  rewrite (eq_bigl (fun i : 'I_b => val i \in l)); first last.
     move=> i /=; rewrite inE; case: (altP (i =P l0 :> nat)) => [Hi | Hil0] /=.
     + subst l0; rewrite (negbTE Hl0l).
       by apply negbTE; rewrite negbK; apply/eqP/val_inj.
-    + by case: ((i : nat) \in l).
+    + by rewrite Hil0 andbT.
   exact: Hrec.
 Qed.
 
 Lemma part_sumn_count l :
   is_part l ->
-  (\sum_(i < (sumn l).+1 | (i : nat) \in l) i * (count_mem (i : nat) l))%N
+  (\sum_(i < (sumn l).+1 | val i \in l) i * (count_mem (val i) l))%N
   = sumn l.
 Proof. by move/part_sumn_count_bound; apply. Qed.
 
@@ -1998,8 +1998,8 @@ rewrite (bigID (fun j : 'I_(n.+1) => (j : nat) \in l)) /=
   - by move/perm_sumn: Hperm; rewrite /= Hsum Hm.
   - subst c0; move/perm_mem: Hperm Hi => /(_ i).
     by rewrite inE eq_refl /= => ->.
-transitivity (\sum_(i < n.+1 | (i : nat) \in l)
-               n%:R^-1 * (zcard (rem (i : nat) l))%:R^-1 : R).
+transitivity (\sum_(i < n.+1 | val i \in l)
+               n%:R^-1 * (zcard (rem (val i) l))%:R^-1 : R).
   apply eq_bigr => /= i Hi.
   have H0i : i != 0%N :> nat.
     move: Hi; apply contraL => /eqP ->.
@@ -2013,11 +2013,11 @@ transitivity (\sum_(i < n.+1 | (i : nat) \in l)
     + by move/perm_sumn; rewrite /= Hsum {1}Hm.
     + by move=> _ /eqP ->.
   rewrite (eq_bigl (fun c : intcompn (n - i) =>
-                      perm_eq (rem (i : nat) l) c)); first last.
+                      perm_eq (rem (val i) l) c)); first last.
     move=> c; rewrite eq_refl andbT.
     have /permPl -> := perm_to_rem Hi.
     by rewrite perm_cons.
-  transitivity (\sum_(c : intcompn (n - i) | perm_eq (rem (i : nat ) l) c)
+  transitivity (\sum_(c : intcompn (n - i) | perm_eq (rem (val i) l) c)
                  n%:R^-1 * \Pi c : R).
     by apply eq_bigr => c _; rewrite intcompn_sumn subnKC // natrM invfM.
   rewrite -mulr_sumr IHm //.
@@ -2033,11 +2033,11 @@ transitivity (\sum_(i < n.+1 | (i : nat) \in l)
     + by move: H0; apply contra; apply (mem_subseq Hrem).
 rewrite {IHm} -mulr_sumr.
 transitivity (n%:R^-1 *
-       (\sum_(i < n.+1 | (i : nat) \in l)
-         (i * (count_mem (i : nat) l))%:R / (zcard l)%:R) : R).
+       (\sum_(i < n.+1 | val i \in l)
+         (i * (count_mem (val i) l))%:R / (zcard l)%:R) : R).
   congr (_ * _); apply eq_bigr => i Hi.
   have H0i : i != 0%N :> nat.
-    move: Hi; apply contraL => /eqP ->.
+    move: Hi => /=; apply contraL => /eqP ->.
     by move: Hpart; rewrite is_part_sortedE => /andP [].
   rewrite -(zcard_rem H0i Hi) [X in _ / X]natrM invfM -[LHS]mul1r !mulrA.
   congr (_ * _); rewrite divff // Hchar.
