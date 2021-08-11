@@ -1094,7 +1094,7 @@ rewrite -big_enum /=.
 rewrite -[RHS](big_map (@cnval d) xpredT
    (fun c : seq nat => (-1)^+(d - size c) *: \prod_(i <- c) H i)).
 rewrite enum_intcompnE.
-elim: d {-2}d (leqnn d) => [| m IHm] d.
+have [m/ltnW] := ubnP d; elim: m => [| m IHm] in d *.
   rewrite leqn0 => /eqP ->.
   by rewrite /enum_compn /= big_seq1 /= subnn expr0 scale1r big_nil E0.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
@@ -1857,7 +1857,7 @@ rewrite -big_enum /= charf0P => Hchar.
 rewrite -[RHS](big_map (@cnval n) xpredT
    (fun c : seq nat => \Pi c *: \prod_(i <- c) 'p_i)).
 rewrite enum_intcompnE.
-elim: n {-2}n (leqnn n) => [| m IHm] n.
+have [m/ltnW] := ubnP n; elim: m => [| m IHm] in n *.
   rewrite leqn0 => /eqP ->.
   by rewrite big_seq1 big_nil symh0 /= invr1 scale1r.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
@@ -1977,15 +1977,15 @@ Lemma coeff_symh_to_symp n (l : 'P_n) :
 Proof.
 rewrite charf0P => Hchar.
 case: l => l /= /andP [/eqP].
-elim: n {-2}n (leqnn n) l => [| m IHm] n.
-  rewrite leqn0 => /eqP -> l /part0 H{}/H ->{l}.
+have [m/ltnW] := ubnP n; elim: m => [| m IHm] in n l *.
+  rewrite leqn0 => /eqP -> /part0 H{}/H ->{l}.
   rewrite zcard_nil /=.
   rewrite (eq_bigl (xpred1 (IntCompN (cnval := [::]) (n := 0%N) isT))); first last.
     move=> i; apply/idP/eqP => [Hperm | /(congr1 val)/= -> //].
     by apply val_inj => /=; apply/nilP; rewrite /nilp -(perm_size Hperm).
   by rewrite big_pred1_eq.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
-move => l Hsum Hpart.
+move => Hsum Hpart.
 have head_intcompn (c : intcompn n) : (head 0 c < n.+1)%N.
   rewrite ltnS; case: c => [[|c0 c]] //= /andP [/eqP <- _].
   exact: leq_addr.
@@ -2284,7 +2284,7 @@ Qed.
 
 Lemma omegasf_symh i : (i <= n)%N -> omegasf 'h_i = 'e_i.
 Proof.
-elim: i {1 3 4 5}i (leqnn i) => [|k IHk] i.
+have [k/ltnW] := ubnP i; elim: k => [| k IHk] in i *.
   by rewrite leqn0 => /eqP ->; rewrite symh0 syme0 rmorph1.
 rewrite leq_eqVlt => /orP [/eqP -> {i} lt_kn|]; last by rewrite ltnS => /IHk.
 rewrite symh_symeE // rmorph_sum //= syme_symhE //.
@@ -2307,8 +2307,8 @@ Qed.
 
 Lemma omegasf_symp i : (0 < i <= n)%N -> omegasf 'p_i = (-1) ^+ i.+1 *: 'p_i.
 Proof.
-move=> /andP [lt0i lein].
-elim: i lein {-2}i (leqnn i) lt0i => [//| i IHi] /= ltin j.
+rewrite andbC => /andP [lein].
+have [j] := ubnPgeq i; elim: i lein j => [//| i IHi] /= ltin j.
   by move=> /(leq_trans _) H{}/H.
 move=> H1 lt0j; move: H1.
 rewrite leq_eqVlt orbC => /orP [/IHi->// | /eqP->{j lt0j}]; first exact: ltnW.
@@ -2508,7 +2508,7 @@ Qed.
 
 Lemma cnvar_symp i : (i < m)%N || (n <= m)%N -> cnvarsym 'p_i.+1 = 'p_i.+1.
 Proof.
-elim: i {-2}i (leqnn i) => [/= | i IHi] d.
+have [b/ltnW] := ubnP i; elim: b i => [| i IHi] d.
   rewrite leqn0 => /eqP -> H.
   by rewrite !sympe1E cnvar_syme.
 rewrite leq_eqVlt => /orP [/eqP ->{d} | ] Hi; last exact: IHi.

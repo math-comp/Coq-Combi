@@ -124,8 +124,8 @@ Qed.
 Lemma enum_compn_allP n : all (is_comp_of_n n) (enum_compn n).
 Proof.
 rewrite /is_comp_of_n /is_comp /enum_compn.
-elim: n {1 3 5}n (leqnn n) => [|aux IHaux] //= n.
-  by rewrite leqn0 !andbT => /eqP ->.
+elim: n {1 3 5}n (leqnn n) => [|aux IHaux] n /=.
+  by rewrite /= leqn0 !andbT => /eqP ->.
 move=> Hn.
 case: (altP (n =P 0)) => [-> //| neq0].
 apply/allP => /= lst /flatten_mapP [/= i].
@@ -143,7 +143,7 @@ Lemma enum_compn_countE n :
   forall s, is_comp_of_n n s -> count_mem s (enum_compn n) = 1.
 Proof.
 rewrite /is_comp_of_n /is_comp /enum_compn.
-elim: n {1 3 5}n (leqnn n) => [|aux IHaux] //= n.
+elim: n {1 3 5}n (leqnn n) => [|aux IHaux] n /=.
   rewrite leqn0 => /eqP -> s.
   rewrite andbC => /andP [/comp0 H /eqP /H{H} ->].
   by rewrite eq_refl.

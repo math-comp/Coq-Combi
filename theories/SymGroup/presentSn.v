@@ -1148,7 +1148,7 @@ Proof using.
 rewrite wordcdE => Hcode.
 have:= Hcode => /is_codeP Hcd Hsz.
 rewrite -(sum_iota_sumnE (n := size c)) // /index_iota subn0.
-elim: {1 3 4}(size c) (leqnn (size c)) => [/= | m IHm] Hm.
+have [n] := ubnPgeq (size c); elim: n => [/= |m IHm] Hm.
   by rewrite !big_nil length1.
 rewrite -(addn1 m) iota_add !big_cat /= add0n !big_seq1.
 rewrite perm_on_prods_length /=; first by rewrite (IHm (ltnW Hm)).

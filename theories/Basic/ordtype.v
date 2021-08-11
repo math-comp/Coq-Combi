@@ -59,19 +59,12 @@ Lemma finord_wf (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
   (forall x, (forall y, y < x -> P y) -> P x) -> forall x, P x.
 Proof.
 move=> IH x.
-move: {2}#|_| (leqnn #|[set y : T | y < x]|) => c.
-elim: c x => [| c IHc] x.
-  rewrite leqn0 cards_eq0 => /eqP Hx.
-  apply IH => y Hy; exfalso.
-  suff : y \in set0 by rewrite in_set0.
-  by rewrite -Hx inE.
-move=> H; apply: IH => y Hy.
-apply: IHc; rewrite -ltnS.
-apply: (leq_trans _ H) => {H}; apply proper_card.
-rewrite /proper; apply/andP; split; apply/subsetP.
+have [n] := ubnP #|[set y : T | y < x]|; elim: n => // n IHn in x *.
+rewrite ltnS leq_eqVlt; case: eqP => [eqcn _ | _ ]; last exact: IHn.
+apply: IH => y ltxy; apply: IHn.
+rewrite -{}eqcn; apply proper_card; apply/andP; split; apply/subsetP.
 - by move=> z; rewrite !inE => /lt_trans; apply.
-- move/(_ y); rewrite !inE => /(_ Hy).
-  by rewrite ltxx.
+- by move/(_ y); rewrite !inE => /(_ ltxy); rewrite ltxx.
 Qed.
 
 Lemma finord_wf_down (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
