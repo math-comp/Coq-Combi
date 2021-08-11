@@ -88,7 +88,6 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset binomial order.
 From mathcomp Require Import bigop ssralg ssrint path perm fingroup.
-From mathcomp Require ssrnum.
 From SsrMultinomials Require Import ssrcomplements freeg mpoly.
 From SsrMultinomials Require monalg.
 
@@ -477,7 +476,7 @@ Qed.
 
 Lemma symm_unique d (f : {sympoly R[n]}) c :
   f = \sum_(l : 'P_d) (c l) *: 'm[l] ->
-  forall l : 'P_d, (size l <= n)%N -> c l = f@_(mpart l).
+  forall l : 'P_d, size l <= n -> c l = f@_(mpart l).
 Proof.
 move=> -> l Hl.
 rewrite !linear_sum /=.
@@ -495,7 +494,7 @@ Qed.
 
 Lemma symm_unique0 d c :
   \sum_(l : 'P_d) (c l) *: 'm[l] = 0 ->
-  forall l : 'P_d, (size l <= n)%N -> c l = 0.
+  forall l : 'P_d, size l <= n -> c l = 0.
 Proof. by move=> /esym/symm_unique => H l /H ->; rewrite mcoeff0. Qed.
 
 Lemma sum_symmE d (f : {sympoly R[n]}) :
@@ -1837,8 +1836,6 @@ End SymheSyms.
 (** ** Basis change from complete to power sums *)
 Section ChangeBasisSymhPowerSum.
 
-Import ssrnum Num.Theory.
-
 Variable nvar0 : nat.
 Variable R : fieldType.
 Local Notation nvar := nvar0.+1.
@@ -1897,18 +1894,18 @@ apply eq_bigr => l _; rewrite scaler_suml; apply eq_big.
 Qed.
 
 Lemma intcompn_cons_sub_proof i n (c : intcompn (n - i)) :
-  i != 0%N -> (i <= n)%N -> is_comp_of_n n (i :: c).
+  i != 0%N -> i <= n -> is_comp_of_n n (i :: c).
 Proof.
 move=> Hi Hin.
 rewrite /is_comp_of_n /= intcompn_sumn subnKC // eq_refl /=.
 rewrite /is_comp inE negb_or eq_sym Hi /=.
 exact: intcompnP.
 Qed.
-Local Definition intcompn_cons i (Hi : i != 0%N) n (Hin : (i <= n)%N) c :=
+Local Definition intcompn_cons i (Hi : i != 0%N) n (Hin : i <= n) c :=
   IntCompN (intcompn_cons_sub_proof c Hi Hin).
 
 Lemma intcompn_behead_sub_proof i n (c : intcompn n) :
-  i != 0%N -> (i <= n)%N ->
+  i != 0%N -> i <= n ->
   is_comp_of_n (n - i)%N (if head 0%N c == i then behead c else rowcompn (n-i)).
 Proof.
 case: c => [[|c0 c] /= /andP [/eqP <- Hcomp]] Hi0 Hin.
@@ -1918,12 +1915,12 @@ subst c0; rewrite addKn eq_refl /=.
 move: Hcomp; rewrite /is_comp inE; apply contra => ->.
 by rewrite orbT.
 Qed.
-Local Definition intcompn_behead i (Hi : i != 0%N) n (Hin : (i <= n)%N) c :=
+Local Definition intcompn_behead i (Hi : i != 0%N) n (Hin : i <= n) c :=
   IntCompN (intcompn_behead_sub_proof c Hi Hin).
 
 
 Lemma part_sumn_count_bound b l :
-  (sumn l < b)%N ->
+  sumn l < b ->
   is_part l ->
   (\sum_(i < b | (i : nat) \in l) i * (count_mem (i : nat) l))%N = sumn l.
 Proof.
@@ -1980,13 +1977,13 @@ case: l => l /= /andP [/eqP].
 have [m/ltnW] := ubnP n; elim: m => [| m IHm] in n l *.
   rewrite leqn0 => /eqP -> /part0 H{}/H ->{l}.
   rewrite zcard_nil /=.
-  rewrite (eq_bigl (xpred1 (IntCompN (cnval := [::]) (n := 0%N) isT))); first last.
+  rewrite (eq_bigl (xpred1 (IntCompN (cnval := [::]) (n := 0) isT))); first last.
     move=> i; apply/idP/eqP => [Hperm | /(congr1 val)/= -> //].
     by apply val_inj => /=; apply/nilP; rewrite /nilp -(perm_size Hperm).
   by rewrite big_pred1_eq.
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
 move => Hsum Hpart.
-have head_intcompn (c : intcompn n) : (head 0 c < n.+1)%N.
+have head_intcompn (c : intcompn n) : head 0%N c < n.+1.
   rewrite ltnS; case: c => [[|c0 c]] //= /andP [/eqP <- _].
   exact: leq_addr.
 pose headcomp c := Ordinal (head_intcompn c).
@@ -2007,7 +2004,7 @@ transitivity (\sum_(i < n.+1 | (i : nat) \in l)
   have H0i : i != 0%N :> nat.
     move: Hi; apply contraL => /eqP ->.
     by move: Hpart; rewrite is_part_sortedE => /andP [].
-  have Hin : (i <= n)%N by rewrite -ltnS.
+  have Hin : i <= n by rewrite -ltnS.
   rewrite (reindex (intcompn_cons H0i Hin)) /=; first last.
     exists (intcompn_behead H0i Hin) => c; rewrite inE => /andP [Hperm Hhead];
         apply val_inj; rewrite /= ?eq_refl //.
@@ -2015,12 +2012,12 @@ transitivity (\sum_(i < n.+1 | (i : nat) \in l)
     case: c Hperm Hhead => [[|c0 c]] //= _.
     + by move/perm_sumn; rewrite /= Hsum {1}Hm.
     + by move=> _ /eqP ->.
-  rewrite (eq_bigl (fun c : intcompn (n - i)%N =>
+  rewrite (eq_bigl (fun c : intcompn (n - i) =>
                       perm_eq (rem (i : nat) l) c)); first last.
     move=> c; rewrite eq_refl andbT.
     have /permPl -> := perm_to_rem Hi.
     by rewrite perm_cons.
-  transitivity (\sum_(c : intcompn (n - i)%N | perm_eq (rem (i : nat ) l) c)
+  transitivity (\sum_(c : intcompn (n - i) | perm_eq (rem (i : nat ) l) c)
                  n%:R^-1 * \Pi c : R).
     by apply eq_bigr => c _; rewrite intcompn_sumn subnKC // natrM invfM.
   rewrite -mulr_sumr IHm //.
@@ -2267,7 +2264,7 @@ Canonical omegasf_rmorphism  := RMorphism  omegasf_is_lrmorphism.
 Canonical omegasf_linear     := AddLinear  omegasf_is_lrmorphism.
 Canonical omegasf_lrmorphism := LRMorphism omegasf_is_lrmorphism.
 
-Lemma omegasf_syme i : (i <= n)%N -> omegasf 'e_i = 'h_i.
+Lemma omegasf_syme i : i <= n -> omegasf 'e_i = 'h_i.
 Proof.
 move=> Hi; apply val_inj; rewrite /= /sympolyf.
 case: (SF 'e_i) => /= p [Hp _].
@@ -2282,7 +2279,7 @@ have {Hp} -> : p = 'X_(Ordinal Hi).
 by rewrite comp_mpolyXU -tnth_nth tnth_mktuple.
 Qed.
 
-Lemma omegasf_symh i : (i <= n)%N -> omegasf 'h_i = 'e_i.
+Lemma omegasf_symh i : i <= n -> omegasf 'h_i = 'e_i.
 Proof.
 have [k/ltnW] := ubnP i; elim: k => [| k IHk] in i *.
   by rewrite leqn0 => /eqP ->; rewrite symh0 syme0 rmorph1.
@@ -2305,7 +2302,7 @@ rewrite !rmorphX /=; congr ( _ ^+ _).
 by rewrite sympolyf_evalX omegasf_syme // omegasf_symh.
 Qed.
 
-Lemma omegasf_symp i : (0 < i <= n)%N -> omegasf 'p_i = (-1) ^+ i.+1 *: 'p_i.
+Lemma omegasf_symp i : 0 < i <= n -> omegasf 'p_i = (-1) ^+ i.+1 *: 'p_i.
 Proof.
 rewrite andbC => /andP [lein].
 have [j] := ubnPgeq i; elim: i lein j => [//| i IHi] /= ltin j.
@@ -2474,7 +2471,7 @@ Canonical cnvarsym_rmorphism  := RMorphism  cnvarsym_is_lrmorphism.
 Canonical cnvarsym_linear     := AddLinear  cnvarsym_is_lrmorphism.
 Canonical cnvarsym_lrmorphism := LRMorphism cnvarsym_is_lrmorphism.
 
-Lemma cnvar_leq_symeE i : (i <= m)%N -> cnvarsym 'e_i = 'e_i.
+Lemma cnvar_leq_symeE i : i <= m -> cnvarsym 'e_i = 'e_i.
 Proof.
 move=> Hi; apply val_inj; rewrite /= /sympolyf.
 case: (SF 'e_i) => /= p [Hp _].
@@ -2488,14 +2485,14 @@ have {Hp} -> : p = 'X_(Ordinal Hi).
 by rewrite comp_mpolyXU -tnth_nth tnth_mktuple.
 Qed.
 
-Lemma cnvar_syme i : (i <= m)%N || (n <= m)%N -> cnvarsym 'e_i = 'e_i.
+Lemma cnvar_syme i : (i <= m) || (n <= m) -> cnvarsym 'e_i = 'e_i.
 Proof.
 move=> /orP [] H; first exact: cnvar_leq_symeE.
-case: (ssrnat.leqP i m) => [] H1; first exact: cnvar_leq_symeE.
+case: (leqP i m) => [] H1; first exact: cnvar_leq_symeE.
 by rewrite !syme_geqnE ?raddf0 // (leq_ltn_trans H H1).
 Qed.
 
-Lemma cnvar_symh i : (i <= m)%N || (n <= m)%N -> cnvarsym 'h_i = 'h_i.
+Lemma cnvar_symh i : (i <= m) || (n <= m) -> cnvarsym 'h_i = 'h_i.
 Proof.
 move=> Hi; rewrite !symh_to_syme.
 rewrite linear_sum /=; apply eq_bigr => la _.
@@ -2506,7 +2503,7 @@ move: Hi => /orP [Hi | ->]; last by rewrite orbT.
 by apply/orP; left; apply: (leq_trans le_id Hi).
 Qed.
 
-Lemma cnvar_symp i : (i < m)%N || (n <= m)%N -> cnvarsym 'p_i.+1 = 'p_i.+1.
+Lemma cnvar_symp i : (i < m) || (n <= m) -> cnvarsym 'p_i.+1 = 'p_i.+1.
 Proof.
 have [b/ltnW] := ubnP i; elim: b i => [| i IHi] d.
   rewrite leqn0 => /eqP -> H.
@@ -2535,10 +2532,10 @@ Section ProdGen.
 
 Variable Gen : forall nvar d : nat, {sympoly R[nvar]}.
 Hypothesis Hcnvargen :
-  forall d : nat, (d < m)%N || (n <= m)%N -> cnvarsym (Gen _ d.+1) = (Gen _ d.+1).
+  forall d : nat, (d < m) || (n <= m) -> cnvarsym (Gen _ d.+1) = (Gen _ d.+1).
 
 Lemma cnvar_prodgen d (la : 'P_d) :
-  (d <= m)%N || (n <= m)%N ->
+  (d <= m) || (n <= m) ->
   cnvarsym (prod_gen (Gen _) la) = prod_gen (Gen _) la.
 Proof.
 move=> Hd; rewrite /prod_gen rmorph_prod.
@@ -2552,7 +2549,7 @@ End ProdGen.
 
 Variable d : nat.
 
-Hypothesis Hd : (d <= m)%N || (n <= m)%N.
+Hypothesis Hd : (d <= m) || (n <= m).
 
 Lemma cnvar_prodsyme (la : 'P_d) : cnvarsym 'e[la] = 'e[la].
 Proof.
