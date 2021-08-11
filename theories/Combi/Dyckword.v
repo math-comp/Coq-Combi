@@ -213,7 +213,7 @@ Qed.
 Lemma height_rcons v l :
   height (rcons v l) = height v + (if l == {{ then 1 else -1).
 Proof.
-rewrite /height /= !count_mem_rcons.
+rewrite /height /= !count_rcons.
 case: l; rewrite /= addn0 PoszD ?opprD ? addrA //.
 by rewrite -addrA [1 - _]addrC addrA.
 Qed.
@@ -990,7 +990,7 @@ Lemma bal_of_DyckK D rt :
   tval D \is a Dyck_word ->
   Dyck_of_bal (bal_of_Dyck rt D) = D.
 Proof.
-move => Hsz Hnth Hw; apply val_inj; apply (rconsK (a := }})) => /=.
+move => Hsz Hnth Hw; apply val_inj; apply (@rconsK _ }} }}) => /=.
 set bD := take (size D) _.
 have -> : size bD = (size (rcons bD }})).-1 by rewrite size_rcons.
 rewrite (@rot_pfminhE (rcons bD }})); first last.
@@ -1082,7 +1082,7 @@ rewrite card_in_imset; first last.
     by rewrite !subKn ?ltnS; try exact: ltnW.
 rewrite -(card_imset _ rev_ord_inj).
 have -> : n.+1 = count_mem }} (rcons D }}).
-  rewrite count_mem_rcons /= addn1 count_mem_height0 //.
+  rewrite count_rcons /= addn1 count_mem_height0 //.
   by move: HD => /Dyck_wordP [].
 rewrite -(@card_preim_nth (size D).+1 _ _ _ {{); last by rewrite size_rcons.
 congr (#|pred_of_set _|).

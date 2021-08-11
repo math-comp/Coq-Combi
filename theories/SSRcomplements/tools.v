@@ -35,10 +35,10 @@ Prenex Implicits nat_of_ord.
 Lemma leq_addE m1 m2 n1 n2 :
   m1 <= m2 -> n1 <= n2 -> m1 + n1 = m2 + n2 -> m1 = m2 /\ n1 = n2.
 Proof.
-move=> Hm Hn H.
-suff Hmeq : m1 = m2 by split => //; move: H; rewrite Hmeq => /addnI.
-apply anti_leq; rewrite Hm /=.
-by have:= leq_sub2l (m1 + n1) Hn; rewrite {1}H !addnK.
+move=> lem len leD.
+suff Hmeq : m1 = m2 by split => //; move: leD; rewrite Hmeq => /addnI.
+apply anti_leq; rewrite lem /=.
+by have:= leq_sub2l (m1 + n1) len; rewrite {1}leD !addnK.
 Qed.
 
 
@@ -79,12 +79,14 @@ elim: s n => [//= | s0 s IHs] n.
   by case (ltngtP n (size s)) => _ <-.
 Qed.
 
-Lemma rconsK a u v : rcons u a = rcons v a -> u = v.
+Lemma rconsK a b u v : rcons u a = rcons v b -> u = v.
 Proof using.
-elim: u v => [| u0 u IHu]; case=> [|v0 v] //= [].
-- by move=> _; case v.
-- by move=> _; case u.
-- by move=> -> /IHu ->.
+by move/(congr1 rev); rewrite !rev_rcons => [[_ /(inv_inj revK)]].
+Qed.
+
+Lemma rcons_nilF s l : ((rcons s l) == [::]) = false.
+Proof using.
+by apply/negbTE/negP => /eqP/(congr1 size); rewrite size_rcons.
 Qed.
 
 Lemma cons_in_map_cons a b s w (l : seq (seq T)) :
@@ -94,14 +96,8 @@ elim: l => [//| l0 l H]; rewrite map_cons in_cons => /orP[]; last exact H.
 by move=> /eqP [->].
 Qed.
 
-Lemma rcons_nilF s l : ((rcons s l) == [::]) = false.
-Proof using.
-case eqP=>//= H; exfalso.
-by have:= eq_refl (size (rcons s l)); rewrite {2}H size_rcons.
-Qed.
-
-Lemma count_mem_rcons w l i :
-  count_mem i (rcons w l) = count_mem i w + (l == i).
+Lemma count_rcons w P l :
+  count P (rcons w l) = count P w + P l.
 Proof using. by rewrite -count_rev rev_rcons /= count_rev addnC. Qed.
 
 (** ** [set_nth] related lemmas *)
