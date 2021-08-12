@@ -342,7 +342,7 @@ rewrite porbits_tinj setpart_shape_union; first last.
   move/setP => /(_ (lshift n x)).
   rewrite imset_f; last exact: porbit_id.
   move=> /esym/imsetP => [] [z _] /eqP.
-  by rewrite (negbTE (lrshift_neq _ _)).
+  by rewrite eq_lrshift.
 by congr sort; rewrite /ct !cast_intpartnE /=; congr (_ ++ _);
   apply setpart_shape_inj; [exact: lshift_inj | exact: rshift_inj].
 Qed.

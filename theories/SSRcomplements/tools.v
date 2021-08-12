@@ -410,16 +410,6 @@ Lemma enum0 : enum 'I_0 = [::].
 Proof. by apply/nilP; rewrite /nilp size_enum_ord. Qed.
 
 
-Section LRShift.
-
-Variables (m n : nat).
-
-(* TODO: remove me *)
-Lemma lrshift_neq i j : @lshift m n i != @rshift m n j.
-Proof using. by rewrite eq_lrshift. Qed.
-
-End LRShift.
-
 Section SeqSub.
 
 Variables (T : countType) (R : Type).

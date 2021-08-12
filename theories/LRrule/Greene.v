@@ -602,7 +602,7 @@ Lemma disjoint_inj (sM : {set 'I_M}) (sN : {set 'I_N}) :
 Proof using.
 rewrite /disjoint; apply/pred0P=> i /=.
 apply/negP => /andP [/imsetP [[l HlM] Hl -> {i}] /imsetP [[r HrN] Hr /eqP]].
-by rewrite (negbTE (lrshift_neq _ _)).
+by rewrite eq_lrshift.
 Qed.
 
 Lemma splitsetK (s : {set 'I_(M+N)}) :
@@ -952,7 +952,7 @@ rewrite (eq_map (f2 := fun i : 'I_(_) => (nth 0 (conj_part sh) i).+1)); first la
     apply/setP => j; rewrite !inE.
     apply/negP => /andP [/eqP -> {j}].
     rewrite mem_imset_eq; last exact: cast_ord_inj.
-    by move/imsetP => [j _ /eqP]; rewrite eq_sym (negbTE (lrshift_neq _ _)).
+    by move/imsetP => [j _ /eqP]; rewrite eq_sym eq_lrshift.
   rewrite cards0 subn0.
   case (ltnP i (size (shcols sh))) => Hi.
   - by rewrite (nth_map set0 _ _ Hi).
@@ -1021,7 +1021,7 @@ case: i j Hj Hij => [| i] [//= | j] /=; rewrite !ltnS => Hj.
 - move=> _ /imsetP [i Hi ->].
   rewrite (nth_map set0 _ _ Hj) /shiftset /= imset_comp.
   rewrite mem_imset_eq; last exact: cast_ord_inj.
-  by move/imsetP => [j' _ /eqP]; rewrite eq_sym (negbTE (lrshift_neq _ _)).
+  by move/imsetP => [j' _ /eqP]; rewrite eq_sym eq_lrshift.
 - move=> Hij; have Hi := ltn_trans Hij Hj.
   rewrite (nth_map set0 _ _ Hj) (nth_map set0 _ _ Hi) /shiftset /=.
   move=> /imsetP [k Hk ->].
@@ -1054,10 +1054,10 @@ rewrite in_setU1 => /orP [].
 - move/eqP => ->; rewrite in_setU1 => /orP []; rewrite /sym_cast /=.
   + by rewrite /eq_op /= !nth_enum_ord //= eqn_add2l (ltn_eqF Hij).
   + move/imsetP => [k _ /= /cast_ord_inj /eqP].
-    by rewrite eq_sym (negbTE (lrshift_neq _ _)).
+    by rewrite eq_sym eq_lrshift.
 - move/imsetP => [li Hli -> {l}].
   rewrite in_setU1 => /orP [].
-  + by rewrite /= (inj_eq (cast_ord_inj (eq_n:=_))) (negbTE (lrshift_neq _ _)).
+  + by rewrite /= (inj_eq (cast_ord_inj (eq_n:=_))) eq_lrshift.
   + move/imsetP => [l Hlj /= /cast_ord_inj /lshift_inj H]; move: H Hli => -> Hli.
     case: (ltnP j (size (shcols sh))) => Hj1;
       last by move: Hlj; rewrite (nth_default _ Hj1) in_set0.
@@ -1457,7 +1457,7 @@ have /disjoint_setI0 -> : [disjoint sl & sr].
   apply/pred0P => l /=; apply/negP => /andP [].
   move=> /imsetP [l1 Hl1 {l} ->] /imsetP [l Hl /cast_ord_inj H]; subst l1.
   move: Hl Hl1 => /imsetP [l1 Hl1 {l} ->] /imsetP [l Hl /eqP].
-  by rewrite (negbTE (lrshift_neq _ _)).
+  by rewrite eq_lrshift.
 rewrite cards0 subn0 /s {s} => ->.
 have -> : #|sl| = minn (size t0) k.
   rewrite /sl imset_comp card_imset; last exact: cast_ord_inj.
