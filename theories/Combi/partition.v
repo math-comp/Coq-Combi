@@ -275,22 +275,27 @@ move/IHsh; apply: contraLR; rewrite !negbK => /eqP Hsh0.
 by move: Head; rewrite Hsh0 leqn0.
 Qed.
 
-Lemma nth_part_non0 sh i : is_part sh -> i < size sh -> nth 0 sh i != 0.
+Lemma in_part_non0 sh i : is_part sh -> i \in sh -> i != 0.
 Proof.
-elim: i sh => [//= | i IHi] [//=| s0 s].
-  by move=> /part_head_non0.
-move=> /= /andP [_].
-exact: IHi.
+elim: sh => [//| s0 sh IHsh] Hpart.
+rewrite inE => /orP[/eqP Hs0|].
+  by move: Hpart => /part_head_non0; rewrite -Hs0.
+by apply: IHsh; move: Hpart => /=/andP[].
 Qed.
 
-Lemma in_part_non0 sh i : is_part sh -> i \in sh -> 0 < i <= sumn sh.
+Lemma nth_part_non0 sh i : is_part sh -> i < size sh -> nth 0 sh i != 0.
+Proof. by move/in_part_non0 => H le_i_sz; apply/H/mem_nth. Qed.
+
+Lemma leq_head_sumn sh : head 0 sh <= sumn sh.
+Proof. by case: sh => //= s0 s; apply: leq_addr. Qed.
+
+Lemma part_leq_head sh i : is_part sh -> i \in sh -> i <= head 0 sh.
 Proof.
 elim: sh => [| sh0 sh IHsh] // Hpart.
-have /= := part_head_non0 Hpart; rewrite -lt0n => lt0sh0.
-move: Hpart => /andP [Head {}/IHsh Hrec].
-rewrite inE => /orP [/eqP -> |]; first by rewrite lt0sh0 leq_addr.
-move=> {}/Hrec /andP [-> /= /leq_trans]; apply.
-exact: leq_addl.
+rewrite inE => /orP [/eqP->/= |].
+  by case: sh0 {Hpart} (part_head_non0 Hpart) => [|n _]//=.
+move: Hpart => /= => /andP[Hhead {}/IHsh H{}/H] /leq_trans; apply.
+by case: sh Hhead.
 Qed.
 
 (** Three equivalent definitions *)
@@ -415,16 +420,6 @@ apply: (leq_ltn_trans (IHsh Hpart)).
 rewrite -{1}[sumn sh]add0n ltn_add2r.
 have /part_head_non0 /= : is_part (s0 :: sh) by rewrite /= Hhead Hpart.
 by rewrite lt0n.
-Qed.
-
-Lemma mem_part sh i : is_part sh -> i \in sh -> 0 < i <= sumn sh.
-Proof.
-elim: sh i => [//= | s0 sh IHsh] i Hpart.
-have /= Hs0 := part_head_non0 Hpart.
-move: Hpart => /andP [_ Hpart].
-rewrite inE => /orP [/eqP -> | /(IHsh _ Hpart)/andP [-> /=]].
-- by rewrite leq_addr andbT; case: s0 Hs0.
-- by move/leq_trans; apply; apply leq_addl.
 Qed.
 
 Lemma part_sumn_rectangle (sh : seq nat) :
@@ -1411,22 +1406,29 @@ Canonical intpartn_subFinType := Eval hnf in [subFinType of intpartn].
 
 Local Notation "''P'" := intpartn.
 
-Lemma intpartnP (p : 'P) : is_part p.
+Implicit Type (p : 'P).
+Lemma intpartnP p : is_part p.
 Proof using. by case: p => /= p /andP []. Qed.
 
-Lemma intpartn_sorted (p : 'P) : sorted geq p.
+Lemma intpartn_sorted p : sorted geq p.
 Proof. by have:= intpartnP p; rewrite is_part_sortedE => /andP []. Qed.
 
 Hint Resolve intpartnP intpartn_sorted : core.
 
-Definition intpart_of_intpartn (p : 'P) := IntPart (intpartnP p).
+Definition intpart_of_intpartn p := IntPart (intpartnP p).
 Coercion intpart_of_intpartn : intpartn >-> intpart.
 
-Lemma sumn_intpartn (p : 'P) : sumn p = n.
+Lemma sumn_intpartn p : sumn p = n.
 Proof using. by case: p => /= p /andP [/eqP]. Qed.
 
-Lemma mem_intpartn (p : 'P) i : i \in pnval p -> 0 < i <= n.
-Proof. by rewrite -(sumn_intpartn p); apply mem_part. Qed.
+Lemma intpartn_leq_head p i : i \in pnval p -> i <= head 0 p.
+Proof. exact: part_leq_head. Qed.
+
+Lemma intpartn_leq p i : i \in pnval p -> i <= n.
+Proof.
+move=> /intpartn_leq_head /leq_trans; apply.
+by rewrite -(sumn_intpartn p); apply: leq_head_sumn.
+Qed.
 
 Lemma enum_intpartnE : map val (enum {:'P}) = enum_partn n.
 Proof using. by rewrite /=; exact: enum_subE. Qed.

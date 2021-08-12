@@ -203,7 +203,9 @@ rewrite !linear_sum /= mulr_sumr; apply eq_bigr => i _.
 rewrite !linearZ /= -scalerAr; congr (_ *: _).
 rewrite {p} (nth_map (rowpartn n)); last by rewrite -cardE ltn_ord.
 move: (nth _ _ _) => la {i}.
-rewrite omega_homsymp // linearZ /= Fchar_inv_homsymp.
+rewrite omega_homsymp //;
+  try by apply: (leq_trans (leq_head_sumn _)); rewrite sumn_intpartn.
+rewrite linearZ /= Fchar_inv_homsymp.
 rewrite /ncfuniCT scalerA mulrC -scalerA -scalerAr; congr (_ *: _).
 rewrite -cfunP => /= s; rewrite !cfunE.
 rewrite odd_cycle_type signr_odd sumn_intpartn.
@@ -216,7 +218,8 @@ Proof. by rewrite -(FcharK f) -omega_Fchar_inv !Fchar_invK. Qed.
 
 Lemma Fchar_sign : Fchar sign_char = 'he[rowpartn n].
 Proof.
-by rewrite -(mulr1 sign_char) -omega_Fchar Fchar_triv omega_homsymh.
+rewrite -(mulr1 sign_char) -omega_Fchar Fchar_triv omega_homsymh //.
+by apply: (leq_trans (leq_head_sumn _)); rewrite sumn_intpartn.
 Qed.
 
 

@@ -437,13 +437,10 @@ Variable n0 d : nat.
 Local Notation n := (n0.+1).
 Variable R : comRingType.
 Local Notation HSF := {homsym R[n, d]}.
-Implicit Type (p q : HSF).
+Implicit Types (p q : HSF) (la : intpartn d).
 
 Lemma omegahomsym_subproof p : omegasf p \is d.-homsym.
-Proof using.
-apply: omegasf_homog_impl; rewrite -homsymE.
-by case: p.
-Qed.
+Proof using. by apply: omegasf_homog; rewrite -homsymE; case: p. Qed.
 Definition omegahomsym p : HSF := HomogSym (omegahomsym_subproof p).
 Lemma omegahomsym_is_linear : linear omegahomsym.
 Proof using.
@@ -452,16 +449,19 @@ Qed.
 Canonical omegahomsym_additive   := Additive  omegahomsym_is_linear.
 Canonical omegahomsym_linear     := AddLinear omegahomsym_is_linear.
 
-Hypothesis (Hd : d <= n).
 
-Lemma omega_homsymh la : omegahomsym 'hh[la] = 'he[la].
-Proof using Hd. by apply val_inj; rewrite /= omegasf_prodsymh. Qed.
-Lemma omega_homsyme la : omegahomsym 'he[la] = 'hh[la].
-Proof using Hd. by apply val_inj; rewrite /= omegasf_prodsyme. Qed.
-Lemma omega_homsyms la : omegahomsym 'hs[la] = 'hs[conj_intpartn la].
-Proof using Hd. by apply val_inj; rewrite /= omegasf_syms. Qed.
-Lemma omega_homsymp la : omegahomsym 'hp[la] = (-1) ^+ (d - size la) *: 'hp[la].
-Proof using Hd. by apply val_inj; rewrite /= omegasf_prodsymp. Qed.
+Lemma omega_homsymh la :
+  head 0%N la <= n -> omegahomsym 'hh[la] = 'he[la].
+Proof using. by move=> Hd; apply val_inj; rewrite /= omegasf_prodsymh. Qed.
+Lemma omega_homsyme la :
+  head 0%N la <= n -> omegahomsym 'he[la] = 'hh[la].
+Proof using. by move=> Hd; apply val_inj; rewrite /= omegasf_prodsyme. Qed.
+Lemma omega_homsyms la :
+  d <= n -> omegahomsym 'hs[la] = 'hs[conj_intpartn la].
+Proof using. by move=> Hd; apply val_inj; rewrite /= omegasf_syms. Qed.
+Lemma omega_homsymp la :
+  head 0%N la <= n -> omegahomsym 'hp[la] = (-1) ^+ (d - size la) *: 'hp[la].
+Proof using. by move=> Hd; apply val_inj; rewrite /= omegasf_prodsymp. Qed.
 
 End OmegaHomSym.
 
@@ -904,7 +904,9 @@ rewrite raddf_sum /= !homsymdot_suml; apply eq_bigr => j _.
 rewrite !linearZ /= !homsymdotZl !homsymdotZr; congr (_ * (_ * _)).
 rewrite ![_`_i](nth_map (rowpartn d)) -?cardE //.
 rewrite ![_`_j](nth_map (rowpartn d)) -?cardE //.
-rewrite !omega_homsymp // homsymdotZl homsymdotZr !homsymdotpp //.
+rewrite !omega_homsymp //;
+  try by apply: (leq_trans (leq_head_sumn _)); rewrite sumn_intpartn.
+rewrite homsymdotZl homsymdotZr !homsymdotpp //.
 case: eqP => /= [->|_]; rewrite ?mulr0 // !mulr1 !mulrA.
 move: (nth _ _ _) => la {i j}.
 have /conj_Cint -> : (-1) ^+ (d - size la) \in Cint by apply rpred_sign.
