@@ -28,24 +28,24 @@ nat)]. We define the following predicates and operations on [seq (seq nat)]:
 
 Integer Partitions:
 
-- [is_part sh] == [sh] is a partition
-- [rem_trail0 sh] == remove the trailing zeroes of a shape
+- [is_part sh]        == [sh] is a partition
+- [rem_trail0 sh]     == remove the trailing zeroes of a shape
 - [is_add_corner sh i] == i is the row of an addable corner of sh
 - [is_rem_corner sh i] == i is the row of a removable corner of sh
-- [incr_nth sh i] == the shape obtained by adding a box at the end of the
-                     i-th row. This gives a partition if i is an addable
-                     corner of sh (Lemma [is_part_incr_nth])
-- [decr_nth sh i] == the shape obtained by removing a box at the end of the
-                     i-th row. This gives a partition if i is an removable
-                     corner of sh (Lemma [is_part_decr_nth])
-- [rem_corners sh] == the list of the rows of the removable corners of sh.
+- [incr_nth sh i]     == the shape obtained by adding a box at the end of the
+                         i-th row. This gives a partition if i is an addable
+                         corner of sh (Lemma [is_part_incr_nth])
+- [decr_nth sh i]     == the shape obtained by removing a box at the end of the
+                         i-th row. This gives a partition if i is an removable
+                         corner of sh (Lemma [is_part_decr_nth])
+- [rem_corners sh]    == the list of the rows of the removable corners of sh.
 - [incr_first_n sh n] == adding 1 to the n'th first part of sh,
-                     always gives a partitions
-- [conj_part sh] == the conjugate of a partition
-- [included s t] == the Ferrer's diagram of s is included in the
-                    Ferrer's diagram of t. This is an order.
+                         always gives a partitions
+- [conj_part sh]      == the conjugate of a partition
+- [included s t]      == the Ferrer's diagram of s is included in the
+                         Ferrer's diagram of t. This is an order.
 - [s / t] = [diff_shape s t] == the difference of the shape s and t
-- [outer_shape s t] == add t to the shape s
+- [outer_shape s t]   == add t to the shape s
 
 
 Enumeration of integer partitions:
@@ -58,24 +58,25 @@ Enumeration of integer partitions:
 - [enum_partns sm sz]      == the lists of all partitions of n of size sz
 - [enum_partnsk sm sz mx]  == the lists of all partitions of n of size sz
                               in parts at most mx
-
-- [intpartn_nb sm] == the number of partitions of n
-- [intpartns_nb sm sz] == the number of partitions of n of size sz
+- [intpartn_nb sm]         == the number of partitions of n
+- [intpartns_nb sm sz]     == the number of partitions of n of size sz
 - [intpartnsk_nb sm sz mx] == the number of partitions of n of size sz
-                                    in parts at most mx
+                              in parts at most mx
 
 
 Sigma types for integer partitions:
 
-- [intpart]      == a type for [seq (seq nat)] which are partitions; it is
-                    canonically a [subCountType] of [seq (seq nat)]
-- [conj_intpart] == the conjugate of a [intpart] as a [intpart]
+- [intpart]       == a type for [seq nat] which are partitions;
+                     canonically a [subCountType] of [seq nat]
+- [conj_intpart]  == the conjugate of a [intpart] as a [intpart]
+- [empty_intpart] == the empty intpart
 
-- ['P_n]          == a type for [seq (seq nat)] which are partitions of [n];
-                     it is canonically a [finType]
-- [conj_intpartn] == the conjugate of a ['P_n] as a ['P_n]
+- ['P_n]          == a type for [seq nat] which are partitions of [n];
+                     canonically a [finType]
+- [cast_intpartn m n eq_mn] == the cast from ['P_m] to ['P_n]
 - [rowpartn n]    == the one row partition of sum [n] as a ['P_n]
 - [colpartn n]    == the one column partition of sum [n] as a ['P_n]
+- [conj_intpartn] == the conjugate of a ['P_n] as a ['P_n]
 - [hookpartm n k] == then hook shape partition of sum [n.+1] as a ['P_n.+1]
                      whose arm length is [k] (not counting the corner),
                      that is [(k+1, 1, ..., 1)].
@@ -87,17 +88,17 @@ Operations on partitions:
 
 - [union_intpart l k] == the partition of type [intpart] obtained by
                gathering the parts of [l] and [k]
-- [l +|+ k] = [union_intpartn l k] == the partition of type ['P_n]
-               obtained by gathering the parts of [l] and [k]
+- [l +|+ k] = [union_intpartn l k] == the partition of type ['P_(m + n)]
+               obtained by gathering the parts of [l : 'P_m] and [k : 'P_n]
 
 Comparison of partitions:
 
 - [partdom s t] == [s] is dominated by [t], that is the partial sum of [s] are
                    smaller that the partial sum of [t].
 - ['PDom_d]     == a type convertible to ['P_d] which is canonically
-                   finite and partially ordered by [partdom].
+                   a finite lattice partially ordered by [partdom].
 - ['PLexi_d]    == a type convertible to ['P_n] which is canonically
-                   finite and ordered by the lexicographic order.
+                   finite and totally ordered by the lexicographic order.
 
 Relation with set partitions:
 
@@ -1125,7 +1126,8 @@ case: (ltnP i (size s)) => //= /(nth_default p) ->.
 by rewrite nth_nseq if_same.
 Qed.
 
-Lemma head_pad (T : Type) n (p : T) (s : seq T) : head p (pad p n s) = head p s.
+Lemma head_pad (T : Type) n (p : T) (s : seq T) :
+  head p (pad p n s) = head p s.
 Proof. by elim: s => [| s0 s IHs] //=; rewrite subn0; case: n. Qed.
 
 Definition outer_shape inner size_seq :=
@@ -1247,6 +1249,11 @@ Proof.
 move=> H; apply: val_inj => /=.
 by apply: sumn_take_inj; last exact H.
 Qed.
+
+Canonical empty_intpart := IntPart (pval := [::]) is_true_true.
+
+Lemma empty_intpartP (p : intpart) : sumn p = 0 -> p = empty_intpart.
+Proof. by move=> Hsum; apply val_inj => /=; apply: part0. Qed.
 
 Fixpoint enum_partnsk sm sz mx : (seq (seq nat)) :=
   if sz is sz.+1 then
@@ -1649,6 +1656,35 @@ rewrite /decr_nth_intpart /=.
 by case: (is_rem_corner p i).
 Qed.
 
+Lemma intpart_rem_corner_ind (F : intpart -> Type) :
+  F empty_intpart ->
+  (forall p : intpart,
+      (forall i, is_rem_corner p i -> F (decr_nth_intpart p i)) -> F p) ->
+  forall p : intpart, F p.
+Proof.
+move=> H0 Hrec p.
+move Hp : (sumn p) => n.
+elim: n p Hp => [| n IHn] p Hp; first by rewrite (empty_intpartP Hp).
+apply: Hrec => i Hi.
+apply: IHn; rewrite /decr_nth_intpart /= Hi.
+by rewrite (sumn_decr_nth (intpartP p) Hi) Hp.
+Qed.
+
+Lemma part_rem_corner_ind (F : seq nat -> Type) :
+  F [::] ->
+  (forall p, is_part p ->
+             (forall i, is_rem_corner p i -> F (decr_nth p i)) -> F p) ->
+  forall p, is_part p -> F p.
+Proof.
+move=> H0 Hrec p Hp; rewrite -[p]/(val (IntPart Hp)).
+apply: (intpart_rem_corner_ind (F := fun p => F (val p))) => [//|{Hp}p IHp].
+apply (Hrec p (intpartP p)) => i Hi.
+by move/(_ i Hi): IHp; rewrite /= Hi.
+Qed.
+
+
+(** ** Lexicographic order on partitions of a fixed sum *)
+
 Import Order.TTheory.
 
 Module IntPartNLexi.
@@ -1971,7 +2007,7 @@ case: (boolP (partdomsh _ _ _ _)) => //= /partdomshP/(_ 0).
 by rewrite !take0 /= !addn0.
 Qed.
 
-Lemma partdom_cons x s1 s2 : partdom (x :: s1) (x :: s2) -> partdom s1 s2.
+Lemma partdom_consK x s1 s2 : partdom (x :: s1) (x :: s2) -> partdom s1 s2.
 Proof.
 rewrite /partdom partdomsh_cons2 add0n leqnn /=.
 by rewrite -(addn0 x) partdomsh_add.
@@ -2405,11 +2441,12 @@ rewrite !leEnat les0 /= leqNgt.
 move: les0; rewrite leq_eqVlt => /orP [/eqP Heq|->]//.
 subst s02; rewrite ltnn /= leEseqlexi; apply: IHsh => //.
   by move: Hsum => /eqP; rewrite eqn_add2l => /eqP.
-exact: (partdom_cons Hdom).
+exact: (partdom_consK Hdom).
 Qed.
 Lemma lt_intpartndomlexi d :
   {homo (id : 'PDom_d -> 'PLexi_d) : x y / (x < y)%O}.
 Proof. by move=> sh1 sh2; rewrite !lt_def=> /andP[-> /le_intpartndomlexi]. Qed.
+
 
 (** * Shape of set partitions and integer partitions *)
 Section SetPartitionShape.

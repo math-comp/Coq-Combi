@@ -98,16 +98,15 @@ Local Open Scope nat_scope.
 
 (** * Recursion for the number of Yamanouchi words and standard tableaux *)
 Lemma card_yama_rec (p : intpart) :
-  (p != [::] :> seq nat) ->
-  #|{:yameval p}| = \sum_(i <- rem_corners p)
-                       #|{:yameval (decr_nth_intpart p i)}|.
+  p != empty_intpart ->
+  #|{:yameval p}| =
+      \sum_(i <- rem_corners p) #|{:yameval (decr_nth_intpart p i)}|.
 Proof.
 move=> H.
 rewrite cardE -(size_map val) enum_yamevalE /enum_yameval.
 move Hn : (sumn p) => n.
 case: n Hn => [| n'] Hn' /=.
-  exfalso; move: H.
-  by rewrite (part0 (intpartP p) Hn').
+  by rewrite (empty_intpartP Hn') in H.
 rewrite size_flatten /shape -sumn_map_condE.
 rewrite /rem_corners -!map_comp.
 congr sumn; apply eq_in_map => i /=.
@@ -116,8 +115,6 @@ rewrite size_map cardE -(size_map val) enum_yamevalE.
 rewrite /enum_yameval /= /= Hcorn.
 by rewrite (sumn_decr_nth (intpartP p) Hcorn) Hn' /=.
 Qed.
-
-Canonical empty_intpart := IntPart (pval := [::]) is_true_true.
 
 Lemma card_yama0 : #|{:yameval empty_intpart}| = 1.
 Proof. by rewrite cardE -(size_map val) enum_yamevalE. Qed.
@@ -128,67 +125,19 @@ Proof.
 by rewrite !cardE -!(size_map val) enum_yamevalE enum_stdtabshE size_map.
 Qed.
 
-Lemma intpart_rem_corner_ind (F : intpart -> Type) :
-  F empty_intpart ->
-  ( forall p : intpart,
-      (p != [::] :> seq nat) ->
-      (forall i, is_rem_corner p i -> F (decr_nth_intpart p i) ) -> F p ) ->
-  ( forall p : intpart, F p ).
-Proof.
-move=> H0 Hrec p.
-move Hp : (sumn p) => n.
-elim: n p Hp => [| n IHn] p Hp.
-  suff -> : p = empty_intpart by apply H0.
-  by apply val_inj => /=; apply: (part0 (intpartP p) Hp).
-have Hnnil : p != [::] :> seq nat.
-  by move: Hp => /eqP; apply contraL => /eqP ->.
-apply (Hrec p Hnnil) => i Hi.
-apply IHn.
-rewrite /decr_nth_intpart /= Hi.
-by rewrite (sumn_decr_nth (intpartP p) Hi) Hp.
-Qed.
-
-Lemma part_rem_corner_ind (F : seq nat -> Type) :
-  F [::] ->
-  ( forall p, is_part p ->
-      (p != [::]) ->
-      (forall i, is_rem_corner p i -> F (decr_nth p i) ) -> F p ) ->
-  ( forall p, is_part p -> F p ).
-Proof.
-move=> H0 Hrec p Hp.
-move Htmp : (IntPart Hp) => pdep.
-have -> : p = pdep by rewrite -Htmp.
-elim/intpart_rem_corner_ind: pdep {p Hp Htmp} => [| p Hp IHp] //=.
-apply (Hrec p (intpartP p) Hp) => i Hi.
-by move/(_ i Hi): IHp; rewrite /= Hi.
-Qed.
-
-Lemma card_stdtabsh_rec (F : intpart -> nat) :
-  F empty_intpart = 1 ->
-  ( forall p : intpart,
-      (p != [::] :> seq nat) ->
-      F p = \sum_(i <- rem_corners p) F (decr_nth_intpart p i) ) ->
-  ( forall p : intpart, F p = #|{:stdtabsh p}| ).
-Proof.
-move=> H0 Hrec.
-elim/intpart_rem_corner_ind => [//= | p Hnnil IHp] /=.
-  by rewrite H0 -card_yam_stdtabE card_yama0.
-rewrite (Hrec _ Hnnil) -card_yam_stdtabE (card_yama_rec Hnnil).
-rewrite /rem_corners !big_filter; apply eq_bigr => i Hi.
-by rewrite card_yam_stdtabE IHp //=.
-Qed.
-
 Local Open Scope ring_scope.
 
 Lemma card_stdtabsh_rat_rec (F : intpart -> rat) :
   F empty_intpart = 1 ->
   ( forall p : intpart,
-      (p != [::] :> seq nat) ->
+      p != empty_intpart ->
       F p = \sum_(i <- rem_corners p) F (decr_nth_intpart p i) ) ->
   forall p : intpart, F p = #|{:stdtabsh p}|%:Q.
 Proof.
 move=> H0 Hrec.
-elim/intpart_rem_corner_ind => [//= | p Hnnil IHp] /=.
+elim/intpart_rem_corner_ind => [//= | p IHp] /=.
+  by rewrite H0 -card_yam_stdtabE card_yama0.
+case: (altP (p =P empty_intpart)) => [-> |/= Hnnil].
   by rewrite H0 -card_yam_stdtabE card_yama0.
 rewrite (Hrec _ Hnnil) -card_yam_stdtabE (card_yama_rec Hnnil).
 rewrite (big_morph Posz PoszD (id1 := Posz O%N)) //.
@@ -1391,7 +1340,7 @@ case (boolP (is_corner_box p (last O A) (last O B))) => Hcorn.
 Qed.
 
 Corollary Corollary4 :
-  p != [::] :> seq nat ->
+  p != empty_intpart ->
   \sum_(i <- rem_corners p) (HLF (decr_nth p i)) / (HLF p) = 1.
 Proof using.
 rewrite big_seq_cond => Hp.
@@ -1404,8 +1353,8 @@ rewrite (eq_bigr (fun i => mu choose_corner
   by rewrite /is_corner_box Hcorn eq_refl.
 rewrite -big_seq_cond -mu_stable_sum.
 rewrite /choose_corner Mlet_simpl mu_random_sum.
-have Hsum : ((sumn p) != 0)%N.
-  by move: Hp; apply contra => /eqP/(part0 (intpartP p)) ->.
+have Hsum : (sumn p) != 0%N.
+  by move: Hp; apply contra => /eqP/empty_intpartP ->.
 rewrite prednK ?lt0n // big_nat_0cond.
 rewrite (eq_bigr (fun => 1)).
   rewrite -big_nat_0cond big_const_seq count_predT size_iota subn0 iter_addr addr0.
@@ -1419,7 +1368,7 @@ exact: mu_walk_to_corner_is_trace.
 Qed.
 
 Corollary Corollary4_eq :
-  p != [::] :> seq nat ->
+  p != empty_intpart ->
   \sum_(i <- rem_corners p) (HLF (decr_nth_intpart p i)) = HLF p.
 Proof using.
 move=> /Corollary4; rewrite -mulr_suml => /divr1_eq <-.
