@@ -33,7 +33,7 @@
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import bigop path.
+From mathcomp Require Import bigop path binomial.
 Require Import tools combclass sorted partition.
 
 Set Implicit Arguments.
@@ -250,9 +250,18 @@ Fact colcompnP d : is_comp_of_n d (colcomp d).
 Proof. by elim: d => [| d]. Qed.
 Canonical colcompn d : intcompn d := IntCompN (colcompnP d).
 
-(* TODO : bijection with set and cardinality
-Lemma card_intcompn n : #|{:intcompn n}| = 2 ^ (n.-1).
-*)
+Lemma card_intcompn n : #|{:intcompn n}| = 2 ^ n.-1.
+Proof.
+rewrite /= !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
+elim/ltn_ind: n => [[_ | n IHn]] /=; first by rewrite expn0.
+rewrite enum_compnE // size_allpairs_dep sumn_mapE.
+rewrite -{1}(subn0 n.+1) -subSS -/(index_iota _ _) big_add1 /= big_mkord.
+transitivity (\sum_(i < n.+1) 2 ^ i.-1).
+  rewrite (reindex_inj rev_ord_inj) /=; apply eq_bigr => i _.
+  by rewrite !subSS subKn ?IHn // -ltnS.
+rewrite big_ord_recl //= expn0 -(mul1n (\sum__ _)) -(predn_exp 2 n).
+by rewrite add1n prednK // expn_gt0.
+Qed.
 
 #[export] Hint Resolve intcompP intcompnP : core.
 
