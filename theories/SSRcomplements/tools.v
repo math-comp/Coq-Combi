@@ -140,12 +140,12 @@ End SeqLemmas.
 
 (** ** [sumn] related lemmas *)
 Lemma sumn_map_condE (T : Type) (s : seq T) (f : T -> nat) (P : pred T) :
-  \sum_(i <- s | P i) f i = sumn [seq f i | i <- s & P i].
+  sumn [seq f i | i <- s & P i] =\sum_(i <- s | P i) f i.
 Proof. by rewrite /sumn foldrE big_map big_filter. Qed.
 
 Lemma sumn_mapE (T : Type) (s : seq T) (f : T -> nat) :
-  \sum_(i <- s) f i = sumn [seq f i | i <- s].
-Proof. by rewrite sumn_map_condE filter_predT. Qed.
+  sumn [seq f i | i <- s] =\sum_(i <- s) f i.
+Proof. by rewrite -sumn_map_condE filter_predT. Qed.
 
 Lemma sum_minn s b :
   \sum_(l <- s) minn l b = sumn s - \sum_(l <- s) (l - b).

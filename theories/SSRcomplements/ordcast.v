@@ -41,37 +41,19 @@ Proof. by apply: val_inj => //=; rewrite nth_enum_ord. Qed.
 
 Section Casts.
 
-(* TODO: remove me *)
-Lemma cast_erefl n : cast_ord (erefl n) =1 id.
-Proof. exact: cast_ord_id. Qed.
-
-Lemma cast_eq m n i j (H : m = n) :
-  (cast_ord H i == cast_ord H j) = (i == j).
-Proof. by subst m; rewrite !cast_erefl. Qed.
-
-Lemma sym_cast_eq m n i j :
-  ((cast_ord (addnC m n) i) == cast_ord (addnC m n) j) = (i == j).
-Proof. exact: cast_eq. Qed.
-
-Lemma cast_map (T: Type) n m (F : 'I_n -> T) (H : m = n) :
-  [seq F i | i <- enum 'I_n] = [seq F ((cast_ord H) i) | i <- enum 'I_m].
-Proof. by subst m; apply eq_map => i; rewrite /= cast_erefl. Qed.
-
 Lemma cast_map_cond (T: Type) n m (P : pred 'I_n) (F : 'I_n -> T) (H : m = n) :
   [seq F i | i <- enum 'I_n & P i] =
-  [seq F ((cast_ord H) i) | i <- enum 'I_m & P ((cast_ord H) i) ].
+  [seq F (cast_ord H i) | i <- enum 'I_m & P (cast_ord H i) ].
 Proof.
 subst m; have /eq_filter -> : (fun i : 'I_n => P (cast_ord (erefl n) i)) =1 P
-  by move=> i; rewrite /= cast_erefl.
+  by move=> i; rewrite /= cast_ord_id.
 by have /eq_map -> : (fun i : 'I_n => F (cast_ord (erefl n) i)) =1 F
-  by move=> i; rewrite /= cast_erefl.
+  by move=> i; rewrite /= cast_ord_id.
 Qed.
 
 Lemma mem_cast m n (H : m = n) (i : 'I_m) (S : {set 'I_m}) :
-  ((cast_ord H) i) \in [set (cast_ord H) i | i in S] = (i \in S).
-Proof.
-by apply/imsetP/idP => [[j Hin /cast_ord_inj ->]| Hin]; last by exists i.
-Qed.
+  (cast_ord H i) \in [set cast_ord H i | i in S] = (i \in S).
+Proof. exact/mem_imset_eq/cast_ord_inj. Qed.
 
 Definition cast_set n m (H : n = m) : {set 'I_n} -> {set 'I_m} :=
   [fun s : {set 'I_n} => (cast_ord H) @: s].

@@ -1442,7 +1442,7 @@ Lemma Kostka_rec_size0 la mu :
   size la > size mu -> Kostka_rec la mu = 0.
 Proof.
 elim: mu la => [|m mu IHmu] la /= H; first by case: la H.
-rewrite -sumn_map_condE; apply big1 => nu Hnu.
+rewrite sumn_map_condE; apply big1 => nu Hnu.
 by apply IHmu; have := hb_strip_size Hnu => /andP [_ /(leq_trans H)].
 Qed.
 
@@ -1452,7 +1452,7 @@ Proof.
 elim: mu d la => [| m0 mu IHmu] d la /= Hd.
   subst d; have -> : la = rowpartn 0 by rewrite !intpartn0.
   by rewrite -rowpartn0E Kostka_diag eqxx.
-rewrite -sumn_map_condE -enum_intpartnE big_map enumT.
+rewrite sumn_map_condE -enum_intpartnE big_map enumT.
 by rewrite Kostka_ind //; apply eq_big => //= nu Hstrip; apply IHmu.
 Qed.
 

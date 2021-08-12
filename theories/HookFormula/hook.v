@@ -108,7 +108,7 @@ move Hn : (sumn p) => n.
 case: n Hn => [| n'] Hn' /=.
   exfalso; move: H.
   by rewrite (part0 (intpartP p) Hn').
-rewrite size_flatten /shape sumn_map_condE.
+rewrite size_flatten /shape -sumn_map_condE.
 rewrite /rem_corners -!map_comp.
 congr sumn; apply eq_in_map => i /=.
 rewrite mem_filter => /andP [Hcorn _].

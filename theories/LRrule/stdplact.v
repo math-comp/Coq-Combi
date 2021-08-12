@@ -135,7 +135,7 @@ rewrite -[filter _ _]map_id (cast_map_cond _ _ (esym (size_std u))).
 congr (map _ _).
 rewrite {2}/enum_mem -enumT /=.
 apply: eq_filter => i /=.
-by rewrite mem_cast.
+exact/mem_imset_eq/cast_ord_inj.
 Qed.
 
 Lemma sorted_std_extract u (S : {set 'I_(size u)}) :

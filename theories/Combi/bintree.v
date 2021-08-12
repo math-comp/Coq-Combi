@@ -283,7 +283,7 @@ Proof. by []. Qed.
 Lemma Catalan_binS n :
   Catalan_bin n.+1 = \sum_(0 <= i < n.+1) Catalan_bin i * Catalan_bin (n - i).
 Proof.
-rewrite /Catalan_bin sumn_mapE last_rcons.
+rewrite /Catalan_bin -sumn_mapE last_rcons.
 rewrite -/Catalan_bin_leq; congr sumn.
 rewrite /index_iota subn0; apply eq_in_map => i.
 rewrite mem_iota /= add0n ltnS => Hi.

@@ -247,7 +247,7 @@ Canonical rowcompn d : intcompn d := IntCompN (rowcompnP d).
 
 Definition colcomp d := nseq d 1%N.
 Fact colcompnP d : is_comp_of_n d (colcomp d).
-Proof. by elim: d => [| d ]. Qed.
+Proof. by elim: d => [| d]. Qed.
 Canonical colcompn d : intcompn d := IntCompN (colcompnP d).
 
 (* TODO : bijection with set and cardinality
