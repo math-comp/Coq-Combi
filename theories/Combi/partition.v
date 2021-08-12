@@ -364,7 +364,6 @@ rewrite andbT; case: sh Hhead => [//= | s1 sh]; first exact: leq_ltn_trans.
 by rewrite rcons_cons.
 Qed.
 
-(** TODO : write the reciprocal *)
 Lemma is_in_part_le (sh : seq nat) r c j k :
   is_part sh -> is_in_shape sh r c -> j <= r -> k <= c -> is_in_shape sh j k.
 Proof.
@@ -372,10 +371,26 @@ rewrite /is_in_shape => /is_part_ijP[_ Hpart] Hcr /Hpart Hrj Hkc.
 exact: leq_ltn_trans Hkc (leq_trans Hcr Hrj).
 Qed.
 
-(** Equality of partitions *)
-Lemma part_nth_len_eq p q :
-  (forall i, nth 0 p i = nth 0 q i) -> is_part p -> is_part q -> size p = size q.
+Lemma is_in_part_is_part (sh : seq nat) :
+  (forall r c j k, j <= r -> k <= c ->
+                   is_in_shape sh r c -> is_in_shape sh j k) ->
+  last 1 sh != 0 -> is_part sh.
 Proof.
+rewrite /is_in_shape => H Hlast.
+apply/is_partP; split => [|i]; first exact: Hlast.
+case Hnth : (nth 0 sh i.+1) => [//|n].
+apply: (H i.+1 n i n (leqnSn i) (leqnn n)).
+by rewrite Hnth.
+Qed.
+
+(** Equality of partitions *)
+Lemma part_eqP p q :
+  is_part p -> is_part q -> reflect (forall i, nth 0 p i = nth 0 q i) (p == q).
+Proof.
+move=> Hp Hq.
+apply (iffP idP) => [/eqP -> //| H].
+apply/eqP; apply (eq_from_nth (x0 := 0)); last by move=> i _; exact: H.
+move: H Hp Hq.
 wlog Hpq : p q / (size p) <= (size q).
   move=> Hwlog Hnth.
   by case: (leqP (size p) (size q)) => [|/ltnW] /Hwlog H{}/H H{}/H ->.
@@ -386,16 +401,6 @@ rewrite leqNgt; apply/negP => Habs.
 move: Hlastq.
 have:= Habs; rewrite -(ltn_predK Habs) ltnS => /(Hq _ _).
 by rewrite nth_last /= -Hnth nth_default // leqn0 => /eqP ->.
-Qed.
-
-Lemma part_eqP p q :
-  is_part p -> is_part q -> reflect (forall i, nth 0 p i = nth 0 q i) (p == q).
-Proof.
-move=> Hp Hq.
-apply (iffP idP) => [/eqP -> //| H].
-apply/eqP; apply (eq_from_nth (x0 := 0)).
-- exact: part_nth_len_eq.
-- move=> i _; exact: H.
 Qed.
 
 (** Partitions and sumn *)
