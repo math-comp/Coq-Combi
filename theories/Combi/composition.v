@@ -242,10 +242,12 @@ Definition rev_intcompn c := IntCompN (rev_intcompn_spec c).
 
 Fixpoint partsums (s : seq nat) :=
   if s is _ :: s' then sumn s :: partsums s' else [::].
-
 Definition descs c : seq 'I_n.-1 :=
   pmap insub [seq i.-1 | i <- rev (behead (partsums (rev c)))].
 Definition descset c : {set 'I_n.-1} := [set i in descs c].
+
+Lemma size_partsums s : size (partsums s) = size s.
+Proof. by elim: s => //= s0 s ->. Qed.
 
 Lemma ltn_sum_non0 i j k : i != 0 -> i + j <= k -> j < k.
 Proof.
@@ -352,6 +354,12 @@ move=> i; rewrite mem_rev; apply/mapP/idP => [[/= [x Hx]] | Hi].
   exists (Ordinal ltin) => /=; last by case: i lt0in {Hi ltin}.
   rewrite mem_enum /descset inE /= /descs mem_pmap_sub /=.
   by apply/mapP; exists i => //; rewrite mem_rev.
+Qed.
+
+Lemma card_descset s : #|descset s| = (size s).-1.
+Proof.
+have := congr1 size (enum_descsetE s); rewrite size_map cardE => ->.
+by rewrite size_rev size_behead size_partsums size_rev.
 Qed.
 
 Lemma descsetK : cancel descset from_descset.
