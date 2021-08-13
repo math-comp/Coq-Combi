@@ -33,7 +33,7 @@
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import bigop path binomial.
+From mathcomp Require Import bigop path binomial finset.
 Require Import tools combclass sorted partition.
 
 Set Implicit Arguments.
@@ -47,6 +47,11 @@ Section Defs.
 Implicit Type s : seq nat.
 
 Definition is_comp s := 0 \notin s.
+
+Lemma is_comp_rcons s sn : is_comp (rcons s sn) = (sn != 0) && (is_comp s).
+Proof.
+by rewrite /is_comp -(mem_rev (rcons _ _)) rev_rcons inE negb_or mem_rev eq_sym.
+Qed.
 
 (** Compositions and sumn *)
 Lemma comp0 s : is_comp s -> sumn s = 0 -> s = [::].
@@ -78,6 +83,7 @@ Lemma intcompP (p : intcomp) : is_comp p.
 Proof. by case: p. Qed.
 
 #[export] Hint Resolve intcompP : core.
+
 
 Fixpoint enum_compn_rec aux n : (seq (seq nat)) :=
   if aux is aux'.+1 then
@@ -180,6 +186,7 @@ Section CompOfn.
 
 Variable n : nat.
 
+
 Structure intcompn : Set :=
   IntCompN {cnval :> seq nat; _ : is_comp_of_n n cnval}.
 Canonical intcompn_subType := Eval hnf in [subType for cnval].
@@ -193,25 +200,185 @@ Definition intcompn_countMixin := Eval hnf in [countMixin of intcompn by <:].
 Canonical intcompn_countType :=
   Eval hnf in CountType intcompn intcompn_countMixin.
 Canonical intcompn_subCountType := Eval hnf in [subCountType of intcompn].
-
 Let type := sub_finType intcompn_subCountType
                         (enum_compn_allP n) (@enum_compn_countE n).
 Canonical intcompn_finType := Eval hnf in [finType of intcompn for type].
 Canonical intcompn_subFinType := Eval hnf in [subFinType of intcompn].
 
-Lemma intcompnP (p : intcompn) : is_comp p.
-Proof using . by case: p => /= p /andP []. Qed.
+Implicit Type (c : intcompn) (d : {set 'I_n.-1}).
+
+Lemma intcompnP c : is_comp c.
+Proof using. by case: c => /= c /andP []. Qed.
 
 Hint Resolve intcompnP : core.
 
-Definition intcomp_of_intcompn (p : intcompn) := IntComp (intcompnP p).
+Definition intcomp_of_intcompn c := IntComp (intcompnP c).
 Coercion intcomp_of_intcompn : intcompn >-> intcomp.
 
-Lemma intcompn_sumn (p : intcompn) : sumn p = n.
-Proof using . by case: p => /= p /andP [/eqP]. Qed.
+Lemma intcompn_sumn c : sumn c = n.
+Proof using. by case: c => /= c /andP [/eqP]. Qed.
 
 Lemma enum_intcompnE : map val (enum {:intcompn}) = enum_compn n.
-Proof using . rewrite /=; exact: enum_subE. Qed.
+Proof using. rewrite /=; exact: enum_subE. Qed.
+
+Lemma card_intcompn : #|{:intcompn}| = 2 ^ n.-1.
+Proof.
+rewrite /= !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
+elim/ltn_ind: n => [[_ | i IHi]] /=; first by rewrite expn0.
+rewrite enum_compnE // size_allpairs_dep sumn_mapE.
+rewrite -{1}(subn0 i.+1) -subSS -/(index_iota _ _) big_add1 /= big_mkord.
+transitivity (\sum_(k < i.+1) 2 ^ k.-1).
+  rewrite (reindex_inj rev_ord_inj) /=; apply eq_bigr => k _.
+  by rewrite !subSS subKn ?IHi // -ltnS.
+rewrite big_ord_recl //= expn0 -(mul1n (\sum__ _)) -(predn_exp 2 i).
+by rewrite add1n prednK // expn_gt0.
+Qed.
+
+Lemma rev_intcompn_spec c : is_comp_of_n n (rev c).
+Proof.
+by rewrite /is_comp_of_n /is_comp /= mem_rev sumn_rev; case: c.
+Qed.
+Definition rev_intcompn c := IntCompN (rev_intcompn_spec c).
+
+Fixpoint partsums (s : seq nat) :=
+  if s is _ :: s' then sumn s :: partsums s' else [::].
+
+Definition descs c : seq 'I_n.-1 :=
+  pmap insub [seq i.-1 | i <- rev (behead (partsums (rev c)))].
+Definition descset c : {set 'I_n.-1} := [set i in descs c].
+
+Lemma ltn_sum_non0 i j k : i != 0 -> i + j <= k -> j < k.
+Proof.
+case: i => // i _; rewrite addSn => /(leq_ltn_trans _); apply.
+exact: leq_addl.
+Qed.
+
+Lemma all_partsums c : all (fun i => 0 < i < n) (behead (partsums c)).
+Proof.
+apply/allP => /= i.
+case: c => c /=/andP[]/=; case/lastP: c => // c cn.
+rewrite eqn_leq => /andP[Hleq _]; move: Hleq.
+rewrite sumn_rcons is_comp_rcons -lt0n /is_comp => Hsum /andP[lt0cn Hcomp].
+elim: c Hcomp Hsum => [|c0 c IHc]//=.
+rewrite inE negb_or eq_sym => /andP[Hc0 {}/IHc Hrec Hsum].
+have {}/Hrec: sumn c + cn <= n.
+  by apply: (leq_trans _ Hsum); rewrite -addnA leq_addl.
+case: c Hsum => [/= | c1 c Hsum].
+  rewrite !addn0 inE => /(ltn_sum_non0 Hc0) ltcnn _ /eqP ->.
+  by rewrite lt0cn ltcnn.
+rewrite rcons_cons [partsums (c1 :: _)]/= ![behead _]/= => Hrec.
+rewrite inE => /orP [/eqP ->|]; last exact: Hrec.
+move: Hsum {Hrec}; rewrite /= sumn_rcons -!addnA => /(ltn_sum_non0 Hc0) ->.
+by rewrite andbT; case: cn lt0cn => // cn _; rewrite !addnS.
+Qed.
+
+Lemma val_descs c :
+  map val (descs c) = [seq i.-1 | i <- rev (behead (partsums (rev c)))].
+Proof.
+have := all_partsums (rev_intcompn c); rewrite /descs /= -all_rev.
+elim: (rev _) => // s0 s IHs /andP[Hs0 {}/IHs Hrec].
+have {}Hs0: s0.-1 < n.-1 by case: s0 Hs0 => // s0; case n.
+by rewrite /oapp /= insubT /= Hrec.
+Qed.
+
+(* TODO: remove me when merged in mathcomp *)
+Lemma eq_sorted (T : Type) (e e' : rel T) : e =2 e' -> sorted e =1 sorted e'.
+Proof. by move=> ee' [] // ? ?; apply: eq_path. Qed.
+
+
+Lemma from_descset_spec d :
+  is_comp_of_n n (if n is 0 then [::]
+                  else pairmap (fun a b => b - a) 0
+                               (rcons [seq (val i).+1 | i in d] n)).
+Proof.
+case: n d => // n0; set n' := n0.+1 => d.
+have Hsort : sorted ltn [seq (val i).+1 | i in d].
+  rewrite /image_mem /enum_mem -enumT /= sorted_map; apply: sorted_filter.
+  - by move => i j k /= /ltn_trans; apply.
+  - have /eq_sorted-> :
+      relpre nat_of_ord ltn =2 fun i j : 'I_n'.-1 => i < j by [].
+    exact: enum_ord_sorted_ltn.
+have Hall : all (fun i => 0 < i < n') [seq (val i).+1 | i in d].
+  by apply/allP => i /mapP/=[[io Hio /= _ ->]]/=; exact: Hio.
+have {}Hsort : sorted ltn (rcons [seq (val i).+1 | i in d] n').
+  case: [seq _ | i in _] Hall Hsort => // a l Hall /sorted_rcons; apply.
+  by move: Hall => /allP/(_ _ (mem_last _ _))/andP[_].
+rewrite /is_comp_of_n /=.
+elim/last_ind: [seq _ | i in _] Hsort Hall => [|s sn IHs]/= Hsort Hall.
+  by rewrite addn0 subn0 eqxx.
+have lt_last : last 0 s < sn.
+  move: Hsort {IHs} => /sorted_rconsK.
+  case/lastP: s Hall => [/andP[/andP[]]// |s sn1 _].
+  rewrite last_rcons -!cats1 -catA => /sorted_catR /=.
+  by rewrite andbT.
+have {Hsort}/IHs Hrec : sorted ltn (rcons s n').
+  case: s Hall Hsort {IHs lt_last} => // a l /allP Hall.
+  move/sorted_rconsK/sorted_rconsK/sorted_rcons; apply.
+  suff /Hall/andP[] : last a l \in rcons (a :: l) sn by [].
+  by rewrite mem_rcons inE mem_last orbT.
+move: Hall; rewrite all_rcons => /andP[/= /andP[_ lt_sn_n] {}/Hrec/andP[]].
+rewrite -!cats1 !pairmap_cat last_cat !sumn_cat /= !addn0 => /eqP Hsum Hcomp.
+apply/andP; split => [{Hcomp}|{Hsum}].
+- rewrite -{2}Hsum -addnA eqn_add2l addnC addnBA //; last exact: ltnW.
+  by rewrite subnK // ltnW.
+- move: Hcomp; rewrite /is_comp !mem_cat !inE !negb_or => /andP[-> _]/=.
+  by rewrite ![0 == _]eq_sym -!lt0n !subn_gt0 lt_last lt_sn_n.
+Qed.
+Definition from_descset d := IntCompN (from_descset_spec d).
+
+Lemma enum_descsetE s :
+  [seq (val i).+1 | i in descset s] = rev (behead (partsums (rev s))).
+Proof.
+apply: (irr_sorted_eq (ltn_trans) ltnn).
+- rewrite sorted_map (eq_sorted (e' := fun i j => val i < val j)).
+  rewrite /enum_mem -enumT /= sorted_filter // ?enum_ord_sorted_ltn //.
+  by move=> i j k /ltn_trans; apply.
+- by move=> i j /=; rewrite ltnS.
+- suff : sorted (fun m : nat => [eta leq m.+1]) (rev (partsums (rev s))).
+    by case: (partsums _) => // a l; rewrite /= rev_cons => /sorted_rconsK.
+  case: s => s /= /andP[_]; rewrite /is_comp -mem_rev rev_sorted.
+  elim: (rev s) => // s0 {}s IHs /=.
+  rewrite inE negb_or eq_sym => /andP[Hs0 {}/IHs].
+  case: s => // s1 s /= ->.
+  case: s0 Hs0 => // s0 _.
+  by rewrite andbT addSn ltnS leq_addl.
+move=> i; rewrite mem_rev; apply/mapP/idP => [[/= [x Hx]] | Hi].
+- rewrite mem_enum /descset inE /descs mem_pmap_sub /=.
+  move/mapP => [/= j Hj ->{x Hx} ->{i}]; rewrite mem_rev in Hj.
+  have /= /allP/(_ _ Hj) := all_partsums (rev_intcompn s).
+  by case: j Hj.
+- have /= /allP/(_ _ Hi) lt0in := all_partsums (rev_intcompn s).
+  have ltin : i.-1 < n.-1 by case: n i lt0in {Hi} => [|n0][|i].
+  exists (Ordinal ltin) => /=; last by case: i lt0in {Hi ltin}.
+  rewrite mem_enum /descset inE /= /descs mem_pmap_sub /=.
+  by apply/mapP; exists i => //; rewrite mem_rev.
+Qed.
+
+Lemma descsetK : cancel descset from_descset.
+Proof.
+rewrite /descset /from_descset; case => [s Hs]; apply val_inj => /=.
+rewrite enum_descsetE /=; move: Hs => /andP [/eqP Hsum Hcomp].
+case: n Hsum => [/(comp0 Hcomp) -> // | n0]; set n' := n0.+1 => Hsum {Hcomp}.
+have -> : rcons (rev (behead (partsums (rev s)))) n' = rev (partsums (rev s)).
+  case/lastP: s Hsum => //= s sn <-.
+  by rewrite rev_rcons /= rev_cons sumn_rcons sumn_rev addnC.
+have {Hsum n0 n'} Hs : rev s != [::].
+  by apply/negP => /eqP H; rewrite -sumn_rev H /n' /= in Hsum.
+rewrite -[RHS]revK.
+case: (rev s) Hs => // s0 {}s _ /=.
+elim: s s0 => [/=| s1 s /(_ s1)IHs] s0; first by rewrite addn0 subn0.
+move: IHs; rewrite !rev_cons -!cats1 -!catA !cat1s !pairmap_cat /= addnK => IHs.
+by rewrite -cat1s catA IHs -catA cat1s.
+Qed.
+
+Lemma descset_bij : bijective descset.
+Proof.
+apply: (inj_card_bij (can_inj descsetK)); rewrite /= card_intcompn.
+by rewrite -cardsT -powersetT card_powerset cardsT card_ord.
+Qed.
+
+Lemma from_descsetK : cancel from_descset descset.
+Proof. by rewrite (bij_can_sym descset_bij); exact: descsetK. Qed.
 
 End CompOfn.
 
@@ -250,18 +417,6 @@ Fact colcompnP d : is_comp_of_n d (colcomp d).
 Proof. by elim: d => [| d]. Qed.
 Canonical colcompn d : intcompn d := IntCompN (colcompnP d).
 
-Lemma card_intcompn n : #|{:intcompn n}| = 2 ^ n.-1.
-Proof.
-rewrite /= !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
-elim/ltn_ind: n => [[_ | n IHn]] /=; first by rewrite expn0.
-rewrite enum_compnE // size_allpairs_dep sumn_mapE.
-rewrite -{1}(subn0 n.+1) -subSS -/(index_iota _ _) big_add1 /= big_mkord.
-transitivity (\sum_(i < n.+1) 2 ^ i.-1).
-  rewrite (reindex_inj rev_ord_inj) /=; apply eq_bigr => i _.
-  by rewrite !subSS subKn ?IHn // -ltnS.
-rewrite big_ord_recl //= expn0 -(mul1n (\sum__ _)) -(predn_exp 2 n).
-by rewrite add1n prednK // expn_gt0.
-Qed.
 
 #[export] Hint Resolve intcompP intcompnP : core.
 
