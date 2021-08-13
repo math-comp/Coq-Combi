@@ -150,7 +150,7 @@ have leqI_trans : transitive leqI.
 have: sorted leqI (enum (mem S)).
   rewrite {1}/enum_mem -enumT /=.
   apply: (sorted_filter leqI_trans).
-  exact: sorted_enum_ord.
+  exact: enum_ord_sorted.
 case: (enum (mem S)) => [//= | i0 l] {S} /=.
 elim: l i0 => [//= | i1 l IHl] i0 /= /andP [Hleqi Hpath].
 rewrite -(IHl i1 Hpath) {IHl Hpath}; congr (_ && _).

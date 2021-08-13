@@ -202,17 +202,23 @@ End Sorted.
 
 Require Import tools.
 
-Lemma sorted_enum_ord N :
-  sorted (fun i j : 'I_N => i <= j) (enum 'I_N).
+Lemma enum_ord_sorted_ltn N :
+  sorted (fun i j : 'I_N => i < j) (enum 'I_N).
 Proof.
 rewrite /sorted; case Henum : (enum 'I_N) => [//= | a l].
-rewrite -(map_path (h := val) (e := leq) (b := pred0)) //.
+rewrite -(map_path (h := val) (e := ltn) (b := pred0)) //.
 - rewrite (_ : l = behead (enum 'I_N)); last by rewrite Henum.
   rewrite (_ : val a = head 0 (map val (enum 'I_N))); last by rewrite Henum.
   rewrite -behead_map val_enum_ord.
   case: N {a l Henum} => [//= | N] /=.
-  exact: (iota_sorted 0 N.+1).
+  exact: (iota_ltn_sorted 0 N.+1).
 - by rewrite (eq_has (a2 := pred0)); first by rewrite has_pred0.
+Qed.
+
+Lemma enum_ord_sorted N :
+  sorted (fun i j : 'I_N => i <= j) (enum 'I_N).
+Proof.
+by have:= enum_ord_sorted_ltn N; apply: sub_sorted => i j /=/ltnW.
 Qed.
 
 Lemma sorted_ltn_ind s :
