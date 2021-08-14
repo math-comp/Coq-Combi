@@ -15,25 +15,39 @@
 (******************************************************************************)
 (** * Integer Compositions.
 
-- [is_comp s] == [s] is a composition, ie. [s] doesn't contains any 0
-- [intcomp] == a sigma type for [is_comp]
+Integer Composition are stored as [seq nat]. We define the following:
 
+- [is_comp s]   == [s] is a composition, ie. [s] doesn't contains any 0
 - [is_comp_of_n sm s] == [s] is a composition of sum [sm]
+- [intcomp]     == a sigma type for [is_comp]
+
 - [intcompn sm] == a sigma type for the predicate [is_comp_of_n sm].
                this is canonically a [subFinType]
 
-- [rowcomp d] == the trivial composition
-- [rowcompn d] == the trivial composition as a [intcompn d]
+- [rowcomp d]   == the trivial composition
+- [rowcompn d]  == the trivial composition as a [intcompn d]
 
-- [colcomp d] == the composition [[:: 1; 1; ...]]
-- [colcompn d] == the composition [[:: 1; 1; ...]] as a [intcompn d]
+- [colcomp d]   == the composition [[:: 1; 1; ...]]
+- [colcompn d]  == the composition [[:: 1; 1; ...]] as a [intcompn d]
+
+Bijection with subsets: Consistently, with permutation starting at 0,
+descents are starting at zero and therefore of type ['I_n.-1].
+In the following we assume.
+
+- [partsums s]  == sorted sequence of partial sums (excluding the trivial
+                   and full sum)
+- [descset c]   == the descent set of [c : intcompn n]
+- [from_descset d] == the composition (of type [c : intcompn n]) whose
+                   descent set is [d : {set 'I_n.-1}].
+
+Compositions and partitions:
 
 - [partn_of_compn n c] == the partition in ['P_n] obtained by sorting
-               [c : intcompn n]
+                   [c : intcompn n]
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import bigop path binomial finset.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice.
+From mathcomp Require Import seq bigop path binomial finset.
 Require Import tools combclass sorted partition.
 
 Set Implicit Arguments.
@@ -48,10 +62,26 @@ Implicit Type s : seq nat.
 
 Definition is_comp s := 0 \notin s.
 
+Lemma is_compP s : reflect (forall i, i \in s -> i != 0) (is_comp s).
+Proof.
+rewrite /is_comp; apply (iffP idP) => [H0 i iins|H].
+- by move: H0; apply contra => /eqP <-.
+- by apply/negP => /H.
+Qed.
+
+Lemma is_comp1 i : is_comp [:: i] = (i != 0).
+Proof. by rewrite /is_comp inE /= eq_sym. Qed.
+
+Lemma is_comp_cons i s : is_comp (i :: s) = (i != 0) && (is_comp s).
+Proof. by rewrite /is_comp inE negb_or eq_sym. Qed.
+
 Lemma is_comp_rcons s sn : is_comp (rcons s sn) = (sn != 0) && (is_comp s).
 Proof.
 by rewrite /is_comp -(mem_rev (rcons _ _)) rev_rcons inE negb_or mem_rev eq_sym.
 Qed.
+
+Lemma is_comp_cat s1 s2 : is_comp (s1 ++ s2) = (is_comp s1) && (is_comp s2).
+Proof. by rewrite /is_comp mem_cat negb_or. Qed.
 
 (** Compositions and sumn *)
 Lemma comp0 s : is_comp s -> sumn s = 0 -> s = [::].
@@ -241,10 +271,10 @@ Qed.
 Definition rev_intcompn c := IntCompN (rev_intcompn_spec c).
 
 
-(** Bijection with subsets *)
+(** * Bijection with subsets *)
 Definition partsums s := [seq sumn (take i s) | i <- iota 1 (size s).-1].
-Definition descs c : seq 'I_n.-1 := pmap insub [seq i.-1 | i <- partsums c].
-Definition descset c : {set 'I_n.-1} := [set i in descs c].
+Definition descset c : {set 'I_n.-1} :=
+  [set i in pmap insub [seq i.-1 | i <- partsums c]].
 
 Lemma size_partsums s : size (partsums s) = (size s).-1.
 Proof. by rewrite size_map size_iota. Qed.
@@ -253,20 +283,12 @@ Lemma all_partsums c : all (fun i => 0 < i < n) (partsums c).
 Proof.
 rewrite all_map; apply/allP => i; rewrite mem_iota add1n.
 case: c => [[|c0 c]] /andP [/eqP <-]/=; first by case: i.
-rewrite /is_comp inE negb_or eq_sym -lt0n => /andP[Hc0 Hc].
+rewrite is_comp_cons -lt0n => /andP[Hc0 Hc].
 case: i => //= i /ltnSE ltisz.
 rewrite (leq_trans Hc0) ?leq_addr //= ltn_add2l {c0 Hc0}.
 rewrite -{2}(cat_take_drop i c) sumn_cat -addn1 leq_add2l.
 rewrite (drop_nth 0 ltisz) /= (leq_trans _ (leq_addr _ _)) // lt0n.
 by move: Hc; apply contra => /eqP <-; exact: mem_nth.
-Qed.
-
-Lemma val_descs c : map val (descs c) = [seq i.-1 | i <- partsums c].
-Proof.
-have := all_partsums c; rewrite /descs /=.
-elim: (partsums c) => // s0 s IHs /andP[Hs0 {}/IHs Hrec] /=.
-have {}Hs0: s0.-1 < n.-1 by case: s0 Hs0 => // s0; case n.
-by rewrite /oapp /= insubT /= Hrec.
 Qed.
 
 (* TODO: remove me when merged in mathcomp *)
@@ -309,8 +331,8 @@ rewrite -!cats1 !pairmap_cat last_cat !sumn_cat /= !addn0 => /eqP Hsum Hcomp.
 apply/andP; split => [{Hcomp}|{Hsum}].
 - rewrite -{2}Hsum -addnA eqn_add2l addnC addnBA //; last exact: ltnW.
   by rewrite subnK // ltnW.
-- move: Hcomp; rewrite /is_comp !mem_cat !inE !negb_or => /andP[-> _]/=.
-  by rewrite ![0 == _]eq_sym -!lt0n !subn_gt0 lt_last lt_sn_n.
+- move: Hcomp; rewrite !is_comp_cat => /andP[-> _]/=.
+  by rewrite !is_comp1 -!lt0n !subn_gt0 lt_last lt_sn_n.
 Qed.
 Definition from_descset d := IntCompN (from_descset_spec d).
 
@@ -333,20 +355,20 @@ apply: (irr_sorted_eq (ltn_trans) ltnn).
   rewrite /enum_mem -enumT /= sorted_filter // ?enum_ord_sorted_ltn //.
   by move=> i j k /ltn_trans; apply.
 - by move=> i j /=; rewrite ltnS.
-- case: s => s /= /andP[_]; rewrite /is_comp => Hcomp.
+- case: s => s /= /andP[_ /is_compP Hcomp].
   apply/(sorted1P 0) => i.
   rewrite size_map size_iota -[nth _ _ _ < _]subn_gt0 => Hi.
   rewrite diff_nth_sumn_take ?leq_pred // lt0n.
-  move: Hcomp; apply contra => /eqP <-; apply: mem_nth.
+  apply: Hcomp; apply: mem_nth.
   by case: (size s) Hi => //= sz /ltn_trans; apply.
 move=> i; apply/mapP/idP => [[/= [x Hx]] | Hi].
-- rewrite mem_enum /descset inE /descs mem_pmap_sub /=.
+- rewrite mem_enum /descset inE mem_pmap_sub /=.
   move/mapP => [/= j Hj ->{x Hx} ->{i}].
   by have /= /allP/(_ _ Hj) := all_partsums s; case: j Hj.
 - have /= /allP/(_ _ Hi) lt0in := all_partsums s.
   have ltin : i.-1 < n.-1 by case: n i lt0in {Hi} => [|n0][|i].
   exists (Ordinal ltin) => /=; last by case: i lt0in {Hi ltin}.
-  rewrite mem_enum /descset inE /= /descs mem_pmap_sub /=.
+  rewrite mem_enum /descset inE /= mem_pmap_sub /=.
   by apply/mapP; exists i.
 Qed.
 
@@ -358,7 +380,7 @@ Qed.
 
 Lemma descsetK : cancel descset from_descset.
 Proof.
-rewrite /descset /from_descset; case => [s Hs]; apply val_inj => /=.
+case => [s Hs]; apply val_inj => /=.
 rewrite enum_descsetE /=; move: Hs => /andP [/eqP Hsum Hcomp].
 case: n Hsum => [/(comp0 Hcomp) -> // | n0]; set n' := n0.+1 => Hsum {Hcomp}.
 case: s Hsum => [|s0 s']//; move Hs: (s0 :: s') => s Hsum.
@@ -405,7 +427,8 @@ Qed.
 Definition intcompn_cast m n (eq_mn : m = n) p :=
   let: erefl in _ = n := eq_mn return intcompn n in p.
 
-Lemma intcompn_castE m n (eq_mn : m = n) p : val (intcompn_cast eq_mn p) = val p.
+Lemma intcompn_castE m n (eq_mn : m = n) p :
+  val (intcompn_cast eq_mn p) = val p.
 Proof. by subst m; case: p. Qed.
 
 Definition rowcomp d := if d is _.+1 then [:: d] else [::].
