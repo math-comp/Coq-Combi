@@ -240,14 +240,27 @@ by rewrite /is_comp_of_n /is_comp /= mem_rev sumn_rev; case: c.
 Qed.
 Definition rev_intcompn c := IntCompN (rev_intcompn_spec c).
 
-Fixpoint partsums (s : seq nat) :=
-  if s is _ :: s' then sumn s :: partsums s' else [::].
-Definition descs c : seq 'I_n.-1 :=
-  pmap insub [seq i.-1 | i <- rev (behead (partsums (rev c)))].
+Fixpoint partsums_rec acc sum (s : seq nat) :=
+  if s is s0 :: s' then partsums_rec (sum :: acc) (s0 + sum) s' else acc.
+Definition partsums s :=
+  if s is s0 :: s' then rev (partsums_rec [::] s0 s') else [::].
+Definition descs c : seq 'I_n.-1 := pmap insub [seq i.-1 | i <- partsums c].
 Definition descset c : {set 'I_n.-1} := [set i in descs c].
 
-Lemma size_partsums s : size (partsums s) = size s.
-Proof. by elim: s => //= s0 s ->. Qed.
+Lemma partsumsE s :
+  partsums s = [seq sumn (take i s) | i <- iota 1 (size s).-1].
+Proof.
+rewrite /partsums; case: s => // s0 s /=.
+rewrite -[RHS]cat0s -{2}[[::]]/(rev [::]).
+elim: s s0 [::] => [| s1 s IHs] s0 acc /=; first by rewrite cats0.
+rewrite {}IHs /= addn0 rev_cons -cats1 -catA cat1s; congr (_ ++ _ :: _).
+rewrite -[2]addn1 iotaDl -map_comp -eq_in_map => i /=.
+rewrite mem_iota => /andP []; case: i => //= i _  _.
+by rewrite [s1 + s0]addnC addnA.
+Qed.
+
+Lemma size_partsums s : size (partsums s) = (size s).-1.
+Proof. by rewrite partsumsE size_map size_iota. Qed.
 
 Lemma ltn_sum_non0 i j k : i != 0 -> i + j <= k -> j < k.
 Proof.
@@ -255,30 +268,22 @@ case: i => // i _; rewrite addSn => /(leq_ltn_trans _); apply.
 exact: leq_addl.
 Qed.
 
-Lemma all_partsums c : all (fun i => 0 < i < n) (behead (partsums c)).
+Lemma all_partsums c : all (fun i => 0 < i < n) (partsums c).
 Proof.
-apply/allP => /= i.
-case: c => c /=/andP[]/=; case/lastP: c => // c cn.
-rewrite eqn_leq => /andP[Hleq _]; move: Hleq.
-rewrite sumn_rcons is_comp_rcons -lt0n /is_comp => Hsum /andP[lt0cn Hcomp].
-elim: c Hcomp Hsum => [|c0 c IHc]//=.
-rewrite inE negb_or eq_sym => /andP[Hc0 {}/IHc Hrec Hsum].
-have {}/Hrec: sumn c + cn <= n.
-  by apply: (leq_trans _ Hsum); rewrite -addnA leq_addl.
-case: c Hsum => [/= | c1 c Hsum].
-  rewrite !addn0 inE => /(ltn_sum_non0 Hc0) ltcnn _ /eqP ->.
-  by rewrite lt0cn ltcnn.
-rewrite rcons_cons [partsums (c1 :: _)]/= ![behead _]/= => Hrec.
-rewrite inE => /orP [/eqP ->|]; last exact: Hrec.
-move: Hsum {Hrec}; rewrite /= sumn_rcons -!addnA => /(ltn_sum_non0 Hc0) ->.
-by rewrite andbT; case: cn lt0cn => // cn _; rewrite !addnS.
+rewrite partsumsE all_map; apply/allP => i; rewrite mem_iota add1n.
+case: c => [[|c0 c]] /andP [/eqP <-]/=; first by case: i.
+rewrite /is_comp inE negb_or eq_sym -lt0n => /andP[Hc0 Hc].
+case: i => //= i /ltnSE ltisz.
+rewrite (leq_trans Hc0) ?leq_addr //= ltn_add2l {c0 Hc0}.
+rewrite -{2}(cat_take_drop i c) sumn_cat -addn1 leq_add2l.
+rewrite (drop_nth 0 ltisz) /= (leq_trans _ (leq_addr _ _)) // lt0n.
+by move: Hc; apply contra => /eqP <-; exact: mem_nth.
 Qed.
 
-Lemma val_descs c :
-  map val (descs c) = [seq i.-1 | i <- rev (behead (partsums (rev c)))].
+Lemma val_descs c : map val (descs c) = [seq i.-1 | i <- partsums c].
 Proof.
-have := all_partsums (rev_intcompn c); rewrite /descs /= -all_rev.
-elim: (rev _) => // s0 s IHs /andP[Hs0 {}/IHs Hrec].
+have := all_partsums c; rewrite /descs /=.
+elim: (partsums c) => // s0 s IHs /andP[Hs0 {}/IHs Hrec] /=.
 have {}Hs0: s0.-1 < n.-1 by case: s0 Hs0 => // s0; case n.
 by rewrite /oapp /= insubT /= Hrec.
 Qed.
@@ -328,38 +333,46 @@ apply/andP; split => [{Hcomp}|{Hsum}].
 Qed.
 Definition from_descset d := IntCompN (from_descset_spec d).
 
-Lemma enum_descsetE s :
-  [seq (val i).+1 | i in descset s] = rev (behead (partsums (rev s))).
+Lemma diff_nth_sumn_take s i m :
+  m <= size s -> i.+1 < m ->
+  nth 0 [seq sumn (take i0 s) | i0 <- iota 1 m] i.+1 -
+  nth 0 [seq sumn (take i0 s) | i0 <- iota 1 m] i = nth 0 s i.+1.
+Proof.
+move=> Hm Hi.
+rewrite !(nth_map 0) ?size_iota //=; last exact: (ltn_trans _ Hi).
+rewrite !nth_iota //=; last exact: (ltn_trans _ Hi).
+rewrite !add1n !sumn_take [X in X - _]big_nat_recr //=.
+by rewrite addnC addnK.
+Qed.
+
+Lemma enum_descsetE s : [seq (val i).+1 | i in descset s] = partsums s.
 Proof.
 apply: (irr_sorted_eq (ltn_trans) ltnn).
 - rewrite sorted_map (eq_sorted (e' := fun i j => val i < val j)).
   rewrite /enum_mem -enumT /= sorted_filter // ?enum_ord_sorted_ltn //.
   by move=> i j k /ltn_trans; apply.
 - by move=> i j /=; rewrite ltnS.
-- suff : sorted (fun m : nat => [eta leq m.+1]) (rev (partsums (rev s))).
-    by case: (partsums _) => // a l; rewrite /= rev_cons => /sorted_rconsK.
-  case: s => s /= /andP[_]; rewrite /is_comp -mem_rev rev_sorted.
-  elim: (rev s) => // s0 {}s IHs /=.
-  rewrite inE negb_or eq_sym => /andP[Hs0 {}/IHs].
-  case: s => // s1 s /= ->.
-  case: s0 Hs0 => // s0 _.
-  by rewrite andbT addSn ltnS leq_addl.
-move=> i; rewrite mem_rev; apply/mapP/idP => [[/= [x Hx]] | Hi].
+- case: s => s /= /andP[_]; rewrite /is_comp => Hcomp.
+  rewrite partsumsE; apply/(sorted1P 0) => i.
+  rewrite size_map size_iota -[nth _ _ _ < _]subn_gt0 => Hi.
+  rewrite diff_nth_sumn_take ?leq_pred // lt0n.
+  move: Hcomp; apply contra => /eqP <-; apply: mem_nth.
+  by case: (size s) Hi => //= sz /ltn_trans; apply.
+move=> i; apply/mapP/idP => [[/= [x Hx]] | Hi].
 - rewrite mem_enum /descset inE /descs mem_pmap_sub /=.
-  move/mapP => [/= j Hj ->{x Hx} ->{i}]; rewrite mem_rev in Hj.
-  have /= /allP/(_ _ Hj) := all_partsums (rev_intcompn s).
-  by case: j Hj.
-- have /= /allP/(_ _ Hi) lt0in := all_partsums (rev_intcompn s).
+  move/mapP => [/= j Hj ->{x Hx} ->{i}].
+  by have /= /allP/(_ _ Hj) := all_partsums s; case: j Hj.
+- have /= /allP/(_ _ Hi) lt0in := all_partsums s.
   have ltin : i.-1 < n.-1 by case: n i lt0in {Hi} => [|n0][|i].
   exists (Ordinal ltin) => /=; last by case: i lt0in {Hi ltin}.
   rewrite mem_enum /descset inE /= /descs mem_pmap_sub /=.
-  by apply/mapP; exists i => //; rewrite mem_rev.
+  by apply/mapP; exists i.
 Qed.
 
 Lemma card_descset s : #|descset s| = (size s).-1.
 Proof.
 have := congr1 size (enum_descsetE s); rewrite size_map cardE => ->.
-by rewrite size_rev size_behead size_partsums size_rev.
+by rewrite size_partsums.
 Qed.
 
 Lemma descsetK : cancel descset from_descset.
@@ -367,16 +380,16 @@ Proof.
 rewrite /descset /from_descset; case => [s Hs]; apply val_inj => /=.
 rewrite enum_descsetE /=; move: Hs => /andP [/eqP Hsum Hcomp].
 case: n Hsum => [/(comp0 Hcomp) -> // | n0]; set n' := n0.+1 => Hsum {Hcomp}.
-have -> : rcons (rev (behead (partsums (rev s)))) n' = rev (partsums (rev s)).
-  case/lastP: s Hsum => //= s sn <-.
-  by rewrite rev_rcons /= rev_cons sumn_rcons sumn_rev addnC.
-have {Hsum n0 n'} Hs : rev s != [::].
-  by apply/negP => /eqP H; rewrite -sumn_rev H /n' /= in Hsum.
-rewrite -[RHS]revK.
-case: (rev s) Hs => // s0 {}s _ /=.
-elim: s s0 => [/=| s1 s /(_ s1)IHs] s0; first by rewrite addn0 subn0.
-move: IHs; rewrite !rev_cons -!cats1 -!catA !cat1s !pairmap_cat /= addnK => IHs.
-by rewrite -cat1s catA IHs -catA cat1s.
+case: s Hsum => [|s0 s']//; move Hs: (s0 :: s') => s Hsum.
+
+have -> : rcons (partsums s) n' = [seq sumn (take i s) | i <- iota 1 (size s)].
+  rewrite partsumsE -{}Hsum -Hs [size (s0 :: s')]/=.
+  by rewrite -{2}(addn1 (size s')) iotaD /= map_cat /= take_size cats1.
+apply: (eq_from_nth (x0 := 0)) => [|i]; rewrite size_pairmap.
+  by rewrite size_map size_iota.
+move=> Hi; rewrite (nth_pairmap 0) //; rewrite size_map size_iota in Hi.
+case: i Hi => [|i] /= Hi; first by rewrite -Hs /= take0 /= addn0 subn0.
+exact: diff_nth_sumn_take.
 Qed.
 
 Lemma descset_bij : bijective descset.
