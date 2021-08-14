@@ -15,8 +15,8 @@
 (******************************************************************************)
 (** * Shapes and Integer Partitions
 
-Partitions (and more generally shapes) are stored by terms of type [seq (seq
-nat)]. We define the following predicates and operations on [seq (seq nat)]:
+Partitions (and more generally shapes) are stored by terms of type [seq nat].
+We define the following predicates and operations on [seq nat]:
 [(r, c)] is in [sh] if [r < sh[i]]
 
 - [is_in_shape sh r c] == the box with coordinate (r, c) belongs to the shape
