@@ -240,37 +240,18 @@ by rewrite /is_comp_of_n /is_comp /= mem_rev sumn_rev; case: c.
 Qed.
 Definition rev_intcompn c := IntCompN (rev_intcompn_spec c).
 
-Fixpoint partsums_rec acc sum (s : seq nat) :=
-  if s is s0 :: s' then partsums_rec (sum :: acc) (s0 + sum) s' else acc.
-Definition partsums s :=
-  if s is s0 :: s' then rev (partsums_rec [::] s0 s') else [::].
+
+(** Bijection with subsets *)
+Definition partsums s := [seq sumn (take i s) | i <- iota 1 (size s).-1].
 Definition descs c : seq 'I_n.-1 := pmap insub [seq i.-1 | i <- partsums c].
 Definition descset c : {set 'I_n.-1} := [set i in descs c].
 
-Lemma partsumsE s :
-  partsums s = [seq sumn (take i s) | i <- iota 1 (size s).-1].
-Proof.
-rewrite /partsums; case: s => // s0 s /=.
-rewrite -[RHS]cat0s -{2}[[::]]/(rev [::]).
-elim: s s0 [::] => [| s1 s IHs] s0 acc /=; first by rewrite cats0.
-rewrite {}IHs /= addn0 rev_cons -cats1 -catA cat1s; congr (_ ++ _ :: _).
-rewrite -[2]addn1 iotaDl -map_comp -eq_in_map => i /=.
-rewrite mem_iota => /andP []; case: i => //= i _  _.
-by rewrite [s1 + s0]addnC addnA.
-Qed.
-
 Lemma size_partsums s : size (partsums s) = (size s).-1.
-Proof. by rewrite partsumsE size_map size_iota. Qed.
-
-Lemma ltn_sum_non0 i j k : i != 0 -> i + j <= k -> j < k.
-Proof.
-case: i => // i _; rewrite addSn => /(leq_ltn_trans _); apply.
-exact: leq_addl.
-Qed.
+Proof. by rewrite size_map size_iota. Qed.
 
 Lemma all_partsums c : all (fun i => 0 < i < n) (partsums c).
 Proof.
-rewrite partsumsE all_map; apply/allP => i; rewrite mem_iota add1n.
+rewrite all_map; apply/allP => i; rewrite mem_iota add1n.
 case: c => [[|c0 c]] /andP [/eqP <-]/=; first by case: i.
 rewrite /is_comp inE negb_or eq_sym -lt0n => /andP[Hc0 Hc].
 case: i => //= i /ltnSE ltisz.
@@ -353,7 +334,7 @@ apply: (irr_sorted_eq (ltn_trans) ltnn).
   by move=> i j k /ltn_trans; apply.
 - by move=> i j /=; rewrite ltnS.
 - case: s => s /= /andP[_]; rewrite /is_comp => Hcomp.
-  rewrite partsumsE; apply/(sorted1P 0) => i.
+  apply/(sorted1P 0) => i.
   rewrite size_map size_iota -[nth _ _ _ < _]subn_gt0 => Hi.
   rewrite diff_nth_sumn_take ?leq_pred // lt0n.
   move: Hcomp; apply contra => /eqP <-; apply: mem_nth.
@@ -381,9 +362,8 @@ rewrite /descset /from_descset; case => [s Hs]; apply val_inj => /=.
 rewrite enum_descsetE /=; move: Hs => /andP [/eqP Hsum Hcomp].
 case: n Hsum => [/(comp0 Hcomp) -> // | n0]; set n' := n0.+1 => Hsum {Hcomp}.
 case: s Hsum => [|s0 s']//; move Hs: (s0 :: s') => s Hsum.
-
 have -> : rcons (partsums s) n' = [seq sumn (take i s) | i <- iota 1 (size s)].
-  rewrite partsumsE -{}Hsum -Hs [size (s0 :: s')]/=.
+  rewrite /partsums -{}Hsum -Hs [size (s0 :: s')]/=.
   by rewrite -{2}(addn1 (size s')) iotaD /= map_cat /= take_size cats1.
 apply: (eq_from_nth (x0 := 0)) => [|i]; rewrite size_pairmap.
   by rewrite size_map size_iota.
