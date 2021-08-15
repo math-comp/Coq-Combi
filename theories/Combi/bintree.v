@@ -217,11 +217,9 @@ Fixpoint enum_bintreesz_leq n :=
   else [:: [:: BinLeaf]].
 Definition enum_bintreesz n := last [::] (enum_bintreesz_leq n).
 
-Lemma Catalan_bin10 :
-  [seq Catalan_bin n | n <- iota 0 10] =
-  [:: 1; 1; 2; 5; 14; 42; 132; 429; 1430; 4862].
+Goal [seq Catalan_bin n | n <- iota 0 10] =
+     [:: 1; 1; 2; 5; 14; 42; 132; 429; 1430; 4862].
 Proof. by []. Qed.
-
 
 
 Lemma size_Catalan_bin_leq n : size (Catalan_bin_leq n) = n.+1.
@@ -1567,13 +1565,9 @@ Lemma TjoinE t1 t2 t : (Tjoin t1 t2 <=T t) = (t1 <=T t) && (t2 <=T t).
 Proof. by rewrite /Tjoin -![_ <=T t]Tamari_flip flipszK TmeetE. Qed.
 
 Definition Tamari_latticeMixin := MeetJoinLeMixin TmeetE TjoinE.
-Definition Tamari_latticeType := LatticeType (bintreesz n) Tamari_latticeMixin.
+Canonical Tamari_latticeType := LatticeType (bintreesz n) Tamari_latticeMixin.
 
 End Def.
-
-Module Exports.
-
-Canonical Tamari_latticeType.
 
 Section Theory.
 
@@ -1593,6 +1587,13 @@ Lemma flipsz_join t1 t2 : flipsz (t1 /\T t2) = (flipsz t1 \/T flipsz t2).
 Proof. by rewrite -[RHS]flipszK flipsz_meet !flipszK. Qed.
 
 End Theory.
+Module Exports.
+
+Canonical Tamari_latticeType.
+Definition right_sizes_meet := right_sizes_meet.
+Definition flipsz_meet := flipsz_meet.
+Definition flipsz_join := flipsz_join.
+
 End Exports.
 End TamariLattice.
 Export TamariLattice.Exports.
@@ -1603,14 +1604,14 @@ Section TamariTBLattice.
 Variable n : nat.
 Implicit Types t : bintreesz n.
 
-Lemma leftcomb_bottom t : leftcombsz n <=T t.
+Fact leftcomb_bottom t : leftcombsz n <=T t.
 Proof.
 rewrite -Tamari_vctleq right_sizes_left_comb.
 apply/vctleqP; split; first by rewrite size_nseq size_right_sizes bintreeszP.
 by move=> i; rewrite nth_nseq if_same.
 Qed.
 
-Lemma rightcomb_top t : t <=T rightcombsz n.
+Fact rightcomb_top t : t <=T rightcombsz n.
 Proof. by rewrite -Tamari_flip flipsz_rightcomb; exact: leftcomb_bottom. Qed.
 
 Definition Tamari_bottomMixin := BottomMixin leftcomb_bottom.
@@ -1645,7 +1646,7 @@ have [] := vct_succ Htam H1 H2.
   by right; apply val_inj.
 Qed.
 
-Lemma Tamari_cover t1 t2 : (trval t2 \in rotations t1) = (covers t1 t2).
+Lemma covers_Tamari t1 t2 : (trval t2 \in rotations t1) = (covers t1 t2).
 Proof.
 apply/idP/coversP => [Hrot|].
 - split => /= [|z /andP[H1 H2]]; first exact: rotations_Tamari.
