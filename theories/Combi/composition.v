@@ -48,7 +48,7 @@ Compositions and partitions:
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice.
 From mathcomp Require Import seq bigop path binomial finset.
-Require Import tools combclass sorted partition.
+Require Import tools combclass sorted partition subseq.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -377,40 +377,45 @@ rewrite !add1n !sumn_take [X in X - _]big_nat_recr //=.
 by rewrite addnC addnK.
 Qed.
 
-Lemma enum_descsetE s : [seq (val i).+1 | i in descset s] = partsums s.
+Lemma sorted_ltn_partsums c : sorted ltn (partsums c).
+Proof.
+case: c => [c /= /andP[_ /is_compP Hcomp]].
+apply/(sorted1P 0) => i.
+rewrite size_map size_iota /= -[nth _ _ _ < _]subn_gt0 => Hi.
+rewrite diff_nth_sumn_take ?leq_pred // lt0n.
+apply: Hcomp; apply: mem_nth.
+by case: (size c) Hi => //= sz /ltn_trans; apply.
+Qed.
+
+Lemma val_descset c : [seq (val i).+1 | i in descset c] = partsums c.
 Proof.
 apply: (irr_sorted_eq (ltn_trans) ltnn).
 - rewrite sorted_map (eq_sorted (e' := fun i j => val i < val j)).
   rewrite /enum_mem -enumT /= sorted_filter // ?enum_ord_sorted_ltn //.
   by move=> i j k /ltn_trans; apply.
 - by move=> i j /=; rewrite ltnS.
-- case: s => s /= /andP[_ /is_compP Hcomp].
-  apply/(sorted1P 0) => i.
-  rewrite size_map size_iota -[nth _ _ _ < _]subn_gt0 => Hi.
-  rewrite diff_nth_sumn_take ?leq_pred // lt0n.
-  apply: Hcomp; apply: mem_nth.
-  by case: (size s) Hi => //= sz /ltn_trans; apply.
+- exact: sorted_ltn_partsums.
 move=> i; apply/mapP/idP => [[/= [x Hx]] | Hi].
 - rewrite mem_enum /descset inE mem_pmap_sub /=.
   move/mapP => [/= j Hj ->{x Hx} ->{i}].
-  by have /= /allP/(_ _ Hj) := all_partsums s; case: j Hj.
-- have /= /allP/(_ _ Hi) lt0in := all_partsums s.
+  by have /= /allP/(_ _ Hj) := all_partsums c; case: j Hj.
+- have /= /allP/(_ _ Hi) lt0in := all_partsums c.
   have ltin : i.-1 < n.-1 by case: n i lt0in {Hi} => [|n0][|i].
   exists (Ordinal ltin) => /=; last by case: i lt0in {Hi ltin}.
   rewrite mem_enum /descset inE /= mem_pmap_sub /=.
   by apply/mapP; exists i.
 Qed.
 
-Lemma card_descset s : #|descset s| = (size s).-1.
+Lemma card_descset c : #|descset c| = (size c).-1.
 Proof.
-have := congr1 size (enum_descsetE s); rewrite size_map cardE => ->.
+have := congr1 size (val_descset c); rewrite size_map cardE => ->.
 by rewrite size_partsums.
 Qed.
 
 Lemma descsetK : cancel descset from_descset.
 Proof.
 case => [s Hs]; apply val_inj => /=.
-rewrite enum_descsetE /=; move: Hs => /andP [/eqP Hsum Hcomp].
+rewrite val_descset /=; move: Hs => /andP [/eqP Hsum Hcomp].
 case: n Hsum => [/(comp0 Hcomp) -> // | n0]; set n' := n0.+1 => Hsum {Hcomp}.
 case: s Hsum => [|s0 s']//; move Hs: (s0 :: s') => s Hsum.
 have -> : rcons (partsums s) n' = [seq sumn (take i s) | i <- iota 1 (size s)].
@@ -508,6 +513,14 @@ apply (iffP subsetP) => Hsub /= i Hin.
 - case: i Hin => [i Hi] /=.
   rewrite /descset !inE !mem_pmap_sub /= => /mapP [j /Hsub Hin Heq].
   by rewrite Heq map_f.
+Qed.
+
+
+Lemma subseq_partsumE c1 c2 :
+  (subseq (partsums c1) (partsums c2)) = (descset c1 \subset descset c2).
+Proof.
+apply/idP/subdescset_partsumP => [/mem_subseq // |].
+by move/(sorted_subseqP ltn_trans ltnn); apply; apply: sorted_ltn_partsums.
 Qed.
 
 Lemma subdescsetP c1 c2 :

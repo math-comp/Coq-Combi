@@ -66,6 +66,48 @@ Qed.
 
 End RCons.
 
+Section SubseqSorted.
+
+Variable (T : eqType) (leT : rel T).
+Implicit Type s : seq T.
+
+Lemma sorted_subseqP s1 s2 :
+  transitive leT -> irreflexive leT -> sorted leT s1 -> sorted leT s2 ->
+  reflect {subset s1 <= s2} (subseq s1 s2).
+Proof.
+move=> leT_trans leT_irr s1_sort s2_sort.
+apply (iffP idP) => [|sub_s12]; first exact: mem_subseq.
+apply/subseqP; exists [seq i \in s1 | i <- s2]; first by rewrite size_map.
+apply: (irr_sorted_eq leT_trans leT_irr s1_sort).
+  exact: (sorted_mask leT_trans).
+move=> i; rewrite -filter_mask mem_filter.
+by case: (boolP (i \in s1)) => // /sub_s12 ->.
+Qed.
+
+End SubseqSorted.
+
+Section SubseqSortedIn.
+
+Variable (T : eqType) (leT : rel T).
+Implicit Type s : seq T.
+
+Lemma sorted_subseq_inP s1 s2 :
+  {in s2 & &, transitive leT} -> {in s2, irreflexive leT} ->
+  sorted leT s1 -> sorted leT s2 ->
+  reflect {subset s1 <= s2} (subseq s1 s2).
+Proof.
+move=> leT_tr leT_irr ss1 ss2; apply (iffP idP); first exact: mem_subseq.
+move: leT_tr leT_irr ss1 ss2 => /in3_sig leT_tr /in1_sig leT_irr .
+have /all_sigP[s2' ->] := allss s2 => + + /[dup] subs12.
+have /all_sigP[{subs12}s1 ->] : all (mem s2) s1.
+  by apply/allP => i /subs12 /mapP [[j /= j_in_s2 _ ->{i}]].
+rewrite !sorted_map => ss1 ss2' subs12.
+apply/map_subseq/(sorted_subseqP leT_tr leT_irr ss1 ss2').
+by move=> i /(map_f sval) /subs12 /mapP[j j_in_s2'] /val_inj->.
+Qed.
+
+End SubseqSortedIn.
+
 
 (** * Subsequence of a sequence as a [fintype]                                *)
 (**
