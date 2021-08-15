@@ -200,7 +200,7 @@ Definition sympoly_lalgMixin :=
 Canonical sympoly_lalgType :=
   Eval hnf in LalgType R {sympoly R[n]} sympoly_lalgMixin.
 
-Lemma sympol_is_lrmorphism :
+Fact sympol_is_lrmorphism :
   lrmorphism (@sympol n R : {sympoly R[n]} -> {mpoly R[n]}).
 Proof. by []. Qed.
 Canonical sympol_additive   := Additive   sympol_is_lrmorphism.
@@ -255,10 +255,6 @@ Canonical sympoly_unitAlgType :=
   Eval hnf in [unitAlgType R of {sympoly R[n]}].
 
 End SymPolyIdomainType.
-
-
-
-(* Print Canonical Projections. *)
 
 
 Section Bases.
@@ -745,9 +741,11 @@ Variable gA gB : nat -> SF.
 Variable co : forall (d : nat), 'P_d -> R.
 
 Local Notation "''gA_' k" := (gA k) (at level 8, format "''gA_' k").
-Local Notation "''gA[' k ]" := (prod_gen gA k) (at level 8, format "''gA[' k ]").
+Local Notation "''gA[' k ]" :=
+  (prod_gen gA k) (at level 8, format "''gA[' k ]").
 Local Notation "''gB_' k" := (gB k) (at level 8, format "''gB_' k").
-Local Notation "''gB[' k ]" := (prod_gen gB k) (at level 8, format "''gB[' k ]").
+Local Notation "''gB[' k ]" :=
+  (prod_gen gB k) (at level 8, format "''gB[' k ]").
 
 Fixpoint coeff_prodgen_seq l : 'P_(sumn l) -> R :=
   if l is l0 :: l' then
@@ -860,7 +858,7 @@ Qed.
 Definition map_sympoly (f : {sympoly R[n]}) : {sympoly S[n]} :=
            SymPoly (map_mpoly_issym f).
 
-Lemma map_sympoly_is_rmorphism : rmorphism map_sympoly.
+Fact map_sympoly_is_rmorphism : rmorphism map_sympoly.
 Proof.
 rewrite /map_sympoly; repeat split.
 - by move=> i j /=; apply val_inj; rewrite /= rmorphB.
@@ -1525,6 +1523,9 @@ End ChangeBasis.
 
 
 (** ** Basis change from Schur to monomial *)
+
+(** We start by doing the computation on [int] using [Kostka] and [KostkaInv]
+and then tranfer to any commutative ring *)
 Section SymsSymmInt.
 
 Variable (n : nat) (d : nat).
@@ -1636,7 +1637,7 @@ Qed.
 End SymsSymm.
 
 
-(** ** Basis change from complete to Schur *)
+(** ** Basis change from complete and elementary to Schur *)
 
 (** We start by doing the computation on [int] using [Kostka] and [KostkaInv]
 and then tranfer to any commutative ring *)
@@ -2146,7 +2147,7 @@ Local Notation SF p := (sym_fundamental (sympolP p)).
 
 Definition sympolyf p := let: exist t _  := SF p in t.
 
-Lemma sympolyf_is_lrmorphism : lrmorphism sympolyf.
+Fact sympolyf_is_lrmorphism : lrmorphism sympolyf.
 Proof.
 rewrite /sympolyf; repeat split.
 - move=> u v.
@@ -2194,7 +2195,7 @@ move: xeq; rewrite -sympolyf_evalE.
 exact: msym_fundamental_un.
 Qed.
 
-Lemma sympolyf_eval_is_lrmorphism : lrmorphism sympolyf_eval.
+Fact sympolyf_eval_is_lrmorphism : lrmorphism sympolyf_eval.
 Proof.
 rewrite /sympolyf_eval; repeat split.
 - by move=> u v; apply val_inj; rewrite /= raddfB.
@@ -2236,7 +2237,7 @@ Lemma val_omegasf p :
   sympol (omegasf p) = (sympolyf p) \mPo [tuple sympol 'h_i.+1 | i < n].
 Proof. by []. Qed.
 
-Lemma omegasf_is_lrmorphism : lrmorphism omegasf.
+Fact omegasf_is_lrmorphism : lrmorphism omegasf.
 Proof.
 rewrite /omegasf; repeat split.
 - by move=> u v; apply val_inj; rewrite /= !raddfB.
@@ -2446,7 +2447,7 @@ Lemma cnvarsym_subproof (p : {sympoly R[m]}) : sympolyf p \mPo E \is symmetric.
 Proof. by apply mcomp_sym => i; rewrite -tnth_nth tnth_mktuple mesym_sym. Qed.
 Definition cnvarsym p : {sympoly R[n]} := SymPoly (cnvarsym_subproof p).
 
-Lemma cnvarsym_is_lrmorphism : lrmorphism cnvarsym.
+Fact cnvarsym_is_lrmorphism : lrmorphism cnvarsym.
 Proof.
 rewrite /cnvarsym; repeat split.
 - by move=> u v; apply val_inj; rewrite /= !raddfB.
@@ -2571,3 +2572,40 @@ by rewrite linearZ /= cnvar_syms.
 Qed.
 
 End ChangeNVar.
+
+
+Section CategoricalSystems.
+
+Variable R : comRingType.
+
+Lemma cnvarsym_id n : @cnvarsym R n n =1 id.
+Proof. by move=> f; apply val_inj; rewrite /= sympolyfP. Qed.
+
+Lemma cnvarsym_leq_trans m n p :
+  (m <= n) -> (n <= p) ->
+  @cnvarsym R n p \o @cnvarsym R m n =1 @cnvarsym R m p.
+Proof.
+move=> le_m_n le_n_p f; rewrite -(sympolyfK f) /=.
+move: (sympolyf f) => {}f; rewrite (mpolyE f) !raddf_sum /=.
+apply eq_bigr => x _; rewrite !mulr_algl !linearZ /=; congr (_ *: _).
+rewrite (multinomUE_id x) !rmorph_prod /=.
+apply eq_bigr => i _; rewrite !rmorphX /= !cnvar_leq_symeE //.
+by rewrite ltnS (leq_trans _ le_m_n) // -ltnS.
+Qed.
+
+Lemma cnvarsym_geq_trans m n p :
+  (m >= n) -> (n >= p) ->
+  @cnvarsym R n p \o @cnvarsym R m n =1 @cnvarsym R m p.
+Proof.
+move=> le_n_m le_p_n f; rewrite -(sympolyfK f) /=.
+move: (sympolyf f) => {}f; rewrite (mpolyE f) !raddf_sum /=.
+apply eq_bigr => x _; rewrite !mulr_algl !linearZ /=; congr (_ *: _).
+rewrite (multinomUE_id x) !rmorph_prod /=.
+apply eq_bigr => [[i le_i_m]] _; rewrite !rmorphX /=; congr (_ ^+ _).
+rewrite !(@cnvar_leq_symeE R m) //.
+case: (ltnP i n.+1) => [le_i_n1|lt_n_i]; first exact: cnvar_leq_symeE.
+rewrite !syme_geqnE ?raddf0 // ltnS.
+exact: (leq_ltn_trans le_p_n lt_n_i).
+Qed.
+
+End CategoricalSystems.
