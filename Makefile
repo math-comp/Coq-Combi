@@ -48,5 +48,5 @@ update-github-doc: dochtml
 	rm -rf /tmp/doctmp
 	git clone git@github.com:hivert/Coq-Combi.git -b gh-pages /tmp/doctmp
 	rsync -avP --delete --exclude .git --exclude README.md html/ /tmp/doctmp
-	cd /tmp/doctmp && git add --all && git commit -m "Updated doc"
-	cd /tmp/doctmp && git push
+	cd /tmp/doctmp && git add --all && git commit --amend
+	cd /tmp/doctmp && git push --force
