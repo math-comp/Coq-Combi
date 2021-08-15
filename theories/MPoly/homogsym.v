@@ -128,7 +128,7 @@ Implicit Types p q : {sympoly R[n]}.
 Lemma homsymE p : (p \is d.-homsym) = (sympol p \is d.-homog).
 Proof. by []. Qed.
 
-Lemma symdhom_submod_closed : submod_closed [in R[n], d.-homsym].
+Fact symdhom_submod_closed : submod_closed [in R[n], d.-homsym].
 Proof.
 split => [|a p q Hp Hq]; rewrite !homsymE.
 - exact: dhomog0.
@@ -236,7 +236,7 @@ Proof.
 by apply val_inj; rewrite /= {1}(homog_symmE (homsym_is_dhomog f)) !linear_sum.
 Qed.
 
-Lemma homogsym_vecaxiom :
+Fact homogsym_vecaxiom :
   Vector.axiom #|[set p : 'P_d | size p <= n]| {homsym R[n, d]}.
 Proof.
 pose b := [set p : 'P_d | size p <= n].
@@ -294,7 +294,7 @@ Variable n : nat.
 Variable R : comRingType.
 Variable c d : nat.
 
-Lemma homsymprod_subproof (p : {homsym R[n, c]}) (q : {homsym R[n, d]}) :
+Fact homsymprod_subproof (p : {homsym R[n, c]}) (q : {homsym R[n, d]}) :
   homsym p * homsym q \is (c + d).-homsym.
 Proof. by apply: dhomogM => /=; apply: homsym_is_dhomog. Qed.
 Canonical homsymprod p q : {homsym R[n, c + d]} :=
@@ -305,7 +305,7 @@ Notation homsymprodr := (homsymprodr_head tt).
 Local Notation "p *h q" := (homsymprod p q)
                              (at level 20, format "p  *h  q").
 
-Lemma homsymprod_is_linear p : linear (homsymprod p).
+Fact homsymprod_is_linear p : linear (homsymprod p).
 Proof.
 by move=> a /= u v; apply val_inj; rewrite /= mulrDr -scalerAr.
 Qed.
@@ -415,7 +415,7 @@ Proof. by move=> /issymP Hp; apply/issymP => s; rewrite msym_pihomog Hp. Qed.
 Definition in_homsym (p : Pol) : HSF :=
   \sum_(la : 'P_d) p@_(mpart la) *: 'hm[la].
 
-Lemma in_homsym_is_linear : linear in_homsym.
+Fact in_homsym_is_linear : linear in_homsym.
 Proof.
 rewrite /in_homsym => a u v.
 rewrite linear_sum /= -big_split /=; apply eq_bigr => la _.
@@ -439,10 +439,10 @@ Variable R : comRingType.
 Local Notation HSF := {homsym R[n, d]}.
 Implicit Types (p q : HSF) (la : intpartn d).
 
-Lemma omegahomsym_subproof p : omegasf p \is d.-homsym.
+Fact omegahomsym_subproof p : omegasf p \is d.-homsym.
 Proof using. by apply: omegasf_homog; rewrite -homsymE; case: p. Qed.
 Definition omegahomsym p : HSF := HomogSym (omegahomsym_subproof p).
-Lemma omegahomsym_is_linear : linear omegahomsym.
+Fact omegahomsym_is_linear : linear omegahomsym.
 Proof using.
 by move=> a f g; apply val_inj; rewrite /= !linearD !linearZ /=.
 Qed.
@@ -687,7 +687,7 @@ Local Notation n := (n0.+1).
 Local Notation HSFR := {homsym R[n, d]}.
 Local Notation HSFS := {homsym S[n, d]}.
 
-Lemma map_sympoly_d_homog (p : HSFR) : map_sympoly mor p \is d.-homsym.
+Fact map_sympoly_d_homog (p : HSFR) : map_sympoly mor p \is d.-homsym.
 Proof.
 rewrite homsymE /=; apply/dhomogP => /= m.
 rewrite mcoeff_msupp mcoeff_map_mpoly => Hm.
@@ -699,7 +699,7 @@ by have /dhomogP/(_ _ Hm) := homsym_is_dhomog p.
 Qed.
 Definition map_homsym (p : HSFR) : HSFS := HomogSym (map_sympoly_d_homog p).
 
-Lemma map_homsym_is_additive : additive map_homsym.
+Fact map_homsym_is_additive : additive map_homsym.
 Proof. by move=> /= p q; apply val_inj; rewrite /= rmorphB. Qed.
 Canonical map_homsym_additive := Additive map_homsym_is_additive.
 
@@ -759,7 +759,7 @@ Local Notation n := n0.+1.
 Variable d : nat.
 Hypothesis Hd : (d <= m)%N || (n0 < m)%N.
 
-Lemma cnvarhomsym_subproof (p : {homsym R[m, d]}) :
+Fact cnvarhomsym_subproof (p : {homsym R[m, d]}) :
   (cnvarsym n0 p) \is d.-homsym.
 Proof using.
 case: p => [p] /=; rewrite unfold_in /= => Hp; rewrite unfold_in.
@@ -770,7 +770,7 @@ by rewrite -Hf => H _; rewrite (msym_fundamental_un H).
 Qed.
 Definition cnvarhomsym (p : {homsym R[m, d]}) : {homsym R[n, d]} :=
   HomogSym (cnvarhomsym_subproof p).
-Lemma cnvarhomsym_is_linear : linear cnvarhomsym.
+Fact cnvarhomsym_is_linear : linear cnvarhomsym.
 Proof. by move=> a f g; apply val_inj; rewrite /= !linearD !linearZ /=. Qed.
 Canonical cnvarhomsym_additive   := Additive  cnvarhomsym_is_linear.
 Canonical cnvarhomsym_linear     := AddLinear cnvarhomsym_is_linear.

@@ -73,8 +73,8 @@ Change of the number of variables
              (in [{mpoly R[m]}]) by the fundamental theorem of symmetric
              polynomials.
 - [cnvarsym R m n] == the canonical algebra morphism
-             [{sympoly R[m.+1]} -> {sympoly R[n.+1]}] given by the fundamental
-             theorem.
+             [{sympoly R[m.+1]} -> {sympoly R[n.+1]}] sending ['e_i] to ['e_i]
+             computed thanks to the fundamental theorem.
 
 We show that if [d ≤ m] or [n ≤ m], for any partition in ['P_d] the change of
 number of variables sends a basis element ['b[la]] to the same element. These
@@ -117,8 +117,7 @@ Variables (n : nat) (R : comRingType).
 Lemma mnm_n0E : @all_equal_to 'X_{1..0} 0%MM.
 Proof. by move=> mon; apply mnmP => [[i Hi]]. Qed.
 
-
-Lemma eq_mnm1 (i j : 'I_n) : (U_( i)%MM == U_( j)%MM) = (i == j).
+Lemma eq_mnm1 (i j : 'I_n) : (U_(i)%MM == U_(j)%MM) = (i == j).
 Proof.
 case: (altP (i =P j)) => [->|/negbTE neq]; first by rewrite eqxx.
 apply/negbTE/negP => /eqP; rewrite mnmP => /(_ j).
@@ -574,7 +573,7 @@ Variables (n : nat) (R : comRingType).
 Local Notation SP := {sympoly R[n]}.
 
 Lemma expUmpartE nv k :
-  (U_( ord0) *+ k)%MM = mpart (rowpartn k) :> 'X_{1..nv.+1}.
+  (U_(ord0) *+ k)%MM = mpart (rowpartn k) :> 'X_{1..nv.+1}.
 Proof.
 rewrite rowpartnE.
 apply/mnmP => [[i Hi]]; rewrite /mpart mulmnE !mnmE -val_eqE /=.
