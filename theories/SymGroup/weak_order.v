@@ -32,7 +32,8 @@ From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import choice fintype tuple fingraph finset order bigop.
 From mathcomp Require Import fingroup perm morphism presentation.
 
-Require Import permcomp tools permuted combclass congr presentSn lattice.
+Require Import permcomp tools permuted combclass congr presentSn
+        ordtype lattice.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -64,10 +65,10 @@ Definition ltperm s t := (t != s) && (leperm s t).
 Local Notation "s '<=R' t" := (leperm s t).
 Local Notation "s '<R' t" := (ltperm s t).
 
-Lemma ltperm_def s t : (s <R t) = ((t != s) && (s <=R t)).
+Fact ltperm_def s t : (s <R t) = ((t != s) && (s <=R t)).
 Proof. by []. Qed.
 
-Lemma lepermP s t :
+Fact lepermP s t :
   reflect (exists2 u, t = s * u & length t = length s + length u)
           (s <=R t).
 Proof.
@@ -76,20 +77,20 @@ apply (iffP existsP) => [] /= [u].
 - by move=> /eqP Heq /eqP Hlen; exists u; apply/andP.
 Qed.
 
-Lemma leperm_length s t : s <=R t -> length s <= length t.
+Fact leperm_length s t : s <=R t -> length s <= length t.
 Proof. by move/lepermP => [u _ ->]; apply leq_addr. Qed.
 
-Lemma leperm_lengthE s t : s <=R t -> length s = length t -> s = t.
+Fact leperm_lengthE s t : s <=R t -> length s = length t -> s = t.
 Proof.
 move/lepermP => /= [u -> ->] /eqP.
 rewrite -{1}(addn0 (length s)) eqn_add2l eq_sym => /eqP/length_eq0 ->.
 by rewrite mulg1.
 Qed.
 
-Lemma leperm_refl s : s <=R s.
+Fact leperm_refl s : s <=R s.
 Proof. by apply/lepermP; exists 1; rewrite ?mulg1 // length1 addn0. Qed.
 
-Lemma leperm_trans : transitive leperm.
+Fact leperm_trans : transitive leperm.
 Proof.
 move=> t s u /lepermP/= [st ->{t} Hsst] /lepermP/= [stu ->{u} Hstu].
 apply/lepermP; exists (st * stu); first by rewrite mulgA.
@@ -97,7 +98,7 @@ rewrite Hstu Hsst -addnA; congr (_ + _).
 by rewrite {}Hsst in Hstu; rewrite (lengthKR Hstu).
 Qed.
 
-Lemma leperm_anti : antisymmetric leperm.
+Fact leperm_anti : antisymmetric leperm.
 Proof.
 move=> s t /andP [Hst Hts]; apply: (leperm_lengthE Hst).
 by apply anti_leq; apply/andP; split; apply leperm_length.
@@ -105,15 +106,15 @@ Qed.
 
 Definition perm_porderMixin :=
   LePOrderMixin ltperm_def leperm_refl leperm_anti leperm_trans.
-Definition perm_porderType :=
+Canonical porderType :=
   POrderType perm_display ('S_n) perm_porderMixin.
-
+Canonical finPOrderType := Eval hnf in [finPOrderType of 'S_n].
 End Def.
 
 Module Exports.
 
-Notation perm_porderMixin := perm_porderMixin.
-Canonical perm_porderType.
+Canonical porderType.
+Canonical finPOrderType.
 
 Notation "x <=R y" := (@Order.le perm_display _ x y).
 Notation "x <R y" := (@Order.lt perm_display _ x y).
@@ -149,6 +150,14 @@ Variable (n0 : nat).
 Local Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n).
 
+Lemma ltperm_length s t : s <R t -> length s < length t.
+Proof.
+move=> ltst.
+have:= leperm_length (ltW ltst); rewrite leq_eqVlt => /orP [/eqP|//].
+move/(leperm_lengthE (ltW ltst)) => Habs.
+by rewrite Habs ltxx in ltst.
+Qed.
+
 Lemma leperm1p s : (1%g : 'S_n) <=R s.
 Proof.
 apply/lepermP; exists s; first by rewrite mul1g.
@@ -169,13 +178,6 @@ Qed.
 
 Lemma leperm_maxperm s : s <=R maxperm.
 Proof. by rewrite -leperm_maxpermMl -{1}maxpermV mulVg leperm1p. Qed.
-
-Lemma leperm_eltrR s (i : 'I_n) :
-  i < n0 -> s^-1 i < s^-1 (inord (i.+1)) -> s <=R (s * 's_i).
-Proof.
-move=> Hi Hnrec; apply/lepermP; exists 's_i => //.
-by rewrite length_add1R // -[val i]/(val (Ordinal Hi)) length_eltr addn1.
-Qed.
 
 Lemma leperm_factorP s t :
   reflect (exists2 w : seq 'I_n0, w \is reduced &
@@ -224,7 +226,6 @@ exists (nth w0 w l).
     rewrite lens1 size_drop subnKC // Ht.
     exact/reducedP.
 Qed.
-
 
 Theorem leperm_invset s t : (s <=R t) = (invset s \subset invset t).
 Proof.
@@ -327,7 +328,8 @@ have {invsett} {}/IHd : invset s \subset invset (t * 's_(t j)).
   by rewrite ltnNge (ltnW siltsj).
 move/le_trans; apply.
 rewrite -{3}(mulgK 's_(t j) t) eltrV.
-exact: leperm_eltrR.
+apply/lepermP; exists 's_(t j) => //.
+by rewrite (length_eltr (Ordinal tjn0)) addn1; exact: length_add1R.
 Qed.
 
 Corollary ltperm_invset s t : (s <R t) = (invset s \proper invset t).
@@ -439,34 +441,47 @@ Qed.
 Lemma suppermPl s t : t <=R (supperm s t).
 Proof. by rewrite suppermC; exact: suppermPr. Qed.
 
-Lemma suppermP s t w : s <=R w -> t <=R w -> (supperm s t) <=R w.
+Fact suppermP s t w : s <=R w -> t <=R w -> (supperm s t) <=R w.
 Proof.
 rewrite !leperm_invset invset_supperm => Hsw Htw; apply tclosure_sub.
 - by rewrite subUset Hsw Htw.
 - by move: (invsetP w) => [].
 Qed.
 
-Lemma supperm_is_join x y z : (supperm x y <=R z) = (x <=R z) && (y <=R z).
+Fact supperm_is_join x y z : (supperm x y <=R z) = (x <=R z) && (y <=R z).
 Proof.
 apply/idP/idP => [leinf | /andP [xley xlez]]; last exact: suppermP.
 by apply/andP; split; apply: (le_trans _ leinf);
   [apply: suppermPr | apply: suppermPl].
 Qed.
-Lemma infperm_is_meet x y z : (x <=R infperm y z) = (x <=R y) && (x <=R z).
+Fact infperm_is_meet x y z : (x <=R infperm y z) = (x <=R y) && (x <=R z).
 Proof.
 rewrite /infperm -![x <=R _]leperm_maxpermMl.
 by rewrite mulgA -{1}maxpermV mulVg mul1g supperm_is_join.
 Qed.
 
 Definition perm_latticeMixin := MeetJoinLeMixin infperm_is_meet supperm_is_join.
-Definition perm_latticeType := LatticeType 'S_n perm_latticeMixin.
+Canonical latticeType := LatticeType 'S_n perm_latticeMixin.
 
 End Def.
 
-Module Exports.
+Section PermTBLattice.
 
-Notation perm_latticeMixin := perm_latticeMixin.
-Canonical perm_latticeType.
+Variable (n0 : nat).
+Local Notation n := n0.+1.
+Implicit Type (s t u v : 'S_n).
+
+Definition perm_bottomMixin := BottomMixin (@leperm1p n0).
+Canonical blatticeType := BLatticeType 'S_n perm_bottomMixin.
+
+Definition perm_topMixin := TopMixin (@leperm_maxperm n0).
+Canonical tblatticeType := TBLatticeType 'S_n perm_topMixin.
+Canonical finLatticeType := Eval hnf in [finLatticeType of 'S_n].
+
+Lemma bottom_perm : Order.bottom = (1 : 'S_n). Proof. by []. Qed.
+Lemma top_perm : Order.top = maxperm. Proof. by []. Qed.
+
+End PermTBLattice.
 
 Section Theory.
 
@@ -481,28 +496,36 @@ Lemma perm_join_meetE s t :
   s /\R t = maxperm * (maxperm * s \/R maxperm * t).
 Proof. by []. Qed.
 
+Lemma covers_permP s t :
+  reflect (exists2 i : 'I_n0, s <R s * 's_i & t = s * 's_i) (covers s t).
+Proof.
+apply (iffP (coversP s t)).
+- move=> [/leperm_succ/= [i ltssi lessit Hsucc]].
+  exists i; first by [].
+  move: lessit; rewrite le_eqVlt => /orP [/eqP ->//|ltssit].
+  exfalso; apply: (Hsucc (s * 's_i)).
+  by rewrite ltssi ltssit.
+- move=> [/= i ltssi ->{t}]; split; first by [].
+  move=> z /andP[/ltperm_length ltsz /ltperm_length].
+  move/leq_trans/(_ (lengthM s 's_i)); rewrite length_eltr addn1 ltnS.
+  by move/(leq_trans ltsz); rewrite ltnn.
+Qed.
+
 End Theory.
+
+Module Exports.
+
+Canonical latticeType.
+Canonical blatticeType.
+Canonical tblatticeType.
+Canonical finLatticeType.
+
+Definition bottom_perm := bottom_perm.
+Definition top_perm := top_perm.
+Definition invset_join := invset_join.
+Definition perm_join_meetE := perm_join_meetE.
+Definition covers_permP := covers_permP.
+
 End Exports.
 End PermLattice.
 Export PermLattice.Exports.
-
-
-Section PermTBLattice.
-
-Variable (n0 : nat).
-Local Notation n := n0.+1.
-Implicit Type (s t u v : 'S_n).
-
-Definition perm_bottomMixin := BottomMixin (@leperm1p n0).
-Canonical perm_blatticeType := BLatticeType 'S_n perm_bottomMixin.
-
-Definition perm_topMixin := TopMixin (@leperm_maxperm n0).
-Canonical perm_tblatticeType := TBLatticeType 'S_n perm_topMixin.
-Canonical perm_finLatticeType := Eval hnf in [finLatticeType of 'S_n].
-
-Lemma bottom_perm : Order.bottom = (1 : 'S_n).
-Proof. by []. Qed.
-Lemma top_perm : Order.top = maxperm.
-Proof. by []. Qed.
-
-End PermTBLattice.
