@@ -19,7 +19,12 @@ _minted*
 depend.d
 depend.dot
 .coqdeps.d
-Makefile.coq.conf
+Makefile.conf
+.CoqMakefile.d
+.Makefile.coq.d
+.Makefile.d
+.lia.cache
+3rdparty/ALEA/.lia.cache
 *.cmi
 *.cmo
 *.cmx
