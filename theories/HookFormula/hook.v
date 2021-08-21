@@ -676,15 +676,15 @@ Qed.
 
 
 Definition trace_seq (last : nat) : seq (seq nat) :=
-  [seq rcons tr last | tr <- enum_subseqs (iota 0 last)].
+  [seq rcons tr last | tr : subseqs (iota 0 last)].
 
 Definition enum_trace (Alpha Beta : nat) : seq ((seq nat) * (seq nat)) :=
   [seq (A, B) | A <- trace_seq Alpha, B <- trace_seq Beta].
 
 Lemma trace_seq_uniq l : uniq (trace_seq l).
 Proof using.
-rewrite map_inj_uniq; last exact: rconsK.
-by apply enum_subseqs_uniq; apply: iota_uniq.
+rewrite map_inj_uniq; first exact: enum_uniq.
+by move=> i j /rconsK/val_inj ->.
 Qed.
 
 Lemma enum_trace_uniq (Alpha Beta : nat) : uniq (enum_trace Alpha Beta).
@@ -699,11 +699,9 @@ Lemma trace_corner_box (Alpha Beta : nat) :
   is_corner_box p Alpha Beta ->
   forall A B, A \in trace_seq Alpha -> B \in trace_seq Beta -> is_trace A B.
 Proof using.
-move=> Hcorn A B.
-move=> /mapP [A' /(allP (enum_subseqsP (iota 0 Alpha))) HsubA -> {A}].
-move=> /mapP [B' /(allP (enum_subseqsP (iota 0 Beta)))  HsubB -> {B}].
+move=> Hcorn A B /mapP[[A' /= subA _ ->{A}]] /mapP[[B' /= subB _ ->{B}]].
 by rewrite /is_trace !rcons_nilF /=
-           -!sorted_subseq_iota_rcons HsubA HsubB !last_rcons.
+           -!sorted_subseq_iota_rcons subA subB !last_rcons.
 Qed.
 
 Lemma trace_seqlP (A B : seq nat) :
@@ -711,10 +709,9 @@ Lemma trace_seqlP (A B : seq nat) :
 Proof using.
 move=> /and5P [].
 case/lastP: A => [//= | A lA] _ _ Hsort _ /= _.
-rewrite last_rcons /trace_seq.
-apply/mapP; exists A; last by [].
-apply: mem_enum_subseqs.
-by rewrite sorted_subseq_iota_rcons.
+rewrite last_rcons /trace_seq; apply/mapP => /=.
+have subA : subseq A (iota 0 lA) by rewrite sorted_subseq_iota_rcons.
+by exists (Subseqs subA); first exact: mem_enum.
 Qed.
 
 Lemma trace_seqrP (A B : seq nat) :
@@ -722,10 +719,9 @@ Lemma trace_seqrP (A B : seq nat) :
 Proof using.
 move=> /and5P [].
 case/lastP: B => [//= | B lB] _ _ _ Hsort /= _.
-rewrite last_rcons /trace_seq.
-apply/mapP; exists B; last by [].
-apply: mem_enum_subseqs.
-by rewrite sorted_subseq_iota_rcons.
+rewrite last_rcons /trace_seq; apply/mapP => /=.
+have subB : subseq B (iota 0 lB) by rewrite sorted_subseq_iota_rcons.
+by exists (Subseqs subB); first exact: mem_enum.
 Qed.
 
 Lemma enum_traceP (Alpha Beta : nat) :
@@ -1171,16 +1167,15 @@ Variable R : comRingType.
 Variable alpha : T -> R.
 
 Lemma expand_prod_add1_seq (S : seq T) :
-  \prod_(i <- S) (1 + alpha i) = \sum_(s <- enum_subseqs S) \prod_(i <- s) alpha i.
+  uniq S ->
+  \prod_(i <- S) (1 + alpha i) = \sum_(s : subseqs S) \prod_(i <- s) alpha i.
 Proof using.
-elim: S => [| n S IHs] //=.
-  by rewrite /= big_nil big_cons 2! big_nil addr0.
-rewrite big_cons IHs {IHs}.
-move: (enum_subseqs _) => sub.
-rewrite big_cat /= mulrDl mul1r addrC.
-congr ( _ + _ ).
-rewrite big_distrr /= big_map.
-apply eq_bigr => i _.
+elim: S => [| a S IHs] aS_uniq //=.
+  by rewrite (big_subseqs0 (fun s => \prod_(i <- s) alpha i)) !big_nil.
+have /= /andP[_ S_uniq] :=  aS_uniq.
+rewrite (big_subseqs_cons (fun s => \prod_(i <- s) alpha i) aS_uniq) /=.
+rewrite big_cons {}IHs // addrC mulrDl mul1r; congr (_ + _).
+rewrite mulr_sumr; apply eq_bigr => /= [[s subs] _] /=.
 by rewrite big_cons.
 Qed.
 
@@ -1284,15 +1279,13 @@ Lemma SimpleCalculation :
   \sum_(X <- enum_trace Alpha Beta) RHSL3_trace X =
   (hook_length_prod p)%:Q / (hook_length_prod p')%:Q.
 Proof using Hpartc'.
-rewrite /enum_trace /trace_seq /RHSL3_trace /RHSL3.
-rewrite big_allpairs /=.
-rewrite Formula1 !expand_prod_add1_seq.
-rewrite /index_iota subn0 big_map big_distrl /=; apply eq_big_seq => A HA.
-rewrite /index_iota subn0 big_map big_distrr /=; apply eq_big_seq => B HB.
-rewrite !belast_behead_rcons !last_behead_rcons.
+rewrite /enum_trace /trace_seq /RHSL3_trace /RHSL3 big_allpairs /=.
+rewrite Formula1 !expand_prod_add1_seq /index_iota ?iota_uniq //.
+rewrite /index_iota subn0 big_map big_distrl big_enum; apply eq_bigr=> A _.
+rewrite /index_iota subn0 big_map big_distrr big_enum; apply eq_bigr=> B _.
+rewrite /= !belast_behead_rcons !last_behead_rcons.
 by congr (_ * _); apply eq_big_seq => L _; rewrite mul1r.
 Qed.
-
 
 Theorem Theorem2 :
   mu choose_corner (fun pair => (ends_at Alpha Beta pair)%:Q) =

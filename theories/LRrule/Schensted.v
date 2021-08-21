@@ -493,7 +493,7 @@ case (altP (si =P wn)) => [-> {si} | Hsiwn Hsubs Hrow].
       by rewrite eqn_leq Hsz Hszlt.
 
 (* The subsequence doesn't end by wn *)
-- move/(subseq_rcons_neq Hsiwn): Hsubs => /(IHw _ _)/(_ Hrow) {Hsiwn Hrow}.
+- move: Hsubs; rewrite subseq_rcons_neq // => /(IHw _ _)/(_ Hrow) {Hsiwn Hrow}.
   move=> [Hsize Hleq]; split.
   * by apply: (leq_trans Hsize); exact: size_ins_inf.
   * rewrite (set_nth_default wn inh Hsize) in Hleq.
