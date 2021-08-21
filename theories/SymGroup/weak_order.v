@@ -481,16 +481,31 @@ Canonical finLatticeType := Eval hnf in [finLatticeType of 'S_n].
 Lemma bottom_perm : Order.bottom = (1 : 'S_n). Proof. by []. Qed.
 Lemma top_perm : Order.top = maxperm. Proof. by []. Qed.
 
+Lemma invset_join s t : invset (s \/R t) = tclosure (invset s :|: invset t).
+Proof. by rewrite /Order.join invset_supperm. Qed.
+
 End PermTBLattice.
+
+Module Exports.
+
+Canonical latticeType.
+Canonical blatticeType.
+Canonical tblatticeType.
+Canonical finLatticeType.
+
+Definition bottom_perm := bottom_perm.
+Definition top_perm := top_perm.
+Definition invset_join := invset_join.
+
+End Exports.
+End PermLattice.
+Export PermLattice.Exports.
 
 Section Theory.
 
 Variable (n0 : nat).
 Local Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n).
-
-Lemma invset_join s t : invset (s \/R t) = tclosure (invset s :|: invset t).
-Proof. by rewrite /Order.join invset_supperm. Qed.
 
 Lemma perm_join_meetE s t :
   s /\R t = maxperm * (maxperm * s \/R maxperm * t).
@@ -512,20 +527,3 @@ apply (iffP (coversP s t)).
 Qed.
 
 End Theory.
-
-Module Exports.
-
-Canonical latticeType.
-Canonical blatticeType.
-Canonical tblatticeType.
-Canonical finLatticeType.
-
-Definition bottom_perm := bottom_perm.
-Definition top_perm := top_perm.
-Definition invset_join := invset_join.
-Definition perm_join_meetE := perm_join_meetE.
-Definition covers_permP := covers_permP.
-
-End Exports.
-End PermLattice.
-Export PermLattice.Exports.
