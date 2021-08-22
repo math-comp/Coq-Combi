@@ -81,8 +81,8 @@ t.]
                                                                               *)
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-From mathcomp Require Import order finset perm fingroup.
+From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice.
+From mathcomp Require Import seq tuple order finset perm fingroup.
 Require Import tools combclass partition Yamanouchi ordtype std tableau.
 
 
@@ -682,6 +682,7 @@ Definition hyper_stdtabsh := StdtabSh hyper_stdtabsh_subproof.
 End StdtabOfShape.
 #[export] Hint Resolve stdtabshP : core.
 
+
 Section StdtabCombClass.
 
 Variable n : nat.
@@ -752,6 +753,22 @@ Definition shape_deg (Q : stdtabn) := IntPartN (is_part_shape_deg Q).
 
 End StdtabCombClass.
 
+Section StdtabnOfStdtabsh.
+
+Variables (n : nat) (sh : intpartn n).
+
+Fact sumn_stdtabsh (t : stdtabsh sh) : is_stdtab_of_n n t.
+Proof.
+move: t => [t /= /andP[->/= /eqP eqsh]].
+by rewrite /size_tab eqsh sumn_intpartn.
+Qed.
+Definition stdtabn_of_stdtabsh t := StdtabN (sumn_stdtabsh t).
+
+Lemma shape_deg_stdtabn_of_stdtabsh t :
+  shape_deg (stdtabn_of_stdtabsh t) = sh.
+Proof. by apply val_inj; rewrite /= shape_stdtabsh. Qed.
+
+End StdtabnOfStdtabsh.
 
 (** * Conjugate of a standard tableau *)
 Section ConjTab.
