@@ -25,9 +25,6 @@ and
 Theorem Frobenius_ident_rat n :
     1 / (n`!)%:Q = \sum_(p : 'P_n) 1 / (hook_length_prod p)%:Q ^+ 2.
 ]]
-
-TODO: The following proof is unnecessarily complicated, involving the
-construction of several [finType]. This should be simplified.
  ******)
 
 Require Import mathcomp.ssreflect.ssreflect.
@@ -40,8 +37,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
-Require Import ordtype tools combclass partition tableau Schensted std stdtab.
-Require Import hook stdplact.
+Require Import ordtype partition tableau Schensted std stdtab hook.
 
 Section Identity.
 
@@ -111,11 +107,11 @@ Theorem Frobenius_ident :
   n`! = \sum_(p : 'P_n) (n`! %/ (hook_length_prod p))^2.
 Proof using.
 rewrite -{1}card_stdwordn -card_stpn_shape_hook.
-have rst2 (w : stdwordn n) : is_stdtab_of_n n (RStabmap w).2.
-  rewrite /= is_stdtab_RStabmap2  -RSinvstdE /=.
-  by rewrite size_RS size_invstd size_std size_sdtn.
 have rst1 (w : stdwordn n) : is_stdtab_of_n n (RStabmap w).1.
   by rewrite RStabmapE /= RSstdE stdwordnP /= size_RS size_sdtn.
+have rst2 (w : stdwordn n) : is_stdtab_of_n n (RStabmap w).2.
+  rewrite /= is_stdtab_RStabmap2 /size_tab -shape_RStabmapE.
+  by rewrite RStabmapE -/(size_tab _) size_RS size_sdtn eqxx.
 pose to_pair (w : stdwordn n) := (StdtabN (rst1 w), StdtabN (rst2 w)).
 pose stdrspair (p : stpn) :=
   if shape p.1 == shape p.2 then (val p.1, val p.2)
