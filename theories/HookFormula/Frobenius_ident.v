@@ -50,49 +50,46 @@ Lemma card_stpn_shape :
 Proof.
 pose pairsh (sh : intpartn n) :=
   [set p : stpn | (shape_deg p.1 == sh) && (shape_deg p.2 == sh)].
+have pairshP (sh : intpartn n) :
+  {t : stdtabsh sh | (stdtabn_of_sh t, stdtabn_of_sh t) \in pairsh sh}.
+  by exists (hyper_stdtabsh sh); rewrite inE /= !shape_deg_stdtabn_of_sh eqxx.
 pose shpart := [set pairsh sh | sh : intpartn n].
 have /card_partition -> :
-    partition shpart [set p : stpn | shape p.1 == shape p.2].
+    partition shpart [set p : stpn | shape_deg p.1 == shape_deg p.2].
   apply/and3P; split.
   - apply/eqP/setP => /= [[t1 t2]]; rewrite inE /=.
     apply/bigcupP/eqP => /= [[S /imsetP [/= sh _ ->{S}]] | eqsh].
-    + by rewrite inE => /= /andP [/eqP/(congr1 val)/= -> /eqP/(congr1 val)/= ->].
+    + by rewrite inE => /= /andP [/eqP-> /eqP->].
     + exists [set p : stpn | (shape_deg p.1 == shape_deg t1) &&
                              (shape_deg p.2 == shape_deg t1)].
       apply/imsetP; exists (shape_deg t1) => //.
-      by rewrite inE /= eqxx /=; apply/eqP/val_inj; rewrite /= eqsh.
+      by rewrite inE /= eqxx /=; apply/eqP; rewrite /= eqsh.
   - apply/trivIsetP=> /= S1 S2 /imsetP[sh1 _ ->{S1}] /imsetP[sh2 _ ->{S2}] neq.
     have {neq} neqsh : sh1 != sh2 by move: neq; apply contra => /eqP ->.
     rewrite -setI_eq0; apply/set0Pn => /=[[[t1 t2]]].
     rewrite !inE /= -!andbA => /and4P [/eqP ->] _ /eqP eqsh _.
     by rewrite eqsh eqxx in neqsh.
   - apply/negP=> /imsetP [/= sh _] Heq.
-    pose t := stdtabn_of_stdtabsh (hyper_stdtabsh sh).
-    have : (t, t) \in pairsh sh.
-      by rewrite inE /= !shape_deg_stdtabn_of_stdtabsh eqxx.
-    by rewrite -Heq inE.
+    by have [t] := pairshP sh; rewrite -Heq inE.
 rewrite big_imset /=; first last.
-  move=> sh1 sh2 _ _ eqsh.
-  pose t := stdtabn_of_stdtabsh (hyper_stdtabsh sh1).
-  have : (t, t) \in pairsh sh1.
-    by rewrite inE /= !shape_deg_stdtabn_of_stdtabsh eqxx.
-  by rewrite eqsh inE /= shape_deg_stdtabn_of_stdtabsh => /andP[/eqP].
+  move=> sh1 sh2 _ _ eqsh; have [t] := pairshP sh1.
+  by rewrite eqsh inE /= shape_deg_stdtabn_of_sh => /andP[/eqP].
 apply eq_bigr => sh _; rewrite -mulnn -!cardsT -cardsX.
 rewrite [RHS](eq_card (B := setT)) /=; last by move=> p; rewrite !inE.
 pose to_stpn (p : (stdtabsh sh) * (stdtabsh sh)) : stpn :=
-  (stdtabn_of_stdtabsh p.1, stdtabn_of_stdtabsh p.2).
+  (stdtabn_of_sh p.1, stdtabn_of_sh p.2).
 have /card_imset <- : injective to_stpn.
   by rewrite /to_stpn => [[t1 t2] [u1 u2]] /= [/val_inj-> /val_inj->].
 apply: eq_card => [[/= t1 t2]]; rewrite !inE /=.
-apply/andP/imsetP => /= [[/eqP sht1 /eqP sht2] | [[u1 u2] _ [->{t1}->{t2}]]].
-- have t1sh : is_stdtab_of_shape sh t1.
-    by rewrite /= stdtabnP /=; have /= -> := (congr1 val sht1).
-  have t2sh : is_stdtab_of_shape sh t2.
-    by rewrite /= stdtabnP /=; have /= -> := (congr1 val sht2).
-  exists (@StdtabSh sh t1 t1sh, @StdtabSh sh t2 t2sh); first by [].
-  rewrite /to_stpn /=.
-  by apply/eqP; rewrite xpair_eqE; apply/andP; split; apply/eqP/val_inj.
-- by rewrite !shape_deg_stdtabn_of_stdtabsh.
+apply/andP/imsetP => /= [[/eqP sht1 /eqP sht2] | [[u1 u2] _ [->{t1}->{t2}]]];
+  last by rewrite !shape_deg_stdtabn_of_sh.
+have t1sh : is_stdtab_of_shape sh t1.
+  by rewrite /= stdtabnP /=; have /= -> := (congr1 val sht1).
+have t2sh : is_stdtab_of_shape sh t2.
+  by rewrite /= stdtabnP /=; have /= -> := (congr1 val sht2).
+exists (@StdtabSh sh t1 t1sh, @StdtabSh sh t2 t2sh); first by [].
+rewrite /to_stpn /=.
+by apply/eqP; rewrite xpair_eqE; apply/andP; split; apply/eqP/val_inj.
 Qed.
 
 Lemma card_stpn_shape_hook :
@@ -128,8 +125,7 @@ have from_pairP p : is_std_of_n n (stdrsinv p).
 pose from_pair p := StdWordN (from_pairP p).
 have to_pairK : cancel to_pair from_pair.
   move=> w; apply val_inj; rewrite /= /stdrsinv /= /stdrspair /to_pair.
-  suff -> : RSTabPair (stdrspairP (StdtabN (rst1 w), StdtabN (rst2 w))) = RStab w.
-    by rewrite RStabK.
+  rewrite [RSTabPair _](_ : _ = RStab w) ?RStabK //.
   apply val_inj; rewrite /= /stdrspair /= shape_RStabmapE eqxx.
   by case: RStabmap.
 rewrite -(card_imset _ (can_inj to_pairK)); apply eq_card => [[/= t1 t2]].

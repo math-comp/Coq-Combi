@@ -757,15 +757,15 @@ Section StdtabnOfStdtabsh.
 
 Variables (n : nat) (sh : intpartn n).
 
-Fact sumn_stdtabsh (t : stdtabsh sh) : is_stdtab_of_n n t.
+Fact stdtabn_of_sh_subproof (t : stdtabsh sh) : is_stdtab_of_n n t.
 Proof.
 move: t => [t /= /andP[->/= /eqP eqsh]].
 by rewrite /size_tab eqsh sumn_intpartn.
 Qed.
-Definition stdtabn_of_stdtabsh t := StdtabN (sumn_stdtabsh t).
+Definition stdtabn_of_sh t := StdtabN (stdtabn_of_sh_subproof t).
 
-Lemma shape_deg_stdtabn_of_stdtabsh t :
-  shape_deg (stdtabn_of_stdtabsh t) = sh.
+Lemma shape_deg_stdtabn_of_sh t :
+  shape_deg (stdtabn_of_sh t) = sh.
 Proof. by apply val_inj; rewrite /= shape_stdtabsh. Qed.
 
 End StdtabnOfStdtabsh.
