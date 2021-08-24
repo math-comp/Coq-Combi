@@ -320,7 +320,7 @@ exists [set val2pos @: (p : {set 'I_(size s)}) | p in ks].
 apply/and4P; split.
 - by rewrite /=; apply/eqP; apply: size_cover_inj; exact: val2pos_inj.
 - exact: (leq_trans (leq_imset_card _ _) Hsz).
-- exact: imset_trivIset val2pos_inj Htriv.
+- exact: (imset_trivIset val2pos_inj).
 - apply/forallP => ptmp; apply/implyP => /imsetP [p Hp -> {ptmp}].
   move/(_ p): Hall; rewrite Hp /= /extractpred.
   move/val2pos_enum ->; rewrite -map_comp /=.

@@ -283,8 +283,7 @@ Lemma trivIset_setrev P : trivIset P = trivIset (rev_ksupp P).
 Proof using.
 apply/idP/idP.
 - by apply: imset_trivIset; exact rev_ord_cast_inj.
-- move/(preimset_trivIset rev_ord_cast_inj).
-  by rewrite -/(rev_ksupp_inv _) rev_ksuppK.
+- by rewrite -{2}(rev_ksuppK P); apply: preimset_trivIset.
 Qed.
 
 Lemma rev_is_ksupp_row P :

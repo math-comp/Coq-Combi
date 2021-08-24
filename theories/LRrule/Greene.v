@@ -684,14 +684,14 @@ move: Hks => /and3P [Hcard Htriv /forallP Hcol].
 have HV : PV \is a k.-supp[R, V].
   rewrite /ksupp; apply/and3P.
   split; first exact: (leq_trans (leq_imset_card _ _) Hcard).
-  - by apply: preimset_trivIset; first exact: lshift_inj.
+  - exact: preimset_trivIset.
   - apply/forallP=> stmp; apply/implyP => /imsetP [s Hs -> {stmp}].
     by rewrite extlsplit; apply: sorted_extract_cond; move/(_ s): Hcol; rewrite Hs.
 have HleqV := (@leq_bigmax_cond _ _ scover _ HV).
 have HW : PW \is a k.-supp[R, W].
   rewrite /ksupp; apply/and3P.
   split; first exact: (leq_trans (leq_imset_card _ _) Hcard).
-  - by apply: preimset_trivIset; first exact: rshift_inj.
+  - exact: preimset_trivIset.
   - apply/forallP=> stmp; apply/implyP => /imsetP [s Hs -> {stmp}].
     by rewrite extrsplit; apply: sorted_extract_cond; move/(_ s): Hcol; rewrite Hs.
 have HleqW := (@leq_bigmax_cond _ _ scover _ HW).

@@ -216,7 +216,7 @@ case: leqP => Hb.
 Qed.
 
 
-Section Enum.
+Section FinSet.
 
 Variable T : finType.
 
@@ -227,16 +227,7 @@ move=> Hx; apply/setP/subset_eqP/andP; split; apply/subsetP=> i.
 - by move=> H; apply/setU1P; right.
 Qed.
 
-Lemma enum_eq0P (S : {set T}):
-  reflect (enum S = [::]) (S == set0).
-Proof.
-apply (iffP eqP) => [-> |]; first exact: enum_set0.
-case: (set_0Vmem S) => [-> //| [x]].
-rewrite -mem_enum => Hx Hnil.
-by rewrite Hnil in_nil in Hx.
-Qed.
-
-End Enum.
+End FinSet.
 
 
 (* New lemmas *)
@@ -244,15 +235,6 @@ Lemma sumn_sort l S : sumn (sort S l) = sumn l.
 Proof using. by have:= perm_sort S l => /permPl/perm_sumn. Qed.
 
 Section ImsetInj.
-
-Implicit Type T : finType.
-
-Lemma set1_disjoint T (i j : T) :
-  [set i] != [set j] -> [disjoint [set i] & [set j]].
-Proof.
-move=> Hneq; rewrite /disjoint; apply/pred0P => l /=; apply: negbTE.
-by rewrite !in_set1; move: Hneq; apply: contra => /andP [/eqP -> /eqP ->].
-Qed.
 
 Lemma map_filter_comp (T1 T2: Type) (l : seq T1) (PP : pred T2) (F : T1 -> T2) :
   [seq F i | i <- l & PP (F i)] = [seq i | i <- map F l & PP i ].
@@ -262,49 +244,58 @@ have /eq_filter -> : (preim F [eta PP]) =1 (fun i => PP (F i)) by [].
 by rewrite map_comp.
 Qed.
 
-Lemma subset_imsetK T1 T2 (f : T1 -> T2) (s t : {set T1}):
+Lemma set1_disjoint (T : finType) (i j : T) :
+  [set i] != [set j] -> [disjoint [set i] & [set j]].
+Proof.
+move=> Hneq; rewrite /disjoint; apply/pred0P => l /=; apply: negbTE.
+by rewrite !in_set1; move: Hneq; apply: contra => /andP [/eqP -> /eqP ->].
+Qed.
+
+Lemma subset_imsetK (T1 T2 : finType) (f : T1 -> T2) (s t : {set T1}):
   injective f -> f @: s \subset f @: t -> s \subset t.
 Proof.
-move=> Hinj /subsetP H.
-by apply/subsetP => x /(imset_f f) /(H _) /imsetP [y Hy /Hinj ->].
+move=> f_inj /subsetP H.
+by apply/subsetP => x /(imset_f f) /(H _) /imsetP [y Hy /f_inj ->].
 Qed.
 
-Lemma imset_inj T1 T2 (f : T1 -> T2) :
-  injective f -> injective (fun s : {set T1} => imset f (mem s)).
-Proof.
-move=> Hinj s1 s2 /eqP; rewrite eqEsubset => /andP [H12 H21].
-move: Hinj => /subset_imsetK Hinj.
-apply/eqP; rewrite eqEsubset.
-by rewrite (Hinj _ _ H12) (Hinj _ _ H21).
-Qed.
+Variables (T T1 T2 : finType) (f : T1 -> T2).
 
-Lemma imset_trivIset T1 T2 (F : T1 -> T2) (P : {set {set T1}}) :
-  injective F -> trivIset P -> trivIset ((fun s : {set T1} => F @: s) @: P).
-Proof.
-move=> Hinj /trivIsetP Htriv.
-apply/trivIsetP => A B /imsetP [FA FAP -> {A}] /imsetP [FB FBP -> {B}] Hneq.
-have {Hneq} neqFAFB : FA != FB by move: Hneq; apply: contra => /eqP ->.
-have:= Htriv _ _ FAP FBP neqFAFB; rewrite -!setI_eq0 -imsetI.
-- by move=> /eqP ->; rewrite imset0.
-- by move=> i j _ _ /=; exact: Hinj.
-Qed.
-
-Lemma preimset_trivIset T1 T2 (F : T1 -> T2) (P : {set {set T2}}) :
-  injective F -> trivIset P -> trivIset ((fun s : {set T2} => F @^-1: s) @: P).
-Proof.
-move=> Hinj /trivIsetP Htriv.
+Lemma preimset_trivIset (P : {set {set T2}}) :
+  trivIset P -> trivIset ((fun s : {set T2} => f @^-1: s) @: P).
+Proof  using.
+move=> /trivIsetP Htriv.
 apply/trivIsetP => A B /imsetP [FA FAP -> {A}] /imsetP [FB FBP -> {B}] Hneq.
 have {Hneq} neqFAFB : FA != FB by move: Hneq; apply: contra => /eqP ->.
 have:= Htriv _ _ FAP FBP neqFAFB; rewrite -!setI_eq0 -preimsetI => /eqP ->.
 by rewrite preimset0.
 Qed.
 
-Lemma disjoint_imset T1 T2 (f : T1 -> T2) (A B : {set T1}) :
-  injective f ->
+Hypothesis (f_inj : injective f).
+
+Lemma imset_inj : injective (fun s : {set T1} => imset f (mem s)).
+Proof.
+move=> s1 s2 /eqP; rewrite eqEsubset => /andP [H12 H21].
+move: f_inj => /subset_imsetK Hinj.
+apply/eqP; rewrite eqEsubset.
+by rewrite (Hinj _ _ H12) (Hinj _ _ H21).
+Qed.
+
+Lemma imset_trivIset (P : {set {set T1}}) :
+  trivIset P -> trivIset ((fun s : {set T1} => f @: s) @: P).
+Proof.
+move=> /trivIsetP Htriv.
+apply/trivIsetP => A B /imsetP [FA FAP -> {A}] /imsetP [FB FBP -> {B}] Hneq.
+have {Hneq} neqFAFB : FA != FB by move: Hneq; apply: contra => /eqP ->.
+have:= Htriv _ _ FAP FBP neqFAFB; rewrite -!setI_eq0 -imsetI.
+- by move=> /eqP ->; rewrite imset0.
+- by move=> i j _ _ /=; exact: f_inj.
+Qed.
+
+Lemma disjoint_imset (A B : {set T1}) :
   [disjoint A & B] -> [disjoint [set f x | x in A] & [set f x | x in B]].
-Proof using.
-rewrite -!setI_eq0 => Hinj /eqP Hdisj.
-rewrite -imsetI; last by move=> x y _ _; exact: Hinj.
+Proof.
+rewrite -!setI_eq0 => /eqP Hdisj.
+rewrite -imsetI; last by move=> x y _ _; exact: f_inj.
 by rewrite imset_eq0 Hdisj.
 Qed.
 
