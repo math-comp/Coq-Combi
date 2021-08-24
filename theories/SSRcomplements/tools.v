@@ -182,7 +182,7 @@ Lemma sumn_pred1_iota a b x :
   sumn [seq ((i == x) : nat) | i <- iota a b] = (a <= x < a + b).
 Proof.
 elim: b a => [/=| b IHb] a.
-  by case: andP => []// [/leq_ltn_trans H{}/H]; rewrite addn0 ltnn.
+  by case: andP => [|//] [/leq_ltn_trans H{}/H]; rewrite addn0 ltnn.
 rewrite addnS ltnS -add1n iotaD map_cat /= leq_eqVlt addn1 {}IHb addSn ltnS.
 by case: eqP => [->|_]//=; rewrite ltnn addn0 leq_addr.
 Qed.
@@ -214,21 +214,6 @@ case: leqP => Hb.
   have := Hb; rewrite /leq => /eqP ->.
   by have := ltnW Hb; rewrite /leq => /eqP ->.
 Qed.
-
-
-(** ** Bigop lemmas *)
-Section BigInterv.
-
-Variable R : Type.
-Variable idx : R.
-Variable op : Monoid.law idx.
-
-Lemma big_nat_0cond n f :
-  \big[op/idx]_(0 <= i < n) f i = \big[op/idx]_(0 <= i < n | (i < n)%N) f i.
-Proof. by rewrite !big_mkord; apply eq_bigl => i; rewrite ltn_ord. Qed.
-
-End BigInterv.
-
 
 
 Section Enum.

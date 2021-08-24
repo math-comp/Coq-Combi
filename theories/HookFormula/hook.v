@@ -1135,7 +1135,7 @@ Lemma prob_choose_corner_ends_at :
 Proof using Hcorn.
 rewrite /choose_corner MLet_simpl mu_random_sum sumnpSPE.
 rewrite mulrC mul1r; congr (_ * _).
-rewrite big_nat_0cond (eq_bigr _ reshape_index_walk_to) -big_nat_0cond.
+rewrite big_nat /= (eq_bigr _ reshape_index_walk_to) -big_nat.
 rewrite (exchange_big_dep (@predT _)) //=.
 apply eq_big_seq => [[A B]].
 rewrite (enum_traceP Hcorn) => /and3P [Htrace HA HB].
@@ -1348,9 +1348,9 @@ rewrite -big_seq_cond -mu_stable_sum.
 rewrite /choose_corner Mlet_simpl mu_random_sum.
 have Hsum : (sumn p) != 0%N.
   by move: Hp; apply contra => /eqP/empty_intpartP ->.
-rewrite prednK ?lt0n // big_nat_0cond.
+rewrite prednK ?lt0n // big_nat /=.
 rewrite (eq_bigr (fun => 1)).
-  rewrite -big_nat_0cond big_const_seq count_predT size_iota subn0 iter_addr addr0.
+  rewrite -big_nat big_const_seq count_predT size_iota subn0 iter_addr addr0.
   by rat_to_ring; rewrite divff // pnatr_eq0.
 move=> i Hi; have:= reshape_offsetP Hi; move/reshape_indexP: Hi.
 rewrite -/(is_in_shape p _ _) => Hind Hoff.
