@@ -116,42 +116,6 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
-Section SSRComplPerm.
-
-Import GroupScope.
-
-Variable T : finType.
-Implicit Types (s : {perm T}).
-
-Lemma permKP s : reflect (involutive s) (s^-1 == s).
-Proof.
-apply (iffP eqP) => [ssV i | invs].
-- by rewrite -{1}ssV permK.
-- rewrite -permP => i; apply (@perm_inj _ s).
-  by rewrite invs permKV.
-Qed.
-
-End SSRComplPerm.
-
-Section SSRComplFinset.
-
-Variables aT rT : finType.
-Variables (f : aT -> rT).
-
-Lemma imsetD (A B : {set aT}) :
-  {in A :|: B &, injective f} -> f @: (B :\: A) =  (f @: B) :\: (f @: A).
-Proof.
-move=> injf; apply/setP=> y; rewrite inE.
-apply/imsetP/andP => [[x] | [yNfA] /imsetP[x xB Hy]].
-- rewrite inE => /andP [xNA xB ->{y}]; split; last exact: imset_f.
-  move: xNA; apply contra.
-  by move=> /imsetP[x1 x1A] /injf->; rewrite ?inE ?xB ?x1A ?orbT.
-- subst y; exists x; rewrite // inE xB andbT.
-  by move: yNfA; apply contra; apply imset_f.
-Qed.
-
-End SSRComplFinset.
-
 Section SRel.
 
 Variable T : finType.

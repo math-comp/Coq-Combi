@@ -234,8 +234,6 @@ End FinSet.
 Lemma sumn_sort l S : sumn (sort S l) = sumn l.
 Proof using. by have:= perm_sort S l => /permPl/perm_sumn. Qed.
 
-Section ImsetInj.
-
 Lemma map_filter_comp (T1 T2: Type) (l : seq T1) (PP : pred T2) (F : T1 -> T2) :
   [seq F i | i <- l & PP (F i)] = [seq i | i <- map F l & PP i ].
 Proof.
@@ -257,6 +255,29 @@ Proof.
 move=> f_inj /subsetP H.
 by apply/subsetP => x /(imset_f f) /(H _) /imsetP [y Hy /f_inj ->].
 Qed.
+
+
+Section SSRComplFinset.
+
+Variables aT rT : finType.
+Variables (f : aT -> rT).
+
+Lemma imsetD (A B : {set aT}) :
+  {in A :|: B &, injective f} -> f @: (B :\: A) = (f @: B) :\: (f @: A).
+Proof.
+move=> injf; apply/setP=> y; rewrite inE.
+apply/imsetP/andP => [[x] | [yNfA] /imsetP[x xB Hy]].
+- rewrite inE => /andP [xNA xB ->{y}]; split; last exact: imset_f.
+  move: xNA; apply contra.
+  by move=> /imsetP[x1 x1A] /injf->; rewrite ?inE ?xB ?x1A ?orbT.
+- subst y; exists x; rewrite // inE xB andbT.
+  by move: yNfA; apply contra; apply imset_f.
+Qed.
+
+End SSRComplFinset.
+
+
+Section ImsetInj.
 
 Variables (T T1 T2 : finType) (f : T1 -> T2).
 

@@ -57,6 +57,14 @@ apply/eqP; rewrite eqEcard; apply/andP; split.
   by rewrite cardsCs setCK card_setact.
 Qed.
 
+Lemma permKP s : reflect (involutive s) (s^-1 == s).
+Proof.
+apply (iffP eqP) => [ssV i | invs].
+- by rewrite -{1}ssV permK.
+- rewrite -permP => i; apply (@perm_inj _ s).
+  by rewrite invs permKV.
+Qed.
+
 End PermComp.
 
 
