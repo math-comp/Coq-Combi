@@ -1299,9 +1299,9 @@ rewrite count_flatten -map_comp (eq_map (f2 := fun i => i == p0 : nat)); first l
     + by rewrite Hhead Hsz -Hsm addKn !eq_refl Hpart.
   - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
     by move=> s; rewrite /= -eqseqE /= Hneq.
-rewrite sumn_iota //= add1n ltnS leq_min Hp0 -Hsm leq_addr !andbT.
+rewrite sumn_pred1_iota add1n ltnS leq_min Hp0 -Hsm leq_addr !andbT.
 have /part_head_non0 /= : is_part (p0 :: p) by rewrite /= Hhead Hpart.
-by rewrite lt0n.
+by rewrite lt0n => ->.
 Qed.
 
 Lemma enum_partnskE sm sz mx :
@@ -1372,8 +1372,7 @@ case: (altP (size p =P 0)) => Hsize.
   rewrite (eq_map (f2 := fun i => i == size p : nat)); first last.
     move=> i /=; rewrite enum_partnsE /=.
     by rewrite Hsum Hpart !andbT eq_sym.
-  rewrite sumn_iota //= add1n ltnS lt0n Hsize /= -(eqP Hsum).
-  exact: size_part.
+  by rewrite sumn_pred1_iota add1n ltnS lt0n Hsize /= -(eqP Hsum) size_part.
 Qed.
 
 Lemma enum_partnP n p : (is_part_of_n n p) = (p \in enum_partn n).

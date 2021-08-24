@@ -35,10 +35,8 @@ Prenex Implicits nat_of_ord.
 Lemma leq_addE m1 m2 n1 n2 :
   m1 <= m2 -> n1 <= n2 -> m1 + n1 = m2 + n2 -> m1 = m2 /\ n1 = n2.
 Proof.
-move=> lem len leD.
-suff Hmeq : m1 = m2 by split => //; move: leD; rewrite Hmeq => /addnI.
-apply anti_leq; rewrite lem /=.
-by have:= leq_sub2l (m1 + n1) len; rewrite {1}leD !addnK.
+move=> lem len eqD; have [_] := leqif_add (leqif_eq lem) (leqif_eq len).
+by rewrite eqD eqxx => /esym/andP[/eqP->/eqP->].
 Qed.
 
 
@@ -54,17 +52,17 @@ Proof using. by case s. Qed.
 
 Lemma belast_behead_rcons x l s :
   belast (head x (rcons s l)) (behead (rcons s l)) = s.
-Proof using. by case: s => [//= | s0 s]; rewrite rcons_cons /= belast_rcons. Qed.
+Proof using. by case: s => // s0 s; rewrite rcons_cons belast_rcons. Qed.
 
 Lemma last_behead_rcons x l s :
   last (head x (rcons s l)) (behead (rcons s l)) = l.
-Proof using. by case: s => [//= | s0 s]; rewrite rcons_cons /= last_rcons. Qed.
+Proof using. by case: s => // s0 s; rewrite rcons_cons last_rcons. Qed.
 
 Lemma set_head_default b a s : s != [::] -> head a s = head b s.
 Proof using. by case: s. Qed.
 
 Lemma rcons_set_nth a s l : set_nth a s (size s) l = rcons s l.
-Proof using. elim: s => [//=| l0 s IHs]. by rewrite rcons_cons -IHs /=. Qed.
+Proof using. by elim: s => // l0 s IHs; rewrite rcons_cons -IHs. Qed.
 
 Lemma set_nth_rcons x0 s x n y :
   set_nth x0 (rcons s x) n y =
@@ -72,9 +70,9 @@ Lemma set_nth_rcons x0 s x n y :
   else if n == size s then rcons s y
        else (rcons s x) ++ ncons (n - size s).-1 x0 [:: y].
 Proof using.
-elim: s n => [//= | s0 s IHs] n.
-- by case eqP => [-> //= |]; case: n => [| []].
-- rewrite rcons_cons /=; case: n => [//= | n] /=.
+elim: s n => [// | s0 s IHs] n.
+- by case eqP => [-> // |]; case: n => [| []].
+- rewrite rcons_cons /=; case: n => //= n.
   move/(_ n) : IHs; rewrite eqSS ltnS.
   by case (ltngtP n (size s)) => _ <-.
 Qed.
@@ -92,7 +90,7 @@ Qed.
 Lemma cons_in_map_cons a b s w (l : seq (seq T)) :
   a :: s \in [seq b :: s1 | s1 <- l] -> a == b.
 Proof using.
-elim: l => [//| l0 l H]; rewrite map_cons in_cons => /orP[]; last exact H.
+elim: l => // l0 l IHl; rewrite map_cons in_cons => /orP[]; last exact: IHl.
 by move=> /eqP [->].
 Qed.
 
@@ -108,10 +106,10 @@ Lemma nth_set_nth_expand a b l i c j :
   (size l <= j < i) -> nth a (set_nth b l i c) j = b.
 Proof using.
 elim: l i j => [/= | l0 l IHl].
-- elim => [//= | i' Hi] /=.
-  by case => [//= | j /=]; rewrite nth_ncons /leq subSS => ->.
-- elim => [//= | i' Hi] j /=; first by rewrite ltn0 andbF.
-  case: j Hi => [//= | j /=] Hi /andP [H1 H2].
+- elim => [// | i' Hi] /=.
+  by case => [// | j /=]; rewrite nth_ncons /leq subSS => ->.
+- elim => [// | i' Hi] j /=; first by rewrite ltn0 andbF.
+  case: j Hi => [// | j /=] Hi /andP [H1 H2].
   by apply: IHl; move: H1 H2; rewrite !/leq !subSS => -> ->.
 Qed.
 
@@ -180,21 +178,13 @@ Proof. by rewrite -sumn_take => /take_oversize ->. Qed.
 Lemma binomial_sumn_iota n : 'C(n, 2) = sumn (iota 0 n).
 Proof. by rewrite -triangular_sum sumnE /index_iota subn0. Qed.
 
-Lemma sumn_iota a b x :
-  a <= x < a + b -> sumn [seq ((i == x) : nat) | i <- iota a b] = 1.
+Lemma sumn_pred1_iota a b x :
+  sumn [seq ((i == x) : nat) | i <- iota a b] = (a <= x < a + b).
 Proof.
 elim: b a => [/=| b IHb] a.
-  rewrite addn0 => /andP [/leq_ltn_trans H{}/H].
-  by rewrite ltnn.
-move/(_ a.+1) : IHb => /= IHb.
-case (ltnP a x) => H1 /andP [H2 H3].
-+ rewrite IHb; first by rewrite (ltn_eqF H1).
-  by rewrite H1 addSnnS.
-+ rewrite eqn_leq H1 H2 /= {H2 H3 IHb}.
-  apply/eqP; rewrite eqSS; apply/eqP => /=.
-  elim: b a H1 => [//= | b IHb] a Ha /=.
-  rewrite IHb; first by rewrite gtn_eqF; last by rewrite ltnS.
-  by rewrite leqW.
+  by case: andP => []// [/leq_ltn_trans H{}/H]; rewrite addn0 ltnn.
+rewrite addnS ltnS -add1n iotaD map_cat /= leq_eqVlt addn1 {}IHb addSn ltnS.
+by case: eqP => [->|_]//=; rewrite ltnn addn0 leq_addr.
 Qed.
 
 Lemma count_mem_iota a b i :

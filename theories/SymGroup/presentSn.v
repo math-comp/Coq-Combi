@@ -326,9 +326,9 @@ rewrite (eq_map (f2 := fun i => i == cn : nat)); first last.
   + rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
     move=> s /=; apply/negP=> /eqP/(congr1 rev).
     by rewrite !rev_rcons => [] [/eqP]; rewrite Hneq.
-rewrite sumn_iota //= add0n.
+rewrite sumn_pred1_iota //= add0n.
 move/is_codeP: Hcode; rewrite size_rcons ltnS => /(_ _ (ltnSn _)).
-by rewrite nth_rcons ltnn eq_refl Hsz.
+by rewrite nth_rcons ltnn eq_refl Hsz => ->.
 Qed.
 
 (** ** Fintype for codes for permutations of size n *)

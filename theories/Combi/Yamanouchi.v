@@ -388,8 +388,9 @@ rewrite (eq_count (a2 := xpred1 y0)); first last.
   move=> i /=; case (altP (i =P y0)) => //= ->.
   by apply: is_rem_corner_yam; rewrite /= Hpart Hyam.
 rewrite -sumn_count /=.
-rewrite sumn_iota //= add0n size_incr_nth.
-by case: (ltnP y0 (size (evalseq y))).
+rewrite sumn_pred1_iota add0n size_incr_nth.
+case: (ltnP y0 (size (evalseq y))) => [->// | _].
+by rewrite ltnSn leq0n.
 Qed.
 
 

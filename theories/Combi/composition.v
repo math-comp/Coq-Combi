@@ -201,8 +201,8 @@ rewrite (eq_map (f2 := fun i => i == s0 : nat)); first last.
     + by rewrite Hs andbT -(eqP Hsum) addKn.
   - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
     by move=> t; rewrite /= -eqseqE /= Hneq.
-rewrite sumn_iota //= add1n ltnS -(eqP Hsum) leq_addr andbT.
-by rewrite lt0n eq_sym.
+rewrite sumn_pred1_iota add1n ltnS -(eqP Hsum) leq_addr andbT.
+by rewrite lt0n eq_sym s0neq0.
 Qed.
 
 Lemma enum_compnP n s : (is_comp_of_n n s) = (s \in enum_compn n).
