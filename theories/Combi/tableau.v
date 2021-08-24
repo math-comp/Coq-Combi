@@ -646,6 +646,7 @@ Notation "'tabsh[' T ']' mu" :=
 #[export] Hint Resolve tabshP : core.
 
 
+(** TODO : Generalise to any finite order using Order.enum_val when released *)
 Section OrdTableau.
 
 Variable n : nat.
@@ -709,6 +710,7 @@ Qed.
 Definition tabrowconst := TabSh (tabrowconst_subproof).
 
 End OrdTableau.
+
 
 (** ** Tableaux and increasing maps *)
 Section IncrMap.
