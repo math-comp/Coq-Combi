@@ -229,6 +229,18 @@ Qed.
 
 End FinSet.
 
+(** TODO: Merged in mathcomp-1.13 *)
+Section SSRComplUndup.
+
+Variables (S T : eqType) (f : S -> T).
+
+Hypothesis Hf : injective f.
+
+Lemma undup_map_inj s : undup (map f s) = map f (undup s).
+Proof. by elim: s => //= s0 s ->; rewrite mem_map //; case: (_ \in _). Qed.
+
+End SSRComplUndup.
+
 
 (* New lemmas *)
 Lemma sumn_sort l S : sumn (sort S l) = sumn l.

@@ -542,8 +542,8 @@ apply (iffP (subdescset_partsumP c1 c2)) => [| [s Hc1 ->{c2}]].
   have u0in : u0 \in partsums (u0 :: u) by rewrite partsums_cons //= inE eqxx.
   have [sz] := ubnPeq (size v).
   elim: sz v => [|sz IHv] [_ |v0 [| v1 v']] //.
-  - by rewrite /= => _ /esym/eqP; rewrite addn_eq0 (negbTE Hu0).
-  - by move=> _ _ _ /(_ _ u0in).
+  + by rewrite /= => _ /esym/eqP; rewrite addn_eq0 (negbTE Hu0).
+  + by move=> _ _ _ /(_ _ u0in).
   move Hv : (v1 :: v') => v; rewrite /= eqSS => /eqP Hsz.
   have vneq0 : v != [::] by rewrite -Hv.
   rewrite is_comp_cons => /andP [Hv0 Hcompv] /= Hsum Hsubset.
@@ -554,21 +554,20 @@ apply (iffP (subdescset_partsumP c1 c2)) => [| [s Hc1 ->{c2}]].
   rewrite leq_eqVlt => /orP[/eqP Heq {IHv} | lt0 {IHu}].
     subst v0.
     move: Hsum => /eqP; rewrite eqn_add2l => /eqP{}/(IHu _ Hcompu Hcompv) Hrec.
-    have {Hsubset} : {subset partsums u <= partsums v}.
-      rewrite -Hu => i Hi {IHu Hrec}.
-      have Hu' := mem_partsum_non0 Hi.
-      have {}/Hsubset : u0 + i \in partsums (u0 :: u).
-        by rewrite partsums_cons // inE map_f ?orbT // -Hu.
-      rewrite partsums_cons // inE => /orP [Heq|].
-        exfalso.
-        move: Heq; rewrite -{2}(addn0 u0) eqn_add2l => /eqP Heq; subst i.
-        have Hcompsu : is_comp_of_n (sumn u) u.
-          by rewrite /is_comp_of_n /= eqxx Hcompu.
-        have /= /allP := all_partsums (IntCompN Hcompsu).
-        by rewrite -Hu => /(_ _ Hi).
+    suff /Hrec [s -> ->] : {subset partsums u <= partsums v}.
+      by exists ([:: u0] :: s); rewrite //= addn0.
+    rewrite -Hu => i Hi {IHu Hrec}.
+    have Hu' := mem_partsum_non0 Hi.
+    have {}/Hsubset : u0 + i \in partsums (u0 :: u).
+      by rewrite partsums_cons // inE map_f ?orbT // -Hu.
+    rewrite partsums_cons // inE => /orP [Heq|]; first last.
       by rewrite mem_map // => x y /eqP; rewrite eqn_add2l => /eqP.
-    move=> /Hrec [s -> ->].
-    by exists ([:: u0] :: s); rewrite //= addn0.
+    exfalso.
+    move: Heq; rewrite -{2}(addn0 u0) eqn_add2l => /eqP Heq; subst i.
+    have Hcompsu : is_comp_of_n (sumn u) u.
+      by rewrite /is_comp_of_n /= eqxx Hcompu.
+    have /= /allP := all_partsums (IntCompN Hcompsu).
+    by rewrite -Hu => /(_ _ Hi).
   have {}/IHv Hrec: size ((v0 + v1) :: v') == sz by rewrite -Hsz -Hv.
   have {}/Hrec Hrec : is_comp (v0 + v1 :: v').
     move: Hcompv; rewrite -Hv !is_comp_cons addn_eq0 negb_and orbC.
@@ -590,13 +589,13 @@ apply (iffP (subdescset_partsumP c1 c2)) => [| [s Hc1 ->{c2}]].
     by move: Hcomp; rewrite {}Hc1 /is_comp -[0]/(sumn [::]) map_f.
   rewrite {c1}Hc1.
   elim: s => // s0 s IHs; rewrite inE negb_or => /andP [Hs0 Hin].
-  have {}IHs := IHs Hin.
+  move/(_ Hin) in IHs.
   case: s0 Hs0 => //= i s0 _.
   elim: s0 i => [|c0 c IHc]//= i.
     rewrite addn0; case: (altP (s =P [::])) => [->//|Hs].
     rewrite !partsums_cons; first last.
-    - by move: Hs; apply contra; case s.
-    - by move: Hs {IHs}; apply contra; case: s Hin => // [[|t0 t']].
+    + by move: Hs; apply contra; case s.
+    + by move: Hs {IHs}; apply contra; case: s Hin => // [[|t0 t']].
     move=> k; rewrite !inE => /orP [/eqP->|]; first by rewrite eqxx.
     by move=> /mapP[l /IHs Hl ->{k}]; rewrite map_f // orbT.
   rewrite addnA [X in {subset _ <= X}]partsums_cons //.

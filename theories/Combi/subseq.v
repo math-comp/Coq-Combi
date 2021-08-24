@@ -32,16 +32,6 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Section SSRCompl.
-
-Variables (S T : eqType) (f : S -> T).
-
-Hypothesis Hf : injective f.
-
-Lemma undup_map_inj s : undup (map f s) = map f (undup s).
-Proof. by elim: s => //= s0 s ->; rewrite mem_map //; case: (_ \in _). Qed.
-
-End SSRCompl.
 
 (******************************************************************************)
 (** TODO: these probably should be contributed to path.v                      *)
