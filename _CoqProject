@@ -35,7 +35,7 @@ theories/HookFormula/Frobenius_ident.v
 theories/HookFormula/hook.v
 theories/Basic/combclass.v
 theories/Basic/congr.v
-   theories/Basic/ordtype.v
+theories/Basic/ordtype.v
 theories/Basic/unitriginv.v
 theories/SymGroup/cycles.v
 theories/SymGroup/cycletype.v

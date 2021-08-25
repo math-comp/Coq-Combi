@@ -1765,6 +1765,7 @@ Module Exports.
 
 Notation "''PLexi_' n" := (intpartnlexi n).
 
+Set Warnings "-redundant-canonical-projection".
 Canonical porderType.
 Canonical latticeType.
 Canonical bLatticeType.
@@ -1782,6 +1783,7 @@ Canonical inhPOrderType.
 Canonical inhFinPOrderType.
 Canonical inhOrderType.
 Canonical inhFinOrderType.
+Set Warnings "+redundant-canonical-projection".
 
 Definition botEintpartnlexi := @botEintpartnlexi.
 Definition topEintpartnlexi := @topEintpartnlexi.
@@ -2400,7 +2402,7 @@ End IntPartNTopBottom.
 Module Exports.
 
 Notation "''PDom_' n" := (intpartndom n).
-
+Set Warnings "-redundant-canonical-projection".
 Canonical porderType.
 Canonical latticeType.
 Canonical bLatticeType.
@@ -2410,6 +2412,7 @@ Canonical finLatticeType.
 Canonical inhType.
 Canonical inhPOrderType.
 Canonical inhFinPOrderType.
+Set Warnings "+redundant-canonical-projection".
 
 Definition leEpartdom := @leEpartdom.
 Definition partdom_conj_intpartn := @partdom_conj_intpartn.

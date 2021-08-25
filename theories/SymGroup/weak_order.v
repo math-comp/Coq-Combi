@@ -113,8 +113,10 @@ End Def.
 
 Module Exports.
 
+Set Warnings "-redundant-canonical-projection".
 Canonical porderType.
 Canonical finPOrderType.
+Set Warnings "+redundant-canonical-projection".
 
 Notation "x <=R y" := (@Order.le perm_display _ x y).
 Notation "x <R y" := (@Order.lt perm_display _ x y).
@@ -488,10 +490,12 @@ End PermTBLattice.
 
 Module Exports.
 
+Set Warnings "-redundant-canonical-projection".
 Canonical latticeType.
 Canonical blatticeType.
 Canonical tblatticeType.
 Canonical finLatticeType.
+Set Warnings "+redundant-canonical-projection".
 
 Definition bottom_perm := bottom_perm.
 Definition top_perm := top_perm.

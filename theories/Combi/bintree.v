@@ -672,8 +672,10 @@ End Tamari.
 
 Module Exports.
 
+Set Warnings "-redundant-canonical-projection".
 Canonical porderType.
 Canonical finPOrderType.
+Set Warnings "+redundant-canonical-projection".
 
 Notation "x <=T y" := (@Order.le Tamari_display _ x y).
 Notation "x <T y" := (@Order.lt Tamari_display _ x y).
@@ -1564,8 +1566,8 @@ Qed.
 Lemma TjoinE t1 t2 t : (Tjoin t1 t2 <=T t) = (t1 <=T t) && (t2 <=T t).
 Proof. by rewrite /Tjoin -![_ <=T t]Tamari_flip flipszK TmeetE. Qed.
 
-Definition Tamari_latticeMixin := MeetJoinLeMixin TmeetE TjoinE.
-Canonical Tamari_latticeType := LatticeType (bintreesz n) Tamari_latticeMixin.
+Definition latticeMixin := MeetJoinLeMixin TmeetE TjoinE.
+Canonical latticeType := LatticeType (bintreesz n) latticeMixin.
 
 End Def.
 
@@ -1586,24 +1588,6 @@ Proof. by apply val_inj => /=; rewrite flipK. Qed.
 Lemma flipsz_join t1 t2 : flipsz (t1 /\T t2) = (flipsz t1 \/T flipsz t2).
 Proof. by rewrite -[RHS]flipszK flipsz_meet !flipszK. Qed.
 
-End Theory.
-Module Exports.
-
-Canonical Tamari_latticeType.
-Definition right_sizes_meet := right_sizes_meet.
-Definition flipsz_meet := flipsz_meet.
-Definition flipsz_join := flipsz_join.
-
-End Exports.
-End TamariLattice.
-Export TamariLattice.Exports.
-
-
-Section TamariTBLattice.
-
-Variable n : nat.
-Implicit Types t : bintreesz n.
-
 Fact leftcomb_bottom t : leftcombsz n <=T t.
 Proof.
 rewrite -Tamari_vctleq right_sizes_left_comb.
@@ -1614,11 +1598,11 @@ Qed.
 Fact rightcomb_top t : t <=T rightcombsz n.
 Proof. by rewrite -Tamari_flip flipsz_rightcomb; exact: leftcomb_bottom. Qed.
 
-Definition Tamari_bottomMixin := BottomMixin leftcomb_bottom.
-Canonical Tamari_blatticeType := BLatticeType (bintreesz n) Tamari_bottomMixin.
-Definition Tamari_topMixin := TopMixin rightcomb_top.
-Canonical Tamari_tblatticeType := TBLatticeType (bintreesz n) Tamari_topMixin.
-Canonical Tamari_finLatticeType :=
+Definition bottomMixin := BottomMixin leftcomb_bottom.
+Canonical blatticeType := BLatticeType (bintreesz n) bottomMixin.
+Definition topMixin := TopMixin rightcomb_top.
+Canonical tblatticeType := TBLatticeType (bintreesz n) topMixin.
+Canonical finLatticeType :=
   Eval hnf in [finLatticeType of (bintreesz n)].
 
 Lemma botETamari : 0%O = leftcombsz n.
@@ -1626,7 +1610,25 @@ Proof. by []. Qed.
 Lemma topETamari : 1%O = rightcombsz n.
 Proof. by []. Qed.
 
-End TamariTBLattice.
+End Theory.
+Module Exports.
+
+Set Warnings "-redundant-canonical-projection".
+Canonical latticeType.
+Canonical blatticeType.
+Canonical tblatticeType.
+Canonical finLatticeType.
+Set Warnings "+redundant-canonical-projection".
+
+Definition right_sizes_meet := right_sizes_meet.
+Definition flipsz_meet := flipsz_meet.
+Definition flipsz_join := flipsz_join.
+Definition botETamari := botETamari.
+Definition topETamari := topETamari.
+
+End Exports.
+End TamariLattice.
+Export TamariLattice.Exports.
 
 
 Section TamariCover.
