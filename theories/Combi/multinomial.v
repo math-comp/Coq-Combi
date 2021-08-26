@@ -34,21 +34,36 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
-Fixpoint multinomial s :=
-  if s is i :: s' then 'C(sumn s, i) * (multinomial s')
-  else 1.
-
+Fixpoint multinomial_rec s :=
+  if s is i :: s' then 'C(sumn s, i) * (multinomial_rec s') else 1.
+Arguments multinomial_rec : simpl nomatch.
+Definition multinomial := nosimpl multinomial_rec.
 Notation "''C' [ s ]" := (multinomial s)
   (at level 8, format "''C' [ s ]") : nat_scope.
+
+
+Lemma multinomial0 : 'C[[::]] = 1.
+Proof. by []. Qed.
+Lemma multinomial1 i : 'C[[:: i]] = 1.
+Proof. by rewrite /multinomial /= addn0 muln1 binn. Qed.
+Lemma multinomialE i s : 'C[i :: s] = 'C(i + sumn s, i) * 'C[s].
+Proof. by []. Qed.
+Lemma multinomial2 a b : 'C[[:: a; b]] = 'C(a + b, a).
+Proof. by rewrite multinomialE /= addn0 multinomial1 muln1. Qed.
 
 Lemma multinomial_fact s : 'C[s] * \prod_(i <- s) i`! = (sumn s)`!.
 Proof.
 elim: s => [| i s IHs] /=; first by rewrite fact0 big_nil muln1.
-rewrite big_cons [i`! * _]mulnC -!mulnA ['C[s] * _]mulnA IHs.
-rewrite [_ * i`!]mulnC.
-rewrite -{2}(addKn i (sumn s)) bin_fact //.
+rewrite big_cons [i`! * _]mulnC -!mulnA ['C[s] * _]mulnA {}IHs /=.
+rewrite [_ * i`!]mulnC -{2}(addKn i (sumn s)) bin_fact //.
 exact: leq_addr.
 Qed.
+
+Lemma multinomial_nseq n a : 'C[nseq n a] * (a`! ^ n) = (a * n)`!.
+Proof. by rewrite -(sumn_nseq a n) -multinomial_fact big_nseq iter_muln_1. Qed.
+
+Lemma multinomial_nseq1 n : 'C[nseq n 1] = n`!.
+Proof. by have:= multinomial_nseq n 1; rewrite exp1n muln1 mul1n. Qed.
 
 Lemma dvdn_prodfact s : \prod_(i <- s) i`! %| (sumn s)`! .
 Proof. by apply/dvdnP; exists 'C[s]; rewrite multinomial_fact. Qed.
@@ -57,6 +72,15 @@ Lemma multinomial_factd s : 'C[s] = (sumn s)`! %/ \prod_(i <- s) i`!.
 Proof.
 rewrite -multinomial_fact mulnK //.
 by apply prodn_gt0 => i; apply fact_gt0.
+Qed.
+
+Lemma multinomial_cat s t :
+  'C[s ++ t] = 'C(sumn s + sumn t, sumn s) * 'C[s] * 'C[t].
+Proof.
+rewrite !multinomial_factd big_cat sumn_cat /=.
+rewrite muln_divA ?dvdn_prodfact // [_ * (sumn t)`!]mulnC mulnA.
+rewrite muln_divA ?dvdn_prodfact // -divnMA -mulnA [(sumn t)`! * _]mulnC.
+by rewrite -{3}(addKn (sumn s) (sumn t)) -mulnA bin_fact ?leq_addr.
 Qed.
 
 Lemma perm_multinomial s t : perm_eq s t -> 'C[s] = 'C[t].
