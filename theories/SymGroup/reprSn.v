@@ -56,6 +56,18 @@ Local Notation reprS n d :=
   (mx_representation [fieldType of algC] 'SG_n d).
 
 
+Section TcastVal.
+Variable (T : eqType).
+
+Lemma tval_tcastE m n (eq_mn : m = n) (t : m.-tuple T) :
+  tcast eq_mn t = t :> seq T.
+Proof. by case: n / eq_mn. Qed.
+
+End TcastVal.
+
+Lemma NirrSn n : Nirr 'SG_n = #|{:'P_n}|.
+Proof using. by rewrite NirrE card_classes_perm card_ord. Qed.
+
 (** * Representation of dimension 1 and natural representation *)
 Section DefTrivSign.
 
@@ -165,18 +177,14 @@ Lemma charSG0 X : X \in irr 'SG_0 -> X = 1.
 Proof.
 move/irrP => [[i Hi] ->{X}].
 apply/eqP; rewrite irr_eq1 -val_eqE /=.
-move: Hi; rewrite NirrE card_classes_perm card_ord card_intpartn.
-have -> : intpartn_nb 0%N = 1%N by [].
-by rewrite ltnS leqn0.
+by move: Hi; rewrite NirrSn card_intpartn -[intpartn_nb 0%N]/1%N ltnS leqn0.
 Qed.
 
 Lemma charSG1 X : X \in irr 'SG_1 -> X = 1.
 Proof.
 move/irrP => [[i Hi] ->{X}].
 apply/eqP; rewrite irr_eq1 -val_eqE /=.
-move: Hi; rewrite NirrE card_classes_perm card_ord card_intpartn.
-have -> : intpartn_nb 1%N = 1%N by [].
-by rewrite ltnS leqn0.
+by move: Hi; rewrite NirrSn card_intpartn -[intpartn_nb 1%N]/1%N ltnS leqn0.
 Qed.
 
 
@@ -238,9 +246,6 @@ Qed.
 
 (** * Representations of the symmetric Group for n=2  *)
 
-Lemma NirrSn n : Nirr 'SG_n = #|{:'P_n}|.
-Proof using. by rewrite NirrE card_classes_perm card_ord. Qed.
-
 Lemma NirrS2 : Nirr 'SG_2 = 2.
 Proof using. by rewrite NirrSn card_intpartn. Qed.
 
@@ -254,8 +259,7 @@ Qed.
 Lemma cfRepr_sign2 : cfRepr sign_repr = 'chi_(cast_ord (esym NirrS2) 1).
 Proof using.
 have : cfRepr sign_repr \in irr 'SG_2.
-  apply/irr_reprP.
-  by exists (Representation sign_repr); first exact: sign_irr.
+  by apply/irr_reprP; exists (Representation sign_repr); first exact: sign_irr.
 move=> /irrP [j]; rewrite -!irrRepr => /eqP/cfRepr_rsimP/mx_rsim_sym Hj.
 apply/eqP/cfRepr_rsimP.
 apply (mx_rsim_trans (mx_rsim_sym Hj)).
@@ -277,28 +281,11 @@ case: (altP (i =P 0)) => [-> | Hi].
 - by rewrite tcastE {2}/tnth /= cfRepr_sign2 (cast_IirrS2 Hi) /=.
 Qed.
 
-Lemma perm_eq_char_S2 :
-  perm_eq [:: cfRepr triv_repr; cfRepr sign_repr] (irr 'SG_2).
-Proof using.
-have Huniq : uniq [:: cfRepr (triv_repr (n := 2)); cfRepr sign_repr].
-  rewrite /= andbT inE; apply/cfRepr_rsimP.
-  exact: triv_sign_not_sim.
-apply uniq_perm => //; first by apply free_uniq; exact: irr_free.
-apply uniq_min_size => //.
-move=> i; rewrite !inE => /orP [] /eqP ->; apply/irr_reprP.
-- by exists (Representation triv_repr); first exact: triv_irr.
-- by exists (Representation sign_repr); first exact: sign_irr.
-- have:= NirrSn 2; rewrite card_intpartn /=.
-  have -> : intpartn_nb 2 = 2 by [].
-  by rewrite size_tuple /= => ->.
-Qed.
-
 Lemma repr_S2 (rho : representation [fieldType of algC] [group of 'SG_2]) :
   mx_irreducible rho -> mx_rsim rho triv_repr \/ mx_rsim rho sign_repr.
 Proof using.
 move=> Hirr.
-have : cfRepr rho \in irr 'SG_2.
-  by apply/irr_reprP; exists rho.
-by rewrite -(perm_mem perm_eq_char_S2) !inE =>
-  /orP [] /cfRepr_rsimP; [left | right].
+have : cfRepr rho \in irr 'SG_2 by apply/irr_reprP; exists rho.
+by rewrite char_S2 memtE tval_tcastE !inE =>
+  /orP[]/cfRepr_rsimP; [left | right].
 Qed.
