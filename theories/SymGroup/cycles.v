@@ -108,7 +108,7 @@ rewrite inE; congr negb; apply/eqP/idP => [H|].
 Qed.
 
 
-(* Complement on porbit *)
+(** Complement on porbit *)
 Lemma porbit_fix s x : (s x == x) = (porbit s x == [set x]).
 Proof using.
 rewrite -[LHS]negbK -in_psupport -psupport_card_porbit negbK.

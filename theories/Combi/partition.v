@@ -1609,6 +1609,41 @@ have -> : k.+2 :: nseq (d - k.+1) 1 = incr_first_n [:: k.+1] (d - k).
 by rewrite conj_part_ind ?subn_gt0 // subKn //= -subSn.
 Qed.
 
+Lemma sorted_geq_count_leq2E (s : seq nat) :
+  sorted geq s -> (count (leq 2) s <= 1) = (nth 0 s 1 <= 1).
+Proof.
+case: s => [|s0 [|s1 s]]//=; first by rewrite addn0; case: ltnP.
+move=> /andP [le10 Hpath]; case: (ltnP 1 s1) => [|les1 {le10}].
+  by move/leq_trans/(_ le10) ->; rewrite !add1n.
+suff -> : count (leq 2) s = 0 by rewrite !addn0; case: ltnP.
+elim: s s1 Hpath les1 => // s2 s IHs s1.
+move=> /= /andP[les2 Hpath /(leq_trans les2) {les2}les].
+by rewrite (IHs _ Hpath les) addn0 ltnNge les.
+Qed.
+
+Lemma sorted_geq_nth0E (s : seq nat) :
+  sorted geq s -> nth 0 s 0 = \max_(i <- s) i.
+Proof.
+case: s => [|s0 s]/= Hpath; first by rewrite big_nil.
+rewrite big_cons; apply/esym/maxn_idPl.
+elim: s s0 Hpath => [|s1 s IHs] s0 /=; first by rewrite big_nil.
+rewrite big_cons geq_max=> /andP [le10 Hpath].
+by rewrite le10 /=; apply: (leq_trans _ le10); apply: IHs.
+Qed.
+
+Lemma intpartn_count_leq2E d (la : 'P_d) :
+  (count (leq 2) la <= 1) = (nth 0 la 1 <= 1).
+Proof.
+apply: sorted_geq_count_leq2E.
+by have:= intpartnP la; rewrite is_part_sortedE => /andP [].
+Qed.
+Lemma intpartn_nth0 d (la : 'P_d) :
+  nth 0 la 0 = \max_(i <- la) i.
+Proof.
+apply sorted_geq_nth0E.
+by have:= intpartnP la; rewrite is_part_sortedE => /andP [].
+Qed.
+
 Lemma hookpartnPE x0 x1 d (la : 'P_d) :
   nth x0 la 1 <= 1 -> la = hookpartn d (nth x1 la 0).-1.
 Proof.

@@ -43,7 +43,7 @@ From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import vector matrix mxalgebra ssrnum algC.
 From mathcomp Require Import mxrepresentation classfun character.
 
-Require Import permcomp tools sorted partition congr cycles cycletype presentSn.
+Require Import permcomp tools partition congr cycles cycletype presentSn.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -67,6 +67,36 @@ End TcastVal.
 
 Lemma NirrSn n : Nirr 'SG_n = #|{:'P_n}|.
 Proof using. by rewrite NirrE card_classes_perm card_ord. Qed.
+
+
+Section LinRepr.
+
+Variables (gT : finGroupType) (G : {group gT}).
+Variable (rG : mx_representation [fieldType of algC] G 1).
+
+Lemma cfRepr1_lin_char : cfRepr rG \is a linear_char.
+Proof. by rewrite unfold_in cfRepr_char /= cfRepr1. Qed.
+
+End LinRepr.
+
+
+Section EltrConj.
+
+Variable n : nat.
+
+Lemma cycle_type_eltr i :
+  (i < n)%N -> cycle_typeSn (eltr n i) = hookpartn n.+1 1.
+Proof.
+move=> /inordi_neq_i1 Hi; rewrite /eltr; apply val_inj => /=.
+by rewrite /cycle_typeSn cycle_type_tperm // /partnCT cast_intpartnE card_ord.
+Qed.
+
+Lemma eltr_conj i j :
+  (i < n)%N -> (j < n)%N -> exists t, eltr n i = ((eltr n j) ^ t)%g.
+Proof. by move=> /inordi_neq_i1 Hi /inordi_neq_i1 Hj; exact/tperm_conj. Qed.
+
+End EltrConj.
+
 
 (** * Representation of dimension 1 and natural representation *)
 Section DefTrivSign.
@@ -110,16 +140,16 @@ Lemma nat_mx_repr : mx_repr 'SG_n nat_mx.
 Proof. by split=> [|g1 g2 _ _]; [exact: perm_mx1 | exact: perm_mxM]. Qed.
 Canonical nat_repr : reprS n n := MxRepresentation nat_mx_repr.
 
-Lemma cfRepr_trivE : cfRepr triv_repr = 1.
+Lemma cfRepr_triv : cfRepr triv_repr = 1.
 Proof using.
 rewrite -cfunP => s.
 by rewrite cfunE cfun1E !inE mulr1n mxtrace1.
 Qed.
 
-Lemma cfRepr_triv : cfRepr triv_repr = 'chi_0.
-Proof using. by rewrite irr0 cfRepr_trivE. Qed.
+Lemma cfRepr_trivE : cfRepr triv_repr = 'chi_0.
+Proof using. by rewrite irr0 cfRepr_triv. Qed.
 Lemma triv_Chi : mx_rsim triv_repr 'Chi_0.
-Proof using. by apply/cfRepr_rsimP; rewrite cfRepr_triv irrRepr. Qed.
+Proof using. by apply/cfRepr_rsimP; rewrite cfRepr_trivE irrRepr. Qed.
 
 Lemma sign_char_subproof :
   is_class_fun <<'SG_n>> [ffun g => (-1) ^+ (odd_perm g)].
@@ -136,7 +166,7 @@ rewrite /trmx trace_mx11 /sign_mx.
 by case: (odd_perm s) => /=; rewrite ?expr1 ?expr0 !mxE eqxx.
 Qed.
 Lemma sign_charP : sign_char \is a linear_char.
-Proof. by rewrite qualifE -{1}cfRepr_sign cfRepr_char /= cfunE odd_perm1. Qed.
+Proof. by rewrite -cfRepr_sign cfRepr1_lin_char. Qed.
 
 Lemma cfRepr_signed (rho : reprS n d) :
   cfRepr (signed_repr rho) = sign_char * cfRepr rho.
@@ -159,20 +189,6 @@ Arguments sign_char {n}.
 Lemma row_free1 : row_free (1 : 'M[algC]_1).
 Proof. by apply/row_freeP; exists 1; rewrite mul1mx. Qed.
 
-Lemma repr1_S0 (rho : reprS 0 1) : mx_rsim rho triv_repr.
-Proof.
-apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
-rewrite /triv_mx_repr /= => g _ /=.
-by rewrite mul1mx mulmx1 (permS0 g) repr_mx1.
-Qed.
-
-Lemma repr1_S1 (rho : reprS 1 1) : mx_rsim rho triv_repr.
-Proof.
-apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
-rewrite /triv_mx_repr /= => g _ /=.
-by rewrite mul1mx mulmx1 (permS1 g) repr_mx1.
-Qed.
-
 Lemma charSG0 X : X \in irr 'SG_0 -> X = 1.
 Proof.
 move/irrP => [[i Hi] ->{X}].
@@ -187,60 +203,63 @@ apply/eqP; rewrite irr_eq1 -val_eqE /=.
 by move: Hi; rewrite NirrSn card_intpartn -[intpartn_nb 1%N]/1%N ltnS leqn0.
 Qed.
 
+Lemma repr1_S0 (rho : reprS 0 1) : mx_rsim rho triv_repr.
+Proof.
+have /lin_char_irr/charSG0 cfrho := cfRepr1_lin_char rho.
+by apply: cfRepr_inj; rewrite cfrho cfRepr_triv.
+Qed.
 
-(** * Representations of dimension 1 the symmetric Group for n > 1*)
+Lemma repr1_S1 (rho : reprS 1 1) : mx_rsim rho triv_repr.
+Proof.
+have /lin_char_irr/charSG1 cfrho := cfRepr1_lin_char rho.
+by apply: cfRepr_inj; rewrite cfrho cfRepr_triv.
+Qed.
+
+
+(** * Representations of dimension 1 the symmetric Group for n > 1 *)
+
+Lemma triv_sign_neq n : (n > 1)%N -> 1 != sign_char :> 'CF('SG_n).
+Proof.
+case: n => // n; rewrite ltnS => Hn.
+apply/negP=> /eqP/cfunP /(_ 's_0)/eqP.
+rewrite cfunE cfun1E inE /= (odd_eltr Hn) /= expr1 -addr_eq0 -mulr2n.
+by have := Cchar; rewrite charf0P => /(_ 2) ->.
+Qed.
 
 Lemma triv_sign_not_sim n :
   (n > 1)%N -> ~ mx_rsim (G := [group of 'SG_n]) triv_repr sign_repr.
 Proof.
-case: n => // n; rewrite ltnS => Hn [B _].
-rewrite row_free_unit => /mulrI HB Hsim.
-have {}/Hsim : 's_0 \in 'SG_n.+1 by [].
-rewrite /triv_repr /sign_repr /triv_mx /sign_mx /= mul1mx (odd_eltr Hn).
-rewrite -[LHS]mulmx1 => /HB/eqP; rewrite -addr_eq0 -mulr2n => /eqP.
-apply/matrixP => /(_ ord0 ord0).
-rewrite !mxE eq_refl /= => /eqP.
-by have := Cchar; rewrite charf0P => /(_ 2) ->.
+move/triv_sign_neq => /negbTE Hneq /cfRepr_rsimP.
+by rewrite cfRepr_triv cfRepr_sign Hneq.
+Qed.
+
+Lemma lin_char_Sn n (xi : 'CF('SG_n)) :
+  xi \is a linear_char -> xi = 1 \/ xi = sign_char.
+Proof.
+case: n xi => [|n] xi Hxi.
+  by left; apply/cfunP => /= s; rewrite cfun1E inE /= permS0 lin_char1.
+have memSn p : p \in [set: 'S_n.+1]%G by rewrite in_setT.
+have ch1_eltr i : (i < n)%N -> xi 's_i = xi 's_0.
+  move=> ltin; have [/= t ->] := eltr_conj (leq_ltn_trans (leq0n _) ltin) ltin.
+  by rewrite /conjg lin_charM // mulrC -lin_charM // mulgK.
+have:= congr1 xi (eltr2 n 0); rewrite lin_charM // lin_char1 // => /eqP.
+rewrite -expr2 sqrf_eq1 => /orP [] /eqP xi_s0.
+- left; apply/cfunP => /= s; rewrite cfun1E inE /=.
+  elim/eltr_ind: s => [|s i lti IHs]; first by rewrite lin_char1.
+  by rewrite lin_charM // {}IHs mulr1 ch1_eltr.
+- right; apply/cfunP => /= s; rewrite cfunE.
+  elim/eltr_ind: s => [|s i lti IHs].
+     by rewrite lin_char1 // odd_perm1 expr0.
+  rewrite lin_charM // {}IHs odd_permM odd_eltr // ch1_eltr // xi_s0.
+  by rewrite mulN1r // signrN.
 Qed.
 
 Lemma repr1 n (rho : reprS n 1) :
   mx_rsim rho triv_repr \/ mx_rsim rho sign_repr.
 Proof.
-case: n rho => [| n] rho; first by left; exact: repr1_S0.
-have Hs0 : 's_0 \in 'SG_n.+1 by [].
-have /esym := repr_mxMr rho Hs0 Hs0.
-set M := rho 's_0.
-rewrite eltr2 repr_mx1 (mx11_scalar M).
-rewrite -mulmxE -scalar_mxM -matrixP => /(_ ord0 ord0) /eqP.
-rewrite !mxE eq_refl mulr1n /= -expr2 sqrf_eq1 => /orP [] /eqP HM.
-- left; apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
-  rewrite /triv_mx_repr /= => g _; rewrite mul1mx mulmx1.
-  have Heltr i : (i < n)%N -> rho 's_i = 1.
-    elim: i => [| i IHi] Hi; first by rewrite -/M (mx11_scalar M) HM.
-    have /(congr1 rho) := eltr_braid Hi.
-    rewrite !repr_mxMr ?inE //= IHi; last exact: ltnW.
-    rewrite !mulr1.
-    have: 's_i.+1 \in 'SG_n.+1 by [].
-    by move=> /(repr_mx_unit rho)/mulIr H{}/H <-.
-  rewrite -(canwordP g); elim: (canword g) => [| w0 w IHw] /=.
-    by rewrite big_nil repr_mx1.
-  rewrite big_cons repr_mxM ?inE // IHw mulmx1.
-  exact: Heltr.
-- right; apply: (MxReprSim (B := 1)) => //; first exact: row_free1.
-  rewrite /sign_mx_repr /= => g _; rewrite mul1mx mulmx1 /sign_mx.
-  have Heltr i : (i < n)%N -> rho 's_i = -1.
-    elim: i => [| i IHi] Hi.
-      by rewrite -/M (mx11_scalar M) HM -[RHS]scaleN1r -scalemx1.
-    have /(congr1 rho) := eltr_braid Hi.
-    rewrite !repr_mxMr ?inE //= IHi; last exact: ltnW.
-    rewrite !mulrN1 mulNr => /eqP; rewrite eqr_opp => /eqP.
-    have: 's_i.+1 \in 'SG_n.+1 by [].
-    by move=> /(repr_mx_unit rho)/mulIr H{}/H <-.
-  rewrite -(canwordP g); elim: (canword g) => [| w0 w IHw] /=.
-    by rewrite big_nil repr_mx1 odd_perm1.
-  rewrite big_cons repr_mxM ?inE // {}IHw odd_permM odd_eltr //= Heltr //.
-  case: (odd_perm (\prod_(i <- w) 's_i)); rewrite /= mulmxE mulN1r //.
-  exact: opprK.
+have /lin_char_Sn := cfRepr1_lin_char rho.
+by move=> [] cfrho; [left|right]; apply: cfRepr_inj;
+  rewrite cfrho ?cfRepr_triv ?cfRepr_sign.
 Qed.
 
 
@@ -256,29 +275,24 @@ move=> Hi; apply val_inj => /=.
 by case: i Hi => [[|[|i]]] //=; rewrite NirrS2.
 Qed.
 
-Lemma cfRepr_sign2 : cfRepr sign_repr = 'chi_(cast_ord (esym NirrS2) 1).
+Lemma sign_char2 : sign_char = 'chi_(cast_ord (esym NirrS2) 1).
 Proof using.
-have : cfRepr sign_repr \in irr 'SG_2.
-  by apply/irr_reprP; exists (Representation sign_repr); first exact: sign_irr.
-move=> /irrP [j]; rewrite -!irrRepr => /eqP/cfRepr_rsimP/mx_rsim_sym Hj.
-apply/eqP/cfRepr_rsimP.
-apply (mx_rsim_trans (mx_rsim_sym Hj)).
-rewrite (cast_IirrS2 (i := j)); first exact: mx_rsim_refl.
-apply/eqP => Hj0; subst j.
-apply: (triv_sign_not_sim (n := 2)) => //.
-exact: mx_rsim_trans (triv_Chi 2) Hj.
+have /irrP [j Hj] := lin_char_irr (sign_charP 2).
+rewrite -(cast_IirrS2 (i := j)) //; apply/eqP => Hj0; subst j.
+by have := triv_sign_neq (n := 2) (ltnSn _); rewrite Hj irr0 eqxx.
 Qed.
+
+Lemma cfRepr_sign2 : cfRepr sign_repr = 'chi_(cast_ord (esym NirrS2) 1).
+Proof using. by rewrite cfRepr_sign sign_char2. Qed.
 
 Lemma sign_Chi2 : mx_rsim sign_repr 'Chi_(cast_ord (esym NirrS2) 1).
 Proof using. by apply/cfRepr_rsimP; rewrite cfRepr_sign2 irrRepr. Qed.
 
-Lemma char_S2 :
-  irr 'SG_2 = tcast (esym NirrS2) [tuple cfRepr triv_repr; cfRepr sign_repr].
+Lemma irr_S2 : irr 'SG_2 = tcast (esym NirrS2) [tuple 1; sign_char].
 Proof using.
-apply eq_from_tnth => i.
-case: (altP (i =P 0)) => [-> | Hi].
-- by rewrite tcastE {2}/tnth /= cfRepr_triv; congr 'chi_(_); exact: val_inj.
-- by rewrite tcastE {2}/tnth /= cfRepr_sign2 (cast_IirrS2 Hi) /=.
+apply eq_from_tnth => i; case: (altP (i =P 0)) => [-> | Hi].
+- by rewrite tcastE irr0.
+- by rewrite tcastE sign_char2 (cast_IirrS2 Hi).
 Qed.
 
 Lemma repr_S2 (rho : representation [fieldType of algC] [group of 'SG_2]) :
@@ -286,6 +300,7 @@ Lemma repr_S2 (rho : representation [fieldType of algC] [group of 'SG_2]) :
 Proof using.
 move=> Hirr.
 have : cfRepr rho \in irr 'SG_2 by apply/irr_reprP; exists rho.
-by rewrite char_S2 memtE tval_tcastE !inE =>
-  /orP[]/cfRepr_rsimP; [left | right].
+rewrite irr_S2 memtE tval_tcastE !inE.
+by move=> /orP[]/eqP cfRho; [left | right]; apply: cfRepr_inj;
+  rewrite ?cfRepr_triv ?cfRepr_sign.
 Qed.
