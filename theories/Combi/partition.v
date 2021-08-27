@@ -1557,55 +1557,72 @@ Proof. by rewrite -[RHS]conj_intpartnK conj_rowpartn. Qed.
 
 (** ** Hook shaped partitions *)
 
-Definition hookpart d k := minn d.+1 k.+1 :: nseq (d - k) 1%N.
-Fact hookpartn_subproof d k : is_part_of_n d.+1 (hookpart d k).
+Definition hookpart d k :=
+  if d is d'.+1 then minn d'.+1 k.+1 :: nseq (d' - k) 1%N else [::].
+Fact hookpartn_subproof d k : is_part_of_n d (hookpart d k).
 Proof.
-rewrite /hookpart /=.
+rewrite /hookpart /=; case: d => [|d]//.
 have /= /andP [/eqP -> ->] := colpartn_subproof (d.+1 - k.+1).
 rewrite andbT subSS minSS addSn minnE subnK ?leq_subr // eqxx /=.
 by case : (d - k).
 Qed.
-Definition hookpartn d k : 'P_d.+1 :=
+Definition hookpartn d k : 'P_d :=
   locked (IntPartN (hookpartn_subproof d k)).
 
 Lemma hookpartnE d k :
-  k <= d -> (hookpartn d k) = k.+1 :: nseq (d - k) 1%N :> seq nat.
-Proof. by rewrite /hookpartn -lock /hookpart /= minSS => /minn_idPr ->. Qed.
-
-Lemma size_hookpartn d k : size (hookpartn d k) = d - k + 1.
-Proof. by rewrite /hookpartn -lock /hookpart /= size_nseq addn1. Qed.
-Lemma behead_hookpartn d k : behead (hookpartn d k) = nseq (d - k) 1%N.
-Proof. by rewrite /hookpartn -lock /=. Qed.
-
-Lemma hookpartn_col d : hookpartn d 0 = colpartn d.+1.
-Proof. by apply val_inj; rewrite /= hookpartnE // subn0 colpartnE. Qed.
-Lemma hookpartn_row d : hookpartn d d = rowpartn d.+1.
-Proof. by apply val_inj; rewrite /= hookpartnE // subnn /= rowpartnE. Qed.
-Lemma conj_hookpartn d k :
-  k <= d -> conj_intpartn (hookpartn d k) = hookpartn d (d - k).
+  k < d -> (hookpartn d k) = k.+1 :: nseq (d.-1 - k) 1%N :> seq nat.
 Proof.
-case: k => [_|k ltkd].
+case: d => // d.
+by rewrite ltnS /hookpartn -lock /hookpart /= minSS => /minn_idPr ->.
+Qed.
+
+Lemma size_hookpartn d k : k < d -> size (hookpartn d k) = d - k.
+Proof.
+rewrite /hookpartn -lock /hookpart; case: d => //= d ltkd.
+by rewrite size_nseq subSn.
+Qed.
+
+Lemma behead_hookpartn d k : behead (hookpartn d k) = nseq (d.-1 - k) 1%N.
+Proof. by rewrite /hookpartn -lock /hookpart; case: d => [|d]. Qed.
+
+Lemma hookpartn_col d : hookpartn d 0 = colpartn d.
+Proof.
+apply val_inj; case: d => [|d]/=.
+  by rewrite /hookpartn /colpartn -!lock.
+by rewrite /= hookpartnE // subn0 colpartnE.
+Qed.
+Lemma hookpartn_row d : hookpartn d d.-1 = rowpartn d.
+Proof.
+apply val_inj; case: d => [|d]/=.
+  by rewrite /hookpartn /rowpartn -!lock.
+by rewrite /= hookpartnE //= subnn /= rowpartnE.
+Qed.
+Lemma conj_hookpartn d k :
+  k < d -> conj_intpartn (hookpartn d k) = hookpartn d (d.-1 - k).
+Proof.
+case: d => // d; rewrite ltnS; case: k => [_|k ltkd].
   by rewrite hookpartn_col subn0 hookpartn_row conj_colpartn.
-apply val_inj; rewrite /= !hookpartnE ?leq_subr //.
+apply val_inj; rewrite /= !hookpartnE ?ltnS ?leq_subr //.
 have -> : k.+2 :: nseq (d - k.+1) 1 = incr_first_n [:: k.+1] (d - k).
   move: ltkd; rewrite -subn_gt0 /= subnS.
   by case: (d - k).
 by rewrite conj_part_ind ?subn_gt0 // subKn //= -subSn.
 Qed.
 
-Lemma hookpartnPE x0 x1 d (la : 'P_d.+1) :
+Lemma hookpartnPE x0 x1 d (la : 'P_d) :
   nth x0 la 1 <= 1 -> la = hookpartn d (nth x1 la 0).-1.
 Proof.
 move=> H; apply val_inj => /=.
 case: la H => /= [[//=|l0 la] /andP[/eqP Heq Hpart]] /= H.
+  by rewrite -Heq /hookpartn -lock.
 case: l0 Heq Hpart (part_head_non0 Hpart) => // l0 /=.
-rewrite addSn => [[Hd]] /andP [_ Hpart] _.
+rewrite addSn => [Hd] /andP [_ Hpart] _.
 rewrite hookpartnE -?Hd ?leq_addr // addKn.
 by rewrite {1}(part_nseq1P Hpart H).
 Qed.
 
 Lemma hookpartnP d (la : 'P_d.+1) :
-  reflect (exists k, k <= d /\ la = hookpartn d k) (nth 0 la 1 <= 1).
+  reflect (exists k, k < d.+1 /\ la = hookpartn d.+1 k) (nth 0 la 1 <= 1).
 Proof.
 apply (iffP idP) => [H | ].
 - exists (nth 0 la 0).-1; split; last exact: (hookpartnPE _ H).
@@ -1630,7 +1647,7 @@ by case: (val_intpartn2 sh) => sheq; [left | right]; apply val_inj;
 Qed.
 
 Lemma intpartn3 (sh : 'P_3) :
-  [\/ sh = rowpartn 3, sh = hookpartn 2 1 | sh = colpartn 3].
+  [\/ sh = rowpartn 3, sh = hookpartn 3 1 | sh = colpartn 3].
 Proof.
 by case: (val_intpartn3 sh) => sheq;
   [apply Or31 | apply Or32 | apply Or33]; apply val_inj;
