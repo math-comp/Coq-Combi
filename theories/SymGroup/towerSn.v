@@ -107,30 +107,25 @@ Proof using. by []. Qed.
 End classGroup.
 
 
-Section CfCast.
-
-Variables (gT : finGroupType).
-
-Definition cast_cf (G H : {set gT}) (eq_GH : G = H) (f : 'CF(G)) :=
-  let: erefl in _ = H := eq_GH return 'CF(H) in f.
-
-Lemma cast_cfE (G H : {set gT}) (eq_GH : G = H) (f : 'CF(G)) :
-  cast_cf eq_GH f =1 f.
-Proof. by subst H. Qed.
-
-End CfCast.
-
 (** * External product of class functions *)
 Section CFExtProdDefs.
 
-Variables (gT hT : finGroupType).
-Variables (G : {group gT}) (H : {group hT}).
+Variables (gT aT : finGroupType).
+Variables (G : {group gT}) (H : {group aT}).
 
 Local Open Scope ring_scope.
 
-Definition cfextprod (g : 'CF(G)) (h : 'CF(H)) : 'CF(setX G H) :=
-  (cfMorph (cast_cf (esym (@morphim_fstX _ _ G H)) g)) *
-  (cfMorph (cast_cf (esym (@morphim_sndX _ _ G H)) h)).
+Lemma cfextprod_subproof (g : 'CF(G)) (h : 'CF(H)) :
+  is_class_fun <<setX G H>> [ffun x => g x.1 * h x.2].
+Proof using.
+rewrite genGid; apply intro_class_fun => [x y|].
+- rewrite !inE => /andP [x1 x2] /andP [y1 y2].
+  by rewrite !cfunJgen ?genGid.
+- move=> x; rewrite inE => /nandP [x1|x2].
+  + by rewrite cfun0gen ?mul0r ?genGid.
+  + by rewrite [h _]cfun0gen ?mulr0 ?genGid.
+Qed.
+Definition cfextprod g h := Cfun 0 (cfextprod_subproof g h).
 Definition cfextprodr_head k g h := let: tt := k in cfextprod h g.
 
 End CFExtProdDefs.
@@ -138,11 +133,10 @@ End CFExtProdDefs.
 Notation "f \ox g" := (cfextprod f g) (at level 40, left associativity).
 Notation cfextprodr := (cfextprodr_head tt).
 
-
 Section CFExtProdTheory.
 
-Variables (gT hT : finGroupType).
-Variables (G : {group gT}) (H : {group hT}).
+Variables (gT aT : finGroupType).
+Variables (G : {group gT}) (H : {group aT}).
 Implicit Type (g : 'CF(G)) (h : 'CF(H)).
 
 Local Open Scope ring_scope.
@@ -150,26 +144,11 @@ Local Open Scope ring_scope.
 Lemma cfextprodrE h g : cfextprodr h g = g \ox h.
 Proof using. by []. Qed.
 
-Let setXsub : setX G H \subset [set: gT * hT].
-Proof.
-by apply/subsetP => [[u v]] _; rewrite inE.
-Qed.
-
-Lemma cfextprodE g h x y : (g \ox h) (x, y) = (g x) * (h y).
-Proof.
-rewrite /cfextprod /=.
-case: (boolP ((x, y) \in setX G H)) => [Hin | Hnotin].
-  by rewrite !(cfunE, cfMorphE, cast_cfE).
-rewrite !cfunE /= cfun0gen ?genGid // mul0r.
-move: Hnotin; rewrite inE negb_and /= => /orP [xnG | ynH].
-- by rewrite [g x]cfun0gen ?mul0r // genGid.
-- by rewrite [h y]cfun0gen ?mulr0 // genGid.
-Qed.
-
 Lemma cfextprod_is_linear g : linear (cfextprod g : 'CF(H) -> 'CF(setX G H)).
 Proof using.
-move=> a h1 h2; apply/cfunP => [[x y]]/=.
-by rewrite !(cfunE, cfextprodE) /= mulrDr !mulrA [g x * a]mulrC.
+move=> /= a h1 h2.
+apply/cfunP=> /= x.
+by rewrite !cfunE !mulrDr mulrA [g _ * _]mulrC mulrA.
 Qed.
 Canonical cfextprod_additive g := Additive (cfextprod_is_linear g).
 Canonical cfextprod_linear g := Linear (cfextprod_is_linear g).
@@ -192,8 +171,9 @@ Proof using. by rewrite linearZ. Qed.
 
 Lemma cfextprodr_is_linear h : linear (cfextprodr h : 'CF(G) -> 'CF(setX G H)).
 Proof using.
-move=> a h1 h2; apply/cfunP => [[x y]]/=.
-by rewrite !(cfunE, cfextprodE) /=  mulrDl !mulrA.
+move=> /= a g1 g2; rewrite !cfextprodrE.
+apply/cfunP=> /= x.
+by rewrite !cfunE !mulrDl -mulrA.
 Qed.
 Canonical cfextprodr_additive h := Additive (cfextprodr_is_linear h).
 Canonical cfextprodr_linear h := Linear (cfextprodr_is_linear h).
@@ -230,10 +210,8 @@ Definition extprod_repr := MxRepresentation extprod_mx_repr.
 
 Lemma cfRepr_extprod : cfRepr extprod_repr = cfRepr rG \ox cfRepr rH.
 Proof using.
-apply/cfun_inP=> [[x y]] GXHx.
-rewrite cfextprodE !cfunE mxtrace_prod /= GXHx.
-move: GXHx; rewrite inE /= => /andP [-> ->].
-by rewrite !mulr1n.
+apply/cfun_inP=> x GXHx.
+by have:= GXHx; rewrite !inE !cfunE GXHx mxtrace_prod => /andP [-> ->] /=.
 Qed.
 
 End ReprExtProd.
@@ -466,7 +444,7 @@ rewrite cfuni_tinj /= -linear_sum (cfIsomE _ _ H1).
 rewrite /cfextprod /= sum_cfunE.
 symmetry; transitivity
   (\sum_(pp | l == pp.1 +|+ pp.2) '1_[pp.1] s1 * '1_[pp.2] s2).
-  by apply eq_bigr => i _; rewrite cfextprodE.
+  by apply eq_bigr => i _; rewrite cfunE.
 case: (altP (l =P _ )) => [->| Hl] /=.
 - rewrite (bigD1 (ct s1, ct s2)) //=.
   rewrite !cfuniCTnE !eqxx /= mulr1.
@@ -509,10 +487,10 @@ Qed.
 
 Lemma cfextprod_cfuni p q : '1_[p] \ox '1_[q] = '1_(classX p q).
 Proof using.
-apply/cfunP => /= [[x y]].
-rewrite cfextprodE !cfuniCTnE cfunElock !genGid !inE /= -natrM mulnb.
+apply/cfunP => /= x.
+rewrite cfunE !cfuniCTnE /= cfunElock genGid !inE /= -natrM mulnb.
 congr ((nat_of_bool _)%:R); rewrite classXE.
-apply /andP/subsetP => [[ct1 ct2] /= z /imsetP[/= x0 _ ] -> {z} | /(_ (x, y))].
+apply /andP/subsetP => [[ct1 ct2] /= y /imsetP[/= x0 _ ] -> {y} | /(_ x)].
 - rewrite inE; apply/andP.
   by split; rewrite classes_of_permP permCTP prod_conjg /=;
          rewrite cycle_type_conjg partnCTE CTpartnK eq_sym ?ct1 ?ct2.
