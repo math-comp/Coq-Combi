@@ -244,11 +244,12 @@ Definition tinjval (s : 'S_m * 'S_n) :=
 Fact tinjval_inj s : injective (tinjval s).
 Proof using.
 rewrite /tinjval => x y.
-case: {2 3}(split x) (erefl (split x)) => [] a Ha;
-  case: {2 3} (split y) (erefl (split y)) => [] b Hb;
-    move=> /(congr1 (@split _ _)); rewrite !unsplitK => [] // [];
-    move=> /perm_inj Hab; subst a;
-    by rewrite -(splitK x) Ha -Hb splitK.
+case: (split_ordP x) => xs ->{x} /=;
+  case: (split_ordP y) => ys ->{y} /=.
+- by move=> /lshift_inj/perm_inj ->.
+- by move/eqP; rewrite eq_lrshift.
+- by move/eqP; rewrite eq_rlshift.
+- by move=> /rshift_inj/perm_inj ->.
 Qed.
 Definition tinj s : 'S_(m + n) := perm (@tinjval_inj s).
 
@@ -292,7 +293,7 @@ by rewrite (_: rshift _ _ = unsplit (y _)) // unsplitK.
 Qed.
 
 Lemma porbit_tinj_lshift s a :
-  porbit (tinj s) (lshift n a) = imset (lshift n) (mem (porbit s.1 a)).
+  porbit (tinj s) (lshift n a) = [set @lshift m n x | x in porbit s.1 a].
 Proof using.
 apply/setP => /= Y.
 apply/porbitP/imsetP => /= [[i ->]|[y]].
@@ -303,7 +304,7 @@ apply/porbitP/imsetP => /= [[i ->]|[y]].
 Qed.
 
 Lemma porbit_tinj_rshift s a :
-  porbit (tinj s) (rshift m a) = imset (@rshift m n) (mem (porbit s.2 a)).
+  porbit (tinj s) (rshift m a) = [set @rshift m n x | x in porbit s.2 a].
 Proof using.
 apply/setP => /= Y.
 apply/porbitP/imsetP => /= [[i ->]|[y]].
@@ -320,16 +321,15 @@ Lemma porbits_tinj s :
     [set (@rshift m n) @: x | x : {set 'I_n} in porbits s.2].
 Proof using.
 apply/setP => S; rewrite /porbits inE.
-apply/imsetP/orP => [[x _ ->{S}] | [] /imsetP [T /imsetP [x _] ->{T}] ->{S}].
+apply/imsetP/orP => [[x _ ->{S}] | [] /imsetP[T /imsetP[x _] ->{T}] ->{S}].
 - rewrite -(splitK x); case: splitP => j _ {x}.
   + left; apply/imsetP; exists (porbit s.1 j) => /=; first exact: imset_f.
     exact: porbit_tinj_lshift.
   + right; apply/imsetP; exists (porbit s.2 j) => /=; first exact: imset_f.
     exact: porbit_tinj_rshift.
-  - by exists (lshift n x); rewrite // porbit_tinj_lshift.
-  - by exists (rshift m x); rewrite // porbit_tinj_rshift.
+  - by exists (lshift n x); last by rewrite porbit_tinj_lshift.
+  - by exists (rshift m x); last by rewrite porbit_tinj_rshift.
 Qed.
-
 
 Lemma cycle_type_tinj s : ct (tinj s) = ct s.1 +|+ ct s.2.
 Proof using.
