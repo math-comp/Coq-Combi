@@ -115,6 +115,21 @@ Variables (G : {group gT}) (H : {group aT}).
 
 Local Open Scope ring_scope.
 
+(** One could use the following alternative definition
+[
+Definition cast_cf (G H : {set gT}) (eq_GH : G = H) (f : 'CF(G)) :=
+  let: erefl in _ = H := eq_GH return 'CF(H) in f.
+Definition cfextprod (g : 'CF(G)) (h : 'CF(H)) : 'CF(setX G H) :=
+  (cfMorph (cast_cf (esym (@morphim_fstX _ _ G H)) g)) *
+  (cfMorph (cast_cf (esym (@morphim_sndX _ _ G H)) h)).
+]
+and prove the equivalence:
+[
+Lemma cfextprodE g h x y : (g \ox h) (x, y) = (g x) * (h y).
+]
+However, the more direct definition below leads to simpler proofs, at least
+once we have proved that it is indeed a class function.
+ *********)
 Lemma cfextprod_subproof (g : 'CF(G)) (h : 'CF(H)) :
   is_class_fun <<setX G H>> [ffun x => g x.1 * h x.2].
 Proof using.
