@@ -52,9 +52,9 @@ Unset Printing Implicit Defensive.
 Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
-Local Notation reprS n d :=
-  (mx_representation [fieldType of algC] 'SG_n d).
 
+Local Notation algCF := [fieldType of algC].
+Local Notation reprS n d := (mx_representation algCF 'SG_n d).
 
 Section TcastVal.
 Variable (T : eqType).
@@ -65,20 +65,31 @@ Proof. by case: n / eq_mn. Qed.
 
 End TcastVal.
 
-Lemma NirrSn n : Nirr 'SG_n = #|{:'P_n}|.
-Proof using. by rewrite NirrE card_classes_perm card_ord. Qed.
-
 
 Section LinRepr.
 
 Variables (gT : finGroupType) (G : {group gT}).
-Variable (rG : mx_representation [fieldType of algC] G 1).
 
-Lemma cfRepr1_lin_char : cfRepr rG \is a linear_char.
-Proof. by rewrite unfold_in cfRepr_char /= cfRepr1. Qed.
+Lemma cfRepr1_lin_char (rG : mx_representation algCF G 1) :
+  cfRepr rG \is a linear_char.
+Proof. by rewrite qualifE cfRepr_char /= cfRepr1. Qed.
+
+Lemma lin_char_reprP xi :
+  reflect (exists rG : mx_representation algCF G 1, xi = cfRepr rG)
+          (xi \is a linear_char).
+Proof.
+apply (iffP idP) => [xiL | [rG ->{xi}]].
+- have:= lin_charW xiL => /char_reprP [[drG rG /= Hxi]].
+  have /eqP:= lin_char1 xiL; rewrite Hxi cfRepr1 pnatr_eq1=> /eqP drG1.
+  by subst drG; exists rG.
+- exact: cfRepr1_lin_char.
+Qed.
 
 End LinRepr.
 
+
+Lemma NirrSn n : Nirr 'SG_n = #|{:'P_n}|.
+Proof using. by rewrite NirrE card_classes_perm card_ord. Qed.
 
 Section EltrConj.
 
@@ -295,7 +306,7 @@ apply eq_from_tnth => i; case: (altP (i =P 0)) => [-> | Hi].
 - by rewrite tcastE sign_char2 (cast_IirrS2 Hi).
 Qed.
 
-Lemma repr_S2 (rho : representation [fieldType of algC] [group of 'SG_2]) :
+Lemma repr_S2 (rho : representation algCF [group of 'SG_2]) :
   mx_irreducible rho -> mx_rsim rho triv_repr \/ mx_rsim rho sign_repr.
 Proof using.
 move=> Hirr.

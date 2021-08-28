@@ -298,6 +298,14 @@ apply cfInd_char; rewrite cfIsom_char.
 exact: (cfextprod_char (cfun1_char _) Hrec).
 Qed.
 
+Lemma homsyme_character (la : 'P_n) : Fchar_inv 'he[la] \is a character.
+Proof.
+rewrite -omega_homsymh; first last.
+  by apply: (leq_trans _ Hn); rewrite -{2}(sumn_intpartn la) leq_head_sumn.
+rewrite omega_Fchar_inv //.
+exact: rpredM (lin_charW (sign_charP _)) (homsymh_character _).
+Qed.
+
 End Character.
 
 End NVar.
