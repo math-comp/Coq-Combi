@@ -760,6 +760,19 @@ move=> /cycle_type_tperm H1 /cycle_type_tperm H2.
 by apply/conj_permP; rewrite H1 H2.
 Qed.
 
+Lemma cycle_type_tpermP (s : {perm T}) :
+  #|T| > 1 ->
+  cycle_type s = hookpartn #|T| 1 ->
+  exists x y, x != y /\ s = tperm x y.
+Proof.
+rewrite {1}cardE.
+have:= enum_uniq T; case: (enum _) => [|x[|y en]]//= /andP[].
+rewrite !inE negb_or => /andP [xy _] _ _ {en}.
+rewrite -(cycle_type_tperm xy) => /esym/eqP/conj_permP [/= t ->{s}].
+exists (t x), (t y); split; first by rewrite (inj_eq perm_inj).
+exact: tpermJ.
+Qed.
+
 End TPerm.
 
 
