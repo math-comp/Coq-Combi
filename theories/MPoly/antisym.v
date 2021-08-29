@@ -59,7 +59,11 @@ Unset Printing Implicit Defensive.
 
 Import LeqGeqOrder.
 
-Local Reserved Notation "''a_' k" (at level 8, k at level 2, format "''a_' k").
+Local Reserved Notation "''a_' k"
+      (at level 8, k at level 2, format "''a_' k").
+Local Reserved Notation "m # s"
+      (at level 40, left associativity, format "m # s").
+
 Local Notation "''II_' n" := ('I_n * 'I_n)%type (at level 8, n at level 2).
 
 
@@ -222,8 +226,7 @@ symmetry; rewrite big_filter /mdeg.
 by rewrite (bigID (fun i => i == 0)) /= big1 ?add0n // => i /eqP.
 Qed.
 
-Local Notation "m # s" := [multinom m (s i) | i < n]
-  (at level 40, left associativity, format "m # s").
+Local Notation "m # s" := [multinom m (s i) | i < n].
 
 Lemma mnm_perm m1 m2 : perm_eq m1 m2 -> {s : 'S_n | m1 == m2 # s}.
 Proof.
@@ -401,8 +404,7 @@ apply/issymP => s; rewrite msymM Hp Hq.
 by case: (odd_perm _); rewrite !simplexp // opprK.
 Qed.
 
-Local Notation "m # s" := [multinom m (s i) | i < n]
-  (at level 40, left associativity, format "m # s").
+Local Notation "m # s" := [multinom m (s i) | i < n].
 
 Lemma isantisym_msupp p (s : 'S_n) (m : 'X_{1..n}) : p \is antisym ->
   (m#s \in msupp p) = (m \in msupp p).
@@ -470,8 +472,8 @@ Variable n : nat.
 Variable R : idomainType.
 Hypothesis Hchar : ~~ (2 \in [char R]).
 
-Local Notation "''a_' k" := (@alternpol n R 'X_[k])
-                              (at level 8, k at level 2, format "''a_' k").
+Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
+Local Notation "m # s" := [multinom m (s i) | i < n].
 
 Lemma sym_antisym_char_not2 :
   n >= 2 -> forall p : {mpoly R[n]}, p \is symmetric -> p \is antisym -> p = 0.
@@ -485,11 +487,7 @@ rewrite -mulr2n -mulr_natr mulf_eq0 => /orP [/eqP -> //|] /= /eqP /= H2.
 by exfalso; move: Hchp; rewrite negb_and H2 eq_refl.
 Qed.
 
-
 Definition rho := [multinom (n - 1 - i)%N | i < n].
-
-Local Notation "m # s" := [multinom m (s i) | i < n]
-  (at level 40, left associativity, format "m # s").
 
 Lemma rho_iota : rho = rev (iota 0 n) :> seq nat.
 Proof using.
@@ -726,6 +724,8 @@ Variable R : comRingType.
 
 Local Notation Delta := (@Vanprod n R).
 Local Notation "'X_ i" := (@mpolyX n R U_(i)). (* Enforce the base ring *)
+Local Notation rho := (rho n).
+Local Notation "''a_' k" := (alternpol 'X_[k]).
 
 Lemma polyX_inj (i j : 'I_n) : 'X_i = 'X_j -> i = j.
 Proof using.
@@ -742,9 +742,6 @@ Proof using. by apply contra; rewrite subr_eq0 => /eqP /polyX_inj ->. Qed.
 Lemma msuppX1 i : msupp 'X_i = [:: U_(i)%MM].
 Proof using. rewrite msuppE /= unlock /= domU //; exact: oner_neq0. Qed.
 
-Local Notation "''a_' k" := (alternpol 'X_[k])
-                              (at level 8, k at level 2, format "''a_' k").
-Local Notation rho := (rho n).
 Let abound b  : {mpoly R[n]} :=
   \prod_(p : 'II_n | p.1 < p.2 <= b) ('X_p.1 - 'X_p.2).
 Let rbound b := [multinom (b - i)%N | i < n].
@@ -915,7 +912,7 @@ Qed.
 End Vanprod.
 
 Theorem Vanprod_alt_int n :
-  Vanprod = alternpol 'X_[(rho n)] :> {mpoly int[n]}.
+  Vanprod = alternpol 'X_[rho n] :> {mpoly int[n]}.
 Proof.
 rewrite (isantisym_alt _
           (Vanprod_neq0 n _) (Vanprod_anti _ _) (Vanprod_dhomog n _)).
@@ -924,7 +921,7 @@ rewrite (isantisym_alt _
 Qed.
 
 Corollary Vanprod_alt n (R : ringType) :
-  Vanprod = alternpol 'X_[(rho n)] :> {mpoly R[n]}.
+  Vanprod = alternpol 'X_[rho n] :> {mpoly R[n]}.
 Proof.
 have := Vanprod_alt_int n => /(congr1 (map_mpoly (S := R) intr)).
 rewrite /Vanprod raddf_sum rmorph_prod.
@@ -942,8 +939,7 @@ Section VandermondeDet.
 Variable n : nat.
 Variable R : comRingType.
 
-Local Notation "''a_' k" := (@alternpol n R 'X_[k])
-                              (at level 8, k at level 2, format "''a_' k").
+Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
 Local Notation rho := (rho n).
 
 Definition antim (s : seq nat) : 'M[ {mpoly R[n]} ]_n :=
