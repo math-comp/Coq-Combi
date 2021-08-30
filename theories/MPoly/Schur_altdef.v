@@ -1539,23 +1539,23 @@ Fixpoint add_ribbon_base base sh len pos :=
     if pos is i.+1 then
       if add_ribbon_base s0 s' len i is Some (shres, h, rem) then
         if rem == 0 then Some (s0 :: shres, h, 0)
-        else if rem == base.+1 - s0 then None
+        else if rem == base.+1 - s0 then error
              else let: p := minn rem (base.+1 - s0) in
                   Some (s0 + p :: shres, h.+1, rem - p)
-      else None
-    else if len == base.+1 - s0 then None
+      else error
+    else if len == base.+1 - s0 then error
          else let: p := minn len (base.+1 - s0) in
               Some (s0 + p :: s', 1, len - p)
   else
-    if len <= pos then None
-    else if len - pos == base.+1 then None
+    if len <= pos then error
+    else if len - pos == base.+1 then error
     else let: p := minn (len - pos) base.+1 in
          Some (p :: nseq pos 1, pos.+1, len - pos - p).
 
 Definition add_ribbon sh len pos :=
   if add_ribbon_base (len + sumn sh) sh len pos is Some (res, h, rem) then
     Some (res, h)  (* assert rem == 0 *)
-  else None.
+  else error.
 
 Section Tests.
 
@@ -1618,46 +1618,60 @@ Goal pmap (add_ribbon [:: 5; 5; 2; 1; 1] 7) (iota 0 15) =
       ([:: 5; 5; 2; 1; 1; 1; 1; 1; 1; 1; 1; 1], 7)].
 Proof. by []. Qed.
 
+End Tests.
+
+Lemma add_ribbon_baseP base sh len pos :
+  (add_ribbon_base base sh len.+1 pos) ->
+  { tr | add_ribbon_base base sh len.+1 pos = Some tr }.
+Proof. by case: add_ribbon_base => // tr _; exists tr. Qed.
+
 Section SpecBase.
 
 Variables (base : nat) (sh : seq nat).
 Hypothesis partsh : is_part sh.
 Hypothesis Hbase : head 1 sh <= base.
 Variable  len pos : nat.
-Variables (res : seq nat) (hgt rem : nat).
-Hypothesis Hret : add_ribbon_base base sh len.+1 pos = Some (res, hgt, rem).
+Hypothesis success : add_ribbon_base base sh len.+1 pos.
 
-Lemma resn0 : res != [::].
+Definition resbase : seq nat :=
+  oapp (fst \o fst) [::] (add_ribbon_base base sh len.+1 pos).
+Definition rembase : nat :=
+  oapp snd 0 (add_ribbon_base base sh len.+1 pos).
+
+Lemma res_non0 : resbase != [::].
 Proof.
-case: sh Hret => /= [|s0 s'] /=.
+rewrite /resbase /oapp /=.
+case: sh success => /= [|s0 s'] /=.
   by case: (ltnP len pos) => // lelpos; case: eqP => // _ [<-].
 case: pos => [| p]; first by case: eqP => // _ [<-].
-case: add_ribbon_base => // [[[rs h [[<- //]|r]]]]/=.
+case: add_ribbon_base => //= [[[rs h] [//|rm]]] /=.
 by case: eqP => // _ [<-].
 Qed.
 
-Lemma rem_add_ribbon_base_lt : rem < len.+1.
+Lemma rem_add_ribbon_base_lt : rembase < len.+1.
 Proof.
-elim: sh partsh base Hbase len pos res hgt rem Hret
-  => /= [_|s0 s' IHs /andP [{}/IHs H{}/H Hrec]] bs Hbs l p rs h rm.
-  case: (ltnP l p) => // lelpos; case: eqP => // _ [_ _ <-].
+rewrite /rembase /oapp /=.
+elim: sh partsh base Hbase len pos success
+  => /= [_|s0 s' IHs /andP [{}/IHs H{}/H Hrec]] bs Hbs l p.
+  case: (ltnP l p) => // lelpos; case: eqP => // _ _.
   case: p {lelpos} => [| p]; first by rewrite !subn0 minSS subSS ltnS leq_subr.
   by rewrite !subSS ltnS -subnDA leq_subr.
 case: p => [| p]; rewrite (subSn Hbs).
-  by case: eqP => // _ [_ _ <-]; rewrite minSS subSS ltnS leq_subr.
+  by case: eqP => // _ _; rewrite minSS subSS ltnS leq_subr.
 move/(_ l p): Hrec; case: add_ribbon_base=> // [[[shres hres] remres]].
-move=> /(_ shres hres remres (erefl _)).
-case: remres => //= [_ [_ _ <-]// | r]; rewrite !ltnS => /ltnW Hrl.
-case: eqP => // _ [_ _ <-].
+move/(_ is_true_true) => /=.
+case: remres => //= r; rewrite !ltnS => /ltnW Hrl.
+case: eqP => // _ _.
 by rewrite minSS subSS (leq_trans _ Hrl) // leq_subr.
 Qed.
 
-Lemma is_part_add_ribbon_base : is_part (base + (rem != 0) :: res).
+Lemma is_part_add_ribbon_base : is_part (base + (rembase != 0) :: resbase).
 Proof.
-elim: sh partsh base Hbase len pos res hgt rem Hret
-  => /= [_|s0 s' IHs /andP[Hhead Hpart]] bs Hbs l p rs h rm.
+rewrite /rembase /resbase /oapp /=.
+elim: sh partsh base Hbase len pos success
+  => /= [_|s0 s' IHs /andP[Hhead Hpart]] bs Hbs l p.
   case: (ltnP l p) => // lelpos; case: (altP (_ =P _)) => //.
-  rewrite subSn // eqSS => Hneq [<- _ <-].
+  rewrite subSn // eqSS => Hneq _.
   rewrite minSS /= is_part_nseq1 andbT subSS.
   apply/andP; split; last by case p.
   move: (l - p) Hneq => i Hneq; rewrite /minn.
@@ -1666,19 +1680,19 @@ elim: sh partsh base Hbase len pos res hgt rem Hret
   by rewrite (ltnNge i bs) (ltnW ibs) /= -lt0n subn_gt0 ibs addn1.
 case: p => [| p]; rewrite (subSn Hbs).
   rewrite eqSS.
-  case: (altP (l =P (bs - s0))) => // Hneq [<- _ <-]; rewrite minSS subSS /=.
+  case: (altP (l =P (bs - s0))) => // Hneq _; rewrite minSS subSS /=.
   rewrite Hpart (leq_trans Hhead (leq_addr _ _)) !andbT addnS /minn.
   move: Hneq; rewrite neq_ltn => /orP [] Hlbs.
     by rewrite Hlbs subnn addn0 -ltn_subRL.
   rewrite (ltnNge l _) (ltnW Hlbs) /= subnKC //.
   by rewrite -lt0n subn_gt0 Hlbs addn1 ltnS.
 case: add_ribbon_base (IHs Hpart s0 Hhead l p) => {IHs}//[[[shres hres] remres]].
-move=> /(_ shres hres remres (erefl _)) /andP[headres Hpartres].
+move/(_ is_true_true) => /=/andP[headres Hpartres].
 case: remres headres => [|remres] /=.
-  rewrite addn0 => headres [<- _ <-] /=.
+  rewrite addn0 => headres _ /=.
   by rewrite addn0 Hbs headres Hpartres.
 rewrite addn1 eqSS => headres.
-case: (altP (remres =P (bs - s0))) => // Hneq [<- _ <-]; rewrite minSS subSS /=.
+case: (altP (remres =P (bs - s0))) => // Hneq _; rewrite minSS subSS /=.
 rewrite {}Hpartres andbT -addSnnS (leq_trans headres (leq_addr _ _)) andbT.
 rewrite /minn; move: Hneq; rewrite neq_ltn => /orP [] Hlbs.
   by rewrite Hlbs subnn addn0 -ltn_subRL.
@@ -1686,12 +1700,13 @@ rewrite (ltnNge remres _) (ltnW Hlbs) /= addSn subnKC //.
 by rewrite -lt0n subn_gt0 Hlbs addn1 ltnS.
 Qed.
 
-Lemma sumn_add_ribbon_base : sumn res + rem = len.+1 + sumn sh.
+Lemma sumn_add_ribbon_base : sumn resbase + rembase = len.+1 + sumn sh.
 Proof.
-elim: sh partsh base Hbase len pos res hgt rem Hret
-  => /= [_|s0 s' IHs /andP[Hhead Hpart]] bs Hbs l p rs h rm.
+rewrite /resbase /rembase /oapp /=.
+elim: sh partsh base Hbase len pos success
+  => /= [_|s0 s' IHs /andP[Hhead Hpart]] bs Hbs l p.
   case: (ltnP l p) => // lelpos; case: (altP (_ =P _)) => //.
-  rewrite subSn // eqSS => Hneq [<- _ <-].
+  rewrite subSn // eqSS => Hneq _.
   rewrite addn0 minSS /= subSS sumn_nseq mul1n !addSn /minn.
   move: Hneq; rewrite neq_ltn => /orP [] ibs.
     by rewrite ibs subnn addn0 subnK.
@@ -1699,7 +1714,7 @@ elim: sh partsh base Hbase len pos res hgt rem Hret
   by rewrite [bs + p]addnC -subnDA subnKC // -leq_subRL // ltnW.
 case: p => [| p]; rewrite (subSn Hbs).
   rewrite eqSS.
-  case: (altP (l =P (bs - s0))) => // Hneq [<- _ <-].
+  case: (altP (l =P (bs - s0))) => // Hneq _.
   rewrite minSS subSS addnS /minn.
   move: Hneq; rewrite neq_ltn => /orP [] Hlbs.
     by rewrite Hlbs subnn addn0 /= !addSn addnA [l + _]addnC.
@@ -1707,12 +1722,12 @@ case: p => [| p]; rewrite (subSn Hbs).
   rewrite !addSn subnBA // [bs + _]addnC -addnA subnKC ?[sumn _ + _]addnC ?addnA //.
   by rewrite addnC -leq_subLR ltnW.
 case: add_ribbon_base (IHs Hpart s0 Hhead l p) => {IHs}//[[[shres hres] remres]].
-move=> /(_ shres hres remres (erefl _)).
+move/(_ is_true_true).
 case: remres => [|remres] /=.
-  rewrite addn0 => sumE [<- _ <-] /=.
+  rewrite addn0 => sumE _ /=.
   by rewrite addn0 sumE !addnA [s0 + _]addnC.
 rewrite !(addnS, addSn) eqSS addnC => [[sumE]].
-case: (altP (remres =P (bs - s0))) => // Hneq [<- _ <-]; rewrite minSS subSS /=.
+case: (altP (remres =P (bs - s0))) => // Hneq _; rewrite minSS subSS /=.
 rewrite /minn; move: Hneq; rewrite neq_ltn => /orP [] Hlbs.
   by rewrite Hlbs subnn addn0 !(addSn, addnS) -!addnA sumE !addnA [s0 + _]addnC.
 rewrite (ltnNge remres _) (ltnW Hlbs) /= [s0 + sumn s']addnC addnA -{}sumE.
@@ -1729,25 +1744,27 @@ Variables (base : nat) (sh : seq nat).
 Hypothesis partsh : is_part sh.
 Hypothesis Hbase : head 1 sh <= base.
 Variable  len pos : nat.
-Variables (res : seq nat) (hgt rem : nat).
-Hypothesis Hret : add_ribbon_base base sh len.+1 pos = Some (res, hgt, rem).
+Hypothesis success : add_ribbon_base base sh len.+1 pos.
 
-Lemma add_ribbon_base_rem0 : base = len.+1 + sumn sh -> rem = 0.
+Lemma add_ribbon_base_rem0 :
+  base = len.+1 + sumn sh -> rembase base sh len pos = 0.
 Proof.
-case: sh partsh Hbase Hret => /= [_ _|s0 s' /andP [Hhead Hpart] Hbs] /=.
-  case: (ltnP len pos) => // lelpos; case: eqP => // _ [_ _ <- ->].
+rewrite /resbase /rembase /oapp /=.
+case: sh partsh Hbase success => /= [_ _|s0 s' /andP [Hhead Hpart] Hbs] /=.
+  case: (ltnP len pos) => // lelpos; case: eqP => // _ _ ->.
   rewrite addn0 subSn // minSS subSS.
   have /minn_idPl -> := leq_trans (leq_subr pos len) (leqnSn _).
   by rewrite subnn.
 case: pos => [| p]; rewrite subSn //.
-  rewrite eqSS; case: eqP => // _ [_ _ <- ->].
+  rewrite eqSS; case: eqP => // _ _ ->.
   rewrite minSS subSS -addnBA ?leq_addr // addKn addSnnS.
   by have /minn_idPl -> := leq_addr (sumn s').+1 len; rewrite subnn.
 case Hrib: add_ribbon_base => // [[[rs h] rm]].
-case: rm Hrib => /= [_[_ _ <-]// | rm] Hrib; rewrite eqSS.
-case: (altP (rm =P (base - s0))) => // Hneq [_ _ <-] beq.
+case: rm Hrib => /= [_ _ // | rm] Hrib; rewrite eqSS.
+case: (altP (rm =P (base - s0))) => // Hneq _ beq.
 rewrite minSS subSS /minn beq.
-have := rem_add_ribbon_base_lt Hpart Hhead Hrib.
+have : add_ribbon_base s0 s' len.+1 p by rewrite Hrib.
+move/(rem_add_ribbon_base_lt Hpart Hhead); rewrite /rembase Hrib /=.
 rewrite ltnS => /leq_trans ->; first by rewrite subnn.
 by rewrite [s0 + _]addnC addnA addnK addSnnS leq_addr.
 Qed.
@@ -1772,16 +1789,21 @@ Lemma is_part_ribbon_base : is_part res.
 Proof.
 move: Hret; rewrite /add_ribbon.
 case Hrib: add_ribbon_base => // [[[x y] z]] [Hx Hy]; subst x y.
-by have /= /andP [] := is_part_add_ribbon_base partsh HypHead Hrib.
+have succ : add_ribbon_base (len.+1 + sumn sh) sh len.+1 pos by rewrite Hrib.
+have /= /andP [] := is_part_add_ribbon_base partsh HypHead succ.
+by rewrite /resbase /= Hrib.
 Qed.
 
 Lemma sumn_add_ribbon : sumn res = len.+1 + sumn sh.
 Proof.
 move: Hret; rewrite /add_ribbon.
 case Hrib: add_ribbon_base => // [[[x y] rem]] [Hx Hy]; subst x y.
-have := sumn_add_ribbon_base partsh HypHead Hrib.
-by rewrite (add_ribbon_base_rem0 partsh HypHead Hrib erefl) addn0.
+have succ : add_ribbon_base (len.+1 + sumn sh) sh len.+1 pos by rewrite Hrib.
+have := sumn_add_ribbon_base partsh HypHead succ.
+rewrite /resbase /= Hrib.
+by rewrite (add_ribbon_base_rem0 partsh HypHead succ) //= addn0.
 Qed.
 
 End Spec.
 
+End AlternStraigten.
