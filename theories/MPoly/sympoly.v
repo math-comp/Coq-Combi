@@ -91,7 +91,7 @@ From mathcomp Require Import bigop ssralg ssrint path perm fingroup.
 From SsrMultinomials Require Import ssrcomplements freeg mpoly.
 From SsrMultinomials Require monalg.
 
-Require Import sorted tools ordtype permuted partition composition.
+Require Import sorted tools ordtype permuted partition skewpart composition.
 Require Import Yamanouchi std tableau stdtab skewtab permcent.
 Require Import antisym Schur_mpoly therule Schur_altdef unitriginv.
 

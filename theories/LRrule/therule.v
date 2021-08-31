@@ -64,7 +64,7 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop path ssralg order.
 From SsrMultinomials Require Import mpoly.
 
-Require Import tools ordcast combclass partition Yamanouchi ordtype.
+Require Import tools ordcast combclass partition skewpart Yamanouchi ordtype.
 Require Import std tableau stdtab Schensted congr plactic Greene_inv.
 Require Import stdplact Yam_plact skewtab shuffle Schur_mpoly freeSchur.
 

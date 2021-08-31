@@ -24,14 +24,12 @@
 - [join_tab t st] == join the tableau [t] with the skew tableau [st].
        this gives a tableau if the inner shape of [st] is the shape of [t] and
        the entries of [t] are smaller than the entries of [st].
-- [hb_strip inn out] == [inn/out] is an horizontal border strip.
-- [vb_strip inn out] == [inn/out] is a vertical border strip.
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop path order.
 
-Require Import tools partition Yamanouchi ordtype tableau std stdtab.
+Require Import tools partition skewpart Yamanouchi ordtype tableau std stdtab.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -292,155 +290,6 @@ Lemma skew_reshapeK inner t :
 Proof using.
 rewrite -(size_map size) => H.
 by rewrite /skew_reshape (outer_shapeK H) -shape_rev flattenK revK.
-Qed.
-
-(** ** Horizontal and vertical border strips *)
-Fixpoint hb_strip inner outer :=
-  if inner is inn0 :: inn then
-    if outer is out0 :: out then
-      (head 0 out <= inn0 <= out0) && (hb_strip inn out)
-    else false
-  else if outer is out0 :: out then out == [::]
-       else true.
-
-Fixpoint vb_strip inner outer :=
-  if outer is out0 :: out then
-    if inner is inn0 :: inn then
-      (inn0 <= out0 <= inn0.+1) && (vb_strip inn out)
-    else (out0 == 1) && (vb_strip [::] out)
-  else inner == [::].
-
-Lemma hb_strip_included inner outer :
-  hb_strip inner outer -> included inner outer.
-Proof using.
-elim: inner outer => [| inn0 inn IHinn] [| out0 out] //=.
-by move=> /andP [] /andP [] _ -> /IHinn ->.
-Qed.
-
-Lemma hb_strip_size inner outer :
-  hb_strip inner outer -> size inner <= size outer <= (size inner).+1.
-Proof using.
-elim: inner outer => [| inn0 inn IHinn] [| out0 out] //=.
-  by move=> /eqP ->.
-by move=> /andP [_ /IHinn]; rewrite !ltnS.
-Qed.
-
-Lemma vb_strip_included inner outer :
-  vb_strip inner outer -> included inner outer.
-Proof using.
-elim: inner outer => [| inn0 inn IHinn] [| out0 out] //=.
-by move=> /andP [] /andP [] -> _ /IHinn ->.
-Qed.
-
-Lemma hb_stripP inner outer :
-  is_part inner -> is_part outer ->
-  reflect
-    (forall i, nth 0 outer i.+1 <= nth 0 inner i <= nth 0 outer i)
-    (hb_strip inner outer).
-Proof using.
-move=> Hinn Hout; apply (iffP idP).
-- elim: inner outer {Hinn Hout} => [| inn0 inn IHinn] /= [| out0 out] //=.
-    by move=> /eqP -> i; rewrite leqnn /= nth_default.
-  by move=> /andP [H0 /IHinn{IHinn}Hrec] [//= | i]; exact: Hrec.
-- elim: inner Hinn outer Hout => [| inn0 inn IHinn] Hinn /=
-                                 [| out0 out] Hout //= H.
-  + have:= H 0 => /andP []; rewrite nth_nil leqn0 => /eqP {}H _.
-    have:= part_head_non0 (is_part_consK Hout).
-    by rewrite -nth0; case: out H {Hout} => //= out1 out' ->.
-  + move/part_head_non0 : Hinn; move/(_ 0) : H.
-    by rewrite /= leqn0 => ->.
-  + have:= H 0; rewrite nth0 /= => -> /=.
-    apply (IHinn (is_part_consK Hinn) _ (is_part_consK Hout)) => i.
-    exact: H i.+1.
-Qed.
-
-Lemma vb_stripP inner outer :
-  is_part inner -> is_part outer ->
-  reflect
-    (forall i, nth 0 inner i <= nth 0 outer i <= (nth 0 inner i).+1)
-    (vb_strip inner outer).
-Proof using.
-move=> Hinn Hout; apply (iffP idP) => [Hstrip|].
-- elim: outer inner Hstrip Hout Hinn => [| out0 out IHout] //= [| inn0 inn].
-  + by move=> _ _ _ i; rewrite nth_default.
-  + by move => /eqP.
-  + move=> /andP [] /eqP -> {out0 IHout} H _ _ [|i] //=.
-    elim: out H i => [_ i| out1 out IHout] /=.
-      by rewrite nth_default.
-    by move=> /andP [] /eqP -> /IHout{IHout} Hrec; case.
-  + by move=> /andP [H0 {}/IHout Hrec]
-              /andP [Hout {}/Hrec Hrec]
-              /andP [Hinn {}/Hrec Hrec] [|i] //=.
-- elim: outer inner Hout Hinn => [| out0 out IHout].
-  + case => //= inn0 inn _ /= /andP [Habs Hinn] H; exfalso.
-    move/(_ 0) : H => /= /andP []; rewrite leqn0 => /eqP Hinn0 _.
-    by subst inn0; move: Habs Hinn; rewrite leqn0 => /part_head0F ->.
-  + move=> inner Hpart; have:= part_head_non0 Hpart => /=.
-    rewrite -lt0n eqn_leq => H0out.
-    case: inner => [_ {IHout} H | inn0 inn]/=.
-    * rewrite H0out.
-      have:= H 0 => /= -> /=.
-      have {H} /= Hout i := H i.+1.
-      move: Hpart => /= /andP [] _.
-      elim: out Hout => [//= | out1 out IHout] H Hpart.
-      have:= part_head_non0 Hpart => /=.
-      rewrite -lt0n eqn_leq => ->.
-      have:= H 0 => /= -> /=.
-      apply: IHout; last exact: (is_part_consK Hpart).
-      by move=> i; exact: H i.+1.
-    * move: Hpart => /andP [] H0 {}/IHout Hrec
-                      /andP [] _ {}/Hrec Hrec H.
-      have := H 0 => /= -> /=.
-      apply Hrec => i.
-      exact: H i.+1.
-Qed.
-
-Lemma vb_strip_conj inner outer :
-  is_part inner -> is_part outer ->
-  vb_strip inner outer -> hb_strip (conj_part inner) (conj_part outer).
-Proof using.
-move=> Hinn Hout.
-have Hcinn := is_part_conj Hinn; have Hcout := is_part_conj Hout.
-move => /(vb_stripP Hinn Hout) H.
-apply/(hb_stripP Hcinn Hcout) => i; rewrite -!conj_leqE //.
-apply/andP; split.
-+ move/(_ (nth 0 (conj_part inner) i)) : H => /andP [] _ /leq_trans.
-  by apply; rewrite ltnS conj_leqE.
-+ move/(_ (nth 0 (conj_part outer) i)) : H => /andP [] /leq_trans H _.
-  by apply H; rewrite conj_leqE.
-Qed.
-
-Lemma hb_strip_conj inner outer :
-  is_part inner -> is_part outer ->
-  hb_strip inner outer -> vb_strip (conj_part inner) (conj_part outer).
-Proof using.
-move=> Hinn Hout.
-have Hcinn := is_part_conj Hinn; have Hcout := is_part_conj Hout.
-move => /(hb_stripP Hinn Hout) H.
-apply/(vb_stripP Hcinn Hcout) => i; rewrite -!conj_leqE //.
-apply/andP; split.
-+ move/(_ (nth 0 (conj_part outer) i)) : H => /andP [] _ /leq_trans.
-  by apply; rewrite conj_leqE.
-+ move/(_ (nth 0 (conj_part inner) i)) : H => /andP [] /leq_trans H _.
-  by apply H; rewrite conj_leqE.
-Qed.
-
-Lemma hb_strip_conjE inner outer :
-  is_part inner -> is_part outer ->
-  hb_strip (conj_part inner) (conj_part outer) = vb_strip inner outer.
-Proof using.
-move=> Hinn Hout; apply/idP/idP; last exact: vb_strip_conj.
-rewrite -{2}(conj_partK Hinn) -{2}(conj_partK Hout).
-exact: hb_strip_conj (is_part_conj Hinn) (is_part_conj Hout).
-Qed.
-
-Lemma vb_strip_conjE inner outer :
-  is_part inner -> is_part outer ->
-  vb_strip (conj_part inner) (conj_part outer) = hb_strip inner outer.
-Proof using.
-move=> Hinn Hout; apply/idP/idP; last exact: hb_strip_conj.
-rewrite -{2}(conj_partK Hinn) -{2}(conj_partK Hout).
-exact: vb_strip_conj (is_part_conj Hinn) (is_part_conj Hout).
 Qed.
 
 Lemma row_hb_strip inner t :
