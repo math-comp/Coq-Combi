@@ -15,8 +15,18 @@
 (******************************************************************************)
 (** * Skew partitions:
 
-- [hb_strip inn out] == [inn/out] is an horizontal border strip.
-- [vb_strip inn out] == [inn/out] is a vertical border strip.
+- [hb_strip inn out] == [out/inn] is an horizontal border strip.
+- [vb_strip inn out] == [out/inn] is a vertical border strip.
+
+Ribbon border strip:
+
+- [add_ribbon sh nbox pos] == tries to add a ribbon with nbox ending at row
+               [pos] to the shape [sh]. Returns [Some (sh, hgt)] where [sh] is
+               the outer shape of the result and [hgt] its height on success,
+               or [error] if not
+- [ribbon_from inn out] == [out/inn] is a ribbon shape starting at row 0
+- [ribbon inn out] == [out/inn] is a ribbon shape
+
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
@@ -179,16 +189,16 @@ Qed.
 
 
 (** ** Ribbon border strips *)
-Fixpoint ribbon_in inner outer :=
+Fixpoint ribbon_from inner outer :=
   if inner is inn0 :: inn then
     if outer is out0 :: out then
       (inn0 < out0) &&
-      ((inn == out) || ((head 0 out == inn0.+1) && (ribbon_in inn out)))
+      ((inn == out) || ((head 0 out == inn0.+1) && (ribbon_from inn out)))
     else false
   else if outer is out0 :: out then head 0 out <= 1
        else false.
 Fixpoint ribbon inner outer :=
-  ribbon_in inner outer ||
+  ribbon_from inner outer ||
   if inner is inn0 :: inn then
     if outer is out0 :: out then
       (inn0 == out0) && (ribbon inn out)
@@ -197,29 +207,29 @@ Fixpoint ribbon inner outer :=
 
 Section Test.
 (*
-Goal ~~ ribbon_in [::] [::].
+Goal ~~ ribbon_from [::] [::].
 Proof. by []. Qed.
-Goal ~~ ribbon_in [:: 2] [:: 2].
+Goal ~~ ribbon_from [:: 2] [:: 2].
 Proof. by []. Qed.
-Goal ribbon_in [::] [:: 4].
+Goal ribbon_from [::] [:: 4].
 Proof. by []. Qed.
-Goal ribbon_in [:: 2] [:: 4].
+Goal ribbon_from [:: 2] [:: 4].
 Proof. by []. Qed.
-Goal ~~ ribbon_in [:: 2] [:: 4; 2].
+Goal ~~ ribbon_from [:: 2] [:: 4; 2].
 Proof. by []. Qed.
-Goal ribbon_in [:: 2] [:: 3].
+Goal ribbon_from [:: 2] [:: 3].
 Proof. by []. Qed.
-Goal ribbon_in [:: 2] [:: 4; 3].
+Goal ribbon_from [:: 2] [:: 4; 3].
 Proof. by []. Qed.
-Goal ribbon_in [:: 3; 2] [:: 4; 4].
+Goal ribbon_from [:: 3; 2] [:: 4; 4].
 Proof. by []. Qed.
-Goal ~~ ribbon_in [:: 3; 2] [:: 4; 4; 1].
+Goal ~~ ribbon_from [:: 3; 2] [:: 4; 4; 1].
 Proof. by []. Qed.
-Goal ~~ ribbon_in [:: 3; 2] [:: 4; 4; 2].
+Goal ~~ ribbon_from [:: 3; 2] [:: 4; 4; 2].
 Proof. by []. Qed.
-Goal ribbon_in [:: 3; 2; 2] [:: 4; 4; 2].
+Goal ribbon_from [:: 3; 2; 2] [:: 4; 4; 2].
 Proof. by []. Qed.
-Goal ~~ ribbon_in [:: 2; 2] [:: 4; 4].
+Goal ~~ ribbon_from [:: 2; 2] [:: 4; 4].
 Proof. by []. Qed.
 
 Goal ribbon [:: 2] [:: 3].
@@ -239,7 +249,7 @@ Proof. by []. Qed.
 *)
 End Test.
 
-Lemma ribbon_in_impl inn out : ribbon_in inn out -> ribbon inn out.
+Lemma ribbon_in_impl inn out : ribbon_from inn out -> ribbon inn out.
 Proof. by case: inn => /= [->| _ _ ->] //. Qed.
 
 Lemma ribbon_consK inn0 inn out0 out :
@@ -250,10 +260,10 @@ by move=>/=/orP[/andP[_ /orP[-> //| /andP[_ /ribbon_in_impl->]]] | /andP[_ ->]];
 Qed.
 Lemma ribbonE inn0 inn out0 out :
   inn0 < out0 ->
-  ribbon (inn0 :: inn) (out0 :: out) = ribbon_in (inn0 :: inn) (out0 :: out).
+  ribbon (inn0 :: inn) (out0 :: out) = ribbon_from (inn0 :: inn) (out0 :: out).
 Proof. by rewrite /= => H; rewrite H /= (ltn_eqF H) /= orbF. Qed.
 
-Lemma ribbon_in_noneq inner outer : ribbon_in inner outer -> inner != outer.
+Lemma ribbon_in_noneq inner outer : ribbon_from inner outer -> inner != outer.
 Proof.
 case: inner outer => [| inn0 inn] [| out0 out] //=.
 by rewrite eqseq_cons => /andP[/ltn_eqF ->].
@@ -265,7 +275,7 @@ by rewrite eqseq_cons => /orP [/andP[/ltn_eqF ->] // | /andP [-> /IHinn]].
 Qed.
 
 Lemma ribbon_in_included inner outer :
-  ribbon_in inner outer -> included inner outer.
+  ribbon_from inner outer -> included inner outer.
 Proof.
 elim: inner outer => [| inn0 inn IHinn] [| out0 out] //=.
 move=> /andP [/ltnW ->] /orP [/eqP -> /=| /andP [_/IHinn//]].
@@ -295,7 +305,7 @@ Fixpoint add_ribbon sh nbox pos :=
  *)
 
 (** Return a triple (shape, height, remaining ) *)
-Definition add_col base s0 shres h rem :=
+Definition add_ribcol base s0 shres h rem :=
   if rem == 0 then Some (s0 :: shres, h, 0)
   else if rem == base.+1 - s0 then None
        else let: p := minn rem (base.+1 - s0) in
@@ -304,11 +314,11 @@ Fixpoint add_ribbon_base base sh nbox pos :=
   if sh is s0 :: s' then
     if pos is i.+1 then
       if add_ribbon_base s0 s' nbox i is Some (shres, h, rem) then
-        add_col base s0 shres h rem
+        add_ribcol base s0 shres h rem
       else None
-    else add_col base s0 s' 0 nbox
+    else add_ribcol base s0 s' 0 nbox
   else if nbox <= pos then None
-       else add_col base 0 (nseq pos 1) pos (nbox - pos).
+       else add_ribcol base 0 (nseq pos 1) pos (nbox - pos).
 
 Definition add_ribbon sh nbox pos :=
   omap fst (* assert snd == 0 *) (add_ribbon_base (nbox + sumn sh) sh nbox pos).
@@ -410,29 +420,29 @@ Hypothesis Hret : add_ribbon_base base sh nbox.+1 pos = Some (res, hgt, rem).
 
 Lemma rem_add_ribbon_base_lt : rem <= nbox.
 Proof.
-have add_col_rem bs s0 rm r :
-    s0 <= bs -> add_col bs s0 _ _ rm = Some (_, _, r) -> r <= rm.-1.
-  rewrite /add_col /= => lts0bs; case: rm => //= [[_ _ <-]// | rm].
+have add_ribcol_rem bs s0 rm r :
+    s0 <= bs -> add_ribcol bs s0 _ _ rm = Some (_, _, r) -> r <= rm.-1.
+  rewrite /add_ribcol /= => lts0bs; case: rm => //= [[_ _ <-]// | rm].
   case: eqP => // _ [_ _ <-].
   by rewrite (subSn lts0bs) minSS subSS leq_subr.
 move: partsh => /= /andP [Hbase Hpart].
 elim: sh Hpart base Hbase nbox pos res hgt rem Hret
   => /= [_|s0 s' IHs /andP [{}/IHs H{}/H Hrec]] bs lts0bs l p rs h rm.
   case: (ltnP l p) => // lepl.
-  rewrite subSn //= => /add_col_rem-/(_ (ltnW lts0bs))/leq_trans; apply.
+  rewrite subSn //= => /add_ribcol_rem-/(_ (ltnW lts0bs))/leq_trans; apply.
   exact: leq_subr.
-case: p => [/add_col_rem -> // | p].
+case: p => [/add_ribcol_rem -> // | p].
 move/(_ l p): Hrec; case: add_ribbon_base=> // [[[shres hres] remres]].
-move=> /(_ _ _ _ erefl) H /add_col_rem-/(_ lts0bs)/leq_trans; apply.
+move=> /(_ _ _ _ erefl) H /add_ribcol_rem-/(_ lts0bs)/leq_trans; apply.
 exact: (leq_trans (leq_pred _) H).
 Qed.
 
-Lemma add_col_part bs s0 s h rm rs hs rms :
+Lemma add_ribcol_part bs s0 s h rm rs hs rms :
   s0 <= bs -> is_part (s0 + (rm != 0) :: s) ->
-  add_col bs s0 s h rm = Some (rs, hs , rms) ->
+  add_ribcol bs s0 s h rm = Some (rs, hs , rms) ->
   is_part (bs + (rms != 0) :: rs).
 Proof.
-rewrite /add_col /= => Hlt /andP [Hhead Hpart].
+rewrite /add_ribcol /= => Hlt /andP [Hhead Hpart].
 case: rm Hhead => /= [|rm]; rewrite ?addn0 ?addn1 => Hhead.
   by move=> [<- _ <-] /=; rewrite addn0 Hlt Hpart Hhead.
 rewrite subSn // eqSS; case: (altP (_ =P _)) => //.
@@ -449,22 +459,22 @@ Proof.
 move: partsh => /= /andP [Hbase Hpart].
 elim: sh Hpart base Hbase nbox pos res hgt rem Hret
   => /= [_|s0 s' IHs /andP[Hhead Hpart]] bs lts0bs l p rs h rm.
-  case: (ltnP l p) => // lepl /(add_col_part (ltnW lts0bs)); apply.
+  case: (ltnP l p) => // lepl /(add_ribcol_part (ltnW lts0bs)); apply.
   by rewrite add0n subSn //= is_part_nseq1 andbT; case p.
-case: p => [/(add_col_part lts0bs)/= | p].
+case: p => [/(add_ribcol_part lts0bs)/= | p].
   by apply; rewrite Hpart andbT addn1 (leq_trans Hhead).
 case: add_ribbon_base (IHs Hpart s0 Hhead l p) => {IHs}//.
 move=> [[shres hres] remres] /(_ _ _ _ erefl) /andP[headres Hpartres].
-move/add_col_part => /(_ lts0bs) /=; apply.
+move/add_ribcol_part => /(_ lts0bs) /=; apply.
 by rewrite headres Hpartres.
 Qed.
 
-Lemma add_col_eq bs s0 s h rm rs hs rms :
+Lemma add_ribcol_eq bs s0 s h rm rs hs rms :
   s0 <= bs ->
-  add_col bs s0 s h rm = Some (rs, hs, rms) ->
+  add_ribcol bs s0 s h rm = Some (rs, hs, rms) ->
   sumn rs + rms = sumn (s0 :: s) + rm.
 Proof.
-rewrite /add_col /=.
+rewrite /add_ribcol /=.
 case: rm => /= [_ [<- _ <- //] | rm lts0bs].
 rewrite subSn // eqSS; case: (altP (_ =P _)) => //.
 rewrite /minn ltnS neq_ltn => /orP [] ibs [<- _ <-{rs hs rms}] /=.
@@ -480,12 +490,12 @@ Proof.
 move: partsh => /= /andP [Hbase Hpart].
 elim: sh Hpart base Hbase nbox pos res hgt rem Hret
     => /= [_|s0 s' IHs /andP[Hhead Hpart]] bs lts0bs l p rs h rm.
-  case: (ltnP l p) => // lepl /(add_col_eq (ltnW lts0bs)) ->.
+  case: (ltnP l p) => // lepl /(add_ribcol_eq (ltnW lts0bs)) ->.
   by rewrite /= addn0 add0n sumn_nseq mul1n subnKC // (leq_trans lepl).
-case: p => [/(add_col_eq lts0bs)/= ->| p].
+case: p => [/(add_ribcol_eq lts0bs)/= ->| p].
   by rewrite addnC addnA.
 case: add_ribbon_base (IHs Hpart s0 Hhead l p) => {IHs}//.
-move=> [[shres hres] remres] /(_ _ _ _ erefl) Heq /(add_col_eq lts0bs) -> /=.
+move=> [[shres hres] remres] /(_ _ _ _ erefl) Heq /(add_ribcol_eq lts0bs) -> /=.
 by rewrite -addnA {}Heq !addnA [s0 + _]addnC.
 Qed.
 
@@ -496,13 +506,13 @@ rewrite {}Heq addnC => /eqP; rewrite eqn_add2r => /eqP ->.
 by rewrite ltnn.
 Qed.
 
-Lemma add_col_ribbon_in bs inn s0 s h rm rs hs rms :
+Lemma add_ribcol_ribbon_from bs inn s0 s h rm rs hs rms :
   s0 <= bs ->
-  ribbon_in (s0 :: inn) (s0.+1 :: s) ->
-  add_col bs s0 s h rm.+1 = Some (rs, hs, rms.+1) ->
-  ribbon_in (bs :: s0 :: inn) (bs.+1 :: rs) && (head 0 rs != 0).
+  ribbon_from (s0 :: inn) (s0.+1 :: s) ->
+  add_ribcol bs s0 s h rm.+1 = Some (rs, hs, rms.+1) ->
+  ribbon_from (bs :: s0 :: inn) (bs.+1 :: rs) && (head 0 rs != 0).
 Proof.
-rewrite /add_col /= !ltnSn /= => lts0bs Hrib.
+rewrite /add_ribcol /= !ltnSn /= => lts0bs Hrib.
 rewrite subSn // eqSS; case: (altP (_ =P _)) => // Heq [<- _ /eqP].
 move: Heq; rewrite minSS subSS /minn.
 rewrite neq_ltn => /orP [->| Hbs]; first by rewrite subnn.
@@ -510,27 +520,27 @@ rewrite (ltnNge rm _) (ltnW Hbs) /= => _.
 by rewrite Hrib /= andbT addnS subnKC // eqxx ltnS lts0bs orbT.
 Qed.
 Lemma add_ribbon_base_inP :
-  rem != 0 -> ribbon_in (base :: sh) (base.+1 :: res).
+  rem != 0 -> ribbon_from (base :: sh) (base.+1 :: res).
 Proof.
 case: rem Hret => // rm Hrm _.
 move: partsh => /= /andP [Hbase Hpart].
 elim: sh Hpart base Hbase nbox pos res hgt rm Hrm
   => [_ /= |s0 s' IHs Hpart] bs lts0bs l p rs h rm.
   case: (ltnP l p) => // lepl.
-  rewrite (subSn lepl) => /(add_col_ribbon_in (ltnW lts0bs))-/(_ [::]) H.
-  have {}/H /= : ribbon_in [:: 0] (1 :: nseq p 1).
+  rewrite (subSn lepl) => /(add_ribcol_ribbon_from (ltnW lts0bs))-/(_ [::]) H.
+  have {}/H /= : ribbon_from [:: 0] (1 :: nseq p 1).
     by rewrite /=; case p => //= [[|]].
   rewrite !ltnSn /= => /andP [].
   case: rs => //= r0 rs /orP [/eqP[<-]//|].
   by move=> /and3P[/eqP ->] _ /orP [/eqP <- _ /=| /andP[/eqP ->]]; rewrite eqxx.
-case: p => [/(add_col_ribbon_in lts0bs)-/(_ s') | p /=] H.
-  by have /H/andP [] : ribbon_in (s0 :: s') (s0.+1 :: s')
+case: p => [/(add_ribcol_ribbon_from lts0bs)-/(_ s') | p /=] H.
+  by have /H/andP [] : ribbon_from (s0 :: s') (s0.+1 :: s')
     by rewrite /ribbon /= ltnSn eqxx.
 move: Hpart; rewrite ltnSn /= => /andP [Hhead Hpart].
 case: add_ribbon_base (IHs Hpart s0 Hhead l p) H => {IHs}//.
 move=> [[shres hres] [|remres]] // /(_ _ _ _ erefl) Hrib.
-move/add_col_ribbon_in => /(_ s' lts0bs) H.
-have {Hrib}/H /= : ribbon_in (s0 :: s') (s0.+1 :: shres) by move: Hrib => /= ->.
+move/add_ribcol_ribbon_from => /(_ s' lts0bs) H.
+have {Hrib}/H /= : ribbon_from (s0 :: s') (s0.+1 :: shres) by move: Hrib => /= ->.
 by rewrite ltnSn /= => /andP [-> _].
 Qed.
 
@@ -540,19 +550,19 @@ move: partsh => /= /andP [Hbase Hpart].
 elim: sh Hpart base Hbase nbox pos res hgt rem Hret
     => /= [_|s0 s' IHs /andP[Hhead Hpart]] bs lts0bs l p rs h rm.
   case: (ltnP l p) => // lepl.
-  rewrite /add_col; case: eqP => [_ [<- <- _] | _] /=.
+  rewrite /add_ribcol; case: eqP => [_ [<- <- _] | _] /=.
     by rewrite add0n count_nseq /= mul1n.
   case: eqP => // _ [<- <- _] /=.
   by rewrite add0n count_nseq /= mul1n subn0 subSn // minSS /= add1n.
 case: p => [|p].
-  rewrite /add_col /=; case: eqP => // _ [<- <- _] /=.
+  rewrite /add_ribcol /=; case: eqP => // _ [<- <- _] /=.
   rewrite addKn subSn // minSS /=.
   suff -> : count (ltn 0) (s' / s') = 0 by rewrite addn0.
   elim: s' {IHs Hhead Hpart} => //= s1 s ->.
   by rewrite subnn add0n.
 case: add_ribbon_base (IHs Hpart s0 Hhead l p) => {IHs}//.
 move=> [[shres hres] remres] // /(_ _ _ _ erefl) Hres.
-rewrite /add_col /=; case: (altP (_ =P _)) => [_ [<- <- _] | Hrem] /=.
+rewrite /add_ribcol /=; case: (altP (_ =P _)) => [_ [<- <- _] | Hrem] /=.
   by rewrite subnn add0n.
 case: eqP => // _ [<- <- _] /=; rewrite -{}Hres addKn subSn //.
 by case: remres Hrem => // r _; rewrite minSS /= add1n.
@@ -571,22 +581,22 @@ Hypothesis Hret : add_ribbon_base base sh nbox.+1 pos = Some (res, hgt, rem).
 
 Lemma add_ribbon_base_rem0 : base = nbox.+1 + sumn sh -> rem = 0.
 Proof.
-have add_col_eq0 bs s0 rm r :
+have add_ribcol_eq0 bs s0 rm r :
     s0 <= bs -> rm <= (bs - s0) ->
-    add_col bs s0 _ _ rm = Some (_, _ , r) -> r = 0.
-  rewrite /add_col /= => lts0bs; case: rm => //= [_ [_ _ <-]// | rm ltrm].
+    add_ribcol bs s0 _ _ rm = Some (_, _ , r) -> r = 0.
+  rewrite /add_ribcol /= => lts0bs; case: rm => //= [_ [_ _ <-]// | rm ltrm].
   case: eqP => // _ [_ _ <-].
   rewrite (subSn lts0bs) minSS subSS.
   by move: ltrm => /ltnW/minn_idPl ->; rewrite subnn.
 move=> Heq.
 move: partsh => /= /andP [Hbase Hpart].
 case: sh Hpart Heq Hbase Hret => /= [_|s0 s' Hpart -> lts0bs]/=.
-  case: (ltnP nbox pos) => // lelpos -> _ /add_col_eq0; apply => //.
+  case: (ltnP nbox pos) => // lelpos -> _ /add_ribcol_eq0; apply => //.
   by rewrite subn0 addn0 leq_subr.
-case: pos => [/add_col_eq0-/(_ lts0bs)/= -> //| p].
+case: pos => [/add_ribcol_eq0-/(_ lts0bs)/= -> //| p].
   by rewrite -addnBA ?leq_addr.
 case Hrib: add_ribbon_base => // [[[rs h] rm]].
-move/add_col_eq0 => /(_ lts0bs) -> //.
+move/add_ribcol_eq0 => /(_ lts0bs) -> //.
 have := rem_add_ribbon_base_lt Hpart Hrib => /leq_trans; apply.
 by rewrite -addnBA ?leq_addr // addKn addSnnS leq_addr.
 Qed.
@@ -600,19 +610,19 @@ move: Hret; rewrite {}Hrem => Hret0.
 move: partsh => /= /andP [Hbase Hpart].
 elim: sh Hpart base Hbase nbox pos res hgt Hret0
   => /= [ _ |s0 s' IHs Hpart] bs lts0bs l p rs h.
-  case: (ltnP l p) => // lepl; rewrite /add_col /=.
+  case: (ltnP l p) => // lepl; rewrite /add_ribcol /=.
   rewrite subn_eq0 ltnNge lepl /= subn0.
   case: (altP (_ =P _)) => // _; rewrite add0n => [][<- _ _].
   by case p.
 case: p => [|p].
-  rewrite /add_col /=; case: (altP (_ =P _)) => // _ [<- _ _].
+  rewrite /add_ribcol /=; case: (altP (_ =P _)) => // _ [<- _ _].
   by rewrite (subSn lts0bs) minSS addnS ltnS leq_addr eqxx.
 move tr : (add_ribbon_base s0 s' l.+1 p) => [] //.
 move: tr => [[shres hres] [|remres]].
   move: Hpart => /andP [{}/IHs H{}/H H{}/H Hrib].
-  by rewrite /add_col /= => [] [<- _]; rewrite eqxx Hrib /= orbT.
+  by rewrite /add_ribcol /= => [] [<- _]; rewrite eqxx Hrib /= orbT.
 move=> /(add_ribbon_base_inP Hpart)/(_ is_true_true) /= /andP [_] Hrib.
-rewrite /add_col /=; case: (altP (_ =P _)) => // Heq [<-{rs} _{h hres}] _.
+rewrite /add_ribcol /=; case: (altP (_ =P _)) => // Heq [<-{rs} _{h hres}] _.
 by rewrite (subSn lts0bs) minSS addnS ltnS leq_addr Hrib.
 Qed.
 
@@ -666,7 +676,7 @@ Qed.
 End Spec.
 
 Lemma ribbon_in_exP inner outer :
-  is_part inner -> is_part outer -> ribbon_in inner outer ->
+  is_part inner -> is_part outer -> ribbon_from inner outer ->
   exists pos, forall nbox, (* base = (head 0 outer).-1 *)
       nbox.+1 + sumn inner > sumn outer ->
       add_ribbon_base (head 0 outer).-1 inner nbox.+1 pos =
@@ -681,7 +691,7 @@ elim: inner outer => [|inn0 inn IHinn] [|out0 out]//.
   have learmnbox : arm <= nbox by exact: leq_trans (leq_addl _ _) (ltnW Harm).
   rewrite -addnC -ltn_subRL in Harm.
   rewrite ltnNge learmnbox /= subSS subSn //.
-  rewrite /add_col /= subn0 eqSS (gtn_eqF Harm) add0n minSS subSS.
+  rewrite /add_ribcol /= subn0 eqSS (gtn_eqF Harm) add0n minSS subSS.
   move/ltnW/minn_idPr: Harm => ->.
   by rewrite addnC subnDA.
 move=> /[swap]/[dup]/part_head_non0.
@@ -689,7 +699,7 @@ case: out0 => //= out0 _ /andP[headout partout] /andP[headinn partinn].
 rewrite ltnS => /andP [le0] /orP [/eqP Heq | /andP[/eqP Hout Hrib]].
   rewrite {partinn inn IHinn}Heq in headinn *.
   exists 0 => nbox; nat_norm; rewrite addnA ltnS ltn_add2r => Hlt.
-  rewrite /add_col //= subSn // eqSS.
+  rewrite /add_ribcol //= subSn // eqSS.
   rewrite addnC -ltn_subLR // in Hlt.
   rewrite (gtn_eqF Hlt) minSS !subSS.
   move/ltnW/minn_idPr: Hlt => ->.
@@ -703,7 +713,7 @@ have {}Hlt1 : sumn out < nbox.+1 + sumn inn.
   move/(leq_trans _); apply; apply: (leq_trans _ (leqnSn _)).
   by rewrite addnC -addnBA // leq_addr.
 move/(_ _ Hlt1) : Hpos; rewrite {}Hout => ->.
-rewrite /add_col /= subn_eq0 leqNgt Hlt1 /=.
+rewrite /add_ribcol /= subn_eq0 leqNgt Hlt1 /=.
 have Hlt2 : nbox.+1 + sumn inn - sumn out > out0.+1 - inn0.
   rewrite addSn !subSn // ltnS.
   by rewrite ltn_subLR // addnBA // ltn_subRL addnC [inn0 + _]addnC.
@@ -729,7 +739,7 @@ elim: inner outer => [|inn0 inn IHinn] [|out0 out]//.
   case: out0 => // out0 _; exists arm; exists arm.+1 => nbox base.
   rewrite addn0 addSn => [] [->] Hout0.
   rewrite ltnNge leq_addl /= subSn ?leq_addl // addnK.
-  rewrite /add_col /= subn0 eqSS (ltn_eqF Hout0) add0n minSS subSS.
+  rewrite /add_ribcol /= subn0 eqSS (ltn_eqF Hout0) add0n minSS subSS.
   move/ltnW/minn_idPl: Hout0 => ->.
   by rewrite subnn.
 move=> /[swap]/[dup]/part_head_non0.
@@ -737,7 +747,7 @@ case: out0 => //= out0 _ /andP[headout partout] /andP[headinn partinn].
 rewrite ltnS => /orP [/andP[le0] /orP [/eqP Heq |]| ].
   rewrite {partinn inn IHinn}Heq in headinn *.
   exists 0; exists 1 => nbox base.
-  rewrite /add_col !addSn addnA => [[]]/eqP.
+  rewrite /add_ribcol !addSn addnA => [[]]/eqP.
   rewrite eqn_add2r => /eqP eqout0 ltout0 /=.
   have ltinn0 := leq_ltn_trans le0 ltout0.
   rewrite subSn ?(ltnW ltinn0) // eqSS.
@@ -751,7 +761,7 @@ move => {IHinn} /andP[/eqP Hout Hrib].
   have Hlt : sumn out < nbox.+1 + sumn inn.
     by rewrite -(ltn_add2l out0.+1) -Heq addnCA ltn_add2r ltnS.
   move/(_ _ Hlt): Hrec; rewrite Hout /= => ->.
-  rewrite /add_col subn_eq0 leqNgt Hlt /=.
+  rewrite /add_ribcol subn_eq0 leqNgt Hlt /=.
   have Hlt1 : nbox.+1 + sumn inn - sumn out < base.+1 - inn0.
     rewrite -(ltn_add2l (inn0 + sumn out)) -addnA subnKC ?(ltnW Hlt) //.
     rewrite addnA [inn0 + _]addnC -addnA Heq.
