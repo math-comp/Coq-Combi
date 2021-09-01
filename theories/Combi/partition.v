@@ -1001,6 +1001,17 @@ apply (iffP idP).
   by move=> i; exact: (H i.+1).
 Qed.
 
+Lemma part_includedP inner outer :
+  is_part inner ->
+  reflect (forall i, nth 0 inner i <= nth 0 outer i) (included inner outer).
+Proof.
+move=> Hinn; apply (iffP (includedP _ _)) => [[]//|H]; split; last by [].
+case Hsz : (size inner) => [//|n].
+have /(nth_part_non0 Hinn) : n < size inner by rewrite Hsz.
+rewrite -lt0n => /leq_trans/(_ (H _)).
+by apply: contraTltn => /(nth_default 0) ->.
+Qed.
+
 Lemma included_behead p1 p2 :
   included p1 p2 -> included (behead p1) (behead p2).
 Proof.
@@ -1092,8 +1103,7 @@ Lemma included_conj_part inner outer :
   included inner outer -> included (conj_part inner) (conj_part outer).
 Proof.
 move=> Hinn Hout /includedP [Hsz Hincl].
-apply/includedP; split; first by rewrite !size_conj_part // -!nth0; exact: Hincl.
-move=> i.
+apply/part_includedP => [|i]; first exact: is_part_conj.
 by rewrite -conj_leqE //; apply (leq_trans (Hincl _)); rewrite conj_leqE.
 Qed.
 
