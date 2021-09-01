@@ -101,14 +101,14 @@ Implicit Type l : T.
 Implicit Type r u v : seq T.
 Implicit Type t : seq (seq T).
 
-Lemma is_in_shape_tab_size t i j :
-  is_in_shape (shape t) i j -> i < size t.
-Proof. by rewrite -(size_map size) -/shape; exact: is_in_shape_size. Qed.
-Lemma is_in_shape_tab i j t :
-  is_in_shape (shape t) i j -> j < size (nth [::] t i).
+Lemma in_shape_tab_size t i j :
+  in_shape (shape t) (i, j) -> i < size t.
+Proof. by rewrite -(size_map size) -/shape; exact: in_shape_size. Qed.
+Lemma in_shape_tab i j t :
+  in_shape (shape t) (i, j) -> j < size (nth [::] t i).
 Proof.
-move=> Hin; have:= Hin; rewrite /is_in_shape /shape (nth_map [::]) //.
-exact: (is_in_shape_tab_size Hin).
+move=> Hin; have:= Hin; rewrite /in_shape /shape (nth_map [::]) //.
+exact: (in_shape_tab_size Hin).
 Qed.
 
 Lemma is_row_set_nth l r pos :
@@ -258,9 +258,9 @@ apply (iffP idP).
 Qed.
 
 Lemma get_tab_default t (r c : nat) :
-  ~~ is_in_shape (shape t) r c -> get_tab t r c = inh.
+  ~~ in_shape (shape t) (r, c) -> get_tab t r c = inh.
 Proof using.
-rewrite /is_in_shape /get_tab -leqNgt nth_shape => Hc.
+rewrite /in_shape /get_tab -leqNgt nth_shape => Hc.
 exact: nth_default.
 Qed.
 
@@ -270,9 +270,9 @@ Lemma to_word_rcons r t : to_word (rcons t r) = r ++ to_word t.
 Proof using. by rewrite /to_word rev_rcons /=. Qed.
 
 Lemma mem_to_word t (r c : nat) :
-  is_in_shape (shape t) r c -> (get_tab t r c) \in (to_word t).
+  in_shape (shape t) (r, c) -> (get_tab t r c) \in (to_word t).
 Proof using.
-rewrite /is_in_shape /get_tab.
+rewrite /in_shape /get_tab.
 elim: t r c => [//= | t0 t IHt] /= r c; first by rewrite nth_default.
 rewrite to_word_cons mem_cat => H.
 case: r H => [/mem_nth ->| r] /=; first by rewrite orbT.
@@ -352,9 +352,9 @@ Qed.
 Lemma is_tableau_getP t :
   reflect
     [/\ is_part (shape t),
-     (forall (r c : nat), is_in_shape (shape t) r c.+1 ->
+     (forall (r c : nat), in_shape (shape t) (r, c.+1) ->
                           (get_tab t r c <= get_tab t r c.+1)%O) &
-     (forall (r c : nat), is_in_shape (shape t) r.+1 c ->
+     (forall (r c : nat), in_shape (shape t) (r.+1, c) ->
                           (get_tab t r c < get_tab t r.+1 c)%O)]
     (is_tableau t).
 Proof using.
@@ -363,24 +363,24 @@ apply/(iffP idP) => [|[Hpart]].
 - move=> /and3P [Hpart /allP Hrow /(sorted_strictP _ dominate_rev_trans)] Hdom.
   split; rewrite /get_tab => // r c Hin.
   + have/Hrow/is_row1P : (nth [::] t r) \in t.
-      by apply/mem_nth/is_in_shape_tab_size/Hin.
-    by apply; exact: is_in_shape_tab.
+      by apply/mem_nth/in_shape_tab_size/Hin.
+    by apply; exact: in_shape_tab.
   + have/(Hdom [::])/dominateP [_] : r < r.+1 < size t.
-      by rewrite ltnSn (is_in_shape_tab_size Hin).
-    by apply; exact: is_in_shape_tab.
+      by rewrite ltnSn (in_shape_tab_size Hin).
+    by apply; exact: in_shape_tab.
 - rewrite /get_tab Hpart => Hrow Hcol /=; apply/andP; split.
   + apply/allP => /= c Hrin.
     have Hr := nth_index [::] Hrin.
     move: Hrin Hr; rewrite -index_mem; move: (index c t) => r Hr Hc; subst c.
     apply/is_row1P => i Hi; apply Hrow.
-    by rewrite /is_in_shape (nth_map [::]).
+    by rewrite /in_shape (nth_map [::]).
   + apply/(sorted_strictP [::] dominate_rev_trans).
     rewrite (incr_equiv _ dominate_rev_trans) => r Hr.
     apply/dominateP; split.
     * rewrite -!(nth_map _ 0) -/shape //; last by move: Hr; apply ltnW.
       by move/is_partP: Hpart => [_].
     * move=> i Hi; apply Hcol.
-      by rewrite /is_in_shape (nth_map [::]).
+      by rewrite /in_shape (nth_map [::]).
 Qed.
 
 (** ** Cuting rows and tableaux *)
@@ -727,11 +727,11 @@ by rewrite /shape -map_comp; apply eq_map => s /=; rewrite size_map.
 Qed.
 
 Lemma get_map_tab (t : seq (seq T1)) r c :
-  is_in_shape (shape t) r c ->
+  in_shape (shape t) (r, c) ->
   get_tab [seq [seq F i | i <- r0] | r0 <- t] r c = F (get_tab t r c).
 Proof.
-move=> Hin; have:= is_in_shape_size Hin; rewrite size_map => Hr.
-move: Hin; rewrite /is_in_shape (nth_map [::]) // /get_tab => Hc.
+move=> Hin; have:= in_shape_size Hin; rewrite size_map => Hr.
+move: Hin; rewrite /in_shape (nth_map [::]) // /get_tab => Hc.
 by rewrite (nth_map [::] _ _ Hr) (nth_map inh).
 Qed.
 
@@ -748,7 +748,7 @@ have Hndecr := in_incr_nondecrE Hincr.
 move/in_incrE in Hincr.
 apply/is_tableau_getP/is_tableau_getP;
   rewrite ?shape_map_tab=> [] [H1 H2 H3]; split => // r c Hrc1;
-  have Hrc : is_in_shape (shape t) r c by apply: (is_in_part_le H1 Hrc1).
+  have Hrc : in_shape (shape t) (r, c) by apply: (in_part_le H1 Hrc1).
 - rewrite !get_map_tab //.
   rewrite Hndecr; [exact: H2 | exact: mem_to_word | exact: mem_to_word].
 - rewrite !get_map_tab //.

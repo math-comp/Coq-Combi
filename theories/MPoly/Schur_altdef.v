@@ -765,7 +765,7 @@ apply/imsetP/eqP => /= [[t ] | Hm].
       apply val_inj => /=.
       rewrite /t /= (nth_map [::]) // (nth_map inh) //.
       rewrite inordK //; apply: mt2; apply: mem_to_word.
-      by rewrite /is_in_shape nth_shape.
+      by rewrite /in_shape nth_shape.
 Qed.
 
 End KostkaEq.

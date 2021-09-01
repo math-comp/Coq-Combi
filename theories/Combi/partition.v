@@ -17,13 +17,11 @@
 
 Partitions (and more generally shapes) are stored by terms of type [seq nat].
 We define the following predicates and operations on [seq nat]:
-[(r, c)] is in [sh] if [r < sh[i]]
 
-- [is_in_shape sh r c] == the box with coordinate (r, c) belongs to the shape
-                          sh, that is: [c < sh[r]].
-- [is_box_in_shape (r, c)] == uncurried version: same as [is_in_shape sh r c].
-- [box_in sh] == a sigma type for boxes in sh : [{ b | is_box_in_shape sh b }]
-                 is is canonically a [subFinType].
+- [in_shape sh (r, c) ] == the box with coordinate (r, c) belongs to the shape
+                         [sh], that is: [c < sh[r]].
+- [box_in sh] == a sigma type for boxes in sh : [{ b | in_shape sh b }]
+                         iy is canonically a [subFinType].
 - [enum_box_in sh] == a full duplicate free list of the boxes in sh.
 
 Integer Partitions:
@@ -130,11 +128,11 @@ Reserved Notation "''PLexi_' n"
 
 
 (** * Shapes *)
-Definition is_in_shape sh r c := c < nth 0 sh r.
+Definition in_shape sh b := b.2 < nth 0 sh b.1.
 
-Lemma is_in_shape_size sh r c : is_in_shape sh r c -> r < size sh.
+Lemma in_shape_size sh r c : in_shape sh (r, c) -> r < size sh.
 Proof.
-rewrite /is_in_shape; apply contraLR; rewrite -!leqNgt => Hr.
+rewrite /in_shape; apply contraLR; rewrite -!leqNgt => Hr.
 by rewrite (nth_default _ Hr).
 Qed.
 
@@ -143,11 +141,9 @@ Section BoxIn.
 
 Variable sh : seq nat.
 
-Definition is_box_in_shape b := is_in_shape sh b.1 b.2.
-
 Structure box_in : Set :=
-  BoxIn {coordbox :> nat * nat; _ : is_box_in_shape coordbox}.
-Canonical box_in_subType := Eval hnf in [subType for coordbox].
+  BoxIn {box_inval :> nat * nat; _ : in_shape sh box_inval}.
+Canonical box_in_subType := Eval hnf in [subType for box_inval].
 Definition box_in_eqMixin := Eval hnf in [eqMixin of box_in by <:].
 Canonical box_in_eqType := Eval hnf in EqType box_in box_in_eqMixin.
 Definition box_in_choiceMixin := Eval hnf in [choiceMixin of box_in by <:].
@@ -180,7 +176,7 @@ rewrite cat_uniq; apply/and3P; split.
   by move=> [r1 c1] [r2 c2] /= [-> ->].
 Qed.
 
-Lemma enum_box_inP : all (fun c => is_in_shape sh c.1 c.2) enum_box_in.
+Lemma enum_box_inP : all (fun c => in_shape sh c) enum_box_in.
 Proof using.
 apply/allP => [[r c]] /= /flatten_mapP [r0].
 rewrite mem_iota add0n /= => Hr0 /mapP [c0].
@@ -188,10 +184,10 @@ by rewrite mem_iota add0n /= => Hc0 [-> ->].
 Qed.
 
 Lemma count_enum_box_inP rc :
-  is_in_shape sh rc.1 rc.2 -> count_mem rc enum_box_in = 1.
+  in_shape sh rc -> count_mem rc enum_box_in = 1.
 Proof using.
 case: rc => [r c] /=.
-rewrite /is_in_shape => H.
+rewrite /in_shape => H.
 rewrite (count_uniq_mem _ enum_box_in_uniq).
 suff -> : (r, c) \in enum_box_in by [].
 apply/flatten_mapP; exists r.
@@ -204,13 +200,13 @@ Let type := sub_finType box_in_subCountType enum_box_inP count_enum_box_inP.
 Canonical box_in_finType := Eval hnf in [finType of box_in for type].
 Canonical box_in_subFinType := Eval hnf in [subFinType of box_in].
 
-Lemma box_inP (rc : box_in) : is_in_shape sh rc.1 rc.2.
+Lemma box_inP (rc : box_in) : in_shape sh rc.
 Proof using. by case: rc. Qed.
 
 Lemma enum_box_inE : map val (enum {:box_in}) = enum_box_in.
 Proof using. exact: enum_subE. Qed.
 
-Lemma mem_enum_box_in : enum_box_in =i is_box_in_shape.
+Lemma mem_enum_box_in : enum_box_in =i in_shape sh.
 Proof using. exact: (sub_enumE enum_box_inP count_enum_box_inP). Qed.
 
 (** ** Rewriting bigops running along the boxes of a shape *)
@@ -224,9 +220,13 @@ rewrite big_flatten /index_iota big_map !subn0; apply eq_bigr => r _.
 by rewrite big_map !subn0; apply eq_bigr.
 Qed.
 
-Lemma big_box_in R (idx : R) (op : Monoid.com_law idx) (f : nat -> nat -> R):
-  \big[op/idx]_(b : box_in) f b.1 b.2 = \big[op/idx]_(b <- enum_box_in) f b.1 b.2.
+Lemma big_box_in R (idx : R) (op : Monoid.com_law idx) (f : nat * nat -> R):
+  \big[op/idx]_(b : box_in) f b = \big[op/idx]_(b <- enum_box_in) f b.
 Proof using. by rewrite -enum_box_inE big_map /= big_enum. Qed.
+
+Lemma big_box_in2 R (idx : R) (op : Monoid.com_law idx) (f : nat -> nat -> R):
+  \big[op/idx]_(b : box_in) f b.1 b.2 = \big[op/idx]_(b <- enum_box_in) f b.1 b.2.
+Proof using. exact: big_box_in. Qed.
 
 End BoxIn.
 
@@ -237,10 +237,9 @@ Proof.
 apply uniq_perm.
 - rewrite /= enum_box_in_uniq andbT.
   apply/negP => /(allP (enum_box_inP sh)) /=.
-  by rewrite /is_in_shape ltnn.
+  by rewrite /in_shape ltnn.
 - exact: enum_box_in_uniq.
-- move=> [r c]; rewrite inE !mem_enum_box_in.
-  rewrite /is_box_in_shape !unfold_in /is_in_shape /=.
+- move=> [r c]; rewrite !inE !mem_enum_box_in !unfold_in /in_shape /=.
   apply/idP/idP.
   + move/orP => [/eqP [-> ->] |].
     * by rewrite nth_incr_nth eq_refl add1n ltnS.
@@ -370,19 +369,19 @@ rewrite andbT; case: sh Hhead => [//= | s1 sh]; first exact: leq_ltn_trans.
 by rewrite rcons_cons.
 Qed.
 
-Lemma is_in_part_le (sh : seq nat) r c j k :
-  is_part sh -> is_in_shape sh r c -> j <= r -> k <= c -> is_in_shape sh j k.
+Lemma in_part_le (sh : seq nat) r c j k :
+  is_part sh -> in_shape sh (r, c) -> j <= r -> k <= c -> in_shape sh (j, k).
 Proof.
-rewrite /is_in_shape => /is_part_ijP[_ Hpart] Hcr /Hpart Hrj Hkc.
+rewrite /in_shape => /is_part_ijP[_ Hpart] Hcr /Hpart Hrj Hkc.
 exact: leq_ltn_trans Hkc (leq_trans Hcr Hrj).
 Qed.
 
-Lemma is_in_part_is_part (sh : seq nat) :
+Lemma in_part_is_part (sh : seq nat) :
   (forall r c j k, j <= r -> k <= c ->
-                   is_in_shape sh r c -> is_in_shape sh j k) ->
+                   in_shape sh (r, c) -> in_shape sh (j, k)) ->
   last 1 sh != 0 -> is_part sh.
 Proof.
-rewrite /is_in_shape => H Hlast.
+rewrite /in_shape => H Hlast.
 apply/is_partP; split => [|i]; first exact: Hlast.
 case Hnth : (nth 0 sh i.+1) => [//|n].
 apply: (H i.+1 n i n (leqnSn i) (leqnn n)).
@@ -568,10 +567,10 @@ by move=> /(IHsh i Hpart).
 Qed.
 
 Lemma is_rem_cornerP sh i : is_part sh ->
-  (i < size sh) && (~~ is_in_shape sh i.+1 (nth 0 sh i).-1) =
+  (i < size sh) && (~~ in_shape sh (i.+1, (nth 0 sh i).-1)) =
   (is_rem_corner sh i).
 Proof.
-rewrite /is_rem_corner /is_in_shape -ltnNge => Hpart.
+rewrite /is_rem_corner /in_shape -ltnNge => Hpart.
 apply/idP/idP.
 - move=> /andP [/(nth_part_non0 Hpart)].
   by case: (nth 0 sh i).
@@ -818,10 +817,10 @@ rewrite (IHsh _ Hpart); first exact: incr_first_n_nthC.
 by move: Hcrn => /=; case: i.
 Qed.
 
-Lemma is_in_conj_part_impl sh:
-  is_part sh -> forall r c, is_in_shape sh r c -> is_in_shape (conj_part sh) c r.
+Lemma in_conj_part_impl sh:
+  is_part sh -> forall r c, in_shape sh (r, c) -> in_shape (conj_part sh) (c, r).
 Proof.
-rewrite /is_in_shape.
+rewrite /in_shape.
 elim: sh => [| s0 s IHs] Hpart r c.
   by rewrite /is_rem_corner nth_default // nth_default //.
 have:= Hpart => /= /andP [Hhead Hparts].
@@ -832,12 +831,12 @@ move=> /(leq_trans H) ->.
 by rewrite ltnS; exact:  IHs.
 Qed.
 
-Lemma is_in_conj_part sh :
-  is_part sh -> forall r c, is_in_shape sh r c = is_in_shape (conj_part sh) c r.
+Lemma in_conj_part sh :
+  is_part sh -> forall r c, in_shape sh (r, c) = in_shape (conj_part sh) (c, r).
 Proof.
-move=> Hpart r c; apply/idP/idP; first exact: is_in_conj_part_impl.
+move=> Hpart r c; apply/idP/idP; first exact: in_conj_part_impl.
 rewrite -{2}(conj_partK Hpart).
-by apply is_in_conj_part_impl; exact: is_part_conj.
+by apply in_conj_part_impl; exact: is_part_conj.
 Qed.
 
 (* A rephrasing of the preceding lemma *)
@@ -845,8 +844,8 @@ Lemma conj_ltnE sh :
   is_part sh -> forall i j, nth 0 sh i > j = (nth 0 (conj_part sh) j > i).
 Proof.
 move=> Hpart.
-rewrite -/(is_in_shape sh _ _) -/(is_in_shape (conj_part sh) _ _).
-exact: is_in_conj_part.
+rewrite -/(in_shape sh _) -/(in_shape (conj_part sh) _).
+exact: in_conj_part.
 Qed.
 
 Lemma conj_leqE sh :
