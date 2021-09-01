@@ -764,7 +764,8 @@ apply/imsetP/eqP => /= [[t ] | Hm].
       rewrite (nth_map inh); last by move: Hc; rewrite -!nth_shape !shape_tabsh.
       apply val_inj => /=.
       rewrite /t /= (nth_map [::]) // (nth_map inh) //.
-      rewrite inordK //; apply: mt2; apply: mem_to_word.
+      rewrite inordK //; apply: mt2.
+      rewrite -/(get_tab _ (_, _)); apply: mem_to_word.
       by rewrite /in_shape nth_shape.
 Qed.
 

@@ -24,8 +24,8 @@ denoted [T].
             this is an order relation on [seq T].
 - [is_tableau t] == [t] of type [(seq (seq T))] is a tableau that is a sequence
             of non empty rows which is sorted for the dominate order.
-- [get_tab t r c] == the element of [t] of coordinate [(r, c)], or [inhabitant T]
-            if [(r, c)] is not is the tableau
+- [get_tab t (r, c)] == the element of [t] of coordinate [(r, c)],
+            or [inhabitant T] if [(r, c)] is not is the tableau
 - [to_word t] == the row reading of the tableau [t]
 - [size_tab t] == the size (number of boxes) of [t]
 - [filter_gtnX_tab n t] == the sub-tableau of [t] formed by the element smaller
@@ -219,7 +219,7 @@ Fixpoint is_tableau t :=
   then [&& (t0 != [::]), is_row t0, dominate (head [::] t') t0 & is_tableau t']
   else true.
 
-Definition get_tab t (r c : nat) := nth inh (nth [::] t r) c.
+Definition get_tab t (rc : nat * nat) := nth inh (nth [::] t rc.1) rc.2.
 
 Definition to_word t := flatten (rev t).
 
@@ -257,8 +257,8 @@ apply (iffP idP).
     * exact: (Hdom i.+1 j.+1).
 Qed.
 
-Lemma get_tab_default t (r c : nat) :
-  ~~ in_shape (shape t) (r, c) -> get_tab t r c = inh.
+Lemma get_tab_default t rc :
+  ~~ in_shape (shape t) rc -> get_tab t rc = inh.
 Proof using.
 rewrite /in_shape /get_tab -leqNgt nth_shape => Hc.
 exact: nth_default.
@@ -269,10 +269,10 @@ Proof using. by rewrite /to_word rev_cons flatten_rcons. Qed.
 Lemma to_word_rcons r t : to_word (rcons t r) = r ++ to_word t.
 Proof using. by rewrite /to_word rev_rcons /=. Qed.
 
-Lemma mem_to_word t (r c : nat) :
-  in_shape (shape t) (r, c) -> (get_tab t r c) \in (to_word t).
+Lemma mem_to_word t rc :
+  in_shape (shape t) rc -> get_tab t rc \in (to_word t).
 Proof using.
-rewrite /in_shape /get_tab.
+move: rc => [r c]; rewrite /in_shape /get_tab.
 elim: t r c => [//= | t0 t IHt] /= r c; first by rewrite nth_default.
 rewrite to_word_cons mem_cat => H.
 case: r H => [/mem_nth ->| r] /=; first by rewrite orbT.
@@ -353,9 +353,9 @@ Lemma is_tableau_getP t :
   reflect
     [/\ is_part (shape t),
      (forall (r c : nat), in_shape (shape t) (r, c.+1) ->
-                          (get_tab t r c <= get_tab t r c.+1)%O) &
+                          (get_tab t (r, c) <= get_tab t (r, c.+1))%O) &
      (forall (r c : nat), in_shape (shape t) (r.+1, c) ->
-                          (get_tab t r c < get_tab t r.+1 c)%O)]
+                          (get_tab t (r, c) < get_tab t (r.+1, c))%O)]
     (is_tableau t).
 Proof using.
 rewrite is_tableau_sorted_dominate.
@@ -726,9 +726,9 @@ Proof.
 by rewrite /shape -map_comp; apply eq_map => s /=; rewrite size_map.
 Qed.
 
-Lemma get_map_tab (t : seq (seq T1)) r c :
-  in_shape (shape t) (r, c) ->
-  get_tab [seq [seq F i | i <- r0] | r0 <- t] r c = F (get_tab t r c).
+Lemma get_map_tab (t : seq (seq T1)) rc :
+  in_shape (shape t) rc ->
+  get_tab [seq [seq F i | i <- r0] | r0 <- t] rc = F (get_tab t rc).
 Proof.
 move=> Hin; have:= in_shape_size Hin; rewrite size_map => Hr.
 move: Hin; rewrite /in_shape (nth_map [::]) // /get_tab => Hc.

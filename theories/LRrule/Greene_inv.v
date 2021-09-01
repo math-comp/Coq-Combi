@@ -1736,9 +1736,9 @@ move: Heq Hpart.
 move: (RS (rembig (rev s))) (RS (rembig s)) => tabr tab Hr.
 subst tabr => Hpart Hcorn Hsh.
 apply eq_from_shape_get_tab; first by rewrite shape_conj_tab.
-move => r c.
+move => [r c].
 rewrite (append_nth_conj_tab _ Hpart Hcorn).
-congr (get_tab (append_nth _ _ _) _ _).
+congr (get_tab (append_nth _ _ _) _).
 - apply maxL_perm; rewrite -Hs -rev_rcons.
   by rewrite perm_sym -perm_rev.
 - move: Hsh.

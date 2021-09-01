@@ -138,8 +138,8 @@ Lemma size_append_nth t b i : size_tab (append_nth t b i) = (size_tab t).+1.
 Proof using. by rewrite /size_tab shape_append_nth sumn_incr_nth. Qed.
 
 Lemma get_tab_append_nth (t : seq (seq T)) l i r c :
-  get_tab (append_nth t l i) r c =
-  if (r == i) && (c == nth 0 (shape t) i) then l else get_tab t r c.
+  get_tab (append_nth t l i) (r, c) =
+  if (r == i) && (c == nth 0 (shape t) i) then l else get_tab t (r, c).
 Proof using.
 rewrite /get_tab /append_nth nth_set_nth /=.
 case: (altP (r =P i)) => [-> | //=] /=.
@@ -244,14 +244,14 @@ Lemma is_tab_append_nth_size_alternative_proof r T n :
    is_part (incr_nth (shape T) r) ->
    is_tableau T -> is_tableau (append_nth T n r).
 Proof.
-have get_append_nth_in rn c :
-    in_shape (shape T) (rn, c) ->
-    get_tab (append_nth T n r) rn c = get_tab T rn c.
+have get_append_nth_in rc :
+    in_shape (shape T) rc -> get_tab (append_nth T n r) rc = get_tab T rc.
+  move: rc => [rn c].
   rewrite /get_tab /append_nth nth_set_nth /=.
   case (altP (rn =P r)) => // -> {rn} /in_shape_tab.
   by rewrite nth_rcons => ->.
 have get_append_nth_eq :
-  get_tab (append_nth T n r) r (nth 0 (shape T) r) = n.
+  get_tab (append_nth T n r) (r, nth 0 (shape T) r) = n.
   rewrite nth_shape /get_tab /append_nth nth_set_nth /= eq_refl /=.
   by rewrite nth_rcons eq_refl ltnn.
 move=> /allP Hw Hparti /is_tableau_getP [Hpart Hrow Hcol].
@@ -777,7 +777,7 @@ Variables (disp: unit) (T : inhOrderType disp).
 
 Definition conj_tab (t : seq (seq T)) : seq (seq T) :=
   let c := conj_part (shape t) in
-  mkseq (fun i => mkseq (fun j => get_tab t j i) (nth 0 c i)) (size c).
+  mkseq (fun i => mkseq (fun j => get_tab t (j, i)) (nth 0 c i)) (size c).
 
 Lemma size_conj_tab t : size (conj_tab t) = size (conj_part (shape t)).
 Proof using. by rewrite /conj_tab size_mkseq. Qed.
@@ -792,7 +792,7 @@ by rewrite -/(shape _) -/(mkseq _ _); apply: mkseq_nth.
 Qed.
 
 Lemma get_conj_tab t :
-  is_part (shape t) -> forall i j, get_tab (conj_tab t) i j = get_tab t j i.
+  is_part (shape t) -> forall i j, get_tab (conj_tab t) (i, j) = get_tab t (j, i).
 Proof using.
 move=> Ht i j.
 case: (boolP (in_shape (shape t) (j, i))) => Hin;
@@ -807,20 +807,20 @@ case: (boolP (in_shape (shape t) (j, i))) => Hin;
 Qed.
 
 Lemma eq_from_shape_get_tab (t u : seq (seq T)) :
-  shape t = shape u -> get_tab t =2 get_tab u -> t = u.
+  shape t = shape u -> get_tab t =1 get_tab u -> t = u.
 Proof using.
 move=> Hsh Hget; apply (eq_from_nth (x0 := [::])).
   by rewrite -!(size_map size) -!/(shape _) Hsh.
 move=> r _; apply (eq_from_nth (x0 := inh)).
   by rewrite -!nth_shape Hsh.
-by move=> c _; rewrite -!/(get_tab _ _ _) Hget.
+by move=> c _; rewrite -!/(get_tab _ (_, _)) Hget.
 Qed.
 
 Lemma conj_tab_shapeK t : is_part (shape t) -> conj_tab (conj_tab t) = t.
 Proof using.
 move=> Hpart; apply eq_from_shape_get_tab.
 - by rewrite !shape_conj_tab conj_partK.
-- move=> r c; rewrite ?get_conj_tab //.
+- move=> [r c]; rewrite ?get_conj_tab //.
   by rewrite shape_conj_tab; apply: is_part_conj.
 Qed.
 
@@ -835,7 +835,7 @@ Proof using.
 move=> Hsh Hcorn; apply eq_from_shape_get_tab.
 - rewrite shape_conj_tab !shape_append_nth shape_conj_tab.
   exact: conj_part_incr_nth.
-- move=> r c; rewrite get_conj_tab; first last.
+- move=> [r c]; rewrite get_conj_tab; first last.
     by rewrite shape_append_nth; apply: is_part_incr_nth.
   rewrite !get_tab_append_nth.
   case: (altP (r =P nth 0 (shape t) i));
@@ -863,22 +863,22 @@ Proof. by compute. Qed.
 
 Lemma stdtab_get_tabNE t :
   is_stdtab t ->
-  forall r1 c1 r2 c2,
-    in_shape (shape t) (r1, c1) ->
-    in_shape (shape t) (r2, c2) ->
-    (r1, c1) != (r2, c2) -> get_tab t r1 c1 != get_tab t r2 c2.
+  forall rc1 rc2,
+    in_shape (shape t) rc1 ->
+    in_shape (shape t) rc2 ->
+    rc1 != rc2 -> get_tab t rc1 != get_tab t rc2.
 Proof.
 move=> /andP [] _ /std_uniq.
-elim: t => [_ | t0 t /= IHt Huniq] r1 c1 r2 c2.
+elim: t => [_ | t0 t /= IHt Huniq] [r1 c1] [r2 c2].
   by rewrite /in_shape /= nth_default //.
 move: Huniq; rewrite to_word_cons cat_uniq => /and3P [] Ht /hasPn Htt0 Ht0.
 rewrite /in_shape /get_tab; case: r1 r2 => [| r1] [| r2]/= Hc1 Hc2.
 - by apply /contra; rewrite [(0, _) == _]/eq_op/= (nth_uniq _ Hc1 Hc2 Ht0).
 - move=> _; have:= mem_nth inh Hc1 => /Htt0; apply contra => /eqP ->.
-  move: Hc2; rewrite -/(get_tab _ _ _) -/(in_shape _ _).
+  move: Hc2; rewrite -/(get_tab _ (_, _)) -/(in_shape _ (_, _)).
   exact: mem_to_word.
 - move=> _; have:= mem_nth inh Hc2 => /Htt0; apply contra => /eqP <-.
-  move: Hc1; rewrite -/(get_tab _ _ _) -/(in_shape _ _).
+  move: Hc1; rewrite -/(get_tab _ (_, _)) -/(in_shape _ (_, _)).
   exact: mem_to_word .
 - rewrite {1}/eq_op/= eqSS -[~~ ((r1 == r2) && (c1 == c2))]/((_, _) != (_, _)).
   exact: IHt.
@@ -897,7 +897,7 @@ apply/andP; split.
   by rewrite -shape_conj_tab nth_shape => ->.
 - move=> i; apply/(is_rowP inh) => j1 j2 /andP [] Hj.
   rewrite -nth_shape shape_conj_tab -(conj_ltnE Hp) nth_shape => Hjsz.
-  rewrite -!/(get_tab _ _ _) !(get_conj_tab Hp).
+  rewrite -!/(get_tab _ (_, _)) !(get_conj_tab Hp).
   have:= Htab => /is_tableauP [] _ _ Hdom.
   move: Hj; rewrite leq_eqVlt => /orP [/eqP -> //|] /Hdom/dominateP [] _ {}Hdom.
   by have /= := ltW (Hdom _ Hjsz); apply.
@@ -906,12 +906,12 @@ apply/andP; split.
   + rewrite -!nth_shape shape_conj_tab.
     by move: Hc => /is_part_ijP [] _; apply; apply: ltnW.
   + move=> i; rewrite -!nth_shape shape_conj_tab -(conj_ltnE Hp) => Hj2.
-    rewrite -!/(get_tab _ _ _) !(get_conj_tab Hp) /get_tab.
+    rewrite -!/(get_tab _ (_, _)) !(get_conj_tab Hp) /get_tab.
     have:= Htab => /is_tableauP [] _ Hrow _.
     rewrite lt_def (is_rowP inh _ (Hrow i)); first last.
       by rewrite (ltnW Hj) -nth_shape Hj2.
     rewrite  -/(in_shape _ _) in Hj2.
-    rewrite andbT -!/(get_tab _ _ _); apply (stdtab_get_tabNE Hstdtab).
+    rewrite andbT -!/(get_tab _ (_, _)); apply (stdtab_get_tabNE Hstdtab).
     * exact: Hj2.
     * exact: (in_part_le (is_part_sht Htab) Hj2 (leqnn _) (ltnW Hj)).
     * by rewrite xpair_eqE eq_refl /= (gtn_eqF Hj).
@@ -924,7 +924,7 @@ apply/andP; split.
   move=> Htmp; have:= reshape_offsetP Htmp; move/reshape_indexP : Htmp.
   rewrite (nth_flatten inh (rev t) pos) shape_rev size_rev size_map => Hpos.
   do !rewrite nth_rev ?size_map //.
-  rewrite -/(get_tab _ _ _) -/(in_shape _ (_, _)) -(get_conj_tab Hp).
+  rewrite -/(get_tab _ (_, _)) -/(in_shape _ (_, _)) -(get_conj_tab Hp).
   rewrite (in_conj_part Hp) -shape_conj_tab {Hpos}.
   exact: mem_to_word.
 Qed.
