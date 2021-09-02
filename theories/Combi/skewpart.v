@@ -205,6 +205,32 @@ Fixpoint ribbon inner outer :=
     else false
   else false.
 
+Fixpoint first_alleq (inner outer : seq nat) :=
+  if inner == outer then 0
+  else
+    if outer is out0 :: out then
+      if inner is inn0 :: inn then
+        (first_alleq inn out).+1
+      else size outer
+    else size inner.
+
+Lemma drop_first_alleqE inner outer :
+  drop (first_alleq inner outer) inner = drop (first_alleq inner outer) outer.
+Proof.
+elim: outer inner => [| out0 out IHout] [|inn0 inn]//=; try by rewrite drop_size.
+by case: eqP => [->|_] /=.
+Qed.
+
+Lemma first_alleq0 inner outer :
+  first_alleq inner outer = 0 -> inner = outer.
+Proof. by case: inner outer => [| out0 out] [|inn0 inn] //=; case: eqP. Qed.
+
+Lemma first_alleq_eq s : first_alleq s s = 0.
+Proof. by case: s => [| s0 s]//=; rewrite eqxx. Qed.
+
+Lemma first_alleq_neq s t : s != t -> first_alleq s t > 0.
+Proof. by elim: t s => [| s0 s IHs] [|t0 t]//= /negbTE ->. Qed.
+
 Section Test.
 (*
 Goal ~~ ribbon_from [::] [::].
@@ -601,6 +627,32 @@ have := rem_add_ribbon_base_lt Hpart Hrib => /leq_trans; apply.
 by rewrite -addnBA ?leq_addr // addKn addSnnS leq_addr.
 Qed.
 
+
+Lemma add_ribbon_base_pos : pos = (first_alleq sh res).-1.
+Proof.
+move: partsh => /= /andP [Hbase Hpart].
+elim: sh Hpart base Hbase nbox pos res hgt rem Hret
+    => /= [_|s0 s' IHs /andP[Hhead Hpart]] bs lts0bs l p rs h rm.
+  case: (ltnP l p) => // lepl.
+  rewrite /add_ribcol; case: eqP => [_ [<- _ _] | _] /=.
+    by rewrite size_nseq.
+  case: eqP => // _ [<- _ _] /=.
+  by rewrite size_nseq.
+case: p => [|p].
+  rewrite /add_ribcol /=; case: eqP => // _ [<- _ _] /=.
+   by rewrite first_alleq_eq; case: eqP.
+case Hrib: add_ribbon_base => // [[[rs1 h1] rm1]].
+move: IHs => /(_ Hpart s0 Hhead l p _ _ _ Hrib) ->.
+have /add_ribbon_base_neq : is_part (s0 :: s') by rewrite /= Hhead Hpart.
+move=> /(_ _ _ _ _ _ Hrib) Hneq.
+rewrite /add_ribcol; case: (altP (rm1 =P _)) => Hrm1.
+  move=> [<-{rs}] _ _ /=; rewrite eqseq_cons eqxx (negbTE Hneq) /=.
+  by move/first_alleq_neq: Hneq; case: first_alleq.
+case: (altP (rm1 =P _)) => // eqrm1 [<- _ _].
+rewrite subSn // eqseq_cons (negbTE Hneq) andbF.
+by move/first_alleq_neq: Hneq; case: first_alleq.
+Qed.
+
 Lemma add_ribbon_baseP : ribbon sh res.
 Proof.
 case: (altP (rem =P 0)) => [Hrem|]; first last.
@@ -640,27 +692,34 @@ Variable  (nbox pos : nat).
 Variables (res : seq nat) (hgt : nat).
 Hypothesis (Hret : add_ribbon sh nbox.+1 pos = Some (res, hgt)).
 
-Local Lemma is_part_base : is_part (nbox.+1 + sumn sh :: sh).
+Lemma is_part_base_init : is_part (nbox.+1 + sumn sh :: sh).
 Proof.
 rewrite /= partsh andbT addSnnS; apply: (leq_trans _ (leq_addl _ _)).
 by case: sh => //= s0 s; rewrite -addnS leq_addr.
 Qed.
 
-Lemma is_part_of_ribbon_base : is_part_of_n (nbox.+1 + sumn sh) res.
+Lemma sumn_add_ribbon : sumn res = nbox.+1 + sumn sh.
 Proof.
 move: Hret; rewrite /add_ribbon.
 case Hrib: add_ribbon_base => // [[[x y] z]] [Hx Hy]; subst x y.
-rewrite /is_part_of_n /=; apply/andP; split.
-  have:= sumn_add_ribbon_base is_part_base Hrib.
-  by rewrite (add_ribbon_base_rem0 is_part_base Hrib erefl) addn0 => ->.
-by have /= /andP [] := is_part_add_ribbon_base is_part_base Hrib.
+have:= sumn_add_ribbon_base is_part_base_init Hrib.
+by rewrite (add_ribbon_base_rem0 is_part_base_init Hrib erefl) addn0 => ->.
 Qed.
+
+Lemma is_part_of_add_ribbon : is_part_of_n (nbox.+1 + sumn sh) res.
+Proof.
+rewrite /is_part_of_n /= sumn_add_ribbon eqxx /=.
+move: Hret; rewrite /add_ribbon.
+case Hrib: add_ribbon_base => // [[[x y] z]] [Hx Hy]; subst x y.
+by have /= /andP [] := is_part_add_ribbon_base is_part_base_init Hrib.
+Qed.
+
 
 Lemma add_ribbonP : ribbon sh res.
 Proof.
 move: Hret; rewrite /add_ribbon.
 case Hrib: add_ribbon_base => // [[[x y] rem]] [Hx Hy]; subst x y.
-exact: (add_ribbon_baseP is_part_base Hrib).
+exact: (add_ribbon_baseP is_part_base_init Hrib).
 Qed.
 
 Lemma included_add_ribbon : included sh res.
@@ -670,7 +729,14 @@ Lemma add_ribbon_height : hgt = count (ltn 0) (res / sh).
 Proof.
 move: Hret; rewrite /add_ribbon.
 case Hrib: add_ribbon_base => // [[[x y] rem]] [Hx Hy]; subst x y.
-exact: (add_ribbon_base_height is_part_base Hrib).
+exact: (add_ribbon_base_height is_part_base_init Hrib).
+Qed.
+
+Lemma add_ribbon_pos : pos = (first_alleq sh res).-1.
+Proof.
+move: Hret; rewrite /add_ribbon.
+case Hrib: add_ribbon_base => // [[[x y] rem]] [Hx Hy]; subst x y.
+exact: (add_ribbon_base_pos is_part_base_init Hrib).
 Qed.
 
 End Spec.
@@ -804,3 +870,33 @@ exists (sout - sumn inner); exists pos; exists h.
 by rewrite -{1}subSn // subnK ?(ltnW ltsum) // {}Hres.
 Qed.
 
+Lemma add_ribbon_eq inner outer :
+  is_part inner -> is_part outer -> ribbon inner outer ->
+  add_ribbon inner (sumn outer - sumn inner) (first_alleq inner outer).-1 =
+  Some (outer, count (ltn 0) (outer / inner)).
+Proof.
+move=> partinn partout Hrib.
+have/(ribbonP partinn partout) := Hrib => [[nbox][pos][H]Heq].
+rewrite -(add_ribbon_height partinn Heq) -(add_ribbon_pos partinn Heq) -Heq.
+by rewrite (sumn_add_ribbon partinn Heq) addnK.
+Qed.
+
+Lemma fst_add_ribbon_inj inner nbox :
+  is_part inner ->
+  {on [pred x : option _ | x], injective (omap fst \o add_ribbon inner nbox.+1)}.
+Proof.
+move=> Hpart pos1; rewrite inE => /= Hrib1 pos2.
+case Hrib1 : add_ribbon Hrib1 => [[outer1 h1]|//] _ /esym /= Hrib2.
+rewrite (add_ribbon_pos Hpart Hrib1).
+case Hrib2 : add_ribbon Hrib2 => [[outer2 h2]|//] /= [] <-.
+by rewrite (add_ribbon_pos Hpart Hrib2).
+Qed.
+
+Lemma add_ribbon_inj inner nbox :
+  is_part inner ->
+  {on [pred x : option _ | x], injective (add_ribbon inner nbox.+1)}.
+Proof.
+move=> /fst_add_ribbon_inj H r1; rewrite inE => H1 r2 Heq.
+apply: (H nbox); last by rewrite /= Heq.
+by rewrite inE /=; case: add_ribbon H1.
+Qed.
