@@ -205,31 +205,41 @@ Fixpoint ribbon inner outer :=
     else false
   else false.
 
-Fixpoint first_alleq (inner outer : seq nat) :=
-  if inner == outer then 0
-  else
-    if outer is out0 :: out then
-      if inner is inn0 :: inn then
-        (first_alleq inn out).+1
-      else size outer
-    else size inner.
+Section FirstAllEq.
 
-Lemma drop_first_alleqE inner outer :
-  drop (first_alleq inner outer) inner = drop (first_alleq inner outer) outer.
+Variable (T : eqType).
+Implicit Types (s t : seq T).
+Fixpoint first_alleq s t : nat :=
+  if s is s0 :: s' then
+    if t is t0 :: t' then
+      if s' != t' then (first_alleq s' t').+1
+      else s0 != t0
+    else size s
+  else size t.
+
+Lemma drop_first_alleqE s t :
+  drop (first_alleq s t) s = drop (first_alleq s t) t.
 Proof.
-elim: outer inner => [| out0 out IHout] [|inn0 inn]//=; try by rewrite drop_size.
-by case: eqP => [->|_] /=.
+elim: s t => [| s0 s IHs] [|t0 t]//=; try by rewrite drop_size.
+by case: eqP => [->|_] //=; case: eqP => [->|].
 Qed.
 
-Lemma first_alleq0 inner outer :
-  first_alleq inner outer = 0 -> inner = outer.
-Proof. by case: inner outer => [| out0 out] [|inn0 inn] //=; case: eqP. Qed.
+Lemma first_alleq0 s t : first_alleq s t = 0 -> s = t.
+Proof.
+by case: s t => [| s0 s] [|t0 t]//=; case: eqP => //= ->; case: eqP => // ->.
+Qed.
 
 Lemma first_alleq_eq s : first_alleq s s = 0.
-Proof. by case: s => [| s0 s]//=; rewrite eqxx. Qed.
+Proof. by case: s => [| s0 s]//=; rewrite !eqxx. Qed.
 
 Lemma first_alleq_neq s t : s != t -> first_alleq s t > 0.
-Proof. by elim: t s => [| s0 s IHs] [|t0 t]//= /negbTE ->. Qed.
+Proof.
+elim: t s => [| s0 s IHs] [|t0 t]//=.
+rewrite eqseq_cons negb_and; case: (altP (t =P s)) => //= _.
+by rewrite orbF => ->.
+Qed.
+
+End FirstAllEq.
 
 Section Test.
 (*
@@ -646,7 +656,6 @@ have := rem_add_ribbon_base_lt Hpart Hrib => /leq_trans; apply.
 by rewrite -addnBA ?leq_addr // addKn addSnnS leq_addr.
 Qed.
 
-
 Lemma add_ribbon_base_pos : pos = (first_alleq sh res).-1.
 Proof.
 move: partsh => /= /andP [Hbase Hpart].
@@ -658,17 +667,16 @@ elim: sh Hpart base Hbase nbox pos res hgt rem Hret
   case: eqP => // _ [<- _ _] /=.
   by rewrite size_nseq.
 case: p => [|p].
-  rewrite /add_ribcol /=; case: eqP => // _ [<- _ _] /=.
-   by rewrite first_alleq_eq; case: eqP.
+  rewrite /add_ribcol /=; case: eqP => // _ [<- _ _].
+  by rewrite eqxx /= subSn // minSS ltn_eqF // addnS ltnS leq_addr.
 case Hrib: add_ribbon_base => // [[[rs1 h1] rm1]].
 move: IHs => /(_ Hpart s0 Hhead l p _ _ _ Hrib) ->.
 have /add_ribbon_base_neq : is_part (s0 :: s') by rewrite /= Hhead Hpart.
 move=> /(_ _ _ _ _ _ Hrib) Hneq.
 rewrite /add_ribcol; case: (altP (rm1 =P _)) => Hrm1.
-  move=> [<-{rs}] _ _ /=; rewrite eqseq_cons eqxx (negbTE Hneq) /=.
+  move=> [<-{rs}] _ _ /=; rewrite Hneq /=.
   by move/first_alleq_neq: Hneq; case: first_alleq.
-case: (altP (rm1 =P _)) => // eqrm1 [<- _ _].
-rewrite subSn // eqseq_cons (negbTE Hneq) andbF.
+case: (altP (rm1 =P _)) => // eqrm1 [<- _ _]; rewrite Hneq.
 by move/first_alleq_neq: Hneq; case: first_alleq.
 Qed.
 
