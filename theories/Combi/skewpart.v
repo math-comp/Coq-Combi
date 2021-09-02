@@ -532,6 +532,25 @@ rewrite {}Heq addnC => /eqP; rewrite eqn_add2r => /eqP ->.
 by rewrite ltnn.
 Qed.
 
+Lemma size_add_ribbon_base : size res = maxn (size sh) pos.+1.
+Proof.
+move: partsh => /= /andP [Hbase Hpart].
+elim: sh Hpart base Hbase nbox pos res hgt rem Hret
+    => /= [_|s0 s' IHs /andP[Hhead Hpart]] bs lts0bs l p rs h rm.
+  case: (ltnP l p) => // lepl.
+  rewrite /add_ribcol; case: eqP => [_ [<- _ _] | _] /=.
+    by rewrite size_nseq.
+  by case: eqP => // _ [<- _ _] /=; rewrite size_nseq.
+case: p => [|p].
+  rewrite /add_ribcol /=; case: eqP => // _ [<- _ _] /=.
+  by rewrite maxnSS maxn0.
+case: add_ribbon_base (IHs Hpart s0 Hhead l p) => {IHs}//.
+move=> [[shres hres] remres] // /(_ _ _ _ erefl) Hres.
+rewrite /add_ribcol /=; case: (altP (_ =P _)) => [_ [<- _ _] | Hrem] /=.
+  by rewrite Hres maxnSS.
+by case: eqP => // _ [<- _ _] /=; rewrite Hres maxnSS.
+Qed.
+
 Lemma add_ribcol_ribbon_from bs inn s0 s h rm rs hs rms :
   s0 <= bs ->
   ribbon_from (s0 :: inn) (s0.+1 :: s) ->
@@ -706,6 +725,13 @@ have:= sumn_add_ribbon_base is_part_base_init Hrib.
 by rewrite (add_ribbon_base_rem0 is_part_base_init Hrib erefl) addn0 => ->.
 Qed.
 
+Lemma size_add_ribbon : size res = maxn (size sh) pos.+1.
+Proof.
+move: Hret; rewrite /add_ribbon.
+case Hrib: add_ribbon_base => // [[[x y] z]] [Hx Hy]; subst x y.
+exact: (size_add_ribbon_base is_part_base_init Hrib).
+Qed.
+
 Lemma is_part_of_add_ribbon : is_part_of_n (nbox.+1 + sumn sh) res.
 Proof.
 rewrite /is_part_of_n /= sumn_add_ribbon eqxx /=.
@@ -713,7 +739,6 @@ move: Hret; rewrite /add_ribbon.
 case Hrib: add_ribbon_base => // [[[x y] z]] [Hx Hy]; subst x y.
 by have /= /andP [] := is_part_add_ribbon_base is_part_base_init Hrib.
 Qed.
-
 
 Lemma add_ribbonP : ribbon sh res.
 Proof.
