@@ -163,6 +163,9 @@ case: (ssrnat.ltnP i n) => Hi.
   exact: size_partm.
 Qed.
 
+Lemma mpartE s i : size s <= n -> mpart s i = nth 0 s i.
+Proof. by rewrite /mpart => ->; rewrite mnmE. Qed.
+
 Lemma mpart0 : @mpart [::] = 0%MM.
 Proof. by apply mnmP => i; rewrite /mpart /= mnmE mnm0E nth_default. Qed.
 
