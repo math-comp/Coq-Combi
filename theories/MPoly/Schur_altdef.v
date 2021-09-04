@@ -148,7 +148,7 @@ move=> Hsz /hasPn H.
 rewrite /mpart Hsz.
 apply/andP; split.
 - rewrite sumn_rem_trail0.
-  rewrite -(@sum_iota_sumnE _ n); last by rewrite size_map size_enum_ord.
+  rewrite (@sumn_nth_le _ n); last by rewrite size_map size_enum_ord.
   rewrite big_mkord.
   rewrite (eq_bigr (fun i : 'I_n => nth 0 la i + mesym1 h i)%N); first last.
     move=> i _.
@@ -159,7 +159,7 @@ apply/andP; split.
     by rewrite nth_ord_enum.
   rewrite big_split /=; apply/eqP; congr (_ + _)%N.
   + rewrite -{2}(sumn_intpartn la).
-    by rewrite -(sum_iota_sumnE Hsz) big_mkord.
+    by rewrite (sumn_nth_le Hsz) big_mkord.
   + rewrite -mdeg_mesym1 /mdeg.
     rewrite -map_tnth_enum big_map big_enum; apply eq_bigr => i _.
     by rewrite mnm_tnth.
@@ -223,7 +223,7 @@ move=> Hszmu Hszla /(vb_stripP (intpartnP _) (intpartnP _)) Hstrip.
 rewrite /setdiff -sum1dep_card.
 rewrite -{2}(addKn d k).
 rewrite -{4}(sumn_intpartn la) -{2}(sumn_intpartn mu).
-rewrite -(sum_iota_sumnE Hszmu) -(sum_iota_sumnE Hszla).
+rewrite (sumn_nth_le Hszmu) (sumn_nth_le Hszla).
 set rhs := RHS.
 have {rhs} -> : rhs = (\sum_(0 <= i < n) (nth 0 mu i - nth 0 la i)).
   rewrite /rhs {rhs} /index_iota subn0.

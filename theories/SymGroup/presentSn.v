@@ -1111,7 +1111,7 @@ Lemma length_permcd c :
 Proof using.
 rewrite wordcdE => Hcode.
 have:= Hcode => /is_codeP Hcd Hsz.
-rewrite -(sum_iota_sumnE (n := size c)) // /index_iota subn0.
+rewrite (sumn_nth_le (n := size c)) // /index_iota subn0.
 have [n] := ubnPgeq (size c); elim: n => [/= |m IHm] Hm.
   by rewrite !big_nil length1.
 rewrite -(addn1 m) iota_add !big_cat /= add0n !big_seq1.
