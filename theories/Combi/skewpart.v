@@ -139,6 +139,23 @@ move=> Hinn Hout; apply (iffP idP) => [Hstrip|].
       exact: H i.+1.
 Qed.
 
+Lemma vb_strip_diffP inner outer :
+  is_part inner -> is_part outer ->
+  reflect
+    (included inner outer /\ all (geq 1) (outer / inner))
+    (vb_strip inner outer).
+Proof.
+move=> Hinn Hout; apply (iffP (vb_stripP Hinn Hout)) => [H | [Hincl H] i].
+- split; first by apply/part_includedP => // i; have /andP[]:= H i.
+  apply/(all_nthP 0) => i _ /=; rewrite nth_diff_shape.
+  by move/(_ i): H => /andP [_]; rewrite leq_subLR addn1.
+- have := Hincl => /includedP [_ /(_ i) -> /=].
+  case: (ltnP i (size outer)) => [| {H} Hsz].
+    move: H => /(all_nthP 0)/(_ i) /=.
+    by rewrite size_diff_shape nth_diff_shape leq_subLR addn1 => H{}/H.
+  by rewrite nth_default.
+Qed.
+
 Lemma vb_strip_conj inner outer :
   is_part inner -> is_part outer ->
   vb_strip inner outer -> hb_strip (conj_part inner) (conj_part outer).
