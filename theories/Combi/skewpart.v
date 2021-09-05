@@ -447,61 +447,74 @@ Fixpoint startrem acc sh nbox pos :=
     let cpos := s0 + pos in
     if c >= cpos then (acc, c - cpos)  (* c == cpos -> error *)
     else startrem acc.+1 s nbox p
-  else (acc, nbox - pos).  (* nbox <= pos -> error *)
+  else (acc + (pos - nbox), nbox - pos).  (* nbox <= pos -> error *)
 
 (* Spec : nth 0 sh start + rem <= nth 0 sh start.-1 *)
 
-Lemma startrem_acc_leq acc sh nbox pos :
-  acc <= (startrem acc sh nbox pos).1 <= (minn pos (size sh)) + acc.
+Lemma startrem_acc_geq acc sh nbox pos : acc <= (startrem acc sh nbox pos).1.
 Proof.
-elim: pos sh acc => [|p IHpos] [|s0 s] acc /=; rewrite ?leqnn ?leq_addl //.
-case: startrem (IHpos s acc.+1) => [start rem] /= /andP [/ltnW H1 H2] /=.
-case: (leqP (s0 + _) _) => H /=; first by rewrite leqnn leq_addl.
-by rewrite minSS addSnnS H1 H2.
+elim: pos sh acc => [|p IHpos] [|s0 s] acc /=; rewrite ?leqnn ?leq_addr //.
+case: startrem (IHpos s acc.+1) => [start rem] /= /ltnW Has /=.
+by case: (leqP (s0 + _) _).
 Qed.
-Lemma startrem_leq sh nbox pos :
-  (startrem 0 sh nbox pos).1 <= minn pos (size sh).
-Proof. by have:= startrem_acc_leq 0 sh nbox pos => /=; rewrite addn0. Qed.
-
 
 Lemma startrem_accE acc sh nbox pos :
   let (start, rem) := startrem acc sh nbox pos in
-  rem > 0 -> (* Success *)
   nth 0 sh (start - acc) + pos + rem = nth 0 sh pos + (start - acc) + nbox.
 Proof.
-elim: pos sh acc => [|p IHpos] [|s0 s] acc;
-                      rewrite /= ?subnn /= ?addn0 ?add0n ?subn0 //.
-  by rewrite subn_gt0 => /ltnW/subnKC.
+elim: pos sh acc => [|p IHpos] [|s0 s] acc /=;
+    rewrite /= ?sub0n ?addn0 ?subnn /= ?add0n ?subn0 ?addn0 //.
+  rewrite addKn nth_nil /= add0n.
+  by rewrite [RHS]addnC -!maxnE maxnC.
 move/(_ s acc.+1): IHpos.
-case: startrem (startrem_acc_leq acc.+1 s nbox p) => [start rem] /= Hstart.
-case: (leqP (s0 + _) _) => [Hle _ _| _ /= Hrec].
-  by rewrite subnn /= addn0 subnKC // addnC.
-move=> {}/Hrec; case: start Hstart => // start /andP[/ltnSE leas _].
-by rewrite subSS subSn //= ?(addSn, addnS) => ->.
+case: startrem (startrem_acc_geq acc.+1 s nbox p) => [start rem] /= Hstart.
+case: (leqP (s0 + _) _) => [Hle _| Hgt].
+  by rewrite subnn /= subnKC // addn0 addnC.
+case: start Hstart => // start /ltnSE Hstart.
+by rewrite subSS (subSn Hstart) /= !(addnS, addSn) => ->.
 Qed.
 Lemma startremE sh nbox pos :
   let (start, rem) := startrem 0 sh nbox pos in
-  rem > 0 -> (* Success *)
   nth 0 sh start + pos + rem = nth 0 sh pos + start + nbox.
 Proof.
 case: startrem (startrem_accE 0 sh nbox pos) => start rem.
 by rewrite subn0; apply.
 Qed.
 
+Lemma startrem_acc_leq acc sh nbox pos :
+  let (start, rem) := startrem acc sh nbox pos in
+  0 < rem -> (* Success *)
+  start <= (minn pos (size sh)) + acc.
+Proof.
+elim: pos sh acc => [|p IHpos] [|s0 s] acc /=;
+    rewrite /= ?sub0n ?addn0 ?subn0 ?min0n ?addn0 //.
+  rewrite subn_gt0 => /ltnW; rewrite -subn_eq0 => /eqP ->.
+  by rewrite minn0 addn0 add0n.
+case: startrem (IHpos s acc.+1) => [start rem] /=.
+case: (leqP (s0 + _) _) => [_ _ _ |H] /=; first by rewrite leq_addl.
+by rewrite minSS addSnnS.
+Qed.
+Lemma startrem_leq sh nbox pos :
+  let (start, rem) := startrem 0 sh nbox pos in
+  0 < rem -> (* Success *)
+  start <= (minn pos (size sh)).
+Proof. by have:= startrem_acc_leq 0 sh nbox pos => /=; rewrite addn0. Qed.
+
 Lemma startremP acc sh nbox pos :
   is_part sh ->
   let (start, rem) := startrem acc sh nbox pos in
-  0 < rem ->
+  0 < rem -> (* Success *)
   (start == acc) || (nth 0 sh (start - acc) + rem <= nth 0 sh (start - acc).-1).
 Proof.
-elim: pos sh acc => [|p IHpos] [|s0 s] acc; rewrite /= ?eqxx //.
+elim: pos sh acc => [|p IHpos] [|s0 s] acc; rewrite /= ?sub0n ?addn0 ?eqxx //.
+  rewrite subn_gt0 => _ /ltnW; rewrite -subn_eq0 => /eqP ->.
+  by rewrite addn0 eqxx.
 move=> /andP[Hhead Hpart].
 move/(_ s acc.+1 Hpart): IHpos => /=.
 have Heq := startrem_accE acc.+1 s nbox p.
-have:= startrem_acc_leq acc.+1 s nbox p => /andP [Hstart _].
+have:= startrem_acc_geq acc.+1 s nbox p => Hstart.
 case: startrem  => [start rem]/= in Heq Hstart * => Hrec.
 case (ltnP 0 rem) => [Hok | {Heq Hrec}].
-  move/(_ Hok) in Heq.
   move/(_ Hok) : Hrec => /orP[/eqP eqstart | Hleq {Heq}]/=.
     case: (leqP (s0 + _) _) => [_ | Hlt _]; first by rewrite eqxx.
     apply/orP; right; rewrite eqstart subSn // subnn /=.
@@ -830,7 +843,7 @@ Lemma sumn_add_ribbon : sumn res = nbox.+1 + sumn sh.
 Proof.
 move: Hret; rewrite /add_ribbon.
 move: (startremE sh nbox.+1 pos) (startrem_leq sh nbox.+1 pos).
-case: startrem => start [|rem]//= /(_ (ltn0Sn _)) Heq lesmin [<- _].
+case: startrem => start [|rem]// Heq /(_ (ltn0Sn _)) lesmin [<- _].
 have:= lesmin; rewrite leq_min => /andP [lespos lessz].
 rewrite /add_ribbon_start_stop !sumn_cat /= sumn_mapS.
 rewrite size_drop size_take -/(minn _ _).
@@ -847,7 +860,7 @@ Lemma is_part_add_ribbon : is_part res.
 Proof.
 move: Hret; rewrite /add_ribbon.
 move: (startrem_leq sh nbox.+1 pos).
-case Hstartrem : startrem => [start [|rem]] //= lesmin [<- _].
+case Hstartrem : startrem => [start [|rem]]//=  /(_ (ltn0Sn _)) lesmin [<- _].
 exact: (is_part_add_ribbon_start_stop _ _ _ Hstartrem).
 Qed.
 Lemma is_part_of_add_ribbon : is_part_of_n (nbox.+1 + sumn sh) res.
@@ -859,7 +872,7 @@ Lemma size_add_ribbon : size res = maxn (size sh) pos.+1.
 Proof.
 move: Hret; rewrite /add_ribbon.
 move: (startrem_leq sh nbox.+1 pos).
-case: startrem => start [|rem]//= lesmin [<- _].
+case: startrem => start [|rem]//= /(_ (ltn0Sn _)) lesmin [<- _].
 have:= lesmin; rewrite leq_min => /andP [lespos lessz].
 rewrite /add_ribbon_start_stop !size_cat /= size_map size_nseq.
 rewrite !size_drop !size_take.
@@ -877,7 +890,7 @@ Proof.
 move: Hret; rewrite /add_ribbon => H.
 apply/(ribbonP partsh is_part_add_ribbon).
 move: (startrem_leq sh nbox.+1 pos) H.
-case Hstartrem : startrem => [start [|rem]] //= lesmin [<- _].
+case: startrem => start [|rem]//= /(_ (ltn0Sn _)) lesmin [<- _].
 exists start; exists pos.
 exact: add_ribbon_start_stopP.
 Qed.
