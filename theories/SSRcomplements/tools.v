@@ -136,13 +136,18 @@ Qed.
 End SeqLemmas.
 
 
+(** ** [minn] related lemmas *)
+Lemma minSS i j : minn i.+1 j.+1 = (minn i j).+1.
+Proof. by rewrite /minn ltnS; case ltnP. Qed.
+
+
 (** ** [sumn] related lemmas *)
 Lemma sumn_map_condE (T : Type) (s : seq T) (f : T -> nat) (P : pred T) :
   sumn [seq f i | i <- s & P i] = \sum_(i <- s | P i) f i.
 Proof. by rewrite /sumn foldrE big_map big_filter. Qed.
 
 Lemma sumn_mapE (T : Type) (s : seq T) (f : T -> nat) :
-  sumn [seq f i | i <- s] =\sum_(i <- s) f i.
+  sumn [seq f i | i <- s] = \sum_(i <- s) f i.
 Proof. by rewrite -sumn_map_condE filter_predT. Qed.
 
 Lemma sum_minn s b :
@@ -176,7 +181,7 @@ case: (ltnP r (size s)) => [/ltnW ltrsz | leszr]; first last.
 rewrite sumnE (big_nth 0) size_drop -{3}(add0n r) big_addn.
 by apply eq_bigr => i _; rewrite nth_drop addnC.
 Qed.
- 
+
 Lemma sumn_nth_le l n :
   size l <= n -> sumn l = \sum_(0 <= i < n) nth 0 l i.
 Proof. by rewrite -sumn_take => /take_oversize ->. Qed.

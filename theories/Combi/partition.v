@@ -359,15 +359,23 @@ Proof. by move=> /= /andP []. Qed.
 Lemma is_part_behead sh : is_part sh -> is_part (behead sh).
 Proof. case: sh => [//| l0 sh] /=; exact: is_part_consK. Qed.
 
-Lemma is_part_rconsK sh sn : is_part (rcons sh sn) -> is_part sh.
+Lemma is_part_subseq sh1 sh2 : subseq sh1 sh2 -> is_part sh2 -> is_part sh1.
 Proof.
-case: sn => [/= | sn].
-  by move/is_partP => []; rewrite last_rcons.
-elim: sh => [//= | s0 sh IHsh].
-rewrite rcons_cons /= => /andP [Hhead /IHsh {IHsh} ->].
-rewrite andbT; case: sh Hhead => [//= | s1 sh]; first exact: leq_ltn_trans.
-by rewrite rcons_cons.
+rewrite !is_part_sortedE => Hsub /andP[Hsort H0].
+rewrite (subseq_sorted _ Hsub Hsort) //=.
+by move: H0; apply contra => /(mem_subseq Hsub).
 Qed.
+
+Lemma is_part_rconsK sh sn : is_part (rcons sh sn) -> is_part sh.
+Proof. exact/is_part_subseq/subseq_rcons. Qed.
+
+Lemma is_part_catl sh1 sh2 : is_part (sh1 ++ sh2) -> is_part sh2.
+Proof. exact/is_part_subseq/suffix_subseq. Qed.
+Lemma is_part_catr sh1 sh2 : is_part (sh1 ++ sh2) -> is_part sh1.
+Proof. exact/is_part_subseq/prefix_subseq. Qed.
+
+
+(** Boxes in a partitions *)
 
 Lemma in_part_le (sh : seq nat) r c j k :
   is_part sh -> in_shape sh (r, c) -> j <= r -> k <= c -> in_shape sh (j, k).
@@ -387,6 +395,7 @@ case Hnth : (nth 0 sh i.+1) => [//|n].
 apply: (H i.+1 n i n (leqnSn i) (leqnn n)).
 by rewrite Hnth.
 Qed.
+
 
 (** Equality of partitions *)
 Lemma part_eqP p q :
@@ -579,10 +588,6 @@ apply/idP/idP.
   by case: (nth 0 sh i) => pi //= _ ->.
 Qed.
 
-Lemma minn0 k : minn k 0 = 0.
-Proof. by rewrite /minn ltn0. Qed.
-Lemma minSS i j : minn i.+1 j.+1 = (minn i j).+1.
-Proof. by rewrite /minn ltnS; case ltnP. Qed.
 
 Fixpoint decr_nth v i {struct i} :=
   if v is n :: v' then
