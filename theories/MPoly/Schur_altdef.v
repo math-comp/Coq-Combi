@@ -1564,22 +1564,22 @@ rewrite !mulmnE !mnm1E -val_eqE /=.
 have := startrem_leq p d.+1 i; rewrite startremeq => /(_ lt0rem) /= lesmin.
 case: (altP (j =P st)) => [/= eqjst |].
   subst j; apply/eqP.
-  rewrite (nth_add_ribbon_start _ lesmin) Tij_j // eqxx muln1.
+  rewrite (nth_add_ribbon_start _ lesmin) cycleij_j // eqxx muln1.
   rewrite addnAC -(eqn_add2r (st + i)) {1}(addnC st i) -!addnA.
   rewrite subn1 /= ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
   rewrite ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
   rewrite ![n0 + _]addnC !addnA [_ + _ + i]addnAC [_ + _ + st]addnAC.
   by have:= startremE p d.+1 i; rewrite startremeq => ->.
 rewrite neq_ltn => /orP [ltjst | ltstj].
-  rewrite Tij_lt // nth_add_ribbon_lt_start //.
+  rewrite cycleij_lt // nth_add_ribbon_lt_start //.
   by rewrite (gtn_eqF (leq_trans ltjst lesti)) muln0 addn0.
 case: (ltnP i j) => [/= ltij | leji].
-  rewrite nth_add_ribbon_stop_lt //.
-  rewrite (out_perm (perm_on_Tij st i) (x := j)); last by rewrite inE -ltnNge.
+  rewrite nth_add_ribbon_stop_lt // cycleij_gt //.
   by rewrite (ltn_eqF ltij) muln0 addn0.
 rewrite -(ltn_predK ltstj) nth_add_ribbon_in //; first last.
   by rewrite (ltn_predK ltstj) ltstj leji.
-rewrite Tij_in ?ltstj ?leji // inordK; last by rewrite (ltn_predK ltstj) ltnW.
+rewrite cycleij_in ?ltstj ?leji // inordK; first last.
+  by rewrite (ltn_predK ltstj) ltnW.
 case: j ltstj leji => [[|j]//= Hj] _ /gtn_eqF ->.
 by rewrite muln0 addn0 addSnnS subnSK // subn1.
 Qed.
