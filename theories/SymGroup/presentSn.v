@@ -436,36 +436,36 @@ Definition eltrL := (eltrL_ord, tpermL).
 Definition eltrR := (eltrR_ord, tpermR).
 Definition eltrD := (eltrD_ord, tpermD).
 
-Lemma Tij_j (i j : 'I_(n.+1)) :
-  i <= j -> 's_[iota i (j - i)] i = j.
+Lemma prodsiota_mi (m : 'I_n.+1) i :
+  i <= m -> 's_[(iota (m - i) i)] (inord (m - i)) = m.
 Proof using.
-move=> Hij; rewrite -{3}(inord_val i) -{1 3}(subKn Hij).
-elim: (j - i) (leq_subr i j) {Hij} => [_ | d IHd] {i}.
-  by rewrite subn0 /= big_nil perm1 inord_val.
-rewrite /= big_cons => Hd.
-by rewrite permM eltrL (subnSK Hd) (IHd (ltnW Hd)).
+elim: i => [| i IHi] /= Hm.
+  by rewrite subn0 inord_val big_nil perm1.
+rewrite big_cons permM eltrL.
+rewrite subnS prednK; last by rewrite subn_gt0.
+by apply: IHi; exact: ltnW.
 Qed.
 
-Lemma perm_on_Tij (i j : 'I_(n.+1)) :
-  perm_on [set k : 'I_n.+1 | k <= j] 's_[iota i (j - i)].
+Lemma prodsiota_ltmi i (m u : 'I_n.+1) :
+  i <= m -> u < m - i -> 's_[(iota (m - i) i)] u = u.
 Proof using.
-rewrite /perm_on; apply/subsetP => k; rewrite !inE.
-apply contraR; rewrite -ltnNge => Hjk.
-case (ltnP j i) => [/ltnW | Hij].
-- by rewrite /leq => /eqP -> /=; rewrite big_nil perm1.
-- rewrite -{1}(subKn Hij).
-  elim: (j - i) (leq_subr i j) {Hij} => [| d IHd] {i}.
-    by rewrite big_nil perm1.
-  rewrite /= big_cons => Hd.
-  rewrite permM eltrD ?(subnSK Hd); first exact: IHd (ltnW Hd).
-  + have:= Hjk; apply contraL => /eqP <-.
-    rewrite -ltnNge inordK; first by rewrite ltnS; apply leq_subr.
-    rewrite ltnS; apply (leq_trans (leq_subr _ j)).
-    by rewrite -ltnS; apply (leq_trans Hjk); apply ltnW; exact: ltn_ord.
-  + have:= Hjk; apply contraL => /eqP <-.
-    rewrite -ltnNge inordK; first by rewrite ltnS; apply leq_subr.
-    rewrite ltnS; apply (leq_trans (leq_subr _ j)).
-    by rewrite -ltnS; apply (leq_trans Hjk); apply ltnW; exact: ltn_ord.
+elim: i => [| i IHi] /= Hm Hu.
+  by rewrite big_nil perm1.
+rewrite big_cons permM eltrD; first last.
+- apply/negP => /eqP Hu1 {IHi}; subst u.
+  move: Hu; rewrite subnS prednK; last by rewrite subn_gt0.
+  rewrite inordK; last by apply: (leq_trans (leq_subr _ _)); rewrite -ltnS.
+  by rewrite ltnNge leq_pred.
+- apply/negP => /eqP Hu1 {IHi}; subst u.
+  move: Hu; rewrite subnS.
+  rewrite inordK; first last.
+    apply: (leq_trans (leq_pred _)).
+    by apply: (leq_trans (leq_subr _ _)); rewrite -ltnS.
+  by rewrite ltnn.
+rewrite subnS prednK; last by rewrite subn_gt0.
+apply: (IHi (ltnW Hm) (leq_trans Hu _)).
+rewrite subnS.
+by move: Hm; rewrite -subn_gt0; case: (m - i).
 Qed.
 
 Lemma prodsK w : 's_[w] * 's_[rev w] = 1.
@@ -959,6 +959,76 @@ Let word_of_partcocode m c : seq nat :=
   flatten [seq rev (iota (m + i - nth 0 c i) (nth 0 c i)) |
            i <- iota 0 (size c)].
 
+Lemma Tij_j (i j : 'I_n) :
+  i <= j -> 's_[iota i (j - i)] i = j.
+Proof using.
+move=> leij; rewrite -{3}(inord_val i) -{1 3}(subKn leij).
+exact/prodsiota_mi/leq_subr.
+Qed.
+
+Lemma Tij_lt (i j k : 'I_n) :
+  i <= j -> k < i -> 's_[iota i (j - i)] k = k.
+Proof using.
+move=> leij ltki; rewrite -{1}(subKn leij).
+apply: prodsiota_ltmi; first exact: leq_subr.
+by rewrite subKn.
+Qed.
+
+Lemma perm_on_Tij (i j : 'I_n) :
+  perm_on [set k : 'I_n | k <= j] 's_[iota i (j - i)].
+Proof using.
+rewrite /perm_on; apply/subsetP => k; rewrite !inE.
+apply contraR; rewrite -ltnNge => ltjk.
+case (ltnP j i) => [/ltnW | leij].
+- by rewrite /leq => /eqP -> /=; rewrite big_nil perm1.
+- rewrite -{1}(subKn leij).
+  elim: (j - i) (leq_subr i j) {leij} => [| d IHd] {i}.
+    by rewrite big_nil perm1.
+  rewrite /= big_cons => Hd.
+  rewrite permM eltrD ?(subnSK Hd); first exact: IHd (ltnW Hd).
+  + have:= ltjk; apply contraL => /eqP <-.
+    rewrite -ltnNge inordK; first by rewrite ltnS; apply leq_subr.
+    rewrite ltnS; apply (leq_trans (leq_subr _ j)).
+    by rewrite -ltnS; apply (leq_trans ltjk); apply ltnW; exact: ltn_ord.
+  + have:= ltjk; apply contraL => /eqP <-.
+    rewrite -ltnNge inordK; first by rewrite ltnS; apply leq_subr.
+    rewrite ltnS; apply (leq_trans (leq_subr _ j)).
+    by rewrite -ltnS; apply (leq_trans ltjk); apply ltnW; exact: ltn_ord.
+Qed.
+
+Lemma Tij_gt (i j k : 'I_n) :
+  j < k -> 's_[iota i (j - i)] k = k.
+Proof using.
+move=> ltjk.
+by rewrite (out_perm (perm_on_Tij i j) (x := k)) // inE -ltnNge.
+Qed.
+
+Lemma Tij_inS (i j k : 'I_n) :
+  i <= k < j -> 's_[iota i (j - i)] (inord k.+1) = k.
+Proof.
+move=> /andP[lejk ltkj]; have ltij := leq_ltn_trans lejk ltkj.
+have lekj := ltnW ltkj.
+have -> /= : iota i (j - i) = iota i (k - i) ++ iota k (j - k.+1).+1.
+  rewrite subnS prednK ?subn_gt0 //.
+  suff -> : (j - i) = (k - i) + (j - k) by rewrite iotaD subnKC.
+  by rewrite addnC addnBA // subnK.
+rewrite big_cat /= big_cons permM Tij_gt //; first last.
+  by rewrite inordK // ltnS (leq_trans ltkj) // -ltnS.
+rewrite permM eltrR_ord.
+have Hk1 := inordK (leq_ltn_trans ltkj (ltn_ord _)).
+by rewrite -Hk1 Tij_lt // Hk1.
+Qed.
+
+Lemma Tij_in (i j k : 'I_n) :
+  i < k <= j -> 's_[iota i (j - i)] k = (inord k.-1).
+Proof.
+move=> /andP[ltik lekj].
+have eqk1 : val k = (inord k.-1 : 'I_n).+1.
+  by rewrite inordK ?(ltn_predK ltik) // ltnW.
+rewrite -{1}(inord_val k) {1}eqk1 Tij_inS //.
+by rewrite -ltnS -eqk1 ltik.
+Qed.
+
 Lemma perm_on_cocode_recP m c s0 s :
   m <= n ->
   is_partcode m c ->
@@ -1025,46 +1095,6 @@ apply contraR; rewrite -leqNgt => Hu; apply/eqP/tpermD.
   by have:= leq_trans Hj1m Hu; rewrite Hju ltnn.
 Qed.
 
-Lemma perm_onV H s : perm_on H s -> perm_on H s^-1.
-Proof using.
-rewrite /perm_on => /subsetP Hsub; apply/subsetP => i.
-rewrite inE => Hi; apply Hsub; rewrite inE.
-move: Hi; apply contra => /eqP {1}<-.
-by rewrite permK.
-Qed.
-
-Lemma prods_mi (m : 'I_n) i :
-  i <= m -> 's_[(iota (m - i) i)] (inord (m - i)) = m.
-Proof using.
-elim: i => [| i IHi] /= Hm.
-  by rewrite subn0 inord_val big_nil perm1.
-rewrite big_cons permM eltrL.
-rewrite subnS prednK; last by rewrite subn_gt0.
-by apply: IHi; exact: ltnW.
-Qed.
-
-Lemma prods_ltmi i (m u : 'I_n) :
-  i <= m -> u < m - i -> 's_[(iota (m - i) i)] u = u.
-Proof using.
-elim: i => [| i IHi] /= Hm Hu.
-  by rewrite big_nil perm1.
-rewrite big_cons permM eltrD; first last.
-- apply/negP => /eqP Hu1 {IHi}; subst u.
-  move: Hu; rewrite subnS prednK; last by rewrite subn_gt0.
-  rewrite inordK; last by apply: (leq_trans (leq_subr _ _)); rewrite -ltnS.
-  by rewrite ltnNge leq_pred.
-- apply/negP => /eqP Hu1 {IHi}; subst u.
-  move: Hu; rewrite subnS.
-  rewrite inordK; first last.
-    apply: (leq_trans (leq_pred _)).
-    by apply: (leq_trans (leq_subr _ _)); rewrite -ltnS.
-  by rewrite ltnn.
-rewrite subnS prednK; last by rewrite subn_gt0.
-apply: (IHi (ltnW Hm) (leq_trans Hu _)).
-rewrite subnS.
-by move: Hm; rewrite -subn_gt0; case: (m - i).
-Qed.
-
 Lemma perm_on_prods_length_ord s i (m : 'I_n) :
   i <= m -> perm_on [set k : 'I_n | k < m] s ->
   length (s * 's_[(rev (iota (m - i) i))]) = length s + i.
@@ -1083,10 +1113,10 @@ rewrite length_add1R.
 - have -> : Ordinal Ho = inord (m - i.+1) by apply val_inj => /=; rewrite inordK.
   rewrite invMg !permM inordK // {IHi}.
   rewrite !subnS prednK; last by rewrite subn_gt0.
-  rewrite {H Ho} prodsV invgK (prods_mi (ltnW Hm)).
+  rewrite {H Ho} prodsV invgK (prodsiota_mi (ltnW Hm)).
   have : m \notin [set k : 'I_n | k < m] by rewrite inE ltnn.
   move/(out_perm (perm_onV Hon)) ->.
-  rewrite (prods_ltmi (ltnW Hm)); first last.
+  rewrite (prodsiota_ltmi (ltnW Hm)); first last.
     rewrite inordK; first by move: Hm; rewrite -subn_gt0; case: (m - i).
     apply: (leq_trans (leq_pred _)).
     by apply: (leq_trans (leq_subr _ _)); rewrite -ltnS.

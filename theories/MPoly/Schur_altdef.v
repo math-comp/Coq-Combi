@@ -1498,7 +1498,7 @@ Local Notation "m # s" := [multinom m (s i) | i < n].
 Lemma act_eltrK i : involutive (fun m : 'X_{1..n} => m # 's_i).
 Proof. by move=> m; apply/mnmP => j; rewrite !mnmE eltrK. Qed.
 
-Lemma alt_straight_rule (m : 'X_{1..n}) (i : nat) :
+Lemma alt_straight_step (m : 'X_{1..n}) (i : nat) :
   i < n0 -> m (inord i.+1) != 0%N ->
   'a_(m + rho) = - 'a_(m # 's_i - U_(inord i) + U_(inord i.+1) + rho).
 Proof.
@@ -1518,9 +1518,73 @@ case: (altP (inord i.+1 =P j)) => [<-{j neqij} /= | neqi1j].
 by rewrite tpermD // (negbTE neqij) (negbTE neqi1j) subn0 addn0.
 Qed.
 
-Lemma is_part_catl sh1 sh2 : is_part (sh1 ++ sh2) -> is_part sh2.
-Proof. by elim: sh1 => // s0 s IHs /= /andP [_ /IHs]. Qed.
+Lemma alt_straight_add_ribbon0 (p : seq nat) (i : 'I_n) (d : nat) :
+  is_part p -> size p <= n ->
+  add_ribbon p d.+1 i == None -> 'a_(mpart p + rho + U_(i) *+ d.+1) = 0%R.
+Proof.
+rewrite /add_ribbon => Hpart Hsz.
+case: startrem (startremE p d.+1 i) (startrem_leq_pos p d.+1 i) => a [|b]//= .
+rewrite addn0 => Heq leai _.
+move: leai; rewrite leq_eqVlt => /orP [/eqP Hai | ltai].
+  by exfalso; move: Heq => /eqP; rewrite Hai -[X in X == _]addn0 !eqn_add2l.
+have ltan := ltn_trans ltai (ltn_ord i).
+set mon := (M in 'a_(M)).
+suff /alt_alternate -> : mon i = mon (Ordinal ltan) => //.
+  by rewrite -val_eqE /= (gtn_eqF ltai).
+apply/eqP; rewrite {}/mon !mnmE !mpartE //=.
+rewrite !mulmnE !mnm1E eqxx -val_eqE muln1 /= (gtn_eqF ltai) muln0 addn0.
+rewrite addnAC -(eqn_add2r (a + i)) {1}(addnC a i) -!addnA.
+rewrite subn1 /= ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
+rewrite ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
+by rewrite ![n0 + _]addnC !addnA [_ + _ + a]addnAC Heq.
+Qed.
 
+Lemma alt_straight_add_ribbon (p : seq nat) (i : 'I_n) (d : nat) :
+  is_part p -> size p <= n ->
+  forall res h, add_ribbon p d.+1 i = Some (res, h) ->
+    'a_(mpart p + rho + U_(i) *+ d.+1) = (-1) ^+ h.-1 *: 'a_(mpart res + rho).
+Proof.
+rewrite /alternpol => Hpart ltsn res h Hrib.
+have := size_add_ribbon Hrib; move: Hrib; rewrite /add_ribbon.
+case startremeq : startrem (startrem_leq_pos p d.+1 i) => [start rem]// lesti.
+case: ltnP => // lt0rem [<- <-] /= Hsz.
+have starto := leq_ltn_trans lesti (ltn_ord i).
+have : start = val (Ordinal starto) by [].
+move: (Ordinal starto) => st Hstart; subst start.
+rewrite (reindex_inj (mulgI 's_[iota st (i - st)]^-1)%g) /= scaler_sumr.
+apply: eq_bigr => s _; rewrite scalerA; congr (_ *: _).
+  rewrite odd_permM odd_permV -odd_size_permE; first last.
+    apply/allP => j; rewrite mem_iota /= subnKC // => /andP[_].
+    by move/leq_ltn_trans/(_ (ltn_ord i)).
+  by rewrite size_iota signr_addb signr_odd.
+rewrite msymMm msymX invgK; congr (msym s 'X_[_]).
+apply mnmP => j; rewrite !mnmE !mpartE //; first last.
+  by rewrite Hsz geq_max ltsn ltn_ord.
+rewrite !mulmnE !mnm1E -val_eqE /=.
+have := startrem_leq p d.+1 i; rewrite startremeq => /(_ lt0rem) /= lesmin.
+case: (altP (j =P st)) => [/= eqjst |].
+  subst j; apply/eqP.
+  rewrite (nth_add_ribbon_start _ lesmin) Tij_j // eqxx muln1.
+  rewrite addnAC -(eqn_add2r (st + i)) {1}(addnC st i) -!addnA.
+  rewrite subn1 /= ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
+  rewrite ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
+  rewrite ![n0 + _]addnC !addnA [_ + _ + i]addnAC [_ + _ + st]addnAC.
+  by have:= startremE p d.+1 i; rewrite startremeq => ->.
+rewrite neq_ltn => /orP [ltjst | ltstj].
+  rewrite Tij_lt // nth_add_ribbon_lt_start //.
+  by rewrite (gtn_eqF (leq_trans ltjst lesti)) muln0 addn0.
+case: (ltnP i j) => [/= ltij | leji].
+  rewrite nth_add_ribbon_stop_lt //.
+  rewrite (out_perm (perm_on_Tij st i) (x := j)); last by rewrite inE -ltnNge.
+  by rewrite (ltn_eqF ltij) muln0 addn0.
+rewrite -(ltn_predK ltstj) nth_add_ribbon_in //; first last.
+  by rewrite (ltn_predK ltstj) ltstj leji.
+rewrite Tij_in ?ltstj ?leji // inordK; last by rewrite (ltn_predK ltstj) ltnW.
+case: j ltstj leji => [[|j]//= Hj] _ /gtn_eqF ->.
+by rewrite muln0 addn0 addSnnS subnSK // subn1.
+Qed.
+
+(*
 Lemma alt_straight_empty_rec lft (i : 'I_n) (d : nat) :
   i > size lft ->
   d - i >= size lft ->
@@ -1690,5 +1754,5 @@ move: Hbase Hsz;rewrite -(cat1s pk) catA => {}/IHp H{}/H /=; apply.
 rewrite last_cat /= -{}Hrib; congr add_ribbon_base.
 by rewrite Hi subSS size_cat /= addn1 subnS Hdiff.
 Qed.
-
+*)
 End AlternStraigten.
