@@ -450,7 +450,7 @@ Qed.
 Lemma prods_iota_ltmi i (m u : 'I_n) :
   u < m - i -> 's_[(iota (m - i) i)] u = u.
 Proof using.
-rewrite big_seq=> ltumi; apply big_ind.
+rewrite big_seq=> ltumi; elim/big_ind: _.
 - by rewrite perm1.
 - by move=> s t Hs Ht; rewrite permM Hs Ht.
 move=> j; rewrite mem_iota.
@@ -480,7 +480,7 @@ Qed.
 Lemma cycleij_gt (i j : nat) (k : 'I_n) :
   j < k -> 's_[index_iota i j] k = k.
 Proof using.
-move=> ltij; rewrite big_seq; apply big_ind.
+move=> ltij; rewrite big_seq; elim/big_ind: _.
 - by rewrite perm1.
 - by move=> s t Hs Ht; rewrite permM Hs Ht.
 move=> u; rewrite mem_iota => /andP[leiu].
