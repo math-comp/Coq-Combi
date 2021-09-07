@@ -1498,9 +1498,6 @@ Local Notation rho := (rho n).
 Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
 Local Notation "m # s" := [multinom m (s i) | i < n].
 
-Lemma act_eltrK i : involutive (fun m : 'X_{1..n} => m # 's_i).
-Proof. by move=> m; apply/mnmP => j; rewrite !mnmE eltrK. Qed.
-
 Lemma alt_straight_step (m : 'X_{1..n}) (i : nat) :
   i < n0 -> m (inord i.+1) != 0%N ->
   'a_(m + rho) = - 'a_(m # 's_i - U_(inord i) + U_(inord i.+1) + rho).
