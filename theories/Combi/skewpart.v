@@ -227,6 +227,7 @@ Definition ribbon_on start stop inner outer :=
      forall i, start <= i < stop -> nth 0 outer i.+1 = (nth 0 inner i).+1,
      nth 0 inner start < nth 0 outer start &
      forall i, i < start -> nth 0 outer i = nth 0 inner i].
+Definition ribbon_height inner outer := count (ltn 0) (outer / inner).
 
 Lemma ribbon_on_start_stop start stop inner outer :
   ribbon_on start stop inner outer -> start <= stop.
@@ -267,6 +268,48 @@ rewrite /ribbon_on; split => [ |[/eqP ->]] [Hsi Hsis Hs His].
 - split; first exact/eqP/esym/(His _ (ltn0Sn _)).
   split=> // i Hi; [exact: (Hsi i.+1) | exact: (Hsis i.+1) | exact: (His i.+1)].
 - split=> //-[|i] Hi//=; [exact: Hsi | exact: Hsis | exact: His].
+Qed.
+
+Lemma ribbon_on0_height stop inner outer :
+  is_part inner -> is_part outer -> ribbon_on 0 stop inner outer ->
+  stop.+1 = ribbon_height inner outer.
+Proof.
+rewrite /ribbon_height => partinn.
+move=> /ribbon_on_stop_lt +/[dup] => H{}/H ltszsout [Hsi Hsis H0 _].
+rewrite -(cat_take_drop stop.+1 (outer / inner)) count_cat.
+rewrite (eq_in_count (a2 := xpredT)); first last.
+  move=> x Hin /=; rewrite -(nth_index 0 (mem_take Hin)).
+  move: (index _ _) (index_ltn Hin) => i; rewrite ltnS => ltis.
+  rewrite nth_diff_shape subn_gt0.
+  case: i ltis => [|i ltis]; first by rewrite H0.
+  rewrite Hsis // ltnS.
+  by move: partinn => /is_partP [_ ->].
+rewrite count_predT (eq_in_count (a2 := xpred0)); first last.
+  move=> x /(nth_index 0) <- /=; move: (index _ _) => i.
+  rewrite nth_drop addSn nth_diff_shape subn_gt0.
+  by rewrite Hsi ?ltnn // ltnS leq_addr.
+rewrite count_pred0 addn0 size_take size_diff_shape.
+by rewrite -/(minn _ _) (minn_idPl ltszsout).
+Qed.
+
+Lemma ribbon_on_height start stop inner outer :
+  is_part inner -> is_part outer ->
+  ribbon_on start stop inner outer ->
+  (stop - start).+1 = ribbon_height inner outer.
+Proof.
+elim: start => [|start IHst] in stop inner outer * => partinn partout Hrib.
+  by rewrite subn0 (ribbon_on0_height partinn partout Hrib).
+have := (ribbon_on_start_stop Hrib).
+case: stop IHst Hrib => // stop IHst Hrib Htss.
+have := ribbon_on_start_le partout Hrib.
+case: inner => // inn0 inn in partinn Hrib * => _.
+move/is_part_consK in partinn.
+have := ribbon_on_stop_lt partout Hrib.
+case: outer => // out0 out in partout Hrib * => _.
+move/is_part_consK in partout.
+move: Hrib; rewrite /ribbon_height ribbon_onSS => [[/eqP eq0 Hrib]] /=.
+rewrite {}eq0 subnn ltnn add0n subSS.
+exact: IHst.
 Qed.
 
 Lemma ribbon_on_inj inner outer start1 stop1 start2 stop2 :
@@ -372,6 +415,7 @@ apply (iffP orP) => [[/andP[lt0]/orP[/eqP Heq|] | /andP[/eqP eq0 Hrib]] | ].
   rewrite ltnn eqxx /=; right.
   by apply/IHinn => //; exists start; exists stop.
 Qed.
+
 
 Section Test.
 (*
@@ -931,6 +975,15 @@ Qed.
 
 Lemma included_add_ribbon : included sh res.
 Proof. exact: ribbon_included (add_ribbonP). Qed.
+
+Lemma add_ribbon_height : hgt = ribbon_height sh res.
+Proof.
+move: is_part_add_ribbon.
+move: Hret (startrem_leq sh nbox.+1 pos); rewrite /add_ribbon.
+case: startrem => start [|rem]//= [<- <-] /(_ (lt0n _)) Hstart Hpart.
+apply: ribbon_on_height => //.
+exact: add_ribbon_start_stopP.
+Qed.
 
 End Spec.
 
