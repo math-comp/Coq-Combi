@@ -1142,6 +1142,13 @@ Proof. by elim: s => [| s0 s IHs] //=; rewrite subn0; case: n. Qed.
 Definition outer_shape inner size_seq :=
   [seq p.1 + p.2 | p <- zip (pad 0 (size (size_seq)) inner) size_seq].
 
+
+Lemma diff_shape_eq s : s / s = nseq (size s) 0.
+Proof. by elim: s => [|s0 a IHs] //=; rewrite subnn IHs. Qed.
+
+Lemma sumn_diff_shape_eq s : sumn (s / s) = 0.
+Proof. by rewrite diff_shape_eq sumn_nseq mul0n. Qed.
+
 Lemma size_diff_shape inner outer : size (outer / inner) = size outer.
 Proof.
 elim: inner outer => [//= | inn0 inn IHinn] /= [//= | out0 out] /=.
