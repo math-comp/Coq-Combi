@@ -47,6 +47,10 @@ Variable (T : eqType).
 Implicit Type s w : seq T.
 Implicit Type a b : T.
 
+Lemma drop_nilE s m :
+  (drop m s == [::]) = (size s <= m).
+Proof. by elim: m s => [|m IHm] [|s0 s] //=; rewrite IHm ltnS. Qed.
+
 Lemma cons_head_behead x s : (s != [::]) -> head x s :: behead s = s.
 Proof using. by case s. Qed.
 
@@ -131,6 +135,22 @@ case eqP => [<- | /eqP Hneq].
     * by apply: nth_set_nth_expand; rewrite Hjsz /= ltn_neqAle Hneq Hij.
     * rewrite nth_default; first by [].
       by rewrite size_set_nth /maxn; case (ltnP i.+1 (size l)).
+Qed.
+
+Lemma eq_from_nth_notin x0 s1 s2 :
+  x0 \notin s1 -> x0 \notin s2 ->
+  (forall i : nat, nth x0 s1 i = nth x0 s2 i) -> s1 = s2.
+Proof.
+wlog Hpq : s1 s2 / (size s1) <= (size s2).
+  move=> Hwlog; case: (leqP (size s1) (size s2)); first exact: Hwlog.
+  by move=> /ltnW/Hwlog H +{}/H => +H => {}/H Heq Hnth; rewrite Heq.
+move=> x0s1 x0s2 Heq; apply: (eq_from_nth (x0 := x0))=> [|i _ //].
+apply anti_leq; rewrite {}Hpq/=.
+case: s2 x0s2 Heq => [//|h2 s2'] Hnotin Heq.
+apply/contraR: Hnotin; rewrite -ltnNge => Habs.
+move/(_ (size (h2 :: s2')).-1): Heq; rewrite nth_last.
+rewrite nth_default => [-> /=|]; first exact: mem_last.
+by move: Habs; rewrite /= ltnS.
 Qed.
 
 End SeqLemmas.

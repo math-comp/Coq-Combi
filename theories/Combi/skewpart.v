@@ -205,11 +205,23 @@ rewrite -{2}(conj_partK Hinn) -{2}(conj_partK Hout).
 exact: vb_strip_conj (is_part_conj Hinn) (is_part_conj Hout).
 Qed.
 
+Lemma vb_strip_countP inner outer :
+  is_part inner -> is_part outer ->
+  reflect
+    (included inner outer /\ all (geq 1) (outer / inner))
+    (vb_strip inner outer).
+Proof.
+move=> Hinn Hout; apply (iffP (vb_stripP Hinn Hout)) => [H | [Hincl H] i].
+- split; first by apply/part_includedP => // i; have /andP[]:= H i.
+  apply/(all_nthP 0) => i _ /=; rewrite nth_diff_shape.
+  by move/(_ i): H => /andP [_]; rewrite leq_subLR addn1.
+- have := Hincl => /includedP [_ /(_ i) -> /=].
+  case: (ltnP i (size outer)) => [| {H} Hsz].
+    move: H => /(all_nthP 0)/(_ i) /=.
+    by rewrite size_diff_shape nth_diff_shape leq_subLR addn1 => H{}/H.
+  by rewrite nth_default.
+Qed.
 
-
-Lemma drop_nilE (T : eqType) (s : seq T) m :
-  (drop m s == [::]) = (size s <= m).
-Proof. by elim: m s => [|m IHm] [|s0 s] //=; rewrite IHm ltnS. Qed.
 
 Section MinDropEq.
 
@@ -261,22 +273,6 @@ case: ex_minnP => n dropn Hminn; apply anti_leq.
 rewrite {}Hminm //=.
 case: m dropm => [|m {}/Hminn]/=; last by rewrite ltnS.
 by rewrite eqseq_cons (negbTE Hneq) andbF.
-Qed.
-
-Lemma eq_from_nth_notin x0 s1 s2 :
-  x0 \notin s1 -> x0 \notin s2 ->
-  (forall i : nat, nth x0 s1 i = nth x0 s2 i) -> s1 = s2.
-Proof.
-wlog Hpq : s1 s2 / (size s1) <= (size s2).
-  move=> Hwlog; case: (leqP (size s1) (size s2)); first exact: Hwlog.
-  by move=> /ltnW/Hwlog H +{}/H => +H => {}/H Heq Hnth; rewrite Heq.
-move=> x0s1 x0s2 Heq; apply: (eq_from_nth (x0 := x0))=> [|i _ //].
-apply anti_leq; rewrite {}Hpq/=.
-case: s2 x0s2 Heq => [//|h2 s2'] Hnotin Heq.
-apply/contraR: Hnotin; rewrite -ltnNge => Habs.
-move/(_ (size (h2 :: s2')).-1): Heq; rewrite nth_last.
-rewrite nth_default => [-> /=|]; first exact: mem_last.
-by move: Habs; rewrite /= ltnS.
 Qed.
 
 Lemma mindropeq_nthP x0 s t p :
