@@ -250,6 +250,12 @@ rewrite /mindropeq; case: ex_minnP => m _ /(_ 0 (eqxx _)).
 by rewrite leqn0 => /eqP ->.
 Qed.
 
+Lemma mindropeq_leq s1 s2 : mindropeq s1 s2 <= maxn (size s1) (size s2).
+Proof.
+rewrite /mindropeq; case: ex_minnP => m _; apply.
+by rewrite !drop_oversize ?leq_maxr ?leq_maxl.
+Qed.
+
 Lemma mindropeq_nil s : mindropeq [::] s = size s.
 Proof.
 rewrite /mindropeq; case: ex_minnP => m /= /eqP/esym dropm Hmin.
@@ -1201,19 +1207,6 @@ have:= Hge; rewrite -ltnS => /ltnW; rewrite -subn_eq0 => /eqP -> /=.
 by rewrite add1n -subSn // maxnE.
 Qed.
 
-Lemma add_ribbonP : ribbon sh res.
-Proof.
-move: Hret; rewrite /add_ribbon => H.
-apply/(ribbonP partsh is_part_add_ribbon).
-move: (startrem_leq sh nbox.+1 pos) H.
-case: startrem => start [|rem]//= /(_ (ltn0Sn _)) lesmin [<- _].
-exists start; exists pos.
-exact: add_ribbon_start_stopP.
-Qed.
-
-Lemma included_add_ribbon : included sh res.
-Proof. exact: ribbon_included (add_ribbonP). Qed.
-
 Lemma add_ribbon_height : hgt = ribbon_height sh res.
 Proof.
 move: is_part_add_ribbon.
@@ -1222,6 +1215,26 @@ case: startrem => start [|rem]//= [<- <-] /(_ (lt0n _)) Hstart Hpart.
 apply: ribbon_on_height => //.
 exact: add_ribbon_start_stopP.
 Qed.
+
+Lemma add_ribbon_onP : ribbon_on (pos.+1 - hgt) pos sh res.
+Proof.
+move: Hret; rewrite /add_ribbon.
+case Hstart : startrem => [start rem]; case: ltnP => // lt0rem [eqstart <-].
+rewrite subSS subKn; first last.
+  by have:= startrem_leq_pos sh nbox.+1 pos; rewrite Hstart /=.
+rewrite -eqstart; apply: add_ribbon_start_stopP => //.
+have := startrem_leq sh nbox.+1 pos.
+by rewrite Hstart; apply.
+Qed.
+
+Lemma add_ribbonP : ribbon sh res.
+Proof.
+apply/(ribbonP partsh is_part_add_ribbon).
+by exists (pos.+1 - hgt); exists pos; apply: add_ribbon_onP.
+Qed.
+
+Lemma included_add_ribbon : included sh res.
+Proof. exact: ribbon_included (add_ribbonP). Qed.
 
 End Spec.
 
@@ -1262,3 +1275,6 @@ have := Hrib => [][_ _ -> _]; congr (Some (_, _)); first last.
   by rewrite (ribbon_on_height partinn partout).
 exact: ribbon_on_addE.
 Qed.
+
+
+  
