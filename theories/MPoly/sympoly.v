@@ -445,11 +445,9 @@ apply val_inj => /=.
 rewrite !linear_sum /=  (bigID (fun i : 'P_d => mpart i \in msupp f)) /=.
 rewrite [X in _ + X]big1 ?addr0;
   last by move=> i /memN_msupp_eq0 ->; rewrite scale0r.
-rewrite (eq_bigr (fun i : 'P_d =>
-           f@_(mpart i) *: sympol ('m[partm (n := n) (mpart i)])));
-    first last.
-  move=> i Hi; congr (_ *: sympol 'm[_]).
-  by rewrite mpartK //; apply (size_mpart_in_supp Hhomog Hi).
+under [RHS]eq_bigr => i Hi.
+  rewrite -{2}(@mpartK n i) //; last exact: (size_mpart_in_supp Hhomog).
+over. rewrite /=.
 transitivity (\sum_(m <- [seq mpart i | i : 'P_d ] | m \in msupp f)
                f@_m *: sympol ('m[partm m])); first last.
   by rewrite big_map big_enum_cond.
@@ -503,9 +501,8 @@ Proof using. by apply val_inj; rewrite /= mesym0E. Qed.
 
 Lemma symp0 : 'p_0 = n%:R.
 Proof using.
-apply /val_inj.
-rewrite /= /symp_pol (eq_bigr (fun => 1));
-  last by move=> i _; rewrite expr0.
+apply /val_inj; rewrite /= /symp_pol.
+under eq_bigr do rewrite expr0.
 by rewrite sumr_const card_ord /= raddfMn.
 Qed.
 
@@ -775,24 +772,18 @@ Proof.
 rewrite /coeff_prodgen /= {2}/prod_gen => H d la.
 have := sumn_intpartn la.
 case: la => [la /= Hla] Hd; subst d.
-rewrite (eq_bigr (fun mu => 'co[mu] *: 'gB[mu])); first last.
-  by move=> mu _; congr (_ *: _); rewrite coeff_prodgen_cast /=.
+under [RHS]eq_bigr do rewrite coeff_prodgen_cast //.
 elim: la {Hla} => [| l la IHla] /=.
   rewrite big_nil (big_pred1 (rowpartn 0)) ?prod_gen0 ?scale1r // => la.
   by symmetry; apply/eqP/val_inj; rewrite /= intpartn0.
 rewrite big_cons H; symmetry.
-transitivity
-  (\sum_(mu : 'P__) \sum_(p | mu == p.1 +|+ p.2)
-    (co (d := l) p.1 * 'co[p.2]_la) *: 'gB[mu]).
-  by apply eq_bigr => mu _; rewrite scaler_suml.
+under [LHS]eq_bigr do rewrite scaler_suml.
 rewrite (exchange_big_dep xpredT) //=.
-pose f mu nu := (co (d := l) mu *: 'gB[mu]) * ('co[nu]_la *: 'gB[nu]).
-transitivity (\sum_(p : _) f p.1 p.2).
-  apply eq_bigr => [[mu nu] _] /=; rewrite big_pred1_eq.
-  by rewrite /f -scalerAl -scalerAr scalerA prod_genM.
-rewrite -(pair_big xpredT xpredT) /=.
-rewrite mulr_suml; apply eq_bigr => nu _.
-by rewrite /f -mulr_sumr -IHla.
+under [LHS]eq_bigr do rewrite big_pred1_eq -prod_genM -scalerA scalerAr scalerAl.
+rewrite -[LHS](pair_big xpredT xpredT
+    (fun mu nu => _ mu *: _ mu * (_ nu *: _ nu))) /=.
+rewrite mulr_suml.
+by under eq_bigr do rewrite -mulr_sumr -IHla.
 Qed.
 
 Definition prod_syme := prod_gen (@syme n R).
@@ -822,8 +813,8 @@ Lemma syms_symsM d1 (la : 'P_d1) d2 (mu : 'P_d2) :
   \sum_(nu : 'P_(d1 + d2) | included la nu)
      's[nu] *+ LRyam_coeff la mu nu :> SF.
 Proof.
-apply val_inj; rewrite /= LRyam_coeffP linear_sum /=; apply eq_bigr => nu Hnu.
-by rewrite raddfMn /=.
+apply val_inj; rewrite /= LRyam_coeffP linear_sum /=.
+by under [RHS]eq_bigr do rewrite raddfMn.
 Qed.
 
 Lemma syms_symhM d1 (la : 'P_d1) d2 :
@@ -1041,11 +1032,8 @@ rewrite big_mkord.
 rewrite [LHS](bigID (fun i : 'I__ => i < C.+1)) /= addrC big1 ?add0r; first last.
   move=> i; rewrite -leqNgt => /bin_small ->.
   by rewrite mulr0.
-transitivity (\sum_(i < C.+1) (-1) ^+ i * ('C(C, i))%:R : R).
-  rewrite -ltnS in HCd.
-  by rewrite [RHS](big_ord_widen _ (fun i => (-1) ^+ i * ('C(C, i))%:R) HCd).
-apply eq_bigr => i _.
-by rewrite !expr1n !mulr1 mulr_natr.
+under [RHS]eq_bigr do rewrite !expr1n !mulr1 -mulr_natr.
+exact/esym/(big_ord_widen _ (fun i => (-1) ^+ i * ('C(C, i))%:R)).
 Qed.
 
 Lemma sum_syme_symh (d : nat) :
@@ -1099,16 +1087,14 @@ rewrite symHE_rec; last by rewrite Hm.
 rewrite big_map /index_iota subSS subn0; apply eq_big_seq => i.
 rewrite mem_iota add1n ltnS => /andP [Hi Hid].
 rewrite big_map.
-rewrite (eq_big_seq
-    (fun c : seq nat => - H i * ((-1) ^+ (d - size c) *: \prod_(i0 <- c) H i0)));
-  first last.
-  move=> s; rewrite -enum_compnP /is_comp_of_n /= => /andP [/eqP Hsum Hcomp].
-  rewrite big_cons -scalerAr mulNr scalerN -scaleNr; congr (_ *: _).
-  subst d; rewrite subSS subSn; first last.
-    apply (leq_trans (size_comp Hcomp)); rewrite {}Hsum.
+under eq_big_seq => s.
+  rewrite -enum_compnP /is_comp_of_n /= => /andP[/eqP Hsum Hcomp].
+  rewrite big_cons scalerAr -mulrNN -scaleNr -[- (-1) ^+ _]mulN1r.
+  rewrite -exprS -subSn; first last.
+    rewrite Hm ltnS (leq_trans (size_comp Hcomp)) // {}Hsum.
     case: i Hi {Hid} => // i' _.
-    by rewrite subSS leq_subr.
-  by rewrite exprS mulN1r opprK.
+    by rewrite Hm subSS leq_subr.
+  by rewrite subSS over.
 rewrite -mulr_sumr.
 case: (altP (d - i =P 0)%N) => [/eqP | Hdi] /=.
   rewrite subn_eq0 => Hdi.
@@ -1166,7 +1152,7 @@ transitivity
   by apply: perm_size; rewrite perm_sort.
 rewrite (exchange_big_dep xpredT) //=.
 apply eq_bigr => la _.
-rewrite (eq_bigl (fun i : 'P_d => i == partn_of_compn la)) ?big_pred1_eq //.
+rewrite (eq_bigl (xpred1 (partn_of_compn la))) ?big_pred1_eq //.
 by move=> mu; rewrite eq_sym -val_eqE.
 Qed.
 
@@ -1187,14 +1173,14 @@ Lemma syme_to_symh d :
   'e_d = \sum_(la : 'P_d)
           (-1) ^+ (d - size la) * (perm_partn la)%:R *: 'h[la] :> SF.
 Proof.
-apply: (symHE_intpartn (syme0 _ _) (symh0 _ _)); exact: sum_symh_syme.
+by apply: (symHE_intpartn (syme0 _ _) (symh0 _ _)); exact: sum_symh_syme.
 Qed.
 
 Lemma symh_to_syme d :
   'h_d = \sum_(la : 'P_d)
           (-1) ^+ (d - size la) * (perm_partn la)%:R *: 'e[la] :> SF.
 Proof.
-apply: (symHE_intpartn (symh0 _ _) (syme0 _ _)); exact: sum_syme_symh.
+by apply: (symHE_intpartn (symh0 _ _) (syme0 _ _)); exact: sum_syme_symh.
 Qed.
 
 
@@ -1244,23 +1230,17 @@ Lemma Newton_symh (k : nat) :
 Proof using.
 apply val_inj => /=; apply/mpolyP => m.
 rewrite mcoeffZ mcoeff_symh !linear_sum big_nat.
-rewrite (eq_bigr
-           (fun i =>
-              (mdeg m == k)%:R *
-                \sum_(j < n) (m j >= (k - i)%N)%:R)) /=; first last.
-  move=> i Hi /=; rewrite mult_symh_powersum.
-  by rewrite subnKC //; apply ltnW.
+under eq_bigr => i /= Hi do rewrite mult_symh_powersum subnKC // ?(ltnW Hi) //.
 rewrite -big_nat -mulr_sumr mulrC.
 case: (altP (mdeg m =P k)) => Hdegm; rewrite /= ?mul1r ?mul0r //.
 rewrite exchange_big /=.
 rewrite (eq_bigr (fun i : 'I_n => (m i)%:R)).
-  by rewrite -Hdegm mdegE -natr_sum; congr (_%:R).
+  by rewrite -Hdegm mdegE -natr_sum.
 move=> i _ /=; rewrite -natr_sum; congr (_%:R).
 have : m i <= k.
   by move: Hdegm; rewrite mdegE => <-; rewrite (bigD1 i) //=; apply leq_addr.
 rewrite big_mkord (reindex_inj rev_ord_inj) /=.
-rewrite (eq_bigr (fun j : 'I_k => (j < m i) : nat)); first last.
-  by move=> j _; rewrite subKn //.
+under eq_bigr do rewrite subKn //.
 move: (m i) => n {m Hdegm i} Hn.
 rewrite (bigID (fun i : 'I_k => i < n)) /=.
 rewrite (eq_bigr (fun i => 1%N)); last by move=> i ->.
@@ -1656,18 +1636,14 @@ elim: mu d Hmu => [|m mu IHmu] deg.
   symmetry; subst deg; rewrite (big_pred1 (rowpartn 0)); first last.
     by move=> i; symmetry; apply/eqP/val_inj; rewrite /= intpartn0.
   by rewrite syms0 -rowpartn0E Kostka_diag scale1r.
-move=> /andP [/eqP Hdeg /andP [_ Hpart]].
+move=> /=/andP[/eqP/esym Hdeg /andP [_ Hpart]].
 rewrite big_cons /= {}(IHmu (sumn mu)) /= ?eq_refl ?Hpart //.
-rewrite [RHS](eq_bigr
-    (fun la : 'P_deg =>
-       \sum_(nu : 'P_(sumn mu) | hb_strip nu la) 'K(nu, mu) *: 's[la]));
-    first last.
-  by move=> la _; rewrite -scaler_suml -natr_sum Kostka_ind.
+under [RHS]eq_bigr do rewrite Kostka_ind ?Hdeg // natr_sum scaler_suml.
 rewrite mulr_sumr [RHS](exchange_big_dep predT) //=.
 apply eq_bigr => la _.
 rewrite -scalerAr -scaler_sumr mulrC syms_symhM; congr (_ *: _).
-have H : (sumn mu + m)%N = deg by rewrite addnC -Hdeg.
-rewrite (reindex _ (onW_bij _ (cast_intpartn_bij H))) /=.
+rewrite addnC in Hdeg.
+rewrite (reindex _ (onW_bij _ (cast_intpartn_bij Hdeg))) /=.
 apply eq_big => [nu | nu _].
 - by case: nu => nu /= Hnu; rewrite cast_intpartnE /=.
 - by apply val_inj; rewrite /= Schur_cast.
@@ -1709,19 +1685,15 @@ elim: mu d Hmu => [|m mu IHmu] deg.
   symmetry; subst deg; rewrite (big_pred1 (rowpartn 0)); first last.
     by move=> i; symmetry; apply/eqP/val_inj; rewrite /= intpartn0.
   by rewrite syms0 -rowpartn0E Kostka_diag scale1r.
-move=> /andP [/eqP Hdeg /andP [_ Hpart]].
+move=> /= /andP[/eqP/esym Hdeg /andP [_ Hpart]].
 rewrite big_cons /= {}(IHmu (sumn mu)) /= ?eq_refl ?Hpart //.
-rewrite [RHS](eq_bigr
-    (fun la : 'P_deg =>
-       \sum_(nu : 'P_(sumn mu) | hb_strip nu la) 'K(nu, mu) *: 's[la^~]));
-    first last.
-  by move=> la _; rewrite -scaler_suml -natr_sum Kostka_ind.
+under [RHS]eq_bigr do rewrite Kostka_ind ?Hdeg // natr_sum scaler_suml.
 rewrite mulr_sumr [RHS](exchange_big_dep predT) //=.
 apply eq_bigr => la _.
 rewrite -scalerAr -scaler_sumr mulrC syms_symeM; congr (_ *: _).
-have H : (sumn mu + m)%N = deg by rewrite addnC -Hdeg.
+rewrite addnC in Hdeg.
 rewrite (reindex _ (onW_bij _ (inv_bij (@conj_intpartnK _)))) /=.
-rewrite (reindex _ (onW_bij _ (cast_intpartn_bij H))) /=.
+rewrite (reindex _ (onW_bij _ (cast_intpartn_bij Hdeg))) /=.
 apply eq_big => [nu | nu _].
 - case: nu => nu /= Hnu; rewrite cast_intpartnE /= vb_strip_conjE //.
   by move: Hnu => /andP [].
@@ -1872,7 +1844,7 @@ rewrite (eq_bigr
   by rewrite natrM invfM -!scalerAr -scalerAl scalerA mulrC.
 rewrite -big_seq -mulr_sumr {}IHm; first last.
   by rewrite leq_subLR Hm -(add1n m) leq_add2r.
-by rewrite -scalerAl scalerA divff // scale1r; congr(_ * _).
+by rewrite -scalerAl scalerA divff // scale1r.
 Qed.
 
 Import LeqGeqOrder.
@@ -1937,11 +1909,9 @@ have /= Hl0 := part_head_non0 Hpart.
 move: Hpart => /andP [_] {}/Hrec Hrec.
 rewrite (bigD1 (Ordinal Hl0b)) /=; last by rewrite inE eq_refl.
 rewrite eq_refl /= mulnDr muln1 -addnA; congr (_ + _)%N.
-rewrite (eq_bigr (fun i : 'I_b => i * (count_mem (val i) l)))%N; first last.
-  move=> i /andP [_ Hi].
-  have : val i != l0 by [].
-  rewrite eq_sym => /negbTE ->.
-  by rewrite add0n.
+under eq_bigr => i /andP[_ /negbTE Hi].
+  rewrite -val_eqE /= in Hi.
+  by rewrite eq_sym Hi add0n over.
 case: (boolP (l0 \in l)) => Hl0l.
 - rewrite -{}Hrec [RHS](bigD1 (Ordinal Hl0b)) //=; congr (_ + _)%N.
   apply: eq_bigl => i; congr (_ && _); rewrite inE.
@@ -1963,10 +1933,9 @@ case: l => l /= /andP [/eqP].
 have [m/ltnW] := ubnP n; elim: m => [| m IHm] in n l *.
   rewrite leqn0 => /eqP -> /part0 H{}/H ->{l}.
   rewrite zcard_nil /=.
-  rewrite (eq_bigl (xpred1 (IntCompN (cnval := [::]) (n := 0) isT))); first last.
-    move=> i; apply/idP/eqP => [Hperm | /(congr1 val)/= -> //].
-    by apply val_inj => /=; apply/nilP; rewrite /nilp -(perm_size Hperm).
-  by rewrite big_pred1_eq.
+  rewrite (eq_bigl (xpred1 (rowcompn 0))); first by rewrite big_pred1_eq.
+  move=> i; apply/idP/eqP => [Hperm | /(congr1 val)/= -> //].
+  by apply val_inj => /=; apply/nilP; rewrite /nilp -(perm_size Hperm).
 rewrite leq_eqVlt => /orP [/eqP Hm|]; last by rewrite ltnS; exact: IHm.
 move => Hsum Hpart.
 have head_intcompn (c : intcompn n) : head 0%N c < n.+1.
@@ -1974,22 +1943,15 @@ have head_intcompn (c : intcompn n) : head 0%N c < n.+1.
   exact: leq_addr.
 pose headcomp c := Ordinal (head_intcompn c).
 rewrite (partition_big headcomp xpredT) //=.
-transitivity (\sum_(j < n.+1)
-                \sum_(i : intcompn n |
-                 perm_eq l i && (head 0%N i == j :> nat)) \Pi i : R).
-  by apply eq_bigr=> i _; apply eq_bigl => c.
-rewrite (bigID (fun j : 'I_(n.+1) => (j : nat) \in l)) /=
-        [X in _ + X]big1 ?addr0; first last.
-  move=> i Hi; apply big1 => [] [[|c0 c] /= _ /andP [Hperm /eqP Hhead]]; exfalso.
+under eq_bigr do under eq_bigl do rewrite -val_eqE /=.
+rewrite (bigID (fun j => val j \in l)) /= [X in _ + X]big1 ?addr0; first last.
+  move=> i Hi; apply big1 => [] [[|c0 c]/= _ /andP[Hperm /eqP Hhead]]; exfalso.
   - by move/perm_sumn: Hperm; rewrite /= Hsum Hm.
   - subst c0; move/perm_mem: Hperm Hi => /(_ i).
     by rewrite inE eq_refl /= => ->.
-transitivity (\sum_(i < n.+1 | val i \in l)
-               n%:R^-1 * (zcard (rem (val i) l))%:R^-1 : R).
-  apply eq_bigr => /= i Hi.
-  have H0i : i != 0%N :> nat.
-    move: Hi; apply contraL => /eqP ->.
-    by move: Hpart; rewrite is_part_sortedE => /andP [].
+rewrite (eq_bigr (fun i => n%:R^-1 * (zcard (rem (val i) l))%:R^-1 : R));
+      first last => [/= i Hi|].
+  have H0i := in_part_non0 Hpart Hi.
   have Hin : i <= n by rewrite -ltnS.
   rewrite (reindex (intcompn_cons H0i Hin)) /=; first last.
     exists (intcompn_behead H0i Hin) => c; rewrite inE => /andP [Hperm Hhead];
@@ -1998,33 +1960,23 @@ transitivity (\sum_(i < n.+1 | val i \in l)
     case: c Hperm Hhead => [[|c0 c]] //= _.
     + by move/perm_sumn; rewrite /= Hsum {1}Hm.
     + by move=> _ /eqP ->.
-  rewrite (eq_bigl (fun c : intcompn (n - i) =>
-                      perm_eq (rem (val i) l) c)); first last.
-    move=> c; rewrite eq_refl andbT.
-    have /permPl -> := perm_to_rem Hi.
-    by rewrite perm_cons.
-  transitivity (\sum_(c : intcompn (n - i) | perm_eq (rem (val i) l) c)
-                 n%:R^-1 * \Pi c : R).
-    by apply eq_bigr => c _; rewrite intcompn_sumn subnKC // natrM invfM.
+  under eq_bigl => c do
+    rewrite eq_refl andbT (permPl (perm_to_rem Hi)) perm_cons.
+  under eq_bigr => c _ do rewrite intcompn_sumn subnKC // natrM invfM.
   rewrite -mulr_sumr IHm //.
-  - rewrite -ltnS -Hm -{3}(subnK Hin).
-    move: H0i; case i => [/= [//=|i']] _.
-    by rewrite addnS ltnS leq_addr.
+  - move: H0i; case i => [/= [//|i']] _ _.
+    by rewrite Hm subSS leq_subr.
   - rewrite -[LHS](addKn i).
     have /perm_sumn /= <- := perm_to_rem Hi.
     by rewrite Hsum.
-  - move: Hpart; rewrite !is_part_sortedE => /andP [Hsort H0].
-    have Hrem := rem_subseq (i :nat) l; apply/andP; split.
+  - move: Hpart; rewrite !is_part_sortedE => /andP[Hsort H0].
+    have Hrem := rem_subseq (val i) l; apply/andP; split.
     + exact: (subseq_sorted _ Hrem).
     + by move: H0; apply contra; apply (mem_subseq Hrem).
 rewrite {IHm} -mulr_sumr.
-transitivity (n%:R^-1 *
-       (\sum_(i < n.+1 | val i \in l)
-         (i * (count_mem (val i) l))%:R / (zcard l)%:R) : R).
-  congr (_ * _); apply eq_bigr => i Hi.
-  have H0i : i != 0%N :> nat.
-    move: Hi => /=; apply contraL => /eqP ->.
-    by move: Hpart; rewrite is_part_sortedE => /andP [].
+rewrite (eq_bigr (fun i => (val i * (count_mem (val i) l))%:R / (zcard l)%:R));
+  first last => [i Hi|] /=.
+  have H0i := in_part_non0 Hpart Hi.
   rewrite -(zcard_rem H0i Hi) [X in _ / X]natrM invfM -[LHS]mul1r !mulrA.
   congr (_ * _); rewrite divff // Hchar.
   rewrite muln_eq0 negb_or H0i /=.
@@ -2049,41 +2001,24 @@ Section Generators.
 
 Variables (n : nat) (R : comRingType).
 
-Lemma prod_homog nv l (dt : l.-tuple nat) (mt : l.-tuple {mpoly R[nv]}) :
-  (forall i : 'I_l, tnth mt i \is (tnth dt i).-homog) ->
-  \prod_(i <- mt) i \is (\sum_(i <- dt) i).-homog.
+Lemma prod_homog nv l (df : 'I_l -> nat) (mf : 'I_l -> {mpoly R[nv]}) :
+  (forall i : 'I_l, mf i \is (df i).-homog) ->
+  \prod_(i < l) mf i \is (\sum_(i < l) df i).-homog.
 Proof using .
-elim: l dt mt => [| l IHl] dt mt H.
-  rewrite tuple0 big_nil tuple0 big_nil; exact: dhomog1.
-case/tupleP: dt H => d dt.
-case/tupleP: mt => p mt H /=.
-rewrite !big_cons; apply dhomogM.
-  by have := H ord0 => /=; rewrite (tnth_nth 0) (tnth_nth 0%N).
-apply IHl => i.
-have := H (inord i.+1).
-rewrite !(tnth_nth 0) !(tnth_nth 0%N) /=.
-by rewrite !inordK; last exact: (ltn_ord i).
+elim: l => [| l IHl] in df mf * => H.
+  by rewrite !big_ord0 dhomog1.
+rewrite !big_ord_recr /=; apply dhomogM; last exact: H.
+by apply: IHl => i; exact: H.
 Qed.
 
 Variable   gen : forall nv : nat, nat -> {mpoly R[nv]}.
 Hypothesis gen_homog : forall nv i : nat, gen nv i \is i.-homog.
 Local Notation G nv := [tuple gen nv i.+1 | i < n].
 
-Lemma homog_X_mPo_gen nv m :
-  'X_[m] \mPo G nv \is (mnmwgt m).-homog.
+Lemma homog_X_mPo_gen nv m : 'X_[m] \mPo G nv \is (mnmwgt m).-homog.
 Proof using gen gen_homog.
-rewrite comp_mpolyX.
-pose dt := [tuple (i.+1 * (m i))%N | i < n].
-pose mt := [tuple (gen nv i.+1) ^+ m i | i < n] : n.-tuple {mpoly R[nv]}.
-rewrite (eq_bigr (fun i : 'I_n => tnth mt i)); first last.
-  by move=> k _ /=; rewrite !tnth_mktuple.
-rewrite -(big_tuple _ _ mt xpredT id).
-rewrite /mnmwgt (eq_bigr (fun i : 'I_n => tnth dt i)); first last.
-  by move=> k _ /=; rewrite !tnth_mktuple mulnC.
-rewrite -(big_tuple _ _ dt xpredT id).
-apply prod_homog => k.
-rewrite !tnth_mktuple {mt dt}; apply: dhomogMn.
-exact: gen_homog.
+rewrite comp_mpolyX /mnmwgt; apply: prod_homog => k.
+by rewrite tnth_mktuple mulnC dhomogMn.
 Qed.
 
 Lemma pihomog_mPo nv p d :
@@ -2300,10 +2235,8 @@ have := Newton_symh1 n0 R i.+1.
 rewrite big_nat_recr //= subnn symh0 mulr1 addrC => /eqP.
 have /= <- := subr_eq _ 'p_i.+1 => /eqP {1}<-.
 rewrite linearP linearN linear_sum /= omegasf_symh //.
-rewrite big_nat (eq_bigr
-                   (fun j => (-1) ^+ j.+1 *: 'p_j * 'e_(i.+1 - j))); first last.
-  move=> j /andP [lt0j ltji1]; rewrite rmorphM /= IHi // omegasf_symh //.
-  exact: (leq_trans (leq_subr _ _)).
+rewrite big_nat; under eq_bigr => j /andP[lt0j ltji1].
+  by rewrite rmorphM /= IHi // omegasf_symh ?(leq_trans (leq_subr _ _)) // over.
 rewrite -big_nat (Newton_syme1 n0 R i.+1).
 rewrite big_nat_recr //= [X in X - _]addrC addrK.
 by rewrite subnn syme0 mulr1.
@@ -2609,3 +2542,4 @@ exact: (leq_ltn_trans le_p_n lt_n_i).
 Qed.
 
 End CategoricalSystems.
+

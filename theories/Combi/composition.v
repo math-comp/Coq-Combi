@@ -291,11 +291,6 @@ rewrite (drop_nth 0 ltisz) /= (leq_trans _ (leq_addr _ _)) // lt0n.
 by move: Hc; apply contra => /eqP <-; exact: mem_nth.
 Qed.
 
-(* TODO: remove me when merged in mathcomp *)
-Lemma eq_sorted (T : Type) (e e' : rel T) : e =2 e' -> sorted e =1 sorted e'.
-Proof. by move=> ee' [] // ? ?; apply: eq_path. Qed.
-
-
 Lemma from_descset_spec d :
   is_comp_of_n n (if n is 0 then [::]
                   else pairmap (fun a b => b - a) 0

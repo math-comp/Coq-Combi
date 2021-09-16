@@ -54,6 +54,9 @@ End LeqGeqOrder.
 
 Import LeqGeqOrder.
 
+(* TODO: remove me when merged in mathcomp *)
+Lemma eq_sorted (T : Type) (e e' : rel T) : e =2 e' -> sorted e =1 sorted e'.
+Proof. by move=> ee' [] // ? ?; apply: eq_path. Qed.
 
 Section Sorted.
 

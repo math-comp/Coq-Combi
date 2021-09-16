@@ -100,9 +100,8 @@ Lemma symh_basisE d :
   \sum_(s in basis n d) 'X_[s2m s] = Schur (rowpartn d).
 Proof using.
 rewrite Schur_tabsh_readingE (eq_bigl _ _ (@tabwordshape_row d)).
-rewrite [RHS](eq_bigr (fun s : d.-tuple 'I_n => 'X_[s2m s])); first last.
-  by move=> [s _] /= _; rewrite mons2mE.
-by apply eq_bigl => m; rewrite inE /=.
+under [LHS]eq_bigr do rewrite mons2mE.
+by apply eq_bigl => m; rewrite inE.
 Qed.
 
 End Schur.
@@ -175,13 +174,10 @@ Lemma mesym_SchurE d :
 Proof using.
 rewrite /= mesym_tupleE /tmono Schur_tabsh_readingE.
 rewrite (eq_bigl _ _ (@tabwordshape_col d)).
-set f := BIG_F; rewrite (eq_bigr (fun x => f (rev_tuple x))) {}/f; first last.
-  by move => i _ /=; apply: perm_big; rewrite -perm_rev.
+under [LHS]eq_bigr => i do have /permPl/(perm_big _) <- /= := perm_rev i.
 rewrite (eq_bigl (fun i => sorted >%O (rev_tuple i))); first last.
-  move=> [t /= _]; rewrite rev_sorted.
-  case: t => [//= | t0 t] /=.
-  apply: (map_path (b := pred0)) => [x y /= _|]//.
-  by apply/hasPn => x /=.
+  move=> [t /= _]; rewrite rev_sorted sorted_map.
+  exact: sorted.eq_sorted.
 by apply/esym/reindex/onW_bij/inv_bij => x; apply val_inj; rewrite /= revK.
 Qed.
 
