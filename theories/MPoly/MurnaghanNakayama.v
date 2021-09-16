@@ -41,7 +41,7 @@ Qed.
 End BigPMap.
 
 
-Section SymsSymp.
+Section MultAlternSymp.
 
 Variable n0 : nat.
 Variable R : comRingType.
@@ -49,7 +49,6 @@ Variable R : comRingType.
 Local Notation n := n0.+1.
 Local Notation rho := (rho n).
 Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
-Local Notation "m # s" := [multinom m (s i) | i < n].
 
 
 Lemma mult_altern_symp_pol p d :
@@ -130,18 +129,18 @@ rewrite (bigID (fun i : 'I_n => add_ribbon la nbox.+1 i)) /=.
 rewrite [X in _ + X = _]big1 ?addr0; last by move=> i; case: add_ribbon.
 rewrite (reindex_omap ribbon_stop add_ribbon_intpartn) /=; first last.
   move=> i; rewrite /add_ribbon_intpartn.
-  case Hrib : {1 2}(add_ribbon la nbox.+1 i) => [[res h]|]//= _.
-  congr Some; apply val_inj; rewrite /= Hrib /=.
-  rewrite (size_add_ribbon Hrib) geq_max szla ltn_ord /=.
-  rewrite (ribbon_on_mindropeq (intpartnP la) _ (add_ribbon_onP Hrib)) //.
-  exact: (is_part_add_ribbon _ Hrib).
+  case Haddrib : {1 2}(add_ribbon la nbox.+1 i) => [[res h]|]//= _.
+  congr Some; apply val_inj; rewrite /= Haddrib /=.
+  rewrite (size_add_ribbon Haddrib) geq_max szla ltn_ord /=.
+  rewrite (ribbon_on_mindropeq (intpartnP la) _ (add_ribbon_onP Haddrib)) //.
+  exact: (is_part_add_ribbon _ Haddrib).
 apply esym; apply: eq_big => mu.
-- case leqP => Hszmu /=; first last.
+  case leqP => Hszmu /=; first last.
   + rewrite /add_ribbon_intpartn.
-    case Hrib : {1 2}(add_ribbon la nbox.+1 0) => [[res h]|//=].
+    case Haddrib : {1 2}(add_ribbon la nbox.+1 0) => [[res h]|//=].
     rewrite andTb /=; case (altP (_ =P Some mu)) => // [[/(congr1 val) /=]].
-    rewrite Hrib /= => Heq.
-    have := size_add_ribbon Hrib; rewrite Heq => {}Heq.
+    rewrite Haddrib /= => Heq.
+    have := size_add_ribbon Haddrib; rewrite Heq => {}Heq.
     by move: Hszmu; rewrite Heq leq_max 2!ltnNge szla.
   + apply esym; case: (boolP (ribbon la mu)) => [Hrib | Hnrib].
     * have := ribbon_addE (intpartnP la) (intpartnP mu) Hrib.
@@ -149,18 +148,67 @@ apply esym; apply: eq_big => mu.
       rewrite Heq andTb /=; apply/eqP; rewrite /add_ribbon_intpartn.
       rewrite {1}Heq; congr Some; apply val_inj => /=.
       by rewrite Heq /=.
-    * case Hrib : (add_ribbon la nbox.+1 _) => [[res h]|//=].
+    * case Haddrib : (add_ribbon la nbox.+1 _) => [[res h]|//=].
       rewrite andTb /=; apply/negP => /eqP.
-      rewrite /add_ribbon_intpartn {1}Hrib => [[/(congr1 val) /=]].
-      rewrite Hrib /= => Heq.
-      by move: Hnrib; rewrite -{}Heq (add_ribbonP _ Hrib).
-move=> /andP[szmu Hrib].
-rewrite szmu.
-have := ribbon_addE (intpartnP la) (intpartnP mu) Hrib.
+      rewrite /add_ribbon_intpartn {1}Haddrib => [[/(congr1 val) /=]].
+      rewrite Haddrib /= => Heq.
+      by move: Hnrib; rewrite -{}Heq (add_ribbonP _ Haddrib).
+move=> /andP[-> Hrib].
+have:= ribbon_addE (intpartnP la) (intpartnP mu) Hrib.
 by rewrite sumn_diff_shape ?ribbon_included // !sumn_intpartn addKn => ->.
 Qed.
 
 End Bijection.
 
-End SymsSymp.
+End MultAlternSymp.
+
+
+Section MultSymsSympIDomain.
+
+Variable n0 : nat.
+Variable R : idomainType.
+
+Local Notation n := n0.+1.
+Local Notation rho := (rho n).
+Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
+
+Lemma syms_sympM_idomain m (la : intpartn m) nbox :
+  's[la] * 'p_(nbox.+1) =
+  \sum_(sh : intpartn (m + nbox.+1) | (size sh <= n) && (ribbon la sh))
+   (-1) ^+ (ribbon_height la sh).-1 *: 's[sh] :> {sympoly R[n]}.
+Proof.
+apply val_inj; case: (leqP (size la) n) => szla /=; first last.
+  rewrite Schur_oversize // mul0r raddf_sum /=.
+  apply/esym/big1 => mu /andP[szmu Hrib]; exfalso.
+  move: Hrib => /ribbon_included/includedP[].
+  by move/leq_trans/(_ szmu)/(leq_trans szla); rewrite ltnn.
+apply: (mulfI (alt_rho_non0 n R)).
+rewrite mulrA alt_SchurE // mult_altern_sympol //.
+rewrite raddf_sum mulr_sumr; apply eq_bigr => mu /andP[szmu Hrib] /=.
+by rewrite -scalerAr alt_SchurE.
+Qed.
+
+End MultSymsSympIDomain.
+
+
+Section MultSymsSymp.
+
+Variable n0 : nat.
+Variable R : comRingType.
+
+Local Notation n := n0.+1.
+Local Notation rho := (rho n).
+Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
+
+Lemma syms_sympM m (la : intpartn m) nbox :
+  's[la] * 'p_(nbox.+1) =
+  \sum_(sh : intpartn (m + nbox.+1) | (size sh <= n) && (ribbon la sh))
+   (-1) ^+ (ribbon_height la sh).-1 *: 's[sh] :> {sympoly R[n]}.
+Proof.
+rewrite -(map_syms [rmorphism of intr]) -(map_symp [rmorphism of intr]).
+rewrite -rmorphM syms_sympM_idomain rmorph_sum /=.
+by under [LHS]eq_bigr do rewrite scale_map_sympoly rmorphX rmorphN1 map_syms.
+Qed.
+
+End MultSymsSymp.
 
