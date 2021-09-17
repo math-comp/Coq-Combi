@@ -52,13 +52,14 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
 From mathcomp Require Import finfun fintype tuple finset bigop order.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
-From mathcomp Require Import rat ssralg ssrnum algC vector.
+From mathcomp Require Import rat ssralg ssrint ssrnum algC vector.
 From mathcomp Require Import mxrepresentation classfun character.
 
 From SsrMultinomials Require Import mpoly.
 Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy
         Schur_altdef stdtab therule.
 Require Import permcomp cycletype towerSn permcent reprSn unitriginv.
+Require Import MurnaghanNakayama.
 
 Require ordtype.
 Local Notation inh := ordtype.Inhabited.Exports.inh.
@@ -456,14 +457,14 @@ rewrite cfdotr_ncfuniCT -(Fchar_isometry (leqSpred n)).
 by rewrite Fchar_irrSGE Fchar_ncfuniCT.
 Qed.
 
-Theorem Frobenius_char_coord la mu :
-  'irrSG[la] (permCT mu) =
-  coord 'hs (enum_rank la) ('hp[mu] : {homsym algC[n.-1.+1, n]}).
+Theorem Frobenius_char_coord la (sigma : 'S_n) :
+  'irrSG[la] sigma =
+  coord 'hs (enum_rank la) ('hp[cycle_typeSn sigma] : {homsym algC[n.-1.+1, n]}).
 Proof.
 pose HSC := {homsym algC[n.-1.+1, n]}.
 symmetry.
-rewrite Frobenius_char_homsymdot /cycle_typeSn (permCTP mu) CTpartnK.
-have /coord_span {2}-> : ('hp[mu] : HSC) \in span 'hs.
+rewrite Frobenius_char_homsymdot.
+have /coord_span {2}-> : ('hp[cycle_typeSn sigma] : HSC) \in span 'hs.
   by rewrite (span_basis (symbs_basis _ (leqSpred n))) // memvf.
 rewrite (reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P__]))) /=.
 rewrite homsymdot_sumr (bigD1 la) //=.
@@ -491,8 +492,35 @@ case: n la mu => [//|n] //= la mu.
   rewrite (charSG0 (irrSG_irr _)) cfun1E inE /=.
   rewrite !mnm_n0E !intpartn0 {la mu} rowpartn0E big_nil mulr1.
   by rewrite mcoeff_alt //= map_inj_in_uniq ?enum_uniq // => /= [[]].
-by rewrite Frobenius_char_coord mcoeff_symbs ?leqSpred //= rmorph_prod.
+rewrite Frobenius_char_coord /cycle_typeSn (permCTP mu) CTpartnK.
+by rewrite mcoeff_symbs ?leqSpred //= rmorph_prod.
 Qed.
+
+
+(** The Murnaghan Nakayama rule for irreducible character ['irrSG[la]] *)
+Theorem Murnaghan_Nakayama_char n la (sigma : 'S_n) :
+  'irrSG[la] sigma = (MNCoeff la (cycle_typeSn sigma))%:~R.
+Proof.
+rewrite Frobenius_char_homsymdot MNCoeff_homogP raddf_sum /=.
+rewrite (bigD1 la) //= big1 ?addr0 //; first last => [i /negbTE Hi|].
+  by rewrite homsymdotZr homsymdotss // eq_sym Hi mulr0.
+rewrite homsymdotZr homsymdotss // eqxx mulr1.
+by rewrite conj_Cint // Cint_int.
+Qed.
+Theorem Murnaghan_NakayamaCT n (la mu : 'P_n) :
+  'irrSG[la] (permCT mu) = (MNCoeff la mu)%:~R.
+Proof.
+by rewrite Murnaghan_Nakayama_char /cycle_typeSn (permCTP mu) CTpartnK.
+Qed.
+
+Corollary irrSG_char_int n (la mu : 'P_n) : 'irrSG[la] (permCT mu) \in Cint.
+Proof. by rewrite Murnaghan_NakayamaCT Cint_int. Qed.
+
+Example Wikipedia_Murnaghan_Nakayama :
+  let p521 := @IntPartN 8 [:: 5; 2; 1]%N is_true_true in
+  let p3311 := @IntPartN 8 [:: 3; 3; 1; 1]%N is_true_true in
+  'irrSG[p521] (permCT p3311) = - 2%:~R.
+Proof. by rewrite /= Murnaghan_NakayamaCT. Qed.
 
 
 (** The dimension of the irreducible character ['irrSG[la]] is the number of
