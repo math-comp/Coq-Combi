@@ -134,9 +134,7 @@ Lemma catlangM d1 d2 (s1 : homlang d1) (s2 : homlang d2) :
   polylang s1 * polylang s2 = polylang (catlang s1 s2).
 Proof using .
 rewrite /polylang /catlang mulr_suml.
-transitivity (\sum_(u in s1) \sum_(v in s2) commword (cat_tuple u v)).
-  apply eq_bigr=> u _; rewrite mulr_sumr.
-  by apply: eq_bigr => t _; rewrite commword_morph.
+under eq_bigr do [rewrite mulr_sumr; under eq_bigr do rewrite -commword_morph].
 rewrite pair_big /=.
 rewrite -(big_imset (h := fun p => cat_tuple p.1 p.2) commword) /=;
   last by move=> [u v] [x y] /= _ _; apply: cat_tuple_inj.
@@ -280,7 +278,7 @@ Proof using .
 rewrite SchurE -tabword_of_tuple_freeSchur.
 rewrite /polylang (big_imset _ (@tabword_of_tuple_freeSchur_inj _ Q)) /=.
 apply: eq_bigr => t _; apply: perm_commword.
-rewrite perm_sym; exact: perm_RS.
+by rewrite perm_sym; exact: perm_RS.
 Qed.
 
 
@@ -376,30 +374,19 @@ rewrite big_trivIset /=; first last.
   rewrite /disjoint; apply/pred0P => w /=.
   rewrite !inE; apply: negbTE; move: Hdiff; apply: contra.
   by move=> /andP [/eqP -> /eqP ->].
-
-transitivity (\sum_(Q in LRsupport) polylang R (freeSchur Q));
-  last by apply eq_bigr=> w _; rewrite Schur_freeSchurE.
-
-rewrite (big_setID [set set0]) /=.
-rewrite [X in X + _](_ : _ = 0) ?add0r; first last.
-  rewrite (eq_bigr (fun=> 0)); first by rewrite sumr_const mul0rn.
-  move=> i; rewrite inE => /andP [_]; rewrite inE => /eqP ->.
-  by rewrite /polylang big_set0.
-
+under [RHS]eq_bigr do rewrite Schur_freeSchurE.
+rewrite (big_setID [set set0]) /= big1 ?add0r; first last => [i|].
+  rewrite inE => /andP [_]; rewrite inE => /eqP ->.
+  by rewrite big_set0.
 rewrite (big_setID [set x | freeSchur x == set0]) /=.
-rewrite [X in X + _](_ : _ = 0) ?add0r; first last.
-  rewrite (eq_bigr (fun=> 0)); first by rewrite sumr_const mul0rn.
-  move=> i; rewrite inE => /andP [_]; rewrite inE => /eqP ->.
+rewrite [X in X + _]big1 ?add0r; first last => [i|].
+  rewrite inE => /andP [_]; rewrite inE => /eqP ->.
   by rewrite /polylang big_set0.
-
-rewrite -big_imset /=; first last.
-  move=> T1 T2 /=.
+rewrite -big_imset /=; first last => [T1 T2 /=|].
   rewrite inE => /andP []; rewrite inE => /set0Pn [x1 Hx1] _ _.
   move: Hx1; rewrite inE => /eqP Hx1 /setP/(_ x1); rewrite !inE Hx1.
   rewrite eq_refl => /esym/eqP; exact: val_inj.
-
-apply: eq_bigl => s; rewrite !inE.
-apply/idP/idP.
+apply: eq_bigl => s; rewrite !inE; apply/idP/idP.
 + move=> /andP [Hn0 /imsetP [Q HQ Hs]]; subst s.
   by rewrite imset_f //= inE HQ inE Hn0.
 + move/imsetP => [Q]; rewrite 2!inE => /andP [H1 H2] ->.
@@ -449,7 +436,7 @@ rewrite !shaped_hyper_stdtabnP => ->.
 move : (LRsupport _ _) => LR.
 rewrite (partition_big (@shape_deg (d1 + d2)) predT) //=.
 apply: eq_bigr => P _.
-rewrite (eq_bigr (fun i => (Schur P))); last by move=> T /andP [_ /eqP ->].
+under eq_bigr => T /andP [_ /eqP ->] do [].
 rewrite sumr_const; congr (_ *+ _).
 by apply: eq_card => i /=; rewrite unfold_in inE.
 Qed.

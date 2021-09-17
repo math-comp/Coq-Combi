@@ -156,33 +156,23 @@ apply/andP; split.
 - rewrite sumn_rem_trail0.
   rewrite (@sumn_nth_le _ n); last by rewrite size_map size_enum_ord.
   rewrite big_mkord.
-  rewrite (eq_bigr (fun i : 'I_n => nth 0 la i + mesym1 h i)%N); first last.
-    move=> i _.
-    have H0 : 0 < n by apply: (leq_ltn_trans _ (ltn_ord i)).
-    rewrite (nth_map (Ordinal H0)); last by rewrite size_enum_ord.
-    rewrite nth_ord_enum /= (mnm_nth 0) /=.
-    rewrite (nth_map (Ordinal H0)); last by rewrite size_enum_ord.
-    by rewrite nth_ord_enum.
+  under eq_bigr do rewrite -tnth_nth -mnm_tnth 2!mnmE.
   rewrite big_split /=; apply/eqP; congr (_ + _)%N.
-  + rewrite -{2}(sumn_intpartn la).
-    by rewrite (sumn_nth_le Hsz) big_mkord.
+  + by rewrite -{2}(sumn_intpartn la) (sumn_nth_le Hsz) big_mkord.
   + rewrite -mdeg_mesym1 /mdeg.
     rewrite -map_tnth_enum big_map big_enum; apply eq_bigr => i _.
     by rewrite mnm_tnth.
-- apply is_part_rem_trail0.
-  apply/(sorted1P 0) => i.
+- apply/is_part_rem_trail0/(sorted1P 0) => i.
   rewrite size_map size_enum_ord => Hi1.
-  have Hi : i < n by exact: (ltn_trans _ Hi1).
+  have Hi : i < n by apply: (ltn_trans _ Hi1).
   have {}/H : i \in iota 0 n.-1.
     rewrite mem_iota add0n.
     by case: n Hi1 {Hsz H Hi} => [//= | n'] /=; rewrite ltnS.
   have H0 : 0 < n by apply: (leq_ltn_trans _ Hi1).
   rewrite /mpart Hsz !(nth_map (Ordinal H0) 0) ?size_enum_ord // !mnmE.
   rewrite !nth_enum_ord //.
-  set bi := (_ \in h); set bi1 := (_ \in h).
-  have:= is_partP _ (intpartnP la) => [] [] _ H.
-  have {H} := H i; move: (i.+1) => j /= H1.
-  case: bi bi1 => [] [] /=; rewrite ?addn1 ?addn0 => H2.
+  have [_ /(_ i) H1] := is_partP _ (intpartnP la).
+  case: (_ i \in h) (_ i.+1 \in h) => [] [] /=; rewrite ?addn1 ?addn0 => H2.
   + by rewrite ltnS.
   + exact: (leq_trans H1).
   + by rewrite ltn_neqAle -eqSS eq_sym H2 H1.
@@ -226,30 +216,23 @@ Lemma card_setdiff d k (la : 'P_d) (mu : 'P_(d + k)) :
   size mu <= n -> size la <= n -> vb_strip la mu -> #|setdiff la mu| = k.
 Proof using .
 move=> Hszmu Hszla /(vb_stripP (intpartnP _) (intpartnP _)) Hstrip.
-rewrite /setdiff -sum1dep_card.
-rewrite -{2}(addKn d k).
-rewrite -{4}(sumn_intpartn la) -{2}(sumn_intpartn mu).
+have Hstrip1 j : nth 0 mu j <= (nth 0 la j).+1 by have /andP[] := Hstrip j.
+have {}Hstrip j : nth 0 la j <= nth 0 mu j by have /andP[] := Hstrip j.
+apply esym; rewrite /setdiff -sum1dep_card -[LHS](addKn d k).
+rewrite -{2}(sumn_intpartn la) -{1}(sumn_intpartn mu).
 rewrite (sumn_nth_le Hszmu) (sumn_nth_le Hszla).
-set rhs := RHS.
-have {rhs} -> : rhs = (\sum_(0 <= i < n) (nth 0 mu i - nth 0 la i)).
-  rewrite /rhs {rhs} /index_iota subn0.
-  elim: n {Hszmu Hszla} => [//= | i IHi]; first by rewrite !big_nil.
+transitivity (\sum_(0 <= i < n) (nth 0 mu i - nth 0 la i)).
+  rewrite /index_iota subn0.
+  elim: n {Hszmu Hszla} => [//= | j IHj]; first by rewrite !big_nil.
   rewrite -addn1 iota_add /= add0n !big_cat !big_cons !big_nil /= !addn0.
-  rewrite subnDA subnAC -addnBA; last by have := Hstrip i => /andP [].
-  rewrite addnC [RHS]addnC -IHi {IHi}.
-  rewrite addnBA //.
-  elim: i => [//= | i IHi]; first by rewrite !big_nil.
-  rewrite -addn1 iota_add /= add0n !big_cat !big_cons !big_nil /= !addn0.
-  apply leq_add; first exact: IHi.
-  by have := Hstrip i => /andP [].
-rewrite big_mkord.
-rewrite [RHS](bigID (fun i : 'I_n => nth 0 la i < nth 0 mu i)) /=.
-rewrite [X in (_ = _ + X)]big1 ?addn0; first last.
-  by move=> i; rewrite -leqNgt /leq => /eqP.
+  rewrite subnDA subnAC -addnBA // addnC [RHS]addnC -{}IHj.
+  by rewrite addnBA // leq_sum.
+rewrite !big_mkord [LHS](bigID (fun i : 'I_n => nth 0 la i < nth 0 mu i)) /=.
+rewrite [X in (_ + X = _)]big1 ?addn0; first last.
+  by move=> i; rewrite -leqNgt -subn_eq0 => /eqP ->.
 apply eq_bigr => i H.
-have:= Hstrip i => /andP [] H1 H2.
 suff -> : nth 0 mu i = (nth 0 la i).+1 by rewrite subSn // subnn.
-by apply anti_leq; rewrite H2 H.
+by apply anti_leq; rewrite Hstrip1 H.
 Qed.
 
 Lemma nth_add_setdiff d k (la : 'P_d) (mu : 'P_(d + k)) :
@@ -259,6 +242,8 @@ Lemma nth_add_setdiff d k (la : 'P_d) (mu : 'P_(d + k)) :
   nth 0 mu i.
 Proof using .
 move=> Hszmu Hszla /(vb_stripP (intpartnP _) (intpartnP _)) Hstrip i.
+have Hstrip1 j : nth 0 mu j <= (nth 0 la j).+1 by have /andP[] := Hstrip j.
+have {}Hstrip j : nth 0 la j <= nth 0 mu j by have /andP[] := Hstrip j.
 case: (ssrnat.ltnP i n) => Hi; first last.
   rewrite !nth_default //.
   - exact: leq_trans Hszmu Hi.
@@ -268,10 +253,8 @@ rewrite /mpart Hszla.
 rewrite !(nth_map (Ordinal H0) 0) ?size_enum_ord // !mnmE.
 rewrite inE /= (nth_enum_ord (Ordinal H0) Hi).
 case: ssrnat.ltnP => H /=; rewrite ?addn0 ?addn1.
-- apply anti_leq; rewrite H /=.
-  by have := Hstrip i => /andP [].
-- apply anti_leq; rewrite H /= andbT.
-  by have := Hstrip i => /andP [].
+- by apply anti_leq; rewrite H Hstrip1.
+- by apply anti_leq; rewrite H Hstrip.
 Qed.
 
 Lemma nohasincr_setdiff d k (la : 'P_d) (mu : 'P_(d + k)) :
@@ -279,11 +262,10 @@ Lemma nohasincr_setdiff d k (la : 'P_d) (mu : 'P_(d + k)) :
   vb_strip la mu -> ~~ hasincr la (setdiff la mu).
 Proof using .
 move=> Hszmu Hszla Hstrip.
-apply/hasPn => i; rewrite mem_iota add0n => /andP [] _ Hi.
+apply/hasPn => i; rewrite mem_iota add0n => /andP[_ Hi].
 rewrite /mnm_add [val _]/= !nth_add_setdiff //.
 rewrite eq_sym ltn_eqF // ltnS.
-have := (is_partP _ (intpartnP mu)) => [] [] _.
-by apply.
+by have [_]:= (is_partP _ (intpartnP mu)); apply.
 Qed.
 
 Lemma add_mesymK d k (la : 'P_d) :
@@ -309,10 +291,8 @@ Theorem alt_mpart_syme d (la : 'P_d) k :
 Proof using .
 rewrite alt_syme => Hszla.
 rewrite (bigID (hasincr la)) /=.
-rewrite (eq_bigr (fun x => 0%R)); last by move=> i /andP [] _ /hasincr0.
-rewrite sumr_const mul0rn add0r.
-rewrite (eq_bigr (fun h => 'a_(mpart (add_mesym k la h) + rho))); first last.
-  by move=> i /andP [] Hk Hincr; rewrite add_mesymE.
+rewrite big1 ?add0r; last by move=> i /andP [] _ /hasincr0.
+under eq_bigr => i /andP[/add_mesymE H{}/H <- //].
 rewrite (reindex_onto _ _ (add_mesymK Hszla)).
 apply eq_bigl => S; rewrite inE -andbA.
 apply/idP/and3P => [H | [Hstrip Hszle /eqP HS]].
@@ -348,8 +328,8 @@ Proof using .
 rewrite -{2}(conj_intpartnK la) /=.
 have Hc : is_part (conj_part la) by apply is_part_conj.
 apply hb_strip_conj => //; first by apply is_part_behead.
-elim: {d la} (conj_part la) Hc => [//=| s0 s IHs] /= /andP [] H0 /IHs {IHs}.
-case: s H0 => [//=| s1 s] /= -> ->.
+elim: {d la} (conj_part la) Hc => [| s0 s IHs] //= /andP[H0 {}/IHs].
+case: s H0 => [| s1 s]//= -> ->.
 by rewrite leqnn.
 Qed.
 
@@ -376,16 +356,15 @@ elim: mu d1 k la => /= [| m0 mu IHmu] d1 k la Hstr.
     by rewrite !nth_nil.
 case: la Hstr => la Hla /= Hstr.
 case: k Hla => [| k] Hla Hd1; subst d1;
-               rewrite -/(is_part (m0 :: mu)) /= => /andP [] _ Hp.
+               rewrite -/(is_part (m0 :: mu)) /= => /andP[_ Hp].
   have Hincl := vb_strip_included Hstr.
-  move: Hla; rewrite addn0 /= -/(sumn (m0 :: mu)) => /andP [] /eqP /esym Heq Hla.
+  move: Hla; rewrite addn0 /= -/(sumn (m0 :: mu)) => /andP[/eqP/esym Heq Hla].
   by rewrite (included_sumnE Hla Hincl Heq).
-case: la Hstr Hla => [//= |s0 la] /= /andP [/andP [ms0 sm0] Hstrip].
-move=> /andP [/eqP Heq /andP [_ Hs]].
+case: la Hstr Hla => [//= |s0 la] /= /andP[/andP[ms0 sm0] Hstrip].
+move=> /andP[/eqP Heq /andP[_ Hs]].
 rewrite leEseqlexi leEnat sm0 /=.
 case: (leqP s0 m0) => //= Hm0.
-have Hs0 : s0 = m0.+1.
-  by apply anti_leq; rewrite Hm0 sm0.
+have Hs0 : s0 = m0.+1 by apply anti_leq; rewrite Hm0 sm0.
 subst s0 => /= {Hm0}.
 move: Heq; rewrite addSn addnS => /eqP; rewrite eqSS -addnA => /eqP /addnI Heq.
 have Hla : is_part_of_n (sumn mu + k)%N la.
@@ -459,7 +438,7 @@ have Hprd : prd =1 pred1 la'.
 rewrite !(eq_bigl _ _ Hprd) {Hprd prd} /= !big_pred1_eq cast_intpartnE.
 set A := (X in _ + X); set B := (X in _ = _ + X).
 suff -> : A = B by move=> /addIr <- {A B}; rewrite Schur_cast.
-apply eq_bigr => {A B} nu /andP [] /andP [] Hstrip Hsznu Hnu.
+apply eq_bigr => {A B} nu /andP[/andP[Hstrip Hsznu] Hnu].
 pose nu' := cast_intpartn (esym Hk) nu.
 have Hlexi : (val nu' < la :> seqlexi _)%O.
   rewrite cast_intpartnE /= {nu'}.
@@ -595,8 +574,8 @@ Definition KostkaMon m := #|KostkaTab m|.
 Lemma sumn_eval w : sumn (eval w) = size w.
 Proof.
 rewrite sumnE /eval big_tuple.
-rewrite (eq_bigr (fun i => count_mem i w)) ?sum_count_mem ?count_predT //.
-by move=> i _; rewrite !tnth_mktuple.
+under eq_bigr do rewrite tnth_mktuple.
+by rewrite sum_count_mem count_predT.
 Qed.
 
 Lemma KostkaMon_sumeval m :
@@ -616,13 +595,12 @@ rewrite /eval mpolyX_prod mcoeffX; congr (nat_of_bool _)%:R.
 apply/eqP/eqP => [/(congr1 val) /= <- {m}| H].
 - elim: w => [| w0 w IHw] /=; first by rewrite big_nil.
   rewrite big_cons; apply eq_from_tnth => i.
-  have:= congr1 (fun t => tnth t i) IHw.
-  rewrite !tnth_mktuple => ->.
+  move/(congr1 (fun t => tnth t i)) : IHw; rewrite !tnth_mktuple => ->.
   by rewrite mnmE -mnm_tnth.
 - apply val_inj => /=; rewrite -H {m H}.
   elim: w => [| w0 w IHw] /=; first by rewrite big_nil.
   rewrite big_cons; apply eq_from_tnth => i.
-  have:= (congr1 (fun t => tnth t i) IHw).
+  move/(congr1 (fun t => tnth t i)) : IHw.
   by rewrite !tnth_mktuple mnmE -mnm_tnth => ->.
 Qed.
 
@@ -630,11 +608,10 @@ Lemma Kostka_Coeff (R : ringType) m : (Schur n R la)@_m = (KostkaMon m)%:R.
 Proof.
 rewrite /Schur linear_sum /= /KostkaMon.
 rewrite (bigID (fun t : tabsh la => t \in KostkaTab m)) /=.
-rewrite addrC big1 ?add0r; first last.
-  by move=> i; rewrite /KostkaTab inE evalE => /negbTE ->.
-rewrite (eq_bigr (fun => 1%R)); first last.
-  by move=> i; rewrite /KostkaTab inE evalE => /eqP ->; rewrite eq_refl.
-by rewrite sumr_const; congr _%:R; apply eq_card => i.
+rewrite addrC big1 ?add0r; first last => [i|].
+  by rewrite /KostkaTab inE evalE => /negbTE ->.
+under eq_bigr => i do rewrite /KostkaTab inE evalE => /eqP ->; rewrite eqxx.
+by rewrite sumr_const; congr _%:R; apply eq_card.
 Qed.
 
 Lemma perm_KostkaMon m1 m2 :
@@ -659,15 +636,13 @@ case: (ssrnat.leqP i n.+1) => [Hi| /ltnW Hi]; first last.
     by rewrite size_map (leq_trans (size_tabsh _)).
   by rewrite sumn_eval size_to_word.
 rewrite sumn_take big_mkord (big_ord_widen _ _ Hi).
-rewrite (eq_bigr (fun j => count_mem j (to_word t))); first last.
-  by move=> /= j _; rewrite (nth_map ord0) ?size_enum_ord // nth_ord_enum.
+under eq_bigr do rewrite (nth_map ord0) ?size_enum_ord // nth_ord_enum.
 rewrite sum_count_mem /= /to_word seq.count_flatten map_rev sumn_rev.
 rewrite -{1}(cat_take_drop i t) map_cat sumn_cat addnC.
 rewrite sumnE big_map big_seq big1 ?add0n; first last.
   move=> /= s Hs; rewrite -(nth_index [::] Hs).
   rewrite nth_drop; apply/eqP; rewrite -leqn0 leqNgt -has_count -all_predC.
-  rewrite (eq_all (a2 := fun i0 : 'I_n.+1 => i <= i0)); first last.
-    by move=> j /=; rewrite -leqNgt.
+  under eq_all => j /= do rewrite -leqNgt.
   have:= all_ltn_nth_tabsh t (i + index s (drop i t)); apply sub_all.
   by move=> j; apply (leq_trans (leq_addr _ _)).
 rewrite /shape -map_take !sumnE !big_map.
@@ -973,19 +948,17 @@ Qed.
 Lemma tabsh_is_std (t : tabsh la) :
   eval (to_word t) = td -> is_std [seq (i : nat) | i : 'I_n.+1 <- to_word t].
 Proof.
-rewrite /is_std => Hev; apply/seq.permP => p.
+rewrite /is_std => Hev; apply/seq.permP => P.
 rewrite count_map -sum_count_mem.
-rewrite (eq_bigr (fun i : 'I__ => (i < d)%N : nat)) /=; first last.
-  move=> i _.
-  by move: Hev => /(congr1 (fun t => tnth t i)); rewrite !tnth_mktuple.
+under eq_bigr => i _.
+  move/(congr1 (fun t => tnth t i)) : Hev; rewrite !tnth_mktuple => ->.
+  by rewrite over.
 rewrite size_map size_to_word /size_tab shape_tabsh sumn_intpartn.
-rewrite -sum1_count.
-transitivity (\sum_(0 <= i < n.+1 | p i) (i < d)).
-  by rewrite big_mkord.
+rewrite -sum1_count /= -(big_mkord _ (fun i => i < d : nat)).
 rewrite -{2}(subn0 d) -/(index_iota 0 d) (big_nat_widen _ _ _ _ _ Hd).
-rewrite (bigID (fun i => i < d)) /= addnC big1 ?add0n; first last.
-  by move=> i /andP [_ /negbTE ->].
-by apply eq_bigr => i /andP [_ ->].
+rewrite (bigID (gtn d)) /= addnC big1 ?add0n; first last.
+  by move=> i /andP[_ /negbTE ->].
+by apply eq_bigr => i /andP[_ ->].
 Qed.
 
 Definition tabnat_of_ord_fun (t : tabsh la) :=
@@ -1585,5 +1558,3 @@ by rewrite muln0 addn0 addSnnS subnSK // subn1.
 Qed.
 
 End AlternStraighten.
-
-

@@ -544,8 +544,7 @@ Definition zcard l :=
 
 Lemma zcard_nil : zcard [::] = 1.
 Proof.
-rewrite /zcard big_nil mul1n /=.
-rewrite (eq_bigr (fun => 1)) // big_const /=.
+rewrite /zcard big_nil mul1n /= big_const fact0.
 by rewrite eq_cardT // size_enum_ord /= mul1n.
 Qed.
 

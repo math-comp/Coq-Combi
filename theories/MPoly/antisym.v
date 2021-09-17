@@ -206,8 +206,7 @@ Qed.
 Lemma sumn_mpart sh : size sh <= n -> sumn (mpart sh) = sumn sh.
 Proof.
 move=> Hsz; rewrite /mpart Hsz !sumnE big_tuple.
-rewrite (eq_bigr (fun i : 'I_n => nth 0 sh i)); first last.
-  by move=> i _; rewrite tnth_mktuple.
+under [LHS]eq_bigr do rewrite tnth_mktuple.
 rewrite (big_nth 0) big_mkord (big_ord_widen _ _ Hsz).
 rewrite (bigID (fun i : 'I_n => i < size sh)) /= addnC big1 ?add0n //.
 by move=> i; rewrite -leqNgt; apply: nth_default.
@@ -699,11 +698,9 @@ rewrite msymM -mulNr; congr (_ * _).
   rewrite msymB opprB.
   by congr (_ - _); rewrite /msym mmapX mmap1U ?eltrL ?eltrR.
 rewrite (big_morph _ (msymM 's_i) (msym1 _ 's_i)) /=.
-rewrite (eq_bigl (fun p : 'II_n.+1 => predi i (eltrp i p))); first last.
-  by move=> [u v]; rewrite -/(predi i (u,v)) (predi_eltrpE (u, v) Hi) /=.
-rewrite (eq_bigr (fun p => 'X_(eltrp i p).1 - 'X_(eltrp i p).2)); first last.
-  by move => [u v] _; rewrite msymB /msym !mmapX !mmap1U.
-rewrite -(big_map _ _ (fun p => ('X_p.1 - 'X_p.2))) /=.
+under [LHS]eq_bigr do rewrite msymB /msym !mmapX !mmap1U.
+under [LHS]eq_bigl => p do rewrite -/(predi i p) (predi_eltrpE p Hi).
+rewrite /= -(big_map _ _ (fun p => ('X_p.1 - 'X_p.2))) /=.
 set L := map _ _; suff Hin : perm_eq L (enum {: 'II_ n.+1}).
   by rewrite (perm_big _ Hin) big_enum_cond.
 apply: uniq_perm.
@@ -928,8 +925,7 @@ Corollary Vanprod_alt n (R : ringType) :
 Proof.
 have := Vanprod_alt_int n => /(congr1 (map_mpoly (S := R) intr)).
 rewrite /Vanprod raddf_sum rmorph_prod.
-rewrite (eq_bigr (fun i => 'X_i.1 - 'X_i.2)); first last.
-  by move=> [i j] _ /=; rewrite raddfB /= !map_mpolyX.
+under [LHS]eq_bigr => p _ do rewrite raddfB /= !map_mpolyX /=.
 by move ->; apply eq_bigr => s _; rewrite raddfZsign !msymX /= map_mpolyX.
 Qed.
 
@@ -985,8 +981,8 @@ rewrite /alternpol (reindex_inj invg_inj) /=.
 rewrite raddf_sum /= (bigID (pred1 1%g)) /=.
 rewrite big_pred1_eq odd_permV odd_perm1 expr0 scale1r invg1 msym1m.
 rewrite mcoeffX eq_refl /=.
-rewrite (eq_bigr (fun => 0)); first by rewrite big1_eq addr0.
-move=> s Hs; rewrite mcoeffZ msymX mcoeffX invgK.
+rewrite big1 ?addr0 // => /= s Hs.
+rewrite mcoeffZ msymX mcoeffX invgK.
 suff : [multinom m (s i) | i < n] != m by move=> /negbTE ->; rewrite mulr0.
 move: Hs; apply contra => /eqP; rewrite mnmP => Heq.
 apply/eqP; rewrite -permP => i; rewrite perm1; apply val_inj => /=.

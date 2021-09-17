@@ -661,10 +661,9 @@ have /sumn_nth_le -> := size_included Hincl.
 rewrite (sumn_nth_le (leqnn (size outer))).
 have [Hsi Hsis Hs His] := Hrib.
 have lt_stop := ribbon_on_stop_lt partout Hrib.
-rewrite (big_cat_nat _ (n := stop.+1)) //= addnC.
-rewrite big_nat (eq_bigr (fun i => nth 0 inner i)) -?big_nat; first last.
-  by move=> i /andP[+ _]; apply: Hsi.
-rewrite {Hsi} [X in _ - X](big_cat_nat _ (n := stop.+1)) //=.
+rewrite (big_cat_nat _ (n := stop.+1)) //= addnC big_nat.
+under [X in X + _ - _ = _]eq_bigr => i /andP[+ _] do move/Hsi->.
+rewrite -big_nat {Hsi} [X in _ - X](big_cat_nat _ (n := stop.+1)) //=.
 rewrite addnC [X in _ - X]addnC subnDA addnK.
 have less := ribbon_on_start_stop Hrib.
 have := less; rewrite -ltnS => /ltnW less1.
@@ -676,7 +675,7 @@ move: less; rewrite leq_eqVlt => /orP [/eqP Hss|ltss].
   by rewrite Hss !big_nat1 subnn add0n.
 rewrite big_nat_recl ?(ltnW ltss) //.
 rewrite big_nat (eq_bigr _ Hsis) -big_nat.
-rewrite (eq_bigr (fun i => 1 + nth 0 inner i)); last by move=> i _; rewrite add1n.
+under eq_bigr do rewrite -add1n.
 rewrite big_split /= big_nat_recr ?(ltnW ltss) //= addnA subnDA addnK.
 rewrite addnC sum_nat_const_nat muln1.
 move/is_part_ijP : partinn => [_ /(_ _ _ (ltnW ltss))].

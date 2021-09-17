@@ -920,9 +920,12 @@ Variable n0 : nat.
 Local Notation n := n0.+1.
 Variable R : comRingType.
 
-Local Notation "''XX'" := 'X_{1.. n}.
-Local Notation "''XX_' m " := 'X_{1.. n < (mdeg m).+1, (mdeg m).+1} (at level 0).
-Implicit Type m : 'XX.
+Local Notation "''Xn'" := 'X_{1.. n}.
+Local Notation "''Xn_' m" := 'X_{1.. n < (mdeg m).+1}
+          (at level 10, m at next level, format "''Xn_' m").
+Local Notation "''XXn_' m" := 'X_{1.. n < (mdeg m).+1, (mdeg m).+1}
+          (at level 10, m at next level, format "''XXn_' m").
+Implicit Type m : 'Xn.
 Local Notation SF := {sympoly R[n]}.
 
 (** ** Bases change between homogeneous and elementary *)
@@ -950,11 +953,11 @@ transitivity (\sum_(0 <= i < d.+1)
     rewrite -signr_odd -[X in _ * X]signr_odd -signr_addb.
     by rewrite oddB // addKb signr_odd.
   rewrite mcoeffM.
-  rewrite (bigID (fun k : 'XX_(m) => (mechar i k.2))) /=.
+  rewrite (bigID (fun k : 'XXn_m => (mechar i k.2))) /=.
   rewrite addrC big1 ?add0r; first last.
     move=> [/= m1 m2 /andP [Hmm /negbTE Hf]].
     by rewrite mcoeff_mesym Hf /= mulr0.
-  rewrite (eq_bigr (fun k : 'XX_m => 1)); first last.
+  rewrite (eq_bigr (fun k : 'XXn_m => 1)); first last.
     move=> [/= m1 m2 /andP [/eqP H1 H2]].
     rewrite mcoeff_symh mcoeff_mesym H2 /= mulr1.
     suff -> : mdeg m1 == (d - i)%N by [].
@@ -962,7 +965,7 @@ transitivity (\sum_(0 <= i < d.+1)
     move: H2 => /andP [/eqP -> _] <-.
     by rewrite addnK.
   subst d; rewrite sumr_const /= -cards_draws; congr _%:R.
-  pose f := (fun mm : 'XX => [set j | mm j != 0%N] : {set 'I_n}).
+  pose f := (fun mm : 'Xn => [set j | mm j != 0%N] : {set 'I_n}).
   pose g := (fun S : {set 'I_n} => [multinom (i \in S : nat) | i < n]).
   have canfg : {in mechar i, cancel f g}.
     move=> m2.
@@ -971,7 +974,7 @@ transitivity (\sum_(0 <= i < d.+1)
     apply/mnmP => j; rewrite mnmE inE.
     case: (altP (m2 j =P 0%N)) => [-> |] //=.
     by move/(_ j): Hall; case: (m2 j) => [|[|k]].
-  rewrite -(card_in_imset (f := f \o (fun mm : 'XX_m => bmnm mm.2))); first last.
+  rewrite -(card_in_imset (f := f \o (fun mm : 'XXn_m => bmnm mm.2))); first last.
     move=> /= [m1 m2] [n1 n2].
     rewrite !unfold_in /= => /andP [/eqP Hmm Hm2] /andP [/eqP Hnn Hn2] /(congr1 g).
     rewrite !canfg // {f g canfg} => /= [] H1.
@@ -988,15 +991,15 @@ transitivity (\sum_(0 <= i < d.+1)
       rewrite (bigID (mem [set j | m2 j != 0%N])) /= addnC.
       rewrite [X in _ = (X + _)%N]big1 ?add0n; first last.
         by move=> j; rewrite inE negbK -mnm_tnth => /eqP ->.
-      rewrite [RHS](eq_bigr (fun => 1%N)) ?sum1_card //.
-      move=> j; rewrite inE -mnm_tnth.
+      rewrite -sum1_card; apply eq_bigr => j.
+      rewrite inE -mnm_tnth.
       by move/(_ j): Hall; case: (m2 j) => [|[|k]].
   - have : mdeg (g S) = #|S|.
       rewrite /mdeg [LHS]big_tuple (bigID (mem S)) /= addnC.
       rewrite [X in (X + _)%N]big1 ?add0n; first last.
         by move=> j /negbTE; rewrite tnth_mktuple => ->.
-      rewrite [LHS](eq_bigr (fun => 1%N)) ?sum1_card //.
-      by move=> j; rewrite tnth_mktuple => ->.
+      under eq_bigr => j do rewrite tnth_mktuple => ->.
+      exact: sum1_card.
     rewrite Hs => HmdeggS.
     have Hm2 : mdeg (g S) < (mdeg m).+1 by rewrite HmdeggS ltnS.
     pose m2 := BMultinom Hm2.
@@ -1234,16 +1237,16 @@ under eq_bigr => i /= Hi do rewrite mult_symh_powersum subnKC // ?(ltnW Hi) //.
 rewrite -big_nat -mulr_sumr mulrC.
 case: (altP (mdeg m =P k)) => Hdegm; rewrite /= ?mul1r ?mul0r //.
 rewrite exchange_big /=.
-rewrite (eq_bigr (fun i : 'I_n => (m i)%:R)).
+transitivity (\sum_(i < n) (m i)%:R : R).
   by rewrite -Hdegm mdegE -natr_sum.
-move=> i _ /=; rewrite -natr_sum; congr (_%:R).
+apply: eq_bigr => i _ /=; rewrite -natr_sum; congr (_%:R).
 have : m i <= k.
   by move: Hdegm; rewrite mdegE => <-; rewrite (bigD1 i) //=; apply leq_addr.
 rewrite big_mkord (reindex_inj rev_ord_inj) /=.
 under eq_bigr do rewrite subKn //.
 move: (m i) => n {m Hdegm i} Hn.
 rewrite (bigID (fun i : 'I_k => i < n)) /=.
-rewrite (eq_bigr (fun i => 1%N)); last by move=> i ->.
+under eq_bigr => i -> /= do [].
 rewrite sum_nat_const /= muln1 big1 ?addn0; last by move=> i /negbTE ->.
 rewrite cardE /= /enum_mem -enumT /=.
 rewrite (eq_filter (a2 := (preim nat_of_ord (fun i => i < n)))) //.
@@ -1363,11 +1366,9 @@ rewrite [X in _ + X]big1 ?addr0 => [|i]; first last.
   case: (boolP [&& _, _ & _]) => //= /and3P [_ Hnthi _]; exfalso.
   move: Hnthi; rewrite /mpart size_colpartn ltk1n mnmE colpartnE nth_nseq.
   by rewrite (ltnNge i _) ltk1i.
-rewrite (eq_bigr (fun _ => 1)) => [|i ltik2].
-  transitivity (\sum_(0 <= i < k.+2) 1 : R).
-    rewrite [RHS](big_nat_widen _ _ _ _ _ ltk1n) big_mkord.
-    exact: eq_bigl.
-  by rewrite sumr_const_nat subn0.
+transitivity (\sum_(0 <= i < k.+2) 1 : R); last by rewrite sumr_const_nat subn0.
+rewrite [RHS](big_nat_widen _ _ _ _ _ ltk1n) big_mkord /=.
+apply eq_bigr => i ltik2.
 rewrite mult_syme_U.
 rewrite mdeg_mpart ?size_colpartn // sumn_intpartn addn1 eqxx /=.
 rewrite /mpart size_colpartn ltk1n mnmE {1 2}colpartnE nth_nseq ltik2 /=.

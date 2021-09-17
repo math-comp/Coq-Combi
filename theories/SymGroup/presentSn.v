@@ -1399,9 +1399,8 @@ Corollary genfun_length n :
   \prod_(0 <= i < n.+1) \sum_(0 <= j < i.+1) 'X^j : {poly int}.
 Proof.
 rewrite (reindex _ (onW_bij _ (prods_codesz_bij n))) /=.
-rewrite (eq_bigr (fun c : codesz _ => 'X^(sumn c))); first last.
-  move=> i _; rewrite (length_permcd (codeszP _)) //.
-  by rewrite size_codesz.
+under eq_bigr => i _ do
+  rewrite (length_permcd (codeszP _)) // ?size_codesz //.
 rewrite /prods_codesz -big_enum /=.
 rewrite -(big_map (@cdval _) xpredT (fun i : seq nat => 'X^(sumn i))).
 elim: n => [/= | n].

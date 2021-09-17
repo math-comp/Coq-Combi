@@ -241,9 +241,7 @@ Lemma Minv_lincombl (Mod : lmodType R) (F G : T -> Mod) :
   (forall t, G t = \sum_u Minv t u *: F u).
 Proof.
 move=> H t.
-rewrite (eq_bigr (fun u => (\sum_v (Minv t u * M u v) *: G v))); first last.
-  move=> i _; rewrite H scaler_sumr; apply eq_bigr => v _.
-  by rewrite scalerA.
+under eq_bigr do [rewrite H scaler_sumr; under eq_bigr do rewrite scalerA].
 rewrite exchange_big /= (bigD1 t) //= -scaler_suml Minvl eq_refl scale1r.
 rewrite big1 ?addr0 // => i /negbTE Hi.
 by rewrite -scaler_suml Minvl Hi scale0r.
@@ -254,9 +252,7 @@ Lemma Minv_lincombr (Mod : lmodType R) (F G : T -> Mod) :
   (forall t, G t = \sum_u Minv u t *: F u).
 Proof.
 move=> H t.
-rewrite (eq_bigr (fun u => (\sum_v (M v u * Minv u t) *: G v))); first last.
-  move=> i _; rewrite H scaler_sumr; apply eq_bigr => v _.
-  by rewrite scalerA mulrC.
+under eq_bigr do [rewrite H scaler_sumr; under eq_bigr do rewrite scalerA mulrC].
 rewrite exchange_big /= (bigD1 t) //= -scaler_suml Minvr eq_refl scale1r.
 rewrite big1 ?addr0 // => i /negbTE Hi.
 by rewrite -scaler_suml Minvr eq_sym Hi scale0r.

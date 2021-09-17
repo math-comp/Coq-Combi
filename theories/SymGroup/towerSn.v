@@ -521,12 +521,10 @@ Proof.
 rewrite /cfdot /= -mulrA; congr (_ * _).
 case: (altP (p1 =P p2)) => [<-{p2} | /negbTE Hneq]; rewrite /= ?mulr1 ?mulr0.
 - rewrite (bigID (fun x => x \in classCT p1)) /=.
-  rewrite (eq_bigr (fun => 1)); first last.
-    move=> i => /andP [_].
+  under eq_bigr => i /andP [_].
     rewrite -classCTP !cfuniCTE => -> /=.
-    by rewrite mul1r conjC1.
-  rewrite sumr_const /= big1 ?addr0; first last.
-    move=> i => /andP [_].
+    by rewrite mul1r conjC1 over.
+  rewrite sumr_const /= big1 ?addr0; first last => [i /andP [_]|].
     rewrite -classCTP !cfuniCTE => /negbTE -> /=.
     by rewrite mul0r.
   congr _%:R; apply eq_card => /= x.

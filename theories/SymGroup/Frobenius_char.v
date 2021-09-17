@@ -176,8 +176,7 @@ Qed.
 Lemma Fchar_triv : Fchar 1 = 'hh[rowpartn n].
 Proof.
 rewrite -decomp_cf_triv linear_sum.
-rewrite (eq_bigr (fun la => 'z_la^-1 *: 'hp[la])); first last.
-  move=> la _.
+rewrite (eq_bigr (fun la => 'z_la^-1 *: 'hp[la])); first last => [la _|].
   rewrite -Fchar_ncfuniCT /ncfuniCT /= linearZ /=.
   by rewrite scalerA /= mulrC divff // scale1r.
 apply val_inj; case: n => [|n0]/=.

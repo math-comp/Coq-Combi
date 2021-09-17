@@ -318,8 +318,7 @@ Lemma famY_subproof (mz : 'X_{1.. (m * n) < d.+1}) i :
 Proof.
 apply: (leq_ltn_trans _ (bmdeg mz)).
 rewrite /mdeg /monsY tnth_mktuple !big_tuple big_mxvec_index /=.
-rewrite (eq_bigr (fun j => tnth mz (mxvec_index i j))); first last.
-  by move=> j _; rewrite tnth_mktuple -mnm_tnth.
+under eq_bigr do rewrite tnth_mktuple mnm_tnth.
 by rewrite (bigD1 i) //= leq_addr.
 Qed.
 Definition famY mz := [ffun i : 'I_m => BMultinom (famY_subproof mz i)].
@@ -382,18 +381,14 @@ rewrite addrC big1 ?add0r; first last.
   move=> i /andP [_ /negbTE Hneq].
   rewrite evalXY_XE -rmorph_prod /= polyXY_scale.
   by rewrite linearZ /= /polX_XY map_mpolyX mcoeffX Hneq mulr0.
-rewrite (eq_bigl (fun mZ : 'X_{1.. _ < _} => monX mZ == mon)); first last.
-  move=> i; rewrite andbC; case: eqP => //= Heq.
-  by rewrite -{2}Hdeg -Heq mdeg_monX eq_refl.
-rewrite (eq_bigr (fun mZ : 'X_{1.. _ < _} =>
-                    \prod_(i < m) 'X_[tnth (monsY mZ) i])); first last.
-  move=> mz Hmz; rewrite evalXY_XE -rmorph_prod /= polyXY_scale.
-  by rewrite linearZ /= /polX_XY map_mpolyX mcoeffX Hmz mulr1.
-rewrite (eq_bigr (fun i : 'I_m => symh_pol_bound n R d.+1 (tnth mon i)));
-    first last.
-  move=> i _; apply: symh_pol_any.
-  rewrite ltnS -Hdeg /mdeg big_tuple (bigD1 i) //=.
-  exact: leq_addr.
+under eq_bigl=> i do [rewrite andb_idl;
+  last by move=> /eqP; rewrite -{3}Hdeg => <-; rewrite mdeg_monX].
+under [LHS]eq_bigr => mz Hmz.
+  rewrite evalXY_XE -rmorph_prod /= polyXY_scale.
+  by rewrite linearZ /= /polX_XY map_mpolyX mcoeffX Hmz mulr1 over.
+under [RHS]eq_bigr => i _ do
+  [rewrite (@symh_pol_any _ _ d.+1) //;
+     last by rewrite ltnS -Hdeg /mdeg big_tuple (bigD1 i) // leq_addr].
 rewrite bigA_distr_big_dep => /=.
 rewrite (reindex (famY (d := d))) /=; first last.
   exists (famYinv (d := d)).
@@ -416,8 +411,7 @@ apply eq_big => [mz | mz /eqP Hmz].
   + apply/mnmP => i.
     have := Hfam i; rewrite unfold_in /= !mnm_tnth => /eqP <-.
     by rewrite ffunE /= !tnth_mktuple mdegE; apply eq_bigr => j _; rewrite mnmE.
-- apply eq_bigr => i _.
-  by rewrite ffunE /= !tnth_mktuple.
+- by apply eq_bigr => i _; rewrite ffunE /= !tnth_mktuple.
 Qed.
 
 Lemma Cauchy_homsymm_homsymh :

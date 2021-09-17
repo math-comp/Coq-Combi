@@ -235,10 +235,9 @@ have -> : cover [set F i | i in S] = F (cover S).
 rewrite {}/F /= => /eqP <-.
 apply: esym.
 rewrite (bigID (fun S => S :&: B == set0)) /=.
-rewrite (eq_bigr (fun B => 0)); first last.
+rewrite big1 ?add0n; first last.
   move=> i /andP [/imsetP [j _ ->]].
   by rewrite -setIA setIid => /eqP ->; rewrite cards0.
-rewrite sum_nat_const muln0 add0n.
 rewrite (eq_bigl (mem ([set i :&: B | i in S & i :&: B != set0]))); first last.
   move=> i /=; apply/andP/imsetP => [[/imsetP [j Hj ->] {i}]|[/= j]].
   - rewrite -setIA setIid => Hint; exists j => //=.
@@ -255,10 +254,7 @@ rewrite big_imset /=; first last.
   move/(_ x): Hneq; rewrite !inE Hx /= => Hxj.
   by apply/eqP/setP => /(_ x); rewrite !inE Hx Hxj HxB.
 apply: esym; rewrite (bigID (fun S => S :&: B == set0)) /=.
-rewrite (eq_bigr (fun=> 0)); first last.
-  move=> i /andP [_ /eqP ->].
-  by rewrite cards0.
-rewrite sum_nat_const muln0 add0n.
+rewrite big1 ?add0n; last by move=> i /andP [_ /eqP ->]; rewrite cards0.
 by apply: eq_bigl => i /=; rewrite inE.
 Qed.
 
@@ -1602,8 +1598,7 @@ move=> Htab; apply/eqP; rewrite eqn_leq; apply/andP; split.
   rewrite (shape_tabcols Htab) /Greene_row /Greene_rel /Greene_rel_t.
   apply/bigmax_leqP => S; rewrite /ksupp => /and3P [Hsz Htriv].
   have:= Htriv; rewrite /trivIset => /eqP <- /forallP Hall.
-  rewrite (eq_bigr (fun B => \sum_(S <- tabcols t) #|B :&: S|));
-    last by move=> B _; rewrite (tabcol_cut (is_part_sht Htab)).
+  under eq_bigr do rewrite -(tabcol_cut (is_part_sht Htab)).
   rewrite exchange_big /= big_map.
   rewrite !big_seq; apply: leq_sum.
   move=> T HT; rewrite leq_min; apply/andP; split.

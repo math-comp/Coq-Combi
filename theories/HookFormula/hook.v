@@ -408,9 +408,8 @@ Proof.
 move=> Hpart Hcorn.
 have:= Hcorn => /andP/=[Hcrn/eqP HBeta].
 have:= decr_nthK Hpart Hcrn; set p' := decr_nth p Alpha => Hp.
-rewrite big_seq_cond.
-apply esym; set F := BIG_F; apply esym.
-rewrite (eq_bigr (fun i => F i.2)); first last.
+set F := (F in _ = \prod_(i <- _) F i).
+rewrite big_seq_cond (eq_bigr (fun i => F i.2)) -?big_seq_cond; first last.
   move=> [r c] /= /andP []; rewrite mem_enum_box_in unfold_in /= => Hin /eqP Hr.
   subst r.
   rewrite /F{F} -Hp hook_length_pred hook_length_incr_nth_row /=; first last.
@@ -422,7 +421,6 @@ rewrite (eq_bigr (fun i => F i.2)); first last.
   move: (hook_length p' (Alpha, c)) => h Hn.
   rewrite -addn1; rewrite PoszD intrD.
   by rewrite -{4}(divff Hn) -{3}div1r -mulrDl.
-rewrite -big_seq_cond.
 transitivity (\prod_(i <- [seq i.2 | i <- enum_box_in p' & i.1 == Alpha]) F i).
   by rewrite big_map big_filter; apply: eq_bigr.
 rewrite big_map /enum_box_in filter_flatten big_flatten /= -map_comp big_map.
@@ -431,12 +429,11 @@ case: (ltnP Alpha (size p')) => Halpha.
   + exact: iota_uniq.
   + rewrite mem_iota add0n.
     by rewrite Halpha.
-  rewrite big_filter big_map (eq_bigl (fun => true)) /=; first last.
-    by move=> i; rewrite /= eq_refl.
+  rewrite big_filter big_map /=.
+  under eq_bigl do rewrite /= eq_refl.
   rewrite /p' nth_decr_nth -HBeta (eq_bigr F) //.
   rewrite /index_iota subn0 mulrC.
-  rewrite (eq_bigr (fun => 1)); first by rewrite big1 // mul1r.
-  move=> i /negbTE Hi.
+  rewrite big1 ?mul1r // => i /negbTE Hi.
   by rewrite big_filter big_map big_pred0.
 - move: HBeta; rewrite -nth_decr_nth (nth_default _ Halpha) => ->.
   rewrite /index_iota /= big_nil.
@@ -1345,13 +1342,11 @@ Corollary Corollary4 :
   \sum_(i <- rem_corners p) (HLF (decr_nth p i)) / (HLF p) = 1.
 Proof using.
 rewrite big_seq_cond => Hp.
-rewrite (eq_bigr (fun i => mu choose_corner
-                     (fun pair => (ends_at (i, (nth O p i).-1) pair)%:Q)));
-    first last.
-  move => i /andP [].
-  rewrite /rem_corners mem_filter => /andP [Hcorn _] _.
-  apply esym. apply Theorem2.
-  by rewrite /corner_box Hcorn eq_refl.
+under eq_bigr => i /andP[].
+  rewrite /rem_corners mem_filter => /andP[Hcorn _] _.
+  rewrite -(Theorem2 (Beta := (nth O p i).-1)); first last.
+    by rewrite /corner_box Hcorn eqxx.
+over.
 rewrite -big_seq_cond -mu_stable_sum.
 rewrite /choose_corner Mlet_simpl mu_random_sum.
 have Hsum : (sumn p) != 0%N.

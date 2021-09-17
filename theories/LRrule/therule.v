@@ -591,15 +591,11 @@ Theorem LRyam_coeffP :
 Proof using .
 rewrite LRtab_coeffP.
 rewrite (bigID (fun P : 'P_(d1 + d2) => included P1 P) predT) /=.
-rewrite [X in _ + X](_ : _ = 0); first last.
-  rewrite (eq_bigr (fun=> 0)).
-  - by rewrite sumr_const mul0rn.
-  - move=> P Hincl.
-    suff -> : LRtab_coeff P1 P2 P = 0%nat by exact: mulr0n.
-    apply/eqP; move: Hincl; apply contraR.
-    rewrite /LRtab_coeff cards_eq0 => /set0Pn [Q].
-    exact: LRtab_set_included.
-rewrite addr0.
+rewrite [X in _ + X]big1 ?addr0; first last => [P Hincl|].
+  suff -> : LRtab_coeff P1 P2 P = 0%N by exact: mulr0n.
+  apply/contraNeq: Hincl.
+  rewrite /LRtab_coeff cards_eq0 => /set0Pn [Q].
+  exact: LRtab_set_included.
 by apply: eq_bigr => P /LRyam_coeffE ->.
 Qed.
 

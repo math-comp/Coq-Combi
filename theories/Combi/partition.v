@@ -2333,10 +2333,9 @@ rewrite /part_fromtuple /from_parttuple /= => Hi.
 move/is_parttupleP : H => [t0 _ srt _].
 have {}t0 : nth 0 t 0 = 0 by move: t0; rewrite (tnth_nth 0).
 rewrite sumn_take big_nat.
-rewrite (eq_bigr (fun j => nth 0 t j.+1 - nth 0 t j)); first last.
-  move=> j /= Hj.
+under eq_bigr => j /= Hj.
   have lejd : j < d by rewrite (leq_trans Hj) // -ltnS.
-  by rewrite nth_rem_trail0 (nth_map 0) ?size_iota // nth_iota.
+  by rewrite nth_rem_trail0 (nth_map 0) ?size_iota // nth_iota // over.
 by rewrite -big_nat sum_diff_tuple // t0 subn0.
 Qed.
 Lemma from_parttupleK t (H : is_parttuple t) :
