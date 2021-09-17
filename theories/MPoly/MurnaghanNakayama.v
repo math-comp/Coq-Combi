@@ -1,3 +1,21 @@
+(** * Combi.MPoly.MurnaghanNakayama : Murnaghan-Nakayama rule *)
+(******************************************************************************)
+(*      Copyright (C) 2021-2021 Florent Hivert <florent.hivert@lri.fr>        *)
+(*                                                                            *)
+(*  Distributed under the terms of the GNU General Public License (GPL)       *)
+(*                                                                            *)
+(*    This code is distributed in the hope that it will be useful,            *)
+(*    but WITHOUT ANY WARRANTY; without even the implied warranty of          *)
+(*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *)
+(*    General Public License for more details.                                *)
+(*                                                                            *)
+(*  The full text of the GPL is available at:                                 *)
+(*                                                                            *)
+(*                  http://www.gnu.org/licenses/                              *)
+(******************************************************************************)
+(** * The Murnaghan–Nakayama rule
+
+ ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset binomial order.
@@ -103,7 +121,7 @@ case Hrib : add_ribbon => [[res h]|] /=; last by rewrite addn0 addnS eqxx.
 have:= is_part_of_add_ribbon (intpartnP la) Hrib => /andP[/eqP -> ->].
 by rewrite addnC sumn_intpartn eqxx.
 Qed.
-Definition add_ribbon_intpartn pos :=
+Local Definition add_ribbon_intpartn pos :=
   match add_ribbon la nbox.+1 pos with
   | Some (_, h) => Some (IntPartN (add_ribbon_intpartn_subproof pos))
   | None => None
@@ -116,12 +134,11 @@ case: (leqP (size mu) n) => // szmu.
 case: mindropeq (mindropeq_leq la mu) => // md /= /leq_trans; apply.
 by rewrite geq_max szla szmu.
 Qed.
-Definition ribbon_stop mu := Ordinal (ribbon_stop_subproof mu).
-
+Local Definition ribbon_stop mu := Ordinal (ribbon_stop_subproof mu).
 
 Lemma mult_altern_sympol :
   'a_(mpart la + rho) * (symp_pol n R nbox.+1) =
-  \sum_(sh : PP | (size sh <= n) && (ribbon la sh))
+  \sum_(sh : PP | (ribbon la sh) && (size sh <= n))
    (-1) ^+ (ribbon_height la sh).-1 *: 'a_(mpart sh + rho).
 Proof.
 rewrite mult_altern_oapp //.
@@ -134,7 +151,7 @@ rewrite (reindex_omap ribbon_stop add_ribbon_intpartn) /=; first last.
   rewrite (size_add_ribbon Haddrib) geq_max szla ltn_ord /=.
   rewrite (ribbon_on_mindropeq (intpartnP la) _ (add_ribbon_onP Haddrib)) //.
   exact: (is_part_add_ribbon _ Haddrib).
-apply esym; apply: eq_big => mu.
+apply esym; apply: eq_big => mu; rewrite andbC.
   case leqP => Hszmu /=; first last.
   + rewrite /add_ribbon_intpartn.
     case Haddrib : {1 2}(add_ribbon la nbox.+1 0) => [[res h]|//=].
@@ -174,17 +191,21 @@ Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
 
 Lemma syms_sympM_idomain m (la : intpartn m) nbox :
   's[la] * 'p_(nbox.+1) =
-  \sum_(sh : intpartn (m + nbox.+1) | (size sh <= n) && (ribbon la sh))
+  \sum_(sh : intpartn (m + nbox.+1) | ribbon la sh)
    (-1) ^+ (ribbon_height la sh).-1 *: 's[sh] :> {sympoly R[n]}.
 Proof.
 apply val_inj; case: (leqP (size la) n) => szla /=; first last.
   rewrite Schur_oversize // mul0r raddf_sum /=.
-  apply/esym/big1 => mu /andP[szmu Hrib]; exfalso.
-  move: Hrib => /ribbon_included/includedP[].
-  by move/leq_trans/(_ szmu)/(leq_trans szla); rewrite ltnn.
+  apply/esym/big1 => mu Hrib.
+  rewrite Schur_oversize ?scaler0 //.
+  apply: (leq_trans szla).
+  by move: Hrib => /ribbon_included/includedP[].
+rewrite raddf_sum /= [in RHS](bigID (fun sh => size (val sh) <= n)) /=.
+rewrite [X in _ = _ + X]big1 ?addr0; first last => [sh /andP[_]|].
+  by rewrite -ltnNge => /Schur_oversize ->; rewrite scaler0.
 apply: (mulfI (alt_rho_non0 n R)).
 rewrite mulrA alt_SchurE // mult_altern_sympol //.
-rewrite raddf_sum mulr_sumr; apply eq_bigr => mu /andP[szmu Hrib] /=.
+rewrite mulr_sumr; apply eq_bigr => mu /andP[szmu Hrib] /=.
 by rewrite -scalerAr alt_SchurE.
 Qed.
 
@@ -201,14 +222,15 @@ Local Notation rho := (rho n).
 Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
 
 Lemma syms_sympM m (la : intpartn m) nbox :
-  's[la] * 'p_(nbox.+1) =
-  \sum_(sh : intpartn (m + nbox.+1) | (size sh <= n) && (ribbon la sh))
+  nbox != 0%N ->
+  's[la] * 'p_(nbox) =
+  \sum_(sh : intpartn (m + nbox) | ribbon la sh)
    (-1) ^+ (ribbon_height la sh).-1 *: 's[sh] :> {sympoly R[n]}.
 Proof.
+case: nbox => // nbox _.
 rewrite -(map_syms [rmorphism of intr]) -(map_symp [rmorphism of intr]).
 rewrite -rmorphM syms_sympM_idomain rmorph_sum /=.
 by under [LHS]eq_bigr do rewrite scale_map_sympoly rmorphX rmorphN1 map_syms.
 Qed.
 
 End MultSymsSymp.
-
