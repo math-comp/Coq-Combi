@@ -1493,7 +1493,7 @@ Qed.
 
 Lemma alt_straight_add_ribbon0 (p : seq nat) (i : 'I_n) (d : nat) :
   is_part p -> size p <= n ->
-  add_ribbon p d.+1 i == None -> 'a_(mpart p + rho + U_(i) *+ d.+1) = 0%R.
+  (add_ribbon p d.+1 i).2 == 0 -> 'a_(mpart p + rho + U_(i) *+ d.+1) = 0%R.
 Proof.
 rewrite /add_ribbon => Hpart Hsz.
 case: startrem (startremE p d.+1 i) (startrem_leq_pos p d.+1 i) => a [|b]//= .
@@ -1514,13 +1514,16 @@ Qed.
 
 Lemma alt_straight_add_ribbon (p : seq nat) (i : 'I_n) (d : nat) :
   is_part p -> size p <= n ->
-  forall res h, add_ribbon p d.+1 i = Some (res, h) ->
-    'a_(mpart p + rho + U_(i) *+ d.+1) = (-1) ^+ h.-1 *: 'a_(mpart res + rho).
+  let: (res, hgt) := add_ribbon p d.+1 i in
+  hgt != 0 ->
+  'a_(mpart p + rho + U_(i) *+ d.+1) = (-1) ^+ hgt.-1 *: 'a_(mpart res + rho).
 Proof.
-rewrite /alternpol => Hpart ltsn res h Hrib.
-have := size_add_ribbon Hrib; move: Hrib; rewrite /add_ribbon.
-case startremeq : startrem (startrem_leq_pos p d.+1 i) => [start rem]// lesti.
-case: ltnP => // lt0rem [<- <-] /= Hsz.
+rewrite /alternpol => Hpart ltsn.
+case Hrib : add_ribbon => [res hgt] Hok.
+have := @size_add_ribbon p d i; rewrite Hrib /= => /(_ Hok).
+move: Hrib; rewrite /add_ribbon.
+case startremeq : startrem (startrem_leq_pos p d.+1 i) => [start rem]//= lesti.
+case: ltnP => [lt0rem[ <- <-] Hsz|_ [_ /esym/eqP]]; last by rewrite (negbTE Hok).
 have starto := leq_ltn_trans lesti (ltn_ord i).
 have : start = val (Ordinal starto) by [].
 move: (Ordinal starto) => st Hstart; subst start.

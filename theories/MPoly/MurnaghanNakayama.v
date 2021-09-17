@@ -80,28 +80,20 @@ rewrite /symp_pol mulr_sumr; apply eq_bigr => i _.
 by rewrite !mpolyXD mpolyXn.
 Qed.
 
-Lemma mult_altern_oapp p d :
-  is_part p -> size p <= n ->
-  'a_(mpart p + rho) * (symp_pol n R d.+1) =
-  \sum_(i < n) oapp (fun ph => (-1) ^+ ph.2.-1 *: 'a_(mpart ph.1 + rho)) 0
-   (add_ribbon p d.+1 i).
-Proof.
-move=> partp szp; rewrite mult_altern_symp_pol.
-apply eq_bigr => i _ /=.
-case Hrib : add_ribbon => [[sh h]|] /=.
-  by rewrite (alt_straight_add_ribbon _ partp szp Hrib).
-by rewrite (alt_straight_add_ribbon0 _ partp szp) // Hrib.
-Qed.
-
 Lemma mult_altern_pmap p d :
   is_part p -> size p <= n ->
   'a_(mpart p + rho) * (symp_pol n R d.+1) =
-  \sum_(psh <- pmap (add_ribbon p d.+1) (iota 0 n))
+  \sum_(psh <- [seq add_ribbon p d.+1 i | i <- iota 0 n] | psh.2 != 0%N)
    (-1) ^+ (psh.2).-1 *: 'a_(mpart psh.1 + rho).
 Proof.
-move=> partp szp; rewrite mult_altern_oapp //.
-rewrite -(big_mkord xpredT (fun i => oapp _ 0 (add_ribbon p d.+1 i))).
-by rewrite big_pmap /index_iota subn0.
+move=> partp szp; rewrite mult_altern_symp_pol big_map.
+rewrite -[n in iota 0 n](subn0 n) -/(index_iota _ _) big_mkord [RHS]big_mkcond /=.
+apply eq_bigr => i _; case Hrib : add_ribbon => [res hgt] /=.
+case (altP (hgt =P 0%N)) => /= [Heq0 | Hneq0].
+  have:= @alt_straight_add_ribbon0 n0 R _ i d partp szp.
+  by rewrite Hrib /= Heq0 => /(_ (eqxx _)).
+have:= @alt_straight_add_ribbon n0 R _ i d partp szp.
+by rewrite Hrib /= => /(_ Hneq0).
 Qed.
 
 
@@ -113,11 +105,9 @@ Variable nbox : nat.
 Local Notation PP := (intpartn (m + nbox.+1)).
 
 Fact add_ribbon_intpartn_subproof pos :
-  is_part_of_n (m + nbox.+1)%N
-               (oapp (fun p => p.1) [:: (m + nbox).+1]
-                     (add_ribbon la nbox.+1 pos)).
+  is_part_of_n (m + nbox.+1)%N (add_ribbon la nbox.+1 pos).1.
 Proof.
-case Hrib : add_ribbon => [[res h]|] /=; last by rewrite addn0 addnS eqxx.
+case Hrib : add_ribbon => [res h] /=. 
 have:= is_part_of_add_ribbon (intpartnP la) Hrib => /andP[/eqP -> ->].
 by rewrite addnC sumn_intpartn eqxx.
 Qed.

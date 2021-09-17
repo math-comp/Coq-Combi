@@ -910,8 +910,10 @@ Definition add_ribbon_start_stop sh start stop rem :=
 Definition add_ribbon sh nbox pos :=
   let: (start, rem) := startrem 0 sh nbox pos in
   if rem > 0 then
-    Some (add_ribbon_start_stop sh start pos rem, (pos - start).+1)
-  else error.
+    (add_ribbon_start_stop sh start pos rem, (pos - start).+1)
+  else
+    (* ensure to return a partition of the right size *)
+    ([:: sumn sh + nbox], 0).
 
 
 Section NThAddRibbon.
@@ -1062,12 +1064,15 @@ Proof. by []. Abort.
 
 Goal startrem 0 [:: 2; 2; 1; 1] 2 0 = (0, 2).
 Proof. by []. Abort.
-Goal add_ribbon [:: 2; 2; 1; 1] 2 0 = Some ([:: 4; 2; 1; 1], 1).
+Goal add_ribbon [:: 2; 2; 1; 1] 2 0 = ([:: 4; 2; 1; 1], 1).
 Proof. by []. Abort.
 Goal startrem 0 [:: 2; 2; 1; 1] 2 1 = (0, 1).
 Proof. by []. Abort.
-Goal add_ribbon [:: 2; 2; 1; 1] 2 1 = Some ([:: 3; 3; 1; 1], 2).
+Goal add_ribbon [:: 2; 2; 1; 1] 2 1 =  ([:: 3; 3; 1; 1], 2).
 Proof. by []. Abort.
+
+Local Definition filter_ok (f : nat -> seq nat * nat) (s : seq nat) :=
+  [seq x | x <- map f s & x.2 != 0].
 
 (** Tests :
 [
@@ -1075,7 +1080,7 @@ sage: s[2, 2] * p[1]
 s[2, 2, 1] + s[3, 2]
 ]
  *****)
-Goal pmap (add_ribbon [:: 2; 2] 1) (iota 0 10) =
+Goal filter_ok (add_ribbon [:: 2; 2] 1) (iota 0 10) =
   [:: ([:: 3; 2], 1); ([:: 2; 2; 1], 1)].
 Proof. by []. Abort.
 (** Tests :
@@ -1084,7 +1089,7 @@ sage: s[2, 2] * p[2]
 -s[2, 2, 1, 1] + s[2, 2, 2] - s[3, 3] + s[4, 2]
 ]
  *****)
-Goal pmap (add_ribbon [:: 2; 2] 2) (iota 0 10) =
+Goal filter_ok (add_ribbon [:: 2; 2] 2) (iota 0 10) =
   [:: ([:: 4; 2], 1); ([:: 3; 3], 2); ([:: 2; 2; 2], 1); ([:: 2; 2; 1; 1], 2)].
 Proof. by []. Abort.
 (** Tests :
@@ -1094,7 +1099,7 @@ sage: s[3, 2, 1, 1] * p[4]
   + s[7, 2, 1, 1]
 ]
 *****)
-Goal pmap (add_ribbon [:: 3; 2; 1; 1] 4) (iota 0 10) =
+Goal filter_ok (add_ribbon [:: 3; 2; 1; 1] 4) (iota 0 10) =
   [:: ([:: 7; 2; 1; 1], 1);
       ([:: 5; 4; 1; 1], 2);
       ([:: 3; 3; 3; 2], 3);
@@ -1107,7 +1112,7 @@ sage: s[2, 2] * p[5]
 s[2, 2, 1, 1, 1, 1, 1] - s[2, 2, 2, 1, 1, 1] + s[3, 3, 3] - s[6, 3] + s[7, 2]
 ]
 *****)
-Goal pmap (add_ribbon [:: 2; 2] 5) (iota 0 8) =
+Goal filter_ok (add_ribbon [:: 2; 2] 5) (iota 0 8) =
   [:: ([:: 7; 2], 1); ([:: 6; 3], 2); ([:: 3; 3; 3], 3);
       ([:: 2; 2; 2; 1; 1; 1], 4); ([:: 2; 2; 1; 1; 1; 1; 1], 5)].
 Proof. by []. Abort.
@@ -1117,7 +1122,7 @@ sage: s[2, 2, 1] * p[5]
 s[2, 2, 1, 1, 1, 1, 1, 1] - s[2, 2, 2, 2, 1, 1] + s[4, 3, 3] - s[6, 3, 1] + s[7, 2, 1]
 ]
 *****)
-Goal pmap (add_ribbon [:: 2; 2; 1] 5) (iota 0 8) =
+Goal filter_ok (add_ribbon [:: 2; 2; 1] 5) (iota 0 8) =
   [:: ([:: 7; 2; 1], 1); ([:: 6; 3; 1], 2); ([:: 4; 3; 3], 3);
       ([:: 2; 2; 2; 2; 1; 1], 4); ([:: 2; 2; 1; 1; 1; 1; 1; 1], 5)].
 Proof. by []. Abort.
@@ -1126,7 +1131,7 @@ Proof. by []. Abort.
 s[5, 5, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1] - s[5, 5, 2, 2, 2, 2, 1, 1, 1] + s[5, 5, 3, 3, 2, 2, 1] - s[5, 5, 4, 3, 2, 2] + s[7, 6, 6, 1, 1] - s[11, 6, 2, 1, 1] + s[12, 5, 2, 1, 1]
 ]
 *****)
-Goal pmap (add_ribbon [:: 5; 5; 2; 1; 1] 7) (iota 0 15) =
+Goal filter_ok (add_ribbon [:: 5; 5; 2; 1; 1] 7) (iota 0 15) =
   [:: ([:: 12; 5; 2; 1; 1], 1); ([:: 11; 6; 2; 1; 1], 2);
      ([:: 7; 6; 6; 1; 1], 3); ([:: 5; 5; 4; 3; 2; 2], 4);
       ([:: 5; 5; 3; 3; 2; 2; 1], 5); ([:: 5; 5; 2; 2; 2; 2; 1; 1; 1], 6);
@@ -1134,16 +1139,16 @@ Goal pmap (add_ribbon [:: 5; 5; 2; 1; 1] 7) (iota 0 15) =
 Proof. by []. Abort.
 
 Goal let sh := [:: 2; 2] in
-     all (fun p => ribbon sh p.1) (pmap (add_ribbon sh 1) (iota 0 8)).
+     all (fun p => ribbon sh p.1) (filter_ok (add_ribbon sh 1) (iota 0 8)).
 Proof. by []. Abort.
 Goal let sh := [:: 2; 2] in
-     all (fun p => ribbon sh p.1) (pmap (add_ribbon sh 5) (iota 0 8)).
+     all (fun p => ribbon sh p.1) (filter_ok (add_ribbon sh 5) (iota 0 8)).
 Proof. by []. Abort.
 Goal let sh := [:: 2; 2; 1] in
-     all (fun p => ribbon sh p.1) (pmap (add_ribbon sh 5) (iota 0 8)).
+     all (fun p => ribbon sh p.1) (filter_ok (add_ribbon sh 5) (iota 0 8)).
 Proof. by []. Abort.
 Goal let sh := [:: 5; 5; 2; 1; 1] in
-     all (fun p => ribbon sh p.1) (pmap (add_ribbon sh 7) (iota 0 15)).
+     all (fun p => ribbon sh p.1) (filter_ok (add_ribbon sh 7) (iota 0 15)).
 Proof. by []. Abort.
 
 End Tests.
@@ -1154,8 +1159,9 @@ Section Spec.
 Variables (sh : seq nat).
 Hypothesis (partsh : is_part sh).
 Variable  (nbox pos : nat).
-Variables (res : seq nat) (hgt : nat).
-Hypothesis (Hret : add_ribbon sh nbox.+1 pos = Some (res, hgt)).
+Local Notation res := (add_ribbon sh nbox.+1 pos).1.
+Local Notation hgt := (add_ribbon sh nbox.+1 pos).2.
+Hypothesis (Hret : hgt != 0).
 
 Lemma sumn_mapS s : sumn [seq i.+1 | i <- s] = sumn s + size s.
 Proof. by elim: s => // s0 s /= ->; rewrite addSnnS -addnS addnA. Qed.
@@ -1164,7 +1170,7 @@ Lemma sumn_add_ribbon : sumn res = nbox.+1 + sumn sh.
 Proof.
 move: Hret; rewrite /add_ribbon.
 move: (startremE sh nbox.+1 pos) (startrem_leq sh nbox.+1 pos).
-case: startrem => start [|rem]// Heq /(_ (ltn0Sn _)) lesmin [<- _].
+case: startrem => start [|rem]//= Heq /(_ (ltn0Sn _)) /= lesmin _.
 have:= lesmin; rewrite leq_min => /andP [lespos lessz].
 rewrite /add_ribbon_start_stop !sumn_cat /= sumn_mapS.
 rewrite size_drop size_take -/(minn _ _).
@@ -1181,7 +1187,7 @@ Lemma is_part_add_ribbon : is_part res.
 Proof.
 move: Hret; rewrite /add_ribbon.
 move: (startrem_leq sh nbox.+1 pos).
-case Hstartrem : startrem => [start [|rem]]//=  /(_ (ltn0Sn _)) lesmin [<- _].
+case Hstartrem : startrem => [start [|rem]]//= /(_ (ltn0Sn _)) lesmin _.
 exact: (is_part_add_ribbon_start_stop _ _ _ Hstartrem).
 Qed.
 Lemma is_part_of_add_ribbon : is_part_of_n (nbox.+1 + sumn sh) res.
@@ -1193,7 +1199,7 @@ Lemma size_add_ribbon : size res = maxn (size sh) pos.+1.
 Proof.
 move: Hret; rewrite /add_ribbon.
 move: (startrem_leq sh nbox.+1 pos).
-case: startrem => start [|rem]//= /(_ (ltn0Sn _)) lesmin [<- _].
+case: startrem => start [|rem]//= /(_ (ltn0Sn _)) lesmin _.
 have:= lesmin; rewrite leq_min => /andP [lespos lessz].
 rewrite /add_ribbon_start_stop !size_cat /= size_map size_nseq.
 rewrite !size_drop !size_take.
@@ -1210,7 +1216,7 @@ Lemma add_ribbon_height : hgt = ribbon_height sh res.
 Proof.
 move: is_part_add_ribbon.
 move: Hret (startrem_leq sh nbox.+1 pos); rewrite /add_ribbon.
-case: startrem => start [|rem]//= [<- <-] /(_ (lt0n _)) Hstart Hpart.
+case: startrem => start [|rem]//= _ /(_ (lt0n _)) Hstart Hpart.
 apply: ribbon_on_height => //.
 exact: add_ribbon_start_stopP.
 Qed.
@@ -1218,12 +1224,12 @@ Qed.
 Lemma add_ribbon_onP : ribbon_on (pos.+1 - hgt) pos sh res.
 Proof.
 move: Hret; rewrite /add_ribbon.
-case Hstart : startrem => [start rem]; case: ltnP => // lt0rem [eqstart <-].
+case Hstartrem : startrem => [start rem]; case: ltnP => //= lt0rem _.
 rewrite subSS subKn; first last.
-  by have:= startrem_leq_pos sh nbox.+1 pos; rewrite Hstart /=.
-rewrite -eqstart; apply: add_ribbon_start_stopP => //.
+  by have:= startrem_leq_pos sh nbox.+1 pos; rewrite Hstartrem /=.
+apply: add_ribbon_start_stopP => //.
 have := startrem_leq sh nbox.+1 pos.
-by rewrite Hstart; apply.
+by rewrite Hstartrem; apply.
 Qed.
 
 Lemma add_ribbonP : ribbon sh res.
@@ -1245,11 +1251,11 @@ Lemma ribbon_on_addE start stop inner outer :
 Proof.
 move=> partinn partout Hrib.
 have Hstartrem := ribbon_on_startrem partinn partout Hrib.
-have := Hrib => [[_ _ Hs _]]; rewrite -subn_gt0 in Hs.
-have := startrem_leq inner (sumn (outer / inner)) stop.
+have:= Hrib => [[_ _ Hs _]]; rewrite -subn_gt0 in Hs.
+have:= startrem_leq inner (sumn (outer / inner)) stop.
 rewrite Hstartrem => /(_ Hs) lesmin.
-apply/eqP/(part_eqP (is_part_add_ribbon_start_stop lesmin partinn Hs Hstartrem)
-                    partout) => i.
+have partres := is_part_add_ribbon_start_stop lesmin partinn Hs Hstartrem.
+apply/eqP/(part_eqP partres partout) => i {Hstartrem partres}.
 move: Hrib => [Hsi Hsis {}Hs His].
 case: (ltnP i start) => [ltistart | lestarti].
   by rewrite !nth_add_ribbon_lt_start // His.
@@ -1265,15 +1271,13 @@ Qed.
 Lemma ribbon_addE inner outer :
   is_part inner -> is_part outer -> ribbon inner outer ->
   add_ribbon inner (sumn (outer / inner)) (mindropeq inner outer).-1 =
-  Some (outer, ribbon_height inner outer).
+  (outer, ribbon_height inner outer).
 Proof.
 move=> partinn partout /(ribbonP partinn partout) [start][stop] Hrib.
 rewrite -(ribbon_on_stopE partinn partout Hrib).
 rewrite /add_ribbon (ribbon_on_startrem partinn partout Hrib) subn_gt0.
-have := Hrib => [][_ _ -> _]; congr (Some (_, _)); first last.
+have:= Hrib => [][_ _ -> _]; congr (_, _); first last.
   by rewrite (ribbon_on_height partinn partout).
 exact: ribbon_on_addE.
 Qed.
 
-
-  
