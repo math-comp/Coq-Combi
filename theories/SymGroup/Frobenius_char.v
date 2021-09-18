@@ -44,9 +44,10 @@ Here is a list of fundamental results:
 - [irrSGP]         : The ['irrSG[la] | la : 'P_n] forms a complete set of
                      irreducible characters for ['SG_n].
 - [Frobenius_char] : Frobenius character formula for ['SG_n].
+- [Murnaghan_Nakayama_char] : Murnaghan-Nakayama character formula for ['SG_n].
 - [dim_cfReprSG]   : the dimension of irreducible representation of ['SG_n].
 - [LR_rule_irrSG]  : Littlewood-Richardson rule for characters of ['SG_n].
- *)
+ ********)
 
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
@@ -124,12 +125,9 @@ Lemma Fchar_ncfuniCT (l : 'P_n) : Fchar '1z_[l] = 'hp[l].
 Proof using.
 rewrite !FcharE (bigD1 l) //= big1 ?addr0; first last.
   move=> m /negbTE Hm /=.
-  rewrite cfunElock cfuniCTE /=.
-  rewrite /cycle_typeSn permCTP.
-  rewrite partnCTE /= !CTpartnK Hm /=.
+  rewrite cfunElock cfuniCTE /= permCTP partnCTE /= !CTpartnK Hm /=.
   by rewrite mulr0 mul0r scale0r.
-rewrite cfunElock cfuniCTE /=.
-rewrite /cycle_typeSn permCTP eq_refl /=.
+rewrite cfunElock cfuniCTE /= permCTP eq_refl /=.
 by rewrite mulr1 divff ?scale1r.
 Qed.
 
@@ -492,26 +490,24 @@ case: n la mu => [//|n] //= la mu.
   rewrite (charSG0 (irrSG_irr _)) cfun1E inE /=.
   rewrite !mnm_n0E !intpartn0 {la mu} rowpartn0E big_nil mulr1.
   by rewrite mcoeff_alt //= map_inj_in_uniq ?enum_uniq // => /= [[]].
-rewrite Frobenius_char_coord /cycle_typeSn (permCTP mu) CTpartnK.
+rewrite Frobenius_char_coord cycle_typeSn_permCT.
 by rewrite mcoeff_symbs ?leqSpred //= rmorph_prod.
 Qed.
 
 
 (** The Murnaghan Nakayama rule for irreducible character ['irrSG[la]] *)
 Theorem Murnaghan_Nakayama_char n la (sigma : 'S_n) :
-  'irrSG[la] sigma = (MNCoeff la (cycle_typeSn sigma))%:~R.
+  'irrSG[la] sigma = (MN_coeff la (cycle_typeSn sigma))%:~R.
 Proof.
-rewrite Frobenius_char_homsymdot MNCoeff_homogP raddf_sum /=.
+rewrite Frobenius_char_homsymdot MN_coeff_homogP raddf_sum /=.
 rewrite (bigD1 la) //= big1 ?addr0 //; first last => [i /negbTE Hi|].
   by rewrite homsymdotZr homsymdotss // eq_sym Hi mulr0.
 rewrite homsymdotZr homsymdotss // eqxx mulr1.
 by rewrite conj_Cint // Cint_int.
 Qed.
-Theorem Murnaghan_NakayamaCT n (la mu : 'P_n) :
-  'irrSG[la] (permCT mu) = (MNCoeff la mu)%:~R.
-Proof.
-by rewrite Murnaghan_Nakayama_char /cycle_typeSn (permCTP mu) CTpartnK.
-Qed.
+Corollary Murnaghan_NakayamaCT n (la mu : 'P_n) :
+  'irrSG[la] (permCT mu) = (MN_coeff la mu)%:~R.
+Proof. by rewrite Murnaghan_Nakayama_char cycle_typeSn_permCT. Qed.
 
 Corollary irrSG_char_int n (la mu : 'P_n) : 'irrSG[la] (permCT mu) \in Cint.
 Proof. by rewrite Murnaghan_NakayamaCT Cint_int. Qed.
@@ -528,7 +524,7 @@ Proof. by rewrite /= Murnaghan_NakayamaCT. Qed.
 Theorem dim_irrSG n (la : 'P_n) : 'irrSG[la] 1%g = #|{: stdtabsh la}|%:R.
 Proof.
 pose HSC := {homsym algC[n.-1.+1, n]}.
-rewrite -permCT_colpartn Frobenius_char_coord.
+rewrite -permCT_colpartn Frobenius_char_coord cycle_typeSn_permCT.
 have -> : 'hp[colpartn n] = 'hh[colpartn n] :> HSC.
   apply val_inj; rewrite /= !prod_gen_colpartn.
   by rewrite sympe1E -symhe1E.

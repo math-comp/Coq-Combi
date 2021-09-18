@@ -921,6 +921,9 @@ rewrite cfuniCTE /cycle_typeSn /=.
 by rewrite partnCTE CTpartnK.
 Qed.
 
+Lemma cycle_typeSn_permCT (ct : 'P_n) : cycle_typeSn (permCT ct) = ct.
+Proof. by rewrite /cycle_typeSn permCTP CTpartnK. Qed.
+
 End Sn.
 
 Lemma cast_cycle_typeSN m n (s : 'S_m) (eq_mn : m = n) :

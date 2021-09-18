@@ -235,26 +235,27 @@ Qed.
 End MultSymsSymp.
 
 
-Fixpoint MNCoeff (la mu : seq nat) : int :=
+(** MN_coeff should only be used when [sumn la == sumn mu]. *)
+Fixpoint MN_coeff (la mu : seq nat) : int :=
   if mu is m0 :: m then
     foldr (fun sh acc =>
              if ribbon sh la then
-               MNCoeff sh m * (-1) ^+ (ribbon_height sh la).-1 + acc
+               MN_coeff sh m * (-1) ^+ (ribbon_height sh la).-1 + acc
              else acc)
           0 (enum_partn (sumn m))
-  else (la == [::]).
+  else 1.
 
-Lemma MNCoeff0 : MNCoeff [::] [::] = 1.
+Lemma MN_coeff0 : MN_coeff [::] [::] = 1.
 Proof. by []. Qed.
 
-Lemma MNCoeff_recE la m0 mu :
-  MNCoeff la (m0 :: mu) =
+Lemma MN_coeff_recE la m0 mu :
+  MN_coeff la (m0 :: mu) =
   \sum_(sh : 'P_(sumn mu) | ribbon sh la)
-   MNCoeff sh mu * (-1) ^+ (ribbon_height sh la).-1.
+   MN_coeff sh mu * (-1) ^+ (ribbon_height sh la).-1.
 Proof.
 apply esym; transitivity (
-    \sum_(sh <- enum_partn (sumn mu) | ribbon sh la)
-     MNCoeff sh mu * (-1) ^+ (ribbon_height sh la).-1).
+                \sum_(sh <- enum_partn (sumn mu) | ribbon sh la)
+                 MN_coeff sh mu * (-1) ^+ (ribbon_height sh la).-1).
   by rewrite -enum_intpartnE [LHS]big_mkcond [RHS]big_mkcond big_map big_enum.
 rewrite big_mkcond /=; elim: enum_partn => [| p0 p] /=; first by rewrite big_nil.
 by rewrite big_cons => ->; case: (ribbon p0 la); rewrite //= add0r.
@@ -268,7 +269,7 @@ sage: s(p[2,1,1])
 -s[1, 1, 1, 1] - s[2, 1, 1] + s[3, 1] + s[4]
 ]
 *****)
-Goal ([seq x | x <- [seq (p, MNCoeff p [:: 2; 1; 1]) | p <- enum_partn 4]
+Goal ([seq x | x <- [seq (p, MN_coeff p [:: 2; 1; 1]) | p <- enum_partn 4]
                & x.2 != 0%R] =
       [:: ([:: 4], Posz 1);
       ([:: 3; 1], Posz 1);
@@ -282,7 +283,7 @@ sage: s(p[4,2,1,1])
 s[1, 1, 1, 1, 1, 1, 1, 1] + s[2, 1, 1, 1, 1, 1, 1] - s[3, 1, 1, 1, 1, 1] - 2*s[3, 3, 2] - s[4, 1, 1, 1, 1] + 2*s[4, 2, 1, 1] - s[5, 1, 1, 1] - s[6, 1, 1] + s[7, 1] + s[8]
 ]
 *****)
-Goal ([seq x | x <- [seq (p, MNCoeff p [:: 4; 2; 1; 1]) | p <- enum_partn 8]
+Goal ([seq x | x <- [seq (p, MN_coeff p [:: 4; 2; 1; 1]) | p <- enum_partn 8]
                & x.2 != 0%R] =
       [:: ([:: 8], Posz 1);
       ([:: 7; 1], Posz 1);
@@ -303,18 +304,17 @@ Section MNRule.
 Variable n0 : nat.
 Local Notation n := n0.+1.
 
-Theorem MNCoeffP_int d (la : 'P_d) :
-  'p[la] = \sum_(sh : 'P_d) MNCoeff sh la *: 's[sh] :> {sympoly int[n]}.
+Theorem MN_coeffP_int d (la : 'P_d) :
+  'p[la] = \sum_(sh : 'P_d) MN_coeff sh la *: 's[sh] :> {sympoly int[n]}.
 Proof.
 rewrite /prod_symp /prod_gen.
 case: la => la /= /andP [/eqP <-{d} /in_part_non0].
 elim: la => [/=|l0 la IHla] Hall.
-  rewrite big_nil (big_pred1 (rowpartn 0)).
-    by rewrite rowpartn0E scale1r syms0.
+  rewrite big_nil (big_pred1 (rowpartn 0)) ?scale1r ?syms0 //.
   by move=> i /=; rewrite intpartn0 eqxx.
 rewrite big_cons {}IHla; first last.
   by move=> i iinla; apply: Hall; rewrite inE {}iinla orbT.
-under [RHS]eq_bigr do rewrite MNCoeff_recE.
+under [RHS]eq_bigr do rewrite MN_coeff_recE.
 rewrite mulr_sumr.
 have {Hall} l0n0 : l0 != 0%N by apply: Hall; rewrite inE eqxx.
 under eq_bigr do rewrite mulrC -scalerAl syms_sympM // scaler_sumr.
@@ -325,18 +325,18 @@ Qed.
 
 Variable R : comRingType.
 
-Theorem MNCoeffP d (la : 'P_d) :
-  'p[la] = \sum_(sh : 'P_d) (MNCoeff sh la)%:~R *: 's[sh] :> {sympoly R[n]}.
+Theorem MN_coeffP d (la : 'P_d) :
+  'p[la] = \sum_(sh : 'P_d) (MN_coeff sh la)%:~R *: 's[sh] :> {sympoly R[n]}.
 Proof.
-rewrite -(map_symp_prod [rmorphism of intr]) MNCoeffP_int rmorph_sum /=.
+rewrite -(map_symp_prod [rmorphism of intr]) MN_coeffP_int rmorph_sum /=.
 by under [LHS]eq_bigr do rewrite scale_map_sympoly map_syms.
 Qed.
 
-Theorem MNCoeff_homogP d (la : 'P_d) :
-  'hp[la] = \sum_(sh : 'P_d) (MNCoeff sh la)%:~R *: 'hs[sh] :> {homsym R[n, d]}.
+Theorem MN_coeff_homogP d (la : 'P_d) :
+  'hp[la] = \sum_(sh : 'P_d) (MN_coeff sh la)%:~R *: 'hs[sh] :> {homsym R[n, d]}.
 Proof.
 apply val_inj => /=; apply val_inj => /=.
-have /= := congr1 val (MNCoeffP la); rewrite /prod_symp => ->.
+have /= := congr1 val (MN_coeffP la); rewrite /prod_symp => ->.
 by rewrite !raddf_sum.
 Qed.
 
