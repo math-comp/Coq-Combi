@@ -429,14 +429,58 @@ Lemma enum0 : enum 'I_0 = [::].
 Proof. by apply/nilP; rewrite /nilp size_enum_ord. Qed.
 
 
-Section SeqSub.
+Section BigOp.
 
-Variables (T : countType) (R : Type).
+Import Monoid.Theory.
 
+Variable R : Type.
 Variable idx : R.
-Variable op : Monoid.com_law idx.
+Local Notation "1" := idx.
+Variable op : Monoid.law 1.
+Local Notation "'*%M'" := op (at level 0).
+Local Notation "x * y" := (op x y).
 
-Lemma big_seq_sub (s : seq T) F :
+Lemma big_pmap (J I : Type) (h : J -> option I) r F :
+  \big[*%M/1]_(i <- pmap h r) F i = \big[*%M/1]_(j <- r) oapp F idx (h j).
+Proof.
+elim: r => [| r0 r IHr]/=; first by rewrite !big_nil.
+rewrite /= big_cons; case: (h r0) => [i|] /=; last by rewrite Monoid.mul1m.
+by rewrite big_cons IHr.
+Qed.
+
+End BigOp.
+
+
+Section AbelianBigOp.
+
+Import Monoid.Theory.
+
+Variable R : Type.
+Variable idx : R.
+Local Notation "1" := idx.
+Variable op : Monoid.com_law 1.
+Local Notation "'*%M'" := op (at level 0).
+Local Notation "x * y" := (op x y).
+
+(** mathcomp version is restrcticted to [s == enum I] for [I : finType] *)
+Lemma partition_big I (s : seq I)
+      (J : finType) (P : pred I) (p : I -> J) (Q : pred J) F :
+  (forall i, P i -> Q (p i)) ->
+  \big[*%M/1]_(i <- s | P i) F i =
+  \big[*%M/1]_(j : J | Q j) \big[*%M/1]_(i <- s | (P i) && (p i == j)) F i.
+Proof.
+move=> Qp; transitivity (\big[*%M/1]_(i <- s | P i && Q (p i)) F i).
+  by apply: eq_bigl => i; case Pi: (P i); rewrite // Qp.
+have [n leQn] := ubnP #|Q|; elim: n => // n IHn in Q {Qp} leQn *.
+case: (pickP Q) => [j Qj | Q0]; last first.
+  by rewrite !big_pred0 // => i; rewrite Q0 andbF.
+rewrite (bigD1 j) // -IHn; last by rewrite ltnS (cardD1x Qj) add1n in leQn.
+rewrite (bigID (fun i => p i == j)); congr (_ * _); apply: eq_bigl => i.
+  by case: eqP => [-> | _]; rewrite !(Qj, simpm).
+by rewrite andbA.
+Qed.
+
+Lemma big_seq_sub (T : countType) (s : seq T) F :
   \big[op/idx]_(x : seq_sub s) F (ssval x) = \big[op/idx]_(x <- undup s) F x.
 Proof.
 rewrite -[LHS](big_map (ssval (s := s)) xpredT (fun x : T => F x)).
@@ -449,7 +493,8 @@ apply perm_big; apply uniq_perm.
   + by exists (SeqSub Hx); rewrite // mem_index_enum.
 Qed.
 
-End SeqSub.
+End AbelianBigOp.
+
 
 Section SetPartition.
 
