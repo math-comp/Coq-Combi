@@ -608,7 +608,7 @@ Proof.
 elim: inner outer=> [/= outer | inn0 inn IHinn].
   rewrite orbF => Hinn Hout.
   apply: (equivP (@ribbon_fromP [::] outer Hinn Hout)).
-  split => [[stop] H | [start] [stop] []]; first by exists 0; exists stop.
+  split => [[stop] H | [start] [stop] []]; first by exists 0, stop.
   case: start => [Hsi Hsis Hs _| start _ _ Hs His]; first last.
     exfalso; move/(_ 0 (ltn0Sn _)) : His => /= H0.
     by case: outer H0 Hout Hs => // out0 out +/part_head_non0 => /= ->.
@@ -620,20 +620,20 @@ move=> partinn partout.
 have:= partinn => /= /andP[hinn Hinn].
 have:= partout => /= /andP[hout Hout].
 apply (iffP orP) => [[/andP[lt0]/orP[/eqP Heq|] | /andP[/eqP eq0 Hrib]] | ].
-- by exists 0; exists 0; split => // [][//|i]/=; rewrite Heq.
+- by exists 0, 0; split => // [][//|i]/=; rewrite Heq.
 - move=> {IHinn} /=/andP[/eqP eqhout].
   move/(ribbon_fromP Hinn Hout) => [stop] [Hsi Hsis Hs His]/=.
-  exists 0; exists stop.+1.
+  exists 0, stop.+1.
   split => //= [] [|i]//=; rewrite ltnS; [exact: Hsi | exact: Hsis].
 - move/(_ _ Hinn Hout Hrib) : IHinn => [start] [stop] [Hsi Hsis Hs His].
-  exists start.+1; exists stop.+1.
+  exists start.+1, stop.+1.
   split => //= [] [|i]//=; rewrite ltnS; [exact: Hsi | exact: Hsis| exact: His].
 - move=> [[/(ribbon_fromP partinn partout) /= ->|start]]; first by left.
   move=> [stop] Hrib.
   have := ribbon_on_start_stop Hrib; case: stop Hrib => // stop.
   rewrite ribbon_onSS  => [[/eqP ->]] Hrib _.
   rewrite ltnn eqxx /=; right.
-  by apply/IHinn => //; exists start; exists stop.
+  by apply/IHinn => //; exists start, stop.
 Qed.
 
 Lemma ribbon_mindropeq inner outer :
@@ -655,7 +655,7 @@ Lemma ribbon_on_sumn start stop inner outer :
 Proof.
 move=> partinn partout Hrib.
 have Hincl : included inner outer.
-  by apply/ribbon_included/ribbonP => //; exists start; exists stop.
+  by apply/ribbon_included/ribbonP => //; exists start, stop.
 rewrite (sumn_diff_shape Hincl).
 have /sumn_nth_le -> := size_included Hincl.
 rewrite (sumn_nth_le (leqnn (size outer))).
@@ -872,7 +872,7 @@ have lest : nth 0 out start >= nth 0 inn stop.
   have:= is_part_ijP _ partinn => [][_].
   move=> /(_ _ _ (ribbon_on_start_stop Hrib))/leq_trans; apply.
   have : included inn out.
-    by apply/ribbon_included/ribbonP => //; exists start; exists stop.
+    by apply/ribbon_included/ribbonP => //; exists start, stop.
   by move/includedP => [_]; apply.
 rewrite (addnBA _ lest) subnKC; last exact: (leq_trans lest (leq_addl _ _)).
 rewrite leqNgt addnS ltnS addnC leq_add /= ?leq_subr //.
@@ -1229,7 +1229,7 @@ Qed.
 Lemma add_ribbonP : ribbon sh res.
 Proof.
 apply/(ribbonP partsh is_part_add_ribbon).
-by exists (pos.+1 - hgt); exists pos; apply: add_ribbon_onP.
+by exists (pos.+1 - hgt), pos; apply: add_ribbon_onP.
 Qed.
 
 Lemma included_add_ribbon : included sh res.
