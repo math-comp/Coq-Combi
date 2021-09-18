@@ -68,7 +68,6 @@ Local Notation n := n0.+1.
 Local Notation rho := (rho n).
 Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
 
-
 Lemma mult_altern_symp_pol p d :
   'a_(mpart p + rho) * (symp_pol n R d.+1) =
    \sum_(i < n) 'a_(mpart p + rho + U_(i) *+ d.+1).
@@ -105,76 +104,37 @@ by rewrite big_pmap /index_iota subn0.
 Qed.
 
 
-Section Bijection.
+Section Lift.
 
 Variable (m : nat) (la : 'P_m).
 Hypothesis (szla : size la <= n).
 Variable nbox : nat.
+Local Notation "'Pr" := 'P_(nbox.+1 + m).
 
-Fact add_ribbon_intpartn_subproof pos :
-  is_part_of_n (nbox.+1 + m)%N
-               (oapp (fun p => p.1) [:: (nbox + m).+1]
-                     (add_ribbon la nbox.+1 pos)).
+Local Definition val_id : ('Pr * nat) -> seq nat* nat :=
+  fun p => let: (sh, h) := p in (val sh, h).
+
+Fact add_ribbon_intpartn_spec pos :
+  { res : option ('Pr * nat) | omap val_id res = add_ribbon la nbox.+1 pos }.
 Proof.
-case Hrib : add_ribbon => [[res h]|] /=; last by rewrite addn0 addSn eqxx.
-have:= is_part_of_add_ribbon (intpartnP la) Hrib => /andP[/eqP -> ->].
-by rewrite sumn_intpartn eqxx.
+case Hrib: (add_ribbon la nbox.+1 pos) => [[sh h]|].
+- have:= is_part_of_add_ribbon (intpartnP _) Hrib.
+  rewrite sumn_intpartn => Hres.
+  by exists (Some (IntPartN Hres, h)).
+- by exists None.
 Qed.
-Local Definition add_ribbon_intpartn pos :=
-  match add_ribbon la nbox.+1 pos with
-  | Some (_, h) => Some (IntPartN (add_ribbon_intpartn_subproof pos))
-  | None => None
-  end.
+Definition add_ribbon_intpartn (pos : nat) : option ('Pr * nat) :=
+  let: exist res _ := add_ribbon_intpartn_spec pos in res.
 
-Fact ribbon_stop_subproof (mu : 'P_(nbox.+1 + m)) :
-  (if size mu <= n then (mindropeq la mu).-1 else 0%N) < n.
-Proof.
-case: (leqP (size mu) n) => // szmu.
-case: mindropeq (mindropeq_leq la mu) => // md /= /leq_trans; apply.
-by rewrite geq_max szla szmu.
-Qed.
-Local Definition ribbon_stop mu := Ordinal (ribbon_stop_subproof mu).
+Lemma add_ribbon_intpartnE pos :
+  add_ribbon la nbox.+1 pos =omap val_id (add_ribbon_intpartn pos).
+Proof. by rewrite /add_ribbon_intpartn; case: add_ribbon_intpartn_spec. Qed.
+Lemma add_ribbon_intpartnP pos res h :
+  add_ribbon_intpartn pos = Some (res, h) ->
+  add_ribbon la nbox.+1 pos = Some (val res, h).
+Proof. by move/(congr1 (omap val_id)); rewrite add_ribbon_intpartnE /=. Qed.
 
-Lemma mult_altern_sympol :
-  'a_(mpart la + rho) * (symp_pol n R nbox.+1) =
-  \sum_(sh : 'P_(nbox.+1 + m) | (ribbon la sh) && (size sh <= n))
-   (-1) ^+ (ribbon_height la sh).-1 *: 'a_(mpart sh + rho).
-Proof.
-rewrite mult_altern_oapp //.
-rewrite (bigID (fun i : 'I_n => add_ribbon la nbox.+1 i)) /=.
-rewrite [X in _ + X = _]big1 ?addr0; last by move=> i; case: add_ribbon.
-rewrite (reindex_omap ribbon_stop add_ribbon_intpartn) /=; first last.
-  move=> i; rewrite /add_ribbon_intpartn.
-  case Haddrib : {1 2}(add_ribbon la nbox.+1 i) => [[res h]|]//= _.
-  congr Some; apply val_inj; rewrite /= Haddrib /=.
-  rewrite (size_add_ribbon Haddrib) geq_max szla ltn_ord /=.
-  rewrite (ribbon_on_mindropeq (intpartnP la) _ (add_ribbon_onP Haddrib)) //.
-  exact: (is_part_add_ribbon _ Haddrib).
-apply esym; apply: eq_big => mu; rewrite andbC.
-  case leqP => Hszmu /=; first last.
-  + rewrite /add_ribbon_intpartn.
-    case Haddrib : {1 2}(add_ribbon la nbox.+1 0) => [[res h]|//=].
-    rewrite andTb /=; case (altP (_ =P Some mu)) => // [[/(congr1 val) /=]].
-    rewrite Haddrib /= => Heq.
-    have := size_add_ribbon Haddrib; rewrite Heq => {}Heq.
-    by move: Hszmu; rewrite Heq leq_max 2!ltnNge szla.
-  + apply esym; case: (boolP (ribbon la mu)) => [Hrib | Hnrib].
-    * have := ribbon_addE (intpartnP la) (intpartnP mu) Hrib.
-      rewrite sumn_diff_shape ?ribbon_included // !sumn_intpartn addnK => Heq.
-      rewrite Heq andTb /=; apply/eqP; rewrite /add_ribbon_intpartn.
-      rewrite {1}Heq; congr Some; apply val_inj => /=.
-      by rewrite Heq /=.
-    * case Haddrib : (add_ribbon la nbox.+1 _) => [[res h]|//=].
-      rewrite andTb /=; apply/negP => /eqP.
-      rewrite /add_ribbon_intpartn {1}Haddrib => [[/(congr1 val) /=]].
-      rewrite Haddrib /= => Heq.
-      by move: Hnrib; rewrite -{}Heq (add_ribbonP _ Haddrib).
-move=> /andP[-> Hrib].
-have:= ribbon_addE (intpartnP la) (intpartnP mu) Hrib.
-by rewrite sumn_diff_shape ?ribbon_included // !sumn_intpartn addnK => ->.
-Qed.
-
-End Bijection.
+End Lift.
 
 End MultAlternSymp.
 
@@ -182,30 +142,26 @@ End MultAlternSymp.
 Section MultSymsSympIDomain.
 
 Variable n0 : nat.
-Variable R : idomainType.
-
 Local Notation n := n0.+1.
-Local Notation rho := (rho n).
-Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
+Variable (R : idomainType).
+Local Notation SF := {sympoly R[n]}.
 
-Lemma syms_sympM_idomain m (la : 'P_m) nbox :
-  's[la] * 'p_(nbox.+1) =
-  \sum_(sh : 'P_(nbox.+1 + m) | ribbon la sh)
-   (-1) ^+ (ribbon_height la sh).-1 *: 's[sh] :> {sympoly R[n]}.
+Lemma syms_sympM_oapp_idomain d (la : 'P_d) m :
+  m != 0%N -> size la <= n ->
+  's[la] * 'p_m =
+  \sum_(i < n) oapp (fun ph => (-1) ^+ ph.2.-1 *: 's[ph.1]) 0
+   (add_ribbon_intpartn la m.-1 i) :> SF.
 Proof.
-apply val_inj; case: (leqP (size la) n) => szla /=; first last.
-  rewrite Schur_oversize // mul0r raddf_sum /=.
-  apply/esym/big1 => mu Hrib.
-  rewrite Schur_oversize ?scaler0 //.
-  apply: (leq_trans szla).
-  by move: Hrib => /ribbon_included/includedP[].
-rewrite raddf_sum /= [in RHS](bigID (fun sh => size (val sh) <= n)) /=.
-rewrite [X in _ = _ + X]big1 ?addr0; first last => [sh /andP[_]|].
-  by rewrite -ltnNge => /Schur_oversize ->; rewrite scaler0.
-apply: (mulfI (alt_rho_non0 n R)).
-rewrite mulrA alt_SchurE // mult_altern_sympol //.
-rewrite mulr_sumr; apply eq_bigr => mu /andP[szmu Hrib] /=.
-by rewrite -scalerAr alt_SchurE.
+case: m => // m _ szla; apply val_inj.
+rewrite /= !raddf_sum /=.
+apply: (mulfI (alt_rho_non0 n _)).
+rewrite mulrA alt_SchurE //= mult_altern_oapp //.
+rewrite mulr_sumr; apply eq_bigr => mu _.
+rewrite add_ribbon_intpartnE.
+case Haddrib: add_ribbon_intpartn => [[sh h]|]/=; last by rewrite mulr0.
+move/add_ribbon_intpartnP in Haddrib.
+rewrite -scalerAr alt_SchurE //.
+by rewrite (size_add_ribbon Haddrib) geq_max szla ltn_ord.
 Qed.
 
 End MultSymsSympIDomain.
@@ -215,21 +171,101 @@ Section MultSymsSymp.
 
 Variable n0 : nat.
 Variable R : comRingType.
-
 Local Notation n := n0.+1.
-Local Notation rho := (rho n).
-Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
+Local Notation SF := {sympoly R[n]}.
 
-Lemma syms_sympM m (la : 'P_m) nbox :
-  nbox != 0%N ->
-  's[la] * 'p_(nbox) =
-  \sum_(sh : 'P_(nbox + m) | ribbon la sh)
-   (-1) ^+ (ribbon_height la sh).-1 *: 's[sh] :> {sympoly R[n]}.
+Lemma syms_sympM_oapp_size d (la : 'P_d) m :
+  m != 0%N -> size la <= n ->
+  's[la] * 'p_m =
+  \sum_(i < n) oapp (fun ph => (-1) ^+ ph.2.-1 *: 's[ph.1]) 0
+   (add_ribbon_intpartn la m.-1 i) :> SF.
 Proof.
-case: nbox => // nbox _.
+move=> Hm szla.
 rewrite -(map_syms [rmorphism of intr]) -(map_symp [rmorphism of intr]).
-rewrite -rmorphM syms_sympM_idomain rmorph_sum /=.
-by under [LHS]eq_bigr do rewrite scale_map_sympoly rmorphX rmorphN1 map_syms.
+rewrite -rmorphM syms_sympM_oapp_idomain // rmorph_sum /=.
+apply eq_bigr => i _.
+case: add_ribbon_intpartn => [p|]/=; last by rewrite rmorph0.
+by rewrite scale_map_sympoly rmorphX rmorphN1 map_syms.
+Qed.
+Lemma syms_sympM_oapp d (la : 'P_d) m :
+  m != 0%N ->
+  's[la] * 'p_m =
+  \sum_(i < n) oapp (fun ph => (-1) ^+ ph.2.-1 *: 's[ph.1]) 0
+   (add_ribbon_intpartn la m.-1 i) :> SF.
+Proof.
+move=> Hm.
+case: (leqP (size la) n) => [/syms_sympM_oapp_size-> // | szla].
+rewrite syms_oversize // mul0r; apply/esym/big1 => /= i _.
+case Haddrib: add_ribbon_intpartn => [[sh h]|]//=.
+move/add_ribbon_intpartnP in Haddrib.
+rewrite syms_oversize ?scaler0 //.
+by rewrite (size_add_ribbon Haddrib) leq_max szla.
+Qed.
+
+Lemma syms_sympM_pmap d (la : 'P_d) m :
+  m != 0%N ->
+  's[la] * 'p_m =
+  \sum_(ph <- pmap (add_ribbon_intpartn la m.-1) (iota 0 n))
+   (-1) ^+ ph.2.-1 *: 's[ph.1] :> SF.
+Proof.
+move=> Hm; rewrite syms_sympM_oapp //.
+by rewrite big_pmap -[n in iota 0 n](subn0 n) -/(index_iota 0 n) big_mkord.
+Qed.
+
+Lemma syms_sympM d (la : 'P_d) m :
+  m != 0%N ->
+  's[la] * 'p_m =
+  \sum_(sh : 'P_(m + d) | ribbon la sh)
+   (-1) ^+ (ribbon_height la sh).-1 *: 's[sh] :> SF.
+Proof.
+move=> Hm.
+case: (ltnP n (size la)) => szla.
+  rewrite syms_oversize // mul0r; apply/esym/big1 => /= i.
+  move=> /ribbon_included/includedP [/(leq_trans szla)/syms_oversize -> _].
+    by rewrite scaler0.
+rewrite (syms_sympM_oapp_size Hm szla).
+case: m Hm => // m _.
+rewrite (bigID (fun i : 'I_n => add_ribbon_intpartn la m i)) /=.
+rewrite [X in _ + X = _]big1 ?addr0; last by move=> i; case: add_ribbon_intpartn.
+rewrite [RHS](bigID (fun sh => size (val sh) <= n)) /=.
+rewrite [X in _ = _ + X]big1 ?addr0; first last => [mu /andP[_]|].
+  by rewrite -ltnNge => /syms_oversize ->; rewrite scaler0.
+have ribbon_stop_subproof (mu : 'P_(m.+1 + d)) :
+  (if size mu <= n then (mindropeq la mu).-1 else 0%N) < n.
+  case: (leqP (size mu) n) => // szmu.
+  case: mindropeq (mindropeq_leq la mu) => // md /= /leq_trans; apply.
+  by rewrite geq_max szla szmu.
+pose ribbon_stop mu := Ordinal (ribbon_stop_subproof mu).
+rewrite (reindex_omap ribbon_stop
+          (omap fst \o (add_ribbon_intpartn la m))) /=; first last => [i|].
+  case Haddrib: add_ribbon_intpartn => [[res h]|]//= _.
+  move/add_ribbon_intpartnP in Haddrib.
+  congr Some; apply val_inj => /=.
+  rewrite (size_add_ribbon Haddrib) geq_max szla ltn_ord /=.
+  rewrite (ribbon_on_mindropeq (intpartnP la) _ (add_ribbon_onP Haddrib)) //.
+  exact: (is_part_add_ribbon _ Haddrib).
+apply esym; apply: eq_big => mu.
+  rewrite andbC; case leqP => Hszmu /=; first last.
+  + case Haddrib: add_ribbon_intpartn => [[res h]|] //=; first last.
+    move/add_ribbon_intpartnP in Haddrib.
+    case (altP (_ =P Some mu)) => // [[Heq]].
+    have := size_add_ribbon Haddrib; rewrite {res Haddrib}Heq /= => Heq.
+    by move: Hszmu; rewrite Heq leq_max 2!ltnNge szla.
+  + apply esym; case: (boolP (ribbon la mu)) => [Hrib | Hnrib].
+    * have := ribbon_addE (intpartnP la) (intpartnP mu) Hrib.
+      rewrite sumn_diff_shape ?ribbon_included // !sumn_intpartn addnK.
+      rewrite add_ribbon_intpartnE.
+      case Haddrib: add_ribbon_intpartn => [[res h]|]//=.
+      by move=> [/val_inj ->]; rewrite eqxx.
+    * case Haddrib: add_ribbon_intpartn => [[res h]|]//=.
+      move/add_ribbon_intpartnP in Haddrib.
+      apply/negP => /eqP [] Heq.
+      by move: Hnrib; rewrite -{}Heq (add_ribbonP _ Haddrib).
+move=> /andP[Hrib ->].
+have:= ribbon_addE (intpartnP la) (intpartnP mu) Hrib.
+rewrite sumn_diff_shape ?ribbon_included // !sumn_intpartn addnK.
+rewrite add_ribbon_intpartnE.
+by case Haddrib: add_ribbon_intpartn => [[res h]|]//= [/val_inj -> <-].
 Qed.
 
 End MultSymsSymp.
@@ -341,3 +377,64 @@ by rewrite !raddf_sum.
 Qed.
 
 End MNRule.
+
+
+
+(** MN_coeff should only be used when [sumn la == sumn mu]. *)
+Fixpoint MN_coeff_rec (la mu nu : seq nat) : int :=
+  if mu is m0 :: m then
+    foldr (fun pair acc =>
+             MN_coeff_rec la m pair.1 * (-1) ^+ pair.2.-1 + acc)
+          0
+          [seq x | x <- pmap (add_ribbon nu m0) (iota 0 (size la))
+                   & included x.1 la]
+  else (la == nu).
+Definition MN_coeff_fast la mu := MN_coeff_rec la mu [::].
+
+Section Tests.
+
+(* Compute MN_coeff_rec [:: 3; 3; 1; 1]%N [:: 5; 2; 1]%N [::]. *)
+
+(** Tests :
+[
+sage: s(p[3, 3, 1, 1]).coefficient([5, 2, 1])
+-2
+]
+*****)
+Goal MN_coeff_fast [:: 5; 2; 1]%N [:: 3; 3; 1; 1]%N = - 2%:R.
+Proof. by []. Abort.
+(** Tests :
+[
+sage: s(p[5, 2, 1]).coefficient([3, 3, 1, 1])
+1
+]
+*****)
+Goal MN_coeff_fast [:: 3; 3; 1; 1]%N [:: 5; 2; 1]%N = 1%:R.
+Proof. by []. Abort.
+
+(** Tests :
+[
+sage: s(p[6, 5, 5, 4, 2, 1]).coefficient([12, 5, 2, 2, 1, 1])
+4
+]
+*****)
+Goal MN_coeff_fast [:: 12; 5; 2; 2; 1; 1]%N [:: 6; 5; 5; 4; 2; 1]%N = 4%:R.
+Proof. by []. Abort.
+(** Tests :
+[
+sage: s(p[6, 5, 5, 4, 2, 1]).coefficient([12, 5, 3, 1, 1, 1])
+-2
+]
+*****)
+Goal MN_coeff_fast [:: 12; 5; 3; 1; 1; 1]%N [:: 6; 5; 5; 4; 2; 1]%N = - 2%:R.
+Proof. by []. Abort.
+Goal MN_coeff_fast [:: 12; 5; 3; 2; 1]%N [:: 6; 5; 5; 4; 2; 1]%N = - 3%:R.
+Proof. by []. Abort.
+Goal MN_coeff_fast [:: 12; 5; 4; 1; 1]%N [:: 6; 5; 5; 4; 2; 1]%N = 2%:R.
+Proof. by []. Abort.
+Goal MN_coeff_fast [:: 12; 5; 4; 2]%N [:: 6; 5; 5; 4; 2; 1]%N = 4%:R.
+Proof. by []. Abort.
+
+End Tests.
+
+

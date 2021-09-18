@@ -684,6 +684,9 @@ Qed.
 Lemma syms_colpartn d : 's[colpartn d] = 'e_d.
 Proof. by apply val_inj; rewrite /= mesym_SchurE. Qed.
 
+Lemma syms_oversize d (la : 'P_d) : n < size la -> 's[la] = 0.
+Proof. by move=> /Schur_oversize => over; apply val_inj => /=. Qed.
+
 End Schur.
 
 Notation "''s[' k ]" := (syms _ _ k).
@@ -730,6 +733,10 @@ Proof.
 rewrite /prod_gen /= colpartnE big_nseq.
 by elim: d => //= d ->; rewrite exprS.
 Qed.
+
+Lemma prod_gen_cast d1 d2 (eq_d : d1 = d2) (la : 'P_d1) :
+  'g[cast_intpartn eq_d la] = 'g[la].
+Proof. by rewrite /prod_gen /= cast_intpartnE. Qed.
 
 End Defs.
 
@@ -798,6 +805,30 @@ End ProdGen.
 Notation "''e[' k ]" := (prod_syme _ _ k).
 Notation "''h[' k ]" := (prod_symh _ _ k).
 Notation "''p[' k ]" := (prod_symp _ _ k).
+
+
+(** Casting the index *)
+Section Cast.
+
+Variable n0 : nat.
+Local Notation n := n0.+1.
+Variables R : comRingType.
+Local Notation SF := {sympoly R[n]}.
+
+Variables (d1 d2 : nat) (eq_d : d1 = d2) (la : 'P_d1).
+
+Lemma syms_cast : 's[cast_intpartn eq_d la] = 's[la] :> SF.
+Proof. by apply val_inj; rewrite /= Schur_cast. Qed.
+Lemma syme_cast : 'e[cast_intpartn eq_d la] = 'e[la] :> SF.
+Proof. exact: prod_gen_cast. Qed.
+Lemma symh_cast : 'h[cast_intpartn eq_d la] = 'h[la] :> SF.
+Proof. exact: prod_gen_cast. Qed.
+Lemma symp_cast : 'p[cast_intpartn eq_d la] = 'p[la] :> SF.
+Proof. exact: prod_gen_cast. Qed.
+Lemma symm_cast : 'm[cast_intpartn eq_d la] = 'm[la] :> SF.
+Proof. by apply val_inj; rewrite /= /symm cast_intpartnE. Qed.
+
+End Cast.
 
 
 (** * Littlewood-Richardson and Pieri rules *)
