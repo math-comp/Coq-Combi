@@ -15,6 +15,11 @@
 (******************************************************************************)
 (** * The Murnaghan–Nakayama rule
 
+[MN_coeff la mu]  == The number of ribbon filling of the shape [la] with
+                     content [mu], defined recursively.
+[MN_coeff_fast la mu] == fast version of [MN_coeff la mu]
+[MN_coeff_rec la nu mu] == The number of ribbon filling of the skew shape
+                     [la / nu] with content [mu], defined recursively.
  ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
@@ -62,7 +67,7 @@ Lemma mult_altern_oapp p d :
   is_part p -> size p <= n ->
   'a_(mpart p + rho) * (symp_pol n R d.+1) =
   \sum_(i < n) oapp (fun ph => (-1) ^+ ph.2.-1 *: 'a_(mpart ph.1 + rho)) 0
-   (add_ribbon p d.+1 i).
+   (add_ribbon p d i).
 Proof.
 move=> partp szp; rewrite mult_altern_symp_pol.
 apply eq_bigr => i _ /=.
@@ -74,11 +79,11 @@ Qed.
 Lemma mult_altern_pmap p d :
   is_part p -> size p <= n ->
   'a_(mpart p + rho) * (symp_pol n R d.+1) =
-  \sum_(psh <- pmap (add_ribbon p d.+1) (iota 0 n))
+  \sum_(psh <- pmap (add_ribbon p d) (iota 0 n))
    (-1) ^+ (psh.2).-1 *: 'a_(mpart psh.1 + rho).
 Proof.
 move=> partp szp; rewrite mult_altern_oapp //.
-rewrite -(big_mkord xpredT (fun i => oapp _ 0 (add_ribbon p d.+1 i))).
+rewrite -(big_mkord xpredT (fun i => oapp _ 0 (add_ribbon p d i))).
 by rewrite big_pmap /index_iota subn0.
 Qed.
 
@@ -327,29 +332,29 @@ End MNRule.
 
 
 (** MN_coeff should only be used when [sumn la == sumn mu]. *)
-Fixpoint MN_coeff_rec (la mu nu : seq nat) : int :=
+Fixpoint MN_coeff_rec (la nu mu : seq nat) : int :=
   if mu is m0 :: m then
     foldr (fun psh acc =>
-             MN_coeff_rec la m psh.1 * (-1) ^+ psh.2.-1 + acc)
+             MN_coeff_rec la psh.1 m * (-1) ^+ psh.2.-1 + acc)
           0
-          [seq psh | psh <- pmap (add_ribbon nu m0) (iota 0 (size la))
+          [seq psh | psh <- pmap (add_ribbon nu m0.-1) (iota 0 (size la))
                    & included psh.1 la]
   else (la == nu).
-Definition MN_coeff_fast la mu := MN_coeff_rec la mu [::].
+Definition MN_coeff_fast la mu := MN_coeff_rec la [::] mu.
 
 
-Lemma MN_coeff_rec_szE la m0 mu nu :
-  MN_coeff_rec la (m0 :: mu) nu =
-  \sum_(psh <- pmap (add_ribbon nu m0) (iota 0 (size la)) | included psh.1 la)
-   MN_coeff_rec la mu psh.1 * (-1) ^+ psh.2.-1.
+Lemma MN_coeff_rec_szE la nu m0 mu :
+  MN_coeff_rec la nu (m0 :: mu) =
+  \sum_(psh <- pmap (add_ribbon nu m0.-1) (iota 0 (size la)) | included psh.1 la)
+   MN_coeff_rec la psh.1 mu * (-1) ^+ psh.2.-1.
 Proof.
 rewrite /=; elim: pmap => [|[sh0 h0] s IHs]/=; first by rewrite big_nil.
 by rewrite big_cons /= -{}IHs; case: included.
 Qed.
 
-Lemma MN_coeff_rec_notincl la mu nu :
+Lemma MN_coeff_rec_notincl la nu mu :
   0%N \notin mu -> is_part nu ->  ~~ included nu la ->
-  MN_coeff_rec la mu nu = 0.
+  MN_coeff_rec la nu mu = 0.
 Proof.
 elim: mu nu => [/= |[|m0] mu IHmu] nu //.
   by case: eqP => // ->; rewrite included_refl.
@@ -360,11 +365,11 @@ suff /negbTE -> : ~~ included sh la by [].
 by apply/contra: nincl => /(included_trans (included_add_ribbon partnu Haddrib)).
 Qed.
 
-Lemma MN_coeff_rec_consE n la m0 mu nu :
+Lemma MN_coeff_rec_consE n la nu m0 mu :
   m0 != 0%N -> size la <= n ->
-  MN_coeff_rec la (m0 :: mu) nu =
-  \sum_(psh <- pmap (add_ribbon nu m0) (iota 0 n) | included psh.1 la)
-   MN_coeff_rec la mu psh.1 * (-1) ^+ psh.2.-1.
+  MN_coeff_rec la nu (m0 :: mu) =
+  \sum_(psh <- pmap (add_ribbon nu m0.-1) (iota 0 n) | included psh.1 la)
+   MN_coeff_rec la psh.1 mu * (-1) ^+ psh.2.-1.
 Proof.
 case: m0 => // m0 _ Hsz; rewrite MN_coeff_rec_szE.
 rewrite big_mkcond big_pmap -(subn0 (size la)) -/(index_iota 0 _) /=.
@@ -378,8 +383,6 @@ by rewrite (size_add_ribbon Haddrib) geq_max ltnNge leszi andbF.
 Qed.
 
 Section Tests.
-
-(* Compute MN_coeff_rec [:: 3; 3; 1; 1]%N [:: 5; 2; 1]%N [::]. *)
 
 (** Tests :
 [
@@ -432,7 +435,7 @@ Local Notation n := n0.+1.
 
 Lemma syms_prod_sympM_int dn (nu : 'P_dn) dm (mu : 'P_dm) :
   's[nu] * 'p[mu] =
-  \sum_(la : 'P_(dn + dm)) MN_coeff_rec la mu nu *: 's[la] :> {sympoly int[n]}.
+  \sum_(la : 'P_(dn + dm)) MN_coeff_rec la nu mu *: 's[la] :> {sympoly int[n]}.
 Proof.
 case: mu => [mu /= Hnu]; rewrite /prod_symp /prod_gen /=.
 move: Hnu => /andP[/eqP <-{dm}]; rewrite is_part_sortedE => /andP[_].
@@ -479,7 +482,7 @@ Local Notation HSF := {homsym R[n, _]}.
 
 Theorem syms_prod_sympM dn (nu : 'P_dn) dm (mu : 'P_dm) :
   's[nu] * 'p[mu] =
-  \sum_(la : 'P_(dn + dm)) (MN_coeff_rec la mu nu)%:~R *: 's[la] :> SF.
+  \sum_(la : 'P_(dn + dm)) (MN_coeff_rec la nu mu)%:~R *: 's[la] :> SF.
 Proof.
 rewrite -(map_syms [rmorphism of intr]) -(map_symp_prod [rmorphism of intr]).
 rewrite -rmorphM syms_prod_sympM_int rmorph_sum /=.
@@ -488,7 +491,7 @@ Qed.
 
 Corollary homsyms_homsympM dn (nu : 'P_dn) dm (mu : 'P_dm) :
   'hs[nu] *h 'hp[mu] =
-  \sum_(la : 'P_(dn + dm)) (MN_coeff_rec la mu nu)%:~R *: 'hs[la] :> HSF.
+  \sum_(la : 'P_(dn + dm)) (MN_coeff_rec la nu mu)%:~R *: 'hs[la] :> HSF.
 Proof.
 apply val_inj => /=; apply val_inj => /=.
 have /= := congr1 val (syms_prod_sympM nu mu); rewrite /prod_symp => ->.
@@ -496,14 +499,14 @@ by rewrite !raddf_sum.
 Qed.
 
 Corollary MN_coeff_recP d (la : 'P_d) :
-  'p[la] = \sum_(sh : 'P_d) (MN_coeff_rec sh la [::])%:~R *: 's[sh] :> SF.
+  'p[la] = \sum_(sh : 'P_d) (MN_coeff_fast sh la)%:~R *: 's[sh] :> SF.
 Proof.
 rewrite -[LHS]mul1r -(syms0 _ _ (colpartn 0)).
 by rewrite syms_prod_sympM; apply eq_bigr => sh _; rewrite colpartnE.
 Qed.
 
 Corollary MN_coeff_rec_homogP d (la : 'P_d) :
-  'hp[la] = \sum_(sh : 'P_d) (MN_coeff_rec sh la [::])%:~R *: 'hs[sh] :> HSF.
+  'hp[la] = \sum_(sh : 'P_d) (MN_coeff_fast sh la)%:~R *: 'hs[sh] :> HSF.
 Proof.
 apply val_inj => /=; apply val_inj => /=.
 have /= := congr1 val (MN_coeff_recP la); rewrite /prod_symp => ->.
@@ -514,12 +517,11 @@ End ComRing.
 
 End FastImplem.
 
-Corollary MN_coeffE d (la mu : 'P_d) :
-  MN_coeff_rec la mu [::] = MN_coeff la mu.
+Corollary MN_coeffE d (la mu : 'P_d) : MN_coeff_fast la mu = MN_coeff la mu.
 Proof.
 pose HSF := {homsym rat[(sumn mu).+1 , d]}.
 pose Pval i := (@enum_val _ xpredT i : 'P_d).
-have : \sum_i (MN_coeff_rec (Pval i) mu [::])%:~R *: 'hs`_i =
+have : \sum_i (MN_coeff_rec (Pval i) [::] mu)%:~R *: 'hs`_i =
        \sum_i (MN_coeff     (Pval i) mu     )%:~R *: 'hs`_i :> HSF.
   rewrite !(reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P_d]))) /=.
   under [LHS]eq_bigr do rewrite /Pval symbsE enum_rankK.

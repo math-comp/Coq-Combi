@@ -18,7 +18,7 @@
 A proof of the Erdös Szekeres theorem about longest increasing and
 decreasing subsequences. The theorem is [Erdos_Szekeres] and
 says that any sequence [s] of length at least [n*m+1] over a totally ordered
-type admit
+type contains
 - either a nondecreasing subsequence of length [n+1];
 - or a strictly decreasing subsequence of length [m+1].
 We prove it as a corollary of Greene's theorem on the Robinson-Schensted

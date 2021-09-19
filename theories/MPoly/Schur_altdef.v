@@ -1493,7 +1493,7 @@ Qed.
 
 Lemma alt_straight_add_ribbon0 (p : seq nat) (i : 'I_n) (d : nat) :
   is_part p -> size p <= n ->
-  add_ribbon p d.+1 i == None -> 'a_(mpart p + rho + U_(i) *+ d.+1) = 0%R.
+  add_ribbon p d i == None -> 'a_(mpart p + rho + U_(i) *+ d.+1) = 0%R.
 Proof.
 rewrite /add_ribbon => Hpart Hsz.
 case: startrem (startremE p d.+1 i) (startrem_leq_pos p d.+1 i) => a [|b]//= .
@@ -1514,7 +1514,7 @@ Qed.
 
 Lemma alt_straight_add_ribbon (p : seq nat) (i : 'I_n) (d : nat) :
   is_part p -> size p <= n ->
-  forall res h, add_ribbon p d.+1 i = Some (res, h) ->
+  forall res h, add_ribbon p d i = Some (res, h) ->
     'a_(mpart p + rho + U_(i) *+ d.+1) = (-1) ^+ h.-1 *: 'a_(mpart res + rho).
 Proof.
 rewrite /alternpol => Hpart ltsn res h Hrib.
