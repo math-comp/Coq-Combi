@@ -15,11 +15,11 @@
 (******************************************************************************)
 (** * The Murnaghan–Nakayama rule
 
-[MN_coeff la mu]  == The number of ribbon filling of the shape [la] with
-                     content [mu], defined recursively.
-[MN_coeff_fast la mu] == fast version of [MN_coeff la mu]
-[MN_coeff_rec la nu mu] == The number of ribbon filling of the skew shape
-                     [la / nu] with content [mu], defined recursively.
+- [MN_coeff la mu] == The number of ribbon filling of the shape [la] with
+                      content [mu], defined recursively.
+- [MN_coeff_fast la mu] == fast version of [MN_coeff la mu]
+- [MN_coeff_rec la nu mu] == The number of ribbon filling of the skew shape
+                      [la / nu] with content [mu], defined recursively.
  ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
