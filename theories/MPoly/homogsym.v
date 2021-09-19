@@ -509,7 +509,7 @@ Proof using Hd.
 by rewrite dimvf /Vector.dim /=; apply eq_card; apply basis_homsym.
 Qed.
 
-Lemma free_symbm : free symbm.
+Lemma symbm_free : free symbm.
 Proof using Hd.
 apply/freeP => co.
 rewrite (reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P_d]))) /=.
@@ -526,7 +526,7 @@ Qed.
 
 Lemma symbm_basis : basis_of fullv symbm.
 Proof using Hd.
-by rewrite basisEfree free_symbm subvf size_map size_tuple /= dim_homsym.
+by rewrite basisEfree symbm_free subvf size_map size_tuple /= dim_homsym.
 Qed.
 
 Lemma symbs_basis : basis_of fullv symbs.
@@ -541,6 +541,8 @@ rewrite big_map (bigD1_seq mu) /= ?mem_enum ?inE ?enum_uniq //.
 rewrite -[X in X \in _]addr0.
 by apply memv_add; [exact: memv_line | exact: mem0v].
 Qed.
+Lemma symbs_free : free symbs.
+Proof. exact/basis_free/symbs_basis. Qed.
 
 Theorem mcoeff_symbs (la : 'P_d) f :
   coord symbs (enum_rank la) f =
@@ -634,6 +636,8 @@ rewrite -[X in X \in _]addr0.
 apply memv_add; first exact: memv_line.
 exact: mem0v.
 Qed.
+Lemma symbe_free : free symbe.
+Proof. exact/basis_free/symbe_basis. Qed.
 
 Lemma symbh_basis : basis_of fullv symbh.
 Proof using Hd.
@@ -648,6 +652,8 @@ rewrite big_map (bigD1_seq mu) /= ?mem_enum ?inE ?enum_uniq //.
 rewrite -[X in X \in _]addr0.
 by apply memv_add; [exact: memv_line | exact: mem0v].
 Qed.
+Lemma symbh_free : free symbh.
+Proof. exact/basis_free/symbh_basis. Qed.
 
 Lemma symbp_basis : [char R] =i pred0 -> basis_of fullv symbp.
 Proof using Hd.
@@ -665,6 +671,8 @@ rewrite big_map (bigD1_seq mu) /= ?mem_enum ?inE ?enum_uniq //.
 rewrite -[X in X \in _]addr0.
 by apply memv_add; [exact: memv_line | exact: mem0v].
 Qed.
+Lemma symbp_free : [char R] =i pred0 -> free symbp.
+Proof. by move=> Hchar; apply/basis_free/symbp_basis. Qed.
 
 End HomSymField.
 
@@ -749,7 +757,7 @@ Proof. by apply eq_from_tnth => i; rewrite !tnth_map map_homsyms. Qed.
 End ChangeField.
 
 
-(** Extracting coords *)
+(** ** Extracting coords *)
 Section Coord.
 
 Variable n0 d : nat.
@@ -769,38 +777,25 @@ Proof. by rewrite /symbp tupleE /= (nth_map la) ?nth_enum_rank // -cardE. Qed.
 Lemma symbsE la : ('hs)`_(enum_rank la) = 'hs[la] :> HSF.
 Proof. by rewrite /symbs tupleE /= (nth_map la) ?nth_enum_rank // -cardE. Qed.
 
-Lemma coord_symbm (Hd : (d <= n)%N) la mu :
-  coord (vT := [vectType R of HSF]) 'hm (enum_rank mu) 'hm[la] = (la == mu)%:R.
-Proof.
-rewrite -!symbmE !(coord_free _ _ (basis_free (symbm_basis _ _))) //.
-by rewrite !(inj_eq (enum_rank_inj (T := [finType of 'P_d]))).
-Qed.
-Lemma coord_symbe (Hd : (d <= n)%N) la mu :
-  coord (vT := [vectType R of HSF]) 'he (enum_rank mu) 'he[la] = (la == mu)%:R.
-Proof.
-rewrite -!symbeE !(coord_free _ _ (basis_free (symbe_basis _ _))) //.
-by rewrite !(inj_eq (enum_rank_inj (T := [finType of 'P_d]))).
-Qed.
-Lemma coord_symbh (Hd : (d <= n)%N) la mu :
-  coord (vT := [vectType R of HSF]) 'hh (enum_rank mu) 'hh[la] = (la == mu)%:R.
-Proof.
-rewrite -!symbhE !(coord_free _ _ (basis_free (symbh_basis _ _))) //.
-by rewrite !(inj_eq (enum_rank_inj (T := [finType of 'P_d]))).
-Qed.
-Lemma coord_symbs (Hd : (d <= n)%N) la mu :
-  coord (vT := [vectType R of HSF]) 'hs (enum_rank mu) 'hs[la] = (la == mu)%:R.
-Proof.
-rewrite -!symbsE !(coord_free _ _ (basis_free (symbs_basis _ _))) //.
-by rewrite !(inj_eq (enum_rank_inj (T := [finType of 'P_d]))).
-Qed.
+Let er_eqE (la mu : 'P_d) :
+  (enum_rank la == enum_rank mu) = (la == mu).
+Proof. by rewrite inj_eq //; apply: enum_rank_inj. Qed.
 
-Hypothesis (char0 : [char R] =i pred0).
-Lemma coord_symbp (Hd : (d <= n)%N) la mu :
-  coord (vT := [vectType R of HSF]) 'hp (enum_rank mu) 'hp[la] = (la == mu)%:R.
-Proof.
-rewrite -!symbpE !(coord_free _ _ (basis_free (symbp_basis _ _))) //.
-by rewrite !(inj_eq (enum_rank_inj (T := [finType of 'P_d]))).
-Qed.
+Local Notation coord := (coord (vT := [vectType R of HSF])).
+
+Hypothesis (Hd : (d <= n)%N).
+Lemma coord_symbm la mu : coord 'hm (enum_rank mu) 'hm[la] = (la == mu)%:R.
+Proof. by rewrite -symbmE coord_free ?er_eqE; last exact: symbm_free. Qed.
+Lemma coord_symbe la mu : coord 'he (enum_rank mu) 'he[la] = (la == mu)%:R.
+Proof. by rewrite -symbeE coord_free ?er_eqE; last exact: symbe_free. Qed.
+Lemma coord_symbh la mu : coord 'hh (enum_rank mu) 'hh[la] = (la == mu)%:R.
+Proof. by rewrite -symbhE coord_free ?er_eqE; last exact: symbh_free. Qed.
+Lemma coord_symbs la mu : coord 'hs (enum_rank mu) 'hs[la] = (la == mu)%:R.
+Proof. by rewrite -symbsE coord_free ?er_eqE; last exact: symbs_free. Qed.
+
+Lemma coord_symbp (char0 : [char R] =i pred0) la mu :
+  coord 'hp (enum_rank mu) 'hp[la] = (la == mu)%:R.
+Proof. by rewrite -symbpE coord_free ?er_eqE; last exact/symbp_free. Qed.
 
 End Coord.
 
@@ -935,9 +930,9 @@ Lemma homsymdotpp (Hd : (d <= n)%N) la mu :
   '[ 'hp[la] | 'hp[mu] ] = (zcard la)%:R * (la == mu)%:R.
 Proof.
 rewrite homsymdotE (bigD1 mu) //= big1 ?addr0 => [| nu /negbTE Hneq].
-- rewrite !(coord_symbp _ Hd) // eq_refl /= conjC1 mulr1.
+- rewrite !(coord_symbp Hd) // eq_refl /= conjC1 mulr1.
   by case: eqP => [-> //| _]; rewrite !mulr0.
-- by rewrite !(coord_symbp _ Hd) // [mu == nu]eq_sym Hneq conjC0 mulr0.
+- by rewrite !(coord_symbp Hd) // [mu == nu]eq_sym Hneq conjC0 mulr0.
 Qed.
 
 Lemma homsymdot_omegasf f g :

@@ -559,7 +559,6 @@ have : \sum_i (MN_coeff_rec (Pval i) mu [::])%:~R *: 'hs`_i =
   under [RHS]eq_bigr do rewrite /Pval symbsE enum_rankK.
   by rewrite -[LHS]MN_coeff_rec_homogP -[RHS]MN_coeff_homogP.
 move/(congr1 (coord 'hs (enum_rank la))) => /eqP.
-have free_hs : free ('hs : seq HSF).
-  by apply/basis_free/symbs_basis; rewrite sumn_intpartn.
+have free_hs : free ('hs : seq HSF) by apply: symbs_free; rewrite sumn_intpartn.
 by rewrite !coord_sum_free // {}/Pval enum_rankK => /eqP/intr_inj.
 Qed.

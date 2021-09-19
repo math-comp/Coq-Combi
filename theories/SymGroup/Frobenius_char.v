@@ -155,8 +155,7 @@ transitivity
   congr coord; apply eq_bigr => /= i _; congr (_ *: _).
   rewrite (nth_map inh); last by rewrite -cardE ltn_ord.
   by congr ('hp[_]); apply enum_val_nth.
-rewrite coord_sum_free ?enum_rankK //.
-exact: (basis_free (symbp_basis Hn _)).
+by rewrite coord_sum_free ?enum_rankK //; exact: symbp_free.
 Qed.
 
 Lemma Fchar_invK : cancel Fchar_inv Fchar.
@@ -537,8 +536,7 @@ rewrite (eq_bigr
   move=> /= i _.
   rewrite (nth_map inh); last by rewrite -cardE ltn_ord.
   by congr (_ *: 'hs[_]); apply enum_val_nth.
-rewrite coord_sum_free ?enum_rankK // ?KostkaStd //.
-exact: basis_free (symbs_basis _ (leqSpred _)).
+by rewrite coord_sum_free ?enum_rankK // ?KostkaStd //; exact: symbs_free.
 Qed.
 
 Theorem dim_cfReprSG n (la : 'P_n) d (rG : mx_representation algCF 'SG_n d) :
