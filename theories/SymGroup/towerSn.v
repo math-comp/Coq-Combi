@@ -46,20 +46,17 @@ The two main results are:
 
 - Theorem [cfuni_Res] which expands the restriction to ['S_m * 'S_n]
   of the cycle indicator class function ['1_[l]]:
-
-  <<
+[[
     'Res[tinj @* ('dom tinj)] '1_[l] =
       \sum_(pp | l == pp.1 +|+ pp.2) '1_[pp.1] \o^ '1_[pp.2].
-  >>
-
+]]
   by Frobenius duality it implies:
 
 - Theorem [ncfuniCT_Ind] which expands the induction of two normalized
   cycle indicator class functions:
-
-  <<
+[[
     'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]) = '1z_[p +|+ q].
-  >>
+]]
 ***************)
 
 Require Import mathcomp.ssreflect.ssreflect.
@@ -116,17 +113,17 @@ Variables (G : {group gT}) (H : {group aT}).
 Local Open Scope ring_scope.
 
 (** One could use the following alternative definition
-<<
+[[
 Definition cast_cf (G H : {set gT}) (eq_GH : G = H) (f : 'CF(G)) :=
   let: erefl in _ = H := eq_GH return 'CF(H) in f.
 Definition cfextprod (g : 'CF(G)) (h : 'CF(H)) : 'CF(setX G H) :=
   (cfMorph (cast_cf (esym (@morphim_fstX _ _ G H)) g)) *
   (cfMorph (cast_cf (esym (@morphim_sndX _ _ G H)) h)).
->>
+]]
 and prove the equivalence:
-<<
+[[
 Lemma cfextprodE g h x y : (g \ox h) (x, y) = (g x) * (h y).
->>
+]]
 However, the more direct definition below leads to simpler proofs, at least
 once we have proved that it is indeed a class function.
  *********)

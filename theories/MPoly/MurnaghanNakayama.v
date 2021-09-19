@@ -13,13 +13,37 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * The Murnaghan–Nakayama rule
+(** * The Murnaghan-Nakayama rule
 
-- [MN_coeff la mu] == The number of ribbon filling of the shape [la] with
-                      content [mu], defined recursively.
+See the page
+#<a href="https://en.wikipedia.org/wiki/Murnaghan%E2%80%93Nakayama_rule">Murnaghan-Nakayama</a># on Wikipedia for a statement. The fixpoint [MN_coeff la mu]
+implement the recursive version, as stated in
+[[
+Theorem MN_coeff_consE la m0 mu :
+  MN_coeff la (m0 :: mu) =
+  \sum_(sh : 'P_(sumn mu) | ribbon sh la)
+   MN_coeff sh mu * (-1) ^+ (ribbon_height sh la).-1.
+]]
+and the base case
+[[
+Lemma MN_coeff0 : MN_coeff [::] [::] = 1.
+]]
+The Murnaghan-Nakayama rule stated in terms of symmetric polynomials is then
+[[
+Theorem MN_coeffP d (la : 'P_d) :
+  'p[la] = \sum_(sh : 'P_d) (MN_coeff sh la)%:~R *: 's[sh] :> {sympoly R[n]}.
+]]
+There is a second implementation which goes bottom up, adding ribbons instead
+of removing them. It allows to compute skew Murnaghan-Nakayama coefficients.
+
+We provide the following definitions:
+
+- [MN_coeff la mu] == then Murnaghan-Nakayama coefficients. That is the
+               alternating number of ribbon filling of the shape [la]
+               with content [mu], defined recursively.
 - [MN_coeff_fast la mu] == fast version of [MN_coeff la mu]
-- [MN_coeff_rec la nu mu] == The number of ribbon filling of the skew shape
-                      [la / nu] with content [mu], defined recursively.
+- [MN_coeff_rec la nu mu] == The alternating number of ribbon filling of
+               the skew shape [la / nu] with content [mu], defined recursively.
  ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
@@ -43,6 +67,8 @@ Local Reserved Notation "''a_' k"
 Local Reserved Notation "m # s"
       (at level 40, left associativity, format "m # s").
 
+
+(** ** Product of an alternating polynomial and a power sum *)
 Section MultAlternSymp.
 
 Variable n0 : nat.
@@ -90,14 +116,15 @@ Qed.
 End MultAlternSymp.
 
 
+(** ** Product of a Schur polynomial and a power sum *)
+(* We first state the theorem on ints and then transfer to any ring *)
 Section MultSymsSympIDomain.
 
 Variable n0 : nat.
 Local Notation n := n0.+1.
-Variable (R : idomainType).
-Local Notation SF := {sympoly R[n]}.
+Local Notation SF := {sympoly int[n]}.
 
-Lemma syms_sympM_oapp_idomain d (la : 'P_d) m :
+Lemma syms_sympM_oapp_int d (la : 'P_d) m :
   m != 0%N -> size la <= n ->
   's[la] * 'p_m =
   \sum_(i < n) oapp (fun ph => (-1) ^+ ph.2.-1 *: 's[ph.1]) 0
@@ -125,19 +152,6 @@ Variable R : comRingType.
 Local Notation n := n0.+1.
 Local Notation SF := {sympoly R[n]}.
 
-Lemma syms_sympM_oapp_size d (la : 'P_d) m :
-  m != 0%N -> size la <= n ->
-  's[la] * 'p_m =
-  \sum_(i < n) oapp (fun ph => (-1) ^+ ph.2.-1 *: 's[ph.1]) 0
-   (add_ribbon_intpartn la m.-1 i) :> SF.
-Proof.
-move=> Hm szla.
-rewrite -(map_syms [rmorphism of intr]) -(map_symp [rmorphism of intr]).
-rewrite -rmorphM syms_sympM_oapp_idomain // rmorph_sum /=.
-apply eq_bigr => i _.
-case: add_ribbon_intpartn => [p|]/=; last by rewrite rmorph0.
-by rewrite scale_map_sympoly rmorphX rmorphN1 map_syms.
-Qed.
 Lemma syms_sympM_oapp d (la : 'P_d) m :
   m != 0%N ->
   's[la] * 'p_m =
@@ -145,12 +159,17 @@ Lemma syms_sympM_oapp d (la : 'P_d) m :
    (add_ribbon_intpartn la m.-1 i) :> SF.
 Proof.
 move=> Hm.
-case: (leqP (size la) n) => [/syms_sympM_oapp_size-> // | szla].
-rewrite syms_oversize // mul0r; apply/esym/big1 => /= i _.
-case Haddrib: add_ribbon_intpartn => [[sh h]|]//=.
-move/add_ribbon_intpartnP in Haddrib.
-rewrite syms_oversize ?scaler0 //.
-by rewrite (size_add_ribbon Haddrib) leq_max szla.
+case: (leqP (size la) n) => szla; first last.
+  rewrite syms_oversize // mul0r; apply/esym/big1 => /= i _.
+  case Haddrib: add_ribbon_intpartn => [[sh h]|]//=.
+  move/add_ribbon_intpartnP in Haddrib.
+  rewrite syms_oversize ?scaler0 //.
+  by rewrite (size_add_ribbon Haddrib) leq_max szla.
+rewrite -(map_syms [rmorphism of intr]) -(map_symp [rmorphism of intr]).
+rewrite -rmorphM syms_sympM_oapp_int // rmorph_sum /=.
+apply eq_bigr => i _.
+case: add_ribbon_intpartn => [p|]/=; last by rewrite rmorph0.
+by rewrite scale_map_sympoly rmorphX rmorphN1 map_syms.
 Qed.
 
 Lemma syms_sympM_pmap d (la : 'P_d) m :
@@ -163,7 +182,8 @@ move=> Hm; rewrite syms_sympM_oapp //.
 by rewrite big_pmap -[n in iota 0 n](subn0 n) -/(index_iota 0 n) big_mkord.
 Qed.
 
-Lemma syms_sympM d (la : 'P_d) m :
+(** The following theorem is a step of the Murnaghan-Nakayama rule *)
+Theorem syms_sympM d (la : 'P_d) m :
   m != 0%N ->
   's[la] * 'p_m =
   \sum_(sh : 'P_(m + d) | ribbon la sh)
@@ -174,10 +194,11 @@ case: (ltnP n (size la)) => szla.
   rewrite syms_oversize // mul0r; apply/esym/big1 => /= i.
   move=> /ribbon_included/includedP [/(leq_trans szla)/syms_oversize -> _].
     by rewrite scaler0.
-rewrite (syms_sympM_oapp_size Hm szla).
+rewrite (syms_sympM_oapp _ Hm).
 case: m Hm => // m _.
 rewrite (bigID (fun i : 'I_n => add_ribbon_intpartn la m i)) /=.
-rewrite [X in _ + X = _]big1 ?addr0; last by move=> i; case: add_ribbon_intpartn.
+rewrite [X in _ + X = _]big1 ?addr0;
+  last by move=> i; case: add_ribbon_intpartn.
 rewrite [RHS](bigID (fun sh => size (val sh) <= n)) /=.
 rewrite [X in _ = _ + X]big1 ?addr0; first last => [mu /andP[_]|].
   by rewrite -ltnNge => /syms_oversize ->; rewrite scaler0.
@@ -222,7 +243,10 @@ Qed.
 End MultSymsSymp.
 
 
-(** MN_coeff should only be used when [sumn la == sumn mu]. *)
+(** * Murnaghan-Nakayama coefficients *)
+
+(** We define those for any sequence of nat, but              *)
+(** [MN_coeff] should only be used when [sumn la == sumn mu]. *)
 Fixpoint MN_coeff (la mu : seq nat) : int :=
   if mu is m0 :: m then
     foldr (fun sh acc =>
@@ -232,10 +256,12 @@ Fixpoint MN_coeff (la mu : seq nat) : int :=
           0 (enum_partn (sumn m))
   else 1.
 
+(** Base case *)
 Lemma MN_coeff0 : MN_coeff [::] [::] = 1.
 Proof. by []. Qed.
 
-Lemma MN_coeff_consE la m0 mu :
+(** Recursive step *)
+Theorem MN_coeff_consE la m0 mu :
   MN_coeff la (m0 :: mu) =
   \sum_(sh : 'P_(sumn mu) | ribbon sh la)
    MN_coeff sh mu * (-1) ^+ (ribbon_height sh la).-1.
@@ -288,6 +314,7 @@ Proof. by []. Abort.
 
 End Tests.
 
+(** * Murnaghan-Nakayama rule *)
 Section MNRule.
 
 Variable n0 : nat.
@@ -313,16 +340,18 @@ by rewrite scalerA.
 Qed.
 
 Variable R : comRingType.
+Local Notation SF := {sympoly R[n]}.
+Local Notation HSF := {homsym R[n, _]}.
 
 Theorem MN_coeffP d (la : 'P_d) :
-  'p[la] = \sum_(sh : 'P_d) (MN_coeff sh la)%:~R *: 's[sh] :> {sympoly R[n]}.
+  'p[la] = \sum_(sh : 'P_d) (MN_coeff sh la)%:~R *: 's[sh] :> SF.
 Proof.
 rewrite -(map_symp_prod [rmorphism of intr]) MN_coeffP_int rmorph_sum /=.
 by under [LHS]eq_bigr do rewrite scale_map_sympoly map_syms.
 Qed.
 
-Theorem MN_coeff_homogP d (la : 'P_d) :
-  'hp[la] = \sum_(sh : 'P_d) (MN_coeff sh la)%:~R *: 'hs[sh] :> {homsym R[n, d]}.
+Corollary MN_coeff_homogP d (la : 'P_d) :
+  'hp[la] = \sum_(sh : 'P_d) (MN_coeff sh la)%:~R *: 'hs[sh] :> HSF.
 Proof.
 apply val_inj => /=; apply val_inj => /=.
 have /= := congr1 val (MN_coeffP la); rewrite /prod_symp => ->.
@@ -333,7 +362,7 @@ End MNRule.
 
 
 
-(** MN_coeff should only be used when [sumn la == sumn mu]. *)
+(** [MN_coeff_rec] should only be used when [sumn la == sum nu + sumn mu]. *)
 Fixpoint MN_coeff_rec (la nu mu : seq nat) : int :=
   if mu is m0 :: m then
     foldr (fun psh acc =>
@@ -347,7 +376,8 @@ Definition MN_coeff_fast la mu := MN_coeff_rec la [::] mu.
 
 Lemma MN_coeff_rec_szE la nu m0 mu :
   MN_coeff_rec la nu (m0 :: mu) =
-  \sum_(psh <- pmap (add_ribbon nu m0.-1) (iota 0 (size la)) | included psh.1 la)
+  \sum_(psh <- pmap (add_ribbon nu m0.-1) (iota 0 (size la))
+       | included psh.1 la)
    MN_coeff_rec la psh.1 mu * (-1) ^+ psh.2.-1.
 Proof.
 rewrite /=; elim: pmap => [|[sh0 h0] s IHs]/=; first by rewrite big_nil.
@@ -364,7 +394,8 @@ rewrite inE negb_or eq_sym => /andP[_ {}/IHmu Hrec] partnu nincl.
 rewrite MN_coeff_rec_szE big_mkcond big_pmap /=; apply big1 => i _.
 case Haddrib : add_ribbon => [[sh h]|]//=.
 suff /negbTE -> : ~~ included sh la by [].
-by apply/contra: nincl => /(included_trans (included_add_ribbon partnu Haddrib)).
+by apply/contra : nincl =>
+  /(included_trans (included_add_ribbon partnu Haddrib)).
 Qed.
 
 Lemma MN_coeff_rec_consE n la nu m0 mu :
@@ -519,6 +550,7 @@ End ComRing.
 
 End FastImplem.
 
+(** The two implementations coincide *)
 Corollary MN_coeffE d (la mu : 'P_d) : MN_coeff_fast la mu = MN_coeff la mu.
 Proof.
 pose HSF := {homsym rat[(sumn mu).+1 , d]}.
