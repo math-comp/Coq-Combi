@@ -25,9 +25,12 @@ Ribbon border strip:
 - [ribbon_on start stop inn out] <-> [out/inn] is a ribbon shape starting and
                ending at rows start and stop.
 - [add_ribbon sh nbox pos] == tries to add a ribbon with nbox ending at row
-               [pos] to the shape [sh]. Returns [Some (sh, hgt)] where [sh] is
-               the outer shape of the result and [hgt] its height on success,
-               or [error] if not
+               [pos] to the shape [sh]. Returns [Some (res, h)] where [res]
+               is the outer shape of the result and [h] its height on success,
+               or [error] if not.
+- [add_ribbon_intpartn sh nbox pos] == sigma type version of add_ribbon. Takes
+               [sh : 'P_d] for some [d] and returns [Some (res, hgt)]
+               where [res] is of type ['P_(nbox + m)]
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
@@ -1276,4 +1279,33 @@ exact: ribbon_on_addE.
 Qed.
 
 
-  
+Section IntPartN.
+
+Variable (m : nat) (la : 'P_m).
+Variable nbox : nat.
+Local Notation "'Pr" := 'P_(nbox.+1 + m).
+
+Local Definition val_id : ('Pr * nat) -> seq nat* nat :=
+  fun p => let: (sh, h) := p in (val sh, h).
+
+Fact add_ribbon_intpartn_spec pos :
+  { res : option ('Pr * nat) | omap val_id res = add_ribbon la nbox.+1 pos }.
+Proof.
+case Hrib: (add_ribbon la nbox.+1 pos) => [[sh h]|].
+- have:= is_part_of_add_ribbon (intpartnP _) Hrib.
+  rewrite sumn_intpartn => Hres.
+  by exists (Some (IntPartN Hres, h)).
+- by exists None.
+Qed.
+Definition add_ribbon_intpartn (pos : nat) : option ('Pr * nat) :=
+  let: exist res _ := add_ribbon_intpartn_spec pos in res.
+
+Lemma add_ribbon_intpartnE pos :
+  add_ribbon la nbox.+1 pos =omap val_id (add_ribbon_intpartn pos).
+Proof. by rewrite /add_ribbon_intpartn; case: add_ribbon_intpartn_spec. Qed.
+Lemma add_ribbon_intpartnP pos res h :
+  add_ribbon_intpartn pos = Some (res, h) ->
+  add_ribbon la nbox.+1 pos = Some (val res, h).
+Proof. by move/(congr1 (omap val_id)); rewrite add_ribbon_intpartnE /=. Qed.
+
+End IntPartN.

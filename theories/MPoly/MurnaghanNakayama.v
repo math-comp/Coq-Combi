@@ -82,39 +82,6 @@ rewrite -(big_mkord xpredT (fun i => oapp _ 0 (add_ribbon p d.+1 i))).
 by rewrite big_pmap /index_iota subn0.
 Qed.
 
-
-Section Lift.
-
-Variable (m : nat) (la : 'P_m).
-Hypothesis (szla : size la <= n).
-Variable nbox : nat.
-Local Notation "'Pr" := 'P_(nbox.+1 + m).
-
-Local Definition val_id : ('Pr * nat) -> seq nat* nat :=
-  fun p => let: (sh, h) := p in (val sh, h).
-
-Fact add_ribbon_intpartn_spec pos :
-  { res : option ('Pr * nat) | omap val_id res = add_ribbon la nbox.+1 pos }.
-Proof.
-case Hrib: (add_ribbon la nbox.+1 pos) => [[sh h]|].
-- have:= is_part_of_add_ribbon (intpartnP _) Hrib.
-  rewrite sumn_intpartn => Hres.
-  by exists (Some (IntPartN Hres, h)).
-- by exists None.
-Qed.
-Definition add_ribbon_intpartn (pos : nat) : option ('Pr * nat) :=
-  let: exist res _ := add_ribbon_intpartn_spec pos in res.
-
-Lemma add_ribbon_intpartnE pos :
-  add_ribbon la nbox.+1 pos =omap val_id (add_ribbon_intpartn pos).
-Proof. by rewrite /add_ribbon_intpartn; case: add_ribbon_intpartn_spec. Qed.
-Lemma add_ribbon_intpartnP pos res h :
-  add_ribbon_intpartn pos = Some (res, h) ->
-  add_ribbon la nbox.+1 pos = Some (val res, h).
-Proof. by move/(congr1 (omap val_id)); rewrite add_ribbon_intpartnE /=. Qed.
-
-End Lift.
-
 End MultAlternSymp.
 
 
