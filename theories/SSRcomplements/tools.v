@@ -494,6 +494,7 @@ apply perm_big; apply uniq_perm.
 Qed.
 
 End AbelianBigOp.
+Arguments partition_big [R idx op I s J P] p Q [F].
 
 
 Section SetPartition.
