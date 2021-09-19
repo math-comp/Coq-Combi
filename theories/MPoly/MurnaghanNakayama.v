@@ -251,10 +251,10 @@ Qed.
 
 Section Tests.
 (** Tests :
-[
+<<
 sage: s(p[2,1,1])
 -s[1, 1, 1, 1] - s[2, 1, 1] + s[3, 1] + s[4]
-]
+>>
 *****)
 Goal ([seq x | x <- [seq (p, MN_coeff p [:: 2; 1; 1]) | p <- enum_partn 4]
                & x.2 != 0%R] =
@@ -265,10 +265,12 @@ Goal ([seq x | x <- [seq (p, MN_coeff p [:: 2; 1; 1]) | p <- enum_partn 4]
 Proof. by []. Abort.
 
 (** Tests :
-[
+<<
 sage: s(p[4,2,1,1])
-s[1, 1, 1, 1, 1, 1, 1, 1] + s[2, 1, 1, 1, 1, 1, 1] - s[3, 1, 1, 1, 1, 1] - 2*s[3, 3, 2] - s[4, 1, 1, 1, 1] + 2*s[4, 2, 1, 1] - s[5, 1, 1, 1] - s[6, 1, 1] + s[7, 1] + s[8]
-]
+s[1, 1, 1, 1, 1, 1, 1, 1] + s[2, 1, 1, 1, 1, 1, 1] - s[3, 1, 1, 1, 1, 1]
+ - 2*s[3, 3, 2] - s[4, 1, 1, 1, 1] + 2*s[4, 2, 1, 1] - s[5, 1, 1, 1]
+ - s[6, 1, 1] + s[7, 1] + s[8]
+>>
 *****)
 Goal ([seq x | x <- [seq (p, MN_coeff p [:: 4; 2; 1; 1]) | p <- enum_partn 8]
                & x.2 != 0%R] =
@@ -385,35 +387,35 @@ Qed.
 Section Tests.
 
 (** Tests :
-[
+<<
 sage: s(p[3, 3, 1, 1]).coefficient([5, 2, 1])
 -2
-]
+>>
 *****)
 Goal MN_coeff_fast [:: 5; 2; 1]%N [:: 3; 3; 1; 1]%N = - 2%:R.
 Proof. by []. Abort.
 (** Tests :
-[
+<<
 sage: s(p[5, 2, 1]).coefficient([3, 3, 1, 1])
 1
-]
+>>
 *****)
 Goal MN_coeff_fast [:: 3; 3; 1; 1]%N [:: 5; 2; 1]%N = 1%:R.
 Proof. by []. Abort.
 
 (** Tests :
-[
+<<
 sage: s(p[6, 5, 5, 4, 2, 1]).coefficient([12, 5, 2, 2, 1, 1])
 4
-]
+>>
 *****)
 Goal MN_coeff_fast [:: 12; 5; 2; 2; 1; 1]%N [:: 6; 5; 5; 4; 2; 1]%N = 4%:R.
 Proof. by []. Abort.
 (** Tests :
-[
+<<
 sage: s(p[6, 5, 5, 4, 2, 1]).coefficient([12, 5, 3, 1, 1, 1])
 -2
-]
+>>
 *****)
 Goal MN_coeff_fast [:: 12; 5; 3; 1; 1; 1]%N [:: 6; 5; 5; 4; 2; 1]%N = - 2%:R.
 Proof. by []. Abort.

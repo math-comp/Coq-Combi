@@ -47,19 +47,19 @@ The two main results are:
 - Theorem [cfuni_Res] which expands the restriction to ['S_m * 'S_n]
   of the cycle indicator class function ['1_[l]]:
 
-  [
+  <<
     'Res[tinj @* ('dom tinj)] '1_[l] =
-    \sum_(pp | l == pp.1 +|+ pp.2) '1_[pp.1] \o^ '1_[pp.2].
-  ]
+      \sum_(pp | l == pp.1 +|+ pp.2) '1_[pp.1] \o^ '1_[pp.2].
+  >>
 
   by Frobenius duality it implies:
 
 - Theorem [ncfuniCT_Ind] which expands the induction of two normalized
   cycle indicator class functions:
 
-  [
+  <<
     'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]) = '1z_[p +|+ q].
-  ]
+  >>
 ***************)
 
 Require Import mathcomp.ssreflect.ssreflect.
