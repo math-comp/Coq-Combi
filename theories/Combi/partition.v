@@ -152,62 +152,40 @@ Definition box_in_countMixin := Eval hnf in [countMixin of box_in by <:].
 Canonical box_in_countType := Eval hnf in CountType box_in box_in_countMixin.
 Canonical box_in_subCountType := Eval hnf in [subCountType of box_in].
 
+Lemma box_inP (rc : box_in) : in_shape sh rc.
+Proof using. by case: rc. Qed.
+
 Definition enum_box_in :=
-  flatten [seq [seq (r, c) | c <- iota 0 (nth 0 sh r) ] | r <- iota 0 (size sh)].
+  [seq (r, c) | r <- iota 0 (size sh), c <- iota 0 (nth 0 sh r)].
 
 Lemma enum_box_in_uniq : uniq enum_box_in.
 Proof using.
-rewrite /enum_box_in.
-elim: sh => [//= | s0 s IHs] /=.
-rewrite cat_uniq; apply/and3P; split.
-- rewrite map_inj_uniq; first exact: iota_uniq.
-  by move => i j /= [].
-- apply/hasP => [[x] /flatten_mapP [r]].
-  rewrite mem_iota add1n => /andP [Hr _] /mapP [ c].
-  rewrite mem_iota add0n /= => Hc -> {x} /mapP [r' _ [Hr1 _]].
-  by move: Hr; rewrite Hr1.
-- set l0 := (X in uniq X) in IHs.
-  rewrite [X in uniq X](_ : _ = [seq (x.1.+1, x.2) | x <- l0]); first last.
-    rewrite /l0 {l0 IHs} map_flatten; congr flatten.
-    rewrite -(addn0 1) iotaDl -!map_comp; apply eq_map => r /=.
-    rewrite -!map_comp; apply eq_map => c /=.
-    by rewrite add1n.
-  rewrite map_inj_uniq; first exact IHs.
-  by move=> [r1 c1] [r2 c2] /= [-> ->].
+apply: allpairs_uniq_dep => [|i _|]; try exact: iota_uniq.
+by move=> [r c] [r' c'] /= _ _ [<-{r'} <-{c'}].
 Qed.
 
-Lemma enum_box_inP : all (fun c => in_shape sh c) enum_box_in.
-Proof using.
-apply/allP => [[r c]] /= /flatten_mapP [r0].
-rewrite mem_iota add0n /= => Hr0 /mapP [c0].
-by rewrite mem_iota add0n /= => Hc0 [-> ->].
+Lemma mem_enum_box_in: enum_box_in =i in_shape sh.
+Proof.
+move=> [r c]; apply/allpairsPdep/idP.
+  move=> [r'][c'][_] /[swap] [[<-{r'} <-{c'}]].
+  by rewrite mem_iota.
+by move=> Hrc; exists r, c; rewrite !mem_iota /= !add0n ?(in_shape_size Hrc).
 Qed.
 
-Lemma count_enum_box_inP rc :
-  in_shape sh rc -> count_mem rc enum_box_in = 1.
-Proof using.
-case: rc => [r c] /=.
-rewrite /in_shape => H.
-rewrite (count_uniq_mem _ enum_box_in_uniq).
-suff -> : (r, c) \in enum_box_in by [].
-apply/flatten_mapP; exists r.
-  rewrite mem_iota /= add0n.
-  by move: H; apply contraLR; rewrite -!leqNgt => /(nth_default 0) ->.
-by apply/mapP; exists c; rewrite // mem_iota add0n.
-Qed.
-
-Let type := sub_finType box_in_subCountType enum_box_inP count_enum_box_inP.
+Let type := sub_uniq_finType box_in_subCountType enum_box_in_uniq mem_enum_box_in.
 Canonical box_in_finType := Eval hnf in [finType of box_in for type].
 Canonical box_in_subFinType := Eval hnf in [subFinType of box_in].
-
-Lemma box_inP (rc : box_in) : in_shape sh rc.
-Proof using. by case: rc. Qed.
 
 Lemma enum_box_inE : map val (enum {:box_in}) = enum_box_in.
 Proof using. exact: enum_subE. Qed.
 
-Lemma mem_enum_box_in : enum_box_in =i in_shape sh.
-Proof using. exact: (sub_enumE enum_box_inP count_enum_box_inP). Qed.
+Lemma card_box_in : #|{:box_in}| = sumn sh.
+Proof using.
+rewrite card_subE /enum_box_in size_allpairs_dep; congr sumn.
+apply: (eq_from_nth (x0 := 0)); rewrite size_map size_iota // => i ltisz.
+by rewrite (nth_map 0) size_iota // nth_iota.
+Qed.
+
 
 (** ** Rewriting bigops running along the boxes of a shape *)
 Lemma big_enum_box_in
@@ -235,17 +213,14 @@ Lemma box_in_incr_nth sh i :
   perm_eq ((i, nth 0 sh i) :: enum_box_in sh) (enum_box_in (incr_nth sh i)).
 Proof.
 apply uniq_perm.
-- rewrite /= enum_box_in_uniq andbT.
-  apply/negP => /(allP (enum_box_inP sh)) /=.
-  by rewrite /in_shape ltnn.
+- by rewrite /= enum_box_in_uniq andbT mem_enum_box_in unfold_in ltnn.
 - exact: enum_box_in_uniq.
 - move=> [r c]; rewrite !inE !mem_enum_box_in !unfold_in /in_shape /=.
-  apply/idP/idP.
-  + move/orP => [/eqP [-> ->] |].
+  apply/idP/idP => [/orP[/eqP [-> ->]|] | ].
     * by rewrite nth_incr_nth eq_refl add1n ltnS.
     * move => /leq_trans; apply.
       by rewrite nth_incr_nth; exact: leq_addl.
-  + rewrite nth_incr_nth {2}/eq_op /= eq_sym.
+  + rewrite nth_incr_nth xpair_eqE eq_sym.
     case: eqP => [-> {r} | Hri] /=; last by rewrite add0n.
     by rewrite add1n ltnS leq_eqVlt.
 Qed.

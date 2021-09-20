@@ -1269,7 +1269,7 @@ rewrite [RHS]mulrC -[RHS]mulr1; congr (_ * _ * _).
 
 (* Hooks neither on the row or column of (Alpha, Beta) *)
 - rewrite big_seq_cond; apply big1 => [[r c]] /= /and3P [].
-  rewrite mem_enum_box_in /in_shape unfold_in => Hrc Hr Hc.
+  rewrite mem_enum_box_in unfold_in => Hrc Hr Hc.
   rewrite -Hp hook_length_incr_nth.
   + by rewrite divff // intr_eq0.
   + exact: is_part_decr_nth.

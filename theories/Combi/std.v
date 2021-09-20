@@ -236,7 +236,7 @@ Definition stdwordn_finMixin :=
 Canonical stdwordn_finType := Eval hnf in FinType stdwordn stdwordn_finMixin.
 
 Lemma card_stdwordn : #|{:stdwordn}| = n`!.
-Proof using. by rewrite card_sub_uniqE size_map -card_Sn cardE. Qed.
+Proof using. by rewrite card_subE size_map -card_Sn cardE. Qed.
 
 End StdCombClass.
 

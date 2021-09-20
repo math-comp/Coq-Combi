@@ -162,12 +162,6 @@ Definition sub_uniq_finMixin := Eval hnf in sub_finMixin Hallp Hcount.
 Definition sub_uniq_finType := Eval hnf in FinType TP sub_uniq_finMixin.
 Definition sub_uniq_subFinType := Eval hnf in [subFinType of sub_uniq_finType].
 
-Lemma enum_sub_uniqE : map val (enum sub_uniq_finType) = lst.
-Proof using. by rewrite enumT unlock /= subType_seqP. Qed.
-
-Lemma card_sub_uniqE : #|sub_uniq_finType| = size lst.
-Proof using. by rewrite cardE -(size_map val) /= enum_subE. Qed.
-
 End SubUniq.
 
 
