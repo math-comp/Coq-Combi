@@ -423,7 +423,7 @@ rewrite big_seq_cond (eq_bigr (fun i => F i.2)) -?big_seq_cond; first last.
   by rewrite -{4}(divff Hn) -{3}div1r -mulrDl.
 transitivity (\prod_(i <- [seq i.2 | i <- enum_box_in p' & i.1 == Alpha]) F i).
   by rewrite big_map big_filter; apply: eq_bigr.
-rewrite big_map /enum_box_in filter_flatten big_flatten /= -map_comp big_map.
+rewrite big_map /enum_box_skew filter_flatten big_flatten /= -map_comp big_map.
 case: (ltnP Alpha (size p')) => Halpha.
 - rewrite (bigD1_seq Alpha) /=; first last.
   + exact: iota_uniq.
@@ -431,6 +431,7 @@ case: (ltnP Alpha (size p')) => Halpha.
     by rewrite Halpha.
   rewrite big_filter big_map /=.
   under eq_bigl do rewrite /= eq_refl.
+  rewrite nth_nil subn0.
   rewrite /p' nth_decr_nth -HBeta (eq_bigr F) //.
   rewrite /index_iota subn0 mulrC.
   rewrite big1 ?mul1r // => i /negbTE Hi.
@@ -1213,7 +1214,7 @@ Lemma Formula1 :
   ( \prod_(0 <= i < Alpha) (1 + ((hook_length p (i, Beta) )%:Q - 1)^-1) ) *
   ( \prod_(0 <= j < Beta)  (1 + ((hook_length p (Alpha, j))%:Q - 1)^-1) ).
 Proof using Hpartc'.
-rewrite /hook_length_prod /= !big_box_in /= (* /hook_length *).
+rewrite /hook_length_prod /= !big_box_skew /= (* /hook_length *).
 rewrite -{1}Hp -(perm_big _ (box_in_incr_nth _ _)) /= big_cons.
 rewrite !PoszM /= !intrM /=.
 rewrite !(big_morph Posz PoszM (id1 := Posz 1%N)) //=.
@@ -1378,7 +1379,7 @@ Theorem HookLengthFormula_rat (p : intpart) :
   ( (#|{:stdtabsh p}|)%:Q = HLF p )%R.
 Proof.
 apply esym; move: p; apply card_stdtabsh_rat_rec.
-- by rewrite /= /hook_length_prod /= big_box_in /enum_box_in /= big_nil factE.
+- by rewrite /= /hook_length_prod /= big_box_skew /= big_nil factE.
 - move=> p Hp; apply esym.
   exact: Corollary4_eq.
 Qed.

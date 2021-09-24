@@ -129,100 +129,25 @@ Reserved Notation "''PLexi_' n"
 
 (** * Shapes *)
 Definition in_shape sh b := b.2 < nth 0 sh b.1.
+Definition in_skew inn out b := nth 0 inn b.1 <= b.2 < nth 0 out b.1.
+
+Lemma in_skewE inn out b :
+  in_skew inn out b =  ~~ in_shape inn b && in_shape out b.
+Proof. by rewrite /in_skew /in_shape -leqNgt andbC. Qed.
+Lemma in_skew_out inn out b : in_skew inn out b -> in_shape out b.
+Proof. by rewrite in_skewE => /andP[]. Qed.
+Lemma in_skew_in inn out b : in_skew inn out b -> ~~ in_shape inn b.
+Proof. by rewrite in_skewE => /andP[]. Qed.
+
+Lemma in_shape_nil : in_shape [::] =1 pred0.
+Proof. by move=> [r c] /=; rewrite /in_shape /= nth_nil ltn0. Qed.
+Lemma in_skew_nil : in_skew [::] =2 in_shape.
+Proof. by move=> out rc; rewrite in_skewE in_shape_nil. Qed.
 
 Lemma in_shape_size sh r c : in_shape sh (r, c) -> r < size sh.
 Proof.
 rewrite /in_shape; apply contraLR; rewrite -!leqNgt => Hr.
 by rewrite (nth_default _ Hr).
-Qed.
-
-(** ** A finite type [finType] for coordinate of boxes inside a shape *)
-Section BoxIn.
-
-Variable sh : seq nat.
-
-Structure box_in : Set :=
-  BoxIn {box_inval :> nat * nat; _ : in_shape sh box_inval}.
-Canonical box_in_subType := Eval hnf in [subType for box_inval].
-Definition box_in_eqMixin := Eval hnf in [eqMixin of box_in by <:].
-Canonical box_in_eqType := Eval hnf in EqType box_in box_in_eqMixin.
-Definition box_in_choiceMixin := Eval hnf in [choiceMixin of box_in by <:].
-Canonical box_in_choiceType := Eval hnf in ChoiceType box_in box_in_choiceMixin.
-Definition box_in_countMixin := Eval hnf in [countMixin of box_in by <:].
-Canonical box_in_countType := Eval hnf in CountType box_in box_in_countMixin.
-Canonical box_in_subCountType := Eval hnf in [subCountType of box_in].
-
-Lemma box_inP (rc : box_in) : in_shape sh rc.
-Proof using. by case: rc. Qed.
-
-Definition enum_box_in :=
-  [seq (r, c) | r <- iota 0 (size sh), c <- iota 0 (nth 0 sh r)].
-
-Lemma enum_box_in_uniq : uniq enum_box_in.
-Proof using.
-apply: allpairs_uniq_dep => [|i _|]; try exact: iota_uniq.
-by move=> [r c] [r' c'] /= _ _ [<-{r'} <-{c'}].
-Qed.
-
-Lemma mem_enum_box_in: enum_box_in =i in_shape sh.
-Proof.
-move=> [r c]; apply/allpairsPdep/idP.
-  move=> [r'][c'][_] /[swap] [[<-{r'} <-{c'}]].
-  by rewrite mem_iota.
-by move=> Hrc; exists r, c; rewrite !mem_iota /= !add0n ?(in_shape_size Hrc).
-Qed.
-
-Let type := sub_uniq_finType box_in_subCountType enum_box_in_uniq mem_enum_box_in.
-Canonical box_in_finType := Eval hnf in [finType of box_in for type].
-Canonical box_in_subFinType := Eval hnf in [subFinType of box_in].
-
-Lemma enum_box_inE : map val (enum {:box_in}) = enum_box_in.
-Proof using. exact: enum_subE. Qed.
-
-Lemma card_box_in : #|{:box_in}| = sumn sh.
-Proof using.
-rewrite card_subE /enum_box_in size_allpairs_dep; congr sumn.
-apply: (eq_from_nth (x0 := 0)); rewrite size_map size_iota // => i ltisz.
-by rewrite (nth_map 0) size_iota // nth_iota.
-Qed.
-
-
-(** ** Rewriting bigops running along the boxes of a shape *)
-Lemma big_enum_box_in
-      (R : Type) (idx : R) (op : Monoid.law idx) (f : nat -> nat -> R):
-  \big[op/idx]_(b <- enum_box_in) f b.1 b.2 =
-  \big[op/idx]_(0 <= r < size sh) \big[op/idx]_(0 <= c < nth 0 sh r) f r c.
-Proof using.
-rewrite /enum_box_in.
-rewrite big_flatten /index_iota big_map !subn0; apply eq_bigr => r _.
-by rewrite big_map !subn0; apply eq_bigr.
-Qed.
-
-Lemma big_box_in R (idx : R) (op : Monoid.com_law idx) (f : nat * nat -> R):
-  \big[op/idx]_(b : box_in) f b = \big[op/idx]_(b <- enum_box_in) f b.
-Proof using. by rewrite -enum_box_inE big_map /= big_enum. Qed.
-
-Lemma big_box_in2 R (idx : R) (op : Monoid.com_law idx) (f : nat -> nat -> R):
-  \big[op/idx]_(b : box_in) f b.1 b.2 = \big[op/idx]_(b <- enum_box_in) f b.1 b.2.
-Proof using. exact: big_box_in. Qed.
-
-End BoxIn.
-
-(** ** Adding a box to a shape *)
-Lemma box_in_incr_nth sh i :
-  perm_eq ((i, nth 0 sh i) :: enum_box_in sh) (enum_box_in (incr_nth sh i)).
-Proof.
-apply uniq_perm.
-- by rewrite /= enum_box_in_uniq andbT mem_enum_box_in unfold_in ltnn.
-- exact: enum_box_in_uniq.
-- move=> [r c]; rewrite !inE !mem_enum_box_in !unfold_in /in_shape /=.
-  apply/idP/idP => [/orP[/eqP [-> ->]|] | ].
-    * by rewrite nth_incr_nth eq_refl add1n ltnS.
-    * move => /leq_trans; apply.
-      by rewrite nth_incr_nth; exact: leq_addl.
-  + rewrite nth_incr_nth xpair_eqE eq_sym.
-    case: eqP => [-> {r} | Hri] /=; last by rewrite add0n.
-    by rewrite add1n ltnS leq_eqVlt.
 Qed.
 
 
@@ -1881,6 +1806,142 @@ by rewrite [#|_|]cardT -(size_map val) /= enum_intpartnE -size_enum_partn.
 Qed.
 
 #[export] Hint Resolve intpartP intpart_sorted intpartnP intpartn_sorted : core.
+
+
+(** * A finite type [finType] for coordinate of boxes inside a shape *)
+Section BoxInSkew.
+
+Variable inner outer : seq nat.
+
+Structure box_skew : Set :=
+  BoxSkew {box_skewval :> nat * nat; _ : in_skew inner outer box_skewval}.
+Canonical box_skew_subType := Eval hnf in [subType for box_skewval].
+Definition box_skew_eqMixin := Eval hnf in [eqMixin of box_skew by <:].
+Canonical box_skew_eqType := Eval hnf in EqType box_skew box_skew_eqMixin.
+Definition box_skew_choiceMixin := Eval hnf in [choiceMixin of box_skew by <:].
+Canonical box_skew_choiceType := Eval hnf in ChoiceType box_skew box_skew_choiceMixin.
+Definition box_skew_countMixin := Eval hnf in [countMixin of box_skew by <:].
+Canonical box_skew_countType := Eval hnf in CountType box_skew box_skew_countMixin.
+Canonical box_skew_subCountType := Eval hnf in [subCountType of box_skew].
+
+Lemma box_skewP (rc : box_skew) : in_skew inner outer rc.
+Proof using. by case: rc. Qed.
+
+Definition enum_box_skew :=
+  [seq (r, c) | r <- iota 0 (size outer),
+                c <- iota (nth 0 inner r) (nth 0 outer r - nth 0 inner r)].
+
+Lemma enum_box_skew_uniq : uniq enum_box_skew.
+Proof using.
+apply: allpairs_uniq_dep => [|i _|]; try exact: iota_uniq.
+by move=> [r c] [r' c'] /= _ _ [<-{r'} <-{c'}].
+Qed.
+
+Lemma mem_enum_box_skew : enum_box_skew =i in_skew inner outer.
+Proof.
+move=> [r c]; apply/allpairsPdep/idP.
+  move=> [r'][c'][_] /[swap] [[<-{r'} <-{c'}]].
+  rewrite mem_iota /in_skew unfold_in /=.
+  case: (leqP (nth 0 inner r) (nth 0 outer r)) => [inout | /ltnW].
+    by rewrite subnKC.
+  rewrite -subn_eq0 => /eqP ->; rewrite addn0.
+  by move=> /andP[/leq_ltn_trans/[apply]]; rewrite ltnn.
+rewrite unfold_in -/(in_skew _ _ (r, c)) in_skewE => /andP[rcinn rcout].
+exists r, c; rewrite !mem_iota /= !add0n (in_shape_size rcout); split => //.
+rewrite /in_shape /= -?leqNgt in rcinn rcout.
+by rewrite rcinn /= subnKC // (leq_trans rcinn (ltnW rcout)).
+Qed.
+
+Let type :=
+  sub_uniq_finType box_skew_subCountType enum_box_skew_uniq mem_enum_box_skew.
+Canonical box_skew_finType := Eval hnf in [finType of box_skew for type].
+Canonical box_skew_subFinType := Eval hnf in [subFinType of box_skew].
+
+Lemma enum_box_skewE : map val (enum {: box_skew}) = enum_box_skew.
+Proof using. exact: enum_subE. Qed.
+
+Lemma card_box_skew : #|{: box_skew}| = sumn (outer / inner).
+Proof using.
+rewrite card_subE /enum_box_skew size_allpairs_dep; congr sumn.
+apply: (eq_from_nth (x0 := 0));
+  rewrite size_map size_iota ?size_diff_shape // => i ltisz.
+by rewrite (nth_map 0) size_iota // nth_iota // add0n nth_diff_shape.
+Qed.
+
+(** ** Rewriting bigops running along the boxes of a shape *)
+Lemma big_box_skew R (idx : R) (op : Monoid.com_law idx) (f : nat * nat -> R):
+  \big[op/idx]_(b : box_skew) f b = \big[op/idx]_(b <- enum_box_skew) f b.
+Proof using. by rewrite -enum_box_skewE big_map /= big_enum. Qed.
+
+Lemma big_box_skew2 R (idx : R) (op : Monoid.com_law idx) (f : nat -> nat -> R):
+  \big[op/idx]_(b : box_skew) f b.1 b.2 = \big[op/idx]_(b <- enum_box_skew) f b.1 b.2.
+Proof using. exact: big_box_skew. Qed.
+
+Lemma big_enum_box_skew
+      (R : Type) (idx : R) (op : Monoid.law idx) (f : nat -> nat -> R):
+  \big[op/idx]_(b <- enum_box_skew) f b.1 b.2 =
+  \big[op/idx]_(0 <= r < size outer)
+   \big[op/idx]_(nth 0 inner r <= c < nth 0 outer r) f r c.
+Proof using.
+rewrite /enum_box_skew.
+rewrite big_flatten /index_iota big_map !subn0; apply eq_bigr => r _.
+by rewrite big_map; apply eq_bigr.
+Qed.
+
+End BoxInSkew.
+#[export] Hint Resolve box_skewP : core.
+
+Notation box_in := (box_skew [::]).
+Notation enum_box_in := (enum_box_skew [::]).
+
+
+Lemma BoxIn_subproof sh rc : in_shape sh rc -> in_skew [::] sh rc.
+Proof. by rewrite in_skewE in_shape_nil. Qed.
+Definition BoxIn sh rc (rc_sh : in_shape sh rc) : box_in sh :=
+  BoxSkew (BoxIn_subproof rc_sh).
+
+Lemma box_inP sh (rc : box_in sh) : in_shape sh rc.
+Proof using. exact: in_skew_out. Qed.
+
+Lemma big_enum_box_in sh
+      (R : Type) (idx : R) (op : Monoid.law idx) (f : nat -> nat -> R):
+  \big[op/idx]_(b <- enum_box_in sh ) f b.1 b.2 =
+  \big[op/idx]_(0 <= r < size sh)
+   \big[op/idx]_(0 <= c < nth 0 sh r) f r c.
+Proof using.
+by rewrite big_enum_box_skew; apply eq_bigr => i _; rewrite nth_nil.
+Qed.
+
+Lemma card_box_in sh : #|{: box_in sh}| = sumn sh.
+Proof using. by rewrite card_box_skew; case: sh. Qed.
+
+Lemma enum_box_in_uniq sh : uniq (enum_box_in sh).
+Proof using. exact: enum_box_skew_uniq. Qed.
+
+Lemma mem_enum_box_in sh : enum_box_in sh =i in_shape sh.
+Proof.
+move=> rc; rewrite mem_enum_box_skew.
+by rewrite !unfold_in -/(in_skew [::] _ rc) in_skewE in_shape_nil /=.
+Qed.
+
+
+(** ** Adding a box to a shape *)
+Lemma box_in_incr_nth sh i :
+  perm_eq ((i, nth 0 sh i) :: enum_box_in sh) (enum_box_in (incr_nth sh i)).
+Proof.
+apply uniq_perm.
+- rewrite /= enum_box_skew_uniq andbT mem_enum_box_skew unfold_in.
+  by rewrite /= nth_nil leq0n ltnn.
+- exact: enum_box_skew_uniq.
+- move=> [r c]; rewrite !inE !mem_enum_box_skew !unfold_in /in_shape nth_nil /=.
+  apply/idP/idP => [/orP[/eqP [-> ->]|] | ].
+    * by rewrite nth_incr_nth eq_refl add1n ltnS.
+    * move => /leq_trans; apply.
+      by rewrite nth_incr_nth; exact: leq_addl.
+  + rewrite nth_incr_nth xpair_eqE eq_sym.
+    case: eqP => [-> {r} | Hri] /=; last by rewrite add0n.
+    by rewrite add1n ltnS leq_eqVlt.
+Qed.
 
 
 (** * The union of two integer partitions *)
