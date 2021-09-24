@@ -20,9 +20,14 @@ We define the following predicates and operations on [seq nat]:
 
 - [in_shape sh (r, c) ] == the box with coordinate (r, c) belongs to the shape
                          [sh], that is: [c < sh[r]].
+- [in_skew inn out (r, c) ] == the box with coordinate (r, c) belongs to the
+                         [out] but not [inn]
 - [box_in sh] == a sigma type for boxes in sh : [{ b | in_shape sh b }]
-                         iy is canonically a [subFinType].
+                         it is canonically a [subFinType].
+- [box_skew inn out] == a sigma type for boxes in the skew shape [out / inn]
 - [enum_box_in sh] == a full duplicate free list of the boxes in sh.
+- [enum_box_skew inn out] == a full duplicate free list of the boxes in
+                         the skew shape [out / inn]
 
 Integer Partitions:
 
