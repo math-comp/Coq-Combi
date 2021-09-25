@@ -37,19 +37,23 @@ equivalence with the textbook one.
 - [ribbon_height inn out] == the height of the shape [out/inn]
 - [add_ribbon_on sh start stop rem] == adds a ribbon to [sh] from
                [start] to [stop] with [rem] boxes at row [start]. The result
-               may not be a partition.
+               may not be a partition if there is an extra box.
 - [add_ribbon sh nbox pos] == tries to add a ribbon of size [nbox.+1]
                ending at row [pos] to the shape [sh]. Returns [Some (res, h)]
-               where [res] is the outer shape of the result and [h] its height
-               on success, or [None] if not.
+               where [res] is the outer shape _partition_ and [h] its height
+               on success, or [None] if not. Compared to [add_ribbon_on], the
+               result is always a partition on success.
 - [add_ribbon_intpartn sh nbox pos] == sigma type version of [add_ribbon].
-               Takes [sh : 'P_d] for some [d] and returns [Some (res, hgt)]
-               where [res] is of type ['P_(nbox.+1 + m)] or [None]
+               Takes [sh : 'P_d] for some [d] and returns [None] or
+               [Some (res, hgt)] where [res] is of type ['P_(nbox.+1 + m)].
 
-Textbook definition
+Textbook definition of ribbon:
 
-- [conn4_skew inner outer] == the skew shape [outer / inner] is 4-connected
-- [has_no_square inner outer] == the shape [outer / inner] has no 2x2 square
+- [neig4 (r, c)] == the 4 neighbors of [r, c].
+- [neig4box b] == idem as a [box_in_skew inner outer] where [b] is itself a
+                box in [out/inn]
+- [conn4_skew inner outer] == the skew shape [out/inn] is 4-connected
+- [has_no_square inner outer] == the shape [out/inn] has no 2x2 square
 - [ribbon_textbook inner outer] == the textbook definition.
 
 ******)
@@ -166,6 +170,7 @@ move=> Hinn Hout; apply (iffP idP) => [Hstrip|].
       exact: H i.+1.
 Qed.
 
+(** Usual definition : at most one box on each row *)
 Lemma vb_strip_diffP inner outer :
   is_part inner -> is_part outer ->
   reflect
@@ -229,23 +234,6 @@ Proof using.
 move=> Hinn Hout; apply/idP/idP; last exact: hb_strip_conj.
 rewrite -{2}(conj_partK Hinn) -{2}(conj_partK Hout).
 exact: vb_strip_conj (is_part_conj Hinn) (is_part_conj Hout).
-Qed.
-
-Lemma vb_strip_countP inner outer :
-  is_part inner -> is_part outer ->
-  reflect
-    (included inner outer /\ all (geq 1) (outer / inner))
-    (vb_strip inner outer).
-Proof.
-move=> Hinn Hout; apply (iffP (vb_stripP Hinn Hout)) => [H | [Hincl H] i].
-- split; first by apply/part_includedP => // i; have /andP[]:= H i.
-  apply/(all_nthP 0) => i _ /=; rewrite nth_diff_shape.
-  by move/(_ i): H => /andP [_]; rewrite leq_subLR addn1.
-- have := Hincl => /includedP [_ /(_ i) -> /=].
-  case: (ltnP i (size outer)) => [| {H} Hsz].
-    move: H => /(all_nthP 0)/(_ i) /=.
-    by rewrite size_diff_shape nth_diff_shape leq_subLR addn1 => H{}/H.
-  by rewrite nth_default.
 Qed.
 
 
@@ -1368,6 +1356,7 @@ End IntPartN.
 
 
 (** ** Equivalence with the textbook definition *)
+(** *** Some complement on [connect] *)
 Section ConnectCompl.
 
 Variables (T : finType) (e : rel T).
@@ -1390,36 +1379,38 @@ Proof. by move=> sym_e x y; rewrite connect_rev sym_e. Qed.
 End ConnectCompl.
 
 
-Section Connected4.
-
-Definition adj4 rc :=
+(** *** 4 neigborhood *)
+Definition neig4 rc :=
   let: (r, c) := rc in [:: (r, c.-1); (r, c.+1); (r.-1, c); (r.+1, c)].
-Lemma adj4_sym rc1 rc2 : rc1 \in adj4 rc2 -> rc2 \in adj4 rc1.
+Lemma neig4_sym rc1 rc2 : rc1 \in neig4 rc2 -> rc2 \in neig4 rc1.
 Proof.
-rewrite /adj4 /=; case: rc1 rc2 => [r1 c1][r2 c2]; rewrite !inE.
+rewrite /neig4 /=; case: rc1 rc2 => [r1 c1][r2 c2]; rewrite !inE.
 move/or4P => [] /eqP [-> ->]; rewrite /= ?eqxx ?orbT //=.
 - by case: c2 => [|c2]; rewrite /= ?eqxx ?orbT.
 - by case: r2 => [|r2]; rewrite /= ?eqxx ?orbT.
 Qed.
-Lemma grel_adj4_sym : symmetric (grel adj4).
-Proof. by move=> rc1 rc2 /=; apply/idP/idP=> /adj4_sym. Qed.
+Lemma grel_neig4_sym : symmetric (grel neig4).
+Proof. by move=> rc1 rc2 /=; apply/idP/idP=> /neig4_sym. Qed.
+
+Section Connected4.
 
 Variable (inner outer : seq nat).
 Local Notation box := (box_skew inner outer).
 
-Definition adj4box (b : box) : seq box := pmap insub (adj4 b).
-Lemma adj4boxE :
-  relpre val (grel adj4) =2 grel (fun b : box => pmap insub (adj4 b)).
+Definition neig4box (b : box) : seq box := pmap insub (neig4 b).
+Lemma neig4boxE :
+  relpre val (grel neig4) =2 grel (fun b : box => pmap insub (neig4 b)).
 Proof. by move=> b1 b2 /=; rewrite mem_pmap_sub. Qed.
 
-Lemma adj4box_sym : symmetric (grel adj4box).
-Proof. by move=> b1 b2 /=; rewrite !mem_pmap_sub; exact: grel_adj4_sym. Qed.
+Lemma neig4box_sym : symmetric (grel neig4box).
+Proof. by move=> b1 b2 /=; rewrite !mem_pmap_sub; exact: grel_neig4_sym. Qed.
 
 End Connected4.
 
 
+(** *** The textbook definition *)
 Definition conn4_skew inner outer :=
-  n_comp (grel (@adj4box inner outer)) predT == 1.
+  n_comp (grel (@neig4box inner outer)) predT == 1.
 Definition has_no_square inner outer :=
   [forall b : box_skew inner outer, ~~ in_skew inner outer (b.1.+1, b.2.+1)].
 Definition ribbon_textbook inner outer :=
@@ -1429,8 +1420,6 @@ Definition ribbon_textbook inner outer :=
    has_no_square inner outer].
 
 
-Module RibbonTB.
-
 Section TextBookDefStartStop.
 
 Variable (start stop : nat) (inner outer : seq nat).
@@ -1439,10 +1428,10 @@ Hypothesis (Hrib : ribbon_on start stop inner outer).
 Local Notation box := (box_skew inner outer).
 Implicit Type (b : box).
 
-Local Notation neig4 := (grel (@adj4box inner outer)).
+Local Notation neig4 := (grel (@neig4box inner outer)).
 
 Lemma conn4_sym : symmetric (connect neig4).
-Proof. exact/connect_from_sym/adj4box_sym. Qed.
+Proof. exact/connect_from_sym/neig4box_sym. Qed.
 
 Local Definition ribbon_box_ex inner outer :=
   let start := (mindropeq inner outer) - ribbon_height inner outer in
@@ -1457,9 +1446,10 @@ Proof.
 rewrite ribbon_on_box_exE /in_skew /= leqnn /=.
 by rewrite -(ribbon_on_nth_leq partinn Hrib) (ribbon_on_start_stop Hrib) leqnn.
 Qed.
-Local Definition ribbon_on_box : box := BoxSkew ribbon_on_box_exP.
+Definition ribbon_on_box_ex : box := BoxSkew ribbon_on_box_exP.
+Local Notation boxex := ribbon_on_box_ex.
 
-Lemma ribbon_on_conn4_box b : connect neig4 ribbon_on_box b.
+Lemma ribbon_on_conn4_box_ex b : connect neig4 boxex b.
 Proof.
 have connV (b1 b2 : box) : b1.1 = b2.1 -> connect neig4 b1 b2.
   wlog Hlog : b1 b2 / b1.2 <= b2.2.
@@ -1480,7 +1470,7 @@ have connV (b1 b2 : box) : b1.1 = b2.1 -> connect neig4 b1 b2.
     move=>/andP[/leq_trans/(_ (leqnSn _)) -> /= _].
     by rewrite eq1=>/andP[_ /(leq_ltn_trans _)]; apply.
   apply: (@connect_trans _ _ (BoxSkew HB)).
-    apply: connect1 => /=; rewrite mem_pmap_sub /= /adj4 /=.
+    apply: connect1 => /=; rewrite mem_pmap_sub /= /neig4 /=.
     by case: box_skewval => [r c]/=; rewrite !inE eqxx /= orbT.
   by apply: IHdr; rewrite //= Hdr addKn.
 move Hb1 : b.1 => r.
@@ -1503,22 +1493,22 @@ apply: (@connect_trans _ _ (BoxSkew HB1)); last exact: connV.
 have HB2: in_skew inner outer (r, nth 0 inner r).
   by rewrite /in_skew /= leqnn /= -(ribbon_on_nth_leq partinn Hrib) lesr ltnW.
 apply: (@connect_trans _ _ (BoxSkew HB2)); first last.
-  apply: connect1 => /=; rewrite mem_pmap_sub /= /adj4 /=.
+  apply: connect1 => /=; rewrite mem_pmap_sub /= /neig4 /=.
   by rewrite !inE eqxx !orbT.
 by apply: IHr; rewrite // lesr ltnW.
 Qed.
 
 Lemma ribbon_on_conn4 b1 b2 : connect neig4 b1 b2.
 Proof.
-apply: (connect_trans _ (ribbon_on_conn4_box b2)).
-by rewrite conn4_sym ribbon_on_conn4_box.
+apply: (connect_trans _ (ribbon_on_conn4_box_ex b2)).
+by rewrite conn4_sym ribbon_on_conn4_box_ex.
 Qed.
 
 Lemma ribbon_on_conn4_skew : conn4_skew inner outer.
 Proof.
 rewrite /conn4_skew; apply/eqP/esym.
-rewrite -(n_comp_connect conn4_sym ribbon_on_box).
-by apply: eq_n_comp_r => b; rewrite !inE ribbon_on_conn4_box.
+rewrite -(n_comp_connect conn4_sym boxex).
+by apply: eq_n_comp_r => b; rewrite !inE ribbon_on_conn4_box_ex.
 Qed.
 
 Lemma ribbon_on_no_square r c :
@@ -1543,7 +1533,7 @@ Hypotheses (partinn : is_part inner) (partout : is_part outer).
 Hypothesis (Htb : ribbon_textbook inner outer).
 Local Notation box := (box_skew inner outer).
 Local Notation stop := (mindropeq inner outer).-1.
-Local Notation neig4 := (grel (@adj4box inner outer)).
+Local Notation neig4 := (grel (@neig4box inner outer)).
 
 Implicit Type (b : box).
 
@@ -1553,42 +1543,34 @@ Proof. by move: Htb => /and4P[]. Qed.
 Lemma mindropeq_non0 : mindropeq inner outer != 0.
 Proof. by move: Htb => /and4P[+ _ _ _]; apply contra => /eqP/mindropeq0->. Qed.
 
-Lemma Hsi i : i > stop -> nth 0 outer i = nth 0 inner i.
-Proof.
-have := mindropeq_non0.
-rewrite /mindropeq; case: ex_minnP => [[//|m]] /eqP Hdrop _ _ /= ltmi.
-by rewrite -(subnKC ltmi) -!nth_drop Hdrop.
-Qed.
-
-Lemma stop_ltn: nth 0 inner stop < nth 0 outer stop.
+Lemma ribbontb_stop_ltn : nth 0 inner stop < nth 0 outer stop.
 Proof.
 rewrite ltn_neqAle.
 have/includedP := incl => [[_ ->]]; rewrite andbT.
 have := mindropeq_non0.
 case H : mindropeq => [//|m] _ /=.
-move: partinn; rewrite is_part_sortedE => /andP[_] inn0.
-move: partout; rewrite is_part_sortedE => /andP[_] out0.
+move: partinn; rewrite is_part_sortedE => /andP[_ inn0].
+move: partout; rewrite is_part_sortedE => /andP[_ out0].
 by move: H => /eqP/(mindropeq_nthP _ inn0 out0) [].
 Qed.
 
-Lemma start_subproof : exists i, nth 0 inner i < nth 0 outer i.
-Proof. by exists stop; exact: stop_ltn. Qed.
-Definition start := ex_minn start_subproof.
+Lemma ribbontb_start_subproof : exists i, nth 0 inner i < nth 0 outer i.
+Proof. by exists stop; exact: ribbontb_stop_ltn. Qed.
+Definition ribbontb_start := ex_minn ribbontb_start_subproof.
+Local Notation start := ribbontb_start.
 
-Lemma start_ltn : nth 0 inner start < nth 0 outer start.
-Proof. by rewrite /start; case: ex_minnP. Qed.
-Lemma His i : i < start -> nth 0 outer i = nth 0 inner i.
+Lemma ribbon_textbook_on : ribbon_on start stop inner outer.
 Proof.
-rewrite /start; case: ex_minnP => m _ Hmin ltim; apply anti_leq.
-have/includedP := incl => [[_ ->]]; rewrite andbT.
-by apply/contraLR: ltim; rewrite -leqNgt -ltnNge; exact: Hmin.
-Qed.
-
-Let conn4sym : connect_sym neig4 := @conn4_sym _ _.
-
-Lemma Hsis i :
-  start <= i < stop -> nth 0 outer i.+1 = (nth 0 inner i).+1.
-Proof.
+have start_ltn : nth 0 inner start < nth 0 outer start.
+  by rewrite /start; case: ex_minnP.
+split => [i|i||i]; first 2 last; first exact: start_ltn.
+- rewrite /start; case: ex_minnP => m _ Hmin ltim; apply anti_leq.
+  have/includedP := incl => [[_ ->]]; rewrite andbT.
+  by apply/contraLR: ltim; rewrite -leqNgt -ltnNge; exact: Hmin.
+- have := mindropeq_non0.
+  rewrite /mindropeq; case: ex_minnP => [[//|m]] /eqP Hdrop _ _ /= ltmi.
+  by rewrite -(subnKC ltmi) -!nth_drop Hdrop.
+have conn4sym : connect_sym neig4 := @conn4_sym _ _.
 move=> Hi; apply anti_leq; apply/andP; split.
   move/includedP: incl => [_ /(_ i)]; rewrite leq_eqVlt => /orP[/eqP-> | lti].
     by move/is_partP: partout => [_/(_ i)/leq_trans]; apply.
@@ -1607,7 +1589,7 @@ rewrite ltnNge; apply/negP => lti.
 pose P := [pred b : box | b.1 <= i].
 have close4 : closed neig4 P.
   apply/intro_closed => //= [][[r1 c1] Hrc1] [[r2 c2] Hrc2].
-  rewrite mem_pmap_sub /= /adj4 !inE /= .
+  rewrite mem_pmap_sub /= /neig4 !inE /= .
   move=> /or4P[]/eqP[Hr2 Hc2]; subst r2 c2 => //.
     by move/(leq_trans (leq_pred _)).
   move=> ltr1; rewrite (ltn_neqAle _ _) ltr1 andbT.
@@ -1619,18 +1601,14 @@ have Hbstart : in_skew inner outer (start, nth 0 inner start).
 pose bstart := BoxSkew Hbstart.
 have Pstart : P bstart by rewrite /P /=; move: Hi => /andP[].
 have Hbstop : in_skew inner outer (stop, nth 0 inner stop).
-  by rewrite /in_skew /= leqnn stop_ltn.
+  by rewrite /in_skew /= leqnn ribbontb_stop_ltn.
 pose bstop := BoxSkew Hbstop.
 have {bconn}/(closed_connect close4) := bconn bstart bstop.
 move: Pstart; rewrite !inE => -> /esym /=.
 by move: Hi => /andP[_ /ltn_geF ->].
 Qed.
 
-Lemma ribbon_textbook_on : ribbon_on start stop inner outer.
-Proof. by split; [exact Hsi|exact Hsis|exact start_ltn|exact His]. Qed.
-
 End TextBookImplDef.
-End RibbonTB.
 
 Theorem ribbon_textbookE inner outer :
   is_part inner -> is_part outer ->
@@ -1640,10 +1618,9 @@ move=> partinn partout.
 apply/idP/idP => [Hrib | Htb].
   have:= ribbonP partinn partout Hrib => [][start][stop] Hon.
   rewrite /ribbon_textbook eq_sym ribbon_noneq // ribbon_included //.
-  rewrite (RibbonTB.ribbon_on_conn4_skew _ _ Hon) //=.
-  by apply/forallP => [[[r c] /(RibbonTB.ribbon_on_no_square _ Hon) /=]]; apply.
-have Hrib := RibbonTB.ribbon_textbook_on partinn partout Htb.
-apply/ribbonP => //; exists (RibbonTB.start partinn partout Htb).
+  rewrite (ribbon_on_conn4_skew _ _ Hon) //=.
+  by apply/forallP => [[[r c] /(ribbon_on_no_square _ Hon) /=]]; apply.
+have Hrib := ribbon_textbook_on partinn partout Htb.
+apply/ribbonP => //; exists (ribbontb_start partinn partout Htb).
 by exists (mindropeq inner outer).-1.
 Qed.
-
