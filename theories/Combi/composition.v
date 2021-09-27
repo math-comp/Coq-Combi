@@ -83,6 +83,9 @@ Qed.
 Lemma is_comp_cat s1 s2 : is_comp (s1 ++ s2) = (is_comp s1) && (is_comp s2).
 Proof. by rewrite /is_comp mem_cat negb_or. Qed.
 
+Lemma part_is_comp s : is_part s -> is_comp s.
+Proof. exact: notin0_part. Qed.
+
 (** Compositions and sumn *)
 Lemma comp0 s : is_comp s -> sumn s = 0 -> s = [::].
 Proof. by rewrite /is_comp; case: s => //= [[|a] l]. Qed.
@@ -449,13 +452,3 @@ rewrite is_part_sortedE; apply/andP; split.
 Qed.
 Canonical partn_of_compn n (c : intcompn n) :=
   IntPartN (part_of_comp_subproof c).
-
-(*
-From mathcomp Require Import finset div.
-
-Lemma card_preim_part_of_compn n (sh : 'P_n) :
-  #|[set c | partn_of_compn c == sh]| =
-  n`! %/ \prod_(i <- iota 1 n) (count_mem i sh)`!.
-Proof.
-*)
-

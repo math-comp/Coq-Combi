@@ -179,13 +179,16 @@ move/IHsh; apply: contraLR; rewrite !negbK => /eqP Hsh0.
 by move: Head; rewrite Hsh0 leqn0.
 Qed.
 
-Lemma in_part_non0 sh i : is_part sh -> i \in sh -> i != 0.
+Lemma notin0_part sh : is_part sh -> 0 \notin sh.
 Proof.
 elim: sh => [//| s0 sh IHsh] Hpart.
-rewrite inE => /orP[/eqP Hs0|].
-  by move: Hpart => /part_head_non0; rewrite -Hs0.
-by apply: IHsh; move: Hpart => /=/andP[].
+rewrite inE negb_or eq_sym.
+have /= -> /= := (part_head_non0 Hpart).
+by apply: IHsh; move: Hpart => /= /andP[].
 Qed.
+
+Lemma in_part_non0 sh i : is_part sh -> i \in sh -> i != 0.
+Proof. by move/notin0_part => + Hi; apply/contra => /eqP <-. Qed.
 
 Lemma nth_part_non0 sh i : is_part sh -> i < size sh -> nth 0 sh i != 0.
 Proof. by move/in_part_non0 => H le_i_sz; apply/H/mem_nth. Qed.
@@ -241,17 +244,11 @@ apply/idP/andP => [Hpart|].
 - split.
   + apply/sorted1P => i _.
     by move: Hpart=> /is_partP [_]; apply.
-  + move: Hpart; elim: sh => [// | s0 sh IHsh] Hpart.
-    rewrite inE negb_or eq_sym.
-    have /= -> /= := (part_head_non0 Hpart).
-    by apply IHsh; move: Hpart => /andP [].
+  + exact: notin0_part.
 - move=> [/sorted1P Hsort Hnotin].
   apply/is_partP; split => [| i].
   + case: sh Hnotin {Hsort} => [// | s0 sh].
-    rewrite inE negb_or eq_sym => /andP [Hs0 Hnot] /=.
-    elim: sh s0 Hs0 Hnot => [// | s1 sh IHsh] s0 _.
-    rewrite inE negb_or eq_sym /= => /andP [].
-    exact: IHsh.
+    by apply contra => /= => /eqP <-; apply: mem_last.
   + case: (ltnP i.+1 (size sh)) => Hsz; first exact: Hsort.
     by rewrite (nth_default _ Hsz).
 Qed.

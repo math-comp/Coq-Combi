@@ -313,4 +313,58 @@ rewrite card_permuted multinomial_factd big_map; congr (_`! %/ _).
 by rewrite sumnE -{1}(size_tuple w) big_map size_count_mem_undup.
 Qed.
 
+Corollary card_permuted_multinomial_subset (s : seq T) :
+  {subset w <= s} -> uniq s ->
+  #|[set: permuted w]| = 'C[[seq count_mem x w | x <- s]].
+Proof.
+move=> subws suniq; rewrite card_permuted_multinomial.
+rewrite -[RHS]multinomial_filter_neq0 filter_map.
+apply/perm_multinomial/perm_map/uniq_perm; first exact: undup_uniq.
+  exact: filter_uniq.
+move=> x; rewrite mem_undup mem_filter inE.
+case: (boolP (x \in w)) => [xinw | /count_memPn ->]; last by rewrite eqxx.
+rewrite (subws _ xinw) andbT; apply esym.
+by apply/eqP => /count_memPn; rewrite xinw.
+Qed.
+
 End ActOnTuple.
+
+Require Import sorted.
+Import LeqGeqOrder.
+
+Lemma card_preim_part_of_compn n (sh : 'P_n) :
+  #|[set c | partn_of_compn c == sh]| =
+  (size sh)`! %/ \prod_(i <- iota 1 n) (count_mem i sh)`!.
+Proof.
+have /eq_finset -> : (fun c => partn_of_compn c == sh) =1 (perm_eq sh).
+  move=> c /=; rewrite -val_eqE /=.
+  apply/idP/idP => [/eqP <-|]; first by rewrite perm_sort.
+  move/(perm_sortP geq_total geq_trans anti_geq) <-.
+  case: sh => [sh /= /andP[_]]; rewrite is_part_sortedE => /andP[Hsort _].
+  exact/eqP/sorted_sort.
+pose tsh := in_tuple sh.
+have c_of_p_pf (p : permuted tsh) : is_comp_of_n n p.
+  rewrite /is_comp_of_n /= -(perm_sumn (permutedP p)) sumn_intpartn eqxx /=.
+  by rewrite /is_comp -(perm_mem (permutedP p)) /= notin0_part.
+rewrite -(on_card_preimset (f := fun p => IntCompN (c_of_p_pf p))); first last.
+  have size_p_of_c (c : intcompn n) :
+    size (if perm_eq tsh c then val c else val tsh) == size sh.
+    by case: (boolP (perm_eq _ _)) => // /perm_size /= ->.
+  have p_of_c_pf (c : intcompn n) : perm_eq tsh (Tuple (size_p_of_c c)).
+    by rewrite /=; case: (boolP (perm_eq tsh c)).
+  exists (fun c => Permuted (p_of_c_pf c)) => x;
+    rewrite inE /= => Hperm; apply val_inj; last by rewrite /= Hperm.
+  by apply val_inj; rewrite /= Hperm.
+transitivity #|[set: permuted tsh]|.
+  by congr #|(_ : {set _})|; apply/setP => t; rewrite !inE /= (permutedP t).
+move=> {c_of_p_pf}.
+have subsh : {subset tsh <= (iota 1 n)}.
+  move=> i /=; rewrite mem_iota add1n ltnS {}/tsh /= => iinsh.
+  have := (in_part_non0 (intpartnP sh) iinsh); rewrite -lt0n => -> /=.
+  by rewrite -(sumn_intpartn sh) leq_sumn_in.
+rewrite (card_permuted_multinomial_subset subsh (iota_uniq _ _)).
+rewrite multinomial_factd big_map; congr (_`! %/ _).
+rewrite sumnE big_map uniq_sum_count_mem ?iota_uniq //=.
+rewrite -count_predT; apply eq_in_count => i /=.
+by rewrite andbT; exact: subsh.
+Qed.

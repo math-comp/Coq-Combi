@@ -49,25 +49,15 @@ Qed.
 
 End BijCard.
 
+
 (** Summing [count_mem] in a [finType] *)
 Lemma sum_count_mem (T : finType) (P : pred T) l :
   \sum_(i | P i) (count_mem i) l = count P l.
 Proof.
-have [s H1 [H2 H3] /= _]:= big_enumP P.
-rewrite -size_filter -{}H1 -(eq_filter H3).
-elim: s H2 {H3} => [_ | p1 p IHp].
-  rewrite big_nil (eq_filter (a2 := pred0)); first by rewrite filter_pred0.
-  by move=> i /=; apply: in_nil.
-rewrite big_cons => /= /andP [Hp1 {}/IHp ->].
-rewrite -[RHS]addn0 size_filter.
-rewrite [in RHS](eq_count (a2 := predU (pred1 p1) (mem p))); first last.
-  by move => i; rewrite /= in_cons.
-have /eq_count/(_ l) : predI (pred1 p1) (mem p) =1 pred0.
-  move=> i /=; apply/negP => /andP [/eqP -> Hp1'].
-  by rewrite Hp1' in Hp1.
-rewrite count_pred0 => <-.
-by rewrite count_predUI size_filter.
+rewrite uniq_sum_count_mem; last exact: index_enum_uniq.
+by apply: eq_count => x /=; rewrite mem_index_enum.
 Qed.
+
 
 (** * Building subtype from a sequence
 

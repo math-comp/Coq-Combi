@@ -471,7 +471,7 @@ Lemma syms_prod_sympM_int dn (nu : 'P_dn) dm (mu : 'P_dm) :
   \sum_(la : 'P_(dn + dm)) MN_coeff_rec la nu mu *: 's[la] :> {sympoly int[n]}.
 Proof.
 case: mu => [mu /= Hnu]; rewrite /prod_symp /prod_gen /=.
-move: Hnu => /andP[/eqP <-{dm}]; rewrite is_part_sortedE => /andP[_].
+move: Hnu => /andP[/eqP <-{dm} /notin0_part].
 elim: mu dn nu => [|m0 mu IHmu] d nu.
   rewrite big_nil mulr1 (bigD1 (cast_intpartn (esym (addn0 d)) nu)) //=.
   rewrite syms_cast cast_intpartnE // eqxx scale1r.

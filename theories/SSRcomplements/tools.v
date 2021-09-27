@@ -162,6 +162,13 @@ Proof. by rewrite /minn ltnS; case ltnP. Qed.
 
 
 (** ** [sumn] related lemmas *)
+Lemma leq_sumn_in (sh : seq nat) i : i \in sh -> i <= sumn sh.
+Proof.
+elim: sh => [//| s0 sh IHsh].
+rewrite inE /= => /orP[/eqP->|/IHsh]; first exact: leq_addr.
+move/leq_trans; apply; exact: leq_addl.
+Qed.
+
 Lemma sumn_map_condE (T : Type) (s : seq T) (f : T -> nat) (P : pred T) :
   sumn [seq f i | i <- s & P i] = \sum_(i <- s | P i) f i.
 Proof. by rewrite /sumn foldrE big_map big_filter. Qed.
@@ -261,6 +268,27 @@ Qed.
 
 End FinSet.
 
+
+Lemma uniq_sum_count_mem (T : eqType) (P : pred T) l s :
+  uniq s ->
+  \sum_(i <- s | P i) (count_mem i) l = count (predI (mem s) P) l.
+Proof.
+move=> suniq; rewrite -big_filter -size_filter.
+have /eq_filter -> : predI (mem s) P =i [seq x <- s | P x].
+  by move=> i; rewrite inE mem_filter andbC.
+have {suniq} : uniq [seq x <- s | P x] by exact: filter_uniq.
+elim: filter => [_ | s0 {}s IHs].
+  by rewrite big_nil (eq_filter (a2 := pred0)); first by rewrite filter_pred0.
+rewrite big_cons => /= /andP[s0s {}/IHs ->].
+rewrite !size_filter -[RHS]addn0.
+rewrite [in RHS](eq_count (a2 := predU (pred1 s0) (mem s))); first last.
+  by move => i; rewrite /= in_cons.
+have /eq_count/(_ l) : predI (pred1 s0) (mem s) =1 pred0.
+  move=> i /=; apply/negP => /andP [/eqP -> s0s'].
+  by rewrite s0s' in s0s.
+rewrite count_pred0 => <-.
+by rewrite count_predUI.
+Qed.
 
 (* New lemmas *)
 Lemma sumn_sort l S : sumn (sort S l) = sumn l.

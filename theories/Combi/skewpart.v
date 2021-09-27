@@ -521,7 +521,7 @@ Qed.
 
 Lemma ribbon_on_mindropeq : mindropeq inner outer = stop.+1.
 Proof.
-move: partinn partout; rewrite !is_part_sortedE => /andP[_ inn0] /andP[_ out0].
+move: partinn partout => /notin0_part inn0 /notin0_part out0.
 apply/eqP/(mindropeq_nthP _ inn0 out0) => {inn0 out0}.
 split => [|i]; last by move: Hrib => [Hsi _ _ _] /Hsi ->.
 rewrite ltn_eqF // -ribbon_on_nth_leq.
@@ -1046,9 +1046,9 @@ Lemma is_part_add_ribbon_on nbox :
 Proof.
 move=> Hpart Hrem Hstartrem.
 have:= startrem_accP 0 nbox stop Hpart; rewrite {}Hstartrem => /(_ Hrem) Hs.
-have:= Hpart; rewrite !is_part_sortedE => /andP[/(sorted1P 0) /= _ H0].
-move: Hpart => /is_partP => [[_ Hsort]].
-apply/andP; split; first last.
+have H0 := notin0_part Hpart.
+move: Hpart => /is_partP [_ Hsort] /=.
+rewrite is_part_sortedE; apply/andP; split; first last.
   move: H0; apply contra; rewrite /add_ribbon_on !mem_cat inE.
   repeat move=> /orP [].
   - exact: mem_take.
@@ -1549,9 +1549,8 @@ rewrite ltn_neqAle.
 have/includedP := incl => [[_ ->]]; rewrite andbT.
 have := mindropeq_non0.
 case H : mindropeq => [//|m] _ /=.
-move: partinn; rewrite is_part_sortedE => /andP[_ inn0].
-move: partout; rewrite is_part_sortedE => /andP[_ out0].
-by move: H => /eqP/(mindropeq_nthP _ inn0 out0) [].
+by move: H => /eqP
+  /(mindropeq_nthP _ (notin0_part partinn) (notin0_part partout)) [].
 Qed.
 
 Lemma ribbontb_start_subproof : exists i, nth 0 inner i < nth 0 outer i.
