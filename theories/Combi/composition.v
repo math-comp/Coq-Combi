@@ -47,8 +47,8 @@ Compositions and partitions:
 ******)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice.
-From mathcomp Require Import seq bigop path binomial finset.
-Require Import tools combclass sorted partition subseq.
+From mathcomp Require Import seq bigop path binomial finset order.
+Require Import tools combclass sorted partition subseq ordtype lattice.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -252,7 +252,7 @@ Lemma intcompn_sumn c : sumn c = n.
 Proof using. by case: c => /= c /andP [/eqP]. Qed.
 
 Lemma enum_intcompnE : map val (enum {:intcompn}) = enum_compn n.
-Proof using. rewrite /=; exact: enum_subE. Qed.
+Proof using. exact: enum_subE. Qed.
 
 Lemma card_intcompn : #|{:intcompn}| = 2 ^ n.-1.
 Proof.
@@ -268,11 +268,10 @@ by rewrite add1n prednK // expn_gt0.
 Qed.
 
 Lemma rev_intcompn_spec c : is_comp_of_n n (rev c).
-Proof.
-by rewrite /is_comp_of_n /is_comp /= mem_rev sumn_rev; case: c.
-Qed.
+Proof. by rewrite /is_comp_of_n /is_comp /= mem_rev sumn_rev; case: c. Qed.
 Definition rev_intcompn c := IntCompN (rev_intcompn_spec c).
-
+Lemma rev_intcompnK : involutive rev_intcompn.
+Proof. by move=> c; apply val_inj => /=; rewrite revK. Qed.
 
 (** * Bijection with subsets *)
 Definition partsums s := [seq sumn (take i s) | i <- iota 1 (size s).-1].
@@ -426,9 +425,12 @@ case: i Hi => [|i] /= Hi; first by rewrite -Hs /= take0 /= addn0 subn0.
 exact: diff_nth_sumn_take.
 Qed.
 
+Lemma descset_inj : injective descset.
+Proof. exact/can_inj/descsetK. Qed.
+
 Lemma descset_bij : bijective descset.
 Proof.
-apply: (inj_card_bij (can_inj descsetK)); rewrite /= card_intcompn.
+apply: (inj_card_bij descset_inj); rewrite /= card_intcompn.
 by rewrite -cardsT -powersetT card_powerset cardsT card_ord.
 Qed.
 
@@ -474,10 +476,10 @@ Proof. by elim: d => [| d]. Qed.
 Canonical colcompn d : intcompn d := IntCompN (colcompnP d).
 
 
-Section RefinementOrder.
+Section DescSet.
 
 Variable (n : nat).
-Implicit Type (c : intcompn n) (d : {set 'I_n.-1}).
+Implicit Types (c : intcompn n) (d : {set 'I_n.-1}).
 
 
 Lemma mem_partsum_non0 u0 u i : i \in partsums (u0 :: u) -> u != [::].
@@ -512,7 +514,6 @@ apply (iffP subsetP) => Hsub /= i Hin.
   rewrite /descset !inE !mem_pmap_sub /= => /mapP [j /Hsub Hin Heq].
   by rewrite Heq map_f.
 Qed.
-
 
 Lemma subseq_partsumE c1 c2 :
   (subseq (partsums c1) (partsums c2)) = (descset c1 \subset descset c2).
@@ -611,7 +612,132 @@ apply (iffP (subdescset_partsumP c1 c2)) => [| [s Hc1 ->{c2}]].
   by rewrite -map_comp -addnA (@map_f _ _ ([eta addn i] \o [eta addn c0])).
 Qed.
 
+End DescSet.
+
+
+Module RefinementOrder.
+Section RefinementOrder.
+
+Variable (n : nat).
+Definition intcompnref := intcompn n.
+Local Notation "'CRef" := intcompnref.
+Implicit Types (c : 'CRef) (d : {set 'I_n.-1}).
+Local Notation SetIn := ({set<= [finType of 'I_n.-1]}).
+
+Definition porderMixin :=
+  Order.CanMixin.CanPOrder (T' := [porderType of SetIn]) (@descsetK n).
+
+Lemma compnref_display : unit. Proof. exact: tt. Qed.
+Canonical porderType :=
+  POrderType compnref_display 'CRef porderMixin.
+Canonical finPOrderType := Eval hnf in [finPOrderType of 'CRef].
+Canonical inhType := InhType 'CRef (InhMixin (rowcompn n)).
+Canonical inhPOrderType := Eval hnf in [inhPOrderType of 'CRef].
+Canonical inhFinPOrderType := Eval hnf in [inhFinPOrderType of 'CRef].
+
+Lemma leEcompnref c1 c2 :
+  (c1 <= c2)%O = (descset c1 \subset descset c2).
+Proof. by []. Qed.
+
+Lemma descset_mono :
+  {mono (@descset n) : A B / (A <= B :> 'CRef)%O >-> (A <= B :> SetIn)%O}.
+Proof. by []. Qed.
+
+Definition latticeMixin :=
+  Order.CanMixin.IsoLattice
+    (T := porderType) (T' := [distrLatticeType of SetIn])
+    (@descsetK n) (@from_descsetK n) descset_mono.
+Canonical latticeType := LatticeType 'CRef latticeMixin.
+
+Lemma descset_meet c1 c2 :
+  descset (c1 `&` c2)%O = descset c1 :&: descset c2.
+Proof. by rewrite from_descsetK. Qed.
+Lemma descset_join c1 c2 :
+  descset (c1 `|` c2)%O = descset c1 :|: descset c2.
+Proof. by rewrite from_descsetK. Qed.
+
+Definition distrLatticeMixin :=
+  Order.CanMixin.IsoDistrLattice
+    (T := porderType) (T' := [distrLatticeType of SetIn])
+    (@descsetK n) (@from_descsetK n) descset_mono.
+Canonical distrLatticeType := DistrLatticeType 'CRef distrLatticeMixin.
+
+Lemma descset_rowcompn : descset (rowcompn n) = set0.
+Proof. by apply/cards0_eq; rewrite card_descset /= /rowcomp; case n. Qed.
+Lemma descset_colcompn : descset (colcompn n) = setT.
+Proof.
+apply/eqP; rewrite -subset_leqif_cards; last exact: subsetT.
+by rewrite card_descset /= /colcomp /= size_nseq cardsT card_ord.
+Qed.
+
+Definition bLatticeMixin :=
+  IsoBLattice (T := porderType) (T' := [bLatticeType of SetIn])
+              (@descsetK n) (@from_descsetK n) descset_mono.
+Canonical bLatticeType := BLatticeType 'CRef bLatticeMixin.
+Definition tbLatticeMixin :=
+  IsoTBLattice (T := bLatticeType) (T' := [tbLatticeType of SetIn])
+              (@descsetK n) (@from_descsetK n) descset_mono.
+Canonical tbLatticeType := TBLatticeType 'CRef tbLatticeMixin.
+
+Lemma topEcompnref : 1%O = colcompn n :> 'CRef.
+Proof. by apply: descset_inj; rewrite from_descsetK descset_colcompn. Qed.
+
+Lemma botEcompnref : 0%O = rowcompn n :> 'CRef.
+Proof. by apply: descset_inj; rewrite from_descsetK descset_rowcompn. Qed.
+
+Canonical bDistrLatticeType := [bDistrLatticeType of 'CRef].
+Canonical tbDistrLatticeType := [tbDistrLatticeType of 'CRef].
+Canonical finLatticeType := [finLatticeType of 'CRef].
+Canonical finDistrLatticeType := [finDistrLatticeType of 'CRef].
+
+Lemma compnref_rev c1 c2 :
+  (rev_intcompn c1 <= rev_intcompn c2 :> 'CRef)%O = (c1 <= c2)%O.
+Proof.
+suff impl c c' :
+  (c <= c')%O -> (rev_intcompn c <= rev_intcompn c' :> 'CRef)%O.
+  by apply/idP/idP=> /impl //; rewrite !rev_intcompnK.
+rewrite !leEcompnref => /subdescsetP [s /= Hc Hd].
+apply/subdescsetP; exists (rev (map rev s)) => /=.
+- rewrite Hc map_rev -map_comp; congr rev; apply eq_map => t /=.
+  by rewrite sumn_rev.
+- by rewrite -rev_flatten Hd.
+Qed.
+
 End RefinementOrder.
+
+Module Exports.
+
+Set Warnings "-redundant-canonical-projection".
+Canonical porderType.
+Canonical latticeType.
+Canonical bLatticeType.
+Canonical tbLatticeType.
+Canonical bDistrLatticeType.
+Canonical tbDistrLatticeType.
+
+Canonical finPOrderType.
+Canonical finLatticeType.
+Canonical finDistrLatticeType.
+
+Canonical inhType.
+Canonical inhPOrderType.
+Canonical inhFinPOrderType.
+Set Warnings "+redundant-canonical-projection".
+
+Definition leEcompnref := @leEcompnref.
+Definition descset_mono := @descset_mono.
+Definition descset_meet := @descset_meet.
+Definition descset_join := @descset_join.
+Definition descset_rowcompn := @descset_rowcompn.
+Definition descset_colcompn := @descset_colcompn.
+Definition botEcompnref := @botEcompnref.
+Definition topEcompnref := @topEcompnref.
+Definition compnref_rev := @compnref_rev.
+End Exports.
+
+End RefinementOrder.
+Export RefinementOrder.Exports.
+
 
 
 #[export] Hint Resolve intcompP intcompnP : core.

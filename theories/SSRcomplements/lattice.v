@@ -103,3 +103,154 @@ End Exports.
 
 End MeetJoinLeMixin.
 Export MeetJoinLeMixin.Exports.
+
+
+
+(** * Onder structure on [{set T}] *)
+Module SetSubsetOrder.
+Section SetSubsetOrder.
+
+Definition type (disp : unit) (T : finType) := {set T}.
+Context {disp : unit} {T : finType}.
+Local Notation "'set" := (type disp T) (at level 0) : type_scope.
+Implicit Type (A B C : 'set).
+
+Lemma le_def A B : A \subset B = (A :&: B == A).
+Proof. exact/setIidPl/eqP. Qed.
+
+Lemma setKUC B A : A :&: (A :|: B) = A.
+Proof. by rewrite setUC setKU. Qed.
+
+Lemma setKIC B A : A :|: (A :&: B) = A.
+Proof. by rewrite setIC setKI. Qed.
+
+Definition t_distrLatticeMixin :=
+  MeetJoinMixin le_def (fun _ _ => erefl _) (@setIC _) (@setUC _)
+                (@setIA _) (@setUA _) setKUC setKIC (@setIUl _) (@setIid _).
+
+
+Lemma subset_display : unit. Proof. exact: tt. Qed.
+
+Canonical eqType := [eqType of 'set].
+Canonical choiceType := [choiceType of 'set].
+Canonical countType := [countType of 'set].
+Canonical finType := [finType of 'set].
+Canonical porderType := POrderType subset_display 'set t_distrLatticeMixin.
+Canonical latticeType := LatticeType 'set t_distrLatticeMixin.
+Canonical bLatticeType := BLatticeType 'set
+  (BottomMixin (@sub0set _ : forall A, (set0 <= A :> 'set)%O)).
+Canonical tbLatticeType := TBLatticeType 'set
+  (TopMixin (@subsetT _ : forall A, (A <= setT :> 'set)%O)).
+Canonical distrLatticeType := DistrLatticeType 'set t_distrLatticeMixin.
+Canonical bDistrLatticeType := [bDistrLatticeType of 'set].
+Canonical tbDistrLatticeType := [tbDistrLatticeType of 'set].
+
+Lemma setIDv A B : B :&: (A :\: B) = set0.
+Proof.
+apply/eqP; rewrite -subset0; apply/subsetP => x.
+by rewrite !inE => /and3P[->].
+Qed.
+
+Definition t_cbdistrLatticeMixin := CBDistrLatticeMixin setIDv (@setID _).
+Canonical cbDistrLatticeType := CBDistrLatticeType 'set t_cbdistrLatticeMixin.
+
+Lemma setTDsym A : ~: A = setT :\: A.
+Proof. by rewrite setTD. Qed.
+
+Definition t_ctbdistrLatticeMixin := CTBDistrLatticeMixin setTDsym.
+Canonical ctbDistrLatticeType := CTBDistrLatticeType 'set t_ctbdistrLatticeMixin.
+
+Canonical finPOrderType := [finPOrderType of 'set].
+Canonical finLatticeType := [finLatticeType of 'set].
+Canonical finDistrLatticeType := [finDistrLatticeType of 'set].
+Canonical finCDistrLatticeType := [finCDistrLatticeType of 'set].
+
+Lemma leEset A B : (A <= B)%O = (A \subset B).
+Proof. by []. Qed.
+Lemma meetEset A B : (A `&` B)%O = A :&: B.
+Proof. by []. Qed.
+Lemma joinEset A B : (A `|` B)%O = A :|: B.
+Proof. by []. Qed.
+Lemma botEset : 0%O = set0 :> 'set.
+Proof. by []. Qed.
+Lemma topEset : 1%O = setT :> 'set.
+Proof. by []. Qed.
+Lemma subEset A B : (A `\` B)%O = A :\: B.
+Proof. by []. Qed.
+Lemma complEset A : (~` A)%O = ~: A.
+Proof. by []. Qed.
+
+End SetSubsetOrder.
+
+Module Exports.
+
+Notation "{set[ d ]<= T }" := (type d T)
+  (at level 70, d at next level, format "{set[ d ]<=  T }") : type_scope.
+Notation "{set<= T }" := (type subset_display T)
+  (at level 70, format "{set<=  T }") : type_scope.
+
+Set Warnings "-redundant-canonical-projection".
+Canonical eqType.
+Canonical choiceType.
+Canonical countType.
+Canonical finType.
+Canonical porderType.
+Canonical latticeType.
+Canonical bLatticeType.
+Canonical tbLatticeType.
+Canonical distrLatticeType.
+Canonical bDistrLatticeType.
+Canonical tbDistrLatticeType.
+Canonical cbDistrLatticeType.
+Canonical ctbDistrLatticeType.
+Canonical finPOrderType.
+Canonical finLatticeType.
+Canonical finDistrLatticeType.
+Canonical finCDistrLatticeType.
+Set Warnings "+redundant-canonical-projection".
+
+Definition leEset := @leEset.
+Definition meetEset := @meetEset.
+Definition joinEset := @joinEset.
+Definition botEset := @botEset.
+Definition topEset := @topEset.
+Definition subEset := @subEset.
+Definition complEset := @complEset.
+
+End Exports.
+End SetSubsetOrder.
+Export SetSubsetOrder.Exports.
+
+Section BLattice.
+
+Variables (disp : unit) (T : porderType disp).
+Variables (disp' : unit) (T' : bLatticeType disp') (f : T -> T').
+
+Variables (f' : T' -> T) (f_can : cancel f f') (f'_can : cancel f' f).
+Variable (f_mono : {mono f : x y / (x <= y)%O}).
+
+Lemma le0x x : (f' 0 <= x)%O.
+Proof. by rewrite -f_mono f'_can le0x. Qed.
+
+Definition IsoBLattice :=
+  @BottomMixin _ (LatticeType T (Order.CanMixin.IsoLattice f_can f'_can f_mono))
+               _ le0x.
+
+End BLattice.
+
+Section TBLattice.
+
+Variables (disp : unit) (T : bLatticeType disp).
+Variables (disp' : unit) (T' : tbLatticeType disp') (f : T -> T').
+
+Variables (f' : T' -> T) (f_can : cancel f f') (f'_can : cancel f' f).
+Variable (f_mono : {mono f : x y / (x <= y)%O}).
+
+Lemma lex1 x : (x <= f' 1)%O.
+Proof. by rewrite -f_mono f'_can lex1. Qed.
+
+Definition IsoTBLattice :=
+  @TopMixin _ (BLatticeType T (IsoBLattice f_can f'_can f_mono))
+            _ lex1.
+
+End TBLattice.
