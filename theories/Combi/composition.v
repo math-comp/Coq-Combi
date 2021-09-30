@@ -671,11 +671,11 @@ by rewrite card_descset /= /colcomp /= size_nseq cardsT card_ord.
 Qed.
 
 Definition bLatticeMixin :=
-  IsoBLattice (T := porderType) (T' := [bLatticeType of SetIn])
-              (@descsetK n) (@from_descsetK n) descset_mono.
+  IsoBottomMixin (T := porderType) (T' := [bLatticeType of SetIn])
+                 (@descsetK n) (@from_descsetK n) descset_mono.
 Canonical bLatticeType := BLatticeType 'CRef bLatticeMixin.
 Definition tbLatticeMixin :=
-  IsoTBLattice (T := bLatticeType) (T' := [tbLatticeType of SetIn])
+  IsoTopMixin (T := bLatticeType) (T' := [tbLatticeType of SetIn])
               (@descsetK n) (@from_descsetK n) descset_mono.
 Canonical tbLatticeType := TBLatticeType 'CRef tbLatticeMixin.
 

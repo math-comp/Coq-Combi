@@ -21,12 +21,11 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Import Order.Theory.
-
+Local Open Scope order_scope.
 
 Module MeetJoinLeMixin.
 Section MeetJoinLeMixin.
 Variable (disp : unit) (T : porderType disp).
-Open Scope order_scope.
 
 Record of_ := Build {
   meet : T -> T -> T;
@@ -165,19 +164,19 @@ Canonical finLatticeType := [finLatticeType of 'set].
 Canonical finDistrLatticeType := [finDistrLatticeType of 'set].
 Canonical finCDistrLatticeType := [finCDistrLatticeType of 'set].
 
-Lemma leEset A B : (A <= B)%O = (A \subset B).
+Lemma leEset A B : (A <= B) = (A \subset B).
 Proof. by []. Qed.
-Lemma meetEset A B : (A `&` B)%O = A :&: B.
+Lemma meetEset A B : A `&` B = A :&: B.
 Proof. by []. Qed.
-Lemma joinEset A B : (A `|` B)%O = A :|: B.
+Lemma joinEset A B : A `|` B = A :|: B.
 Proof. by []. Qed.
-Lemma botEset : 0%O = set0 :> 'set.
+Lemma botEset : 0 = set0 :> 'set.
 Proof. by []. Qed.
-Lemma topEset : 1%O = setT :> 'set.
+Lemma topEset : 1 = setT :> 'set.
 Proof. by []. Qed.
-Lemma subEset A B : (A `\` B)%O = A :\: B.
+Lemma subEset A B : A `\` B = A :\: B.
 Proof. by []. Qed.
-Lemma complEset A : (~` A)%O = ~: A.
+Lemma complEset A : ~` A = ~: A.
 Proof. by []. Qed.
 
 End SetSubsetOrder.
@@ -227,12 +226,12 @@ Variables (disp : unit) (T : porderType disp).
 Variables (disp' : unit) (T' : bLatticeType disp') (f : T -> T').
 
 Variables (f' : T' -> T) (f_can : cancel f f') (f'_can : cancel f' f).
-Variable (f_mono : {mono f : x y / (x <= y)%O}).
+Variable (f_mono : {mono f : x y / x <= y}).
 
-Lemma le0x x : (f' 0 <= x)%O.
+Lemma le0x x : f' 0 <= x.
 Proof. by rewrite -f_mono f'_can le0x. Qed.
 
-Definition IsoBLattice :=
+Definition IsoBottomMixin :=
   @BottomMixin _ (LatticeType T (Order.CanMixin.IsoLattice f_can f'_can f_mono))
                _ le0x.
 
@@ -244,13 +243,13 @@ Variables (disp : unit) (T : bLatticeType disp).
 Variables (disp' : unit) (T' : tbLatticeType disp') (f : T -> T').
 
 Variables (f' : T' -> T) (f_can : cancel f f') (f'_can : cancel f' f).
-Variable (f_mono : {mono f : x y / (x <= y)%O}).
+Variable (f_mono : {mono f : x y / x <= y}).
 
-Lemma lex1 x : (x <= f' 1)%O.
+Lemma lex1 x : x <= f' 1.
 Proof. by rewrite -f_mono f'_can lex1. Qed.
 
-Definition IsoTBLattice :=
-  @TopMixin _ (BLatticeType T (IsoBLattice f_can f'_can f_mono))
+Definition IsoTopMixin :=
+  @TopMixin _ (BLatticeType T (IsoBottomMixin f_can f'_can f_mono))
             _ lex1.
 
 End TBLattice.
