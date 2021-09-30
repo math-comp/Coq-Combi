@@ -24,11 +24,13 @@ Integer Composition are stored as [seq nat]. We define the following:
 - [intcompn sm] == a sigma type for the predicate [is_comp_of_n sm].
                this is canonically a [subFinType]
 
-- [rowcomp d]   == the trivial composition
-- [rowcompn d]  == the trivial composition as a [intcompn d]
+- [rowcomp n]   == the trivial composition
+- [rowcompn n]  == the trivial composition as a [intcompn n]
 
-- [colcomp d]   == the composition [[:: 1; 1; ...]]
-- [colcompn d]  == the composition [[:: 1; 1; ...]] as a [intcompn d]
+- [colcomp n]   == the composition [[:: 1; 1; ...]]
+- [colcompn n]  == the composition [[:: 1; 1; ...]] as a [intcompn n]
+
+- [rev_intcompn c] == the reverse composition inside [intcompn n].
 
 Bijection with subsets: Consistently, with permutation starting at 0,
 descents are starting at zero and therefore of type ['I_n.-1].
