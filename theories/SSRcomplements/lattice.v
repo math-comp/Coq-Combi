@@ -14,7 +14,7 @@
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import ssrbool ssrfun eqtype choice fintype finset order.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -23,6 +23,7 @@ Unset Printing Implicit Defensive.
 Import Order.Theory.
 Local Open Scope order_scope.
 
+(** TODO remove me when released in MathComp *)
 Module MeetJoinLeMixin.
 Section MeetJoinLeMixin.
 Variable (disp : unit) (T : porderType disp).
