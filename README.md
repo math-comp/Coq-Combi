@@ -23,6 +23,8 @@ This library was supported by additional discussions with:
 - Cyril Cohen
 - the SSReflect mailing list
 
+The project was transferred to mathcomp on 2021-10-20.
+
 Contents
 ========================================================================
 
