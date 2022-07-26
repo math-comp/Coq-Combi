@@ -269,7 +269,7 @@ Proof using.
 rewrite /is_std /std size_std_rec perm_sym.
 move Hn : (size s) => n; elim: n s Hn => [//= | n IHn] s Hn.
 apply: (@perm_trans _ (n :: (iota 0 n))).
-  by rewrite -addn1 iota_add /= add0n -cat1s; apply/permPl; exact: perm_catC.
+  by rewrite -addn1 iotaD /= add0n -cat1s; apply/permPl; exact: perm_catC.
 apply: (@perm_trans _ (n :: std_rec n (rembig s))).
   by rewrite perm_cons; apply: IHn; rewrite size_rembig Hn.
 rewrite {IHn Hn} /= -[n :: drop _ _]cat1s catA.

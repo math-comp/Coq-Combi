@@ -224,7 +224,7 @@ rewrite (sumn_nth_le Hszmu) (sumn_nth_le Hszla).
 transitivity (\sum_(0 <= i < n) (nth 0 mu i - nth 0 la i)).
   rewrite /index_iota subn0.
   elim: n {Hszmu Hszla} => [//= | j IHj]; first by rewrite !big_nil.
-  rewrite -addn1 iota_add /= add0n !big_cat !big_cons !big_nil /= !addn0.
+  rewrite -addn1 iotaD /= add0n !big_cat !big_cons !big_nil /= !addn0.
   rewrite subnDA subnAC -addnBA // addnC [RHS]addnC -{}IHj.
   by rewrite addnBA // leq_sum.
 rewrite !big_mkord [LHS](bigID (fun i : 'I_n => nth 0 la i < nth 0 mu i)) /=.
@@ -716,7 +716,7 @@ apply/imsetP/eqP => /= [[t ] | Hm].
   have Ht : is_tab_of_shape la t.
     rewrite /is_tab_of_shape /=; apply/andP; split.
     + rewrite -incr_tab ?tabshP // => [] [i Hio] [j Hjo] /mt2 /= Hi /mt2 /= Hj.
-      by rewrite !ltEsub /= !inordK.
+      by rewrite !ltEord !inordK.
     + rewrite /t {t} -(shape_tabsh t2) /shape /ext_fun -map_comp.
       by apply/eqP/eq_map => s; rewrite /= size_map.
   exists (TabSh Ht).
@@ -991,7 +991,7 @@ move: Hstd; rewrite /is_std size_to_word.
 rewrite /size_tab shape_stdtabsh sumn_intpartn => /perm_mem Hperm.
 rewrite -incr_tab // => /= i j.
 rewrite !Hperm !mem_iota /= !add0n => /leq_trans/(_ Hd) Hi /leq_trans/(_ Hd) Hj.
-by rewrite ltEsub !ltEnat /= !inordK.
+by rewrite ltEord !ltEnat /= !inordK.
 Qed.
 Definition tabord_of_nat (t : stdtabsh la) :=
   TabSh (sh := la) (tabord_of_nat_subproof t).
@@ -1093,7 +1093,7 @@ apply/andP; split.
   rewrite -/(size_tab _) -size_to_word -filter_gt_to_word size_filter.
   rewrite -sum_count_mem /=.
   transitivity (\sum_(i < n.+1 | i < sz) nth 0 s i).
-    apply eq_big => i; rewrite ltEsub ltEnat //= => Hi.
+    apply eq_big => i; rewrite ltEord//= => Hi.
     by rewrite (eqevalP _ Hszrcons Hev) nth_rcons Hi.
   rewrite sumnE (big_nth 0) big_mkord /=.
   by apply esym; apply big_ord_widen; apply ltnW.
@@ -1129,7 +1129,7 @@ case: (ssrnat.ltnP i.+1 (size t)) => Hi.
   rewrite (eqevalP _ Hszrcons Hev) nth_rcons.
   case: (ssrnat.leqP xabs (size s)) => [Hxabs _ | Hxabs]; first last.
     by rewrite (gtn_eqF Hxabs) ltnNge (ltnW Hxabs).
-  rewrite ltEsub ltEnat /= => /leq_trans/(_ Hxabs) {xabs Hxabs}.
+  rewrite ltEord /= => /leq_trans/(_ Hxabs) {xabs Hxabs}.
   have size_take_leq l sq : size (take l sq) <= size sq.
     by rewrite size_take; case ssrnat.ltnP => [/ltnW|].
   move/(_ _ (count (<%O sz) r) r): size_take_leq => HHH.
@@ -1139,7 +1139,7 @@ case: (ssrnat.ltnP i.+1 (size t)) => Hi.
   rewrite size_cat size_take (leq_trans Hleq Hszle).
   rewrite -addn1 leq_add2l -(filter_le_row sz Hrow) => /(mem_nth inh).
   move: (nth _ _ _) => xabs.
-  rewrite mem_filter /= leEsub leEnat andbC => /andP [_] /=.
+  rewrite mem_filter /= leEord andbC => /andP [_] /=.
   move=>/leq_ltn_trans H1/H1.
   by rewrite ltnn.
 - rewrite nth_default -(shape_tabsh t) ?size_map //=.
@@ -1178,7 +1178,7 @@ apply/andP; split.
   + rewrite to_word_skew_reshape // ?size_nseq ?sumndiff //.
     apply/allP => /= i /nseqP [->{i} Hsm].
     apply/allP => /= i /count_memPn/eqP Hi.
-    rewrite ltEsub ltEnat /=.
+    rewrite ltEord /=.
     move: Hi; apply contraR; rewrite -leqNgt => Hi.
     by rewrite (eqevalP _ (ltnW Hsz) Hev) nth_default.
   + have:= Hstrip; rewrite -(hb_strip_rowE (u := nseq m sz)) => //.
@@ -1211,11 +1211,11 @@ case: (ssrnat.ltnP i sz) => Hisz.
   rewrite nth_rcons Hisz => <-.
   elim: (to_word t) => //= w0 w IHw.
   case: ltP; rewrite /= IHw //= /eq_op /=.
-  rewrite leEsub leEnat /= => /(leq_trans Hisz)/gtn_eqF => ->.
+  rewrite leEord /= => /(leq_trans Hisz)/gtn_eqF => ->.
   by rewrite add0n.
 - rewrite nth_default //.
   apply/count_memPn; rewrite mem_filter /=.
-  by rewrite ltEsub ltEnat /= ltnNge Hisz.
+  by rewrite ltEord /= ltnNge Hisz.
 Qed.
 
 Lemma eval_ext_tab (t : T) :
@@ -1267,13 +1267,13 @@ congr skew_reshape.
     rewrite -filter_le_to_word size_filter -sum_count_mem /=.
     rewrite (bigD1 sz) /= // (eqevalP _ Hszrcons Hev).
     rewrite nth_rcons ltnn eq_refl big1 ?addn0 // => i.
-    rewrite andbC -lt_def ltEsub ltEnat /= => Hi.
+    rewrite andbC -lt_def ltEord /= => Hi.
     rewrite (eqevalP _ Hszrcons Hev) nth_rcons.
     by rewrite ltnNge (ltnW Hi) (gtn_eqF Hi).
   rewrite -{1}Hw; symmetry; apply/all_pred1P/allP => /= i.
   rewrite /to_word => /flattenP [/= rtmp].
   rewrite mem_rev => /mapP [/= r Hr ->{rtmp}].
-  rewrite mem_filter leEsub leEnat => /andP [/= Hi Hir].
+  rewrite mem_filter leEord => /andP [/= Hi Hir].
   apply/eqP/val_inj => /=; apply anti_leq; rewrite {}Hi andbT.
   have /count_memPn/eqP : i \in to_word t.
     by rewrite /to_word; apply/flattenP; exists r; first rewrite mem_rev.
@@ -1327,7 +1327,7 @@ rewrite [map _ (join_tab _ _)](_ : _ = pad [::] (size mu) t).
     by rewrite Hfil nth_nseq if_same.
   rewrite Hfil cats0 (eq_in_filter (a2 := predT)) ?filter_predT //.
   move=> x /count_memPn/eqP Hcount.
-  rewrite ltEsub ltEnat /=.
+  rewrite ltEord /=.
   suff : nth 0 s x != 0.
     by case: ssrnat.ltnP => // H; rewrite nth_default.
   rewrite -(eqevalP t (ltnW Hsz) Hev x).

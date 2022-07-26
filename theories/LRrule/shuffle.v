@@ -310,7 +310,7 @@ have /allP/(_ s Hs) := perm_shuffle u (shiftn (size u) v).
 rewrite perm_sym => /perm_trans; apply.
 have /allP/(_ s Hs)/eqP := all_size_shuffle u (shiftn (size u) v).
 rewrite size_map => -> {s Hs}.
-rewrite iota_add.
+rewrite iotaD.
 apply: (@perm_trans _ (u ++ iota (size u) (size v))); last by rewrite perm_cat2r.
 rewrite perm_cat2l -{2}[size u]addn0 iotaDl.
 exact: perm_map.
