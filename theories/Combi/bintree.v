@@ -326,7 +326,7 @@ Proof.
 elim/ltn_ind: n => [[//|n IHn]].
 rewrite enum_bintreeszE.
 have [i] := ubnPgeq n.+1; elim: i => // i IHi /ltnSE-ltin.
-rewrite -addn1 iota_add add0n /=.
+rewrite -addn1 iotaD add0n /=.
 rewrite map_cat flatten_cat /= cats0 cat_uniq.
 rewrite {}IHi /=; last exact: (leq_trans ltin).
 apply/andP; split.

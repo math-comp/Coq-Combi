@@ -230,7 +230,7 @@ Proof.
 rewrite /is_std size_to_word size_stdtab_of_yam.
 elim: y => [//= | y0 y IHy].
 have -> : iota 0 (size (y0 :: y)) = rcons (iota 0 (size y)) (size y).
-  rewrite [size (y0 :: y)]/= -addn1 iota_add add0n /=.
+  rewrite [size (y0 :: y)]/= -addn1 iotaD add0n /=.
   exact: cats1.
 apply: (perm_trans (perm_append_nth _ _ _)).
 move: IHy; rewrite -(perm_cons (size y)) => /perm_trans; apply.
@@ -435,7 +435,7 @@ have/(congr1 size_tab) := Happ.
 rewrite size_append_nth Hsize => /eqP; rewrite eqSS => /eqP Hsz.
 have:= perm_append_nth (remn t) n (last_big t n).
 rewrite {}Happ Hsz (permPl Hperm) perm_sym.
-rewrite -(addn1 n) iota_add /= add0n cats1.
+rewrite -(addn1 n) iotaD /= add0n cats1.
 by rewrite perm_sym perm_rcons perm_sym perm_cons.
 Qed.
 

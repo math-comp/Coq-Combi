@@ -428,7 +428,7 @@ Proof using.
 move=> /dominateP [] Hsz Hdom.
 rewrite -[r0](mkseq_nth inh) -[r1](mkseq_nth inh) /mkseq !count_map.
 rewrite -(subnKC Hsz).
-rewrite iota_add count_cat.
+rewrite iotaD count_cat.
 set s0 := (X in X + _).
 apply (@leq_trans s0); last exact: leq_addr.
 rewrite /s0 {s0} -!size_filter.

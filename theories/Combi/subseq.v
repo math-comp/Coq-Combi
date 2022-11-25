@@ -319,7 +319,7 @@ Proof.
 apply/idP/idP.
 - move=> Hsubs.
   apply: (subseq_sorted ltn_trans (s2 := (iota 0 n.+1))).
-  + by rewrite -addn1 iota_add add0n /= cats1 -subseq_rcons_eq.
+  + by rewrite -addn1 iotaD add0n /= cats1 -subseq_rcons_eq.
   + exact: iota_ltn_sorted.
 - elim: n s => [/= [//=| s0 s]| n IHn s].
     rewrite rcons_cons /= => /(order_path_min ltn_trans) /= /allP Hall.
@@ -331,7 +331,7 @@ apply/idP/idP.
   + move/sorted_rconsK => Hsort.
     have:= Hsn; rewrite -{1}(last_rcons n s sn) => /(sorted_rcons Hsort)/IHn.
     move/subseq_trans; apply.
-    rewrite -addn1 iota_add add0n cats1.
+    rewrite -addn1 iotaD add0n cats1.
     exact: subseq_rcons.
   + move=> Hsort; have H : sn = n.
       apply anti_leq; rewrite Hsn andbT.
@@ -339,7 +339,7 @@ apply/idP/idP.
       rewrite -!cats1 -catA => /sorted_catR => /= /andP [].
       by rewrite ltnS.
     subst sn.
-    rewrite -addn1 iota_add add0n /= cats1.
+    rewrite -addn1 iotaD add0n /= cats1.
     rewrite -subseq_rcons_eq; apply IHn.
     exact: (sorted_rconsK Hsort).
 Qed.

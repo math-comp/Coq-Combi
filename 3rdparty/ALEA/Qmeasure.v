@@ -20,41 +20,43 @@ Require Import Misc Ccpo.
 
 Set Implicit Arguments.
 
-Local Open Scope O_scope.
 
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun eqtype ssrbool ssrnat seq.
-From mathcomp Require Import choice fintype finfun bigop ssrint rat ssralg ssrnum.
+From mathcomp Require Import ssreflect ssrfun eqtype choice.
+From mathcomp Require Import ssrbool ssrnat seq order fintype finfun.
+From mathcomp Require Import bigop ssralg ssrnum ssrint rat.
 Import GRing.
+Import Order.Theory.
 Import Num.Theory.
-Import mc_1_10.Num.Theory.
 
+Delimit Scope order_scope with Omc.
+Local Open Scope O_scope.
+Delimit Scope O_scope with O.
 Local Open Scope ring_scope.
 
-Program Instance ratO : ord rat :=
+#[export] Program Instance ratO : ord rat :=
      { Oeq := fun n m : rat => n = m;
        Ole := fun n m : rat => (n <= m)%R}.
 Next Obligation.
 apply Build_Order => /=.
-- exact: lerr.
-- split => [/andP  H | ->]; first by apply ler_asym.
-  by rewrite lerr.
-- move=> /= x y z; apply ler_trans.
+- exact: lexx.
+- split => [/andP  H | ->]; first by apply le_anti.
+  by rewrite lexx.
+- move=> /= x y z; apply le_trans.
 Defined.
 
 (** Functions to be measured *)
 
 Definition MF (A:Type) := A -> rat.
 
-Instance MFO (A:Type) : ord (MF A) := ford A rat.
+#[export] Instance MFO (A:Type) : ord (MF A) := ford A rat.
 
 (** Type of measures on [A] *)
 
 Definition M A := MF A -m> rat.
 
-Instance MO (A:Type) : ord (M A) := fmono (MF A) rat.
+#[export] Instance MO (A:Type) : ord (M A) := fmono (MF A) rat.
 
-Instance app_mon (A:Type) (x:A) : monotonic (fun (f:MF A) => f x).
+#[export] Instance app_mon (A:Type) (x:A) : monotonic (fun (f:MF A) => f x).
 Proof. by []. Qed.
 #[export] Hint Resolve app_mon : core.
 
@@ -364,15 +366,15 @@ End MeasureProp.
 #[export] Hint Resolve mu_cte : core.
 #[export] Hint Resolve mu_stable_inv_inv : core.
 
-Program Instance Odistr (A:Type) : ord (distr A) := 
+#[export] Program Instance Odistr (A:Type) : ord (distr A) := 
     {Ole := fun (f g : distr A) => (mu f <= mu g)%O;
      Oeq := fun (f g : distr A) => Oeq (mu f) (mu g)}.
 Next Obligation.
 split; intuition.
-- by apply ler_anti; rewrite H0 H1.
+- by apply le_anti; rewrite H0 H1.
 - by rewrite H.
 - by rewrite H.
-- by move=> f g h H1 H2 x; apply: (ler_trans (H1 x) (H2 x)).
+- by move=> f g h H1 H2 x; apply: (le_trans (H1 x) (H2 x)).
 Defined.
 
 
@@ -441,7 +443,7 @@ Add Parametric Morphism : (Mlet (A:=A) (B:=B))
       as Mlet_le_pointwise_morphism.
 Proof. by auto. Qed.
 
-Instance Mlet_mon2 : monotonic2 (@Mlet A B).
+#[export] Instance Mlet_mon2 : monotonic2 (@Mlet A B).
 Proof. by red; auto. Qed.
 
 Definition MLet : distr A -m> (A -> distr B) -m> distr B
@@ -538,7 +540,7 @@ Proof. exact: let_indep. Qed.
 Implicit Types (m : distr A) (f g : A -> bool).
 Lemma mu_bool_le1 m f : mu m (fun x => (f x)%:~R) <= 1%:~R.
 Proof.
-apply ler_trans with (mu m (fun x => 1)).
+apply le_trans with (mu m (fun x => 1)).
 - apply mu_monotonic => x.
   by case (f x) => //=.
 - by rewrite mu_prob => //=.
@@ -563,7 +565,7 @@ Lemma mu_bool_impl1 m f g :
   mu m (fun x => (f x)%:~R) = 1 ->  mu m (fun x => (g x)%:~R) = 1.
 Proof.
 move=> Hi Hf.
-apply ler_anti.
+apply le_anti.
 apply /andP; split; first by [].
 rewrite -[X in X <= _]Hf.
 exact: mu_bool_impl.
@@ -575,8 +577,8 @@ Lemma mu_bool_negb0 m f g :
   mu m (fun x => (g x)%:~R) = 0.
 Proof.
 move => Hi Hf.
-apply ler_anti; apply /andP; split.
-- apply ler_trans with (mu m (fun x : A => 1 - (f x)%:~R)).
+apply le_anti; apply /andP; split.
+- apply le_trans with (mu m (fun x : A => 1 - (f x)%:~R)).
   + apply mu_monotonic => x.
     by case: (f x) (Hi x); case (g x).
   + by rewrite mu_stable_inv Hf subrr.
@@ -597,9 +599,9 @@ Lemma mu_bool_negb1 m f g :
   mu m (fun x => (g x)%:~R) = 1.
 Proof.
 move => Hi Hf.
-apply ler_anti; apply /andP; split.
+apply le_anti; apply /andP; split.
 - by apply mu_stable_le1 => x /=; case (g x).
-  apply ler_trans with (mu m (fun x : A => 1 - (f x)%:~R)).
+  apply le_trans with (mu m (fun x : A => 1 - (f x)%:~R)).
   + by rewrite mu_stable_inv Hf subr0.
   + apply mu_monotonic => x.
     by move: (Hi x); case (f x); case (g x).
@@ -779,7 +781,7 @@ The distribution associated to [flip ()] is
 
 Notation "[1/2]" := (2%:~R)^-1.
 
-Instance flip_mon :
+#[export] Instance flip_mon :
   monotonic (fun (f : bool -> rat) => [1/2] * (f true) + [1/2] * (f false)).
 Proof.
 move=> f g Hfg.
@@ -806,9 +808,7 @@ Qed.
 
 Lemma flip_prob : flip (fun x => 1) = 1.
 Proof.
-rewrite /flip /= !mulr1 -div1r addf_div //=.
-rewrite mul1r -intrD -intrM.
-exact: divrr.
+by rewrite /flip /= !mulr1 -div1r addf_div //=.
 Qed.
 
 Lemma flip_true : flip (fun b => (b%:~R)) = [1/2].
@@ -857,7 +857,7 @@ by rewrite Num.Theory.invr_gt0; auto.
 Qed.
 
 
-Instance finite_mon (c : A -> rat) :
+#[export] Instance finite_mon (c : A -> rat) :
   monotonic (fun f => (\sum_(i <- p | 0 < c i) (c i * f i)) / weight c).
 Proof using.
 move=> f g Hfg.
@@ -952,7 +952,7 @@ move => Ha.
 rewrite Finite_simpl finite_simpl big1_seq ?mul0r // => i.
 case (altP (i =P a)) => [-> /andP [H1 H2] | -].
 - move: Ha => [| Hco]; first by case: (a \in points d) H2.
-  by move: H1; rewrite ltrNge /= Hco.
+  by move: H1; rewrite ltNge /= Hco.
 - by rewrite mulr0.
 Qed.
 
@@ -984,7 +984,7 @@ Proof.
 exists (upoints p) (fun A => 1%:~R).
 case: p; case => [|a s _] //=.
 rewrite /weight big_cons /=.
-apply ltr_le_trans with 1; first by [].
+apply lt_le_trans with 1; first by [].
 rewrite Num.Theory.ler_addl.
 exact: weight_nonneg.
 Defined.
@@ -1135,7 +1135,7 @@ Lemma mu_bool_cond m (f g : A -> bool) :
   mu m (fun x => (f x)%:~R) = 1 ->
   mu m (fun x => (g x)%:~R) = mu m (fun x => (f x && g x)%:~R).
 Proof.
-move=> H; apply ler_asym; apply/andP; split.
+move=> H; apply le_anti; apply/andP; split.
 - rewrite -[X in (_ <= X)]addr0.
   have <- : (mu m) (fun x : A => (~~ f x && g x)%:~R) = 0.
     by move: H; apply mu_bool_negb0 => x; case: (f x).
@@ -1153,10 +1153,10 @@ Proof.
 move=> Hg H.
 have H0g x : 0 <= g x by have:= Hg x => /andP [].
 have Hg1 x : g x <= 1 by have:= Hg x => /andP [].
-apply ler_asym; apply/andP; split.
+apply le_anti; apply/andP; split.
 - rewrite -[X in (_ <= X)]addr0.
   have <- : (mu m) (fun x : A => ((~~ f x)%:~R * g x)) = 0.
-    apply ler_asym; apply/andP; split.
+    apply le_anti; apply/andP; split.
     + rewrite -(subrr 1) -{3}H -mu_bool_negb.
       apply mu_monotonic => x /=.
       by case: (f x) => /=; rewrite ?mul0r ?mul1r.

@@ -230,7 +230,7 @@ Proof.
 elim/last_ind: s => [//=| s sn IHs] /= Hsort.
 move/(_ (sorted_rconsK Hsort)): IHs => [Hsum Hlast]; split.
 - rewrite -{2}(revK (rcons s sn)) rev_rcons sumn_rev /= [sn + _]addnC sumn_rev.
-  rewrite size_rcons -addn1 iota_add /= sumn_cat /= add0n addn0.
+  rewrite size_rcons -addn1 iotaD /= sumn_cat /= add0n addn0.
   apply (leq_add Hsum).
   case/lastP: s Hsort Hlast {Hsum} => [//= | s sn1] /=.
   rewrite !size_rcons !last_rcons /= -!cats1 -catA cat1s => /sorted_catR /=.
@@ -246,7 +246,7 @@ Proof.
 elim/last_ind: s => [//= | s sn IHs] /= Hsort.
 have:= sorted_ltn_ind Hsort.
 rewrite -{2 5}(revK (rcons s sn)) rev_rcons sumn_rev /= [sn + _]addnC sumn_rev.
-rewrite size_rcons -{1 3 4}addn1 iota_add /= sumn_cat /= add0n addn0 cats1.
+rewrite size_rcons -{1 3 4}addn1 iotaD /= sumn_cat /= add0n addn0 cats1.
 rewrite last_rcons => [] [_ Hsn].
 have [Hsum _] := sorted_ltn_ind (sorted_rconsK Hsort).
 by move=> /esym/(leq_addE Hsum Hsn) [/esym/(IHs (sorted_rconsK Hsort)) <- <-].

@@ -7,7 +7,7 @@
 ##         #     GNU Lesser General Public License Version 2.1          ##
 ##         #     (see LICENSE file for the text of the license)         ##
 ##########################################################################
-## GNUMakefile for Coq 8.13.2
+## GNUMakefile for Coq 8.15.2
 
 # For debugging purposes (must stay here, don't move below)
 INITIAL_VARS := $(.VARIABLES)
@@ -29,14 +29,14 @@ MLLIBFILES        := $(COQMF_MLLIBFILES)
 CMDLINE_VFILES    := $(COQMF_CMDLINE_VFILES)
 INSTALLCOQDOCROOT := $(COQMF_INSTALLCOQDOCROOT)
 OTHERFLAGS        := $(COQMF_OTHERFLAGS)
-COQ_SRC_SUBDIRS   := $(COQMF_COQ_SRC_SUBDIRS)
+COQCORE_SRC_SUBDIRS := $(COQMF_COQ_SRC_SUBDIRS)
 OCAMLLIBS         := $(COQMF_OCAMLLIBS)
 SRC_SUBDIRS       := $(COQMF_SRC_SUBDIRS)
 COQLIBS           := $(COQMF_COQLIBS)
 COQLIBS_NOML      := $(COQMF_COQLIBS_NOML)
 CMDLINE_COQLIBS   := $(COQMF_CMDLINE_COQLIBS)
-LOCAL             := $(COQMF_LOCAL)
 COQLIB            := $(COQMF_COQLIB)
+COQCORELIB        := $(COQMF_COQCORELIB)
 DOCDIR            := $(COQMF_DOCDIR)
 OCAMLFIND         := $(COQMF_OCAMLFIND)
 CAMLFLAGS         := $(COQMF_CAMLFLAGS)
@@ -58,6 +58,15 @@ Makefile.conf: _CoqProject
 # For retro-compatibility reasons they can be put in the _CoqProject, but this
 # practice is discouraged since _CoqProject better not contain make specific
 # code (be nice to user interfaces).
+
+# set KEEP_ERROR to prevent make from deleting files produced by failing rules.
+# For instance if coqc creates a .vo but then fails to native compile,
+# the .vo will be deleted unless KEEP_ERROR is nonempty.
+# May confuse make so use only for debugging.
+KEEP_ERROR?=
+ifneq (,$(KEEP_ERROR))
+.DELETE_ON_ERROR:
+endif
 
 # Print shell commands (set to non empty)
 VERBOSE ?=
@@ -81,6 +90,7 @@ else
 STDTIME?=command time -f $(TIMEFMT)
 endif
 
+COQBIN?=
 ifneq (,$(COQBIN))
 # add an ending /
 COQBIN:=$(COQBIN)/
@@ -90,6 +100,7 @@ endif
 COQC     ?= "$(COQBIN)coqc"
 COQTOP   ?= "$(COQBIN)coqtop"
 COQCHK   ?= "$(COQBIN)coqchk"
+COQNATIVE ?= "$(COQBIN)coqnative"
 COQDEP   ?= "$(COQBIN)coqdep"
 COQDOC   ?= "$(COQBIN)coqdoc"
 COQPP    ?= "$(COQBIN)coqpp"
@@ -97,9 +108,9 @@ COQMKFILE ?= "$(COQBIN)coq_makefile"
 OCAMLLIBDEP ?= "$(COQBIN)ocamllibdep"
 
 # Timing scripts
-COQMAKE_ONE_TIME_FILE ?= "$(COQLIB)/tools/make-one-time-file.py"
-COQMAKE_BOTH_TIME_FILES ?= "$(COQLIB)/tools/make-both-time-files.py"
-COQMAKE_BOTH_SINGLE_TIMING_FILES ?= "$(COQLIB)/tools/make-both-single-timing-files.py"
+COQMAKE_ONE_TIME_FILE ?= "$(COQCORELIB)/tools/make-one-time-file.py"
+COQMAKE_BOTH_TIME_FILES ?= "$(COQCORELIB)/tools/make-both-time-files.py"
+COQMAKE_BOTH_SINGLE_TIMING_FILES ?= "$(COQCORELIB)/tools/make-both-single-timing-files.py"
 BEFORE ?=
 AFTER ?=
 
@@ -158,7 +169,7 @@ destination_path = $(if $(DESTDIR),$(DESTDIR)/$(call windrive_path,$(1)),$(1))
 
 # Installation paths of libraries and documentation.
 COQLIBINSTALL ?= $(call destination_path,$(COQLIB)/user-contrib)
-COQDOCINSTALL ?= $(call destination_path,$(DOCDIR)/user-contrib)
+COQDOCINSTALL ?= $(call destination_path,$(DOCDIR)/coq/user-contrib)
 COQTOPINSTALL ?= $(call destination_path,$(COQLIB)/toploop) # FIXME: Unused variable?
 
 ########## End of parameters ##################################################
@@ -208,8 +219,36 @@ COQEXTRAFLAGS?=
 COQCHKEXTRAFLAGS?=
 COQDOCEXTRAFLAGS?=
 
+# Find the last argument of the form "-native-compiler FLAG"
+COQUSERNATIVEFLAG:=$(strip \
+$(subst -native-compiler-,,\
+$(lastword \
+$(filter -native-compiler-%,\
+$(subst -native-compiler ,-native-compiler-,\
+$(strip $(COQEXTRAFLAGS)))))))
+
+COQFILTEREDEXTRAFLAGS:=$(strip \
+$(filter-out -native-compiler-%,\
+$(subst -native-compiler ,-native-compiler-,\
+$(strip $(COQEXTRAFLAGS)))))
+
+COQACTUALNATIVEFLAG:=$(lastword $(COQMF_COQ_NATIVE_COMPILER_DEFAULT) $(COQMF_COQPROJECTNATIVEFLAG) $(COQUSERNATIVEFLAG))
+
+ifeq '$(COQACTUALNATIVEFLAG)' 'yes'
+  COQNATIVEFLAG="-w" "-deprecated-native-compiler-option" "-native-compiler" "ondemand"
+  COQDONATIVE="yes"
+else
+ifeq '$(COQACTUALNATIVEFLAG)' 'ondemand'
+  COQNATIVEFLAG="-w" "-deprecated-native-compiler-option" "-native-compiler" "ondemand"
+  COQDONATIVE="no"
+else
+  COQNATIVEFLAG="-w" "-deprecated-native-compiler-option" "-native-compiler" "no"
+  COQDONATIVE="no"
+endif
+endif
+
 # these flags do NOT contain the libraries, to make them easier to overwrite
-COQFLAGS?=-q $(OTHERFLAGS) $(COQEXTRAFLAGS)
+COQFLAGS?=-q $(OTHERFLAGS) $(COQFILTEREDEXTRAFLAGS) $(COQNATIVEFLAG)
 COQCHKFLAGS?=-silent -o $(COQCHKEXTRAFLAGS)
 COQDOCFLAGS?=-interpolate -utf8 $(COQDOCEXTRAFLAGS)
 
@@ -218,9 +257,14 @@ COQDOCLIBS?=$(COQLIBS_NOML)
 # The version of Coq being run and the version of coq_makefile that
 # generated this makefile
 COQ_VERSION:=$(shell $(COQC) --print-version | cut -d " " -f 1)
-COQMAKEFILE_VERSION:=8.13.2
+COQMAKEFILE_VERSION:=8.15.2
 
-COQSRCLIBS?= $(foreach d,$(COQ_SRC_SUBDIRS), -I "$(COQLIB)/$(d)")
+# COQ_SRC_SUBDIRS is for user-overriding, usually to add
+# `user-contrib/Foo` to the includes, we keep COQCORE_SRC_SUBDIRS for
+# Coq's own core libraries, which should be replaced by ocamlfind
+# options at some point.
+COQ_SRC_SUBDIRS?=
+COQSRCLIBS?= $(foreach d,$(COQCORE_SRC_SUBDIRS), -I "$(COQCORELIB)/$(d)") $(foreach d,$(COQ_SRC_SUBDIRS), -I "$(COQLIB)/$(d)")
 
 CAMLFLAGS+=$(OCAMLLIBS) $(COQSRCLIBS)
 # ocamldoc fails with unknown argument otherwise
@@ -715,9 +759,13 @@ else
 TIMING_EXTRA =
 endif
 
-$(VOFILES): %.vo: %.v
+$(VOFILES): %.vo: %.v | $(VDFILE)
 	$(SHOW)COQC $<
 	$(HIDE)$(TIMER) $(COQC) $(COQDEBUG) $(TIMING_ARG) $(COQFLAGS) $(COQLIBS) $< $(TIMING_EXTRA)
+ifeq ($(COQDONATIVE), "yes")
+	$(SHOW)COQNATIVE $@
+	$(HIDE)$(COQNATIVE) $(COQLIBS) $@
+endif
 
 # FIXME ?merge with .vo / .vio ?
 $(GLOBFILES): %.glob: %.v
@@ -820,13 +868,14 @@ opt:
 printenv::
 	$(warning printenv is deprecated)
 	$(warning write extensions in Makefile.local or include Makefile.conf)
-	@echo 'LOCAL = $(LOCAL)'
 	@echo 'COQLIB = $(COQLIB)'
+	@echo 'COQCORELIB = $(COQCORELIB)'
 	@echo 'DOCDIR = $(DOCDIR)'
 	@echo 'OCAMLFIND = $(OCAMLFIND)'
 	@echo 'HASNATDYNLINK = $(HASNATDYNLINK)'
 	@echo 'SRC_SUBDIRS = $(SRC_SUBDIRS)'
 	@echo 'COQ_SRC_SUBDIRS = $(COQ_SRC_SUBDIRS)'
+	@echo 'COQCORE_SRC_SUBDIRS = $(COQCORE_SRC_SUBDIRS)'
 	@echo 'OCAMLFIND = $(OCAMLFIND)'
 	@echo 'PP = $(PP)'
 	@echo 'COQFLAGS = $(COQFLAGS)'
@@ -840,10 +889,10 @@ printenv::
 .merlin:
 	$(SHOW)'FILL .merlin'
 	$(HIDE)echo 'FLG $(COQMF_CAMLFLAGS)' > .merlin
-	$(HIDE)echo 'B $(COQLIB)' >> .merlin
-	$(HIDE)echo 'S $(COQLIB)' >> .merlin
-	$(HIDE)$(foreach d,$(COQ_SRC_SUBDIRS), \
-		echo 'B $(COQLIB)$(d)' >> .merlin;)
+	$(HIDE)echo 'B $(COQCORELIB)' >> .merlin
+	$(HIDE)echo 'S $(COQCORELIB)' >> .merlin
+	$(HIDE)$(foreach d,$(COQCORE_SRC_SUBDIRS), \
+		echo 'B $(COQCORELIB)$(d)' >> .merlin;)
 	$(HIDE)$(foreach d,$(COQ_SRC_SUBDIRS), \
 		echo 'S $(COQLIB)$(d)' >> .merlin;)
 	$(HIDE)$(foreach d,$(SRC_SUBDIRS), echo 'B $(d)' >> .merlin;)
@@ -864,6 +913,11 @@ debug:
 .PHONY: debug
 
 .DEFAULT_GOAL := all
+
+# Users can create Makefile.local-late to hook into double-colon rules
+# or add other needed Makefile code, using defined
+# variables if necessary.
+-include Makefile.local-late
 
 # Local Variables:
 # mode: makefile-gmake

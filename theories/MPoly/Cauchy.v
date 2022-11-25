@@ -93,13 +93,13 @@ Let vecmx_index : 'I_(m * n) -> 'I_m * 'I_n :=
 
 Lemma vecmx_indexK i : mxvec_index (vecmx_index i).1 (vecmx_index i).2 = i.
 Proof.
-rewrite /vecmx_index/mxvec_index/prod_curry/=.
+rewrite /vecmx_index/mxvec_index/uncurry/=.
 case H : (enum_val (cast_ord (esym (mxvec_cast m n)) i)) => /= [a b].
 by rewrite -H enum_valK cast_ordKV.
 Qed.
 Lemma mxvec_indexK i j : vecmx_index (mxvec_index i j) = (i, j).
 Proof.
-rewrite /vecmx_index/mxvec_index/prod_curry/=.
+rewrite /vecmx_index/mxvec_index/uncurry/=.
 by rewrite cast_ordK enum_rankK.
 Qed.
 
@@ -114,7 +114,7 @@ Lemma big_mxvec_index P F :
     \big[op/idx]_(j < n | P (mxvec_index i j)) F (mxvec_index i j).
 Proof.
 rewrite pair_big_dep.
-rewrite (reindex (prod_curry mxvec_index)); first last.
+rewrite (reindex (uncurry mxvec_index)); first last.
   by apply: (subon_bij _ (curry_mxvec_bij m n)).
 by apply eq_big => [] [i j].
 Qed.

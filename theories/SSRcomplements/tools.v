@@ -233,7 +233,7 @@ Proof. by rewrite count_uniq_mem ?iota_uniq // mem_iota. Qed.
 Lemma iota_ltn a b : b <= a -> [seq i <- iota 0 a | i < b] = iota 0 b.
 Proof.
 move=> Hab.
-rewrite -(subnKC Hab) iota_add add0n filter_cat.
+rewrite -(subnKC Hab) iotaD add0n filter_cat.
 rewrite -[RHS]cats0; congr (_ ++ _).
 - rewrite (eq_in_filter (a2 := predT)) ?filter_predT //.
   by move=> i /=; rewrite mem_iota add0n /= => ->.
@@ -246,9 +246,9 @@ Lemma iota_geq a b : [seq i <- iota 0 a | b <= i] = iota b (a - b).
 Proof.
 (* Note: The equational proof is longer *)
 elim: a => [//=| n IHn].
-rewrite -addn1 iota_add add0n /= filter_cat IHn {IHn} /=.
+rewrite -addn1 iotaD add0n /= filter_cat IHn {IHn} /=.
 case: leqP => Hb.
-- by rewrite addn1 (subSn Hb) -addn1 iota_add /= subnKC.
+- by rewrite addn1 (subSn Hb) -addn1 iotaD /= subnKC.
 - rewrite addn1 cats0.
   have := Hb; rewrite /leq => /eqP ->.
   by have := ltnW Hb; rewrite /leq => /eqP ->.
@@ -456,7 +456,7 @@ case: (leqP n k) => Hk.
 - move Hdiff : (n - k) => d; move: Hdiff => /eqP.
   rewrite -(eqn_add2r k) subnK; last exact: ltnW.
   move/eqP -> => {n Hk}.
-  rewrite addnC iota_add filter_cat map_id add0n.
+  rewrite addnC iotaD filter_cat map_id add0n.
   rewrite (eq_in_filter (a2 := pred0)); first last.
     move=> i; rewrite mem_iota add0n => /andP [_ Hi].
     by move: Hi; rewrite ltnNge => /negbTE => ->.

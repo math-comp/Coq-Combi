@@ -25,25 +25,25 @@ Class Order {A} (E:relation A)  (R:relation A) :=
 
 Generalizable Variables A E R.
 
-Instance OrderEqRefl `{Order A E R} : Reflexive E.
+#[export] Instance OrderEqRefl `{Order A E R} : Reflexive E.
 destruct H as  (rO,aO,tO).
 intros x.
 rewrite <- aO; intuition.
 Qed.
 
-Instance OrderEqSym `{Order A E R} : Symmetric E.
+#[export] Instance OrderEqSym `{Order A E R} : Symmetric E.
 destruct H as (rO,aO,tO).
 intros x y e.
 pose (aO x y); pose (aO y x); intuition.
 Qed.
 
-Instance OrderEqTrans `{Order A E R} : Transitive E.
+#[export] Instance OrderEqTrans `{Order A E R} : Transitive E.
 destruct H as (rO,aO,tO).
 intros x y z e1 e2.
 pose (aO x y); pose (aO y z); pose (aO x z); pose (tO x y z); pose (tO z y x); intuition.
 Qed.
 
-Instance OrderEquiv `{Order A E R} : Equivalence E.
+#[export] Instance OrderEquiv `{Order A E R} : Equivalence E.
 split; auto with *.
 apply OrderEqTrans.
 Qed.
@@ -62,9 +62,9 @@ intros. split with Oeq. apply OrderEquiv.
 Defined.
 
 (*
-Typeclasses Opaque equiv.
+#[export] Typeclasses Opaque equiv.
 
-Instance OrdEquiv `(o:ord A) : Equivalence (equiv (A:=A)).
+#[export] Instance OrdEquiv `(o:ord A) : Equivalence (equiv (A:=A)).
 intros A (E,R,O); apply OrderEquiv.
 Qed.
 *)
@@ -317,7 +317,7 @@ Definition fun_ext A B (R:relation B) : relation (A -> B) :=
 Arguments fun_ext A [B] R.
 
 (** - [ ford f g ] := [ forall x, f x <= g x ] *)
-Program Instance ford A O {o:ord O} : ord (A -> O) :=
+#[export] Program Instance ford A O {o:ord O} : ord (A -> O) :=
   {Oeq:=fun_ext A (Oeq (A:=O)); Ole:=fun_ext A (Ole (A:=O))}.
 Next Obligation.
 abstract (split; unfold fun_ext; intros; intuition;
@@ -388,9 +388,9 @@ as stable_morphism.
 auto.
 Qed.
 
-Typeclasses Opaque monotonic stable.
+#[export] Typeclasses Opaque monotonic stable.
 
-Instance monotonic_stable `{o1:ord Oa} `{o2:ord Ob} (f : Oa -> Ob) {m:monotonic f}
+#[export] Instance monotonic_stable `{o1:ord Oa} `{o2:ord Ob} (f : Oa -> Ob) {m:monotonic f}
          :  stable  f.
 unfold monotonic, stable; simpl; intros.
 apply Ole_antisym; auto.
@@ -402,6 +402,7 @@ Record fmon `{o1:ord Oa} `{o2:ord Ob}:= mon
           {fmont :> Oa -> Ob;
            fmonotonic: monotonic fmont}.
 
+#[export]
 Existing Instance fmonotonic.
 
 Arguments mon [Oa o1 Ob o2] fmont {fmonotonic}.
@@ -433,7 +434,7 @@ Qed.
 #[export] Hint Resolve mon_simpl : core.
 
 
-Instance fstable `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> Ob) : stable f.
+#[export] Instance fstable `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> Ob) : stable f.
 intros; apply monotonic_stable; auto.
 Qed.
 
@@ -451,7 +452,7 @@ intros; apply (fstable f); auto.
 Qed.
 #[export] Hint Resolve fmon_eq : core.
 
-Program Instance fmono Oa Ob {o1:ord Oa} {o2:ord Ob} : ord (Oa -m> Ob)
+#[export] Program Instance fmono Oa Ob {o1:ord Oa} {o2:ord Ob} : ord (Oa -m> Ob)
    := {Oeq := fun (f g : Oa-m> Ob)=> forall x, f x == g x;
        Ole := fun (f g : Oa-m> Ob)=> forall x, f x <= g x}.
 Next Obligation.
@@ -545,7 +546,7 @@ Class monotonic2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc) :=
     monotonic2_intro : forall (x y:Oa) (z t:Ob), x <= y -> z <= t -> f x z <= f y t.
 
 
-Instance mon2_intro `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc)
+#[export] Instance mon2_intro `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc)
     {m1:monotonic f} {m2: forall x, monotonic (f x)} : monotonic2 f | 10.
 red; intros.
 transitivity (f y z).
@@ -570,7 +571,7 @@ Definition mon_comp {A} `{o1: ord Oa} `{o2: ord Ob}
          (f:A -> Oa -> Ob) {mf:forall x, monotonic (f x)} : A -> Oa -m> Ob
          := fun x => mon (f x).
 
-Instance mon_fun_mon `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc)
+#[export] Instance mon_fun_mon `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc)
     {m:monotonic2 f} : monotonic (fun x => mon (f x)).
 red; intros; unfold mon_comp.
 intro z; apply m; auto.
@@ -579,12 +580,12 @@ Qed.
 Class stable2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc) :=
     stable2_intro : forall (x y:Oa) (z t:Ob), x==y -> z == t -> f x z == f y t.
 
-Instance monotonic2_stable2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
+#[export] Instance monotonic2_stable2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
     (f:Oa -> Ob -> Oc) {m:monotonic2 f} : stable2 f.
 red; intros; apply Ole_antisym; auto.
 Qed.
 
-Typeclasses Opaque monotonic2 stable2.
+#[export] Typeclasses Opaque monotonic2 stable2.
 
 Definition mon2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -> Oc)
      {mf:monotonic2 f} : Oa -m> Ob -m> Oc := mon (fun x => mon (f x)).
@@ -605,18 +606,18 @@ Qed.
 Definition fun2 `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -m> Oc)
      : Oa -> Ob -> Oc := fun x => f x.
 
-Instance fmon2_mon `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -m> Oc) :
+#[export] Instance fmon2_mon `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc} (f:Oa -> Ob -m> Oc) :
        forall x:Oa, monotonic (fun2 f x).
 intros; unfold fun2; auto.
 Qed.
 
-Instance fun2_monotonic `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
+#[export] Instance fun2_monotonic `{o1: ord Oa} `{o2: ord Ob} `{o3:ord Oc}
          (f:Oa -> Ob -m> Oc) {mf:monotonic f} : monotonic (fun2 f).
 intros;unfold fun2; auto.
 Qed.
 #[export] Hint Resolve fun2_monotonic : core.
 
-Instance fmonotonic2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc)
+#[export] Instance fmonotonic2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc)
          : monotonic2 (fun2 f).
 intros;unfold fun2;  apply mon2_intro; auto.
 red; intros.
@@ -632,7 +633,7 @@ Lemma mfun2_simpl : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -
 trivial.
 Qed.
 
-Instance mfun2_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
+#[export] Instance mfun2_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
          (f:Oa -m> Ob -m> Oc) x : monotonic (mfun2 f x).
 red; simpl; unfold fun2; intros; auto.
 Qed.
@@ -648,7 +649,7 @@ intros; unfold fun2,mon2; intros x y; auto.
 Qed.
 #[export] Hint Resolve mon2_fun2 fun2_mon2 : core.
 
-Instance fstable2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc)
+#[export] Instance fstable2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc)
                 : stable2 (fun2 f).
 intros; apply monotonic2_stable2; auto.
 Qed.
@@ -697,7 +698,7 @@ Qed.
 (** ** Sequences *)
 (** *** Usual order on natural numbers *)
 
-Program Instance natO : ord nat :=
+#[export] Program Instance natO : ord nat :=
     { Oeq := fun n m : nat => n = m;
        Ole := fun n m : nat => (n <= m)%nat}.
 Next Obligation.
@@ -742,7 +743,7 @@ Qed.
 Definition seq_lift_left {O} (f:nat -> O) n := fun k => f (n+k)%nat.
 
 (* d'où venait le n avant que je le mette en forall?? *)
-Instance mon_seq_lift_left
+#[export] Instance mon_seq_lift_left
   : forall n {O} {o:ord O} (f:nat -> O) {m:monotonic f}, monotonic (seq_lift_left f n).
 red; intros; apply m ; simpl; auto with arith.
 Qed.
@@ -783,7 +784,7 @@ Qed.
 
 Definition seq_lift_right {O} (f:nat -> O) n := fun k => f (k+n)%nat.
 
-Instance mon_seq_lift_right
+#[export] Instance mon_seq_lift_right
    : forall n {O} {o:ord O} (f:nat -> O) {m:monotonic f}, monotonic (seq_lift_right f n).
 red; intros; apply m ; simpl; auto with arith.
 Qed.
@@ -828,7 +829,7 @@ Qed.
 (** *** Monotonicity and functions *)
 (** -  (shift f x) n = f n x *)
 
-Instance shift_mon_fun {A} `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> (A -> Ob)) :
+#[export] Instance shift_mon_fun {A} `{o1:ord Oa} `{o2:ord Ob} (f:Oa -m> (A -> Ob)) :
        forall x:A, monotonic (fun (y:Oa) => f y x).
 red; intros; apply (fmonotonic f); auto.
 Qed.
@@ -859,7 +860,7 @@ intros f g H x y.
 repeat rewrite shift_simpl; auto.
 Qed.
 
-Instance ishift_mon {A} `{o1:ord Oa} `{o2:ord Ob} (f:A -> (Oa -m> Ob)) :
+#[export] Instance ishift_mon {A} `{o1:ord Oa} `{o2:ord Ob} (f:A -> (Oa -m> Ob)) :
        monotonic (fun (y:Oa) (x:A) => f x y).
 red; intros; intro z.
 apply (fmonotonic (f z)); auto.
@@ -890,19 +891,19 @@ apply H.
 Qed.
 
 (*
-Instance shift_mon_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> (Ob -m> Oc))
+#[export] Instance shift_mon_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> (Ob -m> Oc))
      {mf:forall x, monotonic (f x)}, monotonic (f <o> x).
 red; unfold shift; intros; apply m; trivial.
 Defined.
 *)
 
-Instance shift_fun_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> (Ob -> Oc))
+#[export] Instance shift_fun_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> (Ob -> Oc))
      {m:forall x, monotonic (f x)} : monotonic (shift f).
 intros x y H z.
 repeat (rewrite shift_simpl); apply m; trivial.
 Qed.
 
-Instance shift_mon2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc)
+#[export] Instance shift_mon2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc)
      : monotonic2 (fun x y => f y x).
 apply mon2_intro.
 intros x y H z; auto.
@@ -917,7 +918,7 @@ Definition mshift `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} (f:Oa -m> Ob -m> Oc)
 
 Definition id O {o:ord O} : O -> O := fun x => x.
 
-Instance mon_id : forall {O:Type} {o:ord O}, monotonic (id O).
+#[export] Instance mon_id : forall {O:Type} {o:ord O}, monotonic (id O).
 auto.
 Qed.
 
@@ -926,7 +927,7 @@ Qed.
 
 Definition cte A  `{o1:ord Oa} (c:Oa) : A -> Oa := fun x => c.
 
-Instance mon_cte : forall `{o1:ord Oa} `{o2:ord Ob} (c:Ob), monotonic (cte Oa c).
+#[export] Instance mon_cte : forall `{o1:ord Oa} `{o2:ord Ob} (c:Ob), monotonic (cte Oa c).
 auto.
 Qed.
 
@@ -942,7 +943,7 @@ Add Parametric Morphism `{o1:ord Oa} `{o2:ord Ob} : (@cte Oa  Ob _)
 intros c1 c2 H x; simpl; auto.
 Qed.
 
-Instance mon_diag `{o1:ord Oa} `{o2:ord Ob}(f:Oa -m> (Oa -m> Ob))
+#[export] Instance mon_diag `{o1:ord Oa} `{o2:ord Ob}(f:Oa -m> (Oa -m> Ob))
      : monotonic (fun x => f x x).
 intros x y H; apply (fmonotonic2 f); auto.
 Qed.
@@ -1002,13 +1003,13 @@ Qed.
 
 (** - (f@g) x = f (g x) *)
 
-Instance monotonic_comp `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
+#[export] Instance monotonic_comp `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
    (f:Ob -> Oc){mf : monotonic f} (g:Oa -> Ob){mg:monotonic g} : monotonic (fun x => f (g x)).
 intros x y H; auto.
 Qed.
 #[export] Hint Resolve monotonic_comp : core.
 
-Instance monotonic_comp_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
+#[export] Instance monotonic_comp_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc}
    (f:Ob -m> Oc)(g:Oa -m> Ob) : monotonic (fun x => f (g x)).
 intros x y H; auto.
 Qed.
@@ -1045,14 +1046,14 @@ Qed.
 
 (** - (f@2 g) h x = f (g x) (h x) *)
 
-Instance mon_app2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}
+#[export] Instance mon_app2 `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}
       (f:Ob -> Oc -> Od) (g:Oa -> Ob) (h:Oa -> Oc)
       {mf:monotonic2 f}{mg:monotonic g} {mh:monotonic h}
       : monotonic (fun x => f (g x) (h x)).
 intros x y H; auto.
 Qed.
 
-Instance mon_app2_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}
+#[export] Instance mon_app2_mon `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc} `{o4:ord Od}
       (f:Ob -m> Oc -m> Od) (g:Oa -m> Ob) (h:Oa -m> Oc)
       : monotonic (fun x => f (g x) (h x)).
 intros x y H.
@@ -1113,7 +1114,7 @@ auto.
 Qed.
 #[export] Hint Resolve comp_monotonic_left : core.
 
-Instance comp_monotonic2 : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc},
+#[export] Instance comp_monotonic2 : forall `{o1:ord Oa} `{o2:ord Ob} `{o3:ord Oc},
              monotonic2 (@comp Oa _ Ob _ Oc _).
 red; intros.
 apply comp_le_compat; auto.
@@ -1409,13 +1410,13 @@ Qed.
 
 #[export] Hint Resolve islub_mlub islub_lub : core.
 
-Instance lub_mon `{c:cpo D} : monotonic lub.
+#[export] Instance lub_mon `{c:cpo D} : monotonic lub.
 intros; exact (lub_le_compat D o c).
 Qed.
 
 Definition Lub `{c:cpo D} : (nat -m> D) -m> D := mon lub.
 
-Instance monotonic_lub_comp {O} {o:ord O} `{c:cpo D} (f:O -> nat -> D){mf:monotonic2 f}:
+#[export] Instance monotonic_lub_comp {O} {o:ord O} `{c:cpo D} (f:O -> nat -> D){mf:monotonic2 f}:
          monotonic (fun x => mlub (f x)).
 intros; auto.
 Qed.
@@ -1490,7 +1491,7 @@ Definition lub_fun {A} `{c:cpo D} (h : nat -m> (A -> D)) : A -> D
                := fun x => mlub (h <o> x).
 
 (*
-Instance lub_fun_mon  {O} {o:ord O} `{c:cpo D} (h : nat -m> (O -> D))
+#[export] Instance lub_fun_mon  {O} {o:ord O} `{c:cpo D} (h : nat -m> (O -> D))
        {m:forall x, monotonic (h x)} : monotonic (lub_fun h).
 red; unfold lub_fun; intros.
 apply mlub_le_compat.
@@ -1499,7 +1500,7 @@ Qed.
 #[export] Hint Resolve lub_fun_mon : core.
 *)
 
-Instance lub_shift_mon  {O} {o:ord O} `{c:cpo D} (h : nat -m> (O -m> D))
+#[export] Instance lub_shift_mon  {O} {o:ord O} `{c:cpo D} (h : nat -m> (O -m> D))
           : monotonic (fun (x:O) => lub (mshift h x)).
 red; auto.
 Qed.
@@ -1508,7 +1509,7 @@ Qed.
 
 (** *** Functional cpos *)
 
-Program Instance fcpo {A: Type} `(c:cpo D) : cpo (A -> D) :=
+#[export] Program Instance fcpo {A: Type} `(c:cpo D) : cpo (A -> D) :=
   {D0 := fun x:A => (0:D); lub := fun f => lub_fun f}.
 Next Obligation. abstract (intros g; auto). Defined.
 Next Obligation.
@@ -1534,7 +1535,7 @@ Qed.
 (** ** Cpo of monotonic functions *)
 
 
-Program Instance fmon_cpo {O} {o:ord O} `{c:cpo D} : cpo (O -m> D) :=
+#[export] Program Instance fmon_cpo {O} {o:ord O} `{c:cpo D} : cpo (O -m> D) :=
   { D0  := mon (cte O (0:D));
     lub := fun h:nat -m> (O -m> D) => mon (fun (x:O) => lub (cpo:=c) (mshift h x))}.
 Next Obligation. unfold cte; simpl; auto. Defined.
@@ -1546,7 +1547,7 @@ trivial.
 Qed.
 #[export] Hint Resolve fmon_lub_simpl : core.
 
-Instance mon_fun_lub : forall {O} {o:ord O} `{c:cpo D}
+#[export] Instance mon_fun_lub : forall {O} {o:ord O} `{c:cpo D}
          (h:nat -m> (O -> D)) {mh:forall n, monotonic (h n)}, monotonic (lub h).
 red; intros; simpl; auto.
 unfold lub_fun; apply mlub_le_compat.
@@ -1554,7 +1555,7 @@ apply (shift_fun_mon h x y); trivial.
 Qed.
 
 (*
-Instance mon_lub : forall {O} {o:ord O} `{c:cpo D}
+#[export] Instance mon_lub : forall {O} {o:ord O} `{c:cpo D}
          (h:nat -m> (O -m> D)), monotonic (mlub h).
 intros; simpl; auto.
 Qed.
@@ -1599,7 +1600,7 @@ Qed.
 #[export] Hint Resolve double_lub_shift : core.
 
 (*
-Instance mlub_monotonic `{c:cpo D} (h : nat -> nat ->  D) {m:monotonic2 h}:
+#[export] Instance mlub_monotonic `{c:cpo D} (h : nat -> nat ->  D) {m:monotonic2 h}:
        monotonic (fun m => mlub (h m)).
 red; intros.
 apply mlub_le_compat; intro z; auto.
@@ -1613,7 +1614,7 @@ apply Oeq_trans with (1:= diag h).
 
 Qed.
 
-Instance mlub_shift_monotonic `{c:cpo D} (h : nat -> nat ->  D) {m:monotonic2 h}:
+#[export] Instance mlub_shift_monotonic `{c:cpo D} (h : nat -> nat ->  D) {m:monotonic2 h}:
        monotonic (fun m => mlub (h <o> m)).
 red; intros.
 apply mlub_le_compat; intro z.
@@ -1679,7 +1680,7 @@ Qed.
 Class continuous `{c1:cpo D1} `{c2:cpo D2} (f:D1 -m> D2) :=
     cont_intro : forall (h : nat -m> D1), f (lub h) <= lub (f @ h).
 
-Typeclasses Opaque continuous.
+#[export] Typeclasses Opaque continuous.
 
 Lemma continuous_eq_compat : forall `{c1:cpo D1} `{c2:cpo D2}(f g:D1 -m> D2),
                   f == g -> continuous f -> continuous g.
@@ -1706,7 +1707,7 @@ Qed.
 
 
 (** - mon0 x == 0 *)
-Instance cont0  `{c1:cpo D1} `{c2:cpo D2} : continuous (mon (cte D1 (0:D2))).
+#[export] Instance cont0  `{c1:cpo D1} `{c2:cpo D2} : continuous (mon (cte D1 (0:D2))).
 red; simpl; intros; unfold cte; auto.
 Qed.
 
@@ -1743,7 +1744,7 @@ transitivity (lub ((F @2 (mon (cte nat k))) h)); auto.
 apply lub_le_compat; simpl; auto.
 Qed.
 
-Typeclasses Opaque continuous2.
+#[export] Typeclasses Opaque continuous2.
 
 Lemma continuous2_eq_compat :
    forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f g : D1 -m> D2 -m> D3),
@@ -1903,7 +1904,7 @@ Qed.
 
 (** ** Cpo of continuous functions *)
 
-Instance lub_continuous `{c1:cpo D1} `{c2:cpo D2}
+#[export] Instance lub_continuous `{c1:cpo D1} `{c2:cpo D2}
      (f:nat -m> (D1 -m> D2)) {cf:forall n, continuous (f n)}
      : continuous  (lub f).
 red; intros.
@@ -1915,7 +1916,7 @@ Qed.
 
 Record fcont `{c1:cpo D1} `{c2:cpo D2}: Type
      := cont {fcontm :> D1 -m> D2; fcontinuous : continuous fcontm}.
-Existing Instance fcontinuous.
+#[export] Existing Instance fcontinuous.
 
 #[export] Hint Resolve fcontinuous : core.
 Arguments fcont D1 [o][c1] D2 {o0}{c2}.
@@ -1927,7 +1928,7 @@ Infix "-c>" := fcont (at level 30, right associativity) : O_scope.
 
 Definition fcont_fun `{c1:cpo D1} `{c2:cpo D2} (f:D1 -c> D2) : D1 -> D2 := fun x => f x.
 
-Program Instance fcont_ord `{c1:cpo D1} `{c2:cpo D2} : ord (D1 -c> D2)
+#[export] Program Instance fcont_ord `{c1:cpo D1} `{c2:cpo D2} : ord (D1 -c> D2)
   := {Oeq := fun f g => forall x, f x == g x; Ole := fun f g =>  forall x, f x <= g x}.
 Next Obligation.
 abstract (split; intuition; red; intros; transitivity (y x0); auto).
@@ -1967,7 +1968,7 @@ Qed.
 
 Definition fcont0 D1 `{c1:cpo D1} D2 `{c2:cpo D2} : D1 -c> D2 := cont (mon (cte D1 (0:D2))).
 
-Instance fcontm_monotonic : forall `{c1:cpo D1} `{c2:cpo D2},
+#[export] Instance fcontm_monotonic : forall `{c1:cpo D1} `{c2:cpo D2},
          monotonic (fcontm (D1:=D1) (D2:=D2)).
 intros; auto.
 Qed.
@@ -1975,7 +1976,7 @@ Qed.
 Definition Fcontm D1 `{c1:cpo D1} D2 `{c2:cpo D2} : (D1 -c> D2) -m> (D1 -m> D2) :=
      mon (fcontm (D1:=D1) (D2:=D2)).
 
-Instance fcont_lub_continuous :
+#[export] Instance fcont_lub_continuous :
     forall `{c1:cpo D1} `{c2:cpo D2} (f:nat -m> (D1 -c> D2)),
     continuous (lub (D:=D1 -m> D2) (Fcontm D1 D2 @ f)).
 intros; apply lub_continuous.
@@ -1985,7 +1986,7 @@ Qed.
 Definition fcont_lub `{c1:cpo D1} `{c2:cpo D2} : (nat -m> (D1 -c> D2)) -> D1 -c> D2 :=
      fun f => cont (lub (D:=D1 -m> D2) (Fcontm D1 D2 @ f)).
 
-Program Instance fcont_cpo `{c1:cpo D1} `{c2:cpo D2} : cpo (D1-c> D2) :=
+#[export] Program Instance fcont_cpo `{c1:cpo D1} `{c2:cpo D2} : cpo (D1-c> D2) :=
   {D0:=fcont0 D1 D2; lub:=fcont_lub (D1:=D1) (D2:=D2)}.
 Next Obligation.
 abstract (intros; simpl; unfold cte; auto). Defined.
@@ -2005,7 +2006,7 @@ Lemma fcont_app_simpl : forall {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m>
 trivial.
 Qed.
 
-Instance ishift_continuous :
+#[export] Instance ishift_continuous :
    forall {A:Type} `{c1:cpo D1} `{c2:cpo D2} (f: A -> (D1 -c> D2)),
           continuous (ishift f).
 red; intros; intro x.
@@ -2017,7 +2018,7 @@ Qed.
 Definition fcont_ishift {A:Type} `{c1:cpo D1} `{c2:cpo D2} (f: A -> (D1 -c> D2))
         : D1 -c> (A -> D2) := cont _ (fcontinuous:=ishift_continuous f).
 
-Instance mshift_continuous : forall {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m> (D1 -c> D2)),
+#[export] Instance mshift_continuous : forall {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m> (D1 -c> D2)),
          continuous (mshift (Fcontm D1 D2 @ f)).
 red; intros; intro x.
 simpl.
@@ -2041,7 +2042,7 @@ Lemma fcont_lub_simpl : forall `{c1:cpo D1} `{c2:cpo D2} (h:nat -m> D1 -c> D2)(x
 trivial.
 Qed.
 
-Instance cont_app_monotonic : forall `{o1:ord D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
+#[export] Instance cont_app_monotonic : forall `{o1:ord D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
             (p:forall k, continuous (f k)),
             monotonic (Ob:=D2 -c> D3) (fun (k:D1) => cont _ (fcontinuous:=p k)).
 red; simpl; intros.
@@ -2058,7 +2059,7 @@ forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}(f:D1 -m> D2 -m> D3)(p:forall k, co
 trivial.
 Qed.
 
-Instance cont2_continuous `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
+#[export] Instance cont2_continuous `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
            (p:continuous2 f) : continuous (cont_app f (continuous2_app f)).
 red; intros; rewrite cont_app_simpl; intro k; simpl.
 transitivity (lub (D:=D2 -m> D3) (f@h) k).
@@ -2073,12 +2074,12 @@ Definition cont2 `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
 := cont (cont_app f (continuous2_app f)).
 
 
-Instance Fcontm_continuous `{c1:cpo D1} `{c2:cpo D2} : continuous (Fcontm D1 D2).
+#[export] Instance Fcontm_continuous `{c1:cpo D1} `{c2:cpo D2} : continuous (Fcontm D1 D2).
 red; intros; auto.
 Qed.
 #[export] Hint Resolve Fcontm_continuous : core.
 
-Instance fcont_comp_continuous : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
+#[export] Instance fcont_comp_continuous : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
     (f:D2 -c> D3) (g:D1 -c> D2), continuous (f @ g).
 intros; apply (continuous_comp (fcontm f) (fcontm g)); auto.
 Qed.
@@ -2131,7 +2132,7 @@ Lemma fcont_Comp_simpl : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
 trivial.
 Qed.
 
-Instance fcont_Comp_continuous2
+#[export] Instance fcont_Comp_continuous2
    : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}, continuous2 (fcont_Comp D1 D2 D3).
 red; intros.
 change ((lub  f) @_ (lub g) <= lub (D:=D1 -c> D3) ((fcont_Comp D1 D2 D3 @2 f) g)).
@@ -2185,7 +2186,7 @@ intros; apply (fcontinuous f h).
 Qed.
 #[export] Hint Resolve fcont_continuous : core.
 
-Instance fcont_continuous2 : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
+#[export] Instance fcont_continuous2 : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
          (f:D1 -c> D2 -c> D3), continuous2 (Fcontm D2 D3 @ f).
 intros; apply continuous_continuous2; intros.
 change (continuous (f k)); auto.
@@ -2193,7 +2194,7 @@ apply (continuous_comp (Fcontm D2 D3) (fcontm f)); auto.
 Qed.
 #[export] Hint Resolve fcont_continuous2 : core.
 
-Instance cshift_continuous2 : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
+#[export] Instance cshift_continuous2 : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
          (f:D1 -c> D2 -c> D3), continuous2 (mshift (Fcontm D2 D3 @ f)).
 intros; auto.
 Qed.
@@ -2216,7 +2217,7 @@ trivial.
 Qed.
 
 (*
-Instance fcont_comp2_continuous `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} `{c4:cpo D4}
+#[export] Instance fcont_comp2_continuous `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} `{c4:cpo D4}
                 (f: D2 -c> D3 -c> D4) (g:D1 -c> D2) (h:D1 -c> D3)
      : continuous (((Fcontm D3 D4 @ f) @2 g) h).
 red; intros; simpl.
@@ -2264,7 +2265,7 @@ Qed.
 (** - Identity function is continuous *)
 *)
 
-Instance Id_mon : forall `{o1:ord Oa}, monotonic (fun x:Oa => x).
+#[export] Instance Id_mon : forall `{o1:ord Oa}, monotonic (fun x:Oa => x).
 red; trivial.
 Qed.
 
@@ -2709,7 +2710,7 @@ induction n; simpl; auto.
 Qed.
 #[export] Hint Resolve iter_incr : core.
 
-Instance iter_mon : forall `{c: cpo D} (f : D -m> D), monotonic (iter_ f).
+#[export] Instance iter_mon : forall `{c: cpo D} (f : D -m> D), monotonic (iter_ f).
 red; intros.
 induction H; simpl; auto.
 transitivity (iter_ f m); auto.
@@ -2761,7 +2762,7 @@ transitivity (g (iter_ (D:=D) f n)); auto.
 Qed.
 #[export] Hint Resolve fixp_le_compat : core.
 
-Instance fixp_monotonic `{c:cpo D} : monotonic fixp.
+#[export] Instance fixp_monotonic `{c:cpo D} : monotonic fixp.
 red; auto.
 Qed.
 
@@ -2777,7 +2778,7 @@ Lemma Fixp_simpl : forall `{c:cpo D} (f:D-m>D), Fixp D f = fixp f.
 trivial.
 Qed.
 
-Instance iter_monotonic `{c:cpo D} : monotonic iter.
+#[export] Instance iter_monotonic `{c:cpo D} : monotonic iter.
 red; intros f g H.
 intro n; induction n; simpl; intros; auto.
 transitivity (g (iter_ f n)); auto.
@@ -2852,7 +2853,7 @@ trivial.
 Qed.
 
 
-Instance Fixp_cont_continuous :  forall D `{c:cpo D}, continuous (Fixp_cont D).
+#[export] Instance Fixp_cont_continuous :  forall D `{c:cpo D}, continuous (Fixp_cont D).
 red; intros.
 rewrite Fixp_cont_simpl.
 transitivity (fixp (lub (Fcontm D D@h))); auto.
@@ -3255,7 +3256,7 @@ end.
 
 Definition fif {A} (b:bool) : A -> A -> A := fun e1 e2 => if b then e1 else e2.
 
-Instance fif_mon2 `{o:ord A} (b:bool) : monotonic2 (@fif _ b).
+#[export] Instance fif_mon2 `{o:ord A} (b:bool) : monotonic2 (@fif _ b).
 red; intros; case b; auto.
 Qed.
 
@@ -3302,7 +3303,7 @@ Qed.
 
 #[export] Hint Resolve fif_continuous_right fif_continuous_left fif_continuous_left2 : core.
 
-Instance Fif_continuous2 `{c:cpo A} (b:bool) : continuous2 (Fif (A:=A) b).
+#[export] Instance Fif_continuous2 `{c:cpo A} (b:bool) : continuous2 (Fif (A:=A) b).
 apply continuous_continuous2; auto.
 Qed.
 

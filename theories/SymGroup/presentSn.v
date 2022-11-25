@@ -1127,7 +1127,7 @@ have:= Hcode => /is_codeP Hcd Hsz.
 rewrite (sumn_nth_le (n := size c)) // /index_iota subn0.
 have [n] := ubnPgeq (size c); elim: n => [/= |m IHm] Hm.
   by rewrite !big_nil length1.
-rewrite -(addn1 m) iota_add !big_cat /= add0n !big_seq1.
+rewrite -(addn1 m) iotaD !big_cat /= add0n !big_seq1.
 rewrite perm_on_prods_length /=; first by rewrite (IHm (ltnW Hm)).
 - exact: leq_trans Hm Hsz.
 - by apply Hcd.
@@ -1407,7 +1407,7 @@ elim: n => [/= | n].
   by rewrite enum_codeszE /index_iota !big_seq1 /= addn0.
 move: (n.+1) => {}n. (* Workaround of shifting of n *)
 rewrite /index_iota !enum_codeszE big_flatten big_map -/enum_codesz.
-rewrite !subn0 -{2}addn1 iota_add add0n [iota 0 n.+1]lock /=.
+rewrite !subn0 -{2}addn1 iotaD add0n [iota 0 n.+1]lock /=.
 rewrite big_cat /= big_seq1 {2}[(0 :: iota 1 n)%N]lock /= => <-.
 rewrite big_distrr /=; apply eq_bigr => i _.
 rewrite big_distrl /= big_map; apply eq_bigr => j _.
@@ -1823,7 +1823,7 @@ Lemma wcord_cons c i :
   wcord (i :: c) = wcord c ++ map inord (rev (iota (size c - i) i)).
 Proof using.
 rewrite /wcord /wordcd -map_cat; congr (map _ _).
-rewrite size_rev [size (_ :: _)]/= -(addn1 (size c)) iota_add.
+rewrite size_rev [size (_ :: _)]/= -(addn1 (size c)) iotaD.
 rewrite !map_cat !flatten_cat /= cats0 !add0n !rev_cons.
 rewrite nth_rcons size_rev ltnn eq_refl.
 congr ((flatten _) ++ _); apply eq_in_map => j.
@@ -1866,10 +1866,10 @@ Proof using.
 move=> Hbl Hi1 Hi2.
 have Hbli : b - l <= i.-1 by rewrite -ltnS (ltn_predK Hi1).
 have -> : [:: i.-1; i : nat] = iota i.-1 2 by rewrite /= (ltn_predK Hi1).
-rewrite -{2}(subnKC Hbli) catA -iota_add.
+rewrite -{2}(subnKC Hbli) catA -iotaD.
 rewrite -addSnnS addn1 -subSn // (ltn_predK Hi1) -subSn; last by apply ltnW.
 have Hbli1 := leq_trans (ltnW Hi1) (leqnSn _).
-rewrite -{2}(subnKC Hbli1) -iota_add addnC (addnBA _ Hbli1).
+rewrite -{2}(subnKC Hbli1) -iotaD addnC (addnBA _ Hbli1).
 by rewrite (subnK Hi2) (subKn Hbl).
 Qed.
 
