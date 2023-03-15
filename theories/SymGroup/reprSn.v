@@ -234,7 +234,7 @@ Proof.
 case: n => // n; rewrite ltnS => Hn.
 apply/negP=> /eqP/cfunP /(_ 's_0)/eqP.
 rewrite cfunE cfun1E inE /= (odd_eltr Hn) /= expr1 -addr_eq0 -mulr2n.
-by have := Cchar; rewrite charf0P => /(_ 2) ->.
+by have := Cchar; rewrite charf0P => /(_ 2%nat) ->.
 Qed.
 
 Lemma triv_sign_not_sim n :
@@ -276,7 +276,7 @@ Qed.
 
 (** * Representations of the symmetric Group for n=2  *)
 
-Lemma NirrS2 : Nirr 'SG_2 = 2.
+Lemma NirrS2 : Nirr 'SG_2 = 2%nat.
 Proof using. by rewrite NirrSn card_intpartn. Qed.
 
 Lemma cast_IirrS2 (i : Iirr 'SG_2) :

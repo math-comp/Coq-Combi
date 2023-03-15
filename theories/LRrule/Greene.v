@@ -117,7 +117,7 @@ elim: n l => [|n IHn] [| l0 l].
 - by move=> _; have:= ltn_ord l0; rewrite ltn0.
 - rewrite (eq_filter (a2 := pred0)); first by rewrite filter_pred0.
   by move=> i /=; rewrite in_nil.
-- rewrite (enum_ordS n) /=.
+- rewrite (enum_ordSl n) /=.
   case: l0 => [[/=| l0] Hl0].
   + have -> : Ordinal Hl0 = ord0 by exact: val_inj.
     move/unlift_seqE => [l1] [/IHn {IHn} <- Hl].
@@ -339,13 +339,13 @@ Proof using.
 rewrite extractIE.
 elim: n wt P => [//= | n IHn].
 - by rewrite enum0.
-- case/tupleP=> w0 w P; rewrite enum_ordS /=.
+- case/tupleP=> w0 w P; rewrite enum_ordSl /=.
   set lft := map (lift ord0) _.
   suff : [seq tnth [tuple of w0 :: w] i | i <- lft & P i] =
          mask [seq P i | i <- lft] w.
     by case: (P ord0) => /= ->.
   rewrite /lft {lft} filter_map -map_comp -map_comp /= -(IHn w _) /=.
-  by rewrite (eq_map (f2 := tnth w));
+  by rewrite (eq_map (g := tnth w));
     last by move=> i /=; rewrite !(tnth_nth inh).
 Qed.
 
@@ -355,7 +355,7 @@ Proof using.
 rewrite !extractmaskE; case: wt => w /= _.
 elim: n w P1 P2 => [//= | n IHn] w P1 P2 H; first by rewrite enum0.
 case: w => [//= | w0 w]; first by rewrite !mask0.
-rewrite enum_ordS /= -map_comp -map_comp.
+rewrite enum_ordSl /= -map_comp -map_comp.
 case (boolP (P1 ord0)) => H1.
 - by rewrite (H ord0 H1) /= eq_refl; apply: IHn => i /=; apply: H.
 - case (boolP (P2 ord0)) => H2.
@@ -586,7 +586,7 @@ Lemma enumIMN : enum 'I_(M + N) = map lsh (enum 'I_M) ++ map rsh (enum 'I_N).
 Proof using.
 apply: (inj_map (@ord_inj (M + N))).
 rewrite map_cat -2!map_comp !val_enum_ord.
-rewrite (eq_map (f2 := (addn M) \o val)); last by [].
+rewrite (eq_map (g := (addn M) \o val)); last by [].
 by rewrite map_comp !val_enum_ord -iotaDl [M + 0]addnC iotaD.
 Qed.
 
@@ -836,7 +836,7 @@ apply/and4P; split.
   rewrite -(revK (extractpred (in_tuple (rev u)) _)) rev_sorted.
   rewrite !extractIE -map_rev -filter_rev.
   rewrite (eq_map
-             (f2 := fun i => tnth (in_tuple u) (cast_ord (size_rev u) (rev_ord i))));
+             (g := fun i => tnth (in_tuple u) (cast_ord (size_rev u) (rev_ord i))));
     first last.
     move=> i /=.
     by rewrite !(tnth_nth inh) /= nth_rev ?{2}(size_rev u) // -(size_rev u).
@@ -862,7 +862,7 @@ apply/and4P; split.
   rewrite map_rev val_enum_ord (nth_iota _ _ Hi) add0n.
   rewrite nth_rev size_map size_enum_ord; last by rewrite size_rev.
   rewrite [X in X - _](size_rev).
-  rewrite (eq_map (f2 := (fun i => (size u - i.+1)) \o val)); first last.
+  rewrite (eq_map (g := (fun i => (size u - i.+1)) \o val)); first last.
     by move=> j /=; rewrite {1}size_rev.
   rewrite map_comp val_enum_ord size_rev.
   have Hu : size u - i.+1 < size u by rewrite -subn_gt0 subKn.
@@ -939,7 +939,7 @@ Lemma shcol_cards sh :
 Proof using.
 elim: sh => [//= | s0 sh IHsh] /= /andP [Hhead Hpart].
 rewrite -map_comp.
-rewrite (eq_map (f2 := fun i : 'I_(_) => (nth 0 (conj_part sh) i).+1)); first last.
+rewrite (eq_map (g := fun i : 'I_(_) => (nth 0 (conj_part sh) i).+1)); first last.
   move=> i; rewrite /= cardsU.
   rewrite cards1 imset_comp card_imset; last exact: cast_ord_inj.
   rewrite card_imset; last exact: lshift_inj.
@@ -970,12 +970,12 @@ elim: sh s0 Hhead Hpart {IHsh} => [//= | s1 sh IHsh] /=.
     rewrite nth_nseq Hi (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
     by rewrite nth_nil.
   + case => [//= | s0]; rewrite ltnS => /IHl <- {IHl}.
-    rewrite (eq_map (f2 := (fun i => (nth 0 (l0 :: l) i).+1) \o val)) //.
+    rewrite (eq_map (g := (fun i => (nth 0 (l0 :: l) i).+1) \o val)) //.
     rewrite map_comp val_enum_ord /=.
     rewrite -[1]addn0 iotaDl -map_comp.
     pose f := fun i => (nth 0 l i).+1.
-    rewrite (eq_map (f2 := f)) //; apply esym.
-    rewrite (eq_map (f2 := f \o nat_of_ord)) //.
+    rewrite (eq_map (g := f)) //; apply esym.
+    rewrite (eq_map (g := f \o nat_of_ord)) //.
     by rewrite [map _ (enum _)]map_comp val_enum_ord /=.
 Qed.
 
@@ -1210,7 +1210,7 @@ rewrite enumIsize_to_word filter_cat map_cat -[RHS]cat0s; congr (_ ++ _).
 - rewrite (eq_in_filter (a2 := predT)); first last.
     by move=> i /= /mapP [j _ -> {i}]; rewrite imset_f.
   rewrite filter_predT -map_comp.
-  rewrite (eq_map (f2 := nth inh t0 \o val)); first last.
+  rewrite (eq_map (g := nth inh t0 \o val)); first last.
   + move=> i /=; rewrite (tnth_nth inh).
     rewrite {1 2}(to_word_cons t0 t) /= nth_cat.
     rewrite -{2}[size (to_word t)]addn0 ltn_add2l /=.
@@ -1237,10 +1237,10 @@ have /eq_map -> /= :
 rewrite {f} /= enumIsize_to_word filter_cat map_cat -[RHS]cats0; congr (_ ++ _).
 - rewrite (nth_map set0) /=; last by rewrite size_shrows size_map.
   rewrite filter_map /= -map_comp.
-  set f2 := (X in _ = map X _); rewrite (eq_map (f2 := f2)); first last.
-    rewrite /f2 {f2} => j /=; rewrite !(tnth_nth inh) /=.
+  set g := (X in _ = map X _); rewrite (eq_map (g := g)); first last.
+    rewrite /g {g} => j /=; rewrite !(tnth_nth inh) /=.
     by rewrite to_word_cons nth_cat ltn_ord.
-  congr (map f2 _) => {f2}.
+  congr (map g _) => {g}.
   apply: eq_filter => j /=; rewrite mem_imset; last exact lshift_recP.
   rewrite (nth_map set0) /cast_set_tab //=.
   by rewrite size_shrows size_map.
@@ -1287,13 +1287,13 @@ rewrite nth_enum_ord //= {13}to_word_cons.
 rewrite nth_ord_ltn map_cat mask_cat; last by rewrite 2!size_map size_enum_ord.
 rewrite -map_comp.
 set fr := (X in rcons (mask (map X _) _)).
-rewrite (eq_map (f2 := fr)); first last.
+rewrite (eq_map (g := fr)); first last.
   move=> j /=; rewrite inE in_set1 lrshift_recF /=.
   by rewrite (mem_imset _ _ lshift_recP).
 rewrite -map_comp.
-set f2 := (X in _ ++ mask (map X _) _).
-have {f2} /eq_map -> : f2 =1 mem ([set (Ordinal Hi)]).
-  move=> j; rewrite /f2 /= !inE.
+set g := (X in _ ++ mask (map X _) _).
+have {g} /eq_map -> : g =1 mem ([set (Ordinal Hi)]).
+  move=> j; rewrite /g /= !inE.
   rewrite [X in _ || X](_ : _ = false); first last.
     by apply/imsetP => [[k _] /eqP];  rewrite eq_sym lrshift_recF.
   rewrite orbF.

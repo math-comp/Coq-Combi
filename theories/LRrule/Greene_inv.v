@@ -231,7 +231,7 @@ Lemma rev_enum :
 Proof using.
 apply: (inj_map val_inj); rewrite /=.
 rewrite val_enum_ord map_rev -map_comp.
-rewrite [map (_ \o _) _](eq_map (f2 := (fun i => size w - i.+1) \o val)) //.
+rewrite [map (_ \o _) _](eq_map (g := (fun i => size w - i.+1) \o val)) //.
 rewrite map_comp val_enum_ord size_rev.
 apply: (eq_from_nth (x0 := 0)); first by rewrite size_rev size_map.
 move=> i; rewrite size_iota => Hi.

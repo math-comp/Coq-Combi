@@ -1214,7 +1214,7 @@ case: startrem => start [|rem]// Heq /(_ (ltn0Sn _)) lesmin [<- _].
 have:= lesmin; rewrite leq_min => /andP [lespos lessz].
 rewrite /add_ribbon_on !sumn_cat /= sumn_mapS.
 rewrite size_drop size_take -/(minn _ _).
-rewrite sumn_nseq mul1n -(take_take lespos) !addnA.
+rewrite sumn_nseq mul1n -(take_takel _ lespos) !addnA.
 rewrite ![_ + sumn (drop start _)]addnAC -sumn_cat cat_take_drop.
 rewrite ![_ + (_ - start) + _]addnAC addnBA //.
 rewrite minnE -addnA (subnKC (leq_subr _ _)) // 2![_ + pos]addnAC.

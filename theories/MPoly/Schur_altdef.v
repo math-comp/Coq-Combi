@@ -1505,9 +1505,9 @@ set mon := (M in 'a_(M)).
 suff /alt_alternate -> : mon i = mon (Ordinal ltan) => //.
   by rewrite -val_eqE /= (gtn_eqF ltai).
 apply/eqP; rewrite {}/mon !mnmE !mpartE //=.
-rewrite !mulmnE !mnm1E eqxx -val_eqE muln1 /= (gtn_eqF ltai) muln0 addn0.
+rewrite !mulmnE !mnm1E eqxx -val_eqE /= (gtn_eqF ltai) mul1n.
 rewrite addnAC -(eqn_add2r (a + i)) {1}(addnC a i) -!addnA.
-rewrite subn1 /= ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
+rewrite subn1 /= ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS // mul0n add0n.
 rewrite ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
 by rewrite ![n0 + _]addnC !addnA [_ + _ + a]addnAC Heq.
 Qed.
@@ -1537,24 +1537,24 @@ rewrite !mulmnE !mnm1E -val_eqE /=.
 have := startrem_leq p d.+1 i; rewrite startremeq => /(_ lt0rem) /= lesmin.
 case: (altP (j =P st)) => [/= eqjst |].
   subst j; apply/eqP.
-  rewrite (nth_add_ribbon_start _ lesmin) cycleij_j // eqxx muln1.
+  rewrite (nth_add_ribbon_start _ lesmin) cycleij_j // eqxx.
   rewrite addnAC -(eqn_add2r (st + i)) {1}(addnC st i) -!addnA.
-  rewrite subn1 /= ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
+  rewrite subn1 /= ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS // mul1n.
   rewrite ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
   rewrite ![n0 + _]addnC !addnA [_ + _ + i]addnAC [_ + _ + st]addnAC.
   by have:= startremE p d.+1 i; rewrite startremeq => ->.
 rewrite neq_ltn => /orP [ltjst | ltstj].
   rewrite cycleij_lt // nth_add_ribbon_lt_start //.
-  by rewrite (gtn_eqF (leq_trans ltjst lesti)) muln0 addn0.
+  by rewrite (gtn_eqF (leq_trans ltjst lesti)) addn0.
 case: (ltnP i j) => [/= ltij | leji].
   rewrite nth_add_ribbon_stop_lt // cycleij_gt //.
-  by rewrite (ltn_eqF ltij) muln0 addn0.
+  by rewrite (ltn_eqF ltij) addn0.
 rewrite -(ltn_predK ltstj) nth_add_ribbon_in //; first last.
   by rewrite (ltn_predK ltstj) ltstj leji.
 rewrite cycleij_in ?ltstj ?leji // inordK; first last.
   by rewrite (ltn_predK ltstj) ltnW.
 case: j ltstj leji => [[|j]//= Hj] _ /gtn_eqF ->.
-by rewrite muln0 addn0 addSnnS subnSK // subn1.
+by rewrite addSnnS subnSK // subn1.
 Qed.
 
 End AlternStraighten.

@@ -1247,7 +1247,7 @@ rewrite [RHS]mulrC -[RHS]mulr1; congr (_ * _ * _).
   have swap_inj : injective swap by apply (can_inj (g := swap)) => [] [r c].
   rewrite -[RHS]big_filter; set F := (X in \prod_(i <- _) X i).
   rewrite -[X in \prod_(i <- X) _]map_id.
-  rewrite (eq_map (f2 := swap \o swap)); last by move=> [r c].
+  rewrite (eq_map (g := swap \o swap)); last by move=> [r c].
   rewrite map_comp big_map.
   transitivity (\prod_(i <- enum_box_in p' |
                        (i.1 != Alpha) && (i.2 == Beta))  F (swap i)).

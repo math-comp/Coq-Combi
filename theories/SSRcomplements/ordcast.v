@@ -33,7 +33,7 @@ Unset Printing Implicit Defensive.
 Lemma enum_cast_ord m n (H : n = m):
   enum 'I_m = [seq cast_ord H i | i <- enum 'I_n].
 Proof.
-by subst m; rewrite /= (eq_map (f2 := id)) ?map_id // => i; apply: val_inj.
+by subst m; rewrite /= (eq_map (g := id)) ?map_id // => i; apply: val_inj.
 Qed.
 
 Lemma nth_ord_ltn i n (H : i < n) x0 : nth x0 (enum 'I_n) i = (Ordinal H).

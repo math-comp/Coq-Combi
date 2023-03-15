@@ -337,7 +337,7 @@ Lemma cycle_type_conjg s a : cycle_type (s ^ a)%g = cycle_type s.
 Proof using.
 apply esym; apply val_inj => /=.
 rewrite porbits_conjg; apply/perm_sortP => //=.
-rewrite [X in perm_eq X _](eq_map (f2 := fun X : {set T} => #|a @: X|)); first last.
+rewrite [X in perm_eq X _](eq_map (g := fun X : {set T} => #|a @: X|)); first last.
   by move => x;  apply esym; apply card_imset; exact: perm_inj.
 rewrite (map_comp (fun x => #{x})); apply: perm_map.
 apply uniq_perm.

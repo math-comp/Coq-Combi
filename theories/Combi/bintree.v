@@ -733,7 +733,7 @@ rewrite -rev_path /= last_rcons belast_rcons.
 have -> : rev (flipsz t2 :: p) =
           [seq flipsz t | t <- rcons [seq flipsz t' | t' <- rev p] t2].
   rewrite map_rev -rev_cons map_rev /=.
-  rewrite -map_comp (eq_map (f2 := id)); last by move=> x /=; rewrite flipszK.
+  rewrite -map_comp (eq_map (g := id)); last by move=> x /=; rewrite flipszK.
   by rewrite map_id.
 rewrite (map_path (b := pred0)
                   (e' := (fun t t' => trval t' \in rotations t))); first last.

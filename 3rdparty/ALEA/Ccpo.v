@@ -703,7 +703,7 @@ Qed.
        Ole := fun n m : nat => (n <= m)%nat}.
 Next Obligation.
 abstract (apply Build_Order; intros; try lia; auto with arith;
-          red; intros; apply le_trans with y; auto).
+          red; intros; apply Nat.le_trans with y; auto).
 Defined.
 
 Lemma le_Ole : forall n m, ((n <= m)%nat)-> n <= m.

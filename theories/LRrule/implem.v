@@ -195,7 +195,7 @@ elim: outer innev inner sh0 row0 => [//= | out0 out IHout] /= innev inner sh0 ro
 rewrite size_flatten /shape !map_flatten sumn_flatten.
 rewrite tsumnE; congr (sumn _).
 rewrite -[X in [seq sumn i | i <- X]]map_comp.
-rewrite (eq_map (f2 := map (fun row =>
+rewrite (eq_map (g := map (fun row =>
                LRyamtab_count_rec row.2 (behead inner) out (head 0 inner) row.1))).
 - by rewrite [RHS]map_comp (eq_map tsumnE) -!map_comp; exact: eq_map.
 - move=> s /=; rewrite -map_comp; apply eq_map => {s} [] [row sh] /=.
@@ -554,9 +554,9 @@ elim: row base shape => [| l0 row IHrow] [| b0 base] //= shape.
 move/eqP; rewrite eqSS => /eqP Hsize Hdom Hisrow Hskew Hincl.
 rewrite count_flatten -map_comp.
 set f1 := (X in map X); set rec := (X in map _ X).
-pose f2 := nat_of_bool \o (pred1 row) \o (@fst (seq nat) (seq nat)).
-have : {in rec, f1 =1 f2}.
-  rewrite /rec /f1 /f2 {rec f1 f2} => [[r shr]] /= Hr.
+pose g := nat_of_bool \o (pred1 row) \o (@fst (seq nat) (seq nat)).
+have : {in rec, f1 =1 g}.
+  rewrite /rec /f1 /g {rec f1 g} => [[r shr]] /= Hr.
   rewrite count_map.
   case: (altP (r =P row)) => [Hrow | /negbTE Hneq] /=.
   - subst r.
@@ -568,7 +568,7 @@ have : {in rec, f1 =1 f2}.
     exact: head_row_skew_yam Hinn Hisrow Hskew.
   - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
     by move=> y /=; rewrite eqseq_cons Hneq andbF.
-rewrite eq_in_map /rec /f2 => -> {f1 f2 rec}.
+rewrite eq_in_map /rec /g => -> {f1 g rec}.
 rewrite sumn_count /=.
 apply: (IHrow _ _ Hsize (dominate_tl Hdom) (is_row_consK Hisrow)
                (skew_yam_consK Hinn Hskew)).
@@ -594,9 +594,9 @@ move/eqP; rewrite eqSS => /eqP Hsize Hskew0 Hskew Hincl.
 have Hinn := is_part_skew_yam Hinn0 Hskew0.
 rewrite count_flatten -map_comp.
 set f1 := (X in map X); set rec := (X in map _ X).
-pose f2 := nat_of_bool \o (pred1 (row ++ sol)) \o (@fst (seq nat) (seq nat)).
-have : {in rec, f1 =1 f2}.
-  rewrite /rec /f1 /f2 {rec f1 f2} => [[r shr]] /= Hr.
+pose g := nat_of_bool \o (pred1 (row ++ sol)) \o (@fst (seq nat) (seq nat)).
+have : {in rec, f1 =1 g}.
+  rewrite /rec /f1 /g {rec f1 g} => [[r shr]] /= Hr.
   rewrite count_map.
   case: (altP (r =P (row ++ sol))) => [Heq | /negbTE Hneq] /=.
   - subst r.
@@ -610,7 +610,7 @@ have : {in rec, f1 =1 f2}.
     exact: head_row_skew_yam Hinn0 Hisrow (skew_yam_cat Hskew0 Hskew).
   - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
     by move=> y /=; rewrite eqseq_cons Hneq andbF.
-rewrite eq_in_map /rec /f2 => -> {f1 f2 rec}.
+rewrite eq_in_map /rec /g => -> {f1 g rec}.
 rewrite sumn_count /=.
 apply: (IHsh _ _ _ (is_row_consK Hisrow) Hsize Hskew0 (skew_yam_consK Hinn Hskew)).
 apply: (included_trans _ Hincl).
@@ -639,9 +639,9 @@ move/(_ _ inn inn0 row1 _ (path_sorted Hinn)
         (is_part_consK Hout) Hsize Hskewrec) : IHyamtab => Hrec.
 rewrite /= count_flatten -map_comp subSS -/(outer_shape _ _).
 set f1 := (X in map X); set rec := (X in map _ X).
-pose f2 := nat_of_bool \o (pred1 row1) \o (@fst (seq nat) (seq nat)).
-have : {in rec, f1 =1 f2}.
-  rewrite /rec /f1 /f2 {rec f1 f2} => [[rshift shrshift]] /= Hrshift.
+pose g := nat_of_bool \o (pred1 row1) \o (@fst (seq nat) (seq nat)).
+have : {in rec, f1 =1 g}.
+  rewrite /rec /f1 /g {rec f1 g} => [[rshift shrshift]] /= Hrshift.
   rewrite count_map /=.
   case: (altP (rshift =P row1)) => [Hrow1 | /negbTE Hneq] /=.
   - rewrite Hrow1 (eq_count (a2 := pred1 yamtab)); first last.
@@ -653,14 +653,14 @@ have : {in rec, f1 =1 f2}.
     exact: (skew_yam_catrK Hinnev Hsk1 Hsk2).
   - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
     by move=> y /=; rewrite eqseq_cons Hneq.
-rewrite eq_in_map /rec /f2 => -> {f1 f2 rec Hrec}.
+rewrite eq_in_map /rec /g => -> {f1 g rec Hrec}.
 rewrite !map_comp map_flatten -!map_comp sumn_count.
 rewrite count_flatten -map_comp.
 set f1 := (X in map X); set rowl := (X in map _ X).
-pose f2 := nat_of_bool \o (pred1 (drop (sh0 - inn0) row1)) \o
+pose g := nat_of_bool \o (pred1 (drop (sh0 - inn0) row1)) \o
                        (@fst (seq nat) (seq nat)).
-have : {in rowl, f1 =1 f2}.
-  rewrite /rowl /f1 /f2 {rowl f1 f2} => [[row shrow]] /= Hrow.
+have : {in rowl, f1 =1 g}.
+  rewrite /rowl /f1 /g {rowl f1 g} => [[row shrow]] /= Hrow.
   rewrite count_map /=.
   case: (altP (row =P (drop (sh0 - inn0) row1))) => [Hrow1 | /negbTE Hneq] /=.
   - have Hshrow := yamtab_rowsP Hrow.
@@ -683,7 +683,7 @@ have : {in rowl, f1 =1 f2}.
     case: (leqP sh0 (inn0 + size row1)) => [_ // | /ltnW Hover].
     have:= leq_sub2r inn0 Hover; rewrite addKn => /drop_oversize ->.
     by rewrite drop_oversize.
-rewrite eq_in_map /rowl /f2 => -> {f1 f2 rowl}.
+rewrite eq_in_map /rowl /g => -> {f1 g rowl}.
 rewrite map_comp sumn_count count_map /=.
 move: Hyam; rewrite to_word_cons -{1}(cat_take_drop (sh0 - inn0) row1) catA => Hyam.
 have:= skew_yam_catK Hinnev Hyam => [] [shape Hdrop].

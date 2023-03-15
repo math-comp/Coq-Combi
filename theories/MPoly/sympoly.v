@@ -574,9 +574,9 @@ Lemma expUmpartE nv k :
 Proof.
 rewrite rowpartnE.
 apply/mnmP => [[i Hi]]; rewrite /mpart mulmnE !mnmE -val_eqE /=.
-case: k => [|k] /=; first by rewrite mul0n mnmE nth_default.
+case: k => [|k] /=; first by rewrite muln0 mnmE nth_default.
 rewrite mnmE /=;
-by case: i {Hi} => [|i] /=; rewrite ?muln1 // muln0 nth_default.
+by case: i {Hi} => [|i] /=; rewrite ?mul1n // muln0 nth_default.
 Qed.
 
 Lemma expUmpartNE nv k i (P : intpartn k.+1) :
@@ -586,18 +586,18 @@ Proof.
 apply/eqP/andP => [| [/eqP ->{i} /eqP ->{P}]]; last exact: expUmpartE.
 rewrite /mpart; case: leqP => _; first last.
   move/(congr1 (fun mon : 'X_{1..nv.+1} => mon i)).
-  by rewrite mulmnE !mnmE -val_eqE /= eqxx muln1.
+  by rewrite mulmnE !mnmE -val_eqE /= eqxx mul1n.
 case: (altP (i =P ord0)) => [->{i} | neq H]; first split => //.
   apply/eqP/val_inj; rewrite /= rowpartnE.
   case: P H => [[|p0 [|p1 p]]]//=.
     by rewrite addn0 => /andP [/eqP ->].
   rewrite -/(is_part (p1 :: p)) => /and3P [Hsum _ Hpart].
   move/(congr1 (fun mon : 'X_{1..nv.+1} => mon ord0)).
-  rewrite mulmnE !mnmE -val_eqE /= muln1 => Hp0; exfalso.
+  rewrite mulmnE !mnmE -val_eqE /= mul1n => Hp0; exfalso.
   move: Hsum Hpart; rewrite -{}Hp0 -{2}(addn0 k.+1) eqn_add2l.
   by rewrite addn_eq0 => /andP [/eqP -> _] /part_head_non0.
 exfalso; move/(congr1 (fun mon : 'X_{1..nv.+1} => mon ord0)): H.
-rewrite mulmnE !mnmE (negbTE neq) {neq} muln0 /= => Hp0.
+rewrite mulmnE !mnmE (negbTE neq) {neq} mul0n /= => Hp0.
 case: P Hp0 => [[//|p0 p]] Hp /= Hp0.
 by move: Hp; rewrite -{}Hp0 => /andP [_ /part_head_non0].
 Qed.
@@ -1227,7 +1227,7 @@ rewrite /symh_pol mulr_suml linear_sum /=; case: leqP => /= H.
 - pose Ud := (U_(i) *+ d)%MM.
   have Hleq : (Ud <= m)%MM.
     apply/mnm_lepP => j; rewrite mulmnE mnm1E.
-    by case: eqP => /= [<- | _]; rewrite ?muln1 ?muln0.
+    by case: eqP => /= [<- | _]; rewrite ?mul1n ?muln0.
   rewrite andbT -(submK Hleq).
   case: (altP (_ =P _)) => Hdeg /=.
   + move: Hdeg => /eqP; rewrite mdegD mdegMn mdeg1 mul1n eqn_add2r => /eqP Hdeg.
@@ -1246,7 +1246,7 @@ rewrite /symh_pol mulr_suml linear_sum /=; case: leqP => /= H.
 - rewrite andbF big1 // => m' _.
   rewrite mpolyXn -mpolyXD mcoeffX.
   apply/boolRP/eqP/mnmP => /(_ i).
-  rewrite mnmDE mulmnE mnm1E eq_refl muln1 => Habs.
+  rewrite mnmDE mulmnE mnm1E eq_refl mul1n => Habs.
   by move: H; rewrite -Habs ltnNge leq_addl.
 Qed.
 
@@ -1308,13 +1308,13 @@ case: leqP => /= dmi; first last.
   apply/memN_msupp_eq0/negP.
   rewrite (perm_mem (msuppMX _ _)) => /mapP => [/=[mon _]].
   move=> /(congr1 (fun m => m i)) Hmi; move: dmi; rewrite {}Hmi.
-  by rewrite mnmDE mulmnE mnmE eqxx muln1 leqNgt ltnS leq_addr.
+  by rewrite mnmDE mulmnE mnmE eqxx mul1n leqNgt ltnS leq_addr.
 case: leqP => /= dmi2; first last.
   apply/memN_msupp_eq0/negP.
   rewrite (perm_mem (msuppMX _ _)) => /mapP => [/=[mon]].
   rewrite mem_msupp_mesym /mechar => /andP [_ /forallP /= /(_ i) Hmon].
   move=> /(congr1 (fun m => m i)) Hmi; move: dmi2; rewrite {}Hmi.
-  rewrite mnmDE mulmnE mnmE eqxx muln1.
+  rewrite mnmDE mulmnE mnmE eqxx mul1n.
   by rewrite leqNgt !(addSn, ltnS) -(addn1 d) leq_add2l Hmon.
 case: (boolP [forall _, _]) => [/forallP Hall | /=]; first last.
   rewrite negb_forall => /existsP [/= j].
@@ -1323,18 +1323,18 @@ case: (boolP [forall _, _]) => [/forallP Hall | /=]; first last.
   rewrite (perm_mem (msuppMX _ _)) => /mapP => [/=[mon]].
   rewrite mem_msupp_mesym /mechar => /andP [_ /forallP /= /(_ j) Hmon].
   move=> /(congr1 (fun m => m j)) Hmj; move: mj; rewrite {}Hmj.
-  by rewrite mnmDE mulmnE mnmE eq_sym {}neji muln0 add0n leqNgt ltnS Hmon.
+  by rewrite mnmDE mulmnE mnmE eq_sym {}neji mul0n add0n leqNgt ltnS Hmon.
 have {}Hall x : x != i -> m x <= 1 by move=> H; apply: (implyP (Hall x)).
 have leqUm : (U_(i) *+ d <= m)%MM.
   apply/mnm_lepP => j; rewrite mulmnE mnmE.
-  by case: eqP => [<-|]; rewrite ?muln0 // muln1.
+  by case: eqP => [<-|]; rewrite ?mul0n // mul1n.
 rewrite -(submK leqUm) addmC mcoeffMX mcoeff_mesym /mechar.
 move: leqUm => /submK/(congr1 mdeg); rewrite mdegD degm mdegMn mdeg1 mul1n.
 move/eqP; rewrite eqn_add2r => /eqP ->; rewrite eqxx /=.
 case: forallP => // H; exfalso; apply: H => /= j.
 rewrite mnmBE mulmnE mnmE eq_sym.
-case: (altP (_ =P _)) => [->{j} | /Hall]; last by rewrite muln0 subn0.
-by rewrite muln1 leq_subLR addn1.
+case: (altP (_ =P _)) => [->{j} | /Hall]; last by rewrite mul0n subn0.
+by rewrite mul1n leq_subLR addn1.
 Qed.
 
 Lemma mul_ek_p1 (k : nat) :

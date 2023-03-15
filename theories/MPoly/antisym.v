@@ -342,7 +342,7 @@ apply/(iffP forallP) => /= [Hanti i j | Htperm s].
   by case: (odd_perm _); rewrite !simplexp // opprK.
 Qed.
 
-Lemma antisym_char2 : (2 \in [char R]) -> symmetric =i antisym.
+Lemma antisym_char2 : (2%nat \in [char R]) -> symmetric =i antisym.
 Proof using.
 move=> Hchar p /=; apply/issymP/isantisymP => H s;
   by rewrite H oppr_char2; first rewrite expr1n scale1r.
@@ -472,7 +472,7 @@ Section AlternIDomain.
 
 Variable n : nat.
 Variable R : idomainType.
-Hypothesis Hchar : ~~ (2 \in [char R]).
+Hypothesis Hchar : ~~ (2%nat \in [char R]).
 
 Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
 Local Notation "m # s" := [multinom m (s i) | i < n].

@@ -513,7 +513,7 @@ Lemma shape_join_tab s t :
   ([seq r.1 + r.2 | r <- zip (pad 0 (size t) (shape s)) (shape t)])%N.
 Proof using .
 rewrite /shape /join_tab -map_comp.
-rewrite (eq_map (f2 := (fun p => p.1 + p.2) \o
+rewrite (eq_map (g := (fun p => p.1 + p.2) \o
                          (fun p => (size p.1, size p.2)))); first last.
   by move=> [a b] /=; rewrite size_cat.
 rewrite map_comp; congr map.

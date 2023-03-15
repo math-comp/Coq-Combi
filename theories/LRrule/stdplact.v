@@ -283,7 +283,7 @@ rewrite /enum_mem (eq_filter (a2 := mem p)) // -!enumT /= => H.
 apply: (inj_map val_inj).
 rewrite -map_comp (eq_map val2posE).
 rewrite (eq_filter (a2 := mem [set val2pos x | x in p])) //.
-move: H; rewrite (eq_map (f2 := fun i : 'I_(_) => nth (size t) s i)); first last.
+move: H; rewrite (eq_map (g := fun i : 'I_(_) => nth (size t) s i)); first last.
   by move=> i /=; exact: tnth_nth.
 set l := (X in sorted _ X); rewrite -[RHS]/l.
 move=> H; apply: (sorted_eq (leT := leq)).
@@ -324,7 +324,7 @@ apply/and4P; split.
 - apply/forallP => ptmp; apply/implyP => /imsetP [p Hp -> {ptmp}].
   move/(_ p): Hall; rewrite Hp /= /extractpred.
   move/val2pos_enum ->; rewrite -map_comp /=.
-  rewrite (eq_map (f2 := nat_of_ord)); first last.
+  rewrite (eq_map (g := nat_of_ord)); first last.
     move=> i /=; rewrite (tnth_nth (size s)) /=.
     by have:= Hinvst => /linvseqP ->.
   set l := map _ _; have : subseq l [seq val x | x  <- enum 'I_(size s)].

@@ -245,7 +245,7 @@ Proof using HPTi Hpart.
 move=> HPx; have:= HPx; rewrite /enum_union => /Hpart H.
 rewrite count_flatten -2!map_comp.
 pose ix := @Sub TI PI TPI (FI x) H.
-rewrite (eq_map (f2 := fun i => i == ix : nat)); first last.
+rewrite (eq_map (g := fun i => i == ix : nat)); first last.
   move=> i /=.
   case: (altP (i =P ix)) => [-> {i} | Hneq].
   - rewrite count_map /=.
@@ -282,7 +282,7 @@ Lemma card_unionE : #|union_finType| = \sum_(i : TPI) #|TPi i|.
 Proof using.
 rewrite cardE -(size_map val) /= enum_unionE.
 rewrite /enum_union size_flatten /shape -map_comp.
-rewrite (eq_map (f2 := fun i => #|TPi i|)); first last.
+rewrite (eq_map (g := fun i => #|TPi i|)); first last.
   by move=> i; rewrite /= size_map cardE.
 by rewrite sumn_mapE big_enum.
 Qed.

@@ -372,7 +372,7 @@ move=> ev Hev Hpart [/= | y0 y] /=.
   by have -> : [::] == ev = false by move: Hev; case ev.
 move => /andP [] /andP [] _ Hyam /eqP Htmp; subst ev.
 rewrite count_flatten -map_comp.
-rewrite (eq_map (f2 := fun i => i == y0 : nat)); first last.
+rewrite (eq_map (g := fun i => i == y0 : nat)); first last.
   move=> i /=; rewrite count_map /=.
   case (altP (i =P y0)) => [Heq | /negbTE Hneq].
   - subst i; rewrite (eq_count (a2 := xpred1 y)); first last.
@@ -483,7 +483,7 @@ Lemma enum_yamnE :
   map val (enum {:yamn}) = flatten [seq enum_yameval p | p <- enum_partn n].
 Proof using.
 rewrite enum_unionE /=; congr flatten.
-rewrite [LHS](eq_map (f2 := enum_yameval \o val)).
+rewrite [LHS](eq_map (g := enum_yameval \o val)).
 - by rewrite map_comp enum_intpartnE.
 - by move=> i /=; rewrite enum_yamevalE.
 Qed.

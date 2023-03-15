@@ -785,7 +785,7 @@ Proof using. by rewrite /conj_tab size_mkseq. Qed.
 Lemma shape_conj_tab t : shape (conj_tab t) = conj_part (shape t).
 Proof using.
 rewrite /conj_tab /shape -map_comp.
-rewrite (eq_map (f2 := fun i =>
+rewrite (eq_map (g := fun i =>
                          (nth 0 (conj_part [seq size i | i <- t]) i))); first last.
   by move => i /=; rewrite size_mkseq.
 by rewrite -/(shape _) -/(mkseq _ _); apply: mkseq_nth.

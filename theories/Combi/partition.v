@@ -1213,7 +1213,7 @@ elim: sz sm mx => [//= | sz IHsz] /= sm mx Hmx.
   by move=> p /and4P [Hhead/nilP -> /= /eqP <-].
 case=> [| p0 p] //=; first by rewrite andbF.
 move=> /and5P [Hp0]; rewrite eqSS=> /eqP Hsz /eqP Hsm Hhead Hpart.
-rewrite count_flatten -map_comp (eq_map (f2 := fun i => i == p0 : nat)); first last.
+rewrite count_flatten -map_comp (eq_map (g := fun i => i == p0 : nat)); first last.
   move=> i /=; rewrite count_map /=.
   case (altP (i =P p0)) => [Heq | /negbTE Hneq].
   - subst p0; rewrite (eq_count (a2 := xpred1 p)); first last.
@@ -1294,7 +1294,7 @@ case: (altP (size p =P 0)) => Hsize.
   suff -> : sumn (map (fun=> 0) _) = 0 by rewrite addn0.
   by move=> T; elim => [//= |l0 l /= ->].
 - rewrite /= add0n count_flatten -map_comp.
-  rewrite (eq_map (f2 := fun i => i == size p : nat)); first last.
+  rewrite (eq_map (g := fun i => i == size p : nat)); first last.
     move=> i /=; rewrite enum_partnsE /=.
     by rewrite Hsum Hpart !andbT eq_sym.
   by rewrite sumn_pred1_iota add1n ltnS lt0n Hsize /= -(eqP Hsum) size_part.
@@ -1789,7 +1789,7 @@ Lemma size_enum_partnsk sm sz mx :
 Proof.
 elim: sz sm mx => [ [] | sz IHsz] //= sm mx.
 rewrite size_flatten /shape -[1]addn0 iotaDl -!map_comp.
-rewrite (eq_map (f2 := fun i => intpartnsk_nb (sm - i.+1) sz i.+1)); first last.
+rewrite (eq_map (g := fun i => intpartnsk_nb (sm - i.+1) sz i.+1)); first last.
   by move=> i /=; rewrite size_map IHsz.
 elim: (minn sm mx) => [//= | n IHn].
 by rewrite -{1}[n.+1]addn1 iotaD add0n map_cat sumn_cat IHn /= addn0.

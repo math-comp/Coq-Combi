@@ -194,7 +194,7 @@ have /negbTE -> : n != 0.
   move: s0neq0; apply contra => /eqP Hn0.
   by move: Hsum; rewrite Hn0 addn_eq0 => /andP [/eqP ->].
 rewrite count_flatten -map_comp.
-rewrite (eq_map (f2 := fun i => i == s0 : nat)); first last.
+rewrite (eq_map (g := fun i => i == s0 : nat)); first last.
   move=> /= i; rewrite count_map /=.
   case (altP (i =P s0)) => [Heq | /negbTE Hneq].
   - subst s0; rewrite (eq_count (a2 := xpred1 s)); first last.

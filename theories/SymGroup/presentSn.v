@@ -282,7 +282,7 @@ have /IHn{IHn} Hcount : is_code_of_size n c.
   rewrite /is_code_of_size Hsz eq_refl andbT.
   exact: (is_code_rconsK Hcode).
 rewrite count_flatten -map_comp -/enum_codesz.
-rewrite (eq_map (f2 := fun i => i == cn : nat)); first last.
+rewrite (eq_map (g := fun i => i == cn : nat)); first last.
   move=> i /=; rewrite count_map /=.
   case (altP (i =P cn)) => [Heq | /negbTE Hneq].
   + subst i; rewrite (eq_count (a2 := xpred1 c)); first exact: Hcount.
@@ -333,7 +333,7 @@ Proof.
 rewrite factE /= cardE -(size_map val) enum_codeszE.
 elim: n => [//=| n IHn].
 rewrite size_flatten -/enum_codesz /shape -map_comp.
-rewrite (eq_map (f2 := fun => fact_rec n)); first last.
+rewrite (eq_map (g := fun => fact_rec n)); first last.
   by move=> i /=; rewrite size_map.
 by rewrite sumnE big_map big_const_seq count_predT size_iota iter_addn_0 mulnC.
 Qed.
