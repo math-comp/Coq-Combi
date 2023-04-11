@@ -88,8 +88,8 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset binomial order.
 From mathcomp Require Import bigop ssralg ssrint path perm fingroup.
-From SsrMultinomials Require Import ssrcomplements freeg mpoly.
-From SsrMultinomials Require monalg.
+From mathcomp.multinomials Require Import ssrcomplements freeg mpoly.
+From mathcomp.multinomials Require monalg.
 
 Require Import sorted tools ordtype permuted partition skewpart composition.
 Require Import Yamanouchi std tableau stdtab skewtab permcent.

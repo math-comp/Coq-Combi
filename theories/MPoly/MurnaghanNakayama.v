@@ -48,7 +48,7 @@ We provide the following definitions:
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import bigop ssralg ssrint perm fingroup tuple vector rat.
-From SsrMultinomials Require Import ssrcomplements freeg mpoly monalg.
+From mathcomp.multinomials Require Import ssrcomplements freeg mpoly monalg.
 
 Require Import sorted tools ordtype permuted partition skewpart.
 Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym.

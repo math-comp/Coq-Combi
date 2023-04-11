@@ -30,7 +30,7 @@ The following lemma assert that LRcoeff agrees with LRyamtab_list
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop path order.
-From SsrMultinomials Require Import mpoly.
+From mathcomp.multinomials Require Import mpoly.
 
 Require Import tools combclass partition Yamanouchi ordtype tableau.
 Require Import skewtab Schur_mpoly freeSchur therule.

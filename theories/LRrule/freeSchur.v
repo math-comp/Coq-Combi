@@ -81,7 +81,7 @@ Invariance with the choice of Q1 and Q2:
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import order tuple finfun bigop finset ssralg.
-From SsrMultinomials Require Import ssrcomplements freeg mpoly.
+From mathcomp.multinomials Require Import ssrcomplements freeg mpoly.
 
 Require Import tools ordtype partition Yamanouchi std tableau stdtab.
 Require Import Schensted congr plactic stdplact Yam_plact Greene_inv shuffle.

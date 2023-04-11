@@ -79,7 +79,7 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import finset path tuple bigop ssralg order.
 From mathcomp Require Import perm fingroup matrix vector.
 From mathcomp Require ssrnum algC.
-From SsrMultinomials Require Import ssrcomplements freeg mpoly.
+From mathcomp.multinomials Require Import ssrcomplements freeg mpoly.
 
 Require Import tools sorted ordtype permuted partition permcent.
 Require Import antisym Schur_mpoly Schur_altdef sympoly.

@@ -62,7 +62,7 @@ As a corollary we provide the two Pieri rules [Pieri_rowpartn] and
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop path ssralg order.
-From SsrMultinomials Require Import mpoly.
+From mathcomp.multinomials Require Import mpoly.
 
 Require Import tools ordcast combclass partition skewpart Yamanouchi ordtype.
 Require Import std tableau stdtab Schensted congr plactic Greene_inv.

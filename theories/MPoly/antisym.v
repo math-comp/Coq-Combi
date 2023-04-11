@@ -49,7 +49,7 @@ Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq path choice.
 From mathcomp Require Import finset fintype finfun tuple bigop ssralg ssrint.
 From mathcomp Require Import fingroup perm zmodp binomial order.
-From SsrMultinomials Require Import ssrcomplements freeg mpoly.
+From mathcomp.multinomials Require Import ssrcomplements freeg mpoly.
 
 Require Import tools permcomp presentSn sorted partition.
 

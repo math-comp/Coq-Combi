@@ -53,7 +53,7 @@ From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple bigop path finfun.
 From mathcomp Require Import ssrint rat ssralg ssrnum algC matrix vector.
 
-From SsrMultinomials Require Import ssrcomplements mpoly.
+From mathcomp.multinomials Require Import ssrcomplements mpoly.
 
 Require Import tools partition.
 Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym permcent.

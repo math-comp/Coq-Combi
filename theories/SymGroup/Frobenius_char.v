@@ -56,7 +56,7 @@ From mathcomp Require Import ssralg fingroup morphism perm gproduct.
 From mathcomp Require Import rat ssralg ssrint ssrnum algC vector.
 From mathcomp Require Import mxrepresentation classfun character.
 
-From SsrMultinomials Require Import mpoly.
+From mathcomp.multinomials Require Import mpoly.
 Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy
         Schur_altdef stdtab therule.
 Require Import permcomp cycletype towerSn permcent reprSn unitriginv.

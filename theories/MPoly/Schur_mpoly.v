@@ -24,7 +24,7 @@ We give some values for particular partition such as small one, rows and columns
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset bigop ssralg order path.
-From SsrMultinomials Require Import ssrcomplements freeg mpoly.
+From mathcomp.multinomials Require Import ssrcomplements freeg mpoly.
 
 Require Import tools ordtype partition tableau.
 
