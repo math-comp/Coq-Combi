@@ -103,8 +103,8 @@ Lemma psupport_card_porbit s x : (#|porbit s x| != 1%N) = (x \in psupport s).
 Proof using.
 rewrite inE; congr negb; apply/eqP/idP => [H|].
 - by apply/afix1P => /=; rewrite -{2}(iter_porbit s x) H.
-- rewrite /porbit -afix_cycle_in; last by rewrite inE.
-  by move/orbit1P; rewrite /orbit /= => ->; rewrite cards1.
+- rewrite -afix_cycle_in; last by rewrite inE.
+  by move/orbit1P; rewrite porbitE /= => ->; rewrite cards1.
 Qed.
 
 
@@ -113,7 +113,7 @@ Lemma porbit_fix s x : (s x == x) = (porbit s x == [set x]).
 Proof using.
 rewrite -[LHS]negbK -in_psupport -psupport_card_porbit negbK.
 apply/eqP/eqP => [|->]; last by rewrite cards1.
-by move/card_orbit1.
+by rewrite !porbitE; move/card_orbit1.
 Qed.
 
 Lemma porbit_mod s x i :

@@ -21,33 +21,13 @@ ways, three from a list (see [sub_subFinType], [sub_uniq_subFinType] and
 [sub_undup_subFinType] below) and one by taking the disjoint union of already
 constructed subfintypes (see [union_subFinType] below).  *)
 
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import bigop.
-
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
 Require Import tools.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
-
-(** A missing lemma: fintypes in bijection have the same cardinality          *)
-
-(** TODO : Contribute to SSReflect/fintype.v                                  *)
-Section BijCard.
-
-Variables U V : finType.
-Variable f : U -> V.
-
-Lemma bij_card : bijective f -> #|U| = #|V|.
-Proof using.
-move=> [] g Hfg Hgf.
-apply anti_leq; apply/andP; split.
-- rewrite -(card_codom (can_inj Hfg)); exact: max_card.
-- rewrite -(card_codom (can_inj Hgf)); exact: max_card.
-Qed.
-
-End BijCard.
 
 
 (** Summing [count_mem] in a [finType] *)
@@ -75,6 +55,57 @@ We define three possible ways to provide [TP] with a [subFinType] structure:
   [lst] and remove the duplicate elements.
  *)
 
+#[key=TP]
+HB.factory Record seq_isFinite
+  (T : countType) (P : pred T) (TP : subCountType P) := {
+    lst : seq T;
+    all_lst : all P lst;
+    lst_count_1 : forall x : T, P x -> count_mem x lst = 1;
+  }.
+HB.builders Context T P TP of seq_isFinite T P TP.
+
+Fixpoint subType_seq l {struct l} :=
+  match l as l1 return all P l1 -> seq TP with
+  | [::]     => fun => [::]
+  | l0 :: ll => fun Hall =>
+                  match elimTF andP Hall with
+                  | conj H0 Hl => (Sub l0 H0) :: (subType_seq ll Hl)
+                  end
+  end.
+
+Lemma subType_seqP : map val (subType_seq all_lst) = lst.
+Proof using.
+elim: lst all_lst => [| l0 l IHl] //=.
+by case/andP => /= H0 Hall0; rewrite IHl SubK.
+Qed.
+
+Lemma sub_enumE : lst =i P.
+Proof using.
+move=> i.
+apply/idP/idP; rewrite !unfold_in.
+- by move=> /(allP all_lst).
+- by move=> /lst_count_1 => H; apply/count_memPn; rewrite H.
+Qed.
+
+Lemma finite_subP : Finite.axiom (subType_seq all_lst).
+Proof using.
+move=> xP; rewrite (eq_count (a2 := (pred1 (val xP)) \o val)).
+- by rewrite -count_map subType_seqP lst_count_1 //=; exact: valP.
+- by move=> i; apply/idP/idP=> /eqP H; apply/eqP; [rewrite H | apply val_inj].
+Qed.
+
+(* HB.instance Definition _ := Countable.on TP.
+   HB.instance Definition _ := Equality.on TP. *)
+HB.instance Definition _ := isFinite.Build _ finite_subP.
+
+
+(** ** Method 1 - Each element appears only once *)
+Section SubCount.
+
+Hypothesis all_lst : all P lst.
+Hypothesis lst_count_1 : forall x : T, P x -> count_mem x lst = 1.
+
+
 Section SubtypeSeq.
 
 Variable T : countType.
@@ -96,27 +127,27 @@ Variable lst : seq T.
 (** ** Method 1 - Each element appears only once *)
 Section SubCount.
 
-Hypothesis HallP : all P lst.
-Hypothesis Hcount : forall x : T, P x -> count_mem x lst = 1.
+Hypothesis all_lst : all P lst.
+Hypothesis lst_count_1 : forall x : T, P x -> count_mem x lst = 1.
 
-Lemma subType_seqP : map val (subType_seq HallP) = lst.
+Lemma subType_seqP : map val (subType_seq all_lst) = lst.
 Proof using.
-elim: lst HallP => [| l0 l IHl] //=.
+elim: lst all_lst => [| l0 l IHl] //=.
 by case/andP => /= H0 Hall0; rewrite IHl SubK.
 Qed.
 
 Lemma sub_enumE : lst =i P.
-Proof using HallP Hcount.
+Proof using all_lst lst_count_1.
 move=> i.
 apply/idP/idP; rewrite !unfold_in.
-- by move=> /(allP HallP).
-- by move=> /Hcount => H; apply/count_memPn; rewrite H.
+- by move=> /(allP all_lst).
+- by move=> /lst_count_1 => H; apply/count_memPn; rewrite H.
 Qed.
 
-Lemma finite_subP : Finite.axiom (subType_seq HallP).
-Proof using Hcount.
+Lemma finite_subP : Finite.axiom (subType_seq all_lst).
+Proof using lst_count_1.
 move=> xP; rewrite (eq_count (a2 := (pred1 (val xP)) \o val)).
-- by rewrite -count_map subType_seqP Hcount //=; exact: valP.
+- by rewrite -count_map subType_seqP lst_count_1 //=; exact: valP.
 - by move=> i; apply/idP/idP=> /eqP H; apply/eqP; [rewrite H | apply val_inj].
 Qed.
 
@@ -142,13 +173,13 @@ Hypothesis HE : lst =i P.
 Lemma Hallp : all P lst.
 Proof using HE. by apply/allP => x; rewrite HE. Qed.
 
-Lemma Hcount x : P x -> count_mem x lst = 1.
+Lemma lst_count_1 x : P x -> count_mem x lst = 1.
 Proof using HE Huniq.
 have:= HE x; rewrite !unfold_in => <-.
 by rewrite (count_uniq_mem _ Huniq) unfold_in => ->.
 Qed.
 
-Definition sub_uniq_finMixin := Eval hnf in sub_finMixin Hallp Hcount.
+Definition sub_uniq_finMixin := Eval hnf in sub_finMixin Hallp lst_count_1.
 Definition sub_uniq_finType := Eval hnf in FinType TP sub_uniq_finMixin.
 Definition sub_uniq_subFinType := Eval hnf in [subFinType of sub_uniq_finType].
 
@@ -158,11 +189,11 @@ End SubUniq.
 (** ** Method 3 - Each element appears, we remove the duplicates *)
 Section SubUndup.
 
-Hypothesis HallP : all P lst.
+Hypothesis all_lst : all P lst.
 Hypothesis HPin : forall x : T, P x -> x \in lst.
 
 Lemma finite_sub_undupP :
-  Finite.axiom (undup (subType_seq HallP)).
+  Finite.axiom (undup (subType_seq all_lst)).
 Proof using HPin.
 move=> x; rewrite count_uniq_mem; last exact: undup_uniq.
 rewrite mem_undup.
@@ -176,7 +207,7 @@ Definition sub_undup_subFinType := Eval hnf in [subFinType of sub_undup_finType]
 Lemma enum_sub_undupE : map val (enum sub_undup_finType) = undup lst.
 Proof using.
 rewrite enumT unlock /= -{2}subType_seqP.
-elim: lst HallP => [//= | l0 l IHl] /=.
+elim: lst all_lst => [//= | l0 l IHl] /=.
 case/andP=> /= H0 Hall0.
 rewrite mem_map; last exact: val_inj.
 by case: (Sub l0 H0 \in subType_seq Hall0); rewrite /= IHl.

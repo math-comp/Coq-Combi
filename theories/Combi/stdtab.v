@@ -967,6 +967,6 @@ rewrite the interface of stdtabsh to triger a unification (see eg what is done
 for tuple). *)
 Lemma card_stdtabsh_conj_part (sh : intpart) :
   #|{:stdtabsh [the intpart of conj_part sh]}| = #|{:stdtabsh sh}|.
-Proof. by symmetry; apply: (bij_card (conj_stdtabsh_bij sh)). Qed.
+Proof. by symmetry; apply: (bij_eq_card (conj_stdtabsh_bij sh)). Qed.
 
 #[export] Hint Resolve stdtabnP stdtabshP : core.

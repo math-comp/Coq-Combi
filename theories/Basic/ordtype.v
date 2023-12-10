@@ -39,9 +39,9 @@ Cover relation:
 - [covers x y] == [y] covers [x] where [x] and [y] belongs to a common
                   [finPOrderType].
  ********)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype choice fintype seq.
-From mathcomp Require Import finset order path fingraph.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import order.
 Require Import tools.
 
 Set Implicit Arguments.
@@ -49,7 +49,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Local Open Scope order_scope.
-Import Order.TTheory.
+Import Order.Theory.
 
 (******************************************************************************)
 (** * Induction on partially ordered types                                    *)
@@ -159,63 +159,35 @@ Qed.
 
 
 (******************************************************************************)
-(** * Inhabited types                                                        *)
+(** * Inhabited types                                                         *)
 (******************************************************************************)
-Module Inhabited.
 
-Section ClassDef.
+HB.mixin Record isInhabited T := { inh_ex : exists x : T, true }.
+#[short(type=inhType)]
+HB.structure Definition Inhabited := {T of isInhabited T & Choice T}.
 
-Structure mixin_of T := Mixin { _ : exists x : T, true }.
+HB.factory Record isInhabitedType T := { x : T }.
+HB.builders Context T of isInhabitedType T.
+HB.instance Definition _ :=  isInhabited.Build T (ex_intro _ x is_true_true).
+HB.end.
 
-Set Primitive Projections.
-Record class_of T := Class { base : Choice.class_of T; mixin : mixin_of T }.
-Unset Primitive Projections.
-Local Coercion base : class_of >->  Choice.class_of.
+HB.instance Definition _ := isInhabitedType.Build unit tt.
+HB.instance Definition _ := isInhabitedType.Build bool false.
+HB.instance Definition _ := isInhabitedType.Build Prop False.
+HB.instance Definition _ := isInhabitedType.Build nat 0.
+HB.instance Definition _ (n : nat) := isInhabitedType.Build 'I_n.+1 ord0.
 
-Structure type := Pack { sort; _ : class_of sort }.
-Local Coercion sort : type >-> Sortclass.
+HB.instance Definition _ (T : choiceType) :=
+  isInhabitedType.Build (option T) None.
+HB.instance Definition _ (T : finType) :=
+  isInhabitedType.Build {set T} set0.
+HB.instance Definition _ (T T' : inhType) :=
+  isInhabited.Build (T * T')%type
+    (let: ex_intro t _  := @inh_ex T in
+     let: ex_intro t' _ := @inh_ex T' in
+     ex_intro _ (t, t') is_true_true).
 
-Variables (T : Type) (cT : type).
-Definition class := let: Pack _ c as cT' := cT return class_of cT' in c.
-Definition clone c of phant_id class c := @Pack T c.
-
-Definition pack m :=
-  fun b bT & phant_id (Choice.class bT) b => Pack (@Class T b m).
-
-(* Inheritance *)
-Definition eqType := @Equality.Pack cT class.
-Definition choiceType := @Choice.Pack cT class.
-
-End ClassDef.
-
-Module Exports.
-
-Coercion base : class_of >-> Choice.class_of.
-Coercion sort : type >-> Sortclass.
-
-Coercion eqType : type >-> Equality.type.
-Canonical eqType.
-Coercion choiceType : type >-> Choice.type.
-Canonical choiceType.
-
-Notation inhType := type.
-Definition InhMixin {T : Type} (x : T) :=
-  Mixin (ex_intro (fun=> true) x is_true_true).
-Notation InhType T m := (@pack T m _ _ id).
-Notation "[ 'inhMixin' 'of' T ]" := (class _ : mixin_of T)
-  (at level 0, format "[ 'inhMixin'  'of'  T ]") : form_scope.
-Notation "[ 'inhType' 'of' T 'for' cT ]" := (@clone T cT _ id)
-  (at level 0, format "[ 'inhType'  'of'  T  'for'  cT ]") : form_scope.
-Notation "[ 'inhType' 'of' T ]" := (@clone T _ _ id)
-  (at level 0, format "[ 'inhType'  'of'  T ]") : form_scope.
-
-Definition inh {T : type} : T :=
-  xchoose (let: Mixin pf := mixin (class T) in pf).
-
-End Exports.
-
-End Inhabited.
-Export Inhabited.Exports.
+Definition inh {T : inhType} := xchoose (@inh_ex T).
 
 Lemma inh_xchooseE (T : inhType) (exP : exists x0 : T, true) :
   xchoose exP = @inh T.
@@ -228,365 +200,49 @@ rewrite /choose; case: insubP => //= [[x Px]] _ /= ->.
 by rewrite inh_xchooseE.
 Qed.
 
-
-Section ProdInhType.
-
-Variable T R : inhType.
-
-Definition prod_inhMixin := InhMixin (@inh T, @inh R).
-Canonical prod_inhType := Eval hnf in InhType (T * R) prod_inhMixin.
-
-End ProdInhType.
-
-Definition bool_inhMixin := InhMixin false.
-Canonical bool_inhType := InhType bool bool_inhMixin.
-Definition nat_inhMixin := InhMixin 0%N.
-Canonical nat_inhType := InhType nat nat_inhMixin.
-Definition seq_inhMixin (T : Type) := InhMixin (T := seq T) [::].
-Canonical seq_inhType (T : choiceType) := InhType (seq T) (seq_inhMixin T).
-Definition ordinal_inhMixin n := InhMixin (T := 'I_n.+1) ord0.
-Canonical ordinal_inhType n := InhType 'I_n.+1 (ordinal_inhMixin n).
-
-Section Tests.
-Let bla : nat * seq bool := inh.
-Let blo := [inhType of nat].
-
-Let natt := nat.
-Let natt_eqtype := [eqType of natt for [eqType of nat]].
-Let natt_choicetype := [choiceType of natt for [choiceType of nat]].
-Let natt_inhtype := [inhType of natt for [inhType of nat]].
-
-End Tests.
-
+#[short(type=inhFinType)]
+HB.structure Definition InhFinite :=
+  { T of isInhabited T & Finite T }.
 
 (******************************************************************************)
-(** ** Inhabited partially ordered types                                      *)
+(** ** Inhabited ordered types                                                *)
 (******************************************************************************)
-Module InhPOrder.
+#[short(type=inhPOrderType)]
+HB.structure Definition InhPOrder (d : unit) :=
+  {T of isInhabited T & Order.POrder d T}.
 
-Section ClassDef.
+#[short(type=inhLatticeType)]
+HB.structure Definition InhLattice (d : unit) :=
+  {T of isInhabited T & Order.Lattice d T}.
 
-Set Primitive Projections.
-Record class_of (T : Type) : Type := Class {
-  base : Order.POrder.class_of T;
-  mixin : Inhabited.mixin_of T
-}.
-Unset Primitive Projections.
-Definition base2 T m : Inhabited.class_of T :=
-  Inhabited.Class (base m) (mixin m).
-Local Coercion base : class_of >-> Order.POrder.class_of.
-Local Coercion base2 : class_of >-> Inhabited.class_of.
+#[short(type=inhTBLatticeType)]
+HB.structure Definition InhTBLattice (d : unit) :=
+  {T of isInhabited T & Order.TBLattice d T}.
 
-Structure type (disp : unit) := Pack { sort; _ : class_of sort; }.
-Local Coercion sort : type >-> Sortclass.
-
-Variables (T : Type) (disp : unit) (cT : type disp).
-Definition class := let: Pack _ c := cT return class_of cT in c.
-Definition clone c of phant_id class c := @Pack disp T c.
-Definition clone_with disp' c of phant_id class c := @Pack disp' T c.
-
-Definition pack :=
-  fun bT b & phant_id (@Order.POrder.class disp bT) b =>
-  fun mT m & phant_id (Inhabited.mixin (@Inhabited.class mT)) m =>
-  Pack disp (@Class T b m).
-
-Definition eqType := @Equality.Pack cT class.
-Definition choiceType := @Choice.Pack cT class.
-Definition porderType := @Order.POrder.Pack disp cT class.
-Definition inhType := @Inhabited.Pack cT class.
-
-Definition porder_inhType := @Order.POrder.Pack disp inhType class.
-
-End ClassDef.
-
-Module Exports.
-Coercion eqType : type >-> Equality.type.
-Canonical eqType.
-Coercion choiceType : type >-> Choice.type.
-Canonical choiceType.
-Coercion porderType : type >-> Order.POrder.type.
-Canonical porderType.
-Coercion inhType : type >-> Inhabited.type.
-Canonical inhType.
-Canonical porder_inhType.
-Coercion sort : type >-> Sortclass.
-Notation inhPOrderType := type.
-
-Notation "[ 'inhPOrderType' 'of' T ]" := (@pack T _ _ _ id _ _ id)
-  (at level 0, format "[ 'inhPOrderType'  'of'  T ]") : form_scope.
-End Exports.
-
-End InhPOrder.
-Export InhPOrder.Exports.
-
-Canonical bool_inhPOrderType := [inhPOrderType of bool].
-Canonical nat_inhPOrderType := [inhPOrderType of nat].
-
-
-(******************************************************************************)
-(** ** Inhabited totally ordered types                                        *)
-(******************************************************************************)
-Module InhTotal.
-
-Section ClassDef.
-
-Set Primitive Projections.
-Record class_of (T : Type) : Type := Class {
-  base : Order.Total.class_of T;
-  mixin : Inhabited.mixin_of T
-}.
-Unset Primitive Projections.
-Definition base2 T m : Inhabited.class_of T :=
-  Inhabited.Class (base m) (mixin m).
-Local Coercion base : class_of >-> Order.Total.class_of.
-Local Coercion base2 : class_of >-> Inhabited.class_of.
-
-Structure type (disp : unit) := Pack { sort; _ : class_of sort; }.
-Local Coercion sort : type >-> Sortclass.
-
-Variables (T : Type) (disp : unit) (cT : type disp).
-Definition class := let: Pack _ c := cT return class_of cT in c.
-
-Definition pack :=
-  fun bT b & phant_id (@Order.Total.class disp bT) b =>
-  fun mT m & phant_id (Inhabited.mixin (@Inhabited.class mT)) m =>
-  Pack disp (@Class T b m).
-
-Definition eqType := @Equality.Pack cT class.
-Definition choiceType := @Choice.Pack cT class.
-Definition porderType := @Order.POrder.Pack disp cT class.
-Definition totalType := @Order.Total.Pack disp cT class.
-Definition inhType := @Inhabited.Pack cT class.
-Definition inhPOrderType :=
-  @InhPOrder.Pack disp cT (@InhPOrder.Class _ class (mixin class)).
-
-Definition order_inhType := @Order.Total.Pack disp inhType class.
-Definition order_inhPOrderType := @Order.Total.Pack disp inhPOrderType class.
-
-End ClassDef.
-
-Module Exports.
-Coercion eqType : type >-> Equality.type.
-Canonical eqType.
-Coercion choiceType : type >-> Choice.type.
-Canonical choiceType.
-Coercion porderType : type >-> Order.POrder.type.
-Canonical porderType.
-Coercion totalType : type >-> Order.Total.type.
-Canonical totalType.
-Coercion inhType : type >-> Inhabited.type.
-Canonical inhType.
-Coercion inhPOrderType : type >-> InhPOrder.type.
-Canonical inhPOrderType.
-
-Canonical order_inhType.
-(* Canonical order_inhPOrderType.  Breaks the inheritance orderType -> eqType*)
-
-Coercion sort : type >-> Sortclass.
-
-Notation inhOrderType := type.
-Notation "[ 'inhOrderType' 'of' T ]" := (@pack T _ _ _ id _ _ id)
-  (at level 0, format "[ 'inhOrderType'  'of'  T ]") : form_scope.
-End Exports.
-
-End InhTotal.
-
-Export InhTotal.Exports.
-
-Canonical bool_inhOrderType := [inhOrderType of bool].
-Canonical nat_inhOrderType := [inhOrderType of nat].
-
-Section Tests.
-
-Variables (disp : unit) (T1 : orderType disp) (x : T1).
-Goal x == x. Proof. by []. Qed.
-
-End Tests.
+#[short(type=inhOrderType)]
+HB.structure Definition InhOrder (d : unit) :=
+  {T of isInhabited T & Order.Total d T}.
 
 
 (******************************************************************************)
 (** ** Inhabited finite partially ordered types                               *)
 (******************************************************************************)
-Module InhFinPOrder.
+#[short(type=inhFinPOrderType)]
+HB.structure Definition inhFinPOrder (d : unit) :=
+  {T of isInhabited T & Order.POrder d T & Finite T}.
 
-Section ClassDef.
+#[short(type=inhFinLatticeType)]
+HB.structure Definition inhFinLattice (d : unit) :=
+  {T of isInhabited T & Order.FinLattice d T}.
 
-Set Primitive Projections.
-Record class_of (T : Type) : Type := Class {
-  base : Order.FinPOrder.class_of T;
-  mixin : Inhabited.mixin_of T;
-}.
-Unset Primitive Projections.
-
-Definition base2 T m : Inhabited.class_of T :=
-  Inhabited.Class (base m) (mixin m).
-Local Coercion base : class_of >-> Order.FinPOrder.class_of.
-Local Coercion base2 : class_of >-> Inhabited.class_of.
-
-Structure type (disp : unit) := Pack { sort; _ : class_of sort; }.
-Local Coercion sort : type >-> Sortclass.
-
-Variables (T : Type) (disp : unit) (cT : type disp).
-Definition class := let: Pack _ c := cT return class_of cT in c.
-
-Definition pack :=
-  fun bT b & phant_id (@Order.FinPOrder.class disp bT) b =>
-  fun mT m & phant_id (Inhabited.mixin (@Inhabited.class mT)) m =>
-    Pack disp (@Class T b m).
-
-Definition eqType := @Equality.Pack cT class.
-Definition choiceType := @Choice.Pack cT class.
-Definition countType := @Countable.Pack cT class.
-Definition finType := @Finite.Pack cT class.
-Definition porderType := @Order.POrder.Pack disp cT class.
-Definition finPOrderType := @Order.FinPOrder.Pack disp cT class.
-
-Definition inhType := @Inhabited.Pack cT class.
-Definition inhPOrderType :=
-  @InhPOrder.Pack disp cT (@InhPOrder.Class _ class (mixin class)).
-
-Definition finporder_inhType := @Order.FinPOrder.Pack disp inhType class.
-
-End ClassDef.
-
-Module Exports.
-Coercion sort : type >-> Sortclass.
-
-Coercion eqType : type >-> Equality.type.
-Canonical eqType.
-Coercion choiceType : type >-> Choice.type.
-Canonical choiceType.
-Coercion countType : type >-> Countable.type.
-Canonical countType.
-Coercion finType : type >-> Finite.type.
-Canonical finType.
-Coercion porderType : type >-> Order.POrder.type.
-Canonical porderType.
-Coercion finPOrderType : type >-> Order.FinPOrder.type.
-Canonical finPOrderType.
-Coercion inhType : type >-> Inhabited.type.
-Canonical inhType.
-Coercion inhPOrderType : type >-> InhPOrder.type.
-Canonical inhPOrderType.
-
-Canonical finporder_inhType.
-
-Notation inhFinPOrderType := type.
-Notation "[ 'inhFinPOrderType' 'of' T ]" := (@pack T _ _ _ id _ _ id)
-  (at level 0, format "[ 'inhFinPOrderType'  'of'  T ]") : form_scope.
-End Exports.
-
-End InhFinPOrder.
-Export InhFinPOrder.Exports.
-
-Canonical bool_FinPOrderType := [inhFinPOrderType of bool].
+#[short(type=inhFinOrderType)]
+HB.structure Definition inhFinOrder (d : unit) :=
+  {T of isInhabited T & Order.FinTotal d T}.
 
 
-(******************************************************************************)
-(** ** Inhabited finite totally ordered types                                 *)
-(******************************************************************************)
-Module InhFinTotal.
-
-Section ClassDef.
-
-Set Primitive Projections.
-Record class_of (T : Type) : Type := Class {
-  base : Order.FinTotal.class_of T;
-  mixin : Inhabited.mixin_of T;
-}.
-Unset Primitive Projections.
-Definition base2 T m : Inhabited.class_of T :=
-  Inhabited.Class (base m) (mixin m).
-Local Coercion base : class_of >-> Order.FinTotal.class_of.
-Local Coercion base2 : class_of >-> Inhabited.class_of.
-
-Structure type (disp : unit) := Pack { sort; _ : class_of sort; }.
-Local Coercion sort : type >-> Sortclass.
-
-Variables (T : Type) (disp : unit) (cT : type disp).
-Definition class := let: Pack _ c := cT return class_of cT in c.
-
-Definition pack :=
-  fun bT b & phant_id (@Order.FinTotal.class disp bT) b =>
-  fun mT m & phant_id (Inhabited.mixin (@Inhabited.class mT)) m =>
-    Pack disp (@Class T b m).
-
-Definition eqType := @Equality.Pack cT class.
-Definition choiceType := @Choice.Pack cT class.
-Definition countType := @Countable.Pack cT class.
-Definition finType := @Finite.Pack cT class.
-Definition porderType := @Order.POrder.Pack disp cT class.
-Definition finPOrderType := @Order.FinPOrder.Pack disp cT class.
-Definition totalType := @Order.Total.Pack disp cT class.
-Definition finTotalType := @Order.FinTotal.Pack disp cT class.
-Definition inhType := @Inhabited.Pack cT class.
-Definition inhPOrderType :=
-  @InhPOrder.Pack disp cT (@InhPOrder.Class _ class (mixin class)).
-Definition inhTotalType :=
-  @InhTotal.Pack disp cT (@InhTotal.Class _ class (mixin class)).
-Definition inhFinPOrderType :=
-  @InhFinPOrder.Pack disp cT (@InhFinPOrder.Class _ class (mixin class)).
-
-Definition finTotal_inhType := @Order.FinTotal.Pack disp inhType class.
-Definition finTotal_inhPOrderType :=
-  @Order.FinTotal.Pack disp inhPOrderType class.
-Definition finPOrder_inhTotalType :=
-  @Order.FinPOrder.Pack disp inhTotalType class.
-Definition finType_inhTotalType :=
-  @Finite.Pack inhTotalType class.
-
-End ClassDef.
-
-Module Exports.
-Coercion sort : type >-> Sortclass.
-
-Coercion eqType : type >-> Equality.type.
-Canonical eqType.
-Coercion choiceType : type >-> Choice.type.
-Canonical choiceType.
-Coercion countType : type >-> Countable.type.
-Canonical countType.
-Coercion finType : type >-> Finite.type.
-Canonical finType.
-Coercion porderType : type >-> Order.POrder.type.
-Canonical porderType.
-Coercion finPOrderType : type >-> Order.FinPOrder.type.
-Canonical finPOrderType.
-Coercion totalType : type >-> Order.Total.type.
-Canonical totalType.
-Coercion finTotalType : type >-> Order.FinTotal.type.
-Canonical finTotalType.
-Coercion inhType : type >-> Inhabited.type.
-Canonical inhType.
-Coercion  inhPOrderType : type >-> InhPOrder.type.
-Canonical inhPOrderType.
-Coercion inhTotalType : type >-> InhTotal.type.
-Canonical inhTotalType.
-Coercion inhFinPOrderType : type >-> InhFinPOrder.type.
-Canonical inhFinPOrderType.
-
-Canonical finTotal_inhType.
-Canonical finTotal_inhPOrderType.
-Canonical finPOrder_inhTotalType.
-Canonical finType_inhTotalType.
-
-Notation inhFinOrderType := type.
-Notation "[ 'inhFinOrderType' 'of' T ]" := (@pack T _ _ _ id _ _ id)
-  (at level 0, format "[ 'inhFinOrderType'  'of'  T ]") : form_scope.
-End Exports.
-
-End InhFinTotal.
-Export InhFinTotal.Exports.
-
-Canonical bool_FinOrderType := [inhFinOrderType of bool].
-
-Section Tests.
-
-Variables (d : unit) (T : inhFinOrderType d) (x : T).
-Goal x == x. Proof. by []. Qed.
-
-End Tests.
-
+HB.instance Definition _ := Inhabited.on bool.
+HB.instance Definition _ := Inhabited.on nat.
+HB.instance Definition _ n := Inhabited.on 'I_n.+1.
 
 
 (******************************************************************************)
@@ -1223,45 +879,3 @@ elim: n i => //= n IHn i.
 move/(_  i.+1) : IHn => /= ->.
 by rewrite ltEnat /= ltnNge leqnSn.
 Qed.
-
-(** ** The order on ordinals ***)
-
-(** TODO : replace the following by
-    Export Order.OrdinalOrder.Exports when integrated in mathcomp*)
-
-Section OrdinalOrder.
-Variable n : nat.
-Definition ord_porderMixin := [porderMixin of 'I_n by <:].
-Canonical ord_porderType :=
-  POrderType Order.NatOrder.nat_display 'I_n ord_porderMixin.
-Definition ord_totalOrderMixin := [totalOrderMixin of 'I_n by <:].
-Canonical ord_latticeType := LatticeType 'I_n ord_totalOrderMixin.
-Canonical ord_distrLatticeType := DistrLatticeType 'I_n ord_totalOrderMixin.
-Canonical sub_orderType := OrderType 'I_n ord_totalOrderMixin.
-End OrdinalOrder.
-
-Section OrdinalInhabited.
-Variable n0 : nat.
-Local Notation n := n0.+1.
-Implicit Type x : 'I_n.
-
-Lemma ord_bottom x : (ord0 <= x)%O.
-Proof. by []. Qed.
-Lemma ord_top x : (x <= ord_max)%O.
-Proof. by case: x => x ltx /=. Qed.
-
-Definition ord_bottomMixin := BottomMixin ord_bottom.
-Canonical ord_blatticeType := BLatticeType 'I_n ord_bottomMixin.
-Definition ord_topMixin := TopMixin ord_top.
-Canonical ord_tblatticeType := TBLatticeType 'I_n ord_topMixin.
-Canonical ord_finLatticeType := Eval hnf in [finLatticeType of 'I_n].
-Canonical ord_bDistrLatticeType := Eval hnf in [bDistrLatticeType of 'I_n].
-Canonical ord_tbDistrLatticeType := Eval hnf in [tbDistrLatticeType of 'I_n].
-Canonical ord_finDistrLatticeType :=
-  Eval hnf in [finDistrLatticeType of 'I_n].
-Canonical ord_finOrderType := [finOrderType of 'I_n].
-
-Canonical ord_inhPOrderType := [inhPOrderType of 'I_n].
-Canonical ord_inhOrderType := [inhOrderType of 'I_n].
-Canonical ord_inhfinOrderType := [inhFinOrderType of 'I_n].
-End OrdinalInhabited.

@@ -2920,7 +2920,6 @@ apply FIXP_inv.
 rewrite fcont_comp_simpl.
 apply fcont_le.
 rewrite H1; auto.
-rewrite (FIXP_eq (f@_g)) at 2; auto.
 Qed.
 
 Fixpoint fcont_compn {D} {o} `{c:@cpo D o}(f:D -c> D) (n:nat) {struct n} : D -c> D :=

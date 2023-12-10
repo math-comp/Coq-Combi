@@ -82,7 +82,7 @@ case: s => [|s0 s]; first by rewrite vect_n_kP /= => /andP [_].
 move/flatten_mapP; rewrite -/vect_n_k => [] [i].
 rewrite mem_iota [iota _ _]lock add0n => Hs0.
 move/mapP => [t Ht [H1 H2]]; subst i; subst t.
-rewrite (eq_map (f2 := (fun i : nat => i == s0 : nat))).
+rewrite (eq_map (g := (fun i : nat => i == s0 : nat))).
   by unlock; rewrite sumn_pred1_iota add0n Hs0.
 move=> i; rewrite /= count_map /=.
 rewrite (eq_count (a2 := fun t => (i == s0) && (s == t))); first last.
