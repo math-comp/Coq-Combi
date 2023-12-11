@@ -48,9 +48,9 @@ is the same as having the same standardized.
                 which sorts [w] in a stable way.
 
 *****)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype seq tuple.
-From mathcomp Require Import finfun fintype choice finset perm fingroup path order.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import perm fingroup.
 
 Require Import tools combclass ordtype permcomp.
 
@@ -188,14 +188,9 @@ Definition is_std_of_n := [pred w | (is_std w) && (size w == n) ].
 
 Structure stdwordn : Set :=
   StdWordN {stdwordnval :> seq nat; _ : is_std_of_n stdwordnval}.
-Canonical stdwordn_subType := Eval hnf in [subType for stdwordnval].
-Definition stdwordn_eqMixin := Eval hnf in [eqMixin of stdwordn by <:].
-Canonical stdwordn_eqType := Eval hnf in EqType stdwordn stdwordn_eqMixin.
-Definition stdwordn_choiceMixin := Eval hnf in [choiceMixin of stdwordn by <:].
-Canonical stdwordn_choiceType := Eval hnf in ChoiceType stdwordn stdwordn_choiceMixin.
-Definition stdwordn_countMixin := Eval hnf in [countMixin of stdwordn by <:].
-Canonical stdwordn_countType := Eval hnf in CountType stdwordn stdwordn_countMixin.
-Canonical stdwordnn_subCountType := Eval hnf in [subCountType of stdwordn].
+
+HB.instance Definition _ := [isSub of stdwordn for stdwordnval].
+HB.instance Definition _ := [Countable of stdwordn by <:].
 
 Lemma stdwordnP (s : stdwordn) : is_std (val s).
 Proof using. by case: s => s /= /andP []. Qed.
@@ -230,10 +225,9 @@ Proof using.
 by rewrite/enum_stdwordn (map_inj_uniq wordperm_inj); exact: enum_uniq.
 Qed.
 
-Definition stdwordn_finMixin :=
-  Eval hnf in sub_uniq_finMixin
-                stdwordnn_subCountType enum_stdwordn_uniq enum_stdwordnE.
-Canonical stdwordn_finType := Eval hnf in FinType stdwordn stdwordn_finMixin.
+HB.instance Definition _ :=
+  Finite.copy stdwordn
+    (uniq_finType stdwordn enum_stdwordnE enum_stdwordn_uniq).
 
 Lemma card_stdwordn : #|{:stdwordn}| = n`!.
 Proof using. by rewrite card_subE size_map -card_Sn cardE. Qed.

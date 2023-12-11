@@ -33,9 +33,8 @@ are only finitely many sequences [s'] which are a permutation of [s] (that is
 The main result is the cardinality of the set of permuted of a tuple expressed
 as a multinomial [card_permuted_multinomial].
 **************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import tuple bigop path div finset binomial.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import perm fingroup action gproduct.
 
 Require Import tools combclass sorted partition composition multinomial.
@@ -111,25 +110,12 @@ Variable w : n.-tuple T.
 
 Structure permuted : predArgType :=
   Permuted { tpval :> n.-tuple T; _ : perm_eq w tpval }.
+HB.instance Definition _ := [isSub of permuted for tpval].
+HB.instance Definition _ := [Countable of permuted by <:].
 
-Canonical permuted_subType := Eval hnf in [subType for tpval].
-Definition permuted_eqMixin := Eval hnf in [eqMixin of permuted by <:].
-Canonical permuted_eqType := Eval hnf in EqType permuted permuted_eqMixin.
-Definition permuted_choiceMixin :=
-  Eval hnf in [choiceMixin of permuted by <:].
-Canonical permuted_choiceType :=
-  Eval hnf in ChoiceType permuted permuted_choiceMixin.
-Definition permuted_countMixin :=
-  Eval hnf in [countMixin of permuted by <:].
-Canonical permuted_countType :=
-  Eval hnf in CountType permuted permuted_countMixin.
-Canonical permuted_subCountType :=
-  Eval hnf in [subCountType of permuted].
-
-Let type := sub_undup_finType permuted_subCountType
-                              (all_permuted w) (mem_enum_permuted (s := w)).
-Canonical permuted_finType := [finType of permuted for type].
-Canonical permuted_subFinType := Eval hnf in [subFinType of permuted].
+HB.instance Definition _ :=
+  Finite.copy permuted
+    (undup_finType permuted (all_permuted w) (mem_enum_permuted (s := w))).
 
 Lemma permutedP (p : permuted) : perm_eq w p.
 Proof using. by case: p. Qed.

@@ -57,10 +57,8 @@ Textbook definition of ribbon:
 - [ribbon_textbook inner outer] == the textbook definition.
 
 ******)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype choice ssrnat seq fintype.
-From mathcomp Require Import tuple finfun finset bigop path fingraph.
-
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
 Require Import tools sorted partition.
 
 Set Implicit Arguments.
@@ -966,13 +964,17 @@ Hypothesis (lesmin : start <= minn stop (size sh)).
 
 Local Notation res := (add_ribbon_on sh start stop rem).
 
-Let less : start <= stop.
+(** Put some local result in the environment *)
+Local Lemma less : start <= stop.
 Proof. by move: lesmin; rewrite leq_min=>/andP[]. Qed.
-Let lessz : start <= size sh.
+Let less := less.
+Local Lemma lessz : start <= size sh.
 Proof. by move: lesmin; rewrite leq_min=>/andP[]. Qed.
-Let sztd :
+Let lessz := lessz.
+Local Lemma sztd :
   size (drop start (take stop sh)) = minn stop (size sh) - start.
 Proof. by rewrite size_drop size_take /minn. Qed.
+Let sztd := sztd.
 
 Lemma nth_add_ribbon_lt_start i : i < start -> nth 0 res i = nth 0 sh i.
 Proof.
@@ -1214,7 +1216,7 @@ case: startrem => start [|rem]// Heq /(_ (ltn0Sn _)) lesmin [<- _].
 have:= lesmin; rewrite leq_min => /andP [lespos lessz].
 rewrite /add_ribbon_on !sumn_cat /= sumn_mapS.
 rewrite size_drop size_take -/(minn _ _).
-rewrite sumn_nseq mul1n -(take_take lespos) !addnA.
+rewrite sumn_nseq mul1n -(take_takel _ lespos) !addnA.
 rewrite ![_ + sumn (drop start _)]addnAC -sumn_cat cat_take_drop.
 rewrite ![_ + (_ - start) + _]addnAC addnBA //.
 rewrite minnE -addnA (subnKC (leq_subr _ _)) // 2![_ + pos]addnAC.
@@ -1537,7 +1539,7 @@ Local Notation neig4 := (grel (@neig4box inner outer)).
 
 Implicit Type (b : box).
 
-Let incl : included inner outer.
+Local Lemma incl : included inner outer.
 Proof. by move: Htb => /and4P[]. Qed.
 
 Lemma mindropeq_non0 : mindropeq inner outer != 0.
