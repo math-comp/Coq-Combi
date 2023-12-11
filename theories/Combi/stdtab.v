@@ -80,9 +80,9 @@ t.]
 
                                                                               *)
 (******************************************************************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice.
-From mathcomp Require Import seq tuple order finset perm fingroup.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import perm fingroup.
 Require Import tools combclass partition Yamanouchi ordtype std tableau.
 
 
@@ -623,15 +623,8 @@ Variable sh : intpart.
 
 Structure stdtabsh : Set :=
   StdtabSh {stdtabshval :> seq (seq nat); _ : is_stdtab_of_shape sh stdtabshval}.
-
-Canonical stdtabsh_subType := Eval hnf in [subType for stdtabshval].
-Definition stdtabsh_eqMixin := Eval hnf in [eqMixin of stdtabsh by <:].
-Canonical stdtabsh_eqType := Eval hnf in EqType stdtabsh stdtabsh_eqMixin.
-Definition stdtabsh_choiceMixin := Eval hnf in [choiceMixin of stdtabsh by <:].
-Canonical stdtabsh_choiceType := Eval hnf in ChoiceType stdtabsh stdtabsh_choiceMixin.
-Definition stdtabsh_countMixin := Eval hnf in [countMixin of stdtabsh by <:].
-Canonical stdtabsh_countType := Eval hnf in CountType stdtabsh stdtabsh_countMixin.
-Canonical stdtabsh_subCountType := Eval hnf in [subCountType of stdtabsh].
+HB.instance Definition _ := [isSub of stdtabsh for stdtabshval].
+HB.instance Definition _ := [Countable of stdtabsh by <:].
 
 Let stdtabsh_enum : seq stdtabsh := pmap insub (enum_stdtabsh sh).
 
@@ -653,10 +646,7 @@ apply: (enum_yameval_countE (intpartP sh)).
 by rewrite /is_yam_of_eval yam_of_stdtabP //= Hsht.
 Qed.
 
-Definition stdtabsh_finMixin := Eval hnf in FinMixin finite_stdtabsh.
-Canonical stdtabsh_finType := Eval hnf in FinType stdtabsh stdtabsh_finMixin.
-(* Redundant with tabsh_subFinType
-Canonical stdtabsh_subFinType := Eval hnf in [subFinType of stdtabsh_countType]. *)
+HB.instance Definition _ := isFinite.Build stdtabsh finite_stdtabsh.
 
 Lemma stdtabshP (t : stdtabsh) : is_stdtab t.
 Proof using. by case: t => /= t /andP []. Qed.
@@ -691,16 +681,8 @@ Definition is_stdtab_of_n := [pred t | (is_stdtab t) && (size_tab t == n) ].
 
 Structure stdtabn : Set :=
   StdtabN {stdtabnval :> seq (seq nat); _ : is_stdtab_of_n stdtabnval}.
-Canonical stdtabn_subType := Eval hnf in [subType for stdtabnval].
-Definition stdtabn_eqMixin := Eval hnf in [eqMixin of stdtabn by <:].
-Canonical stdtabn_eqType := Eval hnf in EqType stdtabn stdtabn_eqMixin.
-Definition stdtabn_choiceMixin := Eval hnf in [choiceMixin of stdtabn by <:].
-Canonical stdtabn_choiceType := Eval hnf in ChoiceType stdtabn stdtabn_choiceMixin.
-
-Definition stdtabn_countMixin := Eval hnf in [countMixin of stdtabn by <:].
-Canonical stdtabn_countType := Eval hnf in CountType stdtabn stdtabn_countMixin.
-Canonical stdtabnn_subCountType := Eval hnf in [subCountType of stdtabn].
-
+HB.instance Definition _ := [isSub of stdtabn for stdtabnval].
+HB.instance Definition _ := [Countable of stdtabn by <:].
 
 Definition enum_stdtabn : seq (seq (seq nat)) :=
   map (stdtab_of_yam \o val) (enum ({:yamn n})).
@@ -713,9 +695,7 @@ rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
   by rewrite isSome_insub; case: eqP=> // ->.
 move: Ht => /andP [] Htab /eqP.
 rewrite -(size_yam_of_stdtab Htab) => Hszt.
-rewrite /enum_stdtabn map_comp.
-rewrite !enumT unlock subType_seqP.
-rewrite count_map.
+rewrite /enum_stdtabn map_comp enum_unionE count_map.
 rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
   move=> y /(allP (all_unionP _ yamn_PredEq)) /=.
   rewrite /is_yam_of_size => /andP [] Hyam /eqP Hszy /=.
@@ -727,10 +707,7 @@ apply: (count_unionP _ yamn_PredEq).
 - by rewrite /is_yam_of_size yam_of_stdtabP //= Hszt.
 Qed.
 
-Definition stdtabn_finMixin := Eval hnf in FinMixin finite_stdtabn.
-Canonical stdtabn_finType := Eval hnf in FinType stdtabn stdtabn_finMixin.
-(* Redundant with tabsh_subFinType
-Canonical stdtabn_subFinType := Eval hnf in [subFinType of stdtabn_countType]. *)
+HB.instance Definition _ := isFinite.Build stdtabn finite_stdtabn.
 
 Lemma stdtabnP (s : stdtabn) : is_stdtab s.
 Proof using. by case: s => s /= /andP []. Qed.
@@ -785,7 +762,7 @@ Proof using. by rewrite /conj_tab size_mkseq. Qed.
 Lemma shape_conj_tab t : shape (conj_tab t) = conj_part (shape t).
 Proof using.
 rewrite /conj_tab /shape -map_comp.
-rewrite (eq_map (f2 := fun i =>
+rewrite (eq_map (g := fun i =>
                          (nth 0 (conj_part [seq size i | i <- t]) i))); first last.
   by move => i /=; rewrite size_mkseq.
 by rewrite -/(shape _) -/(mkseq _ _); apply: mkseq_nth.
@@ -811,7 +788,7 @@ Lemma eq_from_shape_get_tab (t u : seq (seq T)) :
 Proof using.
 move=> Hsh Hget; apply (eq_from_nth (x0 := [::])).
   by rewrite -!(size_map size) -!/(shape _) Hsh.
-move=> r _; apply (eq_from_nth (x0 := inh)).
+move=> r _; apply: (eq_from_nth (x0 := inh)).
   by rewrite -!nth_shape Hsh.
 by move=> c _; rewrite -!/(get_tab _ (_, _)) Hget.
 Qed.

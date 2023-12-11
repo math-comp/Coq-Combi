@@ -25,9 +25,8 @@
        this gives a tableau if the inner shape of [st] is the shape of [t] and
        the entries of [t] are smaller than the entries of [st].
 ******)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
-From mathcomp Require Import tuple finfun finset bigop path order.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
 
 Require Import tools partition skewpart Yamanouchi ordtype tableau std stdtab.
 
@@ -493,7 +492,7 @@ exact: is_skew_tableau_filter_le_tmp.
 Qed.
 
 Definition join_tab s t :=
-  [seq r.1 ++ r.2 | r <- zip (pad [::] (size t) s) t].
+  [seq pr.1 ++ pr.2 | pr <- zip (pad [::] (size t) s) t].
 
 Lemma size_join_tab s t :
   size s <= size t ->
@@ -510,10 +509,10 @@ Qed.
 
 Lemma shape_join_tab s t :
   shape (join_tab s t) =
-  ([seq r.1 + r.2 | r <- zip (pad 0 (size t) (shape s)) (shape t)])%N.
+  ([seq pr.1 + pr.2 | pr <- zip (pad 0 (size t) (shape s)) (shape t)])%N.
 Proof using .
 rewrite /shape /join_tab -map_comp.
-rewrite (eq_map (f2 := (fun p => p.1 + p.2) \o
+rewrite (eq_map (g := (fun p => p.1 + p.2) \o
                          (fun p => (size p.1, size p.2)))); first last.
   by move=> [a b] /=; rewrite size_cat.
 rewrite map_comp; congr map.

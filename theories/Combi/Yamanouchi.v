@@ -448,10 +448,6 @@ Structure yamn : Set :=
   Yamn {yamnval :> seq nat; _ : is_yam_of_size n yamnval}.
 HB.instance Definition _ := [isSub of yamn for yamnval].
 HB.instance Definition _ := [Countable of yamn by <:].
-Let type : finType := union_finType
-              yamn
-              (fun p : intpartn n => (yameval p))
-              yamn_PredEq yamn_partition_evalseq.
 HB.instance Definition _ :=
   Finite.copy yamn (union_finType
     yamn (fun p : intpartn n => yameval p) yamn_PredEq yamn_partition_evalseq).

@@ -67,9 +67,8 @@ the congruence transitive closure of rule. The main results here are
 - [gencongr_ind] : induction principle on classes for gencongr, any property
                    preserved along the rewriting rule holds for classes.      *)
 (******************************************************************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype seq.
-From mathcomp Require Import path tuple.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
 Require Import Recdef.
 Require Import permcomp permuted multinomial vectNK.
 
@@ -346,7 +345,6 @@ Section CongruenceFacts.
 Variable Alph : eqType.
 Notation word := (seq Alph).
 
-
 Variable r : rel word.
 Hypothesis Hcongr : congruence_rel r.
 Hypothesis Hequiv : equivalence_rel r.
@@ -390,7 +388,7 @@ End CongruenceFacts.
 Section CongruenceClosure.
 
 Variable Alph : eqType.
-Notation word := (seq_eqType Alph).
+Notation word := (seq Alph).
 
 Variable rule : word -> seq word.
 
@@ -410,7 +408,7 @@ Proof using.
 apply: (iffP idP).
 - move/flatten_mapP => [] [] [] a v2 b /=.
   rewrite -cat3_equiv_cut3 => /eqP H2 /mapP [] v1 Hrule H1.
-  by exists a, v1, b, v2.
+  by exists a; exists v1; exists b; exists v2.
 - move=> [] a [] v1 [] b [] v2 [] H1 H2 Hrule.
   apply/flatten_mapP. exists (a, v2, b); first by rewrite -cat3_equiv_cut3 H2.
   by rewrite H1 /=; apply/mapP; exists v1.
@@ -562,7 +560,7 @@ End CongruenceClosure.
 Section InvarContMultHom.
 
 Variable Alph : eqType.
-Notation word := (seq_eqType Alph).
+Notation word := (seq Alph).
 
 Variable rule : word -> seq word.
 Hypothesis Hmulthom : forall u : word, all (perm_eq u) (rule u).
@@ -612,7 +610,7 @@ Hypothesis Hhom : forall u : word, all (szinvar u) (rule u).
 Lemma size_bound (x : word) (s : seq word) :
   all (szinvar x) s -> uniq s -> size s <= #|Alph|^(size x).
 Proof using.
-pose T := tuple_subType (size x) Alph.
+pose T := (size x).-tuple Alph.
 rewrite -card_tuple cardE all_count => /eqP Hall /(pmap_sub_uniq T).
 have := size_pmap_sub T s; rewrite Hall => <-.
 by apply: (full_bound _ (all_predT _)) => u _; rewrite mem_enum.

@@ -43,10 +43,8 @@ In the following tableaux are considered on ['I_n.+1] for a given [n].
             construct the tableau (of type [tabsh sh]) whose i-th row
             contains only [i]'s as elements of ['I_n.+1].
 *****)
-
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import path tuple order.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
 Require Import tools partition ordtype sorted.
 
 Set Implicit Arguments.
@@ -561,14 +559,8 @@ Definition is_tab_of_shape (sh : seq nat) :=
 
 Structure tabsh : predArgType :=
   TabSh {tabshval :> seq (seq T); _ : is_tab_of_shape sh tabshval}.
-Canonical tabsh_subType := Eval hnf in [subType for tabshval].
-Definition tabsh_eqMixin := Eval hnf in [eqMixin of tabsh by <:].
-Canonical tabsh_eqType := Eval hnf in EqType tabsh tabsh_eqMixin.
-Definition tabsh_choiceMixin := Eval hnf in [choiceMixin of tabsh by <:].
-Canonical tabsh_choiceType := Eval hnf in ChoiceType tabsh tabsh_choiceMixin.
-Definition tabsh_countMixin := Eval hnf in [countMixin of tabsh by <:].
-Canonical tabsh_countType := Eval hnf in CountType tabsh tabsh_countMixin.
-Canonical tabsh_subCountType := Eval hnf in [subCountType of tabsh].
+HB.instance Definition _ := [isSub of tabsh for tabshval].
+HB.instance Definition _ := [Countable of tabsh by <:].
 
 Implicit Type (t : tabsh).
 
@@ -604,9 +596,7 @@ move=> w _ /=; apply/idP/idP.
   by rewrite /to_word -Hsh -shape_rev flattenK revK.
 Qed.
 
-Definition tabsh_finMixin := Eval hnf in FinMixin finite_tabsh.
-Canonical tabsh_finType := Eval hnf in FinType tabsh tabsh_finMixin.
-Canonical tabsh_subFinType := Eval hnf in [subFinType of tabsh_countType].
+HB.instance Definition _ := isFinite.Build tabsh finite_tabsh.
 
 Lemma to_word_enum_tabsh :
   perm_eq
@@ -641,7 +631,7 @@ Qed.
 End FinType.
 
 Notation "'tabsh[' T ']' mu" :=
-  (tabsh (T := [inhFinOrderType of T]) mu) (at level 10).
+  (tabsh (T := T : inhFinOrderType _) mu) (at level 10).
 
 #[export] Hint Resolve tabshP : core.
 
