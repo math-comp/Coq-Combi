@@ -47,14 +47,53 @@ Compositions and partitions:
 - [partn_of_compn n c] == the partition in ['P_n] obtained by sorting
                    [c : intcompn n]
 ******)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice.
-From mathcomp Require Import seq bigop path binomial finset order.
-Require Import tools combclass sorted partition subseq ordtype lattice.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+Require Import tools combclass sorted partition subseq ordtype.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
+
+
+HB.factory Record IsoBottom disp T of Order.POrder disp T := {
+  disp' : unit;
+  T' : bPOrderType disp';
+  f : T -> T';
+  f' : T' -> T;
+  f_can : cancel f f';
+  f'_can : cancel f' f;
+  f_mono : {mono f : x y / x <= y}%O;
+}.
+
+HB.builders Context disp T of IsoBottom disp T.
+
+Definition bottom := f' \bot%O.
+Lemma isobottom x : (bottom <= x)%O.
+Proof. by rewrite /bottom -f_mono f'_can Order.le0x. Qed.
+
+HB.instance Definition _ := Order.hasBottom.Build _ T isobottom.
+HB.end.
+
+
+HB.factory Record IsoTop disp T of Order.POrder disp T := {
+  disp' : unit;
+  T' : tPOrderType disp';
+  f : T -> T';
+  f' : T' -> T;
+  f_can : cancel f f';
+  f'_can : cancel f' f;
+  f_mono : {mono f : x y / x <= y}%O;
+}.
+
+HB.builders Context disp T of IsoTop disp T.
+
+Definition top := f' \top%O.
+Lemma isotop x : (x <= top)%O.
+Proof. by rewrite /top -f_mono f'_can Order.lex1. Qed.
+
+HB.instance Definition _ := Order.hasTop.Build _ T isotop.
+HB.end.
 
 
 (** ** Definitions and basic properties *)
@@ -104,15 +143,8 @@ End Defs.
 
 (** * Sigma Types for Compositions *)
 Structure intcomp : Type := IntComp {cval :> seq nat; _ : is_comp cval}.
-Canonical intcomp_subType := Eval hnf in [subType for cval].
-Definition intcomp_eqMixin := Eval hnf in [eqMixin of intcomp by <:].
-Canonical intcomp_eqType := Eval hnf in EqType intcomp intcomp_eqMixin.
-Definition intcomp_choiceMixin := Eval hnf in [choiceMixin of intcomp by <:].
-Canonical intcomp_choiceType :=
-  Eval hnf in ChoiceType intcomp intcomp_choiceMixin.
-Definition intcomp_countMixin := Eval hnf in [countMixin of intcomp by <:].
-Canonical intcomp_countType :=
-  Eval hnf in CountType intcomp intcomp_countMixin.
+HB.instance Definition _ := [isSub of intcomp for cval].
+HB.instance Definition _ := [Countable of intcomp by <:].
 
 Lemma intcompP (p : intcomp) : is_comp p.
 Proof. by case: p. Qed.
@@ -194,7 +226,7 @@ have /negbTE -> : n != 0.
   move: s0neq0; apply contra => /eqP Hn0.
   by move: Hsum; rewrite Hn0 addn_eq0 => /andP [/eqP ->].
 rewrite count_flatten -map_comp.
-rewrite (eq_map (f2 := fun i => i == s0 : nat)); first last.
+rewrite (eq_map (g := fun i => i == s0 : nat)); first last.
   move=> /= i; rewrite count_map /=.
   case (altP (i =P s0)) => [Heq | /negbTE Hneq].
   - subst s0; rewrite (eq_count (a2 := xpred1 s)); first last.
@@ -224,21 +256,11 @@ Variable n : nat.
 
 Structure intcompn : Set :=
   IntCompN {cnval :> seq nat; _ : is_comp_of_n n cnval}.
-Canonical intcompn_subType := Eval hnf in [subType for cnval].
-Definition intcompn_eqMixin := Eval hnf in [eqMixin of intcompn by <:].
-Canonical intcompn_eqType := Eval hnf in EqType intcompn intcompn_eqMixin.
-Definition intcompn_choiceMixin :=
-  Eval hnf in [choiceMixin of intcompn by <:].
-Canonical intcompn_choiceType :=
-  Eval hnf in ChoiceType intcompn intcompn_choiceMixin.
-Definition intcompn_countMixin := Eval hnf in [countMixin of intcompn by <:].
-Canonical intcompn_countType :=
-  Eval hnf in CountType intcompn intcompn_countMixin.
-Canonical intcompn_subCountType := Eval hnf in [subCountType of intcompn].
-Let type := sub_finType intcompn_subCountType
-                        (enum_compn_allP n) (@enum_compn_countE n).
-Canonical intcompn_finType := Eval hnf in [finType of intcompn for type].
-Canonical intcompn_subFinType := Eval hnf in [subFinType of intcompn].
+HB.instance Definition _ := [isSub of intcompn for cnval].
+HB.instance Definition _ := [Countable of intcompn by <:].
+HB.instance Definition _ :=
+  Finite.copy intcompn
+    (seq_finType intcompn (enum_compn_allP n) (@enum_compn_countE n)).
 
 Implicit Type (c : intcompn) (d : {set 'I_n.-1}).
 
@@ -258,7 +280,8 @@ Proof using. exact: enum_subE. Qed.
 
 Lemma card_intcompn : #|{:intcompn}| = 2 ^ n.-1.
 Proof.
-rewrite /= !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
+rewrite /= !cardT -!(size_map val) !enumT.
+rewrite unlock !subType_seqP ?enum_compn_allP //=.
 elim/ltn_ind: n => [[_ | i IHi]] /=; first by rewrite expn0.
 rewrite enum_compnE // size_allpairs_dep sumn_mapE.
 rewrite -{1}(subn0 i.+1) -subSS -/(index_iota _ _) big_add1 /= big_mkord.
@@ -617,25 +640,23 @@ Qed.
 End DescSet.
 
 
-Module RefinementOrder.
+
 Section RefinementOrder.
+Import Order.DefaultSetSubsetOrder.
 
 Variable (n : nat).
 Definition intcompnref := intcompn n.
 Local Notation "'CRef" := intcompnref.
 Implicit Types (c : 'CRef) (d : {set 'I_n.-1}).
-Local Notation SetIn := ({set<= [finType of 'I_n.-1]}).
+Local Notation SetIn := ({set ('I_n.-1 : finType)}).
 
-Definition porderMixin :=
-  Order.CanMixin.CanPOrder (T' := [porderType of SetIn]) (@descsetK n).
-
+HB.instance Definition _ := SubType.copy 'CRef (intcompn n).
+HB.instance Definition _ := Finite.copy 'CRef (intcompn n).
 Lemma compnref_display : unit. Proof. exact: tt. Qed.
-Canonical porderType :=
-  POrderType compnref_display 'CRef porderMixin.
-Canonical finPOrderType := Eval hnf in [finPOrderType of 'CRef].
-Canonical inhType := InhType 'CRef (InhMixin (rowcompn n)).
-Canonical inhPOrderType := Eval hnf in [inhPOrderType of 'CRef].
-Canonical inhFinPOrderType := Eval hnf in [inhFinPOrderType of 'CRef].
+HB.instance Definition _ : Order.isPOrder compnref_display 'CRef :=
+  Order.CanIsPartial compnref_display (@descsetK n).
+HB.instance Definition _ :=
+  isInhabitedType.Build 'CRef (rowcompn n).
 
 Lemma leEcompnref c1 c2 :
   (c1 <= c2)%O = (descset c1 \subset descset c2).
@@ -645,11 +666,9 @@ Lemma descset_mono :
   {mono (@descset n) : A B / (A <= B :> 'CRef)%O >-> (A <= B :> SetIn)%O}.
 Proof. by []. Qed.
 
-Definition latticeMixin :=
-  Order.CanMixin.IsoLattice
-    (T := porderType) (T' := [distrLatticeType of SetIn])
+HB.instance Definition _ :=
+  Order.IsoLattice.Build compnref_display 'CRef
     (@descsetK n) (@from_descsetK n) descset_mono.
-Canonical latticeType := LatticeType 'CRef latticeMixin.
 
 Lemma descset_meet c1 c2 :
   descset (c1 `&` c2)%O = descset c1 :&: descset c2.
@@ -658,11 +677,9 @@ Lemma descset_join c1 c2 :
   descset (c1 `|` c2)%O = descset c1 :|: descset c2.
 Proof. by rewrite from_descsetK. Qed.
 
-Definition distrLatticeMixin :=
-  Order.CanMixin.IsoDistrLattice
-    (T := porderType) (T' := [distrLatticeType of SetIn])
+HB.instance Definition _ :=
+  Order.IsoDistrLattice.Build compnref_display 'CRef
     (@descsetK n) (@from_descsetK n) descset_mono.
-Canonical distrLatticeType := DistrLatticeType 'CRef distrLatticeMixin.
 
 Lemma descset_rowcompn : descset (rowcompn n) = set0.
 Proof. by apply/cards0_eq; rewrite card_descset /= /rowcomp; case n. Qed.
@@ -672,25 +689,18 @@ apply/eqP; rewrite -subset_leqif_cards; last exact: subsetT.
 by rewrite card_descset /= /colcomp /= size_nseq cardsT card_ord.
 Qed.
 
-Definition bLatticeMixin :=
-  IsoBottomMixin (T := porderType) (T' := [bLatticeType of SetIn])
+HB.instance Definition _ :=
+  IsoBottom.Build compnref_display 'CRef
                  (@descsetK n) (@from_descsetK n) descset_mono.
-Canonical bLatticeType := BLatticeType 'CRef bLatticeMixin.
-Definition tbLatticeMixin :=
-  IsoTopMixin (T := bLatticeType) (T' := [tbLatticeType of SetIn])
-              (@descsetK n) (@from_descsetK n) descset_mono.
-Canonical tbLatticeType := TBLatticeType 'CRef tbLatticeMixin.
+HB.instance Definition _ :=
+  IsoTop.Build compnref_display 'CRef
+                 (@descsetK n) (@from_descsetK n) descset_mono.
 
 Lemma topEcompnref : 1%O = colcompn n :> 'CRef.
 Proof. by apply: descset_inj; rewrite from_descsetK descset_colcompn. Qed.
 
 Lemma botEcompnref : 0%O = rowcompn n :> 'CRef.
 Proof. by apply: descset_inj; rewrite from_descsetK descset_rowcompn. Qed.
-
-Canonical bDistrLatticeType := [bDistrLatticeType of 'CRef].
-Canonical tbDistrLatticeType := [tbDistrLatticeType of 'CRef].
-Canonical finLatticeType := [finLatticeType of 'CRef].
-Canonical finDistrLatticeType := [finDistrLatticeType of 'CRef].
 
 Lemma compnref_rev c1 c2 :
   (rev_intcompn c1 <= rev_intcompn c2 :> 'CRef)%O = (c1 <= c2)%O.
@@ -706,41 +716,6 @@ apply/subdescsetP; exists (rev (map rev s)) => /=.
 Qed.
 
 End RefinementOrder.
-
-Module Exports.
-
-Set Warnings "-redundant-canonical-projection".
-Canonical porderType.
-Canonical latticeType.
-Canonical bLatticeType.
-Canonical tbLatticeType.
-Canonical bDistrLatticeType.
-Canonical tbDistrLatticeType.
-
-Canonical finPOrderType.
-Canonical finLatticeType.
-Canonical finDistrLatticeType.
-
-Canonical inhType.
-Canonical inhPOrderType.
-Canonical inhFinPOrderType.
-Set Warnings "+redundant-canonical-projection".
-
-Definition leEcompnref := @leEcompnref.
-Definition descset_mono := @descset_mono.
-Definition descset_meet := @descset_meet.
-Definition descset_join := @descset_join.
-Definition descset_rowcompn := @descset_rowcompn.
-Definition descset_colcompn := @descset_colcompn.
-Definition botEcompnref := @botEcompnref.
-Definition topEcompnref := @topEcompnref.
-Definition compnref_rev := @compnref_rev.
-End Exports.
-
-End RefinementOrder.
-Export RefinementOrder.Exports.
-
-
 
 #[export] Hint Resolve intcompP intcompnP : core.
 

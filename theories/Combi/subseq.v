@@ -23,9 +23,8 @@ following constructor
 - [sub_full w] == [w] as as a [subseqs w].
 
  *)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat bigop.
-From mathcomp Require Import eqtype choice fintype seq path tuple.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
 Require Import tools combclass sorted.
 
 Set Implicit Arguments.
@@ -111,19 +110,9 @@ Variables (T : choiceType) (w : seq T).
 
 Structure subseqs : predArgType :=
   Subseqs {subseqsval :> seq T; _ : subseq subseqsval w}.
-Canonical subseqs_subType := Eval hnf in [subType for subseqsval].
-Definition subseqs_eqMixin := Eval hnf in [eqMixin of subseqs by <:].
-Canonical subseqs_eqType := EqType subseqs subseqs_eqMixin.
-Definition subseqs_choiceMixin := Eval hnf in [choiceMixin of subseqs by <:].
-Canonical subseqs_choiceType := ChoiceType subseqs subseqs_choiceMixin.
+HB.instance Definition _ := [isSub of subseqs for subseqsval].
 
 Implicit Type (s : subseqs).
-
-Lemma subseqsP s : subseq s w.
-Proof using. by case: s => /= s. Qed.
-
-Definition sub_nil  : subseqs := Subseqs (sub0seq w).
-Definition sub_full : subseqs := Subseqs (subseq_refl w).
 
 Lemma to_mask_spec s : {m : (size w).-tuple bool | mask m w == s}.
 Proof.
@@ -136,6 +125,14 @@ Lemma to_maskK : cancel to_mask (fun m => Subseqs (mask_subseq (val m) w)).
 Proof.
 by rewrite /to_mask => s; case: to_mask_spec => m /eqP eqm; apply val_inj.
 Qed.
+
+HB.instance Definition _ := Finite.copy subseqs (can_type to_maskK).
+
+Lemma subseqsP s : subseq s w.
+Proof using. by case: s => /= s. Qed.
+
+Definition sub_nil  : subseqs := Subseqs (sub0seq w).
+Definition sub_full : subseqs := Subseqs (subseq_refl w).
 
 Lemma mask1E x0 i :
   i < size w -> mask [tuple val x == i | x < size w] w = [:: nth x0 w i].
@@ -177,10 +174,7 @@ rewrite /to_mask=> w_uniq m; case: to_mask_spec => m' /= /eqP.
 exact/mask_injP.
 Qed.
 
-Definition subseqs_countMixin := CanCountMixin to_maskK.
-Canonical subseqs_countType := CountType subseqs subseqs_countMixin.
-Definition subseqs_finMixin := CanFinMixin to_maskK.
-Canonical subseqs_finType := FinType subseqs subseqs_finMixin.
+
 
 Lemma enum_subseqsE :
   perm_eq
@@ -307,7 +301,7 @@ Lemma big_subseqs_undup_cond (F : seq T -> R) (P : pred (seq T)) (s : seq T) :
   \big[*%M/1]_(m : (size s).-tuple bool | P (mask m s)) F (mask m s).
 Proof.
 move=> opid; rewrite big_mkcond /=.
-by rewrite (big_subseqs_undup (fun i => if P i then F i else 1)) // big_mkcond.
+by rewrite (big_subseqs_undup (fun i => if P i then F i else 1)) // -big_mkcond.
 Qed.
 
 End Bigop.

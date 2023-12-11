@@ -50,9 +50,8 @@ Sigma types for Yamanouchi words:
                  evaluation ev such as 33 2222 11111 0000000 as a [yameval]
 
 ******)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import bigop.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
 Require Import tools combclass partition.
 
 Set Implicit Arguments.
@@ -372,7 +371,7 @@ move=> ev Hev Hpart [/= | y0 y] /=.
   by have -> : [::] == ev = false by move: Hev; case ev.
 move => /andP [] /andP [] _ Hyam /eqP Htmp; subst ev.
 rewrite count_flatten -map_comp.
-rewrite (eq_map (f2 := fun i => i == y0 : nat)); first last.
+rewrite (eq_map (g := fun i => i == y0 : nat)); first last.
   move=> i /=; rewrite count_map /=.
   case (altP (i =P y0)) => [Heq | /negbTE Hneq].
   - subst i; rewrite (eq_count (a2 := xpred1 y)); first last.
@@ -401,21 +400,11 @@ Variable ev : intpart.
 
 Structure yameval : Set :=
   YamEval {yamevalval :> seq nat; _ : is_yam_of_eval ev yamevalval}.
-Canonical yameval_subType := Eval hnf in [subType for yamevalval].
-Definition yameval_eqMixin := Eval hnf in [eqMixin of yameval by <:].
-Canonical yameval_eqType := Eval hnf in EqType yameval yameval_eqMixin.
-Definition yameval_choiceMixin := Eval hnf in [choiceMixin of yameval by <:].
-Canonical yameval_choiceType :=
-  Eval hnf in ChoiceType yameval yameval_choiceMixin.
-Definition yameval_countMixin := Eval hnf in [countMixin of yameval by <:].
-Canonical yameval_countType :=
-  Eval hnf in CountType yameval yameval_countMixin.
-Canonical yameval_subCountType := Eval hnf in [subCountType of yameval].
-Let type := sub_finType yameval_subCountType
-                        (enum_yamevalP (intpartP ev))
-                        (enum_yameval_countE (intpartP ev)).
-Canonical yameval_finType := Eval hnf in [finType of yameval for type].
-Canonical yameval_subFinType := Eval hnf in [subFinType of yameval].
+HB.instance Definition _ := [isSub of yameval for yamevalval].
+HB.instance Definition _ := [Countable of yameval by <:].
+HB.instance Definition _ :=
+  Finite.copy yameval (seq_finType yameval
+    (enum_yamevalP (intpartP ev)) (enum_yameval_countE (intpartP ev))).
 
 Lemma yamevalP (y : yameval) : is_yam y.
 Proof using. by case: y => /= y /andP[]. Qed.
@@ -439,7 +428,7 @@ Section YamOfSize.
 
 Variable n : nat.
 
-Lemma yamn_PredEq (ev : intpartn_subFinType n) :
+Lemma yamn_PredEq (ev : intpartn n) :
   predI (is_yam_of_size n) (pred1 (val ev) \o evalseq)
   =1 is_yam_of_eval (val ev).
 Proof using.
@@ -457,20 +446,15 @@ Qed.
 
 Structure yamn : Set :=
   Yamn {yamnval :> seq nat; _ : is_yam_of_size n yamnval}.
-Canonical yamn_subType := Eval hnf in [subType for yamnval].
-Definition yamn_eqMixin := Eval hnf in [eqMixin of yamn by <:].
-Canonical yamn_eqType := Eval hnf in EqType yamn yamn_eqMixin.
-Definition yamn_choiceMixin := Eval hnf in [choiceMixin of yamn by <:].
-Canonical yamn_choiceType := Eval hnf in ChoiceType yamn yamn_choiceMixin.
-Definition yamn_countMixin := Eval hnf in [countMixin of yamn by <:].
-Canonical yamn_countType := Eval hnf in CountType yamn yamn_countMixin.
-Canonical yamn_subCountType := Eval hnf in [subCountType of yamn].
-Let type := union_finType
-              yamn_subCountType
-              (fun p : intpartn_subFinType n => (yameval_subFinType p))
+HB.instance Definition _ := [isSub of yamn for yamnval].
+HB.instance Definition _ := [Countable of yamn by <:].
+Let type : finType := union_finType
+              yamn
+              (fun p : intpartn n => (yameval p))
               yamn_PredEq yamn_partition_evalseq.
-Canonical yamn_finType := Eval hnf in [finType of yamn for type].
-Canonical yamn_subFinType := Eval hnf in [subFinType of yamn].
+HB.instance Definition _ :=
+  Finite.copy yamn (union_finType
+    yamn (fun p : intpartn n => yameval p) yamn_PredEq yamn_partition_evalseq).
 
 Lemma yamnP (y : yamn) : is_yam y.
 Proof using. by case: y => /= y /andP []. Qed.
@@ -483,7 +467,7 @@ Lemma enum_yamnE :
   map val (enum {:yamn}) = flatten [seq enum_yameval p | p <- enum_partn n].
 Proof using.
 rewrite enum_unionE /=; congr flatten.
-rewrite [LHS](eq_map (f2 := enum_yameval \o val)).
+rewrite [LHS](eq_map (g := enum_yameval \o val)).
 - by rewrite map_comp enum_intpartnE.
 - by move=> i /=; rewrite enum_yamevalE.
 Qed.
