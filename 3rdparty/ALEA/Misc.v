@@ -23,17 +23,17 @@ Local Open Scope signature_scope.
 
 
 (* Should be in standard library Arith.EqNat.beq_nat. *)
-Lemma beq_nat_neq: forall x y : nat, x <> y -> false = beq_nat x y.
+Lemma beq_nat_neq: forall x y : nat, x <> y -> false = Nat.eqb x y.
 Proof.
   induction x;induction y;simpl;auto.
 Qed.
 
 Lemma if_beq_nat_nat_eq_dec : forall A (x y:nat) (a b:A),
-  (if beq_nat x y then a else b) = if eq_nat_dec x y then a else b.
+  (if Nat.eqb x y then a else b) = if eq_nat_dec x y then a else b.
 Proof.
   intros A x y a b.
   destruct (eq_nat_dec x y);intros;subst.
-  rewrite <- beq_nat_refl;trivial.
+  rewrite Nat.eqb_refl;trivial.
   rewrite <- beq_nat_neq;auto.
 Qed.
 

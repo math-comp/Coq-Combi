@@ -19,9 +19,9 @@ Local Open Scope O_scope.
 Definition eq_rel {A} (E1 E2:relation A) := forall x y, E1 x y <-> E2 x y.
 
 Class Order {A} (E:relation A)  (R:relation A) :=
-  {reflexive :> Reflexive R;
+  {reflexive :: Reflexive R;
    order_eq : forall x y, R x y /\ R y x <-> E x y;
-   transitive :> Transitive R }.
+   transitive :: Transitive R }.
 
 Generalizable Variables A E R.
 
@@ -52,7 +52,7 @@ Opaque OrderEquiv.
 Class ord A :=
    {  Oeq : relation A;
       Ole : relation A;
-      order_rel :> Order Oeq Ole }.
+      order_rel :: Order Oeq Ole }.
 
 
 Lemma OrdSetoid `(o:ord A) : Setoid A.
@@ -703,7 +703,7 @@ Qed.
        Ole := fun n m : nat => (n <= m)%nat}.
 Next Obligation.
 abstract (apply Build_Order; intros; try lia; auto with arith;
-          red; intros; apply le_trans with y; auto).
+          red; intros; apply Nat.le_trans with y; auto).
 Defined.
 
 Lemma le_Ole : forall n m, ((n <= m)%nat)-> n <= m.

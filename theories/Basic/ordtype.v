@@ -69,7 +69,7 @@ Qed.
 
 Lemma finord_wf_down (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
   (forall x, (forall y, y > x -> P y) -> P x) -> forall x, P x.
-Proof. exact: (@finord_wf _ [finPOrderType of T^d]). Qed.
+Proof. exact: (finord_wf (T := T^d : finPOrderType _)). Qed.
 
 
 (******************************************************************************)
@@ -105,7 +105,7 @@ by exfalso; apply: (Hcovers z); rewrite ltxz ltzy.
 Qed.
 
 Lemma covers_dual x y :
-  covers (T := [finPOrderType of T^d]) y x = covers x y.
+  covers (T := T^d : finPOrderType _) y x = covers x y.
 Proof.
 rewrite /= ltEdual; congr (_ && _); apply: eq_forallb => z.
 by rewrite !ltEdual andbC.
@@ -314,7 +314,7 @@ Lemma maxLb a u : a <= maxL a u.
 Proof using.
 elim: u a => //= u0 u IHu a.
 apply: (@le_trans _ _ (Order.max a u0)); last exact: IHu.
-by rewrite le_maxr lexx.
+by rewrite le_max lexx.
 Qed.
 
 Lemma in_maxL a u : (maxL a u) \in a :: u.
@@ -358,7 +358,7 @@ Lemma maxLPt a u : allLeq u (maxL a u).
 Proof using.
 rewrite/allLeq; apply/allP => x Hx.
 elim: u Hx a => //= u0 u IHu; rewrite inE => /orP [/eqP -> | /IHu Hx] a.
-- by rewrite maxC -maxXL le_maxr lexx.
+- by rewrite maxC -maxXL le_max lexx.
 - exact: Hx.
 Qed.
 Lemma maxLP a u : allLeq (a :: u) (maxL a u).
@@ -375,8 +375,8 @@ apply: (iffP idP); first exact: allLeqE.
 rewrite/allLeq; elim: u a => //= u0 u IHu a.
 rewrite maxC -maxXL => Hmax.
 have Hu : maxL a u = a.
-  by apply le_anti; rewrite maxLb andbT -{2}Hmax le_maxr lexx orbT.
-by rewrite -{1}Hmax le_maxr lexx /= IHu.
+  by apply le_anti; rewrite maxLb andbT -{2}Hmax le_max lexx orbT.
+by rewrite -{1}Hmax le_max lexx /= IHu.
 Qed.
 
 Lemma allLeqCons b u a : b <= a -> allLeq u a -> allLeq (b :: u) a.
@@ -393,13 +393,13 @@ Qed.
 Lemma allLeqConsE u a b : allLeq (b :: u) a = (maxL b u <= a).
 Proof using.
 elim: u b => [| u0 u IHu]/= b; first by rewrite andbT.
-by rewrite maxC -maxXL le_maxl -IHu /= !andbA [(u0 <= a) && (b <= a)]andbC.
+by rewrite maxC -maxXL ge_max -IHu /= !andbA [(u0 <= a) && (b <= a)]andbC.
 Qed.
 
 Lemma allLtnConsE u a b : allLtn (b :: u) a = (maxL b u < a).
 Proof using.
 elim: u b => [| u0 u IHu]/= b; first by rewrite andbT.
-by rewrite maxC -maxXL lt_maxl -IHu /= !andbA [(u0 < a) && (b < a)]andbC.
+by rewrite maxC -maxXL gt_max -IHu /= !andbA [(u0 < a) && (b < a)]andbC.
 Qed.
 
 Lemma allLeq_consK b u a : allLeq (b :: u) a -> allLeq u a.
@@ -522,8 +522,8 @@ Lemma rembig_catR a u b v :
 Proof using.
 rewrite /=; elim: u a => [| u0 u IHu] a.
   by rewrite allLtnConsE /= leNgt /= => /negbTE ->.
-rewrite allLtnConsE maxL_cat /= -maxXL le_maxl => /andP [] Ha Hmax.
-by rewrite ltNge le_maxr Ha orbT /= -(IHu _ Hmax).
+rewrite allLtnConsE maxL_cat /= -maxXL ge_max => /andP [] Ha Hmax.
+by rewrite ltNge le_max Ha orbT /= -(IHu _ Hmax).
 Qed.
 
 Lemma rembig_catL a u b v :

@@ -82,11 +82,9 @@ Tamari Lattice:
 - [t1 \/T t2] == the meet of [t1] and [t2] in the Tamari lattice.
 - [t1 /\T t2] == the join of [t1] and [t2] in the Tamari lattice.
  *********************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun bigop ssrnat eqtype fintype choice seq.
-From mathcomp Require Import fingraph path finset order.
-
-Require Import tools combclass lattice ordtype.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+Require Import tools combclass ordtype.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -119,9 +117,7 @@ move=> t1 t2; apply: (iffP idP) => [|<-]; last by elim: t1 => //= r -> l ->.
 elim: t1 t2 => [|l1 IHl r1 IHr]; first by case.
 by case => //= [l2 r2] /andP [] Hr Hl; rewrite (IHl _ Hr)  (IHr _ Hl).
 Qed.
-
-Definition bintree_eqMixin := EqMixin eq_bintreeP.
-Canonical bintree_eqType := Eval hnf in EqType bintree bintree_eqMixin.
+HB.instance Definition _ := hasDecEq.Build bintree eq_bintreeP.
 
 Fixpoint tree_encode (t : bintree) : GenTree.tree unit :=
   match t with
@@ -138,12 +134,8 @@ Fixpoint tree_decode (gt : GenTree.tree unit) :=
 Lemma tree_encodeK : cancel tree_encode tree_decode.
 Proof. by elim=> [// | //= tl -> tr ->]. Qed.
 
-Definition bintree_choiceMixin := CanChoiceMixin tree_encodeK.
-Canonical bintree_choiceType :=
-  Eval hnf in ChoiceType bintree bintree_choiceMixin.
-Definition bintree_countMixin := CanCountMixin tree_encodeK.
-Canonical bintree_countType :=
-  Eval hnf in CountType bintree bintree_countMixin.
+HB.instance Definition _ := CanIsCountable tree_encodeK.
+
 
 Fixpoint size_tree t :=
   match t with
@@ -162,15 +154,8 @@ Variable (n : nat).
 
 Structure bintreesz : predArgType :=
   BinTreeSZ {trval :> bintree; _ : size_tree trval == n}.
-Canonical bintreesz_subType := Eval hnf in [subType for trval].
-Definition bintreesz_eqMixin := [eqMixin of bintreesz by <:].
-Canonical bintreesz_eqType := Eval hnf in EqType bintreesz bintreesz_eqMixin.
-Definition bintreesz_choiceMixin := [choiceMixin of bintreesz by <:].
-Canonical bintreesz_choiceType :=
-  Eval hnf in ChoiceType bintreesz bintreesz_choiceMixin.
-Definition bintreesz_countMixin := [countMixin of bintreesz by <:].
-Canonical bintreesz_countType :=
-  Eval hnf in CountType bintreesz bintreesz_countMixin.
+HB.instance Definition _ := [isSub of bintreesz for trval].
+HB.instance Definition _ := [Countable of bintreesz by <:].
 
 Lemma bintreeszP (t : bintreesz) : size_tree t = n.
 Proof. by case: t => t /= /eqP. Qed.
@@ -375,16 +360,15 @@ move/mem_enum_bintreesz => H.
 by rewrite (count_uniq_mem _ (enum_bintreesz_uniq n)) H.
 Qed.
 
-Local Definition type n := Eval hnf in
-  sub_subFinType [subCountType of bintreesz n]
-                 (enum_bintreeszP n) (@enum_bintreesz_countE n).
-Canonical bintreesz_finType n := Eval hnf in [finType of bintreesz n for type n].
-Canonical bintreesz_subFinType n := Eval hnf in [subFinType of bintreesz n].
-
+HB.instance Definition _ n :=
+  Finite.copy (bintreesz n)
+    (seq_finType (bintreesz n : subCountType _)
+       (enum_bintreeszP n) (@enum_bintreesz_countE n)).
 
 Theorem card_bintreesz n : #|bintreesz n| = Catalan_bin n.
 Proof.
-rewrite /= !cardT -!(size_map val) !enumT unlock !subType_seqP /=.
+rewrite /= !cardT -!(size_map val) !enumT unlock /=.
+rewrite subType_seqP ?enum_bintreeszP //=.
 by rewrite size_enum_bintreeszE.
 Qed.
 
@@ -614,7 +598,6 @@ Qed.
 Fact Tamari_display : unit. Proof. exact: tt. Qed.
 
 (** ** Definition of Tamari order *)
-Module Tamari.
 Section Tamari.
 
 Variable n : nat.
@@ -629,18 +612,12 @@ Local Notation "x '<T' y" := (Tamari_lt x y) (at level 70, y at next level).
 Lemma Tamari_def s t : (s <T t) = ((t != s) && (s <=T t)).
 Proof. by []. Qed.
 
-Lemma rotations_Tamari t t' :
+Lemma rotations_Tamari_internal t t' :
   trval t' \in rotations t -> t <T t'.
 Proof.
 move=> H; rewrite /Tamari_lt eq_sym rotations_neq //.
 exact: connect1.
 Qed.
-
-Lemma Tamari_refl : reflexive Tamari.
-Proof. exact: connect0. Qed.
-
-Lemma Tamari_trans : transitive Tamari.
-Proof. exact: connect_trans. Qed.
 
 Lemma Tamari_rightsizesum t1 t2 :
   t1 <=T t2 -> rightsizesum t1 <= rightsizesum t2 ?= iff (t1 == t2).
@@ -655,36 +632,28 @@ have:= Hlt; rewrite ltn_neqAle => /andP [/negbTE -> _].
 by case: eqP Hlt => [->|] //; rewrite ltnn.
 Qed.
 
-Lemma Tamari_anti : antisymmetric Tamari.
+
+Fact Tamari_refl : reflexive Tamari.
+Proof. exact: connect0. Qed.
+Fact Tamari_trans : transitive Tamari.
+Proof. exact: connect_trans. Qed.
+Fact Tamari_anti : antisymmetric Tamari.
 Proof.
 move=> t1 t2 /andP [ /Tamari_rightsizesum [leq21 eq]].
 move=> /Tamari_rightsizesum [leq12 _].
 by apply/eqP; rewrite -eq eqn_leq leq21 leq12.
 Qed.
 
-Definition porderMixin :=
-  LePOrderMixin Tamari_def Tamari_refl Tamari_anti Tamari_trans.
-Canonical porderType :=
-  POrderType Tamari_display (bintreesz n) porderMixin.
-Canonical finPOrderType := Eval hnf in [finPOrderType of bintreesz n].
+HB.instance Definition _ :=
+  Order.Le_isPOrder.Build Tamari_display (bintreesz n)
+    Tamari_refl Tamari_anti Tamari_trans.
 
 End Tamari.
-
-Module Exports.
-
-Set Warnings "-redundant-canonical-projection".
-Canonical porderType.
-Canonical finPOrderType.
-Set Warnings "+redundant-canonical-projection".
 
 Notation "x <=T y" := (@Order.le Tamari_display _ x y).
 Notation "x <T y" := (@Order.lt Tamari_display _ x y).
 Notation "x /\T y" := (@Order.meet Tamari_display _ x y).
 Notation "x \/T y" := (@Order.join Tamari_display _ x y).
-
-End Exports.
-End Tamari.
-Export Tamari.Exports.
 
 
 Section Flip.
@@ -692,12 +661,13 @@ Section Flip.
 Variable n : nat.
 Implicit Type t : bintreesz n.
 
+Lemma rotations_Tamari t t' :
+  trval t' \in rotations t -> t <T t'.
+Proof. by move/rotations_Tamari_internal. Qed.
+
 Definition TamariE t1 t2 :
   (t1 <=T t2) = connect (fun x y : bintreesz n => grel rotations x y) t1 t2.
 Proof. by []. Qed.
-Lemma rotations_Tamari t t' :
-  trval t' \in rotations t -> t <T t'.
-Proof. exact: Tamari.rotations_Tamari. Qed.
 
 Local Fact rightcombsz_proof : size_tree (rightcomb n) == n.
 Proof. apply/eqP; exact: size_rightcomb. Qed.
@@ -733,7 +703,7 @@ rewrite -rev_path /= last_rcons belast_rcons.
 have -> : rev (flipsz t2 :: p) =
           [seq flipsz t | t <- rcons [seq flipsz t' | t' <- rev p] t2].
   rewrite map_rev -rev_cons map_rev /=.
-  rewrite -map_comp (eq_map (f2 := id)); last by move=> x /=; rewrite flipszK.
+  rewrite -map_comp (eq_map (g := id)); last by move=> x /=; rewrite flipszK.
   by rewrite map_id.
 rewrite (map_path (b := pred0)
                   (e' := (fun t t' => trval t' \in rotations t))); first last.
@@ -1529,8 +1499,7 @@ apply/idP/idP.
 Qed.
 
 
-Module TamariLattice.
-Section Def.
+Section TamariLattice.
 
 Variable n : nat.
 Implicit Types t : bintreesz n.
@@ -1554,7 +1523,7 @@ rewrite /Tmeet -Tamari_vctleq /= from_vctK ?vctmin_Tamari //.
 exact: vctminPr.
 Qed.
 
-Lemma TmeetE t t1 t2 : (t <=T Tmeet t1 t2) = (t <=T t1) && (t <=T t2).
+Fact TmeetE t t1 t2 : (t <=T Tmeet t1 t2) = (t <=T t1) && (t <=T t2).
 Proof.
 apply/idP/andP => [/le_trans Htr| []].
   by split; apply: Htr; first rewrite TmeetC; rewrite TmeetPr.
@@ -1563,15 +1532,16 @@ have Hszeq : size (right_sizes t1) = size (right_sizes t2).
 rewrite /Tmeet -!Tamari_vctleq /= from_vctK ?vctmin_Tamari //.
 exact: vctminP.
 Qed.
-Lemma TjoinE t1 t2 t : (Tjoin t1 t2 <=T t) = (t1 <=T t) && (t2 <=T t).
+Fact TjoinE t1 t2 t : (Tjoin t1 t2 <=T t) = (t1 <=T t) && (t2 <=T t).
 Proof. by rewrite /Tjoin -![_ <=T t]Tamari_flip flipszK TmeetE. Qed.
+HB.instance Definition _ :=
+  Order.POrder_MeetJoin_isLattice.Build Tamari_display
+    (bintreesz n) TmeetE TjoinE.
 
-Definition latticeMixin := MeetJoinLeMixin TmeetE TjoinE.
-Canonical latticeType := LatticeType (bintreesz n) latticeMixin.
+End TamariLattice.
 
-End Def.
 
-Section Theory.
+Section TamariBoundedLattice.
 
 Variable n : nat.
 Implicit Types t : bintreesz n.
@@ -1594,41 +1564,19 @@ rewrite -Tamari_vctleq right_sizes_left_comb.
 apply/vctleqP; split; first by rewrite size_nseq size_right_sizes bintreeszP.
 by move=> i; rewrite nth_nseq if_same.
 Qed.
-
 Fact rightcomb_top t : t <=T rightcombsz n.
 Proof. by rewrite -Tamari_flip flipsz_rightcomb; exact: leftcomb_bottom. Qed.
-
-Definition bottomMixin := BottomMixin leftcomb_bottom.
-Canonical blatticeType := BLatticeType (bintreesz n) bottomMixin.
-Definition topMixin := TopMixin rightcomb_top.
-Canonical tblatticeType := TBLatticeType (bintreesz n) topMixin.
-Canonical finLatticeType :=
-  Eval hnf in [finLatticeType of (bintreesz n)].
+HB.instance Definition _ :=
+  Order.hasBottom.Build Tamari_display (bintreesz n) leftcomb_bottom.
+HB.instance Definition _ :=
+  Order.hasTop.Build Tamari_display (bintreesz n) rightcomb_top.
 
 Lemma botETamari : 0%O = leftcombsz n.
 Proof. by []. Qed.
 Lemma topETamari : 1%O = rightcombsz n.
 Proof. by []. Qed.
 
-End Theory.
-Module Exports.
-
-Set Warnings "-redundant-canonical-projection".
-Canonical latticeType.
-Canonical blatticeType.
-Canonical tblatticeType.
-Canonical finLatticeType.
-Set Warnings "+redundant-canonical-projection".
-
-Definition right_sizes_meet := right_sizes_meet.
-Definition flipsz_meet := flipsz_meet.
-Definition flipsz_join := flipsz_join.
-Definition botETamari := botETamari.
-Definition topETamari := topETamari.
-
-End Exports.
-End TamariLattice.
-Export TamariLattice.Exports.
+End TamariBoundedLattice.
 
 
 Section TamariCover.

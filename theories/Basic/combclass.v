@@ -57,10 +57,10 @@ We define three possible ways to provide [TP] with a [subFinType] structure:
 
 
 Section EnumFintype.
-Context {T : countType} {P : pred T} {TP : subCountType P}.
-Context (subenum : seq T)
-  (subenumP : all P subenum)
-  (subenum_countE : forall x : T, P x -> count_mem x subenum = 1).
+Context {T : countType} {P : pred T} (TP : subCountType P).
+Variable subenum : seq T.
+Hypothesis subenumP : all P subenum.
+Hypothesis subenum_countE : forall x : T, P x -> count_mem x subenum = 1.
 
 Lemma sub_enumE : subenum =i P.
 Proof.
@@ -93,7 +93,7 @@ Proof using. by rewrite cardE -(size_map val) /= enum_subE. Qed.
 End EnumFintype.
 
 
-Module Example.
+Module Example1.
 
 Definition is_one n := n == 1.
 Record isOne := IsOne { one :> nat; _ : is_one one}.
@@ -104,209 +104,102 @@ Proof. by []. Qed.
 Lemma isOne_count_1 x : is_one x -> count_mem x [:: 1] = 1.
 Proof. by rewrite /is_one; case: eqP => [->|]. Qed.
 HB.instance Definition _ :=
-  Finite.copy isOne (seq_finType all_isOne isOne_count_1).
+  Finite.copy isOne (seq_finType isOne all_isOne isOne_count_1).
 
 Lemma enum_isOne : map val (enum (isOne : finType)) = [:: 1].
 Proof. exact: enum_subE. Qed.
 Lemma card_isOne : #|isOne : finType| = 1.
 Proof. exact: card_subE. Qed.
 
-End Example.
+End Example1.
 
 
 
-#[key=TP]
-HB.factory Record seq_isFinite
-  (T : countType) (P : pred T) (TP : Type) of SubCountable T P TP := {
-    lst : seq T;
-    all_lst : all P lst;
-    lst_count_1 : forall x : T, P x -> count_mem x lst = 1;
-  }.
-#[key=TP]
-HB.builders Context T P TP of seq_isFinite T P TP.
+(** ** Method 2 - Each element appears and the lists is uniq *)
+Section UniqFinType.
+Context {T : countType} {P : pred T} (TP : subCountType P).
+Variable subenum : seq T.
+Hypothesis subenumE : subenum =i P.
+Hypothesis subenum_uniq : uniq subenum.
 
-Definition subType_seq : seq TP := pmap insub lst.
-Lemma subType_seqP : map val subType_seq = lst.
+Lemma all_subenum : all P subenum.
+Proof. by apply/allP => x; rewrite subenumE. Qed.
+Lemma subenum_countE x : P x -> count_mem x subenum = 1.
 Proof.
-rewrite /subType_seq; have := all_lst; elim: lst => [|l0 l IHl] //=.
-by case/andP => /= H0 Hall0; rewrite insubT /= IHl // SubK.
+have:= subenumE x; rewrite !unfold_in => <-.
+by rewrite (count_uniq_mem _ subenum_uniq) unfold_in => ->.
 Qed.
-Lemma finite_subP : Finite.axiom subType_seq.
-Proof using.
-move=> xP; rewrite (eq_count (a2 := (pred1 (val xP)) \o val)).
-- by rewrite -count_map subType_seqP lst_count_1 //=; exact: valP.
-- by move=> i; apply/idP/idP=> /eqP H; apply/eqP; [rewrite H | apply val_inj].
-Qed.
-HB.instance Definition _ := isFinite.Build TP finite_subP.
-
-(* TODO : get the following lemmas out if the HB context *)
-Lemma sub_enumE : lst =i P.
-Proof using.
-move=> i.
-apply/idP/idP; rewrite !unfold_in.
-- by move=> /(allP all_lst).
-- by move=> /lst_count_1 => H; apply/count_memPn; rewrite H.
-Qed.
-Lemma enum_subE : map val (enum (TP : finType)) = lst.
-Proof using. by rewrite enumT unlock /= subType_seqP. Qed.
-Lemma card_subE : #|TP : finType| = size lst.
-Proof using. by rewrite cardE -(size_map val) /= enum_subE. Qed.
-
-HB.end.
+Definition uniq_finType : finType :=
+  seq_finType TP all_subenum subenum_countE.
+End UniqFinType.
 
 
+Module Example2.
 
+Definition is_one n := n == 1.
+Record isOne := IsOne { one :> nat; _ : is_one one}.
+HB.instance Definition _ := [isSub of isOne for one].
+HB.instance Definition _ := [Countable of isOne by <:].
+Lemma all_isoneE : [:: 1] =i is_one.
+Proof. by move=> n; rewrite inE. Qed.
+Lemma isOne_uniq : uniq [:: 1].
+Proof. by []. Qed.
+HB.instance Definition _ :=
+  Finite.copy isOne (uniq_finType isOne all_isoneE isOne_uniq).
 
-Fixpoint subType_seq l {struct l} :=
-  match l as l1 return all P l1 -> seq TP with
-  | [::]     => fun => [::]
-  | l0 :: ll => fun Hall =>
-                  match elimTF andP Hall with
-                  | conj H0 Hl => (Sub l0 H0) :: (subType_seq ll Hl)
-                  end
-  end.
+Lemma enum_isOne : map val (enum (isOne : finType)) = [:: 1].
+Proof. exact: enum_subE. Qed.
+Lemma card_isOne : #|isOne : finType| = 1.
+Proof. exact: card_subE. Qed.
 
-Lemma subType_seqP : map val (subType_seq all_lst) = lst.
-Proof using.
-elim: lst all_lst => [| l0 l IHl] //=.
-by case/andP => /= H0 Hall0; rewrite IHl SubK.
-Qed.
-
-Lemma sub_enumE : lst =i P.
-Proof using.
-move=> i.
-apply/idP/idP; rewrite !unfold_in.
-- by move=> /(allP all_lst).
-- by move=> /lst_count_1 => H; apply/count_memPn; rewrite H.
-Qed.
-
-Lemma finite_subP : Finite.axiom (subType_seq all_lst).
-Proof using.
-move=> xP; rewrite (eq_count (a2 := (pred1 (val xP)) \o val)).
-- by rewrite -count_map subType_seqP lst_count_1 //=; exact: valP.
-- by move=> i; apply/idP/idP=> /eqP H; apply/eqP; [rewrite H | apply val_inj].
-Qed.
-
-HB.instance Definition _ := isFinite.Build TP finite_subP.
-
-(* TODO : get the two following lemmas out if the HB context *)
-Lemma enum_subE : map val (enum (TP : finType)) = lst.
-Proof using. by rewrite enumT unlock /= subType_seqP. Qed.
-
-Lemma card_subE : #|TP : finType| = size lst.
-Proof using. by rewrite cardE -(size_map val) /= enum_subE. Qed.
-
-HB.end.
-
-
-
-
-#[key=TP]
-HB.factory Record seq_isFinite
-  (T : countType) (P : pred T) (TP : Type) of SubCountable T P TP := {
-    lst : seq T;
-    all_lst : all P lst;
-    lst_count_1 : forall x : T, P x -> count_mem x lst = 1;
-  }.
-#[key=TP]
-HB.builders Context T P TP of seq_isFinite T P TP.
-
-Fixpoint subType_seq l {struct l} :=
-  match l as l1 return all P l1 -> seq TP with
-  | [::]     => fun => [::]
-  | l0 :: ll => fun Hall =>
-                  match elimTF andP Hall with
-                  | conj H0 Hl => (Sub l0 H0) :: (subType_seq ll Hl)
-                  end
-  end.
-
-Lemma subType_seqP : map val (subType_seq all_lst) = lst.
-Proof using.
-elim: lst all_lst => [| l0 l IHl] //=.
-by case/andP => /= H0 Hall0; rewrite IHl SubK.
-Qed.
-
-Lemma sub_enumE : lst =i P.
-Proof using.
-move=> i.
-apply/idP/idP; rewrite !unfold_in.
-- by move=> /(allP all_lst).
-- by move=> /lst_count_1 => H; apply/count_memPn; rewrite H.
-Qed.
-
-Lemma finite_subP : Finite.axiom (subType_seq all_lst).
-Proof using.
-move=> xP; rewrite (eq_count (a2 := (pred1 (val xP)) \o val)).
-- by rewrite -count_map subType_seqP lst_count_1 //=; exact: valP.
-- by move=> i; apply/idP/idP=> /eqP H; apply/eqP; [rewrite H | apply val_inj].
-Qed.
-
-HB.instance Definition _ := isFinite.Build TP finite_subP.
-
-(* TODO : get the two following lemmas out if the HB context *)
-Lemma enum_subE : map val (enum (TP : finType)) = lst.
-Proof using. by rewrite enumT unlock /= subType_seqP. Qed.
-
-Lemma card_subE : #|TP : finType| = size lst.
-Proof using. by rewrite cardE -(size_map val) /= enum_subE. Qed.
-
-HB.end.
-
-
-#[key=TP]
-HB.factory Record uniq_isFinite
-  (T : countType) (P : pred T) (TP : Type) of SubCountable T P TP := {
-    lst : seq T;
-    lst_uniq : uniq lst;
-    lst_pred_eq : lst =i P;
-  }.
-#[key=TP]
-HB.builders Context T P TP of uniq_isFinite T P TP.
-
-Lemma all_lst : all P lst.
-Proof using. by apply/allP => x; rewrite lst_pred_eq. Qed.
-
-Lemma lst_count_1 x : P x -> count_mem x lst = 1.
-Proof using.
-have:= lst_pred_eq x; rewrite !unfold_in => <-.
-by rewrite (count_uniq_mem _ lst_uniq) unfold_in => ->.
-Qed.
-
-HB.instance Definition _ := seq_isFinite.Build T P TP all_lst lst_count_1.
-HB.end.
-
+End Example2.
 
 
 (** ** Method 3 - Each element appears, we remove the duplicates *)
 Section SubUndup.
-
-Hypothesis all_lst : all P lst.
-Hypothesis HPin : forall x : T, P x -> x \in lst.
+Context {T : countType} {P : pred T} (TP : subCountType P).
+Variable subenum : seq T.
+Hypothesis subenumP : all P subenum.
+Hypothesis subenum_in : forall x : T, P x -> x \in subenum.
 
 Lemma finite_sub_undupP :
-  Finite.axiom (undup (subType_seq all_lst)).
-Proof using HPin.
+  Finite.axiom (undup (subType_seq TP subenum)).
+Proof.
 move=> x; rewrite count_uniq_mem; last exact: undup_uniq.
-rewrite mem_undup.
-by have:= HPin (valP x); rewrite -{1}subType_seqP (mem_map val_inj) => ->.
+rewrite mem_undup; have /= := subenum_in (valP x).
+by rewrite -{1}(subType_seqP TP subenumP) (mem_map val_inj) => ->.
 Qed.
+Definition undup_finType : finType :=
+  HB.pack TP (isFinite.Build TP finite_sub_undupP).
 
-Definition sub_undup_finMixin := Eval hnf in FinMixin finite_sub_undupP.
-Definition sub_undup_finType := Eval hnf in FinType TP sub_undup_finMixin.
-Definition sub_undup_subFinType := Eval hnf in [subFinType of sub_undup_finType].
-
-Lemma enum_sub_undupE : map val (enum sub_undup_finType) = undup lst.
-Proof using.
-rewrite enumT unlock /= -{2}subType_seqP.
-elim: lst all_lst => [//= | l0 l IHl] /=.
-case/andP=> /= H0 Hall0.
-rewrite mem_map; last exact: val_inj.
-by case: (Sub l0 H0 \in subType_seq Hall0); rewrite /= IHl.
+Lemma enum_sub_undupE : map val (enum undup_finType) = undup subenum.
+Proof.
+rewrite enumT unlock /= -{2}(subType_seqP TP subenumP).
+by rewrite (undup_map_inj val_inj).
 Qed.
 
 End SubUndup.
 
-End SubtypeSeq.
+
+Module Example3.
+
+Definition is_one n := n == 1.
+Record isOne := IsOne { one :> nat; _ : is_one one}.
+HB.instance Definition _ := [isSub of isOne for one].
+HB.instance Definition _ := [Countable of isOne by <:].
+Lemma all_isOne : all is_one [:: 1; 1].
+Proof. by []. Qed.
+Lemma isOne_in n : is_one n -> n \in [:: 1; 1].
+Proof. by move/eqP => ->. Qed.
+HB.instance Definition _ :=
+  Finite.copy isOne (undup_finType isOne all_isOne isOne_in).
+
+Lemma enum_isOne : map val (enum (isOne : finType)) = [:: 1].
+Proof. exact: enum_sub_undupE. Qed.
+Lemma card_isOne : #|isOne : finType| = 1.
+Proof. by rewrite cardE -(size_map val) /= enum_isOne. Qed.
+
+End Example3.
 
 
 (** * Finite subtype obtained as a finite the dijoint union of finite subtypes
@@ -367,7 +260,7 @@ Proof using HPTi Hpart.
 move=> HPx; have:= HPx; rewrite /enum_union => /Hpart H.
 rewrite count_flatten -2!map_comp.
 pose ix := @Sub TI PI TPI (FI x) H.
-rewrite (eq_map (f2 := fun i => i == ix : nat)); first last.
+rewrite (eq_map (g := fun i => i == ix : nat)); first last.
   move=> i /=.
   case: (altP (i =P ix)) => [-> {i} | Hneq].
   - rewrite count_map /=.
@@ -384,27 +277,24 @@ rewrite (eq_map (f2 := fun i => i == ix : nat)); first last.
 by rewrite sumn_count /=; exact: (@enumP TPI).
 Qed.
 
-Let union_enum := subType_seq TP all_unionP.
+Let union_enum := subType_seq TP enum_union.
 
 Lemma subType_unionE : map val union_enum = enum_union.
-Proof using HPTi. exact: subType_seqP. Qed.
-
+Proof using HPTi. by rewrite subType_seqP // all_unionP. Qed.
 Lemma finite_unionP : Finite.axiom union_enum.
-Proof using HPTi Hpart TPi. apply finite_subP => x; exact: count_unionP. Qed.
-
-Definition union_finMixin := Eval hnf in FinMixin finite_unionP.
-Definition union_finType := Eval hnf in FinType TP union_finMixin.
-Definition union_subFinType := Eval hnf in [subFinType of union_finType].
+Proof using HPTi Hpart TPi. exact: (finite_subP all_unionP count_unionP). Qed.
+Definition union_finType : finType :=
+  HB.pack TP (isFinite.Build TP finite_unionP).
 
 Lemma enum_unionE :
   map val (enum union_finType) = enum_union.
-Proof using. by rewrite enumT unlock subType_seqP. Qed.
+Proof using. by rewrite enumT unlock subType_seqP // all_unionP. Qed.
 
 Lemma card_unionE : #|union_finType| = \sum_(i : TPI) #|TPi i|.
 Proof using.
 rewrite cardE -(size_map val) /= enum_unionE.
 rewrite /enum_union size_flatten /shape -map_comp.
-rewrite (eq_map (f2 := fun i => #|TPi i|)); first last.
+rewrite (eq_map (g := fun i => #|TPi i|)); first last.
   by move=> i; rewrite /= size_map cardE.
 by rewrite sumn_mapE big_enum.
 Qed.

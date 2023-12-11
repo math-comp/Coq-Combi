@@ -785,10 +785,10 @@ Notation "[1/2]" := (2%:~R)^-1.
   monotonic (fun (f : bool -> rat) => [1/2] * (f true) + [1/2] * (f false)).
 Proof.
 move=> f g Hfg.
-apply Num.Theory.ler_add.
-- rewrite (Num.Theory.ler_pmul2l (x:=2%:~R^-1) _ (f true) (g true)) //.
+apply Num.Theory.lerD.
+- rewrite (Num.Theory.ler_pM2l (x:=2%:~R^-1) _ (f true) (g true)) //.
   exact: Hfg.
-- rewrite (Num.Theory.ler_pmul2l (x:=2%:~R^-1) _ (f false) (g false)) //.
+- rewrite (Num.Theory.ler_pM2l (x:=2%:~R^-1) _ (f false) (g false)) //.
   exact: Hfg.
 Qed.
 
@@ -864,9 +864,9 @@ move=> f g Hfg.
 rewrite /Ole /=.
 case (weight_case c) => [-> |Hci]; rat_to_ring.
 - by rewrite invr0 mulr0 mulr0.
-- rewrite (Num.Theory.ler_pmul2r Hci).
+- rewrite (Num.Theory.ler_pM2r Hci).
   apply Num.Theory.ler_sum => i Hi.
-  rewrite (Num.Theory.ler_pmul2l Hi).
+  rewrite (Num.Theory.ler_pM2l Hi).
   exact: Hfg.
 Qed.
 
@@ -985,7 +985,7 @@ exists (upoints p) (fun A => 1%:~R).
 case: p; case => [|a s _] //=.
 rewrite /weight big_cons /=.
 apply lt_le_trans with 1; first by [].
-rewrite Num.Theory.ler_addl.
+rewrite Num.Theory.lerDl.
 exact: weight_nonneg.
 Defined.
 
