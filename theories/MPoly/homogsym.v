@@ -159,7 +159,7 @@ Variable d : nat.
 
 Local Notation is_homsym := (@is_homsym n R d).
 
-Fact symdhom_submod_closed : submod_closed is_homsym.
+Fact is_homsym_submod_closed : submod_closed is_homsym.
 Proof.
 split => [|a p q Hp Hq]; rewrite !homsymE.
 - exact: dhomog0.
@@ -167,9 +167,9 @@ split => [|a p q Hp Hq]; rewrite !homsymE.
 Qed.
 HB.instance Definition _ :=
   GRing.isSubmodClosed.Build R {sympoly R[n]}
-    is_homsym symdhom_submod_closed.
-
-HB.instance Definition _ := [SubChoice_isSubLmodule of {homsym R[n, d]} by <:].
+    is_homsym is_homsym_submod_closed.
+HB.instance Definition _ :=
+  [SubChoice_isSubLmodule of {homsym R[n, d]} by <:].
 
 Lemma homsym_is_linear :
   linear (@homsym n R d : {homsym R[n, d]} -> {sympoly R[n]}).
@@ -178,18 +178,16 @@ HB.instance Definition _ :=
   GRing.isLinear.Build
     R {homsym R[n, d]} {sympoly R[n]} _ _ homsym_is_linear.
 
-Lemma homsym_is_dhomog (x : {homsym R[n, d]}) : sympol x \is d.-homog.
+Fact homsym_is_dhomog (x : {homsym R[n, d]}) : sympol x \is d.-homog.
 Proof. by case: x. Qed.
-
-(*
-Coercion dhomog_of_homogsym (p : {homsym R[n, d]}) :=
+Definition dhomog_of_homogsym (p : {homsym R[n, d]}) :=
   DHomog (homsym_is_dhomog p).
 
-Lemma dhomog_of_sym_is_linear : linear (@homsym n R d).
-Proof. by []. Qed.
-Canonical dhomog_of_sym_additive := Additive  dhomog_of_sym_is_linear.
-Canonical dhomog_of_sym_linear   := AddLinear dhomog_of_sym_is_linear.
- *)
+Fact dhomog_of_sym_is_linear : linear dhomog_of_homogsym.
+Proof. by move=> r p q; apply val_inj. Qed.
+HB.instance Definition _ :=
+  GRing.isLinear.Build
+    R {homsym R[n, d]} (dhomog n R d) _ _ dhomog_of_sym_is_linear.
 
 End HomogSymLModType.
 
@@ -294,7 +292,7 @@ HB.instance Definition _ p :=
     R {homsym R[n, d]} {homsym R[n, (c + d)]} _ _ (homsymprod_is_linear p).
 
 Lemma homsymprodrE p q : homsymprodr p q = q *h p. Proof. by []. Qed.
-Lemma homsymprodr_is_linear p : linear (homsymprodr p).
+Fact homsymprodr_is_linear p : linear (homsymprodr p).
 Proof.
 by move=> a /= u v; apply val_inj; rewrite /= mulrDl -scalerAl.
 Qed.
@@ -843,7 +841,7 @@ Local Notation HSF := {homsym algC[n, d]}.
 
 Definition homsymdot (p q : HSF) : algC :=
   \sum_(i < #|{:'P_d}|)
-   (zcard (enum_val i))%:R * (coord 'hp i p) * (coord 'hp i q)^*.
+    (zcard (enum_val i))%:R * (coord 'hp i p) * (coord 'hp i q)^*.
 Definition homsymdotr_head k p q := let: tt := k in homsymdot q p.
 
 Notation homsymdotr := (homsymdotr_head tt).

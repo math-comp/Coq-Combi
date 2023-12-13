@@ -50,7 +50,7 @@ orthonormal for the scalar product.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import ssrint rat ssralg ssrnum algC matrix vector.
-From mathcomp Require Import ssrcomplements mpoly.
+From mathcomp Require Import mpoly.
 
 Require Import tools partition ordtype.
 Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym permcent.
@@ -211,7 +211,7 @@ Proof. by rewrite /polX_XY; split; [exact: rmorphM | exact: rmorph1]. Qed.
 HB.instance Definition _ :=
   GRing.isMultiplicative.Build polX polXY polX_XY polX_XY_is_multiplicative.
 
-Lemma polX_XY_is_linear : linear polX_XY.
+Fact polX_XY_is_linear : linear polX_XY.
 Proof.
 rewrite /polX_XY => r /= p q.
 rewrite /map_mpoly mmapD mmapZ /=.
@@ -232,7 +232,7 @@ Proof. by rewrite /polY_XY; split; [exact: rmorphM | exact: rmorph1]. Qed.
 HB.instance Definition _ :=
   GRing.isMultiplicative.Build polY polXY polY_XY polY_XY_is_multiplicative.
 
-Lemma polY_XY_is_linear : linear polY_XY.
+Fact polY_XY_is_linear : linear polY_XY.
 Proof.
 rewrite /polY_XY => r /= p q.
 rewrite scale_polXYE /polXY_scale /= -!mul_mpolyC.
@@ -271,7 +271,7 @@ HB.instance Definition _ :=
   GRing.isMultiplicative.Build {mpoly R[(m * n)]} polXY
     _ evalXY_is_multiplicative.
 
-Lemma evalXY_is_linear : linear evalXY.
+Fact evalXY_is_linear : linear evalXY.
 Proof.
 rewrite /evalXY => r p q.
 by rewrite mmapD mmapZ /= scale_polXYE /polXY_scale /= -!mul_mpolyC.
@@ -309,8 +309,8 @@ Qed.
 Lemma sympXY k : 'p_k(XY) = 'p_k(X) * 'p_k(Y).
 Proof.
 rewrite /= /symp_pol /= /evalXY /= !rmorph_sum /= big_mxvec_index /=.
-rewrite mulr_suml; apply eq_bigr => i _ /=.
-rewrite mulr_sumr; apply eq_bigr => j _ /=.
+rewrite [RHS]mulr_suml; apply eq_bigr => i _ /=.
+rewrite [RHS]mulr_sumr; apply eq_bigr => j _ /=.
 by rewrite !rmorphXn /= mmapX mmap1U mxvec_indexK /= exprMn.
 Qed.
 
@@ -332,7 +332,7 @@ Section BijectionFam.
 
 Variable d : nat.
 
-Lemma famY_subproof (mz : 'X_{1.. (m * n) < d.+1}) i :
+Fact famY_subproof (mz : 'X_{1.. (m * n) < d.+1}) i :
     (mdeg (tnth (monsY (val mz)) i) < d.+1)%N.
 Proof.
 apply: (leq_ltn_trans _ (bmdeg mz)).
@@ -340,17 +340,41 @@ rewrite /mdeg /monsY tnth_mktuple !big_tuple big_mxvec_index /=.
 under eq_bigr do rewrite tnth_mktuple mnm_tnth.
 by rewrite (bigD1 i) //= leq_addr.
 Qed.
-Definition famY mz := [ffun i : 'I_m => BMultinom (famY_subproof mz i)].
+Definition famY mz : {ffun 'I_m -> 'X_{1.. n < d.+1}} :=
+  [ffun i : 'I_m => BMultinom (famY_subproof mz i)].
+
 Let famYinv_fun (ff : {ffun 'I_m -> 'X_{1.. n < d.+1}}) :=
   let mz := [multinom (ff (vecmx_index i).1 (vecmx_index i).2) | i < m * n]
   in if (mdeg mz < d.+1)%N then mz else 0%MM.
-Lemma famYinv_subproof ff : (mdeg (famYinv_fun ff) < d.+1)%N.
+Fact famYinv_subproof ff : (mdeg (famYinv_fun ff) < d.+1)%N.
 Proof.
 rewrite /famYinv_fun /=.
 case: (ssrnat.ltnP (mdeg [multinom _ | i < _]) d.+1) => //= _.
 by rewrite mdeg0.
 Qed.
 Definition famYinv ff := BMultinom (famYinv_subproof ff).
+
+Lemma famY_bij (mon : 'X_{1.. m}) :
+  mdeg mon = d ->
+  {on [pred i in
+       family (fun i0 (j : 'X_{1.. n < d.+1}) => mdeg j == tnth mon i0)],
+    bijective famY}.
+Proof.
+move=> Hdeg; exists famYinv.
+- move=> mz; rewrite inE => /familyP Hff.
+  apply val_inj => /=; rewrite /famYinv_fun.
+  rewrite [[multinom _ | i < m * n]](_ : _ = val mz) /= ?bmdeg //.
+  apply mnmP => c; rewrite mnmE /famY ffunE /=.
+  by rewrite tnth_mktuple mnmE //= -[in RHS](vecmx_indexK c).
+- move=> ff; rewrite inE => /familyP H /=.
+  apply/ffunP => /= i; rewrite ffunE; apply val_inj => /=.
+  rewrite /famYinv_fun [mdeg _](_ : _ = d) ?ltnSn; first last.
+    rewrite -[RHS]Hdeg !mdegE big_mxvec_index => /=; apply eq_bigr => i' _.
+    have {H} := H i'; rewrite unfold_in mnm_tnth => /eqP <-.
+    rewrite mdegE; apply eq_bigr => j _.
+    by rewrite mnmE mxvec_indexK /=.
+   by rewrite tnth_mktuple; apply mnmP => j; rewrite !mnmE mxvec_indexK /=.
+Qed.
 
 End BijectionFam.
 
@@ -372,20 +396,22 @@ case: (altP (mdeg mon =P d)) => Hdeg; first last.
     rewrite sumn_mpart // sumn_intpartn sumnE -/(mdeg _) => Hd.
     by rewrite -Hd eq_refl in Hdeg.
   - by rewrite mcoeff0 mulr0.
-have Hpm : is_part_of_n d (partm mon) by rewrite /= intpartP andbT sumn_partm Hdeg.
+have Hpm : is_part_of_n d (partm mon).
+  by rewrite /= intpartP andbT sumn_partm Hdeg.
 pose pm := IntPartN Hpm.
-rewrite (bigID (fun mu : 'P_d => (size mu <= m)%N)) /=.
-rewrite linearD ![in RHS]linear_sum /=.
-rewrite addrC big1 ?add0r; first last.
-  by move=> la; rewrite -ltnNge => /symm_oversize ->; rewrite !raddf0.
-rewrite (bigD1 pm) ?size_partm //= ?big1 ?addr0; first last.
-  move=> la /andP [Hszla Hla].
-  rewrite mcoeffZ mcoeff_symm //.
-  suff /negbTE -> : ~~ perm_eq (mpart (n := m) la) mon by rewrite mulr0.
-  apply/negP => /perm_partm/(congr1 val)/=.
-  rewrite mpartK // => Heq.
-  by move: Hla; rewrite /eq_op /= Heq eq_refl.
-rewrite mcoeffZ mcoeff_symm ?size_partm // perm_sym partm_permK mulr1.
+suff -> : (Cauchy_kernel d)@_mon = 'h[pm].
+  rewrite (bigID (fun mu : 'P_d => (size mu <= m)%N)) /=.
+  rewrite linearD ![in RHS]linear_sum /=.
+  rewrite addrC big1 ?add0r; first last.
+    by move=> la; rewrite -ltnNge => /symm_oversize ->; rewrite !raddf0.
+  rewrite (bigD1 pm) ?size_partm //= ?big1 ?addr0; first last.
+    move=> la /andP [Hszla Hla].
+    rewrite mcoeffZ mcoeff_symm //.
+    suff /negbTE -> : ~~ perm_eq (mpart (n := m) la) mon by rewrite mulr0.
+    apply/negP => /perm_partm/(congr1 val)/=.
+    rewrite mpartK // => Heq.
+    by move: Hla; rewrite /eq_op /= Heq eq_refl.
+  by rewrite mcoeffZ mcoeff_symm ?size_partm // perm_sym partm_permK mulr1.
 rewrite /Cauchy_kernel /prod_symh /prod_gen {1}/symh /= rmorph_prod /=.
 rewrite rmorph_sum raddf_sum /= partmE; apply esym.
 transitivity (\prod_(i <- mon) sympol 'h_i : polY ).
@@ -409,27 +435,14 @@ under [RHS]eq_bigr => i _ do
   [rewrite (@symh_pol_any _ _ d.+1) //;
      last by rewrite ltnS -Hdeg /mdeg big_tuple (bigD1 i) // leq_addr].
 rewrite bigA_distr_big_dep => /=.
-rewrite (reindex (famY (d := d))) /=; first last.
-  exists (famYinv (d := d)).
-  + move=> mz; rewrite inE => /familyP Hff.
-    apply val_inj => /=.
-    rewrite [[multinom _ | i < m * n]](_ : _ = val mz) /= ?bmdeg //.
-    apply mnmP => c; rewrite mnmE /famY ffunE /=.
-    by rewrite tnth_mktuple mnmE //= -[in RHS](vecmx_indexK c).
-  + move=> ff; rewrite inE => /familyP H /=.
-    apply/ffunP => /= i; rewrite ffunE; apply val_inj => /=.
-    rewrite [mdeg _](_ : _ = d) ?ltnSn; first last.
-      rewrite -[RHS]Hdeg !mdegE big_mxvec_index => /=; apply eq_bigr => i' _.
-      have {H} := H i'; rewrite unfold_in mnm_tnth => /eqP <-.
-      rewrite mdegE; apply eq_bigr => j _.
-      by rewrite mnmE mxvec_indexK /=.
-    by rewrite tnth_mktuple; apply mnmP => j; rewrite !mnmE mxvec_indexK /=.
+rewrite (reindex (famY (d := d))) /=; last exact: famY_bij.
 apply eq_big => [mz | mz /eqP Hmz].
 - apply/eqP/familyP => [/= Hmon i | Hfam].
   + by rewrite unfold_in ffunE /= mdeg_tnth_monsY Hmon.
   + apply/mnmP => i.
     have := Hfam i; rewrite unfold_in /= !mnm_tnth => /eqP <-.
-    by rewrite ffunE /= !tnth_mktuple mdegE; apply eq_bigr => j _; rewrite mnmE.
+    rewrite ffunE /= !tnth_mktuple mdegE.
+    by apply eq_bigr => j _; rewrite mnmE.
 - by apply eq_bigr => i _; rewrite ffunE /= !tnth_mktuple.
 Qed.
 
@@ -563,7 +576,7 @@ HB.instance Definition _ la mu :=
     (Cauchy.polXY n0 n0 algC) algC _ (co_hpXY_is_additive la mu).
 
 Lemma co_hpYE la (p q : pol) :
-  map_mpoly (co_hp la) (p(X) * q(Y)) = co_hp la q *: p.
+  map_mpoly (co_hp la) (p(X) * q(Y)) = (co_hp la q) *: p.
 Proof.
 rewrite polyXY_scale /=; apply/mpolyP => /= m.
 rewrite linearZ /= mcoeff_map_mpoly /= linearZ /= mulrC.
@@ -587,15 +600,15 @@ have : \sum_(nu : 'P_d) 'hsC[nu](X) * 'hsC[nu](Y) =
        \sum_(nu : 'P_d) 'hp[nu](X) * ((zcard nu)%:R^-1 *: 'hp[nu](Y)).
   by rewrite -Cauchy_homsyms_homsyms Cauchy_homsymp_zhomsymp.
 have sum_coord (p : HSC) :
-  \sum_i homsym (coord 'hp i p *: ('hp)`_i : HSC) =
-  \sum_px coord 'hp (enum_rank px) p *: 'hp[px] :> pol.
+      \sum_i homsym (coord 'hp i p *: ('hp)`_i : HSC) =
+      \sum_px coord 'hp (enum_rank px) p *: 'hp[px] :> pol.
   rewrite (reindex _ (onW_bij _ (@enum_rank_bij _))) /=.
   rewrite !linear_sum /=; apply eq_bigr => i _.
   rewrite (nth_map inh) /= -?enum_val_nth // ?enum_rankK //.
   by rewrite -cardE ltn_ord.
 rewrite (eq_bigr (fun nu : 'P_d =>
-                    (\sum_px (coord 'hp (enum_rank px) 'hsC[nu]) *: 'hp[px])(X) *
-                    (\sum_py (coord 'hp (enum_rank py) 'hsC[nu]) *: 'hp[py])(Y)
+             (\sum_px (coord 'hp (enum_rank px) 'hsC[nu]) *: 'hp[px])(X) *
+             (\sum_py (coord 'hp (enum_rank py) 'hsC[nu]) *: 'hp[py])(Y)
         )); first last.
   move=> nu _; rewrite {1 2}(coord_span (to_p nu)).
   by rewrite linear_sum /= sum_coord.

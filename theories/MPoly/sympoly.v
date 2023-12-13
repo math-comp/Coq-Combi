@@ -170,14 +170,12 @@ Variable R : ringType.
 
 HB.instance Definition _ := [SubChoice_isSubLalgebra of {sympoly R[n]} by <:].
 
-Fact sympol_is_linear :
-  linear (@sympol n R : {sympoly R[n]} -> {mpoly R[n]}).
+Fact sympol_is_linear : linear (@sympol n R).
 Proof. by []. Qed.
 HB.instance Definition _ :=
   GRing.isLinear.Build
     R {sympoly R[n]} {mpoly R[n]} _ _ sympol_is_linear.
-Fact sympol_is_multiplicative :
-  multiplicative (@sympol n R : {sympoly R[n]} -> {mpoly R[n]}).
+Fact sympol_is_multiplicative : multiplicative (@sympol n R).
 Proof. by []. Qed.
 HB.instance Definition _ :=
   GRing.isMultiplicative.Build
@@ -198,7 +196,8 @@ Variable R : comRingType.
 
 HB.instance Definition _ :=
   [SubRing_isSubComRing of {sympoly R[n]} by <:].
-HB.instance Definition _ := [SubChoice_isSubAlgebra of {sympoly R[n]} by <:].
+HB.instance Definition _ :=
+  [SubChoice_isSubAlgebra of {sympoly R[n]} by <:].
 
 End SymPolyComRingType.
 
@@ -2020,8 +2019,7 @@ by rewrite tnth_mktuple mulnC dhomogMn.
 Qed.
 
 Lemma pihomog_mPo nv p d :
-  pihomog [measure of mdeg] d (p \mPo G nv) =
-  (pihomog [measure of mnmwgt] d p) \mPo G nv.
+  pihomog mdeg d (p \mPo G nv) = (pihomog mnmwgt d p) \mPo G nv.
 Proof using gen gen_homog.
 elim/mpolyind: p => [| c m p Hm Hc IHp] /=; first by rewrite !linear0.
 rewrite !linearP /= {}IHp; congr (c *: _ + _).
@@ -2045,13 +2043,13 @@ Local Notation E nv := [tuple mesym nv R i.+1 | i < n].
 Lemma mwmwgt_homogP (p : {mpoly R[n]}) d :
   reflect
     (forall nv, p \mPo E nv \is d.-homog)
-    (p \is d.-homog for [measure of mnmwgt]).
+    (p \is d.-homog for mnmwgt).
 Proof using.
 rewrite !homog_piE.
 apply (iffP eqP) => [Homog nv | H].
 - by rewrite -Homog -(pihomog_mPo (fun nv i => dhomog_mesym nv R i)) pihomogP.
 - apply pihomog_dE.
-  suff -> : p = pihomog [measure of mnmwgt] d p by apply: pihomogP.
+  suff -> : p = pihomog mnmwgt d p by apply: pihomogP.
   apply msym_fundamental_un; apply esym.
   rewrite -(pihomog_mPo (fun nv i => dhomog_mesym nv R i)).
   exact: pihomog_dE.
@@ -2059,10 +2057,10 @@ Qed.
 
 Lemma sym_fundamental_homog (p : {mpoly R[n]}) (d : nat) :
   p \is symmetric -> p \is d.-homog ->
-  { t | t \mPo (E n) = p /\ t \is d.-homog for [measure of mnmwgt] }.
+  { t | t \mPo (E n) = p /\ t \is d.-homog for mnmwgt }.
 Proof.
 move=> /sym_fundamental [t [Ht _]] Hhom.
-exists (pihomog [measure of mnmwgt] d t); split.
+exists (pihomog mnmwgt d t); split.
 - by rewrite -(pihomog_mPo (fun nv i => dhomog_mesym nv R i)) Ht pihomog_dE.
 - exact: pihomogP.
 Qed.
@@ -2304,7 +2302,7 @@ Qed.
 
 Lemma sym_fundamental_symh_homog (p : {mpoly R[n]}) (d : nat) :
   p \is symmetric -> p \is d.-homog ->
-  { t | t \mPo S = p /\ t \is d.-homog for [measure of mnmwgt] }.
+  { t | t \mPo S = p /\ t \is d.-homog for mnmwgt }.
 Proof.
 move=> psym Hhom.
 set f := omegasf (SymPoly psym).
@@ -2388,7 +2386,7 @@ Variable m0 n0 : nat.
 Local Notation m := m0.+1.
 Local Notation n := n0.+1.
 Local Notation SF p := (sym_fundamental (sympolP p)).
-Local Notation E := ([tuple sympol 'e_(i.+1) | i < m] : m.-tuple {mpoly R[n]}).
+Local Notation E := [tuple sympol 'e_(i.+1) : {mpoly R[n]} |  i < m].
 
 Lemma cnvarsym_subproof (p : {sympoly R[m]}) : sympolyf p \mPo E \is symmetric.
 Proof. by apply mcomp_sym => i; rewrite -tnth_nth tnth_mktuple mesym_sym. Qed.
@@ -2470,11 +2468,11 @@ Section ProdGen.
 
 Variable Gen : forall nvar d : nat, {sympoly R[nvar]}.
 Hypothesis Hcnvargen :
-  forall d : nat, (d < m) || (n <= m) -> cnvarsym (Gen _ d.+1) = (Gen _ d.+1).
+  forall d : nat, (d < m) || (n <= m) -> cnvarsym (Gen m d.+1) = (Gen n d.+1).
 
 Lemma cnvar_prodgen d (la : 'P_d) :
   (d <= m) || (n <= m) ->
-  cnvarsym (prod_gen (Gen _) la) = prod_gen (Gen _) la.
+  cnvarsym (prod_gen (Gen m) la) = prod_gen (Gen n) la.
 Proof.
 move=> Hd; rewrite /prod_gen rmorph_prod.
 apply eq_big_seq => i Hin.
