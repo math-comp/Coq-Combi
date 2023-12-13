@@ -46,20 +46,17 @@ polynomials in [Y]. We denote by [mz] a monomial in the [Z].
 
 The main result is Theorem [homsymdotss] which asserts that Schur function are
 orthonormal for the scalar product.
-*)
-
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple bigop path finfun.
+*******)
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import ssrint rat ssralg ssrnum algC matrix vector.
+From mathcomp Require Import ssrcomplements mpoly.
 
-From SsrMultinomials Require Import ssrcomplements mpoly.
-
-Require Import tools partition.
+Require Import tools partition ordtype.
 Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym permcent.
 
 Require ordtype.
-Local Notation inh := ordtype.Inhabited.Exports.inh.
+
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -169,64 +166,80 @@ Definition polXY_scale (c : R) (p : polXY) : polXY := c%:MP *: p.
 Local Notation "c *:M p" := (polXY_scale c p)
   (at level 40, left associativity).
 
-Lemma scale_polXYA a b p : a *:M (b *:M p) = (a * b) *:M p.
+HB.instance Definition _ := GRing.Ring.on polXY.
+
+Fact scale_polXYA a b p : a *:M (b *:M p) = (a * b) *:M p.
 Proof. by rewrite /polXY_scale scalerA rmorphM. Qed.
-Lemma scale_polXY1m p : 1 *:M p = p.
+Fact scale_polXY1m p : 1 *:M p = p.
 Proof. by rewrite /polXY_scale rmorph1 scale1r. Qed.
-Lemma scale_polXYDr c p1 p2 :
+Fact scale_polXYDr c p1 p2 :
   c *:M (p1 + p2) = c *:M p1 + c *:M p2.
 Proof. exact: scalerDr. Qed.
-Lemma scale_polXYDl p c1 c2 :
+Fact scale_polXYDl p c1 c2 :
   (c1 + c2) *:M p = c1 *:M p + c2 *:M p.
 Proof. by rewrite /polXY_scale rmorphD /= scalerDl. Qed.
+HB.instance Definition _ :=
+  GRing.Zmodule_isLmodule.Build R polXY
+    scale_polXYA scale_polXY1m scale_polXYDr scale_polXYDl.
 
-Definition polXY_lmodMixin :=
-  LmodMixin scale_polXYA scale_polXY1m scale_polXYDr scale_polXYDl.
-Canonical polXY_lmodType := Eval hnf in LmodType R polXY polXY_lmodMixin.
 Lemma scale_polXYE (c : R) (p : polXY) : c *: p = c *:M p.
 Proof. by []. Qed.
 
-Lemma polXY_scaleAl (c : R) (p q : polXY) : c *: (p * q : polXY) = (c *: p) * q.
+Fact polXY_scaleAl (c : R) (p q : polXY) : c *: (p * q : polXY) = (c *: p) * q.
 Proof. by rewrite !scale_polXYE /polXY_scale /= -!mul_mpolyC mulrA. Qed.
-Canonical polXY_lalgType := Eval hnf in LalgType R polXY polXY_scaleAl.
+HB.instance Definition _ :=
+  GRing.Lmodule_isLalgebra.Build R polXY polXY_scaleAl.
 
-Lemma polXY_scaleAr (c : R) (p q : polXY) : c *: (p * q : polXY) = p * (c *: q).
+Fact polXY_scaleAr (c : R) (p q : polXY) : c *: (p * q : polXY) = p * (c *: q).
 Proof.
 rewrite !scale_polXYE /polXY_scale /= -!mul_mpolyC.
 by rewrite mulrA [_ * p]mulrC mulrA.
 Qed.
-Canonical polXY_algType := Eval hnf in AlgType R polXY polXY_scaleAr.
+HB.instance Definition _ :=
+  GRing.Lalgebra_isAlgebra.Build R polXY polXY_scaleAr.
 
 
 Definition polX_XY : polX -> polXY := map_mpoly (mpolyC n (R := R)).
-Lemma polX_XY_is_lrmorphism : lrmorphism polX_XY.
-Proof.
-rewrite /polX_XY; repeat split.
-- exact: rmorphB.
-- exact: rmorphM.
-- exact: rmorph1.
-- move=> p c.
-  by rewrite /map_mpoly mmapZ /= scale_polXYE /polXY_scale /= -!mul_mpolyC.
-Qed.
-Canonical polX_XY_additive   := Additive   polX_XY_is_lrmorphism.
-Canonical polX_XY_rmorphism  := RMorphism  polX_XY_is_lrmorphism.
-Canonical polX_XY_linear     := AddLinear  polX_XY_is_lrmorphism.
-Canonical polX_XY_lrmorphism := LRMorphism polX_XY_is_lrmorphism.
 
+Fact polX_XY_is_additive : additive polX_XY.
+Proof. by rewrite /polX_XY; exact: rmorphB. Qed.
+HB.instance Definition _ :=
+  GRing.isAdditive.Build polX polXY polX_XY polX_XY_is_additive.
 
-Definition polY_XY : polY -> polXY := mpolyC m (R := [ringType of mpoly n R]).
-Lemma polY_XY_is_lrmorphism : lrmorphism polY_XY.
+Fact polX_XY_is_multiplicative : multiplicative polX_XY.
+Proof. by rewrite /polX_XY; split; [exact: rmorphM | exact: rmorph1]. Qed.
+HB.instance Definition _ :=
+  GRing.isMultiplicative.Build polX polXY polX_XY polX_XY_is_multiplicative.
+
+Lemma polX_XY_is_linear : linear polX_XY.
 Proof.
-rewrite /polY_XY; repeat split.
-- exact: rmorphB.
-- exact: rmorphM.
-- move=> p c.
-  by rewrite scale_polXYE /polXY_scale /= -!mul_mpolyC rmorphM.
+rewrite /polX_XY => r /= p q.
+rewrite /map_mpoly mmapD mmapZ /=.
+by rewrite scale_polXYE /polXY_scale /= -!mul_mpolyC.
 Qed.
-Canonical polY_XY_additive   := Additive   polY_XY_is_lrmorphism.
-Canonical polY_XY_rmorphism  := RMorphism  polY_XY_is_lrmorphism.
-Canonical polY_XY_linear     := AddLinear  polY_XY_is_lrmorphism.
-Canonical polY_XY_lrmorphism := LRMorphism polY_XY_is_lrmorphism.
+HB.instance Definition _ :=
+  GRing.isLinear.Build R polX polXY _ polX_XY polX_XY_is_linear.
+
+Definition polY_XY : polY -> polXY := mpolyC m (R := {mpoly R[n]}).
+
+Fact polY_XY_is_additive : additive polY_XY.
+Proof. by rewrite /polY_XY; exact: rmorphB. Qed.
+HB.instance Definition _ :=
+  GRing.isAdditive.Build polY polXY polY_XY polY_XY_is_additive.
+
+Fact polY_XY_is_multiplicative : multiplicative polY_XY.
+Proof. by rewrite /polY_XY; split; [exact: rmorphM | exact: rmorph1]. Qed.
+HB.instance Definition _ :=
+  GRing.isMultiplicative.Build polY polXY polY_XY polY_XY_is_multiplicative.
+
+Lemma polY_XY_is_linear : linear polY_XY.
+Proof.
+rewrite /polY_XY => r /= p q.
+rewrite scale_polXYE /polXY_scale /= -!mul_mpolyC.
+by rewrite raddfD /= rmorphM.
+Qed.
+HB.instance Definition _ :=
+  GRing.isLinear.Build R polY polXY _ polY_XY polY_XY_is_linear.
 
 
 Notation "p '(Y)'" := (polY_XY p).
@@ -237,7 +250,7 @@ Proof. by rewrite mulrC mul_mpolyC. Qed.
 
 Lemma symmX d (la : 'P_d) : 'hm[la](X) = 'hm[la].
 Proof.
-by have /(congr1 val) := map_symm [rmorphism of (mpolyC n (R:=R))] m0 la.
+by have /(congr1 val) := map_symm (mpolyC n (R:=R)) m0 la.
 Qed.
 
 
@@ -246,19 +259,25 @@ Definition evalXY : polZ -> polXY :=
        (fun i => 'X_((vecmx_index i).1) (X) * 'X_((vecmx_index i).2) (Y)).
 Notation "p '(XY)'" := (evalXY p).
 
-Lemma evalXY_is_lrmorphism : lrmorphism evalXY.
+
+Fact evalXY_is_additive : additive evalXY.
+Proof. by rewrite /evalXY; exact: rmorphB. Qed.
+HB.instance Definition _ :=
+  GRing.isAdditive.Build {mpoly R[(m * n)]} polXY _ evalXY_is_additive.
+
+Fact evalXY_is_multiplicative : multiplicative evalXY.
+Proof. by rewrite /evalXY; split=> [p q|]; rewrite /= ?rmorphM ?rmorph1. Qed.
+HB.instance Definition _ :=
+  GRing.isMultiplicative.Build {mpoly R[(m * n)]} polXY
+    _ evalXY_is_multiplicative.
+
+Lemma evalXY_is_linear : linear evalXY.
 Proof.
-rewrite /evalXY; repeat split.
-- exact: rmorphB.
-- exact: rmorphM.
-- exact: rmorph1.
-- move=> p c.
-  by rewrite  mmapZ /= scale_polXYE /polXY_scale /= -!mul_mpolyC.
+rewrite /evalXY => r p q.
+by rewrite mmapD mmapZ /= scale_polXYE /polXY_scale /= -!mul_mpolyC.
 Qed.
-Canonical evalXY_additive   := Additive   evalXY_is_lrmorphism.
-Canonical evalXY_rmorphism  := RMorphism  evalXY_is_lrmorphism.
-Canonical evalXY_linear     := AddLinear  evalXY_is_lrmorphism.
-Canonical evalXY_lrmorphism := LRMorphism evalXY_is_lrmorphism.
+HB.instance Definition _ :=
+  GRing.isLinear.Build R {mpoly R[(m * n)]} polXY _ _ evalXY_is_linear.
 
 Lemma evalXY_XE mz :
   'X_[mz](XY) = 'X_[monX mz](X) * \prod_(i < m) 'X_[tnth (monsY mz) i](Y).
@@ -275,7 +294,7 @@ rewrite scaler_prod /=; congr (_ *: _).
 - rewrite /monsY tnth_mktuple mpolyXE_id; apply eq_bigr => j _.
   by rewrite mxvec_indexK /= mnmE.
 - rewrite mnmE -prodrXr rmorph_prod /=; apply eq_bigr => j _.
-  by rewrite mxvec_indexK /= rmorphX.
+  by rewrite mxvec_indexK /= rmorphXn.
 Qed.
 
 Lemma evalXY_homog d p : p \is d.-homog -> p(XY) \is d.-homog.
@@ -292,7 +311,7 @@ Proof.
 rewrite /= /symp_pol /= /evalXY /= !rmorph_sum /= big_mxvec_index /=.
 rewrite mulr_suml; apply eq_bigr => i _ /=.
 rewrite mulr_sumr; apply eq_bigr => j _ /=.
-by rewrite !rmorphX /= mmapX mmap1U mxvec_indexK /= exprMn.
+by rewrite !rmorphXn /= mmapX mmap1U mxvec_indexK /= exprMn.
 Qed.
 
 Lemma prod_sympXY d (la : 'P_d) : 'hp[la](XY) = 'hp[la](X) * 'hp[la](Y).
@@ -499,11 +518,9 @@ Variable n0 d : nat.
 Local Notation n := n0.+1.
 Hypothesis Hd : (d <= n)%N.
 
-Local Notation ratF := [numFieldType of rat].
-Local Notation algCF := [numFieldType of algC].
 Local Notation HSC := {homsym algC[n, d]}.
 Local Notation HSQ := {homsym rat[n, d]}.
-Local Notation polXY := (polXY n0 n0 algCF).
+Local Notation polXY := (polXY n0 n0 algC).
 Local Notation pol := {mpoly algC[n]}.
 Local Notation "p '(Y)'" := (@polY_XY n0 n0 _ p)
                              (at level 20, format "p '(Y)'").
@@ -517,23 +534,33 @@ Local Notation "''hpQ[' la ]" := ('hp[la] : HSQ).
 
 
 Definition co_hp (la : 'P_d) : pol -> algC :=
-  homsymdotr 'hp[la] \o in_homsym d (R := algCF).
+  homsymdotr 'hp[la] \o in_homsym d (R := algC).
 Definition co_hpXY (la mu : 'P_d) : polXY -> algC :=
   locked (co_hp la \o map_mpoly (co_hp mu)).
 
-Lemma co_hp_is_additive la : additive (co_hp la).
+Fact co_hp_is_additive la : additive (co_hp la).
 Proof. by rewrite /co_hp => p q; rewrite raddfB. Qed.
-Canonical co_hp_additive la := Additive (co_hp_is_additive la).
-Lemma scale_co_hp la p a : co_hp la (a *: p) = a * co_hp la p.
-Proof. by rewrite /co_hp /= linearZ homsymdotZl. Qed.
+HB.instance Definition _ la :=
+  GRing.isAdditive.Build pol algC _ (co_hp_is_additive la).
+
+Fact co_hp_is_scalar la : scalar (co_hp la).
+Proof.
+rewrite /co_hp => /= r p q.
+by rewrite /= linearD linearZ homsymdotDl homsymdotZl /=.
+Qed.
+HB.instance Definition _ p :=
+  GRing.isLinear.Build algC pol algC _ _ (co_hp_is_scalar p).
+
 Lemma co_hp_hp la mu : co_hp la 'hp[mu] = (zcard mu)%:R * (mu == la)%:R.
 Proof using Hd.
 by rewrite /co_hp /= -![prod_gen _ _]/(homsym 'hp[_]) in_homsymE homsymdotpp.
 Qed.
 
-Lemma co_hpXY_is_additive la mu : additive (co_hpXY la mu).
+Fact co_hpXY_is_additive la mu : additive (co_hpXY la mu).
 Proof. by rewrite /co_hpXY; unlock => p q; rewrite raddfB. Qed.
-Canonical co_hpXY_additive la mu := Additive (co_hpXY_is_additive la mu).
+HB.instance Definition _ la mu :=
+  GRing.isAdditive.Build
+    (Cauchy.polXY n0 n0 algC) algC _ (co_hpXY_is_additive la mu).
 
 Lemma co_hpYE la (p q : pol) :
   map_mpoly (co_hp la) (p(X) * q(Y)) = co_hp la q *: p.
@@ -541,12 +568,12 @@ Proof.
 rewrite polyXY_scale /=; apply/mpolyP => /= m.
 rewrite linearZ /= mcoeff_map_mpoly /= linearZ /= mulrC.
 rewrite /polX_XY /= mcoeff_map_mpoly /= mul_mpolyC.
-by rewrite mulrC -scale_co_hp.
+by rewrite mulrC -linearZ.
 Qed.
 
 Lemma co_hprXYE la mu (p q : pol) :
   co_hpXY la mu (p(X) * q(Y)) = (co_hp la p) * (co_hp mu q).
-Proof. by rewrite /co_hpXY; unlock; rewrite /= co_hpYE scale_co_hp mulrC. Qed.
+Proof. by rewrite /co_hpXY; unlock; rewrite /= co_hpYE linearZ mulrC. Qed.
 
 Lemma coord_zsympsps (la mu : 'P_d) :
   (\sum_nu
@@ -571,21 +598,21 @@ rewrite (eq_bigr (fun nu : 'P_d =>
                     (\sum_py (coord 'hp (enum_rank py) 'hsC[nu]) *: 'hp[py])(Y)
         )); first last.
   move=> nu _; rewrite {1 2}(coord_span (to_p nu)).
-  by rewrite linear_sum; congr ((_)(X) * (_)(Y)); rewrite sum_coord.
+  by rewrite linear_sum /= sum_coord.
 move=> {sum_coord to_p} /(congr1 (co_hpXY la mu)).
 rewrite !raddf_sum /= => /esym.
 rewrite (bigD1 la) //= -[(zcard la)%:R^-1 *: 'hp[la](Y)]linearZ /=.
 rewrite -![prod_gen _ _]/(homsym 'hp[_]).
-rewrite co_hprXYE scale_co_hp co_hp_hp //.
+rewrite co_hprXYE linearZ co_hp_hp //.
 rewrite eq_refl mulr1 !mulrA divff ?mul1r; last by rewrite pnatr_eq0 neq0zcard.
 rewrite big1 ?addr0; first last => [nu /negbTE Hnu |].
   rewrite -![prod_gen _ _]/(homsym 'hp[_]).
   rewrite -[(zcard nu)%:R^-1 *: 'hp[nu](Y)]linearZ /=.
   rewrite -![prod_gen _ _]/(homsym 'hp[_]).
-  rewrite co_hprXYE scale_co_hp co_hp_hp //.
+  rewrite co_hprXYE linearZ co_hp_hp //.
   move: Hnu; rewrite -(inj_eq (@val_inj _ _ _)) /= => ->.
   by rewrite mulr0 !mul0r.
-rewrite co_hp_hp // => /(congr1 (fun x => (zcard la)%:R^-1 * x)).
+rewrite /= co_hp_hp // => /(congr1 (fun x => (zcard la)%:R^-1 * x)).
 rewrite mulrA [X in X * _]mulrC divff; last by rewrite pnatr_eq0 neq0zcard.
 rewrite mul1r !mulr_sumr => -> .
 apply eq_bigr => nu _.
@@ -595,10 +622,10 @@ have dot_sumhp (eta tau : 'P_d) :
   coord 'hp (enum_rank eta) 'hsC[tau] * (zcard eta)%:R.
   rewrite !raddf_sum /= (bigD1 eta) //=.
   rewrite -![prod_gen _ _]/(homsym 'hp[_]).
-  rewrite scale_co_hp co_hp_hp // eq_refl mulr1.
+  rewrite linearZ /= co_hp_hp // eq_refl mulr1.
   rewrite big1 ?addr0 // => p => /negbTE Hp.
   rewrite -![prod_gen _ _]/(homsym 'hp[_]).
-  rewrite scale_co_hp co_hp_hp //.
+  rewrite linearZ /= co_hp_hp //.
   move: Hp; rewrite -(inj_eq (@val_inj _ _ _)) /= => ->.
   by rewrite !mulr0.
 rewrite !{}dot_sumhp ![_ * (zcard _)%:R]mulrC !mulrA.
@@ -611,9 +638,9 @@ Lemma coord_zsymspsp (la mu : 'P_d) :
     ((zcard nu)%:R * coord 'hp (enum_rank nu) 'hsC[mu]))
   = (la == mu)%:R.
 Proof using Hd.
-pose matsp : 'M[algCF]_#|{:'P_d}| :=
+pose matsp : 'M[algC]_#|{:'P_d}| :=
   \matrix_(i, j < #|{:'P_d}|) (coord 'hp i 'hsC[enum_val j]).
-pose matzsp : 'M[algCF]_#|{:'P_d}| :=
+pose matzsp : 'M[algC]_#|{:'P_d}| :=
   \matrix_(i, j < #|{:'P_d}|)
    ((zcard (enum_val j))%:R * (coord 'hp j 'hsC[enum_val i])).
 have: matsp *m matzsp = 1%:M.

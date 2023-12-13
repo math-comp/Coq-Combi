@@ -103,10 +103,9 @@ The main result is thus [Theorem presentation_Sn_eltr]:
     exists f : {morphism 'SG_n.+1 >-> gT}, forall i, i < n -> f 's_i = 'g_i.
   ]
 ***************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
-From mathcomp Require Import choice fintype tuple finfun fingraph finset binomial.
-From mathcomp Require Import bigop fingroup perm morphism presentation.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import fingroup perm morphism presentation.
 From mathcomp Require Import ssralg poly ssrint.
 
 Require Import permcomp tools permuted combclass congr.
@@ -282,7 +281,7 @@ have /IHn{IHn} Hcount : is_code_of_size n c.
   rewrite /is_code_of_size Hsz eq_refl andbT.
   exact: (is_code_rconsK Hcode).
 rewrite count_flatten -map_comp -/enum_codesz.
-rewrite (eq_map (f2 := fun i => i == cn : nat)); first last.
+rewrite (eq_map (g := fun i => i == cn : nat)); first last.
   move=> i /=; rewrite count_map /=.
   case (altP (i =P cn)) => [Heq | /negbTE Hneq].
   + subst i; rewrite (eq_count (a2 := xpred1 c)); first exact: Hcount.
@@ -302,18 +301,11 @@ Variable n : nat.
 
 Structure codesz : Set :=
   CodeSZ {cdval :> seq nat; _ : (cdval \is a code) && (size cdval == n)}.
-Canonical codesz_subType := Eval hnf in [subType for cdval].
-Definition codesz_eqMixin := Eval hnf in [eqMixin of codesz by <:].
-Canonical codesz_eqType := Eval hnf in EqType codesz codesz_eqMixin.
-Definition codesz_choiceMixin := Eval hnf in [choiceMixin of codesz by <:].
-Canonical codesz_choiceType := Eval hnf in ChoiceType codesz codesz_choiceMixin.
-Definition codesz_countMixin := Eval hnf in [countMixin of codesz by <:].
-Canonical codesz_countType := Eval hnf in CountType codesz codesz_countMixin.
-Canonical codesz_subCountType := Eval hnf in [subCountType of codesz].
-Let type := sub_finType codesz_subCountType
-                        (enum_codeszP n) (@enum_codesz_countE n).
-Canonical codesz_finType := Eval hnf in [finType of codesz for type].
-Canonical codesz_subFinType := Eval hnf in [subFinType of codesz].
+HB.instance Definition _ := [isSub of codesz for cdval].
+HB.instance Definition _ := [Countable of codesz by <:].
+HB.instance Definition _ :=
+  Finite.copy codesz
+    (seq_finType codesz (enum_codeszP n) (@enum_codesz_countE n)).
 
 Implicit Type (c : codesz).
 
@@ -333,7 +325,7 @@ Proof.
 rewrite factE /= cardE -(size_map val) enum_codeszE.
 elim: n => [//=| n IHn].
 rewrite size_flatten -/enum_codesz /shape -map_comp.
-rewrite (eq_map (f2 := fun => fact_rec n)); first last.
+rewrite (eq_map (g := fun => fact_rec n)); first last.
   by move=> i /=; rewrite size_map.
 by rewrite sumnE big_map big_const_seq count_predT size_iota iter_addn_0 mulnC.
 Qed.

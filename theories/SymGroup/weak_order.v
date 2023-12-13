@@ -27,13 +27,11 @@ We define the following notations:
 - [s /\R t]   == the join of [s] and [t] for the right weak order.
 
 ***************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
-From mathcomp Require Import choice fintype tuple fingraph finset order bigop.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import fingroup perm morphism presentation.
 
-Require Import permcomp tools permuted combclass congr presentSn
-        ordtype lattice.
+Require Import permcomp tools permuted combclass congr presentSn ordtype.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -54,7 +52,7 @@ Fact perm_display : unit. Proof. exact: tt. Qed.
 Module WeakOrder.
 Section Def.
 
-Variable (n0 : nat).
+Context {n0 : nat}.
 Local Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n).
 
@@ -103,25 +101,26 @@ Proof.
 move=> s t /andP [Hst Hts]; apply: (leperm_lengthE Hst).
 by apply anti_leq; apply/andP; split; apply leperm_length.
 Qed.
+End Def.
+End WeakOrder.
 
-Definition perm_porderMixin :=
-  LePOrderMixin ltperm_def leperm_refl leperm_anti leperm_trans.
-Canonical porderType :=
-  POrderType perm_display ('S_n) perm_porderMixin.
-Canonical finPOrderType := Eval hnf in [finPOrderType of 'S_n].
+Section Def.
+
+Variable (n0 : nat).
+Local Notation n := n0.+1.
+Implicit Type (s t u v : 'S_n).
+
+HB.instance Definition _ := Finite.on 'S_n.
+HB.instance Definition _ :=
+  Order.Le_isPOrder.Build perm_display 'S_n
+    WeakOrder.leperm_refl WeakOrder.leperm_anti WeakOrder.leperm_trans.
 End Def.
 
-Module Exports.
 
-Set Warnings "-redundant-canonical-projection".
-Canonical porderType.
-Canonical finPOrderType.
-Set Warnings "+redundant-canonical-projection".
-
-Notation "x <=R y" := (@Order.le perm_display _ x y).
-Notation "x <R y" := (@Order.lt perm_display _ x y).
-Notation "x /\R y" := (@Order.meet perm_display _ x y).
-Notation "x \/R y" := (@Order.join perm_display _ x y).
+Notation "x <=R y" := (@Order.le perm_display _ (x : 'S__) y).
+Notation "x <R y" := (@Order.lt perm_display _ (x : 'S__) y).
+Notation "x /\R y" := (@Order.meet perm_display _ (x : 'S__) y).
+Notation "x \/R y" := (@Order.join perm_display _ (x : 'S__) y).
 
 Section InternalTheory.
 
@@ -132,18 +131,15 @@ Implicit Type (s t u v : 'S_n).
 Lemma lepermP s t :
   reflect (exists2 u : 'S_n, t = s * u & length t = length s + length u)
           (s <=R t).
-Proof. exact: lepermP. Qed.
+Proof. exact: WeakOrder.lepermP. Qed.
 
 Lemma leperm_length s t : s <=R t -> length s <= length t.
-Proof. exact: leperm_length. Qed.
+Proof. exact: WeakOrder.leperm_length. Qed.
 
 Lemma leperm_lengthE s t : s <=R t -> length s = length t -> s = t.
-Proof. exact: leperm_lengthE. Qed.
+Proof. exact: WeakOrder.leperm_lengthE. Qed.
 
 End InternalTheory.
-End Exports.
-End WeakOrder.
-Export WeakOrder.Exports.
 
 
 Section LEPermTheory.
@@ -410,8 +406,7 @@ Qed.
 End TClosureInvset.
 
 
-Module PermLattice.
-Section Def.
+Section PermLattice.
 
 Variable (n0 : nat).
 Local Notation n := n0.+1.
@@ -430,7 +425,9 @@ exact: is_invset_tclosureU (invsetP _) (invsetP _).
 Qed.
 
 Lemma suppermC s t : supperm s t = supperm t s.
-Proof. by apply invset_inj; rewrite !invset_supperm setUC. Qed.
+Proof.
+by apply: invset_inj; rewrite [RHS]invset_supperm [LHS]invset_supperm setUC.
+Qed.
 
 Lemma suppermPr s t : s <=R (supperm s t).
 Proof.
@@ -462,23 +459,14 @@ rewrite /infperm -![x <=R _]leperm_maxpermMl.
 by rewrite mulgA -{1}maxpermV mulVg mul1g supperm_is_join.
 Qed.
 
-Definition perm_latticeMixin := MeetJoinLeMixin infperm_is_meet supperm_is_join.
-Canonical latticeType := LatticeType 'S_n perm_latticeMixin.
+HB.instance Definition _ :=
+  Order.POrder_MeetJoin_isLattice.Build perm_display ('S_n)
+    infperm_is_meet supperm_is_join.
 
-End Def.
-
-Section PermTBLattice.
-
-Variable (n0 : nat).
-Local Notation n := n0.+1.
-Implicit Type (s t u v : 'S_n).
-
-Definition perm_bottomMixin := BottomMixin (@leperm1p n0).
-Canonical blatticeType := BLatticeType 'S_n perm_bottomMixin.
-
-Definition perm_topMixin := TopMixin (@leperm_maxperm n0).
-Canonical tblatticeType := TBLatticeType 'S_n perm_topMixin.
-Canonical finLatticeType := Eval hnf in [finLatticeType of 'S_n].
+HB.instance Definition _ :=
+  Order.hasBottom.Build perm_display ('S_n) (@leperm1p n0).
+HB.instance Definition _ :=
+  Order.hasTop.Build perm_display ('S_n) (@leperm_maxperm n0).
 
 Lemma bottom_perm : Order.bottom = (1 : 'S_n). Proof. by []. Qed.
 Lemma top_perm : Order.top = maxperm. Proof. by []. Qed.
@@ -486,30 +474,6 @@ Lemma top_perm : Order.top = maxperm. Proof. by []. Qed.
 Lemma invset_join s t : invset (s \/R t) = tclosure (invset s :|: invset t).
 Proof. by rewrite /Order.join invset_supperm. Qed.
 
-End PermTBLattice.
-
-Module Exports.
-
-Set Warnings "-redundant-canonical-projection".
-Canonical latticeType.
-Canonical blatticeType.
-Canonical tblatticeType.
-Canonical finLatticeType.
-Set Warnings "+redundant-canonical-projection".
-
-Definition bottom_perm := bottom_perm.
-Definition top_perm := top_perm.
-Definition invset_join := invset_join.
-
-End Exports.
-End PermLattice.
-Export PermLattice.Exports.
-
-Section Theory.
-
-Variable (n0 : nat).
-Local Notation n := n0.+1.
-Implicit Type (s t u v : 'S_n).
 
 Lemma perm_join_meetE s t :
   s /\R t = maxperm * (maxperm * s \/R maxperm * t).
@@ -530,4 +494,4 @@ apply (iffP (coversP s t)).
   by move/(leq_trans ltsz); rewrite ltnn.
 Qed.
 
-End Theory.
+End PermLattice.

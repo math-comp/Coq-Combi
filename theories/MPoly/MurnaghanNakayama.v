@@ -45,10 +45,10 @@ We provide the following definitions:
 - [MN_coeff_rec la nu mu] == The alternating number of ribbon filling of
                the skew shape [la / nu] with content [mu], defined recursively.
  ******)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import bigop ssralg ssrint perm fingroup tuple vector rat.
-From SsrMultinomials Require Import ssrcomplements freeg mpoly monalg.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import ssralg ssrint perm fingroup tuple vector rat.
+From mathcomp Require Import ssrcomplements freeg mpoly monalg.
 
 Require Import sorted tools ordtype permuted partition skewpart.
 Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym.
@@ -133,7 +133,7 @@ Proof.
 case: m => // m _ szla; apply val_inj.
 rewrite /= !raddf_sum /=.
 apply: (mulfI (alt_rho_non0 n _)).
-rewrite mulrA alt_SchurE //= mult_altern_oapp //.
+rewrite mulrA alt_SchurE //= [LHS]mult_altern_oapp //.
 rewrite mulr_sumr; apply eq_bigr => mu _.
 rewrite add_ribbon_intpartnE.
 case Haddrib: add_ribbon_intpartn => [[sh h]|]/=; last by rewrite mulr0.
@@ -165,11 +165,11 @@ case: (leqP (size la) n) => szla; first last.
   move/add_ribbon_intpartnP in Haddrib.
   rewrite syms_oversize ?scaler0 //.
   by rewrite (size_add_ribbon Haddrib) leq_max szla.
-rewrite -(map_syms [rmorphism of intr]) -(map_symp [rmorphism of intr]).
+rewrite -(map_syms intr) -(map_symp intr).
 rewrite -rmorphM syms_sympM_oapp_int // rmorph_sum /=.
 apply eq_bigr => i _.
 case: add_ribbon_intpartn => [p|]/=; last by rewrite rmorph0.
-by rewrite scale_map_sympoly rmorphX rmorphN1 map_syms.
+by rewrite linearZ /= rmorphXn rmorphN1 map_syms.
 Qed.
 
 Lemma syms_sympM_pmap d (la : 'P_d) m :
@@ -346,8 +346,8 @@ Local Notation HSF := {homsym R[n, _]}.
 Theorem MN_coeffP d (la : 'P_d) :
   'p[la] = \sum_(sh : 'P_d) (MN_coeff sh la)%:~R *: 's[sh] :> SF.
 Proof.
-rewrite -(map_symp_prod [rmorphism of intr]) MN_coeffP_int rmorph_sum /=.
-by under [LHS]eq_bigr do rewrite scale_map_sympoly map_syms.
+rewrite -(map_symp_prod intr) MN_coeffP_int rmorph_sum /=.
+by under [LHS]eq_bigr do rewrite linearZ /= map_syms.
 Qed.
 
 Corollary MN_coeff_homogP d (la : 'P_d) :
@@ -517,9 +517,9 @@ Theorem syms_prod_sympM dn (nu : 'P_dn) dm (mu : 'P_dm) :
   's[nu] * 'p[mu] =
   \sum_(la : 'P_(dn + dm)) (MN_coeff_rec la nu mu)%:~R *: 's[la] :> SF.
 Proof.
-rewrite -(map_syms [rmorphism of intr]) -(map_symp_prod [rmorphism of intr]).
+rewrite -(map_syms intr) -(map_symp_prod intr).
 rewrite -rmorphM syms_prod_sympM_int rmorph_sum /=.
-by under [LHS]eq_bigr do rewrite scale_map_sympoly map_syms.
+by under [LHS]eq_bigr do rewrite linearZ /= map_syms.
 Qed.
 
 Corollary homsyms_homsympM dn (nu : 'P_dn) dm (mu : 'P_dm) :
@@ -557,7 +557,7 @@ pose HSF := {homsym rat[(sumn mu).+1 , d]}.
 pose Pval i := (@enum_val _ xpredT i : 'P_d).
 have : \sum_i (MN_coeff_rec (Pval i) [::] mu)%:~R *: 'hs`_i =
        \sum_i (MN_coeff     (Pval i) mu     )%:~R *: 'hs`_i :> HSF.
-  rewrite !(reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P_d]))) /=.
+  rewrite !(reindex _ (onW_bij _ (@enum_rank_bij 'P_d))) /=.
   under [LHS]eq_bigr do rewrite /Pval symbsE enum_rankK.
   under [RHS]eq_bigr do rewrite /Pval symbsE enum_rankK.
   by rewrite -[LHS]MN_coeff_rec_homogP -[RHS]MN_coeff_homogP.

@@ -35,10 +35,8 @@ We show in Lemmas [repr1] and [repr_S2] that [triv_repr] and [sign_repr]
 exhausts all representations of ['S_n] of degree 1 and all irreducible
 representations of of ['S_2].
 *************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
-From mathcomp Require Import fintype tuple finfun bigop finset fingroup perm.
-From mathcomp Require Import ssralg fingroup morphism perm action.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import fingroup perm ssralg morphism perm action.
 From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import vector matrix mxalgebra ssrnum algC.
 From mathcomp Require Import mxrepresentation classfun character.
@@ -52,9 +50,7 @@ Unset Printing Implicit Defensive.
 Import GroupScope GRing.Theory Num.Theory.
 Local Open Scope ring_scope.
 
-
-Local Notation algCF := [fieldType of algC].
-Local Notation reprS n d := (mx_representation algCF 'SG_n d).
+Local Notation reprS n d := (mx_representation algC 'SG_n d).
 
 Section TcastVal.
 Variable (T : eqType).
@@ -70,12 +66,12 @@ Section LinRepr.
 
 Variables (gT : finGroupType) (G : {group gT}).
 
-Lemma cfRepr1_lin_char (rG : mx_representation algCF G 1) :
+Lemma cfRepr1_lin_char (rG : mx_representation algC G 1) :
   cfRepr rG \is a linear_char.
-Proof. by rewrite qualifE cfRepr_char /= cfRepr1. Qed.
+Proof. by rewrite qualifE /= cfRepr_char /= cfRepr1. Qed.
 
 Lemma lin_char_reprP xi :
-  reflect (exists rG : mx_representation algCF G 1, xi = cfRepr rG)
+  reflect (exists rG : mx_representation algC G 1, xi = cfRepr rG)
           (xi \is a linear_char).
 Proof.
 apply (iffP idP) => [xiL | [rG ->{xi}]].
@@ -306,7 +302,7 @@ apply eq_from_tnth => i; case: (altP (i =P 0)) => [-> | Hi].
 - by rewrite tcastE sign_char2 (cast_IirrS2 Hi).
 Qed.
 
-Lemma repr_S2 (rho : representation algCF [group of 'SG_2]) :
+Lemma repr_S2 (rho : representation algC [group of 'SG_2]) :
   mx_irreducible rho -> mx_rsim rho triv_repr \/ mx_rsim rho sign_repr.
 Proof using.
 move=> Hirr.

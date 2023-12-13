@@ -78,10 +78,10 @@ Invariance with the choice of Q1 and Q2:
   ]
 
 ****************************************************************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
-From mathcomp Require Import order tuple finfun bigop finset ssralg.
-From SsrMultinomials Require Import ssrcomplements freeg mpoly.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import ssralg.
+From mathcomp Require Import ssrcomplements freeg mpoly.
 
 Require Import tools ordtype partition Yamanouchi std tableau stdtab.
 Require Import Schensted congr plactic stdplact Yam_plact Greene_inv shuffle.
@@ -223,7 +223,7 @@ Lemma tabword_of_tuple_freeSchur_inj (Q : stdtabn d) :
 Proof using .
 move=> /= u v.
 rewrite /freeSchur !inE => /eqP Hu /eqP Hv /(congr1 (@tval _ _)) /= H.
-case: (bijRStab [inhOrderType of 'I_n]) => RSinv HK _.
+case: (bijRStab 'I_n) => RSinv HK _.
 apply: val_inj; rewrite -[val u]HK -[val v]HK; congr (RSinv _).
 rewrite {RSinv HK} /RStab /=. apply: pqpair_inj => /=.
 have:= (is_tableau_RS u). have:= is_tableau_RS v.
@@ -649,7 +649,7 @@ rewrite -(card_in_imset (f := bij_LRsupport)).
   + by rewrite shape_bij_LRsupport.
 - move=> Q1 Q2; rewrite inE => /andP [HQ1 /eqP HshQ1].
   rewrite inE => /andP [HQ2 /eqP]; rewrite -HshQ1 {HshQ1} => Heqsh.
-  move=>/(congr1 (@val _ _ _)); rewrite /=.
+  move=>/(congr1 \val); rewrite /=.
   set w1 := (X in changeUT _ _ X).
   set w2 := (X in _ = (RStab (changeUT _ _ X)).2) => Heq1.
   have : RS w1 = RS w2.

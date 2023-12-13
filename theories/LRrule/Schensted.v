@@ -118,9 +118,9 @@ Robinson-Schensted with standard recording tableau:
 - [RStabinv pair] == the word [w] associated to a [rstabpair]
 Again, one has [Lemma bijRStab : bijective RStab.]
 **************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype.
-From mathcomp Require Import choice seq path bigop finset perm fingroup order.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import perm fingroup.
 Require Import tools partition Yamanouchi ordtype subseq tableau std stdtab.
 
 Set Implicit Arguments.
@@ -1291,15 +1291,11 @@ Section Bijection.
 
 Notation Pair := (seq (seq T) * seq nat : Type).
 
-Structure rspair : predArgType := RSpair { pyampair :> Pair; _ : is_RSpair pyampair }.
-
-Canonical rspair_subType := Eval hnf in [subType for pyampair].
-Definition rspair_eqMixin := Eval hnf in [eqMixin of rspair by <:].
-Canonical rspair_eqType := Eval hnf in EqType rspair rspair_eqMixin.
-(*  Definition rspair_choiceMixin := [choiceMixin of rspair by <:].
-Canonical rspair_choiceType :=
-  Eval hnf in ChoiceType rspair rspair_choiceMixin.
-*)
+Structure rspair : predArgType :=
+  RSpair { pyampair :> Pair; _ : is_RSpair pyampair }.
+HB.instance Definition _ := [isSub of rspair for pyampair].
+HB.instance Definition _ := [Equality of rspair by <:].
+HB.instance Definition _ := [Choice of rspair by <:].
 
 Lemma pyampair_inj : injective pyampair. Proof using. exact: val_inj. Qed.
 
@@ -1394,13 +1390,13 @@ Definition is_RStabpair (pair : TabPair) :=
 Structure rstabpair : predArgType :=
   RSTabPair { pqpair :> TabPair; _ : is_RStabpair pqpair }.
 
-Canonical rstabpair_subType := Eval hnf in [subType for pqpair].
-Definition rstabpair_eqMixin := Eval hnf in [eqMixin of rstabpair by <:].
-Canonical rstabpair_eqType := Eval hnf in EqType rstabpair rstabpair_eqMixin.
+HB.instance Definition _ := [isSub of rstabpair for pqpair].
+HB.instance Definition _ := [Choice of rstabpair by <:].
 
 Lemma pqpair_inj : injective pqpair. Proof using. exact: val_inj. Qed.
 
-Definition RStabmap (w : seq T) := let (p, q) := (RSmap w) in (p, stdtab_of_yam q).
+Definition RStabmap (w : seq T) :=
+  let (p, q) := (RSmap w) in (p, stdtab_of_yam q).
 
 Lemma RStabmapE (w : seq T) : (RStabmap w).1 = RS w.
 Proof using. by rewrite /RStabmap -RSmapE; case RSmap. Qed.

@@ -125,9 +125,8 @@ We conclude by the main results:
   tableau.
 
  ****************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice.
-From mathcomp Require Import seq tuple finset perm tuple path bigop order.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import perm.
 Require Import tools ordcast ordtype subseq partition tableau Yamanouchi stdtab.
 Require Import Schensted congr plactic Greene.
 
@@ -231,7 +230,7 @@ Lemma rev_enum :
 Proof using.
 apply: (inj_map val_inj); rewrite /=.
 rewrite val_enum_ord map_rev -map_comp.
-rewrite [map (_ \o _) _](eq_map (f2 := (fun i => size w - i.+1) \o val)) //.
+rewrite [map (_ \o _) _](eq_map (g := (fun i => size w - i.+1) \o val)) //.
 rewrite map_comp val_enum_ord size_rev.
 apply: (eq_from_nth (x0 := 0)); first by rewrite size_rev size_map.
 move=> i; rewrite size_iota => Hi.
@@ -252,7 +251,8 @@ rewrite (eq_filter (a2 := mem S)); first last.
 rewrite map_rev -!map_comp; congr (rev _).
 apply: eq_map => i /=; rewrite !(tnth_nth inh) /=.
 rewrite nth_rev; last exact: irev_w.
-by rewrite subnSK // subKn; last exact: ltnW.
+rewrite subnSK // subKn; last exact: ltnW.
+exact: set_nth_default.
 Qed.
 
 Lemma is_row_dual T :
@@ -808,8 +808,9 @@ Lemma extract_swap_setSE :
 Proof using HS HbNin Hposa Hposc.
 have /extract_cut -> /= : posb \in (swap_set S).
   by rewrite /swap_set /= -Swap.swap1; apply: imset_f.
-rewrite (_ : setI _ _ = S :&: [set j : 'I_(size x) | j < size u]); first last.
-  rewrite -!setIdE -setP => i; rewrite !inE.
+rewrite (_ : setI [set Swap.swap x | x in S] _ =
+               S :&: [set j : 'I_(size x) | j < size u]); first last.
+  rewrite -!setIdE -setP => /= i; rewrite !inE.
   case: (ltnP i (size u)) => Hi; last by rewrite !andbF.
   rewrite !andbT -{1}(Swap.swapL Hi) mem_imset //=.
   exact: Swap.swap_inj.
@@ -1739,7 +1740,7 @@ apply eq_from_shape_get_tab; first by rewrite shape_conj_tab.
 move => [r c].
 rewrite (append_nth_conj_tab _ Hpart Hcorn).
 congr (get_tab (append_nth _ _ _) _).
-- apply maxL_perm; rewrite -Hs -rev_rcons.
+- apply: maxL_perm; rewrite -Hs -rev_rcons.
   by rewrite perm_sym -perm_rev.
 - move: Hsh.
   rewrite !shape_append_nth shape_conj_tab.

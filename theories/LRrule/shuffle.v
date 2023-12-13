@@ -270,7 +270,7 @@ Definition sfilterleq n := [fun v => map (subn^~ n) (filter (leq n) v)].
 Lemma shiftuK n : cancel (shiftn n) (map (subn^~ n)).
 Proof.
 move=> s; rewrite /shiftn -map_comp.
-rewrite (eq_map (f2 := id)); first by rewrite map_id.
+rewrite (eq_map (g := id)); first by rewrite map_id.
 by move=> i /=; rewrite /= addKn.
 Qed.
 

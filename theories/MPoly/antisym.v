@@ -45,11 +45,10 @@ The main results are the Vandermonde determinant expansion:
 - [ Vandet_VanprodE : Vandet = Vanprod ]
 
 *******************************************************************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq path choice.
-From mathcomp Require Import finset fintype finfun tuple bigop ssralg ssrint.
-From mathcomp Require Import fingroup perm zmodp binomial order.
-From SsrMultinomials Require Import ssrcomplements freeg mpoly.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import ssralg ssrint fingroup perm zmodp binomial.
+From mathcomp Require Import ssrcomplements freeg mpoly.
 
 Require Import tools permcomp presentSn sorted partition.
 
@@ -374,10 +373,8 @@ split=> [|p q /isantisymP sp /isantisymP sq]; apply/isantisymP=> s.
 by rewrite msymB sp sq scalerBr.
 Qed.
 
-Canonical antisym_opprPred := OpprPred antisym_zmod.
-Canonical antisym_addrPred := AddrPred antisym_zmod.
-Canonical antisym_zmodPred := ZmodPred antisym_zmod.
-
+HB.instance Definition _ :=
+  GRing.isZmodClosed.Build {mpoly R[n]} _ antisym_zmod.
 
 Lemma antisym_submod_closed : submod_closed antisym.
 Proof using.
@@ -387,7 +384,8 @@ rewrite msymD msymZ sp sq.
 by rewrite scalerA commr_sign -scalerA scalerDr.
 Qed.
 
-Canonical antisym_submodPred := SubmodPred antisym_submod_closed.
+HB.instance Definition _ :=
+  GRing.isSubmodClosed.Build R {mpoly R[n]} _ antisym_submod_closed.
 
 Lemma sym_anti p q :
   p \is antisym -> q \is symmetric -> p * q \is antisym.

@@ -55,9 +55,8 @@ Lemma [plact_map_in_incr].
 
 *****************)
 
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype.
-From mathcomp Require Import choice seq tuple finset perm path order.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import perm.
 Require Import tools partition ordtype tableau stdtab Schensted congr.
 
 
@@ -387,11 +386,10 @@ Section DualRule.
 
 Variables (disp : unit) (Alph : inhOrderType disp).
 Let word := seq Alph.
-Notation Dual := [inhOrderType of Alph^d].
 Implicit Type u v w : word.
 
-Definition revdual := [fun s : seq Alph => rev s : seq Dual].
-Definition from_revdual := [fun s : seq Dual => (rev s) : seq Alph].
+Definition revdual := [fun s : seq Alph => rev s : seq Alph^d].
+Definition from_revdual := [fun s : seq Alph^d => (rev s) : seq Alph].
 
 Lemma revdualK : cancel revdual from_revdual.
 Proof using. by move=> u; rewrite /= revK. Qed.
@@ -403,7 +401,7 @@ Lemma size_revdual u : size u = size (revdual u).
 Proof using. by rewrite /= size_rev. Qed.
 
 Lemma plact2dual u v :
-  u \in plact2 v = (revdual u \in @plact1 _ Dual (revdual v)).
+  u \in plact2 v = (revdual u \in @plact1 _ Alph^d (revdual v)).
 Proof using.
 apply/idP/idP.
 - move /plact2P => [a] [b] [c] [Habc -> ->].
@@ -415,7 +413,7 @@ apply/idP/idP.
 Qed.
 
 Lemma plact1dual u v :
-  u \in plact1 v = (revdual u \in @plact2 _ Dual (revdual v)).
+  u \in plact1 v = (revdual u \in @plact2 _ Alph^d (revdual v)).
 Proof using.
 apply/idP/idP.
 - move /plact1P => [a] [b] [c] [Habc -> ->].
@@ -441,7 +439,6 @@ Section PlactDual.
 
 Variables (disp : unit) (Alph : inhOrderType disp).
 Let word := seq Alph.
-Notation Dual := [inhOrderType of Alph^d].
 Implicit Type u v w : word.
 
 Theorem plact_revdual u v : u =Pl v -> revdual u =Pl revdual v.
@@ -457,10 +454,10 @@ by move: Hplact => /plactruleP [];
   rewrite /revdual /= => -> ; rewrite /= ?orbT.
 Qed.
 
-Theorem plact_from_revdual (u v : seq Dual) :
+Theorem plact_from_revdual (u v : seq Alph^d) :
   u =Pl v -> from_revdual u =Pl from_revdual v.
 Proof using.
-move: v; apply: (@gencongr_ind Dual); first exact: plact_refl.
+move: v; apply: (@gencongr_ind Alph^d); first exact: plact_refl.
 move=> a b1 c b2 Hu Hplact.
 move: Hu => /plact_trans; apply => {u}.
 rewrite /from_revdual /= !rev_cat.
@@ -478,7 +475,7 @@ split; first exact: plact_revdual.
 rewrite -{2}[u]revdualK -{2}[v]revdualK; exact: plact_from_revdual.
 Qed.
 
-Theorem plact_from_dualE (u v : seq Dual) :
+Theorem plact_from_dualE (u v : seq Alph^d) :
   u =Pl v <-> from_revdual u =Pl from_revdual v.
 Proof using.
 split; first exact: plact_from_revdual.
@@ -913,16 +910,15 @@ Section RestrIntervBig.
 
 Variables (disp : unit) (Alph : inhOrderType disp).
 Let word := seq Alph.
-Notation Dual := [inhOrderType of Alph^d].
 
 Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
 
 Variable L : Alph.
 Notation leL := (@Order.le _ Alph L).
-Notation geL := (@Order.ge _ Dual L).
+Notation geL := (@Order.ge _ Alph^d L).
 Notation ltL := (@Order.lt _ Alph L).
-Notation gtL := (@Order.gt _ Dual L).
+Notation gtL := (@Order.gt _ Alph^d L).
 
 Lemma leL_geLdualE u :
   filter leL u = from_revdual (filter geL (revdual u)).

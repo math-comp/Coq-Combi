@@ -27,10 +27,9 @@ The following lemma assert that LRcoeff agrees with LRyamtab_list
     size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.]
 
 ******************************************************************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun finset bigop path order.
-From SsrMultinomials Require Import mpoly.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import ssralg.
+From mathcomp Require Import mpoly.
 
 Require Import tools combclass partition Yamanouchi ordtype tableau.
 Require Import skewtab Schur_mpoly freeSchur therule.
@@ -195,7 +194,7 @@ elim: outer innev inner sh0 row0 => [//= | out0 out IHout] /= innev inner sh0 ro
 rewrite size_flatten /shape !map_flatten sumn_flatten.
 rewrite tsumnE; congr (sumn _).
 rewrite -[X in [seq sumn i | i <- X]]map_comp.
-rewrite (eq_map (f2 := map (fun row =>
+rewrite (eq_map (g := map (fun row =>
                LRyamtab_count_rec row.2 (behead inner) out (head 0 inner) row.1))).
 - by rewrite [RHS]map_comp (eq_map tsumnE) -!map_comp; exact: eq_map.
 - move=> s /=; rewrite -map_comp; apply eq_map => {s} [] [row sh] /=.
@@ -887,7 +886,8 @@ Qed.
 Lemma LRyamtab_all :
   all (is_yam_of_eval P2) (map to_word (LRyamtab_list P1 P2 P)).
 Proof using Hincl. by apply/allP => w /mapP [tab /LRyamtabP Htab ->]. Qed.
-Definition LRyam_list := subType_seq [subCountType of yameval P2] LRyamtab_all.
+Definition LRyam_list :=
+  subType_seq (yameval P2) (map to_word (LRyamtab_list P1 P2 P)).
 
 Lemma LRyamtab_spec_recip yam :
   yam \in LRyam_set P1 P2 P ->
@@ -914,10 +914,10 @@ Qed.
 
 Lemma LRyam_spec_recip yam :
   yam \in LRyam_set P1 P2 P -> count_mem yam LRyam_list = 1.
-Proof using .
+Proof using Hincl.
 move=> /LRyamtab_spec_recip Hyam.
 rewrite (eq_count (a2 := pred1 (val yam) \o val)); last by [].
-by rewrite -count_map subType_seqP.
+by rewrite -count_map subType_seqP // LRyamtab_all.
 Qed.
 
 Theorem LRcoeffE : LRyam_coeff P1 P2 P = LRcoeff P1 P2 P.
@@ -927,9 +927,10 @@ rewrite -sum1dep_card (eq_bigr (fun y => count_mem y LRyam_list)); first last.
   by move=> yam Hyam; rewrite LRyam_spec_recip //= inE.
 rewrite sum_count_mem.
 rewrite (eq_in_count (a2 := predT)).
-  by rewrite count_predT -(size_map val) subType_seqP.
+  by rewrite count_predT -(size_map val) subType_seqP // LRyamtab_all.
 move=> yam /=.
-rewrite -(mem_map val_inj) subType_seqP /= => /mapP [tab Htab ->] {yam}.
+rewrite -(mem_map val_inj) subType_seqP ?LRyamtab_all //=.
+move=> /mapP [tab Htab ->] {yam}.
 have Hskew := LRyamtab_skew_tableau (intpartnP P1) (intpartnP P) Hincl Htab.
 have Hshape := LRyamtab_shape (intpartnP P1) (intpartnP P) Hincl Htab.
 rewrite /is_skew_reshape_tableau /=.

@@ -2,6 +2,7 @@
 -arg -w -arg -notation-overridden
 -arg -w -arg -ambiguous-paths
 -arg -w -arg -redundant-canonical-projection
+-arg -w -arg -projection-no-head-constant
 theories/Combi/bintree.v
 theories/Combi/composition.v
 theories/Combi/Dyckword.v

@@ -1661,6 +1661,7 @@ Implicit Type (sh : 'PLexi).
 
 HB.instance Definition _ := SubType.copy 'PLexi 'P_d.
 HB.instance Definition _ := [Order of 'PLexi by <:].
+HB.instance Definition _ := [Finite of 'PLexi by <:].
 
 Lemma leEintpartnlexi sh1 sh2 :
   (sh1 <= sh2)%O = (sh1 <= sh2 :> seqlexi nat)%O.

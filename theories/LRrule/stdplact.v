@@ -30,9 +30,8 @@ And finally, inverting a standard word amount to exchange the insertion and
 the recording tableaux: Theorem [invseqRSPQE], and Corollaries [invseqRSE],
 [invstdRSE], [RSTabmapstdE] and [RSinvstdE].
  *************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice.
-From mathcomp Require Import seq tuple finset perm fingroup path order.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import perm fingroup.
 
 Require Import tools combclass ordcast partition Yamanouchi ordtype std tableau.
 Require Import stdtab sorted Schensted congr plactic Greene Greene_inv.
@@ -257,9 +256,9 @@ Section KsuppInj.
 Variable s t : seq nat.
 Hypothesis Hinv : invseq s t.
 
-Let Hinvst : linvseq s t.
+Local Lemma Hinvst : linvseq s t.
 Proof using Hinv. by have:= Hinv; rewrite /invseq => /andP []. Qed.
-Let Hinvts : linvseq t s.
+Local Lemma Hinvts : linvseq t s.
 Proof using Hinv. by have:= Hinv; rewrite /invseq => /andP []. Qed.
 
 Local Definition val2pos :=
@@ -283,7 +282,7 @@ rewrite /enum_mem (eq_filter (a2 := mem p)) // -!enumT /= => H.
 apply: (inj_map val_inj).
 rewrite -map_comp (eq_map val2posE).
 rewrite (eq_filter (a2 := mem [set val2pos x | x in p])) //.
-move: H; rewrite (eq_map (f2 := fun i : 'I_(_) => nth (size t) s i)); first last.
+move: H; rewrite (eq_map (g := fun i : 'I_(_) => nth (size t) s i)); first last.
   by move=> i /=; exact: tnth_nth.
 set l := (X in sorted _ X); rewrite -[RHS]/l.
 move=> H; apply: (sorted_eq (leT := leq)).
@@ -314,7 +313,7 @@ move=> H; apply: (sorted_eq (leT := leq)).
 Qed.
 
 Lemma ksupp_inj_invseq k : ksupp_inj <=%O <=%O k s t.
-Proof using Hinvst.
+Proof using Hinv s t.
 rewrite /ksupp_inj /ksupp => ks /and3P [Hsz Htriv /forallP Hall].
 exists [set val2pos @: (p : {set 'I_(size s)}) | p in ks].
 apply/and4P; split.
@@ -324,7 +323,7 @@ apply/and4P; split.
 - apply/forallP => ptmp; apply/implyP => /imsetP [p Hp -> {ptmp}].
   move/(_ p): Hall; rewrite Hp /= /extractpred.
   move/val2pos_enum ->; rewrite -map_comp /=.
-  rewrite (eq_map (f2 := nat_of_ord)); first last.
+  rewrite (eq_map (g := nat_of_ord)); first last.
     move=> i /=; rewrite (tnth_nth (size s)) /=.
     by have:= Hinvst => /linvseqP ->.
   set l := map _ _; have : subseq l [seq val x | x  <- enum 'I_(size s)].

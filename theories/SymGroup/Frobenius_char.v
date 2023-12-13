@@ -48,22 +48,19 @@ Here is a list of fundamental results:
 - [dim_cfReprSG]   : the dimension of irreducible representation of ['SG_n].
 - [LR_rule_irrSG]  : Littlewood-Richardson rule for characters of ['SG_n].
  ********)
-
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
-From mathcomp Require Import finfun fintype tuple finset bigop order.
-From mathcomp Require Import ssralg fingroup morphism perm gproduct.
-From mathcomp Require Import rat ssralg ssrint ssrnum algC vector.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import fingroup perm morphism gproduct.
+From mathcomp Require Import rat ssralg ssrint ssrnum algC vector archimedean.
 From mathcomp Require Import mxrepresentation classfun character.
+From mathcomp Require Import mpoly.
 
-From SsrMultinomials Require Import mpoly.
 Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy
         Schur_altdef stdtab therule.
 Require Import permcomp cycletype towerSn permcent reprSn unitriginv.
 Require Import MurnaghanNakayama.
 
 Require ordtype.
-Local Notation inh := ordtype.Inhabited.Exports.inh.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -79,7 +76,6 @@ Reserved Notation "''M[' l ']'"
          (at level 8, l at level 2, format "''M[' l ]").
 
 
-Local Notation algCF := [numFieldType of algC].
 Local Lemma char0_rat : [char rat] =i pred0.
 Proof. exact: char_num. Qed.
 Local Lemma char0_algC : [char algC] =i pred0.
@@ -118,8 +114,9 @@ move=> a f g; rewrite !FcharE scaler_sumr -big_split /=.
 apply eq_bigr => l _; rewrite !cfunElock.
 by rewrite scalerA mulrA -scalerDl mulrDl.
 Qed.
-Canonical Fchar_additive := Additive Fchar_is_linear.
-Canonical Fchar_linear := Linear Fchar_is_linear.
+HB.instance Definition _ :=
+  GRing.isLinear.Build algC 'CF('SG_n) {homsym algC[nvar, n]} _
+    Fchar Fchar_is_linear.
 
 Lemma Fchar_ncfuniCT (l : 'P_n) : Fchar '1z_[l] = 'hp[l].
 Proof using.
@@ -137,8 +134,9 @@ move=> a f g; rewrite !Fchar_invE scaler_sumr -big_split /=.
 apply eq_bigr => la _.
 by move: ('1z_[la]) => U; rewrite !linearD !linearZ /= scalerDl scalerA mulrC.
 Qed.
-Canonical Fchar_inv_additive := Additive Fchar_inv_is_linear.
-Canonical Fchar_inv_linear := Linear Fchar_inv_is_linear.
+HB.instance Definition _ :=
+  GRing.isLinear.Build algC {homsym algC[nvar, n]} 'CF('SG_n) _
+    Fchar_inv Fchar_inv_is_linear.
 
 Hypothesis Hn : (n <= nvar)%N.
 
@@ -164,7 +162,7 @@ move=> p; rewrite !Fchar_invE linear_sum.
 have: p \in span 'hp.
   by rewrite (span_basis (symbp_basis Hn _ )) // memvf.
 move=> /coord_span {2}->.
-rewrite (reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P__]))) /=.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij 'P__))) /=.
 apply eq_bigr => i _.
 rewrite linearZ /= Fchar_ncfuniCT; congr (_ *: _).
 rewrite (nth_map inh); last by rewrite -cardE ltn_ord.
@@ -378,7 +376,7 @@ Lemma rem_irr (xi phi : 'CF('SG_n)) :
      phi - '[phi, xi] *: xi \is a character.
 Proof.
 move=> Hxi Hphi.
-have /CnatP [m Hm] := Cnat_cfdot_char Hphi (irrWchar Hxi).
+have /natrP [m Hm] := Cnat_cfdot_char Hphi (irrWchar Hxi).
 rewrite Hm.
 elim: m phi Hphi Hm => [|m IHm] phi Hphi Hm; first by rewrite scale0r subr0.
 rewrite mulrS scalerDl scale1r opprD addrA; apply: IHm.
@@ -392,7 +390,7 @@ Proof. by rewrite /irrSG Fchar_inv_isometry // homsymdotss. Qed.
 
 Theorem irrSG_irr la : 'irrSG[la] \in irr 'SG_n.
 Proof.
-elim/(finord_wf_down (T := [finPOrderType of 'PDom_n])): la => la IHla.
+elim/(finord_wf_down (T := 'PDom_n)): la => la IHla.
 rewrite irrEchar irrSG_orthonormal !eq_refl andbT.
 have -> : 'irrSG[la] = 'M[la] - \sum_(mu : 'PDom_n | (la < mu)%O)
                                    '[ 'M[la], 'irrSG[mu] ] *: 'irrSG[mu].
@@ -463,7 +461,7 @@ symmetry.
 rewrite Frobenius_char_homsymdot.
 have /coord_span {2}-> : ('hp[cycle_typeSn sigma] : HSC) \in span 'hs.
   by rewrite (span_basis (symbs_basis _ (leqSpred n))) // memvf.
-rewrite (reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P__]))) /=.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij 'P__))) /=.
 rewrite homsymdot_sumr (bigD1 la) //=.
 rewrite (nth_map (rowpartn n)) -?cardE ?ltn_ord // nth_enum_rank.
 rewrite homsymdotZr homsymdotss ?leqSpred // eq_refl mulr1.
@@ -482,7 +480,7 @@ Notation "''irrSG[' l ']'" := (irrSG l).
 (** Frobenius character formula for ['SG_n] *)
 Theorem Frobenius_char n (la mu : 'P_n) :
   'irrSG[la] (permCT mu) =
-  (Vanprod * \prod_(d <- mu) (symp_pol n algCF d))@_(mpart la + rho n).
+  (Vanprod * \prod_(d <- mu) (symp_pol n algC d))@_(mpart la + rho n).
 Proof.
 rewrite -/Vanprod Vanprod_alt.
 case: n la mu => [//|n] //= la mu.
@@ -502,14 +500,14 @@ rewrite Frobenius_char_homsymdot MN_coeff_homogP raddf_sum /=.
 rewrite (bigD1 la) //= big1 ?addr0 //; first last => [i /negbTE Hi|].
   by rewrite homsymdotZr homsymdotss // eq_sym Hi mulr0.
 rewrite homsymdotZr homsymdotss // eqxx mulr1.
-by rewrite conj_Cint // Cint_int.
+by rewrite Num.Theory.conj_intr // intr_int.
 Qed.
 Corollary Murnaghan_NakayamaCT n (la mu : 'P_n) :
   'irrSG[la] (permCT mu) = (MN_coeff la mu)%:~R.
 Proof. by rewrite Murnaghan_Nakayama_char cycle_typeSn_permCT. Qed.
 
-Corollary irrSG_char_int n (la mu : 'P_n) : 'irrSG[la] (permCT mu) \in Cint.
-Proof. by rewrite Murnaghan_NakayamaCT Cint_int. Qed.
+Corollary irrSG_char_int n (la mu : 'P_n) : 'irrSG[la] (permCT mu) \in Num.int.
+Proof. by rewrite Murnaghan_NakayamaCT intr_int. Qed.
 
 Example Wikipedia_Murnaghan_Nakayama :
   let p521 := @IntPartN 8 [:: 5; 2; 1]%N is_true_true in
@@ -539,7 +537,7 @@ rewrite (eq_bigr
 by rewrite coord_sum_free ?enum_rankK // ?KostkaStd //; exact: symbs_free.
 Qed.
 
-Theorem dim_cfReprSG n (la : 'P_n) d (rG : mx_representation algCF 'SG_n d) :
+Theorem dim_cfReprSG n (la : 'P_n) d (rG : mx_representation algC 'SG_n d) :
   cfRepr rG = 'irrSG[la] -> d = #|{: stdtabsh la}|.
 Proof.
 move=> H; have := cfRepr1 rG; rewrite H dim_irrSG => /eqP.

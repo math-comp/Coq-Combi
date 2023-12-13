@@ -58,12 +58,10 @@ The two main results are:
     'Ind['SG_(m + n)] ('1z_[p] \o^ '1z_[q]) = '1z_[p +|+ q].
 ]]
 ***************)
-
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq path.
-From mathcomp Require Import finfun fintype tuple finset bigop.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
-From mathcomp Require Import ssralg ssrnum matrix vector mxalgebra algC.
+From mathcomp Require Import ssrnum matrix vector mxalgebra algC.
 From mathcomp Require Import classfun character mxrepresentation.
 
 Require Import tools ordcast partition sorted.
@@ -80,8 +78,6 @@ Unset Printing Implicit Defensive.
 
 Import GroupScope GRing.Theory.
 Local Open Scope Combi_scope.
-
-Local Notation algCF := [fieldType of algC].
 
 
 Section classGroup.
@@ -156,14 +152,14 @@ Local Open Scope ring_scope.
 Lemma cfextprodrE h g : cfextprodr h g = g \ox h.
 Proof using. by []. Qed.
 
-Lemma cfextprod_is_linear g : linear (cfextprod g : 'CF(H) -> 'CF(setX G H)).
+Fact cfextprod_is_linear g : linear (cfextprod g : 'CF(H) -> 'CF(setX G H)).
 Proof using.
 move=> /= a h1 h2.
 apply/cfunP=> /= x.
 by rewrite !cfunE !mulrDr mulrA [g _ * _]mulrC mulrA.
 Qed.
-Canonical cfextprod_additive g := Additive (cfextprod_is_linear g).
-Canonical cfextprod_linear g := Linear (cfextprod_is_linear g).
+HB.instance Definition _ g :=
+  GRing.isLinear.Build algC 'CF(H) 'CF(setX G H) _ _ (cfextprod_is_linear g).
 
 Lemma cfextprod0r g : g \ox (0 : 'CF(H)) = 0.
 Proof using. by rewrite linear0. Qed.
@@ -181,14 +177,14 @@ Proof using. by rewrite linear_sum. Qed.
 Lemma cfextprodZr g a h : g \ox (a *: h) = a *: (g \ox h).
 Proof using. by rewrite linearZ. Qed.
 
-Lemma cfextprodr_is_linear h : linear (cfextprodr h : 'CF(G) -> 'CF(setX G H)).
+Fact cfextprodr_is_linear h : linear (cfextprodr h : 'CF(G) -> 'CF(setX G H)).
 Proof using.
 move=> /= a g1 g2; rewrite !cfextprodrE.
 apply/cfunP=> /= x.
 by rewrite !cfunE !mulrDl -mulrA.
 Qed.
-Canonical cfextprodr_additive h := Additive (cfextprodr_is_linear h).
-Canonical cfextprodr_linear h := Linear (cfextprodr_is_linear h).
+HB.instance Definition _ h :=
+  GRing.isLinear.Build algC 'CF(G) 'CF(setX G H) _ _ (cfextprodr_is_linear h).
 
 Lemma cfextprod0l h : (0 : 'CF(G)) \ox h = 0.
 Proof using. by rewrite -cfextprodrE linear0. Qed.
@@ -209,8 +205,8 @@ Proof using. by rewrite -!cfextprodrE linearZ. Qed.
 Section ReprExtProd.
 
 Variables (n1 n2 : nat).
-Variables (rG : mx_representation algCF G n1)
-          (rH : mx_representation algCF H n2).
+Variables (rG : mx_representation algC G n1)
+          (rH : mx_representation algC H n2).
 
 Lemma extprod_mx_repr : mx_repr (setX G H) (fun x => tprod (rG x.1) (rH x.2)).
 Proof using.

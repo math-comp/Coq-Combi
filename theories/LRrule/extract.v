@@ -18,9 +18,9 @@
 We extract to OCaml the implementation of the Robinson-Schensted correspondance
 and The Littlewood-Richardson Rule.
  **********)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
-From mathcomp Require Import finset perm order.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import ssralg.
+From mathcomp Require Import mpoly.
 Require Import subseq partition ordtype Schensted congr plactic Greene Greene_inv
         std stdtab skewtab therule implem.
 
@@ -54,11 +54,11 @@ Extract Constant leq => "( <= )".
 *)
 
 Definition disp := Order.NatOrder.nat_display.
-Definition RS := (@RS disp nat_inhOrderType).
-Definition RSbijnat := (@RSbij disp nat_inhOrderType).
-Definition RSbijinvnat := (@RSbijinv disp nat_inhOrderType).
-Definition RStabnat := (@RStab disp nat_inhOrderType).
-Definition RStabinvnat := (@RStabinv _ nat_inhOrderType).
+Definition RS := (@RS disp nat).
+Definition RSbijnat := (@RSbij disp nat).
+Definition RSbijinvnat := (@RSbijinv disp nat).
+Definition RStabnat := (@RStab disp nat).
+Definition RStabinvnat := (@RStabinv disp nat).
 
 Set Warnings "-extraction-reserved-identifier,-extraction-opaque-accessed".
 (*

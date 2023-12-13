@@ -59,10 +59,10 @@ The main theorem is [Theorem LRyam_coeffP]:
 As a corollary we provide the two Pieri rules [Pieri_rowpartn] and
 [Pieri_colpartn].
 *******************************************************************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
-From mathcomp Require Import tuple finfun finset bigop path ssralg order.
-From SsrMultinomials Require Import mpoly.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import ssralg.
+From mathcomp Require Import mpoly.
 
 Require Import tools ordcast combclass partition skewpart Yamanouchi ordtype.
 Require Import std tableau stdtab Schensted congr plactic Greene_inv.
@@ -318,7 +318,7 @@ rewrite (_ : size_tab _ = d1 + d2); first last.
   rewrite size_join_tab.
   + rewrite size_RS size_std size_hyper_yam sumn_intpartn; congr (_ + _).
     rewrite /size_tab /shape -map_comp.
-    rewrite (eq_map (f2 := size)); last by move=> s /=; rewrite size_map.
+    rewrite (eq_map (g := size)); last by move=> s /=; rewrite size_map.
     rewrite -/(shape _) (shape_skew_reshape Hincl).
     * by rewrite (sumn_diff_shape Hincl) !sumn_intpartn addKn.
     * by rewrite size_std size_yameval sumn_diff_shape_intpartE.
@@ -382,7 +382,7 @@ rewrite !inE /bijLR /= => Hskew.
 case (boolP (is_skew_reshape_tableau P P1 yam)) => [_|] /=; last by rewrite Hskew.
 rewrite /shape /join_tab.
 rewrite !size_map -map_comp.
-rewrite (eq_map (f2 := fun p => size p.1 + size p.2)); first last.
+rewrite (eq_map (g := fun p => size p.1 + size p.2)); first last.
   by move=> i /=; rewrite size_cat.
 rewrite size_zip2 size_skew_reshape.
 rewrite (_ : map size _ = pad 0 (size P) P1); first last.
@@ -393,7 +393,7 @@ rewrite (_ : map size _ = pad 0 (size P) P1); first last.
   by rewrite map_nseq.
 rewrite (_ : map size _ = P / P1); first last.
   rewrite /= -map_comp.
-  rewrite (eq_map (f2 := size)); last by move=> i /=; rewrite size_map.
+  rewrite (eq_map (g := size)); last by move=> i /=; rewrite size_map.
   rewrite -/(shape _) shape_skew_reshape //=.
   by rewrite size_std size_yameval sumn_diff_shape_intpartE.
 rewrite -(size_diff_shape P1 P).
@@ -415,7 +415,7 @@ have -> : shape Q = outer_shape (shape (filter_gt_tab d1 Q)) (shape t).
   have:= stdtabP (stdtabnP Q) => /(join_tab_filter d1) {1}<-.
   rewrite /= /shape /join_tab /pad /=.
   rewrite !size_map -map_comp.
-  rewrite (eq_map (f2 := fun p => size p.1 + size p.2)); first last.
+  rewrite (eq_map (g := fun p => size p.1 + size p.2)); first last.
     by move=> i /=; rewrite size_cat.
   rewrite size_zip2; congr (map _ (zip _ _)).
   move: (size Q) => n.
@@ -491,7 +491,7 @@ Proof using .
 move=> x y; rewrite !inE /bijLR => Hx Hy.
 case (boolP (is_skew_reshape_tableau P P1 x)) => /=; last by rewrite Hx.
 case (boolP (is_skew_reshape_tableau P P1 y)) => /=; last by rewrite Hy.
-move=> Hy1 Hx1 /(congr1 (@val _ _ _))/(congr1 to_word) /= {Hx1 Hy1 Hx Hy} => H.
+move=> Hy1 Hx1 /(congr1 \val)/(congr1 to_word) /= {Hx1 Hy1 Hx Hy} => H.
 apply val_inj => /=.
 pose f := [fun s : seq nat =>
              to_word (join_tab (hyper_stdtabn P1)
@@ -501,7 +501,7 @@ have invf (s : yameval P2) : std s = sfilterleq d1 (f (std s)).
   have /= := join_stdtab_in_shuffle
                (stdtabnP (hyper_stdtabn P1)) (size_leq_skew_reshape (std s)).
   rewrite /size_tab.
-  have /= -> := congr1 (@val _ _ _) (shaped_hyper_stdtabnP P1).
+  have /= -> := congr1 \val (shaped_hyper_stdtabnP P1).
   rewrite sumn_intpartn.
   have:= stdtabnP (hyper_stdtabn P1); rewrite /is_stdtab => /andP [_ /=].
   move /shsh_sfilterleq => H{}/H.

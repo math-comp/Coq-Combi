@@ -72,14 +72,12 @@ The main results are [symbm_basis], [symbe_basis], [symbs_basis],
 [symbh_basis], [symbp_basis] which asserts that they are all bases (if the
 characteristic of the base ring is zero for [symbp_basis]), and the definition
 of the scalar product.
- *)
-
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import finset path tuple bigop ssralg order.
-From mathcomp Require Import perm fingroup matrix vector.
-From mathcomp Require ssrnum algC.
-From SsrMultinomials Require Import ssrcomplements freeg mpoly.
+ ******)
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import ssralg matrix vector ssrnum algC archimedean.
+From mathcomp Require Import fingroup perm.
+From mathcomp Require Import ssrcomplements freeg mpoly.
 
 Require Import tools sorted ordtype permuted partition permcent.
 Require Import antisym Schur_mpoly Schur_altdef sympoly.
@@ -89,7 +87,9 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Import GRing.Theory.
+Import ssrnum algC GRing.Theory Num.Theory.
 
+Local Open Scope nat_scope.
 Local Open Scope ring_scope.
 
 Reserved Notation "{ 'homsym' T [ n , d ] }"
@@ -125,36 +125,18 @@ Variable d : nat.
 
 Implicit Types p q : {sympoly R[n]}.
 
-Lemma homsymE p : (p \is d.-homsym) = (sympol p \is d.-homog).
-Proof. by []. Qed.
+Definition is_homsym p := sympol p \is d.-homog.
 
-Fact symdhom_submod_closed : submod_closed [in R[n], d.-homsym].
-Proof.
-split => [|a p q Hp Hq]; rewrite !homsymE.
-- exact: dhomog0.
-- by apply rpredD => //; apply rpredZ.
-Qed.
-Canonical symdhom_addPred    := AddrPred   symdhom_submod_closed.
-Canonical symdhom_oppPred    := OpprPred   symdhom_submod_closed.
-Canonical symdhom_zmodPred   := ZmodPred   symdhom_submod_closed.
-Canonical symdhom_submodPred := SubmodPred symdhom_submod_closed.
+Lemma homsymE p : (p \is d.-homsym) = (is_homsym p).
+Proof. by []. Qed.
 
 Hypothesis Hvar : (d <= n.+1)%N.
 
 Record homogsym : predArgType :=
-  HomogSym {homsym :> {sympoly R[n]}; _ : homsym \is d.-homsym }.
+  HomogSym {homsym :> {sympoly R[n]}; _ : is_homsym homsym}.
 
-Canonical  homogsym_subType := Eval hnf in [subType for @homsym].
-Definition homogsym_eqMixin := Eval hnf in [eqMixin of homogsym by <:].
-Canonical  homogsym_eqType  := Eval hnf in EqType homogsym homogsym_eqMixin.
-
-Definition homogsym_choiceMixin := [choiceMixin of homogsym by <:].
-Canonical  homogsym_choiceType  :=
-  Eval hnf in ChoiceType homogsym homogsym_choiceMixin.
-
-Definition homogsym_of of phant R := homogsym.
-
-Identity Coercion type_homsym_of : homogsym_of >-> homogsym.
+HB.instance Definition _ := [isSub of homogsym for homsym].
+HB.instance Definition _ := [Choice of homogsym by <:].
 
 Lemma homsym_inj : injective homsym. Proof. exact: val_inj. Qed.
 
@@ -162,13 +144,12 @@ End DefType.
 
 (* We need to break off the section here to let the argument scope *)
 (* directives take effect.                                         *)
-Bind Scope ring_scope with homogsym_of.
 Bind Scope ring_scope with homogsym.
 Arguments homogsym n%N R%R.
 Arguments homsym_inj n%N R%R d%N.
 
 
-Notation "{ 'homsym' T [ n , d ] }" := (homogsym_of n d (Phant T)).
+Notation "{ 'homsym' T [ n , d ] }" := (homogsym n T d).
 
 Section HomogSymLModType.
 
@@ -176,23 +157,26 @@ Variable n : nat.
 Variable R : ringType.
 Variable d : nat.
 
-Definition homogsym_zmodMixin := [zmodMixin of {homsym R[n, d]} by <:].
-Canonical  homogsym_zmodType  :=
-  Eval hnf in ZmodType {homsym R[n, d]} homogsym_zmodMixin.
-Canonical  homogsymen_zmodType  :=
-  Eval hnf in ZmodType (homogsym n R d) homogsym_zmodMixin.
+Local Notation is_homsym := (@is_homsym n R d).
 
-Definition homogsym_lmodMixin := [lmodMixin of {homsym R[n, d]} by <:].
-Canonical  homogsym_lmodType  :=
-  Eval hnf in LmodType R {homsym R[n, d]} homogsym_lmodMixin.
-Canonical  homogsymen_lmodType :=
-  Eval hnf in LmodType R (homogsym n R d) homogsym_lmodMixin.
+Fact symdhom_submod_closed : submod_closed is_homsym.
+Proof.
+split => [|a p q Hp Hq]; rewrite !homsymE.
+- exact: dhomog0.
+- by apply rpredD => //; apply rpredZ.
+Qed.
+HB.instance Definition _ :=
+  GRing.isSubmodClosed.Build R {sympoly R[n]}
+    is_homsym symdhom_submod_closed.
+
+HB.instance Definition _ := [SubChoice_isSubLmodule of {homsym R[n, d]} by <:].
 
 Lemma homsym_is_linear :
   linear (@homsym n R d : {homsym R[n, d]} -> {sympoly R[n]}).
 Proof. by []. Qed.
-Canonical homsym_additive   := Additive   homsym_is_linear.
-Canonical homsym_linear     := AddLinear  homsym_is_linear.
+HB.instance Definition _ :=
+  GRing.isLinear.Build
+    R {homsym R[n, d]} {sympoly R[n]} _ _ homsym_is_linear.
 
 Lemma homsym_is_dhomog (x : {homsym R[n, d]}) : sympol x \is d.-homog.
 Proof. by case: x. Qed.
@@ -208,9 +192,6 @@ Canonical dhomog_of_sym_linear   := AddLinear dhomog_of_sym_is_linear.
  *)
 
 End HomogSymLModType.
-
-Import GRing.Theory.
-Local Open Scope ring_scope.
 
 
 (** ** Homogeneous symmetric polynomials as a vector space *)
@@ -237,11 +218,11 @@ by apply val_inj; rewrite /= {1}(homog_symmE (homsym_is_dhomog f)) !linear_sum.
 Qed.
 
 Fact homogsym_vecaxiom :
-  Vector.axiom #|[set p : 'P_d | size p <= n]| {homsym R[n, d]}.
+  vector_axiom #|[set p : 'P_d | (size p <= n)%N]| {homsym R[n, d]}.
 Proof.
-pose b := [set p : 'P_d | size p <= n].
+pose b := [set p : 'P_d | (size p <= n)%N].
 pose t := enum_tuple (pred_of_set b).
-have sztntht k : size (tnth t k) <= n.
+have sztntht k : (size (tnth t k) <= n)%N.
   by have := mem_tnth k t; rewrite /t mem_enum inE.
 exists (fun p : {homsym R[n, d]} => \row_(i < #|b|) p@_(mpart (tnth t i))).
   by move=> c p q; apply/matrixP=> i j; rewrite !mxE /= mcoeffD mcoeffZ.
@@ -269,9 +250,8 @@ exists (fun r : 'rV[R]_(#|b|) =>
   apply/eqP/val_inj/eqP => /=.
   by rewrite -(nth_uniq (rowpartn d) _ _ (enum_uniq (pred_of_set b))) // -cardE.
 Qed.
-Definition homogsym_vectMixin := VectMixin homogsym_vecaxiom.
-Canonical homogsym_vectType :=
-  Eval hnf in VectType R {homsym R[n, d]} homogsym_vectMixin.
+HB.instance Definition _ := Lmodule_hasFinDim.Build R {homsym R[n, d]}
+  homogsym_vecaxiom.
 
 End Vector.
 
@@ -309,17 +289,18 @@ Fact homsymprod_is_linear p : linear (homsymprod p).
 Proof.
 by move=> a /= u v; apply val_inj; rewrite /= mulrDr -scalerAr.
 Qed.
-Canonical homsymprod_additive p := Additive (homsymprod_is_linear p).
-Canonical homsymprod_linear p := Linear (homsymprod_is_linear p).
+HB.instance Definition _ p :=
+  GRing.isLinear.Build
+    R {homsym R[n, d]} {homsym R[n, (c + d)]} _ _ (homsymprod_is_linear p).
 
 Lemma homsymprodrE p q : homsymprodr p q = q *h p. Proof. by []. Qed.
 Lemma homsymprodr_is_linear p : linear (homsymprodr p).
 Proof.
 by move=> a /= u v; apply val_inj; rewrite /= mulrDl -scalerAl.
 Qed.
-Canonical homsymprodr_additive p := Additive (homsymprodr_is_linear p).
-Canonical homsymprodr_linear p := Linear (homsymprodr_is_linear p).
-
+HB.instance Definition _ p :=
+  GRing.isLinear.Build
+    R {homsym R[n, c]} {homsym R[n, (c + d)]} _ _ (homsymprodr_is_linear p).
 
 Lemma homsymprod0r p : p *h 0 = 0. Proof. exact: raddf0. Qed.
 Lemma homsymprodBr p q1 q2 : p *h (q1 - q2) = p *h q1 - p *h q2.
@@ -421,8 +402,9 @@ rewrite /in_homsym => a u v.
 rewrite linear_sum /= -big_split /=; apply eq_bigr => la _.
 by rewrite scalerA -scalerDl mcoeffD mcoeffZ.
 Qed.
-Canonical in_homsym_additive := Additive  in_homsym_is_linear.
-Canonical in_homsym_linear   := AddLinear in_homsym_is_linear.
+HB.instance Definition _ :=
+  GRing.isLinear.Build
+    R {mpoly R[n]} {homsym R[n, d]} _ _ in_homsym_is_linear.
 
 Lemma in_homsymE (p : HSF) : in_homsym p = p.
 Proof. by rewrite {2}(homsymmE p). Qed.
@@ -439,28 +421,31 @@ Variable R : comRingType.
 Local Notation HSF := {homsym R[n, d]}.
 Implicit Types (p q : HSF) (la : intpartn d).
 
-Fact omegahomsym_subproof p : omegasf p \is d.-homsym.
-Proof using. by apply: omegasf_homog; rewrite -homsymE; case: p. Qed.
+Fact omegahomsym_subproof p : is_homsym d (omegasf p).
+Proof using.
+by apply: omegasf_homog; rewrite -/(is_homsym _ _) -homsymE; case: p.
+Qed.
 Definition omegahomsym p : HSF := HomogSym (omegahomsym_subproof p).
 Fact omegahomsym_is_linear : linear omegahomsym.
 Proof using.
 by move=> a f g; apply val_inj; rewrite /= !linearD !linearZ /=.
 Qed.
-Canonical omegahomsym_additive   := Additive  omegahomsym_is_linear.
-Canonical omegahomsym_linear     := AddLinear omegahomsym_is_linear.
+HB.instance Definition _ :=
+  GRing.isLinear.Build
+    R {homsym R[n, d]} {homsym R[n, d]} _ _ omegahomsym_is_linear.
 
 
 Lemma omega_homsymh la :
-  head 0%N la <= n -> omegahomsym 'hh[la] = 'he[la].
+  (head 0%N la <= n)%N -> omegahomsym 'hh[la] = 'he[la].
 Proof using. by move=> Hd; apply val_inj; rewrite /= omegasf_prodsymh. Qed.
 Lemma omega_homsyme la :
-  head 0%N la <= n -> omegahomsym 'he[la] = 'hh[la].
+  (head 0%N la <= n)%N -> omegahomsym 'he[la] = 'hh[la].
 Proof using. by move=> Hd; apply val_inj; rewrite /= omegasf_prodsyme. Qed.
 Lemma omega_homsyms la :
-  d <= n -> omegahomsym 'hs[la] = 'hs[conj_intpartn la].
+  (d <= n)%N -> omegahomsym 'hs[la] = 'hs[conj_intpartn la].
 Proof using. by move=> Hd; apply val_inj; rewrite /= omegasf_syms. Qed.
 Lemma omega_homsymp la :
-  head 0%N la <= n -> omegahomsym 'hp[la] = (-1) ^+ (d - size la) *: 'hp[la].
+  (head 0%N la <= n)%N -> omegahomsym 'hp[la] = (-1) ^+ (d - size la) *: 'hp[la].
 Proof using. by move=> Hd; apply val_inj; rewrite /= omegasf_prodsymp. Qed.
 
 End OmegaHomSym.
@@ -504,15 +489,13 @@ by rewrite -[X in (_ <= X)%N](sumn_intpartn la); apply: size_part.
 Qed.
 
 Lemma dim_homsym :
-  \dim (fullv (vT := [vectType R of HSF])) = #|{:'P_d}|.
-Proof using Hd.
-by rewrite dimvf /Vector.dim /=; apply eq_card; apply basis_homsym.
-Qed.
+  \dim (fullv (vT := HSF)) = #|{:'P_d}|.
+Proof using Hd. by rewrite dimvf /=; apply eq_card; apply basis_homsym. Qed.
 
 Lemma symbm_free : free symbm.
 Proof using Hd.
 apply/freeP => co.
-rewrite (reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P_d]))) /=.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij 'P_d))) /=.
 rewrite (eq_bigr (fun la : 'P_d => (co (enum_rank la)) *: 'hm[la])); first last.
   move=> la _; rewrite (nth_map (rowpartn _)) /= -?cardE ?ltn_ord //.
   by rewrite -?enum_val_nth enum_rankK.
@@ -551,11 +534,11 @@ Proof.
 have /coord_span -> : f \in span symbs.
   by rewrite (span_basis symbs_basis) memvf.
 rewrite !coord_sum_free ?(basis_free symbs_basis) //.
-rewrite (reindex _ (onW_bij _ (@enum_rank_bij [finType of 'P_d]))) /=.
+rewrite (reindex _ (onW_bij _ (@enum_rank_bij 'P_d))) /=.
 rewrite !linear_sum /= mulr_sumr linear_sum /= (bigD1 la) //=.
 rewrite (nth_map (rowpartn d)) -?cardE ?ltn_ord // nth_enum_rank.
 rewrite -scalerAr linearZ /=.
-have Hszp (nu : 'P_d) : size nu <= n.
+have Hszp (nu : 'P_d) : (size nu <= n)%N.
   by apply: (leq_trans _ Hd); rewrite -{2}(sumn_intpartn nu) size_part.
 rewrite mcoeff_alt_SchurE // eq_refl mulr1 big1 ?addr0 // => mu /negbTE Hmula.
 rewrite (nth_map (rowpartn d)) -?cardE ?ltn_ord // nth_enum_rank.
@@ -709,11 +692,16 @@ Definition map_homsym (p : HSFR) : HSFS := HomogSym (map_sympoly_d_homog p).
 
 Fact map_homsym_is_additive : additive map_homsym.
 Proof. by move=> /= p q; apply val_inj; rewrite /= rmorphB. Qed.
-Canonical map_homsym_additive := Additive map_homsym_is_additive.
+HB.instance Definition _ :=
+  GRing.isAdditive.Build
+    {homsym R[n, d]} {homsym S[n, d]} _ map_homsym_is_additive.
 
-Lemma scale_map_homsym (r : R) (p : HSFR) :
-  map_homsym (r *: p) = (mor r) *: (map_homsym p).
-Proof. by apply val_inj; rewrite /= scale_map_sympoly. Qed.
+Lemma map_homsym_is_scalable : scalable_for (mor \; *:%R) map_homsym.
+Proof. by move=> a /= p; apply val_inj; rewrite /= linearZ. Qed.
+HB.instance Definition _ :=
+  GRing.isScalable.Build _ {homsym R[n, d]} {homsym S[n, d]}
+    _ _ map_homsym_is_scalable.
+
 
 Lemma coord_map_homsym (b : #|{:'P_d}|.-tuple HSFR) j (f : HSFR) :
   basis_of fullv b ->
@@ -727,7 +715,7 @@ rewrite (eq_bigr
            (fun i : 'I_#|{:'P_d}| =>
               (mor (coord b i f)) *: (map_tuple map_homsym b)`_i )).
   by rewrite coord_sum_free //; apply: (basis_free Hmap_basis).
-move=> i _; rewrite /= scale_map_homsym.
+move=> i _; rewrite linearZ /=.
 congr (_ *: _); apply esym; apply nth_map.
 by rewrite size_tuple ltn_ord.
 Qed.
@@ -777,11 +765,11 @@ Proof. by rewrite /symbp tupleE /= (nth_map la) ?nth_enum_rank // -cardE. Qed.
 Lemma symbsE la : ('hs)`_(enum_rank la) = 'hs[la] :> HSF.
 Proof. by rewrite /symbs tupleE /= (nth_map la) ?nth_enum_rank // -cardE. Qed.
 
-Let er_eqE (la mu : 'P_d) :
+Local Lemma er_eqE (la mu : 'P_d) :
   (enum_rank la == enum_rank mu) = (la == mu).
 Proof. by rewrite inj_eq //; apply: enum_rank_inj. Qed.
 
-Local Notation coord := (coord (vT := [vectType R of HSF])).
+Local Notation coord := (coord (vT := HSF)).
 
 Hypothesis (Hd : (d <= n)%N).
 Lemma coord_symbm la mu : coord 'hm (enum_rank mu) 'hm[la] = (la == mu)%:R.
@@ -823,8 +811,9 @@ Definition cnvarhomsym (p : {homsym R[m, d]}) : {homsym R[n, d]} :=
   HomogSym (cnvarhomsym_subproof p).
 Fact cnvarhomsym_is_linear : linear cnvarhomsym.
 Proof. by move=> a f g; apply val_inj; rewrite /= !linearD !linearZ /=. Qed.
-Canonical cnvarhomsym_additive   := Additive  cnvarhomsym_is_linear.
-Canonical cnvarhomsym_linear     := AddLinear cnvarhomsym_is_linear.
+HB.instance Definition _ :=
+  GRing.isLinear.Build
+    R {homsym R[m, d]} {homsym R[n, d]} _ _ cnvarhomsym_is_linear.
 
 Lemma cnvarhomsyme la : cnvarhomsym 'he[la] = 'he[la].
 Proof using Hd. by apply val_inj; rewrite /= -/'e[_] cnvar_prodsyme. Qed.
@@ -840,7 +829,6 @@ Proof using Hd. by apply val_inj; rewrite /= cnvar_syms. Qed.
 End ChangeNVar.
 
 
-Import ssrnum algC GRing.Theory Num.Theory.
 
 Local Lemma char0_algC : [char algC] =i pred0.
 Proof. exact: char_num. Qed.
@@ -851,7 +839,6 @@ Section ScalarProduct.
 
 Variable n0 d : nat.
 Local Notation n := (n0.+1).
-Local Notation algCF := [numFieldType of algC].
 Local Notation HSF := {homsym algC[n, d]}.
 
 Definition homsymdot (p q : HSF) : algC :=
@@ -872,17 +859,16 @@ by apply/eq_bigr => i _; rewrite enum_valK.
 Qed.
 Lemma homsymdotrE p q : homsymdotr p q = '[q | p]. Proof. by []. Qed.
 
-Lemma homsymdotr_is_linear p :
-  linear (homsymdotr p : HSF -> algC^o).
+Fact homsymdotr_is_scalar p : scalar (homsymdotr p).
 Proof.
-move=> a u v.
-rewrite linear_sum -big_split; apply: eq_bigr => x _ /=.
+move=> a /= u v.
+rewrite mulr_sumr /= -big_split; apply: eq_bigr => x _ /=.
 rewrite linearD linearZ /= mulrDr mulrDl !mulrA; congr (_ + _).
 by rewrite [_ * a]mulrC -!mulrA.
 Qed.
-Canonical homsymdotr_additive p := Additive (homsymdotr_is_linear p).
-Canonical homsymdotr_linear p := Linear (homsymdotr_is_linear p).
-
+HB.instance Definition _ p :=
+  GRing.isLinear.Build
+    algC {homsym algC[n, d]} algC _ _ (homsymdotr_is_scalar p).
 
 Lemma homsymdot0l p : '[0 | p] = 0.
 Proof. by rewrite -homsymdotrE linear0. Qed.
@@ -903,7 +889,8 @@ Proof. by rewrite -!homsymdotrE linearZ. Qed.
 Lemma homsymdotC p q : '[p | q] = ('[q | p])^*.
 Proof.
 rewrite /homsymdot rmorph_sum /=.
-apply: eq_bigr=> x _; rewrite !rmorphM conjCK -!mulrA.
+apply: eq_bigr=> x _.
+rewrite [in RHS]rmorphM [X in _ = X * _]rmorphM conjCK -!mulrA.
 have /geC0_conj -> : 0 <= ((zcard (enum_val x))%:R : algC).
   by rewrite -nnegrE ?nnegrE ?ler01 ?ler0n ?oner_neq0.
 by congr (_ * _); rewrite mulrC.
@@ -911,7 +898,9 @@ Qed.
 
 Lemma homsymdotBr p q1 q2 : '[p | q1 - q2] = '[p | q1] - '[p | q2].
 Proof. by rewrite !(homsymdotC p) -rmorphB homsymdotBl. Qed.
-Canonical homsymdot_additive p := Additive (homsymdotBr p).
+HB.instance Definition _ p :=
+  GRing.isAdditive.Build
+    {homsym algC[n, d]} algC _ (homsymdotBr p).
 
 Lemma homsymdot0r p : '[p | 0] = 0. Proof. exact: raddf0. Qed.
 Lemma homsymdotNr p q : '[p | - q] = - '[p | q].
@@ -951,7 +940,8 @@ rewrite !omega_homsymp //;
 rewrite homsymdotZl homsymdotZr !homsymdotpp //.
 case: eqP => /= [->|_]; rewrite ?mulr0 // !mulr1 !mulrA.
 move: (nth _ _ _) => la {i j}.
-have /conj_Cint -> : (-1) ^+ (d - size la) \in Cint by apply rpred_sign.
+have /Num.Theory.conj_intr -> :
+  (-1) ^+ (d - size la) \in (@archimedean.Num.int algC) by apply rpred_sign.
 by rewrite -exprD addnn -muln2 exprM sqrr_sign mul1r.
 Qed.
 

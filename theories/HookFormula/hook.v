@@ -77,14 +77,14 @@ Theorem HookLengthFormula (p : intpart) :
 
  **********)
 
-
 Require Import Misc Ccpo.
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype choice ssrnat seq
-        ssrint div rat fintype bigop path ssralg ssrnum.
+Set Warnings "-hiding-delimiting-key".
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import ssrint div rat ssralg ssrnum.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
 Require Import tools subseq partition Yamanouchi stdtab Qmeasure.
+Set Warnings "hiding-delimiting-key".
 
 
 Set Implicit Arguments.
@@ -396,7 +396,7 @@ Open Scope ring_scope.
 
 Lemma hook_length_pred sh rc :
   (hook_length sh rc)%:~R - 1 = ((hook_length sh rc).-1)%:~R :> rat.
-Proof. by rewrite predn_int // !mulrzDl. Qed.
+Proof. by rewrite predn_int // !mulrzDr_tmp. Qed.
 
 Lemma prod_hook_length_quot_row p Alpha Beta :
   is_part p -> corner_box p (Alpha, Beta) ->
@@ -1030,10 +1030,10 @@ move=> /or3P [] /andP [HA HB].
   have Blen0 : Blen != O.
     rewrite /Blen /lB -size_hook_box_indices.
     by rewrite (is_trace_corner_nil (is_trace_lastr Htrace)).
-  have:= @addf_div rat_fieldType 1 Alen%:Q 1 Blen%:Q.
+  have:= @addf_div rat 1 Alen%:Q 1 Blen%:Q.
   rewrite addrC !div1r !mul1r => ->; rewrite ?intr_eq0 ?eqz_nat //.
   rewrite addrC [LHS]mulrC mulrA mulVf; first by rewrite mul1r invfM mulrC.
-  rewrite -mulrzDl /= intr_eq0 eqz_nat.
+  rewrite -mulrzDr_tmp /= intr_eq0 eqz_nat.
   by rewrite addn_eq0 negb_and Alen0 Blen0.
 - move: HA => /eqP HA; subst A.
   rewrite [X in (_ + X)]walk_to_corner_emptyl // addr0.
@@ -1247,7 +1247,7 @@ rewrite [RHS]mulrC -[RHS]mulr1; congr (_ * _ * _).
   have swap_inj : injective swap by apply (can_inj (g := swap)) => [] [r c].
   rewrite -[RHS]big_filter; set F := (X in \prod_(i <- _) X i).
   rewrite -[X in \prod_(i <- X) _]map_id.
-  rewrite (eq_map (f2 := swap \o swap)); last by move=> [r c].
+  rewrite (eq_map (g := swap \o swap)); last by move=> [r c].
   rewrite map_comp big_map.
   transitivity (\prod_(i <- enum_box_in p' |
                        (i.1 != Alpha) && (i.2 == Beta))  F (swap i)).
@@ -1395,7 +1395,7 @@ Lemma hook_length_prod_nat (p : intpart) :
   #|{:stdtabsh p}| * (hook_length_prod p) = (sumn p)`!.
 Proof.
 apply /eqP; rewrite -eqz_nat PoszM.
-rewrite -(@eqr_int rat_numDomainType) intrM /=.
+rewrite -(@eqr_int rat) intrM /=.
 have /= -> := HookLengthFormula_rat p.
 apply/eqP; rewrite -mulrA -[RHS]mulr1; congr (_ * _)%R.
 rewrite mulrC divff // intr_eq0.

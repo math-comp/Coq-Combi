@@ -105,7 +105,7 @@ by exfalso; apply: (Hcovers z); rewrite ltxz ltzy.
 Qed.
 
 Lemma covers_dual x y :
-  covers (T := T^d : finPOrderType _) y x = covers x y.
+  covers (T := T^d) y x = covers x y.
 Proof.
 rewrite /= ltEdual; congr (_ && _); apply: eq_forallb => z.
 by rewrite !ltEdual andbC.
@@ -201,8 +201,7 @@ by rewrite inh_xchooseE.
 Qed.
 
 #[short(type=inhFinType)]
-HB.structure Definition InhFinite :=
-  { T of isInhabited T & Finite T }.
+HB.structure Definition InhFinite := { T of isInhabited T & Finite T }.
 
 (******************************************************************************)
 (** ** Inhabited ordered types                                                *)
@@ -228,22 +227,36 @@ HB.structure Definition InhOrder (d : unit) :=
 (** ** Inhabited finite partially ordered types                               *)
 (******************************************************************************)
 #[short(type=inhFinPOrderType)]
-HB.structure Definition inhFinPOrder (d : unit) :=
+HB.structure Definition InhFinPOrder (d : unit) :=
   {T of isInhabited T & Order.POrder d T & Finite T}.
 
 #[short(type=inhFinLatticeType)]
-HB.structure Definition inhFinLattice (d : unit) :=
+HB.structure Definition InhFinLattice (d : unit) :=
   {T of isInhabited T & Order.FinLattice d T}.
 
 #[short(type=inhFinOrderType)]
-HB.structure Definition inhFinOrder (d : unit) :=
+HB.structure Definition InhFinOrder (d : unit) :=
   {T of isInhabited T & Order.FinTotal d T}.
-
 
 HB.instance Definition _ := Inhabited.on bool.
 HB.instance Definition _ := Inhabited.on nat.
 HB.instance Definition _ n := Inhabited.on 'I_n.+1.
 
+Section Dual.
+HB.instance Definition _ (T : inhType) :=
+  isInhabitedType.Build (Order.dual T) (@inh T).
+
+Variable d : unit.
+HB.instance Definition _ (T : inhPOrderType d) := InhPOrder.on (T^d).
+HB.instance Definition _ (T : inhLatticeType d) := InhLattice.on (T^d).
+HB.instance Definition _ (T : inhTBLatticeType d) := InhTBLattice.on (T^d).
+HB.instance Definition _ (T : inhOrderType d) := InhOrder.on (T^d).
+
+HB.instance Definition _ (T : inhFinPOrderType d) := InhFinPOrder.on (T^d).
+HB.instance Definition _ (T : inhFinLatticeType d) := InhFinLattice.on (T^d).
+HB.instance Definition _ (T : inhFinOrderType d) := InhFinOrder.on (T^d).
+
+End Dual.
 
 (******************************************************************************)
 (** * Increasing and nondecreasing maps                                      *)

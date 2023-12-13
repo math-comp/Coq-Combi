@@ -81,12 +81,10 @@ Then we define:
 
 Then [ext_tab] and [res_tab] are two inverse bijections.
 ******)
-
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq path.
-From mathcomp Require Import choice fintype finfun tuple bigop ssralg ssrint.
-From mathcomp Require Import order finset fingroup perm.
-From SsrMultinomials Require Import ssrcomplements freeg mpoly.
+From HB Require Import structures.
+From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import ssralg ssrint fingroup perm.
+From mathcomp Require Import mpoly.
 
 Require Import tools combclass ordtype sorted partition tableau.
 Require Import skewpart skewtab antisym Schur_mpoly freeSchur therule.
@@ -115,10 +113,9 @@ Section Alternant.
 
 Variables (n : nat) (R : comRingType).
 
-Local Notation RR := (GRing.ComRing.ringType R).
 Local Notation rho := (rho n).
-Local Notation "''e_' k" := (mesym n RR k).
-Local Notation "''a_' k" := (@alternpol n RR 'X_[k]).
+Local Notation "''e_' k" := (mesym n R k).
+Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
 
 Lemma alt_syme (m : 'X_{1..n}) k :
   'a_(m + rho) * 'e_k =
@@ -127,7 +124,7 @@ Proof using .
 rewrite /alternpol exchange_big /=.
 rewrite mulr_suml; apply eq_bigr => s _.
 rewrite -(issymP _ (mesym_sym n R k) s) mesymE.
-rewrite (raddf_sum (msym_additive _ _)) /=.
+rewrite (raddf_sum (@msym _ _ _)) /=.
 rewrite mulr_sumr; apply eq_bigr => h _.
 rewrite -scalerAl -msymM -mpolyXD.
 by rewrite -!addmA [(mesym1 h + rho)%MM]addmC.
@@ -399,7 +396,7 @@ elim=> [|b IHb] d Hd la.
   by rewrite val_intpartn0 /mpart /= mnmP => i; rewrite !mnmE /=.
 case: (leqP d b) => Hdb; first exact: (IHb _ Hdb).
 have {Hdb}Hd : d = b.+1 by apply anti_leq; rewrite Hd Hdb.
-elim/(finord_wf (T := [finPOrderType of 'PLexi_d])) : la => la IHla Hszla.
+elim/(@finord_wf _ 'PLexi_d) : la => la IHla Hszla.
 pose k := head 1%N (conj_intpartn la).
 pose p1 := behead (conj_intpartn la); pose d1 := sumn p1.
 have Hk : (d = d1 + k)%N.
@@ -509,7 +506,6 @@ End SchurAlternantDef.
 Section IdomainSchurSym.
 
 Variable (n0 : nat) (R : idomainType).
-Local Notation RR := (GRing.IntegralDomain.ringType R).
 Local Notation n := (n0.+1).
 Local Notation rho := (rho n).
 Local Notation "''s_' k" := (Schur n0 R k).
@@ -539,11 +535,11 @@ Local Notation "''s_' k" := (Schur n0 R k).
 
 Theorem Schur_sym d (la : 'P_d) : 's_la \is symmetric.
 Proof using .
-have -> : 's_la = map_mpoly intr (Schur _ [ringType of int] la).
+have -> : 's_la = map_mpoly intr (Schur _ int la).
   rewrite /Schur /polylang /commword raddf_sum /=; apply eq_bigr => i _ /=.
   by rewrite rmorph_prod /=; apply eq_bigr => {}i _ ; rewrite map_mpolyX.
 apply/issymP => s.
-have:= Schur_sym_idomain n0 [idomainType of int] la => /issymP/(_ s) {2}<-.
+have:= Schur_sym_idomain n0 int la => /issymP/(_ s) {2}<-.
 by rewrite msym_map_mpoly.
 Qed.
 
@@ -874,7 +870,8 @@ have Hntht j :
 have Hleqla : size la <= szla.+1 by rewrite Hla.
 rewrite [KostkaTab _ _](_ : _ = [set tabrowconst Hleqla]) ?cards1 //.
 apply/setP => /= t; rewrite !inE; apply/eqP/eqP => [|->]/=.
-- rewrite /mpart Hla ltnSn => H; apply/eqP/tab_eqP => // /= i.
+- rewrite /mpart Hla ltnSn => H.
+  apply/eqP/tab_eqP; rewrite ?tabshP // => // /= i.
   rewrite take_oversize; last by rewrite size_map size_enum_ord -Hla.
   rewrite {}Hntht.
   have Hsht := shape_tabsh t.
@@ -1252,7 +1249,7 @@ move: Hsh => /eqP Hsh.
 congr skew_reshape.
 - by rewrite Hsh.
 - suff -> : shape (filter_le_tab sz t) = mu / (shape (filter_gt_tab sz t)).
-    rewrite diff_shapeK // -(shape_tabsh t); apply included_shape_filter_gt.
+    rewrite diff_shapeK // -(shape_tabsh t); apply: included_shape_filter_gt.
     exact: tabshP.
   apply (eq_from_nth (x0 := 0)).
   - by rewrite size_diff_shape /filter_le_tab -(shape_tabsh t) !size_map.
@@ -1505,7 +1502,7 @@ set mon := (M in 'a_(M)).
 suff /alt_alternate -> : mon i = mon (Ordinal ltan) => //.
   by rewrite -val_eqE /= (gtn_eqF ltai).
 apply/eqP; rewrite {}/mon !mnmE !mpartE //=.
-rewrite !mulmnE !mnm1E eqxx -val_eqE muln1 /= (gtn_eqF ltai) muln0 addn0.
+rewrite !mulmnE !mnm1E eqxx -val_eqE mul1n /= (gtn_eqF ltai) mul0n addn0.
 rewrite addnAC -(eqn_add2r (a + i)) {1}(addnC a i) -!addnA.
 rewrite subn1 /= ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
 rewrite ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
@@ -1537,7 +1534,7 @@ rewrite !mulmnE !mnm1E -val_eqE /=.
 have := startrem_leq p d.+1 i; rewrite startremeq => /(_ lt0rem) /= lesmin.
 case: (altP (j =P st)) => [/= eqjst |].
   subst j; apply/eqP.
-  rewrite (nth_add_ribbon_start _ lesmin) cycleij_j // eqxx muln1.
+  rewrite (nth_add_ribbon_start _ lesmin) cycleij_j // eqxx mul1n.
   rewrite addnAC -(eqn_add2r (st + i)) {1}(addnC st i) -!addnA.
   rewrite subn1 /= ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
   rewrite ![(n0 - _) + _]addnA !subnK -?[i <= n0]ltnS //.
@@ -1545,16 +1542,16 @@ case: (altP (j =P st)) => [/= eqjst |].
   by have:= startremE p d.+1 i; rewrite startremeq => ->.
 rewrite neq_ltn => /orP [ltjst | ltstj].
   rewrite cycleij_lt // nth_add_ribbon_lt_start //.
-  by rewrite (gtn_eqF (leq_trans ltjst lesti)) muln0 addn0.
+  by rewrite (gtn_eqF (leq_trans ltjst lesti)) mul0n addn0.
 case: (ltnP i j) => [/= ltij | leji].
   rewrite nth_add_ribbon_stop_lt // cycleij_gt //.
-  by rewrite (ltn_eqF ltij) muln0 addn0.
+  by rewrite (ltn_eqF ltij) mul0n addn0.
 rewrite -(ltn_predK ltstj) nth_add_ribbon_in //; first last.
   by rewrite (ltn_predK ltstj) ltstj leji.
 rewrite cycleij_in ?ltstj ?leji // inordK; first last.
-  by rewrite (ltn_predK ltstj) ltnW.
+  by rewrite (ltn_predK ltstj) /= ltnW.
 case: j ltstj leji => [[|j]//= Hj] _ /gtn_eqF ->.
-by rewrite muln0 addn0 addSnnS subnSK // subn1.
+by rewrite mul0n addn0 addSnnS subnSK // subn1.
 Qed.
 
 End AlternStraighten.
