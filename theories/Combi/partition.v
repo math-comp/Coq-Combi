@@ -465,7 +465,7 @@ Qed.
 Lemma rem_corner_incr_nth sh i :
   is_part sh -> is_add_corner sh i -> is_rem_corner (incr_nth sh i) i.
 Proof.
-rewrite /is_add_corner /is_rem_corner /= nth_incr_nth. 
+rewrite /is_add_corner /is_rem_corner /= nth_incr_nth.
 case: i => [/= | i].
   case: sh => [// | s0 [// | s1 s]] /= /andP[].
   by rewrite ltnS.
@@ -1153,6 +1153,13 @@ Proof. by have:= intpartP p; rewrite is_part_sortedE => /andP[]. Qed.
 
 #[export] Hint Resolve intpartP intpart_sorted : core.
 
+Lemma intpart_eqP (p q : intpart) :
+  reflect (forall i, nth 0 p i = nth 0 q i) (p == q).
+Proof.
+apply/(iffP eqP) => [-> // |] /part_eqP-/(_ (intpartP p) (intpartP _))/eqP.
+exact: val_inj.
+Qed.
+
 Canonical conj_intpart p := IntPart (is_part_conj (intpartP p)).
 
 Lemma conj_intpartK : involutive conj_intpart.
@@ -1166,6 +1173,7 @@ by apply: sumn_take_inj; last exact H.
 Qed.
 
 Canonical empty_intpart := IntPart (pval := [::]) is_true_true.
+HB.instance Definition _ := isInhabitedType.Build intpart empty_intpart.
 
 Lemma empty_intpartP (p : intpart) : sumn p = 0 -> p = empty_intpart.
 Proof. by move=> Hsum; apply val_inj => /=; apply: part0. Qed.
@@ -1980,6 +1988,177 @@ Qed.
 
 End IntpartnCons.
 
+(** * Young lattice on partition *)
+Section YoungLattice.
+Implicit Type (p q sh : intpart).
+
+Definition le_Young p q := included p q.
+Fact le_Young_refl : reflexive le_Young.
+Proof. exact: included_refl. Qed.
+Fact le_Young_trans : transitive le_Young.
+Proof. exact: included_trans. Qed.
+Fact le_Young_anti : antisymmetric le_Young.
+Proof.
+rewrite /le_Young => [][p Hp] [q Hq] /= /andP [inclpq inclqp].
+by apply val_inj => /=; apply: included_anti.
+Qed.
+Fact Young_display : unit. Proof. exact: tt. Qed.
+HB.instance Definition _ :=
+  Order.Le_isPOrder.Build Young_display intpart
+    le_Young_refl le_Young_anti le_Young_trans.
+
+Lemma le_YoungE sh1 sh2 : (sh1 <= sh2)%O = (included sh1 sh2).
+Proof. by []. Qed.
+Lemma le_Young_nthP sh1 sh2 :
+  reflect (forall i, nth 0 sh1 i <= nth 0 sh2 i) (sh1 <= sh2)%O.
+Proof. exact: (iffP (part_includedP _ (intpartP sh1))). Qed.
+
+Lemma le_Young_sumn: {homo (fun x : intpart => sumn x) : x y / (x <= y)%O }.
+Proof. by move=> sh1 sh2; rewrite le_YoungE; exact: sumn_included. Qed.
+Lemma lt_Young_sumn: {homo (fun x : intpart => sumn x) : x y / (x < y)%O }.
+Proof.
+move=> sh1 sh2; rewrite !lt_neqAle => /andP [neq Hincl].
+rewrite le_Young_sumn // andbT.
+move: neq; apply contra => /eqP/included_sumnE - /(_ (intpartP _) Hincl) Heq.
+exact/eqP/val_inj.
+Qed.
+
+Definition meet_Young_fun sh1 sh2 := [seq minn a.1 a.2 | a <- zip sh1 sh2].
+Lemma size_meet_Young_fun sh1 sh2 :
+  size (meet_Young_fun sh1 sh2) = minn (size sh1) (size sh2).
+Proof. by rewrite size_map size_zip. Qed.
+Lemma nth_meet_Young_fun sh1 sh2 i :
+  nth 0 (meet_Young_fun sh1 sh2) i = minn (nth 0 sh1 i) (nth 0 sh2 i).
+Proof.
+rewrite /meet_Young_fun /=.
+case: (ltnP i (size (zip sh1 sh2))) => Hi.
+  by rewrite (nth_map (0, 0) _ _ Hi) /= nth_zip_cond Hi.
+rewrite [LHS]nth_default ?size_map //; apply/esym/eqP; rewrite -leqn0.
+move: Hi; rewrite size_zip geq_min.
+by move/orP => []/(nth_default _) ->; rewrite ?minn0 ?min0n.
+Qed.
+
+Fact meet_Young_subproof sh1 sh2 : is_part (meet_Young_fun sh1 sh2).
+Proof.
+rewrite is_part_sortedE; apply/andP; split; first last.
+  apply/negP => /(nthP 0) [i]; rewrite nth_meet_Young_fun.
+  rewrite size_meet_Young_fun ltn_min => /andP[le1 le2] /eqP.
+  rewrite -leqn0 geq_min.
+  by move=> /orP[]; rewrite leqn0; apply/negP; rewrite nth_part_non0 //.
+apply/(sorted1P 0) => i _ /=.
+rewrite !nth_meet_Young_fun !leq_min !geq_min.
+have /is_partP [_ -> /=]:= intpartP sh1.
+have /is_partP [_ -> /=]:= intpartP sh2.
+by rewrite orbT.
+Qed.
+Definition meet_Young sh1 sh2 := IntPart (meet_Young_subproof sh1 sh2).
+
+Lemma size_meet_Young sh1 sh2 :
+  size (meet_Young sh1 sh2) = minn (size sh1) (size sh2).
+Proof. exact: size_meet_Young_fun. Qed.
+Lemma nth_meet_Young sh1 sh2 i :
+  nth 0 (meet_Young sh1 sh2) i = minn (nth 0 sh1 i) (nth 0 sh2 i).
+Proof. exact: nth_meet_Young_fun. Qed.
+
+Lemma meet_YoungC : commutative meet_Young.
+Proof.
+move=> sh1 sh2; apply/eqP/intpart_eqP => i.
+by rewrite !nth_meet_Young minnC.
+Qed.
+
+Lemma meet_Young_le sh1 sh2 : (meet_Young sh1 sh2 <= sh1)%O.
+Proof. by apply/le_Young_nthP => i; rewrite nth_meet_Young geq_minl. Qed.
+
+Fact meet_YoungP sh sh1 sh2 :
+  (sh <= meet_Young sh1 sh2)%O = (sh <= sh1)%O && (sh <= sh2)%O.
+Proof.
+apply/idP/andP => [Hinf |].
+  split; apply: (le_trans Hinf); first exact: meet_Young_le.
+  by rewrite meet_YoungC meet_Young_le.
+move=> [/le_Young_nthP le1 /le_Young_nthP le2].
+by apply/le_Young_nthP => i; rewrite nth_meet_Young leq_min le1 le2.
+Qed.
+
+
+Definition join_Young_fun sh1 sh2 :=
+[seq maxn a.1 a.2 | a <- zip (pad 0 (maxn (size sh1) (size sh2)) sh1)
+                             (pad 0 (maxn (size sh1) (size sh2)) sh2)].
+
+Lemma size_join_Young_fun sh1 sh2 :
+  size (join_Young_fun sh1 sh2) = maxn (size sh1) (size sh2).
+Proof.
+rewrite size_map size_zip !size_cat !size_nseq.
+by rewrite !subnKC ?leq_maxl ?leq_maxr // minnn.
+Qed.
+
+Lemma nth_join_Young_fun sh1 sh2 i :
+  nth 0 (join_Young_fun sh1 sh2) i = maxn (nth 0 sh1 i) (nth 0 sh2 i).
+Proof.
+case: (ltnP i (size (join_Young_fun sh1 sh2))) => Hi; first last.
+  by rewrite !nth_default // (leq_trans _ Hi) //
+       size_join_Young_fun ?leq_maxl ?leq_maxr.
+have := Hi; rewrite /join_Young_fun size_map => /= Hi1.
+rewrite (nth_map (0, 0)) // {Hi1}.
+rewrite !nth_zip /=; first last.
+  by rewrite !size_cat !size_nseq -!maxnE maxnA maxnn [RHS]maxnC -maxnA maxnn.
+rewrite !nth_cat !nth_nseq !if_same.
+by rewrite !if_nth // orbC leqVgt.
+Qed.
+
+Fact join_Young_subproof sh1 sh2 : is_part (join_Young_fun sh1 sh2).
+Proof.
+rewrite is_part_sortedE; apply/andP; split; first last.
+  apply/negP => /(nthP 0) [i]; rewrite nth_join_Young_fun.
+  rewrite size_join_Young_fun leq_max.
+  by move=> /orP [] /(nth_part_non0 (intpartP _)) Hi /eqP;
+         rewrite -leqn0 geq_max !leqn0 (negbTE Hi) ?andbF //.
+apply/(sorted1P 0) => i _ /=.
+rewrite !nth_join_Young_fun !geq_max !leq_max.
+have /is_partP [_ -> /=]:= intpartP sh1.
+have /is_partP [_ -> /=]:= intpartP sh2.
+by rewrite orbT.
+Qed.
+Definition join_Young sh1 sh2 := IntPart (join_Young_subproof sh1 sh2).
+
+Lemma size_join_Young sh1 sh2 :
+  size (join_Young sh1 sh2) = maxn (size sh1) (size sh2).
+Proof. exact: size_join_Young_fun. Qed.
+Lemma nth_join_Young sh1 sh2 i :
+  nth 0 (join_Young sh1 sh2) i = maxn (nth 0 sh1 i) (nth 0 sh2 i).
+Proof. exact: nth_join_Young_fun. Qed.
+
+Lemma join_Young_le sh1 sh2 : (sh1 <= join_Young sh1 sh2)%O.
+Proof. by apply/le_Young_nthP => i; rewrite nth_join_Young leq_maxl. Qed.
+
+Lemma join_YoungC : commutative join_Young.
+Proof.
+move=> sh1 sh2; apply/eqP/intpart_eqP => i.
+by rewrite !nth_join_Young maxnC.
+Qed.
+
+Fact join_YoungP sh1 sh2 sh :
+  (join_Young sh1 sh2 <= sh)%O = (sh1 <= sh)%O && (sh2 <= sh)%O.
+Proof.
+apply/idP/andP => [Hsup |].
+  split; apply: (le_trans _ Hsup); first exact: join_Young_le.
+  by rewrite join_YoungC join_Young_le.
+move=> [/le_Young_nthP le1 /le_Young_nthP le2].
+by apply/le_Young_nthP => i; rewrite nth_join_Young geq_max le1 le2.
+Qed.
+HB.instance Definition _ :=
+  Order.POrder_MeetJoin_isLattice.Build Young_display
+    intpart meet_YoungP join_YoungP.
+
+Fact emptypart_leYoung sh : (empty_intpart <= sh)%O.
+Proof. by apply/includedP; split => //= i; rewrite nth_nil. Qed.
+HB.instance Definition _ :=
+  Order.hasBottom.Build Young_display intpart emptypart_leYoung.
+
+Lemma bottomYoungE : 0%O = empty_intpart.
+Proof. by []. Qed.
+
+End YoungLattice.
+
 
 (** * Dominance order on partition *)
 Definition partdomsh n1 n2 (s1 s2 : seq nat) :=
@@ -2366,14 +2545,14 @@ apply/is_parttupleP; split.
   - by apply: (leq_trans (leq_add _ _) conv1); apply: geq_minl.
   - by apply: (leq_trans (leq_add _ _) conv2); apply: geq_minr.
 Qed.
-Definition inf_intpartn sh1 sh2 : 'PDom :=
+Definition meet_intpartn sh1 sh2 : 'PDom :=
   IntPartN (from_parttupleP (parttuple_minnP sh1 sh2)).
-Definition sup_intpartn sh1 sh2 := (inf_intpartn (sh1^#) (sh2^#))^#.
+Definition join_intpartn sh1 sh2 := (meet_intpartn (sh1^#) (sh2^#))^#.
 
-Lemma inf_intpartnC sh1 sh2 : inf_intpartn sh1 sh2 = inf_intpartn sh2 sh1.
+Lemma meet_intpartnC sh1 sh2 : meet_intpartn sh1 sh2 = meet_intpartn sh2 sh1.
 Proof. by apply val_inj; rewrite /= parttuple_minnC. Qed.
 
-Lemma le_inf_intpartn sh1 sh2 : (inf_intpartn sh1 sh2 <= sh1)%O.
+Lemma le_meet_intpartn sh1 sh2 : (meet_intpartn sh1 sh2 <= sh1)%O.
 Proof.
 apply/partdomP => i; case: (ltnP i d.+1) => [Hi| /ltnW Hi].
   by rewrite sumn_take_part_fromtuple // nth_parttuple_minn // geq_minl.
@@ -2381,27 +2560,27 @@ by rewrite !take_intpartn_over // !sumn_intpartn.
 Qed.
 
 
-Lemma inf_intpartnP sh sh1 sh2 :
-  (sh <= inf_intpartn sh1 sh2)%O = (sh <= sh1)%O && (sh <= sh2)%O.
+Fact meet_intpartnP sh sh1 sh2 :
+  (sh <= meet_intpartn sh1 sh2)%O = (sh <= sh1)%O && (sh <= sh2)%O.
 Proof.
-apply/idP/andP => [Hinf | [/partdomP H1 /partdomP H2]].
-  split; apply: (le_trans Hinf); first exact: le_inf_intpartn.
-  by rewrite inf_intpartnC le_inf_intpartn.
+apply/idP/andP => [Hmeet | [/partdomP H1 /partdomP H2]].
+  split; apply: (le_trans Hmeet); first exact: le_meet_intpartn.
+  by rewrite meet_intpartnC le_meet_intpartn.
 apply/partdomP => i.
 case: (ltnP i d.+1) => [Hi | /ltnW Hi]; first last.
   by rewrite !take_intpartn_over // !sumn_intpartn.
 rewrite sumn_take_part_fromtuple // nth_parttuple_minn //.
 by rewrite leq_min H1 H2.
 Qed.
-Lemma sup_intpartnP sh1 sh2 sh :
-  (sup_intpartn sh1 sh2 <= sh)%O = (sh1 <= sh)%O && (sh2 <= sh)%O.
+Fact join_intpartnP sh1 sh2 sh :
+  (join_intpartn sh1 sh2 <= sh)%O = (sh1 <= sh)%O && (sh2 <= sh)%O.
 Proof.
-rewrite /sup_intpartn /= -{1}(conj_intpartnK sh).
-by rewrite partdom_conj_intpartn inf_intpartnP !partdom_conj_intpartn.
+rewrite /join_intpartn /= -{1}(conj_intpartnK sh).
+by rewrite partdom_conj_intpartn meet_intpartnP !partdom_conj_intpartn.
 Qed.
 HB.instance Definition _ :=
   Order.POrder_MeetJoin_isLattice.Build partdom_display
-    'PDom inf_intpartnP sup_intpartnP.
+    'PDom meet_intpartnP join_intpartnP.
 
 End IntPartNDom.
 
