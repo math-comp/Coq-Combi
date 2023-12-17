@@ -855,16 +855,19 @@ case (ltnP pos (size s)) => [{}Hpos | Hpos2].
   by rewrite (subSn Hi) /= nth_drop (subnKC Hi).
 Qed.
 
-Lemma shift_pos_incr pos : {homo shift_pos pos : i j / i <= j}.
+Lemma shift_pos_mono pos : {mono shift_pos pos : i j / i <= j}.
 Proof using.
-move=> i j Hij; rewrite /shift_pos; case (ltnP j pos) => Hj.
-- by rewrite (leq_ltn_trans Hij Hj).
-- case (ltnP i pos) => Hi.
-  + exact: (leq_trans Hij).
-  + exact: (leq_ltn_trans Hij).
+rewrite /shift_pos => i j; case (ltnP j pos) => Hj.
+- case (leqP i j) => Hij; first by rewrite (leq_ltn_trans Hij Hj) Hij.
+  rewrite leqNgt (leq_trans Hij) //.
+  by case: ltnP.
+- case (leqP i j) => Hij.
+    by rewrite (leq_trans (n := i.+1)) //; case ltnP.
+  rewrite ltnNge (ltnW (leq_ltn_trans Hj Hij)) /=.
+  by rewrite ltnNge Hij.
 Qed.
 
-Lemma shiftinv_pos_incr pos : {homo shiftinv_pos pos : i j / i <= j}.
+Lemma shiftinv_pos_homo pos : {homo shiftinv_pos pos : i j / i <= j}.
 Proof using.
 move=> i j Hij; rewrite /shiftinv_pos; case (ltnP j pos) => Hj.
 - by rewrite (leq_ltn_trans Hij Hj).

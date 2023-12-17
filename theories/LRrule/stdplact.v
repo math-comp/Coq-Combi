@@ -376,9 +376,9 @@ move=> H; apply/eqP/stdP; constructor.
   rewrite (nth_map inh); last exact (leq_ltn_trans Hij Hj).
   rewrite (nth_map inh); last exact Hj.
   rewrite !leEnat.
-  apply/idP/idP; first exact: shiftinv_pos_incr.
+  apply/idP/idP; first exact: shiftinv_pos_homo.
   apply: contraLR.
-  rewrite -!ltnNge !ltn_neqAle => /andP [Hneq /shiftinv_pos_incr ->].
+  rewrite -!ltnNge !ltn_neqAle => /andP [Hneq /shiftinv_pos_homo ->].
   rewrite andbT.
   have:= std_uniq H; rewrite rcons_uniq => /andP [Htn Huniqt].
   move: Hneq; set xi := nth _ _ i; set xj := nth _ _ j.

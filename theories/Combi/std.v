@@ -591,7 +591,7 @@ case (altP (i =P posbig u)) => Hipos.
       apply: mem_nth; rewrite /shiftinv_pos size_std_rec -Hszrem.
       exact: (leq_trans Hipos).
     by rewrite Hszrem => /ltW ->.
-  + apply: Hinv; rewrite (shiftinv_pos_incr _ Hij) /=.
+  + apply: Hinv; rewrite (shiftinv_pos_homo _ Hij) /=.
     rewrite /shiftinv_pos.
     case (ltnP j (posbig u)) => Hjpos2; first exact: (leq_trans Hjpos2).
     have {Hjpos Hjpos2} : posbig u < j by rewrite ltn_neqAle eq_sym Hjpos2 Hjpos.
@@ -679,8 +679,9 @@ Section StdTakeDrop.
 Variables (disp1 disp2 : unit).
 Variables (S : inhOrderType disp1)
           (T : inhOrderType disp2).
+Implicit Type u v : seq T.
 
-Lemma std_take_std (u v : seq T) : std (take (size u) (std (u ++ v))) = std u.
+Lemma std_take_std u v : std (take (size u) (std (u ++ v))) = std u.
 Proof.
 apply/eqP/std_eq_invP.
 rewrite -{3}(take_size_cat v (erefl (size u))).
@@ -690,7 +691,7 @@ apply (eq_inv_catl (v1 := drop (size u) (std (u ++ v)))
 - by rewrite !size_take size_std.
 Qed.
 
-Lemma std_drop_std (u v : seq T) : std (drop (size u) (std (u ++ v))) = std v.
+Lemma std_drop_std u v : std (drop (size u) (std (u ++ v))) = std v.
 Proof.
 apply/eqP/std_eq_invP.
 rewrite -{2}(drop_size_cat v (erefl (size u))).
@@ -902,11 +903,14 @@ Section InvSeq.
 Implicit Type n : nat.
 
 Definition linvseq s :=
-  [fun t => all (fun i => nth (size s) t (nth (size t) s i) == i) (iota 0 (size s))].
+  [fun t => all (fun i => nth (size s) t (nth (size t) s i) == i)
+              (iota 0 (size s))].
 Definition invseq s t := linvseq s t && linvseq t s.
 
 Lemma linvseqP s t :
-  reflect (forall i, i < size s -> nth (size s) t (nth (size t) s i) = i) (linvseq s t).
+  reflect
+    (forall i, i < size s -> nth (size s) t (nth (size t) s i) = i)
+    (linvseq s t).
 Proof.
 rewrite /linvseq; apply: (iffP idP) => /=.
 - move=> /allP H i Hi.
@@ -1030,7 +1034,8 @@ Qed.
 Lemma invseqE s t1 t2 : invseq s t1 -> invseq s t2 -> t1 = t2.
 Proof.
 move=> Hinv1 Hinv2.
-have Hsz: size t1 = size t2 by rewrite -(size_invseq Hinv1) -(size_invseq Hinv2).
+have Hsz: size t1 = size t2.
+  by rewrite -(size_invseq Hinv1) -(size_invseq Hinv2).
 apply: (eq_from_nth (x0 := size s) Hsz) => i Hi1.
 have:= Hi1; rewrite Hsz => Hi2.
 have:= Hinv1; rewrite /invseq => /andP [] _ Ht1s.
@@ -1046,7 +1051,8 @@ move=> Hstd; apply: (invseqE (s := invstd s)).
 - by apply: invseq_sym; apply: invseq_invstd.
 Qed.
 
-Lemma invstd_inj s t : is_std s -> is_std t -> (invstd s) = (invstd t) -> s = t.
+Lemma invstd_inj s t :
+  is_std s -> is_std t -> (invstd s) = (invstd t) -> s = t.
 Proof. by move=> Hs Ht /(congr1 invstd); rewrite !invstdK. Qed.
 
 End InvSeq.
@@ -1057,10 +1063,10 @@ Section Examples.
 Let u := [:: 4; 1; 2; 2; 5; 3].
 Let v := [:: 0; 4; 3; 3].
 
-Example std_expl1 : std u = [:: 4; 0; 1; 2; 5; 3].
+Goal std u = [:: 4; 0; 1; 2; 5; 3].
 Proof. by compute. Qed.
-Example std_expl2 :
-  invstd (std u) = filter (gtn (size u)) (invstd (std (u ++ v))).
+Goal invstd (std u) = filter (gtn (size u)) (invstd (std (u ++ v))).
 Proof. by compute. Qed.
 
 End Examples.
+

@@ -202,7 +202,11 @@ Fixpoint enum_bintreesz_leq n :=
   else [:: [:: BinLeaf]].
 Definition enum_bintreesz n := last [::] (enum_bintreesz_leq n).
 
+(** Some tests : *)
 Goal [seq Catalan_bin n | n <- iota 0 10] =
+     [:: 1; 1; 2; 5; 14; 42; 132; 429; 1430; 4862].
+Proof. by []. Qed.
+Goal [seq size (enum_bintreesz n) | n <- iota 0 10] =
      [:: 1; 1; 2; 5; 14; 42; 132; 429; 1430; 4862].
 Proof. by []. Qed.
 

@@ -356,44 +356,44 @@ Definition ribbon_height inner outer := count (ltn 0) (outer / inner).
 Section Test.
 
 Goal ~~ ribbon_from [::] [::].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ~~ ribbon_from [:: 2] [:: 2].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ribbon_from [::] [:: 4].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ribbon_from [:: 2] [:: 4].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ~~ ribbon_from [:: 2] [:: 4; 2].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ribbon_from [:: 2] [:: 3].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ribbon_from [:: 2] [:: 4; 3].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ribbon_from [:: 3; 2] [:: 4; 4].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ~~ ribbon_from [:: 3; 2] [:: 4; 4; 1].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ~~ ribbon_from [:: 3; 2] [:: 4; 4; 2].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ribbon_from [:: 3; 2; 2] [:: 4; 4; 2].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ~~ ribbon_from [:: 2; 2] [:: 4; 4].
-Proof. by []. Abort.
+Proof. by []. Qed.
 
 Goal ribbon [:: 2] [:: 3].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ribbon [:: 2; 2] [:: 3; 2].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ribbon [:: 2; 2] [:: 3; 3].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ribbon [:: 5; 3; 2; 2] [:: 5; 4; 4; 2].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ~~ ribbon [:: 5; 3; 2; 2] [:: 5; 4; 4; 2; 1].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ~~ ribbon [::] [::].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal ~~ ribbon [:: 2; 1] [:: 2; 1].
-Proof. by []. Abort.
+Proof. by []. Qed.
 
 End Test.
 
@@ -1089,32 +1089,32 @@ End NThAddRibbon.
 Section Tests.
 
 Goal add_ribbon_on [:: 2; 2; 1; 1] 0 0 2 = [:: 4; 2; 1; 1].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal add_ribbon_on [:: 2; 2; 1; 1] 1 1 2 = [:: 2; 4; 1; 1].
-Proof. by []. Abort. (* Not a ribbon. just for testing *)
+Proof. by []. Qed. (* Not a ribbon. just for testing *)
 Goal add_ribbon_on [:: 2; 2; 1; 1] 0 1 2 = [:: 4; 3; 1; 1].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal add_ribbon_on [:: 2; 2; 1; 1] 0 2 2 = [:: 4; 3; 3; 1].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal add_ribbon_on [:: 2; 2; 1; 1] 2 2 1 = [:: 2; 2; 2; 1].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal add_ribbon_on [:: 2; 2; 1; 1] 2 3 1 = [:: 2; 2; 2; 2].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal add_ribbon_on [:: 2; 2; 1; 1] 2 4 1 = [:: 2; 2; 2; 2; 2].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal add_ribbon_on [:: 2; 2; 1; 1] 2 5 1 = [:: 2; 2; 2; 2; 2; 1].
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal add_ribbon_on [:: 2; 2; 1; 1] 2 6 1 = [:: 2; 2; 2; 2; 2; 1; 1].
-Proof. by []. Abort.
+Proof. by []. Qed.
 
 Goal startrem 0 [:: 2; 2; 1; 1] 2 0 = (0, 2).
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal add_ribbon [:: 2; 2; 1; 1] 1 0 = Some ([:: 4; 2; 1; 1], 1).
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal startrem 0 [:: 2; 2; 1; 1] 2 1 = (0, 1).
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal add_ribbon [:: 2; 2; 1; 1] 1 1 = Some ([:: 3; 3; 1; 1], 2).
-Proof. by []. Abort.
+Proof. by []. Qed.
 
 (** Tests :
 <<
@@ -1124,7 +1124,7 @@ s[2, 2, 1] + s[3, 2]
 *****)
 Goal pmap (add_ribbon [:: 2; 2] 0) (iota 0 10) =
   [:: ([:: 3; 2], 1); ([:: 2; 2; 1], 1)].
-Proof. by []. Abort.
+Proof. by []. Qed.
 (** Tests :
 <<
 sage: s[2, 2] * p[2]
@@ -1133,7 +1133,7 @@ sage: s[2, 2] * p[2]
 *****)
 Goal pmap (add_ribbon [:: 2; 2] 1) (iota 0 10) =
   [:: ([:: 4; 2], 1); ([:: 3; 3], 2); ([:: 2; 2; 2], 1); ([:: 2; 2; 1; 1], 2)].
-Proof. by []. Abort.
+Proof. by []. Qed.
 (** Tests :
 <<
 sage: s[3, 2, 1, 1] * p[4]
@@ -1147,7 +1147,7 @@ Goal pmap (add_ribbon [:: 3; 2; 1; 1] 3) (iota 0 10) =
       ([:: 3; 3; 3; 2], 3);
       ([:: 3; 2; 2; 2; 2], 3);
       ([:: 3; 2; 1; 1; 1; 1; 1; 1], 4)].
-Proof. by []. Abort.
+Proof. by []. Qed.
 (** Tests :
 <<
 sage: s[2, 2] * p[5]
@@ -1157,7 +1157,7 @@ s[2, 2, 1, 1, 1, 1, 1] - s[2, 2, 2, 1, 1, 1] + s[3, 3, 3] - s[6, 3] + s[7, 2]
 Goal pmap (add_ribbon [:: 2; 2] 4) (iota 0 8) =
   [:: ([:: 7; 2], 1); ([:: 6; 3], 2); ([:: 3; 3; 3], 3);
       ([:: 2; 2; 2; 1; 1; 1], 4); ([:: 2; 2; 1; 1; 1; 1; 1], 5)].
-Proof. by []. Abort.
+Proof. by []. Qed.
 (** Tests :
 <<
 sage: s[2, 2, 1] * p[5]
@@ -1167,7 +1167,7 @@ s[2, 2, 1, 1, 1, 1, 1, 1] - s[2, 2, 2, 2, 1, 1] + s[4, 3, 3] - s[6, 3, 1] + s[7,
 Goal pmap (add_ribbon [:: 2; 2; 1] 4) (iota 0 8) =
   [:: ([:: 7; 2; 1], 1); ([:: 6; 3; 1], 2); ([:: 4; 3; 3], 3);
       ([:: 2; 2; 2; 2; 1; 1], 4); ([:: 2; 2; 1; 1; 1; 1; 1; 1], 5)].
-Proof. by []. Abort.
+Proof. by []. Qed.
 (** Tests :
 <<
 s[5, 5, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1] - s[5, 5, 2, 2, 2, 2, 1, 1, 1] + s[5, 5, 3, 3, 2, 2, 1]
@@ -1179,20 +1179,20 @@ Goal pmap (add_ribbon [:: 5; 5; 2; 1; 1] 6) (iota 0 15) =
      ([:: 7; 6; 6; 1; 1], 3); ([:: 5; 5; 4; 3; 2; 2], 4);
       ([:: 5; 5; 3; 3; 2; 2; 1], 5); ([:: 5; 5; 2; 2; 2; 2; 1; 1; 1], 6);
       ([:: 5; 5; 2; 1; 1; 1; 1; 1; 1; 1; 1; 1], 7)].
-Proof. by []. Abort.
+Proof. by []. Qed.
 
 Goal let sh := [:: 2; 2] in
      all (fun p => ribbon sh p.1) (pmap (add_ribbon sh 0) (iota 0 8)).
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal let sh := [:: 2; 2] in
      all (fun p => ribbon sh p.1) (pmap (add_ribbon sh 4) (iota 0 8)).
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal let sh := [:: 2; 2; 1] in
      all (fun p => ribbon sh p.1) (pmap (add_ribbon sh 4) (iota 0 8)).
-Proof. by []. Abort.
+Proof. by []. Qed.
 Goal let sh := [:: 5; 5; 2; 1; 1] in
      all (fun p => ribbon sh p.1) (pmap (add_ribbon sh 6) (iota 0 15)).
-Proof. by []. Abort.
+Proof. by []. Qed.
 
 End Tests.
 
