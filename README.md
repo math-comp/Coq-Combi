@@ -164,20 +164,16 @@ Installation
 
 This library is based on
 
-* Coq 8.13 or more recent
-
-* [SSReflect/MathComp]([https://github.com/math-comp/math-comp])
-  Library version 1.12 or more recent.
-
-* Pierre-Yves Strub library for
-  [Multinomials] version 1.5.4 (https://github.com/math-comp/multinomials)
+* [SSReflect/MathComp 2]([https://github.com/math-comp/math-comp])
+  Library version 2.1.0 or more recent.
 
 Here are the Opam packages I'm using
 ```
-coq-mathcomp-ssreflect    1.12.0
-coq-mathcomp-algebra      1.12.0
-coq-mathcomp-field        1.12.0
-coq-mathcomp-fingroup     1.12.0
-coq-mathcomp-character    1.12.0
-coq-mathcomp-multinomials 1.5.4
+coq-hierarchy-builder     1.6.0
+coq-mathcomp-ssreflect    2.1.0
+coq-mathcomp-algebra      2.1.0
+coq-mathcomp-field        2.1.0
+coq-mathcomp-fingroup     2.1.0
+coq-mathcomp-character    2.1.0
+coq-mathcomp-multinomials 2.1.0
 ```
