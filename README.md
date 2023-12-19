@@ -14,13 +14,13 @@ Contributors:
 - Jean Christophe Filliâtre (Why3 implementation)
 - Christine Paulin (SSreflect binding for ALEA + hook length formula)
 - Olivier Stietel (hook length formula)
+- Cyril Cohen (MathComp compatibility + nix)
 
 This library was supported by additional discussions with:
 
 - Georges Gonthier
 - Assia Mahoubi
 - Pierre Yves Strub
-- Cyril Cohen
 - the SSReflect mailing list
 
 The project was transferred to mathcomp on 2021-10-20.
@@ -38,11 +38,11 @@ Contents
 
   - the scalar product and the *Cauchy formula*
 
-* the **Littlewood-Richardson** rule using Schützeberger approach, it includes
+* the **Littlewood-Richardson** rule using Schützenberger approach, it includes
 
-  - the *Robinson-Schensted* correspondance
+  - the *Robinson-Schensted* correspondence
 
-  - the construction of the *plactic monoïd*
+  - the construction of the *plactic monoïd* using *Greene invariants*
 
   - the *Littlewood-Richardson* and *Pieri* rules using the combinatorial
     (tableau) definition of Schur polynomials.
@@ -56,21 +56,21 @@ Contents
 * the **Murnaghan-Nakayama** rule for converting power sum to Schur function,
   it includes
 
-  - two recursive implementations building the tableau up or down
+  - two recursive implementations building the tableau upward or downward
 
   - a skew version multiplying a Schur function by a power sum expanding the
     result on Schur functions.
 
 * the **character theory of the symmetric Groups**. We do not use
   representations but rather goes as fast as possible to Frobenius
-  isomorphism and then uses computations with symmetric polynomials. it includes
+  isomorphism and then uses computations with symmetric polynomials. It includes
 
   - *cycle types* for permutations (together with Thibaut Benjamin)
 
   - The tower structure and the *restriction and induction formulas* for class
     indicator (together with Thibaut Benjamin)
 
-  - structure of the *centralizer* of a permutation
+  - the structure of the *centralizer* of a permutation
 
   - Young character and *Young Rule*
 
@@ -78,7 +78,7 @@ Contents
 
   - the *Murnaghan-Nakayama* rule for evaluating irreducible characters
 
-  - the *Littlewood-Richardson* rule for irreducible characters
+  - the *Littlewood-Richardson* rule for inducing irreducible characters
 
 * the **Hook-Length Formula** for standard Young tableaux
   (together with Christine Paulin and Olivier Stietel). We follow closely
@@ -93,13 +93,14 @@ Contents
 
 * various **Combinatorial objects** including
 
-  - integer partitions and compositions,
-  - skew partition, horizontal, vertical and ribbon border strip,
-  - tableaux, standard tableaux, skew tableaux,
-  - subsequences, integer vectors,
-  - standard words and permutations,
-  - Yamanouchi words,
-  - binary trees, Dyck words
+  - integer partitions and compositions, together with Young's and dominance
+    lattices
+  - skew partition, horizontal, vertical and ribbon border strip
+  - tableaux, standard tableaux, skew tableaux
+  - subsequences, integer vectors
+  - standard words, permutations and the standardization map
+  - Yamanouchi word
+  - binary trees, Dyck words and Catalan numbers.
 
 * the **Coxeter presentation of the symmetric group**.
 
