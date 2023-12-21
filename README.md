@@ -100,7 +100,8 @@ Contents
   - subsequences, integer vectors
   - standard words, permutations and the standardization map
   - Yamanouchi word
-  - binary trees, Dyck words and Catalan numbers.
+  - binary trees, Dyck words and Catalan numbers
+  - set partition and refinement order
 
 * the **Coxeter presentation of the symmetric group**.
 
