@@ -258,6 +258,7 @@ Qed.
 End Singleton.
 
 
+Module RefinmentOrder.
 Section RefinmentOrder.
 
 Import LeqGeqOrder.
@@ -323,6 +324,7 @@ have -> : pblock P x = pblock Q x.
 by apply pblock_mem; rewrite (cover_setpart Q).
 Qed.
 Lemma setpartfiner_display : unit. Proof. exact: tt. Qed.
+#[export]
 HB.instance Definition _ :=
   Order.Le_isPOrder.Build setpartfiner_display (setpart S)
     is_finer_refl is_finer_setpart_anti is_finer_trans.
@@ -340,8 +342,10 @@ apply/subsetP=> y; rewrite pblock_trivsetpart //.
 move: xinS; rewrite -{1}(cover_setpart P).
 by move=> /pblock_mem/setpart_subset/subsetP; apply.
 Qed.
+#[export]
 HB.instance Definition _ :=
   Order.hasBottom.Build setpartfiner_display (setpart S) setpart1_bottom.
+#[export]
 HB.instance Definition _ :=
   Order.hasTop.Build setpartfiner_display (setpart S) trivsetpart_top.
 
@@ -374,7 +378,7 @@ Definition meet_finer P Q := SetPart (meet_finer_subproof P Q).
 
 Variant meet_spec P Q X : Prop :=
   MeetSpec A B of A \in P & B \in Q & A :&: B != set0 & X = A :&: B.
-Lemma mem_meet_finerP P Q X:
+Lemma mem_meet_finerP P Q X :
   reflect (meet_spec P Q X) (X \in meet_finer P Q).
 Proof.
 apply (iffP imset2P)=> [[/= A B AinP]|].
@@ -414,7 +418,7 @@ apply: (subset_neq0 XsAB).
 by have /and3P[_ _]:= setpartP R; apply contra=> /eqP <-.
 Qed.
 
-Lemma setpart_conn P : connect_sym (fun x y : T=> y \in (pblock P x)).
+Lemma setpart_conn P : connect_sym (fun x y : T => y \in (pblock P x)).
 Proof.
 suff impl x y : x \in pblock P y -> y \in pblock P x.
   by apply: sym_connect_sym=> x y; apply/idP/idP; apply impl.
@@ -471,16 +475,45 @@ move: Hrel=> /orP[zPy | zQy]; apply: same_pblock => //.
 - have /RB/subsetP := mem_pblock_setpart zQy; apply.
   by rewrite mem_pblockC.
 Qed.
+#[export]
 HB.instance Definition _ :=
   Order.POrder_MeetJoin_isLattice.Build setpartfiner_display (setpart S)
     meet_finerP join_finerP.
 
 End RefinmentOrder.
 
+Module Exports.
+HB.reexport RefinmentOrder.
+
+Section Finer.
+
+Context {T : finType} (S : {set T}).
+Implicit Type (P Q R : setpart S) (A B X Y : {set T}).
+
+Definition is_finerP P Q :
+  reflect (forall A, A \in P -> exists2 B, B \in Q & A \subset B) (P <= Q)%O
+  := is_finerP P Q.
+Definition is_finer_pblockP P Q :
+  reflect (forall x, x \in S -> pblock P x \subset pblock Q x) (P <= Q)%O
+  := is_finer_pblockP P Q.
+
+Lemma setpart_bottomE : 0%O = setpart1 S.
+Proof. by []. Qed.
+Lemma setpart_topE : 1%O = trivsetpart S.
+Proof. by []. Qed.
+
+Definition mem_meet_finerP P Q X : reflect (meet_spec P Q X) (X \in P `&` Q)%O
+  := mem_meet_finerP P Q X.
+
+End Finer.
+End Exports.
+End RefinmentOrder.
+HB.export RefinmentOrder.Exports.
+
 Section FinerCard.
 
 Context {T : finType} (S : {set T})
-  (P Q : setpart S) (finPQ : is_finer P Q).
+  (P Q : setpart S) (finPQ : (P <= Q)%O).
 
 Implicit Types (A B : {set T}).
 
