@@ -332,11 +332,6 @@ Proof.
 apply/is_finer_pblockP=> x xinS.
 rewrite pblock_setpart1 //; apply/subsetP=> y.
 by rewrite inE => /eqP->; rewrite mem_pblock cover_setpart.
-(* Alternative proof :
-apply/is_finerP=> /= A /imsetP [x xinS ->{A}].
-have /bigcupP[/= A Ainp xinA] := setpart_cover P xinS.
-by exists A; split; rewrite ?sub1set.
-*)
 Qed.
 Fact trivsetpart_top P : (P <= trivsetpart S)%O.
 Proof.
@@ -344,13 +339,6 @@ apply/is_finer_pblockP=> x xinS.
 apply/subsetP=> y; rewrite pblock_trivsetpart //.
 move: xinS; rewrite -{1}(cover_setpart P).
 by move=> /pblock_mem/setpart_subset/subsetP; apply.
-(*apply/is_finerP=> /= A AinP.
-case: (altP (_ =P _))=> [Heq | /set0Pn[x xinS]/=].
-  exfalso; subst S; move: AinP.
-  by rewrite (setpart_set0_eq_set0 P) inE.
-have /bigcupP[/= B BinP xinB] := setpart_cover P xinS.
-exists S; split; first by rewrite inE.
-exact: (setpart_subset AinP). *)
 Qed.
 HB.instance Definition _ :=
   Order.hasBottom.Build setpartfiner_display (setpart S) setpart1_bottom.
@@ -463,20 +451,6 @@ apply/is_finer_pblockP=> x xinS; apply/subsetP => y yPx.
 have yinS := mem_pblock_setpart yPx.
 rewrite (pblock_equivalence_partition (join_finer_equivalence P Q)) //.
 by rewrite /join_finer_eq /=; apply: connect1; rewrite /= yPx.
-(*apply/is_finerP=> /= A AinP.
-have /and3P[/eqP covP tiP Pn0] := setpartP P.
-have /subsetP AsS := partitionS (setpartP P) AinP.
-have /set0Pn[x xinA] : A != set0 by move: Pn0; apply contra=> /eqP <-.
-have xinS : x \in S by apply: AsS.
-have /and3P[/eqP covEP _ _] :=
-  equivalence_partitionP (join_finer_equivalence P Q).
-exists (pblock (equivalence_partition (join_finer_eq P Q) S) x); split.
-  by apply: pblock_mem; rewrite covEP.
-apply/subsetP=> /= y yinA.
-rewrite (pblock_equivalence_partition (join_finer_equivalence P Q)) //;
-  last exact: AsS.
-apply: connect1 => /=; apply/orP; left.
-by rewrite (def_pblock tiP AinP). *)
 Qed.
 
 Fact join_finerP P Q R : (join_finer P Q <= R)%O = (P <= R)%O && (Q <= R)%O.
@@ -568,4 +542,3 @@ by apply: map_finer_inj; apply: pblock_mem; rewrite cover_setpart.
 Qed.
 
 End FinerCard.
-
