@@ -986,22 +986,22 @@ apply: rule_gencongr => /=; move: Hrule => /plactruleP [].
 - move/plact1P => [a] [b] [c] [Hord Hv1]; rewrite Hv1 => -> {v2}; subst v1.
   rewrite !mem_cat /=; move: Hord => /andP [].
   move: Hperm => /subset_abc [Ha Hc Hb].
-  move => /(in_incr_nondecr Hincr Ha Hb) -> /(Hincr Hb Hc) -> /=.
+  rewrite -(le_mono_in Hincr) // => -> /(Hincr Hb Hc) -> /=.
   by rewrite mem_seq1 eq_refl ?orbT.
 - move/plact1iP => [a] [b] [c] [Hord -> {v2} Hv1]; rewrite Hv1; subst v1.
   rewrite !mem_cat /=; move: Hord => /andP [].
   move: Hperm => /subset_abc [Hc Ha Hb].
-  move => /(in_incr_nondecr Hincr Ha Hb) -> /(Hincr Hb Hc) -> /=.
+  rewrite -(le_mono_in Hincr) // => -> /(Hincr Hb Hc) -> /=.
   by rewrite mem_seq1 eq_refl ?orbT.
 + move/plact2P => [a] [b] [c] [Hord Hv1]; rewrite Hv1 => -> {v2}; subst v1.
   rewrite !mem_cat /=; move: Hord => /andP [].
   move: Hperm => /subset_abc [Hb Ha Hc].
-  move => /(Hincr Ha Hb) -> /(in_incr_nondecr Hincr Hb Hc) -> /=.
+  move => /(Hincr Ha Hb) ->; rewrite -(le_mono_in Hincr) // => ->.
   by rewrite mem_seq1 eq_refl ?orbT.
 + move/plact2iP => [a] [b] [c] [Hord -> {v2} Hv1]; rewrite Hv1; subst v1.
   rewrite !mem_cat /=; move: Hord => /andP [].
   move: Hperm => /subset_abc [Hb Hc Ha].
-  move => /(Hincr Ha Hb) -> /(in_incr_nondecr Hincr Hb Hc) -> /=.
+  move => /(Hincr Ha Hb) ->; rewrite -(le_mono_in Hincr) // => ->.
   by rewrite mem_seq1 eq_refl ?orbT.
 Qed.
 

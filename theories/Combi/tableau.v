@@ -733,16 +733,15 @@ Lemma incr_tab (t : seq (seq T1)) :
   {in (to_word t) &, {homo F : x y / (x < y)%O}} ->
   (is_tableau t) = (is_tableau [seq map F r | r <- t]).
 Proof.
-move=> Hincr.
-have Hndecr := in_incr_nondecrE Hincr.
-move/in_incrE in Hincr.
+move=> /le_mono_in Hndecr.
+have Hincr := leW_mono_in Hndecr.
 apply/is_tableau_getP/is_tableau_getP;
   rewrite ?shape_map_tab=> [] [H1 H2 H3]; split => // r c Hrc1;
   have Hrc : in_shape (shape t) (r, c) by apply: (in_part_le H1 Hrc1).
 - rewrite !get_map_tab //.
   rewrite Hndecr; [exact: H2 | exact: mem_to_word | exact: mem_to_word].
 - rewrite !get_map_tab //.
-  rewrite Hincr; [exact: H3 | exact: mem_to_word | exact: mem_to_word].
+  by rewrite Hincr; [exact: H3 | exact: mem_to_word | exact: mem_to_word].
 - rewrite -Hndecr; [|exact: mem_to_word | exact: mem_to_word].
   by rewrite -!get_map_tab //; apply: H2.
 - rewrite -Hincr; [|exact: mem_to_word | exact: mem_to_word].

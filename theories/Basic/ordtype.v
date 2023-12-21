@@ -259,59 +259,6 @@ HB.instance Definition _ (T : inhFinOrderType d) := InhFinOrder.on (T^d).
 End Dual.
 
 (******************************************************************************)
-(** * Increasing and nondecreasing maps                                      *)
-(******************************************************************************)
-Section IncrMap.
-
-Variable (disp1 disp2 : unit).
-Variable (T1 : orderType disp1) (T2 : orderType disp2).
-Variable F : T1 -> T2.
-
-Section Local.
-
-Variable P : pred T1.
-Hypothesis Hincr : {in P &, {homo F : x y / x < y}}.
-
-Lemma in_incrE : {in P &, {mono F : x y / x < y}}.
-Proof.
-move=> x y Hx Hy.
-case: (ltgtP x y) => [/Hincr -> //| /Hincr HFyx | ->].
-- by rewrite lt_gtF // HFyx.
-- by rewrite ltxx.
-Qed.
-
-Lemma in_incr_nondecr : {in P &, {homo F : x y / x <= y}}.
-Proof using Hincr.
-move=> x y Hx Hy /=; rewrite le_eqVlt => /orP [/eqP -> //=| H].
-by rewrite le_eqVlt (Hincr Hx Hy H) orbT.
-Qed.
-
-Lemma in_incr_nondecrE : {in P &, {mono F : x y / x <= y}}.
-Proof using Hincr.
-move=> x y Hx Hy /=; rewrite !le_eqVlt.
-case: (ltgtP x y) => /= [/Hincr -> //| /Hincr HFyx | ->].
-- by rewrite orbT.
-- by rewrite -le_eqVlt leNgt HFyx.
-- by rewrite eq_refl.
-Qed.
-
-Lemma in_incr_inj : {in P &, injective F}.
-Proof using Hincr.
-move=> x y Hx Hy /eqP.
-by rewrite !eq_le !in_incr_nondecrE // -!eq_le => /eqP.
-Qed.
-
-End Local.
-
-Definition incrE Hincr := in2T (in_incrE (in2W Hincr)).
-Definition incr_nondecr Hincr := in2T (in_incr_nondecr (in2W Hincr)).
-Definition incr_nondecrE Hincr := in2T (in_incr_nondecr (in2W Hincr)).
-Definition incr_inj Hincr := in2T (in_incr_inj (in2W Hincr)).
-
-End IncrMap.
-
-
-(******************************************************************************)
 (** * sequences over an ordered types                                        *)
 (******************************************************************************)
 (** *** Maximum of a sequence *)
