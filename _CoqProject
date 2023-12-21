@@ -10,6 +10,7 @@ theories/Combi/fibered_set.v
 theories/Combi/partition.v
 theories/Combi/permuted.v
 theories/Combi/multinomial.v
+theories/Combi/setpartition.v
 theories/Combi/skewpart.v
 theories/Combi/skewtab.v
 theories/Combi/std.v
