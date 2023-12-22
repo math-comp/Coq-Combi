@@ -55,8 +55,6 @@ Left branch surgery:
 Rotations and Tamari order:
 
 - [rotations t] == the list of right rotations of the tree [t]
-- [rightsizesum t] == the sum over all nodes [n] of [t] of the size of the
-        right subtree of [n]
 - [t1 <=T t2] == [t1] is smaller than [t2] in the Tamari order
 
 Tamari bracketing vectors:
@@ -68,7 +66,7 @@ Tamari bracketing vectors:
         The characterization of a Tamari vector of size [n] is that
         for all [i < n] then [v_i + 1 < n] and
         for all [j] such that [i < j <= v_i + i] then [v_j + j <= v_i + i].
-The function [right_sizes] and [from_vct] are two inverse bijection from
+The function [right_sizes] and [from_vct] are two inverse bijections from
 binary trees to Tamari vectors as stated in theorems [right_sizesK],
 [right_sizesP] and [from_vctK].
 
@@ -189,8 +187,8 @@ Fixpoint Catalan_bin_leq n :=
   else [:: 1].
 Definition Catalan_bin n := last 0 (Catalan_bin_leq n).
 
-(** A seq of size n.+1 whose i-th element contains the list of all binary trees of
-    size i *)
+(** A seq of size n.+1 whose i-th element contains the list of all binary trees
+    of size i *)
 Fixpoint enum_bintreesz_leq n :=
   if n is n'.+1 then
     let rec := enum_bintreesz_leq n' in
@@ -260,12 +258,11 @@ by rewrite leqnn H.
 Qed.
 
 
-Lemma Catalan0 : Catalan_bin 0 = 1.
+Lemma Catalan_bin0 : Catalan_bin 0 = 1.
 Proof. by []. Qed.
 
 Lemma enum_bintreesz0 : enum_bintreesz 0 = [:: BinLeaf].
 Proof. by []. Qed.
-
 
 Lemma Catalan_binS n :
   Catalan_bin n.+1 = \sum_(0 <= i < n.+1) Catalan_bin i * Catalan_bin (n - i).
@@ -440,10 +437,18 @@ Fixpoint flip t :=
     BinNode (flip r) (flip l)
   else BinLeaf.
 
-Lemma size_rightcomb n : size_tree (rightcomb n) = n.
-Proof. elim: n => //= n ->; by rewrite addn0 add1n. Qed.
-Lemma size_leftcomb n : size_tree (leftcomb n) = n.
-Proof. elim: n => //= n ->; by rewrite addn0 add1n. Qed.
+Section SizeN.
+
+Variable (n : nat).
+
+Fact size_rightcomb : size_tree (rightcomb n) == n.
+Proof. by elim: n. Qed.
+Canonical rightcombsz := BinTreeSZ size_rightcomb.
+
+Lemma size_leftcomb : size_tree (leftcomb n) == n.
+Proof. by elim: n => //= n' /eqP->; rewrite addn0 add1n. Qed.
+Canonical leftcombsz := BinTreeSZ size_leftcomb.
+
 Lemma size_flip t : size_tree (flip t) = size_tree t.
 Proof.
 elim: t => //= l -> r -> /=.
@@ -451,10 +456,23 @@ by rewrite -!addnA [X in 1 + X]addnC.
 Qed.
 Lemma flipK : involutive flip.
 Proof. by elim => //= l -> r ->. Qed.
-Lemma flip_rightcomb n : flip (rightcomb n) = leftcomb n.
-Proof. by elim: n => //= n ->. Qed.
-Lemma flip_leftcomb n : flip (leftcomb n) = rightcomb n.
-Proof. by elim: n => //= n ->. Qed.
+Lemma flip_rightcomb : flip (rightcomb n) = leftcomb n.
+Proof. by elim: n => //= n' ->. Qed.
+Lemma flip_leftcomb : flip (leftcomb n) = rightcomb n.
+Proof. by elim: n => //= n' ->. Qed.
+
+Fact flipsz_subproof (t : bintreesz n) : size_tree (flip t) == n.
+Proof. by rewrite size_flip bintreeszP. Qed.
+Canonical flipsz t := BinTreeSZ (flipsz_subproof t).
+
+Lemma flipszK : involutive flipsz.
+Proof. move=> t; apply val_inj => /=; exact: flipK. Qed.
+Lemma flipsz_rightcomb : flipsz rightcombsz = leftcombsz.
+Proof. by apply val_inj => /=; exact: flip_rightcomb. Qed.
+Lemma flipsz_leftcomb : flipsz leftcombsz = rightcombsz.
+Proof. by apply val_inj => /=; exact: flip_leftcomb. Qed.
+
+End SizeN.
 
 
 (** * Tamari's lattice *)
@@ -489,11 +507,12 @@ by apply/mapP; exists r1.
 Qed.
 
 Lemma rotationP t1 t2 :
-  reflect (exists a b c,
-              [\/ [/\ t1 = BinNode (BinNode a b) c & t2 = BinNode a (BinNode b c)],
-                  [/\ t1 = BinNode a c, t2 = BinNode b c & b \in rotations a] |
-                  [/\ t1 = BinNode a b, t2 = BinNode a c & c \in rotations b]])
-          (t2 \in rotations t1).
+  reflect
+    (exists a b c,
+        [\/ [/\ t1 = BinNode (BinNode a b) c & t2 = BinNode a (BinNode b c)],
+            [/\ t1 = BinNode a c, t2 = BinNode b c & b \in rotations a] |
+            [/\ t1 = BinNode a b, t2 = BinNode a c & c \in rotations b]])
+    (t2 \in rotations t1).
 Proof.
 apply (iffP idP) => [|].
 - case Ht1 : t1 => [//|[|a b] c].
@@ -516,8 +535,8 @@ Lemma size_rotations t t' :
 Proof.
 elim: t t' => [//= | l IHl r IHr] t' /=.
 case H: l => [| ll lr] //; first by move/mapP => [/= lrot /IHr <- ->].
-rewrite inE => /orP [/eqP ->|]; first by rewrite /= !(add1n, addSn, addnS) addnA.
-by rewrite -H mem_cat => /orP [/mapP /= [lrot/IHl]|/mapP /= [rrot/IHr]] <- ->.
+rewrite inE=> /orP[/eqP->|]; first by rewrite /= !(add1n, addSn, addnS) addnA.
+by rewrite -H mem_cat => /orP[/mapP/=[lrot/IHl] | /mapP/=[rrot/IHr]] <- ->.
 Qed.
 
 Lemma rotations_flip_impl t1 t2:
@@ -561,163 +580,14 @@ apply/eqP/eqP => [|->].
 - elim: t => [//=| l _ r IHr].
   case: l => [| ll lr] //= Hrot.
   have {Hrot} /IHr -> : rotations r = [::] by move: Hrot; case: (rotations r).
-  by rewrite size_rightcomb.
+  by rewrite (eqP (size_rightcomb _)).
 - exact: rightcomb_rotations.
 Qed.
 Lemma leftcomb_rotations t : leftcomb (size_tree t) \notin rotations t.
 Proof. by rewrite rotations_flip flip_leftcomb rightcomb_rotations in_nil. Qed.
 
 
-Fixpoint rightsizesum t :=
-  if t is BinNode l r then
-    rightsizesum l + size_tree r + rightsizesum r
-  else 0.
 
-Lemma rightsizesum_gt t t' :
-  t' \in rotations t -> rightsizesum t < rightsizesum t'.
-Proof.
-elim: t t' => [//| l IHl r IHr] t'.
-case Hl : l IHl => [| ll lr] // IHl.
-  rewrite /= add0n => /mapP [/= rot Hrot -> {t'}] /=.
-  rewrite add0n (size_rotations Hrot) ltn_add2l.
-  exact: IHr.
-rewrite -Hl /= {1}Hl /= inE => /orP [/eqP -> /=|].
-  rewrite Hl /= add1n !(addSn, addnS) ltnS -!addnA !leq_add2l.
-  exact: leq_addl.
-rewrite -Hl in IHl.
-rewrite mem_cat => /orP [/mapP /= [lrot Hlrot] | /mapP /= [rrot Hrrot]] -> /=.
-- rewrite !ltn_add2r.
-  exact: IHl.
-- rewrite (size_rotations Hrrot) ltn_add2l.
-  exact: IHr.
-Qed.
-
-Lemma rotations_neq t t' : t' \in rotations t -> t != t'.
-Proof.
-move/rightsizesum_gt; apply contraL => /eqP ->.
-by rewrite ltnn.
-Qed.
-
-
-Fact Tamari_display : unit. Proof. exact: tt. Qed.
-
-(** ** Definition of Tamari order *)
-Section Tamari.
-
-Variable n : nat.
-Implicit Type t : bintreesz n.
-
-Definition Tamari := connect (fun t1 t2 : bintreesz n => grel rotations t1 t2).
-Definition Tamari_lt t1 t2 := (t2 != t1) && (Tamari t1 t2).
-
-Local Notation "x '<=T' y" := (Tamari x y) (at level 70, y at next level).
-Local Notation "x '<T' y" := (Tamari_lt x y) (at level 70, y at next level).
-
-Lemma Tamari_def s t : (s <T t) = ((t != s) && (s <=T t)).
-Proof. by []. Qed.
-
-Lemma rotations_Tamari_internal t t' :
-  trval t' \in rotations t -> t <T t'.
-Proof.
-move=> H; rewrite /Tamari_lt eq_sym rotations_neq //.
-exact: connect1.
-Qed.
-
-Lemma Tamari_rightsizesum t1 t2 :
-  t1 <=T t2 -> rightsizesum t1 <= rightsizesum t2 ?= iff (t1 == t2).
-Proof.
-move/connectP => [] /= p.
-elim: p t1 t2 => [| t0 p IHp] t1 t2 /=.
-  by move=> _ /= ->; split; rewrite // !eq_refl.
-move=> /andP [/rightsizesum_gt Hgt {}/IHp H{}/H].
-move=> [] /(leq_trans Hgt) Hlt _ {Hgt p t0}.
-split; first exact: (ltnW Hlt).
-have:= Hlt; rewrite ltn_neqAle => /andP [/negbTE -> _].
-by case: eqP Hlt => [->|] //; rewrite ltnn.
-Qed.
-
-
-Fact Tamari_refl : reflexive Tamari.
-Proof. exact: connect0. Qed.
-Fact Tamari_trans : transitive Tamari.
-Proof. exact: connect_trans. Qed.
-Fact Tamari_anti : antisymmetric Tamari.
-Proof.
-move=> t1 t2 /andP [ /Tamari_rightsizesum [leq21 eq]].
-move=> /Tamari_rightsizesum [leq12 _].
-by apply/eqP; rewrite -eq eqn_leq leq21 leq12.
-Qed.
-
-HB.instance Definition _ :=
-  Order.Le_isPOrder.Build Tamari_display (bintreesz n)
-    Tamari_refl Tamari_anti Tamari_trans.
-
-End Tamari.
-
-Notation "x <=T y" := (@Order.le Tamari_display _ x y).
-Notation "x <T y" := (@Order.lt Tamari_display _ x y).
-Notation "x /\T y" := (@Order.meet Tamari_display _ x y).
-Notation "x \/T y" := (@Order.join Tamari_display _ x y).
-
-
-Section Flip.
-
-Variable n : nat.
-Implicit Type t : bintreesz n.
-
-Lemma rotations_Tamari t t' :
-  trval t' \in rotations t -> t <T t'.
-Proof. by move/rotations_Tamari_internal. Qed.
-
-Definition TamariE t1 t2 :
-  (t1 <=T t2) = connect (fun x y : bintreesz n => grel rotations x y) t1 t2.
-Proof. by []. Qed.
-
-Local Fact rightcombsz_proof : size_tree (rightcomb n) == n.
-Proof. apply/eqP; exact: size_rightcomb. Qed.
-Canonical rightcombsz := BinTreeSZ rightcombsz_proof.
-Local Fact leftcombsz_proof : size_tree (leftcomb n) == n.
-Proof. apply/eqP; exact: size_leftcomb. Qed.
-Canonical leftcombsz := BinTreeSZ leftcombsz_proof.
-Local Lemma flipsz_proof t : size_tree (flip t) == n.
-Proof. by rewrite size_flip bintreeszP. Qed.
-Canonical flipsz t := BinTreeSZ (flipsz_proof t).
-
-Lemma flipszK : involutive flipsz.
-Proof. move=> t; apply val_inj => /=; exact: flipK. Qed.
-Lemma flipsz_rightcomb : flipsz rightcombsz = leftcombsz.
-Proof. by apply val_inj => /=; exact: flip_rightcomb. Qed.
-Lemma flipsz_leftcomb : flipsz leftcombsz = rightcombsz.
-Proof. by apply val_inj => /=; exact: flip_leftcomb. Qed.
-
-Lemma Tamari_flip t1 t2 : (flipsz t2 <=T flipsz t1) = (t1 <=T t2).
-Proof.
-suff {t1 t2} Timpl t1 t2 : (flipsz t2 <=T flipsz t1) -> t1 <=T t2.
-  apply/idP/idP; first exact: Timpl.
-  by rewrite -{1}(flipszK t1) -{1}(flipszK t2); exact: Timpl.
-rewrite TamariE => /connectP /= [].
-case/lastP => [//= _ | p l Hp] /=.
-  move=> /(congr1 flipsz). rewrite !flipszK => ->.
-  exact: connect0.
-rewrite last_rcons => Hl; subst l; move: Hp.
-have /eq_path -> : (fun t t' => trval t' \in rotations t)
-                   =2 (fun t t' => trval (flipsz t) \in rotations (flipsz t')).
-  by move=> t t' /=; exact: rotations_flip.
-rewrite -rev_path /= last_rcons belast_rcons.
-have -> : rev (flipsz t2 :: p) =
-          [seq flipsz t | t <- rcons [seq flipsz t' | t' <- rev p] t2].
-  rewrite map_rev -rev_cons map_rev /=.
-  rewrite -map_comp (eq_map (g := id)); last by move=> x /=; rewrite flipszK.
-  by rewrite map_id.
-rewrite (map_path (b := pred0)
-                  (e' := (fun t t' => trval t' \in rotations t))); first last.
-  - by apply/hasP => [] [t /=].
-  - by rewrite /rel_base => u v _; rewrite /= !flipK.
-set pp := rcons _ _ => Hp; apply/connectP; exists pp; first by [].
-by rewrite /pp last_rcons.
-Qed.
-
-End Flip.
 
 
 (** ** Tamari vectors *)
@@ -733,14 +603,37 @@ Fixpoint is_Tamari v :=
   else true.
 Definition TamariVector := [qualify a v : seq nat | is_Tamari v].
 
+Lemma sumn_right_sizes_gt t t' :
+  t' \in rotations t -> sumn (right_sizes t) < sumn (right_sizes t').
+Proof.
+elim: t t' => [//| l IHl r IHr] t'.
+case Hl : l IHl => [| ll lr] // IHl.
+  rewrite /= => /mapP [/= rot Hrot -> {t'}] /=.
+  rewrite (size_rotations Hrot) ltn_add2l.
+  exact: IHr.
+rewrite -Hl /= {1}Hl /= inE => /orP [/eqP -> /=|].
+  do 2 rewrite !sumn_cat /=; rewrite Hl /= !sumn_cat /= addnA.
+  rewrite add1n !(addSn, addnS) ltnS -!addnA !leq_add2l !addnA !leq_add2r.
+  exact: leq_addl.
+rewrite -Hl in IHl.
+rewrite mem_cat => /orP [/mapP /= [lrot Hlrot] | /mapP /= [rrot Hrrot]] -> /=.
+- rewrite !sumn_cat /= ltn_add2r.
+  exact: IHl.
+- rewrite (size_rotations Hrrot) !sumn_cat /= !ltn_add2l.
+  exact: IHr.
+Qed.
+
+Lemma rotations_neq t t' : t' \in rotations t -> t != t'.
+Proof.
+move/sumn_right_sizes_gt; apply contraL => /eqP ->.
+by rewrite ltnn.
+Qed.
+
 Lemma size_right_sizes t : size (right_sizes t) = size_tree t.
 Proof.
 elim: t => //= l <- r <-.
 by rewrite size_cat /= addnS add1n addSn.
 Qed.
-
-Lemma rightsizesumE t : sumn (right_sizes t) = rightsizesum t.
-Proof. by elim: t => //= l <- r <-; rewrite sumn_cat /= addnA. Qed.
 
 Lemma right_sizes_left_comb n :
   right_sizes (leftcomb n) = nseq n 0.
@@ -997,10 +890,9 @@ rewrite from_vct_cat_leftE.
 by rewrite IHn; last exact: (leq_trans (leq_addr _ _) H).
 Qed.
 
-Theorem from_vctK s :
-  s \is a TamariVector -> right_sizes (from_vct s) = s.
+Theorem from_vctK : {in TamariVector, cancel from_vct right_sizes}.
 Proof.
-rewrite /from_vct.
+rewrite /from_vct => s.
 have [n] := ubnPleq (size s); elim: n => [|n IHn] in s *.
   by rewrite leqn0 => /nilP ->.
 case: s => [| s0 s] //=.
@@ -1085,11 +977,11 @@ apply (eq_from_nth Hsz12 (x0 := 0)) => i _.
 by apply anti_leq; rewrite H12 H21.
 Qed.
 
-Lemma vctleq_rightsizesum t1 t2 :
+Lemma vctleq_sumn_right_sizes t1 t2 :
   right_sizes t1 <=V right_sizes t2 ->
-  rightsizesum t1 <= rightsizesum t2 ?= iff (t1 == t2).
+  sumn (right_sizes t1) <= sumn (right_sizes t2) ?= iff (t1 == t2).
 Proof.
-rewrite /vctleq -!rightsizesumE -(inj_eq (can_inj right_sizesK)) => /andP [].
+rewrite /vctleq -(inj_eq (can_inj right_sizesK)) => /andP [].
 elim: (right_sizes t1) (right_sizes t2) => [| u0 u IHu] [| v0 v] //=.
 rewrite eqSS => /IHu{IHu}Hrec /andP [H0 /Hrec{Hrec}] [Hleq Heq].
 exact: leqif_add.
@@ -1156,7 +1048,7 @@ apply/TamariP; rewrite size_vctmin Hsz minnn; split.
 Qed.
 
 
-(** * Isomorphism between Tamari order on binary trees and Tamari vectors *)
+(** * Correspondence between rotation on binary trees and Tamari vectors *)
 
 Lemma rotations_vctleq_impl t1 t2 :
   t1 \in rotations t2 -> right_sizes t2 <=V right_sizes t1.
@@ -1472,17 +1364,100 @@ apply/anti_leq/andP; split.
 Qed.
 
 
-Theorem Tamari_vctleq n (t1 t2 : bintreesz n) :
+Fact Tamari_display : unit. Proof. exact: tt. Qed.
+Notation "x <=T y" := (@Order.le Tamari_display _ x y).
+Notation "x <T y" := (@Order.lt Tamari_display _ x y).
+Notation "x /\T y" := (@Order.meet Tamari_display _ x y).
+Notation "x \/T y" := (@Order.join Tamari_display _ x y).
+
+
+(** ** Definition of Tamari order *)
+Module TamariLattice.
+Section TamariLattice.
+
+Variable n : nat.
+Implicit Type t : bintreesz n.
+
+Definition Tamari := connect (fun t1 t2 : bintreesz n => grel rotations t1 t2).
+
+Lemma Tamari_sumn_right_sizes t1 t2 :
+  Tamari t1 t2 ->
+  sumn (right_sizes t1) <= sumn (right_sizes t2) ?= iff (t1 == t2).
+Proof.
+move/connectP => [] /= p.
+elim: p t1 t2 => [| t0 p IHp] t1 t2 /=.
+  by move=> _ /= ->; split; rewrite // !eq_refl.
+move=> /andP [/sumn_right_sizes_gt Hgt {}/IHp H{}/H].
+move=> [] /(leq_trans Hgt) Hlt _ {Hgt p t0}.
+split; first exact: (ltnW Hlt).
+have:= Hlt; rewrite ltn_neqAle => /andP [/negbTE -> _].
+by case: eqP Hlt => [->|] //; rewrite ltnn.
+Qed.
+
+
+Fact Tamari_refl : reflexive Tamari.
+Proof. exact: connect0. Qed.
+Fact Tamari_trans : transitive Tamari.
+Proof. exact: connect_trans. Qed.
+Fact Tamari_anti : antisymmetric Tamari.
+Proof.
+move=> t1 t2 /andP [ /Tamari_sumn_right_sizes [leq21 eq]].
+move=> /Tamari_sumn_right_sizes [leq12 _].
+by apply/eqP; rewrite -eq eqn_leq leq21 leq12.
+Qed.
+
+#[export] HB.instance Definition _ :=
+  Order.Le_isPOrder.Build Tamari_display (bintreesz n)
+    Tamari_refl Tamari_anti Tamari_trans.
+
+Lemma TamariE t1 t2 :
+  (t1 <=T t2) = connect (fun t t' => grel rotations t t') t1 t2.
+Proof. by []. Qed.
+
+Lemma rotations_Tamari t t' : trval t' \in rotations t -> t <T t'.
+Proof.
+move=> H; rewrite lt_def eq_sym rotations_neq //=.
+exact: connect1.
+Qed.
+
+Lemma Tamari_flip t1 t2 : (flipsz t2 <=T flipsz t1) = (t1 <=T t2).
+Proof.
+suff {t1 t2} Timpl t1 t2 : flipsz t2 <=T flipsz t1 -> t1 <=T t2.
+  apply/idP/idP; first exact: Timpl.
+  by rewrite -{1}(flipszK t1) -{1}(flipszK t2); exact: Timpl.
+rewrite TamariE => /connectP /= [].
+case/lastP => [//= _ | p l Hp] /=.
+  move=> /(congr1 (@flipsz n)); rewrite !flipszK => ->.
+  exact: connect0.
+rewrite last_rcons => Hl; subst l; move: Hp.
+have /eq_path -> : (fun t t' => trval t' \in rotations t)
+                   =2 (fun t t' => trval (flipsz t) \in rotations (flipsz t')).
+  by move=> t t' /=; exact: rotations_flip.
+rewrite -rev_path /= last_rcons belast_rcons.
+have -> : rev (flipsz t2 :: p) =
+          [seq flipsz t | t <- rcons [seq flipsz t' | t' <- rev p] t2].
+  rewrite map_rev -rev_cons map_rev /=.
+  rewrite -map_comp (eq_map (g := id)); last by move=> x /=; rewrite flipszK.
+  by rewrite map_id.
+rewrite (map_path (b := pred0)
+                  (e' := (fun t t' => trval t' \in rotations t))); first last.
+  - by apply/hasP => [] [t /=].
+  - by rewrite /rel_base => u v _; rewrite /= !flipK.
+set pp := rcons _ _ => Hp; apply/connectP; exists pp; first by [].
+by rewrite /pp last_rcons.
+Qed.
+
+Theorem Tamari_vctleq t1 t2 :
   (right_sizes t1 <=V right_sizes t2) = (t1 <=T t2).
 Proof.
 apply/idP/idP.
-- have [i] := ubnPleq (rightsizesum t2 - rightsizesum t1).
+- have [i] := ubnPleq (sumn (right_sizes t2) - sumn (right_sizes t1)).
   rewrite leq_subLR.
   elim: i => [|i IHi] in t1 t2 * => Hsum Hleq.
     rewrite addn0 in Hsum.
     suff -> : t1 = t2 by apply: le_refl.
     apply/val_inj/eqP => /=.
-    have [Hsum2 Heq] := vctleq_rightsizesum Hleq.
+    have [Hsum2 Heq] := vctleq_sumn_right_sizes Hleq.
     rewrite -Heq; apply/eqP/anti_leq.
     by rewrite Hsum Hsum2.
   case: (altP (t1 =P t2)) => [-> | Hneq]; first by apply: le_refl.
@@ -1490,7 +1465,7 @@ apply/idP/idP.
   have Hszt : size_tree tt == n by rewrite (size_rotations Hrot) bintreeszP.
   pose t := BinTreeSZ Hszt.
   rewrite -[tt]/(trval t) in Hrot Htleq.
-  have:= rightsizesum_gt Hrot.
+  have:= sumn_right_sizes_gt Hrot.
   rewrite -(leq_add2r i) addSnnS => /(leq_trans Hsum).
   move=> /IHi{IHi}/(_ Htleq) /(le_trans _); apply.
   by apply: ltW; apply: rotations_Tamari.
@@ -1501,12 +1476,6 @@ apply/idP/idP.
   suff /vctleq_trans : right_sizes t1 <=V right_sizes p0 by apply; apply IHp.
   exact: rotations_vctleq_impl.
 Qed.
-
-
-Section TamariLattice.
-
-Variable n : nat.
-Implicit Types t : bintreesz n.
 
 Lemma Tmeet_proof t1 t2 :
   size_tree (from_vct (vctmin (right_sizes t1) (right_sizes t2))) == n.
@@ -1527,7 +1496,7 @@ rewrite /Tmeet -Tamari_vctleq /= from_vctK ?vctmin_Tamari //.
 exact: vctminPr.
 Qed.
 
-Fact TmeetE t t1 t2 : (t <=T Tmeet t1 t2) = (t <=T t1) && (t <=T t2).
+Fact TmeetP t t1 t2 : (t <=T Tmeet t1 t2) = (t <=T t1) && (t <=T t2).
 Proof.
 apply/idP/andP => [/le_trans Htr| []].
   by split; apply: Htr; first rewrite TmeetC; rewrite TmeetPr.
@@ -1536,19 +1505,16 @@ have Hszeq : size (right_sizes t1) = size (right_sizes t2).
 rewrite /Tmeet -!Tamari_vctleq /= from_vctK ?vctmin_Tamari //.
 exact: vctminP.
 Qed.
-Fact TjoinE t1 t2 t : (Tjoin t1 t2 <=T t) = (t1 <=T t) && (t2 <=T t).
-Proof. by rewrite /Tjoin -![_ <=T t]Tamari_flip flipszK TmeetE. Qed.
-HB.instance Definition _ :=
+Fact TjoinP t1 t2 t : (Tjoin t1 t2 <=T t) = (t1 <=T t) && (t2 <=T t).
+Proof. by rewrite /Tjoin -![_ <=T t]Tamari_flip flipszK TmeetP. Qed.
+#[export] HB.instance Definition _ :=
   Order.POrder_MeetJoin_isLattice.Build Tamari_display
-    (bintreesz n) TmeetE TjoinE.
+    (bintreesz n) TmeetP TjoinP.
 
-End TamariLattice.
-
-
-Section TamariBoundedLattice.
-
-Variable n : nat.
-Implicit Types t : bintreesz n.
+Lemma flipsz_meet t1 t2 : flipsz (t1 \/T t2) = (flipsz t1 /\T flipsz t2).
+Proof. by apply val_inj => /=; rewrite flipK. Qed.
+Lemma flipsz_join t1 t2 : flipsz (t1 /\T t2) = (flipsz t1 \/T flipsz t2).
+Proof. by rewrite -[RHS]flipszK flipsz_meet !flipszK. Qed.
 
 Lemma right_sizes_meet t1 t2 :
   right_sizes (t1 /\T t2) = vctmin (right_sizes t1) (right_sizes t2).
@@ -1556,11 +1522,6 @@ Proof.
 rewrite /Order.meet /= from_vctK // vctmin_Tamari //.
 by rewrite !size_right_sizes !bintreeszP.
 Qed.
-
-Lemma flipsz_meet t1 t2 : flipsz (t1 \/T t2) = (flipsz t1 /\T flipsz t2).
-Proof. by apply val_inj => /=; rewrite flipK. Qed.
-Lemma flipsz_join t1 t2 : flipsz (t1 /\T t2) = (flipsz t1 \/T flipsz t2).
-Proof. by rewrite -[RHS]flipszK flipsz_meet !flipszK. Qed.
 
 Fact leftcomb_bottom t : leftcombsz n <=T t.
 Proof.
@@ -1570,9 +1531,9 @@ by move=> i; rewrite nth_nseq if_same.
 Qed.
 Fact rightcomb_top t : t <=T rightcombsz n.
 Proof. by rewrite -Tamari_flip flipsz_rightcomb; exact: leftcomb_bottom. Qed.
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.hasBottom.Build Tamari_display (bintreesz n) leftcomb_bottom.
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.hasTop.Build Tamari_display (bintreesz n) rightcomb_top.
 
 Lemma botETamari : 0%O = leftcombsz n.
@@ -1580,13 +1541,31 @@ Proof. by []. Qed.
 Lemma topETamari : 1%O = rightcombsz n.
 Proof. by []. Qed.
 
-End TamariBoundedLattice.
+
+End TamariLattice.
+
+Module Exports.
+HB.reexport TamariLattice.
+
+Definition TamariE := TamariE.
+Definition rotations_Tamari := rotations_Tamari.
+Definition Tamari_flip := Tamari_flip.
+Definition Tamari_vctleq := Tamari_vctleq.
+Definition flipsz_meet := flipsz_meet.
+Definition flipsz_join := flipsz_join.
+Definition right_sizes_meet := right_sizes_meet.
+Definition botETamari := botETamari.
+Definition topETamari := topETamari.
+
+End Exports.
+End TamariLattice.
+HB.export TamariLattice.Exports.
 
 
 Section TamariCover.
 
 Variable n : nat.
-Implicit Types t : bintreesz n.
+Implicit Type t : bintreesz n.
 
 Lemma Tamari_succ t1 t2 t :
   trval t2 \in rotations t1 -> t1 <=T t -> t <=T t2 -> t = t1 \/ t = t2.
@@ -1618,5 +1597,3 @@ apply/idP/coversP => [Hrot|].
 Qed.
 
 End TamariCover.
-
-
