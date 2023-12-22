@@ -1378,7 +1378,7 @@ Arguments maxperm {n0}.
 
 (** * Let's do some real combinatorics !!!
 
-The generating polynomial for permutation counted by their length.
+The generating polynomial for permutations counted by their length.
  *)
 
 Section Combi.

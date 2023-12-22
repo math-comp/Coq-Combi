@@ -58,13 +58,8 @@ Implicit Type (s t u v : 'S_n).
 
 Definition leperm s t :=
   [exists u, (t == s * u) && (length t == length s + length u)].
-Definition ltperm s t := (t != s) && (leperm s t).
 
 Local Notation "s '<=R' t" := (leperm s t).
-Local Notation "s '<R' t" := (ltperm s t).
-
-Fact ltperm_def s t : (s <R t) = ((t != s) && (s <=R t)).
-Proof. by []. Qed.
 
 Fact lepermP s t :
   reflect (exists2 u, t = s * u & length t = length s + length u)
@@ -101,45 +96,41 @@ Proof.
 move=> s t /andP [Hst Hts]; apply: (leperm_lengthE Hst).
 by apply anti_leq; apply/andP; split; apply leperm_length.
 Qed.
-End Def.
-End WeakOrder.
 
-Section Def.
-
-Variable (n0 : nat).
-Local Notation n := n0.+1.
-Implicit Type (s t u v : 'S_n).
-
-HB.instance Definition _ := Finite.on 'S_n.
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ := Finite.on 'S_n.
+#[export] HB.instance Definition _ :=
   Order.Le_isPOrder.Build perm_display 'S_n
-    WeakOrder.leperm_refl WeakOrder.leperm_anti WeakOrder.leperm_trans.
+    leperm_refl leperm_anti leperm_trans.
+
 End Def.
 
+Module Exports.
+HB.reexport WeakOrder.
 
 Notation "x <=R y" := (@Order.le perm_display _ (x : 'S__) y).
 Notation "x <R y" := (@Order.lt perm_display _ (x : 'S__) y).
 Notation "x /\R y" := (@Order.meet perm_display _ (x : 'S__) y).
 Notation "x \/R y" := (@Order.join perm_display _ (x : 'S__) y).
 
-Section InternalTheory.
+Section WeakOrder.
 
 Variable (n0 : nat).
 Local Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n).
 
-Lemma lepermP s t :
-  reflect (exists2 u : 'S_n, t = s * u & length t = length s + length u)
-          (s <=R t).
-Proof. exact: WeakOrder.lepermP. Qed.
-
-Lemma leperm_length s t : s <=R t -> length s <= length t.
-Proof. exact: WeakOrder.leperm_length. Qed.
-
-Lemma leperm_lengthE s t : s <=R t -> length s = length t -> s = t.
-Proof. exact: WeakOrder.leperm_lengthE. Qed.
-
-End InternalTheory.
+Definition lepermP s t :
+  reflect
+    (exists2 u : 'S_n, t = s * u & length t = length s + length u)
+    (s <=R t)
+  := lepermP s t.
+Definition leperm_length : forall s t, s <=R t -> length s <= length t
+  := leperm_length.
+Definition leperm_lengthE : forall s t, s <=R t -> length s = length t -> s = t
+  := leperm_lengthE.
+End WeakOrder.
+End Exports.
+End WeakOrder.
+HB.export WeakOrder.Exports.
 
 
 Section LEPermTheory.
@@ -223,6 +214,21 @@ exists (nth w0 w l).
   + have:= wred; rewrite -{1}(cat_take_drop l.+1 w)=>/reduced_catr/reducedP->.
     rewrite lens1 size_drop subnKC // Ht.
     exact/reducedP.
+Qed.
+
+Lemma covers_permP s t :
+  reflect (exists2 i : 'I_n0, s <R s * 's_i & t = s * 's_i) (covers s t).
+Proof.
+apply (iffP (coversP s t)).
+- move=> [/leperm_succ/= [i ltssi lessit Hsucc]].
+  exists i; first by [].
+  move: lessit; rewrite le_eqVlt => /orP [/eqP ->//|ltssit].
+  exfalso; apply: (Hsucc (s * 's_i)).
+  by rewrite ltssi ltssit.
+- move=> [/= i ltssi ->{t}]; split; first by [].
+  move=> z /andP[/ltperm_length ltsz /ltperm_length].
+  move/leq_trans/(_ (lengthM s 's_i)); rewrite length_eltr addn1 ltnS.
+  by move/(leq_trans ltsz); rewrite ltnn.
 Qed.
 
 Theorem leperm_invset s t : (s <=R t) = (invset s \subset invset t).
@@ -406,6 +412,8 @@ Qed.
 End TClosureInvset.
 
 
+
+Module PermLattice.
 Section PermLattice.
 
 Variable (n0 : nat).
@@ -459,39 +467,37 @@ rewrite /infperm -![x <=R _]leperm_maxpermMl.
 by rewrite mulgA -{1}maxpermV mulVg mul1g supperm_is_join.
 Qed.
 
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.POrder_MeetJoin_isLattice.Build perm_display ('S_n)
     infperm_is_meet supperm_is_join.
-
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.hasBottom.Build perm_display ('S_n) (@leperm1p n0).
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.hasTop.Build perm_display ('S_n) (@leperm_maxperm n0).
 
+End PermLattice.
+
+Module Exports.
+Section PermLattice.
+HB.reexport PermLattice.
+
+Variable (n0 : nat).
+Local Notation n := n0.+1.
+Implicit Type (s t u v : 'S_n) (A B : {set 'I_n * 'I_n}).
+
 Lemma bottom_perm : Order.bottom = (1 : 'S_n). Proof. by []. Qed.
-Lemma top_perm : Order.top = maxperm. Proof. by []. Qed.
+Lemma top_perm : Order.top = @maxperm n0. Proof. by []. Qed.
 
 Lemma invset_join s t : invset (s \/R t) = tclosure (invset s :|: invset t).
 Proof. by rewrite /Order.join invset_supperm. Qed.
-
 
 Lemma perm_join_meetE s t :
   s /\R t = maxperm * (maxperm * s \/R maxperm * t).
 Proof. by []. Qed.
 
-Lemma covers_permP s t :
-  reflect (exists2 i : 'I_n0, s <R s * 's_i & t = s * 's_i) (covers s t).
-Proof.
-apply (iffP (coversP s t)).
-- move=> [/leperm_succ/= [i ltssi lessit Hsucc]].
-  exists i; first by [].
-  move: lessit; rewrite le_eqVlt => /orP [/eqP ->//|ltssit].
-  exfalso; apply: (Hsucc (s * 's_i)).
-  by rewrite ltssi ltssit.
-- move=> [/= i ltssi ->{t}]; split; first by [].
-  move=> z /andP[/ltperm_length ltsz /ltperm_length].
-  move/leq_trans/(_ (lengthM s 's_i)); rewrite length_eltr addn1 ltnS.
-  by move/(leq_trans ltsz); rewrite ltnn.
-Qed.
-
 End PermLattice.
+End Exports.
+End PermLattice.
+HB.export PermLattice.Exports.
+
+
