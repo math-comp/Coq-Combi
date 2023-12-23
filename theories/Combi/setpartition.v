@@ -24,6 +24,9 @@ In what follows [T] is a [finType] and [S : {set T}].
                      if [S] is non empty
 - [setpart_set0 T]  == the trivial empty partition of [set0] in [setpart set0]
 - [setpart_set1 x]  == the trivial partition of [[set x]] in [setpart [set x]]
+
+- [join_finer_eq P Q] == the equivalence relation obtained as the join of
+                     the one of P and Q.
  ******)
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
@@ -268,35 +271,11 @@ Context {T : finType} (S : {set T}).
 Implicit Type (P Q R : setpart S) (A B X Y : {set T}).
 
 Definition is_finer P Q :=
-  [forall (A | A \in P), [exists (B | B \in Q), A \subset B]].
-
-Lemma is_finerP P Q :
-  reflect
-    (forall A, A \in P -> exists2 B, B \in Q & A \subset B)
-    (is_finer P Q).
-Proof.
-rewrite /is_finer;  apply (iffP idP).
-- move/forall_inP=> /= H A /H{H} /exists_inP[/= B BinQ AsB].
-  by exists B.
-- move=> H; apply/forall_inP=> /= A /H{H} [B BinQ AsB].
-  by apply/exists_inP; exists B.
-Qed.
+  [forall (x | x \in S), pblock P x \subset pblock Q x].
 
 Lemma is_finer_pblockP P Q :
   reflect (forall x, x \in S -> pblock P x \subset pblock Q x) (is_finer P Q).
-Proof.
-apply (iffP (is_finerP P Q)) => [H x xinS | subPQ A AinP].
-  apply/subsetP => y yPx.
-  have eqPxy := same_pblock (trivIsetpart P) yPx.
-  have:= yPx; rewrite -eqPxy mem_pblock=> /pblock_mem{}/H[A AinQ /subsetP PsA].
-  suff -> : pblock Q x = A by apply: PsA; rewrite eqPxy.
-  apply: (def_pblock (trivIsetpart Q) AinQ).
-  by apply: PsA; rewrite eqPxy mem_pblock cover_setpart.
-have [x xinA] := mem_setpart_pblock AinP.
-have Aeq := mem_eq_pblock AinP xinA; subst A.
-exists (pblock Q x); last exact/subPQ/(subsetP (setpart_subset AinP)).
-by rewrite pblock_in // (cover_setpart Q) (subsetP (setpart_subset AinP)).
-Qed.
+Proof. exact: (iffP forall_inP). Qed.
 
 Lemma is_finer_refl : reflexive is_finer.
 Proof. by move=> P; apply/is_finer_pblockP=> x _. Qed.
@@ -328,6 +307,24 @@ Lemma setpartfiner_display : unit. Proof. exact: tt. Qed.
 HB.instance Definition _ :=
   Order.Le_isPOrder.Build setpartfiner_display (setpart S)
     is_finer_refl is_finer_setpart_anti is_finer_trans.
+
+Lemma is_finerP P Q :
+  reflect
+    (forall A, A \in P -> exists2 B : {set T}, B \in Q & A \subset B)
+    (P <= Q)%O.
+Proof.
+apply (iffP (is_finer_pblockP P Q)) => [subPQ A AinP | H x xinS].
+  have [x xinA] := mem_setpart_pblock AinP.
+  have Aeq := mem_eq_pblock AinP xinA; subst A.
+  exists (pblock Q x); last exact/subPQ/(subsetP (setpart_subset AinP)).
+  by rewrite pblock_in // (cover_setpart Q) (subsetP (setpart_subset AinP)).
+apply/subsetP => y yPx.
+have eqPxy := same_pblock (trivIsetpart P) yPx.
+have:= yPx; rewrite -eqPxy mem_pblock=> /pblock_mem{}/H[A AinQ /subsetP PsA].
+suff -> : pblock Q x = A by apply: PsA; rewrite eqPxy.
+apply: (def_pblock (trivIsetpart Q) AinQ).
+by apply: PsA; rewrite eqPxy mem_pblock cover_setpart.
+Qed.
 
 Fact setpart1_bottom P : (setpart1 S <= P)%O.
 Proof.
@@ -482,6 +479,7 @@ HB.instance Definition _ :=
 
 End RefinmentOrder.
 
+
 Module Exports.
 HB.reexport RefinmentOrder.
 
@@ -490,12 +488,42 @@ Section Finer.
 Context {T : finType} (S : {set T}).
 Implicit Type (P Q R : setpart S) (A B X Y : {set T}).
 
-Definition is_finerP P Q :
-  reflect (forall A, A \in P -> exists2 B, B \in Q & A \subset B) (P <= Q)%O
-  := is_finerP P Q.
+Definition is_finerP P := is_finerP P.
 Definition is_finer_pblockP P Q :
   reflect (forall x, x \in S -> pblock P x \subset pblock Q x) (P <= Q)%O
   := is_finer_pblockP P Q.
+
+Lemma is_finer_subpartP P Q :
+  reflect
+    (exists2 subpart : {set T} -> {set {set T}},
+        forall B, B \in Q -> partition (subpart B) B
+        & \bigcup_(B in Q) subpart B = P)
+    (P <= Q)%O.
+Proof.
+apply (iffP idP) => [PfinQ | [f partf UeqP]]; first last.
+  apply/is_finerP=> A; rewrite -UeqP=> /bigcupP[/= B BinQ AinfB].
+  exists B; first exact: BinQ.
+  move/(_ B BinQ): partf=> /cover_partition <-.
+  exact: (bigcup_max _ AinfB).
+exists (fun B => [set A | (A \in P) && (A \subset B)]).
+- move=> B BinQ; apply/and3P; split.
+  + rewrite eqEsubset; apply/andP; split.
+      by apply/bigcupsP=> C; rewrite inE=> /andP[].
+    apply/subsetP=> x xinB.
+    have xinS : x \in S by apply: (subsetP (setpart_subset BinQ)).
+    apply/bigcupP; exists (pblock P x); first last.
+      by rewrite mem_pblock cover_setpart.
+    rewrite inE (pblock_in _ (setpart_non0 _)) cover_setpart xinS /=.
+    suff <- : pblock Q x = B by apply: (is_finer_pblockP P Q PfinQ).
+    exact: def_pblock.
+  + apply: (trivIsetS _ (trivIsetpart P)).
+    by apply/subsetP=> x; rewrite inE=> /andP[].
+  + by have:= setpart_non0 P; apply contra; rewrite inE=> /andP[].
+- apply/setP=> /= A; apply/bigcupP/idP=> /= [[B BinQ] | AinP].
+  + by rewrite inE=> /andP[].
+  + move/is_finerP: PfinQ=> /(_ A AinP) [B BinQ AsB].
+    by exists B=> //; rewrite inE AinP AsB.
+Qed.
 
 Lemma setpart_bottomE : 0%O = setpart1 S.
 Proof. by []. Qed.
@@ -505,10 +533,34 @@ Proof. by []. Qed.
 Definition mem_meet_finerP P Q X : reflect (meet_spec P Q X) (X \in P `&` Q)%O
   := mem_meet_finerP P Q X.
 
+Lemma join_finer_eq_in_S P Q x y :
+  x \in S -> join_finer_eq P Q x y -> y \in S.
+Proof.
+move=> xinS /connectP => [[pth Hpth Hlast]].
+elim: pth x Hpth Hlast xinS => [x /= _ -> // | x p0 IH xn /=].
+move=>/andP[H1 {}/IH/[apply]/[swap] xninS]; apply.
+by move: H1=> /orP[]; apply: mem_pblock_setpart.
+Qed.
+
+Lemma join_finerE P Q x y :
+  x \in S -> y \in pblock (P `|` Q)%O x = join_finer_eq P Q x y.
+Proof.
+move=> xinS; case: (boolP (y \in S))=> [yinS | yninS].
+  by rewrite -(pblock_equivalence_partition (join_finer_equivalence P Q)).
+have:= yninS; rewrite -(pblock_notin (P `|` Q)%O) negbK.
+rewrite mem_pblockC=> /eqP ->.
+rewrite inE; apply/esym/negbTE.
+move: yninS; apply contra; exact: join_finer_eq_in_S.
+Qed.
+
 End Finer.
+
+Notation join_finer_eq := join_finer_eq.
+
 End Exports.
 End RefinmentOrder.
 HB.export RefinmentOrder.Exports.
+
 
 Section FinerCard.
 

@@ -1671,8 +1671,8 @@ Local Notation "'PLexi" := intpartnlexi.
 Implicit Type (sh : 'PLexi).
 
 HB.instance Definition _ := SubType.copy 'PLexi 'P_d.
+HB.instance Definition _ := Finite.copy 'PLexi 'P_d.
 HB.instance Definition _ := [Order of 'PLexi by <:].
-HB.instance Definition _ := [Finite of 'PLexi by <:].
 
 Lemma leEintpartnlexi sh1 sh2 :
   (sh1 <= sh2)%O = (sh1 <= sh2 :> seqlexi nat)%O.
@@ -1991,6 +1991,7 @@ Qed.
 
 End IntpartnCons.
 
+
 (** * Young lattice on partition *)
 Section YoungLattice.
 
@@ -2009,6 +2010,7 @@ rewrite /le_Young => [][p Hp] [q Hq] /= /andP [inclpq inclqp].
 by apply val_inj => /=; apply: included_anti.
 Qed.
 HB.instance Definition _ := Countable.copy 'YL intpart.
+HB.instance Definition _ := Inhabited.copy 'YL intpart.
 
 Fact Young_display : unit. Proof. exact: tt. Qed.
 HB.instance Definition _ :=
@@ -2327,6 +2329,7 @@ Local Notation "'PDom" := intpartndom.
 Implicit Type (sh : 'PDom).
 
 HB.instance Definition _ := Finite.copy 'PDom 'P_d.
+HB.instance Definition _ := Inhabited.copy 'PDom 'P_d.
 
 Fact partdom_antisym : antisymmetric (fun x y : 'P_d => partdom x y).
 Proof.
@@ -2338,8 +2341,6 @@ HB.instance Definition _ :=
   Order.Le_isPOrder.Build partdom_display 'PDom
     partdom_refl partdom_antisym partdom_trans.
 
-HB.instance Definition _ := isInhabitedType.Build 'PDom (rowpartn d).
-
 Lemma leEpartdom : @Order.le partdom_display 'PDom = partdom.
 Proof. by []. Qed.
 
@@ -2347,7 +2348,8 @@ Local Notation "sh '^#'" := (conj_intpartn sh : 'PDom)
                               (at level 10, format "sh '^#'").
 
 Lemma sum_diff sh i :
-  \sum_(l <- sh) (l - i) = \sum_(l <- take (nth 0 (conj_part sh) i) sh) (l - i).
+  \sum_(l <- sh) (l - i) =
+    \sum_(l <- take (nth 0 (conj_part sh) i) sh) (l - i).
 Proof.
 set c := nth 0 (conj_part sh) i.
 rewrite -{1}(cat_take_drop c sh) !big_cat /=.
@@ -2587,7 +2589,7 @@ HB.instance Definition _ :=
     'PDom meet_intpartnP join_intpartnP.
 
 End IntPartNDom.
-
+(* We break the section to allows the case analysis on d *)
 Section IntPartNTopBottom.
 
 Variable d : nat.
