@@ -2695,8 +2695,7 @@ Lemma ex_setpart_shape (s : seq nat) (A : {set T}) :
 Proof using.
 elim: s A => [| i s IHs] A /=.
   move=> /esym/cards0_eq -> _; exists [::]; split => //.
-  apply/partition0P; apply/setP => x.
-  by rewrite !inE in_nil.
+  by rewrite partition_set0.
 rewrite inE eq_sym => Hi /norP [Bne0 /IHs{IHs} Hrec].
 have: i <= #|A| by rewrite -Hi; apply: leq_addr.
 move=> /ex_subset_card [B BsubA /eqP cardB]; subst i.

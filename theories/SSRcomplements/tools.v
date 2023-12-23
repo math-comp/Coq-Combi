@@ -502,24 +502,6 @@ Variable op : Monoid.com_law 1.
 Local Notation "'*%M'" := op (at level 0).
 Local Notation "x * y" := (op x y).
 
-(** mathcomp version is restrcticted to [s == enum I] for [I : finType] *)
-Lemma partition_big I (s : seq I)
-      (J : finType) (P : pred I) (p : I -> J) (Q : pred J) F :
-  (forall i, P i -> Q (p i)) ->
-  \big[*%M/1]_(i <- s | P i) F i =
-  \big[*%M/1]_(j : J | Q j) \big[*%M/1]_(i <- s | (P i) && (p i == j)) F i.
-Proof.
-move=> Qp; transitivity (\big[*%M/1]_(i <- s | P i && Q (p i)) F i).
-  by apply: eq_bigl => i; case Pi: (P i); rewrite // Qp.
-have [n leQn] := ubnP #|Q|; elim: n => // n IHn in Q {Qp} leQn *.
-case: (pickP Q) => [j Qj | Q0]; last first.
-  by rewrite !big_pred0 // => i; rewrite Q0 andbF.
-rewrite (bigD1 j) // -IHn; last by rewrite ltnS (cardD1x Qj) add1n in leQn.
-rewrite (bigID (fun i => p i == j)); congr (_ * _); apply: eq_bigl => i.
-  by case: eqP => [-> | _]; rewrite !(Qj, simpm).
-by rewrite andbA.
-Qed.
-
 Lemma big_seq_sub (T : countType) (s : seq T) F :
   \big[op/idx]_(x : seq_sub s) F (ssval x) = \big[op/idx]_(x <- undup s) F x.
 Proof.
@@ -541,15 +523,6 @@ Section SetPartition.
 
 Variable T : finType.
 Implicit Types (X : {set T}) (P : {set {set T}}).
-
-Lemma partition0P P : reflect (P = set0) (partition P set0).
-Proof using.
-apply (iffP and3P) => [[/eqP Hcov _ H0] | ->].
-- case: (set_0Vmem P) => [// | [X HXP]].
-  exfalso; suff HX : X = set0 by subst X; rewrite HXP in H0.
-  by apply/eqP; rewrite -subset0; rewrite -Hcov (bigcup_max X).
-- by split; rewrite ?inE // /trivIset /cover !big_set0 ?cards0.
-Qed.
 
 Lemma triv_part P X : X \in P -> partition P X -> P = [set X].
 Proof using.
