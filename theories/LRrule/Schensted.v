@@ -17,12 +17,12 @@
 
 This file is a formalization of Schensted's algorithm and the Robinson-Schensted
 correspondence. In the latter, it is easier to first store record the insertion
-as a Yamanouchi word, that is the reverted sequence of the index of the rows where
-the elements were inserted. In a second step, we translate the Yamanouchi word
-in a standard tableau.
+as a Yamanouchi word, that is the reverted sequence of the index of the rows
+where the elements were inserted. In a second step, we translate the Yamanouchi
+word in a standard tableau.
 
-Note: There is some duplication is this file, essentially for pedagogical purpose.
-And also because it was my first serious Coq/Mathcomp development ;-)
+Note: There is some duplication is this file, essentially for pedagogical
+purpose. And also because it was my first serious Coq/Mathcomp development ;-)
 
 Here are the contents:
 
@@ -76,14 +76,17 @@ Inverting the Robinson-Schensted map:
            [instabnrow t l = (s, n)]. This is Theorem [invinstabnrowK]. See also
            Theorem [instabnrowinvK].
 
-- [RSmap w] == the Robinson-Schensted map where the recording tableau is returned
-           as a Yamanouchi word.
+- [RSmap w] == the Robinson-Schensted map where the recording tableau is
+           returned as a Yamanouchi word.
 - [is_RSpair (P, Q)] == [P] is a tableau, [Q] is a Yammanouchi word and the shape
            of [P] is equal to the evaluation of [Q].
+
 The main result is of course [Theorem RSmap_spec w : is_RSpair (RSmap w).]
 
-- [RSmapinv tab yam] == the Robinson-Schensted inverse map of the pair [(tab, yam)]
+- [RSmapinv tab yam] == the Robinson-Schensted inverse map of the pair
+           [(tab, yam)]
 - [RSmapinv2 p] == the uncurrying of [RSmapinv].
+
 The bijectivity of [RSmap] and [RSmapinv2] are stated in
 - Theorem [RSmapK] stated as [RSmapinv2 (RSmap w) = w.]
 - and Theorem [RSmapinv2K] as [RSmap (RSmapinv2 pair) = pair.]
@@ -96,6 +99,7 @@ A sigma type for Robinson-Schensted pairs:
 - [rspair T] == a sigma type for RS pair with tableau in type [T].
 - [RSbij w] == the [rspair T] associated to [w : seq T]
 - [RSbijinv p] == the [seq T] associated to [p : rspair T]
+
 On has [Lemma bijRS : bijective RSbij.]
 
 
@@ -103,7 +107,6 @@ Robinson-Schensted classes:
 
 - [RSclass t] == the list of word [w] having [t] as RS tableau. This is stated
           in Lemma [RSclassE] which says [w \in RSclass tab = (RS w == tab)].
-
 
 Robinson-Schensted with standard recording tableau:
 
@@ -116,6 +119,7 @@ Robinson-Schensted with standard recording tableau:
 
 - [RStab w] == the RS map applied to [w] as a [rstabpair T].
 - [RStabinv pair] == the word [w] associated to a [rstabpair]
+
 Again, one has [Lemma bijRStab : bijective RStab.]
 **************)
 From HB Require Import structures.
@@ -924,8 +928,9 @@ Lemma shape_instabnrow t l :
   let: (tr, nrow) := instabnrow t l in shape tr = incr_nth (shape t) nrow.
 Proof using.
 case H : (instabnrow t l) => [tr nrow] Htab.
-elim: t Htab l tr nrow H => [/= _| t0 t IHt /= /and4P [] _ Hrow _ Htab] l tr nrow /=;
-    first by move=> [] <- <-.
+elim: t Htab l tr nrow H =>
+      [/= _| t0 t IHt /= /and4P[_ Hrow _ Htab]] l tr nrow /=;
+        first by move=> [<- <-].
 case (boolP (bump t0 l)) => [Hbump | Hnbump].
 - rewrite (bump_bumprowE Hrow Hbump).
   case: nrow => [|nrow]; first by case (instabnrow t (bumped t0 l)).
@@ -1060,7 +1065,7 @@ Definition RSmap w := RSmap_rev (rev w).
 
 Lemma RSmapE w : (RSmap w).1 = RS w.
 Proof using.
-elim/last_ind: w => [//= | w wn /=]; rewrite /RSmap /RS rev_rcons /= -instabnrowE.
+elim/last_ind: w => [| w wn] //=; rewrite /RSmap /RS rev_rcons /= -instabnrowE.
 case: (RSmap_rev (rev w)) => [t rows] /= ->.
 by case: (instabnrow (RS_rev (rev w)) wn).
 Qed.
@@ -1097,7 +1102,8 @@ by case Hins: (instabnrow t l0) => [tr row] /= -> ->.
 Qed.
 
 Definition is_RSpair pair :=
-  let: (P, Q) := pair in [&& is_tableau (T:=T) P, is_yam Q & (shape P == evalseq Q)].
+  let: (P, Q) := pair in
+  [&& is_tableau (T:=T) P, is_yam Q & (shape P == evalseq Q)].
 
 Theorem RSmap_spec w : is_RSpair (RSmap w).
 Proof using.
@@ -1138,7 +1144,8 @@ case H : (invbumprow b s) => [r a] /=.
 by case: (leP b (head b s)) => _ //= ->.
 Qed.
 
-Lemma yam_tail_non_nil (l : nat) (s : seq nat) : is_yam (l.+1 :: s) -> s != [::].
+Lemma yam_tail_non_nil (l : nat) (s : seq nat) :
+  is_yam (l.+1 :: s) -> s != [::].
 Proof using.
 case: s => [|//=] Hyam.
 by have:= is_part_eval_yam Hyam; rewrite part_head0F.
@@ -1180,7 +1187,8 @@ Lemma head_tableau_non_nil h t : is_tableau (h :: t) -> h != [::].
 Proof using. by move/and4P => [] ->. Qed.
 
 Lemma is_tableau_instabnrowinv1 (s : seq (seq T)) nrow :
-  is_tableau s -> is_rem_corner (shape s) nrow -> is_tableau (invinstabnrow s nrow).1.
+  is_tableau s -> is_rem_corner (shape s) nrow ->
+  is_tableau (invinstabnrow s nrow).1.
 Proof using.
 rewrite /is_rem_corner.
 elim: s nrow => [/= |s0 s IHs] nrow; first by case nrow.
@@ -1276,7 +1284,8 @@ Qed.
 
 Theorem count_RS w p : count p w = count p (to_word (RS w)).
 Proof using.
-elim/last_ind: w => [//= | w0 w]; rewrite /RS !rev_rcons /= -[(RS_rev (rev w0))]/(RS w0).
+elim/last_ind: w => [//= | w0 w];
+                    rewrite /RS !rev_rcons /= -[(RS_rev (rev w0))]/(RS w0).
 rewrite (count_instab _ _ (is_tableau_RS _)) => <-.
 by rewrite -[rcons _ _](revK) rev_rcons count_rev /= count_rev.
 Qed.
@@ -1314,10 +1323,11 @@ End Bijection.
 (** ** Robinson-Schensted classes *)
 Section Classes.
 
-Definition RSclass := [fun tab =>
-[seq RSmapinv2 (tab, y) | y <- enum_yameval (shape tab)] ].
+Definition RSclass :=
+  [fun tab => [seq RSmapinv2 (tab, y) | y <- enum_yameval (shape tab)] ].
 
-Lemma RSclassP tab : is_tableau tab -> all (fun w => RS w == tab) (RSclass tab).
+Lemma RSclassP tab :
+  is_tableau tab -> all (fun w => RS w == tab) (RSclass tab).
 Proof using.
 move=> Htab /=; apply/allP => w /mapP [] Q.
 move /(allP (enum_yamevalP (is_part_sht Htab))).
@@ -1345,7 +1355,7 @@ Lemma mem_RSclass w : w \in (RSclass (RS w)).
 Proof using. apply negbNE; apply/count_memPn. by rewrite RSclass_countE. Qed.
 
 Lemma RSclassE tab w :
-is_tableau tab -> w \in RSclass tab = (RS w == tab).
+  is_tableau tab -> w \in RSclass tab = (RS w == tab).
 Proof using.
 move=> Htab /=; apply/idP/idP.
 - by move: Htab=> /RSclassP/allP H{}/H.
