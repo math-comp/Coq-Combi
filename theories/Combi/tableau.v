@@ -65,17 +65,16 @@ Implicit Type r : seq T.
 
 Notation is_row := (sorted <=%O).
 
-Definition is_row1P Z r := sorted1P Z <=%O r.
-Definition is_rowP Z r := sortedP Z (@le_trans _ T) (@le_refl _ T) r.
+Definition is_row1P Z r := sortedP Z (e := <=%O) (s := r).
+Definition is_rowP Z r := sorted2P Z (@le_trans _ T) (@le_refl _ T) r.
 Definition is_row_cons := sorted_cons (@le_refl _ T).
 Definition is_row_consK := sorted_consK (T := T) (R := <=%O).
 Definition is_row_rcons := sorted_rcons (T := T) (R := <=%O).
 Definition is_row_rconsK := sorted_rconsK (T := T) (R := <=%O).
 Definition is_row_last := sorted_last (@le_refl _ T).
-Definition is_row_take := sorted_take (T := T) (R := <=%O).
-Definition is_row_drop := sorted_drop (T := T) (R := <=%O).
-Definition is_row_catL := sorted_catL (T := T) (R := <=%O).
-Definition is_row_catR := sorted_catR (T := T) (R := <=%O).
+Definition is_row_take := take_sorted (T := T) (leT := <=%O).
+Definition is_row_drop := drop_sorted (T := T) (leT := <=%O).
+Definition is_row_cat2 := cat_sorted2 (T := T) (leT := <=%O).
 Definition head_leq_last_row :=
   head_leq_last_sorted (@le_trans _ T) (@le_refl _ T).
 Lemma row_lt_by_pos Z r p q:

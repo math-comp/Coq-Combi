@@ -370,7 +370,7 @@ elim/last_ind: [seq _ | i in _] Hsort Hall => [|s sn IHs]/= Hsort Hall.
 have lt_last : last 0 s < sn.
   move: Hsort {IHs} => /sorted_rconsK.
   case/lastP: s Hall => [/andP[/andP[]]// |s sn1 _].
-  rewrite last_rcons -!cats1 -catA => /sorted_catR /=.
+  rewrite last_rcons -!cats1 -catA => /cat_sorted2[]/=.
   by rewrite andbT.
 have {Hsort}/IHs Hrec : sorted ltn (rcons s n').
   case: s Hall Hsort {IHs lt_last} => // a l /allP Hall.
@@ -402,7 +402,7 @@ Qed.
 Lemma sorted_ltn_partsums c : sorted ltn (partsums c).
 Proof.
 case: c => [c /= /andP[_ /is_compP Hcomp]].
-apply/(sorted1P 0) => i.
+apply/(sortedP 0) => i.
 rewrite size_map size_iota /= -[nth _ _ _ < _]subn_gt0 => Hi.
 rewrite diff_nth_sumn_take ?leq_pred // lt0n.
 apply: Hcomp; apply: mem_nth.

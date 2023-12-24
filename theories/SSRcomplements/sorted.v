@@ -54,10 +54,6 @@ End LeqGeqOrder.
 
 Import LeqGeqOrder.
 
-(* TODO: remove me when merged in mathcomp *)
-Lemma eq_sorted (T : Type) (e e' : rel T) : e =2 e' -> sorted e =1 sorted e'.
-Proof. by move=> ee' [] // ? ?; apply: eq_path. Qed.
-
 Section Sorted.
 
 Variable T : eqType.
@@ -75,35 +71,6 @@ Proof using. by case: r => [//=| r0 r] => /andP []. Qed.
 
 Lemma sorted_rconsK l r : sorted (rcons r l) -> sorted r.
 Proof using. by case: r => [//=| r0 r] /=; rewrite rcons_path => /andP []. Qed.
-
-Lemma sorted_take r n : sorted r -> sorted (take n r).
-Proof using.
-elim: r n => [//= | r0 r IHr] [//=| n] /= H.
-case: r r0 H IHr => [//=| r1 r] r0 /= /andP [H Hp] /(_ n Hp).
-by case: n => [//=|n] /= ->; rewrite H.
-Qed.
-
-Lemma sorted_drop r n : sorted r -> sorted (drop n r).
-Proof using.
-elim: n r => [//= | n IHn ]; first by case.
-case => [//= | r0 r /=] H; apply: IHn.
-by case: r H => [//=|r1 r] /andP [].
-Qed.
-
-Lemma sorted_catL u v : sorted (u ++ v) -> sorted u.
-Proof using. by move/(sorted_take (size u)); rewrite take_size_cat. Qed.
-
-Lemma sorted_catR u v : sorted (u ++ v) -> sorted v.
-Proof using. by move/(sorted_drop (size u)); rewrite drop_size_cat. Qed.
-
-Lemma sorted1P r :
-  reflect
-    (forall (i : nat), i.+1 < (size r) -> (nth Z r i <=R nth Z r i.+1))
-    (sorted r).
-Proof using.
-case: r => [| r0 r] /=; first by apply/(iffP idP).
-exact/pathP.
-Qed.
 
 Lemma sorted_rcons l r : sorted r -> (last l r <=R l) -> sorted (rcons r l).
 Proof using. by case: r => [//=| r0 r] /=; rewrite rcons_path => -> ->. Qed.
@@ -137,7 +104,7 @@ Lemma sorted_strictP r :
   reflect
     (forall (i j : nat), i < j < (size r) -> (nth Z r i <=R nth Z r j))
     (sorted r).
-Proof using Rtrans. by apply/(iffP idP); rewrite incr_equiv => /sorted1P. Qed.
+Proof using Rtrans. by apply/(iffP idP); rewrite incr_equiv => /(sortedP Z). Qed.
 
 Hypothesis Rrefl : reflexive R.
 
@@ -162,12 +129,12 @@ split => H.
       by rewrite Hiltj Hj.
 Qed.
 
-Lemma sortedP r :
+Lemma sorted2P r :
   reflect
     (forall (i j : nat), i <= j < (size r) -> (nth Z r i <=R nth Z r j))
     (sorted r).
 Proof using Rrefl Rtrans.
-by apply/(iffP idP); rewrite non_decr_equiv => /sorted1P.
+by apply/(iffP idP); rewrite non_decr_equiv => /(sortedP Z).
 Qed.
 
 Lemma sorted_cons l r : sorted (cons l r) -> (l <=R head l r) /\ sorted r.
@@ -192,7 +159,7 @@ Lemma sorted_lt_by_pos r p q :
   sorted r -> p < size r -> q < size r ->
    (nth Z r p != nth Z r q) && (nth Z r p <=R nth Z r q) -> p < q.
 Proof using Hanti Rrefl Rtrans.
-move=> /sortedP Hsort Hp Hq /andP [Hneq Hpq].
+move=> /sorted2P Hsort Hp Hq /andP [Hneq Hpq].
 have H : q <= p -> (nth Z r q <=R nth Z r p).
   by move=> Hqp; apply Hsort; rewrite Hqp Hp.
 have:= contra H; rewrite ltnNge; apply.
@@ -233,10 +200,10 @@ move/(_ (sorted_rconsK Hsort)): IHs => [Hsum Hlast]; split.
   rewrite size_rcons -addn1 iotaD /= sumn_cat /= add0n addn0.
   apply (leq_add Hsum).
   case/lastP: s Hsort Hlast {Hsum} => [//= | s sn1] /=.
-  rewrite !size_rcons !last_rcons /= -!cats1 -catA cat1s => /sorted_catR /=.
+  rewrite !size_rcons !last_rcons /= -!cats1 -catA cat1s => /cat_sorted2[_]/=.
   by rewrite andbT => /(leq_ltn_trans _); apply.
 - case/lastP: s Hsort Hlast {Hsum} => [//= | s sn1] /=.
-  rewrite !size_rcons !last_rcons /= -!cats1 -catA cat1s => /sorted_catR /=.
+  rewrite !size_rcons !last_rcons /= -!cats1 -catA cat1s => /cat_sorted2[_]/=.
   by rewrite andbT => /(leq_ltn_trans _); apply.
 Qed.
 

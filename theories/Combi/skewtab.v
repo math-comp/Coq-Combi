@@ -304,22 +304,22 @@ case: inner Hpart => [_ | inn0 inn] /=.
   case: t {IHt} => //= t1 t.
   rewrite to_word_cons add0n subn0.
   rewrite /skew_dominate drop0 => Hdom /and4P [] Ht1 _ _ _.
-  rewrite -catA => /is_row_catR Hrow.
+  rewrite -catA => /is_row_cat2[_ Hrow].
   by exfalso; move: Ht1; rewrite (row_dominate Hrow Hdom).
 move=> /andP [Hhead Hpart].
 rewrite to_word_cons subSS => /and4P [_ _ Hdom /IHt{IHt}Hrec] Hrow.
-move/(_ Hpart (is_row_catL Hrow)) : Hrec => -> {Hpart}.
+move/(_ Hpart (is_row_cat2 Hrow).1) : Hrec => -> {Hpart}.
 rewrite leq_addr !andbT.
 case: t Hdom Hrow => [| t1 t]/=; first by case: inn {Hhead}.
 case: inn Hhead => [_ | inn1 inn] /=.
   rewrite add0n subn0 to_word_cons -catA.
-  rewrite /skew_dominate => Hdom /is_row_catR.
-  rewrite -(cat_take_drop inn0 t1) -catA => /is_row_catR /row_dominate H1.
+  rewrite /skew_dominate => Hdom /is_row_cat2[_].
+  rewrite -(cat_take_drop inn0 t1) -catA => /is_row_cat2[_] /row_dominate H1.
   rewrite (H1 Hdom) cats0 size_take.
   by case ltnP => [/ltnW|].
 rewrite /skew_dominate to_word_cons -catA => Hhead Hdom.
-rewrite -(cat_take_drop (inn0 - inn1) t1) -catA => /is_row_catR.
-move=> /is_row_catR/row_dominate H1.
+rewrite -(cat_take_drop (inn0 - inn1) t1) -catA => /is_row_cat2[_].
+move=> /is_row_cat2[_]/row_dominate H1.
 rewrite (H1 Hdom) cats0 size_take.
 case ltnP => [_|]; first by rewrite subnKC.
 by rewrite -(leq_add2l inn1) subnKC.

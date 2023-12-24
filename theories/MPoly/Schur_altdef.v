@@ -159,7 +159,7 @@ apply/andP; split.
   + rewrite -mdeg_mesym1 /mdeg.
     rewrite -map_tnth_enum big_map big_enum; apply eq_bigr => i _.
     by rewrite mnm_tnth.
-- apply/is_part_rem_trail0/(sorted1P 0) => i.
+- apply/is_part_rem_trail0/(sortedP 0) => i.
   rewrite size_map size_enum_ord => Hi1.
   have Hi : i < n by apply: (ltn_trans _ Hi1).
   have {}/H : i \in iota 0 n.-1.

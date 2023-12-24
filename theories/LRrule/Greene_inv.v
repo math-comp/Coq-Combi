@@ -588,7 +588,7 @@ Lemma trivIset_coverU1 :
   trivIset P -> [disjoint S & cover P] -> trivIset (S |: P).
 Proof using.
 move=> Htriv Hdis; case (set_0Vmem S) => [-> | [s Hs]].
-- case (boolP (set0 \in P)); first by move/setU1E ->.
+- case (boolP (set0 \in P)); first by rewrite setU1E => /eqP ->.
   apply (@trivIsetU1 _ set0 P) => //= T _.
   by rewrite -setI_eq0 set0I.
 - have HS : S \notin P.

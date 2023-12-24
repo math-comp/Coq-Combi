@@ -1058,7 +1058,7 @@ rewrite is_part_sortedE; apply/andP; split; first last.
   - by move=> /mapP [x _ /eqP].
   - exact: mem_drop.
   - by rewrite mem_nseq => /andP [].
-apply/(sorted1P 0) => /= i ltiszres.
+apply/(sortedP 0) => /= i ltiszres.
 case: (ltnP i.+1 start) => [lti1start | lestarti1].
   by rewrite !nth_add_ribbon_lt_start // ?Hsort // (ltn_trans (ltnSn _)).
 move: lestarti1; rewrite leq_eqVlt => /orP[/eqP Hi|ltstarti1].

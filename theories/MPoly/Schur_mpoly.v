@@ -178,7 +178,7 @@ rewrite (eq_bigl _ _ (@tabwordshape_col d)).
 under [LHS]eq_bigr => i do have /permPl/(perm_big _) <- /= := perm_rev i.
 rewrite (eq_bigl (fun i => sorted >%O (rev_tuple i))); first last.
   move=> [t /= _]; rewrite rev_sorted sorted_map.
-  exact: sorted.eq_sorted.
+  exact: eq_sorted.
 by apply/esym/reindex/onW_bij/inv_bij => x; apply val_inj; rewrite /= revK.
 Qed.
 

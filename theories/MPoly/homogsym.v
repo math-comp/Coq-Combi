@@ -558,7 +558,7 @@ rewrite /= is_part_sortedE; apply/and3P; split.
   apply/eqP/eq_bigr => /= i _.
   by rewrite sumnE tnth_mktuple big_nseq iter_addn_0 mulnC.
 - rewrite /intpart_of_mon /= rev_sorted.
-  apply/(sorted.sortedP 0%N) => //=; first exact: leq_trans.
+  apply/(sorted2P 0%N) => //=; first exact: leq_trans.
   move=> i j; rewrite !nth_flatten.
   rewrite size_flatten.
   have -> : shape [seq nseq (m i0) i0.+1 | i0 : 'I_n] = m.

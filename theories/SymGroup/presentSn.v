@@ -684,7 +684,7 @@ Proof. exact: rsymrel_total (invset_Delta s). Qed.
 Lemma rsym_invsetP s :
   sorted (rsymrel (invset s)) [seq s^-1 i | i : 'I_n].
 Proof.
-apply/(sorted.sorted1P ord0) => i; rewrite size_map size_enum_ord => i1ltn1.
+apply/(sortedP ord0) => i; rewrite size_map size_enum_ord => i1ltn1.
 have iltn1 := ltnW i1ltn1.
 rewrite !(nth_map ord0) -?enumT ?size_enum_ord //.
 rewrite -[i]/(val (Ordinal iltn1)) nth_ord_enum.
@@ -736,8 +736,8 @@ move=> ISinv; have ID := is_invset_Delta ISinv.
 rewrite /perm_of_invset; set s := perm _.
 have compat (i j : 'I_n) : i < j -> rsymrel IS (s i) (s j).
   rewrite {}/s !permE => /ltnW ilej.
-  apply: (sorted.sortedP _ (rsymrel_trans ISinv) (rsymrel_refl IS) _
-                         (sort_sorted (rsymrel_total ID) (enum 'I_n))).
+  apply: (sorted.sorted2P _ (rsymrel_trans ISinv) (rsymrel_refl IS) _
+            (sort_sorted (rsymrel_total ID) (enum 'I_n))).
   by rewrite ilej size_sort size_enum_ord /=.
 rewrite invset_permV /invset -setP => /=[[i j]] /=.
 apply/imsetP/idP => /= [[[a b]] | ijIS].

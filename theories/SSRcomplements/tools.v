@@ -158,8 +158,7 @@ End SeqLemmas.
 
 (** ** [minn] related lemmas *)
 Lemma minSS i j : minn i.+1 j.+1 = (minn i j).+1.
-Proof. by rewrite /minn ltnS; case ltnP. Qed.
-
+Proof. by rewrite !minnE subSS subSn // leq_subr. Qed.
 
 (** ** [sumn] related lemmas *)
 Lemma leq_sumn_in (sh : seq nat) i : i \in sh -> i <= sumn sh.
@@ -259,11 +258,11 @@ Section FinSet.
 
 Variable T : finType.
 
-Lemma setU1E (x : T) (S : {set T}) : x \in S -> x |: S = S.
+Lemma setU1E (x : T) (S : {set T}) : (x \in S) = (x |: S == S).
 Proof.
-move=> Hx; apply/setP/subset_eqP/andP; split; apply/subsetP=> i.
-- by move/setU1P => [] ->.
-- by move=> H; apply/setU1P; right.
+apply/idP/eqP => [Hx | <-]; last by rewrite in_setU1 eqxx.
+apply/setP => y; rewrite in_setU1 orbC.
+by case: (boolP (y \in S)) => //= /negP; apply contra_notF => /eqP ->.
 Qed.
 
 End FinSet.
@@ -469,28 +468,6 @@ Lemma enum0 : enum 'I_0 = [::].
 Proof. by apply/nilP; rewrite /nilp size_enum_ord. Qed.
 
 
-Section BigOp.
-
-Import Monoid.Theory.
-
-Variable R : Type.
-Variable idx : R.
-Local Notation "1" := idx.
-Variable op : Monoid.law 1.
-Local Notation "'*%M'" := op (at level 0).
-Local Notation "x * y" := (op x y).
-
-Lemma big_pmap (J I : Type) (h : J -> option I) r F :
-  \big[*%M/1]_(i <- pmap h r) F i = \big[*%M/1]_(j <- r) oapp F idx (h j).
-Proof.
-elim: r => [| r0 r IHr]/=; first by rewrite !big_nil.
-rewrite /= big_cons; case: (h r0) => [i|] /=; last by rewrite Monoid.mul1m.
-by rewrite big_cons IHr.
-Qed.
-
-End BigOp.
-
-
 Section AbelianBigOp.
 
 Import Monoid.Theory.
@@ -526,13 +503,11 @@ Implicit Types (X : {set T}) (P : {set {set T}}).
 
 Lemma triv_part P X : X \in P -> partition P X -> P = [set X].
 Proof using.
-move=> HXP /and3P [/eqP Hcov /trivIsetP /(_ X _ HXP) H H0].
-apply/setP => Y; rewrite inE; apply/idP/idP => [HYP | /eqP -> //].
-rewrite eq_sym; move/(_ Y HYP): H => /contraR; apply.
-have /set0Pn [y Hy] : Y != set0
-  by apply/negP => /eqP HY; move: H0; rewrite -HY HYP.
-apply/negP => /disjoint_setI0/setP/(_ y).
-by rewrite !inE Hy -Hcov andbT => /bigcupP; apply; exists Y.
+move=> XinP /and3P [/eqP Hcov /trivIsetP/=/(_ X _ XinP) H H0].
+apply/setP=> /= Y; rewrite inE eq_sym; apply/idP/idP=> [YinP | /eqP <- //].
+move/(_ Y YinP): H => /contraR; apply.
+apply/contra: H0; rewrite disjoint_sym -{}Hcov=> /bigcup_disjointP/(_ _ YinP).
+by move/disjoint_setI0; rewrite setIid => <-.
 Qed.
 
 End SetPartition.

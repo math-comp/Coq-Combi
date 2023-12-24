@@ -33,20 +33,6 @@ Section PermComp.
 Variable T : finType.
 Implicit Type (s : {perm T}) (X : {set T}) (P : {set {set T}}).
 
-(** TODO : submitted to mathcomp *)
-Lemma porbitV s : porbit s^-1 =1 porbit s.
-Proof.
-move=> x; apply/setP => y; rewrite porbit_sym.
-by apply/porbitP/porbitP => [][i ->]; exists i; rewrite expgVn ?permK ?permKV.
-Qed.
-
-(** TODO : submitted to mathcomp *)
-Lemma porbitsV s : porbits s^-1 = porbits s.
-Proof.
-rewrite /porbits; apply/setP=> y.
-by apply/imsetP/imsetP => [] [x _ ->{y}]; exists x; rewrite // porbitV.
-Qed.
-
 Lemma permKP s : reflect (involutive s) (s^-1 == s).
 Proof.
 apply (iffP eqP) => [ssV i | invs].
@@ -81,20 +67,3 @@ apply/eqP; rewrite eqEcard; apply/andP; split.
 Qed.
 
 End SetAct.
-
-
-Section PermOnG.
-
-Variable T : finType.
-Implicit Type (s t c : {perm T}).
-
-(** TODO : submitted to mathcomp *)
-Lemma perm_onV H s : perm_on H s -> perm_on H s^-1.
-Proof using.
-rewrite /perm_on => /subsetP Hsub; apply/subsetP => i.
-rewrite inE => Hi; apply Hsub; rewrite inE.
-move: Hi; apply contra => /eqP {1}<-.
-by rewrite permK.
-Qed.
-
-End PermOnG.

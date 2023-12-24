@@ -107,12 +107,12 @@ Lemma mpart_is_dominant sh : is_part sh -> mpart sh \is dominant.
 Proof.
 rewrite /mpart /dominant; case: leqP => [Hsz|_ _].
 - rewrite is_part_sortedE => /andP [Hpart _].
-  + apply/(sortedP 0) => // i j; rewrite size_tuple => /andP [Hij Hj].
+  + apply/(sorted2P 0) => // i j; rewrite size_tuple => /andP [Hij Hj].
     have Hi := leq_ltn_trans Hij Hj.
     rewrite -[i]/(val (Ordinal Hi)) -[j]/(val (Ordinal Hj)) -!mnm_nth !mnmE /=.
     case: (ssrnat.ltnP j (size sh)) => [Hjsz | /(nth_default _) -> //].
-    by apply: (sortedP _ _ _ _ Hpart) => //; rewrite Hij Hjsz.
-- apply/(sortedP 0) => // i j; rewrite size_tuple => /andP [Hij Hj] /=.
+    by apply: (sorted2P _ _ _ _ Hpart) => //; rewrite Hij Hjsz.
+- apply/(sorted2P 0) => // i j; rewrite size_tuple => /andP [Hij Hj] /=.
   by rewrite (nth_map (Ordinal Hj)) // -cardE card_ord.
 Qed.
 
@@ -582,7 +582,7 @@ apply sorted_sumn_iotaE; first last.
   by rewrite (Hhomog _ (mlead_supp Hpn0)).
 rewrite ltn_sorted_uniq_leq rev_uniq Huniq /=.
 rewrite {Huniq Hhomog} rev_sorted.
-apply/(sortedP 0%N) => // i j; rewrite size_tuple=> /andP [Hij Hj].
+apply/(sorted2P 0%N) => // i j; rewrite size_tuple=> /andP [Hij Hj].
 have H := mlead_antisym_sorted Hpanti.
 have /= := H (Ordinal (leq_ltn_trans Hij Hj)) (Ordinal Hj) Hij.
 by rewrite !(mnm_nth 0) /=; apply.

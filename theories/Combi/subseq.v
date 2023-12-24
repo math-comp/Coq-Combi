@@ -330,8 +330,8 @@ apply/idP/idP.
   + move=> Hsort; have H : sn = n.
       apply anti_leq; rewrite Hsn andbT.
       move: Hsort.
-      rewrite -!cats1 -catA => /sorted_catR => /= /andP [].
-      by rewrite ltnS.
+      rewrite -!cats1 -catA => /cat_sorted2/=[].
+      by rewrite ltnS andbT.
     subst sn.
     rewrite -addn1 iotaD add0n /= cats1.
     rewrite -subseq_rcons_eq; apply IHn.

@@ -246,10 +246,10 @@ Lemma is_part_sortedE sh : (is_part sh) = (sorted geq sh) && (0 \notin sh).
 Proof.
 apply/idP/andP => [Hpart|].
 - split.
-  + apply/sorted1P => i _.
+  + apply/(sortedP 0) => i _.
     by move: Hpart=> /is_partP [_]; apply.
   + exact: notin0_part.
-- move=> [/sorted1P Hsort Hnotin].
+- move=> [/(sortedP 0) Hsort Hnotin].
   apply/is_partP; split => [| i].
   + case: sh Hnotin {Hsort} => [// | s0 sh].
     by apply contra => /= => /eqP <-; apply: mem_last.
@@ -2055,7 +2055,7 @@ rewrite is_part_sortedE; apply/andP; split; first last.
   rewrite size_meet_Young ltn_min => /andP[le1 le2] /eqP.
   rewrite -leqn0 geq_min.
   by move=> /orP[]; rewrite leqn0; apply/negP; rewrite nth_part_non0 //.
-apply/(sorted1P 0) => i _ /=.
+apply/(sortedP 0) => i _ /=.
 rewrite !nth_meet_Young !leq_min !geq_min.
 have /is_partP [_ -> /=]:= intpartP sh1.
 have /is_partP [_ -> /=]:= intpartP sh2.
@@ -2115,7 +2115,7 @@ rewrite is_part_sortedE; apply/andP; split; first last.
   rewrite size_join_Young leq_max.
   by move=> /orP [] /(nth_part_non0 (intpartP _)) Hi /eqP;
          rewrite -leqn0 geq_max !leqn0 (negbTE Hi) ?andbF //.
-apply/(sorted1P 0) => i _ /=.
+apply/(sortedP 0) => i _ /=.
 rewrite !nth_join_Young !geq_max !leq_max.
 have /is_partP [_ -> /=]:= intpartP sh1.
 have /is_partP [_ -> /=]:= intpartP sh2.
@@ -2432,7 +2432,7 @@ Proof.
 apply/is_parttupleP; split.
 - by rewrite tnth_mktuple /= take0.
 - by rewrite tnth_mktuple take_intpartn_over // sumn_intpartn.
-- apply/(sorted1P 0) => i; rewrite size_tuple => ltid.
+- apply/(sortedP 0) => i; rewrite size_tuple => ltid.
   rewrite !nth_parttuple //; last exact: ltnW.
   case: (ltnP i (size sh)) => Hi.
     by rewrite (take_nth 0) // sumn_rcons leq_addr.
@@ -2450,7 +2450,7 @@ Lemma sum_diff_tuple t :
   forall i, i < d.+1 ->
     \sum_(0 <= j < i) (nth 0 t j.+1 - nth 0 t j) = nth 0 t i - nth 0 t 0.
 Proof.
-move=> /(sortedP 0 leq_trans leqnn) srt.
+move=> /(sorted2P 0 leq_trans leqnn) srt.
 elim=> [|i IHi] ltid; first by rewrite big_nil subnn.
 rewrite big_nat_recr //= IHi; last exact: ltnW.
 rewrite addnC addnBA ?srt ?size_tuple //=; last exact: ltnW.
@@ -2465,14 +2465,14 @@ have {}td : nth 0 t d = d by move: td; rewrite (tnth_nth 0).
 apply/andP; split.
   rewrite sumn_rem_trail0 sumnE big_map.
   by rewrite -{1}(subn0 d) -/(index_iota _ _) sum_diff_tuple // t0 td subn0.
-move: srt => /sorted1P srt.
-apply: is_part_rem_trail0; apply/(sorted1P 0) => i /=.
+move: srt => /(sortedP 0) srt.
+apply: is_part_rem_trail0; apply/(sortedP 0) => i /=.
 rewrite size_map size_iota => H1.
 have Hi1 : i.+1 < d.+1 by apply ltnW.
 rewrite !(nth_map 0) ?size_iota ?nth_iota // add0n.
 rewrite leq_subLR addnBA ?srt ?size_tuple // add0n addnn.
 rewrite leq_subRL ?conv // -addnn.
-apply: (leq_trans (srt _ _ _) (leq_addr _ _)).
+apply: (leq_trans (srt _ _) (leq_addr _ _)).
 by rewrite size_tuple.
 Qed.
 Definition part_fromtuple t (H : is_parttuple t) :=
@@ -2531,13 +2531,13 @@ Proof. by rewrite /minn ltn_double; case: ltnP. Qed.
 
 Lemma parttuple_minnP sh1 sh2 : is_parttuple (parttuple_minn sh1 sh2).
 Proof.
-have /is_parttupleP [t10 t1d /(sorted1P 0) sort1 conv1] := parttupleP sh1.
-have /is_parttupleP [t20 t2d /(sorted1P 0) sort2 conv2] := parttupleP sh2.
+have /is_parttupleP [t10 t1d /(sortedP 0) sort1 conv1] := parttupleP sh1.
+have /is_parttupleP [t20 t2d /(sortedP 0) sort2 conv2] := parttupleP sh2.
 rewrite size_tuple in sort1; rewrite size_tuple in sort2.
 apply/is_parttupleP; split.
 - by rewrite !tnth_mktuple /= !take0.
 - by rewrite tnth_mktuple t1d t2d minnn.
-- apply/(sorted1P 0) => i {conv1 conv2}; rewrite size_tuple => lti1d1.
+- apply/(sortedP 0) => i {conv1 conv2}; rewrite size_tuple => lti1d1.
   have ltid1 : i < d.+1 by apply: ltnW.
   move: sort2 => /(_ _ lti1d1); move: sort1 => /(_ _ lti1d1).
   rewrite !nth_parttuple_minn // !nth_parttuple // !leq_min !geq_min => -> ->.
