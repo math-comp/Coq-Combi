@@ -156,7 +156,7 @@ Lemma inspred_any_bump i : inspred i -> bump.
 Proof using HRow.
 rewrite /inspred /= /bump; have:= HRow.
 elim: Row i => [/= | l0 r IHr] i /=; first by case: i.
-case: i => [|i] /= /is_row_cons [] Hhead Hrow.
+case: i => [|i] /is_row_cons[Hhead Hrow].
 - case: r {IHr} Hhead Hrow => [//=|l1 r] /= Hl0l1.
   move/head_leq_last_row => Hlast Hll0.
   exact: lt_le_trans Hll0 (le_trans Hl0l1 Hlast).
@@ -842,7 +842,7 @@ Qed.
 Lemma is_row_invins b s : is_row s -> is_row (invins b s).
 Proof using.
 rewrite /invins.
-elim: s => [_ //=|l0 s IHs] /= /is_row_cons [] Hhead Hrow.
+elim: s => [_ //=|l0 s IHs] /= /is_row_cons[Hhead Hrow].
 case: (leP b (head b s)) => [| Hb] /=;
   first by move: Hrow; case s => [//= | s0 s'] /= -> ->.
 move/(_ Hrow): IHs.
@@ -858,7 +858,7 @@ Lemma head_leq_invbumped b s :
   s != [::] -> is_row s -> (head inh s <= (invbumped b s))%O.
 Proof using.
 rewrite /invbumped.
-elim: s => [_ //=|l0 s IHs] /= _ /is_row_cons [] Hhead Hrow.
+elim: s => [_ //=|l0 s IHs] /= _ /is_row_cons[Hhead Hrow].
 case (altP (s =P [::])) => [-> /=| Hnnil]; first by rewrite lexx.
 rewrite (set_head_default inh _ Hnnil).
 case: (leP b (head inh s)) => [/= |_]; first by rewrite lexx.
@@ -873,7 +873,7 @@ Lemma invbumprowK r a :
   (invbumprow (bumped r a) (ins r a)) = (r, a).
 Proof using.
 rewrite /bump; move=> Hrow Hbump; have:= bump_bumprowE Hrow Hbump.
-elim: r Hrow Hbump => [_ /= |l0 r IHr /= /is_row_cons [] Hl0 Hrow Hbump];
+elim: r Hrow Hbump => [_ /= |l0 r IHr /= /is_row_cons[Hl0 Hrow] Hbump];
   first by rewrite ltxx.
 case: (ltP a l0) => Hal0.
 - by move=> [] <- <- /=; rewrite Hl0.
@@ -890,7 +890,7 @@ Lemma bumprowinvK b s :
   (bumprow (invins b s) (invbumped b s)) = (Some b, s).
 Proof using.
 rewrite /invbump /invins /invbumped.
-elim: s => [//= | s0 s IHs] /= _ /is_row_cons [] Hhead Hrows Hs0.
+elim: s => [//= | s0 s IHs] /= _ /is_row_cons[Hhead Hrows] Hs0.
 case (altP (s =P [::])) => [-> /=| Hnnil]; first by rewrite lexx /= Hs0.
 rewrite (set_head_default s0 _ Hnnil).
 case: (leP b (head s0 s)) => [/=|]; first by rewrite Hs0.
@@ -1036,7 +1036,7 @@ case: nrow => [{IHt} /= Hcorn | nrow Hcorn].
     (* t0 = l0 :: [tt0] :: ln *)
     have:= head_leq_last_row Hrow0.
     rewrite belast_rcons last_rcons /= leNgt => /negbTE ->.
-    move: Hrow0 => /= /is_row_cons [] _ Hrow0.
+    move: Hrow0 => /= /is_row_cons[_ Hrow0].
     by rewrite (bumprow_rcons Hrow0).
 + have Hnnil : (t != [::]) by move: Hcorn; case t => //=; rewrite nth_nil.
   move/(_ nrow Htab Hnnil Hcorn): IHt => {Hcorn} /=.

@@ -67,13 +67,13 @@ Local Notation sorted r := (sorted R r).
 Local Notation "x <=R y" := (R x y) (at level 70, y at next level).
 
 Lemma sorted_consK l r : sorted (cons l r) -> sorted r.
-Proof using. by case: r => [//=| r0 r] => /andP []. Qed.
+Proof using. by case: r => [//| r0 r] /andP[]. Qed.
 
 Lemma sorted_rconsK l r : sorted (rcons r l) -> sorted r.
-Proof using. by case: r => [//=| r0 r] /=; rewrite rcons_path => /andP []. Qed.
+Proof using. by case: r => [| r0 r] //=; rewrite rcons_path => /andP[]. Qed.
 
 Lemma sorted_rcons l r : sorted r -> (last l r <=R l) -> sorted (rcons r l).
-Proof using. by case: r => [//=| r0 r] /=; rewrite rcons_path => -> ->. Qed.
+Proof using. by case: r => [| r0 r] //=; rewrite rcons_path => -> ->. Qed.
 
 Hypothesis Rtrans : transitive R.
 
@@ -138,9 +138,7 @@ by apply/(iffP idP); rewrite non_decr_equiv => /(sortedP Z).
 Qed.
 
 Lemma sorted_cons l r : sorted (cons l r) -> (l <=R head l r) /\ sorted r.
-Proof using Rrefl.
-by case: r => [//=| r0 r]; move => /andP [/= ->].
-Qed.
+Proof using Rrefl. by case: r => [| r0 r] //= /andP[]. Qed.
 
 Lemma sorted_last l r : sorted (rcons r l) -> (last l r <=R l).
 Proof using Rrefl.

@@ -267,18 +267,6 @@ Qed.
 
 End FinSet.
 
-(** TODO: Merged in mathcomp-1.13 *)
-Section SSRComplUndup.
-
-Variables (S T : eqType) (f : S -> T).
-
-Hypothesis Hf : injective f.
-
-Lemma undup_map_inj s : undup (map f s) = map f (undup s).
-Proof. by elim: s => //= s0 s ->; rewrite mem_map //; case: (_ \in _). Qed.
-
-End SSRComplUndup.
-
 
 Lemma uniq_sum_count_mem (T : eqType) (P : pred T) l s :
   uniq s ->
@@ -301,7 +289,7 @@ rewrite count_pred0 => <-.
 by rewrite count_predUI.
 Qed.
 
-(* New lemmas *)
+
 Lemma sumn_sort l S : sumn (sort S l) = sumn l.
 Proof using. by have:= perm_sort S l => /permPl/perm_sumn. Qed.
 
