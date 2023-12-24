@@ -640,22 +640,22 @@ Qed.
 End DescSet.
 
 
-
+Module RefinementOrder.
 Section RefinementOrder.
 Import Order.DefaultSetSubsetOrder.
 
 Variable (n : nat).
-Definition intcompnref := intcompn n.
-Local Notation "'CRef" := intcompnref.
+Definition type := intcompn n.
+Local Notation "'CRef" := type.
 Implicit Types (c : 'CRef) (d : {set 'I_n.-1}).
 Local Notation SetIn := ({set ('I_n.-1 : finType)}).
 
-HB.instance Definition _ := SubType.copy 'CRef (intcompn n).
-HB.instance Definition _ := Finite.copy 'CRef (intcompn n).
-Lemma compnref_display : unit. Proof. exact: tt. Qed.
-HB.instance Definition _ : Order.isPOrder compnref_display 'CRef :=
+#[export] HB.instance Definition _ := SubType.copy 'CRef (intcompn n).
+#[export] HB.instance Definition _ := Finite.copy 'CRef (intcompn n).
+Fact compnref_display : unit. Proof. exact: tt. Qed.
+#[export] HB.instance Definition _ : Order.isPOrder compnref_display 'CRef :=
   Order.CanIsPartial compnref_display (@descsetK n).
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   isInhabitedType.Build 'CRef (rowcompn n).
 
 Lemma leEcompnref c1 c2 :
@@ -666,7 +666,7 @@ Lemma descset_mono :
   {mono (@descset n) : A B / (A <= B :> 'CRef)%O >-> (A <= B :> SetIn)%O}.
 Proof. by []. Qed.
 
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.IsoLattice.Build compnref_display 'CRef
     (@descsetK n) (@from_descsetK n) descset_mono.
 
@@ -677,7 +677,7 @@ Lemma descset_join c1 c2 :
   descset (c1 `|` c2)%O = descset c1 :|: descset c2.
 Proof. by rewrite from_descsetK. Qed.
 
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.IsoDistrLattice.Build compnref_display 'CRef
     (@descsetK n) (@from_descsetK n) descset_mono.
 
@@ -689,10 +689,10 @@ apply/eqP; rewrite -subset_leqif_cards; last exact: subsetT.
 by rewrite card_descset /= /colcomp /= size_nseq cardsT card_ord.
 Qed.
 
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   IsoBottom.Build compnref_display 'CRef
                  (@descsetK n) (@from_descsetK n) descset_mono.
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   IsoTop.Build compnref_display 'CRef
                  (@descsetK n) (@from_descsetK n) descset_mono.
 
@@ -717,7 +717,24 @@ Qed.
 
 End RefinementOrder.
 
+Module Exports.
+HB.reexport RefinementOrder.
+
+Notation intcompnref := type.
+Definition leEcompnref := leEcompnref.
+Definition descset_mono := descset_mono.
+Definition descset_meet := descset_meet.
+Definition descset_join := descset_join.
+Definition topEcompnref := topEcompnref.
+Definition botEcompnref := botEcompnref.
+Definition compnref_rev := compnref_rev.
+
+End Exports.
+End RefinementOrder.
+HB.export RefinementOrder.Exports.
+
 #[export] Hint Resolve intcompP intcompnP : core.
+
 
 Lemma part_of_comp_subproof n (c : intcompn n) :
   is_part_of_n n (sort geq c).

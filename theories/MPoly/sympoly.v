@@ -195,9 +195,9 @@ Variable n : nat.
 Variable R : comRingType.
 
 HB.instance Definition _ :=
-  [SubRing_isSubComRing of {sympoly R[n]} by <:].
-HB.instance Definition _ :=
   [SubChoice_isSubAlgebra of {sympoly R[n]} by <:].
+HB.instance Definition _ :=
+  [SubRing_isSubComRing of {sympoly R[n]} by <:].
 
 End SymPolyComRingType.
 
