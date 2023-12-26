@@ -1662,6 +1662,8 @@ Qed.
 
 (** ** Lexicographic order on partitions of a fixed sum *)
 
+
+Module IntPartNLexi.
 Section IntPartNLexi.
 Import DefaultSeqLexiOrder.
 
@@ -1670,9 +1672,9 @@ Definition intpartnlexi := 'P_d.
 Local Notation "'PLexi" := intpartnlexi.
 Implicit Type (sh : 'PLexi).
 
-HB.instance Definition _ := SubType.copy 'PLexi 'P_d.
-HB.instance Definition _ := Finite.copy 'PLexi 'P_d.
-HB.instance Definition _ := [Order of 'PLexi by <:].
+#[export] HB.instance Definition _ := SubType.copy 'PLexi 'P_d.
+#[export] HB.instance Definition _ := Finite.copy 'PLexi 'P_d.
+#[export] HB.instance Definition _ := [Order of 'PLexi by <:].
 
 Lemma leEintpartnlexi sh1 sh2 :
   (sh1 <= sh2)%O = (sh1 <= sh2 :> seqlexi nat)%O.
@@ -1704,11 +1706,11 @@ move: Hsum; rewrite add1n eqSS => /eqP <-.
 exact: (part_nseq1P Hpart Hhead).
 Qed.
 
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.hasBottom.Build Order.lexi_display 'PLexi colpartn_bot.
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.hasTop.Build Order.lexi_display 'PLexi rowpartn_top.
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   isInhabitedType.Build 'PLexi (rowpartn d).
 
 Lemma botEintpartnlexi : 0%O = colpartn d :> 'PLexi.
@@ -1717,7 +1719,20 @@ Lemma topEintpartnlexi : 1%O = rowpartn d :> 'PLexi.
 Proof. by []. Qed.
 
 End IntPartNLexi.
+
+Module Exports.
+HB.reexport IntPartNLexi.
+
 Notation "''PLexi_' n" := (intpartnlexi n).
+
+Definition leEintpartnlexi := leEintpartnlexi.
+Definition ltEintpartnlexi := ltEintpartnlexi.
+Definition botEintpartnlexi := botEintpartnlexi.
+Definition topEintpartnlexi := topEintpartnlexi.
+
+End Exports.
+End IntPartNLexi.
+HB.export IntPartNLexi.Exports.
 
 
 (**  * Counting functions *)
@@ -1993,6 +2008,7 @@ End IntpartnCons.
 
 
 (** * Young lattice on partition *)
+Module YoungLattice.
 Section YoungLattice.
 
 Definition intpartYoung := intpart.
@@ -2009,11 +2025,11 @@ Proof.
 rewrite /le_Young => [][p Hp] [q Hq] /= /andP [inclpq inclqp].
 by apply val_inj => /=; apply: included_anti.
 Qed.
-HB.instance Definition _ := Countable.copy 'YL intpart.
-HB.instance Definition _ := Inhabited.copy 'YL intpart.
+#[export] HB.instance Definition _ := Countable.copy 'YL intpart.
+#[export] HB.instance Definition _ := Inhabited.copy 'YL intpart.
 
 Fact Young_display : unit. Proof. exact: tt. Qed.
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.Le_isPOrder.Build
     Young_display 'YL le_Young_refl le_Young_anti le_Young_trans.
 
@@ -2141,7 +2157,7 @@ apply/idP/andP => [Hsup |].
 move=> [/le_YoungP le1 /le_YoungP le2].
 by apply/le_YoungP => i; rewrite nth_join_Young geq_max le1 le2.
 Qed.
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.POrder_MeetJoin_isLattice.Build
     Young_display 'YL meet_YoungP join_YoungP.
 
@@ -2152,6 +2168,7 @@ HB.instance Definition _ :=
 HB.instance Definition _ :=
   isInhabitedType.Build 'YL empty_intpart.
 
+
 Lemma bottom_YoungE : 0%O = empty_intpart :> 'YL.
 Proof. by []. Qed.
 
@@ -2160,10 +2177,47 @@ Proof.
 move=> p q r; apply/eqP/intpart_eqP => i.
 by rewrite !(nth_meet_Young, nth_join_Young) minn_maxl.
 Qed.
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.Lattice_Meet_isDistrLattice.Build Young_display 'YL Young_meetUl.
 
 End YoungLattice.
+
+Module Exports.
+HB.reexport YoungLattice.
+
+Implicit Type (p q : intpartYoung).
+
+Notation intpartYoung := intpartYoung.
+Definition le_YoungE := le_YoungE.
+Definition le_YoungP := le_YoungP.
+Definition le_Young_sumn := le_Young_sumn.
+Definition lt_Young_sumn := lt_Young_sumn.
+
+Lemma meet_YoungE p q :
+  (p `&` q)%O = [seq minn a.1 a.2 | a <- zip p q] :> seq nat.
+Proof. by []. Qed.
+Lemma nth_meet_Young p q i :
+  nth 0 (p `&` q)%O i = minn (nth 0 p i) (nth 0 q i).
+Proof. exact: nth_meet_Young. Qed.
+Lemma size_meet_Young p q : size (p `&` q)%O = minn (size p) (size q).
+Proof. exact: size_meet_Young. Qed.
+
+Lemma join_YoungE p q :
+  (p `|` q)%O =
+    [seq maxn a.1 a.2 | a <- zip (pad 0 (maxn (size p) (size q)) p)
+                                 (pad 0 (maxn (size p) (size q)) q)] :> seq nat.
+Proof. by []. Qed.
+Lemma nth_join_Young p q i :
+  nth 0 (p `|` q)%O i = maxn (nth 0 p i) (nth 0 q i).
+Proof. exact: nth_join_Young. Qed.
+Lemma size_join_Young p q : size (p `|` q)%O = maxn (size p) (size q).
+Proof. exact: size_join_Young. Qed.
+
+Definition bottom_YoungE := bottom_YoungE.
+
+End Exports.
+End YoungLattice.
+HB.export YoungLattice.Exports.
 
 
 (** * Dominance order on partition *)
@@ -2321,6 +2375,7 @@ by move: Ht => /partdom_union_intpartl; apply.
 Qed.
 
 
+Module IntPartNDom.
 Section IntPartNDom.
 
 Variable d : nat.
@@ -2328,8 +2383,8 @@ Definition intpartndom := 'P_d.
 Local Notation "'PDom" := intpartndom.
 Implicit Type (sh : 'PDom).
 
-HB.instance Definition _ := Finite.copy 'PDom 'P_d.
-HB.instance Definition _ := Inhabited.copy 'PDom 'P_d.
+#[export] HB.instance Definition _ := Finite.copy 'PDom 'P_d.
+#[export] HB.instance Definition _ := Inhabited.copy 'PDom 'P_d.
 
 Fact partdom_antisym : antisymmetric (fun x y : 'P_d => partdom x y).
 Proof.
@@ -2337,7 +2392,7 @@ by move=> x y /andP[Hxy Hyx]; apply val_inj => /=; apply: partdom_anti.
 Qed.
 
 Lemma partdom_display : unit. Proof. exact: tt. Qed.
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.Le_isPOrder.Build partdom_display 'PDom
     partdom_refl partdom_antisym partdom_trans.
 
@@ -2584,9 +2639,25 @@ Proof.
 rewrite /join_intpartn /= -{1}(conj_intpartnK sh).
 by rewrite partdom_conj_intpartn meet_intpartnP !partdom_conj_intpartn.
 Qed.
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.POrder_MeetJoin_isLattice.Build partdom_display
     'PDom meet_intpartnP join_intpartnP.
+
+Lemma sumn_take_pardom_meet i sh1 sh2 :
+  sumn (take i (sh1 `&` sh2)%O) = minn (sumn (take i sh1)) (sumn (take i sh2)).
+Proof.
+case: (ltnP i d.+1) => [lt_i_d1 | le_d_i].
+  rewrite (sumn_take_part_fromtuple (parttuple_minnP sh1 sh2) lt_i_d1) /=.
+  rewrite (nth_map ord0) ?size_enum_ord //=.
+  rewrite -[i]/(val (Ordinal lt_i_d1)) nth_ord_enum /=.
+  rewrite !(tnth_nth 0) /= ![nth 0 _ _](nth_map ord0) ?size_enum_ord //=.
+  by rewrite -[i]/(val (Ordinal lt_i_d1)) nth_ord_enum /=.
+rewrite !take_intpartn_over ?(ltnW le_d_i) //.
+by rewrite !sumn_intpartn minnn.
+Qed.
+
+Lemma join_intpartnE sh1 sh2 : (sh1 `|` sh2)%O = (sh1^# `&` sh2^#)%O^#.
+Proof. by []. Qed.
 
 End IntPartNDom.
 (* We break the section to allows the case analysis on d *)
@@ -2608,9 +2679,9 @@ Qed.
 Lemma partdom_colpartn sh : (colpartn d <= sh :> 'PDom)%O.
 Proof. by rewrite -partdom_conj_intpartn conj_colpartn partdom_rowpartn. Qed.
 
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.hasBottom.Build partdom_display 'PDom partdom_colpartn.
-HB.instance Definition _ :=
+#[export] HB.instance Definition _ :=
   Order.hasTop.Build partdom_display 'PDom partdom_rowpartn.
 
 Lemma botEintpartndom : 0%O = colpartn d :> 'PDom.
@@ -2620,7 +2691,21 @@ Proof. by []. Qed.
 
 End IntPartNTopBottom.
 
+Module Exports.
+HB.reexport IntPartNDom.
+
 Notation "''PDom_' n" := (intpartndom n).
+
+Definition leEpartdom := leEpartdom.
+Definition partdom_conj_intpartn := partdom_conj_intpartn.
+Definition sumn_take_pardom_meet := sumn_take_pardom_meet.
+Definition join_intpartnE := join_intpartnE.
+Definition botEintpartndom := botEintpartndom.
+Definition topEintpartndom := topEintpartndom.
+
+End Exports.
+End IntPartNDom.
+HB.export IntPartNDom.Exports.
 
 
 Lemma le_intpartndomlexi d :
