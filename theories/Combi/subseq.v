@@ -159,7 +159,7 @@ apply (iffP idP) => [w_uniq m1 m2 eqmask |].
   have nthE m : (nth false m i) = (nth Z w i \in mask m w).
     by rewrite in_mask // (mem_nth Z (ltn_ord i)) /= index_uniq.
   by rewrite !nthE eqmask.
-- case Hw: w => [//|w0 w']; rewrite -Hw => minj.
+- case Hw: w => [// |w0 w']; rewrite -Hw => minj.
   pose f := (fun i : T => [:: i]).
   apply/(uniqP w0) => i j; rewrite !inE => lti ltj Heq.
   have {Heq}:= congr1 (cons^~ [::]) Heq.
@@ -255,7 +255,7 @@ Lemma big_subseqs_cons (F : seq T -> R) (a : T) (s : seq T) :
   \big[*%M/1]_(i : subseqs (a :: s)) F i =
   \big[*%M/1]_(i : subseqs s) F (a :: i) * \big[*%M/1]_(i : subseqs s) F (i).
 Proof.
-move=> asuniq; have := asuniq => /= /andP [_ suniq].
+move=> asuniq; have := asuniq => /= /andP[_ suniq].
 rewrite !big_subseqs //.
 rewrite [X in X * _](big_subseqs (fun s => F (a :: s))) //.
 rewrite (bigID (fun m => tnth m ord0)) /=; congr( _ * _).
@@ -315,7 +315,7 @@ apply/idP/idP.
   apply: (subseq_sorted ltn_trans (s2 := (iota 0 n.+1))).
   + by rewrite -addn1 iotaD add0n /= cats1 -subseq_rcons_eq.
   + exact: iota_ltn_sorted.
-- elim: n s => [/= [//=| s0 s]| n IHn s].
+- elim: n s => [/= [// | s0 s] | n IHn s].
     rewrite rcons_cons /= => /(order_path_min ltn_trans) /= /allP Hall.
     exfalso.
     suff /Hall : 0 \in rcons s 0 by [].

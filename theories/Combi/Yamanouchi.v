@@ -82,7 +82,7 @@ Qed.
 
 Lemma evalseq_countE : evalseq_count =1 evalseq.
 Proof.
-elim => [//| l0 s /= <-]; apply: (@eq_from_nth _ 0).
+elim => [// | l0 s /= <-]; apply: (@eq_from_nth _ 0).
   rewrite size_incr_nth !size_map !size_iota /= {1}maxnC {1}/maxn.
   by case (ltngtP l0.+1 (foldr _ _ _)).
 move=> i; rewrite nth_incr_nth size_map => Hsz.
@@ -93,7 +93,7 @@ case (ltnP i (foldr maxn 0 [seq i.+1 | i <- s])) => Hi.
   by rewrite (nth_iota _ _ Hi) /= add0n.
 - rewrite (nth_default 0) /=; last by rewrite size_map size_iota.
   congr ((l0 == i) + _).
-  elim: s Hi {Hsz} => [//| s0 s /=].
+  elim: s Hi {Hsz} => [// | s0 s /=].
   move: (foldr _ _ _) => m IHs; rewrite /maxn.
   case (ltnP s0.+1 m) => Hs Hi.
   + by rewrite (IHs Hi) (ltn_eqF (leq_ltn_trans (leqnSn s0) (leq_trans Hs Hi))).
@@ -108,7 +108,7 @@ case: (ltnP i (foldr maxn 0 [seq i.+1 | i <- s])) => Hi.
   by rewrite nth_iota.
 - rewrite nth_default; last by rewrite size_map size_iota.
   elim: s Hi => [| s0 s IHs] //=.
-  by rewrite geq_max => /andP [/ltn_eqF -> /= /IHs <-].
+  by rewrite geq_max => /andP[/ltn_eqF -> /= /IHs <-].
 Qed.
 
 Lemma perm_evalseq s t : perm_eq s t = (evalseq s == evalseq t).
@@ -123,8 +123,8 @@ apply/idP/idP => [Hperm | /eqP].
   have:= congr1 size H; rewrite !size_map !size_iota => Hmax.
   rewrite /perm_eq; apply /allP => i /= Hi.
   have {}Hi : i < mx.
-  move: Hi; rewrite mem_cat => /orP [].
-  + rewrite /mx; elim s => [//= | s0 s' IHs] /=.
+  move: Hi; rewrite mem_cat => /orP[].
+  + rewrite /mx; elim s => [// | s0 s' IHs] /=.
     rewrite inE => /orP [/eqP -> | Hi]; first exact: leq_maxl.
     rewrite leq_max; apply/orP; right.
     exact: IHs.
@@ -140,13 +140,13 @@ apply/idP/idP => [Hperm | /eqP].
 Qed.
 
 Lemma evalseq0 y : evalseq y = [::] -> y = [::].
-Proof. by case: y => [//= | [|y0] y] /=; case: (evalseq y). Qed.
+Proof. by case: y => [// | [|y0] y] /=; case: (evalseq y). Qed.
 
 Lemma evalseq_cons l s : evalseq (l :: s) = incr_nth (evalseq s) l.
 Proof. by []. Qed.
 
 Lemma evalseq_eq_size y : sumn (evalseq y) = size y.
-Proof. by elim: y => [//= | y0 y] /=; rewrite sumn_incr_nth => ->. Qed.
+Proof. by elim: y => [// | y0 y] /=; rewrite sumn_incr_nth => ->. Qed.
 
 (** * Yamanouchi words:                                                       *)
 (** Sequence of rows of the corners for an increasing sequence of partitions. *)
@@ -163,7 +163,7 @@ Lemma is_yamP s :
     (is_yam s).
 Proof.
 apply (iffP idP).
-- elim: s => [| s0 s IHs] //= /andP [] /is_partP [] _ Hpart /IHs Hrec {IHs}.
+- elim: s => [| s0 s IHs] //= /andP[/is_partP[_ Hpart] {}/IHs Hrec].
   case => [| i] n //=.
   case: (altP (s0 =P n)) => Hns0.
   + subst s0; rewrite ltn_eqF // add0n add1n.
@@ -176,7 +176,7 @@ apply (iffP idP).
   apply/andP; split.
   + move: (s0 :: s) {IHs} H => {s0}s /(_ 0); rewrite drop0 => Hs.
     apply /is_partP; split; last by move=> i; rewrite !nth_evalseq.
-    elim: s {Hs} => [//= | s0 s IHs] /=.
+    elim: s {Hs} => [// | s0 s IHs] /=.
     exact: last_incr_nth_non0.
   + apply: IHs => i n; exact (H i.+1 n).
 Qed.
@@ -197,22 +197,22 @@ apply (iffP idP).
 Qed.
 
 Lemma is_part_eval_yam s : is_yam s -> is_part (evalseq s).
-Proof. by case: s => [//= | s0 s] /= /andP []. Qed.
+Proof. by case: s => [// | s0 s] /= /andP[]. Qed.
 
 Lemma is_yam_tl l0 s : is_yam (l0 :: s) -> is_yam s.
-Proof. by move=> /= /andP []. Qed.
+Proof. by move=> /= /andP[]. Qed.
 
 Lemma is_yam_catr s t : is_yam (s ++ t) -> is_yam t.
-Proof. by elim: s => [//= | s0 s IHs] /= /andP [] _. Qed.
+Proof. by elim: s => [// | s0 s IHs] /= /andP[_]. Qed.
 
 Lemma last_yam y : is_yam y -> last 0 y = 0.
 Proof.
 case/lastP: y => [//= | y yn].
 rewrite last_rcons.
-elim: y => [//= | y0 y IHy] /=.
-  case: yn => [//= | y] /= /andP [] H _.
-  by elim: y H => [//= | yn IHy] /= /IHy.
-by move=> /andP [] _; exact IHy.
+elim: y => [// | y0 y IHy] /=.
+  case: yn => [// | y] /= /andP[H _].
+  by elim: y H => [// | yn IHy] /= /IHy.
+by move=> /andP[_]; exact IHy.
 Qed.
 
 (** Remove the zeroes from a yam and decrease all the other entries by 1 *)
@@ -225,8 +225,8 @@ Fixpoint decr_yam s :=
 
 Lemma evalseq_decr_yam s : evalseq (decr_yam s) = behead (evalseq s).
 Proof.
-elim: s => [//= | s0 s /= IHs].
-case s0 => [ | s0' /=].
+elim: s => [// | s0 s /= IHs].
+case s0 => [| s0' /=].
 - by rewrite IHs /=; case (evalseq s).
 - rewrite IHs /=; case (evalseq s) => [|sh0 sh //=].
   by case: s0'.
@@ -234,17 +234,17 @@ Qed.
 
 Lemma is_yam_decr s : is_yam s -> is_yam (decr_yam s).
 Proof.
-elim: s => [//= | s0 s IHs] /= /andP [] Hpart.
-move/IHs {IHs} => Hyam; case: s0 Hpart=> [//= | s0'] /=.
+elim: s => [// | s0 s IHs] /= /andP[Hpart].
+move=> {}/IHs Hyam; case: s0 Hpart=> [// | s0'] /=.
 rewrite Hyam andbT evalseq_decr_yam.
-case H : (evalseq s) => [| sh0 sh] /= /andP [] _ //=.
+case H : (evalseq s) => [| sh0 sh] /= /andP[_] //=.
 by case s0'.
 Qed.
 
 Lemma is_rem_corner_yam l0 s :
   is_yam (l0 :: s) -> is_rem_corner (evalseq (l0 :: s)) l0.
 Proof.
-move/is_yam_tl/is_part_eval_yam/is_partP => [] _ Hpart.
+move/is_yam_tl/is_part_eval_yam/is_partP => [_ Hpart].
 rewrite /is_rem_corner !nth_incr_nth ltn_eqF // eq_refl add0n add1n ltnS.
 exact: Hpart.
 Qed.
@@ -252,11 +252,11 @@ Qed.
 Lemma is_add_corner_yam l0 s :
   is_yam (l0 :: s) -> is_add_corner (evalseq s) l0.
 Proof.
-rewrite /is_add_corner /=; case: l0 => [//= | l0] /=.
-case: (evalseq s) => [| sh0 sh] /andP [].
-  move=> /andP [] H1 H2 _; exfalso.
+rewrite /is_add_corner /=; case: l0 => [// | l0] /=.
+case: (evalseq s) => [| sh0 sh] /andP[].
+  move=> /andP[H1 H2] _; exfalso.
   by case: l0 H1 H2 => //= l0 _; elim: l0.
-move=> /is_partP [] _ /( _ l0) /=.
+move=> /is_partP[_ /( _ l0)] /=.
 rewrite -/(incr_nth (sh0 :: sh) l0.+1) !nth_incr_nth eq_refl add1n.
 by rewrite eq_sym ltn_eqF // add0n.
 Qed.
@@ -270,7 +270,7 @@ Definition hyper_yam ev := hyper_yam_rev (rev ev).
 
 Lemma size_hyper_yam ev : size (hyper_yam ev) = sumn ev.
 Proof.
-elim/last_ind: ev => [//= | sh sn] /=.
+elim/last_ind: ev => [// | sh sn] /=.
 rewrite /hyper_yam -(sumn_rev (rcons _ _)) rev_rcons /= size_cat => ->.
 by rewrite size_nseq sumn_rev.
 Qed.
@@ -280,36 +280,36 @@ Proof. by elim: s => [| s0 s /= ->]. Qed.
 
 Lemma part_rcons_ind s sn : is_part (rcons s sn.+2) -> is_part (rcons s sn.+1).
 Proof.
-elim: s => [//= | s0 s IHs] /=.
-move => /andP [] Hhead {}/IHs ->; rewrite andbT.
-case: s Hhead => [//= | s1 s]; first exact: ltn_trans.
+elim: s => [// | s0 s IHs] /=.
+move => /andP[Hhead {}/IHs ->]; rewrite andbT.
+case: s Hhead => [// | s1 s]; first exact: ltn_trans.
 by rewrite !rcons_cons.
 Qed.
 
 (** "is_part ev" is just here to ensure that sh doesn't ends with a 0 *)
 Lemma evalseq_hyper_yam ev : is_part ev -> evalseq (hyper_yam ev) = ev.
 Proof.
-rewrite /hyper_yam; elim/last_ind: ev => [//= | s sn IHs].
+rewrite /hyper_yam; elim/last_ind: ev => [// | s sn IHs].
 rewrite rev_rcons /=; case: sn => [/= | sn].
-  by move/is_partP; rewrite last_rcons /= => [] [].
+  by move/is_partP; rewrite last_rcons /= => [][].
 elim: sn => [/= | sn /= IHsn].
   by move/is_part_rconsK/IHs ->; rewrite size_rev incr_nth_size.
-move=> Hpart; rewrite IHsn {IHsn IHs}.
-- rewrite size_rev {Hpart}; elim: s => [//= | s0 s IHs] /=.
+move=> Hpart; rewrite {IHs}IHsn.
+- rewrite size_rev {Hpart}; elim: s => [// | s0 s IHs] /=.
   by rewrite IHs.
 - exact: part_rcons_ind.
 Qed.
 
 Lemma hyper_yamP ev : is_part ev -> is_yam (hyper_yam ev).
 Proof.
-elim/last_ind: ev => [//= | s sn IHs].
+elim/last_ind: ev => [// | s sn IHs].
 rewrite /hyper_yam rev_rcons /=; case: sn => [| sn].
   by move/is_partP; rewrite last_rcons /= => [] [].
 elim: sn => [/= | sn /= IHsn].
   move=> Hpart1; have Hpart := is_part_rconsK Hpart1.
   by rewrite (IHs Hpart) size_rev (evalseq_hyper_yam Hpart) incr_nth_size Hpart1.
 move=> Hpart2.
-move/(_ (part_rcons_ind Hpart2))/andP : IHsn => [] -> ->; rewrite !andbT.
+move/(_ (part_rcons_ind Hpart2))/andP : IHsn => [-> ->]; rewrite !andbT.
 by have:= Hpart2; rewrite -{1}(evalseq_hyper_yam Hpart2) /hyper_yam rev_rcons.
 Qed.
 
@@ -324,7 +324,7 @@ Lemma is_yam_cat_any y0 y1 z :
   is_yam y0 -> is_yam y1 -> evalseq y0 = evalseq y1 ->
   is_yam (z ++ y0) -> is_yam (z ++ y1).
 Proof.
-elim: z => [//= | z0 z IHz] /= Hy0 Hy1 H /andP [] Hpart Hyam.
+elim: z => [//= | z0 z IHz] /= Hy0 Hy1 H /andP[Hpart Hyam].
 apply/andP; split; last exact: IHz.
 suff <- : evalseq (z ++ y0) = evalseq (z ++ y1) by [].
 apply /eqP; rewrite -perm_evalseq.
@@ -348,11 +348,11 @@ move=> Hpart; apply/allP => y.
 rewrite /enum_yameval /is_yam_of_eval; move Hn: (sumn ev) => n.
 elim: n ev Hpart Hn y => [| n IHn] /= .
   by move=> ev Hsh /part0 H0 y; rewrite mem_seq1 H0 //= => /eqP ->.
-move=> ev Hpart Hev [/= | y0 y] /=.
+move=> ev Hpart Hev [| y0 y] /=.
 - have -> : [::] == ev = false by move: Hev; case ev.
   by move=> /flattenP [] ltmp /mapP [i _ ->] /mapP [].
 - move/flatten_mapP => [i].
-  rewrite mem_filter mem_iota add0n => /and3P [Hcorn _ Hi].
+  rewrite mem_filter mem_iota add0n => /and3P[Hcorn _ Hi].
   move/mapP => [x Hx [Hitmp Hxtmp]]; subst i x.
   have Hsum : sumn (decr_nth ev y0) = n by rewrite sumn_decr_nth //= Hev.
   move/(_ _ (is_part_decr_nth Hpart Hcorn) Hsum _ Hx): IHn => /andP[-> /eqP ->].
@@ -366,10 +366,10 @@ Proof.
 rewrite /enum_yameval /is_yam_of_eval; move Hn: (sumn ev) => n.
 elim: n ev Hn => [| n IHn] /= .
   move=> ev Hev /part0 H0 y.
-  by rewrite (H0 Hev) => /andP [] _ /eqP/evalseq0 ->.
+  by rewrite (H0 Hev) => /andP[_ /eqP/evalseq0 ->].
 move=> ev Hev Hpart [/= | y0 y] /=.
   by have -> : [::] == ev = false by move: Hev; case ev.
-move => /andP [] /andP [] _ Hyam /eqP Htmp; subst ev.
+move => /andP[/andP[_ Hyam] /eqP Htmp]; subst ev.
 rewrite count_flatten -map_comp.
 rewrite (eq_map (g := fun i => i == y0 : nat)); first last.
   move=> i /=; rewrite count_map /=.
@@ -453,10 +453,10 @@ HB.instance Definition _ :=
     yamn (fun p : intpartn n => yameval p) yamn_PredEq yamn_partition_evalseq).
 
 Lemma yamnP (y : yamn) : is_yam y.
-Proof using. by case: y => /= y /andP []. Qed.
+Proof using. by case: y => /= y /andP[]. Qed.
 
 Lemma size_yamn (y : yamn) : size y = n.
-Proof using. by case: y => /= y /andP [] _ /eqP. Qed.
+Proof using. by case: y => /= y /andP[_ /eqP]. Qed.
 
 (** Check of disjoint union enumeration *)
 Lemma enum_yamnE :

@@ -205,7 +205,7 @@ Proof.
 elim: sh => [| sh0 sh IHsh] // Hpart.
 rewrite inE => /orP [/eqP->/= |].
   by case: sh0 {Hpart} (part_head_non0 Hpart) => [|n _]//=.
-move: Hpart => /= => /andP[Hhead {}/IHsh H{}/H] /leq_trans; apply.
+move: Hpart => /= => /andP[Hhead {}/IHsh /[apply]] /leq_trans; apply.
 by case: sh Hhead.
 Qed.
 
@@ -313,8 +313,8 @@ apply/eqP; apply (eq_from_nth (x0 := 0)); last by move=> i _; exact: H.
 move: H Hp Hq.
 wlog Hpq : p q / (size p) <= (size q).
   move=> Hwlog Hnth.
-  by case: (leqP (size p) (size q)) => [|/ltnW] /Hwlog H{}/H H{}/H ->.
-move=> Hnth /is_part_ijP [Hlastp Hp] /is_part_ijP [Hlastq Hq].
+  by case: (leqP (size p) (size q)) => [|/ltnW] /Hwlog /[apply]/[apply] ->.
+move=> Hnth /is_part_ijP[Hlastp Hp] /is_part_ijP[Hlastq Hq].
 apply anti_leq; rewrite {}Hpq /=.
 case: q Hnth Hlastq Hq => [//=|q0 q] Hnth Hlastq Hq.
 rewrite leqNgt; apply/negP => Habs.
@@ -339,11 +339,9 @@ Qed.
 Lemma part_sumn_rectangle (sh : seq nat) :
   is_part sh -> sumn sh <= (head 0 sh) * (size sh).
 Proof.
-elim: sh => [//= | s0 s IHs] /= /andP[Hhead /IHs{IHs} Hsum].
-rewrite mulnS leq_add2l.
-apply (leq_trans Hsum).
-rewrite {Hsum} leq_mul2r.
-by case: s Hhead => [//= | s1 s].
+elim: sh => [//= | s0 s IHs] /= /andP[Hhead {}/IHs Hsum].
+rewrite mulnS leq_add2l; apply (leq_trans Hsum) => {Hsum}; rewrite leq_mul2r.
+by case: s Hhead.
 Qed.
 
 
@@ -626,7 +624,7 @@ Lemma is_part_incr_first_n sh n :
   is_part sh -> is_part (incr_first_n sh n).
 Proof.
 elim: sh n => [// n _| s0 sh IHsh] /=; first exact: is_part_nseq1.
-case=> [//= | n] /andP[Hhead /IHsh{IHsh} /= ->]; rewrite andbT.
+case=> [//= | n] /andP[Hhead {}/IHsh /= ->]; rewrite andbT.
 case: sh Hhead => [_ | s1 sh] /=; first by case n.
 case: n => [| n] /=; last by apply.
 by move/leq_trans; apply.
@@ -634,7 +632,7 @@ Qed.
 
 Lemma is_part_conj sh : is_part sh -> is_part (conj_part sh).
 Proof.
-elim: sh => [//= | s0 sh IHsh] /= /andP[_ /IHsh{IHsh}].
+elim: sh => [//= | s0 sh IHsh] /= /andP[_ {}/IHsh].
 exact: is_part_incr_first_n.
 Qed.
 
@@ -654,7 +652,7 @@ Qed.
 
 Lemma size_conj_part sh : is_part sh -> size (conj_part sh) = head 0 sh.
 Proof.
-elim: sh => [//= | s0 [| s1 sh] IHsh] /= /andP[Hhead /IHsh{IHsh}] /= Hrec.
+elim: sh => [//= | s0 [| s1 sh] IHsh] /= /andP[Hhead {}/IHsh] /= Hrec.
 - by rewrite size_nseq.
 - by move: Hhead; rewrite -{1}Hrec => /size_incr_first_n.
 Qed.
@@ -781,7 +779,7 @@ Lemma rem_corner_incr_first_n sh i :
 Proof.
 rewrite /is_rem_corner.
 elim: sh i => [/= i _ | s0 sh IHsh i]; first by elim: i.
-move=> /= => /andP[Hhead /IHsh{IHsh} Hrec].
+move=> /= => /andP[Hhead {}/IHsh Hrec].
 case: i => [| i] /=; first by case: sh Hhead {Hrec}.
 exact: (Hrec i).
 Qed.
@@ -794,9 +792,7 @@ elim: sh i n => [/= i n _ | s0 sh IHsh i n]; first by elim: i.
 rewrite [is_part _]/= => /andP[Hhead Hpart].
 case: i => [/= | i].
   case: sh IHsh Hhead Hpart => [//= | s1 sh] IHsh Hhead Hpart H10.
-    case: n {IHsh Hhead Hpart} => [//= | n].
-    rewrite /nseq; case: n => [//= | n] /=.
-    by rewrite ltnS.
+    by case: n {IHsh Hhead Hpart} => [| [| n]].
   case: n {IHsh Hhead Hpart} => [| [| n]] //=.
   exact: (leq_trans H10).
 rewrite [X in (X -> _)]/= => Hcorn.
@@ -869,7 +865,7 @@ Lemma sumn_take_inj s t :
   (forall k, sumn (take k s) = sumn (take k t)) -> s = t.
 Proof.
 elim: s t => [//= t _ | s0 s IHs t].
-- move/part_head_non0; case: t => [//= | t0 t] /= Ht0 IHs.
+- move/part_head_non0; case: t => [| t0 t] //= Ht0 IHs.
   exfalso; move/(_ 1) : IHs; rewrite /= take0 /= addn0 => H.
   by rewrite H eq_refl in Ht0.
 - case: t s IHs => [s _ Hs _ /(_ 1) | t0 t] /=.
@@ -898,7 +894,7 @@ Proof.
 apply (iffP idP).
 - elim: inner outer => [//= | inn0 inn IHinn] /=.
     by move=> outer _; split; last by move=> i; rewrite nth_nil.
-  case=> [//= | out0 out] /= /andP[H0 /IHinn{IHinn} [Hsize H]].
+  case=> [//= | out0 out] /= /andP[H0 {}/IHinn [Hsize H]].
   split; first by rewrite ltnS.
   by case.
 - elim: inner outer => [//= | inn0 inn IHinn] /=.
@@ -993,7 +989,7 @@ Lemma included_sumnE inner outer :
 Proof.
 elim: inner outer => [| inn0 inn IHinn] /=.
   by move=> outer Houter _ /esym/(part0 Houter) ->.
-case=> [//= | outer0 out] /= /andP[_ /IHinn{IHinn}Hrec] /andP[H0 Hincl] Heq.
+case=> [//= | outer0 out] /= /andP[_ {}/IHinn Hrec] /andP[H0 Hincl] Heq.
 by have:= leq_addE H0 (sumn_included Hincl) Heq => [] [-> /(Hrec Hincl) ->].
 Qed.
 
@@ -1103,7 +1099,7 @@ rewrite /outer_shape.
 elim: inner outer => [//= | inn0 inn IHinn] /= outer.
   rewrite subn0 => _; elim: outer => [//= | out0 out /= ->].
   by rewrite add0n.
-case: outer => [//= | out0 out] /= /andP[Hin /IHinn{IHinn} ->].
+case: outer => [//= | out0 out] /= /andP[Hin {}/IHinn ->].
 by rewrite addnC subnK.
 Qed.
 
@@ -1125,7 +1121,7 @@ rewrite /outer_shape; congr map; congr zip.
 rewrite /= size_cat size_nseq.
 set n := (X in (_++ _) ++ nseq X _).
 suff -> : n = 0 by rewrite /= cats0.
-rewrite /n{n}.
+rewrite {}/n.
 move: (size sz) (size inner) => a b.
 case: (ltnP a b) => [/ltnW | ] H.
 - by move: H; rewrite /leq => /eqP H; rewrite H addn0 H.
@@ -1293,7 +1289,7 @@ rewrite count_cat enum_partnsE /= Hsum Hpart !andbT.
 case: (altP (size p =P 0)) => Hsize.
 - rewrite count_flatten -map_comp.
   set empty := map _ _; have {empty} -> : empty = [seq 0 | i <- iota 1 sm].
-    rewrite /empty {empty} -eq_in_map => i /=.
+    rewrite {}/empty -eq_in_map => i /=.
     rewrite mem_iota add1n ltnS => /andP[/lt0n_neq0 Hi _].
     apply/count_memPn => /=; move: Hi; apply: contra.
     move/(allP (enum_partns_allP _ _)) => /= /andP[/eqP <- _].
@@ -2781,10 +2777,10 @@ Proof using.
 elim: s A => [| i s IHs] A /=.
   move=> /esym/cards0_eq -> _; exists [::]; split => //.
   by rewrite partition_set0.
-rewrite inE eq_sym => Hi /norP [Bne0 /IHs{IHs} Hrec].
+rewrite inE eq_sym => Hi /norP [Bne0 {}/IHs Hrec].
 have: i <= #|A| by rewrite -Hi; apply: leq_addr.
 move=> /ex_subset_card [B BsubA /eqP cardB]; subst i.
-have /Hrec{Hrec} [P [Puniq]] : sumn s = #|A :\: B|.
+have {}/Hrec [P [Puniq]] : sumn s = #|A :\: B|.
   by rewrite cardsD (setIidPr BsubA) -Hi addKn.
 move=> /and3P [/eqP covP trivP set0P] Ps; rewrite inE in set0P.
 have BninP : B \notin P.

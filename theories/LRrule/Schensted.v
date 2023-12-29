@@ -161,7 +161,7 @@ Proof using HRow.
 rewrite /inspred /= /bump; have:= HRow.
 elim: Row i => [/= | l0 r IHr] i /=; first by case: i.
 case: i => [|i] /is_row_cons[Hhead Hrow].
-- case: r {IHr} Hhead Hrow => [//=|l1 r] /= Hl0l1.
+- case: r {IHr} Hhead Hrow => [// |l1 r] /= Hl0l1.
   move/head_leq_last_row => Hlast Hll0.
   exact: lt_le_trans Hll0 (le_trans Hl0l1 Hlast).
 - by move/(IHr _ Hrow); case r => //; rewrite ltxx.
@@ -208,7 +208,7 @@ Notation pos := (inspos Row l).
 Definition ins := set_nth l Row pos l.
 
 Lemma inspos_leq_size : pos <= size Row.
-Proof using. by elim: Row => [//= | l0 r IHr] /=; case: (ltP l l0). Qed.
+Proof using. by elim: Row => [// | l0 r IHr] /=; case: (ltP l l0). Qed.
 
 Lemma inspos_lt_size_ins : pos < size ins.
 Proof using.
@@ -223,19 +223,19 @@ Lemma nbump_insposE : ~~bump -> mininspred = pos.
 Proof using HRow.
 move=> Hbump; rewrite (nbump_mininspredE Hbump).
 move: Hbump; rewrite notbump.
-elim: Row HRow => [//=|l0 r IHr] Hrow /= Hlast.
-case: (ltP l l0) => [Hll0|_].
+elim: Row HRow => [// | l0 r IHr] Hrow /= Hlast.
+case: (ltP l l0) => [Hll0 | _].
 * exfalso => {IHr}.
   have:= le_lt_trans (le_trans (head_leq_last_row Hrow) Hlast) Hll0.
   by rewrite ltxx.
-* move: Hrow=> /is_row_consK/IHr{IHr}.
-  case: r Hlast => [//=| l1 r] /= Hlast.
+* move: Hrow => /is_row_consK {}/IHr.
+  case: r Hlast => [// | l1 r] /= Hlast.
   by case: (ltP l l1) => _ /(_ Hlast) ->.
 Qed.
 
 Lemma inspred_inspos : bump -> inspred pos.
 Proof using.
-rewrite /inspred /bump; elim: Row => [//=| l0 [_ /= H| l1 r /= IHr]].
+rewrite /inspred /bump; elim: Row => [// | l0 [_ /= H | l1 r /= IHr]].
 - by rewrite H /= H.
 - by move/IHr; case: (ltP l l0).
 Qed.
@@ -248,8 +248,8 @@ Qed.
 
 Lemma nth_lt_inspos i : i < pos -> (nth l Row i <= l)%O.
 Proof using.
-elim: Row i => [//=|t0 r IHr] /=; case: (ltP l t0) => //= Ht.
-by case=> [//=|i] /=; exact: IHr.
+elim: Row i => [// | t0 r IHr] /=; case: (ltP l t0) => //= Ht.
+by case=> [// | i] /=; exact: IHr.
 Qed.
 
 Lemma inspredN_lt_inspos i : i < pos -> ~~ (inspred i).
@@ -284,7 +284,7 @@ Proof using HRow. by rewrite /insmin /ins insposE. Qed.
 Lemma insrowE : insmin = insrow Row l.
 Proof using HRow.
 rewrite /insmin insposE.
-elim: Row HRow => [//=| l0 r IHr] Hrow /=.
+elim: Row HRow => [// | l0 r IHr] Hrow /=.
 by case: (ltP l l0) => _ //=; rewrite (IHr (is_row_consK Hrow)).
 Qed.
 
@@ -302,7 +302,7 @@ Proof using HRow. by move=> Hnbump; rewrite -insposE nbump_mininspredE. Qed.
 Lemma lt_inspos_nth i : i < size Row -> (nth l Row i <= l)%O -> i < pos.
 Proof using HRow.
 move: HRow; move=> /is_rowP Hrow Hi Hnthi; rewrite -insposE /mininspred /inspred.
-case (ltP l (last l Row)) => [Hlt |//=].
+case (ltP l (last l Row)) => [Hlt | //].
 case (ex_minnP (ex_intro _ _ _)) => pos /(le_lt_trans Hnthi) H1 _.
 move/(_ l pos i): Hrow => H2.
 have {H2} /contra : pos <= i -> (nth l Row pos <= nth l Row i)%O.
@@ -311,7 +311,7 @@ by rewrite -ltnNge -ltNge; apply.
 Qed.
 
 Lemma insrow_head_lt : (head l (insrow Row l) <= l)%O.
-Proof using. by case: Row => [//=|l0 r] /=; case: (ltP l l0). Qed.
+Proof using. by case: Row => [// | l0 r] /=; case: (ltP l l0). Qed.
 
 Lemma ins_head_lt : (head l ins <= l)%O.
 Proof using HRow. by rewrite -insE insrowE; exact: insrow_head_lt. Qed.
@@ -358,7 +358,7 @@ Qed.
 Lemma ins_leq i : i < size Row -> (nth l ins i <= nth l Row i)%O.
 Proof using HRow.
 rewrite -insE /insmin nth_set_nth /=.
-case eqP => [->|_ _ //].
+case eqP => [-> | _ _ //].
 rewrite /mininspred /inspred; case (ltP l (last l Row)) => [Hcase | Hcase].
 - by case (ex_minnP (ex_intro _ _ _)) => pos Hl _ _; exact: ltW.
 - by rewrite ltnn.
@@ -379,7 +379,7 @@ Proof using. by rewrite /bump /= ltxx. Qed.
 Lemma bump_tail l0 r l : bump (l0 :: r) l -> (l0 <= l -> bump r l)%O.
 Proof using.
 rewrite /bump /= => Hbump Hll0.
-case: r Hbump => [/= H1 | //=].
+case: r Hbump => [/= H1 | //].
 by exfalso; have:= lt_le_trans H1 Hll0; rewrite ltxx.
 Qed.
 
@@ -398,12 +398,12 @@ Proof using. by rewrite /Sch rev_rcons. Qed.
 
 Lemma is_row_Sch w : is_row (Sch w).
 Proof using.
-by elim/last_ind: w => [//= | w wn IHw]; rewrite Sch_rcons is_row_ins.
+by elim/last_ind: w => [// | w wn IHw]; rewrite Sch_rcons is_row_ins.
 Qed.
 
 Lemma Sch_size w : size (Sch w) <= size w.
 Proof using.
-elim/last_ind: w => [//= | w wn IHw]; rewrite Sch_rcons size_rcons.
+elim/last_ind: w => [// | w wn IHw]; rewrite Sch_rcons size_rcons.
 exact: (leq_trans (size_ins_sup _ wn)).
 Qed.
 
@@ -416,14 +416,14 @@ Theorem Sch_exists w i :
   exists s : seq T, (last inh s == nth inh (Sch w) i) && subseqrow_n s w i.+1.
 Proof using.
 rewrite /subseqrow_n.
-elim/last_ind: w i => [//=| w wn IHw] i.
+elim/last_ind: w i => [// | w wn IHw] i.
 rewrite Sch_rcons {2}/ins.
-case (altP (i =P (inspos (Sch w) wn))) =>[|Hineq Hileq].
-- case: i => [<-|i Hieq ] _.
+case (altP (i =P (inspos (Sch w) wn))) => [| Hineq Hileq].
+- case: i => [<- | i Hieq ] _.
   + by exists [:: wn] => /=; case (Sch w) => /= [|_ _];
         rewrite -cats1 suffix_subseq; apply/and3P; repeat split.
   + have:= inspos_leq_size (Sch w) wn; rewrite -Hieq.
-    case/IHw => {IHw} s => /and4P [/eqP Hlast Hsubs /eqP Hsz Hrow].
+    move=> {}/IHw [s] /and4P[/eqP Hlast Hsubs /eqP Hsz Hrow].
     exists (rcons s wn); apply/and4P; repeat split.
     + by rewrite last_rcons nth_set_nth_any eq_refl.
     + by rewrite -subseq_rcons_eq.
@@ -439,7 +439,7 @@ case (altP (i =P (inspos (Sch w) wn))) =>[|Hineq Hileq].
     + by rewrite (bump_size_ins HrowSch Hcase).
     + rewrite (nbump_inspos_eq_size HrowSch Hcase) (nbump_size_ins HrowSch Hcase).
       by rewrite ltnS ltn_neqAle => -> ->.
-  case (IHw _ Hi) => {IHw} s => /and4P [/eqP Hlast Hsubs /eqP Hsz Hrow].
+  case (IHw _ Hi) => {IHw} s => /and4P[/eqP Hlast Hsubs /eqP Hsz Hrow].
   exists s; apply/and4P; repeat split.
     + by rewrite /ins in Hileq; rewrite nth_set_nth_any (negbTE Hineq) Hi Hlast.
     + apply: (subseq_trans Hsubs); exact: subseq_rcons.
@@ -462,10 +462,11 @@ case (altP (si =P wn)) => [-> {si} | Hsiwn Hsubs Hrow].
   (* s = wn *)
   + split; first by rewrite size_ins_non_0.
     have:= size_ins_non_0 (Sch w) wn => Hany.
-    rewrite -[size [::]]/(0) (set_nth_default wn inh Hany) nth0; apply: ins_head_lt.
+    rewrite -[size [::]]/(0) (set_nth_default wn inh Hany) nth0.
+    apply: ins_head_lt.
     exact: is_row_Sch.
   (* s = [s] si wn *)
-  move/(_ _ _ Hsubs (is_row_rconsK Hrow)): IHw => [] Hszlt Hlt.
+  move/(_ _ _ Hsubs (is_row_rconsK Hrow)): IHw => [Hszlt Hlt].
   have:= is_row_last Hrow; rewrite last_rcons => Hsiwn.
 
   case (boolP (bump (Sch w) wn )) => [Hbump | Hnbump].
@@ -507,8 +508,8 @@ Qed.
 
 Corollary size_ndec_Sch w s : subseqrow s w -> (size s) <= size (Sch w).
 Proof using.
-case/lastP: s => [//=| s si].
-move/Sch_leq_last => [] H _.
+case/lastP: s => [// | s si].
+move/Sch_leq_last => [H _].
 by rewrite size_rcons.
 Qed.
 
@@ -516,9 +517,9 @@ Corollary exist_size_Sch w : exists s : seq T, subseqrow_n s w (size (Sch w)).
 Proof using.
 case/lastP: w => [| w wn]; first by exists [::].
 have:= size_ins_non_0 (Sch w) wn; rewrite -Sch_rcons.
-case Hn : (size _) => [_ //=| n] _.
+case Hn : (size _) => [_ // | n] _.
 have:= ltnSn n; rewrite -{2}Hn => H.
-elim (Sch_exists H) => s /andP [] _ Hrsq.
+elim (Sch_exists H) => s /andP[_ Hrsq].
 by exists s.
 Qed.
 
@@ -567,7 +568,7 @@ Notation bumpRow := (bumprow Row l).
 
 Lemma ins_bumprowE : insRow = bumpRow.2.
 Proof using.
-elim: Row => [//= | t0 r IHr /=].
+elim: Row => [// | t0 r IHr] /=.
 case: (ltP l t0) => _ //=.
 by move: IHr; case (bumprow r l) => [lr tr] /= ->.
 Qed.
@@ -575,7 +576,7 @@ Qed.
 Lemma bump_bumprowE : bump -> bumpRow = (Some bumped, ins).
 Proof using HRow.
 rewrite /bumped -(insE HRow) (insrowE HRow).
-elim: Row HRow => [//= | t0 r IHr] Hrow /= Hlast;
+elim: Row HRow => [// | t0 r IHr] Hrow /= Hlast;
   first by rewrite bump_nil in Hlast.
 case: (ltP l t0) => //=.
 move: Hlast => /bump_tail H{}/H Hlast.
@@ -585,7 +586,7 @@ Qed.
 Lemma nbump_bumprowE : ~~bump -> bumpRow = (None, ins).
 Proof using HRow.
 rewrite notbump -(insE HRow) (insrowE HRow).
-elim: Row HRow => [//= | t0 r IHr] Hrow Hlast /=.
+elim: Row HRow => [// | t0 r IHr] Hrow Hlast /=.
 case: (ltP l t0) => //= Ht0.
 - exfalso.
   have:= le_lt_trans (le_trans (head_leq_last_row Hrow) Hlast) Ht0.
@@ -611,7 +612,7 @@ Lemma bumprow_size :
   let: (lr, tr) := bumpRow in
   (size Row).+1 == (size tr) + if lr is Some _ then 1 else 0.
 Proof using.
-elim: Row => [//= | t0 r IHr /=].
+elim: Row => [// | t0 r IHr] /=.
 case: (ltP l t0) => _ /=; first by rewrite -addn1.
 by move: IHr; case (bumprow r l) => [lr tr] /= /eqP ->.
 Qed.
@@ -647,7 +648,7 @@ Lemma dominate_inspos r1 r0 l :
   is_row r0 -> is_row r1 -> dominate r1 r0 ->
   bump r0 l -> inspos r0 l >= inspos r1 (bumped r0 l).
 Proof using.
-move=> Hrow0 Hrow1 /dominateP [] Hsz Hdom /= Hbump.
+move=> Hrow0 Hrow1 /dominateP[Hsz Hdom] /= Hbump.
 case (ltnP (inspos r0 l) (size r1)) => Hpossz.
 - move/(_ _ Hpossz): Hdom; rewrite -/(bumped r0 l) => Hl1.
   apply: (inspos_leq_exP Hrow1).
@@ -660,10 +661,10 @@ Lemma bump_dominate r1 r0 l :
   is_row r0 -> is_row r1 -> bump r0 l ->
   dominate r1 r0 -> dominate (ins r1 (bumped r0 l)) (ins r0 l).
 Proof using.
-move=> Hrow0 Hrow1 Hbump Hdom; have:= Hdom => /dominateP [] Hsize Hlt.
+move=> Hrow0 Hrow1 Hbump Hdom; have:= Hdom => /dominateP[Hsize Hlt].
 have Hsize' : size (ins r1 (bumped r0 l)) <= size (ins r0 l).
   rewrite (bump_size_ins Hrow0 Hbump) {1}/ins size_set_nth /maxn.
-  case (ltnP (inspos r1 (bumped r0 l)).+1 (size r1)) => [//=|_].
+  case (ltnP (inspos r1 (bumped r0 l)).+1 (size r1)) => [// | _].
   apply: (@leq_ltn_trans (inspos r0 l)); first exact: dominate_inspos.
   exact: bump_inspos_lt_size.
 apply/dominateP; split; first exact Hsize'.
@@ -686,9 +687,10 @@ case eqP => [Hipos0 | /eqP Hipos0]; case eqP => [Hipos1 | /eqP Hipos1].
 - apply: (@le_lt_trans _ T l); last exact: lt_bumped.
   by subst pos0; apply: nth_lt_inspos; rewrite ltn_neqAle Hipos0 /= Hipos1.
 - case (ltnP i (size r1)) => Hsz.
-  * rewrite (set_nth_default inh _ Hsz) (set_nth_default inh _ (leq_trans Hsz Hsize)).
+  * rewrite (set_nth_default inh _ Hsz)
+      (set_nth_default inh _ (leq_trans Hsz Hsize)).
     exact: Hlt.
-  * exfalso; case (boolP (bump r1 (bumped r0 l))) => [|Hnbump].
+  * exfalso; case (boolP (bump r1 (bumped r0 l))) => [ | Hnbump].
     - move/bump_size_ins => H; rewrite (H Hrow1) in Hi.
       by have:= leq_ltn_trans Hsz Hi; rewrite ltnn.
     - have:= Hnbump; move/nbump_ins_rconsE => Heq.
@@ -703,8 +705,8 @@ Lemma dominateK_inspos r1 r0 l0 :
   bump r0 l0 -> inspos r0 l0 >= inspos r1 (bumped r0 l0).
 Proof using.
 move Hl1 : (bumped r0 l0) => l1; rewrite /bumped in Hl1.
-move=> Hrow0 Hrow1 /dominateP [] Hsz Hdom /= Hbump.
-case (leqP (inspos r1 l1) (inspos r0 l0)) => [//= | Habs].
+move=> Hrow0 Hrow1 /dominateP[Hsz Hdom] /= Hbump.
+case (leqP (inspos r1 l1) (inspos r0 l0)) => [// | Habs].
 have Hpos1 := inspos_lt_size_ins r1 l1.
 have:= leq_trans Hpos1 Hsz; rewrite (bump_size_ins Hrow0 Hbump) => Hpos0.
 move: Hrow0 => /is_rowP Hrow0.
@@ -720,7 +722,7 @@ Lemma bump_dominateK r1 r0 l0 :
   is_row r0 -> is_row r1 -> bump r0 l0 ->
   dominate (ins r1 (bumped r0 l0)) (ins r0 l0) -> dominate r1 r0.
 Proof using.
-move=> Hrow0 Hrow1 Hbump0 Hdom; have:= Hdom => /dominateP [] Hsize Hlt.
+move=> Hrow0 Hrow1 Hbump0 Hdom; have:= Hdom => /dominateP[Hsize Hlt].
 have:= dominateK_inspos Hrow0 Hrow1 Hdom Hbump0 => Hpos.
 move Hl1 : (bumped r0 l0) => l1; rewrite Hl1 in Hdom Hsize Hlt Hpos.
 rewrite /bumped in Hl1.
@@ -729,11 +731,13 @@ have Hsize' : size r1 <= size r0.
   by apply/leq_trans; exact: size_ins_inf.
 apply/dominateP; split; first exact: Hsize'.
 move=> i Hi; have Hi' := leq_trans Hi (size_ins_inf Hrow1 l1).
-rewrite (set_nth_default l1 inh Hi) (set_nth_default l0 inh (leq_trans Hi Hsize')).
+rewrite (set_nth_default l1 inh Hi)
+  (set_nth_default l0 inh (leq_trans Hi Hsize')).
 case (altP (i =P inspos r1 l1)) => Hipos1.
 - have:= nth_inspos_ins r1 l1; rewrite -Hipos1.
   have:= Hlt i Hi'.
-  rewrite (set_nth_default l0 inh (leq_trans Hi' Hsize)) (set_nth_default l1 inh Hi').
+  rewrite (set_nth_default l0 inh (leq_trans Hi' Hsize))
+    (set_nth_default l1 inh Hi').
   rewrite {1}Hipos1 {1}/ins nth_set_nth {1}Hipos1 /=.
   case (altP (i =P inspos r0 l0)) => [Hipos0 _| Hipos0].
   * rewrite {2}Hipos0 Hl1 => <-; rewrite Hipos1 nth_inspos_ins.
@@ -749,7 +753,8 @@ case (altP (i =P inspos r1 l1)) => Hipos1.
     have:= contra (@lt_inspos_nth r1 Hrow1 l1 _ Hi).
     by rewrite -leqNgt -ltNge Hipos0; apply.
   * have:= Hlt _ Hi'.
-    rewrite (set_nth_default l0 inh (leq_trans Hi' Hsize)) (set_nth_default l1 inh Hi').
+    rewrite (set_nth_default l0 inh (leq_trans Hi' Hsize))
+      (set_nth_default l1 inh Hi').
     by rewrite !/ins !nth_set_nth /= (negbTE Hipos0) (negbTE Hipos1).
 Qed.
 
@@ -777,8 +782,8 @@ Qed.
 
 Theorem is_tableau_instab t l : is_tableau t -> is_tableau (instab t l).
 Proof using.
-elim: t l => [l _ //=| t0 t IHt l Htab].
-move: Htab => /= /and4P [] Ht0 Hrow0 Hdom Htab.
+elim: t l => [l _ // | t0 t IHt l Htab].
+move: Htab => /= /and4P[Ht0 Hrow0 Hdom Htab].
 case (boolP (bump t0 l)) => [Hbump0 | Hnbump0].
 - rewrite /= (bump_bumprowE Hrow0 Hbump0).
   case: t IHt Hdom Htab => [_ _ _ | t1 t IHt Hdom Htab] /=.
@@ -797,7 +802,7 @@ Qed.
 
 Lemma instab_non_nil t l : instab t l != [::].
 Proof using.
-by case: t => [//=| t0 t /=]; case (bumprow t0 l) => [[ll|]] l0.
+by case: t => [// | t0 t] /=; case (bumprow t0 l) => [[ll|]] l0.
 Qed.
 
 Fixpoint RS_rev w : seq (seq T) :=
@@ -806,7 +811,7 @@ Definition RS w := RS_rev (rev w).
 
 Theorem is_tableau_RS w : is_tableau (RS w).
 Proof using.
-elim/last_ind: w => [//= | w l0 /=].
+elim/last_ind: w => [// | w l0] /=.
 rewrite /RS rev_rcons /=.
 exact: is_tableau_instab.
 Qed.
@@ -837,7 +842,7 @@ Definition invbumped b s := (invbumprow b s).2.
 Lemma head_lt_invins b s i :
   s != [::] -> invbump b s -> (head i s <= head i (invins b s))%O.
 Proof using.
-rewrite /invins /invbump; case: s => [//=| l0 s /= _].
+rewrite /invins /invbump; case: s => [// | l0 s /= _].
 case (invbumprow b s) => r a.
 case: (leP b (head b s)) => _ //=.
 exact: ltW.
@@ -846,14 +851,14 @@ Qed.
 Lemma is_row_invins b s : is_row s -> is_row (invins b s).
 Proof using.
 rewrite /invins.
-elim: s => [_ //=|l0 s IHs] /= /is_row_cons[Hhead Hrow].
+elim: s => [_ // | l0 s IHs] /= /is_row_cons[Hhead Hrow].
 case: (leP b (head b s)) => [| Hb] /=;
-  first by move: Hrow; case s => [//= | s0 s'] /= -> ->.
+  first by move: Hrow; case s => [// | s0 s'] /= -> ->.
 move/(_ Hrow): IHs.
-case H : (invbumprow b s) => [[//=|r0 r] a] /= ->; rewrite andbT.
+case H : (invbumprow b s) => [[// | r0 r] a] /= ->; rewrite andbT.
 apply: (le_trans Hhead).
 have -> : r0 = head l0 (invins b s) by rewrite /invins H.
-case (altP (s =P [::])) => [-> //=|Hnnil].
+case (altP (s =P [::])) => [-> // | Hnnil].
 apply: (head_lt_invins _ Hnnil).
 by rewrite /invbump Hb.
 Qed.
@@ -862,10 +867,10 @@ Lemma head_leq_invbumped b s :
   s != [::] -> is_row s -> (head inh s <= (invbumped b s))%O.
 Proof using.
 rewrite /invbumped.
-elim: s => [_ //=|l0 s IHs] /= _ /is_row_cons[Hhead Hrow].
-case (altP (s =P [::])) => [-> /=| Hnnil]; first by rewrite lexx.
+elim: s => [_ // | l0 s IHs] /= _ /is_row_cons[Hhead Hrow].
+case (altP (s =P [::])) => [-> /= | Hnnil]; first by rewrite lexx.
 rewrite (set_head_default inh _ Hnnil).
-case: (leP b (head inh s)) => [/= |_]; first by rewrite lexx.
+case: (leP b (head inh s)) => [/= | _]; first by rewrite lexx.
 move: {IHs} (IHs Hnnil Hrow).
 case H : (invbumprow b s) => [r a] /= Hb.
 apply: (le_trans Hhead).
@@ -877,14 +882,14 @@ Lemma invbumprowK r a :
   (invbumprow (bumped r a) (ins r a)) = (r, a).
 Proof using.
 rewrite /bump; move=> Hrow Hbump; have:= bump_bumprowE Hrow Hbump.
-elim: r Hrow Hbump => [_ /= |l0 r IHr /= /is_row_cons[Hl0 Hrow] Hbump];
+elim: r Hrow Hbump => [_ /= | l0 r IHr /= /is_row_cons[Hl0 Hrow] Hbump];
   first by rewrite ltxx.
 case: (ltP a l0) => Hal0.
 - by move=> [] <- <- /=; rewrite Hl0.
 - have {}Hbump: (a < last a r)%O.
-    case: r {IHr Hl0 Hrow} Hbump Hal0 => [/=|//=]; first exact: lt_le_trans.
+    case: r {IHr Hl0 Hrow} Hbump Hal0 => [/= | //]; first exact: lt_le_trans.
   have H := bump_bumprowE Hrow Hbump.
-  rewrite H => [] [] <- <- /=.
+  rewrite H => [][<- <-] /=.
   have:= head_ins_lt_bumped Hrow (bumped r a) Hbump; rewrite ltNge => /negbTE ->.
   by rewrite (IHr Hrow Hbump H).
 Qed.
@@ -894,10 +899,10 @@ Lemma bumprowinvK b s :
   (bumprow (invins b s) (invbumped b s)) = (Some b, s).
 Proof using.
 rewrite /invbump /invins /invbumped.
-elim: s => [//= | s0 s IHs] /= _ /is_row_cons[Hhead Hrows] Hs0.
-case (altP (s =P [::])) => [-> /=| Hnnil]; first by rewrite lexx /= Hs0.
+elim: s => [// | s0 s IHs] /= _ /is_row_cons[Hhead Hrows] Hs0.
+case (altP (s =P [::])) => [-> /= | Hnnil]; first by rewrite lexx /= Hs0.
 rewrite (set_head_default s0 _ Hnnil).
-case: (leP b (head s0 s)) => [/=|]; first by rewrite Hs0.
+case: (leP b (head s0 s)) => [/= | ]; first by rewrite Hs0.
 rewrite (set_head_default b s0 Hnnil).
 move/(IHs Hnnil Hrows) {IHs}.
 case H : (invbumprow b s) => [r a] /= Hb; rewrite Hb.
@@ -918,8 +923,8 @@ Fixpoint instabnrow t l : seq (seq T) * nat :=
 
 Lemma instabnrowE t l : (instabnrow t l).1 = instab t l.
 Proof using.
-elim: t l => [//=| t0 t IHt] l /=.
-case (bumprow t0 l) => [[ll|//=] rr].
+elim: t l => [// | t0 t IHt] l /=.
+case (bumprow t0 l) => [[ll | //] rr].
 by move/(_ ll): IHt; case (instabnrow t ll) => [tres nres] /= ->.
 Qed.
 
@@ -955,12 +960,13 @@ Lemma is_rem_corner_instabnrow t l : is_tableau t ->
     let: (res, nrow) := instabnrow t l in is_rem_corner (shape res) nrow.
 Proof using.
 rewrite /is_rem_corner.
-elim: t l => [l _|t0 t IHt l /and4P [Hnnil Hrow /dominateP [Hdom _] Htab]] //=.
+elim: t l => [l _ | t0 t IHt l /and4P[Hnnil Hrow /dominateP[Hdom _] Htab]] //=.
 case (boolP (bump t0 l)) => [Hbump | Hnbump].
 - rewrite (bump_bumprowE Hrow Hbump) /=.
   move/(_ (bumped t0 l) Htab): IHt.
   by case (instabnrow t (bumped t0 l)) => [res nrow].
-- rewrite (nbump_bumprowE Hrow Hnbump) (nbump_ins_rconsE Hrow Hnbump) /= size_rcons.
+- rewrite (nbump_bumprowE Hrow Hnbump)
+    (nbump_ins_rconsE Hrow Hnbump) /= size_rcons.
   by move: Hdom; rewrite -nth0 /=; case t.
 Qed.
 
@@ -981,7 +987,7 @@ Fixpoint invinstabnrow t nrow : seq (seq T) * T :=
 Theorem invinstabnrowK t l :
   is_tableau t -> invinstabnrow (instab t l) (instabnrow t l).2 = (t, l).
 Proof using.
-elim: t l => [l //=| t0 t IHt] l /= /and4P [] Hnnil Hrow0 Hdom Htab.
+elim: t l => [l // | t0 t IHt] l /= /and4P[Hnnil Hrow0 Hdom Htab].
 case (boolP (bump t0 l)) => [Hbump | Hnbump].
 - rewrite (bump_bumprowE Hrow0 Hbump) /=.
   move/(_ (bumped t0 l) Htab): IHt.
@@ -990,28 +996,25 @@ case (boolP (bump t0 l)) => [Hbump | Hnbump].
 - rewrite (nbump_bumprowE Hrow0 Hnbump) (nbump_ins_rconsE Hrow0 Hnbump) /=.
   case Hres : (rcons t0 l) => [| ares tres]; first by move: Hres; case t0.
   case eqP => Htres.
-  * exfalso; move: Hnnil; have:= eq_refl (size (rcons t0 l)).
+    exfalso; move: Hnnil; have:= eq_refl (size (rcons t0 l)).
     by rewrite {2}Hres Htres size_rcons /= => /nilP ->.
-  * have -> : (belast ares tres) = t0
-      by have:= eq_refl (belast l (rcons t0 l));
-               rewrite {2}belast_rcons Hres /= => /eqP [].
-    by have -> : (last ares tres) = l
-      by have:= eq_refl (last l (rcons t0 l));
-               rewrite {2}last_rcons Hres /= => /eqP.
+  congr (_ :: _ , _).
+    by move: Hres => /(congr1 (belast l)); rewrite belast_rcons => [][->].
+  by move: Hres => /(congr1 (last l)); rewrite last_rcons => ->.
 Qed.
 
 Lemma invbump_geq_head t tin l nrow :
   t != [::] -> is_tableau t -> invinstabnrow t nrow = (tin, l) ->
   (l >= head l (head [::] t))%O.
 Proof using.
-case: t => [//= | r0 t] /= _ /and4P [] Hnnil0 Hrow0 _ _.
+case: t => [// | r0 t] /= _ /and4P[Hnnil0 Hrow0 _ _].
 case: nrow => [| nrow].
-- case: r0 Hnnil0 Hrow0 => [//= | l0 [| l1 tl0]] _ H /= [] _ <- //=.
+- case: r0 Hnnil0 Hrow0 => [// | l0 [| l1 tl0]] _ H /= [_ <-] //=.
   exact: head_leq_last_row H.
 - case (invinstabnrow t nrow) => [tr lr].
   have:= head_leq_invbumped lr Hnnil0 Hrow0.
   rewrite /invbumped.
-  case (invbumprow lr r0) => [t0r l0r] /= H [] _ <-.
+  case (invbumprow lr r0) => [t0r l0r] /= H [_ <-].
   by rewrite (set_head_default inh l0r Hnnil0).
 Qed.
 
@@ -1020,9 +1023,9 @@ Lemma invbump_dom r0 t tin l nrow :
   r0 != [::] -> dominate (head [::] t) r0 -> invbump l r0.
 Proof using.
 rewrite /invbump => Htnnil Ht /(invbump_geq_head Htnnil Ht).
-case: t Htnnil Ht => [//= | r1 t] /= _ /and4P [] Hnnil1 _ _ _.
-case: r1 Hnnil1 => [//= | l1 r1 ] /= _ Hl1.
-case: r0 => [//= | l0 r0 ] /= _ /dominateP [ ] _ /(_ 0 (ltn0Sn _)) => /= Hl0.
+case: t Htnnil Ht => [// | r1 t] /= _ /and4P[Hnnil1 _ _ _].
+case: r1 Hnnil1 => [// | l1 r1 ] /= _ Hl1.
+case: r0 => [// | l0 r0 ] /= _ /dominateP[_ /(_ 0 (ltn0Sn _))] => /= Hl0.
 exact: lt_le_trans Hl0 Hl1.
 Qed.
 
@@ -1030,14 +1033,14 @@ Theorem instabnrowinvK t nrow :
   is_tableau t -> t != [::] -> is_rem_corner (shape t) nrow ->
   let: (tin, l) := invinstabnrow t nrow in (instabnrow tin l) = (t, nrow).
 Proof using.
-elim: t nrow => [//= | t0 t IHt] nrow /= /and4P [] Hnnil0 Hrow0 Hdom Htab _.
+elim: t nrow => [// | t0 t IHt] nrow /= /and4P[Hnnil0 Hrow0 Hdom Htab _].
 rewrite /is_rem_corner.
 case: nrow => [{IHt} /= Hcorn | nrow Hcorn].
-+ case: t0 Hnnil0 Hrow0 Hdom Hcorn => [//= | l0 t0 _].
++ case: t0 Hnnil0 Hrow0 Hdom Hcorn => [// | l0 t0 _].
   case eqP => [/= -> _ _ | Hnnil0 Hrow0 _ _].
-  * case: t Htab => [//= |t1 t] /= /and4P [] Ht _ _ _ Hsz.
+  * case: t Htab => [// | t1 t] /= /and4P[Ht _ _ _ Hsz].
     by exfalso; move: Ht Hsz; case t1.
-  * elim/last_ind: t0 Hnnil0 Hrow0 => [//= | tt0 ln IHtt0] _ Hrow0.
+  * elim/last_ind: t0 Hnnil0 Hrow0 => [// | tt0 ln IHtt0] _ Hrow0.
     (* t0 = l0 :: [tt0] :: ln *)
     have:= head_leq_last_row Hrow0.
     rewrite belast_rcons last_rcons /= leNgt => /negbTE ->.
@@ -1072,7 +1075,7 @@ Qed.
 
 Lemma size_RSmap2 w : size ((RSmap w).2) = size w.
 Proof using.
-elim/last_ind: w => [//= | w wn].
+elim/last_ind: w => [// | w wn].
 rewrite /RSmap rev_rcons /=.
 case: (RSmap_rev (rev w)) => [t rows] /=.
 case: (instabnrow t wn) => [tr nrow] /= ->.
@@ -1084,7 +1087,7 @@ Proof using. rewrite /RSmap RSmapE; apply: is_tableau_RS. Qed.
 
 Lemma shape_RSmap_eq w : shape (RSmap w).1 = evalseq (RSmap w).2.
 Proof using.
-elim/last_ind: w => [//=| w l0]; rewrite /RSmap rev_rcons /=.
+elim/last_ind: w => [// | w l0]; rewrite /RSmap rev_rcons /=.
 have:= is_tableau_RSmap1 w; rewrite /RSmap.
 case: (RSmap_rev (rev w)) => [t rows] /= Htab.
 have:= shape_instabnrow l0 Htab.
@@ -1094,7 +1097,7 @@ Qed.
 
 Lemma is_yam_RSmap2 w : is_yam (RSmap w).2.
 Proof using.
-elim/last_ind: w => [//=| w l0].
+elim/last_ind: w => [// | w l0].
 have:= is_part_sht (is_tableau_RSmap1 (rcons w l0)).
 rewrite shape_RSmap_eq /RSmap rev_rcons /=.
 case Hbij : (RSmap_rev (rev w)) => [t rows] /=.
@@ -1125,7 +1128,7 @@ Definition RSmapinv2 pair := RSmapinv (pair.1) (pair.2).
 Theorem RSmapK w : RSmapinv2 (RSmap w) = w.
 Proof using.
 rewrite /RSmapinv2.
-elim/last_ind: w => [//=| w wn]; rewrite /RSmap /RS rev_rcons /=.
+elim/last_ind: w => [// | w wn]; rewrite /RSmap /RS rev_rcons /=.
 have:= is_tableau_RSmap1 w; rewrite /RSmap.
 case Hbij : (RSmap_rev (rev w)) => [t rows] /= Htab IHw.
 have:= invinstabnrowK wn Htab; rewrite -(instabnrowE t wn).
@@ -1139,7 +1142,7 @@ Proof using. by elim: s => //=; case nrow. Qed.
 
 Lemma size_invins b s : size (invins b s) = (size s).
 Proof using.
-rewrite /invins; elim: s => [//= | s0 s] /=.
+rewrite /invins; elim: s => [// | s0 s] /=.
 case H : (invbumprow b s) => [r a] /=.
 by case: (leP b (head b s)) => _ //= ->.
 Qed.
@@ -1147,7 +1150,7 @@ Qed.
 Lemma yam_tail_non_nil (l : nat) (s : seq nat) :
   is_yam (l.+1 :: s) -> s != [::].
 Proof using.
-case: s => [|//=] Hyam.
+case: s => [| //] Hyam.
 by have:= is_part_eval_yam Hyam; rewrite part_head0F.
 Qed.
 
@@ -1156,35 +1159,35 @@ Lemma shape_instabnrowinv1 t nrow yam :
   shape (invinstabnrow t nrow).1 == evalseq yam.
 Proof using.
 elim: nrow yam t => [|nrow IHnrow] yam t Hyam.
-- case: t => [//= | r0 t]; first by case (evalseq yam).
+- case: t => [/= | r0 t]; first by case (evalseq yam).
   rewrite evalseq_cons => Hshape.
   move/is_yam_tl : Hyam => /is_part_eval_yam Hpart.
   case: r0 Hpart Hshape => [/= | l0 [| l1 r0'] ] Hpart Hshape /=.
   * by case: (evalseq yam) Hshape.
   * case: (evalseq yam) Hpart Hshape => //=.
-    case => [|//=] l /andP []; rewrite leqn0.
+    case => [ | //] l /andP[]; rewrite leqn0.
     by move/part_head0F => ->.
   * move: Hshape; rewrite size_belast /=.
     by case (evalseq yam).
-- case: t => [//= | r0 t]; first by case (evalseq yam).
+- case: t => [/= | r0 t]; first by case (evalseq yam).
   rewrite evalseq_cons => /eqP Hshape.
   have Hsz0 : (size r0) = head 0 (evalseq yam).
     by move: Hshape => /=; case (evalseq yam) => [|s0 s] [] ->.
   move/(congr1 behead): Hshape.
-  rewrite behead_incr_nth -evalseq_decr_yam /= => /eqP/IHnrow{IHnrow} Hrec.
+  rewrite behead_incr_nth -evalseq_decr_yam /= => /eqP{}/IHnrow Hrec.
   have Hnnilyam := yam_tail_non_nil Hyam.
-  move: Hyam => /is_yam_decr; rewrite [decr_yam _]/= => /Hrec{Hrec} /=.
+  move: Hyam => /is_yam_decr; rewrite [decr_yam _]/= => {}/Hrec /=.
   case Hinv: (invinstabnrow t nrow) => [tin l] /=.
   have:= size_invins l r0; rewrite /invins.
   case Hbump: (invbumprow l r0) => [t0r l0r] /= -> /eqP ->.
   rewrite {Hbump t0r l0r Hinv tin l} evalseq_decr_yam Hsz0 {Hsz0 r0}.
-  case: yam Hnnilyam => [//= | a b _].
-  have: evalseq (a :: b) != [::] by case: a => [/= | a /=]; case (evalseq b).
+  case: yam Hnnilyam => [// | a b _].
+  have: evalseq (a :: b) != [::] by case: a => [| a] /=; case (evalseq b).
   by case (evalseq (a :: b)).
 Qed.
 
 Lemma head_tableau_non_nil h t : is_tableau (h :: t) -> h != [::].
-Proof using. by move/and4P => [] ->. Qed.
+Proof using. by move/and4P => [->]. Qed.
 
 Lemma is_tableau_instabnrowinv1 (s : seq (seq T)) nrow :
   is_tableau s -> is_rem_corner (shape s) nrow ->
@@ -1193,9 +1196,9 @@ Proof using.
 rewrite /is_rem_corner.
 elim: s nrow => [/= |s0 s IHs] nrow; first by case nrow.
 case: nrow => [/= | nrow].
-- move=> {IHs} /and4P []; case: s0 => [//= | s0h s0t] _.
+- move=> {IHs} /and4P[]; case: s0 => [// | s0h s0t] _.
   case eqP => [-> /= _ _ | /eqP Hnnil]; first by case s.
-  case/lastP: s0t Hnnil => [//= | s0t s0l] _; rewrite -!rcons_cons => Hrow.
+  case/lastP: s0t Hnnil => [// | s0t s0l] _; rewrite -!rcons_cons => Hrow.
   rewrite belast_rcons.
   case Ht : s => [/= | s1 s']; first by have:= is_row_rconsK Hrow => /= ->.
   rewrite -Ht /= => Hdom -> Hshape.
@@ -1203,8 +1206,8 @@ case: nrow => [/= | nrow].
   rewrite -rcons_cons in Hdom.
   move: Hdom; rewrite -cats1; apply: dominate_cut.
   by move: Hshape; rewrite Ht /= size_rcons ltnS.
-- case Hs : s => [//= | s1 s']; first by rewrite nth_nil.
-  rewrite -Hs => /= /and4P [] Hnnil0 Hrows0 Hdom Htabs Hcorn.
+- case Hs : s => [/= | s1 s']; first by rewrite nth_nil.
+  rewrite -Hs => /= /and4P[Hnnil0 Hrows0 Hdom Htabs] Hcorn.
   have:= Htabs; rewrite {1}Hs; move/head_tableau_non_nil => Hnnil1.
   move/(_ _ Htabs Hcorn): IHs.
   have Hnnils : (s != [::]) by rewrite Hs.
@@ -1215,26 +1218,27 @@ case: nrow => [/= | nrow].
   move: Hdom; rewrite {s}Hs /= => Hdom.
   have:= dominate_head Hnnil1 Hdom.
   rewrite (set_head_default l0 inh Hnnil0) (set_head_default l0 inh Hnnil1).
-  move=> /lt_le_trans H{}/H /(bumprowinvK Hnnil0 Hrows0).
+  move=> /lt_le_trans /[apply] /(bumprowinvK Hnnil0 Hrows0).
   have:= is_row_invins l0 Hrows0; have:= size_invins l0 s0;
   rewrite /invins /invbumped.
   case Hinv0: (invbumprow l0 s0) => [t0 l] /= Hsize Hrowt0 Hins0.
   have Hnnilt0: (t0 != [::]) by move: Hnnil0 Hsize; case t0 => [//=|]; case s0.
   rewrite Hnnilt0 Hrowt0 Htabt andbT /=.
-  case Ht : t Htabt => [//=| t1 t'] /tableau_is_row Hrowt1 /=.
-  have:= @head_instab t1 t' l0 Hrowt1; rewrite -{}Ht -{}Hins1 /= => Hins {t t' s'}.
+  case Ht : t Htabt => [// | t1 t'] /tableau_is_row Hrowt1 /=.
+  have:= @head_instab t1 t' l0 Hrowt1.
+  rewrite -{}Ht -{}Hins1 /= => Hins {t t' s'}.
   have Hbump : (bump t0 l).
     case (boolP (bump t0 l)) => [//= | Hnbump].
     by have:= nbump_bumprowE Hrowt0 Hnbump; rewrite Hins0.
   apply: (bump_dominateK Hrowt0 Hrowt1 Hbump).
   have:= bump_bumprowE Hrowt0 Hbump.
-  by rewrite /bumped Hins0 => [] [] <- <-; rewrite -Hins.
+  by rewrite /bumped Hins0 => [][<- <-]; rewrite -Hins.
 Qed.
 
 Theorem RSmapinv2K pair : is_RSpair pair -> RSmap (RSmapinv2 pair) = pair.
 Proof using.
-rewrite /is_RSpair /RSmap /RSmapinv2; case: pair => [tab yam] /and3P [].
-elim: yam tab => [[] //= _ _ | row yam IHyam] tab Htab Hyam Hshape /=.
+rewrite /is_RSpair /RSmap /RSmapinv2; case: pair => [tab yam] /and3P[].
+elim: yam tab => [[] // | row yam IHyam] tab Htab Hyam Hshape /=.
 have:= is_rem_corner_yam Hyam; rewrite -(eqP Hshape) => Hcorn.
 have Hnnil : (tab != [::]).
   move: Hshape; case tab => //= /eqP /(congr1 size).
@@ -1246,7 +1250,7 @@ have:= is_tableau_instabnrowinv1 Htab Hcorn.
 have:= shape_instabnrowinv1 Hyam Hshape.
 case Hinvins: (invinstabnrow tab row) => [tin l] /= Hshapetin Htabtin.
 rewrite rev_rcons /=.
-move: Hyam => /= /andP [] Hincr Hyam.
+move: Hyam => /= /andP[Hincr Hyam].
 by have:= IHyam tin Htabtin Hyam Hshapetin => /= -> ->.
 Qed.
 
@@ -1266,7 +1270,7 @@ Qed.
 
 Theorem size_RS w : size_tab (RS w) = size w.
 Proof using.
-elim/last_ind: w => [//= | w0 w].
+elim/last_ind: w => [// | w0 w].
 rewrite /RS rev_rcons /= -[(RS_rev (rev w0))]/(RS w0).
 by rewrite (size_instab _ (is_tableau_RS _)) size_rcons => ->.
 Qed.
@@ -1274,7 +1278,7 @@ Qed.
 Lemma count_instab t l p :
   is_tableau t -> count p (to_word (instab t l)) = (p l) + count p (to_word t).
 Proof using.
-elim: t l => [//= _ | r t IHt] l /= /and4P [] _ _ _ Htab.
+elim: t l => [// _ | r t IHt] l /= /and4P[_ _ _ Htab].
 have:= bumprow_count r l p.
 case (bumprow r l) => [[ll|] lr] /= /eqP Hbump; rewrite addnC in Hbump;
   rewrite !to_word_cons !count_cat [_ + (count p r)]addnC addnA Hbump.
@@ -1284,8 +1288,8 @@ Qed.
 
 Theorem count_RS w p : count p w = count p (to_word (RS w)).
 Proof using.
-elim/last_ind: w => [//= | w0 w];
-                    rewrite /RS !rev_rcons /= -[(RS_rev (rev w0))]/(RS w0).
+elim/last_ind: w => [// | w0 w].
+rewrite /RS !rev_rcons /= -[(RS_rev (rev w0))]/(RS w0).
 rewrite (count_instab _ _ (is_tableau_RS _)) => <-.
 by rewrite -[rcons _ _](revK) rev_rcons count_rev /= count_rev.
 Qed.
@@ -1329,9 +1333,9 @@ Definition RSclass :=
 Lemma RSclassP tab :
   is_tableau tab -> all (fun w => RS w == tab) (RSclass tab).
 Proof using.
-move=> Htab /=; apply/allP => w /mapP [] Q.
+move=> Htab /=; apply/allP => w /mapP[Q].
 move /(allP (enum_yamevalP (is_part_sht Htab))).
-rewrite /is_yam_of_eval => /andP [] Hyam /eqP Hsh -> {w}.
+rewrite /is_yam_of_eval => /andP[Hyam /eqP Hsh] ->{w}.
 by rewrite -RSmapE RSmapinv2K //= Htab Hyam Hsh /=.
 Qed.
 
@@ -1340,12 +1344,10 @@ Proof using.
 rewrite count_map.
 rewrite (eq_in_count (a2 := pred1 ((RSmap w).2))); first last.
   move=> y /= /(allP (enum_yamevalP (is_part_sht (is_tableau_RS _)))).
-  rewrite /is_yam_of_eval => /andP [] Hyam /eqP Hsh.
+  rewrite /is_yam_of_eval => /andP[Hyam /eqP Hsh].
   apply/idP/idP => /eqP H.
   - by rewrite -{}H RSmapinv2K //= (is_tableau_RS _) Hyam Hsh /=.
-  - rewrite {}H -RSmapE.
-    have -> : ((RSmap w).1, (RSmap w).2) = RSmap w by case RSmap.
-    by rewrite RSmapK.
+  - by rewrite {}H -RSmapE -surjective_pairing RSmapK.
 apply: (enum_yameval_countE (is_part_sht (is_tableau_RS _))).
 rewrite /is_yam_of_eval -shape_RSmap_eq RSmapE eq_refl andbT.
 exact: is_yam_RSmap2.
@@ -1358,16 +1360,14 @@ Lemma RSclassE tab w :
   is_tableau tab -> w \in RSclass tab = (RS w == tab).
 Proof using.
 move=> Htab /=; apply/idP/idP.
-- by move: Htab=> /RSclassP/allP H{}/H.
+- by move: Htab=> /RSclassP/allP/[apply].
 - move/eqP => Hw.
   apply/mapP; exists (RSmap w).2.
   + apply/count_memPn.
     rewrite (enum_yameval_countE (is_part_sht Htab)) //=.
     rewrite /is_yam_of_eval is_yam_RSmap2 /=.
     by rewrite -shape_RSmap_eq RSmapE Hw.
-  + rewrite -Hw -RSmapE.
-    rewrite (_ : ((RSmap w).1, (RSmap w).2) = RSmap w); last by case RSmap.
-    by rewrite RSmapK.
+  + by rewrite -Hw -RSmapE -surjective_pairing RSmapK.
 Qed.
 
 End Classes.
@@ -1414,20 +1414,20 @@ Proof using. by rewrite /RStabmap -RSmapE; case RSmap. Qed.
 Theorem RStabmap_spec w : is_RStabpair (RStabmap w).
 Proof using.
 have:= RSmap_spec w; rewrite /is_RStabpair /is_RSpair /RStabmap.
-case H : (RSmap w) => [P Q] /and3P [] -> /stdtab_of_yamP -> /eqP -> /=.
+case H : (RSmap w) => [P Q] /and3P[-> /stdtab_of_yamP-> /eqP->] /=.
 by rewrite shape_stdtab_of_yam.
 Qed.
 
 Lemma shape_RStabmapE (w : seq T) : shape (RStabmap w).1 = shape (RStabmap w).2.
 Proof using.
 have:= RStabmap_spec w; rewrite /is_RStabpair.
-by case: (RStabmap w) => [P Q] /and3P [] /= _ _ /eqP.
+by case: (RStabmap w) => [P Q] /and3P[/= _ _ /eqP].
 Qed.
 
 Lemma is_stdtab_RStabmap2 (w : seq T) : is_stdtab (RStabmap w).2.
 Proof using.
 have:= RStabmap_spec w; rewrite /is_RStabpair.
-by case: (RStabmap w) => [P Q] /and3P [] /=.
+by case: (RStabmap w) => [P Q] /and3P[] /=.
 Qed.
 
 Definition RStab w := RSTabPair (RStabmap_spec w).
@@ -1445,7 +1445,7 @@ Lemma RStabinvK : cancel RStabinv RStab.
 Proof using.
 rewrite /RStab /RStabinv /RStabmap.
 move=> [[P Q] H] /=; apply: pqpair_inj => /=.
-move: H; rewrite /is_RStabpair => /and3P [] Htab Hstdtab Hshape //=.
+move: H; rewrite /is_RStabpair => /and3P[Htab Hstdtab Hshape] //=.
 rewrite RSmapinv2K.
 + by rewrite (yam_of_stdtabK Hstdtab).
 + by rewrite /is_RSpair Htab yam_of_stdtabP //= shape_yam_of_stdtab.

@@ -107,7 +107,7 @@ Lemma plact1P u v :
           (v \in plact1 u).
 Proof using.
 apply: (iffP idP).
-- case: u => [//=|u0[//=|u1[//=|u2[]//=]]]; case H : ((u0 <= u2 < u1)%O).
+- case: u => [//|u0[//|u1[//|u2[]//=]]]; case H : ((u0 <= u2 < u1)%O).
   + by rewrite mem_seq1 => /eqP ->; exists u0, u2, u1.
   + by rewrite in_nil.
 - by move=> [a] [b] [c] [H -> ->]; rewrite /= H mem_seq1 eq_refl.
@@ -119,7 +119,7 @@ Lemma plact1iP u v :
           (v \in plact1i u).
 Proof using.
 apply: (iffP idP).
-- case: u => [//=|u0[//=|u1[//=|u2[]//=]]]; case H : ((u1 <= u2 < u0)%O).
+- case: u => [//|u0[//|u1[//|u2[]//=]]]; case H : ((u1 <= u2 < u0)%O).
   + by rewrite mem_seq1 => /eqP ->; exists u1, u2, u0.
   + by rewrite in_nil.
 - by move=> [a] [b] [c] [H -> ->]; rewrite /= H mem_seq1 eq_refl.
@@ -132,7 +132,7 @@ Lemma plact2P u v :
           (v \in plact2 u).
 Proof using.
 apply: (iffP idP).
-- case: u => [//=|u0[//=|u1[//=|u2[]//=]]]; case H : ((u1 < u0 <= u2)%O).
+- case: u => [//|u0[//|u1[//|u2[]//=]]]; case H : ((u1 < u0 <= u2)%O).
   + by rewrite mem_seq1 => /eqP ->; exists u1, u0, u2.
   + by rewrite in_nil.
 - by move=> [a] [b] [c] [H -> ->]; rewrite /= H mem_seq1 eq_refl.
@@ -144,7 +144,7 @@ Lemma plact2iP u v :
           (v \in plact2i u).
 Proof using.
 apply: (iffP idP).
-- case: u => [//=|u0[//=|u1[//=|u2[]//=]]]; case H : ((u2 < u0 <= u1)%O).
+- case: u => [//|u0[//|u1[//|u2[]//=]]]; case H : ((u2 < u0 <= u1)%O).
   + by rewrite mem_seq1 => /eqP ->; exists u2, u0, u1.
   + by rewrite in_nil.
 - by move=> [a] [b] [c] [H -> ->]; rewrite /= H mem_seq1 eq_refl.
@@ -185,37 +185,37 @@ Qed.
 Lemma plact1_homog : forall u : word, all (perm_eq u) (plact1 u).
 Proof using.
 move=> u; apply/allP => v /plact1P.
-move=> [a] [b] [c] [/andP [H1 H2] -> ->] /=; rewrite /perm_eq /=.
+move=> [a] [b] [c] [/andP[H1 H2] -> ->] /=; rewrite /perm_eq /=.
 rewrite !eq_refl ![c == a]eq_sym ![c == b]eq_sym ![b == a]eq_sym /=.
-case Hab : (a == b);
-    by rewrite (lt_eqF H2) (lt_eqF (le_lt_trans H1 H2)) !eq_refl /=.
+by case Hab : (a == b);
+  rewrite (lt_eqF H2) (lt_eqF (le_lt_trans H1 H2)) !eq_refl /=.
 Qed.
 
 Lemma plact1i_homog : forall u : word, all (perm_eq u) (plact1i u).
 Proof using.
 move=> u; apply/allP => v /plact1iP.
-move=> [a] [b] [c] [/andP [H1 H2] -> ->] /=; rewrite /perm_eq /=.
+move=> [a] [b] [c] [/andP[H1 H2] -> ->] /=; rewrite /perm_eq /=.
 rewrite !eq_refl ![c == a]eq_sym ![c == b]eq_sym ![b == a]eq_sym /=.
-case Hab : (a == b);
-    by rewrite (lt_eqF H2) (lt_eqF (le_lt_trans H1 H2)) !eq_refl /=.
+by case Hab : (a == b);
+  rewrite (lt_eqF H2) (lt_eqF (le_lt_trans H1 H2)) !eq_refl /=.
 Qed.
 
 Lemma plact2_homog : forall u : word, all (perm_eq u) (plact2 u).
 Proof using.
 move=> u; apply/allP => v /plact2P.
-move=> [a] [b] [c] [/andP [H1 H2] -> ->] /=; rewrite /perm_eq /=.
+move=> [a] [b] [c] [/andP[H1 H2] -> ->] /=; rewrite /perm_eq /=.
 rewrite !eq_refl ![c == a]eq_sym ![c == b]eq_sym ![b == a]eq_sym /=.
-case Hab : (b == c);
-    by rewrite (lt_eqF H1) (lt_eqF (lt_le_trans H1 H2)) !eq_refl /=.
+by case Hab : (b == c);
+  rewrite (lt_eqF H1) (lt_eqF (lt_le_trans H1 H2)) !eq_refl /=.
 Qed.
 
 Lemma plact2i_homog : forall u : word, all (perm_eq u) (plact2i u).
 Proof using.
 move=> u; apply/allP => v /plact2iP.
-move=> [a] [b] [c] [/andP [H1 H2] -> ->] /=; rewrite /perm_eq /=.
+move=> [a] [b] [c] [/andP[H1 H2] -> ->] /=; rewrite /perm_eq /=.
 rewrite !eq_refl ![c == a]eq_sym ![c == b]eq_sym ![b == a]eq_sym /=.
-case Hab : (b == c);
-    by rewrite (lt_eqF H1) (lt_eqF (lt_le_trans H1 H2)) !eq_refl /=.
+by case Hab : (b == c);
+  rewrite (lt_eqF H1) (lt_eqF (lt_le_trans H1 H2)) !eq_refl /=.
 Qed.
 
 Lemma plactrule_homog : forall u : word, all (perm_eq u) (plactrule u).
@@ -279,18 +279,18 @@ Implicit Type u v w : word.
 
 Lemma plact_row u v : is_row u -> u =Pl v -> u = v.
 Proof using.
-move=> Hrowu; move: v; apply: gencongr_ind => [//= |] x y1 z y2 Hu /plactruleP [].
-- move/plact1P => [a] [b] [c] [/andP [Hab Hbc] Hy _]; exfalso.
-  move: Hrowu; rewrite Hu Hy => /is_row_cat2[_]/is_row_cat2[] /= /and3P [] _.
+move=> Hrowu; move: v; apply: gencongr_ind => [// |] x y1 z y2 Hu /plactruleP[].
+- move/plact1P => [a] [b] [c] [/andP[Hab Hbc] Hy _]; exfalso.
+  move: Hrowu; rewrite Hu Hy => /is_row_cat2[_]/is_row_cat2[] /= /and3P[_].
   by rewrite leNgt Hbc.
-- move/plact1iP => [a] [b] [c] [/andP [Hab Hbc] _ Hy]; exfalso.
-  move: Hrowu; rewrite Hu Hy => /is_row_cat2[_]/is_row_cat2[] /= /and3P [].
+- move/plact1iP => [a] [b] [c] [/andP[Hab Hbc] _ Hy]; exfalso.
+  move: Hrowu; rewrite Hu Hy => /is_row_cat2[_]/is_row_cat2[] /= /and3P[].
   by rewrite leNgt (le_lt_trans Hab Hbc).
-- move/plact2P => [a] [b] [c] [/andP [Hab Hbc] Hy _]; exfalso.
-  move: Hrowu; rewrite Hu Hy => /is_row_cat2[_]/is_row_cat2[] /= /and3P [].
+- move/plact2P => [a] [b] [c] [/andP[Hab Hbc] Hy _]; exfalso.
+  move: Hrowu; rewrite Hu Hy => /is_row_cat2[_]/is_row_cat2[] /= /and3P[].
   by rewrite leNgt Hab.
-- move/plact2iP => [a] [b] [c] [/andP [Hab Hbc] _ Hy]; exfalso.
-  move: Hrowu; rewrite Hu Hy => /is_row_cat2[_]/is_row_cat2[] /= /and3P [] _.
+- move/plact2iP => [a] [b] [c] [/andP[Hab Hbc] _ Hy]; exfalso.
+  move: Hrowu; rewrite Hu Hy => /is_row_cat2[_]/is_row_cat2[] /= /and3P[_].
   by rewrite leNgt (lt_le_trans Hab Hbc).
 Qed.
 
@@ -298,27 +298,27 @@ Lemma sorted_center u v w :
   sorted >%O (u ++ v ++ w) -> sorted >%O v.
 Proof using.
 rewrite /sorted; case: u => [| u0 u] /=.
-  case: v => [//= | v0 v] /=.
-  by rewrite cat_path => /andP [].
-case: v => [//= | v0 v] /=.
-rewrite !cat_path => /andP [] /= _ /andP [] _.
-by rewrite cat_path => /andP [].
+  case: v => [// | v0 v] /=.
+  by rewrite cat_path => /andP[].
+case: v => [// | v0 v] /=.
+rewrite !cat_path => /andP[/= _ /andP[_]].
+by rewrite cat_path => /andP[].
 Qed.
 
 Lemma plact_col u v : sorted >%O u -> u =Pl v -> u = v.
 Proof using.
-move=> Hcolu; move: v; apply: gencongr_ind => [//= |] x y1 z y2 Hu /plactruleP [].
+move=> Hcolu; move: v; apply: gencongr_ind => [// |] x y1 z y2 Hu /plactruleP[].
 - move/plact1P => [a] [b] [c] [/andP [Hab Hbc] Hy _]; exfalso.
-  move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P [].
+  move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P[].
   by rewrite ltNge (le_trans Hab (ltW Hbc)).
 - move/plact1iP => [a] [b] [c] [/andP [Hab Hbc] _ Hy]; exfalso.
-  move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P [] _.
+  move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P[_].
   by rewrite ltNge Hab.
 - move/plact2P => [a] [b] [c] [/andP [Hab Hbc] Hy _]; exfalso.
-  move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P [] _.
+  move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P[_].
   by rewrite ltNge (le_trans (ltW Hab) Hbc).
 - move/plact2iP => [a] [b] [c] [/andP [Hab Hbc] _ Hy]; exfalso.
-  move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P [].
+  move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P[].
   by rewrite ltNge Hbc.
 Qed.
 
@@ -338,36 +338,36 @@ have {}Huniq x y z : rev u =Pl rev (x ++ y ++ z) -> uniq y.
   move=> Hpl; have : uniq (x ++ y ++ z).
     rewrite -rev_uniq -(perm_uniq (s1 := rev u)) ?rev_uniq //.
     exact: plact_homog.
-  by rewrite !cat_uniq => /and4P [] _ _.
-move: v; apply: gencongr_ind => [| x y1 z y2 Hv /plactruleP []] /=;
+  by rewrite !cat_uniq => /and4P[_ _].
+move: v; apply: gencongr_ind => [| x y1 z y2 Hv /plactruleP[]] /=;
     first exact: plact_refl.
-- move/plact1P => [a] [b] [c] [/andP [Hab Hbc] Hy1 Hy2].
+- move/plact1P => [a] [b] [c] [/andP[Hab Hbc] Hy1 Hy2].
   apply (plact_trans Hv); rewrite !rev_cat -!catA; apply: plact_is_congr.
   rewrite Hy1 Hy2 /rev /=; apply rule_gencongr.
   apply/plactruleP/or4P => /=.
-  move: Hv => /Huniq; rewrite Hy1 /= => /andP [].
-  rewrite mem_seq2 negb_or => /andP [] _ Hanb _.
+  move: Hv => /Huniq; rewrite Hy1 /= => /andP[].
+  rewrite mem_seq2 negb_or => /andP[_ Hanb] _.
   by rewrite !lt_neqAle Hab Hanb (ltW Hbc) /= !mem_seq1 eq_refl ?orbT.
-- move/plact1iP => [a] [b] [c] [/andP [Hab Hbc] Hy2 Hy1].
+- move/plact1iP => [a] [b] [c] [/andP[Hab Hbc] Hy2 Hy1].
   apply (plact_trans Hv); rewrite !rev_cat -!catA; apply: plact_is_congr.
   rewrite Hy1 Hy2 /rev /=; apply rule_gencongr.
   apply/plactruleP/or4P => /=.
-  move: Hv => /Huniq; rewrite Hy1 /= => /and3P [] _.
+  move: Hv => /Huniq; rewrite Hy1 /= => /and3P[] _.
   rewrite mem_seq1 => Hanb _.
   by rewrite !lt_neqAle Hab Hanb (ltW Hbc) /= !mem_seq1 eq_refl ?orbT.
-- move/plact2P => [a] [b] [c] [/andP [Hab Hbc] Hy1 Hy2].
+- move/plact2P => [a] [b] [c] [/andP[Hab Hbc] Hy1 Hy2].
   apply (plact_trans Hv); rewrite !rev_cat -!catA; apply: plact_is_congr.
   rewrite Hy1 Hy2 /rev /=; apply rule_gencongr.
   apply/plactruleP/or4P => /=.
   move: Hv => /Huniq; rewrite Hy1 /= => /andP [].
-  rewrite mem_seq2 negb_or => /andP [] _ Hbnc _.
+  rewrite mem_seq2 negb_or => /andP[_ Hbnc] _.
   by rewrite !lt_neqAle Hbc Hbnc (ltW Hab) /= !mem_seq1 eq_refl ?orbT.
-- move/plact2iP => [a] [b] [c] [/andP [Hab Hbc] Hy2 Hy1].
+- move/plact2iP => [a] [b] [c] [/andP[Hab Hbc] Hy2 Hy1].
   apply (plact_trans Hv); rewrite !rev_cat -!catA; apply: plact_is_congr.
   rewrite Hy1 Hy2 /rev /=; apply rule_gencongr.
   apply/plactruleP/or4P => /=.
-  move: Hv => /Huniq; rewrite Hy1 /= => /and3P [].
-  rewrite mem_seq2 negb_or => /andP [] Hbnc _ _ _.
+  move: Hv => /Huniq; rewrite Hy1 /= => /and3P[].
+  rewrite mem_seq2 negb_or => /andP[Hbnc _] _ _.
   by rewrite !lt_neqAle Hbc Hbnc (ltW Hab) /= !mem_seq1 eq_refl ?orbT.
 Qed.
 
@@ -449,7 +449,7 @@ move: Hu => /plact_trans; apply => {u}.
 rewrite /revdual /= !rev_cat.
 apply: plact_catl; apply: plact_catr.
 apply: rule_gencongr => /=.
-by move: Hplact => /plactruleP [];
+by move: Hplact => /plactruleP[];
   rewrite !mem_cat (plact1dual, plact1idual, plact2dual, plact2idual);
   rewrite /revdual /= => -> ; rewrite /= ?orbT.
 Qed.
@@ -464,7 +464,7 @@ rewrite /from_revdual /= !rev_cat.
 apply: plact_catl. apply: plact_catr.
 apply: rule_gencongr => /=.
 move: Hplact; rewrite -{1}[b1]from_revdualK -{1}[b2]from_revdualK.
-by move=> /plactruleP [];
+by move=> /plactruleP[];
   rewrite !mem_cat -(plact1dual, plact1idual, plact2dual, plact2idual);
   rewrite /from_revdual /= => -> ; rewrite /= ?orbT.
 Qed.
@@ -628,7 +628,7 @@ Implicit Type u v w r : word.
 
 Lemma rembig_plact1 u v : u \in (plact1 v) -> rembig u = rembig v.
 Proof using.
-move/plact1P => [] a [] b [] c [] /andP [] Hab Hbc -> -> /=.
+move/plact1P => [a] [b] [c] [] /andP[Hab Hbc] -> -> /=.
 rewrite Hbc [(b < a)%O]ltNge Hab /= andbT andbF.
 by rewrite (le_lt_trans Hab Hbc).
 Qed.
@@ -638,7 +638,7 @@ Proof using. by rewrite -plact1I => /rembig_plact1 ->. Qed.
 
 Lemma rembig_plact2 u v : u \in (plact2 v) -> rembig u = rembig v.
 Proof using.
-move/plact2P => [] a [] b [] c [] /andP [] Hab Hbc -> -> /=.
+move/plact2P => [a] [b] [c] [] /andP[Hab Hbc] -> -> /=.
 rewrite Hab [(c < b)%O]ltNge Hbc /= !andbT.
 by rewrite [(c < a)%O]ltNge (lt_le_trans Hab Hbc)
            (ltW (lt_le_trans Hab Hbc)).
@@ -662,11 +662,11 @@ rewrite (plact_ltrans H).
 have:= plactrule_homog b1 => {u H} /allP/(_ _ Hplact) Heq.
 have:= Heq; rewrite -(perm_cat2r c) => Heqc.
 have:= rembig_eq_permR _ Heqc => /(_ a) [] [-> ->].
-- apply: plact_is_congr; exact: rule_gencongr.
+- by apply: plact_is_congr; exact: rule_gencongr.
 - apply: plact_catr.
   have:= rembig_eq_permL _ Heq => /(_ c) [] [-> ->].
-  + apply: plact_catl; rewrite (rembig_plact Hplact); exact: plact_refl.
-  + apply: plact_catl; exact: rule_gencongr.
+  + by apply: plact_catl; rewrite (rembig_plact Hplact); exact: plact_refl.
+  + by apply: plact_catl; exact: rule_gencongr.
 Qed.
 
 Lemma inspos_rcons l r b : (l < b)%O -> inspos r l = inspos (rcons r b) l.
@@ -706,16 +706,16 @@ Lemma allLeq_is_row_rcons w b :
 Proof using.
 move=> H row Hin; apply: is_row_rcons.
 - move: Hin; have:= is_tableau_RS w.
-  elim: (RS w) => [//= | t0 t IHt] /= /and4P [_ Hrow _ Htab].
-  rewrite inE => /orP [].
+  elim: (RS w) => [// | t0 t IHt] /= /and4P[_ Hrow _ Htab].
+  rewrite inE => /orP[].
   + by move/eqP => ->.
   + exact: IHt.
 - have: allLeq (to_word (RS w)) b by rewrite (perm_allLeq (perm_RS w)).
-  elim: (RS w) Hin => [//= | t0 t IHt] /=.
-  rewrite inE to_word_cons => /orP [/eqP ->|].
-  + rewrite allLeq_catE => /andP [] _; case/lastP: t0 => [//=| t0 tn].
+  elim: (RS w) Hin => [// | t0 t IHt] /=.
+  rewrite inE to_word_cons => /orP[/eqP ->|].
+  + rewrite allLeq_catE => /andP[_]; case/lastP: t0 => [// | t0 tn].
     by move/allLeq_last; rewrite last_rcons.
-  + by move=> Hrow; rewrite allLeq_catE => /andP [] /(IHt Hrow).
+  + by move=> Hrow; rewrite allLeq_catE => /andP[/(IHt Hrow)].
 Qed.
 
 Lemma last_ins_lt r l b : (l < b -> last b r < b -> last b (ins r l) < b)%O.
@@ -737,7 +737,7 @@ rewrite -!nth_last /bumped => /is_rowP Hrow Hl Hlast.
 case: (ltnP (inspos r l) (size r)) => H.
 - rewrite (set_nth_default b l H).
   apply: (@le_lt_trans _ _ (nth b r (size r).-1)); last exact Hlast.
-  apply: Hrow; move: H; case: (size r) => [//=| s].
+  apply: Hrow; move: H; case: (size r) => [// | s].
   by rewrite ltnS /= => -> /=.
 - by rewrite (nth_default _ H).
 Qed.
@@ -752,7 +752,7 @@ Proof using.
 elim: t l lb => [/= l lb _| t0 t IHt l lb Htab] Hl Hallrow.
 - case: lb => [_ /=| lb Hj]; first by rewrite Hl /= (lt_eqF Hl) eq_refl.
   by exfalso; move/(_ 0 (ltn0Sn _)): Hj; rewrite /= ltxx.
-- move: Htab => /= /and4P [] Hnnil Hrow0 _ Htab.
+- move: Htab => /= /and4P[Hnnil Hrow0 _ Htab].
   case: lb => [/= _ {IHt Htab} | lb Hj /=].
   + have Hrow: is_row (rcons t0 b) by apply: Hallrow; rewrite inE eq_refl.
     case: (boolP (bump t0 l)) => [Hbump | Hnbump].
@@ -762,7 +762,7 @@ elim: t l lb => [/= l lb _| t0 t IHt l lb Htab] Hl Hallrow.
     * have:= nbump_bumprow_rconsE Hrow Hl Hnbump.
       rewrite (nbump_bumprowE Hrow0 Hnbump) (nbump_ins_rconsE Hrow0 Hnbump) => ->.
       rewrite /= last_rcons (lt_eqF Hl) /= {Hrow0 Hrow Hnbump}.
-      case: t Hallrow => [//= _ | t1 t Hallrow /=]; first by rewrite eq_refl.
+      case: t Hallrow => [/= _ | t1 t Hallrow /=]; first by rewrite eq_refl.
       have : t1 \in [:: t0, t1 & t] by rewrite !inE eq_refl orbT.
       move/Hallrow/bumprow_rcons => -> /=.
       by rewrite last_rcons eq_refl.
@@ -786,15 +786,15 @@ Theorem rembig_RS_last_big a v :
 Proof using.
 have: a :: v != [::] by [].
 move Hrem : (rembig (a :: v)) => rem; move: Hrem => /eqP; rewrite eq_sym.
-move/rembigP => H{}/H [] L [] b [] R [] -> Hav HL HR.
+move/rembigP => /[apply]- [L] [b] [R] [-> Hav HL HR].
 rewrite (maxL_LbR Hav HL (allLtnW HR)) Hav {a v Hav}.
 elim/last_ind: R HR => [/= _| R Rn IHR].
 - rewrite cats0 cats1.
   rewrite [RS (rcons L b)]/RS rev_rcons /= -[RS_rev (rev L)]/(RS L).
   case HRS : (instab (RS L)) => [| tr0 tr /=].
-  + exfalso; move: HRS; case: (RS L) => [//= | t0 t /=].
+  + exfalso; move: HRS; case: (RS L) => [// | t0 t /=].
     by case: (bumprow t0 b) => [[] u v].
-  + move: HRS; case HRSL : (RS L) => [//= | t0 t /=].
+  + move: HRS; case HRSL : (RS L) => [// | t0 t /=].
     * by move=> [<- <-] /=; rewrite eq_refl.
     * have Hrow: is_row (rcons t0 b).
         have := allLeq_is_row_rcons HL; rewrite HRSL.
@@ -869,7 +869,7 @@ Lemma plactic_filter_ge L u v :
 Proof using.
 move: v; apply: gencongr_ind; first exact: plact_refl.
 move=> a b1 c b2 Hu.
-rewrite (plact_ltrans Hu) {u Hu} => /plactruleP [].
+rewrite (plact_ltrans Hu) {u Hu} => /plactruleP[].
 - exact: plact1_ge.
 - rewrite -plact1I => /(plact1_ge L)-/(_ a c).
   by move/plact_ltrans <-; exact: plact_refl.
@@ -894,7 +894,7 @@ have Heq: {in u, >%O L =1 >=%O ML}.
   move=> x Hx /=.
   apply/idP/idP => Hxl.
   - by apply: HML; rewrite mem_filter Hx /= Hxl.
-  - have:= in_maxL fu0 fu'; rewrite -Hfu; rewrite mem_filter /= => /andP [HMLL _].
+  - have:= in_maxL fu0 fu'; rewrite -Hfu; rewrite mem_filter /= => /andP[HMLL _].
     exact: le_lt_trans Hxl HMLL.
 rewrite (eq_in_filter Heq).
 have {}Heq: {in v, >%O L =1 >=%O ML}.
@@ -982,26 +982,26 @@ split.
   + by rewrite H ?orbT.
 rewrite (plact_ltrans Hu) {Hu} !map_cat.
 apply: plact_catr; apply: plact_catl.
-apply: rule_gencongr => /=; move: Hrule => /plactruleP [].
+apply: rule_gencongr => /=; move: Hrule => /plactruleP[].
 - move/plact1P => [a] [b] [c] [Hord Hv1]; rewrite Hv1 => -> {v2}; subst v1.
-  rewrite !mem_cat /=; move: Hord => /andP [].
+  rewrite !mem_cat /=; move: Hord => /andP[].
   move: Hperm => /subset_abc [Ha Hc Hb].
   rewrite -(le_mono_in Hincr) // => -> /(Hincr Hb Hc) -> /=.
   by rewrite mem_seq1 eq_refl ?orbT.
 - move/plact1iP => [a] [b] [c] [Hord -> {v2} Hv1]; rewrite Hv1; subst v1.
-  rewrite !mem_cat /=; move: Hord => /andP [].
+  rewrite !mem_cat /=; move: Hord => /andP[].
   move: Hperm => /subset_abc [Hc Ha Hb].
   rewrite -(le_mono_in Hincr) // => -> /(Hincr Hb Hc) -> /=.
   by rewrite mem_seq1 eq_refl ?orbT.
 + move/plact2P => [a] [b] [c] [Hord Hv1]; rewrite Hv1 => -> {v2}; subst v1.
-  rewrite !mem_cat /=; move: Hord => /andP [].
+  rewrite !mem_cat /=; move: Hord => /andP[].
   move: Hperm => /subset_abc [Hb Ha Hc].
-  move => /(Hincr Ha Hb) ->; rewrite -(le_mono_in Hincr) // => ->.
+  move=> /(Hincr Ha Hb) ->; rewrite -(le_mono_in Hincr) // => ->.
   by rewrite mem_seq1 eq_refl ?orbT.
 + move/plact2iP => [a] [b] [c] [Hord -> {v2} Hv1]; rewrite Hv1; subst v1.
-  rewrite !mem_cat /=; move: Hord => /andP [].
+  rewrite !mem_cat /=; move: Hord => /andP[].
   move: Hperm => /subset_abc [Hb Hc Ha].
-  move => /(Hincr Ha Hb) ->; rewrite -(le_mono_in Hincr) // => ->.
+  move=> /(Hincr Ha Hb) ->; rewrite -(le_mono_in Hincr) // => ->.
   by rewrite mem_seq1 eq_refl ?orbT.
 Qed.
 

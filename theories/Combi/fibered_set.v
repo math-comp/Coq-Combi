@@ -76,20 +76,20 @@ Qed.
 
 Lemma fbset_fbbij x : x \in U -> fbbij V x \in V.
 Proof using HcardEq.
-by move=> /fbbij_in_fiber /imsetP [x0]; rewrite inE => /andP [] Hx0 _ ->.
+by move=> /fbbij_in_fiber /imsetP[x0]; rewrite inE => /andP[Hx0 _] ->.
 Qed.
 
 Lemma equi_fbbij x : x \in U -> fbfun (fbbij V x) = fbfun x.
 Proof using HcardEq.
 move=> /fbbij_in_fiber.
-by move=> /imsetP [im0]; rewrite inE => /andP [_ /eqP <- ->].
+by move=> /imsetP[im0]; rewrite inE => /andP[_ /eqP <-] ->.
 Qed.
 
 Lemma fbbijK : {in U, cancel (fbbij V) (fbbij U)}.
 Proof using HcardEq.
 move=> x Hx.
 have : index (fbbij V x) (enum (fiber V (fbfun x))) =
-       index x         (enum (fiber U (fbfun x))).
+       index          x  (enum (fiber U (fbfun x))).
   rewrite index_uniq //; last exact: enum_uniq.
   by rewrite -cardE -HcardEq cardE index_mem mem_enum; apply: mem_fiber.
 rewrite /fbbij (equi_fbbij Hx) => ->.
@@ -117,6 +117,8 @@ Lemma fbbijP (U V : fibered_set) :
   [/\ {in U &, injective (fbbij V)},
    [set fbbij V x | x in U] = V &
    {in U, forall x, fbfun (fbbij V x) = fbfun x} ].
-Proof using. split; [exact: inj_fbbij | exact: surj_fbbij | exact: equi_fbbij]. Qed.
+Proof using.
+split; [exact: inj_fbbij | exact: surj_fbbij | exact: equi_fbbij].
+Qed.
 
 End BijFiberedSet.
