@@ -19,7 +19,7 @@ Require Import Coq.Classes.SetoidTactics.
 Require Import Coq.Classes.SetoidClass.
 Require Import Coq.Classes.Morphisms.
 
-Local Open Scope signature_scope.
+#[local] Open Scope signature_scope.
 
 
 (* Should be in standard library Arith.EqNat.beq_nat. *)

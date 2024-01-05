@@ -84,7 +84,7 @@ Unset Printing Implicit Defensive.
 
 #[local] Hint Resolve porbit_id : core.
 
-Local Notation "''SC_' i " := (finset (fun x => #{x} == i))
+#[local] Notation "''SC_' i " := (finset (fun x => #{x} == i))
     (at level 0).
 
 (** ** Support and cycle in the centralizer *)
@@ -311,9 +311,9 @@ case: (boolP (_ \in _)) => [|_].
 - by move=> C _; rewrite perm1.
 Qed.
 
-Local Definition stab_iporbits_porbitmap P :=
+#[local] Definition stab_iporbits_porbitmap P :=
   PorbitMap (stab_iporbits_stab P) (stab_iporbits_homog P).
-Local Definition stab_iporbits_map P := cymap (stab_iporbits_porbitmap P).
+#[local] Definition stab_iporbits_map P := cymap (stab_iporbits_porbitmap P).
 
 Lemma stab_iporbits_map_inj P : injective (stab_iporbits_map P).
 Proof using.
@@ -536,7 +536,7 @@ rewrite inE; apply/andP; split.
   + exact: (subsetP (cent1_stab_iporbit_porbitgrpS s)).
 Qed.
 
-Local Open Scope nat_scope.
+#[local] Open Scope nat_scope.
 
 (** ** Conjucacy class cardinality *)
 Definition zcard l :=

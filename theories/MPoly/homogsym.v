@@ -89,8 +89,8 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory.
 Import ssrnum algC GRing.Theory Num.Theory.
 
-Local Open Scope nat_scope.
-Local Open Scope ring_scope.
+#[local] Open Scope nat_scope.
+#[local] Open Scope ring_scope.
 
 Reserved Notation "{ 'homsym' T [ n , d ] }"
   (at level 0, T, n, d at level 2, format "{ 'homsym'  T [ n ,  d ] }").
@@ -157,7 +157,7 @@ Variable n : nat.
 Variable R : ringType.
 Variable d : nat.
 
-Local Notation is_homsym := (@is_homsym n R d).
+#[local] Notation is_homsym := (@is_homsym n R d).
 
 Fact is_homsym_submod_closed : submod_closed is_homsym.
 Proof.
@@ -196,11 +196,11 @@ End HomogSymLModType.
 Section Vector.
 
 Variable n0 : nat.
-Local Notation n := (n0.+1).
+#[local] Notation n := (n0.+1).
 Variable R : comRingType.
 
 Variable d : nat.
-Local Notation SF := {sympoly R[n]}.
+#[local] Notation SF := {sympoly R[n]}.
 Implicit Type (la : 'P_d).
 
 Definition homsymm la : {homsym R[n, d]} := HomogSym (symm_homog n R la).
@@ -280,7 +280,7 @@ Canonical homsymprod p q : {homsym R[n, c + d]} :=
 Definition homsymprodr_head k p q := let: tt := k in homsymprod q p.
 
 Notation homsymprodr := (homsymprodr_head tt).
-Local Notation "p *h q" := (homsymprod p q)
+#[local] Notation "p *h q" := (homsymprod p q)
                              (at level 20, format "p  *h  q").
 
 Fact homsymprod_is_linear p : linear (homsymprod p).
@@ -340,9 +340,9 @@ Notation "p *h q" := (homsymprod p q)
 Section HomSymProdGen.
 
 Variable n0 : nat.
-Local Notation n := (n0.+1).
+#[local] Notation n := (n0.+1).
 Variable R : comRingType.
-Local Notation HSF := {homsym R[n, _]}.
+#[local] Notation HSF := {homsym R[n, _]}.
 
 Import LeqGeqOrder.
 
@@ -365,12 +365,12 @@ End HomSymProdGen.
 Section InHomSym.
 
 Variable n0 d : nat.
-Local Notation n := (n0.+1).
+#[local] Notation n := (n0.+1).
 Variable R : comRingType.
-Local Notation Pol := {mpoly R[n]}.
-Local Notation HSF := {homsym R[n, d]}.
+#[local] Notation Pol := {mpoly R[n]}.
+#[local] Notation HSF := {homsym R[n, d]}.
 
-Local Notation "''pi_' d" :=
+#[local] Notation "''pi_' d" :=
   (pihomog [measure of mdeg] d) (at level 5, format "''pi_' d").
 
 (** TODO: Contribute to Pierre-Yves's multinomials *)
@@ -414,9 +414,9 @@ End InHomSym.
 Section OmegaHomSym.
 
 Variable n0 d : nat.
-Local Notation n := (n0.+1).
+#[local] Notation n := (n0.+1).
 Variable R : comRingType.
-Local Notation HSF := {homsym R[n, d]}.
+#[local] Notation HSF := {homsym R[n, d]}.
 Implicit Types (p q : HSF) (la : intpartn d).
 
 Fact omegahomsym_subproof p : is_homsym d (omegasf p).
@@ -451,7 +451,7 @@ End OmegaHomSym.
 Section OmegaProd.
 
 Variable n0 : nat.
-Local Notation n := (n0.+1).
+#[local] Notation n := (n0.+1).
 Variable R : comRingType.
 
 Lemma omegahomsym_rmorph c d (p : {homsym R[n, c]}) (q : {homsym R[n, d]}) :
@@ -465,12 +465,12 @@ End OmegaProd.
 Section HomSymField.
 
 Variable n0 d : nat.
-Local Notation n := (n0.+1).
+#[local] Notation n := (n0.+1).
 Variable R : fieldType.
-Local Notation HSF := {homsym R[n, d]}.
+#[local] Notation HSF := {homsym R[n, d]}.
 
 
-Local Notation Basis := (#|{:'P_d}|.-tuple HSF).
+#[local] Notation Basis := (#|{:'P_d}|.-tuple HSF).
 Definition symbe : Basis := [tuple of [seq 'he[la] | la : 'P_d]].
 Definition symbh : Basis := [tuple of [seq 'hh[la] | la : 'P_d]].
 Definition symbm : Basis := [tuple of [seq 'hm[la] | la : 'P_d]].
@@ -544,7 +544,7 @@ rewrite -scalerAr linearZ /=.
 by rewrite mcoeff_alt_SchurE // Hmula mulr0.
 Qed.
 
-Local Notation E := [tuple mesym n R i.+1 | i < n].
+#[local] Notation E := [tuple mesym n R i.+1 | i < n].
 
 Definition intpart_of_mon m : seq nat :=
   rev (flatten [tuple nseq (m i) i.+1 | i < n]).
@@ -578,7 +578,7 @@ rewrite /= is_part_sortedE; apply/and3P; split.
 Qed.
 Canonical intpartn_of_mon m (H : mnmwgt m = d) := IntPartN (intpart_of_monP H).
 
-Local Lemma Esym : (forall i : 'I_n, E`_i \is symmetric).
+#[local] Lemma Esym : (forall i : 'I_n, E`_i \is symmetric).
 Proof using.
 move=> i; rewrite (nth_map i) ?size_tuple //.
 by rewrite -tnth_nth tnth_ord_tuple mesym_sym.
@@ -672,9 +672,9 @@ Variable R S : fieldType.
 Variable mor : {rmorphism R -> S}.
 
 Variable n0 d : nat.
-Local Notation n := (n0.+1).
-Local Notation HSFR := {homsym R[n, d]}.
-Local Notation HSFS := {homsym S[n, d]}.
+#[local] Notation n := (n0.+1).
+#[local] Notation HSFR := {homsym R[n, d]}.
+#[local] Notation HSFS := {homsym S[n, d]}.
 
 Fact map_sympoly_d_homog (p : HSFR) : map_sympoly mor p \is d.-homsym.
 Proof.
@@ -747,9 +747,9 @@ End ChangeField.
 Section Coord.
 
 Variable n0 d : nat.
-Local Notation n := (n0.+1).
+#[local] Notation n := (n0.+1).
 Variable R : fieldType.
-Local Notation HSF := {homsym R[n, d]}.
+#[local] Notation HSF := {homsym R[n, d]}.
 Implicit Type (la : 'P_d).
 
 Lemma symbmE la : ('hm)`_(enum_rank la) = 'hm[la] :> HSF.
@@ -763,11 +763,11 @@ Proof. by rewrite /symbp tupleE /= (nth_map la) ?nth_enum_rank // -cardE. Qed.
 Lemma symbsE la : ('hs)`_(enum_rank la) = 'hs[la] :> HSF.
 Proof. by rewrite /symbs tupleE /= (nth_map la) ?nth_enum_rank // -cardE. Qed.
 
-Local Lemma er_eqE (la mu : 'P_d) :
+#[local] Lemma er_eqE (la mu : 'P_d) :
   (enum_rank la == enum_rank mu) = (la == mu).
 Proof. by rewrite inj_eq //; apply: enum_rank_inj. Qed.
 
-Local Notation coord := (coord (vT := HSF)).
+#[local] Notation coord := (coord (vT := HSF)).
 
 Hypothesis (Hd : (d <= n)%N).
 Lemma coord_symbm la mu : coord 'hm (enum_rank mu) 'hm[la] = (la == mu)%:R.
@@ -791,8 +791,8 @@ Section ChangeNVar.
 
 Variable R : comRingType.
 Variable m0 n0 : nat.
-Local Notation m := m0.+1.
-Local Notation n := n0.+1.
+#[local] Notation m := m0.+1.
+#[local] Notation n := n0.+1.
 Variable d : nat.
 Hypothesis Hd : (d <= m)%N || (n0 < m)%N.
 
@@ -828,7 +828,7 @@ End ChangeNVar.
 
 
 
-Local Lemma char0_algC : [char algC] =i pred0.
+#[local] Lemma char0_algC : [char algC] =i pred0.
 Proof. exact: char_num. Qed.
 #[local] Hint Resolve char0_algC : core.
 
@@ -836,8 +836,8 @@ Proof. exact: char_num. Qed.
 Section ScalarProduct.
 
 Variable n0 d : nat.
-Local Notation n := (n0.+1).
-Local Notation HSF := {homsym algC[n, d]}.
+#[local] Notation n := (n0.+1).
+#[local] Notation HSF := {homsym algC[n, d]}.
 
 Definition homsymdot (p q : HSF) : algC :=
   \sum_(i < #|{:'P_d}|)

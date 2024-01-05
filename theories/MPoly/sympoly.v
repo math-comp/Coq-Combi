@@ -97,7 +97,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 Import GRing.Theory.
 
 
@@ -222,7 +222,7 @@ Variable n : nat.
 Variable R : comRingType.
 Implicit Type m : 'X_{1.. n}.
 
-Local Notation "m # s" := [multinom m (s i) | i < n]
+#[local] Notation "m # s" := [multinom m (s i) | i < n]
   (at level 40, left associativity, format "m # s").
 
 
@@ -231,7 +231,7 @@ Local Notation "m # s" := [multinom m (s i) | i < n]
 Fact syme_sym d : mesym n R d \is symmetric.
 Proof using. exact: mesym_sym. Qed.
 Canonical syme d : {sympoly R[n]} := SymPoly (syme_sym d).
-Local Notation "''e_' k" := (syme k).
+#[local] Notation "''e_' k" := (syme k).
 
 Lemma syme_geqnE d : d > n -> 'e_d = 0.
 Proof. by move=> Hd; apply val_inj; rewrite /= mesym_geqnE. Qed.
@@ -266,7 +266,7 @@ apply/issymP => s; rewrite -mpolyP => m.
 by rewrite mcoeff_sym !mcoeff_symh_pol mdeg_mperm.
 Qed.
 Canonical symh d : {sympoly R[n]} := SymPoly (symh_sym d).
-Local Notation "''h_' k" := (symh k).
+#[local] Notation "''h_' k" := (symh k).
 
 Lemma mcoeff_symh d m : 'h_d@_m = (mdeg m == d)%:R.
 Proof. exact: mcoeff_symh_pol. Qed.
@@ -286,7 +286,7 @@ rewrite mnmP => j; rewrite !mnmE /=; congr nat_of_bool.
 by apply/eqP/eqP => [|->//]; apply: perm_inj.
 Qed.
 Canonical symp d : {sympoly R[n]} := SymPoly (symp_sym d).
-Local Notation "''p_' k" := (symp k).
+#[local] Notation "''p_' k" := (symp k).
 
 Lemma symp_homog d : sympol 'p_d \is d.-homog.
 Proof using.
@@ -525,7 +525,7 @@ Notation "''m[' k ]" := (symm _ _ k).
 Section ChangeBaseMonomial.
 
 Variables (n : nat) (R : comRingType).
-Local Notation SP := {sympoly R[n]}.
+#[local] Notation SP := {sympoly R[n]}.
 
 Lemma expUmpartE nv k :
   (U_(ord0) *+ k)%MM = mpart (rowpartn k) :> 'X_{1..nv.+1}.
@@ -618,12 +618,12 @@ Section Schur.
 Variable n0 : nat.
 Variable R : comRingType.
 
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 
 Definition syms d (la : 'P_d) : {sympoly R[n]} :=
   SymPoly (Schur_sym n0 R la).
 
-Local Notation "''s[' k ]" := (syms k).
+#[local] Notation "''s[' k ]" := (syms k).
 
 Lemma syms_homog d (la : 'P_d) : sympol 's[la] \is d.-homog.
 Proof. exact: Schur_homog. Qed.
@@ -659,7 +659,7 @@ Section ProdGen.
 
 Variable n : nat.
 Variable R : comRingType.
-Local Notation SF := {sympoly R[n]}.
+#[local] Notation SF := {sympoly R[n]}.
 
 Section Defs.
 
@@ -668,8 +668,8 @@ Hypothesis gen_homog : forall d, sympol (gen d) \is d.-homog.
 
 Definition prod_gen d (sh : 'P_d) := \prod_(i <- sh) gen i.
 
-Local Notation "''g_' k" := (gen k) (at level 8, format "''g_' k").
-Local Notation "''g[' k ]" := (prod_gen k) (at level 8, format "''g[' k ]").
+#[local] Notation "''g_' k" := (gen k) (at level 8, format "''g_' k").
+#[local] Notation "''g[' k ]" := (prod_gen k) (at level 8, format "''g[' k ]").
 
 Lemma prod_gen_homog d (sh : 'P_d) : sympol 'g[sh] \is d.-homog.
 Proof using gen_homog.
@@ -702,11 +702,11 @@ End Defs.
 Variable gA gB : nat -> SF.
 Variable co : forall (d : nat), 'P_d -> R.
 
-Local Notation "''gA_' k" := (gA k) (at level 8, format "''gA_' k").
-Local Notation "''gA[' k ]" :=
+#[local] Notation "''gA_' k" := (gA k) (at level 8, format "''gA_' k").
+#[local] Notation "''gA[' k ]" :=
   (prod_gen gA k) (at level 8, format "''gA[' k ]").
-Local Notation "''gB_' k" := (gB k) (at level 8, format "''gB_' k").
-Local Notation "''gB[' k ]" :=
+#[local] Notation "''gB_' k" := (gB k) (at level 8, format "''gB_' k").
+#[local] Notation "''gB[' k ]" :=
   (prod_gen gB k) (at level 8, format "''gB[' k ]").
 
 Fixpoint coeff_prodgen_seq l : 'P_(sumn l) -> R :=
@@ -715,9 +715,9 @@ Fixpoint coeff_prodgen_seq l : 'P_(sumn l) -> R :=
              \sum_(p | la == p.1 +|+ p.2) co p.1 * coeff_prodgen_seq p.2
   else fun _ => 1.
 
-Local Notation "''co[' k ]" := (coeff_prodgen_seq k)
+#[local] Notation "''co[' k ]" := (coeff_prodgen_seq k)
                                  (at level 8, format "''co[' k ]").
-Local Notation "''co[' k ]_ l" := (coeff_prodgen_seq (l := l) k)
+#[local] Notation "''co[' k ]_ l" := (coeff_prodgen_seq (l := l) k)
                                  (at level 8, only parsing).
 
 Definition coeff_prodgen d (la mu : 'P_d) : R :=
@@ -770,9 +770,9 @@ Notation "''p[' k ]" := (prod_symp _ _ k).
 Section Cast.
 
 Variable n0 : nat.
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 Variables R : comRingType.
-Local Notation SF := {sympoly R[n]}.
+#[local] Notation SF := {sympoly R[n]}.
 
 Variables (d1 d2 : nat) (eq_d : d1 = d2) (la : 'P_d1).
 
@@ -794,9 +794,9 @@ End Cast.
 Section LRrule_Pieri.
 
 Variable n0 : nat.
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 Variables R : comRingType.
-Local Notation SF := {sympoly R[n]}.
+#[local] Notation SF := {sympoly R[n]}.
 
 Lemma syms_symsM d1 (la : 'P_d1) d2 (mu : 'P_d2) :
   's[la] * 's[mu] =
@@ -828,7 +828,7 @@ Section ScalarChange.
 Variables R S : comRingType.
 Variable mor : {rmorphism R -> S}.
 Variable n0 : nat.
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 
 Lemma map_mpoly_issym (f : {sympoly R[n]}) : map_mpoly mor f \is symmetric.
 Proof.
@@ -912,16 +912,16 @@ End ScalarChange.
 Section ChangeBasis.
 
 Variable n0 : nat.
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 Variable R : comRingType.
 
-Local Notation "''Xn'" := 'X_{1.. n}.
-Local Notation "''Xn_' m" := 'X_{1.. n < (mdeg m).+1}
+#[local] Notation "''Xn'" := 'X_{1.. n}.
+#[local] Notation "''Xn_' m" := 'X_{1.. n < (mdeg m).+1}
           (at level 10, m at next level, format "''Xn_' m").
-Local Notation "''XXn_' m" := 'X_{1.. n < (mdeg m).+1, (mdeg m).+1}
+#[local] Notation "''XXn_' m" := 'X_{1.. n < (mdeg m).+1, (mdeg m).+1}
           (at level 10, m at next level, format "''XXn_' m").
 Implicit Type m : 'Xn.
-Local Notation SF := {sympoly R[n]}.
+#[local] Notation SF := {sympoly R[n]}.
 
 (** ** Bases change between homogeneous and elementary *)
 Lemma sum_symh_syme (d : nat) :
@@ -1505,7 +1505,7 @@ and then tranfer to any commutative ring *)
 Section SymsSymmInt.
 
 Variable (n : nat) (d : nat).
-Local Notation SF := {sympoly int[n.+1]}.
+#[local] Notation SF := {sympoly int[n.+1]}.
 Implicit Type (la mu : 'P_d).
 
 Lemma syms_symm_int la :
@@ -1571,7 +1571,7 @@ End SymsSymmInt.
 Section SymsSymm.
 
 Variable (n : nat) (R : comRingType) (d : nat).
-Local Notation SF := {sympoly R[n.+1]}.
+#[local] Notation SF := {sympoly R[n.+1]}.
 Implicit Type (la mu : 'P_d).
 
 Lemma syms_symm la :
@@ -1620,7 +1620,7 @@ and then tranfer to any commutative ring *)
 Section SymheSymsInt.
 
 Variables (n : nat) (d : nat).
-Local Notation SF := {sympoly int[n.+1]}.
+#[local] Notation SF := {sympoly int[n.+1]}.
 Implicit Type la mu : 'P_d.
 
 Lemma symh_syms_int mu :
@@ -1670,7 +1670,7 @@ rewrite -(unitrig_sum1r (fun la : 'PDom_d => 'h[la]) mu (KostkaInv_unitrig d)).
 by rewrite -syms_symh_int.
 Qed.
 
-Local Notation "la '^~'" := (conj_intpartn la) (at level 10).
+#[local] Notation "la '^~'" := (conj_intpartn la) (at level 10).
 
 Lemma syme_syms_int mu :
   'e[mu] = \sum_(la : 'P_d) 'K(la, mu) *: 's[la^~] :> SF.
@@ -1726,7 +1726,7 @@ End SymheSymsInt.
 Section SymheSyms.
 
 Variables (R : comRingType) (n : nat) (d : nat).
-Local Notation SF := {sympoly R[n.+1]}.
+#[local] Notation SF := {sympoly R[n.+1]}.
 Implicit Type la mu : 'P_d.
 
 Lemma symh_syms mu : 'h[mu] = \sum_(la : 'P_d) 'K(la, mu) *: 's[la] :> SF.
@@ -1763,7 +1763,7 @@ rewrite rmorphD rmorph_sum /= map_symh_prod; congr (_ + _); apply eq_bigr => i _
 by rewrite linearZ_LR /= map_symh_prod.
 Qed.
 
-Local Notation "la '^~'" := (conj_intpartn la) (at level 10).
+#[local] Notation "la '^~'" := (conj_intpartn la) (at level 10).
 
 Lemma syme_syms mu : 'e[mu] = \sum_(la : 'P_d) 'K(la, mu) *: 's[la ^~] :> SF.
 Proof.
@@ -1807,13 +1807,13 @@ Section ChangeBasisSymhPowerSum.
 
 Variable nvar0 : nat.
 Variable R : fieldType.
-Local Notation nvar := nvar0.+1.
-Local Notation SF := {sympoly R[nvar]}.
+#[local] Notation nvar := nvar0.+1.
+#[local] Notation SF := {sympoly R[nvar]}.
 
 Fixpoint prod_partsum (s : seq nat) :=
   if s is _ :: s' then (sumn s * prod_partsum s')%N else 1%N.
 
-Local Notation "\Pi s" := (prod_partsum s)%:R^-1 (at level 0, s at level 2).
+#[local] Notation "\Pi s" := (prod_partsum s)%:R^-1 (at level 0, s at level 2).
 
 Lemma symh_to_symp_prod_partsum n :
   [char R] =i pred0 ->
@@ -1870,7 +1870,7 @@ rewrite /is_comp_of_n /= intcompn_sumn subnKC // eq_refl /=.
 rewrite /is_comp inE negb_or eq_sym Hi /=.
 exact: intcompnP.
 Qed.
-Local Definition intcompn_cons i (Hi : i != 0%N) n (Hin : i <= n) c :=
+#[local] Definition intcompn_cons i (Hi : i != 0%N) n (Hin : i <= n) c :=
   IntCompN (intcompn_cons_sub_proof c Hi Hin).
 
 Lemma intcompn_behead_sub_proof i n (c : intcompn n) :
@@ -1884,7 +1884,7 @@ subst c0; rewrite addKn eq_refl /=.
 move: Hcomp; rewrite /is_comp inE; apply contra => ->.
 by rewrite orbT.
 Qed.
-Local Definition intcompn_behead i (Hi : i != 0%N) n (Hin : i <= n) c :=
+#[local] Definition intcompn_behead i (Hi : i != 0%N) n (Hin : i <= n) c :=
   IntCompN (intcompn_behead_sub_proof c Hi Hin).
 
 
@@ -2009,7 +2009,7 @@ Qed.
 
 Variable   gen : forall nv : nat, nat -> {mpoly R[nv]}.
 Hypothesis gen_homog : forall nv i : nat, gen nv i \is i.-homog.
-Local Notation G nv := [tuple gen nv i.+1 | i < n].
+#[local] Notation G nv := [tuple gen nv i.+1 | i < n].
 
 Lemma homog_X_mPo_gen nv m : 'X_[m] \mPo G nv \is (mnmwgt m).-homog.
 Proof using gen gen_homog.
@@ -2037,7 +2037,7 @@ End Generators.
 Section MPoESymHomog.
 
 Variables (n : nat) (R : comRingType).
-Local Notation E nv := [tuple mesym nv R i.+1 | i < n].
+#[local] Notation E nv := [tuple mesym nv R i.+1 | i < n].
 
 Lemma mwmwgt_homogP (p : {mpoly R[n]}) d :
   reflect
@@ -2073,7 +2073,7 @@ Variable R : comRingType.
 Variable m : nat.
 Implicit Type p : {sympoly R[m]}.
 
-Local Notation SF p := (sym_fundamental (sympolP p)).
+#[local] Notation SF p := (sym_fundamental (sympolP p)).
 
 Definition sympolyf p := let: exist t _  := SF p in t.
 
@@ -2160,9 +2160,9 @@ Section Omega.
 
 Variable R : comRingType.
 Variable n0 : nat.
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 Implicit Type p : {sympoly R[n]}.
-Local Notation SF p := (sym_fundamental (sympolP p)).
+#[local] Notation SF p := (sym_fundamental (sympolP p)).
 
 Fact omegasf_is_symmetric p :
   (sympolyf p) \mPo [tuple sympol 'h_i.+1 | i < n] \is @symmetric n R.
@@ -2374,7 +2374,7 @@ Qed.
 
 End Omega.
 
-Local Close Scope Combi_scope.
+#[local] Close Scope Combi_scope.
 
 
 (** * Change of the number of variables *)
@@ -2382,10 +2382,10 @@ Section ChangeNVar.
 
 Variable R : comRingType.
 Variable m0 n0 : nat.
-Local Notation m := m0.+1.
-Local Notation n := n0.+1.
-Local Notation SF p := (sym_fundamental (sympolP p)).
-Local Notation E := [tuple sympol 'e_(i.+1) : {mpoly R[n]} |  i < m].
+#[local] Notation m := m0.+1.
+#[local] Notation n := n0.+1.
+#[local] Notation SF p := (sym_fundamental (sympolP p)).
+#[local] Notation E := [tuple sympol 'e_(i.+1) : {mpoly R[n]} |  i < m].
 
 Lemma cnvarsym_subproof (p : {sympoly R[m]}) : sympolyf p \mPo E \is symmetric.
 Proof. by apply mcomp_sym => i; rewrite -tnth_nth tnth_mktuple mesym_sym. Qed.

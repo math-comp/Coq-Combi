@@ -155,8 +155,8 @@ Qed.
 (** * Braces and Dyck words *)
 Inductive brace : Set := | Open : brace | Close : brace.
 
-Local Notation "{{" := Open.
-Local Notation "}}" := Close.
+#[local] Notation "{{" := Open.
+#[local] Notation "}}" := Close.
 
 Definition bool_of_brace b := if b is {{ then true else false.
 Definition brace_of_bool b := if b then {{ else }}.

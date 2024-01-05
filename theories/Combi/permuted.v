@@ -143,7 +143,7 @@ Section ActOnTuple.
 Variables (T : countType) (n : nat) (w : n.-tuple T).
 Implicit Type (t : permuted w).
 
-Local Notation wp := (Permuted (perm_refl w)).
+#[local] Notation wp := (Permuted (perm_refl w)).
 
 Lemma permutedact_subproof t (s : 'S_n) :
   perm_eq w [tuple tnth t (s^-1 i) | i < n].
@@ -153,7 +153,7 @@ by rewrite /= perm_sym; apply/tuple_permP; exists s^-1.
 Qed.
 Definition permutedact t s := Permuted (permutedact_subproof t s).
 
-Local Notation "t # s" := (permutedact t s)
+#[local] Notation "t # s" := (permutedact t s)
   (at level 40, left associativity, format "t # s").
 
 Lemma permutedact_is_action : is_action [set: 'S_n] permutedact.
@@ -166,7 +166,7 @@ split => /= [s t1 t2 Heq | t s1 s2 _ _].
   by rewrite !tnth_mktuple invMg permM.
 Qed.
 Canonical permuted_action := Action permutedact_is_action.
-Local Notation pact := permuted_action.
+#[local] Notation pact := permuted_action.
 
 Lemma permuted_action_trans :
   [transitive [set: 'S_n], on [set: permuted w] | pact].

@@ -646,9 +646,9 @@ Import Order.DefaultSetSubsetOrder.
 
 Variable (n : nat).
 Definition type := intcompn n.
-Local Notation "'CRef" := type.
+#[local] Notation "'CRef" := type.
 Implicit Types (c : 'CRef) (d : {set 'I_n.-1}).
-Local Notation SetIn := ({set ('I_n.-1 : finType)}).
+#[local] Notation SetIn := ({set ('I_n.-1 : finType)}).
 
 #[export] HB.instance Definition _ := SubType.copy 'CRef (intcompn n).
 #[export] HB.instance Definition _ := Finite.copy 'CRef (intcompn n).

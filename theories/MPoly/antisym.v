@@ -58,12 +58,12 @@ Unset Printing Implicit Defensive.
 
 Import LeqGeqOrder.
 
-Local Reserved Notation "''a_' k"
+#[local] Reserved Notation "''a_' k"
       (at level 8, k at level 2, format "''a_' k").
-Local Reserved Notation "m # s"
+#[local] Reserved Notation "m # s"
       (at level 40, left associativity, format "m # s").
 
-Local Notation "''II_' n" := ('I_n * 'I_n)%type (at level 8, n at level 2).
+#[local] Notation "''II_' n" := ('I_n * 'I_n)%type (at level 8, n at level 2).
 
 
 Open Scope group_scope.
@@ -227,7 +227,7 @@ symmetry; rewrite big_filter /mdeg.
 by rewrite (bigID (fun i => i == 0)) /= big1 ?add0n // => i /eqP.
 Qed.
 
-Local Notation "m # s" := [multinom m (s i) | i < n].
+#[local] Notation "m # s" := [multinom m (s i) | i < n].
 
 Lemma mnm_perm m1 m2 : perm_eq m1 m2 -> {s : 'S_n | m1 == m2 # s}.
 Proof.
@@ -255,8 +255,8 @@ Arguments dominant {n}.
 
 
 Import GRing.Theory.
-Local Open Scope ring_scope.
-Local Definition simplexp := (expr0, expr1, scale1r, scaleN1r,
+#[local] Open Scope ring_scope.
+#[local] Definition simplexp := (expr0, expr1, scale1r, scaleN1r,
                               mulrN, mulNr, mulrNN).
 
 (** ** Change of scalar in multivariate polynomials *)
@@ -404,7 +404,7 @@ apply/issymP => s; rewrite msymM Hp Hq.
 by case: (odd_perm _); rewrite !simplexp // opprK.
 Qed.
 
-Local Notation "m # s" := [multinom m (s i) | i < n].
+#[local] Notation "m # s" := [multinom m (s i) | i < n].
 
 Lemma isantisym_msupp p (s : 'S_n) (m : 'X_{1..n}) : p \is antisym ->
   (m#s \in msupp p) = (m \in msupp p).
@@ -472,8 +472,8 @@ Variable n : nat.
 Variable R : idomainType.
 Hypothesis Hchar : ~~ (2 \in [char R]).
 
-Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
-Local Notation "m # s" := [multinom m (s i) | i < n].
+#[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
+#[local] Notation "m # s" := [multinom m (s i) | i < n].
 
 Lemma sym_antisym_char_not2 :
   n >= 2 -> forall p : {mpoly R[n]}, p \is symmetric -> p \is antisym -> p = 0.
@@ -634,8 +634,8 @@ Section EltrP.
 Variable n i : nat.
 Implicit Type (p : 'II_n.+1).
 
-Local Definition eltrp p := ('s_i p.1, 's_i p.2).
-Local Definition predi p := (p.1 < p.2) && (p != (inord i, inord i.+1)).
+#[local] Definition eltrp p := ('s_i p.1, 's_i p.2).
+#[local] Definition predi p := (p.1 < p.2) && (p != (inord i, inord i.+1)).
 
 Lemma eltrpK : involutive eltrp.
 Proof. by move=> [u v]; rewrite /eltrp !eltrK. Qed.
@@ -720,10 +720,10 @@ Section Vanprod.
 Variable n : nat.
 Variable R : comRingType.
 
-Local Notation Delta := (@Vanprod n R).
-Local Notation "'X_ i" := (@mpolyX n R U_(i)). (* Enforce the base ring *)
-Local Notation rho := (rho n).
-Local Notation "''a_' k" := (alternpol 'X_[k]).
+#[local] Notation Delta := (@Vanprod n R).
+#[local] Notation "'X_ i" := (@mpolyX n R U_(i)). (* Enforce the base ring *)
+#[local] Notation rho := (rho n).
+#[local] Notation "''a_' k" := (alternpol 'X_[k]).
 
 Lemma polyX_inj (i j : 'I_n) : 'X_i = 'X_j -> i = j.
 Proof using.
@@ -936,8 +936,8 @@ Section VandermondeDet.
 Variable n : nat.
 Variable R : comRingType.
 
-Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
-Local Notation rho := (rho n).
+#[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
+#[local] Notation rho := (rho n).
 
 Definition antim (s : seq nat) : 'M[ {mpoly R[n]} ]_n :=
   \matrix_(i, j < n) 'X_i ^+ (nth 0 s j + (n - 1) - j)%N.
@@ -945,7 +945,7 @@ Definition Vanmx : 'M[ {mpoly R[n]} ]_n :=
   \matrix_(i, j < n) 'X_i ^+ (n - 1 - j).
 Definition Vandet := \det Vanmx.
 
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 
 Lemma Vanmx_antimE : Vanmx = antim [::].
 Proof using. by apply/matrixP => i j /=; rewrite !mxE nth_default. Qed.

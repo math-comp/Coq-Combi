@@ -94,7 +94,7 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory.
 Import Num.Theory.
 
-Local Open Scope nat_scope.
+#[local] Open Scope nat_scope.
 
 (** * Recursion for the number of Yamanouchi words and standard tableaux *)
 Lemma card_yama_rec (p : intpart) :
@@ -125,7 +125,7 @@ Proof.
 by rewrite !cardE -!(size_map val) enum_yamevalE enum_stdtabshE size_map.
 Qed.
 
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 
 Lemma card_stdtabsh_rat_rec (F : intpart -> rat) :
   F empty_intpart = 1 ->
@@ -183,7 +183,7 @@ Definition hook_length sh rc := (arm_length sh rc + leg_length sh rc).+1.
 
 (** The hook length product *)
 Definition hook_length_prod sh := (\prod_(b : box_in sh) hook_length sh b)%N.
-Local Notation HLF sh :=  (((sumn sh)`!)%:Q / (hook_length_prod sh)%:Q)%R.
+#[local] Notation HLF sh :=  (((sumn sh)`!)%:Q / (hook_length_prod sh)%:Q)%R.
 
 
 Lemma hook_length_geq1 sh rc : hook_length sh rc >= 1.
@@ -452,7 +452,7 @@ Implicit Types (r c k l : nat) (rc kl : nat * nat).
 
 (** ** Hook boxes *)
 
-Local Notation conj := (conj_part p).
+#[local] Notation conj := (conj_part p).
 
 Definition in_hook rc kl :=
   let: (r, c) := rc in let: (k, l) := kl in
@@ -482,10 +482,10 @@ rewrite /hook_length /leg_length /arm_length /=.
 by rewrite -!subn1 -!subnDA !add1n !addn1 addnC.
 Qed.
 
-Local Lemma ltnPred a b : a < b -> (a <= b.-1).
+#[local] Lemma ltnPred a b : a < b -> (a <= b.-1).
 Proof using. by case: b. Qed.
 
-Local Lemma iota_hookE a b c : a < b -> b < a.+1 + (c.-1 - a) = (b < c).
+#[local] Lemma iota_hookE a b c : a < b -> b < a.+1 + (c.-1 - a) = (b < c).
 Proof using.
 move => Hab; rewrite addSn.
 case: (ltnP b c) => Hbc.
@@ -805,7 +805,7 @@ case (size (hook_box_indices (r, c)) =P 0%N) => [H0 | /eqP Hs].
     by rewrite H1 H3 eq_refl.
 Qed.
 
-Local Definition charfun A B := fun x : seq nat * seq nat => (x == (A, B))%:Q.
+#[local] Definition charfun A B := fun x : seq nat * seq nat => (x == (A, B))%:Q.
 
 Lemma walk_to_corner_emptyl m rc (A B : seq nat) :
   (A == [::])%B -> mu (walk_to_corner m rc) (charfun A B) = 0.

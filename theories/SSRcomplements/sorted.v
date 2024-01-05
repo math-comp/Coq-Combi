@@ -63,8 +63,8 @@ Variable R : rel T.
 Implicit Type l : T.
 Implicit Type r : seq T.
 
-Local Notation sorted r := (sorted R r).
-Local Notation "x <=R y" := (R x y) (at level 70, y at next level).
+#[local] Notation sorted r := (sorted R r).
+#[local] Notation "x <=R y" := (R x y) (at level 70, y at next level).
 
 Lemma sorted_consK l r : sorted (cons l r) -> sorted r.
 Proof using. by case: r => [//| r0 r] /andP[]. Qed.

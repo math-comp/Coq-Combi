@@ -43,7 +43,7 @@ Section Identity.
 
 Variable n : nat.
 
-Local Notation stpn := (stdtabn n * stdtabn n)%type.
+#[local] Notation stpn := (stdtabn n * stdtabn n)%type.
 Lemma card_stpn_shape :
   #|[set p : stpn | shape p.1 == shape p.2]| =
     \sum_(sh : 'P_n) #|{:stdtabsh sh}|^2.
@@ -136,7 +136,7 @@ apply/eqP; rewrite xpair_eqE /= -!val_eqE /= /stdrsinv.
 by rewrite -[RStabmap _]/(val (RStab _)) RStabinvK /= /stdrspair eqsh !eqxx.
 Qed.
 
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 
 Import GRing.Theory.
 Import Num.Theory.

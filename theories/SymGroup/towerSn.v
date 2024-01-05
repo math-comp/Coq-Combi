@@ -77,7 +77,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Import GroupScope GRing.Theory.
-Local Open Scope Combi_scope.
+#[local] Open Scope Combi_scope.
 
 
 Section classGroup.
@@ -106,7 +106,7 @@ Section CFExtProdDefs.
 Variables (gT aT : finGroupType).
 Variables (G : {group gT}) (H : {group aT}).
 
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 
 (** One could use the following alternative definition
 [[
@@ -147,7 +147,7 @@ Variables (gT aT : finGroupType).
 Variables (G : {group gT}) (H : {group aT}).
 Implicit Type (g : 'CF(G)) (h : 'CF(H)).
 
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 
 Lemma cfextprodrE h g : cfextprodr h g = g \ox h.
 Proof using. by []. Qed.
@@ -241,8 +241,8 @@ Section TowerMorphism.
 
 Variables m n : nat.
 
-Local Notation ct := cycle_typeSn.
-Local Notation SnXm := (setX 'SG_m 'SG_n).
+#[local] Notation ct := cycle_typeSn.
+#[local] Notation SnXm := (setX 'SG_m 'SG_n).
 
 Definition tinjval (s : 'S_m * 'S_n) :=
   fun (x : 'I_(m + n)) => match split x  with
@@ -427,13 +427,13 @@ End Assoc.
 
 Notation "f \o^ g" := (cfIsom (isom_tinj _ _) (f \ox g)) (at level 40).
 
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 
 (** * Restriction formula *)
 Section Restriction.
 
 Variables m n : nat.
-Local Notation ct := cycle_typeSn.
+#[local] Notation ct := cycle_typeSn.
 
 Lemma cfuni_tinj s (l : 'P_(m + n)) :
   '1_[l] (tinj s) = (l == ct s.1 +|+ ct s.2)%:R.
@@ -477,12 +477,12 @@ Variables m n : nat.
 
 Implicit Types (p : 'P_m) (q : 'P_n).
 
-Local Notation ct := cycle_typeSn.
-Local Notation SnXm := (setX 'SG_m 'SG_n).
-Local Notation classX p q := ((permCT p, permCT q) ^: SnXm).
+#[local] Notation ct := cycle_typeSn.
+#[local] Notation SnXm := (setX 'SG_m 'SG_n).
+#[local] Notation classX p q := ((permCT p, permCT q) ^: SnXm).
 
 Import GroupScope GRing.Theory Num.Theory.
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 
 Lemma classXE p q : classX p q = setX (classCT p) (classCT q).
 Proof using.

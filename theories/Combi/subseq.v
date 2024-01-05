@@ -218,9 +218,9 @@ End FinType.
 Section Bigop.
 
 Context {R : Type} {idx : R} {op : Monoid.com_law idx}.
-Local Notation "1" := idx.
-Local Notation "'*%M'" := op (at level 0).
-Local Notation "x * y" := (op x y).
+#[local] Notation "1" := idx.
+#[local] Notation "'*%M'" := op (at level 0).
+#[local] Notation "x * y" := (op x y).
 Context {T : choiceType}.
 
 Lemma big_subseqs (F : seq T -> R) (s : seq T) :

@@ -63,11 +63,11 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Import GRing.Theory Num.Theory.
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 
-Local Lemma char0_rat : [char rat] =i pred0.
+#[local] Lemma char0_rat : [char rat] =i pred0.
 Proof. exact: Num.Theory.char_num. Qed.
-Local Lemma char0_algC : [char algC] =i pred0.
+#[local] Lemma char0_algC : [char algC] =i pred0.
 Proof. exact: Num.Theory.char_num. Qed.
 #[local] Hint Resolve char0_algC char0_rat : core.
 
@@ -158,12 +158,12 @@ Qed.
 
 Variable (R : comRingType).
 
-Local Notation polZ := {mpoly R[m * n]}.
-Local Notation polX := {mpoly R[m]}.
-Local Notation polY := {mpoly R[n]}.
+#[local] Notation polZ := {mpoly R[m * n]}.
+#[local] Notation polX := {mpoly R[m]}.
+#[local] Notation polY := {mpoly R[n]}.
 Definition polXY := {mpoly polY[m]}.
 Definition polXY_scale (c : R) (p : polXY) : polXY := c%:MP *: p.
-Local Notation "c *:M p" := (polXY_scale c p)
+#[local] Notation "c *:M p" := (polXY_scale c p)
   (at level 40, left associativity).
 
 HB.instance Definition _ := GRing.Ring.on polXY.
@@ -528,22 +528,22 @@ End CauchyKernelField.
 Section Scalar.
 
 Variable n0 d : nat.
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 Hypothesis Hd : (d <= n)%N.
 
-Local Notation HSC := {homsym algC[n, d]}.
-Local Notation HSQ := {homsym rat[n, d]}.
-Local Notation polXY := (polXY n0 n0 algC).
-Local Notation pol := {mpoly algC[n]}.
-Local Notation "p '(Y)'" := (@polY_XY n0 n0 _ p)
+#[local] Notation HSC := {homsym algC[n, d]}.
+#[local] Notation HSQ := {homsym rat[n, d]}.
+#[local] Notation polXY := (polXY n0 n0 algC).
+#[local] Notation pol := {mpoly algC[n]}.
+#[local] Notation "p '(Y)'" := (@polY_XY n0 n0 _ p)
                              (at level 20, format "p '(Y)'").
-Local Notation "p '(X)'" := (@polX_XY n0 n0 _ p)
+#[local] Notation "p '(X)'" := (@polX_XY n0 n0 _ p)
                              (at level 20, format "p '(X)'").
 
-Local Notation "''hsC[' la ]" := ('hs[la] : HSC).
-Local Notation "''hsQ[' la ]" := ('hs[la] : HSQ).
-Local Notation "''hpC[' la ]" := ('hp[la] : HSC).
-Local Notation "''hpQ[' la ]" := ('hp[la] : HSQ).
+#[local] Notation "''hsC[' la ]" := ('hs[la] : HSC).
+#[local] Notation "''hsQ[' la ]" := ('hs[la] : HSQ).
+#[local] Notation "''hpC[' la ]" := ('hp[la] : HSC).
+#[local] Notation "''hpQ[' la ]" := ('hp[la] : HSQ).
 
 
 Definition co_hp (la : 'P_d) : pol -> algC :=

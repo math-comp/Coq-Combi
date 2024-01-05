@@ -76,9 +76,9 @@ Reserved Notation "''M[' l ']'"
          (at level 8, l at level 2, format "''M[' l ]").
 
 
-Local Lemma char0_rat : [char rat] =i pred0.
+#[local] Lemma char0_rat : [char rat] =i pred0.
 Proof. exact: char_num. Qed.
-Local Lemma char0_algC : [char algC] =i pred0.
+#[local] Lemma char0_algC : [char algC] =i pred0.
 Proof. exact: char_num. Qed.
 #[local] Hint Resolve char0_algC char0_rat : core.
 
@@ -87,12 +87,12 @@ Proof. exact: char_num. Qed.
 Section NVar.
 
 Variable nvar0 : nat.
-Local Notation nvar := nvar0.+1.
+#[local] Notation nvar := nvar0.+1.
 
 Section Defs.
 
 Variable n : nat.
-Local Notation HS := {homsym algC[nvar, n]}.
+#[local] Notation HS := {homsym algC[nvar, n]}.
 
 Definition Fchar (f : 'CF('SG_n)) : HS :=
   locked (\sum_(la : 'P_n) (f (permCT la) / 'z_la) *: 'hp[la]).
@@ -271,7 +271,7 @@ Import LeqGeqOrder.
 
 Variable n : nat.
 Hypothesis Hn : (n <= nvar)%N.
-Local Notation HS := {homsym algC[nvar, n]}.
+#[local] Notation HS := {homsym algC[nvar, n]}.
 
 Lemma homsymh_character (la : 'P_n) : Fchar_inv 'hh[la] \is a character.
 Proof.

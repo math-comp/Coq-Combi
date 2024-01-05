@@ -9,10 +9,10 @@ Require Export Coq.Classes.SetoidClass.
 Require Export Coq.Classes.Morphisms.
 
 Declare Scope signature_scope.
-Local Open Scope signature_scope.
+#[local] Open Scope signature_scope.
 Declare Scope O_scope.
 Delimit Scope O_scope with O.
-Local Open Scope O_scope.
+#[local] Open Scope O_scope.
 
 (** ** Ordered type *)
 

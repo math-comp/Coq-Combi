@@ -175,15 +175,15 @@ Implicit Type u v w r : word.
 Variable w : word.
 Variable k : nat.
 
-Local Definition rev_ord_cast : 'I_(size w) -> 'I_(size (revdual w)) :=
+#[local] Definition rev_ord_cast : 'I_(size w) -> 'I_(size (revdual w)) :=
   (cast_ord (size_revdual w)) \o (@rev_ord _).
-Local Definition rev_set (s : {set 'I_(size w)}) : {set 'I_(size (revdual w))} :=
+#[local] Definition rev_set (s : {set 'I_(size w)}) : {set 'I_(size (revdual w))} :=
   [set rev_ord_cast i | i in s].
 
-Local Definition rev_ksupp (P : {set {set 'I_(size w)}}) :
+#[local] Definition rev_ksupp (P : {set {set 'I_(size w)}}) :
   {set {set 'I_(size (revdual w))}} :=
   [set rev_set u | u in P].
-Local Definition rev_ksupp_inv (S : {set {set 'I_(size (revdual w))}}) :
+#[local] Definition rev_ksupp_inv (S : {set {set 'I_(size (revdual w))}}) :
   {set {set 'I_(size w)}}  :=
   [set rev_ord_cast @^-1: s | s : {set 'I_(_)} in S].
 
@@ -222,7 +222,7 @@ apply/setP/subset_eqP/andP; split; apply/subsetP=> i.
   + by rewrite /rev_ord_cast /= rev_ordK cast_ordKV.
 Qed.
 
-Local Lemma irev_w i : i < size w -> size w - i.+1 < size w.
+#[local] Lemma irev_w i : i < size w -> size w - i.+1 < size w.
 Proof using. move/subnSK ->; exact: leq_subr. Qed.
 
 Lemma rev_enum :

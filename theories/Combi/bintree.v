@@ -929,7 +929,7 @@ Definition vctleq v1 v2 :=
   (size v1 == size v2) && (all (fun p => p.1 <= p.2) (zip v1 v2)).
 Definition vctmin v1 v2 := [seq minn p.1 p.2 | p <- zip v1 v2].
 
-Local Notation "x '<=V' y" := (vctleq x y) (at level 70, y at next level).
+#[local] Notation "x '<=V' y" := (vctleq x y) (at level 70, y at next level).
 
 Section TestsComp.
 

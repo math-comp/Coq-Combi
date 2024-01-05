@@ -53,13 +53,13 @@ Module WeakOrder.
 Section Def.
 
 Context {n0 : nat}.
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n).
 
 Definition leperm s t :=
   [exists u, (t == s * u) && (length t == length s + length u)].
 
-Local Notation "s '<=R' t" := (leperm s t).
+#[local] Notation "s '<=R' t" := (leperm s t).
 
 Fact lepermP s t :
   reflect (exists2 u, t = s * u & length t = length s + length u)
@@ -115,7 +115,7 @@ Notation "x \/R y" := (@Order.join perm_display _ (x : 'S__) y).
 Section WeakOrder.
 
 Variable (n0 : nat).
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n).
 
 Definition lepermP s t :
@@ -136,7 +136,7 @@ HB.export WeakOrder.Exports.
 Section LEPermTheory.
 
 Variable (n0 : nat).
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n).
 
 Lemma ltperm_length s t : s <R t -> length s < length t.
@@ -348,7 +348,7 @@ End LEPermTheory.
 Section TClosureInvset.
 
 Variable (n0 : nat).
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n) (A B : {set 'I_n * 'I_n}).
 
 Lemma tclosure_Delta A : A \subset Delta -> tclosure A \subset Delta.
@@ -417,7 +417,7 @@ Module PermLattice.
 Section PermLattice.
 
 Variable (n0 : nat).
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n) (A B : {set 'I_n * 'I_n}).
 
 Definition supperm s t : 'S_n :=
@@ -482,7 +482,7 @@ Section PermLattice.
 HB.reexport PermLattice.
 
 Variable (n0 : nat).
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n) (A B : {set 'I_n * 'I_n}).
 
 Lemma bottom_perm : Order.bottom = (1 : 'S_n). Proof. by []. Qed.

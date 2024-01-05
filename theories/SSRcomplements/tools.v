@@ -462,10 +462,10 @@ Import Monoid.Theory.
 
 Variable R : Type.
 Variable idx : R.
-Local Notation "1" := idx.
+#[local] Notation "1" := idx.
 Variable op : Monoid.com_law 1.
-Local Notation "'*%M'" := op (at level 0).
-Local Notation "x * y" := (op x y).
+#[local] Notation "'*%M'" := op (at level 0).
+#[local] Notation "x * y" := (op x y).
 
 Lemma big_seq_sub (T : countType) (s : seq T) F :
   \big[op/idx]_(x : seq_sub s) F (ssval x) = \big[op/idx]_(x <- undup s) F x.

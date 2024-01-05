@@ -144,7 +144,7 @@ have : fs CM (porbit s x) != set0.
 by move/set0Pn/sigW => H; apply H.
 Qed.
 
-Local Definition cymapcan x :=
+#[local] Definition cymapcan x :=
   odflt (cymapcan_aux x) [pick y in CM (porbit s x)].
 Definition cymap x := ((t ^+ (indporbit s x)) (cymapcan x))%g.
 
@@ -440,7 +440,7 @@ Qed.
 
 End CycleTypeConj.
 
-Local Definition slporbits (T : finType) (s : {perm T}) :=
+#[local] Definition slporbits (T : finType) (s : {perm T}) :=
   FiberedSet set0 (porbits s) (fun x => #{x}).
 
 Lemma fiber_slporbitE (T : finType) (s : {perm T}) i :
@@ -463,7 +463,7 @@ Proof using eqct. by have := fbbijP cycle_type_eq => [] [] _ ->. Qed.
 Fact conjg_porbits_homog :
   {in porbits s, forall C, #|fbbij (U := slporbits s) (slporbits t) C| = #|C| }.
 Proof using eqct. by have := fbbijP cycle_type_eq => [] []. Qed.
-Local Definition CMbij := PorbitMap conjg_porbits_stab conjg_porbits_homog.
+#[local] Definition CMbij := PorbitMap conjg_porbits_stab conjg_porbits_homog.
 Definition conjbij := cymap CMbij.
 
 Lemma conjbijP x : conjbij (s x) = t (conjbij x).
@@ -838,7 +838,7 @@ by apply eq_card => s; rewrite !inE.
 Qed.
 
 Import GroupScope GRing.Theory.
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 
 (** * Cycle indicator *)
 Section CFunIndicator.
@@ -848,7 +848,7 @@ Variable ct : 'P_#|T|.
 Definition cfuniCT :=
   cfun_indicator [set: {perm T}] (classCT ct).
 
-Local Notation "''1_[' p ]" := (cfuniCT p) : ring_scope.
+#[local] Notation "''1_[' p ]" := (cfuniCT p) : ring_scope.
 
 Lemma cfuniCTE s :
   ('1_[s]) = (cycle_type s == ct)%:R.
@@ -870,7 +870,7 @@ Notation "''1_[' p ]" := (cfuniCT p) : ring_scope.
 Coercion CTpartn n := cast_intpartn (esym (card_ord n)).
 
 Import GroupScope GRing.Theory.
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 
 
 (** ** Central function for ['S_n] *)

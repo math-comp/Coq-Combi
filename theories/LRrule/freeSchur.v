@@ -92,7 +92,7 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Import Order.TTheory.
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 Import GRing.Theory.
 
 
@@ -188,9 +188,9 @@ Section FreeSchur.
 Variable R : comRingType.
 
 Variable n0 : nat.
-Local Notation n := (n0.+1).
-Local Notation Schur sh := (Schur n0 R sh).
-Local Notation homlang d := (homlang n d).
+#[local] Notation n := (n0.+1).
+#[local] Notation Schur sh := (Schur n0 R sh).
+#[local] Notation homlang d := (homlang n d).
 
 Section Degree.
 

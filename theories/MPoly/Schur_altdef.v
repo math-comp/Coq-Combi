@@ -97,15 +97,15 @@ Unset Printing Implicit Defensive.
 Import Order.TTheory.
 Import GRing.Theory.
 
-Local Open Scope ring_scope.
-Local Open Scope Combi_scope.
+#[local] Open Scope ring_scope.
+#[local] Open Scope Combi_scope.
 
 
-Local Reserved Notation "''a_' k"
+#[local] Reserved Notation "''a_' k"
       (at level 8, k at level 2, format "''a_' k").
-Local Reserved Notation "''e_' k"
+#[local] Reserved Notation "''e_' k"
       (at level 8, k at level 2, format "''e_' k").
-Local Reserved Notation "m # s"
+#[local] Reserved Notation "m # s"
       (at level 40, left associativity, format "m # s").
 
 (** Alternating and symmetric polynomial *)
@@ -113,9 +113,9 @@ Section Alternant.
 
 Variables (n : nat) (R : comRingType).
 
-Local Notation rho := (rho n).
-Local Notation "''e_' k" := (mesym n R k).
-Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
+#[local] Notation rho := (rho n).
+#[local] Notation "''e_' k" := (mesym n R k).
+#[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
 
 Lemma alt_syme (m : 'X_{1..n}) k :
   'a_(m + rho) * 'e_k =
@@ -130,13 +130,13 @@ rewrite -scalerAl -msymM -mpolyXD.
 by rewrite -!addmA [(mesym1 h + rho)%MM]addmC.
 Qed.
 
-Local Open Scope nat_scope.
+#[local] Open Scope nat_scope.
 
 Section HasIncr.
 
 Variables (d k : nat) (la : 'P_d) (h : {set 'I_n}).
 
-Local Definition hasincr :=
+#[local] Definition hasincr :=
   has (fun i => (nth 0 (mpart la + mesym1 h)%MM i).+1 ==
                  nth 0 (mpart la + mesym1 h)%MM i.+1) (iota 0 n.-1).
 
@@ -376,10 +376,10 @@ End Alternant.
 Section SchurAlternantDef.
 
 Variable (n0 : nat) (R : comRingType).
-Local Notation n := (n0.+1).
-Local Notation rho := (rho n).
-Local Notation "''s_[' k ']'" := (Schur n0 R k).
-Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
+#[local] Notation n := (n0.+1).
+#[local] Notation rho := (rho n).
+#[local] Notation "''s_[' k ']'" := (Schur n0 R k).
+#[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
 
 Lemma Schur_cast d d' (la : 'P_d) (Heq : d = d') :
   Schur n0 R (cast_intpartn Heq la) = 's_[la].
@@ -506,10 +506,10 @@ End SchurAlternantDef.
 Section IdomainSchurSym.
 
 Variable (n0 : nat) (R : idomainType).
-Local Notation n := (n0.+1).
-Local Notation rho := (rho n).
-Local Notation "''s_' k" := (Schur n0 R k).
-Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
+#[local] Notation n := (n0.+1).
+#[local] Notation rho := (rho n).
+#[local] Notation "''s_' k" := (Schur n0 R k).
+#[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
 
 Theorem alt_uniq d (la : 'P_d) (s : {mpoly R[n]}) :
   size la <= n -> 'a_rho * s = 'a_(mpart la + rho) -> s = 's_la.
@@ -530,8 +530,8 @@ End IdomainSchurSym.
 Section RingSchurSym.
 
 Variable (n0 : nat) (R : ringType).
-Local Notation n := (n0.+1).
-Local Notation "''s_' k" := (Schur n0 R k).
+#[local] Notation n := (n0.+1).
+#[local] Notation "''s_' k" := (Schur n0 R k).
 
 Theorem Schur_sym d (la : 'P_d) : 's_la \is symmetric.
 Proof using .
@@ -557,7 +557,7 @@ End RingSchurSym.
 
 
 (** * Kostka numbers *)
-Local Open Scope nat_scope.
+#[local] Open Scope nat_scope.
 
 Section DefsKostkaMon.
 
@@ -752,12 +752,12 @@ Implicit Type la : 'P_d.
 (* We prepend a 0 to take care of the empty partition *)
 Definition Kostka la mu :=
   KostkaMon la (mpart (n := (size mu).-1.+1) mu).
-Local Notation "''K' ( la , mu )" := (Kostka la mu)
+#[local] Notation "''K' ( la , mu )" := (Kostka la mu)
   (at level 8, format "''K' ( la ,  mu )") : nat_scope.
-Local Notation "''K' ( la , mu )" := ((Kostka la mu)%:R : int)
+#[local] Notation "''K' ( la , mu )" := ((Kostka la mu)%:R : int)
   (at level 8, format "''K' ( la ,  mu )") : ring_scope.
 
-Local Arguments mpart n s : clear implicits.
+#[local] Arguments mpart n s : clear implicits.
 
 Lemma mpartS n mu :
   size mu <= n -> mnmwiden (mpart n mu) = mpart n.+1 mu.
@@ -1065,18 +1065,18 @@ Section BijectionExtTab.
 
 Variable n : nat.
 
-Local Open Scope nat_scope.
+#[local] Open Scope nat_scope.
 
 Variables (s : seq nat) (m : nat).
 Hypothesis (Hsz : size s < n.+1).
-Local Notation sz := (Ordinal Hsz).
-Local Lemma Hszrcons : size (rcons s m) <= n.+1.
+#[local] Notation sz := (Ordinal Hsz).
+#[local] Lemma Hszrcons : size (rcons s m) <= n.+1.
 Proof. by rewrite size_rcons. Qed.
 
-Local Notation P := ('P_(sumn s)).
-Local Notation Pm := ('P_((sumn s) + m)).
+#[local] Notation P := ('P_(sumn s)).
+#[local] Notation Pm := ('P_((sumn s) + m)).
 Variable (mu : Pm).
-Local Notation Tm := (tabsh mu).
+#[local] Notation Tm := (tabsh mu).
 Hypothesis Hmu : size mu <= n.+1.
 
 Lemma shape_res_tab_subproof (t : Tm) :
@@ -1148,19 +1148,19 @@ Qed.
 
 Variable (la : P).
 Hypothesis Hstrip : hb_strip la mu.
-Local Notation T := (tabsh la).
+#[local] Notation T := (tabsh la).
 
-Local Definition Hlamu := size_included (hb_strip_included Hstrip).
-Local Definition Hla : size la <= n.+1 := leq_trans Hlamu Hmu.
+#[local] Definition Hlamu := size_included (hb_strip_included Hstrip).
+#[local] Definition Hla : size la <= n.+1 := leq_trans Hlamu Hmu.
 
 Definition res_tab (t : Tm) : T :=
   if insub (filter_gt_tab sz t) is Some tr then tr
   else locked (tabrowconst Hla).
-Local Definition ext_tab_fun (t : T) :=
+#[local] Definition ext_tab_fun (t : T) :=
   if eqeval t s then join_tab t (skew_reshape la mu (nseq m sz))
   else locked (tabrowconst Hmu).
 
-Local Lemma sumndiff : sumn (mu / la) = m.
+#[local] Lemma sumndiff : sumn (mu / la) = m.
 Proof.
 by rewrite sumn_diff_shape ?hb_strip_included // !sumn_intpartn addKn.
 Qed.
@@ -1365,7 +1365,7 @@ End BijectionExtTab.
 (** * Recursive computation of Kostka numbers *)
 Section KostkaRec.
 
-Local Open Scope nat_scope.
+#[local] Open Scope nat_scope.
 
 
 Lemma Kostka_ind d (la : 'P_d) m mu :
@@ -1463,10 +1463,10 @@ Section AlternStraighten.
 Variable n0 : nat.
 Variable R : comRingType.
 
-Local Notation n := n0.+1.
-Local Notation rho := (rho n).
-Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
-Local Notation "m # s" := [multinom m (s i) | i < n].
+#[local] Notation n := n0.+1.
+#[local] Notation rho := (rho n).
+#[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
+#[local] Notation "m # s" := [multinom m (s i) | i < n].
 
 Lemma alt_straight_step (m : 'X_{1..n}) (i : nat) :
   i < n0 -> m (inord i.+1) != 0%N ->

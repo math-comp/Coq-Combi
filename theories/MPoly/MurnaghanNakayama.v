@@ -58,13 +58,13 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 Import GRing.Theory.
 
 
-Local Reserved Notation "''a_' k"
+#[local] Reserved Notation "''a_' k"
       (at level 8, k at level 2, format "''a_' k").
-Local Reserved Notation "m # s"
+#[local] Reserved Notation "m # s"
       (at level 40, left associativity, format "m # s").
 
 
@@ -74,9 +74,9 @@ Section MultAlternSymp.
 Variable n0 : nat.
 Variable R : comRingType.
 
-Local Notation n := n0.+1.
-Local Notation rho := (rho n).
-Local Notation "''a_' k" := (@alternpol n R 'X_[k]).
+#[local] Notation n := n0.+1.
+#[local] Notation rho := (rho n).
+#[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
 
 Lemma mult_altern_symp_pol p d :
   'a_(mpart p + rho) * (symp_pol n R d.+1) =
@@ -121,8 +121,8 @@ End MultAlternSymp.
 Section MultSymsSympIDomain.
 
 Variable n0 : nat.
-Local Notation n := n0.+1.
-Local Notation SF := {sympoly int[n]}.
+#[local] Notation n := n0.+1.
+#[local] Notation SF := {sympoly int[n]}.
 
 Lemma syms_sympM_oapp_int d (la : 'P_d) m :
   m != 0%N -> size la <= n ->
@@ -149,8 +149,8 @@ Section MultSymsSymp.
 
 Variable n0 : nat.
 Variable R : comRingType.
-Local Notation n := n0.+1.
-Local Notation SF := {sympoly R[n]}.
+#[local] Notation n := n0.+1.
+#[local] Notation SF := {sympoly R[n]}.
 
 Lemma syms_sympM_oapp d (la : 'P_d) m :
   m != 0%N ->
@@ -318,7 +318,7 @@ End Tests.
 Section MNRule.
 
 Variable n0 : nat.
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 
 Theorem MN_coeffP_int d (la : 'P_d) :
   'p[la] = \sum_(sh : 'P_d) MN_coeff sh la *: 's[sh] :> {sympoly int[n]}.
@@ -340,8 +340,8 @@ by rewrite scalerA.
 Qed.
 
 Variable R : comRingType.
-Local Notation SF := {sympoly R[n]}.
-Local Notation HSF := {homsym R[n, _]}.
+#[local] Notation SF := {sympoly R[n]}.
+#[local] Notation HSF := {homsym R[n, _]}.
 
 Theorem MN_coeffP d (la : 'P_d) :
   'p[la] = \sum_(sh : 'P_d) (MN_coeff sh la)%:~R *: 's[sh] :> SF.
@@ -464,7 +464,7 @@ End Tests.
 Section FastImplem.
 
 Variable n0 : nat.
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 
 Lemma syms_prod_sympM_int dn (nu : 'P_dn) dm (mu : 'P_dm) :
   's[nu] * 'p[mu] =
@@ -510,8 +510,8 @@ Qed.
 Section ComRing.
 
 Variable R : comRingType.
-Local Notation SF := {sympoly R[n]}.
-Local Notation HSF := {homsym R[n, _]}.
+#[local] Notation SF := {sympoly R[n]}.
+#[local] Notation HSF := {homsym R[n, _]}.
 
 Theorem syms_prod_sympM dn (nu : 'P_dn) dm (mu : 'P_dm) :
   's[nu] * 'p[mu] =

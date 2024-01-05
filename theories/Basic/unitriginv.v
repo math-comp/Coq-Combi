@@ -42,7 +42,7 @@ Unset Printing Implicit Defensive.
 
 Import Order.TTheory.
 Import GRing.Theory.
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 
 Section UniTriangular.
 
@@ -158,7 +158,7 @@ Implicit Types t u v : T.
 
 Hypothesis Munitrig : unitrig M.
 
-Local Notation n := #|{: T}|.
+#[local] Notation n := #|{: T}|.
 Definition Mat : 'M[R]_n := \matrix_(i, j < n) M (enum_val i) (enum_val j).
 
 Lemma det_unitrig : \det Mat = 1.

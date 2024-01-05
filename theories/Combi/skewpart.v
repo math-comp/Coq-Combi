@@ -961,16 +961,16 @@ Section NThAddRibbon.
 Variable (sh : seq nat) (start stop rem : nat).
 Hypothesis (lesmin : start <= minn stop (size sh)).
 
-Local Notation res := (add_ribbon_on sh start stop rem).
+#[local] Notation res := (add_ribbon_on sh start stop rem).
 
 (** Put some local result in the environment *)
-Local Lemma less : start <= stop.
+#[local] Lemma less : start <= stop.
 Proof. by move: lesmin; rewrite leq_min=>/andP[]. Qed.
 Let less := less.
-Local Lemma lessz : start <= size sh.
+#[local] Lemma lessz : start <= size sh.
 Proof. by move: lesmin; rewrite leq_min=>/andP[]. Qed.
 Let lessz := lessz.
-Local Lemma sztd :
+#[local] Lemma sztd :
   size (drop start (take stop sh)) = minn stop (size sh) - start.
 Proof. by rewrite size_drop size_take /minn. Qed.
 Let sztd := sztd.
@@ -1329,7 +1329,7 @@ Section IntPartN.
 
 Variable (m : nat) (la : 'P_m).
 Variable nbox : nat.
-Local Notation "'Pr" := 'P_(nbox.+1 + m).
+#[local] Notation "'Pr" := 'P_(nbox.+1 + m).
 
 Let val_id := fun p : ('Pr * nat) => let: (sh, h) := p in (val sh, h).
 
@@ -1396,7 +1396,7 @@ Proof. by move=> rc1 rc2 /=; apply/idP/idP=> /neig4_sym. Qed.
 Section Connected4.
 
 Variable (inner outer : seq nat).
-Local Notation box := (box_skew inner outer).
+#[local] Notation box := (box_skew inner outer).
 
 Definition neig4box (b : box) : seq box := pmap insub (neig4 b).
 Lemma neig4boxE :
@@ -1426,15 +1426,15 @@ Section TextBookDefStartStop.
 Variable (start stop : nat) (inner outer : seq nat).
 Hypotheses (partinn : is_part inner) (partout : is_part outer).
 Hypothesis (Hrib : ribbon_on start stop inner outer).
-Local Notation box := (box_skew inner outer).
+#[local] Notation box := (box_skew inner outer).
 Implicit Type (b : box).
 
-Local Notation neig4 := (grel (@neig4box inner outer)).
+#[local] Notation neig4 := (grel (@neig4box inner outer)).
 
 Lemma conn4_sym : symmetric (connect neig4).
 Proof. exact/connect_from_sym/neig4box_sym. Qed.
 
-Local Definition ribbon_box_ex inner outer :=
+#[local] Definition ribbon_box_ex inner outer :=
   let start := (mindropeq inner outer) - ribbon_height inner outer in
   (start, nth 0 inner start).
 
@@ -1448,7 +1448,7 @@ rewrite ribbon_on_box_exE /in_skew /= leqnn /=.
 by rewrite -(ribbon_on_nth_leq partinn Hrib) (ribbon_on_start_stop Hrib) leqnn.
 Qed.
 Definition ribbon_on_box_ex : box := BoxSkew ribbon_on_box_exP.
-Local Notation boxex := ribbon_on_box_ex.
+#[local] Notation boxex := ribbon_on_box_ex.
 
 Lemma ribbon_on_conn4_box_ex b : connect neig4 boxex b.
 Proof.
@@ -1532,13 +1532,13 @@ Section TextBookImplDef.
 Variable (inner outer : seq nat).
 Hypotheses (partinn : is_part inner) (partout : is_part outer).
 Hypothesis (Htb : ribbon_textbook inner outer).
-Local Notation box := (box_skew inner outer).
-Local Notation stop := (mindropeq inner outer).-1.
-Local Notation neig4 := (grel (@neig4box inner outer)).
+#[local] Notation box := (box_skew inner outer).
+#[local] Notation stop := (mindropeq inner outer).-1.
+#[local] Notation neig4 := (grel (@neig4box inner outer)).
 
 Implicit Type (b : box).
 
-Local Lemma incl : included inner outer.
+#[local] Lemma incl : included inner outer.
 Proof. by move: Htb => /and4P[]. Qed.
 
 Lemma mindropeq_non0 : mindropeq inner outer != 0.
@@ -1557,7 +1557,7 @@ Qed.
 Lemma ribbontb_start_subproof : exists i, nth 0 inner i < nth 0 outer i.
 Proof. by exists stop; exact: ribbontb_stop_ltn. Qed.
 Definition ribbontb_start := ex_minn ribbontb_start_subproof.
-Local Notation start := ribbontb_start.
+#[local] Notation start := ribbontb_start.
 
 Lemma ribbon_textbook_on : ribbon_on start stop inner outer.
 Proof.

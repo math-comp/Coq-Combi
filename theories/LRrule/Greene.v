@@ -405,7 +405,7 @@ Definition ksupp (k : nat) :=
   [qualify a P : {set {set 'I_N}} |
    [&& (#|P| <= k)%N, trivIset P & [forall (s | s \in P), sorted R (extract s)]]].
 
-Local Notation "k .-supp" := (ksupp k)
+#[local] Notation "k .-supp" := (ksupp k)
   (at level 2, format "k .-supp") : form_scope.
 
 Lemma ksupp0 k : set0 \is a k.-supp.
@@ -578,8 +578,8 @@ Variable M N : nat.
 Variable V : M.-tuple Alph.
 Variable W : N.-tuple Alph.
 
-Local Notation lsh := (@lshift M N).
-Local Notation rsh := (@rshift M N).
+#[local] Notation lsh := (@lshift M N).
+#[local] Notation rsh := (@rshift M N).
 
 Lemma enumIMN : enum 'I_(M + N) = map lsh (enum 'I_M) ++ map rsh (enum 'I_N).
 Proof using.
@@ -666,7 +666,7 @@ suff -> : rsh i \in [set i0 : 'I_(M+N) | M <= i0] by rewrite andbT.
 by rewrite inE /=; exact: leq_addr.
 Qed.
 
-Local Notation scover := (fun x => #|cover x|).
+#[local] Notation scover := (fun x => #|cover x|).
 
 Lemma Greene_rel_t_cat k :
   Greene_rel_t R [tuple of V ++ W] k <= Greene_rel_t R V k + Greene_rel_t R W k.
@@ -803,7 +803,7 @@ Implicit Type u v w : seq Alph.
 Implicit Type p : seq nat.
 Implicit Type t : seq (seq Alph).
 
-Local Definition revset n (s : {set 'I_n}) : {set 'I_n} :=
+#[local] Definition revset n (s : {set 'I_n}) : {set 'I_n} :=
   [set rev_ord x | x in s].
 
 Lemma revsetK {n} : involutive (@revset n).
@@ -894,15 +894,15 @@ Let sym_cast m n (i : 'I_(m + n)) : 'I_(n + m) := cast_ord (addnC m n) i.
 
 Prenex Implicits sym_cast.
 
-Local Definition shiftset s0 sh :=
+#[local] Definition shiftset s0 sh :=
   [fun s : {set 'I_(sumn sh)} => (sym_cast \o (@lshift (sumn sh) s0)) @: s].
 
-Local Fixpoint shrows sh : seq {set 'I_(sumn sh)} :=
+#[local] Fixpoint shrows sh : seq {set 'I_(sumn sh)} :=
   if sh is s0 :: sh then
     [set (sym_cast \o (@rshift (sumn sh) s0)) i | i in 'I_s0] ::
     map (@shiftset s0 sh) (shrows sh)
   else [::].
-Local Fixpoint shcols sh : seq {set 'I_(sumn sh)} :=
+#[local] Fixpoint shcols sh : seq {set 'I_(sumn sh)} :=
   if sh is s0 :: sh then
     [seq (sym_cast (@rshift (sumn sh) s0 i)) |:
          (@shiftset s0 sh (nth set0 (shcols sh) i))
@@ -1084,9 +1084,9 @@ Variable (t0 : seq Alph) (t : seq (seq Alph)).
 Lemma size_to_word_cons : size (to_word t) + size t0 = size (to_word (t0 :: t)).
 Proof using. by rewrite !size_to_word /size_tab /= addnC. Qed.
 
-Local Definition cast_cons := cast_ord size_to_word_cons.
-Local Definition rsh_rec := (cast_cons \o (@rshift (size (to_word t)) (size t0))).
-Local Definition lsh_rec := (cast_cons \o (@lshift (size (to_word t)) (size t0))).
+#[local] Definition cast_cons := cast_ord size_to_word_cons.
+#[local] Definition rsh_rec := (cast_cons \o (@rshift (size (to_word t)) (size t0))).
+#[local] Definition lsh_rec := (cast_cons \o (@lshift (size (to_word t)) (size t0))).
 
 Lemma lshift_recP : injective lsh_rec.
 Proof using.
@@ -1125,9 +1125,9 @@ have := (disjoint_inj st s0); rewrite -setI_eq0 => /eqP ->.
 by rewrite imset0.
 Qed.
 
-Local Definition lsplit_rec :=
+#[local] Definition lsplit_rec :=
   [fun s : {set 'I_(size (to_word (t0 :: t)))} => lsh_rec @^-1: s].
-Local Definition rsplit_rec :=
+#[local] Definition rsplit_rec :=
   [fun s : {set 'I_(size (to_word (t0 :: t)))} => rsh_rec @^-1: s].
 
 (* I didn't manage to use this lemma getting it pass through \bigcup *)

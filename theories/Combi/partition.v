@@ -1312,7 +1312,7 @@ HB.instance Definition _ :=
   Finite.copy intpartn
     (seq_finType intpartn (enum_partn_allP n) (@enum_partn_countE n)).
 
-Local Notation "''P'" := intpartn.
+#[local] Notation "''P'" := intpartn.
 
 Implicit Type (p : 'P).
 Lemma intpartnP p : is_part p.
@@ -1655,7 +1655,7 @@ Import DefaultSeqLexiOrder.
 
 Variable d : nat.
 Definition intpartnlexi := 'P_d.
-Local Notation "'PLexi" := intpartnlexi.
+#[local] Notation "'PLexi" := intpartnlexi.
 Implicit Type (sh : 'PLexi).
 
 #[export] HB.instance Definition _ := SubType.copy 'PLexi 'P_d.
@@ -1998,7 +1998,7 @@ Module YoungLattice.
 Section YoungLattice.
 
 Definition intpartYoung := intpart.
-Local Notation "'YL" := intpartYoung.
+#[local] Notation "'YL" := intpartYoung.
 Implicit Type (p q sh : 'YL).
 
 Definition le_Young p q := included p q.
@@ -2366,7 +2366,7 @@ Section IntPartNDom.
 
 Variable d : nat.
 Definition intpartndom := 'P_d.
-Local Notation "'PDom" := intpartndom.
+#[local] Notation "'PDom" := intpartndom.
 Implicit Type (sh : 'PDom).
 
 #[export] HB.instance Definition _ := Finite.copy 'PDom 'P_d.
@@ -2385,7 +2385,7 @@ Lemma partdom_display : unit. Proof. exact: tt. Qed.
 Lemma leEpartdom : @Order.le partdom_display 'PDom = partdom.
 Proof. by []. Qed.
 
-Local Notation "sh '^#'" := (conj_intpartn sh : 'PDom)
+#[local] Notation "sh '^#'" := (conj_intpartn sh : 'PDom)
                               (at level 10, format "sh '^#'").
 
 Lemma sum_diff sh i :
@@ -2650,7 +2650,7 @@ End IntPartNDom.
 Section IntPartNTopBottom.
 
 Variable d : nat.
-Local Notation "'PDom" := (intpartndom d).
+#[local] Notation "'PDom" := (intpartndom d).
 Implicit Type (sh : 'PDom).
 
 Lemma partdom_rowpartn sh : (sh <= rowpartn d)%O.

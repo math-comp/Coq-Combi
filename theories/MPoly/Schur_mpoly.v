@@ -34,13 +34,13 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 Import Order.TTheory.
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 Import GRing.Theory.
 
 Section Schur.
 
 Variable n0 : nat.
-Local Notation n := n0.+1.
+#[local] Notation n := n0.+1.
 Variable R : ringType.
 
 Lemma mons2mE s : 'X_[s2m s] = \prod_(i <- s) 'X_i :> {mpoly R[n]}.
@@ -111,7 +111,7 @@ End Schur.
 Section SchurComRingType.
 
 Variable n0 : nat.
-Local Notation n := (n0.+1).
+#[local] Notation n := (n0.+1).
 Variable R : comRingType.
 
 

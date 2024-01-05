@@ -48,7 +48,7 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Local Open Scope order_scope.
+#[local] Open Scope order_scope.
 Import Order.Theory.
 
 (******************************************************************************)

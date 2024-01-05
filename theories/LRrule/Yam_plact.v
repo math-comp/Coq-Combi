@@ -321,7 +321,7 @@ rewrite -shape_RSmap_eq RSmapE.
 by rewrite (shape_RS_yam (yamevalP y)) eval_yameval.
 Qed.
 
-Local Definition auxbij (p : intpart) (y : yameval p) : yameval p :=
+#[local] Definition auxbij (p : intpart) (y : yameval p) : yameval p :=
   YamEval (auxbijP y).
 
 Lemma auxbij_inj (p : intpart) : injective (@auxbij p).
@@ -340,7 +340,7 @@ apply val_inj; apply perm_stdE => /=.
   by rewrite [RSmap (std y)]RSE [RSmap (std z)]RSE HRS1 !RSmap_std HRS2.
 Qed.
 
-Local Definition auxbij_inv (p : intpart) := invF (@auxbij_inj p).
+#[local] Definition auxbij_inv (p : intpart) := invF (@auxbij_inj p).
 
 Theorem plact_from_yam sh w :
   is_part sh ->

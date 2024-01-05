@@ -151,9 +151,9 @@ Reserved Notation "''s_' i"
 Reserved Notation "''s_' [ w ] "
       (at level 8, w at level 100, format "''s_' [ w ]").
 
-Local Reserved Notation "''II_' n" (at level 8, n at level 2).
-Local Reserved Notation "a =Br b" (at level 70).
-Local Reserved Notation "''I[' a '..' b ']'" (at level 0, a, b at level 2).
+#[local] Reserved Notation "''II_' n" (at level 8, n at level 2).
+#[local] Reserved Notation "a =Br b" (at level 70).
+#[local] Reserved Notation "''I[' a '..' b ']'" (at level 0, a, b at level 2).
 
 
 Lemma ieqi1F i : (i == i.+1) = false. Proof. by apply: negbTE; elim i. Qed.
@@ -418,11 +418,11 @@ apply: tpermC; rewrite /eq_op /=.
   by rewrite eqSS (ltn_eqF (ltnW Hij)).
 Qed.
 
-Local Lemma eltrL_ord (i : 'I_n) : 's_i i = inord i.+1.
+#[local] Lemma eltrL_ord (i : 'I_n) : 's_i i = inord i.+1.
 Proof. by rewrite /eltr -{3}(inord_val i) tpermL. Qed.
-Local Lemma eltrR_ord (i : 'I_n) : 's_i (inord i.+1) = i.
+#[local] Lemma eltrR_ord (i : 'I_n) : 's_i (inord i.+1) = i.
 Proof. by rewrite /eltr tpermR inord_val. Qed.
-Local Lemma eltrD_ord (i j : 'I_n) : i != j -> inord i.+1 != j -> 's_i j = j.
+#[local] Lemma eltrD_ord (i j : 'I_n) : i != j -> inord i.+1 != j -> 's_i j = j.
 Proof. by move=> Hi Hi1; rewrite tpermD // inord_val. Qed.
 
 Definition eltrL := (eltrL_ord, tpermL).
@@ -537,7 +537,7 @@ Qed.
 End ElemTransp.
 
 
-Local Notation "''II_' n" := ('I_n * 'I_n)%type.
+#[local] Notation "''II_' n" := ('I_n * 'I_n)%type.
 
 (** * Inversion set of a permutation *)
 Section InvSet.
@@ -1562,7 +1562,7 @@ Qed.
 Definition braidcongr := gencongr_hom braidrule_homog.
 Definition braidclass := genclass_hom braidrule_homog.
 
-Local Notation "a =Br b" := (braidcongr a b).
+#[local] Notation "a =Br b" := (braidcongr a b).
 
 Lemma braid_equiv : equivalence_rel braidcongr.
 Proof using. by apply: gencongr_equiv; exact: braidrule_sym. Qed.
@@ -1724,10 +1724,10 @@ Notation braidred := (@braid_reduces _).
 Section CanWord.
 
 Variable (n0 : nat).
-Local Notation n := n0.+1.
-Local Notation "''s_' i" := (eltr n i) : group_scope.
-Local Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
-Local Notation "a =Br b" := (braidcongr a b).
+#[local] Notation n := n0.+1.
+#[local] Notation "''s_' i" := (eltr n i) : group_scope.
+#[local] Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
+#[local] Notation "a =Br b" := (braidcongr a b).
 
 Fixpoint inscode (c : seq nat) (i : 'I_n) :=
   if c is c0 :: c' then
@@ -1865,7 +1865,7 @@ rewrite -{2}(subnKC Hbli1) -iotaD addnC (addnBA _ Hbli1).
 by rewrite (subnK Hi2) (subKn Hbl).
 Qed.
 
-Local Notation "''I[' a '..' b ']'" :=
+#[local] Notation "''I[' a '..' b ']'" :=
   [seq inord i | i <- rev (iota (b - a) a)].
 
 Lemma braid_pred_lineC (i : 'I_n) (sz c : nat) :
@@ -2057,7 +2057,7 @@ Notation "''s_' i" := (eltr _ i) : group_scope.
 Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i) : group_scope.
 
 
-Local Notation "a =Br b" := (braidcongr a b) : bool_scope.
+#[local] Notation "a =Br b" := (braidcongr a b) : bool_scope.
 
 Theorem braidred_to_canword n (w : seq 'I_n) :
   { p | path braidred w p /\ last w p = canword 's_[w] }.
@@ -2137,7 +2137,7 @@ Variable n : nat.
 Variable gT : finGroupType.
 Variable eltrG : nat -> gT.
 
-Local Notation "''g_' i" :=
+#[local] Notation "''g_' i" :=
   (eltrG i) (at level 8, i at level 2, format "''g_' i").
 
 Variant relat_Sn : Prop :=

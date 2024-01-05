@@ -84,7 +84,7 @@ Section OutEval.
 
 
 (* For some reason, using ssrnat's add prevents OCaml extraction *)
-Local Fixpoint add m n := if m is m'.+1 then add m' n.+1 else n.
+#[local] Fixpoint add m n := if m is m'.+1 then add m' n.+1 else n.
 Lemma addE : add =2 addn.
 Proof. by elim=> //= n IHn m; rewrite IHn addSnnS. Qed.
 
@@ -949,11 +949,11 @@ Section LR.
 Variables d1 d2 : nat.
 Variables (P1 : 'P_d1) (P2 : 'P_d2).
 
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 Import GRing.Theory.
 
 Variable (n0 : nat) (R : comRingType).
-Local Notation n := (n0.+1).
+#[local] Notation n := (n0.+1).
 Notation Schur p := (Schur n0 R p).
 
 Theorem LRtab_coeffP :

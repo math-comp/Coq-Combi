@@ -29,9 +29,9 @@ Import Order.Theory.
 Import Num.Theory.
 
 Delimit Scope order_scope with Omc.
-Local Open Scope O_scope.
+#[local] Open Scope O_scope.
 Delimit Scope O_scope with O.
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 
 #[export] Program Instance ratO : ord rat :=
      { Oeq := fun n m : rat => n = m;
@@ -836,7 +836,7 @@ Proof. by []. Qed.
 
 Require Arith.
 
-(* Local Open Scope rat_scope. *)
+(* #[local] Open Scope rat_scope. *)
 
 Section FiniteDistributions.
 
@@ -1093,8 +1093,6 @@ by rewrite mem_iota add0n.
 Qed.
 
 End UnifNat.
-
-(* Local Close Scope rat_scope. *)
 
 
 (** * Distribution and big sums *)

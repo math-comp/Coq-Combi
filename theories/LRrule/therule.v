@@ -74,7 +74,7 @@ Unset Printing Implicit Defensive.
 
 Import Order.TTheory.
 Open Scope N.
-Local Open Scope Combi.
+#[local] Open Scope Combi.
 
 (** * Gluing a standard tableaux with a skew tableau *)
 Section LR.
@@ -578,11 +578,11 @@ exact: included_shape_filter_gt_tab.
 Qed.
 
 (** * The statement of the Littlewood-Richardson rule *)
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 Import GRing.Theory.
 
 Variable (n0 : nat) (R : comRingType).
-Local Notation n := (n0.+1).
+#[local] Notation n := (n0.+1).
 Notation Schur p := (Schur n0 R p).
 
 Theorem LRyam_coeffP :
@@ -605,11 +605,11 @@ End TheRule.
 (** * Pieri's rules *)
 Section Pieri.
 
-Local Open Scope ring_scope.
+#[local] Open Scope ring_scope.
 Import GRing.Theory.
 
 Variable (n0 : nat) (R : comRingType).
-Local Notation n := (n0.+1).
+#[local] Notation n := (n0.+1).
 Notation Schur p := (Schur n0 R p).
 
 Lemma yamrowP :
