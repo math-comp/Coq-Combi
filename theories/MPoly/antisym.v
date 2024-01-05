@@ -106,13 +106,13 @@ Qed.
 Lemma mpart_is_dominant sh : is_part sh -> mpart sh \is dominant.
 Proof.
 rewrite /mpart /dominant; case: leqP => [Hsz|_ _].
-- rewrite is_part_sortedE => /andP [Hpart _].
-  + apply/(sorted2P 0) => // i j; rewrite size_tuple => /andP [Hij Hj].
+- rewrite is_part_sortedE => /andP[Hpart _].
+  + apply/(sorted2P 0) => // i j; rewrite size_tuple => /andP[Hij Hj].
     have Hi := leq_ltn_trans Hij Hj.
     rewrite -[i]/(val (Ordinal Hi)) -[j]/(val (Ordinal Hj)) -!mnm_nth !mnmE /=.
     case: (ssrnat.ltnP j (size sh)) => [Hjsz | /(nth_default _) -> //].
     by apply: (sorted2P _ _ _ _ Hpart) => //; rewrite Hij Hjsz.
-- apply/(sorted2P 0) => // i j; rewrite size_tuple => /andP [Hij Hj] /=.
+- apply/(sorted2P 0) => // i j; rewrite size_tuple => /andP[Hij Hj] /=.
   by rewrite (nth_map (Ordinal Hj)) // -cardE card_ord.
 Qed.
 
@@ -133,14 +133,14 @@ move=> Hdom; rewrite (is_dominant_partm Hdom).
 case: m Hdom => [[s Hs /=]].
 rewrite unfold_in (mnm_nth 0) /=.
 case: i => [i /= _] {Hs}; elim: s i => [| s0 s IHs] i // Hsort /=.
-case: (altP (s0 =P 0)) Hsort => [->{s0} /= {IHs} Hpath|_].
+case: (s0 =P 0) Hsort => [->{s0} /= {IHs} Hpath | _].
 - have -> : s = nseq (size s) 0.
-    elim: s Hpath => [//= | s0 s IHs] /= /andP [].
-    by rewrite leqn0 => /eqP -> /IHs {1}->.
+    elim: s Hpath => //= s0 s IHs /andP[].
+    by rewrite leqn0 => /eqP-> /IHs {1}->.
   rewrite (eq_in_filter (a2 := pred0)) ?filter_pred0; first last.
-    by move=> x /nseqP [-> _].
+    by move=> x /nseqP[-> _].
   by case: i => //= i; rewrite nth_nseq if_same.
-- move=> /sorted_consK/IHs {IHs} /= Hrec.
+- move=> /sorted_consK {}/IHs /= Hrec.
   by case: i.
 Qed.
 
@@ -231,7 +231,7 @@ Local Notation "m # s" := [multinom m (s i) | i < n].
 
 Lemma mnm_perm m1 m2 : perm_eq m1 m2 -> {s : 'S_n | m1 == m2 # s}.
 Proof.
-move=> Hperm; apply sigW; move: Hperm => /tuple_permP [s /val_inj Hs] /=.
+move=> Hperm; apply sigW; move: Hperm => /tuple_permP[s /val_inj Hs] /=.
 by exists s; apply/eqP; apply val_inj => /=.
 Qed.
 
@@ -311,7 +311,7 @@ apply/(iffP forallP) => /= [Hsym i j | Htperm s].
 - case: (prod_tpermP s) => ts -> {s} Hall.
   elim: ts Hall => [_ | t0 ts IHts] /=.
     by rewrite !big_nil /= msym1m.
-  move=> /andP [_ /IHts{IHts}/eqP Hrec].
+  move=> /andP[_ {}/IHts/eqP Hrec].
   by rewrite !big_cons msymMm Htperm Hrec.
 Qed.
 
@@ -335,7 +335,7 @@ apply/(iffP forallP) => /= [Hanti i j | Htperm s].
 - case: (prod_tpermP s) => ts -> {s} Hall.
   elim: ts Hall => [_ | t0 ts IHts] /=.
     by rewrite !big_nil odd_perm1 /= msym1m expr0 scale1r.
-  move=> /andP [H0 /IHts{IHts}/eqP Hrec].
+  move=> /andP[H0 {}/IHts/eqP Hrec].
   rewrite !big_cons msymMm Htperm H0 msymN Hrec.
   rewrite odd_mul_tperm H0 /=.
   by case: (odd_perm _); rewrite !simplexp // opprK.
@@ -483,7 +483,7 @@ move: Hchar; rewrite (char_mpoly n R) => Hchp.
 pose s := tperm (Ordinal (ltnW Hn)) (Ordinal Hn).
 have:= Hanti s; rewrite Hsym.
 rewrite odd_tperm /= => /eqP; rewrite !simplexp -addr_eq0.
-rewrite -mulr2n -mulr_natr mulf_eq0 => /orP [/eqP -> //|] /= /eqP /= H2.
+rewrite -mulr2n -mulr_natr mulf_eq0 => /orP[/eqP-> //|] /= /eqP /= H2.
 by exfalso; move: Hchp; rewrite negb_and H2 eq_refl.
 Qed.
 
@@ -582,7 +582,7 @@ apply sorted_sumn_iotaE; first last.
   by rewrite (Hhomog _ (mlead_supp Hpn0)).
 rewrite ltn_sorted_uniq_leq rev_uniq Huniq /=.
 rewrite {Huniq Hhomog} rev_sorted.
-apply/(sorted2P 0%N) => // i j; rewrite size_tuple=> /andP [Hij Hj].
+apply/(sorted2P 0%N) => // i j; rewrite size_tuple=> /andP[Hij Hj].
 have H := mlead_antisym_sorted Hpanti.
 have /= := H (Ordinal (leq_ltn_trans Hij Hj)) (Ordinal Hj) Hij.
 by rewrite !(mnm_nth 0) /=; apply.
@@ -612,7 +612,7 @@ rewrite odd_perm1 /= expr0 scale1r msym1m mcoeffX eq_refl /=.
 rewrite big1; first by rewrite addr0 mulr1 subrr eq_refl.
 move=> s Hs; apply /eqP; move: Hs; apply contraR.
 rewrite linearZ /= msymX mcoeffX.
-case: (altP ( _ =P rho)); last by rewrite mulr0 eq_refl.
+case: ( _ =P rho); last by rewrite mulr0 eq_refl.
 rewrite mnmP => H _; rewrite -eq_invg1; apply/eqP.
 rewrite -permP => i; rewrite perm1.
 move/(_ i) : H => /=.
@@ -645,32 +645,32 @@ Proof using.
 move=> Hi.
 have Hii1 : val (@inord n i.+1) = (@inord n i).+1.
   by do 2 (rewrite /= inordK; last by apply (leq_trans Hi)).
-move: p => [u v] /=; rewrite /predi /= /eltrp => /andP [Hlt Hneq] /=.
-case: (altP (inord i =P u)) => Hu.
+move: p => [u v] /=; rewrite /predi /= /eltrp => /andP[Hlt Hneq] /=.
+case/altP: (inord i =P u) => Hu.
   subst u; rewrite eltrL.
-  case: (altP (v =P inord i.+1)) Hneq Hlt => [Hu | Hu _ Hlt].
+  case/altP: (v =P inord i.+1) Hneq Hlt => [Hu | Hu _ Hlt].
     by subst v; rewrite /= eq_refl.
   rewrite eltrD; [| by rewrite neq_ltn Hlt | by rewrite eq_sym].
   apply/andP; split.
   - by rewrite ltn_neqAle eq_sym Hu /= Hii1.
   - rewrite /eq_op /= eq_sym; apply/nandP; left.
     by rewrite /eq_op /= Hii1 ieqi1F.
-case: (altP (inord i.+1 =P u)) => Hu1.
+case/altP: (inord i.+1 =P u) => Hu1.
   subst u; rewrite eltrR /=.
   rewrite eltrD; first last.
-  - by move: Hlt; rewrite ltn_neqAle => /andP [].
+  - by move: Hlt; rewrite ltn_neqAle => /andP[].
   - move: Hlt; rewrite Hii1 => /ltnW.
-    by rewrite ltn_neqAle => /andP [].
+    by rewrite ltn_neqAle => /andP[].
   apply/andP; split.
   - by apply: (ltn_trans _ Hlt); rewrite Hii1.
   - rewrite /eq_op /= eq_refl /= eq_sym.
-    by move: Hlt; rewrite ltn_neqAle => /andP [].
+    by move: Hlt; rewrite ltn_neqAle => /andP[].
 rewrite (tpermD Hu Hu1); apply/andP; split; first last.
   by apply/nandP => /=; left; rewrite eq_sym.
-case: (altP (inord i =P v)) => Hv.
+case/altP: (inord i =P v) => Hv.
   subst v; rewrite eltrL Hii1.
   by apply (leq_trans Hlt).
-case: (altP (inord i.+1 =P v)) => Hv1.
+case/altP: (inord i.+1 =P v) => Hv1.
   subst v; rewrite eltrR.
   by move: Hlt; rewrite Hii1 ltnS ltn_neqAle eq_sym Hu /=.
 by rewrite eltrD.
@@ -728,7 +728,7 @@ Local Notation "''a_' k" := (alternpol 'X_[k]).
 Lemma polyX_inj (i j : 'I_n) : 'X_i = 'X_j -> i = j.
 Proof using.
 move/(congr1 (mcoeff U_(j))); rewrite !mcoeffX eq_refl /=.
-case: (altP (_ =P _)) => [H _ | _ /esym /= /eqP] /=.
+case: (_ =P _) => [H _ | _ /esym /= /eqP] /=.
 - have:= congr1 (fun x : 'X_{1..n} => x j) H.
   by rewrite !mnm1E eq_refl eq_sym; case: eqP.
 - by have:= oner_neq0 R => /negbTE ->.
@@ -794,7 +794,7 @@ case: (boolP (U_(ordc) <= k)%MM) => Hck.
     apply: (lepm_trans _ Hk); apply/mnm_lepP => i.
     rewrite mnmBE; exact: leq_subr.
   rewrite big1 ?addr0; first last.
-    move=> m /andP [Hmk Hmc1].
+    move=> m /andP[Hmk Hmc1].
     rewrite coeffXdiff; last exact: lepm_trans Hmk Hk.
     by move: Hmc1; rewrite {1}/eq_op /= => /= /negbTE /= ->; rewrite mul0r.
   rewrite -{2}(submK Hck).
@@ -822,7 +822,7 @@ Lemma mcoeff_arbound b : b < n -> (abound b)@_(rbound b) = 1.
 Proof using.
 elim: b => [Hb | b IHb Hb1].
   rewrite /abound {Hb} big1; first last.
-    by move=> [i j] /= /andP [/leq_trans H{}/H].
+    by move=> [i j] /= /andP[/leq_trans /[apply]].
   rewrite mcoeff1 /=.
   suff -> : rbound 0 = 0%MM by rewrite eq_refl.
   by rewrite mnmP => i; rewrite mnmE.
@@ -844,7 +844,7 @@ rewrite [X in X * _](_ : _ =
       by apply negbTE; move: Hj => /eqP; apply contra => /eqP ->.
   rewrite (reindex (fun i : 'I_n => (i, ordb1))) /=; first last.
     exists (fun p : 'II_n => p.1) => //.
-    by move=> [i j] /=; rewrite inE /= => /andP [_ /eqP <-].
+    by move=> [i j] /=; rewrite inE /= => /andP[_ /eqP<-].
   by apply eq_bigl => i; rewrite eq_refl andbT.
 rewrite (mcoeff_poly_mul_lin _ _ (k := (mdeg (rbound b.+1)).+1)) //.
 have /= := @coeff_prodXdiff ordb1.
@@ -860,7 +860,7 @@ rewrite (eq_bigl (xpred1 msmb)); first last.
   by rewrite /= mesymlm_rbound.
 rewrite big_pred1_eq /= {}Hprod ?mesymlm_rbound // eq_refl mul1r.
 rewrite big1 ?addr0; first last.
-  move=> m /andP [Hm Hneq].
+  move=> m /andP[Hm Hneq].
   rewrite (eq_bigl (fun i : 'I_(_) => i < b.+1)); first last.
     by move=> i; rewrite ltnS.
   rewrite (@coeff_prodXdiff ordb1) //.
@@ -875,11 +875,11 @@ Qed.
 Lemma Vanprod_coeff_rho : Delta@_rho = 1.
 Proof using.
 rewrite /Vanprod.
-case: (altP (n =P 0%N)) => [Hn |].
+case: (n =P 0%N) => [Hn | /eqP].
 - rewrite big1; last by move=> [[i Hi]]; exfalso; rewrite Hn in Hi.
   suff -> : rho = 0%MM by rewrite mcoeff1 eq_refl.
   by rewrite mnmP => [[i Hi]]; exfalso; rewrite Hn in Hi.
-- rewrite -lt0n => /prednK/eqP; rewrite eqn_leq => /andP [].
+- rewrite -lt0n => /prednK/eqP; rewrite eqn_leq => /andP[].
   move=> /mcoeff_arbound <- _.
   rewrite /rho subn1; congr mcoeff.
   apply eq_bigl => [[i j]] /=.
@@ -896,9 +896,9 @@ Qed.
 
 Lemma Vanprod_dhomog : Delta \is 'C(n, 2).-homog.
 Proof using.
-have /homogP [d Hd] : Delta \is homog [measure of mdeg].
+have /homogP[d Hd] : Delta \is homog [measure of mdeg].
   rewrite /Vanprod -big_filter -(big_map _ xpredT id).
-  apply homog_prod; apply/allP => X /mapP [[i j]] /= _ -> {X}.
+  apply homog_prod; apply/allP => X /mapP[[i j]/= _ ->{X}].
   by apply/homogP; exists 1%N; apply rpredB; rewrite dhomogX /= mdeg1.
 suff <- : d = 'C(n, 2) by [].
 have Hr : rho \in msupp Delta.

@@ -66,7 +66,7 @@ Lemma perm_eq_permuted_tuple (s : seq T) (H : size s == n) :
 Proof using.
 set t := Tuple H; have Ht : perm_eq s t by [].
 move=> s1 Hss1; rewrite perm_sym in Hss1.
-have:= perm_trans Hss1 Ht => /tuple_permP [p Hs1].
+have:= perm_trans Hss1 Ht => /tuple_permP[p Hs1].
 apply/mapP; set t1 := (X in _ = tval X) in Hs1; exists t1; last exact Hs1.
 rewrite /permuted_tuple; apply/mapP.
 by exists p; first by rewrite mem_enum.
@@ -75,7 +75,7 @@ Qed.
 Lemma mem_enum_permuted (s t : n.-tuple T) :
   perm_eq s t -> t \in permuted_tuple s.
 Proof using.
-rewrite perm_sym => /tuple_permP [perm Hperm].
+rewrite perm_sym => /tuple_permP[perm Hperm].
 apply/mapP; exists perm; first by rewrite mem_enum.
 by apply val_inj; rewrite /= Hperm.
 Qed.
@@ -83,7 +83,7 @@ Qed.
 Lemma all_permuted (s : n.-tuple T) :
   all (fun x : n.-tuple T => perm_eq s x) (permuted_tuple s).
 Proof using.
-apply/allP => t /mapP [/= perm _] ->{t}.
+apply/allP => t /mapP[/= perm _ ->{t}].
 by rewrite perm_sym; apply/tuple_permP; exists perm.
 Qed.
 
@@ -173,7 +173,7 @@ Lemma permuted_action_trans :
 Proof using.
 apply/imsetP; exists (Permuted (perm_refl w)); first by [].
 apply/setP => /= t; rewrite !inE; apply/esym/orbitP => /=.
-have:= permutedP t => /tuple_permP [s /val_inj Hs].
+have:= permutedP t => /tuple_permP[s /val_inj Hs].
 exists s; first by rewrite inE.
 apply val_inj => /=; apply eq_from_tnth => /= i.
 by rewrite {1}Hs !tnth_mktuple permKV.
@@ -186,16 +186,16 @@ Lemma stab_tuple_prod :
 Proof using.
 have Htriv : trivIset [set [set i | tnth w i == val x] | x : seq_sub w].
   apply/trivIsetP => /= X Y.
-  move=> /imsetP [/= [x Hx _ /= ->{X}]].
-  move=> /imsetP [/= [y Hy _ /= ->{Y}]] Hneq.
+  move=> /imsetP[/= [x Hx _ /= ->{X}]].
+  move=> /imsetP[/= [y Hy _ /= ->{Y}]] Hneq.
   rewrite -setI_eq0; apply/eqP/setP => /= i.
-  rewrite !inE; apply/negP => /andP [/eqP ->] /eqP Hxy.
+  rewrite !inE; apply/negP => /andP[/eqP -> /eqP Hxy].
   by move: Hneq; rewrite Hxy eq_refl.
 apply/eqP; rewrite bigprodGE eqEsubset; apply/andP; split.
 - apply/subsetP => /= s.
   move/astabP/(_ wp); rewrite inE eq_refl => /(_ isT) Ht.
   rewrite -(perm_decE (s := s) Htriv); first last.
-  + apply/astabP => /= CS /imsetP [/= x _ ->{CS}].
+  + apply/astabP => /= CS /imsetP[/= x _ ->{CS}].
     apply/astab1P; rewrite astab1_set.
     rewrite !inE /=; apply/subsetP => j.
     rewrite !inE => /eqP <-.
@@ -203,17 +203,17 @@ apply/eqP; rewrite bigprodGE eqEsubset; apply/andP; split.
   + apply/subsetP => /= i _; apply/bigcupP => /=.
     exists [set i0 | tnth w i0 == tnth w i]; last by rewrite inE.
     by apply/imsetP => /=; exists (SeqSub (mem_tnth i w)) => //=.
-  apply group_prod => /= u /imsetP [/= X].
-  move=> /imsetP [x Hx ->{X} ->{u}]; apply/mem_gen.
+  apply group_prod => /= u /imsetP[/= X].
+  move=> /imsetP[x Hx ->{X} ->{u}]; apply/mem_gen.
   apply/bigcupP; exists x => //.
   by rewrite inE; exact: restr_perm_on.
-- rewrite gen_subG; apply/subsetP => /= s /bigcupP [/= x _] Hs.
+- rewrite gen_subG; apply/subsetP => /= s /bigcupP[/= x _] Hs.
   rewrite !inE /=; apply/subsetP => j; rewrite !inE => /eqP ->{j}.
   apply/eqP/val_inj/eq_from_tnth => /= i.
   rewrite tnth_mktuple.
   case: (boolP (tnth w i == val x)) => Hl0.
   + move: Hs; rewrite inE => /im_perm_on/setP/(_ i).
-    rewrite !inE Hl0 => /imsetP [/= j].
+    rewrite !inE Hl0 => /imsetP[/= j].
     rewrite inE => /eqP H {1}->.
     by rewrite (eqP Hl0) permK.
   + move: Hs => /groupVr; rewrite inE /= => /out_perm -> //.
@@ -227,13 +227,13 @@ Proof using.
 rewrite stab_tuple_prod; apply/esym/eqP/bigdprodYP => x /= _.
 apply/subsetP => /= s; rewrite !inE negb_and negbK => Ht.
 have {Ht} : s \in Sym [set i | tnth w i != val x].
-  move: Ht; rewrite bigprodGE => /gen_prodgP [u [/= f Hf ->{s}]].
-  apply group_prod => j _; move/(_ j): Hf => /bigcupP [k Hk].
+  move: Ht; rewrite bigprodGE => /gen_prodgP[u [/= f Hf ->{s}]].
+  apply group_prod => j _; move/(_ j): Hf => /bigcupP[k Hk].
   rewrite !inE /perm_on => /subset_trans; apply.
   by apply/subsetP => C; rewrite !inE => /eqP ->.
 rewrite inE => on_neqi; apply/andP; split.
-- case: (altP (s =P 1)) => //=; apply contra => on_eqi.
-  apply/eqP/permP => /= i; rewrite perm1.
+- case: (s =P 1) => //=; apply contra_notN => on_eqi.
+  apply/permP => /= i; rewrite perm1.
   case: (boolP (tnth w i == val x)) => [HC | /negbTE HC].
   + by rewrite (out_perm on_neqi) // !inE HC.
   + by rewrite (out_perm on_eqi) // !inE HC.

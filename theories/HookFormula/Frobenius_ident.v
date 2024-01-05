@@ -58,8 +58,8 @@ have /card_partition -> :
     partition shpart [set p : stpn | shape_deg p.1 == shape_deg p.2].
   apply/and3P; split.
   - apply/eqP/setP => /= [[t1 t2]]; rewrite inE /=.
-    apply/bigcupP/eqP => /= [[S /imsetP [/= sh _ ->{S}]] | eqsh].
-    + by rewrite inE => /= /andP [/eqP-> /eqP->].
+    apply/bigcupP/eqP => /= [[S /imsetP[/= sh _ ->{S}]] | eqsh].
+    + by rewrite inE => /= /andP[/eqP-> /eqP->].
     + exists [set p : stpn | (shape_deg p.1 == shape_deg t1) &&
                              (shape_deg p.2 == shape_deg t1)].
       apply/imsetP; exists (shape_deg t1) => //.
@@ -67,9 +67,9 @@ have /card_partition -> :
   - apply/trivIsetP=> /= S1 S2 /imsetP[sh1 _ ->{S1}] /imsetP[sh2 _ ->{S2}] neq.
     have {neq} neqsh : sh1 != sh2 by move: neq; apply contra => /eqP ->.
     rewrite -setI_eq0; apply/set0Pn => /=[[[t1 t2]]].
-    rewrite !inE /= -!andbA => /and4P [/eqP ->] _ /eqP eqsh _.
+    rewrite !inE /= -!andbA => /and4P[/eqP->] _ /eqP eqsh _.
     by rewrite eqsh eqxx in neqsh.
-  - apply/negP=> /imsetP [/= sh _] Heq.
+  - apply/negP=> /imsetP[/= sh _ Heq].
     by have [t] := pairshP sh; rewrite -Heq inE.
 rewrite big_imset /=; first last.
   move=> sh1 sh2 _ _ eqsh; have [t] := pairshP sh1.
@@ -120,7 +120,7 @@ pose stdrsinv p := RStabinv (RSTabPair (stdrspairP p)).
 have from_pairP p : is_std_of_n n (stdrsinv p).
   case: p => [t1 t2]; rewrite /= /stdrsinv /= -RSstdE -size_RS -RStabmapE.
   rewrite -[RStabmap _]/(val (RStab _)) RStabinvK /stdrspair /=.
-  rewrite [(_).1](_ : _ = val t1); last by case (altP (shape t1 =P shape t2)).
+  rewrite [(_).1](_ : _ = val t1); last by case eqP.
   by rewrite stdtabnP /= size_tab_stdtabn.
 pose from_pair p := StdWordN (from_pairP p).
 have to_pairK : cancel to_pair from_pair.
@@ -129,7 +129,7 @@ have to_pairK : cancel to_pair from_pair.
   apply val_inj; rewrite /= /stdrspair /= shape_RStabmapE eqxx.
   by case: RStabmap.
 rewrite -(card_imset _ (can_inj to_pairK)); apply eq_card => [[/= t1 t2]].
-rewrite inE /=; apply/imsetP/idP=>/= [[w _ [->{t1}->{t2}/=]] | eqsh].
+rewrite inE /=; apply/imsetP/idP => /= [[w _ [->{t1} ->{t2}/=]] | eqsh].
   by rewrite shape_RStabmapE.
 exists (from_pair (t1, t2)); first by [].
 apply/eqP; rewrite xpair_eqE /= -!val_eqE /= /stdrsinv.

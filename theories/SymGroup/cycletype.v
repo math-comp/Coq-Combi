@@ -18,7 +18,7 @@
 This files deals with cycle type of permutations. We define the following
 notions, where [s] is a permutation over a finite type [T]:
 
-- [canporbit s x] == a chosen canonical element in the cycle of [x]
+- [canporbit s x] == a chosen canonical element in the [s]-cycle of [x]
 - [indporbit s x] == the position of [x] in its cycle wrt [canporbit s x]
 
 Cycle maps:
@@ -136,7 +136,7 @@ Record porbits_map := PorbitMap {
 
 Variable CM : porbits_map.
 
-Lemma aux (x : U) : V.
+Fact cymapcan_aux (x : U) : V.
 Proof using CM.
 have : fs CM (porbit s x) != set0.
   rewrite -card_gt0 fs_homog ?imset_f // card_gt0.
@@ -144,7 +144,8 @@ have : fs CM (porbit s x) != set0.
 by move/set0Pn/sigW => H; apply H.
 Qed.
 
-Local Definition cymapcan x := odflt (aux x) [pick y in CM (porbit s x)].
+Local Definition cymapcan x :=
+  odflt (cymapcan_aux x) [pick y in CM (porbit s x)].
 Definition cymap x := ((t ^+ (indporbit s x)) (cymapcan x))%g.
 
 Lemma fs_porbitP x : CM (porbit s x) \in porbits t.
@@ -155,7 +156,7 @@ Qed.
 Lemma porbit_cymapcan x : porbit t (cymapcan x) = CM (porbit s x).
 Proof using.
 rewrite /cymapcan /=.
-have:= fs_porbitP x => /imsetP [y0 _ ->].
+have:= fs_porbitP x => /imsetP[y0 _ ->].
 case: pickP => [/= y|].
 - by rewrite -eq_porbit_mem => /eqP ->.
 - by move=> /(_ y0); rewrite porbit_id.
@@ -167,7 +168,7 @@ Proof using. by rewrite /cymap porbit_perm porbit_cymapcan. Qed.
 Lemma cymapcan_perm i x : cymapcan ((s ^+ i)%g x) = cymapcan x.
 Proof using CM.
 rewrite /cymapcan porbit_perm.
-have:= fs_porbitP x => /imsetP [y0 _ ->].
+have:= fs_porbitP x => /imsetP[y0 _ ->].
 by case: pickP => // /(_ y0); rewrite porbit_id.
 Qed.
 
@@ -192,12 +193,12 @@ case: pickP => [im Him /= Hdefim | Habs] /=.
 - rewrite /canporbit (_ : [pick y in  _] = some im) //.
   rewrite [LHS](_ : _ = [pick y in CM (porbit s x)]); first last.
   apply eq_pick => y /=; congr (y \in _).
-  have:= fs_porbitP x => /imsetP [y0 _ Hy0].
+  have:= fs_porbitP x => /imsetP[y0 _ Hy0].
     by move: Him; rewrite Hy0 /= -eq_porbit_mem => /eqP ->.
   rewrite Hdefim /cymapcan.
   by case: pickP => // /(_ im); rewrite Him.
 - exfalso; move: Habs.
-  have:= fs_porbitP x => /imsetP [y _ ->] /(_ y).
+  have:= fs_porbitP x => /imsetP[y _ ->] /(_ y).
   by rewrite porbit_id.
 Qed.
 
@@ -220,7 +221,7 @@ move=> Heq x; rewrite /cymap /cymapcan /=.
 rewrite -Heq; last exact: imset_f.
 case: pickP => // Habs.
 exfalso; move: Habs.
-have:= fs_porbitP CM1 x => /imsetP [y _ ->] /(_ y).
+have:= fs_porbitP CM1 x => /imsetP[y _ ->] /(_ y).
 by rewrite porbit_id.
 Qed.
 
@@ -243,7 +244,7 @@ move=> Hcomp x; rewrite /cymap /=.
 rewrite /cymapcan /= porbit_perm porbit_cymapcan indporbit_cymap; congr (_ _).
 have /= -> := (Hcomp (porbit u x)); last exact: imset_f.
 case: (pickP (mem (CMuw _))) => // Habs; exfalso.
-have:= fs_porbitP CMuw x => /imsetP [z _ Hz].
+have:= fs_porbitP CMuw x => /imsetP[z _ Hz].
 by have:= Habs z; rewrite Hz /= porbit_id.
 Qed.
 
@@ -264,7 +265,7 @@ Qed.
 Section CycleTypeConj.
 
 Variable T : finType.
-Implicit Types (s t : {perm T}) (n : nat).
+Implicit Types (a b s t : {perm T}) (n : nat).
 
 Fact cycle_type_subproof s : is_part_of_n #|T| (setpart_shape (porbits s)).
 Proof using.
@@ -290,8 +291,8 @@ apply (colpartnP (x0 := 1)); rewrite /= /setpart_shape.
 set l := sort _ _; case: (ltnP 0 (size l)) => [|];
   last by rewrite leqn0 => /nilP ->.
 rewrite -nth0 {}/l => /(mem_nth 1).
-rewrite mem_sort => /mapP [/= S].
-rewrite mem_enum => /imsetP [x _ ->{S}] ->.
+rewrite mem_sort => /mapP[/= S].
+rewrite mem_enum => /imsetP[x _ ->{S}] ->.
 have /eqP : (1%g : {perm T}) x = x by rewrite perm1.
 rewrite porbit_fix => /eqP ->.
 by rewrite cards1.
@@ -303,7 +304,7 @@ Proof. by apply val_inj; rewrite /= porbitsV. Qed.
 Lemma conjg_cycle s a : (<[s]> :^ a = <[s ^ a]>)%g.
 Proof using.
 apply /setP => x.
-apply /imsetP/cycleP => [[x0 /cycleP [i] ->] -> | [i] ->].
+apply /imsetP/cycleP => [[x0 /cycleP[i] ->] -> | [i] ->].
 - by exists i; apply: conjXg.
 - by exists (s ^+i)%g; [apply /cycleP; exists i | rewrite conjXg].
 Qed.
@@ -311,7 +312,7 @@ Qed.
 Lemma porbit_conjg s a x :
   porbit ((s ^ a)%g) (a x) = [set a y | y in porbit s x].
 Proof using.
-rewrite !porbitE; apply /setP => y.
+rewrite !porbitE; apply/setP => y.
 apply /idP/imsetP => [|[x0] Hx0 ->].
 - rewrite -conjg_cycle => Hy.
   exists ((a ^-1)%g y); last by rewrite permKV.
@@ -323,8 +324,8 @@ Qed.
 Lemma porbits_conjg s a :
   porbits (s ^ a)%g = [set [set a y | y in (X : {set T})] | X in porbits s].
 Proof using.
-apply /setP => X0.
-apply /imsetP/imsetP => [[x _]|[x /imsetP [x0 _] ->] ->].
+apply /setP => /= X0.
+apply /imsetP/imsetP => [[x _]|[x /imsetP[x0 _ ->]] ->] /=.
 - rewrite (_: x = a ((a ^-1)%g (x))); last by rewrite permKV.
   rewrite porbit_conjg => ->.
   exists (porbit s ((a^-1)%g x)) => //.
@@ -337,7 +338,8 @@ Lemma cycle_type_conjg s a : cycle_type (s ^ a)%g = cycle_type s.
 Proof using.
 apply esym; apply val_inj => /=.
 rewrite porbits_conjg; apply/perm_sortP => //=.
-rewrite [X in perm_eq X _](eq_map (g := fun X : {set T} => #|a @: X|)); first last.
+rewrite [X in perm_eq X _](eq_map
+                             (g := fun X : {set T} => #|a @: X|)); first last.
   by move => x;  apply esym; apply card_imset; exact: perm_inj.
 rewrite (map_comp (fun x => #{x})); apply: perm_map.
 apply uniq_perm.
@@ -346,8 +348,8 @@ apply uniq_perm.
 - exact: enum_uniq.
 - move=> x; rewrite mem_enum.
   apply/mapP/imsetP => [] [x0].
-  + by rewrite mem_enum => Hx0 -> {x}; exists x0.
-  + by move=> Hx0 -> {x}; exists x0; rewrite ?mem_enum.
+  + by rewrite mem_enum => Hx0 ->{x}; exists x0.
+  + by move=> Hx0 ->{x}; exists x0; rewrite ?mem_enum.
 Qed.
 
 Lemma card_pred_card_porbits s (P : pred nat) :
@@ -373,10 +375,10 @@ rewrite porbits_conjg /cover (big_morph _ (imsetU _) (imset0 _)).
 rewrite -[RHS](big_imset id) /=; first last.
   by move=> X Y _ _; apply: imset_inj; apply perm_inj.
 apply/eq_bigl => X; rewrite !inE.
-apply/andP/imsetP => [[/imsetP [/= C HC ->{X}]] | [/= C]].
+apply/andP/imsetP => [[/imsetP[/= C HC ->{X}]] | [/= C]].
 - rewrite card_imset; last exact: perm_inj.
   by move=> cardC; exists C; rewrite // inE HC cardC.
-- rewrite inE => /andP [HC cardC] ->{X}; split; first exact: imset_f.
+- rewrite inE => /andP[HC cardC] ->{X}; split; first exact: imset_f.
   by rewrite card_imset; last exact: perm_inj.
 Qed.
 
@@ -391,10 +393,10 @@ Lemma disjoint_psupports_conjg (A : {set {perm T}}) a :
   disjoint_psupports A -> disjoint_psupports [set (s ^ a)%g | s in A].
 Proof using.
 move => [/trivIsetP Hdisj Hinj].
-split => [|x1 x2 /imsetP [s1 Hs1 ->] /imsetP [s2 Hs2 ->]].
+split => [|x1 x2 /imsetP[s1 Hs1 ->] /imsetP[s2 Hs2 ->]].
 - apply /trivIsetP => B1 B2.
-  move => /imsetP [x1 /imsetP [s1 Hs1 ->] -> {x1}].
-  move => /imsetP [x2 /imsetP [s2 Hs2 ->] -> {x2}].
+  move => /imsetP[x1 /imsetP[s1 Hs1 ->] ->{x1}].
+  move => /imsetP[x2 /imsetP[s2 Hs2 ->] ->{x2}].
   rewrite !psupport_conjg => Hdiff.
   apply disjoint_imset; first exact: perm_inj.
   apply: Hdisj; try exact: imset_f.
@@ -403,9 +405,9 @@ split => [|x1 x2 /imsetP [s1 Hs1 ->] /imsetP [s2 Hs2 ->]].
   rewrite (_ : s1 = s2) //; apply Hinj => //.
   apply /setP => x; apply /idP/idP => Hx.
   + have:= imset_f a Hx.
-    by rewrite Hsupp => /imsetP [y] Hy /perm_inj ->.
+    by rewrite Hsupp => /imsetP[y Hy /perm_inj ->].
   + have:= imset_f a Hx.
-    by rewrite -Hsupp => /imsetP [y] Hy /perm_inj ->.
+    by rewrite -Hsupp => /imsetP[y Hy /perm_inj ->].
 Qed.
 
 Import finmodule.FiniteModule morphism.
@@ -413,7 +415,7 @@ Import finmodule.FiniteModule morphism.
 Lemma cycle_dec_conjg s a:
   [set (c ^ a)%g | c in cycle_dec s] = cycle_dec (s ^ a)%g.
 Proof using.
-apply esym; apply cycle_decP; constructor => [x /imsetP [x0 Hx0 ->]||].
+apply esym; apply cycle_decP; constructor => [x /imsetP[x0 Hx0 ->]||].
 - by apply: cyclic_conjg; apply: cyclic_dec; apply: Hx0.
 - by apply: disjoint_psupports_conjg; apply disjoint_cycle_dec.
 - have abel : abelian <<[set (c ^ a)%g | c in cycle_dec s]>>.
@@ -498,7 +500,7 @@ Lemma classes_of_permP s t :
   (t \in (s ^: [set: {perm T}])%g) = (cycle_type s == cycle_type t).
 Proof using.
 apply /idP/conj_permP => [| [c ->]].
-- by move=> /imsetP [c Hc ->]; exists c.
+- by move=> /imsetP[c Hc ->]; exists c.
 - by apply: imset_f; rewrite inE.
 Qed.
 
@@ -520,8 +522,8 @@ apply/idP/idP => [|Hx]; rewrite next_nth.
 - rewrite mem_enum Hx.
   move: Hsize Hx; rewrite -mem_enum cardE.
   case: (enum C) (enum_uniq (pred_of_set C)) => // a [// | b l] /=.
-  move=> /and3P []; rewrite inE => /norP [/negbTE Hab Ha] Hb Huniq _.
-  rewrite !inE => /orP [/eqP -> |/orP [/eqP -> |Hx]].
+  move=> /and3P[]; rewrite inE => /norP[/negbTE Hab Ha] Hb Huniq _.
+  rewrite !inE => /orP[/eqP -> | /orP[/eqP -> |Hx]].
   + by rewrite eq_refl /= eq_sym Hab.
   + rewrite Hab eq_refl /=.
     case: {2 3}l (erefl l) => [|c l0 Hl]; first by rewrite Hab.
@@ -581,7 +583,7 @@ Lemma porbit_set_of_set C : #|C| > 1 -> porbit_set (perm_of_porbit C) = [set C].
 Proof using.
 move=> Hsize; apply /setP => X.
 rewrite !inE.
-apply/andP/eqP => [[/imsetP [x _ ->]]|->].
+apply/andP/eqP => [[/imsetP[x _ ->]] | ->].
 - rewrite psupport_card_porbit psupport_perm_of_porbit // => Hx.
   rewrite [RHS](perm_of_porbitE Hx).
   by apply/eqP; rewrite eq_porbit_mem -perm_of_porbitE.
@@ -591,7 +593,7 @@ Qed.
 
 Lemma isperm_of_porbit C : #|C| > 1 -> perm_of_porbit C \is cyclic.
 Proof using.
-move => Hsize; apply /cards1P; exists C.
+move=> Hsize; apply /cards1P; exists C.
 exact: porbit_set_of_set.
 Qed.
 
@@ -604,7 +606,7 @@ Lemma psupports_perm_of_porbit P :
   [set X in P | 1 < #|X|].
 Proof using.
 rewrite -[RHS]imset_id.
-apply eq_in_imset => i; rewrite inE => /andP [_ Hi].
+apply eq_in_imset => i; rewrite inE => /andP[_ Hi].
 by rewrite psupport_perm_of_porbit.
 Qed.
 
@@ -612,13 +614,13 @@ Lemma disj_perm_of_setpart P :
   partition P [set: T] ->
   disjoint_psupports [set perm_of_porbit s| s in [set X0 in P | 1 < #|X0|]].
 Proof using.
-move => Hpart; split => [|C D].
+move=> Hpart; split => [|C D].
 - rewrite -imset_comp psupports_perm_of_porbit.
   apply /trivIsetP => A B; rewrite !inE.
-  move => /andP [AinP _] /andP [BinP _].
-  by move: Hpart => /and3P [_ /trivIsetP /(_ A B AinP BinP) ].
-- move => /imsetP [A]; rewrite inE => /andP [_ cardA] ->.
-  move => /imsetP [B]; rewrite inE => /andP [_ cardB] ->.
+  move=> /andP[AinP _] /andP[BinP _].
+  by move: Hpart => /and3P[_ /trivIsetP /(_ A B AinP BinP) ].
+- move=> /imsetP[A]; rewrite inE => /andP[_ cardA] ->.
+  move=> /imsetP[B]; rewrite inE => /andP[_ cardB] ->.
   by rewrite !psupport_perm_of_porbit // => ->.
 Qed.
 
@@ -629,39 +631,39 @@ move=> Hpart; apply /setP => X.
 apply /idP/idP => HX.
 - case: (boolP (X \in porbit_set (perm_of_setpart P))).
   + rewrite porbit_set_of_disjoint; last exact: disj_perm_of_setpart.
-    move => /bigcupP [C] /imsetP [X0].
-    rewrite inE => /andP [H HX0] ->.
+    move => /bigcupP[C] /imsetP[X0].
+    rewrite inE => /andP[H HX0] ->.
     by rewrite porbit_set_of_set // inE => /eqP ->.
-  + rewrite inE => /nandP []; first by rewrite HX.
-    move: HX => /imsetP [x _ ->].
+  + rewrite inE => /nandP[]; first by rewrite HX.
+    move: HX => /imsetP[x _ ->{X}].
     rewrite psupport_card_porbit => Hsupp.
     have:= Hsupp; rewrite in_psupport negbK porbit_fix => /eqP ->.
     move: Hsupp; rewrite psupport_of_disjoint; last exact: disj_perm_of_setpart.
     rewrite -(big_imset id) /=; first last.
-      move=> C D /imsetP [c]; rewrite inE => /andP [_ cardc ->{C}].
-      move=>     /imsetP [d]; rewrite inE => /andP [_ cardd ->{D}].
+      move=> C D /imsetP[c]; rewrite inE => /andP[_ cardc ->{C}].
+      move=>     /imsetP[d]; rewrite inE => /andP[_ cardd ->{D}].
       by rewrite !psupport_perm_of_porbit // => ->.
     rewrite -imset_comp psupports_perm_of_porbit => /bigcupP.
     move=> /exists_inP; rewrite -[X in (is_true X) -> _]negbK.
     have xinP : x \in cover P by rewrite (cover_partition Hpart).
     have:= xinP; rewrite -mem_pblock => xPblock.
     rewrite negb_exists_in => /forall_inP/(_ (pblock P x))/contraL/(_ xPblock).
-    rewrite inE => /nandP []; first by rewrite pblock_mem.
-    rewrite -leqNgt leq_eqVlt => /orP [/cards1P [y Hy]|].
+    rewrite inE => /nandP[]; first by rewrite pblock_mem.
+    rewrite -leqNgt leq_eqVlt => /orP[/cards1P[y Hy]|].
     * move: xPblock; rewrite Hy inE => /eqP ->.
       by rewrite -Hy; apply pblock_mem.
     * rewrite ltnS leqn0 cards_eq0 => /eqP H.
       by move: xPblock; rewrite H inE.
 - case: (boolP (#|X| == 1)).
-  + move => /cards1P [x Hx]; subst X.
+  + move => /cards1P[x Hx]; subst X.
     apply /imsetP; exists x => //.
     apply esym; apply/eqP; rewrite -porbit_fix.
     rewrite -[_ == x]negbK -in_psupport psupport_of_disjoint;
       last exact: disj_perm_of_setpart.
     apply /bigcupP => /exists_inP; apply /negP; rewrite negb_exists_in.
-    apply /forall_inP => C /imsetP [x0]; rewrite inE => /andP [Hx0 Hcard] ->.
+    apply /forall_inP => C /imsetP[x0]; rewrite inE => /andP[Hx0 Hcard] ->.
     rewrite psupport_perm_of_porbit //.
-    move: Hpart => /and3P [_ /trivIsetP /(_ [set x] x0) Hxx0 _].
+    move: Hpart => /and3P[_ /trivIsetP /(_ [set x] x0) Hxx0 _].
     move: Hxx0 => /(_ HX Hx0) Htmp.
     have /eqP {}/Htmp : [set x] <> x0
       by move => Heq; move: Hcard; rewrite -Heq cards1.
@@ -669,11 +671,11 @@ apply /idP/idP => HX.
     apply /negP => Hx.
     suff: x \in set0 by rewrite inE.
     by rewrite -Hxx0 inE Hx andbT inE.
-  + have:= Hpart => /and3P [_ _ Hset0].
+  + have:= Hpart => /and3P[_ _ Hset0].
     move=> H; move: H HX Hset0.
-    rewrite neq_ltn => /orP [|Hcard HX Hset0].
+    rewrite neq_ltn => /orP[ | Hcard HX Hset0].
       by rewrite ltnS leqn0 cards_eq0 => /eqP -> ->.
-    suff: X \in porbit_set (perm_of_setpart P) by rewrite inE => /andP [].
+    suff: X \in porbit_set (perm_of_setpart P) by rewrite inE => /andP[].
     rewrite porbit_set_of_disjoint; last exact: disj_perm_of_setpart.
     apply /bigcupP; exists (perm_of_porbit X);
       last by rewrite porbit_set_of_set ?inE.
@@ -700,7 +702,7 @@ Proof. by move=> xz yz; apply/eqP; rewrite -porbit_fix tpermD. Qed.
 Lemma porbit_tpermL x y : porbit (tperm x y) x = [set x; y].
 Proof.
 apply/setP => t; rewrite !inE.
-apply/porbitP/idP => [[n ->{t}] | /orP []/eqP ->{t}].
+apply/porbitP/idP => [[n ->{t}] | /orP[] /eqP ->{t}].
 - rewrite -(odd_double_half n) expgD -mul2n expgM expgS expg1 tperm2 expg1n mulg1.
   case: (odd n) => /=; apply/orP; first by right; rewrite expg1 tpermL.
   by left; rewrite expg0 perm1.
@@ -716,13 +718,13 @@ Lemma porbits_tperm x y :
   [set x; y] |: [set [set z] | z : T & (x != z) && (y != z)].
 Proof.
 rewrite /porbits; apply/setP => S; rewrite !inE.
-apply/imsetP/idP => [[z _ ->{S}] | /orP [/eqP->{S} | /imsetP[z]]].
-- case: (altP (x =P z)) => [<-{z} | xz]; first by rewrite porbit_tpermL eqxx.
-  case: (altP (y =P z)) => [{xz} <-{z} | yz]; first by rewrite porbit_tpermR eqxx.
+apply/imsetP/idP => [[z _ ->{S}] | /orP[/eqP->{S} | /imsetP[z]]].
+- case: (x =P z) => [<-{z} | /eqP xz]; first by rewrite porbit_tpermL eqxx.
+  case: (y =P z) => [{xz} <-{z} | /eqP yz]; first by rewrite porbit_tpermR eqxx.
   rewrite porbit_tpermD //; apply/orP; right.
   by apply/imsetP; exists z => //; rewrite inE xz yz.
 - by exists x => //; rewrite porbit_tpermL.
-- rewrite inE => /andP [xz yz] ->{S}.
+- rewrite inE => /andP[xz yz] ->{S}.
   by exists z => //; rewrite porbit_tpermD.
 Qed.
 
@@ -738,7 +740,7 @@ have /(hookpartnPE 0) -> : nth 0 ct 1 <= 1.
     by apply: filter_uniq; apply enum_uniq.
   rewrite porbits_tperm => S; rewrite inE mem_filter /= mem_enum.
   apply/idP/eqP => [ | ->]; last by rewrite !inE eqxx /= andbT cards2 Neq.
-  rewrite andbC !inE => /andP [/orP [/eqP -> // | /imsetP [z _ ->{S}]]].
+  rewrite andbC !inE => /andP[/orP[/eqP -> // | /imsetP[z _ ->{S}]]].
   by rewrite cards1 ltnn.
 congr hookpartn.
 rewrite intpartn_nth0 /ct /cycle_type /= /setpart_shape.
@@ -747,7 +749,7 @@ rewrite {}/s big_map big_enum /=.
 suff -> : \max_(i in porbits (tperm x y)) #|i| = 2 by [].
 rewrite porbits_tperm; apply anti_leq; apply/andP; split.
   apply/bigmax_leqP => /= S.
-  by rewrite !inE=> /orP [/eqP->//| /imsetP[z _ ->{S}]];
+  by rewrite !inE=> /orP[/eqP->// | /imsetP[z _ ->{S}]];
      rewrite ?cards1 ?cards2 ?Neq.
 apply: (bigmax_sup [set x; y]); last by rewrite cards2 Neq.
 by rewrite !inE eqxx.
@@ -767,8 +769,8 @@ Lemma cycle_type_tpermP (s : {perm T}) :
 Proof.
 rewrite {1}cardE.
 have:= enum_uniq T; case: (enum _) => [|x[|y en]]//= /andP[].
-rewrite !inE negb_or => /andP [xy _] _ _ {en}.
-rewrite -(cycle_type_tperm xy) => /esym/eqP/conj_permP [/= t ->{s}].
+rewrite !inE negb_or => /andP[xy _] _ _ {en}.
+rewrite -(cycle_type_tperm xy) => /esym/eqP/conj_permP[/= t ->{s}].
 exists (t x), (t y); split; first by rewrite (inj_eq perm_inj).
 exact: tpermJ.
 Qed.
@@ -807,7 +809,7 @@ End Classes.
 
 Lemma permCT_colpartn_card : permCT (colpartn #|T|) = 1%g.
 Proof.
-have /conj_permP [s ->] : cycle_type 1 == cycle_type (permCT (colpartn #|T|)).
+have /conj_permP[s ->] : cycle_type 1 == cycle_type (permCT (colpartn #|T|)).
   by rewrite permCTP cycle_type1.
 by rewrite conj1g.
 Qed.
@@ -856,7 +858,7 @@ congr ((nat_of_bool _) %:R); apply/idP/idP.
 - rewrite classCTP => /subsetP; apply.
   apply /imsetP; exists 1%g; first by rewrite inE.
   by rewrite conjg1.
-- move=> /eqP <-; apply/subsetP => t /imsetP [c] _ -> {t}.
+- move=> /eqP <-; apply/subsetP => t /imsetP[c _ ->{t}].
   by rewrite -classCTP cycle_type_conjg.
 Qed.
 

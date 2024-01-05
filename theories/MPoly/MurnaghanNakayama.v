@@ -192,7 +192,7 @@ Proof.
 move=> Hm.
 case: (ltnP n (size la)) => szla.
   rewrite syms_oversize // mul0r; apply/esym/big1 => /= i.
-  move=> /ribbon_included/includedP [/(leq_trans szla)/syms_oversize -> _].
+  move=> /ribbon_included/includedP[/(leq_trans szla)/syms_oversize -> _].
     by rewrite scaler0.
 rewrite (syms_sympM_oapp _ Hm).
 case: m Hm => // m _.
@@ -220,7 +220,7 @@ apply esym; apply: eq_big => mu.
   rewrite andbC; case leqP => Hszmu /=; first last.
   + case Haddrib: add_ribbon_intpartn => [[res h]|] //=; first last.
     move/add_ribbon_intpartnP in Haddrib.
-    case (altP (_ =P Some mu)) => // [[Heq]].
+    case (_ =P Some mu) => // [[Heq]].
     have := size_add_ribbon Haddrib; rewrite {res Haddrib}Heq /= => Heq.
     by move: Hszmu; rewrite Heq leq_max 2!ltnNge szla.
   + apply esym; case: (boolP (ribbon la mu)) => [Hrib | Hnrib].
@@ -231,7 +231,7 @@ apply esym; apply: eq_big => mu.
       by move=> [/val_inj ->]; rewrite eqxx.
     * case Haddrib: add_ribbon_intpartn => [[res h]|]//=.
       move/add_ribbon_intpartnP in Haddrib.
-      apply/negP => /eqP [] Heq.
+      apply/negP => /eqP[] Heq.
       by move: Hnrib; rewrite -{}Heq (add_ribbonP _ Haddrib).
 move=> /andP[Hrib ->].
 have:= ribbon_addE (intpartnP la) (intpartnP mu) Hrib.
@@ -324,8 +324,8 @@ Theorem MN_coeffP_int d (la : 'P_d) :
   'p[la] = \sum_(sh : 'P_d) MN_coeff sh la *: 's[sh] :> {sympoly int[n]}.
 Proof.
 rewrite /prod_symp /prod_gen.
-case: la => la /= /andP [/eqP <-{d} /in_part_non0].
-elim: la => [/=|l0 la IHla] Hall.
+case: la => la /= /andP[/eqP<-{d} /in_part_non0].
+elim: la => [/= | l0 la IHla] Hall.
   rewrite big_nil (big_pred1 (rowpartn 0)) ?scale1r ?syms0 //.
   by move=> i /=; rewrite intpartn0 eqxx.
 rewrite big_cons {}IHla; first last.
@@ -411,7 +411,7 @@ rewrite (big_cat_nat _ _ _ _ Hsz) //=.
 rewrite [X in _ + X]big_nat [X in _ + X]big1 ?addr0 // => i /andP[leszi _].
 case Haddrib : add_ribbon => [[sh h]|]//=.
 suff /negbTE -> : ~~ included sh la by [].
-apply/negP => /includedP [] + _.
+apply/negP => /includedP[+ _].
 by rewrite (size_add_ribbon Haddrib) geq_max ltnNge leszi andbF.
 Qed.
 
@@ -478,7 +478,7 @@ elim: mu dn nu => [|m0 mu IHmu] d nu.
   rewrite big1 ?addr0 // => la.
   rewrite -val_eqE /= cast_intpartnE => /negbTE ->.
   by rewrite scale0r.
-rewrite inE negb_or eq_sym => /andP [Hm0 Hmu].
+rewrite inE negb_or eq_sym => /andP[Hm0 Hmu].
 rewrite big_cons mulrA syms_sympM_oapp //.
 move Hmmu : (m0 :: mu) => mmu.  (* to prevent the expansion of MN_coeff_rec *)
 rewrite [RHS](bigID (fun sh => size (val sh) <= n)) /=.

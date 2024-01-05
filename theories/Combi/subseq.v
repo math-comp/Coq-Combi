@@ -89,7 +89,7 @@ move=> leT_tr leT_irr ss1 ss2; apply (iffP idP); first exact: mem_subseq.
 move: leT_tr leT_irr ss1 ss2 => /in3_sig leT_tr /in1_sig leT_irr .
 have /all_sigP[s2' ->] := allss s2 => + + /[dup] subs12.
 have /all_sigP[{subs12}s1 ->] : all (mem s2) s1.
-  by apply/allP => i /subs12 /mapP [[j /= j_in_s2 _ ->{i}]].
+  by apply/allP => i /subs12 /mapP[[j /= j_in_s2 _ ->{i}]].
 rewrite !sorted_map => ss1 ss2' subs12.
 apply/map_subseq/(sorted_subseqP leT_tr leT_irr ss1 ss2').
 by move=> i /(map_f sval) /subs12 /mapP[j j_in_s2'] /val_inj->.
@@ -117,7 +117,7 @@ Implicit Type (s : subseqs).
 Lemma to_mask_spec s : {m : (size w).-tuple bool | mask m w == s}.
 Proof.
 move: s => [s subs]; apply/sigW => /=.
-by move: subs => /subseqP [m /eqP szm ->{s}]; exists (Tuple szm).
+by move: subs => /subseqP[m /eqP szm ->{s}]; exists (Tuple szm).
 Qed.
 Definition to_mask s := let: exist m _ := to_mask_spec s in m.
 
@@ -162,7 +162,7 @@ apply (iffP idP) => [w_uniq m1 m2 eqmask |].
 - case Hw: w => [// |w0 w']; rewrite -Hw => minj.
   pose f := (fun i : T => [:: i]).
   apply/(uniqP w0) => i j; rewrite !inE => lti ltj Heq.
-  have {Heq}:= congr1 (cons^~ [::]) Heq.
+  move/(congr1 (cons^~ [::]) (x := _) (y := _)): Heq.
   rewrite -!mask1E // => /minj /(congr1 (fun t => tnth t (Ordinal lti))).
   by rewrite !tnth_mktuple /= eqxx => /esym/eqP.
 Qed.
@@ -183,7 +183,7 @@ Lemma enum_subseqsE :
 Proof.
 apply: uniq_perm; [exact: enum_uniq | exact: undup_uniq |].
 move=> [s subs] /=; rewrite mem_enum inE mem_undup.
-apply/esym/mapP; have /subseqP [m /eqP szm eqs] := subs.
+apply/esym/mapP; have /subseqP[m /eqP szm eqs] := subs.
 by exists (Tuple szm); [exact: mem_enum | exact: val_inj].
 Qed.
 
@@ -245,7 +245,8 @@ Qed.
 Lemma big_subseqs0 (F : seq T -> R) :
   \big[*%M/1]_(i : subseqs [::]) F i = F [::].
 Proof.
-transitivity (\big[*%M/1]_(s <- [:: sub_full [::]]) F s); last by rewrite big_seq1.
+transitivity (\big[*%M/1]_(s <- [:: sub_full [::]]) F s);
+  last by rewrite big_seq1.
 apply: perm_big; apply uniq_perm => //; first exact: index_enum_uniq.
 by move=> [{}s Hs]; rewrite !inE mem_index_enum -val_eqE /= -subseq0 Hs.
 Qed.
@@ -301,14 +302,15 @@ Lemma big_subseqs_undup_cond (F : seq T -> R) (P : pred (seq T)) (s : seq T) :
   \big[*%M/1]_(m : (size s).-tuple bool | P (mask m s)) F (mask m s).
 Proof.
 move=> opid; rewrite big_mkcond /=.
-by rewrite (big_subseqs_undup (fun i => if P i then F i else 1)) // -big_mkcond.
+by rewrite (big_subseqs_undup (fun i => if P i then F i else 1)) -?big_mkcond.
 Qed.
 
 End Bigop.
 
 
 (** * Relating sub sequences of [iota] and being sorted *)
-Lemma sorted_subseq_iota_rcons s n : subseq s (iota 0 n) = sorted ltn (rcons s n).
+Lemma sorted_subseq_iota_rcons s n :
+  subseq s (iota 0 n) = sorted ltn (rcons s n).
 Proof.
 apply/idP/idP.
 - move=> Hsubs.

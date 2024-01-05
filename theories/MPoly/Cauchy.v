@@ -363,8 +363,8 @@ Proof.
 move=> Hdeg; exists famYinv.
 - move=> mz; rewrite inE => /familyP Hff.
   apply val_inj => /=; rewrite /famYinv_fun.
-  rewrite [[multinom _ | i < m * n]](_ : _ = val mz) /= ?bmdeg //.
-  apply mnmP => c; rewrite mnmE /famY ffunE /=.
+  rewrite (([multinom _ | i < m * n] =P val mz) _) /= ?bmdeg //.
+  apply/eqP/mnmP => c; rewrite mnmE /famY ffunE /=.
   by rewrite tnth_mktuple mnmE //= -[in RHS](vecmx_indexK c).
 - move=> ff; rewrite inE => /familyP H /=.
   apply/ffunP => /= i; rewrite ffunE; apply val_inj => /=.
@@ -385,8 +385,8 @@ Lemma Cauchy_symm_symh :
   Cauchy_kernel d = \sum_(la : 'P_d) ('h[la] : polY) *: ('m[la] : polXY).
 Proof.
 apply/mpolyP => mon.
-case: (altP (mdeg mon =P d)) => Hdeg; first last.
-  rewrite (dhomog_nemf_coeff (Cauchy_kernel_dhomog d) Hdeg).
+case/altP: (mdeg mon =P d) => Hdeg; first last.
+rewrite (dhomog_nemf_coeff (Cauchy_kernel_dhomog d) Hdeg).
   rewrite linear_sum /= big1 ?mcoeff0 // => la _.
   rewrite mcoeffZ.
   case: (ssrnat.leqP (size la) m) => [Hi | /symm_oversize ->].
@@ -405,7 +405,7 @@ suff -> : (Cauchy_kernel d)@_mon = 'h[pm].
   rewrite addrC big1 ?add0r; first last.
     by move=> la; rewrite -ltnNge => /symm_oversize ->; rewrite !raddf0.
   rewrite (bigD1 pm) ?size_partm //= ?big1 ?addr0; first last.
-    move=> la /andP [Hszla Hla].
+    move=> la /andP[Hszla Hla].
     rewrite mcoeffZ mcoeff_symm //.
     suff /negbTE -> : ~~ perm_eq (mpart (n := m) la) mon by rewrite mulr0.
     apply/negP => /perm_partm/(congr1 val)/=.
@@ -423,7 +423,7 @@ transitivity (\prod_(i <- mon) sympol 'h_i : polY ).
 rewrite {Hpm pm} /= big_tuple; symmetry.
 rewrite (bigID (fun mZ : 'X_{1.. _ < _} => monX mZ == mon)) /=.
 rewrite addrC big1 ?add0r; first last.
-  move=> i /andP [_ /negbTE Hneq].
+  move=> i /andP[_ /negbTE Hneq].
   rewrite evalXY_XE -rmorph_prod /= polyXY_scale.
   by rewrite linearZ /= /polX_XY map_mpolyX mcoeffX Hneq mulr0.
 under eq_bigl=> i do [rewrite andb_idl;

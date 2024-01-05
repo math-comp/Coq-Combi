@@ -123,13 +123,13 @@ Lemma cfextprodE g h x y : (g \ox h) (x, y) = (g x) * (h y).
 However, the more direct definition below leads to simpler proofs, at least
 once we have proved that it is indeed a class function.
  *********)
-Lemma cfextprod_subproof (g : 'CF(G)) (h : 'CF(H)) :
+Fact cfextprod_subproof (g : 'CF(G)) (h : 'CF(H)) :
   is_class_fun <<setX G H>> [ffun x => g x.1 * h x.2].
 Proof using.
 rewrite genGid; apply intro_class_fun => [x y|].
-- rewrite !inE => /andP [x1 x2] /andP [y1 y2].
+- rewrite !inE => /andP[x1 x2] /andP[y1 y2].
   by rewrite !cfunJgen ?genGid.
-- move=> x; rewrite inE => /nandP [x1|x2].
+- move=> x; rewrite inE => /nandP[x1|x2].
   + by rewrite cfun0gen ?mul0r ?genGid.
   + by rewrite [h _]cfun0gen ?mulr0 ?genGid.
 Qed.
@@ -208,18 +208,19 @@ Variables (n1 n2 : nat).
 Variables (rG : mx_representation algC G n1)
           (rH : mx_representation algC H n2).
 
-Lemma extprod_mx_repr : mx_repr (setX G H) (fun x => tprod (rG x.1) (rH x.2)).
+Fact extprod_mx_repr_subproof :
+  mx_repr (setX G H) (fun x => tprod (rG x.1) (rH x.2)).
 Proof using.
 split=>[|i j]; first by rewrite !repr_mx1 tprod1.
-rewrite !inE => /andP [i1 i2] /andP [j1 j2].
+rewrite !inE => /andP[i1 i2] /andP[j1 j2].
 by rewrite !repr_mxM // tprodE.
 Qed.
-Definition extprod_repr := MxRepresentation extprod_mx_repr.
+Definition extprod_mx_repr := MxRepresentation extprod_mx_repr_subproof.
 
-Lemma cfRepr_extprod : cfRepr extprod_repr = cfRepr rG \ox cfRepr rH.
+Lemma cfRepr_extprod : cfRepr extprod_mx_repr = cfRepr rG \ox cfRepr rH.
 Proof using.
 apply/cfun_inP=> x GXHx.
-by have:= GXHx; rewrite !inE !cfunE GXHx mxtrace_prod => /andP [-> ->] /=.
+by have:= GXHx; rewrite !inE !cfunE GXHx mxtrace_prod => /andP[-> ->] /=.
 Qed.
 
 End ReprExtProd.
@@ -227,8 +228,8 @@ End ReprExtProd.
 Lemma cfextprod_char g h :
   g \is a character -> h \is a character -> g \ox h \is a character.
 Proof.
-move=> /char_reprP [rG ->{g}] /char_reprP [rH ->{h}].
-apply/char_reprP; exists (Representation (extprod_repr rG rH)).
+move=> /char_reprP[rG ->{g}] /char_reprP[rH ->{h}].
+apply/char_reprP; exists (Representation (extprod_mx_repr rG rH)).
 by rewrite /= cfRepr_extprod.
 Qed.
 
@@ -272,7 +273,7 @@ Canonical morph_of_tinj := Morphism (D := SnXm) (in2W tinj_morphM).
 Lemma isom_tinj : isom SnXm (tinj @* ('dom tinj)) tinj.
 Proof using.
 apply/isomP; split; last by [].
-apply/subsetP => [] /= [s1 s2]; rewrite inE => /andP [_].
+apply/subsetP => [] /= [s1 s2]; rewrite inE => /andP[_].
 rewrite !inE /= => /eqP/permP H.
 rewrite -[1]/(1,1) /xpair_eqE /=.
 apply/andP; split; apply/eqP/permP => x; rewrite !perm1.
@@ -344,9 +345,9 @@ Proof using.
 apply val_inj; rewrite union_intpartnE cast_intpartnE /=.
 rewrite porbits_tinj setpart_shape_union; first last.
   rewrite -setI_eq0; apply/eqP/setP => S.
-  rewrite !inE; apply/negP => /andP [].
-  move=> /imsetP [X /imsetP [x _ ->]] -> {X}.
-  move=> /imsetP [X /imsetP [y _ ->]].
+  rewrite !inE; apply/negP => /andP[].
+  move=> /imsetP[X /imsetP[x _ ->]] -> {X}.
+  move=> /imsetP[X /imsetP[y _ ->]].
   move/setP => /(_ (lshift n x)).
   rewrite imset_f; last exact: porbit_id.
   move=> /esym/imsetP => [] [z _] /eqP.
@@ -447,23 +448,23 @@ case: (boolP (s \in tinj @* ('dom tinj))) => Hs; first last.
   by rewrite !cfun0gen // genGid.
 rewrite (cfResE _ _ Hs); last exact: subsetT.
 move: Hs => /imsetP/= [[s1 s2]].
-rewrite inE => /andP [H1 _] -> {s}.
+rewrite inE => /andP[H1 _] -> {s}.
 rewrite cfuni_tinj /= -linear_sum (cfIsomE _ _ H1).
 rewrite /cfextprod /= sum_cfunE.
 symmetry; transitivity
   (\sum_(pp | l == pp.1 +|+ pp.2) '1_[pp.1] s1 * '1_[pp.2] s2).
   by apply eq_bigr => i _; rewrite cfunE.
-case: (altP (l =P _ )) => [->| Hl] /=.
+case: (altP eqP) => [->| Hl] /=.
 - rewrite (bigD1 (ct s1, ct s2)) //=.
   rewrite !cfuniCTnE !eqxx /= mulr1.
-  rewrite big1 ?addr0 // => [[t1 t2]] /andP [_].
+  rewrite big1 ?addr0 // => [[t1 t2]] /andP[_].
   rewrite !cfuniCTnE eq_sym xpair_eqE.
-  by move=> /nandP [] /negbTE -> /=; rewrite ?mulr0 ?mul0r.
+  by move=> /nandP[] /negbTE -> /=; rewrite ?mulr0 ?mul0r.
 - rewrite big1 // => [[t1 t2]] /= /eqP Hll; subst l.
   have {Hl} : (t1, t2) != (ct s1, ct s2).
-    by move: Hl; apply contra => /eqP [-> ->].
+    by move: Hl; apply contra => /eqP[-> ->].
   rewrite !cfuniCTnE eq_sym xpair_eqE.
-  by move=> /nandP [] /negbTE -> /=; rewrite ?mulr0 ?mul0r.
+  by move=> /nandP[] /negbTE -> /=; rewrite ?mulr0 ?mul0r.
 Qed.
 
 End Restriction.
@@ -498,12 +499,12 @@ Proof using.
 apply/cfunP => /= x.
 rewrite cfunE !cfuniCTnE /= cfunElock genGid !inE /= -natrM mulnb.
 congr ((nat_of_bool _)%:R); rewrite classXE.
-apply /andP/subsetP => [[ct1 ct2] /= y /imsetP[/= x0 _ ] -> {y} | /(_ x)].
+apply /andP/subsetP => [[ct1 ct2] /= y /imsetP[/= x0 _] ->{y} | /(_ x)].
 - rewrite inE; apply/andP.
   by split; rewrite classes_of_permP permCTP prod_conjg /=;
          rewrite cycle_type_conjg partnCTE CTpartnK eq_sym ?ct1 ?ct2.
 - rewrite class_refl => /(_ isT).
-  rewrite inE => /andP [/imsetP/=[y1 _ ->] /imsetP/=[y2 _ ->]].
+  rewrite inE => /andP[/imsetP[/= y1 _ ->] /imsetP[/= y2 _ ->]].
   by rewrite /ct !cycle_type_conjg !permCTP !CTpartnK !eqxx.
 Qed.
 
@@ -512,18 +513,18 @@ Lemma cfdot_classfun_part p1 p2 :
   '[ '1_[p1], '1_[p2] ] = #|'SG_m|%:R^-1 * #|classCT p1|%:R * (p1 == p2)%:R.
 Proof.
 rewrite /cfdot /= -mulrA; congr (_ * _).
-case: (altP (p1 =P p2)) => [<-{p2} | /negbTE Hneq]; rewrite /= ?mulr1 ?mulr0.
+case: (altP eqP) => [<-{p2} | /negbTE Hneq]; rewrite /= ?mulr1 ?mulr0.
 - rewrite (bigID (fun x => x \in classCT p1)) /=.
-  under eq_bigr => i /andP [_].
+  under eq_bigr => i /andP[_].
     rewrite -classCTP !cfuniCTE => -> /=.
     by rewrite mul1r conjC1 over.
-  rewrite sumr_const /= big1 ?addr0; first last => [i /andP [_]|].
+  rewrite sumr_const /= big1 ?addr0; first last => [i /andP[_]|].
     rewrite -classCTP !cfuniCTE => /negbTE -> /=.
     by rewrite mul0r.
   congr _%:R; apply eq_card => /= x.
   by rewrite unfold_in inE.
 - apply big1 => i _; rewrite !cfuniCTE.
-  case: (altP (_ =P _)) => [-> | Hi]; rewrite /= ?mul0r // mul1r {i}.
+  case: eqP => [-> | _]; rewrite /= ?mul0r // mul1r {i}.
   by rewrite partnCTE /= !CTpartnK Hneq /= conjC0.
 Qed.
 
@@ -624,7 +625,7 @@ case: (boolP (p +|+ q == l)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
     rewrite !invfM !invrK.
     rewrite [_ * #|classCT p|%:R]mulrC -!mulrA; congr (_ * _).
     by rewrite [RHS]mulrA [RHS]mulrC natrM invfM.
-  by move=> i /andP [] _ ip; rewrite classXI ?cards0 ?mul0r.
+  by move=> i /andP[_ ip]; rewrite classXI ?cards0 ?mul0r.
 - rewrite big1 //= => i /eqP unioni.
   have ip: i != (p, q).
     move: unionp; apply contraR; rewrite negbK {}unioni => /eqP.

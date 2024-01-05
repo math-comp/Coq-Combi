@@ -168,11 +168,11 @@ Lemma enum_compn_rec_any aux1 aux2 n :
 Proof.
 elim: aux1 aux2 n => [| aux1 IHaux1] aux2 n /=.
   by rewrite leqn0 => /eqP -> //=; case aux2.
-case: (altP (n =P 0)) => [-> | Hn Haux1] //=; first by case aux2.
+case: (n =P 0) => [-> | /eqP Hn Haux1] //=; first by case aux2.
 case: aux2 => [| aux2 /= Haux2].
   by rewrite leqn0 => /eqP H; rewrite H eq_refl in Hn.
 rewrite (negbTE Hn); congr flatten; apply eq_in_map => i.
-rewrite mem_iota add1n ltnS => /andP [Hi _].
+rewrite mem_iota add1n ltnS => /andP[Hi _].
 congr map; apply: IHaux1; rewrite leq_subLR.
 - by apply: (leq_trans Haux1); rewrite -{1}(add0n aux1) ltn_add2r.
 - by apply: (leq_trans Haux2); rewrite -{1}(add0n aux2) ltn_add2r.
@@ -189,7 +189,7 @@ Lemma enum_compnE n :
 Proof.
 rewrite -(enum_compn_any (leqnSn n)) /= => /negbTE ->.
 congr flatten; apply eq_in_map => i.
-rewrite mem_iota add1n ltnS => /andP [Hi _].
+rewrite mem_iota add1n ltnS => /andP[Hi _].
 congr map; apply enum_compn_any.
 by rewrite leq_subLR; apply: leq_addl.
 Qed.
@@ -200,14 +200,14 @@ rewrite /is_comp_of_n /is_comp /enum_compn.
 elim: n {1 3 5}n (leqnn n) => [|aux IHaux] n /=.
   by rewrite /= leqn0 !andbT => /eqP ->.
 move=> Hn.
-case: (altP (n =P 0)) => [-> //| neq0].
-apply/allP => /= lst /flatten_mapP [/= i].
-rewrite mem_iota add1n ltnS => /andP [lt0i lein] /mapP [/= s Hs] ->{lst}.
+case: (n =P 0) => [-> // | _].
+apply/allP => /= lst /flatten_mapP[/= i].
+rewrite mem_iota add1n ltnS => /andP[lt0i lein] /mapP[/= s Hs ->{lst}].
 have {}/IHaux/allP/(_ s Hs)/= : n - i <= aux.
   rewrite leq_subLR; apply (leq_trans Hn).
   case: i lt0i {lein Hs} => // i _.
   by rewrite addSnnS; apply leq_addl.
-rewrite negb_or => /andP [/eqP ->] ->.
+rewrite negb_or => /andP[/eqP -> ->].
 rewrite subnKC // eq_refl /= andbT.
 by rewrite eq_sym -lt0n.
 Qed.
@@ -217,18 +217,18 @@ Lemma enum_compn_countE n :
 Proof.
 rewrite /is_comp_of_n /is_comp /enum_compn.
 elim: n {1 3 5}n (leqnn n) => [|aux IHaux] n /=.
-  rewrite leqn0 => /eqP -> s.
-  rewrite andbC => /andP [/comp0 H /eqP /H{H} ->].
+  rewrite leqn0 => /eqP-> s.
+  rewrite andbC => /andP[/comp0 H /eqP {}/H->].
   by rewrite eq_refl.
-move=> Hn [|s0 s] /andP [/= ]; first by move=> /eqP <-.
-rewrite negb_or => Hsum /andP [s0neq0] Hs.
+move=> Hn [|s0 s] /andP[/= ]; first by move=> /eqP<-.
+rewrite negb_or => Hsum /andP[s0neq0 Hs].
 have /negbTE -> : n != 0.
   move: s0neq0; apply contra => /eqP Hn0.
-  by move: Hsum; rewrite Hn0 addn_eq0 => /andP [/eqP ->].
+  by move: Hsum; rewrite Hn0 addn_eq0 => /andP[/eqP->].
 rewrite count_flatten -map_comp.
 rewrite (eq_map (g := fun i => i == s0 : nat)); first last.
   move=> /= i; rewrite count_map /=.
-  case (altP (i =P s0)) => [Heq | /negbTE Hneq].
+  case: (i =P s0) => [Heq | /eqP/negbTE Hneq].
   - subst s0; rewrite (eq_count (a2 := xpred1 s)); first last.
       by move=> x; rewrite /= -eqseqE /= eq_refl /=.
     rewrite {}IHaux //=.
@@ -265,7 +265,7 @@ HB.instance Definition _ :=
 Implicit Type (c : intcompn) (d : {set 'I_n.-1}).
 
 Lemma intcompnP c : is_comp c.
-Proof using. by case: c => /= c /andP []. Qed.
+Proof using. by case: c => /= c /andP[]. Qed.
 
 Hint Resolve intcompnP : core.
 
@@ -273,7 +273,7 @@ Definition intcomp_of_intcompn c := IntComp (intcompnP c).
 Coercion intcomp_of_intcompn : intcompn >-> intcomp.
 
 Lemma intcompn_sumn c : sumn c = n.
-Proof using. by case: c => /= c /andP [/eqP]. Qed.
+Proof using. by case: c => /= c /andP[/eqP]. Qed.
 
 Lemma enum_intcompnE : map val (enum {:intcompn}) = enum_compn n.
 Proof using. exact: enum_subE. Qed.
@@ -338,7 +338,7 @@ Qed.
 Lemma all_partsums c : all (fun i => 0 < i < n) (partsums c).
 Proof.
 rewrite all_map; apply/allP => i; rewrite mem_iota add1n.
-case: c => [[|c0 c]] /andP [/eqP <-]/=; first by case: i.
+case: c => [[|c0 c]] /andP[/eqP <-]/=; first by case: i.
 rewrite is_comp_cons -lt0n => /andP[Hc0 Hc].
 case: i => //= i /ltnSE ltisz.
 rewrite (leq_trans Hc0) ?leq_addr //= ltn_add2l {c0 Hc0}.
@@ -437,7 +437,7 @@ Qed.
 Lemma descsetK : cancel descset from_descset.
 Proof.
 case => [s Hs]; apply val_inj => /=.
-rewrite val_descset /=; move: Hs => /andP [/eqP Hsum Hcomp].
+rewrite val_descset /=; move: Hs => /andP[/eqP Hsum Hcomp].
 case: n Hsum => [/(comp0 Hcomp) -> // | n0]; set n' := n0.+1 => Hsum {Hcomp}.
 case: s Hsum => [|s0 s']//; move Hs: (s0 :: s') => s Hsum.
 have -> : rcons (partsums s) n' = [seq sumn (take i s) | i <- iota 1 (size s)].
@@ -480,7 +480,7 @@ Lemma intcompn2 (sh : intcompn 2) :
   sh = [:: 2]  :> seq nat \/ sh = [:: 1; 1] :> seq nat.
 Proof.
 case: sh => sh Hsh /=; move: Hsh; rewrite enum_compnP.
-by rewrite /enum_compn /= !inE => /orP [] /eqP ->; [right | left].
+by rewrite /enum_compn /= !inE => /orP[] /eqP ->; [right | left].
 Qed.
 
 Definition intcompn_cast m n (eq_mn : m = n) p :=
@@ -517,9 +517,9 @@ Lemma mem_partsum_gt x v0 v1 v :
 Proof.
 move=> ltv0x.
 rewrite partsums_cons // inE (gtn_eqF ltv0x) /= => Hin.
-have Hv : v != [::] by move: Hin => /mapP [y /mem_partsum_non0].
+have Hv : v != [::] by move: Hin => /mapP[y /mem_partsum_non0].
 move: Hin; rewrite !partsums_cons //= !inE -map_comp.
-move=> /orP [/eqP-> | /mapP[i Hin -> /=]]; first by rewrite eqxx.
+move=> /orP[/eqP-> | /mapP[i Hin -> /=]]; first by rewrite eqxx.
 by rewrite addnA map_f ?orbT.
 Qed.
 
@@ -536,7 +536,7 @@ apply (iffP subsetP) => Hsub /= i Hin.
   have {Hin} := allP (all_partsums c2) _ Hin.
   by case: i j Hi Heq => // i [|j] //= _ ->.
 - case: i Hin => [i Hi] /=.
-  rewrite /descset !inE !mem_pmap_sub /= => /mapP [j /Hsub Hin Heq].
+  rewrite /descset !inE !mem_pmap_sub /= => /mapP[j /Hsub Hin Heq].
   by rewrite Heq map_f.
 Qed.
 
@@ -557,7 +557,7 @@ apply (iffP (subdescset_partsumP c1 c2)) => [| [s Hc1 ->{c2}]].
   rewrite -{}Hu in Hsum.
   elim: u v Hcompu Hcompv Hsum => [| u0 u IHu] v.
     by move=> _ Hcompv /(comp0 Hcompv) -> _; exists [::].
-  rewrite is_comp_cons => /andP [Hu0 Hcompu].
+  rewrite is_comp_cons => /andP[Hu0 Hcompu].
   case: u IHu Hcompu => [_ _ |u1 u'].
     rewrite /= addn0 => _ Hv _.
     by exists [:: v]; rewrite /= ?Hv ?cats0.
@@ -570,7 +570,7 @@ apply (iffP (subdescset_partsumP c1 c2)) => [| [s Hc1 ->{c2}]].
   + by move=> _ _ _ /(_ _ u0in).
   move Hv : (v1 :: v') => v; rewrite /= eqSS => /eqP Hsz.
   have vneq0 : v != [::] by rewrite -Hv.
-  rewrite is_comp_cons => /andP [Hv0 Hcompv] /= Hsum Hsubset.
+  rewrite is_comp_cons => /andP[Hv0 Hcompv] /= Hsum Hsubset.
   have : v0 <= u0.
     have {IHu IHv} := Hsubset _ u0in.
     rewrite partsums_cons // inE => /orP[/eqP ->// | /mapP[x _ ->]].
@@ -584,7 +584,7 @@ apply (iffP (subdescset_partsumP c1 c2)) => [| [s Hc1 ->{c2}]].
     have Hu' := mem_partsum_non0 Hi.
     have {}/Hsubset : u0 + i \in partsums (u0 :: u).
       by rewrite partsums_cons // inE map_f ?orbT // -Hu.
-    rewrite partsums_cons // inE => /orP [Heq|]; first last.
+    rewrite partsums_cons // inE => /orP[Heq|]; first last.
       by rewrite mem_map // => x y /eqP; rewrite eqn_add2l => /eqP.
     exfalso.
     move: Heq; rewrite -{2}(addn0 u0) eqn_add2l => /eqP Heq; subst i.
@@ -595,7 +595,7 @@ apply (iffP (subdescset_partsumP c1 c2)) => [| [s Hc1 ->{c2}]].
   have {}/IHv Hrec: size ((v0 + v1) :: v') == sz by rewrite -Hsz -Hv.
   have {}/Hrec Hrec : is_comp (v0 + v1 :: v').
     move: Hcompv; rewrite -Hv !is_comp_cons addn_eq0 negb_and orbC.
-    by move=> /andP [/negbTE->->].
+    by move=> /andP[/negbTE->->].
   have {}/Hrec Hrec : sumn (v0 + v1 :: v') = sumn (u0 :: u).
     by rewrite /= -Hsum -Hv /= addnA.
   have {Hsubset}/Hrec : {subset partsums (u0 :: u) <= partsums (v0 + v1 :: v')}.
@@ -609,22 +609,22 @@ apply (iffP (subdescset_partsumP c1 c2)) => [| [s Hc1 ->{c2}]].
   move=> [Hp0 Hv']; subst p0 v' u u0 v.
   by exists ((v0 :: v1 :: p) :: s); rewrite //= -ueq addnA.
 - have : [::] \notin s.
-    apply/negP => Hs; case: c1 Hc1 => [c1 /= /andP [_ Hcomp Hc1]].
+    apply/negP => Hs; case: c1 Hc1 => [c1 /= /andP[_ Hcomp Hc1]].
     by move: Hcomp; rewrite {}Hc1 /is_comp -[0]/(sumn [::]) map_f.
   rewrite {c1}Hc1.
-  elim: s => // s0 s IHs; rewrite inE negb_or => /andP [Hs0 Hin].
+  elim: s => // s0 s IHs; rewrite inE negb_or => /andP[Hs0 Hin].
   move/(_ Hin) in IHs.
   case: s0 Hs0 => //= i s0 _.
-  elim: s0 i => [|c0 c IHc]//= i.
-    rewrite addn0; case: (altP (s =P [::])) => [->//|Hs].
+  elim: s0 i => [|c0 c IHc] /= i.
+    rewrite addn0; case: (s =P [::]) => [->// | Hs].
     rewrite !partsums_cons; first last.
-    + by move: Hs; apply contra; case s.
-    + by move: Hs {IHs}; apply contra; case: s Hin => // [[|t0 t']].
-    move=> k; rewrite !inE => /orP [/eqP->|]; first by rewrite eqxx.
+    + by move: Hs; apply contra_notN; case s.
+    + by move: Hs {IHs}; apply contra_notN; case: s Hin => // [[|t0 t']].
+    move=> k; rewrite !inE => /orP[/eqP->|]; first by rewrite eqxx.
     by move=> /mapP[l /IHs Hl ->{k}]; rewrite map_f // orbT.
   rewrite addnA [X in {subset _ <= X}]partsums_cons //.
   move=> k; rewrite !inE => {}/IHc.
-  case: (altP (c =P [::])) => [->{c}|Hc]/=.
+  case: (c =P [::]) => [->{c} | Hc]/=.
     move=> /mapP[[|l]]; rewrite mem_iota //= add1n ltnS => Hl ->{k}.
     rewrite -addnA map_f ?orbT // partsums_cons; last by case: (flatten s) Hl.
     case: l Hl => // l; first by rewrite take0 /= addn0 inE eqxx.
@@ -632,8 +632,8 @@ apply (iffP (subdescset_partsumP c1 c2)) => [| [s Hc1 ->{c2}]].
     rewrite /partsums; apply (@map_f _ _ (fun i => sumn (take i (flatten s)))).
     by rewrite mem_iota add1n; case: (size _) Hl.
   rewrite !partsums_cons //; try by case: c Hc.
-  rewrite /= !inE => /orP [/eqP ->|]; first by rewrite eqxx orbT.
-  move=> /mapP [l Hl ->{k}]; rewrite orbA; apply/orP; right.
+  rewrite /= !inE => /orP[/eqP ->|]; first by rewrite eqxx orbT.
+  move=> /mapP[l Hl ->{k}]; rewrite orbA; apply/orP; right.
   by rewrite -map_comp -addnA (@map_f _ _ ([eta addn i] \o [eta addn c0])).
 Qed.
 
@@ -708,7 +708,7 @@ Proof.
 suff impl c c' :
   (c <= c')%O -> (rev_intcompn c <= rev_intcompn c' :> 'CRef)%O.
   by apply/idP/idP=> /impl //; rewrite !rev_intcompnK.
-rewrite !leEcompnref => /subdescsetP [s /= Hc Hd].
+rewrite !leEcompnref => /subdescsetP[s /= Hc Hd].
 apply/subdescsetP; exists (rev (map rev s)) => /=.
 - rewrite Hc map_rev -map_comp; congr rev; apply eq_map => t /=.
   by rewrite sumn_rev.

@@ -95,7 +95,7 @@ Lemma cons_in_map_cons a b s w (l : seq (seq T)) :
   a :: s \in [seq b :: s1 | s1 <- l] -> a == b.
 Proof using.
 elim: l => // l0 l IHl; rewrite map_cons in_cons => /orP[]; last exact: IHl.
-by move=> /eqP [->].
+by move=> /eqP[->].
 Qed.
 
 Lemma count_rcons w P l :
@@ -113,7 +113,7 @@ elim: l i j => [/= | l0 l IHl].
 - elim => [// | i' Hi] /=.
   by case => [// | j /=]; rewrite nth_ncons /leq subSS => ->.
 - elim => [// | i' Hi] j /=; first by rewrite ltn0 andbF.
-  case: j Hi => [// | j /=] Hi /andP [H1 H2].
+  case: j Hi => [// | j /=] Hi /andP[H1 H2].
   by apply: IHl; move: H1 H2; rewrite !/leq !subSS => -> ->.
 Qed.
 
@@ -237,7 +237,7 @@ rewrite -[RHS]cats0; congr (_ ++ _).
 - rewrite (eq_in_filter (a2 := predT)) ?filter_predT //.
   by move=> i /=; rewrite mem_iota add0n /= => ->.
 - rewrite (eq_in_filter (a2 := pred0)) ?filter_pred0 //.
-  move=> i /=; rewrite mem_iota (subnKC Hab) => /andP [].
+  move=> i /=; rewrite mem_iota (subnKC Hab) => /andP[].
   by rewrite leqNgt => /negbTE.
 Qed.
 
@@ -283,7 +283,7 @@ rewrite !size_filter -[RHS]addn0.
 rewrite [in RHS](eq_count (a2 := predU (pred1 s0) (mem s))); first last.
   by move => i; rewrite /= in_cons.
 have /eq_count/(_ l) : predI (pred1 s0) (mem s) =1 pred0.
-  move=> i /=; apply/negP => /andP [/eqP -> s0s'].
+  move=> i /=; apply/negP => /andP[/eqP -> s0s'].
   by rewrite s0s' in s0s.
 rewrite count_pred0 => <-.
 by rewrite count_predUI.
@@ -305,14 +305,14 @@ Lemma set1_disjoint (T : finType) (i j : T) :
   [set i] != [set j] -> [disjoint [set i] & [set j]].
 Proof.
 move=> Hneq; rewrite /disjoint; apply/pred0P => l /=; apply: negbTE.
-by rewrite !in_set1; move: Hneq; apply: contra => /andP [/eqP -> /eqP ->].
+by rewrite !in_set1; move: Hneq; apply: contra => /andP[/eqP-> /eqP->].
 Qed.
 
 Lemma subset_imsetK (T1 T2 : finType) (f : T1 -> T2) (s t : {set T1}):
   injective f -> f @: s \subset f @: t -> s \subset t.
 Proof.
 move=> f_inj /subsetP H.
-by apply/subsetP => x /(imset_f f) /(H _) /imsetP [y Hy /f_inj ->].
+by apply/subsetP => x /(imset_f f) /(H _) /imsetP[y Hy /f_inj ->].
 Qed.
 
 
@@ -326,7 +326,7 @@ Lemma imsetD (A B : {set aT}) :
 Proof.
 move=> injf; apply/setP=> y; rewrite inE.
 apply/imsetP/andP => [[x] | [yNfA] /imsetP[x xB Hy]].
-- rewrite inE => /andP [xNA xB ->{y}]; split; last exact: imset_f.
+- rewrite inE => /andP[xNA xB ->{y}]; split; last exact: imset_f.
   move: xNA; apply contra.
   by move=> /imsetP[x1 x1A] /injf->; rewrite ?inE ?xB ?x1A ?orbT.
 - subst y; exists x; rewrite // inE xB andbT.
@@ -344,7 +344,7 @@ Lemma preimset_trivIset (P : {set {set T2}}) :
   trivIset P -> trivIset ((fun s : {set T2} => f @^-1: s) @: P).
 Proof  using.
 move=> /trivIsetP Htriv.
-apply/trivIsetP => A B /imsetP [FA FAP -> {A}] /imsetP [FB FBP -> {B}] Hneq.
+apply/trivIsetP => A B /imsetP[FA FAP -> {A}] /imsetP[FB FBP -> {B}] Hneq.
 have {Hneq} neqFAFB : FA != FB by move: Hneq; apply: contra => /eqP ->.
 have:= Htriv _ _ FAP FBP neqFAFB; rewrite -!setI_eq0 -preimsetI => /eqP ->.
 by rewrite preimset0.
@@ -354,7 +354,7 @@ Hypothesis (f_inj : injective f).
 
 Lemma imset_inj : injective (fun s : {set T1} => imset f (mem s)).
 Proof.
-move=> s1 s2 /eqP; rewrite eqEsubset => /andP [H12 H21].
+move=> s1 s2 /eqP; rewrite eqEsubset => /andP[H12 H21].
 move: f_inj => /subset_imsetK Hinj.
 apply/eqP; rewrite eqEsubset.
 by rewrite (Hinj _ _ H12) (Hinj _ _ H21).
@@ -364,7 +364,7 @@ Lemma imset_trivIset (P : {set {set T1}}) :
   trivIset P -> trivIset ((fun s : {set T1} => f @: s) @: P).
 Proof.
 move=> /trivIsetP Htriv.
-apply/trivIsetP => A B /imsetP [FA FAP -> {A}] /imsetP [FB FBP -> {B}] Hneq.
+apply/trivIsetP => A B /imsetP[FA FAP -> {A}] /imsetP[FB FBP -> {B}] Hneq.
 have {Hneq} neqFAFB : FA != FB by move: Hneq; apply: contra => /eqP ->.
 have:= Htriv _ _ FAP FBP neqFAFB; rewrite -!setI_eq0 -imsetI.
 - by move=> /eqP ->; rewrite imset0.
@@ -415,7 +415,7 @@ case: (ltnP k n) => Hk.
     rewrite -[1]addn0 !iotaDl (IHk _ Hk).
     by rewrite filter_map /= -!map_comp.
 - rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT map_id.
-  move=> i /=; rewrite mem_iota add0n => /andP [_ H2].
+  move=> i /=; rewrite mem_iota add0n => /andP[_ H2].
   by rewrite (leq_trans H2 Hk).
 Qed.
 
@@ -437,7 +437,7 @@ rewrite drop_iota add0n.
 case: (leqP n k) => Hk.
 - have:= Hk; rewrite -subn_eq0 => /eqP -> /=.
   rewrite (eq_in_filter (a2 := pred0)); first by rewrite filter_pred0.
-  move=> i; rewrite mem_iota add0n => /andP [_ Hi].
+  move=> i; rewrite mem_iota add0n => /andP[_ Hi].
   have:= leq_trans Hi Hk.
   by rewrite ltnNge => /negbTE => ->.
 - move Hdiff : (n - k) => d; move: Hdiff => /eqP.
@@ -445,11 +445,11 @@ case: (leqP n k) => Hk.
   move/eqP -> => {n Hk}.
   rewrite addnC iotaD filter_cat map_id add0n.
   rewrite (eq_in_filter (a2 := pred0)); first last.
-    move=> i; rewrite mem_iota add0n => /andP [_ Hi].
+    move=> i; rewrite mem_iota add0n => /andP[_ Hi].
     by move: Hi; rewrite ltnNge => /negbTE => ->.
   rewrite filter_pred0 cat0s.
   rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT.
-  by move=> i; rewrite mem_iota => /andP [->].
+  by move=> i; rewrite mem_iota => /andP[->].
 Qed.
 
 Lemma enum0 : enum 'I_0 = [::].
@@ -491,7 +491,7 @@ Implicit Types (X : {set T}) (P : {set {set T}}).
 
 Lemma triv_part P X : X \in P -> partition P X -> P = [set X].
 Proof using.
-move=> XinP /and3P [/eqP Hcov /trivIsetP/=/(_ X _ XinP) H H0].
+move=> XinP /and3P[/eqP Hcov /trivIsetP/=/(_ X _ XinP) H H0].
 apply/setP=> /= Y; rewrite inE eq_sym; apply/idP/idP=> [YinP | /eqP <- //].
 move/(_ Y YinP): H => /contraR; apply.
 apply/contra: H0; rewrite disjoint_sym -{}Hcov=> /bigcup_disjointP/(_ _ YinP).

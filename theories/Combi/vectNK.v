@@ -57,7 +57,7 @@ Qed.
 Lemma in_vect_n_k n k s : s \in vect_n_k n k -> (sumn s == n) && (size s == k).
 Proof.
 elim: k n s => [| k IHk n]; first by case => [[| s0 s]|].
-case => [|s0 s] /flattenP /= [ll /mapP [i Hi ->] /mapP [s' //=]].
+case => [|s0 s] /flattenP /= [ll /mapP[i Hi ->] /mapP[s' //]].
 rewrite -/vect_n_k => /IHk /andP[/eqP Hsum /eqP Hsize] [-> ->].
 rewrite Hsize /= eq_refl andbT Hsum.
 move: Hi; rewrite mem_iota add0n ltnS => /andP[_ Hi].
@@ -163,7 +163,7 @@ Proof using.
 have -> : (a ++ b ++ c) = flatten [:: a; b; c] by rewrite /= cats0.
 rewrite flatten_equiv_cut_k /cut3; split.
 - by move=> H; apply/mapP; exists [:: a; b; c].
-- move=> /mapP [t].
+- move=> /mapP[t].
   case: t => [| t0 t]; first by rewrite /cut_k => /size_cut_k.
   case: t => [| t1 t]; first by rewrite /cut_k => /size_cut_k.
   case: t => [| t2 t]; first by rewrite /cut_k => /size_cut_k.

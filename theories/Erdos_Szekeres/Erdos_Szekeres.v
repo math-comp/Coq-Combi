@@ -54,7 +54,7 @@ have : #|P| > 0.
   + by apply/forallP => x; rewrite inE.
 rewrite /P {P} => /(eq_bigmax_cond (fun x => #|cover x|)).
 case=> x Hx Hmax; rewrite Hmax.
-move: Hx; rewrite /ksupp unfold_in => /and3P [] Hcard _ /forallP Hall.
+move: Hx; rewrite /ksupp unfold_in => /and3P[Hcard _ /forallP Hall].
 case Hc: #|x| => [/= | c ].
   move: Hc => /eqP; rewrite cards_eq0 => /eqP ->.
   exists [::]; repeat split; first exact: sub0seq.
@@ -81,7 +81,7 @@ move=> Hsize; pose tab := RS s.
 have {Hsize} : (n < size (shape tab)) \/ (m < head 0 (shape tab)).
   have Hpart := is_part_sht (is_tableau_RS s).
   apply/orP; move: Hsize; rewrite -(size_RS s) /size_tab.
-  apply contraLR; rewrite negb_or -!leqNgt => /andP [] Hn Hm.
+  apply contraLR; rewrite negb_or -!leqNgt => /andP[Hn Hm].
   by apply (leq_trans (part_sumn_rectangle Hpart)); apply: leq_mul.
 move=> [] Hltn.
 - right => {m}.
@@ -90,22 +90,23 @@ move=> [] Hltn.
   rewrite (_ : \sum_(l <- shape (RS s)) minn l 1 = size (shape (RS s))); first last.
     have := is_part_sht (is_tableau_RS s).
     move: (shape _) => sh.
-    elim: sh => [//= | s0 sh IHsh]; first by rewrite big_nil.
+    elim: sh => [// | s0 sh IHsh]; first by rewrite big_nil.
     move=> Hpart; have /= Hs0 := part_head_non0 Hpart.
-    move: Hpart => /= /andP [] Hhead Hpart.
+    move: Hpart => /= /andP[Hhead Hpart].
     rewrite big_cons (IHsh Hpart).
     rewrite (_ : minn s0 1 = 1) ?add1n //.
     by rewrite /minn; move: Hs0; case s0.
   move=> Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
-  case: (Greene_rel_one s >%O) => x [] Hsubs [] Hsort <- Hn.
+  case: (Greene_rel_one s >%O) => x [Hsubs] [Hsort <- Hn].
   by exists x.
 - left => {n}.
   have := Greene_row_RS 1 s.
   rewrite (_ : sumn (take 1 (shape (RS s))) = head 0 (shape (RS s))); first last.
-    by case: (shape (RS s)) => [| s0 l] //=; rewrite take0 addn0.
+    by case: (shape (RS s)) => [// | s0 l] /=; rewrite take0 addn0.
   rewrite /Greene_row => Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
-  case: (Greene_rel_one s <=%O) => x [] Hsubs [] Hsort <- Hn.
+  case: (Greene_rel_one s <=%O) => x [Hsubs] [Hsort <- Hn].
   by exists x.
 Qed.
 
 End OrderedType.
+

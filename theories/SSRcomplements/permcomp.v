@@ -63,8 +63,8 @@ Proof. by rewrite /setact imsetU1 //; apply: in2W; apply: act_inj. Qed.
 Lemma setactC S a : to^* (~: S) a = ~: to^* S a.
 Proof using.
 apply/eqP; rewrite eqEcard; apply/andP; split.
-- apply/subsetP => x /imsetP [y]; rewrite !inE => Hy -> {x}.
-  by move: Hy; apply contra => /imsetP [z Hz] /act_inj ->.
+- apply/subsetP => x /imsetP[y]; rewrite !inE => Hy ->{x}.
+  by move: Hy; apply contra => /imsetP[z Hz /act_inj->].
 - rewrite card_setact [X in _ <= X]cardsCs setCK.
   by rewrite cardsCs setCK card_setact.
 Qed.

@@ -514,7 +514,7 @@ Lemma symbs_basis : basis_of fullv symbs.
 Proof using Hd.
 rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
 rewrite -(span_basis symbm_basis).
-apply/span_subvP => s /mapP [/= la]; rewrite !mem_enum => _ ->{s}.
+apply/span_subvP => s /mapP[/= la]; rewrite !mem_enum => _ ->{s}.
 have -> : 'hm[la] = \sum_(mu : 'P_d) 'K^-1(la, mu) *: 'hs[mu] :> HSF.
   by apply val_inj; rewrite /= (symm_syms _ _ la) !linear_sum.
 rewrite span_def; apply memv_suml => mu _; apply memvZ.
@@ -565,16 +565,16 @@ rewrite /= is_part_sortedE; apply/and3P; split.
     rewrite /shape -map_comp (tuple_map_ord m) /=.
     apply eq_map => k /=.
     by rewrite size_nseq.
-  move=> /andP [Hij Hjm]; have Him := leq_ltn_trans Hij Hjm.
+  move=> /andP[Hij Hjm]; have Him := leq_ltn_trans Hij Hjm.
   have:= reshape_indexP Hjm; have:= reshape_offsetP Hjm.
   have:= reshape_indexP Him; have:= reshape_offsetP Him.
   rewrite size_tuple => Hc1 Hr1 Hc2 Hr2.
   do 2 (rewrite (nth_map ord0); last by rewrite size_enum_ord).
   rewrite !(mnm_nth 0) !nth_nseq !nth_enum_ord //= {Hr1 Hr2}.
   rewrite {}Hc1 {}Hc2 ltnS; move: Hij.
-  by rewrite (reshape_leq m) => /orP [/ltnW | /andP [/eqP ->]].
+  by rewrite (reshape_leq m) => /orP[/ltnW | /andP[/eqP->]].
 - rewrite /intpart_of_mon; rewrite mem_rev; apply/flatten_mapP => /= [[s _]].
-  by move=> /nseqP [].
+  by move=> /nseqP[].
 Qed.
 Canonical intpartn_of_mon m (H : mnmwgt m = d) := IntPartN (intpart_of_monP H).
 
@@ -624,7 +624,7 @@ Lemma symbh_basis : basis_of fullv symbh.
 Proof using Hd.
 rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
 rewrite -(span_basis symbe_basis).
-apply/span_subvP => s /mapP [/= la]; rewrite !mem_enum => _ ->{s}.
+apply/span_subvP => s /mapP[/= la]; rewrite !mem_enum => _ ->{s}.
 have -> : 'he[la] = \sum_(mu : 'P_d) coeff_prodgen (fun d (la : 'P_d) =>
             (-1)^+(d - size la) * (perm_partn la)%:R) la mu *: 'hh[mu] :> HSF.
   by apply val_inj; rewrite /= linear_sum /= (prod_prodgen (syme_to_symh n0 R)).
@@ -641,7 +641,7 @@ Proof using Hd.
 move=> Hchar.
 rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
 rewrite -(span_basis symbh_basis).
-apply/span_subvP => s /mapP [/= la]; rewrite !mem_enum => _ ->{s}.
+apply/span_subvP => s /mapP[/= la]; rewrite !mem_enum => _ ->{s}.
 pose co := fun (n : nat) (l : 'P_n) => (permcent.zcard l)%:R^-1 : R.
 have -> : 'hh[la] = \sum_(mu : 'P_d)
                      coeff_prodgen co la mu *: 'hp[mu] :> HSF.
@@ -925,7 +925,7 @@ Qed.
 Lemma homsymdot_omegasf f g :
   (d <= n)%N -> '[ omegahomsym f | omegahomsym g ] = '[ f | g ].
 Proof.
-move=> Hd; have /andP [/eqP Hfull Hfree]:= symbp_basis Hd char0_algC.
+move=> Hd; have /andP[/eqP Hfull Hfree]:= symbp_basis Hd char0_algC.
 have:= (memvf g); rewrite -Hfull => /coord_span ->.
 rewrite raddf_sum /= !homsymdot_sumr; apply eq_bigr => i _.
 have:= (memvf f); rewrite -Hfull => /coord_span ->.

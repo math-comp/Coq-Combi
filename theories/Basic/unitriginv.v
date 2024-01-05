@@ -68,7 +68,7 @@ Qed.
 Lemma unitrig1 : unitrig (fun x y => (x == y)%:R).
 Proof.
 apply/unitrigP; split => [u | u v] /=; first by rewrite eq_refl.
-by case: (altP (v =P u)) => [-> |] //=; rewrite eq_refl.
+by case: (v =P u) => [-> |] //=; rewrite eq_refl.
 Qed.
 
 (** TODO : construct the group of unitriangular matrix *)
@@ -77,7 +77,7 @@ Lemma unitrig_suml M (Mod : lmodType R) (F : T -> Mod) u :
   unitrig M ->
   \sum_(t : T) M u t *: F t = \sum_(t | (t <= u)%O) M u t *: F t.
 Proof.
-move=> /unitrigP [Muni Mtrig].
+move=> /unitrigP[Muni Mtrig].
 rewrite (bigID (fun t => (t <= u)%O)) /= addrC big1 ?add0r // => i.
 by move=> /(contraR (@Mtrig _ _))/eqP ->; rewrite scale0r.
 Qed.
@@ -87,7 +87,7 @@ Lemma unitrig_sum1l M (Mod : lmodType R) (F : T -> Mod) u :
   \sum_(t : T) M u t *: F t = F u + \sum_(t | (t < u)%O) M u t *: F t.
 Proof.
 move=> Hut; rewrite unitrig_suml // (bigD1 u) //=.
-move: Hut => /unitrigP [-> _]; rewrite scale1r; congr (_ + _).
+move: Hut => /unitrigP[-> _]; rewrite scale1r; congr (_ + _).
 by apply eq_bigl => t; rewrite lt_neqAle andbC.
 Qed.
 
@@ -95,7 +95,7 @@ Lemma unitrig_sumr M (Mod : lmodType R) (F : T -> Mod) t :
   unitrig M ->
   \sum_(u : T) M u t *: F u = \sum_(u | (t <= u)%O) M u t *: F u.
 Proof.
-move=> /unitrigP [Muni Mtrig].
+move=> /unitrigP[Muni Mtrig].
 rewrite (bigID (fun u => (t <= u)%O)) /= addrC big1 ?add0r // => i.
 by move=> /(contraR (@Mtrig _ _))/eqP ->; rewrite scale0r.
 Qed.
@@ -105,7 +105,7 @@ Lemma unitrig_sum1r M (Mod : lmodType R) (F : T -> Mod) t :
   \sum_(u : T) M u t *: F u = F t + \sum_(u | (t < u)%O) M u t *: F u.
 Proof.
 move=> Hut; rewrite unitrig_sumr // (bigD1 t) //=.
-move: Hut => /unitrigP [-> _]; rewrite scale1r; congr (_ + _).
+move: Hut => /unitrigP[-> _]; rewrite scale1r; congr (_ + _).
 by apply eq_bigl => u; rewrite lt_def andbC.
 Qed.
 
@@ -114,7 +114,7 @@ Lemma unitrig_sumlV M (Mod : lmodType R) (F : T -> Mod) u :
   unitrig M ->
   \sum_(t : T) M t u *: F t = \sum_(t | (u <= t)%O) M t u *: F t.
 Proof.
-move=> /unitrigP [Muni Mtrig].
+move=> /unitrigP[Muni Mtrig].
 rewrite (bigID (fun t => (u <= t)%O)) /= addrC big1 ?add0r // => i.
 by move=> /(contraR (@Mtrig _ _))/eqP ->; rewrite scale0r.
 Qed.
@@ -124,7 +124,7 @@ Lemma unitrig_sum1lV M (Mod : lmodType R) (F : T -> Mod) u :
   \sum_(t : T) M t u *: F t = F u + \sum_(t | (u < t)%O) M t u *: F t.
 Proof.
 move=> Hut; rewrite unitrig_sumlV // (bigD1 u) //=.
-move: Hut => /unitrigP [-> _]; rewrite scale1r; congr (_ + _).
+move: Hut => /unitrigP[-> _]; rewrite scale1r; congr (_ + _).
 by apply eq_bigl => t; rewrite lt_def andbC.
 Qed.
 
@@ -132,7 +132,7 @@ Lemma unitrig_sumrV M (Mod : lmodType R) (F : T -> Mod) t :
   unitrig M ->
   \sum_(u : T) M t u *: F u = \sum_(u | (u <= t)%O) M t u *: F u.
 Proof.
-move=> /unitrigP [Muni Mtrig].
+move=> /unitrigP[Muni Mtrig].
 rewrite (bigID (fun u => (u <= t)%O)) /= addrC big1 ?add0r // => i.
 by move=> /(contraR (@Mtrig _ _))/eqP ->; rewrite scale0r.
 Qed.
@@ -142,7 +142,7 @@ Lemma unitrig_sum1rV M (Mod : lmodType R) (F : T -> Mod) t :
   \sum_(u : T) M t u *: F u = F t + \sum_(u | (u < t)%O) M t u *: F u.
 Proof.
 move=> Hut; rewrite unitrig_sumrV // (bigD1 t) //=.
-move: Hut => /unitrigP [-> _]; rewrite scale1r; congr (_ + _).
+move: Hut => /unitrigP[-> _]; rewrite scale1r; congr (_ + _).
 by apply eq_bigl => u; rewrite lt_neqAle andbC.
 Qed.
 
@@ -163,23 +163,23 @@ Definition Mat : 'M[R]_n := \matrix_(i, j < n) M (enum_val i) (enum_val j).
 
 Lemma det_unitrig : \det Mat = 1.
 Proof.
-have [Muni Mtrig] := unitrigP _ Munitrig.
+have [Muni Mtrig] := unitrigP M Munitrig.
 rewrite /Mat /determinant (bigD1 1%g) //=.
-rewrite !big1 ?mulr1 ?odd_perm1 ?expr0 ?addr0 //.
-- move=> s Hs.
-  have [i /eqP Hi] : exists i, M (enum_val i) (enum_val (s i)) == 0.
-    apply/existsP; move: Hs; apply contraR.
-    rewrite negb_exists => /forallP /= H.
-    have {}H : forall i : 'I_n, (enum_val (s i) <= enum_val i)%O.
-      by move=> i; exact: Mtrig (H i).
-    suff Hfix : forall t, s (enum_rank t) = enum_rank t.
-      by apply/eqP/permP => /= i; rewrite perm1 -(enum_valK i); apply: Hfix.
-    elim/ordtype.finord_wf => t IHt.
-    move/(_ (enum_rank t)) : H.
-    rewrite le_eqVlt => /orP [/eqP/(can_inj (@enum_valK _)) // |].
-    by rewrite enum_rankK => /IHt; rewrite !enum_valK => /perm_inj.
+rewrite !big1; last by move=> i _; rewrite mxE perm1 Muni.
+rewrite ?mulr1 ?odd_perm1 ?expr0 ?addr0 //.
+move=> s Hs.
+suff [i /eqP Hi] : exists i, M (enum_val i) (enum_val (s i)) == 0.
   by rewrite (bigD1 i) //= mxE Hi mul0r mulr0.
-- by move=> i _; rewrite mxE perm1 Muni.
+apply/existsP; move: Hs; apply contraR.
+rewrite negb_exists => /forallP /= H.
+have {}H : forall i : 'I_n, (enum_val (s i) <= enum_val i)%O.
+  by move=> i; exact: Mtrig (H i).
+suff Hfix : forall t, s (enum_rank t) = enum_rank t.
+  by apply/eqP/permP => /= i; rewrite perm1 -(enum_valK i); apply: Hfix.
+elim/ordtype.finord_wf => t IHt.
+move/(_ (enum_rank t)) : H.
+rewrite le_eqVlt => /orP[/eqP/(can_inj (@enum_valK _)) // |].
+by rewrite enum_rankK => /IHt; rewrite !enum_valK => /perm_inj.
 Qed.
 
 Definition Minv t u : R := invmx Mat (enum_rank t) (enum_rank u).
@@ -212,10 +212,10 @@ have [Muni Mtrig] := unitrigP _ Munitrig.
 apply contraR => H; apply/eqP; elim/ordtype.finord_wf: u H => /= u IHu Hu.
 have:= Minvr u t.
 rewrite [X in  _ = (nat_of_bool X)%:R](_ : _ = false) /=; first last.
-  by apply negbTE; move: Hu; apply contra => /eqP ->.
+  by apply negbTE; move: Hu; apply contra => /eqP->.
 rewrite (bigID (fun v => v <= u)%O) /= [X in _ + X]big1 ?addr0; first last.
   by move=> v /(contraR (@Mtrig _ _)) /eqP ->; rewrite mul0r.
-rewrite (bigD1 u) //= Muni mul1r big1 ?addr0 // => i /andP [Hneq Hlt].
+rewrite (bigD1 u) //= Muni mul1r big1 ?addr0 // => i /andP[Hneq Hlt].
 rewrite IHu ?mulr0 //.
 - by rewrite lt_neqAle Hlt Hneq.
 - by move: Hu; apply contra => /le_trans; apply.
@@ -228,7 +228,7 @@ have:= Minvr t t; rewrite eq_refl /= -[1%:R]/1 => <-.
 rewrite (bigID (fun v => v <= t)%O) /= [X in _ + X]big1 ?addr0; first last.
   by move=> v /(contraR (@Mtrig _ _))/eqP ->; rewrite mul0r.
 rewrite (bigID (fun v => t <= v)%O) /= [X in _ + X]big1 ?addr0; first last.
-  by move=> v /andP [_ /(contraR (@Minv_trig _ _))/eqP ->]; rewrite mulr0.
+  by move=> v /andP[_ /(contraR (@Minv_trig _ _))/eqP->]; rewrite mulr0.
 rewrite (big_pred1 t) ?Muni ?mul1r // => v /=.
 by rewrite eq_le.
 Qed.

@@ -160,7 +160,7 @@ Qed.
 Fact trivsetpart_subproof :
   partition (T := T) (if S == set0 then set0 else [set S]) S.
 Proof.
-case: (altP (_ =P _))=>[-> | /set0Pn[x xinS]/=].
+case: (S =P set0) => [-> | /eqP/set0Pn[x xinS]/=].
   by rewrite partition_set0.
 rewrite /partition cover1 eq_refl trivIset1 /=.
 by rewrite inE eq_sym; apply/set0Pn; exists x.
@@ -235,8 +235,8 @@ Proof. by rewrite -powersetE powerset1 !inE=> /orP[]/eqP->; [left|right]. Qed.
 Lemma part_set1_eq (P : {set {set T}}) :
   partition P [set x] -> P = [set [set x]].
 Proof.
-move=> /[dup] /and3P [H1 _ Hn0] /triv_part; apply.
-move: H1; rewrite eqEsubset=> /andP [subPx /subsetP/(_ x)].
+move=> /[dup] /and3P[H1 _ Hn0] /triv_part; apply.
+move: H1; rewrite eqEsubset=> /andP[subPx /subsetP/(_ x)].
 rewrite inE=> /(_ (eq_refl _))/bigcupP[/= A AinP xinA].
 suff <- : A = [set x] by [].
 apply/eqP; rewrite eqEsubset.
@@ -337,7 +337,7 @@ Proof.
 apply/is_finer_pblockP=> x xinS.
 apply/subsetP=> y; rewrite pblock_trivsetpart //.
 move: xinS; rewrite -{1}(cover_setpart P).
-by move=> /pblock_mem/setpart_subset/subsetP; apply.
+by move/pblock_mem/setpart_subset/subsetP; apply.
 Qed.
 #[export]
 HB.instance Definition _ :=
@@ -538,14 +538,14 @@ Lemma join_finer_eq_in_S P Q x y :
 Proof.
 move=> xinS /connectP => [[pth Hpth Hlast]].
 elim: pth x Hpth Hlast xinS => [x /= _ -> // | x p0 IH xn /=].
-move=>/andP[H1 {}/IH/[apply]/[swap] xninS]; apply.
+case/andP=> [H1 {}/IH/[apply]/[swap] xninS]; apply.
 by move: H1=> /orP[]; apply: mem_pblock_setpart.
 Qed.
 
 Lemma join_finerE P Q x y :
   x \in S -> y \in pblock (P `|` Q)%O x = join_finer_eq P Q x y.
 Proof.
-move=> xinS; case: (boolP (y \in S))=> [yinS | yninS].
+move=> xinS; case/boolP: (y \in S) => [yinS | yninS].
   by rewrite -(pblock_equivalence_partition (join_finer_equivalence P Q)).
 have:= yninS; rewrite -(pblock_notin (P `|` Q)%O) negbK.
 rewrite mem_pblockC=> /eqP ->.

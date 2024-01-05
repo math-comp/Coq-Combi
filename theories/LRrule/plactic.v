@@ -308,16 +308,16 @@ Qed.
 Lemma plact_col u v : sorted >%O u -> u =Pl v -> u = v.
 Proof using.
 move=> Hcolu; move: v; apply: gencongr_ind => [// |] x y1 z y2 Hu /plactruleP[].
-- move/plact1P => [a] [b] [c] [/andP [Hab Hbc] Hy _]; exfalso.
+- move/plact1P => [a] [b] [c] [/andP[Hab Hbc] Hy _]; exfalso.
   move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P[].
   by rewrite ltNge (le_trans Hab (ltW Hbc)).
-- move/plact1iP => [a] [b] [c] [/andP [Hab Hbc] _ Hy]; exfalso.
+- move/plact1iP => [a] [b] [c] [/andP[Hab Hbc] _ Hy]; exfalso.
   move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P[_].
   by rewrite ltNge Hab.
-- move/plact2P => [a] [b] [c] [/andP [Hab Hbc] Hy _]; exfalso.
+- move/plact2P => [a] [b] [c] [/andP[Hab Hbc] Hy _]; exfalso.
   move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P[_].
   by rewrite ltNge (le_trans (ltW Hab) Hbc).
-- move/plact2iP => [a] [b] [c] [/andP [Hab Hbc] _ Hy]; exfalso.
+- move/plact2iP => [a] [b] [c] [/andP[Hab Hbc] _ Hy]; exfalso.
   move: Hcolu; rewrite Hu Hy => /sorted_center /= /and3P[].
   by rewrite ltNge Hbc.
 Qed.
@@ -359,7 +359,7 @@ move: v; apply: gencongr_ind => [| x y1 z y2 Hv /plactruleP[]] /=;
   apply (plact_trans Hv); rewrite !rev_cat -!catA; apply: plact_is_congr.
   rewrite Hy1 Hy2 /rev /=; apply rule_gencongr.
   apply/plactruleP/or4P => /=.
-  move: Hv => /Huniq; rewrite Hy1 /= => /andP [].
+  move: Hv => /Huniq; rewrite Hy1 /= => /andP[].
   rewrite mem_seq2 negb_or => /andP[_ Hbnc] _.
   by rewrite !lt_neqAle Hbc Hbnc (ltW Hab) /= !mem_seq1 eq_refl ?orbT.
 - move/plact2iP => [a] [b] [c] [/andP[Hab Hbc] Hy2 Hy1].
@@ -594,7 +594,7 @@ apply: (@plact_trans _ _ (rcons (to_word (RS w)) l0)); first exact: plact_rcons.
 have:= is_tableau_RS w.
 elim: (RS w) l0 {H} => [/=| r0 t IHt] l0.
   rewrite /RS /to_word /= => _; exact: plact_refl.
-move=> /= /and4P [Ht0 Hrow0 _ Htab].
+move=> /= /and4P[Ht0 Hrow0 _ Htab].
 case (boolP (bump r0 l0)) => [Hbump | Hnbump].
 - rewrite (bump_bumprowE Hrow0 Hbump); move/(_ (bumped r0 l0) Htab) : IHt.
   rewrite !to_word_cons -!cats1 /= -catA => IHt.
@@ -842,7 +842,7 @@ move/plact1P => [a] [b] [c] [Habc -> ->].
 rewrite !filter_cat /=.
 apply: plact_catr; apply: plact_catl.
 case: (leP c L) => Hc; last exact: plact_refl.
-have /andP [Hab Hbc] := Habc.
+have /andP[Hab Hbc] := Habc.
 have HbL := le_trans (ltW Hbc) Hc.
 rewrite HbL (le_trans Hab HbL).
 apply: rule_gencongr => /=.
@@ -857,7 +857,7 @@ move/plact2P => [a] [b] [c] [Habc -> ->].
 rewrite !filter_cat /=.
 apply: plact_catr; apply: plact_catl.
 case: (leP c L) => Hc; last exact: plact_refl.
-have /andP [Hab Hbc] := Habc.
+have /andP[Hab Hbc] := Habc.
 have HbL := le_trans Hbc Hc.
 rewrite HbL (le_trans (ltW Hab) HbL).
 apply: rule_gencongr => /=.
@@ -885,7 +885,7 @@ Proof using.
 move=> H; case Hfu : [seq x <- u | (L > x)%O] => [| fu0 fu'].
   suff -> : [seq x <- v | (L > x)%O] = [::] by apply plact_refl.
   apply/eqP; move: Hfu => /eqP; apply contraLR.
-  rewrite -!has_filter => /hasP [x Hx HgtnX].
+  rewrite -!has_filter => /hasP[x Hx HgtnX].
   apply/hasP; exists x; last exact HgtnX.
   by move: H => /plact_homog/perm_mem ->.
 have := maxLP fu0 fu' => /allP; rewrite -Hfu => HML.
@@ -975,7 +975,7 @@ move: v H; apply: gencongr_ind; first by split; last exact: plact_refl.
 move=> l v1 r v2 [Hperm Hu] Hrule.
 split.
 - move=> i; move/(_ i): Hperm.
-  rewrite !mem_cat => Hperm /or3P [] H; apply: Hperm.
+  rewrite !mem_cat => Hperm /or3P[] H; apply: Hperm.
   + by rewrite H ?orbT.
   + have /allP := plactrule_homog v1 => /(_ _ Hrule)/perm_mem ->.
     by rewrite H ?orbT.

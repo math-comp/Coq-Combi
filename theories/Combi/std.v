@@ -554,9 +554,9 @@ rewrite !(nth_inspos _ _ _ Hpossz).
 have Hposszstd : posbig u <= size (std_rec n (rembig u)).
   by rewrite size_std_rec -Hszrem.
 rewrite !(nth_inspos _ _ _ Hposszstd).
-case (altP (i =P posbig u)) => Hipos.
+case/altP: (i =P posbig u) => Hipos.
 - subst i.
-  case (altP (j =P posbig u)) => Hjpos; first by rewrite !lexx.
+  case/altP: (j =P posbig u) => Hjpos; first by rewrite !lexx.
   rewrite -nth_rembig (shiftinv_posK Hjpos).
   have {Hij}Hjpos : posbig u < j by rewrite ltn_neqAle eq_sym Hij Hjpos.
   have /allP Hall := allLtn_std_rec (rembig u).
@@ -574,7 +574,7 @@ case (altP (i =P posbig u)) => Hipos.
     apply: mem_nth; rewrite size_drop ltn_sub2r //=.
     exact: (leq_ltn_trans Hjpos).
   by rewrite leNgt => ->.
-- case (altP (j =P posbig u)) => Hjpos.
+- case/altP: (j =P posbig u) => Hjpos.
   + subst j.
     have {Hij}Hipos : i < posbig u by rewrite ltn_neqAle Hipos Hij.
     rewrite /shiftinv_pos Hipos -nth_rembig.
@@ -781,11 +781,11 @@ apply/eq_invP; split; first by move: Hsz; rewrite !size_cat /=.
 have Hsztransp :
   (size (u ++ [:: a, b & v])) = (size (u ++ [:: b, a & v])) by rewrite !size_cat.
 move=> i j /andP[Hij Hj].
-case: (altP (i =P (size u))) => Hiu.
+case/altP: (i =P (size u)) => Hiu.
 - subst i; rewrite {2}HuU !nth_sizeu.
-  case: (altP (j =P (size u))) => Hju.
+  case/altP: (j =P (size u)) => Hju.
   + by subst j; rewrite {2}HuU !nth_sizeu !lexx.
-  case: (altP (j =P (size u).+1)) => Hju1.
+  case/altP: (j =P (size u).+1) => Hju1.
   + subst j; rewrite {2}HuU !nth_sizeu1.
     by rewrite !leNgt Hab HAB.
   + move/(_ (size u).+1 j) : Hinv.
@@ -796,9 +796,9 @@ case: (altP (i =P (size u))) => Hiu.
     rewrite HuU in Hju; rewrite HuU in Hju1.
     rewrite (nth_transp _ _ _ Hju Hju1).
     by rewrite {2}HuU !nth_sizeu1.
-case: (altP (i =P (size u).+1)) => Hiu1.
+case/altP: (i =P (size u).+1) => Hiu1.
 - subst i; rewrite {2}HuU !nth_sizeu1.
-  case: (altP (j =P (size u).+1)) => Hju1.
+  case/altP: (j =P (size u).+1) => Hju1.
   + subst j; rewrite {2}HuU !nth_sizeu1.
     by rewrite !lexx.
   + move/(_ (size u) j) : Hinv.
@@ -814,7 +814,7 @@ case: (altP (i =P (size u).+1)) => Hiu1.
   rewrite HuU in Hiu; rewrite HuU in Hiu1.
   rewrite (nth_transp _ _ _ Hiu Hiu1).
   rewrite -HuU in Hiu; rewrite -HuU in Hiu1.
-  case: (altP (j =P (size u))) => Hju.
+  case/altP: (j =P (size u)) => Hju.
   + subst j; rewrite {2}HuU !nth_sizeu.
     move/(_ i (size u).+1) : Hinv.
     set Hyp := (X in (X -> _ ) -> _) => Hinv.
@@ -822,7 +822,7 @@ case: (altP (i =P (size u).+1)) => Hiu1.
       rewrite /Hyp (leq_trans Hij (leqnSn _)) /=; rewrite !size_cat /=.
       by rewrite !addnS !ltnS; exact: leq_addr.
     by rewrite {2}HuU !nth_sizeu1.
-  case: (altP (j =P (size u).+1)) => Hju1.
+  case/altP: (j =P (size u).+1) => Hju1.
   + subst j; rewrite {2}HuU !nth_sizeu1.
     move/(_ i (size u)) : Hinv.
     set Hyp := (X in (X -> _ ) -> _) => Hinv.

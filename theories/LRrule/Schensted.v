@@ -418,7 +418,7 @@ Proof using.
 rewrite /subseqrow_n.
 elim/last_ind: w i => [// | w wn IHw] i.
 rewrite Sch_rcons {2}/ins.
-case (altP (i =P (inspos (Sch w) wn))) => [| Hineq Hileq].
+case: (i =P (inspos (Sch w) wn)) => [| /eqP Hineq Hileq].
 - case: i => [<- | i Hieq ] _.
   + by exists [:: wn] => /=; case (Sch w) => /= [|_ _];
         rewrite -cats1 suffix_subseq; apply/and3P; repeat split.
@@ -451,10 +451,10 @@ Theorem Sch_leq_last w s si:
   subseqrow (rcons s si) w ->
   size s < size (Sch w) /\ (nth inh (Sch w) (size s) <= si)%O.
 Proof using.
-rewrite /subseqrow => /andP [].
+rewrite /subseqrow => /andP[].
 elim/last_ind: w s si => [| w wn IHw] s si; first by rewrite subseq0 rcons_nilF.
 rewrite Sch_rcons  /=; have HSch := is_row_Sch w.
-case (altP (si =P wn)) => [-> {si} | Hsiwn Hsubs Hrow].
+case: (si =P wn) => [-> {si} | /eqP Hsiwn Hsubs Hrow].
 
 (* The subseqence s ends by wn *)
 - rewrite -subseq_rcons_eq.
@@ -531,7 +531,7 @@ Theorem Sch_max_size (w : seq T) :
 Proof.
 apply/eqP; rewrite eqn_leq; apply/andP; split.
 - case: (exist_size_Sch w) => s;
-    rewrite /subseqrow_n => /and3P [Hsubs /eqP Hsz Hrow].
+    rewrite /subseqrow_n => /and3P[Hsubs /eqP Hsz Hrow].
   pose witness  := Subseqs Hsubs.
   have -> : size (Sch w) = size witness by rewrite /= Hsz.
   exact: (@leq_bigmax_cond _ _ (size \o (@subseqsval _ w)) witness Hrow).
@@ -733,26 +733,26 @@ apply/dominateP; split; first exact: Hsize'.
 move=> i Hi; have Hi' := leq_trans Hi (size_ins_inf Hrow1 l1).
 rewrite (set_nth_default l1 inh Hi)
   (set_nth_default l0 inh (leq_trans Hi Hsize')).
-case (altP (i =P inspos r1 l1)) => Hipos1.
+case/altP: (i =P inspos r1 l1) => Hipos1.
 - have:= nth_inspos_ins r1 l1; rewrite -Hipos1.
   have:= Hlt i Hi'.
   rewrite (set_nth_default l0 inh (leq_trans Hi' Hsize))
     (set_nth_default l1 inh Hi').
   rewrite {1}Hipos1 {1}/ins nth_set_nth {1}Hipos1 /=.
-  case (altP (i =P inspos r0 l0)) => [Hipos0 _| Hipos0].
-  * rewrite {2}Hipos0 Hl1 => <-; rewrite Hipos1 nth_inspos_ins.
+  case/altP: (i =P inspos r0 l0) => [Hipos0 _| Hipos0].
+  + rewrite {2}Hipos0 Hl1 => <-; rewrite Hipos1 nth_inspos_ins.
     case (boolP (bump r1 l1)) => Hbump;
       last by move: Hi; rewrite Hipos1 (nbump_inspos_eq_size Hrow1 Hbump) ltnn.
     by have:= inspred_mininspred Hbump; rewrite (insposE Hrow1) /inspred.
-  * rewrite -{1}Hipos1 (negbTE Hipos0) nth_inspos_ins => Hlt1 Heqins.
+  + rewrite -{1}Hipos1 (negbTE Hipos0) nth_inspos_ins => Hlt1 Heqins.
     rewrite -Hipos1 in Hlt1.
     apply: (lt_le_trans Hlt1); rewrite -{1}Heqins.
     exact: ins_leq.
-- case (altP (i =P inspos r0 l0)) => [Hipos0 | Hipos0].
-  * rewrite Hipos0 Hl1.
+- case/altP: (i =P inspos r0 l0) => Hipos0.
+  + rewrite Hipos0 Hl1.
     have:= contra (@lt_inspos_nth r1 Hrow1 l1 _ Hi).
     by rewrite -leqNgt -ltNge Hipos0; apply.
-  * have:= Hlt _ Hi'.
+  + have:= Hlt _ Hi'.
     rewrite (set_nth_default l0 inh (leq_trans Hi' Hsize))
       (set_nth_default l1 inh Hi').
     by rewrite !/ins !nth_set_nth /= (negbTE Hipos0) (negbTE Hipos1).
@@ -858,7 +858,7 @@ move/(_ Hrow): IHs.
 case H : (invbumprow b s) => [[// | r0 r] a] /= ->; rewrite andbT.
 apply: (le_trans Hhead).
 have -> : r0 = head l0 (invins b s) by rewrite /invins H.
-case (altP (s =P [::])) => [-> // | Hnnil].
+case: (s =P [::]) => [-> // | /eqP Hnnil].
 apply: (head_lt_invins _ Hnnil).
 by rewrite /invbump Hb.
 Qed.
@@ -868,7 +868,7 @@ Lemma head_leq_invbumped b s :
 Proof using.
 rewrite /invbumped.
 elim: s => [_ // | l0 s IHs] /= _ /is_row_cons[Hhead Hrow].
-case (altP (s =P [::])) => [-> /= | Hnnil]; first by rewrite lexx.
+case: (s =P [::]) => [-> /= | /eqP Hnnil]; first by rewrite lexx.
 rewrite (set_head_default inh _ Hnnil).
 case: (leP b (head inh s)) => [/= | _]; first by rewrite lexx.
 move: {IHs} (IHs Hnnil Hrow).
@@ -900,7 +900,7 @@ Lemma bumprowinvK b s :
 Proof using.
 rewrite /invbump /invins /invbumped.
 elim: s => [// | s0 s IHs] /= _ /is_row_cons[Hhead Hrows] Hs0.
-case (altP (s =P [::])) => [-> /= | Hnnil]; first by rewrite lexx /= Hs0.
+case: (s =P [::]) => [-> /= | /eqP Hnnil]; first by rewrite lexx /= Hs0.
 rewrite (set_head_default s0 _ Hnnil).
 case: (leP b (head s0 s)) => [/= | ]; first by rewrite Hs0.
 rewrite (set_head_default b s0 Hnnil).

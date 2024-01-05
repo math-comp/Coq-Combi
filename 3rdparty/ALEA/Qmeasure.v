@@ -537,8 +537,11 @@ Lemma let_indep_distr (m1 : distr A) (m2 : distr B) :
   Mlet m1 (fun => m2) == m2.
 Proof. exact: let_indep. Qed.
 
-Implicit Types (m : distr A) (f g : A -> bool).
-Lemma mu_bool_le1 m f : mu m (fun x => (f x)%:~R) <= 1%:~R.
+Section MuBool.
+Context {m : distr A}.
+Implicit Types (f g : A -> bool).
+
+Lemma mu_bool_le1 {f} : mu m (fun x => (f x)%:~R) <= 1%:~R.
 Proof.
 apply le_trans with (mu m (fun x => 1)).
 - apply mu_monotonic => x.
@@ -547,12 +550,11 @@ apply le_trans with (mu m (fun x => 1)).
 Qed.
 Hint Resolve mu_bool_le1 : core.
 
-Lemma mu_bool_0le (m : distr A) (f : A -> bool) :
-  0%:~R <= mu m (fun x => (f x)%:~R).
+Lemma mu_bool_0le {f} : 0%:~R <= mu m (fun x => (f x)%:~R).
 Proof. by apply mu_stable_pos => x /=; case (f x). Qed.
 Hint Resolve mu_bool_0le : core.
 
-Lemma mu_bool_impl m f g :
+Lemma mu_bool_impl {f g} :
   (forall x, (f x) ==> (g x)%B) ->
   (mu m (fun x => (f x)%:~R) <= mu m (fun x => (g x)%:~R)).
 Proof.
@@ -560,7 +562,7 @@ move=> Hfg; apply mu_monotonic => x.
 by move: (Hfg x); case (f x); case (g x).
 Qed.
 
-Lemma mu_bool_impl1 m f g :
+Lemma mu_bool_impl1 {f g} :
   (forall x, (f x) ==> (g x)%B) ->
   mu m (fun x => (f x)%:~R) = 1 ->  mu m (fun x => (g x)%:~R) = 1.
 Proof.
@@ -571,7 +573,7 @@ rewrite -[X in X <= _]Hf.
 exact: mu_bool_impl.
 Qed.
 
-Lemma mu_bool_negb0 m f g :
+Lemma mu_bool_negb0 {f g} :
   (forall x, (f x) ==> ~~ (g x)%B) ->
   mu m (fun x => (f x)%:~R) = 1 ->
   mu m (fun x => (g x)%:~R) = 0.
@@ -586,14 +588,14 @@ apply le_anti; apply /andP; split.
   by move => x /=; case (g x).
 Qed.
 
-Lemma mu_bool_negb m f :
+Lemma mu_bool_negb {f} :
   mu m (fun x => (~~ f x)%:~R) = 1 - mu m (fun x => (f x)%:~R).
 Proof.
 rewrite -mu_stable_inv.
 by apply mu_stable_eq => x; case (f x).
 Qed.
 
-Lemma mu_bool_negb1 m f g :
+Lemma mu_bool_negb1 {f g} :
   (forall x, (~~ (f x) ==> g x)%B) ->
   mu m (fun x => (f x)%:~R) = 0 ->
   mu m (fun x => (g x)%:~R) = 1.
@@ -606,6 +608,8 @@ apply le_anti; apply /andP; split.
   + apply mu_monotonic => x.
     by move: (Hi x); case (f x); case (g x).
 Qed.
+
+End MuBool.
 
 End OperDistr.
 
@@ -950,7 +954,7 @@ Lemma Finite_eq_out (A : eqType) (d : fin A) (a : A) :
 Proof.
 move => Ha.
 rewrite Finite_simpl finite_simpl big1_seq ?mul0r // => i.
-case (altP (i =P a)) => [-> /andP [H1 H2] | -].
+case (i =P a) => [-> /andP [H1 H2] | _].
 - move: Ha => [| Hco]; first by case: (a \in points d) H2.
   by move: H1; rewrite ltNge /= Hco.
 - by rewrite mulr0.

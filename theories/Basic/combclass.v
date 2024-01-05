@@ -251,8 +251,8 @@ Definition enum_union := flatten [seq map val (enum (TPi i)) | i : TPI].
 Lemma all_unionP : all P enum_union.
 Proof using HPTi.
 rewrite /enum_union.
-apply/allP => x /flatten_mapP [] i /mapP [] ifin Hi -> {i} /mapP [] xfin Hx -> {x}.
-by have:= valP xfin; rewrite -HPTi /= => /andP [].
+apply/allP => x /flatten_mapP[i /mapP[ifin Hi ->{i}] /mapP[xfin Hx ->{x}]].
+by have:= valP xfin; rewrite -HPTi /= => /andP[].
 Qed.
 
 Lemma count_unionP x : P x -> count_mem x enum_union = 1.
@@ -262,18 +262,18 @@ rewrite count_flatten -2!map_comp.
 pose ix := @Sub TI PI TPI (FI x) H.
 rewrite (eq_map (g := fun i => i == ix : nat)); first last.
   move=> i /=.
-  case: (altP (i =P ix)) => [-> {i} | Hneq].
+  case: eqP => [->{i} | Hneq].
   - rewrite count_map /=.
     have Hix : Pi (val ix) x by rewrite -HPTi /= SubK HPx eq_refl.
     pose xPI := @Sub T _ (TPi ix) x Hix.
     rewrite (eq_count (a2 := pred1 xPI)); first last.
-      move=> y /=; apply/idP/idP => /eqP HH; apply /eqP.
+      move=> y /=; apply/eqP/eqP => HH.
       + by apply val_inj; rewrite HH SubK.
       + by rewrite HH SubK.
     by rewrite enumT /=; exact: (@enumP (TPi ix)).
-  - apply/count_memPn; move: Hneq; apply contra => /mapP [] xfin _ Hx.
-  apply/eqP; apply val_inj; rewrite SubK.
-  by have:= valP xfin; rewrite /= -HPTi Hx=> /andP [] _ /eqP ->.
+  - apply/count_memPn; apply/contra_notN: Hneq => /mapP[xfin _ Hx].
+    apply val_inj; rewrite SubK.
+    by have:= valP xfin; rewrite /= -HPTi Hx=> /andP[_ /eqP->].
 by rewrite sumn_count /=; exact: (@enumP TPI).
 Qed.
 

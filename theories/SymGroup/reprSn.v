@@ -75,7 +75,7 @@ Lemma lin_char_reprP xi :
           (xi \is a linear_char).
 Proof.
 apply (iffP idP) => [xiL | [rG ->{xi}]].
-- have:= lin_charW xiL => /char_reprP [[drG rG /= Hxi]].
+- have:= lin_charW xiL => /char_reprP[[drG rG /= Hxi]].
   have /eqP:= lin_char1 xiL; rewrite Hxi cfRepr1 pnatr_eq1=> /eqP drG1.
   by subst drG; exists rG.
 - exact: cfRepr1_lin_char.
@@ -108,7 +108,7 @@ End EltrConj.
 (** * Representation of dimension 1 and natural representation *)
 Section DefTrivSign.
 
-Variables n d : nat.
+Context {n : nat} (d : nat).
 
 Definition triv_mx (g : 'S_n) : 'M[algC]_1 := 1.
 Definition sign_mx (g : 'S_n) : 'M[algC]_1 := (-1) ^+ (odd_perm g).
@@ -184,12 +184,6 @@ Qed.
 
 End DefTrivSign.
 
-Arguments triv_mx_repr {n}.
-Arguments triv_repr {n}.
-Arguments sign_mx_repr {n}.
-Arguments sign_repr {n}.
-Arguments sign_char {n}.
-
 
 (** * Representations of the symmetric Group for n = 0 and 1  *)
 
@@ -250,7 +244,7 @@ have ch1_eltr i : (i < n)%N -> xi 's_i = xi 's_0.
   move=> ltin; have [/= t ->] := eltr_conj (leq_ltn_trans (leq0n _) ltin) ltin.
   by rewrite /conjg lin_charM // mulrC -lin_charM // mulgK.
 have:= congr1 xi (eltr2 n 0); rewrite lin_charM // lin_char1 // => /eqP.
-rewrite -expr2 sqrf_eq1 => /orP [] /eqP xi_s0.
+rewrite -expr2 sqrf_eq1 => /orP[] /eqP xi_s0.
 - left; apply/cfunP => /= s; rewrite cfun1E inE /=.
   elim/eltr_ind: s => [|s i lti IHs]; first by rewrite lin_char1.
   by rewrite lin_charM // {}IHs mulr1 ch1_eltr.
@@ -284,7 +278,7 @@ Qed.
 
 Lemma sign_char2 : sign_char = 'chi_(cast_ord (esym NirrS2) 1).
 Proof using.
-have /irrP [j Hj] := lin_char_irr (sign_charP 2).
+have /irrP[j Hj] := lin_char_irr (@sign_charP 2).
 rewrite -(cast_IirrS2 (i := j)) //; apply/eqP => Hj0; subst j.
 by have := triv_sign_neq (n := 2) (ltnSn _); rewrite Hj irr0 eqxx.
 Qed.
@@ -297,7 +291,7 @@ Proof using. by apply/cfRepr_rsimP; rewrite cfRepr_sign2 irrRepr. Qed.
 
 Lemma irr_S2 : irr 'SG_2 = tcast (esym NirrS2) [tuple 1; sign_char].
 Proof using.
-apply eq_from_tnth => i; case: (altP (i =P 0)) => [-> | Hi].
+apply eq_from_tnth => i; case: (i =P 0) => [-> | /eqP Hi].
 - by rewrite tcastE irr0.
 - by rewrite tcastE sign_char2 (cast_IirrS2 Hi).
 Qed.

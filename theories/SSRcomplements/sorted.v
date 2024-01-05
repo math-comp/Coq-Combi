@@ -86,10 +86,10 @@ split => H.
 - by move=> i Hi; apply: H; rewrite Hi ltnSn.
 - move=> i j; move Hdiff : (j - i.+1) => diff.
   elim: diff i j Hdiff => [| diff IHdiff] i j /=.
-  + move/eqP; rewrite -/(leq j i) => /eqP H1 /andP [H2 Hj].
+  + move/eqP; rewrite -/(leq j i) => /eqP H1 /andP[H2 Hj].
     have Hij : i.+1 = j by apply/eqP; rewrite eqn_leq H2 /= /leq H1.
     by rewrite -Hij; apply: H; rewrite Hij.
-  + move=> Hdiff => /andP [_ Hj].
+  + move=> Hdiff => /andP[_ Hj].
     have Hij : i < j.-1.
       by move: Hdiff; rewrite subnS -subn1 subnAC subn1 -subn_gt0 => ->.
     apply: (Rtrans (y := nth Z r j.-1)).
@@ -119,9 +119,9 @@ split => H.
   exact: H.
 - move=> i j; move Hdiff : (j - i) => diff.
   elim: diff i j Hdiff => [| diff IHdiff] i j /=.
-  + move/eqP; rewrite -/(leq j i) => H1 /andP [H2 Hj].
+  + move/eqP; rewrite -/(leq j i) => H1 /andP[H2 Hj].
     by rewrite (_ : i = j); last by apply/eqP; rewrite eqn_leq H1 H2.
-  + move=> Hdiff => /andP [_ Hj].
+  + move=> Hdiff => /andP[_ Hj].
     have Hiltj : i < j by rewrite -subn_gt0 Hdiff.
     apply: (Rtrans (y := nth Z r i.+1)).
     * by apply: H; exact: (leq_ltn_trans Hiltj).
@@ -142,12 +142,12 @@ Proof using Rrefl. by case: r => [| r0 r] //= /andP[]. Qed.
 
 Lemma sorted_last l r : sorted (rcons r l) -> (last l r <=R l).
 Proof using Rrefl.
-by case: r => [//=| r0 r] /=; rewrite rcons_path => /andP [].
+by case: r => [//=| r0 r] /=; rewrite rcons_path => /andP[].
 Qed.
 
 Lemma head_leq_last_sorted l r : sorted (l :: r) -> (l <=R last l r).
 Proof using Rrefl Rtrans.
-elim: r l => [//=| t0 r IHr] l /= /andP [Hl {}/IHr].
+elim: r l => [//=| t0 r IHr] l /= /andP[Hl {}/IHr].
 exact: Rtrans Hl.
 Qed.
 
@@ -157,7 +157,7 @@ Lemma sorted_lt_by_pos r p q :
   sorted r -> p < size r -> q < size r ->
    (nth Z r p != nth Z r q) && (nth Z r p <=R nth Z r q) -> p < q.
 Proof using Hanti Rrefl Rtrans.
-move=> /sorted2P Hsort Hp Hq /andP [Hneq Hpq].
+move=> /sorted2P Hsort Hp Hq /andP[Hneq Hpq].
 have H : q <= p -> (nth Z r q <=R nth Z r p).
   by move=> Hqp; apply Hsort; rewrite Hqp Hp.
 have:= contra H; rewrite ltnNge; apply.

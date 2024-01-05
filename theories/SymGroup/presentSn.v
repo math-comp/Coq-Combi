@@ -131,11 +131,11 @@ Lemma tclosure_sub A B :
   A \subset B -> transitive (srel B) -> tclosure A \subset B.
 Proof.
 move=> /subsetP AB trB.
-apply/subsetP => /= [[i j]]; rewrite /tclosure inE /= => /andP [Hneq].
+apply/subsetP => /= [[i j]]; rewrite /tclosure inE /= => /andP[Hneq].
 move/connectP => /= [p]; elim: p => [| p0 p IHp] /= in i Hneq *.
   by move => _ Heq; rewrite Heq eqxx in Hneq.
-case: (altP (p0 =P j)) => [<- /= /andP[/AB ->] // | {}/IHp IHp].
-by move=> /andP [/AB {}/trB trB {}/IHp H{}/H]; apply: trB.
+case: (p0 =P j) => [<- /= /andP[/AB ->] // | /eqP {}/IHp IHp].
+by move=> /andP[/AB {}/trB trB {}/IHp /[apply]]; apply: trB.
 Qed.
 
 End SRel.
@@ -210,7 +210,7 @@ Qed.
 Lemma is_code_rcons c i : i <= size c -> c \is a code -> rcons c i \is a code.
 Proof.
 move=> Hi /is_codeP Hcode; apply/is_codeP => j.
-rewrite size_rcons ltnS leq_eqVlt => /orP [/eqP ->| Hj]; rewrite nth_rcons.
+rewrite size_rcons ltnS leq_eqVlt => /orP[/eqP ->| Hj]; rewrite nth_rcons.
 - by rewrite ltnn eq_refl.
 - by rewrite Hj; apply Hcode.
 Qed.
@@ -234,9 +234,9 @@ Lemma wordcd_ltn c :
   c \is a code -> all (gtn (size c).-1) (wordcd c).
 Proof.
 move=> /is_codeP Hcode.
-apply/allP => i /flatten_mapP [ j]; rewrite mem_iota /= add0n => Hc.
+apply/allP => i /flatten_mapP[ j]; rewrite mem_iota /= add0n => Hc.
 rewrite mem_rev mem_iota subnK; last exact: Hcode.
-move=> /andP [_ /leq_trans]; apply.
+move=> /andP[_ /leq_trans]; apply.
 by case: (size c) Hc.
 Qed.
 
@@ -263,9 +263,9 @@ Fixpoint enum_codesz n :=
 Lemma enum_codeszP n : all (is_code_of_size n) (enum_codesz n).
 Proof.
 rewrite /is_code_of_size; elim: n => [| n IHn] //.
-apply/allP => cn /flatten_mapP [i].
+apply/allP => cn /flatten_mapP[i].
 rewrite -/enum_codesz mem_iota /= add0n ltnS => Hi.
-move=> /mapP [c /(allP IHn) {IHn}] /andP [Hcode /eqP Hsz ->] {cn}.
+move=> /mapP[c /(allP IHn) {IHn}] /andP[Hcode /eqP Hsz ->{cn}].
 rewrite size_rcons Hsz eq_refl andbT.
 by apply is_code_rcons; first by rewrite Hsz.
 Qed.
@@ -273,17 +273,17 @@ Qed.
 Lemma enum_codesz_countE n c :
   is_code_of_size n c -> count_mem c (enum_codesz n) = 1.
 Proof.
-elim: n c => [//= | n IHn] c /andP [].
+elim: n c => [/= | n IHn] c /andP[].
   by move=> _ /nilP ->; rewrite eq_refl addn0.
 case/lastP: c => [// | c cn] Hcode.
 rewrite size_rcons eqSS => /eqP Hsz.
-have /IHn{IHn} Hcount : is_code_of_size n c.
+have {}/IHn Hcount : is_code_of_size n c.
   rewrite /is_code_of_size Hsz eq_refl andbT.
   exact: (is_code_rconsK Hcode).
 rewrite count_flatten -map_comp -/enum_codesz.
 rewrite (eq_map (g := fun i => i == cn : nat)); first last.
   move=> i /=; rewrite count_map /=.
-  case (altP (i =P cn)) => [Heq | /negbTE Hneq].
+  case (i =P cn) => [Heq | /eqP/negbTE Hneq].
   + subst i; rewrite (eq_count (a2 := xpred1 c)); first exact: Hcount.
     by move=> s /=; apply/idP/idP => [/eqP/rconsK ->| /eqP ->].
   + rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
@@ -310,10 +310,10 @@ HB.instance Definition _ :=
 Implicit Type (c : codesz).
 
 Lemma codeszP c : val c \is a code.
-Proof using. by case: c => c /= /andP []. Qed.
+Proof using. by case: c => c /= /andP[]. Qed.
 
 Lemma size_codesz c : size c = n.
-Proof using. by case: c => c /= /andP [_ /eqP]. Qed.
+Proof using. by case: c => c /= /andP[_ /eqP]. Qed.
 
 Lemma enum_codeszE : map val (enum {:codesz}) = enum_codesz n.
 Proof using. by rewrite /=; exact: enum_subE. Qed.
@@ -350,7 +350,7 @@ Proof using.
 move=> Hxy Hyz.
 rewrite -{1}(tpermV x y) -mulgA -/(conjg _ _) tpermJ tpermR.
 rewrite -{1}(tpermV y z) -mulgA -/(conjg _ _) tpermJ tpermL.
-case: (altP (x =P z)) => [-> | Hxz].
+case: (x =P z) => [-> | /eqP Hxz].
 - by rewrite tpermR tpermL tpermC.
 - rewrite (tpermD Hxz Hyz).
   rewrite ![x == _]eq_sym in Hxy Hxz.
@@ -407,7 +407,7 @@ Qed.
 Lemma eltr_comm i j :
   i.+1 < j < n0 -> 's_i * 's_j = 's_j * 's_i.
 Proof using.
-move => /andP [Hij Hj].
+move => /andP[Hij Hj].
 have Hi := ltn_trans Hij Hj.
 apply: tpermC; rewrite /eq_op /=.
 - by rewrite inord1i // inordi // (ltn_eqF (ltnW Hij)).
@@ -574,14 +574,14 @@ Lemma transitive_DeltaI1 IS :
       i < j < k -> (i, k) \in IS -> ((i, j) \in IS \/ (j, k) \in IS)).
 Proof.
 split.
-- rewrite /= => tr i j k /andP [iltj jltk] ik.
+- rewrite /= => tr i j k /andP[iltj jltk] ik.
   case: (boolP ((i, j) \in IS)) => [_|ijN]/=; first by left.
   right; move: ik; apply/contraLR => jkN.
   have {}/tr tr : (i, j) \in Delta :\: IS by rewrite !inE ijN /= iltj.
   have {}/tr    : (j, k) \in Delta :\: IS by rewrite !inE jkN /= jltk.
-  by rewrite /= inE => /andP [].
+  by rewrite /= inE => /andP[].
 - move=> H j i k; rewrite /= !inE /= ![_ && (_ < _)]andbC.
-  move=> /andP [iltj ijN] /andP [jltk jkN].
+  move=> /andP[iltj ijN] /andP[jltk jkN].
   rewrite (ltn_trans iltj jltk) /=.
   have ijk : i < j < k by rewrite iltj jltk.
   move: ijN; apply contra => /(H i j k ijk) [] //.
@@ -591,7 +591,7 @@ Qed.
 Lemma invset_Delta s : invset s \subset Delta.
 Proof.
 rewrite /invset/Delta; apply/subsetP => [[/= i j]].
-by rewrite !inE /= => /andP [].
+by rewrite !inE /= => /andP[].
 Qed.
 
 Lemma invset_permV s :
@@ -610,8 +610,8 @@ split; first exact: invset_Delta.
   by move=> /andP[/ltn_trans iltj /(ltn_trans _) siltsj]
             /andP[/iltj-> /siltsj->].
 - rewrite /=/invset => j i k /=; rewrite !inE /=.
-  have bla A B : ((~~ (A && B)) && A) = (A && ~~ B) by case: A; case: B.
-  rewrite !{}bla -!leqNgt.
+  have logic A B : ((~~ (A && B)) && A) = (A && ~~ B) by case: A; case: B.
+  rewrite !{}logic -!leqNgt.
   by move=> /andP[/ltn_trans iltj /leq_trans siltsj] /andP[/iltj-> /siltsj->].
 Qed.
 
@@ -622,12 +622,12 @@ Lemma rsymrel_anti IS :
   IS \subset Delta -> antisymmetric (rsymrel IS).
 Proof.
 rewrite /rsymrel => /subsetP HD i j /=.
-move=> /andP [/or3P [/eqP -> //|jiIS|/andP [iltj ijNIS]]].
-- move=> /or3P [/eqP -> //|ijIS|/andP [jlti jiNIS]].
+move=> /andP[/or3P[/eqP -> // | jiIS | /andP[iltj ijNIS]]].
+- move=> /or3P[/eqP -> // | ijIS | /andP[jlti jiNIS]].
   + exfalso.
     by have:= ltn_trans (DeltaP (HD _ jiIS)) (DeltaP (HD _ ijIS)); rewrite ltnn.
   + by rewrite jiIS in jiNIS.
-- move=> /or3P [/eqP -> //|ijIS|/andP [jlti jiNIS]].
+- move=> /or3P[/eqP -> // | ijIS | /andP[jlti jiNIS]].
   + by rewrite ijIS in ijNIS.
   + exfalso.
     by have:= ltn_trans iltj jlti; rewrite ltnn.
@@ -635,10 +635,10 @@ Qed.
 Lemma rsymrel_trans IS : is_invset IS -> transitive (rsymrel IS).
 Proof.
 case; rewrite /rsymrel/= => /subsetP HD HIS HDIS j i k /=.
-move/orP=> [/eqP->{i}| Hij]; first by [].
-move/orP=> [/eqP<-{k}| Hjk]; first by rewrite Hij orbT.
+move/orP=> [/eqP ->{i}| Hij]; first by [].
+move/orP=> [/eqP <-{k}| Hjk]; first by rewrite Hij orbT.
 apply/orP; right; move: Hij Hjk.
-move=> /orP [jiIS|/andP [iltj ijNIS]] /orP [kjIS|/andP [jltk jkNIS]]; apply/orP.
+move=> /orP[jiIS | /andP[iltj ijNIS]] /orP[kjIS | /andP[jltk jkNIS]]; apply/orP.
 - by left; apply: (HIS j).
 - case: (ltngtP i k) => [iltk | klti | /val_inj ik].
   + right => /=.
@@ -741,7 +741,7 @@ have compat (i j : 'I_n) : i < j -> rsymrel IS (s i) (s j).
   by rewrite ilej size_sort size_enum_ord /=.
 rewrite invset_permV /invset -setP => /=[[i j]] /=.
 apply/imsetP/idP => /= [[[a b]] | ijIS].
-- rewrite inE /= => /andP [altb sbltsa [->{i} ->{j}]].
+- rewrite inE /= => /andP[altb sbltsa [->{i} ->{j}]].
   move: altb => {}/compat.
   rewrite !inE /= /eq_op/= eqn_leq (leqNgt (s a) (s b)) sbltsa /=.
   by rewrite (ltnNge (s a) (s b)) (ltnW sbltsa) /= orbF.
@@ -769,7 +769,7 @@ move=> Hi; case: tpermP => [-> | -> | /eqP Ha1 /eqP Hai1];
 - by rewrite (ltn_neqAle i.+1 b) => ->; rewrite andbT.
 - by rewrite ltnS leqnn.
 - by move/ltnW => ->.
-- by rewrite ltnS (ltn_neqAle a i) eq_sym => /andP [-> ->].
+- by rewrite ltnS (ltn_neqAle a i) eq_sym => /andP[-> ->].
 - by rewrite ltnS ltn_neqAle => -> /=; rewrite eq_sym andbT orbF.
 - move=> ->; apply esym; apply/orP; left.
   move: Ha1; apply contra => /eqP Hia.
@@ -785,7 +785,7 @@ move => Hi Hfwd.
 have Hio : (inord i) = i by apply val_inj => /=; rewrite inordK.
 apply/setP => [/= [u v]] /=; rewrite !inE /= !permM.
 apply/idP/idP.
-- move=> /andP [Huv].
+- move=> /andP[Huv].
   case: tpermP => /= [Hv | Hv | /eqP Hvi /eqP Hvi1].
   + rewrite Hio in Hv; subst v.
     have Htu : 's_i u = u.
@@ -823,11 +823,11 @@ apply/idP/idP.
     apply/imsetP; exists (u, v); last by rewrite !eltrD // eq_sym.
     by rewrite inE /= Huv Hsvu.
 - move/orP => [].
-    move=> /eqP [-> ->].
+    move=> /eqP[->{u} ->{v}].
     by rewrite eltrL eltrR Hfwd inordi1 // ltnS leqnn.
-  move=> /imsetP [[a b]]; rewrite inE /= => /andP [Hab Hsba] [-> ->] {u v}.
+  move=> /imsetP[[a b]]; rewrite inE /= => /andP[Hab Hsba] [->{u} ->{v}].
   rewrite !eltrK Hsba andbT (eltr_exchange Hi Hab) -negb_and.
-  move: Hsba; apply contraL; rewrite -leqNgt => /andP [/eqP Hia /eqP Hib].
+  move: Hsba; apply contraL; rewrite -leqNgt => /andP[/eqP Hia /eqP Hib].
   have -> : a = i by apply val_inj.
   have -> : b = (inord i.+1) by apply val_inj; rewrite /= -Hib inordi1.
   exact: ltnW.
@@ -868,7 +868,7 @@ Lemma length1 : length 1 = 0.
 Proof using.
 rewrite /length /invset.
 apply/eqP; rewrite cards_eq0; apply/eqP/setP => [[i j]]; rewrite !inE !perm1.
-apply/negP=> /andP /= [/ltn_trans H{}/H].
+apply/negP=> /andP /= [/ltn_trans /[apply]].
 by rewrite ltnn.
 Qed.
 
@@ -887,8 +887,8 @@ rewrite (invset_eltrL Hi Hfwd).
 rewrite cardsU1 (card_imset _ (@inv_inj _ _ _)); first last.
   by move=> [u v] /=; rewrite !eltrK.
 rewrite (_ : (_, _) \in _ = false) //.
-apply/negP => /imsetP [[u v]].
-rewrite inE /= => /andP [Huv Hsvu] [].
+apply/negP => /imsetP[[u v]].
+rewrite inE /= => /andP[Huv Hsvu] [].
 move/(congr1 's_i); rewrite eltrK eltrL => Hu; subst u.
 move/(congr1 's_i); rewrite eltrK eltrR => Hv; subst v.
 by move: Huv => /ltnW; rewrite inordi1 // ltnn.
@@ -1027,7 +1027,7 @@ have {Hcode}/Hrec Hrec: is_partcode m (mo - s mo :: c).
     by rewrite add0n; exact: leq_subr.
   by rewrite ltnS addSnnS => /Hcode.
 set srec := s * _.
-have /Hrec{Hrec} /= : perm_on [set k : 'I_n | k < m] srec.
+have {}/Hrec /= : perm_on [set k : 'I_n | k < m] srec.
   rewrite {Hrec} /srec /perm_on; apply/subsetP => k.
   rewrite !inE; apply contraR; rewrite -ltnNge permM ltnS => Hmk.
   apply/eqP; case (leqP k m) => Hkm.
@@ -1056,7 +1056,7 @@ move=> /is_codeP Hc Hmsz Hm.
 rewrite big_seq; apply big_rec => [| i s]; first exact: perm_on1.
 rewrite mem_iota /= add0n => Him /(perm_onM _); apply => {s}.
 rewrite big_seq; apply big_rec => [| j s]; first exact: perm_on1.
-rewrite mem_rev mem_iota /= => /andP [_].
+rewrite mem_rev mem_iota /= => /andP[_].
 move/(_ _ (leq_trans Him Hmsz)): Hc => /subnK -> Hji /(perm_onM _); apply => {s}.
 have Hj1m := leq_ltn_trans Hji Him.
 have Hjm := ltn_trans Hji Him.
@@ -1195,7 +1195,7 @@ Lemma odd_size_permE ts :
   all (gtn n0) ts -> odd (size ts) = odd_perm 's_[ts].
 Proof using.
 elim: ts => [_ | t0 t IHt] /=; first by rewrite big_nil odd_perm1.
-move=> /andP [Ht0 /IHt{IHt} ->].
+move=> /andP[Ht0 {}/IHt ->].
 by rewrite big_cons odd_mul_tperm (inordi_neq_i1 Ht0) addTb.
 Qed.
 
@@ -1320,7 +1320,7 @@ rewrite /invset -setP => /=[[i j]]; rewrite !inE /= [RHS]andbC.
 case: ltnP => //= iltj; rewrite !permM.
 apply/idP/idP => [Hsm|].
 - apply/imsetP => /=[] [[k l]].
-  rewrite inE /= => /andP [kltl slltsk] [Hi Hj]; subst i; subst j.
+  rewrite inE /= => /andP[kltl slltsk] [Hi Hj]; subst i; subst j.
   move: Hsm; rewrite !maxpermK => /(ltn_trans slltsk).
   by rewrite ltnn.
 - move/imsetP => /= H; rewrite ltnNge; apply/negP.
@@ -1521,7 +1521,7 @@ Proof using.
 rewrite /braid_aba /=; apply: (iffP idP).
 - case: u => [//=|u0[//=|u1[//=|u2[]//=]]].
   case H : ((u0 == u2) && ((u0.+1 == u1) || (u1.+1 == u0))).
-  + move: H => /andP [/eqP <- Heq].
+  + move: H => /andP[/eqP <- Heq].
     rewrite mem_seq1 => /eqP ->.
     by exists u0, u1.
   + by rewrite in_nil.
@@ -1545,10 +1545,10 @@ Qed.
 Lemma braidrule_sym (u v : seq 'I_n) :
   v \in (braidrule u) -> u \in (braidrule v).
 Proof using.
-rewrite !mem_cat => /orP [] /= Hbr; apply/orP.
-- left; move: Hbr => /braid_abaP [a] [b] [Hab -> ->].
+rewrite !mem_cat => /orP[] /= Hbr; apply/orP.
+- left; move: Hbr => /braid_abaP[a] [b] [Hab -> ->].
   by rewrite /braid_aba eq_refl orbC Hab inE.
-- right; move: Hbr => /braidCP [a] [b] [Hab -> ->].
+- right; move: Hbr => /braidCP[a] [b] [Hab -> ->].
   by rewrite /braidC orbC Hab inE.
 Qed.
 
@@ -1556,7 +1556,7 @@ Lemma braidrule_homog (u : seq 'I_n) :
   all [pred v | size v == size u] (braidrule u).
 Proof using.
 apply/allP => /= v.
-by rewrite mem_cat => /orP [/braid_abaP | /braidCP] [a] [b] [_ -> ->].
+by rewrite mem_cat => /orP[/braid_abaP | /braidCP] [a] [b] [_ -> ->].
 Qed.
 
 Definition braidcongr := gencongr_hom braidrule_homog.
@@ -1607,9 +1607,9 @@ Proof using. by move=> /gencongr_invar /= /eqP ->. Qed.
 Lemma braid_rev u v : u =Br v -> rev u =Br rev v.
 Proof using.
 move: v; apply gencongr_ind; first exact: braid_refl.
-move=> a b1 c b2 /braid_ltrans -> {u} Hrule.
+move=> a b1 c b2 /braid_ltrans ->{u} Hrule.
 rewrite !rev_cat -!catA; apply braid_is_congr; apply rule_gencongr.
-move: Hrule; rewrite /braidrule /= !mem_cat => /orP [].
+move: Hrule; rewrite /braidrule /= !mem_cat => /orP[].
 - move/braid_abaP => [x] [y] [Hxy -> ->].
   by rewrite /rev /= eq_refl Hxy /= inE eq_refl.
 - move/braidCP => [x] [y] [Hxy -> ->].
@@ -1620,7 +1620,7 @@ Lemma class_braid1 i s : s =Br [:: i] -> s = [:: i].
 Proof.
 rewrite braid_sym.
 move: s; apply: gencongr_ind => //= a b1 c b2 /(congr1 size) /= Hsize.
-by rewrite mem_cat => /orP [/braid_abaP | /braidCP] [x [y]] [_ Hb1 _];
+by rewrite mem_cat => /orP[/braid_abaP | /braidCP] [x [y]] [_ Hb1 _];
   exfalso; move: Hsize; rewrite Hb1 !size_cat /= !addnS.
 Qed.
 
@@ -1628,13 +1628,13 @@ Theorem braid_prods (v w : seq 'I_n) : v =Br w -> 's_[v] = 's_[w].
 Proof using.
 move=> H; apply/esym; move: w H; apply gencongr_ind => // a b1 c b2 <- Hrule.
 rewrite !big_cat /=; congr (_ * (_ * _)).
-move: Hrule; rewrite {a c} /braidrule /= mem_cat => /orP [].
+move: Hrule; rewrite {a c} /braidrule /= mem_cat => /orP[].
 - move/braid_abaP => [x] [y] [Hxy -> ->].
   do 2 (rewrite 2!big_cons big_seq1 mulgA).
-  by move: Hxy => /orP [] /eqP Hxy; rewrite -Hxy eltr_braid // Hxy.
+  by move: Hxy => /orP[] /eqP Hxy; rewrite -Hxy eltr_braid // Hxy.
 - move/braidCP => [x] [y] [Hxy -> ->].
   do 2 (rewrite big_cons big_seq1).
-  move: Hxy => /orP [] Hxy.
+  move: Hxy => /orP[] Hxy.
   + by rewrite [RHS]eltr_comm // Hxy /=.
   + by rewrite [LHS]eltr_comm // Hxy /=.
 Qed.
@@ -1669,15 +1669,15 @@ case: u IHu => [| b l] IHu.
   by move=> [x] [i] [y] []; case: x => [| x0 [|x1 x]].
 case: v => [| v0 v] /=.
   rewrite orbF; apply (iffP idP).
-  - move=> /andP [/eqP Ha /eqP Hl]; subst a l.
+  - move=> /andP[/eqP Ha /eqP Hl]; subst a l.
     by exists [::], b, [::].
   - move=> [x] [i] [y] []; case: x => [| x0 x] //.
     by case: y => //= [] [-> -> ->]; rewrite eq_refl.
 apply (iffP idP).
-- move=> /orP [] /andP [/eqP -> {a}].
+- move=> /orP[] /andP[/eqP ->{a}].
   + move=> /eqP Hl; subst l.
     by exists [::], b, (v0 :: v).
-  + move/IHu => {IHu} [x] [i] [y] [Hbl -> {v}].
+  + move/IHu => {IHu} [x] [i] [y] [Hbl ->{v}].
     by exists (v0 :: x), i, y => /=; rewrite Hbl.
 - move=> [x] [i] [y] []; case: x => [| x0 x] /=.
   + by move=> [-> -> ->] <-; rewrite !eq_refl.
@@ -1694,7 +1694,7 @@ Qed.
 
 Lemma prods_reducesE u v : reduces u v -> 's_[u] = 's_[v].
 Proof using.
-move/reducesP => [x] [i] [y] [-> {u} -> {v}].
+move/reducesP => [x] [i] [y] [->{u} ->{v}].
 by rewrite !big_cat big_cons !big_seq1 /= eltr2 mul1g.
 Qed.
 
@@ -1703,12 +1703,12 @@ Definition braid_reduces (u v : seq 'I_n) := (u =Br v) || (reduces u v).
 Lemma braidred_catl (u v w : seq 'I_n) :
   braid_reduces u v -> braid_reduces (u ++ w) (v ++ w).
 Proof using.
-rewrite /braid_reduces => /orP [/braid_catl -> // |] /reduces_catl ->.
+rewrite /braid_reduces => /orP[/braid_catl -> // |] /reduces_catl ->.
 by rewrite orbT.
 Qed.
 
 Lemma braidredE u v : braid_reduces u v -> 's_[u] = 's_[v].
-Proof using. by move=> /orP []; [apply braid_prods|apply prods_reducesE]. Qed.
+Proof using. by move=> /orP[]; [apply braid_prods|apply prods_reducesE]. Qed.
 
 End Reduced.
 Arguments reducedP {n w}.
@@ -1877,8 +1877,8 @@ rewrite (iota_cut_i Hc0 Hi Hisz) !rev_cat !map_cat -cats1 -!catA.
 set A := map _ _; rewrite {1 3}/rev [map _ _]/= inord_val; set B := map _ _.
 apply (braid_trans (y := A ++ [:: i; inord i.-1] ++ (i :: B))); first last.
   do 2 apply braid_catr; rewrite -cat1s; apply ltn_braidC => u.
-  rewrite {}/B {A} => /mapP [x].
-  rewrite mem_rev mem_iota => /andP [_].
+  rewrite {}/B {A} => /mapP[x].
+  rewrite mem_rev mem_iota => /andP[_].
   case: i Hisz Hi (inord_predS Hi Hisz) => [[| i] Hi] //= Hisz.
   rewrite !ltnS => /subnKC -> Hszi Hx ->.
   by rewrite inordK //; apply (ltn_trans Hx); apply ltnW.
@@ -1892,8 +1892,8 @@ apply (braid_trans (y := A ++ [:: inord i.-1; i; inord i.-1])); first last.
 rewrite -[inord i.-1 :: i :: _]cat1s catA; apply braid_catl.
 rewrite /A; case: (ltnP i sz) => Hi'.
   apply gtn_braidC => u.
-  rewrite {}/A => /mapP [x].
-  rewrite mem_rev mem_iota => /andP [Hix Hx] -> {u} /=.
+  rewrite {}/A => /mapP[x].
+  rewrite mem_rev mem_iota => /andP[Hix Hx] ->{u} /=.
   rewrite subnKC // in Hx.
   rewrite inordK; last by apply (leq_ltn_trans (leq_pred _)).
   rewrite (ltn_predK Hi).
@@ -1906,8 +1906,8 @@ Lemma braid_ltn_lineC (i : 'I_n) (sz c : nat) :
   sz <= n -> i.+1 < sz - c -> c <= sz ->
   [:: i] ++ 'I[c .. sz] =Br 'I[c .. sz] ++ [:: i].
 Proof using.
-move=> Hsz Hi Hc0; apply gtn_braidC => u /mapP [ x].
-rewrite mem_rev mem_iota => /andP [Hix Hx] -> {u} /=.
+move=> Hsz Hi Hc0; apply gtn_braidC => u /mapP[ x].
+rewrite mem_rev mem_iota => /andP[Hix Hx] ->{u} /=.
 rewrite subnK // in Hx.
 rewrite inordK; last by apply (leq_trans Hx).
 exact: (leq_trans Hi).
@@ -1919,7 +1919,7 @@ Implicit Type (u v w : seq 'I_n).
 Lemma path_braidred_catl p u w :
   path braidred u p -> path braidred (u ++ w) [seq v ++ w | v <- p].
 Proof using.
-elim: p u => [//= | p0 p IHp] u /= /andP [Hbr /IHp ->].
+elim: p u => [//= | p0 p IHp] u /= /andP[Hbr /IHp ->].
 by rewrite braidred_catl.
 Qed.
 
@@ -1929,7 +1929,7 @@ Lemma braidred_inscode_path c (i : 'I_n) :
         last ((wcord c) ++ [:: i]) p = wcord (inscode c i) }.
 Proof using.
 elim: c i => [//= | c0 c IHc] i /= Hcode.
-have:= Hcode; rewrite rev_cons => /is_code_rconsK /IHc{IHc} Hrec.
+have:= Hcode; rewrite rev_cons => /is_code_rconsK {}/IHc Hrec.
 move/head_revcode : Hcode => Hc0.
 rewrite !ltnS wcord_cons -catA => Hsz Hisz.
 case: ltnP => Hi.
@@ -2009,7 +2009,7 @@ rewrite rev_rcons /= -/(straighten w) -cats1 => [] [prec] [Hpath Hlast].
 have : size (straighten w) <= n0.+2 by rewrite size_straighten.
 move=> /(braidred_inscode_path (is_code_straighten w)) => Hins.
 have : wn.+1 < size (straighten w) by rewrite size_straighten ltnS.
-move=> /Hins{Hins} [pins] [Hpathins Hlastins].
+move=> {}/Hins [pins] [Hpathins Hlastins].
 exists ([seq v ++ [:: wn] | v <- prec] ++ pins); split => [| {Hpath Hpathins}].
 - rewrite cat_path (last_map (fun v => v ++ [:: wn])) Hlast Hpathins andbT.
   exact: path_braidred_catl.
@@ -2019,7 +2019,7 @@ Qed.
 Theorem prods_straighten w : 's_[wcord (straighten w)] = 's_[w].
 Proof using.
 move: (straighten_path_npos w) => [p] [Hpath <-].
-elim: p w Hpath => [| p0 p IHp] //= w /andP [/braidredE -> {w}].
+elim: p w Hpath => [| p0 p IHp] //= w /andP[/braidredE ->{w}].
 exact: IHp.
 Qed.
 
@@ -2030,9 +2030,9 @@ have:= (prods_straighten w); rewrite -{1}(canwordP 's_[w]).
 rewrite -!(big_map nat_of_ord xpredT) /= canwordE /wcord -map_comp.
 rewrite [map _ _](_ : _ = wordcd (rev (straighten w))); first last.
   rewrite -[RHS](map_id) -eq_in_map => i.
-  rewrite /= /wordcd => /flatten_mapP [j].
+  rewrite /= /wordcd => /flatten_mapP[j].
   rewrite mem_rev !mem_iota /= add0n size_rev size_straighten ltnS => Hj.
-  move=> /andP [_]; rewrite subnK => [Hij | ].
+  move=> /andP[_]; rewrite subnK => [Hij | ].
     by rewrite inordK // (leq_trans Hij Hj).
   have /is_codeP := is_code_straighten w.
   by rewrite size_rev size_straighten; apply; rewrite ltnS.
@@ -2062,7 +2062,7 @@ Local Notation "a =Br b" := (braidcongr a b) : bool_scope.
 Theorem braidred_to_canword n (w : seq 'I_n) :
   { p | path braidred w p /\ last w p = canword 's_[w] }.
 Proof.
-case: (altP (n =P 0)) => Hn.
+case: (n =P 0) => Hn.
   subst n; case: w => [| [w0 Hw0] w] //=.
   by rewrite big_nil canword1; exists [::].
 move: Hn; case H : {1}(n) => _ //=; subst n.
@@ -2072,8 +2072,8 @@ Qed.
 Lemma braidred_size_decr n (w : seq 'I_n) p :
   path braidred w p -> size w >= size (last w p).
 Proof.
-elim: p w => [| p0 p IHp] //= w /andP [HBr /IHp/leq_trans]; apply.
-move: HBr => /orP [ /size_braid -> // |].
+elim: p w => [| p0 p IHp] //= w /andP[HBr /IHp/leq_trans]; apply.
+move: HBr => /orP[ /size_braid -> // |].
 move/reducesP => [x] [i] [y] [-> ->].
 by rewrite !size_cat [size [:: i; i] + _]addnC addnA; exact: leq_addr.
 Qed.
@@ -2083,9 +2083,9 @@ Theorem braid_to_canword n (w : seq 'I_n) :
 Proof.
 move/reducedP; rewrite -size_canword braid_sym.
 case: (braidred_to_canword w) => p [Hpath <-].
-elim: p w Hpath => [| p0 p IHp] //= w /andP [].
-rewrite {1}/braidred => /orP [] HBr.
-- move/IHp; rewrite (size_braid HBr) => H{}/H /braid_ltrans ->.
+elim: p w Hpath => [| p0 p IHp] //= w /andP[].
+rewrite {1}/braidred => /orP[] HBr.
+- move/IHp; rewrite (size_braid HBr) => /[apply] /braid_ltrans ->.
   by rewrite braid_sym.
 - move=> {IHp} /braidred_size_decr Hsz Heq; exfalso.
   move: Hsz; rewrite {}Heq.
@@ -2103,8 +2103,8 @@ have {Hnred} : length ((\prod_(i <- u) 's_ i) : 'S_n.+1) < size u.
 rewrite -size_canword.
 case: (braidred_to_canword u) => p [Hpath <-].
 elim: p u Hpath => [| p0 p IHp] u //=; first by rewrite ltnn.
-rewrite {1}/braidred => /andP [/orP [] HBr].
-- move/IHp; rewrite (size_braid HBr) => H{}/H.
+rewrite {1}/braidred => /andP[/orP[] HBr].
+- move/IHp; rewrite (size_braid HBr) => /[apply].
   move=> [v] [w] [/(braid_trans HBr) {HBr} Hred].
   by exists v, w.
 - by exists u, p0.
@@ -2124,9 +2124,9 @@ Lemma canword_eltr n (i : 'I_n) : canword 's_i = [:: i].
 Proof.
 suff /braid_to_canword : [:: i] \is reduced.
   by rewrite big_seq1 braid_sym => /class_braid1.
-apply contraT => /reduceP [/= v [w []]].
+apply contraT => /reduceP[/= v [w []]].
 rewrite braid_sym => /class_braid1 ->{v}.
-move=> /reducesP [v [a [b]]] [] /(congr1 size) /=.
+move=> /reducesP[v [a [b]]] [] /(congr1 size) /=.
 by rewrite size_cat /= !addnS.
 Qed.
 
@@ -2158,22 +2158,22 @@ have morph_eltrP : {morph morph_eltr_fun : x y / x * y}.
   have:= braidred_to_canword (canword i ++ canword j) => [[redpath [Hpath]]].
   rewrite big_cat /= !canwordP /morph_eltr_fun -big_cat /= => Hlast.
   elim: redpath (_ ++ _) Hpath Hlast =>
-      [c _ <- //|] w0 wp IHwp /= c /andP [Hbr] {}/IHwp H{}/H ->.
-  move: Hbr => /orP [].
+      [c _ <- //|] w0 wp IHwp /= c /andP[Hbr] {}/IHwp H{}/H ->.
+  move: Hbr => /orP[].
   - rewrite braid_sym; move: c; apply: gencongr_ind => //.
     move=> a b1 c b2 ->{w0} Hbr; rewrite !big_cat /=; congr (_ * (_ * _)) => {a c}.
-    move: Hbr; rewrite /= mem_cat => /orP [].
-    + move=> /braid_abaP [a [b [Heq ->{b1} ->{b2}]]].
+    move: Hbr; rewrite /= mem_cat => /orP[].
+    + move=> /braid_abaP[a [b [Heq ->{b1} ->{b2}]]].
       rewrite !big_cons !big_nil !mulg1 !mulgA.
-      move: Heq => /orP [] /eqP Heq.
+      move: Heq => /orP[] /eqP Heq.
       * by rewrite -Heq; apply Hbraid; rewrite Heq.
       * by rewrite -Heq; symmetry; apply Hbraid; rewrite Heq.
-    + move=> /braidCP [a [b [Heq ->{b1} ->{b2}]]].
+    + move=> /braidCP[a [b [Heq ->{b1} ->{b2}]]].
       rewrite !big_cons !big_nil !mulg1.
-      move: Heq => /orP [] Heq.
+      move: Heq => /orP[] Heq.
       * by apply Hcom; rewrite Heq /=.
       * by symmetry; apply Hcom; rewrite Heq /=.
-  - move=> /reducesP [a [l [b [->{c} ->{w0}]]]].
+  - move=> /reducesP[a [l [b [->{c} ->{w0}]]]].
     rewrite !big_cat /= !big_cons !big_nil !mulg1.
     have:= Hsq l (ltn_ord l); rewrite expgS expg1 => ->.
     by rewrite mul1g.
@@ -2201,16 +2201,16 @@ apply intro_isoGrp.
   rewrite big_cons; apply groupM => /=; last exact: IHt.
   apply (subsetP (subset_gen _)); rewrite !inE.
   by case: t0 => [] [| //=] /= _.
-- move=> Gt H; case/existsP => /= s0 /eqP [<-{H} Hx0].
+- move=> Gt H; case/existsP => /= s0 /eqP[<-{H} Hx0].
   apply/homgP.
   pose fs := fun i => match i with 0 => s0 | _ => 1 end.
   have /presentation_Sn_eltr [f Hf] : relat_Sn 1 fs.
     constructor; try by case=> [|i].
-    by case=> [|i] j // /andP [/leq_ltn_trans H'/H'].
+    by case=> [|i] j // /andP[/leq_ltn_trans H'/H'].
   exists f; rewrite {3}eltr_genSn morphim_gen; last exact: subsetT.
   congr <<_>>; apply/setP => x; rewrite !inE.
   apply/imsetP/eqP => [[/= x0]| ->{x}] /=; rewrite setTI.
-  + move=> /imsetP [/= i _ -> ->].
+  + move=> /imsetP[/= i _ -> ->].
     by case: i => [[|i] //= ] _; rewrite Hf.
   + exists 's_0; rewrite ?setTI ?Hf //.
     by apply/imsetP => /=; exists (inord 0); rewrite //= inordK.
@@ -2229,16 +2229,16 @@ apply intro_isoGrp.
     apply (subsetP (subset_gen _)); rewrite !inE.
     by case: t0 => [] [| [| //=]] /= _; rewrite eq_refl /= ?orbT.
   + by apply/eqP/eltr_braid.
-- move=> Gt H; case/existsP => /= [] [s0 s1] /eqP [<-{H} Hx0 Hx1 H3].
+- move=> Gt H; case/existsP => /= [] [s0 s1] /eqP[<-{H} Hx0 Hx1 H3].
   rewrite joingU1; apply/homgP.
   pose fs := fun i => match i with 0 => s0 | 1 => s1 | _ => 1 end.
   have /presentation_Sn_eltr [f Hf] : relat_Sn 2 fs.
     constructor; try by case=> [|[|i]].
-    by case=> [|i] j // /andP [/leq_ltn_trans H'/H'].
+    by case=> [|i] j // /andP[/leq_ltn_trans H'/H'].
   exists f; rewrite {3}eltr_genSn morphim_gen; last exact: subsetT.
   congr <<_>>; apply/setP => x; rewrite !inE.
-  apply/imsetP/idP => [[/= x0] | /orP [] /eqP ->{x}] /=; rewrite setTI.
-  + move=> /imsetP [/= i _ -> ->].
+  apply/imsetP/idP => [[/= x0] | /orP[] /eqP ->{x}] /=; rewrite setTI.
+  + move=> /imsetP[/= i _ -> ->].
     by case: i => [[|[|i]] //= ] _; rewrite Hf // eq_refl ?orbT.
   + exists 's_0; rewrite ?setTI ?Hf //.
     by apply/imsetP => /=; exists (inord 0); rewrite //= inordK.
@@ -2270,16 +2270,16 @@ apply intro_isoGrp.
   do 2 do [apply/andP; split; first by apply/eqP/eltr_braid].
   by apply/eqP/eltr_comm.
 - move=> Gt H; case/existsP => /= [] [[s0 s1] s2]
-                                  /eqP [<-{H} Hx0 Hx1 Hx2 H010 H121 H02].
+                                  /eqP[<-{H} Hx0 Hx1 Hx2 H010 H121 H02].
   rewrite Gen3; apply/homgP.
   pose fs := fun i => match i with 0 => s0 | 1 => s1 | 2 => s2 | _ => 1 end.
   have /presentation_Sn_eltr [f Hf] : relat_Sn 3 fs.
     constructor; try by case=> [|[|[|i]]].
-    by case=> [|[|i]] [|[|[|j]]] // /andP [/leq_ltn_trans H'/H'].
+    by case=> [|[|i]] [|[|[|j]]] // /andP[/leq_ltn_trans H'/H'].
   exists f; rewrite {3}eltr_genSn morphim_gen; last exact: subsetT.
   congr <<_>>; apply/setP => x; rewrite !inE -orbA.
-  apply/imsetP/idP => [[/= x0] | /or3P [] /eqP ->{x}] /=; rewrite setTI.
-  + move=> /imsetP [/= i _ -> ->].
+  apply/imsetP/idP => [[/= x0] | /or3P[] /eqP ->{x}] /=; rewrite setTI.
+  + move=> /imsetP[/= i _ -> ->].
     by case: i => [[|[|[|i]]] //= ] _; rewrite Hf //= eq_refl ?orbT.
   + exists 's_0; rewrite ?setTI ?Hf //.
     by apply/imsetP => /=; exists (inord 0); rewrite //= inordK.
@@ -2314,17 +2314,17 @@ apply intro_isoGrp.
   do 2 do [apply/andP; split; first by apply/eqP/eltr_comm].
   by apply/eqP/eltr_comm.
 - move=> Gt H; case/existsP => /= [] [[[s0 s1] s2] s3]
-     /eqP [<-{H} Hx0 Hx1 Hx2 Hx3 H010 H121 H232 H02 H03 H13].
+     /eqP[<-{H} Hx0 Hx1 Hx2 Hx3 H010 H121 H232 H02 H03 H13].
   rewrite Gen4; apply/homgP.
   pose fs := fun i =>
                match i with 0 => s0 | 1 => s1 | 2 => s2 | 3 => s3 | _ => 1 end.
   have /presentation_Sn_eltr [f Hf] : relat_Sn 4 fs.
     constructor; try by case=> [|[|[|[|i]]]].
-    by case=> [|[|[|i]]] [|[|[|[|j]]]] // /andP [/leq_ltn_trans H'/H'].
+    by case=> [|[|[|i]]] [|[|[|[|j]]]] // /andP[/leq_ltn_trans H'/H'].
   exists f; rewrite {3}eltr_genSn morphim_gen; last exact: subsetT.
   congr <<_>>; apply/setP => x; rewrite !inE -!orbA.
-  apply/imsetP/idP => [[/= x0] | /or4P [] /eqP ->{x}] /=; rewrite setTI.
-  + move=> /imsetP [/= i _ -> ->].
+  apply/imsetP/idP => [[/= x0] | /or4P[] /eqP ->{x}] /=; rewrite setTI.
+  + move=> /imsetP[/= i _ -> ->].
     by case: i => [[|[|[|[|i]]]] //= ] _; rewrite Hf //= eq_refl ?orbT.
   + exists 's_0; rewrite ?setTI ?Hf //.
     by apply/imsetP => /=; exists (inord 0); rewrite //= inordK.

@@ -227,7 +227,7 @@ rewrite homsymdot_sumr cfdot_sumr; apply eq_bigr => mu _.
 rewrite ![Fchar (_ *: '1z_[_])]linearZ /= !Fchar_ncfuniCT.
 rewrite homsymdotZl homsymdotZr cfdotZl cfdotZr; congr (_ * (_ * _)).
 rewrite homsymdotpp // cfdotZl cfdotZr cfdot_classfun_part.
-case: (altP (la =P mu)) => [<-{mu} | _]; rewrite ?mulr0 ?mulr1 //.
+case: (la =P mu) => [<-{mu} | _]; rewrite ?mulr0 ?mulr1 //.
 rewrite -zcoeffE -[LHS]mulr1; congr (_ * _).
 rewrite /zcoeff rmorphM rmorphV; first last.
   by rewrite unitfE pnatr_eq0 card_classCT_neq0.
@@ -241,6 +241,7 @@ Proof using Hn. by rewrite -Fchar_isometry !Fchar_invK. Qed.
 
 End Defs.
 
+(** ** The Frobenius Characteristic is a graded ring morphism *)
 (**
 This cannot be written as a SSReflect [{morph Fchar : f g / ...  >-> ... }]
 because the dependency of Fchar on the degree [n]. The three [Fchar] below are
@@ -248,12 +249,7 @@ actually three different functions.
 
 Note: this can be solved using a dependant record [{n; 'CF('S_n)}] with a
 dependent equality but I'm not sure this is really needed.
-
-*)
-
-
-(** ** The Frobenius Characteristic is a graded ring morphism *)
-
+******)
 Theorem Fchar_ind_morph m n (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
   Fchar ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f *h Fchar g.
 Proof using.
@@ -280,11 +276,11 @@ Local Notation HS := {homsym algC[nvar, n]}.
 Lemma homsymh_character (la : 'P_n) : Fchar_inv 'hh[la] \is a character.
 Proof.
 move: (n) la Hn => d [la /= Hla].
-have:= Hla => /andP [/eqP Hd _]; subst d.
+have:= Hla => /andP[/eqP Hd _]; subst d.
 elim: la Hla => [| l0 la IHla] Hlla Hd.
   by rewrite intpartn0 -Fchar_triv FcharK // cfun1_char.
 have Hla : (sumn la == sumn la) && is_part la.
-  by rewrite eq_refl /=; have:= Hlla => /andP [_ /is_part_consK ->].
+  by rewrite eq_refl /=; have:= Hlla => /andP[_ /is_part_consK ->].
 have Hdla : (sumn la <= nvar)%N by apply: (leq_trans _ Hd); rewrite /= leq_addl.
 have {IHla} Hrec := IHla Hla Hdla.
 rewrite homsymprod_hh -Fchar_triv -(Fchar_invK Hdla 'hh[(IntPartN Hla)]).
@@ -298,7 +294,7 @@ Proof.
 rewrite -omega_homsymh; first last.
   by apply: (leq_trans _ Hn); rewrite -{2}(sumn_intpartn la) leq_head_sumn.
 rewrite omega_Fchar_inv //.
-exact: rpredM (lin_charW (sign_charP _)) (homsymh_character _).
+exact: (rpredM (lin_charW sign_charP) (homsymh_character _)).
 Qed.
 
 End Character.
@@ -366,7 +362,7 @@ Lemma rem_irr1 (xi phi : 'CF('SG_n)) :
   xi \in irr 'SG_n -> phi \is a character -> '[phi, xi] != 0 ->
      phi - xi \is a character.
 Proof.
-move=> /irrP [i ->{xi}] Hphi.
+move=> /irrP[i ->{xi}] Hphi.
 rewrite -irr_consttE => /(constt_charP i Hphi) [psi Hpsi ->{phi Hphi}].
 by rewrite [_ + psi]addrC addrK.
 Qed.
@@ -376,7 +372,7 @@ Lemma rem_irr (xi phi : 'CF('SG_n)) :
      phi - '[phi, xi] *: xi \is a character.
 Proof.
 move=> Hxi Hphi.
-have /natrP [m Hm] := Cnat_cfdot_char Hphi (irrWchar Hxi).
+have /natrP[m Hm] := Cnat_cfdot_char Hphi (irrWchar Hxi).
 rewrite Hm.
 elim: m phi Hphi Hm => [|m IHm] phi Hphi Hm; first by rewrite scale0r subr0.
 rewrite mulrS scalerDl scale1r opprD addrA; apply: IHm.
@@ -406,7 +402,7 @@ have : all (<%O la) L by apply filter_all.
 have : uniq L by apply: filter_uniq; apply: index_enum_uniq.
 elim: L => [| l0 l IHl].
   by rewrite big_nil subr0 homsymh_character.
-rewrite big_cons /= => /andP [Hl0l Huniq] /andP [Hl0 Hall].
+rewrite big_cons /= => /andP[Hl0l Huniq] /andP[Hl0 Hall].
 rewrite [X in 'M[la] - X]addrC opprD addrA.
 have {IHl Huniq Hall} := IHl Huniq Hall.
 set Frec := 'M[la] - _ => HFrec.
@@ -431,7 +427,7 @@ have Huniq : uniq IRR.
 apply (uniq_perm Huniq).
   exact: (free_uniq (basis_free (irr_basis _))).
 have /(uniq_min_size Huniq) Htmp : {subset IRR <= irr 'SG_n}.
-  move=> /= f /mapP [/= p /mapP [/= la _ ->{p}] -> {f}].
+  move=> /= f /mapP[/= p /mapP[/= la _ ->{p}] ->{f}].
   exact: irrSG_irr.
 suff /Htmp [] : (size (irr 'SG_n) <= size IRR)%N by [].
 rewrite size_tuple -(vector.size_basis (irr_basis _)) dim_cfun.

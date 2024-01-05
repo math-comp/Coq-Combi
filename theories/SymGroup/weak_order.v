@@ -21,8 +21,8 @@ of sets of inversions and that it is a lattice.
 
 We define the following notations:
 
-- [s <=R t]     == [s] is smaller than [t] for the right weak order.
-- [s <R t]      == [s] is strictly smaller  than [t] for the right weak order.
+- [s <=R t]   == [s] is smaller than [t] for the right weak order.
+- [s <R t]    == [s] is strictly smaller  than [t] for the right weak order.
 - [s \/R t]   == the meet of [s] and [t] for the right weak order.
 - [s /\R t]   == the join of [s] and [t] for the right weak order.
 
@@ -66,7 +66,7 @@ Fact lepermP s t :
           (s <=R t).
 Proof.
 apply (iffP existsP) => [] /= [u].
-- by move/andP => [/eqP Heq /eqP Hlen]; exists u.
+- by move=> /andP[/eqP Heq /eqP Hlen]; exists u.
 - by move=> /eqP Heq /eqP Hlen; exists u; apply/andP.
 Qed.
 
@@ -85,7 +85,7 @@ Proof. by apply/lepermP; exists 1; rewrite ?mulg1 // length1 addn0. Qed.
 
 Fact leperm_trans : transitive leperm.
 Proof.
-move=> t s u /lepermP/= [st ->{t} Hsst] /lepermP/= [stu ->{u} Hstu].
+move=> t s u /lepermP[/= st ->{t} Hsst] /lepermP[/= stu ->{u} Hstu].
 apply/lepermP; exists (st * stu); first by rewrite mulgA.
 rewrite Hstu Hsst -addnA; congr (_ + _).
 by rewrite {}Hsst in Hstu; rewrite (lengthKR Hstu).
@@ -93,7 +93,7 @@ Qed.
 
 Fact leperm_anti : antisymmetric leperm.
 Proof.
-move=> s t /andP [Hst Hts]; apply: (leperm_lengthE Hst).
+move=> s t /andP[Hst Hts]; apply: (leperm_lengthE Hst).
 by apply anti_leq; apply/andP; split; apply leperm_length.
 Qed.
 
@@ -142,7 +142,7 @@ Implicit Type (s t u v : 'S_n).
 Lemma ltperm_length s t : s <R t -> length s < length t.
 Proof.
 move=> ltst.
-have:= leperm_length (ltW ltst); rewrite leq_eqVlt => /orP [/eqP|//].
+have:= leperm_length (ltW ltst); rewrite leq_eqVlt => /orP[/eqP | //].
 move/(leperm_lengthE (ltW ltst)) => Habs.
 by rewrite Habs ltxx in ltst.
 Qed.
@@ -222,7 +222,7 @@ Proof.
 apply (iffP (coversP s t)).
 - move=> [/leperm_succ/= [i ltssi lessit Hsucc]].
   exists i; first by [].
-  move: lessit; rewrite le_eqVlt => /orP [/eqP ->//|ltssit].
+  move: lessit; rewrite le_eqVlt => /orP[/eqP ->// | ltssit].
   exfalso; apply: (Hsucc (s * 's_i)).
   by rewrite ltssi ltssit.
 - move=> [/= i ltssi ->{t}]; split; first by [].
@@ -255,13 +255,13 @@ move: H; elim: d => [|d IHd] in t Hd *.
   move=> H; move: Hd; rewrite addn0 /length => /eqP.
   rewrite (subset_leqif_cards H) => /eqP/invset_inj ->.
   exact: le_refl.
-rewrite subEproper=> /orP[/eqP/invset_inj->|]; first exact: le_refl.
+rewrite subEproper=> /orP[/eqP/invset_inj-> | ]; first exact: le_refl.
 move/properP => /= [incl ex].
-have {ex} /ex_minnP [m /existsP /=[[i j]] /=] : exists n : nat,
+have {ex} /ex_minnP[m /existsP[[/= i j]] /=] : exists n : nat,
     [exists p, [&& p \in invset t, p \notin invset s & t p.1 - t p.2 == n]].
   move: ex => [[i j]] ijt ijNs; exists (t i - t j).
   by apply/existsP => /=; exists (i, j) => /=; apply/and3P.
-rewrite [in X in (X-> _ -> _)]/invset !inE /= => /and3P [/andP [iltj tjltti]].
+rewrite [in X in (X-> _ -> _)]/invset !inE /= => /and3P[/andP[iltj tjltti]].
 rewrite iltj /= -leqNgt leq_eqVlt (inj_eq val_inj) (inj_eq perm_inj).
 rewrite -[i == j](inj_eq val_inj) (ltn_eqF iltj) /= => siltsj /eqP eqm Hm.
 have m0 : 0 < m by case: m eqm {Hm} => // /eqP; rewrite subn_eq0 leqNgt tjltti.
@@ -285,7 +285,7 @@ have {Hm m0 eqm tjltti} Heq : m = 1%N.
     - rewrite tk; rewrite -eqm.
       case: (val (t i)) tjltti => //= u; rewrite ltnS => Hu.
       by rewrite subSS subSn // ltnn.
-  case: (ltngtP k i) => [klti|iltk|/val_inj Hk]; last 1 first.
+  case: (ltngtP k i) => [klti | iltk | /val_inj Hk]; last 1 first.
   - by move: Habs; rewrite -eqm -Hk tk subSn // ?subnn ltnn.
   - left; have kltj := ltn_trans klti iltj.
     apply: Hm; rewrite inE /= kltj /= ?tk //.
@@ -296,17 +296,17 @@ have {Hm m0 eqm tjltti} Heq : m = 1%N.
   have {tjltti} tkltti : t k < t i.
     rewrite tk {}Hti {eqm Hm}; case: m Habs => [|[|m]]// _.
     by rewrite !addnS !ltnS leq_addr.
-  case: (ltngtP k j) => [kltj|jltk|/val_inj Hkj]; last first.
+  case: (ltngtP k j) => [kltj | jltk | /val_inj Hkj]; last first.
   - exfalso; move: Hkj => /(congr1 t)/(congr1 val)/=/eqP.
     by rewrite tk eqn_leq ltnn.
   - right; apply: Hm; rewrite inE /= iltk //=.
     move: incl => /(_ j k jltk)/contra; rewrite -!leqNgt => incl.
     have {}/incl : t j <= t k by rewrite tk.
     exact: leq_trans (ltnW siltsj).
-  case: (ltnP (s i) (s k)) => [siltsk|sklesi].
+  case: (ltnP (s i) (s k)) => [siltsk | sklesi].
   - right; apply: Hm; rewrite inE /= iltk //=.
     by rewrite -leqNgt; exact: ltnW.
-  case: (ltnP (s k) (s j)) => [skltsj|sjlesk].
+  case: (ltnP (s k) (s j)) => [skltsj | sjlesk].
   - left; apply: Hm; rewrite inE /= kltj /= ?tk //.
     by rewrite -leqNgt; apply ltnW.
   - by have:= leq_trans siltsj (leq_trans sjlesk sklesi); rewrite ltnn.
@@ -327,7 +327,7 @@ have {Himi Himj} invsett : invset t = (i, j) |: invset (t * 's_(t j)).
 have {invsett} {}/IHd : invset s \subset invset (t * 's_(t j)).
   move: incl; rewrite {}invsett => /subsetP Hsubs.
   apply/subsetP => /= [[k l] H].
-  move/(_ _ H): Hsubs; rewrite !inE /= => /orP [] // /eqP Heq.
+  move/(_ _ H): Hsubs; rewrite !inE /= => /orP[] // /eqP Heq.
   exfalso; move: H; rewrite {}Heq /invset !inE /= iltj /=.
   by rewrite ltnNge (ltnW siltsj).
 move/le_trans; apply.
@@ -363,7 +363,7 @@ move/tclosure_Delta => /subsetP subs.
 rewrite /= => j i k /= ijA jkA.
 move: (subs _ ijA) (subs _ jkA); rewrite 2!inE /= => iltj jltk.
 move: iltj jltk (ltn_trans iltj jltk); rewrite !ltn_neqAle.
-move=> /andP [inj _] /andP [jnk _] /andP [ink _].
+move=> /andP[inj _] /andP[jnk _] /andP[ink _].
 move: ijA jkA; rewrite !inE /= inj ink jnk /=.
 exact: connect_trans.
 Qed.
@@ -379,30 +379,30 @@ constructor; rewrite /=.
 - exact: tclosure_Delta.
 - exact: tclosureP.
 - move=> j i k; rewrite /= !inE /= ![~~ _ && _]andbC ![connect _ _ _ && _]andbC.
-  move=> /andP [iltj]; have:= iltj; rewrite ltn_neqAle => /andP [-> _] /= cij.
-  move=> /andP [jltk]; have:= jltk; rewrite ltn_neqAle => /andP [-> _] /= cjk.
+  move=> /andP[iltj]; have:= iltj; rewrite ltn_neqAle => /andP[-> _] /= cij.
+  move=> /andP[jltk]; have:= jltk; rewrite ltn_neqAle => /andP[-> _] /= cjk.
   have iltk := ltn_trans iltj jltk; rewrite iltk /=.
-  have:= iltk; rewrite ltn_neqAle => /andP [-> _] /=.
+  have:= iltk; rewrite ltn_neqAle => /andP[-> _] /=.
   have {cij cjk} /andP := conj cij cjk; apply contraL; rewrite negb_and !negbK.
   (* Idea: in the path from i to k, there is a step u v which goes over j.
      This step is connected either by A or B. Then j is connected to u or v. *)
-  move=> /connectP /=[p Hp Hk] {iltk}.
+  move=> /connectP[/= p Hp Hk] {iltk}.
   elim: p => [|p0 p IHp] /= in i Hp Hk iltj *.
     by exfalso; have:= ltn_trans iltj jltk; rewrite Hk ltnn.
-  move: Hp => /andP [ip0AB Hp]; apply /orP.
+  move: Hp => /andP[ip0AB Hp]; apply /orP.
   case: (ltngtP p0 j) => [p0ltj | jltp0 | /val_inj Heq]; last 1 first.
   + by left; apply: connect1; rewrite -Heq.
-  + move/(_ _ Hp Hk p0ltj): IHp => {p Hk Hp} /orP [|->]; last by right.
+  + move/(_ _ Hp Hk p0ltj): IHp => {p Hk Hp} /orP[|->]; last by right.
     by move/(connect_trans (connect1 (e := srel AUB) ip0AB)); left.
   + wlog ip0 : A B HAUB isA isB ip0AB / (i, p0) \in A.
-      subst AUB; move=> Hlog; move: ip0AB; rewrite inE => /orP [] Hip0.
+      subst AUB; move=> Hlog; move: ip0AB; rewrite inE => /orP[] Hip0.
       * by have:= Hip0 => {}/(Hlog A B); apply; rewrite //= inE Hip0.
       * by have:= Hip0 => {}/(Hlog B A); apply; rewrite // setUC // inE Hip0.
     suffices: ((i, j) \in AUB) || ((j, p0) \in AUB).
-      move/orP=> [ijAB|jp0AB]; [left|right].
+      move/orP=> [ijAB | jp0AB]; [left | right].
       * exact: connect1.
       * by apply/connectP; exists (p0 :: p); rewrite //= jp0AB Hp.
-    rewrite -HAUB !inE -!orbA [((i, j) \in B) || _]orbC -!orbA orbA.
+    rewrite -HAUB !inE -!orbA [((i, j) \in B) || _] orbC -!orbA orbA.
     apply/or3P; apply Or31; apply/orP.
     move: isA => [_ _]; rewrite transitive_DeltaI1 => H.
     have /H/(_ ip0) : i < j < p0 by rewrite iltj jltp0.
@@ -457,7 +457,7 @@ Qed.
 
 Fact supperm_is_join x y z : (supperm x y <=R z) = (x <=R z) && (y <=R z).
 Proof.
-apply/idP/idP => [leinf | /andP [xley xlez]]; last exact: suppermP.
+apply/idP/idP => [leinf | /andP[xley xlez]]; last exact: suppermP.
 by apply/andP; split; apply: (le_trans _ leinf);
   [apply: suppermPr | apply: suppermPl].
 Qed.
@@ -499,5 +499,3 @@ End PermLattice.
 End Exports.
 End PermLattice.
 HB.export PermLattice.Exports.
-
-
