@@ -24,17 +24,16 @@ to [S2] which sends the fiber of [i] to the fiber of [i]. That is [fbbij]
 commute with the [fbfun] : [forall x, fbfun2 (fbbij x) = fbfun1 x].
 
 - [fibered_set] == record for fibered sets on a carrier [finType]
-- [fiber S i]  == the [i]-fiber of [S]
+- [fiber S i]   == the [i]-fiber of [S]
 
-- [fbbij U V] == a bijection from [U] to [V] provided the two fibered sets [U]
-  and [V] have their fiber of [i] of the same cardinality:
+- [fbbij U V]   == a bijection from [U] to [V] provided the two fibered sets
+                [U] and [V] have their fiber of [i] of the same cardinality:
 
   [Hypothesis HcardEq : forall i, #|fiber U i| = #|fiber V i|.]
 
 *)
 Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype div.
-From mathcomp Require Import tuple finfun path bigop finset binomial.
+From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype finset.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -97,20 +96,7 @@ apply nth_index.
 by rewrite mem_enum; apply: mem_fiber.
 Qed.
 
-Lemma inj_fbbij : {in U &, injective (fbbij V)}.
-Proof using HcardEq. exact: can_in_inj fbbijK. Qed.
-
 End Defs.
-
-Lemma surj_fbbij (U V : fibered_set) :
-  (forall i, #|fiber U i| = #|fiber V i|) -> [set fbbij V x | x in U] = V.
-Proof using.
-rewrite -setP => HcardEq y.
-apply/imsetP/idP => [[x Hx] -> {y} | Hy].
-- exact: fbset_fbbij.
-- exists (fbbij U y); first exact: fbset_fbbij.
-  by rewrite fbbijK //.
-Qed.
 
 Lemma fbbijP (U V : fibered_set) :
   (forall i, #|fiber U i| = #|fiber V i|) ->
@@ -118,7 +104,11 @@ Lemma fbbijP (U V : fibered_set) :
    [set fbbij V x | x in U] = V &
    {in U, forall x, fbfun (fbbij V x) = fbfun x} ].
 Proof using.
-split; [exact: inj_fbbij | exact: surj_fbbij | exact: equi_fbbij].
+move=> HcardEq.
+split; [exact: can_in_inj (fbbijK _) | | exact: equi_fbbij].
+rewrite -setP => y.
+apply/imsetP/idP => [[x Hx] ->{y} | Hy]; first exact: fbset_fbbij.
+by exists (fbbij U y); [exact: fbset_fbbij | rewrite fbbijK].
 Qed.
 
 End BijFiberedSet.

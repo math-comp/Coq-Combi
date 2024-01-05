@@ -34,6 +34,8 @@ Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
 
+Implicit Type (i a b : nat) (s t : seq nat).
+
 Fixpoint multinomial_rec s :=
   if s is i :: s' then 'C(sumn s, i) * (multinomial_rec s') else 1.
 Arguments multinomial_rec : simpl nomatch.
