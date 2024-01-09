@@ -49,6 +49,17 @@ case: pickP=> /= [A /andP[PA Ax]| noA]; first by rewrite PA; exists A.
 by rewrite (negbTE set0nP)=> [[A PA Ax]]; case/andP: (noA A).
 Qed.
 
+Lemma mem_pblockC (T : finType) (P : {set {set T}}) :
+  trivIset P -> forall x y : T, (x \in pblock P y) = (y \in pblock P x).
+Proof.
+move=> Htriv.
+suff refl x y : x \in pblock P y -> y \in pblock P x.
+  by move=> x y; apply/(sameP idP)/(iffP idP); apply refl.
+move=> /[dup] /(same_pblock Htriv) eqPxy.
+rewrite -eqPxy mem_pblock => Hcov.
+by rewrite -eq_pblock // eqPxy.
+Qed.
+
 Lemma equivalence_partitionE (T : finType) (R S : rel T) (D : {set T}) :
   R =2 S -> equivalence_partition R D = equivalence_partition S D.
 Proof.
@@ -118,19 +129,10 @@ move=> /[dup] xPy.
 by rewrite -(same_pblock (trivIsetpart P) xPy) mem_pblock cover_setpart.
 Qed.
 
-Lemma mem_pblockC P x y : (x \in pblock P y) = (y \in pblock P x).
-Proof.
-suff impl a b : (a \in pblock P b) -> (b \in pblock P a).
-  by apply/idP/idP; apply impl.
-move=> /[dup] aPb /mem_pblock_setpart.
-rewrite -{1}(cover_setpart P) => /(eq_pblock _ (trivIsetpart P)) <-.
-exact/eqP/same_pblock.
-Qed.
-
 Lemma pblock_notin P x : (pblock P x != set0) = (x \in S).
 Proof.
 apply/idP/idP => [/set0Pn[y]|].
-  by rewrite mem_pblockC => /mem_pblock_setpart.
+  by rewrite mem_pblockC // => /mem_pblock_setpart.
 rewrite -{1}(cover_setpart P) => /pblock_mem H.
 by have:= setpart_non0 P; apply contra=> /eqP <-.
 Qed.
@@ -548,9 +550,9 @@ Proof.
 move=> xinS; case/boolP: (y \in S) => [yinS | yninS].
   by rewrite -(pblock_equivalence_partition (join_finer_equivalence P Q)).
 have:= yninS; rewrite -(pblock_notin (P `|` Q)%O) negbK.
-rewrite mem_pblockC=> /eqP ->.
+rewrite mem_pblockC // => /eqP ->.
 rewrite inE; apply/esym/negbTE.
-move: yninS; apply contra; exact: join_finer_eq_in_S.
+by move: yninS; apply contra; exact: join_finer_eq_in_S.
 Qed.
 
 End Finer.
