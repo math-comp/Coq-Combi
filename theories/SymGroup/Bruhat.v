@@ -26,7 +26,7 @@ We define the following notations:
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import fingroup perm morphism presentation.
-From mathcomp Require Import ssralg matrix ssrint.
+From mathcomp Require Import ssralg matrix.
 
 Require Import permcomp tools permuted combclass congr presentSn.
 Require Import std ordtype.
@@ -47,23 +47,350 @@ Section PermMX.
 Variable (R : semiRingType) (n : nat).
 Implicit Type (s t : 'S_n).
 
-Lemma perm_mx1P s : (@perm_mx R n s == (1%:M)%R) = (s == 1).
+Lemma perm_mx_eq1 s : (@perm_mx R n s == (1%:M)%R) = (s == 1).
 Proof.
 apply/eqP/eqP=> [| ->]; last by rewrite perm_mx1.
-rewrite /perm_mx row_permEsub => Heq.
+rewrite /perm_mx row_permEsub => /esym Heq.
 apply/permP=> /= i; rewrite perm1.
-have:= erefl (rowsub s 1%:M i i : R)%R; rewrite {1}Heq !mxE eq_refl /=.
+move/(congr1 (fun m : 'M__ => m i i)): Heq; rewrite !mxE eq_refl /=.
 by case: eqP => //= _ /eqP; rewrite oner_eq0.
 Qed.
 
-Lemma perm_mx_inj  : injective (@perm_mx R n).
+Lemma perm_mx_inj : injective (@perm_mx R n).
 Proof.
-move=> s t /(congr1 (mulmx (perm_mx t^-1))) /eqP.
-rewrite -!perm_mxM gnorm perm_mx1 perm_mx1P => /eqP/(congr1 (mulg t)).
-by rewrite !gnorm.
+move=> s t /(congr1 (mulmx (perm_mx t^-1)))/eqP.
+rewrite -!perm_mxM mulVg perm_mx1 perm_mx_eq1 => /eqP/(congr1 (mulg t)).
+by rewrite mulgA mulgV mulg1 mul1g.
+Qed.
+
+Lemma is_perm_mx_sumP (m : 'M[nat]_n) :
+  reflect ((forall (i : 'I_n), \sum_j m i j = 1%R) /\
+           (forall (j : 'I_n), \sum_i m i j = 1%R))
+    (is_perm_mx m).
+Proof.
+apply (iffP existsP) => /= [[/= s /eqP ->{m}]| [sum_row sum_col]].
+  have byrow : forall s (i : 'I_n), \sum_(j < n) perm_mx s i j = 1%R.
+    move=> {}s i; rewrite (bigD1 (s i)) //= !mxE eq_refl big1 ?addn0 // => j.
+    by rewrite !mxE eq_sym => /negbTE ->.
+  split => i; first exact: byrow.
+  rewrite -[RHS](byrow s^-1 i); apply eq_bigr => j _.
+  by rewrite !mxE -[in RHS](inj_eq (@perm_inj _ s)) permKV eq_sym.
+have pex i : { j | (m i j == 1%N) && [forall k, (k != j) ==> (m i k == 0%N)] }.
+  apply sigW; have /eqP/sum_nat_eq1[/= j [_ mij1 mi0]] := sum_row i.
+  exists j; rewrite {}mij1 /=; apply/forallP => k.
+  by apply/implyP => /mi0 ->.
+have pex_inj : injective (fun i : 'I_n => proj1_sig (pex i)).
+  move=> /= i j.
+  case: (pex i) => k /= /andP[/eqP mik _].
+  case: (pex j) => kj /= /[swap] <-{kj} /andP[/eqP mjk _].
+  have /eqP/sum_nat_eq1[/= i0 [_ mi0k neqi0]] := sum_col k.
+  have {neqi0} eqi0 l : m l k = 1%N -> l = i0.
+    by move/eqP; apply/contraTeq => /neqi0 ->.
+  by rewrite (eqi0 _ mik) (eqi0 _ mjk).
+exists (perm pex_inj); apply/eqP/matrixP=> i j; rewrite !mxE permE.
+case: (pex i) => k /= /andP[/eqP mik /forallP/= neq0].
+case: eqP => [<-{j} // | /eqP]; rewrite eq_sym.
+by have /implyP/[apply]/eqP-> := neq0 j.
 Qed.
 
 End PermMX.
+
+#[local] Lemma lti1 n (i : 'I_n) : i.+1 < n.+1. by rewrite ltnS. Qed.
+#[local] Lemma lti  n (i : 'I_n) : i    < n.+1. exact: (ltnW (lti1 _)). Qed.
+#[local] Lemma lei  n (i : 'I_n.+1) : i <= n. by rewrite -ltnS. Qed.
+Hint Resolve lti1 lti perm_inj lei : core.
+
+Lemma setIE (T : finType) (pA pB : pred T) :
+  [set y | pA y & pB y] = [set y | pA y] :&: [set y | pB y].
+Proof. by apply/setP=> x; rewrite !inE. Qed.
+
+Lemma sum_lt1 n k : k <= n -> \sum_(i < n | i < k) 1 = k.
+Proof.
+move=> lekn.
+rewrite -(big_ord_widen _ (fun => 1%N) lekn).
+by rewrite big_const_ord iter_addn_0 mul1n.
+Qed.
+
+
+Section MatrixSum.
+
+Context {n0 : nat}.
+#[local] Notation n := n0.+1.
+Implicit Type (s t u v : 'S_n).
+Implicit Type (m : 'M[nat]_n).
+Implicit Type (M : 'M[nat]_n.+1).
+
+
+Definition mxsum m : 'M_n.+1 :=
+  \matrix_(i < n.+1, j < n.+1)
+   \sum_(k < n | k < i) \sum_(l < n | l < j) m k l.
+
+Definition mxdiff M : 'M[nat]_n :=
+  \matrix_(i < n, j < n)
+    (   M (inord i.+1) (inord j.+1) + M (inord i) (inord j)
+      - M (inord i) (inord j.+1) - M (inord i.+1) (inord j) ).
+
+Lemma mxsumE m (i j : nat) :
+  i < n.+1 -> j < n.+1 ->
+  mxsum m (inord i) (inord j) =
+    \sum_(k < i) \sum_(l < j) m (inord k) (inord l).
+Proof.
+rewrite mxE !ltnS => lti ltj.
+rewrite [RHS](big_ord_widen _
+                (fun k => \sum_(l < j) (m (inord k) (inord l))) lti).
+rewrite inordK //; apply eq_bigr => k _.
+rewrite (big_ord_widen _ (fun l => (m (inord k) (inord l))) ltj).
+rewrite inordK //; apply eq_bigr => l _.
+by rewrite !inord_val.
+Qed.
+
+Lemma mxsum_tr m : (mxsum m^T = (mxsum m)^T)%R.
+Proof.
+apply matrixP=> i j; rewrite !mxE exchange_big_idem //=.
+apply: eq_bigr => k ltkj; apply: eq_bigr => l ltli.
+by rewrite mxE.
+Qed.
+
+Lemma mxdiff_tr M : (mxdiff M^T = (mxdiff M)^T)%R.
+Proof.
+apply matrixP=> i j; rewrite !mxE.
+Admitted.
+
+Lemma mxsumK : cancel mxsum mxdiff.
+Proof.
+move=> m; apply matrixP=> i j; rewrite mxE !mxsumE //.
+rewrite !big_ord_recr /= !inord_val.
+by rewrite -!addnA [X in X - _ - _]addnC addnK addnC -addnA addnK.
+Qed.
+
+Lemma perm_mxsum_inj : injective (mxsum \o perm_mx).
+Proof. exact: (inj_comp (can_inj mxsumK) (@perm_mx_inj _ _)). Qed.
+
+Lemma perm_mxsumE s i j :
+  (mxsum \o perm_mx) s i j = \sum_(k < n | (k < i) && (s k < j)) 1%N.
+Proof.
+rewrite !mxE big_mkcondr_idem //=; apply eq_bigr => k _.
+under eq_bigr => l _ do rewrite !mxE /= eq_sym.
+case: ltnP => [ltskj | lejsk].
+  by rewrite (bigD1 (s k)) //= eq_refl big1 // => l /andP[_ /negbTE->].
+rewrite big1 // => l /leq_trans/(_ lejsk) /ltn_eqF.
+by rewrite -(val_eqE l (s k)) => ->.
+Qed.
+
+Lemma perm_mxsum1 i j : mxsum (perm_mx 1) i j = minn i j.
+Proof.
+rewrite perm_mxsumE.
+rewrite (eq_bigl (fun k : 'I_n => k < minn i j)).
+  exact (sum_lt1 (leq_trans (geq_minr i j) (ltn_ord j))).
+by move=> k; rewrite perm1 ltn_min.
+Qed.
+
+Lemma perm_mxsum_maxperm i j : mxsum (perm_mx maxperm) i j = i + j - n.
+Proof.
+rewrite perm_mxsumE.
+rewrite (eq_bigl (fun k : 'I_n => (k < i) && (n - j <= k))); first last.
+  by move=> k; rewrite permE /= ltn_subCl // ltnS.
+rewrite -(big_geq_mkord _ _ (gtn i) (fun => 1%N)) /=.
+rewrite -(big_nat_widen _ _ _ predT) //=.
+by rewrite big_const_nat iter_addn_0 mul1n subnBA.
+Qed.
+
+
+Definition is_pmxsum_row M :=
+  [forall i : 'I_n.+1,
+      [&& (M i ord0 == 0), (M i ord_max == i) &
+          [forall j : 'I_n.+1,
+              M i (inord j.-1) <= M i j <= (M i (inord j.-1)).+1]]].
+
+Definition is_pmxsum_pos M :=
+  [forall i : 'I_n, forall j : 'I_n,
+      M (inord i.+1) (inord j.+1) + M (inord i) (inord j) >=
+      M (inord i) (inord j.+1)    + M (inord i.+1) (inord j) ].
+
+Definition is_pmxsum M :=
+  [&& is_pmxsum_row M, is_pmxsum_row M^T & is_pmxsum_pos M].
+
+Lemma is_pmxsum_rowP M :
+  reflect
+    [/\ (forall i : 'I_n.+1, M i ord0 = 0),
+        (forall i : 'I_n.+1, M i ord_max = i) &
+         forall i j : 'I_n.+1,
+              M i (inord j.-1) <= M i j <= (M i (inord j.-1)).+1]
+    (is_pmxsum_row M).
+Proof.
+apply (iffP forallP) => /= [H | [H0 Hmax Hincr i]].
+  by split => [i|i|i j]; move/(_ i): H => /and3P[/eqP H0 /eqP Hi /forallP].
+by apply/and3P; split; try exact/eqP; apply/forallP.
+Qed.
+
+Lemma is_pmxsum_posP M :
+  reflect (forall i  j : 'I_n,
+        M (inord i.+1) (inord j.+1) + M (inord i) (inord j) >=
+        M (inord i) (inord j.+1)    + M (inord i.+1) (inord j))
+    (is_pmxsum_pos M).
+Proof.
+apply (iffP forallP) => /= [H i j | H i].
+  by move/(_ i)/forallP : H; apply.
+by apply/forallP.
+Qed.
+
+Lemma is_perm_mxsum_rowP s : is_pmxsum_row (mxsum (perm_mx s)).
+Proof.
+apply/is_pmxsum_rowP; split=> [i | i | i j]; rewrite !perm_mxsumE.
+- by rewrite sum1dep_card setIE [X in _ :&: X](_ : _ = set0) ?setI0 ?cards0.
+- rewrite sum1dep_card setIE [X in _ :&: X](_ : _ = setT).
+    by rewrite setIT -sum1dep_card sum_lt1.
+  by apply/setP=> /= k; rewrite !inE ltn_ord.
+- apply/andP; split.
+    apply sub_le_big => //=; first by move=> a b; apply leq_addr.
+    move=> k /andP[->] /= /leq_trans; apply.
+    by rewrite inordK ?leq_pred // (leq_ltn_trans (leq_pred _)).
+  rewrite (bigID (fun k => s k == inord j.-1)) /= addnC.
+  set P := (P in (\sum_(i < _ | P i) _).+1).
+  rewrite (eq_bigl P) {}/P; first last.
+    move=> k; rewrite -andbA; congr (_ && _).
+    rewrite inordK ?(leq_ltn_trans (leq_pred _)) //.
+    case: j => [[|j] Hj] //=.
+    by rewrite [RHS]ltn_neqAle ltnS andbC -val_eqE /= inordK.
+  rewrite -[X in _ <= X]addn1 leq_add2l.
+  rewrite [X in _ <= X](_ : 1%N = \sum_(i0 < n | (s i0 == inord j.-1)) 1%N).
+    by apply sub_le_big => [||k /andP[]] //= a b; apply leq_addr.
+  rewrite (eq_bigl (pred1 (s^-1 (inord j.-1)))) ?big_pred1_eq // => /= k /=.
+  by rewrite -(inj_eq (@perm_inj _ s^-1)) permK.
+Qed.
+
+Lemma is_perm_mxsum_posP s : is_pmxsum_pos (mxsum (perm_mx s)).
+Proof.
+apply/is_pmxsum_posP => i j.
+rewrite !mxsumE // !big_ord_recr /= !inord_val.
+by rewrite -!addnA leq_add2l addnC leq_add2l leq_addl.
+Qed.
+
+Lemma mxsum_perm_mx_is_pmxsum s : is_pmxsum (mxsum (perm_mx s)).
+Proof.
+rewrite /is_pmxsum -mxsum_tr tr_perm_mx.
+by rewrite !is_perm_mxsum_rowP is_perm_mxsum_posP.
+Qed.
+
+Lemma is_pmxsum_tr M : is_pmxsum M = is_pmxsum M^T.
+Proof.
+suff {M} impl M : is_pmxsum M -> is_pmxsum M^T.
+  apply/idP/idP; first exact: impl.
+  by rewrite -{2}(trmxK M); apply: impl.
+rewrite /is_pmxsum trmxK => /and3P[-> -> /=] /is_pmxsum_posP H.
+by apply/is_pmxsum_posP => i j; rewrite !mxE addnC.
+Qed.
+
+Lemma is_pmxsumP M : is_pmxsum M -> is_perm_mx (mxdiff M).
+Proof.
+suff {M} rowsum M i : is_pmxsum M -> \sum_j mxdiff M i j = 1%R.
+  move=> H; apply/is_perm_mx_sumP; split => i; first exact: rowsum.
+  transitivity (\sum_j mxdiff M^T i j).
+    apply eq_bigr => j _.
+(*    
+move/and3P=> [Hrow Hcol Hpos].
+
+    /forallP/= Hrow /forallP/= Hcol /forallP/= Hpos].
+apply/is_perm_mx_sumP. *)
+Admitted.
+
+End MatrixSum.
+
+
+
+Fact Bruhat_display : unit. Proof. exact: tt. Qed.
+
+Module BruhatOrder.
+Section Def.
+
+Context {n0 : nat}.
+#[local] Notation n := n0.+1.
+Implicit Type (s t u v : 'S_n).
+
+#[local] Notation perm_mxsum := (mxsum \o (perm_mx (n := n))).
+
+Definition Bruhat s t :=
+  [forall i, forall j, perm_mxsum s i j >= perm_mxsum t i j].
+
+Lemma BruhatP s t :
+  reflect (forall i, forall j, perm_mxsum s i j >= perm_mxsum t i j)
+    (Bruhat s t).
+Proof. by apply (iffP forallP) => /= H i; apply/forallP. Qed.
+
+Fact Bruhat_refl : reflexive Bruhat.
+Proof. by move=> s; apply/BruhatP. Qed.
+Fact Bruhat_anti : antisymmetric Bruhat.
+Proof.
+move=>s t /andP[/BruhatP lets /BruhatP lest].
+apply perm_mxsum_inj; apply/matrixP=> i j; apply anti_leq.
+by rewrite lest lets.
+Qed.
+Fact Bruhat_trans : transitive Bruhat.
+Proof.
+move=>t s u /BruhatP lets /BruhatP leut; apply/BruhatP=> i j.
+exact: (leq_trans (leut i j) (lets i j)).
+Qed.
+
+#[export] HB.instance Definition _ := Finite.on 'S_n.
+#[export] HB.instance Definition _ :=
+  Order.Le_isPOrder.Build Bruhat_display 'S_n
+    Bruhat_refl Bruhat_anti Bruhat_trans.
+
+Local Notation "x <=B y" := (@Order.le Bruhat_display _ (x : 'S__) y).
+
+Fact Bruhat1s s : 1 <=B s.
+Proof.
+suff lecoeff t i j : perm_mxsum t i j <= i.
+  apply/BruhatP => i j; rewrite perm_mxsum1 leq_min lecoeff /=.
+  rewrite [X in X <= _](_ : _ = (mxsum (perm_mx s))^T j i)%R; last by rewrite !mxE.
+  by rewrite -mxsum_tr tr_perm_mx lecoeff.
+rewrite perm_mxsumE.
+have /sum_lt1 {2}<- : i <= n by [].
+rewrite [X in _ <= X](bigID (fun k => t k < j)) /=.
+exact: leq_addr.
+Qed.
+#[export] HB.instance Definition _ :=
+  Order.hasBottom.Build Bruhat_display 'S_n Bruhat1s.
+
+Fact Bruhat_maxperm s : s <=B maxperm.
+Proof.
+apply/BruhatP => i j; rewrite perm_mxsum_maxperm perm_mxsumE.
+rewrite sum1dep_card setIE cardsI.
+rewrite -[X in _ <=_ + X - _](card_imset _ (@perm_inj _ s)) /=.
+rewrite [imset _ _](_ : _ = [set x : 'I_n | x < j]); first last.
+  apply/setP => /= k; rewrite inE.
+  by rewrite -(permKV s k) mem_imset // inE permKV.
+rewrite -![in X in _ <= X - _]sum1dep_card !sum_lt1 //; apply: leq_sub2l.
+rewrite -[X in _ <= X](card_ord n) -cardsT /=.
+exact/subset_leq_card/subsetT.
+Qed.
+
+#[export] HB.instance Definition _ :=
+  Order.hasTop.Build Bruhat_display 'S_n Bruhat_maxperm.
+
+End Def.
+
+Module Exports.
+HB.reexport BruhatOrder.
+
+Notation "x <=B y" := (@Order.le Bruhat_display _ (x : 'S__) y).
+Notation "x <B y" := (@Order.lt Bruhat_display _ (x : 'S__) y).
+
+Definition BruhatP {n0} (s t : 'S_n0.+1) :
+  reflect
+    (forall i j, mxsum (perm_mx s) i j >= mxsum (perm_mx t) i j) (s <=B t)
+  := BruhatP s t.
+
+Lemma bottom_Bruhat n0 : Order.bottom = (1 : 'S_n0.+1). Proof. by []. Qed.
+Lemma top_Bruhat n0 : Order.top = @maxperm n0. Proof. by []. Qed.
+
+End Exports.
+End BruhatOrder.
+HB.export BruhatOrder.Exports.
+
+
+
+
 
 Lemma card_set_ord_leq_lt n i j :
   j < n.+1 -> #|[set k : 'I_n | i <= k < j]| = j - i.
@@ -92,6 +419,10 @@ Context {n0 : nat}.
 #[local] Notation n := n0.+1.
 Implicit Type (s t u v : 'S_n).
 
+#[local] Lemma lei1 (i : 'I_n) : i.+1 < n.+1. by rewrite ltnS. Qed.
+#[local] Lemma lei  (i : 'I_n) : i    < n.+1. exact: (ltnW (lei1 _)). Qed.
+Hint Resolve lei1 lei perm_inj : core.
+
 
 Definition grmx s : 'M_n.+1 :=
   \matrix_(i < n.+1, j < n.+1)
@@ -99,10 +430,8 @@ Definition grmx s : 'M_n.+1 :=
 
 Lemma grmxV s : grmx s^-1 = ((grmx s)^T)%R.
 Proof.
-have sinj := perm_inj (s := s).
-have s1inj := perm_inj (s := s^-1).
 apply matrixP=> i j; rewrite !mxE.
-rewrite -(card_imset _ sinj); congr (fun S : {set _} => #|S|).
+rewrite -(card_imset _ (@perm_inj _ s)); congr (fun S : {set _} => #|S|).
 rewrite -setP => /= k; rewrite inE.
 rewrite -{1}(permKV s k) mem_imset // !inE mem_imset // inE.
 rewrite andbC; congr andb.
@@ -143,13 +472,13 @@ Qed.
 Lemma grmxE s (i j : nat) :
   i < n.+1 -> j < n.+1 ->
   grmx s (inord i) (inord j) =
-    (\sum_(k < i) \sum_(l < j) (s (inord k) == inord l)%:R)%R.
+    \sum_(k < i) \sum_(l < j) (s (inord k) == inord l).
 Proof.
 rewrite grmx_pairE mxE !ltnS => lti ltj.
 rewrite [RHS](big_ord_widen _
-                (fun k => \sum_(l < j) (s (inord k) == inord l)%:R)%R lti).
+                (fun k => \sum_(l < j) (s (inord k) == inord l)) lti).
 under eq_bigr => k _ do
-  rewrite (big_ord_widen _ (fun l => (s (inord k) == inord l)%:R)%R ltj).
+  rewrite (big_ord_widen _ (fun l => (s (inord k) == inord l) : nat) ltj).
 rewrite pair_big_dep_idem //= -sum1dep_card.
 rewrite -[LHS](eq_bigl (P1 := fun x : 'I_n * 'I_n =>
              (x.1 < i) && (x.2 < j) && (s x.1 == x.2))); first last.
@@ -159,15 +488,21 @@ apply eq_bigr => [][k l] /= /andP[ltki ltlj].
 by rewrite !inord_val; case eqP.
 Qed.
 
-(** Unused ! Also this is not a characterisation of the grmx. It also
-    include th growth matrix of alternating sign matrices             *)
+
 Definition is_grmx_row (m : 'M[nat]_n.+1) :=
   [forall i : 'I_n.+1,
       [&& (m i ord0 == 0), (m i ord_max == i) &
           [forall j : 'I_n.+1,
               m i (inord j.-1) <= m i j <= (m i (inord j.-1)).+1]]].
 
-Definition is_grmx (m : 'M[nat]_n.+1) := is_grmx_row m && is_grmx_row m^T.
+Definition is_grmx_pos (m : 'M_n.+1) :=
+  [forall i : 'I_n, forall j : 'I_n,
+      m (inord i.+1) (inord j.+1) + m (inord i) (inord j) >=
+      m (inord i) (inord j.+1)    + m (inord i.+1) (inord j) ].
+
+Definition is_grmx (m : 'M[nat]_n.+1) :=
+  [&& is_grmx_row m, is_grmx_row m^T & is_grmx_pos m].
+
 
 Lemma is_grmx_rowP s : is_grmx_row (grmx s).
 Proof.
@@ -177,7 +512,7 @@ apply/forallP => /= i; rewrite !mxE; apply/and3P; split.
 - by rewrite setlt0 set0I cards0.
 - have -> : [set i : 'I_n | i < (@ord_max n)] = [set: 'I_n].
     by apply/setP => /= x; rewrite !inE /= ltn_ord.
-  by rewrite setTI (card_imset _ (perm_inj (s := s))) card_set_ord_lt.
+  by rewrite setTI (card_imset _ (@perm_inj _ s)) card_set_ord_lt.
 - apply/forallP => /= j; rewrite !mxE.
   move: [set s k | k : 'I_n & _] => /= S.
   have /inordK -> : j.-1 < n.+1 by apply(leq_ltn_trans (leq_pred _)).
@@ -197,31 +532,33 @@ apply/forallP => /= i; rewrite !mxE; apply/and3P; split.
     by rewrite !inE => /andP[].
 Qed.
 
+
+Lemma is_grmx_posP s : is_grmx_pos (grmx s).
+Proof.
+apply/forallP => /= i; apply/forallP => /= j.
+rewrite !grmxE // !big_ord_recr /= !inord_val.
+by rewrite -!addnA leq_add2l addnC leq_add2l leq_addl.
+Qed.
+
 Lemma is_grmxP s : is_grmx (grmx s).
-Proof. by rewrite /is_grmx -grmxV !is_grmx_rowP. Qed.
+Proof. by rewrite /is_grmx -grmxV !is_grmx_rowP is_grmx_posP. Qed.
 
-
-Definition perm_mx_of_grmx (m : 'M_n.+1) : 'M[int]_n :=
+Definition perm_mx_of_grmx (m : 'M_n.+1) : 'M[nat]_n :=
   \matrix_(i < n, j < n)
-  (   (m (inord i.+1) (inord j.+1))%:Z - (m (inord i) (inord j.+1))%:Z
-    - (m (inord i.+1) (inord j))%:Z    + (m (inord i) (inord j))%:Z )%R.
+    (   m (inord i.+1) (inord j.+1) - m (inord i) (inord j.+1)
+      + m (inord i) (inord j)       - m (inord i.+1) (inord j) ).
 
 Lemma perm_mx_of_grmxP s : perm_mx_of_grmx (grmx s) = perm_mx s.
 Proof.
 apply/matrixP=> i j.
-have lei1 : i.+1 < n.+1 by rewrite ltnS.
-have lej1 : j.+1 < n.+1 by rewrite ltnS.
-have lei : i < n.+1 by apply ltnW.
-have lej : j < n.+1 by apply ltnW.
 rewrite [LHS]mxE !grmxE // !mxE !big_ord_recr /= !inord_val.
-rewrite !PoszD !opprD !addrA.
-set S := (X in (_ + X)%R).
-rewrite -/S -!addrA [(-S + _)%R]addrC !addrA addrK {S}.
-set S := (X in (X + _ + _ + _ + _)%R).
-rewrite -/S [(S +  _)%R]addrC addrC -!addrA [(S +  _)%R]addrC subrK {S}.
-rewrite addrA addrC addrA subrK.
+rewrite [X in X - _ + _ - _]addnC addnK.
+rewrite [X in _ - X]addnC subnDr addnC addnK.
 by case: eqP.
 Qed.
+
+Lemma is_perm_mx_grmx m : is_grmx m -> is_perm_mx m.
+Admitted.
 
 Lemma grmx_inj : injective grmx.
 Proof.
@@ -338,12 +675,8 @@ HB.export BruhatOrder.Exports.
            0 1 1 1
               x
            0 1 2 2
-                x
-           0 1 2 3
-
-
-0 0 0 0               0 0 0 0
- x                       x
+0 0 0 0         x     0 0 0 0
+ x         0 1 2 3       x
 0 1 1 1               0 0 1 1
      x                 x
 0 1 1 2               0 1 2 2
@@ -357,12 +690,8 @@ HB.export BruhatOrder.Exports.
 0 0 1 1               0 0 0 1
      x                 x
 0 0 1 2               0 1 1 2
- x                       x
-0 1 2 3               0 1 2 3
-
-
-           0 0 0 0
-                x
+ x         0 0 0 0       x
+0 1 2 3         x     0 1 2 3
            0 0 0 1
               x
            0 0 1 2
