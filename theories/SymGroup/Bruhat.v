@@ -42,6 +42,18 @@ Reserved Notation "s '<=B' t" (at level 70, t at next level).
 Reserved Notation "s '<B' t"  (at level 70, t at next level).
 
 
+
+Lemma bounded_le_homo (m n : nat) f :
+  (forall i, m <= i < n -> f i <= f i.+1) ->
+  {in [pred i | m <= i & i <= n] &, {homo f : x y / x <= y}}.
+Proof.
+move=> H i j; rewrite !inE /= => lein.
+elim: j => [_ |j IHj]; first by rewrite leqn0 => /eqP ->.
+move=> /andP[_ ltjn]; rewrite leq_eqVlt ltnS => /orP [/eqP <- // | leij].
+have lemj : m <= j by move: lein => /andP[/[swap] _ /leq_trans]; apply.
+by apply: (leq_trans (IHj _ leij) (H _ _)); rewrite lemj //= ltnW.
+Qed.
+
 Lemma telescope_sumn_in2 n m f : n <= m ->
   {in [pred i | n <= i <= m] &, {homo f : x y / x <= y}} ->
   \sum_(n <= k < m) (f k.+1 - f k) = f m - f n.
@@ -206,18 +218,16 @@ rewrite -(big_nat_widen _ _ _ predT) //=.
 by rewrite big_const_nat iter_addn_0 mul1n subnBA.
 Qed.
 
-Local Notation H i := (@inord n i).
-
 Definition is_pmxsum_row M :=
   [forall i : 'I_n.+1,
       [&& (M i ord0 == 0), (M i ord_max == i) &
           [forall j : 'I_n.+1,
-              M i (H j.-1) <= M i j <= (M i (H j.-1)).+1]]].
+              M i (inord j.-1) <= M i j <= (M i (inord j.-1)).+1]]].
 
 Definition is_pmxsum_pos M :=
   [forall i : 'I_n, forall j : 'I_n,
-      M (H i.+1) (H j.+1) + M (H i) (H j) >=
-      M (H i) (H j.+1)    + M (H i.+1) (H j) ].
+      M (inord i.+1) (inord j.+1) + M (inord i) (inord j) >=
+      M (inord i) (inord j.+1)    + M (inord i.+1) (inord j) ].
 
 Definition is_pmxsum M :=
   [&& is_pmxsum_row M, is_pmxsum_row M^T & is_pmxsum_pos M].
@@ -227,7 +237,7 @@ Lemma is_pmxsum_rowP M :
     [/\ (forall i : 'I_n.+1, M i ord0 = 0),
         (forall i : 'I_n.+1, M i ord_max = i) &
          forall i j : 'I_n.+1,
-              M i (H j.-1) <= M i j <= (M i (H j.-1)).+1]
+              M i (inord j.-1) <= M i j <= (M i (inord j.-1)).+1]
     (is_pmxsum_row M).
 Proof.
 apply (iffP forallP) => /= [H | [H0 Hmax Hincr i]].
@@ -237,8 +247,8 @@ Qed.
 
 Lemma is_pmxsum_posP M :
   reflect (forall i  j : 'I_n,
-        M (H i.+1) (H j.+1) + M (H i) (H j) >=
-        M (H i) (H j.+1)    + M (H i.+1) (H j))
+        M (inord i.+1) (inord j.+1) + M (inord i) (inord j) >=
+        M (inord i) (inord j.+1)    + M (inord i.+1) (inord j))
     (is_pmxsum_pos M).
 Proof.
 apply (iffP forallP) => /= [H i j | H i].
@@ -293,17 +303,6 @@ rewrite /is_pmxsum trmxK => /and3P[-> -> /=] /is_pmxsum_posP H.
 by apply/is_pmxsum_posP => i j; rewrite !mxE addnC.
 Qed.
 
-Lemma bounded_le_homo (m n : nat) f :
-  (forall i, m <= i < n -> f i <= f i.+1) ->
-  {in [pred i | m <= i & i <= n] &, {homo f : x y / x <= y}}.
-Proof.
-move=> H i j; rewrite !inE /= => lein.
-elim: j => [_ |j IHj]; first by rewrite leqn0 => /eqP ->.
-move=> /andP[_ ltjn]; rewrite leq_eqVlt ltnS => /orP [/eqP <- // | leij].
-have lemj : m <= j by move: lein => /andP[/[swap] _ /leq_trans]; apply.
-by apply: (leq_trans (IHj _ leij) (H _ _)); rewrite lemj //= ltnW.
-Qed.
-
 Lemma is_pmxsumP M : is_pmxsum M -> is_perm_mx (mxdiff M).
 Proof.
 suff {M} rowsum M i : is_pmxsum M -> \sum_j mxdiff M i j = 1%R.
@@ -313,23 +312,22 @@ suff {M} rowsum M i : is_pmxsum M -> \sum_j mxdiff M i j = 1%R.
   by apply: rowsum; rewrite is_pmxsum_tr.
 move/and3P=> [/is_pmxsum_rowP[R0 Rmax _] /is_pmxsum_rowP[_ _ Cincr]
               /is_pmxsum_posP Mpos].
-have {}Cincr j : j <= n ->  M (H i) (H j) <= M (H i.+1) (H j).
-  by move/(_ (H j) (H i.+1)): Cincr; rewrite !mxE inordK // => /andP[].
-pose f j := M (H i.+1) (H j) - M (H i) (H j).
-have {Mpos} /(telescope_sumn_in2 (leq0n _)) :
-    {in [pred i | 0 <= i & i <= n] &, {homo f : x y / x <= y}}.
-  apply: bounded_le_homo => j /= ltjn; rewrite {}/f.
-  rewrite leq_subLR addnBA; last exact: Cincr.
-  move/(_ i (Ordinal ltjn)): Mpos => /= Mpos.
-  rewrite leq_subRL [X in _ <= X]addnC //.
-  exact: (leq_trans (leq_addr _ _) Mpos).
-rewrite {}/f /=.
-have -> : H 0 = ord0 :> 'I_n.+1 by apply val_inj; rewrite /= inordK.
-have -> : H n = ord_max :> 'I_n.+1 by apply val_inj; rewrite /= inordK.
-rewrite !{}R0 !subn0 !{}Rmax !inordK // subSnn /= natr1E => <-.
-rewrite big_mkord; apply eq_bigr => j _.
-rewrite mxE subnBA; last exact/Cincr/ltnW.
-congr (_ - _); rewrite addnBAC //; exact: Cincr.
+have {}Cincr j : j <= n ->  M (inord i) (inord j) <= M (inord i.+1) (inord j).
+  by move/(_ (inord j) (inord i.+1)): Cincr; rewrite !mxE inordK // => /andP[].
+pose f j := M (inord i.+1) (inord j) - M (inord i) (inord j).
+transitivity (\sum_(0 <= k < n) (f k.+1 - f k)).
+  rewrite big_mkord; apply eq_bigr => j _.
+  rewrite mxE subnBA; last exact/Cincr/ltnW.
+  by congr (_ - _); rewrite addnBAC //; exact: Cincr.
+rewrite telescope_sumn_in2 // {}/f.
+  have -> : inord 0 = ord0 :> 'I_n.+1 by apply val_inj; rewrite /= inordK.
+  have -> : inord n = ord_max :> 'I_n.+1 by apply val_inj; rewrite /= inordK.
+  by rewrite !R0 !subn0 !Rmax !inordK // subSnn /= natr1E.
+apply: bounded_le_homo => j /= ltjn {R0 Rmax}.
+rewrite leq_subLR addnBA; last exact: Cincr.
+move/(_ i (Ordinal ltjn)): Mpos => /= Mpos.
+rewrite leq_subRL [X in _ <= X]addnC //.
+exact: (leq_trans (leq_addr _ _) Mpos).
 Qed.
 
 End MatrixSum.
