@@ -125,6 +125,8 @@ End PermMX.
 #[local] Lemma lei  n (i : 'I_n.+1) : i <= n. by rewrite -ltnS. Qed.
 #[local] Lemma inord0 n : inord 0 = ord0 :> 'I_n.+1.
 by apply val_inj; rewrite /= inordK. Qed.
+#[local] Lemma inord_max n : inord n = ord_max :> 'I_n.+1.
+by apply val_inj; rewrite /= inordK. Qed.
 
   Hint Resolve lti1 lti perm_inj lei : core.
 
@@ -292,7 +294,7 @@ by apply/is_pmxsum_posP => i j; rewrite !mxE addnC.
 Qed.
 
 Lemma sum_mxdiff M k j:
-  is_pmxsum M ->  k < n -> j <= n ->
+  is_pmxsum M -> k < n -> j <= n ->
   \sum_(l < j) mxdiff M (inord k) (inord l) =
     M (inord k.+1) (inord j) - M (inord k) (inord j).
 Proof.
@@ -325,9 +327,7 @@ suff {M} rowsum M i : is_pmxsum M -> \sum_j mxdiff M i j = 1%R.
 move=> /[dup] HM /and3P[/is_pmxsum_rowP[_ Rmax _] _ _].
 transitivity (\sum_(l < n) mxdiff M (inord i) (inord l)).
   by apply eq_bigr => j _; rewrite !inord_val.
-rewrite sum_mxdiff //.
-have -> : inord n = ord_max :> 'I_n.+1 by apply val_inj; rewrite /= inordK.
-by rewrite !Rmax !inordK // subSnn.
+by rewrite sum_mxdiff // inord_max !Rmax !inordK ?subSnn.
 Qed.
 
 Lemma mxdiffK : {in is_pmxsum, cancel mxdiff mxsum}.
@@ -339,7 +339,7 @@ have {}Cincr i j (ltin : i < n) :
   by move/(_ (inord j) (inord i.+1)): Cincr; rewrite !mxE inordK // ltnS.
 apply matrixP=> i j; rewrite -{1}(inord_val i) -{1}(inord_val j) mxsumE //.
 transitivity
-   (\sum_(0 <= k < i) (M (inord k.+1) (inord j) - M (inord k) (inord j)) );
+    ( \sum_(0 <= k < i) (M (inord k.+1) (inord j) - M (inord k) (inord j)) );
     first last.
   rewrite telescope_sumn_in2 //; first by rewrite !inord_val inord0 C0 subn0.
   apply: bounded_le_homo => k /= ltki.
