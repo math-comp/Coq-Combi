@@ -15,9 +15,31 @@
 (******************************************************************************)
 (** * The (strong) Bruhat order on the Symmetric Group
 
-We define the (strong) Bruhat order on the symmetric group.
+The goal of this file is to define the (strong) Bruhat order on the symmetric
+group. We use the technique of growth matrices.
 
-We define the following notations:
+We define the following notations where the matrices [m] and [M] have types
+[m : 'M[nat]_n] and [M : 'M[nat]_(n.+1)]:
+
+Matrix sums:
+
+- [mxsum m]   == matrix in ['M[nat]_(n.+1)] whose entries are the sum of the
+                 entries strictly at its north-west in [m].
+- [mxdiff M]  == the matrix in ['M[nat]_n] such that
+
+           [mxdiff M i j =  M i.+1 j.+1 + M i j - M i j.+1 - M i.+1 j].
+
+Matrix sum of permutation matrices:
+
+- [is_pmxsum_row M] == for any [i] the i-th row of [M] is increassing
+                 from [0] to [i].
+- [is_pmxsum_pos M] == for any [i j] one have the following inegality
+
+           [M i.+1 j.+1 + M i j >= M i j.+1 - M i.+1 j].
+
+- [is_pmxsum M] == M is the matrix sum of a permutation matrix
+
+Bruhat Order:
 
 - [s <=B t]   == [s] is smaller than [t] for the right weak order.
 - [s <B t]    == [s] is strictly smaller  than [t] for the right weak order.
@@ -127,8 +149,7 @@ End PermMX.
 by apply val_inj; rewrite /= inordK. Qed.
 #[local] Lemma inord_max n : inord n = ord_max :> 'I_n.+1.
 by apply val_inj; rewrite /= inordK. Qed.
-
-  Hint Resolve lti1 lti perm_inj lei : core.
+Hint Resolve lti1 lti perm_inj lei : core.
 
 Lemma setIE (T : finType) (pA pB : pred T) :
   [set y | pA y & pB y] = [set y | pA y] :&: [set y | pB y].
@@ -151,9 +172,8 @@ Implicit Type (m : 'M[nat]_n).
 Implicit Type (M : 'M[nat]_n.+1).
 
 
-Definition mxsum m : 'M_n.+1 :=
-  \matrix_(i < n.+1, j < n.+1)
-   \sum_(k < n | k < i) \sum_(l < n | l < j) m k l.
+Definition mxsum m : 'M[nat]_n.+1 :=
+  \matrix_(i, j) \sum_(k < n | k < i) \sum_(l < n | l < j) m k l.
 
 Definition mxdiff M : 'M[nat]_n :=
   \matrix_(i < n, j < n)
@@ -163,15 +183,13 @@ Definition mxdiff M : 'M[nat]_n :=
 Lemma mxsumE m (i j : nat) :
   i < n.+1 -> j < n.+1 ->
   mxsum m (inord i) (inord j) =
-    \sum_(k < i) \sum_(l < j) m (inord k) (inord l).
+    \sum_(0 <= k < i) \sum_(0 <= l < j) m (inord k) (inord l).
 Proof.
-rewrite mxE !ltnS => lti ltj.
-rewrite [RHS](big_ord_widen _
-                (fun k => \sum_(l < j) (m (inord k) (inord l))) lti).
-rewrite inordK //; apply eq_bigr => k _.
-rewrite (big_ord_widen _ (fun l => (m (inord k) (inord l))) ltj).
-rewrite inordK //; apply eq_bigr => l _.
-by rewrite !inord_val.
+rewrite mxE !ltnS => lein lejn.
+rewrite [RHS](big_nat_widen _ _ n) //= big_mkord inordK //.
+apply eq_bigr => k _.
+rewrite [RHS](big_nat_widen _ _ n) //= big_mkord inordK //.
+by apply eq_bigr => l _; rewrite !inord_val.
 Qed.
 
 Lemma mxsum_tr m : (mxsum m^T = (mxsum m)^T)%R.
@@ -187,7 +205,7 @@ Proof. by apply matrixP=> i j; rewrite !mxE -subnDAC subnDA. Qed.
 Lemma mxsumK : cancel mxsum mxdiff.
 Proof.
 move=> m; apply matrixP=> i j; rewrite mxE !mxsumE //.
-rewrite !big_ord_recr /= !inord_val.
+rewrite !big_nat_recr /= // !inord_val.
 by rewrite -!addnA [X in X - _ - _]addnC addnK addnC -addnA addnK.
 Qed.
 
@@ -249,14 +267,13 @@ by apply/and3P; split; try exact/eqP; apply/forallP.
 Qed.
 
 Lemma is_pmxsum_posP M :
-  reflect (forall i  j : 'I_n,
+  reflect (forall i j : 'I_n,
         M (inord i.+1) (inord j.+1) + M (inord i) (inord j) >=
         M (inord i) (inord j.+1)    + M (inord i.+1) (inord j))
     (is_pmxsum_pos M).
 Proof.
-apply (iffP forallP) => /= [H i j | H i].
-  by move/(_ i)/forallP : H; apply.
-by apply/forallP.
+apply (iffP forallP) => /= [H i j | H i]; last exact/forallP.
+by move/(_ i)/forallP : H; apply.
 Qed.
 
 Lemma is_perm_mxsum_rowP s : is_pmxsum_row (mxsum (perm_mx s)).
@@ -274,7 +291,7 @@ Qed.
 Lemma is_perm_mxsum_posP s : is_pmxsum_pos (mxsum (perm_mx s)).
 Proof.
 apply/is_pmxsum_posP => i j.
-rewrite !mxsumE // !big_ord_recr /= !inord_val.
+rewrite !mxsumE // !big_nat_recr //=.
 by rewrite -!addnA leq_add2l addnC leq_add2l leq_addl.
 Qed.
 
@@ -295,7 +312,7 @@ Qed.
 
 Lemma sum_mxdiff M k j:
   is_pmxsum M -> k < n -> j <= n ->
-  \sum_(l < j) mxdiff M (inord k) (inord l) =
+  \sum_(0 <= l < j) mxdiff M (inord k) (inord l) =
     M (inord k.+1) (inord j) - M (inord k) (inord j).
 Proof.
 move=> /[dup] HM /and3P[/is_pmxsum_rowP[R0 _ _]
@@ -306,7 +323,7 @@ have {}Cincr i l (ltin : i < n) :
   by move/(_ (inord l) (inord i.+1)): Cincr; rewrite !mxE inordK // ltnS.
 pose F l := M (inord k.+1) (inord l) - M (inord k) (inord l).
 transitivity (\sum_(0 <= l < j) (F l.+1 - F l)).
-  rewrite big_mkord; apply: eq_bigr => [][l /leq_trans/(_ lejn) ltln /= _].
+  rewrite !big_nat; apply eq_bigr => l /= /leq_trans/(_ lejn) ltln.
   rewrite mxE !inordK // subnBA; last exact: Cincr.
   by congr (_ - _); rewrite addnBAC //; exact: Cincr.
 rewrite {}/F telescope_sumn_in2 //; first by rewrite !inord0 !R0 !subn0.
@@ -325,8 +342,8 @@ suff {M} rowsum M i : is_pmxsum M -> \sum_j mxdiff M i j = 1%R.
     by apply eq_bigr => j _; rewrite mxdiff_tr [RHS]mxE.
   by apply: rowsum; rewrite is_pmxsum_tr.
 move=> /[dup] HM /and3P[/is_pmxsum_rowP[_ Rmax _] _ _].
-transitivity (\sum_(l < n) mxdiff M (inord i) (inord l)).
-  by apply eq_bigr => j _; rewrite !inord_val.
+transitivity (\sum_(0 <= l < n) mxdiff M (inord i) (inord l)).
+  by rewrite big_mkord; apply eq_bigr => j _; rewrite !inord_val.
 by rewrite sum_mxdiff // inord_max !Rmax !inordK ?subSnn.
 Qed.
 
@@ -344,9 +361,8 @@ transitivity
   rewrite telescope_sumn_in2 //; first by rewrite !inord_val inord0 C0 subn0.
   apply: bounded_le_homo => k /= ltki.
   by apply/Cincr/(leq_trans ltki).
-rewrite big_mkord /=.
-apply: eq_bigr => [][k /leq_trans/(_ (ltn_ord i)) ltkn /= _].
-by rewrite sum_mxdiff.
+rewrite !big_nat; apply: eq_bigr => k /= /leq_trans/(_ (ltn_ord i)) ltkn /=.
+exact: sum_mxdiff.
 Qed.
 
 Lemma is_pmxsumP M : reflect (exists s, M = mxsum (perm_mx s)) (is_pmxsum M).
