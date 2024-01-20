@@ -379,6 +379,18 @@ Qed.
 End Transp.
 
 
+Section MaxPerm.
+
+Context {n : nat}.
+Definition maxperm : 'S_n := perm (@rev_ord_inj n).
+
+Lemma maxpermK : involutive maxperm.
+Proof. by move=> i; rewrite !permE rev_ordK. Qed.
+Lemma maxpermV : maxperm^-1 = maxperm.
+Proof. exact/eqP/permKP/maxpermK. Qed.
+
+End MaxPerm.
+
 Section ElemTransp.
 
 Variable n0 : nat.
@@ -542,8 +554,7 @@ End ElemTransp.
 (** * Inversion set of a permutation *)
 Section InvSet.
 
-Variable n0 : nat.
-Notation n := n0.+1.
+Variable n : nat.
 
 Implicit Type (p : 'II_n) (IS S : {set 'II_n}).
 Implicit Type s t : 'S_n.
@@ -681,6 +692,26 @@ Proof. exact: rsymrel_trans (invsetP s). Qed.
 Lemma rsym_invset_total s : total (rsymrel (invset s)).
 Proof. exact: rsymrel_total (invset_Delta s). Qed.
 
+End InvSet.
+
+
+Section PermOfInvSet.
+
+Variable n0 : nat.
+Local Notation n := n0.+1.
+Implicit Type s t : 'S_n.
+
+Lemma perm_of_relP (r : rel 'I_n) :
+  injective (fun i : 'I_n => nth ord0 (sort r (enum 'I_n)) i).
+Proof.
+move=> i j /= /eqP.
+rewrite nth_uniq => [/eqP/val_inj -> //|||].
+- by rewrite size_sort size_enum_ord.
+- by rewrite size_sort size_enum_ord.
+- by rewrite sort_uniq enum_uniq.
+Qed.
+Definition perm_of_invset IS := (perm (@perm_of_relP (rsymrel IS)))^-1.
+
 Lemma rsym_invsetP s :
   sorted (rsymrel (invset s)) [seq s^-1 i | i : 'I_n].
 Proof.
@@ -695,26 +726,15 @@ rewrite !permKV /= ltnSn leqnSn /= orbT !andbT.
 by rewrite -neq_ltn eq_sym orbN.
 Qed.
 
-Lemma perm_of_relP (r : rel 'I_n) :
-  injective (fun i : 'I_n => nth ord0 (sort r (enum 'I_n)) i).
-Proof.
-move=> i j /= /eqP.
-rewrite nth_uniq => [/eqP/val_inj -> //|||].
-- by rewrite size_sort size_enum_ord.
-- by rewrite size_sort size_enum_ord.
-- by rewrite sort_uniq enum_uniq.
-Qed.
-Definition perm_of_invset IS := (perm (@perm_of_relP (rsymrel IS)))^-1.
-
-Lemma invsetK : cancel invset perm_of_invset.
+Lemma invsetK : cancel (@invset n) perm_of_invset.
 Proof.
 rewrite /perm_of_invset=> s; apply invg_inj; rewrite invgK.
 apply/permP => i /=; rewrite permE.
 have -> : s^-1 i = nth ord0 [seq s^-1 i | i : 'I_n] i.
   by rewrite (nth_map ord0) ?size_enum_ord // nth_ord_enum.
 congr nth => {i}.
-apply: (sorted_eq (@rsym_invset_trans s) (@rsym_invset_anti s)).
-- exact: (sort_sorted (@rsym_invset_total s)).
+apply (sorted_eq (@rsym_invset_trans _ s) (@rsym_invset_anti _ s)).
+- exact: (sort_sorted (@rsym_invset_total _ s)).
 - exact: rsym_invsetP.
 - rewrite perm_sort; apply uniq_perm.
   + exact: enum_uniq.
@@ -725,7 +745,7 @@ apply: (sorted_eq (@rsym_invset_trans s) (@rsym_invset_anti s)).
     by rewrite permK.
 Qed.
 
-Theorem invset_inj : injective invset.
+Theorem invset_inj : injective (@invset n).
 Proof. by move=> s t Hinvset; rewrite -(invsetK s) Hinvset invsetK. Qed.
 
 
@@ -846,8 +866,9 @@ rewrite invset_eltrL // imsetU1; congr (_ |: _).
   by move=> [u v]; rewrite /= !permM !eltrK !permK.
 Qed.
 
-End InvSet.
-Arguments Delta {n0}.
+End PermOfInvSet.
+
+Arguments Delta {n}.
 
 
 
@@ -1258,7 +1279,7 @@ by rewrite ltnn.
 Qed.
 
 
-Lemma card_Delta : #|@Delta n0| = 'C(n, 2).
+Lemma card_Delta : #|@Delta n| = 'C(n, 2).
 Proof.
 rewrite /Delta -card_ltn_sorted_tuples.
 have /card_imset <- : injective (fun p : 'II_n => [tuple p.1; p.2]).
@@ -1275,14 +1296,7 @@ Proof.
 by rewrite /length -card_Delta; apply: subset_leq_card (invset_Delta s).
 Qed.
 
-Definition maxperm : 'S_n := perm (@rev_ord_inj n).
-
-Lemma maxpermK : involutive maxperm.
-Proof. by move=> i; rewrite !permE rev_ordK. Qed.
-Lemma maxpermV : maxperm^-1 = maxperm.
-Proof. exact/eqP/permKP/maxpermK. Qed.
-
-Lemma invset_maxperm : invset maxperm = Delta.
+Lemma invset_maxperm : invset (@maxperm n) = Delta.
 Proof.
 apply/setP => /= [[i j]]; rewrite /Delta !inE /= !permE.
 case: ltnP => //= Hij; apply ltn_sub2l.
@@ -1290,9 +1304,9 @@ case: ltnP => //= Hij; apply ltn_sub2l.
 - by rewrite ltnS.
 Qed.
 
-Lemma length_maxperm : length maxperm = 'C(n, 2).
+Lemma length_maxperm : length (@maxperm n) = 'C(n, 2).
 Proof. by rewrite /length invset_maxperm card_Delta. Qed.
-Lemma length_maxpermE s : length s = 'C(n, 2) -> s = maxperm.
+Lemma length_maxpermE s : length s = 'C(n, 2) -> s = (@maxperm n).
 Proof.
 move=> Hlen; apply/invset_inj/eqP.
 rewrite eqEcard -!/(length _) Hlen length_maxperm leqnn andbT.
@@ -1370,7 +1384,6 @@ Qed.
 
 End Length.
 Arguments length  {n0}.
-Arguments maxperm {n0}.
 
 #[export] Hint Resolve cocodeP : core.
 #[export] Hint Resolve codeszP : core.

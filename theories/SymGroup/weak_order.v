@@ -486,7 +486,7 @@ Variable (n0 : nat).
 Implicit Type (s t u v : 'S_n) (A B : {set 'I_n * 'I_n}).
 
 Lemma bottom_perm : Order.bottom = (1 : 'S_n). Proof. by []. Qed.
-Lemma top_perm : Order.top = @maxperm n0. Proof. by []. Qed.
+Lemma top_perm : Order.top = @maxperm n. Proof. by []. Qed.
 
 Lemma invset_join s t : invset (s \/R t) = tclosure (invset s :|: invset t).
 Proof. by rewrite /Order.join invset_supperm. Qed.
