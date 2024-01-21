@@ -12,8 +12,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
+From mathcomp Require Import all_ssreflect.
 Require Import ordtype tableau Yamanouchi stdtab shuffle freeSchur skewtab therule implem.
 
 Set Implicit Arguments.
@@ -43,7 +42,7 @@ Goal
     (LRyam_enum inner eval outer) )
   =
   ([:: [:: 0; 1; 0]; [:: 1; 0; 0]], [:: [:: 0; 1; 0]; [:: 1; 0; 0]]).
-Proof. by compute; exact erefl. Qed.
+Proof. by vm_compute; exact erefl. Qed.
 
 Goal
     let inner := [:: 2; 1] in
@@ -56,7 +55,7 @@ Goal
                                    (stdtab_of_yam (hyper_yam eval)) )
                (enum_stdtabsh outer)) )
       ( LRyam_enum inner eval outer ).
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 
 Goal
   let inner := [:: 3; 2; 1] in
@@ -64,33 +63,33 @@ Goal
   let outer := [:: 4; 3; 2; 1] in
   (LRyam_enum inner eval outer)
   = [:: [:: 1; 0; 1; 0]; [:: 1; 1; 0; 0]].
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 
 
 Goal LRyamtab_list [:: 2] [:: 1; 1] [:: 3; 1]
      = [:: [:: [:: 0]; [:: 1]]].
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 
 Goal LRyamtab_list [:: 2] [:: 1] [:: 3] = [:: [:: [:: 0]]].
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 
 Goal LRyamtab_list [:: 2; 1] [:: 2; 1] [:: 3; 2; 1]
      = [:: [:: [:: 0]; [:: 0]; [:: 1]]; [:: [:: 0]; [:: 1]; [:: 0]]].
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 
 Goal LRyamtab_list [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2]
      = [:: [:: [:: 0; 0]; [:: 1]; [:: 0; 2]; [:: 1; 3]];
            [:: [:: 0; 0]; [:: 1]; [:: 1; 2]; [:: 0; 3]]].
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 
 Goal map to_word (LRyamtab_list [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2])
      = [:: [:: 1; 3; 0; 2; 1; 0; 0]; [:: 0; 3; 1; 2; 1; 0; 0]].
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 
 
 Goal LRyam_enum [:: 3; 3; 1] [:: 3; 2; 1; 1] [:: 5; 4; 3; 2]
 = [:: [:: 0; 3; 1; 2; 1; 0; 0]; [:: 1; 3; 0; 2; 1; 0; 0]].
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 (**
 ...00 ...00
 ...1  ...1
@@ -101,12 +100,12 @@ Proof. compute; exact erefl. Qed.
 Goal map to_word (LRyamtab_list [:: 3; 3; 1] [:: 4; 2; 1] [:: 5; 4; 3; 2])
      = [:: [:: 1; 2; 0; 0; 1; 0; 0]; [:: 0; 2; 0; 1; 1; 0; 0];
            [:: 0; 1; 0; 2; 1; 0; 0]].
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 
 Goal LRyam_enum [:: 3; 3; 1] [:: 4; 2; 1] [:: 5; 4; 3; 2]
      = [:: [:: 0; 1; 0; 2; 1; 0; 0]; [:: 0; 2; 0; 1; 1; 0; 0];
            [:: 1; 2; 0; 0; 1; 0; 0]].
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 (**
 ...11 ...11 ...11
 ...2  ...2  ...2
@@ -117,22 +116,22 @@ Proof. compute; exact erefl. Qed.
 (* According LRcalc = 18 *)
 Goal size (LRyamtab_list
   [:: 4; 3; 2; 1] [:: 4; 3; 2; 1] [:: 6; 5; 4; 3; 1; 1]) = 18.
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 (* According LRcalc = 9 *)
 Goal size (LRyamtab_list
   [:: 4; 3; 2; 1] [:: 4; 3; 2; 1] [:: 5; 5; 3; 3; 2; 1; 1]) = 9.
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 (* According to LRcalc and Wikipedia = 176 *)
 Goal size (LRyamtab_list
   [:: 5; 4; 3; 2; 1] [:: 5; 4; 3; 2; 1] [:: 8; 6; 5; 4; 3; 2; 1; 1]) = 176.
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 Goal LRcoeff
   [:: 5; 4; 3; 2; 1] [:: 5; 4; 3; 2; 1] [:: 8; 6; 5; 4; 3; 2; 1; 1] = 176.
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 (* According to LRcalc and Wikipedia = 2064 *)
 Goal size (LRyamtab_list
   [:: 6; 5; 4; 3; 2; 1] [:: 6; 5; 4; 3; 2; 1] [:: 9; 8; 7; 5; 4; 3; 3; 2; 1]) = 2064.
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
 Goal LRcoeff
   [:: 6; 5; 4; 3; 2; 1] [:: 6; 5; 4; 3; 2; 1] [:: 9; 8; 7; 5; 4; 3; 3; 2; 1] = 2064.
-Proof. compute; exact erefl. Qed.
+Proof. vm_compute; exact erefl. Qed.
