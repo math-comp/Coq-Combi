@@ -25,15 +25,6 @@ algorithms to
 
 Here are the notion defined is this file:
 
-Notion of code
-
-- [c \is a code] == c is a list such that [c_i <= i].
-- [wordcd c] == for a code [c] the list [0, 1-c1..1, 2-c2..2, ..]
-
-- [is_code_of_size c n] == the predicate [c] is a code of size [n]
-- [enum_codesz n] == a list enumerating all the code of size [n]
-- [codesz n] == sigma type for codes of size [n], canonically a [finType]
-
 Elementary tranpositions
 
 - ['s_i]     == the i-th elementary transposition. It is of type ['S_n.+1]
@@ -52,6 +43,15 @@ Inversion sets
 - [rsymrel IS] == the reflexive and antisymmetric closure of the binary
                 relation associated to the inversion set [IS]
 - [perm_of_invset IS] == the permutation whose inversion set is [IS]
+
+Notion of code
+
+- [c \is a code] == c is a list such that [c_i <= i].
+- [wordcd c] == for a code [c] the list [0, 1-c1..1, 2-c2..2, ..]
+
+- [is_code_of_size c n] == the predicate [c] is a code of size [n]
+- [enum_codesz n] == a list enumerating all the code of size [n]
+- [codesz n] == sigma type for codes of size [n], canonically a [finType]
 
 Inverse Lehmer code
 
@@ -133,13 +133,12 @@ Proof.
 move=> /subsetP AB trB.
 apply/subsetP => /= [[i j]]; rewrite /tclosure inE /= => /andP[Hneq].
 move/connectP => /= [p]; elim: p => [| p0 p IHp] /= in i Hneq *.
-  by move => _ Heq; rewrite Heq eqxx in Hneq.
+  by move=> _ Heq; rewrite Heq eqxx in Hneq.
 case: (p0 =P j) => [<- /= /andP[/AB ->] // | /eqP {}/IHp IHp].
 by move=> /andP[/AB {}/trB trB {}/IHp /[apply]]; apply: trB.
 Qed.
 
 End SRel.
-
 Prenex Implicits srel.
 
 
@@ -225,9 +224,8 @@ Qed.
 Lemma code_ltn_size c : c \is a code -> all (gtn (size c)) c.
 Proof.
 move=> /is_codeP Hcode.
-apply/allP => v Hv; rewrite -(nth_index 0 Hv).
-move: Hv; rewrite -index_mem => Hv.
-by have:= Hv => /Hcode/leq_ltn_trans; apply.
+apply/allP => /= v /[dup]/(nth_index 0){-1}<-.
+by rewrite -index_mem => /[dup] Hv /Hcode/leq_ltn_trans; apply.
 Qed.
 
 Lemma wordcd_ltn c :
@@ -320,6 +318,7 @@ Proof using. by rewrite /=; exact: enum_subE. Qed.
 
 End FinType.
 
+
 Lemma card_codesz n : #|{:codesz n}| = n`!.
 Proof.
 rewrite factE /= cardE -(size_map val) enum_codeszE.
@@ -331,7 +330,6 @@ by rewrite sumnE big_map big_const_seq count_predT size_iota iter_addn_0 mulnC.
 Qed.
 
 End Codes.
-
 #[export] Hint Resolve codeszP : core.
 
 
@@ -372,7 +370,7 @@ case: (tpermP x y i) => [ _ _ _ | _ _ _ | _ _ ].
 - rewrite ![x == _]eq_sym in Hxa Hxb.
   by rewrite tpermD.
 - move=> /eqP; rewrite eq_sym => Hai.
-- move=> /eqP; rewrite eq_sym => Hbi.
+  move=> /eqP; rewrite eq_sym => Hbi.
   by rewrite tpermD.
 Qed.
 
@@ -391,180 +389,24 @@ Proof. exact/eqP/permKP/maxpermK. Qed.
 
 End MaxPerm.
 
-Section ElemTransp.
-
-Variable n0 : nat.
-Notation n := n0.+1.
-
-Definition eltr i : 'S_n0.+1 := tperm (inord i) (inord i.+1).
-
-Notation "''s_' i" := (eltr i).
-Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
-
-Implicit Type s t : 'S_n.
-
-Lemma eltrV i : 's_i^-1 = 's_i. Proof. by rewrite tpermV. Qed.
-Lemma eltrK i : involutive 's_i. Proof. exact: tpermK. Qed.
-Lemma eltr2 i : 's_i * 's_i = 1. Proof. exact: tperm2. Qed.
-
-Lemma eltr_braid i :
-  i.+1 < n0 -> 's_i * 's_i.+1 * 's_i = 's_i.+1 * 's_i * 's_i.+1.
-Proof using.
-move=> Hi.
-apply: tperm_braid; rewrite /eq_op /=.
-- by rewrite inord1i // inordi // !trivSimpl.
-- by rewrite inordi // inordi1 // !trivSimpl.
-Qed.
-
-Lemma eltr_comm i j :
-  i.+1 < j < n0 -> 's_i * 's_j = 's_j * 's_i.
-Proof using.
-move => /andP[Hij Hj].
-have Hi := ltn_trans Hij Hj.
-apply: tpermC; rewrite /eq_op /=.
-- by rewrite inord1i // inordi // (ltn_eqF (ltnW Hij)).
-- by rewrite !inordi // (ltn_eqF Hij).
-- rewrite inord1i // inordi1 //.
-  by rewrite (ltn_eqF (leq_trans (ltnW Hij) (leqnSn j))).
-- rewrite inordi // inordi1 //.
-  by rewrite eqSS (ltn_eqF (ltnW Hij)).
-Qed.
-
-#[local] Lemma eltrL_ord (i : 'I_n) : 's_i i = inord i.+1.
-Proof. by rewrite /eltr -{3}(inord_val i) tpermL. Qed.
-#[local] Lemma eltrR_ord (i : 'I_n) : 's_i (inord i.+1) = i.
-Proof. by rewrite /eltr tpermR inord_val. Qed.
-#[local] Lemma eltrD_ord (i j : 'I_n) : i != j -> inord i.+1 != j -> 's_i j = j.
-Proof. by move=> Hi Hi1; rewrite tpermD // inord_val. Qed.
-
-Definition eltrL := (eltrL_ord, tpermL).
-Definition eltrR := (eltrR_ord, tpermR).
-Definition eltrD := (eltrD_ord, tpermD).
-
-Lemma prods_iota_mi (m : 'I_n) i :
-  i <= m -> 's_[iota (m - i) i] (inord (m - i)) = m.
-Proof using.
-elim: i => [| i IHi] /= Hm.
-  by rewrite subn0 inord_val big_nil perm1.
-rewrite big_cons permM eltrL.
-rewrite subnS prednK; last by rewrite subn_gt0.
-by apply: IHi; exact: ltnW.
-Qed.
-
-Lemma prods_iota_ltmi i (m u : 'I_n) :
-  u < m - i -> 's_[(iota (m - i) i)] u = u.
-Proof using.
-rewrite big_seq=> ltumi; elim/big_ind: _.
-- by rewrite perm1.
-- by move=> s t Hs Ht; rewrite permM Hs Ht.
-move=> j; rewrite mem_iota.
-case: (ltnP m i) => [/ltnW|].
-  by rewrite -subn_eq0 => /eqP H; rewrite H in ltumi.
-move=> /subnK -> /andP[/(leq_trans ltumi) ltuj].
-move=> /leq_ltn_trans/(_ (ltn_ord _)) ltjn1.
-have jo  := ltn_trans (ltnSn _) ltjn1.
-rewrite eltrD // -val_eqE //= inordK // gtn_eqF //.
-exact: (ltn_trans ltuj (ltnSn _)).
-Qed.
-
-Lemma cycleij_j (i j : 'I_n) :
-  i <= j -> 's_[index_iota i j] i = j.
-Proof using.
-move=> leij; rewrite /index_iota -{3}(inord_val i) -{1 3}(subKn leij).
-exact/prods_iota_mi/leq_subr.
-Qed.
-
-Lemma cycleij_lt (i j k : 'I_n) :
-  i <= j -> k < i -> 's_[index_iota i j] k = k.
-Proof using.
-move=> leij ltki; rewrite /index_iota -{1}(subKn leij).
-by apply: prods_iota_ltmi; rewrite subKn.
-Qed.
-
-Lemma cycleij_gt (i j : nat) (k : 'I_n) :
-  j < k -> 's_[index_iota i j] k = k.
-Proof using.
-move=> ltij; rewrite big_seq; elim/big_ind: _.
-- by rewrite perm1.
-- by move=> s t Hs Ht; rewrite permM Hs Ht.
-move=> u; rewrite mem_iota => /andP[leiu].
-case: (ltnP j i) => [/ltnW|].
-  rewrite -subn_eq0 => /eqP ->.
-  by rewrite addn0 => /leq_trans/(_ leiu); rewrite ltnn.
-move=> /subnKC -> /leq_ltn_trans/(_ ltij) ltu1k.
-have u1o := ltn_trans ltu1k (ltn_ord k).
-have uo  := ltn_trans (ltnSn _) u1o.
-rewrite eltrD // -val_eqE //= inordK // ltn_eqF //.
-exact: (ltn_trans (ltnSn _) ltu1k).
-Qed.
-
-Lemma cycleij_inS i (j k : 'I_n) :
-  i <= k < j -> 's_[index_iota i j] (inord k.+1) = k.
-Proof.
-rewrite /index_iota => /andP[lejk ltkj].
-have ltij := leq_ltn_trans lejk ltkj.
-have lekj := ltnW ltkj.
-have -> /= : iota i (j - i) = iota i (k - i) ++ iota k (j - k.+1).+1.
-  rewrite subnS prednK ?subn_gt0 //.
-  suff -> : (j - i) = (k - i) + (j - k) by rewrite iotaD subnKC.
-  by rewrite addnC addnBA // subnK.
-rewrite big_cat /= big_cons permM cycleij_gt //; first last.
-  by rewrite inordK // ltnS (leq_trans ltkj) // -ltnS.
-rewrite permM eltrR_ord.
-have Hk1 := inordK (leq_ltn_trans ltkj (ltn_ord _)).
-by rewrite -Hk1 cycleij_lt // Hk1.
-Qed.
-
-Lemma cycleij_in i (j k : 'I_n) :
-  i < k <= j -> 's_[index_iota i j] k = (inord k.-1).
-Proof.
-move=> /andP[ltik lekj].
-have eqk1 : val k = (inord k.-1 : 'I_n).+1.
-  by rewrite inordK ?(ltn_predK ltik) // ltnW.
-rewrite -{1}(inord_val k) {1}eqk1 cycleij_inS //.
-by rewrite -ltnS -eqk1 ltik.
-Qed.
-
-Lemma prodsK w : 's_[w] * 's_[rev w] = 1.
-Proof using.
-elim/last_ind: w => [| w wn IHw] /=.
-  by rewrite /rev /= !big_nil mulg1.
-rewrite rev_rcons -cat1s -cats1 -big_cat /=.
-rewrite -catA -[wn :: rev w]cat1s [X in w ++ X]catA cat1s !big_cat /=.
-suff -> : 's_[[:: wn; wn]] = 1 by rewrite mul1g.
-by rewrite big_cons big_seq1 eltr2.
-Qed.
-
-Lemma prodsV w : 's_[rev w] = 's_[w]^-1.
-Proof using. by apply/eqP; rewrite eq_sym eq_invg_mul prodsK. Qed.
-
-Lemma odd_eltr i : (i < n0)%N -> odd_perm 's_i.
-Proof.
-rewrite odd_tperm => Hi.
-apply/negP=> /eqP/(congr1 val)/eqP/=.
-rewrite !inordK // ?ltnS ?ieqi1F //.
-exact: ltnW.
-Qed.
-
-End ElemTransp.
-
 
 #[local] Notation "''II_' n" := ('I_n * 'I_n)%type.
 
 (** * Inversion set of a permutation *)
 Section InvSet.
 
-Variable n : nat.
+Context {n : nat}.
 
 Implicit Type (p : 'II_n) (IS S : {set 'II_n}).
 Implicit Type s t : 'S_n.
 
 Definition Delta : {set 'II_n} := [set p : 'II_n | (p.1 < p.2)].
-Definition invset (s : 'S_n) : {set 'II_n} :=
+Definition invset s : {set 'II_n} :=
   [set p : 'II_n | (p.1 < p.2) && (s p.1 > s p.2) ].
 Definition rsymrel IS :=
   [rel i j : 'I_n |
    [|| (i == j), (j, i) \in IS | (i < j) && ((i, j) \notin IS)]].
+Definition length s := #|invset s|.
 
 Variant is_invset IS : Prop :=
   IsInvset of IS \subset Delta
@@ -576,6 +418,19 @@ Lemma mem_Delta i j : (i, j) \in Delta = (i < j).
 Proof. by rewrite inE. Qed.
 Lemma DeltaP i j : (i, j) \in Delta -> (i < j).
 Proof. by rewrite inE. Qed.
+
+Lemma card_Delta : #|Delta| = 'C(n, 2).
+Proof.
+rewrite /Delta -card_ltn_sorted_tuples.
+have /card_imset <- : injective (fun p : 'II_n => [tuple p.1; p.2]).
+  by move=> [i1 i2] [j1 j2] [-> ->].
+congr #|pred_of_set _|; apply/setP => [[[| s0 [| s1 [|s]]]]] // Hs.
+rewrite inE /=; apply/imsetP/idP => /= [[[i j]] |]; rewrite andbT.
+- by rewrite inE /= => Hij [-> ->].
+- move=> Hsort; exists (s0, s1); first by rewrite inE.
+  exact: val_inj.
+Qed.
+
 Lemma is_invset_Delta IS : is_invset IS -> IS \subset Delta.
 Proof. by move=> []. Qed.
 
@@ -586,7 +441,7 @@ Lemma transitive_DeltaI1 IS :
 Proof.
 split.
 - rewrite /= => tr i j k /andP[iltj jltk] ik.
-  case: (boolP ((i, j) \in IS)) => [_|ijN]/=; first by left.
+  case: (boolP ((i, j) \in IS)) => [_ | ijN]/=; first by left.
   right; move: ik; apply/contraLR => jkN.
   have {}/tr tr : (i, j) \in Delta :\: IS by rewrite !inE ijN /= iltj.
   have {}/tr    : (j, k) \in Delta :\: IS by rewrite !inE jkN /= jltk.
@@ -626,6 +481,46 @@ split; first exact: invset_Delta.
   by move=> /andP[/ltn_trans iltj /leq_trans siltsj] /andP[/iltj-> /siltsj->].
 Qed.
 
+Lemma invset_maxperm : invset (@maxperm n) = Delta.
+Proof.
+apply/setP => /= [[i j]]; rewrite /Delta !inE /= !permE.
+case: ltnP => //= Hij; apply ltn_sub2l.
+- exact: (leq_ltn_trans Hij).
+- by rewrite ltnS.
+Qed.
+
+Lemma invset_maxpermMr s : invset (s * maxperm) = Delta :\: invset s.
+Proof.
+rewrite /invset -setP => /= [[i j]].
+rewrite /Delta !inE /= !permM ![maxperm _]permE.
+case: (ltnP i j) => //= iltj; rewrite andbT -leqNgt.
+rewrite [RHS]leq_eqVlt val_eqE (inj_eq perm_inj).
+rewrite -[i == j]val_eqE (ltn_eqF iltj) /=.
+apply/idP/idP => [| siltsj].
+- apply contraLR; rewrite -!leqNgt => H.
+  by apply leq_sub2l; rewrite ltnS.
+- apply ltn_sub2l => //.
+  exact: (leq_ltn_trans siltsj).
+Qed.
+Lemma invset_maxpermMl s :
+  invset (maxperm * s) =
+  Delta :\: [set (maxperm p.2, maxperm p.1) | p in invset s].
+Proof.
+rewrite /invset -setP => /=[[i j]]; rewrite !inE /= [RHS]andbC.
+case: ltnP => //= iltj; rewrite !permM.
+apply/idP/idP => [Hsm|].
+- apply/imsetP => /=[] [[k l]].
+  rewrite inE /= => /andP[kltl slltsk] [Hi Hj]; subst i; subst j.
+  move: Hsm; rewrite !maxpermK => /(ltn_trans slltsk).
+  by rewrite ltnn.
+- move/imsetP => /= H; rewrite ltnNge; apply/negP.
+  rewrite leq_eqVlt val_eqE !(inj_eq perm_inj).
+  rewrite -[i == j]val_eqE (ltn_eqF iltj) /= => Hsm.
+  apply: H; exists (maxperm j, maxperm i); rewrite ?inE /= ?maxpermK //.
+  rewrite {}Hsm andbT !permE /=.
+  apply ltn_sub2l => //.
+  exact: (leq_ltn_trans iltj).
+Qed.
 
 Lemma rsymrel_refl IS : reflexive (rsymrel IS).
 Proof. by rewrite /rsymrel=> k /=; rewrite eqxx. Qed.
@@ -692,49 +587,47 @@ Proof. exact: rsymrel_trans (invsetP s). Qed.
 Lemma rsym_invset_total s : total (rsymrel (invset s)).
 Proof. exact: rsymrel_total (invset_Delta s). Qed.
 
-End InvSet.
-
-
-Section PermOfInvSet.
-
-Variable n0 : nat.
-Local Notation n := n0.+1.
-Implicit Type s t : 'S_n.
-
 Lemma perm_of_relP (r : rel 'I_n) :
-  injective (fun i : 'I_n => nth ord0 (sort r (enum 'I_n)) i).
+  injective (fun i : 'I_n => nth i (sort r (enum 'I_n)) i).
 Proof.
 move=> i j /= /eqP.
+have /(set_nth_default j i)-> : i < size (sort r (enum 'I_n)).
+  by rewrite size_sort size_enum_ord.
 rewrite nth_uniq => [/eqP/val_inj -> //|||].
 - by rewrite size_sort size_enum_ord.
 - by rewrite size_sort size_enum_ord.
 - by rewrite sort_uniq enum_uniq.
 Qed.
-Definition perm_of_invset IS := (perm (@perm_of_relP (rsymrel IS)))^-1.
+Definition perm_of_invset IS :=
+  (perm (@perm_of_relP (rsymrel IS)))^-1.
 
 Lemma rsym_invsetP s :
   sorted (rsymrel (invset s)) [seq s^-1 i | i : 'I_n].
 Proof.
+case: (n =P 0) => [neq0 | /eqP nnon0].
+  suff -> : [seq s^-1 i | i : 'I_n] = [::] by [].
+  by apply: size0nil; rewrite size_map size_enum_ord.
+have {nnon0} ord0 : 'I_n by case: n {s} nnon0 => // n0 _; apply ord0.
 apply/(sortedP ord0) => i; rewrite size_map size_enum_ord => i1ltn1.
 have iltn1 := ltnW i1ltn1.
-rewrite !(nth_map ord0) -?enumT ?size_enum_ord //.
+rewrite !(nth_map ord0) -?enumT ?size_enum_ord //=.
 rewrite -[i]/(val (Ordinal iltn1)) nth_ord_enum.
 rewrite -[succn i]/(val (Ordinal i1ltn1)) nth_ord_enum.
-set io := (Ordinal iltn1); set io1 := (Ordinal i1ltn1).
+set io := Ordinal iltn1; set io1 := Ordinal i1ltn1.
 rewrite /= !inE /= negb_and -!leqNgt.
 rewrite !permKV /= ltnSn leqnSn /= orbT !andbT.
 by rewrite -neq_ltn eq_sym orbN.
 Qed.
 
-Lemma invsetK : cancel (@invset n) perm_of_invset.
+Lemma invsetK : cancel invset perm_of_invset.
 Proof.
 rewrite /perm_of_invset=> s; apply invg_inj; rewrite invgK.
-apply/permP => i /=; rewrite permE.
-have -> : s^-1 i = nth ord0 [seq s^-1 i | i : 'I_n] i.
-  by rewrite (nth_map ord0) ?size_enum_ord // nth_ord_enum.
+apply/permP => /= i; rewrite permE.
+have -> : s^-1 i = nth i [seq s^-1 i | i : 'I_n] i.
+  by rewrite (nth_map i) ?size_enum_ord // nth_ord_enum.
 congr nth => {i}.
-apply (sorted_eq (@rsym_invset_trans _ s) (@rsym_invset_anti _ s)).
-- exact: (sort_sorted (@rsym_invset_total _ s)).
+apply (sorted_eq (@rsym_invset_trans s) (@rsym_invset_anti s)).
+- exact: (sort_sorted (@rsym_invset_total s)).
 - exact: rsym_invsetP.
 - rewrite perm_sort; apply uniq_perm.
   + exact: enum_uniq.
@@ -745,19 +638,21 @@ apply (sorted_eq (@rsym_invset_trans _ s) (@rsym_invset_anti _ s)).
     by rewrite permK.
 Qed.
 
-Theorem invset_inj : injective (@invset n).
-Proof. by move=> s t Hinvset; rewrite -(invsetK s) Hinvset invsetK. Qed.
+Theorem invset_inj : injective invset.
+Proof. exact: (can_inj invsetK). Qed.
 
-
-Theorem perm_of_invsetK IS :
+Theorem perm_of_invsetK (IS : {set 'II_n}) :
   is_invset IS -> invset (perm_of_invset IS) = IS.
 Proof.
 move=> ISinv; have ID := is_invset_Delta ISinv.
 rewrite /perm_of_invset; set s := perm _.
 have compat (i j : 'I_n) : i < j -> rsymrel IS (s i) (s j).
   rewrite {}/s !permE => /ltnW ilej.
-  apply: (sorted.sorted2P _ (rsymrel_trans ISinv) (rsymrel_refl IS) _
-            (sort_sorted (rsymrel_total ID) (enum 'I_n))).
+  set L := sort _ _.
+  have /(set_nth_default j i)-> : i < size L.
+    by rewrite size_sort size_enum_ord.
+  apply (sorted.sorted2P _ (rsymrel_trans ISinv) (rsymrel_refl IS) _
+            (sort_sorted (rsymrel_total ID) (enum 'I__))).
   by rewrite ilej size_sort size_enum_ord /=.
 rewrite invset_permV /invset -setP => /=[[i j]] /=.
 apply/imsetP/idP => /= [[[a b]] | ijIS].
@@ -775,6 +670,209 @@ apply/imsetP/idP => /= [[[a b]] | ijIS].
   move=> /(subsetP ID)/DeltaP/ltn_trans/(_ iltj).
   by rewrite ltnn.
 Qed.
+
+
+Lemma length1 : length 1 = 0.
+Proof using.
+rewrite /length /invset.
+apply/eqP; rewrite cards_eq0; apply/eqP/setP => [[i j]]; rewrite !inE !perm1.
+apply/negP=> /andP[/ltn_trans /[apply]].
+by rewrite ltnn.
+Qed.
+
+Lemma lengthV s : length s^-1 = length s.
+Proof using.
+rewrite /length invset_permV card_imset //.
+by move=> /= [i j] [k l] /= [/perm_inj-> /perm_inj->].
+Qed.
+
+Lemma length_max s : length s <= 'C(n, 2).
+Proof.
+by rewrite /length -card_Delta; apply: subset_leq_card (invset_Delta s).
+Qed.
+
+Lemma length_maxperm : length (@maxperm n) = 'C(n, 2).
+Proof. by rewrite /length invset_maxperm card_Delta. Qed.
+Lemma length_maxpermE s : length s = 'C(n, 2) -> s = (@maxperm n).
+Proof.
+move=> Hlen; apply/invset_inj/eqP.
+rewrite eqEcard -!/(length _) Hlen length_maxperm leqnn andbT.
+by rewrite invset_maxperm invset_Delta.
+Qed.
+
+Lemma length_maxpermMr s : length (s * maxperm) = 'C(n, 2) - length s.
+Proof.
+rewrite /length invset_maxpermMr cardsD card_Delta.
+by have /setIidPr -> := invset_Delta s.
+Qed.
+Lemma length_maxpermMl s : length (maxperm * s) = 'C(n, 2) - length s.
+Proof. by rewrite -lengthV invMg maxpermV length_maxpermMr lengthV. Qed.
+
+End InvSet.
+
+
+Section ElemTransp.
+
+Variable n0 : nat.
+Notation n := n0.+1.
+
+Definition eltr i : 'S_n0.+1 := tperm (inord i) (inord i.+1).
+
+Notation "''s_' i" := (eltr i).
+Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
+
+Implicit Type s t : 'S_n.
+
+Lemma eltrV i : 's_i^-1 = 's_i. Proof. by rewrite tpermV. Qed.
+Lemma eltrK i : involutive 's_i. Proof. exact: tpermK. Qed.
+Lemma eltr2 i : 's_i * 's_i = 1. Proof. exact: tperm2. Qed.
+
+Lemma eltr_braid i :
+  i.+1 < n0 -> 's_i * 's_i.+1 * 's_i = 's_i.+1 * 's_i * 's_i.+1.
+Proof using.
+move=> Hi.
+apply: tperm_braid; rewrite /eq_op /=.
+- by rewrite inord1i // inordi // !trivSimpl.
+- by rewrite inordi // inordi1 // !trivSimpl.
+Qed.
+
+Lemma eltr_comm i j :
+  i.+1 < j < n0 -> 's_i * 's_j = 's_j * 's_i.
+Proof using.
+move=> /andP[Hij Hj].
+have Hi := ltn_trans Hij Hj.
+apply: tpermC; rewrite /eq_op /=.
+- by rewrite inord1i // inordi // (ltn_eqF (ltnW Hij)).
+- by rewrite !inordi // (ltn_eqF Hij).
+- rewrite inord1i // inordi1 //.
+  by rewrite (ltn_eqF (leq_trans (ltnW Hij) (leqnSn j))).
+- rewrite inordi // inordi1 //.
+  by rewrite eqSS (ltn_eqF (ltnW Hij)).
+Qed.
+
+#[local] Lemma eltrL_ord (i : 'I_n) : 's_i i = inord i.+1.
+Proof. by rewrite /eltr -{3}(inord_val i) tpermL. Qed.
+#[local] Lemma eltrR_ord (i : 'I_n) : 's_i (inord i.+1) = i.
+Proof. by rewrite /eltr tpermR inord_val. Qed.
+#[local] Lemma eltrD_ord (i j : 'I_n) : i != j -> inord i.+1 != j -> 's_i j = j.
+Proof. by move=> Hi Hi1; rewrite tpermD // inord_val. Qed.
+
+Definition eltrL := (eltrL_ord, tpermL).
+Definition eltrR := (eltrR_ord, tpermR).
+Definition eltrD := (eltrD_ord, tpermD).
+
+Lemma prods_iota_mi (m : 'I_n) i :
+  i <= m -> 's_[iota (m - i) i] (inord (m - i)) = m.
+Proof using.
+elim: i => [| i IHi] /= Hm.
+  by rewrite subn0 inord_val big_nil perm1.
+rewrite big_cons permM eltrL.
+rewrite subnS prednK; last by rewrite subn_gt0.
+by apply: IHi; exact: ltnW.
+Qed.
+
+Lemma prods_iota_ltmi i (m u : 'I_n) :
+  u < m - i -> 's_[(iota (m - i) i)] u = u.
+Proof using.
+rewrite big_seq=> ltumi; elim/big_ind: _ => /=.
+- by rewrite perm1.
+- by move=> s t Hs Ht; rewrite permM Hs Ht.
+move=> j; rewrite mem_iota.
+case: (ltnP m i) => [/ltnW | /subnK->].
+  by rewrite -subn_eq0 => /eqP H; rewrite H in ltumi.
+move=> /andP[/(leq_trans ltumi) ltuj /leq_ltn_trans/(_ (ltn_ord _)) ltjn1].
+have jo := ltn_trans (ltnSn _) ltjn1.
+rewrite eltrD // -val_eqE //= inordK // gtn_eqF //.
+exact: (ltn_trans ltuj (ltnSn _)).
+Qed.
+
+Lemma cycleij_j (i j : 'I_n) :
+  i <= j -> 's_[index_iota i j] i = j.
+Proof using.
+move=> leij; rewrite /index_iota -{3}(inord_val i) -{1 3}(subKn leij).
+exact/prods_iota_mi/leq_subr.
+Qed.
+
+Lemma cycleij_lt (i j k : 'I_n) :
+  i <= j -> k < i -> 's_[index_iota i j] k = k.
+Proof using.
+move=> leij ltki; rewrite /index_iota -{1}(subKn leij).
+by apply: prods_iota_ltmi; rewrite subKn.
+Qed.
+
+Lemma cycleij_gt (i j : nat) (k : 'I_n) :
+  j < k -> 's_[index_iota i j] k = k.
+Proof using.
+move=> ltij; rewrite big_seq; elim/big_ind: _.
+- by rewrite perm1.
+- by move=> s t Hs Ht; rewrite permM Hs Ht.
+move=> u; rewrite mem_iota => /andP[leiu].
+case: (ltnP j i) => [/ltnW |].
+  rewrite -subn_eq0 => /eqP ->.
+  by rewrite addn0 => /leq_trans/(_ leiu); rewrite ltnn.
+move=> /subnKC -> /leq_ltn_trans/(_ ltij) ltu1k.
+have u1o := ltn_trans ltu1k (ltn_ord k).
+have uo  := ltn_trans (ltnSn _) u1o.
+rewrite eltrD // -val_eqE //= inordK // ltn_eqF //.
+exact: (ltn_trans (ltnSn _) ltu1k).
+Qed.
+
+Lemma cycleij_inS i (j k : 'I_n) :
+  i <= k < j -> 's_[index_iota i j] (inord k.+1) = k.
+Proof.
+rewrite /index_iota => /andP[lejk ltkj].
+have ltij := leq_ltn_trans lejk ltkj.
+have lekj := ltnW ltkj.
+have -> /= : iota i (j - i) = iota i (k - i) ++ iota k (j - k.+1).+1.
+  rewrite subnS prednK ?subn_gt0 //.
+  suff -> : (j - i) = (k - i) + (j - k) by rewrite iotaD subnKC.
+  by rewrite addnC addnBA // subnK.
+rewrite big_cat /= big_cons permM cycleij_gt //; first last.
+  by rewrite inordK // ltnS (leq_trans ltkj) // -ltnS.
+rewrite permM eltrR_ord.
+have Hk1 := inordK (leq_ltn_trans ltkj (ltn_ord _)).
+by rewrite -Hk1 cycleij_lt // Hk1.
+Qed.
+
+Lemma cycleij_in i (j k : 'I_n) :
+  i < k <= j -> 's_[index_iota i j] k = (inord k.-1).
+Proof.
+move=> /andP[ltik lekj].
+have eqk1 : val k = (inord k.-1 : 'I_n).+1.
+  by rewrite inordK ?(ltn_predK ltik) // ltnW.
+rewrite -{1}(inord_val k) {1}eqk1 cycleij_inS //.
+by rewrite -ltnS -eqk1 ltik.
+Qed.
+
+Lemma prodsK w : 's_[w] * 's_[rev w] = 1.
+Proof using.
+elim/last_ind: w => [| w wn IHw] /=.
+  by rewrite /rev /= !big_nil mulg1.
+rewrite rev_rcons -cat1s -cats1 -big_cat /=.
+rewrite -catA -[wn :: rev w]cat1s [X in w ++ X]catA cat1s !big_cat /=.
+suff -> : 's_[[:: wn; wn]] = 1 by rewrite mul1g.
+by rewrite big_cons big_seq1 eltr2.
+Qed.
+
+Lemma prodsV w : 's_[rev w] = 's_[w]^-1.
+Proof using. by apply/eqP; rewrite eq_sym eq_invg_mul prodsK. Qed.
+
+Lemma odd_eltr i : (i < n0)%N -> odd_perm 's_i.
+Proof.
+rewrite odd_tperm => Hi.
+apply/negP=> /eqP/(congr1 val)/eqP/=.
+rewrite !inordK // ?ltnS ?ieqi1F //.
+exact: ltnW.
+Qed.
+
+End ElemTransp.
+
+
+Section PermOfInvSetEltr.
+
+Variable n0 : nat.
+Local Notation n := n0.+1.
+Implicit Type s t : 'S_n.
 
 Notation "''s_' i" := (eltr _ i).
 Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
@@ -797,17 +895,16 @@ move=> Hi; case: tpermP => [-> | -> | /eqP Ha1 /eqP Hai1];
 Qed.
 
 Lemma invset_eltrL s (i : 'I_n) :
-  i < n0 -> s i < s (inord (i.+1)) ->
+  i < n0 -> s i < s (inord i.+1) ->
   invset ('s_i * s) =
   (i, inord i.+1) |: [set ('s_i p.1, 's_i p.2) | p in invset s].
 Proof.
 move => Hi Hfwd.
-have Hio : (inord i) = i by apply val_inj => /=; rewrite inordK.
 apply/setP => [/= [u v]] /=; rewrite !inE /= !permM.
 apply/idP/idP.
 - move=> /andP[Huv].
   case: tpermP => /= [Hv | Hv | /eqP Hvi /eqP Hvi1].
-  + rewrite Hio in Hv; subst v.
+  + rewrite inord_val in Hv; subst v.
     have Htu : 's_i u = u.
       rewrite eltrD // eq_sym.
       * by move: Huv; apply contraL => /eqP ->; rewrite ltnn.
@@ -816,49 +913,46 @@ apply/idP/idP.
     apply/imsetP; exists (u, inord i.+1); first last.
       by rewrite /= eltrR Htu.
     by rewrite inE /= Hs andbT inordi1 //; apply/(ltn_trans Huv).
-  + rewrite Hio; subst v; case: tpermP.
-    * by move=> ->; rewrite Hio eq_refl.
+  + rewrite inord_val; subst v; case: tpermP.
+    * by move=> ->; rewrite inord_val eq_refl.
     * by move=> Hu; move: Huv; rewrite Hu ltnn.
-    rewrite Hio => /eqP Hiu /eqP Hi1u.
+    rewrite inord_val => /eqP Hiu /eqP Hi1u.
     have Htu : 's_i u = u by rewrite eltrD // eq_sym.
     move=> Hsiu; apply/orP; right.
     apply/imsetP; exists (u, i); last by rewrite Htu /= eltrL.
     by rewrite inE /= Hsiu andbT ltn_neqAle Hiu -ltnS -(inordi1 Hi) Huv.
-  rewrite Hio in Hvi.
+  rewrite inord_val in Hvi.
   case: tpermP => [Hu | Hu | /eqP Hui /eqP Hui1].
-  + rewrite Hio in Hu; subst u => Hsvi1.
+  + rewrite inord_val in Hu; subst u => Hsvi1.
     have Htv : 's_i v = v by rewrite eltrD // eq_sym.
     apply/orP; right.
     apply/imsetP; exists ((inord i.+1), v); last by rewrite Htv /= eltrR.
     rewrite inE /= Hsvi1 ltn_neqAle inordi1 //.
     by rewrite Huv !andbT eq_sym -(inordi1 Hi) Hvi1.
-  + rewrite Hio; subst u => Hsvi1.
-    have Htv : 's_i v = v by rewrite eltrD // eq_sym // Hio.
+  + rewrite inord_val; subst u => Hsvi1.
+    have Htv : 's_i v = v by rewrite eltrD // eq_sym // inord_val.
     apply/orP; right.
     apply/imsetP; exists (i, v); last by rewrite Htv /= eltrL.
     rewrite inE /= Hsvi1 ltn_neqAle eq_sym Hvi !andbT /=.
     by move: Huv; rewrite inordi1 // => /ltnW/ltnW.
-  + rewrite Hio in Hui; move=> Hsvu.
+  + rewrite inord_val in Hui; move=> Hsvu.
     apply/orP; right.
     apply/imsetP; exists (u, v); last by rewrite !eltrD // eq_sym.
     by rewrite inE /= Huv Hsvu.
-- move/orP => [].
-    move=> /eqP[->{u} ->{v}].
+- move/orP => [/eqP[->{u} ->{v}] | /imsetP[[/= a b]]].
     by rewrite eltrL eltrR Hfwd inordi1 // ltnS leqnn.
-  move=> /imsetP[[a b]]; rewrite inE /= => /andP[Hab Hsba] [->{u} ->{v}].
+  rewrite inE /= => /andP[Hab Hsba] [->{u} ->{v}].
   rewrite !eltrK Hsba andbT (eltr_exchange Hi Hab) -negb_and.
-  move: Hsba; apply contraL; rewrite -leqNgt => /andP[/eqP Hia /eqP Hib].
-  have -> : a = i by apply val_inj.
+  move: Hsba; apply contraL; rewrite -leqNgt => /andP[/eqP/val_inj<- /eqP Hib].
   have -> : b = (inord i.+1) by apply val_inj; rewrite /= -Hib inordi1.
   exact: ltnW.
 Qed.
 
 Lemma invset_eltrR s (i : 'I_n) :
-  i < n0 -> s^-1 i < s^-1 (inord (i.+1)) ->
+  i < n0 -> s^-1 i < s^-1 (inord i.+1) ->
   invset (s * 's_i) = (s^-1 i, s^-1 (inord i.+1)) |: invset s.
 Proof.
 move=> Hi Hfwd.
-have Hio : (inord i) = i by apply val_inj => /=; rewrite inordK.
 rewrite -eltrV -{1}(invgK s) -invMg invset_permV.
 rewrite invset_eltrL // imsetU1; congr (_ |: _).
 - by rewrite /= !permM eltrL eltrR.
@@ -866,10 +960,8 @@ rewrite invset_eltrL // imsetU1; congr (_ |: _).
   by move=> [u v]; rewrite /= !permM !eltrK !permK.
 Qed.
 
-End PermOfInvSet.
-
+End PermOfInvSetEltr.
 Arguments Delta {n}.
-
 
 
 Section Length.
@@ -883,27 +975,12 @@ Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
 Implicit Type s t u : 'S_n.
 
 (** * Length of a permutation *)
-Definition length s := #|invset s|.
-
-Lemma length1 : length 1 = 0.
-Proof using.
-rewrite /length /invset.
-apply/eqP; rewrite cards_eq0; apply/eqP/setP => [[i j]]; rewrite !inE !perm1.
-apply/negP=> /andP /= [/ltn_trans /[apply]].
-by rewrite ltnn.
-Qed.
-
-Lemma lengthV s : length s^-1 = length s.
-Proof using.
-rewrite /length invset_permV card_imset //.
-by move=> /= [i j] [k l] /= [/perm_inj-> /perm_inj->].
-Qed.
+(** the length was defined with invset *)
 
 Lemma length_add1L s (i : 'I_n) :
-  i < n0 -> s i < s (inord (i.+1)) -> length ('s_i * s) = (length s).+1.
+  i < n0 -> s i < s (inord i.+1) -> length ('s_i * s) = (length s).+1.
 Proof using.
 rewrite /length => Hi Hfwd.
-have Hio : (inord i) = i by apply val_inj => /=; rewrite inordK.
 rewrite (invset_eltrL Hi Hfwd).
 rewrite cardsU1 (card_imset _ (@inv_inj _ _ _)); first last.
   by move=> [u v] /=; rewrite !eltrK.
@@ -916,7 +993,7 @@ by move: Huv => /ltnW; rewrite inordi1 // ltnn.
 Qed.
 
 Lemma length_sub1L s (i : 'I_n) :
-  i < n0 -> s i > s (inord (i.+1)) -> length s = (length ('s_i * s)).+1.
+  i < n0 -> s i > s (inord i.+1) -> length s = (length ('s_i * s)).+1.
 Proof using.
 move=> Hi Hs.
 rewrite -{1}[s](mulKg 's_i) eltrV.
@@ -924,20 +1001,18 @@ by apply (length_add1L Hi); rewrite !permM eltrL eltrR.
 Qed.
 
 Lemma length_descL s (i : 'I_n) :
-  i < n0 -> (s i < s (inord (i.+1))) = (length ('s_i * s) > length s).
+  i < n0 -> (s i < s (inord i.+1)) = (length ('s_i * s) > length s).
 Proof using.
 move=> Hi.
-case: (ltngtP (s i) (s (inord (i.+1)))) => Hsi; apply esym.
+case: (ltngtP (s i) (s (inord i.+1))) => Hsi; apply esym.
 - by rewrite (length_add1L  Hi Hsi) ltnS leqnn.
 - by rewrite (length_sub1L Hi Hsi) ltnNge leqnSn.
-- exfalso.
-  have {Hsi} : s i = s (inord i.+1) by apply val_inj.
-  move=> /perm_inj /(congr1 val) /= /eqP.
-  by rewrite inordK ?ltnS // trivSimpl.
+- exfalso; move/val_inj/perm_inj/(congr1 val)/eqP: Hsi.
+  by rewrite /= inordK ?ltnS // trivSimpl.
 Qed.
 
 Lemma length_add1R s (i : 'I_n) :
-  i < n0 -> s^-1 i < s^-1 (inord (i.+1)) -> length (s * 's_i) = (length s).+1.
+  i < n0 -> s^-1 i < s^-1 (inord i.+1) -> length (s * 's_i) = (length s).+1.
 Proof using.
 move=> Hi Hdesc.
 rewrite -lengthV -[length s]lengthV invMg eltrV.
@@ -945,7 +1020,7 @@ exact: length_add1L.
 Qed.
 
 Lemma length_sub1R s (i : 'I_n) :
-  i < n0 -> s^-1 i > s^-1 (inord (i.+1)) -> length s = (length (s * 's_i)).+1.
+  i < n0 -> s^-1 i > s^-1 (inord i.+1) -> length s = (length (s * 's_i)).+1.
 Proof using.
 move=> Hi Hdesc.
 rewrite -lengthV -[length (s * _)]lengthV invMg eltrV.
@@ -953,7 +1028,7 @@ exact: length_sub1L.
 Qed.
 
 Lemma length_descR s (i : 'I_n) :
-  i < n0 -> (s^-1 i < s^-1 (inord (i.+1))) = (length (s * 's_i) > length s).
+  i < n0 -> (s^-1 i < s^-1 (inord i.+1)) = (length (s * 's_i) > length s).
 Proof using.
 by move/length_descL ->; rewrite -{1}eltrV -invMg !lengthV.
 Qed.
@@ -969,7 +1044,7 @@ Qed.
 Lemma length_prods (w : seq 'I_n0) : length 's_[w] <= size w.
 Proof using.
 elim: w => [/=| w0 w]; first by rewrite big_nil length1.
-rewrite big_cons /=; move: ('s_[w]) => s Hlen.
+rewrite big_cons /=; move: ('s_[w]) => /= s Hlen.
 pose w0' := inord (n' := n0) w0.
 have Hw0' : w0' < n0 by rewrite /= inordK //; apply: ltnW; rewrite ltnS.
 have -> : w0 = w0' :> nat by rewrite inordK //; apply ltnW; rewrite ltnS.
@@ -977,9 +1052,8 @@ case (ltngtP (s w0') (s (inord w0'.+1))) => H.
 - by rewrite (length_add1L Hw0' H); rewrite ltnS.
 - move: Hlen; rewrite (length_sub1L Hw0' H) => /ltnW.
   by rewrite -ltnS => /ltnW.
-- exfalso; move: H => /val_inj/perm_inj => H.
-  have {H} /= /eqP := (congr1 nat_of_ord H).
-  by rewrite inordK // ieqi1F.
+- exfalso; move/val_inj/perm_inj/(congr1 val)/eqP : H.
+  by rewrite /= inordK // ieqi1F.
 Qed.
 
 
@@ -1000,7 +1074,7 @@ Definition Lehmer (s : 'S_n.+1) (i : 'I_n.+1) :=
 (** ** Properties of the dual code *)
 Lemma cocode_rec_cat m c s : cocode_rec m c s = (cocode_rec m [::] s ++ c).
 Proof using.
-elim: m => [//= | m IHm] in c s * => /=.
+elim: m => [| m IHm] in c s * => //=.
 by rewrite IHm [X in _ = X ++ _]IHm -cat1s catA.
 Qed.
 
@@ -1061,8 +1135,7 @@ rewrite {Hcode}/srec -mulgA; congr (s * _).
 rewrite /word_of_partcocode /= addn0 (subKn Hsm) big_cat /=.
 rewrite mulgA prodsK mul1g; apply congr_big => //; congr flatten.
 rewrite -(addn0 1%N) iotaDl -map_comp.
-apply eq_map => i /=.
-by rewrite addnA addn1.
+by apply eq_map => i /=; rewrite addnA addn1.
 Qed.
 
 End PartCode.
@@ -1074,9 +1147,9 @@ Lemma perm_on_prods c m :
           (\prod_(i <- iota 0 m) 's_[(rev (iota (i - nth 0 c i) (nth 0 c i)))]).
 Proof using.
 move=> /is_codeP Hc Hmsz Hm.
-rewrite big_seq; apply big_rec => [| i s]; first exact: perm_on1.
+rewrite big_seq; apply big_rec => [| /= i s]; first exact: perm_on1.
 rewrite mem_iota /= add0n => Him /(perm_onM _); apply => {s}.
-rewrite big_seq; apply big_rec => [| j s]; first exact: perm_on1.
+rewrite big_seq; apply big_rec => [| /= j s]; first exact: perm_on1.
 rewrite mem_rev mem_iota /= => /andP[_].
 move/(_ _ (leq_trans Him Hmsz)): Hc => /subnK -> Hji /(perm_onM _); apply => {s}.
 have Hj1m := leq_ltn_trans Hji Him.
@@ -1103,40 +1176,37 @@ have H : m - i.+1 < n0.
   by rewrite ltnS; exact: leq_subr.
 have:= H; rewrite -ltnS => /ltnW Ho.
 have -> : (m - i.+1) = Ordinal Ho by [].
-rewrite length_add1R.
-- by rewrite (IHi _ (ltnW Hm) Hon) addnS.
-- by [].
-- have -> : Ordinal Ho = inord (m - i.+1) by apply val_inj => /=; rewrite inordK.
-  rewrite invMg !permM inordK // {IHi}.
-  rewrite !subnS prednK; last by rewrite subn_gt0.
-  rewrite {H Ho} prodsV invgK (prods_iota_mi (ltnW Hm)).
-  have : m \notin [set k : 'I_n | k < m] by rewrite inE ltnn.
-  move/(out_perm (perm_onV Hon)) ->.
-  rewrite prods_iota_ltmi; first last.
-    rewrite inordK; first by move: Hm; rewrite -subn_gt0; case: (m - i).
-    apply: (leq_trans (leq_pred _)).
-    by apply: (leq_trans (leq_subr _ _)); rewrite -ltnS.
-  have:= perm_closed (inord (m - i).-1) (perm_onV Hon).
-  rewrite !inE => -> /=; rewrite inordK.
-  - rewrite prednK; last by rewrite subn_gt0.
-    exact: leq_subr.
-  - rewrite prednK; last by rewrite subn_gt0.
-    by apply: (leq_trans (leq_subr _ _)); exact: ltnW.
+rewrite length_add1R //; first by rewrite (IHi _ (ltnW Hm) Hon) addnS {IHi}.
+have -> : Ordinal Ho = inord (m - i.+1) by apply val_inj => /=; rewrite inordK.
+rewrite invMg !permM inordK //.
+rewrite !subnS prednK; last by rewrite subn_gt0.
+rewrite {H Ho} prodsV invgK (prods_iota_mi (ltnW Hm)).
+have : m \notin [set k : 'I_n | k < m] by rewrite inE ltnn.
+move/(out_perm (perm_onV Hon)) ->.
+rewrite prods_iota_ltmi; first last.
+  rewrite inordK; first by move: Hm; rewrite -subn_gt0; case: (m - i).
+  apply: (leq_trans (leq_pred _)).
+  by apply: (leq_trans (leq_subr _ _)); rewrite -ltnS.
+have:= perm_closed (inord (m - i).-1) (perm_onV Hon).
+rewrite !inE => -> /=; rewrite inordK.
+- rewrite prednK; last by rewrite subn_gt0.
+  exact: leq_subr.
+- rewrite prednK; last by rewrite subn_gt0.
+  by apply: (leq_trans (leq_subr _ _)); exact: ltnW.
 Qed.
 
 Lemma perm_on_prods_length s i m :
   m < n -> i <= m -> perm_on [set k : 'I_n | k < m] s ->
   length (s * 's_[(rev (iota (m - i) i))]) = length s + i.
 Proof using.
-move=> Hm; have -> : m = Ordinal Hm by [].
+move=> Hm; rewrite -[m]/(val (Ordinal Hm)).
 exact: perm_on_prods_length_ord.
 Qed.
 
 Lemma length_permcd c :
   c \is a code -> size c <= n -> length 's_[wordcd c] = sumn c.
 Proof using.
-rewrite wordcdE => Hcode.
-have:= Hcode => /is_codeP Hcd Hsz.
+rewrite wordcdE => /[dup] Hcode /is_codeP Hcd Hsz.
 rewrite (sumn_nth_le (n := size c)) // /index_iota subn0.
 have [n] := ubnPgeq (size c); elim: n => [/= |m IHm] Hm.
   by rewrite !big_nil length1.
@@ -1279,93 +1349,15 @@ by rewrite ltnn.
 Qed.
 
 
-Lemma card_Delta : #|@Delta n| = 'C(n, 2).
-Proof.
-rewrite /Delta -card_ltn_sorted_tuples.
-have /card_imset <- : injective (fun p : 'II_n => [tuple p.1; p.2]).
-  by move=> [i1 i2] [j1 j2] [-> ->].
-congr #|pred_of_set _|; apply/setP => [[[| s0 [| s1 [|s]]]]] // Hs.
-rewrite inE /=; apply/imsetP/idP => /= [[[i j]] |]; rewrite andbT.
-- by rewrite inE /= => Hij [-> ->].
-- move=> Hsort; exists (s0, s1); first by rewrite inE.
-  exact: val_inj.
-Qed.
-
-Lemma length_max s : length s <= 'C(n, 2).
-Proof.
-by rewrite /length -card_Delta; apply: subset_leq_card (invset_Delta s).
-Qed.
-
-Lemma invset_maxperm : invset (@maxperm n) = Delta.
-Proof.
-apply/setP => /= [[i j]]; rewrite /Delta !inE /= !permE.
-case: ltnP => //= Hij; apply ltn_sub2l.
-- by apply (leq_trans Hij); rewrite -ltnS.
-- by rewrite ltnS.
-Qed.
-
-Lemma length_maxperm : length (@maxperm n) = 'C(n, 2).
-Proof. by rewrite /length invset_maxperm card_Delta. Qed.
-Lemma length_maxpermE s : length s = 'C(n, 2) -> s = (@maxperm n).
-Proof.
-move=> Hlen; apply/invset_inj/eqP.
-rewrite eqEcard -!/(length _) Hlen length_maxperm leqnn andbT.
-by rewrite invset_maxperm invset_Delta.
-Qed.
-
-Lemma invset_maxpermMr s : invset (s * maxperm) = Delta :\: invset s.
-Proof.
-rewrite /invset -setP => /= [[i j]].
-rewrite /Delta !inE /= !permM ![maxperm _]permE.
-case: (ltnP i j) => //= iltj; rewrite andbT -leqNgt.
-rewrite [RHS]leq_eqVlt (inj_eq val_inj) (inj_eq perm_inj).
-rewrite -[i == j](inj_eq val_inj) (ltn_eqF iltj) /=.
-apply/idP/idP => [| siltsj].
-- apply contraLR; rewrite -!leqNgt => H.
-  by apply leq_sub2l; rewrite ltnS.
-- apply ltn_sub2l => //; rewrite ltnS.
-  by apply (leq_trans siltsj); rewrite -ltnS.
-Qed.
-Lemma invset_maxpermMl s :
-  invset (maxperm * s) =
-  Delta :\: [set (maxperm p.2, maxperm p.1) | p in invset s].
-Proof.
-rewrite /invset -setP => /=[[i j]]; rewrite !inE /= [RHS]andbC.
-case: ltnP => //= iltj; rewrite !permM.
-apply/idP/idP => [Hsm|].
-- apply/imsetP => /=[] [[k l]].
-  rewrite inE /= => /andP[kltl slltsk] [Hi Hj]; subst i; subst j.
-  move: Hsm; rewrite !maxpermK => /(ltn_trans slltsk).
-  by rewrite ltnn.
-- move/imsetP => /= H; rewrite ltnNge; apply/negP.
-  rewrite leq_eqVlt (inj_eq val_inj) !(inj_eq perm_inj).
-  rewrite -[i == j](inj_eq val_inj) (ltn_eqF iltj) /= => Hsm.
-  apply: H; exists (maxperm j, maxperm i); rewrite ?inE /= ?maxpermK //.
-  rewrite {}Hsm andbT !permE /=.
-  apply ltn_sub2l => //; rewrite ltnS.
-  by apply (leq_trans iltj); rewrite -ltnS.
-Qed.
-
-Lemma length_maxpermMr s : length (s * maxperm) = 'C(n, 2) - length s.
-Proof.
-rewrite /length invset_maxpermMr cardsD card_Delta.
-by have /setIidPr -> := invset_Delta s.
-Qed.
-Lemma length_maxpermMl s : length (maxperm * s) = 'C(n, 2) - length s.
-Proof. by rewrite -lengthV invMg maxpermV length_maxpermMr lengthV. Qed.
-
-
-
 Definition prods_codesz (c : codesz n) : 'S_n := 's_[wordcd c].
 
 Lemma prods_codesz_bij : bijective prods_codesz.
 Proof using.
-apply inj_card_bij; last by rewrite card_codesz card_Sn.
-move=> c1 c2 Heq.
-suff /image_injP Hinj :
+apply inj_card_bij => [/= c1 c2 Heq|]; last by rewrite card_codesz card_Sn.
+suff {c1 c2 Heq} /image_injP Hinj :
   #|image prods_codesz {:codesz n}| == #|{:codesz n}| by exact: (Hinj c1 c2).
-rewrite {c1 c2 Heq} card_codesz (eq_card (B := 'S_n)) ?card_Sn //.
-move=> s; rewrite !inE; apply/mapP.
+rewrite card_codesz (eq_card (B := 'S_n)) ?card_Sn // => /= s.
+rewrite !inE; apply/mapP.
 have Hcode : is_code_of_size n (cocode s).
   by rewrite /is_code_of_size cocodeP size_cocode /=.
 exists (CodeSZ Hcode); first by rewrite enumT.
@@ -1383,8 +1375,6 @@ by move/((bij_inj prods_codesz_bij) (CodeSZ HC1) (CodeSZ HC2))/(congr1 val).
 Qed.
 
 End Length.
-Arguments length  {n0}.
-
 #[export] Hint Resolve cocodeP : core.
 #[export] Hint Resolve codeszP : core.
 
@@ -1400,9 +1390,13 @@ Import GRing.Theory.
 Open Scope ring_scope.
 
 Corollary genfun_length n :
-  \sum_(s in 'S_n.+1) 'X^(length s) =
-  \prod_(0 <= i < n.+1) \sum_(0 <= j < i.+1) 'X^j : {poly int}.
+  \sum_(s : 'S_n) 'X^(length s) =
+  \prod_(0 <= i < n) \sum_(0 <= j < i.+1) 'X^j : {poly int}.
 Proof.
+case: n => [|n].
+  rewrite (big_pred1_id _ _ (i := 1%g)); first last.
+    by move=> s; rewrite permS0 /= eq_refl.
+  by rewrite addr0 length1 expr0 big_mkord big_ord0.
 rewrite (reindex _ (onW_bij _ (prods_codesz_bij n))) /=.
 under eq_bigr => i _ do
   rewrite (length_permcd (codeszP _)) // ?size_codesz //.
@@ -1427,7 +1421,7 @@ End Combi.
 Section Reduced.
 
 Variable n : nat.
-Implicit Type w : seq 'I_n.
+Implicit Type u v w : seq 'I_n.
 
 Notation "''s_' i" := (eltr n i).
 Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
@@ -1629,15 +1623,15 @@ move: Hrule; rewrite /braidrule /= !mem_cat => /orP[].
   by rewrite /rev /= orbC Hxy mem_seq1 eq_refl.
 Qed.
 
-Lemma class_braid1 i s : s =Br [:: i] -> s = [:: i].
+Lemma class_braid1 (i : 'I_n) u : u =Br [:: i] -> u = [:: i].
 Proof.
 rewrite braid_sym.
-move: s; apply: gencongr_ind => //= a b1 c b2 /(congr1 size) /= Hsize.
+move: u; apply: gencongr_ind => //= a b1 c b2 /(congr1 size) /= Hsize.
 by rewrite mem_cat => /orP[/braid_abaP | /braidCP] [x [y]] [_ Hb1 _];
   exfalso; move: Hsize; rewrite Hb1 !size_cat /= !addnS.
 Qed.
 
-Theorem braid_prods (v w : seq 'I_n) : v =Br w -> 's_[v] = 's_[w].
+Theorem braid_prods v w : v =Br w -> 's_[v] = 's_[w].
 Proof using.
 move=> H; apply/esym; move: w H; apply gencongr_ind => // a b1 c b2 <- Hrule.
 rewrite !big_cat /=; congr (_ * (_ * _)).
@@ -1732,7 +1726,6 @@ Notation braidred := (@braid_reduces _).
 #[export] Hint Resolve braidww : core.
 
 
-
 (** ** The cocode insertion algorithm *)
 Section CanWord.
 
@@ -1796,10 +1789,10 @@ case: eqP => [Hi1 | /eqP Hi1].
   rewrite rev_cons; apply: (is_code_rcons _ Hcd).
   by rewrite size_rev -subn_gt0 -Hi1.
 have {Hi1}Hi : i.+1 < size c - c0 by rewrite ltn_neqAle Hi Hi1.
-  rewrite rev_cons.
-  have /Hrec : i.+1 < size c by apply (leq_trans Hi); exact: leq_subr.
-  move/is_code_rcons; apply.
-  by rewrite size_rev size_inscode.
+rewrite rev_cons.
+have /Hrec : i.+1 < size c by apply (leq_trans Hi); exact: leq_subr.
+move/is_code_rcons; apply.
+by rewrite size_rev size_inscode.
 Qed.
 
 
@@ -1814,7 +1807,7 @@ apply (inj_map (@val_inj _ _ _)) => /=.
 rewrite insub_wordcdK //; last by rewrite size_rev.
 rewrite -map_comp -[RHS]map_id -eq_in_map => j /Hall /= Hj.
 rewrite inordK //.
-by case: (size c) Hj Hsz => [//= | sz] /=; exact: leq_trans.
+by case: (size c) Hj Hsz => [| sz] //=; exact: leq_trans.
 Qed.
 
 Lemma reduced_wcord c :
@@ -1993,7 +1986,7 @@ Definition straighten w := straighten_rev (rev w).
 
 Lemma size_straighten w : size (straighten w) = n.+1.
 Proof using.
-rewrite /straighten; elim/last_ind: w => [//= | w wn IHw] /=.
+rewrite /straighten; elim/last_ind: w => [| w wn IHw] //=.
   by rewrite size_nseq.
 by rewrite rev_rcons /= size_inscode.
 Qed.
@@ -2036,10 +2029,9 @@ elim: p w Hpath => [| p0 p IHp] //= w /andP[/braidredE ->{w}].
 exact: IHp.
 Qed.
 
-Corollary cocode_straightenE w :
-  rev (straighten w) = cocode 's_[w].
+Corollary cocode_straightenE w : rev (straighten w) = cocode 's_[w].
 Proof using.
-have:= (prods_straighten w); rewrite -{1}(canwordP 's_[w]).
+have:= prods_straighten w; rewrite -{1}(canwordP 's_[w]).
 rewrite -!(big_map nat_of_ord xpredT) /= canwordE /wcord -map_comp.
 rewrite [map _ _](_ : _ = wordcd (rev (straighten w))); first last.
   rewrite -[RHS](map_id) -eq_in_map => i.
@@ -2072,7 +2064,12 @@ Notation "''s_[' w ']'" := (\prod_(i <- w) 's_i) : group_scope.
 
 #[local] Notation "a =Br b" := (braidcongr a b) : bool_scope.
 
-Theorem braidred_to_canword n (w : seq 'I_n) :
+Section BraidRed.
+
+Variable n : nat.
+Implicit Types (u v w : seq 'I_n).
+
+Theorem braidred_to_canword w :
   { p | path braidred w p /\ last w p = canword 's_[w] }.
 Proof.
 case: (n =P 0) => Hn.
@@ -2082,8 +2079,7 @@ move: Hn; case H : {1}(n) => _ //=; subst n.
 exact: canword_path_npos.
 Qed.
 
-Lemma braidred_size_decr n (w : seq 'I_n) p :
-  path braidred w p -> size w >= size (last w p).
+Lemma braidred_size_decr w p : path braidred w p -> size w >= size (last w p).
 Proof.
 elim: p w => [| p0 p IHp] //= w /andP[HBr /IHp/leq_trans]; apply.
 move: HBr => /orP[ /size_braid -> // |].
@@ -2091,8 +2087,7 @@ move/reducesP => [x] [i] [y] [-> ->].
 by rewrite !size_cat [size [:: i; i] + _]addnC addnA; exact: leq_addr.
 Qed.
 
-Theorem braid_to_canword n (w : seq 'I_n) :
-  w \is reduced -> w =Br canword 's_[w].
+Theorem braid_to_canword w : w \is reduced -> w =Br canword 's_[w].
 Proof.
 move/reducedP; rewrite -size_canword braid_sym.
 case: (braidred_to_canword w) => p [Hpath <-].
@@ -2107,8 +2102,7 @@ rewrite !size_cat [size [:: i; i] + _]addnC addnA /=.
 by rewrite leqNgt addnS ltnS addn1 leqnSn.
 Qed.
 
-Theorem reduceP n (u : seq 'I_n) :
-  u \isn't reduced -> exists v w, u =Br v /\ reduces v w.
+Theorem reduceP u : u \isn't reduced -> exists v w, u =Br v /\ reduces v w.
 Proof.
 rewrite unfold_in => Hnred.
 have {Hnred} : length ((\prod_(i <- u) 's_ i) : 'S_n.+1) < size u.
@@ -2123,25 +2117,24 @@ rewrite {1}/braidred => /andP[/orP[] HBr].
 - by exists u, p0.
 Qed.
 
-Corollary reduced_braid n (v w : seq 'I_n) :
+(** Matsumoto Theorem *)
+Corollary reduced_braid v w :
   v \is reduced -> w \is reduced -> ('s_[v] == 's_[w] :> 'S_n.+1) = (v =Br w).
 Proof.
-move=> Hv Hw; apply/idP/idP => [/eqP H|].
-- apply (braid_trans (y := canword 's_[v])).
-  + exact: braid_to_canword.
-  + rewrite H braid_sym; exact: braid_to_canword.
-- by move/braid_prods ->.
+move=> Hv Hw; apply/idP/idP => [/eqP H | /braid_prods -> //].
+apply: (braid_trans (braid_to_canword Hv)).
+rewrite H braid_sym; exact: braid_to_canword.
 Qed.
 
-Lemma canword_eltr n (i : 'I_n) : canword 's_i = [:: i].
+Lemma canword_eltr (i : 'I_n) : canword 's_i = [:: i].
 Proof.
 suff /braid_to_canword : [:: i] \is reduced.
   by rewrite big_seq1 braid_sym => /class_braid1.
-apply contraT => /reduceP[/= v [w []]].
-rewrite braid_sym => /class_braid1 ->{v}.
-move=> /reducesP[v [a [b]]] [] /(congr1 size) /=.
-by rewrite size_cat /= !addnS.
+by apply/reducedP; rewrite big_seq1 length_eltr.
 Qed.
+
+End BraidRed.
+
 
 (** * The presentation of the symmetric groups *)
 Section PresentationSn.
@@ -2171,7 +2164,7 @@ have morph_eltrP : {morph morph_eltr_fun : x y / x * y}.
   have:= braidred_to_canword (canword i ++ canword j) => [[redpath [Hpath]]].
   rewrite big_cat /= !canwordP /morph_eltr_fun -big_cat /= => Hlast.
   elim: redpath (_ ++ _) Hpath Hlast =>
-      [c _ <- //|] w0 wp IHwp /= c /andP[Hbr] {}/IHwp H{}/H ->.
+      [c _ <- //|] w0 wp IHwp /= c /andP[Hbr] {}/IHwp /[apply] ->.
   move: Hbr => /orP[].
   - rewrite braid_sym; move: c; apply: gencongr_ind => //.
     move=> a b1 c b2 ->{w0} Hbr; rewrite !big_cat /=; congr (_ * (_ * _)) => {a c}.
@@ -2219,7 +2212,7 @@ apply intro_isoGrp.
   pose fs := fun i => match i with 0 => s0 | _ => 1 end.
   have /presentation_Sn_eltr [f Hf] : relat_Sn 1 fs.
     constructor; try by case=> [|i].
-    by case=> [|i] j // /andP[/leq_ltn_trans H'/H'].
+    by case=> [|i] j // /andP[/leq_ltn_trans /[apply]].
   exists f; rewrite {3}eltr_genSn morphim_gen; last exact: subsetT.
   congr <<_>>; apply/setP => x; rewrite !inE.
   apply/imsetP/eqP => [[/= x0]| ->{x}] /=; rewrite setTI.
@@ -2247,7 +2240,7 @@ apply intro_isoGrp.
   pose fs := fun i => match i with 0 => s0 | 1 => s1 | _ => 1 end.
   have /presentation_Sn_eltr [f Hf] : relat_Sn 2 fs.
     constructor; try by case=> [|[|i]].
-    by case=> [|i] j // /andP[/leq_ltn_trans H'/H'].
+    by case=> [|i] j // /andP[/leq_ltn_trans /[apply]].
   exists f; rewrite {3}eltr_genSn morphim_gen; last exact: subsetT.
   congr <<_>>; apply/setP => x; rewrite !inE.
   apply/imsetP/idP => [[/= x0] | /orP[] /eqP ->{x}] /=; rewrite setTI.
@@ -2288,7 +2281,7 @@ apply intro_isoGrp.
   pose fs := fun i => match i with 0 => s0 | 1 => s1 | 2 => s2 | _ => 1 end.
   have /presentation_Sn_eltr [f Hf] : relat_Sn 3 fs.
     constructor; try by case=> [|[|[|i]]].
-    by case=> [|[|i]] [|[|[|j]]] // /andP[/leq_ltn_trans H'/H'].
+    by case=> [|[|i]] [|[|[|j]]] // /andP[/leq_ltn_trans /[apply]].
   exists f; rewrite {3}eltr_genSn morphim_gen; last exact: subsetT.
   congr <<_>>; apply/setP => x; rewrite !inE -orbA.
   apply/imsetP/idP => [[/= x0] | /or3P[] /eqP ->{x}] /=; rewrite setTI.
@@ -2333,7 +2326,7 @@ apply intro_isoGrp.
                match i with 0 => s0 | 1 => s1 | 2 => s2 | 3 => s3 | _ => 1 end.
   have /presentation_Sn_eltr [f Hf] : relat_Sn 4 fs.
     constructor; try by case=> [|[|[|[|i]]]].
-    by case=> [|[|[|i]]] [|[|[|[|j]]]] // /andP[/leq_ltn_trans H'/H'].
+    by case=> [|[|[|i]]] [|[|[|[|j]]]] // /andP[/leq_ltn_trans /[apply]].
   exists f; rewrite {3}eltr_genSn morphim_gen; last exact: subsetT.
   congr <<_>>; apply/setP => x; rewrite !inE -!orbA.
   apply/imsetP/idP => [[/= x0] | /or4P[] /eqP ->{x}] /=; rewrite setTI.
