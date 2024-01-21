@@ -277,16 +277,16 @@ have {}Hm (k l : 'I_n) :
   by rewrite pIt pNIs eq_refl.
 have {Hm m0 eqm tjltti} Heq : m = 1%N.
   have {}incl (k l : 'I_n) : k < l -> s k > s l -> t k > t l.
-    by move=> kltl; move: incl => /subsetP/(_ (k, l)); rewrite !inE kltl.
+    by move=> kltl; move: incl => /subsetP/(_ (k, l))/[!inE]/[!kltl].
   apply anti_leq; rewrite {}m0 andbT {Hd IHd}.
   rewrite leqNgt; apply/negP => Habs.
   pose k := (t^-1 (inord (t j).+1)).
   have tk : t k = (t j).+1 :> nat.
     by rewrite /k permKV inordK // ltnS (leq_trans tjltti _) // -ltnS.
   suffices []: (m <= t k - t j) \/ (m <= t i - t k).
-    - by rewrite tk subSn // subnn => /(leq_trans Habs); rewrite ltnn.
-    - rewrite tk; rewrite -eqm.
-      case: (val (t i)) tjltti => //= u; rewrite ltnS => Hu.
+    - by rewrite tk subSn // subnn => /(leq_trans Habs)/[!ltnn].
+    - rewrite tk -eqm.
+      case: (val (t i)) tjltti => //= u /[!ltnS] Hu.
       by rewrite subSS subSn // ltnn.
   case: (ltngtP k i) => [klti | iltk | /val_inj Hk]; last 1 first.
   - by move: Habs; rewrite -eqm -Hk tk subSn // ?subnn ltnn.
@@ -330,7 +330,7 @@ have {Himi Himj} invsett : invset t = (i, j) |: invset (t * 's_(t j)).
 have {invsett} {}/IHd : invset s \subset invset (t * 's_(t j)).
   move: incl; rewrite {}invsett => /subsetP Hsubs.
   apply/subsetP => /= [[k l] H].
-  move/(_ _ H): Hsubs; rewrite !inE /= => /orP[] // /eqP Heq.
+  move/(_ _ H): Hsubs => /[!inE] /orP[] // /eqP Heq.
   exfalso; move: H; rewrite {}Heq /invset !inE /= iltj /=.
   by rewrite ltnNge (ltnW siltsj).
 move/le_trans; apply.
@@ -398,7 +398,7 @@ constructor; rewrite /=.
   + move/(_ _ Hp Hk p0ltj): IHp => {p Hk Hp} /orP[|->]; last by right.
     by move/(connect_trans (connect1 (e := srel AUB) ip0AB)); left.
   + wlog ip0 : A B HAUB isA isB ip0AB / (i, p0) \in A.
-      subst AUB; move=> Hlog; move: ip0AB; rewrite inE => /orP[] Hip0.
+      subst AUB; move=> Hlog; move: ip0AB => /[!inE] /orP[] Hip0.
       * by have:= Hip0 => {}/(Hlog A B); apply; rewrite //= inE Hip0.
       * by have:= Hip0 => {}/(Hlog B A); apply; rewrite // setUC // inE Hip0.
     suffices: ((i, j) \in AUB) || ((j, p0) \in AUB).
@@ -443,7 +443,7 @@ Qed.
 Lemma suppermPr s t : s <=R (supperm s t).
 Proof.
 rewrite !leperm_invset; rewrite invset_supperm /tclosure.
-apply/subsetP => /= [[i j] Hinv]; rewrite !inE /=.
+apply/subsetP => /= [[i j] Hinv] /[!inE] /=.
 rewrite neq_ltn (DeltaP ((subsetP (invset_Delta s)) _ Hinv)) /=.
 by apply/connectP; exists [:: j]; rewrite //= inE Hinv /=.
 Qed.
