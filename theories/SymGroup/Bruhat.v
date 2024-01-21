@@ -57,14 +57,17 @@ Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
 
-Local Open Scope ring_scope.
-Local Open Scope nat_scope.
+#[local] Open Scope ring_scope.
+#[local] Open Scope nat_scope.
 Import GroupScope GRing.Theory.
 Import Order.Theory.
+
 
 Reserved Notation "s '<=B' t" (at level 70, t at next level).
 Reserved Notation "s '<B' t"  (at level 70, t at next level).
 
+
+#[local] Open Scope Combi_scope.
 
 
 Lemma bounded_le_homo (m n : nat) f :
@@ -84,11 +87,9 @@ Lemma telescope_sumn_in2 n m f : n <= m ->
 Proof.
 move=> nm fle; rewrite (telescope_big (fun i j => f j - f i)).
   by case: ltngtP nm => // -> /[!subnn].
-move=> k /andP[nk km] /=; rewrite addnBAC ?fle 1?ltnW// ?subnKC// ?fle// inE.
-- by rewrite (ltnW nk) ltnW.
-- by rewrite ltnW // (ltn_trans nk).
-- by rewrite leqnn ltnW // (ltn_trans nk).
-- by rewrite ltnW //= ltnW.
+move=> k /andP[nk km] /=.
+by rewrite addnBAC ?fle 1?ltnW// ?subnKC// ?fle//
+     inE ?leqnn ltnW // ?(ltn_trans nk) //= ltnW.
 Qed.
 
 
@@ -194,7 +195,7 @@ Implicit Type (m : 'M[nat]_n).
 Implicit Type (M : 'M[nat]_n.+1).
 Implicit Type (s : 'S_n).
 
-Local Notation mxsum := (@mxsum n).
+#[local] Notation mxsum := (@mxsum n).
 
 Lemma mxsum_tr m : mxsum m^T = (mxsum m)^T.
 Proof.
@@ -438,7 +439,7 @@ Qed.
   Order.Le_isPOrder.Build Bruhat_display 'S_n
     Bruhat_refl Bruhat_anti Bruhat_trans.
 
-Local Notation "x <=B y" := (@Order.le Bruhat_display _ (x : 'S__) y).
+#[local] Notation "x <=B y" := (@Order.le Bruhat_display _ (x : 'S__) y).
 
 Fact Bruhat1s s : 1 <=B s.
 Proof.
@@ -476,8 +477,8 @@ End Def.
 Module Exports.
 HB.reexport BruhatOrder.
 
-Notation "x <=B y" := (@Order.le Bruhat_display _ (x : 'S__) y).
-Notation "x <B y" := (@Order.lt Bruhat_display _ (x : 'S__) y).
+Notation "x <=B y" := (@Order.le Bruhat_display _ (x : 'S__) y) : Combi_scope.
+Notation "x <B y" := (@Order.lt Bruhat_display _ (x : 'S__) y) : Combi_scope.
 
 Section Exports.
 
@@ -540,6 +541,15 @@ Proof. by rewrite /conjg maxpermV Bruhat_Mmax Bruhat_maxM. Qed.
 
 End Symmetry.
 
+
+Section RedWords.
+
+Context {n0 : nat}.
+#[local] Notation n := n0.+1.
+Implicit Type (s t u v : 'S_n).
+
+
+End RedWords.
 
 (*
            0 0 0 0
