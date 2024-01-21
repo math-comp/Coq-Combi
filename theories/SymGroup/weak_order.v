@@ -40,6 +40,9 @@ Unset Printing Implicit Defensive.
 Import GroupScope.
 Import Order.Theory.
 
+#[local] Open Scope Combi_scope.
+
+
 Reserved Notation "s '<=R' t" (at level 70, t at next level).
 Reserved Notation "s '<R' t"  (at level 70, t at next level).
 Reserved Notation "s '/\R' t" (at level 70, t at next level).
@@ -107,10 +110,10 @@ End Def.
 Module Exports.
 HB.reexport WeakOrder.
 
-Notation "x <=R y" := (@Order.le perm_display _ (x : 'S__) y).
-Notation "x <R y" := (@Order.lt perm_display _ (x : 'S__) y).
-Notation "x /\R y" := (@Order.meet perm_display _ (x : 'S__) y).
-Notation "x \/R y" := (@Order.join perm_display _ (x : 'S__) y).
+Notation "x <=R y" := (@Order.le perm_display _ (x : 'S__) y) : Combi_scope.
+Notation "x <R y" := (@Order.lt perm_display _ (x : 'S__) y) : Combi_scope.
+Notation "x /\R y" := (@Order.meet perm_display _ (x : 'S__) y) : Combi_scope.
+Notation "x \/R y" := (@Order.join perm_display _ (x : 'S__) y) : Combi_scope.
 
 Section WeakOrder.
 
