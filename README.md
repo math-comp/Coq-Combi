@@ -6,7 +6,7 @@ Formalisation of (algebraic) combinatorics in Coq/MathComp.
 Authors
 ========================================================================
 
-Florent Hivert <Florent.Hivert@lri.fr>
+Florent Hivert <Florent.Hivert@lisn.fr>
 
 Contributors:
 
@@ -18,6 +18,7 @@ Contributors:
 
 This library was supported by additional discussions with:
 
+- Kazuhiko Sakaguchi (port on MathComp2 / Hierarchy Builder)
 - Georges Gonthier
 - Assia Mahoubi
 - Pierre Yves Strub
