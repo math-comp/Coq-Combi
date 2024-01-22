@@ -7,7 +7,7 @@
 { lib, mkCoqDerivation, which, coq
   , mathcomp-ssreflect, mathcomp-fingroup
   , mathcomp-algebra, multinomials
-  , mathcomp-character, mathcomp-field
+  , mathcomp-character, mathcomp-field, hierarchy-builder
   ## declare extra dependencies here, to be used in propagateBuildInputs e.g.
   # , mathcomp, coq-elpi
   , version ? null }:

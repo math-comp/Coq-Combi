@@ -43,6 +43,7 @@
     ## through the following attribute
     # coqPackages.coq.override.version = "8.11";
     coqPackages.coq.override.version = "8.18";
+    coqPackages.mathcomp.override.version = "2.1.0";
 
     ## In some cases, light overrides are not available/enough
     ## in which case you can use either
