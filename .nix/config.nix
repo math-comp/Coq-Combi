@@ -7,7 +7,7 @@
   ## The attribute to build from the local sources,
   ## either using nixpkgs data or the overlays located in `.nix/coq-overlays`
   ## Will determine the default main-job of the bundles defined below
-  attribute = "Coq-Combi";
+  attribute = "coq-combi";
 
   ## If you want to select a different attribute (to build from the local sources as well)
   ## when calling `nix-shell` and `nix-build` without the `--argstr job` argument
