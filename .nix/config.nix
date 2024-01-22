@@ -31,17 +31,18 @@
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "8.15";
+  default-bundle = "8.18";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration
   ## When generating GitHub Action CI, one workflow file
   ## will be created per bundle
-  bundles."8.15" = {
+  bundles."8.18" = {
 
     ## You can override Coq and other Coq coqPackages
     ## through the following attribute
-    coqPackages.coq.override.version = "8.15";
+    # coqPackages.coq.override.version = "8.11";
+    coqPackages.coq.override.version = "8.18";
 
     ## In some cases, light overrides are not available/enough
     ## in which case you can use either
@@ -77,6 +78,8 @@
     ## via the command genNixActions only if it is a dependency or a
     ## reverse dependency of a job flagged as "main-job" (see above).
 
+    ## Run on push on following branches (default [ "master" ])
+    # push-branches = [ "master" "branch2" ];
   };
 
   ## Cachix caches to use in CI
