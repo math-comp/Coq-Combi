@@ -3,6 +3,8 @@ Coq-Combi
 
 Formalisation of (algebraic) combinatorics in Coq/MathComp.
 
+[![Nix CI for bundle 8.18](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-8.18.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-8.18.yml)
+
 Authors
 ========================================================================
 
