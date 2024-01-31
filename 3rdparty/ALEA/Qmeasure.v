@@ -127,10 +127,10 @@ Hint Resolve Mstable0 : core.
 Lemma Mstable_opp : stable_opp m.
 Proof using Mstable_sub.
 move => f; transitivity (m \0 - m f); first last.
-  by rewrite Mstable0 /null_fun_head /= sub0r.
+  by rewrite Mstable0 /= sub0r.
 rewrite -Mstable_sub.
 apply Mstable_eq => x.
-by rewrite /null_fun_head /= sub0r.
+by rewrite /= sub0r.
 Qed.
 
 Lemma Mstable_add : stable_add m.

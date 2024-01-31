@@ -31,13 +31,13 @@
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "8.18";
+  default-bundle = "coq8.18-mc2.1.0";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration
   ## When generating GitHub Action CI, one workflow file
   ## will be created per bundle
-  bundles."8.18" = {
+  bundles."coq8.18-mc2.1.0" = {
 
     ## You can override Coq and other Coq coqPackages
     ## through the following attribute
@@ -81,6 +81,26 @@
 
     ## Run on push on following branches (default [ "master" ])
     # push-branches = [ "master" "branch2" ];
+  };
+
+  bundles."coq8.17-mc2.1.0" = {
+    coqPackages.coq.override.version = "8.17";
+    coqPackages.mathcomp.override.version = "2.1.0";
+  };
+
+  bundles."coq8.17-mc2.2.0" = {
+    coqPackages.coq.override.version = "8.17";
+    coqPackages.mathcomp.override.version = "2.2.0";
+  };
+
+  bundles."coq8.18-mc2.2.0" = {
+    coqPackages.coq.override.version = "8.18";
+    coqPackages.mathcomp.override.version = "2.2.0";
+  };
+
+  bundles."coq8.19-mc2.2.0" = {
+    coqPackages.coq.override.version = "8.19";
+    coqPackages.mathcomp.override.version = "2.2.0";
   };
 
   ## Cachix caches to use in CI
