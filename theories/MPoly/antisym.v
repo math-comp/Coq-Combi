@@ -619,7 +619,8 @@ move/(_ i) : H => /=.
 rewrite /rho !mnm_tnth !tnth_mktuple !mnm_tnth !tnth_mktuple !subn1 => H.
 rewrite -[LHS]rev_ordK -[RHS]rev_ordK; congr rev_ord.
 apply val_inj => /=; rewrite !subnS.
-by have:= ltn_ord i => /ltn_predK {1 5}<-; rewrite !subSKn.
+have/ltn_predK neq11 := ltn_ord i.
+by rewrite -[X in (X - _)%N]neq11 -[X in (X - i)%N]neq11 !subSKn.
 Qed.
 
 End AlternIDomain.

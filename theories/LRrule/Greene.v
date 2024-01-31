@@ -503,7 +503,7 @@ Qed.
 Lemma Greene_rel_t_sup k : Greene_rel_t k <= N.
 Proof using.
 rewrite /Greene_rel_t /=; apply/bigmax_leqP => P _.
-move: (cover P) => cover {P}; rewrite -{5}[N]card_ord.
+move: (cover P) => cover {P}; rewrite -[N in _ <= N]card_ord.
 exact: max_card.
 Qed.
 
@@ -641,7 +641,7 @@ rewrite (_ : map _ (map rsh _) = nseq N false); first last.
   apply: (@eq_from_nth _ false); first by rewrite size_map size_enum_ord size_nseq.
   move=> i; rewrite size_map size_enum_ord => Hi.
   rewrite nth_nseq Hi /= (nth_map (Ordinal Hi)) /=; last by rewrite size_enum_ord.
-  by rewrite inE inE /= -{7}[M]addn0 ltn_add2l ltn0 andbF.
+  by rewrite inE inE /= -[M in _ < M]addn0 ltn_add2l ltn0 andbF.
 rewrite mask_false cats0 -[in RHS]map_comp; congr (mask _ V).
 apply: eq_map => i /=; rewrite inE in_setI.
 suff -> : lsh i \in [set i0 : 'I_(M+N) | i0 < M] by rewrite andbT.
@@ -985,7 +985,7 @@ elim: sh => [// | s0 sh IHsh] /=.
 rewrite imset_comp card_imset; last exact: cast_ord_inj.
 rewrite card_imset; last exact: rshift_inj.
 rewrite card_ord; congr (_ :: _).
-rewrite -map_comp -{19}IHsh; apply: eq_map.
+rewrite -map_comp -{}[RHS]IHsh; apply: eq_map.
 move=> S /=; rewrite imset_comp.
 rewrite card_imset; last exact: cast_ord_inj.
 by rewrite card_imset; last exact: lshift_inj.
@@ -1042,8 +1042,8 @@ elim: sh => [/= | s0 sh /= IHsh]; first by rewrite /trivIseq => i j /= /andP[].
 rewrite /trivIseq size_shcols_cons => i j /andP[Hij Hj].
 have Hi := ltn_trans Hij Hj.
 rewrite /disjoint; apply/pred0P => l /=; apply/negP => /andP[].
-rewrite (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
-rewrite (nth_map (Ordinal Hj)); last by rewrite size_enum_ord.
+rewrite [nth _ _ i](nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
+rewrite [nth _ _ j](nth_map (Ordinal Hj)); last by rewrite size_enum_ord.
 rewrite !nth_enum_ord //=.
 rewrite in_setU1 => /orP[].
 - move/eqP => ->; rewrite in_setU1 => /orP[]; rewrite /sym_cast /=.
@@ -1279,7 +1279,7 @@ Lemma extract_tabcols_rec i :
 Proof using.
 move => Hi; rewrite /= !extractmaskE tabcols_cons enumIsize_to_word /=.
 rewrite (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
-rewrite nth_enum_ord //= {13}to_word_cons.
+rewrite nth_enum_ord //= [X in mask _ X]to_word_cons.
 rewrite nth_ord_ltn map_cat mask_cat; last by rewrite 2!size_map size_enum_ord.
 rewrite -map_comp.
 set fr := (X in rcons (mask (map X _) _)).

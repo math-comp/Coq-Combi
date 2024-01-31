@@ -1395,7 +1395,7 @@ Corollary genfun_length n :
 Proof.
 case: n => [|n].
   rewrite (big_pred1_id _ _ (i := 1%g)); first last.
-    by move=> s; rewrite permS0 /= eq_refl.
+    by move=> s; rewrite !permS0 /= eq_refl.
   by rewrite addr0 length1 expr0 big_mkord big_ord0.
 rewrite (reindex _ (onW_bij _ (prods_codesz_bij n))) /=.
 under eq_bigr => i _ do

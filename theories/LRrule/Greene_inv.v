@@ -1082,7 +1082,7 @@ rewrite /S'; move /extract_cut ->.
 rewrite -cats1 -[X in _ = _ ++ X]cats0 -[tnth _ _ :: _]cat1s.
 congr ((extract (in_tuple x) _) ++ _ ++ _).
 - apply/setP => i; rewrite !inE.
-  case (boolP (i \in S)) => //= _.
+  case: (boolP (i \in S)) => //= _.
   case: (ltnP i (size u).+1); last by rewrite andbF.
   by move/ltnW ->.
 - by rewrite (tnth_nth a) /x /=; elim: u.
@@ -1106,7 +1106,7 @@ congr (_ ++ _ ++ (extract (in_tuple x) _)).
   by have:= leq_trans H2 H1; rewrite ltnn.
 - by rewrite (tnth_nth a) /x /=; elim: u.
 - apply/setP => i; rewrite !inE.
-  case (boolP (i \in S)) => //= _.
+  case: (boolP (i \in S)) => //= _.
   case: (ltnP (size u).+2 i); last by rewrite andbF.
   by move/ltnW ->.
 Qed.
@@ -1120,7 +1120,7 @@ have : posb \in T' by rewrite /T' !inE leqnn Hposb.
 move /extract_cut ->; rewrite -cats1 -[[:: b]]cats0 -[tnth _ _ :: _]cat1s.
 congr ((extract (in_tuple x) _) ++ _ ++ _).
 - apply/setP => i; rewrite !inE.
-  case (boolP (i \in T)) => //= _.
+  case: (boolP (i \in T)) => //= _.
   case: (ltnP i (size u)); last by rewrite andbF.
   by move/ltnW ->.
 - by rewrite (tnth_nth a) /x /=; elim: u.
@@ -1144,7 +1144,7 @@ congr (_ ++ _ ++ (extract (in_tuple x) _)).
   by have:= leq_trans H2 H1; rewrite ltnn.
 - by rewrite (tnth_nth a) /x /=; elim: u.
 - apply/setP => i; rewrite !inE.
-  case (boolP (i \in T)) => //= Hi.
+  case: (boolP (i \in T)) => //= Hi.
   case: (ltnP (size u).+2 i).
   + by move/ltnW/ltnW => H; rewrite H (ltnW H).
   + move=> Hi1; apply/negP => /andP[_ H2].

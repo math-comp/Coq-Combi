@@ -224,7 +224,7 @@ Qed.
 Lemma Minv_uni t : Minv t t = 1.
 Proof.
 have [Muni Mtrig] := unitrigP _ Munitrig.
-have:= Minvr t t; rewrite eq_refl /= -[1%:R]/1 => <-.
+have:= Minvr t t; rewrite eq_refl /= mulr1n => <-.
 rewrite (bigID (fun v => v <= t)%O) /= [X in _ + X]big1 ?addr0; first last.
   by move=> v /(contraR (@Mtrig _ _))/eqP ->; rewrite mul0r.
 rewrite (bigID (fun v => t <= v)%O) /= [X in _ + X]big1 ?addr0; first last.
