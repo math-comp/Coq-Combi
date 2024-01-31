@@ -52,7 +52,7 @@ Opaque OrderEquiv.
 Class ord A :=
    {  Oeq : relation A;
       Ole : relation A;
-      order_rel : Order Oeq Ole }.
+      #[global] order_rel :: Order Oeq Ole }.
 
 
 Lemma OrdSetoid `(o:ord A) : Setoid A.
