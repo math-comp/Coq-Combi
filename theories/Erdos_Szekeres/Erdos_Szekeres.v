@@ -45,28 +45,26 @@ rewrite /Greene_rel /= /Greene_rel_t.
 set P := (X in \max_(_ | X _) _).
 have : #|P| > 0.
   apply/card_gt0P; exists set0.
-  rewrite /P /ksupp !unfold_in /= cards0 /=.
+  rewrite {}/P /ksupp !unfold_in /= cards0 /=.
   apply/andP; split.
   + by apply/trivIsetP => s1 s2; rewrite inE.
   + by apply/forallP => x; rewrite inE.
-rewrite /P {P} => /(eq_bigmax_cond (fun x => #|cover x|)).
-case=> x Hx Hmax; rewrite Hmax.
-move: Hx; rewrite /ksupp unfold_in => /and3P[Hcard _ /forallP Hall].
-case Hc: #|x| => [/= | c ].
-  move: Hc => /eqP; rewrite cards_eq0 => /eqP ->.
+rewrite {}/P => /(eq_bigmax_cond (fun x => #|cover x|)).
+case=> U /[swap] /[dup] Hmax ->.
+rewrite /ksupp unfold_in => /and3P[Hcard _ /forallP Hall].
+case HU: #|U| => [/= | c].
+  move: HU => /eqP; rewrite cards_eq0 => /eqP ->.
   exists [::]; repeat split; first exact: sub0seq.
   by rewrite /cover big_set0 cards0.
-have {Hcard Hc} : #|x| == 1.
-  move: Hcard; rewrite Hc.
-  by rewrite ltnS leqn0 => /eqP ->.
-move/cards1P => [] x0 Hx0; subst x.
-move/(_ x0) : Hall; rewrite inE eq_refl /=.
+have {Hcard HU} : #|U| == 1.
+  by move: Hcard; rewrite HU ltnS leqn0 => /eqP ->.
+move/cards1P => [x Hx]; subst U.
+move/(_ x) : Hall; rewrite inE eq_refl /=.
 set sol := extractpred _ _ => Hsol.
 exists sol; repeat split.
 + exact: extsubsm.
 + exact: Hsol.
-+ rewrite /sol size_extract.
-  by rewrite /= /cover big_set1.
++ by rewrite /sol size_extract /= /cover big_set1.
 Qed.
 
 Theorem Erdos_Szekeres
@@ -76,31 +74,31 @@ Theorem Erdos_Szekeres
   (exists t, subseq t s /\ sorted >%O t /\ size t > n).
 Proof using .
 move=> Hsize; pose tab := RS s.
-have {Hsize} [Hltn|Hltn] : (n < size (shape tab)) \/ (m < head 0 (shape tab)).
+have {Hsize} : (n < size (shape tab)) \/ (m < head 0 (shape tab)).
   have Hpart := is_part_sht (is_tableau_RS s).
   apply/orP; move: Hsize; rewrite -(size_RS s) /size_tab.
   apply contraLR; rewrite negb_or -!leqNgt => /andP[Hn Hm].
-  by apply (leq_trans (part_sumn_rectangle Hpart)); apply: leq_mul.
+  exact: (leq_trans (part_sumn_rectangle Hpart) (leq_mul _ _)).
+move=> [] Hltn.
 - right => {m}.
   have := Greene_col_RS 1 s.
   rewrite -sum_conj.
   rewrite (_ : \sum_(l <- _) minn l 1 = size (shape (RS s))); first last.
     have := is_part_sht (is_tableau_RS s).
     move: (shape _) => sh.
-    elim: sh => [// | s0 sh IHsh]; first by rewrite big_nil.
-    move=> Hpart; have /= Hs0 := part_head_non0 Hpart.
+    elim: sh => [// | s0 sh IHsh Hpart]; first by rewrite big_nil.
+    have /= Hs0 := part_head_non0 Hpart.
     move: Hpart => /= /andP[Hhead Hpart].
-    rewrite big_cons (IHsh Hpart).
-    rewrite (_ : minn s0 1 = 1) ?add1n //.
-    by rewrite /minn; move: Hs0; case s0.
-  move=> Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
+    rewrite big_cons (IHsh Hpart) (_ : minn s0 1 = 1) ?add1n //.
+    by case: s0 Hs0 {Hhead}.
+  move: Hltn => /[swap] <-{tab}.
   case: (Greene_rel_one s >%O) => x [Hsubs] [Hsort <- Hn].
   by exists x.
 - left => {n}.
   have := Greene_row_RS 1 s.
   rewrite (_ : sumn _ = head 0 (shape (RS s))); first last.
-    by case: (shape (RS s)) => [// | s0 l] /=; rewrite take0 addn0.
-  rewrite /Greene_row => Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
+    by case: (shape (RS s)) => [| s0 l] //=; rewrite take0 addn0.
+  rewrite /Greene_row; move: Hltn => /[swap] <-{tab}.
   case: (Greene_rel_one s <=%O) => x [Hsubs] [Hsort <- Hn].
   by exists x.
 Qed.
