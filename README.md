@@ -148,7 +148,7 @@ Various unstable/unfinished experiments:
 Documentation
 ========================================================================
 
-* The [documentation](http://hivert.github.io/Coq-Combi/) is now complete !
+* The [documentation](https://math-comp.github.io/combi/1.0.0/index.html) is now complete !
 
 * A
   [presentation](https://github.com/hivert/Coq-Combi/raw/master/doc/Talk-CRM/CRM.pdf)
