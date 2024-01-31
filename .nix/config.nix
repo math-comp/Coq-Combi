@@ -83,19 +83,9 @@
     # push-branches = [ "master" "branch2" ];
   };
 
-  bundles."coq8.16-mc2.1.0" = {
-    coqPackages.coq.override.version = "8.16";
-    coqPackages.mathcomp.override.version = "2.1.0";
-  };
-
   bundles."coq8.17-mc2.1.0" = {
     coqPackages.coq.override.version = "8.17";
     coqPackages.mathcomp.override.version = "2.1.0";
-  };
-
-  bundles."coq8.16-mc2.2.0" = {
-    coqPackages.coq.override.version = "8.16";
-    coqPackages.mathcomp.override.version = "2.2.0";
   };
 
   bundles."coq8.17-mc2.2.0" = {
