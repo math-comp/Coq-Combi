@@ -179,7 +179,7 @@ by apply/set0Pn; exists x.
 Qed.
 
 End Defs.
-Hint Resolve setpartP trivIsetpart setpart_non0 : core.
+#[export] Hint Resolve setpartP trivIsetpart setpart_non0 : core.
 
 
 Section Empty.
