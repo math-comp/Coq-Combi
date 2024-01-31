@@ -150,18 +150,12 @@ Documentation
 Various unstable/unfinished experiments:
 ========================================
 
-* bijection m-trees <-> m-dyck words.
-  See the [trees branch on Github](https://github.com/math-comp/Coq-Combi/tree/trees).
-
 * a **Why3 certified implementation** of the LR-Rule
   (together with Jean Christophe Filliâtre).
   See the [Why3 branch on Github](https://github.com/math-comp/Coq-Combi/tree/Why3).
 
 * Poset.
   See the [posets branch on Github](https://github.com/math-comp/Coq-Combi/tree/posets).
-
-* Set-partitions
-  See the [SetPartition branch on Github](https://github.com/math-comp/Coq-Combi/tree/SetPartition).
 
 Installation
 ========================================================================
