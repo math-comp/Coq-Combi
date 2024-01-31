@@ -3,7 +3,9 @@ Coq-Combi
 
 Formalisation of (algebraic) combinatorics in Coq/MathComp.
 
-[![Nix CI for bundle 8.18](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-8.18.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-8.18.yml)
+[![Nix CI for coq8.17-mc2.1.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.17-mc2.1.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.17-mc2.1.0.yml) [![Nix CI for coq8.18-mc2.1.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.18-mc2.1.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.18-mc2.1.0.yml) 
+
+[![Nix CI for coq8.17-mc2.2.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.17-mc2.2.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.17-mc2.2.0.yml) [![Nix CI for coq8.18-mc2.2.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.18-mc2.2.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.18-mc2.2.0.yml) [![Nix CI for coq8.19-mc2.2.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.19-mc2.2.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.19-mc2.2.0.yml)
 
 Authors
 ========================================================================
