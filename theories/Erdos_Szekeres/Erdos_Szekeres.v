@@ -37,11 +37,8 @@ Unset Printing Implicit Defensive.
 Import Order.TTheory.
 Open Scope N.
 
-Section OrderedType.
 
-Variables (disp : unit) (T : inhOrderType disp).
-
-Lemma Greene_rel_one (s : seq T) (R : rel T) :
+Lemma Greene_rel_one (T : eqType) (s : seq T) (R : rel T) :
   exists t : seq T, subseq t s /\ sorted R t /\ size t = (Greene_rel R s) 1.
 Proof using .
 rewrite /Greene_rel /= /Greene_rel_t.
@@ -72,22 +69,22 @@ exists sol; repeat split.
   by rewrite /= /cover big_set1.
 Qed.
 
-Theorem Erdos_Szekeres (m n : nat) (s : seq T) :
+Theorem Erdos_Szekeres
+  (disp : unit) (T : inhOrderType disp) (m n : nat) (s : seq T) :
   size s > m * n ->
   (exists t, subseq t s /\ sorted <=%O t /\ size t > m) \/
   (exists t, subseq t s /\ sorted >%O t /\ size t > n).
 Proof using .
 move=> Hsize; pose tab := RS s.
-have {Hsize} : (n < size (shape tab)) \/ (m < head 0 (shape tab)).
+have {Hsize} [Hltn|Hltn] : (n < size (shape tab)) \/ (m < head 0 (shape tab)).
   have Hpart := is_part_sht (is_tableau_RS s).
   apply/orP; move: Hsize; rewrite -(size_RS s) /size_tab.
   apply contraLR; rewrite negb_or -!leqNgt => /andP[Hn Hm].
   by apply (leq_trans (part_sumn_rectangle Hpart)); apply: leq_mul.
-move=> [] Hltn.
 - right => {m}.
   have := Greene_col_RS 1 s.
   rewrite -sum_conj.
-  rewrite (_ : \sum_(l <- shape (RS s)) minn l 1 = size (shape (RS s))); first last.
+  rewrite (_ : \sum_(l <- _) minn l 1 = size (shape (RS s))); first last.
     have := is_part_sht (is_tableau_RS s).
     move: (shape _) => sh.
     elim: sh => [// | s0 sh IHsh]; first by rewrite big_nil.
@@ -101,12 +98,11 @@ move=> [] Hltn.
   by exists x.
 - left => {n}.
   have := Greene_row_RS 1 s.
-  rewrite (_ : sumn (take 1 (shape (RS s))) = head 0 (shape (RS s))); first last.
+  rewrite (_ : sumn _ = head 0 (shape (RS s))); first last.
     by case: (shape (RS s)) => [// | s0 l] /=; rewrite take0 addn0.
   rewrite /Greene_row => Hgr; move: Hltn; rewrite -Hgr {tab Hgr}.
   case: (Greene_rel_one s <=%O) => x [Hsubs] [Hsort <- Hn].
   by exists x.
 Qed.
 
-End OrderedType.
 

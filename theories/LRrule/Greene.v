@@ -20,9 +20,12 @@ We define the following notions and notations:
 - [trivIseq U] == [u : seq {set T}] contains pairwise disjoint sets.
 
 In the following, we denote:
+
 - [wt] : an [n.-tuple Alph] for an alphabet [Alph].
 - [R]  : a relation on [Alph]
+
 Then we define:
+
 - [extractpred wt P] == the sequence of the entries of [wt] whose index verify
       the predicate [P].
 - [extract wt S] == the sequence of the entries of [wt] supported by [S],
@@ -323,7 +326,7 @@ Require Import ordtype.
 (** ** Definition and basic properties *)
 Section GreeneDef.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {Alph : eqType}.
 
 Definition extractpred n (wt : n.-tuple Alph) (P : pred 'I_n) :=
   [seq tnth wt i | i <- enum P].
@@ -345,7 +348,7 @@ elim: n wt P => [// | n IHn].
     by case: (P ord0) => /= ->.
   rewrite {}/lft filter_map -map_comp -map_comp /= -(IHn w _) /=.
   by rewrite (eq_map (g := tnth w));
-    last by move=> i /=; rewrite !(tnth_nth inh).
+    last by move=> i /=; rewrite !(tnth_nth w0).
 Qed.
 
 Lemma extsubsIm n wt (P1 P2 : pred 'I_n) :
@@ -519,12 +522,12 @@ Qed.
 
 End GreeneDef.
 
-Notation "k '.-supp' [ R , wt ]" := (@ksupp _ _ R _ wt k)
+Notation "k '.-supp' [ R , wt ]" := (@ksupp _ R _ wt k)
   (at level 2, format "k '.-supp' [ R ,  wt ]") : form_scope.
 
 Section Cast.
 
-Variable (d : unit) (T : inhOrderType d).
+Context {T : eqType}.
 
 Lemma ksupp_cast  R (w1 w2 : seq T) (H : w1 = w2) k Q :
   Q \is a k.-supp[R, in_tuple w1] ->
@@ -570,7 +573,7 @@ End Cast.
 (** ** Greene numbers of a concatenation *)
 Section GreeneCat.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {Alph : eqType}.
 Variable R : rel Alph.
 Hypothesis HR : transitive R.
 
@@ -703,7 +706,7 @@ End GreeneCat.
 
 Section GreeneSeq.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {Alph : eqType}.
 Variable R : rel Alph.
 Hypothesis HR : transitive R.
 
@@ -718,7 +721,11 @@ rewrite (_ :  Greene_rel_t _ _ _ =
   first by apply: Greene_rel_t_cat.
 have Hsz : size (v ++ w) = (size v + size w) by rewrite size_cat.
 rewrite -(Greene_rel_t_cast _ Hsz); congr (Greene_rel_t R _ k).
-by apply: eq_from_tnth => i; rewrite tcastE !(tnth_nth inh).
+apply: eq_from_tnth => i; rewrite tcastE.
+case: (altP (size v + size w =P 0)) => Hsize.
+  by exfalso; move: i; rewrite Hsize => [][].
+have x0 : Alph by rewrite -Hsz in i Hsize; case: (v ++ w) Hsize.
+by rewrite !(tnth_nth x0).
 Qed.
 
 Let negR := (fun a b => ~~(R a b)).
@@ -745,11 +752,11 @@ Qed.
 End GreeneSeq.
 
 
-Lemma eq_Greene_rel (d : unit) (T : inhOrderType d) (R1 R2 : rel T) u :
+Lemma eq_Greene_rel (T : eqType) (R1 R2 : rel T) u :
   R1 =2 R2 -> Greene_rel R1 u  =1  Greene_rel R2 u.
 Proof. exact: eq_Greene_rel_t. Qed.
 
-Lemma Greene_rel_uniq (d : unit) (T : inhOrderType d) (leT : rel T) u :
+Lemma Greene_rel_uniq (T : eqType) (leT : rel T) u :
   uniq u ->
   Greene_rel leT u  =1  Greene_rel (fun x y => (x != y) && (leT x y)) u.
 Proof. by move=> Hu k; exact: Greene_rel_t_uniq. Qed.
@@ -768,9 +775,7 @@ Qed.
 (** ** Injection of k-supports *)
 Section GreeneInj.
 
-Context {disp1 disp2 : unit}
-        {T1 : inhOrderType disp1}
-        {T2 : inhOrderType disp2}.
+Context {T1 T2 : eqType}.
 Variable R1 : rel T1.
 Variable R2 : rel T2.
 
@@ -789,7 +794,7 @@ have : #|P1| > 0.
   by exists set0; rewrite in_set; apply: ksupp0.
 move/(eq_bigmax_cond (fun x => #|cover x|)) => [ks1 Hks1 ->].
 move/(_ _ Hks1): Hinj => [] [ks2 /andP[/eqP ->] Hks2].
-exact: (leq_bigmax_cond (F := (fun x => #|cover x|))).
+exact: (leq_bigmax_cond (F := fun x => #|cover x|)).
 Qed.
 
 End GreeneInj.
@@ -798,7 +803,7 @@ End GreeneInj.
 (** ** Reverting a word on the dual alphabet *)
 Section Rev.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {Alph : eqType}.
 Implicit Type u v w : seq Alph.
 Implicit Type p : seq nat.
 Implicit Type t : seq (seq Alph).
@@ -815,11 +820,16 @@ apply/imsetP/idP => [[x /= Hx ->] | Hi].
 - by exists i => //=; rewrite rev_ordK.
 Qed.
 
-
 Lemma ksupp_inj_rev (leT : rel Alph) u k :
   ksupp_inj leT (fun y x => leT x y) k u (rev u).
 Proof using.
-move=> ks /and3P[Hsz Htriv /forallP Hall].
+case: u => [|u0 u] /=.
+  exists set0; apply/and4P; split => /=.
+  - by apply/eqP; congr (#|pred_of_set _|); apply/setP=> [][]/=.
+  - by rewrite cards0.
+  - by rewrite /trivIset /cover !big_set0 cards0.
+  - by apply/forallP => s; rewrite inE /=.  
+move: (u0 :: u) => {}u ks /and3P[Hsz Htriv /forallP Hall].
 exists (cast_set (esym (size_rev u)) @: ((@revset _) @: ks)).
 apply/and4P; split.
 - rewrite cover_cast /cast_set /=.
@@ -838,7 +848,7 @@ apply/and4P; split.
                       tnth (in_tuple u) (cast_ord (size_rev u) (rev_ord i))));
     first last.
     move=> i /=.
-    by rewrite !(tnth_nth inh) /= nth_rev ?{2}(size_rev u) // -(size_rev u).
+    by rewrite !(tnth_nth u0) /= nth_rev ?{2}(size_rev u) // -(size_rev u).
   set S1 := (X in sorted _ X -> _); set S2 := (X in _ -> sorted _ X).
   suff -> : S1 = S2 by [].
   rewrite {}/S1 {}/S2 {k ks Hsz Htriv HS}.
@@ -1621,7 +1631,7 @@ apply/eqP; rewrite eqn_leq /=; apply/andP; split.
                       Greene_col (in_tuple t0) k)).
   + by apply: Greene_rel_cat => a b c /= H1 H2; apply: (lt_trans H2 H1).
   + rewrite big_cons addnC; apply: leq_add; last exact Ht.
-    have:= (@Greene_rel_seq _ _ >%O _ t0 k).
+    have:= (@Greene_rel_seq _ >%O _ t0 k).
     rewrite /Greene_rel /= => -> //=.
     * by move=> a b c /=; rewrite -!leNgt; exact: le_trans.
     * move: Hrow; rewrite /sorted; case: t0 => [// | l t0].
