@@ -21,8 +21,8 @@ We define the following predicates and operations on [seq nat]:
 - [in_shape sh (r, c) ] == the box with coordinate (r, c) belongs to the shape
                          [sh], that is: [c < sh[r]].
 - [in_skew inn out (r, c) ] == the box with coordinate (r, c) belongs to the
-                         [out] but not [inn]
-- [box_in sh] == a sigma type for boxes in sh : [{ b | in_shape sh b }]
+                         shape [out] but not [inn]
+- [box_in sh] == a sigma type for boxes in sh : [{ b | in_shape sh b }];
                          it is canonically a [subFinType].
 - [box_skew inn out] == a sigma type for boxes in the skew shape [out / inn]
 - [enum_box_in sh] == a full duplicate free list of the boxes in sh.
@@ -43,23 +43,24 @@ Integer Partitions:
                          corner of sh (Lemma [is_part_decr_nth])
 - [rem_corners sh]    == the list of the rows of the removable corners of sh.
 - [incr_first_n sh n] == adding 1 to the n'th first part of sh,
-                         always gives a partitions
+                         always gives a partition
 - [conj_part sh]      == the conjugate of a partition
-- [included s t]      == the Ferrer's diagram of s is included in the
-                         Ferrer's diagram of t. This is an order.
-- [s / t] = [diff_shape s t] == the difference of the shape s and t
+- [included s t]      == the Ferrers diagram of s is included in the
+                         Ferrers diagram of t. This is an order.
+- [s / t] = [diff_shape s t] == the difference of the shapes s and t
 - [outer_shape s t]   == add t to the shape s
 
 
 Enumeration of integer partitions:
 
-- [is_part_of_n sm sh]     == sh in a partition of n
-- [is_part_of_ns sm sz sh] == sh in a partitionfo n of size sz
-- [is_part_of_nsk sm sz mx sh] == sh in a partition of n of size sz
+- [is_part_of_n sm sh]     == sh is a partition of n
+- [is_part_of_ns sm sz sh] == sh is a partition of n of size sz
+                           ("size" means "length")
+- [is_part_of_nsk sm sz mx sh] == sh is a partition of n of size sz
                               in parts at most mx
-- [enum_partn sm]          == the lists of all partitions of n
-- [enum_partns sm sz]      == the lists of all partitions of n of size sz
-- [enum_partnsk sm sz mx]  == the lists of all partitions of n of size sz
+- [enum_partn sm]          == the list of all partitions of n
+- [enum_partns sm sz]      == the list of all partitions of n of size sz
+- [enum_partnsk sm sz mx]  == the list of all partitions of n of size sz
                               in parts at most mx
 - [intpartn_nb sm]         == the number of partitions of n
 - [intpartns_nb sm sz]     == the number of partitions of n of size sz
@@ -72,20 +73,20 @@ Sigma types for integer partitions:
 - [intpart]       == a type for [seq nat] which are partitions;
                      canonically a [subCountType] of [seq nat]
 - [conj_intpart]  == the conjugate of a [intpart] as a [intpart]
-- [empty_intpart] == the empty intpart
+- [empty_intpart] == the empty [intpart]
 
 - ['P_n]          == a type for [seq nat] which are partitions of [n];
                      canonically a [finType]
 - [cast_intpartn m n eq_mn] == the cast from ['P_m] to ['P_n]
-- [rowpartn n]    == the one row partition of sum [n] as a ['P_n]
-- [colpartn n]    == the one column partition of sum [n] as a ['P_n]
+- [rowpartn n]    == the one-row partition of sum [n] as a ['P_n]
+- [colpartn n]    == the one-column partition of sum [n] as a ['P_n]
 - [conj_intpartn] == the conjugate of a ['P_n] as a ['P_n]
-- [hookpartm n k] == then hook shape partition of sum [n.+1] as a ['P_n.+1]
+- [hookpartm n k] == the hook shape partition of sum [n.+1] as a ['P_n.+1]
                      whose arm length is [k] (not counting the corner),
-                     that is [(k+1, 1, ..., 1)].
+                     that is, [(k+1, 1, ..., 1)].
 
 - [decr_nth_intpart p i] == the shape obtained by removing a box at the end
-               of the [i]-th row if the result is a partition else [p]
+                            of the [i]-th row if the result is a partition, else [p]
 
 Operations on partitions:
 
@@ -98,18 +99,19 @@ Comparison of partitions:
 
 
 - ['YL]         == a type convertible to [intpart] which is canonically
-                   a lattice partially ordered by [included].
-- [partdom s t] == [s] is dominated by [t], that is the partial sum of [s] are
-                   smaller that the partial sum of [t].
+                   a lattice partially ordered by [included]
+                              ("Young's lattice").
+- [partdom s t] == [s] is dominated by [t], that is, the partial sums of [s] are
+                   less-or-equal to the partial sums of [t].
 - ['PDom_d]     == a type convertible to ['P_d] which is canonically
                    a finite lattice partially ordered by [partdom].
-- ['PLexi_d]    == a type convertible to ['P_n] which is canonically
+- ['PLexi_d]    == a type convertible to ['P_d] which is canonically
                    finite and totally ordered by the lexicographic order.
 
 Relation with set partitions:
 
 - [setpart_shape P] == the shape of a set partition, i.e.
-               the sorted list of the cardinal of the parts
+               the sorted list of the cardinalities of the parts
 ******)
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
