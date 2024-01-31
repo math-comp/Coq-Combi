@@ -83,9 +83,34 @@
     # push-branches = [ "master" "branch2" ];
   };
 
-  bundles."coq8.19-mc2.1.0" = {
-    coqPackages.coq.override.version = "8.19";
+  bundles."coq8.16-mc2.1.0" = {
+    coqPackages.coq.override.version = "8.16";
     coqPackages.mathcomp.override.version = "2.1.0";
+  };
+
+  bundles."coq8.17-mc2.1.0" = {
+    coqPackages.coq.override.version = "8.17";
+    coqPackages.mathcomp.override.version = "2.1.0";
+  };
+
+  bundles."coq8.16-mc2.2.0" = {
+    coqPackages.coq.override.version = "8.16";
+    coqPackages.mathcomp.override.version = "2.2.0";
+  };
+
+  bundles."coq8.17-mc2.2.0" = {
+    coqPackages.coq.override.version = "8.17";
+    coqPackages.mathcomp.override.version = "2.2.0";
+  };
+
+  bundles."coq8.18-mc2.2.0" = {
+    coqPackages.coq.override.version = "8.18";
+    coqPackages.mathcomp.override.version = "2.2.0";
+  };
+
+  bundles."coq8.19-mc2.2.0" = {
+    coqPackages.coq.override.version = "8.19";
+    coqPackages.mathcomp.override.version = "2.2.0";
   };
 
   ## Cachix caches to use in CI
