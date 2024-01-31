@@ -129,37 +129,39 @@ Contents
   proof available in https://github.com/hivert/FormalPowerSeries which I plan
   to merge here at some points.
 
-Various unstable/unfinished experiments:
-========================================
-
-* bijection m-trees <-> m-dyck words.
-  See the [trees branch on Github](https://github.com/hivert/Coq-Combi/tree/trees).
-
-* a **Why3 certified implementation** of the LR-Rule
-  (together with Jean Christophe Filliâtre).
-  See the [Why3 branch on Github](https://github.com/hivert/Coq-Combi/tree/Why3).
-
-* Poset.
-  See the [posets branch on Github](https://github.com/hivert/Coq-Combi/tree/posets).
-
-* Set-partitions
-  See the [SetPartition branch on Github](https://github.com/hivert/Coq-Combi/tree/SetPartition).
-
 Documentation
 ========================================================================
 
-* The [documentation](https://math-comp.github.io/combi/1.0.0/index.html) is now complete !
+* The [documentation](https://math-comp.github.io/combi/1.0.0/toc.html) is now
+  complete ! with the 
+  [dependancy graph](https://math-comp.github.io/combi/1.0.0/index.html).
 
 * A
-  [presentation](https://github.com/hivert/Coq-Combi/raw/master/doc/Talk-CRM/CRM.pdf)
+  [presentation](https://github.com/math-comp/Coq-Combi/raw/master/doc/Talk-CRM/CRM.pdf)
   given at "[Algebra and combinatorics at LaCIM](http://www.crm.umontreal.ca/2018/Algebre18/index_e.php), a conference
   for the 50th anniversary of the CRM", September 24-28, 2018, Montreal,
   Quebec, Canada. This presentation is targeted at combinatorialist.
 
 * Another
-  [presentation](https://github.com/hivert/Coq-Combi/raw/master/doc/Talk/INRIA.pdf)
+  [presentation](https://github.com/math-comp/Coq-Combi/raw/master/doc/Talk/INRIA.pdf)
   given at [Specfun](https://specfun.inria.fr/seminar/) Inria seminar, march
   2015. This presentation is targeted at proof-assistant specialist.
+
+Various unstable/unfinished experiments:
+========================================
+
+* bijection m-trees <-> m-dyck words.
+  See the [trees branch on Github](https://github.com/math-comp/Coq-Combi/tree/trees).
+
+* a **Why3 certified implementation** of the LR-Rule
+  (together with Jean Christophe Filliâtre).
+  See the [Why3 branch on Github](https://github.com/math-comp/Coq-Combi/tree/Why3).
+
+* Poset.
+  See the [posets branch on Github](https://github.com/math-comp/Coq-Combi/tree/posets).
+
+* Set-partitions
+  See the [SetPartition branch on Github](https://github.com/math-comp/Coq-Combi/tree/SetPartition).
 
 Installation
 ========================================================================
