@@ -1796,7 +1796,7 @@ by rewrite size_rev size_inscode.
 Qed.
 
 
-Let wcord c : seq 'I_n := map inord (wordcd (rev c)).
+Definition wcord c : seq 'I_n := map inord (wordcd (rev c)).
 
 Lemma wcordE c :
   rev c \is a code -> size c <= n.+1 -> wcord c = pmap insub (wordcd (rev c)).
@@ -1965,18 +1965,18 @@ case: eqP => [Hi1 | /eqP Hi1].
   exists [::]; split; first by [].
   by rewrite /= wcord_cons rev_cons map_rcons subnS -Hi1 /= inord_val cats1.
 have {Hi1}Hi : i.+1 < size c - c0 by rewrite ltn_neqAle Hi Hi1.
-  have:= Hsz.
-  rewrite -ltnS => /ltnW/(Hrec _)/(_ (leq_trans Hi (leq_subr _ _))) {Hrec} /=.
-  rewrite wcord_cons size_inscode.
-  move=> [pth] [Hpath <-].
-  exists ((wcord c ++ [:: i] ++ 'I[c0 .. (size c)]) ::
+have:= Hsz.
+rewrite -ltnS => /ltnW/(Hrec _)/(_ (leq_trans Hi (leq_subr _ _))) {Hrec} /=.
+rewrite wcord_cons size_inscode.
+move=> [pth] [Hpath <-].
+exists ((wcord c ++ [:: i] ++ 'I[c0 .. (size c)]) ::
           [seq v ++ 'I[c0 .. (size c)] | v <- pth]); split => [| {Hpath}].
-  - have /= := path_braidred_catl 'I[c0 .. (size c)] Hpath.
-    rewrite -catA /= => ->; rewrite andbT.
-    rewrite /braidred braid_catr // braid_sym.
-    exact: braid_ltn_lineC.
-  - rewrite !catA; case: pth => [| p0 p] //=.
-    exact: last_map.
+- have /= := path_braidred_catl 'I[c0 .. (size c)] Hpath.
+  rewrite -catA /= => ->; rewrite andbT.
+  rewrite /braidred braid_catr // braid_sym.
+  exact: braid_ltn_lineC.
+- rewrite !catA; case: pth => [| p0 p] //=.
+  exact: last_map.
 Qed.
 
 (** ** Straigthening a word *)
