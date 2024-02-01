@@ -15,6 +15,8 @@
 (******************************************************************************)
 (** * The plactic monoid
 
+Knuth rewriting rules:
+
 - [plact1] == rewriting rule acb -> cab if a <= b < c
 - [plact1i] == rewriting rule cab -> acb if a <= b < c
 - [plact2] == rewriting rule bac -> bca if a < b <= c

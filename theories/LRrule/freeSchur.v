@@ -182,7 +182,7 @@ Qed.
 End TableauReading.
 
 
-(** * Free Schur function : lifting Schur function is the free algebra *)
+(** * Free Schur functions : lifting Schur functions in the free algebra *)
 Section FreeSchur.
 
 Variable R : comRingType.
@@ -453,7 +453,7 @@ by rewrite size_rcons IHw.
 Qed.
 
 
-(** ** Invariance with respect to choice of the Q-Tableau *)
+(** ** Invariance with respect to the choice of the Q-Tableau *)
 Section Bij_LRsupport.
 
 Section ChangeUT.

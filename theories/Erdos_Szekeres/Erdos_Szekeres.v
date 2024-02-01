@@ -22,7 +22,7 @@ type contains
 - either a nondecreasing subsequence of length [n+1];
 - or a strictly decreasing subsequence of length [m+1].
 We prove it as a corollary of Greene's theorem on the Robinson-Schensted
-correspondance. Note that there are other proof which require less theory.
+correspondance. Note that there are other proofs which require less theory.
  *****)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.

@@ -1314,10 +1314,9 @@ case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
     by rewrite HSb orbT.
   have /extract2 -> : posa < posc by [].
   rewrite !(tnth_nth b) /= andbT.
-  elim u => [| u0 u'] /=.
-  + move: Hord => /andP[/le_lt_trans /[apply]].
-    by rewrite leNgt => ->.
-  + by apply.
+  elim u => [| u0 u'] //=.
+  move: Hord => /andP[/le_lt_trans /[apply]].
+  by rewrite leNgt => ->.
 - rewrite negb_exists => /forallP Hall.
   exists (NoSetContainingBoth.Q S1);
     rewrite NoSetContainingBoth.size_cover_Q /=.
@@ -1352,19 +1351,19 @@ case (boolP [exists S, [&& S \in P, posa \in S & posc \in S] ]).
   move HcastS : (cast_set (congr1 size Hbac) S) => S'.
   have HS'in : S' \in P' by rewrite -HcastP -HcastS; apply: imset_f.
   set pos1 := Swap.pos1 u (c :: w) b a.
-  have Hpos1 : pos1 \in S'.
+  have {posa HSa} Hpos1 : pos1 \in S'.
     rewrite -(cast_ordKV (congr1 size Hbac) pos1) -HcastS /cast_set /=.
     apply: imset_f.
     suff -> /= : cast_ord (esym (congr1 size Hbac)) pos1 = posa by [].
     by apply: val_inj; rewrite /= size_cat /= addn1.
   set pos2 := SetContainingBothLeft.posc u w a b c.
-  have Hpos2 : pos2 \in S'.
+  have {posc HSc} Hpos2 : pos2 \in S'.
     rewrite -(cast_ordKV (congr1 size Hbac) pos2) -HcastS /cast_set /=.
     apply: imset_f.
     suff -> /= : cast_ord (esym (congr1 size Hbac)) pos2 = posc by [].
     by apply: val_inj; rewrite /= size_cat /= addn1.
-  have:= SetContainingBothLeft.exists_Qy Hyp Hsupp' HS'in Hpos1 Hpos2.
-  move=> [Q [Hcover HsuppQ]].
+  have {pos1 pos2 Hyp Hsupp' S' HcastS HS'in Hpos1 Hpos2} [Q [Hcover HsuppQ]]
+      := SetContainingBothLeft.exists_Qy Hyp Hsupp' HS'in Hpos1 Hpos2.
   exists Q; apply/andP; split; last exact HsuppQ.
   by rewrite Hcover -HcastP -size_cover_inj //=; exact: cast_ord_inj.
 - rewrite negb_exists => /forallP Hall.
@@ -1439,19 +1438,19 @@ case (boolP [exists S, [&& S \in P, posa \in S & posc \in S] ]).
   move HcastS : (cast_set (congr1 size Hbca) S) => S'.
   have HS'in : S' \in P' by rewrite -HcastP -HcastS; apply: imset_f.
   set pos1 := Swap.pos1 u (a :: w) b c.
-  have Hpos1 : pos1 \in S'.
+  have {posa HSa} Hpos1 : pos1 \in S'.
     rewrite -(cast_ordKV (congr1 size Hbca) pos1) -HcastS /cast_set /=.
     apply: imset_f.
     suff -> /= : cast_ord (esym (congr1 size Hbca)) pos1 = posa by [].
     by apply: val_inj; rewrite /= size_cat /= addn1.
   set pos2 := Ordinal (SetContainingBothLeft.u2lt u w c b a).
-  have Hpos2 : pos2 \in S'.
+  have {posc HSc} Hpos2 : pos2 \in S'.
     rewrite -(cast_ordKV (congr1 size Hbca) pos2) -HcastS /cast_set /=.
     apply: imset_f.
     suff -> /= : cast_ord (esym (congr1 size Hbca)) pos2 = posc by [].
     by apply: val_inj; rewrite /= size_cat /= addn1.
-  have:= SetContainingBothLeft.exists_Qy Hyp Hsupp' HS'in Hpos1 Hpos2.
-  move=> [Q [Hcover HsuppQ]].
+  have {pos1 pos2 Hyp Hsupp' S' HcastS HS'in Hpos1 Hpos2} [Q [Hcover HsuppQ]]
+      := SetContainingBothLeft.exists_Qy Hyp Hsupp' HS'in Hpos1 Hpos2.
   exists Q; apply/andP; split; last exact HsuppQ.
   by rewrite Hcover -HcastP -size_cover_inj //=; exact: cast_ord_inj.
 - rewrite negb_exists => /forallP Hall.
@@ -1616,7 +1615,8 @@ rewrite -Greene_row_tab; last exact: is_tableau_RS.
 by apply: Greene_row_invar_plactic; exact: congr_RS.
 Qed.
 
-Corollary plactic_shapeRS_row_proof u v : u =Pl v -> shape (RS u) = shape (RS v).
+Corollary plactic_shapeRS_row_proof u v :
+  u =Pl v -> shape (RS u) = shape (RS v).
 Proof using.
 move=> Hpl.
 suff HeqRS k : Greene_row (to_word (RS u)) k = Greene_row (to_word (RS v)) k
