@@ -43,6 +43,7 @@ theories/Basic/ordtype.v
 theories/Basic/unitriginv.v
 theories/SymGroup/cycles.v
 theories/SymGroup/cycletype.v
+theories/SymGroup/Bruhat.v
 theories/SymGroup/Frobenius_char.v
 theories/SymGroup/permcent.v
 theories/SymGroup/presentSn.v
