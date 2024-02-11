@@ -74,11 +74,11 @@ Lemma bounded_le_homo (m n : nat) f :
   (forall i, m <= i < n -> f i <= f i.+1) ->
   {in [pred i | m <= i & i <= n] &, {homo f : x y / x <= y}}.
 Proof.
-move=> H i j /[!inE] lein.
-elim: j => [_ /[!leqn0]/eqP -> // | j IHj].
-move=> /andP[_ ltjn]; rewrite leq_eqVlt ltnS => /orP [/eqP <- // | leij].
-have lemj : m <= j by move: lein => /andP[/[swap] _ /leq_trans]; apply.
-by apply: (leq_trans (IHj _ leij) (H _ _)); rewrite lemj //= ltnW.
+rewrite -!leEnat => H; apply Order.NatMonotonyTheory.nondecn_inP.
+  move=> i j /[!inE] /andP[lemi _] /andP[_ lejn].
+  move=> k /andP[/ltW/(le_trans lemi) lemk /ltW/le_trans/(_ lejn) lekn].
+  by rewrite inE lemk lekn.
+by move=> i /[!inE] /andP[lemi _] /andP[_ lein]; apply: H; rewrite lemi.
 Qed.
 
 Lemma telescope_sumn_in2 n m f : n <= m ->
