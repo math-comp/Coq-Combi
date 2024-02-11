@@ -153,7 +153,7 @@ End PermMX.
 by apply val_inj; rewrite /= inordK. Qed.
 #[local] Lemma inord_max n : inord n = ord_max :> 'I_n.+1.
 by apply val_inj; rewrite /= inordK. Qed.
-Hint Resolve lti1 lti perm_inj lei : core.
+#[local] Hint Resolve lti1 lti perm_inj lei : core.
 
 Lemma setIE (T : finType) (pA pB : pred T) :
   [set y | pA y & pB y] = [set y | pA y] :&: [set y | pB y].
@@ -383,13 +383,12 @@ have {}Cincr i j (ltin : i < n') :
   by move/(_ (inord j) (inord i.+1)): Cincr; rewrite !mxE inordK // ltnS.
 apply matrixP=> i j; rewrite -{1}(inord_val i) -{1}(inord_val j) mxsumE //.
 transitivity
-    ( \sum_(0 <= k < i) (M (inord k.+1) (inord j) - M (inord k) (inord j)) );
-    first last.
-  rewrite telescope_sumn_in2 //; first by rewrite !inord_val inord0 C0 subn0.
-  apply: bounded_le_homo => k /= ltki.
-  by apply/Cincr/(leq_trans ltki).
-rewrite !big_nat; apply: eq_bigr => k /= /leq_trans/(_ (ltn_ord i)) ltkn /=.
-exact: sum_mxdiff.
+    ( \sum_(0 <= k < i) (M (inord k.+1) (inord j) - M (inord k) (inord j)) ).
+  rewrite !big_nat; apply: eq_bigr => k /= /leq_trans/(_ (ltn_ord i)) ltkn /=.
+  exact: sum_mxdiff.
+rewrite telescope_sumn_in2 //; first by rewrite !inord_val inord0 C0 subn0.
+apply: bounded_le_homo => k /= ltki.
+by apply/Cincr/(leq_trans ltki).
 Qed.
 
 Lemma is_pmxsumP M : reflect (exists s, M = mxsum (perm_mx s)) (is_pmxsum M).
