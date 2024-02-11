@@ -1,3 +1,4 @@
+-docroot Combi
 -R theories Combi
 -arg -w -arg -notation-overridden
 -arg -w -arg -ambiguous-paths
