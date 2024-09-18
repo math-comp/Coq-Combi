@@ -113,19 +113,20 @@ Lemma commword_morph (u v : seq 'I_n) :
 Proof using . by rewrite /commword big_cat. Qed.
 
 Lemma commtuple_morph d1 d2 (u : d1.-tuple 'I_n) (v : d2.-tuple 'I_n) :
-  commword (cat_tuple u v) = (commword u) * (commword v).
+  commword [tuple of u ++ v] = (commword u) * (commword v).
 Proof using . by rewrite commword_morph. Qed.
 
 Definition homlang d := {set d.-tuple 'I_n}.
 Definition polylang d (s : homlang d) := \sum_(w in s) commword w.
 Definition catlang d1 d2 (s1 : homlang d1) (s2 : homlang d2) :
   homlang (d1 + d2) :=
- [set cat_tuple w1 w2 | w1 in s1, w2 in s2].
+  [set [tuple of w1 ++ w2] | w1 : d1.-tuple 'I_n in s1,
+                             w2 : d2.-tuple 'I_n in s2].
 
 Lemma cat_tuple_inj d1 d2 (u x : d1.-tuple 'I_n) (v y : d2.-tuple 'I_n) :
-  cat_tuple u v = cat_tuple x y -> (u, v) = (x, y).
+  [tuple of u ++ v] = [tuple of x ++ y] -> (u, v) = (x, y).
 Proof using .
-rewrite /cat_tuple => [] [/eqP].
+move=> [/eqP].
 rewrite eqseq_cat; last by rewrite !size_tuple.
 by move=> /andP[/eqP/val_inj -> /eqP/val_inj ->].
 Qed.
@@ -313,7 +314,7 @@ apply/setP/subset_eqP/andP; split; apply/subsetP=> t.
   have Hsz2 : size (drop d1 t) == d2.
     by rewrite size_drop size_tuple addKn.
   pose t2 := Tuple Hsz2.
-  have Hcat : t = cat_tuple t1 t2.
+  have Hcat : t = [tuple of t1 ++ t2].
     by apply: val_inj => /=; rewrite cat_take_drop.
   have : val t1 \in langQ Q1 /\ val t2 \in langQ Q2.
     rewrite LRtriple_cat_equiv // !size_tuple !size_tab_stdtabn //.

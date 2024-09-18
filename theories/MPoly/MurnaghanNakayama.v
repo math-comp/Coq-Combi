@@ -312,7 +312,18 @@ Goal ([seq x | x <- [seq (p, MN_coeff p [:: 4; 2; 1; 1]) | p <- enum_partn 8]
       ([:: 1; 1; 1; 1; 1; 1; 1; 1], Posz 1)])%N.
 Proof. by []. Qed.
 
+(** This is the character table of S_4 *)
+Example S4CharTable :
+  [seq [seq MN_coeff p q | p <- enum_partn 4] | q <- enum_partn 4]
+     = [:: [:: 1;  0; -1;  1; -1];
+           [:: 1;  2; -1; -1;  1];
+           [:: 1; -1;  0;  0;  1];
+           [:: 1;  0;  1; -1; -1];
+           [:: 1;  2;  3;  3;  1]]%Z.
+Proof. by []. Qed.
+
 End Tests.
+
 
 (** * Murnaghan-Nakayama rule *)
 Section MNRule.
