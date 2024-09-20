@@ -1175,37 +1175,51 @@ Fixpoint enum_partnsk sm sz mx : (seq (seq nat)) :=
   else if sm is sm.+1 then [::] else [:: [::]].
 
 Definition enum_partns sm sz := enum_partnsk sm sz sm.
-Definition enum_partn sm := flatten [seq enum_partns sm sz | sz <- iota 0 sm.+1 ].
+Definition enum_partnm sm mx :=
+  flatten [seq enum_partnsk sm sz mx | sz <- iota 0 sm.+1 ].
+Definition enum_partn sm :=
+  flatten [seq enum_partns sm sz | sz <- iota 0 sm.+1 ].
 
 Definition is_part_of_n   sm :=
   [pred p | (sumn p == sm)   & is_part p ].
 Definition is_part_of_ns  sm sz :=
   [pred p | (size p == sz)   & is_part_of_n sm p].
+Definition is_part_of_nm sm mx :=
+  [pred p | (head 0 p <= mx) & is_part_of_n sm p].
 Definition is_part_of_nsk sm sz mx :=
-  [pred p | (head 1 p <= mx) & is_part_of_ns sm sz p].
+  [pred p | (head 0 p <= mx) & is_part_of_ns sm sz p].
 
 Lemma enum_partnsk_allP sm sz mx :
-  mx >= 1 -> all (is_part_of_nsk sm sz mx) (enum_partnsk sm sz mx).
+  all (is_part_of_nsk sm sz mx) (enum_partnsk sm sz mx).
 Proof.
-move=> Hmx; apply/allP => /=.
+case (ltnP mx 1) => [|Hmx].
+  rewrite ltnS leqn0 => /eqP ->.
+  by case: sz sm => //= [][|sm].
+apply/allP => /=.
 elim: sz sm mx Hmx => [/= []| sz IHsz sm] //= mx Hmx p.
-  by rewrite mem_seq1 => /eqP -> /=; rewrite Hmx.
-move/flatten_mapP => [i].
-rewrite mem_iota ltnS => /andP[Hposi Himin] /mapP[recp].
+  by rewrite mem_seq1 => /eqP ->.
+move/flatten_mapP => /=[i].
+rewrite mem_iota ltnS => /andP[Hposi Himin] /mapP[/=recp].
 move/(IHsz _ _ Hposi)/and4P => [Hp Hsum Hsz Hhead] -> /= {IHsz}.
-rewrite Hp (eqP Hsum) (eqP Hsz) Hhead {Hp Hsum Hsz Hhead} /=.
+rewrite (eqP Hsum) (eqP Hsz) Hhead {Hsum Hsz Hhead} /=.
 move: Himin; rewrite leq_min => /andP[/subnKC -> ->].
-by rewrite !eq_refl.
+rewrite !eq_refl /= andbT.
+by case: recp Hp.
 Qed.
 
 Lemma enum_partnsk_countE sm sz mx :
-  mx >= 1 ->
   forall p, is_part_of_nsk sm sz mx p ->
             count_mem p (enum_partnsk sm sz mx) = 1.
 Proof.
+case (ltnP mx 1).
+  rewrite ltnS leqn0 => /eqP -> p.
+  case: sz => [|sz]/= => /and4P[H /eqP].
+    by move/size0nil => -> /= /eqP <-.
+  case: p H => [| p0 p]//=; rewrite leqn0 => /eqP-> _ _ /andP[].
+  by rewrite leqn0 => /part_head0F->.
 elim: sz sm mx => [| sz IHsz] /= sm mx Hmx.
-  by move=> p /and4P[Hhead/nilP -> /= /eqP <-].
-case=> [| p0 p] //=; first by rewrite andbF.
+  by move=> p /and4P[Hhead /nilP -> /= /eqP <-].
+case=> [| p0 p] //=.
 move=> /and5P[Hp0]; rewrite eqSS=> /eqP Hsz /eqP Hsm Hhead Hpart.
 rewrite count_flatten -map_comp.
 rewrite (eq_map (g := fun i => i == p0 : nat)); first last.
@@ -1216,7 +1230,8 @@ rewrite (eq_map (g := fun i => i == p0 : nat)); first last.
     rewrite {}IHsz //=.
     + have /part_head_non0 /= : is_part (i :: p) by rewrite /= Hhead Hpart.
       by rewrite lt0n.
-    + by rewrite Hhead Hsz -Hsm addKn !eq_refl Hpart.
+    + rewrite {}Hsz -{}Hsm addKn !eq_refl {}Hpart !andbT.
+      by case: p Hhead.
   - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
     by move=> s; rewrite /= -eqseqE /= Hneq.
 rewrite sumn_pred1_iota add1n ltnS leq_min Hp0 -Hsm leq_addr !andbT.
@@ -1225,21 +1240,18 @@ by rewrite lt0n => ->.
 Qed.
 
 Lemma enum_partnskE sm sz mx :
-  mx >= 1 ->
   forall p, count_mem p (enum_partnsk sm sz mx) = is_part_of_nsk sm sz mx p.
 Proof.
-move=> Hx p; case (boolP ((is_part_of_nsk sm sz mx) p)) => H /=.
+move=> p; case (boolP ((is_part_of_nsk sm sz mx) p)) => H /=.
 - by rewrite enum_partnsk_countE.
 - apply/count_memPn; move: H; apply: contra.
-  exact: (allP (enum_partnsk_allP _ _ Hx)).
+  exact: (allP (enum_partnsk_allP _ _ _)).
 Qed.
 
 Lemma enum_partns_allP sm sz : all (is_part_of_ns sm sz) (enum_partns sm sz).
 Proof.
 apply/allP; rewrite /enum_partns => /= p.
-case: sm => [/= | sm]; first by case: sz; rewrite //= mem_seq1 => /eqP ->.
-have /enum_partnsk_allP/allP Hall : sm.+1 >= 1 by [].
-by move=> /Hall /= /andP[_].
+by have:= allP (enum_partnsk_allP _ _ _) => /[apply] /= /andP[_].
 Qed.
 
 Lemma enum_partns_countE sm sz p :
@@ -1248,10 +1260,7 @@ Proof.
 rewrite /enum_partns.
 case: p => /= [/and3P[/eqP<- /eqP<-] // | p0 p] /and4P[Hsz Hsum Hhead Hpart].
 rewrite enum_partnsk_countE //=.
-- rewrite -(eqP Hsum); apply: (@leq_trans p0); last exact: leq_addr.
-  have /part_head_non0 /= : is_part (p0 :: p) by rewrite /= Hhead Hpart.
-  by rewrite lt0n.
-- by rewrite Hsz Hsum Hhead Hpart -(eqP Hsum) leq_addr.
+by rewrite Hsz Hsum Hhead Hpart -(eqP Hsum) leq_addr.
 Qed.
 
 Lemma enum_partnsE sm sz p :
@@ -1269,8 +1278,7 @@ apply/allP; rewrite /enum_partn => /= p.
 case: sm => [/= | sm]; first by rewrite mem_seq1 => /eqP ->.
 rewrite cat0s => /flatten_mapP[i].
 rewrite mem_iota ltnS => /andP[Hposi Hi].
-have /enum_partnsk_allP/allP Hall : sm.+1 >= 1 by [].
-by move=> /Hall /= /and3P[].
+by have:= allP (enum_partnsk_allP _ _ _) => /[apply] /= /and3P[_].
 Qed.
 
 Lemma enum_partn_countE sm p :
@@ -1299,6 +1307,33 @@ Lemma enum_partnP n p : (is_part_of_n n p) = (p \in enum_partn n).
 Proof.
 apply/idP/idP; last by move/(allP (enum_partn_allP n)).
 by rewrite -has_pred1 has_count; move/enum_partn_countE ->.
+Qed.
+
+Lemma enum_partnm_allP sm mx :
+  mx >= 1 -> all (is_part_of_nm sm mx) (enum_partnm sm mx).
+Proof.
+move=> Hmx.
+apply/allP; rewrite /enum_partnm => /= p.
+case: sm => [/= | sm].
+  by rewrite //= mem_seq1 => /eqP ->.
+rewrite cat0s => /flatten_mapP[i].
+rewrite mem_iota ltnS => /andP[Hposi Hi].
+by have:= allP (enum_partnsk_allP _ _ _) => /[apply] /= /and4P[-> _ -> ->].
+Qed.
+
+Lemma enum_partnm_countE sm mx p :
+  is_part_of_nm sm mx p -> count_mem p (enum_partnm sm mx) = 1.
+Proof.
+case: mx => [|mx]/=; rewrite /enum_partnm.
+  case: p => [| [|p0] p] //=; first by rewrite andbT => /eqP <-.
+  by move=>/and3P[_ /[!leqn0] /part_head0F ->].
+move=> /and3P[Hmx /eqP Hsum Hpart].
+rewrite count_flatten -map_comp.
+rewrite (eq_map (g := fun i => i == size p : nat)); first last.
+  move=> i /=; rewrite enum_partnskE //=.
+  by rewrite Hmx Hsum Hpart /= eqxx !andbT eq_sym.
+rewrite sumn_pred1_iota add0n ltnS leq0n /=.
+by rewrite (leq_trans (size_part Hpart)) // Hsum.
 Qed.
 
 
