@@ -13,8 +13,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-From mathcomp Require Import all_ssreflect.
-From mathcomp Require Import ssralg poly binomial rat ssrnum.
+From mathcomp Require Import all_ssreflect ssralg ssrint.
 From Combi Require Import tfps auxresults.
 
 Require Import sorted partition.
@@ -227,7 +226,7 @@ Local Open Scope tfps_scope.
 
 Lemma sg_strict_part_bound n b :
   [tfps i => (cBSpart i b)%:R] =
-    \prod_(1 <= i < b.+1) (1 + \X ^+ i) :> {tfps rat n}.
+    \prod_(1 <= i < b.+1) (1 + \X ^+ i) :> {tfps int n}.
 Proof.
 elim: b => [| b IHb].
   rewrite big_geq //; apply/tfpsP => i le_i_n.
@@ -236,12 +235,12 @@ elim: b => [| b IHb].
     rewrite /cBSpart [[set sh : _ | _]](_ : _ = [set rowpartn 0]); first last.
       by apply/setP => /= sh; rewrite !inE intpartn0 /= eqxx rowpartn0E.
     by rewrite cards1 eqxx.
-  rewrite /cBSpart [[set sh : _ | _]](_ : _ = set0); first last.
-    apply/setP => /= [sh] /=; rewrite !inE.
-    apply/negbTE; rewrite negb_and; apply/orP; right.
-    case: sh => /= [[// | s0 sh]] /andP[_ /part_head_non0 /=].
-    by rewrite leqn0 => /negbTE ->.
-  by rewrite cards0 eqn0Ngt.
+  rewrite /cBSpart [[set sh : _ | _]](_ : _ = set0).
+    by rewrite cards0 eqn0Ngt.
+  apply/setP => /= [sh] /=; rewrite !inE.
+  apply/negbTE; rewrite negb_and; apply/orP; right.
+  case: sh => /= [[// | s0 sh]] /andP[_ /part_head_non0 /=].
+  by rewrite leqn0 => /negbTE ->.
 rewrite big_nat_recr //= -{}IHb; apply/tfpsP => i le_i_n.
 rewrite mulrDr mulr1 !coeft_simpl le_i_n !coef_tfps_of_fun le_i_n.
 case: ltnP => [lt_i_b1 | lt_b_i].
@@ -252,7 +251,7 @@ Qed.
 
 Lemma sg_strict_part n :
   [tfps i => (cSpart i)%:R] =
-    \prod_(1 <= i < n.+1) (1 + \X ^+ i) :> {tfps rat n}.
+    \prod_(1 <= i < n.+1) (1 + \X ^+ i) :> {tfps int n}.
 Proof.
 rewrite -sg_strict_part_bound; apply/tfpsP => i le_i_n.
 by rewrite !coef_tfps_of_fun le_i_n cBSpartE.
@@ -261,7 +260,7 @@ Qed.
 
 Lemma sg_odd_part_bound n b :
   [tfps i => (cBOpart i b)%:R] =
-    \prod_(1 <= i < b.+1 | odd i) (1 - \X ^+ i)^-1 :> {tfps rat n}.
+    \prod_(1 <= i < b.+1 | odd i) (1 - \X ^+ i)^-1 :> {tfps int n}.
 Proof.
 elim: b => [| b IHb].
   rewrite big_geq //; apply/tfpsP => i le_i_n.
@@ -270,12 +269,12 @@ elim: b => [| b IHb].
     rewrite /cBOpart [[set sh : _ | _]](_ : _ = [set rowpartn 0]); first last.
       by apply/setP => /= sh; rewrite !inE intpartn0 /= eqxx rowpartn0E.
     by rewrite cards1 eqxx.
-  rewrite /cBOpart [[set sh : _ | _]](_ : _ = set0); first last.
-    apply/setP => /= [sh] /=; rewrite !inE.
-    apply/negbTE; rewrite negb_and; apply/orP; right.
-    case: sh => /= [[// | s0 sh]] /andP[_ /part_head_non0 /=].
-    by rewrite leqn0 => /negbTE ->.
-  by rewrite cards0 eqn0Ngt.
+  rewrite /cBOpart [[set sh : _ | _]](_ : _ = set0).
+    by rewrite cards0 eqn0Ngt.
+  apply/setP => /= [sh] /=; rewrite !inE.
+  apply/negbTE; rewrite negb_and; apply/orP; right.
+  case: sh => /= [[// | s0 sh]] /andP[_ /part_head_non0 /=].
+  by rewrite leqn0 => /negbTE ->.
 rewrite big_mkcond big_nat_recr //= -big_mkcond /= -{}IHb.
 case: (boolP (odd b)) => [odd_b | nodd_b] /=.
   rewrite mulr1; apply/tfpsP => i le_i_n.
@@ -294,48 +293,43 @@ Qed.
 
 Lemma sg_odd_part n :
   [tfps i => (cOpart i)%:R] =
-    \prod_(1 <= i < n.+1 | odd i) (1 - \X ^+ i)^-1 :> {tfps rat n}.
+    \prod_(1 <= i < n.+1 | odd i) (1 - \X ^+ i)^-1 :> {tfps int n}.
 Proof.
 rewrite -sg_odd_part_bound; apply/tfpsP => i le_i_n.
 by rewrite !coef_tfps_of_fun le_i_n cBOpartE.
 Qed.
 
-Lemma Euler_identity n :
+Theorem Euler_identity n :
   \prod_(1 <= i < n.+1) (1 + \X ^+ i)
-  = \prod_(1 <= i < n.+1 | odd i) (1 - \X ^+ i)^-1 :> {tfps rat n}.
+  = \prod_(1 <= i < n.+1 | odd i) (1 - \X ^+ i)^-1 :> {tfps int n}.
 Proof.
-pose ev := \prod_(1 <= i < n.+1 | ~~ odd i) (1 - \X ^+ i) : {tfps rat n}.
-have produnit P :
-    \prod_(1 <= i < n.+1 | P i) (1 - \X ^+ i) \is a GRing.unit.
-  rewrite /ev big_nat_cond; apply: rpred_prod => /= i /andP[/andP[lt0i _] _].
+have unit_tfps1 := unitr1 {tfps int n}.
+have unit_prod P :
+    \prod_(1 <= i < n.+1 | P i) (1 - \X ^+ i) \is a (@GRing.unit {tfps int n}).
+  rewrite big_nat_cond; apply: rpred_prod => /= i /andP[/andP[lt0i _] _].
   rewrite unit_tfpsE !coeft_simpl eqxx /=.
-  move: lt0i; rewrite lt0n eq_sym => /negbTE ->.
-  by rewrite subr0 unitr1.
-have evunit : ev  \is a GRing.unit by exact: produnit.
-rewrite -[RHS](divrK evunit) {evunit}/ev prodrV ?produnit //=.
-rewrite -[X in _ = X * _]invrM ?produnit // [X in X^-1]mulrC.
-have := erefl (\prod_(1 <= i < n.+1) (1 - \X ^+ i) : {tfps rat n}).
-rewrite {1}(bigID odd) /= => ->.
-suff {produnit} -> : \prod_(1 <= i < n.+1 | ~~ odd i) (1 - \X ^+ i) =
-            (\prod_(1 <= i < n.+1) (1 + \X ^+ i))
-            * (\prod_(1 <= i < n.+1) (1 - \X ^+ i)) :> {tfps rat n}.
-  by rewrite mulrC mulrK ?produnit.
-rewrite -big_split /=; symmetry.
+  by move: lt0i; rewrite lt0n eq_sym => /negbTE ->; rewrite subr0.
+rewrite -[RHS](divrK (unit_prod (fun i => ~~ odd i))) prodrV //=.
+rewrite -[X in _ = X * _]invrM // [X in X^-1]mulrC.
+have:= erefl (\prod_(1 <= i < n.+1) (1 - \X ^+ i) : {tfps int n}).
+rewrite {1}(bigID odd) /= => ->; rewrite mulrC.
+rewrite -[LHS]divr1; apply/eqP; rewrite eq_divr //.
+rewrite -big_split /=; apply/eqP {unit_prod unit_tfps1}.
 under eq_bigr => i _.
-  by rewrite !mulrDl !mulrDr !mul1r !mulr1 addrA subrK mulrN -exprD addnn over.
+  rewrite !(mulrDl, mulrDr, mul1r, mulr1).
+  by rewrite addrA subrK mulrN -exprD addnn over.
 rewrite /= (bigID (fun i => i.*2 < n.+1)%N) /=.
 rewrite [X in _ * X]big1 ?mulr1; first last.
   move=> i; rewrite -ltnNge => lt_n_i2; apply/tfpsP => k le_k_n.
   rewrite !coeft_simpl le_k_n /=.
-  have /ltn_eqF -> := (leq_ltn_trans le_k_n lt_n_i2).
+  have /ltn_eqF -> := leq_ltn_trans le_k_n lt_n_i2.
   by rewrite subr0.
+(* The remaining of this proof is quite painful *)
 rewrite -(big_map _ (fun i => (i < n.+1)%N) (fun i => 1 - \X ^+ i)).
 rewrite /index_iota subSS subn0.
-rewrite -big_filter -[RHS]big_filter; apply/perm_big/uniq_perm.
-- apply filter_uniq; rewrite map_inj_uniq ?iota_uniq //.
-  exact: double_inj.
+rewrite -big_filter -[RHS]big_filter; apply/perm_big/uniq_perm => [||/= i].
+- by apply filter_uniq; rewrite map_inj_uniq ?iota_uniq //; apply double_inj.
 - exact/filter_uniq/iota_uniq.
-move=> i.
 rewrite !mem_filter mem_iota add1n ltnS.
 rewrite [RHS]andbA [RHS]andbC [RHS]andbA.
 case: (leqP i n) => //= le_i_n.
@@ -350,12 +344,121 @@ apply: (leq_trans _ le_i_n).
 by rewrite -leq_double eqi -addnn leq_addr.
 Qed.
 
-Theorem Euler_partition n :
+
+
+
+
+(*
+rewrite [RHS]big_add1 [RHS]big_mkord ![_.-1]/=.
+
+reindex_onto
+
+rewrite -(even_uphalfK odd_n); move: (uphalf n) => {odd_n}n.
+under eq_bigl => i.
+  rewrite ltnS leq_double -ltnS.
+  by rewrite -[(_ < _)%N]andTb -/(~~ false) -(odd_double i) over.
+rewrite /= -[LHS]big_nat_widen; last by rewrite ltnS -addnn leq_addl.
+rewrite !big_add1 !big_mkord ![_.-1]/=.
+
+
+have bla (i : 'I_n./2) : (i.*2.+1 < odd n + n)%N.
+  case: i => [i /=]; rewrite /= -uphalfK ltn_Sdouble uphalfE.
+  by move/leq_trans; apply; apply: half_leq.
+
+
+  
+
+Lemma Euler_identity n :
+  \prod_(1 <= i < n.+1) (1 + \X ^+ i)
+  = \prod_(1 <= i < n.+1 | odd i) (1 - \X ^+ i)^-1 :> {tfps int n}.
+Proof.
+have unit_tfps1 := unitr1 {tfps int n}.
+have produnit P :
+    \prod_(1 <= i < n.+1 | P i) (1 - \X ^+ i) \is a (@GRing.unit {tfps int n}).
+  rewrite big_nat_cond; apply: rpred_prod => /= i /andP[/andP[lt0i _] _].
+  rewrite unit_tfpsE !coeft_simpl eqxx /=.
+  by move: lt0i; rewrite lt0n eq_sym => /negbTE ->; rewrite subr0.
+have evunit : \prod_(1 <= i < n.+1 | ~~ odd i) (1 - \X ^+ i) \is a
+                (@GRing.unit {tfps int n}) by exact: produnit.
+rewrite -[RHS](divrK evunit) prodrV //=.
+rewrite -[X in _ = X * _]invrM // [X in X^-1]mulrC.
+have := erefl (\prod_(1 <= i < n.+1) (1 - \X ^+ i) : {tfps int n}).
+rewrite {1}(bigID odd) /= => ->; rewrite mulrC.
+rewrite -[LHS]divr1; apply/eqP; rewrite eq_divr //.
+rewrite -big_split /=; apply/eqP.
+under eq_bigr => i _.
+  by rewrite !mulrDl !mulrDr !mul1r !mulr1 addrA subrK mulrN -exprD addnn over.
+rewrite /= (bigID (fun i => i.*2 < n.+1)%N) /=.
+rewrite [X in _ * X]big1 ?mulr1; first last.
+  move=> i; rewrite -ltnNge => lt_n_i2; apply/tfpsP => k le_k_n.
+  rewrite !coeft_simpl le_k_n /=.
+  have /ltn_eqF -> := leq_ltn_trans le_k_n lt_n_i2.
+  by rewrite subr0.
+(* The remaining of this proof is quite painful *)
+under eq_bigl => i.
+  by rewrite -gtn_uphalf_double -[(_ < _)%N]andTb -/(~~ false) -(odd_double i) over.
+rewrite -[LHS]big_nat_widen; first last.
+  by rewrite -leq_double uphalfK -addnn leq_add2r; case: (odd _).
+rewrite !big_add1 !big_mkord ![_.-1]/=.
+have bla (i : 'I_n./2) : (i.*2.+1 < odd n + n)%N.
+  case: i => [i /=]; rewrite /= -uphalfK ltn_Sdouble uphalfE.
+  by move/leq_trans; apply; apply: half_leq.
+pose h i := Ordinal (bla i).
+have hE (i : 'I_n./2) : i.+1.*2 = (val (h i)).+1 by rewrite /= doubleS.
+under [LHS]eq_bigl => i do rewrite hE.
+under [LHS]eq_bigr => i _ do rewrite hE.
+rewrite -(reindex h (P := fun (j : 'I_(odd n + n)) => ~~ odd (\val j).+1)
+            (F := fun (j : 'I_(odd n + n)) => (1 - \X ^+ (\val j).+1))) /=.
+  rewrite -!(big_mkord (fun i => ~~ ~~ odd i) (fun i => (1 - \X ^+ i.+1))).
+  case: (boolP (odd n)) => [odd_n |_]; rewrite /= ?add0n ?add1n //.
+  rewrite big_mkcond big_nat_recr //= -big_mkcond /= odd_n /=.
+  suff -> : \X ^+ n.+1 = 0 :> {tfps int n} by rewrite subr0 mulr1.
+  apply/tfpsP => i le_i_n; rewrite !coeft_simpl le_i_n /=.
+  by move: le_i_n; rewrite -ltnS => /ltn_eqF ->.
+have blo (i : 'I_(odd n + n)) : (i.-1./2 < n./2)%N.
+  rewrite -ltn_double !halfK.
+
+  rewrite -ltnS -/(uphalf n).
+under [LHS]eq_bigl do rewrite negbK.
+under [RHS]eq_bigl do rewrite negbK.
+rewrite /=.
+
+(uphalf n.+1).-1 == n./2
+             
+  under eq_bigl => i do rewrite -gtn_uphalf_double -[(_ < _)%N]andTb -/(xpredT i).
+rewrite -[LHS]big_nat_widen; first last.
+  by rewrite -leq_double uphalfK -addnn leq_add2r; case: (odd _).
+rewrite !big_add1 /= !big_mkord.
+under [RHS]eq_bigl do rewrite negbK.
+
+
+(* This one works *)
+rewrite -(big_map _ (fun i => (i < n.+1)%N) (fun i => 1 - \X ^+ i)).
+rewrite /index_iota subSS subn0.
+rewrite -big_filter -[RHS]big_filter; apply/perm_big/uniq_perm => [||/= i].
+- by apply filter_uniq; rewrite map_inj_uniq ?iota_uniq //; apply double_inj.
+- exact/filter_uniq/iota_uniq.
+rewrite !mem_filter mem_iota add1n ltnS.
+rewrite [RHS]andbA [RHS]andbC [RHS]andbA.
+case: (leqP i n) => //= le_i_n.
+apply/mapP/idP => /=[[j]|].
+  rewrite mem_iota => /andP[le_0_j _ ->{i le_i_n}].
+  by rewrite odd_double /= double_gt0.
+move/andP => [/even_halfK eqi lt_0_i].
+exists i./2; last by rewrite eqi.
+rewrite mem_iota add1n ltnS.
+move: lt_0_i; rewrite -{1}eqi double_gt0 => -> /=.
+apply: (leq_trans _ le_i_n).
+by rewrite -leq_double eqi -addnn leq_addr.
+Qed.
+ *)
+
+Corollary Euler_strict_odd_partition n :
   #|[set sh : 'P_n | uniq sh]| = #|[set sh : 'P_n | all odd sh]|.
 Proof.
 have /(congr1 (coeftfps n)) /= := Euler_identity n.
 rewrite -sg_odd_part -sg_strict_part !coef_tfps_of_fun leqnn => /eqP.
-by rewrite Num.Theory.eqr_nat => /eqP.
+by rewrite !natz eqz_nat => /eqP.
 Qed.
 
 End Euler.
