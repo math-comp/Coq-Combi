@@ -21,7 +21,7 @@ TODO: these probably should be contributed to SSReflect itself
 ****************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import finset bigop path binomial.
+From mathcomp Require Import finset bigop path binomial div ssralg.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -502,3 +502,142 @@ End SetPartition.
 
 Notation "#{ x }" :=  #|(x : {set _})|
                       (at level 0, x at level 10, format "#{ x }").
+
+(** TODO remove me when integrated in mathcomp *)
+Section SSRcomplUnit.
+
+Lemma big_rcons [R : Type] (idx : R) (op : Monoid.law idx)
+   [I : Type] (i : I) (r : seq I) (P : pred I) (F : I -> R)
+   (x := \big[op/idx]_(j <- r | P j) F j) :
+   \big[op/idx]_(j <- rcons r i | P j) F j = (if P i then op x (F i) else x).
+Proof.
+rewrite -cats1 big_cat big_cons big_nil Monoid.mulm1.
+by case: (P i) => //; rewrite Monoid.mulm1.
+Qed.
+
+Import GRing.Theory.
+Local Open Scope ring_scope.
+
+(** TODO remove me when integrated in mathcomp *)
+Lemma unitr_prod {R : unitRingType} {I : Type} (P : pred I) (E : I -> R) (r : seq I) :
+  (forall i, P i -> E i \is a GRing.unit) ->
+    (\prod_(i <- r | P i) E i \is a GRing.unit).
+Proof.
+by move=> Eunit; elim/big_rec: _ => [/[!unitr1] |i x /Eunit/unitrMr->].
+Qed.
+
+(** TODO remove me when integrated in mathcomp *)
+Lemma unitr_prod_in {R : unitRingType} {I : eqType} (P : pred I) (E : I -> R) (r : seq I) :
+  {in r, forall i, P i -> E i \is a GRing.unit} ->
+    (\prod_(i <- r | P i) E i \is a GRing.unit).
+Proof.
+by rewrite big_seq_cond => H; apply: unitr_prod => i /andP[]; exact: H.
+Qed.
+
+Variable R : unitRingType.
+
+(** TODO remove me when integrated in mathcomp *)
+Lemma rev_prodr (I : Type) (r : seq I) (P : pred I) (E : I -> R) :
+  \prod_(i <- r | P i) (E i : R^c) = \prod_(i <- rev r | P i) E i.
+Proof.
+by elim: r => [|x r IHr]; rewrite ?big_nil// big_cons rev_cons big_rcons IHr.
+Qed.
+
+(** TODO remove me when integrated in mathcomp *)
+Lemma rev_prodrV (I : Type) (r : seq I) (P : pred I) (E : I -> R) :
+  (forall i, P i -> E i \is a GRing.unit) ->
+  \prod_(i <- r | P i) (E i)^-1 = ((\prod_(i <- r | P i) (E i : R^c))^-1).
+Proof.
+move=> Eunit.
+have := unitr_prod r (Eunit : forall i, P i -> (E i : R^c) \is a GRing.unit).
+elim/big_rec2: _ => [|i x y Pi]; first by rewrite invr1.
+by rewrite unitrMr ?Eunit// => + yunit => ->//; rewrite invrM// ?Eunit.
+Qed.
+
+End SSRcomplUnit.
+
+
+Section SSRcomplComUnit.
+
+Import GRing.Theory.
+Local Open Scope ring_scope.
+
+Variable R : comUnitRingType.
+
+(** TODO remove me when integrated in mathcomp *)
+Lemma unitr_prodP (I : eqType) (r : seq I) (P : pred I) (E : I -> R) :
+  reflect {in r, forall i, P i -> E i \is a GRing.unit}
+    (\prod_(i <- r | P i) E i \is a GRing.unit).
+Proof.
+apply (iffP idP); last exact: unitr_prod_in.
+elim: r => [|r0 r IHr] //; rewrite big_cons.
+case: (boolP (P r0)) => [Pr0 | /negbTE nPr0].
+  rewrite unitrM => /andP[unitEr0 {}/IHr unitr].
+  by move=> i /[!inE]/orP[/eqP->{i} // | ]; last exact: unitr.
+by move=> {}/IHr unitr i /[!inE]/orP[/eqP->{i} // /[!nPr0]|]; last exact: unitr.
+Qed.
+
+(** TODO remove me when integrated in mathcomp *)
+Lemma prodrV (I : eqType) (r : seq I) (P : pred I) (E : I -> R) :
+  (forall i, P i -> E i \is a GRing.unit) ->
+  \prod_(i <- r | P i) (E i)^-1 = (\prod_(i <- r | P i) E i)^-1.
+Proof.
+move/rev_prodrV => ->; rewrite rev_prodr; congr _^-1 => /=.
+by apply: perm_big; rewrite perm_rev.
+Qed.
+
+End SSRcomplComUnit.
+
+
+Section ReindexDouble.
+
+Context {R : Type} {idx : R} {op : R -> R -> R}.
+
+Lemma reindex_big_double {m n : nat} (P : pred nat) F :
+  \big[op/idx]_(m <= i < n.+1 | P i.*2) F i.*2
+    = \big[op/idx]_(m.*2 <= i < n.*2.+1 | ~~ odd i && P i) F i.
+Proof.
+rewrite -[LHS]big_map.
+rewrite [map _ _](_ : _ = [seq i <- index_iota m.*2 n.*2.+1 | ~~ odd i]).
+  rewrite -big_filter -filter_predI big_filter.
+  by apply: eq_bigl => i /[1!andbC].
+rewrite /index_iota; case: (ltnP n m) => [lt_n_m | le_m_n].
+  have := lt_n_m; rewrite -subn_eq0 => /eqP ->.
+  by have := lt_n_m; rewrite -ltn_double -subn_eq0 => /eqP ->.
+rewrite !subSn ?leq_double // -doubleB.
+move: (n - m) => {le_m_n}n /=; rewrite odd_double /=; congr (_ :: _).
+by elim: n m => [|n IHn] m //=; rewrite odd_double //= IHn doubleS.
+Qed.
+
+
+Lemma reindex_big_multiple d {m n : nat} (P : pred nat) F :
+  0 < d ->
+  \big[op/idx]_(m <= i < n.+1 | P (i * d)) F (i * d)
+    = \big[op/idx]_(m * d <= i < (n * d).+1 | (d %| i) && P i) F i.
+Proof.
+rewrite -[LHS]big_map => le0d.
+have mulnd_inj : injective (muln^~ d).
+  by apply: incn_inj => i j; apply: leq_pmul2r.
+rewrite [map _ _](_ : _ = [seq i <- index_iota (m * d) (n * d).+1 | d %| i]).
+  rewrite -big_filter -filter_predI big_filter.
+  by apply: eq_bigl => i /[1!andbC].
+rewrite /index_iota; case: (ltnP n m) => [lt_n_m | le_m_n].
+  have := lt_n_m; rewrite -subn_eq0 => /eqP ->.
+  by have := lt_n_m; rewrite -(ltn_pmul2r le0d) -subn_eq0 => /eqP ->.
+apply: (sorted_eq leq_trans anti_leq).
+- rewrite sorted_map (eq_sorted (e' := fun i j => i <= j)) ?iota_sorted //.
+  move=> i j /=; rewrite leq_mul2r.
+  by move: le0d; rewrite lt0n => /negbTE ->.
+- exact/(sorted_filter leq_trans)/iota_sorted.
+apply/uniq_perm => [||/= i].
+- by rewrite map_inj_uniq ?iota_uniq.
+- exact/filter_uniq/iota_uniq.
+rewrite !mem_filter mem_iota.
+case: (boolP (d %| i)) => [/dvdnP [j ->] | d_ndiv] /=; first last.
+  apply/mapP => [[/= j _]].
+  by move: d_ndiv => /[swap] ->; rewrite dvdn_mull ?dvdnn.
+rewrite (mem_map mulnd_inj) mem_iota !subSn ?leq_pmul2r // !addnS !ltnS.
+by rewrite -mulnBl -mulnDl leq_pmul2r.
+Qed.
+
+End ReindexDouble.

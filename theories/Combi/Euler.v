@@ -16,120 +16,11 @@
 From mathcomp Require Import all_ssreflect ssralg ssrint.
 From Combi Require Import tfps auxresults.
 
-Require Import sorted partition.
-
+Require Import tools sorted partition.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
-
-
-Import LeqGeqOrder.
-
-Section SSRcomplUnit.
-
-Lemma big_rcons [R : Type] (idx : R) (op : Monoid.law idx)
-   [I : Type] (i : I) (r : seq I) (P : pred I) (F : I -> R)
-   (x := \big[op/idx]_(j <- r | P j) F j) :
-   \big[op/idx]_(j <- rcons r i | P j) F j = (if P i then op x (F i) else x).
-Proof.
-rewrite -cats1 big_cat big_cons big_nil Monoid.mulm1.
-by case: (P i) => //; rewrite Monoid.mulm1.
-Qed.
-
-Import GRing.Theory.
-Local Open Scope ring_scope.
-
-Lemma unitr_prod {R : unitRingType} {I : Type} (P : pred I) (E : I -> R) (r : seq I) :
-  (forall i, P i -> E i \is a GRing.unit) ->
-    (\prod_(i <- r | P i) E i \is a GRing.unit).
-Proof.
-by move=> Eunit; elim/big_rec: _ => [/[!unitr1] |i x /Eunit/unitrMr->].
-Qed.
-
-Lemma unitr_prod_in {R : unitRingType} {I : eqType} (P : pred I) (E : I -> R) (r : seq I) :
-  {in r, forall i, P i -> E i \is a GRing.unit} ->
-    (\prod_(i <- r | P i) E i \is a GRing.unit).
-Proof.
-by rewrite big_seq_cond => H; apply: unitr_prod => i /andP[]; exact: H.
-Qed.
-
-Variable R : unitRingType.
-
-Lemma prodr_converse (I : Type) (r : seq I) (P : pred I) (E : I -> R) :
-  \prod_(i <- r | P i) (E i : R^c) = \prod_(i <- rev r | P i) E i.
-Proof.
-by elim: r => [|x r IHr]; rewrite ?big_nil// big_cons rev_cons big_rcons IHr.
-Qed.
-
-Lemma prodrV_noncom (I : Type) (r : seq I) (P : pred I) (E : I -> R) :
-  (forall i, P i -> E i \is a GRing.unit) ->
-  \prod_(i <- r | P i) (E i)^-1 = ((\prod_(i <- r | P i) (E i : R^c))^-1).
-Proof.
-move=> Eunit.
-have := unitr_prod r (Eunit : forall i, P i -> (E i : R^c) \is a GRing.unit).
-elim/big_rec2: _ => [|i x y Pi]; first by rewrite invr1.
-by rewrite unitrMr ?Eunit// => + yunit => ->//; rewrite invrM// ?Eunit.
-Qed.
-
-End SSRcomplUnit.
-
-
-Section SSRcomplComUnit.
-
-Import GRing.Theory.
-Local Open Scope ring_scope.
-
-Variable R : comUnitRingType.
-
-Lemma unitr_prodP (I : eqType) (r : seq I) (P : pred I) (E : I -> R) :
-  reflect {in r, forall i, P i -> E i \is a GRing.unit}
-    (\prod_(i <- r | P i) E i \is a GRing.unit).
-Proof.
-apply (iffP idP); last exact: unitr_prod_in.
-elim: r => [|r0 r IHr] //; rewrite big_cons.
-case: (boolP (P r0)) => [Pr0 | /negbTE nPr0].
-  rewrite unitrM => /andP[unitEr0 {}/IHr unitr].
-  by move=> i /[!inE]/orP[/eqP->{i} // | ]; last exact: unitr.
-by move=> {}/IHr unitr i /[!inE]/orP[/eqP->{i} // /[!nPr0]|]; last exact: unitr.
-Qed.
-
-Lemma prodrV (I : eqType) (r : seq I) (P : pred I) (E : I -> R) :
-  (forall i, P i -> E i \is a GRing.unit) ->
-  \prod_(i <- r | P i) (E i)^-1 = (\prod_(i <- r | P i) E i)^-1.
-Proof.
-move/prodrV_noncom=> ->; rewrite prodr_converse; congr _^-1 => /=.
-by apply: perm_big; rewrite perm_rev.
-Qed.
-
-End SSRcomplComUnit.
-
-Section ReindexDouble.
-
-Context {R : Type} {idx : R} {op : R -> R -> R}.
-
-Lemma reindex_big_double {m n : nat} (P : pred nat) F :
-  \big[op/idx]_(m <= i < n.+1 | P i.*2) F i.*2
-    = \big[op/idx]_(m.*2 <= i < n.*2.+1 | ~~ odd i && P i) F i.
-Proof.
-case: (ltnP n m) => [lt_n_m | le_m_n].
-  by rewrite !big_geq // ltn_double.
-rewrite -(subnKC le_m_n) {le_m_n}.
-move: (n - m) => {}n; elim: n m => [| n IHn] m.
-  rewrite addn0 /index_iota !subSn // !subnn /=.
-  by rewrite !big_cons odd_double !big_nil /=.
-rewrite addnS big_ltn_cond; last by rewrite ltnS -addnS leq_addr.
-rewrite [RHS]big_ltn_cond; last by rewrite ltnS leq_double -addnS leq_addr.
-rewrite odd_double /= {}IHn.
-set LB := (X in op _ X); rewrite -/LB.
-symmetry; set RB := (X in op _ X); rewrite -/RB; symmetry.
-suff -> : LB = RB by [].
-rewrite {}/LB {}/RB [RHS]big_ltn_cond; first last.
-  by rewrite ltnS ltn_double ltnS leq_addr.
-by rewrite /= odd_double /= doubleS addSn.
-Qed.
-
-End ReindexDouble.
 
 
 Section ConsPart.
@@ -142,7 +33,7 @@ Lemma val_cons_intpartn z a (sh : 'P_n) :
   head z sh <= a.+1 -> val (cons_intpartn a sh) = a.+1 :: val sh.
 Proof.
 rewrite /cons_intpartn => Hsh; rewrite /= -cat1s.
-rewrite rowpartnSE sorted_merge // cat1s /=.
+rewrite rowpartnSE (sorted_merge LeqGeqOrder.geq_trans) // cat1s /=.
 case: sh Hsh => /= sh /andP[_] /[!is_part_sortedE] /andP[Hsort _].
 by case: sh Hsort => [|b l]//= -> ->.
 Qed.
