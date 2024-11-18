@@ -64,7 +64,7 @@ Section Yama.
 
 Implicit Type s : seq nat.
 
-(** * Evaluation of a sequence of integer (mostly Yamanouchi word) *)
+(** * Evaluation of a sequence of integers (mostly Yamanouchi word) *)
 Fixpoint evalseq s :=
   if s is s0 :: s'
   then incr_nth (evalseq s') s0

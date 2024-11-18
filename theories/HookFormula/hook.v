@@ -1,4 +1,4 @@
-(** * Combi.HookFormula.hook : A proof of the Hook-Lenght formula *)
+(** * Combi.HookFormula.hook : A proof of the Hook-Length formula *)
 (******************************************************************************)
 (*      Copyright (C) 2015-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*      Copyright (C) 2015      Chritine Paulin <christine.paulin@lri.fr>     *)
@@ -14,7 +14,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * A proof of the Hook-Lenght formula
+(** * A proof of the Hook-Length formula
 
 This file contains a proof of the Frame-Robinson-Thrall (see [[FRT]]) hook-Length
 formula for the number of standard Young tableau. It follows

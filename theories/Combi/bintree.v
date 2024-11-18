@@ -70,7 +70,7 @@ The function [right_sizes] and [from_vct] are two inverse bijections from
 binary trees to Tamari vectors as stated in theorems [right_sizesK],
 [right_sizesP] and [from_vctK].
 
-- [vctleq v1 v2] = [v1 <=V v2] == [v1] and [v2] are of the same lenght
+- [vctleq v1 v2] = [v1 <=V v2] == [v1] and [v2] are of the same length
         and [v1] is smaller than [v2] componentwise (ie. for all [i] then
         [v1_i <= v2_i]
 - [vctmin v1 v2] == the componentwise min of [v1] and [v2]

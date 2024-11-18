@@ -40,7 +40,7 @@ We define the following notions and notations:
 Here is a list of fundamental results:
 
 - [Fchar_isometry] : The Frobenius characteristic is an isometry.
-- [Young_rule]     : The Young rule for character of ['SG_n].
+- [Young_rule]     : The Young's rule for character of ['SG_n].
 - [irrSGP]         : The ['irrSG[la] | la : 'P_n] forms a complete set of
                      irreducible characters for ['SG_n].
 - [Frobenius_char] : Frobenius character formula for ['SG_n].
@@ -264,7 +264,7 @@ Qed.
 
 (** * Combinatorics of characters of the symmetric groups *)
 
-(** ** Young characters and Young Rule *)
+(** ** Young characters and Young's Rule *)
 Section Character.
 
 Import LeqGeqOrder.
@@ -437,7 +437,7 @@ Qed.
 
 
 
-(** ** Frobenius character formula for ['SG_n] *)
+(** ** Frobenius character formula for the symmetric group ['SG_n] *)
 
 (** The value of the irreducible character ['irrSG[la]] using scalar product of
     symmetric function *)
