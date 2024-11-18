@@ -145,8 +145,8 @@ End DefType.
 (* We need to break off the section here to let the argument scope *)
 (* directives take effect.                                         *)
 Bind Scope ring_scope with homogsym.
-Arguments homogsym n%N R%R.
-Arguments homsym_inj n%N R%R d%N.
+Arguments homogsym n%_N R%_R.
+Arguments homsym_inj n%_N R%_R d%_N.
 
 
 Notation "{ 'homsym' T [ n , d ] }" := (homogsym n T d).
@@ -216,7 +216,7 @@ by apply val_inj; rewrite /= {1}(homog_symmE (homsym_is_dhomog f)) !linear_sum.
 Qed.
 
 Fact homogsym_vecaxiom :
-  vector_axiom #|[set p : 'P_d | (size p <= n)%N]| {homsym R[n, d]}.
+  Vector.axiom #|[set p : 'P_d | (size p <= n)%N]| {homsym R[n, d]}.
 Proof.
 pose b := [set p : 'P_d | (size p <= n)%N].
 pose t := enum_tuple (pred_of_set b).
@@ -371,7 +371,7 @@ Variable R : comRingType.
 #[local] Notation HSF := {homsym R[n, d]}.
 
 #[local] Notation "''pi_' d" :=
-  (pihomog [measure of mdeg] d) (at level 5, format "''pi_' d").
+  (pihomog mdeg d) (at level 5, format "''pi_' d").
 
 (** TODO: Contribute to Pierre-Yves's multinomials *)
 Lemma msym_pihomog nv s (p : {mpoly R[nv]}) :

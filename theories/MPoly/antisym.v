@@ -897,7 +897,7 @@ Qed.
 
 Lemma Vanprod_dhomog : Delta \is 'C(n, 2).-homog.
 Proof using.
-have /homogP[d Hd] : Delta \is homog [measure of mdeg].
+have /homogP[d Hd] : Delta \is homog mdeg.
   rewrite /Vanprod -big_filter -(big_map _ xpredT id).
   apply homog_prod; apply/allP => X /mapP[[i j]/= _ ->{X}].
   by apply/homogP; exists 1%N; apply rpredB; rewrite dhomogX /= mdeg1.
