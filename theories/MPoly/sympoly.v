@@ -158,7 +158,7 @@ End DefType.
 (* We need to break off the section here to let the argument scope *)
 (* directives take effect.                                         *)
 Bind Scope ring_scope with sympoly.
-Arguments sympol n%_N R%_R.
+(* Arguments sympol {n}%nat_scope {R}%ring_scope. *)
 
 Notation "{ 'sympoly' T [ n ] }" := (sympoly n T).
 

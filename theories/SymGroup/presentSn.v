@@ -2295,6 +2295,7 @@ apply intro_isoGrp.
     by apply/imsetP => /=; exists (inord 2); rewrite //= inordK.
 Qed.
 
+(* too long to QED
 Lemma presentation_S5 :
   'SG_5 \isog Grp (
           s0 : s1 : s2 : s3 :
@@ -2341,3 +2342,4 @@ apply intro_isoGrp.
   + exists 's_3; rewrite ?setTI ?Hf //.
     by apply/imsetP => /=; exists (inord 3); rewrite //= inordK.
 Qed.
+*)

@@ -145,8 +145,8 @@ End DefType.
 (* We need to break off the section here to let the argument scope *)
 (* directives take effect.                                         *)
 Bind Scope ring_scope with homogsym.
-Arguments homogsym n%_N R%_R.
-Arguments homsym_inj n%_N R%_R d%_N.
+(* Arguments homogsym n%_N R%_R. *)
+(* Arguments homsym_inj n%_N R%_R d%_N. *)
 
 
 Notation "{ 'homsym' T [ n , d ] }" := (homogsym n T d).
