@@ -43,7 +43,7 @@
     ## through the following attribute
     # coqPackages.coq.override.version = "8.11";
     coqPackages.coq.override.version = "8.18";
-    coqPackages.mathcomp.override.version = "2.1.0";
+    coqPackages.mathcomp.override.version = "2.2.0";
 
     ## In some cases, light overrides are not available/enough
     ## in which case you can use either
@@ -83,11 +83,6 @@
     # push-branches = [ "master" "branch2" ];
   };
 
-  bundles."coq8.17-mc2.1.0" = {
-    coqPackages.coq.override.version = "8.17";
-    coqPackages.mathcomp.override.version = "2.1.0";
-  };
-
   bundles."coq8.17-mc2.2.0" = {
     coqPackages.coq.override.version = "8.17";
     coqPackages.mathcomp.override.version = "2.2.0";
@@ -101,6 +96,11 @@
   bundles."coq8.19-mc2.2.0" = {
     coqPackages.coq.override.version = "8.19";
     coqPackages.mathcomp.override.version = "2.2.0";
+  };
+
+  bundles."coq8.19-mc2.3.0" = {
+    coqPackages.coq.override.version = "8.19";
+    coqPackages.mathcomp.override.version = "2.3.0";
   };
 
   ## Cachix caches to use in CI

@@ -3,8 +3,6 @@ Coq-Combi
 
 Formalisation of (algebraic) combinatorics in Coq/MathComp.
 
-[![Nix CI for coq8.17-mc2.1.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.17-mc2.1.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.17-mc2.1.0.yml) [![Nix CI for coq8.18-mc2.1.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.18-mc2.1.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.18-mc2.1.0.yml) 
-
 [![Nix CI for coq8.17-mc2.2.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.17-mc2.2.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.17-mc2.2.0.yml) [![Nix CI for coq8.18-mc2.2.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.18-mc2.2.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.18-mc2.2.0.yml) [![Nix CI for coq8.19-mc2.2.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.19-mc2.2.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.19-mc2.2.0.yml)
 
 Authors
@@ -165,15 +163,15 @@ Installation
 This library is based on
 
 * [SSReflect/MathComp 2]([https://github.com/math-comp/math-comp])
-  Library version 2.1.0 or more recent.
+  Library version 2.2.0 or more recent.
 
 Here are the Opam packages I'm using
 ```
-coq-hierarchy-builder     1.6.0
-coq-mathcomp-ssreflect    2.1.0
-coq-mathcomp-algebra      2.1.0
-coq-mathcomp-field        2.1.0
-coq-mathcomp-fingroup     2.1.0
-coq-mathcomp-character    2.1.0
-coq-mathcomp-multinomials 2.1.0
+coq-hierarchy-builder        1.7.0
+coq-mathcomp-ssreflect       2.2.0
+coq-mathcomp-algebra         2.2.0
+coq-mathcomp-field           2.2.0
+coq-mathcomp-fingroup        2.2.0
+coq-mathcomp-character       2.2.0
+coq-mathcomp-multinomials    2.2.0
 ```
