@@ -147,8 +147,8 @@ Notation "''SG_' n" := [set: 'S_n]
 
 Reserved Notation "''s_' i"
       (at level 8, i at level 2, format "''s_' i").
-Reserved Notation "''s_' [ w ] "
-      (at level 8, w at level 100, format "''s_' [ w ]").
+Reserved Notation "''s_[' w ] "
+      (at level 0, w at level 100, format "''s_[' w ]").
 
 #[local] Reserved Notation "''II_' n" (at level 8, n at level 2).
 #[local] Reserved Notation "a =Br b" (at level 70).
@@ -321,11 +321,11 @@ End FinType.
 
 Lemma card_codesz n : #|{:codesz n}| = n`!.
 Proof.
-rewrite factE /= cardE -(size_map val) enum_codeszE.
+rewrite /= cardE -(size_map val) enum_codeszE.
 elim: n => [//=| n IHn].
 rewrite size_flatten -/enum_codesz /shape -map_comp.
-rewrite (eq_map (g := fun => fact_rec n)); first last.
-  by move=> i /=; rewrite size_map.
+rewrite (eq_map (g := fun => n`!)); first last.
+  by move=> i /=; rewrite size_map IHn.
 by rewrite sumnE big_map big_const_seq count_predT size_iota iter_addn_0 mulnC.
 Qed.
 
@@ -719,7 +719,7 @@ Notation n := n0.+1.
 Definition eltr i : 'S_n0.+1 := tperm (inord i) (inord i.+1).
 
 Notation "''s_' i" := (eltr i).
-Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
+Notation "''s_[' w ]" := (\prod_(i <- w) 's_i).
 
 Implicit Type s t : 'S_n.
 
@@ -875,7 +875,7 @@ Local Notation n := n0.+1.
 Implicit Type s t : 'S_n.
 
 Notation "''s_' i" := (eltr _ i).
-Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
+Notation "''s_[' w ]" := (\prod_(i <- w) 's_i).
 
 Lemma eltr_exchange i (a b : 'I_n) :
   i < n0 -> a < b -> 's_i a < 's_i b = (i != a) || (i.+1 != b).
@@ -970,7 +970,7 @@ Variable n0 : nat.
 Notation n := n0.+1.
 
 Notation "''s_' i" := (eltr n0 i).
-Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
+Notation "''s_[' w ]" := (\prod_(i <- w) 's_i).
 
 Implicit Type s t u : 'S_n.
 
@@ -1424,7 +1424,7 @@ Variable n : nat.
 Implicit Type u v w : seq 'I_n.
 
 Notation "''s_' i" := (eltr n i).
-Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
+Notation "''s_[' w ]" := (\prod_(i <- w) 's_i).
 
 Definition reduced_word := [qualify w : seq 'I_n | length 's_[w] == size w ].
 Notation reduced := reduced_word.
@@ -1732,7 +1732,7 @@ Section CanWord.
 Variable (n0 : nat).
 #[local] Notation n := n0.+1.
 #[local] Notation "''s_' i" := (eltr n i) : group_scope.
-#[local] Notation "''s_' [ w ]" := (\prod_(i <- w) 's_i).
+#[local] Notation "''s_[' w ]" := (\prod_(i <- w) 's_i).
 #[local] Notation "a =Br b" := (braidcongr a b).
 
 Fixpoint inscode (c : seq nat) (i : 'I_n) :=

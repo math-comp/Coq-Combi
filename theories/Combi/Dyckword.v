@@ -350,14 +350,17 @@ Canonical join_Dyck D1 D2 := DyckWord (Dyck_word_OwCw D1 D2).
 
 End DyckType.
 
-Notation "[ 'Dyck' 'of' s ]" := (dyck (fun sP => @DyckWord s sP))
+#[warning="-notation-incompatible-prefix"]
+Notation "'[' 'Dyck' 'of' s ]" := (dyck (fun sP => @DyckWord s sP))
   (at level 9, format "[ 'Dyck'  'of'  s ]") : form_scope.
 
-Notation "[ 'Dyck' 'of' s 'by' pf ]" := (@DyckWord s pf)
+#[warning="-notation-incompatible-prefix"]
+Notation "'[' 'Dyck' 'of' s 'by' pf ]" := (@DyckWord s pf)
   (at level 9, format "[ 'Dyck'  'of'  s  'by'  pf ]") : form_scope.
 
-Notation "[ 'Dyck' {{ D1 }} D2 ]" := (join_Dyck D1 D2)
-  (at level 8, format "[ 'Dyck'  {{  D1  }}  D2 ]",
+#[warning="-notation-incompatible-prefix"]
+Notation "'[' 'Dyck' '{{' D1 '}}' D2 ]" := (join_Dyck D1 D2)
+  (at level 8, format "[ 'Dyck'  '{{'  D1  '}}'  D2 ]",
    D1 at next level) : form_scope.
 
 
@@ -467,7 +470,7 @@ Implicit Type D : Dyck.
 
 Variable P : Dyck -> Type.
 Hypotheses (Pnil : P nil_Dyck)
-           (Pcons : forall D1 D2, P D1 -> P D2 -> P ([Dyck {{ D1 }} D2])).
+           (Pcons : forall D1 D2, P D1 -> P D2 -> P [Dyck {{ D1 }} D2]).
 
 Theorem Dyck_ind D : P D.
 Proof.

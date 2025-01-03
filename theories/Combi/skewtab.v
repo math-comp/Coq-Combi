@@ -134,7 +134,7 @@ Qed.
 (** ** Skew tableaux *)
 Section Dominate.
 
-Variables (disp : unit) (T : inhOrderType disp).
+Variables (disp : _) (T : inhOrderType disp).
 Implicit Type u v : seq T.
 
 Definition skew_dominate sh u v := dominate (drop sh u) v.
@@ -375,7 +375,7 @@ End Dominate.
 (** ** Skewing and joining tableaux *)
 Section FilterLeqGeq.
 
-Variables (disp : unit) (T : inhOrderType disp).
+Variables (disp : _) (T : inhOrderType disp).
 Implicit Type l : T.
 Implicit Type r w : seq T.
 Implicit Type t : seq (seq T).
@@ -646,7 +646,7 @@ End FilterLeqGeq.
 Section EqInvSkewTab.
 
 Lemma eq_inv_skew_dominate
-      (d1 d2 : unit) (T1 : inhOrderType d1) (T2 : inhOrderType d2)
+      d1 d2 (T1 : inhOrderType d1) (T2 : inhOrderType d2)
       (u1 v1 : seq T1) (u2 v2 : seq T2) s :
   eq_inv (u1 ++ v1) (u2 ++ v2) ->
   size u1 = size u2 ->
@@ -673,8 +673,7 @@ rewrite leq_add2r ltn_add2l; apply/andP; split.
 Qed.
 
 Lemma eq_inv_is_skew_tableau_reshape_size
-      inner outer
-      (d1 d2 : unit) (T1 : inhOrderType d1) (T2 : inhOrderType d2)
+      inner outer d1 d2 (T1 : inhOrderType d1) (T2 : inhOrderType d2)
       (u1 : seq T1) (u2 : seq T2) :
   size inner = size outer -> (* complete with 0 if needed *)
   eq_inv u1 u2 -> size u1 = sumn (outer / inner) ->
@@ -728,7 +727,7 @@ apply (eq_inv_catr (u1 := take (sumn d) u1) (u2 := take (sumn d) u2) ).
 Qed.
 
 Lemma is_skew_tableau_skew_reshape_pad0 inner outer
-      (d : unit) (T : inhOrderType d) (u : seq T) :
+      d (T : inhOrderType d) (u : seq T) :
   is_skew_tableau inner (skew_reshape inner outer u) =
   is_skew_tableau ((pad 0 (size outer)) inner)
                   (skew_reshape ((pad 0 (size outer)) inner) outer u).
@@ -740,8 +739,7 @@ by rewrite /skew_reshape diff_shape_pad0.
 Qed.
 
 Theorem eq_inv_is_skew_tableau_reshape
-        inner outer
-        (d1 d2 : unit) (T1 : inhOrderType d1) (T2 : inhOrderType d2)
+        inner outer d1 d2 (T1 : inhOrderType d1) (T2 : inhOrderType d2)
         (u1 : seq T1) (u2 : seq T2) :
   size inner <= size outer ->
   eq_inv u1 u2 ->
@@ -761,7 +759,7 @@ apply eq_inv_is_skew_tableau_reshape_size.
 Qed.
 
 Theorem is_skew_tableau_reshape_std inner outer
-        (d : unit) (T : inhOrderType d) (u : seq T) :
+        d (T : inhOrderType d) (u : seq T) :
   size inner <= size outer ->
   size u = sumn (outer / inner) ->
   is_skew_tableau inner (skew_reshape inner outer u) =
@@ -774,8 +772,7 @@ apply/idP/idP; apply eq_inv_is_skew_tableau_reshape => //=.
 - by rewrite size_std.
 Qed.
 
-Theorem is_tableau_reshape_std sh
-        (d : unit) (T : inhOrderType d) (u : seq T) :
+Theorem is_tableau_reshape_std sh d (T : inhOrderType d) (u : seq T) :
   size u = sumn sh ->
   is_tableau (skew_reshape [::] sh u) =
   is_tableau (skew_reshape [::] sh (std u)).
@@ -784,7 +781,7 @@ move=> Hsz.
 by rewrite -!is_skew_tableau0; rewrite is_skew_tableau_reshape_std.
 Qed.
 
-Theorem is_tableau_std (d : unit) (T : inhOrderType d) (t : seq (seq T)) :
+Theorem is_tableau_std d (T : inhOrderType d) (t : seq (seq T)) :
   is_tableau t = is_tableau (skew_reshape [::] (shape t) (std (to_word t))).
 Proof.
 rewrite -{1}(to_wordK t); apply is_tableau_reshape_std.

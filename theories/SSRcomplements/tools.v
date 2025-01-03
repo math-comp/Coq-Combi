@@ -21,7 +21,7 @@ TODO: these probably should be contributed to SSReflect itself
 ****************************************************************************)
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import finset bigop path binomial.
+From mathcomp Require Import finset bigop path binomial order.
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -214,7 +214,7 @@ Proof. by rewrite -sumn_take => /take_oversize ->. Qed.
 
 (** ** [iota] related lemmas *)
 Lemma binomial_sumn_iota n : 'C(n, 2) = sumn (iota 0 n).
-Proof. by rewrite -triangular_sum sumnE /index_iota subn0. Qed.
+Proof. by rewrite -bin2_sum sumnE /index_iota subn0. Qed.
 
 Lemma sumn_pred1_iota a b x :
   sumn [seq ((i == x) : nat) | i <- iota a b] = (a <= x < a + b).

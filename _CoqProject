@@ -1,6 +1,7 @@
 -docroot Combi
 -R theories Combi
 -arg -w -arg -notation-overridden
+-arg -w -arg -notation-incompatible-prefix
 -arg -w -arg -ambiguous-paths
 -arg -w -arg -redundant-canonical-projection
 -arg -w -arg -projection-no-head-constant

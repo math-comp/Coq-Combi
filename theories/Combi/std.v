@@ -238,7 +238,7 @@ End StdCombClass.
 (** * Standardisation of a word over a totally ordered alphabet *)
 Section Standardisation.
 
-Context {disp : unit} {Alph : orderType disp}.
+Context {disp : _} {Alph : orderType disp}.
 Implicit Type s u v w : seq Alph.
 
 Fixpoint std_rec n s :=
@@ -345,8 +345,7 @@ move Hn : (size s) => n; elim: n s Hn => [/= | n IHn] s Hsz.
   exact: posbig_take_dropE.
 Qed.
 
-Lemma std_stdE (disp : unit) (T : orderType disp)
-      (s : seq T) : std (std s) = std s.
+Lemma std_stdE disp (T : orderType disp) (s : seq T) : std (std s) = std s.
 Proof. apply: std_std; exact: std_is_std. Qed.
 
 
@@ -360,10 +359,10 @@ Definition eq_inv d1 d2 (T1 : inhOrderType d1) (T2 : inhOrderType d2)
            (w1 : seq T1) (w2 : seq T2) :=
   (versions w1) =2 (versions w2).
 
-Variables (disp1 disp2 disp3 : unit).
-Variables (S : inhOrderType disp1)
-          (T : inhOrderType disp2)
-          (U : inhOrderType disp3).
+Variables (disp1 disp2 disp3 : _)
+   (S : inhOrderType disp1)
+   (T : inhOrderType disp2)
+   (U : inhOrderType disp3).
 
 Lemma eq_inv_refl (w : seq T) : eq_inv w w.
 Proof. by []. Qed.
@@ -402,8 +401,8 @@ Qed.
 
 Section EqInvAltDef.
 
-Variables (disp1 disp2 disp3 : unit).
-Variables (S : inhOrderType disp1)
+Variables (disp1 disp2 disp3 : _)
+          (S : inhOrderType disp1)
           (T : inhOrderType disp2)
           (U : inhOrderType disp3).
 
@@ -480,9 +479,7 @@ Qed.
 
 Section EqInvPosRemBig.
 
-Variables (disp1 disp2 : unit).
-Variables (S : inhOrderType disp1)
-          (T : inhOrderType disp2).
+Variables (disp1 disp2 : _) (S : inhOrderType disp1) (T : inhOrderType disp2).
 
 Lemma eq_inv_posbig (u : seq S) (v : seq T) :
   eq_inv u v -> posbig u = posbig v.
@@ -604,9 +601,7 @@ End EqInvPosRemBig.
 
 Section Spec.
 
-Variables (disp1 disp2 : unit).
-Variables (S : inhOrderType disp1)
-          (T : inhOrderType disp2).
+Variables (disp1 disp2 : _) (S : inhOrderType disp1) (T : inhOrderType disp2).
 
 Variant std_spec (s : seq T) (p : seq nat) : Prop :=
   | StdSpec : is_std p -> eq_inv s p -> std_spec s p.
@@ -677,9 +672,7 @@ End Spec.
 
 Section StdTakeDrop.
 
-Variables (disp1 disp2 : unit).
-Variables (S : inhOrderType disp1)
-          (T : inhOrderType disp2).
+Variables (disp1 disp2 : _) (S : inhOrderType disp1) (T : inhOrderType disp2).
 Implicit Type u v : seq T.
 
 Lemma std_take_std u v : std (take (size u) (std (u ++ v))) = std u.
@@ -707,8 +700,7 @@ End StdTakeDrop.
 
 Section PermEq.
 
-Variable disp : unit.
-Variable Alph : orderType disp.
+Variable (disp : _) (Alph : orderType disp).
 Implicit Type u v : seq Alph.
 
 Theorem perm_stdE u v : perm_eq u v -> std u = std v -> u = v.
@@ -737,8 +729,7 @@ End PermEq.
 (** ** Standardization and elementary transpositions of a word *)
 Section Transp.
 
-Variable disp : unit.
-Variable Alph : inhOrderType disp.
+Variable (disp : _) (Alph : inhOrderType disp).
 Implicit Type u v : seq Alph.
 
 Lemma nth_transp u v a b i :

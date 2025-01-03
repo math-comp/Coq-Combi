@@ -71,9 +71,9 @@ Import GroupScope GRing.Theory Num.Theory.
 Open Scope ring_scope.
 
 Reserved Notation "''irrSG[' l ']'"
-         (at level 8, l at level 2, format "''irrSG[' l ]").
+         (at level 0, l at level 2, format "''irrSG[' l ]").
 Reserved Notation "''M[' l ']'"
-         (at level 8, l at level 2, format "''M[' l ]").
+         (at level 0, l at level 2, format "''M[' l ]").
 
 
 #[local] Lemma char0_rat : [char rat] =i pred0.

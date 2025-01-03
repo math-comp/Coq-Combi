@@ -287,7 +287,7 @@ by congr (_ * _); rewrite -big_mkcond.
 Qed.
 
 Lemma big_subseqs_undup (F : seq T -> R) (s : seq T) :
-  idempotent op ->
+  idempotent_op op ->
   \big[*%M/1]_(i : subseqs s) F i =
   \big[*%M/1]_(m : (size s).-tuple bool) F (mask m s).
 Proof.
@@ -297,7 +297,7 @@ by rewrite big_map big_enum; exact: eq_bigr.
 Qed.
 
 Lemma big_subseqs_undup_cond (F : seq T -> R) (P : pred (seq T)) (s : seq T) :
-  idempotent op ->
+  idempotent_op op ->
   \big[*%M/1]_(i : subseqs s | P i) F i =
   \big[*%M/1]_(m : (size s).-tuple bool | P (mask m s)) F (mask m s).
 Proof.

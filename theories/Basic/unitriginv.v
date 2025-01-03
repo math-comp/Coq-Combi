@@ -47,8 +47,7 @@ Import GRing.Theory.
 Section UniTriangular.
 
 Variable R : comUnitRingType.
-Variable disp : unit.
-Variable T : finPOrderType disp.
+Variables (disp : _) (T : finPOrderType disp).
 Implicit Type M : T -> T -> R.
 Implicit Types t u v : T.
 
@@ -151,8 +150,7 @@ End UniTriangular.
 Section TriangularInv.
 
 Variable R : comUnitRingType.
-Variable disp : unit.
-Variable T : finPOrderType disp.
+Variable (disp : _) (T : finPOrderType disp).
 Variable M : T -> T -> R.
 Implicit Types t u v : T.
 

@@ -304,7 +304,7 @@ have -> : pblock P x = pblock Q x.
   by apply/eqP; rewrite eqEsubset ?PsQ ?QsP.
 by apply pblock_mem; rewrite (cover_setpart Q).
 Qed.
-Lemma setpartfiner_display : unit. Proof. exact: tt. Qed.
+Lemma setpartfiner_display : Order.disp_t. Proof. by []. Qed.
 #[export]
 HB.instance Definition _ :=
   Order.Le_isPOrder.Build setpartfiner_display (setpart S)
@@ -527,9 +527,9 @@ exists (fun B => [set A | (A \in P) && (A \subset B)]).
     by exists B=> //; rewrite inE AinP AsB.
 Qed.
 
-Lemma setpart_bottomE : 0%O = setpart1 S.
+Lemma setpart_bottomE : \bot%O = setpart1 S.
 Proof. by []. Qed.
-Lemma setpart_topE : 1%O = trivsetpart S.
+Lemma setpart_topE : \top%O = trivsetpart S.
 Proof. by []. Qed.
 
 Definition mem_meet_finerP P Q X : reflect (meet_spec P Q X) (X \in P `&` Q)%O

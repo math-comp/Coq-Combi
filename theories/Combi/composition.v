@@ -57,7 +57,7 @@ Unset Printing Implicit Defensive.
 
 
 HB.factory Record IsoBottom disp T of Order.POrder disp T := {
-  disp' : unit;
+  disp' : Order.disp_t;
   T' : bPOrderType disp';
   f : T -> T';
   f' : T' -> T;
@@ -77,7 +77,7 @@ HB.end.
 
 
 HB.factory Record IsoTop disp T of Order.POrder disp T := {
-  disp' : unit;
+  disp' : Order.disp_t;
   T' : tPOrderType disp';
   f : T -> T';
   f' : T' -> T;
@@ -652,7 +652,7 @@ Implicit Types (c : 'CRef) (d : {set 'I_n.-1}).
 
 #[export] HB.instance Definition _ := SubType.copy 'CRef (intcompn n).
 #[export] HB.instance Definition _ := Finite.copy 'CRef (intcompn n).
-Fact compnref_display : unit. Proof. exact: tt. Qed.
+Fact compnref_display : Order.disp_t. Proof. by []. Qed.
 #[export] HB.instance Definition _ : Order.isPOrder compnref_display 'CRef :=
   Order.CanIsPartial compnref_display (@descsetK n).
 #[export] HB.instance Definition _ :=
@@ -696,10 +696,10 @@ Qed.
   IsoTop.Build compnref_display 'CRef
                  (@descsetK n) (@from_descsetK n) descset_mono.
 
-Lemma topEcompnref : 1%O = colcompn n :> 'CRef.
+Lemma topEcompnref : \top%O = colcompn n :> 'CRef.
 Proof. by apply: descset_inj; rewrite from_descsetK descset_colcompn. Qed.
 
-Lemma botEcompnref : 0%O = rowcompn n :> 'CRef.
+Lemma botEcompnref : \bot%O = rowcompn n :> 'CRef.
 Proof. by apply: descset_inj; rewrite from_descsetK descset_rowcompn. Qed.
 
 Lemma compnref_rev c1 c2 :

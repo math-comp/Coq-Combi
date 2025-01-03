@@ -71,9 +71,11 @@ Proof. exact: Num.Theory.char_num. Qed.
 Proof. exact: Num.Theory.char_num. Qed.
 #[local] Hint Resolve char0_algC char0_rat : core.
 
-
+#[warning="-postfix-notation-not-level-1"]
 Reserved Notation "p '(Y)'"  (at level 20, format "p '(Y)'").
+#[warning="-postfix-notation-not-level-1"]
 Reserved Notation "p '(X)'"  (at level 20, format "p '(X)'").
+#[warning="-postfix-notation-not-level-1"]
 Reserved Notation "p '(XY)'" (at level 20, format "p '(XY)'").
 
 
