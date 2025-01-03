@@ -1695,15 +1695,15 @@ exact: (part_nseq1P Hpart Hhead).
 Qed.
 
 #[export] HB.instance Definition _ :=
-  Order.hasBottom.Build Order.lexi_display 'PLexi colpartn_bot.
+  Order.hasBottom.Build _ 'PLexi colpartn_bot.
 #[export] HB.instance Definition _ :=
-  Order.hasTop.Build Order.lexi_display 'PLexi rowpartn_top.
+  Order.hasTop.Build _ 'PLexi rowpartn_top.
 #[export] HB.instance Definition _ :=
   isInhabitedType.Build 'PLexi (rowpartn d).
 
-Lemma botEintpartnlexi : 0%O = colpartn d :> 'PLexi.
+Lemma botEintpartnlexi : \bot%O = colpartn d :> 'PLexi.
 Proof. by []. Qed.
-Lemma topEintpartnlexi : 1%O = rowpartn d :> 'PLexi.
+Lemma topEintpartnlexi : \top%O = rowpartn d :> 'PLexi.
 Proof. by []. Qed.
 
 End IntPartNLexi.
@@ -2016,7 +2016,7 @@ Qed.
 #[export] HB.instance Definition _ := Countable.copy 'YL intpart.
 #[export] HB.instance Definition _ := Inhabited.copy 'YL intpart.
 
-Fact Young_display : unit. Proof. exact: tt. Qed.
+Fact Young_display : Order.disp_t. Proof. by []. Qed.
 #[export] HB.instance Definition _ :=
   Order.Le_isPOrder.Build
     Young_display 'YL le_Young_refl le_Young_anti le_Young_trans.
@@ -2153,11 +2153,8 @@ Fact emptypart_bottom sh : (empty_intpart <= sh :> 'YL)%O.
 Proof. by apply/includedP; split => //= i; rewrite nth_nil. Qed.
 HB.instance Definition _ :=
   Order.hasBottom.Build Young_display 'YL emptypart_bottom.
-HB.instance Definition _ :=
-  isInhabitedType.Build 'YL empty_intpart.
 
-
-Lemma bottom_YoungE : 0%O = empty_intpart :> 'YL.
+Lemma bottom_YoungE : \bot%O = empty_intpart :> 'YL.
 Proof. by []. Qed.
 
 Fact Young_meetUl : @left_distributive 'YL 'YL Order.meet Order.join.
@@ -2379,7 +2376,7 @@ Proof.
 by move=> x y /andP[Hxy Hyx]; apply val_inj => /=; apply: partdom_anti.
 Qed.
 
-Lemma partdom_display : unit. Proof. exact: tt. Qed.
+Lemma partdom_display : Order.disp_t. Proof. by []. Qed.
 #[export] HB.instance Definition _ :=
   Order.Le_isPOrder.Build partdom_display 'PDom
     partdom_refl partdom_antisym partdom_trans.
@@ -2672,9 +2669,9 @@ Proof. by rewrite -partdom_conj_intpartn conj_colpartn partdom_rowpartn. Qed.
 #[export] HB.instance Definition _ :=
   Order.hasTop.Build partdom_display 'PDom partdom_rowpartn.
 
-Lemma botEintpartndom : 0%O = colpartn d :> 'PDom.
+Lemma botEintpartndom : \bot%O = colpartn d :> 'PDom.
 Proof. by []. Qed.
-Lemma topEintpartndom : 1%O = rowpartn d :> 'PDom.
+Lemma topEintpartndom : \top%O = rowpartn d :> 'PDom.
 Proof. by []. Qed.
 
 End IntPartNTopBottom.

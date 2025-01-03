@@ -395,7 +395,7 @@ Open Scope ring_scope.
 
 Lemma hook_length_pred sh rc :
   (hook_length sh rc)%:~R - 1 = ((hook_length sh rc).-1)%:~R :> rat.
-Proof. by rewrite predn_int // !mulrzDr_tmp. Qed.
+Proof. by rewrite predn_int // !mulrzDr. Qed.
 
 Lemma prod_hook_length_quot_row p Alpha Beta :
   is_part p -> corner_box p (Alpha, Beta) ->
@@ -1032,7 +1032,7 @@ move=> /or3P[] /andP[HA HB].
   have:= @addf_div rat 1 Alen%:Q 1 Blen%:Q.
   rewrite addrC !div1r !mul1r => ->; rewrite ?intr_eq0 ?eqz_nat //.
   rewrite addrC [LHS]mulrC mulrA mulVf; first by rewrite mul1r invfM mulrC.
-  rewrite -mulrzDr_tmp /= intr_eq0 eqz_nat.
+  rewrite -mulrzDr /= intr_eq0 eqz_nat.
   by rewrite addn_eq0 negb_and Alen0 Blen0.
 - move: HA => /eqP HA; subst A.
   rewrite [X in (_ + X)]walk_to_corner_emptyl // addr0.

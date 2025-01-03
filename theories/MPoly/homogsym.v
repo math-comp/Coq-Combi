@@ -94,8 +94,10 @@ Import ssrnum algC GRing.Theory Num.Theory.
 
 Reserved Notation "{ 'homsym' T [ n , d ] }"
   (at level 0, T, n, d at level 2, format "{ 'homsym'  T [ n ,  d ] }").
+#[warning="-closed-notation-not-level-0"]
 Reserved Notation "'[ p | q ]"
   (at level 2, format "'[hv' ''[' p  | '/ '  q ] ']'").
+#[warning="-closed-notation-not-level-0"]
 Reserved Notation "'[ p | q ] _( R , n )"
   (at level 2, format "'[hv' ''[' p  | '/ '  q ] ']' '_(' R ,  n )").
 
