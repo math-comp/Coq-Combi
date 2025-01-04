@@ -549,12 +549,12 @@ Hypothesis Hd : (d <= n)%N.
 
 
 Definition co_hp (la : 'P_d) : pol -> algC :=
-  homsymdotr 'hp[la] \o in_homsym d (R := algC).
+  homsymdot^~ 'hp[la] \o in_homsym d (R := algC).
 Definition co_hpXY (la mu : 'P_d) : polXY -> algC :=
   locked (co_hp la \o map_mpoly (co_hp mu)).
 
 Fact co_hp_is_additive la : additive (co_hp la).
-Proof. by rewrite /co_hp => p q; rewrite raddfB. Qed.
+Proof. by rewrite /co_hp => p q; rewrite /= raddfB homsymdotBl. Qed.
 HB.instance Definition _ la :=
   GRing.isAdditive.Build pol algC _ (co_hp_is_additive la).
 

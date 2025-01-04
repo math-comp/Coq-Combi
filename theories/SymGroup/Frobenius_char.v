@@ -52,6 +52,7 @@ From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import fingroup perm morphism gproduct.
 From mathcomp Require Import rat ssralg ssrint ssrnum algC vector archimedean.
+From mathcomp Require Import sesquilinear.
 From mathcomp Require Import mxrepresentation classfun character.
 From mathcomp Require Import mpoly.
 
@@ -253,7 +254,8 @@ dependent equality but I'm not sure this is really needed.
 Theorem Fchar_ind_morph m n (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
   Fchar ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f *h Fchar g.
 Proof using.
-rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) !linear_sum; apply eq_bigr => /= l _.
+rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
+rewrite !(linear_sum, linear_sumr); apply eq_bigr => /= l _.
 rewrite cfextprod_suml homsymprod_suml !linear_sum; apply eq_bigr => /= k _.
 do 2 rewrite [in RHS]linearZ /= Fchar_ncfuniCT.
 rewrite cfextprodZr cfextprodZl homsymprodZr homsymprodZl !scalerA.
@@ -492,7 +494,7 @@ Qed.
 Theorem Murnaghan_Nakayama_char n la (sigma : 'S_n) :
   'irrSG[la] sigma = (MN_coeff la (cycle_typeSn sigma))%:~R.
 Proof.
-rewrite Frobenius_char_homsymdot MN_coeff_homogP raddf_sum /=.
+rewrite Frobenius_char_homsymdot MN_coeff_homogP homsymdot_sumr /=.
 rewrite (bigD1 la) //= big1 ?addr0 //; first last => [i /negbTE Hi|].
   by rewrite homsymdotZr homsymdotss // eq_sym Hi mulr0.
 rewrite homsymdotZr homsymdotss // eqxx mulr1.
