@@ -574,7 +574,7 @@ Proof using. by rewrite /= -(shape_tabsh t); apply: to_wordK. Qed.
 
 Let tabsh_enum :
   seq tabsh := pmap insub
-              [seq rev (reshape (rev sh) (val w)) | w in {:d.-tuple T}].
+              [seq rev (reshape (rev sh) (val w)) | w in {: d.-tuple T}].
 
 Lemma finite_tabsh : Finite.axiom tabsh_enum.
 Proof using.

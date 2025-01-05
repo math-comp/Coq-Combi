@@ -1340,7 +1340,7 @@ move=> /intpartn_leq_head /leq_trans; apply.
 by rewrite -(sumn_intpartn p); apply: leq_head_sumn.
 Qed.
 
-Lemma enum_intpartnE : map val (enum {:'P}) = enum_partn n.
+Lemma enum_intpartnE : map val (enum {: 'P}) = enum_partn n.
 Proof using. by rewrite /=; exact: enum_subE. Qed.
 
 Fact conj_intpartnP p : is_part_of_n n (conj_part p).
@@ -1756,7 +1756,7 @@ rewrite -{1}[n.+1]addn1 iotaD add0n !map_cat sumn_cat IHn /= addn0.
 by rewrite size_enum_partns.
 Qed.
 
-Lemma card_intpartn sm : #|{:'P_sm}| = intpartn_nb sm.
+Lemma card_intpartn sm : #|{: 'P_sm}| = intpartn_nb sm.
 Proof.
 by rewrite [#|_|]cardT -(size_map val) /= enum_intpartnE -size_enum_partn.
 Qed.

@@ -660,7 +660,7 @@ Proof using. by case: t => /= t /andP[]. Qed.
 Lemma shape_stdtabsh (t : stdtabsh) : shape t = sh.
 Proof using. by case: t => /= t /andP[_ /eqP]. Qed.
 
-Lemma enum_stdtabshE : map val (enum {:stdtabsh}) = enum_stdtabsh sh.
+Lemma enum_stdtabshE : map val (enum {: stdtabsh}) = enum_stdtabsh sh.
 Proof.
 rewrite enumT unlock /= /stdtabsh_enum /enum_stdtabsh.
 elim: (enum_yameval sh) (enum_yamevalP (intpartP sh)) => //= y ly IHly.
@@ -691,7 +691,7 @@ HB.instance Definition _ := [isSub of stdtabn for stdtabnval].
 HB.instance Definition _ := [Countable of stdtabn by <:].
 
 Definition enum_stdtabn : seq (seq (seq nat)) :=
-  map (stdtab_of_yam \o val) (enum ({:yamn n})).
+  map (stdtab_of_yam \o val) (enum ({: yamn n})).
 Let stdtabn_enum : seq stdtabn := pmap insub enum_stdtabn.
 
 Fact finite_stdtabn : Finite.axiom stdtabn_enum.
@@ -947,7 +947,7 @@ by exists (stdtabshcast (conj_intpartK sh) \o conj_stdtabsh) => t;
 Qed.
 
 Lemma card_stdtabsh_conj_part (sh : intpart) :
-  #|{:stdtabsh (conj_part sh)}| = #|{:stdtabsh sh}|.
+  #|{: stdtabsh (conj_part sh)}| = #|{: stdtabsh sh}|.
 Proof. by symmetry; apply: (bij_eq_card (conj_stdtabsh_bij sh)). Qed.
 
 #[export] Hint Resolve stdtabnP stdtabshP : core.

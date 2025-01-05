@@ -412,7 +412,7 @@ Proof using. by case: y => /= y /andP[_ /eqP]. Qed.
 Lemma size_yameval (y : yameval) : size y = sumn ev.
 Proof using. by rewrite -evalseq_eq_size eval_yameval. Qed.
 
-Lemma enum_yamevalE : map val (enum {:yameval}) = enum_yameval ev.
+Lemma enum_yamevalE : map val (enum {: yameval}) = enum_yameval ev.
 Proof using. by rewrite /=; exact: enum_subE. Qed.
 
 Definition hyper_yameval := YamEval (hyper_yam_of_eval (intpartP ev)).
@@ -457,7 +457,7 @@ Proof using. by case: y => /= y /andP[_ /eqP]. Qed.
 
 (** Check of disjoint union enumeration *)
 Lemma enum_yamnE :
-  map val (enum {:yamn}) = flatten [seq enum_yameval p | p <- enum_partn n].
+  map val (enum {: yamn}) = flatten [seq enum_yameval p | p <- enum_partn n].
 Proof using.
 rewrite enum_unionE /=; congr flatten.
 rewrite [LHS](eq_map (g := enum_yameval \o val)).

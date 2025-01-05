@@ -313,13 +313,13 @@ Proof using. by case: c => c /= /andP[]. Qed.
 Lemma size_codesz c : size c = n.
 Proof using. by case: c => c /= /andP[_ /eqP]. Qed.
 
-Lemma enum_codeszE : map val (enum {:codesz}) = enum_codesz n.
+Lemma enum_codeszE : map val (enum {: codesz}) = enum_codesz n.
 Proof using. by rewrite /=; exact: enum_subE. Qed.
 
 End FinType.
 
 
-Lemma card_codesz n : #|{:codesz n}| = n`!.
+Lemma card_codesz n : #|{: codesz n}| = n`!.
 Proof.
 rewrite /= cardE -(size_map val) enum_codeszE.
 elim: n => [//=| n IHn].
@@ -1355,7 +1355,7 @@ Lemma prods_codesz_bij : bijective prods_codesz.
 Proof using.
 apply inj_card_bij => [/= c1 c2 Heq|]; last by rewrite card_codesz card_Sn.
 suff {c1 c2 Heq} /image_injP Hinj :
-  #|image prods_codesz {:codesz n}| == #|{:codesz n}| by exact: (Hinj c1 c2).
+  #|image prods_codesz {: codesz n}| == #|{: codesz n}| by exact: (Hinj c1 c2).
 rewrite card_codesz (eq_card (B := 'S_n)) ?card_Sn // => /= s.
 rewrite !inE; apply/mapP.
 have Hcode : is_code_of_size n (cocode s).

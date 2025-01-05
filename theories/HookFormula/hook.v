@@ -72,7 +72,7 @@ Finally the main Theorem is stated as:
 
 [[
 Theorem HookLengthFormula (p : intpart) :
-  #|{:stdtabsh p}| = (sumn p)`! %/ (hook_length_prod p).
+  #|{: stdtabsh p}| = (sumn p)`! %/ (hook_length_prod p).
 ]]
 
  **********)
@@ -99,8 +99,8 @@ Import Num.Theory.
 (** * Recursion for the number of Yamanouchi words and standard tableaux *)
 Lemma card_yama_rec (p : intpart) :
   p != empty_intpart ->
-  #|{:yameval p}| =
-      \sum_(i <- rem_corners p) #|{:yameval (decr_nth_intpart p i)}|.
+  #|{: yameval p}| =
+      \sum_(i <- rem_corners p) #|{: yameval (decr_nth_intpart p i)}|.
 Proof.
 move=> H.
 rewrite cardE -(size_map val) enum_yamevalE /enum_yameval.
@@ -116,11 +116,11 @@ rewrite /enum_yameval /= /= Hcorn.
 by rewrite (sumn_decr_nth (intpartP p) Hcorn) Hn' /=.
 Qed.
 
-Lemma card_yama0 : #|{:yameval empty_intpart}| = 1.
+Lemma card_yama0 : #|{: yameval empty_intpart}| = 1.
 Proof. by rewrite cardE -(size_map val) enum_yamevalE. Qed.
 
 Lemma card_yam_stdtabE (p : intpart) :
-  #|{:yameval p}| = #|{:stdtabsh p}|.
+  #|{: yameval p}| = #|{: stdtabsh p}|.
 Proof.
 by rewrite !cardE -!(size_map val) enum_yamevalE enum_stdtabshE size_map.
 Qed.
@@ -132,7 +132,7 @@ Lemma card_stdtabsh_rat_rec (F : intpart -> rat) :
   ( forall p : intpart,
       p != empty_intpart ->
       F p = \sum_(i <- rem_corners p) F (decr_nth_intpart p i) ) ->
-  forall p : intpart, F p = #|{:stdtabsh p}|%:Q.
+  forall p : intpart, F p = #|{: stdtabsh p}|%:Q.
 Proof.
 move=> H0 Hrec.
 elim/intpart_rem_corner_ind => [| p IHp] /=.
@@ -1370,7 +1370,7 @@ Qed.
 End FindCorner.
 
 Theorem HookLengthFormula_rat (p : intpart) :
-  ( (#|{:stdtabsh p}|)%:Q = HLF p )%R.
+  ( (#|{: stdtabsh p}|)%:Q = HLF p )%R.
 Proof.
 apply esym; move: p; apply card_stdtabsh_rat_rec.
 - by rewrite /= /hook_length_prod /= big_box_skew /= big_nil factE.
@@ -1386,7 +1386,7 @@ by apply/prodf_neq0 => [] [] [r c].
 Qed.
 
 Lemma hook_length_prod_nat (p : intpart) :
-  #|{:stdtabsh p}| * (hook_length_prod p) = (sumn p)`!.
+  #|{: stdtabsh p}| * (hook_length_prod p) = (sumn p)`!.
 Proof.
 apply /eqP; rewrite -eqz_nat PoszM.
 rewrite -(@eqr_int rat) intrM /=.
@@ -1398,11 +1398,11 @@ Qed.
 
 Lemma hook_length_prod_div (p : intpart) : (hook_length_prod p) %| (sumn p)`!.
 Proof.
-by apply/dvdnP; exists #|{:stdtabsh p}|; rewrite hook_length_prod_nat.
+by apply/dvdnP; exists #|{: stdtabsh p}|; rewrite hook_length_prod_nat.
 Qed.
 
 Theorem HookLengthFormula (p : intpart) :
-  #|{:stdtabsh p}| = (sumn p)`! %/ (hook_length_prod p).
+  #|{: stdtabsh p}| = (sumn p)`! %/ (hook_length_prod p).
 Proof.
 by rewrite -hook_length_prod_nat mulnK // lt0n; exact: hook_length_prod_non0.
 Qed.

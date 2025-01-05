@@ -229,7 +229,7 @@ HB.instance Definition _ :=
   Finite.copy stdwordn
     (uniq_finType stdwordn enum_stdwordnE enum_stdwordn_uniq).
 
-Lemma card_stdwordn : #|{:stdwordn}| = n`!.
+Lemma card_stdwordn : #|{: stdwordn}| = n`!.
 Proof using. by rewrite card_subE size_map -card_Sn cardE. Qed.
 
 End StdCombClass.

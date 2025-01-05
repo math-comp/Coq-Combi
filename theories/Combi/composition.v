@@ -275,10 +275,10 @@ Coercion intcomp_of_intcompn : intcompn >-> intcomp.
 Lemma intcompn_sumn c : sumn c = n.
 Proof using. by case: c => /= c /andP[/eqP]. Qed.
 
-Lemma enum_intcompnE : map val (enum {:intcompn}) = enum_compn n.
+Lemma enum_intcompnE : map val (enum {: intcompn}) = enum_compn n.
 Proof using. exact: enum_subE. Qed.
 
-Lemma card_intcompn : #|{:intcompn}| = 2 ^ n.-1.
+Lemma card_intcompn : #|{: intcompn}| = 2 ^ n.-1.
 Proof.
 rewrite /= !cardT -!(size_map val) !enumT.
 rewrite unlock !subType_seqP ?enum_compn_allP //=.
