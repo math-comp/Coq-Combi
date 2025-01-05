@@ -50,6 +50,7 @@ orthonormal for the scalar product.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import ssrint rat ssralg ssrnum algC matrix vector.
+From mathcomp Require Import sesquilinear.
 From mathcomp Require Import mpoly.
 
 Require Import tools partition ordtype.
@@ -71,12 +72,11 @@ Proof. exact: Num.Theory.char_num. Qed.
 Proof. exact: Num.Theory.char_num. Qed.
 #[local] Hint Resolve char0_algC char0_rat : core.
 
-#[warning="-postfix-notation-not-level-1"]
+Set Warnings "-postfix-notation-not-level-1".
 Reserved Notation "p '(Y)'"  (at level 20, format "p '(Y)'").
-#[warning="-postfix-notation-not-level-1"]
 Reserved Notation "p '(X)'"  (at level 20, format "p '(X)'").
-#[warning="-postfix-notation-not-level-1"]
 Reserved Notation "p '(XY)'" (at level 20, format "p '(XY)'").
+Set Warnings "postfix-notation-not-level-1".
 
 
 (** ** Polynomials in two sets of variables *)
@@ -534,18 +534,13 @@ Variable n0 d : nat.
 Hypothesis Hd : (d <= n)%N.
 
 #[local] Notation HSC := {homsym algC[n, d]}.
-#[local] Notation HSQ := {homsym rat[n, d]}.
 #[local] Notation polXY := (polXY n0 n0 algC).
 #[local] Notation pol := {mpoly algC[n]}.
-#[local] Notation "p '(Y)'" := (@polY_XY n0 n0 _ p)
-                             (at level 20, format "p '(Y)'").
-#[local] Notation "p '(X)'" := (@polX_XY n0 n0 _ p)
-                             (at level 20, format "p '(X)'").
+#[local] Notation "p '(Y)'" := (@polY_XY n0 n0 _ p).
+#[local] Notation "p '(X)'" := (@polX_XY n0 n0 _ p).
 
 #[local] Notation "''hsC[' la ]" := ('hs[la] : HSC).
-#[local] Notation "''hsQ[' la ]" := ('hs[la] : HSQ).
 #[local] Notation "''hpC[' la ]" := ('hp[la] : HSC).
-#[local] Notation "''hpQ[' la ]" := ('hp[la] : HSQ).
 
 
 Definition co_hp (la : 'P_d) : pol -> algC :=
@@ -653,10 +648,10 @@ Lemma coord_zsymspsp (la mu : 'P_d) :
     ((zcard nu)%:R * coord 'hp (enum_rank nu) 'hsC[mu]))
   = (la == mu)%:R.
 Proof using Hd.
-pose matsp : 'M[algC]_#|{:'P_d}| :=
-  \matrix_(i, j < #|{:'P_d}|) (coord 'hp i 'hsC[enum_val j]).
-pose matzsp : 'M[algC]_#|{:'P_d}| :=
-  \matrix_(i, j < #|{:'P_d}|)
+pose matsp : 'M[algC]_#|{: 'P_d}| :=
+  \matrix_(i, j < #|{: 'P_d}|) (coord 'hp i 'hsC[enum_val j]).
+pose matzsp : 'M[algC]_#|{: 'P_d}| :=
+  \matrix_(i, j < #|{: 'P_d}|)
    ((zcard (enum_val j))%:R * (coord 'hp j 'hsC[enum_val i])).
 have: matsp *m matzsp = 1%:M.
   apply/matrixP => i j /=.
@@ -688,7 +683,7 @@ transitivity
 rewrite homsymdot_suml; apply eq_bigr => /= l _.
 rewrite homsymdotZl homsymdot_sumr -mulrA; congr (_ * _).
 transitivity
-  (\sum_(i < #|{:'P_d}|)
+  (\sum_(i < #|{: 'P_d}|)
     (coord 'hp i 'hsC[mu])^* * (zcard (enum_val l))%:R * (i == l)%:R).
   apply: eq_bigr => i _; rewrite homsymdotZr -mulrA; congr (_ * _).
   rewrite !(nth_map inh _ (fun l => 'hp[l])) -?cardE ?ltn_ord //.
@@ -696,6 +691,19 @@ transitivity
 rewrite (bigD1 l) //= big1 ?addr0; last by move=> m /negbTE ->; rewrite mulr0.
 rewrite eq_refl mulr1 mulrC; congr (_ * _).
 by rewrite -coord_map_homsym ?map_homsymbp ?symbp_basis // map_homsyms.
+Qed.
+
+Theorem homsyms_orthonormal : orthonormal homsymdot ('hs : seq HSC).
+Proof.
+have hs_uniq := free_uniq (basis_free (symbs_basis algC Hd)).
+apply/orthonormalP; split => /=; first exact: hs_uniq.
+have {hs_uniq} hs_inj : injective (fun la : 'P_d => 'hs[la] : HSC).
+  move=> /= la mu.
+  have /tnthP[i /[dup] eqla ->] : la \in enum {: 'P_d} by rewrite mem_enum.
+  have /tnthP[j /[dup] eqmu ->] : mu \in enum {: 'P_d} by rewrite mem_enum.
+  by rewrite -!['hs[_]]tnth_map => /(tuple_uniqP _ hs_uniq) ->.
+move=> f g /mapP[/= la _ {f}->]/mapP[/= mu _ {g}->].
+by rewrite homsymdotss (inj_eq hs_inj).
 Qed.
 
 End Scalar.

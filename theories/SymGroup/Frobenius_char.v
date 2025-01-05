@@ -149,7 +149,7 @@ rewrite FcharE; congr (_ *: _).
 rewrite (reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 transitivity
   (coord 'hp (enum_rank la)
-         (\sum_(j < #|{:'P_n}|)
+         (\sum_(j < #|{: 'P_n}|)
            (f (permCT (enum_val j)) / 'z_(enum_val j)) *: ('hp`_j : HS))).
   congr coord; apply eq_bigr => /= i _; congr (_ *: _).
   rewrite (nth_map inh); last by rewrite -cardE ltn_ord.
@@ -285,7 +285,7 @@ have Hla : (sumn la == sumn la) && is_part la.
   by rewrite eq_refl /=; have:= Hlla => /andP[_ /is_part_consK ->].
 have Hdla : (sumn la <= nvar)%N by apply: (leq_trans _ Hd); rewrite /= leq_addl.
 have {IHla} Hrec := IHla Hla Hdla.
-rewrite homsymprod_hh -Fchar_triv -(Fchar_invK Hdla 'hh[(IntPartN Hla)]).
+rewrite homsymprod_h1h -Fchar_triv -(Fchar_invK Hdla 'hh[(IntPartN Hla)]).
 rewrite -Fchar_ind_morph (FcharK Hd).
 apply cfInd_char; rewrite cfIsom_char.
 exact: (cfextprod_char (cfun1_char _) Hrec).
