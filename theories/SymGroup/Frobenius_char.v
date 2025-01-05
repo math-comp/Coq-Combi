@@ -52,8 +52,8 @@ From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import fingroup perm morphism gproduct.
 From mathcomp Require Import rat ssralg ssrint ssrnum algC vector archimedean.
-From mathcomp Require Import sesquilinear.
 From mathcomp Require Import mxrepresentation classfun character.
+From mathcomp Require Import sesquilinear.
 From mathcomp Require Import mpoly.
 
 Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy
@@ -82,6 +82,38 @@ Proof. exact: char_num. Qed.
 #[local] Lemma char0_algC : [char algC] =i pred0.
 Proof. exact: char_num. Qed.
 #[local] Hint Resolve char0_algC char0_rat : core.
+
+
+(** TODO: contribute to mathcomp *)
+Section CharDotProduct.
+
+Variable (gT : finGroupType) (G : {group gT}).
+
+#[local] Notation cfdot := (cfdot (B := G)).
+
+Fact cfdot_is_bilinear :
+  bilinear_for *%R (Num.conj_op \; *%R) cfdot.
+Proof.
+split => /= p r /= u v; first by rewrite cfdotDl cfdotZl.
+by rewrite cfdotDr cfdotZr.
+Qed.
+HB.instance Definition _ :=
+  bilinear_isBilinear.Build algC 'CF(G) 'CF(G) algC *%R (Num.conj_op \; *%R)
+    cfdot cfdot_is_bilinear.
+
+Fact cfdot_is_hermitian (phi psi : 'CF(G)) :
+  '[phi, psi] = (-1) ^+ false * '[psi, phi]^*.
+Proof. by rewrite expr0 mul1r -cfdotC. Qed.
+HB.instance Definition _ :=
+  isHermitianSesquilinear.Build
+    algC 'CF(G) false Num.conj_op cfdot cfdot_is_hermitian.
+
+Fact cfdot_is_dot (phi : 'CF(G)) : phi != 0 -> 0 < '[phi].
+Proof. by rewrite cfnorm_gt0. Qed.
+HB.instance Definition _ :=
+  isDotProduct.Build algC 'CF(G) cfdot cfdot_is_dot.
+
+End CharDotProduct.
 
 
 (** * Definition and basic properties *)
@@ -220,11 +252,11 @@ Qed.
 
 
 (** ** The Frobenius Characteristic is an isometry *)
-Theorem Fchar_isometry f g : '[Fchar f | Fchar g] = '[f, g].
+Corollary Fchar_isometry : isometry homsymdot cfdot Fchar.
 Proof using Hn.
-rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) !linear_sum /=.
+move=> f g.
+rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) !linear_sum /=; apply eq_bigr => mu _.
 rewrite homsymdot_suml cfdot_suml; apply eq_bigr => la _.
-rewrite homsymdot_sumr cfdot_sumr; apply eq_bigr => mu _.
 rewrite ![Fchar (_ *: '1z_[_])]linearZ /= !Fchar_ncfuniCT.
 rewrite homsymdotZl homsymdotZr cfdotZl cfdotZr; congr (_ * (_ * _)).
 rewrite homsymdotpp // cfdotZl cfdotZr cfdot_classfun_part.

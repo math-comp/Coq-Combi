@@ -697,13 +697,8 @@ Theorem homsyms_orthonormal : orthonormal homsymdot ('hs : seq HSC).
 Proof.
 have hs_uniq := free_uniq (basis_free (symbs_basis algC Hd)).
 apply/orthonormalP; split => /=; first exact: hs_uniq.
-have {hs_uniq} hs_inj : injective (fun la : 'P_d => 'hs[la] : HSC).
-  move=> /= la mu.
-  have /tnthP[i /[dup] eqla ->] : la \in enum {: 'P_d} by rewrite mem_enum.
-  have /tnthP[j /[dup] eqmu ->] : mu \in enum {: 'P_d} by rewrite mem_enum.
-  by rewrite -!['hs[_]]tnth_map => /(tuple_uniqP _ hs_uniq) ->.
 move=> f g /mapP[/= la _ {f}->]/mapP[/= mu _ {g}->].
-by rewrite homsymdotss (inj_eq hs_inj).
+by rewrite homsymdotss (inj_eq (injectiveP _ hs_uniq)).
 Qed.
 
 End Scalar.
