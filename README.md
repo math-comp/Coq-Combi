@@ -163,7 +163,8 @@ Installation
 This library is based on
 
 * [SSReflect/MathComp 2]([https://github.com/math-comp/math-comp])
-  Library version 2.2.0 or more recent.
+  Library version 2.2.0 
+* This branch is *not* compatible with version MathComp 2.3.0.
 
 Here are the Opam packages I'm using
 ```
