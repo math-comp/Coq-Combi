@@ -140,7 +140,7 @@ Open Scope bool.
 
 Section Duality.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Let word := seq Alph.
 
 Lemma extract_cut (N : nat) (wt : N.-tuple Alph) (i : 'I_N) (S : {set 'I_N}) :
@@ -348,7 +348,7 @@ End Duality.
 Module Swap.
 Section Swap.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -486,7 +486,7 @@ Module NoSetContainingBoth.
 
 Section Case.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -645,7 +645,7 @@ Module SetContainingBothLeft.
 (** *** Generic order hypothesis *)
 Section RelHypothesis.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Implicit Type a b c : Alph.
 
 Record hypRabc  R a b c := HypRabc {
@@ -683,7 +683,7 @@ End RelHypothesis.
 
 Section Case.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Let word := seq Alph.
 
 Implicit Type u v w r : word.
@@ -1287,7 +1287,7 @@ End SetContainingBothLeft.
 (** * Greene numbers are invariant by each plactic rules *)
 Section GreeneInvariantsRule.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Let word := seq Alph.
 
 Variable u v1 w v2 : word.
@@ -1470,7 +1470,7 @@ End GreeneInvariantsRule.
 (** ** Deducing the other comparisons by duality *)
 Section GreeneInvariantsDual.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Let word := seq Alph.
 Implicit Type u v w : word.
 
@@ -1590,7 +1590,7 @@ End GreeneInvariantsDual.
 (** * Main theorem *)
 Section GreeneInvariants.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -1692,7 +1692,7 @@ Qed.
 End GreeneInvariants.
 
 Corollary Greene_row_eq_shape_RS
-          (d1 d2 : unit) (S : inhOrderType d1) (T : inhOrderType d2)
+          d1 d2 (S : inhOrderType d1) (T : inhOrderType d2)
           (s : seq S) (t : seq T) :
   (forall k, Greene_row s k = Greene_row t k) -> (shape (RS s) = shape (RS t)).
 Proof.
@@ -1704,7 +1704,7 @@ exact: HGreene.
 Qed.
 
 Corollary Greene_col_eq_shape_RS
-          (d1 d2 : unit) (S : inhOrderType d1) (T : inhOrderType d2)
+          d1 d2 (S : inhOrderType d1) (T : inhOrderType d2)
           (s : seq S) (t : seq T) :
   (forall k, Greene_col s k = Greene_col t k) -> (shape (RS s) = shape (RS t)).
 Proof.
@@ -1719,7 +1719,7 @@ Qed.
 (** ** Reverting uniq words *)
 Section RevConj.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Implicit Type s : seq Alph.
 
 Theorem RS_rev_uniq s : uniq s -> RS (rev s) = conj_tab (RS s).

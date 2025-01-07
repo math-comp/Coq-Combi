@@ -46,7 +46,7 @@ Import Order.TTheory.
 (** ** Plactic congruence and standardization *)
 Section StdRS.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Implicit Type s u v w : seq Alph.
 Implicit Type p : seq nat.
 Implicit Type t : seq (seq Alph).
@@ -209,11 +209,11 @@ Proof using. by apply: Greene_row_eq_shape_RS; exact: Greene_std. Qed.
 
 End StdRS.
 
-Theorem RSmap_std (d : unit) (T : inhOrderType d) (w : seq T) :
+Theorem RSmap_std disp (T : inhOrderType disp) (w : seq T) :
   (RSmap (std w)).2 = (RSmap w).2.
 Proof.
 move Hn : (size w) => n.
-elim: n d T w Hn => [/= | n IHn] d T w; first by move/eqP/nilP => ->.
+elim: n disp T w Hn => [/= | n IHn] d T w; first by move/eqP/nilP => ->.
 case/lastP Hw : w => [// | w' wn] Hn.
 have:= shape_RS_std (rcons w' wn).
 rewrite -!RSmapE !shape_RSmap_eq.
@@ -240,7 +240,7 @@ case HRS : (RSmap st) => [t0 rows].
 by case Hins : (instabnrow t0 stn) => [tr irow] /= /incr_nth_inj ->.
 Qed.
 
-Corollary RStabmap_std (d : unit) (T : inhOrderType d) (w : seq T) :
+Corollary RStabmap_std disp (T : inhOrderType disp) (w : seq T) :
   (RStabmap (std w)).2 = (RStabmap w).2.
 Proof.
 rewrite /RStabmap.
@@ -538,14 +538,14 @@ case H : (RStabmap (invstd s)) => [P Q].
 by rewrite (invseqRSE (invseq_invstd Hstd)) H.
 Qed.
 
-Corollary RSTabmapstdE (disp : unit) (T : inhOrderType disp) (w : seq T) :
+Corollary RSTabmapstdE disp (T : inhOrderType disp) (w : seq T) :
   (RStabmap (invstd (std w))).1 = (RStabmap (std w)).2.
 Proof.
 have := invstdRSE (std_is_std w).
 by case (RStabmap (invstd (std w))) => [P Q] /= ->.
 Qed.
 
-Corollary RSinvstdE (disp : unit) (T : inhOrderType disp) (w : seq T) :
+Corollary RSinvstdE disp (T : inhOrderType disp) (w : seq T) :
   RS (invstd (std w)) = (RStabmap w).2.
 Proof.
 rewrite -RStabmapE RSTabmapstdE /RStabmap.

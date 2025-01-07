@@ -415,7 +415,7 @@ End ShiftedShuffle.
 (** * Shifted shuffle and inverse standardized *)
 Section LRTriple.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -628,7 +628,7 @@ apply: (iffP idP) => /=.
   + rewrite /= -Hp2 RSmapE; exact: mem_RSclass.
 Qed.
 
-Lemma filter_gt_RS (d : unit) (T : inhOrderType d) (w : seq T) n :
+Lemma filter_gt_RS d (T : inhOrderType d) (w : seq T) n :
   RS (filter (>%O n) w) = filter_gt_tab n (RS w).
 Proof using .
 apply/eqP.

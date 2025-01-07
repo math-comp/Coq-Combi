@@ -46,7 +46,7 @@ Variable n : nat.
 #[local] Notation stpn := (stdtabn n * stdtabn n)%type.
 Lemma card_stpn_shape :
   #|[set p : stpn | shape p.1 == shape p.2]| =
-    \sum_(sh : 'P_n) #|{:stdtabsh sh}|^2.
+    \sum_(sh : 'P_n) #|{: stdtabsh sh}|^2.
 Proof.
 pose pairsh (sh : intpartn n) :=
   [set p : stpn | (shape_deg p.1 == sh) && (shape_deg p.2 == sh)].

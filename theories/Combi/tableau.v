@@ -58,7 +58,7 @@ Import Order.Theory.
 (** ** Specialization of sorted Lemmas *)
 Section Rows.
 
-Variables (disp : unit) (T : inhOrderType disp).
+Variables (disp : _) (T : inhOrderType disp).
 
 Implicit Type l : T.
 Implicit Type r : seq T.
@@ -92,7 +92,7 @@ Notation is_row := (sorted <=%O).
 (** ** Dominance order for rows *)
 Section Dominate.
 
-Context {disp : unit} {T : inhOrderType disp}.
+Context {disp : _} {T : inhOrderType disp}.
 
 Implicit Type l : T.
 Implicit Type r u v : seq T.
@@ -205,7 +205,7 @@ Arguments dominate_rev_trans {disp T}.
 (** * Tableaux : definition and basic properties *)
 Section Tableau.
 
-Variables (disp : unit) (T : inhOrderType disp).
+Variables (disp : _) (T : inhOrderType disp).
 
 Implicit Type l : T.
 Implicit Type r w : seq T.
@@ -522,7 +522,7 @@ Prenex Implicits is_tableau to_word size_tab.
 (** ** Tableaux from their row reading *)
 Section TableauReading.
 
-Variables (disp : unit) (A : inhOrderType disp).
+Variables (disp : _) (A : inhOrderType disp).
 
 Definition tabsh_reading (sh : seq nat) (w : seq A) :=
   (size w == sumn sh) && (is_tableau (rev (reshape (rev sh) w))).
@@ -550,7 +550,7 @@ End TableauReading.
 (** ** Sigma type for tableaux *)
 Section FinType.
 
-Context {disp : unit} {T : inhFinOrderType disp}.
+Context {disp : _} {T : inhFinOrderType disp}.
 Variables (d : nat) (sh : 'P_d).
 
 Definition is_tab_of_shape (sh : seq nat) :=
@@ -574,7 +574,7 @@ Proof using. by rewrite /= -(shape_tabsh t); apply: to_wordK. Qed.
 
 Let tabsh_enum :
   seq tabsh := pmap insub
-              [seq rev (reshape (rev sh) (val w)) | w in {:d.-tuple T}].
+              [seq rev (reshape (rev sh) (val w)) | w in {: d.-tuple T}].
 
 Lemma finite_tabsh : Finite.axiom tabsh_enum.
 Proof using.
@@ -704,7 +704,7 @@ End OrdTableau.
 (** ** Tableaux and increasing maps *)
 Section IncrMap.
 
-Context (disp1 disp2 : unit)
+Context (disp1 disp2 : _)
         (T1 : inhOrderType disp1)
         (T2 : inhOrderType disp2).
 Variable F : T1 -> T2.
