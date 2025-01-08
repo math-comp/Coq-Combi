@@ -165,7 +165,7 @@ This library is based on
 * [SSReflect/MathComp 2](https://github.com/math-comp/math-comp)
   Library version 2.3.0 or more recent.
 
-* For MathComp 2.2.0, use the [MathComp-2.2.0 branch](https://github.com/math-comp/Coq-Combi/tree/MathComp-2.2.0)
+* For MathComp 2.2.0, use the [MathComp-2.2.0](https://github.com/math-comp/Coq-Combi/tree/MathComp-2.2.0) branch.
 
 Here are the Opam packages I'm using
 ```
