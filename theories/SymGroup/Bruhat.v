@@ -41,8 +41,8 @@ Matrix sum of permutation matrices:
 
 Bruhat Order:
 
-- [s <=B t]   == [s] is smaller than [t] for the right weak order.
-- [s <B t]    == [s] is strictly smaller  than [t] for the right weak order.
+- [s <=B t]   == [s] is smaller than [t] for the Bruhat order.
+- [s <B t]    == [s] is strictly smaller  than [t] for the Bruhat order.
 
 ***************************)
 From HB Require Import structures.
