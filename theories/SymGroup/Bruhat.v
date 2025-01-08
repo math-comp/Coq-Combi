@@ -401,7 +401,7 @@ Qed.
 End PermMatrixSum.
 
 
-Fact Bruhat_display : unit. Proof. exact: tt. Qed.
+Fact Bruhat_display : Order.disp_t. Proof. by []. Qed.
 
 Module BruhatOrder.
 Section Def.

@@ -79,7 +79,7 @@ Import LeqGeqOrder.
 #[local] Hint Resolve porbit_id : core.
 
 Reserved Notation "''1_[' G ]"
-         (at level 8, G at level 2, format "''1_[' G ]").
+         (at level 0, G at level 2, format "''1_[' G ]").
 
 
 Section CanPorbit.

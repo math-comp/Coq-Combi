@@ -63,6 +63,7 @@ From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
 From mathcomp Require Import ssrnum matrix vector mxalgebra algC.
 From mathcomp Require Import classfun character mxrepresentation.
+From mathcomp Require Import sesquilinear.
 
 Require Import tools ordcast partition sorted.
 Require Import permcomp cycles cycletype permcent.
@@ -134,12 +135,11 @@ rewrite genGid; apply intro_class_fun => [x y|].
   + by rewrite [h _]cfun0gen ?mulr0 ?genGid.
 Qed.
 Definition cfextprod g h := Cfun 0 (cfextprod_subproof g h).
-Definition cfextprodr_head k g h := let: tt := k in cfextprod h g.
 
 End CFExtProdDefs.
 
 Notation "f \ox g" := (cfextprod f g) (at level 40, left associativity).
-Notation cfextprodr := (cfextprodr_head tt).
+
 
 Section CFExtProdTheory.
 
@@ -149,58 +149,50 @@ Implicit Type (g : 'CF(G)) (h : 'CF(H)).
 
 #[local] Open Scope ring_scope.
 
-Lemma cfextprodrE h g : cfextprodr h g = g \ox h.
-Proof using. by []. Qed.
-
-Fact cfextprod_is_linear g : linear (cfextprod g : 'CF(H) -> 'CF(setX G H)).
-Proof using.
-move=> /= a h1 h2.
-apply/cfunP=> /= x.
-by rewrite !cfunE !mulrDr mulrA [g _ * _]mulrC mulrA.
+Fact cfextprod_is_bilinear :
+  bilinear_for *:%R *:%R (cfextprod (G := G) (H := H)).
+Proof.
+split => /= g r /= h1 h2; apply/cfunP => /= x.
+- by rewrite !cfunE !mulrDl -mulrA.
+- by rewrite !cfunE !mulrDr mulrA [g _ * _]mulrC mulrA.
 Qed.
-HB.instance Definition _ g :=
-  GRing.isLinear.Build algC 'CF(H) 'CF(setX G H) _ _ (cfextprod_is_linear g).
+HB.instance Definition _ :=
+  bilinear_isBilinear.Build
+    algC 'CF(G) 'CF(H) 'CF(setX G H)
+    *:%R *:%R (cfextprod (G := G) (H := H)) cfextprod_is_bilinear.
 
 Lemma cfextprod0r g : g \ox (0 : 'CF(H)) = 0.
-Proof using. by rewrite linear0. Qed.
+Proof using. by rewrite linear0r. Qed.
 Lemma cfextprodNr g h : g \ox - h = - (g \ox h).
-Proof using. by rewrite linearN. Qed.
+Proof using. by rewrite linearNr. Qed.
 Lemma cfextprodDr g h1 h2 : g \ox (h1 + h2) = g \ox h1 + g \ox h2.
-Proof using. by rewrite linearD. Qed.
+Proof using. by rewrite linearDr. Qed.
 Lemma cfextprodBr g h1 h2 : g \ox (h1 - h2) = g \ox h1 - g \ox h2.
-Proof using. by rewrite linearB. Qed.
+Proof using. by rewrite linearBr. Qed.
 Lemma cfextprodMnr h g n : g \ox (h *+ n) = (g \ox h) *+ n.
-Proof using. by rewrite linearMn. Qed.
+Proof using. by rewrite linearMnr. Qed.
 Lemma cfextprod_sumr g I r (P : pred I) (phi : I -> 'CF(H)) :
   g \ox (\sum_(i <- r | P i) phi i) = \sum_(i <- r | P i) g \ox phi i.
-Proof using. by rewrite linear_sum. Qed.
+Proof using. by rewrite linear_sumr. Qed.
 Lemma cfextprodZr g a h : g \ox (a *: h) = a *: (g \ox h).
-Proof using. by rewrite linearZ. Qed.
+Proof using. by rewrite linearZr. Qed.
 
-Fact cfextprodr_is_linear h : linear (cfextprodr h : 'CF(G) -> 'CF(setX G H)).
-Proof using.
-move=> /= a g1 g2; rewrite !cfextprodrE.
-apply/cfunP=> /= x.
-by rewrite !cfunE !mulrDl -mulrA.
-Qed.
-HB.instance Definition _ h :=
-  GRing.isLinear.Build algC 'CF(G) 'CF(setX G H) _ _ (cfextprodr_is_linear h).
 
 Lemma cfextprod0l h : (0 : 'CF(G)) \ox h = 0.
-Proof using. by rewrite -cfextprodrE linear0. Qed.
+Proof using. by rewrite linear0l. Qed.
 Lemma cfextprodNl h g : - g \ox h = - g \ox h.
-Proof using. by rewrite -!cfextprodrE linearN. Qed.
+Proof using. by rewrite linearNl. Qed.
 Lemma cfextprodDl h g1 g2 : (g1 + g2) \ox h = g1 \ox h + g2 \ox h.
-Proof using. by rewrite -!cfextprodrE linearD. Qed.
+Proof using. by rewrite linearDl. Qed.
 Lemma cfextprodBl h g1 g2 : (g1 - g2) \ox h = g1 \ox h - g2 \ox h.
-Proof using. by rewrite -!cfextprodrE linearB. Qed.
+Proof using. by rewrite linearBl. Qed.
 Lemma cfextprodMnl h g n : g *+ n \ox h = g \ox h *+ n.
-Proof using. by rewrite -!cfextprodrE linearMn. Qed.
+Proof using. by rewrite linearMnl. Qed.
 Lemma cfextprod_suml h I r (P : pred I) (phi : I -> 'CF(G)) :
   (\sum_(i <- r | P i) phi i) \ox h = \sum_(i <- r | P i) phi i \ox h.
-Proof using. by rewrite -!cfextprodrE linear_sum. Qed.
+Proof using. by rewrite linear_sumlz. Qed.
 Lemma cfextprodZl h a g : (a *: g) \ox h = a *: (g \ox h).
-Proof using. by rewrite -!cfextprodrE linearZ. Qed.
+Proof using. by rewrite linearZl. Qed.
 
 Section ReprExtProd.
 

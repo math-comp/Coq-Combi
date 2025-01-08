@@ -59,7 +59,7 @@ In this section, we fix two nat [n] and [d] with hypothesis [Hd : d <= n.+1].
 Extension of tableaux:
 
 In this section, we fix
-- a non empty sequence of integer [rcons s m] whose size is less than [n].
+- a non empty sequence of integers [rcons s m] whose size is less than [n].
 - [la] : a partition of [sumn s] whose size is less than [n].
 - [mu] : a partition of [(sumn s) + m] whose size is less than [n].
 We are given some proofs [Hs] [Hla] [Hmu] that all these partition are of size
@@ -279,7 +279,7 @@ by rewrite nth_rem_trail0 nth_add_setdiff.
 Qed.
 
 
-(** * Piery's rule for alternating polynomials *)
+(** * Piery's rule multplying an alternant by an elementary polynomial *)
 Theorem alt_mpart_syme d (la : 'P_d) k :
   size la <= n ->
   ('a_(mpart la + rho) * 'e_k =
@@ -372,7 +372,7 @@ Qed.
 End Alternant.
 
 
-(** * Jacobi's definition of schur function *)
+(** * Cauchy-Jacobi definition of Schur function *)
 Section SchurAlternantDef.
 
 Variable (n0 : nat) (R : comRingType).

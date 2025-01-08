@@ -1,4 +1,4 @@
-(** * Combi.HookFormula.hook : A proof of the Hook-Lenght formula *)
+(** * Combi.HookFormula.hook : A proof of the Hook-Length formula *)
 (******************************************************************************)
 (*      Copyright (C) 2015-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*      Copyright (C) 2015      Chritine Paulin <christine.paulin@lri.fr>     *)
@@ -14,7 +14,7 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * A proof of the Hook-Lenght formula
+(** * A proof of the Hook-Length formula
 
 This file contains a proof of the Frame-Robinson-Thrall (see [[FRT]]) hook-Length
 formula for the number of standard Young tableau. It follows
@@ -72,7 +72,7 @@ Finally the main Theorem is stated as:
 
 [[
 Theorem HookLengthFormula (p : intpart) :
-  #|{:stdtabsh p}| = (sumn p)`! %/ (hook_length_prod p).
+  #|{: stdtabsh p}| = (sumn p)`! %/ (hook_length_prod p).
 ]]
 
  **********)
@@ -99,8 +99,8 @@ Import Num.Theory.
 (** * Recursion for the number of Yamanouchi words and standard tableaux *)
 Lemma card_yama_rec (p : intpart) :
   p != empty_intpart ->
-  #|{:yameval p}| =
-      \sum_(i <- rem_corners p) #|{:yameval (decr_nth_intpart p i)}|.
+  #|{: yameval p}| =
+      \sum_(i <- rem_corners p) #|{: yameval (decr_nth_intpart p i)}|.
 Proof.
 move=> H.
 rewrite cardE -(size_map val) enum_yamevalE /enum_yameval.
@@ -116,11 +116,11 @@ rewrite /enum_yameval /= /= Hcorn.
 by rewrite (sumn_decr_nth (intpartP p) Hcorn) Hn' /=.
 Qed.
 
-Lemma card_yama0 : #|{:yameval empty_intpart}| = 1.
+Lemma card_yama0 : #|{: yameval empty_intpart}| = 1.
 Proof. by rewrite cardE -(size_map val) enum_yamevalE. Qed.
 
 Lemma card_yam_stdtabE (p : intpart) :
-  #|{:yameval p}| = #|{:stdtabsh p}|.
+  #|{: yameval p}| = #|{: stdtabsh p}|.
 Proof.
 by rewrite !cardE -!(size_map val) enum_yamevalE enum_stdtabshE size_map.
 Qed.
@@ -132,7 +132,7 @@ Lemma card_stdtabsh_rat_rec (F : intpart -> rat) :
   ( forall p : intpart,
       p != empty_intpart ->
       F p = \sum_(i <- rem_corners p) F (decr_nth_intpart p i) ) ->
-  forall p : intpart, F p = #|{:stdtabsh p}|%:Q.
+  forall p : intpart, F p = #|{: stdtabsh p}|%:Q.
 Proof.
 move=> H0 Hrec.
 elim/intpart_rem_corner_ind => [| p IHp] /=.
@@ -395,7 +395,7 @@ Open Scope ring_scope.
 
 Lemma hook_length_pred sh rc :
   (hook_length sh rc)%:~R - 1 = ((hook_length sh rc).-1)%:~R :> rat.
-Proof. by rewrite predn_int // !mulrzDr_tmp. Qed.
+Proof. by rewrite predn_int // !mulrzDr. Qed.
 
 Lemma prod_hook_length_quot_row p Alpha Beta :
   is_part p -> corner_box p (Alpha, Beta) ->
@@ -1032,7 +1032,7 @@ move=> /or3P[] /andP[HA HB].
   have:= @addf_div rat 1 Alen%:Q 1 Blen%:Q.
   rewrite addrC !div1r !mul1r => ->; rewrite ?intr_eq0 ?eqz_nat //.
   rewrite addrC [LHS]mulrC mulrA mulVf; first by rewrite mul1r invfM mulrC.
-  rewrite -mulrzDr_tmp /= intr_eq0 eqz_nat.
+  rewrite -mulrzDr /= intr_eq0 eqz_nat.
   by rewrite addn_eq0 negb_and Alen0 Blen0.
 - move: HA => /eqP HA; subst A.
   rewrite [X in (_ + X)]walk_to_corner_emptyl // addr0.
@@ -1370,7 +1370,7 @@ Qed.
 End FindCorner.
 
 Theorem HookLengthFormula_rat (p : intpart) :
-  ( (#|{:stdtabsh p}|)%:Q = HLF p )%R.
+  ( (#|{: stdtabsh p}|)%:Q = HLF p )%R.
 Proof.
 apply esym; move: p; apply card_stdtabsh_rat_rec.
 - by rewrite /= /hook_length_prod /= big_box_skew /= big_nil factE.
@@ -1386,7 +1386,7 @@ by apply/prodf_neq0 => [] [] [r c].
 Qed.
 
 Lemma hook_length_prod_nat (p : intpart) :
-  #|{:stdtabsh p}| * (hook_length_prod p) = (sumn p)`!.
+  #|{: stdtabsh p}| * (hook_length_prod p) = (sumn p)`!.
 Proof.
 apply /eqP; rewrite -eqz_nat PoszM.
 rewrite -(@eqr_int rat) intrM /=.
@@ -1398,11 +1398,11 @@ Qed.
 
 Lemma hook_length_prod_div (p : intpart) : (hook_length_prod p) %| (sumn p)`!.
 Proof.
-by apply/dvdnP; exists #|{:stdtabsh p}|; rewrite hook_length_prod_nat.
+by apply/dvdnP; exists #|{: stdtabsh p}|; rewrite hook_length_prod_nat.
 Qed.
 
 Theorem HookLengthFormula (p : intpart) :
-  #|{:stdtabsh p}| = (sumn p)`! %/ (hook_length_prod p).
+  #|{: stdtabsh p}| = (sumn p)`! %/ (hook_length_prod p).
 Proof.
 by rewrite -hook_length_prod_nat mulnK // lt0n; exact: hook_length_prod_non0.
 Qed.

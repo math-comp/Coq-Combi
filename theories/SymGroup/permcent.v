@@ -538,7 +538,7 @@ Qed.
 
 #[local] Open Scope nat_scope.
 
-(** ** Conjucacy class cardinality *)
+(** ** Conjugacy class cardinality *)
 Definition zcard l :=
   \prod_(i <- l) i * \prod_(i < (sumn l).+1) (count_mem (i : nat) l)`!.
 

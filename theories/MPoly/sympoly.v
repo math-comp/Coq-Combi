@@ -133,11 +133,11 @@ Reserved Notation "{ 'sympoly' T [ n ] }"
 Reserved Notation "''e_' k" (at level 8, k at level 2, format "''e_' k").
 Reserved Notation "''h_' k" (at level 8, k at level 2, format "''h_' k").
 Reserved Notation "''p_' k" (at level 8, k at level 2, format "''p_' k").
-Reserved Notation "''e[' k ]" (at level 8, format "''e[' k ]").
-Reserved Notation "''h[' k ]" (at level 8, format "''h[' k ]").
-Reserved Notation "''p[' k ]" (at level 8, format "''p[' k ]").
-Reserved Notation "''m[' k ]" (at level 8, format "''m[' k ]").
-Reserved Notation "''s[' k ]" (at level 8, format "''s[' k ]").
+Reserved Notation "''e[' k ]" (at level 0, format "''e[' k ]").
+Reserved Notation "''h[' k ]" (at level 0, format "''h[' k ]").
+Reserved Notation "''p[' k ]" (at level 0, format "''p[' k ]").
+Reserved Notation "''m[' k ]" (at level 0, format "''m[' k ]").
+Reserved Notation "''s[' k ]" (at level 0, format "''s[' k ]").
 
 
 Section DefType.
@@ -158,7 +158,7 @@ End DefType.
 (* We need to break off the section here to let the argument scope *)
 (* directives take effect.                                         *)
 Bind Scope ring_scope with sympoly.
-Arguments sympol n%N R%R.
+(* Arguments sympol {n}%nat_scope {R}%ring_scope. *)
 
 Notation "{ 'sympoly' T [ n ] }" := (sympoly n T).
 

@@ -70,7 +70,7 @@ The function [right_sizes] and [from_vct] are two inverse bijections from
 binary trees to Tamari vectors as stated in theorems [right_sizesK],
 [right_sizesP] and [from_vctK].
 
-- [vctleq v1 v2] = [v1 <=V v2] == [v1] and [v2] are of the same lenght
+- [vctleq v1 v2] = [v1 <=V v2] == [v1] and [v2] are of the same length
         and [v1] is smaller than [v2] componentwise (ie. for all [i] then
         [v1_i <= v2_i]
 - [vctmin v1 v2] == the componentwise min of [v1] and [v2]
@@ -1362,7 +1362,7 @@ apply/anti_leq/andP; split.
 Qed.
 
 
-Fact Tamari_display : unit. Proof. exact: tt. Qed.
+Fact Tamari_display : Order.disp_t. Proof. by []. Qed.
 Notation "x <=T y" := (@Order.le Tamari_display _ x y).
 Notation "x <T y" := (@Order.lt Tamari_display _ x y).
 Notation "x /\T y" := (@Order.meet Tamari_display _ x y).
@@ -1534,9 +1534,9 @@ Proof. by rewrite -Tamari_flip flipsz_rightcomb; exact: leftcomb_bottom. Qed.
 #[export] HB.instance Definition _ :=
   Order.hasTop.Build Tamari_display (bintreesz n) rightcomb_top.
 
-Lemma botETamari : 0%O = leftcombsz n.
+Lemma botETamari : \bot%O = leftcombsz n.
 Proof. by []. Qed.
-Lemma topETamari : 1%O = rightcombsz n.
+Lemma topETamari : \top%O = rightcombsz n.
 Proof. by []. Qed.
 
 

@@ -76,6 +76,7 @@ of the scalar product.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import ssralg matrix vector ssrnum algC archimedean.
+From mathcomp Require Import sesquilinear.
 From mathcomp Require Import fingroup perm.
 From mathcomp Require Import ssrcomplements freeg mpoly.
 
@@ -92,12 +93,34 @@ Import ssrnum algC GRing.Theory Num.Theory.
 #[local] Open Scope nat_scope.
 #[local] Open Scope ring_scope.
 
+Reserved Notation "d .-homsym" (at level 1, format "d .-homsym").
+Reserved Notation "[ 'in' R [ n ] , d .-homsym ]"
+  (at level 0, R, n at level 2, d at level 0,
+     format "[ 'in'  R [ n ] ,  d .-homsym ]").
 Reserved Notation "{ 'homsym' T [ n , d ] }"
   (at level 0, T, n, d at level 2, format "{ 'homsym'  T [ n ,  d ] }").
+
+Set Warnings "-closed-notation-not-level-0".
+Reserved Notation "''he[' k ]" (at level 8, k at level 2, format "''he[' k ]").
+Reserved Notation "''hh[' k ]" (at level 8, k at level 2, format "''hh[' k ]").
+Reserved Notation "''hp[' k ]" (at level 8, k at level 2, format "''hp[' k ]").
+Reserved Notation "''hm[' k ]" (at level 8, k at level 2, format "''hm[' k ]").
+Reserved Notation "''hs[' k ]" (at level 8, k at level 2, format "''hs[' k ]").
+
+Reserved Notation "''he'" (at level 8, format "''he'").
+Reserved Notation "''hh'" (at level 8, format "''hh'").
+Reserved Notation "''hp'" (at level 8, format "''hp'").
+Reserved Notation "''hm'" (at level 8, format "''hm'").
+Reserved Notation "''hs'" (at level 8, format "''hs'").
+
+Reserved Notation "p *h q" (at level 20, format "p  *h  q").
+
 Reserved Notation "'[ p | q ]"
   (at level 2, format "'[hv' ''[' p  | '/ '  q ] ']'").
 Reserved Notation "'[ p | q ] _( R , n )"
   (at level 2, format "'[hv' ''[' p  | '/ '  q ] ']' '_(' R ,  n )").
+
+Set Warnings "closed-notation-not-level-0".
 
 
 Definition ishomogsym1 {n} {R : ringType} (d : nat) :
@@ -110,11 +133,9 @@ Definition homogsym1_keyed {n R} d := KeyedQualifier (@homogsym1_key n R d).
 End SymPolyHomogKey.
 Canonical SymPolyHomogKey.homogsym1_keyed.
 
-Notation "d .-homsym" := (@ishomogsym1 _ _ d)
-  (at level 1, format "d .-homsym") : form_scope.
-Notation "[ 'in' R [ n ] , d .-homsym ]" := (@ishomogsym1 n R d)
-  (at level 0, R, n at level 2, d at level 0,
-     format "[ 'in'  R [ n ] ,  d .-homsym ]") : form_scope.
+Notation "d .-homsym" := (@ishomogsym1 _ _ d) : form_scope.
+Notation "[ 'in' R [ n ] , d .-homsym ]" := (@ishomogsym1 n R d) : form_scope.
+
 
 (** ** Homogeneous symmetric polynomials *)
 Section DefType.
@@ -145,9 +166,8 @@ End DefType.
 (* We need to break off the section here to let the argument scope *)
 (* directives take effect.                                         *)
 Bind Scope ring_scope with homogsym.
-Arguments homogsym n%N R%R.
-Arguments homsym_inj n%N R%R d%N.
-
+(* Arguments homogsym n%_N R%_R. *)
+(* Arguments homsym_inj n%_N R%_R d%_N. *)
 
 Notation "{ 'homsym' T [ n , d ] }" := (homogsym n T d).
 
@@ -216,7 +236,7 @@ by apply val_inj; rewrite /= {1}(homog_symmE (homsym_is_dhomog f)) !linear_sum.
 Qed.
 
 Fact homogsym_vecaxiom :
-  vector_axiom #|[set p : 'P_d | (size p <= n)%N]| {homsym R[n, d]}.
+  Vector.axiom #|[set p : 'P_d | (size p <= n)%N]| {homsym R[n, d]}.
 Proof.
 pose b := [set p : 'P_d | (size p <= n)%N].
 pose t := enum_tuple (pred_of_set b).
@@ -253,16 +273,11 @@ HB.instance Definition _ := Lmodule_hasFinDim.Build R {homsym R[n, d]}
 
 End Vector.
 
-Notation "''he[' k ]" := (homsyme _ _ k)
-                              (at level 8, k at level 2, format "''he[' k ]").
-Notation "''hh[' k ]" := (homsymh _ _ k)
-                              (at level 8, k at level 2, format "''hh[' k ]").
-Notation "''hp[' k ]" := (homsymp _ _ k)
-                              (at level 8, k at level 2, format "''hp[' k ]").
-Notation "''hm[' k ]" := (homsymm _ _ k)
-                              (at level 8, k at level 2, format "''hm[' k ]").
-Notation "''hs[' k ]" := (homsyms _ _ k)
-                              (at level 8, k at level 2, format "''hs[' k ]").
+Notation "''he[' k ]" := (homsyme _ _ k).
+Notation "''hh[' k ]" := (homsymh _ _ k).
+Notation "''hp[' k ]" := (homsymp _ _ k).
+Notation "''hm[' k ]" := (homsymm _ _ k).
+Notation "''hs[' k ]" := (homsyms _ _ k).
 
 
 (** ** Products of homogeneous symmetric polynomials *)
@@ -277,65 +292,55 @@ Fact homsymprod_subproof (p : {homsym R[n, c]}) (q : {homsym R[n, d]}) :
 Proof. by apply: dhomogM => /=; apply: homsym_is_dhomog. Qed.
 Canonical homsymprod p q : {homsym R[n, c + d]} :=
   HomogSym (homsymprod_subproof p q).
-Definition homsymprodr_head k p q := let: tt := k in homsymprod q p.
-
-Notation homsymprodr := (homsymprodr_head tt).
-#[local] Notation "p *h q" := (homsymprod p q)
-                             (at level 20, format "p  *h  q").
-
-Fact homsymprod_is_linear p : linear (homsymprod p).
+Fact homsymprod_is_bilinear : bilinear_for *:%R *:%R homsymprod.
 Proof.
-by move=> a /= u v; apply val_inj; rewrite /= mulrDr -scalerAr.
+split => /= p r /= u v; apply val_inj => /=.
+- by rewrite mulrDl -scalerAl.
+- by rewrite mulrDr -scalerAr.
 Qed.
-HB.instance Definition _ p :=
-  GRing.isLinear.Build
-    R {homsym R[n, d]} {homsym R[n, (c + d)]} _ _ (homsymprod_is_linear p).
+HB.instance Definition _ :=
+  bilinear_isBilinear.Build
+    R {homsym R[n, c]} {homsym R[n, d]} {homsym R[n, c + d]}
+    *:%R *:%R homsymprod homsymprod_is_bilinear.
 
-Lemma homsymprodrE p q : homsymprodr p q = q *h p. Proof. by []. Qed.
-Fact homsymprodr_is_linear p : linear (homsymprodr p).
-Proof.
-by move=> a /= u v; apply val_inj; rewrite /= mulrDl -scalerAl.
-Qed.
-HB.instance Definition _ p :=
-  GRing.isLinear.Build
-    R {homsym R[n, c]} {homsym R[n, (c + d)]} _ _ (homsymprodr_is_linear p).
+#[local] Notation "p *h q" := (homsymprod p q).
 
-Lemma homsymprod0r p : p *h 0 = 0. Proof. exact: raddf0. Qed.
+
+Lemma homsymprod0r p : p *h 0 = 0. Proof. exact: linear0r. Qed.
 Lemma homsymprodBr p q1 q2 : p *h (q1 - q2) = p *h q1 - p *h q2.
-Proof. exact: raddfB. Qed.
+Proof. exact: linearBr. Qed.
 Lemma homsymprodNr p q : p *h (- q) = - p *h q.
-Proof. exact: raddfN. Qed.
+Proof. exact: linearNr. Qed.
 Lemma homsymprodDr p q1 q2 : p *h (q1 + q2) = p *h q1 + p *h q2.
-Proof. exact: raddfD. Qed.
+Proof. exact: linearDr. Qed.
 Lemma homsymprodMnr p q m : p *h (q *+ m) = (p *h q) *+ m.
-Proof. exact: raddfMn. Qed.
+Proof. exact: linearMnr. Qed.
 Lemma homsymprod_sumr p I r (P : pred I) (q : I -> {homsym R[n, d]}) :
   p *h (\sum_(i <- r | P i) q i) = \sum_(i <- r | P i) p *h q i.
-Proof. exact: raddf_sum. Qed.
+Proof. exact: linear_sumr. Qed.
 Lemma homsymprodZr a p q : p *h (a *: q) = a *: (p *h q).
-Proof. by rewrite linearZ. Qed.
+Proof. by rewrite linearZr. Qed.
 
 Lemma homsymprod0l p : 0 *h p = 0.
-Proof. by rewrite -homsymprodrE linear0. Qed.
+Proof. by rewrite linear0l. Qed.
 Lemma homsymprodNl p q : (- q) *h p = - q *h p.
-Proof. by rewrite -!homsymprodrE linearN. Qed.
+Proof. by rewrite linearNl. Qed.
 Lemma homsymprodDl p q1 q2 : (q1 + q2) *h p = q1 *h p + q2 *h p.
-Proof. by rewrite -!homsymprodrE linearD. Qed.
+Proof. by rewrite linearDl. Qed.
 Lemma homsymprodBl p q1 q2 : (q1 - q2) *h p = q1 *h p - q2 *h p.
-Proof. by rewrite -!homsymprodrE linearB. Qed.
+Proof. by rewrite linearBl. Qed.
 Lemma homsymprodMnl p q m : (q *+ m) *h p = q *h p *+ m.
-Proof. by rewrite -!homsymprodrE linearMn. Qed.
+Proof. by rewrite linearMnl. Qed.
 Lemma homsymprod_suml p I r (P : pred I) (q : I -> {homsym R[n, c]}) :
   (\sum_(i <- r | P i) q i) *h p = \sum_(i <- r | P i) q i *h p.
-Proof. by rewrite -!homsymprodrE linear_sum. Qed.
+Proof. by rewrite linear_sumlz. Qed.
 Lemma homsymprodZl p a q : (a *: q) *h p = a *: q *h p.
-Proof. by rewrite -!homsymprodrE linearZ. Qed.
+Proof. by rewrite linearZl. Qed.
 
 End HomogSymProd.
 
-Notation homsymprodr := (homsymprodr_head tt).
-Notation "p *h q" := (homsymprod p q)
-                       (at level 20, format "p  *h  q").
+Notation "p *h q" := (homsymprod p q).
+
 
 Section HomSymProdGen.
 
@@ -344,20 +349,31 @@ Variable n0 : nat.
 Variable R : comRingType.
 #[local] Notation HSF := {homsym R[n, _]}.
 
-Import LeqGeqOrder.
+Section Merge.
+Variables (d1 d2 : nat) (la : 'P_d1) (mu : 'P_d2).
 
+Lemma homsymprod_hh : 'hh[la] *h 'hh[mu] = 'hh[la +|+ mu] :> HSF.
+Proof. by apply val_inj; rewrite /= prod_genM. Qed.
+Lemma homsymprod_he : 'he[la] *h 'he[mu] = 'he[la +|+ mu] :> HSF.
+Proof. by apply val_inj; rewrite /= prod_genM. Qed.
+Lemma homsymprod_hp : 'hp[la] *h 'hp[mu] = 'hp[la +|+ mu] :> HSF.
+Proof. by apply val_inj; rewrite /= prod_genM. Qed.
+End Merge.
+
+Section Cons.
 Variables (d l0 : nat) (la : seq nat).
 Hypotheses (Hla : is_part_of_n d la)
            (Hlla : is_part_of_n (l0 + d)%N (l0 :: la)).
 Notation Plla := (IntPartN Hlla).
 Notation Pla := (IntPartN Hla).
 
-Lemma homsymprod_hh : 'hh[Plla] = 'hh[rowpartn l0] *h 'hh[Pla] :> HSF.
+Lemma homsymprod_h1h : 'hh[Plla] = 'hh[rowpartn l0] *h 'hh[Pla] :> HSF.
 Proof. by apply val_inj; rewrite /= prod_genM intpartn_cons. Qed.
-Lemma homsymprod_he : 'he[Plla] = 'he[rowpartn l0] *h 'he[Pla] :> HSF.
+Lemma homsymprod_h1e : 'he[Plla] = 'he[rowpartn l0] *h 'he[Pla] :> HSF.
 Proof. by apply val_inj; rewrite /= prod_genM intpartn_cons. Qed.
-Lemma homsymprod_hp : 'hp[Plla] = 'hp[rowpartn l0] *h 'hp[Pla] :> HSF.
+Lemma homsymprod_h1p : 'hp[Plla] = 'hp[rowpartn l0] *h 'hp[Pla] :> HSF.
 Proof. by apply val_inj; rewrite /= prod_genM intpartn_cons. Qed.
+End Cons.
 
 End HomSymProdGen.
 
@@ -371,7 +387,7 @@ Variable R : comRingType.
 #[local] Notation HSF := {homsym R[n, d]}.
 
 #[local] Notation "''pi_' d" :=
-  (pihomog [measure of mdeg] d) (at level 5, format "''pi_' d").
+  (pihomog mdeg d) (at level 5, format "''pi_' d").
 
 (** TODO: Contribute to Pierre-Yves's multinomials *)
 Lemma msym_pihomog nv s (p : {mpoly R[nv]}) :
@@ -470,7 +486,7 @@ Variable R : fieldType.
 #[local] Notation HSF := {homsym R[n, d]}.
 
 
-#[local] Notation Basis := (#|{:'P_d}|.-tuple HSF).
+#[local] Notation Basis := (#|{: 'P_d}|.-tuple HSF).
 Definition symbe : Basis := [tuple of [seq 'he[la] | la : 'P_d]].
 Definition symbh : Basis := [tuple of [seq 'hh[la] | la : 'P_d]].
 Definition symbm : Basis := [tuple of [seq 'hm[la] | la : 'P_d]].
@@ -479,7 +495,7 @@ Definition symbp : Basis := [tuple of [seq 'hp[la] | la : 'P_d]].
 
 Hypothesis Hd : (d <= n)%N.
 
-Lemma basis_homsym : [set p : 'P_d | (size p <= n)%N] =i {:'P_d}.
+Lemma basis_homsym : [set p : 'P_d | (size p <= n)%N] =i {: 'P_d}.
 Proof using Hd.
 move=> la.
 rewrite !inE; apply: (leq_trans _ Hd).
@@ -487,7 +503,7 @@ by rewrite -[X in (_ <= X)%N](sumn_intpartn la); apply: size_part.
 Qed.
 
 Lemma dim_homsym :
-  \dim (fullv (vT := HSF)) = #|{:'P_d}|.
+  \dim (fullv (vT := HSF)) = #|{: 'P_d}|.
 Proof using Hd. by rewrite dimvf /=; apply eq_card; apply basis_homsym. Qed.
 
 Lemma symbm_free : free symbm.
@@ -658,11 +674,11 @@ Proof. by move=> Hchar; apply/basis_free/symbp_basis. Qed.
 End HomSymField.
 
 
-Notation "''he'" := (symbe _ _ _) (at level 8, format "''he'").
-Notation "''hh'" := (symbh _ _ _) (at level 8, format "''hh'").
-Notation "''hp'" := (symbp _ _ _) (at level 8, format "''hp'").
-Notation "''hm'" := (symbm _ _ _) (at level 8, format "''hm'").
-Notation "''hs'" := (symbs _ _ _) (at level 8, format "''hs'").
+Notation "''he'" := (symbe _ _ _).
+Notation "''hh'" := (symbh _ _ _).
+Notation "''hp'" := (symbp _ _ _).
+Notation "''hm'" := (symbm _ _ _).
+Notation "''hs'" := (symbs _ _ _).
 
 
 (** ** Changing the base field *)
@@ -701,7 +717,7 @@ HB.instance Definition _ :=
     _ _ map_homsym_is_scalable.
 
 
-Lemma coord_map_homsym (b : #|{:'P_d}|.-tuple HSFR) j (f : HSFR) :
+Lemma coord_map_homsym (b : #|{: 'P_d}|.-tuple HSFR) j (f : HSFR) :
   basis_of fullv b ->
   basis_of fullv (map_tuple map_homsym b) ->
   coord (map_tuple map_homsym b) j (map_homsym f) = mor (coord b j f).
@@ -710,7 +726,7 @@ move=> Hbasis Hmap_basis.
 have toSf : f \in span b by rewrite (span_basis Hbasis) // memvf.
 rewrite {1}(coord_span toSf) raddf_sum /=.
 rewrite (eq_bigr
-           (fun i : 'I_#|{:'P_d}| =>
+           (fun i : 'I_#|{: 'P_d}| =>
               (mor (coord b i f)) *: (map_tuple map_homsym b)`_i )).
   by rewrite coord_sum_free //; apply: (basis_free Hmap_basis).
 move=> i _; rewrite linearZ /=.
@@ -835,16 +851,15 @@ Proof. exact: char_num. Qed.
 (** * The scalar product *)
 Section ScalarProduct.
 
-Variable n0 d : nat.
+Context {n0 d : nat}.
 #[local] Notation n := (n0.+1).
 #[local] Notation HSF := {homsym algC[n, d]}.
 
-Definition homsymdot (p q : HSF) : algC :=
-  \sum_(i < #|{:'P_d}|)
-    (zcard (enum_val i))%:R * (coord 'hp i p) * (coord 'hp i q)^*.
-Definition homsymdotr_head k p q := let: tt := k in homsymdot q p.
+Implicit Type (p q u v : HSF).
 
-Notation homsymdotr := (homsymdotr_head tt).
+Definition homsymdot p q : algC :=
+  \sum_(i < #|{: 'P_d}|)
+    (zcard (enum_val i))%:R * (coord 'hp i p) * (coord 'hp i q)^*.
 Notation "''[' u | v ]" := (homsymdot u v) : ring_scope.
 
 Lemma homsymdotE p q :
@@ -855,35 +870,6 @@ Proof.
 rewrite /homsymdot [RHS](reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 by apply/eq_bigr => i _; rewrite enum_valK.
 Qed.
-Lemma homsymdotrE p q : homsymdotr p q = '[q | p]. Proof. by []. Qed.
-
-Fact homsymdotr_is_scalar p : scalar (homsymdotr p).
-Proof.
-move=> a /= u v.
-rewrite mulr_sumr /= -big_split; apply: eq_bigr => x _ /=.
-rewrite linearD linearZ /= mulrDr mulrDl !mulrA; congr (_ + _).
-by rewrite [_ * a]mulrC -!mulrA.
-Qed.
-HB.instance Definition _ p :=
-  GRing.isLinear.Build
-    algC {homsym algC[n, d]} algC _ _ (homsymdotr_is_scalar p).
-
-Lemma homsymdot0l p : '[0 | p] = 0.
-Proof. by rewrite -homsymdotrE linear0. Qed.
-Lemma homsymdotNl p q : '[- q | p] = - '[q | p].
-Proof. by rewrite -!homsymdotrE linearN. Qed.
-Lemma homsymdotDl p q1 q2 : '[q1 + q2 | p] = '[q1 | p] + '[q2 | p].
-Proof. by rewrite -!homsymdotrE linearD. Qed.
-Lemma homsymdotBl p q1 q2 : '[q1 - q2 | p] = '[q1 | p] - '[q2 | p].
-Proof. by rewrite -!homsymdotrE linearB. Qed.
-Lemma homsymdotMnl p q n : '[q *+ n | p] = '[q | p] *+ n.
-Proof. by rewrite -!homsymdotrE linearMn. Qed.
-Lemma homsymdot_suml p I r (P : pred I) (q : I -> HSF) :
-  '[\sum_(i <- r | P i) q i | p] = \sum_(i <- r | P i) '[q i | p].
-Proof. by rewrite -!homsymdotrE linear_sum. Qed.
-Lemma homsymdotZl p a q : '[a *: q | p] = a * '[q | p].
-Proof. by rewrite -!homsymdotrE linearZ. Qed.
-
 Lemma homsymdotC p q : '[p | q] = ('[q | p])^*.
 Proof.
 rewrite /homsymdot rmorph_sum /=.
@@ -893,28 +879,88 @@ have /geC0_conj -> : 0 <= ((zcard (enum_val x))%:R : algC).
   by rewrite -nnegrE ?nnegrE ?ler01 ?ler0n ?oner_neq0.
 by congr (_ * _); rewrite mulrC.
 Qed.
+Fact homsymdot_is_bilinear : bilinear_for *%R (Num.conj_op \; *%R) homsymdot.
+Proof.
+have lin r p u v : '[r *: u + v | p] = r * '[u | p] + '[v | p].
+  rewrite !homsymdotE mulr_sumr /= -big_split; apply: eq_bigr => x _ /=.
+  rewrite linearD linearZ /= mulrDr mulrDl !mulrA; congr (_ + _).
+  by rewrite [_ * r]mulrC -!mulrA.
+split => /= p r /= u v; first exact: lin.
+by rewrite !(homsymdotC p) lin rmorphD rmorphM.
+Qed.
+HB.instance Definition _ :=
+  bilinear_isBilinear.Build algC HSF HSF algC *%R (Num.conj_op \; *%R)
+    homsymdot homsymdot_is_bilinear.
+Notation "''[' u | v ]" := (homsymdot u v) : ring_scope.
 
-Lemma homsymdotBr p q1 q2 : '[p | q1 - q2] = '[p | q1] - '[p | q2].
-Proof. by rewrite !(homsymdotC p) -rmorphB homsymdotBl. Qed.
-HB.instance Definition _ p :=
-  GRing.isAdditive.Build
-    {homsym algC[n, d]} algC _ (homsymdotBr p).
+Fact homsymdot_is_hermitian p q : '[p | q] = (-1) ^+ false * '[q | p]^*.
+Proof. by rewrite expr0 mul1r -homsymdotC. Qed.
+HB.instance Definition _ :=
+  isHermitianSesquilinear.Build
+    algC HSF false Num.conj_op homsymdot homsymdot_is_hermitian.
 
-Lemma homsymdot0r p : '[p | 0] = 0. Proof. exact: raddf0. Qed.
+Lemma homsymdot0l p : '[0 | p] = 0.
+Proof. exact: linear0l. Qed.
+Lemma homsymdotNl p q : '[- q | p] = - '[q | p].
+Proof. exact: linearNl. Qed.
+Lemma homsymdotDl p q1 q2 : '[q1 + q2 | p] = '[q1 | p] + '[q2 | p].
+Proof. exact: linearDl. Qed.
+Lemma homsymdotBl p q1 q2 : '[q1 - q2 | p] = '[q1 | p] - '[q2 | p].
+Proof. exact: linearBl. Qed.
+Lemma homsymdotMnl p q n : '[q *+ n | p] = '[q | p] *+ n.
+Proof. exact: linearMnl. Qed.
+Lemma homsymdot_suml p I r (P : pred I) (q : I -> HSF) :
+  '[\sum_(i <- r | P i) q i | p] = \sum_(i <- r | P i) '[q i | p].
+Proof. exact: linear_sumlz. Qed.
+Lemma homsymdotZl p a q : '[a *: q | p] = a * '[q | p].
+Proof. exact: linearZl. Qed.
+
+Lemma homsymdot0r p : '[p | 0] = 0.
+Proof. exact: linear0r. Qed.
 Lemma homsymdotNr p q : '[p | - q] = - '[p | q].
-Proof. exact: raddfN. Qed.
+Proof. exact: linearNr. Qed.
 Lemma homsymdotDr p q1 q2 : '[p | q1 + q2] = '[p | q1] + '[p | q2].
-Proof. exact: raddfD. Qed.
+Proof. exact: linearDr. Qed.
+Lemma homsymdotBr p q1 q2 : '[p | q1 - q2] = '[p | q1] - '[p | q2].
+Proof. exact: linearBr. Qed.
 Lemma homsymdotMnr p q n : '[p | q *+ n] = '[p | q] *+ n.
-Proof. exact: raddfMn. Qed.
+Proof. exact: linearMnr. Qed.
 Lemma homsymdot_sumr p I r (P : pred I) (q : I -> HSF) :
   '[p | \sum_(i <- r | P i) q i] = \sum_(i <- r | P i) '[p | q i].
-Proof. exact: raddf_sum. Qed.
+Proof. exact: linear_sumr. Qed.
 Lemma homsymdotZr a p q : '[p | a *: q] = a^* * '[p | q].
-Proof. by rewrite !(homsymdotC p) homsymdotZl rmorphM. Qed.
+Proof. exact: linearZr. Qed.
 
-Lemma homsymdotpp (Hd : (d <= n)%N) la mu :
-  '[ 'hp[la] | 'hp[mu] ] = (zcard la)%:R * (la == mu)%:R.
+
+Hypothesis (Hd : (d <= n)%N).
+
+Fact homsymdot_is_dot f : f != 0 -> 0 < '[f | f].
+Proof.
+rewrite lt0r andbC.
+pose co (la : 'P_d) :=
+  (zcard la)%:R * coord 'hp (enum_rank la) f * (coord 'hp (enum_rank la) f)^*.
+have le0zcc (la : 'P_d) : 0 <= co la.
+  by rewrite /co -mulrA mulr_ge0 // mul_conjC_ge0.
+have -> /= : 0 <= '[f | f].
+  by rewrite homsymdotE; apply: sumr_ge0 => /= la _; apply: le0zcc.
+have /andP[/eqP Hfull Hfree]:= symbp_basis Hd char0_algC.
+have:= memvf f; rewrite -Hfull => /coord_span {1}->.
+apply contra; rewrite homsymdotE => /eqP H.
+have {H le0zcc} eq0zcc (la : 'P_d) : co la = 0.
+  by apply/(psumr_eq0P _ H) => //= mu _; apply le0zcc.
+suff allc0 i : coord 'hp i f = 0.
+  by apply/eqP/big1 => /= i _; rewrite allc0 scale0r.
+have {eq0zcc} /eqP := eq0zcc (enum_val i).
+rewrite {}/co enum_valK -mulrA mulf_eq0 pnatr_eq0 (negbTE (neq0zcard _)) /=.
+by rewrite mul_conjC_eq0 => /eqP.
+Qed.
+HB.instance Definition _ :=
+  isDotProduct.Build algC HSF homsymdot homsymdot_is_dot.
+
+
+(** Formulas for other bases will be proved in Cauchy *)
+Lemma homsymdotpp la mu :
+  '['hp[la] | 'hp[mu]] = (zcard la)%:R * (la == mu)%:R.
 Proof.
 rewrite homsymdotE (bigD1 mu) //= big1 ?addr0 => [| nu /negbTE Hneq].
 - rewrite !(coord_symbp Hd) // eq_refl /= conjC1 mulr1.
@@ -923,12 +969,12 @@ rewrite homsymdotE (bigD1 mu) //= big1 ?addr0 => [| nu /negbTE Hneq].
 Qed.
 
 Lemma homsymdot_omegasf f g :
-  (d <= n)%N -> '[ omegahomsym f | omegahomsym g ] = '[ f | g ].
+  '[omegahomsym f |omegahomsym g ] = '[f | g].
 Proof.
-move=> Hd; have /andP[/eqP Hfull Hfree]:= symbp_basis Hd char0_algC.
-have:= (memvf g); rewrite -Hfull => /coord_span ->.
+have /andP[/eqP Hfull Hfree]:= symbp_basis Hd char0_algC.
+have:= memvf g; rewrite -Hfull => /coord_span ->.
 rewrite raddf_sum /= !homsymdot_sumr; apply eq_bigr => i _.
-have:= (memvf f); rewrite -Hfull => /coord_span ->.
+have:= memvf f; rewrite -Hfull => /coord_span ->.
 rewrite raddf_sum /= !homsymdot_suml; apply eq_bigr => j _.
 rewrite !linearZ /= !homsymdotZl !homsymdotZr; congr (_ * (_ * _)).
 rewrite ![_`_i](nth_map (rowpartn d)) -?cardE //.
@@ -943,9 +989,19 @@ have /Num.Theory.conj_intr -> :
 by rewrite -exprD addnn -muln2 exprM sqrr_sign mul1r.
 Qed.
 
+Lemma homsymp_orthogonal : pairwise_orthogonal homsymdot 'hp.
+Proof.
+apply/pairwise_orthogonalP => /=; split.
+  have pfree := basis_free (symbp_basis Hd char0_algC).
+  rewrite free_uniq // andbT.
+  by move: pfree; rewrite free_directv /= => /andP[].
+move=> f g /mapP[/= la _ {f}->]/mapP[/= mu _ {g}->].
+rewrite homsymdotpp.
+by case: (altP (la =P mu)) => [->|_]; rewrite /= ?mulr0 // eqxx.
+Qed.
+
 End ScalarProduct.
 
-Notation homsymdotr := (homsymdotr_head tt).
 Notation "''[' u | v ]" := (homsymdot u v) : ring_scope.
 Notation "''[' u | v ] _( n , d )" :=
   (@homsymdot n d u v) (only parsing) : ring_scope.
