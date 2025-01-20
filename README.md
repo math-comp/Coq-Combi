@@ -136,6 +136,11 @@ Documentation
   complete ! with the 
   [dependancy graph](https://math-comp.github.io/combi/1.0.0/index.html).
 
+* A [paper](https://dl.acm.org/doi/10.1145/3703595.3705885) and the associated
+  [slides](https://www.lri.fr/~hivert/Conf/CPP2025.pdf), in CPP '25:
+  Proceedings of the 14th ACM SIGPLAN International Conference on Certified
+  Programs and Proofs
+
 * A
   [presentation](https://github.com/math-comp/Coq-Combi/raw/master/doc/Talk-CRM/CRM.pdf)
   given at "[Algebra and combinatorics at LaCIM](http://www.crm.umontreal.ca/2018/Algebre18/index_e.php), a conference
