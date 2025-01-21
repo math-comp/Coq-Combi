@@ -53,6 +53,7 @@ From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import fingroup perm morphism gproduct.
 From mathcomp Require Import rat ssralg ssrint ssrnum algC vector archimedean.
 From mathcomp Require Import mxrepresentation classfun character.
+From mathcomp Require Import sesquilinear.
 From mathcomp Require Import mpoly.
 
 Require Import sorted ordtype tools partition antisym sympoly homogsym Cauchy
@@ -71,9 +72,9 @@ Import GroupScope GRing.Theory Num.Theory.
 Open Scope ring_scope.
 
 Reserved Notation "''irrSG[' l ']'"
-         (at level 8, l at level 2, format "''irrSG[' l ]").
+         (at level 0, l at level 2, format "''irrSG[' l ]").
 Reserved Notation "''M[' l ']'"
-         (at level 8, l at level 2, format "''M[' l ]").
+         (at level 0, l at level 2, format "''M[' l ]").
 
 
 #[local] Lemma char0_rat : [char rat] =i pred0.
@@ -81,6 +82,38 @@ Proof. exact: char_num. Qed.
 #[local] Lemma char0_algC : [char algC] =i pred0.
 Proof. exact: char_num. Qed.
 #[local] Hint Resolve char0_algC char0_rat : core.
+
+
+(** TODO: contribute to mathcomp *)
+Section CharDotProduct.
+
+Variable (gT : finGroupType) (G : {group gT}).
+
+#[local] Notation cfdot := (cfdot (B := G)).
+
+Fact cfdot_is_bilinear :
+  bilinear_for *%R (Num.conj_op \; *%R) cfdot.
+Proof.
+split => /= p r /= u v; first by rewrite cfdotDl cfdotZl.
+by rewrite cfdotDr cfdotZr.
+Qed.
+HB.instance Definition _ :=
+  bilinear_isBilinear.Build algC 'CF(G) 'CF(G) algC *%R (Num.conj_op \; *%R)
+    cfdot cfdot_is_bilinear.
+
+Fact cfdot_is_hermitian (phi psi : 'CF(G)) :
+  '[phi, psi] = (-1) ^+ false * '[psi, phi]^*.
+Proof. by rewrite expr0 mul1r -cfdotC. Qed.
+HB.instance Definition _ :=
+  isHermitianSesquilinear.Build
+    algC 'CF(G) false Num.conj_op cfdot cfdot_is_hermitian.
+
+Fact cfdot_is_dot (phi : 'CF(G)) : phi != 0 -> 0 < '[phi].
+Proof. by rewrite cfnorm_gt0. Qed.
+HB.instance Definition _ :=
+  isDotProduct.Build algC 'CF(G) cfdot cfdot_is_dot.
+
+End CharDotProduct.
 
 
 (** * Definition and basic properties *)
@@ -148,7 +181,7 @@ rewrite FcharE; congr (_ *: _).
 rewrite (reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 transitivity
   (coord 'hp (enum_rank la)
-         (\sum_(j < #|{:'P_n}|)
+         (\sum_(j < #|{: 'P_n}|)
            (f (permCT (enum_val j)) / 'z_(enum_val j)) *: ('hp`_j : HS))).
   congr coord; apply eq_bigr => /= i _; congr (_ *: _).
   rewrite (nth_map inh); last by rewrite -cardE ltn_ord.
@@ -219,11 +252,11 @@ Qed.
 
 
 (** ** The Frobenius Characteristic is an isometry *)
-Theorem Fchar_isometry f g : '[Fchar f | Fchar g] = '[f, g].
+Corollary Fchar_isometry : isometry homsymdot cfdot Fchar.
 Proof using Hn.
-rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) !linear_sum /=.
+move=> f g.
+rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) !linear_sum /=; apply eq_bigr => mu _.
 rewrite homsymdot_suml cfdot_suml; apply eq_bigr => la _.
-rewrite homsymdot_sumr cfdot_sumr; apply eq_bigr => mu _.
 rewrite ![Fchar (_ *: '1z_[_])]linearZ /= !Fchar_ncfuniCT.
 rewrite homsymdotZl homsymdotZr cfdotZl cfdotZr; congr (_ * (_ * _)).
 rewrite homsymdotpp // cfdotZl cfdotZr cfdot_classfun_part.
@@ -253,7 +286,8 @@ dependent equality but I'm not sure this is really needed.
 Theorem Fchar_ind_morph m n (f : 'CF('SG_m)) (g : 'CF('SG_n)) :
   Fchar ('Ind['SG_(m + n)] (f \o^ g)) = Fchar f *h Fchar g.
 Proof using.
-rewrite (ncfuniCT_gen f) (ncfuniCT_gen g) !linear_sum; apply eq_bigr => /= l _.
+rewrite (ncfuniCT_gen f) (ncfuniCT_gen g).
+rewrite !(linear_sum, linear_sumr); apply eq_bigr => /= l _.
 rewrite cfextprod_suml homsymprod_suml !linear_sum; apply eq_bigr => /= k _.
 do 2 rewrite [in RHS]linearZ /= Fchar_ncfuniCT.
 rewrite cfextprodZr cfextprodZl homsymprodZr homsymprodZl !scalerA.
@@ -283,7 +317,7 @@ have Hla : (sumn la == sumn la) && is_part la.
   by rewrite eq_refl /=; have:= Hlla => /andP[_ /is_part_consK ->].
 have Hdla : (sumn la <= nvar)%N by apply: (leq_trans _ Hd); rewrite /= leq_addl.
 have {IHla} Hrec := IHla Hla Hdla.
-rewrite homsymprod_hh -Fchar_triv -(Fchar_invK Hdla 'hh[(IntPartN Hla)]).
+rewrite homsymprod_h1h -Fchar_triv -(Fchar_invK Hdla 'hh[(IntPartN Hla)]).
 rewrite -Fchar_ind_morph (FcharK Hd).
 apply cfInd_char; rewrite cfIsom_char.
 exact: (cfextprod_char (cfun1_char _) Hrec).
@@ -492,7 +526,7 @@ Qed.
 Theorem Murnaghan_Nakayama_char n la (sigma : 'S_n) :
   'irrSG[la] sigma = (MN_coeff la (cycle_typeSn sigma))%:~R.
 Proof.
-rewrite Frobenius_char_homsymdot MN_coeff_homogP raddf_sum /=.
+rewrite Frobenius_char_homsymdot MN_coeff_homogP homsymdot_sumr /=.
 rewrite (bigD1 la) //= big1 ?addr0 //; first last => [i /negbTE Hi|].
   by rewrite homsymdotZr homsymdotss // eq_sym Hi mulr0.
 rewrite homsymdotZr homsymdotss // eqxx mulr1.

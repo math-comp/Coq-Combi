@@ -55,7 +55,7 @@ Import Order.Theory.
 (** * Induction on partially ordered types                                    *)
 (******************************************************************************)
 
-Lemma finord_wf (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
+Lemma finord_wf disp (T : finPOrderType disp) (P : T -> Type) :
   (forall x, (forall y, y < x -> P y) -> P x) -> forall x, P x.
 Proof.
 move=> IH x.
@@ -67,7 +67,7 @@ rewrite -{}eqcn; apply proper_card; apply/andP; split; apply/subsetP.
 - by move/(_ y); rewrite !inE => /(_ ltxy); rewrite ltxx.
 Qed.
 
-Lemma finord_wf_down (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
+Lemma finord_wf_down disp (T : finPOrderType disp) (P : T -> Type) :
   (forall x, (forall y, y > x -> P y) -> P x) -> forall x, P x.
 Proof. exact: (finord_wf (T := T^d : finPOrderType _)). Qed.
 
@@ -78,12 +78,12 @@ Proof. exact: (finord_wf (T := T^d : finPOrderType _)). Qed.
 
 (** We only define covering relation for finite type, since it cannot be      *)
 (** decided and it is not very useful for infinite orders.                    *)
-Definition covers {disp : unit} {T : finPOrderType disp} :=
+Definition covers {disp} {T : finPOrderType disp} :=
   [rel x y : T | (x < y) && [forall z, ~~(x < z < y)]].
 
 Section CoversFinPOrder.
 
-Variable (disp : unit) (T : finPOrderType disp).
+Variable (disp : _) (T : finPOrderType disp).
 Implicit Type (x y : T).
 
 Lemma coversP x y : reflect (x < y /\ (forall z, ~(x < z < y))) (covers x y).
@@ -148,7 +148,7 @@ Proof. by rewrite -covers_connect; apply: (iffP connectP). Qed.
 
 End CoversFinPOrder.
 
-Lemma covers_rind (disp : unit) (T : finPOrderType disp) (P : T -> Type) :
+Lemma covers_rind disp (T : finPOrderType disp) (P : T -> Type) :
   (forall x y, covers y x -> P x -> P y) ->
   forall x, P x -> forall y, x >= y -> P y.
 Proof.
@@ -168,12 +168,12 @@ HB.structure Definition Inhabited := {T of isInhabited T & Choice T}.
 
 HB.factory Record isInhabitedType T := { x : T }.
 HB.builders Context T of isInhabitedType T.
-HB.instance Definition _ :=  isInhabited.Build T (ex_intro _ x is_true_true).
+#[warning="-HB.no-new-instance"]
+HB.instance Definition _ := isInhabited.Build T (ex_intro _ x is_true_true).
 HB.end.
 
 HB.instance Definition _ := isInhabitedType.Build unit tt.
 HB.instance Definition _ := isInhabitedType.Build bool false.
-HB.instance Definition _ := isInhabitedType.Build Prop False.
 HB.instance Definition _ := isInhabitedType.Build nat 0.
 HB.instance Definition _ (n : nat) := isInhabitedType.Build 'I_n.+1 ord0.
 
@@ -207,19 +207,19 @@ HB.structure Definition InhFinite := { T of isInhabited T & Finite T }.
 (** ** Inhabited ordered types                                                *)
 (******************************************************************************)
 #[short(type=inhPOrderType)]
-HB.structure Definition InhPOrder (d : unit) :=
+HB.structure Definition InhPOrder d :=
   {T of isInhabited T & Order.POrder d T}.
 
 #[short(type=inhLatticeType)]
-HB.structure Definition InhLattice (d : unit) :=
+HB.structure Definition InhLattice d :=
   {T of isInhabited T & Order.Lattice d T}.
 
 #[short(type=inhTBLatticeType)]
-HB.structure Definition InhTBLattice (d : unit) :=
+HB.structure Definition InhTBLattice d :=
   {T of isInhabited T & Order.TBLattice d T}.
 
 #[short(type=inhOrderType)]
-HB.structure Definition InhOrder (d : unit) :=
+HB.structure Definition InhOrder d :=
   {T of isInhabited T & Order.Total d T}.
 
 
@@ -227,15 +227,15 @@ HB.structure Definition InhOrder (d : unit) :=
 (** ** Inhabited finite partially ordered types                               *)
 (******************************************************************************)
 #[short(type=inhFinPOrderType)]
-HB.structure Definition InhFinPOrder (d : unit) :=
+HB.structure Definition InhFinPOrder d :=
   {T of isInhabited T & Order.POrder d T & Finite T}.
 
 #[short(type=inhFinLatticeType)]
-HB.structure Definition InhFinLattice (d : unit) :=
+HB.structure Definition InhFinLattice d :=
   {T of isInhabited T & Order.FinLattice d T}.
 
 #[short(type=inhFinOrderType)]
-HB.structure Definition InhFinOrder (d : unit) :=
+HB.structure Definition InhFinOrder d :=
   {T of isInhabited T & Order.FinTotal d T}.
 
 HB.instance Definition _ := Inhabited.on bool.
@@ -246,15 +246,14 @@ Section Dual.
 HB.instance Definition _ (T : inhType) :=
   isInhabitedType.Build (Order.dual T) (@inh T).
 
-Variable d : unit.
-HB.instance Definition _ (T : inhPOrderType d) := InhPOrder.on (T^d).
-HB.instance Definition _ (T : inhLatticeType d) := InhLattice.on (T^d).
-HB.instance Definition _ (T : inhTBLatticeType d) := InhTBLattice.on (T^d).
-HB.instance Definition _ (T : inhOrderType d) := InhOrder.on (T^d).
+HB.instance Definition _ d (T : inhPOrderType d) := InhPOrder.on (T^d).
+HB.instance Definition _ d (T : inhLatticeType d) := InhLattice.on (T^d).
+HB.instance Definition _ d (T : inhTBLatticeType d) := InhTBLattice.on (T^d).
+HB.instance Definition _ d (T : inhOrderType d) := InhOrder.on (T^d).
 
-HB.instance Definition _ (T : inhFinPOrderType d) := InhFinPOrder.on (T^d).
-HB.instance Definition _ (T : inhFinLatticeType d) := InhFinLattice.on (T^d).
-HB.instance Definition _ (T : inhFinOrderType d) := InhFinOrder.on (T^d).
+HB.instance Definition _ d (T : inhFinPOrderType d) := InhFinPOrder.on (T^d).
+HB.instance Definition _ d (T : inhFinLatticeType d) := InhFinLattice.on (T^d).
+HB.instance Definition _ d (T : inhFinOrderType d) := InhFinOrder.on (T^d).
 
 End Dual.
 
@@ -264,7 +263,7 @@ End Dual.
 (** *** Maximum of a sequence *)
 Section MaxSeq.
 
-Variables (disp : unit) (T : orderType disp).
+Variables (disp : _) (T : orderType disp).
 Implicit Type a b c : T.
 Implicit Type u v : seq T.
 
@@ -300,7 +299,7 @@ End MaxSeq.
 (** *** Comparison of the elements of a sequence to an element *)
 Section AllLeqLtn.
 
-Variables (disp : unit) (T : orderType disp).
+Variables (disp : _) (T : orderType disp).
 Implicit Type a b c : T.
 Implicit Type u v : seq T.
 
@@ -453,7 +452,7 @@ End AllLeqLtn.
 (** *** Removing the largest letter of a sequence *)
 Section RemoveBig.
 
-Variables (disp : unit) (T : orderType disp).
+Variables (disp : _) (T : orderType disp).
 Variable Z : T.
 Implicit Type a b c : T.
 Implicit Type u v w r : seq T.

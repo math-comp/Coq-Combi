@@ -67,8 +67,7 @@ exists sol; repeat split.
 + by rewrite /sol size_extract /= /cover big_set1.
 Qed.
 
-Theorem Erdos_Szekeres
-  (disp : unit) (T : inhOrderType disp) (m n : nat) (s : seq T) :
+Theorem Erdos_Szekeres disp (T : inhOrderType disp) (m n : nat) (s : seq T) :
   size s > m * n ->
   (exists t, subseq t s /\ sorted <=%O t /\ size t > m) \/
   (exists t, subseq t s /\ sorted >%O t /\ size t > n).

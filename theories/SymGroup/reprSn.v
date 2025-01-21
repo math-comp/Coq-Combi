@@ -84,7 +84,7 @@ Qed.
 End LinRepr.
 
 
-Lemma NirrSn n : Nirr 'SG_n = #|{:'P_n}|.
+Lemma NirrSn n : Nirr 'SG_n = #|{: 'P_n}|.
 Proof using. by rewrite NirrE card_classes_perm card_ord. Qed.
 
 Section EltrConj.
