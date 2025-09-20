@@ -24,6 +24,7 @@ type contains
 We prove it as a corollary of Greene's theorem on the Robinson-Schensted
 correspondance. Note that there are other proofs which require less theory.
  *****)
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop path order.
@@ -67,8 +68,7 @@ exists sol; repeat split.
 + by rewrite /sol size_extract /= /cover big_set1.
 Qed.
 
-Theorem Erdos_Szekeres
-  (disp : unit) (T : inhOrderType disp) (m n : nat) (s : seq T) :
+Theorem Erdos_Szekeres disp (T : inhOrderType disp) (m n : nat) (s : seq T) :
   size s > m * n ->
   (exists t, subseq t s /\ sorted <=%O t /\ size t > m) \/
   (exists t, subseq t s /\ sorted >%O t /\ size t > n).

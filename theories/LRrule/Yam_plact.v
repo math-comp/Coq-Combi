@@ -36,6 +36,7 @@ is surjective. This is Theorem [plact_from_yam]:
 ]
 ****)
 
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset path bigop order.

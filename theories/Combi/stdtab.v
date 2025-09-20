@@ -96,7 +96,7 @@ Import Order.Theory.
 (** ** Appending on the n-th row *)
 Section AppendNth.
 
-Variables (disp :unit) (T : inhOrderType disp).
+Variables (disp : _) (T : inhOrderType disp).
 Implicit Type b : T.
 Implicit Type t : seq (seq T).
 
@@ -599,7 +599,7 @@ Qed.
 End Bijection.
 
 
-Lemma eq_inv_is_row (d1 d2 : unit) (T1 : inhOrderType d1) (T2 : inhOrderType d2)
+Lemma eq_inv_is_row (d1 d2 : _) (T1 : inhOrderType d1) (T2 : inhOrderType d2)
       (u1 : seq T1) (u2 : seq T2) :
   eq_inv u1 u2 -> is_row u1 -> is_row u2.
 Proof.
@@ -609,7 +609,7 @@ rewrite -(Hinv i j Hij).
 exact: Hrow.
 Qed.
 
-Lemma is_row_stdE (d : unit) (T : inhOrderType d) (w : seq T) :
+Lemma is_row_stdE (d : _) (T : inhOrderType d) (w : seq T) :
   is_row (std w) = is_row w.
 Proof.
 by apply/idP/idP; apply eq_inv_is_row; first apply eq_inv_sym; apply: eq_inv_std.
@@ -660,7 +660,7 @@ Proof using. by case: t => /= t /andP[]. Qed.
 Lemma shape_stdtabsh (t : stdtabsh) : shape t = sh.
 Proof using. by case: t => /= t /andP[_ /eqP]. Qed.
 
-Lemma enum_stdtabshE : map val (enum {:stdtabsh}) = enum_stdtabsh sh.
+Lemma enum_stdtabshE : map val (enum {: stdtabsh}) = enum_stdtabsh sh.
 Proof.
 rewrite enumT unlock /= /stdtabsh_enum /enum_stdtabsh.
 elim: (enum_yameval sh) (enum_yamevalP (intpartP sh)) => //= y ly IHly.
@@ -691,7 +691,7 @@ HB.instance Definition _ := [isSub of stdtabn for stdtabnval].
 HB.instance Definition _ := [Countable of stdtabn by <:].
 
 Definition enum_stdtabn : seq (seq (seq nat)) :=
-  map (stdtab_of_yam \o val) (enum ({:yamn n})).
+  map (stdtab_of_yam \o val) (enum ({: yamn n})).
 Let stdtabn_enum : seq stdtabn := pmap insub enum_stdtabn.
 
 Fact finite_stdtabn : Finite.axiom stdtabn_enum.
@@ -755,7 +755,7 @@ End StdtabnOfStdtabsh.
 (** * Conjugate of a standard tableau *)
 Section ConjTab.
 
-Variables (disp: unit) (T : inhOrderType disp).
+Variables (disp: _) (T : inhOrderType disp).
 
 Definition conj_tab (t : seq (seq T)) : seq (seq T) :=
   let c := conj_part (shape t) in
@@ -947,7 +947,7 @@ by exists (stdtabshcast (conj_intpartK sh) \o conj_stdtabsh) => t;
 Qed.
 
 Lemma card_stdtabsh_conj_part (sh : intpart) :
-  #|{:stdtabsh (conj_part sh)}| = #|{:stdtabsh sh}|.
+  #|{: stdtabsh (conj_part sh)}| = #|{: stdtabsh sh}|.
 Proof. by symmetry; apply: (bij_eq_card (conj_stdtabsh_bij sh)). Qed.
 
 #[export] Hint Resolve stdtabnP stdtabshP : core.

@@ -219,7 +219,7 @@ apply: (plactic_filter_le d1).
 exact: congr_RS.
 Qed.
 
-Lemma filter_gt_to_word (d : unit) (T : inhOrderType d) n (t : seq (seq T)) :
+Lemma filter_gt_to_word disp (T : inhOrderType disp) n (t : seq (seq T)) :
   filter (>%O n) (to_word t) = to_word (filter_gt_tab n t).
 Proof using .
 elim: t => [// | t0 t IHt] /=.
@@ -229,7 +229,7 @@ case: (filter (>%O n) t0 =P [::]) => [->|_] /=.
 - by rewrite to_word_cons IHt.
 Qed.
 
-Lemma filter_le_to_word (d : unit) (T : inhOrderType d) n (t : seq (seq T)) :
+Lemma filter_le_to_word disp (T : inhOrderType disp) n (t : seq (seq T)) :
   filter (<=%O n) (to_word t) = to_word (filter_le_tab n t).
 Proof using .
 elim: t => [// | t0 t IHt] /=.
@@ -553,8 +553,7 @@ Qed.
 
 End OneCoeff.
 
-Lemma included_shape_filter_gt_tab
-      (d : unit) (T : inhOrderType d) (n : T) t :
+Lemma included_shape_filter_gt_tab disp (T : inhOrderType disp) (n : T) t :
   is_tableau t -> included (shape (filter_gt_tab n t)) (shape t).
 Proof using .
 elim: t => [// | r0 t /= IHt] /= /and4P[Hnnil Hrow Hdom Htab].
@@ -581,7 +580,7 @@ Qed.
 #[local] Open Scope ring_scope.
 Import GRing.Theory.
 
-Variable (n0 : nat) (R : comRingType).
+Variable (n0 : nat) (R : comNzRingType).
 #[local] Notation n := (n0.+1).
 Notation Schur p := (Schur n0 R p).
 
@@ -608,7 +607,7 @@ Section Pieri.
 #[local] Open Scope ring_scope.
 Import GRing.Theory.
 
-Variable (n0 : nat) (R : comRingType).
+Variable (n0 : nat) (R : comNzRingType).
 #[local] Notation n := (n0.+1).
 Notation Schur p := (Schur n0 R p).
 

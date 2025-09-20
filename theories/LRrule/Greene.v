@@ -896,7 +896,7 @@ End Rev.
 (** * Greene number for tableaux *)
 Section GreeneRec.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Implicit Type u v w : seq Alph.
 Implicit Type t : seq (seq Alph).
 
@@ -1529,7 +1529,7 @@ End GreeneRec.
 (** ** Greene numbers of a tableau *)
 Section GreeneTab.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 
 Implicit Type t : seq (seq Alph).
 
@@ -1648,7 +1648,7 @@ End GreeneTab.
 
 (** ** Recovering a shape from Greene numbers on tableaux *)
 Theorem Greene_row_tab_eq_shape
-        (d1 d2 : unit) (T1 : inhOrderType d1) (T2 : inhOrderType d2)
+        d1 d2 (T1 : inhOrderType d1) (T2 : inhOrderType d2)
         (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
   is_tableau t1 -> is_tableau t2 ->
   (forall k, Greene_row (to_word t1) k = Greene_row (to_word t2) k) ->
@@ -1662,7 +1662,7 @@ exact: Heq.
 Qed.
 
 Theorem Greene_col_tab_eq_shape
-        (d1 d2 : unit) (T1 : inhOrderType d1) (T2 : inhOrderType d2)
+        d1 d2 (T1 : inhOrderType d1) (T2 : inhOrderType d2)
         (t1 : seq (seq T1)) (t2 : seq (seq T2)) :
   is_tableau t1 -> is_tableau t2 ->
   (forall k, Greene_col (to_word t1) k = Greene_col (to_word t2) k) ->

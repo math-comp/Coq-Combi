@@ -26,7 +26,7 @@ Require Import subseq partition ordtype Schensted congr plactic Greene Greene_in
 
 Set Extraction Output Directory ".".
 
-Require Import Wf_nat.
+From Stdlib Require Import Wf_nat.
 Extraction Inline Wf_nat.lt_wf_rec1 Wf_nat.lt_wf_rec
   Wf_nat.lt_wf_ind Wf_nat.gt_wf_rec Wf_nat.gt_wf_ind.
 

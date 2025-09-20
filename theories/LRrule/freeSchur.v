@@ -100,7 +100,7 @@ Import GRing.Theory.
 Section CommutativeImage.
 
 Variable n : nat.
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 Definition commword (w : seq 'I_n) : {mpoly R[n]} := \prod_(i <- w) 'X_i.
 
@@ -152,7 +152,7 @@ End CommutativeImage.
 (** ** Row reading of tableau *)
 Section TableauReading.
 
-Context {disp : unit} {A : inhOrderType disp}.
+Context {disp : _} {A : inhOrderType disp}.
 
 Definition tabsh_reading_RS (sh : seq nat) (w : seq A) :=
   (to_word (RS w) == w) && (shape (RS (w)) == sh).
@@ -185,7 +185,7 @@ End TableauReading.
 (** * Free Schur functions : lifting Schur functions in the free algebra *)
 Section FreeSchur.
 
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 Variable n0 : nat.
 #[local] Notation n := (n0.+1).
@@ -441,8 +441,7 @@ rewrite sumr_const; congr (_ *+ _).
 by apply: eq_card => i /=; rewrite unfold_in inE.
 Qed.
 
-Lemma size_RSmapinv2_yam d
-      (disp : unit) (Typ : inhOrderType disp)
+Lemma size_RSmapinv2_yam d disp (Typ : inhOrderType disp)
       (tab : seq (seq Typ)) (T : stdtabn d) :
   size (RSmapinv2 (tab, yam_of_stdtab T)) = d.
 Proof using .
@@ -464,7 +463,7 @@ Hypothesis Hsh2 : shape U2 = shape T2.
 
 Section TakeDrop.
 
-Context {disp : unit} {T : inhOrderType disp}.
+Context {disp : _} {T : inhOrderType disp}.
 
 Lemma RStabE (w : seq T) : (RStab w).1 = (RS w).
 Proof using . by rewrite RStabmapE. Qed.
@@ -526,7 +525,7 @@ Qed.
 
 End TakeDrop.
 
-Lemma changeUTK (disp : unit) (T : inhOrderType disp) (w : seq T) :
+Lemma changeUTK disp (T : inhOrderType disp) (w : seq T) :
   (take d1 w) \in langQ U1 ->
   (drop d1 w) \in langQ U2 ->
   changeUT U1 U2 (changeUT T1 T2 w) = w.

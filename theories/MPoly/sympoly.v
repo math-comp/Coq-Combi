@@ -101,7 +101,7 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory.
 
 
-Lemma boolRP (R : ringType) (b : bool) : reflect (b%:R = 0 :> R) (~~b).
+Lemma boolRP (R : nzRingType) (b : bool) : reflect (b%:R = 0 :> R) (~~b).
 Proof using.
 apply (iffP idP) => [/negbTE -> // | H].
 apply/negP => Hb; move: H; rewrite Hb /= => /eqP.
@@ -110,7 +110,7 @@ Qed.
 
 Section MultinomCompl.
 
-Variables (n : nat) (R : comRingType).
+Variables (n : nat) (R : comNzRingType).
 
 Lemma mnm_n0E : @all_equal_to 'X_{1..0} 0%MM.
 Proof. by move=> mon; apply mnmP => [[i Hi]]. Qed.
@@ -133,17 +133,17 @@ Reserved Notation "{ 'sympoly' T [ n ] }"
 Reserved Notation "''e_' k" (at level 8, k at level 2, format "''e_' k").
 Reserved Notation "''h_' k" (at level 8, k at level 2, format "''h_' k").
 Reserved Notation "''p_' k" (at level 8, k at level 2, format "''p_' k").
-Reserved Notation "''e[' k ]" (at level 8, format "''e[' k ]").
-Reserved Notation "''h[' k ]" (at level 8, format "''h[' k ]").
-Reserved Notation "''p[' k ]" (at level 8, format "''p[' k ]").
-Reserved Notation "''m[' k ]" (at level 8, format "''m[' k ]").
-Reserved Notation "''s[' k ]" (at level 8, format "''s[' k ]").
+Reserved Notation "''e[' k ]" (at level 0, format "''e[' k ]").
+Reserved Notation "''h[' k ]" (at level 0, format "''h[' k ]").
+Reserved Notation "''p[' k ]" (at level 0, format "''p[' k ]").
+Reserved Notation "''m[' k ]" (at level 0, format "''m[' k ]").
+Reserved Notation "''s[' k ]" (at level 0, format "''s[' k ]").
 
 
 Section DefType.
 
 Variable n : nat.
-Variable R : ringType.
+Variable R : nzRingType.
 
 Record sympoly : predArgType :=
   SymPoly {sympol :> {mpoly R[n]}; _ : sympol \is symmetric}.
@@ -166,7 +166,7 @@ Notation "{ 'sympoly' T [ n ] }" := (sympoly n T).
 Section SymPolyRingType.
 
 Variable n : nat.
-Variable R : ringType.
+Variable R : nzRingType.
 
 HB.instance Definition _ := [SubChoice_isSubLalgebra of {sympoly R[n]} by <:].
 
@@ -192,12 +192,12 @@ End SymPolyRingType.
 Section SymPolyComRingType.
 
 Variable n : nat.
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 HB.instance Definition _ :=
   [SubChoice_isSubAlgebra of {sympoly R[n]} by <:].
 HB.instance Definition _ :=
-  [SubRing_isSubComRing of {sympoly R[n]} by <:].
+  [SubNzRing_isSubComNzRing of {sympoly R[n]} by <:].
 
 End SymPolyComRingType.
 
@@ -208,7 +208,7 @@ Variable n : nat.
 Variable R : idomainType.
 
 HB.instance Definition _ :=
-  [SubRing_isSubUnitRing of {sympoly R[n]} by <:].
+  [SubNzRing_isSubUnitRing of {sympoly R[n]} by <:].
 HB.instance Definition _ :=
   [SubComUnitRing_isSubIntegralDomain of {sympoly R[n]} by <:].
 
@@ -219,7 +219,7 @@ Section Bases.
 
 Variable n : nat.
 
-Variable R : comRingType.
+Variable R : comNzRingType.
 Implicit Type m : 'X_{1.. n}.
 
 #[local] Notation "m # s" := [multinom m (s i) | i < n]
@@ -524,7 +524,7 @@ Notation "''m[' k ]" := (symm _ _ k).
 
 Section ChangeBaseMonomial.
 
-Variables (n : nat) (R : comRingType).
+Variables (n : nat) (R : comNzRingType).
 #[local] Notation SP := {sympoly R[n]}.
 
 Lemma expUmpartE nv k :
@@ -616,7 +616,7 @@ End ChangeBaseMonomial.
 Section Schur.
 
 Variable n0 : nat.
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 #[local] Notation n := n0.+1.
 
@@ -658,7 +658,7 @@ generators \prod_(i <- la) 'g_i.
 Section ProdGen.
 
 Variable n : nat.
-Variable R : comRingType.
+Variable R : comNzRingType.
 #[local] Notation SF := {sympoly R[n]}.
 
 Section Defs.
@@ -771,7 +771,7 @@ Section Cast.
 
 Variable n0 : nat.
 #[local] Notation n := n0.+1.
-Variables R : comRingType.
+Variables R : comNzRingType.
 #[local] Notation SF := {sympoly R[n]}.
 
 Variables (d1 d2 : nat) (eq_d : d1 = d2) (la : 'P_d1).
@@ -795,7 +795,7 @@ Section LRrule_Pieri.
 
 Variable n0 : nat.
 #[local] Notation n := n0.+1.
-Variables R : comRingType.
+Variables R : comNzRingType.
 #[local] Notation SF := {sympoly R[n]}.
 
 Lemma syms_symsM d1 (la : 'P_d1) d2 (mu : 'P_d2) :
@@ -825,7 +825,7 @@ End LRrule_Pieri.
 (** * Change of scalars *)
 Section ScalarChange.
 
-Variables R S : comRingType.
+Variables R S : comNzRingType.
 Variable mor : {rmorphism R -> S}.
 Variable n0 : nat.
 #[local] Notation n := n0.+1.
@@ -913,7 +913,7 @@ Section ChangeBasis.
 
 Variable n0 : nat.
 #[local] Notation n := n0.+1.
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 #[local] Notation "''Xn'" := 'X_{1.. n}.
 #[local] Notation "''Xn_' m" := 'X_{1.. n < (mdeg m).+1}
@@ -1570,7 +1570,7 @@ End SymsSymmInt.
 
 Section SymsSymm.
 
-Variable (n : nat) (R : comRingType) (d : nat).
+Variable (n : nat) (R : comNzRingType) (d : nat).
 #[local] Notation SF := {sympoly R[n.+1]}.
 Implicit Type (la mu : 'P_d).
 
@@ -1725,7 +1725,7 @@ End SymheSymsInt.
 
 Section SymheSyms.
 
-Variables (R : comRingType) (n : nat) (d : nat).
+Variables (R : comNzRingType) (n : nat) (d : nat).
 #[local] Notation SF := {sympoly R[n.+1]}.
 Implicit Type la mu : 'P_d.
 
@@ -1816,10 +1816,10 @@ Fixpoint prod_partsum (s : seq nat) :=
 #[local] Notation "\Pi s" := (prod_partsum s)%:R^-1 (at level 0, s at level 2).
 
 Lemma symh_to_symp_prod_partsum n :
-  [char R] =i pred0 ->
+  [pchar R] =i pred0 ->
   'h_n = \sum_(c : intcompn n) \Pi c *: \prod_(i <- c) 'p_i :> SF.
 Proof using.
-rewrite -big_enum /= charf0P => Hchar.
+rewrite -big_enum /= pcharf0P => Hchar.
 rewrite -[RHS](big_map (@cnval n) xpredT
    (fun c : seq nat => \Pi c *: \prod_(i <- c) 'p_i)).
 rewrite enum_intcompnE.
@@ -1846,7 +1846,7 @@ Qed.
 Import LeqGeqOrder.
 
 Lemma symh_to_symp_intpartn n :
-  [char R] =i pred0 ->
+  [pchar R] =i pred0 ->
   'h_n = \sum_(l : 'P_n)
            (\sum_(c : intcompn n | perm_eq l c) \Pi c) *: 'p[l] :> SF.
 Proof.
@@ -1921,10 +1921,10 @@ case: (boolP (l0 \in l)) => Hl0l.
 Qed.
 
 Lemma coeff_symh_to_symp n (l : 'P_n) :
-  [char R] =i pred0 ->
+  [pchar R] =i pred0 ->
   \sum_(c : intcompn n | perm_eq l c) \Pi c = (zcard l)%:R^-1 :> R.
 Proof.
-rewrite charf0P => Hchar.
+rewrite pcharf0P => Hchar.
 case: l => l /= /andP[/eqP].
 have [m/ltnW] := ubnP n; elim: m => [| m IHm] in n l *.
   rewrite leqn0 => /eqP-> /part0 /[apply] ->{l}.
@@ -1983,7 +1983,7 @@ by rewrite Hchar Hsum Hm.
 Qed.
 
 Theorem symh_to_symp n :
-  [char R] =i pred0 -> 'h_n = \sum_(l : 'P_n) (zcard l)%:R^-1 *: 'p[l] :> SF.
+  [pchar R] =i pred0 -> 'h_n = \sum_(l : 'P_n) (zcard l)%:R^-1 *: 'p[l] :> SF.
 Proof.
 move=> Hchar.
 rewrite symh_to_symp_intpartn //; apply eq_bigr => l _.
@@ -1995,7 +1995,7 @@ End ChangeBasisSymhPowerSum.
 
 Section Generators.
 
-Variables (n : nat) (R : comRingType).
+Variables (n : nat) (R : comNzRingType).
 
 Lemma prod_homog nv l (df : 'I_l -> nat) (mf : 'I_l -> {mpoly R[nv]}) :
   (forall i : 'I_l, mf i \is (df i).-homog) ->
@@ -2036,7 +2036,7 @@ End Generators.
 (** ** Symmetric polynomials expressed as polynomial in the elementary *)
 Section MPoESymHomog.
 
-Variables (n : nat) (R : comRingType).
+Variables (n : nat) (R : comNzRingType).
 #[local] Notation E nv := [tuple mesym nv R i.+1 | i < n].
 
 Lemma mwmwgt_homogP (p : {mpoly R[n]}) d :
@@ -2069,7 +2069,7 @@ End MPoESymHomog.
 
 Section SymPolF.
 
-Variable R : comRingType.
+Variable R : comNzRingType.
 Variable m : nat.
 Implicit Type p : {sympoly R[m]}.
 
@@ -2158,7 +2158,7 @@ End SymPolF.
 
 Section Omega.
 
-Variable R : comRingType.
+Variable R : comNzRingType.
 Variable n0 : nat.
 #[local] Notation n := n0.+1.
 Implicit Type p : {sympoly R[n]}.
@@ -2380,7 +2380,7 @@ End Omega.
 (** * Change of the number of variables *)
 Section ChangeNVar.
 
-Variable R : comRingType.
+Variable R : comNzRingType.
 Variable m0 n0 : nat.
 #[local] Notation m := m0.+1.
 #[local] Notation n := n0.+1.
@@ -2523,7 +2523,7 @@ End ChangeNVar.
 
 Section CategoricalSystems.
 
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 Lemma cnvarsym_id n : @cnvarsym R n n =1 id.
 Proof. by move=> f; apply val_inj; rewrite /= sympolyfP. Qed.

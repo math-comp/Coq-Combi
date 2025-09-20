@@ -72,7 +72,7 @@ Import GRing.Theory.
 Section MultAlternSymp.
 
 Variable n0 : nat.
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 #[local] Notation n := n0.+1.
 #[local] Notation rho := (rho n).
@@ -148,7 +148,7 @@ End MultSymsSympIDomain.
 Section MultSymsSymp.
 
 Variable n0 : nat.
-Variable R : comRingType.
+Variable R : comNzRingType.
 #[local] Notation n := n0.+1.
 #[local] Notation SF := {sympoly R[n]}.
 
@@ -339,7 +339,7 @@ rewrite scaler_suml; apply eq_bigr => nu _.
 by rewrite scalerA.
 Qed.
 
-Variable R : comRingType.
+Variable R : comNzRingType.
 #[local] Notation SF := {sympoly R[n]}.
 #[local] Notation HSF := {homsym R[n, _]}.
 
@@ -407,7 +407,7 @@ Proof.
 case: m0 => // m0 _ Hsz; rewrite MN_coeff_rec_szE.
 rewrite big_mkcond big_pmap -(subn0 (size la)) -/(index_iota 0 _) /=.
 rewrite [RHS]big_mkcond big_pmap -(subn0 n) -/(index_iota 0 _) /=.
-rewrite (big_cat_nat _ _ _ _ Hsz) //=.
+rewrite (big_cat_nat _ Hsz) //=.
 rewrite [X in _ + X]big_nat [X in _ + X]big1 ?addr0 // => i /andP[leszi _].
 case Haddrib : add_ribbon => [[sh h]|]//=.
 suff /negbTE -> : ~~ included sh la by [].
@@ -509,7 +509,7 @@ Qed.
 
 Section ComRing.
 
-Variable R : comRingType.
+Variable R : comNzRingType.
 #[local] Notation SF := {sympoly R[n]}.
 #[local] Notation HSF := {homsym R[n, _]}.
 

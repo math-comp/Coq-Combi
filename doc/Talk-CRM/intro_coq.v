@@ -1,3 +1,4 @@
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype.
 From mathcomp Require Import  fintype choice seq bigop div.

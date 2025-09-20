@@ -84,7 +84,7 @@ Qed.
 End LinRepr.
 
 
-Lemma NirrSn n : Nirr 'SG_n = #|{:'P_n}|.
+Lemma NirrSn n : Nirr 'SG_n = #|{: 'P_n}|.
 Proof using. by rewrite NirrE card_classes_perm card_ord. Qed.
 
 Section EltrConj.
@@ -224,7 +224,7 @@ Proof.
 case: n => // n; rewrite ltnS => Hn.
 apply/negP=> /eqP/cfunP /(_ 's_0)/eqP.
 rewrite cfunE cfun1E inE /= (odd_eltr Hn) /= expr1 -addr_eq0 -mulr2n.
-by have := Cchar; rewrite charf0P => /(_ 2) ->.
+by have:= Cpchar; rewrite pcharf0P => /(_ 2) ->.
 Qed.
 
 Lemma triv_sign_not_sim n :

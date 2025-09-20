@@ -49,7 +49,7 @@ Reserved Notation "s '/\R' t" (at level 70, t at next level).
 Reserved Notation "s '\/R' t" (at level 70, t at next level).
 
 
-Fact perm_display : unit. Proof. exact: tt. Qed.
+Fact perm_display : Order.disp_t. Proof. by []. Qed.
 
 
 Module WeakOrder.

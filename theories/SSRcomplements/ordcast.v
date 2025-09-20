@@ -18,6 +18,7 @@
 Aside a few basic lemmas, the only new definition is:
 - [cast_set (H : n = m) S] == cast [S : {set 'I_n}] to [S : {set 'I_m}].
 *********)
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 From mathcomp Require Import finset tuple bigop.

@@ -60,6 +60,7 @@ abgebraic translation of the rule and recode the triple by some standard
 skew tableaux.
 *************************)
 
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice.
 From mathcomp Require Import order seq tuple finset perm binomial bigop.
@@ -415,7 +416,7 @@ End ShiftedShuffle.
 (** * Shifted shuffle and inverse standardized *)
 Section LRTriple.
 
-Context {disp : unit} {Alph : inhOrderType disp}.
+Context {disp : _} {Alph : inhOrderType disp}.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -628,7 +629,7 @@ apply: (iffP idP) => /=.
   + rewrite /= -Hp2 RSmapE; exact: mem_RSclass.
 Qed.
 
-Lemma filter_gt_RS (d : unit) (T : inhOrderType d) (w : seq T) n :
+Lemma filter_gt_RS d (T : inhOrderType d) (w : seq T) n :
   RS (filter (>%O n) w) = filter_gt_tab n (RS w).
 Proof using .
 apply/eqP.

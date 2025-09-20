@@ -952,7 +952,7 @@ Variables (P1 : 'P_d1) (P2 : 'P_d2).
 #[local] Open Scope ring_scope.
 Import GRing.Theory.
 
-Variable (n0 : nat) (R : comRingType).
+Variable (n0 : nat) (R : comNzRingType).
 #[local] Notation n := (n0.+1).
 Notation Schur p := (Schur n0 R p).
 

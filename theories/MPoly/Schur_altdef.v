@@ -111,7 +111,7 @@ Import GRing.Theory.
 (** Alternating and symmetric polynomial *)
 Section Alternant.
 
-Variables (n : nat) (R : comRingType).
+Variables (n : nat) (R : comNzRingType).
 
 #[local] Notation rho := (rho n).
 #[local] Notation "''e_' k" := (mesym n R k).
@@ -375,7 +375,7 @@ End Alternant.
 (** * Cauchy-Jacobi definition of Schur function *)
 Section SchurAlternantDef.
 
-Variable (n0 : nat) (R : comRingType).
+Variable (n0 : nat) (R : comNzRingType).
 #[local] Notation n := (n0.+1).
 #[local] Notation rho := (rho n).
 #[local] Notation "''s_[' k ']'" := (Schur n0 R k).
@@ -529,7 +529,7 @@ End IdomainSchurSym.
 
 Section RingSchurSym.
 
-Variable (n0 : nat) (R : ringType).
+Variable (n0 : nat) (R : nzRingType).
 #[local] Notation n := (n0.+1).
 #[local] Notation "''s_' k" := (Schur n0 R k).
 
@@ -583,7 +583,7 @@ rewrite /mdeg -sumnE inE => /eqP <-{m}.
 by rewrite sumn_eval size_to_word /size_tab shape_tabsh.
 Qed.
 
-Lemma evalE (R : ringType) m w :
+Lemma evalE (R : nzRingType) m w :
   (\prod_(v <- w) 'X_v)@_m = (eval w == m)%:R :> R.
 Proof.
 rewrite -[X in X@_m](big_map (fun i : 'I_n.+1 => (U_(i))%MM) xpredT).
@@ -600,7 +600,7 @@ apply/eqP/eqP => [/(congr1 val) /= <-{m} | H].
   by rewrite !tnth_mktuple mnmE -mnm_tnth => ->.
 Qed.
 
-Lemma Kostka_Coeff (R : ringType) m : (Schur n R la)@_m = (KostkaMon m)%:R.
+Lemma Kostka_Coeff (R : nzRingType) m : (Schur n R la)@_m = (KostkaMon m)%:R.
 Proof.
 rewrite /Schur linear_sum /= /KostkaMon.
 rewrite (bigID (fun t : tabsh la => t \in KostkaTab m)) /=.
@@ -1461,7 +1461,7 @@ Notation "''K^-1' ( la , mu )" := ((KostkaInv la mu)%:~R)
 Section AlternStraighten.
 
 Variable n0 : nat.
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 #[local] Notation n := n0.+1.
 #[local] Notation rho := (rho n).

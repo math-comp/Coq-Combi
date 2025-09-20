@@ -1362,7 +1362,7 @@ apply/anti_leq/andP; split.
 Qed.
 
 
-Fact Tamari_display : unit. Proof. exact: tt. Qed.
+Fact Tamari_display : Order.disp_t. Proof. by []. Qed.
 Notation "x <=T y" := (@Order.le Tamari_display _ x y).
 Notation "x <T y" := (@Order.lt Tamari_display _ x y).
 Notation "x /\T y" := (@Order.meet Tamari_display _ x y).
@@ -1534,9 +1534,9 @@ Proof. by rewrite -Tamari_flip flipsz_rightcomb; exact: leftcomb_bottom. Qed.
 #[export] HB.instance Definition _ :=
   Order.hasTop.Build Tamari_display (bintreesz n) rightcomb_top.
 
-Lemma botETamari : 0%O = leftcombsz n.
+Lemma botETamari : \bot%O = leftcombsz n.
 Proof. by []. Qed.
-Lemma topETamari : 1%O = rightcombsz n.
+Lemma topETamari : \top%O = rightcombsz n.
 Proof. by []. Qed.
 
 

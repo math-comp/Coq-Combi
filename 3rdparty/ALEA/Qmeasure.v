@@ -20,6 +20,9 @@ Require Import Misc Ccpo.
 
 Set Implicit Arguments.
 
+From Stdlib Require Arith.
+From Stdlib Require Import Lia.
+
 
 From mathcomp Require Import ssreflect ssrfun eqtype choice.
 From mathcomp Require Import ssrbool ssrnat seq order fintype finfun.
@@ -802,12 +805,9 @@ Definition flip : M bool :=
 Lemma flip_stable_sub : stable_sub flip.
 Proof.
 rewrite /flip /stable_sub => /= f g.
-rewrite !mulrDr !mulrN [in RHS]opprD.
-move: (2%:~R^-1 * f true) => ft.
-move: (2%:~R^-1 * g true) => gt.
-move: (2%:~R^-1 * f false) => ff.
-move: (2%:~R^-1 * g false) => gf.
-by ring_to_rat; ring.
+rewrite !mulrDr !mulrN [in RHS]opprD 2!addrA; congr (_ - _).
+rewrite -!addrA; congr (_ + _).
+by rewrite addrC.
 Qed.
 
 Lemma flip_prob : flip (fun x => 1) = 1.
@@ -833,8 +833,6 @@ Proof. by []. Qed.
 
 
 (** ** Finite distributions given by points and rational coefficients *)
-
-Require Arith.
 
 (* #[local] Open Scope rat_scope. *)
 

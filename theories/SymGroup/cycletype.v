@@ -60,6 +60,7 @@ Central functions:
 - [cycle_typeSn s] == the cycle type in ['P_n] of a permutations in ['S_n].
 
 **********)
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset path bigop.
@@ -79,7 +80,7 @@ Import LeqGeqOrder.
 #[local] Hint Resolve porbit_id : core.
 
 Reserved Notation "''1_[' G ]"
-         (at level 8, G at level 2, format "''1_[' G ]").
+         (at level 0, G at level 2, format "''1_[' G ]").
 
 
 Section CanPorbit.

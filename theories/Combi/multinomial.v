@@ -23,6 +23,7 @@ The main expression is Lemma [multinomial_factd]:
   [ 'C[s] = (sumn s)`! %/ \prod_(i <- s) i`!. ]
 
 ******)
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import bigop div binomial.
@@ -39,7 +40,8 @@ Implicit Type (i a b : nat) (s t : seq nat).
 Fixpoint multinomial_rec s :=
   if s is i :: s' then 'C(sumn s, i) * (multinomial_rec s') else 1.
 Arguments multinomial_rec : simpl nomatch.
-Definition multinomial := nosimpl multinomial_rec.
+Definition multinomial := multinomial_rec.
+Arguments multinomial : simpl never.
 Notation "''C' [ s ]" := (multinomial s)
   (at level 8, format "''C' [ s ]") : nat_scope.
 

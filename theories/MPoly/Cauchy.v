@@ -50,6 +50,7 @@ orthonormal for the scalar product.
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
 From mathcomp Require Import ssrint rat ssralg ssrnum algC matrix vector.
+From mathcomp Require Import sesquilinear.
 From mathcomp Require Import mpoly.
 
 Require Import tools partition ordtype.
@@ -65,16 +66,17 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory Num.Theory.
 #[local] Open Scope ring_scope.
 
-#[local] Lemma char0_rat : [char rat] =i pred0.
-Proof. exact: Num.Theory.char_num. Qed.
-#[local] Lemma char0_algC : [char algC] =i pred0.
-Proof. exact: Num.Theory.char_num. Qed.
-#[local] Hint Resolve char0_algC char0_rat : core.
+#[local] Lemma pchar0_rat : [pchar rat] =i pred0.
+Proof. exact: Num.Theory.pchar_num. Qed.
+#[local] Lemma pchar0_algC : [pchar algC] =i pred0.
+Proof. exact: Num.Theory.pchar_num. Qed.
+#[local] Hint Resolve pchar0_algC pchar0_rat : core.
 
-
+Set Warnings "-postfix-notation-not-level-1".
 Reserved Notation "p '(Y)'"  (at level 20, format "p '(Y)'").
 Reserved Notation "p '(X)'"  (at level 20, format "p '(X)'").
 Reserved Notation "p '(XY)'" (at level 20, format "p '(XY)'").
+Set Warnings "postfix-notation-not-level-1".
 
 
 (** ** Polynomials in two sets of variables *)
@@ -156,7 +158,7 @@ by apply eq_bigr => j _; rewrite -mnm_tnth mnmE.
 Qed.
 
 
-Variable (R : comRingType).
+Variable (R : comNzRingType).
 
 #[local] Notation polZ := {mpoly R[m * n]}.
 #[local] Notation polX := {mpoly R[m]}.
@@ -166,7 +168,7 @@ Definition polXY_scale (c : R) (p : polXY) : polXY := c%:MP *: p.
 #[local] Notation "c *:M p" := (polXY_scale c p)
   (at level 40, left associativity).
 
-HB.instance Definition _ := GRing.Ring.on polXY.
+HB.instance Definition _ := GRing.NzRing.on polXY.
 
 Fact scale_polXYA a b p : a *:M (b *:M p) = (a * b) *:M p.
 Proof. by rewrite /polXY_scale scalerA rmorphM. Qed.
@@ -301,8 +303,8 @@ Lemma evalXY_homog d p : p \is d.-homog -> p(XY) \is d.-homog.
 Proof.
 move/pihomog_dE <-; rewrite pihomogE.
 rewrite rmorph_sum /=; apply rpred_sum => mon /eqP Hdeg.
-rewrite linearZ /= scale_polXYE; apply rpredZ.
-rewrite evalXY_XE -rmorph_prod /= polyXY_scale; apply rpredZ.
+rewrite linearZ /= scale_polXYE; apply: rpredZ.
+rewrite evalXY_XE -rmorph_prod /= polyXY_scale /=; apply: rpredZ.
 by rewrite /polX_XY map_mpolyX dhomogX /= mdeg_monX Hdeg.
 Qed.
 
@@ -474,7 +476,7 @@ Qed.
 Lemma Cauchy_kernel_symmetric : Cauchy_kernel d \is symmetric.
 Proof.
 rewrite Cauchy_symm_symh; apply rpred_sum => la _.
-by apply rpredZ; apply sympolP.
+by apply: rpredZ; apply sympolP.
 Qed.
 
 (** Unused lemma *)
@@ -512,11 +514,11 @@ Variable R : fieldType.
 
 (** *** Cauchy formula for power sum symmetric polynomials *)
 Lemma Cauchy_homsymp_zhomsymp m n d :
-  [char R] =i pred0 ->
+  [pchar R] =i pred0 ->
   Cauchy_kernel m n R d =
   \sum_(la : 'P_d) 'hp[la](X) * ((zcard la)%:R^-1 *: 'hp[la](Y)).
 Proof.
-move=> Hchar.
+move=> Hpchar.
 rewrite /Cauchy_kernel symh_to_symp // !rmorph_sum /=; apply eq_bigr => la _.
 by rewrite linearZ /= -scalerAr prod_sympXY; congr (_ *: _).
 Qed.
@@ -532,27 +534,22 @@ Variable n0 d : nat.
 Hypothesis Hd : (d <= n)%N.
 
 #[local] Notation HSC := {homsym algC[n, d]}.
-#[local] Notation HSQ := {homsym rat[n, d]}.
 #[local] Notation polXY := (polXY n0 n0 algC).
 #[local] Notation pol := {mpoly algC[n]}.
-#[local] Notation "p '(Y)'" := (@polY_XY n0 n0 _ p)
-                             (at level 20, format "p '(Y)'").
-#[local] Notation "p '(X)'" := (@polX_XY n0 n0 _ p)
-                             (at level 20, format "p '(X)'").
+#[local] Notation "p '(Y)'" := (@polY_XY n0 n0 _ p).
+#[local] Notation "p '(X)'" := (@polX_XY n0 n0 _ p).
 
 #[local] Notation "''hsC[' la ]" := ('hs[la] : HSC).
-#[local] Notation "''hsQ[' la ]" := ('hs[la] : HSQ).
 #[local] Notation "''hpC[' la ]" := ('hp[la] : HSC).
-#[local] Notation "''hpQ[' la ]" := ('hp[la] : HSQ).
 
 
 Definition co_hp (la : 'P_d) : pol -> algC :=
-  homsymdotr 'hp[la] \o in_homsym d (R := algC).
+  homsymdot^~ 'hp[la] \o in_homsym d (R := algC).
 Definition co_hpXY (la mu : 'P_d) : polXY -> algC :=
   locked (co_hp la \o map_mpoly (co_hp mu)).
 
 Fact co_hp_is_additive la : additive (co_hp la).
-Proof. by rewrite /co_hp => p q; rewrite raddfB. Qed.
+Proof. by rewrite /co_hp => p q; rewrite /= raddfB homsymdotBl. Qed.
 HB.instance Definition _ la :=
   GRing.isAdditive.Build pol algC _ (co_hp_is_additive la).
 
@@ -651,10 +648,10 @@ Lemma coord_zsymspsp (la mu : 'P_d) :
     ((zcard nu)%:R * coord 'hp (enum_rank nu) 'hsC[mu]))
   = (la == mu)%:R.
 Proof using Hd.
-pose matsp : 'M[algC]_#|{:'P_d}| :=
-  \matrix_(i, j < #|{:'P_d}|) (coord 'hp i 'hsC[enum_val j]).
-pose matzsp : 'M[algC]_#|{:'P_d}| :=
-  \matrix_(i, j < #|{:'P_d}|)
+pose matsp : 'M[algC]_#|{: 'P_d}| :=
+  \matrix_(i, j < #|{: 'P_d}|) (coord 'hp i 'hsC[enum_val j]).
+pose matzsp : 'M[algC]_#|{: 'P_d}| :=
+  \matrix_(i, j < #|{: 'P_d}|)
    ((zcard (enum_val j))%:R * (coord 'hp j 'hsC[enum_val i])).
 have: matsp *m matzsp = 1%:M.
   apply/matrixP => i j /=.
@@ -686,7 +683,7 @@ transitivity
 rewrite homsymdot_suml; apply eq_bigr => /= l _.
 rewrite homsymdotZl homsymdot_sumr -mulrA; congr (_ * _).
 transitivity
-  (\sum_(i < #|{:'P_d}|)
+  (\sum_(i < #|{: 'P_d}|)
     (coord 'hp i 'hsC[mu])^* * (zcard (enum_val l))%:R * (i == l)%:R).
   apply: eq_bigr => i _; rewrite homsymdotZr -mulrA; congr (_ * _).
   rewrite !(nth_map inh _ (fun l => 'hp[l])) -?cardE ?ltn_ord //.
@@ -694,6 +691,14 @@ transitivity
 rewrite (bigD1 l) //= big1 ?addr0; last by move=> m /negbTE ->; rewrite mulr0.
 rewrite eq_refl mulr1 mulrC; congr (_ * _).
 by rewrite -coord_map_homsym ?map_homsymbp ?symbp_basis // map_homsyms.
+Qed.
+
+Theorem homsyms_orthonormal : orthonormal homsymdot ('hs : seq HSC).
+Proof.
+have hs_uniq := free_uniq (basis_free (symbs_basis algC Hd)).
+apply/orthonormalP; split => /=; first exact: hs_uniq.
+move=> f g /mapP[/= la _ {f}->]/mapP[/= mu _ {g}->].
+by rewrite homsymdotss (inj_eq (injectiveP _ hs_uniq)).
 Qed.
 
 End Scalar.
