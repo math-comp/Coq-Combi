@@ -37,7 +37,7 @@
   ## alternative configuration
   ## When generating GitHub Action CI, one workflow file
   ## will be created per bundle
-  bundles."coq8.18-mc2.4.0" = {
+  bundles."rocq-9.0-mc2.4.0" = {
 
     ## You can override Coq and other Coq coqPackages
     ## through the following attribute
@@ -83,15 +83,15 @@
     # push-branches = [ "master" "branch2" ];
   };
 
-  bundles."rocq-9.0-mc2.4.0" = {
-    coqPackages.coq.override.version = "8.19";
-    coqPackages.mathcomp.override.version = "2.4.0";
-  };
+  # bundles."rocq-9.0-mc2.4.0" = {
+  #   coqPackages.coq.override.version = "8.19";
+  #   coqPackages.mathcomp.override.version = "2.4.0";
+  # };
 
-  bundles."coq8.20-mc2.4.0" = {
-    coqPackages.coq.override.version = "8.20";
-    coqPackages.mathcomp.override.version = "2.4.0";
-  };
+  # bundles."coq8.20-mc2.4.0" = {
+  #   coqPackages.coq.override.version = "8.20";
+  #   coqPackages.mathcomp.override.version = "2.4.0";
+  # };
 
   ## Cachix caches to use in CI
   ## Below we list some standard ones
