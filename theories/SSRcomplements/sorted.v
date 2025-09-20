@@ -18,6 +18,7 @@
 (**                                                                           *)
 (** TODO: these probably should be contributed to path.v                      *)
 (******************************************************************************)
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import path order.

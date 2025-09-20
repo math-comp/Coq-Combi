@@ -66,11 +66,11 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory Num.Theory.
 #[local] Open Scope ring_scope.
 
-#[local] Lemma char0_rat : [char rat] =i pred0.
-Proof. exact: Num.Theory.char_num. Qed.
-#[local] Lemma char0_algC : [char algC] =i pred0.
-Proof. exact: Num.Theory.char_num. Qed.
-#[local] Hint Resolve char0_algC char0_rat : core.
+#[local] Lemma pchar0_rat : [pchar rat] =i pred0.
+Proof. exact: Num.Theory.pchar_num. Qed.
+#[local] Lemma pchar0_algC : [pchar algC] =i pred0.
+Proof. exact: Num.Theory.pchar_num. Qed.
+#[local] Hint Resolve pchar0_algC pchar0_rat : core.
 
 Set Warnings "-postfix-notation-not-level-1".
 Reserved Notation "p '(Y)'"  (at level 20, format "p '(Y)'").
@@ -158,7 +158,7 @@ by apply eq_bigr => j _; rewrite -mnm_tnth mnmE.
 Qed.
 
 
-Variable (R : comRingType).
+Variable (R : comNzRingType).
 
 #[local] Notation polZ := {mpoly R[m * n]}.
 #[local] Notation polX := {mpoly R[m]}.
@@ -168,7 +168,7 @@ Definition polXY_scale (c : R) (p : polXY) : polXY := c%:MP *: p.
 #[local] Notation "c *:M p" := (polXY_scale c p)
   (at level 40, left associativity).
 
-HB.instance Definition _ := GRing.Ring.on polXY.
+HB.instance Definition _ := GRing.NzRing.on polXY.
 
 Fact scale_polXYA a b p : a *:M (b *:M p) = (a * b) *:M p.
 Proof. by rewrite /polXY_scale scalerA rmorphM. Qed.
@@ -303,8 +303,8 @@ Lemma evalXY_homog d p : p \is d.-homog -> p(XY) \is d.-homog.
 Proof.
 move/pihomog_dE <-; rewrite pihomogE.
 rewrite rmorph_sum /=; apply rpred_sum => mon /eqP Hdeg.
-rewrite linearZ /= scale_polXYE; apply rpredZ.
-rewrite evalXY_XE -rmorph_prod /= polyXY_scale; apply rpredZ.
+rewrite linearZ /= scale_polXYE; apply: rpredZ.
+rewrite evalXY_XE -rmorph_prod /= polyXY_scale /=; apply: rpredZ.
 by rewrite /polX_XY map_mpolyX dhomogX /= mdeg_monX Hdeg.
 Qed.
 
@@ -476,7 +476,7 @@ Qed.
 Lemma Cauchy_kernel_symmetric : Cauchy_kernel d \is symmetric.
 Proof.
 rewrite Cauchy_symm_symh; apply rpred_sum => la _.
-by apply rpredZ; apply sympolP.
+by apply: rpredZ; apply sympolP.
 Qed.
 
 (** Unused lemma *)
@@ -514,11 +514,11 @@ Variable R : fieldType.
 
 (** *** Cauchy formula for power sum symmetric polynomials *)
 Lemma Cauchy_homsymp_zhomsymp m n d :
-  [char R] =i pred0 ->
+  [pchar R] =i pred0 ->
   Cauchy_kernel m n R d =
   \sum_(la : 'P_d) 'hp[la](X) * ((zcard la)%:R^-1 *: 'hp[la](Y)).
 Proof.
-move=> Hchar.
+move=> Hpchar.
 rewrite /Cauchy_kernel symh_to_symp // !rmorph_sum /=; apply eq_bigr => la _.
 by rewrite linearZ /= -scalerAr prod_sympXY; congr (_ *: _).
 Qed.

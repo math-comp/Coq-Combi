@@ -77,11 +77,11 @@ Reserved Notation "''M[' l ']'"
          (at level 0, l at level 2, format "''M[' l ]").
 
 
-#[local] Lemma char0_rat : [char rat] =i pred0.
-Proof. exact: char_num. Qed.
-#[local] Lemma char0_algC : [char algC] =i pred0.
-Proof. exact: char_num. Qed.
-#[local] Hint Resolve char0_algC char0_rat : core.
+#[local] Lemma pchar0_rat : [pchar rat] =i pred0.
+Proof. exact: pchar_num. Qed.
+#[local] Lemma pchar0_algC : [pchar algC] =i pred0.
+Proof. exact: pchar_num. Qed.
+#[local] Hint Resolve pchar0_algC pchar0_rat : core.
 
 
 (** TODO: contribute to mathcomp *)

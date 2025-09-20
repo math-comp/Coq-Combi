@@ -833,8 +833,8 @@ Qed.
 Lemma sumn_take_leq s k1 k2 :
   k1 <= k2 -> sumn (take k1 s) <= sumn (take k2 s).
 Proof.
-rewrite !sumn_take; move=> H.
-by rewrite (big_cat_nat _ _ _ _ H) //=; apply leq_addr.
+rewrite !sumn_take => H.
+by rewrite (big_cat_nat _ H) //=; apply leq_addr.
 Qed.
 
 Lemma sum_conj sh k : \sum_(l <- sh) minn l k = sumn (take k (conj_part sh)).

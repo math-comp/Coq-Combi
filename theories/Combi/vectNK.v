@@ -23,6 +23,7 @@
               [seq (seq T) * (seq T) * (seq T)])
 
 *****)
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype seq.
 Require Import tools.

@@ -60,6 +60,7 @@ Central functions:
 - [cycle_typeSn s] == the cycle type in ['P_n] of a permutations in ['S_n].
 
 **********)
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
 From mathcomp Require Import tuple finfun finset path bigop.

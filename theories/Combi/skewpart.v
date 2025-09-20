@@ -500,13 +500,13 @@ Qed.
 Lemma ribbon_on_height : (stop - start).+1 = ribbon_height inner outer.
 Proof.
 rewrite /ribbon_height -sumn_count sumnE big_map (big_nth 0) size_diff_shape.
-rewrite (big_cat_nat _ _ _ (leq0n start)
+rewrite (big_cat_nat (leq0n start)
                      (leq_trans ribbon_on_start_stop (ltnW ribbon_on_stop_lt))) /=.
 rewrite big_nat big1 ?add0n; first last => [i /= leis|].
   rewrite nth_diff_shape subn_gt0 -ribbon_on_nth_leq.
   by rewrite leqNgt leis.
 have := ribbon_on_start_stop; rewrite -ltnS => leqss.
-rewrite (big_cat_nat _ _ _ (ltnW leqss) ribbon_on_stop_lt) /= addnC.
+rewrite (big_cat_nat (ltnW leqss) ribbon_on_stop_lt) /= addnC.
 rewrite big_nat big1 ?add0n; first last => [i /= /andP[ltsi _]|].
   rewrite nth_diff_shape subn_gt0 -ribbon_on_nth_leq.
   by rewrite (leqNgt i) ltsi andbF.
@@ -544,7 +544,7 @@ rewrite (sumn_nth_le (leqnn (size outer))).
 have [Hsi Hsis Hs His] := Hrib.
 rewrite (big_cat_nat _ (n := stop.+1)) ? ribbon_on_stop_lt //= addnC big_nat.
 under [X in X + _ - _ = _]eq_bigr => i /andP[+ _] do move/Hsi->.
-rewrite -big_nat {Hsi} [X in _ - X](big_cat_nat _ _ _ _ ribbon_on_stop_lt) //=.
+rewrite -big_nat {Hsi} [X in _ - X](big_cat_nat _ ribbon_on_stop_lt) //=.
 rewrite addnC [X in _ - X]addnC subnDA addnK.
 have:= ribbon_on_start_stop; rewrite -ltnS => /ltnW less1.
 rewrite (big_cat_nat _ (n := start)) //=.

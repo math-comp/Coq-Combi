@@ -100,7 +100,7 @@ Import GRing.Theory.
 Section CommutativeImage.
 
 Variable n : nat.
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 Definition commword (w : seq 'I_n) : {mpoly R[n]} := \prod_(i <- w) 'X_i.
 
@@ -185,7 +185,7 @@ End TableauReading.
 (** * Free Schur functions : lifting Schur functions in the free algebra *)
 Section FreeSchur.
 
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 Variable n0 : nat.
 #[local] Notation n := (n0.+1).

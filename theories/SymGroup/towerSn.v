@@ -550,7 +550,7 @@ Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 Lemma zcoeffE k (l : 'P_k) : zcoeff l = (zcard l)%:R.
 Proof.
 rewrite /zcoeff card_class_of_part cardsT card_Sn.
-rewrite char0_natf_div; [| exact: Cchar | exact: dvdn_zcard_fact].
+rewrite pchar0_natf_div; [| exact: Cpchar | exact: dvdn_zcard_fact].
 rewrite invf_div mulrC mulfVK //.
 by rewrite pnatr_eq0 -lt0n; apply: fact_gt0.
 Qed.

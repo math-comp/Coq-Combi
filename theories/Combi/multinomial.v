@@ -23,6 +23,7 @@ The main expression is Lemma [multinomial_factd]:
   [ 'C[s] = (sumn s)`! %/ \prod_(i <- s) i`!. ]
 
 ******)
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import bigop div binomial.

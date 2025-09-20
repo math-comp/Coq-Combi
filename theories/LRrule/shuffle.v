@@ -60,6 +60,7 @@ abgebraic translation of the rule and recode the triple by some standard
 skew tableaux.
 *************************)
 
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice.
 From mathcomp Require Import order seq tuple finset perm binomial bigop.

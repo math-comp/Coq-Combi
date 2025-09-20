@@ -24,6 +24,7 @@ type contains
 We prove it as a corollary of Greene's theorem on the Robinson-Schensted
 correspondance. Note that there are other proofs which require less theory.
  *****)
+From Corelib Require Import Setoid.
 Require Import mathcomp.ssreflect.ssreflect.
 From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop path order.

@@ -41,7 +41,7 @@ Section Schur.
 
 Variable n0 : nat.
 #[local] Notation n := n0.+1.
-Variable R : ringType.
+Variable R : nzRingType.
 
 Lemma mons2mE s : 'X_[s2m s] = \prod_(i <- s) 'X_i :> {mpoly R[n]}.
 Proof.
@@ -112,7 +112,7 @@ Section SchurComRingType.
 
 Variable n0 : nat.
 #[local] Notation n := (n0.+1).
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 
 Lemma perm_enum_basis d :

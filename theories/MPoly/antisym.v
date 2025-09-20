@@ -262,7 +262,7 @@ Import GRing.Theory.
 (** ** Change of scalar in multivariate polynomials *)
 Section ScalarChange.
 
-Variables R S : ringType.
+Variables R S : nzRingType.
 Variable mor : {rmorphism R -> S}.
 Variable n : nat.
 
@@ -285,7 +285,7 @@ End ScalarChange.
 
 
 (** ** Characteristic of multivariate polynomials *)
-Lemma char_mpoly n (R : ringType) : [char R] =i [char {mpoly R[n]}].
+Lemma char_mpoly n (R : nzRingType) : [pchar R] =i [pchar {mpoly R[n]}].
 Proof using.
 move=> p; rewrite !unfold_in /= -mpolyC_nat.
 case: (prime.prime p) => //=.
@@ -299,7 +299,7 @@ Qed.
 Section MPolySym.
 
 Variable n : nat.
-Variable R : ringType.
+Variable R : nzRingType.
 
 Implicit Types p q r : {mpoly R[n]}.
 
@@ -341,10 +341,10 @@ apply/(iffP forallP) => /= [Hanti i j | Htperm s].
   by case: (odd_perm _); rewrite !simplexp // opprK.
 Qed.
 
-Lemma antisym_char2 : (2 \in [char R]) -> symmetric =i antisym.
+Lemma antisym_pchar2 : (2 \in [pchar R]) -> symmetric =i antisym.
 Proof using.
 move=> Hchar p /=; apply/issymP/isantisymP => H s;
-  by rewrite H oppr_char2; first rewrite expr1n scale1r.
+  by rewrite H oppr_pchar2; first rewrite expr1n scale1r.
 Qed.
 
 Lemma perm_smalln : n <= 1 -> forall s : 'S_n, s = 1%g.
@@ -438,7 +438,7 @@ End MPolySym.
 Arguments antisym {n R}.
 
 
-Lemma issym_eltrP n (R : ringType) (p : {mpoly R[n.+1]}) :
+Lemma issym_eltrP n (R : nzRingType) (p : {mpoly R[n.+1]}) :
   reflect (forall i, i < n -> msym 's_i p = p) (p \is symmetric).
 Proof.
 apply/(iffP forallP) => /= [Hanti i Hi | Heltr].
@@ -448,7 +448,7 @@ apply/(iffP forallP) => /= [Hanti i Hi | Heltr].
   + by rewrite msymMm (Heltr i Hi) IH.
 Qed.
 
-Lemma isantisym_eltrP n (R : ringType) (p : {mpoly R[n.+1]}) :
+Lemma isantisym_eltrP n (R : nzRingType) (p : {mpoly R[n.+1]}) :
   reflect (forall i, i < n -> msym 's_i p = - p) (p \is antisym).
 Proof.
 apply/(iffP forallP) => [Hanti i Hi | Heltr].
@@ -463,14 +463,14 @@ Qed.
 
 
 (** * Alternating polynomials *)
-Definition alternpol n (R : ringType) (f : {mpoly R[n]}) : {mpoly R[n]} :=
+Definition alternpol n (R : nzRingType) (f : {mpoly R[n]}) : {mpoly R[n]} :=
   \sum_(s : 'S_n) (-1) ^+ s *: msym s f.
 
 Section AlternIDomain.
 
 Variable n : nat.
 Variable R : idomainType.
-Hypothesis Hchar : ~~ (2 \in [char R]).
+Hypothesis Hchar : ~~ (2 \in [pchar R]).
 
 #[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
 #[local] Notation "m # s" := [multinom m (s i) | i < n].
@@ -626,7 +626,7 @@ Qed.
 End AlternIDomain.
 
 (** ** Vandermonde product *)
-Definition Vanprod {n} {R : ringType} : {mpoly R[n]} :=
+Definition Vanprod {n} {R : nzRingType} : {mpoly R[n]} :=
   \prod_(p : 'II_n | p.1 < p.2) ('X_p.1 - 'X_p.2).
 
 
@@ -685,7 +685,7 @@ Qed.
 
 End EltrP.
 
-Lemma Vanprod_anti n (R : comRingType) : @Vanprod n R \is antisym.
+Lemma Vanprod_anti n (R : comNzRingType) : @Vanprod n R \is antisym.
 Proof.
 case: n => [| n].
   by apply/isantisymP => s; rewrite (permS0 s) msym1m odd_perm1 simplexp.
@@ -711,7 +711,7 @@ apply: uniq_perm.
   by apply map_f; rewrite mem_index_enum.
 Qed.
 
-Lemma sym_VanprodM n (R : comRingType) (p : {mpoly R[n]}) :
+Lemma sym_VanprodM n (R : comNzRingType) (p : {mpoly R[n]}) :
   p \is symmetric -> Vanprod * p \is antisym.
 Proof. by apply sym_anti; apply Vanprod_anti. Qed.
 
@@ -719,7 +719,7 @@ Proof. by apply sym_anti; apply Vanprod_anti. Qed.
 Section Vanprod.
 
 Variable n : nat.
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 #[local] Notation Delta := (@Vanprod n R).
 #[local] Notation "'X_ i" := (@mpolyX n R U_(i)). (* Enforce the base ring *)
@@ -919,7 +919,7 @@ rewrite (isantisym_alt _
 - by apply/negP => /=; rewrite inE /= eqz_nat.
 Qed.
 
-Corollary Vanprod_alt n (R : ringType) :
+Corollary Vanprod_alt n (R : nzRingType) :
   Vanprod = alternpol 'X_[rho n] :> {mpoly R[n]}.
 Proof.
 have := Vanprod_alt_int n => /(congr1 (map_mpoly (S := R) intr)).
@@ -935,7 +935,7 @@ From mathcomp Require Import matrix.
 Section VandermondeDet.
 
 Variable n : nat.
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 #[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
 #[local] Notation rho := (rho n).

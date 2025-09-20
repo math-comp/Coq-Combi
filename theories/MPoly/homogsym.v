@@ -123,11 +123,11 @@ Reserved Notation "'[ p | q ] _( R , n )"
 Set Warnings "closed-notation-not-level-0".
 
 
-Definition ishomogsym1 {n} {R : ringType} (d : nat) :
+Definition ishomogsym1 {n} {R : nzRingType} (d : nat) :
   qualifier 0 {sympoly R[n]} := [qualify p | sympol p \is d.-homog].
 
 Module SymPolyHomogKey.
-Fact homogsym1_key {n} {R : ringType} d : pred_key (@ishomogsym1 n R d).
+Fact homogsym1_key {n} {R : nzRingType} d : pred_key (@ishomogsym1 n R d).
 Proof. by []. Qed.
 Definition homogsym1_keyed {n R} d := KeyedQualifier (@homogsym1_key n R d).
 End SymPolyHomogKey.
@@ -141,7 +141,7 @@ Notation "[ 'in' R [ n ] , d .-homsym ]" := (@ishomogsym1 n R d) : form_scope.
 Section DefType.
 
 Variable n : nat.
-Variable R : ringType.
+Variable R : nzRingType.
 Variable d : nat.
 
 Implicit Types p q : {sympoly R[n]}.
@@ -174,7 +174,7 @@ Notation "{ 'homsym' T [ n , d ] }" := (homogsym n T d).
 Section HomogSymLModType.
 
 Variable n : nat.
-Variable R : ringType.
+Variable R : nzRingType.
 Variable d : nat.
 
 #[local] Notation is_homsym := (@is_homsym n R d).
@@ -217,7 +217,7 @@ Section Vector.
 
 Variable n0 : nat.
 #[local] Notation n := (n0.+1).
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 Variable d : nat.
 #[local] Notation SF := {sympoly R[n]}.
@@ -284,7 +284,7 @@ Notation "''hs[' k ]" := (homsyms _ _ k).
 Section HomogSymProd.
 
 Variable n : nat.
-Variable R : comRingType.
+Variable R : comNzRingType.
 Variable c d : nat.
 
 Fact homsymprod_subproof (p : {homsym R[n, c]}) (q : {homsym R[n, d]}) :
@@ -346,7 +346,7 @@ Section HomSymProdGen.
 
 Variable n0 : nat.
 #[local] Notation n := (n0.+1).
-Variable R : comRingType.
+Variable R : comNzRingType.
 #[local] Notation HSF := {homsym R[n, _]}.
 
 Section Merge.
@@ -382,7 +382,7 @@ Section InHomSym.
 
 Variable n0 d : nat.
 #[local] Notation n := (n0.+1).
-Variable R : comRingType.
+Variable R : comNzRingType.
 #[local] Notation Pol := {mpoly R[n]}.
 #[local] Notation HSF := {homsym R[n, d]}.
 
@@ -431,7 +431,7 @@ Section OmegaHomSym.
 
 Variable n0 d : nat.
 #[local] Notation n := (n0.+1).
-Variable R : comRingType.
+Variable R : comNzRingType.
 #[local] Notation HSF := {homsym R[n, d]}.
 Implicit Types (p q : HSF) (la : intpartn d).
 
@@ -468,7 +468,7 @@ Section OmegaProd.
 
 Variable n0 : nat.
 #[local] Notation n := (n0.+1).
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 Lemma omegahomsym_rmorph c d (p : {homsym R[n, c]}) (q : {homsym R[n, d]}) :
   omegahomsym (p *h q) = (omegahomsym p) *h (omegahomsym q).
@@ -652,7 +652,7 @@ Qed.
 Lemma symbh_free : free symbh.
 Proof. exact/basis_free/symbh_basis. Qed.
 
-Lemma symbp_basis : [char R] =i pred0 -> basis_of fullv symbp.
+Lemma symbp_basis : [pchar R] =i pred0 -> basis_of fullv symbp.
 Proof using Hd.
 move=> Hchar.
 rewrite basisEdim size_map size_tuple dim_homsym leqnn andbT.
@@ -668,7 +668,7 @@ rewrite big_map (bigD1_seq mu) /= ?mem_enum ?inE ?enum_uniq //.
 rewrite -[X in X \in _]addr0.
 by apply memv_add; [exact: memv_line | exact: mem0v].
 Qed.
-Lemma symbp_free : [char R] =i pred0 -> free symbp.
+Lemma symbp_free : [pchar R] =i pred0 -> free symbp.
 Proof. by move=> Hchar; apply/basis_free/symbp_basis. Qed.
 
 End HomSymField.
@@ -795,7 +795,7 @@ Proof. by rewrite -symbhE coord_free ?er_eqE; last exact: symbh_free. Qed.
 Lemma coord_symbs la mu : coord 'hs (enum_rank mu) 'hs[la] = (la == mu)%:R.
 Proof. by rewrite -symbsE coord_free ?er_eqE; last exact: symbs_free. Qed.
 
-Lemma coord_symbp (char0 : [char R] =i pred0) la mu :
+Lemma coord_symbp (char0 : [pchar R] =i pred0) la mu :
   coord 'hp (enum_rank mu) 'hp[la] = (la == mu)%:R.
 Proof. by rewrite -symbpE coord_free ?er_eqE; last exact/symbp_free. Qed.
 
@@ -805,7 +805,7 @@ End Coord.
 (** ** Changing the number of variables *)
 Section ChangeNVar.
 
-Variable R : comRingType.
+Variable R : comNzRingType.
 Variable m0 n0 : nat.
 #[local] Notation m := m0.+1.
 #[local] Notation n := n0.+1.
@@ -844,9 +844,9 @@ End ChangeNVar.
 
 
 
-#[local] Lemma char0_algC : [char algC] =i pred0.
-Proof. exact: char_num. Qed.
-#[local] Hint Resolve char0_algC : core.
+#[local] Lemma pchar0_algC : [pchar algC] =i pred0.
+Proof. exact: pchar_num. Qed.
+#[local] Hint Resolve pchar0_algC : core.
 
 (** * The scalar product *)
 Section ScalarProduct.
@@ -943,7 +943,7 @@ have le0zcc (la : 'P_d) : 0 <= co la.
   by rewrite /co -mulrA mulr_ge0 // mul_conjC_ge0.
 have -> /= : 0 <= '[f | f].
   by rewrite homsymdotE; apply: sumr_ge0 => /= la _; apply: le0zcc.
-have /andP[/eqP Hfull Hfree]:= symbp_basis Hd char0_algC.
+have /andP[/eqP Hfull Hfree]:= symbp_basis Hd pchar0_algC.
 have:= memvf f; rewrite -Hfull => /coord_span {1}->.
 apply contra; rewrite homsymdotE => /eqP H.
 have {H le0zcc} eq0zcc (la : 'P_d) : co la = 0.
@@ -971,7 +971,7 @@ Qed.
 Lemma homsymdot_omegasf f g :
   '[omegahomsym f |omegahomsym g ] = '[f | g].
 Proof.
-have /andP[/eqP Hfull Hfree]:= symbp_basis Hd char0_algC.
+have /andP[/eqP Hfull Hfree]:= symbp_basis Hd pchar0_algC.
 have:= memvf g; rewrite -Hfull => /coord_span ->.
 rewrite raddf_sum /= !homsymdot_sumr; apply eq_bigr => i _.
 have:= memvf f; rewrite -Hfull => /coord_span ->.
@@ -992,7 +992,7 @@ Qed.
 Lemma homsymp_orthogonal : pairwise_orthogonal homsymdot 'hp.
 Proof.
 apply/pairwise_orthogonalP => /=; split.
-  have pfree := basis_free (symbp_basis Hd char0_algC).
+  have pfree := basis_free (symbp_basis Hd pchar0_algC).
   rewrite free_uniq // andbT.
   by move: pfree; rewrite free_directv /= => /andP[].
 move=> f g /mapP[/= la _ {f}->]/mapP[/= mu _ {g}->].

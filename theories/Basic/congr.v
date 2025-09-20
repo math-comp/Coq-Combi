@@ -69,7 +69,7 @@ the congruence transitive closure of rule. The main results here are
 (******************************************************************************)
 From HB Require Import structures.
 From mathcomp Require Import all_ssreflect.
-Require Import Recdef.
+From Stdlib Require Import Recdef.
 Require Import permcomp permuted multinomial vectNK.
 
 Set Implicit Arguments.
