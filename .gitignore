@@ -24,6 +24,7 @@ Makefile.conf
 .Makefile.coq.d
 .Makefile.d
 .lia.cache
+.coq-native
 3rdparty/ALEA/.lia.cache
 *.cmi
 *.cmo
