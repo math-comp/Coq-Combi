@@ -416,7 +416,7 @@ End ShiftedShuffle.
 (** * Shifted shuffle and inverse standardized *)
 Section LRTriple.
 
-Context {disp : _} {Alph : inhOrderType disp}.
+Context {disp} {Alph : inhOrderType disp}.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.

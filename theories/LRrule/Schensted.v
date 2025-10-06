@@ -137,7 +137,7 @@ Import Order.Theory.
 
 Section NonEmpty.
 
-Variables (disp : _) (T : inhOrderType disp).
+Context disp (T : inhOrderType disp).
 (** * Schensted's algorithm *)
 
 (** ** Row insertion *)
@@ -1390,7 +1390,7 @@ by apply/idP/idP => Hstd; apply: (perm_std Hstd);
 Qed.
 
 Section QTableau.
-Variables (disp : _) (T : inhOrderType disp).
+Context disp (T : inhOrderType disp).
 
 Notation TabPair := (seq (seq T) * seq (seq nat) : Type).
 

@@ -46,7 +46,7 @@ Import Order.TTheory.
 (** ** Plactic congruence and standardization *)
 Section StdRS.
 
-Context {disp : _} {Alph : inhOrderType disp}.
+Context {disp} {Alph : inhOrderType disp}.
 Implicit Type s u v w : seq Alph.
 Implicit Type p : seq nat.
 Implicit Type t : seq (seq Alph).

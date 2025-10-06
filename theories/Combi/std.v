@@ -238,7 +238,7 @@ End StdCombClass.
 (** * Standardisation of a word over a totally ordered alphabet *)
 Section Standardisation.
 
-Context {disp : _} {Alph : orderType disp}.
+Context {disp} {Alph : orderType disp}.
 Implicit Type s u v w : seq Alph.
 
 Fixpoint std_rec n s :=
@@ -359,7 +359,7 @@ Definition eq_inv d1 d2 (T1 : inhOrderType d1) (T2 : inhOrderType d2)
            (w1 : seq T1) (w2 : seq T2) :=
   (versions w1) =2 (versions w2).
 
-Variables (disp1 disp2 disp3 : _)
+Context disp1 disp2 disp3
    (S : inhOrderType disp1)
    (T : inhOrderType disp2)
    (U : inhOrderType disp3).
@@ -401,7 +401,7 @@ Qed.
 
 Section EqInvAltDef.
 
-Variables (disp1 disp2 disp3 : _)
+Context disp1 disp2 disp3
           (S : inhOrderType disp1)
           (T : inhOrderType disp2)
           (U : inhOrderType disp3).
@@ -479,7 +479,7 @@ Qed.
 
 Section EqInvPosRemBig.
 
-Variables (disp1 disp2 : _) (S : inhOrderType disp1) (T : inhOrderType disp2).
+Context disp1 disp2 (S : inhOrderType disp1) (T : inhOrderType disp2).
 
 Lemma eq_inv_posbig (u : seq S) (v : seq T) :
   eq_inv u v -> posbig u = posbig v.
@@ -601,7 +601,7 @@ End EqInvPosRemBig.
 
 Section Spec.
 
-Variables (disp1 disp2 : _) (S : inhOrderType disp1) (T : inhOrderType disp2).
+Context disp1 disp2 (S : inhOrderType disp1) (T : inhOrderType disp2).
 
 Variant std_spec (s : seq T) (p : seq nat) : Prop :=
   | StdSpec : is_std p -> eq_inv s p -> std_spec s p.
@@ -672,7 +672,7 @@ End Spec.
 
 Section StdTakeDrop.
 
-Variables (disp1 disp2 : _) (S : inhOrderType disp1) (T : inhOrderType disp2).
+Context disp1 disp2 (S : inhOrderType disp1) (T : inhOrderType disp2).
 Implicit Type u v : seq T.
 
 Lemma std_take_std u v : std (take (size u) (std (u ++ v))) = std u.
@@ -700,7 +700,7 @@ End StdTakeDrop.
 
 Section PermEq.
 
-Variable (disp : _) (Alph : orderType disp).
+Context disp (Alph : orderType disp).
 Implicit Type u v : seq Alph.
 
 Theorem perm_stdE u v : perm_eq u v -> std u = std v -> u = v.
@@ -729,7 +729,7 @@ End PermEq.
 (** ** Standardization and elementary transpositions of a word *)
 Section Transp.
 
-Variable (disp : _) (Alph : inhOrderType disp).
+Context disp (Alph : inhOrderType disp).
 Implicit Type u v : seq Alph.
 
 Lemma nth_transp u v a b i :

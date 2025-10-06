@@ -896,7 +896,7 @@ End Rev.
 (** * Greene number for tableaux *)
 Section GreeneRec.
 
-Context {disp : _} {Alph : inhOrderType disp}.
+Context {disp} {Alph : inhOrderType disp}.
 Implicit Type u v w : seq Alph.
 Implicit Type t : seq (seq Alph).
 
@@ -1529,7 +1529,7 @@ End GreeneRec.
 (** ** Greene numbers of a tableau *)
 Section GreeneTab.
 
-Context {disp : _} {Alph : inhOrderType disp}.
+Context {disp} {Alph : inhOrderType disp}.
 
 Implicit Type t : seq (seq Alph).
 

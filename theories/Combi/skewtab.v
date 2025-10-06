@@ -134,7 +134,7 @@ Qed.
 (** ** Skew tableaux *)
 Section Dominate.
 
-Variables (disp : _) (T : inhOrderType disp).
+Context disp (T : inhOrderType disp).
 Implicit Type u v : seq T.
 
 Definition skew_dominate sh u v := dominate (drop sh u) v.
@@ -375,7 +375,7 @@ End Dominate.
 (** ** Skewing and joining tableaux *)
 Section FilterLeqGeq.
 
-Variables (disp : _) (T : inhOrderType disp).
+Context disp (T : inhOrderType disp).
 Implicit Type l : T.
 Implicit Type r w : seq T.
 Implicit Type t : seq (seq T).

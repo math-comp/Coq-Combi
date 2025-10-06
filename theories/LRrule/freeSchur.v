@@ -152,7 +152,7 @@ End CommutativeImage.
 (** ** Row reading of tableau *)
 Section TableauReading.
 
-Context {disp : _} {A : inhOrderType disp}.
+Context {disp} {A : inhOrderType disp}.
 
 Definition tabsh_reading_RS (sh : seq nat) (w : seq A) :=
   (to_word (RS w) == w) && (shape (RS (w)) == sh).
@@ -463,7 +463,7 @@ Hypothesis Hsh2 : shape U2 = shape T2.
 
 Section TakeDrop.
 
-Context {disp : _} {T : inhOrderType disp}.
+Context {disp} {T : inhOrderType disp}.
 
 Lemma RStabE (w : seq T) : (RStab w).1 = (RS w).
 Proof using . by rewrite RStabmapE. Qed.
