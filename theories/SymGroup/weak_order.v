@@ -97,7 +97,7 @@ Qed.
 Fact leperm_anti : antisymmetric leperm.
 Proof.
 move=> s t /andP[Hst Hts]; apply: (leperm_lengthE Hst).
-by apply anti_leq; apply/andP; split; apply leperm_length.
+by apply/anti_leq/andP; split; apply leperm_length.
 Qed.
 
 #[export] HB.instance Definition _ := Finite.on 'S_n.

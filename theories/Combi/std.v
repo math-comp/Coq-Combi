@@ -310,7 +310,7 @@ set pos := (posbig s).+1; set LR := take _ _.
 have HposLR : pos = size LR.
   rewrite /LR size_take /pos size_std_rec.
   case: (ltnP (posbig s).+1 (size s)) => Hpos; first by [].
-  apply/eqP; rewrite eqn_leq Hpos andbT.
+  apply: anti_leq; rewrite Hpos andbT.
   have: s != [::] by move: Hmax; case s.
   exact: posbig_size.
 rewrite HposLR; apply/eqP; rewrite -posbigE.
@@ -948,7 +948,7 @@ Qed.
 Lemma size_invseq s t : invseq s t -> size s = size t.
 Proof.
 rewrite /invseq => /andP[Hst Hts].
-by apply/eqP; rewrite eqn_leq !size_leq_invseq.
+by apply: anti_leq; rewrite !size_leq_invseq.
 Qed.
 
 Lemma linvseq_subset_iota s t : linvseq s t -> {subset iota 0 (size s) <= t}.

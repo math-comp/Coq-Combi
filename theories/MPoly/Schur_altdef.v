@@ -1271,7 +1271,7 @@ congr skew_reshape.
   rewrite /to_word => /flattenP[/= rtmp].
   rewrite mem_rev => /mapP[/= r Hr ->{rtmp}].
   rewrite mem_filter leEord => /andP[/= Hi Hir].
-  apply/eqP/val_inj => /=; apply anti_leq; rewrite {}Hi andbT.
+  apply/eqP/val_inj/anti_leq; rewrite {}Hi andbT.
   have /count_memPn/eqP : i \in to_word t.
     by rewrite /to_word; apply/flattenP; exists r; first rewrite mem_rev.
   rewrite (eqevalP _ Hszrcons Hev); apply contraR; rewrite -ltnNge => Hi.

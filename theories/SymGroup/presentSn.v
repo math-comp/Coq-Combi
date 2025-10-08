@@ -1126,7 +1126,7 @@ have {}/Hrec /= : perm_on [set k : 'I_n | k < m] srec.
   rewrite {Hrec} /srec /perm_on; apply/subsetP => k.
   rewrite !inE; apply contraR; rewrite -ltnNge permM ltnS => Hmk.
   apply/eqP; case (leqP k m) => Hkm.
-  + have -> : k = mo by apply val_inj; apply/eqP; rewrite /= eqn_leq Hmk Hkm.
+  + have -> : k = mo by apply/val_inj/anti_leq; rewrite Hmk Hkm.
     exact: cycleij_j.
   + have -> : s k = k by apply (out_perm Hon); rewrite inE -ltnNge.
     rewrite cycleij_gt // -ltnNge.
@@ -1471,7 +1471,7 @@ Lemma reduced_catr u v : u ++ v \is reduced -> v \is reduced.
 Proof using.
 rewrite !unfold_in size_cat => /eqP H.
 have {H} Huv : length 's_[u] + length 's_[v] = size u + size v.
-  apply/eqP; rewrite eqn_leq (leq_add (length_prods u) (length_prods v)) /=.
+  apply/anti_leq; rewrite (leq_add (length_prods u) (length_prods v)) /=.
   by have:= lengthM 's_[u] 's_[v]; rewrite -big_cat /= H => ->.
 by have:= leq_addE (length_prods u) (length_prods v) Huv => [] [_ ->].
 Qed.

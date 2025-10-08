@@ -513,7 +513,7 @@ Qed.
 Lemma Greene_rel_t_0 : Greene_rel_t 0 = 0.
 Proof using.
 rewrite /Greene_rel_t /=.
-apply/eqP; rewrite eqn_leq; apply/andP; split; last by [].
+apply/anti_leq/andP; split; last by [].
 apply/bigmax_leqP => S.
 rewrite /ksupp => /and3P[HS _ _].
 have -> : S = set0 by apply/eqP; rewrite -cards_eq0 eqn_leq HS.
@@ -734,7 +734,7 @@ Hypothesis HnegR : transitive negR.
 Lemma Greene_rel_seq r k : sorted negR r -> Greene_rel r k = minn (size r) k.
 Proof using HnegR.
 move=> Hrow /=.
-apply/eqP; rewrite eqn_leq; apply/andP; split; last exact: Greene_rel_t_inf.
+apply/anti_leq/andP; split; last exact: Greene_rel_t_inf.
 rewrite leq_min Greene_rel_t_sup /=; apply/bigmax_leqP => s.
 rewrite /ksupp /trivIset => /and3P[Hcard /eqP /= <- /forallP Hsort].
 suff {Hcard} H B : B \in s -> #|B| <= 1.
@@ -883,7 +883,7 @@ Qed.
 Lemma Greene_rel_rev (leT : rel Alph) u :
   Greene_rel leT u =1 Greene_rel (fun y x => leT x y) (rev u).
 Proof using.
-move=> k; apply anti_leq; apply/andP; split.
+move=> k; apply/anti_leq/andP; split.
 - apply leq_Greene; first exact: ksupp_inj_rev.
 - rewrite [X in _ <= X](eq_Greene_rel (R2 := fun x y => leT x y)).
   + apply leq_Greene; rewrite -{2}(revK u); exact: ksupp_inj_rev.
@@ -1600,7 +1600,7 @@ Qed.
 Theorem Greene_row_tab k t :
   is_tableau t -> Greene_row (to_word t) k = sumn (take k (shape t)).
 Proof using.
-move=> Htab; apply/eqP; rewrite eqn_leq; apply/andP; split.
+move=> Htab; apply/anti_leq/andP; split.
 - rewrite -(conj_partK (is_part_sht Htab)) -sum_conj.
   rewrite (shape_tabcols Htab) /Greene_row /Greene_rel /Greene_rel_t.
   apply/bigmax_leqP => /= U; rewrite /ksupp => /and3P[Hsz Htriv].
@@ -1623,7 +1623,7 @@ Theorem Greene_col_tab k t :
   is_tableau t -> Greene_col (to_word t) k = sumn (take k (conj_part (shape t))).
 Proof using.
 move=> Htab; rewrite -sum_conj.
-apply/eqP; rewrite eqn_leq /=; apply/andP; split.
+apply/anti_leq/andP; split.
 - elim: t Htab => [_ | t0 t IHt] /=.
     by apply: (@leq_trans 0); first exact: Greene_rel_t_sup.
   move=> /and4P[_ Hrow _ /IHt{IHt} Ht]; rewrite to_word_cons.

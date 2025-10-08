@@ -88,7 +88,7 @@ split => H.
 - move=> i j; move Hdiff : (j - i.+1) => diff.
   elim: diff i j Hdiff => [| diff IHdiff] i j /=.
   + move/eqP; rewrite -/(leq j i) => /eqP H1 /andP[H2 Hj].
-    have Hij : i.+1 = j by apply/eqP; rewrite eqn_leq H2 /= /leq H1.
+    have Hij : i.+1 = j by apply/anti_leq; rewrite H2 /leq H1.
     by rewrite -Hij; apply: H; rewrite Hij.
   + move=> Hdiff => /andP[_ Hj].
     have Hij : i < j.-1.
@@ -121,7 +121,7 @@ split => H.
 - move=> i j; move Hdiff : (j - i) => diff.
   elim: diff i j Hdiff => [| diff IHdiff] i j /=.
   + move/eqP; rewrite -/(leq j i) => H1 /andP[H2 Hj].
-    by rewrite (_ : i = j); last by apply/eqP; rewrite eqn_leq H1 H2.
+    by rewrite (_ : i = j); last by apply/anti_leq; rewrite H1 H2.
   + move=> Hdiff => /andP[_ Hj].
     have Hiltj : i < j by rewrite -subn_gt0 Hdiff.
     apply: (Rtrans (y := nth Z r i.+1)).

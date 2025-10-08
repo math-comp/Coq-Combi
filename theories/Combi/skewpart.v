@@ -317,7 +317,7 @@ apply (iffP eqP); case: ex_minnP => m eqdrop mmin.
   + rewrite -eqmp1 => i lemi.
     by rewrite -(subnKC lemi) -!nth_drop (eqP eqdrop).
 - move=> [Hneq Heq].
-  apply anti_leq; apply/andP; split.
+  apply/anti_leq/andP; split.
   + apply: mmin; apply/eqP/(eq_from_nth_notin (x0 := x0)); first last.
       by move=> i; rewrite !nth_drop addSn; apply: Heq; rewrite ltnS leq_addr.
     * by apply/contra: x0notint => /mem_drop.
@@ -1571,7 +1571,7 @@ split => [i|i||i]; first 2 last; first exact: start_ltn.
   rewrite /mindropeq; case: ex_minnP => [[//|m]] /eqP Hdrop _ _ /= ltmi.
   by rewrite -(subnKC ltmi) -!nth_drop Hdrop.
 have conn4sym : connect_sym neig4 := @conn4_sym _ _.
-move=> Hi; apply anti_leq; apply/andP; split.
+move=> Hi; apply/anti_leq/andP; split.
   move/includedP: incl => [_ /(_ i)]; rewrite leq_eqVlt => /orP[/eqP-> | lti].
     by move/is_partP: partout => [_/(_ i)/leq_trans]; apply.
   have Hb : in_skew inner outer (i, nth 0 inner i) by rewrite /in_skew /= leqnn.

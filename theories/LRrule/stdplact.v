@@ -115,9 +115,7 @@ Qed.
 Theorem std_plact u v : u =Pl v -> std u =Pl std v.
 Proof using.
 move: v; apply: gencongr_ind; first exact: plact_refl.
-move=> a b1 c b2 H Hplact.
-rewrite (plact_ltrans H).
-move: Hplact {H} => /plactruleP[].
+move=> a b1 c b2 /plact_ltrans -> /plactruleP[].
 - exact: std_plact1.
 - rewrite -plact1I => /std_plact1-/(_ a c)/plact_ltrans <-; exact: plact_refl.
 - exact: std_plact2.
@@ -199,13 +197,13 @@ Qed.
 
 Lemma Greene_std u k : Greene_row (std u) k = Greene_row u k.
 Proof using.
-apply/eqP; rewrite eqn_leq; apply/andP; split; apply: leq_Greene.
+apply/anti_leq/andP; split; apply: leq_Greene.
 + exact: ksupp_inj_stdI.
 + exact: ksupp_inj_std.
 Qed.
 
 Theorem shape_RS_std u : shape (RS (std u)) = shape (RS u).
-Proof using. by apply: Greene_row_eq_shape_RS; exact: Greene_std. Qed.
+Proof using. exact/Greene_row_eq_shape_RS/Greene_std. Qed.
 
 End StdRS.
 
@@ -244,8 +242,8 @@ Corollary RStabmap_std disp (T : inhOrderType disp) (w : seq T) :
   (RStabmap (std w)).2 = (RStabmap w).2.
 Proof.
 rewrite /RStabmap.
-move H : (RSmap w) => [P Q].
-move Hs : (RSmap (std w)) => [Ps Qs] /=.
+case H : (RSmap w) => [P Q].
+case Hs : (RSmap (std w)) => [Ps Qs] /=.
 by rewrite -[Q]/(P, Q).2 -H -[Qs]/(Ps, Qs).2 -Hs RSmap_std.
 Qed.
 
@@ -285,9 +283,7 @@ rewrite (eq_filter (a2 := mem [set val2pos x | x in p])) //.
 move: H; rewrite (eq_map (g := fun i : 'I_(_) => nth (size t) s i)); first last.
   by move=> i /=; exact: tnth_nth.
 set l := (X in sorted _ X); rewrite -[RHS]/l.
-move=> H; apply: (sorted_eq (leT := leq)).
-- exact: leq_trans.
-- by move=> i j H1; apply/eqP; rewrite eqn_leq.
+move=> H; apply: (sorted_eq leq_trans anti_leq).
 - apply: (subseq_sorted leq_trans (s2 := map val (enum 'I_(size t)))).
   + by apply: map_subseq; exact: filter_subseq.
   + by rewrite val_enum_ord; exact: iota_sorted.
@@ -295,10 +291,10 @@ move=> H; apply: (sorted_eq (leT := leq)).
   by rewrite (eq_path (e' := leq)); last by move=> i j /=; rewrite leEnat.
 - apply: uniq_perm.
   + rewrite map_inj_in_uniq.
-    * by apply: filter_uniq; exact: enum_uniq.
+    * exact/filter_uniq/enum_uniq.
     * by move=> i j Hi _ /=; exact: val_inj.
   + rewrite map_inj_in_uniq.
-    * by apply: filter_uniq; exact: enum_uniq.
+    * exact/filter_uniq/enum_uniq.
     * move=> i j Hij _ /= HH; apply: val_inj.
       have:= Hinvst => /linvseqP Heq.
       by rewrite /= -(Heq _ (ltn_ord i)) -(Heq _ (ltn_ord j)) HH.
@@ -340,8 +336,7 @@ End KsuppInj.
 Lemma Greene_invseq s t k : invseq s t -> Greene_row s k = Greene_row t k.
 Proof.
 move=> Hst; have Hts := invseq_sym Hst.
-by apply/eqP; rewrite eqn_leq; apply/andP; split;
-  apply: leq_Greene; exact: ksupp_inj_invseq.
+by apply/anti_leq/andP; split; apply: leq_Greene; exact: ksupp_inj_invseq.
 Qed.
 
 Lemma shape_invseq s t : invseq s t -> shape (RS s) = shape (RS t).
@@ -514,7 +509,7 @@ move: IHn; rewrite -Hs RSmap_std HRSt /= => ->.
 rewrite shape_stdtab_of_yam => /incr_nth_inj ->.
 congr (append_nth _ _ _).
 
-have:= (congr1 (fun t => sumn (shape t)) (RSmapE t')).
+have:= congr1 (fun t => sumn (shape t)) (RSmapE t').
 rewrite (shape_RSmap_eq t') evalseq_eq_size HRSt => ->.
 rewrite -/(size_tab (RS t')) size_RS.
 move: Hsize; rewrite Ht Hn size_rcons => /succn_inj <-.

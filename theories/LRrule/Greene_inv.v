@@ -121,6 +121,8 @@ We conclude by the main results:
   Greene numbers are plactic invariants.
 - [plactic_RS] which shows that the plactic classes are the fiber of the
   Robinson-Schensted map.
+- [shape_RS_revdual] asserting that the tableaux associated to a word and its
+  revdual have the same shapes.
 - [RS_rev_uniq] asserting that reverting a uniq word conjugate its insertion
   tableau.
 
@@ -158,8 +160,8 @@ congr (((map (tnth wt) _) ++ _) ++ (map (tnth wt) _)).
   congr ((j \in S) && _); case (ltnP j i) => H; last by rewrite andbF.
   by rewrite (ltn_trans H (ltnSn i)).
 - rewrite [X in map _ X](_ : _ = [:: i]) //.
-  rewrite (eq_filter (a2 := xpred1 i)); first last.
-    move=> j /=; rewrite ltnS -eqn_leq inE andbT.
+  rewrite (eq_filter (a2 := xpred1 i)) => [| /= j /=]; first last.
+    rewrite ltnS -eqn_leq inE andbT.
     case: (j =P i) => [-> | H]; first by rewrite eq_refl Hi.
     suff /negbTE -> : (val j != val i) by rewrite andbF.
     by apply/contra_notN: H => /eqP/val_inj ->.
@@ -242,7 +244,7 @@ by rewrite add0n (subnSK Hi); rewrite subKn; last exact: ltnW.
 Qed.
 
 Lemma extract_rev_set S :
-  (extract (in_tuple (revdual w))) (rev_set S) = revdual (extract (in_tuple w) S).
+  extract (in_tuple (revdual w)) (rev_set S) = revdual (extract (in_tuple w) S).
 Proof using.
 rewrite !/extract /= !extractIE /rev_set rev_enum.
 rewrite filter_rev filter_map.
@@ -318,28 +320,28 @@ Qed.
 Lemma size_cover_rev P : #|cover (rev_ksupp P)| = #|cover P|.
 Proof using. by rewrite -size_cover_inj; last exact rev_ord_cast_inj. Qed.
 
-Lemma Greene_col_dual : Greene_col w k = Greene_col (revdual w) k.
-Proof using.
-rewrite /Greene_col.
-apply/eqP; rewrite eqn_leq; apply/andP; split.
-- apply: leq_Greene; rewrite /ksupp_inj => S HS; exists (rev_ksupp S).
-  rewrite size_cover_rev eq_refl /=.
-  by rewrite (rev_is_ksupp_col S) in HS.
-- apply: leq_Greene; rewrite /ksupp_inj => S HS.
-  exists (rev_ksupp_inv S); rewrite -{1}[S]rev_ksuppKV size_cover_rev eq_refl /=.
-  by move: HS; rewrite -{1}[S]rev_ksuppKV rev_is_ksupp_col.
-Qed.
-
 Lemma Greene_row_dual : Greene_row w k = Greene_row (revdual w) k.
 Proof using.
 rewrite /Greene_col.
-apply/eqP; rewrite eqn_leq; apply/andP; split.
+apply/anti_leq/andP; split.
 - apply: leq_Greene; rewrite /ksupp_inj => S HS; exists (rev_ksupp S).
   rewrite size_cover_rev eq_refl /=.
   by rewrite rev_is_ksupp_row in HS.
 - apply: leq_Greene; rewrite /ksupp_inj => S HS.
   exists (rev_ksupp_inv S); rewrite -{1}[S]rev_ksuppKV size_cover_rev eq_refl /=.
   by move: HS; rewrite -{1}[S]rev_ksuppKV rev_is_ksupp_row.
+Qed.
+
+Lemma Greene_col_dual : Greene_col w k = Greene_col (revdual w) k.
+Proof using.
+rewrite /Greene_col.
+apply/anti_leq/andP; split.
+- apply: leq_Greene; rewrite /ksupp_inj => S HS; exists (rev_ksupp S).
+  rewrite size_cover_rev eq_refl /=.
+  by rewrite rev_is_ksupp_col in HS.
+- apply: leq_Greene; rewrite /ksupp_inj => S HS.
+  exists (rev_ksupp_inv S); rewrite -{1}[S]rev_ksuppKV size_cover_rev eq_refl /=.
+  by move: HS; rewrite -{1}[S]rev_ksuppKV rev_is_ksupp_col.
 Qed.
 
 End Duality.
@@ -360,16 +362,16 @@ Variable u v : word.
 Variable l0 l1 : Alph.
 Let x := u ++ [:: l0; l1] ++ v.
 
-Lemma ult : size u < size x.
+Lemma pos0_subproof : size u < size x.
 Proof using l0 l1 v.
 by rewrite /= size_cat /= addnS ltnS -{1}[size u]addn0 leq_add2l.
 Qed.
-Definition pos0 := Ordinal ult.
-Lemma u1lt : (size u).+1 < size x.
+Definition pos0 := Ordinal pos0_subproof.
+Lemma pos1_subproof : (size u).+1 < size x.
 Proof using l0 l1 v.
 by rewrite /= size_cat /= addnS ltnS -{1}[size u]addn0 ltn_add2l.
 Qed.
-Definition pos1 := Ordinal u1lt.
+Definition pos1 := Ordinal pos1_subproof.
 
 Lemma tnth_pos0 : tnth (in_tuple x) pos0 = l0.
 Proof using.
@@ -705,11 +707,11 @@ Notation posa := (Swap.pos1 u (c :: v) b a).
 Notation swap := (@Swap.swap _ u (c :: v) b a).
 Notation swap_set := (Swap.swap_set u (c :: v) b a).
 
-Lemma u2lt : (size u).+2 < size x.
+Lemma posc_subproof : (size u).+2 < size x.
 Proof using a b c v.
 by rewrite /= size_cat /= 2!addnS 2!ltnS -{1}[size u]addn0 ltn_add2l.
 Qed.
-Definition posc := Ordinal u2lt.
+Definition posc := Ordinal posc_subproof.
 
 Lemma tnth_posc : tnth (in_tuple x) posc = c.
 Proof using a b u v.
@@ -764,7 +766,7 @@ apply/setP => /(_ posa); rewrite in_set0 in_setI Hi.
 by rewrite Hposa.
 Qed.
 
-Lemma extract_swap_set T :
+Lemma sorted_extract_swap_set T :
   T != swap_set S -> T \in Qbnotin -> sorted R (extract (in_tuple x) T).
 Proof using HS HbNin Hposa Px.
 move/inPQE => /[apply] HT; move: Px => /and3P[_ _ /forallP/(_ T)].
@@ -782,9 +784,8 @@ rewrite (_ : setI _ _ = S :&: [set j : 'I_(size x) | j < size u]); first last.
   rewrite -!setIdE -setP => i; rewrite !inE.
   case: (ltnP i (size u)) => Hi; first by rewrite (ltn_trans Hi).
   case: (ltnP i (size u).+1) => Hi2; last by rewrite andbF.
-  have -> : i = posb.
-    by apply: val_inj => /=; apply/eqP; rewrite eqn_leq Hi andbT -ltnS.
-  by rewrite posbinSF.
+  suff-> : i = posb by rewrite posbinSF.
+  by apply/val_inj/anti_leq; rewrite /= Hi andbT -ltnS.
 congr (_ ++ _ :: _).
 set LS := (setI _ _); have HposcLS : posc \in LS.
   by rewrite /LS !inE /=; apply/andP; split.
@@ -826,7 +827,7 @@ have -> : LS :&: [set j : 'I_(size x) | j < (size u).+2] = set0.
   case: (ltnP (size u) i) => Hi; last by rewrite andbF.
   case: (ltnP i (size u).+2) => Hi2; last by rewrite andbF.
   rewrite (_ : i = posa); first last.
-    by apply: val_inj => /=; apply/eqP; rewrite eqn_leq Hi andbT -ltnS.
+    by apply/val_inj/anti_leq; rewrite /= Hi andbT -ltnS.
   rewrite -Swap.swap0 mem_imset //=; last exact: Swap.swap_inj.
   by rewrite posbinSF.
 have /= -> := extract0 (in_tuple x); rewrite cat0s.
@@ -838,7 +839,7 @@ rewrite andbT; congr (_ && _).
 exact: (ltn_trans (ltn_trans (ltnSn _) (ltnSn _)) Hi).
 Qed.
 
-Lemma extract_swap_set_S : sorted R (extract (in_tuple x) (swap_set S)).
+Lemma sorted_extract_swap_set_S : sorted R (extract (in_tuple x) (swap_set S)).
 Proof using HRabc HS HbNin Hposa Hposc Px.
 rewrite extract_swap_setSE.
 have : sorted R (extract (in_tuple x) S).
@@ -864,8 +865,8 @@ apply/and3P; split.
   exact HtrivP.
 - apply/forallP => T2; apply/implyP => /imsetP[T HT ->{T2}].
   case/altP: (T =P S) => Heq.
-  + subst T; exact: extract_swap_set_S.
-  + apply: extract_swap_set.
+  + subst T; exact: sorted_extract_swap_set_S.
+  + apply: sorted_extract_swap_set.
     * move: Heq; apply: contra => /eqP H; apply/eqP; exact: Swap.swap_set_inj.
     * by rewrite /Qbnotin mem_imset; last exact: Swap.swap_set_inj.
 Qed.
@@ -887,7 +888,7 @@ End BNotIn.
 
 (** *** Case where [b] is in [cover P]
 
-We assume that is is in a set [T] and switch the right part of [S] and [T]
+We assume that it is in a set [T] and switch the right part of [S] and [T]
  *)
 Section BIn.
 
@@ -963,11 +964,11 @@ apply/setP/subset_eqP/andP; split; apply/subsetP=> i; rewrite !inE.
     case: (ltnP (size u).+2 i) => //= Hi2.
     case: (ltnP (size u).+1 i) => Hi1.
     * have Htmp : i = posc.
-        by apply: val_inj => /=; apply/eqP; rewrite eqn_leq Hi2 Hi1.
+        by apply/val_inj/anti_leq; rewrite /= Hi2 Hi1.
       subst i => {Hi1 Hi2 Hiu}.
       by move/(_ posc): Hdisj; rewrite in_set0 in_setI Hi Hposc.
     * have Htmp : i = posa.
-        by apply: val_inj => /=; apply/eqP; rewrite eqn_leq Hiu Hi1.
+        by apply/val_inj/anti_leq; rewrite /= Hiu Hi1.
       subst i => {Hi1 Hi2 Hiu}.
       by move/(_ posa): Hdisj; rewrite in_set0 in_setI Hi Hposa.
 Qed.
@@ -1151,16 +1152,16 @@ congr (_ ++ _ ++ (extract (in_tuple x) _)).
     have:= TS_disjoint => /disjoint_setI0; apply/setP => Hdisj.
     case: (ltnP (size u).+1 i) => Hi2.
     * have Htmp : i = posc.
-        by apply: val_inj => /=; apply/eqP; rewrite eqn_leq Hi2 Hi1.
+        by apply/val_inj/anti_leq; rewrite /= Hi2 Hi1.
       subst i => {Hi1 H2 Hi2}.
       by move/(_ posc): Hdisj; rewrite in_set0 in_setI Hi Hposc.
     * have Htmp : i = posa.
-        by apply: val_inj => /=; apply/eqP; rewrite eqn_leq Hi2 H2.
+        by apply/val_inj/anti_leq; rewrite /= Hi2 H2.
       subst i => {Hi1 H2 Hi2}.
       by move/(_ posa): Hdisj; rewrite in_set0 in_setI Hi Hposa.
 Qed.
 
-Lemma extract_S1 : sorted R (extract (in_tuple x) S1).
+Lemma sorted_extract_S1 : sorted R (extract (in_tuple x) S1).
 Proof using HRabc HS HT Hposa Hposb Hposc Px.
 move: Px => /and3P[_ _ /forallP Hall].
 rewrite extract_S1E; set lL := (X in X ++ _); set lR := (X in _ ++ X).
@@ -1179,7 +1180,7 @@ have:= sorted_extract_cond (Rtrans HRabc) [set j : 'I_(size x) | j >= posb] Hseq
 by rewrite extract_bT -/lR HlR /= => /andP[-> _].
 Qed.
 
-Lemma extract_T1 : sorted R (extract (in_tuple x) T1).
+Lemma sorted_extract_T1 : sorted R (extract (in_tuple x) T1).
 Proof using HRabc HS HT Hposb Hposc Px.
 move: Px => /and3P[_ _ /forallP Hall].
 rewrite extract_T1E; set lL := (X in X ++ _); set lR := (X in _ ++ X).
@@ -1208,8 +1209,8 @@ rewrite /Qbin; apply/and3P; split.
   by apply: (leq_trans (leq_card_setU _ _)); rewrite !cards1.
 - exact: trivIset_Qbin.
 - apply/forallP => U; apply/implyP; rewrite !inE => /orP[]; first move => /orP[].
-  + by move/eqP => H; subst U; exact: extract_S1.
-  + by move/eqP => H; subst U; exact: extract_T1.
+  + by move/eqP => H; subst U; exact: sorted_extract_S1.
+  + by move/eqP => H; subst U; exact: sorted_extract_T1.
   + by rewrite negb_or => /andP[_ HU]; have := HallP U; rewrite HU /=.
 Qed.
 
@@ -1299,7 +1300,7 @@ Lemma ksuppRow_inj_plact1i :
   v2 \in plact1i v1 -> ksupp_inj <=%O <=%O k (u ++ v1 ++ w) (u ++ v2 ++ w).
 Proof using.
 move/plact1iP => [a] [b] [c] [Hord -> ->].
-rewrite /ksupp_inj  => S1 Hsupp.
+rewrite /ksupp_inj => S1 Hsupp.
 pose posa := (Swap.pos0 u (b :: w) c a).
 pose posc := (Swap.pos1 u (b :: w) c a).
 case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
@@ -1314,7 +1315,7 @@ case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
     by rewrite HSb orbT.
   have /extract2 -> : posa < posc by [].
   rewrite !(tnth_nth b) /= andbT.
-  elim u => [| u0 u'] //=.
+  rewrite !nth_cat !ltnNge leqnn leqnSn /= subnn subSnn /=.
   move: Hord => /andP[/le_lt_trans /[apply]].
   by rewrite leNgt => ->.
 - rewrite negb_exists => /forallP Hall.
@@ -1400,10 +1401,9 @@ case (boolP [exists S, [&& S \in S1, posa \in S & posc \in S] ]).
     by rewrite HSb orbT.
   have /extract2 -> : posa < posc by [].
   rewrite !(tnth_nth b) /= andbT.
-  elim u => [| u0 u'] /=.
-  + move: Hord => /andP[/le_lt_trans /[apply] /ltW].
-    by rewrite leNgt => /negbTE ->.
-  + by apply.
+  rewrite !nth_cat !ltnNge leqnn leqnSn /= subnn subSnn /=.
+  move: Hord => /andP[/le_lt_trans /[apply]] /ltW.
+  by rewrite leNgt => /negbTE ->.
 - rewrite negb_exists => /forallP Hall.
   exists (NoSetContainingBoth.Q S1);
     rewrite NoSetContainingBoth.size_cover_Q /=.
@@ -1443,7 +1443,7 @@ case (boolP [exists S, [&& S \in P, posa \in S & posc \in S] ]).
     apply: imset_f.
     suff -> /= : cast_ord (esym (congr1 size Hbca)) pos1 = posa by [].
     by apply: val_inj; rewrite /= size_cat /= addn1.
-  set pos2 := Ordinal (SetContainingBothLeft.u2lt u w c b a).
+  set pos2 := Ordinal (SetContainingBothLeft.posc_subproof u w c b a).
   have {posc HSc} Hpos2 : pos2 \in S'.
     rewrite -(cast_ordKV (congr1 size Hbca) pos2) -HcastS /cast_set /=.
     apply: imset_f.
@@ -1524,7 +1524,7 @@ Lemma Greene_row_invar_plact1 u v1 w v2 k :
   v2 \in plact1 v1 ->
   Greene_row (u ++ v1 ++ w) k = Greene_row (u ++ v2 ++ w) k.
 Proof using.
-move=> H; apply/eqP; rewrite eqn_leq; apply/andP; split.
+move=> H; apply/anti_leq/andP; split.
 - exact: Greene_row_leq_plact1.
 - by apply: Greene_row_leq_plact1i; rewrite -plact1I.
 Qed.
@@ -1540,7 +1540,7 @@ Lemma Greene_row_invar_plact2 u v1 w v2 k :
   v2 \in plact2 v1 ->
   Greene_row (u ++ v1 ++ w) k = Greene_row (u ++ v2 ++ w) k.
 Proof using.
-move=> H; apply/eqP; rewrite eqn_leq; apply/andP; split.
+move=> H; apply/anti_leq/andP; split.
 - exact: Greene_row_leq_plact2.
 - by apply: Greene_row_leq_plact2i; rewrite -plact2I.
 Qed.
@@ -1556,7 +1556,7 @@ Lemma Greene_col_invar_plact1 u v1 w v2 k :
   v2 \in plact1 v1 ->
   Greene_col (u ++ v1 ++ w) k = Greene_col (u ++ v2 ++ w) k.
 Proof using.
-move=> H; apply/eqP; rewrite eqn_leq; apply/andP; split.
+move=> H; apply/anti_leq/andP; split.
 - exact: Greene_col_leq_plact1.
 - by apply: Greene_col_leq_plact1i; rewrite -plact1I.
 Qed.
@@ -1572,7 +1572,7 @@ Lemma Greene_col_invar_plact2 u v1 w v2 k :
   v2 \in plact2 v1 ->
   Greene_col (u ++ v1 ++ w) k = Greene_col (u ++ v2 ++ w) k.
 Proof using.
-move=> H; apply/eqP; rewrite eqn_leq; apply/andP; split.
+move=> H; apply/anti_leq/andP; split.
 - exact: Greene_col_leq_plact2.
 - by apply: Greene_col_leq_plact2i; rewrite -plact2I.
 Qed.
@@ -1600,8 +1600,8 @@ Implicit Type u v w r : word.
 Theorem Greene_row_invar_plactic u v :
   u =Pl v -> forall k, Greene_row u k = Greene_row v k.
 Proof using.
-move=> Hpl k.
-move: v Hpl; apply: gencongr_ind; first exact: erefl.
+move=> /[swap] k.
+move: v; apply: gencongr_ind; first exact: erefl.
 move=> a b1 c b2 -> {u} /plactruleP[].
 - exact: Greene_row_invar_plact1.
 - exact: Greene_row_invar_plact1i.
@@ -1726,10 +1726,7 @@ Context d {Alph : inhOrderType d}.
 Implicit Type s : seq Alph.
 
 Corollary shape_RS_revdual s : shape (RS (revdual s)) = shape (RS s).
-Proof.
-apply: Greene_row_eq_shape_RS => k.
-by rewrite -Greene_row_dual.
-Qed.
+Proof. by apply: Greene_row_eq_shape_RS => k; rewrite -Greene_row_dual. Qed.
 
 Theorem RS_rev_uniq s : uniq s -> RS (rev s) = conj_tab (RS s).
 Proof using.

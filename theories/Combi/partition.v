@@ -760,9 +760,7 @@ Proof.
 move=> Hpart.
 case: c => //= c _.
 rewrite (conj_leqE Hpart) (conj_ltnE Hpart) /=.
-apply/idP/idP.
-- by move/eqP ->; rewrite !leqnn.
-- by move=> H; apply/eqP; exact: anti_leq.
+by apply/idP/idP => [/eqP ->|]; rewrite ?leqnn // -eqn_leq.
 Qed.
 
 Lemma rem_corner_incr_first_n sh i :

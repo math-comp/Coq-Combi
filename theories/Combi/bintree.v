@@ -1456,8 +1456,7 @@ apply/idP/idP.
     suff -> : t1 = t2 by apply: le_refl.
     apply/val_inj/eqP => /=.
     have [Hsum2 Heq] := vctleq_sumn_right_sizes Hleq.
-    rewrite -Heq; apply/eqP/anti_leq.
-    by rewrite Hsum Hsum2.
+    by rewrite -Heq eqn_leq Hsum Hsum2.
   case: (t1 =P t2) => [-> | /eqP Hneq]; first by apply: le_refl.
   have [/= tt [Hrot Htleq]] := vctleq_rotation Hleq Hneq.
   have Hszt : size_tree tt == n by rewrite (size_rotations Hrot) bintreeszP.
