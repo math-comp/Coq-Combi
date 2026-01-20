@@ -68,7 +68,7 @@ the congruence transitive closure of rule. The main results here are
                    preserved along the rewriting rule holds for classes.      *)
 (******************************************************************************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From Stdlib Require Import Recdef.
 Require Import permcomp permuted multinomial vectNK.
 

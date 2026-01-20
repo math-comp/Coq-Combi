@@ -60,7 +60,7 @@ As a corollary we provide the two Pieri rules [Pieri_rowpartn] and
 [Pieri_colpartn].
 *******************************************************************************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import ssralg.
 From mathcomp Require Import mpoly.
 

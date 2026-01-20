@@ -33,8 +33,7 @@ commute with the [fbfun] : [forall x, fbfun2 (fbbij x) = fbfun1 x].
 
 *)
 From Corelib Require Import Setoid.
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype finset.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype finset.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

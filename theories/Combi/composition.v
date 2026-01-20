@@ -48,7 +48,7 @@ Compositions and partitions:
                    [c : intcompn n]
 ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 Require Import tools combclass sorted partition subseq ordtype.
 
 Set Implicit Arguments.

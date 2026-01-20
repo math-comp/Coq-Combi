@@ -66,7 +66,7 @@ As a consequence two tableaux whose row readings have the same row (or column)
 Greene numbers have the same shape (this is Theorem [Greene_row_tab_eq_shape] and
 [Greene_col_tab_eq_shape]).
  ********************)
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import perm.
 
 Require Import sorted tools subseq partition tableau.

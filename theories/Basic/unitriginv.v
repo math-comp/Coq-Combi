@@ -30,8 +30,7 @@ therefore invertible. Moreover Lemma [Minv_unitrig] says that the inverse
 is unitriangular too.
  *******)
 From Corelib Require Import Setoid.
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat order.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat order.
 From mathcomp Require Import fintype bigop ssralg.
 From mathcomp Require Import finset fingroup perm matrix.
 

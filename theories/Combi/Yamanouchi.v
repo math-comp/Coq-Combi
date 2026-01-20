@@ -51,7 +51,7 @@ Sigma types for Yamanouchi words:
 
 ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 Require Import tools combclass partition.
 
 Set Implicit Arguments.

@@ -67,7 +67,7 @@ rotation trick: there is a (n+1) to 1 map from balanced words to Dyck words.
        have the same cardinality n+1.
  *********************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import div ssralg ssrint ssrnum binomial.
 Require Import tools combclass bintree.
 
@@ -730,7 +730,7 @@ apply/Dyck_wordP; rewrite height_take_leq; split => [n|].
     rewrite height_simpl take_takel; last exact: ltnW.
     move: Hbal1; rewrite -{1}(cat_take_drop pfminh w) height_simpl => /eqP.
     rewrite -subr_eq0 opprK [height _ + _]addrC -addrA addr_eq0 => /eqP ->.
-    rewrite addrC subr_ge0 lezD1.
+    rewrite [- _ + _]addrC subr_ge0 lezD1.
     by rewrite pfminhP pfminh_min.
 - have : height (rot pfminh w) = -1.
     by rewrite /rot height_cat addrC -height_cat cat_take_drop.

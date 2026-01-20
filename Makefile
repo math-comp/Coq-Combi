@@ -7,7 +7,7 @@
 ##         #     GNU Lesser General Public License Version 2.1          ##
 ##         #     (see LICENSE file for the text of the license)         ##
 ##########################################################################
-## GNUMakefile for Rocq 9.0.0
+## GNUMakefile for Rocq 9.0.1
 
 # For debugging purposes (must stay here, don't move below)
 INITIAL_VARS := $(.VARIABLES)
@@ -278,7 +278,7 @@ COQDOCLIBS?=$(COQLIBS_NOML)
 # generated this makefile
 # NB --print-version is not in the rocq shim
 COQ_VERSION:=$(shell $(ROCQ) c --print-version | cut -d " " -f 1)
-COQMAKEFILE_VERSION:=9.0.0
+COQMAKEFILE_VERSION:=9.0.1
 
 # COQ_SRC_SUBDIRS is for user-overriding, usually to add
 # `user-contrib/Foo` to the includes, we keep COQCORE_SRC_SUBDIRS for
@@ -682,8 +682,8 @@ clean::
 	$(HIDE)rm -f $(VOFILES)
 	$(HIDE)rm -f $(VOFILES:.vo=.vos)
 	$(HIDE)rm -f $(VOFILES:.vo=.vok)
-	$(HIDE)rm -f $(VOFILES:.vo=.v.prof.json)
-	$(HIDE)rm -f $(VOFILES:.vo=.v.prof.json.gz)
+	$(HIDE)rm -f $(VOFILES:.vo=.vo.prof.json)
+	$(HIDE)rm -f $(VOFILES:.vo=.vo.prof.json.gz)
 	$(HIDE)rm -f $(BEAUTYFILES) $(VFILES:=.old)
 	$(HIDE)rm -f all.ps all-gal.ps all.pdf all-gal.pdf all.glob all-mli.tex
 	$(HIDE)rm -f $(VFILES:.v=.glob)

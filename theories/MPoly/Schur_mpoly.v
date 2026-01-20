@@ -22,7 +22,7 @@
 We give some values for particular partition such as small one, rows and columns.
 ***********)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import ssralg.
 From mathcomp Require Import ssrcomplements freeg mpoly.
 
@@ -79,7 +79,7 @@ Qed.
 
 Lemma Schur_oversize d (sh : 'P_d) : (size sh > n)%N -> Schur sh = 0.
 Proof using.
-move=> Hn; apply big1 => t _; exfalso.
+move=> Hn; apply: big1 => t _; exfalso.
 have:= size_tabsh t; rewrite -(size_map size) -/(shape t) shape_tabsh.
 by move=> /(leq_trans Hn); rewrite ltnn.
 Qed.

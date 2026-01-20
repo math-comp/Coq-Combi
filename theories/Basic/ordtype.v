@@ -40,7 +40,7 @@ Cover relation:
                   [finPOrderType].
  ********)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From mathcomp Require Import order.
 Require Import tools.
 

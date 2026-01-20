@@ -61,9 +61,8 @@ Central functions:
 
 **********)
 From Corelib Require Import Setoid.
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun finset path bigop.
+From mathcomp Require Import ssreflect ssrfun ssrbool ssrnat eqtype choice fintype.
+From mathcomp Require Import seq tuple finfun finset path bigop.
 From mathcomp Require Import fingroup perm action.
 From mathcomp Require Import ssralg matrix mxalgebra algC classfun.
 

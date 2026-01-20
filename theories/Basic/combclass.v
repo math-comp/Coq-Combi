@@ -22,7 +22,7 @@ ways, three from a list (see [sub_subFinType], [sub_uniq_subFinType] and
 constructed subfintypes (see [union_subFinType] below).  *)
 
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 Require Import tools.
 
 Set Implicit Arguments.

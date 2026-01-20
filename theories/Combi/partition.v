@@ -114,7 +114,7 @@ Relation with set partitions:
                the sorted list of the cardinalities of the parts
 ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import div ssralg ssrint ssrnum binomial.
 Require Import tools combclass sorted ordtype.
 

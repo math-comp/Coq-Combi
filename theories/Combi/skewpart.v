@@ -58,7 +58,7 @@ Textbook definition of ribbon:
 
 ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 Require Import tools sorted partition.
 
 Set Implicit Arguments.

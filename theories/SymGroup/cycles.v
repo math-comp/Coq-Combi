@@ -36,8 +36,7 @@ the unique decomposition of [s] into disjoint cycles:
 **)
 
 From Corelib Require Import Setoid.
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple path bigop finset div.
 From mathcomp Require Import fingroup perm action ssralg.
 From mathcomp Require finmodule.

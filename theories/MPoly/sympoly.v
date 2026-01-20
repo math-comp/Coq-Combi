@@ -85,7 +85,7 @@ and [cnvar_symm].
 
  ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import ssralg ssrint fingroup perm.
 From mathcomp Require Import ssrcomplements freeg mpoly.
 
@@ -175,11 +175,11 @@ Proof. by []. Qed.
 HB.instance Definition _ :=
   GRing.isLinear.Build
     R {sympoly R[n]} {mpoly R[n]} _ _ sympol_is_linear.
-Fact sympol_is_multiplicative : multiplicative (@sympol n R).
+Fact sympol_is_monoid_morphism : monoid_morphism (@sympol n R).
 Proof. by []. Qed.
 HB.instance Definition _ :=
-  GRing.isMultiplicative.Build
-    {sympoly R[n]} {mpoly R[n]} _ sympol_is_multiplicative.
+  GRing.isMonoidMorphism.Build
+    {sympoly R[n]} {mpoly R[n]} _ sympol_is_monoid_morphism.
 
 Lemma sympolP (x : {sympoly R[n]}) : sympol x \is symmetric.
 Proof. by case: x. Qed.
@@ -371,7 +371,7 @@ case: (boolP (m \in msupp p)) => [minsupp | mninsupp].
   exfalso; apply: neq; apply: dominant_eq => //.
   by rewrite -{}Hperm partm_permK.
 - rewrite (memN_msupp_eq0 mninsupp); symmetry.
-  rewrite big_seq_cond; apply big1 => /= m' /andP[Hsupp Hdom].
+  rewrite big_seq_cond; apply: big1 => /= m' /andP[Hsupp Hdom].
   rewrite mcoeffZ (mcoeff_symm _ (size_partm _)) partmK //.
   suff -> : perm_eq m' m = false by rewrite mulr0.
   apply/negP => Hperm; move: mninsupp.
@@ -409,7 +409,7 @@ over. rewrite /=.
 transitivity (\sum_(m <- [seq mpart i | i : 'P_d ] | m \in msupp f)
                f@_m *: sympol ('m[partm m])); first last.
   by rewrite big_map big_enum_cond.
-rewrite -big_filter -[RHS]big_filter; apply perm_big; apply uniq_perm.
+rewrite -big_filter -[RHS]big_filter; apply: perm_big; apply uniq_perm.
 - by apply filter_uniq; apply msupp_uniq.
 - rewrite filter_map map_inj_in_uniq; first by apply filter_uniq; apply enum_uniq.
   move=> /= c1 c2; rewrite !mem_filter /= => /andP[Hc1 _] /andP[Hc2 _].
@@ -838,17 +838,17 @@ Qed.
 Definition map_sympoly (f : {sympoly R[n]}) : {sympoly S[n]} :=
            SymPoly (map_mpoly_issym f).
 
-Fact map_sympoly_is_additive : additive map_sympoly.
+Fact map_sympoly_is_zmod_morphism : zmod_morphism map_sympoly.
 Proof. by move=> i j /=; apply val_inj; rewrite /= rmorphB. Qed.
 HB.instance Definition _ :=
-  GRing.isAdditive.Build {sympoly R[n]} {sympoly S[n]}
-    _ map_sympoly_is_additive.
+  GRing.isZmodMorphism.Build {sympoly R[n]} {sympoly S[n]}
+    _ map_sympoly_is_zmod_morphism.
 
-Fact map_sympoly_is_multiplicative : multiplicative map_sympoly.
-Proof. by split=> [i j|]; apply val_inj; rewrite /= ?rmorphM ?rmorph1. Qed.
+Fact map_sympoly_is_monoid_morphism : monoid_morphism map_sympoly.
+Proof. by split=> [|i j]; apply val_inj; rewrite /= ?rmorphM ?rmorph1. Qed.
 HB.instance Definition _ :=
-  GRing.isMultiplicative.Build {sympoly R[n]} {sympoly S[n]}
-    _ map_sympoly_is_multiplicative.
+  GRing.isMonoidMorphism.Build {sympoly R[n]} {sympoly S[n]}
+    _ map_sympoly_is_monoid_morphism.
 
 Lemma map_sympoly_is_scalable : scalable_for (mor \; *:%R) map_sympoly.
 Proof.
@@ -1514,7 +1514,7 @@ Proof.
 rewrite /Kostka; apply val_inj; rewrite /= linear_sum /=.
 apply mpolyP => m; rewrite Kostka_Coeff linear_sum /=.
 case/altP: (mdeg m =P sumn la) => Heq; first last.
-- rewrite (KostkaMon_sumeval Heq); symmetry; apply big1 => i _.
+- rewrite (KostkaMon_sumeval Heq); symmetry; apply: big1 => i _.
   rewrite mcoeffZ.
   case: (leqP (size i) n.+1) => [Hszl | /symm_oversize ->]; first last.
     by rewrite mcoeff0 mulr0.
@@ -1941,7 +1941,7 @@ pose headcomp c := Ordinal (head_intcompn c).
 rewrite (partition_big headcomp xpredT) //=.
 under eq_bigr do under eq_bigl do rewrite -val_eqE /=.
 rewrite (bigID (fun j => val j \in l)) /= [X in _ + X]big1 ?addr0; first last.
-  move=> i Hi; apply big1 => [] [[|c0 c]/= _ /andP[Hperm /eqP Hhead]]; exfalso.
+  move=> i Hi; apply: big1 => [] [[|c0 c]/= _ /andP[Hperm /eqP Hhead]]; exfalso.
   - by move/perm_sumn: Hperm; rewrite /= Hsum Hm.
   - subst c0; move/perm_mem: Hperm Hi => /(_ i).
     by rewrite inE eq_refl /= => ->.
@@ -2088,19 +2088,19 @@ HB.instance Definition _ :=
   GRing.isLinear.Build
     R {sympoly R[m]} {mpoly R[m]} _ _ sympolyf_is_linear.
 
-Fact sympolyf_is_multiplicative : multiplicative sympolyf.
+Fact sympolyf_is_monoid_morphism : monoid_morphism sympolyf.
 Proof.
 rewrite /sympolyf; split.
+- case: (SF 1) => [p1 [Hp1 _]].
+  by apply msym_fundamental_un; rewrite Hp1 comp_mpoly1.
 - move=> u v.
   case: (SF (u * v)) (SF u) (SF v) => [puv [Hpuv _]] [pu [Hpu _]] [pv [Hpv _]].
   apply msym_fundamental_un.
   by rewrite [RHS]rmorphM /= -/(pu \mPo _) -/(pv \mPo _) Hpu Hpv Hpuv.
-- case: (SF 1) => [p1 [Hp1 _]].
-  by apply msym_fundamental_un; rewrite Hp1 comp_mpoly1.
 Qed.
 HB.instance Definition _ :=
-  GRing.isMultiplicative.Build
-    {sympoly R[m]} {mpoly R[m]} _ sympolyf_is_multiplicative.
+  GRing.isMonoidMorphism.Build
+    {sympoly R[m]} {mpoly R[m]} _ sympolyf_is_monoid_morphism.
 
 
 (** ** Fundamental theorem of symmetric polynomials *)
@@ -2138,15 +2138,15 @@ HB.instance Definition _ :=
   GRing.isLinear.Build
     R {mpoly R[m]} {sympoly R[m]} _ _ esympolyf_eval_is_linear.
 
-Fact esympolyf_eval_is_multiplicative : multiplicative sympolyf_eval.
+Fact esympolyf_eval_is_monoid_morphism : monoid_morphism sympolyf_eval.
 Proof.
 rewrite /sympolyf_eval; split.
-- by move=> u v; apply val_inj; rewrite /= !rmorphM.
 - by apply val_inj; rewrite /= !rmorph1.
+- by move=> u v; apply val_inj; rewrite /= !rmorphM.
 Qed.
 HB.instance Definition _ :=
-  GRing.isMultiplicative.Build
-    {mpoly R[m]} {sympoly R[m]} _ esympolyf_eval_is_multiplicative.
+  GRing.isMonoidMorphism.Build
+    {mpoly R[m]} {sympoly R[m]} _ esympolyf_eval_is_monoid_morphism.
 
 Lemma sympolyf_evalX (i : 'I_m) : sympolyf_eval 'X_i = 'e_i.+1.
 Proof.
@@ -2186,15 +2186,15 @@ HB.instance Definition _ :=
   GRing.isLinear.Build
     R {sympoly R[n]} {sympoly R[n]} _ _ omegasf_is_linear.
 
-Fact omegasf_is_multiplicative : multiplicative omegasf.
+Fact omegasf_is_monoid_morphism : monoid_morphism omegasf.
 Proof.
 rewrite /omegasf; split.
-- by move=> u v; apply val_inj; rewrite /= !rmorphM.
 - by apply val_inj; by rewrite /= !rmorph1.
+- by move=> u v; apply val_inj; rewrite /= !rmorphM.
 Qed.
 HB.instance Definition _ :=
-  GRing.isMultiplicative.Build
-    {sympoly R[n]} {sympoly R[n]} _ omegasf_is_multiplicative.
+  GRing.isMonoidMorphism.Build
+    {sympoly R[n]} {sympoly R[n]} _ omegasf_is_monoid_morphism.
 
 Lemma omegasf_syme i : i <= n -> omegasf 'e_i = 'h_i.
 Proof.
@@ -2397,15 +2397,15 @@ HB.instance Definition _ :=
   GRing.isLinear.Build
     R {sympoly R[m]} {sympoly R[n]} _ _ cnvarsym_is_linear.
 
-Fact cnvarsym_is_multiplicative : multiplicative cnvarsym.
+Fact cnvarsym_is_monoid_morphism : monoid_morphism cnvarsym.
 Proof.
 rewrite /cnvarsym; split.
-- by move=> u v; apply val_inj; rewrite /= !rmorphM.
 - by apply val_inj; rewrite /= /comp_mpoly !rmorph1.
+- by move=> u v; apply val_inj; rewrite /= !rmorphM.
 Qed.
 HB.instance Definition _ :=
-  GRing.isMultiplicative.Build
-    {sympoly R[m]} {sympoly R[n]} _ cnvarsym_is_multiplicative.
+  GRing.isMonoidMorphism.Build
+    {sympoly R[m]} {sympoly R[n]} _ cnvarsym_is_monoid_morphism.
 
 Lemma cnvar_leq_symeE i : i <= m -> cnvarsym 'e_i = 'e_i.
 Proof.
@@ -2446,8 +2446,9 @@ have [b/ltnW] := ubnP i; elim: b i => [| i IHi] d.
 rewrite leq_eqVlt => /orP[/eqP ->{d} | ] Hi; last exact: IHi.
 have:= Newton_symh m0 R i.+2 => /(congr1 cnvarsym).
 rewrite linearZ /= cnvar_symh // Newton_symh.
-rewrite big_ltn // symh0 mul1r subn0 => /esym.
-rewrite linear_sum big_ltn //= rmorphM /= symh0 rmorph1 mul1r subn0.
+rewrite big_ltn // symh0 mul1r subn0.
+rewrite [X in X = _ -> _]big_ltn //= symh0 mul1r subn0 => /esym.
+rewrite raddfD /= raddf_sum /=.
 suff -> : \sum_(1 <= j < i.+2) cnvarsym ('h_j * 'p_(i.+2 - j)) =
           \sum_(1 <= j < i.+2) 'h_j * 'p_(i.+2 - j).
   by apply: addIr.

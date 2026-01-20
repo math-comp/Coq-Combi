@@ -81,7 +81,7 @@ t.]
                                                                               *)
 (******************************************************************************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import perm fingroup.
 Require Import tools combclass partition Yamanouchi ordtype std tableau.
 

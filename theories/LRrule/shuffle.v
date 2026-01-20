@@ -61,9 +61,8 @@ skew tableaux.
 *************************)
 
 From Corelib Require Import Setoid.
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice.
-From mathcomp Require Import order seq tuple finset perm binomial bigop.
+From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice.
+From mathcomp Require Import order seq tuple finfun finset perm binomial bigop.
 Require Import tools vectNK subseq partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted plactic Greene_inv stdplact.
 

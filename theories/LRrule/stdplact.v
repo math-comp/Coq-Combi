@@ -30,7 +30,7 @@ And finally, inverting a standard word amount to exchange the insertion and
 the recording tableaux: Theorem [invseqRSPQE], and Corollaries [invseqRSE],
 [invstdRSE], [RSTabmapstdE] and [RSinvstdE].
  *************)
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import perm fingroup.
 
 Require Import tools combclass ordcast partition Yamanouchi ordtype std tableau.

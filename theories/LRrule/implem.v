@@ -27,7 +27,7 @@ The following lemma assert that LRcoeff agrees with LRyamtab_list
     size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.]
 
 ******************************************************************************)
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import ssralg.
 From mathcomp Require Import mpoly.
 

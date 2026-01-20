@@ -46,7 +46,7 @@ We provide the following definitions:
                the skew shape [la / nu] with content [mu], defined recursively.
  ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From mathcomp Require Import ssralg ssrint perm fingroup tuple vector rat.
 From mathcomp Require Import ssrcomplements freeg mpoly monalg.
 
@@ -333,7 +333,7 @@ rewrite big_cons {}IHla; first last.
 under [RHS]eq_bigr do rewrite MN_coeff_consE.
 rewrite mulr_sumr.
 have {Hall} l0n0 : l0 != 0%N by apply: Hall; rewrite inE eqxx.
-under eq_bigr do rewrite mulrC -scalerAl syms_sympM // scaler_sumr.
+under [LHS]eq_bigr do rewrite mulrC -scalerAl syms_sympM // scaler_sumr.
 rewrite (exchange_big_dep xpredT) //=; apply: eq_bigr => mu _.
 rewrite scaler_suml; apply eq_bigr => nu _.
 by rewrite scalerA.

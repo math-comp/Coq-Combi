@@ -46,7 +46,7 @@ The main results are the Vandermonde determinant expansion:
 
 *******************************************************************************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import ssralg ssrint fingroup perm zmodp binomial.
 From mathcomp Require Import ssrcomplements freeg mpoly.
 

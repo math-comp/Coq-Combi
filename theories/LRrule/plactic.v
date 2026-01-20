@@ -57,7 +57,7 @@ Lemma [plact_map_in_incr].
 
 *****************)
 
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import perm.
 Require Import tools partition ordtype tableau stdtab Schensted congr.
 

@@ -127,7 +127,7 @@ We conclude by the main results:
   tableau.
 
  ****************)
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import perm.
 Require Import tools ordcast ordtype subseq partition tableau Yamanouchi stdtab.
 Require Import Schensted congr plactic Greene.

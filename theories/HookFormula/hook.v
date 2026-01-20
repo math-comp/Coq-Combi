@@ -79,7 +79,7 @@ Theorem HookLengthFormula (p : intpart) :
 
 Require Import Misc Ccpo.
 Set Warnings "-hiding-delimiting-key".
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From mathcomp Require Import ssrint div rat ssralg ssrnum.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 

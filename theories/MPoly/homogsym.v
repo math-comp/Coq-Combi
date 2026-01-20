@@ -56,7 +56,8 @@ Changing the base ring and the number of variables:
                      [mnmwgt m = d]
 
 - [map_homsym mor f] == change the base ring of the hom. sym. poly [f] using
-                     the ring morphism [mor]. This is canonically additive.
+                     the ring morphism [mor].
+                     This is canonically a zmodule morphism.
 - [cnvarhomsym n f] == change the number of variables of the hom. sym. poly
                      [f] by sending elementary to elementary. This is
                      canonically linear.
@@ -74,7 +75,7 @@ characteristic of the base ring is zero for [symbp_basis]), and the definition
 of the scalar product.
  ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From mathcomp Require Import ssralg matrix vector ssrnum algC archimedean.
 From mathcomp Require Import sesquilinear.
 From mathcomp Require Import fingroup perm.
@@ -116,9 +117,9 @@ Reserved Notation "''hs'" (at level 8, format "''hs'").
 Reserved Notation "p *h q" (at level 20, format "p  *h  q").
 
 Reserved Notation "'[ p | q ]"
-  (at level 2, format "'[hv' ''[' p  | '/ '  q ] ']'").
+  (at level 0, format "'[hv' ''[' p  | '/ '  q ] ']'").
 Reserved Notation "'[ p | q ] _( R , n )"
-  (at level 2, format "'[hv' ''[' p  | '/ '  q ] ']' '_(' R ,  n )").
+  (at level 0, format "'[hv' ''[' p  | '/ '  q ] ']' '_(' R ,  n )").
 
 Set Warnings "closed-notation-not-level-0".
 
@@ -704,11 +705,11 @@ by have /dhomogP/(_ _ Hm) := homsym_is_dhomog p.
 Qed.
 Definition map_homsym (p : HSFR) : HSFS := HomogSym (map_sympoly_d_homog p).
 
-Fact map_homsym_is_additive : additive map_homsym.
+Fact map_homsym_is_zmod_morphism : zmod_morphism map_homsym.
 Proof. by move=> /= p q; apply val_inj; rewrite /= rmorphB. Qed.
 HB.instance Definition _ :=
-  GRing.isAdditive.Build
-    {homsym R[n, d]} {homsym S[n, d]} _ map_homsym_is_additive.
+  GRing.isZmodMorphism.Build
+    {homsym R[n, d]} {homsym S[n, d]} _ map_homsym_is_zmod_morphism.
 
 Lemma map_homsym_is_scalable : scalable_for (mor \; *:%R) map_homsym.
 Proof. by move=> a /= p; apply val_inj; rewrite /= linearZ. Qed.
@@ -874,12 +875,12 @@ Lemma homsymdotC p q : '[p | q] = ('[q | p])^*.
 Proof.
 rewrite /homsymdot rmorph_sum /=.
 apply: eq_bigr=> x _.
-rewrite [in RHS]rmorphM [X in _ = X * _]rmorphM conjCK -!mulrA.
+rewrite [in RHS]rmorphM [X in _ = X * _]rmorphM /= conjCK -!mulrA.
 have /geC0_conj -> : 0 <= ((zcard (enum_val x))%:R : algC).
   by rewrite -nnegrE ?nnegrE ?ler01 ?ler0n ?oner_neq0.
 by congr (_ * _); rewrite mulrC.
 Qed.
-Fact homsymdot_is_bilinear : bilinear_for *%R (Num.conj_op \; *%R) homsymdot.
+Fact homsymdot_is_bilinear : bilinear_for *%R (Num.conj \; *%R) homsymdot.
 Proof.
 have lin r p u v : '[r *: u + v | p] = r * '[u | p] + '[v | p].
   rewrite !homsymdotE mulr_sumr /= -big_split; apply: eq_bigr => x _ /=.
@@ -889,7 +890,7 @@ split => /= p r /= u v; first exact: lin.
 by rewrite !(homsymdotC p) lin rmorphD rmorphM.
 Qed.
 HB.instance Definition _ :=
-  bilinear_isBilinear.Build algC HSF HSF algC *%R (Num.conj_op \; *%R)
+  bilinear_isBilinear.Build algC HSF HSF algC *%R (Num.conj \; *%R)
     homsymdot homsymdot_is_bilinear.
 Notation "''[' u | v ]" := (homsymdot u v) : ring_scope.
 
@@ -897,7 +898,7 @@ Fact homsymdot_is_hermitian p q : '[p | q] = (-1) ^+ false * '[q | p]^*.
 Proof. by rewrite expr0 mul1r -homsymdotC. Qed.
 HB.instance Definition _ :=
   isHermitianSesquilinear.Build
-    algC HSF false Num.conj_op homsymdot homsymdot_is_hermitian.
+    algC HSF false Num.conj homsymdot homsymdot_is_hermitian.
 
 Lemma homsymdot0l p : '[0 | p] = 0.
 Proof. exact: linear0l. Qed.

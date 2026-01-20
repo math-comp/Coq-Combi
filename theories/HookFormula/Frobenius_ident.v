@@ -28,8 +28,7 @@ Theorem Frobenius_ident_rat n :
  ******)
 
 From Corelib Require Import Setoid.
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype choice ssrnat seq
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq
         ssrint div rat fintype finset bigop path ssralg ssrnum order.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 

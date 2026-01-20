@@ -104,7 +104,7 @@ The main result is thus [Theorem presentation_Sn_eltr]:
   ]
 ***************************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From mathcomp Require Import fingroup perm morphism presentation.
 From mathcomp Require Import ssralg poly ssrint.
 
@@ -723,7 +723,7 @@ Notation "''s_[' w ]" := (\prod_(i <- w) 's_i).
 
 Implicit Type s t : 'S_n.
 
-Lemma eltrV i : 's_i^-1 = 's_i. Proof. by rewrite tpermV. Qed.
+Lemma eltrV i : ('s_i)^-1 = 's_i. Proof. by rewrite tpermV. Qed.
 Lemma eltrK i : involutive 's_i. Proof. exact: tpermK. Qed.
 Lemma eltr2 i : 's_i * 's_i = 1. Proof. exact: tperm2. Qed.
 
@@ -1391,7 +1391,7 @@ Open Scope ring_scope.
 
 Corollary genfun_length n :
   \sum_(s : 'S_n) 'X^(length s) =
-  \prod_(0 <= i < n) \sum_(0 <= j < i.+1) 'X^j : {poly int}.
+  \prod_(0 <= i < n) \sum_(0 <= j < i.+1) 'X^j :> {poly int}.
 Proof.
 case: n => [|n].
   rewrite (big_pred1_id _ _ (i := 1%g)); first last.

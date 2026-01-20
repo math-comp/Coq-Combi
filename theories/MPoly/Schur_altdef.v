@@ -82,7 +82,7 @@ Then we define:
 Then [ext_tab] and [res_tab] are two inverse bijections.
 ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import ssralg ssrint fingroup perm.
 From mathcomp Require Import mpoly.
 

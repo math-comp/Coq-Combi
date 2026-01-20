@@ -123,7 +123,7 @@ Robinson-Schensted with standard recording tableau:
 Again, one has [Lemma bijRStab : bijective RStab.]
 **************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import perm fingroup.
 Require Import tools partition Yamanouchi ordtype subseq tableau std stdtab.
 

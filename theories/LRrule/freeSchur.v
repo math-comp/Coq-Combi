@@ -79,7 +79,7 @@ Invariance with the choice of Q1 and Q2:
 
 ****************************************************************************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import ssralg.
 From mathcomp Require Import ssrcomplements freeg mpoly.
 

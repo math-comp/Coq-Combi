@@ -29,7 +29,7 @@ In what follows [T] is a [finType] and [S : {set T}].
                      the one of P and Q.
  ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import div ssralg ssrint ssrnum binomial.
 Require Import tools combclass sorted ordtype partition.
 
