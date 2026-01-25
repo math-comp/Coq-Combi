@@ -1290,7 +1290,8 @@ Proof using.
 move => Hi; rewrite /= !extractmaskE tabcols_cons enumIsize_to_word /=.
 rewrite (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
 rewrite nth_enum_ord //= [X in mask _ X]to_word_cons.
-rewrite nth_ord_ltn map_cat mask_cat; last by rewrite 2!size_map size_enum_ord.
+rewrite (nth_ord_enum (Ordinal Hi) (Ordinal Hi)).
+rewrite map_cat mask_cat; last by rewrite 2!size_map size_enum_ord.
 rewrite -map_comp.
 set fr := (X in rcons (mask (map X _) _)).
 rewrite (eq_map (g := fr)); first last.
@@ -1320,7 +1321,8 @@ apply/setP/subset_eqP/andP; split; apply/subsetP => i.
   move/(mem_takeP set0) => [pos].
   rewrite size_map size_enum_ord leq_min => /andP[Hpos Hpos0] ->.
   rewrite (nth_map (Ordinal Hpos0)); last by rewrite size_enum_ord.
-  rewrite !inE lrshift_recF /= (mem_imset _ _ lshift_recP) nth_ord_ltn => Hi.
+  rewrite !inE lrshift_recF /= (mem_imset _ _ lshift_recP).
+  rewrite (nth_ord_enum (Ordinal Hpos0) (Ordinal Hpos0)) /= => Hi.
   apply/bigcupP; exists (nth set0 (tabcols t) (Ordinal Hpos0)); last exact Hi.
   rewrite inE; apply/(mem_takeP set0).
   exists pos; last by [].
@@ -1338,7 +1340,7 @@ apply/setP/subset_eqP/andP; split; apply/subsetP => i.
   + rewrite inE; apply/(mem_takeP set0).
     exists pos; first by rewrite size_map size_enum_ord leq_min Hpos.
     rewrite (nth_map (Ordinal Hpos0)); last by rewrite size_enum_ord.
-    by rewrite nth_ord_ltn.
+    by rewrite (nth_ord_enum (Ordinal Hpos0) (Ordinal Hpos0)).
   + by rewrite !inE lrshift_recF /=; apply/imsetP; exists i.
 Qed.
 

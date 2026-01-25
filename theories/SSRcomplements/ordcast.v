@@ -36,9 +36,6 @@ Proof.
 by subst m; rewrite /= (eq_map (g := id)) ?map_id // => i; apply: val_inj.
 Qed.
 
-Lemma nth_ord_ltn i n (H : i < n) x0 : nth x0 (enum 'I_n) i = (Ordinal H).
-Proof. by apply: val_inj => //=; rewrite nth_enum_ord. Qed.
-
 Section Casts.
 
 Lemma cast_map_cond (T: Type) n m (P : pred 'I_n) (F : 'I_n -> T) (H : m = n) :
