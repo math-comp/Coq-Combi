@@ -46,7 +46,7 @@ Bruhat Order:
 
 ***************************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import fingroup perm morphism presentation.
 From mathcomp Require Import ssralg matrix.
 
@@ -95,7 +95,7 @@ Qed.
 
 Section PermMX.
 
-Variable (R : semiRingType) (n : nat).
+Variable (R : nzSemiRingType) (n : nat).
 Implicit Type (s t : 'S_n).
 
 Lemma perm_mx_eq1 s : (@perm_mx R n s == 1%:M) = (s == 1).
@@ -110,7 +110,7 @@ Qed.
 Lemma perm_mx_inj : injective (@perm_mx R n).
 Proof.
 move=> s t /(congr1 (mulmx (perm_mx t^-1)))/eqP.
-rewrite -!perm_mxM mulVg perm_mx1 perm_mx_eq1 => /eqP/(congr1 (mulg t)).
+rewrite -!perm_mxM mulVg perm_mx1 perm_mx_eq1 => /eqP/(congr1 (mul t)).
 by rewrite mulgA mulgV mulg1 mul1g.
 Qed.
 
@@ -401,7 +401,7 @@ Qed.
 End PermMatrixSum.
 
 
-Fact Bruhat_display : unit. Proof. exact: tt. Qed.
+Fact Bruhat_display : Order.disp_t. Proof. by []. Qed.
 
 Module BruhatOrder.
 Section Def.
