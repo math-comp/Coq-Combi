@@ -458,6 +458,28 @@ Proof. by []. Qed.
 Goal MN_coeff_fast [:: 12; 5; 4; 2]%N [:: 6; 5; 5; 4; 2; 1]%N = 4%:R.
 Proof. by []. Qed.
 
+Local Open Scope int_scope.
+
+(*
+Let partn := rev (enum_partn 12).
+Eval native_compute in
+  [seq [seq MN_coeff_fast la mu | mu <- partn] | la <- partn].
+*)
+
+(* Character table of S_5
+see https://fr.wikipedia.org/wiki/Repr%C3%A9sentations_du_groupe_sym%C3%A9trique
+ *)
+Let partn := rev (enum_partn 5).
+Goal [seq [seq MN_coeff_fast la mu | mu <- partn] | la <- partn]
+ = [:: [:: 1; -1;  1;  1; -1; -1;  1];
+       [:: 4; -2;  1;  0;  0;  1; -1];
+       [:: 6;  0;  0; -2;  0;  0;  1];
+       [:: 5; -1; -1;  1;  1; -1;  0];
+       [:: 4;  2;  1;  0;  0; -1; -1];
+       [:: 5;  1; -1;  1; -1;  1;  0];
+       [:: 1;  1;  1;  1;  1;  1;  1]].
+Proof. by []. Qed.
+
 End Tests.
 
 
