@@ -84,6 +84,7 @@ From mathcomp Require Import ssrcomplements freeg mpoly.
 Require Import tools sorted ordtype permuted partition permcent.
 Require Import antisym Schur_mpoly Schur_altdef sympoly.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -259,7 +260,7 @@ exists (fun r : 'rV[R]_(#|b|) =>
 - move=> r /=; apply/matrixP=> i j.
   rewrite mxE !raddf_sum ord1 /= (bigD1 j) //=.
   rewrite !linearZ /= mcoeff_symm ?sztntht //.
-  rewrite perm_refl mulr1 big1 ?addr0 //.
+  rewrite perm_refl mulr1 big1 ?addr0 ?ord1 //.
   move=> k Hkj.
   rewrite !linearZ /= mcoeff_symm ?sztntht //.
   suff : ~~(perm_eq (mpart (n := n) (tnth t k)) (mpart (n := n) (tnth t j))).

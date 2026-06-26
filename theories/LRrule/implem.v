@@ -35,6 +35,7 @@ Require Import tools combclass partition Yamanouchi ordtype tableau.
 Require Import skewtab Schur_mpoly freeSchur therule.
 
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

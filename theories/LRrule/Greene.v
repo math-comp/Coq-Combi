@@ -72,6 +72,7 @@ From mathcomp Require Import perm.
 Require Import sorted tools subseq partition tableau.
 Require Import Schensted congr plactic ordcast.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

@@ -27,6 +27,7 @@ From Corelib Require Import Setoid.
 From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
 Require Import tools.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

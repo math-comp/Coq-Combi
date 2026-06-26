@@ -47,6 +47,7 @@ From HB Require Import structures.
 From mathcomp Require Import all_boot order.
 Require Import tools partition ordtype sorted.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

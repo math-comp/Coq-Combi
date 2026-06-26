@@ -36,6 +36,7 @@ From mathcomp Require Import finset fingroup perm matrix.
 
 Require ordtype.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

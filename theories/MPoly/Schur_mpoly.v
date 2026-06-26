@@ -29,6 +29,7 @@ From mathcomp Require Import ssrcomplements freeg mpoly.
 
 Require Import tools ordtype partition tableau.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
