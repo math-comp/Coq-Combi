@@ -43,6 +43,7 @@ From mathcomp Require Import tuple finfun finset path bigop order.
 Require Import tools partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted congr plactic Greene_inv stdplact.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

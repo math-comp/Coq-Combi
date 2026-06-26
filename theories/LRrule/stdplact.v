@@ -36,6 +36,7 @@ From mathcomp Require Import perm fingroup.
 Require Import tools combclass ordcast partition Yamanouchi ordtype std tableau.
 Require Import stdtab sorted Schensted congr plactic Greene Greene_inv.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

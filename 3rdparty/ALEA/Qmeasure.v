@@ -31,6 +31,8 @@ Import GRing.
 Import Order.Theory.
 Import Num.Theory.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+
 Delimit Scope order_scope with Omc.
 #[local] Open Scope O_scope.
 Delimit Scope O_scope with O.
@@ -939,7 +941,7 @@ congr *%R.
 rewrite -big_filter (bigD1_seq a) /=.
 - rewrite (eq_refl a) mulr1.
   transitivity (coeff d a + 0)%R; last by rewrite addr0.
-  congr +%R; apply big1 => i.
+  congr +%R; apply: big1 => i.
   by case (i == a); rewrite //= ?mulr0 ?addr0.
 - by rewrite mem_filter Hain Hap.
 - by rewrite filter_uniq.

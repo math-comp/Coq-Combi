@@ -90,6 +90,7 @@ Require Import tools combclass ordtype sorted partition tableau.
 Require Import skewpart skewtab antisym Schur_mpoly freeSchur therule.
 Require Import std stdtab unitriginv presentSn.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

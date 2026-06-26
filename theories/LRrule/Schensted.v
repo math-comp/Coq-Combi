@@ -127,6 +127,7 @@ From mathcomp Require Import all_boot order.
 From mathcomp Require Import perm fingroup.
 Require Import tools partition Yamanouchi ordtype subseq tableau std stdtab.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

@@ -30,6 +30,7 @@ From mathcomp Require Import tuple finfun finset bigop path order.
 
 Require Import partition tableau Schensted ordtype Greene Greene_inv.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

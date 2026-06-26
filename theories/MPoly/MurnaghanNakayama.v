@@ -48,11 +48,12 @@ We provide the following definitions:
 From HB Require Import structures.
 From mathcomp Require Import all_boot.
 From mathcomp Require Import ssralg ssrint perm fingroup tuple vector rat.
-From mathcomp Require Import ssrcomplements freeg mpoly monalg.
+From mathcomp Require Import ssrcomplements mpoly.
 
 Require Import sorted tools ordtype permuted partition skewpart.
 Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

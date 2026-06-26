@@ -66,6 +66,7 @@ From mathcomp Require Import order seq tuple finfun finset perm binomial bigop.
 Require Import tools vectNK subseq partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted plactic Greene_inv stdplact.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

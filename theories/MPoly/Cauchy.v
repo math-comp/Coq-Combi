@@ -59,6 +59,7 @@ Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym permcent.
 Require ordtype.
 
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -302,7 +303,7 @@ Qed.
 Lemma evalXY_homog d p : p \is d.-homog -> p(XY) \is d.-homog.
 Proof.
 move/pihomog_dE <-; rewrite pihomogE.
-rewrite rmorph_sum /=; apply rpred_sum => mon /eqP Hdeg.
+rewrite rmorph_sum /=; apply: rpred_sum => mon /eqP Hdeg.
 rewrite linearZ /= scale_polXYE; apply: rpredZ.
 rewrite evalXY_XE -rmorph_prod /= polyXY_scale /=; apply: rpredZ.
 by rewrite /polX_XY map_mpolyX dhomogX /= mdeg_monX Hdeg.
@@ -475,7 +476,7 @@ Qed.
 (** Unused lemma *)
 Lemma Cauchy_kernel_symmetric : Cauchy_kernel d \is symmetric.
 Proof.
-rewrite Cauchy_symm_symh; apply rpred_sum => la _.
+rewrite Cauchy_symm_symh; apply: rpred_sum => la _.
 by apply: rpredZ; apply sympolP.
 Qed.
 
@@ -702,4 +703,3 @@ by rewrite homsymdotss (inj_eq (injectiveP _ hs_uniq)).
 Qed.
 
 End Scalar.
-

@@ -93,6 +93,7 @@ Require Import sorted tools ordtype permuted partition skewpart composition.
 Require Import Yamanouchi std tableau stdtab skewtab permcent.
 Require Import antisym Schur_mpoly therule Schur_altdef unitriginv.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -271,7 +272,7 @@ Canonical symh d : {sympoly R[n]} := SymPoly (symh_sym d).
 Lemma mcoeff_symh d m : 'h_d@_m = (mdeg m == d)%:R.
 Proof. exact: mcoeff_symh_pol. Qed.
 Lemma symh_homog d : sympol 'h_d \is d.-homog.
-Proof using. by apply rpred_sum => m /eqP H; rewrite dhomogX /= H. Qed.
+Proof using. by apply: rpred_sum => m /eqP H; rewrite dhomogX /= H. Qed.
 
 
 (** ** Power sum symmetric polynomials *)
