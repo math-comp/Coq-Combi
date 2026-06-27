@@ -4,31 +4,50 @@
 ## but the full doc is on nixos / nix packages website:
 ## https://nixos.org/manual/nixpkgs/stable/#sec-language-coq
 
-{ lib, mkCoqDerivation, which, coq
-  , mathcomp-ssreflect, mathcomp-fingroup
-  , mathcomp-algebra, multinomials
-  , mathcomp-character, mathcomp-field, hierarchy-builder
+{
+  lib,
+  coq,
+  mkCoqDerivation,
+  mathcomp,
+  multinomials,
+  stdlib,
   ## declare extra dependencies here, to be used in propagateBuildInputs e.g.
   # , mathcomp, coq-elpi
-  , version ? null }:
+  version ? null,
+}:
 
-with lib; mkCoqDerivation {
-  pname = "coq-combi";
-  ## you can configure the domain, owner and repository, the default are:
-  # repo = "coq-combi";
-  # owner = "coq-community";
-  # domain = "github.com";
+let
+  derivation = mkCoqDerivation {
+    pname = "coq-combi";
+    repo = "Coq-Combi";
+    owner = "math-comp";
+    ## you can configure the domain, owner and repository, the default are:
+    # repo = "coq-combi";
+    # owner = "coq-community";
+    # domain = "github.com";
 
-  inherit version;
+    inherit version;
 ## The `defaultVersion` attribute is important for nixpkgs but can be kept unchanged
 ## for local usage since it will be ignored locally if
 ## - this derivation corresponds to the main attribute,
 ## - or its version is overridden (by a branch, PR, url or path) in `.nix/config.nix`.
-  defaultVersion = with versions; switch coq.coq-version [
-    ## Example of possible dependencies
-    # { case = range "8.13" "8.14"; out = "1.2.0"; }
-    ## other predicates are `isLe v`, `isLt v`, `isGe v`, `isGt v`, `isEq v` etc
-  ] null;
+    defaultVersion =
+      let
+        case = coq: mc: out: {
+          cases = [
+            coq
+            mc
+          ];
+          inherit out;
+        };
+      in
+      with lib.versions;
+      lib.switch
+        [ coq.version mathcomp.version ]
+        [
+          (case (range "9.0" "9.1") (isGe "2.5.0") "2.0.3")
+        ]
+        null;
 
   ## Declare existing releases
   ## leave sha256 empty at first and then copy paste
@@ -37,22 +56,30 @@ with lib; mkCoqDerivation {
   ## if the tag is not exactly the version number you can amend like this
   # release."1.1.1".rev = "v1.1.1";
   ## if a consistent scheme gives the tag from the release number, you can do like this:
-  # releaseRev = v: "v${v}";
+    release = {
+      "2.0.3".hash = "";
+    };
+    releaseRev = v: "v${v}";
 
   ## Add dependencies in here. In particular you can add
   ## - arbitrary nix packages (you need to require them at the beginning of the file)
   ## - Coq packages (require them at the beginning of the file)
   ## - OCaml packages (use `coq.ocamlPackages.xxx`, no need to require them at the beginning of the file)
-  propagatedBuildInputs =
-    [ mathcomp-ssreflect mathcomp-fingroup mathcomp-algebra multinomials
-      mathcomp-character mathcomp-field];
+    propagatedBuildInputs = [
+      mathcomp.character
+      multinomials
+      stdlib
+    ];
 
   ## Does the package contain OCaml code?
   # mlPlugin = false;
 
   ## Give some meta data
   ## This is needed for submitting the package to nixpkgs but not required for local use.
-  meta = {
+    meta = {
+      description = "Formalisation of (algebraic) combinatorics in Coq/MathComp.";
+      license = lib.licenses.gpl3Only;
+    };
     ## Describe your package in one sentence
     # description = "";
     ## Kindly ask one of these people if they want to be an official maintainer.
@@ -62,4 +89,5 @@ with lib; mkCoqDerivation {
     ## https://github.com/NixOS/nixpkgs/blob/master/lib/licenses.nix
     # license = licenses.mit;
   };
-}
+in
+derivation
