@@ -25,25 +25,66 @@
   ## /!\ Manual overlays in `.nix/coq-overlays` should be preferred then.
   # buildInputs = [ ];
 
+  ## Set this when the package has no rocqPackages version yet
+  ## (either in nixpkgs or in .nix/rocq-overlays)
+  no-rocq-yet = true;
+
   ## Indicate the relative location of your _CoqProject
   ## If not specified, it defaults to "_CoqProject"
   # coqproject = "_CoqProject";
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "rocq-9.0-mc2.4.0";
+  default-bundle = "rocq-9.1-mc2.5.0";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration
   ## When generating GitHub Action CI, one workflow file
   ## will be created per bundle
-  bundles."rocq-9.0-mc2.4.0" = {
+  bundles = {
+    "rocq-9.0-mc2.5.0" = {
+      rocqPackages = {
+        rocq-core.override.version = "9.0";
+        mathcomp.override.version = "2.5.0";
+        mathcomp.job = false;
+      };
+      coqPackages = {
+        coq.override.version = "9.0";
+        mathcomp.override.version = "2.5.0";
+      };
+    };
+    "rocq-9.1-mc2.5.0" = {
+      rocqPackages = {
+        rocq-core.override.version = "9.1";
+        mathcomp.override.version = "2.5.0";
+        mathcomp.job = false;
+      };
+      coqPackages = {
+        coq.override.version = "9.1";
+        mathcomp.override.version = "2.5.0";
+      };
+    };
+    "rocq-9.1-mcmaster" = {
+      rocqPackages = {
+        rocq-core.override.version = "9.1";
+        mathcomp.override.version = "master";
+        mathcomp-finmap.override.version = "master";
+        multinomials.override.version = "master";
+        mathcomp.job = false;
+        multinomials.job = false;
+        mathcomp-finmap.job = false;
+      };
+      coqPackages = {
+        coq.override.version = "9.1";
+        mathcomp.override.version = "master";
+        mathcomp-finmap.override.version = "master";
+        multinomials.override.version = "master";
+      };
+    };
 
     ## You can override Coq and other Coq coqPackages
     ## through the following attribute
     # coqPackages.coq.override.version = "8.11";
-    coqPackages.rocq.override.version = "9.0";
-    coqPackages.mathcomp.override.version = "2.4.0";
 
     ## In some cases, light overrides are not available/enough
     ## in which case you can use either
@@ -83,32 +124,22 @@
     # push-branches = [ "master" "branch2" ];
   };
 
-  # bundles."rocq-9.0-mc2.4.0" = {
-  #   coqPackages.coq.override.version = "8.19";
-  #   coqPackages.mathcomp.override.version = "2.4.0";
-  # };
-
-  # bundles."coq8.20-mc2.4.0" = {
-  #   coqPackages.coq.override.version = "8.20";
-  #   coqPackages.mathcomp.override.version = "2.4.0";
-  # };
-
   ## Cachix caches to use in CI
   ## Below we list some standard ones
   cachix.coq = {};
-  cachix.math-comp = {};
+  cachix.math-comp.authToken = "CACHIX_AUTH_TOKEN";
   cachix.coq-community = {};
-  
+
   ## If you have write access to one of these caches you can
   ## provide the auth token or signing key through a secret
   ## variable on GitHub. Then, you should give the variable
   ## name here. For instance, coq-community projects can use
   ## the following line instead of the one above:
   # cachix.coq-community.authToken = "CACHIX_AUTH_TOKEN";
-  
+
   ## Or if you have a signing key for a given Cachix cache:
   # cachix.my-cache.signingKey = "CACHIX_SIGNING_KEY"
-  
+
   ## Note that here, CACHIX_AUTH_TOKEN and CACHIX_SIGNING_KEY
   ## are the names of secret variables. They are set in
   ## GitHub's web interface.
