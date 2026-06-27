@@ -1,7 +1,7 @@
 Rocq-Combi
 =========
 
-Formalisation of algebraic combinatorics in Coq/MathComp.
+Formalisation of algebraic combinatorics in Rocq/MathComp.
 
 [![Nix CI for bundle rocq-9.1-mcmaster](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.1-mcmaster.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.1-mcmaster.yml) [![Nix CI for bundle rocq-9.1-mc2.5.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.1-mc2.5.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.1-mc2.5.0.yml) [![Nix CI for bundle rocq-9.0-mc2.5.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.0-mc2.5.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.0-mc2.5.0.yml)
 
