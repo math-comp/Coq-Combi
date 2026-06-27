@@ -1,9 +1,9 @@
 Coq-Combi
 =========
 
-Formalisation of (algebraic) combinatorics in Coq/MathComp.
+Formalisation of algebraic combinatorics in Coq/MathComp.
 
-[![Nix CI for coq8.18-mc2.3.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.18-mc2.3.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.18-mc2.3.0.yml) [![Nix CI for coq8.19-mc2.3.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.19-mc2.3.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.19-mc2.3.0.yml) [![Nix CI for coq8.20-mc2.3.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.20-mc2.3.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.20-mc2.3.0.yml)
+[![Nix CI for bundle rocq-9.1-mcmaster](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.1-mcmaster.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.1-mcmaster.yml) [![Nix CI for bundle rocq-9.1-mc2.5.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.1-mc2.5.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.1-mc2.5.0.yml) [![Nix CI for bundle rocq-9.0-mc2.5.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.0-mc2.5.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.0-mc2.5.0.yml)
 
 Authors
 ========================================================================
@@ -17,6 +17,7 @@ Contributors:
 - Christine Paulin (SSreflect binding for ALEA + hook length formula)
 - Olivier Stietel (hook length formula)
 - Cyril Cohen (MathComp compatibility + nix)
+- Pierre Roux (MathComp compatibility + nix)
 
 This library was supported by additional discussions with:
 
