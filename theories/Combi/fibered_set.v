@@ -32,8 +32,8 @@ commute with the [fbfun] : [forall x, fbfun2 (fbbij x) = fbfun1 x].
   [Hypothesis HcardEq : forall i, #|fiber U i| = #|fiber V i|.]
 
 *)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype finset.
+From Corelib Require Import Setoid.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype finset.
 
 Set Implicit Arguments.
 Unset Strict Implicit.

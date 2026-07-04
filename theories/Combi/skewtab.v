@@ -26,10 +26,11 @@
        the entries of [t] are smaller than the entries of [st].
 ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 
 Require Import tools partition skewpart Yamanouchi ordtype tableau std stdtab.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -134,7 +135,7 @@ Qed.
 (** ** Skew tableaux *)
 Section Dominate.
 
-Variables (disp : _) (T : inhOrderType disp).
+Context disp (T : inhOrderType disp).
 Implicit Type u v : seq T.
 
 Definition skew_dominate sh u v := dominate (drop sh u) v.
@@ -375,7 +376,7 @@ End Dominate.
 (** ** Skewing and joining tableaux *)
 Section FilterLeqGeq.
 
-Variables (disp : _) (T : inhOrderType disp).
+Context disp (T : inhOrderType disp).
 Implicit Type l : T.
 Implicit Type r w : seq T.
 Implicit Type t : seq (seq T).

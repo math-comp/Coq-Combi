@@ -34,13 +34,14 @@ The main result is the cardinality of the set of permuted of a tuple expressed
 as a multinomial [card_permuted_multinomial].
 **************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From mathcomp Require Import perm fingroup action gproduct.
 
 Require Import tools combclass sorted partition composition multinomial.
 Require Import permcomp cycles.
 
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

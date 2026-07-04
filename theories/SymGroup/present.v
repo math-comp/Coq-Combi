@@ -1,8 +1,22 @@
 (** * Group Presentations *)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq.
-From mathcomp Require Import choice fintype finset finfun.
-From mathcomp Require Import bigop fingroup perm morphism.
+(******************************************************************************)
+(*      Copyright (C) 2016-2018 Florent Hivert <florent.hivert@lri.fr>        *)
+(*                                                                            *)
+(*  Distributed under the terms of the GNU General Public License (GPL)       *)
+(*                                                                            *)
+(*    This code is distributed in the hope that it will be useful,            *)
+(*    but WITHOUT ANY WARRANTY; without even the implied warranty of          *)
+(*    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU       *)
+(*    General Public License for more details.                                *)
+(*                                                                            *)
+(*  The full text of the GPL is available at:                                 *)
+(*                                                                            *)
+(*                  http://www.gnu.org/licenses/                              *)
+(******************************************************************************)
+From Corelib Require Import Setoid.
+From mathcomp Require Import all_boot.
+From mathcomp Require Import fingroup perm morphism.
+
 
 Set Implicit Arguments.
 Unset Strict Implicit.

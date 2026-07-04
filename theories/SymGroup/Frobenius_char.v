@@ -49,7 +49,7 @@ Here is a list of fundamental results:
 - [LR_rule_irrSG]  : Littlewood-Richardson rule for characters of ['SG_n].
  ********)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import fingroup perm morphism gproduct.
 From mathcomp Require Import rat ssralg ssrint ssrnum algC vector archimedean.
 From mathcomp Require Import mxrepresentation classfun character.
@@ -63,6 +63,7 @@ Require Import MurnaghanNakayama.
 
 Require ordtype.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -77,11 +78,11 @@ Reserved Notation "''M[' l ']'"
          (at level 0, l at level 2, format "''M[' l ]").
 
 
-#[local] Lemma char0_rat : [char rat] =i pred0.
-Proof. exact: char_num. Qed.
-#[local] Lemma char0_algC : [char algC] =i pred0.
-Proof. exact: char_num. Qed.
-#[local] Hint Resolve char0_algC char0_rat : core.
+#[local] Lemma pchar0_rat : [pchar rat] =i pred0.
+Proof. exact: pchar_num. Qed.
+#[local] Lemma pchar0_algC : [pchar algC] =i pred0.
+Proof. exact: pchar_num. Qed.
+#[local] Hint Resolve pchar0_algC pchar0_rat : core.
 
 
 (** TODO: contribute to mathcomp *)
@@ -92,13 +93,13 @@ Variable (gT : finGroupType) (G : {group gT}).
 #[local] Notation cfdot := (cfdot (B := G)).
 
 Fact cfdot_is_bilinear :
-  bilinear_for *%R (Num.conj_op \; *%R) cfdot.
+  bilinear_for *%R (Num.conj \; *%R) cfdot.
 Proof.
 split => /= p r /= u v; first by rewrite cfdotDl cfdotZl.
 by rewrite cfdotDr cfdotZr.
 Qed.
 HB.instance Definition _ :=
-  bilinear_isBilinear.Build algC 'CF(G) 'CF(G) algC *%R (Num.conj_op \; *%R)
+  bilinear_isBilinear.Build algC 'CF(G) 'CF(G) algC *%R (Num.conj \; *%R)
     cfdot cfdot_is_bilinear.
 
 Fact cfdot_is_hermitian (phi psi : 'CF(G)) :
@@ -106,7 +107,7 @@ Fact cfdot_is_hermitian (phi psi : 'CF(G)) :
 Proof. by rewrite expr0 mul1r -cfdotC. Qed.
 HB.instance Definition _ :=
   isHermitianSesquilinear.Build
-    algC 'CF(G) false Num.conj_op cfdot cfdot_is_hermitian.
+    algC 'CF(G) false Num.conj cfdot cfdot_is_hermitian.
 
 Fact cfdot_is_dot (phi : 'CF(G)) : phi != 0 -> 0 < '[phi].
 Proof. by rewrite cfnorm_gt0. Qed.
@@ -205,7 +206,7 @@ Qed.
 Lemma Fchar_triv : Fchar 1 = 'hh[rowpartn n].
 Proof.
 rewrite -decomp_cf_triv linear_sum.
-rewrite (eq_bigr (fun la => 'z_la^-1 *: 'hp[la])); first last => [la _|].
+rewrite (eq_bigr (fun la => ('z_la)^-1 *: 'hp[la])); first last => [la _|].
   rewrite -Fchar_ncfuniCT /ncfuniCT /= linearZ /=.
   by rewrite scalerA /= mulrC divff // scale1r.
 apply val_inj; case: n => [|n0]/=.

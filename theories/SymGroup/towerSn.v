@@ -59,7 +59,7 @@ The two main results are:
 ]]
 ***************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
 From mathcomp Require Import ssrnum matrix vector mxalgebra algC.
 From mathcomp Require Import classfun character mxrepresentation.
@@ -73,6 +73,7 @@ Notation "''SG_' n" := [set: 'S_n]
 
 Import LeqGeqOrder.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -550,7 +551,7 @@ Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 Lemma zcoeffE k (l : 'P_k) : zcoeff l = (zcard l)%:R.
 Proof.
 rewrite /zcoeff card_class_of_part cardsT card_Sn.
-rewrite char0_natf_div; [| exact: Cchar | exact: dvdn_zcard_fact].
+rewrite pchar0_natf_div; [| exact: Cpchar | exact: dvdn_zcard_fact].
 rewrite invf_div mulrC mulfVK //.
 by rewrite pnatr_eq0 -lt0n; apply: fact_gt0.
 Qed.
@@ -589,7 +590,7 @@ rewrite setIid big1 ?addr0.
     rewrite classes_of_permP permCTP.
     by rewrite (partnCTK (cycle_type s)).
   move/imsetP => [y _ ->]; rewrite cfunJgen ?genGid ?inE //.
-  rewrite fmorph_div !conjC_nat !mulrA divfK ?pnatr_eq0 ?card_classCT_neq0 //.
+  rewrite fmorph_div /= !conjC_nat !mulrA divfK ?pnatr_eq0 ?card_classCT_neq0 //.
   by rewrite mulfK // neq0CG.
 - move=> p /negbTE pct.
   rewrite !cfdotZl cfdotZr.
@@ -633,7 +634,7 @@ rewrite cfextprodZl cfextprodZr.
 rewrite !linearZ /= !cfdotZl cfdotZr cfdot_Ind_cfuniCT.
 case: eqP => _ /=; rewrite ?mul0r ?mulr0 // !mul1r.
 rewrite 2!mulrA mulrC mulrA [X in (X * _)]mulrC -invfM divff ?mul1r.
-  by rewrite fmorph_div !conjC_nat.
+  by rewrite fmorph_div /= !conjC_nat.
 by apply mulf_neq0.
 Qed.
 

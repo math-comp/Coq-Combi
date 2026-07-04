@@ -123,10 +123,11 @@ Robinson-Schensted with standard recording tableau:
 Again, one has [Lemma bijRStab : bijective RStab.]
 **************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import perm fingroup.
 Require Import tools partition Yamanouchi ordtype subseq tableau std stdtab.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -137,7 +138,7 @@ Import Order.Theory.
 
 Section NonEmpty.
 
-Variables (disp : _) (T : inhOrderType disp).
+Context disp (T : inhOrderType disp).
 (** * Schensted's algorithm *)
 
 (** ** Row insertion *)
@@ -262,7 +263,7 @@ case: (ex_minnP (ex_intro _ _ _)) => pos Hl Hpos.
 move/(_ _ (inspred_inspos Hbump)): Hpos => Hleq.
 case (ltnP pos (inspos Row l)) => H2.
 - by exfalso; move: Hl; rewrite (negbTE (inspredN_lt_inspos H2)).
-- by apply/eqP; rewrite eqn_leq Hleq H2.
+- by apply/anti_leq; rewrite Hleq H2.
 Qed.
 
 Lemma insposE : mininspred = pos.
@@ -529,7 +530,7 @@ End Schensted.
 Theorem Sch_max_size (w : seq T) :
   size (Sch w) = \max_(s : subseqs w | is_row s) size s.
 Proof.
-apply/eqP; rewrite eqn_leq; apply/andP; split.
+apply/anti_leq/andP; split.
 - case: (exist_size_Sch w) => s;
     rewrite /subseqrow_n => /and3P[Hsubs /eqP Hsz Hrow].
   pose witness  := Subseqs Hsubs.
@@ -1390,7 +1391,7 @@ by apply/idP/idP => Hstd; apply: (perm_std Hstd);
 Qed.
 
 Section QTableau.
-Variables (disp : _) (T : inhOrderType disp).
+Context disp (T : inhOrderType disp).
 
 Notation TabPair := (seq (seq T) * seq (seq nat) : Type).
 

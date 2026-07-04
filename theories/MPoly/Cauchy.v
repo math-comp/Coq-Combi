@@ -48,7 +48,7 @@ The main result is Theorem [homsymdotss] which asserts that Schur function are
 orthonormal for the scalar product.
 *******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From mathcomp Require Import ssrint rat ssralg ssrnum algC matrix vector.
 From mathcomp Require Import sesquilinear.
 From mathcomp Require Import mpoly.
@@ -59,6 +59,7 @@ Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym permcent.
 Require ordtype.
 
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -66,11 +67,11 @@ Unset Printing Implicit Defensive.
 Import GRing.Theory Num.Theory.
 #[local] Open Scope ring_scope.
 
-#[local] Lemma char0_rat : [char rat] =i pred0.
-Proof. exact: Num.Theory.char_num. Qed.
-#[local] Lemma char0_algC : [char algC] =i pred0.
-Proof. exact: Num.Theory.char_num. Qed.
-#[local] Hint Resolve char0_algC char0_rat : core.
+#[local] Lemma pchar0_rat : [pchar rat] =i pred0.
+Proof. exact: Num.Theory.pchar_num. Qed.
+#[local] Lemma pchar0_algC : [pchar algC] =i pred0.
+Proof. exact: Num.Theory.pchar_num. Qed.
+#[local] Hint Resolve pchar0_algC pchar0_rat : core.
 
 Set Warnings "-postfix-notation-not-level-1".
 Reserved Notation "p '(Y)'"  (at level 20, format "p '(Y)'").
@@ -158,7 +159,7 @@ by apply eq_bigr => j _; rewrite -mnm_tnth mnmE.
 Qed.
 
 
-Variable (R : comRingType).
+Variable (R : comNzRingType).
 
 #[local] Notation polZ := {mpoly R[m * n]}.
 #[local] Notation polX := {mpoly R[m]}.
@@ -168,7 +169,7 @@ Definition polXY_scale (c : R) (p : polXY) : polXY := c%:MP *: p.
 #[local] Notation "c *:M p" := (polXY_scale c p)
   (at level 40, left associativity).
 
-HB.instance Definition _ := GRing.Ring.on polXY.
+HB.instance Definition _ := GRing.NzRing.on polXY.
 
 Fact scale_polXYA a b p : a *:M (b *:M p) = (a * b) *:M p.
 Proof. by rewrite /polXY_scale scalerA rmorphM. Qed.
@@ -203,15 +204,15 @@ HB.instance Definition _ :=
 
 Definition polX_XY : polX -> polXY := map_mpoly (mpolyC n (R := R)).
 
-Fact polX_XY_is_additive : additive polX_XY.
+Fact polX_XY_is_zmod_morphism : zmod_morphism polX_XY.
 Proof. by rewrite /polX_XY; exact: rmorphB. Qed.
 HB.instance Definition _ :=
-  GRing.isAdditive.Build polX polXY polX_XY polX_XY_is_additive.
+  GRing.isZmodMorphism.Build polX polXY polX_XY polX_XY_is_zmod_morphism.
 
-Fact polX_XY_is_multiplicative : multiplicative polX_XY.
-Proof. by rewrite /polX_XY; split; [exact: rmorphM | exact: rmorph1]. Qed.
+Fact polX_XY_is_monoid_morphism : monoid_morphism polX_XY.
+Proof. by rewrite /polX_XY; split; [exact: rmorph1 | exact: rmorphM]. Qed.
 HB.instance Definition _ :=
-  GRing.isMultiplicative.Build polX polXY polX_XY polX_XY_is_multiplicative.
+  GRing.isMonoidMorphism.Build polX polXY polX_XY polX_XY_is_monoid_morphism.
 
 Fact polX_XY_is_linear : linear polX_XY.
 Proof.
@@ -224,15 +225,15 @@ HB.instance Definition _ :=
 
 Definition polY_XY : polY -> polXY := mpolyC m (R := {mpoly R[n]}).
 
-Fact polY_XY_is_additive : additive polY_XY.
+Fact polY_XY_is_zmod_morphism : zmod_morphism polY_XY.
 Proof. by rewrite /polY_XY; exact: rmorphB. Qed.
 HB.instance Definition _ :=
-  GRing.isAdditive.Build polY polXY polY_XY polY_XY_is_additive.
+  GRing.isZmodMorphism.Build polY polXY polY_XY polY_XY_is_zmod_morphism.
 
-Fact polY_XY_is_multiplicative : multiplicative polY_XY.
-Proof. by rewrite /polY_XY; split; [exact: rmorphM | exact: rmorph1]. Qed.
+Fact polY_XY_is_monoid_morphism : monoid_morphism polY_XY.
+Proof. by rewrite /polY_XY; split; [exact: rmorph1 | exact: rmorphM]. Qed.
 HB.instance Definition _ :=
-  GRing.isMultiplicative.Build polY polXY polY_XY polY_XY_is_multiplicative.
+  GRing.isMonoidMorphism.Build polY polXY polY_XY polY_XY_is_monoid_morphism.
 
 Fact polY_XY_is_linear : linear polY_XY.
 Proof.
@@ -262,16 +263,16 @@ Definition evalXY : polZ -> polXY :=
 Notation "p '(XY)'" := (evalXY p).
 
 
-Fact evalXY_is_additive : additive evalXY.
+Fact evalXY_is_zmod_morphism : zmod_morphism evalXY.
 Proof. by rewrite /evalXY; exact: rmorphB. Qed.
 HB.instance Definition _ :=
-  GRing.isAdditive.Build {mpoly R[(m * n)]} polXY _ evalXY_is_additive.
+  GRing.isZmodMorphism.Build {mpoly R[(m * n)]} polXY _ evalXY_is_zmod_morphism.
 
-Fact evalXY_is_multiplicative : multiplicative evalXY.
-Proof. by rewrite /evalXY; split=> [p q|]; rewrite /= ?rmorphM ?rmorph1. Qed.
+Fact evalXY_is_monoid_morphism : monoid_morphism evalXY.
+Proof. by rewrite /evalXY; split=> [|p q]; rewrite /= ?rmorphM ?rmorph1. Qed.
 HB.instance Definition _ :=
-  GRing.isMultiplicative.Build {mpoly R[(m * n)]} polXY
-    _ evalXY_is_multiplicative.
+  GRing.isMonoidMorphism.Build {mpoly R[(m * n)]} polXY
+    _ evalXY_is_monoid_morphism.
 
 Fact evalXY_is_linear : linear evalXY.
 Proof.
@@ -302,9 +303,9 @@ Qed.
 Lemma evalXY_homog d p : p \is d.-homog -> p(XY) \is d.-homog.
 Proof.
 move/pihomog_dE <-; rewrite pihomogE.
-rewrite rmorph_sum /=; apply rpred_sum => mon /eqP Hdeg.
-rewrite linearZ /= scale_polXYE; apply rpredZ.
-rewrite evalXY_XE -rmorph_prod /= polyXY_scale; apply rpredZ.
+rewrite rmorph_sum /=; apply: rpred_sum => mon /eqP Hdeg.
+rewrite linearZ /= scale_polXYE; apply: rpredZ.
+rewrite evalXY_XE -rmorph_prod /= polyXY_scale /=; apply: rpredZ.
 by rewrite /polX_XY map_mpolyX dhomogX /= mdeg_monX Hdeg.
 Qed.
 
@@ -475,8 +476,8 @@ Qed.
 (** Unused lemma *)
 Lemma Cauchy_kernel_symmetric : Cauchy_kernel d \is symmetric.
 Proof.
-rewrite Cauchy_symm_symh; apply rpred_sum => la _.
-by apply rpredZ; apply sympolP.
+rewrite Cauchy_symm_symh; apply: rpred_sum => la _.
+by apply: rpredZ; apply sympolP.
 Qed.
 
 (** Unused lemma *)
@@ -514,11 +515,11 @@ Variable R : fieldType.
 
 (** *** Cauchy formula for power sum symmetric polynomials *)
 Lemma Cauchy_homsymp_zhomsymp m n d :
-  [char R] =i pred0 ->
+  [pchar R] =i pred0 ->
   Cauchy_kernel m n R d =
   \sum_(la : 'P_d) 'hp[la](X) * ((zcard la)%:R^-1 *: 'hp[la](Y)).
 Proof.
-move=> Hchar.
+move=> Hpchar.
 rewrite /Cauchy_kernel symh_to_symp // !rmorph_sum /=; apply eq_bigr => la _.
 by rewrite linearZ /= -scalerAr prod_sympXY; congr (_ *: _).
 Qed.
@@ -548,10 +549,10 @@ Definition co_hp (la : 'P_d) : pol -> algC :=
 Definition co_hpXY (la mu : 'P_d) : polXY -> algC :=
   locked (co_hp la \o map_mpoly (co_hp mu)).
 
-Fact co_hp_is_additive la : additive (co_hp la).
+Fact co_hp_is_zmod_morphism la : zmod_morphism (co_hp la).
 Proof. by rewrite /co_hp => p q; rewrite /= raddfB homsymdotBl. Qed.
 HB.instance Definition _ la :=
-  GRing.isAdditive.Build pol algC _ (co_hp_is_additive la).
+  GRing.isZmodMorphism.Build pol algC _ (co_hp_is_zmod_morphism la).
 
 Fact co_hp_is_scalar la : scalar (co_hp la).
 Proof.
@@ -566,11 +567,11 @@ Proof using Hd.
 by rewrite /co_hp /= -![prod_gen _ _]/(homsym 'hp[_]) in_homsymE homsymdotpp.
 Qed.
 
-Fact co_hpXY_is_additive la mu : additive (co_hpXY la mu).
+Fact co_hpXY_is_zmod_morphism la mu : zmod_morphism (co_hpXY la mu).
 Proof. by rewrite /co_hpXY; unlock => p q; rewrite raddfB. Qed.
 HB.instance Definition _ la mu :=
-  GRing.isAdditive.Build
-    (Cauchy.polXY n0 n0 algC) algC _ (co_hpXY_is_additive la mu).
+  GRing.isZmodMorphism.Build
+    (Cauchy.polXY n0 n0 algC) algC _ (co_hpXY_is_zmod_morphism la mu).
 
 Lemma co_hpYE la (p q : pol) :
   map_mpoly (co_hp la) (p(X) * q(Y)) = (co_hp la q) *: p.
@@ -702,4 +703,3 @@ by rewrite homsymdotss (inj_eq (injectiveP _ hs_uniq)).
 Qed.
 
 End Scalar.
-

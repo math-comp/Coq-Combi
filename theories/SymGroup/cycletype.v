@@ -60,9 +60,9 @@ Central functions:
 - [cycle_typeSn s] == the cycle type in ['P_n] of a permutations in ['S_n].
 
 **********)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype.
-From mathcomp Require Import tuple finfun finset path bigop.
+From Corelib Require Import Setoid.
+From mathcomp Require Import ssreflect ssrfun ssrbool ssrnat eqtype choice fintype.
+From mathcomp Require Import seq tuple finfun finset path bigop.
 From mathcomp Require Import fingroup perm action.
 From mathcomp Require Import ssralg matrix mxalgebra algC classfun.
 
@@ -70,6 +70,7 @@ From mathcomp Require Import ssralg matrix mxalgebra algC classfun.
 Require Import partition tools sorted.
 Require Import permcomp fibered_set cycles.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -747,7 +748,7 @@ rewrite intpartn_nth0 /ct /cycle_type /= /setpart_shape.
 set s := (X in sort geq X); have /permPl/(perm_big _) -> /= := perm_sort geq s.
 rewrite {}/s big_map big_enum /=.
 suff -> : \max_(i in porbits (tperm x y)) #|i| = 2 by [].
-rewrite porbits_tperm; apply anti_leq; apply/andP; split.
+rewrite porbits_tperm; apply/anti_leq/andP; split.
   apply/bigmax_leqP => /= S.
   by rewrite !inE=> /orP[/eqP->// | /imsetP[z _ ->{S}]];
      rewrite ?cards1 ?cards2 ?Neq.

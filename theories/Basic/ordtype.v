@@ -40,10 +40,11 @@ Cover relation:
                   [finPOrderType].
  ********)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From mathcomp Require Import order.
 Require Import tools.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -83,7 +84,7 @@ Definition covers {disp} {T : finPOrderType disp} :=
 
 Section CoversFinPOrder.
 
-Variable (disp : _) (T : finPOrderType disp).
+Context disp (T : finPOrderType disp).
 Implicit Type (x y : T).
 
 Lemma coversP x y : reflect (x < y /\ (forall z, ~(x < z < y))) (covers x y).
@@ -263,7 +264,7 @@ End Dual.
 (** *** Maximum of a sequence *)
 Section MaxSeq.
 
-Variables (disp : _) (T : orderType disp).
+Context disp (T : orderType disp).
 Implicit Type a b c : T.
 Implicit Type u v : seq T.
 
@@ -299,7 +300,7 @@ End MaxSeq.
 (** *** Comparison of the elements of a sequence to an element *)
 Section AllLeqLtn.
 
-Variables (disp : _) (T : orderType disp).
+Context disp (T : orderType disp).
 Implicit Type a b c : T.
 Implicit Type u v : seq T.
 
@@ -452,7 +453,7 @@ End AllLeqLtn.
 (** *** Removing the largest letter of a sequence *)
 Section RemoveBig.
 
-Variables (disp : _) (T : orderType disp).
+Context disp (T : orderType disp).
 Variable Z : T.
 Implicit Type a b c : T.
 Implicit Type u v w r : seq T.

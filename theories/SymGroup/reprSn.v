@@ -35,7 +35,7 @@ We show in Lemmas [repr1] and [repr_S2] that [triv_repr] and [sign_repr]
 exhausts all representations of ['S_n] of degree 1 and all irreducible
 representations of of ['S_2].
 *************)
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From mathcomp Require Import fingroup perm ssralg morphism perm action.
 From mathcomp Require Import zmodp. (* Defines the coercion nat -> 'I_n.+1 *)
 From mathcomp Require Import vector matrix mxalgebra ssrnum algC.
@@ -224,7 +224,7 @@ Proof.
 case: n => // n; rewrite ltnS => Hn.
 apply/negP=> /eqP/cfunP /(_ 's_0)/eqP.
 rewrite cfunE cfun1E inE /= (odd_eltr Hn) /= expr1 -addr_eq0 -mulr2n.
-by have := Cchar; rewrite charf0P => /(_ 2) ->.
+by have:= Cpchar; rewrite pcharf0P => /(_ 2) ->.
 Qed.
 
 Lemma triv_sign_not_sim n :

@@ -60,7 +60,7 @@ As a corollary we provide the two Pieri rules [Pieri_rowpartn] and
 [Pieri_colpartn].
 *******************************************************************************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import ssralg.
 From mathcomp Require Import mpoly.
 
@@ -68,6 +68,7 @@ Require Import tools ordcast combclass partition skewpart Yamanouchi ordtype.
 Require Import std tableau stdtab Schensted congr plactic Greene_inv.
 Require Import stdplact Yam_plact skewtab shuffle Schur_mpoly freeSchur.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -580,7 +581,7 @@ Qed.
 #[local] Open Scope ring_scope.
 Import GRing.Theory.
 
-Variable (n0 : nat) (R : comRingType).
+Variable (n0 : nat) (R : comNzRingType).
 #[local] Notation n := (n0.+1).
 Notation Schur p := (Schur n0 R p).
 
@@ -607,7 +608,7 @@ Section Pieri.
 #[local] Open Scope ring_scope.
 Import GRing.Theory.
 
-Variable (n0 : nat) (R : comRingType).
+Variable (n0 : nat) (R : comNzRingType).
 #[local] Notation n := (n0.+1).
 Notation Schur p := (Schur n0 R p).
 

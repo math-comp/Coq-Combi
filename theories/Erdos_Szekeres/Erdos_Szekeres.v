@@ -24,12 +24,13 @@ type contains
 We prove it as a corollary of Greene's theorem on the Robinson-Schensted
 correspondance. Note that there are other proofs which require less theory.
  *****)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
+From Corelib Require Import Setoid.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple finfun finset bigop path order.
 
 Require Import partition tableau Schensted ordtype Greene Greene_inv.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

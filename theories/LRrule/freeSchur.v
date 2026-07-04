@@ -79,7 +79,7 @@ Invariance with the choice of Q1 and Q2:
 
 ****************************************************************************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import ssralg.
 From mathcomp Require Import ssrcomplements freeg mpoly.
 
@@ -87,6 +87,7 @@ Require Import tools ordtype partition Yamanouchi std tableau stdtab.
 Require Import Schensted congr plactic stdplact Yam_plact Greene_inv shuffle.
 Require Import Schur_mpoly.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -100,7 +101,7 @@ Import GRing.Theory.
 Section CommutativeImage.
 
 Variable n : nat.
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 Definition commword (w : seq 'I_n) : {mpoly R[n]} := \prod_(i <- w) 'X_i.
 
@@ -152,7 +153,7 @@ End CommutativeImage.
 (** ** Row reading of tableau *)
 Section TableauReading.
 
-Context {disp : _} {A : inhOrderType disp}.
+Context {disp} {A : inhOrderType disp}.
 
 Definition tabsh_reading_RS (sh : seq nat) (w : seq A) :=
   (to_word (RS w) == w) && (shape (RS (w)) == sh).
@@ -185,7 +186,7 @@ End TableauReading.
 (** * Free Schur functions : lifting Schur functions in the free algebra *)
 Section FreeSchur.
 
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 Variable n0 : nat.
 #[local] Notation n := (n0.+1).
@@ -463,7 +464,7 @@ Hypothesis Hsh2 : shape U2 = shape T2.
 
 Section TakeDrop.
 
-Context {disp : _} {T : inhOrderType disp}.
+Context {disp} {T : inhOrderType disp}.
 
 Lemma RStabE (w : seq T) : (RStab w).1 = (RS w).
 Proof using . by rewrite RStabmapE. Qed.

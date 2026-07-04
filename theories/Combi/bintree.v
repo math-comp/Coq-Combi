@@ -81,9 +81,10 @@ Tamari Lattice:
 - [t1 /\T t2] == the join of [t1] and [t2] in the Tamari lattice.
  *********************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 Require Import tools combclass ordtype.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -1456,8 +1457,7 @@ apply/idP/idP.
     suff -> : t1 = t2 by apply: le_refl.
     apply/val_inj/eqP => /=.
     have [Hsum2 Heq] := vctleq_sumn_right_sizes Hleq.
-    rewrite -Heq; apply/eqP/anti_leq.
-    by rewrite Hsum Hsum2.
+    by rewrite -Heq eqn_leq Hsum Hsum2.
   case: (t1 =P t2) => [-> | /eqP Hneq]; first by apply: le_refl.
   have [/= tt [Hrot Htleq]] := vctleq_rotation Hleq Hneq.
   have Hszt : size_tree tt == n by rewrite (size_rotations Hrot) bintreeszP.

@@ -114,10 +114,11 @@ Relation with set partitions:
                the sorted list of the cardinalities of the parts
 ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import div ssralg ssrint ssrnum binomial.
 Require Import tools combclass sorted ordtype.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -760,9 +761,7 @@ Proof.
 move=> Hpart.
 case: c => //= c _.
 rewrite (conj_leqE Hpart) (conj_ltnE Hpart) /=.
-apply/idP/idP.
-- by move/eqP ->; rewrite !leqnn.
-- by move=> H; apply/eqP; exact: anti_leq.
+by apply/idP/idP => [/eqP ->|]; rewrite ?leqnn // -eqn_leq.
 Qed.
 
 Lemma rem_corner_incr_first_n sh i :
@@ -833,8 +832,8 @@ Qed.
 Lemma sumn_take_leq s k1 k2 :
   k1 <= k2 -> sumn (take k1 s) <= sumn (take k2 s).
 Proof.
-rewrite !sumn_take; move=> H.
-by rewrite (big_cat_nat _ _ _ _ H) //=; apply leq_addr.
+rewrite !sumn_take => H.
+by rewrite (big_cat_nat _ H) //=; apply leq_addr.
 Qed.
 
 Lemma sum_conj sh k : \sum_(l <- sh) minn l k = sumn (take k (conj_part sh)).

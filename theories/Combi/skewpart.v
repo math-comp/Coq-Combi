@@ -58,9 +58,10 @@ Textbook definition of ribbon:
 
 ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 Require Import tools sorted partition.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -317,7 +318,7 @@ apply (iffP eqP); case: ex_minnP => m eqdrop mmin.
   + rewrite -eqmp1 => i lemi.
     by rewrite -(subnKC lemi) -!nth_drop (eqP eqdrop).
 - move=> [Hneq Heq].
-  apply anti_leq; apply/andP; split.
+  apply/anti_leq/andP; split.
   + apply: mmin; apply/eqP/(eq_from_nth_notin (x0 := x0)); first last.
       by move=> i; rewrite !nth_drop addSn; apply: Heq; rewrite ltnS leq_addr.
     * by apply/contra: x0notint => /mem_drop.
@@ -500,13 +501,13 @@ Qed.
 Lemma ribbon_on_height : (stop - start).+1 = ribbon_height inner outer.
 Proof.
 rewrite /ribbon_height -sumn_count sumnE big_map (big_nth 0) size_diff_shape.
-rewrite (big_cat_nat _ _ _ (leq0n start)
+rewrite (big_cat_nat (leq0n start)
                      (leq_trans ribbon_on_start_stop (ltnW ribbon_on_stop_lt))) /=.
 rewrite big_nat big1 ?add0n; first last => [i /= leis|].
   rewrite nth_diff_shape subn_gt0 -ribbon_on_nth_leq.
   by rewrite leqNgt leis.
 have := ribbon_on_start_stop; rewrite -ltnS => leqss.
-rewrite (big_cat_nat _ _ _ (ltnW leqss) ribbon_on_stop_lt) /= addnC.
+rewrite (big_cat_nat (ltnW leqss) ribbon_on_stop_lt) /= addnC.
 rewrite big_nat big1 ?add0n; first last => [i /= /andP[ltsi _]|].
   rewrite nth_diff_shape subn_gt0 -ribbon_on_nth_leq.
   by rewrite (leqNgt i) ltsi andbF.
@@ -544,7 +545,7 @@ rewrite (sumn_nth_le (leqnn (size outer))).
 have [Hsi Hsis Hs His] := Hrib.
 rewrite (big_cat_nat _ (n := stop.+1)) ? ribbon_on_stop_lt //= addnC big_nat.
 under [X in X + _ - _ = _]eq_bigr => i /andP[+ _] do move/Hsi->.
-rewrite -big_nat {Hsi} [X in _ - X](big_cat_nat _ _ _ _ ribbon_on_stop_lt) //=.
+rewrite -big_nat {Hsi} [X in _ - X](big_cat_nat _ ribbon_on_stop_lt) //=.
 rewrite addnC [X in _ - X]addnC subnDA addnK.
 have:= ribbon_on_start_stop; rewrite -ltnS => /ltnW less1.
 rewrite (big_cat_nat _ (n := start)) //=.
@@ -1571,7 +1572,7 @@ split => [i|i||i]; first 2 last; first exact: start_ltn.
   rewrite /mindropeq; case: ex_minnP => [[//|m]] /eqP Hdrop _ _ /= ltmi.
   by rewrite -(subnKC ltmi) -!nth_drop Hdrop.
 have conn4sym : connect_sym neig4 := @conn4_sym _ _.
-move=> Hi; apply anti_leq; apply/andP; split.
+move=> Hi; apply/anti_leq/andP; split.
   move/includedP: incl => [_ /(_ i)]; rewrite leq_eqVlt => /orP[/eqP-> | lti].
     by move/is_partP: partout => [_/(_ i)/leq_trans]; apply.
   have Hb : in_skew inner outer (i, nth 0 inner i) by rewrite /in_skew /= leqnn.

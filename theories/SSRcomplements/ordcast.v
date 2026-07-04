@@ -18,7 +18,7 @@
 Aside a few basic lemmas, the only new definition is:
 - [cast_set (H : n = m) S] == cast [S : {set 'I_n}] to [S : {set 'I_m}].
 *********)
-Require Import mathcomp.ssreflect.ssreflect.
+From Corelib Require Import Setoid.
 From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype finfun fintype choice seq tuple.
 From mathcomp Require Import finset tuple bigop.
 
@@ -35,9 +35,6 @@ Lemma enum_cast_ord m n (H : n = m):
 Proof.
 by subst m; rewrite /= (eq_map (g := id)) ?map_id // => i; apply: val_inj.
 Qed.
-
-Lemma nth_ord_ltn i n (H : i < n) x0 : nth x0 (enum 'I_n) i = (Ordinal H).
-Proof. by apply: val_inj => //=; rewrite nth_enum_ord. Qed.
 
 Section Casts.
 

@@ -69,8 +69,8 @@ Here are the main results:
   [ #|classCT l| = n`! %/ zcard l. ]
 
 *******************************************************************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq fintype.
+From Corelib Require Import Setoid.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq fintype.
 From mathcomp Require Import tuple path bigop finset div.
 From mathcomp Require Import fingroup perm action gproduct morphism.
 
@@ -78,6 +78,7 @@ Require Import tools partition permcomp cycles cycletype.
 
 Import GroupScope.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

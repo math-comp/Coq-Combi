@@ -22,13 +22,14 @@
 We give some values for particular partition such as small one, rows and columns.
 ***********)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import ssralg.
 From mathcomp Require Import ssrcomplements freeg mpoly.
 
 
 Require Import tools ordtype partition tableau.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -41,7 +42,7 @@ Section Schur.
 
 Variable n0 : nat.
 #[local] Notation n := n0.+1.
-Variable R : ringType.
+Variable R : nzRingType.
 
 Lemma mons2mE s : 'X_[s2m s] = \prod_(i <- s) 'X_i :> {mpoly R[n]}.
 Proof.
@@ -79,7 +80,7 @@ Qed.
 
 Lemma Schur_oversize d (sh : 'P_d) : (size sh > n)%N -> Schur sh = 0.
 Proof using.
-move=> Hn; apply big1 => t _; exfalso.
+move=> Hn; apply: big1 => t _; exfalso.
 have:= size_tabsh t; rewrite -(size_map size) -/(shape t) shape_tabsh.
 by move=> /(leq_trans Hn); rewrite ltnn.
 Qed.
@@ -112,7 +113,7 @@ Section SchurComRingType.
 
 Variable n0 : nat.
 #[local] Notation n := (n0.+1).
-Variable R : comRingType.
+Variable R : comNzRingType.
 
 
 Lemma perm_enum_basis d :

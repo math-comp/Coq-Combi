@@ -18,7 +18,7 @@
 We extract to OCaml the implementation of the Robinson-Schensted correspondance
 and The Littlewood-Richardson Rule.
  **********)
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import ssralg.
 From mathcomp Require Import mpoly.
 Require Import subseq partition ordtype Schensted congr plactic Greene Greene_inv
@@ -26,7 +26,7 @@ Require Import subseq partition ordtype Schensted congr plactic Greene Greene_in
 
 Set Extraction Output Directory ".".
 
-Require Import Wf_nat.
+From Stdlib Require Import Wf_nat.
 Extraction Inline Wf_nat.lt_wf_rec1 Wf_nat.lt_wf_rec
   Wf_nat.lt_wf_ind Wf_nat.gt_wf_rec Wf_nat.gt_wf_ind.
 

@@ -79,7 +79,7 @@ Theorem HookLengthFormula (p : intpart) :
 
 Require Import Misc Ccpo.
 Set Warnings "-hiding-delimiting-key".
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From mathcomp Require Import ssrint div rat ssralg ssrnum.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
@@ -87,6 +87,7 @@ Require Import tools subseq partition Yamanouchi stdtab Qmeasure.
 Set Warnings "hiding-delimiting-key".
 
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -1164,7 +1165,7 @@ End EndsAt.
 Section Formula.
 
 Variable T : countType.
-Variable R : comRingType.
+Variable R : comPzRingType.
 Variable alpha : T -> R.
 
 Lemma expand_prod_add1_seq (S : seq T) :

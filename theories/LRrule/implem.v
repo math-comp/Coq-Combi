@@ -27,7 +27,7 @@ The following lemma assert that LRcoeff agrees with LRyamtab_list
     size (LRyamtab_list inner eval outer) = LRcoeff inner eval outer.]
 
 ******************************************************************************)
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import ssralg.
 From mathcomp Require Import mpoly.
 
@@ -35,6 +35,7 @@ Require Import tools combclass partition Yamanouchi ordtype tableau.
 Require Import skewtab Schur_mpoly freeSchur therule.
 
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -952,7 +953,7 @@ Variables (P1 : 'P_d1) (P2 : 'P_d2).
 #[local] Open Scope ring_scope.
 Import GRing.Theory.
 
-Variable (n0 : nat) (R : comRingType).
+Variable (n0 : nat) (R : comNzRingType).
 #[local] Notation n := (n0.+1).
 Notation Schur p := (Schur n0 R p).
 

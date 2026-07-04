@@ -29,13 +29,14 @@ We show that such a matrix has determinant 1 (Lemma [det_unitrig]) and is
 therefore invertible. Moreover Lemma [Minv_unitrig] says that the inverse
 is unitriangular too.
  *******)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat order.
+From Corelib Require Import Setoid.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat order.
 From mathcomp Require Import fintype bigop ssralg.
 From mathcomp Require Import finset fingroup perm matrix.
 
 Require ordtype.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -47,7 +48,7 @@ Import GRing.Theory.
 Section UniTriangular.
 
 Variable R : comUnitRingType.
-Variables (disp : _) (T : finPOrderType disp).
+Context disp (T : finPOrderType disp).
 Implicit Type M : T -> T -> R.
 Implicit Types t u v : T.
 
@@ -149,8 +150,7 @@ End UniTriangular.
 
 Section TriangularInv.
 
-Variable R : comUnitRingType.
-Variable (disp : _) (T : finPOrderType disp).
+Context (R : comUnitRingType) disp (T : finPOrderType disp).
 Variable M : T -> T -> R.
 Implicit Types t u v : T.
 

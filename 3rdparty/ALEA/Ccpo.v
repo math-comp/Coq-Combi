@@ -1,12 +1,12 @@
 (** * Ccpo.v: Specification and properties of a cpo *)
 
-Require Export Arith.
+From Stdlib Require Export Arith.
 (* Require Export Omega. *)
-From Coq Require Import Lia.
+From Stdlib Require Import Lia.
 
-Require Export Coq.Classes.SetoidTactics.
-Require Export Coq.Classes.SetoidClass.
-Require Export Coq.Classes.Morphisms.
+From Stdlib Require Export Classes.SetoidTactics.
+From Stdlib Require Export Classes.SetoidClass.
+From Stdlib Require Export Classes.Morphisms.
 
 Declare Scope signature_scope.
 #[local] Open Scope signature_scope.

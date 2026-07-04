@@ -1,9 +1,9 @@
-Coq-Combi
+Rocq-Combi
 =========
 
-Formalisation of (algebraic) combinatorics in Coq/MathComp.
+Formalisation of algebraic combinatorics in Rocq/MathComp.
 
-[![Nix CI for coq8.18-mc2.3.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.18-mc2.3.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.18-mc2.3.0.yml) [![Nix CI for coq8.19-mc2.3.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.19-mc2.3.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.19-mc2.3.0.yml) [![Nix CI for coq8.20-mc2.3.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.20-mc2.3.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-coq8.20-mc2.3.0.yml)
+[![Nix CI for bundle rocq-9.1-mcmaster](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.1-mcmaster.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.1-mcmaster.yml) [![Nix CI for bundle rocq-9.1-mc2.5.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.1-mc2.5.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.1-mc2.5.0.yml) [![Nix CI for bundle rocq-9.0-mc2.5.0](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.0-mc2.5.0.yml/badge.svg)](https://github.com/math-comp/Coq-Combi/actions/workflows/nix-action-rocq-9.0-mc2.5.0.yml)
 
 Authors
 ========================================================================
@@ -17,6 +17,7 @@ Contributors:
 - Christine Paulin (SSreflect binding for ALEA + hook length formula)
 - Olivier Stietel (hook length formula)
 - Cyril Cohen (MathComp compatibility + nix)
+- Pierre Roux (MathComp compatibility + nix)
 
 This library was supported by additional discussions with:
 
@@ -136,6 +137,11 @@ Documentation
   complete ! with the 
   [dependancy graph](https://math-comp.github.io/combi/1.0.0/index.html).
 
+* A [paper](https://dl.acm.org/doi/10.1145/3703595.3705885) and the associated
+  [slides](https://www.lri.fr/~hivert/Conf/CPP2025.pdf), in CPP '25:
+  Proceedings of the 14th ACM SIGPLAN International Conference on Certified
+  Programs and Proofs
+
 * A
   [presentation](https://github.com/math-comp/Coq-Combi/raw/master/doc/Talk-CRM/CRM.pdf)
   given at "[Algebra and combinatorics at LaCIM](http://www.crm.umontreal.ca/2018/Algebre18/index_e.php), a conference
@@ -163,17 +169,22 @@ Installation
 This library is based on
 
 * [SSReflect/MathComp 2](https://github.com/math-comp/math-comp)
-  Library version 2.3.0 or more recent.
+  Library version 2.5.0 or more recent.
+* This branch is *not* compatible with version MathComp 2.4.0.
+
+* For MathComp 2.4.0, use the [MathComp-2.4.0](https://github.com/math-comp/Coq-Combi/tree/MathComp-2.4.0) branch.
+
+* For MathComp 2.3.0, use the [MathComp-2.3.0](https://github.com/math-comp/Coq-Combi/tree/MathComp-2.3.0) branch.
 
 * For MathComp 2.2.0, use the [MathComp-2.2.0](https://github.com/math-comp/Coq-Combi/tree/MathComp-2.2.0) branch.
 
 Here are the Opam packages I'm using
 ```
-coq-hierarchy-builder        1.8.0
-coq-mathcomp-ssreflect       2.3.0
-coq-mathcomp-algebra         2.3.0
-coq-mathcomp-field           2.3.0
-coq-mathcomp-fingroup        2.3.0
-coq-mathcomp-character       2.3.0
-coq-mathcomp-multinomials    2.3.0
+rocq-hierarchy-builder        1.9.1
+rocq-mathcomp-ssreflect       2.5.0
+rocq-mathcomp-algebra         2.5.0
+rocq-mathcomp-field           2.5.0
+rocq-mathcomp-fingroup        2.5.0
+rocq-mathcomp-character       2.5.0
+coq-mathcomp-multinomials     2.4.0
 ```

@@ -28,11 +28,12 @@ We define the following notations:
 
 ***************************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import fingroup perm morphism presentation.
 
 Require Import permcomp tools permuted combclass congr presentSn ordtype.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -97,7 +98,7 @@ Qed.
 Fact leperm_anti : antisymmetric leperm.
 Proof.
 move=> s t /andP[Hst Hts]; apply: (leperm_lengthE Hst).
-by apply anti_leq; apply/andP; split; apply leperm_length.
+by apply/anti_leq/andP; split; apply leperm_length.
 Qed.
 
 #[export] HB.instance Definition _ := Finite.on 'S_n.
@@ -194,7 +195,7 @@ Qed.
 Lemma leperm_succ s t :
   s <R t -> exists2 i : 'I_n0, (s <R s * 's_i) & (s * 's_i <=R t).
 Proof.
-move=> /andP[sNt /leperm_factorP[w wred [l Ht Hs]]].
+rewrite lt_def => /andP[sNt /leperm_factorP[w wred [l Ht Hs]]].
 have : l < size w.
   by move: sNt; apply contraR; rewrite Ht Hs -leqNgt => /take_oversize ->.
 case Hw : w => // [w0 wtl]; rewrite -{}Hw {wtl} => Hl.

@@ -44,9 +44,10 @@ In the following tableaux are considered on ['I_n.+1] for a given [n].
             contains only [i]'s as elements of ['I_n.+1].
 *****)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 Require Import tools partition ordtype sorted.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -58,7 +59,7 @@ Import Order.Theory.
 (** ** Specialization of sorted Lemmas *)
 Section Rows.
 
-Variables (disp : _) (T : inhOrderType disp).
+Context disp (T : inhOrderType disp).
 
 Implicit Type l : T.
 Implicit Type r : seq T.
@@ -92,7 +93,7 @@ Notation is_row := (sorted <=%O).
 (** ** Dominance order for rows *)
 Section Dominate.
 
-Context {disp : _} {T : inhOrderType disp}.
+Context {disp} {T : inhOrderType disp}.
 
 Implicit Type l : T.
 Implicit Type r u v : seq T.
@@ -205,7 +206,7 @@ Arguments dominate_rev_trans {disp T}.
 (** * Tableaux : definition and basic properties *)
 Section Tableau.
 
-Variables (disp : _) (T : inhOrderType disp).
+Context disp (T : inhOrderType disp).
 
 Implicit Type l : T.
 Implicit Type r w : seq T.
@@ -522,7 +523,7 @@ Prenex Implicits is_tableau to_word size_tab.
 (** ** Tableaux from their row reading *)
 Section TableauReading.
 
-Variables (disp : _) (A : inhOrderType disp).
+Context disp (A : inhOrderType disp).
 
 Definition tabsh_reading (sh : seq nat) (w : seq A) :=
   (size w == sumn sh) && (is_tableau (rev (reshape (rev sh) w))).
@@ -550,7 +551,7 @@ End TableauReading.
 (** ** Sigma type for tableaux *)
 Section FinType.
 
-Context {disp : _} {T : inhFinOrderType disp}.
+Context {disp} {T : inhFinOrderType disp}.
 Variables (d : nat) (sh : 'P_d).
 
 Definition is_tab_of_shape (sh : seq nat) :=
@@ -704,9 +705,7 @@ End OrdTableau.
 (** ** Tableaux and increasing maps *)
 Section IncrMap.
 
-Context (disp1 disp2 : _)
-        (T1 : inhOrderType disp1)
-        (T2 : inhOrderType disp2).
+Context disp1 disp2 (T1 : inhOrderType disp1) (T2 : inhOrderType disp2).
 Variable F : T1 -> T2.
 
 Lemma shape_map_tab (t : seq (seq T1)) :

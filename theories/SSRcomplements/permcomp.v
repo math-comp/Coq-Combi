@@ -15,8 +15,8 @@
 (******************************************************************************)
 (** * A few lemmas on permutation
 ***********)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrfun ssrbool eqtype ssrnat seq choice fintype div.
+From Corelib Require Import Setoid.
+From mathcomp Require Import ssreflect ssrfun ssrbool eqtype ssrnat seq choice fintype div.
 From mathcomp Require Import finset fingroup perm morphism action.
 
 Set Implicit Arguments.

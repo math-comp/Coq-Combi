@@ -49,11 +49,12 @@ is the same as having the same standardized.
 
 *****)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import perm fingroup.
 
 Require Import tools combclass ordtype permcomp.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -238,7 +239,7 @@ End StdCombClass.
 (** * Standardisation of a word over a totally ordered alphabet *)
 Section Standardisation.
 
-Context {disp : _} {Alph : orderType disp}.
+Context {disp} {Alph : orderType disp}.
 Implicit Type s u v w : seq Alph.
 
 Fixpoint std_rec n s :=
@@ -310,7 +311,7 @@ set pos := (posbig s).+1; set LR := take _ _.
 have HposLR : pos = size LR.
   rewrite /LR size_take /pos size_std_rec.
   case: (ltnP (posbig s).+1 (size s)) => Hpos; first by [].
-  apply/eqP; rewrite eqn_leq Hpos andbT.
+  apply: anti_leq; rewrite Hpos andbT.
   have: s != [::] by move: Hmax; case s.
   exact: posbig_size.
 rewrite HposLR; apply/eqP; rewrite -posbigE.
@@ -359,7 +360,7 @@ Definition eq_inv d1 d2 (T1 : inhOrderType d1) (T2 : inhOrderType d2)
            (w1 : seq T1) (w2 : seq T2) :=
   (versions w1) =2 (versions w2).
 
-Variables (disp1 disp2 disp3 : _)
+Context disp1 disp2 disp3
    (S : inhOrderType disp1)
    (T : inhOrderType disp2)
    (U : inhOrderType disp3).
@@ -401,7 +402,7 @@ Qed.
 
 Section EqInvAltDef.
 
-Variables (disp1 disp2 disp3 : _)
+Context disp1 disp2 disp3
           (S : inhOrderType disp1)
           (T : inhOrderType disp2)
           (U : inhOrderType disp3).
@@ -479,7 +480,7 @@ Qed.
 
 Section EqInvPosRemBig.
 
-Variables (disp1 disp2 : _) (S : inhOrderType disp1) (T : inhOrderType disp2).
+Context disp1 disp2 (S : inhOrderType disp1) (T : inhOrderType disp2).
 
 Lemma eq_inv_posbig (u : seq S) (v : seq T) :
   eq_inv u v -> posbig u = posbig v.
@@ -601,7 +602,7 @@ End EqInvPosRemBig.
 
 Section Spec.
 
-Variables (disp1 disp2 : _) (S : inhOrderType disp1) (T : inhOrderType disp2).
+Context disp1 disp2 (S : inhOrderType disp1) (T : inhOrderType disp2).
 
 Variant std_spec (s : seq T) (p : seq nat) : Prop :=
   | StdSpec : is_std p -> eq_inv s p -> std_spec s p.
@@ -672,7 +673,7 @@ End Spec.
 
 Section StdTakeDrop.
 
-Variables (disp1 disp2 : _) (S : inhOrderType disp1) (T : inhOrderType disp2).
+Context disp1 disp2 (S : inhOrderType disp1) (T : inhOrderType disp2).
 Implicit Type u v : seq T.
 
 Lemma std_take_std u v : std (take (size u) (std (u ++ v))) = std u.
@@ -700,7 +701,7 @@ End StdTakeDrop.
 
 Section PermEq.
 
-Variable (disp : _) (Alph : orderType disp).
+Context disp (Alph : orderType disp).
 Implicit Type u v : seq Alph.
 
 Theorem perm_stdE u v : perm_eq u v -> std u = std v -> u = v.
@@ -729,7 +730,7 @@ End PermEq.
 (** ** Standardization and elementary transpositions of a word *)
 Section Transp.
 
-Variable (disp : _) (Alph : inhOrderType disp).
+Context disp (Alph : inhOrderType disp).
 Implicit Type u v : seq Alph.
 
 Lemma nth_transp u v a b i :
@@ -948,7 +949,7 @@ Qed.
 Lemma size_invseq s t : invseq s t -> size s = size t.
 Proof.
 rewrite /invseq => /andP[Hst Hts].
-by apply/eqP; rewrite eqn_leq !size_leq_invseq.
+by apply: anti_leq; rewrite !size_leq_invseq.
 Qed.
 
 Lemma linvseq_subset_iota s t : linvseq s t -> {subset iota 0 (size s) <= t}.

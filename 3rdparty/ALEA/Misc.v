@@ -12,12 +12,12 @@
 
 Set Implicit Arguments.
 (* Require Export Setoid. *)
-Require Export Arith.
-From Coq Require Import Lia.
+From Stdlib Require Export Arith.
+From Stdlib Require Import Lia.
 
-Require Import Coq.Classes.SetoidTactics.
-Require Import Coq.Classes.SetoidClass.
-Require Import Coq.Classes.Morphisms.
+From Stdlib Require Import Classes.SetoidTactics.
+From Stdlib Require Import Classes.SetoidClass.
+From Stdlib Require Import Classes.Morphisms.
 
 #[local] Open Scope signature_scope.
 
@@ -260,7 +260,7 @@ Qed.
 
 (** * Preliminary lemmas relating the ordre on nat and N *)
 
-Require Export NArith.
+From Stdlib Require Export NArith.
 
 Lemma N2Nat_lt_mono : forall n m, (n < m)%N <-> (N.to_nat n < N.to_nat m)%nat.
 unfold N.lt; intros n m; rewrite N2Nat.inj_compare.

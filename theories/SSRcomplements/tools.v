@@ -19,10 +19,11 @@ No new notions are defined here.
 
 TODO: these probably should be contributed to SSReflect itself
 ****************************************************************************)
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype fintype choice seq.
-From mathcomp Require Import finset bigop path binomial order.
+From Corelib Require Import Setoid.
+From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice.
+From mathcomp Require Import seq finset bigop path binomial order.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

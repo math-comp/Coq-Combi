@@ -29,10 +29,11 @@ In what follows [T] is a [finType] and [S : {set T}].
                      the one of P and Q.
  ******)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import div ssralg ssrint ssrnum binomial.
 Require Import tools combclass sorted ordtype partition.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.

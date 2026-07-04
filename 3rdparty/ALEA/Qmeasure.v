@@ -20,6 +20,9 @@ Require Import Misc Ccpo.
 
 Set Implicit Arguments.
 
+From Stdlib Require Arith.
+From Stdlib Require Import Lia.
+
 
 From mathcomp Require Import ssreflect ssrfun eqtype choice.
 From mathcomp Require Import ssrbool ssrnat seq order fintype finfun.
@@ -27,6 +30,8 @@ From mathcomp Require Import bigop ssralg ssrnum ssrint rat.
 Import GRing.
 Import Order.Theory.
 Import Num.Theory.
+
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 
 Delimit Scope order_scope with Omc.
 #[local] Open Scope O_scope.
@@ -802,12 +807,9 @@ Definition flip : M bool :=
 Lemma flip_stable_sub : stable_sub flip.
 Proof.
 rewrite /flip /stable_sub => /= f g.
-rewrite !mulrDr !mulrN [in RHS]opprD.
-move: (2%:~R^-1 * f true) => ft.
-move: (2%:~R^-1 * g true) => gt.
-move: (2%:~R^-1 * f false) => ff.
-move: (2%:~R^-1 * g false) => gf.
-by ring_to_rat; ring.
+rewrite !mulrDr !mulrN [in RHS]opprD 2!addrA; congr (_ - _).
+rewrite -!addrA; congr (_ + _).
+by rewrite addrC.
 Qed.
 
 Lemma flip_prob : flip (fun x => 1) = 1.
@@ -833,8 +835,6 @@ Proof. by []. Qed.
 
 
 (** ** Finite distributions given by points and rational coefficients *)
-
-Require Arith.
 
 (* #[local] Open Scope rat_scope. *)
 
@@ -941,7 +941,7 @@ congr *%R.
 rewrite -big_filter (bigD1_seq a) /=.
 - rewrite (eq_refl a) mulr1.
   transitivity (coeff d a + 0)%R; last by rewrite addr0.
-  congr +%R; apply big1 => i.
+  congr +%R; apply: big1 => i.
   by case (i == a); rewrite //= ?mulr0 ?addr0.
 - by rewrite mem_filter Hain Hap.
 - by rewrite filter_uniq.

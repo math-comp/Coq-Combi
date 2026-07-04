@@ -104,12 +104,13 @@ The main result is thus [Theorem presentation_Sn_eltr]:
   ]
 ***************************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot.
 From mathcomp Require Import fingroup perm morphism presentation.
 From mathcomp Require Import ssralg poly ssrint.
 
 Require Import permcomp tools permuted combclass congr present.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -401,7 +402,7 @@ Notation "''s_[' w ]" := (\prod_(i <- w) 's_i).
 
 Implicit Type s t : 'S_n.
 
-Lemma eltrV i : 's_i^-1 = 's_i. Proof. by rewrite tpermV. Qed.
+Lemma eltrV i : ('s_i)^-1 = 's_i. Proof. by rewrite tpermV. Qed.
 Lemma eltrK i : involutive 's_i. Proof. exact: tpermK. Qed.
 Lemma eltr2 i : 's_i * 's_i = 1. Proof. exact: tperm2. Qed.
 
@@ -1128,7 +1129,7 @@ have {}/Hrec /= : perm_on [set k : 'I_n | k < m] srec.
   rewrite {Hrec} /srec /perm_on; apply/subsetP => k.
   rewrite !inE; apply contraR; rewrite -ltnNge permM ltnS => Hmk.
   apply/eqP; case (leqP k m) => Hkm.
-  + have -> : k = mo by apply val_inj; apply/eqP; rewrite /= eqn_leq Hmk Hkm.
+  + have -> : k = mo by apply/val_inj/anti_leq; rewrite Hmk Hkm.
     exact: cycleij_j.
   + have -> : s k = k by apply (out_perm Hon); rewrite inE -ltnNge.
     rewrite cycleij_gt // -ltnNge.
@@ -1391,7 +1392,7 @@ Open Scope ring_scope.
 
 Corollary genfun_length n :
   \sum_(s : 'S_n) 'X^(length s) =
-  \prod_(0 <= i < n) \sum_(0 <= j < i.+1) 'X^j : {poly int}.
+  \prod_(0 <= i < n) \sum_(0 <= j < i.+1) 'X^j :> {poly int}.
 Proof.
 case: n => [|n].
   rewrite (big_pred1_id _ _ (i := 1%g)); first last.
@@ -1471,7 +1472,7 @@ Lemma reduced_catr u v : u ++ v \is reduced -> v \is reduced.
 Proof using.
 rewrite !unfold_in size_cat => /eqP H.
 have {H} Huv : length 's_[u] + length 's_[v] = size u + size v.
-  apply/eqP; rewrite eqn_leq (leq_add (length_prods u) (length_prods v)) /=.
+  apply/anti_leq; rewrite (leq_add (length_prods u) (length_prods v)) /=.
   by have:= lengthM 's_[u] 's_[v]; rewrite -big_cat /= H => ->.
 by have:= leq_addE (length_prods u) (length_prods v) Huv => [] [_ ->].
 Qed.
@@ -2273,6 +2274,20 @@ constructor.
   by exists phi => i; rewrite phiE //= inord_val.
 Qed.
 
+Lemma pres_S2 :
+  (fun i : 'I_1 => 's_i, [:: ([:: ord0; ord0 ], [::]) ]) \present [set: 'S_2].
+Proof.
+suff  -> : [:: ([:: ord0; ord0 ], [::]) ] = relSn 1 by apply: present_Sn.
+rewrite /relSn -2![LHS]cats0 -catA; congr (_ ++ _ ++ _).
+- rewrite /image_mem; suff -> : enum 'I_1 = [:: ord0] by [].
+  by apply: (inj_map val_inj); rewrite enumT /= unlock /= val_ord_enum.
+- rewrite /image_mem; set p := (X in enum X).
+  suff /eq_enum -> : p =i pred0 by rewrite fintype.enum0.
+  by rewrite {}/p => [[i j]] /=; rewrite !inE /= !fintype.ord1.
+- rewrite /image_mem; set p := (X in enum X).
+  suff /eq_enum -> : p =i pred0 by rewrite fintype.enum0.
+  by rewrite {}/p => [[i j]] /=; rewrite !inE /= !fintype.ord1.
+Qed.
 
 Lemma joingU1 (gt : finGroupType) (a : gt) (S : {set gt}) :
   <[a]> <*> <<S>>  = << a |: S >>.
@@ -2377,48 +2392,5 @@ apply intro_isoGrp.
   + exists 's_2; rewrite ?setTI ?Hf //.
     by apply/imsetP => /=; exists (inord 2); rewrite //= inordK.
 Qed.
-
-
-Section PresS2.
-
-Definition s0 : 'S_2 := tperm (inord 0) (inord 1).
-
-Lemma ord1E (x : 'I_1) : x = ord0.
-Proof.
-by apply val_inj; case: x => [x] /=; rewrite ltnS leqn0 => /eqP ->.
-Qed.
-
-Lemma pres_S2 :
-  ((fun i : 'I_1 => 's_i), [:: ([:: ord0; ord0 ], [::]) ]) \present [set: 'S_2].
-Proof.
-constructor => //=.
-- by rewrite (eltr_genSn 1).
-- by rewrite andbT !big_cons big_nil mulg1 eltr2.
-move=> hT gensH; rewrite andbT !big_cons big_nil mulg1 => /eqP g2E.
-pose morph_eltr_fun (s : 'S_2) := \prod_(i <- canword s) gensH i.
-have morph_eltrP : {morph morph_eltr_fun : x y / x * y}.
-  move=> i j.
-  have:= braidred_to_canword (canword i ++ canword j) => [[redpath [Hpath]]].
-  rewrite big_cat /= !canwordP /morph_eltr_fun -big_cat /= => Hlast.
-  elim: redpath (_ ++ _) Hpath Hlast =>
-    [c _ <- //|] w0 wp IHwp /= c /andP [Hbr] {}/IHwp H{}/H ->.
-  move: Hbr => /orP [].
-  - rewrite braid_sym; move: c; apply: gencongr_ind => //.
-    move=> a b1 c b2 ->{w0} Hbr; rewrite !big_cat /=; congr (_ * (_ * _)) => {a c}.
-    move: Hbr; rewrite /= mem_cat => /orP [].
-    + move=> /braid_abaP [a [b [_ ->{b1} ->{b2}]]] /=.
-      by rewrite !(ord1E a) !(ord1E b).
-    + move=> /braidCP [a [b [_ ->{b1} ->{b2}]]].
-      by rewrite !(ord1E a) !(ord1E b).
-  - move=> /reducesP [a [l [b [->{c} ->{w0}]]]].
-    rewrite !big_cat /= !big_cons !big_nil !mulg1.
-    by rewrite (ord1E l) g2E mul1g.
-exists (Morphism (in2W morph_eltrP)) => [] [i Hi] /=.
-rewrite /morph_eltr_fun.
-have /= -> := (canword_eltr (Ordinal Hi)).
-by rewrite big_seq1.
-Qed.
-
-End PresS2.
 
 

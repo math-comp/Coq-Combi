@@ -57,11 +57,12 @@ Lemma [plact_map_in_incr].
 
 *****************)
 
-From mathcomp Require Import all_ssreflect.
+From mathcomp Require Import all_boot order.
 From mathcomp Require Import perm.
 Require Import tools partition ordtype tableau stdtab Schensted congr.
 
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -73,7 +74,7 @@ Import Order.Theory.
 (** * Definition of the Plactic monoid *)
 Section Defs.
 
-Variables (disp : _) (Alph : inhOrderType disp).
+Context disp (Alph : inhOrderType disp).
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -275,7 +276,7 @@ Notation "a =Pl b" := (plactcongr a b) (at level 70).
 
 Section RowsAndCols.
 
-Variables (disp : _) (Alph : inhOrderType disp).
+Context disp (Alph : inhOrderType disp).
 Let word := seq Alph.
 Implicit Type u v w : word.
 
@@ -329,7 +330,7 @@ End RowsAndCols.
 (** ** Plactic equivalence and reversal *)
 Section Rev.
 
-Variables (disp : _) (Alph : inhOrderType disp).
+Context disp (Alph : inhOrderType disp).
 Let word := seq Alph.
 Implicit Type u v w : word.
 
@@ -386,7 +387,7 @@ End Rev.
 (** ** Plactic equivalence and order duality *)
 Section DualRule.
 
-Variables (disp : _) (Alph : inhOrderType disp).
+Context disp (Alph : inhOrderType disp).
 Let word := seq Alph.
 Implicit Type u v w : word.
 
@@ -439,7 +440,7 @@ Arguments from_revdual {disp Alph}.
 
 Section PlactDual.
 
-Variables (disp : _) (Alph : inhOrderType disp).
+Context disp (Alph : inhOrderType disp).
 Let word := seq Alph.
 Implicit Type u v w : word.
 
@@ -490,7 +491,7 @@ End PlactDual.
 (** * Plactic monoid and Robinson-Schensted map *)
 Section RSToPlactic.
 
-Variables (disp : _) (Alph : inhOrderType disp).
+Context disp (Alph : inhOrderType disp).
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -622,7 +623,7 @@ End RSToPlactic.
 (** ** Removing the last big letter and plactic congruence *)
 Section RemoveBig.
 
-Variables (disp : _) (Alph : inhOrderType disp).
+Context disp (Alph : inhOrderType disp).
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -830,7 +831,7 @@ End RemoveBig.
 
 Section RestrIntervSmall.
 
-Variables (disp : _) (Alph : inhOrderType disp).
+Context disp (Alph : inhOrderType disp).
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -910,7 +911,7 @@ End RestrIntervSmall.
 
 Section RestrIntervBig.
 
-Variables (disp : _) (Alph : inhOrderType disp).
+Context disp (Alph : inhOrderType disp).
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.
@@ -955,7 +956,7 @@ End RestrIntervBig.
 (** ** Plactic congruence and increasing maps *)
 Section IncrMap.
 
-Variables (disp1 disp2 : _) (T1 : inhOrderType disp1) (T2 : inhOrderType disp2).
+Context disp1 disp2 (T1 : inhOrderType disp1) (T2 : inhOrderType disp2).
 Variable F : T1 -> T2.
 Variable u v : seq T1.
 

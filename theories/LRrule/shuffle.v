@@ -60,12 +60,13 @@ abgebraic translation of the rule and recode the triple by some standard
 skew tableaux.
 *************************)
 
-Require Import mathcomp.ssreflect.ssreflect.
-From mathcomp Require Import ssrbool ssrfun ssrnat eqtype finfun fintype choice.
-From mathcomp Require Import order seq tuple finset perm binomial bigop.
+From Corelib Require Import Setoid.
+From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice.
+From mathcomp Require Import order seq tuple finfun finset perm binomial bigop.
 Require Import tools vectNK subseq partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted plactic Greene_inv stdplact.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -415,7 +416,7 @@ End ShiftedShuffle.
 (** * Shifted shuffle and inverse standardized *)
 Section LRTriple.
 
-Context {disp : _} {Alph : inhOrderType disp}.
+Context {disp} {Alph : inhOrderType disp}.
 Let word := seq Alph.
 
 Implicit Type a b c : Alph.

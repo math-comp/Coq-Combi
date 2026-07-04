@@ -68,10 +68,11 @@ the congruence transitive closure of rule. The main results here are
                    preserved along the rewriting rule holds for classes.      *)
 (******************************************************************************)
 From HB Require Import structures.
-From mathcomp Require Import all_ssreflect.
-Require Import Recdef.
+From mathcomp Require Import all_boot.
+From Stdlib Require Import Recdef.
 Require Import permcomp permuted multinomial vectNK.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
