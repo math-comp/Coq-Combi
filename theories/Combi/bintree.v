@@ -22,7 +22,7 @@ graph of left rotation. We show that it is indeed a lattice.
 
 Basic definitions:
 
-- [bintree] == the type of binary trees this is canonically a [countType]
+- [bintree] == the type of binary trees. This is canonically a [countType]
 - [BinLeaf] == the leaf for binary trees
 - [BinNode left right] == the binary tree with subtrees [left] [right]
 
@@ -99,7 +99,7 @@ Reserved Notation "x '\/T' y" (at level 70, y at next level).
 
 
 (** * Inductive type for binary trees *)
-Inductive bintree : predArgType :=
+Inductive bintree : Set :=
   | BinLeaf  : bintree
   | BinNode  : bintree -> bintree -> bintree.
 
@@ -133,7 +133,10 @@ Fixpoint tree_decode (gt : GenTree.tree unit) :=
 Lemma tree_encodeK : cancel tree_encode tree_decode.
 Proof. by elim=> //= tl -> tr ->. Qed.
 
-HB.instance Definition _ := CanIsCountable tree_encodeK.
+HB.instance Definition _ :=
+  Choice.copy bintree (can_type tree_encodeK).
+HB.instance Definition _ :=
+  Countable.copy bintree (can_type tree_encodeK).
 
 
 Fixpoint size_tree t :=
