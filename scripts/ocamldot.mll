@@ -17,11 +17,10 @@ let addDepend t =
 rule processSource = parse
     ['.' '-' '/' 'A'-'Z' 'a'-'z' '_' '\192'-'\214' '\216'-'\246'
      '\248'-'\255' '\'' '0'-'9' ]+ '.' ['A'-'Z' 'a'-'z']+
-    [' ' '\009']* ':'
+    [' ' '\009']* ['A'-'Z' 'a'-'z' '_' '.']* ':'
       { let s = Lexing.lexeme lexbuf in
         let i = String.rindex s '.' in
         let s = String.sub s 0 i in
-(*        let s = Filename.basename s in *)
         let s = String.capitalize_ascii s in
         currentSource := s;
 	nodes := StringSet.add s (!nodes);
@@ -41,7 +40,6 @@ and processTargets = parse
       { let t = Lexing.lexeme lexbuf in
         let i = String.rindex t '.' in
         let t = String.sub t 0 i in
-(*        let t = Filename.basename t in *)
         let t = String.capitalize_ascii t in
         addDepend t;
         processTargets lexbuf }
