@@ -53,6 +53,8 @@ From mathcomp Require Import ssralg matrix.
 Require Import permcomp tools permuted combclass congr presentSn.
 Require Import std ordtype.
 
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
