@@ -1,5 +1,5 @@
-Rocq-Combi
-=========
+Rocq-Combi V1.1.0
+=================
 
 Formalisation of algebraic combinatorics in Rocq/MathComp.
 
