@@ -104,7 +104,7 @@ Contents
   - subsequences, integer vectors
   - standard words, permutations and the standardization map
   - Yamanouchi word
-  - binary trees, Dyck words and Catalan numbers
+  - binary trees, ordered trees, Dyck words and Catalan numbers
   - set partition and refinement order
 
 * the **Coxeter presentation of the symmetric group**.
@@ -117,7 +117,8 @@ Contents
     iff they are equivalent under braid relations
   - the Coxeter length and the inversion set
   - the dual Lehmer code of a permutation
-  - the weak permutohedron lattice
+  - the weak permutohedron lattice, the strong Bruhat order (using corner
+    sums matrices)
 
 * the **factorization** of the Vandermonde determinant as the product
   of differences.
