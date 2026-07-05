@@ -202,7 +202,7 @@ Import GRing.Theory.
 Local Open Scope ring_scope.
 Local Open Scope tfps_scope.
 
-Lemma sg_strict_part_bound n b :
+Lemma gfun_strict_part_bound n b :
   [tfps i => (cBSpart i b)%:R] =
     \prod_(1 <= i < b.+1) (1 + \X ^+ i) :> {tfps int n}.
 Proof.
@@ -227,16 +227,16 @@ rewrite cBSpart_rec // natrD; congr (_ + _).
 by rewrite (leq_trans _ le_i_n) ?leq_subr.
 Qed.
 
-Lemma sg_strict_part n :
+Lemma gfun_strict_part n :
   [tfps i => (cSpart i)%:R] =
     \prod_(1 <= i < n.+1) (1 + \X ^+ i) :> {tfps int n}.
 Proof.
-rewrite -sg_strict_part_bound; apply/tfpsP => i le_i_n.
+rewrite -gfun_strict_part_bound; apply/tfpsP => i le_i_n.
 by rewrite !coef_tfps_of_fun le_i_n cBSpartE.
 Qed.
 
 
-Lemma sg_odd_part_bound n b :
+Lemma gfun_odd_part_bound n b :
   [tfps i => (cBOpart i b)%:R] =
     \prod_(1 <= i < b.+1 | odd i) (1 - \X ^+ i)^-1 :> {tfps int n}.
 Proof.
@@ -269,11 +269,11 @@ rewrite natrD; congr (_ + _).
 by rewrite [in RHS]cBOpart_even_rec.
 Qed.
 
-Lemma sg_odd_part n :
+Lemma gfun_odd_part n :
   [tfps i => (cOpart i)%:R] =
     \prod_(1 <= i < n.+1 | odd i) (1 - \X ^+ i)^-1 :> {tfps int n}.
 Proof.
-rewrite -sg_odd_part_bound; apply/tfpsP => i le_i_n.
+rewrite -gfun_odd_part_bound; apply/tfpsP => i le_i_n.
 by rewrite !coef_tfps_of_fun le_i_n cBOpartE.
 Qed.
 
@@ -312,7 +312,7 @@ Corollary Euler_strict_odd_partition n :
   #|[set sh : 'P_n | uniq sh]| = #|[set sh : 'P_n | all odd sh]|.
 Proof.
 have /(congr1 (coeftfps n)) /= := Euler_identity n.
-rewrite -sg_odd_part -sg_strict_part !coef_tfps_of_fun leqnn => /eqP.
+rewrite -gfun_odd_part -gfun_strict_part !coef_tfps_of_fun leqnn => /eqP.
 by rewrite !natz eqz_nat => /eqP.
 Qed.
 
