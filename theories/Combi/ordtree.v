@@ -30,9 +30,12 @@ Ordered trees of size n:
 - [enum_ordtreesz n] == the list of a ordered trees of size [n]
 - [ordtreesz n]      == the Sigma type for ordered trees of size [n].
         This is canonically a [finType] with enumeration [enum_ordtreesz n]
+
+Various Notion:
+
 - [depth_ordtree t]  == the depth of the ordered tree [t], that is the
         maximum number of node on a branch.
-
+- [line_ordtree n]   == the linear tree of size n + 1
  *********************)
 From HB Require Import structures.
 From mathcomp Require Import all_boot.
@@ -272,4 +275,40 @@ suff [n eqf] : exists n : nat, f = (nseq n.+1 (OrdNode [::])).
 exists (size f).-1.
 have {eqmax} -> : (size f).-1.+1 = (size f) by case: f eqmax {alld1}.
 by apply/all_pred1P/allP => /= t {}/alld1; rewrite depth_tree_eq1.
+Qed.
+
+
+Fixpoint line_ordtree n :=
+  if n is n0.+1 then OrdNode [:: line_ordtree n0] else OrdNode [::].
+
+Lemma size_line_ordtree n : size_ordtree (line_ordtree n) = n.+1.
+Proof. by elim: n => // n /= ->; rewrite addn0. Qed.
+Lemma depth_line_ordtree n : depth_ordtree (line_ordtree n) = n.+1.
+Proof. by elim: n => // n /= ->; rewrite maxn0. Qed.
+Lemma depth_le_size t :
+  depth_ordtree t <= size_ordtree t
+                  ?= iff (t == line_ordtree (size_ordtree t).-1).
+Proof.
+have dlesz t1 : depth_ordtree t1 <= size_ordtree t1.
+  elim/indtree: t1  {t} => /=; elim=> [// |t f IHf Ht] /=.
+  have /Ht ledt : t \in t :: f by rewrite inE eqxx.
+  have {Ht} /IHf : forall t, t \in f -> depth_ordtree t <= size_ordtree t.
+    by move=> t0 t0in; apply: Ht; rewrite inE t0in orbT.
+  rewrite !ltnS -(leq_add2l (size_ordtree t)) => /(leq_trans _); apply.
+  by rewrite geq_max leq_addl andbT (leq_trans ledt) // leq_addr.
+split; first exact: dlesz.
+apply/eqP/eqP => [|->]; last by rewrite size_line_ordtree depth_line_ordtree.
+elim/indtree: t => /= [[// | t f]] IHf [] Heq.
+have /= := dlesz (OrdNode f); rewrite ltnS.
+rewrite -(leq_add2l (size_ordtree t)) -Heq.
+rewrite leq_max => /orP[]; first last.
+  by rewrite -{2}(add0n (foldr _ _ _)) leq_add2r leqNgt size_ordtree_pos.
+move/leq_trans => /(_ _ (dlesz t)).
+rewrite -{2}(addn0 (size_ordtree t)) leq_add2l leqn0 => H0.
+move: Heq; have {H0} -> : f = [::].
+  case: f H0 {IHf} => //= t1 f.
+  by rewrite -leqn0 geq_max leqNgt depth_ordtree_pos.
+rewrite /= maxn0 addn0 => /[dup] + ->.
+have {}/IHf/[apply] : t \in t :: f by rewrite inE eqxx.
+by case: size_ordtree (size_ordtree_pos t) => //= n _ ->.
 Qed.
