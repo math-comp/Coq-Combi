@@ -5,6 +5,7 @@
 -arg -w -arg -ambiguous-paths
 -arg -w -arg -redundant-canonical-projection
 -arg -w -arg -projection-no-head-constant
+-arg -w -arg -deprecated-since-mathcomp-2.6.0
 theories/Combi/bintree.v
 theories/Combi/composition.v
 theories/Combi/Dyckword.v
@@ -12,6 +13,7 @@ theories/Combi/fibered_set.v
 theories/Combi/partition.v
 theories/Combi/permuted.v
 theories/Combi/multinomial.v
+theories/Combi/ordtree.v
 theories/Combi/setpartition.v
 theories/Combi/skewpart.v
 theories/Combi/skewtab.v
