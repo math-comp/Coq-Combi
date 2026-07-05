@@ -13,10 +13,12 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-From mathcomp Require Import all_ssreflect ssralg ssrint.
-From Combi Require Import tfps auxresults.
+From mathcomp Require Import all_boot ssralg ssrint.
 
+Require Import tfps auxresults.
 Require Import tools sorted partition.
+
+Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 
 Set Implicit Arguments.
 Unset Strict Implicit.
