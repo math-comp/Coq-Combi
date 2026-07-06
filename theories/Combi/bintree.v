@@ -1,4 +1,4 @@
-(** * Combi.Combi.bintree : Binary Trees *)
+(** * Combi.Combi.bintree : Binary Trees and Tamari lattice *)
 (******************************************************************************)
 (*      Copyright (C) 2014-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
@@ -279,6 +279,7 @@ rewrite -!nth_last !size_Catalan_bin_leq /= !Catalan_bin_leqE //.
 exact: leq_subr.
 Qed.
 
+(** ** Enumeration and [finType] of binary trees of a fixed size *)
 Lemma enum_bintreeszE n :
   enum_bintreesz n.+1 =
   flatten [seq [seq BinNode tl tr |
@@ -479,7 +480,7 @@ Proof. by apply val_inj => /=; exact: flip_leftcomb. Qed.
 End SizeN.
 
 
-(** * Tamari's lattice *)
+(** * Rotations and Tamari vectors *)
 (** ** Rotations in binary trees *)
 Fixpoint rotations t :=
   if t is BinNode l r then
@@ -761,7 +762,7 @@ Qed.
 
 
 
-(** ** Bijection with Tamari vectors *)
+(** ** Bijection between binary trees and Tamari vectors *)
 Fixpoint from_vct_rec fuel lft vct :=
   if fuel is fuel.+1 then
     if vct is v0 :: vct' then
@@ -927,7 +928,7 @@ Lemma from_vct0 n : from_vct (nseq n 0) = leftcomb n.
 Proof. by rewrite -right_sizes_left_comb right_sizesK. Qed.
 
 
-(** ** Comparison of Tamari vectors *)
+(** ** Lattice structure on Tamari vectors *)
 
 Definition vctleq v1 v2 :=
   (size v1 == size v2) && (all (fun p => p.1 <= p.2) (zip v1 v2)).
@@ -1373,7 +1374,7 @@ Notation "x /\T y" := (@Order.meet Tamari_display _ x y).
 Notation "x \/T y" := (@Order.join Tamari_display _ x y).
 
 
-(** ** Definition of Tamari order *)
+(** ** Definition of the Tamari lattice *)
 Module TamariLattice.
 Section TamariLattice.
 
@@ -1580,7 +1581,7 @@ have [] := vct_succ Htam H1 H2.
   by right; apply val_inj.
 Qed.
 
-Lemma covers_Tamari t1 t2 : (trval t2 \in rotations t1) = (covers t1 t2).
+Theorem covers_Tamari t1 t2 : (trval t2 \in rotations t1) = (covers t1 t2).
 Proof.
 apply/idP/coversP => [Hrot|].
 - split => /= [|z /andP[H1 H2]]; first exact: rotations_Tamari.
