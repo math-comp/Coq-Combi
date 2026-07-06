@@ -1,4 +1,4 @@
-(** * Combi.hook.Frobenius_ident : Frobenius identity *)
+(** * Combi.HookFormula.Frobenius_ident : Frobenius identity *)
 (******************************************************************************)
 (*      Copyright (C) 2015-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
