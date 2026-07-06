@@ -1,4 +1,4 @@
-(** * Combi.Combi.ordree : Ordered Trees *)
+(** * Combi.Combi.ordtree : Ordered Trees *)
 (******************************************************************************)
 (*      Copyright (C) 2014-2018 Florent Hivert <florent.hivert@lri.fr>        *)
 (*                                                                            *)
@@ -31,7 +31,7 @@ Ordered trees of size n:
 - [ordtreesz n]      == the Sigma type for ordered trees of size [n].
         This is canonically a [finType] with enumeration [enum_ordtreesz n]
 
-Various Notion:
+Misc definitions:
 
 - [depth_ordtree t]  == the depth of the ordered tree [t], that is the
         maximum number of node on a branch.
