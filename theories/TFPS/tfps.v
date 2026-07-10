@@ -151,8 +151,8 @@ Lemma index_translation (m j : nat) (F : nat -> R) :
   \big[op/idx]_(i < m - j) F i =
   \big[op/idx]_(k < m | j <= k) F (k - j).
 Proof.
-rewrite -(big_mkord predT F) /= (big_mknat _ j m (fun k => F (k - j))).
-rewrite -{2}[j]add0n (big_addn 0 m j _ _).
+rewrite -(big_mkord predT F) -(big_geq_mkord j m predT (fun i => F (i - j))) /=.
+rewrite -{2}[j]add0n big_addn.
 by apply: eq_bigr => i _ ; rewrite addnK.
 Qed.
 
@@ -2931,9 +2931,10 @@ Proof.
 rewrite /log /logt => f0_eq1; apply tfpsP => i le_in.
 rewrite raddfN !coeftN /=; congr (- _).
 rewrite (coef_comp_tfps_leq (l := n)) -?coeft0_eq10 // coeft_sum /=.
-rewrite -big_mknat /= [RHS]big_mkcond /=; apply eq_bigr => j _.
-rewrite coef_tfps_of_fun -ltnS ltn_ord coeftZ lt0n.
-by case: eqP => //= _; rewrite mul0r.
+rewrite big_mknat /= big_ltn // inordK //=.
+rewrite coef_tfps_of_fun /= mul0r add0r.
+rewrite !big_nat; apply eq_bigr => j /andP[le1j /[!ltnS] ltjn].
+by rewrite inordK // coef_tfps_of_fun ltjn coeftZ -lt0n le1j.
 Qed.
 
 Lemma log_coeft0_eq1_val f : f \in coeft0_eq1 ->
@@ -3082,6 +3083,15 @@ Qed.
 
 Lemma expB : {in @coeft0_eq0 R n &, {morph exp : f g / f - g >-> f / g}}.
 Proof. by move=> f g hf hg; rewrite expD ?rpredN // expN. Qed.
+
+Lemma exp_sum (I : eqType) (r : seq I) (P : pred I) (F : I -> {tfps R n}) :
+  (forall i, P i -> F i \in coeft0_eq0) ->
+  exp (\sum_(i <- r | P i) F i) = \prod_(i <- r | P i) exp (F i).
+Proof.
+move=> H; apply (big_morph_in (@coeft0_eq0D R n)
+                   (zero_in_coeft0_eq0 R n) expD (exp0 R n)).
+by apply/allP => /= f /mapP[i]; rewrite mem_filter => /andP[/H Fiin _ ->].
+Qed.
 
 End ExpMorph.
 
@@ -3281,6 +3291,14 @@ Qed.
 Lemma log_div : {in coeft0_eq1 &, {morph (@log R n) : f g / f / g >-> f - g}}.
 Proof. by move=> f g f0_eq1 g0_eq1 /=; rewrite logM ?rpredV // logV. Qed.
 
+Lemma log_prod (I : eqType) (r : seq I) (P : pred I) (F : I -> {tfps R n}) :
+  (forall i, P i -> F i \in coeft0_eq1) ->
+  log (\prod_(i <- r | P i) F i) = \sum_(i <- r | P i) log (F i).
+Proof.
+pose mulcl := mulr_closed_coeft0_eq1 R n.
+move=> H; apply: (big_morph_in mulcl.2 mulcl.1 logM (log1 _ _)).
+by apply/allP => /= f /mapP[i]; rewrite mem_filter => /andP[/H Fiin _ ->].
+Qed.
 
 Section ExprTfps.
 
@@ -3467,6 +3485,7 @@ Definition derivXn_tfps       := TFPSUnitRing.derivXn_tfps.
 Definition expD               := TFPSUnitRing.expD               nuf.
 Definition expN               := TFPSUnitRing.expN               nuf.
 Definition expB               := TFPSUnitRing.expB               nuf.
+Definition exp_sum            := TFPSUnitRing.exp_sum            nuf.
 Definition deriv_tfps_eq0_cst := TFPSUnitRing.deriv_tfps_eq0_cst nuf.
 Definition deriv_tfps_ex_eq0  := TFPSUnitRing.deriv_tfps_ex_eq0  nuf.
 Definition deriv_tfps_eq0     := TFPSUnitRing.deriv_tfps_eq0     nuf.
@@ -3485,6 +3504,7 @@ Definition log_inj            := TFPSUnitRing.log_inj            nuf.
 Definition logM               := TFPSUnitRing.logM               nuf.
 Definition logV               := TFPSUnitRing.logV               nuf.
 Definition log_div            := TFPSUnitRing.log_div            nuf.
+Definition log_prod           := TFPSUnitRing.log_prod           nuf.
 Definition coeft0_eq1_expr    := TFPSUnitRing.coeft0_eq1_expr.
 Definition expr_tfpsn         := TFPSUnitRing.expr_tfpsn         nuf.
 Definition expr_tfps0         := TFPSUnitRing.expr_tfps0.

@@ -73,13 +73,6 @@ rewrite Monoid.mul1m [LHS]big_nat_cond [RHS]big_nat_cond.
 by apply/eq_bigl => i; have [] := ltnP i m1; rewrite ?(andbT, andbF).
 Qed.
 
-Lemma big_mknat  (op : Monoid.law idx)  (a b : nat) (F : nat -> R) :
-  \big[op/idx]_(i < b | a <= i) F i = \big[op/idx]_(a <= i < b) F i.
-Proof.
-rewrite -(big_mkord (fun i => a <= i) F).
-by rewrite -(big_nat_widen_l _ _ predT) ?leq0n.
-Qed.
-
 End MoreBigop.
 
 Section MoreCoef.
