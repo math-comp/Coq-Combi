@@ -61,6 +61,7 @@ theories/MPoly/symseries.v
 theories/MPoly/antisym.v
 theories/MPoly/Cauchy.v
 theories/MPoly/homogsym.v
+theories/MPoly/sympoly_def.v
 theories/MPoly/sympoly.v
 theories/MPoly/Schur_mpoly.v
 theories/MPoly/Schur_altdef.v

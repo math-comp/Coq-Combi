@@ -92,6 +92,7 @@ From mathcomp Require Import ssrcomplements freeg mpoly.
 Require Import sorted tools ordtype permuted partition skewpart composition.
 Require Import Yamanouchi std tableau stdtab skewtab permcent.
 Require Import antisym Schur_mpoly therule Schur_altdef unitriginv.
+Require Export sympoly_def.
 
 Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
@@ -100,6 +101,15 @@ Unset Printing Implicit Defensive.
 
 #[local] Open Scope ring_scope.
 Import GRing.Theory.
+
+Reserved Notation "''e_' k" (at level 8, k at level 2, format "''e_' k").
+Reserved Notation "''h_' k" (at level 8, k at level 2, format "''h_' k").
+Reserved Notation "''p_' k" (at level 8, k at level 2, format "''p_' k").
+Reserved Notation "''e[' k ]" (at level 0, format "''e[' k ]").
+Reserved Notation "''h[' k ]" (at level 0, format "''h[' k ]").
+Reserved Notation "''p[' k ]" (at level 0, format "''p[' k ]").
+Reserved Notation "''m[' k ]" (at level 0, format "''m[' k ]").
+Reserved Notation "''s[' k ]" (at level 0, format "''s[' k ]").
 
 
 Lemma boolRP (R : nzRingType) (b : bool) : reflect (b%:R = 0 :> R) (~~b).
@@ -127,93 +137,6 @@ Lemma mcoeffXU (i j : 'I_n) : ('X_i @_U_(j) : R) = (i == j)%:R.
 Proof. by rewrite mcoeffX eq_mnm1. Qed.
 
 End MultinomCompl.
-
-
-Reserved Notation "{ 'sympoly' T [ n ] }"
-  (at level 0, T, n at level 2, format "{ 'sympoly'  T [ n ] }").
-Reserved Notation "''e_' k" (at level 8, k at level 2, format "''e_' k").
-Reserved Notation "''h_' k" (at level 8, k at level 2, format "''h_' k").
-Reserved Notation "''p_' k" (at level 8, k at level 2, format "''p_' k").
-Reserved Notation "''e[' k ]" (at level 0, format "''e[' k ]").
-Reserved Notation "''h[' k ]" (at level 0, format "''h[' k ]").
-Reserved Notation "''p[' k ]" (at level 0, format "''p[' k ]").
-Reserved Notation "''m[' k ]" (at level 0, format "''m[' k ]").
-Reserved Notation "''s[' k ]" (at level 0, format "''s[' k ]").
-
-
-Section DefType.
-
-Variable n : nat.
-Variable R : nzRingType.
-
-Record sympoly : predArgType :=
-  SymPoly {sympol :> {mpoly R[n]}; _ : sympol \is symmetric}.
-
-HB.instance Definition _ := [isSub of sympoly for sympol].
-HB.instance Definition _ := [Choice of sympoly by <:].
-
-Lemma sympol_inj : injective sympol. Proof. exact: val_inj. Qed.
-
-End DefType.
-
-(* We need to break off the section here to let the argument scope *)
-(* directives take effect.                                         *)
-Bind Scope ring_scope with sympoly.
-(* Arguments sympol {n}%nat_scope {R}%ring_scope. *)
-
-Notation "{ 'sympoly' T [ n ] }" := (sympoly n T).
-
-
-Section SymPolyRingType.
-
-Variable n : nat.
-Variable R : nzRingType.
-
-HB.instance Definition _ := [SubChoice_isSubLalgebra of {sympoly R[n]} by <:].
-
-Fact sympol_is_linear : linear (@sympol n R).
-Proof. by []. Qed.
-HB.instance Definition _ :=
-  GRing.isLinear.Build
-    R {sympoly R[n]} {mpoly R[n]} _ _ sympol_is_linear.
-Fact sympol_is_monoid_morphism : monoid_morphism (@sympol n R).
-Proof. by []. Qed.
-HB.instance Definition _ :=
-  GRing.isMonoidMorphism.Build
-    {sympoly R[n]} {mpoly R[n]} _ sympol_is_monoid_morphism.
-
-Lemma sympolP (x : {sympoly R[n]}) : sympol x \is symmetric.
-Proof. by case: x. Qed.
-
-End SymPolyRingType.
-
-#[export] Hint Resolve sympolP : core.
-
-
-Section SymPolyComRingType.
-
-Variable n : nat.
-Variable R : comNzRingType.
-
-HB.instance Definition _ :=
-  [SubChoice_isSubAlgebra of {sympoly R[n]} by <:].
-HB.instance Definition _ :=
-  [SubNzRing_isSubComNzRing of {sympoly R[n]} by <:].
-
-End SymPolyComRingType.
-
-
-Section SymPolyIdomainType.
-
-Variable n : nat.
-Variable R : idomainType.
-
-HB.instance Definition _ :=
-  [SubNzRing_isSubUnitRing of {sympoly R[n]} by <:].
-HB.instance Definition _ :=
-  [SubComUnitRing_isSubIntegralDomain of {sympoly R[n]} by <:].
-
-End SymPolyIdomainType.
 
 
 Section Bases.
@@ -2558,4 +2481,3 @@ exact: (leq_ltn_trans le_p_n lt_n_i).
 Qed.
 
 End CategoricalSystems.
-
