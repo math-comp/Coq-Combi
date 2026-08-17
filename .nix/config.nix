@@ -64,20 +64,53 @@
         mathcomp.override.version = "2.5.0";
       };
     };
+    "rocq-9.2-mc2.5.0" = {
+      rocqPackages = {
+        rocq-core.override.version = "9.2";
+        mathcomp.override.version = "2.5.0";
+        mathcomp.job = false;
+      };
+      coqPackages = {
+        coq.override.version = "9.2";
+        mathcomp.override.version = "2.5.0";
+      };
+    };
+    "rocq-9.2-mc2.6.0" = {
+      rocqPackages = {
+        rocq-core.override.version = "9.2";
+        mathcomp.override.version = "2.6.0";
+        mathcomp.job = false;
+      };
+      coqPackages = {
+        coq.override.version = "9.2";
+        mathcomp.override.version = "2.6.0";
+      };
+    };
     "rocq-9.1-mcmaster" = {
       rocqPackages = {
         rocq-core.override.version = "9.1";
         mathcomp.override.version = "master";
-        mathcomp-finmap.override.version = "master";
         multinomials.override.version = "master";
         mathcomp.job = false;
         multinomials.job = false;
-        mathcomp-finmap.job = false;
       };
       coqPackages = {
         coq.override.version = "9.1";
         mathcomp.override.version = "master";
-        mathcomp-finmap.override.version = "master";
+        multinomials.override.version = "master";
+      };
+    };
+    "rocq-9.2-mcmaster" = {
+      rocqPackages = {
+        rocq-core.override.version = "9.2";
+        mathcomp.override.version = "master";
+        multinomials.override.version = "master";
+        mathcomp.job = false;
+        multinomials.job = false;
+      };
+      coqPackages = {
+        coq.override.version = "9.2";
+        mathcomp.override.version = "master";
         multinomials.override.version = "master";
       };
     };
