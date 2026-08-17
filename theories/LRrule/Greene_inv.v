@@ -157,12 +157,12 @@ rewrite -{1}[enum _](cat_take_drop i.+1) drop_enumI take_enumI !filter_cat map_c
 rewrite -{1}[enum _](cat_take_drop i)    drop_enumI take_enumI !filter_cat map_cat.
 rewrite -cat1s catA -!filter_predI.
 congr (((map (tnth wt) _) ++ _) ++ (map (tnth wt) _)).
-- apply eq_filter => j /=; rewrite !inE !andbT.
+- apply eq_filter => j /=; rewrite !inE !andbT -?andbA.
   congr ((j \in S) && _); case (ltnP j i) => H; last by rewrite andbF.
   by rewrite (ltn_trans H (ltnSn i)).
 - rewrite [X in map _ X](_ : _ = [:: i]) //.
   rewrite (eq_filter (a2 := xpred1 i)) => [| /= j /=]; first last.
-    rewrite ltnS -eqn_leq inE andbT.
+    rewrite ltnS andbC -?andbA -eqn_leq inE /=.
     case: (j =P i) => [-> | H]; first by rewrite eq_refl Hi.
     suff /negbTE -> : (val j != val i) by rewrite andbF.
     by apply/contra_notN: H => /eqP/val_inj ->.

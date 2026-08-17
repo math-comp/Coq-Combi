@@ -2447,7 +2447,7 @@ have [b/ltnW] := ubnP i; elim: b i => [| i IHi] d.
 rewrite leq_eqVlt => /orP[/eqP ->{d} | ] Hi; last exact: IHi.
 have:= Newton_symh m0 R i.+2 => /(congr1 cnvarsym).
 rewrite linearZ /= cnvar_symh // Newton_symh.
-rewrite big_ltn // symh0 mul1r subn0.
+rewrite [X in _ = _ X -> _]big_ltn // symh0 mul1r subn0.
 rewrite [X in X = _ -> _]big_ltn //= symh0 mul1r subn0 => /esym.
 rewrite raddfD /= raddf_sum /=.
 suff -> : \sum_(1 <= j < i.+2) cnvarsym ('h_j * 'p_(i.+2 - j)) =

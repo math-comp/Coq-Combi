@@ -266,8 +266,7 @@ Canonical morph_of_tinj := Morphism (D := SnXm) (in2W tinj_morphM).
 Lemma isom_tinj : isom SnXm (tinj @* ('dom tinj)) tinj.
 Proof using.
 apply/isomP; split; last by [].
-apply/subsetP => [] /= [s1 s2]; rewrite inE => /andP[_].
-rewrite !inE /= => /eqP/permP H.
+apply/subsetP => [] /= [s1 s2]; rewrite !inE => /andP[_ /eqP/permP H].
 rewrite -[1]/(1,1) /xpair_eqE /=.
 apply/andP; split; apply/eqP/permP => x; rewrite !perm1.
 - have:= H (unsplit (inl x)).
@@ -605,7 +604,8 @@ Lemma cfdot_Ind_cfuniCT p q (l : 'P_(m + n)) :
   '[ 'Ind['SG_(m + n)] ('1_[p] \o^ '1_[q]), '1_[l] ] =
   (p +|+ q == l)%:R / 'z_p / 'z_q.
 Proof using.
-rewrite -cfdot_Res_r cfuni_Res -linear_sum cfIsom_iso cfdot_sumr.
+rewrite -cfdot_Res_r cfuni_Res -[X in '[_, X] = _]linear_sum /=.
+rewrite [LHS]cfIsom_iso cfdot_sumr.
 transitivity
   (\sum_(i | l == i.1 +|+ i.2)
     #|(classX p q) :&: (classX i.1 i.2)|%:R / #|SnXm|%:R : algC).

@@ -525,8 +525,8 @@ apply/esym/sdprod_normal_complP.
 rewrite /= -/(stab_iporbits s).
 rewrite inE; apply/andP; split.
 - apply/eqP/trivgP; apply/subsetP => t.
-  rewrite 2!inE => /andP[/imsetP[/= P]].
-  rewrite setIid => HP Ht /andP[tC tCporbits]; rewrite inE.
+  rewrite 3!inE => /andP[/imsetP[/= P]].
+  rewrite setIid => HP Ht /andP[tC tCporbits].
   suff : P = 1 by rewrite Ht => ->; rewrite morphism.morph1.
   by rewrite -(permcyclesK HP) -Ht; apply: inporbits1.
 - rewrite /=; apply/eqP/setP => /= t.

@@ -320,7 +320,7 @@ have Hdla : (sumn la <= nvar)%N by apply: (leq_trans _ Hd); rewrite /= leq_addl.
 have {IHla} Hrec := IHla Hla Hdla.
 rewrite homsymprod_h1h -Fchar_triv -(Fchar_invK Hdla 'hh[(IntPartN Hla)]).
 rewrite -Fchar_ind_morph (FcharK Hd).
-apply cfInd_char; rewrite cfIsom_char.
+apply cfInd_char; rewrite (cfIsom_char (isom_tinj _ _)).
 exact: (cfextprod_char (cfun1_char _) Hrec).
 Qed.
 
