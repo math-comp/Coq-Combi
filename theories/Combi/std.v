@@ -54,7 +54,7 @@ From mathcomp Require Import perm fingroup.
 
 Require Import tools combclass ordtype permcomp.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -122,7 +122,7 @@ Qed.
 
 Lemma uniq_wordperm n (p : 'S_n) : uniq (wordperm p).
 Proof.
-rewrite (eq_uniq _ (wordperm_iota p)); first exact: (iota_uniq 0 n).
+rewrite (eq_uniq _ (wordperm_iota p)); last exact: (iota_uniq 0 n).
 by rewrite size_map size_enum_ord size_iota.
 Qed.
 
@@ -150,7 +150,7 @@ have Hfp : injective fp.
   exact: std_uniq.
 exists (perm Hfp); rewrite /wordperm /=.
 apply: (@eq_from_nth _ 0); first by rewrite size_map size_enum_ord.
-move=> i Hi; rewrite (nth_map (Ordinal Hi)); last by rewrite size_enum_ord.
+move=> i Hi; rewrite (nth_map (Ordinal Hi)); first by rewrite size_enum_ord.
 rewrite -{3}[i]/(val (Ordinal Hi)).
 by rewrite nth_ord_enum /= permE /fp /= ffunE /= /fpn /=.
 Qed.
@@ -168,12 +168,12 @@ Lemma wordperm_invP n (p : 'S_n) i (j : 'I_n) :
 Proof.
 split; rewrite /wordperm.
 - case (ltnP i n) => Hi.
-  + rewrite (nth_map j); last by rewrite size_enum_ord.
+  + rewrite (nth_map j); first by rewrite size_enum_ord.
     rewrite /= => /val_inj <-.
     by rewrite permK nth_enum_ord.
-  + rewrite nth_default; last by rewrite size_map size_enum_ord.
+  + rewrite nth_default; first by rewrite size_map size_enum_ord.
     by move=> Hn; exfalso; have:= ltn_ord j; rewrite -{1}Hn ltnn.
-- move ->; rewrite (nth_map j); last by rewrite size_enum_ord; apply: ltn_ord.
+- move ->; rewrite (nth_map j); first by rewrite size_enum_ord; apply: ltn_ord.
   by rewrite nth_ord_enum /= permKV.
 Qed.
 
@@ -876,7 +876,7 @@ rewrite (leq_trans (leq_trans (leqnSn _) (leqnSn _)) (leqnSn _)) /=.
 set dr := drop (size u) (std w1).
 have : size dr >= 3 by rewrite /dr /w1 size_drop size_std size_cat addnC addnK.
 case H : dr => [// | A [// | B [// | C d']]] _ /=.
-rewrite !subSn //=; last exact: (@leq_trans (size u).+1).
+rewrite !subSn //=; first exact: (@leq_trans (size u).+1).
 by rewrite subnn drop0.
 Qed.
 
@@ -983,7 +983,7 @@ move/(perm_size_uniq (iota_uniq 0 (size s)) Hiota) : Htmp => Hperm {Hiota}.
 apply/linvseqP => i Hi; move: Hinv => /linvseqP Hinv.
 have:= mem_nth (size s) Hi; rewrite -(perm_mem Hperm) mem_iota /= add0n => Hnth.
 move/(_ _ Hnth) : Hinv => Heq.
-have/eqP := Heq; rewrite nth_uniq //=; first by move/eqP.
+have/eqP := Heq; rewrite nth_uniq //=; last by move/eqP.
 case: (ltnP (nth (size t) s (nth (size s) t i)) (size t)) => //= H.
 move: Heq; rewrite (nth_default _ H) => /eqP.
 by rewrite (gtn_eqF Hnth).
@@ -1010,8 +1010,8 @@ Proof.
 move=> Hstd; rewrite /invseq.
 apply/andP; split; apply/linvseqP; rewrite size_mkseq => i Hi.
 - rewrite nth_mkseq.
-  + by apply: (index_uniq _ Hi); apply: std_uniq.
   + by rewrite -(mem_std _ Hstd) mem_nth.
+  + by apply: (index_uniq _ Hi); apply: std_uniq.
 - by rewrite nth_mkseq //=; apply: nth_index; rewrite (mem_std _ Hstd).
 Qed.
 

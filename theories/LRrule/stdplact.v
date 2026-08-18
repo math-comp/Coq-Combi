@@ -36,7 +36,7 @@ From mathcomp Require Import perm fingroup.
 Require Import tools combclass ordcast partition Yamanouchi ordtype std tableau.
 Require Import stdtab sorted Schensted congr plactic Greene Greene_inv.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -164,7 +164,7 @@ rewrite /ksupp_inj /ksupp => ks /and3P[Hsz Htriv /forallP Hall].
 exists (cast_set (esym (size_std u)) @: ks).
 apply/and4P; split.
 - rewrite cover_cast /cast_set /=.
-  by rewrite card_imset; last exact: cast_ord_inj.
+  by rewrite card_imset; first exact: cast_ord_inj.
 - apply: (@leq_trans #|ks|); last exact: Hsz.
   exact: leq_imset_card.
 - apply: imset_trivIset; last exact: Htriv.
@@ -180,7 +180,7 @@ rewrite /ksupp_inj /ksupp => ks /and3P[Hsz Htriv /forallP Hall].
 exists (cast_set (size_std u) @: ks).
 apply/and4P; split.
 - rewrite cover_cast /cast_set /=.
-  by rewrite card_imset; last exact: cast_ord_inj.
+  by rewrite card_imset; first exact: cast_ord_inj.
 - apply: (@leq_trans #|ks|); last exact: Hsz.
   exact: leq_imset_card.
 - apply: imset_trivIset; last exact: Htriv.
@@ -191,8 +191,8 @@ apply/and4P; split.
   rewrite /extractpred; congr (map _ _).
   apply: eq_enum => i.
   rewrite inE /cast_set /= -imset_comp.
-  rewrite (eq_imset (g := id)); first last.
-    by move=> j; rewrite /= (cast_ordK (size_std u)).
+  rewrite (eq_imset (g := id)) => [j |].
+    by rewrite /= (cast_ordK (size_std u)).
   by rewrite imset_id inE.
 Qed.
 
@@ -280,31 +280,31 @@ Proof using.
 rewrite /enum_mem (eq_filter (a2 := mem p)) // -!enumT /= => H.
 apply: (inj_map val_inj).
 rewrite -map_comp (eq_map val2posE).
-rewrite (eq_filter (a2 := mem [set val2pos x | x in p])) //.
-move: H; rewrite (eq_map (g := fun i : 'I_(_) => nth (size t) s i)); first last.
-  by move=> i /=; exact: tnth_nth.
+rewrite (eq_filter (a2 := mem [set val2pos x | x in p])) //; move: H.
+rewrite (eq_map (g := fun i : 'I_(_) => nth (size t) s i)) => [i /= |].
+  exact: tnth_nth.
 set l := (X in sorted _ X); rewrite -[RHS]/l.
 move=> H; apply: (sorted_eq leq_trans anti_leq).
 - apply: (subseq_sorted leq_trans (s2 := map val (enum 'I_(size t)))).
   + by apply: map_subseq; exact: filter_subseq.
   + by rewrite val_enum_ord; exact: iota_sorted.
 - move: H; rewrite /sorted; case: l => [// | l0 l].
-  by rewrite (eq_path (e' := leq)); last by move=> i j /=; rewrite leEnat.
+  by rewrite (eq_path (e' := leq)) => [i j /=|]; first by rewrite leEnat.
 - apply: uniq_perm.
   + rewrite map_inj_in_uniq.
-    * exact/filter_uniq/enum_uniq.
     * by move=> i j Hi _ /=; exact: val_inj.
-  + rewrite map_inj_in_uniq.
     * exact/filter_uniq/enum_uniq.
+  + rewrite map_inj_in_uniq.
     * move=> i j Hij _ /= HH; apply: val_inj.
       have:= Hinvst => /linvseqP Heq.
       by rewrite /= -(Heq _ (ltn_ord i)) -(Heq _ (ltn_ord j)) HH.
+    * exact/filter_uniq/enum_uniq.
   + rewrite {H}/l => i /=; apply/idP/idP => /mapP[j].
     * rewrite mem_filter => /andP[/= /imsetP[i' Hi' -> _] ->{i}].
       apply/mapP; exists i'; last by [].
       by rewrite mem_filter /= Hi' /=; rewrite mem_enum.
     * rewrite mem_filter => /andP[/= Hj _ ->{i}].
-      apply/mapP; exists (Ordinal (linvseq_ltn_szt Hinvst (ltn_ord j))); last by [].
+      apply/mapP; exists (Ordinal (linvseq_ltn_szt Hinvst (ltn_ord j))) => //.
       rewrite mem_filter; apply/andP; split => /=; last by rewrite mem_enum.
       by rewrite /val2pos; rewrite imset_f.
 Qed.
@@ -320,8 +320,8 @@ apply/and4P; split.
 - apply/forallP => ptmp; apply/implyP => /imsetP[p Hp ->{ptmp}].
   move/(_ p): Hall; rewrite Hp /= /extractpred.
   move/val2pos_enum ->; rewrite -map_comp /=.
-  rewrite (eq_map (g := nat_of_ord)); first last.
-    move=> i /=; rewrite (tnth_nth (size s)) /=.
+  rewrite (eq_map (g := nat_of_ord)) => [i /= |].
+    rewrite (tnth_nth (size s)) /=.
     by have:= Hinvst => /linvseqP ->.
   set l := map _ _; have : subseq l [seq val x | x  <- enum 'I_(size s)].
     apply: map_subseq; rewrite /enum_mem.
@@ -369,8 +369,8 @@ move=> H; apply/eqP/stdP; constructor.
   + by rewrite size_map size_iota.
 - apply/eq_invP; split; first by rewrite size_map.
   move=> i j /andP[Hij Hj].
-  rewrite (nth_map inh); last exact (leq_ltn_trans Hij Hj).
-  rewrite (nth_map inh); last exact Hj.
+  rewrite (nth_map inh); first exact (leq_ltn_trans Hij Hj).
+  rewrite (nth_map inh); first exact Hj.
   rewrite !leEnat.
   apply/idP/idP; first exact: shiftinv_pos_homo.
   apply: contraLR.
@@ -444,7 +444,7 @@ rewrite (std_rcons_shiftinv (invseq_is_std (invseq_sym Hinv))).
 have := Hinv; rewrite /invseq => /andP[/linvseqP Hst /linvseqP Hts].
 apply/linvseqP => i Hi.
 rewrite (set_nth_default inh _ Hi) -nth_rembig.
-rewrite (nth_map (size (s0 :: s))); first last.
+rewrite (nth_map (size (s0 :: s))).
   set si := shift_pos _ _; have Hsipos : si != posbig (s0 :: s).
     rewrite /si /shift_pos; case: (ltnP i (posbig (s0 :: s))).
     + by move /ltn_eqF ->.
@@ -461,7 +461,7 @@ have Hpos : shift_pos tn i < size (s0 :: s).
   by case (i < tn); first by move/leq_trans; apply.
 rewrite (set_nth_default (size (rcons t tn)) inh Hpos).
 move: (Hst _ Hpos); rewrite nth_rcons.
-rewrite (_ : nth _ _ _ < size t); first by move ->; rewrite shift_posK.
+rewrite (_ : nth _ _ _ < size t); last by move ->; rewrite shift_posK.
 have -> : size t = (size (s0 :: s)).-1 by rewrite (size_invseq Hinv) size_rcons.
 apply: (nth_std_pos (size (rcons t tn)) (invseq_is_std Hinv) Hpos).
 rewrite (posbig_invseq Hinv) /shift_pos.
@@ -545,7 +545,7 @@ Corollary RSinvstdE disp (T : inhOrderType disp) (w : seq T) :
   RS (invstd (std w)) = (RStabmap w).2.
 Proof.
 rewrite -RStabmapE RSTabmapstdE /RStabmap.
-rewrite [LHS](_ : _ = stdtab_of_yam (RSmap (std w)).2); last by case: RSmap.
-rewrite [RHS](_ : _ = stdtab_of_yam (RSmap w).2); last by case: RSmap.
+rewrite [LHS](_ : _ = stdtab_of_yam (RSmap (std w)).2); first by case: RSmap.
+rewrite [RHS](_ : _ = stdtab_of_yam (RSmap w).2); first by case: RSmap.
 by congr (stdtab_of_yam _); exact: RSmap_std.
 Qed.

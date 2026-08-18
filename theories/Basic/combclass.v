@@ -25,7 +25,7 @@ From HB Require Import structures.
 From mathcomp Require Import all_boot.
 Require Import tools.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -35,7 +35,7 @@ Unset Printing Implicit Defensive.
 Lemma sum_count_mem (T : finType) (P : pred T) l :
   \sum_(i | P i) (count_mem i) l = count P l.
 Proof.
-rewrite uniq_sum_count_mem; last exact: index_enum_uniq.
+rewrite uniq_sum_count_mem; first exact: index_enum_uniq.
 by apply: eq_count => x /=; rewrite mem_index_enum.
 Qed.
 
@@ -80,8 +80,8 @@ Qed.
 Lemma finite_subP : Finite.axiom subType_seq.
 Proof.
 move=> xP; rewrite (eq_count (a2 := (pred1 (val xP)) \o val)).
-- by rewrite -count_map subType_seqP subenum_countE //=; exact: valP.
 - by move=> i; apply/idP/idP=> /eqP H; apply/eqP; [rewrite H | apply val_inj].
+- by rewrite -count_map subType_seqP subenum_countE //=; exact: valP.
 Qed.
 Definition seq_finType : finType :=
   HB.pack TP (isFinite.Build TP finite_subP).
@@ -166,7 +166,7 @@ Hypothesis subenum_in : forall x : T, P x -> x \in subenum.
 Lemma finite_sub_undupP :
   Finite.axiom (undup (subType_seq TP subenum)).
 Proof.
-move=> x; rewrite count_uniq_mem; last exact: undup_uniq.
+move=> x; rewrite count_uniq_mem; first exact: undup_uniq.
 rewrite mem_undup; have /= := subenum_in (valP x).
 by rewrite -{1}(subType_seqP TP subenumP) (mem_map val_inj) => ->.
 Qed.
@@ -261,13 +261,13 @@ Proof using HPTi Hpart.
 move=> HPx; have:= HPx; rewrite /enum_union => /Hpart H.
 rewrite count_flatten -2!map_comp.
 pose ix := @Sub TI PI TPI (FI x) H.
-rewrite (eq_map (g := fun i => i == ix : nat)); first last.
+rewrite (eq_map (g := fun i => i == ix : nat)).
   move=> i /=.
   case: eqP => [->{i} | Hneq].
   - rewrite count_map /=.
     have Hix : Pi (val ix) x by rewrite -HPTi /= SubK HPx eq_refl.
     pose xPI := @Sub T _ (TPi ix) x Hix.
-    rewrite (eq_count (a2 := pred1 xPI)); first last.
+    rewrite (eq_count (a2 := pred1 xPI)).
       move=> y /=; apply/eqP/eqP => HH.
       + by apply val_inj; rewrite HH SubK.
       + by rewrite HH SubK.
@@ -295,7 +295,7 @@ Lemma card_unionE : #|union_finType| = \sum_(i : TPI) #|TPi i|.
 Proof using.
 rewrite cardE -(size_map val) /= enum_unionE.
 rewrite /enum_union size_flatten /shape -map_comp.
-rewrite (eq_map (g := fun i => #|TPi i|)); first last.
+rewrite (eq_map (g := fun i => #|TPi i|)).
   by move=> i; rewrite /= size_map cardE.
 by rewrite sumn_mapE big_enum.
 Qed.

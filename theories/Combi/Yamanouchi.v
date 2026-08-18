@@ -54,7 +54,7 @@ From HB Require Import structures.
 From mathcomp Require Import all_boot.
 Require Import tools combclass partition.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -90,9 +90,9 @@ move=> i; rewrite nth_incr_nth size_map => Hsz.
 rewrite (nth_map 0 _ _ Hsz); rewrite size_iota in Hsz.
 rewrite (nth_iota _ _ Hsz) add0n.
 case (ltnP i (foldr maxn 0 [seq i.+1 | i <- s])) => Hi.
-- rewrite (nth_map 0 _ _); last by rewrite size_iota.
+- rewrite (nth_map 0 _ _); first by rewrite size_iota.
   by rewrite (nth_iota _ _ Hi) /= add0n.
-- rewrite (nth_default 0) /=; last by rewrite size_map size_iota.
+- rewrite (nth_default 0) /=; first by rewrite size_map size_iota.
   congr (_ + _).
   elim: s Hi {Hsz} => // s0 s /=.
   move: (foldr _ _ _) => m IHs; rewrite /maxn.
@@ -106,7 +106,7 @@ Proof.
 rewrite -evalseq_countE /evalseq_count.
 case: (ltnP i (foldr maxn 0 [seq i.+1 | i <- s])) => Hi.
 - by rewrite (nth_map 0) ?size_iota // nth_iota.
-- rewrite nth_default; last by rewrite size_map size_iota.
+- rewrite nth_default; first by rewrite size_map size_iota.
   elim: s Hi => // s0 s IHs /=.
   by rewrite geq_max => /andP[/ltn_eqF -> /= /IHs <-].
 Qed.
@@ -133,9 +133,9 @@ have {}Hi : i < mx.
     rewrite leq_max; apply/orP; right.
     exact: IHt.
 move/(congr1 (fun s => nth 0 s i)) : H.
-rewrite (nth_map 0); last by rewrite size_iota.
-rewrite (nth_map 0); last by rewrite -Hmax size_iota.
-rewrite (nth_iota _ _ Hi) nth_iota; last by rewrite -Hmax.
+rewrite (nth_map 0); first by rewrite size_iota.
+rewrite (nth_map 0); first by rewrite -Hmax size_iota.
+rewrite (nth_iota _ _ Hi) nth_iota; first by rewrite -Hmax.
 by rewrite !add0n => ->.
 Qed.
 
@@ -292,10 +292,9 @@ rewrite rev_rcons /=; case: sn => [/= | sn].
   by move/is_partP; rewrite last_rcons /= => [][].
 elim: sn => [/= | sn /= IHsn].
   by move/is_part_rconsK/IHs ->; rewrite size_rev incr_nth_size.
-move=> Hpart; rewrite {IHs}IHsn.
-- rewrite size_rev {Hpart}; elim: s => // s0 s IHs /=.
-  by rewrite IHs.
-- exact: part_rcons_ind.
+move=> Hpart; rewrite {IHs}IHsn; first exact: part_rcons_ind.
+rewrite size_rev {Hpart}; elim: s => // s0 s IHs /=.
+by rewrite IHs.
 Qed.
 
 Lemma hyper_yamP ev : is_part ev -> is_yam (hyper_yam ev).
@@ -369,21 +368,20 @@ move=> ev Hev Hpart [/= | y0 y] /=.
   by have -> : [::] == ev = false by move: Hev; case ev.
 move => /andP[/andP[_ Hyam] /eqP Htmp]; subst ev.
 rewrite count_flatten -map_comp.
-rewrite (eq_map (g := fun i => i == y0 : nat)); first last.
-  move=> i /=; rewrite count_map /=.
+rewrite (eq_map (g := fun i => i == y0 : nat)) => [i /= |].
+  rewrite count_map /=.
   case: eqP => [Heq | /eqP/negbTE Hneq].
-  - subst i; rewrite (eq_count (a2 := xpred1 y)); first last.
-      by move=> s; rewrite /= -eqseqE /= eq_refl /=.
+  - subst i; rewrite (eq_count (a2 := xpred1 y)) => [s |].
+      by rewrite /= -eqseqE /= eq_refl /=.
     rewrite (incr_nthK (is_part_eval_yam Hyam) Hpart) IHn //=.
     + by move: Hev; rewrite sumn_incr_nth => /eqP; rewrite eqSS => /eqP.
     + exact: is_part_eval_yam.
     + by rewrite Hyam eq_refl.
-  - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
+  - rewrite (eq_count (a2 := pred0)); last by rewrite count_pred0.
     by move=> s; rewrite /= -eqseqE /= Hneq.
 rewrite sumn_count count_filter.
-rewrite (eq_count (a2 := xpred1 y0)); first last.
-  move=> i /=; case eqP => //= ->.
-  by apply: is_rem_corner_yam; rewrite /= Hpart Hyam.
+rewrite (eq_count (a2 := xpred1 y0)) => [i /= |].
+  by case eqP => //= ->; apply: is_rem_corner_yam; rewrite /= Hpart Hyam.
 rewrite -sumn_count /=.
 rewrite sumn_pred1_iota add0n size_incr_nth.
 case: (ltnP y0 (size (evalseq y))) => [-> // | _].
@@ -461,9 +459,9 @@ Lemma enum_yamnE :
   map val (enum {: yamn}) = flatten [seq enum_yameval p | p <- enum_partn n].
 Proof using.
 rewrite enum_unionE /=; congr flatten.
-rewrite [LHS](eq_map (g := enum_yameval \o val)).
+rewrite [LHS](eq_map (g := enum_yameval \o val)) => [i /= |].
+- by rewrite enum_yamevalE.
 - by rewrite map_comp enum_intpartnE.
-- by move=> i /=; rewrite enum_yamevalE.
 Qed.
 
 End YamOfSize.

@@ -63,7 +63,7 @@ Require Import MurnaghanNakayama.
 
 Require ordtype.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -154,8 +154,7 @@ HB.instance Definition _ :=
 
 Lemma Fchar_ncfuniCT (l : 'P_n) : Fchar '1z_[l] = 'hp[l].
 Proof using.
-rewrite !FcharE (bigD1 l) //= big1 ?addr0; first last.
-  move=> m /negbTE Hm /=.
+rewrite !FcharE (bigD1 l) //= big1 ?addr0 => [m /negbTE Hm /= |].
   rewrite cfunElock cfuniCTE /= permCTP partnCTE /= !CTpartnK Hm /=.
   by rewrite mulr0 mul0r scale0r.
 rewrite cfunElock cfuniCTE /= permCTP eq_refl /=.
@@ -185,7 +184,7 @@ transitivity
          (\sum_(j < #|{: 'P_n}|)
            (f (permCT (enum_val j)) / 'z_(enum_val j)) *: ('hp`_j : HS))).
   congr coord; apply eq_bigr => /= i _; congr (_ *: _).
-  rewrite (nth_map inh); last by rewrite -cardE ltn_ord.
+  rewrite (nth_map inh); first by rewrite -cardE ltn_ord.
   by congr ('hp[_]); apply enum_val_nth.
 by rewrite coord_sum_free ?enum_rankK //; exact: symbp_free.
 Qed.
@@ -199,19 +198,19 @@ move=> /coord_span {2}->.
 rewrite (reindex _ (onW_bij _ (@enum_rank_bij 'P__))) /=.
 apply eq_bigr => i _.
 rewrite linearZ /= Fchar_ncfuniCT; congr (_ *: _).
-rewrite (nth_map inh); last by rewrite -cardE ltn_ord.
+rewrite (nth_map inh); first by rewrite -cardE ltn_ord.
 by congr ('hp[_]); rewrite -enum_val_nth enum_rankK.
 Qed.
 
 Lemma Fchar_triv : Fchar 1 = 'hh[rowpartn n].
 Proof.
 rewrite -decomp_cf_triv linear_sum.
-rewrite (eq_bigr (fun la => ('z_la)^-1 *: 'hp[la])); first last => [la _|].
+rewrite (eq_bigr (fun la => ('z_la)^-1 *: 'hp[la])) => [la _|].
   rewrite -Fchar_ncfuniCT /ncfuniCT /= linearZ /=.
   by rewrite scalerA /= mulrC divff // scale1r.
 apply val_inj; case: n => [|n0]/=.
-  rewrite prod_gen0 (big_pred1 (rowpartn 0)); first last.
-    by move=> la /=; rewrite !intpartn0 eqxx.
+  rewrite prod_gen0 (big_pred1 (rowpartn 0)) => [la /=|].
+    by rewrite !intpartn0 eqxx.
   rewrite linearZ /= prod_gen0.
   rewrite zcoeffE /zcard rowpartn0E big_nil mul1n /=.
   by rewrite big1 // invr1 scale1r.
@@ -230,7 +229,7 @@ have /coord_span -> : p \in span 'hp.
   by rewrite (span_basis (symbp_basis Hn _ )) // memvf.
 rewrite !linear_sum /= mulr_sumr; apply eq_bigr => i _.
 rewrite !linearZ /= -scalerAr; congr (_ *: _).
-rewrite {p} (nth_map (rowpartn n)); last by rewrite -cardE ltn_ord.
+rewrite {p} (nth_map (rowpartn n)); first by rewrite -cardE ltn_ord.
 move: (nth _ _ _) => la {i}.
 rewrite omega_homsymp //;
   try by apply: (leq_trans (leq_head_sumn _)); rewrite sumn_intpartn.
@@ -263,9 +262,9 @@ rewrite homsymdotZl homsymdotZr cfdotZl cfdotZr; congr (_ * (_ * _)).
 rewrite homsymdotpp // cfdotZl cfdotZr cfdot_classfun_part.
 case: (la =P mu) => [<-{mu} | _]; rewrite ?mulr0 ?mulr1 //.
 rewrite -zcoeffE -[LHS]mulr1; congr (_ * _).
-rewrite /zcoeff rmorphM rmorphV; first last.
+rewrite /zcoeff rmorphM rmorphV.
   by rewrite unitfE pnatr_eq0 card_classCT_neq0.
-rewrite !rmorph_nat -mulrA [X in _ * X]mulrC - mulrA divff; first last.
+rewrite !rmorph_nat -mulrA [X in _ * X]mulrC - mulrA divff.
   by rewrite pnatr_eq0 card_classCT_neq0.
 by rewrite mulr1 divff // pnatr_eq0 -lt0n cardsT card_Sn fact_gt0.
 Qed.
@@ -326,7 +325,7 @@ Qed.
 
 Lemma homsyme_character (la : 'P_n) : Fchar_inv 'he[la] \is a character.
 Proof.
-rewrite -omega_homsymh; first last.
+rewrite -omega_homsymh.
   by apply: (leq_trans _ Hn); rewrite -{2}(sumn_intpartn la) leq_head_sumn.
 rewrite omega_Fchar_inv //.
 exact: (rpredM (lin_charW sign_charP) (homsymh_character _)).
@@ -496,8 +495,7 @@ rewrite (reindex _ (onW_bij _ (@enum_rank_bij 'P__))) /=.
 rewrite homsymdot_sumr (bigD1 la) //=.
 rewrite (nth_map (rowpartn n)) -?cardE ?ltn_ord // nth_enum_rank.
 rewrite homsymdotZr homsymdotss ?leqSpred // eq_refl mulr1.
-rewrite big1 ?addr0; first last.
-  move=> nu /negbTE Hnu.
+rewrite big1 ?addr0 => [nu /negbTE Hnu |].
   rewrite (nth_map (rowpartn n)) -?cardE ?ltn_ord // nth_enum_rank.
   by rewrite homsymdotZr homsymdotss ?leqSpred // eq_sym Hnu mulr0.
 by rewrite -coord_map_homsym ?map_homsymbs ?symbs_basis // map_homsymp.
@@ -528,7 +526,7 @@ Theorem Murnaghan_Nakayama_char n la (sigma : 'S_n) :
   'irrSG[la] sigma = (MN_coeff la (cycle_typeSn sigma))%:~R.
 Proof.
 rewrite Frobenius_char_homsymdot MN_coeff_homogP homsymdot_sumr /=.
-rewrite (bigD1 la) //= big1 ?addr0 //; first last => [i /negbTE Hi|].
+rewrite (bigD1 la) //= big1 ?addr0 // => [i /negbTE Hi|].
   by rewrite homsymdotZr homsymdotss // eq_sym Hi mulr0.
 rewrite homsymdotZr homsymdotss // eqxx mulr1.
 by rewrite Num.Theory.conj_intr // intr_int.
@@ -561,9 +559,8 @@ have -> : 'hh[colpartn n] = \sum_la 'K(la, colpartn n) *: 'hs[la] :> HSC.
   by rewrite /= linear_sum /= -![prod_gen _ _]/('h[_]) symh_syms.
 rewrite (reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 rewrite (eq_bigr
-           (fun i : 'I__ => 'K(enum_val i, colpartn n) *: 'hs`_i)); first last.
-  move=> /= i _.
-  rewrite (nth_map inh); last by rewrite -cardE ltn_ord.
+           (fun i => 'K(enum_val i, colpartn n) *: 'hs`_i)) => [/= i _ |].
+  rewrite (nth_map inh); first by rewrite -cardE ltn_ord.
   by congr (_ *: 'hs[_]); apply enum_val_nth.
 by rewrite coord_sum_free ?enum_rankK // ?KostkaStd //; exact: symbs_free.
 Qed.

@@ -84,7 +84,7 @@ From HB Require Import structures.
 From mathcomp Require Import all_boot order.
 Require Import tools combclass ordtype.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -319,7 +319,7 @@ rewrite enum_bintreeszE.
 have [i] := ubnPgeq n.+1; elim: i => // i IHi /ltnSE-ltin.
 rewrite -addn1 iotaD add0n /=.
 rewrite map_cat flatten_cat /= cats0 cat_uniq.
-rewrite {}IHi /=; last exact: (leq_trans ltin).
+rewrite {}IHi /=; first exact: (leq_trans ltin).
 apply/andP; split.
 - apply/hasP => [] /= [[| l r]] /allpairsP/= [[l1 r1] /= []].
   + by move=> _ _ /eqP; rewrite eqE.
@@ -334,7 +334,7 @@ apply/andP; split.
   elim: (enum_bintreesz i) => [// | l ll IHll] /= /andP[Hnotin {}/IHll Hrec].
   rewrite cat_uniq Hrec /= andbT.
   apply/andP; split.
-  + rewrite map_inj_uniq; first by apply IHn; apply leq_subr.
+  + rewrite map_inj_uniq; last by apply IHn; apply leq_subr.
     by move=> r1 r2 [].
   + apply/hasP => [] /= [t].
     move/allpairsP => [] /= [l1 r1 /= [Hl1 _ ->{t}]].
@@ -829,8 +829,8 @@ elim: fuel => [| fuel IHfuel] in vct fuel1 lft *.
 case: fuel1 => // fuel1; rewrite !ltnS.
 case: vct => // v0 vct /= Hsz Hfuel1.
 rewrite !(IHfuel _ fuel1) //.
-- by rewrite size_take; exact: (leq_ltn_trans (geq_minr _ _) Hsz).
 - by rewrite size_drop; exact: (leq_ltn_trans (leq_subr _ _) Hsz).
+- by rewrite size_take; exact: (leq_ltn_trans (geq_minr _ _) Hsz).
 Qed.
 
 Lemma from_vct_accE lft v0 vct :
@@ -838,10 +838,10 @@ Lemma from_vct_accE lft v0 vct :
   from_vct_acc (BinNode lft (from_vct_acc BinLeaf (take v0 vct)))
                (drop v0 vct).
 Proof.
-rewrite -[in RHS](from_vct_fuelE (fuel := size (v0 :: vct))); first last.
+rewrite -[in RHS](from_vct_fuelE (fuel := size (v0 :: vct))).
   by rewrite /= ltnS size_drop leq_subr.
 rewrite {2}/from_vct_acc.
-rewrite -[_ _.+1 _ _](from_vct_fuelE (fuel := size (v0 :: vct))); first by [].
+rewrite -[_ _.+1 _ _](from_vct_fuelE (fuel := size (v0 :: vct))) //.
 by rewrite /= size_take -/(minn _ _) ltnS geq_minr.
 Qed.
 
@@ -854,8 +854,8 @@ case: vct => [_ | v0 v] /=.
   by rewrite /from_vct_acc /= cat_left0t.
 rewrite ltnS -{1}(cat_take_drop v0 v) size_cat !from_vct_accE /=.
 move: (take v0 v) (drop v0 v) => {v0 v} u v Huv.
-rewrite IHn; last exact: (leq_trans (leq_addl _ _) Huv).
-rewrite [in RHS]IHn; last exact: (leq_trans (leq_addl _ _) Huv).
+rewrite IHn; first exact: (leq_trans (leq_addl _ _) Huv).
+rewrite [in RHS]IHn; first exact: (leq_trans (leq_addl _ _) Huv).
 by rewrite cat_leftA cat_left_Node.
 Qed.
 
@@ -868,8 +868,8 @@ case: s => [| s0 s] //=.
 rewrite ltnS -{1}(cat_take_drop s0 s) size_cat => Hsz.
 rewrite from_vct_accE from_vct_cat_leftE.
 rewrite size_cat_left /= addn0 add1n addnS.
-rewrite IHn; last exact: (leq_trans (leq_addl _ _) Hsz).
-rewrite IHn; last exact: (leq_trans (leq_addr _ _) Hsz).
+rewrite IHn; first exact: (leq_trans (leq_addl _ _) Hsz).
+rewrite IHn; first exact: (leq_trans (leq_addr _ _) Hsz).
 by rewrite addnC -size_cat cat_take_drop.
 Qed.
 
@@ -888,9 +888,9 @@ rewrite -cats1 -(from_leftK br) -(from_leftK [:: r]) -/(cat_left _ _) /=.
 rewrite right_sizes_cat_left /=.
 rewrite from_vct_accE -!size_right_sizes drop_size_cat // take_size_cat //.
 rewrite size_right_sizes size_cat_left /= addn0 add1n addnS ltnS => H.
-rewrite IHn /=; last exact: (leq_trans (leq_addl _ _) H).
+rewrite IHn /=; first exact: (leq_trans (leq_addl _ _) H).
 rewrite from_vct_cat_leftE.
-by rewrite IHn; last exact: (leq_trans (leq_addr _ _) H).
+by rewrite IHn; first exact: (leq_trans (leq_addr _ _) H).
 Qed.
 
 Theorem from_vctK : {in TamariVector, cancel from_vct right_sizes}.
@@ -902,12 +902,12 @@ case: s => [| s0 s] //=.
 rewrite ltnS -{1}(cat_take_drop s0 s) size_cat => Hsz Hcons.
 have:= Hcons => /Tamari_consP[Hs0 Hs Hall].
 rewrite from_vct_accE from_vct_cat_leftE right_sizes_cat_left.
-rewrite IHn /=; first last.
-  - exact: Tamari_drop.
+rewrite IHn /=.
   - exact: (leq_trans (leq_addl _ _) Hsz).
-rewrite {}IHn /=; first last.
-  - exact: Tamari_take.
+  - exact: Tamari_drop.
+rewrite {}IHn /=.
   - exact: (leq_trans (leq_addr _ _) Hsz).
+  - exact: Tamari_take.
 by rewrite cat_take_drop size_from_vct_acc size_takel.
 Qed.
 
@@ -1002,7 +1002,7 @@ rewrite /vctmin.
 case: (ltnP i (minn (size v1) (size v2))) => Hi.
 - rewrite (nth_map (0,0)) ?size_zip //=.
   by rewrite !nth_zip_cond ?size_zip Hi /=.
-- rewrite nth_default; last by rewrite size_map size_zip.
+- rewrite nth_default; first by rewrite size_map size_zip.
   move: Hi.
   by rewrite geq_min => /orP[] /(nth_default 0) ->; rewrite ?min0n ?minn0.
 Qed.
@@ -1197,7 +1197,7 @@ case: (leqP u0 (size u)) => Hu0; rewrite !(from_vct_accE t).
   exact: leq_trans Hsz (leq_addl _ _).
 - have H0 : v0 < (u0 - size u).-1.
     rewrite -ltnS; apply: (leq_trans _ (leqSpred _)).
-    rewrite -(ltn_add2r (size u)) subnK; last exact: ltnW.
+    rewrite -(ltn_add2r (size u)) subnK; first exact: ltnW.
     move/Tamari_consP: Htam1 => [_ _ /(_ _ Hu0)].
     rewrite nth_cat ltnn subnn /=.
     rewrite -[(_ + v0).+1]addnS -addnA /=.
@@ -1250,7 +1250,7 @@ set v0 := nth 0 (right_sizes t1) i.
 set w0 := nth 0 (right_sizes t2) i => H0.
 have Hi : i < size (right_sizes t1).
   move: H0; apply contraLR; rewrite -!ltnNge !ltnS /v0 /w0 => H.
-  by rewrite nth_default; last by rewrite -Hsz.
+  by rewrite nth_default; first by rewrite -Hsz.
 pose u := take i (right_sizes t1).
 pose v := drop i.+1 (right_sizes t1).
 pose w := drop i.+1 (right_sizes t2) => Hmin.
@@ -1440,12 +1440,12 @@ rewrite -rev_path /= last_rcons belast_rcons.
 have -> : rev (flipsz t2 :: p) =
           [seq flipsz t | t <- rcons [seq flipsz t' | t' <- rev p] t2].
   rewrite map_rev -rev_cons map_rev /=.
-  rewrite -map_comp (eq_map (g := id)); last by move=> x /=; rewrite flipszK.
+  rewrite -map_comp (eq_map (g := id)) => [x | ]; first by rewrite /= flipszK.
   by rewrite map_id.
 rewrite (map_path (b := pred0)
-                  (e' := (fun t t' => trval t' \in rotations t))); first last.
-  - by apply/hasP => [] [t /=].
+                  (e' := (fun t t' => trval t' \in rotations t))).
   - by rewrite /rel_base => u v _; rewrite /= !flipK.
+  - by apply/hasP => [] [t /=].
 set pp := rcons _ _ => Hp; apply/connectP; exists pp; first by [].
 by rewrite /pp last_rcons.
 Qed.

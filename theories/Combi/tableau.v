@@ -47,7 +47,7 @@ From HB Require Import structures.
 From mathcomp Require Import all_boot order.
 Require Import tools partition ordtype sorted.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -375,7 +375,7 @@ apply/(iffP idP) => [|[Hpart]].
   + apply/(sorted_strictP [::] dominate_rev_trans).
     rewrite (incr_equiv _ dominate_rev_trans) => r Hr.
     apply/dominateP; split.
-    * rewrite -!(nth_map _ 0) -/shape //; last by move: Hr; apply ltnW.
+    * rewrite -!(nth_map _ 0) -/shape //; first by move: Hr; apply ltnW.
       by move/is_partP: Hpart => [_].
     * move=> i Hi; apply Hcol.
       by rewrite /in_shape (nth_map [::]).
@@ -431,10 +431,10 @@ set s0 := (X in X + _).
 apply (@leq_trans s0); last exact: leq_addr.
 rewrite {}/s0 -!size_filter.
 set f1 := (X in filter X ); set f0 := (X in _ <= size (filter X _)).
-rewrite (eq_in_filter (a1 := f1) (a2 := predI f1 (gtn (size r1)))); first last.
-  by move=> i; rewrite mem_iota /= add0n => ->; rewrite andbT.
-rewrite (eq_in_filter (a1 := f0) (a2 := predI f0 (gtn (size r1)))); first last.
-  by move=> i; rewrite mem_iota /= add0n => ->; rewrite andbT.
+rewrite (eq_in_filter (a1 := f1) (a2 := predI f1 (gtn (size r1)))) => [i |].
+  by rewrite mem_iota /= add0n => ->; rewrite andbT.
+rewrite (eq_in_filter (a1 := f0) (a2 := predI f0 (gtn (size r1)))) => [i |].
+  by rewrite mem_iota /= add0n => ->; rewrite andbT.
 rewrite !size_filter; apply sub_count => i /=.
 rewrite {}/f1 {}/f0 => /= /andP[Hn Hi].
 rewrite Hi andbT.
@@ -451,10 +451,9 @@ move: Hdom => /dominateP[Hsz Hdom].
 apply/dominateP; rewrite !size_filter.
 split; first exact Hsize.
 move=> i Hi.
-rewrite (filter_gt_row _ Hrow0) (filter_gt_row _ Hrow1) !nth_take.
-- by apply Hdom; apply (leq_trans Hi); apply: count_size.
-- exact: Hi.
-- exact: (leq_trans Hi).
+rewrite (filter_gt_row _ Hrow0) (filter_gt_row _ Hrow1) !nth_take //.
+  exact: (leq_trans Hi).
+by apply Hdom; apply (leq_trans Hi); apply: count_size.
 Qed.
 
 Definition filter_gt_tab n :=
@@ -580,13 +579,13 @@ Let tabsh_enum :
 Lemma finite_tabsh : Finite.axiom tabsh_enum.
 Proof using.
 case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
-rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
+rewrite count_filter -(@eq_count _ (pred1 t)) => [s /= |].
   by rewrite isSome_insub; case: eqP=> // ->.
 move: Ht => /andP[Htab /eqP Hsh].
 rewrite count_map.
 have Htw : size (to_word t) == d.
   by rewrite size_to_word /size_tab Hsh sumn_intpartn.
-rewrite (eq_in_count (a2 := pred1 (Tuple Htw))).
+rewrite (eq_in_count (a2 := pred1 (Tuple Htw))); first last.
   by rewrite enumT; apply: enumP (Tuple Htw).
 move=> w _ /=; apply/idP/idP.
 - move=> /eqP Ht; subst t.
@@ -604,10 +603,10 @@ Lemma to_word_enum_tabsh :
     [seq x <- [seq (i : seq _) | i : d.-tuple T]  | tabsh_reading sh x].
 Proof using.
 apply uniq_perm.
-- rewrite map_inj_in_uniq; first exact: enum_uniq.
+- rewrite map_inj_in_uniq; last exact: enum_uniq.
   move=> t u _ _ /= Heq; apply val_inj.
   by rewrite /= -(tabsh_to_wordK t) -(tabsh_to_wordK u) Heq /=.
-- apply filter_uniq; rewrite map_inj_uniq; last exact: val_inj.
+- apply filter_uniq; rewrite map_inj_uniq; first exact: val_inj.
   exact: enum_uniq.
 move=> w /=; rewrite /tabsh_reading mem_filter; apply/idP/idP.
 - move=> /mapP[t _ ->{w}].
@@ -616,7 +615,7 @@ move=> w /=; rewrite /tabsh_reading mem_filter; apply/idP/idP.
   have Ht : size (to_word (val t)) == d.
     by rewrite size_to_word /size_tab shape_tabsh sumn_intpartn.
   have -> : to_word (val t) = val (Tuple Ht) by [].
-  rewrite mem_map; last exact: val_inj.
+  rewrite mem_map; first exact: val_inj.
   exact: mem_enum.
 - move=> /andP[/andP[/eqP Hsz Htab] /mapP[tpl _ hw]]; subst w.
   have Htsh : is_tab_of_shape sh (rev (reshape (rev sh) tpl)).
@@ -737,12 +736,12 @@ apply/is_tableau_getP/is_tableau_getP;
   rewrite ?shape_map_tab=> [] [H1 H2 H3]; split => // r c Hrc1;
   have Hrc : in_shape (shape t) (r, c) by apply: (in_part_le H1 Hrc1).
 - rewrite !get_map_tab //.
-  rewrite Hndecr; [exact: H2 | exact: mem_to_word | exact: mem_to_word].
+  by rewrite Hndecr; [exact: mem_to_word | exact: mem_to_word | exact: H2].
 - rewrite !get_map_tab //.
-  by rewrite Hincr; [exact: H3 | exact: mem_to_word | exact: mem_to_word].
-- rewrite -Hndecr; [|exact: mem_to_word | exact: mem_to_word].
+  by rewrite Hincr; [exact: mem_to_word | exact: mem_to_word | exact: H3].
+- rewrite -Hndecr; [exact: mem_to_word | exact: mem_to_word |].
   by rewrite -!get_map_tab //; apply: H2.
-- rewrite -Hincr; [|exact: mem_to_word | exact: mem_to_word].
+- rewrite -Hincr; [exact: mem_to_word | exact: mem_to_word |].
   by rewrite -!get_map_tab //; apply: H3.
 Qed.
 

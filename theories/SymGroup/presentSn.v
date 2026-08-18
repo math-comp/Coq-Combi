@@ -110,7 +110,7 @@ From mathcomp Require Import ssralg poly ssrint.
 
 Require Import permcomp tools permuted combclass congr present.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -173,8 +173,8 @@ Proof. move=> Hi; rewrite inordK //; apply ltnW; exact: ltnW. Qed.
 Lemma inordi_neq_i1 n i : i < n -> (@inord n i != @inord n i.+1).
 Proof.
 move=> Hi.
-rewrite /eq_op /= inordK; last by apply (leq_trans Hi).
-rewrite inordK; last exact: Hi.
+rewrite /eq_op /= inordK; first exact: (leq_trans Hi).
+rewrite inordK; first exact: Hi.
 by rewrite ieqi1F.
 Qed.
 
@@ -195,7 +195,7 @@ Proof.
 rewrite /wordcd size_flatten; congr sumn.
 rewrite /shape -map_comp.
 apply (eq_from_nth (x0 := 0)); rewrite size_map size_iota //.
-move=> i Hi; rewrite (nth_map 0); last by rewrite size_iota.
+move=> i Hi; rewrite (nth_map 0); first by rewrite size_iota.
 by rewrite /= size_rev size_iota (nth_iota _ _ Hi) add0n.
 Qed.
 
@@ -234,7 +234,7 @@ Lemma wordcd_ltn c :
 Proof.
 move=> /is_codeP Hcode.
 apply/allP => i /flatten_mapP[ j]; rewrite mem_iota /= add0n => Hc.
-rewrite mem_rev mem_iota subnK; last exact: Hcode.
+rewrite mem_rev mem_iota subnK; first exact: Hcode.
 move=> /andP[_ /leq_trans]; apply.
 by case: (size c) Hc.
 Qed.
@@ -244,8 +244,8 @@ Lemma insub_wordcdK n c :
   [seq (i : nat) | i : 'I_n <- pmap insub (wordcd c)] = wordcd c.
 Proof.
 move=> /wordcd_ltn/allP Hall Hsz.
-rewrite pmap_filter; last by move=> j /=; rewrite insubK.
-rewrite (eq_in_filter (a2 := xpredT)); first by rewrite filter_predT.
+rewrite pmap_filter => [j /= |]; first by rewrite insubK.
+rewrite (eq_in_filter (a2 := xpredT)); last by rewrite filter_predT.
 move=> j /= /Hall /= Hj.
 have {}Hj : j < n by case: (size c) Hj Hsz => [| sz]//=; apply: leq_trans.
 by rewrite insubT.
@@ -280,12 +280,12 @@ have {}/IHn Hcount : is_code_of_size n c.
   rewrite /is_code_of_size Hsz eq_refl andbT.
   exact: (is_code_rconsK Hcode).
 rewrite count_flatten -map_comp -/enum_codesz.
-rewrite (eq_map (g := fun i => i == cn : nat)); first last.
-  move=> i /=; rewrite count_map /=.
+rewrite (eq_map (g := fun i => i == cn : nat)) => [i /= |].
+  rewrite count_map /=.
   case (i =P cn) => [Heq | /eqP/negbTE Hneq].
-  + subst i; rewrite (eq_count (a2 := xpred1 c)); first exact: Hcount.
+  + subst i; rewrite (eq_count (a2 := xpred1 c)); last exact: Hcount.
     by move=> s /=; apply/idP/idP => [/eqP/rconsK ->| /eqP ->].
-  + rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
+  + rewrite (eq_count (a2 := pred0)); last by rewrite count_pred0.
     move=> s /=; apply/negP=> /eqP/(congr1 rev).
     by rewrite !rev_rcons => [] [/eqP]; rewrite Hneq.
 rewrite sumn_pred1_iota //= add0n.
@@ -325,8 +325,8 @@ Proof.
 rewrite /= cardE -(size_map val) enum_codeszE.
 elim: n => [//=| n IHn].
 rewrite size_flatten -/enum_codesz /shape -map_comp.
-rewrite (eq_map (g := fun => n`!)); first last.
-  by move=> i /=; rewrite size_map IHn.
+rewrite (eq_map (g := fun => n`!)) => [i /= |].
+  by rewrite size_map IHn.
 by rewrite sumnE big_map big_const_seq count_predT size_iota iter_addn_0 mulnC.
 Qed.
 
@@ -446,7 +446,7 @@ Proof using.
 elim: i => [| i IHi] /= Hm.
   by rewrite subn0 inord_val big_nil perm1.
 rewrite big_cons permM eltrL.
-rewrite subnS prednK; last by rewrite subn_gt0.
+rewrite subnS prednK; first by rewrite subn_gt0.
 by apply: IHi; exact: ltnW.
 Qed.
 
@@ -506,7 +506,7 @@ have -> /= : iota i (j - i) = iota i (k - i) ++ iota k (j - k.+1).+1.
   rewrite subnS prednK ?subn_gt0 //.
   suff -> : (j - i) = (k - i) + (j - k) by rewrite iotaD subnKC.
   by rewrite addnC addnBA // subnK.
-rewrite big_cat /= big_cons permM cycleij_gt //; first last.
+rewrite big_cat /= big_cons permM cycleij_gt //.
   by rewrite inordK // ltnS (leq_trans ltkj) // -ltnS.
 rewrite permM eltrR_ord.
 have Hk1 := inordK (leq_ltn_trans ltkj (ltn_ord _)).
@@ -753,7 +753,7 @@ Proof.
 move=> i j /= /eqP.
 have /(set_nth_default j i)-> : i < size (sort r (enum 'I_n)).
   by rewrite size_sort size_enum_ord.
-rewrite nth_uniq => [/eqP/val_inj -> //|||].
+rewrite nth_uniq => [|||/eqP/val_inj -> //].
 - by rewrite size_sort size_enum_ord.
 - by rewrite size_sort size_enum_ord.
 - by rewrite sort_uniq enum_uniq.
@@ -791,7 +791,7 @@ apply (sorted_eq (@rsym_invset_trans s) (@rsym_invset_anti s)).
 - exact: rsym_invsetP.
 - rewrite perm_sort; apply uniq_perm.
   + exact: enum_uniq.
-  + rewrite map_inj_uniq; first exact: enum_uniq.
+  + rewrite map_inj_uniq; last exact: enum_uniq.
     exact: perm_inj.
   + move=> /= i; apply esym.
     rewrite mem_enum inE; apply/mapP; exists (s i); first by rewrite mem_enum.
@@ -985,8 +985,8 @@ Lemma length_add1L s (i : 'I_n) :
 Proof using.
 rewrite /length => Hi Hfwd.
 rewrite (invset_eltrL Hi Hfwd).
-rewrite cardsU1 (card_imset _ (@inv_inj _ _ _)); first last.
-  by move=> [u v] /=; rewrite !eltrK.
+rewrite cardsU1 (card_imset _ (@inv_inj _ _ _)) => [[u v] /= |].
+  by rewrite !eltrK.
 rewrite (_ : (_, _) \in _ = false) //.
 apply/negP => /imsetP[[u v]].
 rewrite inE /= => /andP[Huv Hsvu] [].
@@ -1172,30 +1172,30 @@ Lemma perm_on_prods_length_ord s i (m : 'I_n) :
   length (s * 's_[rev (iota (m - i) i)]) = length s + i.
 Proof using.
 elim: i s => [/= | i IHi] /= s Hm Hon; first by rewrite /= big_nil mulg1 addn0.
-rewrite rev_cons -cats1 big_cat /= {1}subnS prednK; last by rewrite subn_gt0.
+rewrite rev_cons -cats1 big_cat /= {1}subnS prednK; first by rewrite subn_gt0.
 rewrite big_seq1 mulgA.
 have H : m - i.+1 < n0.
   rewrite -ltnS subnSK //; apply: (leq_trans _ (ltn_ord m)).
   by rewrite ltnS; exact: leq_subr.
 have:= H; rewrite -ltnS => /ltnW Ho.
 have -> : (m - i.+1) = Ordinal Ho by [].
-rewrite length_add1R //; first by rewrite (IHi _ (ltnW Hm) Hon) addnS {IHi}.
+rewrite length_add1R //; last by rewrite (IHi _ (ltnW Hm) Hon) addnS {IHi}.
 have -> : Ordinal Ho = inord (m - i.+1) by apply val_inj => /=; rewrite inordK.
 rewrite invMg !permM inordK //.
-rewrite !subnS prednK; last by rewrite subn_gt0.
+rewrite !subnS prednK; first by rewrite subn_gt0.
 rewrite {H Ho} prodsV invgK (prods_iota_mi (ltnW Hm)).
 have : m \notin [set k : 'I_n | k < m] by rewrite inE ltnn.
 move/(out_perm (perm_onV Hon)) ->.
-rewrite prods_iota_ltmi; first last.
-  rewrite inordK; first by move: Hm; rewrite -subn_gt0; case: (m - i).
+rewrite prods_iota_ltmi.
+  rewrite inordK; last by move: Hm; rewrite -subn_gt0; case: (m - i).
   apply: (leq_trans (leq_pred _)).
   by apply: (leq_trans (leq_subr _ _)); rewrite -ltnS.
 have:= perm_closed (inord (m - i).-1) (perm_onV Hon).
 rewrite !inE => -> /=; rewrite inordK.
-- rewrite prednK; last by rewrite subn_gt0.
-  exact: leq_subr.
-- rewrite prednK; last by rewrite subn_gt0.
+- rewrite prednK; first by rewrite subn_gt0.
   by apply: (leq_trans (leq_subr _ _)); exact: ltnW.
+- rewrite prednK; first by rewrite subn_gt0.
+  exact: leq_subr.
 Qed.
 
 Lemma perm_on_prods_length s i m :
@@ -1214,7 +1214,7 @@ rewrite (sumn_nth_le (n := size c)) // /index_iota subn0.
 have [n] := ubnPgeq (size c); elim: n => [/= |m IHm] Hm.
   by rewrite !big_nil length1.
 rewrite -(addn1 m) iotaD !big_cat /= add0n !big_seq1.
-rewrite perm_on_prods_length /=; first by rewrite (IHm (ltnW Hm)).
+rewrite perm_on_prods_length /=; last by rewrite (IHm (ltnW Hm)).
 - exact: leq_trans Hm Hsz.
 - by apply Hcd.
 - rewrite -/(index_iota _ _). apply: (perm_on_prods Hcode (ltnW Hm)).
@@ -1395,8 +1395,8 @@ Corollary genfun_length n :
   \prod_(0 <= i < n) \sum_(0 <= j < i.+1) 'X^j :> {poly int}.
 Proof.
 case: n => [|n].
-  rewrite (big_pred1_id _ _ (i := 1%g)); first last.
-    by move=> s; rewrite !permS0 /= eq_refl.
+  rewrite (big_pred1_id _ _ (i := 1%g)) => [s |].
+    by rewrite !permS0 /= eq_refl.
   by rewrite addr0 length1 expr0 big_mkord big_ord0.
 rewrite (reindex _ (onW_bij _ (prods_codesz_bij n))) /=.
 under eq_bigr => i _ do
@@ -1763,7 +1763,7 @@ Qed.
 Lemma inord_predS (i : 'I_n) a b :
   a < i -> i < b -> (inord (n' := n0) i.-1).+1 < b.
 Proof using.
-move=> Ha Hb; rewrite inordK; last by apply (leq_ltn_trans (leq_pred _)).
+move=> Ha Hb; rewrite inordK; first exact: (leq_ltn_trans (leq_pred _)).
 by rewrite (ltn_predK Ha).
 Qed.
 
@@ -1805,7 +1805,7 @@ Proof using.
 rewrite /wcord => Hcode; have:= Hcode => /wordcd_ltn/allP.
 rewrite size_rev => Hall Hsz.
 apply (inj_map (@val_inj _ _ _)) => /=.
-rewrite insub_wordcdK //; last by rewrite size_rev.
+rewrite insub_wordcdK //; first by rewrite size_rev.
 rewrite -map_comp -[RHS]map_id -eq_in_map => j /Hall /= Hj.
 rewrite inordK //.
 by case: (size c) Hj Hsz => [| sz] //=; exact: leq_trans.
@@ -1866,7 +1866,7 @@ move=> Hbl Hi1 Hi2.
 have Hbli : b - l <= i.-1 by rewrite -ltnS (ltn_predK Hi1).
 have -> : [:: i.-1; i : nat] = iota i.-1 2 by rewrite /= (ltn_predK Hi1).
 rewrite -{2}(subnKC Hbli) catA -iotaD.
-rewrite -addSnnS addn1 -subSn // (ltn_predK Hi1) -subSn; last by apply ltnW.
+rewrite -addSnnS addn1 -subSn // (ltn_predK Hi1) -subSn; first exact: ltnW.
 have Hbli1 := leq_trans (ltnW Hi1) (leqnSn _).
 rewrite -{2}(subnKC Hbli1) -iotaD addnC (addnBA _ Hbli1).
 by rewrite (subnK Hi2) (subKn Hbl).
@@ -1894,7 +1894,7 @@ apply (braid_trans (y := A ++ [:: inord i.-1; i; inord i.-1])); first last.
   rewrite -catA /=; apply braid_catr; apply rule_gencongr => /=.
   rewrite eq_refl /=.
   suff -> : (inord (n' := n0) i.-1).+1 = i by rewrite eq_refl /= mem_seq1 eq_refl.
-  rewrite inordK; last by apply (leq_ltn_trans (leq_pred _)).
+  rewrite inordK; first exact: (leq_ltn_trans (leq_pred _)).
   by rewrite (ltn_predK Hi).
 rewrite -[inord i.-1 :: i :: _]cat1s catA; apply braid_catl.
 rewrite /A; case: (ltnP i sz) => Hi'.
@@ -1902,9 +1902,9 @@ rewrite /A; case: (ltnP i sz) => Hi'.
   rewrite {}/A => /mapP[x].
   rewrite mem_rev mem_iota => /andP[Hix Hx] ->{u} /=.
   rewrite subnKC // in Hx.
-  rewrite inordK; last by apply (leq_ltn_trans (leq_pred _)).
+  rewrite inordK; first exact: (leq_ltn_trans (leq_pred _)).
   rewrite (ltn_predK Hi).
-  by rewrite inordK; last apply: (leq_trans Hx).
+  by rewrite inordK; first exact: (leq_trans Hx).
 move: Hi'; rewrite -ltnS => /ltnW.
 by rewrite /leq => /eqP ->.
 Qed.
@@ -1916,8 +1916,7 @@ Proof using.
 move=> Hsz Hi Hc0; apply gtn_braidC => u /mapP[ x].
 rewrite mem_rev mem_iota => /andP[Hix Hx] ->{u} /=.
 rewrite subnK // in Hx.
-rewrite inordK; last by apply (leq_trans Hx).
-exact: (leq_trans Hi).
+rewrite inordK; [exact: (leq_trans Hx) | exact: (leq_trans Hi)].
 Qed.
 
 
@@ -2034,11 +2033,11 @@ Corollary cocode_straightenE w : rev (straighten w) = cocode 's_[w].
 Proof using.
 have:= prods_straighten w; rewrite -{1}(canwordP 's_[w]).
 rewrite -!(big_map nat_of_ord xpredT) /= canwordE /wcord -map_comp.
-rewrite [map _ _](_ : _ = wordcd (rev (straighten w))); first last.
+rewrite [map _ _](_ : _ = wordcd (rev (straighten w))).
   rewrite -[RHS](map_id) -eq_in_map => i.
   rewrite /= /wordcd => /flatten_mapP[j].
   rewrite mem_rev !mem_iota /= add0n size_rev size_straighten ltnS => Hj.
-  move=> /andP[_]; rewrite subnK => [Hij | ].
+  move=> /andP[_]; rewrite subnK => [| Hij]; first last.
     by rewrite inordK // (leq_trans Hij Hj).
   have /is_codeP := is_code_straighten w.
   by rewrite size_rev size_straighten; apply; rewrite ltnS.
@@ -2268,8 +2267,8 @@ constructor.
 - case: n => [| n] /= Ht gensH.
     move => _; exists [morphism of trivm _] => [] [i] /= Hi.
     by have:= Hi; rewrite ltn0.
-  rewrite (satisfy_eq (gens2 := (fun i : 'I_n.+1 => (gensH \o @inord _) i)));
-    last by move=> i /=; rewrite inord_val.
+  rewrite (satisfy_eq (gens2 := (fun i : 'I_n.+1 => (gensH \o @inord _) i))).
+    by move=> i /=; rewrite inord_val.
   move/relat_SnP/univ_Sn_eltr => [phi phiE].
   by exists phi => i; rewrite phiE //= inord_val.
 Qed.
@@ -2311,7 +2310,7 @@ apply intro_isoGrp.
   have /univ_Sn_eltr [f Hf] : relat_Sn 1 fs.
     constructor; try by case=> [|i].
     by case=> [|i] j // /andP[/leq_ltn_trans /[apply]].
-  exists f; rewrite {3}eltr_genSn morphim_gen; last exact: subsetT.
+  exists f; rewrite {3}eltr_genSn morphim_gen; first exact: subsetT.
   congr <<_>>; apply/setP => x; rewrite !inE.
   apply/imsetP/eqP => [[/= x0]| ->{x}] /=; rewrite setTI.
   + move=> /imsetP[/= i _ -> ->].
@@ -2339,7 +2338,7 @@ apply intro_isoGrp.
   have /univ_Sn_eltr [f Hf] : relat_Sn 2 fs.
     constructor; try by case=> [|[|i]].
     by case=> [|i] j // /andP[/leq_ltn_trans /[apply]].
-  exists f; rewrite {3}eltr_genSn morphim_gen; last exact: subsetT.
+  exists f; rewrite {3}eltr_genSn morphim_gen; first exact: subsetT.
   congr <<_>>; apply/setP => x; rewrite !inE.
   apply/imsetP/idP => [[/= x0] | /orP[] /eqP ->{x}] /=; rewrite setTI.
   + move=> /imsetP[/= i _ -> ->].
@@ -2380,7 +2379,7 @@ apply intro_isoGrp.
   have /univ_Sn_eltr [f Hf] : relat_Sn 3 fs.
     constructor; try by case=> [|[|[|i]]].
     by case=> [|[|i]] [|[|[|j]]] // /andP[/leq_ltn_trans /[apply]].
-  exists f; rewrite {3}eltr_genSn morphim_gen; last exact: subsetT.
+  exists f; rewrite {3}eltr_genSn morphim_gen; first exact: subsetT.
   congr <<_>>; apply/setP => x; rewrite !inE -orbA.
   apply/imsetP/idP => [[/= x0] | /or3P[] /eqP ->{x}] /=; rewrite setTI.
   + move=> /imsetP[/= i _ -> ->].

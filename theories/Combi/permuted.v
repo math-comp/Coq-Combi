@@ -41,7 +41,7 @@ Require Import tools combclass sorted partition composition multinomial.
 Require Import permcomp cycles.
 
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -195,15 +195,15 @@ have Htriv : trivIset [set [set i | tnth w i == val x] | x : seq_sub w].
 apply/eqP; rewrite bigprodGE eqEsubset; apply/andP; split.
 - apply/subsetP => /= s.
   move/astabP/(_ wp); rewrite inE eq_refl => /(_ isT) Ht.
-  rewrite -(perm_decE (s := s) Htriv); first last.
+  rewrite -(perm_decE (s := s) Htriv).
+  + apply/subsetP => /= i _; apply/bigcupP => /=.
+    exists [set i0 | tnth w i0 == tnth w i]; last by rewrite inE.
+    by apply/imsetP => /=; exists (SeqSub (mem_tnth i w)) => //=.
   + apply/astabP => /= CS /imsetP[/= x _ ->{CS}].
     apply/astab1P; rewrite astab1_set.
     rewrite !inE /=; apply/subsetP => j.
     rewrite !inE => /eqP <-.
     by rewrite -{1}[w]/(val wp) -Ht tnth_mktuple permK.
-  + apply/subsetP => /= i _; apply/bigcupP => /=.
-    exists [set i0 | tnth w i0 == tnth w i]; last by rewrite inE.
-    by apply/imsetP => /=; exists (SeqSub (mem_tnth i w)) => //=.
   apply group_prod => /= u /imsetP[/= X].
   move=> /imsetP[x Hx ->{X} ->{u}]; apply/mem_gen.
   apply/bigcupP; exists x => //.
@@ -333,7 +333,7 @@ pose tsh := in_tuple sh.
 have c_of_p_pf (p : permuted tsh) : is_comp_of_n n p.
   rewrite /is_comp_of_n /= -(perm_sumn (permutedP p)) sumn_intpartn eqxx /=.
   by rewrite /is_comp -(perm_mem (permutedP p)) /= notin0_part.
-rewrite -(on_card_preimset (f := fun p => IntCompN (c_of_p_pf p))); first last.
+rewrite -(on_card_preimset (f := fun p => IntCompN (c_of_p_pf p))).
   have size_p_of_c (c : intcompn n) :
     size (if perm_eq tsh c then val c else val tsh) == size sh.
     by case: (boolP (perm_eq _ _)) => // /perm_size /= ->.

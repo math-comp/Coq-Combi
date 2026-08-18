@@ -33,7 +33,7 @@ From mathcomp Require Import all_boot order.
 From mathcomp Require Import div ssralg ssrint ssrnum binomial.
 Require Import tools combclass sorted ordtype partition.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -465,7 +465,7 @@ apply/idP/andP=> [Hjoin | [/is_finer_pblockP RA /is_finer_pblockP RB]].
 apply/is_finer_pblockP => x xinS.
 apply/subsetP=> y /[dup]/mem_pblock_setpart yinS.
 rewrite (pblock_equivalence_partition (join_finer_equivalence P Q)) //.
-rewrite {yinS} /join_finer_eq => /closed_connect <-{y}.
+rewrite {yinS} /join_finer_eq => /closed_connect <-{y}; first last.
   by rewrite mem_pblock (cover_setpart R).
 move=> y z /= Hrel; rewrite -!eq_pblock ?(cover_setpart R) //.
 suff {x xinS} -> : pblock R y = pblock R z by [].

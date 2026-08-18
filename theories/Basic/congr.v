@@ -72,7 +72,7 @@ From mathcomp Require Import all_boot.
 From Stdlib Require Import Recdef.
 Require Import permcomp permuted multinomial vectNK.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -124,7 +124,7 @@ Lemma uniq_step s : uniq (step s).
 Proof using. exact: undup_uniq. Qed.
 
 Lemma undup_step s : undup (step s) = step s.
-Proof using. by rewrite undup_id; last exact: undup_uniq. Qed.
+Proof using. by rewrite undup_id; first exact: undup_uniq. Qed.
 
 Lemma invar_step s : all invar s -> all invar (step s).
 Proof using Hinvar.
@@ -241,7 +241,7 @@ case/lastP: pathxy Hy => [/= -> _ | pathxz z]; first exact: (Rew [::]).
 rewrite last_rcons belast_rcons rev_cons => ->{y} Hpath.
 apply: (Rew (rcons (rev pathxz) x)).
 - set rel := (X in path X _ _) in Hpath.
-  rewrite (eq_path (e' := rel)); first exact: Hpath.
+  rewrite (eq_path (e' := rel)); last exact: Hpath.
   by move=> i j; rewrite /rel; apply/idP/idP; exact: Hsym.
 - by rewrite last_rcons.
 Qed.
@@ -379,8 +379,8 @@ Lemma congr_cat u1 u2 v1 v2 : r u1 u2 -> r v1 v2 -> r (u1 ++ v1) (u2 ++ v2).
 Proof using Hcongr Hequiv.
 move: Hequiv => /equivalence_relP[Hrefl Htrans].
 move=> Hu Hv; rewrite (Htrans _ (u1 ++ v2)).
-- exact: congr_catl.
 - exact: congr_catr.
+- exact: congr_catl.
 Qed.
 
 End CongruenceFacts.
@@ -473,7 +473,7 @@ move: gencongr_equiv => /equivalence_relP[Hrefl Htrans].
 move=> a b1 c; apply: rtrans_ind.
 - exact: Hrefl.
 - move=> /= x y Hx Hrule.
-  rewrite (@Htrans _ (a ++ x ++ c)); last apply: Hx.
+  rewrite (@Htrans _ (a ++ x ++ c)); first apply: Hx.
   rewrite {Hx}; apply rule_rtrans.
   exact: congrrule_is_congr.
 Qed.

@@ -30,7 +30,7 @@ From mathcomp Require Import all_boot order.
 
 Require Import tools partition skewpart Yamanouchi ordtype tableau std stdtab.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -254,14 +254,14 @@ Proof using.
 rewrite /shape /skew_reshape.
 elim: inner outer s => [| inn0 inn IHinn] /= outer s.
   move=> _; elim: outer s => [s /eqP/nilP -> // | out0 out IHout] /= s Hsz.
-  rewrite rev_cons reshape_rcons; last by rewrite sumn_rev addnC -Hsz.
+  rewrite rev_cons reshape_rcons; first by rewrite sumn_rev addnC -Hsz.
   rewrite rev_rcons /= IHout.
-  - by rewrite size_drop sumn_rev Hsz addnK.
   - by rewrite sumn_rev size_takel // Hsz leq_addl.
+  - by rewrite size_drop sumn_rev Hsz addnK.
 case: outer s => [// | out0 out] /= s /andP[H0 Hincl] Hsz.
-rewrite rev_cons reshape_rcons; last by rewrite sumn_rev addnC -Hsz.
+rewrite rev_cons reshape_rcons; first by rewrite sumn_rev addnC -Hsz.
 rewrite rev_rcons /= size_drop sumn_rev.
-rewrite (IHinn _ _ Hincl); first by rewrite Hsz addnK.
+rewrite (IHinn _ _ Hincl); last by rewrite Hsz addnK.
 by rewrite size_takel // Hsz leq_addl.
 Qed.
 
@@ -273,15 +273,15 @@ Proof using.
 rewrite /skew_reshape /to_word revK.
 elim: inner outer s => [| inn0 inn IHinn] /= outer s.
   move=> _; elim: outer s => [s /eqP/nilP -> // | out0 out IHout] /= s Hsz.
-  rewrite rev_cons reshape_rcons; last by rewrite sumn_rev addnC -Hsz.
-  rewrite flatten_rcons IHout; first by rewrite cat_take_drop.
+  rewrite rev_cons reshape_rcons; first by rewrite sumn_rev addnC -Hsz.
+  rewrite flatten_rcons IHout; last by rewrite cat_take_drop.
   by rewrite sumn_rev size_takel // Hsz leq_addl.
 case: outer s => //= out0 out s /andP[H0 Hincl] Hsz.
-rewrite rev_cons reshape_rcons; last by rewrite sumn_rev addnC -Hsz.
+rewrite rev_cons reshape_rcons; first by rewrite sumn_rev addnC -Hsz.
 rewrite flatten_rcons IHinn.
-- by rewrite cat_take_drop.
 - exact: Hincl.
 - by rewrite sumn_rev size_takel // Hsz leq_addl.
+- by rewrite cat_take_drop.
 Qed.
 
 Lemma skew_reshapeK inner t :
@@ -345,7 +345,7 @@ apply/andP/idP => [[] Hincl /(row_hb_strip Hpartin) | Hstrip].
     by rewrite take_size Hrow eq_refl !andbT.
   set dsh := out / inn.
   move=> Hpartout /= u Hsize Hrow /andP[/andP[Hhead0 H0] Hstrip].
-  rewrite /skew_reshape /= rev_cons reshape_rcons; first last.
+  rewrite /skew_reshape /= rev_cons reshape_rcons.
     by rewrite sumn_rev Hsize /= addnC.
   rewrite rev_rcons -/dsh /=.
   apply/and4P; split.
@@ -476,7 +476,7 @@ case: ([seq x <- t0 | (x < n)%O] =P [::]) => Ht0 /=; first last.
   by rewrite subSS -(IHt Htab).
 rewrite Ht0 /= {IHt}.
 rewrite (filter_le_first_row0 Htab Hdom Ht0).
-rewrite [filter _ _ ](_ : _ = [::]); last by elim: (size t).
+rewrite [filter _ _ ](_ : _ = [::]); first by elim: (size t).
 by rewrite /= /shape map_nseq.
 Qed.
 
@@ -511,8 +511,7 @@ Lemma shape_join_tab s t :
   ([seq pr.1 + pr.2 | pr <- zip (pad 0 (size t) (shape s)) (shape t)])%N.
 Proof using .
 rewrite /shape /join_tab -map_comp.
-rewrite (eq_map (g := (fun p => p.1 + p.2) \o
-                         (fun p => (size p.1, size p.2)))); first last.
+rewrite (eq_map (g := (fun p => p.1 + p.2) \o (fun p => (size p.1, size p.2)))).
   by move=> [a b] /=; rewrite size_cat.
 rewrite map_comp; congr map.
 elim: t s => [| t0 t IHt] [| s0 s] //=.
@@ -528,7 +527,7 @@ rewrite /join_tab /=.
 elim: t s => [// | t0 t IHt] /= s; first by rewrite leqn0 => /nilP -> /=.
 case: s => [_ | s0 s] /=.
   rewrite !to_word_cons {IHt}.
-  rewrite [map _ _](_ : _ = t); first by exact: perm_refl.
+  rewrite [map _ _](_ : _ = t); last exact: perm_refl.
   by elim: t {t0} => [// | t0 t] /= ->.
 rewrite ltnS subSS => {}/IHt.
 rewrite !to_word_cons -!/(to_word _) !catA perm_cat2r.
@@ -545,7 +544,7 @@ rewrite /join_tab.
 elim: t => [// | t0 t IHt] /= /and4P[Hnnil Hrow0 Hdom Htab].
 case H: [seq x <- t0 | (x < n)%O] => [| f0 f] /=.
 - rewrite {IHt} (filter_le_first_row0 Htab Hdom H).
-  rewrite [filter _ _](_ : _ = [::]); last by elim: (size t).
+  rewrite [filter _ _](_ : _ = [::]); first by elim: (size t).
   rewrite cat0s /= (filter_le_row n Hrow0) -!size_filter /= H /= drop0.
   congr (_ :: _).
   rewrite (filter_gt_first_row0 Htab Hdom H).
@@ -558,7 +557,7 @@ Qed.
 Lemma all_allLtn_cat (s0 s1 s : seq T) :
   all (allLtn (s0 ++ s1)) s -> all (allLtn s0) s /\ all (allLtn s1) s.
 Proof using.
-rewrite (eq_all (a2 := predI (allLtn s0) (allLtn s1))); first last.
+rewrite (eq_all (a2 := predI (allLtn s0) (allLtn s1))).
   by rewrite /allLtn => i /=; rewrite all_cat.
 by rewrite all_predI => /andP[].
 Qed.
@@ -586,7 +585,7 @@ Proof using.
 rewrite /join_tab.
 elim: s t => [| s0 s IHs] /= t.
   move => _ _ Ht; rewrite subn0 /=.
-  rewrite [map _ _](_ : _ = t); last by elim: t {Ht} => //= r t ->.
+  rewrite [map _ _](_ : _ = t); first by elim: t {Ht} => //= r t ->.
   by rewrite -is_skew_tableau0.
 rewrite to_word_cons => /all_allLtn_cat [Halls Halls0].
 move/and4P => [Hnnils0 Hrows0 Hdoms Htabs].
@@ -696,7 +695,7 @@ have Hinvr : eq_inv r1 r2.
   by move/eq_inv_catl; apply; rewrite !size_take -Hszu.
 have Hszr1 : size r1 = sumn shres by rewrite size_takel // Hszres.
 have {IHinn Hsz Hinvr Hszr1} IH := IHinn _ r1 r2 Hsz Hinvr Hszr1.
-rewrite !rev_cons !reshape_rcons; first last.
+rewrite !rev_cons !reshape_rcons.
 - by rewrite sumn_rev addnC Hszeq.
 - by rewrite -Hszu sumn_rev addnC Hszeq.
 rewrite sumn_rev !rev_rcons /= !size_drop.

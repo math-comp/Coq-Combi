@@ -66,7 +66,7 @@ From mathcomp Require Import order seq tuple finfun finset perm binomial bigop.
 Require Import tools vectNK subseq partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted plactic Greene_inv stdplact.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -155,8 +155,8 @@ elim: u v => [| a u IHu] /= v HI.
   by rewrite !andbT (eq_filter (a2 := pred0)) // filter_pred0.
 elim: v HI => [_ | b v IHv] /=.
 - rewrite !andbT inE eq_refl /=; apply/eqP; congr (a :: _).
-  rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT.
-  by move => i /=; rewrite inE => ->; rewrite orbT.
+  rewrite (eq_in_filter (a2 := predT)) => [i /= /[!inE] -> /[!orbT] // |].
+  by rewrite filter_predT.
 - move=> HI; rewrite all_cat.
   apply/andP; split; apply/allP=> x /mapP[s Hs ->{x}] /=.
   + rewrite !inE eq_refl /=; apply/eqP; congr (a :: _).
@@ -165,11 +165,11 @@ elim: v HI => [_ | b v IHv] /=.
       move/(_ i): HI; rewrite !inE => /negbT.
       by apply: contra => /andP[->]; rewrite orbT.
     case (boolP (a \in u)) => Ha.
-    * rewrite (eq_filter (a2 := mem u)); first by apply/eqP; apply: (Hu _ Hs).
+    * rewrite (eq_filter (a2 := mem u)); last by apply/eqP; apply: (Hu _ Hs).
       move => i /=; rewrite inE.
       apply/idP/idP => [| ->]; last by rewrite orbT.
       by move/orP => [/eqP ->|].
-    * rewrite (eq_in_filter (a2 := mem u)); first by apply/eqP; apply: (Hu _ Hs).
+    * rewrite (eq_in_filter (a2 := mem u)); last by apply/eqP; apply: (Hu _ Hs).
       move => i /=; rewrite inE => Hi.
       apply/idP/idP; last by move ->; rewrite orbT.
       have /allP := perm_shuffle u (b :: v) => /(_ _ Hs)/perm_mem/(_ i).
@@ -214,16 +214,16 @@ Lemma mem_shuffle_pred u v s Pu Pv:
 Proof using .
 move=> HI Hu Hv Hsz; have /all_filterP Hall := mem_shuffle_predU HI Hu Hv Hsz.
 elim: u v s Hu Hv {Hsz} Hall => [| a u' IHu] /= v s Hu Hv Hall.
-  move: Hall => /all_filterP; rewrite (eq_in_filter (a2 := Pv)).
-    by move <-; rewrite Hv mem_seq1.
-  move=> i Hi /=.
+  move: Hall => /all_filterP.
+  rewrite (eq_in_filter (a2 := Pv)) => [i Hi /= | <-]; first last.
+    by rewrite Hv mem_seq1.
   rewrite (_ : Pu i = false) //; apply/negP => HPu.
   have : i \in [seq x <- s | Pu x] by rewrite mem_filter HPu Hi.
   by rewrite Hu /= in_nil.
 elim: v s Hv Hu Hall => [// | b v IHv] /= s Hv Hu Hall.
-  move: Hall => /all_filterP; rewrite (eq_in_filter (a2 := Pu)).
-    by move <-; rewrite Hu mem_seq1.
-  move=> i Hi /=.
+  move: Hall => /all_filterP.
+  rewrite (eq_in_filter (a2 := Pu)) => [i Hi /= | <-]; first last.
+    by rewrite Hu mem_seq1.
   rewrite (_ : Pv i = false) ?orbF //; apply/negP => HPv.
   have : i \in [seq x <- s | Pv x] by rewrite mem_filter HPv Hi.
   by rewrite Hv /= in_nil.
@@ -269,15 +269,14 @@ Definition sfilterleq n := [fun v => map (subn^~ n) (filter (leq n) v)].
 Lemma shiftuK n : cancel (shiftn n) (map (subn^~ n)).
 Proof.
 move=> s; rewrite /shiftn -map_comp.
-rewrite (eq_map (g := id)); first by rewrite map_id.
-by move=> i /=; rewrite /= addKn.
+rewrite (eq_map (g := id)) => [i /= |]; last by rewrite map_id.
+by rewrite addKn.
 Qed.
 
 Lemma sfilterleqK n v : shiftn n (sfilterleq n v) = [seq x <- v | n <= x].
 Proof.
 rewrite /=; elim: v => [// | v0 v IHv] /=.
-case: leqP => H /=; rewrite IHv; last by [].
-by rewrite subnKC.
+by case: leqP => H /=; rewrite IHv // subnKC.
 Qed.
 
 Lemma sfilterleqE n u v : u = sfilterleq n v <-> shiftn n u = filter (leq n) v.
@@ -405,7 +404,7 @@ have {Hv1} Hplv : v1 =Pl v2.
   rewrite !mem_filter !leEnat !ltEnat /= => /andP[Hx _] /andP[Hy _] Hxy.
   by rewrite -(ltn_add2r (size u1)) ?subnK.
 exists u2, v2; split => //.
-rewrite mem_shsh; first last.
+rewrite mem_shsh.
   by apply (perm_std Hstdu1); rewrite perm_sym; exact: plact_homog.
 by rewrite -(perm_size (plact_homog Hplu)) !eq_refl.
 Qed.
@@ -431,23 +430,20 @@ move=> Hstd; apply: uniq_perm.
 - exact: iota_uniq.
 - move=> i; rewrite mem_filter mem_iota /= add0n leq_min.
   congr (_ && _).
-  rewrite (perm_mem Hstd).
-  by rewrite mem_iota /= add0n.
+  by rewrite (perm_mem Hstd) mem_iota /= add0n.
 Qed.
 
 Lemma perm_sfilterleq p n :
   is_std p -> perm_eq (sfilterleq n p) (iota 0 ((size p) - n)).
 Proof using .
 move=> Hstd; apply: uniq_perm.
-- rewrite map_inj_in_uniq.
-  + by apply: filter_uniq; exact: std_uniq.
-  + move=> i j; rewrite !mem_filter => /andP[Hi _] /andP[Hj _] H.
+- rewrite map_inj_in_uniq => [i j|].
+  + rewrite !mem_filter => /andP[Hi _] /andP[Hj _] H.
     by rewrite -(subnK Hi) H (subnK Hj).
+  + exact/filter_uniq/std_uniq.
 - exact: iota_uniq.
 - move=> i; rewrite mem_sfilterleqK.
-  rewrite (perm_mem Hstd).
-  rewrite !mem_iota /= !add0n.
-  by rewrite ltn_subRL addnC.
+  by rewrite (perm_mem Hstd) !mem_iota /= !add0n ltn_subRL addnC.
 Qed.
 
 Lemma size_sfiltergtn p n :
@@ -475,14 +471,14 @@ Qed.
 Lemma size_sfiltergtn_cat u v :
   size (sfiltergtn (size u) (invstd (std (u ++ v)))) = size u.
 Proof using .
-rewrite (size_sfiltergtn _ (invstd_is_std _)); last exact: std_is_std.
+rewrite (size_sfiltergtn _ (invstd_is_std _)); first exact: std_is_std.
 rewrite size_invstd size_std size_cat.
 by have /minn_idPl -> : size u <= size u + size v by apply: leq_addr.
 Qed.
 Lemma size_sfilterleq_cat u v :
   size (sfilterleq (size u) (invstd (std (u ++ v)))) = size v.
 Proof using .
-rewrite (size_sfilterleq _ (invstd_is_std _)); last exact: std_is_std.
+rewrite (size_sfilterleq _ (invstd_is_std _)); first exact: std_is_std.
 by rewrite size_invstd size_std size_cat addKn.
 Qed.
 
@@ -529,12 +525,12 @@ apply/eq_invP; split; first by rewrite size_invstd size_sfiltergtn_cat.
 move=> i j /andP[Hij Hj].
 have Hi := leq_ltn_trans Hij Hj.
 rewrite leEnat /=.
-do 2 (rewrite nth_mkseq; last by rewrite size_sfiltergtn_cat).
+do 2 (rewrite nth_mkseq; first by rewrite size_sfiltergtn_cat).
 rewrite index_leq_filter //= -/(invstd (std (u++v))).
 have Hucat : size u <= size (std (u ++ v)).
   by rewrite size_std size_cat; apply: leq_addr.
 do 2 (rewrite (index_invstd (std_is_std (u ++ v)));
-      last by apply: (@leq_trans (size u)); last exact Hucat).
+      first by apply: (@leq_trans (size u)); last exact Hucat).
 have /eq_invP := eq_inv_std (u ++ v) => [] [_ Hinv].
 have Hijsz : i <= j < size (u ++ v).
   rewrite Hij /=; apply: (leq_trans Hj); rewrite size_cat; exact: leq_addr.
@@ -556,10 +552,10 @@ apply/eq_invP; split; first by rewrite size_invstd size_sfilterleq_cat.
 move=> i j /andP[Hij Hj].
 have Hi := leq_ltn_trans Hij Hj.
 rewrite leEnat /=.
-do 2 (rewrite nth_mkseq; last by rewrite size_sfilterleq_cat).
+do 2 (rewrite nth_mkseq; first by rewrite size_sfilterleq_cat).
 rewrite !index_sfilterleq index_leq_filter; try apply: leq_addl.
 do 2 (rewrite (index_invstd (std_is_std (u ++ v)));
-  last by rewrite size_std size_cat addnC ltn_add2l).
+  first by rewrite size_std size_cat addnC ltn_add2l).
 have /eq_invP := eq_inv_std (u ++ v) => [] [_ Hinv].
 have Hijsz : i + size u <= j + size u < size (u ++ v).
   rewrite size_cat [size u + _]addnC.
@@ -576,7 +572,7 @@ Qed.
 Theorem invstd_cat_in_shsh u v :
   invstd (std (u ++ v)) \in shsh (invstd (std u)) (invstd (std v)).
 Proof using .
-rewrite mem_shsh; last by apply: invstd_is_std; apply: std_is_std.
+rewrite mem_shsh; first exact/invstd_is_std/std_is_std.
 rewrite {2}(invstd_catgtn u v) size_invstd size_std (invstd_catleq u v).
 by rewrite !eq_refl.
 Qed.
@@ -779,12 +775,12 @@ apply/eq_invP; split.
 move=> i j /andP[Hij]; rewrite size_takel // => Hj.
 have Hi := leq_ltn_trans Hij Hj.
 rewrite leEnat /=.
-do 2 (rewrite nth_mkseq; last rewrite size_sfiltergtn //;
-        last by rewrite size_invstd size_std (minn_idPl Hn)).
+do 2 (rewrite nth_mkseq; first rewrite size_sfiltergtn //;
+        first by rewrite size_invstd size_std (minn_idPl Hn)).
 rewrite index_leq_filter // !nth_take //.
-rewrite (index_invstd (std_is_std w)); first last.
+rewrite (index_invstd (std_is_std w)).
   by apply (leq_trans Hi); rewrite size_std.
-rewrite (index_invstd (std_is_std w)); first last.
+rewrite (index_invstd (std_is_std w)).
   by apply (leq_trans Hj); rewrite size_std.
 have /eq_invP := (eq_inv_std w) => [] [_]; apply.
 by rewrite Hij (leq_trans Hj Hn).
@@ -808,11 +804,12 @@ apply/eq_invP; split.
 move=> i j /andP[Hij]; rewrite size_drop => Hj.
 rewrite leEnat /=.
 have Hi := leq_ltn_trans Hij Hj.
-do 2 (rewrite nth_mkseq; last by rewrite size_sfilterleq // size_invstd size_std).
+do 2 (rewrite nth_mkseq;
+      first by rewrite size_sfilterleq // size_invstd size_std).
 rewrite !index_sfilterleq !nth_drop.
 rewrite index_leq_filter ?leq_addl //.
 do 2 (rewrite (index_invstd (std_is_std w));
-      last by rewrite size_std addnC -ltn_subRL).
+      first by rewrite size_std addnC -ltn_subRL).
 have /eq_invP := (eq_inv_std w) => [] [_].
 rewrite ![_ + n]addnC; apply.
 by rewrite leq_add2l Hij /= -ltn_subRL.
@@ -887,18 +884,14 @@ Theorem LRtriple_conj t1 t2 t :
   LRtriple t1 t2 t -> LRtriple (conj_tab t1) (conj_tab t2) (conj_tab t).
 Proof using .
 move=> Ht1 Ht2 Ht [p1 p2 p Hp1 Hp2 Hp].
-rewrite mem_shsh; last by rewrite -RSstdE Hp1.
+rewrite mem_shsh; first by rewrite -RSstdE Hp1.
 move=> /= /andP[/eqP Hsh1 /eqP Hsh2].
 apply: (@LRTriple _ _ _ (rev p1) (rev p2) (rev p)).
-- rewrite RS_rev_uniq; last by apply std_uniq; rewrite -RSstdE Hp1.
-  by rewrite Hp1.
-- rewrite RS_rev_uniq; last by apply std_uniq; rewrite -RSstdE Hp2.
-  by rewrite Hp2.
-- rewrite RS_rev_uniq; last by apply std_uniq; rewrite -RSstdE Hp.
-  by rewrite Hp.
-- rewrite mem_shsh; first last.
-    rewrite /is_std size_rev perm_rev.
-    by rewrite -/(is_std _)  -RSstdE Hp1.
+- by rewrite RS_rev_uniq ?Hp1 //; apply std_uniq; rewrite -RSstdE Hp1.
+- by rewrite RS_rev_uniq ?Hp2 //; apply std_uniq; rewrite -RSstdE Hp2.
+- by rewrite RS_rev_uniq ?Hp  //; apply std_uniq; rewrite -RSstdE Hp.
+- rewrite mem_shsh.
+    by rewrite /is_std size_rev perm_rev -/(is_std _)  -RSstdE Hp1.
   by rewrite /= size_rev !filter_rev map_rev Hsh1 Hsh2 !eq_refl.
 Qed.
 
@@ -912,9 +905,9 @@ have Hc2 := is_stdtab_conj Ht2.
 have Hc := is_stdtab_conj Ht.
 apply/idP/idP => /LRtripleP H; apply/LRtripleP => //=.
 - apply: LRtriple_conj => //; exact: H.
-- rewrite -[t1]conj_tabK; last by move: Ht1 => /andP[].
-  rewrite -[t2]conj_tabK; last by move: Ht2 => /andP[].
-  rewrite -[t]conj_tabK;  last by move: Ht  => /andP[].
+- rewrite -[t1]conj_tabK; first by move: Ht1 => /andP[].
+  rewrite -[t2]conj_tabK; first by move: Ht2 => /andP[].
+  rewrite -[t]conj_tabK;  first by move: Ht  => /andP[].
   apply: LRtriple_conj => //; exact: H.
 Qed.
 

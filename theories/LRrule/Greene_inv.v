@@ -132,7 +132,7 @@ From mathcomp Require Import perm.
 Require Import tools ordcast ordtype subseq partition tableau Yamanouchi stdtab.
 Require Import Schensted congr plactic Greene.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -161,7 +161,7 @@ congr (((map (tnth wt) _) ++ _) ++ (map (tnth wt) _)).
   congr ((j \in S) && _); case (ltnP j i) => H; last by rewrite andbF.
   by rewrite (ltn_trans H (ltnSn i)).
 - rewrite [X in map _ X](_ : _ = [:: i]) //.
-  rewrite (eq_filter (a2 := xpred1 i)) => [| /= j /=]; first last.
+  rewrite (eq_filter (a2 := xpred1 i)) => [/= j /= |].
     rewrite ltnS andbC -?andbA -eqn_leq inE /=.
     case: (j =P i) => [-> | H]; first by rewrite eq_refl Hi.
     suff /negbTE -> : (val j != val i) by rewrite andbF.
@@ -207,8 +207,8 @@ set f := (X in imset X _).
 suff /eq_imset -> : f =1 id by rewrite imset_id.
 rewrite {}/f /rev_set => s /=.
 apply/setP/subset_eqP/andP.
-by split; apply/subsetP=> i; rewrite inE;
-  by rewrite mem_imset; last exact rev_ord_cast_inj.
+by split; apply/subsetP=> i /[!inE];
+  by rewrite mem_imset; first exact rev_ord_cast_inj.
 Qed.
 
 Lemma rev_ksuppKV : cancel rev_ksupp_inv rev_ksupp.
@@ -237,11 +237,11 @@ rewrite [map (_ \o _) _](eq_map (g := (fun i => size w - i.+1) \o val)) //.
 rewrite map_comp val_enum_ord size_rev.
 apply: (eq_from_nth (x0 := 0)); first by rewrite size_rev size_map.
 move=> i; rewrite size_iota => Hi.
-rewrite nth_rev; last by rewrite size_map size_iota.
-rewrite (nth_iota _ _ Hi) add0n size_map (nth_map 0);
-  last by rewrite size_iota; apply: irev_w.
+rewrite nth_rev; first by rewrite size_map size_iota.
+rewrite (nth_iota _ _ Hi) add0n size_map (nth_map 0).
+  by rewrite size_iota; apply: irev_w.
 rewrite size_iota (nth_iota _ _ (irev_w Hi)).
-by rewrite add0n (subnSK Hi); rewrite subKn; last exact: ltnW.
+by rewrite add0n (subnSK Hi); rewrite subKn; first exact: ltnW.
 Qed.
 
 Lemma extract_rev_set S :
@@ -249,12 +249,12 @@ Lemma extract_rev_set S :
 Proof using.
 rewrite !/extract /= !extractIE /rev_set rev_enum.
 rewrite filter_rev filter_map.
-rewrite (eq_filter (a2 := mem S)); first last.
-  by move=> i /=; rewrite mem_imset; last exact rev_ord_cast_inj.
+rewrite (eq_filter (a2 := mem S)) => [i /= |].
+  by rewrite mem_imset; first exact rev_ord_cast_inj.
 rewrite map_rev -!map_comp; congr (rev _).
 apply: eq_map => i /=; rewrite !(tnth_nth inh) /=.
-rewrite nth_rev; last exact: irev_w.
-rewrite subnSK // subKn; last exact: ltnW.
+rewrite nth_rev; first exact: irev_w.
+rewrite subnSK // subKn; first exact: ltnW.
 exact: set_nth_default.
 Qed.
 
@@ -280,7 +280,7 @@ by rewrite -ltEdual.
 Qed.
 
 Lemma size_rev_ksupp P : #|rev_ksupp P| = #|P|.
-Proof using. by rewrite card_imset; last exact: rev_set_inj. Qed.
+Proof using. by rewrite card_imset; first exact: rev_set_inj. Qed.
 
 Lemma trivIset_setrev P : trivIset P = trivIset (rev_ksupp P).
 Proof using.
@@ -299,7 +299,7 @@ apply/forallP/forallP => Hall S; apply/implyP.
   rewrite -is_row_dual.
   by move/(_ T) : Hall; rewrite HT.
 - move=> HS; move/(_ (rev_set S)) : Hall.
-  rewrite (_ : _ \in _); last by rewrite mem_imset; last exact rev_set_inj.
+  rewrite (_ : _ \in _); first by rewrite mem_imset; first exact rev_set_inj.
   by rewrite is_row_dual.
 Qed.
 
@@ -313,13 +313,13 @@ apply/forallP/forallP => Hall S; apply/implyP.
   rewrite -is_col_dual.
   by move/(_ T): Hall; rewrite HT.
 - move=> HS; move/(_ (rev_set S)): Hall.
-  rewrite (_ : _ \in _) /=; first last.
-    by rewrite mem_imset; last exact rev_set_inj.
+  rewrite (_ : _ \in _) /=.
+    by rewrite mem_imset; first exact rev_set_inj.
   by have /= -> := is_col_dual S.
 Qed.
 
 Lemma size_cover_rev P : #|cover (rev_ksupp P)| = #|cover P|.
-Proof using. by rewrite -size_cover_inj; last exact rev_ord_cast_inj. Qed.
+Proof using. by rewrite -size_cover_inj; first exact rev_ord_cast_inj. Qed.
 
 Lemma Greene_row_dual : Greene_row w k = Greene_row (revdual w) k.
 Proof using.
@@ -439,7 +439,7 @@ Qed.
 
 Lemma swap_size_cover (P : {set {set 'I_(size x)}}) :
   #|cover (swap_set @: P)| = #|cover P|.
-Proof using. by rewrite swap_cover card_imset; last exact swap_inj. Qed.
+Proof using. by rewrite swap_cover card_imset; first exact swap_inj. Qed.
 
 Lemma enum_cut : enum 'I_(size x) =
                  [seq i <- enum 'I_(size x) | val i < size u]
@@ -458,8 +458,9 @@ rewrite filter_cat //=; congr (_ ++ _).
   rewrite addKn !iotaD map_id filter_cat -[RHS]cats0.
   congr (_ ++ _).
   + by rewrite /= !addnS addn0 ltnSn (ltn_trans (ltnSn _) (ltnSn _)).
-  + rewrite (eq_in_filter (a2 := pred0)); first by rewrite filter_pred0.
-    by move=> i; rewrite mem_iota /= leqNgt => /andP[/negbTE ->].
+  + rewrite (eq_in_filter (a2 := pred0)) => [i |].
+      by rewrite mem_iota /= leqNgt => /andP[/negbTE ->].
+    by rewrite filter_pred0.
 Qed.
 
 Lemma size_cut_sizeu :
@@ -534,7 +535,7 @@ Lemma extract_swap_set S :
 Proof using HnoBoth.
 move=> HS; rewrite /extract /= !extractmaskE /=.
 rewrite (enum_cast_ord Hcast) -map_comp.
-rewrite Swap.enum_cut /x /y !map_cat !mask_cat //=; first last.
+rewrite Swap.enum_cut /x /y !map_cat !mask_cat //=.
   - rewrite size_map; exact: Swap.size_cut_sizeu.
   - rewrite size_map; exact: Swap.size_cut_sizeu.
 rewrite !mem_cast.
@@ -542,21 +543,21 @@ congr (mask _ u ++ _ ++ mask _ v).
 - apply eq_in_map => i /=.
   rewrite mem_filter => /andP[Hi _].
   by rewrite mem_cast -{1}[i](Swap.swapL Hi) /Swap.swap_set /= mem_imset;
-    last exact: Swap.swap_inj.
-- rewrite -{1}Swap.swap1 mem_imset //=; last exact: Swap.swap_inj.
-  rewrite -{2 3}Swap.swap0 mem_imset //=; last exact: Swap.swap_inj.
+    first exact: Swap.swap_inj.
+- rewrite -{1}Swap.swap1 mem_imset //=; first exact: Swap.swap_inj.
+  rewrite -{2 3}Swap.swap0 mem_imset //=; first exact: Swap.swap_inj.
   by move/(_ _ HS): HnoBoth; case: (posa \in S); case: (posb \in S).
 - apply eq_in_map => i /=.
   rewrite mem_filter => /andP[]; rewrite addnS addn1 => Hi _.
   by rewrite mem_cast -{1}[i](Swap.swapR Hi) /Swap.swap_set /= mem_imset;
-    last exact: Swap.swap_inj.
+    first exact: Swap.swap_inj.
 Qed.
 
 Lemma ksupp_Q : Q \is a k.-supp[R, in_tuple y].
 Proof using HnoBoth Px.
 move: Px => /and3P[HszP HtrivP /forallP /= HallP].
 apply/and3P; split.
-- by rewrite card_imset; last exact swap_set_inj.
+- by rewrite card_imset; first exact swap_set_inj.
 - rewrite /Q /swap_set imset_comp.
   apply: imset_trivIset; first exact: cast_ord_inj.
   apply: imset_trivIset; first exact: Swap.swap_inj.
@@ -753,8 +754,7 @@ rewrite /Qbnotin => Hneq /imsetP[TP HTP Hswap]; subst T.
 have {}Hneq : TP != S by move: Hneq; apply: contra => /eqP ->.
 suff -> : swap_set TP = TP by [].
 rewrite /swap_set /= -setP /Swap.swap => i.
-rewrite (eq_in_imset (g := id)); first by rewrite imset_id.
-move=> {}i /= Hi.
+rewrite (eq_in_imset (g := id)) => [{}i /= Hi |]; last by rewrite imset_id.
 have -> : (i == posb) = false.
   apply/negP => /eqP //= Hib; subst i.
   have Hcov : posb \in cover P by rewrite /cover; apply/bigcupP; exists TP.
@@ -781,7 +781,7 @@ Lemma extract_SE :
     extract (in_tuple x) (S :&: [set j : 'I_(size x) | (size u).+2 < j]).
 Proof using HS HbNin Hposa Hposc.
 rewrite (extract_cut (in_tuple x) Hposa) /= Swap.tnth_pos1.
-rewrite (_ : setI _ _ = S :&: [set j : 'I_(size x) | j < size u]); first last.
+rewrite (_ : setI _ _ = S :&: [set j : 'I_(size x) | j < size u]).
   rewrite -!setIdE -setP => i; rewrite !inE.
   case: (ltnP i (size u)) => Hi; first by rewrite (ltn_trans Hi).
   case: (ltnP i (size u).+1) => Hi2; last by rewrite andbF.
@@ -811,7 +811,7 @@ Proof using HS HbNin Hposa Hposc.
 have /extract_cut -> /= : posb \in (swap_set S).
   by rewrite /swap_set /= -Swap.swap1; apply: imset_f.
 rewrite (_ : setI [set Swap.swap x | x in S] _ =
-               S :&: [set j : 'I_(size x) | j < size u]); first last.
+               S :&: [set j : 'I_(size x) | j < size u]).
   rewrite -!setIdE -setP => /= i; rewrite !inE.
   case: (ltnP i (size u)) => Hi; last by rewrite !andbF.
   rewrite !andbT -{1}(Swap.swapL Hi) mem_imset //=.
@@ -827,15 +827,15 @@ have -> : LS :&: [set j : 'I_(size x) | j < (size u).+2] = set0.
   rewrite /LS -setP => i; rewrite !inE /=.
   case: (ltnP (size u) i) => Hi; last by rewrite andbF.
   case: (ltnP i (size u).+2) => Hi2; last by rewrite andbF.
-  rewrite (_ : i = posa); first last.
+  rewrite (_ : i = posa).
     by apply/val_inj/anti_leq; rewrite /= Hi andbT -ltnS.
-  rewrite -Swap.swap0 mem_imset //=; last exact: Swap.swap_inj.
+  rewrite -Swap.swap0 mem_imset //=; first exact: Swap.swap_inj.
   by rewrite posbinSF.
 have /= -> := extract0 (in_tuple x); rewrite cat0s.
 rewrite tnth_posc; congr (_ :: extractpred (in_tuple x) (mem (pred_of_set _))).
 rewrite {HposcLS}/LS -setP => i; rewrite !inE.
 case: (ltnP (size u).+2 i) => Hi; last by rewrite !andbF.
-rewrite -{1}(Swap.swapR (ltnW Hi)) mem_imset //=; last exact: Swap.swap_inj.
+rewrite -{1}(Swap.swapR (ltnW Hi)) mem_imset //=; first exact: Swap.swap_inj.
 rewrite andbT; congr (_ && _).
 exact: (ltn_trans (ltn_trans (ltnSn _) (ltnSn _)) Hi).
 Qed.
@@ -860,7 +860,7 @@ Lemma ksupp_bnotin : Qbnotin \is a k.-supp[R, in_tuple x].
 Proof using HRabc HS HbNin Hposa Hposc Px.
 move: Px => /and3P[HszP HtrivP /forallP HallP].
 apply/and3P; split.
-- by rewrite card_imset; last apply: Swap.swap_set_inj.
+- by rewrite card_imset; first exact: Swap.swap_set_inj.
 - rewrite /Qbnotin /swap_set.
   apply: imset_trivIset; first exact: Swap.swap_inj.
   exact HtrivP.
@@ -869,7 +869,7 @@ apply/and3P; split.
   + subst T; exact: sorted_extract_swap_set_S.
   + apply: sorted_extract_swap_set.
     * move: Heq; apply: contra => /eqP H; apply/eqP; exact: Swap.swap_set_inj.
-    * by rewrite /Qbnotin mem_imset; last exact: Swap.swap_set_inj.
+    * by rewrite /Qbnotin mem_imset; first exact: Swap.swap_set_inj.
 Qed.
 
 Lemma Qbnotin_noboth T : T \in Qbnotin -> ~ ((posa \in T) && (posc \in T)).
@@ -877,12 +877,12 @@ Proof using HS HbNin.
 rewrite /Qbnotin => /imsetP[U HU ->{T}].
 case: (U =P S) => Heq.
 - subst U; rewrite -Swap.swap0 /swap_set /=.
-  rewrite mem_imset; last apply: Swap.swap_inj.
+  rewrite mem_imset; first exact: Swap.swap_inj.
   by rewrite posbinSF.
 - rewrite -Swap.swap0 /swap_set /=.
-  rewrite mem_imset; last apply: Swap.swap_inj.
+  rewrite mem_imset; first exact: Swap.swap_inj.
   move/andP => [Hb _]; move: HbNin.
-  by rewrite (_ : _ \in _); last by rewrite /cover; apply/bigcupP; exists U.
+  by rewrite (_ : _ \in _); first by apply/bigcupP; exists U.
 Qed.
 
 End BNotIn.
@@ -1056,10 +1056,10 @@ Lemma extract_S1E :
   extract (in_tuple x) (T :&: [set j : 'I_(size x) | j > posc]).
 Proof using.
 rewrite /S1 /extract /= /extractpred (enumUltV (d := posa)).
-- by rewrite map_cat.
 - by move=> i; rewrite !inE => /andP[_ Hi].
 - move=> i; rewrite !inE => /andP[_ Hi] /=.
   exact: (ltn_trans (ltnSn _)).
+- by rewrite map_cat.
 Qed.
 
 Lemma extract_T1E :
@@ -1068,10 +1068,10 @@ Lemma extract_T1E :
   extract (in_tuple x) (S :&: [set j : 'I_(size x) | j >= posc]).
 Proof using.
 rewrite /T1 /extract /= /extractpred (enumUltV (d := posb)).
-- by rewrite map_cat.
 - by move=> i; rewrite !inE => /andP[_ Hi].
 - move=> i; rewrite !inE => /andP[_ Hi] /=.
   exact: (ltn_trans (ltnSn _)).
+- by rewrite map_cat.
 Qed.
 
 Lemma extract_Sa :
@@ -1267,7 +1267,7 @@ move HcastP : ((cast_set eqsz) @: Q) => Q'.
 exists (@NoSetContainingBoth.Q _ _ (u ++ [:: b]) v a c Q'); split.
 - rewrite -(eqP (@NoSetContainingBoth.size_cover_Q _ _ (u ++ [:: b]) v a c Q')).
   rewrite -HcastP cover_cast /cast_set /=.
-  by rewrite card_imset; last exact: cast_ord_inj.
+  by rewrite card_imset; first exact: cast_ord_inj.
 - apply: NoSetContainingBoth.ksupp_Q.
   by rewrite -HcastP; apply: ksupp_cast.
 - move=> S1; rewrite -HcastP => /imsetP[S0 HS0 ->{S1}].
@@ -1612,7 +1612,7 @@ Qed.
 
 Corollary Greene_row_RS k w : Greene_row w k = sumn (take k (shape (RS w))).
 Proof using.
-rewrite -Greene_row_tab; last exact: is_tableau_RS.
+rewrite -Greene_row_tab; first exact: is_tableau_RS.
 by apply: Greene_row_invar_plactic; exact: congr_RS.
 Qed.
 
@@ -1643,7 +1643,7 @@ Qed.
 Corollary Greene_col_RS k w :
   Greene_col w k = sumn (take k (conj_part (shape (RS w)))).
 Proof using.
-rewrite -Greene_col_tab; last exact: is_tableau_RS.
+rewrite -Greene_col_tab; first exact: is_tableau_RS.
 by apply: Greene_col_invar_plactic; exact: congr_RS.
 Qed.
 
@@ -1702,8 +1702,8 @@ Corollary Greene_row_eq_shape_RS (s : seq S) (t : seq T) :
 Proof.
 move=> HGreene; apply: Greene_row_tab_eq_shape; try apply: is_tableau_RS.
 move=> k.
-rewrite -(Greene_row_invar_plactic (u := s)); last exact: congr_RS.
-rewrite -(Greene_row_invar_plactic (u := t)); last exact: congr_RS.
+rewrite -(Greene_row_invar_plactic (u := s)); first exact: congr_RS.
+rewrite -(Greene_row_invar_plactic (u := t)); first exact: congr_RS.
 exact: HGreene.
 Qed.
 
@@ -1712,8 +1712,8 @@ Corollary Greene_col_eq_shape_RS (s : seq S) (t : seq T) :
 Proof.
 move=> HGreene; apply: Greene_col_tab_eq_shape; try apply: is_tableau_RS.
 move=> k.
-rewrite -(Greene_col_invar_plactic (u := s)); last exact: congr_RS.
-rewrite -(Greene_col_invar_plactic (u := t)); last exact: congr_RS.
+rewrite -(Greene_col_invar_plactic (u := s)); first exact: congr_RS.
+rewrite -(Greene_col_invar_plactic (u := t)); first exact: congr_RS.
 exact: HGreene.
 Qed.
 

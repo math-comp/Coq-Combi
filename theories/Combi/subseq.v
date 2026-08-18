@@ -27,7 +27,7 @@ From HB Require Import structures.
 From mathcomp Require Import all_boot.
 Require Import tools combclass sorted.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -139,8 +139,8 @@ Lemma mask1E x0 i :
   i < size w -> mask [tuple val x == i | x < size w] w = [:: nth x0 w i].
 Proof.
 move=> lti.
-rewrite [val (mktuple _)](_ : _ = [seq x == i | x <- iota 0 (size w)]);
-  last by rewrite /= (map_comp (pred1 i) val) val_enum_ord.
+rewrite [val (mktuple _)](_ : _ = [seq x == i | x <- iota 0 (size w)]).
+  by rewrite /= (map_comp (pred1 i) val) val_enum_ord.
 elim: w i lti => //= v0 v IHv [_|i /ltnSE lti] /=.
   rewrite [map _ _](_ : _ = nseq (size v) false) ?mask_false //.
   apply (eq_from_nth (x0 := false)) => [|i].
@@ -201,7 +201,7 @@ Qed.
 Lemma seq_masks_uniq :
   uniq w -> uniq [seq mask (val m) w | m : (size w).-tuple bool].
 Proof.
-move=> w_uniq; rewrite map_inj_uniq; first exact: enum_uniq.
+move=> w_uniq; rewrite map_inj_uniq; last exact: enum_uniq.
 exact/mask_injP.
 Qed.
 

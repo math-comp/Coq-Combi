@@ -13,9 +13,16 @@
 (*                                                                            *)
 (*                  http://www.gnu.org/licenses/                              *)
 (******************************************************************************)
-(** * Cauchy formula for symmetric polynomials
+(** * Cauchy formula for symmetric polynomials and the scalar product.
 
-In this file we fix two non zero natural [m] and [n] and consider the two sets
+We first define the scalar product:
+
+- ['[ u | v ]]    == the scalar product of hom. sym. poly., only defined over
+                     the field [algC].
+- ['[ u | v ] _(n, d)] == the scalar product of hom. sym. poly. specifying
+                     the number of variable and degree.
+
+Then we fix two non zero natural [m] and [n] and consider the two sets
 of variables [X := (x_i)_{i < m}] and [Y := (y_j)_{j < n}]. We also consider
 the variables [z_{i,j} := x_i * y_j].
 
@@ -50,7 +57,7 @@ orthonormal for the scalar product.
 From HB Require Import structures.
 From mathcomp Require Import all_boot.
 From mathcomp Require Import ssrint rat ssralg ssrnum algC matrix vector.
-From mathcomp Require Import sesquilinear.
+From mathcomp Require Import sesquilinear archimedean.
 From mathcomp Require Import mpoly.
 
 Require Import tools partition ordtype.
@@ -59,7 +66,7 @@ Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym permcent.
 Require ordtype.
 
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -78,6 +85,169 @@ Reserved Notation "p '(Y)'"  (at level 20, format "p '(Y)'").
 Reserved Notation "p '(X)'"  (at level 20, format "p '(X)'").
 Reserved Notation "p '(XY)'" (at level 20, format "p '(XY)'").
 Set Warnings "postfix-notation-not-level-1".
+
+
+
+(** * The scalar product *)
+Section ScalarProduct.
+
+Context {n0 d : nat}.
+#[local] Notation n := (n0.+1).
+#[local] Notation HSF := {homsym algC[n, d]}.
+
+Implicit Type (p q u v : HSF).
+
+Definition homsymdot p q : algC :=
+  \sum_(i < #|{: 'P_d}|)
+    (zcard (enum_val i))%:R * (coord 'hp i p) * (coord 'hp i q)^*.
+Notation "''[' u | v ]" := (homsymdot u v) : ring_scope.
+
+Lemma homsymdotE p q :
+  '[ p | q ] =
+  \sum_(la : 'P_d) (zcard la)%:R *
+    (coord 'hp (enum_rank la) p) * (coord 'hp (enum_rank la) q)^*.
+Proof.
+rewrite /homsymdot [RHS](reindex _ (onW_bij _ (@enum_val_bij _))) /=.
+by apply/eq_bigr => i _; rewrite enum_valK.
+Qed.
+Lemma homsymdotC p q : '[p | q] = ('[q | p])^*.
+Proof.
+rewrite /homsymdot rmorph_sum /=.
+apply: eq_bigr=> x _.
+rewrite [in RHS]rmorphM [X in _ = X * _]rmorphM /= conjCK -!mulrA.
+have /geC0_conj -> : 0 <= ((zcard (enum_val x))%:R : algC).
+  by rewrite -nnegrE ?nnegrE ?ler01 ?ler0n ?oner_neq0.
+by congr (_ * _); rewrite mulrC.
+Qed.
+Fact homsymdot_is_bilinear : bilinear_for *%R (Num.conj \; *%R) homsymdot.
+Proof.
+have lin r p u v : '[r *: u + v | p] = r * '[u | p] + '[v | p].
+  rewrite !homsymdotE mulr_sumr /= -big_split; apply: eq_bigr => x _ /=.
+  rewrite linearD linearZ /= mulrDr mulrDl !mulrA; congr (_ + _).
+  by rewrite [_ * r]mulrC -!mulrA.
+split => /= p r /= u v; first exact: lin.
+by rewrite !(homsymdotC p) lin rmorphD rmorphM.
+Qed.
+HB.instance Definition _ :=
+  bilinear_isBilinear.Build algC HSF HSF algC *%R (Num.conj \; *%R)
+    homsymdot homsymdot_is_bilinear.
+Notation "''[' u | v ]" := (homsymdot u v) : ring_scope.
+
+Fact homsymdot_is_hermitian p q : '[p | q] = (-1) ^+ false * '[q | p]^*.
+Proof. by rewrite expr0 mul1r -homsymdotC. Qed.
+HB.instance Definition _ :=
+  isHermitianSesquilinear.Build
+    algC HSF false Num.conj homsymdot homsymdot_is_hermitian.
+
+Lemma homsymdot0l p : '[0 | p] = 0.
+Proof. exact: linear0l. Qed.
+Lemma homsymdotNl p q : '[- q | p] = - '[q | p].
+Proof. exact: linearNl. Qed.
+Lemma homsymdotDl p q1 q2 : '[q1 + q2 | p] = '[q1 | p] + '[q2 | p].
+Proof. exact: linearDl. Qed.
+Lemma homsymdotBl p q1 q2 : '[q1 - q2 | p] = '[q1 | p] - '[q2 | p].
+Proof. exact: linearBl. Qed.
+Lemma homsymdotMnl p q n : '[q *+ n | p] = '[q | p] *+ n.
+Proof. exact: linearMnl. Qed.
+Lemma homsymdot_suml p I r (P : pred I) (q : I -> HSF) :
+  '[\sum_(i <- r | P i) q i | p] = \sum_(i <- r | P i) '[q i | p].
+Proof. exact: linear_sumlz. Qed.
+Lemma homsymdotZl p a q : '[a *: q | p] = a * '[q | p].
+Proof. exact: linearZl. Qed.
+
+Lemma homsymdot0r p : '[p | 0] = 0.
+Proof. exact: linear0r. Qed.
+Lemma homsymdotNr p q : '[p | - q] = - '[p | q].
+Proof. exact: linearNr. Qed.
+Lemma homsymdotDr p q1 q2 : '[p | q1 + q2] = '[p | q1] + '[p | q2].
+Proof. exact: linearDr. Qed.
+Lemma homsymdotBr p q1 q2 : '[p | q1 - q2] = '[p | q1] - '[p | q2].
+Proof. exact: linearBr. Qed.
+Lemma homsymdotMnr p q n : '[p | q *+ n] = '[p | q] *+ n.
+Proof. exact: linearMnr. Qed.
+Lemma homsymdot_sumr p I r (P : pred I) (q : I -> HSF) :
+  '[p | \sum_(i <- r | P i) q i] = \sum_(i <- r | P i) '[p | q i].
+Proof. exact: linear_sumr. Qed.
+Lemma homsymdotZr a p q : '[p | a *: q] = a^* * '[p | q].
+Proof. exact: linearZr. Qed.
+
+
+Hypothesis (Hd : (d <= n)%N).
+
+Fact homsymdot_is_dot f : f != 0 -> 0 < '[f | f].
+Proof.
+rewrite lt0r andbC.
+pose co (la : 'P_d) :=
+  (zcard la)%:R * coord 'hp (enum_rank la) f * (coord 'hp (enum_rank la) f)^*.
+have le0zcc (la : 'P_d) : 0 <= co la.
+  by rewrite /co -mulrA mulr_ge0 // mul_conjC_ge0.
+have -> /= : 0 <= '[f | f].
+  by rewrite homsymdotE; apply: sumr_ge0 => /= la _; apply: le0zcc.
+have /andP[/eqP Hfull Hfree]:= symbp_basis Hd pchar0_algC.
+have:= memvf f; rewrite -Hfull => /coord_span {1}->.
+apply contra; rewrite homsymdotE => /eqP H.
+have {H le0zcc} eq0zcc (la : 'P_d) : co la = 0.
+  by apply/(psumr_eq0P _ H) => //= mu _; apply le0zcc.
+suff allc0 i : coord 'hp i f = 0.
+  by apply/eqP/big1 => /= i _; rewrite allc0 scale0r.
+have {eq0zcc} /eqP := eq0zcc (enum_val i).
+rewrite {}/co enum_valK -mulrA mulf_eq0 pnatr_eq0 (negbTE (neq0zcard _)) /=.
+by rewrite mul_conjC_eq0 => /eqP.
+Qed.
+HB.instance Definition _ :=
+  isDotProduct.Build algC HSF homsymdot homsymdot_is_dot.
+
+
+(** Formulas for other bases will be proved in Cauchy *)
+Lemma homsymdotpp la mu :
+  '['hp[la] | 'hp[mu]] = (zcard la)%:R * (la == mu)%:R.
+Proof.
+rewrite homsymdotE (bigD1 mu) //= big1 ?addr0 => [nu /negbTE Hneq|].
+  by rewrite !(coord_symbp Hd) // [mu == nu]eq_sym Hneq conjC0 mulr0.
+rewrite !(coord_symbp Hd) // eq_refl /= conjC1 mulr1.
+by case: eqP => [-> //| _]; rewrite !mulr0.
+Qed.
+
+Lemma homsymdot_omegasf f g :
+  '[omegahomsym f | omegahomsym g ] = '[f | g].
+Proof.
+have /andP[/eqP Hfull Hfree]:= symbp_basis Hd pchar0_algC.
+have:= memvf g; rewrite -Hfull => /coord_span ->.
+rewrite raddf_sum /= !homsymdot_sumr; apply eq_bigr => i _.
+have:= memvf f; rewrite -Hfull => /coord_span ->.
+rewrite raddf_sum /= !homsymdot_suml; apply eq_bigr => j _.
+rewrite !linearZ /= !homsymdotZl !homsymdotZr; congr (_ * (_ * _)).
+rewrite ![_`_i](nth_map (rowpartn d)) -?cardE //.
+rewrite ![_`_j](nth_map (rowpartn d)) -?cardE //.
+rewrite !omega_homsymp //;
+  try by apply: (leq_trans (leq_head_sumn _)); rewrite sumn_intpartn.
+rewrite homsymdotZl homsymdotZr !homsymdotpp //.
+case: eqP => /= [->|_]; rewrite ?mulr0 // !mulr1 !mulrA.
+move: (nth _ _ _) => la {i j}.
+have /Num.Theory.conj_intr -> :
+  (-1) ^+ (d - size la) \in (@archimedean.Num.int algC) by apply rpred_sign.
+by rewrite -exprD addnn -muln2 exprM sqrr_sign mul1r.
+Qed.
+
+Lemma homsymp_orthogonal : pairwise_orthogonal homsymdot 'hp.
+Proof.
+apply/pairwise_orthogonalP => /=; split.
+  have pfree := basis_free (symbp_basis Hd pchar0_algC).
+  rewrite free_uniq // andbT.
+  by move: pfree; rewrite free_directv /= => /andP[].
+move=> f g /mapP[/= la _ {f}->]/mapP[/= mu _ {g}->].
+rewrite homsymdotpp.
+by case: (altP (la =P mu)) => [->|_]; rewrite /= ?mulr0 // eqxx.
+Qed.
+
+End ScalarProduct.
+
+Notation "''[' u | v ]" := (homsymdot u v) : ring_scope.
+Notation "''[' u | v ] _( n , d )" :=
+  (@homsymdot n d u v) (only parsing) : ring_scope.
+
+
+
 
 
 (** ** Polynomials in two sets of variables *)
@@ -113,9 +283,8 @@ Lemma big_mxvec_index P F :
    \big[op/idx]_(i < m)
     \big[op/idx]_(j < n | P (mxvec_index i j)) F (mxvec_index i j).
 Proof.
-rewrite pair_big_dep.
-rewrite (reindex (uncurry mxvec_index)); first last.
-  by apply: (subon_bij _ (curry_mxvec_bij m n)).
+rewrite pair_big_dep (reindex (uncurry mxvec_index)).
+  exact: (subon_bij _ (curry_mxvec_bij m n)).
 by apply eq_big => [] [i j].
 Qed.
 
@@ -371,7 +540,7 @@ move=> Hdeg; exists famYinv.
   by rewrite tnth_mktuple mnmE //= -[in RHS](vecmx_indexK c).
 - move=> ff; rewrite inE => /familyP H /=.
   apply/ffunP => /= i; rewrite ffunE; apply val_inj => /=.
-  rewrite /famYinv_fun [mdeg _](_ : _ = d) ?ltnSn; first last.
+  rewrite /famYinv_fun [mdeg _](_ : _ = d) ?ltnSn.
     rewrite -[RHS]Hdeg !mdegE big_mxvec_index => /=; apply eq_bigr => i' _.
     have {H} := H i'; rewrite unfold_in mnm_tnth => /eqP <-.
     rewrite mdegE; apply eq_bigr => j _.
@@ -405,10 +574,9 @@ pose pm := IntPartN Hpm.
 suff -> : (Cauchy_kernel d)@_mon = 'h[pm].
   rewrite (bigID (fun mu : 'P_d => (size mu <= m)%N)) /=.
   rewrite linearD ![in RHS]linear_sum /=.
-  rewrite addrC big1 ?add0r; first last.
-    by move=> la; rewrite -ltnNge => /symm_oversize ->; rewrite !raddf0.
-  rewrite (bigD1 pm) ?size_partm //= ?big1 ?addr0; first last.
-    move=> la /andP[Hszla Hla].
+  rewrite addrC big1 ?add0r => [la |].
+    by rewrite -ltnNge => /symm_oversize ->; rewrite !raddf0.
+  rewrite (bigD1 pm) ?size_partm //= ?big1 ?addr0 => [la /andP[Hszla Hla] |].
     rewrite mcoeffZ mcoeff_symm //.
     suff /negbTE -> : ~~ perm_eq (mpart (n := m) la) mon by rewrite mulr0.
     apply/negP => /perm_partm/(congr1 val)/=.
@@ -419,26 +587,25 @@ rewrite /Cauchy_kernel /prod_symh /prod_gen {1}/symh /= rmorph_prod /=.
 rewrite rmorph_sum raddf_sum /= partmE; apply esym.
 transitivity (\prod_(i <- mon) sympol 'h_i : polY ).
   rewrite [RHS](bigID (fun i => i == 0%N)) /=.
-  rewrite [in RHS]big1 ?mul1r; first last => [i /eqP ->|].
+  rewrite [in RHS]big1 ?mul1r => [i /eqP ->|].
     exact: (congr1 val (symh0 n R)).
   rewrite /= -[RHS]big_filter; apply: perm_big.
   by rewrite perm_sort.
 rewrite {Hpm pm} /= big_tuple; symmetry.
 rewrite (bigID (fun mZ : 'X_{1.. _ < _} => monX mZ == mon)) /=.
-rewrite addrC big1 ?add0r; first last.
-  move=> i /andP[_ /negbTE Hneq].
+rewrite addrC big1 ?add0r => [i /andP[_ /negbTE Hneq] |].
   rewrite evalXY_XE -rmorph_prod /= polyXY_scale.
   by rewrite linearZ /= /polX_XY map_mpolyX mcoeffX Hneq mulr0.
 under eq_bigl=> i do [rewrite andb_idl;
-  last by move=> /eqP; rewrite -{3}Hdeg => <-; rewrite mdeg_monX].
+  first by move=> /eqP; rewrite -{3}Hdeg => <-; rewrite mdeg_monX].
 under [LHS]eq_bigr => mz Hmz.
   rewrite evalXY_XE -rmorph_prod /= polyXY_scale.
   by rewrite linearZ /= /polX_XY map_mpolyX mcoeffX Hmz mulr1 over.
 under [RHS]eq_bigr => i _ do
   [rewrite (@symh_pol_any _ _ d.+1) //;
-     last by rewrite ltnS -Hdeg /mdeg big_tuple (bigD1 i) // leq_addr].
+     first by rewrite ltnS -Hdeg /mdeg big_tuple (bigD1 i) // leq_addr].
 rewrite bigA_distr_big_dep => /=.
-rewrite (reindex (famY (d := d))) /=; last exact: famY_bij.
+rewrite (reindex (famY (d := d))) /=; first exact: famY_bij.
 apply eq_big => [mz | mz /eqP Hmz].
 - apply/eqP/familyP => [/= Hmon i | Hfam].
   + by rewrite unfold_in ffunE /= mdeg_tnth_monsY Hmon.
@@ -607,16 +774,15 @@ have sum_coord (p : HSC) :
 rewrite (eq_bigr (fun nu : 'P_d =>
              (\sum_px (coord 'hp (enum_rank px) 'hsC[nu]) *: 'hp[px])(X) *
              (\sum_py (coord 'hp (enum_rank py) 'hsC[nu]) *: 'hp[py])(Y)
-        )); first last.
-  move=> nu _; rewrite {1 2}(coord_span (to_p nu)).
-  by rewrite linear_sum /= sum_coord.
+        )) => [nu _ |].
+  by rewrite {1 2}(coord_span (to_p nu)) linear_sum /= sum_coord.
 move=> {sum_coord to_p} /(congr1 (co_hpXY la mu)).
 rewrite !raddf_sum /= => /esym.
 rewrite (bigD1 la) //= -[(zcard la)%:R^-1 *: 'hp[la](Y)]linearZ /=.
 rewrite -![prod_gen _ _]/(homsym 'hp[_]).
 rewrite co_hprXYE linearZ co_hp_hp //.
-rewrite eq_refl mulr1 !mulrA divff ?mul1r; last by rewrite pnatr_eq0 neq0zcard.
-rewrite big1 ?addr0; first last => [nu /negbTE Hnu |].
+rewrite eq_refl mulr1 !mulrA divff ?mul1r; first by rewrite pnatr_eq0 neq0zcard.
+rewrite big1 ?addr0 => [nu /negbTE Hnu |].
   rewrite -![prod_gen _ _]/(homsym 'hp[_]).
   rewrite -[(zcard nu)%:R^-1 *: 'hp[nu](Y)]linearZ /=.
   rewrite -![prod_gen _ _]/(homsym 'hp[_]).
@@ -624,23 +790,23 @@ rewrite big1 ?addr0; first last => [nu /negbTE Hnu |].
   move: Hnu; rewrite -(inj_eq (@val_inj _ _ _)) /= => ->.
   by rewrite mulr0 !mul0r.
 rewrite /= co_hp_hp // => /(congr1 (fun x => (zcard la)%:R^-1 * x)).
-rewrite mulrA [X in X * _]mulrC divff; last by rewrite pnatr_eq0 neq0zcard.
+rewrite mulrA [X in X * _]mulrC divff; first by rewrite pnatr_eq0 neq0zcard.
 rewrite mul1r !mulr_sumr => -> .
 apply eq_bigr => nu _.
 rewrite co_hprXYE.
-have dot_sumhp (eta tau : 'P_d) :
+suff dot_sumhp (eta tau : 'P_d) :
   co_hp eta (\sum_px coord 'hp (enum_rank px) 'hsC[tau] *: 'hp[px]) =
-  coord 'hp (enum_rank eta) 'hsC[tau] * (zcard eta)%:R.
-  rewrite !raddf_sum /= (bigD1 eta) //=.
-  rewrite -![prod_gen _ _]/(homsym 'hp[_]).
-  rewrite linearZ /= co_hp_hp // eq_refl mulr1.
-  rewrite big1 ?addr0 // => p => /negbTE Hp.
-  rewrite -![prod_gen _ _]/(homsym 'hp[_]).
-  rewrite linearZ /= co_hp_hp //.
-  move: Hp; rewrite -(inj_eq (@val_inj _ _ _)) /= => ->.
-  by rewrite !mulr0.
-rewrite !{}dot_sumhp ![_ * (zcard _)%:R]mulrC !mulrA.
-by rewrite ![_ * (zcard la)%:R]mulrC divff ?mul1r // pnatr_eq0 neq0zcard.
+    coord 'hp (enum_rank eta) 'hsC[tau] * (zcard eta)%:R.
+  rewrite !{}dot_sumhp ![_ * (zcard _)%:R]mulrC !mulrA.
+  by rewrite ![_ * (zcard la)%:R]mulrC divff ?mul1r // pnatr_eq0 neq0zcard.
+rewrite !raddf_sum /= (bigD1 eta) //=.
+rewrite -![prod_gen _ _]/(homsym 'hp[_]).
+rewrite linearZ /= co_hp_hp // eq_refl mulr1.
+rewrite big1 ?addr0 // => p => /negbTE Hp.
+rewrite -![prod_gen _ _]/(homsym 'hp[_]).
+rewrite linearZ /= co_hp_hp //.
+move: Hp; rewrite -(inj_eq (@val_inj _ _ _)) /= => ->.
+by rewrite !mulr0.
 Qed.
 
 Lemma coord_zsymspsp (la mu : 'P_d) :
@@ -689,7 +855,8 @@ transitivity
   apply: eq_bigr => i _; rewrite homsymdotZr -mulrA; congr (_ * _).
   rewrite !(nth_map inh _ (fun l => 'hp[l])) -?cardE ?ltn_ord //.
   by rewrite -!enum_val_nth homsymdotpp // (inj_eq enum_val_inj) eq_sym.
-rewrite (bigD1 l) //= big1 ?addr0; last by move=> m /negbTE ->; rewrite mulr0.
+rewrite (bigD1 l) //= big1 ?addr0 => [m /negbTE -> |].
+  by rewrite mulr0.
 rewrite eq_refl mulr1 mulrC; congr (_ * _).
 by rewrite -coord_map_homsym ?map_homsymbp ?symbp_basis // map_homsyms.
 Qed.

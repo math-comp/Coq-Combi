@@ -51,7 +51,7 @@ From HB Require Import structures.
 From mathcomp Require Import all_boot order.
 Require Import tools combclass sorted partition subseq ordtype.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -227,17 +227,17 @@ have /negbTE -> : n != 0.
   move: s0neq0; apply contra => /eqP Hn0.
   by move: Hsum; rewrite Hn0 addn_eq0 => /andP[/eqP->].
 rewrite count_flatten -map_comp.
-rewrite (eq_map (g := fun i => i == s0 : nat)); first last.
-  move=> /= i; rewrite count_map /=.
+rewrite (eq_map (g := fun i => i == s0 : nat)) => [/= i /=|].
+  rewrite count_map /=.
   case: (i =P s0) => [Heq | /eqP/negbTE Hneq].
-  - subst s0; rewrite (eq_count (a2 := xpred1 s)); first last.
-      by move=> x; rewrite /= -eqseqE /= eq_refl /=.
+  - subst s0; rewrite (eq_count (a2 := xpred1 s)) => [x |].
+      by rewrite /= -eqseqE /= eq_refl /=.
     rewrite {}IHaux //=.
     + rewrite leq_subLR; apply (leq_trans Hn).
       case: i s0neq0 {Hsum} => // i _.
       by rewrite addSnnS; apply leq_addl.
     + by rewrite Hs andbT -(eqP Hsum) addKn.
-  - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
+  - rewrite (eq_count (a2 := pred0)); last by rewrite count_pred0.
     by move=> t; rewrite /= -eqseqE /= Hneq.
 rewrite sumn_pred1_iota add1n ltnS -(eqP Hsum) leq_addr andbT.
 by rewrite lt0n eq_sym s0neq0.
@@ -381,7 +381,7 @@ have {Hsort}/IHs Hrec : sorted ltn (rcons s n').
 move: Hall; rewrite all_rcons => /andP[/= /andP[_ lt_sn_n] {}/Hrec/andP[]].
 rewrite -!cats1 !pairmap_cat last_cat !sumn_cat /= !addn0 => /eqP Hsum Hcomp.
 apply/andP; split => [{Hcomp}|{Hsum}].
-- rewrite -{2}Hsum -addnA eqn_add2l addnC addnBA //; last exact: ltnW.
+- rewrite -{2}Hsum -addnA eqn_add2l addnC addnBA //; first exact: ltnW.
   by rewrite subnK // ltnW.
 - move: Hcomp; rewrite !is_comp_cat => /andP[-> _]/=.
   by rewrite !is_comp1 -!lt0n !subn_gt0 lt_last lt_sn_n.
@@ -394,8 +394,8 @@ Lemma diff_nth_sumn_take s i m :
   nth 0 [seq sumn (take i0 s) | i0 <- iota 1 m] i = nth 0 s i.+1.
 Proof.
 move=> Hm Hi.
-rewrite !(nth_map 0) ?size_iota //=; last exact: (ltn_trans _ Hi).
-rewrite !nth_iota //=; last exact: (ltn_trans _ Hi).
+rewrite !(nth_map 0) ?size_iota //=; first exact: (ltn_trans _ Hi).
+rewrite !nth_iota //=; first exact: (ltn_trans _ Hi).
 rewrite !add1n !sumn_take [X in X - _]big_nat_recr //=.
 by rewrite addnC addnK.
 Qed.
@@ -413,10 +413,10 @@ Qed.
 Lemma val_descset c : [seq (val i).+1 | i in descset c] = partsums c.
 Proof.
 apply: (irr_sorted_eq (ltn_trans) ltnn).
-- rewrite sorted_map (eq_sorted (e' := fun i j => val i < val j)).
+- rewrite sorted_map (eq_sorted (e' := fun i j => val i < val j)) /=.
+    by move=> i j /=; rewrite ltnS.
   rewrite /enum_mem -enumT /= sorted_filter // ?enum_ord_sorted_ltn //.
   by move=> i j k /ltn_trans; apply.
-- by move=> i j /=; rewrite ltnS.
 - exact: sorted_ltn_partsums.
 move=> i; apply/mapP/idP => [[/= [x Hx]] | Hi].
 - rewrite mem_enum /descset inE mem_pmap_sub /=.
@@ -618,7 +618,7 @@ apply (iffP (subdescset_partsumP c1 c2)) => [| [s Hc1 ->{c2}]].
   case: s0 Hs0 => //= i s0 _.
   elim: s0 i => [|c0 c IHc] /= i.
     rewrite addn0; case: (s =P [::]) => [->// | Hs].
-    rewrite !partsums_cons; first last.
+    rewrite !partsums_cons.
     + by move: Hs; apply contra_notN; case s.
     + by move: Hs {IHs}; apply contra_notN; case: s Hin => // [[|t0 t']].
     move=> k; rewrite !inE => /orP[/eqP->|]; first by rewrite eqxx.
@@ -627,7 +627,7 @@ apply (iffP (subdescset_partsumP c1 c2)) => [| [s Hc1 ->{c2}]].
   move=> k; rewrite !inE => {}/IHc.
   case: (c =P [::]) => [->{c} | Hc]/=.
     move=> /mapP[[|l]]; rewrite mem_iota //= add1n ltnS => Hl ->{k}.
-    rewrite -addnA map_f ?orbT // partsums_cons; last by case: (flatten s) Hl.
+    rewrite -addnA map_f ?orbT // partsums_cons; first by case: (flatten s) Hl.
     case: l Hl => // l; first by rewrite take0 /= addn0 inE eqxx.
     move=> Hl; rewrite inE map_f ?orbT //.
     rewrite /partsums; apply (@map_f _ _ (fun i => sumn (take i (flatten s)))).
@@ -686,7 +686,7 @@ Lemma descset_rowcompn : descset (rowcompn n) = set0.
 Proof. by apply/cards0_eq; rewrite card_descset /= /rowcomp; case n. Qed.
 Lemma descset_colcompn : descset (colcompn n) = setT.
 Proof.
-apply/eqP; rewrite -subset_leqif_cards; last exact: subsetT.
+apply/eqP; rewrite -subset_leqif_cards; first exact: subsetT.
 by rewrite card_descset /= /colcomp /= size_nseq cardsT card_ord.
 Qed.
 

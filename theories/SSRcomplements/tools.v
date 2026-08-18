@@ -23,7 +23,7 @@ From Corelib Require Import Setoid.
 From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice.
 From mathcomp Require Import seq finset bigop path binomial order.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -134,7 +134,7 @@ case eqP => [<- | /eqP Hneq].
     exact: set_nth_default.
   + case (leqP j i) => Hij.
     * by apply: nth_set_nth_expand; rewrite Hjsz /= ltn_neqAle Hneq Hij.
-    * rewrite nth_default; first by [].
+    * rewrite nth_default; last by [].
       by rewrite size_set_nth /maxn; case (ltnP i.+1 (size l)).
 Qed.
 
@@ -150,7 +150,7 @@ apply anti_leq; rewrite {}Hpq/=.
 case: s2 x0s2 Heq => [//|h2 s2'] Hnotin Heq.
 apply/contraR: Hnotin; rewrite -ltnNge => Habs.
 move/(_ (size (h2 :: s2')).-1): Heq; rewrite nth_last.
-rewrite nth_default => [-> /=|]; first exact: mem_last.
+rewrite nth_default => [| -> /=]; last exact: mem_last.
 by move: Habs; rewrite /= ltnS.
 Qed.
 
@@ -278,11 +278,10 @@ have /eq_filter -> : predI (mem s) P =i [seq x <- s | P x].
   by move=> i; rewrite inE mem_filter andbC.
 have {suniq} : uniq [seq x <- s | P x] by exact: filter_uniq.
 elim: filter => [_ | s0 {}s IHs].
-  by rewrite big_nil (eq_filter (a2 := pred0)); first by rewrite filter_pred0.
+  by rewrite big_nil (eq_filter (a2 := pred0)); last by rewrite filter_pred0.
 rewrite big_cons => /= /andP[s0s {}/IHs ->].
 rewrite !size_filter -[RHS]addn0.
-rewrite [in RHS](eq_count (a2 := predU (pred1 s0) (mem s))); first last.
-  by move => i; rewrite /= in_cons.
+rewrite [in RHS](eq_count (a2 := predU (pred1 s0) (mem s))) => [i //= |].
 have /eq_count/(_ l) : predI (pred1 s0) (mem s) =1 pred0.
   move=> i /=; apply/negP => /andP[/eqP -> s0s'].
   by rewrite s0s' in s0s.
@@ -368,15 +367,15 @@ move=> /trivIsetP Htriv.
 apply/trivIsetP => A B /imsetP[FA FAP -> {A}] /imsetP[FB FBP -> {B}] Hneq.
 have {Hneq} neqFAFB : FA != FB by move: Hneq; apply: contra => /eqP ->.
 have:= Htriv _ _ FAP FBP neqFAFB; rewrite -!setI_eq0 -imsetI.
-- by move=> /eqP ->; rewrite imset0.
 - by move=> i j _ _ /=; exact: f_inj.
+- by move=> /eqP ->; rewrite imset0.
 Qed.
 
 Lemma disjoint_imset (A B : {set T1}) :
   [disjoint A & B] -> [disjoint [set f x | x in A] & [set f x | x in B]].
 Proof.
 rewrite -!setI_eq0 => /eqP Hdisj.
-rewrite -imsetI; last by move=> x y _ _; exact: f_inj.
+rewrite -imsetI => [x y _ _ |]; first exact: f_inj.
 by rewrite imset_eq0 Hdisj.
 Qed.
 
@@ -415,7 +414,7 @@ case: (ltnP k n) => Hk.
   + case: n Hk => [//= | n] Hk /=.
     rewrite -[1]addn0 !iotaDl (IHk _ Hk).
     by rewrite filter_map /= -!map_comp.
-- rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT map_id.
+- rewrite (eq_in_filter (a2 := predT)); last by rewrite filter_predT map_id.
   move=> i /=; rewrite mem_iota add0n => /andP[_ H2].
   by rewrite (leq_trans H2 Hk).
 Qed.
@@ -426,7 +425,7 @@ case (leqP k n) => Hkn.
 - case: i => i Hi /=.
   rewrite -(mem_map val_inj) map_drop val_enum_ord /= drop_iota mem_iota /= add0n.
   by rewrite (subnKC Hkn) Hi andbT.
-- rewrite drop_oversize; last by rewrite size_enum_ord; apply: ltnW.
+- rewrite drop_oversize; first by rewrite size_enum_ord; apply: ltnW.
   have:= ltn_trans (ltn_ord i) Hkn.
   by rewrite in_nil ltnNge => /negbTE => ->.
 Qed.
@@ -437,19 +436,19 @@ apply: (inj_map val_inj); rewrite map_drop map_filter_comp val_enum_ord.
 rewrite drop_iota add0n.
 case: (leqP n k) => Hk.
 - have:= Hk; rewrite -subn_eq0 => /eqP -> /=.
-  rewrite (eq_in_filter (a2 := pred0)); first by rewrite filter_pred0.
+  rewrite (eq_in_filter (a2 := pred0)); last by rewrite filter_pred0.
   move=> i; rewrite mem_iota add0n => /andP[_ Hi].
   have:= leq_trans Hi Hk.
   by rewrite ltnNge => /negbTE => ->.
 - move Hdiff : (n - k) => d; move: Hdiff => /eqP.
-  rewrite -(eqn_add2r k) subnK; last exact: ltnW.
+  rewrite -(eqn_add2r k) subnK; first exact: ltnW.
   move/eqP -> => {n Hk}.
   rewrite addnC iotaD filter_cat map_id add0n.
-  rewrite (eq_in_filter (a2 := pred0)); first last.
-    move=> i; rewrite mem_iota add0n => /andP[_ Hi].
-    by move: Hi; rewrite ltnNge => /negbTE => ->.
+  rewrite (eq_in_filter (a2 := pred0)) => [i |].
+    rewrite mem_iota add0n => /andP[_].
+    by rewrite ltnNge => /negbTE => ->.
   rewrite filter_pred0 cat0s.
-  rewrite (eq_in_filter (a2 := predT)); first by rewrite filter_predT.
+  rewrite (eq_in_filter (a2 := predT)); last by rewrite filter_predT.
   by move=> i; rewrite mem_iota => /andP[->].
 Qed.
 
@@ -473,7 +472,7 @@ Lemma big_seq_sub (T : countType) (s : seq T) F :
 Proof.
 rewrite -[LHS](big_map (ssval (s := s)) xpredT (fun x : T => F x)).
 apply perm_big; apply uniq_perm.
-- rewrite map_inj_uniq; last exact: val_inj.
+- rewrite map_inj_uniq; first exact: val_inj.
   exact: index_enum_uniq.
 - exact: undup_uniq.
 - move=> x; rewrite mem_undup; apply/mapP/idP => [/= [y _ ->] | Hx].

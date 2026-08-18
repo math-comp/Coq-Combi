@@ -61,7 +61,7 @@ From HB Require Import structures.
 From mathcomp Require Import all_boot.
 Require Import tools sorted partition.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -503,12 +503,12 @@ Proof.
 rewrite /ribbon_height -sumn_count sumnE big_map (big_nth 0) size_diff_shape.
 rewrite (big_cat_nat (leq0n start)
                      (leq_trans ribbon_on_start_stop (ltnW ribbon_on_stop_lt))) /=.
-rewrite big_nat big1 ?add0n; first last => [i /= leis|].
+rewrite big_nat big1 ?add0n => [i /= leis|].
   rewrite nth_diff_shape subn_gt0 -ribbon_on_nth_leq.
   by rewrite leqNgt leis.
 have := ribbon_on_start_stop; rewrite -ltnS => leqss.
 rewrite (big_cat_nat (ltnW leqss) ribbon_on_stop_lt) /= addnC.
-rewrite big_nat big1 ?add0n; first last => [i /= /andP[ltsi _]|].
+rewrite big_nat big1 ?add0n => [i /= /andP[ltsi _]|].
   rewrite nth_diff_shape subn_gt0 -ribbon_on_nth_leq.
   by rewrite (leqNgt i) ltsi andbF.
 rewrite big_nat; under eq_bigr => i.
@@ -885,10 +885,9 @@ move=> partinn partout Hrib.
 rewrite (ribbon_on_sumn partinn partout Hrib) subn0 /=.
 case: stop Hrib => [|st] [Hsi Hsis /= H0 _].
   by rewrite sub0n addn0 subn0 add0n.
-rewrite [st.+1 + _]addnC !addnA leq_add2r subnKC ?(ltnW H0) /=; first last.
-  apply: (leq_trans _ (ltnW H0)).
-  by move: partinn => /is_part_ijP[_] /(_ _ _ (leq0n st.+1)) /=.
-by rewrite subnDr.
+rewrite [st.+1 + _]addnC !addnA leq_add2r subnKC ?(ltnW H0) /= ?subnDr //.
+apply: (leq_trans _ (ltnW H0)).
+by move: partinn => /is_part_ijP[_] /(_ _ _ (leq0n st.+1)) /=.
 Qed.
 
 Lemma ribbon_on_startrem_acc start stop inner outer acc :
@@ -917,7 +916,7 @@ have lest : nth 0 out start >= nth 0 inn stop.
   have : included inn out.
     by apply/ribbon_included/ribbonP => //; exists start, stop.
   by move/includedP => [_]; apply.
-rewrite (addnBA _ lest) subnKC; last exact: (leq_trans lest (leq_addl _ _)).
+rewrite (addnBA _ lest) subnKC; first exact: (leq_trans lest (leq_addl _ _)).
 rewrite leqNgt addnS ltnS addnC leq_add /= ?leq_subr //.
 by rewrite IHstart // !(addSn, addnS).
 Qed.
@@ -997,7 +996,7 @@ rewrite -/(minn _ _) (minn_idPl lessz) ltnNge (ltnW ltsi) /=.
 rewrite subSn //= nth_cat size_map sztd.
 rewrite ltn_subRL subnKC // leq_min leis /=.
 case: ltnP => [ltisz | leszi].
-- rewrite (nth_map 0); first last.
+- rewrite (nth_map 0).
     by rewrite sztd ltn_subRL subnKC // leq_min leis.
   by rewrite nth_drop subnKC // nth_take.
 have ltszs := leq_ltn_trans leszi leis.
@@ -1018,7 +1017,7 @@ rewrite -/(minn _ _) (minn_idPl lessz) (leq_gtF (ltnW ltszs)).
 rewrite nth_cat /= size_map sztd ltnS.
 rewrite leq_subLR subnKC //.
 rewrite leq_min (ltn_geF ltsi) //=.
-rewrite nth_cat size_drop -(subSn lesmin) subnBA; last exact: ltnW.
+rewrite nth_cat size_drop -(subSn lesmin) subnBA; first exact: ltnW.
 rewrite (subnK (ltnW ltszs)) /minn.
 case: (ltnP stop (size sh)) => [ltstsz | leszst].
   rewrite ltn_subRL subnKC //.
@@ -1074,11 +1073,11 @@ move: ltstarti1; rewrite ltnS leq_eqVlt => /orP[/eqP Hi| ltstarti].
 case: i ltstarti => // i /ltnSE ltstarti in ltiszres *.
 case: (ltnP i.+1 stop) => [lti1s | lesi1].
   rewrite !nth_add_ribbon_in ?ltnS ?Hsort //.
-  + by rewrite ltstarti (ltn_trans _ lti1s).
   + by rewrite (leq_trans ltstarti _).
+  + by rewrite ltstarti (ltn_trans _ lti1s).
 rewrite nth_add_ribbon_stop_lt //.
 move: lesi1; rewrite leq_eqVlt => /orP[/eqP|] ltsi.
-  rewrite nth_add_ribbon_in; last by rewrite ltnS ltstarti ltsi /=.
+  rewrite nth_add_ribbon_in; first by rewrite ltnS ltstarti ltsi /=.
   by do 2 apply: (leq_trans (Hsort _)).
 by rewrite nth_add_ribbon_stop_lt.
 Qed.
@@ -1267,7 +1266,7 @@ Lemma add_ribbon_onP : ribbon_on (pos.+1 - hgt) pos sh res.
 Proof.
 move: Hret; rewrite /add_ribbon.
 case Hstart : startrem => [start rem]; case: ltnP => // lt0rem [eqstart <-].
-rewrite subSS subKn; first last.
+rewrite subSS subKn.
   by have:= startrem_leq_pos sh nbox.+1 pos; rewrite Hstart /=.
 rewrite -eqstart; apply: add_ribbon_on_remP => //.
 have := startrem_leq sh nbox.+1 pos.

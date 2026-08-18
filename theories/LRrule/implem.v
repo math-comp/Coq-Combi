@@ -35,7 +35,7 @@ Require Import tools combclass partition Yamanouchi ordtype tableau.
 Require Import skewtab Schur_mpoly freeSchur therule.
 
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -197,9 +197,9 @@ rewrite tsumnE; congr (sumn _).
 rewrite -[X in [seq sumn i | i <- X]]map_comp.
 rewrite (eq_map (g := map (fun row =>
                LRyamtab_count_rec row.2 (behead inner) out (head 0 inner) row.1))).
-- by rewrite [RHS]map_comp (eq_map tsumnE) -!map_comp; exact: eq_map.
 - move=> s /=; rewrite -map_comp; apply eq_map => {s} [] [row sh] /=.
   by rewrite size_map IHout.
+- by rewrite [RHS]map_comp (eq_map tsumnE) -!map_comp; exact: eq_map.
 Qed.
 
 
@@ -352,7 +352,7 @@ Proof using .
 elim: outer innev inner sh0 row0 => [// | out0 out IHout] /=
             innev inner sh0 row0.
 congr flatten.
-rewrite (_ : head 0 (inner ++ nseq _ 0) = head 0 inner); last by case inner.
+rewrite (_ : head 0 (inner ++ nseq _ 0) = head 0 inner); first by case inner.
 apply eq_map => i; congr map.
 rewrite IHout /=; congr LRyamtab_list_rec.
 by case: inner; rewrite //= subn0.
@@ -519,7 +519,7 @@ rewrite /one_letter_choices count_filter
   => Hpart Hrow Hlrw Hincl /andP[Hmin Hmax] Hisrow.
 move/(_ _ (hyper_yam_of_eval Hpart)): Hrow => /= /andP[Hyamrow /eqP Hshr].
 move/(_ _ (hyper_yam_of_eval Hpart)): Hlrw => /= /andP[Hyamlrow /eqP Hshape].
-rewrite (eq_count (a2 := pred1 l)); first last.
+rewrite (eq_count (a2 := pred1 l)).
   move=> i /=; case (i =P l) => [Hi | //]; subst i.
   have -> /= : is_add_corner shr l by rewrite -Hshr; exact: is_add_corner_yam.
   move: Hincl => /includedP[_ Hincl].
@@ -560,13 +560,13 @@ have : {in rec, f1 =1 f2}.
   rewrite count_map.
   case: (r =P row) => [Hrow | /eqP/negbTE Hneq] /=.
   - subst r.
-    rewrite (eq_count (a2 := pred1 l0)); first last.
+    rewrite (eq_count (a2 := pred1 l0)).
       by move=> i /=; rewrite eqseq_cons eq_refl andbT.
     apply: (choose_one_countE Hinn (yamtab_rowsP Hr) Hskew Hincl _ Hisrow).
     have /dominate_head/(_ Hdom) : l0 :: row != [::] by [].
     rewrite ltEnat /= => -> /=.
     exact: head_row_skew_yam Hinn Hisrow Hskew.
-  - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
+  - rewrite (eq_count (a2 := pred0)); last by rewrite count_pred0.
     by move=> y /=; rewrite eqseq_cons Hneq andbF.
 rewrite eq_in_map /rec /f2 => -> {f1 f2 rec}.
 rewrite sumn_count /=.
@@ -600,15 +600,15 @@ have : {in rec, f1 =1 f2}.
   rewrite count_map.
   case: (r =P (row ++ sol)) => [Heq | /eqP/negbTE Hneq] /=.
   - subst r.
-    rewrite (eq_count (a2 := pred1 r0)); first last.
-      by move=> i /=; rewrite eqseq_cons eq_refl andbT.
-    rewrite (_ : head _ _ = head (size inn0) (row ++ sol)); first last.
+    rewrite (eq_count (a2 := pred1 r0)) => [i /= |].
+      by rewrite eqseq_cons eq_refl andbT.
+    rewrite (_ : head _ _ = head (size inn0) (row ++ sol)).
       by case row => //=; case sol.
     apply: (choose_one_countE Hinn0 (yamtab_shiftP Hskew0 Hr)
                (skew_yam_cat Hskew0 Hskew) Hincl _ Hisrow).
     rewrite /=.
     exact: head_row_skew_yam Hinn0 Hisrow (skew_yam_cat Hskew0 Hskew).
-  - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
+  - rewrite (eq_count (a2 := pred0)); last by rewrite count_pred0.
     by move=> y /=; rewrite eqseq_cons Hneq andbF.
 rewrite eq_in_map /rec /f2 => -> {f1 f2 rec}.
 rewrite sumn_count /=.
@@ -644,14 +644,14 @@ have : {in rec, f1 =1 f2}.
   rewrite /rec /f1 /f2 {rec f1 f2} => [[rshift shrshift]] /= Hrshift.
   rewrite count_map /=.
   case: (rshift =P row1) => [Hrow1 | /eqP/negbTE Hneq] /=.
-  - rewrite Hrow1 (eq_count (a2 := pred1 yamtab)); first last.
-      by move => y /=; rewrite eqseq_cons eq_refl /=.
+  - rewrite Hrow1 (eq_count (a2 := pred1 yamtab)) => [y /= |].
+      by rewrite eqseq_cons eq_refl /=.
     move: Hyam; rewrite to_word_cons.
     move: Hrshift=>/flatten_mapP[[row shrow] /yamtab_rowsP/yamtab_shiftP H{}/H].
     rewrite Hrow1 => Hsk1 Hsk2.
     apply (Hrec shrshift (is_part_skew_yam Hinnev Hsk1)).
     exact: (skew_yam_catrK Hinnev Hsk1 Hsk2).
-  - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
+  - rewrite (eq_count (a2 := pred0)); last by rewrite count_pred0.
     by move=> y /=; rewrite eqseq_cons Hneq.
 rewrite eq_in_map /rec /f2 => -> {f1 f2 rec Hrec}.
 rewrite !map_comp map_flatten -!map_comp sumn_count.
@@ -676,7 +676,7 @@ have : {in rowl, f1 =1 f2}.
     + move: Hshrow; rewrite Hrow1 => /(skew_yam_catrK Hinnev) H.
       move: Hshrow1; rewrite -{1}(cat_take_drop (sh0 - inn0) row1).
       exact: H.
-  - rewrite (eq_in_count (a2 := pred0)); first by rewrite count_pred0.
+  - rewrite (eq_in_count (a2 := pred0)); last by rewrite count_pred0.
     move=> [shift shshift] /yamtab_shift_drop /= Hshift.
     move: Hneq; apply contraFF.
     rewrite -Hshift => /eqP ->.
@@ -691,9 +691,9 @@ move=> /(skew_yam_included (is_part_skew_yam Hinnev Hdrop)) Hshape.
 have Heq : size (drop (sh0 - inn0) row1) =
            size (take (inn0 + size row1 - sh0) row0).
   rewrite size_drop size_takel.
-  - by move: Hinn => /= /andP[/subnBA -> _]; rewrite addnC.
   - move: Hout => //= /andP[/(leq_sub2r sh0)].
     by rewrite addKn addnC => -> _.
+  - by move: Hinn => /= /andP[/subnBA -> _]; rewrite addnC.
 apply: (yamtab_rows_countE Hinnev Heq _ (is_row_drop _ _) Hdrop Hshape).
 - move: Hskew => /= /and4P[_ _]; rewrite skew_dominate_cut /skew_dominate => Hdom _.
   suff <- : size row1 - (sh0 - inn0) = inn0 + size row1 - sh0 by exact Hdom.
@@ -803,7 +803,7 @@ have {}Hout : is_part
   case: outer Hout {Hincl Hshape Hinn Hsztab} => [//= | s0 s] /= ->.
   by rewrite leqnn.
 have Hsize : size ((pad 0 (size outer)) inner) = size yamtab.
-  rewrite size_cat size_nseq subnKC; last exact: size_included.
+  rewrite size_cat size_nseq subnKC; first exact: size_included.
   by rewrite -(size_diff_shape inner outer) -Hshape size_map.
 have Hskew : is_skew_tableau (head 1 outer :: (pad 0 (size outer)) inner)
                              ([::] :: yamtab).
@@ -899,7 +899,7 @@ have Hszyam : size yam = sumn (P / P1).
   by rewrite -evalseq_eq_size eval_yameval (sumn_diff_shape_intpartE P2).
 rewrite -[val yam](to_word_skew_reshape Hincl Hszyam).
 rewrite count_map.
-rewrite (eq_in_count (a2 := pred1 (skew_reshape P1 P (val yam)))); first last.
+rewrite (eq_in_count (a2 := pred1 (skew_reshape P1 P (val yam)))).
   move=> tab /= Htab; apply/eqP/eqP => [| -> //].
   rewrite (to_word_skew_reshape Hincl Hszyam) => <-.
   have Hshape := (LRyamtab_shape (intpartnP P1) (intpartnP P) Hincl Htab).
@@ -917,17 +917,17 @@ Lemma LRyam_spec_recip yam :
   yam \in LRyam_set P1 P2 P -> count_mem yam LRyam_list = 1.
 Proof using Hincl.
 move=> /LRyamtab_spec_recip Hyam.
-rewrite (eq_count (a2 := pred1 (val yam) \o val)); last by [].
+rewrite (eq_count (a2 := pred1 (val yam) \o val)) //.
 by rewrite -count_map subType_seqP // LRyamtab_all.
 Qed.
 
 Theorem LRcoeffE : LRyam_coeff P1 P2 P = LRcoeff P1 P2 P.
 Proof using Hincl.
 rewrite /LRyam_coeff -LRcoeffP -(size_map to_word).
-rewrite -sum1dep_card (eq_bigr (fun y => count_mem y LRyam_list)); first last.
+rewrite -sum1dep_card (eq_bigr (fun y => count_mem y LRyam_list)).
   by move=> yam Hyam; rewrite LRyam_spec_recip //= inE.
 rewrite sum_count_mem.
-rewrite (eq_in_count (a2 := predT)).
+rewrite (eq_in_count (a2 := predT)); first last.
   by rewrite count_predT -(size_map val) subType_seqP // LRyamtab_all.
 move=> yam /=.
 rewrite -(mem_map val_inj) subType_seqP ?LRyamtab_all //=.

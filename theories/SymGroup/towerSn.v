@@ -73,7 +73,7 @@ Notation "''SG_' n" := [set: 'S_n]
 
 Import LeqGeqOrder.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -335,13 +335,13 @@ Qed.
 Lemma cycle_type_tinj s : ct (tinj s) = ct s.1 +|+ ct s.2.
 Proof using.
 apply val_inj; rewrite union_intpartnE cast_intpartnE /=.
-rewrite porbits_tinj setpart_shape_union; first last.
+rewrite porbits_tinj setpart_shape_union.
   rewrite -setI_eq0; apply/eqP/setP => S.
   rewrite !inE; apply/negP => /andP[].
   move=> /imsetP[X /imsetP[x _ ->]] -> {X}.
   move=> /imsetP[X /imsetP[y _ ->]].
   move/setP => /(_ (lshift n x)).
-  rewrite imset_f; last exact: porbit_id.
+  rewrite imset_f; first exact: porbit_id.
   move=> /esym/imsetP => [] [z _] /eqP.
   by rewrite eq_lrshift.
 by congr sort; rewrite /ct !cast_intpartnE /=; congr (_ ++ _);
@@ -388,16 +388,16 @@ rewrite -(splitK itmp) !permE.
 case: splitP => i _ {itmp}; rewrite /tinjval !unsplitK /= cast_permE.
 - rewrite -(splitK i) !permE.
   case: splitP => j _ {i}; rewrite /tinjval !unsplitK /=.
-  + rewrite [cast_ord (esym _) _](_ : _ = unsplit (inl j));
-      last exact: val_inj.
+  + rewrite [cast_ord (esym _) _](_ : _ = unsplit (inl j)).
+      exact: val_inj.
     by rewrite !unsplitK /=; apply val_inj.
-  + rewrite [cast_ord (esym _) _](_ : _ = unsplit (inr (lshift _ j)));
-      last exact: val_inj.
+  + rewrite [cast_ord (esym _) _](_ : _ = unsplit (inr (lshift _ j))).
+      exact: val_inj.
     rewrite !unsplitK /=; apply val_inj => /=.
     rewrite (_: lshift _ _ = unsplit (inl j)) //.
     by rewrite !permE /tinjval !unsplitK /=.
-- rewrite [cast_ord (esym _) _](_ : _ = unsplit (inr (rshift _ i)));
-    last by apply: val_inj => /=; rewrite addnA.
+- rewrite [cast_ord (esym _) _](_ : _ = unsplit (inr (rshift _ i))).
+    by apply: val_inj => /=; rewrite addnA.
   rewrite !permE /tinjval !unsplitK /=.
   rewrite (_: rshift n _ = unsplit (inr i)) //.
   rewrite !permE /tinjval !unsplitK /=.
@@ -438,7 +438,7 @@ Proof using.
 apply/cfunP => /= s.
 case: (boolP (s \in tinj @* ('dom tinj))) => Hs; first last.
   by rewrite !cfun0gen // genGid.
-rewrite (cfResE _ _ Hs); last exact: subsetT.
+rewrite (cfResE _ _ Hs); first exact: subsetT.
 move: Hs => /imsetP/= [[s1 s2]].
 rewrite inE => /andP[H1 _] -> {s}.
 rewrite cfuni_tinj /= -linear_sum (cfIsomE _ _ H1).
@@ -510,7 +510,7 @@ case: (altP eqP) => [<-{p2} | /negbTE Hneq]; rewrite /= ?mulr1 ?mulr0.
   under eq_bigr => i /andP[_].
     rewrite -classCTP !cfuniCTE => -> /=.
     by rewrite mul1r conjC1 over.
-  rewrite sumr_const /= big1 ?addr0; first last => [i /andP[_]|].
+  rewrite sumr_const /= big1 ?addr0 => [i /andP[_]|].
     rewrite -classCTP !cfuniCTE => /negbTE -> /=.
     by rewrite mul0r.
   congr _%:R; apply eq_card => /= x.
@@ -550,7 +550,7 @@ Notation "''z_' p" := (zcoeff p) (at level 2, format "''z_' p").
 Lemma zcoeffE k (l : 'P_k) : zcoeff l = (zcard l)%:R.
 Proof.
 rewrite /zcoeff card_class_of_part cardsT card_Sn.
-rewrite pchar0_natf_div; [| exact: Cpchar | exact: dvdn_zcard_fact].
+rewrite pchar0_natf_div; [exact: Cpchar | exact: dvdn_zcard_fact|].
 rewrite invf_div mulrC mulfVK //.
 by rewrite pnatr_eq0 -lt0n; apply: fact_gt0.
 Qed.
@@ -569,13 +569,13 @@ Lemma ncfuniCT_gen k (f : 'CF('SG_k)) :
 Proof using.
 apply/cfunP => /= x.
 rewrite (bigD1 (ct x)) //= cfunE sum_cfunE big1.
-- rewrite addr0 !cfunE cfuniCTnE eqxx /= mulr1.
-  rewrite -mulrA [_^-1 *_]mulrC mulrA mulfK //.
-  have: (permCT (ct x)) \in x ^: 'SG_k.
-    rewrite classes_of_permP permCTP.
-    by rewrite (partnCTK (cycle_type x)).
-  by move/imsetP => [y _ ->]; rewrite cfunJgen ?genGid ?inE.
-- by move=> p /negbTE pct; rewrite !cfunE cfuniCTnE eq_sym pct /= !mulr0.
+  by move=> p /negbTE pct; rewrite !cfunE cfuniCTnE eq_sym pct /= !mulr0.
+rewrite addr0 !cfunE cfuniCTnE eqxx /= mulr1.
+rewrite -mulrA [_^-1 *_]mulrC mulrA mulfK //.
+have: (permCT (ct x)) \in x ^: 'SG_k.
+  rewrite classes_of_permP permCTP.
+  by rewrite (partnCTK (cycle_type x)).
+by move/imsetP => [y _ ->]; rewrite cfunJgen ?genGid ?inE.
 Qed.
 
 Lemma cfdotr_ncfuniCT k (f : 'CF('SG_k)) (s : 'S_k) : (f s) = '[f, '1z_[ct s]].
@@ -585,18 +585,18 @@ rewrite (bigD1 (ct s)) //= !cfdotZl cfdotZr.
 rewrite mulrA (divfK _) //.
 rewrite cfdot_cfuni; try (by apply: class_normal; rewrite inE).
 rewrite setIid big1 ?addr0.
+- move=> p /negbTE pct.
+  rewrite !cfdotZl cfdotZr.
+  rewrite cfdot_cfuni; try (by apply: class_normal; rewrite inE).
+  rewrite class_disj; last by rewrite cards0 mul0r !mulr0.
+  apply/negP; rewrite classes_of_permP !permCTP.
+  by rewrite partnCTE !CTpartnK pct.
 - have: (permCT (ct s)) \in s ^: 'SG_k.
     rewrite classes_of_permP permCTP.
     by rewrite (partnCTK (cycle_type s)).
   move/imsetP => [y _ ->]; rewrite cfunJgen ?genGid ?inE //.
   rewrite fmorph_div /= !conjC_nat !mulrA divfK ?pnatr_eq0 ?card_classCT_neq0 //.
   by rewrite mulfK // neq0CG.
-- move=> p /negbTE pct.
-  rewrite !cfdotZl cfdotZr.
-  rewrite cfdot_cfuni; try (by apply: class_normal; rewrite inE).
-  rewrite class_disj; first by rewrite cards0 mul0r !mulr0.
-  apply/negP; rewrite classes_of_permP !permCTP.
-  by rewrite partnCTE !CTpartnK pct.
 Qed.
 
 (** Application of Frobenius duality : [cfdot_Res_r] *)
@@ -612,13 +612,13 @@ transitivity
   apply eq_bigr => i _; rewrite !cfextprod_cfuni.
   by rewrite cfdot_cfuni //=; apply: class_normal; rewrite !inE.
 case: (boolP (p +|+ q == l)) => [|] /= unionp; [rewrite mul1r|rewrite !mul0r].
-- rewrite (bigD1 (p, q)) /=; last by rewrite eq_sym.
-  rewrite setIid big1.
-    rewrite addr0 classXE !cardsX natrM /zcoeff.
-    rewrite !invfM !invrK.
-    rewrite [_ * #|classCT p|%:R]mulrC -!mulrA; congr (_ * _).
-    by rewrite [RHS]mulrA [RHS]mulrC natrM invfM.
-  by move=> i /andP[_ ip]; rewrite classXI ?cards0 ?mul0r.
+- rewrite (bigD1 (p, q)) /=; first by rewrite eq_sym.
+  rewrite setIid big1 => [i /andP[_ ip] |].
+    by rewrite classXI ?cards0 ?mul0r.
+  rewrite addr0 classXE !cardsX natrM /zcoeff.
+  rewrite !invfM !invrK.
+  rewrite [_ * #|classCT p|%:R]mulrC -!mulrA; congr (_ * _).
+  by rewrite [RHS]mulrA [RHS]mulrC natrM invfM.
 - rewrite big1 //= => i /eqP unioni.
   have ip: i != (p, q).
     move: unionp; apply contraR; rewrite negbK {}unioni => /eqP.
@@ -634,8 +634,8 @@ rewrite cfextprodZl cfextprodZr.
 rewrite !linearZ /= !cfdotZl cfdotZr cfdot_Ind_cfuniCT.
 case: eqP => _ /=; rewrite ?mul0r ?mulr0 // !mul1r.
 rewrite 2!mulrA mulrC mulrA [X in (X * _)]mulrC -invfM divff ?mul1r.
-  by rewrite fmorph_div /= !conjC_nat.
-by apply mulf_neq0.
+  exact: mulf_neq0.
+by rewrite fmorph_div /= !conjC_nat.
 Qed.
 
 Theorem ncfuniCT_Ind p q :

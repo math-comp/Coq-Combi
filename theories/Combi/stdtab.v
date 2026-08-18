@@ -86,7 +86,7 @@ From mathcomp Require Import perm fingroup.
 Require Import tools combclass partition Yamanouchi ordtype std tableau.
 
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -124,12 +124,12 @@ rewrite /shape /=; apply: (@eq_from_nth _ 0).
 - rewrite size_map size_set_nth size_incr_nth size_map /maxn.
   by case: (ltngtP i.+1 (size t)).
 - move=> j Hi.
-  rewrite nth_incr_nth (nth_map [::]) /=; last by move: Hi; rewrite size_map.
+  rewrite nth_incr_nth (nth_map [::]) /=; first by move: Hi; rewrite size_map.
   rewrite nth_set_nth /= eq_sym.
   have -> : nth 0 [seq size i | i <- t] j = size (nth [::] t j).
     case: (ltnP j (size t)) => Hcase.
     + by rewrite (nth_map [::] _ _ Hcase).
-    + by rewrite (nth_default _ Hcase) nth_default; last by rewrite size_map.
+    + by rewrite (nth_default _ Hcase) nth_default; first by rewrite size_map.
   case eqP => [->|].
   + by rewrite size_rcons add1n.
   + by rewrite add0n.
@@ -258,7 +258,7 @@ move=> /allP Hw Hparti /is_tableau_getP[Hpart Hrow Hcol].
 apply/is_tableau_getP; split => [| rn c Hini | rn c Hini].
 - by rewrite shape_append_nth.
 - case: (boolP (in_shape (shape T) (rn, c.+1))) => Hin.
-  + rewrite !get_append_nth_in //; first exact: Hrow.
+  + rewrite !get_append_nth_in //; last exact: Hrow.
     by apply (in_part_le Hpart Hin).
   + move: Hini Hin {Hcol Hpart Hparti}; rewrite /in_shape.
     rewrite shape_append_nth nth_incr_nth /=.
@@ -270,7 +270,7 @@ apply/is_tableau_getP; split => [| rn c Hini | rn c Hini].
     rewrite leEnat; apply/ltnW/Hw.
     by apply mem_to_word; rewrite /in_shape H.
 - case: (boolP (in_shape (shape T) (rn.+1, c))) => Hin.
-  + rewrite !get_append_nth_in //; first exact: Hcol.
+  + rewrite !get_append_nth_in //; last exact: Hcol.
     by apply (in_part_le Hpart Hin).
   + move: Hini Hin {Hcol Hrow}; rewrite /in_shape.
     rewrite shape_append_nth nth_incr_nth.
@@ -638,12 +638,12 @@ Let stdtabsh_enum : seq stdtabsh := pmap insub (enum_stdtabsh sh).
 Fact finite_stdtabsh : Finite.axiom stdtabsh_enum.
 Proof using.
 case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
-rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
+rewrite count_filter -(@eq_count _ (pred1 t)) => [s /=|].
   by rewrite isSome_insub; case: eqP=> // ->.
 move: Ht => /andP[Htab /eqP].
 rewrite -(shape_yam_of_stdtab Htab) => Hsht.
 rewrite /enum_stdtabsh count_map.
-rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
+rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))).
   move=> y /(allP (enum_yamevalP (intpartP sh))).
   rewrite /is_yam_of_eval => /andP[Hyam /eqP Hevy] /=.
   apply/idP/idP => /eqP H; apply/eqP.
@@ -698,12 +698,12 @@ Let stdtabn_enum : seq stdtabn := pmap insub enum_stdtabn.
 Fact finite_stdtabn : Finite.axiom stdtabn_enum.
 Proof using.
 case=> /= t Ht; rewrite -(count_map _ (pred1 t)) (pmap_filter (@insubK _ _ _)).
-rewrite count_filter -(@eq_count _ (pred1 t)) => [|s /=]; last first.
+rewrite count_filter -(@eq_count _ (pred1 t)) => [s /= |].
   by rewrite isSome_insub; case: eqP => // ->.
 move: Ht => /andP[Htab /eqP].
 rewrite -(size_yam_of_stdtab Htab) => Hszt.
 rewrite /enum_stdtabn map_comp enum_unionE count_map.
-rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))); first last.
+rewrite (eq_in_count (a2 := pred1 (yam_of_stdtab t))).
   move=> y /(allP (all_unionP _ yamn_PredEq)) /=.
   rewrite /is_yam_of_size => /andP[Hyam /eqP Hszy] /=.
   apply/idP/idP => /eqP H; apply/eqP.
@@ -769,8 +769,8 @@ Lemma shape_conj_tab t : shape (conj_tab t) = conj_part (shape t).
 Proof using.
 rewrite /conj_tab /shape -map_comp.
 rewrite (eq_map (g := fun i =>
-           (nth 0 (conj_part [seq size i | i <- t]) i))); first last.
-  by move => i /=; rewrite size_mkseq.
+           (nth 0 (conj_part [seq size i | i <- t]) i))) => [i /= |].
+  by rewrite size_mkseq.
 by rewrite -/(shape _) -/(mkseq _ _); apply: mkseq_nth.
 Qed.
 
@@ -781,11 +781,11 @@ Proof using.
 move=> Ht i j.
 case: (boolP (in_shape (shape t) (j, i))) => Hin;
   have:= Hin; rewrite (in_conj_part Ht) => Hconj.
-- rewrite {1}/get_tab /conj_tab nth_mkseq; last exact: (in_shape_size Hconj).
+- rewrite {1}/get_tab /conj_tab nth_mkseq; first exact: (in_shape_size Hconj).
   rewrite -shape_conj_tab.
-  by rewrite nth_mkseq; last by rewrite shape_conj_tab; apply: Hconj.
+  by rewrite nth_mkseq; first by rewrite shape_conj_tab; apply: Hconj.
 - rewrite /get_tab.
-  rewrite [RHS]nth_default; last by rewrite leqNgt -nth_shape.
+  rewrite [RHS]nth_default; first by rewrite leqNgt -nth_shape.
   apply nth_default.
   by rewrite leqNgt -nth_shape shape_conj_tab.
 Qed.
@@ -819,7 +819,7 @@ Proof using.
 move=> Hsh Hcorn; apply eq_from_shape_get_tab.
 - rewrite shape_conj_tab !shape_append_nth shape_conj_tab.
   exact: conj_part_incr_nth.
-- move=> [r c]; rewrite get_conj_tab; first last.
+- move=> [r c]; rewrite get_conj_tab.
     by rewrite shape_append_nth; apply: is_part_incr_nth.
   rewrite !get_tab_append_nth.
   case: (r =P nth 0 (shape t) i);
@@ -828,7 +828,7 @@ move=> Hsh Hcorn; apply eq_from_shape_get_tab.
   + by rewrite Hi nth0 nth_default // size_conj_part.
   + have : nth 0 (shape t) i <= nth 0 (shape t) i < nth 0 (shape t) i.-1.
       by rewrite leqnn H.
-    rewrite -nth_conjE //; last by case: i H {Hr}; rewrite // ltnn.
+    rewrite -nth_conjE //; first by case: i H {Hr}; rewrite // ltnn.
     by move=> /eqP ->.
 Qed.
 
@@ -892,7 +892,7 @@ apply/andP; split.
   + move=> i; rewrite -!nth_shape shape_conj_tab -(conj_ltnE Hp) => Hj2.
     rewrite -!/(get_tab _ (_, _)) !(get_conj_tab Hp) /get_tab.
     have:= Htab => /is_tableauP[_ Hrow _].
-    rewrite lt_def (is_rowP inh _ (Hrow i)); first last.
+    rewrite lt_def (is_rowP inh _ (Hrow i)).
       by rewrite (ltnW Hj) -nth_shape Hj2.
     rewrite  -/(in_shape _ _) in Hj2.
     rewrite andbT -!/(get_tab _ (_, _)); apply (stdtab_get_tabNE Hstdtab).

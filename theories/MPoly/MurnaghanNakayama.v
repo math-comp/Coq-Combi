@@ -53,7 +53,7 @@ From mathcomp Require Import ssrcomplements mpoly.
 Require Import sorted tools ordtype permuted partition skewpart.
 Require Import antisym Schur_mpoly Schur_altdef sympoly homogsym.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -198,10 +198,10 @@ case: (ltnP n (size la)) => szla.
 rewrite (syms_sympM_oapp _ Hm).
 case: m Hm => // m _.
 rewrite (bigID (fun i : 'I_n => add_ribbon_intpartn la m i)) /=.
-rewrite [X in _ + X = _]big1 ?addr0;
-  last by move=> i; case: add_ribbon_intpartn.
+rewrite [X in _ + X = _]big1 ?addr0 => [i |].
+  by case: add_ribbon_intpartn.
 rewrite [RHS](bigID (fun sh => size (val sh) <= n)) /=.
-rewrite [X in _ = _ + X]big1 ?addr0; first last => [mu /andP[_]|].
+rewrite [X in _ = _ + X]big1 ?addr0 => [mu /andP[_]|].
   by rewrite -ltnNge => /syms_oversize ->; rewrite scaler0.
 have ribbon_stop_subproof (mu : 'P_(m.+1 + d)) :
   (if size mu <= n then (mindropeq la mu).-1 else 0%N) < n.
@@ -210,7 +210,7 @@ have ribbon_stop_subproof (mu : 'P_(m.+1 + d)) :
   by rewrite geq_max szla szmu.
 pose ribbon_stop mu := Ordinal (ribbon_stop_subproof mu).
 rewrite (reindex_omap ribbon_stop
-          (omap fst \o (add_ribbon_intpartn la m))) /=; first last => [i|].
+          (omap fst \o (add_ribbon_intpartn la m))) /= => [i|].
   case Haddrib: add_ribbon_intpartn => [[res h]|]//= _.
   move/add_ribbon_intpartnP in Haddrib.
   congr Some; apply val_inj => /=.
@@ -329,8 +329,8 @@ case: la => la /= /andP[/eqP<-{d} /in_part_non0].
 elim: la => [/= | l0 la IHla] Hall.
   rewrite big_nil (big_pred1 (rowpartn 0)) ?scale1r ?syms0 //.
   by move=> i /=; rewrite intpartn0 eqxx.
-rewrite big_cons {}IHla; first last.
-  by move=> i iinla; apply: Hall; rewrite inE {}iinla orbT.
+rewrite big_cons {}IHla => [i iinla| ].
+  by apply: Hall; rewrite inE {}iinla orbT.
 under [RHS]eq_bigr do rewrite MN_coeff_consE.
 rewrite mulr_sumr.
 have {Hall} l0n0 : l0 != 0%N by apply: Hall; rewrite inE eqxx.
@@ -505,7 +505,7 @@ rewrite inE negb_or eq_sym => /andP[Hm0 Hmu].
 rewrite big_cons mulrA syms_sympM_oapp //.
 move Hmmu : (m0 :: mu) => mmu.  (* to prevent the expansion of MN_coeff_rec *)
 rewrite [RHS](bigID (fun sh => size (val sh) <= n)) /=.
-rewrite [X in _ + X]big1 ?addr0; first last => [la|].
+rewrite [X in _ + X]big1 ?addr0 => [la|].
   by rewrite -ltnNge => /syms_oversize ->; rewrite scaler0.
 under [RHS]eq_bigr => la Hla.
   rewrite -{2}Hmmu (MN_coeff_rec_consE _ _ Hm0 Hla).
@@ -523,7 +523,7 @@ have cast_eq : (d + (m0.+1 + sumn mu) = m0.+1 + d + sumn mu)%N.
 rewrite (reindex _ (onW_bij _ (cast_intpartn_bij cast_eq))) /=.
 under [LHS]eq_bigr do rewrite cast_intpartnE syms_cast /=.
 rewrite [LHS](bigID (fun sh => size (val sh) <= n)) /=.
-rewrite [X in _ + X]big1 ?addr0; first last => [la|].
+rewrite [X in _ + X]big1 ?addr0 => [la|].
   by rewrite -ltnNge => /syms_oversize ->; rewrite !scaler0.
 apply eq_bigr => la szla.
 case: (boolP (included res la)) => incl; first by rewrite scalerA mulrC.

@@ -27,7 +27,7 @@ From Corelib Require Import Setoid.
 From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype seq.
 Require Import tools.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -84,14 +84,14 @@ case: s => [|s0 s]; first by rewrite vect_n_kP /= => /andP[_].
 move/flatten_mapP; rewrite -/vect_n_k => [] [i].
 rewrite mem_iota [iota _ _]lock add0n => Hs0.
 move/mapP => [t Ht [H1 H2]]; subst i; subst t.
-rewrite (eq_map (g := (fun i : nat => i == s0 : nat))).
+rewrite (eq_map (g := (fun i : nat => i == s0 : nat))); first last.
   by unlock; rewrite sumn_pred1_iota add0n Hs0.
 move=> i; rewrite /= count_map /=.
-rewrite (eq_count (a2 := fun t => (i == s0) && (s == t))); first last.
+rewrite (eq_count (a2 := fun t => (i == s0) && (s == t))).
   rewrite /= /preim => t /=.
   by apply/eqP/andP => [[-> ->] | [/eqP -> /eqP ->]].
 case H : (i == s0) => /=; last by rewrite count_pred0.
-rewrite (eq_count (a2 := (xpred1 s))); last exact: eq_sym.
+rewrite (eq_count (a2 := (xpred1 s))); first exact: eq_sym.
 by apply: IHk; rewrite (eqP H).
 Qed.
 
@@ -132,13 +132,13 @@ Lemma flatten_equiv_cut_k s ss : s == flatten ss <-> ss \in cut_k (size ss) s.
 Proof using.
 split; first by move=> /eqP ->; apply (cut_k_flatten ss).
 move => /mapP[sh]; rewrite vect_n_kP => /andP[/eqP Hsum _] H; subst ss.
-by rewrite reshapeKr; last rewrite Hsum.
+by rewrite reshapeKr ?Hsum.
 Qed.
 
 Lemma size_cut_k k s ss : ss \in (cut_k k s) -> size ss = k.
 Proof using.
 rewrite /cut_k => /mapP[sh /in_vect_n_k/andP[/eqP Hsum /eqP Hsize] -> {ss}].
-by rewrite -(size_map size _) -/(shape _) reshapeKl; last rewrite Hsum.
+by rewrite -(size_map size _) -/(shape _) reshapeKl ?Hsum.
 Qed.
 
 End CutK.

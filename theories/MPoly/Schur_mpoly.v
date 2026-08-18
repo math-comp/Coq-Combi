@@ -29,7 +29,7 @@ From mathcomp Require Import ssrcomplements freeg mpoly.
 
 Require Import tools ordtype partition tableau.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -73,8 +73,8 @@ Qed.
 
 Lemma Schur0 (sh : 'P_0) : Schur sh = 1.
 Proof using.
-rewrite Schur_tabsh_readingE (eq_bigl (xpred1 [tuple])); first last.
-  by move=> i /=; rewrite tuple0 [RHS]eq_refl val_intpartn0.
+rewrite Schur_tabsh_readingE (eq_bigl (xpred1 [tuple])) => [i /= |].
+  by rewrite tuple0 [RHS]eq_refl val_intpartn0.
 by rewrite big_pred1_eq big_nil.
 Qed.
 
@@ -121,9 +121,9 @@ Lemma perm_enum_basis d :
           [seq val m | m in [set m : 'X_{1..n < d.+1} | mdeg m == d]].
 Proof using.
 apply uniq_perm.
-- rewrite map_inj_in_uniq; first exact: enum_uniq.
+- rewrite map_inj_in_uniq; last exact: enum_uniq.
   move=> i j; rewrite !mem_enum => Hi Hj; exact: inj_s2m.
-- rewrite map_inj_uniq; [exact: enum_uniq | exact: val_inj].
+- rewrite map_inj_uniq; [exact: val_inj | exact: enum_uniq].
 move=> m; apply/mapP/mapP => [[] s | [] mb].
 - rewrite mem_enum inE /= => Hsort ->.
   have mdegs : mdeg (s2m s) = d.
@@ -177,8 +177,8 @@ Proof using.
 rewrite /= mesym_tupleE /tmono Schur_tabsh_readingE.
 rewrite (eq_bigl _ _ (@tabwordshape_col d)).
 under [LHS]eq_bigr => i do have /permPl/(perm_big _) <- /= := perm_rev i.
-rewrite (eq_bigl (fun i => sorted >%O (rev_tuple i))); first last.
-  move=> [t /= _]; rewrite rev_sorted sorted_map.
+rewrite (eq_bigl (fun i => sorted >%O (rev_tuple i))) => [[t /= _] |].
+  rewrite rev_sorted sorted_map.
   exact: eq_sorted.
 by apply/esym/reindex/onW_bij/inv_bij => x; apply val_inj; rewrite /= revK.
 Qed.

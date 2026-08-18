@@ -53,7 +53,7 @@ From mathcomp Require Import ssralg matrix.
 Require Import permcomp tools permuted combclass congr presentSn.
 Require Import std ordtype.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 
 Set Implicit Arguments.
 Unset Strict Implicit.
@@ -87,7 +87,7 @@ Lemma telescope_sumn_in2 n m f : n <= m ->
   {in [pred i | n <= i <= m] &, {homo f : x y / x <= y}} ->
   \sum_(n <= k < m) (f k.+1 - f k) = f m - f n.
 Proof.
-move=> nm fle; rewrite (telescope_big (fun i j => f j - f i)).
+move=> nm fle; rewrite (telescope_big (fun i j => f j - f i)); first last.
   by case: ltngtP nm => // -> /[!subnn].
 move=> k /andP[nk km] /=.
 by rewrite addnBAC ?fle 1?ltnW// ?subnKC// ?fle//
@@ -232,16 +232,16 @@ Qed.
 
 Lemma perm_mxsum1 i j : mxsum (perm_mx 1) i j = minn i j.
 Proof.
-rewrite perm_mxsumE (eq_bigl (fun k : 'I_n => k < minn i j)).
-  exact (sum_lt1 (leq_trans (geq_minr i j) (ltn_ord j))).
-by move=> k; rewrite perm1 ltn_min.
+rewrite perm_mxsumE (eq_bigl (fun k : 'I_n => k < minn i j)) => [k |].
+  by rewrite perm1 ltn_min.
+exact (sum_lt1 (leq_trans (geq_minr i j) (ltn_ord j))).
 Qed.
 
 Lemma perm_mxsum_maxperm i j : mxsum (perm_mx maxperm) i j = i + j - n.
 Proof.
 rewrite perm_mxsumE.
-rewrite (eq_bigl (fun k : 'I_n => (k < i) && (n - j <= k))); first last.
-  by move=> k; rewrite permE /= ltn_subCl // ltnS.
+rewrite (eq_bigl (fun k : 'I_n => (k < i) && (n - j <= k))) => [k |].
+  by rewrite permE /= ltn_subCl // ltnS.
 rewrite -(big_geq_mkord _ _ (gtn i) (fun => 1%N)) /=.
 rewrite -(big_nat_widen _ _ _ predT) //=.
 by rewrite big_const_nat iter_addn_0 mul1n subnBA.
@@ -329,11 +329,11 @@ have {}Cincr i l (ltin : i < n) :
 pose F l := M (inord k.+1) (inord l) - M (inord k) (inord l).
 transitivity (\sum_(0 <= l < j) (F l.+1 - F l)).
   rewrite !big_nat; apply eq_bigr => l /= /leq_trans/(_ lejn) ltln.
-  rewrite mxE !inordK // subnBA; last exact: Cincr.
+  rewrite mxE !inordK // subnBA; first exact: Cincr.
   by congr (_ - _); rewrite addnBAC //; exact: Cincr.
-rewrite {}/F telescope_sumn_in2 //; first by rewrite !inord0 !R0 !subn0.
+rewrite {}/F telescope_sumn_in2 //; last by rewrite !inord0 !R0 !subn0.
 apply: bounded_le_homo => l /= /leq_trans/(_ lejn) ltln.
-rewrite leq_subLR addnBA /=; last exact: Cincr.
+rewrite leq_subLR addnBA /=; first exact: Cincr.
 move/(_ (Ordinal ltkn) (Ordinal ltln)): Mpos => /= Mpos.
 rewrite leq_subRL [X in _ <= X]addnC //.
 exact: (leq_trans (leq_addr _ _) Mpos).
@@ -388,7 +388,7 @@ transitivity
     ( \sum_(0 <= k < i) (M (inord k.+1) (inord j) - M (inord k) (inord j)) ).
   rewrite !big_nat; apply: eq_bigr => k /= /leq_trans/(_ (ltn_ord i)) ltkn /=.
   exact: sum_mxdiff.
-rewrite telescope_sumn_in2 //; first by rewrite !inord_val inord0 C0 subn0.
+rewrite telescope_sumn_in2 //; last by rewrite !inord_val inord0 C0 subn0.
 apply: bounded_le_homo => k /= ltki.
 by apply/Cincr/(leq_trans ltki).
 Qed.
@@ -446,8 +446,8 @@ Fact Bruhat1s s : 1 <=B s.
 Proof.
 suff lecoeff t i j : perm_mxsum t i j <= i.
   apply/BruhatP => i j; rewrite perm_mxsum1 leq_min lecoeff /=.
-  rewrite [X in X <= _](_ : _ = (mxsum (perm_mx s))^T j i);
-    last by rewrite !mxE.
+  rewrite [X in X <= _](_ : _ = (mxsum (perm_mx s))^T j i).
+    by rewrite !mxE.
   by rewrite -mxsum_tr tr_perm_mx lecoeff.
 rewrite perm_mxsumE.
 have /sum_lt1 {2}<- : i <= n by [].
@@ -462,7 +462,7 @@ Proof.
 apply/BruhatP => i j; rewrite perm_mxsum_maxperm perm_mxsumE.
 rewrite sum1dep_card setIE cardsI.
 rewrite -[X in _ <=_ + X - _](card_imset _ (@perm_inj _ s)) /=.
-rewrite [imset _ _](_ : _ = [set x : 'I_n | x < j]); first last.
+rewrite [imset _ _](_ : _ = [set x : 'I_n | x < j]).
   apply/setP => /= k /[!inE].
   by rewrite -(permKV s k) mem_imset // inE permKV.
 rewrite -![in X in _ <= X - _]sum1dep_card !sum_lt1 //; apply: leq_sub2l.
@@ -526,7 +526,7 @@ suff {s t} mxsum_maxpermM i j (s : 'S_N) :
   by rewrite !{}mxsum_maxpermM; apply/leq_sub2l/HB.
 have /[!ltnS]/sum_lt1 <- := ltn_ord i.
 rewrite !perm_mxsumE !big_mkcondr_idem //=.
-set S := (X in _ = _ - X); apply/eqP; rewrite -(eqn_add2r S) subnK; first last.
+set S := (X in _ = _ - X); apply/eqP; rewrite -(eqn_add2r S) subnK.
   by rewrite {}/S; apply leq_sum => k _; case: ltnP.
 rewrite {}/S -big_split_idem //=.
 apply/eqP/eq_bigr => k ltki; rewrite permM permE /=.

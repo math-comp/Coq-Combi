@@ -43,7 +43,7 @@ From mathcomp Require Import tuple finfun finset path bigop order.
 Require Import tools partition Yamanouchi ordtype std tableau stdtab.
 Require Import Schensted congr plactic Greene_inv stdplact.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -115,7 +115,7 @@ elim=> [/= | a0 aw /= IHaw].
     subst a.
     have {Hac}Hbc : c = b.+1 by apply/anti_leq; rewrite Hbc Hac.
     subst c; subst yc.
-    rewrite incr_nthC is_part_incr_nth1E; first exact Hpart.
+    rewrite incr_nthC is_part_incr_nth1E; last exact Hpart.
     exact: is_part_eval_yam.
   + move: Hrew H => /plact2P[a] [b] [c] [].
     rewrite leEnat ltEnat /= => /andP[Hab Hbc] -> -> /=.

@@ -36,7 +36,7 @@ From mathcomp Require Import finset fingroup perm matrix.
 
 Require ordtype.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -163,7 +163,8 @@ Lemma det_unitrig : \det Mat = 1.
 Proof.
 have [Muni Mtrig] := unitrigP M Munitrig.
 rewrite /Mat /determinant (bigD1 1%g) //=.
-rewrite !big1; last by move=> i _; rewrite mxE perm1 Muni.
+rewrite !big1; last by rewrite addr0 mulr_sign odd_perm1.
+  by move=> i _; rewrite mxE perm1 Muni.
 rewrite ?mulr1 ?odd_perm1 ?expr0 ?addr0 //.
 move=> s Hs.
 suff [i /eqP Hi] : exists i, M (enum_val i) (enum_val (s i)) == 0.
@@ -188,7 +189,7 @@ rewrite (reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 transitivity (mulmx (invmx Mat) Mat (enum_rank t) (enum_rank u)).
   rewrite mxE; apply eq_bigr => /= i _.
   by rewrite /Minv mxE enum_rankK enum_valK.
-rewrite mulVmx; last by rewrite unitmxE det_unitrig unitr1.
+rewrite mulVmx; first by rewrite unitmxE det_unitrig unitr1.
 rewrite mxE; congr (nat_of_bool _)%:R.
 by apply/eqP/eqP => [/(can_inj (@enum_rankK _))|] ->.
 Qed.
@@ -199,7 +200,7 @@ rewrite (reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 transitivity (mulmx Mat (invmx Mat) (enum_rank t) (enum_rank u)).
   rewrite mxE; apply eq_bigr => /= i _.
   by rewrite /Minv mxE enum_valK enum_rankK.
-rewrite mulmxV; last by rewrite unitmxE det_unitrig unitr1.
+rewrite mulmxV; first by rewrite unitmxE det_unitrig unitr1.
 rewrite mxE; congr (nat_of_bool _)%:R.
 by apply/eqP/eqP => [/(can_inj (@enum_rankK _))|] ->.
 Qed.
@@ -209,9 +210,9 @@ Proof.
 have [Muni Mtrig] := unitrigP _ Munitrig.
 apply contraR => H; apply/eqP; elim/ordtype.finord_wf: u H => /= u IHu Hu.
 have:= Minvr u t.
-rewrite [X in  _ = (nat_of_bool X)%:R](_ : _ = false) /=; first last.
+rewrite [X in  _ = (nat_of_bool X)%:R](_ : _ = false) /=.
   by apply negbTE; move: Hu; apply contra => /eqP->.
-rewrite (bigID (fun v => v <= u)%O) /= [X in _ + X]big1 ?addr0; first last.
+rewrite (bigID (fun v => v <= u)%O) /= [X in _ + X]big1 ?addr0.
   by move=> v /(contraR (@Mtrig _ _)) /eqP ->; rewrite mul0r.
 rewrite (bigD1 u) //= Muni mul1r big1 ?addr0 // => i /andP[Hneq Hlt].
 rewrite IHu ?mulr0 //.
@@ -223,9 +224,9 @@ Lemma Minv_uni t : Minv t t = 1.
 Proof.
 have [Muni Mtrig] := unitrigP _ Munitrig.
 have:= Minvr t t; rewrite eq_refl /= mulr1n => <-.
-rewrite (bigID (fun v => v <= t)%O) /= [X in _ + X]big1 ?addr0; first last.
+rewrite (bigID (fun v => v <= t)%O) /= [X in _ + X]big1 ?addr0.
   by move=> v /(contraR (@Mtrig _ _))/eqP ->; rewrite mul0r.
-rewrite (bigID (fun v => t <= v)%O) /= [X in _ + X]big1 ?addr0; first last.
+rewrite (bigID (fun v => t <= v)%O) /= [X in _ + X]big1 ?addr0.
   by move=> v /andP[_ /(contraR (@Minv_trig _ _))/eqP->]; rewrite mulr0.
 rewrite (big_pred1 t) ?Muni ?mul1r // => v /=.
 by rewrite eq_le.

@@ -62,7 +62,7 @@ From mathcomp Require Import perm.
 Require Import tools partition ordtype tableau stdtab Schensted congr.
 
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -544,7 +544,7 @@ have Hsizeset : size (set_nth l r pos l) = size r.
   rewrite size_set_nth maxnC /maxn ltnS.
   by move: Hpos; rewrite ltnNge => /negbTE => ->.
 apply: (eq_from_nth (x0 := l)) => [| i].
-- rewrite (_ : size (_ ++ _ :: _) = size r); last by rewrite -Hr !size_cat.
+- rewrite (_ : size (_ ++ _ :: _) = size r); first by rewrite -Hr !size_cat.
   by rewrite Hsizeset.
 - rewrite Hsizeset nth_set_nth -/pos nth_cat Hsize /= => Hi.
   case (ltngtP i pos) => Hipos.
@@ -603,11 +603,11 @@ case (boolP (bump r0 l0)) => [Hbump | Hnbump].
   rewrite !to_word_cons -!cats1 /= -catA => IHt.
   rewrite (@plact_ltrans _ _ _
                          (flatten (rev t) ++ [:: bumped r0 l0] ++ (ins r0 l0))).
-  + by rewrite catA; exact: plact_catl.
   + by apply: plact_catr; exact: congr_bump.
+  + by rewrite catA; exact: plact_catl.
 - rewrite (nbump_bumprowE Hrow0 Hnbump) {IHt}.
   rewrite !to_word_cons -!cats1 -catA cats1.
-  by apply: plact_catr; rewrite nbump_ins_rconsE; first exact: plact_refl.
+  by apply: plact_catr; rewrite nbump_ins_rconsE; last exact: plact_refl.
 Qed.
 
 Corollary Sch_plact u v : RS u == RS v -> u =Pl v .
@@ -724,7 +724,7 @@ Qed.
 Lemma last_ins_lt r l b : (l < b -> last b r < b -> last b (ins r l) < b)%O.
 Proof using.
 rewrite -!nth_last => Hl Hlast.
-rewrite (set_nth_default l b); first last.
+rewrite (set_nth_default l b).
   have : (ins r l) != [::] by apply: set_nth_non_nil.
   by case : (ins r l).
 rewrite nth_set_nth size_set_nth /= maxnC /maxn ltnS.

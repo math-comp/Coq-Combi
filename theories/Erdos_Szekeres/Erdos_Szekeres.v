@@ -30,7 +30,7 @@ From mathcomp Require Import tuple finfun finset bigop path order.
 
 Require Import partition tableau Schensted ordtype Greene Greene_inv.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -83,7 +83,7 @@ move=> [] Hltn.
 - right => {m}.
   have := Greene_col_RS 1 s.
   rewrite -sum_conj.
-  rewrite (_ : \sum_(l <- _) minn l 1 = size (shape (RS s))); first last.
+  rewrite (_ : \sum_(l <- _) minn l 1 = size (shape (RS s))).
     have := is_part_sht (is_tableau_RS s).
     move: (shape _) => sh.
     elim: sh => [// | s0 sh IHsh Hpart]; first by rewrite big_nil.
@@ -96,7 +96,7 @@ move=> [] Hltn.
   by exists x.
 - left => {n}.
   have := Greene_row_RS 1 s.
-  rewrite (_ : sumn _ = head 0 (shape (RS s))); first last.
+  rewrite (_ : sumn _ = head 0 (shape (RS s))).
     by case: (shape (RS s)) => [| s0 l] //=; rewrite take0 addn0.
   rewrite /Greene_row; move: Hltn => /[swap] <-{tab}.
   case: (Greene_rel_one s <=%O) => x [Hsubs] [Hsort <- Hn].

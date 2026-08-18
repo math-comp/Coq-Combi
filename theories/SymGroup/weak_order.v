@@ -33,7 +33,7 @@ From mathcomp Require Import fingroup perm morphism presentation.
 
 Require Import permcomp tools permuted combclass congr presentSn ordtype.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -250,7 +250,7 @@ apply/idP/idP => [/lepermP/= [u]->{t} | H].
   pose il := lift ord_max i.
   have Hi : il < n0 by rewrite /il lift_max ltn_ord.
   have Hsi : 's_i = 's_il :> 'S_n by rewrite lift_max.
-  rewrite Hsi invset_eltrR //; first exact: subsetU1.
+  rewrite Hsi invset_eltrR //; last exact: subsetU1.
   by rewrite length_descR // -{}Hsi Hlen (lengthKL Hlen) length_eltr addn1 ltnS.
 
 have /subnKC: length s <= length t by rewrite /length subset_leq_card.

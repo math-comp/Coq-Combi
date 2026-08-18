@@ -70,7 +70,7 @@ From mathcomp Require Import ssralg matrix mxalgebra algC classfun.
 Require Import partition tools sorted.
 Require Import permcomp fibered_set cycles.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -192,9 +192,9 @@ rewrite /cymap /cymapcan /canporbit porbit_perm.
 have:= erefl (cymapcan x); rewrite {1}/cymapcan.
 case: pickP => [im Him /= Hdefim | Habs] /=.
 - rewrite /canporbit (_ : [pick y in  _] = some im) //.
-  rewrite [LHS](_ : _ = [pick y in CM (porbit s x)]); first last.
-  apply eq_pick => y /=; congr (y \in _).
-  have:= fs_porbitP x => /imsetP[y0 _ Hy0].
+  rewrite [LHS](_ : _ = [pick y in CM (porbit s x)]).
+    apply eq_pick => y /=; congr (y \in _).
+    have:= fs_porbitP x => /imsetP[y0 _ Hy0].
     by move: Him; rewrite Hy0 /= -eq_porbit_mem => /eqP ->.
   rewrite Hdefim /cymapcan.
   by case: pickP => // /(_ im); rewrite Him.
@@ -219,7 +219,7 @@ Lemma cymapE (U V : finType) (s : {perm U}) (t : {perm V})
    {in porbits s, CM1 =1 CM2} -> cymap CM1 =1 cymap CM2.
 Proof using.
 move=> Heq x; rewrite /cymap /cymapcan /=.
-rewrite -Heq; last exact: imset_f.
+rewrite -Heq; first exact: imset_f.
 case: pickP => // Habs.
 exfalso; move: Habs.
 have:= fs_porbitP CM1 x => /imsetP[y _ ->] /(_ y).
@@ -243,7 +243,7 @@ Lemma cymap_comp (U V W: finType)
 Proof using.
 move=> Hcomp x; rewrite /cymap /=.
 rewrite /cymapcan /= porbit_perm porbit_cymapcan indporbit_cymap; congr (_ _).
-have /= -> := (Hcomp (porbit u x)); last exact: imset_f.
+have /= -> := (Hcomp (porbit u x)); first exact: imset_f.
 case: (pickP (mem (CMuw _))) => // Habs; exfalso.
 have:= fs_porbitP CMuw x => /imsetP[z _ Hz].
 by have:= Habs z; rewrite Hz /= porbit_id.
@@ -258,7 +258,7 @@ move=> H x /=.
 have porbits_stab_id (s : {perm U}) : id @: porbits s \subset porbits s.
   by rewrite imset_id.
 pose CMid s := PorbitMap (porbits_stab_id s) (fun x _ => erefl #|x|).
-rewrite [LHS](cymap_comp (CMuw := (CMid u))); first exact: cymap_id.
+rewrite [LHS](cymap_comp (CMuw := (CMid u))); last exact: cymap_id.
 by move=> y Hy /=; exact: H.
 Qed.
 
@@ -317,7 +317,7 @@ rewrite !porbitE; apply/setP => y.
 apply /idP/imsetP => [|[x0] Hx0 ->].
 - rewrite -conjg_cycle => Hy.
   exists ((a ^-1)%g y); last by rewrite permKV.
-  move: Hy; rewrite {1}(_: y = a ((a ^-1)%g (y))); last by rewrite permKV.
+  move: Hy; rewrite {1}(_: y = a ((a ^-1)%g (y))); first by rewrite permKV.
   by rewrite -{1}apermE orbit_conjsg.
 - by rewrite -conjg_cycle -apermE orbit_conjsg.
 Qed.
@@ -327,7 +327,7 @@ Lemma porbits_conjg s a :
 Proof using.
 apply /setP => /= X0.
 apply /imsetP/imsetP => [[x _]|[x /imsetP[x0 _ ->]] ->] /=.
-- rewrite (_: x = a ((a ^-1)%g (x))); last by rewrite permKV.
+- rewrite (_: x = a ((a ^-1)%g (x))); first by rewrite permKV.
   rewrite porbit_conjg => ->.
   exists (porbit s ((a^-1)%g x)) => //.
   by apply /imsetP; exists ((a^-1)%g x).
@@ -340,11 +340,11 @@ Proof using.
 apply esym; apply val_inj => /=.
 rewrite porbits_conjg; apply/perm_sortP => //=.
 rewrite [X in perm_eq X _](eq_map
-                             (g := fun X : {set T} => #|a @: X|)); first last.
-  by move => x;  apply esym; apply card_imset; exact: perm_inj.
+                             (g := fun X : {set T} => #|a @: X|)) => [x|].
+  by apply esym; apply card_imset; exact: perm_inj.
 rewrite (map_comp (fun x => #{x})); apply: perm_map.
 apply uniq_perm.
-- rewrite map_inj_uniq; first exact: enum_uniq.
+- rewrite map_inj_uniq; last exact: enum_uniq.
   by apply imset_inj; apply: perm_inj.
 - exact: enum_uniq.
 - move=> x; rewrite mem_enum.
@@ -373,14 +373,14 @@ Lemma psupport_conjg s a : psupport (s ^ a) = [set a x | x in psupport s].
 Proof using.
 rewrite -!(cover_partition (partition_psupport _)) /porbit_set.
 rewrite porbits_conjg /cover (big_morph _ (imsetU _) (imset0 _)).
-rewrite -[RHS](big_imset id) /=; first last.
-  by move=> X Y _ _; apply: imset_inj; apply perm_inj.
+rewrite -[RHS](big_imset id) /= => [X Y _ _| ].
+  exact/imset_inj/perm_inj.
 apply/eq_bigl => X; rewrite !inE.
 apply/andP/imsetP => [[/imsetP[/= C HC ->{X}]] | [/= C]].
-- rewrite card_imset; last exact: perm_inj.
+- rewrite card_imset; first exact: perm_inj.
   by move=> cardC; exists C; rewrite // inE HC cardC.
 - rewrite inE => /andP[HC cardC] ->{X}; split; first exact: imset_f.
-  by rewrite card_imset; last exact: perm_inj.
+  by rewrite card_imset; first exact: perm_inj.
 Qed.
 
 Lemma card_psupport_conjg s a : #|psupport s| = #|psupport (s ^ a)%g|.
@@ -425,16 +425,15 @@ apply esym; apply cycle_decP; constructor => [x /imsetP[x0 Hx0 ->]||].
  (* We tranfert the computation in the Z-module associated [abel] *)
  (* Product in the group become commutative sum in the Z-module   *)
   rewrite [LHS](_ : _ =
-    val (\sum_(i in [set (c ^ a)%g | c in cycle_dec s]) fmod abel i)%R);
-      first last.
-    rewrite -(morph_prod [morphism of fmod abel]);
-      last by move=> i; apply: mem_gen.
+    val (\sum_(i in [set (c ^ a)%g | c in cycle_dec s]) fmod abel i)%R).
+    rewrite -(morph_prod [morphism of fmod abel]) => [i|].
+      exact: mem_gen.
     rewrite -[LHS](fmodK abel) //.
     by apply group_prod => i; apply: mem_gen.
-  rewrite big_imset /=; last by move=> x y _ _; apply: conjg_inj.
-  rewrite -(morph_prod [morphism of fmod abel]); first last.
-    by move=> i Hi; apply mem_gen; apply: imset_f.
-  rewrite fmodK; first last.
+  rewrite big_imset /= => [x y _ _| ]; first exact: conjg_inj.
+  rewrite -(morph_prod [morphism of fmod abel]) => [i Hi |].
+    exact/mem_gen/imset_f.
+  rewrite fmodK.
     by apply group_prod => i Hi; apply mem_gen; apply: imset_f.
   by rewrite -conjg_prod cycle_decE.
 Qed.
@@ -537,7 +536,7 @@ apply/idP/idP => [|Hx]; rewrite next_nth.
     rewrite Hax Hbx.
     case (ltnP (index x l).+2 (size (b :: l))) => Hindex.
     * have:= Hxb; rewrite -index_mem => Hindex1.
-      rewrite -{2}(nth_index a Hxb) nth_uniq //=; last by apply /andP.
+      rewrite -{2}(nth_index a Hxb) nth_uniq //=; first by apply /andP.
       by rewrite Hbx gtn_eqF.
     * by rewrite nth_default ?Hax.
 Qed.
@@ -631,7 +630,7 @@ Proof using.
 move=> Hpart; apply /setP => X.
 apply /idP/idP => HX.
 - case: (boolP (X \in porbit_set (perm_of_setpart P))).
-  + rewrite porbit_set_of_disjoint; last exact: disj_perm_of_setpart.
+  + rewrite porbit_set_of_disjoint; first exact: disj_perm_of_setpart.
     move => /bigcupP[C] /imsetP[X0].
     rewrite inE => /andP[H HX0] ->.
     by rewrite porbit_set_of_set // inE => /eqP ->.
@@ -639,8 +638,8 @@ apply /idP/idP => HX.
     move: HX => /imsetP[x _ ->{X}].
     rewrite psupport_card_porbit => Hsupp.
     have:= Hsupp; rewrite in_psupport negbK porbit_fix => /eqP ->.
-    move: Hsupp; rewrite psupport_of_disjoint; last exact: disj_perm_of_setpart.
-    rewrite -(big_imset id) /=; first last.
+    move: Hsupp; rewrite psupport_of_disjoint; first exact: disj_perm_of_setpart.
+    rewrite -(big_imset id) /=.
       move=> C D /imsetP[c]; rewrite inE => /andP[_ cardc ->{C}].
       move=>     /imsetP[d]; rewrite inE => /andP[_ cardd ->{D}].
       by rewrite !psupport_perm_of_porbit // => ->.
@@ -659,8 +658,8 @@ apply /idP/idP => HX.
   + move => /cards1P[x Hx]; subst X.
     apply /imsetP; exists x => //.
     apply esym; apply/eqP; rewrite -porbit_fix.
-    rewrite -[_ == x]negbK -in_psupport psupport_of_disjoint;
-      last exact: disj_perm_of_setpart.
+    rewrite -[_ == x]negbK -in_psupport psupport_of_disjoint.
+      exact: disj_perm_of_setpart.
     apply /bigcupP => /exists_inP; apply /negP; rewrite negb_exists_in.
     apply /forall_inP => C /imsetP[x0]; rewrite inE => /andP[Hx0 Hcard] ->.
     rewrite psupport_perm_of_porbit //.
@@ -677,7 +676,7 @@ apply /idP/idP => HX.
     rewrite neq_ltn => /orP[ | Hcard HX Hset0].
       by rewrite ltnS leqn0 cards_eq0 => /eqP -> ->.
     suff: X \in porbit_set (perm_of_setpart P) by rewrite inE => /andP[].
-    rewrite porbit_set_of_disjoint; last exact: disj_perm_of_setpart.
+    rewrite porbit_set_of_disjoint; first exact: disj_perm_of_setpart.
     apply /bigcupP; exists (perm_of_porbit X);
       last by rewrite porbit_set_of_set ?inE.
     apply /imsetP; exists X => //.
@@ -834,7 +833,7 @@ Qed.
 Lemma card_classes_perm :
   #|classes [set: {perm T}]| = #|{: 'P_#|T| }|.
 Proof using.
-rewrite -imset_classCT card_imset; last exact: classCT_inj.
+rewrite -imset_classCT card_imset; first exact: classCT_inj.
 by apply eq_card => s; rewrite !inE.
 Qed.
 

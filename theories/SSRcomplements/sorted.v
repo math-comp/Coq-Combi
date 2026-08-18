@@ -22,7 +22,7 @@ From Corelib Require Import Setoid.
 From mathcomp Require Import ssreflect ssrbool ssrfun ssrnat eqtype fintype choice seq.
 From mathcomp Require Import path order.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -121,7 +121,7 @@ split => H.
 - move=> i j; move Hdiff : (j - i) => diff.
   elim: diff i j Hdiff => [| diff IHdiff] i j /=.
   + move/eqP; rewrite -/(leq j i) => H1 /andP[H2 Hj].
-    by rewrite (_ : i = j); last by apply/anti_leq; rewrite H1 H2.
+    by rewrite (_ : i = j); first by apply/anti_leq; rewrite H1 H2.
   + move=> Hdiff => /andP[_ Hj].
     have Hiltj : i < j by rewrite -subn_gt0 Hdiff.
     apply: (Rtrans (y := nth Z r i.+1)).
@@ -176,12 +176,12 @@ Lemma enum_ord_sorted_ltn N :
 Proof.
 rewrite /sorted; case Henum : (enum 'I_N) => [//= | a l].
 rewrite -(map_path (h := val) (e := ltn) (b := pred0)) //.
-- rewrite (_ : l = behead (enum 'I_N)); last by rewrite Henum.
-  rewrite (_ : val a = head 0 (map val (enum 'I_N))); last by rewrite Henum.
+- by rewrite (eq_has (a2 := pred0)) ?has_pred0.
+- rewrite (_ : l = behead (enum 'I_N)); first by rewrite Henum.
+  rewrite (_ : val a = head 0 (map val (enum 'I_N))); first by rewrite Henum.
   rewrite -behead_map val_enum_ord.
   case: N {a l Henum} => [//= | N] /=.
   exact: (iota_ltn_sorted 0 N.+1).
-- by rewrite (eq_has (a2 := pred0)); first by rewrite has_pred0.
 Qed.
 
 Lemma enum_ord_sorted N :

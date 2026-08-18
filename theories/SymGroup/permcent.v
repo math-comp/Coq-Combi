@@ -78,7 +78,7 @@ Require Import tools partition permcomp cycles cycletype.
 
 Import GroupScope.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -212,12 +212,12 @@ case: (boolP (x \in S)) => Hx.
 - apply/setP => y; apply/imsetP/idP => [[z Hz ->{y}] /= | Hy].
   + have:= Hz; rewrite -eq_porbit_mem => /eqP Hsz.
     rewrite apermE restr_permE //.
-    - rewrite -Hsz -{1}(expg1 s); exact: mem_porbit.
-    - by rewrite (stab_porbit nSs) // Hsz -stab_porbit.
+    * by rewrite (stab_porbit nSs) // Hsz -stab_porbit.
+    * rewrite -Hsz -{1}(expg1 s); exact: mem_porbit.
   + have HsVy : s^-1 y \in porbit s x.
       by rewrite porbit_sym -(porbit_perm _ 1) expg1 permKV porbit_sym.
     exists ((s ^-1) y); first exact: HsVy.
-    rewrite /= apermE restr_permE => //; first by rewrite permKV.
+    rewrite /= apermE restr_permE => //; last by rewrite permKV.
     by move: Hx; rewrite (stab_porbit nSs) => /subsetP; apply.
 - move: nSs; rewrite -astabsC => nSs.
   have: x \in ~: S by rewrite inE.
@@ -232,18 +232,18 @@ Qed.
 
 Lemma porbitgrpE s : 'CC(s) = \big[dprod/1]_(c in cycle_dec s) <[c]>.
 Proof using.
-rewrite disjoint_psupport_dprodE; last exact: disjoint_cycle_dec.
+rewrite disjoint_psupport_dprodE; first exact: disjoint_cycle_dec.
 apply/setP => /= t; apply/idP/idP.
 - rewrite inE => /andP[Hcomm Hstab].
   have:= partition_psupport s => /and3P[/eqP Hcov Htriv _].
-  rewrite -(perm_decE (S := porbit_set s) (s := t)) //; first last.
-  + by apply/astabP => C; rewrite /porbit_set inE => /andP[/(astabP Hstab)].
+  rewrite -(perm_decE (S := porbit_set s) (s := t)) //.
   + rewrite {}Hcov; apply/subsetP => x.
     rewrite !in_psupport (porbit_fix s); apply contra => /eqP Hx.
     have /(astabP Hstab) : porbit s x \in porbits s by apply: imset_f.
     rewrite Hx => /setP/(_ x).
     rewrite inE eq_refl /= => /imsetP[y].
     by rewrite inE => /eqP -> /=; rewrite apermE => <-.
+  + by apply/astabP => C; rewrite /porbit_set inE => /andP[/(astabP Hstab)].
   + rewrite /cycle_dec bigprodGE.
     apply/group_prod => c /imsetP[C HC ->{c}].
     apply mem_gen; apply/bigcupP; exists (restr_perm C s).
@@ -261,16 +261,16 @@ Lemma card_porbitgrpE s : #|'CC(s)| = (\prod_(i <- cycle_type s) i)%N.
 Proof using.
 rewrite -(bigdprod_card (esym (porbitgrpE s))).
 rewrite /cycle_type /= /setpart_shape /cycle_dec.
-rewrite big_imset /=; last exact: restr_perm_inj.
-rewrite [RHS](perm_big [seq #{x} | x in porbits s]);
-  last by apply/permPl; apply perm_sort.
+rewrite big_imset /=; first exact: restr_perm_inj.
+rewrite [RHS](perm_big [seq #{x} | x in porbits s]).
+  exact/permPl/perm_sort.
 rewrite /= [RHS]big_map big_enum.
 rewrite [RHS](bigID (fun X => #{X} == 1%N)) /=.
-rewrite [X in _ = (X * _)%N]big1 ?mul1n; last by move=> i /andP[_ /eqP].
-rewrite [RHS](eq_bigl (mem (porbit_set s))) /=;
-  last by move=> C; rewrite /porbit_set !inE.
+rewrite [X in _ = (X * _)%N]big1 ?mul1n => [i /andP[_ /eqP] // |].
+rewrite [RHS](eq_bigl (mem (porbit_set s))) /= => [C |].
+  by rewrite /porbit_set !inE.
 apply eq_bigr => X HX; rewrite -orderE.
-rewrite order_cyclic; last by rewrite unfold_in (porbit_set_restr HX) cards1.
+rewrite order_cyclic; first by rewrite unfold_in (porbit_set_restr HX) cards1.
 by rewrite psupport_restr_perm.
 Qed.
 
@@ -355,13 +355,12 @@ Proof using.
 move=> /= P HP; apply/permP => /= C.
 rewrite /inporbits /=.
 case: (boolP (C \in porbits s)) => HC.
-- rewrite !restr_permE // ?actpermE /=; first last.
+- rewrite !restr_permE // ?actpermE /=.
     apply/astabsP => {HC} C; rewrite /= apermE actpermE /=.
     apply (actsP (cent1_act_on_porbits s)).
     exact: permcyclesP.
   move: HC => /imsetP[x _ ->{C}].
-  rewrite cent1_act_porbit; last exact: permcyclesP.
-  exact: porbit_permcycles.
+  rewrite cent1_act_porbit; [exact: permcyclesP | exact: porbit_permcycles].
 - rewrite (out_perm (restr_perm_on _ _) HC).
   by move: HP; rewrite inE => /andP[]; rewrite inE => /out_perm ->.
 Qed.
@@ -410,10 +409,10 @@ Lemma stab_iporbitsE_prod s :
 Proof using.
 apply/setP => t.
 rewrite inE bigprodGE; apply/andP/idP => [[Ht /bigcapP/(_ _ isT) Hcyi] | Ht].
-- rewrite -(perm_decE (s := t) (trivIset_iporbits s)); first last.
+- rewrite -(perm_decE (s := t) (trivIset_iporbits s)).
+  + by move: Ht; rewrite inE -psupport_perm_on cover_iporbits.
   + apply/astabP => /= CS /imsetP[/= i _ ->{CS}].
     by apply/astab1P; rewrite astab1_set; exact: Hcyi.
-  + by move: Ht; rewrite inE -psupport_perm_on cover_iporbits.
   apply group_prod => u /imsetP[/= X /imsetP[/= i _ ->{X}] ->{u}].
   apply mem_gen; apply/bigcupP; exists i; first by [].
   by rewrite inE; exact: restr_perm_on.
@@ -473,7 +472,7 @@ have /= HyV := groupVr Hy.
 rewrite inE; apply/andP; split.
 - by apply groupM; last exact: groupM.
 - apply/astabP => C /imsetP[x _ ->{C}].
-  rewrite !actM /= cent1_act_porbit // zCporbits; last exact: imset_f.
+  rewrite !actM /= cent1_act_porbit // zCporbits; first exact: imset_f.
   by rewrite -cent1_act_porbit // -!actM mulVg act1.
 Qed.
 
@@ -501,13 +500,13 @@ rewrite -(mulKg str t); apply mem_mulg.
   split; first exact: groupM.
   apply/astabP => C /imsetP[x _ ->{C}].
   rewrite !actM /= cent1_act_porbit //=.
-  rewrite porbit_permcycles; first last.
+  rewrite porbit_permcycles.
     by rewrite -inporbits_im; apply imset_f; apply groupVr.
-  rewrite /inporbits /= restr_permE; first last.
-  + exact: imset_f.
+  rewrite /inporbits /= restr_permE.
   + apply/astabsP => X /=; rewrite actpermK.
     apply astabs_act; move: Ht => /groupVr; apply/subsetP => /=.
     exact: cent1_act_on_porbits.
+  + exact: imset_f.
   by rewrite actpermE /= -actM mulVg act1.
 Qed.
 
@@ -586,8 +585,8 @@ Qed.
 Corollary card_cent1_perm s : #|'C[s]| = zcard (cycle_type s).
 Proof using.
 have /esym/sdprod_card <- := cent1_permE s.
-rewrite card_porbitgrpE card_in_imset // ?setIid; first last.
-  by apply: can_in_inj; exact: permcyclesK.
+rewrite card_porbitgrpE card_in_imset // ?setIid.
+  exact/can_in_inj/permcyclesK.
 by rewrite /zcard card_stab_iporbits // sumn_intpartn.
 Qed.
 
@@ -595,8 +594,8 @@ Theorem card_class_perm s :
   #|class s [set: {perm T}]| = #|T|`! %/ zcard (cycle_type s).
 Proof using.
 rewrite -card_cent1_perm -index_cent1 /= -divgI.
-rewrite (eq_card (B := perm_on setT)); first last.
-  move=> p; rewrite inE unfold_in /perm_on /=.
+rewrite (eq_card (B := perm_on setT)) => [p |].
+  rewrite inE unfold_in /perm_on /=.
   by apply/esym/subsetP => i _; rewrite in_set.
 rewrite card_perm cardsE setTI; congr (_ %/ #|_|).
 by rewrite /= setTI.

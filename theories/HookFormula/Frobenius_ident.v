@@ -32,7 +32,7 @@ From mathcomp Require Import ssreflect ssrfun ssrbool eqtype choice ssrnat seq
         ssrint div rat fintype finset bigop path ssralg ssrnum order.
 (* Import bigop before ssralg/ssrnum to get correct printing of \sum \prod*)
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -72,11 +72,11 @@ have /card_partition -> :
     by rewrite eqsh eqxx in neqsh.
   - apply/negP=> /imsetP[/= sh _ Heq].
     by have [t] := pairshP sh; rewrite -Heq inE.
-rewrite big_imset /=; first last.
-  move=> sh1 sh2 _ _ eqsh; have [t] := pairshP sh1.
+rewrite big_imset /= => [sh1 sh2 _ _ eqsh |].
+  have [t] := pairshP sh1.
   by rewrite eqsh inE /= shape_deg_stdtabn_of_sh => /andP[/eqP].
 apply eq_bigr => sh _; rewrite -mulnn -!cardsT -cardsX.
-rewrite [RHS](eq_card (B := setT)) /=; last by move=> p; rewrite !inE.
+rewrite [RHS](eq_card (B := setT)) /= => [p /[!inE] //|].
 pose to_stpn (p : (stdtabsh sh) * (stdtabsh sh)) : stpn :=
   (stdtabn_of_sh p.1, stdtabn_of_sh p.2).
 have /card_imset <- : injective to_stpn.
@@ -121,7 +121,7 @@ pose stdrsinv p := RStabinv (RSTabPair (stdrspairP p)).
 have from_pairP p : is_std_of_n n (stdrsinv p).
   case: p => [t1 t2]; rewrite /= /stdrsinv /= -RSstdE -size_RS -RStabmapE.
   rewrite -[RStabmap _]/(val (RStab _)) RStabinvK /stdrspair /=.
-  rewrite [(_).1](_ : _ = val t1); last by case eqP.
+  rewrite [(_).1](_ : _ = val t1); first by case eqP.
   by rewrite stdtabnP /= size_tab_stdtabn.
 pose from_pair p := StdWordN (from_pairP p).
 have to_pairK : cancel to_pair from_pair.
@@ -147,13 +147,12 @@ Theorem Frobenius_ident_rat :
 Proof using.
 rewrite -[RHS]mulr1.
 have Hfn0 : n`!%:Q != 0 by rewrite intr_eq0 eqz_nat -lt0n fact_gt0.
-rewrite -{5}(@divff _ ((n`!%:Q) ^+ 2)); last by rewrite sqrf_eq0.
+rewrite -{5}(@divff _ ((n`!%:Q) ^+ 2)); first by rewrite sqrf_eq0.
 rewrite mulrA mulr_suml.
-rewrite (eq_bigr (fun p : 'P_n => ((n`! %/ (hook_length_prod p)) ^ 2)%N%:Q));
-  first last.
+rewrite (eq_bigr (fun p : 'P_n => ((n`! %/ (hook_length_prod p)) ^ 2)%N%:Q)).
   move=> p _; rewrite PoszM intrM.
   have -> : (n`! %/ hook_length_prod p)%:Q = (n`!)%:Q / (hook_length_prod p)%:Q.
-    rewrite -[LHS]mulr1 -{2}(@divff _ (hook_length_prod p)%:Q); first last.
+    rewrite -[LHS]mulr1 -{2}(@divff _ (hook_length_prod p)%:Q).
       by rewrite intr_eq0 eqz_nat /=; apply: (hook_length_prod_non0 p).
     rewrite !mulrA -intrM -PoszM.
     have:= hook_length_prod_div p.

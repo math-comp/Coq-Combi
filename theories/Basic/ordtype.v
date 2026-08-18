@@ -44,7 +44,7 @@ From mathcomp Require Import all_boot.
 From mathcomp Require Import order.
 Require Import tools.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -395,8 +395,8 @@ Qed.
 Lemma perm_allLeq u v a : perm_eq u v -> allLeq u a -> allLeq v a.
 Proof using.
 move=> Hperm /allLeqP; rewrite (maxL_perm (b := a) (v := v)).
-- by move=> Hall; apply/allLeqP.
 - by rewrite perm_cons.
+- by move=> Hall; apply/allLeqP.
 Qed.
 Lemma perm_allLeqE u v a : perm_eq u v -> allLeq u a = allLeq v a.
 Proof using.
@@ -774,7 +774,7 @@ Lemma nth_rembig s i :
 Proof using.
 case Hs : s => [//= | s0 s'].
 rewrite /shift_pos -rembigE nth_cat -Hs.
-rewrite size_take posbig_size; last by rewrite Hs.
+rewrite size_take posbig_size; first by rewrite Hs.
 case (ltnP i (posbig s)) => Hipos.
 - by rewrite nth_take.
 - by rewrite nth_drop addSn subnKC.

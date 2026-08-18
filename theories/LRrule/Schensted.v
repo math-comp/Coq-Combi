@@ -127,7 +127,7 @@ From mathcomp Require Import all_boot order.
 From mathcomp Require Import perm fingroup.
 Require Import tools partition Yamanouchi ordtype subseq tableau std stdtab.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -477,8 +477,8 @@ case: (si =P wn) => [-> {si} | /eqP Hsiwn Hsubs Hrow].
       by rewrite (set_nth_default inh wn Hszlt); exact: (le_trans Hlt Hsiwn).
     rewrite size_rcons (bump_size_ins HSch Hbump); split.
     * exact: (leq_ltn_trans Hszpos (bump_inspos_lt_size HSch Hbump)).
-    * rewrite {2}(_: wn = nth inh (ins (Sch w) wn) (inspos (Sch w) wn));
-        last by rewrite /ins nth_set_nth_any eq_refl.
+    * rewrite {2}(_: wn = nth inh (ins (Sch w) wn) (inspos (Sch w) wn)).
+        by rewrite /ins nth_set_nth_any eq_refl.
       apply (is_rowP _ _ (is_row_ins HSch wn)).
       by rewrite Hszpos size_set_nth leq_max ltnSn.
 
@@ -486,14 +486,14 @@ case: (si =P wn) => [-> {si} | /eqP Hsiwn Hsubs Hrow].
   + rewrite (nbump_ins_rconsE HSch Hnbump) !size_rcons nth_rcons.
     split; first by [].
     case: (leqP (size s).+2 (size (Sch w))) => Hsz.
-    * apply: (@le_trans _ T (last inh (Sch w)) _ wn); first last.
-        rewrite -nth_last (set_nth_default wn inh);
-          first by rewrite nth_last -notbump.
+    * apply: (@le_trans _ T (last inh (Sch w)) _ wn).
+        rewrite -(nth_last inh).
+        apply: (is_rowP _ _ HSch).
+        have:= Hsz; rewrite -{1}(ltn_predK Hsz) ltnS => -> /=.
+        by rewrite -{2}(ltn_predK Hsz); exact: ltnSn.
+      rewrite -nth_last (set_nth_default wn inh).
         by rewrite -{2}(ltn_predK Hsz).
-      rewrite -(nth_last inh).
-      apply: (is_rowP _ _ HSch).
-      have:= Hsz; rewrite -{1}(ltn_predK Hsz) ltnS => -> /=.
-      by rewrite -{2}(ltn_predK Hsz); exact: ltnSn.
+      by rewrite nth_last -notbump.
     * case eqP => [// | Habs].
       exfalso; rewrite ltnS in Hsz; move: Habs => /eqP.
       by rewrite eqn_leq Hsz Hszlt.
@@ -1343,7 +1343,7 @@ Qed.
 Lemma RSclass_countE w : count_mem w (RSclass (RS w)) = 1.
 Proof using.
 rewrite count_map.
-rewrite (eq_in_count (a2 := pred1 ((RSmap w).2))); first last.
+rewrite (eq_in_count (a2 := pred1 ((RSmap w).2))).
   move=> y /= /(allP (enum_yamevalP (is_part_sht (is_tableau_RS _)))).
   rewrite /is_yam_of_eval => /andP[Hyam /eqP Hsh].
   apply/idP/idP => /eqP H.
@@ -1440,7 +1440,7 @@ Proof using.
 rewrite /RStab /RStabinv /RStabmap.
 move=> w /=; have:= is_yam_RSmap2 w.
 case H : (RSmap w) => [P Q] /= Hyam.
-by rewrite stdtab_of_yamK; first by rewrite -H (RSmapK w).
+by rewrite stdtab_of_yamK; last by rewrite -H (RSmapK w).
 Qed.
 Lemma RStabinvK : cancel RStabinv RStab.
 Proof using.
@@ -1448,8 +1448,8 @@ rewrite /RStab /RStabinv /RStabmap.
 move=> [[P Q] H] /=; apply: pqpair_inj => /=.
 move: H; rewrite /is_RStabpair => /and3P[Htab Hstdtab Hshape] //=.
 rewrite RSmapinv2K.
-+ by rewrite (yam_of_stdtabK Hstdtab).
-+ by rewrite /is_RSpair Htab yam_of_stdtabP //= shape_yam_of_stdtab.
+- by rewrite /is_RSpair Htab yam_of_stdtabP //= shape_yam_of_stdtab.
+- by rewrite (yam_of_stdtabK Hstdtab).
 Qed.
 Lemma bijRStab : bijective RStab.
 Proof using.

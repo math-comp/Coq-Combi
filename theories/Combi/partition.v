@@ -118,7 +118,7 @@ From mathcomp Require Import all_boot order.
 From mathcomp Require Import div ssralg ssrint ssrnum binomial.
 Require Import tools combclass sorted ordtype.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -397,14 +397,14 @@ Proof.
 rewrite -!nth_last size_incr_nth.
 case (ltnP i (size sh)) => Hi.
 - have Hsz : (size sh).-1 < size sh by move: Hi; case: (size sh).
-  rewrite (set_nth_default 0 1 (s := incr_nth _ _));
-    last by rewrite size_incr_nth Hi Hsz.
+  rewrite (set_nth_default 0 1 (s := incr_nth _ _)).
+    by rewrite size_incr_nth Hi Hsz.
   rewrite nth_incr_nth; apply contra.
   rewrite addn_eq0 => /andP[_ H].
   by rewrite (set_nth_default 0 1).
 - move=> _; rewrite /= (set_nth_default 0 1).
-  + by rewrite nth_incr_nth eq_refl.
   + by rewrite size_incr_nth [i < size sh]ltnNge Hi /=.
+  + by rewrite nth_incr_nth eq_refl.
 Qed.
 
 Lemma is_part_incr_nth_size sh i :
@@ -572,7 +572,7 @@ Proof.
 move=> Hpart Hout; rewrite /is_add_corner /=.
 case: i Hout => [// | i] Hout; rewrite [i.+1.-1]/=.
 apply/orP; right.
-rewrite nth_decr_nth nth_decr_nth_neq //; last by rewrite eq_sym ltn_eqF.
+rewrite nth_decr_nth nth_decr_nth_neq //; first by rewrite eq_sym ltn_eqF.
 move: Hout; rewrite /is_rem_corner => Hi2.
 move/is_partP : Hpart => [_ Hdecr].
 apply: leq_trans _ (Hdecr i).
@@ -673,7 +673,7 @@ elim: sh l => //= s0 s IHs l _ /=.
 move=> /andP[_ Hpart] Hs0.
 case: l Hs0 => //= l; rewrite ltnS => Hs0.
 case: s IHs Hpart Hs0 => [// | s1 s IHs].
-- by case: l => [// | l]; rewrite conj_nseq; last exact: ltn0Sn.
+- by case: l => [// | l]; rewrite conj_nseq; first exact: ltn0Sn.
 - have Hneq : s1 :: s != [::] by [].
   move=> Hpart Hsize /=.
   move/(_ l Hneq Hpart Hsize) : IHs.
@@ -685,7 +685,7 @@ Proof.
 elim: sh => //= s0 sh IHsh /andP[Hhead Hpart].
 case: (sh =P [::]) => Hsh.
 - move: Hhead; rewrite Hsh /=; exact: conj_nseq.
-- rewrite conj_part_ind //=; first by rewrite IHsh.
+- rewrite conj_part_ind //=; last by rewrite IHsh.
   + apply/contra_notN: Hsh => /eqP.
     case: sh Hpart {IHsh Hhead} => //= s1 s.
     case: s1 => [/andP[] | s1 _]; first by rewrite leqn0 => /part_head0F ->.
@@ -707,7 +707,7 @@ case: i => [_ | i Hcrn]/=.
     rewrite (size_conj_part Hpart).
     move: H0; case sh => [| n _] //=; exact: ltnW.
   have Hszn : size (incr_first_n (conj_part sh) s0.+1) = s0.+1.
-    by rewrite size_incr_first_n; last exact: (leq_trans Hszconj).
+    by rewrite size_incr_first_n; first exact: (leq_trans Hszconj).
   apply (eq_from_nth (x0 := 0)).
   - rewrite Hszn.
     by rewrite size_incr_nth ltnNge (size_incr_first_n Hszconj) leqnn /=.
@@ -715,7 +715,7 @@ case: i => [_ | i Hcrn]/=.
     rewrite nth_incr_nth !nth_incr_first_n Hi ltn_neqAle.
     move: Hi; rewrite ltnS eq_sym => ->.
     by case: eqP => /= _; rewrite ?add0n ?add1n.
-rewrite (IHsh _ Hpart); first exact: incr_first_n_nthC.
+rewrite (IHsh _ Hpart); last exact: incr_first_n_nthC.
 by move: Hcrn => /=; case: i.
 Qed.
 
@@ -1207,16 +1207,16 @@ elim: sz sm mx => [| sz IHsz] /= sm mx Hmx.
 case=> [| p0 p] //=; first by rewrite andbF.
 move=> /and5P[Hp0]; rewrite eqSS=> /eqP Hsz /eqP Hsm Hhead Hpart.
 rewrite count_flatten -map_comp.
-rewrite (eq_map (g := fun i => i == p0 : nat)); first last.
+rewrite (eq_map (g := fun i => i == p0 : nat)).
   move=> i /=; rewrite count_map /=.
   case (i =P p0) => [Heq | /eqP/negbTE Hneq].
-  - subst p0; rewrite (eq_count (a2 := xpred1 p)); first last.
+  - subst p0; rewrite (eq_count (a2 := xpred1 p)).
       by move=> s; rewrite /= -eqseqE /= eq_refl /=.
     rewrite {}IHsz //=.
     + have /part_head_non0 /= : is_part (i :: p) by rewrite /= Hhead Hpart.
       by rewrite lt0n.
     + by rewrite Hhead Hsz -Hsm addKn !eq_refl Hpart.
-  - rewrite (eq_count (a2 := pred0)); first by rewrite count_pred0.
+  - rewrite (eq_count (a2 := pred0)); last by rewrite count_pred0.
     by move=> s; rewrite /= -eqseqE /= Hneq.
 rewrite sumn_pred1_iota add1n ltnS leq_min Hp0 -Hsm leq_addr !andbT.
 have /part_head_non0 /= : is_part (p0 :: p) by rewrite /= Hhead Hpart.
@@ -1288,9 +1288,8 @@ case/altP: (size p =P 0) => Hsize.
   suff -> : sumn (map (fun=> 0) _) = 0 by rewrite addn0.
   by move=> T; elim => [|l0 l /= ->].
 - rewrite /= add0n count_flatten -map_comp.
-  rewrite (eq_map (g := fun i => i == size p : nat)); first last.
-    move=> i /=; rewrite enum_partnsE /=.
-    by rewrite Hsum Hpart !andbT eq_sym.
+  rewrite (eq_map (g := fun i => i == size p : nat)) => [i /= |].
+    by rewrite enum_partnsE /= Hsum Hpart !andbT eq_sym.
   by rewrite sumn_pred1_iota add1n ltnS lt0n Hsize /= -(eqP Hsum) size_part.
 Qed.
 
@@ -1738,8 +1737,8 @@ Lemma size_enum_partnsk sm sz mx :
 Proof.
 elim: sz sm mx => [ [] | sz IHsz] //= sm mx.
 rewrite size_flatten /shape -[1]addn0 iotaDl -!map_comp.
-rewrite (eq_map (g := fun i => intpartnsk_nb (sm - i.+1) sz i.+1)); first last.
-  by move=> i /=; rewrite size_map IHsz.
+rewrite (eq_map (g := fun i => intpartnsk_nb (sm - i.+1) sz i.+1)) => [i /= |].
+  by rewrite size_map IHsz.
 elim: (minn sm mx) => [// | n IHn].
 by rewrite -{1}[n.+1]addn1 iotaD add0n map_cat sumn_cat IHn /= addn0.
 Qed.
@@ -2105,10 +2104,9 @@ case: (ltnP i (size (join_Young_fun sh1 sh2))) => Hi; first last.
        size_join_Young ?leq_maxl ?leq_maxr.
 have := Hi; rewrite /join_Young_fun size_map => /= Hi1.
 rewrite (nth_map (0, 0)) // {Hi1}.
-rewrite !nth_zip /=; first last.
+rewrite !nth_zip /=.
   by rewrite !size_cat !size_nseq -!maxnE maxnA maxnn [RHS]maxnC -maxnA maxnn.
-rewrite !nth_cat !nth_nseq !if_same.
-by rewrite !if_nth // orbC leqVgt.
+by rewrite !nth_cat !nth_nseq !if_same !if_nth // orbC leqVgt.
 Qed.
 
 Fact join_Young_subproof sh1 sh2 : is_part (join_Young_fun sh1 sh2).
@@ -2415,7 +2413,7 @@ have -> : \sum_(l <- sh1) (l - i) = \sum_(l <- take c1 sh1) (l - i).
   by rewrite conj_leqE // leq_addr.
 rewrite -(leq_add2r (c1 * i)) -{2}(size_takel Hc1) -sum1_size.
 rewrite big_distrl -big_split /=.
-rewrite big_seq [X in X <= _](eq_bigr id) -?big_seq; first last.
+rewrite big_seq [X in X <= _](eq_bigr id) -?big_seq.
   move=> j /(mem_takeP 0) [pos Hpos ->{j}].
   rewrite mul1n; apply: subnK.
   apply ltnW; rewrite conj_ltnE // -/c1.
@@ -2423,8 +2421,8 @@ rewrite big_seq [X in X <= _](eq_bigr id) -?big_seq; first last.
 move/(_  c1): Hdom; rewrite !sumnE => /leq_trans; apply.
 rewrite -{2}(cat_take_drop c1 sh2) !big_cat /= addnC addnA.
 apply: (leq_trans _ (leq_addr _ _)); rewrite -sumnE sumn_take.
-rewrite [X in _ <= X](_ : _ = \sum_(0 <= i0 < c1) maxn i (nth 0 sh2 i0)).
-  by apply leq_sum => j _; apply leq_maxr.
+rewrite [X in _ <= X](_ : _ = \sum_(0 <= i0 < c1) maxn i (nth 0 sh2 i0));
+  last by apply leq_sum => j _; apply leq_maxr.
 rewrite sum_take ?sub0n //.
 rewrite -{1}(subn0 c1) -sum_nat_const_nat.
 rewrite -big_split; apply eq_bigr => /= j _.
@@ -2472,12 +2470,12 @@ apply/is_parttupleP; split.
 - by rewrite tnth_mktuple /= take0.
 - by rewrite tnth_mktuple take_intpartn_over // sumn_intpartn.
 - apply/(sortedP 0) => i; rewrite size_tuple => ltid.
-  rewrite !nth_parttuple //; last exact: ltnW.
+  rewrite !nth_parttuple //; first exact: ltnW.
   case: (ltnP i (size sh)) => Hi.
     by rewrite (take_nth 0) // sumn_rcons leq_addr.
   by rewrite !take_oversize // (leq_trans Hi).
 - move=> [|i]// /andP[_ ltid].
-  rewrite !nth_parttuple /= ?ltnS //=; try exact: ltnW; first last.
+  rewrite !nth_parttuple /= ?ltnS //=; try exact: ltnW.
     by apply ltnW; apply ltnW.
   rewrite -addnn !sumn_take !big_nat_recr //= -!addnA leq_add2l.
   rewrite [X in _ <= X]addnC addnA leq_add2l.
@@ -2491,8 +2489,8 @@ Lemma sum_diff_tuple t :
 Proof.
 move=> /(sorted2P 0 leq_trans leqnn) srt.
 elim=> [|i IHi] ltid; first by rewrite big_nil subnn.
-rewrite big_nat_recr //= IHi; last exact: ltnW.
-rewrite addnC addnBA ?srt ?size_tuple //=; last exact: ltnW.
+rewrite big_nat_recr //= IHi; first exact: ltnW.
+rewrite addnC addnBA ?srt ?size_tuple //=; first exact: ltnW.
 by rewrite subnK // srt // size_tuple leqnSn.
 Qed.
 
@@ -2830,7 +2828,7 @@ Proof using.
 rewrite /setpart_shape /= => Hinj.
 apply/perm_sortP/permP => // P.
 rewrite !count_set_of_card -(card_imset _ (imset_inj Hinj)).
-rewrite imsetI; last by move=> B C _ _; exact: imset_inj.
+rewrite imsetI; first by move=> B C _ _; exact: imset_inj.
 congr #{_}; apply/setP => S; rewrite !inE.
 case: (boolP (S \in (imset _ _))) => //= /imsetP[U _ -> {S}].
 rewrite (card_imset _ Hinj).

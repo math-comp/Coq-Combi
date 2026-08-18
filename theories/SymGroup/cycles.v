@@ -43,7 +43,7 @@ From mathcomp Require finmodule.
 
 Require Import tools permcomp.
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -104,7 +104,7 @@ Lemma psupport_card_porbit s x : (#|porbit s x| != 1%N) = (x \in psupport s).
 Proof using.
 rewrite inE; congr negb; apply/eqP/idP => [H|].
 - by apply/afix1P => /=; rewrite -{2}(iter_porbit s x) H.
-- rewrite -afix_cycle_in; last by rewrite inE.
+- rewrite -afix_cycle_in; first by rewrite inE.
   by move/orbit1P; rewrite porbitE /= => ->; rewrite cards1.
 Qed.
 
@@ -293,7 +293,7 @@ case: (restr_perm X s x =P x) => [/[dup]{-1}-> /eqP | /eqP Hx].
     suff: forall i, ((restr_perm (T:=T) X s ^+ i) (s y) = (s ^+ i.+1) y) /\
                       (s ^+ i.+1) y \in psupport (restr_perm (T:=T) X s).
       move=> /(_ #[s].-1) [_].
-      rewrite prednK; last exact: order_gt0.
+      rewrite prednK; first exact: order_gt0.
       by rewrite expg_order perm1.
     elim=> [|i [IHi1 IHi2]]; first by rewrite expg0 expg1 perm1.
     have:= IHi2; rewrite in_psupport => /restr_perm_neq.
@@ -484,13 +484,13 @@ have abel := abelian_disjoint_psupports Hdisj.
 (* We tranfert the computation in the Z-module associated [abel] *)
 (* Product in the group become commutative sum in the Z-module   *)
 rewrite [X in fun_of_perm X](_ :
-           _ = val (\sum_(C0 in A) fmod abel C0)%R); first last.
-  rewrite -morph_prod /=; last by move=> i; apply: mem_gen.
+           _ = val (\sum_(C0 in A) fmod abel C0)%R).
+  rewrite -morph_prod /=; first by move=> i; apply: mem_gen.
   rewrite -[LHS](fmodK abel) //.
   by apply group_prod => i; apply: mem_gen.
 rewrite (bigD1 C) //= GRing.addrC -morph_prod //=.
-rewrite -fmodM /=; [ | exact: group_prod | exact: mem_gen].
-rewrite fmodK; last by apply groupM; [exact: group_prod |  exact: mem_gen].
+rewrite -fmodM /=; [exact: group_prod | exact: mem_gen |].
+rewrite fmodK; first by apply groupM; [exact: group_prod |  exact: mem_gen].
 (* Back in symmetric group computation *)
 rewrite {abel Hin Hdisj HC} permM; congr fun_of_perm.
 apply big_rec; first by rewrite perm1.
@@ -554,21 +554,20 @@ Proof using.
 move=> Htriv /subsetP Hcover Hact.
 apply/permP => x.
 case: (boolP (x \in psupport s)) => Hx; first last.
-  rewrite out_perm_prod.
-  + by move: Hx; rewrite in_psupport negbK => /eqP ->.
-  + move=> Ctmp /imsetP[C HC ->{Ctmp}].
-    move: Hx; apply contra; rewrite !in_psupport => H.
+  rewrite out_perm_prod => [Ctmp /imsetP[C HC ->{Ctmp}] |]; move: Hx.
+  + apply contra; rewrite !in_psupport => H.
     by have:= H; rewrite (restr_perm_neq H).
+  + by rewrite in_psupport negbK => /eqP ->.
 have:= Hcover x Hx => /bigcupP[C HC HxC].
 have Hrestr : (restr_perm (T:=T) C s) x = s x.
   rewrite restr_permE // -astab1_set.
   move: Hact => /astab_act/(_ HC) Hact.
   by apply/astabP => D; rewrite inE => /eqP ->{D}.
 rewrite (prod_of_disjoint (C := restr_perm C s)).
-- exact: Hrestr.
 - exact: disjoint_perm_dec.
 - exact: imset_f.
 - by move: Hx; rewrite !in_psupport Hrestr.
+- exact: Hrestr.
 Qed.
 
 Lemma cycle_decE s : \prod_(C in cycle_dec s) C = s.

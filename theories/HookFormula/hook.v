@@ -87,7 +87,7 @@ Require Import tools subseq partition Yamanouchi stdtab Qmeasure.
 Set Warnings "hiding-delimiting-key".
 
 
-Set SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
+Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -201,9 +201,9 @@ Lemma arm_length_ler sh r c j :
 Proof.
 rewrite /in_shape /arm_length => /is_part_ijP[_ Hpart] Hr Hc.
 move/(_ _ _ (ltnW Hr)): Hpart => Hshjr.
-rewrite -ltnS !prednK; first exact: leq_sub2r.
-- by rewrite subn_gt0; apply: leq_trans Hc Hshjr.
+rewrite -ltnS !prednK; last exact: leq_sub2r.
 - by rewrite subn_gt0; apply: Hc.
+- by rewrite subn_gt0; apply: leq_trans Hc Hshjr.
 Qed.
 
 Lemma arm_length_ltl sh r c j :
@@ -213,9 +213,9 @@ Proof.
 rewrite /in_shape /arm_length => /is_part_ijP[_ Hpart] Hc Hr.
 move/(_ _ _ (ltnW Hr)): Hpart => Hshjr.
 have Hcr := ltn_trans Hc Hr.
-rewrite -ltnS !prednK; first exact: ltn_sub2l.
-- by rewrite subn_gt0; apply: Hcr.
+rewrite -ltnS !prednK; last exact: ltn_sub2l.
 - by rewrite subn_gt0; apply: Hr.
+- by rewrite subn_gt0; apply: Hcr.
 Qed.
 
 Lemma leg_length_ltr sh r c j :
@@ -341,8 +341,8 @@ Lemma arm_length_incr_nth_row sh r c :
   arm_length (incr_nth sh r) (r, c) = (arm_length sh (r, c)).+1.
 Proof.
 rewrite /in_shape /arm_length nth_incr_nth eq_refl add1n => Hc.
-rewrite prednK; last by rewrite subn_gt0.
-by rewrite subSn; last exact: ltnW.
+rewrite prednK; first by rewrite subn_gt0.
+by rewrite subSn; first exact: ltnW.
 Qed.
 
 Lemma arm_length_incr_nth_nrow sh r c i :
@@ -371,12 +371,12 @@ Lemma hook_length_incr_nth_col sh r i :
   = (hook_length sh (i, nth 0 sh r)).+1.
 Proof.
 move=> Hpart Hcorn Hin.
-rewrite -hook_length_conj_part; last exact: is_part_incr_nth.
-rewrite conj_part_incr_nth // hook_length_incr_nth_row; first last.
-  - by rewrite -in_conj_part.
-  - exact: is_add_corner_conj_part.
-  - exact: is_part_conj.
-by rewrite hook_length_conj_part.
+rewrite -hook_length_conj_part; first exact: is_part_incr_nth.
+rewrite conj_part_incr_nth // hook_length_incr_nth_row.
+- exact: is_part_conj.
+- exact: is_add_corner_conj_part.
+- by rewrite -in_conj_part.
+- by rewrite hook_length_conj_part.
 Qed.
 
 Lemma hook_length_incr_nth sh i r c :
@@ -409,14 +409,13 @@ move=> Hpart Hcorn.
 have:= Hcorn => /andP/=[Hcrn/eqP HBeta].
 have:= decr_nthK Hpart Hcrn; set p' := decr_nth p Alpha => Hp.
 set F := (F in _ = \prod_(i <- _) F i).
-rewrite big_seq_cond (eq_bigr (fun i => F i.2)) -?big_seq_cond; first last.
+rewrite big_seq_cond (eq_bigr (fun i => F i.2)) -?big_seq_cond.
   move=> [r c] /= /andP[]; rewrite mem_enum_box_in unfold_in /= => Hin /eqP Hr.
   subst r.
-  rewrite {}/F -Hp hook_length_pred hook_length_incr_nth_row /=; first last.
-  - exact: Hin.
-  - rewrite /p'.
-    exact: add_corner_decr_nth.
+  rewrite {}/F -Hp hook_length_pred hook_length_incr_nth_row /=.
   - exact: is_part_decr_nth.
+  - by rewrite /p'; exact: add_corner_decr_nth.
+  - exact: Hin.
   have: (hook_length p' (Alpha, c))%:Q != 0 by rewrite intr_eq0.
   move: (hook_length p' (Alpha, c)) => h Hn.
   rewrite -addn1; rewrite PoszD intrD.
@@ -425,10 +424,9 @@ transitivity (\prod_(i <- [seq i.2 | i <- enum_box_in p' & i.1 == Alpha]) F i).
   by rewrite big_map big_filter; apply: eq_bigr.
 rewrite big_map /enum_box_skew filter_flatten big_flatten /= -map_comp big_map.
 case: (ltnP Alpha (size p')) => Halpha.
-- rewrite (bigD1_seq Alpha) /=; first last.
+- rewrite (bigD1_seq Alpha) /=.
+  + by rewrite mem_iota add0n Halpha.
   + exact: iota_uniq.
-  + rewrite mem_iota add0n.
-    by rewrite Halpha.
   rewrite big_filter big_map /=.
   under eq_bigl do rewrite /= eq_refl.
   rewrite nth_nil subn0.
@@ -505,24 +503,24 @@ Proof using.
 move: rc kl => [r c] [k l] /=.
 apply/mapP/idP => /= [|].
 - move=> /= [[]x]; rewrite mem_cat => /orP[] /=.
-  + rewrite mem_map; last by move=> u v [].
+  + rewrite mem_map; first by move=> u v [].
     rewrite mem_iota => /andP[Hrx Hxr] /=[->{k} ->{l}].
     rewrite /in_hook; apply/orP; right.
     by rewrite eq_refl Hrx /= -(iota_hookE _ Hrx).
   + by move=> /mapP[y] _.
   + by move=> /mapP[y] _.
-  + rewrite mem_map; last by move=> u v [].
+  + rewrite mem_map; first by move=> u v [].
     rewrite mem_iota => /andP[Hcx Hxc] /= [->{k} ->{l}].
     rewrite /in_hook; apply/orP; left.
     by rewrite eq_refl Hcx /= -(iota_hookE _ Hcx).
 - rewrite /in_hook => /orP[] /and3P[/eqP <-].
   + move=> {k} Hc Hr.
     exists (inr l); last by [].
-    rewrite mem_cat; apply/orP; right; rewrite mem_map; last by move=> u v [].
+    rewrite mem_cat; apply/orP; right; rewrite mem_map; first by move=> u v [].
     by rewrite mem_iota Hc /= iota_hookE.
   + move=> {l} Hr Hc.
     exists (inl k); last by [].
-    rewrite mem_cat; apply/orP; left; rewrite mem_map; last by move=> u v [].
+    rewrite mem_cat; apply/orP; left; rewrite mem_map; first by move=> u v [].
     by rewrite mem_iota Hr /= iota_hookE.
 Qed.
 
@@ -607,8 +605,8 @@ apply: (leq_ltn_trans (IHB _ (is_trace_tlr _ Htrace))); first by [].
 have:= Htrace => /and5P[_ _ _ /= /andP[Hb _] _].
 rewrite {IHB} /arm_length.
 suff HB0 : B0 < nth 0 p a.
-  rewrite -ltnS prednK; last by rewrite subn_gt0.
-  rewrite -ltnS prednK //; last by rewrite subn_gt0; exact: (ltn_trans Hb HB0).
+  rewrite -ltnS prednK; first by rewrite subn_gt0.
+  rewrite -ltnS prednK //; first by rewrite subn_gt0; exact: (ltn_trans Hb HB0).
   rewrite ltnS; apply ltn_sub2l; last exact Hb.
   exact: (ltn_trans Hb HB0).
 rewrite -/(in_shape _ (_, _)).
@@ -623,8 +621,8 @@ apply: (leq_ltn_trans (IHA _ (is_trace_tll _ Htrace))); first by [].
 have:= Htrace => /and5P[_ _ /= /andP[Ha _] _ _].
 rewrite {IHA} /leg_length.
 suff HA0 : A0 < nth 0 conj b.
-  rewrite -ltnS prednK; last by rewrite subn_gt0.
-  rewrite -ltnS prednK //; last by rewrite subn_gt0; exact: (ltn_trans Ha HA0).
+  rewrite -ltnS prednK; first by rewrite subn_gt0.
+  rewrite -ltnS prednK //; first by rewrite subn_gt0; exact: (ltn_trans Ha HA0).
   rewrite ltnS; apply ltn_sub2l; last exact Ha.
   exact: (ltn_trans Ha HA0).
 rewrite -/(in_shape _ (_, _)).
@@ -688,7 +686,7 @@ Definition enum_trace (Alpha Beta : nat) : seq ((seq nat) * (seq nat)) :=
 
 Lemma trace_seq_uniq l : uniq (trace_seq l).
 Proof using.
-rewrite map_inj_uniq; first exact: enum_uniq.
+rewrite map_inj_uniq; last exact: enum_uniq.
 by move=> i j /rconsK/val_inj ->.
 Qed.
 
@@ -859,17 +857,24 @@ congr (_ / _).
 rewrite /hook_box_indices big_cat /= !big_map /= addrC.
 congr (_ + _).
 - case (boolP (size B == 0%N)) => HB.
-  + rewrite big1.
+  + rewrite big1 => [i _|].
+    * rewrite charfun_simplr.
+      apply: (mu_bool_negb0 _ (walk_to_corner_inv m a i)) => [] [X Y] /=.
+      apply/implyP => /and4P[_ SY _ _].
+      by move: SY; apply contra => /eqP[_ ->].
     * apply esym.
       apply: (mu_bool_negb0 _ (walk_to_corner_inv m a (head O B))) =>
           [] [X Y] /=.
       apply/implyP => /and4P[_ SY _ _].
       by move: SY; apply contra => /eqP[_ ->].
-    * move => i _; rewrite charfun_simplr.
-      apply: (mu_bool_negb0 _ (walk_to_corner_inv m a i)) => [] [X Y] /=.
-      apply/implyP => /and4P[_ SY _ _].
-      by move: SY; apply contra => /eqP[_ ->].
   + rewrite (bigD1_seq (head O B) _ (iota_uniq _ _)) /=.
+    * have:= Ht => /and5P[_ _ _ HsortB _].
+      have Hb : (b < head 0 B)%N.
+        by move: HsortB HB; case B => // b0 B' /= /andP[].
+      rewrite mem_iota (iota_hookE _ Hb) Hb /=.
+      have Hh : (head O B \in b :: B).
+        by move: HB; case B => // n l _; rewrite !inE eq_refl orbT.
+      exact: (is_trace_in_in_shape Ht (mem_head _ _) Hh).
     * rewrite -{1}(@charfun_simplr b (a :: A) B) -[RHS]addr0.
       congr (_ + _).
       apply: big1 => i Hi.
@@ -878,33 +883,18 @@ congr (_ + _).
       apply/implyP => /and4P[_ _ _ SH].
       move: Hi; apply contra => /eqP[_ <-].
       by rewrite eq_sym.
-    * have:= Ht => /and5P[_ _ _ HsortB _].
-      have Hb : (b < head 0 B)%N.
-        by move: HsortB HB; case B => // b0 B' /= /andP[].
-      rewrite mem_iota (iota_hookE _ Hb) Hb /=.
-      have Hh : (head O B \in b :: B).
-        by move: HB; case B => // n l _; rewrite !inE eq_refl orbT.
-      exact: (is_trace_in_in_shape Ht (mem_head _ _) Hh).
 - case (boolP (size A == O)) => HA.
-  + rewrite big1.
+  + rewrite big1 => [i _ |].
+    * rewrite charfun_simpll.
+      apply: (mu_bool_negb0 _ (walk_to_corner_inv m i b)) => [] [X Y] /=.
+      apply /implyP => /andP[SX _].
+      by move: SX; apply contra => /eqP[-> _].
     * apply esym.
       apply: (mu_bool_negb0 _ (walk_to_corner_inv m (head O A) b)) =>
           [] [X Y] /=.
       apply /implyP => /andP[SX _].
       by move: SX; apply contra => /eqP[-> _].
-    * move => i _; rewrite charfun_simpll.
-      apply: (mu_bool_negb0 _ (walk_to_corner_inv m i b)) => [] [X Y] /=.
-      apply /implyP => /andP[SX _].
-      by move: SX; apply contra => /eqP[-> _].
   + rewrite (bigD1_seq (head O A) _ (iota_uniq _ _)) /=.
-    * rewrite -{1}(@charfun_simpll a A (b :: B)) -[RHS]addr0.
-      congr (_ + _).
-      apply: big1 => i Hi.
-      rewrite charfun_simpll.
-      apply: (mu_bool_negb0 _ (walk_to_corner_inv m i b)) => [] [X Y] /=.
-      apply /implyP => /and4P[_ _ HX _].
-      move: Hi; apply contra => /eqP[<- _].
-      by rewrite eq_sym.
     * have:= Ht => /and5P[_ _ HsortA _ _].
       have Ha : (a < head 0 A)%N.
         by move: HsortA HA; case A => // a0 A' /= /andP[].
@@ -914,6 +904,14 @@ congr (_ + _).
       have:= is_trace_in_in_shape Ht Hh (mem_head _ _).
       case: p => /= part Hpart.
       by rewrite in_conj_part.
+    * rewrite -{1}(@charfun_simpll a A (b :: B)) -[RHS]addr0.
+      congr (_ + _).
+      apply: big1 => i Hi.
+      rewrite charfun_simpll.
+      apply: (mu_bool_negb0 _ (walk_to_corner_inv m i b)) => [] [X Y] /=.
+      apply /implyP => /and4P[_ _ HX _].
+      move: Hi; apply contra => /eqP[<- _].
+      by rewrite eq_sym.
 Qed.
 
 Lemma mu_walk_to_corner_is_trace rc m :
@@ -953,9 +951,9 @@ rewrite mem_cat => /orP[] /mapP[j]; rewrite mem_iota => /andP/=[H1 H2] ->{i};
     rewrite -ltnS; apply: (leq_trans _ Hal).
     exact: hook_length_ltr.
   rewrite -[RHS](IHm _ Hj Hlen).
-  rewrite (mu_pos_cond _ (walk_to_corner_inv m j c)); first last.
+  rewrite (mu_pos_cond _ (walk_to_corner_inv m j c)).
     by move=> [A B]; apply/andP; split; [exact: mu_bool_0le | exact: mu_bool_le1].
-  rewrite [RHS](mu_pos_cond _ (walk_to_corner_inv m j c)); first last.
+  rewrite [RHS](mu_pos_cond _ (walk_to_corner_inv m j c)).
     by move=> [A B]; case: (is_trace _ _).
   apply Mstable_eq => [] [A B] /=.
   do 2 (case: eqP => /=; first by rewrite !mul0r).
@@ -968,9 +966,9 @@ rewrite mem_cat => /orP[] /mapP[j]; rewrite mem_iota => /andP/=[H1 H2] ->{i};
     rewrite -ltnS; apply: (leq_trans _ Hal).
     exact: hook_length_ltl.
   rewrite -[RHS](IHm _ Hj Hlen).
-  rewrite (mu_pos_cond _ (walk_to_corner_inv m r j)); first last.
+  rewrite (mu_pos_cond _ (walk_to_corner_inv m r j)).
     by move=> [A B]; apply/andP; split; [exact: mu_bool_0le | exact: mu_bool_le1].
-  rewrite [RHS](mu_pos_cond _ (walk_to_corner_inv m r j)); first last.
+  rewrite [RHS](mu_pos_cond _ (walk_to_corner_inv m r j)).
     by move=> [A B]; case: (is_trace _ _).
   apply Mstable_eq => [] [A B].
   do 2 (case: eqP => /=; first by rewrite !mul0r).
@@ -1003,12 +1001,12 @@ have -> (u v : bool) : ~~u || ~~v = [|| (~~u && ~~v), (u && ~~v) | (~~ u && v)].
   by case: u; case: v.
 move=> /or3P[] /andP[HA HB].
 - case: A B HA HB Hs Ht => [// | A0 A] [// | B0 B] _ _ Hsize Htrace /=.
-  rewrite (IHm a B0 (A0 :: A) B); first last.
-    * exact: (is_trace_tlr _ Htrace).
-    * by move: Hsize => /=; rewrite addnS ltnS.
-  rewrite (IHm A0 b A (B0 :: B)); first last.
-    * exact: (is_trace_tll _ Htrace).
-    * by move: Hsize => /=; rewrite addSn ltnS.
+  rewrite (IHm a B0 (A0 :: A) B).
+  + by move: Hsize => /=; rewrite addnS ltnS.
+  + exact: (is_trace_tlr _ Htrace).
+  rewrite (IHm A0 b A (B0 :: B)).
+  + by move: Hsize => /=; rewrite addSn ltnS.
+  + exact: (is_trace_tll _ Htrace).
   rewrite {IHm Hsize Hn0} size_hook_box_indices -subn1.
   rewrite /RHSL3 /= !big_cons.
   set lA := (last A0 A); set lB := (last B0 B).
@@ -1032,17 +1030,17 @@ move=> /or3P[] /andP[HA HB].
     by rewrite (is_trace_corner_nil (is_trace_lastr Htrace)).
   have:= @addf_div rat 1 Alen%:Q 1 Blen%:Q.
   rewrite addrC !div1r !mul1r => ->; rewrite ?intr_eq0 ?eqz_nat //.
-  rewrite addrC [LHS]mulrC mulrA mulVf; first by rewrite mul1r invfM mulrC.
+  rewrite addrC [LHS]mulrC mulrA mulVf; last by rewrite mul1r invfM mulrC.
   rewrite -mulrzDr /= intr_eq0 eqz_nat.
   by rewrite addn_eq0 negb_and Alen0 Blen0.
 - move: HA => /eqP HA; subst A.
   rewrite [X in (_ + X)]walk_to_corner_emptyl // addr0.
   have HBd := esym (cons_head_behead O HB).
   rewrite {2}HBd.
-  rewrite (IHm a (head O B) [::] (behead B)); first last.
-    * by rewrite -HBd; apply: (is_trace_tlr HB Ht).
-    * rewrite size_behead; move: HB Hs.
-      by case B => // B0 B' _ /=; rewrite !add0n.
+  rewrite (IHm a (head O B) [::] (behead B)).
+  + rewrite size_behead; move: HB Hs.
+    by case B => // B0 B' _ /=; rewrite !add0n.
+  + by rewrite -HBd; apply: (is_trace_tlr HB Ht).
   rewrite /RHSL3 !big_nil /=.
   rewrite {3}HBd (belast_cat b [:: head O B] (behead B)) big_cat big_seq1 /=.
   rewrite size_hook_box_indices.
@@ -1051,10 +1049,10 @@ move=> /or3P[] /andP[HA HB].
   rewrite walk_to_corner_emptyr  // add0r.
   have HAd := esym (cons_head_behead O HA).
   rewrite {2}HAd.
-  rewrite (IHm (head O A) b (behead A) [::]); first last.
-    * by rewrite -HAd; apply: (is_trace_tll HA Ht).
-    * rewrite size_behead; move: HA Hs.
-      by case A => // A0 A' _ /=; rewrite !addn0.
+  rewrite (IHm (head O A) b (behead A) [::]).
+  + rewrite size_behead; move: HA Hs.
+    by case A => // A0 A' _ /=; rewrite !addn0.
+  + by rewrite -HAd; apply: (is_trace_tll HA Ht).
   rewrite /RHSL3 !big_nil /=.
   rewrite {3}HAd (belast_cat a [:: head O A] (behead A)) big_cat big_seq1 /=.
   rewrite size_hook_box_indices.
@@ -1101,18 +1099,17 @@ rewrite -/(in_shape p (_, _)) => Hin.
 rewrite big_seq_cond.
 pose F := (fun X => mu (walk_to_corner (hook_length p (r, c)).-1 (r, c))
                        (charfun X.1 X.2)).
-rewrite (eq_bigr F); first last.
+rewrite (eq_bigr F).
   move=> /= [A B] /and3P/= [].
   rewrite /F (enum_traceP Hcorn).
   move => /and3P[Htrace HAlpha HBeta] /eqP<-{r} /eqP<-{c} {F Hin}.
   rewrite /RHSL3_trace /=.
-  rewrite -(Lemma3 (m := (hook_length p (head O A, head O B)).-1)) /=;
-      first last.
-  - by have:= Htrace => /and3P[HA HB _]; rewrite !cons_head_behead.
+  rewrite -(Lemma3 (m := (hook_length p (head O A, head O B)).-1)) /=.
   - have:= Htrace => /and3P[HA HB _].
     case: A B HA HB Htrace {HAlpha HBeta} => [// | a A] [// | b B] /= _ _ Htrace.
     rewrite addnC.
     exact: (leq_add (trace_size_arm_length Htrace) (trace_size_leg_length Htrace)).
+  - by have:= Htrace => /and3P[HA HB _]; rewrite !cons_head_behead.
   apply: Mstable_eq => [] [X1 X2].
   by have:= Htrace => /and3P[HA HB _]; rewrite !cons_head_behead.
 rewrite -big_seq_cond.
@@ -1121,7 +1118,7 @@ transitivity (\sum_(i0 <- enum_trace Alpha Beta) F i0).
   have H := mu_walk_to_corner_is_trace Hin (leqnn _).
   rewrite (mu_bool_cond _ H).
   apply Mstable_eq => [[A B]] /=.
-  rewrite /charfun -in_seq_sum; last exact: enum_trace_uniq.
+  rewrite /charfun -in_seq_sum; first exact: enum_trace_uniq.
   by rewrite enum_traceP.
 - rewrite (bigID (starts_at (r, c))) /= -[RHS]addr0; congr (_ + _).
   apply big1 => [[A B]]; rewrite /starts_at {}/F /= => H.
@@ -1145,12 +1142,11 @@ have Hin : (head O B < nth O p (head O A))%N.
   have:= Htrace => /and3P[HA0 HB0 _].
   case: A B HA0 HB0 Htrace {HA HB} => [// | a A] [// | b B] /= _ _ Htrace.
   exact: (is_trace_in_shape Htrace).
-rewrite -big_filter (bigD1_seq (flatten_index p (head O A) (head O B))) /=;
-    first last.
-- by apply filter_uniq; apply: iota_uniq.
+rewrite -big_filter (bigD1_seq (flatten_index p (head O A) (head O B))) /=.
 - rewrite mem_filter (flatten_indexKr Hin) (flatten_indexKl Hin).
   rewrite /starts_at !eq_refl /= mem_iota add0n subn0 /=.
   exact: flatten_indexP.
+- by apply filter_uniq; apply: iota_uniq.
 rewrite -[RHS]addr0; congr (_ + _).
 rewrite big_filter_cond; apply big_pred0 => i.
 rewrite /starts_at /=.
@@ -1229,7 +1225,7 @@ rewrite [RHS]mulrC -[RHS]mulr1; congr (_ * _ * _).
 - have Hpartconj := is_part_conj (intpartP p).
   have Hcornconj := corner_box_conj_part (intpartP p) Hcorn.
   have Hconj' : (decr_nth (conj_part p) Beta) = conj_part p'.
-    rewrite -Hp conj_part_incr_nth //; last exact: add_corner_decr_nth.
+    rewrite -Hp conj_part_incr_nth //; first exact: add_corner_decr_nth.
     rewrite -HBeta' incr_nthK //.
     apply (is_part_incr_nth Hpartc').
     rewrite HBeta'; apply (is_add_corner_conj_part Hpart').
@@ -1243,7 +1239,7 @@ rewrite [RHS]mulrC -[RHS]mulr1; congr (_ * _ * _).
   have swap_inj : injective swap by apply (can_inj (g := swap)) => [] [r c].
   rewrite -[RHS]big_filter; set F := (X in \prod_(i <- _) X i).
   rewrite -[X in \prod_(i <- X) _]map_id.
-  rewrite (eq_map (g := swap \o swap)); last by move=> [r c].
+  rewrite (eq_map (g := swap \o swap)); first by move=> [r c].
   rewrite map_comp big_map.
   transitivity (\prod_(i <- enum_box_in p' |
                        (i.1 != Alpha) && (i.2 == Beta))  F (swap i)).
@@ -1268,13 +1264,13 @@ rewrite [RHS]mulrC -[RHS]mulr1; congr (_ * _ * _).
 - rewrite big_seq_cond; apply big1 => [[r c]] /= /and3P[].
   rewrite mem_enum_box_in unfold_in => Hrc Hr Hc.
   rewrite -Hp hook_length_incr_nth.
-  + by rewrite divff // intr_eq0.
   + exact: is_part_decr_nth.
   + exact: add_corner_decr_nth.
   + exact: Hrc.
   + by rewrite eq_sym.
   + move: Hc; rewrite eq_sym HBeta -Hp.
     by rewrite nth_incr_nth eq_refl add1n.
+  + by rewrite divff // intr_eq0.
 Qed.
 
 Lemma SimpleCalculation :
@@ -1301,7 +1297,7 @@ have -> : Rhs = ((1 / (sumn p').+1%:Q) *
   rewrite /Rhs -!mulrA [(((hook_length_prod p')%:Q)^-1 / _)%R]mulrC !invfM !mul1r.
   rewrite !mulrA [X in (X / _ / _ / _)]mulrC.
   congr (_ * _); rewrite -!mulrA; congr (_ * _).
-  rewrite mulrA divff; first by rewrite invrK mul1r.
+  rewrite mulrA divff; last by rewrite invrK mul1r.
   rewrite intr_eq0 eqz_nat -lt0n.
   exact: fact_gt0.
 rewrite {Rhs} !mul1r -[RHS]mulrA; congr (_ * _).
@@ -1319,7 +1315,7 @@ Lemma ends_at_rem_cornerE :
 Proof using.
 rewrite /ends_at => [] [A B] /=.
 case (boolP (corner_box p (last O A, last O B))) => Hcorn.
-- rewrite (bigD1_seq (last O A) _ (rem_corners_uniq p)) /=; first last.
+- rewrite (bigD1_seq (last O A) _ (rem_corners_uniq p)) /=.
     move: Hcorn; rewrite /rem_corners /corner_box => /andP[Hcorn _].
     rewrite mem_filter Hcorn mem_iota add0n leq0n /=.
     move: Hcorn; rewrite /is_rem_corner.
@@ -1340,7 +1336,7 @@ Proof using.
 rewrite big_seq_cond => Hp.
 under eq_bigr => i /andP[].
   rewrite /rem_corners mem_filter => /andP[Hcorn _] _.
-  rewrite -(Theorem2 (Beta := (nth O p i).-1)); first last.
+  rewrite -(Theorem2 (Beta := (nth O p i).-1)).
     by rewrite /corner_box Hcorn eqxx.
 over.
 rewrite -big_seq_cond -mu_stable_sum.
@@ -1348,7 +1344,7 @@ rewrite /choose_corner Mlet_simpl mu_random_sum.
 have Hsum : (sumn p) != 0%N.
   by move: Hp; apply contra => /eqP/empty_intpartP ->.
 rewrite prednK ?lt0n // big_nat /=.
-rewrite (eq_bigr (fun => 1)).
+rewrite (eq_bigr (fun => 1)); first last.
   rewrite -big_nat big_const_seq count_predT size_iota subn0 iter_addr addr0.
   by rat_to_ring; rewrite divff // pnatr_eq0.
 move=> i Hi; have:= reshape_offsetP Hi; move/reshape_indexP: Hi.
