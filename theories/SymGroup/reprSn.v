@@ -50,7 +50,7 @@ Unset Printing Implicit Defensive.
 Import GroupScope GRing.Theory Num.Theory.
 #[local] Open Scope ring_scope.
 
-#[local] Notation reprS n d := (mx_representation algC 'SG_n d).
+Local Abbreviation reprS n d := (mx_representation algC 'SG_n d).
 
 Section TcastVal.
 Variable (T : eqType).

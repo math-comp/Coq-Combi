@@ -49,7 +49,7 @@ by have /eq_map -> : (fun i : 'I_n => F (cast_ord (erefl n) i)) =1 F
 Qed.
 
 Lemma mem_cast m n (H : m = n) (i : 'I_m) (S : {set 'I_m}) :
-  (cast_ord H i) \in [set cast_ord H i | i in S] = (i \in S).
+  (cast_ord H i \in [set cast_ord H i | i in S]) = (i \in S).
 Proof. exact/mem_imset/cast_ord_inj. Qed.
 
 Definition cast_set n m (H : n = m) : {set 'I_n} -> {set 'I_m} :=

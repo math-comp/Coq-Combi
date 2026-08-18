@@ -189,9 +189,9 @@ Section FreeSchur.
 Variable R : comNzRingType.
 
 Variable n0 : nat.
-#[local] Notation n := (n0.+1).
-#[local] Notation Schur sh := (Schur n0 R sh).
-#[local] Notation homlang d := (homlang n d).
+Local Abbreviation n := (n0.+1).
+Local Abbreviation Schur sh := (Schur n0 R sh).
+Local Abbreviation homlang d := (homlang n d).
 
 Section Degree.
 
@@ -205,7 +205,7 @@ Definition freeSchur (Q : stdtabn d) : homlang d  :=
   [set t : d.-tuple 'I_n | (RStabmap t).2 == Q].
 
 Lemma freeSchurP Q (t : d.-tuple 'I_n) :
-  t \in freeSchur Q = (val t \in langQ Q).
+  (t \in freeSchur Q) = (val t \in langQ Q).
 Proof using . by rewrite /freeSchur /langQ !inE /=. Qed.
 
 Lemma size_RS_tuple (t : d.-tuple 'I_n) : size (to_word (RS t)) == d.

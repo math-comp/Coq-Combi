@@ -104,7 +104,7 @@ elim: l => [_ | l0 l IHl] /=.
 Qed.
 
 Lemma ord0_in_map_liftF n (l : seq 'I_n) :
-  ord0 \in [seq lift ord0 i | i <- l] = false.
+  (ord0 \in [seq lift ord0 i | i <- l]) = false.
 Proof.
 elim: l => [| l0 l] /=; first by rewrite in_nil.
 by rewrite in_cons; have:= neq_lift ord0 l0; rewrite eq_sym => /negbTE ->.
@@ -408,7 +408,7 @@ Definition ksupp (k : nat) :=
    [&& (#|P| <= k)%N, trivIset P & [forall (s | s \in P), sorted R (extract s)]]].
 
 #[local] Notation "k .-supp" := (ksupp k)
-  (at level 2, format "k .-supp") : form_scope.
+  (at level 1, format "k .-supp") : form_scope.
 
 Lemma ksupp0 k : set0 \is a k.-supp.
 Proof using.
@@ -419,7 +419,7 @@ Qed.
 
 Definition Greene_rel_t k := \max_(P | P \is a k.-supp) #|cover P|.
 
-Notation Ik k := [set i : 'I_N | i < k].
+Local Abbreviation Ik k := [set i : 'I_N | i < k].
 
 Lemma iotagtnk k : [seq x <- iota 0 N | gtn k x] = iota 0 (minn N k).
 Proof using.
@@ -522,7 +522,7 @@ Qed.
 End GreeneDef.
 
 Notation "k '.-supp' [ R , wt ]" := (@ksupp _ R _ wt k)
-  (at level 2, format "k '.-supp' [ R ,  wt ]") : form_scope.
+  (at level 1, format "k '.-supp' [ R ,  wt ]") : form_scope.
 
 Section Cast.
 
@@ -580,8 +580,8 @@ Variable M N : nat.
 Variable V : M.-tuple Alph.
 Variable W : N.-tuple Alph.
 
-#[local] Notation lsh := (@lshift M N).
-#[local] Notation rsh := (@rshift M N).
+Local Abbreviation lsh := (@lshift M N).
+Local Abbreviation rsh := (@rshift M N).
 
 Lemma enumIMN : enum 'I_(M + N) = map lsh (enum 'I_M) ++ map rsh (enum 'I_N).
 Proof using.
@@ -670,7 +670,7 @@ suff -> : rsh i \in [set i0 : 'I_(M+N) | M <= i0] by rewrite andbT.
 by rewrite inE /=; exact: leq_addr.
 Qed.
 
-#[local] Notation scover := (fun x => #|cover x|).
+Local Abbreviation scover := (fun x => #|cover x|).
 
 Lemma Greene_rel_t_cat k :
   Greene_rel_t R [tuple of V ++ W] k <= Greene_rel_t R V k + Greene_rel_t R W k.
@@ -1111,13 +1111,13 @@ by move: Hi; rewrite H ltnNge leq_addr.
 Qed.
 
 Lemma rshift_in_lshift_recF i (s : {set 'I_(size (to_word t))}) :
-  rsh_rec i \in [set lsh_rec x | x in s] = false.
+  (rsh_rec i \in [set lsh_rec x | x in s]) = false.
 Proof using.
 by apply/negP => /imsetP[j _ /eqP]; rewrite eq_sym lrshift_recF.
 Qed.
 
 Lemma lshift_in_rshift_recF i (s : {set 'I_(size t0)}) :
-  lsh_rec i \in [set rsh_rec x | x in s] = false.
+  (lsh_rec i \in [set rsh_rec x | x in s]) = false.
 Proof using.
 by apply/negP => /imsetP[j _ /eqP]; rewrite lrshift_recF.
 Qed.
@@ -1580,7 +1580,8 @@ Qed.
 
 Lemma shape_tabcols t:
   is_tableau t ->
-  conj_part (shape t) = [seq #|s : {set 'I_(size (to_word t))}| | s <- tabcols t].
+  conj_part (shape t) =
+    [seq #|(s : {set 'I_(size (to_word t))})| | s <- tabcols t].
 Proof using.
 move=> Htab.
 rewrite -shcol_cards; first exact: is_part_sht.

@@ -351,15 +351,15 @@ Canonical join_Dyck D1 D2 := DyckWord (Dyck_word_OwCw D1 D2).
 
 End DyckType.
 
-#[warning="-notation-incompatible-prefix"]
+#[warning="-notation-incompatible-prefix,-closed-notation-not-level-0"]
 Notation "'[' 'Dyck' 'of' s ]" := (dyck (fun sP => @DyckWord s sP))
   (at level 9, format "[ 'Dyck'  'of'  s ]") : form_scope.
 
-#[warning="-notation-incompatible-prefix"]
+#[warning="-notation-incompatible-prefix,-closed-notation-not-level-0"]
 Notation "'[' 'Dyck' 'of' s 'by' pf ]" := (@DyckWord s pf)
   (at level 9, format "[ 'Dyck'  'of'  s  'by'  pf ]") : form_scope.
 
-#[warning="-notation-incompatible-prefix"]
+#[warning="-notation-incompatible-prefix,-closed-notation-not-level-0"]
 Notation "'[' 'Dyck' '{{' D1 '}}' D2 ]" := (join_Dyck D1 D2)
   (at level 8, format "[ 'Dyck'  '{{'  D1  '}}'  D2 ]",
    D1 at next level) : form_scope.

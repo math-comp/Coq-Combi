@@ -546,7 +546,7 @@ by move: H1=> /orP[]; apply: mem_pblock_setpart.
 Qed.
 
 Lemma join_finerE P Q x y :
-  x \in S -> y \in pblock (P `|` Q)%O x = join_finer_eq P Q x y.
+  x \in S -> (y \in pblock (P `|` Q)%O x) = (join_finer_eq P Q x y).
 Proof.
 move=> xinS; case/boolP: (y \in S) => [yinS | yninS].
   by rewrite -(pblock_equivalence_partition (join_finer_equivalence P Q)).
@@ -558,7 +558,7 @@ Qed.
 
 End Finer.
 
-Notation join_finer_eq := join_finer_eq.
+Abbreviation join_finer_eq := join_finer_eq.
 
 End Exports.
 End RefinmentOrder.

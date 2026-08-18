@@ -396,7 +396,7 @@ by apply: (iffP (@nthP _ _ _ x0)) => [] [i];
   exact: leq_trans isz (geq_minl _ _).
 Qed.
 
-Lemma mem_take_enumI n (i : 'I_n) k : i \in take k (enum 'I_n) = (i < k).
+Lemma mem_take_enumI n (i : 'I_n) k : (i \in take k (enum 'I_n)) = (i < k).
 Proof.
 case: i => i Hi /=.
 rewrite -(mem_map val_inj) map_take val_enum_ord /= take_iota mem_iota /= add0n.
@@ -419,7 +419,7 @@ case: (ltnP k n) => Hk.
   by rewrite (leq_trans H2 Hk).
 Qed.
 
-Lemma mem_drop_enumI n (i : 'I_n) k : i \in drop k (enum 'I_n) = (i >= k).
+Lemma mem_drop_enumI n (i : 'I_n) k : (i \in drop k (enum 'I_n)) = (i >= k).
 Proof.
 case (leqP k n) => Hkn.
 - case: i => i Hi /=.

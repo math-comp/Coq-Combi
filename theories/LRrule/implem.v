@@ -954,8 +954,8 @@ Variables (P1 : 'P_d1) (P2 : 'P_d2).
 Import GRing.Theory.
 
 Variable (n0 : nat) (R : comNzRingType).
-#[local] Notation n := (n0.+1).
-Notation Schur p := (Schur n0 R p).
+Local Abbreviation n := (n0.+1).
+Local Abbreviation Schur p := (Schur n0 R p).
 
 Theorem LRtab_coeffP :
   Schur P1 * Schur P2 =

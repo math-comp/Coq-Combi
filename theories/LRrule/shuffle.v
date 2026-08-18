@@ -282,7 +282,7 @@ Qed.
 Lemma sfilterleqE n u v : u = sfilterleq n v <-> shiftn n u = filter (leq n) v.
 Proof. by split => [-> {u} /= | /= <- {v}]; rewrite ?sfilterleqK ?shiftuK. Qed.
 
-Lemma mem_sfilterleqK n v i : i \in (sfilterleq n v) = (i + n \in v).
+Lemma mem_sfilterleqK n v i : (i \in (sfilterleq n v)) = (i + n \in v).
 Proof.
 rewrite /=; elim: v => [// | v0 v IHv] /=.
 case: leqP => H /=; rewrite !inE IHv.
@@ -484,7 +484,7 @@ Qed.
 
 Lemma index_leq_filter s (P : pred nat) i j :
   P i -> P j ->
-  (index i (filter P s)) <= (index j (filter P s)) = (index i s <= index j s).
+  (index i (filter P s) <= index j (filter P s)) = (index i s <= index j s).
 Proof using .
 move=> Hi Hj.
 elim: s => //= s0 s IHs.

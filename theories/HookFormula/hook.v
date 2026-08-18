@@ -184,7 +184,7 @@ Definition hook_length sh rc := (arm_length sh rc + leg_length sh rc).+1.
 
 (** The hook length product *)
 Definition hook_length_prod sh := (\prod_(b : box_in sh) hook_length sh b)%N.
-#[local] Notation HLF sh :=  (((sumn sh)`!)%:Q / (hook_length_prod sh)%:Q)%R.
+#[local] Abbreviation HLF sh :=  (((sumn sh)`!)%:Q / (hook_length_prod sh)%:Q)%R.
 
 
 Lemma hook_length_geq1 sh rc : hook_length sh rc >= 1.
@@ -451,7 +451,7 @@ Implicit Types (r c k l : nat) (rc kl : nat * nat).
 
 (** ** Hook boxes *)
 
-#[local] Notation conj := (conj_part p).
+#[local] Abbreviation conj := (conj_part p).
 
 Definition in_hook rc kl :=
   let: (r, c) := rc in let: (k, l) := kl in
@@ -484,7 +484,7 @@ Qed.
 #[local] Lemma ltnPred a b : a < b -> (a <= b.-1).
 Proof using. by case: b. Qed.
 
-#[local] Lemma iota_hookE a b c : a < b -> b < a.+1 + (c.-1 - a) = (b < c).
+#[local] Lemma iota_hookE a b c : a < b -> (b < a.+1 + (c.-1 - a)) = (b < c).
 Proof using.
 move => Hab; rewrite addSn.
 case: (ltnP b c) => Hbc.
@@ -730,7 +730,7 @@ Qed.
 Lemma enum_traceP (Alpha Beta : nat) :
   corner_box p (Alpha, Beta) ->
   forall A B,
-    (A, B) \in enum_trace Alpha Beta =
+    ((A, B) \in enum_trace Alpha Beta) =
     [&& (is_trace A B), (last 0 A == Alpha) & (last 0 B == Beta)].
 Proof using.
 move=> Hcorn A B.

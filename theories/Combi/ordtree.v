@@ -51,7 +51,7 @@ Unset Printing Implicit Defensive.
 Unset Elimination Schemes.
 Inductive ordtree : Set := OrdNode : seq ordtree -> ordtree.
 Set Elimination Schemes.
-Notation forest := (seq ordtree).
+Abbreviation forest := (seq ordtree).
 
 Lemma OrdNode_inj : injective OrdNode.
 Proof. by move=> f1 f2 []. Qed.

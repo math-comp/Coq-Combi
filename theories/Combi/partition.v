@@ -743,7 +743,7 @@ Qed.
 
 (* A rephrasing of the preceding lemma *)
 Lemma conj_ltnE sh :
-  is_part sh -> forall i j, nth 0 sh i > j = (nth 0 (conj_part sh) j > i).
+  is_part sh -> forall i j, (nth 0 sh i > j) = (nth 0 (conj_part sh) j > i).
 Proof.
 move=> Hpart.
 rewrite -/(in_shape sh _) -/(in_shape (conj_part sh) _).
@@ -1840,8 +1840,8 @@ Qed.
 End BoxInSkew.
 #[export] Hint Resolve box_skewP : core.
 
-Notation box_in := (box_skew [::]).
-Notation enum_box_in := (enum_box_skew [::]).
+Abbreviation box_in := (box_skew [::]).
+Abbreviation enum_box_in := (enum_box_skew [::]).
 
 Lemma BoxIn_subproof sh rc : in_shape sh rc -> in_skew [::] sh rc.
 Proof. by rewrite in_skewE in_shape_nil. Qed.
@@ -2169,7 +2169,7 @@ HB.reexport YoungLattice.
 
 Implicit Type (p q : intpartYoung).
 
-Notation intpartYoung := intpartYoung.
+Abbreviation intpartYoung := intpartYoung.
 Definition le_YoungE := le_YoungE.
 Definition le_YoungP := le_YoungP.
 Definition le_Young_sumn := le_Young_sumn.
@@ -2382,7 +2382,7 @@ Lemma leEpartdom : @Order.le partdom_display 'PDom = partdom.
 Proof. by []. Qed.
 
 #[local] Notation "sh '^#'" := (conj_intpartn sh : 'PDom)
-                              (at level 10, format "sh '^#'").
+                              (at level 1, format "sh '^#'").
 
 Lemma sum_diff sh i :
   \sum_(l <- sh) (l - i) =

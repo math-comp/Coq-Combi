@@ -64,7 +64,7 @@ Context disp (T : inhOrderType disp).
 Implicit Type l : T.
 Implicit Type r : seq T.
 
-Notation is_row := (sorted <=%O).
+Abbreviation is_row := (sorted <=%O).
 
 Definition is_row1P Z r := sortedP Z (e := <=%O) (s := r).
 Definition is_rowP Z r := sorted2P Z (@le_trans _ T) (@le_refl _ T) r.
@@ -88,7 +88,7 @@ Qed.
 
 End Rows.
 
-Notation is_row := (sorted <=%O).
+Abbreviation is_row := (sorted <=%O).
 
 (** ** Dominance order for rows *)
 Section Dominate.

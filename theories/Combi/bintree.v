@@ -1349,7 +1349,7 @@ have Hw : w = u ++ w0 :: v.
   - rewrite nth_cat Hiu; apply/anti_leq/andP; split.
     + by move/vctleqP: Hwv0 => [_ /(_ i)]; rewrite nth_cat Hiu.
     + by move/vctleqP: Hvw  => [_ /(_ i)]; rewrite nth_cat Hiu.
-  - have Hf : i < size u = false by rewrite ltnNge (ltnW Hui).
+  - have Hf : (i < size u) = false by rewrite ltnNge (ltnW Hui).
     rewrite nth_cat Hf.
     have:= Hui; rewrite -subn_gt0; case Hd : (i - size u) => [| d] //= _.
     apply/anti_leq/andP; split.

@@ -94,11 +94,11 @@ Reserved Notation "{ 'homsym' T [ n , d ] }"
   (at level 0, T, n, d at level 2, format "{ 'homsym'  T [ n ,  d ] }").
 
 Set Warnings "-closed-notation-not-level-0".
-Reserved Notation "''he[' k ]" (at level 8, k at level 2, format "''he[' k ]").
-Reserved Notation "''hh[' k ]" (at level 8, k at level 2, format "''hh[' k ]").
-Reserved Notation "''hp[' k ]" (at level 8, k at level 2, format "''hp[' k ]").
-Reserved Notation "''hm[' k ]" (at level 8, k at level 2, format "''hm[' k ]").
-Reserved Notation "''hs[' k ]" (at level 8, k at level 2, format "''hs[' k ]").
+Reserved Notation "''he[' k ]" (at level 8, k at level 50, format "''he[' k ]").
+Reserved Notation "''hh[' k ]" (at level 8, k at level 50, format "''hh[' k ]").
+Reserved Notation "''hp[' k ]" (at level 8, k at level 50, format "''hp[' k ]").
+Reserved Notation "''hm[' k ]" (at level 8, k at level 50, format "''hm[' k ]").
+Reserved Notation "''hs[' k ]" (at level 8, k at level 50, format "''hs[' k ]").
 
 Reserved Notation "''he'" (at level 8, format "''he'").
 Reserved Notation "''hh'" (at level 8, format "''hh'").
@@ -170,7 +170,7 @@ Variable n : nat.
 Variable R : nzRingType.
 Variable d : nat.
 
-#[local] Notation is_homsym := (@is_homsym n R d).
+#[local] Abbreviation is_homsym := (@is_homsym n R d).
 
 Fact is_homsym_submod_closed : submod_closed is_homsym.
 Proof.
@@ -209,11 +209,11 @@ End HomogSymLModType.
 Section Vector.
 
 Variable n0 : nat.
-#[local] Notation n := (n0.+1).
+#[local] Abbreviation n := (n0.+1).
 Variable R : comNzRingType.
 
 Variable d : nat.
-#[local] Notation SF := {sympoly R[n]}.
+#[local] Abbreviation SF := {sympoly R[n]}.
 Implicit Type (la : 'P_d).
 
 Definition homsymm la : {homsym R[n, d]} := HomogSym (symm_homog n R la).
@@ -281,7 +281,7 @@ Variable c d : nat.
 Fact homsymprod_subproof (p : {homsym R[n, c]}) (q : {homsym R[n, d]}) :
   homsym p * homsym q \is (c + d).-homsym.
 Proof. by apply: dhomogM => /=; apply: homsym_is_dhomog. Qed.
-Canonical homsymprod p q : {homsym R[n, c + d]} :=
+Canonical homsymprod p q : {homsym R[n, (c + d)]} :=
   HomogSym (homsymprod_subproof p q).
 Fact homsymprod_is_bilinear : bilinear_for *:%R *:%R homsymprod.
 Proof.
@@ -291,7 +291,7 @@ split => /= p r /= u v; apply val_inj => /=.
 Qed.
 HB.instance Definition _ :=
   bilinear_isBilinear.Build
-    R {homsym R[n, c]} {homsym R[n, d]} {homsym R[n, c + d]}
+    R {homsym R[n, c]} {homsym R[n, d]} {homsym R[n, (c + d)]}
     *:%R *:%R homsymprod homsymprod_is_bilinear.
 
 #[local] Notation "p *h q" := (homsymprod p q).
@@ -336,9 +336,9 @@ Notation "p *h q" := (homsymprod p q).
 Section HomSymProdGen.
 
 Variable n0 : nat.
-#[local] Notation n := (n0.+1).
+#[local] Abbreviation n := (n0.+1).
 Variable R : comNzRingType.
-#[local] Notation HSF := {homsym R[n, _]}.
+#[local] Abbreviation HSF := {homsym R[n, _]}.
 
 Section Merge.
 Variables (d1 d2 : nat) (la : 'P_d1) (mu : 'P_d2).
@@ -355,8 +355,8 @@ Section Cons.
 Variables (d l0 : nat) (la : seq nat).
 Hypotheses (Hla : is_part_of_n d la)
            (Hlla : is_part_of_n (l0 + d)%N (l0 :: la)).
-Notation Plla := (IntPartN Hlla).
-Notation Pla := (IntPartN Hla).
+Abbreviation Plla := (IntPartN Hlla).
+Abbreviation Pla := (IntPartN Hla).
 
 Lemma homsymprod_h1h : 'hh[Plla] = 'hh[rowpartn l0] *h 'hh[Pla] :> HSF.
 Proof. by apply val_inj; rewrite /= prod_genM intpartn_cons. Qed.
@@ -372,10 +372,10 @@ End HomSymProdGen.
 Section InHomSym.
 
 Variable n0 d : nat.
-#[local] Notation n := (n0.+1).
+#[local] Abbreviation n := (n0.+1).
 Variable R : comNzRingType.
-#[local] Notation Pol := {mpoly R[n]}.
-#[local] Notation HSF := {homsym R[n, d]}.
+#[local] Abbreviation Pol := {mpoly R[n]}.
+#[local] Abbreviation HSF := {homsym R[n, d]}.
 
 #[local] Notation "''pi_' d" :=
   (pihomog mdeg d) (at level 5, format "''pi_' d").
@@ -421,9 +421,9 @@ End InHomSym.
 Section OmegaHomSym.
 
 Variable n0 d : nat.
-#[local] Notation n := (n0.+1).
+#[local] Abbreviation n := (n0.+1).
 Variable R : comNzRingType.
-#[local] Notation HSF := {homsym R[n, d]}.
+#[local] Abbreviation HSF := {homsym R[n, d]}.
 Implicit Types (p q : HSF) (la : intpartn d).
 
 Fact omegahomsym_subproof p : is_homsym d (omegasf p).
@@ -458,7 +458,7 @@ End OmegaHomSym.
 Section OmegaProd.
 
 Variable n0 : nat.
-#[local] Notation n := (n0.+1).
+#[local] Abbreviation n := (n0.+1).
 Variable R : comNzRingType.
 
 Lemma omegahomsym_rmorph c d (p : {homsym R[n, c]}) (q : {homsym R[n, d]}) :
@@ -472,12 +472,12 @@ End OmegaProd.
 Section HomSymField.
 
 Variable n0 d : nat.
-#[local] Notation n := (n0.+1).
+#[local] Abbreviation n := (n0.+1).
 Variable R : fieldType.
-#[local] Notation HSF := {homsym R[n, d]}.
+#[local] Abbreviation HSF := {homsym R[n, d]}.
 
 
-#[local] Notation Basis := (#|{: 'P_d}|.-tuple HSF).
+#[local] Abbreviation Basis := (#|{: 'P_d}|.-tuple HSF).
 Definition symbe : Basis := [tuple of [seq 'he[la] | la : 'P_d]].
 Definition symbh : Basis := [tuple of [seq 'hh[la] | la : 'P_d]].
 Definition symbm : Basis := [tuple of [seq 'hm[la] | la : 'P_d]].
@@ -551,7 +551,7 @@ rewrite -scalerAr linearZ /=.
 by rewrite mcoeff_alt_SchurE // Hmula mulr0.
 Qed.
 
-#[local] Notation E := [tuple mesym n R i.+1 | i < n].
+#[local] Abbreviation E := [tuple mesym n R i.+1 | i < n].
 
 Definition intpart_of_mon m : seq nat :=
   rev (flatten [tuple nseq (m i) i.+1 | i < n]).
@@ -679,9 +679,9 @@ Variable R S : fieldType.
 Variable mor : {rmorphism R -> S}.
 
 Variable n0 d : nat.
-#[local] Notation n := (n0.+1).
-#[local] Notation HSFR := {homsym R[n, d]}.
-#[local] Notation HSFS := {homsym S[n, d]}.
+#[local] Abbreviation n := (n0.+1).
+#[local] Abbreviation HSFR := {homsym R[n, d]}.
+#[local] Abbreviation HSFS := {homsym S[n, d]}.
 
 Fact map_sympoly_d_homog (p : HSFR) : map_sympoly mor p \is d.-homsym.
 Proof.
@@ -754,9 +754,9 @@ End ChangeField.
 Section Coord.
 
 Variable n0 d : nat.
-#[local] Notation n := (n0.+1).
+#[local] Abbreviation n := (n0.+1).
 Variable R : fieldType.
-#[local] Notation HSF := {homsym R[n, d]}.
+#[local] Abbreviation HSF := {homsym R[n, d]}.
 Implicit Type (la : 'P_d).
 
 Lemma symbmE la : ('hm)`_(enum_rank la) = 'hm[la] :> HSF.
@@ -774,7 +774,7 @@ Proof. by rewrite /symbs tupleE /= (nth_map la) ?nth_enum_rank // -cardE. Qed.
   (enum_rank la == enum_rank mu) = (la == mu).
 Proof. by rewrite inj_eq //; apply: enum_rank_inj. Qed.
 
-#[local] Notation coord := (coord (vT := HSF)).
+#[local] Abbreviation coord := (coord (vT := HSF)).
 
 Hypothesis (Hd : (d <= n)%N).
 Lemma coord_symbm la mu : coord 'hm (enum_rank mu) 'hm[la] = (la == mu)%:R.
@@ -798,8 +798,8 @@ Section ChangeNVar.
 
 Variable R : comNzRingType.
 Variable m0 n0 : nat.
-#[local] Notation m := m0.+1.
-#[local] Notation n := n0.+1.
+#[local] Abbreviation m := m0.+1.
+#[local] Abbreviation n := n0.+1.
 Variable d : nat.
 Hypothesis Hd : (d <= m)%N || (n0 < m)%N.
 

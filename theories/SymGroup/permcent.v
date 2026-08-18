@@ -86,7 +86,7 @@ Unset Printing Implicit Defensive.
 #[local] Hint Resolve porbit_id : core.
 
 #[local] Notation "''SC_' i " := (finset (fun x => #{x} == i))
-    (at level 0).
+    (at level 1).
 
 (** ** Support and cycle in the centralizer *)
 Section PermCycles.

@@ -649,7 +649,7 @@ Variable (n : nat).
 Definition type := intcompn n.
 #[local] Notation "'CRef" := type.
 Implicit Types (c : 'CRef) (d : {set 'I_n.-1}).
-#[local] Notation SetIn := ({set ('I_n.-1 : finType)}).
+#[local] Abbreviation SetIn := ({set ('I_n.-1 : finType)}).
 
 #[export] HB.instance Definition _ := SubType.copy 'CRef (intcompn n).
 #[export] HB.instance Definition _ := Finite.copy 'CRef (intcompn n).
@@ -721,7 +721,7 @@ End RefinementOrder.
 Module Exports.
 HB.reexport RefinementOrder.
 
-Notation intcompnref := type.
+Abbreviation intcompnref := type.
 Definition leEcompnref := leEcompnref.
 Definition descset_mono := descset_mono.
 Definition descset_meet := descset_meet.

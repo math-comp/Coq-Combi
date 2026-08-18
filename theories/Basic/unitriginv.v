@@ -156,7 +156,7 @@ Implicit Types t u v : T.
 
 Hypothesis Munitrig : unitrig M.
 
-#[local] Notation n := #|{: T}|.
+#[local] Abbreviation n := #|{: T}|.
 Definition Mat : 'M[R]_n := \matrix_(i, j < n) M (enum_val i) (enum_val j).
 
 Lemma det_unitrig : \det Mat = 1.

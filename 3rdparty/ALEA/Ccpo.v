@@ -390,8 +390,9 @@ Qed.
 
 #[export] Typeclasses Opaque monotonic stable.
 
-#[export] Instance monotonic_stable `{o1:ord Oa} `{o2:ord Ob} (f : Oa -> Ob) {m:monotonic f}
-         :  stable  f.
+#[export] Instance monotonic_stable
+  `{o1:ord Oa} `{o2:ord Ob} (f : Oa -> Ob) {m:monotonic f}
+  : stable  f.
 unfold monotonic, stable; simpl; intros.
 apply Ole_antisym; auto.
 Qed.
@@ -2001,8 +2002,9 @@ Definition fcont_app {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m> D1 -c> D2
 (** printing <_> %\ensuremath{<\!\_\!>}% #&lt;_&gt;# *)
 Infix "<_>" := fcont_app (at level 70) : O_scope.
 
-Lemma fcont_app_simpl : forall {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m> D1 -c> D2)(x:D1)(y:O),
-            (f <_> x) y = f y x.
+Lemma fcont_app_simpl :
+  forall {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m> D1 -c> D2)(x:D1)(y:O),
+    (f <_> x) y = f y x.
 trivial.
 Qed.
 
@@ -2030,21 +2032,23 @@ Definition fcont_mshift {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m> (D1 -c
 
 
 Lemma fcont_app_continuous :
-       forall {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m> D1 -c> D2) (h:nat -m> D1),
-            f <_> (lub h) <= lub (D:=O -m> D2) ((fcont_mshift f) @ h).
+  forall {O} {o:ord O} `{c1:cpo D1} `{c2:cpo D2} (f: O -m> D1 -c> D2) (h:nat -m> D1),
+    (f <_> (lub h)) <= lub (D:=O -m> D2) ((fcont_mshift f) @ h).
 intros; intro x.
 rewrite fcont_app_simpl.
 rewrite (fcontinuous (f x) h); simpl; auto.
 Qed.
 
-Lemma fcont_lub_simpl : forall `{c1:cpo D1} `{c2:cpo D2} (h:nat -m> D1 -c> D2)(x:D1),
-            lub h x = lub (h <_> x).
+Lemma fcont_lub_simpl :
+  forall `{c1:cpo D1} `{c2:cpo D2} (h:nat -m> D1 -c> D2) (x:D1),
+    lub h x = lub (h <_> x).
 trivial.
 Qed.
 
-#[export] Instance cont_app_monotonic : forall `{o1:ord D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
-            (p:forall k, continuous (f k)),
-            monotonic (Ob:=D2 -c> D3) (fun (k:D1) => cont _ (fcontinuous:=p k)).
+#[export] Instance cont_app_monotonic :
+  forall `{o1:ord D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
+         (p:forall k, continuous (f k)),
+    monotonic (Ob:=D2 -c> D3) (fun (k:D1) => cont _ (fcontinuous:=p k)).
 red; simpl; intros.
 apply (fmonotonic f); trivial.
 Qed.
@@ -2054,13 +2058,15 @@ Definition cont_app `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
     := mon (fun k => cont (f k) (fcontinuous:=p k)).
 
 Lemma cont_app_simpl :
-forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}(f:D1 -m> D2 -m> D3)(p:forall k, continuous (f k))
-        (k:D1),  cont_app f p k = cont (f k).
+  forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
+         (f:D1 -m> D2 -m> D3)(p:forall k, continuous (f k)) (k:D1),
+    cont_app f p k = cont (f k).
 trivial.
 Qed.
 
-#[export] Instance cont2_continuous `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
-           (p:continuous2 f) : continuous (cont_app f (continuous2_app f)).
+#[export] Instance cont2_continuous
+  `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
+  (p:continuous2 f) : continuous (cont_app f (continuous2_app f)).
 red; intros; rewrite cont_app_simpl; intro k; simpl.
 transitivity (lub (D:=D2 -m> D3) (f@h) k).
 assert (continuous f).
@@ -2074,17 +2080,20 @@ Definition cont2 `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D1 -m> D2 -m> D3)
 := cont (cont_app f (continuous2_app f)).
 
 
-#[export] Instance Fcontm_continuous `{c1:cpo D1} `{c2:cpo D2} : continuous (Fcontm D1 D2).
+#[export] Instance Fcontm_continuous `{c1:cpo D1} `{c2:cpo D2} :
+  continuous (Fcontm D1 D2).
 red; intros; auto.
 Qed.
 #[export] Hint Resolve Fcontm_continuous : core.
 
-#[export] Instance fcont_comp_continuous : forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
+#[export] Instance fcont_comp_continuous :
+  forall `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3}
     (f:D2 -c> D3) (g:D1 -c> D2), continuous (f @ g).
 intros; apply (continuous_comp (fcontm f) (fcontm g)); auto.
 Qed.
 
-Definition fcont_comp `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D2 -c> D3) (g:D1 -c> D2)
+Definition fcont_comp
+  `{c1:cpo D1} `{c2:cpo D2} `{c3:cpo D3} (f:D2 -c> D3) (g:D1 -c> D2)
    : D1 -c> D3 := cont (f @ g).
 
 Infix "@_" := fcont_comp (at level 35) : O_scope.

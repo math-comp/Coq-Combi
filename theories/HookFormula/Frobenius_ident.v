@@ -44,7 +44,7 @@ Section Identity.
 
 Variable n : nat.
 
-#[local] Notation stpn := (stdtabn n * stdtabn n)%type.
+Local Abbreviation stpn := (stdtabn n * stdtabn n)%type.
 Lemma card_stpn_shape :
   #|[set p : stpn | shape p.1 == shape p.2]| =
     \sum_(sh : 'P_n) #|{: stdtabsh sh}|^2.

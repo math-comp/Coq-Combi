@@ -90,7 +90,7 @@ Section CharDotProduct.
 
 Variable (gT : finGroupType) (G : {group gT}).
 
-#[local] Notation cfdot := (cfdot (B := G)).
+#[local] Abbreviation cfdot := (cfdot (B := G)).
 
 Fact cfdot_is_bilinear :
   bilinear_for *%R (Num.conj \; *%R) cfdot.
@@ -121,12 +121,12 @@ End CharDotProduct.
 Section NVar.
 
 Variable nvar0 : nat.
-#[local] Notation nvar := nvar0.+1.
+#[local] Abbreviation nvar := nvar0.+1.
 
 Section Defs.
 
 Variable n : nat.
-#[local] Notation HS := {homsym algC[nvar, n]}.
+#[local] Abbreviation HS := {homsym algC[nvar, n]}.
 
 Definition Fchar (f : 'CF('SG_n)) : HS :=
   locked (\sum_(la : 'P_n) (f (permCT la) / 'z_la) *: 'hp[la]).
@@ -182,7 +182,7 @@ rewrite (reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 transitivity
   (coord 'hp (enum_rank la)
          (\sum_(j < #|{: 'P_n}|)
-           (f (permCT (enum_val j)) / 'z_(enum_val j)) *: ('hp`_j : HS))).
+           (f (permCT (enum_val j)) / 'z_(enum_val j)) *: (('hp)`_j : HS))).
   congr coord; apply eq_bigr => /= i _; congr (_ *: _).
   rewrite (nth_map inh); first by rewrite -cardE ltn_ord.
   by congr ('hp[_]); apply enum_val_nth.
@@ -305,7 +305,7 @@ Import LeqGeqOrder.
 
 Variable n : nat.
 Hypothesis Hn : (n <= nvar)%N.
-#[local] Notation HS := {homsym algC[nvar, n]}.
+#[local] Abbreviation HS := {homsym algC[nvar, n]}.
 
 Lemma homsymh_character (la : 'P_n) : Fchar_inv 'hh[la] \is a character.
 Proof.
@@ -559,7 +559,7 @@ have -> : 'hh[colpartn n] = \sum_la 'K(la, colpartn n) *: 'hs[la] :> HSC.
   by rewrite /= linear_sum /= -![prod_gen _ _]/('h[_]) symh_syms.
 rewrite (reindex _ (onW_bij _ (@enum_val_bij _))) /=.
 rewrite (eq_bigr
-           (fun i => 'K(enum_val i, colpartn n) *: 'hs`_i)) => [/= i _ |].
+           (fun i => 'K(enum_val i, colpartn n) *: ('hs)`_i)) => [/= i _ |].
   rewrite (nth_map inh); first by rewrite -cardE ltn_ord.
   by congr (_ *: 'hs[_]); apply enum_val_nth.
 by rewrite coord_sum_free ?enum_rankK // ?KostkaStd //; exact: symbs_free.

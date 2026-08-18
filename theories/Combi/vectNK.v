@@ -36,39 +36,33 @@ Unset Printing Implicit Defensive.
 
 Section VectNK.
 
+Implicit Type (s : seq nat).
+
 Fixpoint vect_n_k n k :=
   if k is k'.+1
   then flatten (mkseq (fun i => map (cons i) (vect_n_k (n-i) k') ) n.+1)
   else if n is 0 then [:: [::]] else [::].
 
-Lemma vect_n_k_in n k s : sumn s == n -> size s == k -> s \in vect_n_k n k.
+
+Lemma vect_n_kP n k s : (s \in vect_n_k n k) = (sumn s == n) && (size s == k).
 Proof.
+apply/idP/idP => [ | /andP[]].
+  elim: k n s => [| k IHk n]; first by case => [[| s0 s]|].
+  case => [|s0 s] /flattenP /= [ll /mapP[i Hi ->] /mapP[s' //]].
+  rewrite -/vect_n_k => /IHk /andP[/eqP Hsum /eqP Hsize] [-> ->].
+  rewrite Hsize /= eq_refl andbT Hsum.
+  move: Hi; rewrite mem_iota add0n ltnS => /andP[_ Hi].
+  by rewrite addnC subnK.
 elim: k n s => [| k IHk n].
-- by case => [s _ /nilP -> // | n]; case.
-- case => [// | s0 s] /eqP Hsum Hsize.
-  apply/flattenP; rewrite -/vect_n_k /mkseq.
-  exists (map (cons s0) (vect_n_k (n - s0) k)).
-  + apply/mapP; exists s0; last by [].
-    by rewrite mem_iota leq0n add0n /= ltnS -Hsum /=; apply: leq_addr.
-  + apply/mapP; exists s; last by [].
-    apply: IHk; first by rewrite -Hsum /= -{2}[s0]addn0 subnDl subn0.
-    by move: Hsize.
-Qed.
-
-Lemma in_vect_n_k n k s : s \in vect_n_k n k -> (sumn s == n) && (size s == k).
-Proof.
-elim: k n s => [| k IHk n]; first by case => [[| s0 s]|].
-case => [|s0 s] /flattenP /= [ll /mapP[i Hi ->] /mapP[s' //]].
-rewrite -/vect_n_k => /IHk /andP[/eqP Hsum /eqP Hsize] [-> ->].
-rewrite Hsize /= eq_refl andbT Hsum.
-move: Hi; rewrite mem_iota add0n ltnS => /andP[_ Hi].
-by rewrite addnC subnK.
-Qed.
-
-Lemma vect_n_kP n k s : s \in vect_n_k n k = (sumn s == n) && (size s == k).
-Proof.
-apply/idP/idP; first exact: in_vect_n_k.
-by move=> /andP[]; apply: vect_n_k_in.
+  by case => [s _ /nilP -> // | n]; case.
+case => [// | s0 s] /eqP Hsum Hsize.
+apply/flattenP; rewrite -/vect_n_k /mkseq.
+exists (map (cons s0) (vect_n_k (n - s0) k)).
+  apply/mapP; exists s0; last by [].
+  by rewrite mem_iota leq0n add0n /= ltnS -Hsum /=; apply: leq_addr.
+apply/mapP; exists s; last by [].
+apply: IHk; first by rewrite -Hsum /= -{2}[s0]addn0 subnDl subn0.
+by move: Hsize.
 Qed.
 
 Lemma vect_0_k k : vect_n_k 0 k = [:: nseq k 0].
@@ -114,10 +108,7 @@ Implicit Type (s : seq T) (ss : seq (seq T)).
 
 Lemma mem_shape_vect_n_k ss :
   (shape ss) \in vect_n_k (size (flatten ss)) (size ss).
-Proof using.
-apply: vect_n_k_in; first by rewrite size_flatten.
-by rewrite size_map.
-Qed.
+Proof using. by rewrite vect_n_kP size_flatten size_map !eqxx. Qed.
 
 Definition cut_k k s := [seq reshape sh s | sh <- vect_n_k (size s) k].
 
@@ -137,7 +128,7 @@ Qed.
 
 Lemma size_cut_k k s ss : ss \in (cut_k k s) -> size ss = k.
 Proof using.
-rewrite /cut_k => /mapP[sh /in_vect_n_k/andP[/eqP Hsum /eqP Hsize] -> {ss}].
+rewrite /cut_k => /mapP[sh /[!vect_n_kP]/andP[/eqP Hsum /eqP Hsize] -> {ss}].
 by rewrite -(size_map size _) -/(shape _) reshapeKl ?Hsum.
 Qed.
 

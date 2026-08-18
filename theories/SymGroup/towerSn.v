@@ -234,8 +234,8 @@ Section TowerMorphism.
 
 Variables m n : nat.
 
-#[local] Notation ct := cycle_typeSn.
-#[local] Notation SnXm := (setX 'SG_m 'SG_n).
+#[local] Abbreviation ct := cycle_typeSn.
+#[local] Abbreviation SnXm := (setX 'SG_m 'SG_n).
 
 Definition tinjval (s : 'S_m * 'S_n) :=
   fun (x : 'I_(m + n)) => match split x  with
@@ -425,7 +425,7 @@ Notation "f \o^ g" := (cfIsom (isom_tinj _ _) (f \ox g)) (at level 40).
 Section Restriction.
 
 Variables m n : nat.
-#[local] Notation ct := cycle_typeSn.
+#[local] Abbreviation ct := cycle_typeSn.
 
 Lemma cfuni_tinj s (l : 'P_(m + n)) :
   '1_[l] (tinj s) = (l == ct s.1 +|+ ct s.2)%:R.
@@ -469,9 +469,9 @@ Variables m n : nat.
 
 Implicit Types (p : 'P_m) (q : 'P_n).
 
-#[local] Notation ct := cycle_typeSn.
-#[local] Notation SnXm := (setX 'SG_m 'SG_n).
-#[local] Notation classX p q := ((permCT p, permCT q) ^: SnXm).
+#[local] Abbreviation ct := cycle_typeSn.
+#[local] Abbreviation SnXm := (setX 'SG_m 'SG_n).
+#[local] Abbreviation classX p q := ((permCT p, permCT q) ^: SnXm).
 
 Import GroupScope GRing.Theory Num.Theory.
 #[local] Open Scope ring_scope.

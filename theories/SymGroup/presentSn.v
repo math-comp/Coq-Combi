@@ -393,7 +393,7 @@ End MaxPerm.
 Section ElemTransp.
 
 Variable n0 : nat.
-Notation n := n0.+1.
+Local Abbreviation n := n0.+1.
 
 Definition eltr i : 'S_n0.+1 := tperm (inord i) (inord i.+1).
 
@@ -574,7 +574,7 @@ Variant is_invset IS : Prop :=
   & transitive (srel (Delta :\: IS)).
 
 
-Lemma mem_Delta i j : (i, j) \in Delta = (i < j).
+Lemma mem_Delta i j : ((i, j) \in Delta) = (i < j).
 Proof. by rewrite inE. Qed.
 Lemma DeltaP i j : (i, j) \in Delta -> (i < j).
 Proof. by rewrite inE. Qed.
@@ -876,12 +876,12 @@ Notation "''s_[' w ]" := (\prod_(i <- w) 's_i).
 Section PermOfInvSetEltr.
 
 Variable n0 : nat.
-Local Notation n := n0.+1.
+Local Abbreviation n := n0.+1.
 Implicit Type s t : 'S_n.
 
 Notation "''s_[' w ]" := (\prod_(i <- w) 's_i).
 Lemma eltr_exchange i (a b : 'I_n) :
-  i < n0 -> a < b -> 's_i a < 's_i b = (i != a) || (i.+1 != b).
+  i < n0 -> a < b -> ('s_i a < 's_i b) = (i != a) || (i.+1 != b).
 Proof using.
 move=> Hi; case: tpermP => [-> | -> | /eqP Ha1 /eqP Hai1];
   case: tpermP => [-> | -> | /eqP Hb1 /eqP Hbi1];
@@ -970,7 +970,7 @@ Arguments Delta {n}.
 Section Length.
 
 Variable n0 : nat.
-Notation n := n0.+1.
+Local Abbreviation n := n0.+1.
 
 Notation "''s_' i" := (eltr n0 i).
 Notation "''s_[' w ]" := (\prod_(i <- w) 's_i).
@@ -987,7 +987,7 @@ rewrite /length => Hi Hfwd.
 rewrite (invset_eltrL Hi Hfwd).
 rewrite cardsU1 (card_imset _ (@inv_inj _ _ _)) => [[u v] /= |].
   by rewrite !eltrK.
-rewrite (_ : (_, _) \in _ = false) //.
+rewrite (_ : ((_, _) \in _) = false) //.
 apply/negP => /imsetP[[u v]].
 rewrite inE /= => /andP[Huv Hsvu] [].
 move/(congr1 's_i); rewrite eltrK eltrL => Hu; subst u.
@@ -1428,7 +1428,7 @@ Notation "''s_' i" := (eltr n i).
 Notation "''s_[' w ]" := (\prod_(i <- w) 's_i).
 
 Definition reduced_word := [qualify w : seq 'I_n | length 's_[w] == size w ].
-Notation reduced := reduced_word.
+Abbreviation reduced := reduced_word.
 
 Lemma reducedP w : reflect (length 's_[w] = size w) (w \is reduced).
 Proof. by rewrite unfold_in; apply/eqP. Qed.
@@ -1438,7 +1438,7 @@ Proof using. by rewrite unfold_in big_nil length1. Qed.
 
 Hint Resolve reduced_nil : core.
 
-Lemma reduced_iiF i : [:: i; i] \is reduced = false.
+Lemma reduced_iiF i : ([:: i; i] \is reduced) = false.
 Proof using. by rewrite unfold_in /= big_cons big_seq1 eltr2 length1. Qed.
 
 Lemma reduced_rev w : w \is reduced -> rev w \is reduced.
@@ -1721,8 +1721,8 @@ Proof using. by move=> /orP[]; [apply braid_prods|apply prods_reducesE]. Qed.
 End Reduced.
 Arguments reducedP {n w}.
 
-Notation reduced := (reduced_word _).
-Notation braidred := (@braid_reduces _).
+Abbreviation reduced := (reduced_word _).
+Abbreviation braidred := (@braid_reduces _).
 
 #[export] Hint Resolve braidww : core.
 
@@ -1731,7 +1731,7 @@ Notation braidred := (@braid_reduces _).
 Section CanWord.
 
 Variable (n0 : nat).
-#[local] Notation n := n0.+1.
+#[local] Abbreviation n := n0.+1.
 #[local] Notation "''s_' i" := (eltr n i) : group_scope.
 #[local] Notation "''s_[' w ]" := (\prod_(i <- w) 's_i).
 #[local] Notation "a =Br b" := (braidcongr a b).

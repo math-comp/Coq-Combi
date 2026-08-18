@@ -376,13 +376,13 @@ Definition pos1 := Ordinal pos1_subproof.
 
 Lemma tnth_pos0 : tnth (in_tuple x) pos0 = l0.
 Proof using.
-by rewrite (tnth_nth l0) nth_cat (_ : pos0 < size u = false) ?ltnn // subnn.
+by rewrite (tnth_nth l0) nth_cat (_ : (pos0 < size u) = false) ?ltnn // subnn.
 Qed.
 
 Lemma tnth_pos1 : tnth (in_tuple x) pos1 = l1.
 Proof using.
 rewrite (tnth_nth l1) nth_cat.
-have -> : pos1 < size u = false.
+have -> : (pos1 < size u) = false.
   by have:= leqnSn (size u); rewrite leqNgt => /negbTE ->.
 by rewrite subSn //= subnn.
 Qed.
@@ -507,10 +507,10 @@ Let y := u ++ [:: b; a] ++ v.
 Variable P : {set {set 'I_(size x)}}.
 Hypothesis Px : P \is a k.-supp[R, in_tuple x].
 
-Notation posa := (Swap.pos0 u v a b).
-Notation posb := (Swap.pos1 u v a b).
-Notation swapX := (@Swap.swap _ u v a b).
-Notation swap_setX := (Swap.swap_set u v a b).
+Local Abbreviation posa := (Swap.pos0 u v a b).
+Local Abbreviation posb := (Swap.pos1 u v a b).
+Local Abbreviation swapX := (@Swap.swap _ u v a b).
+Local Abbreviation swap_setX := (Swap.swap_set u v a b).
 
 Hypothesis HnoBoth :
   forall S : {set 'I_(size x)}, S \in P -> ~ ((posa \in S) && (posb \in S)).
@@ -704,10 +704,10 @@ Variable k : nat.
 Variable P : {set {set 'I_(size x)}}.
 Hypothesis Px : P \is a k.-supp[R, in_tuple x].
 
-Notation posb := (Swap.pos0 u (c :: v) b a).
-Notation posa := (Swap.pos1 u (c :: v) b a).
-Notation swap := (@Swap.swap _ u (c :: v) b a).
-Notation swap_set := (Swap.swap_set u (c :: v) b a).
+Local Abbreviation posb := (Swap.pos0 u (c :: v) b a).
+Local Abbreviation posa := (Swap.pos1 u (c :: v) b a).
+Local Abbreviation swap := (@Swap.swap _ u (c :: v) b a).
+Local Abbreviation swap_set := (Swap.swap_set u (c :: v) b a).
 
 Lemma posc_subproof : (size u).+2 < size x.
 Proof using a b c v.
@@ -718,7 +718,7 @@ Definition posc := Ordinal posc_subproof.
 Lemma tnth_posc : tnth (in_tuple x) posc = c.
 Proof using a b u v.
 rewrite /x (tnth_nth c) nth_cat /=.
-have -> : (size u).+2 < size u = false.
+have -> : ((size u).+2 < size u) = false.
   have:= leq_trans (leqnSn (size u)) (leqnSn _).
   by rewrite leqNgt => /negbTE ->.
 by rewrite -add1n addnS -addSn addnK.
@@ -737,7 +737,7 @@ Section BNotIn.
 
 Hypothesis HbNin : posb \notin (cover P).
 
-Lemma posbinSF : posb \in S = false.
+Lemma posbinSF : (posb \in S) = false.
 Proof using HS HbNin.
 apply/negP => Hb.
 by move: HbNin; rewrite /cover => /bigcupP[]; exists S.

@@ -197,7 +197,7 @@ Implicit Type (m : 'M[nat]_n).
 Implicit Type (M : 'M[nat]_n.+1).
 Implicit Type (s : 'S_n).
 
-#[local] Notation mxsum := (@mxsum n).
+Local Abbreviation mxsum := (@mxsum n).
 
 Lemma mxsum_tr m : mxsum m^T = (mxsum m)^T.
 Proof.
@@ -411,7 +411,7 @@ Section Def.
 Context {n : nat}.
 Implicit Type (s t u v : 'S_n).
 
-#[local] Notation perm_mxsum := (@mxsum n \o (perm_mx (n := n))).
+Local Abbreviation perm_mxsum := (@mxsum n \o (perm_mx (n := n))).
 
 Definition Bruhat s t :=
   [forall i, forall j, perm_mxsum s i j >= perm_mxsum t i j].
@@ -546,7 +546,7 @@ End Symmetry.
 Section RedWords.
 
 Context {n0 : nat}.
-#[local] Notation n := n0.+1.
+Local Abbreviation n := n0.+1.
 Implicit Type (s t u v : 'S_n).
 
 

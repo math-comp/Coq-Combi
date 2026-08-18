@@ -273,7 +273,7 @@ rewrite -{1}[l](cat_take_drop (posbig s)) -cat1s -catA.
 by apply/permPl; apply: perm_catCA.
 Qed.
 
-Lemma in_std_ltn_size s i : i \in std s = (i < size s).
+Lemma in_std_ltn_size s i : (i \in std s) = (i < size s).
 Proof using. by rewrite (mem_std _ (std_is_std s)) size_std_rec. Qed.
 
 Lemma allLtn_std_rec s : allLtn (std s) (size s).

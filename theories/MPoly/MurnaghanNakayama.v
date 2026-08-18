@@ -75,8 +75,8 @@ Section MultAlternSymp.
 Variable n0 : nat.
 Variable R : comNzRingType.
 
-#[local] Notation n := n0.+1.
-#[local] Notation rho := (rho n).
+#[local] Abbreviation n := n0.+1.
+#[local] Abbreviation rho := (rho n).
 #[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
 
 Lemma mult_altern_symp_pol p d :
@@ -122,8 +122,8 @@ End MultAlternSymp.
 Section MultSymsSympIDomain.
 
 Variable n0 : nat.
-#[local] Notation n := n0.+1.
-#[local] Notation SF := {sympoly int[n]}.
+#[local] Abbreviation n := n0.+1.
+#[local] Abbreviation SF := {sympoly int[n]}.
 
 Lemma syms_sympM_oapp_int d (la : 'P_d) m :
   m != 0%N -> size la <= n ->
@@ -150,8 +150,8 @@ Section MultSymsSymp.
 
 Variable n0 : nat.
 Variable R : comNzRingType.
-#[local] Notation n := n0.+1.
-#[local] Notation SF := {sympoly R[n]}.
+#[local] Abbreviation n := n0.+1.
+#[local] Abbreviation SF := {sympoly R[n]}.
 
 Lemma syms_sympM_oapp d (la : 'P_d) m :
   m != 0%N ->
@@ -319,7 +319,7 @@ End Tests.
 Section MNRule.
 
 Variable n0 : nat.
-#[local] Notation n := n0.+1.
+#[local] Abbreviation n := n0.+1.
 
 Theorem MN_coeffP_int d (la : 'P_d) :
   'p[la] = \sum_(sh : 'P_d) MN_coeff sh la *: 's[sh] :> {sympoly int[n]}.
@@ -341,8 +341,8 @@ by rewrite scalerA.
 Qed.
 
 Variable R : comNzRingType.
-#[local] Notation SF := {sympoly R[n]}.
-#[local] Notation HSF := {homsym R[n, _]}.
+#[local] Abbreviation SF := {sympoly R[n]}.
+#[local] Abbreviation HSF := {homsym R[n, _]}.
 
 Theorem MN_coeffP d (la : 'P_d) :
   'p[la] = \sum_(sh : 'P_d) (MN_coeff sh la)%:~R *: 's[sh] :> SF.
@@ -487,7 +487,7 @@ End Tests.
 Section FastImplem.
 
 Variable n0 : nat.
-#[local] Notation n := n0.+1.
+#[local] Abbreviation n := n0.+1.
 
 Lemma syms_prod_sympM_int dn (nu : 'P_dn) dm (mu : 'P_dm) :
   's[nu] * 'p[mu] =
@@ -533,8 +533,8 @@ Qed.
 Section ComRing.
 
 Variable R : comNzRingType.
-#[local] Notation SF := {sympoly R[n]}.
-#[local] Notation HSF := {homsym R[n, _]}.
+#[local] Abbreviation SF := {sympoly R[n]}.
+#[local] Abbreviation HSF := {homsym R[n, _]}.
 
 Theorem syms_prod_sympM dn (nu : 'P_dn) dm (mu : 'P_dm) :
   's[nu] * 'p[mu] =
@@ -578,8 +578,8 @@ Corollary MN_coeffE d (la mu : 'P_d) : MN_coeff_fast la mu = MN_coeff la mu.
 Proof.
 pose HSF := {homsym rat[(sumn mu).+1 , d]}.
 pose Pval i := (@enum_val _ xpredT i : 'P_d).
-have : \sum_i (MN_coeff_rec (Pval i) [::] mu)%:~R *: 'hs`_i =
-       \sum_i (MN_coeff     (Pval i) mu     )%:~R *: 'hs`_i :> HSF.
+have : \sum_i (MN_coeff_rec (Pval i) [::] mu)%:~R *: ('hs)`_i =
+       \sum_i (MN_coeff     (Pval i) mu     )%:~R *: ('hs)`_i :> HSF.
   rewrite !(reindex _ (onW_bij _ (@enum_rank_bij 'P_d))) /=.
   under [LHS]eq_bigr do rewrite /Pval symbsE enum_rankK.
   under [RHS]eq_bigr do rewrite /Pval symbsE enum_rankK.

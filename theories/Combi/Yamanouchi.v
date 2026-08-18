@@ -346,7 +346,7 @@ rewrite /enum_yameval /is_yam_of_eval; move Hn: (sumn ev) => n.
 elim: n ev Hpart Hn y => [| n IHn] /= .
   by move=> ev Hsh /part0 H0 y; rewrite mem_seq1 H0 //= => /eqP ->.
 move=> ev Hpart Hev [| y0 y] /=.
-- have -> : [::] == ev = false by move: Hev; case ev.
+- have -> : ([::] == ev) = false by move: Hev; case ev.
   by move/flattenP => [ltmp /mapP[i _ ->] /mapP[]].
 - move/flatten_mapP => [i].
   rewrite mem_filter mem_iota add0n => /and3P[Hcorn _ Hi].
@@ -365,7 +365,7 @@ elim: n ev Hn => [| n IHn] /= .
   move=> ev Hev /part0 H0 y.
   by rewrite (H0 Hev) => /andP[_ /eqP/evalseq0 ->].
 move=> ev Hev Hpart [/= | y0 y] /=.
-  by have -> : [::] == ev = false by move: Hev; case ev.
+  by have -> : ([::] == ev) = false by move: Hev; case ev.
 move => /andP[/andP[_ Hyam] /eqP Htmp]; subst ev.
 rewrite count_flatten -map_comp.
 rewrite (eq_map (g := fun i => i == y0 : nat)) => [i /= |].

@@ -92,8 +92,8 @@ Set Warnings "postfix-notation-not-level-1".
 Section ScalarProduct.
 
 Context {n0 d : nat}.
-#[local] Notation n := (n0.+1).
-#[local] Notation HSF := {homsym algC[n, d]}.
+#[local] Abbreviation n := (n0.+1).
+#[local] Abbreviation HSF := {homsym algC[n, d]}.
 
 Implicit Type (p q u v : HSF).
 
@@ -254,9 +254,9 @@ Notation "''[' u | v ] _( n , d )" :=
 Section CauchyKernel.
 
 Variables (m0 n0 : nat).
-Notation m := m0.+1.
-Notation n := n0.+1.
-Notation mxvec_index := (@mxvec_index m n).
+Abbreviation m := m0.+1.
+Abbreviation n := n0.+1.
+Abbreviation mxvec_index := (@mxvec_index m n).
 
 Let vecmx_index : 'I_(m * n) -> 'I_m * 'I_n :=
   (enum_val \o cast_ord (esym (mxvec_cast m n))).
@@ -290,7 +290,7 @@ Qed.
 
 End Big.
 
-Definition monX (mon : 'X_{1.. m*n}) : 'X_{1.. m} :=
+Definition monX (mon : 'X_{1..(m*n)}) : 'X_{1.. m} :=
   [multinom (\sum_(j < n) mon (mxvec_index i j))%N | i < m].
 
 Lemma mdeg_monX mon : mdeg (monX mon) = mdeg mon.
@@ -300,7 +300,7 @@ rewrite tnth_mktuple; apply eq_bigr => j _.
 by rewrite mnm_tnth.
 Qed.
 
-Definition monsY (mz : 'X_{1.. m*n}) :=
+Definition monsY (mz : 'X_{1..(m*n)}) :=
   [tuple [multinom mz (mxvec_index i j) | j < n] | i < m].
 
 Definition Ymon (ms : m.-tuple 'X_{1.. n}) :=
@@ -330,9 +330,9 @@ Qed.
 
 Variable (R : comNzRingType).
 
-#[local] Notation polZ := {mpoly R[m * n]}.
-#[local] Notation polX := {mpoly R[m]}.
-#[local] Notation polY := {mpoly R[n]}.
+#[local] Abbreviation polZ := {mpoly R[m * n]}.
+#[local] Abbreviation polX := {mpoly R[m]}.
+#[local] Abbreviation polY := {mpoly R[n]}.
 Definition polXY := {mpoly polY[m]}.
 Definition polXY_scale (c : R) (p : polXY) : polXY := c%:MP *: p.
 #[local] Notation "c *:M p" := (polXY_scale c p)
@@ -698,12 +698,12 @@ End CauchyKernelField.
 Section Scalar.
 
 Variable n0 d : nat.
-#[local] Notation n := n0.+1.
+#[local] Abbreviation n := n0.+1.
 Hypothesis Hd : (d <= n)%N.
 
-#[local] Notation HSC := {homsym algC[n, d]}.
-#[local] Notation polXY := (polXY n0 n0 algC).
-#[local] Notation pol := {mpoly algC[n]}.
+#[local] Abbreviation HSC := {homsym algC[n, d]}.
+#[local] Abbreviation polXY := (polXY n0 n0 algC).
+#[local] Abbreviation pol := {mpoly algC[n]}.
 #[local] Notation "p '(Y)'" := (@polY_XY n0 n0 _ p).
 #[local] Notation "p '(X)'" := (@polX_XY n0 n0 _ p).
 

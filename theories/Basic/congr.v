@@ -345,7 +345,7 @@ Definition congruence_rule (T : eqType) (rule : seq T -> seq (seq T)) :=
 Section CongruenceFacts.
 
 Variable Alph : eqType.
-Notation word := (seq Alph).
+Local Abbreviation word := (seq Alph).
 
 Variable r : rel word.
 Hypothesis Hcongr : congruence_rel r.
@@ -390,7 +390,7 @@ End CongruenceFacts.
 Section CongruenceClosure.
 
 Variable Alph : eqType.
-Notation word := (seq Alph).
+Local Abbreviation word := (seq Alph).
 Implicit Types (a b c u v w : word).
 
 Variable rule : word -> seq word.
@@ -564,7 +564,7 @@ End CongruenceClosure.
 Section InvarContMultHom.
 
 Variable Alph : eqType.
-Notation word := (seq Alph).
+Local Abbreviation word := (seq Alph).
 
 Variable rule : word -> seq word.
 Hypothesis Hmulthom : forall u : word, all (perm_eq u) (rule u).
@@ -605,7 +605,7 @@ End InvarContMultHom.
 Section InvarContHom.
 
 Variable Alph : finType.
-Notation word := (seq Alph).
+Local Abbreviation word := (seq Alph).
 
 Variable rule : word -> seq word.
 Let szinvar (u : word) := [pred v : word | size v == size u].

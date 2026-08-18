@@ -404,7 +404,7 @@ Lemma size_revdual u : size u = size (revdual u).
 Proof using. by rewrite /= size_rev. Qed.
 
 Lemma plact2dual u v :
-  u \in plact2 v = (revdual u \in @plact1 _ Alph^d (revdual v)).
+  (u \in plact2 v) = (revdual u \in @plact1 _ Alph^d (revdual v)).
 Proof using.
 apply/idP/idP.
 - move /plact2P => [a] [b] [c] [Habc -> ->].
@@ -416,7 +416,7 @@ apply/idP/idP.
 Qed.
 
 Lemma plact1dual u v :
-  u \in plact1 v = (revdual u \in @plact2 _ Alph^d (revdual v)).
+  (u \in plact1 v) = (revdual u \in @plact2 _ Alph^d (revdual v)).
 Proof using.
 apply/idP/idP.
 - move /plact1P => [a] [b] [c] [Habc -> ->].
@@ -427,10 +427,12 @@ apply/idP/idP.
   by rewrite -leEdual -ltEdual andbC Habc' /= mem_seq1.
 Qed.
 
-Lemma plact1idual u v : u \in plact1i v = (revdual u \in plact2i (revdual v)).
+Lemma plact1idual u v :
+  (u \in plact1i v) = (revdual u \in plact2i (revdual v)).
 Proof using. by apply/idP/idP; rewrite -plact1I -plact2I plact1dual. Qed.
 
-Lemma plact2idual u v : u \in plact2i v = (revdual u \in plact1i (revdual v)).
+Lemma plact2idual u v :
+  (u \in plact2i v) = (revdual u \in plact1i (revdual v)).
 Proof using. by apply/idP/idP; rewrite -plact1I -plact2I plact2dual. Qed.
 
 End DualRule.
@@ -918,10 +920,10 @@ Implicit Type a b c : Alph.
 Implicit Type u v w r : word.
 
 Variable L : Alph.
-Notation leL := (@Order.le _ Alph L).
-Notation geL := (@Order.ge _ Alph^d L).
-Notation ltL := (@Order.lt _ Alph L).
-Notation gtL := (@Order.gt _ Alph^d L).
+Local Abbreviation leL := (@Order.le _ Alph L).
+Local Abbreviation geL := (@Order.ge _ Alph^d L).
+Local Abbreviation ltL := (@Order.lt _ Alph L).
+Local Abbreviation gtL := (@Order.gt _ Alph^d L).
 
 Lemma leL_geLdualE u :
   filter leL u = from_revdual (filter geL (revdual u)).

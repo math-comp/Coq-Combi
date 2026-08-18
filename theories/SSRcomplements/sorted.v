@@ -64,7 +64,7 @@ Variable R : rel T.
 Implicit Type l : T.
 Implicit Type r : seq T.
 
-#[local] Notation sorted r := (sorted R r).
+#[local] Abbreviation sorted r := (sorted R r).
 #[local] Notation "x <=R y" := (R x y) (at level 70, y at next level).
 
 Lemma sorted_consK l r : sorted (cons l r) -> sorted r.

@@ -722,9 +722,9 @@ Section Vanprod.
 Variable n : nat.
 Variable R : comNzRingType.
 
-#[local] Notation Delta := (@Vanprod n R).
+#[local] Abbreviation Delta := (@Vanprod n R).
 #[local] Notation "'X_ i" := (@mpolyX n R U_(i)). (* Enforce the base ring *)
-#[local] Notation rho := (rho n).
+#[local] Abbreviation rho := (rho n).
 #[local] Notation "''a_' k" := (alternpol 'X_[k]).
 
 Lemma polyX_inj (i j : 'I_n) : 'X_i = 'X_j -> i = j.
@@ -808,7 +808,7 @@ case: (boolP (U_(ordc) <= k)%MM) => Hck.
   by rewrite -[RHS](addmK (U_(ordc))%MM) -[LHS](addmK (U_(ordc))%MM) Heq.
 - rewrite big1 => [m /= Hm |].
     rewrite coeffXdiff; first exact: lepm_trans Hm Hk.
-    suff -> : m == U_(ordc)%MM :> 'X_{1..n} = false by rewrite mul0r.
+    suff -> : (m == U_(ordc)%MM :> 'X_{1..n}) = false by rewrite mul0r.
     apply/negP => /eqP; rewrite mnmP => /(_ ordc).
     rewrite mnm1E eq_refl /= => Habs; move: Hck.
     have : (U_(ordc) <= m)%MM by rewrite lep1mP {}Habs.
@@ -933,7 +933,7 @@ Variable n : nat.
 Variable R : comNzRingType.
 
 #[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
-#[local] Notation rho := (rho n).
+#[local] Abbreviation rho := (rho n).
 
 Definition antim (s : seq nat) : 'M[ {mpoly R[n]} ]_n :=
   \matrix_(i, j < n) 'X_i ^+ (nth 0 s j + (n - 1) - j)%N.

@@ -123,7 +123,7 @@ apply/negbTE/negP => /eqP; rewrite mnmP => /(_ j).
 by rewrite !mnm1E eqxx neq.
 Qed.
 
-Lemma mcoeffXU (i j : 'I_n) : ('X_i @_U_(j) : R) = (i == j)%:R.
+Lemma mcoeffXU (i j : 'I_n) : (('X_i)@_U_(j) : R) = (i == j)%:R.
 Proof. by rewrite mcoeffX eq_mnm1. Qed.
 
 End MultinomCompl.
@@ -269,7 +269,7 @@ Qed.
 Canonical symh d : {sympoly R[n]} := SymPoly (symh_sym d).
 #[local] Notation "''h_' k" := (symh k).
 
-Lemma mcoeff_symh d m : 'h_d@_m = (mdeg m == d)%:R.
+Lemma mcoeff_symh d m : ('h_d)@_m = (mdeg m == d)%:R.
 Proof. exact: mcoeff_symh_pol. Qed.
 Lemma symh_homog d : sympol 'h_d \is d.-homog.
 Proof using. by apply: rpred_sum => m /eqP H; rewrite dhomogX /= H. Qed.
@@ -525,7 +525,7 @@ Notation "''m[' k ]" := (symm _ _ k).
 Section ChangeBaseMonomial.
 
 Variables (n : nat) (R : comNzRingType).
-#[local] Notation SP := {sympoly R[n]}.
+#[local] Abbreviation SP := {sympoly R[n]}.
 
 Lemma expUmpartE nv k :
   (U_(ord0) *+ k)%MM = mpart (rowpartn k) :> 'X_{1..nv.+1}.
@@ -618,7 +618,7 @@ Section Schur.
 Variable n0 : nat.
 Variable R : comNzRingType.
 
-#[local] Notation n := n0.+1.
+#[local] Abbreviation n := n0.+1.
 
 Definition syms d (la : 'P_d) : {sympoly R[n]} :=
   SymPoly (Schur_sym n0 R la).
@@ -659,7 +659,7 @@ Section ProdGen.
 
 Variable n : nat.
 Variable R : comNzRingType.
-#[local] Notation SF := {sympoly R[n]}.
+#[local] Abbreviation SF := {sympoly R[n]}.
 
 Section Defs.
 
@@ -669,6 +669,7 @@ Hypothesis gen_homog : forall d, sympol (gen d) \is d.-homog.
 Definition prod_gen d (sh : 'P_d) := \prod_(i <- sh) gen i.
 
 #[local] Notation "''g_' k" := (gen k) (at level 8, format "''g_' k").
+#[warning="-closed-notation-not-level-0"]
 #[local] Notation "''g[' k ]" := (prod_gen k) (at level 8, format "''g[' k ]").
 
 Lemma prod_gen_homog d (sh : 'P_d) : sympol 'g[sh] \is d.-homog.
@@ -703,9 +704,11 @@ Variable gA gB : nat -> SF.
 Variable co : forall (d : nat), 'P_d -> R.
 
 #[local] Notation "''gA_' k" := (gA k) (at level 8, format "''gA_' k").
+#[warning="-closed-notation-not-level-0"]
 #[local] Notation "''gA[' k ]" :=
   (prod_gen gA k) (at level 8, format "''gA[' k ]").
 #[local] Notation "''gB_' k" := (gB k) (at level 8, format "''gB_' k").
+#[warning="-closed-notation-not-level-0"]
 #[local] Notation "''gB[' k ]" :=
   (prod_gen gB k) (at level 8, format "''gB[' k ]").
 
@@ -715,8 +718,10 @@ Fixpoint coeff_prodgen_seq l : 'P_(sumn l) -> R :=
              \sum_(p | la == p.1 +|+ p.2) co p.1 * coeff_prodgen_seq p.2
   else fun _ => 1.
 
+#[warning="-closed-notation-not-level-0"]
 #[local] Notation "''co[' k ]" := (coeff_prodgen_seq k)
                                  (at level 8, format "''co[' k ]").
+#[warning="-closed-notation-not-level-0"]
 #[local] Notation "''co[' k ]_ l" := (coeff_prodgen_seq (l := l) k)
                                  (at level 8, only parsing).
 
@@ -770,9 +775,9 @@ Notation "''p[' k ]" := (prod_symp _ _ k).
 Section Cast.
 
 Variable n0 : nat.
-#[local] Notation n := n0.+1.
+#[local] Abbreviation n := n0.+1.
 Variables R : comNzRingType.
-#[local] Notation SF := {sympoly R[n]}.
+#[local] Abbreviation SF := {sympoly R[n]}.
 
 Variables (d1 d2 : nat) (eq_d : d1 = d2) (la : 'P_d1).
 
@@ -794,9 +799,9 @@ End Cast.
 Section LRrule_Pieri.
 
 Variable n0 : nat.
-#[local] Notation n := n0.+1.
+#[local] Abbreviation n := n0.+1.
 Variables R : comNzRingType.
-#[local] Notation SF := {sympoly R[n]}.
+#[local] Abbreviation SF := {sympoly R[n]}.
 
 Lemma syms_symsM d1 (la : 'P_d1) d2 (mu : 'P_d2) :
   's[la] * 's[mu] =
@@ -828,7 +833,7 @@ Section ScalarChange.
 Variables R S : comNzRingType.
 Variable mor : {rmorphism R -> S}.
 Variable n0 : nat.
-#[local] Notation n := n0.+1.
+#[local] Abbreviation n := n0.+1.
 
 Lemma map_mpoly_issym (f : {sympoly R[n]}) : map_mpoly mor f \is symmetric.
 Proof.
@@ -912,7 +917,7 @@ End ScalarChange.
 Section ChangeBasis.
 
 Variable n0 : nat.
-#[local] Notation n := n0.+1.
+#[local] Abbreviation n := n0.+1.
 Variable R : comNzRingType.
 
 #[local] Notation "''Xn'" := 'X_{1.. n}.
@@ -921,7 +926,7 @@ Variable R : comNzRingType.
 #[local] Notation "''XXn_' m" := 'X_{1.. n < (mdeg m).+1, (mdeg m).+1}
           (at level 10, m at next level, format "''XXn_' m").
 Implicit Type m : 'Xn.
-#[local] Notation SF := {sympoly R[n]}.
+#[local] Abbreviation SF := {sympoly R[n]}.
 
 (** ** Bases change between homogeneous and elementary *)
 Lemma sum_symh_syme (d : nat) :
@@ -1503,8 +1508,8 @@ and then tranfer to any commutative ring *)
 Section SymsSymmInt.
 
 Variable (n : nat) (d : nat).
-#[local] Notation SF := {sympoly int[n.+1]}.
-Implicit Type (la mu : 'P_d).
+#[local] Abbreviation SF := {sympoly int[n.+1]}.
+Implicit Type (la mu : 'PDom_d).
 
 Lemma syms_symm_int la :
   's[la] = \sum_(mu : 'P_d) 'K(la, mu)%:R *: 'm[mu] :> SF.
@@ -1540,9 +1545,9 @@ Qed.
 
 Lemma syms_symm_partdom_int la :
   's[la] =
-  'm[la] + \sum_(mu : 'PDom_d | (mu < la)%O) 'K(la, mu) *: 'm[mu] :> SF.
+  'm[la] + \sum_(mu | (mu < la)%O) 'K(la, mu) *: 'm[mu] :> SF.
 Proof.
-rewrite -(unitrig_sum1l (fun mu : 'PDom_d => 'm[mu]) la (Kostka_unitrig _ d)).
+rewrite -(unitrig_sum1l (fun mu => 'm[mu]) la (Kostka_unitrig _ d)).
 by rewrite -syms_symm_int.
 Qed.
 
@@ -1557,9 +1562,9 @@ Qed.
 
 Lemma symm_syms_partdom_int la :
   'm[la] =
-  's[la] + \sum_(mu : 'PDom_d | (mu < la)%O) KostkaInv la mu *:'s[mu] :> SF.
+  's[la] + \sum_(mu | (mu < la)%O) KostkaInv la mu *:'s[mu] :> SF.
 Proof.
-rewrite -(unitrig_sum1l (fun mu : 'PDom_d => 's[mu]) la (KostkaInv_unitrig d)).
+rewrite -(unitrig_sum1l (fun mu => 's[mu]) la (KostkaInv_unitrig d)).
 by rewrite -symm_syms_int.
 Qed.
 
@@ -1569,8 +1574,8 @@ End SymsSymmInt.
 Section SymsSymm.
 
 Variable (n : nat) (R : comNzRingType) (d : nat).
-#[local] Notation SF := {sympoly R[n.+1]}.
-Implicit Type (la mu : 'P_d).
+#[local] Abbreviation SF := {sympoly R[n.+1]}.
+Implicit Type (la mu : 'PDom_d).
 
 Lemma syms_symm la :
   's[la] = \sum_(mu : 'P_d) 'K(la, mu)%:R *: 'm[mu] :> SF.
@@ -1583,7 +1588,7 @@ Qed.
 
 Lemma syms_symm_partdom la :
   's[la] =
-  'm[la] + \sum_(mu | (mu < la :> 'PDom_d)%O) 'K(la, mu) *: 'm[mu] :> SF.
+  'm[la] + \sum_(mu | (mu < la)%O) 'K(la, mu) *: 'm[mu] :> SF.
 Proof.
 rewrite -(map_syms intr) syms_symm_partdom_int.
 rewrite rmorphD rmorph_sum /= map_symm; congr (_ + _); apply eq_bigr => i _.
@@ -1601,7 +1606,7 @@ Qed.
 
 Lemma symm_syms_partdom la :
   'm[la] =
-  's[la] + \sum_(mu | (mu < la :> 'PDom_d)%O) 'K^-1(la, mu) *: 's[mu] :> SF.
+  's[la] + \sum_(mu | (mu < la)%O) 'K^-1(la, mu) *: 's[mu] :> SF.
 Proof.
 rewrite -(map_symm intr) symm_syms_partdom_int.
 rewrite rmorphD rmorph_sum /= map_syms; congr (_ + _); apply eq_bigr => i _.
@@ -1618,8 +1623,8 @@ and then tranfer to any commutative ring *)
 Section SymheSymsInt.
 
 Variables (n : nat) (d : nat).
-#[local] Notation SF := {sympoly int[n.+1]}.
-Implicit Type la mu : 'P_d.
+#[local] Abbreviation SF := {sympoly int[n.+1]}.
+Implicit Type la mu : 'PDom_d.
 
 Lemma symh_syms_int mu :
   'h[mu] = \sum_(la : 'P_d) 'K(la, mu) *: 's[la] :> SF.
@@ -1645,9 +1650,9 @@ Qed.
 
 Lemma symh_syms_partdom_int mu :
   'h[mu] =
-  's[mu] + \sum_(la | (mu < la :> 'PDom_d)%O) 'K(la, mu) *: 's[la] :> SF.
+  's[mu] + \sum_(la | (mu < la)%O) 'K(la, mu) *: 's[la] :> SF.
 Proof.
-rewrite -(unitrig_sum1r (fun la : 'PDom_d => 's[la]) mu (Kostka_unitrig _ d)).
+rewrite -(unitrig_sum1r (fun la => 's[la]) mu (Kostka_unitrig _ d)).
 by rewrite -symh_syms_int.
 Qed.
 
@@ -1656,19 +1661,19 @@ Lemma syms_symh_int mu :
 Proof.
 rewrite /KostkaInv.
 apply: (Minv_lincombr (Kostka_unitrig _ d)
-         (G := fun mu : 'PDom_d => 's[mu]) (F := fun mu : 'PDom_d => 'h[mu])).
+         (G := fun mu => 's[mu]) (F := fun mu => 'h[mu])).
 exact: symh_syms_int.
 Qed.
 
 Lemma syms_symh_partdom_int mu :
   's[mu] =
-  'h[mu] + \sum_(la | (mu < la :> 'PDom_d)%O) KostkaInv la mu *: 'h[la] :> SF.
+  'h[mu] + \sum_(la | (mu < la)%O) KostkaInv la mu *: 'h[la] :> SF.
 Proof.
-rewrite -(unitrig_sum1r (fun la : 'PDom_d => 'h[la]) mu (KostkaInv_unitrig d)).
+rewrite -(unitrig_sum1r (fun la => 'h[la]) mu (KostkaInv_unitrig d)).
 by rewrite -syms_symh_int.
 Qed.
 
-#[local] Notation "la '^~'" := (conj_intpartn la) (at level 10).
+#[local] Notation "la '^~'" := (conj_intpartn la) (at level 1).
 
 Lemma syme_syms_int mu :
   'e[mu] = \sum_(la : 'P_d) 'K(la, mu) *: 's[la^~] :> SF.
@@ -1696,9 +1701,9 @@ Qed.
 
 Lemma syme_syms_partdom_int mu :
   'e[mu] =
-  's[mu^~] + \sum_(la | (mu < la :> 'PDom_d)%O) 'K(la, mu) *: 's[la^~] :> SF.
+  's[mu^~] + \sum_(la | (mu < la)%O) 'K(la, mu) *: 's[la^~] :> SF.
 Proof.
-rewrite -(unitrig_sum1r (fun la : 'PDom_d => 's[la^~]) mu (Kostka_unitrig _ d)).
+rewrite -(unitrig_sum1r (fun la => 's[la^~]) mu (Kostka_unitrig _ d)).
 by rewrite -syme_syms_int.
 Qed.
 
@@ -1707,15 +1712,15 @@ Lemma syms_syme_int mu :
 Proof.
 rewrite /KostkaInv.
 apply: (Minv_lincombr (Kostka_unitrig _ d)
-         (G := fun mu : 'PDom_d => 's[mu^~]) (F := fun mu : 'PDom_d => 'e[mu])).
+         (G := fun mu => 's[mu^~]) (F := fun mu => 'e[mu])).
 exact: syme_syms_int.
 Qed.
 
 Lemma syms_syme_partdom_int mu :
   's[mu^~] =
-  'e[mu] + \sum_(la | (mu < la :> 'PDom_d)%O) KostkaInv la mu *: 'e[la] :> SF.
+  'e[mu] + \sum_(la | (mu < la)%O) KostkaInv la mu *: 'e[la] :> SF.
 Proof.
-rewrite -(unitrig_sum1r (fun la : 'PDom_d => 'e[la]) mu (KostkaInv_unitrig d)).
+rewrite -(unitrig_sum1r (fun la => 'e[la]) mu (KostkaInv_unitrig d)).
 by rewrite -syms_syme_int.
 Qed.
 
@@ -1724,8 +1729,8 @@ End SymheSymsInt.
 Section SymheSyms.
 
 Variables (R : comNzRingType) (n : nat) (d : nat).
-#[local] Notation SF := {sympoly R[n.+1]}.
-Implicit Type la mu : 'P_d.
+#[local] Abbreviation SF := {sympoly R[n.+1]}.
+Implicit Type la mu : 'PDom_d.
 
 Lemma symh_syms mu : 'h[mu] = \sum_(la : 'P_d) 'K(la, mu) *: 's[la] :> SF.
 Proof.
@@ -1737,7 +1742,7 @@ Qed.
 
 Lemma symh_syms_partdom mu :
   'h[mu] =
-  's[mu] + \sum_(la | (mu < la :> 'PDom_d)%O) 'K(la, mu) *: 's[la] :> SF.
+  's[mu] + \sum_(la | (mu < la)%O) 'K(la, mu) *: 's[la] :> SF.
 Proof.
 rewrite -(map_symh_prod intr) symh_syms_partdom_int.
 rewrite rmorphD rmorph_sum /= map_syms; congr (_ + _); apply eq_bigr => i _.
@@ -1754,14 +1759,14 @@ Qed.
 
 Lemma syms_symh_partdom mu :
   's[mu] =
-  'h[mu] + \sum_(la | (mu < la :> 'PDom_d)%O) 'K^-1(la, mu) *: 'h[la] :> SF.
+  'h[mu] + \sum_(la | (mu < la)%O) 'K^-1(la, mu) *: 'h[la] :> SF.
 Proof.
 rewrite -(map_syms intr) syms_symh_partdom_int.
 rewrite rmorphD rmorph_sum /= map_symh_prod; congr (_ + _); apply eq_bigr => i _.
 by rewrite linearZ_LR /= map_symh_prod.
 Qed.
 
-#[local] Notation "la '^~'" := (conj_intpartn la) (at level 10).
+#[local] Notation "la '^~'" := (conj_intpartn la) (at level 1).
 
 Lemma syme_syms mu : 'e[mu] = \sum_(la : 'P_d) 'K(la, mu) *: 's[la ^~] :> SF.
 Proof.
@@ -1773,7 +1778,7 @@ Qed.
 
 Lemma syme_syms_partdom mu :
   'e[mu] =
-  's[mu^~] + \sum_(la | (mu < la :> 'PDom_d)%O) 'K(la, mu) *: 's[la^~] :> SF.
+  's[mu^~] + \sum_(la | (mu < la)%O) 'K(la, mu) *: 's[la^~] :> SF.
 Proof.
 rewrite -(map_syme_prod intr) syme_syms_partdom_int.
 rewrite rmorphD rmorph_sum /= map_syms; congr (_ + _); apply eq_bigr => i _.
@@ -1790,7 +1795,7 @@ Qed.
 
 Lemma syms_syme_partdom mu :
   's[mu^~] =
-  'e[mu] + \sum_(la | (mu < la :> 'PDom_d)%O) 'K^-1(la, mu) *: 'e[la] :> SF.
+  'e[mu] + \sum_(la | (mu < la)%O) 'K^-1(la, mu) *: 'e[la] :> SF.
 Proof.
 rewrite -(map_syms intr) syms_syme_partdom_int.
 rewrite rmorphD rmorph_sum /= map_syme_prod; congr (_ + _); apply eq_bigr => i _.
@@ -1805,13 +1810,13 @@ Section ChangeBasisSymhPowerSum.
 
 Variable nvar0 : nat.
 Variable R : fieldType.
-#[local] Notation nvar := nvar0.+1.
-#[local] Notation SF := {sympoly R[nvar]}.
+#[local] Abbreviation nvar := nvar0.+1.
+#[local] Abbreviation SF := {sympoly R[nvar]}.
 
 Fixpoint prod_partsum (s : seq nat) :=
   if s is _ :: s' then (sumn s * prod_partsum s')%N else 1%N.
 
-#[local] Notation "\Pi s" := (prod_partsum s)%:R^-1 (at level 0, s at level 2).
+#[local] Notation "\Pi s" := (prod_partsum s)%:R^-1 (at level 1, s at level 2).
 
 Lemma symh_to_symp_prod_partsum n :
   [pchar R] =i pred0 ->
@@ -2007,7 +2012,7 @@ Qed.
 
 Variable   gen : forall nv : nat, nat -> {mpoly R[nv]}.
 Hypothesis gen_homog : forall nv i : nat, gen nv i \is i.-homog.
-#[local] Notation G nv := [tuple gen nv i.+1 | i < n].
+#[local] Abbreviation G nv := [tuple gen nv i.+1 | i < n].
 
 Lemma homog_X_mPo_gen nv m : 'X_[m] \mPo G nv \is (mnmwgt m).-homog.
 Proof using gen gen_homog.
@@ -2035,7 +2040,7 @@ End Generators.
 Section MPoESymHomog.
 
 Variables (n : nat) (R : comNzRingType).
-#[local] Notation E nv := [tuple mesym nv R i.+1 | i < n].
+#[local] Abbreviation E nv := [tuple mesym nv R i.+1 | i < n].
 
 Lemma mwmwgt_homogP (p : {mpoly R[n]}) d :
   reflect
@@ -2071,7 +2076,7 @@ Variable R : comNzRingType.
 Variable m : nat.
 Implicit Type p : {sympoly R[m]}.
 
-#[local] Notation SF p := (sym_fundamental (sympolP p)).
+#[local] Abbreviation SF p := (sym_fundamental (sympolP p)).
 
 Definition sympolyf p := let: exist t _  := SF p in t.
 
@@ -2158,9 +2163,9 @@ Section Omega.
 
 Variable R : comNzRingType.
 Variable n0 : nat.
-#[local] Notation n := n0.+1.
+#[local] Abbreviation n := n0.+1.
 Implicit Type p : {sympoly R[n]}.
-#[local] Notation SF p := (sym_fundamental (sympolP p)).
+#[local] Abbreviation SF p := (sym_fundamental (sympolP p)).
 
 Fact omegasf_is_symmetric p :
   (sympolyf p) \mPo [tuple sympol 'h_i.+1 | i < n] \is @symmetric n R.
@@ -2268,8 +2273,10 @@ move=> p; apply/idP/idP; last exact: omegasf_homog.
 by rewrite -{2}(omegasfK p); apply: omegasf_homog.
 Qed.
 
-Notation S := ([tuple sympol 'h_i.+1 | i < n] : n.-tuple {mpoly R[n]}).
-Notation E := ([tuple sympol 'e_i.+1 | i < n] : n.-tuple {mpoly R[n]}).
+#[local] Abbreviation S :=
+  ([tuple sympol 'h_i.+1 | i < n] : n.-tuple {mpoly R[n]}).
+#[local] Abbreviation E :=
+  ([tuple sympol 'e_i.+1 | i < n] : n.-tuple {mpoly R[n]}).
 
 Lemma msym_fundamental_symh_un (t1 t2 : {mpoly R[n]}) :
   t1 \mPo S = t2 \mPo S -> t1 = t2.
@@ -2380,10 +2387,10 @@ Section ChangeNVar.
 
 Variable R : comNzRingType.
 Variable m0 n0 : nat.
-#[local] Notation m := m0.+1.
-#[local] Notation n := n0.+1.
-#[local] Notation SF p := (sym_fundamental (sympolP p)).
-#[local] Notation E := [tuple sympol 'e_(i.+1) : {mpoly R[n]} |  i < m].
+#[local] Abbreviation m := m0.+1.
+#[local] Abbreviation n := n0.+1.
+#[local] Abbreviation SF p := (sym_fundamental (sympolP p)).
+#[local] Abbreviation E := [tuple sympol 'e_(i.+1) : {mpoly R[n]} |  i < m].
 
 Lemma cnvarsym_subproof (p : {sympoly R[m]}) : sympolyf p \mPo E \is symmetric.
 Proof. by apply mcomp_sym => i; rewrite -tnth_nth tnth_mktuple mesym_sym. Qed.

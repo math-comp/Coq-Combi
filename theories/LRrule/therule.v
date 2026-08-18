@@ -582,8 +582,8 @@ Qed.
 Import GRing.Theory.
 
 Variable (n0 : nat) (R : comNzRingType).
-#[local] Notation n := (n0.+1).
-Notation Schur p := (Schur n0 R p).
+Local Abbreviation n := (n0.+1).
+Local Abbreviation Schur p := (Schur n0 R p).
 
 Theorem LRyam_coeffP :
   Schur P1 * Schur P2 =
@@ -609,8 +609,8 @@ Section Pieri.
 Import GRing.Theory.
 
 Variable (n0 : nat) (R : comNzRingType).
-#[local] Notation n := (n0.+1).
-Notation Schur p := (Schur n0 R p).
+Local Abbreviation n := (n0.+1).
+Local Abbreviation Schur p := (Schur n0 R p).
 
 Lemma yamrowP :
   is_yam_of_eval (intpart_of_intpartn (rowpartn d2)) (ncons d2 0%N [::]).

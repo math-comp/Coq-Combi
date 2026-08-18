@@ -205,7 +205,7 @@ Fixpoint inspos r (l : T) : nat :=
     else (inspos r' l).+1
   else 0.
 
-Notation pos := (inspos Row l).
+Local Abbreviation pos := (inspos Row l).
 Definition ins := set_nth l Row pos l.
 
 Lemma inspos_leq_size : pos <= size Row.
@@ -551,10 +551,10 @@ Hypothesis HRow : is_row Row.
 Variable l : T.
 
 Definition bumped := nth l Row (inspos Row l).
-Notation ins := (ins Row l).
-Notation inspos := (inspos Row l).
-Notation insRow := (insrow Row l).
-Notation bump := (bump Row l).
+Local Abbreviation ins := (ins Row l).
+Local Abbreviation inspos := (inspos Row l).
+Local Abbreviation insRow := (insrow Row l).
+Local Abbreviation bump := (bump Row l).
 
 Lemma lt_bumped : bump -> (l < bumped)%O.
 Proof using. by move/inspred_inspos. Qed.
@@ -565,7 +565,7 @@ Fixpoint bumprow r l : (option T) * (seq T) :=
     else let: (lr, rr) := bumprow r l in (lr, l0 :: rr)
   else (None, [:: l]).
 
-Notation bumpRow := (bumprow Row l).
+Local Abbreviation bumpRow := (bumprow Row l).
 
 Lemma ins_bumprowE : insRow = bumpRow.2.
 Proof using.
@@ -1303,7 +1303,7 @@ End Statistics.
 (** ** Sigma types and bijections *)
 Section Bijection.
 
-Notation Pair := (seq (seq T) * seq nat : Type).
+Local Abbreviation Pair := (seq (seq T) * seq nat : Type).
 
 Structure rspair : predArgType :=
   RSpair { pyampair :> Pair; _ : is_RSpair pyampair }.
@@ -1358,7 +1358,7 @@ Lemma mem_RSclass w : w \in (RSclass (RS w)).
 Proof using. apply negbNE; apply/count_memPn. by rewrite RSclass_countE. Qed.
 
 Lemma RSclassE tab w :
-  is_tableau tab -> w \in RSclass tab = (RS w == tab).
+  is_tableau tab -> (w \in RSclass tab) = (RS w == tab).
 Proof using.
 move=> Htab /=; apply/idP/idP.
 - by move: Htab=> /RSclassP/allP/[apply].
@@ -1393,7 +1393,7 @@ Qed.
 Section QTableau.
 Context disp (T : inhOrderType disp).
 
-Notation TabPair := (seq (seq T) * seq (seq nat) : Type).
+Local Abbreviation TabPair := (seq (seq T) * seq (seq nat) : Type).
 
 Definition is_RStabpair (pair : TabPair) :=
   let: (P, Q) := pair in [&& is_tableau P, is_stdtab Q & (shape P == shape Q)].

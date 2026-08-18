@@ -107,9 +107,9 @@ Proof. by rewrite /is_one; case: eqP => [->|]. Qed.
 HB.instance Definition _ :=
   Finite.copy isOne (seq_finType isOne all_isOne isOne_count_1).
 
-Lemma enum_isOne : map val (enum (isOne : finType)) = [:: 1].
+Lemma enum_isOne : map val (enum {: isOne}) = [:: 1].
 Proof. exact: enum_subE. Qed.
-Lemma card_isOne : #|isOne : finType| = 1.
+Lemma card_isOne : #|{: isOne}| = 1.
 Proof. exact: card_subE. Qed.
 
 End Example1.
@@ -148,9 +148,9 @@ Proof. by []. Qed.
 HB.instance Definition _ :=
   Finite.copy isOne (uniq_finType isOne all_isoneE isOne_uniq).
 
-Lemma enum_isOne : map val (enum (isOne : finType)) = [:: 1].
+Lemma enum_isOne : map val (enum {: isOne}) = [:: 1].
 Proof. exact: enum_subE. Qed.
-Lemma card_isOne : #|isOne : finType| = 1.
+Lemma card_isOne : #|{: isOne}| = 1.
 Proof. exact: card_subE. Qed.
 
 End Example2.
@@ -195,9 +195,9 @@ Proof. by move/eqP => ->. Qed.
 HB.instance Definition _ :=
   Finite.copy isOne (undup_finType isOne all_isOne isOne_in).
 
-Lemma enum_isOne : map val (enum (isOne : finType)) = [:: 1].
+Lemma enum_isOne : map val (enum {: isOne}) = [:: 1].
 Proof. exact: enum_sub_undupE. Qed.
-Lemma card_isOne : #|isOne : finType| = 1.
+Lemma card_isOne : #|{: isOne}| = 1.
 Proof. by rewrite cardE -(size_map val) /= enum_isOne. Qed.
 
 End Example3.

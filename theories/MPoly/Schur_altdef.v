@@ -101,6 +101,12 @@ Import GRing.Theory.
 #[local] Open Scope ring_scope.
 #[local] Open Scope Combi_scope.
 
+Reserved Notation "''K' ( la , mu )"
+  (at level 0, format "''K' ( la ,  mu )").
+Reserved Notation "''K' ( la , mu )"
+  (at level 0, format "''K' ( la ,  mu )").
+Reserved Notation "''K^-1' ( la , mu )"
+  (at level 0, format "''K^-1' ( la ,  mu )").
 
 #[local] Reserved Notation "''a_' k"
       (at level 8, k at level 2, format "''a_' k").
@@ -114,7 +120,7 @@ Section Alternant.
 
 Variables (n : nat) (R : comNzRingType).
 
-#[local] Notation rho := (rho n).
+#[local] Abbreviation rho := (rho n).
 #[local] Notation "''e_' k" := (mesym n R k).
 #[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
 
@@ -377,8 +383,8 @@ End Alternant.
 Section SchurAlternantDef.
 
 Variable (n0 : nat) (R : comNzRingType).
-#[local] Notation n := (n0.+1).
-#[local] Notation rho := (rho n).
+#[local] Abbreviation n := (n0.+1).
+#[local] Abbreviation rho := (rho n).
 #[local] Notation "''s_[' k ']'" := (Schur n0 R k).
 #[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
 
@@ -507,8 +513,8 @@ End SchurAlternantDef.
 Section IdomainSchurSym.
 
 Variable (n0 : nat) (R : idomainType).
-#[local] Notation n := (n0.+1).
-#[local] Notation rho := (rho n).
+#[local] Abbreviation n := (n0.+1).
+#[local] Abbreviation rho := (rho n).
 #[local] Notation "''s_' k" := (Schur n0 R k).
 #[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
 
@@ -531,7 +537,7 @@ End IdomainSchurSym.
 Section RingSchurSym.
 
 Variable (n0 : nat) (R : nzRingType).
-#[local] Notation n := (n0.+1).
+#[local] Abbreviation n := (n0.+1).
 #[local] Notation "''s_' k" := (Schur n0 R k).
 
 Theorem Schur_sym d (la : 'P_d) : 's_la \is symmetric.
@@ -753,10 +759,8 @@ Implicit Type la : 'P_d.
 (* We prepend a 0 to take care of the empty partition *)
 Definition Kostka la mu :=
   KostkaMon la (mpart (n := (size mu).-1.+1) mu).
-#[local] Notation "''K' ( la , mu )" := (Kostka la mu)
-  (at level 8, format "''K' ( la ,  mu )") : nat_scope.
-#[local] Notation "''K' ( la , mu )" := ((Kostka la mu)%:R : int)
-  (at level 8, format "''K' ( la ,  mu )") : ring_scope.
+#[local] Notation "''K' ( la , mu )" := (Kostka la mu) : nat_scope.
+#[local] Notation "''K' ( la , mu )" := ((Kostka la mu)%:R : int) : ring_scope.
 
 #[local] Arguments mpart n s : clear implicits.
 
@@ -1068,14 +1072,14 @@ Variable n : nat.
 
 Variables (s : seq nat) (m : nat).
 Hypothesis (Hsz : size s < n.+1).
-#[local] Notation sz := (Ordinal Hsz).
+#[local] Abbreviation sz := (Ordinal Hsz).
 #[local] Lemma Hszrcons : size (rcons s m) <= n.+1.
 Proof. by rewrite size_rcons. Qed.
 
-#[local] Notation P := ('P_(sumn s)).
-#[local] Notation Pm := ('P_((sumn s) + m)).
+#[local] Abbreviation P := ('P_(sumn s)).
+#[local] Abbreviation Pm := ('P_((sumn s) + m)).
 Variable (mu : Pm).
-#[local] Notation Tm := (tabsh mu).
+#[local] Abbreviation Tm := (tabsh mu).
 Hypothesis Hmu : size mu <= n.+1.
 
 Lemma shape_res_tab_subproof (t : Tm) :
@@ -1147,7 +1151,7 @@ Qed.
 
 Variable (la : P).
 Hypothesis Hstrip : hb_strip la mu.
-#[local] Notation T := (tabsh la).
+#[local] Abbreviation T := (tabsh la).
 
 #[local] Definition Hlamu := size_included (hb_strip_included Hstrip).
 #[local] Definition Hla : size la <= n.+1 := leq_trans Hlamu Hmu.
@@ -1429,10 +1433,8 @@ Qed.
 End KostkaRec.
 
 
-Notation "''K' ( la , mu )" := (Kostka la mu)
-  (at level 8, format "''K' ( la ,  mu )") : nat_scope.
-Notation "''K' ( la , mu )" := (Kostka la mu)%:R
-  (at level 8, format "''K' ( la ,  mu )") : ring_scope.
+Notation "''K' ( la , mu )" := (Kostka la mu) : nat_scope.
+Notation "''K' ( la , mu )" := (Kostka la mu)%:R : ring_scope.
 
 Lemma Kostka_unitrig (R : comUnitRingType) d :
   unitrig (fun la mu : 'PDom_d => 'K(la, mu)%:R : R).
@@ -1450,8 +1452,7 @@ Lemma KostkaInv_unitrig d :
   unitrig (fun la mu : 'PDom_d => KostkaInv la mu).
 Proof. exact: (Minv_unitrig (Kostka_unitrig _ d)). Qed.
 
-Notation "''K^-1' ( la , mu )" := ((KostkaInv la mu)%:~R)
-  (at level 8, format "''K^-1' ( la ,  mu )") : ring_scope.
+Notation "''K^-1' ( la , mu )" := ((KostkaInv la mu)%:~R) : ring_scope.
 
 
 
@@ -1461,8 +1462,8 @@ Section AlternStraighten.
 Variable n0 : nat.
 Variable R : comNzRingType.
 
-#[local] Notation n := n0.+1.
-#[local] Notation rho := (rho n).
+#[local] Abbreviation n := n0.+1.
+#[local] Abbreviation rho := (rho n).
 #[local] Notation "''a_' k" := (@alternpol n R 'X_[k]).
 #[local] Notation "m # s" := [multinom m (s i) | i < n].
 
