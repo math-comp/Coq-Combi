@@ -59,7 +59,7 @@ The two main results are:
 ]]
 ***************)
 From HB Require Import structures.
-From mathcomp Require Import all_boot.
+From mathcomp Require Import boot.
 From mathcomp Require Import ssralg fingroup morphism perm gproduct.
 From mathcomp Require Import ssrnum matrix vector mxalgebra algC.
 From mathcomp Require Import classfun character mxrepresentation.

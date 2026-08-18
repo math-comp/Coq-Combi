@@ -55,7 +55,7 @@ The main result is Theorem [homsymdotss] which asserts that Schur function are
 orthonormal for the scalar product.
 *******)
 From HB Require Import structures.
-From mathcomp Require Import all_boot.
+From mathcomp Require Import boot.
 From mathcomp Require Import ssrint rat ssralg ssrnum algC matrix vector.
 From mathcomp Require Import sesquilinear archimedean.
 From mathcomp Require Import mpoly.
@@ -360,7 +360,7 @@ Proof. by []. Qed.
 Fact polXY_scaleAl (c : R) (p q : polXY) : c *: (p * q : polXY) = (c *: p) * q.
 Proof. by rewrite !scale_polXYE /polXY_scale /= -!mul_mpolyC mulrA. Qed.
 HB.instance Definition _ :=
-  GRing.Lmodule_isLalgebra.Build R polXY polXY_scaleAl.
+  GRing.LSemiModule_isLSemiAlgebra.Build R polXY polXY_scaleAl.
 
 Fact polXY_scaleAr (c : R) (p q : polXY) : c *: (p * q : polXY) = p * (c *: q).
 Proof.
@@ -368,7 +368,7 @@ rewrite !scale_polXYE /polXY_scale /= -!mul_mpolyC.
 by rewrite mulrA [_ * p]mulrC mulrA.
 Qed.
 HB.instance Definition _ :=
-  GRing.Lalgebra_isAlgebra.Build R polXY polXY_scaleAr.
+  GRing.LSemiAlgebra_isSemiAlgebra.Build R polXY polXY_scaleAr.
 
 
 Definition polX_XY : polX -> polXY := map_mpoly (mpolyC n (R := R)).

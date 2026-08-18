@@ -81,7 +81,7 @@ Tamari Lattice:
 - [t1 /\T t2] == the join of [t1] and [t2] in the Tamari lattice.
  *********************)
 From HB Require Import structures.
-From mathcomp Require Import all_boot order.
+From mathcomp Require Import boot order.
 Require Import tools combclass ordtype.
 
 Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)

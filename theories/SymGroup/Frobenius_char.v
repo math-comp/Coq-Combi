@@ -49,7 +49,7 @@ Here is a list of fundamental results:
 - [LR_rule_irrSG]  : Littlewood-Richardson rule for characters of ['SG_n].
  ********)
 From HB Require Import structures.
-From mathcomp Require Import all_boot order.
+From mathcomp Require Import boot order.
 From mathcomp Require Import fingroup perm morphism gproduct.
 From mathcomp Require Import rat ssralg ssrint ssrnum algC vector archimedean.
 From mathcomp Require Import mxrepresentation classfun character.

@@ -67,7 +67,7 @@ The main results are [symbm_basis], [symbe_basis], [symbs_basis],
 characteristic of the base ring is zero for [symbp_basis]).
  ******)
 From HB Require Import structures.
-From mathcomp Require Import all_boot.
+From mathcomp Require Import boot.
 From mathcomp Require Import ssralg matrix vector ssrnum algC sesquilinear.
 From mathcomp Require Import fingroup perm.
 From mathcomp Require Import ssrcomplements freeg mpoly.

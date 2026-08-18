@@ -44,7 +44,7 @@ In the following tableaux are considered on ['I_n.+1] for a given [n].
             contains only [i]'s as elements of ['I_n.+1].
 *****)
 From HB Require Import structures.
-From mathcomp Require Import all_boot order.
+From mathcomp Require Import boot order.
 Require Import tools partition ordtype sorted.
 
 Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)

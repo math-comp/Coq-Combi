@@ -48,7 +48,7 @@ Compositions and partitions:
                    [c : intcompn n]
 ******)
 From HB Require Import structures.
-From mathcomp Require Import all_boot order.
+From mathcomp Require Import boot order.
 Require Import tools combclass sorted partition subseq ordtype.
 
 Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)

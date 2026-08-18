@@ -85,7 +85,7 @@ and [cnvar_symm].
 
  ******)
 From HB Require Import structures.
-From mathcomp Require Import all_boot order.
+From mathcomp Require Import boot order.
 From mathcomp Require Import ssralg ssrint fingroup perm.
 From mathcomp Require Import ssrcomplements freeg mpoly.
 
@@ -169,7 +169,8 @@ Section SymPolyRingType.
 Variable n : nat.
 Variable R : nzRingType.
 
-HB.instance Definition _ := [SubChoice_isSubLalgebra of {sympoly R[n]} by <:].
+HB.instance Definition _ :=
+  [SubChoice_isSubNzLalgebra of {sympoly R[n]} by <:].
 
 Fact sympol_is_linear : linear (@sympol n R).
 Proof. by []. Qed.
@@ -196,9 +197,9 @@ Variable n : nat.
 Variable R : comNzRingType.
 
 HB.instance Definition _ :=
-  [SubChoice_isSubAlgebra of {sympoly R[n]} by <:].
+  [SubSemiRing_isSubComSemiRing of {sympoly R[n]} by <:].
 HB.instance Definition _ :=
-  [SubNzRing_isSubComNzRing of {sympoly R[n]} by <:].
+  [SubLSemiAlgebra_isSubSemiAlgebra of {sympoly R[n]} by <:].
 
 End SymPolyComRingType.
 

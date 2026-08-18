@@ -22,7 +22,7 @@
 We give some values for particular partition such as small one, rows and columns.
 ***********)
 From HB Require Import structures.
-From mathcomp Require Import all_boot order.
+From mathcomp Require Import boot order.
 From mathcomp Require Import ssralg.
 From mathcomp Require Import ssrcomplements freeg mpoly.
 

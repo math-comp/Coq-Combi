@@ -46,7 +46,7 @@ We provide the following definitions:
                the skew shape [la / nu] with content [mu], defined recursively.
  ******)
 From HB Require Import structures.
-From mathcomp Require Import all_boot.
+From mathcomp Require Import boot.
 From mathcomp Require Import ssralg ssrint perm fingroup tuple vector rat.
 From mathcomp Require Import ssrcomplements mpoly.
 

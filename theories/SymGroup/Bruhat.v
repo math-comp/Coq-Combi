@@ -46,7 +46,7 @@ Bruhat Order:
 
 ***************************)
 From HB Require Import structures.
-From mathcomp Require Import all_boot order.
+From mathcomp Require Import boot order.
 From mathcomp Require Import fingroup perm morphism presentation.
 From mathcomp Require Import ssralg matrix.
 

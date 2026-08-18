@@ -40,8 +40,7 @@ Cover relation:
                   [finPOrderType].
  ********)
 From HB Require Import structures.
-From mathcomp Require Import all_boot.
-From mathcomp Require Import order.
+From mathcomp Require Import boot order.
 Require Import tools.
 
 Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)

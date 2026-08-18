@@ -38,7 +38,7 @@ Misc definitions:
 - [line_ordtree n]   == the linear tree of size n + 1
  *********************)
 From HB Require Import structures.
-From mathcomp Require Import all_boot.
+From mathcomp Require Import boot.
 Require Import tools combclass bintree.
 
 Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)

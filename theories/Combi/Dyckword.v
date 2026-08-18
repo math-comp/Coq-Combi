@@ -67,7 +67,7 @@ rotation trick: there is a (n+1) to 1 map from balanced words to Dyck words.
        have the same cardinality n+1.
  *********************)
 From HB Require Import structures.
-From mathcomp Require Import all_boot order.
+From mathcomp Require Import boot order.
 From mathcomp Require Import div ssralg ssrint ssrnum binomial.
 Require Import tools combclass bintree.
 

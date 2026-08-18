@@ -104,7 +104,7 @@ The main result is thus [Theorem presentation_Sn_eltr]:
   ]
 ***************************)
 From HB Require Import structures.
-From mathcomp Require Import all_boot.
+From mathcomp Require Import boot.
 From mathcomp Require Import fingroup perm morphism presentation.
 From mathcomp Require Import ssralg poly ssrint.
 

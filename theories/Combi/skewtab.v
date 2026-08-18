@@ -26,7 +26,7 @@
        the entries of [t] are smaller than the entries of [st].
 ******)
 From HB Require Import structures.
-From mathcomp Require Import all_boot order.
+From mathcomp Require Import boot order.
 
 Require Import tools partition skewpart Yamanouchi ordtype tableau std stdtab.
 

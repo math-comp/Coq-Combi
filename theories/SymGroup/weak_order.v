@@ -28,7 +28,7 @@ We define the following notations:
 
 ***************************)
 From HB Require Import structures.
-From mathcomp Require Import all_boot order.
+From mathcomp Require Import boot order.
 From mathcomp Require Import fingroup perm morphism presentation.
 
 Require Import permcomp tools permuted combclass congr presentSn ordtype.

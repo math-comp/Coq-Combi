@@ -22,7 +22,7 @@ ways, three from a list (see [sub_subFinType], [sub_uniq_subFinType] and
 constructed subfintypes (see [union_subFinType] below).  *)
 
 From HB Require Import structures.
-From mathcomp Require Import all_boot.
+From mathcomp Require Import boot.
 Require Import tools.
 
 Unset SsrOldRewriteGoalsOrder.  (* change to Unset and remove the line when requiring MathComp >= 2.6 *)
