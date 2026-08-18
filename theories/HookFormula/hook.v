@@ -1161,7 +1161,7 @@ End EndsAt.
 Section Formula.
 
 Variable T : countType.
-Variable R : comPzRingType.
+Variable R : comRingType.
 Variable alpha : T -> R.
 
 Lemma expand_prod_add1_seq (S : seq T) :
