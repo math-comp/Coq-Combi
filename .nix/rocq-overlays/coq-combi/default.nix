@@ -66,7 +66,7 @@ let
   ## - Coq packages (require them at the beginning of the file)
   ## - OCaml packages (use `coq.ocamlPackages.xxx`, no need to require them at the beginning of the file)
     propagatedBuildInputs = [
-      mathcomp.character
+      mathcomp.group-representation
       multinomials
       stdlib
     ];

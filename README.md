@@ -170,8 +170,8 @@ Installation
 This library is based on
 
 * [SSReflect/MathComp 2](https://github.com/math-comp/math-comp)
-  Library version 2.5.0 or more recent.
-* This branch is *not* compatible with version MathComp 2.4.0.
+  Library version 2.6.0 or more recent.
+* This branch is *not* compatible with version MathComp 2.5.0.
 
 * For MathComp 2.4.0, use the [MathComp-2.4.0](https://github.com/math-comp/Coq-Combi/tree/MathComp-2.4.0) branch.
 
@@ -181,11 +181,11 @@ This library is based on
 
 Here are the Opam packages I'm using
 ```
-rocq-hierarchy-builder        1.9.1
-rocq-mathcomp-ssreflect       2.5.0
-rocq-mathcomp-algebra         2.5.0
-rocq-mathcomp-field           2.5.0
-rocq-mathcomp-fingroup        2.5.0
-rocq-mathcomp-character       2.5.0
-coq-mathcomp-multinomials     2.4.0
+rocq-hierarchy-builder        1.10.3
+rocq-mathcomp-ssreflect       2.6.0
+rocq-mathcomp-algebra         2.6.0
+rocq-mathcomp-field           2.6.0
+rocq-mathcomp-fingroup        2.6.0
+rocq-mathcomp-character       2.6.0
+coq-mathcomp-multinomials     2.5.0
 ```

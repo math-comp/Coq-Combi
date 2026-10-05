@@ -25,93 +25,79 @@
   ## /!\ Manual overlays in `.nix/coq-overlays` should be preferred then.
   # buildInputs = [ ];
 
-  ## Set this when the package has no rocqPackages version yet
-  ## (either in nixpkgs or in .nix/rocq-overlays)
-  no-rocq-yet = true;
-
   ## Indicate the relative location of your _CoqProject
   ## If not specified, it defaults to "_CoqProject"
   # coqproject = "_CoqProject";
 
   ## select an entry to build in the following `bundles` set
   ## defaults to "default"
-  default-bundle = "rocq-9.1-mc2.5.0";
+  default-bundle = "rocq-9.2-mc2.6.0";
 
   ## write one `bundles.name` attribute set per
   ## alternative configuration
   ## When generating GitHub Action CI, one workflow file
   ## will be created per bundle
   bundles = {
-    "rocq-9.0-mc2.5.0" = {
+    "rocq-9.0-mc2.6.0" = {
       rocqPackages = {
         rocq-core.override.version = "9.0";
-        mathcomp.override.version = "2.5.0";
+        coq.override.version = "9.0";
+        mathcomp.override.version = "2.6.0";
         mathcomp.job = false;
       };
-      coqPackages = {
-        coq.override.version = "9.0";
-        mathcomp.override.version = "2.5.0";
-      };
     };
-    "rocq-9.1-mc2.5.0" = {
+    "rocq-9.1-mc2.6.0" = {
       rocqPackages = {
         rocq-core.override.version = "9.1";
-        mathcomp.override.version = "2.5.0";
-        mathcomp.job = false;
-      };
-      coqPackages = {
         coq.override.version = "9.1";
-        mathcomp.override.version = "2.5.0";
-      };
-    };
-    "rocq-9.2-mc2.5.0" = {
-      rocqPackages = {
-        rocq-core.override.version = "9.2";
-        mathcomp.override.version = "2.5.0";
+        mathcomp.override.version = "2.6.0";
         mathcomp.job = false;
-      };
-      coqPackages = {
-        coq.override.version = "9.2";
-        mathcomp.override.version = "2.5.0";
       };
     };
     "rocq-9.2-mc2.6.0" = {
       rocqPackages = {
         rocq-core.override.version = "9.2";
+        coq.override.version = "9.2";
         mathcomp.override.version = "2.6.0";
         mathcomp.job = false;
       };
-      coqPackages = {
-        coq.override.version = "9.2";
+    };
+    "rocq-9.3-mc2.6.0" = {
+      rocqPackages = {
+        rocq-core.override.version = "9.3";
+        coq.override.version = "9.3";
         mathcomp.override.version = "2.6.0";
+        mathcomp.job = false;
       };
     };
     "rocq-9.1-mcmaster" = {
       rocqPackages = {
         rocq-core.override.version = "9.1";
+        coq.override.version = "9.1";
         mathcomp.override.version = "master";
         multinomials.override.version = "master";
         mathcomp.job = false;
         multinomials.job = false;
-      };
-      coqPackages = {
-        coq.override.version = "9.1";
-        mathcomp.override.version = "master";
-        multinomials.override.version = "master";
       };
     };
     "rocq-9.2-mcmaster" = {
       rocqPackages = {
         rocq-core.override.version = "9.2";
+        coq.override.version = "9.2";
         mathcomp.override.version = "master";
         multinomials.override.version = "master";
         mathcomp.job = false;
         multinomials.job = false;
       };
-      coqPackages = {
-        coq.override.version = "9.2";
+    };
+    "rocq-9.3-mcmaster" = {
+      rocqPackages = {
+        rocq-core.override.version = "9.3";
+        coq.override.version = "9.3";
         mathcomp.override.version = "master";
         multinomials.override.version = "master";
+        mathcomp.job = false;
+        multinomials.job = false;
       };
     };
 

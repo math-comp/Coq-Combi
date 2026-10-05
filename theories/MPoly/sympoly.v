@@ -196,7 +196,7 @@ Variable n : nat.
 Variable R : comNzRingType.
 
 HB.instance Definition _ :=
-  [SubChoice_isSubAlgebra of {sympoly R[n]} by <:].
+  [SubChoice_isSubNzAlgebra of {sympoly R[n]} by <:].
 HB.instance Definition _ :=
   [SubNzRing_isSubComNzRing of {sympoly R[n]} by <:].
 
@@ -2555,4 +2555,3 @@ exact: (leq_ltn_trans le_p_n lt_n_i).
 Qed.
 
 End CategoricalSystems.
-
